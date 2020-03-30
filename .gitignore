@@ -30,3 +30,16 @@
 *.exe
 *.out
 *.app
+
+# Binaries
+*.bin
+*.elf
+*.hex
+*.map
+
+# Python byte-compiled
+*/__pycache__
+
+# Kdevelop files
+*.kdev4
+.kdev4/
