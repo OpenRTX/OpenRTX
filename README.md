@@ -1,5 +1,10 @@
-# OpenDMR
-## Open source firmware for the TYT MD380
+# OpenRTX
+## Modular Open Source Radio Firmware
+
+OpenRTX is a free and open source firmware for digitam ham radios, top-down designed
+with modularity, flexibility and performance in mind.
+
+Currently OpenRTX is being actively developed for the TYT MD-380/390 and MD-UV380/390.
 
 This firmware is *highly experimental* and is not in a usable state right now,
 however contributions and testing are welcome and accepted.
@@ -9,7 +14,7 @@ however contributions and testing are welcome and accepted.
 To build and install the firmware, first clone this repository:
 
 ```
-git clone https://github.com/n1zzo/OpenDMR
+git clone https://github.com/n1zzo/OpenRTX
 ```
 
 To build the firmware you need to have a toolchain for the ARM ISA installed
@@ -17,11 +22,11 @@ on you system, you can install one using your package manager.
 You can then proceed in building the firmware:
 
 ```
-cd OpenDMR
+cd OpenRTX
 make
 ```
 
-If everithing compiled without errors you can connect your radio via USB,
+If everything compiled without errors you can connect your radio via USB,
 put it in recovery mode (by powering it on with the PTT and the button
 above it pressed), and flash the firmware:
 
@@ -39,12 +44,12 @@ we still owe you the two liters, Travis!
 
 ## Credits
 
-OpenDMR was created by:
+OpenRTX was created by:
 
 - Niccolò Izzo IU2KIN <n@izzo.sh>
 - Silvano Seva IU2KWO <silseva@fastwebnet.it>
+- Federico Izzo IU2NUO <federico@izzo.pro>
 
 All this was made possible by the huge reverse engineering effort of
 Travis Goodspeed and all the contributors of [md380tools](https://github.com/travisgoodspeed/md380tools).
-A huge thank goes to Roger Clark, and his [OpenGD77](https://github.com/rogerclarkmelbourne/OpenGD77) which inspired this project,
-and which we aspire becoming a part of.
+A huge thank goes to Roger Clark, and his [OpenGD77](https://github.com/rogerclarkmelbourne/OpenGD77) which inspired this project.
