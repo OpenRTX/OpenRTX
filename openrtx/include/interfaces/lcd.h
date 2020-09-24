@@ -15,16 +15,14 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef LCH_H
-#define LCH_H
+#ifndef LCD_H
+#define LCD_H
 
 #include <stdint.h>
 #include <stdbool.h>
 
 /**
- * Low level driver for Tytera MD380 display, which is has an HX8302-A controller.
- * Actually, no datasheet for the display controller exists on the internet,
- * however a fairly compatible chip, for which datasheet exists, is the HX8353-E.
+ * Standard interface for all low-level display drivers.
  *
  *********************** HOW TO MANAGE FRAMEBUFFER *****************************
  *
@@ -46,9 +44,9 @@
  */
 
 /**
- * This function initialises the display, configures TIM8 for backlight control
- * and allocates framebuffer on the heap. After initialisation, backlight is
- * set to zero.
+ * This function initialises the display, configures backlight control and
+ * allocates framebuffer on the heap. After initialisation, backlight is set
+ * to zero.
  * NOTE: framebuffer allocation is the first operation performed, if fails an
  * error message is printed on the virtual COM port and this function returns
  * prematurely, without configuring the display and the backlight timer. Thus, a
@@ -57,8 +55,8 @@
 void lcd_init();
 
 /**
- * When called, this function turns off backlight, shuts down TIM8 and
- * deallocates the framebuffer.
+ * When called, this function turns off backlight, shuts down backlight control
+ * and deallocates the framebuffer.
  */
 void lcd_terminate();
 
@@ -118,4 +116,4 @@ bool lcd_renderingInProgress();
  */
 uint16_t *lcd_getFrameBuffer();
 
-#endif /* LCH_H */
+#endif /* LCD_H */
