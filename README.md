@@ -19,6 +19,12 @@ git clone https://github.com/n1zzo/OpenRTX
 
 To build the firmware you need to have a toolchain for the ARM ISA installed
 on you system, you can install one using your package manager.
+
+For example on Ubuntu you can install `arm-none-eabi-gcc`
+```
+sudo apt install gcc-arm-none-eabi
+```
+
 You can then proceed in building the firmware:
 
 ```
