@@ -1,5 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2020 by Federico Izzo IU2NUO, Niccolò Izzo IU2KIN and   *
+ *                         Silvano Seva IU2KWO                             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -27,6 +28,7 @@ int main(int argc, char *argv[]);
 void Reset_Handler() __attribute__((__interrupt__, noreturn));
 void Reset_Handler()
 {
+    // Disable interrupts at startup, as the RTOS requires this.
     __disable_irq();
 
     // Call CMSIS init function, it's safe to do it here.
@@ -50,8 +52,6 @@ void Reset_Handler()
 
     memcpy(data, etext, edata-data);
     memset(bss_start, 0, bss_end-bss_start);
-
-    __enable_irq();
 
     // General system configurations: enabling all GPIO ports.
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN
@@ -104,8 +104,9 @@ void __attribute__((weak)) BusFault_Handler();
 void __attribute__((weak)) UsageFault_Handler();
 void __attribute__((weak)) SVC_Handler();
 void __attribute__((weak)) DebugMon_Handler();
-void __attribute__((weak)) PendSV_Handler();
-void __attribute__((weak)) SysTick_Handler();
+
+void __attribute__((weak)) OS_CPU_PendSVHandler();  // uC/OS-III naming convention
+void __attribute__((weak)) OS_CPU_SysTickHandler();
 
 void __attribute__((weak)) WWDG_IRQHandler();
 void __attribute__((weak)) PVD_IRQHandler();
@@ -212,8 +213,8 @@ void (* const __Vectors[])() __attribute__ ((section(".isr_vector"))) =
     SVC_Handler,
     DebugMon_Handler,
     0,
-    PendSV_Handler,
-    SysTick_Handler,
+    OS_CPU_PendSVHandler,
+    OS_CPU_SysTickHandler,
 
     WWDG_IRQHandler,
     PVD_IRQHandler,

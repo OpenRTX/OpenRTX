@@ -175,9 +175,9 @@
 *********************************************************************************************************
 */
 
-#if 0
-#define  CPU_CFG_ENDIAN_TYPE            CPU_ENDIAN_TYPE_BIG     /* Defines CPU data    word-memory order (see Note #2). */
-#endif
+// #if 0
+#define  CPU_CFG_ENDIAN_TYPE            CPU_ENDIAN_TYPE_LITTLE     /* Defines CPU data    word-memory order (see Note #2). */
+// #endif
 
 
 /*
@@ -239,9 +239,9 @@
 *                           implementing only bits[7:6].
 *********************************************************************************************************
 */
-#if 0
+// #if 0
 #define  CPU_CFG_NVIC_PRIO_BITS                            4u
-#endif
+// #endif
 
 
 /*
