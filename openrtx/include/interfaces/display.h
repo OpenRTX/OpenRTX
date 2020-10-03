@@ -15,8 +15,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef LCD_H
-#define LCD_H
+#ifndef DISPLAY_H
+#define DISPLAY_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -52,32 +52,32 @@
  * prematurely, without configuring the display and the backlight timer. Thus, a
  * dark screen can be symptom of failed allocation.
  */
-void lcd_init();
+void display_init();
 
 /**
  * When called, this function turns off backlight, shuts down backlight control
  * and deallocates the framebuffer.
  */
-void lcd_terminate();
+void display_terminate();
 
 /**
  * Get screen width in pixels.
  * @return screen with, in pixels.
  */
-uint16_t lcd_screenWidth();
+uint16_t display_screenWidth();
 
 /**
  * Get screen height in pixels.
  * @return screen height, in pixels.
  */
-uint16_t lcd_screenHeight();
+uint16_t display_screenHeight();
 
 /**
  * Set screen backlight to a given level.
  * @param level: backlight level, from 0 (backlight off) to 255 (backlight at
  * full brightness).
  */
-void lcd_setBacklightLevel(uint8_t level);
+void display_setBacklightLevel(uint8_t level);
 
 /**
  * Copy a given section, between two given rows, of framebuffer content to the
@@ -85,20 +85,20 @@ void lcd_setBacklightLevel(uint8_t level);
  * @param startRow: first row of the framebuffer section to be copied
  * @param endRow: last row of the framebuffer section to be copied
  */
-void lcd_renderRows(uint8_t startRow, uint8_t endRow);
+void display_renderRows(uint8_t startRow, uint8_t endRow);
 
 /**
  * Copy framebuffer content to the display internal buffer. To be called
  * whenever there is need to update the display.
  */
-void lcd_render();
+void display_render();
 
 /**
  * Check if framebuffer is being copied to the screen or not, in which case it
  * can be modified without problems.
  * @return false if rendering is not in progress.
  */
-bool lcd_renderingInProgress();
+bool display_renderingInProgress();
 
 /**
  * Get pointer to framebuffer. Being this a standard interface for all the
@@ -106,13 +106,13 @@ bool lcd_renderingInProgress();
  * to the caller performing the correct cast to one of the standard types used
  * for color coding.
  * Changes to the framebuffer will not be reflected on the display until
- * lcd_render() or lcd_renderRows() are called.
+ * display_render() or display_renderRows() are called.
  *
  * 
  * WARNING: no bound check is performed! Do not call free() on the pointer
  * returned, doing so will destroy the framebuffer!
  * @return pointer to framebuffer.
  */
-void *lcd_getFrameBuffer();
+void *display_getFrameBuffer();
 
-#endif /* LCD_H */
+#endif /* DISPLAY_H */

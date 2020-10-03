@@ -19,7 +19,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include "gpio.h"
-#include "lcd.h"
+#include "display.h"
 #include "delays.h"
 
 /* Defines for GPIO control, really ugly but useful. */
@@ -103,7 +103,7 @@
 #define SCREEN_HEIGHT 128
 
 /*
- * LCD framebuffer, allocated on the heap by lcd_init().
+ * LCD framebuffer, allocated on the heap by display_init().
  * Pixel format is RGB565, 16 bit per pixel
  */
 static uint16_t *frameBuffer;
@@ -124,7 +124,7 @@ static inline __attribute__((__always_inline__)) void writeData(uint8_t val)
     *((volatile uint8_t*) LCD_FSMC_ADDR_DATA) = val;
 }
 
-void lcd_init()
+void display_init()
 {
     /* Allocate framebuffer, two bytes per pixel */
     frameBuffer = (uint16_t *) malloc(SCREEN_WIDTH * SCREEN_HEIGHT * 2);
@@ -353,7 +353,7 @@ void lcd_init()
     gpio_setPin(CS);
 }
 
-void lcd_terminate()
+void display_terminate()
 {
     /* Shut off backlight, FSMC and deallocate framebuffer */
     gpio_setMode(GPIOC, 6, OUTPUT);
@@ -366,22 +366,22 @@ void lcd_terminate()
     }
 }
 
-uint16_t lcd_screenWidth()
+uint16_t display_screenWidth()
 {
     return SCREEN_WIDTH;
 }
 
-uint16_t lcd_screenHeight()
+uint16_t display_screenHeight()
 {
     return SCREEN_HEIGHT;
 }
 
-void lcd_setBacklightLevel(uint8_t level)
+void display_setBacklightLevel(uint8_t level)
 {
     TIM8->CCR1 = level;
 }
 
-void lcd_renderRows(uint8_t startRow, uint8_t endRow)
+void display_renderRows(uint8_t startRow, uint8_t endRow)
 {
 
     /*
@@ -426,12 +426,12 @@ void lcd_renderRows(uint8_t startRow, uint8_t endRow)
                      | DMA_SxCR_EN;           /* Start transfer              */
 }
 
-void lcd_render()
+void display_render()
 {
-    lcd_renderRows(0, SCREEN_HEIGHT);
+    display_renderRows(0, SCREEN_HEIGHT);
 }
 
-bool lcd_renderingInProgress()
+bool display_renderingInProgress()
 {
     /*
      * Render is in progress if PD6 is low. Its value can be tested reading
@@ -441,7 +441,7 @@ bool lcd_renderingInProgress()
     return (pinValue == 0) ? 1 : 0;
 }
 
-void *lcd_getFrameBuffer()
+void *display_getFrameBuffer()
 {
     return (void *)(frameBuffer);
 }

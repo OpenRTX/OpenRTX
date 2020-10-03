@@ -25,7 +25,7 @@
  * the driver source file.
  */
 
-#include "lcd.h"
+#include "display.h"
 #include <unistd.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -37,30 +37,30 @@ void drawRect(int x, int y, int width, int height, uint16_t color)
 {
     int x_max = x + width;
     int y_max = y + height;
-    uint16_t *buf = (uint16_t *)(lcd_getFrameBuffer());
+    uint16_t *buf = (uint16_t *)(display_getFrameBuffer());
 
     for(int i=y; i < y_max; i++)
     {
         for(int j=x; j < x_max; j++)
         {
-            buf[j + i*lcd_screenWidth()] = color;
+            buf[j + i*display_screenWidth()] = color;
         }
     }
 }
 
 int main()
 {
-    lcd_init();
-    lcd_setBacklightLevel(254);
+    display_init();
+    display_setBacklightLevel(254);
 
     /* Horizontal red line */
-    drawRect(0, 10, lcd_screenWidth(), 20, 0xF800);
+    drawRect(0, 10, display_screenWidth(), 20, 0xF800);
 
     /* Vertical blue line */
-    drawRect(10, 0, 20, lcd_screenHeight(), 0x001F);
+    drawRect(10, 0, 20, display_screenHeight(), 0x001F);
 
     /* Vertical green line */
-    drawRect(80, 0, 20, lcd_screenHeight(), 0x07e0);
+    drawRect(80, 0, 20, display_screenHeight(), 0x07e0);
 
     /*
      * Use SDL event listener to check if window close button has been pressed,
@@ -70,11 +70,11 @@ int main()
 
     while(1)
     {
-        lcd_render();
+        display_render();
         SDL_PollEvent(&eventListener);
         if(eventListener.type == SDL_QUIT) break;
     }
     
-    lcd_terminate();
+    display_terminate();
     return 0;
 }

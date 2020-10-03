@@ -24,7 +24,7 @@
  * this driver.
  */
 
-#include "lcd.h"
+#include "display.h"
 #include <stdio.h>
 #include <string.h>
 #include <SDL2/SDL.h>
@@ -42,7 +42,7 @@ SDL_Surface *renderSurface;
 uint16_t *frameBuffer;
 bool inProgress;
 
-void lcd_init()
+void display_init()
 {
     if(SDL_Init(SDL_INIT_VIDEO) < 0)
     {
@@ -68,7 +68,7 @@ void lcd_init()
     }
 }
 
-void lcd_terminate()
+void display_terminate()
 {
     while(inProgress) { }         /* Wait until current render finishes */
     printf("Terminating SDL display emulator, goodbye!\n");
@@ -77,22 +77,22 @@ void lcd_terminate()
     SDL_Quit();
 }
 
-uint16_t lcd_screenWidth()
+uint16_t display_screenWidth()
 {
     return SCREEN_WIDTH;
 }
 
-uint16_t lcd_screenHeight()
+uint16_t display_screenHeight()
 {
     return SCREEN_HEIGHT;
 }
 
-void lcd_setBacklightLevel(uint8_t level)
+void display_setBacklightLevel(uint8_t level)
 {
     printf("Backlight level set to %d\n", level);
 }
 
-void lcd_renderRows(uint8_t startRow, uint8_t endRow)
+void display_renderRows(uint8_t startRow, uint8_t endRow)
 {
     Uint32 *pixels = (Uint32*)renderSurface->pixels;
     inProgress = true;
@@ -130,17 +130,17 @@ void lcd_renderRows(uint8_t startRow, uint8_t endRow)
     SDL_UpdateWindowSurface(window);
 }
 
-void lcd_render()
+void display_render()
 {
-    lcd_renderRows(0, SCREEN_HEIGHT);
+    display_renderRows(0, SCREEN_HEIGHT);
 }
 
-bool lcd_renderingInProgress()
+bool display_renderingInProgress()
 {
     return inProgress;
 }
 
-void *lcd_getFrameBuffer()
+void *display_getFrameBuffer()
 {
     return (void *)(frameBuffer);
 }

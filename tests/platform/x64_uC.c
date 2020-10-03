@@ -7,7 +7,7 @@
 #include <SDL2/SDL.h>
 #undef main
 
-#include "lcd.h"
+#include "display.h"
 
 static OS_TCB        App_TaskStartTCB;
 static CPU_STK_SIZE  App_TaskStartStk[APP_CFG_TASK_START_STK_SIZE];
@@ -23,28 +23,28 @@ void drawRect(int x, int y, int width, int height, uint16_t color)
 {
     int x_max = x + width;
     int y_max = y + height;
-    if(x_max > lcd_screenWidth()) x_max = lcd_screenWidth();
-    if(y_max > lcd_screenHeight()) y_max = lcd_screenHeight();
-    uint16_t *buf = (uint16_t *)(lcd_getFrameBuffer());
+    if(x_max > display_screenWidth()) x_max = display_screenWidth();
+    if(y_max > display_screenHeight()) y_max = display_screenHeight();
+    uint16_t *buf = (uint16_t *)(display_getFrameBuffer());
 
     for(int i=y; i < y_max; i++)
     {
         for(int j=x; j < x_max; j++)
         {
-            buf[j + i*lcd_screenWidth()] = color;
+            buf[j + i*display_screenWidth()] = color;
         }
     }
 }
 
 void clearScreen()
 {
-    uint16_t *buf = (uint16_t *)(lcd_getFrameBuffer());
+    uint16_t *buf = (uint16_t *)(display_getFrameBuffer());
 
-    for(int i=0; i < lcd_screenHeight(); i++)
+    for(int i=0; i < display_screenHeight(); i++)
     {
-        for(int j=0; j < lcd_screenWidth(); j++)
+        for(int j=0; j < display_screenWidth(); j++)
         {
-            buf[j + i*lcd_screenWidth()] = 0xFFFF;
+            buf[j + i*display_screenWidth()] = 0xFFFF;
         }
     }
 }
@@ -117,7 +117,7 @@ static void gfxThread(void *arg)
     int pos = 0;
     SDL_Event eventListener;
 
-    lcd_init();
+    display_init();
 
     while(1)
     {
@@ -125,16 +125,16 @@ static void gfxThread(void *arg)
         if(eventListener.type == SDL_QUIT) break;
 
         clearScreen();
-        drawRect(0, pos, lcd_screenWidth(), 20, 0xF800);
-        lcd_render();
-        while(lcd_renderingInProgress()) ;
+        drawRect(0, pos, display_screenWidth(), 20, 0xF800);
+        display_render();
+        while(display_renderingInProgress()) ;
         pos += 20;
-        if(pos > lcd_screenHeight() - 20) pos = 0;
+        if(pos > display_screenHeight() - 20) pos = 0;
 
         OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &os_err);
     }
 
     running = 0;
     OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &os_err);
-    lcd_terminate();
+    display_terminate();
 }
