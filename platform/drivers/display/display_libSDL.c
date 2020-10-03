@@ -140,7 +140,7 @@ bool lcd_renderingInProgress()
     return inProgress;
 }
 
-uint16_t *lcd_getFrameBuffer()
+void *lcd_getFrameBuffer()
 {
-    return frameBuffer;
+    return (void *)(frameBuffer);
 }

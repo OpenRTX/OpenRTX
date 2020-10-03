@@ -441,7 +441,7 @@ bool lcd_renderingInProgress()
     return (pinValue == 0) ? 1 : 0;
 }
 
-uint16_t *lcd_getFrameBuffer()
+void *lcd_getFrameBuffer()
 {
-    return frameBuffer;
+    return (void *)(frameBuffer);
 }

@@ -25,7 +25,7 @@ void drawRect(int x, int y, int width, int height, uint16_t color)
     int y_max = y + height;
     if(x_max > lcd_screenWidth()) x_max = lcd_screenWidth();
     if(y_max > lcd_screenHeight()) y_max = lcd_screenHeight();
-    uint16_t *buf = lcd_getFrameBuffer();
+    uint16_t *buf = (uint16_t *)(lcd_getFrameBuffer());
 
     for(int i=y; i < y_max; i++)
     {
@@ -38,7 +38,7 @@ void drawRect(int x, int y, int width, int height, uint16_t color)
 
 void clearScreen()
 {
-    uint16_t *buf = lcd_getFrameBuffer();
+    uint16_t *buf = (uint16_t *)(lcd_getFrameBuffer());
 
     for(int i=0; i < lcd_screenHeight(); i++)
     {

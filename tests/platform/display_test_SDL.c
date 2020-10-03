@@ -37,7 +37,7 @@ void drawRect(int x, int y, int width, int height, uint16_t color)
 {
     int x_max = x + width;
     int y_max = y + height;
-    uint16_t *buf = lcd_getFrameBuffer();
+    uint16_t *buf = (uint16_t *)(lcd_getFrameBuffer());
 
     for(int i=y; i < y_max; i++)
     {

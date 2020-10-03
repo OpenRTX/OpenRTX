@@ -26,8 +26,8 @@
  *
  *********************** HOW TO MANAGE FRAMEBUFFER *****************************
  *
- * This driver allocates the framebuffer as a block of memory addressed linearly
- * as an array of SCREEN_HEIGHT*SCREEN_WIDTH 16-bit variables.
+ * This driver allocates the framebuffer as a block of linearly addressed memory
+ * equivalent to an array of SCREEN_HEIGHT*SCREEN_WIDTH elements.
  * With respect to it, screen is indexed in this way:
  *
  *   (0,0)
@@ -39,7 +39,7 @@
  *     y
  *
  * then to set the value of the pixel having coordinates (X,Y), framebuffer has
- * to be indexed in this way buf[X + Y*SCREEN_WIDTH].
+ * to be indexed in this way: buf[X + Y*SCREEN_WIDTH].
  *
  */
 
@@ -101,19 +101,18 @@ void lcd_render();
 bool lcd_renderingInProgress();
 
 /**
- * Get pointer to framebuffer. This buffer is addressed linearly and each
- * location is a pixel whose color coding is RGB565.
+ * Get pointer to framebuffer. Being this a standard interface for all the
+ * low-level display drivers, this function returns a pointer to void: it's up
+ * to the caller performing the correct cast to one of the standard types used
+ * for color coding.
  * Changes to the framebuffer will not be reflected on the display until
  * lcd_render() or lcd_renderRows() are called.
  *
- * IMPORTANT NOTE: to accomodate the display driver chip's needs, this buffer
- * MUST be filled with values in big endian mode! A cleaner way to have the
- * correct endianness, is to use GCC's builtin function __builtin_bswap16().
- *
+ * 
  * WARNING: no bound check is performed! Do not call free() on the pointer
  * returned, doing so will destroy the framebuffer!
  * @return pointer to framebuffer.
  */
-uint16_t *lcd_getFrameBuffer();
+void *lcd_getFrameBuffer();
 
 #endif /* LCD_H */
