@@ -62,7 +62,7 @@ void display_terminate();
 
 /**
  * Get screen width in pixels.
- * @return screen with, in pixels.
+ * @return screen width, in pixels.
  */
 uint16_t display_screenWidth();
 
