@@ -54,7 +54,7 @@ OpenRTX was created by:
 
 - Niccolò Izzo IU2KIN <n@izzo.sh>
 - Silvano Seva IU2KWO <silseva@fastwebnet.it>
-- Federico Izzo IU2NUO <federico@izzo.pro>
+- Federico Amedeo Izzo IU2NUO <federico@izzo.pro>
 
 All this was made possible by the huge reverse engineering effort of
 Travis Goodspeed and all the contributors of [md380tools](https://github.com/travisgoodspeed/md380tools).
