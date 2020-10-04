@@ -28,8 +28,8 @@ sudo apt install gcc-arm-none-eabi
 You can then proceed in building the firmware:
 
 ```
-cd OpenRTX
-make
+meson builddir
+meson compile -C builddir linux
 ```
 
 If everything compiled without errors you can connect your radio via USB,
