@@ -52,10 +52,45 @@
  */
 
 /**
+ * Structure that represents the X,Y coordinates of a single point
+ */
+typedef struct point_t
+{
+    uint16_t x;
+    uint16_t y;
+} point_t;
+
+/**
+ * Structure that represents a single color in the RGB 8 bit per channel format
+ */
+typedef struct color_t
+{
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+} color_t;
+
+/**
  * This function calls the correspondent method of the low level interface display.h
  * It initializes the display and sets the backlight to zero.
  */
 void graphics_init();
+
+/**
+ * This function calls the correspondent method of the low level interface display.h
+ * Get pointer to framebuffer. Being this a standard interface for all the
+ * low-level display drivers, this function returns a pointer to void: it's up
+ * to the caller performing the correct cast to one of the standard types used
+ * for color coding.
+ * Changes to the framebuffer will not be reflected on the display until
+ * graphics_render() or graphics_renderRows() are called.
+ *
+ *
+ * WARNING: no bound check is performed! Do not call free() on the pointer
+ * returned, doing so will destroy the framebuffer!
+ * @return pointer to framebuffer.
+ */
+void *graphics_getFrameBuffer();
 
 /**
  * This function calls the correspondent method of the low level interface display.h
@@ -110,19 +145,26 @@ void graphics_render();
 bool graphics_renderingInProgress();
 
 /**
- * This function calls the correspondent method of the low level interface display.h
- * Get pointer to framebuffer. Being this a standard interface for all the
- * low-level display drivers, this function returns a pointer to void: it's up
- * to the caller performing the correct cast to one of the standard types used
- * for color coding.
- * Changes to the framebuffer will not be reflected on the display until
- * graphics_render() or graphics_renderRows() are called.
- *
- * 
- * WARNING: no bound check is performed! Do not call free() on the pointer
- * returned, doing so will destroy the framebuffer!
- * @return pointer to framebuffer.
+ * Fills screen with the specified color.
+ * @param color: border and fill color, in color_t format.
  */
-void *graphics_getFrameBuffer();
+void graphics_fillScreen(color_t color);
+
+/**
+ * Draw a line from start to end coordinates, ends included.
+ * @param start: line start point, in pixel coordinates.
+ * @param end: line end point, in pixel coordinates.
+ * @param color: line color, in color_t format.
+ */
+void graphics_drawLine(point_t start, point_t end, color_t color);
+
+/**
+ * Draw a rectangle of specified width, height and color.
+ * @param width: rectangle width, in pixels, borders included.
+ * @param height: rectangle height, in pixels, borders included.
+ * @param color: border and fill color, in color_t format.
+ * @param fill: if true the rectangle will be solid, otherwise it will have a 1-pixel border
+ */
+void graphics_drawRect(uint16_t width, uint16_t height, color_t color, bool fill);
 
 #endif /* GRAPHICS_H */
