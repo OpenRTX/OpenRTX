@@ -55,6 +55,21 @@
 void display_init();
 
 /**
+ * Get pointer to framebuffer. Being this a standard interface for all the
+ * low-level display drivers, this function returns a pointer to void: it's up
+ * to the caller performing the correct cast to one of the standard types used
+ * for color coding.
+ * Changes to the framebuffer will not be reflected on the display until
+ * display_render() or display_renderRows() are called.
+ *
+ * 
+ * WARNING: no bound check is performed! Do not call free() on the pointer
+ * returned, doing so will destroy the framebuffer!
+ * @return pointer to framebuffer.
+ */
+void *display_getFrameBuffer();
+
+/**
  * When called, this function turns off backlight, shuts down backlight control
  * and deallocates the framebuffer.
  */
@@ -99,20 +114,5 @@ void display_render();
  * @return false if rendering is not in progress.
  */
 bool display_renderingInProgress();
-
-/**
- * Get pointer to framebuffer. Being this a standard interface for all the
- * low-level display drivers, this function returns a pointer to void: it's up
- * to the caller performing the correct cast to one of the standard types used
- * for color coding.
- * Changes to the framebuffer will not be reflected on the display until
- * display_render() or display_renderRows() are called.
- *
- * 
- * WARNING: no bound check is performed! Do not call free() on the pointer
- * returned, doing so will destroy the framebuffer!
- * @return pointer to framebuffer.
- */
-void *display_getFrameBuffer();
 
 #endif /* DISPLAY_H */
