@@ -78,22 +78,6 @@ void graphics_init();
 
 /**
  * This function calls the correspondent method of the low level interface display.h
- * Get pointer to framebuffer. Being this a standard interface for all the
- * low-level display drivers, this function returns a pointer to void: it's up
- * to the caller performing the correct cast to one of the standard types used
- * for color coding.
- * Changes to the framebuffer will not be reflected on the display until
- * graphics_render() or graphics_renderRows() are called.
- *
- *
- * WARNING: no bound check is performed! Do not call free() on the pointer
- * returned, doing so will destroy the framebuffer!
- * @return pointer to framebuffer.
- */
-void *graphics_getFrameBuffer();
-
-/**
- * This function calls the correspondent method of the low level interface display.h
  * It turns off backlight, shuts down backlight control and deallocates the framebuffer.
  */
 void graphics_terminate();
