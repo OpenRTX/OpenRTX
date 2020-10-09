@@ -24,6 +24,7 @@
 #include "display.h"
 #include "graphics.h"
 #include <string.h>
+#include <stdio.h>
 
 #define COLOR_WHITE = {31, 63, 31}
 
@@ -91,49 +92,47 @@ rgb565_t _true2highColor(color_t true_color)
     uint8_t high_g = true_color.g >> 2;
     uint8_t high_b = true_color.b >> 3;
     rgb565_t high_color = {high_r, high_g, high_b};
+    /*printf("Converting color... True: R:%02XG:%02XB:%02X High:R:%02XG:%02XB:%02X\n", true_color.r,
+    true_color.g, true_color.b, high_r, high_g, high_b);*/
     return high_color;
 }
 
 void graphics_clearScreen()
 {
-    if(!initialized)
-	return;
+    if(!initialized) return;
     // Set the whole framebuffer to 0x00 = make the screen black
     memset(buf, 0x00, sizeof(rgb565_t) * screen_width * screen_height);
 }
 
 void graphics_fillScreen(color_t color)
 {
-    if(!initialized)
-	return;
+    if(!initialized) return;
     rgb565_t color_565 = _true2highColor(color);
     for(int y=0; y < screen_height; y++)
     {
-	for(int x=0; x < screen_width; x++)
-	{
-	    buf[x + y*screen_width] = color_565;
-	}
+        for(int x=0; x < screen_width; x++)
+        {
+            buf[x + y*screen_width] = color_565;
+        }
     }
 }
 
 void graphics_drawLine(point_t start, point_t end, color_t color)
 {
-    if(!initialized)
-	return;
+    if(!initialized) return;
     rgb565_t color_565 = _true2highColor(color);
     for(int y=0; y < screen_height; y++)
     {
-	for(int x=0; x < screen_width; x++)
-	{
-	    buf[x + y*screen_width] = color_565;
-	}
+        for(int x=0; x < screen_width; x++)
+        {
+            buf[x + y*screen_width] = color_565;
+        }
     }
 }
 
 void graphics_drawRect(point_t start, uint16_t width, uint16_t height, color_t color, bool fill)
 {
-    if(!initialized)
-	return;
+    if(!initialized) return;
     rgb565_t color_565 = _true2highColor(color);
     uint16_t x_max = start.x + width;
     uint16_t y_max = start.y + height;
@@ -141,10 +140,10 @@ void graphics_drawRect(point_t start, uint16_t width, uint16_t height, color_t c
     if(y_max > (screen_height - 1)) y_max = screen_height - 1;
     for(int y=start.y; y < y_max; y++)
     {
-	for(int x=start.x; x < x_max; x++)
-	{
-	    buf[x + y*screen_width] = color_565;
-	}
+        for(int x=start.x; x < x_max; x++)
+        {
+            buf[x + y*screen_width] = color_565;
+        }
     }
 }
 
