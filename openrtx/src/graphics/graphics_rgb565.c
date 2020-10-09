@@ -136,13 +136,17 @@ void graphics_drawRect(point_t start, uint16_t width, uint16_t height, color_t c
     rgb565_t color_565 = _true2highColor(color);
     uint16_t x_max = start.x + width;
     uint16_t y_max = start.y + height;
+    bool perimeter = 0;
     if(x_max > (screen_width - 1)) x_max = screen_width - 1;
     if(y_max > (screen_height - 1)) y_max = screen_height - 1;
     for(int y=start.y; y < y_max; y++)
     {
         for(int x=start.x; x < x_max; x++)
         {
-            buf[x + y*screen_width] = color_565;
+            if(y == start.y || y == y_max-1 || x == start.x || x == x_max-1) perimeter = 1;
+            else perimeter = 0;
+            // If fill is false, draw only rectangle perimeter
+            if(fill || perimeter) buf[x + y*screen_width] = color_565;
         }
     }
 }

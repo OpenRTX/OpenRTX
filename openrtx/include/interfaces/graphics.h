@@ -152,7 +152,7 @@ void graphics_drawLine(point_t start, point_t end, color_t color);
  * @param width: rectangle width, in pixels, borders included.
  * @param height: rectangle height, in pixels, borders included.
  * @param color: border and fill color, in color_t format.
- * @param fill: if true the rectangle will be solid, otherwise it will have a 1-pixel border
+ * @param fill: if true the rectangle will be solid, otherwise it will be empty with a 1-pixel border
  */
 void graphics_drawRect(point_t start, uint16_t width, uint16_t height, color_t color, bool fill);
 
