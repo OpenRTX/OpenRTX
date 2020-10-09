@@ -94,8 +94,8 @@ static void gfxThread(void *arg)
         if(eventListener.type == SDL_QUIT) break;
 
         graphics_clearScreen();
-	point_t origin = {0, pos};
-	color_t color_red = {255, 0, 0};
+        point_t origin = {0, pos};
+        color_t color_red = {255, 0, 0};
         graphics_drawRect(origin, display_screenWidth(), 20, color_red, 1);
         graphics_render();
         while(graphics_renderingInProgress()) ;
