@@ -129,6 +129,11 @@ void graphics_render();
 bool graphics_renderingInProgress();
 
 /**
+ * Makes the screen black.
+ */
+void graphics_clearScreen();
+
+/**
  * Fills screen with the specified color.
  * @param color: border and fill color, in color_t format.
  */

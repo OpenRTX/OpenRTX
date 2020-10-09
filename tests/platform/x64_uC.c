@@ -7,7 +7,7 @@
 #include <SDL2/SDL.h>
 #undef main
 
-#include "display.h"
+#include "graphics.h"
 
 static OS_TCB        App_TaskStartTCB;
 static CPU_STK_SIZE  App_TaskStartStk[APP_CFG_TASK_START_STK_SIZE];
@@ -18,36 +18,6 @@ static CPU_STK_SIZE  gfxStk[APP_CFG_TASK_START_STK_SIZE];
 static void gfxThread(void *arg);
 
 static int running = 0;
-
-void drawRect(int x, int y, int width, int height, uint16_t color)
-{
-    int x_max = x + width;
-    int y_max = y + height;
-    if(x_max > display_screenWidth()) x_max = display_screenWidth();
-    if(y_max > display_screenHeight()) y_max = display_screenHeight();
-    uint16_t *buf = (uint16_t *)(display_getFrameBuffer());
-
-    for(int i=y; i < y_max; i++)
-    {
-        for(int j=x; j < x_max; j++)
-        {
-            buf[j + i*display_screenWidth()] = color;
-        }
-    }
-}
-
-void clearScreen()
-{
-    uint16_t *buf = (uint16_t *)(display_getFrameBuffer());
-
-    for(int i=0; i < display_screenHeight(); i++)
-    {
-        for(int j=0; j < display_screenWidth(); j++)
-        {
-            buf[j + i*display_screenWidth()] = 0xFFFF;
-        }
-    }
-}
 
 int  main (void)
 {
@@ -91,7 +61,6 @@ int  main (void)
     return 0;
 }
 
-
 static void App_TaskStart(void *p_arg)
 {
 
@@ -117,24 +86,26 @@ static void gfxThread(void *arg)
     int pos = 0;
     SDL_Event eventListener;
 
-    display_init();
+    graphics_init();
 
     while(1)
     {
         SDL_PollEvent(&eventListener);
         if(eventListener.type == SDL_QUIT) break;
 
-        clearScreen();
-        drawRect(0, pos, display_screenWidth(), 20, 0xF800);
-        display_render();
-        while(display_renderingInProgress()) ;
+        graphics_clearScreen();
+	point_t origin = {0, pos};
+	color_t color_red = {255, 0, 0};
+        graphics_drawRect(origin, display_screenWidth(), 20, color_red, 1);
+        graphics_render();
+        while(graphics_renderingInProgress()) ;
         pos += 20;
-        if(pos > display_screenHeight() - 20) pos = 0;
+        if(pos > graphics_screenHeight() - 20) pos = 0;
 
         OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &os_err);
     }
 
     running = 0;
     OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &os_err);
-    display_terminate();
+    graphics_terminate();
 }

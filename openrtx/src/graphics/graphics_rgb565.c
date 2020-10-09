@@ -23,6 +23,9 @@
 
 #include "display.h"
 #include "graphics.h"
+#include <string.h>
+
+#define COLOR_WHITE = {31, 63, 31}
 
 typedef struct rgb565_t
 { 
@@ -33,7 +36,7 @@ typedef struct rgb565_t
 
 bool initialized = 0;
 uint16_t screen_width = 0;
-uint16_t screen_heigth = 0;
+uint16_t screen_height = 0;
 rgb565_t *buf;
 
 void graphics_init()
@@ -41,7 +44,7 @@ void graphics_init()
     display_init();
     // Set global variables and framebuffer pointer
     screen_width = graphics_screenWidth();
-    screen_heigth = graphics_screenHeight();
+    screen_height = graphics_screenHeight();
     buf = (rgb565_t *)(display_getFrameBuffer());
     initialized = 1;
 }
@@ -82,7 +85,7 @@ bool graphics_renderingInProgress()
     return display_renderingInProgress();
 }
 
-rgb565_t true2highColor(color_t true_color)
+rgb565_t _true2highColor(color_t true_color)
 {
     uint8_t high_r = true_color.r >> 3;
     uint8_t high_g = true_color.g >> 2;
@@ -91,12 +94,20 @@ rgb565_t true2highColor(color_t true_color)
     return high_color;
 }
 
+void graphics_clearScreen()
+{
+    if(!initialized)
+	return;
+    // Set the whole framebuffer to 0x00 = make the screen black
+    memset(buf, 0x00, sizeof(rgb565_t) * screen_width * screen_height);
+}
+
 void graphics_fillScreen(color_t color)
 {
     if(!initialized)
 	return;
-    rgb565_t color_565 = true2highColor(color);
-    for(int y=0; y < screen_heigth; y++)
+    rgb565_t color_565 = _true2highColor(color);
+    for(int y=0; y < screen_height; y++)
     {
 	for(int x=0; x < screen_width; x++)
 	{
@@ -109,8 +120,8 @@ void graphics_drawLine(point_t start, point_t end, color_t color)
 {
     if(!initialized)
 	return;
-    rgb565_t color_565 = true2highColor(color);
-    for(int y=0; y < screen_heigth; y++)
+    rgb565_t color_565 = _true2highColor(color);
+    for(int y=0; y < screen_height; y++)
     {
 	for(int x=0; x < screen_width; x++)
 	{
@@ -123,13 +134,11 @@ void graphics_drawRect(point_t start, uint16_t width, uint16_t height, color_t c
 {
     if(!initialized)
 	return;
-    rgb565_t color_565 = true2highColor(color);
+    rgb565_t color_565 = _true2highColor(color);
     uint16_t x_max = start.x + width;
-    if(x_max > (screen_width - 1))
-	x_max = screen_width - 1;
     uint16_t y_max = start.y + height;
-    if(y_max > (screen_heigth - 1))
-	y_max = screen_heigth - 1;
+    if(x_max > (screen_width - 1)) x_max = screen_width - 1;
+    if(y_max > (screen_height - 1)) y_max = screen_height - 1;
     for(int y=start.y; y < y_max; y++)
     {
 	for(int x=start.x; x < x_max; x++)
