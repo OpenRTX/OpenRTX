@@ -60,7 +60,8 @@ dep = [sdl_dep, threads_dep]
 ## Platform specialization
 ##
 linux_src = src + ['tests/platform/x64_uC.c',
-                   'platform/drivers/display/display_libSDL.c']
+                   'platform/drivers/display/display_libSDL.c',
+                   'openrtx/src/graphics/graphics_rgb565.c']
 linux_def = def + {'SCREEN_WIDTH': 160, 'SCREEN_HEIGHT': 128}
 
 ##

@@ -26,10 +26,10 @@
 
 typedef struct rgb565_t
 { 
-    uint16_t r : 5
-    uint16_t g : 6
-    uint16_t b : 5
-} rgb565_t
+    uint16_t r : 5;
+    uint16_t g : 6;
+    uint16_t b : 5;
+} rgb565_t;
 
 bool initialized = 0;
 uint16_t screen_width = 0;
@@ -129,7 +129,7 @@ void graphics_drawRect(point_t start, uint16_t width, uint16_t height, color_t c
 	x_max = screen_width - 1;
     uint16_t y_max = start.y + height;
     if(y_max > (screen_heigth - 1))
-	y_max = screen_height - 1;
+	y_max = screen_heigth - 1;
     for(int y=start.y; y < y_max; y++)
     {
 	for(int x=start.x; x < x_max; x++)
