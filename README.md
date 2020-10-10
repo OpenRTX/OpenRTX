@@ -9,13 +9,31 @@ Currently OpenRTX is being actively developed for the TYT MD-380/390 and MD-UV38
 This firmware is *highly experimental* and is not in a usable state right now,
 however contributions and testing are welcome and accepted.
 
-## Installation
+## Compilation
 
 To build and install the firmware, first clone this repository:
 
 ```
 git clone https://github.com/n1zzo/OpenRTX
 ```
+
+The following steps depend on the selected platform:
+
+### Linux
+
+The OpenRTX linux build depends on libSDL, on Ubuntu you can install it with:
+```
+sudo apt install libsdl2-dev
+```
+
+The firmware can be compiled with:
+
+```
+meson builddir
+meson compile -C builddir openrtx-linux
+```
+
+### TYT MD-380 / TYT MD-UV380
 
 To build the firmware you need to have a toolchain for the ARM ISA installed
 on you system, you can install one using your package manager.
@@ -28,8 +46,8 @@ sudo apt install gcc-arm-none-eabi
 You can then proceed in building the firmware:
 
 ```
-meson builddir
-meson compile -C builddir linux
+meson builddir --cross-file cross_arm.txt
+meson compile -C builddir openrtx-md380
 ```
 
 If everything compiled without errors you can connect your radio via USB,

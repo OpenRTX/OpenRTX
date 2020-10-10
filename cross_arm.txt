@@ -1,0 +1,43 @@
+[binaries]
+c       = 'arm-none-eabi-gcc'
+cpp     = 'arm-none-eabi-g++'
+ld      = 'arm-none-eabi-ld'
+ar      = 'arm-none-eabi-ar'
+as      = 'arm-none-eabi-as'
+size    = 'arm-none-eabi-size'
+objdump = 'arm-none-eabi-objdump'
+objcopy = 'arm-none-eabi-objcopy'
+strip   = 'arm-none-eabi-strip'
+gdb     = 'arm-none-eabi-gdb'
+terminal= 'x-terminal-emulator'
+openocd = '/usr/local/bin/openocd'
+
+[properties]
+c_args      = [
+               '-mcpu=cortex-m4',           # Cortex-M4 CPU
+               '-mthumb',                   # ARM Thumb2 ISA
+               '-mfloat-abi=hard',          # Hard floating point support
+               '-mfpu=fpv4-sp-d16',
+              ]
+
+c_link_args = [
+               '-mcpu=cortex-m4',
+               '-mthumb',
+               '-mfloat-abi=hard',
+               '-mfpu=fpv4-sp-d16',
+               '-Wl,--gc-sections',
+               '-Wl,-Map,main.map',
+               '-nostdlib',
+               '-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
+               '-Wl,--start-group',
+               '-lc',
+               '-lgcc',
+               '-lm',
+               '-Wl,--end-group'
+              ]
+
+[host_machine]
+system = 'none'
+cpu_family = 'arm'
+cpu = 'cortex-m4'
+endian = 'little'
