@@ -28,11 +28,19 @@
 
 #define COLOR_WHITE = {31, 63, 31}
 
-typedef struct rgb565_t
-{ 
-    uint16_t r : 5;
-    uint16_t g : 6;
+/* This graphics driver is meant for an RGB565 little endian pixel format.
+ * Thus, to accomodate for the endianness, the fields in struct rgb565_t have to
+ * be written in reversed order.
+ *
+ * For more details about endianness and bitfield structs see the following web
+ * page: http://mjfrazer.org/mjfrazer/bitfields/
+ */
+
+typedef struct
+{
     uint16_t b : 5;
+    uint16_t g : 6;
+    uint16_t r : 5;
 } rgb565_t;
 
 bool initialized = 0;
@@ -88,12 +96,11 @@ bool graphics_renderingInProgress()
 
 rgb565_t _true2highColor(color_t true_color)
 {
-    uint8_t high_r = true_color.r >> 3;
-    uint8_t high_g = true_color.g >> 2;
-    uint8_t high_b = true_color.b >> 3;
-    rgb565_t high_color = {high_r, high_g, high_b};
-    /*printf("Converting color... True: R:%02XG:%02XB:%02X High:R:%02XG:%02XB:%02X\n", true_color.r,
-    true_color.g, true_color.b, high_r, high_g, high_b);*/
+    rgb565_t high_color;
+    high_color.r = true_color.r >> 3;
+    high_color.g = true_color.g >> 2;
+    high_color.b = true_color.b >> 3;
+
     return high_color;
 }
 
@@ -108,9 +115,9 @@ void graphics_fillScreen(color_t color)
 {
     if(!initialized) return;
     rgb565_t color_565 = _true2highColor(color);
-    for(int y=0; y < screen_height; y++)
+    for(int y = 0; y < screen_height; y++)
     {
-        for(int x=0; x < screen_width; x++)
+        for(int x = 0; x < screen_width; x++)
         {
             buf[x + y*screen_width] = color_565;
         }
@@ -121,9 +128,9 @@ void graphics_drawLine(point_t start, point_t end, color_t color)
 {
     if(!initialized) return;
     rgb565_t color_565 = _true2highColor(color);
-    for(int y=0; y < screen_height; y++)
+    for(int y = start.y; y < end.y; y++)
     {
-        for(int x=0; x < screen_width; x++)
+        for(int x = start.x; x < end.x; x++)
         {
             buf[x + y*screen_width] = color_565;
         }
@@ -139,9 +146,9 @@ void graphics_drawRect(point_t start, uint16_t width, uint16_t height, color_t c
     bool perimeter = 0;
     if(x_max > (screen_width - 1)) x_max = screen_width - 1;
     if(y_max > (screen_height - 1)) y_max = screen_height - 1;
-    for(int y=start.y; y < y_max; y++)
+    for(int y = start.y; y < y_max; y++)
     {
-        for(int x=start.x; x < x_max; x++)
+        for(int x = start.x; x < x_max; x++)
         {
             if(y == start.y || y == y_max-1 || x == start.x || x == x_max-1) perimeter = 1;
             else perimeter = 0;
