@@ -23,15 +23,24 @@ The following steps depend on the selected platform:
 
 The OpenRTX linux build depends on libSDL, on Ubuntu you can install it with:
 ```
-sudo apt install libsdl2-dev
+sudo apt install gcc pkg-config libsdl2-dev
 ```
 
 The firmware can be compiled with:
 
 ```
-meson builddir
-meson compile -C builddir openrtx-linux
+meson setup build_linux
+meson compile -C build_linux openrtx-linux
 ```
+
+If you are using a version of Meson older than v0.55.0, the above command will fail, compile with:
+
+```
+meson setup build_linux
+ninja -C build_linux openrtx-linux -jN
+```
+
+Where N is the number of cores that you want to allocate to the build process.
 
 ### TYT MD-380 / TYT MD-UV380
 
@@ -46,9 +55,18 @@ sudo apt install gcc-arm-none-eabi
 You can then proceed in building the firmware:
 
 ```
-meson builddir --cross-file cross_arm.txt
+meson setup --cross-file cross_arm.txt build_md380
 meson compile -C builddir openrtx-md380
 ```
+
+If you are using a version of Meson older than v0.55.0, the above command will fail, compile with:
+
+```
+meson setup --cross-file cross_arm.txt build_md380
+ninja -C build_md380 openrtx-md380 -jN
+```
+
+Where N is the number of cores that you want to allocate to the build process.
 
 If everything compiled without errors you can connect your radio via USB,
 put it in recovery mode (by powering it on with the PTT and the button

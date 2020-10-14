@@ -1,5 +1,6 @@
-# Meson build dir
-builddir
+# Meson build dirs
+build_linux
+build_md380
 
 # Prerequisites
 *.d
