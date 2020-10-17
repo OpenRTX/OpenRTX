@@ -43,7 +43,8 @@ rtos_inc = ['rtos/uC-OS3/Source',
             'rtos/uC-CPU/Cfg',
             'rtos/uC-LIB',
             'rtos/uC-LIB/Cfg']
-inc = interfaces + rtos_inc
+fonts = ['openrtx/include/fonts']
+inc = interfaces + rtos_inc + fonts
 
 ##
 ## Definitions
