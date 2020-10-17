@@ -21,10 +21,11 @@
  * It is suitable for color displays, it will have grayscale and B/W counterparts
  */
 
-#include "display.h"
-#include "graphics.h"
 #include <string.h>
 #include <stdio.h>
+#include "display.h"
+#include "graphics.h"
+#include "font_OpenGD77.h"
 
 #define COLOR_WHITE = {31, 63, 31}
 
@@ -124,6 +125,14 @@ void graphics_fillScreen(color_t color)
     }
 }
 
+void setPixel(point_t pos, color_t color)
+{
+    if (pos.x > screen_width || pos.y > screen_height)
+        return; // off the screen
+
+    buf[pos.x + pos.y*screen_width] = _true2highColor(color);
+}
+
 void graphics_drawLine(point_t start, point_t end, color_t color)
 {
     if(!initialized) return;
@@ -158,3 +167,103 @@ void graphics_drawRect(point_t start, uint16_t width, uint16_t height, color_t c
     }
 }
 
+void printCentered(uint16_t y, const char *text, font_t fontSize, color_t color)
+{
+    point_t origin = {0, y};
+    printCore(origin, text, fontSize, TEXT_ALIGN_CENTER, color);
+}
+
+void printAt(point_t pos, const  char *text, font_t fontSize, color_t color)
+{
+    printCore(pos, text, fontSize, TEXT_ALIGN_LEFT, color);
+}
+
+void printCore(point_t start, const char *szMsg, font_t fontSize, textAlign_t alignment, color_t color)
+{
+    uint8_t *currentCharData;
+    uint8_t *currentFont;
+    uint16_t *writePos;
+    uint8_t *readPos;
+
+    rgb565_t color_565 = _true2highColor(color);
+
+    switch(fontSize)
+    {
+        case FONT_SIZE_1:
+            currentFont = (uint8_t *) font_6x8;
+            break;
+        case FONT_SIZE_1_BOLD:
+            currentFont = (uint8_t *) font_6x8_bold;
+            break;
+        case FONT_SIZE_2:
+            currentFont = (uint8_t *) font_8x8;
+            break;
+        case FONT_SIZE_3:
+            currentFont = (uint8_t *) font_8x16;
+            break;
+        case FONT_SIZE_4:
+            currentFont = (uint8_t *) font_16x32;
+            break;
+        default:
+            return;// Invalid font selected
+            break;
+    }
+
+    int16_t startCode           = currentFont[2];  // get first defined character
+    int16_t endCode             = currentFont[3];  // get last defined character
+    int16_t charWidthPixels     = currentFont[4];  // width in pixel of one char
+    int16_t charHeightPixels    = currentFont[5];  // page count per char
+    int16_t bytesPerChar        = currentFont[7];  // bytes per char
+
+    int16_t sLen = strlen(szMsg);
+    // Compute amount of letters that fit till the end of the screen
+    if ((charWidthPixels*sLen) + start.x > screen_width)
+    {
+        sLen = (screen_width-start.x)/charWidthPixels;
+    }
+
+    if (sLen < 0)
+    {
+        return;
+    }
+
+    switch(alignment)
+    {
+        case TEXT_ALIGN_LEFT:
+            // left aligned, do nothing.
+            break;
+        case TEXT_ALIGN_CENTER:
+            start.x = (screen_width - (charWidthPixels * sLen))/2;
+            break;
+        case TEXT_ALIGN_RIGHT:
+            start.x = screen_width - (charWidthPixels * sLen);
+            break;
+    }
+
+    for (int16_t i=0; i<sLen; i++)
+    {
+        uint32_t charOffset = (szMsg[i] - startCode);
+
+        // End boundary checking.
+        if (charOffset > endCode)
+        {
+            charOffset = ('?' - startCode); // Substitute unsupported ASCII code by a question mark
+        }
+
+        currentCharData = (uint8_t *)&currentFont[8 + (charOffset * bytesPerChar)];
+
+        // We print the character from up-left to bottom right
+        for(int16_t vscan=0; vscan < charHeightPixels; vscan++) {
+            for(int16_t hscan=0; hscan < charWidthPixels; hscan++) {
+                int16_t charChunk = vscan / 8;
+                int16_t bitIndex = (hscan + charChunk * charWidthPixels) * 8 +
+                                    vscan % 8;
+                int16_t byte = bitIndex >> 3;
+                int16_t bitMask = 1 << (bitIndex & 7);
+                if (currentCharData[byte] & bitMask)
+                    buf[(start.y + vscan) * screen_width +
+                         start.x + hscan + i * charWidthPixels] = color_565;
+            }
+        }
+    }
+}

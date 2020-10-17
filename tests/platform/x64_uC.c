@@ -96,7 +96,10 @@ static void gfxThread(void *arg)
         graphics_clearScreen();
         point_t origin = {0, pos};
         color_t color_red = {255, 0, 0};
+        color_t color_white = {255, 255, 255};
         graphics_drawRect(origin, display_screenWidth(), 20, color_red, 1);
+        char *buffer = "KEK";
+        printCore(origin, buffer, FONT_SIZE_4, TEXT_ALIGN_LEFT,color_white);
         graphics_render();
         while(graphics_renderingInProgress()) ;
         pos += 20;

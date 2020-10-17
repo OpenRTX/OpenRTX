@@ -70,6 +70,22 @@ typedef struct color_t
     uint8_t b;
 } color_t;
 
+typedef enum
+{
+        FONT_SIZE_1 = 0,
+        FONT_SIZE_1_BOLD,
+        FONT_SIZE_2,
+        FONT_SIZE_3,
+        FONT_SIZE_4
+} font_t;
+
+typedef enum
+{
+        TEXT_ALIGN_LEFT = 0,
+        TEXT_ALIGN_CENTER,
+        TEXT_ALIGN_RIGHT
+} textAlign_t;
+
 /**
  * This function calls the correspondent method of the low level interface display.h
  * It initializes the display and sets the backlight to zero.
@@ -140,6 +156,13 @@ void graphics_clearScreen();
 void graphics_fillScreen(color_t color);
 
 /**
+ * Change the color of a single pixel.
+ * @param pos: x,y coordinates of the pixel.
+ * @param color: desired pixel color, in color_t format.
+ */
+void setPixel(point_t pos, color_t color);
+
+/**
  * Draw a line from start to end coordinates, ends included.
  * @param start: line start point, in pixel coordinates.
  * @param end: line end point, in pixel coordinates.
@@ -155,5 +178,11 @@ void graphics_drawLine(point_t start, point_t end, color_t color);
  * @param fill: if true the rectangle will be solid, otherwise it will be empty with a 1-pixel border
  */
 void graphics_drawRect(point_t start, uint16_t width, uint16_t height, color_t color, bool fill);
+
+void printCentered(uint16_t y, const  char *text, font_t fontSize, color_t color);
+
+void printAt(point_t pos, const  char *text, font_t fontSize, color_t color);
+
+void printCore(point_t start, const char *szMsg, font_t fontSize, textAlign_t alignment, color_t color);
 
 #endif /* GRAPHICS_H */
