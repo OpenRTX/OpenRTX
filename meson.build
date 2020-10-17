@@ -62,7 +62,7 @@ linux_src = src + ['tests/platform/x64_uC.c',
                    'rtos/uC-CPU/Posix/cpu_c.c']
 
 
-linux_def = def + {'SCREEN_WIDTH': '160', 'SCREEN_HEIGHT': '128'}
+linux_def = def + {'SCREEN_WIDTH': '160', 'SCREEN_HEIGHT': '128', 'PIX_FMT_RGB565': ''}
 
 linux_inc = inc + ['rtos/uC-OS3/Ports/POSIX',
                    'rtos/uC-CPU/Posix']
