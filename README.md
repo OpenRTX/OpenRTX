@@ -55,15 +55,15 @@ sudo apt install gcc-arm-none-eabi
 You can then proceed in building the firmware:
 
 ```
-meson setup --cross-file cross_arm.txt build_md380
-meson compile -C builddir openrtx-md380
+meson setup --cross-file cross_arm.txt build_arm
+meson compile -C build_arm openrtx_md380
 ```
 
 If you are using a version of Meson older than v0.55.0, the above command will fail, compile with:
 
 ```
-meson setup --cross-file cross_arm.txt build_md380
-ninja -C build_md380 openrtx-md380 -jN
+meson setup --cross-file cross_arm.txt build_arm
+ninja -C build_arm openrtx_md380 -jN
 ```
 
 Where N is the number of cores that you want to allocate to the build process.
@@ -73,7 +73,7 @@ put it in recovery mode (by powering it on with the PTT and the button
 above it pressed), and flash the firmware:
 
 ```
-make flash
+meson compile -C build_arm openrtx_md380_flash
 ```
 
 Now you can power cycle your radio and enjoy the new breath of freedom!

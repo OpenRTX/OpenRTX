@@ -144,6 +144,50 @@ md380 = {'sources': md380_src,
 ##
 ## Select your radio model among the supported ones: MD-380, MD-UV380
 ##
-executable('openrtx-linux', kwargs:linux)
-executable('openrtx-md380', kwargs:md380)
-executable('openrtx-mduv380', kwargs:md380)
+openrtx_linux = executable('openrtx_linux.bin', kwargs:linux)
+openrtx_md380 = executable('openrtx_md380.bin', kwargs:md380)
+openrtx_mduv380g = executable('openrtx_mduv380g.bin', kwargs:md380)
+
+radio_tool = find_program('radio_tool')
+
+openrtx_md380_wrap = custom_target('openrtx_md380_wrap',
+  output : 'openrtx_md380_wrap.bin',
+  input : openrtx_md380,
+  command : [radio_tool,
+             '--wrap',
+             '-o', '@OUTPUT@',
+             '-r', 'MD380',
+             '-s', '0x0800C000:@INPUT@'])
+
+openrtx_md380_flash = custom_target('openrtx_md380_flash',
+  input : openrtx_md380_wrap,
+  output : 'openrtx_md380_flash',
+  command : [radio_tool, '-d', '0', '-f', '-i', '@INPUT@'])
+
+openrtx_md390_wrap = custom_target('openrtx_md390_wrap',
+  output : 'openrtx_md390_wrap.bin',
+  input : openrtx_md380,
+  command : [radio_tool,
+             '--wrap',
+             '-o', '@OUTPUT@',
+             '-r', 'MD390',
+             '-s', '0x0800C000:@INPUT@'])
+
+openrtx_md390_flash = custom_target('openrtx_md390_flash',
+  input : openrtx_md390_wrap,
+  output : 'openrtx_md390_flash',
+  command : [radio_tool, '-d', '0', '-f', '-i', '@INPUT@'])
+
+openrtx_mduv380g_wrap = custom_target('openrtx_mduv380g_wrap',
+  output : 'openrtx_mduv380g_wrap.bin',
+  input : openrtx_mduv380g,
+  command : [radio_tool,
+             '--wrap',
+             '-o', '@OUTPUT@',
+             '-r', 'UV3X0',
+             '-s', '0x0800C000:@INPUT@'])
+
+openrtx_mduv380g_flash = custom_target('openrtx_mduv380g_flash',
+  input : openrtx_mduv380g_wrap,
+  output : 'openrtx_mduv380g_flash',
+  command : [radio_tool, '-d', '0', '-f', '-i', '@INPUT@'])
