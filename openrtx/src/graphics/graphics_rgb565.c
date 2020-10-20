@@ -49,48 +49,48 @@ uint16_t screen_width = 0;
 uint16_t screen_height = 0;
 rgb565_t *buf;
 
-void graphics_init()
+void gfx_init()
 {
     display_init();
     // Set global variables and framebuffer pointer
-    screen_width = graphics_screenWidth();
-    screen_height = graphics_screenHeight();
+    screen_width = gfx_screenWidth();
+    screen_height = gfx_screenHeight();
     buf = (rgb565_t *)(display_getFrameBuffer());
     initialized = 1;
 }
 
-void graphics_terminate()
+void gfx_terminate()
 {
     display_terminate();
     initialized = 0;
 }
 
-uint16_t graphics_screenWidth()
+uint16_t gfx_screenWidth()
 {
     return display_screenWidth();
 }
 
-uint16_t graphics_screenHeight()
+uint16_t gfx_screenHeight()
 {
     return display_screenHeight();
 }
 
-void graphics_setBacklightLevel(uint8_t level)
+void gfx_setBacklightLevel(uint8_t level)
 {
     display_setBacklightLevel(level);
 }
 
-void graphics_renderRows(uint8_t startRow, uint8_t endRow)
+void gfx_renderRows(uint8_t startRow, uint8_t endRow)
 {
     display_renderRows(startRow, endRow);
 }
 
-void graphics_render()
+void gfx_render()
 {
     display_render();
 }
 
-bool graphics_renderingInProgress()
+bool gfx_renderingInProgress()
 {
     return display_renderingInProgress();
 }
@@ -105,14 +105,14 @@ rgb565_t _true2highColor(color_t true_color)
     return high_color;
 }
 
-void graphics_clearScreen()
+void gfx_clearScreen()
 {
     if(!initialized) return;
     // Set the whole framebuffer to 0x00 = make the screen black
     memset(buf, 0x00, sizeof(rgb565_t) * screen_width * screen_height);
 }
 
-void graphics_fillScreen(color_t color)
+void gfx_fillScreen(color_t color)
 {
     if(!initialized) return;
     rgb565_t color_565 = _true2highColor(color);
@@ -125,7 +125,7 @@ void graphics_fillScreen(color_t color)
     }
 }
 
-void setPixel(point_t pos, color_t color)
+void gfx_setPixel(point_t pos, color_t color)
 {
     if (pos.x > screen_width || pos.y > screen_height)
         return; // off the screen
@@ -133,7 +133,7 @@ void setPixel(point_t pos, color_t color)
     buf[pos.x + pos.y*screen_width] = _true2highColor(color);
 }
 
-void graphics_drawLine(point_t start, point_t end, color_t color)
+void gfx_drawLine(point_t start, point_t end, color_t color)
 {
     if(!initialized) return;
     rgb565_t color_565 = _true2highColor(color);
@@ -146,7 +146,7 @@ void graphics_drawLine(point_t start, point_t end, color_t color)
     }
 }
 
-void graphics_drawRect(point_t start, uint16_t width, uint16_t height, color_t color, bool fill)
+void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color, bool fill)
 {
     if(!initialized) return;
     rgb565_t color_565 = _true2highColor(color);
@@ -167,18 +167,7 @@ void graphics_drawRect(point_t start, uint16_t width, uint16_t height, color_t c
     }
 }
 
-void printCentered(uint16_t y, const char *text, font_t fontSize, color_t color)
-{
-    point_t origin = {0, y};
-    printCore(origin, text, fontSize, TEXT_ALIGN_CENTER, color);
-}
-
-void printAt(point_t pos, const  char *text, font_t fontSize, color_t color)
-{
-    printCore(pos, text, fontSize, TEXT_ALIGN_LEFT, color);
-}
-
-void printCore(point_t start, const char *szMsg, font_t fontSize, textAlign_t alignment, color_t color)
+void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t alignment, color_t color)
 {
     uint8_t *currentCharData;
     uint8_t *currentFont;
@@ -187,7 +176,7 @@ void printCore(point_t start, const char *szMsg, font_t fontSize, textAlign_t al
 
     rgb565_t color_565 = _true2highColor(color);
 
-    switch(fontSize)
+    switch(size)
     {
         case FONT_SIZE_1:
             currentFont = (uint8_t *) font_6x8;
@@ -215,17 +204,14 @@ void printCore(point_t start, const char *szMsg, font_t fontSize, textAlign_t al
     int16_t charHeightPixels    = currentFont[5];  // page count per char
     int16_t bytesPerChar        = currentFont[7];  // bytes per char
 
-    int16_t sLen = strlen(szMsg);
+    int16_t sLen = strlen(text);
     // Compute amount of letters that fit till the end of the screen
     if ((charWidthPixels*sLen) + start.x > screen_width)
     {
         sLen = (screen_width-start.x)/charWidthPixels;
     }
 
-    if (sLen < 0)
-    {
-        return;
-    }
+    if (sLen < 0) return;
 
     switch(alignment)
     {
@@ -242,7 +228,7 @@ void printCore(point_t start, const char *szMsg, font_t fontSize, textAlign_t al
 
     for (int16_t i=0; i<sLen; i++)
     {
-        uint32_t charOffset = (szMsg[i] - startCode);
+        uint32_t charOffset = (text[i] - startCode);
 
         // End boundary checking.
         if (charOffset > endCode)

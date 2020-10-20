@@ -86,29 +86,29 @@ static void gfxThread(void *arg)
     int pos = 0;
     SDL_Event eventListener;
 
-    graphics_init();
+    gfx_init();
 
     while(1)
     {
         SDL_PollEvent(&eventListener);
         if(eventListener.type == SDL_QUIT) break;
 
-        graphics_clearScreen();
+        gfx_clearScreen();
         point_t origin = {0, pos};
         color_t color_red = {255, 0, 0};
         color_t color_white = {255, 255, 255};
-        graphics_drawRect(origin, display_screenWidth(), 20, color_red, 1);
+        gfx_drawRect(origin, display_screenWidth(), 20, color_red, 1);
         char *buffer = "KEK";
-        printCore(origin, buffer, FONT_SIZE_4, TEXT_ALIGN_LEFT,color_white);
-        graphics_render();
-        while(graphics_renderingInProgress()) ;
+        gfx_print(origin, buffer, FONT_SIZE_4, TEXT_ALIGN_LEFT,color_white);
+        gfx_render();
+        while(gfx_renderingInProgress()) ;
         pos += 20;
-        if(pos > graphics_screenHeight() - 20) pos = 0;
+        if(pos > gfx_screenHeight() - 20) pos = 0;
 
         OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &os_err);
     }
 
     running = 0;
     OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &os_err);
-    graphics_terminate();
+    gfx_terminate();
 }

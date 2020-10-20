@@ -77,7 +77,7 @@ typedef enum
         FONT_SIZE_2,
         FONT_SIZE_3,
         FONT_SIZE_4
-} font_t;
+} fontSize_t;
 
 typedef enum
 {
@@ -90,27 +90,27 @@ typedef enum
  * This function calls the correspondent method of the low level interface display.h
  * It initializes the display and sets the backlight to zero.
  */
-void graphics_init();
+void gfx_init();
 
 /**
  * This function calls the correspondent method of the low level interface display.h
  * It turns off backlight, shuts down backlight control and deallocates the framebuffer.
  */
-void graphics_terminate();
+void gfx_terminate();
 
 /**
  * This function calls the correspondent method of the low level interface display.h
  * Get screen width in pixels.
  * @return screen width, in pixels.
  */
-uint16_t graphics_screenWidth();
+uint16_t gfx_screenWidth();
 
 /**
  * This function calls the correspondent method of the low level interface display.h
  * Get screen height in pixels.
  * @return screen height, in pixels.
  */
-uint16_t graphics_screenHeight();
+uint16_t gfx_screenHeight();
 
 /**
  * This function calls the correspondent method of the low level interface display.h
@@ -118,7 +118,7 @@ uint16_t graphics_screenHeight();
  * @param level: backlight level, from 0 (backlight off) to 255 (backlight at
  * full brightness).
  */
-void graphics_setBacklightLevel(uint8_t level);
+void gfx_setBacklightLevel(uint8_t level);
 
 /**
  * This function calls the correspondent method of the low level interface display.h
@@ -127,14 +127,14 @@ void graphics_setBacklightLevel(uint8_t level);
  * @param startRow: first row of the framebuffer section to be copied
  * @param endRow: last row of the framebuffer section to be copied
  */
-void graphics_renderRows(uint8_t startRow, uint8_t endRow);
+void gfx_renderRows(uint8_t startRow, uint8_t endRow);
 
 /**
  * This function calls the correspondent method of the low level interface display.h
  * Copy framebuffer content to the display internal buffer. To be called
  * whenever there is need to update the display.
  */
-void graphics_render();
+void gfx_render();
 
 /**
  * This function calls the correspondent method of the low level interface display.h
@@ -142,25 +142,25 @@ void graphics_render();
  * can be modified without problems.
  * @return false if rendering is not in progress.
  */
-bool graphics_renderingInProgress();
+bool gfx_renderingInProgress();
 
 /**
  * Makes the screen black.
  */
-void graphics_clearScreen();
+void gfx_clearScreen();
 
 /**
  * Fills screen with the specified color.
  * @param color: border and fill color, in color_t format.
  */
-void graphics_fillScreen(color_t color);
+void gfx_fillScreen(color_t color);
 
 /**
  * Change the color of a single pixel.
  * @param pos: x,y coordinates of the pixel.
  * @param color: desired pixel color, in color_t format.
  */
-void setPixel(point_t pos, color_t color);
+void gfx_setPixel(point_t pos, color_t color);
 
 /**
  * Draw a line from start to end coordinates, ends included.
@@ -168,7 +168,7 @@ void setPixel(point_t pos, color_t color);
  * @param end: line end point, in pixel coordinates.
  * @param color: line color, in color_t format.
  */
-void graphics_drawLine(point_t start, point_t end, color_t color);
+void gfx_drawLine(point_t start, point_t end, color_t color);
 
 /**
  * Draw a rectangle of specified width, height and color.
@@ -177,12 +177,16 @@ void graphics_drawLine(point_t start, point_t end, color_t color);
  * @param color: border and fill color, in color_t format.
  * @param fill: if true the rectangle will be solid, otherwise it will be empty with a 1-pixel border
  */
-void graphics_drawRect(point_t start, uint16_t width, uint16_t height, color_t color, bool fill);
+void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color, bool fill);
 
-void printCentered(uint16_t y, const  char *text, font_t fontSize, color_t color);
-
-void printAt(point_t pos, const  char *text, font_t fontSize, color_t color);
-
-void printCore(point_t start, const char *szMsg, font_t fontSize, textAlign_t alignment, color_t color);
+/**
+ * Prints text on the screen.
+ * @param start: text line start point, in pixel coordinates.
+ * @param text: text to print.
+ * @param size: text font size, defined as enum.
+ * @param alignment: text alignment type, defined as enum.
+ * @param color: text color, in color_t format.
+ */
+void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t alignment, color_t color);
 
 #endif /* GRAPHICS_H */
