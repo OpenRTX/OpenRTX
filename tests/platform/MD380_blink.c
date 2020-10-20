@@ -71,8 +71,8 @@ static void startTask(void* arg)
     (void) arg;
     OS_ERR err;
 
-    gpio_setMode(GPIOD, 13, OUTPUT);
-    gpio_setMode(GPIOD, 14, OUTPUT);
+    gpio_setMode(GPIOE, 0, OUTPUT);
+    gpio_setMode(GPIOE, 1, OUTPUT);
 
     CPU_Init();
     OS_CPU_SysTickInitFreq(SystemCoreClock);
@@ -115,7 +115,7 @@ static void t1(void *arg)
 
     while(1)
     {
-        gpio_togglePin(GPIOD, 13);
+        gpio_togglePin(GPIOE, 0);
         OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
     }
 }
@@ -127,7 +127,7 @@ static void t2(void *arg)
 
     while(1)
     {
-        gpio_togglePin(GPIOD, 14);
+        gpio_togglePin(GPIOE, 1);
         OSTimeDlyHMSM(0u, 0u, 2u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
     }
 }
