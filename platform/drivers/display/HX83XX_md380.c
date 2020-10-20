@@ -18,6 +18,8 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
+#include <os.h>
 #include "gpio.h"
 #include "display.h"
 #include "delays.h"
@@ -110,8 +112,10 @@ static uint16_t *frameBuffer;
 
 void __attribute__((used)) DMA2_Stream7_IRQHandler()
 {
+    OSIntEnter();
     DMA2->HIFCR |= DMA_HIFCR_CTCIF7 | DMA_HIFCR_CTEIF7;    /* Clear flags */
     gpio_setPin(CS);
+    OSIntExit();
 }
 
 static inline __attribute__((__always_inline__)) void writeCmd(uint8_t cmd)
@@ -126,13 +130,19 @@ static inline __attribute__((__always_inline__)) void writeData(uint8_t val)
 
 void display_init()
 {
+    /* Framebuffer size, in bytes */
+    const size_t fbSize = SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(uint16_t);
+
     /* Allocate framebuffer, two bytes per pixel */
-    frameBuffer = (uint16_t *) malloc(SCREEN_WIDTH * SCREEN_HEIGHT * 2);
+    frameBuffer = (uint16_t *) malloc(fbSize);
     if(frameBuffer == NULL)
     {
         printf("*** LCD ERROR: cannot allocate framebuffer! ***");
         return;
     }
+
+    /* Clear framebuffer, setting all pixels to 0xFFFF makes the screen white */
+    memset(frameBuffer, 0xFF, fbSize);
 
     /*
      * Configure TIM8 for backlight PWM: Fpwm = 100kHz, 8 bit of resolution
@@ -383,7 +393,6 @@ void display_setBacklightLevel(uint8_t level)
 
 void display_renderRows(uint8_t startRow, uint8_t endRow)
 {
-
     /*
      * Put screen data lines back to alternate function mode, since they are in
      * common with keyboard buttons and the keyboard driver sets them as inputs.
@@ -397,6 +406,18 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
     GPIOE->MODER |= 0x2A8000;
 
     gpio_clearPin(CS);
+
+    /*
+     * First of all, convert all pixels from little to big endian, for
+     * compatibility with the display driver. We do this after having brought
+     * the CS pin low, in this way user code calling the renderingInProgress
+     * function gets true as return value and does not stomp our work.
+     */
+    for(size_t i = 0; i < SCREEN_HEIGHT * SCREEN_WIDTH; i++)
+    {
+        uint16_t pixel = frameBuffer[i];
+        frameBuffer[i] = __builtin_bswap16(pixel);
+    }
 
     /* Configure start and end rows in display driver */
     writeCmd(CMD_RASET);
@@ -414,8 +435,9 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
      * we have to set the transfer size to twice the framebuffer size, since
      * this one is made of 16 bit variables.
      */
-    DMA2_Stream7->NDTR = (endRow - startRow)*SCREEN_WIDTH*2;
-    DMA2_Stream7->PAR  = ((uint32_t ) frameBuffer + (startRow*SCREEN_WIDTH*2));
+    DMA2_Stream7->NDTR = (endRow - startRow) * SCREEN_WIDTH * sizeof(uint16_t);
+    DMA2_Stream7->PAR  = ((uint32_t ) frameBuffer + (startRow * SCREEN_WIDTH 
+                                                     * sizeof(uint16_t)));
     DMA2_Stream7->M0AR = LCD_FSMC_ADDR_DATA;
     DMA2_Stream7->CR = DMA_SxCR_CHSEL         /* Channel 7                   */
                      | DMA_SxCR_PL_0          /* Medium priority             */
