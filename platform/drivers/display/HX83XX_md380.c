@@ -408,15 +408,19 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
     gpio_clearPin(CS);
 
     /*
-     * First of all, convert all pixels from little to big endian, for
+     * First of all, convert pixels from little to big endian, for
      * compatibility with the display driver. We do this after having brought
      * the CS pin low, in this way user code calling the renderingInProgress
      * function gets true as return value and does not stomp our work.
      */
-    for(size_t i = 0; i < SCREEN_HEIGHT * SCREEN_WIDTH; i++)
+    for(uint8_t y = startRow; y < endRow; y++)
     {
-        uint16_t pixel = frameBuffer[i];
-        frameBuffer[i] = __builtin_bswap16(pixel);
+        for(uint8_t x = 0; x < SCREEN_WIDTH; x++)
+        {
+            size_t pos = x + y * SCREEN_WIDTH;
+            uint16_t pixel = frameBuffer[pos];
+            frameBuffer[ipos] = __builtin_bswap16(pixel);
+        }
     }
 
     /* Configure start and end rows in display driver */
