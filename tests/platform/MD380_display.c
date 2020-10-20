@@ -1,50 +1,73 @@
+/***************************************************************************
+ *   Copyright (C) 2020 by Federico Izzo IU2NUO, Niccolò Izzo IU2KIN and   *
+ *                         Silvano Seva IU2KWO                             *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 3 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
+ ***************************************************************************/
 
-#include  <app_cfg.h>
-#include  <os.h>
-#include  <stdio.h>
-
-#include "graphics.h"
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <app_cfg.h>
+#include <os.h>
+#include <lib_mem.h>
+#include <stdio.h>
+#include "stm32f4xx.h"
 #include "gpio.h"
+#include "delays.h"
+#include "display.h"
 
-static OS_TCB        App_TaskStartTCB;
-static CPU_STK_SIZE  App_TaskStartStk[APP_CFG_TASK_START_STK_SIZE];
-static void App_TaskStart(void *p_arg);
+static OS_TCB        startTCB;
+static CPU_STK_SIZE  startStk[APP_CFG_TASK_START_STK_SIZE];
+static void startTask(void *arg);
 
-static OS_TCB        gfxTCB;
-static CPU_STK_SIZE  gfxStk[APP_CFG_TASK_START_STK_SIZE];
-static void gfxThread(void *arg);
+static OS_TCB        t1TCB;
+static CPU_STK_SIZE  t1Stk[128];
+static void t1(void *arg);
 
-static int running = 0;
+static OS_TCB        t2TCB;
+static CPU_STK_SIZE  t2Stk[128];
+static void t2(void *arg);
 
-int  main (void)
+void drawRect(int x, int y, int width, int height, uint16_t color)
 {
-    OS_ERR  err;
-    running = 1;
+    int x_max = x + width;
+    int y_max = y + height;
+    uint16_t *buf = (uint16_t *)(display_getFrameBuffer());
+
+    for(int i=y; i < y_max; i++)
+    {
+        for(int j=x; j < x_max; j++)
+        {
+            buf[j + i*display_screenWidth()] = color;
+        }
+    }
+}
+
+int main(void)
+{
+    OS_ERR err;
 
     OSInit(&err);
-    OS_CPU_SysTickInit();
 
-    OSTaskCreate((OS_TCB     *)&App_TaskStartTCB,
-                 (CPU_CHAR   *)"App Task Start",
-                 (OS_TASK_PTR ) App_TaskStart,
+    OSTaskCreate((OS_TCB     *)&startTCB,
+                 (CPU_CHAR   *)" ",
+                 (OS_TASK_PTR ) startTask,
                  (void       *) 0,
                  (OS_PRIO     ) APP_CFG_TASK_START_PRIO,
-                 (CPU_STK    *)&App_TaskStartStk[0],
-                 (CPU_STK     )(APP_CFG_TASK_START_STK_SIZE / 10u),
-                 (CPU_STK_SIZE) APP_CFG_TASK_START_STK_SIZE,
-                 (OS_MSG_QTY  ) 0,
-                 (OS_TICK     ) 0,
-                 (void       *) 0,
-                 (OS_OPT      )(OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR),
-                 (OS_ERR     *)&err);
-
-     OSTaskCreate((OS_TCB     *)&gfxTCB,
-                 (CPU_CHAR   *)"gfx",
-                 (OS_TASK_PTR ) gfxThread,
-                 (void       *) 0,
-                 (OS_PRIO     ) APP_CFG_TASK_START_PRIO,
-                 (CPU_STK    *)&gfxStk[0],
-                 (CPU_STK     )(APP_CFG_TASK_START_STK_SIZE / 10u),
+                 (CPU_STK    *)&startStk[0],
+                 (CPU_STK     )startStk[APP_CFG_TASK_START_STK_SIZE / 10u],
                  (CPU_STK_SIZE) APP_CFG_TASK_START_STK_SIZE,
                  (OS_MSG_QTY  ) 0,
                  (OS_TICK     ) 0,
@@ -54,50 +77,87 @@ int  main (void)
 
     OSStart(&err);
 
-    printf("OSStart returned, quitting\n");
+    for(;;) ;
     return 0;
 }
 
-static void App_TaskStart(void *p_arg)
+static void startTask(void* arg)
 {
 
-    (void) p_arg;
-    OS_ERR os_err;
+    (void) arg;
+    OS_ERR err;
+
     gpio_setMode(GPIOE, 0, OUTPUT);
+    gpio_setMode(GPIOE, 1, OUTPUT);
 
-    while (running)
-    {
-        gpio_togglePin(GPIOE, 0);
-        OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
-    }
+    CPU_Init();
+    OS_CPU_SysTickInitFreq(SystemCoreClock);
 
-    exit(1);
+    OSTaskCreate((OS_TCB     *)&t1TCB,
+                (CPU_CHAR   *)" ",
+                (OS_TASK_PTR ) t1,
+                (void       *) 0,
+                (OS_PRIO     ) 5,
+                (CPU_STK    *)&t1Stk[0],
+                (CPU_STK     ) 0,
+                (CPU_STK_SIZE) 128,
+                (OS_MSG_QTY  ) 0,
+                (OS_TICK     ) 0,
+                (void       *) 0,
+                (OS_OPT      )(OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR),
+                (OS_ERR     *)&err);
+
+    OSTaskCreate((OS_TCB     *)&t2TCB,
+                (CPU_CHAR   *)" ",
+                (OS_TASK_PTR ) t2,
+                (void       *) 0,
+                (OS_PRIO     ) 5,
+                (CPU_STK    *)&t2Stk[0],
+                (CPU_STK     ) 0,
+                (CPU_STK_SIZE) 128,
+                (OS_MSG_QTY  ) 0,
+                (OS_TICK     ) 0,
+                (void       *) 0,
+                (OS_OPT      )(OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR),
+                (OS_ERR     *)&err);
+
+    while(1) ;
 }
 
-static void gfxThread(void *arg)
+static void t1(void *arg)
 {
     (void) arg;
     OS_ERR os_err;
 
-    int pos = 0;
+    while(1)
+    {
+        gpio_togglePin(GPIOE, 0);
+        OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+    }
+}
 
-    graphics_init();
+static void t2(void *arg)
+{
+    (void) arg;
+    OS_ERR os_err;
+
+    display_init();
+    display_setBacklightLevel(254);
 
     while(1)
     {
-        graphics_clearScreen();
-        point_t origin = {0, pos};
-        color_t color_red = {255, 0, 0};
-        graphics_drawRect(origin, display_screenWidth(), 20, color_red, 1);
-        graphics_render();
-        while(graphics_renderingInProgress()) ;
-        pos += 20;
-        if(pos > graphics_screenHeight() - 20) pos = 0;
+        /* Horizontal red line */
+        drawRect(0, 10, display_screenWidth(), 20, 0xF800);
 
-        OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+        /* Vertical blue line */
+        drawRect(10, 0, 20, display_screenHeight(), 0x001F);
+
+        /* Vertical green line */
+        drawRect(80, 0, 20, display_screenHeight(), 0x07e0);
+
+        display_render();
+
+        gpio_togglePin(GPIOE, 1);
+        OSTimeDlyHMSM(0u, 0u, 2u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
     }
-
-    running = 0;
-    OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &os_err);
-    graphics_terminate();
 }

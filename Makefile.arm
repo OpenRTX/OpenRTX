@@ -5,7 +5,7 @@
 ##
 ## List here your source files (both .s, .c and .cpp)
 ##
-SRC := tests/platform/stm32f4_uC.c
+SRC := tests/platform/MD380_display.c
 
 ##
 ## Drivers' source files and include directories
@@ -23,7 +23,10 @@ platform/mcu/STM32F4xx/drivers/usb/usbd_req.c      \
 platform/mcu/STM32F4xx/drivers/usb/usbd_usr.c      \
 platform/mcu/STM32F4xx/drivers/gpio.c              \
 platform/mcu/STM32F4xx/drivers/usb_vcom.c          \
-platform/mcu/STM32F4xx/drivers/delays.c
+platform/mcu/STM32F4xx/drivers/delays.c            \
+\
+platform/drivers/display/HX83XX_md380.c
+
 
 ##
 ## List here additional static libraries with relative path
