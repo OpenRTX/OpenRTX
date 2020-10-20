@@ -30,14 +30,14 @@ The firmware can be compiled with:
 
 ```
 meson setup build_linux
-meson compile -C build_linux openrtx-linux
+meson compile -C build_linux openrtx_linux
 ```
 
 If you are using a version of Meson older than v0.55.0, the above command will fail, compile with:
 
 ```
 meson setup build_linux
-ninja -C build_linux openrtx-linux -jN
+ninja -C build_linux openrtx_linux.bin -jN
 ```
 
 Where N is the number of cores that you want to allocate to the build process.
