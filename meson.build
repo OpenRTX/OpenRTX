@@ -132,78 +132,71 @@ foreach k, v : md380_def
   endif
 endforeach
 
-linux = {'sources': linux_src,
-         'c_args': linux_args,
-         'include_directories': linux_inc,
-         'dependencies': linux_dep}
+linux_opts = {'sources': linux_src,
+              'c_args': linux_args,
+              'include_directories': linux_inc,
+              'dependencies': linux_dep}
 
-md380 = {'sources': md380_src,
-         'c_args': md380_args,
-         'include_directories': md380_inc}
+md380_opts = {'sources': md380_src,
+              'c_args': md380_args,
+              'include_directories': md380_inc}
 
 ##
-## Select your radio model among the supported ones: MD-380, MD-UV380
+## Targets
 ##
-openrtx_linux = executable('openrtx_linux', kwargs:linux)
-openrtx_md380 = executable('openrtx_md380', kwargs:md380)
-openrtx_mduv380g = executable('openrtx_mduv380g', kwargs:md380)
+targets = [
+
+  {'name': 'linux',
+   'opts': linux_opts,
+   'flashable': false},
+
+  {'name': 'md380',
+   'opts': md380_opts,
+   'flashable': true,
+   'wrap': 'MD380',
+   'load_addr': '0x0800C000'},
+
+  {'name': 'md390',
+   'opts': md380_opts,
+   'flashable': true,
+   'wrap': 'MD390',
+   'load_addr': '0x0800C000'},
+
+  {'name': 'mduv380g',
+   'opts': md380_opts,
+   'flashable': true,
+   'wrap': 'UV3X0',
+   'load_addr': '0x0800C000'},
+
+  ]
 
 objcopy = find_program('objcopy')
 radio_tool = find_program('radio_tool')
 
-openrtx_md380_bin = custom_target('openrtx_md380_bin',
-  output : 'openrtx_md380_bin',
-  input : openrtx_md380,
-  command : [objcopy,
-             '-O', 'binary',
-             '@INPUT@', '@OUTPUT@'])
+foreach t : targets
 
-openrtx_mduv380g_bin = custom_target('openrtx_mduv380g_bin',
-  output : 'openrtx_mduv380g_bin',
-  input : openrtx_mduv380g,
-  command : [objcopy,
-             '-O', 'binary',
-             '@INPUT@', '@OUTPUT@'])
+  name = 'openrtx_'+t['name']
+  exe = executable(name, kwargs:t['opts'])
 
+  if t['flashable']
 
-openrtx_md380_wrap = custom_target('openrtx_md380_wrap',
-  output : 'openrtx_md380_wrap',
-  input : openrtx_md380_bin,
-  command : [radio_tool,
-             '--wrap',
-             '-o', '@OUTPUT@',
-             '-r', 'MD380',
-             '-s', '0x0800C000:@INPUT@'])
+    bin = custom_target(name+'_bin',
+      output : name+'_bin',
+      input : exe,
+      command : [objcopy, '-O', 'binary', '@INPUT@', '@OUTPUT@'])
 
-openrtx_md380_flash = custom_target('openrtx_md380_flash',
-  input : openrtx_md380_wrap,
-  output : 'openrtx_md380_flash',
-  command : [radio_tool, '-d', '0', '-f', '-i', '@INPUT@'])
+    wrap = custom_target(name+'_wrap',
+      output : name+'_wrap',
+      input : bin,
+      command : [radio_tool,
+                 '--wrap',
+                 '-o', '@OUTPUT@',
+                 '-r', t['wrap'],
+                 '-s', t['load_addr']+':@INPUT@'])
 
-openrtx_md390_wrap = custom_target('openrtx_md390_wrap',
-  output : 'openrtx_md390_wrap',
-  input : openrtx_md380_bin,
-  command : [radio_tool,
-             '--wrap',
-             '-o', '@OUTPUT@',
-             '-r', 'MD390',
-             '-s', '0x0800C000:@INPUT@'])
-
-openrtx_md390_flash = custom_target('openrtx_md390_flash',
-  input : openrtx_md390_wrap,
-  output : 'openrtx_md390_flash',
-  command : [radio_tool, '-d', '0', '-f', '-i', '@INPUT@'])
-
-openrtx_mduv380g_wrap = custom_target('openrtx_mduv380g_wrap',
-  output : 'openrtx_mduv380g_wrap',
-  input : openrtx_mduv380g_bin,
-  command : [radio_tool,
-             '--wrap',
-             '-o', '@OUTPUT@',
-             '-r', 'UV3X0',
-             '-s', '0x0800C000:@INPUT@'])
-
-openrtx_mduv380g_flash = custom_target('openrtx_mduv380g_flash',
-  input : openrtx_mduv380g_wrap,
-  output : 'openrtx_mduv380g_flash',
-  command : [radio_tool, '-d', '0', '-f', '-i', '@INPUT@'])
+    custom_target(name+'_flash',
+      input : wrap,
+      output : name+'_flash',
+      command : [radio_tool, '-d', '0', '-f', '-i', '@INPUT@'])
+  endif
+endforeach
