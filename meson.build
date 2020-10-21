@@ -78,7 +78,7 @@ endif
 
 
 ## TYT MD380
-md380_src = src + ['tests/platform/stm32f4_uC.c',
+md380_src = src + ['tests/platform/MD380_display.c',
                    'platform/mcu/STM32F4xx/boot/startup.c',
                    'platform/mcu/STM32F4xx/boot/libc_integration.c',
                    'platform/mcu/STM32F4xx/drivers/usb/usb_bsp.c',
@@ -144,15 +144,31 @@ md380 = {'sources': md380_src,
 ##
 ## Select your radio model among the supported ones: MD-380, MD-UV380
 ##
-openrtx_linux = executable('openrtx_linux.bin', kwargs:linux)
-openrtx_md380 = executable('openrtx_md380.bin', kwargs:md380)
-openrtx_mduv380g = executable('openrtx_mduv380g.bin', kwargs:md380)
+openrtx_linux = executable('openrtx_linux', kwargs:linux)
+openrtx_md380 = executable('openrtx_md380', kwargs:md380)
+openrtx_mduv380g = executable('openrtx_mduv380g', kwargs:md380)
 
+objcopy = find_program('objcopy')
 radio_tool = find_program('radio_tool')
 
-openrtx_md380_wrap = custom_target('openrtx_md380_wrap',
-  output : 'openrtx_md380_wrap.bin',
+openrtx_md380_bin = custom_target('openrtx_md380_bin',
+  output : 'openrtx_md380_bin',
   input : openrtx_md380,
+  command : [objcopy,
+             '-O', 'binary',
+             '@INPUT@', '@OUTPUT@'])
+
+openrtx_mduv380g_bin = custom_target('openrtx_mduv380g_bin',
+  output : 'openrtx_mduv380g_bin',
+  input : openrtx_mduv380g,
+  command : [objcopy,
+             '-O', 'binary',
+             '@INPUT@', '@OUTPUT@'])
+
+
+openrtx_md380_wrap = custom_target('openrtx_md380_wrap',
+  output : 'openrtx_md380_wrap',
+  input : openrtx_md380_bin,
   command : [radio_tool,
              '--wrap',
              '-o', '@OUTPUT@',
@@ -165,8 +181,8 @@ openrtx_md380_flash = custom_target('openrtx_md380_flash',
   command : [radio_tool, '-d', '0', '-f', '-i', '@INPUT@'])
 
 openrtx_md390_wrap = custom_target('openrtx_md390_wrap',
-  output : 'openrtx_md390_wrap.bin',
-  input : openrtx_md380,
+  output : 'openrtx_md390_wrap',
+  input : openrtx_md380_bin,
   command : [radio_tool,
              '--wrap',
              '-o', '@OUTPUT@',
@@ -179,8 +195,8 @@ openrtx_md390_flash = custom_target('openrtx_md390_flash',
   command : [radio_tool, '-d', '0', '-f', '-i', '@INPUT@'])
 
 openrtx_mduv380g_wrap = custom_target('openrtx_mduv380g_wrap',
-  output : 'openrtx_mduv380g_wrap.bin',
-  input : openrtx_mduv380g,
+  output : 'openrtx_mduv380g_wrap',
+  input : openrtx_mduv380g_bin,
   command : [radio_tool,
              '--wrap',
              '-o', '@OUTPUT@',
