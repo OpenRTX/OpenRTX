@@ -419,7 +419,7 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
         {
             size_t pos = x + y * SCREEN_WIDTH;
             uint16_t pixel = frameBuffer[pos];
-            frameBuffer[ipos] = __builtin_bswap16(pixel);
+            frameBuffer[pos] = __builtin_bswap16(pixel);
         }
     }
 
