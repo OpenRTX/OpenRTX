@@ -1,5 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Federico Izzo IU2NUO, Niccolò Izzo IU2KIN and   *
+ *   Copyright (C) 2020 by Federico Izzo IU2NUO,                           *
+ *                         Niccolò Izzo IU2KIN,                            *
  *                         Silvano Seva IU2KWO                             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -26,8 +27,6 @@
 #include "display.h"
 #include "graphics.h"
 #include "font_OpenGD77.h"
-
-#define COLOR_WHITE = {31, 63, 31}
 
 /* This graphics driver is meant for an RGB565 little endian pixel format.
  * Thus, to accomodate for the endianness, the fields in struct rgb565_t have to
@@ -73,11 +72,6 @@ uint16_t gfx_screenWidth()
 uint16_t gfx_screenHeight()
 {
     return display_screenHeight();
-}
-
-void gfx_setBacklightLevel(uint8_t level)
-{
-    display_setBacklightLevel(level);
 }
 
 void gfx_renderRows(uint8_t startRow, uint8_t endRow)
