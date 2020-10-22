@@ -24,6 +24,7 @@
 #include "display.h"
 #include "delays.h"
 #include "hwconfig.h"
+#include "stm32f4xx.h"
 
 /* Defines for GPIO control, really ugly but useful. */
 #define D0  GPIOD,14

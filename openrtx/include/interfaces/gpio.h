@@ -19,7 +19,6 @@
 #define GPIO_H
 
 #include <stdint.h>
-#include "stm32f4xx.h"
 
 /**
  * GPIO functional modes.
@@ -55,7 +54,7 @@ enum Speed
  * @param pin: GPIO pin number, between 0 and 15.
  * @param mode: GPIO functional mode to be set.
  */
-void gpio_setMode(GPIO_TypeDef *port, uint8_t pin, enum Mode mode);
+void gpio_setMode(void *port, uint8_t pin, enum Mode mode);
 
 /**
  * Map alternate function to GPIO pin. The pin has to be configured in alternate
@@ -65,7 +64,7 @@ void gpio_setMode(GPIO_TypeDef *port, uint8_t pin, enum Mode mode);
  * @param afNum: alternate function number, retrieved from mapping table in
  * microcontroller's datasheet.
  */
-void gpio_setAlternateFunction(GPIO_TypeDef *port, uint8_t pin, uint8_t afNum);
+void gpio_setAlternateFunction(void *port, uint8_t pin, uint8_t afNum);
 
 /**
  * Configure GPIO pin maximum output speed.
@@ -73,7 +72,7 @@ void gpio_setAlternateFunction(GPIO_TypeDef *port, uint8_t pin, uint8_t afNum);
  * @param pin: GPIO pin number, between 0 and 15.
  * @param spd: GPIO output speed to be set.
  */
-void gpio_setOutputSpeed(GPIO_TypeDef *port, uint8_t pin, enum Speed spd);
+void gpio_setOutputSpeed(void *port, uint8_t pin, enum Speed spd);
 
 /**
  * Set GPIO pin to high logic level.
@@ -81,7 +80,7 @@ void gpio_setOutputSpeed(GPIO_TypeDef *port, uint8_t pin, enum Speed spd);
  * @param port: GPIO port, it has to be equal to GPIOA_BASE, GPIOB_BASE, ...
  * @param pin: GPIO pin number, between 0 and 15.
  */
-void gpio_setPin(GPIO_TypeDef *port, uint8_t pin);
+void gpio_setPin(void *port, uint8_t pin);
 
 /**
  * Set GPIO pin to low logic level.
@@ -89,7 +88,7 @@ void gpio_setPin(GPIO_TypeDef *port, uint8_t pin);
  * @param port: GPIO port, it has to be equal to GPIOA_BASE, GPIOB_BASE, ...
  * @param pin: GPIO pin number, between 0 and 15.
  */
-void gpio_clearPin(GPIO_TypeDef *port, uint8_t pin);
+void gpio_clearPin(void *port, uint8_t pin);
 
 /**
  * Toggle logic level of a GPIO pin, with respect to its state before calling
@@ -97,7 +96,7 @@ void gpio_clearPin(GPIO_TypeDef *port, uint8_t pin);
  * @param port: GPIO port, it has to be equal to GPIOA_BASE, GPIOB_BASE, ...
  * @param pin: GPIO pin number, between 0 and 15.
  */
-void gpio_togglePin(GPIO_TypeDef *port, uint8_t pin);
+void gpio_togglePin(void *port, uint8_t pin);
 
 /**
  * Read GPIO pin's logic level.
@@ -105,6 +104,6 @@ void gpio_togglePin(GPIO_TypeDef *port, uint8_t pin);
  * @param pin: GPIO pin number, between 0 and 15.
  * @return 1 if pin is at high logic level, 0 if pin is at low logic level.
  */
-uint8_t gpio_readPin(const GPIO_TypeDef *port, uint8_t pin);
+uint8_t gpio_readPin(const void *port, uint8_t pin);
 
 #endif /* GPIO_H */
