@@ -122,7 +122,8 @@ void _bw_setPixel(point_t pos, bw_t bw)
      */
     uint16_t cell = (pos.x + pos.y*screen_width) / 8;
     uint16_t elem = (pos.x + pos.y*screen_width) % 8;
-    buf[cell] = buf[cell] & (bw << elem);
+    buf[cell] &= ~(1 << elem);
+    buf[cell] |= (bw << elem);
 }
 
 void gfx_setPixel(point_t pos, color_t color)
