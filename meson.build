@@ -170,8 +170,8 @@ targets = [
 
   ]
 
-objcopy = find_program('objcopy', required:false)
-radio_tool = find_program('radio_tool', required:false)
+objcopy = find_program('objcopy', required:false, disabler:true)
+radio_tool = find_program('radio_tool', required:false, disabler:true)
 
 foreach t : targets
 
@@ -180,27 +180,23 @@ foreach t : targets
 
   if t['flashable']
 
-    if objcopy.found()
-      bin = custom_target(name+'_bin',
-        output : name+'_bin',
-        input : exe,
-        command : [objcopy, '-O', 'binary', '@INPUT@', '@OUTPUT@'])
+    bin = custom_target(name+'_bin',
+      output : name+'_bin',
+      input : exe,
+      command : [objcopy, '-O', 'binary', '@INPUT@', '@OUTPUT@'])
 
-      if radio_tool.found()
-        wrap = custom_target(name+'_wrap',
-          output : name+'_wrap',
-          input : bin,
-          command : [radio_tool,
-                     '--wrap',
-                     '-o', '@OUTPUT@',
-                     '-r', t['wrap'],
-                     '-s', t['load_addr']+':@INPUT@'])
+      wrap = custom_target(name+'_wrap',
+        output : name+'_wrap',
+        input : bin,
+        command : [radio_tool,
+                   '--wrap',
+                   '-o', '@OUTPUT@',
+                   '-r', t['wrap'],
+                   '-s', t['load_addr']+':@INPUT@'])
 
-        custom_target(name+'_flash',
-          input : wrap,
-          output : name+'_flash',
-          command : [radio_tool, '-d', '0', '-f', '-i', '@INPUT@'])
-      endif
-    endif
+      custom_target(name+'_flash',
+        input : wrap,
+        output : name+'_flash',
+        command : [radio_tool, '-d', '0', '-f', '-i', '@INPUT@'])
   endif
 endforeach
