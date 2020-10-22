@@ -85,7 +85,7 @@ Now you can power cycle your radio and enjoy the new breath of freedom!
 To run OpenRTX on Linux you have to change a system configuration.
 This is needed in order to run the uC/OS-III RTOS on Linux.
 
-Add the following line to `/etc/security/limits.conf`
+Add the following line to `/etc/security/limits.conf` replacing `user` with your user
 ```
 user             -       rtprio          unlimited
 ```
