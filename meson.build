@@ -170,8 +170,8 @@ targets = [
 
   ]
 
-objcopy = find_program('objcopy')
-radio_tool = find_program('radio_tool')
+objcopy = find_program('objcopy', required:false)
+radio_tool = find_program('radio_tool', required:false)
 
 foreach t : targets
 
