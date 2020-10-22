@@ -68,6 +68,8 @@ ninja -C build_arm openrtx_md380 -jN
 
 Where N is the number of cores that you want to allocate to the build process.
 
+## Flashing your radio
+
 If everything compiled without errors you can connect your radio via USB,
 put it in recovery mode (by powering it on with the PTT and the button
 above it pressed), and flash the firmware:
@@ -77,6 +79,19 @@ meson compile -C build_arm openrtx_md380_flash
 ```
 
 Now you can power cycle your radio and enjoy the new breath of freedom!
+
+## Running on Linux
+
+To run OpenRTX on Linux you have to change a system configuration.
+This is needed in order to run the uC/OS-III RTOS on Linux.
+
+Add the following line to `/etc/security/limits.conf`
+```
+user             -       rtprio          unlimited
+```
+And then reboot your computer.
+
+Now you can execute the binary `build_linux/openrtx_linux` you compiled with the instructions above.
 
 ## License
 
