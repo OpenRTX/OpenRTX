@@ -37,7 +37,7 @@ If you are using a version of Meson older than v0.55.0, the above command will f
 
 ```
 meson setup build_linux
-ninja -C build_linux openrtx_linux.bin -jN
+ninja -C build_linux openrtx_linux -jN
 ```
 
 Where N is the number of cores that you want to allocate to the build process.
