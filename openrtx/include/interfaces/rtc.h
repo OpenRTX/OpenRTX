@@ -1,5 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Silvano Seva IU2KWO and Niccolò Izzo IU2KIN     *
+ *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
+ *                         Niccolò Izzo IU2KIN                             *
+ *                         Silvano Seva IU2KWO                             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -19,14 +21,13 @@
 #define RTC_H
 
 #include <stdint.h>
-#include "stm32f4xx.h"
 
 /**
- * Driver for STM32 real time clock, providing both calendar and clock
- * functionalities.
+ * Standard interface for real time clock drivers, providing both calendar and
+ * clock functionalities.
  *
- * RTC is active also when radio is powered off, thanks to the internal
- * lithium backup battery.
+ * Depending on hardware, RTC is active also when radio is powered off, thanks
+ * to the internal lithium backup battery.
  */
 
 typedef struct
@@ -42,14 +43,12 @@ typedef struct
 }curTime_t;
 
 /**
- * Initialise and start RTC, which uses as clock source the external 32.768kHz
- * crystal connected to PC14 and PC15 (indicated with LSE in STM32 reference
- * manual).
+ * Initialise and start RTC.
  */
 void rtc_init();
 
 /**
- * Shutdown RTC and external 32.768kHz clock source.
+ * Shutdown RTC.
  */
 void rtc_shutdown();
 
