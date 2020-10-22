@@ -33,13 +33,13 @@ typedef enum
 {
     WHITE = 0,
     BLACK = 1,
-} bw_t
+} bw_t;
 
 bool initialized = 0;
 uint16_t screen_width = 0;
 uint16_t screen_height = 0;
 uint8_t *buf;
-uint16_t fbSize
+uint16_t fbSize;
 
 void gfx_init()
 {
@@ -64,12 +64,12 @@ void gfx_terminate()
 
 uint16_t gfx_screenWidth()
 {
-    return display_screenWidth;
+    return display_screenWidth();
 }
 
 uint16_t gfx_screenHeight()
 {
-    return display_screenHeight;
+    return display_screenHeight();
 }
 
 void gfx_renderRows(uint8_t startRow, uint8_t endRow)
@@ -108,36 +108,41 @@ void gfx_fillScreen(color_t color)
 {
     if(!initialized) return;
     bw_t bw = _color2bw(color);
-    if(bw == WHITE):
+    if(bw == WHITE)
         memset(buf, 0x00, fbSize);
-    else if(bw == BLACK):
+    else if(bw == BLACK)
         memset(buf, 0xFF, fbSize);
 }
 
-void gfx_setPixel(point_t pos, color_t color)
+void _bw_setPixel(point_t pos, bw_t bw)
 {
-    bw_t bw = _color2bw(color);
-    if (pos.x >= screen_width || pos.y >= screen_height)
-        return; // off the screen
-    
     /*
      * Black and white 1bpp format: framebuffer is an array of uint8_t, where
      * each cell contains the values of eight pixels, one per bit.
      */
     uint16_t cell = (pos.x + pos.y*screen_width) / 8;
     uint16_t elem = (pos.x + pos.y*screen_width) % 8;
-    buf[cell] & (bw << elem);
+    buf[cell] = buf[cell] & (bw << elem);
+}
+
+void gfx_setPixel(point_t pos, color_t color)
+{
+    if (pos.x >= screen_width || pos.y >= screen_height)
+        return; // off the screen
+    bw_t bw = _color2bw(color);
+    _bw_setPixel(pos, bw); 
 }
 
 void gfx_drawLine(point_t start, point_t end, color_t color)
 {
     if(!initialized) return;
-    rgb565_t color_565 = _true2highColor(color);
+    bw_t bw = _color2bw(color);
     for(int y = start.y; y < end.y; y++)
     {
         for(int x = start.x; x < end.x; x++)
         {
-            buf[x + y*screen_width] = color_565;
+            point_t pos = {x, y};
+            _bw_setPixel(pos, bw);
         }
     }
 }
@@ -145,7 +150,7 @@ void gfx_drawLine(point_t start, point_t end, color_t color)
 void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color, bool fill)
 {
     if(!initialized) return;
-    rgb565_t color_565 = _true2highColor(color);
+    bw_t bw = _color2bw(color);
     uint16_t x_max = start.x + width;
     uint16_t y_max = start.y + height;
     bool perimeter = 0;
@@ -158,7 +163,11 @@ void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color,
             if(y == start.y || y == y_max-1 || x == start.x || x == x_max-1) perimeter = 1;
             else perimeter = 0;
             // If fill is false, draw only rectangle perimeter
-            if(fill || perimeter) buf[x + y*screen_width] = color_565;
+            if(fill || perimeter)
+            {
+                point_t pos = {x, y};
+                _bw_setPixel(pos, bw);
+            }
         }
     }
 }
@@ -170,7 +179,7 @@ void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t ali
     uint16_t *writePos;
     uint8_t *readPos;
 
-    rgb565_t color_565 = _true2highColor(color);
+    bw_t bw = _color2bw(color);
 
     switch(size)
     {
@@ -243,8 +252,11 @@ void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t ali
                 int16_t byte = bitIndex >> 3;
                 int16_t bitMask = 1 << (bitIndex & 7);
                 if (currentCharData[byte] & bitMask)
-                    buf[(start.y + vscan) * screen_width +
-                         start.x + hscan + i * charWidthPixels] = color_565;
+                {
+                    point_t pos = {start.x + hscan + i * charWidthPixels, 
+                                   start.y + vscan};
+                    _bw_setPixel(pos, bw);
+                }
             }
         }
     }
