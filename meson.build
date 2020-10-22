@@ -58,12 +58,12 @@ def = {'DONT_USE_CMSIS_INIT': ''}
 ## Linux
 linux_src = src + ['tests/platform/x64_uC.c',
                    'platform/drivers/display/display_libSDL.c',
-                   'openrtx/src/graphics/graphics_rgb565.c',
+                   'openrtx/src/graphics/graphics_bw.c',
                    'rtos/uC-OS3/Ports/POSIX/os_cpu_c.c',
                    'rtos/uC-CPU/Posix/cpu_c.c']
 
 
-linux_def = def + {'SCREEN_WIDTH': '160', 'SCREEN_HEIGHT': '128', 'PIX_FMT_RGB565': ''}
+linux_def = def + {'SCREEN_WIDTH': '160', 'SCREEN_HEIGHT': '128', 'PIX_FMT_BW': ''}
 
 linux_inc = inc + ['rtos/uC-OS3/Ports/POSIX',
                    'rtos/uC-CPU/Posix']
@@ -102,12 +102,13 @@ md380_src = src + ['openrtx/src/main.c',
                    'rtos/uC-CPU/ARM-Cortex-M/ARMv7-M/cpu_c.c',
                    'rtos/uC-CPU/ARM-Cortex-M/ARMv7-M/cpu_a.s']
 
-md380_def = def + {'SCREEN_WIDTH': '160', 'SCREEN_HEIGHT': '128', 'STM32F40_41xxx': ''}
+md380_def = def + {'STM32F40_41xxx': ''}
 
 md380_inc = inc + ['platform/mcu/CMSIS/Include',
                    'platform/mcu/CMSIS/Device/ST/STM32F4xx/Include',
                    'platform/mcu/STM32F4xx',
                    'platform/mcu/STM32F4xx/drivers/usb',
+                   'platform/targets/MD380',
                    'rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M',
                    'rtos/uC-CPU/ARM-Cortex-M/ARMv7-M']
 

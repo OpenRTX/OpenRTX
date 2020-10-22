@@ -23,6 +23,7 @@
 #include "gpio.h"
 #include "display.h"
 #include "delays.h"
+#include "hwconfig.h"
 
 /* Defines for GPIO control, really ugly but useful. */
 #define D0  GPIOD,14
@@ -99,10 +100,6 @@
 /* Addresses for memory-mapped display data and command (through FSMC) */
 #define LCD_FSMC_ADDR_COMMAND 0x60000000
 #define LCD_FSMC_ADDR_DATA    0x60040000
-
-/* Screen dimensions */
-#define SCREEN_WIDTH 160
-#define SCREEN_HEIGHT 128
 
 /*
  * LCD framebuffer, allocated on the heap by display_init().
