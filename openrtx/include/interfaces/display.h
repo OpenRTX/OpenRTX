@@ -88,13 +88,6 @@ uint16_t display_screenWidth();
 uint16_t display_screenHeight();
 
 /**
- * Set screen backlight to a given level.
- * @param level: backlight level, from 0 (backlight off) to 255 (backlight at
- * full brightness).
- */
-void display_setBacklightLevel(uint8_t level);
-
-/**
  * Copy a given section, between two given rows, of framebuffer content to the
  * display.
  * @param startRow: first row of the framebuffer section to be copied
