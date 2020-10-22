@@ -342,7 +342,7 @@ void display_init()
 
 void display_terminate()
 {
-    /* Shut off backlight, FSMC and deallocate framebuffer */
+    /* Shut off FSMC and deallocate framebuffer */
     gpio_setMode(GPIOC, 6, OUTPUT);
     gpio_clearPin(GPIOC, 6);
     RCC->AHB3ENR &= ~RCC_AHB3ENR_FSMCEN;

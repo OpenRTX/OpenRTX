@@ -29,7 +29,7 @@
  * This interface is based on the lower level interface display.h
  * Many methods of graphics.h are basically calls to methods in display.h.
  *
- * On top of basic framebuffer and backlight control, graphics.h implements
+ * On top of basic framebuffer control, graphics.h implements
  * graphics primitives for drawing fonts and shapes
  *
  *********************** HOW TO MANAGE FRAMEBUFFER *****************************
@@ -88,13 +88,13 @@ typedef enum
 
 /**
  * This function calls the correspondent method of the low level interface display.h
- * It initializes the display and sets the backlight to zero.
+ * It initializes the display.
  */
 void gfx_init();
 
 /**
  * This function calls the correspondent method of the low level interface display.h
- * It turns off backlight, shuts down backlight control and deallocates the framebuffer.
+ * It terminates the display driver and deallocates the framebuffer.
  */
 void gfx_terminate();
 
@@ -111,14 +111,6 @@ uint16_t gfx_screenWidth();
  * @return screen height, in pixels.
  */
 uint16_t gfx_screenHeight();
-
-/**
- * This function calls the correspondent method of the low level interface display.h
- * Set screen backlight to a given level.
- * @param level: backlight level, from 0 (backlight off) to 255 (backlight at
- * full brightness).
- */
-void gfx_setBacklightLevel(uint8_t level);
 
 /**
  * This function calls the correspondent method of the low level interface display.h

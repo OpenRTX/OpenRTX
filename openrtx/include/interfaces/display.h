@@ -44,13 +44,12 @@
  */
 
 /**
- * This function initialises the display, configures backlight control and
- * allocates framebuffer on the heap. After initialisation, backlight is set
- * to zero.
+ * This function initialises the display and allocates framebuffer on the heap.
+ *
  * NOTE: framebuffer allocation is the first operation performed, if fails an
  * error message is printed on the virtual COM port and this function returns
- * prematurely, without configuring the display and the backlight timer. Thus, a
- * dark screen can be symptom of failed allocation.
+ * prematurely, without configuring the display. 
+ * Thus, a dark screen can be symptom of failed allocation.
  */
 void display_init();
 
@@ -70,7 +69,7 @@ void display_init();
 void *display_getFrameBuffer();
 
 /**
- * When called, this function turns off backlight, shuts down backlight control
+ * When called, this function terminates the display driver 
  * and deallocates the framebuffer.
  */
 void display_terminate();

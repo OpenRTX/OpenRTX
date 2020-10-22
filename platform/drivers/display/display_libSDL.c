@@ -185,11 +185,6 @@ uint16_t display_screenHeight()
     return SCREEN_HEIGHT;
 }
 
-void display_setBacklightLevel(uint8_t level)
-{
-    printf("Backlight level set to %d\n", level);
-}
-
 void display_renderRows(uint8_t startRow, uint8_t endRow)
 {
     Uint32 *pixels = (Uint32*)renderSurface->pixels;
