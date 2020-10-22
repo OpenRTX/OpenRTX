@@ -121,7 +121,7 @@ void gfx_fillScreen(color_t color)
 
 void gfx_setPixel(point_t pos, color_t color)
 {
-    if (pos.x > screen_width || pos.y > screen_height)
+    if (pos.x >= screen_width || pos.y >= screen_height)
         return; // off the screen
 
     buf[pos.x + pos.y*screen_width] = _true2highColor(color);
