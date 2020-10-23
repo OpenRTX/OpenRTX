@@ -22,8 +22,8 @@
 #include "stm32f4xx.h"
 #include "../drivers/usb_vcom.h"
 
-///< Entry point for application code
-int main(int argc, char *argv[]);
+///< Entry point for system bootstrap after initial configurations.
+void systemBootstrap();
 
 void Reset_Handler() __attribute__((__interrupt__, noreturn));
 void Reset_Handler()
@@ -84,11 +84,11 @@ void Reset_Handler()
     // correctly
     setvbuf(stdin, NULL, _IONBF, 0);
 
-
     // Jump to application code
-    main(0, NULL);
+    systemBootstrap();
 
-    // If main returns loop indefinitely
+    // Execution flow should never reach this point but, in any case, loop
+    // indefinitely it this happens
     for(;;) ;
 }
 

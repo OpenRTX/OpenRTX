@@ -79,6 +79,7 @@ endif
 
 ## TYT MD380
 md380_src = src + ['openrtx/src/main.c',
+                   'openrtx/src/bootstrap.c',
                    'platform/mcu/STM32F4xx/boot/startup.c',
                    'platform/mcu/STM32F4xx/boot/libc_integration.c',
                    'platform/mcu/STM32F4xx/drivers/usb/usb_bsp.c',
