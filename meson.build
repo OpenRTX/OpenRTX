@@ -56,8 +56,12 @@ def = {'DONT_USE_CMSIS_INIT': ''}
 ##
 
 ## Linux
-linux_src = src + ['tests/platform/x64_uC.c',
+linux_src = src + ['openrtx/src/main.c',
+                   'openrtx/src/bootstrap.c',
                    'platform/drivers/display/display_libSDL.c',
+                   'platform/mcu/x86_64/drivers/gpio.c',
+                   'platform/mcu/x86_64/drivers/delays.c',
+                   'platform/targets/linux/platform.c',
                    'openrtx/src/graphics/graphics_bw.c',
                    'rtos/uC-OS3/Ports/POSIX/os_cpu_c.c',
                    'rtos/uC-CPU/Posix/cpu_c.c']
@@ -66,7 +70,8 @@ linux_src = src + ['tests/platform/x64_uC.c',
 linux_def = def + {'SCREEN_WIDTH': '160', 'SCREEN_HEIGHT': '128', 'PIX_FMT_BW': ''}
 
 linux_inc = inc + ['rtos/uC-OS3/Ports/POSIX',
-                   'rtos/uC-CPU/Posix']
+                   'rtos/uC-CPU/Posix',
+                   'platform/targets/linux']
 
 if not meson.is_cross_build()
   sdl_dep = dependency('SDL2')
@@ -138,7 +143,8 @@ endforeach
 linux_opts = {'sources': linux_src,
               'c_args': linux_args,
               'include_directories': linux_inc,
-              'dependencies': linux_dep}
+              'dependencies': linux_dep,
+              'link_args' : '--entry=systemBootstrap'}
 
 md380_opts = {'sources': md380_src,
               'c_args': md380_args,
