@@ -44,6 +44,8 @@ extern uint32_t USBD_OTG_ISR_Handler(USB_OTG_CORE_HANDLE *pdev);
 
 void USB_OTG_BSP_Init(USB_OTG_CORE_HANDLE *pdev)
 {
+    (void) pdev;
+
     gpio_setMode(GPIOA, 11, ALTERNATE);
     gpio_setAlternateFunction(GPIOA, 11, 10);
     gpio_setOutputSpeed(GPIOA, 11, HIGH);      // 100MHz output speed
@@ -64,6 +66,8 @@ void USB_OTG_BSP_Init(USB_OTG_CORE_HANDLE *pdev)
 */
 void USB_OTG_BSP_EnableInterrupt(USB_OTG_CORE_HANDLE *pdev)
 {
+    (void) pdev;
+
     NVIC_ClearPendingIRQ(OTG_FS_IRQn);
     NVIC_SetPriority(OTG_FS_IRQn, 14);
     NVIC_EnableIRQ(OTG_FS_IRQn);

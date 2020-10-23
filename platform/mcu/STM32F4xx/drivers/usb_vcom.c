@@ -242,6 +242,7 @@ ssize_t vcom_readBlock(void* buf, size_t len)
 
 static uint8_t  usbd_cdc_Init (void  *pdev, uint8_t cfgidx)
 {
+    (void) cfgidx;
     uint8_t *pbuf;
 
     /* Open EP IN */
@@ -265,6 +266,8 @@ static uint8_t  usbd_cdc_Init (void  *pdev, uint8_t cfgidx)
 
 static uint8_t  usbd_cdc_DeInit (void  *pdev, uint8_t cfgidx)
 {
+    (void) cfgidx;
+
     /* Open EP IN */
     DCD_EP_Close(pdev, CDC_IN_EP);
 
@@ -363,6 +366,8 @@ static uint8_t  usbd_cdc_Setup (void  *pdev, USB_SETUP_REQ *req)
 
 static uint8_t  usbd_cdc_EP0_RxReady (void  *pdev)
 {
+    (void) pdev;
+
     if (cdcCmd != NO_CMD)
     {
         VCP_Ctrl(cdcCmd, CmdBuff, cdcLen);
@@ -374,6 +379,9 @@ static uint8_t  usbd_cdc_EP0_RxReady (void  *pdev)
 
 static uint8_t  usbd_cdc_DataIn (void *pdev, uint8_t epnum)
 {
+    (void) pdev;
+    (void) epnum;
+
     return USBD_OK;
 }
 
@@ -402,17 +410,22 @@ static uint8_t  usbd_cdc_DataOut (void *pdev, uint8_t epnum)
 
 static uint8_t  usbd_cdc_SOF (void *pdev)
 {
+    (void) pdev;
     return USBD_OK;
 }
 
 static uint8_t  *USBD_cdc_GetCfgDesc (uint8_t speed, uint16_t *length)
 {
+    (void) speed;
+    (void) length;
+
     *length = sizeof (usbd_cdc_CfgDesc);
     return usbd_cdc_CfgDesc;
 }
 
 static uint16_t VCP_Ctrl (uint32_t Cmd, uint8_t* Buf, uint32_t Len)
 {
+    (void) Len;
 
     /* NOTE:commands not  needed for this driver:
      *  SEND_ENCAPSULATED_COMMAND
