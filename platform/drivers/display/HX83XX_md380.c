@@ -26,21 +26,6 @@
 #include "hwconfig.h"
 #include "stm32f4xx.h"
 
-/* Defines for GPIO control, really ugly but useful. */
-#define D0  GPIOD,14
-#define D1  GPIOD,15
-#define D2  GPIOD,0
-#define D3  GPIOD,1
-#define D4  GPIOE,7
-#define D5  GPIOE,8
-#define D6  GPIOE,9
-#define D7  GPIOE,10
-#define WR  GPIOD,5
-#define RD  GPIOD,4
-#define CS  GPIOD,6
-#define RS  GPIOD,12
-#define RST GPIOD,13
-
 /**
  * LCD command set, basic and extended
  */
@@ -112,7 +97,7 @@ void __attribute__((used)) DMA2_Stream7_IRQHandler()
 {
     OSIntEnter();
     DMA2->HIFCR |= DMA_HIFCR_CTCIF7 | DMA_HIFCR_CTEIF7;    /* Clear flags */
-    gpio_setPin(CS);
+    gpio_setPin(LCD_CS);
     OSIntExit();
 }
 
@@ -194,41 +179,41 @@ void display_init()
                         | 7;        /* ADDSET */
 
     /* Configure alternate function for data and control lines. */
-    gpio_setMode(D0, ALTERNATE);
-    gpio_setMode(D1, ALTERNATE);
-    gpio_setMode(D2, ALTERNATE);
-    gpio_setMode(D3, ALTERNATE);
-    gpio_setMode(D4, ALTERNATE);
-    gpio_setMode(D5, ALTERNATE);
-    gpio_setMode(D6, ALTERNATE);
-    gpio_setMode(D7, ALTERNATE);
-    gpio_setMode(RS, ALTERNATE);
-    gpio_setMode(WR, ALTERNATE);
-    gpio_setMode(RD, ALTERNATE);
+    gpio_setMode(LCD_D0, ALTERNATE);
+    gpio_setMode(LCD_D1, ALTERNATE);
+    gpio_setMode(LCD_D2, ALTERNATE);
+    gpio_setMode(LCD_D3, ALTERNATE);
+    gpio_setMode(LCD_D4, ALTERNATE);
+    gpio_setMode(LCD_D5, ALTERNATE);
+    gpio_setMode(LCD_D6, ALTERNATE);
+    gpio_setMode(LCD_D7, ALTERNATE);
+    gpio_setMode(LCD_RS, ALTERNATE);
+    gpio_setMode(LCD_WR, ALTERNATE);
+    gpio_setMode(LCD_RD, ALTERNATE);
 
-    gpio_setAlternateFunction(D0, 12);
-    gpio_setAlternateFunction(D1, 12);
-    gpio_setAlternateFunction(D2, 12);
-    gpio_setAlternateFunction(D3, 12);
-    gpio_setAlternateFunction(D4, 12);
-    gpio_setAlternateFunction(D5, 12);
-    gpio_setAlternateFunction(D6, 12);
-    gpio_setAlternateFunction(D7, 12);
-    gpio_setAlternateFunction(RS, 12);
-    gpio_setAlternateFunction(WR, 12);
-    gpio_setAlternateFunction(RD, 12);
+    gpio_setAlternateFunction(LCD_D0, 12);
+    gpio_setAlternateFunction(LCD_D1, 12);
+    gpio_setAlternateFunction(LCD_D2, 12);
+    gpio_setAlternateFunction(LCD_D3, 12);
+    gpio_setAlternateFunction(LCD_D4, 12);
+    gpio_setAlternateFunction(LCD_D5, 12);
+    gpio_setAlternateFunction(LCD_D6, 12);
+    gpio_setAlternateFunction(LCD_D7, 12);
+    gpio_setAlternateFunction(LCD_RS, 12);
+    gpio_setAlternateFunction(LCD_WR, 12);
+    gpio_setAlternateFunction(LCD_RD, 12);
 
     /* Reset and chip select lines as outputs */
-    gpio_setMode(CS,  OUTPUT);
-    gpio_setMode(RST, OUTPUT);
+    gpio_setMode(LCD_CS,  OUTPUT);
+    gpio_setMode(LCD_RST, OUTPUT);
 
-    gpio_setPin(CS);    /* CS idle state is high level */
-    gpio_clearPin(RST); /* Put LCD in reset mode */
+    gpio_setPin(LCD_CS);    /* CS idle state is high level */
+    gpio_clearPin(LCD_RST); /* Put LCD in reset mode */
 
     delayMs(20);
-    gpio_setPin(RST);   /* Exit from reset */
+    gpio_setPin(LCD_RST);   /* Exit from reset */
 
-    gpio_clearPin(CS);
+    gpio_clearPin(LCD_CS);
 
     /**
      * The following command sequence has been taken as-is from Tytera original
@@ -335,14 +320,12 @@ void display_init()
     writeCmd(CMD_DISPON);
     writeCmd(CMD_RAMWR);
 
-    gpio_setPin(CS);
+    gpio_setPin(LCD_CS);
 }
 
 void display_terminate()
 {
     /* Shut off FSMC and deallocate framebuffer */
-    gpio_setMode(GPIOC, 6, OUTPUT);
-    gpio_clearPin(GPIOC, 6);
     RCC->AHB3ENR &= ~RCC_AHB3ENR_FSMCEN;
     if(frameBuffer != NULL)
     {
@@ -374,7 +357,7 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
     GPIOD->MODER |= 0xA000000A;     /* Back to AF mode */
     GPIOE->MODER |= 0x2A8000;
 
-    gpio_clearPin(CS);
+    gpio_clearPin(LCD_CS);
 
     /*
      * First of all, convert pixels from little to big endian, for
@@ -428,12 +411,8 @@ void display_render()
 
 bool display_renderingInProgress()
 {
-    /*
-     * Render is in progress if PD6 is low. Its value can be tested reading
-     * GPIOD->ODR.
-     */
-    uint16_t pinValue = (GPIOD->ODR & (1 << 6));
-    return (pinValue == 0) ? 1 : 0;
+    /* Rendering is in progress if display's chip select is low. */
+    return gpio_readPin(LCD_CS);
 }
 
 void *display_getFrameBuffer()

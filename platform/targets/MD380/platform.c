@@ -43,13 +43,15 @@ void platform_init()
     TIM8->CR1 |= TIM_CR1_CEN;       /* Start timer */
 
     /* Configure backlight GPIO, TIM8 is on AF3 */
-    gpio_setMode(GPIOC, 6, ALTERNATE);
-    gpio_setAlternateFunction(GPIOC, 6, 3);
+    gpio_setMode(LCD_BKLIGHT, ALTERNATE);
+    gpio_setAlternateFunction(LCD_BKLIGHT, 3);
 }
 
 void platform_terminate()
 {
     /* Shut off backlight */
+    gpio_setMode(LCD_BKLIGHT, OUTPUT);
+    gpio_clearPin(LCD_BKLIGHT);
     RCC->APB2ENR &= ~RCC_APB2ENR_TIM8EN;
 }
 

@@ -20,8 +20,27 @@
 #ifndef HWCONFIG_H
 #define HWCONFIG_H
 
+#include "stm32f4xx.h"
+
 /* Screen dimensions */
 #define SCREEN_WIDTH 160
 #define SCREEN_HEIGHT 128
+
+/* Defines for GPIO control, really ugly but useful. */
+#define LCD_D0  GPIOD,14
+#define LCD_D1  GPIOD,15
+#define LCD_D2  GPIOD,0
+#define LCD_D3  GPIOD,1
+#define LCD_D4  GPIOE,7
+#define LCD_D5  GPIOE,8
+#define LCD_D6  GPIOE,9
+#define LCD_D7  GPIOE,10
+#define LCD_WR  GPIOD,5
+#define LCD_RD  GPIOD,4
+#define LCD_CS  GPIOD,6
+#define LCD_RS  GPIOD,12
+#define LCD_RST GPIOD,13
+
+#define LCD_BKLIGHT GPIOC,6
 
 #endif
