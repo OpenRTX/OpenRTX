@@ -23,10 +23,11 @@
 #include <os.h>
 #include <lib_mem.h>
 #include <stdio.h>
-#include "stm32f4xx.h"
 #include "gpio.h"
 #include "delays.h"
 #include "display.h"
+#include "hwconfig.h"
+#include "platform.h"
 
 static OS_TCB        startTCB;
 static CPU_STK_SIZE  startStk[APP_CFG_TASK_START_STK_SIZE];
@@ -50,7 +51,7 @@ void drawRect(int x, int y, int width, int height, uint16_t color)
     {
         for(int j=x; j < x_max; j++)
         {
-            buf[j + i*display_screenWidth()] = color;
+            buf[j + i*SCREEN_WIDTH] = color;
         }
     }
 }
@@ -142,18 +143,19 @@ static void t2(void *arg)
     OS_ERR os_err;
 
     display_init();
-    display_setBacklightLevel(254);
+    platform_init();
+    platform_setBacklightLevel(254);
 
     while(1)
     {
         /* Horizontal red line */
-        drawRect(0, 10, display_screenWidth(), 20, 0xF800);
+        drawRect(0, 10, SCREEN_WIDTH, 20, 0xF800);
 
         /* Vertical blue line */
-        drawRect(10, 0, 20, display_screenHeight(), 0x001F);
+        drawRect(10, 0, 20, SCREEN_HEIGHT, 0x001F);
 
         /* Vertical green line */
-        drawRect(80, 0, 20, display_screenHeight(), 0x07e0);
+        drawRect(80, 0, 20, SCREEN_HEIGHT, 0x07e0);
 
         display_render();
 
