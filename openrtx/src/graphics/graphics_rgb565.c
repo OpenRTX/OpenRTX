@@ -24,6 +24,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <hwconfig.h>
 #include "display.h"
 #include "graphics.h"
 #include "font_OpenGD77.h"
