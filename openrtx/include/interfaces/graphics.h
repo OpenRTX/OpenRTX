@@ -100,20 +100,6 @@ void gfx_terminate();
 
 /**
  * This function calls the correspondent method of the low level interface display.h
- * Get screen width in pixels.
- * @return screen width, in pixels.
- */
-uint16_t gfx_screenWidth();
-
-/**
- * This function calls the correspondent method of the low level interface display.h
- * Get screen height in pixels.
- * @return screen height, in pixels.
- */
-uint16_t gfx_screenHeight();
-
-/**
- * This function calls the correspondent method of the low level interface display.h
  * Copy a given section, between two given rows, of framebuffer content to the
  * display.
  * @param startRow: first row of the framebuffer section to be copied

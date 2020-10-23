@@ -97,13 +97,13 @@ static void gfxThread(void *arg)
         point_t origin = {0, pos};
         color_t color_red = {255, 0, 0};
         color_t color_white = {255, 255, 255};
-        gfx_drawRect(origin, display_screenWidth(), 20, color_red, 1);
+        gfx_drawRect(origin, SCREEN_WIDTH, 20, color_red, 1);
         char *buffer = "KEK";
         gfx_print(origin, buffer, FONT_SIZE_4, TEXT_ALIGN_LEFT,color_white);
         gfx_render();
         while(gfx_renderingInProgress()) ;
         pos += 20;
-        if(pos > gfx_screenHeight() - 20) pos = 0;
+        if(pos > SCREEN_HEIGHT - 20) pos = 0;
 
         OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &os_err);
     }

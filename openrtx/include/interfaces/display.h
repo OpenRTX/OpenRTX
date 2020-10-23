@@ -75,18 +75,6 @@ void *display_getFrameBuffer();
 void display_terminate();
 
 /**
- * Get screen width in pixels.
- * @return screen width, in pixels.
- */
-uint16_t display_screenWidth();
-
-/**
- * Get screen height in pixels.
- * @return screen height, in pixels.
- */
-uint16_t display_screenHeight();
-
-/**
  * Copy a given section, between two given rows, of framebuffer content to the
  * display.
  * @param startRow: first row of the framebuffer section to be copied

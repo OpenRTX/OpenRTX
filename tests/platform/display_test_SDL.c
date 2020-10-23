@@ -43,7 +43,7 @@ void drawRect(int x, int y, int width, int height, uint16_t color)
     {
         for(int j=x; j < x_max; j++)
         {
-            buf[j + i*display_screenWidth()] = color;
+            buf[j + i * SCREEN_WIDTH] = color;
         }
     }
 }
@@ -54,13 +54,13 @@ int main()
     display_setBacklightLevel(254);
 
     /* Horizontal red line */
-    drawRect(0, 10, display_screenWidth(), 20, 0xF800);
+    drawRect(0, 10, SCREEN_WIDTH, 20, 0xF800);
 
     /* Vertical blue line */
-    drawRect(10, 0, 20, display_screenHeight(), 0x001F);
+    drawRect(10, 0, 20, SCREEN_HEIGHT, 0x001F);
 
     /* Vertical green line */
-    drawRect(80, 0, 20, display_screenHeight(), 0x07e0);
+    drawRect(80, 0, 20, SCREEN_HEIGHT, 0x07e0);
 
     /*
      * Use SDL event listener to check if window close button has been pressed,

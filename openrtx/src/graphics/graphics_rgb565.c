@@ -44,16 +44,11 @@ typedef struct
 } rgb565_t;
 
 bool initialized = 0;
-uint16_t screen_width = 0;
-uint16_t screen_height = 0;
 rgb565_t *buf;
 
 void gfx_init()
 {
     display_init();
-    // Set global variables and framebuffer pointer
-    screen_width = gfx_screenWidth();
-    screen_height = gfx_screenHeight();
     buf = (rgb565_t *)(display_getFrameBuffer());
     initialized = 1;
 }
@@ -62,16 +57,6 @@ void gfx_terminate()
 {
     display_terminate();
     initialized = 0;
-}
-
-uint16_t gfx_screenWidth()
-{
-    return display_screenWidth();
-}
-
-uint16_t gfx_screenHeight()
-{
-    return display_screenHeight();
 }
 
 void gfx_renderRows(uint8_t startRow, uint8_t endRow)
@@ -103,28 +88,28 @@ void gfx_clearScreen()
 {
     if(!initialized) return;
     // Set the whole framebuffer to 0x00 = make the screen black
-    memset(buf, 0x00, sizeof(rgb565_t) * screen_width * screen_height);
+    memset(buf, 0x00, sizeof(rgb565_t) * SCREEN_WIDTH * SCREEN_HEIGHT);
 }
 
 void gfx_fillScreen(color_t color)
 {
     if(!initialized) return;
     rgb565_t color_565 = _true2highColor(color);
-    for(int y = 0; y < screen_height; y++)
+    for(int y = 0; y < SCREEN_HEIGHT; y++)
     {
-        for(int x = 0; x < screen_width; x++)
+        for(int x = 0; x < SCREEN_WIDTH; x++)
         {
-            buf[x + y*screen_width] = color_565;
+            buf[x + y*SCREEN_WIDTH] = color_565;
         }
     }
 }
 
 void gfx_setPixel(point_t pos, color_t color)
 {
-    if (pos.x >= screen_width || pos.y >= screen_height)
+    if (pos.x >= SCREEN_WIDTH || pos.y >= SCREEN_HEIGHT)
         return; // off the screen
 
-    buf[pos.x + pos.y*screen_width] = _true2highColor(color);
+    buf[pos.x + pos.y*SCREEN_WIDTH] = _true2highColor(color);
 }
 
 void gfx_drawLine(point_t start, point_t end, color_t color)
@@ -135,7 +120,7 @@ void gfx_drawLine(point_t start, point_t end, color_t color)
     {
         for(int x = start.x; x < end.x; x++)
         {
-            buf[x + y*screen_width] = color_565;
+            buf[x + y*SCREEN_WIDTH] = color_565;
         }
     }
 }
@@ -147,8 +132,8 @@ void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color,
     uint16_t x_max = start.x + width;
     uint16_t y_max = start.y + height;
     bool perimeter = 0;
-    if(x_max > (screen_width - 1)) x_max = screen_width - 1;
-    if(y_max > (screen_height - 1)) y_max = screen_height - 1;
+    if(x_max > (SCREEN_WIDTH - 1)) x_max = SCREEN_WIDTH - 1;
+    if(y_max > (SCREEN_HEIGHT - 1)) y_max = SCREEN_HEIGHT - 1;
     for(int y = start.y; y < y_max; y++)
     {
         for(int x = start.x; x < x_max; x++)
@@ -156,7 +141,7 @@ void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color,
             if(y == start.y || y == y_max-1 || x == start.x || x == x_max-1) perimeter = 1;
             else perimeter = 0;
             // If fill is false, draw only rectangle perimeter
-            if(fill || perimeter) buf[x + y*screen_width] = color_565;
+            if(fill || perimeter) buf[x + y*SCREEN_WIDTH] = color_565;
         }
     }
 }
@@ -200,9 +185,9 @@ void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t ali
 
     int16_t sLen = strlen(text);
     // Compute amount of letters that fit till the end of the screen
-    if ((charWidthPixels*sLen) + start.x > screen_width)
+    if ((charWidthPixels*sLen) + start.x > SCREEN_WIDTH)
     {
-        sLen = (screen_width-start.x)/charWidthPixels;
+        sLen = (SCREEN_WIDTH-start.x)/charWidthPixels;
     }
 
     if (sLen < 0) return;
@@ -213,10 +198,10 @@ void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t ali
             // left aligned, do nothing.
             break;
         case TEXT_ALIGN_CENTER:
-            start.x = (screen_width - (charWidthPixels * sLen))/2;
+            start.x = (SCREEN_WIDTH - (charWidthPixels * sLen))/2;
             break;
         case TEXT_ALIGN_RIGHT:
-            start.x = screen_width - (charWidthPixels * sLen);
+            start.x = SCREEN_WIDTH - (charWidthPixels * sLen);
             break;
     }
 
@@ -241,7 +226,7 @@ void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t ali
                 int16_t byte = bitIndex >> 3;
                 int16_t bitMask = 1 << (bitIndex & 7);
                 if (currentCharData[byte] & bitMask)
-                    buf[(start.y + vscan) * screen_width +
+                    buf[(start.y + vscan) * SCREEN_WIDTH +
                          start.x + hscan + i * charWidthPixels] = color_565;
             }
         }

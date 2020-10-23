@@ -36,22 +36,17 @@ typedef enum
 } bw_t;
 
 bool initialized = 0;
-uint16_t screen_width = 0;
-uint16_t screen_height = 0;
 uint8_t *buf;
 uint16_t fbSize;
 
 void gfx_init()
 {
     display_init();
-    // Set global variables and framebuffer pointer
-    screen_width = gfx_screenWidth();
-    screen_height = gfx_screenHeight();
     buf = (uint8_t *)(display_getFrameBuffer());
     // Calculate framebuffer size
-    fbSize = (screen_height * screen_width) / 8;
+    fbSize = (SCREEN_HEIGHT * SCREEN_WIDTH) / 8;
     /* Compensate for eventual truncation error in division */
-    if((fbSize * 8) < (screen_height * screen_width)) fbSize += 1; 
+    if((fbSize * 8) < (SCREEN_HEIGHT * SCREEN_WIDTH)) fbSize += 1; 
     fbSize *= sizeof(uint8_t);
     initialized = 1;
 }
@@ -60,16 +55,6 @@ void gfx_terminate()
 {
     display_terminate();
     initialized = 0;
-}
-
-uint16_t gfx_screenWidth()
-{
-    return display_screenWidth();
-}
-
-uint16_t gfx_screenHeight()
-{
-    return display_screenHeight();
 }
 
 void gfx_renderRows(uint8_t startRow, uint8_t endRow)
@@ -120,15 +105,15 @@ void _bw_setPixel(point_t pos, bw_t bw)
      * Black and white 1bpp format: framebuffer is an array of uint8_t, where
      * each cell contains the values of eight pixels, one per bit.
      */
-    uint16_t cell = (pos.x + pos.y*screen_width) / 8;
-    uint16_t elem = (pos.x + pos.y*screen_width) % 8;
+    uint16_t cell = (pos.x + pos.y*SCREEN_WIDTH) / 8;
+    uint16_t elem = (pos.x + pos.y*SCREEN_WIDTH) % 8;
     buf[cell] &= ~(1 << elem);
     buf[cell] |= (bw << elem);
 }
 
 void gfx_setPixel(point_t pos, color_t color)
 {
-    if (pos.x >= screen_width || pos.y >= screen_height)
+    if (pos.x >= SCREEN_WIDTH || pos.y >= SCREEN_HEIGHT)
         return; // off the screen
     bw_t bw = _color2bw(color);
     _bw_setPixel(pos, bw); 
@@ -155,8 +140,8 @@ void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color,
     uint16_t x_max = start.x + width;
     uint16_t y_max = start.y + height;
     bool perimeter = 0;
-    if(x_max > (screen_width - 1)) x_max = screen_width - 1;
-    if(y_max > (screen_height - 1)) y_max = screen_height - 1;
+    if(x_max > (SCREEN_WIDTH - 1)) x_max = SCREEN_WIDTH - 1;
+    if(y_max > (SCREEN_HEIGHT - 1)) y_max = SCREEN_HEIGHT - 1;
     for(int y = start.y; y < y_max; y++)
     {
         for(int x = start.x; x < x_max; x++)
@@ -212,9 +197,9 @@ void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t ali
 
     int16_t sLen = strlen(text);
     // Compute amount of letters that fit till the end of the screen
-    if ((charWidthPixels*sLen) + start.x > screen_width)
+    if ((charWidthPixels*sLen) + start.x > SCREEN_WIDTH)
     {
-        sLen = (screen_width-start.x)/charWidthPixels;
+        sLen = (SCREEN_WIDTH-start.x)/charWidthPixels;
     }
 
     if (sLen < 0) return;
@@ -225,10 +210,10 @@ void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t ali
             // left aligned, do nothing.
             break;
         case TEXT_ALIGN_CENTER:
-            start.x = (screen_width - (charWidthPixels * sLen))/2;
+            start.x = (SCREEN_WIDTH - (charWidthPixels * sLen))/2;
             break;
         case TEXT_ALIGN_RIGHT:
-            start.x = screen_width - (charWidthPixels * sLen);
+            start.x = SCREEN_WIDTH - (charWidthPixels * sLen);
             break;
     }
 

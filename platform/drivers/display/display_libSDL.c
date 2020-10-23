@@ -175,16 +175,6 @@ void display_terminate()
     SDL_Quit();
 }
 
-uint16_t display_screenWidth()
-{
-    return SCREEN_WIDTH;
-}
-
-uint16_t display_screenHeight()
-{
-    return SCREEN_HEIGHT;
-}
-
 void display_renderRows(uint8_t startRow, uint8_t endRow)
 {
     Uint32 *pixels = (Uint32*)renderSurface->pixels;
