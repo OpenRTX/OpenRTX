@@ -20,7 +20,6 @@
 #include <app_cfg.h>
 #include <os.h>
 #include <lib_mem.h>
-#include "stm32f4xx.h"
 #include "platform.h"
 #include "gpio.h"
 
