@@ -17,6 +17,7 @@
 
 #include "platform.h"
 #include "gpio.h"
+#include <stdio.h>
 
 void platform_init()
 {

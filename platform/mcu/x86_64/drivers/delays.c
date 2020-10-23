@@ -17,6 +17,7 @@
 
 #include "delays.h"
 #include <unistd.h>
+#include <stdio.h>
 
 /**
  * Implementation of the delay functions for x86_64.

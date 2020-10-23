@@ -16,6 +16,7 @@
  ***************************************************************************/
 
 #include "gpio.h"
+#include <stdio.h>
 
 void gpio_setMode(void *port, uint8_t pin, enum Mode mode)
 {
