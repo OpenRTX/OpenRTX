@@ -27,10 +27,6 @@
 #include "delays.h"
 #include <lib_mem.h>
 
-static OS_TCB        startTCB;
-static CPU_STK_SIZE  startStk[APP_CFG_TASK_START_STK_SIZE];
-static void startTask(void *arg);
-
 static OS_TCB        t1TCB;
 static CPU_STK_SIZE  t1Stk[128];
 static void t1(void *arg);
@@ -41,34 +37,6 @@ static void t2(void *arg);
 
 int main(void)
 {
-    OS_ERR err;
-
-    OSInit(&err);
-
-    OSTaskCreate((OS_TCB     *)&startTCB,
-                 (CPU_CHAR   *)" ",
-                 (OS_TASK_PTR ) startTask,
-                 (void       *) 0,
-                 (OS_PRIO     ) APP_CFG_TASK_START_PRIO,
-                 (CPU_STK    *)&startStk[0],
-                 (CPU_STK     )startStk[APP_CFG_TASK_START_STK_SIZE / 10u],
-                 (CPU_STK_SIZE) APP_CFG_TASK_START_STK_SIZE,
-                 (OS_MSG_QTY  ) 0,
-                 (OS_TICK     ) 0,
-                 (void       *) 0,
-                 (OS_OPT      )(OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR),
-                 (OS_ERR     *)&err);
-
-    OSStart(&err);
-
-    for(;;) ;
-    return 0;
-}
-
-static void startTask(void* arg)
-{
-
-    (void) arg;
     OS_ERR err;
 
     gpio_setMode(GPIOE, 0, OUTPUT);
@@ -106,6 +74,7 @@ static void startTask(void* arg)
                 (OS_ERR     *)&err);
 
     while(1) ;
+    return 0;
 }
 
 static void t1(void *arg)
