@@ -15,8 +15,9 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <gpio.h>
+#include "hwconfig.h"
 #include "adc1.h"
-#include "gpio.h"
 
 uint16_t measurements[4];
 
@@ -32,10 +33,10 @@ void adc1_init()
      * - PA3: vox level
      * - PB0: RSSI level
      */
-    gpio_setMode(GPIOA, 0, INPUT_ANALOG);
-    gpio_setMode(GPIOA, 1, INPUT_ANALOG);
-    gpio_setMode(GPIOA, 3, INPUT_ANALOG);
-    gpio_setMode(GPIOB, 0, INPUT_ANALOG);
+    gpio_setMode(AIN_VOLUME, INPUT_ANALOG);
+    gpio_setMode(AIN_VBAT,   INPUT_ANALOG);
+    gpio_setMode(AIN_MIC,    INPUT_ANALOG);
+    gpio_setMode(AIN_RSSI,   INPUT_ANALOG);
 
     /*
      * ADC clock is APB2 frequency divided by 8, giving 10.5MHz.
@@ -89,7 +90,7 @@ void adc1_init()
     ADC1->CR2 |= ADC_CR2_SWSTART;
 }
 
-void adc1_shutdown()
+void adc1_terminate()
 {
     DMA2_Stream0->CR &= ~DMA_SxCR_EN;
     ADC1->CR2 &= ADC_CR2_ADON;

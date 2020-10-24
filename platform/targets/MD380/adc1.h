@@ -19,7 +19,6 @@
 #define ADC1_H
 
 #include <stdint.h>
-#include "stm32f4xx.h"
 
 /**
  * Driver for ADC1, used to continuously sample the following channels:
@@ -45,7 +44,7 @@ void adc1_init();
  * Turn off ADC1 (also gating off its clock) and disable DMA2 Stream 0.
  * DMA2 clock is kept active.
  */
-void adc1_shutdown();
+void adc1_terminate();
 
 /**
  * Get current measurement of a given channel, mapped as below:

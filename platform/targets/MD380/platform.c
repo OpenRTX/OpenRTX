@@ -17,13 +17,24 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stm32f4xx.h>
-#include "platform.h"
+#include <platform.h>
+#include <gpio.h>
 #include "hwconfig.h"
-#include "gpio.h"
+#include "adc1.h"
 
 void platform_init()
 {
+    /* Configure GPIOs */
+    gpio_setMode(GREEN_LED, OUTPUT);
+    gpio_setMode(RED_LED, OUTPUT);
+
+    /* Backlight pin connected to TIM8 CR1 */
+    gpio_setMode(LCD_BKLIGHT, ALTERNATE);
+    gpio_setAlternateFunction(LCD_BKLIGHT, 3);
+
+    /* Initialise ADC1, for vbat, RSSI, ... */
+    adc1_init();
+
     /*
      * Configure TIM8 for backlight PWM: Fpwm = 100kHz, 8 bit of resolution
      * APB2 freq. is 84MHz, then: PSC = 327 to have Ftick = 256.097kHz
@@ -42,18 +53,86 @@ void platform_init()
     TIM8->CCR1 = 0;
     TIM8->EGR  = TIM_EGR_UG;        /* Update registers */
     TIM8->CR1 |= TIM_CR1_CEN;       /* Start timer */
-
-    /* Configure backlight GPIO, TIM8 is on AF3 */
-    gpio_setMode(LCD_BKLIGHT, ALTERNATE);
-    gpio_setAlternateFunction(LCD_BKLIGHT, 3);
 }
 
 void platform_terminate()
 {
-    /* Shut off backlight */
+    /* Shut down backlight */
     gpio_setMode(LCD_BKLIGHT, OUTPUT);
     gpio_clearPin(LCD_BKLIGHT);
+
+    gpio_clearPin(GREEN_LED);
+    gpio_clearPin(RED_LED);
+
+    /* Shut down timer */
     RCC->APB2ENR &= ~RCC_APB2ENR_TIM8EN;
+
+    /* Shut down ADC */
+    adc1_terminate();
+}
+
+float platform_getVbat()
+{
+    return adc1_getMeasurement(0);
+}
+
+float platform_getMicLevel()
+{
+    return adc1_getMeasurement(2);
+}
+
+float platform_getVolumeLevel()
+{
+    return adc1_getMeasurement(3);
+}
+
+uint8_t platform_getChSelector()
+{
+    return 0.0f;
+}
+
+void platform_ledOn(led_t led)
+{
+    switch(led)
+    {
+        case GREEN:
+            gpio_setPin(GREEN_LED);
+            break;
+
+        case RED:
+            gpio_setPin(RED_LED);
+            break;
+
+        default:
+            break;
+    }
+}
+
+void platform_ledOff(led_t led)
+{
+    switch(led)
+    {
+        case GREEN:
+            gpio_clearPin(GREEN_LED);
+            break;
+
+        case RED:
+            gpio_clearPin(RED_LED);
+            break;
+
+        default:
+            break;
+    }
+}
+
+void platform_beepStart(uint16_t freq)
+{
+    (void) freq;
+}
+
+void platform_beepStop()
+{
+
 }
 
 void platform_setBacklightLevel(uint8_t level)

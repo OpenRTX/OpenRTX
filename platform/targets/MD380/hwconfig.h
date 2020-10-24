@@ -20,7 +20,7 @@
 #ifndef HWCONFIG_H
 #define HWCONFIG_H
 
-#include "stm32f4xx.h"
+#include <stm32f4xx.h>
 
 /* Screen dimensions */
 #define SCREEN_WIDTH 160
@@ -42,5 +42,13 @@
 #define LCD_RST GPIOD,13
 
 #define LCD_BKLIGHT GPIOC,6
+
+#define GREEN_LED  GPIOE,0
+#define RED_LED    GPIOE,1
+
+#define AIN_VOLUME GPIOA,0
+#define AIN_VBAT   GPIOA,1
+#define AIN_MIC    GPIOA,3
+#define AIN_RSSI   GPIOB,0
 
 #endif
