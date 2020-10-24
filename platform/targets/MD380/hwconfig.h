@@ -26,7 +26,7 @@
 #define SCREEN_WIDTH 160
 #define SCREEN_HEIGHT 128
 
-/* Defines for GPIO control, really ugly but useful. */
+/* Display */
 #define LCD_D0  GPIOD,14
 #define LCD_D1  GPIOD,15
 #define LCD_D2  GPIOD,0
@@ -40,15 +40,25 @@
 #define LCD_CS  GPIOD,6
 #define LCD_RS  GPIOD,12
 #define LCD_RST GPIOD,13
-
 #define LCD_BKLIGHT GPIOC,6
 
+/* Signalling LEDs */
 #define GREEN_LED  GPIOE,0
 #define RED_LED    GPIOE,1
 
+/* Analog inputs */
 #define AIN_VOLUME GPIOA,0
 #define AIN_VBAT   GPIOA,1
 #define AIN_MIC    GPIOA,3
 #define AIN_RSSI   GPIOB,0
+
+/* Channel selection rotary encoder */
+#define CH_SELECTOR_0 GPIOE,14
+#define CH_SELECTOR_1 GPIOE,15
+#define CH_SELECTOR_2 GPIOB,10
+#define CH_SELECTOR_3 GPIOB,11
+
+/* Push-to-talk switch */
+#define PTT_SW GPIOE,11
 
 #endif

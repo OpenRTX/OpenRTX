@@ -28,17 +28,28 @@ void platform_init()
     gpio_setMode(GREEN_LED, OUTPUT);
     gpio_setMode(RED_LED, OUTPUT);
 
-    /* Backlight pin connected to TIM8 CR1 */
     gpio_setMode(LCD_BKLIGHT, ALTERNATE);
     gpio_setAlternateFunction(LCD_BKLIGHT, 3);
 
-    /* Initialise ADC1, for vbat, RSSI, ... */
+    gpio_setMode(CH_SELECTOR_0, INPUT);
+    gpio_setMode(CH_SELECTOR_1, INPUT);
+    gpio_setMode(CH_SELECTOR_2, INPUT);
+    gpio_setMode(CH_SELECTOR_3, INPUT);
+
+    gpio_setMode(PTT_SW, INPUT);
+
+    /*
+     * Initialise ADC1, for vbat, RSSI, ... 
+     * Configuration of corresponding GPIOs in analog input mode is done inside
+     * the driver.
+     */
     adc1_init();
 
     /*
      * Configure TIM8 for backlight PWM: Fpwm = 100kHz, 8 bit of resolution
      * APB2 freq. is 84MHz, then: PSC = 327 to have Ftick = 256.097kHz
      * With ARR = 256, Fpwm is 100kHz;
+     * Backlight pin is connected to TIM8 CR1.
      */
     RCC->APB2ENR |= RCC_APB2ENR_TIM8EN;
     TIM8->ARR = 255;
@@ -61,6 +72,7 @@ void platform_terminate()
     gpio_setMode(LCD_BKLIGHT, OUTPUT);
     gpio_clearPin(LCD_BKLIGHT);
 
+    /* Shut down LEDs */
     gpio_clearPin(GREEN_LED);
     gpio_clearPin(RED_LED);
 
@@ -88,12 +100,19 @@ float platform_getVolumeLevel()
 
 uint8_t platform_getChSelector()
 {
-    return 0.0f;
+    static const uint8_t rsPositions[] = { 11, 14, 10, 15, 6, 3, 7, 2, 12, 13,
+                                           9, 16, 5, 4, 8, 1 };
+    int pos = gpio_readPin(CH_SELECTOR_0)
+            | (gpio_readPin(CH_SELECTOR_1) << 1)
+            | (gpio_readPin(CH_SELECTOR_2) << 2)
+            | (gpio_readPin(CH_SELECTOR_3) << 3);
+    return rsPositions[pos];
 }
 
 bool platform_getPttStatus()
 {
-    return false;
+    /* PTT line has a pullup resistor with PTT switch closing to ground */
+    return (gpio_readPin(PTT_SW) == 0) ? true : false;
 }
 
 void platform_ledOn(led_t led)
@@ -132,12 +151,13 @@ void platform_ledOff(led_t led)
 
 void platform_beepStart(uint16_t freq)
 {
+    /* TODO */
     (void) freq;
 }
 
 void platform_beepStop()
 {
-
+    /* TODO */
 }
 
 void platform_setBacklightLevel(uint8_t level)
