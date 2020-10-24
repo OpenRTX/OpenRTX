@@ -91,6 +91,11 @@ uint8_t platform_getChSelector()
     return 0.0f;
 }
 
+bool platform_getPttStatus()
+{
+    return false;
+}
+
 void platform_ledOn(led_t led)
 {
     switch(led)

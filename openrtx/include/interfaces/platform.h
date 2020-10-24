@@ -74,6 +74,11 @@ float platform_getVolumeLevel();
 uint8_t platform_getChSelector();
 
 /**
+ * This function reads and returns the current PTT status.
+ */
+bool platform_getPttStatus();
+
+/**
  * This function turns on the selected led.
  * @param led: which led to control
  */
