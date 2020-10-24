@@ -21,8 +21,7 @@
 #include <os.h>
 #include <lib_mem.h>
 #include <hwconfig.h>
-#include "platform.h"
-#include "gpio.h"
+#include <platform.h>
 
 /*
  * Entry point for application code, not in this translation unit.
