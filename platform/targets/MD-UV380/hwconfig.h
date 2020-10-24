@@ -20,7 +20,7 @@
 #ifndef HWCONFIG_H
 #define HWCONFIG_H
 
-#include "stm32f4xx.h"
+#include <stm32f4xx.h>
 
 /* Screen dimensions */
 #define SCREEN_WIDTH 160
@@ -42,5 +42,27 @@
 #define LCD_RST GPIOD,13
 
 #define LCD_BKLIGHT GPIOD,8
+
+/*
+ * To enable pwm for display backlight dimming uncomment this directive.
+ *
+ * WARNING: backlight pwm is disabled by default because it generates a
+ * continuous tone in the speaker and headphones.
+ *
+ * This issue cannot be solved in any way because it derives from how the
+ * MD-UV380 mcu pins are used: to have a noiseless backlight pwm, the control
+ * pin has to be connected to a mcu pin having between its alternate functions
+ * an output compare channel of one of the timers. With this configuration, the
+ * pwm signal can completely generated in hardware and its frequency can be well
+ * above 22kHz, which is the upper limit for human ears.
+ *
+ * In the MD-UV380 radio, display backlight is connected to PD8, which is not
+ * connected to any of the available output compare channels. Thus, the pwm
+ * signal generation is managed inside the TIM11 ISR by toggling the backlight
+ * pin and its frequency has to be low (~250Hz) to not put too much overehad on
+ * the processor due to timer ISR triggering at an high rate.
+ *
+ * #define ENABLE_BKLIGHT_DIMMING
+ */
 
 #endif

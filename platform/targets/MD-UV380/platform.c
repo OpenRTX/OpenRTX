@@ -19,7 +19,29 @@
 
 #include <platform.h>
 #include <gpio.h>
+#include <os.h>
 #include "hwconfig.h"
+
+#ifdef ENABLE_BKLIGHT_DIMMING
+void TIM1_TRG_COM_TIM11_IRQHandler()
+{
+    OSIntEnter();
+
+    if(TIM11->SR & TIM_SR_CC1IF)
+    {
+        gpio_clearPin(LCD_BKLIGHT); /* Clear pin on compare match */
+    }
+
+    if(TIM11->SR & TIM_SR_UIF)
+    {
+        gpio_setPin(LCD_BKLIGHT);   /* Set pin on counter reload */
+    }
+
+    TIM11->SR = 0;
+
+    OSIntExit();
+}
+#endif
 
 void platform_init()
 {
@@ -29,6 +51,33 @@ void platform_init()
 
     gpio_setMode(LCD_BKLIGHT, OUTPUT);
     gpio_clearPin(LCD_BKLIGHT);
+
+    #ifdef ENABLE_BKLIGHT_DIMMING
+    /*
+     * Configure TIM11 for backlight PWM: Fpwm = 256Hz, 8 bit of resolution
+     * APB2 freq. is 84MHz, then: PSC = 1281 to have Ftick = 65.52kHz
+     * With ARR = 256, Fpwm is 256Hz;
+     */
+    RCC->APB2ENR |= RCC_APB2ENR_TIM11EN;
+    TIM11->ARR = 255;
+    TIM11->PSC = 1282;
+    TIM11->CNT = 0;
+    TIM11->CR1   |= TIM_CR1_ARPE;
+    TIM11->CCMR1 |= TIM_CCMR1_OC1M_2
+                 |  TIM_CCMR1_OC1M_1
+                 |  TIM_CCMR1_OC1PE;
+    TIM11->CCER  |= TIM_CCER_CC1E;
+    TIM11->CCR1 = 0;
+    TIM11->EGR  = TIM_EGR_UG;        /* Update registers            */
+    TIM11->SR   = 0;                 /* Clear interrupt flags       */
+    TIM11->DIER = TIM_DIER_CC1IE     /* Interrupt on compare match  */
+                | TIM_DIER_UIE;      /* Interrupt on counter reload */
+    TIM11->CR1 |= TIM_CR1_CEN;       /* Start timer                 */
+
+    NVIC_ClearPendingIRQ(TIM1_TRG_COM_TIM11_IRQn);
+    NVIC_SetPriority(TIM1_TRG_COM_TIM11_IRQn,15);
+    NVIC_EnableIRQ(TIM1_TRG_COM_TIM11_IRQn);
+    #endif
 }
 
 void platform_terminate()
@@ -39,7 +88,9 @@ void platform_terminate()
     gpio_clearPin(GREEN_LED);
     gpio_clearPin(RED_LED);
 
-    RCC->APB2ENR &= ~RCC_APB2ENR_TIM8EN;
+    #ifdef ENABLE_BKLIGHT_DIMMING
+    RCC->APB2ENR &= ~RCC_APB2ENR_TIM11EN;
+    #endif
 }
 
 float platform_getVbat()
@@ -108,12 +159,25 @@ void platform_beepStop()
 
 void platform_setBacklightLevel(uint8_t level)
 {
-    if(level > 0)
+    /*
+     * Little workaround for the following nasty behaviour: if CCR1 value is
+     * zero, a waveform with 99% duty cycle is generated. This is because we are
+     * emulating pwm with interrupts.
+     */
+    if(level > 1)
     {
+        #ifdef ENABLE_BKLIGHT_DIMMING
+        TIM11->CCR1 = level;
+        TIM11->CR1 |= TIM_CR1_CEN;
+        #else
         gpio_setPin(LCD_BKLIGHT);
+        #endif
     }
     else
     {
+        #ifdef ENABLE_BKLIGHT_DIMMING
+        TIM11->CR1 &= ~TIM_CR1_CEN;
+        #endif
         gpio_clearPin(LCD_BKLIGHT);
     }
 }
