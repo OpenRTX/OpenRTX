@@ -1,6 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
+ *                         Niccolò Izzo IU2KIN,                            *
  *                         Silvano Seva IU2KWO                             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -21,6 +21,7 @@
 #include <gpio.h>
 #include <os.h>
 #include "hwconfig.h"
+#include "adc1.h"
 
 #ifdef ENABLE_BKLIGHT_DIMMING
 void TIM1_TRG_COM_TIM11_IRQHandler()
@@ -51,6 +52,20 @@ void platform_init()
 
     gpio_setMode(LCD_BKLIGHT, OUTPUT);
     gpio_clearPin(LCD_BKLIGHT);
+
+    gpio_setMode(CH_SELECTOR_0, INPUT);
+    gpio_setMode(CH_SELECTOR_1, INPUT);
+    gpio_setMode(CH_SELECTOR_2, INPUT);
+    gpio_setMode(CH_SELECTOR_3, INPUT);
+
+    gpio_setMode(PTT_SW, INPUT);
+
+    /*
+     * Initialise ADC1, for vbat, RSSI, ... 
+     * Configuration of corresponding GPIOs in analog input mode is done inside
+     * the driver.
+     */
+    adc1_init();
 
     #ifdef ENABLE_BKLIGHT_DIMMING
     /*
@@ -85,37 +100,52 @@ void platform_terminate()
     /* Shut down backlight */
     gpio_clearPin(LCD_BKLIGHT);
 
-    gpio_clearPin(GREEN_LED);
-    gpio_clearPin(RED_LED);
-
     #ifdef ENABLE_BKLIGHT_DIMMING
     RCC->APB2ENR &= ~RCC_APB2ENR_TIM11EN;
     #endif
+
+    /* Shut down LEDs */
+    gpio_clearPin(GREEN_LED);
+    gpio_clearPin(RED_LED);
+
+    /* Shut down timer */
+    RCC->APB2ENR &= ~RCC_APB2ENR_TIM8EN;
+
+    /* Shut down ADC */
+    adc1_terminate();
+
 }
 
 float platform_getVbat()
 {
-    return 0.0f;
+    return adc1_getMeasurement(0);
 }
 
 float platform_getMicLevel()
 {
-    return 0.0f;
+    return adc1_getMeasurement(2);
 }
 
 float platform_getVolumeLevel()
 {
-    return 0.0f;
+    return adc1_getMeasurement(3);
 }
 
 uint8_t platform_getChSelector()
 {
-    return 0.0f;
+    static const uint8_t rsPositions[] = { 11, 14, 10, 15, 6, 3, 7, 2, 12, 13,
+                                           9, 16, 5, 4, 8, 1 };
+    int pos = gpio_readPin(CH_SELECTOR_0)
+            | (gpio_readPin(CH_SELECTOR_1) << 1)
+            | (gpio_readPin(CH_SELECTOR_2) << 2)
+            | (gpio_readPin(CH_SELECTOR_3) << 3);
+    return rsPositions[pos];
 }
 
 bool platform_getPttStatus()
 {
-    return false;
+    /* PTT line has a pullup resistor with PTT switch closing to ground */ 
+    return (gpio_readPin(PTT_SW) == 0) ? true : false;
 }
 
 void platform_ledOn(led_t led)
@@ -154,12 +184,13 @@ void platform_ledOff(led_t led)
 
 void platform_beepStart(uint16_t freq)
 {
+    /* TODO */
     (void) freq;
 }
 
 void platform_beepStop()
 {
-    
+    /* TODO */
 }
 
 void platform_setBacklightLevel(uint8_t level)

@@ -120,6 +120,45 @@ md380_inc = inc + ['platform/mcu/CMSIS/Include',
                    'rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M',
                    'rtos/uC-CPU/ARM-Cortex-M/ARMv7-M']
 
+
+## TYT MD-UV380
+mduv380_src = src + ['openrtx/src/main.c',
+                      'openrtx/src/bootstrap.c',
+                      'platform/mcu/STM32F4xx/boot/startup.c',
+                      'platform/mcu/STM32F4xx/boot/libc_integration.c',
+                      'platform/mcu/STM32F4xx/drivers/usb/usb_bsp.c',
+                      'platform/mcu/STM32F4xx/drivers/usb/usb_core.c',
+                      'platform/mcu/STM32F4xx/drivers/usb/usb_dcd.c',
+                      'platform/mcu/STM32F4xx/drivers/usb/usb_dcd_int.c',
+                      'platform/mcu/STM32F4xx/drivers/usb/usbd_desc.c',
+                      'platform/mcu/STM32F4xx/drivers/usb/usbd_core.c',
+                      'platform/mcu/STM32F4xx/drivers/usb/usbd_ioreq.c',
+                      'platform/mcu/STM32F4xx/drivers/usb/usbd_req.c',
+                      'platform/mcu/STM32F4xx/drivers/usb/usbd_usr.c',
+                      'platform/mcu/STM32F4xx/drivers/gpio.c',
+                      'platform/mcu/STM32F4xx/drivers/usb_vcom.c',
+                      'platform/mcu/STM32F4xx/drivers/delays.c',
+                      'platform/mcu/CMSIS/Device/ST/STM32F4xx/Source/system_stm32f4xx.c',
+                      'platform/drivers/display/HX83XX_MDxx380.c',
+                      'platform/targets/MD-UV380/platform.c',
+                      'platform/targets/MD-UV380/adc1.c',
+                      'openrtx/src/graphics/graphics_rgb565.c',
+                      'rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M/os_cpu_c.c',
+                      'rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M/os_cpu_a.s',
+                      'rtos/uC-CPU/ARM-Cortex-M/ARMv7-M/cpu_c.c',
+                      'rtos/uC-CPU/ARM-Cortex-M/ARMv7-M/cpu_a.s']
+
+mduv380_def = def + {'STM32F40_41xxx': ''}
+
+mduv380_inc = inc + ['platform/mcu/CMSIS/Include',
+		      'platform/mcu/CMSIS/Device/ST/STM32F4xx/Include',
+		      'platform/mcu/STM32F4xx',
+		      'platform/mcu/STM32F4xx/drivers',
+		      'platform/mcu/STM32F4xx/drivers/usb',
+		      'platform/targets/MD-UV380',
+		      'rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M',
+		      'rtos/uC-CPU/ARM-Cortex-M/ARMv7-M']
+
 ##
 ## Compilation defines
 ##
@@ -141,6 +180,15 @@ foreach k, v : md380_def
   endif
 endforeach
 
+mduv380_args = []
+foreach k, v : mduv380_def
+  if v == ''
+    mduv380_args += '-D@0@'.format(k)
+  else
+    mduv380_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
+
 linux_opts = {'sources': linux_src,
               'c_args': linux_args,
               'include_directories': linux_inc,
@@ -150,6 +198,11 @@ linux_opts = {'sources': linux_src,
 md380_opts = {'sources': md380_src,
               'c_args': md380_args,
               'include_directories': md380_inc}
+
+
+mduv380_opts = {'sources': mduv380_src,
+		'c_args': mduv380_args,
+		'include_directories': mduv380_inc}
 
 ##
 ## Targets
@@ -173,7 +226,7 @@ targets = [
    'load_addr': '0x0800C000'},
 
   {'name': 'mduv380g',
-   'opts': md380_opts,
+   'opts': mduv380_opts,
    'flashable': true,
    'wrap': 'UV3X0',
    'load_addr': '0x0800C000'},
