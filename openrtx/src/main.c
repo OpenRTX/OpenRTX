@@ -27,6 +27,7 @@
 
 void platform_test()
 {
+    gpio_togglePin(GREEN_LED);
     OS_ERR os_err;
     point_t pos_line1 = {0, 0};
     point_t pos_line2 = {0, 9};
@@ -47,11 +48,13 @@ void platform_test()
     gfx_print(pos_line3, buf3, FONT_SIZE_1, TEXT_ALIGN_LEFT, color_white);
     gfx_render();
     while(gfx_renderingInProgress());
-    OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+    OSTimeDlyHMSM(0u, 0u, 0u, 250u, OS_OPT_TIME_HMSM_STRICT, &os_err);
 }
 
 int main(void)
 {
+    gpio_setMode(GREEN_LED, OUTPUT);
+
     // Init the graphic stack
     gfx_init();
     platform_setBacklightLevel(255);
