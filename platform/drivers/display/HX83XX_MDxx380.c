@@ -401,8 +401,12 @@ void display_render()
 
 bool display_renderingInProgress()
 {
-    /* Rendering is in progress if display's chip select is low. */
-    return gpio_readPin(LCD_CS);
+    /*
+     * Rendering is in progress if display's chip select is low or a DMA
+     * transfer is in progress.
+     */
+    bool dmaBusy = (DMA2_Stream7->CR & DMA_SxCR_EN) ? true : false;
+    return (gpio_readPin(LCD_CS) == 0) || dmaBusy;
 }
 
 void *display_getFrameBuffer()
