@@ -54,7 +54,7 @@ void platform_init();
 void platform_terminate();
 
 /**
- * This function reads and returns the current battery voltage.
+ * This function reads and returns the current battery voltage in volt.
  */
 float platform_getVbat();
 
