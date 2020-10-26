@@ -33,3 +33,70 @@ void platform_setBacklightLevel(uint8_t level)
 {
 	printf("platform_setBacklightLevel(%u)\n", level);
 }
+
+
+float platform_getVbat(){
+	printf("platform_getVbat()\n");
+	return 0.69;
+}
+
+
+float platform_getMicLevel(){
+	printf("platform_getMicLevel()\n");
+	return 0.69;
+}
+
+
+float platform_getVolumeLevel(){
+	printf("platform_getVolumeLevel()\n");
+	return 0.69;
+}
+
+
+uint8_t platform_getChSelector(){
+	printf("platform_getChSelector()\n");
+	return 42;
+}
+
+
+bool platform_getPttStatus(){
+	printf("platform_getVbat()\n");
+	return true;
+}
+
+
+void platform_ledOn(led_t led){
+	char* str;
+
+	switch(led){
+		case 0:
+			str = "GREEN";
+			break;
+		case 1:
+			str = "RED";
+			break;
+		case 2:
+			str = "YELLOW";
+			break;
+		case 3:
+			str = "WHITE";
+			break;
+	}
+
+	printf("platform_ledOn(%s)\n", str);
+}
+
+
+void platform_ledOff(led_t led){
+	printf("platform_ledOff()\n");
+}
+
+
+void platform_beepStart(uint16_t freq){
+	printf("platform_beepStart(%u)\n", freq);
+}
+
+
+void platform_beepStop(){
+	printf("platform_beepStop()\n");
+}
