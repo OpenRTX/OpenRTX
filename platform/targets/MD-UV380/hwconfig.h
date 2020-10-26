@@ -62,6 +62,13 @@
 #define PTT_SW GPIOE,11
 
 /*
+ * Keyboard. Here we define only rows, since coloumn lines are the same as
+ * LCD_Dx. See also: https://www.qsl.net/dl4yhf/RT3/md380_hw.html#keyboard
+ */
+#define KB_ROW1 GPIOA,6 /* K1 */
+#define KB_ROW2 GPIOD,2 /* K2 */
+
+/*
  * To enable pwm for display backlight dimming uncomment this directive.
  *
  * WARNING: backlight pwm is disabled by default because it generates a
