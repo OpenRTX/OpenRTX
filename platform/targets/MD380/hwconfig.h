@@ -67,5 +67,6 @@
  */
 #define KB_ROW1 GPIOA,6 /* K1 */
 #define KB_ROW2 GPIOD,2 /* K2 */
+#define KB_ROW3 GPIOD,3 /* K3 */
 
 #endif

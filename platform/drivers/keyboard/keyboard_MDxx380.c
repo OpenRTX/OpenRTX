@@ -30,8 +30,10 @@ void kbd_init()
     /* Set the two row lines as outputs */
     gpio_setMode(KB_ROW1, OUTPUT);
     gpio_setMode(KB_ROW2, OUTPUT);
+    gpio_setMode(KB_ROW3, OUTPUT);
     gpio_clearPin(KB_ROW1);
     gpio_clearPin(KB_ROW2);
+    gpio_clearPin(KB_ROW3);
 }
 
 void kbd_terminate()
@@ -39,9 +41,10 @@ void kbd_terminate()
     /* Back to default state */
     gpio_clearPin(KB_ROW1);
     gpio_clearPin(KB_ROW2);
+    gpio_clearPin(KB_ROW3);
     gpio_setMode(KB_ROW1, INPUT);
     gpio_setMode(KB_ROW2, INPUT);
-
+    gpio_setMode(KB_ROW3, INPUT);
 }
 
 uint32_t kbd_getKeys()
@@ -89,5 +92,11 @@ uint32_t kbd_getKeys()
     if(gpio_readPin(LCD_D3)) keys |= KEY_7;
 
     gpio_clearPin(KB_ROW2);
+    gpio_setPin(KB_ROW3);
+
+    if(gpio_readPin(LCD_D6)) keys |= KEY_F1;
+    if(gpio_readPin(LCD_D7)) keys |= KEY_MONI;
+
+    gpio_clearPin(KB_ROW3);
     return keys;
 }
