@@ -47,16 +47,11 @@
 #define RED_LED    GPIOE,1
 
 /* Analog inputs */
-#define AIN_VOLUME GPIOA,0
 #define AIN_VBAT   GPIOA,1
-#define AIN_MIC    GPIOA,3
-#define AIN_RSSI   GPIOB,0
 
 /* Channel selection rotary encoder */
 #define CH_SELECTOR_0 GPIOE,14
-#define CH_SELECTOR_1 GPIOE,15
-#define CH_SELECTOR_2 GPIOB,10
-#define CH_SELECTOR_3 GPIOB,11
+#define CH_SELECTOR_1 GPIOB,11
 
 /* Push-to-talk switch */
 #define PTT_SW GPIOE,11

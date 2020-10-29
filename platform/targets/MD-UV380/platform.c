@@ -55,8 +55,6 @@ void platform_init()
 
     gpio_setMode(CH_SELECTOR_0, INPUT);
     gpio_setMode(CH_SELECTOR_1, INPUT);
-    gpio_setMode(CH_SELECTOR_2, INPUT);
-    gpio_setMode(CH_SELECTOR_3, INPUT);
 
     gpio_setMode(PTT_SW, INPUT);
 
@@ -108,12 +106,8 @@ void platform_terminate()
     gpio_clearPin(GREEN_LED);
     gpio_clearPin(RED_LED);
 
-    /* Shut down timer */
-    RCC->APB2ENR &= ~RCC_APB2ENR_TIM8EN;
-
     /* Shut down ADC */
     adc1_terminate();
-
 }
 
 float platform_getVbat()
@@ -128,22 +122,20 @@ float platform_getVbat()
 
 float platform_getMicLevel()
 {
-    return adc1_getMeasurement(2);
+    return 0.0f;
 }
 
 float platform_getVolumeLevel()
 {
-    return adc1_getMeasurement(3);
+    return 0.0f;
 }
 
 uint8_t platform_getChSelector()
 {
-    static const uint8_t rsPositions[] = { 11, 14, 10, 15, 6, 3, 7, 2, 12, 13,
-                                           9, 16, 5, 4, 8, 1 };
+    static const uint8_t rsPositions[] = { 1, 4, 2, 3};
     int pos = gpio_readPin(CH_SELECTOR_0)
             | (gpio_readPin(CH_SELECTOR_1) << 1)
-            | (gpio_readPin(CH_SELECTOR_2) << 2)
-            | (gpio_readPin(CH_SELECTOR_3) << 3);
+
     return rsPositions[pos];
 }
 
