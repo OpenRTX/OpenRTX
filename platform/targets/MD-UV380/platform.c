@@ -134,7 +134,7 @@ uint8_t platform_getChSelector()
 {
     static const uint8_t rsPositions[] = { 1, 4, 2, 3};
     int pos = gpio_readPin(CH_SELECTOR_0)
-            | (gpio_readPin(CH_SELECTOR_1) << 1)
+            | (gpio_readPin(CH_SELECTOR_1) << 1);
 
     return rsPositions[pos];
 }

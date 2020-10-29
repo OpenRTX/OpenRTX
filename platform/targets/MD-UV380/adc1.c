@@ -32,11 +32,12 @@ void adc1_init()
      * - PA1: battery voltage
      * - PA3: vox level
      * - PB0: RSSI level
+     * Volume, Mic and RSSI temporarily disabled until the right pinout is found
      */
-    gpio_setMode(AIN_VOLUME, INPUT_ANALOG);
+    //gpio_setMode(AIN_VOLUME, INPUT_ANALOG);
     gpio_setMode(AIN_VBAT,   INPUT_ANALOG);
-    gpio_setMode(AIN_MIC,    INPUT_ANALOG);
-    gpio_setMode(AIN_RSSI,   INPUT_ANALOG);
+    //gpio_setMode(AIN_MIC,    INPUT_ANALOG);
+    //gpio_setMode(AIN_RSSI,   INPUT_ANALOG);
 
     /*
      * ADC clock is APB2 frequency divided by 8, giving 10.5MHz.

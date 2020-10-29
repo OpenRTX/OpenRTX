@@ -40,10 +40,10 @@ void platform_test()
     float volumeLevel = platform_getVolumeLevel();
     uint8_t currentCh = platform_getChSelector();
     bool ptt = platform_getPttStatus();
-    char buf2[20] = "";
+    char buf2[26] = "";
     snprintf(buf2, sizeof(buf2), "bat:%.2f mic:%.2f", vBat, micLevel);
-    char buf3[20] = "";
-    snprintf(buf3, sizeof(buf3), "vol:%.2f ch:%d ptt:%d", volumeLevel, currentCh, ptt);
+    char buf3[26] = "";
+    snprintf(buf3, sizeof(buf3), "vol:%.2f ch:%d ptt:%s", volumeLevel, currentCh, ptt?"on":"off");
     gfx_print(pos_line2, buf2, FONT_SIZE_1, TEXT_ALIGN_LEFT, color_white);
     gfx_print(pos_line3, buf3, FONT_SIZE_1, TEXT_ALIGN_LEFT, color_white);
     gfx_render();
