@@ -22,6 +22,7 @@
 
 #include <stdbool.h>
 #include <state.h>
+#include <stdint.h>
 
 /**
  * This function initialises the User Interface, starting the 
@@ -34,7 +35,7 @@ void ui_init();
  * current radio state and the keys pressed.
  * @return true if a screen refresh is needed after the update
  */
-bool ui_update(state_t state, uint16_t keys);
+bool ui_update(state_t state, uint32_t keys);
 
 /**
  * This function terminates the User Interface.

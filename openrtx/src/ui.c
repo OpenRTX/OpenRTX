@@ -61,7 +61,7 @@ void ui_init()
 {
 }
 
-bool ui_update(state_t state, uint16_t keys)
+bool ui_update(state_t state, uint32_t keys)
 {
     return true;
 }
