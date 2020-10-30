@@ -58,6 +58,8 @@ def = {'DONT_USE_CMSIS_INIT': ''}
 ## Linux
 linux_src = src + ['openrtx/src/main.c',
                    'openrtx/src/bootstrap.c',
+                   'openrtx/src/state.c',
+                   'openrtx/src/ui.c',
                    'platform/drivers/display/display_libSDL.c',
                    'platform/mcu/x86_64/drivers/gpio.c',
                    'platform/mcu/x86_64/drivers/delays.c',
@@ -85,6 +87,8 @@ endif
 ## TYT MD380
 md380_src = src + ['openrtx/src/main.c',
                    'openrtx/src/bootstrap.c',
+                   'openrtx/src/state.c',
+                   'openrtx/src/ui.c',
                    'platform/mcu/STM32F4xx/boot/startup.c',
                    'platform/mcu/STM32F4xx/boot/libc_integration.c',
                    'platform/mcu/STM32F4xx/drivers/usb/usb_bsp.c',
@@ -125,6 +129,8 @@ md380_inc = inc + ['platform/mcu/CMSIS/Include',
 ## TYT MD-UV380
 mduv380_src = src + ['openrtx/src/main.c',
                       'openrtx/src/bootstrap.c',
+                      'openrtx/src/state.c',
+                      'openrtx/src/ui.c',
                       'platform/mcu/STM32F4xx/boot/startup.c',
                       'platform/mcu/STM32F4xx/boot/libc_integration.c',
                       'platform/mcu/STM32F4xx/drivers/usb/usb_bsp.c',
