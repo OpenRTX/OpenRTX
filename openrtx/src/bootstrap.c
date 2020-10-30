@@ -69,6 +69,8 @@ static void startTask(void* arg)
     /* SysTick is available only for ARM-based targets */
     #ifdef __arm__
     OS_CPU_SysTickInitFreq(SystemCoreClock);
+    #else
+    OS_CPU_SysTickInit();
     #endif
 
     /* Initialise platform drivers */
