@@ -21,9 +21,16 @@ The following steps depend on the selected platform:
 
 ### Linux
 
-The OpenRTX linux build depends on libSDL, on Ubuntu you can install it with:
+The OpenRTX linux build depends on libSDL, 
+
+on Ubuntu you can install it with:
 ```
 sudo apt install gcc pkg-config libsdl2-dev
+```
+
+on Fedora you need:
+```
+sudo dnf install meson SDL2-devel
 ```
 
 The firmware can be compiled with:
@@ -50,6 +57,11 @@ on you system, you can install one using your package manager.
 For example on Ubuntu you can install `arm-none-eabi-gcc`
 ```
 sudo apt install gcc-arm-none-eabi
+```
+
+on Fedora you need:
+```
+sudo dnf install arm-none-eabi-gcc-cs
 ```
 
 You can then proceed in building the firmware:
@@ -106,6 +118,7 @@ OpenRTX was created by:
 - Niccolò Izzo IU2KIN <n@izzo.sh>
 - Silvano Seva IU2KWO <silseva@fastwebnet.it>
 - Federico Amedeo Izzo IU2NUO <federico@izzo.pro>
+- Frederik Saraci IU2NRO <frederik.saraci@gmail.it>
 
 All this was made possible by the huge reverse engineering effort of
 Travis Goodspeed and all the contributors of [md380tools](https://github.com/travisgoodspeed/md380tools).
