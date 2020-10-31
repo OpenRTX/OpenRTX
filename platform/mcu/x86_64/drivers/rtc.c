@@ -1,5 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Federico Izzo IU2NUO, Niccolò Izzo IU2KIN and   *
+ *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
+ *                         Niccolò Izzo IU2KIN,                            *
  *                         Silvano Seva IU2KWO                             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -16,54 +17,60 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <os.h>
-#include "gpio.h"
-#include "graphics.h"
-#include "hwconfig.h"
-#include "platform.h"
-#include "state.h"
-#include "keyboard.h"
-#include "ui.h"
+#include <time.h>
+#include "rtc.h"
 
-
-int main(void)
+void rtc_init()
 {
-    OS_ERR os_err;
+    printf("rtc_init()\n");
+}
 
-    // Init the graphic stack
-    gfx_init();
-    platform_setBacklightLevel(255);
+void rtc_shutdown()
+{
+    printf("rtc_shutdown()\n");
+}
 
-    // Print splash screen
-    point_t splash_origin = {0, SCREEN_HEIGHT / 2};
-    color_t color_yellow_fab413 = {250, 180, 19};
-    char *splash_buf = "OpenRTX";
-    gfx_clearScreen();
-    gfx_print(splash_origin, splash_buf, FONT_SIZE_4, TEXT_ALIGN_CENTER, color_yellow_fab413);
-    gfx_render();
-    while(gfx_renderingInProgress());
-    OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
-    
-    // Clear screen
-    gfx_clearScreen();
-    gfx_render();
-    while(gfx_renderingInProgress());
+void rtc_setTime(curTime_t t)
+{
+    printf("rtc_setTime(t)\n");
+}
 
+void rtc_setHour(uint8_t hours, uint8_t minutes, uint8_t seconds)
+{
+    printf("rtc_setHour(%d, %d, %d)\n", hours, minutes, seconds);
+}
 
-    // UI update infinite loop
-    while(1)
-    {
-	state_t state = state_update();
-	uint32_t keys = kbd_getKeys();
-	bool renderNeeded = ui_update(state, keys);
-	if(renderNeeded)
-	{
-	    gfx_render();
-	    while(gfx_renderingInProgress());
-	}
-        OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &os_err);
-    }
+void rtc_setDate(uint8_t date, uint8_t month, uint8_t year)
+{
+    printf("rtc_setDate(%d, %d, %d)\n", date, month, year);
+}
+
+curTime_t rtc_getTime()
+{
+    curTime_t t;
+
+    time_t rawtime;
+    struct tm * timeinfo;
+    time ( &rawtime );
+    timeinfo = localtime ( &rawtime );
+
+    t.hour = timeinfo->tm_hour;
+    t.minute = timeinfo->tm_min;
+    t.second = timeinfo->tm_sec;
+    t.year = timeinfo->tm_year + 1900;
+    t.day = timeinfo->tm_mday;
+    t.month = timeinfo->tm_mon + 1;
+
+    return t;
+}
+
+void rtc_dstSet()
+{
+    printf("rtc_dstSet()\n");
+}
+
+void rtc_dstClear()
+{
+    printf("rtc_dstClear()\n");
 }
