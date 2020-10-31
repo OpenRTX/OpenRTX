@@ -8,6 +8,18 @@ project('OpenRTX', 'c',
 ##
 ## Here are listed all the platform independent source files
 ##
+
+## OpenRTX
+
+openrtx_src = ['openrtx/src/main.c',
+               'openrtx/src/bootstrap.c',
+               'openrtx/src/state.c',
+               'openrtx/src/ui.c']
+
+openrtx_inc = ['openrtx/include/interfaces',
+               'openrtx/include/fonts']
+
+## RTOS
 rtos_src = ['rtos/uC-OS3/Source/__dbg_uCOS-III.c',
             'rtos/uC-OS3/Source/os_cfg_app.c',
             'rtos/uC-OS3/Source/os_core.c',
@@ -31,20 +43,17 @@ rtos_src = ['rtos/uC-OS3/Source/__dbg_uCOS-III.c',
             'rtos/uC-LIB/lib_math.c',
             'rtos/uC-LIB/lib_mem.c',
             'rtos/uC-LIB/lib_str.c']
-src = rtos_src
 
-##
-## Includes
-##
-interfaces = ['openrtx/include/interfaces']
 rtos_inc = ['rtos/uC-OS3/Source',
             'rtos/uC-OS3/Cfg',
             'rtos/uC-CPU',
             'rtos/uC-CPU/Cfg',
             'rtos/uC-LIB',
             'rtos/uC-LIB/Cfg']
-fonts = ['openrtx/include/fonts']
-inc = interfaces + rtos_inc + fonts
+
+
+src = openrtx_src + rtos_src
+inc = openrtx_inc + rtos_inc
 
 ##
 ## Definitions
@@ -52,15 +61,48 @@ inc = interfaces + rtos_inc + fonts
 def = {'DONT_USE_CMSIS_INIT': ''}
 
 ##
+## MCU-dependent sources and includes
+##
+
+## STM32F405
+
+stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.c',
+                 'platform/mcu/STM32F4xx/boot/libc_integration.c',
+                 'platform/mcu/STM32F4xx/drivers/usb/usb_bsp.c',
+                 'platform/mcu/STM32F4xx/drivers/usb/usb_core.c',
+                 'platform/mcu/STM32F4xx/drivers/usb/usb_dcd.c',
+                 'platform/mcu/STM32F4xx/drivers/usb/usb_dcd_int.c',
+                 'platform/mcu/STM32F4xx/drivers/usb/usbd_desc.c',
+                 'platform/mcu/STM32F4xx/drivers/usb/usbd_core.c',
+                 'platform/mcu/STM32F4xx/drivers/usb/usbd_ioreq.c',
+                 'platform/mcu/STM32F4xx/drivers/usb/usbd_req.c',
+                 'platform/mcu/STM32F4xx/drivers/usb/usbd_usr.c',
+                 'platform/mcu/STM32F4xx/drivers/gpio.c',
+                 'platform/mcu/STM32F4xx/drivers/usb_vcom.c',
+                 'platform/mcu/STM32F4xx/drivers/delays.c',
+                 'platform/mcu/STM32F4xx/drivers/rtc.c',
+                 'platform/mcu/CMSIS/Device/ST/STM32F4xx/Source/system_stm32f4xx.c',
+                 'rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M/os_cpu_c.c',
+                 'rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M/os_cpu_a.s',
+                 'rtos/uC-CPU/ARM-Cortex-M/ARMv7-M/cpu_c.c',
+                 'rtos/uC-CPU/ARM-Cortex-M/ARMv7-M/cpu_a.s']
+
+stm32f405_inc = ['platform/mcu/CMSIS/Include',
+                 'platform/mcu/CMSIS/Device/ST/STM32F4xx/Include',
+                 'platform/mcu/STM32F4xx',
+                 'platform/mcu/STM32F4xx/drivers',
+                 'platform/mcu/STM32F4xx/drivers/usb',
+                 'rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M',
+                 'rtos/uC-CPU/ARM-Cortex-M/ARMv7-M']
+
+stm32f405_def = {'STM32F40_41xxx': ''}
+
+##
 ## Platform specializations
 ##
 
 ## Linux
-linux_src = src + ['openrtx/src/main.c',
-                   'openrtx/src/bootstrap.c',
-                   'openrtx/src/state.c',
-                   'openrtx/src/ui.c',
-                   'platform/drivers/display/display_libSDL.c',
+linux_src = src + ['platform/drivers/display/display_libSDL.c',
                    'platform/drivers/keyboard/keyboard_linux.c',
                    'platform/mcu/x86_64/drivers/gpio.c',
                    'platform/mcu/x86_64/drivers/delays.c',
@@ -84,89 +126,28 @@ else
   linux_dep = []
 endif
 
-
 ## TYT MD380
-md380_src = src + ['openrtx/src/main.c',
-                   'openrtx/src/bootstrap.c',
-                   'openrtx/src/state.c',
-                   'openrtx/src/ui.c',
-                   'platform/mcu/STM32F4xx/boot/startup.c',
-                   'platform/mcu/STM32F4xx/boot/libc_integration.c',
-                   'platform/mcu/STM32F4xx/drivers/usb/usb_bsp.c',
-                   'platform/mcu/STM32F4xx/drivers/usb/usb_core.c',
-                   'platform/mcu/STM32F4xx/drivers/usb/usb_dcd.c',
-                   'platform/mcu/STM32F4xx/drivers/usb/usb_dcd_int.c',
-                   'platform/mcu/STM32F4xx/drivers/usb/usbd_desc.c',
-                   'platform/mcu/STM32F4xx/drivers/usb/usbd_core.c',
-                   'platform/mcu/STM32F4xx/drivers/usb/usbd_ioreq.c',
-                   'platform/mcu/STM32F4xx/drivers/usb/usbd_req.c',
-                   'platform/mcu/STM32F4xx/drivers/usb/usbd_usr.c',
-                   'platform/mcu/STM32F4xx/drivers/gpio.c',
-                   'platform/mcu/STM32F4xx/drivers/usb_vcom.c',
-                   'platform/mcu/STM32F4xx/drivers/delays.c',
-                   'platform/mcu/CMSIS/Device/ST/STM32F4xx/Source/system_stm32f4xx.c',
-                   'platform/drivers/display/HX83XX_MDxx380.c',
-                   'platform/drivers/keyboard/keyboard_MDxx380.c',
-                   'platform/targets/MD380/platform.c',
-                   'platform/targets/MD380/adc1.c',
-                   'openrtx/src/graphics/graphics_rgb565.c',
-                   'rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M/os_cpu_c.c',
-                   'rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M/os_cpu_a.s',
-                   'rtos/uC-CPU/ARM-Cortex-M/ARMv7-M/cpu_c.c',
-                   'rtos/uC-CPU/ARM-Cortex-M/ARMv7-M/cpu_a.s']
+md380_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDxx380.c',
+                                   'platform/drivers/keyboard/keyboard_MDxx380.c',
+                                   'platform/targets/MD380/platform.c',
+                                   'platform/targets/MD380/adc1.c',
+                                   'openrtx/src/graphics/graphics_rgb565.c']
 
-md380_def = def + {'STM32F40_41xxx': ''}
+md380_def = def + stm32f405_def
 
-md380_inc = inc + ['platform/mcu/CMSIS/Include',
-                   'platform/mcu/CMSIS/Device/ST/STM32F4xx/Include',
-                   'platform/mcu/STM32F4xx',
-                   'platform/mcu/STM32F4xx/drivers',
-                   'platform/mcu/STM32F4xx/drivers/usb',
-                   'platform/targets/MD380',
-                   'rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M',
-                   'rtos/uC-CPU/ARM-Cortex-M/ARMv7-M']
+md380_inc = inc + stm32f405_inc + ['platform/targets/MD380']
 
 
 ## TYT MD-UV380
-mduv380_src = src + ['openrtx/src/main.c',
-                      'openrtx/src/bootstrap.c',
-                      'openrtx/src/state.c',
-                      'openrtx/src/ui.c',
-                      'platform/mcu/STM32F4xx/boot/startup.c',
-                      'platform/mcu/STM32F4xx/boot/libc_integration.c',
-                      'platform/mcu/STM32F4xx/drivers/usb/usb_bsp.c',
-                      'platform/mcu/STM32F4xx/drivers/usb/usb_core.c',
-                      'platform/mcu/STM32F4xx/drivers/usb/usb_dcd.c',
-                      'platform/mcu/STM32F4xx/drivers/usb/usb_dcd_int.c',
-                      'platform/mcu/STM32F4xx/drivers/usb/usbd_desc.c',
-                      'platform/mcu/STM32F4xx/drivers/usb/usbd_core.c',
-                      'platform/mcu/STM32F4xx/drivers/usb/usbd_ioreq.c',
-                      'platform/mcu/STM32F4xx/drivers/usb/usbd_req.c',
-                      'platform/mcu/STM32F4xx/drivers/usb/usbd_usr.c',
-                      'platform/mcu/STM32F4xx/drivers/gpio.c',
-                      'platform/mcu/STM32F4xx/drivers/usb_vcom.c',
-                      'platform/mcu/STM32F4xx/drivers/delays.c',
-                      'platform/mcu/CMSIS/Device/ST/STM32F4xx/Source/system_stm32f4xx.c',
-                      'platform/drivers/display/HX83XX_MDxx380.c',
-                      'platform/drivers/keyboard/keyboard_MDxx380.c',
-                      'platform/targets/MD-UV380/platform.c',
-                      'platform/targets/MD-UV380/adc1.c',
-                      'openrtx/src/graphics/graphics_rgb565.c',
-                      'rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M/os_cpu_c.c',
-                      'rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M/os_cpu_a.s',
-                      'rtos/uC-CPU/ARM-Cortex-M/ARMv7-M/cpu_c.c',
-                      'rtos/uC-CPU/ARM-Cortex-M/ARMv7-M/cpu_a.s']
+mduv380_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDxx380.c',
+                                     'platform/drivers/keyboard/keyboard_MDxx380.c',
+                                     'platform/targets/MD-UV380/platform.c',
+                                     'platform/targets/MD-UV380/adc1.c',
+                                     'openrtx/src/graphics/graphics_rgb565.c']
 
-mduv380_def = def + {'STM32F40_41xxx': ''}
+mduv380_def = def + stm32f405_def
 
-mduv380_inc = inc + ['platform/mcu/CMSIS/Include',
-		      'platform/mcu/CMSIS/Device/ST/STM32F4xx/Include',
-		      'platform/mcu/STM32F4xx',
-		      'platform/mcu/STM32F4xx/drivers',
-		      'platform/mcu/STM32F4xx/drivers/usb',
-		      'platform/targets/MD-UV380',
-		      'rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M',
-		      'rtos/uC-CPU/ARM-Cortex-M/ARMv7-M']
+mduv380_inc = inc + stm32f405_inc + ['platform/targets/MD-UV380']
 
 ##
 ## Compilation defines
@@ -210,8 +191,8 @@ md380_opts = {'sources': md380_src,
 
 
 mduv380_opts = {'sources': mduv380_src,
-		'c_args': mduv380_args,
-		'include_directories': mduv380_inc}
+                'c_args': mduv380_args,
+                'include_directories': mduv380_inc}
 
 ##
 ## Targets
