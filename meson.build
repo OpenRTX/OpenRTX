@@ -107,12 +107,12 @@ linux_src = src + ['platform/drivers/display/display_libSDL.c',
                    'platform/mcu/x86_64/drivers/gpio.c',
                    'platform/mcu/x86_64/drivers/delays.c',
                    'platform/targets/linux/platform.c',
-                   'openrtx/src/graphics/graphics_bw.c',
+                   'openrtx/src/graphics/graphics_rgb565.c',
                    'rtos/uC-OS3/Ports/POSIX/os_cpu_c.c',
                    'rtos/uC-CPU/Posix/cpu_c.c']
 
 
-linux_def = def + {'SCREEN_WIDTH': '160', 'SCREEN_HEIGHT': '128', 'PIX_FMT_BW': ''}
+linux_def = def + {'SCREEN_WIDTH': '160', 'SCREEN_HEIGHT': '128', 'PIX_FMT_RGB565': ''}
 
 linux_inc = inc + ['rtos/uC-OS3/Ports/POSIX',
                    'rtos/uC-CPU/Posix',
