@@ -77,13 +77,29 @@ void ui_drawTopBar()
     // TODO: Replace with battery icon
     char bat_buf[6] = "";
     float v_bat = platform_getVbat();
-    snprintf(bat_buf, sizeof(bat_buf), "%.1fV", v_bat);
+    snprintf(bat_buf, sizeof(bat_buf), "%.1fV ", v_bat);
     gfx_print(top_bar_pos, bat_buf, FONT_SIZE_1, TEXT_ALIGN_RIGHT, color_white);
 }
 
-void ui_drawMainScreen()
+void ui_drawVFO(state_t state)
+{
+    // Middle line printing positions, uses 8 px padding
+    point_t line1_pos = {0, 25};
+    point_t line2_pos = {0, 57};
+    point_t line3_pos = {0, 89};
+
+    // Print VFO frequencies
+    char freq_buf[20] = "";
+    snprintf(freq_buf, sizeof(freq_buf), "Rx: %09.5f", state.rx_freq);
+    gfx_print(line1_pos, freq_buf, FONT_SIZE_3, TEXT_ALIGN_CENTER, color_white);
+    snprintf(freq_buf, sizeof(freq_buf), "Tx: %09.5f", state.tx_freq);
+    gfx_print(line2_pos, freq_buf, FONT_SIZE_3, TEXT_ALIGN_CENTER, color_white);
+}
+
+void ui_drawMainScreen(state_t state)
 {
     ui_drawTopBar();
+    ui_drawVFO(state);
 }
 
 void ui_init()
@@ -93,7 +109,7 @@ void ui_init()
 bool ui_update(state_t state, uint32_t keys)
 {
     gfx_clearScreen();
-    ui_drawMainScreen();
+    ui_drawMainScreen(state);
     return true;
 }
 

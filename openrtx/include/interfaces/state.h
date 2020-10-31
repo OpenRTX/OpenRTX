@@ -20,6 +20,8 @@
 #ifndef STATE_H
 #define STATE_H
 
+#include <datatypes.h>
+
 /**
  * Part of this structure has been commented because the corresponding
  * functionality is not yet implemented.
@@ -37,8 +39,8 @@ typedef struct state_t {
     //time_t tx_status_tv;
     //bool tx_status;
     
-    //freq_t rx_freq;
-    //freq_t tx_freq;
+    freq_t rx_freq;
+    freq_t tx_freq;
     
     //float tx_power;
     

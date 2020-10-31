@@ -17,24 +17,26 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdio.h>
-#include <state.h>
+#ifndef DATATYPES_H
+#define DATATYPES_H
 
-state_t current_state;
+/**                                                                             
+ * \brief CTCSS and DCS type definition.                                        
+ *                                                                              
+ * Continuous Tone Controlled Squelch System (CTCSS)                            
+ * sub-audible tone frequency are expressed in \em tenth of Hz.                 
+ * For example, the subaudible tone of 88.5 Hz is represented within            
+ * Hamlib by 885.                                                               
+ *                                                                              
+ * Digitally-Coded Squelch codes are simple direct integers.                    
+ */                                                                             
+typedef unsigned int tone_t;
+ 
+/**                                                                             
+ * \brief Frequency type,                                                       
+ *                                                                              
+ * Frequency type unit in Hz, able to hold SHF frequencies.                     
+ */ 
+typedef float freq_t;
 
-void state_init()
-{
-    /*TODO: Read current state parameters from hardware, 
-     * or initialize them to sane defaults */
-     current_state.rx_freq = 0.0;
-     current_state.tx_freq = 0.0;
-}
-
-state_t state_update()
-{
-    return current_state;
-}
-
-void state_terminate()
-{
-}
+#endif /* DATATYPES_H */

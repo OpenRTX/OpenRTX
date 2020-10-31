@@ -33,6 +33,9 @@ int main(void)
 {
     OS_ERR os_err;
 
+    // Initialize the radio state
+    state_init();
+    
     // Init the graphic stack
     gfx_init();
     platform_setBacklightLevel(255);
@@ -51,7 +54,6 @@ int main(void)
     gfx_clearScreen();
     gfx_render();
     while(gfx_renderingInProgress());
-
 
     // UI update infinite loop
     while(1)
