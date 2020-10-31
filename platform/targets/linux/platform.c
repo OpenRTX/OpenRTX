@@ -34,10 +34,9 @@ void platform_setBacklightLevel(uint8_t level)
 	printf("platform_setBacklightLevel(%u)\n", level);
 }
 
-
+// Simulate a fully charged lithium battery
 float platform_getVbat(){
-	printf("platform_getVbat()\n");
-	return 0.69;
+	return 7.8;
 }
 
 

@@ -58,17 +58,27 @@
 #include "ui.h"
 #include "graphics.h"
 #include "rtc.h"
+#include "platform.h"
 
 color_t color_white = {255, 255, 255};
 
 void ui_drawTopBar()
 {
-    // Print clock on top bar, use 4 px padding
-    point_t clock_pos = {0, 5};
+    // Top bar printing position, uses 4 px padding
+    point_t top_bar_pos = {0, 5};
+
+    // Print clock on top bar
     char clock_buf[6] = "";
     curTime_t time = rtc_getTime();
     snprintf(clock_buf, sizeof(clock_buf), "%2d:%2d", time.hour, time.minute);
-    gfx_print(clock_pos, clock_buf, FONT_SIZE_1, TEXT_ALIGN_CENTER, color_white);
+    gfx_print(top_bar_pos, clock_buf, FONT_SIZE_1, TEXT_ALIGN_CENTER, color_white);
+
+    // Print battery voltage on top bar, use 4 px padding
+    // TODO: Replace with battery icon
+    char bat_buf[6] = "";
+    float v_bat = platform_getVbat();
+    snprintf(bat_buf, sizeof(bat_buf), "%.1fV", v_bat);
+    gfx_print(top_bar_pos, bat_buf, FONT_SIZE_1, TEXT_ALIGN_RIGHT, color_white);
 }
 
 void ui_drawMainScreen()
