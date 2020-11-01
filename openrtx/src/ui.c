@@ -197,14 +197,14 @@ void ui_drawTopBar()
     // Print clock on top bar
     char clock_buf[6] = "";
     curTime_t time = rtc_getTime();
-    snprintf(clock_buf, sizeof(clock_buf), "%2d:%2d", time.hour, time.minute);
+    snprintf(clock_buf, sizeof(clock_buf), "%02d:%02d", time.hour, time.minute);
     gfx_print(layout.top_pos, clock_buf, layout.top_font, TEXT_ALIGN_CENTER, color_white);
 
     // Print battery voltage on top bar, use 4 px padding
     // TODO: Replace with battery icon
     char bat_buf[6] = "";
     float v_bat = platform_getVbat();
-    snprintf(bat_buf, sizeof(bat_buf), "%.1fV ", v_bat);
+    snprintf(bat_buf, sizeof(bat_buf), "%02.1fV ", v_bat);
     gfx_print(layout.top_pos, bat_buf, layout.top_font, TEXT_ALIGN_RIGHT, color_white);
 }
 
