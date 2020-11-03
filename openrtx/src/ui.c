@@ -67,6 +67,7 @@
 #include "graphics.h"
 #include "rtc.h"
 #include "platform.h"
+#include "hwconfig.h"
 
 typedef struct layout_t
 {
