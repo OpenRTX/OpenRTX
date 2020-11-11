@@ -30,7 +30,7 @@ uint32_t kbd_getKeys() {
         if (event.type == SDL_QUIT)
             exit(0);
         //Ignore all non-keyboard events
-        if (event.type != SDL_KEYDOWN) return 0;
+        if (event.type != SDL_KEYDOWN) continue;
         const uint8_t *state = SDL_GetKeyboardState(NULL);
         if (state[SDL_SCANCODE_0]) keys |= KEY_0;
         if (state[SDL_SCANCODE_1]) keys |= KEY_1;
