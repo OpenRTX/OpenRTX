@@ -28,7 +28,6 @@ c_link_args = [
                '-Wl,--gc-sections',
                '-Wl,-Map,main.map',
                '-nostdlib',
-               '-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
                '-Wl,--start-group',
                '-lc',
                '-lgcc',

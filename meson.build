@@ -188,11 +188,13 @@ linux_opts = {'sources': linux_src,
 
 md380_opts = {'sources': md380_src,
               'c_args': md380_args,
+              'link_args' : '-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
               'include_directories': md380_inc}
 
 
 mduv380_opts = {'sources': mduv380_src,
                 'c_args': mduv380_args,
+                'link_args' : '-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
                 'include_directories': mduv380_inc}
 
 ##
