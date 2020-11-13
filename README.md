@@ -81,8 +81,20 @@ ninja -C build_arm openrtx_md380 -jN
 Where N is the number of cores that you want to allocate to the build process.
 
 ## Flashing your radio
+You can flash your radio from your Linux computer using the [radio_tool](https://github.com/v0l/radio_tool) software.
 
-If everything compiled without errors you can connect your radio via USB,
+First compile and install `radio_tool` using the following commands
+```
+git clone https://github.com/v0l/radio_tool
+cd radio_tool
+mkdir build && cd build
+cmake ..
+make -j4
+sudo make install
+```
+For more informations on `radio_tool` visit it's repository at https://github.com/v0l/radio_tool
+
+If OpenRTX compiled without errors you can connect your radio via USB,
 put it in recovery mode (by powering it on with the PTT and the button
 above it pressed), and flash the firmware:
 
