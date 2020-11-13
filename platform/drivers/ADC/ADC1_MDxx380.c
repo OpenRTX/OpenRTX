@@ -34,7 +34,7 @@ void adc1_init()
      * - PB0: RSSI level
      */
     gpio_setMode(AIN_VBAT,   INPUT_ANALOG);
-    #ifdef PLATFORM_MD380
+    #if defined(PLATFORM_MD380) || defined(PLATFORM_MD390)
     gpio_setMode(AIN_VOLUME, INPUT_ANALOG);
     gpio_setMode(AIN_MIC,    INPUT_ANALOG);
     gpio_setMode(AIN_RSSI,   INPUT_ANALOG);
@@ -64,7 +64,7 @@ void adc1_init()
               | ADC_CR2_ADON;
 
     /* Scan sequence config. */
-    #ifdef PLATFORM_MD380
+    #if defined(PLATFORM_MD380) || defined(PLATFORM_MD390)
     ADC1->SQR1 = 3 << 20;    /* Four channels to be converted          */
     ADC1->SQR3 |= (1 << 0)   /* CH1, battery voltage on PA1            */
                |  (8 << 5)   /* CH8, RSSI value on PB0                 */
