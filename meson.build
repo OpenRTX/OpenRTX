@@ -96,7 +96,7 @@ stm32f405_inc = ['platform/mcu/CMSIS/Include',
                  'rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M',
                  'rtos/uC-CPU/ARM-Cortex-M/ARMv7-M']
 
-stm32f405_def = {'STM32F40_41xxx': ''}
+stm32f405_def = {'STM32F40_41xxx': '',  'HSE_VALUE':'8000000'}
 
 ##
 ## Platform specializations
