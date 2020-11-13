@@ -18,7 +18,8 @@ openrtx_src = ['openrtx/src/main.c',
 
 openrtx_inc = ['openrtx/include/interfaces',
                'openrtx/include/fonts',
-               'platform/drivers/ADC']
+               'platform/drivers/ADC',
+               'platform/drivers/tones']
 
 ## RTOS
 rtos_src = ['rtos/uC-OS3/Source/__dbg_uCOS-III.c',
@@ -96,7 +97,7 @@ stm32f405_inc = ['platform/mcu/CMSIS/Include',
                  'rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M',
                  'rtos/uC-CPU/ARM-Cortex-M/ARMv7-M']
 
-stm32f405_def = {'STM32F40_41xxx': '',  'HSE_VALUE':'8000000'}
+stm32f405_def = {'STM32F40_41xxx': '', 'HSE_VALUE':'8000000'}
 
 ##
 ## Platform specializations
@@ -132,6 +133,7 @@ endif
 md380_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDxx380.c',
                                    'platform/drivers/keyboard/keyboard_MDxx380.c',
                                    'platform/drivers/ADC/ADC1_MDxx380.c',
+                                   'platform/drivers/tones/toneGenerator_MDxx380.c',
                                    'platform/targets/MD380/platform.c',
                                    'openrtx/src/graphics/graphics_rgb565.c']
 
