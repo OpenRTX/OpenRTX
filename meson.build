@@ -154,12 +154,20 @@ mduv380_inc = inc + stm32f405_inc + ['platform/targets/MD-UV380']
 ##
 ## Compilation defines
 ##
-linux_args = []
+linux_c_args = []
+linux_l_args = ['--entry=systemBootstrap']
+
+# Add AddressSanitizer if required
+if get_option('asan')
+  linux_c_args += '-fsanitize=address'
+  linux_l_args += '-fsanitize=address'
+endif
+
 foreach k, v : linux_def
   if v == ''
-    linux_args += '-D@0@'.format(k)
+    linux_c_args += '-D@0@'.format(k)
   else
-    linux_args += '-D@0@=@1@'.format(k, v)
+    linux_c_args += '-D@0@=@1@'.format(k, v)
   endif
 endforeach
 
@@ -182,10 +190,10 @@ foreach k, v : mduv380_def
 endforeach
 
 linux_opts = {'sources': linux_src,
-              'c_args': linux_args,
+              'c_args': linux_c_args,
               'include_directories': linux_inc,
               'dependencies': linux_dep,
-              'link_args' : '--entry=systemBootstrap'}
+              'link_args' : linux_l_args}
 
 md380_opts = {'sources': md380_src,
               'c_args': md380_args,

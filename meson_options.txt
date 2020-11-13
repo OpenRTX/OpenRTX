@@ -1,0 +1,1 @@
+option('asan', type : 'boolean', value : false, description : 'Compile the software with AddressSanitizer')
