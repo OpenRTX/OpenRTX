@@ -28,6 +28,9 @@
 #define SCREEN_WIDTH 160
 #define SCREEN_HEIGHT 128
 
+/* Screen needs x-axis mirroring */
+#define DISPLAY_MIRROR_X
+
 /* Display */
 #define LCD_D0  GPIOD,14
 #define LCD_D1  GPIOD,15

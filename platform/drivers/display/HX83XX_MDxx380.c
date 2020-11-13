@@ -282,8 +282,8 @@ void display_init()
     /** The registers and commands below are the same in HX8353-E controller **/
 
     /*
-     * Configuring screen's memory access control: TYT MD390 has the screen
-     * rotated by 90° degrees, so we have to exgange row and coloumn indexing.
+     * Configuring screen's memory access control: TYT MD3x0 radios have the screen
+     * rotated by 90° degrees, so we have to exchange row and coloumn indexing.
      * Moreover, we need to invert the vertical updating order to avoid painting
      * an image from bottom to top (that is, horizontally mirrored).
      * For reference see, in HX8353-E datasheet, MADCTL description at page 149
@@ -299,10 +299,10 @@ void display_init()
      * - bit 1 and 0: don't care
      */
     writeCmd(CMD_MADCTL);
-    #ifndef PLATFORM_MD380
-    writeData(0x60);    /* MD390 */
+    #ifndef DISPLAY_MIRROR_X
+    writeData(0x60);    /* MD390 and similar radios: screen "normal" */
     #else
-    writeData(0xA0);    /* MD380 */
+    writeData(0xA0);    /* MD380 and similar radios: screen mirrored */
     #endif
 
     writeCmd(CMD_CASET);
