@@ -20,7 +20,7 @@
 #include <platform.h>
 #include <gpio.h>
 #include "hwconfig.h"
-#include "adc1.h"
+#include "ADC1_MDxx380.h"
 
 void platform_init()
 {

@@ -17,7 +17,7 @@
 
 #include <gpio.h>
 #include "hwconfig.h"
-#include "adc1.h"
+#include "ADC1_MDxx380.h"
 
 uint16_t measurements[4];
 
@@ -32,12 +32,13 @@ void adc1_init()
      * - PA1: battery voltage
      * - PA3: vox level
      * - PB0: RSSI level
-     * Volume, Mic and RSSI temporarily disabled until the right pinout is found
      */
-    //gpio_setMode(AIN_VOLUME, INPUT_ANALOG);
     gpio_setMode(AIN_VBAT,   INPUT_ANALOG);
-    //gpio_setMode(AIN_MIC,    INPUT_ANALOG);
-    //gpio_setMode(AIN_RSSI,   INPUT_ANALOG);
+    #ifdef PLATFORM_MD380
+    gpio_setMode(AIN_VOLUME, INPUT_ANALOG);
+    gpio_setMode(AIN_MIC,    INPUT_ANALOG);
+    gpio_setMode(AIN_RSSI,   INPUT_ANALOG);
+    #endif
 
     /*
      * ADC clock is APB2 frequency divided by 8, giving 10.5MHz.
@@ -63,11 +64,16 @@ void adc1_init()
               | ADC_CR2_ADON;
 
     /* Scan sequence config. */
+    #ifdef PLATFORM_MD380
     ADC1->SQR1 = 3 << 20;    /* Four channels to be converted          */
     ADC1->SQR3 |= (1 << 0)   /* CH1, battery voltage on PA1            */
                |  (8 << 5)   /* CH8, RSSI value on PB0                 */
                |  (3 << 10)  /* CH3, vox level on PA3                  */
                |  (0 << 15); /* CH0, volume potentiometer level on PA0 */
+    #else
+    ADC1->SQR1 = 0;          /* Convert one channel                    */
+    ADC1->SQR3 |= (1 << 0);  /* CH1, battery voltage on PA1            */
+    #endif
 
     /* DMA2 Stream 0 configuration:
      * - channel 0: ADC1

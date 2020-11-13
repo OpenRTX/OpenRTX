@@ -17,7 +17,8 @@ openrtx_src = ['openrtx/src/main.c',
                'openrtx/src/ui.c']
 
 openrtx_inc = ['openrtx/include/interfaces',
-               'openrtx/include/fonts']
+               'openrtx/include/fonts',
+               'platform/drivers/ADC']
 
 ## RTOS
 rtos_src = ['rtos/uC-OS3/Source/__dbg_uCOS-III.c',
@@ -130,8 +131,8 @@ endif
 ## TYT MD380
 md380_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDxx380.c',
                                    'platform/drivers/keyboard/keyboard_MDxx380.c',
+                                   'platform/drivers/ADC/ADC1_MDxx380.c',
                                    'platform/targets/MD380/platform.c',
-                                   'platform/targets/MD380/adc1.c',
                                    'openrtx/src/graphics/graphics_rgb565.c']
 
 md380_def = def + stm32f405_def
@@ -142,8 +143,8 @@ md380_inc = inc + stm32f405_inc + ['platform/targets/MD380']
 ## TYT MD-UV380
 mduv380_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDxx380.c',
                                      'platform/drivers/keyboard/keyboard_MDxx380.c',
+                                     'platform/drivers/ADC/ADC1_MDxx380.c',
                                      'platform/targets/MD-UV380/platform.c',
-                                     'platform/targets/MD-UV380/adc1.c',
                                      'openrtx/src/graphics/graphics_rgb565.c']
 
 mduv380_def = def + stm32f405_def
