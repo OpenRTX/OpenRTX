@@ -1,7 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN,                            *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2020 by Silvano Seva IU2KWO and Niccolò Izzo IU2KIN     *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -17,28 +15,50 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef DATATYPES_H
-#define DATATYPES_H
+#ifndef PLL_MD3x0_H
+#define PLL_MD3x0_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 /**
- * \brief CTCSS and DCS type definition.
+ * Driver for PLL in MD3x0 radios (MD380 and MD380), which is SKY73210.
  *
- * Continuous Tone Controlled Squelch System (CTCSS)
- * sub-audible tone frequency are expressed in \em tenth of Hz.
- * For example, the subaudible tone of 88.5 Hz is represented within Hamlib by
- * 885.
- *
- * Digitally-Coded Squelch codes are simple direct integers.
+ * WARNING: the PLL and DMR chips share the SPI MOSI line, thus particular care
+ * has to be put to avoid them stomping reciprocally. This driver does not make
+ * any check if a SPI transfer is already in progress, deferring the correct bus
+ * management to higher level modules. However, a function returning true if the
+ * bus is currently in use by this driver is provided.
  */
-typedef unsigned int tone_t;
 
 /**
- * \brief Frequency type.
- *
- * Frequency type unit in Hz, able to hold SHF frequencies.
+ * Initialise the PLL.
  */
-typedef uint32_t freq_t;
+void pll_init();
 
-#endif /* DATATYPES_H */
+/**
+ * Terminate PLL driver, bringing GPIOs back to reset state.
+ */
+void pll_terminate();
+
+/**
+ * Change VCO frequency.
+ * @param freq: new VCO frequency, in Hz.
+ * @param clkDiv: reference clock division factor.
+ */
+void pll_setFrequency(float freq, uint8_t clkDiv);
+
+/**
+ * Check if PLL is locked.
+ * @return true if PLL is locked.
+ */
+bool pll_locked();
+
+/**
+ * Check if the SPI bus in common between PLL and DMR chips is in use by this
+ * driver.
+ * @return true if this driver is using the SPI bus.
+ */
+bool pll_spiInUse();
+
+#endif /* PLL_H */

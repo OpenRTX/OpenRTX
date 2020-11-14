@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN,                            *
+ *                         Niccolò Izzo IU2KIN                             *
+ *                         Frederik Saraci IU2NRO                          *
  *                         Silvano Seva IU2KWO                             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -17,28 +18,57 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef DATATYPES_H
-#define DATATYPES_H
+#ifndef RTX_H
+#define RTX_H
 
 #include <stdint.h>
+#include <datatypes.h>
 
-/**
- * \brief CTCSS and DCS type definition.
- *
- * Continuous Tone Controlled Squelch System (CTCSS)
- * sub-audible tone frequency are expressed in \em tenth of Hz.
- * For example, the subaudible tone of 88.5 Hz is represented within Hamlib by
- * 885.
- *
- * Digitally-Coded Squelch codes are simple direct integers.
- */
-typedef unsigned int tone_t;
+enum funcmode
+{
+    OFF,
+    RX,
+    TX
+};
 
-/**
- * \brief Frequency type.
- *
- * Frequency type unit in Hz, able to hold SHF frequencies.
- */
-typedef uint32_t freq_t;
+enum tone
+{
+    NONE,
+    CTCSS_67_0,
+    CTCSS_71_9,
+    CTCSS_81_5
+};
 
-#endif /* DATATYPES_H */
+enum bw
+{
+    BW_12_5,
+    BW_25
+};
+
+enum opmode
+{
+    FM,
+    DMR
+};
+
+void rtx_init();
+
+void rtx_terminate();
+
+void rtx_setTxFreq(freq_t freq);
+
+void rtx_setRxFreq(freq_t freq);
+
+void rtx_setFuncmode(enum funcmode mode);
+
+void rtx_setToneRx(enum tone t);
+
+void rtx_setToneTx(enum tone t);
+
+void rtx_setBandwidth(enum bw b);
+
+float rtx_getRssi();
+
+void rtx_setOpmode(enum opmode mode);
+
+#endif /* RTX_H */

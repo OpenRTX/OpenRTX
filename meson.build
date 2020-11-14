@@ -11,7 +11,6 @@ project('OpenRTX', 'c',
 
 ## OpenRTX
 
-
 openrtx_src = ['openrtx/src/bootstrap.c',
                'openrtx/src/state.c',
                'openrtx/src/ui.c',
@@ -32,6 +31,8 @@ openrtx_inc = ['openrtx/include/interfaces',
                'platform/drivers/NVM',
                'platform/drivers/tones',
                'openrtx/include/fonts/adafruit']
+               'platform/drivers/tones',
+               'platform/drivers/baseband']
 
 ## RTOS
 rtos_src = ['rtos/uC-OS3/Source/__dbg_uCOS-III.c',
@@ -174,6 +175,8 @@ md380_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDx.c',
                                    'platform/drivers/NVM/extFlash_MDx.c',
                                    'platform/drivers/NVM/nvmem_MD3x0.c',
                                    'platform/drivers/tones/toneGenerator_MDx.c',
+                                   'platform/drivers/baseband/pll_MD3x0.c',
+                                   'platform/drivers/baseband/rtx_MD3x0.c',
                                    'platform/targets/MD-380/platform.c',
                                    'openrtx/src/graphics/graphics_rgb565.c']
 

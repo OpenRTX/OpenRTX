@@ -87,4 +87,35 @@
 #define FLASH_SDO GPIOB,4
 #define FLASH_SDI GPIOB,5
 
+/* PLL */
+#define PLL_CS  GPIOD,11
+#define PLL_CLK GPIOE,4
+#define PLL_DAT GPIOE,5     /* WARNING: this line is also HR_C5000 MOSI */
+#define PLL_LD  GPIOD,10
+
+/* HR_C5000 */
+#define DMR_CS    GPIOE,2
+#define DMR_CLK   GPIOC,13
+#define DMR_MOSI  PLL_DAT
+#define DMR_MISO  GPIOE,3
+#define DMR_SLEEP GPIOE,6
+#define V_CS      GPIOB,12
+
+/* RTX control */
+#define PLL_PWR   GPIOA,8
+#define VCOVCC_SW GPIOA,9
+#define DMR_SW    GPIOA,10
+#define FM_SW     GPIOB,2
+#define WN_SW     GPIOA,13
+#define RF_APC_SW GPIOC,4
+#define TX_STG_EN GPIOC,5
+#define RX_STG_EN GPIOC,9
+#define APC_TV    GPIOA,4
+#define MOD2_BIAS GPIOA,5
+
+/* Audio control */
+#define AMP_EN   GPIOB,9
+#define SPK_MUTE GPIOB,8
+#define FM_MUTE  GPIOE,13
+
 #endif
