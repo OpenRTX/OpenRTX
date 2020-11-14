@@ -1,5 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Federico Izzo IU2NUO, Niccolò Izzo IU2KIN and   *
+ *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
+ *                         Niccolò Izzo IU2KIN                             *
+ *                         Frederik Saraci IU2NRO                          *
  *                         Silvano Seva IU2KWO                             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -16,56 +18,157 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <app_cfg.h>
 #include <os.h>
-#include "gpio.h"
-#include "graphics.h"
-#include "hwconfig.h"
-#include "platform.h"
+#include "delays.h"
 #include "state.h"
-#include "keyboard.h"
 #include "ui.h"
 
+// Allocate UI thread task control block and stack
+static OS_TCB       ui_tcb;
+static CPU_STK_SIZE ui_stk[128];
+static void ui_task(void *arg);
 
-int main(void)
+// Allocate state thread task control block and stack
+static OS_TCB       state_tcb;
+static CPU_STK_SIZE state_stk[128];
+static void state_task(void *arg);
+
+// Allocate rtx radio thread task control block and stack
+static OS_TCB       rtx_tcb;
+static CPU_STK_SIZE rtx_stk[128];
+static void rtx_task(void *arg);
+
+// Allocate dmr radio thread task control block and stack
+static OS_TCB       dmr_tcb;
+static CPU_STK_SIZE dmr_stk[128];
+static void dmr_task(void *arg);
+
+
+void create_threads()
 {
     OS_ERR os_err;
 
+    // Create UI thread
+    OSTaskCreate((OS_TCB     *)&ui_tcb,
+                 (CPU_CHAR   *)" ",
+                 (OS_TASK_PTR ) ui_task,
+                 (void       *) 0,
+                 (OS_PRIO     ) 5,
+                 (CPU_STK    *)&ui_stk[0],
+                 (CPU_STK     ) 0,
+                 (CPU_STK_SIZE) 128,
+                 (OS_MSG_QTY  ) 0,
+                 (OS_TICK     ) 0,
+                 (void       *) 0,
+                 (OS_OPT      )(OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR),
+                 (OS_ERR     *)&os_err);
+
+    // Create state thread
+    OSTaskCreate((OS_TCB     *)&state_tcb,
+                 (CPU_CHAR   *)" ",
+                 (OS_TASK_PTR ) state_task,
+                 (void       *) 0,
+                 (OS_PRIO     ) 5,
+                 (CPU_STK    *)&state_stk[0],
+                 (CPU_STK     ) 0,
+                 (CPU_STK_SIZE) 128,
+                 (OS_MSG_QTY  ) 0,
+                 (OS_TICK     ) 0,
+                 (void       *) 0,
+                 (OS_OPT      )(OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR),
+                 (OS_ERR     *)&os_err);
+    
+    // Create rtx radio thread
+    OSTaskCreate((OS_TCB     *)&rtx_tcb,
+                 (CPU_CHAR   *)" ",
+                 (OS_TASK_PTR ) rtx_task,
+                 (void       *) 0,
+                 (OS_PRIO     ) 5,
+                 (CPU_STK    *)&rtx_stk[0],
+                 (CPU_STK     ) 0,
+                 (CPU_STK_SIZE) 128,
+                 (OS_MSG_QTY  ) 0,
+                 (OS_TICK     ) 0,
+                 (void       *) 0,
+                 (OS_OPT      )(OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR),
+                 (OS_ERR     *)&os_err);
+    
+    // Create dmr radio thread
+    OSTaskCreate((OS_TCB     *)&dmr_tcb,
+                 (CPU_CHAR   *)" ",
+                 (OS_TASK_PTR ) dmr_task,
+                 (void       *) 0,
+                 (OS_PRIO     ) 5,
+                 (CPU_STK    *)&dmr_stk[0],
+                 (CPU_STK     ) 0,
+                 (CPU_STK_SIZE) 128,
+                 (OS_MSG_QTY  ) 0,
+                 (OS_TICK     ) 0,
+                 (void       *) 0,
+                 (OS_OPT      )(OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR),
+                 (OS_ERR     *)&os_err);
+}
+
+int main(void)
+{
     // Initialize the radio state
     state_init();
     
-    // Init the graphic stack
-    gfx_init();
-    platform_setBacklightLevel(255);
-
-    // Print splash screen
-    point_t splash_origin = {0, SCREEN_HEIGHT / 2};
-    color_t color_yellow_fab413 = {250, 180, 19};
-    char *splash_buf = "OpenRTX";
-    gfx_clearScreen();
-    gfx_print(splash_origin, splash_buf, FONT_SIZE_4, TEXT_ALIGN_CENTER, color_yellow_fab413);
-    gfx_render();
-    while(gfx_renderingInProgress());
-    OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+    // Create OpenRTX threads
+    create_threads();
     
-    // Clear screen
-    gfx_clearScreen();
-    gfx_render();
-    while(gfx_renderingInProgress());
+    while(1) ;
+    return 0;
+}
 
-    // UI update infinite loop
+static void ui_task(void *arg)
+{
+    (void) arg;
+    OS_ERR os_err; 
     while(1)
     {
-	state_t state = state_update();
-	uint32_t keys = kbd_getKeys();
-	bool renderNeeded = ui_update(state, keys);
-	if(renderNeeded)
-	{
-	    gfx_render();
-	    while(gfx_renderingInProgress());
-	}
-        OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+        // Execute UI thread every 33ms to get ~30FPS
+        ui_main();
+        OSTimeDlyHMSM(0u, 0u, 0u, 33u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+    }
+}
+
+static void state_task(void *arg)
+{
+    (void) arg;
+    OS_ERR os_err; 
+    while(1)
+    {
+        // Execute state thread every 1s
+        state_main();
+        OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+    }
+}
+
+static void rtx_task(void *arg)
+{
+    (void) arg;
+    OS_ERR os_err; 
+    while(1)
+    {
+        // Execute rtx radio thread every 33ms to match UI refresh
+        //TODO: uncomment after rtx.h merge
+        //rtx_main();
+        OSTimeDlyHMSM(0u, 0u, 0u, 33u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+    }
+}
+
+static void dmr_task(void *arg)
+{
+    (void) arg;
+    OS_ERR os_err; 
+    while(1)
+    {
+        // Execute dmr radio thread every 30ms to match DMR timeslot
+        //TODO: uncomment after dmr.h merge
+        //dmr_main();
+        OSTimeDlyHMSM(0u, 0u, 0u, 30u, OS_OPT_TIME_HMSM_STRICT, &os_err);
     }
 }

@@ -30,6 +30,10 @@ void state_init()
      current_state.tx_freq = 0.0;
 }
 
+void state_main()
+{
+}
+
 state_t state_update()
 {
     return current_state;

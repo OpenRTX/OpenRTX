@@ -65,6 +65,11 @@ typedef struct state_t {
 void state_init();
 
 /**
+ * This function is the entry point of the state thread
+ */
+void state_main();
+
+/**
  * This function updates the state information by sourcing the
  * updated values of the various fields of the state_t struct
  * from corresponding device drivers.
