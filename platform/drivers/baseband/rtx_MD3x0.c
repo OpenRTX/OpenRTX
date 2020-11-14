@@ -24,6 +24,7 @@
 #include "rtx.h"
 #include "pll_MD3x0.h"
 #include "ADC1_MDxx380.h"
+#include "HR-C5000_MD3x0.h"
 
 const freq_t IF_FREQ = 49950000.0f;  /* Intermediate frequency: 49.95MHz */
 
@@ -81,6 +82,11 @@ void rtx_init()
      */
     gpio_setPin(PLL_PWR);
     pll_init();
+
+    /*
+     * Configure HR_C5000
+     */
+    C5000_init();
 }
 
 void rtx_terminate()
@@ -124,14 +130,23 @@ void rtx_setFuncmode(enum funcmode mode)
             gpio_clearPin(RF_APC_SW);
             gpio_setPin(VCOVCC_SW);
             pll_setFrequency(rxFreq - IF_FREQ, 5);
-            _setMod2Bias(0x3c0);       /* TODO use calibration      */
-            _setApcTv(0x956);          /* TODO use calibration      */
+            _setMod2Bias(0x60*4 + 0x600);       /* TODO use calibration      */
+            _setApcTv(0x956);                   /* TODO use calibration      */
 
             gpio_setPin(RX_STG_EN);
             break;
 
         case TX:
-            /* TODO */
+            gpio_clearPin(RX_STG_EN);
+
+            gpio_setPin(RF_APC_SW);
+            gpio_clearPin(VCOVCC_SW);
+            pll_setFrequency(txFreq, 5);
+
+            _setMod2Bias(0x60*4 + 0x600);       /* TODO use calibration      */
+            _setApcTv(0x02);
+
+            gpio_setPin(TX_STG_EN);
             break;
 
         default:
