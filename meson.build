@@ -14,10 +14,12 @@ project('OpenRTX', 'c',
 openrtx_src = ['openrtx/src/main.c',
                'openrtx/src/bootstrap.c',
                'openrtx/src/state.c',
-               'openrtx/src/ui.c']
+               'openrtx/src/ui.c',
+               'openrtx/src/threads.c']
 
 openrtx_inc = ['openrtx/include/interfaces',
                'openrtx/include/fonts',
+               'openrtx/include',
                'platform/drivers/ADC',
                'platform/drivers/tones']
 

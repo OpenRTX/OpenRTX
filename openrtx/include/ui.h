@@ -31,11 +31,6 @@
 void ui_init();
 
 /**
- * This function is the entry point of the UI thread 
- */
-void ui_main();
-
-/**
  * This function advances the User Interface FSM, basing on the 
  * current radio state and the keys pressed.
  * @return true if a screen refresh is needed after the update

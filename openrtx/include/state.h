@@ -17,29 +17,69 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdio.h>
-#include <state.h>
+#ifndef STATE_H
+#define STATE_H
 
-state_t current_state;
+#include <datatypes.h>
 
-void state_init()
-{
-    /*TODO: Read current state parameters from hardware, 
-     * or initialize them to sane defaults */
-     current_state.rx_freq = 0.0;
-     current_state.tx_freq = 0.0;
-}
+/**
+ * Part of this structure has been commented because the corresponding
+ * functionality is not yet implemented.
+ * Uncomment once the related feature is ready
+ */
 
-void state_update()
-{
+typedef struct state_t {
+    //enum ui_screen;
+    //enum tuner_mode;
+    //enum radio_mode;
     
-}
+    //time_t rx_status_tv;
+    //bool rx_status;
+    
+    //time_t tx_status_tv;
+    //bool tx_status;
+    
+    freq_t rx_freq;
+    freq_t tx_freq;
+    
+    //float tx_power;
+    
+    //uint8_t squelch;
+    
+    //tone_t rx_tone;
+    //tone_t tx_tone;
+    
+    //ch_t *channel;
+    
+//#ifdef DMR_ENABLED
+    //uint8_t dmr_color;
+    //uint8_t dmr_timeslot;
+    //dmr_contact_t *dmr_contact;
+//#endif
+} state_t;
 
-state_t state_getCurrentState()
-{
-    return current_state;
-}
+/**
+ * This function initialises the Radio state, acquiring the information
+ * needed to populate it from device drivers. 
+ */
+void state_init();
 
-void state_terminate()
-{
-}
+/**
+ * This function updates the state information by sourcing the
+ * updated values of the various fields of the state_t struct
+ * from corresponding device drivers.
+ */
+void state_update();
+
+/**
+ * Fetch current state.
+ * @return current state.
+ */
+state_t state_getCurrentState();
+
+/**
+ * This function terminates the Radio state.
+ */
+void state_terminate();
+
+#endif /* STATE_H */
