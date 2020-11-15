@@ -103,8 +103,8 @@ uint32_t kbd_getKeys()
     gpio_setPin(KB_ROW3);
 
     delayUs(1);
-    if(gpio_readPin(LCD_D6)) keys |= KEY_F1;
-    if(gpio_readPin(LCD_D7)) keys |= KEY_MONI;
+    if(gpio_readPin(FUNC_SW)) keys |= KEY_F1;
+    if(gpio_readPin(MONI_SW)) keys |= KEY_MONI;
 
     gpio_clearPin(KB_ROW3);
     return keys;
