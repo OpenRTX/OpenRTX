@@ -55,7 +55,7 @@ void create_threads()
                  (CPU_CHAR   *)" ",
                  (OS_TASK_PTR ) ui_task,
                  (void       *) 0,
-                 (OS_PRIO     ) 5,
+                 (OS_PRIO     ) 10,
                  (CPU_STK    *)&ui_stk[0],
                  (CPU_STK     ) 0,
                  (CPU_STK_SIZE) 128,
@@ -70,7 +70,7 @@ void create_threads()
                  (CPU_CHAR   *)" ",
                  (OS_TASK_PTR ) state_task,
                  (void       *) 0,
-                 (OS_PRIO     ) 5,
+                 (OS_PRIO     ) 30,
                  (CPU_STK    *)&state_stk[0],
                  (CPU_STK     ) 0,
                  (CPU_STK_SIZE) 128,
@@ -100,7 +100,7 @@ void create_threads()
                  (CPU_CHAR   *)" ",
                  (OS_TASK_PTR ) dmr_task,
                  (void       *) 0,
-                 (OS_PRIO     ) 5,
+                 (OS_PRIO     ) 3,
                  (CPU_STK    *)&dmr_stk[0],
                  (CPU_STK     ) 0,
                  (CPU_STK_SIZE) 128,
@@ -129,9 +129,9 @@ static void ui_task(void *arg)
     OS_ERR os_err; 
     while(1)
     {
-        // Execute UI thread every 33ms to get ~30FPS
+        // Execute UI thread every 30ms to get ~33FPS
         ui_main();
-        OSTimeDlyHMSM(0u, 0u, 0u, 33u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+        OSTimeDlyHMSM(0u, 0u, 0u, 30u, OS_OPT_TIME_HMSM_STRICT, &os_err);
     }
 }
 
@@ -153,10 +153,10 @@ static void rtx_task(void *arg)
     OS_ERR os_err; 
     while(1)
     {
-        // Execute rtx radio thread every 33ms to match UI refresh
+        // Execute rtx radio thread every 30ms to match DMR task
         //TODO: uncomment after rtx.h merge
         //rtx_main();
-        OSTimeDlyHMSM(0u, 0u, 0u, 33u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+        OSTimeDlyHMSM(0u, 0u, 0u, 30u, OS_OPT_TIME_HMSM_STRICT, &os_err);
     }
 }
 
