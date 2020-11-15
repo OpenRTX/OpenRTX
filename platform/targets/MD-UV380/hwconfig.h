@@ -61,10 +61,16 @@
 /*
  * Keyboard. Here we define only rows, since coloumn lines are the same as
  * LCD_Dx. See also: https://www.qsl.net/dl4yhf/RT3/md380_hw.html#keyboard
+ *
+ * "Monitor" and "Function" buttons, on the other hand, are connected to
+ * keyboard row 3 and on LCD_D6 and LCD_D7. They are SWAPPED with respect to
+ * connections made on MD-380.
  */
 #define KB_ROW1 GPIOA,6 /* K1 */
 #define KB_ROW2 GPIOD,2 /* K2 */
 #define KB_ROW3 GPIOD,3 /* K3 */
+#define MONI_SW LCD_D6
+#define FUNC_SW LCD_D7
 
 /*
  * To enable pwm for display backlight dimming uncomment this directive.

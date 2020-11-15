@@ -66,10 +66,17 @@ uint32_t kbd_getKeys()
     /*
      * Scan keyboard by coloumns.
      * For key configuration, see: https://www.qsl.net/dl4yhf/RT3/md380_hw.html#keyboard
+     *
+     * Keys coloumns (LCD_D...) have 1k series resistor and a 10pF capacitor
+     * connected to ground, making a low-pass filter with a settling time of
+     * ~50ns. CPU runs at 168MHz and 50ns are approximately eigth instructions,
+     * this means that we have to put a small delay before reading the GPIOs to
+     * allow voltage to settle.
      */
     uint32_t keys = 0;
     gpio_setPin(KB_ROW1);
 
+    delayUs(1);
     if(gpio_readPin(LCD_D7)) keys |= KEY_STAR;
     if(gpio_readPin(LCD_D2)) keys |= KEY_3;
     if(gpio_readPin(LCD_D1)) keys |= KEY_2;
@@ -82,6 +89,7 @@ uint32_t kbd_getKeys()
     gpio_clearPin(KB_ROW1);
     gpio_setPin(KB_ROW2);
 
+    delayUs(1);
     if(gpio_readPin(LCD_D7)) keys |= KEY_ESC;
     if(gpio_readPin(LCD_D2)) keys |= KEY_DOWN;
     if(gpio_readPin(LCD_D1)) keys |= KEY_UP;
@@ -94,6 +102,7 @@ uint32_t kbd_getKeys()
     gpio_clearPin(KB_ROW2);
     gpio_setPin(KB_ROW3);
 
+    delayUs(1);
     if(gpio_readPin(LCD_D6)) keys |= KEY_F1;
     if(gpio_readPin(LCD_D7)) keys |= KEY_MONI;
 
