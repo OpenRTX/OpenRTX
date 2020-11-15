@@ -9,10 +9,12 @@ Currently OpenRTX is being actively developed for the TYT MD-380/390 and MD-UV38
 This firmware is *highly experimental* and is not in a usable state right now,
 however contributions and testing are welcome and accepted.
 
+For information on currently supported radios and features, see the [Development status](https://github.com/n1zzo/OpenRTX/wiki/Development-status) wiki page.
+
 ## Compile and flash
 
 For instructions on how to compile and flash OpenRTX to your radio,
-or just run OpenRTX on Linux see the [wiki](https://github.com/n1zzo/OpenRTX/wiki).
+or just run OpenRTX on Linux see the [How to compile](https://github.com/n1zzo/OpenRTX/wiki/How-to-compile) wiki page.
 
 ## License
 
