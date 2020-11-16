@@ -101,7 +101,8 @@ void toneGen_init()
 
     /*
      * Timer configuration:
-     * - APB1 frequency = 42MHz, with 1:10 prescaler we have Ftick = 4.2MHz
+     * - APB1 frequency = 42MHz but timer run at twice of this frequency: with
+     * 1:20 prescaler we have Ftick = 4.2MHz
      * - ARR = 255 (8-bit PWM), gives an update rate of 16.406kHz
      * - Nominal update rate is 16.384kHz -> error = +22.25Hz
      */
@@ -109,7 +110,7 @@ void toneGen_init()
     __DSB();
 
     TIM3->ARR   = 0xFF;
-    TIM3->PSC   = 9;
+    TIM3->PSC   = 19;
     TIM3->CCMR1 = TIM_CCMR1_OC2M_2  /* CH2 in PWM mode 1, preload enabled */
                 | TIM_CCMR1_OC2M_1
                 | TIM_CCMR1_OC2PE;

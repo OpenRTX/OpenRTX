@@ -67,15 +67,16 @@ void platform_init()
 
     #ifdef ENABLE_BKLIGHT_DIMMING
     /*
-     * Configure TIM11 for backlight PWM: Fpwm = 256Hz, 8 bit of resolution
-     * APB2 freq. is 84MHz, then: PSC = 1281 to have Ftick = 65.52kHz
+     * Configure TIM11 for backlight PWM: Fpwm = 256Hz, 8 bit of resolution.
+     * APB2 freq. is 84MHz but timer runs at twice this frequency, then:
+     * PSC = 2564 to have Ftick = 65.52kHz
      * With ARR = 256, Fpwm is 256Hz;
      */
     RCC->APB2ENR |= RCC_APB2ENR_TIM11EN;
     __DSB();
 
     TIM11->ARR = 255;
-    TIM11->PSC = 1282;
+    TIM11->PSC = 2563;
     TIM11->CNT = 0;
     TIM11->CR1   |= TIM_CR1_ARPE;
     TIM11->CCMR1 |= TIM_CCMR1_OC1M_2

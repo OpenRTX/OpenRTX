@@ -46,8 +46,9 @@ void platform_init()
     adc1_init();
 
     /*
-     * Configure TIM8 for backlight PWM: Fpwm = 100kHz, 8 bit of resolution
-     * APB2 freq. is 84MHz, then: PSC = 327 to have Ftick = 256.097kHz
+     * Configure TIM8 for backlight PWM: Fpwm = 100kHz with 8 bit of resolution.
+     * APB2 freq. is 84MHz, but timer runs at twice this frequency.
+     * Then: PSC = 655 to have Ftick = 256.097kHz
      * With ARR = 256, Fpwm is 100kHz;
      * Backlight pin is connected to TIM8 CR1.
      */
@@ -55,7 +56,7 @@ void platform_init()
     __DSB();
 
     TIM8->ARR = 255;
-    TIM8->PSC = 327;
+    TIM8->PSC = 654;
     TIM8->CNT = 0;
     TIM8->CR1   |= TIM_CR1_ARPE;    /* LCD backlight is on PC6, TIM8-CH1 */
     TIM8->CCMR1 |= TIM_CCMR1_OC1M_2
