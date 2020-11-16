@@ -23,6 +23,10 @@
 #include "keyboard.h"
 #include <SDL2/SDL.h>
 
+void kbd_init()
+{
+}
+
 uint32_t kbd_getKeys() {
     SDL_Event event;
     uint32_t keys = 0;
