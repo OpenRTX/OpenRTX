@@ -19,9 +19,7 @@
 #include <stdio.h>
 #include <app_cfg.h>
 #include <os.h>
-#include <lib_mem.h>
 #include <hwconfig.h>
-#include <platform.h>
 
 /*
  * Entry point for application code, not in this translation unit.
@@ -66,15 +64,12 @@ static void startTask(void* arg)
 
     CPU_Init();
 
-    /* SysTick is available only for ARM-based targets */
+    /* On ARM-based targets setup SysTick */
     #ifdef __arm__
     OS_CPU_SysTickInitFreq(SystemCoreClock);
     #else
     OS_CPU_SysTickInit();
     #endif
-
-    /* Initialise platform drivers */
-    platform_init();
 
     /* Jump to application code */
     main(0, NULL);
