@@ -25,6 +25,7 @@ void adc1_init()
 {
     RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
     RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
+    __DSB();
 
     /*
      * Configure GPIOs to analog input mode:
@@ -100,8 +101,9 @@ void adc1_init()
 void adc1_terminate()
 {
     DMA2_Stream0->CR &= ~DMA_SxCR_EN;
-    ADC1->CR2 &= ADC_CR2_ADON;
+    ADC1->CR2 &= ~ADC_CR2_ADON;
     RCC->APB2ENR &= ~RCC_APB2ENR_ADC1EN;
+    __DSB();
 }
 
 float adc1_getMeasurement(uint8_t ch)

@@ -106,6 +106,7 @@ void toneGen_init()
      * - Nominal update rate is 16.384kHz -> error = +22.25Hz
      */
     RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
+    __DSB();
 
     TIM3->ARR   = 0xFF;
     TIM3->PSC   = 9;
@@ -125,6 +126,8 @@ void toneGen_init()
 void toneGen_shutdown()
 {
     RCC->APB1ENR &= ~RCC_APB1ENR_TIM3EN;
+    __DSB();
+
     gpio_setMode(CTCSS_OUT, INPUT);
     gpio_setMode(BEEP_OUT,  INPUT);
 }

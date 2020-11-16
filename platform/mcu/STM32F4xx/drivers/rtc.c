@@ -25,6 +25,8 @@ void rtc_init()
 {
     /* Enable write protection for RTC registers */
     RCC->APB1ENR |= RCC_APB1ENR_PWREN;
+    __DSB();
+
     PWR->CR |= PWR_CR_DBP;
     RTC->WPR = 0xCA;
     RTC->WPR = 0x53;

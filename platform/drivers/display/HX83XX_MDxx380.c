@@ -132,6 +132,8 @@ void display_init()
      * framebuffer content to the screen without using CPU.
      */
     RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
+    __DSB();
+
     NVIC_ClearPendingIRQ(DMA2_Stream7_IRQn);
     NVIC_SetPriority(DMA2_Stream7_IRQn, 14);
     NVIC_EnableIRQ(DMA2_Stream7_IRQn);
@@ -141,6 +143,7 @@ void display_init()
      * lines.
      */
     RCC->AHB3ENR |= RCC_AHB3ENR_FSMCEN;
+    __DSB();
 
     /* Configure FSMC as LCD driver.
      * BCR1 config:
@@ -331,6 +334,8 @@ void display_terminate()
 {
     /* Shut off FSMC and deallocate framebuffer */
     RCC->AHB3ENR &= ~RCC_AHB3ENR_FSMCEN;
+    __DSB();
+
     if(frameBuffer != NULL)
     {
         free(frameBuffer);

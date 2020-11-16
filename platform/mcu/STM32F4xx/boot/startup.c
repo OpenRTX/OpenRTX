@@ -59,6 +59,7 @@ void Reset_Handler()
                  |  RCC_AHB1ENR_GPIOCEN
                  |  RCC_AHB1ENR_GPIODEN
                  |  RCC_AHB1ENR_GPIOEEN;
+    __DSB();
 
     // Configure all GPIO pins to fast speed mode (50MHz)
     GPIOA->OSPEEDR = 0xAAAAAAAA;

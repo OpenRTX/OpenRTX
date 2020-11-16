@@ -72,6 +72,8 @@ void platform_init()
      * With ARR = 256, Fpwm is 256Hz;
      */
     RCC->APB2ENR |= RCC_APB2ENR_TIM11EN;
+    __DSB();
+
     TIM11->ARR = 255;
     TIM11->PSC = 1282;
     TIM11->CNT = 0;
@@ -100,6 +102,7 @@ void platform_terminate()
 
     #ifdef ENABLE_BKLIGHT_DIMMING
     RCC->APB2ENR &= ~RCC_APB2ENR_TIM11EN;
+    __DSB();
     #endif
 
     /* Shut down LEDs */
