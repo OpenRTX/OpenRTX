@@ -31,6 +31,8 @@
 #include "usbd_conf.h"
 #include "stm32f4xx.h"
 #include "gpio.h"
+#include <os.h>
+#include <delays.h>
 
 extern USB_OTG_CORE_HANDLE           USB_OTG_dev;
 extern uint32_t USBD_OTG_ISR_Handler(USB_OTG_CORE_HANDLE *pdev);
@@ -78,18 +80,9 @@ void USB_OTG_BSP_EnableInterrupt(USB_OTG_CORE_HANDLE *pdev)
 * @param  usec : Value of delay required in micro sec
 * @retval None
 */
-void USB_OTG_BSP_uDelay (const uint32_t usec) {
-
-    uint32_t count = 0;
-    const uint32_t utime = (120 * usec / 7);
-
-    do
-    {
-        if( ++count > utime )
-        {
-            return ;
-        }
-    } while (1);
+void USB_OTG_BSP_uDelay (const uint32_t usec)
+{
+    delayUs(usec);
 }
 
 
@@ -101,11 +94,13 @@ void USB_OTG_BSP_uDelay (const uint32_t usec) {
 */
 void USB_OTG_BSP_mDelay (const uint32_t msec)
 {
-    USB_OTG_BSP_uDelay(msec * 1000);
+    delayMs(msec);
 }
 
 void OTG_FS_IRQHandler(void)
 {
+    OSIntEnter();
     USBD_OTG_ISR_Handler (&USB_OTG_dev);
+    OSIntExit();
 }
 

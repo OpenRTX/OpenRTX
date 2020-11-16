@@ -249,7 +249,7 @@ void SystemCoreClockUpdate(void)
       else
       {
         /* HSI used as PLL clock source */
-        pllvco = (HSI_VALUE / pllm) * ((RCC->PLLCFGR & RCC_PLLCFGR_PLLN) >> 6);      
+        pllvco = (HSI_VALUE / pllm) * ((RCC->PLLCFGR & RCC_PLLCFGR_PLLN) >> 6);
       }
 
       pllp = (((RCC->PLLCFGR & RCC_PLLCFGR_PLLP) >>16) + 1 ) *2;
@@ -306,18 +306,21 @@ static void SetSysClock(void)
     RCC->APB1ENR |= RCC_APB1ENR_PWREN;
     PWR->CR |= PWR_CR_VOS;
 
-    /* HCLK = SYSCLK / 1*/
+    /* HCLK = SYSCLK / 1 */
     RCC->CFGR |= RCC_CFGR_HPRE_DIV1;
 
-    /* PCLK2 = HCLK / 2*/
+    /* PCLK2 = HCLK / 2 */
     RCC->CFGR |= RCC_CFGR_PPRE2_DIV2;
 
-    /* PCLK1 = HCLK / 4*/
+    /* PCLK1 = HCLK / 4 */
     RCC->CFGR |= RCC_CFGR_PPRE1_DIV4;
 
     /* Configure the main PLL */
-    RCC->PLLCFGR = PLL_M | (PLL_N << 5) | (((PLL_P >> 1) -1) << 16) |
-                   (RCC_PLLCFGR_PLLSRC_HSE) | (PLL_Q << 24);
+    RCC->PLLCFGR = (PLL_Q << 24)                /* PLL divider for USB clock  */
+                 | RCC_PLLCFGR_PLLSRC_HSE       /* HSE as PLL clock source    */
+                 | (((PLL_P >> 1) -1) << 16)    /* PLL divider for main clock */
+                 | (PLL_N << 6)                 /* PLL multiplier             */
+                 | PLL_M;                       /* Input clock divider        */
 
     /* Enable the main PLL */
     RCC->CR |= RCC_CR_PLLON;
