@@ -64,14 +64,14 @@
  */
 
 #include <stdio.h>
-#include <os.h>
-#include "ui.h"
-#include "graphics.h"
-#include "keyboard.h"
-#include "delays.h"
-#include "rtc.h"
-#include "platform.h"
-#include "hwconfig.h"
+#include <stdint.h>
+#include <ui.h>
+#include <rtc.h>
+#include <delays.h>
+#include <graphics.h>
+#include <keyboard.h>
+#include <platform.h>
+#include <hwconfig.h>
 
 typedef struct layout_t
 {
@@ -90,100 +90,85 @@ typedef struct layout_t
 layout_t layout;
 bool layout_ready = false;
 color_t color_white = {255, 255, 255};
-bool first_run = true;
 
 layout_t _ui_calculateLayout()
 {
-    // Variables needed to calculate positions
-    uint16_t top_h = 0;
-    uint16_t top_pad = 0;
-    uint16_t line1_h = 0;
-    uint16_t line2_h = 0;
-    uint16_t line3_h = 0;
-    uint16_t line_pad = 0;
-    uint16_t bottom_pad = 0;
-    fontSize_t top_font = 0;
-    fontSize_t line1_font = 0;
-    fontSize_t line2_font = 0;
-    fontSize_t line3_font = 0;
-    fontSize_t bottom_font = 0;
-
     // Calculate UI layout depending on vertical resolution
     // Tytera MD380, MD-UV380
-    if (SCREEN_HEIGHT >= 128)
-    {
-        // Height and padding shown in diagram at beginning of file
-        top_h = 16;
-        top_pad = 4;
-        line1_h = 32;
-        line2_h = 32;
-        line3_h = 32;
-        line_pad = 8;
-        bottom_pad = 4;
-        
-        // Top bar font: 8 pt
-        top_font = FONT_SIZE_1;
-        // Middle line fonts: 16 pt
-        line1_font = FONT_SIZE_3;
-        line2_font = FONT_SIZE_3;
-        line3_font = FONT_SIZE_3;
-        // Bottom bar font: 8 pt
-        bottom_font = FONT_SIZE_1;
-    }
+    #if SCREEN_HEIGHT > 127
+
+    // Height and padding shown in diagram at beginning of file
+    const uint16_t top_h = 16;
+    const uint16_t top_pad = 4;
+    const uint16_t line1_h = 32;
+    const uint16_t line2_h = 32;
+    const uint16_t line3_h = 32;
+    const uint16_t line_pad = 8;
+    const uint16_t bottom_pad = 4;
+
+    // Top bar font: 8 pt
+    const fontSize_t top_font = FONT_SIZE_1;
+    // Middle line fonts: 16 pt
+    const fontSize_t line1_font = FONT_SIZE_3;
+    const fontSize_t line2_font = FONT_SIZE_3;
+    const fontSize_t line3_font = FONT_SIZE_3;
+    // Bottom bar font: 8 pt
+    const fontSize_t bottom_font = FONT_SIZE_1;
+
     // Radioddity GD-77
-    else if (SCREEN_HEIGHT >= 64)
-    {
-        // Height and padding shown in diagram at beginning of file
-        top_h = 8;
-        top_pad = 0;
-        line1_h = 20;
-        line2_h = 20;
-        line3_h = 0;
-        line_pad = 2;
-        bottom_pad = 0;
+    #elif SCREEN_HEIGHT > 63
 
-        // Top bar font: 8 pt
-        top_font = FONT_SIZE_1;
-        // Middle line fonts: 16, 16, 8 pt
-        line1_font = FONT_SIZE_3;
-        line2_font = FONT_SIZE_3;
-        line3_font = FONT_SIZE_1;
-        // Bottom bar font: 8 pt
-        bottom_font = FONT_SIZE_1;
-    }
-    else if (SCREEN_HEIGHT >= 48)
-    {
-        // Height and padding shown in diagram at beginning of file
-        top_h = 8;
-        top_pad = 0;
-        line1_h = 20;
-        line2_h = 20;
-        line3_h = 0;
-        line_pad = 2;
-        bottom_pad = 0;
+    // Height and padding shown in diagram at beginning of file
+    const uint16_t top_h = 8;
+    const uint16_t top_pad = 0;
+    const uint16_t line1_h = 20;
+    const uint16_t line2_h = 20;
+    const uint16_t line3_h = 0;
+    const uint16_t line_pad = 2;
+    const uint16_t bottom_pad = 0;
 
-        // Top bar font: 8 pt
-        top_font = FONT_SIZE_1;
-        // Middle line fonts: 16, 16
-        line1_font = FONT_SIZE_3;
-        line2_font = FONT_SIZE_3;
-        // Not present in this UI
-        line3_font = 0;
-        bottom_font = 0;
-    }
-    else
-    {
-        printf("ERROR: Unsupported vertical resolution: %d\n", SCREEN_HEIGHT);
-    }
+    // Top bar font: 8 pt
+    const fontSize_t top_font = FONT_SIZE_1;
+    // Middle line fonts: 16, 16, 8 pt
+    const fontSize_t line1_font = FONT_SIZE_3;
+    const fontSize_t line2_font = FONT_SIZE_3;
+    const fontSize_t line3_font = FONT_SIZE_1;
+    // Bottom bar font: 8 pt
+    const fontSize_t bottom_font = FONT_SIZE_1;
+
+    #elif SCREEN_HEIGHT > 47
+
+    // Height and padding shown in diagram at beginning of file
+    const uint16_t top_h = 8;
+    const uint16_t top_pad = 0;
+    const uint16_t line1_h = 20;
+    const uint16_t line2_h = 20;
+    const uint16_t line3_h = 0;
+    const uint16_t line_pad = 2;
+    const uint16_t bottom_pad = 0;
+
+    // Top bar font: 8 pt
+    const fontSize_t top_font = FONT_SIZE_1;
+    // Middle line fonts: 16, 16
+    const fontSize_t line1_font = FONT_SIZE_3;
+    const fontSize_t line2_font = FONT_SIZE_3;
+    // Not present in this UI
+    const fontSize_t line3_font = 0;
+    const fontSize_t bottom_font = 0;
+
+    #else
+    #error Unsupported vertical resolution!
+    #endif
 
     // Calculate printing positions
-    point_t top_pos = {0, top_pad};
-    point_t line1_pos = {0, top_h + line_pad};
-    point_t line2_pos = {0, top_h + line1_h + line_pad};
-    point_t line3_pos = {0, top_h + line1_h + line2_h + line_pad};
+    point_t top_pos    = {0, top_pad};
+    point_t line1_pos  = {0, top_h + line_pad};
+    point_t line2_pos  = {0, top_h + line1_h + line_pad};
+    point_t line3_pos  = {0, top_h + line1_h + line2_h + line_pad};
     point_t bottom_pos = {0, top_h + line1_h + line2_h + line3_h + bottom_pad};
 
-    layout_t new_layout = {
+    layout_t new_layout =
+    {
         top_pos,
         line1_pos,
         line2_pos,
@@ -198,7 +183,7 @@ layout_t _ui_calculateLayout()
     return new_layout;
 }
 
-void ui_drawTopBar()
+void _ui_drawTopBar()
 {
     // Print clock on top bar
     char clock_buf[6] = "";
@@ -214,7 +199,7 @@ void ui_drawTopBar()
     gfx_print(layout.top_pos, bat_buf, layout.top_font, TEXT_ALIGN_RIGHT, color_white);
 }
 
-void ui_drawVFO(state_t state)
+void _ui_drawVFO(state_t state)
 {
     // Print VFO frequencies
     char freq_buf[20] = "";
@@ -226,8 +211,8 @@ void ui_drawVFO(state_t state)
 
 void ui_drawMainScreen(state_t state)
 {
-    ui_drawTopBar();
-    ui_drawVFO(state);
+    _ui_drawTopBar();
+    _ui_drawVFO(state);
 }
 
 void ui_init()
