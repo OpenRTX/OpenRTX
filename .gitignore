@@ -1,5 +1,6 @@
 # Meson build dirs
 build_linux
+build_arm
 build_md380
 
 # Prerequisites
