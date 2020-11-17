@@ -106,29 +106,37 @@ void C5000_init()
     gpio_setMode(DMR_SLEEP, OUTPUT);
 
     gpio_setPin(DMR_CS);
-    gpio_setPin(DMR_SLEEP);
+    gpio_clearPin(DMR_SLEEP);         /* Exit from sleep pulling down DMR_SLEEP  */
 
+    _writeReg(0x00, 0x0A, 0x80);      /* Internal clock connected to crystal     */
+    _writeReg(0x00, 0x0B, 0x28);      /* PLL M register (multiplier)             */
+    _writeReg(0x00, 0x0C, 0x33);      /* PLL input and output dividers           */
     OSTimeDly(1, OS_OPT_TIME_DLY, &e);
-    gpio_clearPin(DMR_SLEEP);
-    C5000_dmrMode();
-    OSTimeDly(1, OS_OPT_TIME_DLY, &e);
-    C5000_fmMode();
+    _writeReg(0x00, 0x0A, 0x00);      /* Internal clock connected to PLL         */
+    _writeReg(0x00, 0xBA, 0x22);      /* Built-in codec clock freq. (HR_C6000)   */
+    _writeReg(0x00, 0xBB, 0x11);      /* Output clock operating freq. (HR_C6000) */
 }
 
 void C5000_terminate()
 {
+    gpio_setPin(DMR_SLEEP);
+    gpio_setMode(DMR_CS,    INPUT);
+    gpio_setMode(DMR_CLK,   INPUT);
+    gpio_setMode(DMR_MOSI,  INPUT);
+    gpio_setMode(DMR_MISO,  INPUT);
+    gpio_setMode(DMR_SLEEP, INPUT);
 }
 
 void C5000_dmrMode()
 {
-    _writeReg(0x00, 0x0A, 0x80);
-    _writeReg(0x00, 0x0B, 0x28);
-    _writeReg(0x00, 0x0C, 0x33);
-    OSTimeDly(1, OS_OPT_TIME_DLY, &e);
-    _writeReg(0x00, 0x0A, 0x00);
+//     _writeReg(0x00, 0x0A, 0x80);
+//     _writeReg(0x00, 0x0B, 0x28);
+//     _writeReg(0x00, 0x0C, 0x33);
+//     OSTimeDly(1, OS_OPT_TIME_DLY, &e);
+//     _writeReg(0x00, 0x0A, 0x00);
     _writeReg(0x00, 0xB9, 0x32);
-    _writeReg(0x00, 0xBA, 0x22);
-    _writeReg(0x00, 0xBB, 0x11);
+//     _writeReg(0x00, 0xBA, 0x22);
+//     _writeReg(0x00, 0xBB, 0x11);
     _writeReg(0x00, 0x10, 0x4F);
     _writeReg(0x00, 0x40, 0x43);
     _writeReg(0x00, 0x41, 0x40);
@@ -182,24 +190,17 @@ void C5000_dmrMode()
 
 void C5000_fmMode()
 {
-    _writeReg(0x00, 0x0A, 0x80);
-    _writeReg(0x00, 0x0B, 0x28);
-    _writeReg(0x00, 0x0C, 0x33);
-    OSTimeDly(1, OS_OPT_TIME_DLY, &e);
-    _writeReg(0x00, 0x0A, 0x00);
-    _writeReg(0x00, 0xB9, 0x33);
-    _writeReg(0x00, 0xBA, 0x22);
-    _writeReg(0x00, 0xBB, 0x11);
-    _writeReg(0x00, 0x10, 0x80);
-    _writeReg(0x00, 0x07, 0x0E);
-    _writeReg(0x00, 0x08, 0x10);
-    _writeReg(0x00, 0x09, 0x00);
+    _writeReg(0x00, 0xB9, 0x33);    /* System clock frequency (HR_C6000) */
+    _writeReg(0x00, 0x10, 0x80);    /* FM modulator mode                 */
+    _writeReg(0x00, 0x07, 0x0E);    /* IF frequency - upper 8 bits       */
+    _writeReg(0x00, 0x08, 0x10);    /* IF frequency - middle 8 bits      */
+    _writeReg(0x00, 0x09, 0x00);    /* IF frequency - lower 8 bits       */
     _sendSequence(initSeq1, sizeof(initSeq1));
-    _writeReg(0x00, 0x06, 0x00);
+    _writeReg(0x00, 0x06, 0x00);    /* VoCoder control                   */
     _sendSequence(initSeq2, sizeof(initSeq2));
-    _writeReg(0x00, 0x48, 0x00);
-    _writeReg(0x00, 0x47, 0x1F);    /* This is 0x7F - freq_adj_mid */
-    _writeReg(0x00, 0x0D, 0x8C);
+    _writeReg(0x00, 0x48, 0x00);    /* Two-point bias, upper value       */
+    _writeReg(0x00, 0x47, 0x1F);    /* Two-point bias. This is 0x7F - freq_adj_mid */
+    _writeReg(0x00, 0x0D, 0x8C);    /* Codec control                     */
     _writeReg(0x00, 0x0E, 0x44);
     _writeReg(0x00, 0x0F, 0xC8);
     _writeReg(0x00, 0x25, 0x0E);
@@ -214,10 +215,6 @@ void C5000_fmMode()
 
 void C5000_activateAnalogTx()
 {
-    delayMs(51);
-    _writeReg(0x00, 0x25, 0x0E);
-
-    delayMs(15);
     _writeReg(0x00, 0x0D, 0x8C);
     _writeReg(0x00, 0x0E, 0x44);
     _writeReg(0x00, 0x0F, 0xC8);
@@ -237,21 +234,11 @@ void C5000_activateAnalogTx()
     _writeReg(0x01, 0x51, 0x00);
     _writeReg(0x00, 0x81, 0x00);
     _writeReg(0x00, 0x60, 0x80);
-
-    delayMs(15);
-    _writeReg(0x00, 0x0E, 0x40);
-
-    delayMs(350);
-    _writeReg(0x00, 0x0E, 0x44);
 }
 
 void C5000_shutdownAnalogTx()
 {
-    delayMs(50);
-    _writeReg(0x00, 0x60, 0x80);
-    delayMs(270);
-    _writeReg(0x00, 0x0E, 0x44);
-    _writeReg(0x00, 0x60, 0x80);
+    _writeReg(0x00, 0x60, 0x00);
 }
 
 void C5000_writeReg(uint8_t reg, uint8_t val)

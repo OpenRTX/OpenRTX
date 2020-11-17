@@ -195,6 +195,7 @@ void rtx_setOpmode(enum opmode mode)
         case FM:
             gpio_clearPin(DMR_SW);
             gpio_setPin(FM_SW);
+            C5000_fmMode();
             break;
 
         case DMR:

@@ -34,9 +34,9 @@
 
 int main(void)
 {
-    platform_init();
-    toneGen_init();
-    toneGen_setToneFreq(77.0f);
+//     platform_init();
+//     toneGen_init();
+//     toneGen_setToneFreq(77.0f);
 
     gpio_setMode(SPK_MUTE, OUTPUT);
     gpio_setMode(AMP_EN,   OUTPUT);
@@ -47,7 +47,7 @@ int main(void)
     gpio_clearPin(SPK_MUTE);    /* Unmute speaker                       */
 
     rtx_init();
-    rtx_setTxFreq(432950000.0f);
+    rtx_setTxFreq(430100000.0f);
     rtx_setBandwidth(BW_25);
     rtx_setOpmode(FM);
     rtx_setFuncmode(OFF);
