@@ -43,7 +43,6 @@ const uint8_t initSeq4[] = {0x01, 0x30, 0x30, 0x4E, 0x14, 0x1E, 0x1A, 0x30, 0x3D
 const uint8_t initSeq5[] = {0x01, 0x40, 0x90, 0x03, 0x01, 0x02, 0x05, 0x07, 0xF0};
 const uint8_t initSeq6[] = {0x01, 0x50, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-
 uint8_t _spiSendRecv(uint8_t value)
 {
     gpio_clearPin(DMR_CLK);
@@ -106,15 +105,15 @@ void C5000_init()
     gpio_setMode(DMR_SLEEP, OUTPUT);
 
     gpio_setPin(DMR_CS);
-    gpio_clearPin(DMR_SLEEP);         /* Exit from sleep pulling down DMR_SLEEP  */
+    gpio_clearPin(DMR_SLEEP);         // Exit from sleep pulling down DMR_SLEEP
 
-    _writeReg(0x00, 0x0A, 0x80);      /* Internal clock connected to crystal     */
-    _writeReg(0x00, 0x0B, 0x28);      /* PLL M register (multiplier)             */
-    _writeReg(0x00, 0x0C, 0x33);      /* PLL input and output dividers           */
+    _writeReg(0x00, 0x0A, 0x80);      // Internal clock connected to crystal
+    _writeReg(0x00, 0x0B, 0x28);      // PLL M register (multiplier)
+    _writeReg(0x00, 0x0C, 0x33);      // PLL input and output dividers
     OSTimeDly(1, OS_OPT_TIME_DLY, &e);
-    _writeReg(0x00, 0x0A, 0x00);      /* Internal clock connected to PLL         */
-    _writeReg(0x00, 0xBA, 0x22);      /* Built-in codec clock freq. (HR_C6000)   */
-    _writeReg(0x00, 0xBB, 0x11);      /* Output clock operating freq. (HR_C6000) */
+    _writeReg(0x00, 0x0A, 0x00);      // Internal clock connected to PLL
+    _writeReg(0x00, 0xBA, 0x22);      // Built-in codec clock freq. (HR_C6000)
+    _writeReg(0x00, 0xBB, 0x11);      // Output clock operating freq. (HR_C6000)
 }
 
 void C5000_terminate()
@@ -146,7 +145,7 @@ void C5000_dmrMode()
     _writeReg(0x00, 0x06, 0x21);
     _sendSequence(initSeq1, sizeof(initSeq1));
     _writeReg(0x00, 0x48, 0x00);
-    _writeReg(0x00, 0x47, 0x1F);    /* This is 0x7F - freq_adj_mid */
+    _writeReg(0x00, 0x47, 0x1F);    // This is 0x7F - freq_adj_mid */
     _sendSequence(initSeq2, sizeof(initSeq2));
     _writeReg(0x00, 0x00, 0x28);
     OSTimeDly(1, OS_OPT_TIME_DLY, &e);
@@ -190,55 +189,51 @@ void C5000_dmrMode()
 
 void C5000_fmMode()
 {
-    _writeReg(0x00, 0xB9, 0x33);    /* System clock frequency (HR_C6000) */
-    _writeReg(0x00, 0x10, 0x80);    /* FM modulator mode                 */
-    _writeReg(0x00, 0x07, 0x0E);    /* IF frequency - upper 8 bits       */
-    _writeReg(0x00, 0x08, 0x10);    /* IF frequency - middle 8 bits      */
-    _writeReg(0x00, 0x09, 0x00);    /* IF frequency - lower 8 bits       */
+    _writeReg(0x00, 0xB9, 0x33);    // System clock frequency (HR_C6000)
+    _writeReg(0x00, 0x10, 0x80);    // FM modulator mode
+    _writeReg(0x00, 0x07, 0x0E);    // IF frequency - upper 8 bits
+    _writeReg(0x00, 0x08, 0x10);    // IF frequency - middle 8 bits
+    _writeReg(0x00, 0x09, 0x00);    // IF frequency - lower 8 bits
     _sendSequence(initSeq1, sizeof(initSeq1));
-    _writeReg(0x00, 0x06, 0x00);    /* VoCoder control                   */
+    _writeReg(0x00, 0x06, 0x00);    // VoCoder control
     _sendSequence(initSeq2, sizeof(initSeq2));
-    _writeReg(0x00, 0x48, 0x00);    /* Two-point bias, upper value       */
-    _writeReg(0x00, 0x47, 0x1F);    /* Two-point bias. This is 0x7F - freq_adj_mid */
-    _writeReg(0x00, 0x0D, 0x8C);    /* Codec control                     */
-    _writeReg(0x00, 0x0E, 0x44);
-    _writeReg(0x00, 0x0F, 0xC8);
-    _writeReg(0x00, 0x25, 0x0E);
-    _writeReg(0x00, 0x26, 0xFE);
-    _writeReg(0x00, 0x83, 0xFF);
-    _writeReg(0x00, 0x87, 0x00);
-    _writeReg(0x00, 0x81, 0x00);
-    _writeReg(0x00, 0x60, 0x00);
-
-    _writeReg(0x00, 0x00, 0x28);
+    _writeReg(0x00, 0x48, 0x00);    // Two-point bias, upper value
+    _writeReg(0x00, 0x47, 0x1F);    // Two-point bias. This is 0x7F - freq_adj_mid */
+    _writeReg(0x00, 0x0D, 0x8C);    // Codec control
+    _writeReg(0x00, 0x0E, 0x44);    // Mute HPout and enable MIC 1
+    _writeReg(0x00, 0x0F, 0xC8);    // ADLinVol, mic volume
+//     _writeReg(0x00, 0x25, 0x0E);
+//     _writeReg(0x00, 0x26, 0xFE);
+    _writeReg(0x00, 0x83, 0xFF);    // Clear all interrupt flags
+    _writeReg(0x00, 0x87, 0x00);    // Disable "stop" interrupts
+    _writeReg(0x00, 0x81, 0x00);    // Mask other interrupts
+    _writeReg(0x00, 0x60, 0x00);    // Disable both analog and DMR transmission
+    _writeReg(0x00, 0x00, 0x28);    // Reset register
 }
 
 void C5000_activateAnalogTx()
 {
-    _writeReg(0x00, 0x0D, 0x8C);
-    _writeReg(0x00, 0x0E, 0x44);
-    _writeReg(0x00, 0x0F, 0xC8);
-    _writeReg(0x00, 0x25, 0x0E);
-    _writeReg(0x00, 0x26, 0xFE);
-    _writeReg(0x00, 0x83, 0xFF);
-    _writeReg(0x00, 0x87, 0x00);
-    _writeReg(0x00, 0x45, 0x32);
-    _writeReg(0x00, 0x46, 0x85);
-    _writeReg(0x00, 0x04, 0x1F);
-    _writeReg(0x00, 0x35, 0x1E);
-    _writeReg(0x00, 0x3F, 0x04);
-    _writeReg(0x00, 0x34, 0x3C);
-    _writeReg(0x00, 0x3E, 0x08);
-    _writeReg(0x00, 0x37, 0xC2);
-    _writeReg(0x01, 0x50, 0x00);
-    _writeReg(0x01, 0x51, 0x00);
-    _writeReg(0x00, 0x81, 0x00);
-    _writeReg(0x00, 0x60, 0x80);
+    _writeReg(0x00, 0x0D, 0x8C);    // Codec control
+    _writeReg(0x00, 0x0E, 0x44);    // Mute HPout and enable MIC 1
+    _writeReg(0x00, 0x0F, 0xC8);    // ADLinVol, mic volume
+//     _writeReg(0x00, 0x25, 0x0E);
+//     _writeReg(0x00, 0x26, 0xFE);
+    _writeReg(0x00, 0x45, 0x32);    // Mod2 magnitude (HR_C6000)
+    _writeReg(0x00, 0x46, 0x85);    // Mod1 magnitude (HR_C6000)
+    _writeReg(0x00, 0x04, 0x1F);    // Bias value for TX, Q-channel
+    _writeReg(0x00, 0x35, 0x1E);    // FM modulation factor
+    _writeReg(0x00, 0x3F, 0x04);    // FM Limiting modulation factor (HR_C6000)
+    _writeReg(0x00, 0x34, 0x3C);    // Enable pre-emphasis, 25kHz bandwidth
+    _writeReg(0x00, 0x3E, 0x08);    // "FM Modulation frequency deviation coefficient at the receiving end" (HR_C6000)
+    _writeReg(0x00, 0x37, 0xC2);    // Unknown register
+//     _writeReg(0x01, 0x50, 0x00);
+//     _writeReg(0x01, 0x51, 0x00);
+    _writeReg(0x00, 0x60, 0x80);    // Enable analog voice transmission
 }
 
 void C5000_shutdownAnalogTx()
 {
-    _writeReg(0x00, 0x60, 0x00);
+    _writeReg(0x00, 0x60, 0x00);    // Disable both analog and DMR transmission
 }
 
 void C5000_writeReg(uint8_t reg, uint8_t val)
