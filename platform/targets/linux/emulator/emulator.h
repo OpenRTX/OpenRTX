@@ -21,7 +21,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
 
 #ifndef SCREEN_WIDTH
 #define SCREEN_WIDTH 160
