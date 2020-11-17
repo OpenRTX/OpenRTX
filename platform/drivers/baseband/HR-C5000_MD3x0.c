@@ -94,8 +94,6 @@ void _sendSequence(const uint8_t *seq, uint8_t len)
     gpio_setPin(DMR_CS);
 }
 
-OS_ERR e;
-
 void C5000_init()
 {
     gpio_setMode(DMR_CS,    OUTPUT);
@@ -110,7 +108,8 @@ void C5000_init()
     _writeReg(0x00, 0x0A, 0x80);      // Internal clock connected to crystal
     _writeReg(0x00, 0x0B, 0x28);      // PLL M register (multiplier)
     _writeReg(0x00, 0x0C, 0x33);      // PLL input and output dividers
-    OSTimeDly(1, OS_OPT_TIME_DLY, &e);
+    OS_ERR err;
+    OSTimeDly(1, OS_OPT_TIME_DLY, &err);
     _writeReg(0x00, 0x0A, 0x00);      // Internal clock connected to PLL
     _writeReg(0x00, 0xBA, 0x22);      // Built-in codec clock freq. (HR_C6000)
     _writeReg(0x00, 0xBB, 0x11);      // Output clock operating freq. (HR_C6000)
@@ -124,6 +123,18 @@ void C5000_terminate()
     gpio_setMode(DMR_MOSI,  INPUT);
     gpio_setMode(DMR_MISO,  INPUT);
     gpio_setMode(DMR_SLEEP, INPUT);
+}
+
+void C5000_setModOffset(uint8_t offset)
+{
+    /*
+     * Original TYT MD-380 code does this, both for DMR and FM.
+     */
+    uint8_t offUpper = (offset < 0x80) ? 0x00 : 0x03;
+    uint8_t offLower = offset - 0x7F;
+
+    _writeReg(0x00, 0x48, offUpper);    // Two-point bias, upper value
+    _writeReg(0x00, 0x47, offLower);    // Two-point bias, lower value
 }
 
 void C5000_dmrMode()
@@ -144,11 +155,13 @@ void C5000_dmrMode()
     _writeReg(0x00, 0x09, 0x00);
     _writeReg(0x00, 0x06, 0x21);
     _sendSequence(initSeq1, sizeof(initSeq1));
-    _writeReg(0x00, 0x48, 0x00);
-    _writeReg(0x00, 0x47, 0x1F);    // This is 0x7F - freq_adj_mid */
+//     _writeReg(0x00, 0x48, 0x00);
+//     _writeReg(0x00, 0x47, 0x1F);    // This is 0x7F - freq_adj_mid */
     _sendSequence(initSeq2, sizeof(initSeq2));
     _writeReg(0x00, 0x00, 0x28);
-    OSTimeDly(1, OS_OPT_TIME_DLY, &e);
+
+    OS_ERR err;
+    OSTimeDly(1, OS_OPT_TIME_DLY, &err);
 
     _writeReg(0x00, 0x14, 0x59);
     _writeReg(0x00, 0x15, 0xF5);
@@ -197,8 +210,6 @@ void C5000_fmMode()
     _sendSequence(initSeq1, sizeof(initSeq1));
     _writeReg(0x00, 0x06, 0x00);    // VoCoder control
     _sendSequence(initSeq2, sizeof(initSeq2));
-    _writeReg(0x00, 0x48, 0x00);    // Two-point bias, upper value
-    _writeReg(0x00, 0x47, 0x1F);    // Two-point bias. This is 0x7F - freq_adj_mid */
     _writeReg(0x00, 0x0D, 0x8C);    // Codec control
     _writeReg(0x00, 0x0E, 0x44);    // Mute HPout and enable MIC 1
     _writeReg(0x00, 0x0F, 0xC8);    // ADLinVol, mic volume
@@ -211,7 +222,7 @@ void C5000_fmMode()
     _writeReg(0x00, 0x00, 0x28);    // Reset register
 }
 
-void C5000_activateAnalogTx()
+void C5000_startAnalogTx()
 {
     _writeReg(0x00, 0x0D, 0x8C);    // Codec control
     _writeReg(0x00, 0x0E, 0x44);    // Mute HPout and enable MIC 1
@@ -231,7 +242,7 @@ void C5000_activateAnalogTx()
     _writeReg(0x00, 0x60, 0x80);    // Enable analog voice transmission
 }
 
-void C5000_shutdownAnalogTx()
+void C5000_stopAnalogTx()
 {
     _writeReg(0x00, 0x60, 0x00);    // Disable both analog and DMR transmission
 }

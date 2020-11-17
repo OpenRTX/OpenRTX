@@ -20,13 +20,12 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
+#include <stdbool.h>
 #include <os.h>
 #include "gpio.h"
 #include "delays.h"
 #include "rtx.h"
 #include "ADC1_MDxx380.h"
-#include "graphics.h"
 #include "platform.h"
 #include "hwconfig.h"
 #include "HR-C5000_MD3x0.h"
@@ -34,7 +33,7 @@
 
 int main(void)
 {
-//     platform_init();
+    platform_init();
 //     toneGen_init();
 //     toneGen_setToneFreq(77.0f);
 
@@ -52,24 +51,31 @@ int main(void)
     rtx_setOpmode(FM);
     rtx_setFuncmode(OFF);
 
-    gpio_setMode(GPIOE, 0,  OUTPUT);
-    gpio_setMode(GPIOA, 14, OUTPUT);
+    gpio_setMode(GPIOA, 14, OUTPUT); /* Micpwr_sw */
     gpio_setPin(GPIOA, 14);
+
+    bool txActive = false;
 
     while (1)
     {
-        OS_ERR err;
-        gpio_setPin(GPIOE, 0);
-        rtx_setFuncmode(TX);
-        C5000_activateAnalogTx();
-//         toneGen_toneOn();
-        OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
-//         toneGen_toneOff();
-        C5000_shutdownAnalogTx();
-        rtx_setFuncmode(OFF);
-        gpio_clearPin(GPIOE, 0);
+        if(platform_getPttStatus() && (txActive == false))
+        {
+            rtx_setFuncmode(TX);
+            C5000_startAnalogTx();
+            platform_ledOn(RED);
+            txActive = true;
+        }
 
-        OSTimeDlyHMSM(0u, 0u, 3u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
+        if(!platform_getPttStatus() && (txActive == true))
+        {
+            rtx_setFuncmode(OFF);
+            C5000_stopAnalogTx();
+            platform_ledOff(RED);
+            txActive = false;
+        }
+
+        OS_ERR err;
+        OSTimeDlyHMSM(0u, 0u, 0u, 10u, OS_OPT_TIME_HMSM_STRICT, &err);
     }
 
     return 0;

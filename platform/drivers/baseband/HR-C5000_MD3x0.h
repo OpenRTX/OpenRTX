@@ -45,32 +45,35 @@ void C5000_init();
 void C5000_terminate();
 
 /**
- * 
+ * Set value for two-point modulation offset adjustment. This value usually is
+ * stored in radio calibration data.
+ * @param offset: value for modulation offset adjustment.
+ */
+void C5000_setModOffset(uint8_t offset);
+
+/**
+ * Configure HR_C5000 chipset for DMR operation.
  */
 void C5000_dmrMode();
 
 /**
- * 
+ * Configure HR_C5000 chipset for analog FM operation.
  */
 void C5000_fmMode();
 
 /**
- * 
+ * Start analog FM transmission.
  */
-void C5000_activateAnalogTx();
+void C5000_startAnalogTx();
 
 /**
- * 
+ * Stop analog FM transmission.
  */
-void C5000_shutdownAnalogTx();
+void C5000_stopAnalogTx();
 
 /**
- * 
- */
-void C5000_writeReg(uint8_t reg, uint8_t val);
-
-/**
- * 
+ * Check if SPI common to HR_C5000 and PLL is in use by this driver.
+ * @retur true if SPI lines are being used by this driver.
  */
 bool C5000_spiInUse();
 

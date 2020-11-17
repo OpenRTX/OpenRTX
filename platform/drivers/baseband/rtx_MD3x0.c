@@ -31,11 +31,6 @@ const freq_t IF_FREQ = 49950000.0f;  /* Intermediate frequency: 49.95MHz */
 freq_t rxFreq = 430000000.0f;
 freq_t txFreq = 430000000.0f;
 
-void _setMod2Bias(uint16_t value)
-{
-    DAC->DHR12R2 = value;
-}
-
 void _setApcTv(uint16_t value)
 {
     DAC->DHR12R1 = value;
@@ -51,7 +46,6 @@ void rtx_init()
     gpio_setMode(DMR_SW,    OUTPUT);
     gpio_setMode(WN_SW,     OUTPUT);
     gpio_setMode(FM_SW,     OUTPUT);
-//     gpio_setMode(V_CS,      OUTPUT);
     gpio_setMode(RF_APC_SW, OUTPUT);
     gpio_setMode(TX_STG_EN, OUTPUT);
     gpio_setMode(RX_STG_EN, OUTPUT);
@@ -61,7 +55,6 @@ void rtx_init()
     gpio_clearPin(WN_SW);      /* 25kHz band (?)                                    */
     gpio_clearPin(DMR_SW);     /* Disconnect HR_C5000 input IF signal and audio out */
     gpio_clearPin(FM_SW);      /* Disconnect analog FM audio path                   */
-//     gpio_setPin(V_CS);
     gpio_clearPin(RF_APC_SW);  /* Disable RF power control                          */
     gpio_clearPin(TX_STG_EN);  /* Disable TX power stage                            */
     gpio_clearPin(RX_STG_EN);  /* Disable RX input stage                            */
@@ -87,6 +80,13 @@ void rtx_init()
      * Configure HR_C5000
      */
     C5000_init();
+
+    /*
+     * Modulation bias settings
+     */
+    const uint8_t mod2_bias = 0x60;        /* TODO use calibration  */
+    DAC->DHR12R2 = mod2_bias*4 + 0x600;    /* Original FW does this */
+    C5000_setModOffset(mod2_bias);
 }
 
 void rtx_terminate()
@@ -130,7 +130,6 @@ void rtx_setFuncmode(enum funcmode mode)
             gpio_clearPin(RF_APC_SW);
             gpio_setPin(VCOVCC_SW);
             pll_setFrequency(rxFreq - IF_FREQ, 5);
-            _setMod2Bias(0x60*4 + 0x600);       /* TODO use calibration      */
             _setApcTv(0x956);                   /* TODO use calibration      */
 
             gpio_setPin(RX_STG_EN);
@@ -143,7 +142,6 @@ void rtx_setFuncmode(enum funcmode mode)
             gpio_clearPin(VCOVCC_SW);
             pll_setFrequency(txFreq, 5);
 
-            _setMod2Bias(0x60*4 + 0x600);       /* TODO use calibration      */
             _setApcTv(0x02);
 
             gpio_setPin(TX_STG_EN);
