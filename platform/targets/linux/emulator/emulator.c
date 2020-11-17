@@ -25,6 +25,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+radio_state Radio_State = {12, 7, 3, 4, 1, false};
+
 void systemBootstrap();
 
 int CLIMenu() {
@@ -99,15 +101,11 @@ void *startCLIMenu() {
         }
     } while (choice != EXIT);
     printf("exiting\n");
-    SDL_Quit();
-    SDL_DestroyWindow(window);
     exit(0);
 };
 
 
 int emulator_main() {
-    Radio_State = (radio_state){12, 7, 3, 4, 1, false};
-
     pthread_t gui_thread, cli_thread, radio_thread;
     int err1, err2;
 

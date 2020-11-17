@@ -17,6 +17,8 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
+#ifndef EMULATOR_H
+#define EMULATOR_H
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -29,11 +31,6 @@
 #ifndef SCREEN_HEIGHT
 #define SCREEN_HEIGHT 128
 #endif
-
-
-SDL_Renderer *renderer;      /* SDL renderer           */
-SDL_Window *window;          /* SDL window             */
-SDL_Texture *displayTexture; /* SDL rendering surface  */
 
 enum choices {
     VAL_RSSI=1,
@@ -55,4 +52,6 @@ typedef struct {
     bool PttStatus;
 } radio_state;
 
-radio_state Radio_State;
+extern radio_state Radio_State;
+
+#endif /* EMULATOR_H */
