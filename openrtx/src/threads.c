@@ -58,15 +58,15 @@ static void ui_task(void *arg)
     platform_setBacklightLevel(255);
 
     // Display splash screen
-    point_t splash_origin = {0, SCREEN_HEIGHT / 2};
+    point_t splash_origin = {0, SCREEN_HEIGHT / 2 + 6};
     color_t yellow_fab413 = {250, 180, 19};
     char *splash_buf = "OpenRTX";
     gfx_clearScreen();
-    gfx_print(splash_origin, "OpenRTX", FONT_SIZE_18PT, TEXT_ALIGN_CENTER,
+    gfx_print(splash_origin, "OpenRTX", FONT_SIZE_12PT, TEXT_ALIGN_CENTER,
               yellow_fab413);
     gfx_render();
     while(gfx_renderingInProgress());
-    OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+    OSTimeDlyHMSM(1u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
 
     // Clear screen
     gfx_clearScreen();

@@ -104,16 +104,17 @@ layout_t _ui_calculateLayout()
     const uint16_t line2_h = 32;
     const uint16_t line3_h = 32;
     const uint16_t line_pad = 8;
+    const uint16_t bottom_h = top_h;
     const uint16_t bottom_pad = 4;
 
     // Top bar font: 8 pt
-    const fontSize_t top_font = FONT_SIZE_9PT;
+    const fontSize_t top_font = FONT_SIZE_8PT;
     // Middle line fonts: 16 pt
     const fontSize_t line1_font = FONT_SIZE_12PT;
     const fontSize_t line2_font = FONT_SIZE_12PT;
     const fontSize_t line3_font = FONT_SIZE_12PT;
     // Bottom bar font: 8 pt
-    const fontSize_t bottom_font = FONT_SIZE_9PT;
+    const fontSize_t bottom_font = FONT_SIZE_8PT;
 
     // Radioddity GD-77
     #elif SCREEN_HEIGHT > 63
@@ -125,6 +126,7 @@ layout_t _ui_calculateLayout()
     const uint16_t line2_h = 20;
     const uint16_t line3_h = 0;
     const uint16_t line_pad = 2;
+    const uint16_t bottom_h = top_h;
     const uint16_t bottom_pad = 0;
 
     // Top bar font: 8 pt
@@ -145,6 +147,7 @@ layout_t _ui_calculateLayout()
     const uint16_t line2_h = 20;
     const uint16_t line3_h = 0;
     const uint16_t line_pad = 2;
+    const uint16_t bottom_h = 0;
     const uint16_t bottom_pad = 0;
 
     // Top bar font: 8 pt
@@ -161,11 +164,11 @@ layout_t _ui_calculateLayout()
     #endif
 
     // Calculate printing positions
-    point_t top_pos    = {0, top_pad};
-    point_t line1_pos  = {0, top_h + line_pad};
-    point_t line2_pos  = {0, top_h + line1_h + line_pad};
-    point_t line3_pos  = {0, top_h + line1_h + line2_h + line_pad};
-    point_t bottom_pos = {0, top_h + line1_h + line2_h + line3_h + bottom_pad};
+    point_t top_pos    = {0, top_h - top_pad};
+    point_t line1_pos  = {0, top_h + line1_h - line_pad};
+    point_t line2_pos  = {0, top_h + line1_h + line2_h - line_pad};
+    point_t line3_pos  = {0, top_h + line1_h + line2_h + line3_h - line_pad};
+    point_t bottom_pos = {0, top_h + line1_h + line2_h + line3_h + bottom_h - bottom_pad};
 
     layout_t new_layout =
     {

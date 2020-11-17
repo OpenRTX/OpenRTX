@@ -25,8 +25,11 @@
 #include <display.h>
 #include "gfxfont.h"
 #include "TomThumb.h"
+#include "FreeSans6pt7b.h"
+#include "FreeSans8pt7b.h"
 #include "FreeSans9pt7b.h"
 #include "FreeSans12pt7b.h"
+#include "FreeSans16pt7b.h"
 #include "FreeSans18pt7b.h"
 #include "FreeSans24pt7b.h"
 
@@ -78,9 +81,12 @@ typedef struct color_t
 
 typedef enum
 {
-    FONT_SIZE_6PT = 0,
+    FONT_SIZE_5PT = 0,
+    FONT_SIZE_6PT,
+    FONT_SIZE_8PT,
     FONT_SIZE_9PT,
     FONT_SIZE_12PT,
+    FONT_SIZE_16PT,
     FONT_SIZE_18PT,
     FONT_SIZE_24PT
 } fontSize_t;
@@ -95,10 +101,13 @@ typedef enum
 /**
  * Selection of the fonts, ordered by the fontSize_t enum.
  */
-static GFXfont fonts[] = { TomThumb,           // 6pt
+static GFXfont fonts[] = { TomThumb,           // 5pt
+                           FreeSans6pt7b,      // 6pt
+                           FreeSans8pt7b,      // 8pt
                            FreeSans9pt7b,      // 9pt
                            FreeSans12pt7b,     // 12pt
-                           FreeSans18pt7b,     // 18pt
+                           FreeSans16pt7b,     // 16pt
+                           FreeSans18pt7b,     // 16pt
                            FreeSans24pt7b };   // 24pt
 
 /**
