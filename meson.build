@@ -106,7 +106,8 @@ stm32f405_def = {'STM32F40_41xxx': '', 'HSE_VALUE':'8000000'}
 ##
 
 ## Linux
-linux_src = src + ['platform/drivers/display/display_libSDL.c',
+linux_src = src + ['platform/targets/linux/emulator/emulator.c',
+                   'platform/drivers/display/display_libSDL.c',
                    'platform/drivers/keyboard/keyboard_linux.c',
                    'platform/mcu/x86_64/drivers/gpio.c',
                    'platform/mcu/x86_64/drivers/delays.c',
@@ -121,7 +122,8 @@ linux_def = def + {'SCREEN_WIDTH': '160', 'SCREEN_HEIGHT': '128', 'PIX_FMT_RGB56
 
 linux_inc = inc + ['rtos/uC-OS3/Ports/POSIX',
                    'rtos/uC-CPU/Posix',
-                   'platform/targets/linux']
+                   'platform/targets/linux',
+                   'platform/targets/linux/emulator']
 
 if not meson.is_cross_build()
   sdl_dep = dependency('SDL2')
@@ -171,7 +173,7 @@ mduv380_def = def + stm32f405_def
 ## Compilation defines
 ##
 linux_c_args = []
-linux_l_args = ['--entry=systemBootstrap']
+linux_l_args = ['--entry=entry']
 
 # Add AddressSanitizer if required
 if get_option('asan')

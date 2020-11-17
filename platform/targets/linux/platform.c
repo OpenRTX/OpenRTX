@@ -18,10 +18,11 @@
 #include "platform.h"
 #include "gpio.h"
 #include <stdio.h>
+#include "emulator.h"
 
 void platform_init()
 {
-	printf("Platform init\n");
+	//printf("Platform init\n");
 }
 
 void platform_terminate()
@@ -31,36 +32,32 @@ void platform_terminate()
 
 void platform_setBacklightLevel(uint8_t level)
 {
-	printf("platform_setBacklightLevel(%u)\n", level);
+	//printf("platform_setBacklightLevel(%u)\n", level);
 }
 
 // Simulate a fully charged lithium battery
 float platform_getVbat(){
-	return 7.8;
+	return Radio_State.Vbat;
 }
 
 
 float platform_getMicLevel(){
-	printf("platform_getMicLevel()\n");
-	return 0.69;
+	return Radio_State.micLevel;
 }
 
 
 float platform_getVolumeLevel(){
-	printf("platform_getVolumeLevel()\n");
-	return 0.69;
+	return Radio_State.volumeLevel;
 }
 
 
 uint8_t platform_getChSelector(){
-	printf("platform_getChSelector()\n");
-	return 42;
+	return Radio_State.chSelector;
 }
 
 
 bool platform_getPttStatus(){
-	printf("platform_getVbat()\n");
-	return true;
+    return Radio_State.PttStatus;
 }
 
 
