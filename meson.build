@@ -18,10 +18,10 @@ openrtx_src = ['openrtx/src/main.c',
                'openrtx/src/threads.c']
 
 openrtx_inc = ['openrtx/include/interfaces',
-               'openrtx/include/fonts',
                'openrtx/include',
                'platform/drivers/ADC',
-               'platform/drivers/tones']
+               'platform/drivers/tones',
+               'openrtx/include/fonts/adafruit']
 
 ## RTOS
 rtos_src = ['rtos/uC-OS3/Source/__dbg_uCOS-III.c',

@@ -27,7 +27,6 @@
 #include <hwconfig.h>
 #include "display.h"
 #include "graphics.h"
-#include "font_OpenGD77.h"
 
 /* This graphics driver is meant for an RGB565 little endian pixel format.
  * Thus, to accomodate for the endianness, the fields in struct rgb565_t have to
@@ -147,89 +146,103 @@ void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color,
     }
 }
 
-void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t alignment, color_t color)
-{
-    uint8_t *currentCharData;
-    uint8_t *currentFont;
-    uint16_t *writePos;
-    uint8_t *readPos;
-
-    rgb565_t color_565 = _true2highColor(color);
-
-    switch(size)
-    {
-        case FONT_SIZE_1:
-            currentFont = (uint8_t *) font_6x8;
-            break;
-        case FONT_SIZE_1_BOLD:
-            currentFont = (uint8_t *) font_6x8_bold;
-            break;
-        case FONT_SIZE_2:
-            currentFont = (uint8_t *) font_8x8;
-            break;
-        case FONT_SIZE_3:
-            currentFont = (uint8_t *) font_8x16;
-            break;
-        case FONT_SIZE_4:
-            currentFont = (uint8_t *) font_16x32;
-            break;
-        default:
-            return;// Invalid font selected
+/**
+ * Compute the pixel size of the first text line
+ * @param f: font used as the source of glyphs
+ * @param text: the input text
+ * @param length: the length of the input text, used for boundary checking
+ */
+static inline uint16_t get_line_size(GFXfont f,
+                                     const char *text,
+                                     uint16_t length) {
+    uint16_t line_size = 0;
+    for(unsigned i = 0;
+        i < length && text[i] != '\n' && text[i] != '\r';
+        i++) {
+        GFXglyph glyph = f.glyph[text[i] - f.first];
+        if (line_size + glyph.xAdvance < SCREEN_WIDTH)
+            line_size += glyph.xAdvance;
+        else
             break;
     }
+    return line_size;
+}
 
-    int16_t startCode           = currentFont[2];  // get first defined character
-    int16_t endCode             = currentFont[3];  // get last defined character
-    int16_t charWidthPixels     = currentFont[4];  // width in pixel of one char
-    int16_t charHeightPixels    = currentFont[5];  // page count per char
-    int16_t bytesPerChar        = currentFont[7];  // bytes per char
-
-    int16_t sLen = strlen(text);
-    // Compute amount of letters that fit till the end of the screen
-    if ((charWidthPixels*sLen) + start.x > SCREEN_WIDTH)
-    {
-        sLen = (SCREEN_WIDTH-start.x)/charWidthPixels;
-    }
-
-    if (sLen < 0) return;
-
+/**
+ * Compute the start x coordinate of a new line of given pixel size
+ * @param alinment: enum representing the text alignment
+ * @param line_size: the size of the current text line in pixels
+ */
+static inline uint16_t get_reset_x(textAlign_t alignment, uint16_t line_size) {
     switch(alignment)
     {
         case TEXT_ALIGN_LEFT:
-            // left aligned, do nothing.
-            break;
+            return 0;
         case TEXT_ALIGN_CENTER:
-            start.x = (SCREEN_WIDTH - (charWidthPixels * sLen))/2;
-            break;
+            return (SCREEN_WIDTH - line_size)/2;
         case TEXT_ALIGN_RIGHT:
-            start.x = SCREEN_WIDTH - (charWidthPixels * sLen);
-            break;
+            return SCREEN_WIDTH - line_size;
     }
+    return 0;
+}
 
-    for (int16_t i=0; i<sLen; i++)
-    {
-        uint32_t charOffset = (text[i] - startCode);
+void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t alignment, color_t color) {
 
-        // End boundary checking.
-        if (charOffset > endCode)
-        {
-            charOffset = ('?' - startCode); // Substitute unsupported ASCII code by a question mark
+    rgb565_t color_565 = _true2highColor(color);
+
+    GFXfont f = fonts[size];
+
+    size_t len = strlen(text);
+
+    // Compute size of the first row in pixels
+    uint16_t line_size = get_line_size(f, text, len);
+    uint16_t reset_x = get_reset_x(alignment, line_size);
+    start.x = reset_x;
+
+    /* For each char in the string */
+    for(unsigned i = 0; i < len; i++) {
+        char c = text[i];
+        GFXglyph glyph = f.glyph[c - f.first];
+        uint8_t *bitmap = f.bitmap;
+
+        uint16_t bo = glyph.bitmapOffset;
+        uint8_t w = glyph.width, h = glyph.height;
+        int8_t xo = glyph.xOffset,
+               yo = glyph.yOffset;
+        uint8_t xx, yy, bits = 0, bit = 0;
+
+        // Handle newline and carriage return
+        if (c == '\n') {
+          start.x = reset_x;
+          start.y += f.yAdvance;
+          continue;
+        } else if (c == '\r') {
+          start.x = reset_x;
+          continue;
         }
 
-        currentCharData = (uint8_t *)&currentFont[8 + (charOffset * bytesPerChar)];
+        // Handle wrap around
+        if (start.x + glyph.xAdvance > SCREEN_WIDTH) {
+            // Compute size of the first row in pixels
+            line_size = get_line_size(f, text, len);
+            start.x = reset_x = get_reset_x(alignment, line_size);
+            start.y += f.yAdvance;
+        }
 
-        // We print the character from up-left to bottom right
-        for(int16_t vscan=0; vscan < charHeightPixels; vscan++) {
-            for(int16_t hscan=0; hscan < charWidthPixels; hscan++) {
-                int16_t charChunk = vscan / 8;
-                int16_t bitIndex = (hscan + charChunk * charWidthPixels) * 8 +
-                                    vscan % 8;
-                int16_t byte = bitIndex >> 3;
-                int16_t bitMask = 1 << (bitIndex & 7);
-                if (currentCharData[byte] & bitMask)
-                    buf[(start.y + vscan) * SCREEN_WIDTH +
-                         start.x + hscan + i * charWidthPixels] = color_565;
+        // Draw bitmap
+        for (yy = 0; yy < h; yy++) {
+            for (xx = 0; xx < w; xx++) {
+                if (!(bit++ & 7)) {
+                    bits = bitmap[bo++];
+                }
+                if (bits & 0x80) {
+                    if (start.y + yo + yy < SCREEN_HEIGHT && start.x + xo + xx < SCREEN_WIDTH && start.y + yo + yy > 0 &&  start.x + xo + xx > 0)
+                        buf[(start.y + yo + yy) * SCREEN_WIDTH +
+                            start.x + xo + xx] = color_565;
+                }
+                bits <<= 1;
             }
         }
+        start.x += glyph.xAdvance;
     }
 }

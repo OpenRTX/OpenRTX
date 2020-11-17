@@ -107,13 +107,13 @@ layout_t _ui_calculateLayout()
     const uint16_t bottom_pad = 4;
 
     // Top bar font: 8 pt
-    const fontSize_t top_font = FONT_SIZE_1;
+    const fontSize_t top_font = FONT_SIZE_9PT;
     // Middle line fonts: 16 pt
-    const fontSize_t line1_font = FONT_SIZE_3;
-    const fontSize_t line2_font = FONT_SIZE_3;
-    const fontSize_t line3_font = FONT_SIZE_3;
+    const fontSize_t line1_font = FONT_SIZE_12PT;
+    const fontSize_t line2_font = FONT_SIZE_12PT;
+    const fontSize_t line3_font = FONT_SIZE_12PT;
     // Bottom bar font: 8 pt
-    const fontSize_t bottom_font = FONT_SIZE_1;
+    const fontSize_t bottom_font = FONT_SIZE_9PT;
 
     // Radioddity GD-77
     #elif SCREEN_HEIGHT > 63

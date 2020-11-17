@@ -62,7 +62,7 @@ static void ui_task(void *arg)
     color_t yellow_fab413 = {250, 180, 19};
     char *splash_buf = "OpenRTX";
     gfx_clearScreen();
-    gfx_print(splash_origin, "OpenRTX", FONT_SIZE_4, TEXT_ALIGN_CENTER,
+    gfx_print(splash_origin, "OpenRTX", FONT_SIZE_18PT, TEXT_ALIGN_CENTER,
               yellow_fab413);
     gfx_render();
     while(gfx_renderingInProgress());

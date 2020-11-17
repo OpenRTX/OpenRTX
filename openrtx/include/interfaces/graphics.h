@@ -23,6 +23,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <display.h>
+#include "gfxfont.h"
+#include "TomThumb.h"
+#include "FreeSans9pt7b.h"
+#include "FreeSans12pt7b.h"
+#include "FreeSans18pt7b.h"
+#include "FreeSans24pt7b.h"
 
 /**
  * Standard high-level graphic interface for all display types.
@@ -72,19 +78,28 @@ typedef struct color_t
 
 typedef enum
 {
-        FONT_SIZE_1 = 0,
-        FONT_SIZE_1_BOLD,
-        FONT_SIZE_2,
-        FONT_SIZE_3,
-        FONT_SIZE_4
+    FONT_SIZE_6PT = 0,
+    FONT_SIZE_9PT,
+    FONT_SIZE_12PT,
+    FONT_SIZE_18PT,
+    FONT_SIZE_24PT
 } fontSize_t;
 
 typedef enum
 {
-        TEXT_ALIGN_LEFT = 0,
-        TEXT_ALIGN_CENTER,
-        TEXT_ALIGN_RIGHT
+    TEXT_ALIGN_LEFT = 0,
+    TEXT_ALIGN_CENTER,
+    TEXT_ALIGN_RIGHT
 } textAlign_t;
+
+/**
+ * Selection of the fonts, ordered by the fontSize_t enum.
+ */
+static GFXfont fonts[] = { TomThumb,           // 6pt
+                           FreeSans9pt7b,      // 9pt
+                           FreeSans12pt7b,     // 12pt
+                           FreeSans18pt7b,     // 18pt
+                           FreeSans24pt7b };   // 24pt
 
 /**
  * This function calls the correspondent method of the low level interface display.h
