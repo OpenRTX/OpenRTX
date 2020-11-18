@@ -157,6 +157,18 @@ void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color,
     }
 }
 
+void gfx_drawHLine(uint16_t y, uint16_t height, color_t color)
+{
+    point_t start = {0, y}; 
+    gfx_drawRect(start, SCREEN_WIDTH, height, color, 1); 
+}
+
+void gfx_drawVLine(uint16_t x, uint16_t width, color_t color)
+{
+    point_t start = {x, 0}; 
+    gfx_drawRect(start, width, SCREEN_HEIGHT, color, 1); 
+}
+
 /**
  * Compute the pixel size of the first text line
  * @param f: font used as the source of glyphs
