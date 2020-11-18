@@ -210,12 +210,23 @@ void _ui_drawVFO(state_t state)
     gfx_print(layout.line1_pos, freq_buf, layout.line1_font, TEXT_ALIGN_CENTER, color_white);
     snprintf(freq_buf, sizeof(freq_buf), "Tx: %09.5f", state.tx_freq);
     gfx_print(layout.line2_pos, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER, color_white);
+    // Print VFO Demo on line 3
+    char line3_buf[10] = "VFO Demo";
+    gfx_print(layout.line3_pos, line3_buf, layout.line3_font, TEXT_ALIGN_CENTER, color_white);
+}
+
+void _ui_drawBottomBar()
+{
+    // Print OpenRTX on bottom bar
+    char bottom_buf[8] = "OpenRTX";
+    gfx_print(layout.bottom_pos, bottom_buf, layout.bottom_font, TEXT_ALIGN_CENTER, color_white);
 }
 
 void ui_drawMainScreen(state_t state)
 {
     _ui_drawTopBar();
     _ui_drawVFO(state);
+    _ui_drawBottomBar();
 }
 
 void ui_init()

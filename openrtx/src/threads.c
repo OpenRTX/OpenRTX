@@ -66,7 +66,7 @@ static void ui_task(void *arg)
               yellow_fab413);
     gfx_render();
     while(gfx_renderingInProgress());
-    OSTimeDlyHMSM(1u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+    OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
 
     // Clear screen
     gfx_clearScreen();
