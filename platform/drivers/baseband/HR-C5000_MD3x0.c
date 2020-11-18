@@ -131,7 +131,7 @@ void C5000_setModOffset(uint8_t offset)
      * Original TYT MD-380 code does this, both for DMR and FM.
      */
     uint8_t offUpper = (offset < 0x80) ? 0x00 : 0x03;
-    uint8_t offLower = offset - 0x7F;
+    uint8_t offLower = 0x7F - offset;
 
     _writeReg(0x00, 0x48, offUpper);    // Two-point bias, upper value
     _writeReg(0x00, 0x47, offLower);    // Two-point bias, lower value

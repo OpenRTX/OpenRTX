@@ -20,19 +20,21 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
+#include <stdbool.h>
 #include <os.h>
 #include "gpio.h"
 #include "delays.h"
 #include "rtx.h"
-#include "ADC1_MDxx380.h"
-#include "graphics.h"
 #include "platform.h"
 #include "hwconfig.h"
+#include "HR-C5000_MD3x0.h"
+#include "toneGenerator_MDxx380.h"
 
 int main(void)
 {
     platform_init();
+//     toneGen_init();
+//     toneGen_setToneFreq(77.0f);
 
     gpio_setMode(SPK_MUTE, OUTPUT);
     gpio_setMode(AMP_EN,   OUTPUT);
@@ -43,27 +45,47 @@ int main(void)
     gpio_clearPin(SPK_MUTE);    /* Unmute speaker                       */
 
     rtx_init();
+    rtx_setTxFreq(430100000.0f);
     rtx_setRxFreq(430100000.0f);
     rtx_setBandwidth(BW_25);
     rtx_setOpmode(FM);
     rtx_setFuncmode(RX);
 
-    gfx_init();
-    platform_setBacklightLevel(255);
+    gpio_setMode(GPIOA, 14, OUTPUT); /* Micpwr_sw */
+    gpio_setPin(GPIOA, 14);
 
-    color_t white  = {255, 255, 255};
-    point_t origin = {0, SCREEN_HEIGHT / 9};
-    char buf[30]   = {0};
+    bool txActive = false;
+    uint8_t count = 0;
 
     while (1)
     {
-        snprintf(sizeof(buf), buf, "RSSI level %f\n", rtx_getRssi());
-        gfx_clearScreen();
-        gfx_print(origin, buf, FONT_SIZE_3, TEXT_ALIGN_CENTER, white);
-        gfx_render();
-        while (gfx_renderingInProgress());
+        if(platform_getPttStatus() && (txActive == false))
+        {
+            rtx_setFuncmode(OFF);
+            rtx_setFuncmode(TX);
+            C5000_startAnalogTx();
+            platform_ledOn(RED);
+            txActive = true;
+        }
+
+        if(!platform_getPttStatus() && (txActive == true))
+        {
+            rtx_setFuncmode(OFF);
+            C5000_stopAnalogTx();
+            platform_ledOff(RED);
+            rtx_setFuncmode(RX);
+            txActive = false;
+        }
+
+        count++;
+        if(count == 50)
+        {
+            printf("RSSI: %f\r\n", rtx_getRssi());
+            count = 0;
+        }
+
         OS_ERR err;
-        OSTimeDlyHMSM(0u, 0u, 0u, 500u, OS_OPT_TIME_HMSM_STRICT, &err);
+        OSTimeDlyHMSM(0u, 0u, 0u, 10u, OS_OPT_TIME_HMSM_STRICT, &err);
     }
 
     return 0;
