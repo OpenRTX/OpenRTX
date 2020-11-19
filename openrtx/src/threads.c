@@ -55,7 +55,6 @@ static void ui_task(void *arg)
 
     // Initialise graphics driver
     gfx_init();
-    platform_setBacklightLevel(255);
 
     // Display splash screen
     point_t splash_origin = {0, SCREEN_HEIGHT / 2 + 6};
@@ -66,6 +65,10 @@ static void ui_task(void *arg)
               yellow_fab413);
     gfx_render();
     while(gfx_renderingInProgress());
+    // Wait 30ms to hide random pixels on screen
+    OSTimeDlyHMSM(0u, 0u, 0u, 30u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+    platform_setBacklightLevel(255);
+    // Keep the splash screen for 1 second
     OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
 
     // Clear screen
