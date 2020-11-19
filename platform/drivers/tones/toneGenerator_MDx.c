@@ -18,7 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include "toneGenerator_MDxx380.h"
+#include "toneGenerator_MDx.h"
 #include <hwconfig.h>
 #include <gpio.h>
 

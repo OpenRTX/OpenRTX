@@ -134,10 +134,10 @@ else
 endif
 
 ## TYT MD380
-md380_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDxx380.c',
-                                   'platform/drivers/keyboard/keyboard_MDxx380.c',
-                                   'platform/drivers/ADC/ADC1_MDxx380.c',
-                                   'platform/drivers/tones/toneGenerator_MDxx380.c',
+md380_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDx.c',
+                                   'platform/drivers/keyboard/keyboard_MDx.c',
+                                   'platform/drivers/ADC/ADC1_MDx.c',
+                                   'platform/drivers/tones/toneGenerator_MDx.c',
                                    'platform/targets/MD-380/platform.c',
                                    'openrtx/src/graphics/graphics_rgb565.c']
 
@@ -146,10 +146,10 @@ md380_def = def + stm32f405_def
 
 
 ## TYT MD390
-md390_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDxx380.c',
-                                   'platform/drivers/keyboard/keyboard_MDxx380.c',
-                                   'platform/drivers/ADC/ADC1_MDxx380.c',
-                                   'platform/drivers/tones/toneGenerator_MDxx380.c',
+md390_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDx.c',
+                                   'platform/drivers/keyboard/keyboard_MDx.c',
+                                   'platform/drivers/ADC/ADC1_MDx.c',
+                                   'platform/drivers/tones/toneGenerator_MDx.c',
                                    'platform/targets/MD-390/platform.c',
                                    'openrtx/src/graphics/graphics_rgb565.c']
 
@@ -159,9 +159,9 @@ md390_def = def + stm32f405_def
 
 
 ## TYT MD-UV380
-mduv380_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDxx380.c',
-                                     'platform/drivers/keyboard/keyboard_MDxx380.c',
-                                     'platform/drivers/ADC/ADC1_MDxx380.c',
+mduv380_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDx.c',
+                                     'platform/drivers/keyboard/keyboard_MDx.c',
+                                     'platform/drivers/ADC/ADC1_MDx.c',
                                      'platform/targets/MD-UV380/platform.c',
                                      'openrtx/src/graphics/graphics_rgb565.c']
 
