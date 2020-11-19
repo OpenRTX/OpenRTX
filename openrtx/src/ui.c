@@ -75,6 +75,8 @@
 
 typedef struct layout_t
 {
+    uint16_t top_h;
+    uint16_t bottom_h;
     point_t top_pos;
     point_t line1_pos;
     point_t line2_pos;
@@ -90,6 +92,7 @@ typedef struct layout_t
 layout_t layout;
 bool layout_ready = false;
 color_t color_white = {255, 255, 255};
+color_t color_grey = {60, 60, 60};
 
 layout_t _ui_calculateLayout()
 {
@@ -172,6 +175,8 @@ layout_t _ui_calculateLayout()
 
     layout_t new_layout =
     {
+        top_h,
+        bottom_h,
         top_pos,
         line1_pos,
         line2_pos,
@@ -184,6 +189,14 @@ layout_t _ui_calculateLayout()
         bottom_font,
     };
     return new_layout;
+}
+
+void _ui_drawBackground()
+{
+    // Print top bar line of 1 pixel height
+    gfx_drawHLine(layout.top_h, 1, color_grey);
+    // Print bottom bar line of 1 pixel height
+    gfx_drawHLine(SCREEN_HEIGHT - layout.bottom_h - 1, 1, color_grey);
 }
 
 void _ui_drawTopBar()
@@ -224,6 +237,7 @@ void _ui_drawBottomBar()
 
 void ui_drawMainScreen(state_t state)
 {
+    _ui_drawBackground();
     _ui_drawTopBar();
     _ui_drawVFO(state);
     _ui_drawBottomBar();
