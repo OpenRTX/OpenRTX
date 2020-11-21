@@ -72,6 +72,12 @@
 #define MONI_SW LCD_D6
 #define FUNC_SW LCD_D7
 
+/* External flash */
+#define FLASH_CS  GPIOD,7
+#define FLASH_CLK GPIOB,3
+#define FLASH_SDO GPIOB,4
+#define FLASH_SDI GPIOB,5
+
 /*
  * To enable pwm for display backlight dimming uncomment this directive.
  *

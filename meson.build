@@ -11,7 +11,7 @@ project('OpenRTX', 'c',
 
 ## OpenRTX
 
-openrtx_src = ['openrtx/src/main.c',
+openrtx_src = ['tests/platform/printCalib_MDUV380.c',
                'openrtx/src/bootstrap.c',
                'openrtx/src/state.c',
                'openrtx/src/ui.c',
@@ -20,6 +20,7 @@ openrtx_src = ['openrtx/src/main.c',
 openrtx_inc = ['openrtx/include/interfaces',
                'openrtx/include',
                'platform/drivers/ADC',
+               'platform/drivers/NVM',
                'platform/drivers/tones',
                'openrtx/include/fonts/adafruit']
 
@@ -161,6 +162,7 @@ md390_def = def + stm32f405_def
 ## TYT MD-UV380
 mduv380_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDx.c',
                                      'platform/drivers/keyboard/keyboard_MDx.c',
+                                     'platform/drivers/NVM/extFlash_MDx.c',
                                      'platform/drivers/ADC/ADC1_MDx.c',
                                      'platform/targets/MD-UV380/platform.c',
                                      'openrtx/src/graphics/graphics_rgb565.c']
