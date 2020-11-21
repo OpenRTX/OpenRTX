@@ -21,8 +21,20 @@
 #include <stdio.h>
 #include <state.h>
 
-state_t state;
-modified_t state_flags;
+const curTime_t epoch = {0, 0, 0, 1, 1, 1970};
+
+state_t state = {
+    epoch,  //time
+    0.0,    //v_bat
+    0.0,    //rx_freq
+    0.0     //tx_freq
+};
+
+modified_t state_flags = {
+    false,  //ui_modified
+    false,  //rtx_modified
+    false   //self_modified
+};
 
 void state_init()
 {
