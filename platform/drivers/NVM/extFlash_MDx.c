@@ -60,7 +60,7 @@ void extFlash_init()
               | SPI_CR1_SPE;    /* Enable peripheral         */
 }
 
-void extFlash_shutdown()
+void extFlash_terminate()
 {
     extFlash_sleep();
 
@@ -98,7 +98,7 @@ ssize_t extFlash_readSecurityRegister(uint32_t addr, uint8_t* buf, size_t len)
     size_t readLen = len;
     if((addrRange + len) > 0xFF)
     {
-        readLen = len + (addrRange & 0xFF);
+        readLen = 0xFF - (addrRange & 0xFF);
     }
 
     gpio_clearPin(FLASH_CS);

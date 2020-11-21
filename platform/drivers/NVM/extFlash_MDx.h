@@ -39,7 +39,7 @@ void extFlash_init();
 /**
  * Terminate driver for external flash.
  */
-void extFlash_shutdown();
+void extFlash_terminate();
 
 /**
  * Release flash chip from power down mode, this function should be called at
