@@ -27,6 +27,9 @@
 #include <platform.h>
 #include <hwconfig.h>
 
+// Allocate state mutex
+static OS_MUTEX state_mutex;
+
 // Allocate UI task control block and stack
 static OS_TCB  ui_tcb;
 static CPU_STK ui_stk[UI_TASK_STKSIZE];
@@ -50,19 +53,15 @@ static void ui_task(void *arg)
     (void) arg;
     OS_ERR os_err;
 
-    // Initialise keyboard
+    // Initialize keyboard
     kbd_init();
-
-    // Initialise graphics driver
+    // Initialize graphics driver
     gfx_init();
+    // Initialize user interface
+    ui_init();
 
     // Display splash screen
-    point_t splash_origin = {0, SCREEN_HEIGHT / 2 + 6};
-    color_t yellow_fab413 = {250, 180, 19};
-    char *splash_buf = "OpenRTX";
-    gfx_clearScreen();
-    gfx_print(splash_origin, "OpenRTX", FONT_SIZE_12PT, TEXT_ALIGN_CENTER,
-              yellow_fab413);
+    ui_drawSplashScreen();
     gfx_render();
     while(gfx_renderingInProgress());
     // Wait 30ms to hide random pixels on screen
@@ -71,16 +70,25 @@ static void ui_task(void *arg)
     // Keep the splash screen for 1 second
     OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
 
-    // Clear screen
-    gfx_clearScreen();
-    gfx_render();
-    while(gfx_renderingInProgress());
+    // Get initial state local copy
+    // Wait for unlocked mutex and lock it
+    OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
+    state_t last_state = state;
+    // Unlock the mutex
+    OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
 
     while(1)
     {
-        state_t state = state_getCurrentState();
         uint32_t keys = kbd_getKeys();
-        bool renderNeeded = ui_update(state, keys);
+        // Wait for unlocked mutex and lock it
+        OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err); 
+        // React to keypresses and redraw GUI
+        bool renderNeeded = ui_update(last_state, keys);
+        // Update state local copy
+        last_state = state;
+        // Unlock the mutex
+        OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
+
         if(renderNeeded)
         {
             gfx_render();
@@ -92,24 +100,27 @@ static void ui_task(void *arg)
     }
 }
 
-
 // State update task
 static void state_task(void *arg)
 {
     (void) arg;
     OS_ERR os_err;
 
-    // Initialise state
-    state_init();
-
     while(1)
     {
-        // Execute state thread every 1s
-        state_update();
+        // Wait for unlocked mutex and lock it
+        OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
+
+        state.time = rtc_getTime(); 
+        state.v_bat = platform_getVbat();
+        
+	    // Unlock the mutex
+        OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
+        
+        // Execute state update thread every 1s
         OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
     }
 }
-
 
 // RTX task
 static void rtx_task(void *arg)
@@ -146,9 +157,21 @@ void create_threads()
 {
     OS_ERR os_err;
 
+    // Create state mutex
+    OSMutexCreate((OS_MUTEX  *) &state_mutex,
+                 (CPU_CHAR   *) "State Mutex",
+                 (OS_ERR     *) &os_err);
+
+    // Wait for unlocked mutex and lock it
+    OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
+    // State initialization, execute before starting all tasks
+    state_init();
+    // Unlock the mutex
+    OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
+
     // Create UI thread
     OSTaskCreate((OS_TCB     *) &ui_tcb,
-                 (CPU_CHAR   *) " ",
+                 (CPU_CHAR   *) "UI Task",
                  (OS_TASK_PTR ) ui_task,
                  (void       *) 0,
                  (OS_PRIO     ) 10,
@@ -163,7 +186,7 @@ void create_threads()
 
     // Create state thread
     OSTaskCreate((OS_TCB     *) &state_tcb,
-                 (CPU_CHAR   *) " ",
+                 (CPU_CHAR   *) "State Task",
                  (OS_TASK_PTR ) state_task,
                  (void       *) 0,
                  (OS_PRIO     ) 30,
@@ -178,7 +201,7 @@ void create_threads()
 
     // Create rtx radio thread
     OSTaskCreate((OS_TCB     *) &rtx_tcb,
-                 (CPU_CHAR   *) " ",
+                 (CPU_CHAR   *) "RTX Task",
                  (OS_TASK_PTR ) rtx_task,
                  (void       *) 0,
                  (OS_PRIO     ) 5,
@@ -193,7 +216,7 @@ void create_threads()
 
     // Create dmr radio thread
     OSTaskCreate((OS_TCB     *) &dmr_tcb,
-                 (CPU_CHAR   *) " ",
+                 (CPU_CHAR   *) "DMR Task",
                  (OS_TASK_PTR ) dmr_task,
                  (void       *) 0,
                  (OS_PRIO     ) 3,

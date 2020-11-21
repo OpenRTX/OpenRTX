@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
  *                         Niccolò Izzo IU2KIN,                            *
+ *                         Frederik Saraci IU2NRO,                         *
  *                         Silvano Seva IU2KWO                             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -21,14 +22,17 @@
 #define STATE_H
 
 #include <datatypes.h>
+#include <stdbool.h>
+#include <rtc.h>
 
 /**
  * Part of this structure has been commented because the corresponding
  * functionality is not yet implemented.
  * Uncomment once the related feature is ready
  */
-
 typedef struct state_t {
+    curTime_t time;
+    float v_bat;
     //enum ui_screen;
     //enum tuner_mode;
     //enum radio_mode;
@@ -59,27 +63,26 @@ typedef struct state_t {
 } state_t;
 
 /**
- * This function initialises the Radio state, acquiring the information
- * needed to populate it from device drivers. 
+ * This structure is used to mark if the state has been modified
+ * and by which thread.
+ * The threads that are watching for state updates
+ * check the variables of other threads, if they are set,
+ * they know that the state have been modified
+ */
+typedef struct modified_t {
+    bool ui_modified;
+    bool rtx_modified;
+    bool self_modified;
+} modified_t;
+
+extern state_t state;
+extern modified_t state_flags;
+
+
+/**
+ * This function initializes the Radio state, acquiring the information
+ * needed to populate it from device drivers.
  */
 void state_init();
-
-/**
- * This function updates the state information by sourcing the
- * updated values of the various fields of the state_t struct
- * from corresponding device drivers.
- */
-void state_update();
-
-/**
- * Fetch current state.
- * @return current state.
- */
-state_t state_getCurrentState();
-
-/**
- * This function terminates the Radio state.
- */
-void state_terminate();
 
 #endif /* STATE_H */

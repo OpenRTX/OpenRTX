@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
  *                         Niccolò Izzo IU2KIN,                            *
+ *                         Frederik Saraci IU2NRO,                         *
  *                         Silvano Seva IU2KWO                             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -20,26 +21,15 @@
 #include <stdio.h>
 #include <state.h>
 
-state_t current_state;
+state_t state;
+modified_t state_flags;
 
 void state_init()
 {
     /*TODO: Read current state parameters from hardware, 
      * or initialize them to sane defaults */
-     current_state.rx_freq = 0.0;
-     current_state.tx_freq = 0.0;
-}
-
-void state_update()
-{
-    
-}
-
-state_t state_getCurrentState()
-{
-    return current_state;
-}
-
-void state_terminate()
-{
+    state.time = rtc_getTime();
+    state.v_bat = platform_getVbat();
+    state.rx_freq = 0.0;
+    state.tx_freq = 0.0;
 }

@@ -66,7 +66,6 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <ui.h>
-#include <rtc.h>
 #include <delays.h>
 #include <graphics.h>
 #include <keyboard.h>
@@ -91,8 +90,10 @@ typedef struct layout_t
 
 layout_t layout;
 bool layout_ready = false;
+bool redraw_needed = true;
 color_t color_white = {255, 255, 255};
 color_t color_grey = {60, 60, 60};
+color_t yellow_fab413 = {250, 180, 19};
 
 layout_t _ui_calculateLayout()
 {
@@ -203,19 +204,18 @@ void _ui_drawTopBar()
 {
     // Print clock on top bar
     char clock_buf[6] = "";
-    curTime_t time = rtc_getTime();
-    snprintf(clock_buf, sizeof(clock_buf), "%02d:%02d", time.hour, time.minute);
+    snprintf(clock_buf, sizeof(clock_buf), "%02d:%02d", state.time.hour, 
+             state.time.minute);
     gfx_print(layout.top_pos, clock_buf, layout.top_font, TEXT_ALIGN_CENTER, color_white);
 
     // Print battery voltage on top bar, use 4 px padding
     // TODO: Replace with battery icon
     char bat_buf[6] = "";
-    float v_bat = platform_getVbat();
-    snprintf(bat_buf, sizeof(bat_buf), "%02.1fV ", v_bat);
+    snprintf(bat_buf, sizeof(bat_buf), "%02.1fV ", state.v_bat);
     gfx_print(layout.top_pos, bat_buf, layout.top_font, TEXT_ALIGN_RIGHT, color_white);
 }
 
-void _ui_drawVFO(state_t state)
+void _ui_drawVFO()
 {
     // Print VFO frequencies
     char freq_buf[20] = "";
@@ -232,30 +232,58 @@ void _ui_drawBottomBar()
     gfx_print(layout.bottom_pos, bottom_buf, layout.bottom_font, TEXT_ALIGN_CENTER, color_white);
 }
 
-void ui_drawMainScreen(state_t state)
+bool ui_drawMainScreen(state_t last_state)
 {
-    _ui_drawBackground();
-    _ui_drawTopBar();
-    _ui_drawVFO(state);
-    _ui_drawBottomBar();
+    bool screen_update = false;
+    // Total GUI redraw
+    if(redraw_needed)
+    {
+        gfx_clearScreen();
+        _ui_drawBackground();
+        _ui_drawTopBar();
+        _ui_drawVFO();
+        _ui_drawBottomBar();
+        screen_update = true;
+    }
+    // Partial GUI redraw
+    // TODO: until gfx_clearRows() is implemented, we need to redraw everything
+    else
+    {
+        gfx_clearScreen();
+        _ui_drawBackground();
+        _ui_drawTopBar();
+        _ui_drawVFO();
+        _ui_drawBottomBar();
+        screen_update = true;
+    }
+    return screen_update;
 }
 
 void ui_init()
 {
+    redraw_needed = true;
     layout = _ui_calculateLayout();
     layout_ready = true;
 }
 
-bool ui_update(state_t state, uint32_t keys)
+void ui_drawSplashScreen()
+{
+    point_t splash_origin = {0, SCREEN_HEIGHT / 2 + 6};
+    char *splash_buf = "OpenRTX";
+    gfx_clearScreen();
+    gfx_print(splash_origin, "OpenRTX", FONT_SIZE_12PT, TEXT_ALIGN_CENTER,
+              yellow_fab413);
+}
+
+bool ui_update(state_t last_state, uint32_t keys)
 {
     if(!layout_ready)
     {
         layout = _ui_calculateLayout();
         layout_ready = true;
     }
-    gfx_clearScreen();
-    ui_drawMainScreen(state);
-    return true;
+    bool screen_update = ui_drawMainScreen(last_state);
+    return screen_update;
 }
 
 void ui_terminate()
