@@ -163,6 +163,7 @@ md390_def = def + stm32f405_def
 mduv380_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDx.c',
                                      'platform/drivers/keyboard/keyboard_MDx.c',
                                      'platform/drivers/NVM/extFlash_MDx.c',
+                                     'platform/drivers/NVM/nvmem_MDUV3x0.c',
                                      'platform/drivers/ADC/ADC1_MDx.c',
                                      'platform/targets/MD-UV380/platform.c',
                                      'openrtx/src/graphics/graphics_rgb565.c']
