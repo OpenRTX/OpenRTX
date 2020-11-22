@@ -71,7 +71,7 @@ void nvm_readCalibData(void *buf)
     (void) extFlash_readSecurityRegister(0x1060, calib->uhfCal.openSql1, 9);
     (void) extFlash_readSecurityRegister(0x1090, calib->uhfCal.ctcss67Hz, 9);
     (void) extFlash_readSecurityRegister(0x10a0, calib->uhfCal.ctcss151Hz, 9);
-    (void) extFlash_readSecurityRegister(0x10b0, calib->uhfCal.ctcss151Hz, 9);
+    (void) extFlash_readSecurityRegister(0x10b0, calib->uhfCal.ctcss254Hz, 9);
     (void) extFlash_readSecurityRegister(0x10d0, calib->uhfCal.dcsMod1, 9);
     (void) extFlash_readSecurityRegister(0x2030, calib->uhfCal.sendIrange, 9);
     (void) extFlash_readSecurityRegister(0x2040, calib->uhfCal.sendQrange, 9);
@@ -95,7 +95,11 @@ void nvm_readCalibData(void *buf)
     (void) extFlash_readSecurityRegister(0x1039, calib->vhfCal.rxSensitivity, 5);
     (void) extFlash_readSecurityRegister(0x109b, calib->vhfCal.ctcss67Hz, 5);
     (void) extFlash_readSecurityRegister(0x10ab, calib->vhfCal.ctcss151Hz, 5);
-    (void) extFlash_readSecurityRegister(0x10bb, calib->vhfCal.ctcss151Hz, 5);
+    (void) extFlash_readSecurityRegister(0x10bb, calib->vhfCal.ctcss254Hz, 5);
+    (void) extFlash_readSecurityRegister(0x10e0, calib->vhfCal.openSql9, 5);
+    (void) extFlash_readSecurityRegister(0x10e5, calib->vhfCal.closeSql9, 5);
+    (void) extFlash_readSecurityRegister(0x10ea, calib->vhfCal.closeSql1, 5);
+    (void) extFlash_readSecurityRegister(0x10ef, calib->vhfCal.openSql1, 5);
     (void) extFlash_readSecurityRegister(0x10db, calib->vhfCal.dcsMod1, 5);
     (void) extFlash_readSecurityRegister(0x2039, calib->vhfCal.sendIrange, 5);
     (void) extFlash_readSecurityRegister(0x2049, calib->vhfCal.sendQrange, 5);
