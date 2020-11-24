@@ -22,8 +22,6 @@
 
 #include <stm32f4xx.h>
 
-#define PLATFORM_MDUV380
-
 /* Screen dimensions */
 #define SCREEN_WIDTH 160
 #define SCREEN_HEIGHT 128

@@ -145,7 +145,7 @@ md380_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDx.c',
                                    'openrtx/src/graphics/graphics_rgb565.c']
 
 md380_inc = inc + stm32f405_inc + ['platform/targets/MD-380']
-md380_def = def + stm32f405_def
+md380_def = def + stm32f405_def + {'PLATFORM_MD380': ''}
 
 
 ## TYT MD390
@@ -159,7 +159,7 @@ md390_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDx.c',
                                    'openrtx/src/graphics/graphics_rgb565.c']
 
 md390_inc = inc + stm32f405_inc + ['platform/targets/MD-390']
-md390_def = def + stm32f405_def
+md390_def = def + stm32f405_def + {'PLATFORM_MD390': ''}
 
 
 
@@ -173,7 +173,7 @@ mduv380_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDx.c',
                                      'openrtx/src/graphics/graphics_rgb565.c']
 
 mduv380_inc = inc + stm32f405_inc + ['platform/targets/MD-UV380']
-mduv380_def = def + stm32f405_def
+mduv380_def = def + stm32f405_def + {'PLATFORM_MDUV380': ''}
 
 
 ##
