@@ -40,6 +40,11 @@ void ui_init();
 bool ui_update(state_t last_state, uint32_t keys);
 
 /**
+ * This function writes the OpenRTX splash screen image into the framebuffer.
+ */
+void ui_drawSplashScreen();
+
+/**
  * This function terminates the User Interface.
  */
 void ui_terminate();

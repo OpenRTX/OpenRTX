@@ -206,13 +206,15 @@ void _ui_drawTopBar()
     char clock_buf[6] = "";
     snprintf(clock_buf, sizeof(clock_buf), "%02d:%02d", state.time.hour, 
              state.time.minute);
-    gfx_print(layout.top_pos, clock_buf, layout.top_font, TEXT_ALIGN_CENTER, color_white);
+    gfx_print(layout.top_pos, clock_buf, layout.top_font, TEXT_ALIGN_CENTER,
+              color_white);
 
     // Print battery voltage on top bar, use 4 px padding
     // TODO: Replace with battery icon
     char bat_buf[6] = "";
     snprintf(bat_buf, sizeof(bat_buf), "%02.1fV ", state.v_bat);
-    gfx_print(layout.top_pos, bat_buf, layout.top_font, TEXT_ALIGN_RIGHT, color_white);
+    gfx_print(layout.top_pos, bat_buf, layout.top_font, TEXT_ALIGN_RIGHT,
+              color_white);
 }
 
 void _ui_drawVFO()
@@ -220,20 +222,25 @@ void _ui_drawVFO()
     // Print VFO frequencies
     char freq_buf[20] = "";
     snprintf(freq_buf, sizeof(freq_buf), "Rx: %09.5f", state.rx_freq);
-    gfx_print(layout.line2_pos, freq_buf, layout.line1_font, TEXT_ALIGN_CENTER, color_white);
+    gfx_print(layout.line2_pos, freq_buf, layout.line1_font, TEXT_ALIGN_CENTER,
+              color_white);
     snprintf(freq_buf, sizeof(freq_buf), "Tx: %09.5f", state.tx_freq);
-    gfx_print(layout.line3_pos, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER, color_white);
+    gfx_print(layout.line3_pos, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
+              color_white);
 }
 
 void _ui_drawBottomBar()
 {
     // Print OpenRTX on bottom bar
     char bottom_buf[8] = "OpenRTX";
-    gfx_print(layout.bottom_pos, bottom_buf, layout.bottom_font, TEXT_ALIGN_CENTER, color_white);
+    gfx_print(layout.bottom_pos, bottom_buf, layout.bottom_font,
+              TEXT_ALIGN_CENTER, color_white);
 }
 
 bool ui_drawMainScreen(state_t last_state)
 {
+    (void) last_state;
+
     bool screen_update = false;
     // Total GUI redraw
     if(redraw_needed)
@@ -269,7 +276,6 @@ void ui_init()
 void ui_drawSplashScreen()
 {
     point_t splash_origin = {0, SCREEN_HEIGHT / 2 + 6};
-    char *splash_buf = "OpenRTX";
     gfx_clearScreen();
     gfx_print(splash_origin, "OpenRTX", FONT_SIZE_12PT, TEXT_ALIGN_CENTER,
               yellow_fab413);
@@ -277,11 +283,14 @@ void ui_drawSplashScreen()
 
 bool ui_update(state_t last_state, uint32_t keys)
 {
+    (void) keys;
+
     if(!layout_ready)
     {
         layout = _ui_calculateLayout();
         layout_ready = true;
     }
+
     bool screen_update = ui_drawMainScreen(last_state);
     return screen_update;
 }
