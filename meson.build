@@ -11,7 +11,7 @@ project('OpenRTX', 'c',
 
 ## OpenRTX
 
-openrtx_src = ['tests/platform/printCalib_MDUV380.c',
+openrtx_src = ['tests/platform/printCalib_MDx.c',
                'openrtx/src/bootstrap.c',
                'openrtx/src/state.c',
                'openrtx/src/ui.c',
@@ -138,6 +138,8 @@ endif
 md380_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDx.c',
                                    'platform/drivers/keyboard/keyboard_MDx.c',
                                    'platform/drivers/ADC/ADC1_MDx.c',
+                                   'platform/drivers/NVM/extFlash_MDx.c',
+                                   'platform/drivers/NVM/nvmem_MD3x0.c',
                                    'platform/drivers/tones/toneGenerator_MDx.c',
                                    'platform/targets/MD-380/platform.c',
                                    'openrtx/src/graphics/graphics_rgb565.c']
@@ -150,6 +152,8 @@ md380_def = def + stm32f405_def
 md390_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDx.c',
                                    'platform/drivers/keyboard/keyboard_MDx.c',
                                    'platform/drivers/ADC/ADC1_MDx.c',
+                                   'platform/drivers/NVM/extFlash_MDx.c',
+                                   'platform/drivers/NVM/nvmem_MD3x0.c',
                                    'platform/drivers/tones/toneGenerator_MDx.c',
                                    'platform/targets/MD-390/platform.c',
                                    'openrtx/src/graphics/graphics_rgb565.c']
