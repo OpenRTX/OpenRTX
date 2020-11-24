@@ -826,7 +826,7 @@ void USBD_GetString(uint8_t *desc, uint8_t *unicode, uint16_t *len)
     unicode[idx++] = *len;
     unicode[idx++] =  USB_DESC_TYPE_STRING;
     
-    while (*desc != NULL) 
+    while (*desc != 0)
     {
       unicode[idx++] = *desc++;
       unicode[idx++] =  0x00;
@@ -844,7 +844,7 @@ static uint8_t USBD_GetLen(uint8_t *buf)
 {
     uint8_t  len = 0;
 
-    while (*buf != NULL) 
+    while (*buf != 0)
     {
         len++;
         buf++;

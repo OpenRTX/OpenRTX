@@ -29,6 +29,15 @@
 #include "usb_core.h"
 #include "usb_bsp.h"
 
+/* Workaround to suppress -Wattributes warning */
+struct __attribute__((packed, aligned(1))) T_UINT32_WRITE { uint32_t v; };
+#define __UNALIGNED_UINT32_WRITE(addr, val) \
+        (void)((((struct T_UINT32_WRITE *)(void *)(addr))->v) = (val))
+
+struct __attribute__((packed, aligned(1))) T_UINT32_READ { uint32_t v; };
+#define __UNALIGNED_UINT32_READ(addr) \
+        (((const struct T_UINT32_READ *)(const void *)(addr))->v)
+
 
 /** @addtogroup USB_OTG_DRIVER
 * @{
@@ -180,7 +189,7 @@ USB_OTG_STS USB_OTG_WritePacket(USB_OTG_CORE_HANDLE *pdev,
     fifo = pdev->regs.DFIFO[ch_ep_num];
     for (i = 0; i < count32b; i++, src+=4)
     {
-      USB_OTG_WRITE_REG32( fifo, *((__packed uint32_t *)src) );
+      USB_OTG_WRITE_REG32( fifo, __UNALIGNED_UINT32_READ(src) );
     }
   }
   return status;
@@ -205,7 +214,7 @@ void *USB_OTG_ReadPacket(USB_OTG_CORE_HANDLE *pdev,
   
   for ( i = 0; i < count32b; i++, dest += 4 )
   {
-    *(__packed uint32_t *)dest = USB_OTG_READ_REG32(fifo);
+    __UNALIGNED_UINT32_WRITE(dest, USB_OTG_READ_REG32(fifo));
     
   }
   return ((void *)dest);
