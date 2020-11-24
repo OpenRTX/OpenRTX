@@ -20,6 +20,8 @@
 #ifndef DATATYPES_H
 #define DATATYPES_H
 
+#include <stdint.h>
+
 /**                                                                             
  * \brief CTCSS and DCS type definition.                                        
  *                                                                              
@@ -37,6 +39,6 @@ typedef unsigned int tone_t;
  *                                                                              
  * Frequency type unit in Hz, able to hold SHF frequencies.                     
  */ 
-typedef float freq_t;
+typedef uint32_t freq_t;
 
 #endif /* DATATYPES_H */

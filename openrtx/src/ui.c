@@ -221,10 +221,10 @@ void _ui_drawVFO()
 {
     // Print VFO frequencies
     char freq_buf[20] = "";
-    snprintf(freq_buf, sizeof(freq_buf), "Rx: %09.5f", state.rx_freq);
+    snprintf(freq_buf, sizeof(freq_buf), "Rx: %09.5f", ((float) state.rx_freq));
     gfx_print(layout.line2_pos, freq_buf, layout.line1_font, TEXT_ALIGN_CENTER,
               color_white);
-    snprintf(freq_buf, sizeof(freq_buf), "Tx: %09.5f", state.tx_freq);
+    snprintf(freq_buf, sizeof(freq_buf), "Tx: %09.5f", ((float) state.tx_freq));
     gfx_print(layout.line3_pos, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
               color_white);
 }
