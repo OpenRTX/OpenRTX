@@ -16,6 +16,9 @@ For information on currently supported radios and features, see the [Development
 For instructions on how to compile and flash OpenRTX to your radio,
 or just run OpenRTX on Linux see the [How to compile](https://github.com/n1zzo/OpenRTX/wiki/How-to-compile) wiki page.
 
+## Screenshots
+<img src="assets/splash.gif" width="200" height="auto">
+
 ## License
 
 This software is released under the GNU GPL v3, the modified wrapping scripts
