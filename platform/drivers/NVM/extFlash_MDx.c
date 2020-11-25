@@ -125,7 +125,6 @@ void extFlash_readData(uint32_t addr, uint8_t* buf, size_t len)
     (void) _spi1SendRecv((addr >> 16) & 0xFF);  /* Address high   */
     (void) _spi1SendRecv((addr >> 8) & 0xFF);   /* Address middle */
     (void) _spi1SendRecv(addr & 0xFF);          /* Address low    */
-    (void) _spi1SendRecv(0x00);                 /* Dummy byte     */
 
     for(size_t i = 0; i < len; i++)
     {

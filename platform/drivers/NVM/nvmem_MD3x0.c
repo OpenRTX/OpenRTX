@@ -24,6 +24,98 @@
 #include "calibInfo_MDx.h"
 
 /**
+ * \internal Data structure matching the one used by original MD3x0 firmware to
+ * manage channel data inside nonvolatile flash memory.
+ *
+ * Taken by dmrconfig repository: https://github.com/sergev/dmrconfig/blob/master/md380.c
+ */
+typedef struct
+{
+    // Byte 0
+    uint8_t channel_mode        : 2,
+            bandwidth           : 2,
+            autoscan            : 1,
+            squelch             : 1,
+            _unused1            : 1,
+            lone_worker         : 1;
+
+    // Byte 1
+    uint8_t talkaround          : 1,
+            rx_only             : 1,
+            repeater_slot       : 2,
+            colorcode           : 4;
+
+    // Byte 2
+    uint8_t privacy_no          : 4,
+            privacy             : 2,
+            private_call_conf   : 1,
+            data_call_conf      : 1;
+
+    // Byte 3
+    uint8_t rx_ref_frequency    : 2,
+            _unused2            : 1,
+            emergency_alarm_ack : 1,
+            _unused3            : 2,
+            uncompressed_udp    : 1,
+            display_pttid_dis   : 1;
+
+    // Byte 4
+    uint8_t tx_ref_frequency    : 2,
+            _unused4            : 2,
+            vox                 : 1,
+            power               : 1,
+            admit_criteria      : 2;
+
+    // Byte 5
+    uint8_t _unused5            : 4,
+            in_call_criteria    : 2,
+            _unused6            : 2;
+
+    // Bytes 6-7
+    uint16_t contact_name_index;
+
+    // Bytes 8-9
+    uint8_t tot                 : 6,
+            _unused13           : 2;
+    uint8_t tot_rekey_delay;
+
+    // Bytes 10-11
+    uint8_t emergency_system_index;
+    uint8_t scan_list_index;
+
+    // Bytes 12-13
+    uint8_t group_list_index;
+    uint8_t _unused7;
+
+    // Bytes 14-15
+    uint8_t _unused8;
+    uint8_t _unused9;
+
+    // Bytes 16-23
+    uint32_t rx_frequency;
+    uint32_t tx_frequency;
+
+    // Bytes 24-27
+    uint16_t ctcss_dcs_receive;
+    uint16_t ctcss_dcs_transmit;
+
+    // Bytes 28-29
+    uint8_t rx_signaling_syst;
+    uint8_t tx_signaling_syst;
+
+    // Bytes 30-31
+    uint8_t _unused10;
+    uint8_t _unused11;
+
+    // Bytes 32-63
+    uint16_t name[16];
+}
+md3x0Channel_t;
+
+const uint32_t chDataBaseAddr = 0x1ee00; /**< Base address of channel data         */
+const uint32_t maxNumChannels = 1000;    /**< Maximum number of channels in memory */
+
+/**
  * \internal Utility function to convert 4 byte BCD values into a 32-bit
  * unsigned integer ones.
  */
@@ -92,4 +184,57 @@ void nvm_readCalibData(void *buf)
         calib->rxFreq[i] = ((freq_t) _bcd2bin(freqs[2*i]));
         calib->txFreq[i] = ((freq_t) _bcd2bin(freqs[2*i+1]));
     }
+}
+
+int nvm_readChannelData(channel_t *channel, uint16_t pos)
+{
+    if(pos > maxNumChannels) return -1;
+
+    extFlash_wakeup();
+    delayUs(5);
+
+    md3x0Channel_t chData;
+    uint32_t readAddr = chDataBaseAddr + pos * sizeof(md3x0Channel_t);
+    extFlash_readData(readAddr, ((uint8_t *) &chData), sizeof(md3x0Channel_t));
+    extFlash_sleep();
+
+    channel->mode            = chData.channel_mode - 1;
+    channel->bandwidth       = chData.bandwidth;
+    channel->admit_criteria  = chData.admit_criteria;
+    channel->squelch         = chData.squelch;
+    channel->rx_only         = chData.rx_only;
+    channel->vox             = chData.vox;
+    channel->power           = ((chData.power == 1) ? 5.0f : 1.0f);
+    channel->rx_frequency    = _bcd2bin(chData.rx_frequency);
+    channel->tx_frequency    = _bcd2bin(chData.tx_frequency);
+    channel->tot             = chData.tot;
+    channel->tot_rekey_delay = chData.tot_rekey_delay;
+    channel->emSys_index     = chData.emergency_system_index;
+    channel->scanList_index  = chData.scan_list_index;
+    channel->groupList_index = chData.group_list_index;
+
+    /*
+     * Brutally convert channel name from unicode to char by truncating the most
+     * significant byte
+     */
+    for(uint16_t i = 0; i < 16; i++)
+    {
+        channel->name[i] = ((char) (chData.name[i] & 0x00FF));
+    }
+
+    /* Load mode-specific parameters */
+    if(channel->mode == FM)
+    {
+        channel->fm.ctcDcs_rx = chData.ctcss_dcs_receive;
+        channel->fm.ctcDcs_tx = chData.ctcss_dcs_transmit;
+    }
+    else if(channel->mode == DMR)
+    {
+        channel->dmr.contactName_index = chData.contact_name_index;
+        channel->dmr.dmr_timeslot      = chData.repeater_slot;
+        channel->dmr.rxColorCode       = chData.colorcode;
+        channel->dmr.txColorCode       = chData.colorcode;
+    }
+
+    return 0;
 }
