@@ -18,10 +18,10 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include "nvmem.h"
-#include "extFlash_MDx.h"
-#include <nvmTypes_MD3x0.h>
+#include <nvmem.h>
 #include <delays.h>
+#include "extFlash_MDx.h"
+#include "calibInfo_MDx.h"
 
 /**
  * \internal Utility function to convert 4 byte BCD values into a 32-bit

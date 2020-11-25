@@ -18,9 +18,9 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <nvmem.h>
 #include <delays.h>
-#include "nvmTypes_MDUV3x0.h"
-#include "nvmem.h"
+#include "calibInfo_MDx.h"
 #include "extFlash_MDx.h"
 
 /**

@@ -21,10 +21,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <sys/types.h>
-#include "nvmem.h"
-#include "nvmTypes_MD3x0.h"
-#include "nvmTypes_MDUV3x0.h"
-#include "extFlash_MDx.h"
+#include <nvmem.h>
+#include <calibInfo_MDx.h>
 
 void printMD3x0calibration()
 {
