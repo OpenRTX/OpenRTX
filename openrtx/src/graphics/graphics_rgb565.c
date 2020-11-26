@@ -201,11 +201,6 @@ static inline uint16_t get_reset_x(textAlign_t alignment, uint16_t line_size) {
 
 void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t alignment, color_t color) {
 
-    OS_ERR os_err;
-
-    // TODO: Without this delay dots are not printed
-    OSTimeDlyHMSM(0u, 0u, 0u, 1u, OS_OPT_TIME_HMSM_STRICT, &os_err);
-
     rgb565_t color_565 = _true2highColor(color);
 
     GFXfont f = fonts[size];
