@@ -283,6 +283,14 @@ void ui_drawSplashScreen()
               yellow_fab413);
 }
 
+void ui_drawSplashScreen2()
+{
+    point_t splash_origin = {0, SCREEN_HEIGHT / 2 - 6};
+    gfx_clearScreen();
+    gfx_print(splash_origin, "O P N\nR T X", FONT_SIZE_12PT, TEXT_ALIGN_CENTER,
+              yellow_fab413);
+}
+
 bool ui_update(state_t last_state, uint32_t keys)
 {
     (void) keys;
