@@ -77,17 +77,26 @@ static void ui_task(void *arg)
     // Unlock the mutex
     OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
 
+    uint32_t last_keys = 0;
+
     while(1)
     {
         uint32_t keys = kbd_getKeys();
-        // React to keypresses and redraw GUI
-        bool renderNeeded = ui_update(last_state, keys);
+        if(keys != last_keys)
+        {
+            printf("Keys changed!\n");
+            last_keys = keys;
+        }
         // Wait for unlocked mutex and lock it
         OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err); 
+        // React to keypresses and update FSM inside state
+        ui_updateFSM(last_state, keys);
         // Update state local copy
         last_state = state;
         // Unlock the mutex
         OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
+        // Redraw GUI
+        bool renderNeeded = ui_updateGUI(last_state);
 
         if(renderNeeded)
         {

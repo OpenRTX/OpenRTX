@@ -32,12 +32,18 @@ void ui_init();
 
 /**
  * This function advances the User Interface FSM, basing on the 
- * current radio state and the keys pressed and redraws the GUI.
+ * current radio state and the keys pressed.
  * @param last_state: A local copy of the previous radio state
  * @param keys: A bitmap containing the currently pressed keys
+ */
+void ui_updateFSM(state_t last_state, uint32_t keys);
+
+/**
+ * This function redraws the GUI based on the last radio state.
+ * @param last_state: A local copy of the previous radio state
  * @return true if a screen refresh is needed after the update
  */
-bool ui_update(state_t last_state, uint32_t keys);
+bool ui_updateGUI(state_t last_state);
 
 /**
  * This function writes the OpenRTX splash screen image into the framebuffer.

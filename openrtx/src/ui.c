@@ -291,16 +291,32 @@ void ui_drawSplashScreen2()
               yellow_fab413);
 }
 
-bool ui_update(state_t last_state, uint32_t keys)
+void ui_updateFSM(state_t last_state, uint32_t keys)
 {
-    (void) keys;
+    // Temporary VFO controls
+    if(keys && KEY_UP)
+    {
+        printf("Frequency UP\n");
+        // Advance TX and RX frequency of 12.5KHz
+        state.channel.rx_frequency += 12500;
+        state.channel.tx_frequency += 12500;
+    }
+    if(keys && KEY_DOWN)
+    {
+        printf("Frequency DOWN\n");
+        // Advance TX and RX frequency of 12.5KHz
+        state.channel.rx_frequency -= 12500;
+        state.channel.tx_frequency -= 12500;
+    }
+}
 
+bool ui_updateGUI(state_t last_state)
+{
     if(!layout_ready)
     {
         layout = _ui_calculateLayout();
         layout_ready = true;
     }
-
     bool screen_update = ui_drawMainScreen(last_state);
     return screen_update;
 }
