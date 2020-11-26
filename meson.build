@@ -11,7 +11,7 @@ project('OpenRTX', 'c',
 
 ## OpenRTX
 
-openrtx_src = ['tests/platform/printContacts_MDx.c',
+openrtx_src = ['openrtx/src/main.c',
                'openrtx/src/bootstrap.c',
                'openrtx/src/state.c',
                'openrtx/src/ui.c',
