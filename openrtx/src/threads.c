@@ -80,10 +80,10 @@ static void ui_task(void *arg)
     while(1)
     {
         uint32_t keys = kbd_getKeys();
-        // Wait for unlocked mutex and lock it
-        OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err); 
         // React to keypresses and redraw GUI
         bool renderNeeded = ui_update(last_state, keys);
+        // Wait for unlocked mutex and lock it
+        OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err); 
         // Update state local copy
         last_state = state;
         // Unlock the mutex
@@ -158,16 +158,12 @@ void create_threads()
     OS_ERR os_err;
 
     // Create state mutex
-    OSMutexCreate((OS_MUTEX  *) &state_mutex,
-                 (CPU_CHAR   *) "State Mutex",
-                 (OS_ERR     *) &os_err);
+    OSMutexCreate((OS_MUTEX  *)  &state_mutex,
+                  (CPU_CHAR   *) "State Mutex",
+                  (OS_ERR     *) &os_err);
 
-    // Wait for unlocked mutex and lock it
-    OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
     // State initialization, execute before starting all tasks
     state_init();
-    // Unlock the mutex
-    OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
 
     // Create UI thread
     OSTaskCreate((OS_TCB     *) &ui_tcb,

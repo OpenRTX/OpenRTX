@@ -22,29 +22,26 @@
 #include <state.h>
 #include <platform.h>
 
-const curTime_t epoch = {0, 0, 0, 1, 1, 1, 70};
-
-state_t state =
-{
-    epoch,  //time
-    0.0,    //v_bat
-    0.0,    //rx_freq
-    0.0     //tx_freq
-};
-
-modified_t state_flags =
-{
-    false,  //ui_modified
-    false,  //rtx_modified
-    false   //self_modified
-};
+state_t state;
 
 void state_init()
 {
-    /*TODO: Read current state parameters from hardware, 
-     * or initialize them to sane defaults */
+    /*
+     * TODO: Read current state parameters from hardware, 
+     * or initialize them to sane defaults
+     */
+    state.radioStateUpdated = true;
     state.time = rtc_getTime();
     state.v_bat = platform_getVbat();
-    state.rx_freq = 0.0;
-    state.tx_freq = 0.0;
+
+    state.channelInfoUpdated = true;
+    state.channel.mode = 0;
+    state.channel.bandwidth = 0;
+    state.channel.power = 0;
+    state.channel.rx_frequency = 430000000;
+    state.channel.tx_frequency = 430000000;
+
+    state.rtxStatus = RTX_OFF;
+    state.sqlLevel = 0;
+    state.voxLevel = 0;
 }

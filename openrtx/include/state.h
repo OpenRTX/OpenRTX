@@ -24,15 +24,19 @@
 #include <datatypes.h>
 #include <stdbool.h>
 #include <rtc.h>
+#include <cps.h>
 
 /**
  * Part of this structure has been commented because the corresponding
  * functionality is not yet implemented.
  * Uncomment once the related feature is ready
  */
-typedef struct state_t {
+typedef struct
+{
+    bool radioStateUpdated;
     curTime_t time;
     float v_bat;
+
     //enum ui_screen;
     //enum tuner_mode;
     //enum radio_mode;
@@ -42,42 +46,23 @@ typedef struct state_t {
     
     //time_t tx_status_tv;
     //bool tx_status;
-    
-    freq_t rx_freq;
-    freq_t tx_freq;
-    
-    //float tx_power;
-    
-    //uint8_t squelch;
-    
-    //tone_t rx_tone;
-    //tone_t tx_tone;
-    
-    //ch_t *channel;
-    
-//#ifdef DMR_ENABLED
-    //uint8_t dmr_color;
-    //uint8_t dmr_timeslot;
-    //dmr_contact_t *dmr_contact;
-//#endif
-} state_t;
 
-/**
- * This structure is used to mark if the state has been modified
- * and by which thread.
- * The threads that are watching for state updates
- * check the variables of other threads, if they are set,
- * they know that the state have been modified
- */
-typedef struct modified_t {
-    bool ui_modified;
-    bool rtx_modified;
-    bool self_modified;
-} modified_t;
+    bool channelInfoUpdated;
+    channel_t channel;
+    uint8_t rtxStatus;
+    uint8_t sqlLevel;
+    uint8_t voxLevel;
+}
+state_t;
+
+enum RtxStatus
+{
+    RTX_OFF = 0,
+    RTX_RX,
+    RTX_TX
+};
 
 extern state_t state;
-extern modified_t state_flags;
-
 
 /**
  * This function initializes the Radio state, acquiring the information

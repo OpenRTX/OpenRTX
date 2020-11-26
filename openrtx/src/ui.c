@@ -200,31 +200,31 @@ void _ui_drawBackground()
     gfx_drawHLine(SCREEN_HEIGHT - layout.bottom_h - 1, 1, color_grey);
 }
 
-void _ui_drawTopBar()
+void _ui_drawTopBar(state_t* state)
 {
     // Print clock on top bar
     char clock_buf[6] = "";
-    snprintf(clock_buf, sizeof(clock_buf), "%02d:%02d", state.time.hour, 
-             state.time.minute);
+    snprintf(clock_buf, sizeof(clock_buf), "%02d:%02d", state->time.hour, 
+             state->time.minute);
     gfx_print(layout.top_pos, clock_buf, layout.top_font, TEXT_ALIGN_CENTER,
               color_white);
 
     // Print battery voltage on top bar, use 4 px padding
     // TODO: Replace with battery icon
     char bat_buf[6] = "";
-    snprintf(bat_buf, sizeof(bat_buf), "%02.1fV ", state.v_bat);
+    snprintf(bat_buf, sizeof(bat_buf), "%02.1fV ", state->v_bat);
     gfx_print(layout.top_pos, bat_buf, layout.top_font, TEXT_ALIGN_RIGHT,
               color_white);
 }
 
-void _ui_drawVFO()
+void _ui_drawVFO(state_t* state)
 {
     // Print VFO frequencies
     char freq_buf[20] = "";
-    snprintf(freq_buf, sizeof(freq_buf), "Rx: %09.5f", ((float) state.rx_freq));
+    snprintf(freq_buf, sizeof(freq_buf), "Rx: %09.5f", ((float) state->channel.rx_frequency));
     gfx_print(layout.line2_pos, freq_buf, layout.line1_font, TEXT_ALIGN_CENTER,
               color_white);
-    snprintf(freq_buf, sizeof(freq_buf), "Tx: %09.5f", ((float) state.tx_freq));
+    snprintf(freq_buf, sizeof(freq_buf), "Tx: %09.5f", ((float) state->channel.tx_frequency));
     gfx_print(layout.line3_pos, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
               color_white);
 }
@@ -239,16 +239,14 @@ void _ui_drawBottomBar()
 
 bool ui_drawMainScreen(state_t last_state)
 {
-    (void) last_state;
-
     bool screen_update = false;
     // Total GUI redraw
     if(redraw_needed)
     {
         gfx_clearScreen();
         _ui_drawBackground();
-        _ui_drawTopBar();
-        _ui_drawVFO();
+        _ui_drawTopBar(&last_state);
+        _ui_drawVFO(&last_state);
         _ui_drawBottomBar();
         screen_update = true;
     }
@@ -258,8 +256,8 @@ bool ui_drawMainScreen(state_t last_state)
     {
         gfx_clearScreen();
         _ui_drawBackground();
-        _ui_drawTopBar();
-        _ui_drawVFO();
+        _ui_drawTopBar(&last_state);
+        _ui_drawVFO(&last_state);
         _ui_drawBottomBar();
         screen_update = true;
     }
