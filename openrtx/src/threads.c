@@ -61,7 +61,7 @@ static void ui_task(void *arg)
     ui_init();
 
     // Display splash screen
-    ui_drawSplashScreen();
+    ui_drawSplashScreen2();
     gfx_render();
     while(gfx_renderingInProgress());
     // Wait 30ms to hide random pixels on screen
