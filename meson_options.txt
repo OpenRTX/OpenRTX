@@ -1,1 +1,2 @@
 option('asan', type : 'boolean', value : false, description : 'Compile the software with AddressSanitizer')
+option('test', type: 'string', description: 'Replace the main OpenRTX source file with a specialized test')

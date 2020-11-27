@@ -11,11 +11,18 @@ project('OpenRTX', 'c',
 
 ## OpenRTX
 
-openrtx_src = ['openrtx/src/main.c',
-               'openrtx/src/bootstrap.c',
+
+openrtx_src = ['openrtx/src/bootstrap.c',
                'openrtx/src/state.c',
                'openrtx/src/ui.c',
                'openrtx/src/threads.c']
+
+## Replace main executable with platform test
+if get_option('test') != ''
+  openrtx_src += 'tests/platform/'+get_option('test')+'.c'
+else
+  openrtx_src += 'openrtx/src/main.c'
+endif
 
 openrtx_inc = ['openrtx/include/interfaces',
                'openrtx/include',
