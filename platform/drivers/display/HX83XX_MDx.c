@@ -88,10 +88,10 @@
 #define LCD_FSMC_ADDR_DATA    0x60040000
 
 /*
- * LCD framebuffer, allocated on the heap by display_init().
+ * LCD framebuffer, statically allocated.
  * Pixel format is RGB565, 16 bit per pixel
  */
-static uint16_t *frameBuffer;
+static uint16_t frameBuffer[SCREEN_WIDTH * SCREEN_HEIGHT];
 
 void __attribute__((used)) DMA2_Stream7_IRQHandler()
 {
@@ -113,19 +113,8 @@ static inline __attribute__((__always_inline__)) void writeData(uint8_t val)
 
 void display_init()
 {
-    /* Framebuffer size, in bytes */
-    const size_t fbSize = SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(uint16_t);
-
-    /* Allocate framebuffer, two bytes per pixel */
-    frameBuffer = (uint16_t *) malloc(fbSize);
-    if(frameBuffer == NULL)
-    {
-        printf("*** LCD ERROR: cannot allocate framebuffer! ***");
-        return;
-    }
-
     /* Clear framebuffer, setting all pixels to 0xFFFF makes the screen white */
-    memset(frameBuffer, 0xFF, fbSize);
+    memset(frameBuffer, 0xFF, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(uint16_t));
 
     /*
      * Turn on DMA2 and configure its interrupt. DMA is used to transfer the
@@ -335,11 +324,6 @@ void display_terminate()
     /* Shut off FSMC and deallocate framebuffer */
     RCC->AHB3ENR &= ~RCC_AHB3ENR_FSMCEN;
     __DSB();
-
-    if(frameBuffer != NULL)
-    {
-        free(frameBuffer);
-    }
 }
 
 void display_renderRows(uint8_t startRow, uint8_t endRow)

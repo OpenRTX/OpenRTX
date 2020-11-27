@@ -39,11 +39,12 @@ static __IO uint32_t usbd_cdc_AltSet = 0;
 uint8_t outEnpBuffer[CDC_DATA_OUT_PACKET_SIZE];
 
 /* Circular buffer for incoming data enqueuement: each packet coming from host
- * is stored here, eventually erasing oldest data
+ * is stored here, eventually erasing oldest data.
+ * Buffer is statically allocated.
  */
 struct rb
 {
-    uint8_t *data;
+    uint8_t data[RX_RING_BUF_SIZE];
     size_t readPtr;
     size_t writePtr;
 }
@@ -203,9 +204,6 @@ int vcom_init()
     rxRingBuf.readPtr = 0;
     rxRingBuf.writePtr = 0;
 
-    rxRingBuf.data = (uint8_t *) malloc(RX_RING_BUF_SIZE);
-    if(rxRingBuf.data == NULL) return -1;
-
     USBD_Init(&USB_OTG_dev, USB_OTG_FS_CORE_ID, &USR_desc, &USBD_CDC_cb,
               &USR_cb);
 
@@ -276,9 +274,6 @@ static uint8_t  usbd_cdc_DeInit (void  *pdev, uint8_t cfgidx)
 
     /* Open Command IN EP */
     DCD_EP_Close(pdev,CDC_CMD_EP);
-
-    /* Deallocate RX buffer */
-    if(rxRingBuf.data != NULL) free(rxRingBuf.data);
 
     return USBD_OK;
 }
