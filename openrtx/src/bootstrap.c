@@ -29,8 +29,9 @@ int main(int argc, char *argv[]);
 /*
  * OS startup task, will call main() when all initialisations are done.
  */
-static OS_TCB        startTCB;
-static CPU_STK_SIZE  startStk[APP_CFG_TASK_START_STK_SIZE];
+#define START_TSK_STKSIZE 512/4
+static OS_TCB  startTCB;
+static CPU_STK startStk[START_TSK_STKSIZE];
 static void startTask(void *arg);
 
 void systemBootstrap()
@@ -39,19 +40,19 @@ void systemBootstrap()
 
     OSInit(&err);
 
-    OSTaskCreate((OS_TCB     *)&startTCB,
-                 (CPU_CHAR   *)" ",
+    OSTaskCreate((OS_TCB     *) &startTCB,
+                 (CPU_CHAR   *) " ",
                  (OS_TASK_PTR ) startTask,
                  (void       *) 0,
                  (OS_PRIO     ) APP_CFG_TASK_START_PRIO,
-                 (CPU_STK    *)&startStk[0],
-                 (CPU_STK     )startStk[APP_CFG_TASK_START_STK_SIZE / 10u],
-                 (CPU_STK_SIZE) APP_CFG_TASK_START_STK_SIZE,
+                 (CPU_STK    *) &startStk[0],
+                 (CPU_STK     ) startStk[START_TSK_STKSIZE / 10u],
+                 (CPU_STK_SIZE) START_TSK_STKSIZE,
                  (OS_MSG_QTY  ) 0,
                  (OS_TICK     ) 0,
                  (void       *) 0,
-                 (OS_OPT      )(OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR),
-                 (OS_ERR     *)&err);
+                 (OS_OPT      ) (OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR),
+                 (OS_ERR     *) &err);
 
     OSStart(&err);
 

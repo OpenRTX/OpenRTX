@@ -32,21 +32,35 @@
 /* Mutex for concurrent access to state variable */
 static OS_MUTEX state_mutex;
 
+
+ /**************************** IMPORTANT NOTE **********************************
+  *                                                                            *
+  * Rationale for "xx_TASK_STKSIZE/4": uC/OS-III manages task stack in terms   *
+  * of CPU_STK elements which, on a 32-bit target, are something like uint32_t,*
+  * that is, one CPU_STK elements takes four bytes.                            *
+  *                                                                            *
+  * Now, the majority of the world manages stack in terms of *bytes* and this  *
+  * leads to an excessive RAM usage if not properly managed. For example, if   *
+  * we have, say, xx_TASK_SIZE = 128 with these odd CPU_STK elements we end    *
+  * up eating 128*4 = 512 bytes.                                               *
+  * The simple workaround for this is dividing the stack size by four.         *
+  ******************************************************************************/
+
 /* UI task control block and stack */
 static OS_TCB  ui_tcb;
-static CPU_STK ui_stk[UI_TASK_STKSIZE];
+static CPU_STK ui_stk[UI_TASK_STKSIZE/4];
 
 /* State task control block and stack */
 static OS_TCB  state_tcb;
-static CPU_STK state_stk[STATE_TASK_STKSIZE];
+static CPU_STK state_stk[STATE_TASK_STKSIZE/4];
 
 /* Baseband task control block and stack */
 static OS_TCB  rtx_tcb;
-static CPU_STK rtx_stk[RTX_TASK_STKSIZE];
+static CPU_STK rtx_stk[RTX_TASK_STKSIZE/4];
 
 /* DMR task control block and stack */
 static OS_TCB  dmr_tcb;
-static CPU_STK dmr_stk[DMR_TASK_STKSIZE];
+static CPU_STK dmr_stk[DMR_TASK_STKSIZE/4];
 
 
 /**
@@ -193,7 +207,7 @@ void create_threads()
                  (OS_PRIO     ) 10,
                  (CPU_STK    *) &ui_stk[0],
                  (CPU_STK     ) 0,
-                 (CPU_STK_SIZE) UI_TASK_STKSIZE,
+                 (CPU_STK_SIZE) UI_TASK_STKSIZE/4,
                  (OS_MSG_QTY  ) 0,
                  (OS_TICK     ) 0,
                  (void       *) 0,
@@ -208,7 +222,7 @@ void create_threads()
                  (OS_PRIO     ) 30,
                  (CPU_STK    *) &state_stk[0],
                  (CPU_STK     ) 0,
-                 (CPU_STK_SIZE) STATE_TASK_STKSIZE,
+                 (CPU_STK_SIZE) STATE_TASK_STKSIZE/4,
                  (OS_MSG_QTY  ) 0,
                  (OS_TICK     ) 0,
                  (void       *) 0,
@@ -223,7 +237,7 @@ void create_threads()
                  (OS_PRIO     ) 5,
                  (CPU_STK    *) &rtx_stk[0],
                  (CPU_STK     ) 0,
-                 (CPU_STK_SIZE) RTX_TASK_STKSIZE,
+                 (CPU_STK_SIZE) RTX_TASK_STKSIZE/4,
                  (OS_MSG_QTY  ) 0,
                  (OS_TICK     ) 0,
                  (void       *) 0,
@@ -238,7 +252,7 @@ void create_threads()
                  (OS_PRIO     ) 3,
                  (CPU_STK    *) &dmr_stk[0],
                  (CPU_STK     ) 0,
-                 (CPU_STK_SIZE) DMR_TASK_STKSIZE,
+                 (CPU_STK_SIZE) DMR_TASK_STKSIZE/4,
                  (OS_MSG_QTY  ) 0,
                  (OS_TICK     ) 0,
                  (void       *) 0,

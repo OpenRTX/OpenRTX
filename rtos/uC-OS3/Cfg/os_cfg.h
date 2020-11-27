@@ -28,10 +28,10 @@
 #define OS_CFG_H
 
                                                                 /* --------------------------- MISCELLANEOUS --------------------------- */
-#define OS_CFG_APP_HOOKS_EN                        1u           /* Enable (1) or Disable (0) application specific hooks                  */
+#define OS_CFG_APP_HOOKS_EN                        0u           /* Enable (1) or Disable (0) application specific hooks                  */
 #define OS_CFG_ARG_CHK_EN                          1u           /* Enable (1) or Disable (0) argument checking                           */
 #define OS_CFG_CALLED_FROM_ISR_CHK_EN              1u           /* Enable (1) or Disable (0) check for called from ISR                   */
-#define OS_CFG_DBG_EN                              1u           /* Enable (1) or Disable (0) debug code/variables                        */
+#define OS_CFG_DBG_EN                              0u           /* Enable (1) or Disable (0) debug code/variables                        */
 #define OS_CFG_TICK_EN                             1u           /* Enable (1) or Disable (0) the kernel tick                             */
 #define OS_CFG_DYN_TICK_EN                         0u           /* Enable (1) or Disable (0) the Dynamic Tick                            */
 #define OS_CFG_INVALID_OS_CALLS_CHK_EN             1u           /* Enable (1) or Disable (0) checks for invalid kernel calls             */
@@ -54,7 +54,7 @@
 
 
                                                                 /* ------------------------ MEMORY MANAGEMENT -------------------------  */
-#define OS_CFG_MEM_EN                              1u           /* Enable (1) or Disable (0) code generation for the MEMORY MANAGER      */
+#define OS_CFG_MEM_EN                              0u           /* Enable (1) or Disable (0) code generation for the MEMORY MANAGER      */
 
 
                                                                 /* ------------------- MUTUAL EXCLUSION SEMAPHORES --------------------  */
@@ -78,13 +78,13 @@
 
 
                                                                 /* -------------------------- TASK MANAGEMENT -------------------------- */
-#define OS_CFG_STAT_TASK_EN                        1u           /* Enable (1) or Disable (0) the statistics task                         */
-#define OS_CFG_STAT_TASK_STK_CHK_EN                1u           /*     Check task stacks from the statistic task                         */
+#define OS_CFG_STAT_TASK_EN                        0u           /* Enable (1) or Disable (0) the statistics task                         */
+#define OS_CFG_STAT_TASK_STK_CHK_EN                0u           /*     Check task stacks from the statistic task                         */
 
-#define OS_CFG_TASK_CHANGE_PRIO_EN                 1u           /* Include code for OSTaskChangePrio()                                   */
-#define OS_CFG_TASK_DEL_EN                         1u           /* Include code for OSTaskDel()                                          */
+#define OS_CFG_TASK_CHANGE_PRIO_EN                 0u           /* Include code for OSTaskChangePrio()                                   */
+#define OS_CFG_TASK_DEL_EN                         0u           /* Include code for OSTaskDel()                                          */
 #define OS_CFG_TASK_IDLE_EN                        1u           /* Include the idle task                                                 */
-#define OS_CFG_TASK_PROFILE_EN                     1u           /* Include variables in OS_TCB for profiling                             */
+#define OS_CFG_TASK_PROFILE_EN                     0u           /* Include variables in OS_TCB for profiling                             */
 #define OS_CFG_TASK_Q_EN                           1u           /* Include code for OSTaskQXXXX()                                        */
 #define OS_CFG_TASK_Q_PEND_ABORT_EN                1u           /* Include code for OSTaskQPendAbort()                                   */
 #define OS_CFG_TASK_REG_TBL_SIZE                   1u           /* Number of task specific registers                                     */
@@ -106,8 +106,8 @@
 
 
                                                                 /* ------------------------- TIMER MANAGEMENT -------------------------- */
-#define OS_CFG_TMR_EN                              1u           /* Enable (1) or Disable (0) code generation for TIMERS                  */
-#define OS_CFG_TMR_DEL_EN                          1u           /* Enable (1) or Disable (0) code generation for OSTmrDel()              */
+#define OS_CFG_TMR_EN                              0u           /* Enable (1) or Disable (0) code generation for TIMERS                  */
+#define OS_CFG_TMR_DEL_EN                          0u           /* Enable (1) or Disable (0) code generation for OSTmrDel()              */
 
 
                                                                 /* ------------------------- TRACE RECORDER ---------------------------- */
