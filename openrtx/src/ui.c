@@ -221,23 +221,24 @@ void _ui_drawVFO(state_t* state)
 {
     // Print VFO frequencies
     char freq_buf[20] = "";
-    snprintf(freq_buf, sizeof(freq_buf), "Rx: %03d.%05d", 
+    snprintf(freq_buf, sizeof(freq_buf), "Rx: %03ld.%05ld",
              state->channel.rx_frequency/1000000,
              state->channel.rx_frequency%1000000);
+
     gfx_print(layout.line2_pos, freq_buf, layout.line1_font, TEXT_ALIGN_CENTER,
               color_white);
-    snprintf(freq_buf, sizeof(freq_buf), "Tx: %03d.%05d", 
+
+    snprintf(freq_buf, sizeof(freq_buf), "Tx: %03ld.%05ld",
              state->channel.tx_frequency/1000000,
              state->channel.tx_frequency%1000000);
+
     gfx_print(layout.line3_pos, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
               color_white);
 }
 
 void _ui_drawBottomBar()
 {
-    // Print OpenRTX on bottom bar
-    char bottom_buf[8] = "OpenRTX";
-    gfx_print(layout.bottom_pos, bottom_buf, layout.bottom_font,
+    gfx_print(layout.bottom_pos, "OpenRTX", layout.bottom_font,
               TEXT_ALIGN_CENTER, color_white);
 }
 
@@ -277,33 +278,33 @@ void ui_init()
 
 void ui_drawSplashScreen()
 {
-    point_t splash_origin = {0, SCREEN_HEIGHT / 2 + 6};
     gfx_clearScreen();
+
+    #ifdef OLD_SPLASH
+    point_t splash_origin = {0, SCREEN_HEIGHT / 2 + 6};
     gfx_print(splash_origin, "OpenRTX", FONT_SIZE_12PT, TEXT_ALIGN_CENTER,
               yellow_fab413);
-}
-
-void ui_drawSplashScreen2()
-{
+    #else
     point_t splash_origin = {0, SCREEN_HEIGHT / 2 - 6};
-    gfx_clearScreen();
     gfx_print(splash_origin, "O P N\nR T X", FONT_SIZE_12PT, TEXT_ALIGN_CENTER,
               yellow_fab413);
+    #endif
 }
 
 void ui_updateFSM(state_t last_state, uint32_t keys)
 {
+    (void) last_state;
+
     // Temporary VFO controls
-    if(keys && KEY_UP)
+    if(keys & KEY_UP)
     {
-        printf("Frequency UP\n");
         // Advance TX and RX frequency of 12.5KHz
         state.channel.rx_frequency += 12500;
         state.channel.tx_frequency += 12500;
     }
-    if(keys && KEY_DOWN)
+
+    if(keys & KEY_DOWN)
     {
-        printf("Frequency DOWN\n");
         // Advance TX and RX frequency of 12.5KHz
         state.channel.rx_frequency -= 12500;
         state.channel.tx_frequency -= 12500;

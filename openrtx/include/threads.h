@@ -31,7 +31,7 @@ void create_threads();
 /**
  * Stack size for UI task, in bytes.
  */
-#define UI_TASK_STKSIZE 128
+#define UI_TASK_STKSIZE 1024
 
 /**
  * Stack size for state update task, in bytes.
