@@ -231,17 +231,20 @@ linux_opts = {'sources': linux_src,
 
 md380_opts = {'sources': md380_src,
               'c_args': md380_args,
-              'link_args' : '-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
+              'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
+                             '-Wl,--print-memory-usage'],
               'include_directories': md380_inc}
 
 md390_opts = {'sources': md390_src,
               'c_args': md390_args,
-              'link_args' : '-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
+              'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
+                             '-Wl,--print-memory-usage'],
               'include_directories': md390_inc}
 
 mduv380_opts = {'sources': mduv380_src,
                 'c_args': mduv380_args,
-                'link_args' : '-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
+                'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
+                               '-Wl,--print-memory-usage'],
                 'include_directories': mduv380_inc}
 
 ##
@@ -288,18 +291,18 @@ foreach t : targets
       input : exe,
       command : [objcopy, '-O', 'binary', '@INPUT@', '@OUTPUT@'])
 
-      wrap = custom_target(name+'_wrap',
-        output : name+'_wrap',
-        input : bin,
-        command : [radio_tool,
-                   '--wrap',
-                   '-o', '@OUTPUT@',
-                   '-r', t['wrap'],
-                   '-s', t['load_addr']+':@INPUT@'])
+    wrap = custom_target(name+'_wrap',
+      output : name+'_wrap',
+      input : bin,
+      command : [radio_tool,
+                 '--wrap',
+                 '-o', '@OUTPUT@',
+                 '-r', t['wrap'],
+                 '-s', t['load_addr']+':@INPUT@'])
 
-      custom_target(name+'_flash',
-        input : wrap,
-        output : name+'_flash',
-        command : [radio_tool, '-d', '0', '-f', '-i', '@INPUT@'])
+    custom_target(name+'_flash',
+      input : wrap,
+      output : name+'_flash',
+      command : [radio_tool, '-d', '0', '-f', '-i', '@INPUT@'])
   endif
 endforeach
