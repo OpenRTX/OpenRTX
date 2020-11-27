@@ -223,14 +223,14 @@ void _ui_drawVFO(state_t* state)
     char freq_buf[20] = "";
     snprintf(freq_buf, sizeof(freq_buf), "Rx: %03ld.%05ld",
              state->channel.rx_frequency/1000000,
-             state->channel.rx_frequency%1000000);
+             state->channel.rx_frequency%1000000/10);
 
     gfx_print(layout.line2_pos, freq_buf, layout.line1_font, TEXT_ALIGN_CENTER,
               color_white);
 
     snprintf(freq_buf, sizeof(freq_buf), "Tx: %03ld.%05ld",
              state->channel.tx_frequency/1000000,
-             state->channel.tx_frequency%1000000);
+             state->channel.tx_frequency%1000000/10);
 
     gfx_print(layout.line3_pos, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
               color_white);
