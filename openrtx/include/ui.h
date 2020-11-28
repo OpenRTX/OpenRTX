@@ -36,7 +36,7 @@ void ui_init();
  * @param last_state: A local copy of the previous radio state
  * @param keys: A bitmap containing the currently pressed keys
  */
-void ui_updateFSM(state_t last_state, uint32_t keys);
+void ui_updateFSM(state_t last_state, keyboard_t keys);
 
 /**
  * This function redraws the GUI based on the last radio state.

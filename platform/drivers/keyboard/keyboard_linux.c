@@ -27,9 +27,9 @@ void kbd_init()
 {
 }
 
-uint32_t kbd_getKeys() {
+keyboard_t kbd_getKeys() {
     SDL_Event event;
-    uint32_t keys = 0;
+    keyboard_t keys = 0;
     while ((SDL_PollEvent(&event)) != 0) {
         if (event.type == SDL_QUIT)
             exit(0);

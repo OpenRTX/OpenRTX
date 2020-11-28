@@ -24,7 +24,7 @@
 #include <stdbool.h>
 
 /**
- * The following enum provides a set of flags to be used to check whose buttons
+ * The following enum provides a set of flags to be used to check which buttons
  * are pressed by bit-masking the uint32_t value returned by kbd_getKeys().
  */
 enum keys
@@ -63,6 +63,16 @@ enum keys
 };
 
 /**
+ * The status of the keyboard keys is provided as an uint32_t.
+ * To check which buttons are pressed one can bit-mask the 
+ * uint32_t value keyboard_t with one of the values defined in keys.
+ * Example:
+ * keyboard_t keys = kbd_getKeys();
+ * if(keys & KEY_ENTER) do_stuff();
+ */
+typedef uint32_t keyboard_t;
+
+/**
  * This function initialises the keyboard subsystem, configuring the GPIOs as
  * needed.
  */
@@ -79,6 +89,6 @@ void kbd_terminate();
  * 
  * @return an uint32_t representing the current keyboard configuration.
  */
-uint32_t kbd_getKeys();
+keyboard_t kbd_getKeys();
 
 #endif /* KEYBOARD_H */

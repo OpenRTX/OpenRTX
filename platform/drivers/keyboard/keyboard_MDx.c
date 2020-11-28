@@ -47,7 +47,7 @@ void kbd_terminate()
     gpio_setMode(KB_ROW3, INPUT);
 }
 
-uint32_t kbd_getKeys()
+keyboard_t kbd_getKeys()
 {
     /*
      * First of all, configure the row lines as inputs. Since they are in common
@@ -73,7 +73,7 @@ uint32_t kbd_getKeys()
      * this means that we have to put a small delay before reading the GPIOs to
      * allow voltage to settle.
      */
-    uint32_t keys = 0;
+    keyboard_t keys = 0;
     gpio_setPin(KB_ROW1);
 
     delayUs(1);

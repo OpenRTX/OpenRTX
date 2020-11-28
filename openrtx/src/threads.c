@@ -95,11 +95,11 @@ static void ui_task(void *arg)
     state_t last_state = state;
     OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
 
-    uint32_t last_keys = 0;
+    keyboard_t last_keys = 0;
 
     while(1)
     {
-        uint32_t keys = kbd_getKeys();
+        keyboard_t keys = kbd_getKeys();
         if(keys != last_keys)
         {
             last_keys = keys;

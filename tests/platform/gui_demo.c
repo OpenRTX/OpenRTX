@@ -59,7 +59,7 @@ int main(void)
     while(1)
     {
 	state_t state = state_update();
-	uint32_t keys = kbd_getKeys();
+	keyboard_t keys = kbd_getKeys();
 	bool renderNeeded = ui_update(state, keys);
 	if(renderNeeded)
 	{

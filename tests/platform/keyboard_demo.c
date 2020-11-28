@@ -89,7 +89,7 @@ int main(void) {
     while (1) {
         gfx_clearScreen();
         gfx_print(title_origin, title_buf, FONT_SIZE_3, TEXT_ALIGN_CENTER, color_red);
-        uint32_t keys = kbd_getKeys();
+        keyboard_t keys = kbd_getKeys();
         print_keys(keys);
         gfx_render();
         while (gfx_renderingInProgress());

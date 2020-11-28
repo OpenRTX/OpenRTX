@@ -291,7 +291,7 @@ void ui_drawSplashScreen()
     #endif
 }
 
-void ui_updateFSM(state_t last_state, uint32_t keys)
+void ui_updateFSM(state_t last_state, keyboard_t keys)
 {
     (void) last_state;
 
