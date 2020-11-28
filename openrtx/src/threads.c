@@ -32,6 +32,8 @@
 /* Mutex for concurrent access to state variable */
 static OS_MUTEX state_mutex;
 
+/* Queue for sending and receiving keyboard status */
+static OS_Q kbd_queue;
 
  /**************************** IMPORTANT NOTE ***********************************
   *                                                                             *
@@ -49,6 +51,10 @@ static OS_MUTEX state_mutex;
 /* UI task control block and stack */
 static OS_TCB  ui_tcb;
 static CPU_STK ui_stk[UI_TASK_STKSIZE/sizeof(CPU_STK)];
+
+/* Keyboard task control block and stack */
+static OS_TCB  kbd_tcb;
+static CPU_STK kbd_stk[KBD_TASK_STKSIZE/4];
 
 /* State task control block and stack */
 static OS_TCB  state_tcb;
@@ -70,9 +76,8 @@ static void ui_task(void *arg)
 {
     (void) arg;
     OS_ERR os_err;
+    OS_MSG_SIZE msg_size = 0;
 
-    // Initialize keyboard
-    kbd_init();
     // Initialize graphics driver
     gfx_init();
     // Initialize user interface
@@ -95,23 +100,19 @@ static void ui_task(void *arg)
     state_t last_state = state;
     OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
 
-    keyboard_t last_keys = 0;
-
     while(1)
     {
-        keyboard_t keys = kbd_getKeys();
-        if(keys != last_keys)
-        {
-            last_keys = keys;
-        }
-
+        // Read from the keyboard queue (returns 0 if no message is present)
+        keyboard_t keys = (keyboard_t)OSQPend(&kbd_queue, 0u, OS_OPT_PEND_NON_BLOCKING,
+                                              &msg_size, 0u, &os_err);
+        if(msg_size != 0) printf("msg size:%d\n", msg_size);
+        // Lock mutex, read and update state
         OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err); 
-
         // React to keypresses and update FSM inside state
         ui_updateFSM(last_state, keys);
         // Update state local copy
         last_state = state;
-
+        // Unlock mutex
         OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
 
         // Redraw GUI
@@ -125,6 +126,36 @@ static void ui_task(void *arg)
 
         // Update UI at ~33 FPS
         OSTimeDlyHMSM(0u, 0u, 0u, 30u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+    }
+}
+
+/**
+ * \internal Task function for reading and sending keyboard status.
+ */
+static void kbd_task(void *arg)
+{
+    (void) arg;
+    OS_ERR os_err;
+
+    // Initialize keyboard driver
+    kbd_init();
+    // Initialize previous keyboard status
+    keyboard_t last_keys = 0;
+
+    while(1)
+    {
+        keyboard_t keys = kbd_getKeys();
+		// Compare current keyboard state with previous state
+        if(keys != last_keys)
+        {
+			// Save current keyboard state
+            last_keys = keys;
+            // Send keyboard status in queue
+            OSQPost(&kbd_queue, (void *)keys, sizeof(keyboard_t), 
+                    OS_OPT_POST_FIFO + OS_OPT_POST_NO_SCHED, &os_err);
+        }
+        // Read keyboard state at 10Hz
+        OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &os_err);
     }
 }
 
@@ -192,10 +223,16 @@ void create_threads()
     OS_ERR os_err;
 
     // Create state mutex
-    OSMutexCreate((OS_MUTEX  *)  &state_mutex,
-                  (CPU_CHAR   *) "State Mutex",
-                  (OS_ERR     *) &os_err);
+    OSMutexCreate((OS_MUTEX  *) &state_mutex,
+                  (CPU_CHAR  *) "State Mutex",
+                  (OS_ERR    *) &os_err);
 
+    // Create keyboard queue
+    OSQCreate((OS_Q      *) &kbd_queue,
+              (CPU_CHAR  *) "Keyboard Queue",
+              (OS_MSG_QTY ) 10,
+              (OS_ERR    *) &os_err);
+    
     // State initialization, execute before starting all tasks
     state_init();
 
@@ -214,6 +251,21 @@ void create_threads()
                  (OS_OPT      ) (OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR),
                  (OS_ERR     *) &os_err);
 
+    // Create Keyboard thread
+    OSTaskCreate((OS_TCB     *) &kbd_tcb,
+                 (CPU_CHAR   *) "Keyboard Task",
+                 (OS_TASK_PTR ) kbd_task,
+                 (void       *) 0,
+                 (OS_PRIO     ) 20,
+                 (CPU_STK    *) &kbd_stk[0],
+                 (CPU_STK     ) 0,
+                 (CPU_STK_SIZE) KBD_TASK_STKSIZE/4,
+                 (OS_MSG_QTY  ) 0,
+                 (OS_TICK     ) 0,
+                 (void       *) 0,
+                 (OS_OPT      ) (OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR),
+                 (OS_ERR     *) &os_err);
+    
     // Create state thread
     OSTaskCreate((OS_TCB     *) &state_tcb,
                  (CPU_CHAR   *) "State Task",
