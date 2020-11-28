@@ -28,24 +28,47 @@
  */
 void create_threads();
 
+#ifdef __arm__
+
 /**
  * Stack size for UI task, in bytes.
  */
-#define UI_TASK_STKSIZE 1024
+#define UI_TASK_STKSIZE 1024*4
 
 /**
  * Stack size for state update task, in bytes.
  */
-#define STATE_TASK_STKSIZE 128
+#define STATE_TASK_STKSIZE 128*4
 
 /**
  * Stack size for baseband control task, in bytes.
  */
-#define RTX_TASK_STKSIZE 128
+#define RTX_TASK_STKSIZE 128*4
 
 /**
  * Stack size for DMR task, in bytes.
  */
-#define DMR_TASK_STKSIZE 128
+#define DMR_TASK_STKSIZE 128*4
+
+#else /* __arm__ */
+
+#define UI_TASK_STKSIZE 4096
+
+/**
+ * Stack size for state update task, in bytes.
+ */
+#define STATE_TASK_STKSIZE 1024
+
+/**
+ * Stack size for baseband control task, in bytes.
+ */
+#define RTX_TASK_STKSIZE 1024
+
+/**
+ * Stack size for DMR task, in bytes.
+ */
+#define DMR_TASK_STKSIZE 1024
+
+#endif /* __arm__ */
 
 #endif /* THREADS_H */
