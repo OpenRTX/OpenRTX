@@ -22,6 +22,7 @@
 
 #include <stdbool.h>
 #include <state.h>
+#include <keyboard.h>
 #include <stdint.h>
 
 /**
