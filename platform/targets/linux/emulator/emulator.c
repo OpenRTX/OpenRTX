@@ -43,18 +43,18 @@ int CLIMenu() {
     printf("> ");
     do {
         scanf("%d", &choice);
-    } while (choice < 1 || choice > 7);
-    printf("\e[1;1H\e[2J");
+    } while (choice < 1 || choice > 8);
+    printf("\033[1;1H\033[2J");
     return choice;
 }
 
-void *updateValue(float *curr_value) {
+void updateValue(float *curr_value) {
     printf("Current value: %f\n", *curr_value);
     printf("New value: \n");
     scanf("%f", curr_value);
 }
 
-void *printState() {
+void printState() {
     printf("\nCurrent state\n");
     printf("RSSI   : %f\n", Radio_State.RSSI);
     printf("Battery: %f\n", Radio_State.Vbat);
@@ -67,8 +67,8 @@ void *printState() {
 
 void *startRadio() {
     systemBootstrap();
+    return NULL;
 }
-//void *startGUI();
 
 void *startCLIMenu() {
     int choice;
@@ -102,31 +102,28 @@ void *startCLIMenu() {
     } while (choice != EXIT);
     printf("exiting\n");
     exit(0);
-};
+}
 
 
 int emulator_main() {
-    pthread_t gui_thread, cli_thread, radio_thread;
-    int err1, err2;
+    pthread_t cli_thread, radio_thread;
+    int err1, err2 = 0;
 
     err1 = pthread_create(&cli_thread, NULL, startCLIMenu, NULL);
-    //err2 = pthread_create(&gui_thread, NULL, startGUI, NULL);
+    err2 = pthread_create(&radio_thread, NULL, startRadio, NULL);
 
-    if (err1) {
+    if (err1 | err2) {
         printf("An error occurred starting the threads: %d, %d\n", err1, err2);
         return 1;
     }
-    //pthread_join(gui_thread, NULL);
-    pthread_create(&radio_thread, NULL, startRadio, NULL);
     pthread_join(cli_thread, NULL);
-
 
     printf("73\n");
     return 0;
 }
 
 
-void *entry() {
+void entry() {
     __asm__(
     "xorl %ebp, %ebp\n\t"
     "mov %RDX, %R9\n\t"
