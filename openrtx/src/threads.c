@@ -103,9 +103,10 @@ static void ui_task(void *arg)
     while(1)
     {
         // Read from the keyboard queue (returns 0 if no message is present)
-        keyboard_t keys = (keyboard_t)OSQPend(&kbd_queue, 0u, OS_OPT_PEND_NON_BLOCKING,
+        void * msg = OSQPend(&kbd_queue, 0u, OS_OPT_PEND_NON_BLOCKING,
                                               &msg_size, 0u, &os_err);
-        if(msg_size != 0) printf("msg size:%d\n", msg_size);
+        // Copy keyboard_t keys from received void * pointer msg
+        keyboard_t keys = msg;
         // Lock mutex, read and update state
         OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err); 
         // React to keypresses and update FSM inside state
@@ -139,23 +140,21 @@ static void kbd_task(void *arg)
 
     // Initialize keyboard driver
     kbd_init();
-    // Initialize previous keyboard status
-    keyboard_t last_keys = 0;
 
     while(1)
     {
         keyboard_t keys = kbd_getKeys();
-		// Compare current keyboard state with previous state
-        if(keys != last_keys)
+		// Check if some key is pressed
+        if(keys != 0)
         {
-			// Save current keyboard state
-            last_keys = keys;
+            // Copy keyboard_t keys in void * message to use with OSQPost
+            void * msg = keys;
             // Send keyboard status in queue
-            OSQPost(&kbd_queue, (void *)keys, sizeof(keyboard_t), 
+            OSQPost(&kbd_queue, msg, sizeof(keyboard_t), 
                     OS_OPT_POST_FIFO + OS_OPT_POST_NO_SCHED, &os_err);
         }
-        // Read keyboard state at 10Hz
-        OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+        // Read keyboard state at 5Hz
+        OSTimeDlyHMSM(0u, 0u, 0u, 200u, OS_OPT_TIME_HMSM_STRICT, &os_err);
     }
 }
 
