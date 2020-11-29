@@ -203,9 +203,9 @@ void _ui_drawBackground()
 void _ui_drawTopBar(state_t* state)
 {
     // Print clock on top bar
-    char clock_buf[6] = "";
-    snprintf(clock_buf, sizeof(clock_buf), "%02d:%02d", state->time.hour, 
-             state->time.minute);
+    char clock_buf[9] = "";
+    snprintf(clock_buf, sizeof(clock_buf), "%02d:%02d:%02d", state->time.hour, 
+             state->time.minute, state->time.second);
     gfx_print(layout.top_pos, clock_buf, layout.top_font, TEXT_ALIGN_CENTER,
               color_white);
 
