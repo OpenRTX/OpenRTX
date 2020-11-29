@@ -147,7 +147,18 @@ void gfx_render();
 bool gfx_renderingInProgress();
 
 /**
- * Makes the screen black.
+ * Clears a portion of the screen content
+ * This results in a black screen on color displays
+ * And a white screen on B/W displays
+ * @param startRow: first row of the framebuffer section to be cleared
+ * @param endRow: last row of the framebuffer section to be cleared
+ */
+void gfx_clearRows(uint8_t startRow, uint8_t endRow);
+
+/**
+ * Clears the content of the screen
+ * This results in a black screen on color displays
+ * And a white screen on B/W displays
  */
 void gfx_clearScreen();
 

@@ -85,6 +85,16 @@ rgb565_t _true2highColor(color_t true_color)
     return high_color;
 }
 
+void gfx_clearRows(uint8_t startRow, uint8_t endRow)
+{
+    if(!initialized) return;
+    if(endRow < startRow) return;
+    uint16_t start = startRow * SCREEN_WIDTH * sizeof(rgb565_t);
+    uint16_t height = endRow - startRow * SCREEN_WIDTH * sizeof(rgb565_t);
+    // Set the specified rows to 0x00 = make the screen black
+    memset(buf + start, 0x00, height);
+}
+
 void gfx_clearScreen()
 {
     if(!initialized) return;
