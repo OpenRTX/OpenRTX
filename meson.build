@@ -12,10 +12,11 @@ project('OpenRTX', 'c',
 ## OpenRTX
 
 
-openrtx_src = ['openrtx/src/bootstrap.c',
-               'openrtx/src/state.c',
-               'openrtx/src/ui.c',
-               'openrtx/src/threads.c']
+openrtx_src = ['openrtx/src/bootstrap.c']
+               #'openrtx/src/state.c',
+               #'openrtx/src/ui.c',
+               #'openrtx/src/threads.c']
+
 
 ## Replace main executable with platform test
 if get_option('test') != ''
@@ -110,6 +111,25 @@ stm32f405_inc = ['platform/mcu/CMSIS/Include',
 
 stm32f405_def = {'STM32F40_41xxx': '', 'HSE_VALUE':'8000000'}
 
+## MK22FN512
+
+mk22fn512_src = ['platform/mcu/MK22FN512xxx12/boot/startup.c',
+                 'platform/mcu/MK22FN512xxx12/boot/libc_integration.c',
+                 'platform/mcu/MK22FN512xxx12/drivers/gpio.c',
+                 'platform/mcu/MK22FN512xxx12/drivers/delays.c',
+                 'platform/mcu/CMSIS/Device/NXP/MK22FN512xxx12/Source/system_MK22F51212.c',
+                 'rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M/os_cpu_c.c',
+                 'rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M/os_cpu_a.s',
+                 'rtos/uC-CPU/ARM-Cortex-M/ARMv7-M/cpu_c.c',
+                 'rtos/uC-CPU/ARM-Cortex-M/ARMv7-M/cpu_a.s']
+
+mk22fn512_inc = ['platform/mcu/CMSIS/Include',
+                 'platform/mcu/CMSIS/Device/NXP/MK22FN512xxx12/Include',
+                 'rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M',
+                 'rtos/uC-CPU/ARM-Cortex-M/ARMv7-M']
+
+mk22fn512_def = {}
+
 ##
 ## Platform specializations
 ##
@@ -170,7 +190,6 @@ md390_inc = inc + stm32f405_inc + ['platform/targets/MD-390']
 md390_def = def + stm32f405_def + {'PLATFORM_MD390': ''}
 
 
-
 ## TYT MD-UV380
 mduv380_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDx.c',
                                      'platform/drivers/keyboard/keyboard_MDx.c',
@@ -182,6 +201,13 @@ mduv380_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDx.c',
 
 mduv380_inc = inc + stm32f405_inc + ['platform/targets/MD-UV380']
 mduv380_def = def + stm32f405_def + {'PLATFORM_MDUV380': ''}
+
+
+## Radioddity GD77
+gd77_src = src + mk22fn512_src + ['platform/targets/GD77/platform.c']
+
+gd77_inc = inc + mk22fn512_inc + ['platform/targets/GD77']
+gd77_def = def + mk22fn512_def + {'PLATFORM_GD77': ''}
 
 
 ##
@@ -231,6 +257,16 @@ foreach k, v : mduv380_def
   endif
 endforeach
 
+gd77_args = []
+foreach k, v : gd77_def
+  if v == ''
+    gd77_args += '-D@0@'.format(k)
+  else
+    gd77_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
+
+
 linux_opts = {'sources': linux_src,
               'c_args': linux_c_args,
               'include_directories': linux_inc,
@@ -254,6 +290,12 @@ mduv380_opts = {'sources': mduv380_src,
                 'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
                                '-Wl,--print-memory-usage'],
                 'include_directories': mduv380_inc}
+
+gd77_opts = {'sources': gd77_src,
+             'c_args': gd77_args,
+             'link_args' : ['-Wl,-T../platform/mcu/MK22FN512xxx12/linker_script.ld',
+                            '-Wl,--print-memory-usage'],
+             'include_directories':gd77_inc}
 
 ##
 ## Targets
@@ -282,6 +324,11 @@ targets = [
    'wrap': 'UV3X0',
    'load_addr': '0x0800C000'},
 
+   {'name': 'gd77',
+   'opts': gd77_opts,
+   'flashable': true,
+   'wrap': 'UV3X0',
+   'load_addr': '0x0800C000'},
   ]
 
 objcopy = find_program('objcopy', required:false, disabler:true)
