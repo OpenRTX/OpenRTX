@@ -1,0 +1,152 @@
+/***************************************************************************
+ *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
+ *                         Niccolò Izzo IU2KIN                             *
+ *                         Frederik Saraci IU2NRO                          *
+ *                         Silvano Seva IU2KWO                             *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 3 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
+ ***************************************************************************/
+
+#include <stdio.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
+#include <os.h>
+#include "gpio.h"
+#include "display.h"
+#include "delays.h"
+#include "hwconfig.h"
+
+/*
+ * LCD framebuffer, allocated on the heap by display_init().
+ * Pixel format is black and white, one bit per pixel
+ */
+static uint8_t *frameBuffer;
+
+void sendByteToController(uint8_t value)
+{
+    for(uint8_t i = 0; i < 8; i++)
+    {
+        gpio_clearPin(LCD_CLK);
+
+        if(value & 0x80)
+        {
+            gpio_setPin(LCD_DAT);
+        }
+        else
+        {
+            gpio_clearPin(LCD_DAT);
+        }
+
+        gpio_setPin(LCD_CLK);
+        value <<= 1;
+    }
+}
+
+void display_init()
+{
+    /* Framebuffer size, in bytes */
+    unsigned int fbSize = (SCREEN_HEIGHT * SCREEN_WIDTH)/8;
+    if((fbSize * 8) < (SCREEN_HEIGHT * SCREEN_WIDTH)) fbSize += 1; /* Compensate for eventual truncation error in division */
+    fbSize *= sizeof(uint8_t);
+
+    /* Allocate framebuffer */
+    frameBuffer = (uint8_t *) malloc(fbSize);
+    if(frameBuffer == NULL)
+    {
+        printf("*** LCD ERROR: cannot allocate framebuffer! ***");
+        return;
+    }
+
+    /* Clear framebuffer, setting all pixels to 0x00 makes the screen white */
+    memset(frameBuffer, 0x00, fbSize);
+
+    gpio_setMode(LCD_CS,  OUTPUT);
+    gpio_setMode(LCD_RST, OUTPUT);
+    gpio_setMode(LCD_RS,  OUTPUT);
+    gpio_setMode(LCD_CLK, OUTPUT);
+    gpio_setMode(LCD_DAT, OUTPUT);
+
+    gpio_setPin(LCD_CS);
+    gpio_clearPin(LCD_RS);
+    gpio_clearPin(LCD_CLK);
+    gpio_clearPin(LCD_DAT);
+
+    gpio_clearPin(LCD_RST);     /* Reset controller                */
+    delayMs(1);
+    gpio_setPin(LCD_RST);
+    delayMs(5);
+
+    gpio_clearPin(LCD_CS);
+
+    gpio_clearPin(LCD_RS);      /* RS low -> command mode          */
+//     sendByteToController(0xE2); /* System Reset                    */
+    sendByteToController(0x2F); /* Voltage Follower On             */
+    sendByteToController(0x81); /* Set Electronic Volume = 15      */
+    sendByteToController(0x3F); /* Full contrast                   */
+    sendByteToController(0xA2); /* Set Bias = 1/9                  */
+    sendByteToController(0xA1); /* A0 Set SEG Direction            */
+    sendByteToController(0xC0); /* Set COM Direction               */
+    sendByteToController(0xA4); /* White background, black pixels  */
+    sendByteToController(0xAF); /* Set Display Enable              */
+}
+
+void display_terminate()
+{
+    if(frameBuffer != NULL)
+    {
+        free(frameBuffer);
+    }
+}
+
+void display_renderRows(uint8_t startRow, uint8_t endRow)
+{
+    if(frameBuffer == NULL) return;
+
+    uint8_t *rowPos = (frameBuffer + startRow * SCREEN_WIDTH);
+
+    for(uint8_t row = startRow; row < endRow; row++)
+    {
+        gpio_clearPin(LCD_RS);            /* RS low -> command mode */
+        sendByteToController(0xB0 | row); /* Set Y position         */
+        sendByteToController(0x10);       /* Set X position         */
+        sendByteToController(0x04);
+
+        gpio_setPin(LCD_RS);              /* RS high -> data mode   */
+
+        for(size_t x = 0; x < SCREEN_WIDTH; x++)
+        {
+            sendByteToController(*rowPos);
+            rowPos++;
+        }
+    }
+}
+
+void display_render()
+{
+    display_renderRows(0, SCREEN_HEIGHT);
+}
+
+bool display_renderingInProgress()
+{
+    /*
+     * Rendering is in progress if display's chip select is low or a DMA
+     * transfer is in progress.
+     */
+}
+
+void *display_getFrameBuffer()
+{
+    return (void *)(frameBuffer);
+}
