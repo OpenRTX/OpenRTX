@@ -209,12 +209,11 @@ void _ui_drawTopBar(state_t* state)
     gfx_print(layout.top_pos, clock_buf, layout.top_font, TEXT_ALIGN_CENTER,
               color_white);
 
-    // Print battery voltage on top bar, use 4 px padding
-    // TODO: Replace with battery icon
-    char bat_buf[6] = "";
-    snprintf(bat_buf, sizeof(bat_buf), "%02.1fV ", state->v_bat);
-    gfx_print(layout.top_pos, bat_buf, layout.top_font, TEXT_ALIGN_RIGHT,
-              color_white);
+    // Print battery icon on top bar, use 4 px padding
+    float percentage = state->v_bat / MAX_VBAT;
+    printf("BEFORE: %f\n", percentage);
+    point_t bat_pos = {SCREEN_WIDTH - 24, layout.top_pos.y - 10};
+    gfx_drawBattery(bat_pos, 19, 12, 0.5f);
 }
 
 void _ui_drawVFO(state_t* state)

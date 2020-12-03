@@ -127,9 +127,9 @@ void gfx_drawLine(point_t start, point_t end, color_t color)
 {
     if(!initialized) return;
     rgb565_t color_565 = _true2highColor(color);
-    for(int y = start.y; y < end.y; y++)
+    for(int y = start.y; y <= end.y; y++)
     {
-        for(int x = start.x; x < end.x; x++)
+        for(int x = start.x; x <= end.x; x++)
         {
             buf[x + y*SCREEN_WIDTH] = color_565;
         }
@@ -140,16 +140,16 @@ void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color,
 {
     if(!initialized) return;
     rgb565_t color_565 = _true2highColor(color);
-    uint16_t x_max = start.x + width;
-    uint16_t y_max = start.y + height;
+    uint16_t x_max = start.x + width - 1;
+    uint16_t y_max = start.y + height - 1;
     bool perimeter = 0;
     if(x_max > (SCREEN_WIDTH - 1)) x_max = SCREEN_WIDTH - 1;
     if(y_max > (SCREEN_HEIGHT - 1)) y_max = SCREEN_HEIGHT - 1;
-    for(int y = start.y; y < y_max; y++)
+    for(int y = start.y; y <= y_max; y++)
     {
-        for(int x = start.x; x < x_max; x++)
+        for(int x = start.x; x <= x_max; x++)
         {
-            if(y == start.y || y == y_max-1 || x == start.x || x == x_max-1) perimeter = 1;
+            if(y == start.y || y == y_max || x == start.x || x == x_max) perimeter = 1;
             else perimeter = 0;
             // If fill is false, draw only rectangle perimeter
             if(fill || perimeter) buf[x + y*SCREEN_WIDTH] = color_565;
@@ -268,4 +268,63 @@ void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t ali
         }
         start.x += glyph.xAdvance;
     }
+}
+
+    /*
+     * Function to draw battery of arbitrary size
+     * starting coordinates are relative to the top left point.
+     *
+     * ******************      |
+     * *                *      |
+     * *  *******       *      |
+     * *  *******       **     |
+     * *  *******       **     | <-- Height (px)
+     * *  *******       *      | 
+     * *                *      | 
+     * ******************      |
+     *
+     * __________________
+     *
+     * ^
+     * |
+     *
+     * Width (px)
+     *
+     */
+void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, float percentage) {
+    printf("AFTER: %f\n", percentage);
+    color_t white =  {255, 255, 255};
+    color_t green =  {0,   255, 0  };
+    color_t yellow = {250, 180, 19 };
+    color_t red =    {255, 0,   0  };
+    color_t black =  {0,   0,   0  };
+
+    // Select color according to percentage
+    color_t bat_color = yellow;
+    if (percentage < 0.2)
+        bat_color = red;
+    else if (percentage > 0.8)
+        bat_color = green;
+
+    // Draw the battery outline
+    gfx_drawRect(start, width, height, white, false);
+
+    // Draw the battery fill
+    point_t fill_start = {start.x + 2, start.y + 2};
+    gfx_drawRect(fill_start, (int)(((float)(width - 4)) * percentage), height - 4, bat_color, true);
+
+    // Round corners
+    point_t top_left = start;
+    point_t top_right = {start.x + width - 1, start.y};
+    point_t bottom_left = {start.x, start.y + height - 1};
+    point_t bottom_right = {start.x + width - 1, start.y + height - 1};
+    gfx_setPixel(top_left, black);
+    gfx_setPixel(top_right, black);
+    gfx_setPixel(bottom_left, black);
+    gfx_setPixel(bottom_right, black);
+
+    // Draw the button
+    point_t button_start = {start.x + width, start.y + (height / 2) - 2};
+    point_t button_end = {start.x + width, start.y + (height / 2) + 2};
+    gfx_drawLine(button_start, button_end, white);
 }

@@ -48,3 +48,6 @@
 
 /* Push-to-talk switch */
 #define PTT_SW "PTT_SW",11
+
+/* Maximum battery voltage */
+#define MAX_VBAT 8.5f
