@@ -26,6 +26,7 @@
 #include <graphics.h>
 #include <platform.h>
 #include <hwconfig.h>
+#include <events.h>
 
 #include <stdio.h>
 
@@ -33,7 +34,7 @@
 static OS_MUTEX state_mutex;
 
 /* Queue for sending and receiving keyboard status */
-static OS_Q kbd_queue;
+static OS_Q ui_queue;
 
  /**************************** IMPORTANT NOTE ***********************************
   *                                                                             *
@@ -103,20 +104,19 @@ static void ui_task(void *arg)
     while(1)
     {
         // Read from the keyboard queue (returns 0 if no message is present)
-        void * msg = OSQPend(&kbd_queue, 0u, OS_OPT_PEND_NON_BLOCKING,
-                                              &msg_size, 0u, &os_err);
         // Copy keyboard_t keys from received void * pointer msg
-        keyboard_t keys = msg;
-        // Lock mutex, read and update state
+        event_t event = OSQPend(&ui_queue, 0u, OS_OPT_PEND_NON_BLOCKING,
+                                              &msg_size, 0u, &os_err);
+        // Lock mutex, read and write state
         OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err); 
         // React to keypresses and update FSM inside state
-        ui_updateFSM(last_state, keys);
+        ui_updateFSM(last_state, event);
         // Update state local copy
         last_state = state;
         // Unlock mutex
         OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
 
-        // Redraw GUI
+        // Redraw GUI based on last state copy
         bool renderNeeded = ui_updateGUI(last_state);
 
         if(renderNeeded)
@@ -147,10 +147,12 @@ static void kbd_task(void *arg)
 		// Check if some key is pressed
         if(keys != 0)
         {
-            // Copy keyboard_t keys in void * message to use with OSQPost
-            void * msg = keys;
+            // Send event_t as void * message to use with OSQPost
+            event_t kbd_msg;
+            kbd_msg.type = EVENT_KBD;
+            kbd_msg.payload = keys;
             // Send keyboard status in queue
-            OSQPost(&kbd_queue, msg, sizeof(keyboard_t), 
+            OSQPost(&ui_queue, (void *)kbd_msg, sizeof(event_t), 
                     OS_OPT_POST_FIFO + OS_OPT_POST_NO_SCHED, &os_err);
         }
         // Read keyboard state at 5Hz
@@ -226,9 +228,9 @@ void create_threads()
                   (CPU_CHAR  *) "State Mutex",
                   (OS_ERR    *) &os_err);
 
-    // Create keyboard queue
-    OSQCreate((OS_Q      *) &kbd_queue,
-              (CPU_CHAR  *) "Keyboard Queue",
+    // Create UI event queue
+    OSQCreate((OS_Q      *) &ui_queue,
+              (CPU_CHAR  *) "UI event queue",
               (OS_MSG_QTY ) 10,
               (OS_ERR    *) &os_err);
     
