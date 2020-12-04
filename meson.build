@@ -12,10 +12,10 @@ project('OpenRTX', 'c',
 ## OpenRTX
 
 
-openrtx_src = ['openrtx/src/bootstrap.c']
-               #'openrtx/src/state.c',
-               #'openrtx/src/ui.c',
-               #'openrtx/src/threads.c']
+openrtx_src = ['openrtx/src/bootstrap.c',
+               'openrtx/src/state.c',
+               'openrtx/src/ui.c',
+               'openrtx/src/threads.c']
 
 
 ## Replace main executable with platform test
@@ -204,7 +204,9 @@ mduv380_def = def + stm32f405_def + {'PLATFORM_MDUV380': ''}
 
 
 ## Radioddity GD77
-gd77_src = src + mk22fn512_src + ['platform/targets/GD77/platform.c']
+gd77_src = src + mk22fn512_src + ['platform/targets/GD77/platform.c',
+                                  'platform/drivers/display/UC1701_GD77.c',
+                                  'openrtx/src/graphics/graphics_bw.c']
 
 gd77_inc = inc + mk22fn512_inc + ['platform/targets/GD77']
 gd77_def = def + mk22fn512_def + {'PLATFORM_GD77': ''}

@@ -21,12 +21,30 @@
 #include <platform.h>
 #include <gpio.h>
 #include "hwconfig.h"
+#include "rtc.h"
+
+curTime_t rtc_getTime()
+{
+    /* TODO */
+    curTime_t t;
+    t.hour   = 12;
+    t.minute = 12;
+    t.second = 12;
+    t.year  = 2020;
+    t.day   = 4;
+    t.month = 12;
+    t.date  = 12;
+    return t;
+}
 
 void platform_init()
 {
     /* Configure GPIOs */
     gpio_setMode(GREEN_LED, OUTPUT);
     gpio_setMode(RED_LED, OUTPUT);
+
+    gpio_setMode(LCD_BKLIGHT, OUTPUT);
+    gpio_clearPin(LCD_BKLIGHT);
 }
 
 void platform_terminate()
@@ -112,4 +130,12 @@ void platform_beepStop()
 void platform_setBacklightLevel(uint8_t level)
 {
     /* TODO */
+    if(level > 1)
+    {
+        gpio_setPin(LCD_BKLIGHT);
+    }
+    else
+    {
+        gpio_clearPin(LCD_BKLIGHT);
+    }
 }

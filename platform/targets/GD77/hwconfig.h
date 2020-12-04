@@ -27,4 +27,16 @@
 #define GREEN_LED  GPIOB,18
 #define RED_LED    GPIOC,14
 
+/* Screen dimensions */
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+
+/* Display */
+#define LCD_BKLIGHT GPIOC,4
+#define LCD_CS      GPIOC,8
+#define LCD_RST     GPIOC,9
+#define LCD_RS      GPIOC,10
+#define LCD_CLK     GPIOC,11
+#define LCD_DAT     GPIOC,12
+
 #endif

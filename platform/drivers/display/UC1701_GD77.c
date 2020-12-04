@@ -91,10 +91,11 @@ void display_init()
     gpio_clearPin(LCD_CS);
 
     gpio_clearPin(LCD_RS);      /* RS low -> command mode          */
-//     sendByteToController(0xE2); /* System Reset                    */
+//     sendByteToController(0xE2); /* System Reset                 */
     sendByteToController(0x2F); /* Voltage Follower On             */
     sendByteToController(0x81); /* Set Electronic Volume = 15      */
-    sendByteToController(0x3F); /* Full contrast                   */
+    /* TODO variable contrast */
+    sendByteToController(0x15); /* Contrast                        */
     sendByteToController(0xA2); /* Set Bias = 1/9                  */
     sendByteToController(0xA1); /* A0 Set SEG Direction            */
     sendByteToController(0xC0); /* Set COM Direction               */
@@ -110,40 +111,55 @@ void display_terminate()
     }
 }
 
+void display_renderRow(uint8_t row)
+{
+    /* magic stuff */
+    uint8_t *buf = (frameBuffer + 128 * row);
+    for (uint8_t i = 0; i<16; i++)
+    {
+        uint8_t tmp[8] = {0};
+        for (uint8_t j = 0; j < 8; j++)
+        {
+            uint8_t tmp_buf = buf[j*16 + i];
+            int count = __builtin_popcount(tmp_buf);
+            while (count > 0)
+            {
+                int pos = __builtin_ctz(tmp_buf);
+                tmp[pos] |= 1UL << j;
+                tmp_buf &= ~(1 << pos);
+                count--;
+            }
+        }
+        for (uint8_t s = 0; s < 8; s++){
+            sendByteToController(tmp[s]);
+        }
+    }
+}
+
 void display_renderRows(uint8_t startRow, uint8_t endRow)
 {
-    if(frameBuffer == NULL) return;
-
-    uint8_t *rowPos = (frameBuffer + startRow * SCREEN_WIDTH);
-
-    for(uint8_t row = startRow; row < endRow; row++)
+        for(uint8_t row = startRow; row < endRow; row++)
     {
         gpio_clearPin(LCD_RS);            /* RS low -> command mode */
         sendByteToController(0xB0 | row); /* Set Y position         */
         sendByteToController(0x10);       /* Set X position         */
         sendByteToController(0x04);
-
         gpio_setPin(LCD_RS);              /* RS high -> data mode   */
-
-        for(size_t x = 0; x < SCREEN_WIDTH; x++)
-        {
-            sendByteToController(*rowPos);
-            rowPos++;
-        }
+        display_renderRow(row);
     }
+        
 }
 
 void display_render()
 {
-    display_renderRows(0, SCREEN_HEIGHT);
+    gpio_clearPin(LCD_CS);
+    display_renderRows(0, SCREEN_HEIGHT / 8);
+    gpio_setPin(LCD_CS);
 }
 
 bool display_renderingInProgress()
 {
-    /*
-     * Rendering is in progress if display's chip select is low or a DMA
-     * transfer is in progress.
-     */
+    return (gpio_readPin(LCD_CS) == 0);
 }
 
 void *display_getFrameBuffer()
