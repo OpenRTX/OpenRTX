@@ -25,6 +25,7 @@ else
 endif
 
 openrtx_inc = ['openrtx/include/interfaces',
+               'openrtx/include/calibration',
                'openrtx/include',
                'platform/drivers/ADC',
                'platform/drivers/NVM',
