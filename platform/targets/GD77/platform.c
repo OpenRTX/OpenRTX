@@ -30,7 +30,7 @@ curTime_t rtc_getTime()
     t.hour   = 12;
     t.minute = 12;
     t.second = 12;
-    t.year  = 2020;
+    t.year  = 20;
     t.day   = 4;
     t.month = 12;
     t.date  = 12;

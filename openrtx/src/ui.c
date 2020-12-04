@@ -124,24 +124,24 @@ layout_t _ui_calculateLayout()
     #elif SCREEN_HEIGHT > 63
 
     // Height and padding shown in diagram at beginning of file
-    const uint16_t top_h = 8;
-    const uint16_t top_pad = 0;
-    const uint16_t line1_h = 20;
-    const uint16_t line2_h = 20;
-    const uint16_t line3_h = 0;
-    const uint16_t line_pad = 2;
+    const uint16_t top_h = 13;
+    const uint16_t top_pad = 4;
+    const uint16_t line1_h = 15;
+    const uint16_t line2_h = 15;
+    const uint16_t line3_h = 15;
+    const uint16_t line_pad = 15;
     const uint16_t bottom_h = top_h;
-    const uint16_t bottom_pad = 0;
+    const uint16_t bottom_pad = 11;
 
     // Top bar font: 8 pt
-    const fontSize_t top_font = FONT_SIZE_1;
+    const fontSize_t top_font = FONT_SIZE_6PT;
     // Middle line fonts: 16, 16, 8 pt
-    const fontSize_t line1_font = FONT_SIZE_3;
-    const fontSize_t line2_font = FONT_SIZE_3;
-    const fontSize_t line3_font = FONT_SIZE_1;
+    const fontSize_t line1_font = FONT_SIZE_8PT;
+    const fontSize_t line2_font = FONT_SIZE_8PT;
+    const fontSize_t line3_font = FONT_SIZE_5PT;
     // Bottom bar font: 8 pt
-    const fontSize_t bottom_font = FONT_SIZE_1;
-
+    const fontSize_t bottom_font = FONT_SIZE_6PT;
+    
     #elif SCREEN_HEIGHT > 47
 
     // Height and padding shown in diagram at beginning of file
