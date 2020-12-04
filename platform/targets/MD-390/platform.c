@@ -19,8 +19,12 @@
 
 #include <platform.h>
 #include <gpio.h>
-#include "hwconfig.h"
-#include "ADC1_MDx.h"
+#include <hwconfig.h>
+#include <ADC1_MDx.h>
+#include <calibInfo_MDx.h>
+#include <nvmem.h>
+
+md3x0Calib_t calibration;
 
 void platform_init()
 {
@@ -67,6 +71,12 @@ void platform_init()
     TIM8->CCR1 = 0;
     TIM8->EGR  = TIM_EGR_UG;        /* Update registers */
     TIM8->CR1 |= TIM_CR1_CEN;       /* Start timer */
+
+    /*
+     * Initialise non volatile memory manager and load calibration data.
+     */
+    nvm_init();
+    nvm_readCalibData(&calibration);
 }
 
 void platform_terminate()
@@ -85,6 +95,9 @@ void platform_terminate()
 
     /* Shut down ADC */
     adc1_terminate();
+
+    /* Shut down NVM driver */
+    nvm_terminate();
 }
 
 float platform_getVbat()
@@ -172,4 +185,9 @@ void platform_beepStop()
 void platform_setBacklightLevel(uint8_t level)
 {
     TIM8->CCR1 = level;
+}
+
+const void *platform_getCalibrationData()
+{
+    return ((const void *) &calibration);
 }

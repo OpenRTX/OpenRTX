@@ -20,8 +20,12 @@
 #include <platform.h>
 #include <gpio.h>
 #include <os.h>
-#include "hwconfig.h"
-#include "ADC1_MDx.h"
+#include <hwconfig.h>
+#include <ADC1_MDx.h>
+#include <calibInfo_MDx.h>
+#include <nvmem.h>
+
+mduv3x0Calib_t calibration;
 
 #ifdef ENABLE_BKLIGHT_DIMMING
 void TIM1_TRG_COM_TIM11_IRQHandler()
@@ -94,6 +98,12 @@ void platform_init()
     NVIC_SetPriority(TIM1_TRG_COM_TIM11_IRQn,15);
     NVIC_EnableIRQ(TIM1_TRG_COM_TIM11_IRQn);
     #endif
+
+    /*
+     * Initialise non volatile memory manager and load calibration data.
+     */
+    nvm_init();
+    nvm_readCalibData(&calibration);
 }
 
 void platform_terminate()
@@ -112,6 +122,9 @@ void platform_terminate()
 
     /* Shut down ADC */
     adc1_terminate();
+
+    /* Shut down NVM driver */
+    nvm_terminate();
 }
 
 float platform_getVbat()
@@ -217,4 +230,9 @@ void platform_setBacklightLevel(uint8_t level)
         #endif
         gpio_clearPin(LCD_BKLIGHT);
     }
+}
+
+const void *platform_getCalibrationData()
+{
+    return ((const void *) &calibration);
 }

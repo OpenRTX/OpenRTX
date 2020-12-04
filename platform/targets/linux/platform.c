@@ -22,77 +22,92 @@
 
 void platform_init()
 {
-	//printf("Platform init\n");
+    //printf("Platform init\n");
 }
 
 void platform_terminate()
 {
-	printf("Platform terminate\n");
+    printf("Platform terminate\n");
 }
 
 void platform_setBacklightLevel(uint8_t level)
 {
-	//printf("platform_setBacklightLevel(%u)\n", level);
+    //printf("platform_setBacklightLevel(%u)\n", level);
 }
 
 // Simulate a fully charged lithium battery
-float platform_getVbat(){
-	return Radio_State.Vbat;
+float platform_getVbat()
+{
+    return Radio_State.Vbat;
 }
 
 
-float platform_getMicLevel(){
-	return Radio_State.micLevel;
+float platform_getMicLevel()
+{
+    return Radio_State.micLevel;
 }
 
 
-float platform_getVolumeLevel(){
-	return Radio_State.volumeLevel;
+float platform_getVolumeLevel()
+{
+    return Radio_State.volumeLevel;
 }
 
 
-uint8_t platform_getChSelector(){
-	return Radio_State.chSelector;
+uint8_t platform_getChSelector()
+{
+    return Radio_State.chSelector;
 }
 
 
-bool platform_getPttStatus(){
+bool platform_getPttStatus()
+{
     return Radio_State.PttStatus;
 }
 
 
-void platform_ledOn(led_t led){
-	char* str;
+void platform_ledOn(led_t led)
+{
+    char* str;
 
-	switch(led){
-		case 0:
-			str = "GREEN";
-			break;
-		case 1:
-			str = "RED";
-			break;
-		case 2:
-			str = "YELLOW";
-			break;
-		case 3:
-			str = "WHITE";
-			break;
-	}
+    switch(led)
+    {
+        case 0:
+            str = "GREEN";
+            break;
+        case 1:
+            str = "RED";
+            break;
+        case 2:
+            str = "YELLOW";
+            break;
+        case 3:
+            str = "WHITE";
+            break;
+    }
 
-	printf("platform_ledOn(%s)\n", str);
+    printf("platform_ledOn(%s)\n", str);
 }
 
 
-void platform_ledOff(led_t led){
-	printf("platform_ledOff()\n");
+void platform_ledOff(led_t led)
+{
+    printf("platform_ledOff()\n");
 }
 
 
-void platform_beepStart(uint16_t freq){
-	printf("platform_beepStart(%u)\n", freq);
+void platform_beepStart(uint16_t freq)
+{
+    printf("platform_beepStart(%u)\n", freq);
 }
 
 
-void platform_beepStop(){
-	printf("platform_beepStop()\n");
+void platform_beepStop()
+{
+    printf("platform_beepStop()\n");
+}
+
+const void *platform_getCalibrationData()
+{
+    return NULL;
 }
