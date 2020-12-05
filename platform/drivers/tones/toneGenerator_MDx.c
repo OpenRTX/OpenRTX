@@ -21,6 +21,7 @@
 #include "toneGenerator_MDx.h"
 #include <hwconfig.h>
 #include <gpio.h>
+#include <os.h>
 
 /*
  * Sine table for PWM-based sinewave generation, containing 256 samples over one
@@ -62,6 +63,7 @@ uint32_t beepTimerCount = 0; /* Downcounter for timed "beep"                  */
 
 void __attribute__((used)) TIM3_IRQHandler()
 {
+    OSIntEnter();
     toneTableIndex += toneTableIncr;
     beepTableIndex += beepTableIncr;
 
@@ -83,6 +85,7 @@ void __attribute__((used)) TIM3_IRQHandler()
     {
         TIM3->CR1 &= ~TIM_CR1_CEN;
     }
+    OSIntExit();
 }
 
 void toneGen_init()
