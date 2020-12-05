@@ -247,11 +247,6 @@ void C5000_startAnalogTx()
     _writeReg(0x00, 0x0F, 0xC8);    // ADLinVol, mic volume
 //     _writeReg(0x00, 0x25, 0x0E);
 //     _writeReg(0x00, 0x26, 0xFE);
-//     _writeReg(0x00, 0x45, 0x32);    // Mod2 magnitude (HR_C6000)
-//     _writeReg(0x00, 0x46, 0x85);    // Mod1 magnitude (HR_C6000)
-//     _writeReg(0x00, 0x04, 0x1F);    // Bias value for TX, Q-channel
-//     _writeReg(0x00, 0x35, 0x1E);    // FM modulation factor
-//     _writeReg(0x00, 0x3F, 0x04);    // FM Limiting modulation factor (HR_C6000)
     _writeReg(0x00, 0x34, 0x3C);    // Enable pre-emphasis, 25kHz bandwidth
     _writeReg(0x00, 0x3E, 0x08);    // "FM Modulation frequency deviation coefficient at the receiving end" (HR_C6000)
     _writeReg(0x00, 0x37, 0xC2);    // Unknown register
@@ -263,10 +258,6 @@ void C5000_startAnalogTx()
 void C5000_stopAnalogTx()
 {
     _writeReg(0x00, 0x60, 0x00);    // Disable both analog and DMR transmission
-}
-
-void C5000_writeReg(uint8_t reg, uint8_t val)
-{
 }
 
 bool C5000_spiInUse()
