@@ -42,8 +42,8 @@ enum eventType_t
  */
 typedef struct
 {
-    uint32_t type    : 3,
-    uint32_t payload : 29
+    uint32_t type    : 3;
+    uint32_t payload : 29;
 }event_t;
 
 #endif /* EVENT_H */

@@ -24,6 +24,7 @@
 #include <state.h>
 #include <keyboard.h>
 #include <stdint.h>
+#include <event.h>
 
 /**
  * This function initialises the User Interface, starting the 
@@ -35,9 +36,9 @@ void ui_init();
  * This function advances the User Interface FSM, basing on the 
  * current radio state and the keys pressed.
  * @param last_state: A local copy of the previous radio state
- * @param keys: A bitmap containing the currently pressed keys
+ * @param event: An event from other threads
  */
-void ui_updateFSM(state_t last_state, keyboard_t keys);
+void ui_updateFSM(state_t last_state, event_t event);
 
 /**
  * This function redraws the GUI based on the last radio state.

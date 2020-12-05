@@ -58,8 +58,6 @@ enum keys
     KEY_F8    = (1 << 26),  /* Function button (device specific) */
     KEY_F9    = (1 << 27),  /* Function button (device specific) */
     KEY_F10   = (1 << 28),  /* Function button (device specific) */
-    KEY_F11   = (1 << 29),  /* Function button (device specific) */
-    KEY_F12   = (1 << 30)  /* Function button (device specific) */
 };
 
 /**

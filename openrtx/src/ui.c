@@ -291,23 +291,28 @@ void ui_drawSplashScreen()
     #endif
 }
 
-void ui_updateFSM(state_t last_state, keyboard_t keys)
+void ui_updateFSM(state_t last_state, event_t event)
 {
     (void) last_state;
 
-    // Temporary VFO controls
-    if(keys & KEY_UP)
+    // Process pressed keys
+    if(event.type = EVENT_KBD)
     {
-        // Advance TX and RX frequency of 12.5KHz
-        state.channel.rx_frequency += 12500;
-        state.channel.tx_frequency += 12500;
-    }
+        keyboard_t keys = event.payload;
+        // Temporary VFO controls
+        if(keys & KEY_UP)
+        {
+            // Advance TX and RX frequency of 12.5KHz
+            state.channel.rx_frequency += 12500;
+            state.channel.tx_frequency += 12500;
+        }
 
-    if(keys & KEY_DOWN)
-    {
-        // Advance TX and RX frequency of 12.5KHz
-        state.channel.rx_frequency -= 12500;
-        state.channel.tx_frequency -= 12500;
+        if(keys & KEY_DOWN)
+        {
+            // Advance TX and RX frequency of 12.5KHz
+            state.channel.rx_frequency -= 12500;
+            state.channel.tx_frequency -= 12500;
+        }
     }
 }
 

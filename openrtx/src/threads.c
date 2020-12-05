@@ -26,14 +26,14 @@
 #include <graphics.h>
 #include <platform.h>
 #include <hwconfig.h>
-#include <events.h>
+#include <event.h>
 
 #include <stdio.h>
 
 /* Mutex for concurrent access to state variable */
 static OS_MUTEX state_mutex;
 
-/* Queue for sending and receiving keyboard status */
+/* Queue for sending and receiving ui update requests */
 static OS_Q ui_queue;
 
  /**************************** IMPORTANT NOTE ***********************************
@@ -103,10 +103,9 @@ static void ui_task(void *arg)
 
     while(1)
     {
-        // Read from the keyboard queue (returns 0 if no message is present)
-        // Copy keyboard_t keys from received void * pointer msg
-        event_t event = OSQPend(&ui_queue, 0u, OS_OPT_PEND_NON_BLOCKING,
-                                              &msg_size, 0u, &os_err);
+        // Wait to receive an event message
+        event_t event = (event_t)OSQPend(&ui_queue, 0u, OS_OPT_PEND_BLOCKING,
+                                         &msg_size, 0u, &os_err);
         // Lock mutex, read and write state
         OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err); 
         // React to keypresses and update FSM inside state
@@ -125,8 +124,10 @@ static void ui_task(void *arg)
             while(gfx_renderingInProgress());
         }
 
+        // We don't need a delay because we lock on incoming events
+        // TODO: Enable self refresh when a continuous visualization is enabled
         // Update UI at ~33 FPS
-        OSTimeDlyHMSM(0u, 0u, 0u, 30u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+        //OSTimeDlyHMSM(0u, 0u, 0u, 30u, OS_OPT_TIME_HMSM_STRICT, &os_err);
     }
 }
 
@@ -151,8 +152,9 @@ static void kbd_task(void *arg)
             event_t kbd_msg;
             kbd_msg.type = EVENT_KBD;
             kbd_msg.payload = keys;
+            void * msg = (void *) kbd_msg;
             // Send keyboard status in queue
-            OSQPost(&ui_queue, (void *)kbd_msg, sizeof(event_t), 
+            OSQPost(&ui_queue, msg, sizeof(event_t), 
                     OS_OPT_POST_FIFO + OS_OPT_POST_NO_SCHED, &os_err);
         }
         // Read keyboard state at 5Hz
