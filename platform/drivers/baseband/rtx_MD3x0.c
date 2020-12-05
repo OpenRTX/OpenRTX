@@ -189,6 +189,14 @@ void _updateC5000IQparams()
     C5000_setModAmplitude(I, Q);
 }
 
+void _setCTCSS()
+{
+    if((rtxStatus.opMode == FM) && (rtxStatus.txTone != 0))
+    {
+        float tone = ((float) rtxStatus.txTone) / 10.0f;
+        toneGen_setToneFreq(tone);
+    }
+}
 
 
 void rtx_init()
@@ -350,9 +358,10 @@ void rtx_taskFunc()
         _setOpMode();
         _setBandwidth();
         _updateC5000IQparams();
+        _setCTCSS();
 
         /* TODO: temporarily force to RX mode if rtx is off. */
-        if(rtxStatus.opStatus == OFF) _enableRx();
+        if(rtxStatus.opStatus == OFF) _enableRxStage();
     }
 
     if(platform_getPttStatus() && (rtxStatus.opStatus != TX))
