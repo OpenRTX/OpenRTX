@@ -18,28 +18,190 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <hwconfig.h>
+#include <calibInfo_MDx.h>
+#include <calibUtils.h>
 #include <datatypes.h>
+#include <hwconfig.h>
+#include <platform.h>
+#include <ADC1_MDx.h>
+#include <string.h>
+#include <stdlib.h>
 #include <gpio.h>
-#include "rtx.h"
-#include "pll_MD3x0.h"
-#include "ADC1_MDxx380.h"
+#include <rtx.h>
+#include <os.h>
 #include "HR-C5000_MD3x0.h"
+#include "pll_MD3x0.h"
 
-const freq_t IF_FREQ = 49950000.0f;  /* Intermediate frequency: 49.95MHz */
+#include "toneGenerator_MDx.h"
+#include <stdio.h>
 
-freq_t rxFreq = 430000000.0f;
-freq_t txFreq = 430000000.0f;
-
-void _setApcTv(uint16_t value)
+struct rtxStatus_t
 {
-    DAC->DHR12R1 = value;
+    uint8_t opMode    : 2,  /**< Operating mode (FM, DMR, ...) */
+            bandwidth : 2,  /**< Channel bandwidth             */
+            txDisable : 1,  /**< Disable TX operation          */
+            opStatus  : 3;  /**< RTX status (OFF, RX, TX)      */
+
+    freq_t rxFrequency;     /**< RX frequency, in Hz           */
+    freq_t txFrequency;     /**< TX frequency, in Hz           */
+
+    float txPower;          /**< TX power, in W                */
+    uint8_t sqlLevel;       /**< Squelch opening level         */
+
+    tone_t rxTone;          /**< RX CTC/DCS tone               */
+    tone_t txTone;          /**< TX CTC/DCS tone               */
 }
+rtxStatus;
+
+OS_Q cfgMailbox;
+const md3x0Calib_t *calData;
+const freq_t IF_FREQ = 49950000;  /* Intermediate frequency: 49.95MHz */
+
+static void printUnsignedInt(unsigned int x)
+{
+    static const char hexdigits[]="0123456789abcdef";
+    char result[]="0x........\r\n";
+    for(int i=9;i>=2;i--)
+    {
+        result[i]=hexdigits[x & 0xf];
+        x>>=4;
+    }
+    puts(result);
+}
+
+/*
+ * Helper functions to reduce code mess. They all access 'rtxStatus'
+ * internally.
+ */
+void _setBandwidth()
+{
+    /* Override bandwidth configuration for digital modes */
+    uint8_t bandwidth = BW_12_5;
+    if(rtxStatus.opMode == FM) bandwidth = rtxStatus.bandwidth;
+
+    switch(bandwidth)
+    {
+        case BW_12_5:
+            gpio_setPin(WN_SW);
+            C5000_setModFactor(0x1E);
+            break;
+
+        case BW_20:
+            gpio_clearPin(WN_SW);
+            C5000_setModFactor(0x30);
+            break;
+
+        case BW_25:
+            gpio_clearPin(WN_SW);
+            C5000_setModFactor(0x3C);
+            break;
+
+        default:
+            break;
+    }
+}
+
+void _setOpMode()
+{
+    switch(rtxStatus.opMode)
+    {
+        case FM:
+            gpio_clearPin(DMR_SW);
+            gpio_setPin(FM_SW);
+            C5000_fmMode();
+            break;
+
+        case DMR:
+            gpio_clearPin(FM_SW);
+            gpio_setPin(DMR_SW);
+            //C5000_dmrMode();
+            break;
+
+        default:
+            break;
+    }
+}
+
+void _enableTxStage()
+{
+//     if(rtxStatus.txDisable == 1) return;
+
+    gpio_clearPin(RX_STG_EN);
+
+    gpio_setPin(RF_APC_SW);
+    gpio_clearPin(VCOVCC_SW);
+
+    pll_setFrequency(rtxStatus.txFrequency, 5);
+
+    /*
+     * Set transmit power. Initial setting is 1W, overridden to 5W if tx power
+     * is greater than 1W.
+     * TODO: increase granularity
+     */
+    const uint8_t *paramPtr = calData->txLowPower;
+    if(rtxStatus.txPower > 1.0f) paramPtr = calData->txHighPower;
+    uint8_t apc = interpCalParameter(rtxStatus.txFrequency, calData->txFreq,
+                                     paramPtr, 9);
+    DAC->DHR12L1 = apc * 0xFF;
+
+    gpio_setPin(TX_STG_EN);
+    rtxStatus.opStatus = TX;
+}
+
+void _enableRxStage()
+{
+    gpio_clearPin(TX_STG_EN);
+
+    gpio_clearPin(RF_APC_SW);
+    gpio_setPin(VCOVCC_SW);
+
+    pll_setFrequency(((float) rtxStatus.rxFrequency - IF_FREQ), 5);
+
+    /* Set tuning voltage for input filter */
+    uint8_t tuneVoltage = interpCalParameter(rtxStatus.rxFrequency,
+                                             calData->rxFreq,
+                                             calData->rxSensitivity, 9);
+    DAC->DHR12L1 = tuneVoltage * 0xFF;
+
+    gpio_setPin(RX_STG_EN);
+    rtxStatus.opStatus = RX;
+}
+
+void _disableRtxStages()
+{
+    gpio_clearPin(TX_STG_EN);
+    gpio_clearPin(RX_STG_EN);
+    rtxStatus.opStatus = OFF;
+}
+
+void _updateC5000IQparams()
+{
+    const uint8_t *Ical = calData->sendIrange;
+    if(rtxStatus.opMode == FM) Ical = calData->analogSendIrange;
+    uint8_t I = interpCalParameter(rtxStatus.txFrequency, calData->txFreq, Ical,
+                                   9);
+
+    const uint8_t *Qcal = calData->sendQrange;
+    if(rtxStatus.opMode == FM) Qcal = calData->analogSendQrange;
+    uint8_t Q = interpCalParameter(rtxStatus.txFrequency, calData->txFreq, Qcal,
+                                   9);
+
+    C5000_setModAmplitude(I, Q);
+}
+
+
 
 void rtx_init()
 {
+    /* Create the message queue for RTX configuration */
+    OS_ERR err;
+    OSQCreate((OS_Q     *) &cfgMailbox,
+              (CPU_CHAR *) "",
+              (OS_MSG_QTY) 1,
+              (OS_ERR   *) &err);
+
     /*
-     * Configure GPIOs
+     * Configure RTX GPIOs
      */
     gpio_setMode(PLL_PWR,   OUTPUT);
     gpio_setMode(VCOVCC_SW, OUTPUT);
@@ -60,6 +222,19 @@ void rtx_init()
     gpio_clearPin(RX_STG_EN);  /* Disable RX input stage                            */
 
     /*
+     * Configure audio control GPIOs
+     */
+    gpio_setMode(SPK_MUTE, OUTPUT);
+    gpio_setMode(AMP_EN,   OUTPUT);
+    gpio_setMode(FM_MUTE,  OUTPUT);
+    gpio_setMode(MIC_PWR,  OUTPUT);
+
+    gpio_setPin(MIC_PWR);       /* Turn on microphone                   */
+    gpio_setPin(AMP_EN);        /* Turn on audio amplifier              */
+    gpio_setPin(FM_MUTE);       /* Unmute path from AF_out to amplifier */
+    gpio_clearPin(SPK_MUTE);      /* Mute speaker                         */
+
+    /*
      * Configure and enble DAC
      */
     gpio_setMode(APC_TV,    INPUT_ANALOG);
@@ -69,6 +244,11 @@ void rtx_init()
     DAC->CR = DAC_CR_EN2 | DAC_CR_EN1;
     DAC->DHR12R2 = 0;
     DAC->DHR12R1 = 0;
+
+    /*
+     * Load calibration data
+     */
+    calData = ((const md3x0Calib_t *) platform_getCalibrationData());
 
     /*
      * Enable and configure PLL
@@ -84,9 +264,22 @@ void rtx_init()
     /*
      * Modulation bias settings
      */
-    const uint8_t mod2_bias = 0x60;        /* TODO use calibration  */
-    DAC->DHR12R2 = mod2_bias*4 + 0x600;    /* Original FW does this */
-    C5000_setModOffset(mod2_bias);
+    DAC->DHR12R2 = (calData->freqAdjustMid)*4 + 0x600; /* Original FW does this */
+    C5000_setModOffset(calData->freqAdjustMid);
+
+    /*
+     * Default initialisation for rtx status
+     */
+    rtxStatus.opMode      = FM;
+    rtxStatus.bandwidth   = BW_25;
+    rtxStatus.txDisable   = 0;
+    rtxStatus.opStatus    = OFF;
+    rtxStatus.rxFrequency = 430000000;
+    rtxStatus.txFrequency = 430000000;
+    rtxStatus.txPower     = 0.0f;
+    rtxStatus.sqlLevel    = 1;
+    rtxStatus.rxTone      = 0;
+    rtxStatus.txTone      = 0;
 }
 
 void rtx_terminate()
@@ -100,109 +293,90 @@ void rtx_terminate()
     gpio_clearPin(TX_STG_EN);  /* Disable TX power stage                            */
     gpio_clearPin(RX_STG_EN);  /* Disable RX input stage                            */
 
+    gpio_clearPin(MIC_PWR);    /* Turn off microphone                */
+    gpio_clearPin(AMP_EN);     /* Turn off audio amplifier           */
+    gpio_clearPin(FM_MUTE);    /* Mute path from AF_out to amplifier */
+
     DAC->DHR12R2 = 0;
     DAC->DHR12R1 = 0;
     RCC->APB1ENR &= ~RCC_APB1ENR_DACEN;
+
 }
 
-void rtx_setTxFreq(freq_t freq)
+void rtx_configure(const rtxConfig_t *cfg)
 {
-    txFreq = freq;
-}
+    OS_ERR err;
+    OSQPost((OS_Q      *) &cfgMailbox,
+            (void      *) cfg,
+            (OS_MSG_SIZE) sizeof(rtxConfig_t *),
+            (OS_OPT     ) OS_OPT_POST_FIFO,
+            (OS_ERR    *) &err);
 
-void rtx_setRxFreq(freq_t freq)
-{
-    rxFreq = freq;
-}
-
-void rtx_setFuncmode(enum funcmode mode)
-{
-    switch(mode)
+    /*
+     * In case message queue is not empty, flush the old and unread configuration
+     * and post the new one.
+     */
+    if(err == OS_ERR_Q_MAX)
     {
-        case OFF:
-            gpio_clearPin(TX_STG_EN);
-            gpio_clearPin(RX_STG_EN);
-            break;
+        OSQFlush((OS_Q   *) &cfgMailbox,
+                 (OS_ERR *) &err);
 
-        case RX:
-            gpio_clearPin(TX_STG_EN);
-
-            gpio_clearPin(RF_APC_SW);
-            gpio_setPin(VCOVCC_SW);
-            pll_setFrequency(rxFreq - IF_FREQ, 5);
-            _setApcTv(0x956);                   /* TODO use calibration      */
-
-            gpio_setPin(RX_STG_EN);
-            break;
-
-        case TX:
-            gpio_clearPin(RX_STG_EN);
-
-            gpio_setPin(RF_APC_SW);
-            gpio_clearPin(VCOVCC_SW);
-            pll_setFrequency(txFreq, 5);
-
-            _setApcTv(0x02);
-
-            gpio_setPin(TX_STG_EN);
-            break;
-
-        default:
-            /* TODO */
-            break;
+        OSQPost((OS_Q      *) &cfgMailbox,
+                (void      *) cfg,
+                (OS_MSG_SIZE) sizeof(rtxConfig_t *),
+                (OS_OPT     ) OS_OPT_POST_FIFO,
+                (OS_ERR    *) &err);
     }
 }
 
-void rtx_setToneRx(enum tone t)
+void rtx_taskFunc()
 {
-    /* TODO */
-}
+    OS_ERR err;
+    OS_MSG_SIZE size;
+    void *msg = OSQPend((OS_Q        *) &cfgMailbox,
+                        (OS_TICK      ) 0,
+                        (OS_OPT       ) OS_OPT_PEND_NON_BLOCKING,
+                        (OS_MSG_SIZE *) &size,
+                        (CPU_TS      *) NULL,
+                        (OS_ERR      *) &err);
 
-void rtx_setToneTx(enum tone t)
-{
-    /* TODO */
-}
-
-void rtx_setBandwidth(enum bw b)
-{
-    switch(b)
+    if((err == OS_ERR_NONE) && (msg != NULL))
     {
-        case BW_25:
-            gpio_clearPin(WN_SW);
-            break;
+        uint8_t tmp = rtxStatus.opStatus;
+        memcpy(&rtxStatus, msg, sizeof(rtxConfig_t));
+        free(msg);
+        rtxStatus.opStatus = tmp;
 
-        case BW_12_5:
-            gpio_setPin(WN_SW);
-            break;
+        _setOpMode();
+        _setBandwidth();
+        _updateC5000IQparams();
 
-        default:
-            /* TODO */
-            break;
+        /* TODO: temporarily force to RX mode if rtx is off. */
+        if(rtxStatus.opStatus == OFF) _enableRx();
+    }
+
+    if(platform_getPttStatus() && (rtxStatus.opStatus != TX))
+    {
+        _disableRtxStages();
+        toneGen_toneOn();
+        gpio_setPin(MIC_PWR);
+        C5000_startAnalogTx();
+        _enableTxStage();
+        platform_ledOn(RED);
+    }
+
+    if(!platform_getPttStatus() && (rtxStatus.opStatus == TX))
+    {
+        _disableRtxStages();
+        gpio_clearPin(MIC_PWR);
+        toneGen_toneOff();
+        C5000_stopAnalogTx();
+        _enableRxStage();
+        platform_ledOff(RED);
     }
 }
 
 float rtx_getRssi()
 {
-    return adc1_getMeasurement(1);
-}
-
-void rtx_setOpmode(enum opmode mode)
-{
-    switch(mode)
-    {
-        case FM:
-            gpio_clearPin(DMR_SW);
-            gpio_setPin(FM_SW);
-            C5000_fmMode();
-            break;
-
-        case DMR:
-            gpio_clearPin(FM_SW);
-            gpio_setPin(DMR_SW);
-            break;
-
-        default:
-            /* TODO */
-            break;
-    }
+    return 0;
 }

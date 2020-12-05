@@ -24,51 +24,69 @@
 #include <stdint.h>
 #include <datatypes.h>
 
-enum funcmode
+typedef struct
 {
-    OFF,
-    RX,
-    TX
-};
+    uint8_t opMode    : 2,  /**< Operating mode (FM, DMR, ...) */
+            bandwidth : 2,  /**< Channel bandwidth             */
+            txDisable : 1,  /**< Disable TX operation          */
+            _padding  : 3;
 
-enum tone
-{
-    NONE,
-    CTCSS_67_0,
-    CTCSS_71_9,
-    CTCSS_81_5
-};
+    freq_t rxFrequency;     /**< RX frequency, in Hz           */
+    freq_t txFrequency;     /**< TX frequency, in Hz           */
 
-enum bw
+    float txPower;          /**< TX power, in W                */
+    uint8_t sqlLevel;       /**< Squelch opening level         */
+
+    tone_t rxTone;          /**< RX CTC/DCS tone               */
+    tone_t txTone;          /**< TX CTC/DCS tone               */
+}
+rtxConfig_t;
+
+enum bandwidth
 {
-    BW_12_5,
-    BW_25
+    BW_12_5 = 0,    /**< 12.5kHz bandwidth */
+    BW_20   = 1,    /**< 20kHz bandwidth   */
+    BW_25   = 2     /**< 25kHz bandwidth   */
 };
 
 enum opmode
 {
-    FM,
-    DMR
+    FM  = 0,        /**< Analog FM */
+    DMR = 1         /**< DMR       */
 };
 
+enum opstatus
+{
+    OFF = 0,        /**< OFF          */
+    RX  = 1,        /**< Receiving    */
+    TX  = 2         /**< Transmitting */
+};
+
+
+/**
+ * Initialise rtx stage
+ */
 void rtx_init();
 
+/**
+ * Shut down rtx stage
+ */
 void rtx_terminate();
 
-void rtx_setTxFreq(freq_t freq);
+/**
+ * Post a new RTX configuration on the internal message queue. Data structure
+ * \b must be heap-allocated and \b must not be modified after this function has
+ * been called. The driver takes care of its deallocation.
+ * @param cfg: pointer to a structure containing the new RTX configuration.
+ */
+void rtx_configure(const rtxConfig_t *cfg);
 
-void rtx_setRxFreq(freq_t freq);
-
-void rtx_setFuncmode(enum funcmode mode);
-
-void rtx_setToneRx(enum tone t);
-
-void rtx_setToneTx(enum tone t);
-
-void rtx_setBandwidth(enum bw b);
+/**
+ * High-level code is in charge of calling this function periodically, since it
+ * contains all the RTX management functionalities.
+ */
+void rtx_taskFunc();
 
 float rtx_getRssi();
-
-void rtx_setOpmode(enum opmode mode);
 
 #endif /* RTX_H */

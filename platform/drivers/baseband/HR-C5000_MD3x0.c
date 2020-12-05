@@ -129,12 +129,30 @@ void C5000_setModOffset(uint8_t offset)
 {
     /*
      * Original TYT MD-380 code does this, both for DMR and FM.
+     *
+     * References: functions @0x0803fda8 and @0x0804005c
      */
     uint8_t offUpper = (offset < 0x80) ? 0x00 : 0x03;
     uint8_t offLower = 0x7F - offset;
 
     _writeReg(0x00, 0x48, offUpper);    // Two-point bias, upper value
     _writeReg(0x00, 0x47, offLower);    // Two-point bias, lower value
+
+    _writeReg(0x00, 0x04, offLower);    // Bias value for TX, Q-channel
+}
+
+void C5000_setModAmplitude(uint8_t iAmp, uint8_t qAmp)
+{
+    _writeReg(0x00, 0x45, iAmp);    // Mod2 magnitude (HR_C6000)
+    _writeReg(0x00, 0x46, qAmp);    // Mod1 magnitude (HR_C6000)
+
+}
+
+void C5000_setModFactor(uint8_t mf)
+{
+    _writeReg(0x00, 0x35, mf);      // FM modulation factor
+    _writeReg(0x00, 0x3F, 0x04);    // FM Limiting modulation factor (HR_C6000)
+
 }
 
 void C5000_dmrMode()
@@ -229,11 +247,11 @@ void C5000_startAnalogTx()
     _writeReg(0x00, 0x0F, 0xC8);    // ADLinVol, mic volume
 //     _writeReg(0x00, 0x25, 0x0E);
 //     _writeReg(0x00, 0x26, 0xFE);
-    _writeReg(0x00, 0x45, 0x32);    // Mod2 magnitude (HR_C6000)
-    _writeReg(0x00, 0x46, 0x85);    // Mod1 magnitude (HR_C6000)
-    _writeReg(0x00, 0x04, 0x1F);    // Bias value for TX, Q-channel
-    _writeReg(0x00, 0x35, 0x1E);    // FM modulation factor
-    _writeReg(0x00, 0x3F, 0x04);    // FM Limiting modulation factor (HR_C6000)
+//     _writeReg(0x00, 0x45, 0x32);    // Mod2 magnitude (HR_C6000)
+//     _writeReg(0x00, 0x46, 0x85);    // Mod1 magnitude (HR_C6000)
+//     _writeReg(0x00, 0x04, 0x1F);    // Bias value for TX, Q-channel
+//     _writeReg(0x00, 0x35, 0x1E);    // FM modulation factor
+//     _writeReg(0x00, 0x3F, 0x04);    // FM Limiting modulation factor (HR_C6000)
     _writeReg(0x00, 0x34, 0x3C);    // Enable pre-emphasis, 25kHz bandwidth
     _writeReg(0x00, 0x3E, 0x08);    // "FM Modulation frequency deviation coefficient at the receiving end" (HR_C6000)
     _writeReg(0x00, 0x37, 0xC2);    // Unknown register

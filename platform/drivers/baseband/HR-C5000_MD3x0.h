@@ -52,6 +52,19 @@ void C5000_terminate();
 void C5000_setModOffset(uint8_t offset);
 
 /**
+ * Set values for two-point modulation amplitude adjustment. These values
+ * usually are stored in radio calibration data.
+ * @param iMag: value for modulation offset adjustment.
+ */
+void C5000_setModAmplitude(uint8_t iAmp, uint8_t qAmp);
+
+/**
+ * Set value for FM-mode modulation factor, a value dependent on bandwidth.
+ * @param mf: value for FM modulation factor.
+ */
+void C5000_setModFactor(uint8_t mf);
+
+/**
  * Configure HR_C5000 chipset for DMR operation.
  */
 void C5000_dmrMode();
