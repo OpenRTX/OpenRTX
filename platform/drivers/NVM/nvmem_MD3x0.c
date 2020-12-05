@@ -179,10 +179,15 @@ void nvm_readCalibData(void *buf)
     (void) extFlash_readSecurityRegister(0x20b0, ((uint8_t *) &freqs), 72);
     extFlash_sleep();
 
+    /*
+     * Ugly quirk: frequency stored in calibration data is divided by ten, so,
+     * after bcd2bin conversion we have something like 40'135'000. To ajdust
+     * things, frequency has to be multiplied by ten.
+     */
     for(uint8_t i = 0; i < 9; i++)
     {
-        calib->rxFreq[i] = ((freq_t) _bcd2bin(freqs[2*i]));
-        calib->txFreq[i] = ((freq_t) _bcd2bin(freqs[2*i+1]));
+        calib->rxFreq[i] = ((freq_t) _bcd2bin(freqs[2*i])) * 10;
+        calib->txFreq[i] = ((freq_t) _bcd2bin(freqs[2*i+1])) * 10;
     }
 }
 

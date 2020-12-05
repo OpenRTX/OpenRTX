@@ -39,7 +39,7 @@
  * and frequencies.
  * @return value for the calibration parameter at the given frequency point.
  */
-uint8_t interpCalParameter(freq_t freq, freq_t *calPoints, uint8_t *param,
-                                                           uint8_t elems);
+uint8_t interpCalParameter(const freq_t freq, const freq_t *calPoints,
+                           const uint8_t *param, const uint8_t elems);
 
 #endif /* CALIB_UTILS_H */
