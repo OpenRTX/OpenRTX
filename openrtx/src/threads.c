@@ -103,9 +103,12 @@ static void ui_task(void *arg)
 
     while(1)
     {
-        // Wait to receive an event message
-        event_t event = (event_t)OSQPend(&ui_queue, 0u, OS_OPT_PEND_BLOCKING,
-                                         &msg_size, 0u, &os_err);
+        // Read from the keyboard queue (returns 0 if no message is present)
+        // Copy keyboard_t keys from received void * pointer msg
+        void *msg = OSQPend(&ui_queue, 0u, OS_OPT_PEND_BLOCKING,
+                            &msg_size, 0u, &os_err);
+        event_t event = ((event_t) msg);
+
         // Lock mutex, read and write state
         OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err); 
         // React to keypresses and update FSM inside state
@@ -152,9 +155,9 @@ static void kbd_task(void *arg)
             event_t kbd_msg;
             kbd_msg.type = EVENT_KBD;
             kbd_msg.payload = keys;
-            void * msg = (void *) kbd_msg;
+
             // Send keyboard status in queue
-            OSQPost(&ui_queue, msg, sizeof(event_t), 
+            OSQPost(&ui_queue, (void *)kbd_msg.value, sizeof(event_t), 
                     OS_OPT_POST_FIFO + OS_OPT_POST_NO_SCHED, &os_err);
         }
         // Read keyboard state at 5Hz

@@ -40,10 +40,15 @@ enum eventType_t
  * But if we keep the size under 32 bits, we can sent the
  * entire message, casting it to a void * pointer.
  */
-typedef struct
+typedef union
 {
-    uint32_t type    : 3;
-    uint32_t payload : 29;
+    struct
+    {
+        uint32_t type    : 3,
+                 payload : 29;
+    };
+
+    void *value;
 }event_t;
 
 #endif /* EVENT_H */
