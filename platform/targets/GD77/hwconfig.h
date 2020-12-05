@@ -39,4 +39,21 @@
 #define LCD_CLK     GPIOC,11
 #define LCD_DAT     GPIOC,12
 
+/* Keyboard */
+#define KB_ROW0 GPIOB,19
+#define KB_ROW1 GPIOB,20
+#define KB_ROW2 GPIOB,21
+#define KB_ROW3 GPIOB,22
+#define KB_ROW4 GPIOB,23
+
+#define KB_COL0 GPIOC,0
+#define KB_COL1 GPIOC,1
+#define KB_COL2 GPIOC,2
+#define KB_COL3 GPIOC,3
+
+#define PTT_SW   GPIOA,1
+#define FUNC_SW  GPIOA,2
+#define FUNC2_SW GPIOB,1
+#define MONI_SW  GPIOB,9
+
 #endif
