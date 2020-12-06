@@ -21,68 +21,47 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <os.h>
 #include "gpio.h"
 #include "delays.h"
 #include "rtx.h"
 #include "platform.h"
 #include "hwconfig.h"
-#include "HR-C5000_MD3x0.h"
-#include "toneGenerator_MDxx380.h"
+#include "toneGenerator_MDx.h"
 
 int main(void)
 {
     platform_init();
-//     toneGen_init();
-//     toneGen_setToneFreq(77.0f);
-
-    gpio_setMode(SPK_MUTE, OUTPUT);
-    gpio_setMode(AMP_EN,   OUTPUT);
-    gpio_setMode(FM_MUTE,  OUTPUT);
-
-    gpio_setPin(AMP_EN);        /* Turn on audio amplifier              */
-    gpio_setPin(FM_MUTE);       /* Unmute path from AF_out to amplifier */
-    gpio_clearPin(SPK_MUTE);    /* Unmute speaker                       */
+    toneGen_init();
 
     rtx_init();
-    rtx_setTxFreq(430100000.0f);
-    rtx_setRxFreq(430100000.0f);
-    rtx_setBandwidth(BW_25);
-    rtx_setOpmode(FM);
-    rtx_setFuncmode(RX);
 
-    gpio_setMode(GPIOA, 14, OUTPUT); /* Micpwr_sw */
-    gpio_setPin(GPIOA, 14);
+    freq_t rptFreq  = 430100000;
+    freq_t rptShift = 1600000;
+    tone_t ctcss    = 719;
 
-    bool txActive = false;
-    uint8_t count = 0;
+    /*
+     * Allocate a configuration message for RTX.
+     * This memory chunk is then freed inside the driver, so you must not call
+     * free() in this pointer!
+     */
+    rtxConfig_t *cfg = ((rtxConfig_t *) malloc(sizeof(rtxConfig_t)));
+
+    cfg->opMode = FM;
+    cfg->bandwidth = BW_25;
+    cfg->rxFrequency = rptFreq;
+    cfg->txFrequency = rptFreq + rptShift;
+    cfg->txPower = 1.0f;
+    cfg->sqlLevel = 3;
+    cfg->rxTone = 0;
+    cfg->txTone = ctcss;
+    rtx_configure(cfg);
 
     while (1)
     {
-        if(platform_getPttStatus() && (txActive == false))
-        {
-            rtx_setFuncmode(OFF);
-            rtx_setFuncmode(TX);
-            C5000_startAnalogTx();
-            platform_ledOn(RED);
-            txActive = true;
-        }
 
-        if(!platform_getPttStatus() && (txActive == true))
-        {
-            rtx_setFuncmode(OFF);
-            C5000_stopAnalogTx();
-            platform_ledOff(RED);
-            rtx_setFuncmode(RX);
-            txActive = false;
-        }
-
-        count++;
-        if(count == 50)
-        {
-            printf("RSSI: %f\r\n", rtx_getRssi());
-            count = 0;
-        }
+        rtx_taskFunc();
 
         OS_ERR err;
         OSTimeDlyHMSM(0u, 0u, 0u, 10u, OS_OPT_TIME_HMSM_STRICT, &err);

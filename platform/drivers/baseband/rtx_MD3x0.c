@@ -18,12 +18,14 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <toneGenerator_MDx.h>
 #include <calibInfo_MDx.h>
 #include <calibUtils.h>
 #include <datatypes.h>
 #include <hwconfig.h>
 #include <platform.h>
 #include <ADC1_MDx.h>
+#include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
 #include <gpio.h>
@@ -32,7 +34,6 @@
 #include "HR-C5000_MD3x0.h"
 #include "pll_MD3x0.h"
 
-#include "toneGenerator_MDx.h"
 #include <stdio.h>
 
 struct rtxStatus_t
@@ -53,9 +54,12 @@ struct rtxStatus_t
 }
 rtxStatus;
 
-OS_Q cfgMailbox;
-const md3x0Calib_t *calData;
-const freq_t IF_FREQ = 49950000;  /* Intermediate frequency: 49.95MHz */
+OS_Q cfgMailbox;                  /* Queue for incoming config messages */
+const md3x0Calib_t *calData;      /* Pointer to calibration data        */
+const freq_t IF_FREQ = 49950000;  /* Intermediate frequency: 49.95MHz   */
+
+uint8_t sqlOpenTsh;               /* Squelch opening threshold          */
+uint8_t sqlCloseTsh;              /* Squelch closing threshold          */
 
 static void printUnsignedInt(unsigned int x)
 {
@@ -124,7 +128,7 @@ void _setOpMode()
 
 void _enableTxStage()
 {
-//     if(rtxStatus.txDisable == 1) return;
+    if(rtxStatus.txDisable == 1) return;
 
     gpio_clearPin(RX_STG_EN);
 
@@ -198,6 +202,34 @@ void _setCTCSS()
     }
 }
 
+void _updateSqlThresholds()
+{
+    /*
+     * TODO:
+     * - check why openSql9 is less than openSql1, maybe parameters are swapped
+     * - squelch levels 1 - 9
+     */
+    uint8_t sql1OpenTsh = interpCalParameter(rtxStatus.rxFrequency, calData->rxFreq,
+                                             calData->openSql9, 9);
+
+    uint8_t sql1CloseTsh = interpCalParameter(rtxStatus.rxFrequency, calData->rxFreq,
+                                              calData->closeSql9, 9);
+
+    sqlOpenTsh = sql1OpenTsh;
+    sqlCloseTsh = sql1CloseTsh;
+
+/*    uint8_t sql9OpenTsh = interpCalParameter(rtxStatus.rxFrequency, calData->rxFreq,
+                                             calData->openSql1, 9);
+
+    uint8_t sql9CloseTsh = interpCalParameter(rtxStatus.rxFrequency, calData->rxFreq,
+                                              calData->closeSql1, 9);
+
+    sqlOpenTsh = sql1OpenTsh + ((rtxStatus.sqlLevel - 1) *
+                                (sql9OpenTsh - sql1OpenTsh))/8;
+
+    sqlCloseTsh = sql1CloseTsh + ((rtxStatus.sqlLevel - 1) *
+                                  (sql9CloseTsh - sql1CloseTsh))/8; */
+}
 
 void rtx_init()
 {
@@ -240,7 +272,7 @@ void rtx_init()
     gpio_setPin(MIC_PWR);       /* Turn on microphone                   */
     gpio_setPin(AMP_EN);        /* Turn on audio amplifier              */
     gpio_setPin(FM_MUTE);       /* Unmute path from AF_out to amplifier */
-    gpio_clearPin(SPK_MUTE);      /* Mute speaker                         */
+    gpio_setPin(SPK_MUTE);      /* Mute speaker                         */
 
     /*
      * Configure and enble DAC
@@ -359,9 +391,29 @@ void rtx_taskFunc()
         _setBandwidth();
         _updateC5000IQparams();
         _setCTCSS();
+        _updateSqlThresholds();
 
         /* TODO: temporarily force to RX mode if rtx is off. */
         if(rtxStatus.opStatus == OFF) _enableRxStage();
+    }
+
+    if(rtxStatus.opStatus == RX)
+    {
+        /* Convert back voltage to ADC counts */
+        float sqlValue = (adc1_getMeasurement(1) * 4096.0f)/3300.0f;
+        uint16_t sqlLevel = ((uint16_t) sqlValue) >> 6;
+
+        if((gpio_readPin(SPK_MUTE) == 1) && (sqlLevel > sqlOpenTsh))
+        {
+            gpio_clearPin(SPK_MUTE);
+            platform_ledOn(GREEN);
+        }
+
+        if((gpio_readPin(SPK_MUTE) == 0) && (sqlLevel < sqlCloseTsh))
+        {
+            gpio_setPin(SPK_MUTE);
+            platform_ledOff(GREEN);
+        }
     }
 
     if(platform_getPttStatus() && (rtxStatus.opStatus != TX))
@@ -387,5 +439,5 @@ void rtx_taskFunc()
 
 float rtx_getRssi()
 {
-    return 0;
+    return adc1_getMeasurement(1);
 }
