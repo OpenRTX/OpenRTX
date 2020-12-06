@@ -142,12 +142,17 @@ linux_src = src + ['platform/targets/linux/emulator/emulator.c',
                    'platform/mcu/x86_64/drivers/delays.c',
                    'platform/mcu/x86_64/drivers/rtc.c',
                    'platform/targets/linux/platform.c',
-                   'openrtx/src/graphics/graphics_rgb565.c',
                    'rtos/uC-OS3/Ports/POSIX/os_cpu_c.c',
                    'rtos/uC-CPU/Posix/cpu_c.c']
 
 
 linux_def = def + {'SCREEN_WIDTH': '160', 'SCREEN_HEIGHT': '128', 'PIX_FMT_RGB565': ''}
+
+if 'PIX_FMT_RGB565' in linux_def
+  linux_src = linux_src + ['openrtx/src/graphics/graphics_rgb565.c']
+elif 'PIX_FMT_BW' in linux_def
+  linux_src = linux_src + ['openrtx/src/graphics/graphics_bw.c']
+endif
 
 linux_inc = inc + ['rtos/uC-OS3/Ports/POSIX',
                    'rtos/uC-CPU/Posix',
