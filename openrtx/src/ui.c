@@ -75,6 +75,7 @@
 typedef struct layout_t
 {
     uint16_t top_h;
+    uint16_t line1_h;
     uint16_t bottom_h;
     uint16_t vertical_pad;
     uint16_t horizontal_pad;
@@ -179,6 +180,7 @@ layout_t _ui_calculateLayout()
     layout_t new_layout =
     {
         top_h,
+        line1_h,
         bottom_h,
         vertical_pad,
         horizontal_pad,
@@ -226,14 +228,14 @@ void _ui_drawMiddleVFO(state_t* last_state)
 {
     // Print VFO frequencies
     char freq_buf[20] = "";
-    snprintf(freq_buf, sizeof(freq_buf), "Rx: %03d.%05d",
+    snprintf(freq_buf, sizeof(freq_buf), "Rx: %03u.%05u",
              last_state->channel.rx_frequency/1000000,
              last_state->channel.rx_frequency%1000000/10);
 
     gfx_print(layout.line2_pos, freq_buf, layout.line1_font, TEXT_ALIGN_CENTER,
               color_white);
 
-    snprintf(freq_buf, sizeof(freq_buf), "Tx: %03d.%05d",
+    snprintf(freq_buf, sizeof(freq_buf), "Tx: %03u.%05u",
              last_state->channel.tx_frequency/1000000,
              last_state->channel.tx_frequency%1000000/10);
 
@@ -280,9 +282,20 @@ bool _ui_drawMenuTop()
     // Total GUI page redraw
     if(redraw_needed)
     {
+        // Print "menu" on top bar
         gfx_clearScreen();
         gfx_print(layout.top_pos, "Menu", layout.top_font,
                   TEXT_ALIGN_CENTER, color_white);
+        // Print menu entries
+        point_t pos = {0, layout.line1_h};
+        char entry_buf[MENU_LEN] = "";
+        for(int item=0; (item < MENU_NUM) && (pos.y < SCREEN_HEIGHT); item++)
+        {
+            snprintf(entry_buf, sizeof(entry_buf), "%s", menuItems[item][0]);
+            gfx_print(pos, entry_buf, layout.line1_font, 
+                      TEXT_ALIGN_LEFT, color_white);
+            pos.y += layout.line1_h;
+        }
         screen_update = true;
     }
     return screen_update;

@@ -26,6 +26,9 @@
 #include <stdint.h>
 #include <event.h>
 
+#define MENU_NUM 6
+#define MENU_LEN 10
+
 enum uiScreen
 {
     MAIN_VFO = 0,
@@ -37,6 +40,15 @@ enum uiScreen
     MENU_SMS,
     MENU_GPS,
     MENU_SETTINGS
+};
+
+const char menuItems[MENU_NUM][MENU_LEN] = {
+    "Zone",
+    "Channels",
+    "Contacts",
+    "Messages",
+    "GPS",
+    "Settings"
 };
 
 /**
