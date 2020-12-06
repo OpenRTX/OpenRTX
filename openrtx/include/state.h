@@ -37,7 +37,7 @@ typedef struct
     curTime_t time;
     float v_bat;
 
-    //enum ui_screen;
+    uint8_t ui_screen;
     //enum tuner_mode;
     //enum radio_mode;
     

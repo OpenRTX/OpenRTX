@@ -26,6 +26,19 @@
 #include <stdint.h>
 #include <event.h>
 
+enum uiScreen
+{
+    MAIN_VFO = 0,
+    MAIN_MEM,
+    MENU_TOP,
+    MENU_ZONE,
+    MENU_CHANNEL,
+    MENU_CONTACTS,
+    MENU_SMS,
+    MENU_GPS,
+    MENU_SETTINGS
+};
+
 /**
  * This function initialises the User Interface, starting the 
  * Finite State Machine describing the user interaction.
@@ -33,12 +46,17 @@
 void ui_init();
 
 /**
+ * This function writes the OpenRTX splash screen image into the framebuffer.
+ */
+void ui_drawSplashScreen();
+
+/**
  * This function advances the User Interface FSM, basing on the 
  * current radio state and the keys pressed.
  * @param last_state: A local copy of the previous radio state
  * @param event: An event from other threads
  */
-void ui_updateFSM(state_t last_state, event_t event);
+void ui_updateFSM(event_t event);
 
 /**
  * This function redraws the GUI based on the last radio state.
@@ -46,11 +64,6 @@ void ui_updateFSM(state_t last_state, event_t event);
  * @return true if a screen refresh is needed after the update
  */
 bool ui_updateGUI(state_t last_state);
-
-/**
- * This function writes the OpenRTX splash screen image into the framebuffer.
- */
-void ui_drawSplashScreen();
 
 /**
  * This function terminates the User Interface.

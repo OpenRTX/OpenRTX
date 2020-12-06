@@ -117,7 +117,7 @@ static void ui_task(void *arg)
         // Lock mutex, read and write state
         OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err); 
         // React to keypresses and update FSM inside state
-        ui_updateFSM(last_state, event);
+        ui_updateFSM(event);
         // Update state local copy
         last_state = state;
         // Unlock mutex

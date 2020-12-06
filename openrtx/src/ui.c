@@ -204,17 +204,17 @@ void _ui_drawBackground()
     gfx_drawHLine(SCREEN_HEIGHT - layout.bottom_h - 1, 1, color_grey);
 }
 
-void _ui_drawTopBar(state_t* state)
+void _ui_drawTopBar(state_t* last_state)
 {
     // Print clock on top bar
     char clock_buf[9] = "";
-    snprintf(clock_buf, sizeof(clock_buf), "%02d:%02d:%02d", state->time.hour, 
-             state->time.minute, state->time.second);
+    snprintf(clock_buf, sizeof(clock_buf), "%02d:%02d:%02d", last_state->time.hour, 
+             last_state->time.minute, last_state->time.second);
     gfx_print(layout.top_pos, clock_buf, layout.top_font, TEXT_ALIGN_CENTER,
               color_white);
 
     // Print battery icon on top bar, use 4 px padding
-    float percentage = state->v_bat / MAX_VBAT;
+    float percentage = last_state->v_bat / MAX_VBAT;
     uint16_t bat_width = SCREEN_WIDTH / 9;
     uint16_t bat_height = layout.top_h - layout.vertical_pad;
     point_t bat_pos = {SCREEN_WIDTH - bat_width - layout.horizontal_pad,
@@ -222,20 +222,20 @@ void _ui_drawTopBar(state_t* state)
     gfx_drawBattery(bat_pos, bat_width, bat_height, percentage);
 }
 
-void _ui_drawVFO(state_t* state)
+void _ui_drawMiddleVFO(state_t* last_state)
 {
     // Print VFO frequencies
     char freq_buf[20] = "";
-    snprintf(freq_buf, sizeof(freq_buf), "Rx: %03ld.%05ld",
-             state->channel.rx_frequency/1000000,
-             state->channel.rx_frequency%1000000/10);
+    snprintf(freq_buf, sizeof(freq_buf), "Rx: %03d.%05d",
+             last_state->channel.rx_frequency/1000000,
+             last_state->channel.rx_frequency%1000000/10);
 
     gfx_print(layout.line2_pos, freq_buf, layout.line1_font, TEXT_ALIGN_CENTER,
               color_white);
 
-    snprintf(freq_buf, sizeof(freq_buf), "Tx: %03ld.%05ld",
-             state->channel.tx_frequency/1000000,
-             state->channel.tx_frequency%1000000/10);
+    snprintf(freq_buf, sizeof(freq_buf), "Tx: %03d.%05d",
+             last_state->channel.tx_frequency/1000000,
+             last_state->channel.tx_frequency%1000000/10);
 
     gfx_print(layout.line3_pos, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
               color_white);
@@ -247,7 +247,7 @@ void _ui_drawBottomBar()
               TEXT_ALIGN_CENTER, color_white);
 }
 
-bool ui_drawMainScreen(state_t last_state)
+bool _ui_drawMainVFO(state_t* last_state)
 {
     bool screen_update = false;
     // Total GUI redraw
@@ -255,20 +255,34 @@ bool ui_drawMainScreen(state_t last_state)
     {
         gfx_clearScreen();
         _ui_drawBackground();
-        _ui_drawTopBar(&last_state);
-        _ui_drawVFO(&last_state);
+        _ui_drawTopBar(last_state);
+        _ui_drawMiddleVFO(last_state);
         _ui_drawBottomBar();
         screen_update = true;
     }
-    // Partial GUI redraw
+    // Partial GUI page redraw
     // TODO: until gfx_clearRows() is implemented, we need to redraw everything
     else
     {
         gfx_clearScreen();
         _ui_drawBackground();
-        _ui_drawTopBar(&last_state);
-        _ui_drawVFO(&last_state);
+        _ui_drawTopBar(last_state);
+        _ui_drawMiddleVFO(last_state);
         _ui_drawBottomBar();
+        screen_update = true;
+    }
+    return screen_update;
+}
+
+bool _ui_drawMenuTop()
+{
+    bool screen_update = false;
+    // Total GUI page redraw
+    if(redraw_needed)
+    {
+        gfx_clearScreen();
+        gfx_print(layout.top_pos, "Menu", layout.top_font,
+                  TEXT_ALIGN_CENTER, color_white);
         screen_update = true;
     }
     return screen_update;
@@ -296,27 +310,45 @@ void ui_drawSplashScreen()
     #endif
 }
 
-void ui_updateFSM(state_t last_state, event_t event)
+void ui_updateFSM(event_t event)
 {
-    (void) last_state;
-
     // Process pressed keys
     if(event.type == EVENT_KBD)
     {
         keyboard_t keys = event.payload;
-        // Temporary VFO controls
-        if(keys & KEY_UP)
+        switch(state.ui_screen)
         {
-            // Advance TX and RX frequency of 12.5KHz
-            state.channel.rx_frequency += 12500;
-            state.channel.tx_frequency += 12500;
-        }
-
-        if(keys & KEY_DOWN)
-        {
-            // Advance TX and RX frequency of 12.5KHz
-            state.channel.rx_frequency -= 12500;
-            state.channel.tx_frequency -= 12500;
+            // VFO screen
+            case MAIN_VFO:
+                // Temporary VFO controls
+                if(keys & KEY_UP)
+                {
+                    // Advance TX and RX frequency of 12.5KHz
+                    state.channel.rx_frequency += 12500;
+                    state.channel.tx_frequency += 12500;
+                }
+                else if(keys & KEY_DOWN)
+                {
+                    // Advance TX and RX frequency of 12.5KHz
+                    state.channel.rx_frequency -= 12500;
+                    state.channel.tx_frequency -= 12500;
+                }
+                else if(keys & KEY_ENTER)
+                    // Open Menu
+                    state.ui_screen = MENU_TOP;
+                break;
+            // Top menu screen
+            case MENU_TOP:
+                if(keys & KEY_UP)
+                {
+                }
+                else if(keys & KEY_DOWN)
+                {
+                }
+                else if(keys & KEY_ESC)
+                    // Close Menu
+                    state.ui_screen = MAIN_VFO;
+                break;
         }
     }
 }
@@ -328,7 +360,19 @@ bool ui_updateGUI(state_t last_state)
         layout = _ui_calculateLayout();
         layout_ready = true;
     }
-    bool screen_update = ui_drawMainScreen(last_state);
+    bool screen_update = false;
+    // Draw current GUI page
+    switch(last_state.ui_screen)
+    {
+        // VFO screen
+        case MAIN_VFO:
+            screen_update = _ui_drawMainVFO(&last_state);
+            break;
+        // Top menu screen
+        case MENU_TOP:
+            screen_update = _ui_drawMenuTop();
+            break;
+    }
     return screen_update;
 }
 
