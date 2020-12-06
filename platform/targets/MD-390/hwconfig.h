@@ -85,6 +85,6 @@
 #define FLASH_SDI GPIOB,5
 
 /* Maximum battery voltage */
-#define MAX_VBAT 8.2f
+#define MAX_VBAT 8.4f
 
 #endif

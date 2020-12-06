@@ -274,14 +274,14 @@ void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t ali
      * Function to draw battery of arbitrary size
      * starting coordinates are relative to the top left point.
      *
-     * ******************      |
+     *  ****************       |
      * *                *      |
      * *  *******       *      |
      * *  *******       **     |
      * *  *******       **     | <-- Height (px)
      * *  *******       *      | 
      * *                *      | 
-     * ******************      |
+     *  ****************       |
      *
      * __________________
      *
@@ -292,18 +292,20 @@ void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t ali
      *
      */
 void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, float percentage) {
-    printf("AFTER: %f\n", percentage);
     color_t white =  {255, 255, 255};
     color_t green =  {0,   255, 0  };
     color_t yellow = {250, 180, 19 };
     color_t red =    {255, 0,   0  };
     color_t black =  {0,   0,   0  };
 
+    // Cap percentage to 1
+    percentage = (percentage > 1.0f) ? 1.0f : percentage;
+
     // Select color according to percentage
     color_t bat_color = yellow;
-    if (percentage < 0.2)
+    if (percentage < 0.3)
         bat_color = red;
-    else if (percentage > 0.8)
+    else if (percentage > 0.7)
         bat_color = green;
 
     // Draw the battery outline
@@ -324,7 +326,7 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, float perce
     gfx_setPixel(bottom_right, black);
 
     // Draw the button
-    point_t button_start = {start.x + width, start.y + (height / 2) - 2};
-    point_t button_end = {start.x + width, start.y + (height / 2) + 2};
+    point_t button_start = {start.x + width, start.y + height / 2 - 2};
+    point_t button_end = {start.x + width, start.y + height / 2 + 1};
     gfx_drawLine(button_start, button_end, white);
 }

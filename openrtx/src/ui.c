@@ -76,6 +76,8 @@ typedef struct layout_t
 {
     uint16_t top_h;
     uint16_t bottom_h;
+    uint16_t vertical_pad;
+    uint16_t horizontal_pad;
     point_t top_pos;
     point_t line1_pos;
     point_t line2_pos;
@@ -103,13 +105,13 @@ layout_t _ui_calculateLayout()
 
     // Height and padding shown in diagram at beginning of file
     const uint16_t top_h = 16;
-    const uint16_t top_pad = 4;
+    const uint16_t bottom_h = top_h;
     const uint16_t line1_h = 32;
     const uint16_t line2_h = 32;
     const uint16_t line3_h = 32;
     const uint16_t line_pad = 8;
-    const uint16_t bottom_h = top_h;
-    const uint16_t bottom_pad = 4;
+    const uint16_t vertical_pad = 4;
+    const uint16_t horizontal_pad = 4;
 
     // Top bar font: 8 pt
     const fontSize_t top_font = FONT_SIZE_8PT;
@@ -125,13 +127,13 @@ layout_t _ui_calculateLayout()
 
     // Height and padding shown in diagram at beginning of file
     const uint16_t top_h = 13;
-    const uint16_t top_pad = 4;
+    const uint16_t bottom_h = top_h;
     const uint16_t line1_h = 15;
     const uint16_t line2_h = 15;
     const uint16_t line3_h = 15;
     const uint16_t line_pad = 15;
-    const uint16_t bottom_h = top_h;
-    const uint16_t bottom_pad = 11;
+    const uint16_t vertical_pad = 4;
+    const uint16_t horizontal_pad = 4;
 
     // Top bar font: 8 pt
     const fontSize_t top_font = FONT_SIZE_6PT;
@@ -146,13 +148,13 @@ layout_t _ui_calculateLayout()
 
     // Height and padding shown in diagram at beginning of file
     const uint16_t top_h = 8;
-    const uint16_t top_pad = 0;
+    const uint16_t bottom_h = 0;
     const uint16_t line1_h = 20;
     const uint16_t line2_h = 20;
     const uint16_t line3_h = 0;
     const uint16_t line_pad = 2;
-    const uint16_t bottom_h = 0;
-    const uint16_t bottom_pad = 0;
+    const uint16_t vertical_pad = 0;
+    const uint16_t horizontal_pad = 0;
 
     // Top bar font: 8 pt
     const fontSize_t top_font = FONT_SIZE_1;
@@ -168,16 +170,18 @@ layout_t _ui_calculateLayout()
     #endif
 
     // Calculate printing positions
-    point_t top_pos    = {0, top_h - top_pad};
+    point_t top_pos    = {0, top_h - vertical_pad};
     point_t line1_pos  = {0, top_h + line1_h - line_pad};
     point_t line2_pos  = {0, top_h + line1_h + line2_h - line_pad};
     point_t line3_pos  = {0, top_h + line1_h + line2_h + line3_h - line_pad};
-    point_t bottom_pos = {0, top_h + line1_h + line2_h + line3_h + bottom_h - bottom_pad};
+    point_t bottom_pos = {0, top_h + line1_h + line2_h + line3_h + bottom_h - vertical_pad};
 
     layout_t new_layout =
     {
         top_h,
         bottom_h,
+        vertical_pad,
+        horizontal_pad
         top_pos,
         line1_pos,
         line2_pos,
@@ -211,9 +215,10 @@ void _ui_drawTopBar(state_t* state)
 
     // Print battery icon on top bar, use 4 px padding
     float percentage = state->v_bat / MAX_VBAT;
-    printf("BEFORE: %f\n", percentage);
-    point_t bat_pos = {SCREEN_WIDTH - 24, layout.top_pos.y - 10};
-    gfx_drawBattery(bat_pos, 19, 12, 0.5f);
+    uint16_t bat_width = SCREEN_WIDTH / 9;
+    uint16_t bat_height = layout.top_h - layout.vertical_pad / 2;
+    point_t bat_pos = {SCREEN_WIDTH - bat_width - layout.horizontal_pad, 1};
+    gfx_drawBattery(bat_pos, bat_width, bat_height, percentage);
 }
 
 void _ui_drawVFO(state_t* state)

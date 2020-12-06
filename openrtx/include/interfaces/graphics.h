@@ -219,4 +219,14 @@ void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color,
  */
 void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t alignment, color_t color);
 
+/**
+ * Function to draw battery of arbitrary size.
+ * Starting coordinates are relative to the top left point.
+ * @param start: battery icon start point, in pixel coordinates.
+ * @param width: battery icon width
+ * @param height: battery icon height
+ * @param percentage: battery charge percentage
+ */
+void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, float percentage);
+
 #endif /* GRAPHICS_H */
