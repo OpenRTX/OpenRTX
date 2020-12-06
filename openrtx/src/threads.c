@@ -55,7 +55,7 @@ static CPU_STK ui_stk[UI_TASK_STKSIZE/sizeof(CPU_STK)];
 
 /* Keyboard task control block and stack */
 static OS_TCB  kbd_tcb;
-static CPU_STK kbd_stk[KBD_TASK_STKSIZE/4];
+static CPU_STK kbd_stk[KBD_TASK_STKSIZE/sizeof(CPU_STK)];
 
 /* Device task control block and stack */
 static OS_TCB  dev_tcb;
