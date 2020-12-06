@@ -57,9 +57,9 @@ static CPU_STK ui_stk[UI_TASK_STKSIZE/sizeof(CPU_STK)];
 static OS_TCB  kbd_tcb;
 static CPU_STK kbd_stk[KBD_TASK_STKSIZE/4];
 
-/* State task control block and stack */
-static OS_TCB  state_tcb;
-static CPU_STK state_stk[STATE_TASK_STKSIZE/sizeof(CPU_STK)];
+/* Device task control block and stack */
+static OS_TCB  dev_tcb;
+static CPU_STK dev_stk[DEV_TASK_STKSIZE/sizeof(CPU_STK)];
 
 /* Baseband task control block and stack */
 static OS_TCB  rtx_tcb;
@@ -173,7 +173,7 @@ static void kbd_task(void *arg)
 /**
  * \internal Task function in charge of updating the radio state.
  */
-static void state_task(void *arg)
+static void dev_task(void *arg)
 {
     (void) arg;
     OS_ERR os_err;
@@ -286,14 +286,14 @@ void create_threads()
                  (OS_ERR     *) &os_err);
     
     // Create state thread
-    OSTaskCreate((OS_TCB     *) &state_tcb,
-                 (CPU_CHAR   *) "State Task",
-                 (OS_TASK_PTR ) state_task,
+    OSTaskCreate((OS_TCB     *) &dev_tcb,
+                 (CPU_CHAR   *) "Device Task",
+                 (OS_TASK_PTR ) dev_task,
                  (void       *) 0,
                  (OS_PRIO     ) 30,
-                 (CPU_STK    *) &state_stk[0],
+                 (CPU_STK    *) &dev_stk[0],
                  (CPU_STK     ) 0,
-                 (CPU_STK_SIZE) STATE_TASK_STKSIZE/sizeof(CPU_STK),
+                 (CPU_STK_SIZE) DEV_TASK_STKSIZE/sizeof(CPU_STK),
                  (OS_MSG_QTY  ) 0,
                  (OS_TICK     ) 0,
                  (void       *) 0,
