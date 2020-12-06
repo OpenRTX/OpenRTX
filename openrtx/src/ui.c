@@ -58,8 +58,8 @@
  *      ┌─────────────────────────┐
  *      │  top_status_bar (8 px)  │  8 pt font without vertical padding
  *      ├─────────────────────────┤
- *      │      Line 1 (20px)      │  16 pt font with 2 px vertical padding
- *      │      Line 2 (20px)      │  16 pt font with 2 px vertical padding
+ *      │      Line 1 (15px)      │  16 pt font with 2 px vertical padding
+ *      │      Line 2 (15px)      │  16 pt font with 2 px vertical padding
  *      └─────────────────────────┘
  */
 
@@ -127,11 +127,11 @@ layout_t _ui_calculateLayout()
 
     // Height and padding shown in diagram at beginning of file
     const uint16_t top_h = 13;
-    const uint16_t bottom_h = top_h;
-    const uint16_t line1_h = 15;
+    const uint16_t bottom_h = 18;
+    const uint16_t line1_h = 0;
     const uint16_t line2_h = 15;
     const uint16_t line3_h = 15;
-    const uint16_t line_pad = 15;
+    const uint16_t line_pad = 2;
     const uint16_t vertical_pad = 4;
     const uint16_t horizontal_pad = 4;
 
@@ -181,7 +181,7 @@ layout_t _ui_calculateLayout()
         top_h,
         bottom_h,
         vertical_pad,
-        horizontal_pad
+        horizontal_pad,
         top_pos,
         line1_pos,
         line2_pos,
@@ -191,7 +191,7 @@ layout_t _ui_calculateLayout()
         line1_font,
         line2_font,
         line3_font,
-        bottom_font,
+        bottom_font
     };
     return new_layout;
 }
@@ -216,8 +216,9 @@ void _ui_drawTopBar(state_t* state)
     // Print battery icon on top bar, use 4 px padding
     float percentage = state->v_bat / MAX_VBAT;
     uint16_t bat_width = SCREEN_WIDTH / 9;
-    uint16_t bat_height = layout.top_h - layout.vertical_pad / 2;
-    point_t bat_pos = {SCREEN_WIDTH - bat_width - layout.horizontal_pad, 1};
+    uint16_t bat_height = layout.top_h - layout.vertical_pad;
+    point_t bat_pos = {SCREEN_WIDTH - bat_width - layout.horizontal_pad,
+                       layout.vertical_pad / 2};
     gfx_drawBattery(bat_pos, bat_width, bat_height, percentage);
 }
 

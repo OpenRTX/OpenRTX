@@ -19,7 +19,7 @@
 
 /**
  * This source file provides a black and white implementation for the graphics.h interface
- * It is suitable for monochromatic displays with 1 bit per pixel, 
+ * It is suitable for monochromatic displays with 1 bit per pixel,
  * it will have RGB and grayscale counterparts
  */
 
@@ -46,7 +46,7 @@ void gfx_init()
     // Calculate framebuffer size
     fbSize = (SCREEN_HEIGHT * SCREEN_WIDTH) / 8;
     /* Compensate for eventual truncation error in division */
-    if((fbSize * 8) < (SCREEN_HEIGHT * SCREEN_WIDTH)) fbSize += 1; 
+    if((fbSize * 8) < (SCREEN_HEIGHT * SCREEN_WIDTH)) fbSize += 1;
     fbSize *= sizeof(uint8_t);
     initialized = 1;
 }
@@ -74,8 +74,8 @@ bool gfx_renderingInProgress()
 
 bw_t _color2bw(color_t true_color)
 {
-    if(true_color.r == 0 && 
-       true_color.g == 0 && 
+    if(true_color.r == 0 &&
+       true_color.g == 0 &&
        true_color.b == 0)
         return WHITE;
     else
@@ -116,16 +116,16 @@ void gfx_setPixel(point_t pos, color_t color)
     if (pos.x >= SCREEN_WIDTH || pos.y >= SCREEN_HEIGHT)
         return; // off the screen
     bw_t bw = _color2bw(color);
-    _bw_setPixel(pos, bw); 
+    _bw_setPixel(pos, bw);
 }
 
 void gfx_drawLine(point_t start, point_t end, color_t color)
 {
     if(!initialized) return;
     bw_t bw = _color2bw(color);
-    for(int y = start.y; y < end.y; y++)
+    for(int y = start.y; y <= end.y; y++)
     {
-        for(int x = start.x; x < end.x; x++)
+        for(int x = start.x; x <= end.x; x++)
         {
             point_t pos = {x, y};
             _bw_setPixel(pos, bw);
@@ -160,14 +160,14 @@ void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color,
 
 void gfx_drawHLine(uint16_t y, uint16_t height, color_t color)
 {
-    point_t start = {0, y}; 
-    gfx_drawRect(start, SCREEN_WIDTH, height, color, 1); 
+    point_t start = {0, y};
+    gfx_drawRect(start, SCREEN_WIDTH, height, color, 1);
 }
 
 void gfx_drawVLine(uint16_t x, uint16_t width, color_t color)
 {
-    point_t start = {x, 0}; 
-    gfx_drawRect(start, width, SCREEN_HEIGHT, color, 1); 
+    point_t start = {x, 0};
+    gfx_drawRect(start, width, SCREEN_HEIGHT, color, 1);
 }
 
 /**
@@ -270,4 +270,55 @@ void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t ali
         }
         start.x += glyph.xAdvance;
     }
+}
+
+/*
+ * Function to draw battery of arbitrary size
+ * starting coordinates are relative to the top left point.
+ *
+ *  ****************       |
+ * *                *      |
+ * *  *******       *      |
+ * *  *******       **     |
+ * *  *******       **     | <-- Height (px)
+ * *  *******       *      |
+ * *                *      |
+ *  ****************       |
+ *
+ * __________________
+ *
+ * ^
+ * |
+ *
+ * Width (px)
+ *
+ */
+void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, float percentage) {
+    color_t white =  {255, 255, 255};
+    color_t black =  {0,   0,   0  };
+
+    // Cap percentage to 1
+    percentage = (percentage > 1.0f) ? 1.0f : percentage;
+
+    // Draw the battery outline
+    gfx_drawRect(start, width, height, white, false);
+
+    // Draw the battery fill
+    point_t fill_start = {start.x + 2, start.y + 2};
+    gfx_drawRect(fill_start, (int)(((float)(width - 4)) * percentage), height - 4, white, true);
+
+    // Round corners
+    point_t top_left = start;
+    point_t top_right = {start.x + width - 1, start.y};
+    point_t bottom_left = {start.x, start.y + height - 1};
+    point_t bottom_right = {start.x + width - 1, start.y + height - 1};
+    gfx_setPixel(top_left, black);
+    gfx_setPixel(top_right, black);
+    gfx_setPixel(bottom_left, black);
+    gfx_setPixel(bottom_right, black);
+
+    // Draw the button
+    point_t button_start = {start.x + width, start.y + height / 2 - 1};
+    point_t button_end = {start.x + width, start.y + height / 2 + 1};
+    gfx_drawLine(button_start, button_end, white);
 }

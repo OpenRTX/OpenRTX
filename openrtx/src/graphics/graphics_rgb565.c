@@ -270,27 +270,27 @@ void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t ali
     }
 }
 
-    /*
-     * Function to draw battery of arbitrary size
-     * starting coordinates are relative to the top left point.
-     *
-     *  ****************       |
-     * *                *      |
-     * *  *******       *      |
-     * *  *******       **     |
-     * *  *******       **     | <-- Height (px)
-     * *  *******       *      | 
-     * *                *      | 
-     *  ****************       |
-     *
-     * __________________
-     *
-     * ^
-     * |
-     *
-     * Width (px)
-     *
-     */
+/*
+ * Function to draw battery of arbitrary size
+ * starting coordinates are relative to the top left point.
+ *
+ *  ****************       |
+ * *                *      |
+ * *  *******       *      |
+ * *  *******       **     |
+ * *  *******       **     | <-- Height (px)
+ * *  *******       *      | 
+ * *                *      | 
+ *  ****************       |
+ *
+ * __________________
+ *
+ * ^
+ * |
+ *
+ * Width (px)
+ *
+ */
 void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, float percentage) {
     color_t white =  {255, 255, 255};
     color_t green =  {0,   255, 0  };
@@ -326,7 +326,7 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, float perce
     gfx_setPixel(bottom_right, black);
 
     // Draw the button
-    point_t button_start = {start.x + width, start.y + height / 2 - 2};
+    point_t button_start = {start.x + width, start.y + height / 2 - 2 + (height % 2)};
     point_t button_end = {start.x + width, start.y + height / 2 + 1};
     gfx_drawLine(button_start, button_end, white);
 }
