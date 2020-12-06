@@ -12,7 +12,6 @@ project('OpenRTX', 'c',
 ## OpenRTX
 
 openrtx_src = ['openrtx/src/bootstrap.c',
-               'openrtx/src/bootstrap.c',
                'openrtx/src/state.c',
                'openrtx/src/ui.c',
                'openrtx/src/threads.c']
@@ -31,7 +30,7 @@ openrtx_inc = ['openrtx/include/interfaces',
                'platform/drivers/ADC',
                'platform/drivers/NVM',
                'platform/drivers/tones',
-               'openrtx/include/fonts/adafruit']
+               'openrtx/include/fonts/adafruit',
                'platform/drivers/tones',
                'platform/drivers/baseband']
 
