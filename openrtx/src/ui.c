@@ -303,9 +303,9 @@ bool _ui_drawMenuTop()
         for(int item=0; (item < MENU_NUM) && (pos.y < SCREEN_HEIGHT); item++)
         {
             snprintf(entry_buf, sizeof(entry_buf), "%s", menuItems[item]);
-            gfx_print(pos, entry_buf, layout.line1_font, 
+            gfx_print(pos, entry_buf, layout.top_font, 
                       TEXT_ALIGN_LEFT, color_white);
-            pos.y += layout.line1_h;
+            pos.y += layout.top_h;
         }
         screen_update = true;
     }
