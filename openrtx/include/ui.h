@@ -42,15 +42,6 @@ enum uiScreen
     MENU_SETTINGS
 };
 
-const char menuItems[MENU_NUM][MENU_LEN] = {
-    "Zone",
-    "Channels",
-    "Contacts",
-    "Messages",
-    "GPS",
-    "Settings"
-};
-
 /**
  * This function initialises the User Interface, starting the 
  * Finite State Machine describing the user interaction.
