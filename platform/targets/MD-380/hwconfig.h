@@ -29,6 +29,9 @@
 /* Screen needs x-axis mirroring */
 #define DISPLAY_MIRROR_X
 
+/* Maximum battery voltage */
+#define MAX_VBAT 8.4f
+
 /* Display */
 #define LCD_D0  GPIOD,14
 #define LCD_D1  GPIOD,15

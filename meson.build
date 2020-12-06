@@ -171,9 +171,9 @@ endif
 ## TYT MD380
 md380_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDx.c',
                                    'platform/drivers/keyboard/keyboard_MDx.c',
-                                   'platform/drivers/ADC/ADC1_MDx.c',
                                    'platform/drivers/NVM/extFlash_MDx.c',
                                    'platform/drivers/NVM/nvmem_MD3x0.c',
+                                   'platform/drivers/ADC/ADC1_MDx.c',
                                    'platform/drivers/tones/toneGenerator_MDx.c',
                                    'platform/drivers/baseband/pll_MD3x0.c',
                                    'platform/drivers/baseband/rtx_MD3x0.c',
@@ -188,10 +188,13 @@ md380_def = def + stm32f405_def + {'PLATFORM_MD380': ''}
 ## TYT MD390
 md390_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDx.c',
                                    'platform/drivers/keyboard/keyboard_MDx.c',
-                                   'platform/drivers/ADC/ADC1_MDx.c',
                                    'platform/drivers/NVM/extFlash_MDx.c',
                                    'platform/drivers/NVM/nvmem_MD3x0.c',
+                                   'platform/drivers/ADC/ADC1_MDx.c',
                                    'platform/drivers/tones/toneGenerator_MDx.c',
+                                   'platform/drivers/baseband/pll_MD3x0.c',
+                                   'platform/drivers/baseband/rtx_MD3x0.c',
+                                   'platform/drivers/baseband/HR-C5000_MD3x0.c',
                                    'platform/targets/MD-390/platform.c',
                                    'openrtx/src/graphics/graphics_rgb565.c']
 
