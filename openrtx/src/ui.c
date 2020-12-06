@@ -298,7 +298,7 @@ bool _ui_drawMenuTop()
         gfx_print(layout.top_pos, "Menu", layout.top_font,
                   TEXT_ALIGN_CENTER, color_white);
         // Print menu entries
-        point_t pos = {0, layout.line1_h};
+        point_t pos = {layout.horizontal_pad, layout.line1_h};
         char entry_buf[MENU_LEN] = "";
         for(int item=0; (item < MENU_NUM) && (pos.y < SCREEN_HEIGHT); item++)
         {
