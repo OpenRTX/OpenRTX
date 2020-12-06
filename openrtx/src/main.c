@@ -30,6 +30,5 @@ int main(void)
     // Create OpenRTX threads
     create_threads();
 
-    while(1) ;
     return 0;
 }
