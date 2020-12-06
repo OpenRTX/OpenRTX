@@ -43,7 +43,7 @@ void create_threads();
 /**
  * Stack size for state update task, in bytes.
  */
-#define STATE_TASK_STKSIZE 128*4
+#define STATE_TASK_STKSIZE 256*4
 
 /**
  * Stack size for baseband control task, in bytes.

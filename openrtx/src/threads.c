@@ -101,6 +101,11 @@ static void ui_task(void *arg)
     state_t last_state = state;
     OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
 
+    // Initial GUI draw
+    ui_updateGUI(last_state);
+    gfx_render();
+    while(gfx_renderingInProgress());
+
     while(1)
     {
         // Read from the keyboard queue (returns 0 if no message is present)
@@ -175,6 +180,7 @@ static void state_task(void *arg)
 
     while(1)
     {
+        // Lock mutex and update internal state
         OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
 
         state.time = rtc_getTime(); 
@@ -182,6 +188,13 @@ static void state_task(void *arg)
 
         OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
 
+        // Signal state update to UI thread
+        event_t dev_msg;
+        dev_msg.type = EVENT_STATUS;
+        dev_msg.payload = 0;
+        OSQPost(&ui_queue, (void *)dev_msg.value, sizeof(event_t), 
+                OS_OPT_POST_FIFO + OS_OPT_POST_NO_SCHED, &os_err);
+        
         // Execute state update thread every 1s
         OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
     }

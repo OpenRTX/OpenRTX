@@ -296,7 +296,7 @@ void ui_updateFSM(state_t last_state, event_t event)
     (void) last_state;
 
     // Process pressed keys
-    if(event.type = EVENT_KBD)
+    if(event.type == EVENT_KBD)
     {
         keyboard_t keys = event.payload;
         // Temporary VFO controls
