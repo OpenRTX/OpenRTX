@@ -259,14 +259,14 @@ void _ui_drawMiddleVFO(state_t* last_state)
 {
     // Print VFO frequencies
     char freq_buf[20] = "";
-    snprintf(freq_buf, sizeof(freq_buf), "Rx: %03u.%05u",
+    snprintf(freq_buf, sizeof(freq_buf), "Rx: %03lu.%05lu",
              last_state->channel.rx_frequency/1000000,
              last_state->channel.rx_frequency%1000000/10);
 
     gfx_print(layout.line2_pos, freq_buf, layout.line1_font, TEXT_ALIGN_CENTER,
               color_white);
 
-    snprintf(freq_buf, sizeof(freq_buf), "Tx: %03u.%05u",
+    snprintf(freq_buf, sizeof(freq_buf), "Tx: %03lu.%05lu",
              last_state->channel.tx_frequency/1000000,
              last_state->channel.tx_frequency%1000000/10);
 
