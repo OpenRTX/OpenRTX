@@ -71,6 +71,7 @@
 #include <keyboard.h>
 #include <platform.h>
 #include <hwconfig.h>
+#include <string.h>
 
 const char *menuItems[MENU_NUM] =
 {
@@ -102,12 +103,13 @@ typedef struct layout_t
     fontSize_t bottom_font;
 } layout_t;
 
+const color_t color_white = {255, 255, 255};
+const color_t color_grey = {60, 60, 60};
+const color_t yellow_fab413 = {250, 180, 19};
+
 layout_t layout;
 bool layout_ready = false;
 bool redraw_needed = true;
-color_t color_white = {255, 255, 255};
-color_t color_grey = {60, 60, 60};
-color_t yellow_fab413 = {250, 180, 19};
 
 layout_t _ui_calculateLayout()
 {
@@ -233,6 +235,23 @@ void _ui_drawTopBar(state_t* last_state)
     point_t bat_pos = {SCREEN_WIDTH - bat_width - layout.horizontal_pad,
                        layout.vertical_pad / 2};
     gfx_drawBattery(bat_pos, bat_width, bat_height, percentage);
+
+    // Print radio mode on top bar
+    char mode[4] = "";
+    switch(last_state->radio_mode)
+    {
+        case MODE_FM:
+        strcpy(mode, "FM");
+        break;
+        case MODE_NFM:
+        strcpy(mode, "NFM");
+        break;
+        case MODE_DMR:
+        strcpy(mode, "DMR");
+        break;
+    }
+    gfx_print(layout.top_pos, mode, layout.top_font, TEXT_ALIGN_LEFT,
+              color_white);
 }
 
 void _ui_drawMiddleVFO(state_t* last_state)

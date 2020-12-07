@@ -38,8 +38,8 @@ typedef struct
     float v_bat;
 
     uint8_t ui_screen;
-    //enum tuner_mode;
-    //enum radio_mode;
+    uint8_t tuner_mode;
+    uint8_t radio_mode;
     
     //time_t rx_status_tv;
     //bool rx_status;
@@ -54,6 +54,21 @@ typedef struct
     uint8_t voxLevel;
 }
 state_t;
+
+enum TunerMode
+{
+    VFO = 0,
+    CH,
+    SCAN,
+    CHSCAN
+};
+
+enum RadioMode
+{
+    MODE_FM = 0,
+    MODE_NFM,
+    MODE_DMR,
+};
 
 enum RtxStatus
 {
