@@ -39,7 +39,7 @@ char *keys_list[] = {
         "MONI", "F1"
 };
 
-void *print_keys(int keys) {
+void *print_keys(keyboard_t keys) {
     point_t origin = {0, SCREEN_HEIGHT / 4};
     //count set bits to check how many keys are being pressed
     int i = __builtin_popcount(keys);
@@ -48,7 +48,7 @@ void *print_keys(int keys) {
         //position of the first set bit
         int pos = __builtin_ctz(keys);
         sprintf(buf, "Pressed: %s", keys_list[pos + 1]);
-        gfx_print(origin, buf, FONT_SIZE_2, TEXT_ALIGN_LEFT, color_green);
+        gfx_print(origin, buf, FONT_SIZE_8PT, TEXT_ALIGN_LEFT, color_green);
         origin.y += 9;
         //unset the bit we already handled
         keys &= ~(1 << pos);
@@ -59,36 +59,29 @@ void *print_keys(int keys) {
 int main(void) {
     OS_ERR os_err;
 
-    // Initialize the radio state
-    state_init();
+    // Initialize platform drivers
+    platform_init();
 
-    // Init the graphic stack
+    // Initialize graphics driver
     gfx_init();
-    platform_setBacklightLevel(255);
-
-    // Print splash screen
-    point_t splash_origin = {0, SCREEN_HEIGHT / 2};
-    char *splash_buf = "OpenRTX";
-    gfx_clearScreen();
-    gfx_print(splash_origin, splash_buf, FONT_SIZE_4, TEXT_ALIGN_CENTER, color_yellow_fab413);
-    gfx_render();
-    while (gfx_renderingInProgress());
-    OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
 
     // Clear screen
     gfx_clearScreen();
     gfx_render();
     while (gfx_renderingInProgress());
+    platform_setBacklightLevel(255);
+
+    // Initialize keyboard driver
+    kbd_init();
 
     point_t title_origin = {0, SCREEN_HEIGHT / 9};
-
 
     char *title_buf = "Keyboard demo";
 
     // UI update infinite loop
     while (1) {
         gfx_clearScreen();
-        gfx_print(title_origin, title_buf, FONT_SIZE_3, TEXT_ALIGN_CENTER, color_red);
+        gfx_print(title_origin, title_buf, FONT_SIZE_8PT, TEXT_ALIGN_CENTER, color_red);
         keyboard_t keys = kbd_getKeys();
         print_keys(keys);
         gfx_render();
