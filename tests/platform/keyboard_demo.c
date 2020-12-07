@@ -54,6 +54,8 @@ void *print_keys(keyboard_t keys) {
         keys &= ~(1 << pos);
         i--;
     }
+    gfx_render();
+    while (gfx_renderingInProgress());
 }
 
 int main(void) {
@@ -83,9 +85,8 @@ int main(void) {
         gfx_clearScreen();
         gfx_print(title_origin, title_buf, FONT_SIZE_8PT, TEXT_ALIGN_CENTER, color_red);
         keyboard_t keys = kbd_getKeys();
-        print_keys(keys);
-        gfx_render();
-        while (gfx_renderingInProgress());
+        if (keys != 0)
+            print_keys(keys);
         OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &os_err);
     }
 }
