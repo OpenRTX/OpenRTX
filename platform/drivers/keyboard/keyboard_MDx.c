@@ -54,14 +54,14 @@ keyboard_t kbd_getKeys()
      * with the display, their configuration can have been screwed up by display
      * driver among two subsequent calls of this function.
      */
-    gpio_setMode(LCD_D0, INPUT);
-    gpio_setMode(LCD_D1, INPUT);
-    gpio_setMode(LCD_D2, INPUT);
-    gpio_setMode(LCD_D3, INPUT);
-    gpio_setMode(LCD_D4, INPUT);
-    gpio_setMode(LCD_D5, INPUT);
-    gpio_setMode(LCD_D6, INPUT);
-    gpio_setMode(LCD_D7, INPUT);
+    gpio_setMode(LCD_D0, INPUT_PULL_DOWN);
+    gpio_setMode(LCD_D1, INPUT_PULL_DOWN);
+    gpio_setMode(LCD_D2, INPUT_PULL_DOWN);
+    gpio_setMode(LCD_D3, INPUT_PULL_DOWN);
+    gpio_setMode(LCD_D4, INPUT_PULL_DOWN);
+    gpio_setMode(LCD_D5, INPUT_PULL_DOWN);
+    gpio_setMode(LCD_D6, INPUT_PULL_DOWN);
+    gpio_setMode(LCD_D7, INPUT_PULL_DOWN);
 
     /*
      * Scan keyboard by coloumns.

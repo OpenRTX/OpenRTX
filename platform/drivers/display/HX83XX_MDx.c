@@ -331,14 +331,15 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
     /*
      * Put screen data lines back to alternate function mode, since they are in
      * common with keyboard buttons and the keyboard driver sets them as inputs.
-     * Little HACK: we bypass GPIO API and write directly into GPIO control
-     * registers.
      */
-
-    GPIOD->MODER &= ~0xF000000F;    /* Clear old values */
-    GPIOE->MODER &= ~0x3FC000;
-    GPIOD->MODER |= 0xA000000A;     /* Back to AF mode */
-    GPIOE->MODER |= 0x2A8000;
+    gpio_setMode(LCD_D0, ALTERNATE);
+    gpio_setMode(LCD_D1, ALTERNATE);
+    gpio_setMode(LCD_D2, ALTERNATE);
+    gpio_setMode(LCD_D3, ALTERNATE);
+    gpio_setMode(LCD_D4, ALTERNATE);
+    gpio_setMode(LCD_D5, ALTERNATE);
+    gpio_setMode(LCD_D6, ALTERNATE);
+    gpio_setMode(LCD_D7, ALTERNATE);
 
     gpio_clearPin(LCD_CS);
 
