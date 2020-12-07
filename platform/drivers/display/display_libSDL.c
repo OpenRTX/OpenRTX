@@ -48,6 +48,14 @@
 #define PIX_FMT_RGB565
 #endif
 
+#ifdef PIX_FMT_RGB565
+#define PIXEL_FORMAT SDL_PIXELFORMAT_RGB565
+#define PIXEL_SIZE uint16_t
+#else
+#define PIXEL_FORMAT SDL_PIXELFORMAT_ARGB8888
+#define PIXEL_SIZE uint32_t
+#endif
+
 SDL_Renderer *renderer;      /* SDL renderer           */
 SDL_Window *window;          /* SDL window             */
 SDL_Texture *displayTexture; /* SDL rendering surface  */
@@ -59,7 +67,8 @@ bool inProgress;             /* Flag to signal when rendering is in progress */
  * Internal helper function which fetches pixel at position (x, y) from framebuffer
  * and returns it in SDL-compatible format, which is ARGB8888.
  */
-uint32_t fetchPixelFromFb(unsigned int x, unsigned int y) {
+uint32_t fetchPixelFromFb(unsigned int x, unsigned int y)
+{
     uint32_t pixel = 0;
 
 #ifdef PIX_FMT_BW
@@ -83,43 +92,18 @@ uint32_t fetchPixelFromFb(unsigned int x, unsigned int y) {
 
     pixel = 0xFF000000 | (px << 16) | (px << 8) | px;
 #endif
-
-#ifdef PIX_FMT_RGB565
-    /*
-     * SDL pixel format is ARGB8888, while ours is RGB565, thus we need
-     * to do some conversions when writing framebuffer content to the
-     * window. We also set alpha value to its maximum.
-     */
-    uint16_t *fb = (uint16_t *) (frameBuffer);
-
-    uint32_t r = (fb[x + y * SCREEN_WIDTH] & 0xF800) >> 11;
-    uint32_t g = (fb[x + y * SCREEN_WIDTH] & 0x07E0) >> 5;
-    uint32_t b = (fb[x + y * SCREEN_WIDTH] & 0x001F) & 0x1F;
-
-    /*
-     * Here we do conversions by multiplying by some scaling factors,
-     * we use ints just because the precision of floats is not really
-     * needed.
-     * Conversion factors:
-     * - five bit to eight bit: 8.226
-     * - six bit to eight bit: 4.0476
-     */
-    r = (r * 8) + (r * 226) / 1000;
-    g = (g * 4) + (g * 476) / 10000;
-    b = (b * 8) + (b * 226) / 1000;
-
-    pixel = 0xFF000000 | (r << 16) | (g << 8) | b;
-#endif
-
     return pixel;
 }
 
 
-void display_init() {
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+void display_init()
+{
+    if (SDL_Init(SDL_INIT_VIDEO) < 0)
+    {
         printf("SDL video init error!!\n");
 
-    } else {
+    } else
+    {
 
         window = SDL_CreateWindow("OpenRTX",
                                   SDL_WINDOWPOS_UNDEFINED,
@@ -129,7 +113,7 @@ void display_init() {
 
         renderer = SDL_CreateRenderer(window, -1, 0);
         SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
-        displayTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING,
+        displayTexture = SDL_CreateTexture(renderer, PIXEL_FORMAT, SDL_TEXTUREACCESS_STREAMING,
                                            SCREEN_WIDTH, SCREEN_HEIGHT);
         SDL_RenderClear(renderer);
         SDL_RenderCopy(renderer, displayTexture, NULL, NULL);
@@ -168,40 +152,52 @@ void display_init() {
     }
 }
 
-void display_terminate() {
-    while (inProgress) {}         /* Wait until current render finishes */
+void display_terminate()
+{
+    while (inProgress)
+    {}         /* Wait until current render finishes */
     printf("Terminating SDL display emulator, goodbye!\n");
     free(frameBuffer);
     SDL_DestroyWindow(window);
     SDL_Quit();
 }
 
-void display_renderRows(uint8_t startRow, uint8_t endRow) {
-    Uint32 *pixels;
+void display_renderRows(uint8_t startRow, uint8_t endRow)
+{
+    PIXEL_SIZE *pixels;
     int pitch = 0;
-    if (SDL_LockTexture(displayTexture, NULL, (void **) &pixels, &pitch) < 0) {
+    if (SDL_LockTexture(displayTexture, NULL, (void **) &pixels, &pitch) < 0)
+    {
         printf("SDL_lock failed: %s\n", SDL_GetError());
     }
     inProgress = true;
+#ifdef PIX_FMT_RGB565
+    uint16_t *fb = (uint16_t *) (frameBuffer);
+    memcpy(pixels, fb, sizeof(uint16_t) * SCREEN_HEIGHT * SCREEN_WIDTH);
+#else
     for (unsigned int x = 0; x < SCREEN_WIDTH; x++) {
         for (unsigned int y = startRow; y < endRow; y++) {
             pixels[x + y * SCREEN_WIDTH] = fetchPixelFromFb(x, y);
         }
     }
+#endif
     SDL_UnlockTexture(displayTexture);
     SDL_RenderCopy(renderer, displayTexture, NULL, NULL);
     SDL_RenderPresent(renderer);
     inProgress = false;
 }
 
-void display_render() {
+void display_render()
+{
     display_renderRows(0, SCREEN_HEIGHT);
 }
 
-bool display_renderingInProgress() {
+bool display_renderingInProgress()
+{
     return inProgress;
 }
 
-void *display_getFrameBuffer() {
+void *display_getFrameBuffer()
+{
     return (void *) (frameBuffer);
 }
