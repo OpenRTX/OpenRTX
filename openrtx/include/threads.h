@@ -33,27 +33,27 @@ void create_threads();
 /**
  * Stack size for UI task, in bytes.
  */
-#define UI_TASK_STKSIZE 1024*4
+#define UI_TASK_STKSIZE 1024
 
 /**
  * Stack size for Keyboard task, in bytes.
  */
-#define KBD_TASK_STKSIZE 256*4
+#define KBD_TASK_STKSIZE 256
 
 /**
  * Stack size for state update task, in bytes.
  */
-#define DEV_TASK_STKSIZE 256*4
+#define DEV_TASK_STKSIZE 512
 
 /**
  * Stack size for baseband control task, in bytes.
  */
-#define RTX_TASK_STKSIZE 128*4
+#define RTX_TASK_STKSIZE 128
 
 /**
  * Stack size for DMR task, in bytes.
  */
-#define DMR_TASK_STKSIZE 128*4
+#define DMR_TASK_STKSIZE 128
 
 #else /* __arm__ */
 
