@@ -38,25 +38,7 @@ void check_battery() {
 
     // Draw low battery screen
     if (charge <= 0) {
-        gfx_clearScreen();
-        uint16_t bat_width = SCREEN_WIDTH / 2;
-        uint16_t bat_height = SCREEN_HEIGHT / 3;
-        point_t bat_pos = {SCREEN_WIDTH / 4, SCREEN_HEIGHT / 6};
-        gfx_drawBattery(bat_pos, bat_width, bat_height, 0.1f);
-        point_t text_pos_1 = {0, SCREEN_HEIGHT * 3 / 4};
-        point_t text_pos_2 = {0, SCREEN_HEIGHT * 3 / 4 + 16};
-        const color_t color_white = {255, 255, 255};
-
-        gfx_print(text_pos_1,
-                  "For emergency operation",
-                  FONT_SIZE_6PT,
-                  TEXT_ALIGN_CENTER,
-                  color_white);
-        gfx_print(text_pos_2,
-                  "press any button.",
-                  FONT_SIZE_6PT,
-                  TEXT_ALIGN_CENTER,
-                  color_white);
+        ui_drawLowBatteryScreen();
         gfx_render();
 
         // Wait 5 seconds

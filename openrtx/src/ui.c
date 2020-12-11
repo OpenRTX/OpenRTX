@@ -19,9 +19,9 @@
  ***************************************************************************/
 
 /*
- * The graphical user interface (GUI) works by splitting the screen in 
+ * The graphical user interface (GUI) works by splitting the screen in
  * horizontal rows, with row height depending on vertical resolution.
- * 
+ *
  * The general screen layout is composed by an upper status bar at the
  * top of the screen and a lower status bar at the bottom.
  * The central portion of the screen is filled by two big text/number rows
@@ -158,7 +158,7 @@ layout_t _ui_calculateLayout()
     const fontSize_t line3_font = FONT_SIZE_5PT;
     // Bottom bar font: 8 pt
     const fontSize_t bottom_font = FONT_SIZE_6PT;
-    
+
     #elif SCREEN_HEIGHT > 47
 
     // Height and padding shown in diagram at beginning of file
@@ -224,7 +224,7 @@ void _ui_drawTopBar(state_t* last_state)
 {
     // Print clock on top bar
     char clock_buf[9] = "";
-    snprintf(clock_buf, sizeof(clock_buf), "%02d:%02d:%02d", last_state->time.hour, 
+    snprintf(clock_buf, sizeof(clock_buf), "%02d:%02d:%02d", last_state->time.hour,
              last_state->time.minute, last_state->time.second);
     gfx_print(layout.top_pos, clock_buf, layout.top_font, TEXT_ALIGN_CENTER,
               color_white);
@@ -323,7 +323,7 @@ bool _ui_drawMenuTop()
         for(int item=0; (item < MENU_NUM) && (pos.y < SCREEN_HEIGHT); item++)
         {
             snprintf(entry_buf, sizeof(entry_buf), "%s", menuItems[item]);
-            gfx_print(pos, entry_buf, layout.top_font, 
+            gfx_print(pos, entry_buf, layout.top_font,
                       TEXT_ALIGN_LEFT, color_white);
             pos.y += layout.top_h;
         }
@@ -352,6 +352,29 @@ void ui_drawSplashScreen()
     gfx_print(splash_origin, "O P N\nR T X", FONT_SIZE_12PT, TEXT_ALIGN_CENTER,
               yellow_fab413);
     #endif
+}
+
+void ui_drawLowBatteryScreen()
+{
+    gfx_clearScreen();
+    uint16_t bat_width = SCREEN_WIDTH / 2;
+    uint16_t bat_height = SCREEN_HEIGHT / 3;
+    point_t bat_pos = {SCREEN_WIDTH / 4, SCREEN_HEIGHT / 8};
+    gfx_drawBattery(bat_pos, bat_width, bat_height, 0.1f);
+    point_t text_pos_1 = {0, SCREEN_HEIGHT * 2 / 3};
+    point_t text_pos_2 = {0, SCREEN_HEIGHT * 2 / 3 + 16};
+    const color_t color_white = {255, 255, 255};
+
+    gfx_print(text_pos_1,
+              "For emergency use",
+              FONT_SIZE_6PT,
+              TEXT_ALIGN_CENTER,
+              color_white);
+    gfx_print(text_pos_2,
+              "press any button.",
+              FONT_SIZE_6PT,
+              TEXT_ALIGN_CENTER,
+              color_white);
 }
 
 void ui_updateFSM(event_t event)
