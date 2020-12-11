@@ -305,7 +305,7 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, float perce
     color_t bat_color = yellow;
     if (percentage < 0.3)
         bat_color = red;
-    else if (percentage > 0.7)
+    else if (percentage > 0.6)
         bat_color = green;
 
     // Draw the battery outline
@@ -326,7 +326,7 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, float perce
     gfx_setPixel(bottom_right, black);
 
     // Draw the button
-    point_t button_start = {start.x + width, start.y + height / 2 - 2 + (height % 2)};
-    point_t button_end = {start.x + width, start.y + height / 2 + 1};
+    point_t button_start = {start.x + width, start.y + height / 2 - (height / 8) - 1 + (height % 2)};
+    point_t button_end =   {start.x + width, start.y + height / 2 + (height / 8)};
     gfx_drawLine(button_start, button_end, white);
 }
