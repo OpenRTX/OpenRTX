@@ -72,6 +72,7 @@
 #include <platform.h>
 #include <hwconfig.h>
 #include <string.h>
+#include <battery.h>
 
 const char *menuItems[MENU_NUM] =
 {
@@ -229,12 +230,12 @@ void _ui_drawTopBar(state_t* last_state)
               color_white);
 
     // Print battery icon on top bar, use 4 px padding
-    float percentage = last_state->v_bat / MAX_VBAT;
+    float charge = battery_getCharge(last_state->v_bat);
     uint16_t bat_width = SCREEN_WIDTH / 9;
     uint16_t bat_height = layout.top_h - layout.vertical_pad;
     point_t bat_pos = {SCREEN_WIDTH - bat_width - layout.horizontal_pad,
                        layout.vertical_pad / 2};
-    gfx_drawBattery(bat_pos, bat_width, bat_height, percentage);
+    gfx_drawBattery(bat_pos, bat_width, bat_height, charge);
 
     // Print radio mode on top bar
     char mode[4] = "";

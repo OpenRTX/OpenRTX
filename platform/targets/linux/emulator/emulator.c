@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-radio_state Radio_State = {12, 7, 3, 4, 1, false};
+radio_state Radio_State = {12, 8.2f, 3, 4, 1, false};
 
 void systemBootstrap();
 

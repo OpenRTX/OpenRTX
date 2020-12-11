@@ -26,8 +26,8 @@
 #define SCREEN_WIDTH 160
 #define SCREEN_HEIGHT 128
 
-/* Maximum battery voltage */
-#define MAX_VBAT 8.4f
+/* Battery type */
+#define BAT_LIPO_2S
 
 /* Display */
 #define LCD_D0  GPIOD,14

@@ -1,5 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Frederik Saraci IU2NRO                          *
+ *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
+ *                         Niccolò Izzo IU2KIN,                            *
+ *                         Silvano Seva IU2KWO                             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -15,39 +17,29 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <battery.h>
+#include <hwconfig.h>
+#include <math.h>
 
-#define PLATFORM_LINUX
+/* This array acts as a lookup table for converting Li-Po voltage into
+ * charge percentage, elements range from 0% to 100% (included) with 5% steps.
+ * Data is taken from (https://blog.ampow.com/lipo-voltage-chart/).
+ */
+#define V_LUT_STEPS 21
+#if defined BAT_LIPO_1S
+float bat_v_min = 3.61f;
+float bat_v_max = 4.20f;
+#elif defined BAT_LIPO_2S
+float bat_v_min = 7.22f;
+float bat_v_max = 8.40f;
+#elif defined BAT_LIPO_3S
+float bat_v_min = 10.83;
+float bat_v_max = 12.60;
+#else
+#error Please define a battery type into platform/targets/.../hwconfig.h
+#endif
 
-/* Battery type */
-#define BAT_LIPO_2S
-
-#define GPIOA "PA"
-#define GPIOB "PB"
-#define GPIOC "PC"
-#define GPIOD "PD"
-#define GPIOE "PE"
-#define GPIOF "PF"
-#define GPIOG "PG"
-#define GPIOH "PH"
-#define GPIOI "PI"
-#define GPIOJ "PJ"
-#define GPIOK "PK"
-
-/* Signalling LEDs */
-#define GREEN_LED  "GREEN_LED",0
-#define RED_LED    "RED_LED",1
-
-/* Analog inputs */
-#define AIN_VOLUME "AIN_VOLUME",0
-#define AIN_VBAT   "AIN_VBAT",1
-#define AIN_MIC    "AIN_MIC",3
-#define AIN_RSSI   "AIN_RSSI",0
-
-/* Channel selection rotary encoder */
-#define CH_SELECTOR_0 "CH_SELECTOR_0",14
-#define CH_SELECTOR_1 "CH_SELECTOR_1",15
-#define CH_SELECTOR_2 "CH_SELECTOR_2",10
-#define CH_SELECTOR_3 "CH_SELECTOR_3",11
-
-/* Push-to-talk switch */
-#define PTT_SW "PTT_SW",11
+float battery_getCharge(float vbat) {
+    // Perform a linear interpolation between minimum and maximum charge values
+    return (vbat - bat_v_min) / (bat_v_max - bat_v_min);
+}

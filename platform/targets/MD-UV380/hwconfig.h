@@ -26,6 +26,9 @@
 #define SCREEN_WIDTH 160
 #define SCREEN_HEIGHT 128
 
+/* Battery type */
+#define BAT_LIPO_2S
+
 /* Display */
 #define LCD_D0  GPIOD,14
 #define LCD_D1  GPIOD,15
@@ -75,9 +78,6 @@
 #define FLASH_CLK GPIOB,3
 #define FLASH_SDO GPIOB,4
 #define FLASH_SDI GPIOB,5
-
-/* Maximum battery voltage */
-#define MAX_VBAT 8.4f
 
 /*
  * To enable pwm for display backlight dimming uncomment this directive.

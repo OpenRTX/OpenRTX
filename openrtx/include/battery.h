@@ -1,5 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Frederik Saraci IU2NRO                          *
+ *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
+ *                         Niccolò Izzo IU2KIN,                            *
+ *                         Silvano Seva IU2KWO                             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -15,39 +17,14 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#ifndef BATTERY_H
+#define BATTERY_H
 
-#define PLATFORM_LINUX
+/* This function uses battery charge tables to convert a battery voltage into a
+ * charge percentage.
+ * @param vbat: the voltage read from the battery in volt
+ * @return the charge percentage
+ */
+float battery_getCharge(float vbat);
 
-/* Battery type */
-#define BAT_LIPO_2S
-
-#define GPIOA "PA"
-#define GPIOB "PB"
-#define GPIOC "PC"
-#define GPIOD "PD"
-#define GPIOE "PE"
-#define GPIOF "PF"
-#define GPIOG "PG"
-#define GPIOH "PH"
-#define GPIOI "PI"
-#define GPIOJ "PJ"
-#define GPIOK "PK"
-
-/* Signalling LEDs */
-#define GREEN_LED  "GREEN_LED",0
-#define RED_LED    "RED_LED",1
-
-/* Analog inputs */
-#define AIN_VOLUME "AIN_VOLUME",0
-#define AIN_VBAT   "AIN_VBAT",1
-#define AIN_MIC    "AIN_MIC",3
-#define AIN_RSSI   "AIN_RSSI",0
-
-/* Channel selection rotary encoder */
-#define CH_SELECTOR_0 "CH_SELECTOR_0",14
-#define CH_SELECTOR_1 "CH_SELECTOR_1",15
-#define CH_SELECTOR_2 "CH_SELECTOR_2",10
-#define CH_SELECTOR_3 "CH_SELECTOR_3",11
-
-/* Push-to-talk switch */
-#define PTT_SW "PTT_SW",11
+#endif /* BATTERY_H */

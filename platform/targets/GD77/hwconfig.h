@@ -31,6 +31,9 @@
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 
+/* Battery type */
+#define BAT_LIPO_2S
+
 /* Display */
 #define LCD_BKLIGHT GPIOC,4
 #define LCD_CS      GPIOC,8
