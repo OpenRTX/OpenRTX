@@ -79,23 +79,6 @@ static void ui_task(void *arg)
     OS_ERR os_err;
     OS_MSG_SIZE msg_size = 0;
 
-    // Initialize graphics driver
-    gfx_init();
-    // Initialize user interface
-    ui_init();
-
-    // Display splash screen
-    ui_drawSplashScreen();
-    gfx_render();
-    while(gfx_renderingInProgress());
-
-    // Wait 30ms before turning on backlight to hide random pixels on screen
-    OSTimeDlyHMSM(0u, 0u, 0u, 30u, OS_OPT_TIME_HMSM_STRICT, &os_err);
-    platform_setBacklightLevel(255);
-
-    // Keep the splash screen for 1 second
-    OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
-
     // Get initial state local copy
     OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
     state_t last_state = state;
