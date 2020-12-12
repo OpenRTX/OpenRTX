@@ -83,8 +83,9 @@ void display_terminate();
 void display_renderRows(uint8_t startRow, uint8_t endRow);
 
 /**
- * Copy framebuffer content to the display internal buffer. To be called
+ * Copy framebuffer content to the display internal buffer, to be called
  * whenever there is need to update the display.
+ * This function blocks the caller until render is completed.
  */
 void display_render();
 
