@@ -87,7 +87,6 @@ static void ui_task(void *arg)
     // Initial GUI draw
     ui_updateGUI(last_state);
     gfx_render();
-    while(gfx_renderingInProgress());
 
     while(1)
     {
@@ -112,7 +111,6 @@ static void ui_task(void *arg)
         if(renderNeeded)
         {
             gfx_render();
-            while(gfx_renderingInProgress());
         }
 
         // We don't need a delay because we lock on incoming events

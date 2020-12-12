@@ -29,7 +29,8 @@
 #include <hwconfig.h>
 
 /* If battery level is below 0% draw low battery screen, wait and shutdown */
-void check_battery() {
+void check_battery()
+{
     OS_ERR os_err;
 
     // Check battery percentage
@@ -37,7 +38,8 @@ void check_battery() {
     float charge = battery_getCharge(vbat);
 
     // Draw low battery screen
-    if (charge <= 0) {
+    if (charge <= 0)
+    {
         ui_drawLowBatteryScreen();
         gfx_render();
 
@@ -67,7 +69,6 @@ int main(void)
     // Display splash screen
     ui_drawSplashScreen();
     gfx_render();
-    while(gfx_renderingInProgress());
 
     // Wait 30ms before turning on backlight to hide random pixels on screen
     OSTimeDlyHMSM(0u, 0u, 0u, 30u, OS_OPT_TIME_HMSM_STRICT, &os_err);
@@ -80,7 +81,8 @@ int main(void)
     create_threads();
 
     // Auxiliary functions loop
-    while(true) {
+    while(true)
+    {
         check_battery();
         OSTimeDlyHMSM(0u, 1u, 0u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
     }
