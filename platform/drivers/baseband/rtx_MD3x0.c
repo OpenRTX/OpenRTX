@@ -30,34 +30,19 @@
 #include <stdlib.h>
 #include <gpio.h>
 #include <rtx.h>
-#include <os.h>
 #include "HR-C5000_MD3x0.h"
 #include "pll_MD3x0.h"
 
 #include <stdio.h>
 
-struct rtxStatus_t
-{
-    uint8_t opMode    : 2,  /**< Operating mode (FM, DMR, ...) */
-            bandwidth : 2,  /**< Channel bandwidth             */
-            txDisable : 1,  /**< Disable TX operation          */
-            opStatus  : 3;  /**< RTX status (OFF, RX, TX)      */
-
-    freq_t rxFrequency;     /**< RX frequency, in Hz           */
-    freq_t txFrequency;     /**< TX frequency, in Hz           */
-
-    float txPower;          /**< TX power, in W                */
-    uint8_t sqlLevel;       /**< Squelch opening level         */
-
-    tone_t rxTone;          /**< RX CTC/DCS tone               */
-    tone_t txTone;          /**< TX CTC/DCS tone               */
-}
-rtxStatus;
-
-OS_Q cfgMailbox;                  /* Queue for incoming config messages */
-const md3x0Calib_t *calData;      /* Pointer to calibration data        */
 const freq_t IF_FREQ = 49950000;  /* Intermediate frequency: 49.95MHz   */
 
+OS_MUTEX *cfgMutex;               /* Mutex for incoming config messages */
+OS_Q cfgMailbox;                  /* Queue for incoming config messages */
+
+const md3x0Calib_t *calData;      /* Pointer to calibration data        */
+
+rtxStatus_t rtxStatus;            /* RTX driver status                  */
 uint8_t sqlOpenTsh;               /* Squelch opening threshold          */
 uint8_t sqlCloseTsh;              /* Squelch closing threshold          */
 
@@ -231,8 +216,11 @@ void _updateSqlThresholds()
                                   (sql9CloseTsh - sql1CloseTsh))/8; */
 }
 
-void rtx_init()
+void rtx_init(OS_MUTEX *m)
 {
+    /* Initialise mutex for configuration access */
+    cfgMutex = m;
+
     /* Create the message queue for RTX configuration */
     OS_ERR err;
     OSQCreate((OS_Q     *) &cfgMailbox,
@@ -343,12 +331,12 @@ void rtx_terminate()
 
 }
 
-void rtx_configure(const rtxConfig_t *cfg)
+void rtx_configure(const rtxStatus_t *cfg)
 {
     OS_ERR err;
     OSQPost((OS_Q      *) &cfgMailbox,
             (void      *) cfg,
-            (OS_MSG_SIZE) sizeof(rtxConfig_t *),
+            (OS_MSG_SIZE) sizeof(rtxStatus_t *),
             (OS_OPT     ) OS_OPT_POST_FIFO,
             (OS_ERR    *) &err);
 
@@ -363,10 +351,15 @@ void rtx_configure(const rtxConfig_t *cfg)
 
         OSQPost((OS_Q      *) &cfgMailbox,
                 (void      *) cfg,
-                (OS_MSG_SIZE) sizeof(rtxConfig_t *),
+                (OS_MSG_SIZE) sizeof(rtxStatus_t *),
                 (OS_OPT     ) OS_OPT_POST_FIFO,
                 (OS_ERR    *) &err);
     }
+}
+
+rtxStatus_t rtx_getCurrentStatus()
+{
+    return rtxStatus;
 }
 
 void rtx_taskFunc()
@@ -382,19 +375,29 @@ void rtx_taskFunc()
 
     if((err == OS_ERR_NONE) && (msg != NULL))
     {
-        uint8_t tmp = rtxStatus.opStatus;
-        memcpy(&rtxStatus, msg, sizeof(rtxConfig_t));
-        free(msg);
-        rtxStatus.opStatus = tmp;
+        /* Try locking mutex for read access */
+        OSMutexPend(cfgMutex, 0, OS_OPT_PEND_NON_BLOCKING, NULL, &err);
 
-        _setOpMode();
-        _setBandwidth();
-        _updateC5000IQparams();
-        _setCTCSS();
-        _updateSqlThresholds();
+        if(err == OS_ERR_NONE)
+        {
+            /* Copy new configuration and override opStatus flags */
+            uint8_t tmp = rtxStatus.opStatus;
+            memcpy(&rtxStatus, msg, sizeof(rtxStatus_t));
+            rtxStatus.opStatus = tmp;
 
-        /* TODO: temporarily force to RX mode if rtx is off. */
-        if(rtxStatus.opStatus == OFF) _enableRxStage();
+            /* Done, release mutex */
+            OSMutexPost(cfgMutex, OS_OPT_POST_NONE, &err);
+
+            /* Update HW configuration */
+            _setOpMode();
+            _setBandwidth();
+            _updateC5000IQparams();
+            _setCTCSS();
+            _updateSqlThresholds();
+
+            /* TODO: temporarily force to RX mode if rtx is off. */
+            if(rtxStatus.opStatus == OFF) _enableRxStage();
+        }
     }
 
     if(rtxStatus.opStatus == RX)

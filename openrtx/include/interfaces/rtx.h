@@ -21,6 +21,7 @@
 #ifndef RTX_H
 #define RTX_H
 
+#include <os.h>
 #include <stdint.h>
 #include <datatypes.h>
 
@@ -29,7 +30,8 @@ typedef struct
     uint8_t opMode    : 2,  /**< Operating mode (FM, DMR, ...) */
             bandwidth : 2,  /**< Channel bandwidth             */
             txDisable : 1,  /**< Disable TX operation          */
-            _padding  : 3;
+            scan      : 1,  /**< Scan enabled                  */
+            opStatus  : 2;  /**< Operating status (OFF, ...)   */
 
     freq_t rxFrequency;     /**< RX frequency, in Hz           */
     freq_t txFrequency;     /**< TX frequency, in Hz           */
@@ -40,7 +42,7 @@ typedef struct
     tone_t rxTone;          /**< RX CTC/DCS tone               */
     tone_t txTone;          /**< TX CTC/DCS tone               */
 }
-rtxConfig_t;
+rtxStatus_t;
 
 enum bandwidth
 {
@@ -64,9 +66,11 @@ enum opstatus
 
 
 /**
- * Initialise rtx stage
+ * Initialise rtx stage.
+ * @param m: pointer to the mutex protecting the shared configuration data
+ * structure.
  */
-void rtx_init();
+void rtx_init(OS_MUTEX *m);
 
 /**
  * Shut down rtx stage
@@ -75,11 +79,18 @@ void rtx_terminate();
 
 /**
  * Post a new RTX configuration on the internal message queue. Data structure
- * \b must be heap-allocated and \b must not be modified after this function has
- * been called. The driver takes care of its deallocation.
+ * \b must be protected by the same mutex whose pointer has been passed as a
+ * parameter to rtx_init(). This driver only copies its content into the internal
+ * data structure, eventual garbage collection has to be performed by caller.
  * @param cfg: pointer to a structure containing the new RTX configuration.
  */
-void rtx_configure(const rtxConfig_t *cfg);
+void rtx_configure(const rtxStatus_t *cfg);
+
+/**
+ * Obtain a copy of the RTX driver's internal status data structure.
+ * @return copy of the RTX driver's internal status data structure.
+ */
+rtxStatus_t rtx_getCurrentStatus();
 
 /**
  * High-level code is in charge of calling this function periodically, since it
@@ -87,6 +98,10 @@ void rtx_configure(const rtxConfig_t *cfg);
  */
 void rtx_taskFunc();
 
+/**
+ * Get current RSSI voltage.
+ * @return RSSI voltage.
+ */
 float rtx_getRssi();
 
 #endif /* RTX_H */

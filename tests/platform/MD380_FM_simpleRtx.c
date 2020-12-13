@@ -30,40 +30,49 @@
 #include "hwconfig.h"
 #include "toneGenerator_MDx.h"
 
+OS_MUTEX mutex;
+OS_ERR err;
+
+static const freq_t rptFreq  = 430100000;
+static const freq_t rptShift = 1600000;
+static const tone_t ctcss    = 719;
+
 int main(void)
 {
     platform_init();
     toneGen_init();
 
-    rtx_init();
+    OSMutexCreate(&mutex, "", &err);
 
-    freq_t rptFreq  = 430100000;
-    freq_t rptShift = 1600000;
-    tone_t ctcss    = 719;
+    rtx_init(&mutex);
 
-    /*
-     * Allocate a configuration message for RTX.
-     * This memory chunk is then freed inside the driver, so you must not call
-     * free() in this pointer!
-     */
-    rtxConfig_t *cfg = ((rtxConfig_t *) malloc(sizeof(rtxConfig_t)));
 
-    cfg->opMode = FM;
-    cfg->bandwidth = BW_25;
-    cfg->rxFrequency = rptFreq;
-    cfg->txFrequency = rptFreq + rptShift;
-    cfg->txPower = 1.0f;
-    cfg->sqlLevel = 3;
-    cfg->rxTone = 0;
-    cfg->txTone = ctcss;
-    rtx_configure(cfg);
+    rtxStatus_t cfg;
+
+    /* Take mutex and update the RTX configuration */
+    OSMutexPend(&mutex, 0, OS_OPT_PEND_BLOCKING, NULL, &err);
+
+    cfg.opMode = FM;
+    cfg.bandwidth = BW_25;
+    cfg.rxFrequency = rptFreq;
+    cfg.txFrequency = rptFreq + rptShift;
+    cfg.txPower = 1.0f;
+    cfg.sqlLevel = 3;
+    cfg.rxTone = 0;
+    cfg.txTone = ctcss;
+
+    OSMutexPost(&mutex, OS_OPT_POST_NONE, &err);
+
+    /* After mutex has been released, post the new configuration */
+    rtx_configure(&cfg);
 
     while (1)
     {
-
         rtx_taskFunc();
 
-        OS_ERR err;
+        /* You can also resync the cfg */
+        cfg = rtx_getCurrentStatus();
+
         OSTimeDlyHMSM(0u, 0u, 0u, 10u, OS_OPT_TIME_HMSM_STRICT, &err);
     }
 
