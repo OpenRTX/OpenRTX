@@ -17,12 +17,13 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <platform.h>
 #include <gpio.h>
+#include <nvmem.h>
+#include <platform.h>
 #include <hwconfig.h>
 #include <ADC1_MDx.h>
 #include <calibInfo_MDx.h>
-#include <nvmem.h>
+#include <toneGenerator_MDx.h>
 
 md3x0Calib_t calibration;
 
@@ -77,6 +78,11 @@ void platform_init()
      */
     nvm_init();
     nvm_readCalibData(&calibration);
+
+    /*
+     * Initialise tone generator
+     */
+    toneGen_init();
 }
 
 void platform_terminate()

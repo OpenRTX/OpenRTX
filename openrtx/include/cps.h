@@ -30,8 +30,8 @@
  */
 enum mode_t
 {
-    FM = 0,      /**< Analog FM mode */
-    DMR          /**< DMR mode */
+    FM  = 0,      /**< Analog FM mode */
+    DMR = 1          /**< DMR mode */
 };
 
 /**
@@ -41,9 +41,9 @@ enum mode_t
 enum admit_t
 {
     ALWAYS = 0,  /**< Always transmit when PTT is pressed         */
-    FREE,        /**< Transmit only if channel si free            */
-    TONE,        /**< Transmit on matching tone                   */
-    COLOR        /**< Transmit only if color code is not used yet */
+    FREE   = 1,  /**< Transmit only if channel si free            */
+    TONE   = 2,  /**< Transmit on matching tone                   */
+    COLOR  = 3   /**< Transmit only if color code is not used yet */
 };
 
 /**
@@ -52,8 +52,8 @@ enum admit_t
 enum bw_t
 {
     BW_12_5 = 0, /**< Bandwidth is 12.5kHz */
-    BW_20,       /**< Bandwidth is 20kHz   */
-    BW_25        /**< Bandwidth is 25kHz   */
+    BW_20   = 1, /**< Bandwidth is 20kHz   */
+    BW_25   = 2  /**< Bandwidth is 25kHz   */
 };
 
 /**

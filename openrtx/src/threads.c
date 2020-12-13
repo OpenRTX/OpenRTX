@@ -27,14 +27,16 @@
 #include <platform.h>
 #include <hwconfig.h>
 #include <event.h>
-
-#include <stdio.h>
+#include <rtx.h>
 
 /* Mutex for concurrent access to state variable */
 static OS_MUTEX state_mutex;
 
 /* Queue for sending and receiving ui update requests */
 static OS_Q ui_queue;
+
+/* Mutex for concurrent access to RTX state variable */
+static OS_MUTEX rtx_mutex;
 
  /**************************** IMPORTANT NOTE ***********************************
   *                                                                             *
@@ -64,11 +66,6 @@ static CPU_STK dev_stk[DEV_TASK_STKSIZE/sizeof(CPU_STK)];
 /* Baseband task control block and stack */
 static OS_TCB  rtx_tcb;
 static CPU_STK rtx_stk[RTX_TASK_STKSIZE/sizeof(CPU_STK)];
-
-/* DMR task control block and stack */
-static OS_TCB  dmr_tcb;
-static CPU_STK dmr_stk[DMR_TASK_STKSIZE/sizeof(CPU_STK)];
-
 
 /**
  * \internal Task function in charge of updating the UI.
@@ -189,28 +186,11 @@ static void rtx_task(void *arg)
     (void) arg;
     OS_ERR os_err;
 
-    while(1)
-    {
-        // Execute rtx radio thread every 30ms to match DMR task
-        //TODO: uncomment after rtx.h merge
-        //rtx_main();
-        OSTimeDlyHMSM(0u, 0u, 0u, 30u, OS_OPT_TIME_HMSM_STRICT, &os_err);
-    }
-}
-
-/**
- * \internal Task function for DMR management.
- */
-static void dmr_task(void *arg)
-{
-    (void) arg;
-    OS_ERR os_err;
+    rtx_init(&rtx_mutex);
 
     while(1)
     {
-        // Execute dmr radio thread every 30ms to match DMR timeslot
-        //TODO: uncomment after dmr.h merge
-        //dmr_main();
+        rtx_taskFunc();
         OSTimeDlyHMSM(0u, 0u, 0u, 30u, OS_OPT_TIME_HMSM_STRICT, &os_err);
     }
 }
@@ -232,7 +212,12 @@ void create_threads()
               (CPU_CHAR  *) "UI event queue",
               (OS_MSG_QTY ) 10,
               (OS_ERR    *) &os_err);
-    
+
+    // Create RTX state mutex
+    OSMutexCreate((OS_MUTEX  *) &rtx_mutex,
+                  (CPU_CHAR  *) "RTX Mutex",
+                  (OS_ERR    *) &os_err);
+
     // State initialization, execute before starting all tasks
     state_init();
 
@@ -265,7 +250,7 @@ void create_threads()
                  (void       *) 0,
                  (OS_OPT      ) (OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR),
                  (OS_ERR     *) &os_err);
-    
+
     // Create state thread
     OSTaskCreate((OS_TCB     *) &dev_tcb,
                  (CPU_CHAR   *) "Device Task",
@@ -290,21 +275,6 @@ void create_threads()
                  (CPU_STK    *) &rtx_stk[0],
                  (CPU_STK     ) 0,
                  (CPU_STK_SIZE) RTX_TASK_STKSIZE/sizeof(CPU_STK),
-                 (OS_MSG_QTY  ) 0,
-                 (OS_TICK     ) 0,
-                 (void       *) 0,
-                 (OS_OPT      ) (OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR),
-                 (OS_ERR     *) &os_err);
-
-    // Create dmr radio thread
-    OSTaskCreate((OS_TCB     *) &dmr_tcb,
-                 (CPU_CHAR   *) "DMR Task",
-                 (OS_TASK_PTR ) dmr_task,
-                 (void       *) 0,
-                 (OS_PRIO     ) 3,
-                 (CPU_STK    *) &dmr_stk[0],
-                 (CPU_STK     ) 0,
-                 (CPU_STK_SIZE) DMR_TASK_STKSIZE/sizeof(CPU_STK),
                  (OS_MSG_QTY  ) 0,
                  (OS_TICK     ) 0,
                  (void       *) 0,
