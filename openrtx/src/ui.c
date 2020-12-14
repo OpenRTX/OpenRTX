@@ -382,37 +382,38 @@ void ui_updateFSM(event_t event)
     // Process pressed keys
     if(event.type == EVENT_KBD)
     {
-        keyboard_t keys = event.payload;
+        kbd_msg_t msg;
+        msg.value = event.payload;
         switch(state.ui_screen)
         {
             // VFO screen
             case MAIN_VFO:
                 // Temporary VFO controls
-                if(keys & KEY_UP)
+                if(msg.keys & KEY_UP)
                 {
                     // Advance TX and RX frequency of 12.5KHz
                     state.channel.rx_frequency += 12500;
                     state.channel.tx_frequency += 12500;
                 }
-                else if(keys & KEY_DOWN)
+                else if(msg.keys & KEY_DOWN)
                 {
                     // Advance TX and RX frequency of 12.5KHz
                     state.channel.rx_frequency -= 12500;
                     state.channel.tx_frequency -= 12500;
                 }
-                else if(keys & KEY_ENTER)
+                else if(msg.keys & KEY_ENTER)
                     // Open Menu
                     state.ui_screen = MENU_TOP;
                 break;
             // Top menu screen
             case MENU_TOP:
-                if(keys & KEY_UP)
+                if(msg.keys & KEY_UP)
                 {
                 }
-                else if(keys & KEY_DOWN)
+                else if(msg.keys & KEY_DOWN)
                 {
                 }
-                else if(keys & KEY_ESC)
+                else if(msg.keys & KEY_ESC)
                     // Close Menu
                     state.ui_screen = MAIN_VFO;
                 break;
