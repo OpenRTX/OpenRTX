@@ -176,6 +176,8 @@ static void kbd_task(void *arg)
             OSQPost(&ui_queue, (void *)event.value, sizeof(event_t), 
                     OS_OPT_POST_FIFO + OS_OPT_POST_NO_SCHED, &os_err);
             }
+            // Save current keyboard state as previous
+            prev_keys = keys;
         }
         // Read keyboard state at 5Hz
         OSTimeDlyHMSM(0u, 0u, 0u, 200u, OS_OPT_TIME_HMSM_STRICT, &os_err);
