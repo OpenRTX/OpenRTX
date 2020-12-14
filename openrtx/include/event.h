@@ -44,8 +44,8 @@ typedef union
 {
     struct
     {
-        uint32_t type    : 3,
-                 payload : 29;
+        uint32_t type    : 2,
+                 payload : 30;
     };
 
     void *value;

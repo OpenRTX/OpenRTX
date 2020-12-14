@@ -128,20 +128,54 @@ static void kbd_task(void *arg)
     // Initialize keyboard driver
     kbd_init();
 
+    // Allocate timestamp array
+    OS_TICK key_ts[kbd_num_keys];
+    OS_TICK now;
+
+    // Variable for saving previous and current keyboard status
+    keyboard_t prev_keys = 0;
+    keyboard_t keys = 0;
+
     while(1)
     {
-        keyboard_t keys = kbd_getKeys();
-		// Check if some key is pressed
-        if(keys != 0)
+        // Get currently pressed keys
+        keys = kbd_getKeys();
+        // Compare with previous keyboard status
+        if(keys != prev_keys)
         {
+            bool long_press = false;
+            bool send_event = false;
+            now = OSTimeGet(&os_err);
+            for(uint8_t k=0; k < kbd_num_keys; k++)
+            {
+                // Key has been pressed
+                if(!(prev_keys & k) && (keys & k))
+                {
+                    // Save timestamp
+                    key_ts[k] = now;
+                }
+                // Key has been released
+                else if((prev_keys & k) && !(keys & k))
+                {
+                    send_event = true;
+                    // Check timestamp
+                    if((now - key_ts[k]) >= kbd_long_interval)
+                        long_press = true;
+                }
+            }
+            if(send_event)
+            {
+            kbd_msg_t msg;
+            msg.long_press = long_press;
+            msg.keys = keys;
             // Send event_t as void * message to use with OSQPost
-            event_t kbd_msg;
-            kbd_msg.type = EVENT_KBD;
-            kbd_msg.payload = keys;
-
+            event_t event;
+            event.type = EVENT_KBD;
+            event.payload = msg.value;
             // Send keyboard status in queue
-            OSQPost(&ui_queue, (void *)kbd_msg.value, sizeof(event_t), 
+            OSQPost(&ui_queue, (void *)event.value, sizeof(event_t), 
                     OS_OPT_POST_FIFO + OS_OPT_POST_NO_SCHED, &os_err);
+            }
         }
         // Read keyboard state at 5Hz
         OSTimeDlyHMSM(0u, 0u, 0u, 200u, OS_OPT_TIME_HMSM_STRICT, &os_err);

@@ -27,7 +27,7 @@
  * The following enum provides a set of flags to be used to check which buttons
  * are pressed by bit-masking the uint32_t value returned by kbd_getKeys().
  */
-enum keys
+enum key
 {
     KEY_0     = (1 << 0),   /* Keypad digit "0"                  */
     KEY_1     = (1 << 1),   /* Keypad digit "1"                  */
@@ -61,9 +61,36 @@ enum keys
 };
 
 /**
- * The status of the keyboard keys is provided as an uint32_t.
+ * Number of supported keys
+ */
+static const uint8_t kbd_num_keys = 29;
+
+/**
+ * Time interval in ticks after which a keypress is considered a long-press
+ */
+static const uint8_t kbd_long_interval = 29;
+
+/**
+ * Structure that represents a keyboard event payload
+ * The maximum size of an event payload is 30 bits
+ * For a keyboard event we use 1 bit to signal a short or long press
+ * And the remaining 29 bits to communicate currently pressed keys.
+ */
+typedef union
+{
+    struct
+    {
+        uint32_t long_press : 1,
+                 keys : 29;
+    };
+    
+    uint32_t value;
+} kbd_msg_t;
+
+/**
+ * We encode the status of all the keys with a uint32_t value
  * To check which buttons are pressed one can bit-mask the 
- * uint32_t value keyboard_t with one of the values defined in keys.
+ * keys value with one of the enum values defined in key.
  * Example:
  * keyboard_t keys = kbd_getKeys();
  * if(keys & KEY_ENTER) do_stuff();
