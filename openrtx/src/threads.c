@@ -149,13 +149,13 @@ static void kbd_task(void *arg)
             for(uint8_t k=0; k < kbd_num_keys; k++)
             {
                 // Key has been pressed
-                if(!(prev_keys & k) && (keys & k))
+                if(!(prev_keys & (1 << k)) && (keys & (1 << k)))
                 {
                     // Save timestamp
                     key_ts[k] = now;
                 }
                 // Key has been released
-                else if((prev_keys & k) && !(keys & k))
+                else if((prev_keys & (1 << k)) && !(keys & (1 << k)))
                 {
                     send_event = true;
                     // Check timestamp
