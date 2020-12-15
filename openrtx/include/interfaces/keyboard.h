@@ -80,10 +80,11 @@ typedef union
 {
     struct
     {
-        uint32_t long_press : 1,
-                 keys : 29;
+        uint32_t _padding   : 2,
+                 long_press : 1,
+                 keys       : 29;
     };
-    
+
     uint32_t value;
 } kbd_msg_t;
 
