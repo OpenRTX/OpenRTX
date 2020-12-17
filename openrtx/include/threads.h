@@ -38,7 +38,7 @@ void create_threads();
 /**
  * Stack size for Keyboard task, in bytes.
  */
-#define KBD_TASK_STKSIZE 256
+#define KBD_TASK_STKSIZE 512
 
 /**
  * Stack size for state update task, in bytes.
