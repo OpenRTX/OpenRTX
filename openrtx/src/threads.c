@@ -38,6 +38,9 @@ static OS_Q ui_queue;
 /* Mutex for concurrent access to RTX state variable */
 static OS_MUTEX rtx_mutex;
 
+/* Mutex to avoid reading keyboard during display update */
+static OS_MUTEX display_mutex;
+
  /**************************** IMPORTANT NOTE ***********************************
   *                                                                             *
   * Rationale for "xx_TASK_STKSIZE/sizeof(CPU_STK)": uC/OS-III manages task     *
@@ -107,7 +110,10 @@ static void ui_task(void *arg)
 
         if(renderNeeded)
         {
+            // Lock display mutex and render display
+            OSMutexPend(&display_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
             gfx_render();
+            OSMutexPost(&display_mutex, OS_OPT_POST_NONE, &os_err);
         }
 
         // We don't need a delay because we lock on incoming events
@@ -138,52 +144,51 @@ static void kbd_task(void *arg)
 
     while(1)
     {
-        if(!gfx_renderingInProgress())
+        // Lock display mutex and read keyboard status
+        OSMutexPend(&display_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
+        keys = kbd_getKeys();
+        OSMutexPost(&display_mutex, OS_OPT_POST_NONE, &os_err);
+        // Compare with previous keyboard status
+        if(keys != prev_keys)
         {
-            // Get currently pressed keys
-            keys = kbd_getKeys();
-            // Compare with previous keyboard status
-            if(keys != prev_keys)
+            bool long_press = false;
+            bool send_event = false;
+            now = OSTimeGet(&os_err);
+            for(uint8_t k=0; k < kbd_num_keys; k++)
             {
-                bool long_press = false;
-                bool send_event = false;
-                now = OSTimeGet(&os_err);
-                for(uint8_t k=0; k < kbd_num_keys; k++)
+                // Key has been pressed
+                if(!(prev_keys & (1 << k)) && (keys & (1 << k)))
                 {
-                    // Key has been pressed
-                    if(!(prev_keys & (1 << k)) && (keys & (1 << k)))
-                    {
-                        // Save timestamp
-                        key_ts[k] = now;
-                    }
-                    // Key has been released
-                    else if((prev_keys & (1 << k)) && !(keys & (1 << k)))
-                    {
-                        send_event = true;
-                        // Check timestamp
-                        if((now - key_ts[k]) >= kbd_long_interval)
-                            long_press = true;
-                    }
+                    // Save timestamp
+                    key_ts[k] = now;
                 }
-                if(send_event)
+                // Key has been released
+                else if((prev_keys & (1 << k)) && !(keys & (1 << k)))
                 {
-                    kbd_msg_t msg;
-                    msg.long_press = long_press;
-                    // OR the saved key status with the current key status
-                    // Do this because the new key status is got when the
-                    // key is lifted, and does not contain the pressed key anymore
-                    msg.keys = keys | prev_keys;
-                    // Send event_t as void * message to use with OSQPost
-                    event_t event;
-                    event.type = EVENT_KBD;
-                    event.payload = msg.value;
-                    // Send keyboard status in queue
-                    OSQPost(&ui_queue, (void *)event.value, sizeof(event_t), 
-                            OS_OPT_POST_FIFO + OS_OPT_POST_NO_SCHED, &os_err);
+                    send_event = true;
+                    // Check timestamp
+                    if((now - key_ts[k]) >= kbd_long_interval)
+                        long_press = true;
                 }
-                // Save current keyboard state as previous
-                prev_keys = keys;
             }
+            if(send_event)
+            {
+                kbd_msg_t msg;
+                msg.long_press = long_press;
+                // OR the saved key status with the current key status
+                // Do this because the new key status is got when the
+                // key is lifted, and does not contain the pressed key anymore
+                msg.keys = keys | prev_keys;
+                // Send event_t as void * message to use with OSQPost
+                event_t event;
+                event.type = EVENT_KBD;
+                event.payload = msg.value;
+                // Send keyboard status in queue
+                OSQPost(&ui_queue, (void *)event.value, sizeof(event_t), 
+                        OS_OPT_POST_FIFO + OS_OPT_POST_NO_SCHED, &os_err);
+            }
+            // Save current keyboard state as previous
+            prev_keys = keys;
         }
         // Read keyboard state at 20Hz
         OSTimeDlyHMSM(0u, 0u, 0u, 50u, OS_OPT_TIME_HMSM_STRICT, &os_err);
@@ -260,6 +265,11 @@ void create_threads()
                   (CPU_CHAR  *) "RTX Mutex",
                   (OS_ERR    *) &os_err);
 
+    // Create display mutex
+    OSMutexCreate((OS_MUTEX  *) &display_mutex,
+                  (CPU_CHAR  *) "Display Mutex",
+                  (OS_ERR    *) &os_err);
+    
     // State initialization, execute before starting all tasks
     state_init();
 
