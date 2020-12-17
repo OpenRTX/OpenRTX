@@ -22,6 +22,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <os_cfg_app.h>
 
 /**
  * The following enum provides a set of flags to be used to check which buttons
@@ -68,7 +69,7 @@ static const uint8_t kbd_num_keys = 29;
 /**
  * Time interval in ticks after which a keypress is considered a long-press
  */
-static const uint8_t kbd_long_interval = 29;
+static const uint16_t kbd_long_interval = OS_CFG_TICK_RATE_HZ * 1;
 
 /**
  * Structure that represents a keyboard event payload
