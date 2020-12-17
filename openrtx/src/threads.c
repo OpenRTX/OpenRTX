@@ -138,49 +138,52 @@ static void kbd_task(void *arg)
 
     while(1)
     {
-        // Get currently pressed keys
-        keys = kbd_getKeys();
-        // Compare with previous keyboard status
-        if(keys != prev_keys)
+        if(!gfx_renderingInProgress())
         {
-            bool long_press = false;
-            bool send_event = false;
-            now = OSTimeGet(&os_err);
-            for(uint8_t k=0; k < kbd_num_keys; k++)
+            // Get currently pressed keys
+            keys = kbd_getKeys();
+            // Compare with previous keyboard status
+            if(keys != prev_keys)
             {
-                // Key has been pressed
-                if(!(prev_keys & (1 << k)) && (keys & (1 << k)))
+                bool long_press = false;
+                bool send_event = false;
+                now = OSTimeGet(&os_err);
+                for(uint8_t k=0; k < kbd_num_keys; k++)
                 {
-                    // Save timestamp
-                    key_ts[k] = now;
+                    // Key has been pressed
+                    if(!(prev_keys & (1 << k)) && (keys & (1 << k)))
+                    {
+                        // Save timestamp
+                        key_ts[k] = now;
+                    }
+                    // Key has been released
+                    else if((prev_keys & (1 << k)) && !(keys & (1 << k)))
+                    {
+                        send_event = true;
+                        // Check timestamp
+                        if((now - key_ts[k]) >= kbd_long_interval)
+                            long_press = true;
+                    }
                 }
-                // Key has been released
-                else if((prev_keys & (1 << k)) && !(keys & (1 << k)))
+                if(send_event)
                 {
-                    send_event = true;
-                    // Check timestamp
-                    if((now - key_ts[k]) >= kbd_long_interval)
-                        long_press = true;
+                    kbd_msg_t msg;
+                    msg.long_press = long_press;
+                    // OR the saved key status with the current key status
+                    // Do this because the new key status is got when the
+                    // key is lifted, and does not contain the pressed key anymore
+                    msg.keys = keys | prev_keys;
+                    // Send event_t as void * message to use with OSQPost
+                    event_t event;
+                    event.type = EVENT_KBD;
+                    event.payload = msg.value;
+                    // Send keyboard status in queue
+                    OSQPost(&ui_queue, (void *)event.value, sizeof(event_t), 
+                            OS_OPT_POST_FIFO + OS_OPT_POST_NO_SCHED, &os_err);
                 }
+                // Save current keyboard state as previous
+                prev_keys = keys;
             }
-            if(send_event)
-            {
-                kbd_msg_t msg;
-                msg.long_press = long_press;
-                // OR the saved key status with the current key status
-                // Do this because the new key status is got when the
-                // key is lifted, and does not contain the pressed key anymore
-                msg.keys = keys | prev_keys;
-                // Send event_t as void * message to use with OSQPost
-                event_t event;
-                event.type = EVENT_KBD;
-                event.payload = msg.value;
-                // Send keyboard status in queue
-                OSQPost(&ui_queue, (void *)event.value, sizeof(event_t), 
-                        OS_OPT_POST_FIFO + OS_OPT_POST_NO_SCHED, &os_err);
-            }
-            // Save current keyboard state as previous
-            prev_keys = keys;
         }
         // Read keyboard state at 20Hz
         OSTimeDlyHMSM(0u, 0u, 0u, 50u, OS_OPT_TIME_HMSM_STRICT, &os_err);
