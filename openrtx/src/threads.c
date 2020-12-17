@@ -165,22 +165,25 @@ static void kbd_task(void *arg)
             }
             if(send_event)
             {
-            kbd_msg_t msg;
-            msg.long_press = long_press;
-            msg.keys = keys;
-            // Send event_t as void * message to use with OSQPost
-            event_t event;
-            event.type = EVENT_KBD;
-            event.payload = msg.value;
-            // Send keyboard status in queue
-            OSQPost(&ui_queue, (void *)event.value, sizeof(event_t), 
-                    OS_OPT_POST_FIFO + OS_OPT_POST_NO_SCHED, &os_err);
+                kbd_msg_t msg;
+                msg.long_press = long_press;
+                // OR the saved key status with the current key status
+                // Do this because the new key status is got when the
+                // key is lifted, and does not contain the pressed key anymore
+                msg.keys = keys | prev_keys;
+                // Send event_t as void * message to use with OSQPost
+                event_t event;
+                event.type = EVENT_KBD;
+                event.payload = msg.value;
+                // Send keyboard status in queue
+                OSQPost(&ui_queue, (void *)event.value, sizeof(event_t), 
+                        OS_OPT_POST_FIFO + OS_OPT_POST_NO_SCHED, &os_err);
             }
             // Save current keyboard state as previous
             prev_keys = keys;
         }
-        // Read keyboard state at 5Hz
-        OSTimeDlyHMSM(0u, 0u, 0u, 200u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+        // Read keyboard state at 20Hz
+        OSTimeDlyHMSM(0u, 0u, 0u, 50u, OS_OPT_TIME_HMSM_STRICT, &os_err);
     }
 }
 
