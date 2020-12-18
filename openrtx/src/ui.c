@@ -185,11 +185,11 @@ layout_t _ui_calculateLayout()
     #endif
 
     // Calculate printing positions
-    point_t top_pos    = {0, top_h - vertical_pad};
-    point_t line1_pos  = {0, top_h + line1_h - line_pad};
-    point_t line2_pos  = {0, top_h + line1_h + line2_h - line_pad};
-    point_t line3_pos  = {0, top_h + line1_h + line2_h + line3_h - line_pad};
-    point_t bottom_pos = {0, top_h + line1_h + line2_h + line3_h + bottom_h - vertical_pad};
+    point_t top_pos    = {horizontal_pad, top_h - vertical_pad};
+    point_t line1_pos  = {horizontal_pad, top_h + line1_h - line_pad};
+    point_t line2_pos  = {horizontal_pad, top_h + line1_h + line2_h - line_pad};
+    point_t line3_pos  = {horizontal_pad, top_h + line1_h + line2_h + line3_h - line_pad};
+    point_t bottom_pos = {horizontal_pad, top_h + line1_h + line2_h + line3_h + bottom_h - vertical_pad};
 
     layout_t new_layout =
     {

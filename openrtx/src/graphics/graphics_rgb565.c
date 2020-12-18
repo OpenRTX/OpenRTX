@@ -196,11 +196,13 @@ static inline uint16_t get_line_size(GFXfont f,
  * @param alinment: enum representing the text alignment
  * @param line_size: the size of the current text line in pixels
  */
-static inline uint16_t get_reset_x(textAlign_t alignment, uint16_t line_size) {
+static inline uint16_t get_reset_x(textAlign_t alignment,
+                                   uint16_t line_size,
+                                   uint16_t startx) {
     switch(alignment)
     {
         case TEXT_ALIGN_LEFT:
-            return 0;
+            return startx;
         case TEXT_ALIGN_CENTER:
             return (SCREEN_WIDTH - line_size)/2;
         case TEXT_ALIGN_RIGHT:
@@ -219,7 +221,7 @@ void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t ali
 
     // Compute size of the first row in pixels
     uint16_t line_size = get_line_size(f, text, len);
-    uint16_t reset_x = get_reset_x(alignment, line_size);
+    uint16_t reset_x = get_reset_x(alignment, line_size, start.x);
     start.x = reset_x;
 
     /* For each char in the string */
@@ -248,7 +250,7 @@ void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t ali
         if (start.x + glyph.xAdvance > SCREEN_WIDTH) {
             // Compute size of the first row in pixels
             line_size = get_line_size(f, text, len);
-            start.x = reset_x = get_reset_x(alignment, line_size);
+            start.x = reset_x = get_reset_x(alignment, line_size, start.x);
             start.y += f.yAdvance;
         }
 
