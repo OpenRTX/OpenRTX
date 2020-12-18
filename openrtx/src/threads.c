@@ -164,10 +164,6 @@ static void kbd_task(void *arg)
                 {
                     // Save timestamp
                     key_ts[k] = now;
-                }
-                // Key has been released
-                else if((prev_keys & (1 << k)) && !(keys & (1 << k)))
-                {
                     send_event = true;
                 }
             }
@@ -175,7 +171,7 @@ static void kbd_task(void *arg)
         // Some key is kept pressed
         else if(keys != 0)
         {
-            // Check for long-press timers
+            // Check for saved timestamp to trigger long-presses
             for(uint8_t k=0; k < kbd_num_keys; k++)
             {
                 // The key is pressed and its long-press timer is over
