@@ -1,7 +1,5 @@
 # Meson build dirs
-build_linux
-build_arm
-build_md380
+build_*
 
 # Prerequisites
 *.d
@@ -48,3 +46,6 @@ build_md380
 # Kdevelop files
 *.kdev4
 .kdev4/
+
+# gutentags
+tags
