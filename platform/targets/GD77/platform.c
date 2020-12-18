@@ -21,35 +21,24 @@
 #include <platform.h>
 #include <gpio.h>
 #include "hwconfig.h"
-#include "rtc.h"
-
-curTime_t rtc_getTime()
-{
-    /* TODO */
-    curTime_t t;
-    t.hour   = 12;
-    t.minute = 12;
-    t.second = 12;
-    t.year  = 20;
-    t.day   = 4;
-    t.month = 12;
-    t.date  = 12;
-    return t;
-}
 
 void platform_init()
 {
     /* Configure GPIOs */
     gpio_setMode(GREEN_LED, OUTPUT);
-    gpio_setMode(RED_LED, OUTPUT);
+    gpio_setMode(RED_LED,   OUTPUT);
 
     gpio_setMode(LCD_BKLIGHT, OUTPUT);
     gpio_clearPin(LCD_BKLIGHT);
+
+    gpio_setMode(PTT_SW, INPUT);
 }
 
 void platform_terminate()
 {
-    /* TODO */
+    gpio_clearPin(LCD_BKLIGHT);
+    gpio_clearPin(RED_LED);
+    gpio_clearPin(GREEN_LED);
 }
 
 float platform_getVbat()
@@ -72,14 +61,14 @@ float platform_getVolumeLevel()
 
 uint8_t platform_getChSelector()
 {
-    /* TODO */
+    /* GD77 does not have a channel selector */
     return 0;
 }
 
 bool platform_getPttStatus()
 {
-    /* TODO */
-    return false;
+    /* PTT line has a pullup resistor with PTT switch closing to ground */
+    return (gpio_readPin(PTT_SW) == 0) ? true : false;
 }
 
 void platform_ledOn(led_t led)
@@ -119,6 +108,7 @@ void platform_ledOff(led_t led)
 void platform_beepStart(uint16_t freq)
 {
     /* TODO */
+
     (void) freq;
 }
 
@@ -129,7 +119,7 @@ void platform_beepStop()
 
 void platform_setBacklightLevel(uint8_t level)
 {
-    /* TODO */
+    /* TODO: backlight dimming */
     if(level > 1)
     {
         gpio_setPin(LCD_BKLIGHT);

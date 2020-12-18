@@ -18,45 +18,55 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef HWCONFIG_H
-#define HWCONFIG_H
+#include <os.h>
+#include "rtc.h"
 
-#include "MK22F51212.h"
+/*
+ * NOTE: even if the MK22FN512 MCU has an RTC, it is unusable in GDx platforms
+ * because they lacks of the proper hardware necessary to run the RTC also when
+ * the MCU is powered off.
+ * We thus provide a stub implementation of the RTC API to avoid cluttering the
+ * main code with #ifdefs checking wheter or not the RTC can be actually used.
+ */
 
-/* Screen dimensions */
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
+void rtc_init() { }
 
-/* Battery type */
-#define BAT_LIPO_2S
+void rtc_shutdown() { }
 
-/* Display */
-#define LCD_BKLIGHT GPIOC,4
-#define LCD_CS      GPIOC,8
-#define LCD_RST     GPIOC,9
-#define LCD_RS      GPIOC,10
-#define LCD_CLK     GPIOC,11
-#define LCD_DAT     GPIOC,12
+void rtc_setTime(curTime_t t)
+{
+    (void) t;
+}
 
-/* Signalling LEDs */
-#define GREEN_LED  GPIOB,18
-#define RED_LED    GPIOC,14
+void rtc_setHour(uint8_t hours, uint8_t minutes, uint8_t seconds)
+{
+    (void) hours;
+    (void) minutes;
+    (void) seconds;
+}
 
-/* Keyboard */
-#define KB_ROW0 GPIOB,19
-#define KB_ROW1 GPIOB,20
-#define KB_ROW2 GPIOB,21
-#define KB_ROW3 GPIOB,22
-#define KB_ROW4 GPIOB,23
+void rtc_setDate(uint8_t date, uint8_t month, uint8_t year)
+{
+    (void) date;
+    (void) month;
+    (void) year;
+}
 
-#define KB_COL0 GPIOC,0
-#define KB_COL1 GPIOC,1
-#define KB_COL2 GPIOC,2
-#define KB_COL3 GPIOC,3
+curTime_t rtc_getTime()
+{
+    curTime_t t;
 
-#define PTT_SW   GPIOA,1
-#define FUNC_SW  GPIOA,2
-#define FUNC2_SW GPIOB,1
-#define MONI_SW  GPIOB,9
+    t.hour   = 12;
+    t.minute = 12;
+    t.second = 12;
+    t.year  = 20;
+    t.day   = 4;
+    t.month = 12;
+    t.date  = 12;
 
-#endif
+    return t;
+}
+
+void rtc_dstSet() { }
+
+void rtc_dstClear() { }
