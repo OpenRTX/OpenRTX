@@ -69,7 +69,7 @@ static const uint8_t kbd_num_keys = 29;
 /**
  * Time interval in ticks after which a keypress is considered a long-press
  */
-static const uint16_t kbd_long_interval = OS_CFG_TICK_RATE_HZ * 1;
+static const uint16_t kbd_long_interval = OS_CFG_TICK_RATE_HZ / 2;
 
 /**
  * Structure that represents a keyboard event payload
