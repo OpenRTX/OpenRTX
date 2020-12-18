@@ -223,6 +223,7 @@ mduv380_def = def + stm32f405_def + {'PLATFORM_MDUV380': ''}
 gd77_src = src + mk22fn512_src + ['platform/targets/GD77/platform.c',
                                   'platform/drivers/display/UC1701_GD77.c',
                                   'platform/drivers/keyboard/keyboard_GD77.c',
+                                  'platform/drivers/baseband/rtx_GDx.c',
                                   'openrtx/src/graphics/graphics_bw.c']
 
 gd77_inc = inc + mk22fn512_inc + ['platform/targets/GD77']
