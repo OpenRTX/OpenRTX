@@ -78,6 +78,9 @@ static void ui_task(void *arg)
     (void) arg;
     OS_ERR os_err;
     OS_MSG_SIZE msg_size = 0;
+    rtxStatus_t rtx_cfg;
+    // RTX needs synchronization
+    bool sync_rtx = true;
 
     // Get initial state local copy
     OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
@@ -99,11 +102,29 @@ static void ui_task(void *arg)
         // Lock mutex, read and write state
         OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err); 
         // React to keypresses and update FSM inside state
-        ui_updateFSM(event);
+        ui_updateFSM(event, &sync_rtx);
         // Update state local copy
         last_state = state;
         // Unlock mutex
         OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
+
+        // If synchronization needed take mutex and update RTX configuration
+        if(sync_rtx)
+        {
+            OSMutexPend(&rtx_mutex, 0, OS_OPT_PEND_BLOCKING, NULL, &os_err);
+            rtx_cfg.opMode = state.channel.mode;
+            rtx_cfg.bandwidth = state.channel.bandwidth;
+            rtx_cfg.rxFrequency = state.channel.rx_frequency;
+            rtx_cfg.txFrequency = state.channel.tx_frequency;
+            rtx_cfg.txPower = state.channel.power;
+            rtx_cfg.sqlLevel = state.channel.squelch;
+            rtx_cfg.rxTone = state.channel.fm.ctcDcs_rx;
+            rtx_cfg.txTone = state.channel.fm.ctcDcs_tx;
+            OSMutexPost(&rtx_mutex, OS_OPT_POST_NONE, &os_err);
+
+            rtx_configure(&rtx_cfg);
+            sync_rtx = false;
+        }
 
         // Redraw GUI based on last state copy
         bool renderNeeded = ui_updateGUI(last_state);

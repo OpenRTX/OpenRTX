@@ -22,17 +22,8 @@
 #define CPS_H
 
 #include <stdint.h>
+#include <rtx.h>
 #include <datatypes.h>
-
-/**
- * \enum mode_t Enumeration type defining the operating mode associated to each
- * channel.
- */
-enum mode_t
-{
-    FM  = 0,      /**< Analog FM mode */
-    DMR = 1          /**< DMR mode */
-};
 
 /**
  * \enum admit_t Enumeration type defining the admission criteria to a the
@@ -44,16 +35,6 @@ enum admit_t
     FREE   = 1,  /**< Transmit only if channel si free            */
     TONE   = 2,  /**< Transmit on matching tone                   */
     COLOR  = 3   /**< Transmit only if color code is not used yet */
-};
-
-/**
- * \enum bw_t Enumeration type defining the bandwidth of a the channel.
- */
-enum bw_t
-{
-    BW_12_5 = 0, /**< Bandwidth is 12.5kHz */
-    BW_20   = 1, /**< Bandwidth is 20kHz   */
-    BW_25   = 2  /**< Bandwidth is 25kHz   */
 };
 
 /**

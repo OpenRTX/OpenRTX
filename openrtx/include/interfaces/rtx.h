@@ -45,18 +45,25 @@ typedef struct
 }
 rtxStatus_t;
 
-// enum bandwidth
-// {
-//     BW_12_5 = 0,    /**< 12.5kHz bandwidth */
-//     BW_20   = 1,    /**< 20kHz bandwidth   */
-//     BW_25   = 2     /**< 25kHz bandwidth   */
-// };
-// 
-// enum opmode
-// {
-//     FM  = 0,        /**< Analog FM */
-//     DMR = 1         /**< DMR       */
-// };
+/**
+ * \enum bandwidth Enumeration type defining the bandwidth of the channel.
+ */
+enum bandwidth
+{
+    BW_12_5 = 0,    /**< 12.5kHz bandwidth */
+    BW_20   = 1,    /**< 20kHz bandwidth   */
+    BW_25   = 2     /**< 25kHz bandwidth   */
+};
+
+/**
+ * \enum opmode Enumeration type defining the operating mode associated to each
+ * channel.
+ */
+enum opmode
+{
+    FM  = 0,        /**< Analog FM */
+    DMR = 1         /**< DMR       */
+};
 
 enum opstatus
 {

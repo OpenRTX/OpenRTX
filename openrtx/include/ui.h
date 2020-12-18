@@ -59,8 +59,9 @@ void ui_drawSplashScreen();
  * current radio state and the keys pressed.
  * @param last_state: A local copy of the previous radio state
  * @param event: An event from other threads
+ * @param sync_rtx: If true RTX needs to be synchronized
  */
-void ui_updateFSM(event_t event);
+void ui_updateFSM(event_t event, bool *sync_rtx);
 
 /**
  * This function redraws the GUI based on the last radio state.

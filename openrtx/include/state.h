@@ -39,7 +39,6 @@ typedef struct
 
     uint8_t ui_screen;
     uint8_t tuner_mode;
-    uint8_t radio_mode;
     
     //time_t rx_status_tv;
     //bool rx_status;
@@ -63,13 +62,6 @@ enum TunerMode
     CH,
     SCAN,
     CHSCAN
-};
-
-enum RadioMode
-{
-    MODE_FM = 0,
-    MODE_NFM,
-    MODE_DMR,
 };
 
 enum RtxStatus
