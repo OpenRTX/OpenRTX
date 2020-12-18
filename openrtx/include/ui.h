@@ -39,7 +39,8 @@ enum uiScreen
     MENU_CONTACTS,
     MENU_SMS,
     MENU_GPS,
-    MENU_SETTINGS
+    MENU_SETTINGS,
+    LOW_BAT
 };
 
 /**

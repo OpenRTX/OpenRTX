@@ -52,6 +52,8 @@ typedef struct
     uint8_t rtxStatus;
     uint8_t sqlLevel;
     uint8_t voxLevel;
+
+    bool emergency;
 }
 state_t;
 

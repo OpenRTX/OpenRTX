@@ -354,7 +354,7 @@ void ui_drawSplashScreen()
     #endif
 }
 
-void ui_drawLowBatteryScreen()
+bool _ui_drawLowBatteryScreen()
 {
     gfx_clearScreen();
     uint16_t bat_width = SCREEN_WIDTH / 2;
@@ -375,10 +375,23 @@ void ui_drawLowBatteryScreen()
               FONT_SIZE_6PT,
               TEXT_ALIGN_CENTER,
               color_white);
+    return true;
 }
 
 void ui_updateFSM(event_t event)
 {
+    // Check if battery has enough charge to operate
+    float charge = battery_getCharge(state.v_bat);
+    if (!state.emergency && charge <= 0)
+    {
+        state.ui_screen = LOW_BAT;
+        if(event.type == EVENT_KBD && event.payload) {
+            state.ui_screen = MAIN_VFO;
+            state.emergency = true;
+        }
+        return;
+    }
+
     // Process pressed keys
     if(event.type == EVENT_KBD)
     {
@@ -439,6 +452,10 @@ bool ui_updateGUI(state_t last_state)
         // Top menu screen
         case MENU_TOP:
             screen_update = _ui_drawMenuTop();
+            break;
+        // Low battery screen
+        case LOW_BAT:
+            screen_update = _ui_drawLowBatteryScreen();
             break;
     }
     return screen_update;
