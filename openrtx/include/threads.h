@@ -48,12 +48,7 @@ void create_threads();
 /**
  * Stack size for baseband control task, in bytes.
  */
-#define RTX_TASK_STKSIZE 128
-
-/**
- * Stack size for DMR task, in bytes.
- */
-#define DMR_TASK_STKSIZE 128
+#define RTX_TASK_STKSIZE 512
 
 #else /* __arm__ */
 
@@ -73,11 +68,6 @@ void create_threads();
  * Stack size for baseband control task, in bytes.
  */
 #define RTX_TASK_STKSIZE 1024
-
-/**
- * Stack size for DMR task, in bytes.
- */
-#define DMR_TASK_STKSIZE 1024
 
 #endif /* __arm__ */
 
