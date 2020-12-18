@@ -35,14 +35,16 @@ void state_init()
     state.v_bat = platform_getVbat();
 
     state.channelInfoUpdated = true;
-    state.channel.mode = 0;
-    state.channel.bandwidth = 0;
-    state.channel.power = 0;
+    state.channel.mode = FM;
+    state.channel.bandwidth = BW_25;
+    state.channel.power = 1.0;
     state.channel.rx_frequency = 430000000;
     state.channel.tx_frequency = 430000000;
+    state.channel.fm.ctcDcs_rx = 0;
+    state.channel.fm.ctcDcs_tx = 719;
 
     state.rtxStatus = RTX_OFF;
-    state.sqlLevel = 0;
+    state.sqlLevel = 3;
     state.voxLevel = 0;
 
     state.emergency = false;
