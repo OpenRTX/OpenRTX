@@ -388,7 +388,6 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
                                                      * sizeof(uint16_t)));
     DMA2_Stream7->M0AR = LCD_FSMC_ADDR_DATA;
     DMA2_Stream7->CR = DMA_SxCR_CHSEL         /* Channel 7                   */
-                     | DMA_SxCR_PL_0          /* Medium priority             */
                      | DMA_SxCR_PINC          /* Increment source pointer    */
                      | DMA_SxCR_DIR_1         /* Memory to memory            */
                      | DMA_SxCR_TCIE          /* Transfer complete interrupt */

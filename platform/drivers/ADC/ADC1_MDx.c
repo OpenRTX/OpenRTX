@@ -100,10 +100,11 @@ void adc1_init()
     DMA2_Stream0->PAR = ((uint32_t) &(ADC1->DR));
     DMA2_Stream0->M0AR = ((uint32_t) &sampleRingBuf);
     DMA2_Stream0->NDTR = 16;
-    DMA2_Stream0->CR = DMA_SxCR_MSIZE_0
-                     | DMA_SxCR_PSIZE_0
-                     | DMA_SxCR_MINC
-                     | DMA_SxCR_CIRC
+    DMA2_Stream0->CR = DMA_SxCR_MSIZE_0     /* Memory size: 16 bit     */
+                     | DMA_SxCR_PSIZE_0     /* Peripheral size: 16 bit */
+                     | DMA_SxCR_PL_0        /* Medium priority         */
+                     | DMA_SxCR_MINC        /* Increment memory        */
+                     | DMA_SxCR_CIRC        /* Circular mode           */
                      | DMA_SxCR_EN;
 
     /* Finally, start conversion */
