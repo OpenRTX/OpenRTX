@@ -170,11 +170,11 @@ static void kbd_task(void *arg)
         // Reset flags and get current time
         long_press = false;
         send_event = false;
-        now = OSTimeGet(&os_err);
         // Lock display mutex and read keyboard status
         OSMutexPend(&display_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
         keys = kbd_getKeys();
         OSMutexPost(&display_mutex, OS_OPT_POST_NONE, &os_err);
+        now = OSTimeGet(&os_err);
         // The key status has changed
         if(keys != prev_keys)
         {
