@@ -162,12 +162,28 @@ inline void gfx_setPixel(point_t pos, color_t color)
         return; // off the screen
 
 #ifdef PIX_FMT_RGB565
-    buf[pos.x + pos.y*SCREEN_WIDTH] = _true2highColor(color);
+    // Blend old pixel value and new one
+    if (color.alpha < 255) {
+        uint8_t alpha = color.alpha;
+        rgb565_t new_pixel = _true2highColor(color);
+        uint16_t raw_pixel = __builtin_bswap16(
+                *((uint16_t *)buf + pos.x + pos.y*SCREEN_WIDTH));
+        rgb565_t old_pixel = *((rgb565_t*) &raw_pixel);
+        rgb565_t pixel = {((255-alpha)*old_pixel.b+alpha*new_pixel.b)/255,
+                          ((255-alpha)*old_pixel.g+alpha*new_pixel.g)/255,
+                          ((255-alpha)*old_pixel.r+alpha*new_pixel.r)/255};
+        buf[pos.x + pos.y*SCREEN_WIDTH] = pixel;
+    } else {
+        buf[pos.x + pos.y*SCREEN_WIDTH] = _true2highColor(color);
+    }
 #elif defined PIX_FMT_BW
-    uint16_t cell = (pos.x + pos.y*SCREEN_WIDTH) / 8;
-    uint16_t elem = (pos.x + pos.y*SCREEN_WIDTH) % 8;
-    buf[cell] &= ~(1 << elem);
-    buf[cell] |= (_color2bw(color) << elem);
+    // Ignore more than half transparent pixels
+    if (color.alpha >= 128) {
+        uint16_t cell = (pos.x + pos.y*SCREEN_WIDTH) / 8;
+        uint16_t elem = (pos.x + pos.y*SCREEN_WIDTH) % 8;
+        buf[cell] &= ~(1 << elem);
+        buf[cell] |= (_color2bw(color) << elem);
+    }
 #endif
 }
 
@@ -349,16 +365,16 @@ void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t ali
  *
  */
 void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, float percentage) {
-    color_t white =  {255, 255, 255};
-    color_t black =  {0,   0,   0  };
+    color_t white =  {255, 255, 255, 255};
+    color_t black =  {0,   0,   0  , 255};
 
     // Cap percentage to 1
     percentage = (percentage > 1.0f) ? 1.0f : percentage;
 
 #ifdef PIX_FMT_RGB565
-    color_t green =  {0,   255, 0  };
-    color_t yellow = {250, 180, 19 };
-    color_t red =    {255, 0,   0  };
+    color_t green =  {0,   255, 0  , 255};
+    color_t yellow = {250, 180, 19 , 255};
+    color_t red =    {255, 0,   0  , 255};
 
     // Select color according to percentage
     color_t bat_color = yellow;

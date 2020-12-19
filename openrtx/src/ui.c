@@ -105,9 +105,9 @@ typedef struct layout_t
     fontSize_t bottom_font;
 } layout_t;
 
-const color_t color_white = {255, 255, 255};
-const color_t color_grey = {60, 60, 60};
-const color_t yellow_fab413 = {250, 180, 19};
+const color_t color_white = {255, 255, 255, 255};
+const color_t color_grey = {60, 60, 60, 255};
+const color_t yellow_fab413 = {250, 180, 19, 255};
 
 layout_t layout;
 bool layout_ready = false;
@@ -286,6 +286,11 @@ bool _ui_drawMainVFO(state_t* last_state)
     {
         gfx_clearScreen();
         _ui_drawBackground();
+        point_t splash_origin = {0, SCREEN_HEIGHT / 2 - 6};
+        color_t yellow = yellow_fab413;
+        yellow.alpha = 0.1f * 255;
+        gfx_print(splash_origin, "O P N\nR T X", FONT_SIZE_12PT, TEXT_ALIGN_CENTER,
+                  yellow);
         _ui_drawTopBar(last_state);
         _ui_drawMiddleVFO(last_state);
         _ui_drawBottomBar();
@@ -361,7 +366,6 @@ bool _ui_drawLowBatteryScreen()
     gfx_drawBattery(bat_pos, bat_width, bat_height, 0.1f);
     point_t text_pos_1 = {0, SCREEN_HEIGHT * 2 / 3};
     point_t text_pos_2 = {0, SCREEN_HEIGHT * 2 / 3 + 16};
-    const color_t color_white = {255, 255, 255};
 
     gfx_print(text_pos_1,
               "For emergency use",
