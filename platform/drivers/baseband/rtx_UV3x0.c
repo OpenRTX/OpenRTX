@@ -25,7 +25,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <rtx.h>
-#include <stdio.h>
 
 OS_MUTEX *cfgMutex;               /* Mutex for incoming config messages */
 OS_Q cfgMailbox;                  /* Queue for incoming config messages */
@@ -43,8 +42,6 @@ void rtx_init(OS_MUTEX *m)
               (CPU_CHAR *) "",
               (OS_MSG_QTY) 1,
               (OS_ERR   *) &err);
-
-    printf("RTX configured\n");
 
     /*
      * Default initialisation for rtx status
