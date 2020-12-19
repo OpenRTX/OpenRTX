@@ -43,11 +43,6 @@
 #define SCREEN_HEIGHT 128
 #endif
 
-#if !defined(PIX_FMT_BW) && !defined(PIX_FMT_GRAYSC) && !defined(PIX_FMT_RGB565)
-#warning No pixel format defined, defaulting to RGB565
-#define PIX_FMT_RGB565
-#endif
-
 #ifdef PIX_FMT_RGB565
 #define PIXEL_FORMAT SDL_PIXELFORMAT_RGB565
 #define PIXEL_SIZE uint16_t

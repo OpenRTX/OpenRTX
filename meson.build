@@ -16,6 +16,7 @@ openrtx_src = ['openrtx/src/bootstrap.c',
                'openrtx/src/ui.c',
                'openrtx/src/threads.c',
                'openrtx/src/battery.c',
+               'openrtx/src/graphics.c',
                'openrtx/src/calibUtils.c']
 
 
@@ -153,12 +154,6 @@ linux_src = src + ['platform/targets/linux/emulator/emulator.c',
 
 linux_def = def + {'SCREEN_WIDTH': '160', 'SCREEN_HEIGHT': '128', 'PIX_FMT_RGB565': ''}
 
-if 'PIX_FMT_RGB565' in linux_def
-  linux_src = linux_src + ['openrtx/src/graphics/graphics_rgb565.c']
-elif 'PIX_FMT_BW' in linux_def
-  linux_src = linux_src + ['openrtx/src/graphics/graphics_bw.c']
-endif
-
 linux_inc = inc + ['rtos/uC-OS3/Ports/POSIX',
                    'rtos/uC-CPU/Posix',
                    'platform/targets/linux',
@@ -182,8 +177,7 @@ md380_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDx.c',
                                    'platform/drivers/baseband/pll_MD3x0.c',
                                    'platform/drivers/baseband/rtx_MD3x0.c',
                                    'platform/drivers/baseband/HR-C5000_MD3x0.c',
-                                   'platform/targets/MD-380/platform.c',
-                                   'openrtx/src/graphics/graphics_rgb565.c']
+                                   'platform/targets/MD-380/platform.c']
 
 md380_inc = inc + stm32f405_inc + ['platform/targets/MD-380']
 md380_def = def + stm32f405_def + {'PLATFORM_MD380': ''}
@@ -199,8 +193,7 @@ md390_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDx.c',
                                    'platform/drivers/baseband/pll_MD3x0.c',
                                    'platform/drivers/baseband/rtx_MD3x0.c',
                                    'platform/drivers/baseband/HR-C5000_MD3x0.c',
-                                   'platform/targets/MD-390/platform.c',
-                                   'openrtx/src/graphics/graphics_rgb565.c']
+                                   'platform/targets/MD-390/platform.c']
 
 md390_inc = inc + stm32f405_inc + ['platform/targets/MD-390']
 md390_def = def + stm32f405_def + {'PLATFORM_MD390': ''}
@@ -213,8 +206,7 @@ mduv380_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDx.c',
                                      'platform/drivers/NVM/nvmem_MDUV3x0.c',
                                      'platform/drivers/ADC/ADC1_MDx.c',
                                      'platform/drivers/baseband/rtx_UV3x0.c',
-                                     'platform/targets/MD-UV380/platform.c',
-                                     'openrtx/src/graphics/graphics_rgb565.c']
+                                     'platform/targets/MD-UV380/platform.c']
 
 mduv380_inc = inc + stm32f405_inc + ['platform/targets/MD-UV380']
 mduv380_def = def + stm32f405_def + {'PLATFORM_MDUV380': ''}
@@ -224,8 +216,7 @@ mduv380_def = def + stm32f405_def + {'PLATFORM_MDUV380': ''}
 gd77_src = src + mk22fn512_src + ['platform/targets/GD77/platform.c',
                                   'platform/drivers/display/UC1701_GD77.c',
                                   'platform/drivers/keyboard/keyboard_GD77.c',
-                                  'platform/drivers/baseband/rtx_GDx.c',
-                                  'openrtx/src/graphics/graphics_bw.c']
+                                  'platform/drivers/baseband/rtx_GDx.c']
 
 gd77_inc = inc + mk22fn512_inc + ['platform/targets/GD77']
 gd77_def = def + mk22fn512_def + {'PLATFORM_GD77': ''}

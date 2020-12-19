@@ -18,18 +18,19 @@
  ***************************************************************************/
 
 /**
- * This source file provides an RGB implementation for the graphics.h interface
- * It is suitable for color displays, it will have grayscale and B/W counterparts
+ * This source file provides an  implementation for the graphics.h interface
+ * It is suitable for both color, grayscale and B/W display
  */
 
 #include <os.h>
 #include <string.h>
 #include <stdio.h>
 #include <hwconfig.h>
-#include "display.h"
-#include "graphics.h"
+#include <display.h>
+#include <graphics.h>
 
-/* This graphics driver is meant for an RGB565 little endian pixel format.
+#ifdef PIX_FMT_RGB565
+/* This specialization is meant for an RGB565 little endian pixel format.
  * Thus, to accomodate for the endianness, the fields in struct rgb565_t have to
  * be written in reversed order.
  *
@@ -44,14 +45,64 @@ typedef struct
     uint16_t r : 5;
 } rgb565_t;
 
+rgb565_t _true2highColor(color_t true_color)
+{
+    rgb565_t high_color;
+    high_color.r = true_color.r >> 3;
+    high_color.g = true_color.g >> 2;
+    high_color.b = true_color.b >> 3;
+
+    return high_color;
+}
+
+#define PIXEL_T rgb565_t
+#elif defined PIX_FMT_BW
+/**
+ * This specialization is meant for black and white pixel format.
+ * It is suitable for monochromatic displays with 1 bit per pixel,
+ * it will have RGB and grayscale counterparts
+ */
+
+typedef enum
+{
+    WHITE = 0,
+    BLACK = 1,
+} bw_t;
+
+bw_t _color2bw(color_t true_color)
+{
+    if(true_color.r == 0 &&
+       true_color.g == 0 &&
+       true_color.b == 0)
+        return WHITE;
+    else
+        return BLACK;
+}
+
+#define PIXEL_T uint8_t
+#else
+#error Please define a pixel format type into hwconfig.h or meson.build
+#endif
+
 bool initialized = 0;
-rgb565_t *buf;
+PIXEL_T *buf;
+uint16_t fbSize;
 
 void gfx_init()
 {
     display_init();
-    buf = (rgb565_t *)(display_getFrameBuffer());
+    buf = (PIXEL_T *)(display_getFrameBuffer());
     initialized = 1;
+
+// Calculate framebuffer size
+#ifdef PIX_FMT_RGB565
+    fbSize = SCREEN_HEIGHT * SCREEN_WIDTH * sizeof(PIXEL_T);
+#elif defined PIX_FMT_BW
+    fbSize = (SCREEN_HEIGHT * SCREEN_WIDTH) / 8;
+    /* Compensate for eventual truncation error in division */
+    if((fbSize * 8) < (SCREEN_HEIGHT * SCREEN_WIDTH)) fbSize += 1;
+    fbSize *= sizeof(uint8_t);
+#endif
 }
 
 void gfx_terminate()
@@ -75,22 +126,12 @@ bool gfx_renderingInProgress()
     return display_renderingInProgress();
 }
 
-rgb565_t _true2highColor(color_t true_color)
-{
-    rgb565_t high_color;
-    high_color.r = true_color.r >> 3;
-    high_color.g = true_color.g >> 2;
-    high_color.b = true_color.b >> 3;
-
-    return high_color;
-}
-
 void gfx_clearRows(uint8_t startRow, uint8_t endRow)
 {
     if(!initialized) return;
     if(endRow < startRow) return;
-    uint16_t start = startRow * SCREEN_WIDTH * sizeof(rgb565_t);
-    uint16_t height = endRow - startRow * SCREEN_WIDTH * sizeof(rgb565_t);
+    uint16_t start = startRow * SCREEN_WIDTH * sizeof(PIXEL_T);
+    uint16_t height = endRow - startRow * SCREEN_WIDTH * sizeof(PIXEL_T);
     // Set the specified rows to 0x00 = make the screen black
     memset(buf + start, 0x00, height);
 }
@@ -99,39 +140,46 @@ void gfx_clearScreen()
 {
     if(!initialized) return;
     // Set the whole framebuffer to 0x00 = make the screen black
-    memset(buf, 0x00, sizeof(rgb565_t) * SCREEN_WIDTH * SCREEN_HEIGHT);
+    memset(buf, 0x00, fbSize);
 }
 
 void gfx_fillScreen(color_t color)
 {
     if(!initialized) return;
-    rgb565_t color_565 = _true2highColor(color);
     for(int y = 0; y < SCREEN_HEIGHT; y++)
     {
         for(int x = 0; x < SCREEN_WIDTH; x++)
         {
-            buf[x + y*SCREEN_WIDTH] = color_565;
+            point_t pos = {x, y};
+            gfx_setPixel(pos, color);
         }
     }
 }
 
-void gfx_setPixel(point_t pos, color_t color)
+inline void gfx_setPixel(point_t pos, color_t color)
 {
     if (pos.x >= SCREEN_WIDTH || pos.y >= SCREEN_HEIGHT)
         return; // off the screen
 
+#ifdef PIX_FMT_RGB565
     buf[pos.x + pos.y*SCREEN_WIDTH] = _true2highColor(color);
+#elif defined PIX_FMT_BW
+    uint16_t cell = (pos.x + pos.y*SCREEN_WIDTH) / 8;
+    uint16_t elem = (pos.x + pos.y*SCREEN_WIDTH) % 8;
+    buf[cell] &= ~(1 << elem);
+    buf[cell] |= (_color2bw(color) << elem);
+#endif
 }
 
 void gfx_drawLine(point_t start, point_t end, color_t color)
 {
     if(!initialized) return;
-    rgb565_t color_565 = _true2highColor(color);
     for(int y = start.y; y <= end.y; y++)
     {
         for(int x = start.x; x <= end.x; x++)
         {
-            buf[x + y*SCREEN_WIDTH] = color_565;
+            point_t pos = {x, y};
+            gfx_setPixel(pos, color);
         }
     }
 }
@@ -139,7 +187,6 @@ void gfx_drawLine(point_t start, point_t end, color_t color)
 void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color, bool fill)
 {
     if(!initialized) return;
-    rgb565_t color_565 = _true2highColor(color);
     uint16_t x_max = start.x + width - 1;
     uint16_t y_max = start.y + height - 1;
     bool perimeter = 0;
@@ -152,7 +199,11 @@ void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color,
             if(y == start.y || y == y_max || x == start.x || x == x_max) perimeter = 1;
             else perimeter = 0;
             // If fill is false, draw only rectangle perimeter
-            if(fill || perimeter) buf[x + y*SCREEN_WIDTH] = color_565;
+            if(fill || perimeter)
+            {
+                point_t pos = {x, y};
+                gfx_setPixel(pos, color);
+            }
         }
     }
 }
@@ -213,8 +264,6 @@ static inline uint16_t get_reset_x(textAlign_t alignment,
 
 void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t alignment, color_t color) {
 
-    rgb565_t color_565 = _true2highColor(color);
-
     GFXfont f = fonts[size];
 
     size_t len = strlen(text);
@@ -261,9 +310,15 @@ void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t ali
                     bits = bitmap[bo++];
                 }
                 if (bits & 0x80) {
-                    if (start.y + yo + yy < SCREEN_HEIGHT && start.x + xo + xx < SCREEN_WIDTH && start.y + yo + yy > 0 &&  start.x + xo + xx > 0)
-                        buf[(start.y + yo + yy) * SCREEN_WIDTH +
-                            start.x + xo + xx] = color_565;
+                    if (start.y + yo + yy < SCREEN_HEIGHT &&
+                        start.x + xo + xx < SCREEN_WIDTH &&
+                        start.y + yo + yy > 0 &&
+                        start.x + xo + xx > 0)
+                    {
+                        point_t pos = {start.x + xo + xx, start.y + yo + yy};
+                        gfx_setPixel(pos, color);
+
+                    }
                 }
                 bits <<= 1;
             }
@@ -295,13 +350,15 @@ void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t ali
  */
 void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, float percentage) {
     color_t white =  {255, 255, 255};
-    color_t green =  {0,   255, 0  };
-    color_t yellow = {250, 180, 19 };
-    color_t red =    {255, 0,   0  };
     color_t black =  {0,   0,   0  };
 
     // Cap percentage to 1
     percentage = (percentage > 1.0f) ? 1.0f : percentage;
+
+#ifdef PIX_FMT_RGB565
+    color_t green =  {0,   255, 0  };
+    color_t yellow = {250, 180, 19 };
+    color_t red =    {255, 0,   0  };
 
     // Select color according to percentage
     color_t bat_color = yellow;
@@ -309,6 +366,9 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, float perce
         bat_color = red;
     else if (percentage > 0.6)
         bat_color = green;
+#elif defined PIX_FMT_BW
+    color_t bat_color = white;
+#endif
 
     // Draw the battery outline
     gfx_drawRect(start, width, height, white, false);

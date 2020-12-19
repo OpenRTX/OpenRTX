@@ -26,6 +26,9 @@
 #define SCREEN_WIDTH 160
 #define SCREEN_HEIGHT 128
 
+/* Screen pixel format */
+#define PIX_FMT_RGB565
+
 /* Battery type */
 #define BAT_LIPO_2S
 
