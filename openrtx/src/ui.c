@@ -75,7 +75,10 @@
 #include <string.h>
 #include <battery.h>
 
-const char *menuItems[MENU_NUM] =
+#define MENU_NUM 6
+#define MENU_LEN 10
+
+const char *menu_items[MENU_NUM] =
 {
     "Zone",
     "Channels",
@@ -84,7 +87,6 @@ const char *menuItems[MENU_NUM] =
     "GPS",
     "Settings"
 };
-
 
 typedef struct layout_t
 {
@@ -105,13 +107,15 @@ typedef struct layout_t
     fontSize_t bottom_font;
 } layout_t;
 
-const color_t color_white = {255, 255, 255, 255};
+const color_t color_black = {0, 0, 0, 255};
 const color_t color_grey = {60, 60, 60, 255};
+const color_t color_white = {255, 255, 255, 255};
 const color_t yellow_fab413 = {250, 180, 19, 255};
 
 layout_t layout;
 bool layout_ready = false;
 bool redraw_needed = true;
+uint8_t menu_selected = 0;
 
 layout_t _ui_calculateLayout()
 {
@@ -213,7 +217,7 @@ layout_t _ui_calculateLayout()
     return new_layout;
 }
 
-void _ui_drawBackground()
+void _ui_drawVFOBackground()
 {
     // Print top bar line of 1 pixel height
     gfx_drawHLine(layout.top_h, 1, color_grey);
@@ -221,7 +225,7 @@ void _ui_drawBackground()
     gfx_drawHLine(SCREEN_HEIGHT - layout.bottom_h - 1, 1, color_grey);
 }
 
-void _ui_drawTopBar(state_t* last_state)
+void _ui_drawVFOTop(state_t* last_state)
 {
     // Print clock on top bar
     char clock_buf[9] = "";
@@ -253,7 +257,7 @@ void _ui_drawTopBar(state_t* last_state)
               color_white);
 }
 
-void _ui_drawMiddleVFO(state_t* last_state)
+void _ui_drawVFOMiddle(state_t* last_state)
 {
     // Print VFO frequencies
     char freq_buf[20] = "";
@@ -272,10 +276,29 @@ void _ui_drawMiddleVFO(state_t* last_state)
               color_white);
 }
 
-void _ui_drawBottomBar()
+void _ui_drawVFOBottom()
 {
     gfx_print(layout.bottom_pos, "OpenRTX", layout.bottom_font,
               TEXT_ALIGN_CENTER, color_white);
+}
+
+void _ui_drawMenuList(point_t pos, const char *entries[], uint8_t selected)
+{
+    char entry_buf[MENU_LEN] = "";
+    for(int item=0; (item < MENU_NUM) && (pos.y < SCREEN_HEIGHT); item++)
+    {
+        snprintf(entry_buf, sizeof(entry_buf), "%s", entries[item]);
+        if(item == selected)
+        {
+            gfx_drawRect(pos, SCREEN_WIDTH, layout.top_h, color_white, true); 
+            gfx_print(pos, entry_buf, layout.top_font, TEXT_ALIGN_LEFT, color_black);
+        }
+        else
+        {
+            gfx_print(pos, entry_buf, layout.top_font, TEXT_ALIGN_LEFT, color_white);
+        }
+        pos.y += layout.top_h;
+    }
 }
 
 bool _ui_drawMainVFO(state_t* last_state)
@@ -285,15 +308,15 @@ bool _ui_drawMainVFO(state_t* last_state)
     if(redraw_needed)
     {
         gfx_clearScreen();
-        _ui_drawBackground();
+        _ui_drawVFOBackground();
         point_t splash_origin = {0, SCREEN_HEIGHT / 2 - 6};
         color_t yellow = yellow_fab413;
         yellow.alpha = 0.1f * 255;
         gfx_print(splash_origin, "O P N\nR T X", FONT_SIZE_12PT, TEXT_ALIGN_CENTER,
                   yellow);
-        _ui_drawTopBar(last_state);
-        _ui_drawMiddleVFO(last_state);
-        _ui_drawBottomBar();
+        _ui_drawVFOTop(last_state);
+        _ui_drawVFOMiddle(last_state);
+        _ui_drawVFOBottom();
         screen_update = true;
     }
     // Partial GUI page redraw
@@ -301,10 +324,10 @@ bool _ui_drawMainVFO(state_t* last_state)
     else
     {
         gfx_clearScreen();
-        _ui_drawBackground();
-        _ui_drawTopBar(last_state);
-        _ui_drawMiddleVFO(last_state);
-        _ui_drawBottomBar();
+        _ui_drawVFOBackground();
+        _ui_drawVFOTop(last_state);
+        _ui_drawVFOMiddle(last_state);
+        _ui_drawVFOBottom();
         screen_update = true;
     }
     return screen_update;
@@ -322,14 +345,7 @@ bool _ui_drawMenuTop()
                   TEXT_ALIGN_CENTER, color_white);
         // Print menu entries
         point_t pos = {layout.horizontal_pad, layout.line1_h};
-        char entry_buf[MENU_LEN] = "";
-        for(int item=0; (item < MENU_NUM) && (pos.y < SCREEN_HEIGHT); item++)
-        {
-            snprintf(entry_buf, sizeof(entry_buf), "%s", menuItems[item]);
-            gfx_print(pos, entry_buf, layout.top_font,
-                      TEXT_ALIGN_LEFT, color_white);
-            pos.y += layout.top_h;
-        }
+        _ui_drawMenuList(pos, menu_items, menu_selected);
         screen_update = true;
     }
     return screen_update;

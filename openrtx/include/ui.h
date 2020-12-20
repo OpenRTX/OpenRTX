@@ -26,9 +26,6 @@
 #include <stdint.h>
 #include <event.h>
 
-#define MENU_NUM 6
-#define MENU_LEN 10
-
 enum uiScreen
 {
     MAIN_VFO = 0,
