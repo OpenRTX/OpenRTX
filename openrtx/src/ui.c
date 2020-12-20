@@ -290,7 +290,9 @@ void _ui_drawMenuList(point_t pos, const char *entries[], uint8_t selected)
         snprintf(entry_buf, sizeof(entry_buf), "%s", entries[item]);
         if(item == selected)
         {
-            gfx_drawRect(pos, SCREEN_WIDTH, layout.top_h, color_white, true); 
+            // Draw rectangle under selected item, compensating for text height
+            point_t rect_pos = {0, pos.y - layout.top_h + 3};
+            gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.top_h, color_white, true); 
             gfx_print(pos, entry_buf, layout.top_font, TEXT_ALIGN_LEFT, color_black);
         }
         else
@@ -442,9 +444,13 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
             case MENU_TOP:
                 if(msg.keys & KEY_UP)
                 {
+                    if(menu_selected > 0)
+                        menu_selected -= 1;
                 }
                 else if(msg.keys & KEY_DOWN)
                 {
+                    if(menu_selected < MENU_NUM)
+                        menu_selected += 1;
                 }
                 else if(msg.keys & KEY_ESC)
                     // Close Menu
