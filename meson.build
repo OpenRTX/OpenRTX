@@ -222,6 +222,16 @@ gd77_inc = inc + mk22fn512_inc + ['platform/targets/GD77']
 gd77_def = def + mk22fn512_def + {'PLATFORM_GD77': ''}
 
 
+## Baofeng DM-1801
+dm1801_src = src + mk22fn512_src + ['platform/targets/DM-1801/platform.c',
+                                    'platform/drivers/display/UC1701_GD77.c',
+                                    'platform/drivers/keyboard/keyboard_GD77.c',
+                                    'platform/drivers/baseband/rtx_GDx.c']
+
+dm1801_inc = inc + mk22fn512_inc + ['platform/targets/DM-1801']
+dm1801_def = def + mk22fn512_def + {'PLATFORM_DM1801': ''}
+
+
 ##
 ## Compilation defines
 ##
@@ -278,6 +288,14 @@ foreach k, v : gd77_def
   endif
 endforeach
 
+dm1801_args = []
+foreach k, v : dm1801_def
+  if v == ''
+    dm1801_args += '-D@0@'.format(k)
+  else
+    dm1801_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
 
 linux_opts = {'sources': linux_src,
               'c_args': linux_c_args,
@@ -309,6 +327,12 @@ gd77_opts = {'sources': gd77_src,
                             '-Wl,--print-memory-usage'],
              'include_directories':gd77_inc}
 
+dm1801_opts = {'sources': dm1801_src,
+               'c_args': dm1801_args,
+               'link_args' : ['-Wl,-T../platform/mcu/MK22FN512xxx12/linker_script.ld',
+                              '-Wl,--print-memory-usage'],
+               'include_directories':dm1801_inc}
+
 ##
 ## Targets
 ##
@@ -338,6 +362,12 @@ targets = [
 
    {'name': 'gd77',
    'opts': gd77_opts,
+   'flashable': true,
+   'wrap': 'UV3X0',
+   'load_addr': '0x0800C000'},
+
+   {'name': 'dm1801',
+   'opts': dm1801_opts,
    'flashable': true,
    'wrap': 'UV3X0',
    'load_addr': '0x0800C000'},
