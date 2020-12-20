@@ -75,8 +75,13 @@
 #include <string.h>
 #include <battery.h>
 
+// Maximum menu entry length
+#define MAX_ENTRY_LEN 12
+
+// Number of top menu entries
 #define MENU_NUM 6
-#define MENU_LEN 10
+// Number of settings menu entries
+#define SETTINGS_NUM 1
 
 const char *menu_items[MENU_NUM] =
 {
@@ -86,6 +91,11 @@ const char *menu_items[MENU_NUM] =
     "Messages",
     "GPS",
     "Settings"
+};
+
+const char *settings_items[SETTINGS_NUM] =
+{
+    "Time & Date"
 };
 
 typedef struct layout_t
@@ -282,10 +292,11 @@ void _ui_drawVFOBottom()
               TEXT_ALIGN_CENTER, color_white);
 }
 
-void _ui_drawMenuList(point_t pos, const char *entries[], uint8_t selected)
+void _ui_drawMenuList(point_t pos, const char *entries[], 
+                      uint8_t num_entries, uint8_t selected)
 {
-    char entry_buf[MENU_LEN] = "";
-    for(int item=0; (item < MENU_NUM) && (pos.y < SCREEN_HEIGHT); item++)
+    char entry_buf[MAX_ENTRY_LEN] = "";
+    for(int item=0; (item < num_entries) && (pos.y < SCREEN_HEIGHT); item++)
     {
         snprintf(entry_buf, sizeof(entry_buf), "%s", entries[item]);
         if(item == selected)
@@ -335,22 +346,26 @@ bool _ui_drawMainVFO(state_t* last_state)
     return screen_update;
 }
 
-bool _ui_drawMenuTop()
+void _ui_drawMenuTop()
 {
-    bool screen_update = false;
-    // Total GUI page redraw
-    if(redraw_needed)
-    {
-        // Print "menu" on top bar
-        gfx_clearScreen();
-        gfx_print(layout.top_pos, "Menu", layout.top_font,
-                  TEXT_ALIGN_CENTER, color_white);
-        // Print menu entries
-        point_t pos = {layout.horizontal_pad, layout.line1_h};
-        _ui_drawMenuList(pos, menu_items, menu_selected);
-        screen_update = true;
-    }
-    return screen_update;
+    // Print "Menu" on top bar
+    gfx_clearScreen();
+    gfx_print(layout.top_pos, "Menu", layout.top_font,
+              TEXT_ALIGN_CENTER, color_white);
+    // Print menu entries
+    point_t pos = {layout.horizontal_pad, layout.line1_h};
+    _ui_drawMenuList(pos, menu_items, MENU_NUM, menu_selected);
+}
+
+void _ui_drawMenuSettings()
+{
+    // Print "Settings" on top bar
+    gfx_clearScreen();
+    gfx_print(layout.top_pos, "Settings", layout.top_font,
+              TEXT_ALIGN_CENTER, color_white);
+    // Print menu entries
+    point_t pos = {layout.horizontal_pad, layout.line1_h};
+    _ui_drawMenuList(pos, settings_items, SETTINGS_NUM, menu_selected);
 }
 
 void ui_init()
@@ -421,7 +436,6 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
         {
             // VFO screen
             case MAIN_VFO:
-                // Temporary VFO controls
                 if(msg.keys & KEY_UP)
                 {
                     // Advance TX and RX frequency of 12.5KHz
@@ -449,12 +463,35 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 }
                 else if(msg.keys & KEY_DOWN)
                 {
-                    if(menu_selected < MENU_NUM)
+                    if(menu_selected < MENU_NUM-1)
                         menu_selected += 1;
                 }
+                else if(msg.keys & KEY_ENTER)
+                {
+                    // Open selected menu item
+                    switch(menu_selected)
+                    {
+                        // TODO: Add missing submenu states
+                        case 5:
+                            state.ui_screen = MENU_SETTINGS;
+                            break;
+                        default:
+                            state.ui_screen = MENU_TOP;
+                    }
+                }
                 else if(msg.keys & KEY_ESC)
+                {
                     // Close Menu
                     state.ui_screen = MAIN_VFO;
+                }
+                break;
+            // Settings menu screen
+            case MENU_SETTINGS:
+                if(msg.keys & KEY_ESC)
+                {
+                    // Return to top menu
+                    state.ui_screen = MENU_TOP;
+                }
                 break;
         }
     }
@@ -467,6 +504,7 @@ bool ui_updateGUI(state_t last_state)
         layout = _ui_calculateLayout();
         layout_ready = true;
     }
+    // TODO: Improve screen_update logic
     bool screen_update = false;
     // Draw current GUI page
     switch(last_state.ui_screen)
@@ -477,7 +515,13 @@ bool ui_updateGUI(state_t last_state)
             break;
         // Top menu screen
         case MENU_TOP:
-            screen_update = _ui_drawMenuTop();
+            _ui_drawMenuTop();
+            screen_update = true;
+            break;
+        // Settings menu screen
+        case MENU_SETTINGS:
+            _ui_drawMenuSettings();
+            screen_update = true;
             break;
         // Low battery screen
         case LOW_BAT:
