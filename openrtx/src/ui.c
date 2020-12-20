@@ -478,11 +478,15 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         default:
                             state.ui_screen = MENU_TOP;
                     }
+                    // Reset menu selection
+                    menu_selected = 0;
                 }
                 else if(msg.keys & KEY_ESC)
                 {
                     // Close Menu
                     state.ui_screen = MAIN_VFO;
+                    // Reset menu selection
+                    menu_selected = 0;
                 }
                 break;
             // Settings menu screen
@@ -491,6 +495,8 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 {
                     // Return to top menu
                     state.ui_screen = MENU_TOP;
+                    // Reset menu selection
+                    menu_selected = 0;
                 }
                 break;
         }
