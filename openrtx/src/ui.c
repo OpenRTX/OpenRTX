@@ -684,6 +684,23 @@ bool _ui_freq_check_limits(freq_t freq)
     return valid;
 }
 
+bool _ui_drawMenuMacro() {
+        gfx_print(layout.line1_pos, "1 2 3", FONT_SIZE_12PT, TEXT_ALIGN_CENTER,
+                  color_white);
+        gfx_print(layout.line2_pos, "4 5 6", FONT_SIZE_12PT, TEXT_ALIGN_CENTER,
+                  color_white);
+        gfx_print(layout.line3_pos, "7 8 9", FONT_SIZE_12PT, TEXT_ALIGN_CENTER,
+                  color_white);
+    return true;
+}
+
+bool _ui_drawDarkOverlay() {
+    color_t alpha_grey = {0, 0, 0, 245};
+    point_t origin = {0, 0};
+    gfx_drawRect(origin, SCREEN_WIDTH, SCREEN_HEIGHT, alpha_grey, true);
+    return true;
+}
+
 void ui_updateFSM(event_t event, bool *sync_rtx)
 {
     // Check if battery has enough charge to operate
@@ -732,6 +749,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 else if(msg.keys & KEY_ENTER)
                     // Open Menu
                     state.ui_screen = MENU_TOP;
+<<<<<<< HEAD
                 else if(input_isNumberPressed(msg))
                 {
                     // Open Frequency input screen
@@ -843,6 +861,12 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         }
                     }
                 }
+                else if(msg.keys & KEY_MONI)
+                {
+                    // Open Macro Menu
+                    _ui_drawDarkOverlay();
+                    state.ui_screen = MENU_MACRO;
+                }
                 break;
             // Top menu screen
             case MENU_TOP:
@@ -904,6 +928,12 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     // Reset menu selection
                     menu_selected = 0;
                 }
+                break;
+            // Macro menu
+            case MENU_MACRO:
+                // Exit from this menu when monitor key is released
+                if(!(msg.keys & KEY_MONI))
+                    state.ui_screen = MAIN_VFO;
                 break;
             // Settings menu screen
             case MENU_SETTINGS:
@@ -1008,6 +1038,10 @@ void ui_updateGUI(state_t last_state)
         // Channel menu screen
         case MENU_CHANNEL:
             _ui_drawMenuChannel();
+            break;
+        // Macro menu
+        case MENU_MACRO:
+            screen_update = _ui_drawMenuMacro();
             break;
         // Settings menu screen
         case MENU_SETTINGS:

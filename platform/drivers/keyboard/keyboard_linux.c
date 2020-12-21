@@ -49,7 +49,7 @@ keyboard_t kbd_getKeys() {
     if (state[SDL_SCANCODE_RETURN]) keys |= KEY_ENTER;
     if (state[SDL_SCANCODE_NONUSHASH]) keys |= KEY_HASH;
     if (state[SDL_SCANCODE_MINUS]) keys |= KEY_F1;
-    if (state[SDLK_PLUS]) keys |= KEY_MONI;
+    if (state[SDL_SCANCODE_M]) keys |= KEY_MONI;
     return keys;
 }
 
