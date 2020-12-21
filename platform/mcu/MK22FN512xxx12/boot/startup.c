@@ -20,6 +20,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "MK22F51212.h"
+#include "system_MK22F51212.h"
 
 ///< Entry point for system bootstrap after initial configurations.
 void systemBootstrap();
@@ -31,8 +32,37 @@ void Reset_Handler()
     __disable_irq();
 
     // Call CMSIS init function, it's safe to do it here.
-    // This function initialises VTOR, clock-tree and flash memory wait states.
+    // This function initialises VTOR.
     SystemInit();
+
+    // Initialise clock tree for full speed run, since SystemInit by NXP does not.
+    //
+    // Clock tree configuration:
+    // - External clock input: 12.288MHz from HR_C6000 resonator
+    // - PLL input divider: 4 -> PLL reference clock is 3.072MHz
+    // - PLL multiplier: 39 -> PLL output clock is 119.808MHz
+    //
+    // - Core and system clock @ 119.808MHz
+    // - Bus clock @ 59.904MHz
+    // - FlexBus clock @ 29.952MHz
+    // - Flash clock @ 23.962MHz
+
+    SIM->CLKDIV1 = SIM_CLKDIV1_OUTDIV2(1)   // Bus clock divider = 2
+                 | SIM_CLKDIV1_OUTDIV3(3)   // FlexBus clock divider = 4
+                 | SIM_CLKDIV1_OUTDIV4(4);  // Flash clock divider = 5
+
+    MCG->C2 |= MCG_C2_RANGE(2);             // Very high frequency range
+    OSC->CR |= OSC_CR_ERCLKEN(1);           // Enable external reference clock
+
+    MCG->C6 |= MCG_C6_VDIV0(15);            // PLL multiplier set to 39
+    MCG->C5 |= MCG_C5_PRDIV0(3)             // Divide PLL ref clk by 4
+            |  MCG_C5_PLLCLKEN0(1);         // Enable PLL clock
+
+    SMC->PMPROT = SMC_PMPROT_AHSRUN(1);     // Allow HSRUN mode
+    SMC->PMCTRL = SMC_PMCTRL_RUNM(3);       // Switch to HSRUN mode
+    while((SMC->PMSTAT & 0x80) == 0) ;      // Wait till switch to HSRUN is effective
+
+    MCG->C6 |= MCG_C6_PLLS(1);              // Connect PLL to MCG source
 
     //These are defined in the linker script
     extern unsigned char _etext asm("_etext");
