@@ -19,8 +19,14 @@
  ***************************************************************************/
 
 #include <platform.h>
+#include <ADC0_GDx.h>
 #include <gpio.h>
+#include <os.h>
 #include "hwconfig.h"
+
+/* Mutex for concurrent access to ADC0 */
+OS_MUTEX adc_mutex;
+OS_ERR e;
 
 void platform_init()
 {
@@ -48,6 +54,12 @@ void platform_init()
 
     gpio_setMode(LCD_BKLIGHT, OUTPUT);
     gpio_setAlternateFunction(LCD_BKLIGHT, 2);
+
+    /*
+     * Initialise ADC
+     */
+    adc0_init();
+    OSMutexCreate(&adc_mutex, "", &e);
 }
 
 void platform_terminate()
@@ -55,18 +67,28 @@ void platform_terminate()
     gpio_clearPin(LCD_BKLIGHT);
     gpio_clearPin(RED_LED);
     gpio_clearPin(GREEN_LED);
+
+    adc0_terminate();
 }
 
 float platform_getVbat()
 {
-    /* TODO */
-    return 0.0f;
+    float value = 0.0f;
+    OSMutexPend(&adc_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &e);
+    value = adc0_getMeasurement(1);
+    OSMutexPost(&adc_mutex, OS_OPT_POST_NONE, &e);
+
+    return (value * 3.0f)/1000.0f;
 }
 
 float platform_getMicLevel()
 {
-    /* TODO */
-    return 0.0f;
+    float value = 0.0f;
+    OSMutexPend(&adc_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &e);
+    value = adc0_getMeasurement(3);
+    OSMutexPost(&adc_mutex, OS_OPT_POST_NONE, &e);
+
+    return value;
 }
 
 float platform_getVolumeLevel()
