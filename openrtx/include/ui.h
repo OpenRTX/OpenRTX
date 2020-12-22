@@ -37,6 +37,7 @@ enum uiScreen
     MENU_SMS,
     MENU_GPS,
     MENU_SETTINGS,
+    SETTINGS_TIMEDATE,
     LOW_BAT
 };
 

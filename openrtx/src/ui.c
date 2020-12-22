@@ -348,8 +348,8 @@ bool _ui_drawMainVFO(state_t* last_state)
 
 void _ui_drawMenuTop()
 {
-    // Print "Menu" on top bar
     gfx_clearScreen();
+    // Print "Menu" on top bar
     gfx_print(layout.top_pos, "Menu", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print menu entries
@@ -359,13 +359,32 @@ void _ui_drawMenuTop()
 
 void _ui_drawMenuSettings()
 {
-    // Print "Settings" on top bar
     gfx_clearScreen();
+    // Print "Settings" on top bar
     gfx_print(layout.top_pos, "Settings", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print menu entries
     point_t pos = {layout.horizontal_pad, layout.line1_h};
     _ui_drawMenuList(pos, settings_items, SETTINGS_NUM, menu_selected);
+}
+
+void _ui_drawSettingsTimeDate(state_t* last_state)
+{
+    gfx_clearScreen();
+    // Print "Time&Date" on top bar
+    gfx_print(layout.top_pos, "Time&Date", layout.top_font,
+              TEXT_ALIGN_CENTER, color_white);
+    // Print current time and date
+    char date_buf[12] = "";
+    char time_buf[9] = "";
+    snprintf(date_buf, sizeof(date_buf), "%02d/%02d/%02d", 
+             last_state->time.date, last_state->time.month, last_state->time.year);
+    snprintf(time_buf, sizeof(time_buf), "%02d:%02d:%02d", 
+             last_state->time.hour, last_state->time.minute, last_state->time.second);
+    gfx_print(layout.line2_pos, date_buf, layout.line2_font, TEXT_ALIGN_CENTER,
+              color_white);
+    gfx_print(layout.line3_pos, time_buf, layout.line3_font, TEXT_ALIGN_CENTER,
+              color_white);
 }
 
 void ui_init()
@@ -491,10 +510,35 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 break;
             // Settings menu screen
             case MENU_SETTINGS:
-                if(msg.keys & KEY_ESC)
+                if(msg.keys & KEY_ENTER)
+                {
+                    // Open selected menu item
+                    switch(menu_selected)
+                    {
+                        // TODO: Add missing submenu states
+                        case 0:
+                            state.ui_screen = SETTINGS_TIMEDATE;
+                            break;
+                        default:
+                            state.ui_screen = MENU_TOP;
+                    }
+                    // Reset menu selection
+                    menu_selected = 0;
+                }
+                else if(msg.keys & KEY_ESC)
                 {
                     // Return to top menu
                     state.ui_screen = MENU_TOP;
+                    // Reset menu selection
+                    menu_selected = 0;
+                }
+                break;
+            // Time&Date settingsscreen
+            case SETTINGS_TIMEDATE:
+                if(msg.keys & KEY_ESC)
+                {
+                    // Return to settings menu
+                    state.ui_screen = MENU_SETTINGS;
                     // Reset menu selection
                     menu_selected = 0;
                 }
@@ -527,6 +571,11 @@ bool ui_updateGUI(state_t last_state)
         // Settings menu screen
         case MENU_SETTINGS:
             _ui_drawMenuSettings();
+            screen_update = true;
+            break;
+        // Time&Date settings screen
+        case SETTINGS_TIMEDATE:
+            _ui_drawSettingsTimeDate(&last_state);
             screen_update = true;
             break;
         // Low battery screen
