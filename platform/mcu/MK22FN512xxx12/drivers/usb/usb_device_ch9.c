@@ -360,6 +360,8 @@ static usb_status_t USB_DeviceCh9SetClearFeature(usb_device_handle handle,
                                                  uint8_t **buffer,
                                                  uint32_t *length)
 {
+    (void) buffer;
+    (void) length;
     usb_status_t error = kStatus_USB_InvalidRequest;
     uint8_t state;
     uint8_t isSet = 0U;
@@ -450,6 +452,8 @@ static usb_status_t USB_DeviceCh9SetAddress(usb_device_handle handle,
                                             uint8_t **buffer,
                                             uint32_t *length)
 {
+    (void) buffer;
+    (void) length;
     usb_status_t error = kStatus_USB_InvalidRequest;
     uint8_t state;
 
@@ -535,6 +539,7 @@ static usb_status_t USB_DeviceCh9GetConfiguration(usb_device_handle handle,
                                                   uint8_t **buffer,
                                                   uint32_t *length)
 {
+    (void) setup;
     uint8_t state;
 
     USB_DeviceGetStatus(handle, kUSB_DeviceStatusDeviceState, &state);
@@ -568,6 +573,8 @@ static usb_status_t USB_DeviceCh9SetConfiguration(usb_device_handle handle,
                                                   uint8_t **buffer,
                                                   uint32_t *length)
 {
+    (void) buffer;
+    (void) length;
     uint8_t state;
 
     USB_DeviceGetStatus(handle, kUSB_DeviceStatusDeviceState, &state);
@@ -643,6 +650,8 @@ static usb_status_t USB_DeviceCh9SetInterface(usb_device_handle handle,
                                               uint8_t **buffer,
                                               uint32_t *length)
 {
+    (void) buffer;
+    (void) length;
     uint8_t state;
 
     USB_DeviceGetStatus(handle, kUSB_DeviceStatusDeviceState, &state);
@@ -777,6 +786,7 @@ usb_status_t USB_DeviceControlCallback(usb_device_handle handle,
                                        usb_device_endpoint_callback_message_struct_t *message,
                                        void *callbackParam)
 {
+    (void) callbackParam;
     usb_setup_struct_t *deviceSetup;
     uint8_t *setupOutBuffer;
     uint8_t *buffer = (uint8_t *)NULL;

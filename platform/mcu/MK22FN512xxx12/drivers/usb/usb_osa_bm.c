@@ -34,64 +34,6 @@
 #include "MK22F51212.h"
 #include "fsl_common.h"
 
-/*******************************************************************************
- * Definitions
- ******************************************************************************/
-#define USB_OSA_BM_EVENT_COUNT (2U)
-#define USB_OSA_BM_SEM_COUNT (1U)
-#define USB_OSA_BM_MSGQ_COUNT (1U)
-#define USB_OSA_BM_MSG_COUNT (8U)
-#define USB_OSA_BM_MSG_SIZE (4U)
-
-/* BM Event status structure */
-typedef struct _usb_osa_event_struct
-{
-    uint32_t value; /* Event mask */
-    uint32_t flag;  /* Event flags, includes auto clear flag */
-    uint8_t isUsed; /* Is used */
-} usb_osa_event_struct_t;
-
-/* BM semaphore status structure */
-typedef struct _usb_osa_sem_struct
-{
-    uint32_t value; /* Semaphore count */
-    uint8_t isUsed; /* Is used */
-} usb_osa_sem_struct_t;
-
-/* BM msg status structure */
-typedef struct _usb_osa_msg_struct
-{
-    uint32_t msg[USB_OSA_BM_MSG_SIZE]; /* Message entity pointer */
-} usb_osa_msg_struct_t;
-
-/* BM msgq status structure */
-typedef struct _usb_osa_msgq_struct
-{
-    usb_osa_msg_struct_t msgs[USB_OSA_BM_MSG_COUNT]; /* Message entity list */
-    uint32_t count;                                  /* Max message entity count */
-    uint32_t msgSize;                                /* Size of each message */
-    uint32_t msgCount;                               /* Valid messages */
-    uint32_t index;                                  /* The first empty message entity index */
-    uint32_t current;                                /* The vaild message index */
-    uint8_t isUsed;                                  /* Is used */
-} usb_osa_msgq_struct_t;
-
-/*******************************************************************************
- * Prototypes
- ******************************************************************************/
-
-/*******************************************************************************
- * Variables
- ******************************************************************************/
-
-USB_GLOBAL static usb_osa_sem_struct_t s_UsbBmSemStruct[USB_OSA_BM_SEM_COUNT];
-USB_GLOBAL static usb_osa_event_struct_t s_UsbBmEventStruct[USB_OSA_BM_EVENT_COUNT];
-USB_GLOBAL static usb_osa_msgq_struct_t s_UsbBmMsgqStruct[USB_OSA_BM_MSGQ_COUNT];
-
-/*******************************************************************************
- * Code
- ******************************************************************************/
-
 void USB_OsaEnterCritical(uint32_t *sr)
 {
     *sr = __get_PRIMASK();

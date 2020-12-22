@@ -271,6 +271,8 @@ usb_status_t USB_DeviceGetDescriptor(usb_device_handle handle,
                                      uint32_t *length,
                                      uint8_t **buffer)
 {
+    (void) handle;
+
     uint8_t descriptorType = (uint8_t)((setup->wValue & 0xFF00U) >> 8U);
     uint8_t descriptorIndex = (uint8_t)((setup->wValue & 0x00FFU));
     usb_status_t ret = kStatus_USB_Success;
@@ -364,6 +366,7 @@ usb_status_t USB_DeviceSetConfigure(usb_device_handle handle, uint8_t configure)
  */
 usb_status_t USB_DeviceGetConfigure(usb_device_handle handle, uint8_t *configure)
 {
+    (void) handle;
     *configure = g_currentConfigure;
     return kStatus_USB_Success;
 }
@@ -381,6 +384,7 @@ usb_status_t USB_DeviceGetConfigure(usb_device_handle handle, uint8_t *configure
  */
 usb_status_t USB_DeviceSetInterface(usb_device_handle handle, uint8_t interface, uint8_t alternateSetting)
 {
+    (void) handle;
     g_interface[interface] = alternateSetting;
     return USB_DeviceCallback(handle, kUSB_DeviceEventSetInterface, &interface);
 }
@@ -398,6 +402,7 @@ usb_status_t USB_DeviceSetInterface(usb_device_handle handle, uint8_t interface,
  */
 usb_status_t USB_DeviceGetInterface(usb_device_handle handle, uint8_t interface, uint8_t *alternateSetting)
 {
+    (void) handle;
     *alternateSetting = g_interface[interface];
     return kStatus_USB_Success;
 }
@@ -421,6 +426,7 @@ usb_status_t USB_DeviceGetInterface(usb_device_handle handle, uint8_t interface,
  */
 usb_status_t USB_DeviceSetSpeed(usb_device_handle handle, uint8_t speed)
 {
+    (void) handle;
     usb_descriptor_union_t *ptr1;
     usb_descriptor_union_t *ptr2;
 

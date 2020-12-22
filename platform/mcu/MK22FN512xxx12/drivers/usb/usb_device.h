@@ -578,7 +578,7 @@ extern void USB_DeviceDcdHSIsrFunction(void *deviceHandle);
 #define USB_DeviceLpcIp3511TaskFunction(deviceHandle) USB_DeviceTaskFunction(deviceHandle)
 #endif
 
-#if ((defined(USB_DEVICE_CONFIG_KHCI)) && (USB_DEVICE_CONFIG_KHCI > 0U))
+// #if ((defined(USB_DEVICE_CONFIG_KHCI)) && (USB_DEVICE_CONFIG_KHCI > 0U))
 /*!
  * @brief Device KHCI ISR function.
  *
@@ -597,7 +597,7 @@ extern void USB_DeviceKhciIsrFunction(void *deviceHandle);
  */
 extern void USB_DeviceDcdIsrFunction(void *deviceHandle);
 #endif
-#endif
+// #endif
 
 #if ((defined(USB_DEVICE_CONFIG_EHCI)) && (USB_DEVICE_CONFIG_EHCI > 0U))
 /*!

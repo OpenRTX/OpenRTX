@@ -356,6 +356,7 @@ static usb_status_t USB_DeviceControl(usb_device_handle handle, usb_device_contr
 static usb_status_t USB_DeviceResetNotification(usb_device_struct_t *handle,
                                                 usb_device_callback_message_struct_t *message)
 {
+    (void) message;
 #if (defined(USB_DEVICE_CONFIG_USE_TASK) && (USB_DEVICE_CONFIG_USE_TASK > 0U))
     USB_OSA_SR_ALLOC();
 #endif
