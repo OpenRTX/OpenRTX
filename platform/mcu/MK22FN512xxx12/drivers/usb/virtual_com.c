@@ -27,33 +27,71 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "MK22F51212.h"
-#include "gpio.h"
 
+#include <gpio.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <MK22F51212.h>
 
-#include "usb_device_config.h"
 #include "usb.h"
-#include "usb_device.h"
-
-#include "usb_device_cdc_acm.h"
-#include "usb_device_ch9.h"
-// #include "fsl_debug_console.h"
-
-#include "usb_device_descriptor.h"
-#include "virtual_com.h"
 #include "fsl_common.h"
+#include "usb_device.h"
+#include "virtual_com.h"
+#include "usb_device_ch9.h"
+#include "usb_device_config.h"
+#include "usb_device_cdc_acm.h"
+#include "usb_device_descriptor.h"
 
-/*******************************************************************************
-* Variables
-******************************************************************************/
+/* Currently configured line coding */
+#define LINE_CODING_SIZE (0x07)
+#define LINE_CODING_DTERATE (115200)
+#define LINE_CODING_CHARFORMAT (0x00)
+#define LINE_CODING_PARITYTYPE (0x00)
+#define LINE_CODING_DATABITS (0x08)
+
+/* Communications feature */
+#define COMM_FEATURE_DATA_SIZE (0x02)
+#define STATUS_ABSTRACT_STATE (0x0000)
+#define COUNTRY_SETTING (0x0000)
+
+/* Notification of serial state */
+#define NOTIF_PACKET_SIZE (0x08)
+#define UART_BITMAP_SIZE (0x02)
+#define NOTIF_REQUEST_TYPE (0xA1)
+
+/* Define the types for application */
+typedef struct
+{
+    usb_device_handle deviceHandle;     /* USB device handle.                                                                */
+    volatile uint8_t attach;            /* A flag to indicate whether a usb device is attached. 1: attached, 0: not attached */
+    uint8_t speed;                      /* Speed of USB device. USB_SPEED_FULL/USB_SPEED_LOW/USB_SPEED_HIGH.                 */
+    volatile uint8_t startTransactions; /* A flag to indicate whether a CDC device is ready to transmit and receive data.    */
+    uint8_t currentConfiguration;       /* Current configuration value.                                                      */
+    uint8_t hasSentState;               /*!< 1: The device has primed the state in interrupt pipe, 0: Not primed the state.  */
+    uint8_t currentInterfaceAlternateSetting [USB_CDC_VCOM_INTERFACE_COUNT]; /* Current alternate setting value for each interface. */
+}
+usb_cdc_vcom_struct_t;
+
+/* Define the infomation relates to abstract control model */
+typedef struct
+{
+    uint8_t serialStateBuf[NOTIF_PACKET_SIZE + UART_BITMAP_SIZE]; /* Serial state buffer of the CDC device to notify the
+                                                                     serial state to host. */
+    bool dtePresent;          /* A flag to indicate whether DTE is present.         */
+    uint16_t breakDuration;   /* Length of time in milliseconds of the break signal */
+    uint8_t dteStatus;        /* Status of data terminal equipment                  */
+    uint8_t currentInterface; /* Current interface index.                           */
+    uint16_t uartState;       /* UART state of the CDC device.                      */
+}
+usb_cdc_acm_info_t;
+
 /* Data structure of virtual com device */
 static usb_cdc_vcom_struct_t s_cdcVcom;
 
 /* Line codinig of cdc device */
-static uint8_t s_lineCoding[LINE_CODING_SIZE] = {
+static uint8_t s_lineCoding[LINE_CODING_SIZE] =
+{
     /* E.g. 0x00,0xC2,0x01,0x00 : 0x0001C200 is 115200 bits per second */
     (LINE_CODING_DTERATE >> 0U) & 0x000000FFU,
     (LINE_CODING_DTERATE >> 8U) & 0x000000FFU,
@@ -61,32 +99,34 @@ static uint8_t s_lineCoding[LINE_CODING_SIZE] = {
     (LINE_CODING_DTERATE >> 24U) & 0x000000FFU,
     LINE_CODING_CHARFORMAT,
     LINE_CODING_PARITYTYPE,
-    LINE_CODING_DATABITS};
+    LINE_CODING_DATABITS
+};
 
 /* Abstract state of cdc device */
-static uint8_t s_abstractState[COMM_FEATURE_DATA_SIZE] = {(STATUS_ABSTRACT_STATE >> 0U) & 0x00FFU,
-                                                          (STATUS_ABSTRACT_STATE >> 8U) & 0x00FFU};
+static uint8_t s_abstractState[COMM_FEATURE_DATA_SIZE] =
+{
+    (STATUS_ABSTRACT_STATE >> 0U) & 0x00FFU,
+    (STATUS_ABSTRACT_STATE >> 8U) & 0x00FFU
+};
 
 /* Country code of cdc device */
-static uint8_t s_countryCode[COMM_FEATURE_DATA_SIZE] = {(COUNTRY_SETTING >> 0U) & 0x00FFU,
-                                                        (COUNTRY_SETTING >> 8U) & 0x00FFU};
+static uint8_t s_countryCode[COMM_FEATURE_DATA_SIZE] =
+{
+    (COUNTRY_SETTING >> 0U) & 0x00FFU,
+    (COUNTRY_SETTING >> 8U) & 0x00FFU
+};
 
 /* CDC ACM information */
-USB_DATA_ALIGNMENT static usb_cdc_acm_info_t s_usbCdcAcmInfo = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0};
+USB_DATA_ALIGNMENT static usb_cdc_acm_info_t s_usbCdcAcmInfo =
+{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0};
+
 /* Data buffer for receiving and sending*/
-USB_DATA_ALIGNMENT static uint8_t s_currRecvBuf[DATA_BUFF_SIZE];
-USB_DATA_ALIGNMENT static uint8_t s_currSendBuf[DATA_BUFF_SIZE];
+USB_DATA_ALIGNMENT static uint8_t s_currRecvBuf[FS_CDC_VCOM_BULK_OUT_PACKET_SIZE];
+USB_DATA_ALIGNMENT static uint8_t s_currSendBuf[FS_CDC_VCOM_BULK_OUT_PACKET_SIZE];
 volatile static uint32_t s_recvSize = 0;
-volatile static uint32_t s_sendSize = 0;
+// volatile static uint32_t s_sendSize = 0;
 static uint32_t s_usbBulkMaxPacketSize = FS_CDC_VCOM_BULK_OUT_PACKET_SIZE;
 
-/*******************************************************************************
-* Prototypes
-******************************************************************************/
-
-/*******************************************************************************
-* Code
-******************************************************************************/
 /*!
  * @brief Interrupt in pipe callback function.
  *
@@ -546,17 +586,15 @@ void USB0_IRQHandler(void)
     USB_DeviceKhciIsrFunction(s_cdcVcom.deviceHandle);
 }
 
-/*!
- * @brief Application initialization function.
- *
- * This function initializes the application.
- *
- * @return None.
- */
-void APPInit(void)
+
+/******************************************************************************
+ *                                                                            *
+ *              Implementation of USB vcom functions                          *
+ *                                                                            *
+ ******************************************************************************/
+
+void vcom_init()
 {
-    
-    
     SIM->CLKDIV2 = SIM_CLKDIV2_USBDIV(0)
                  | SIM_CLKDIV2_USBFRAC(0);
     SIM->SOPT2 = SIM_SOPT2_USBSRC(1U)
@@ -570,14 +608,10 @@ void APPInit(void)
     s_cdcVcom.attach = 0;
     s_cdcVcom.deviceHandle = NULL;
 
-    if (kStatus_USB_Success != USB_DeviceInit(CONTROLLER_ID, USB_DeviceCallback, &s_cdcVcom.deviceHandle))
+    if (USB_DeviceInit(kUSB_ControllerKhci0,USB_DeviceCallback,
+                                &s_cdcVcom.deviceHandle) != kStatus_USB_Success)
     {
-        usb_echo("USB device vcom failed\r\n");
         return;
-    }
-    else
-    {
-        usb_echo("USB device CDC virtual com demo\r\n");
     }
 
     NVIC_SetPriority(USB0_IRQn, 3);
@@ -586,10 +620,60 @@ void APPInit(void)
     USB_DeviceRun(s_cdcVcom.deviceHandle);
 }
 
-void APPTest(void)
+ssize_t vcom_writeBlock(const void *buf, size_t len)
 {
-    char *str = "blablabla\r\n";
-    memcpy(s_currSendBuf, str, sizeof(str));
-    USB_DeviceSendRequest(s_cdcVcom.deviceHandle, USB_CDC_VCOM_BULK_IN_ENDPOINT,
-                          s_currSendBuf, sizeof(str));
+    memcpy(s_currSendBuf, buf, len);
+    if((s_cdcVcom.attach == 1) && (s_cdcVcom.startTransactions == 1))
+    {
+        (void) USB_DeviceSendRequest(s_cdcVcom.deviceHandle,
+                                     USB_CDC_VCOM_BULK_IN_ENDPOINT,
+                                     s_currSendBuf, len);
+    }
+}
+
+ssize_t vcom_readBlock(void* buf, size_t len)
+{
+    if((s_cdcVcom.attach == 1) && (s_cdcVcom.startTransactions == 1))
+    {
+        size_t toTransfer = (len < s_recvSize) ? len : s_recvSize;
+        memcpy(buf, s_currRecvBuf, toTransfer);
+        s_recvSize = 0;
+        return toTransfer;
+    }
+
+    return 0;
+}
+
+void APP_task(void)
+{
+//     usb_status_t error = kStatus_USB_Error;
+//     if ((1 == s_cdcVcom.attach) && (1 == s_cdcVcom.startTransactions))
+//     {
+//         /* User Code */
+//         if ((0 != s_recvSize) && (0xFFFFFFFFU != s_recvSize))
+//         {
+//             int32_t i;
+// 
+//             /* Copy Buffer to Send Buff */
+//             for (i = 0; i < s_recvSize; i++)
+//             {
+//                 s_currSendBuf[s_sendSize++] = s_currRecvBuf[i];
+//             }
+//             s_recvSize = 0;
+//         }
+// 
+//         if (s_sendSize)
+//         {
+//             uint32_t size = s_sendSize;
+//             s_sendSize = 0;
+// 
+//             error = USB_DeviceSendRequest(s_cdcVcom.deviceHandle, USB_CDC_VCOM_BULK_IN_ENDPOINT, s_currSendBuf, size);
+// 
+//             if (error != kStatus_USB_Success)
+//             {
+//                 /* Failure to send Data Handling code here */
+//             }
+//         }
+// 
+//     }
 }
