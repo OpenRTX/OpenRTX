@@ -17,10 +17,11 @@
  ***************************************************************************/
  
 
-#include <string.h>
 #include <stdio.h>
-#include "MK22F51212.h"
-#include "system_MK22F51212.h"
+#include <string.h>
+#include <usb_vcom.h>
+#include <MK22F51212.h>
+#include <system_MK22F51212.h>
 
 ///< Entry point for system bootstrap after initial configurations.
 void systemBootstrap();
@@ -83,8 +84,8 @@ void Reset_Handler()
 
     SIM->SCGC5 |= 0x3E00;   // Enable GPIO clock
 
-//     // Enable virtual com port (for stdin, stdout and stderr redirection)
-//     vcom_init();
+    // Enable virtual com port (for stdin, stdout and stderr redirection)
+    vcom_init();
 
     // Set no buffer for stdin, required to make scanf, getchar, ... working
     // correctly

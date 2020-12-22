@@ -34,8 +34,8 @@
 #include <stdbool.h>
 #include <MK22F51212.h>
 
-#include "virtual_com.h"
 #include "usb/usb.h"
+#include "usb_vcom.h"
 #include "usb/fsl_common.h"
 #include "usb/usb_device.h"
 #include "usb/usb_device_ch9.h"
@@ -627,13 +627,21 @@ void vcom_init()
 
 ssize_t vcom_writeBlock(const void *buf, size_t len)
 {
-    memcpy(sendBuf, buf, len);
     if((cdcVcom.attach == 1) && (cdcVcom.startTransactions == 1))
     {
-        usb_status_t st = USB_DeviceSendRequest(cdcVcom.deviceHandle,
-                                                USB_CDC_VCOM_BULK_IN_ENDPOINT,
-                                                sendBuf, len);
-        if(st != kStatus_USB_Success) return -1;
+        uint32_t bytesToSend = len;
+        while(bytesToSend > 0)
+        {
+            uint32_t xFerLen = (bytesToSend > FS_CDC_VCOM_BULK_OUT_PACKET_SIZE)
+                             ? FS_CDC_VCOM_BULK_OUT_PACKET_SIZE : bytesToSend;
+
+            memcpy(sendBuf, buf, xFerLen);
+            usb_status_t st = USB_DeviceSendRequest(cdcVcom.deviceHandle,
+                                                  USB_CDC_VCOM_BULK_IN_ENDPOINT,
+                                                  sendBuf, xFerLen);
+            if(st != kStatus_USB_Success) return -1;
+            bytesToSend -= xFerLen;
+        }
     }
 
     return len;

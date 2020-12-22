@@ -24,6 +24,7 @@
 #include <sys/fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <usb_vcom.h>
 
 
 void pthread_mutex_unlock(){}
@@ -198,11 +199,7 @@ int _write_r(struct _reent *ptr, int fd, const void *buf, size_t cnt)
 {
     if(fd == STDOUT_FILENO || fd == STDERR_FILENO)
     {
-        //vcom_writeBlock(buf, cnt);
-        //return cnt;
-        (void) buf;
-        (void) cnt;
-        return -1;
+        return vcom_writeBlock(buf, cnt);
     }
 
     /* If fd is not stdout or stderr */
@@ -220,11 +217,8 @@ int _read_r(struct _reent *ptr, int fd, void *buf, size_t cnt)
     {
         for(;;)
         {
-            //ssize_t r = vcom_readBlock(buf, cnt);
-            //if((r < 0) || (r == (ssize_t)(cnt))) return r;
-            (void) buf;
-            (void) cnt;
-            return -1;
+            ssize_t r = vcom_readBlock(buf, cnt);
+            if((r < 0) || (r == (ssize_t)(cnt))) return r;
         }
     }
     else
