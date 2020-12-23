@@ -72,6 +72,12 @@ static const uint8_t kbd_num_keys = 29;
 static const uint16_t kbd_long_interval = OS_CFG_TICK_RATE_HZ * 0.7;
 
 /**
+ * Mask for the numeric keys in a key map
+ * Numeric keys: bit0->bit9 = 0x1FF
+ */
+static const uint32_t kbd_num_mask = 0x1FF;
+
+/**
  * Structure that represents a keyboard event payload
  * The maximum size of an event payload is 30 bits
  * For a keyboard event we use 1 bit to signal a short or long press

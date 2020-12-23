@@ -432,6 +432,11 @@ bool _ui_drawLowBatteryScreen()
     return true;
 }
 
+bool _kbd_number_pressed(kbd_msg_t msg)
+{
+    return msg.keys & kbd_num_mask;
+}
+
 void ui_updateFSM(event_t event, bool *sync_rtx)
 {
     // Check if battery has enough charge to operate
