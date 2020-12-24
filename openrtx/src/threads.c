@@ -207,10 +207,7 @@ static void kbd_task(void *arg)
         {
             kbd_msg_t msg;
             msg.long_press = long_press;
-            // OR the saved key status with the current key status
-            // Do this because the new key status is got when the
-            // key is lifted, and does not contain the pressed key anymore
-            msg.keys = keys | prev_keys;
+            msg.keys = keys;
             // Send event_t as void * message to use with OSQPost
             event_t event;
             event.type = EVENT_KBD;
