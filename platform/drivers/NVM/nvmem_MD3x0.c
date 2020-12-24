@@ -20,8 +20,8 @@
 
 #include <interfaces/nvmem.h>
 #include <interfaces/delays.h>
-#include "extFlash_MDx.h"
-#include "calibInfo_MDx.h"
+#include <calibInfo_MDx.h>
+#include "W25Qx.h"
 
 /**
  * \internal Data structure matching the one used by original MD3x0 firmware to
@@ -133,51 +133,51 @@ uint32_t _bcd2bin(uint32_t bcd)
 
 void nvm_init()
 {
-    extFlash_init();
+    W25Qx_init();
 }
 
 void nvm_terminate()
 {
-    extFlash_terminate();
+    W25Qx_terminate();
 }
 
 void nvm_readCalibData(void *buf)
 {
-    extFlash_wakeup();
+    W25Qx_wakeup();
     delayUs(5);
 
     md3x0Calib_t *calib = ((md3x0Calib_t *) buf);
 
-    (void) extFlash_readSecurityRegister(0x1000, &(calib->vox1), 11);
-    (void) extFlash_readSecurityRegister(0x1010, calib->txHighPower, 9);
-    (void) extFlash_readSecurityRegister(0x1020, calib->txLowPower, 9);
-    (void) extFlash_readSecurityRegister(0x1030, calib->rxSensitivity, 9);
-    (void) extFlash_readSecurityRegister(0x1040, calib->openSql9, 9);
-    (void) extFlash_readSecurityRegister(0x1050, calib->closeSql9, 9);
-    (void) extFlash_readSecurityRegister(0x1060, calib->openSql1, 9);
-    (void) extFlash_readSecurityRegister(0x1070, calib->closeSql1, 9);
-    (void) extFlash_readSecurityRegister(0x1080, calib->maxVolume, 9);
-    (void) extFlash_readSecurityRegister(0x1090, calib->ctcss67Hz, 9);
-    (void) extFlash_readSecurityRegister(0x10a0, calib->ctcss151Hz, 9);
-    (void) extFlash_readSecurityRegister(0x10b0, calib->ctcss254Hz, 9);
-    (void) extFlash_readSecurityRegister(0x10c0, calib->dcsMod2, 9);
-    (void) extFlash_readSecurityRegister(0x10d0, calib->dcsMod1, 9);
-    (void) extFlash_readSecurityRegister(0x10e0, calib->mod1Partial, 9);
-    (void) extFlash_readSecurityRegister(0x10f0, calib->analogVoiceAdjust, 9);
+    (void) W25Qx_readSecurityRegister(0x1000, &(calib->vox1), 11);
+    (void) W25Qx_readSecurityRegister(0x1010, calib->txHighPower, 9);
+    (void) W25Qx_readSecurityRegister(0x1020, calib->txLowPower, 9);
+    (void) W25Qx_readSecurityRegister(0x1030, calib->rxSensitivity, 9);
+    (void) W25Qx_readSecurityRegister(0x1040, calib->openSql9, 9);
+    (void) W25Qx_readSecurityRegister(0x1050, calib->closeSql9, 9);
+    (void) W25Qx_readSecurityRegister(0x1060, calib->openSql1, 9);
+    (void) W25Qx_readSecurityRegister(0x1070, calib->closeSql1, 9);
+    (void) W25Qx_readSecurityRegister(0x1080, calib->maxVolume, 9);
+    (void) W25Qx_readSecurityRegister(0x1090, calib->ctcss67Hz, 9);
+    (void) W25Qx_readSecurityRegister(0x10a0, calib->ctcss151Hz, 9);
+    (void) W25Qx_readSecurityRegister(0x10b0, calib->ctcss254Hz, 9);
+    (void) W25Qx_readSecurityRegister(0x10c0, calib->dcsMod2, 9);
+    (void) W25Qx_readSecurityRegister(0x10d0, calib->dcsMod1, 9);
+    (void) W25Qx_readSecurityRegister(0x10e0, calib->mod1Partial, 9);
+    (void) W25Qx_readSecurityRegister(0x10f0, calib->analogVoiceAdjust, 9);
 
-    (void) extFlash_readSecurityRegister(0x2000, calib->lockVoltagePartial, 9);
-    (void) extFlash_readSecurityRegister(0x2010, calib->sendIpartial, 9);
-    (void) extFlash_readSecurityRegister(0x2020, calib->sendQpartial, 9);
-    (void) extFlash_readSecurityRegister(0x2030, calib->sendIrange, 9);
-    (void) extFlash_readSecurityRegister(0x2040, calib->sendQrange, 9);
-    (void) extFlash_readSecurityRegister(0x2050, calib->rxIpartial, 9);
-    (void) extFlash_readSecurityRegister(0x2060, calib->rxQpartial, 9);
-    (void) extFlash_readSecurityRegister(0x2070, calib->analogSendIrange, 9);
-    (void) extFlash_readSecurityRegister(0x2080, calib->analogSendQrange, 9);
+    (void) W25Qx_readSecurityRegister(0x2000, calib->lockVoltagePartial, 9);
+    (void) W25Qx_readSecurityRegister(0x2010, calib->sendIpartial, 9);
+    (void) W25Qx_readSecurityRegister(0x2020, calib->sendQpartial, 9);
+    (void) W25Qx_readSecurityRegister(0x2030, calib->sendIrange, 9);
+    (void) W25Qx_readSecurityRegister(0x2040, calib->sendQrange, 9);
+    (void) W25Qx_readSecurityRegister(0x2050, calib->rxIpartial, 9);
+    (void) W25Qx_readSecurityRegister(0x2060, calib->rxQpartial, 9);
+    (void) W25Qx_readSecurityRegister(0x2070, calib->analogSendIrange, 9);
+    (void) W25Qx_readSecurityRegister(0x2080, calib->analogSendQrange, 9);
 
     uint32_t freqs[18];
-    (void) extFlash_readSecurityRegister(0x20b0, ((uint8_t *) &freqs), 72);
-    extFlash_sleep();
+    (void) W25Qx_readSecurityRegister(0x20b0, ((uint8_t *) &freqs), 72);
+    W25Qx_sleep();
 
     /*
      * Ugly quirk: frequency stored in calibration data is divided by ten, so,
@@ -195,13 +195,13 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
 {
     if(pos > maxNumChannels) return -1;
 
-    extFlash_wakeup();
+    W25Qx_wakeup();
     delayUs(5);
 
     md3x0Channel_t chData;
     uint32_t readAddr = chDataBaseAddr + pos * sizeof(md3x0Channel_t);
-    extFlash_readData(readAddr, ((uint8_t *) &chData), sizeof(md3x0Channel_t));
-    extFlash_sleep();
+    W25Qx_readData(readAddr, ((uint8_t *) &chData), sizeof(md3x0Channel_t));
+    W25Qx_sleep();
 
     channel->mode            = chData.channel_mode - 1;
     channel->bandwidth       = chData.bandwidth;

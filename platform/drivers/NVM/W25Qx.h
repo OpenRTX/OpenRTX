@@ -18,28 +18,26 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef EXTFLASH_MDx_H
-#define EXTFLASH_MDx_H
+#ifndef W25Qx_H
+#define W25Qx_H
 
 #include <stdint.h>
 #include <sys/types.h>
 
 /**
- * Driver for external non volatile memory on MDx family devices, containing
- * both calibration and contact data.
- * For this family non volatile storage hardware is a Winbond W25Q128FV SPI flash
- * connected to SPI1 peripheral.
+ * Driver for Winbond W25Qx family of SPI flash devices, used as external non
+ * volatile memory on various radios to store both calibration and contact data.
  */
 
 /**
  * Initialise driver for external flash.
  */
-void extFlash_init();
+void W25Qx_init();
 
 /**
  * Terminate driver for external flash.
  */
-void extFlash_terminate();
+void W25Qx_terminate();
 
 /**
  * Release flash chip from power down mode, this function should be called at
@@ -48,12 +46,12 @@ void extFlash_terminate();
  * Application code must wait at least 3us before issuing any other command
  * after this one.
  */
-void extFlash_wakeup();
+void W25Qx_wakeup();
 
 /**
  * Put flash chip in low power mode.
  */
-void extFlash_sleep();
+void W25Qx_sleep();
 
 /**
  * Read data from one of the flash security registers, located at addresses
@@ -67,7 +65,7 @@ void extFlash_sleep();
  * @return: -1 if address is not whithin security registers address range, the
  * number of bytes effectively read otherwise.
  */
-ssize_t extFlash_readSecurityRegister(uint32_t addr, uint8_t *buf, size_t len);
+ssize_t W25Qx_readSecurityRegister(uint32_t addr, uint8_t *buf, size_t len);
 
 /**
  * Read data from flash memory.
@@ -76,6 +74,6 @@ ssize_t extFlash_readSecurityRegister(uint32_t addr, uint8_t *buf, size_t len);
  * @param buf: pointer to a buffer where data is written to.
  * @param len: number of bytes to read.
  */
-void extFlash_readData(uint32_t addr, uint8_t *buf, size_t len);
+void W25Qx_readData(uint32_t addr, uint8_t *buf, size_t len);
 
-#endif /* EXTFLASH_MDx_H */
+#endif /* W25Qx_H */

@@ -20,8 +20,8 @@
 
 #include <interfaces/nvmem.h>
 #include <interfaces/delays.h>
-#include "calibInfo_MDx.h"
-#include "extFlash_MDx.h"
+#include <calibInfo_MDx.h>
+#include "W25Qx.h"
 
 /**
  * \internal Data structure matching the one used by original MD3x0 firmware to
@@ -137,45 +137,45 @@ uint32_t _bcd2bin(uint32_t bcd)
 
 void nvm_init()
 {
-    extFlash_init();
+    W25Qx_init();
 }
 
 void nvm_terminate()
 {
-    extFlash_terminate();
+    W25Qx_terminate();
 }
 
 void nvm_readCalibData(void *buf)
 {
-    extFlash_wakeup();
+    W25Qx_wakeup();
     delayUs(5);
 
     mduv3x0Calib_t *calib = ((mduv3x0Calib_t *) buf);
 
     /* Common calibration data */
-    (void) extFlash_readSecurityRegister(0x1000, (&calib->vox1), 6);
+    (void) W25Qx_readSecurityRegister(0x1000, (&calib->vox1), 6);
 
     /* UHF-band calibration data */
-    (void) extFlash_readSecurityRegister(0x1009, (&calib->uhfCal.freqAdjustMid), 1);
-    (void) extFlash_readSecurityRegister(0x1010, calib->uhfCal.txHighPower, 9);
-    (void) extFlash_readSecurityRegister(0x2090, calib->uhfCal.txMidPower, 9);
-    (void) extFlash_readSecurityRegister(0x1020, calib->uhfCal.txLowPower, 9);
-    (void) extFlash_readSecurityRegister(0x1030, calib->uhfCal.rxSensitivity, 9);
-    (void) extFlash_readSecurityRegister(0x1040, calib->uhfCal.openSql9, 9);
-    (void) extFlash_readSecurityRegister(0x1050, calib->uhfCal.closeSql9, 9);
-    (void) extFlash_readSecurityRegister(0x1070, calib->uhfCal.closeSql1, 9);
-    (void) extFlash_readSecurityRegister(0x1060, calib->uhfCal.openSql1, 9);
-    (void) extFlash_readSecurityRegister(0x1090, calib->uhfCal.ctcss67Hz, 9);
-    (void) extFlash_readSecurityRegister(0x10a0, calib->uhfCal.ctcss151Hz, 9);
-    (void) extFlash_readSecurityRegister(0x10b0, calib->uhfCal.ctcss254Hz, 9);
-    (void) extFlash_readSecurityRegister(0x10d0, calib->uhfCal.dcsMod1, 9);
-    (void) extFlash_readSecurityRegister(0x2030, calib->uhfCal.sendIrange, 9);
-    (void) extFlash_readSecurityRegister(0x2040, calib->uhfCal.sendQrange, 9);
-    (void) extFlash_readSecurityRegister(0x2070, calib->uhfCal.analogSendIrange, 9);
-    (void) extFlash_readSecurityRegister(0x2080, calib->uhfCal.analogSendQrange, 9);
+    (void) W25Qx_readSecurityRegister(0x1009, (&calib->uhfCal.freqAdjustMid), 1);
+    (void) W25Qx_readSecurityRegister(0x1010, calib->uhfCal.txHighPower, 9);
+    (void) W25Qx_readSecurityRegister(0x2090, calib->uhfCal.txMidPower, 9);
+    (void) W25Qx_readSecurityRegister(0x1020, calib->uhfCal.txLowPower, 9);
+    (void) W25Qx_readSecurityRegister(0x1030, calib->uhfCal.rxSensitivity, 9);
+    (void) W25Qx_readSecurityRegister(0x1040, calib->uhfCal.openSql9, 9);
+    (void) W25Qx_readSecurityRegister(0x1050, calib->uhfCal.closeSql9, 9);
+    (void) W25Qx_readSecurityRegister(0x1070, calib->uhfCal.closeSql1, 9);
+    (void) W25Qx_readSecurityRegister(0x1060, calib->uhfCal.openSql1, 9);
+    (void) W25Qx_readSecurityRegister(0x1090, calib->uhfCal.ctcss67Hz, 9);
+    (void) W25Qx_readSecurityRegister(0x10a0, calib->uhfCal.ctcss151Hz, 9);
+    (void) W25Qx_readSecurityRegister(0x10b0, calib->uhfCal.ctcss254Hz, 9);
+    (void) W25Qx_readSecurityRegister(0x10d0, calib->uhfCal.dcsMod1, 9);
+    (void) W25Qx_readSecurityRegister(0x2030, calib->uhfCal.sendIrange, 9);
+    (void) W25Qx_readSecurityRegister(0x2040, calib->uhfCal.sendQrange, 9);
+    (void) W25Qx_readSecurityRegister(0x2070, calib->uhfCal.analogSendIrange, 9);
+    (void) W25Qx_readSecurityRegister(0x2080, calib->uhfCal.analogSendQrange, 9);
 
     uint32_t freqs[18];
-    (void) extFlash_readSecurityRegister(0x20b0, ((uint8_t *) &freqs), 72);
+    (void) W25Qx_readSecurityRegister(0x20b0, ((uint8_t *) &freqs), 72);
 
     for(uint8_t i = 0; i < 9; i++)
     {
@@ -184,26 +184,26 @@ void nvm_readCalibData(void *buf)
     }
 
     /* VHF-band calibration data */
-    (void) extFlash_readSecurityRegister(0x100c, (&calib->vhfCal.freqAdjustMid), 1);
-    (void) extFlash_readSecurityRegister(0x1019, calib->vhfCal.txHighPower, 5);
-    (void) extFlash_readSecurityRegister(0x2099, calib->vhfCal.txMidPower, 5);
-    (void) extFlash_readSecurityRegister(0x1029, calib->vhfCal.txLowPower, 5);
-    (void) extFlash_readSecurityRegister(0x1039, calib->vhfCal.rxSensitivity, 5);
-    (void) extFlash_readSecurityRegister(0x109b, calib->vhfCal.ctcss67Hz, 5);
-    (void) extFlash_readSecurityRegister(0x10ab, calib->vhfCal.ctcss151Hz, 5);
-    (void) extFlash_readSecurityRegister(0x10bb, calib->vhfCal.ctcss254Hz, 5);
-    (void) extFlash_readSecurityRegister(0x10e0, calib->vhfCal.openSql9, 5);
-    (void) extFlash_readSecurityRegister(0x10e5, calib->vhfCal.closeSql9, 5);
-    (void) extFlash_readSecurityRegister(0x10ea, calib->vhfCal.closeSql1, 5);
-    (void) extFlash_readSecurityRegister(0x10ef, calib->vhfCal.openSql1, 5);
-    (void) extFlash_readSecurityRegister(0x10db, calib->vhfCal.dcsMod1, 5);
-    (void) extFlash_readSecurityRegister(0x2039, calib->vhfCal.sendIrange, 5);
-    (void) extFlash_readSecurityRegister(0x2049, calib->vhfCal.sendQrange, 5);
-    (void) extFlash_readSecurityRegister(0x2079, calib->uhfCal.analogSendIrange, 5);
-    (void) extFlash_readSecurityRegister(0x2089, calib->vhfCal.analogSendQrange, 5);
+    (void) W25Qx_readSecurityRegister(0x100c, (&calib->vhfCal.freqAdjustMid), 1);
+    (void) W25Qx_readSecurityRegister(0x1019, calib->vhfCal.txHighPower, 5);
+    (void) W25Qx_readSecurityRegister(0x2099, calib->vhfCal.txMidPower, 5);
+    (void) W25Qx_readSecurityRegister(0x1029, calib->vhfCal.txLowPower, 5);
+    (void) W25Qx_readSecurityRegister(0x1039, calib->vhfCal.rxSensitivity, 5);
+    (void) W25Qx_readSecurityRegister(0x109b, calib->vhfCal.ctcss67Hz, 5);
+    (void) W25Qx_readSecurityRegister(0x10ab, calib->vhfCal.ctcss151Hz, 5);
+    (void) W25Qx_readSecurityRegister(0x10bb, calib->vhfCal.ctcss254Hz, 5);
+    (void) W25Qx_readSecurityRegister(0x10e0, calib->vhfCal.openSql9, 5);
+    (void) W25Qx_readSecurityRegister(0x10e5, calib->vhfCal.closeSql9, 5);
+    (void) W25Qx_readSecurityRegister(0x10ea, calib->vhfCal.closeSql1, 5);
+    (void) W25Qx_readSecurityRegister(0x10ef, calib->vhfCal.openSql1, 5);
+    (void) W25Qx_readSecurityRegister(0x10db, calib->vhfCal.dcsMod1, 5);
+    (void) W25Qx_readSecurityRegister(0x2039, calib->vhfCal.sendIrange, 5);
+    (void) W25Qx_readSecurityRegister(0x2049, calib->vhfCal.sendQrange, 5);
+    (void) W25Qx_readSecurityRegister(0x2079, calib->uhfCal.analogSendIrange, 5);
+    (void) W25Qx_readSecurityRegister(0x2089, calib->vhfCal.analogSendQrange, 5);
 
-    (void) extFlash_readSecurityRegister(0x2000, ((uint8_t *) &freqs), 40);
-    extFlash_sleep();
+    (void) W25Qx_readSecurityRegister(0x2000, ((uint8_t *) &freqs), 40);
+    W25Qx_sleep();
 
     for(uint8_t i = 0; i < 5; i++)
     {
@@ -216,13 +216,13 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
 {
     if(pos > maxNumChannels) return -1;
 
-    extFlash_wakeup();
+    W25Qx_wakeup();
     delayUs(5);
 
     mduv3x0Channel_t chData;
     uint32_t readAddr = chDataBaseAddr + pos * sizeof(mduv3x0Channel_t);
-    extFlash_readData(readAddr, ((uint8_t *) &chData), sizeof(mduv3x0Channel_t));
-    extFlash_sleep();
+    W25Qx_readData(readAddr, ((uint8_t *) &chData), sizeof(mduv3x0Channel_t));
+    W25Qx_sleep();
 
     channel->mode            = chData.channel_mode - 1;
     channel->bandwidth       = chData.bandwidth;
