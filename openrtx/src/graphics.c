@@ -26,8 +26,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <hwconfig.h>
-#include <display.h>
-#include <graphics.h>
+#include <interfaces/display.h>
+#include <interfaces/graphics.h>
 
 #ifdef PIX_FMT_RGB565
 /* This specialization is meant for an RGB565 little endian pixel format.

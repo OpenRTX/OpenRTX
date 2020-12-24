@@ -24,7 +24,7 @@
  * this driver.
  */
 
-#include "display.h"
+#include <interfaces/display.h>
 #include <stdio.h>
 #include <string.h>
 #include <SDL2/SDL.h>

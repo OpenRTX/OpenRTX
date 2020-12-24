@@ -30,9 +30,9 @@
 #include "usb_bsp.h"
 #include "usbd_conf.h"
 #include "stm32f4xx.h"
-#include "gpio.h"
+#include <interfaces/gpio.h>
 #include <os.h>
-#include <delays.h>
+#include <interfaces/delays.h>
 
 extern USB_OTG_CORE_HANDLE           USB_OTG_dev;
 extern uint32_t USBD_OTG_ISR_Handler(USB_OTG_CORE_HANDLE *pdev);

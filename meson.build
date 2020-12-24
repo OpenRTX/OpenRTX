@@ -27,9 +27,8 @@ else
   openrtx_src += 'openrtx/src/main.c'
 endif
 
-openrtx_inc = ['openrtx/include/interfaces',
+openrtx_inc = ['openrtx/include',
                'openrtx/include/calibration',
-               'openrtx/include',
                'platform/drivers/ADC',
                'platform/drivers/NVM',
                'platform/drivers/tones',

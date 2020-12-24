@@ -22,7 +22,7 @@
 
 #include <stdbool.h>
 #include <state.h>
-#include <keyboard.h>
+#include <interfaces/keyboard.h>
 #include <stdint.h>
 #include <event.h>
 

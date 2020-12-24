@@ -20,7 +20,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include "keyboard.h"
+#include <interfaces/keyboard.h>
 #include <SDL2/SDL.h>
 
 void kbd_init()

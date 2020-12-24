@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <sys/types.h>
-#include <nvmem.h>
+#include <interfaces/nvmem.h>
 #include <cps.h>
 
 int main()

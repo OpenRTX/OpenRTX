@@ -18,8 +18,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <nvmem.h>
-#include <delays.h>
+#include <interfaces/nvmem.h>
+#include <interfaces/delays.h>
 #include "extFlash_MDx.h"
 #include "calibInfo_MDx.h"
 

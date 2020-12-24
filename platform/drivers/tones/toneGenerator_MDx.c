@@ -20,7 +20,7 @@
 
 #include "toneGenerator_MDx.h"
 #include <hwconfig.h>
-#include <gpio.h>
+#include <interfaces/gpio.h>
 #include <os.h>
 
 /*

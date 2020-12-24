@@ -16,7 +16,7 @@
  ***************************************************************************/
 
 #include "MK22F51212.h"
-#include "gpio.h"
+#include <interfaces/gpio.h>
 
 /*
  * MK22 GPIO management is a bit convoluted: instead of having all the registers

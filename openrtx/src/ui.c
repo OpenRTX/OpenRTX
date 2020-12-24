@@ -66,11 +66,11 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <ui.h>
-#include <rtx.h>
-#include <delays.h>
-#include <graphics.h>
-#include <keyboard.h>
-#include <platform.h>
+#include <interfaces/rtx.h>
+#include <interfaces/delays.h>
+#include <interfaces/graphics.h>
+#include <interfaces/keyboard.h>
+#include <interfaces/platform.h>
 #include <hwconfig.h>
 #include <string.h>
 #include <battery.h>

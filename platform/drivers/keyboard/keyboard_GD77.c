@@ -18,9 +18,9 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include "gpio.h"
-#include "delays.h"
-#include "keyboard.h"
+#include <interfaces/gpio.h>
+#include <interfaces/delays.h>
+#include <interfaces/keyboard.h>
 #include "hwconfig.h"
 
 void kbd_init()

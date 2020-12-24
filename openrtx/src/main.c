@@ -23,9 +23,9 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include <threads.h>
-#include <platform.h>
+#include <interfaces/platform.h>
 #include <battery.h>
-#include <graphics.h>
+#include <interfaces/graphics.h>
 #include <hwconfig.h>
 
 int main(void)

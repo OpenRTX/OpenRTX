@@ -19,7 +19,7 @@
 
 #include <stdio.h>
 #include <time.h>
-#include "rtc.h"
+#include <interfaces/rtc.h>
 
 void rtc_init()
 {

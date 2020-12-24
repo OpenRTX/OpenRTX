@@ -17,8 +17,8 @@
 
 #include "pll_MD3x0.h"
 #include <math.h>
-#include "gpio.h"
-#include "delays.h"
+#include <interfaces/gpio.h>
+#include <interfaces/delays.h>
 #include "hwconfig.h"
 
 #define REF_CLK 16800000.0F  /* Reference clock: 16.8MHz                 */

@@ -23,10 +23,10 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <os.h>
-#include "gpio.h"
-#include "delays.h"
-#include "rtx.h"
-#include "platform.h"
+#include <interfaces/gpio.h>
+#include <interfaces/delays.h>
+#include <interfaces/rtx.h>
+#include <interfaces/platform.h>
 #include "hwconfig.h"
 #include "toneGenerator_MDx.h"
 

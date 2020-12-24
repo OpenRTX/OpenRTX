@@ -23,8 +23,8 @@
 #include <os.h>
 #include <stdio.h>
 #include "stm32f4xx.h"
-#include "gpio.h"
-#include "delays.h"
+#include <interfaces/gpio.h>
+#include <interfaces/delays.h>
 #include <lib_mem.h>
 
 static OS_TCB        t1TCB;

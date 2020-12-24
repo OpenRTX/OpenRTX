@@ -20,11 +20,11 @@
 
 #include <datatypes.h>
 #include <hwconfig.h>
-#include <platform.h>
+#include <interfaces/platform.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
-#include <rtx.h>
+#include <interfaces/rtx.h>
 
 OS_MUTEX *cfgMutex;               /* Mutex for incoming config messages */
 OS_Q cfgMailbox;                  /* Queue for incoming config messages */

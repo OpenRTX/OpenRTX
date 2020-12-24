@@ -15,7 +15,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include "gpio.h"
+#include <interfaces/gpio.h>
 #include <stdio.h>
 
 void gpio_setMode(void *port, uint8_t pin, enum Mode mode)

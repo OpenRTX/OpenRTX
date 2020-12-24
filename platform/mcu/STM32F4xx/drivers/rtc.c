@@ -18,7 +18,7 @@
  ***************************************************************************/
 
 #include <os.h>
-#include "rtc.h"
+#include <interfaces/rtc.h>
 #include "stm32f4xx.h"
 
 void rtc_init()

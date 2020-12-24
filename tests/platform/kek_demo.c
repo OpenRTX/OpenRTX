@@ -7,7 +7,7 @@
 #include <SDL2/SDL.h>
 #undef main
 
-#include "graphics.h"
+#include <interfaces/graphics.h>
 
 static OS_TCB        App_TaskStartTCB;
 static CPU_STK_SIZE  App_TaskStartStk[APP_CFG_TASK_START_STK_SIZE];

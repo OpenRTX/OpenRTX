@@ -15,7 +15,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include "delays.h"
+#include <interfaces/delays.h>
 
 /**
  * Implementation of the delay functions for STM32F405 MCU.

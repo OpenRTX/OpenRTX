@@ -17,13 +17,13 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <platform.h>
-#include <gpio.h>
+#include <interfaces/platform.h>
+#include <interfaces/gpio.h>
 #include <os.h>
 #include <hwconfig.h>
 #include <ADC1_MDx.h>
 #include <calibInfo_MDx.h>
-#include <nvmem.h>
+#include <interfaces/nvmem.h>
 
 mduv3x0Calib_t calibration;
 

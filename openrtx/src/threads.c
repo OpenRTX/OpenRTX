@@ -22,12 +22,12 @@
 #include <ui.h>
 #include <state.h>
 #include <threads.h>
-#include <keyboard.h>
-#include <graphics.h>
-#include <platform.h>
+#include <interfaces/keyboard.h>
+#include <interfaces/graphics.h>
+#include <interfaces/platform.h>
 #include <hwconfig.h>
 #include <event.h>
-#include <rtx.h>
+#include <interfaces/rtx.h>
 
 /* Mutex for concurrent access to state variable */
 static OS_MUTEX state_mutex;

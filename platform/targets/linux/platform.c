@@ -15,8 +15,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include "platform.h"
-#include "gpio.h"
+#include <interfaces/platform.h>
+#include <interfaces/gpio.h>
 #include <stdio.h>
 #include "emulator.h"
 

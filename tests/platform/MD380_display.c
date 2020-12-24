@@ -23,11 +23,11 @@
 #include <os.h>
 #include <lib_mem.h>
 #include <stdio.h>
-#include "gpio.h"
-#include "delays.h"
-#include "display.h"
+#include <interfaces/gpio.h>
+#include <interfaces/delays.h>
+#include <interfaces/display.h>
 #include "hwconfig.h"
-#include "platform.h"
+#include <interfaces/platform.h>
 
 static OS_TCB        t1TCB;
 static CPU_STK_SIZE  t1Stk[128];

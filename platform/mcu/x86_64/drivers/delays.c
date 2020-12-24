@@ -15,7 +15,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include "delays.h"
+#include <interfaces/delays.h>
 #include <unistd.h>
 #include <stdio.h>
 

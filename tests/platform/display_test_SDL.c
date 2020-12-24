@@ -25,7 +25,7 @@
  * the driver source file.
  */
 
-#include "display.h"
+#include <interfaces/display.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdint.h>

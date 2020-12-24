@@ -18,9 +18,9 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <platform.h>
+#include <interfaces/platform.h>
 #include <ADC0_GDx.h>
-#include <gpio.h>
+#include <interfaces/gpio.h>
 #include <os.h>
 #include "hwconfig.h"
 

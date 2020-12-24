@@ -20,9 +20,9 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include "gpio.h"
-#include "delays.h"
-#include "keyboard.h"
+#include <interfaces/gpio.h>
+#include <interfaces/delays.h>
+#include <interfaces/keyboard.h>
 #include "hwconfig.h"
 
 void kbd_init()

@@ -19,7 +19,7 @@
  ***************************************************************************/
 
 #include <os.h>
-#include "rtc.h"
+#include <interfaces/rtc.h>
 
 /*
  * NOTE: even if the MK22FN512 MCU has an RTC, it is unusable in GDx platforms

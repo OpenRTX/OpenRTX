@@ -23,13 +23,13 @@
 #include <calibUtils.h>
 #include <datatypes.h>
 #include <hwconfig.h>
-#include <platform.h>
+#include <interfaces/platform.h>
 #include <ADC1_MDx.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
-#include <gpio.h>
-#include <rtx.h>
+#include <interfaces/gpio.h>
+#include <interfaces/rtx.h>
 #include "HR-C5000_MD3x0.h"
 #include "pll_MD3x0.h"
 

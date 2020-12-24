@@ -22,7 +22,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <display.h>
+#include <interfaces/display.h>
 #include "gfxfont.h"
 #include "TomThumb.h"
 #include "FreeSans6pt7b.h"

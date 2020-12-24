@@ -15,7 +15,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <gpio.h>
+#include <interfaces/gpio.h>
 #include "hwconfig.h"
 #include "ADC1_MDx.h"
 

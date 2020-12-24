@@ -28,7 +28,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <gpio.h>
+#include <interfaces/gpio.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>

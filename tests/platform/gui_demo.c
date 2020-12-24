@@ -20,12 +20,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <os.h>
-#include "gpio.h"
-#include "graphics.h"
+#include <interfaces/gpio.h>
+#include <interfaces/graphics.h>
 #include "hwconfig.h"
-#include "platform.h"
+#include <interfaces/platform.h>
 #include "state.h"
-#include "keyboard.h"
+#include <interfaces/keyboard.h>
 #include "ui.h"
 
 

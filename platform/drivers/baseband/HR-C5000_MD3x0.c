@@ -20,8 +20,8 @@
 
 #include "HR-C5000_MD3x0.h"
 #include <hwconfig.h>
-#include <gpio.h>
-#include <delays.h>
+#include <interfaces/gpio.h>
+#include <interfaces/delays.h>
 #include <hwconfig.h>
 #include <os.h>
 
