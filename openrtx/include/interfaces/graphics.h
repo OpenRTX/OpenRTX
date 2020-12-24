@@ -23,15 +23,15 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <interfaces/display.h>
-#include "gfxfont.h"
-#include "TomThumb.h"
-#include "FreeSans6pt7b.h"
-#include "FreeSans8pt7b.h"
-#include "FreeSans9pt7b.h"
-#include "FreeSans12pt7b.h"
-#include "FreeSans16pt7b.h"
-#include "FreeSans18pt7b.h"
-#include "FreeSans24pt7b.h"
+#include <gfxfont.h>
+#include <TomThumb.h>
+#include <FreeSans6pt7b.h>
+#include <FreeSans8pt7b.h>
+#include <FreeSans9pt7b.h>
+#include <FreeSans12pt7b.h>
+#include <FreeSans16pt7b.h>
+#include <FreeSans18pt7b.h>
+#include <FreeSans24pt7b.h>
 
 /**
  * Standard high-level graphic interface for all display types.
