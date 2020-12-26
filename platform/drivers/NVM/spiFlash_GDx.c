@@ -18,64 +18,57 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef HWCONFIG_H
-#define HWCONFIG_H
+#include <gpio.h>
+#include <delays.h>
+#include <stdint.h>
+#include <hwconfig.h>
 
-#include "MK22F51212.h"
+/*
+ * Implementation of external flash SPI interface for GDx devices.
+ * In these radios the SPI communication has to be managed through software bit
+ * banging, since there is no SPI peripheral available.
+ */
 
-/* Supported radio bands */
-#define BAND_VHF
-#define BAND_UHF
+uint8_t spiFlash_SendRecv(uint8_t val)
+{
+    uint8_t data = 0;
+    for(uint8_t i = 0; i < 8; i++)
+    {
+        gpio_clearPin(FLASH_CLK);
+        delayUs(1);
 
-/* Band limits in Hz */
-#define FREQ_LIMIT_VHF_LO 136000000
-#define FREQ_LIMIT_VHF_HI 174000000
-#define FREQ_LIMIT_UHF_LO 400000000
-#define FREQ_LIMIT_UHF_HI 470000000
+        if((val << i) & 0x80)
+        {
+            gpio_setPin(FLASH_SDO);
+        }
+        else
+        {
+            gpio_clearPin(FLASH_SDO);
+        }
 
-/* Screen dimensions */
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
+        gpio_setPin(FLASH_CLK);
+        delayUs(1);
 
-/* Screen pixel format */
-#define PIX_FMT_BW
+        data <<= 1;
+        data |= (gpio_readPin(FLASH_SDI)) ? 0x01 : 0x00;
+    }
 
-/* Battery type */
-#define BAT_LIPO_2S
+    return data;
+}
 
-/* Display */
-#define LCD_BKLIGHT GPIOC,4
-#define LCD_CS      GPIOC,8
-#define LCD_RST     GPIOC,9
-#define LCD_RS      GPIOC,10
-#define LCD_CLK     GPIOC,11
-#define LCD_DAT     GPIOC,12
+void spiFlash_init()
+{
+    gpio_setMode(FLASH_CLK, OUTPUT);
+    gpio_setMode(FLASH_SDO, OUTPUT);
+    gpio_setMode(FLASH_SDI, INPUT);
 
-/* Signalling LEDs */
-#define GREEN_LED  GPIOA,17
-#define RED_LED    GPIOC,14
+    gpio_clearPin(FLASH_CLK);
+    gpio_clearPin(FLASH_SDO);
+}
 
-/* Keyboard */
-#define KB_ROW0 GPIOB,19
-#define KB_ROW1 GPIOB,20
-#define KB_ROW2 GPIOB,21
-#define KB_ROW3 GPIOB,22
-#define KB_ROW4 GPIOB,23
-
-#define KB_COL0 GPIOC,0
-#define KB_COL1 GPIOC,1
-#define KB_COL2 GPIOC,2
-#define KB_COL3 GPIOC,3
-
-#define PTT_SW   GPIOA,1
-#define FUNC_SW  GPIOA,2
-#define FUNC2_SW GPIOB,1
-#define MONI_SW  GPIOB,9
-
-/* External flash */
-#define FLASH_CS  GPIOE,6
-#define FLASH_CLK GPIOE,5
-#define FLASH_SDO GPIOE,4
-#define FLASH_SDI GPIOA,19
-
-#endif
+void spiFlash_terminate()
+{
+    gpio_setMode(FLASH_CLK, INPUT);
+    gpio_setMode(FLASH_SDO, INPUT);
+    gpio_setMode(FLASH_SDI, INPUT);
+}
