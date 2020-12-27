@@ -484,11 +484,15 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 {
                     if(menu_selected > 0)
                         menu_selected -= 1;
+                    else
+                        menu_selected = MENU_NUM-1;
                 }
                 else if(msg.keys & KEY_DOWN)
                 {
                     if(menu_selected < MENU_NUM-1)
                         menu_selected += 1;
+                    else
+                        menu_selected = 0;
                 }
                 else if(msg.keys & KEY_ENTER)
                 {
