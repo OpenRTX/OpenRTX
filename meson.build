@@ -159,6 +159,9 @@ linux_src = src + ['platform/targets/linux/emulator/emulator.c',
                    'rtos/uC-CPU/Posix/cpu_c.c']
 
 
+# GDx family display emulation
+#linux_def = def + {'SCREEN_WIDTH': '128', 'SCREEN_HEIGHT': '64', 'PIX_FMT_BW': ''}
+# MDx family display emulation
 linux_def = def + {'SCREEN_WIDTH': '160', 'SCREEN_HEIGHT': '128', 'PIX_FMT_RGB565': ''}
 
 linux_inc = inc + ['rtos/uC-OS3/Ports/POSIX',
