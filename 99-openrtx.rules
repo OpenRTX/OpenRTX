@@ -1,7 +1,7 @@
 # udev rules for DFU mode on radios supported by OpenRTX
 # Place this in /etc/udev/rules.d/ to let non-root users talk to the radios.
 
-# GDx platform (example: Radioddity GD77)
+# GDx family (example: Radioddity GD77)
 SUBSYSTEM=="usb", ATTRS{idVendor}=="15a2", ATTRS{idProduct}=="0073", MODE="0666"
-# MDx platform (example: Tytera MD380)
+# MDx family (example: Tytera MD380)
 SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="df11", MODE="0666"
