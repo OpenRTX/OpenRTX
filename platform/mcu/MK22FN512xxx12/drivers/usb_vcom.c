@@ -649,12 +649,12 @@ ssize_t vcom_writeBlock(const void *buf, size_t len)
 
 ssize_t vcom_readBlock(void* buf, size_t len)
 {
-    if((cdcVcom.attach == 1) && (cdcVcom.startTransactions == 1))
+    if(recvSize != 0)
     {
         size_t toTransfer = (len < recvSize) ? len : recvSize;
         memcpy(buf, recvBuf, toTransfer);
         recvSize = 0;
-        return toTransfer;
+        return ((ssize_t) toTransfer);
     }
 
     return 0;

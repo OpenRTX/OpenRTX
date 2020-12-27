@@ -213,19 +213,28 @@ int _write_r(struct _reent *ptr, int fd, const void *buf, size_t cnt)
  */
 int _read_r(struct _reent *ptr, int fd, void *buf, size_t cnt)
 {
+    int ret = -1;
+
     if(fd == STDIN_FILENO)
     {
         for(;;)
         {
             ssize_t r = vcom_readBlock(buf, cnt);
-            if((r < 0) || (r == (ssize_t)(cnt))) return r;
+            if((r < 0) || (r == ((ssize_t) cnt)))
+            {
+                ret = ((int) r);
+                break;
+            }
         }
     }
     else
+    {
+        /* If fd is not stdin */
+        ptr->_errno = EBADF;
+        ret = -1;
+    }
 
-    /* If fd is not stdin */
-    ptr->_errno = EBADF;
-    return -1;
+    return ret;
 }
 
 int _read(int fd, void *buf, size_t cnt)
