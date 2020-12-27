@@ -311,11 +311,17 @@ void _ui_drawVFOBottom()
 void _ui_drawMenuList(point_t pos, const char *entries[], 
                       uint8_t num_entries, uint8_t selected)
 {
+    // Number of menu entries that fit in the screen height
+    uint8_t entries_in_screen = ((SCREEN_HEIGHT - pos.y) / layout.top_h) + 1;
+    uint8_t scroll = 0;
     char entry_buf[MAX_ENTRY_LEN] = "";
     for(int item=0; (item < num_entries) && (pos.y < SCREEN_HEIGHT); item++)
     {
-        snprintf(entry_buf, sizeof(entry_buf), "%s", entries[item]);
-        if(item == selected)
+        // If selection is off the screen, scroll screen
+        if(selected >= entries_in_screen)
+            scroll = selected - entries_in_screen + 1;
+        snprintf(entry_buf, sizeof(entry_buf), "%s", entries[item + scroll]);
+        if(item + scroll == selected)
         {
             // Draw rectangle under selected item, compensating for text height
             point_t rect_pos = {0, pos.y - layout.top_h + 3};
