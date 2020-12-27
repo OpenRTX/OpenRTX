@@ -102,6 +102,8 @@ typedef struct layout_t
 {
     uint16_t top_h;
     uint16_t line1_h;
+    uint16_t line2_h;
+    uint16_t line3_h;
     uint16_t bottom_h;
     uint16_t vertical_pad;
     uint16_t horizontal_pad;
@@ -158,9 +160,9 @@ layout_t _ui_calculateLayout()
     // Height and padding shown in diagram at beginning of file
     const uint16_t top_h = 13;
     const uint16_t bottom_h = 18;
-    const uint16_t line1_h = 0;
+    const uint16_t line1_h = 15;
     const uint16_t line2_h = 15;
-    const uint16_t line3_h = 15;
+    const uint16_t line3_h = 0;
     const uint16_t line_pad = 2;
     const uint16_t vertical_pad = 4;
     const uint16_t horizontal_pad = 4;
@@ -174,6 +176,7 @@ layout_t _ui_calculateLayout()
     // Bottom bar font: 8 pt
     const fontSize_t bottom_font = FONT_SIZE_6PT;
 
+    // Radioddity RD-5R
     #elif SCREEN_HEIGHT > 47
 
     // Height and padding shown in diagram at beginning of file
@@ -210,6 +213,8 @@ layout_t _ui_calculateLayout()
     {
         top_h,
         line1_h,
+        line2_h,
+        line3_h,
         bottom_h,
         vertical_pad,
         horizontal_pad,
@@ -271,18 +276,29 @@ void _ui_drawVFOMiddle(state_t* last_state)
 {
     // Print VFO frequencies
     char freq_buf[20] = "";
+    point_t freq1_pos = {0,0};
+    point_t freq2_pos = {0,0};
+    // On radios with 2 rows display use line 1 and 2
+    if(layout.line3_h == 0)
+    {
+        freq1_pos = layout.line1_pos;
+        freq2_pos = layout.line2_pos;
+    }
+    // On radios with 3 rows display use line 2 and 3
+    else
+    {
+        freq1_pos = layout.line2_pos;
+        freq2_pos = layout.line3_pos;
+    }
     snprintf(freq_buf, sizeof(freq_buf), "Rx: %03lu.%05lu",
              last_state->channel.rx_frequency/1000000,
              last_state->channel.rx_frequency%1000000/10);
-
-    gfx_print(layout.line2_pos, freq_buf, layout.line1_font, TEXT_ALIGN_CENTER,
+    gfx_print(freq1_pos, freq_buf, layout.line1_font, TEXT_ALIGN_CENTER,
               color_white);
-
     snprintf(freq_buf, sizeof(freq_buf), "Tx: %03lu.%05lu",
              last_state->channel.tx_frequency/1000000,
              last_state->channel.tx_frequency%1000000/10);
-
-    gfx_print(layout.line3_pos, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
+    gfx_print(freq2_pos, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
               color_white);
 }
 
@@ -353,8 +369,7 @@ void _ui_drawMenuTop()
     gfx_print(layout.top_pos, "Menu", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print menu entries
-    point_t pos = {layout.horizontal_pad, layout.line1_h};
-    _ui_drawMenuList(pos, menu_items, MENU_NUM, menu_selected);
+    _ui_drawMenuList(layout.line1_pos, menu_items, MENU_NUM, menu_selected);
 }
 
 void _ui_drawMenuSettings()
@@ -364,8 +379,7 @@ void _ui_drawMenuSettings()
     gfx_print(layout.top_pos, "Settings", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print menu entries
-    point_t pos = {layout.horizontal_pad, layout.line1_h};
-    _ui_drawMenuList(pos, settings_items, SETTINGS_NUM, menu_selected);
+    _ui_drawMenuList(layout.line1_pos, settings_items, SETTINGS_NUM, menu_selected);
 }
 
 void _ui_drawSettingsTimeDate(state_t* last_state)
