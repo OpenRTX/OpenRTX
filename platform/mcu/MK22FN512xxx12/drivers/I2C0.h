@@ -62,4 +62,24 @@ void i2c0_read(uint8_t addr, void *buf, size_t len);
  */
 bool i2c0_busy();
 
+/**
+ * Acquire exclusive ownership on the I2C peripheral by locking an internal
+ * mutex. This function is nonblocking and returs true if mutex has been
+ * successfully locked by the caller.
+ * @return true if device has been locked.
+ */
+bool i2c0_lockDevice();
+
+/**
+ * Acquire exclusive ownership on the I2C peripheral by locking an internal
+ * mutex. In case mutex is already locked, this function blocks the execution
+ * flow until it becomes free again.
+ */
+void i2c0_lockDeviceBlocking();
+
+/**
+ * Release exclusive ownership on the I2C peripheral.
+ */
+void i2c0_releaseDevice();
+
 #endif /* I2C0_H */
