@@ -78,12 +78,7 @@
 // Maximum menu entry length
 #define MAX_ENTRY_LEN 12
 
-// Number of top menu entries
-#define MENU_NUM 6
-// Number of settings menu entries
-#define SETTINGS_NUM 1
-
-const char *menu_items[MENU_NUM] =
+const char *menu_items[6] =
 {
     "Zone",
     "Channels",
@@ -92,11 +87,15 @@ const char *menu_items[MENU_NUM] =
     "GPS",
     "Settings"
 };
+// Calculate number of main menu entries
+const uint8_t menu_num = sizeof(menu_items)/sizeof(menu_items[0]);
 
-const char *settings_items[SETTINGS_NUM] =
+const char *settings_items[1] =
 {
     "Time & Date"
 };
+// Calculate number of settings menu entries
+const uint8_t settings_num = sizeof(settings_items)/sizeof(settings_items[0]);
 
 typedef struct layout_t
 {
@@ -375,7 +374,7 @@ void _ui_drawMenuTop()
     gfx_print(layout.top_pos, "Menu", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print menu entries
-    _ui_drawMenuList(layout.line1_pos, menu_items, MENU_NUM, menu_selected);
+    _ui_drawMenuList(layout.line1_pos, menu_items, menu_num, menu_selected);
 }
 
 void _ui_drawMenuSettings()
@@ -385,7 +384,7 @@ void _ui_drawMenuSettings()
     gfx_print(layout.top_pos, "Settings", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print menu entries
-    _ui_drawMenuList(layout.line1_pos, settings_items, SETTINGS_NUM, menu_selected);
+    _ui_drawMenuList(layout.line1_pos, settings_items, settings_num, menu_selected);
 }
 
 void _ui_drawSettingsTimeDate(state_t* last_state)
@@ -505,11 +504,11 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     if(menu_selected > 0)
                         menu_selected -= 1;
                     else
-                        menu_selected = MENU_NUM-1;
+                        menu_selected = menu_num-1;
                 }
                 else if(msg.keys & KEY_DOWN)
                 {
-                    if(menu_selected < MENU_NUM-1)
+                    if(menu_selected < menu_num-1)
                         menu_selected += 1;
                     else
                         menu_selected = 0;
