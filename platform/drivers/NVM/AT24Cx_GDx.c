@@ -18,68 +18,45 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef HWCONFIG_H
-#define HWCONFIG_H
+#include "AT24Cx.h"
+#include <I2C0.h>
+#include <gpio.h>
+#include <delays.h>
+#include <stdint.h>
+#include <hwconfig.h>
 
-#include "MK22F51212.h"
+static const uint8_t devAddr = 0xA0;    /* EEPROM I2C address */
 
-/* Supported radio bands */
-#define BAND_VHF
-#define BAND_UHF
+void AT24Cx_init()
+{
+    gpio_setMode(I2C_SDA, OPEN_DRAIN);
+    gpio_setMode(I2C_SCL, OPEN_DRAIN);
+    gpio_setAlternateFunction(I2C_SDA, 3);
+    gpio_setAlternateFunction(I2C_SCL, 3);
 
-/* Band limits in Hz */
-#define FREQ_LIMIT_VHF_LO 136000000
-#define FREQ_LIMIT_VHF_HI 174000000
-#define FREQ_LIMIT_UHF_LO 400000000
-#define FREQ_LIMIT_UHF_HI 470000000
+    i2c0_init();
+}
 
-/* Screen dimensions */
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
+void AT24Cx_terminate()
+{
+    i2c0_terminate();
+    gpio_setMode(I2C_SDA, INPUT);
+    gpio_setMode(I2C_SCL, INPUT);
+}
 
-/* Screen pixel format */
-#define PIX_FMT_BW
+void AT24Cx_readData(uint32_t addr, void* buf, size_t len)
+{
+    uint16_t a = __builtin_bswap16((uint16_t) addr);
 
-/* Battery type */
-#define BAT_LIPO_2S
+    /*
+     * On GDx devices the I2C bus is shared between the EEPROM and the AT1846S,
+     * so we have to acquire exclusive ownership before exchanging data
+     */
+    i2c0_lockDeviceBlocking();
 
-/* Display */
-#define LCD_BKLIGHT GPIOC,4
-#define LCD_CS      GPIOC,8
-#define LCD_RST     GPIOC,9
-#define LCD_RS      GPIOC,10
-#define LCD_CLK     GPIOC,11
-#define LCD_DAT     GPIOC,12
+    i2c0_write(devAddr, &a, 2, false);
+    delayUs(10);
+    i2c0_read(devAddr, buf, len);
 
-/* Signalling LEDs */
-#define GREEN_LED  GPIOA,17
-#define RED_LED    GPIOC,14
-
-/* Keyboard */
-#define KB_ROW0 GPIOB,19
-#define KB_ROW1 GPIOB,20
-#define KB_ROW2 GPIOB,21
-#define KB_ROW3 GPIOB,22
-#define KB_ROW4 GPIOB,23
-
-#define KB_COL0 GPIOC,0
-#define KB_COL1 GPIOC,1
-#define KB_COL2 GPIOC,2
-#define KB_COL3 GPIOC,3
-
-#define PTT_SW   GPIOA,1
-#define FUNC_SW  GPIOA,2
-#define FUNC2_SW GPIOB,1
-#define MONI_SW  GPIOB,9
-
-/* External flash */
-#define FLASH_CS  GPIOE,6
-#define FLASH_CLK GPIOE,5
-#define FLASH_SDO GPIOE,4
-#define FLASH_SDI GPIOA,19
-
-/* I2C for EEPROM and AT1846S */
-#define I2C_SDA GPIOE,25
-#define I2C_SCL GPIOE,24
-
-#endif
+    i2c0_releaseDevice();
+}

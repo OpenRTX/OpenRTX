@@ -18,68 +18,34 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef HWCONFIG_H
-#define HWCONFIG_H
+#ifndef AT24Cx_H
+#define AT24Cx_H
 
-#include "MK22F51212.h"
+#include <stdint.h>
+#include <sys/types.h>
 
-/* Supported radio bands */
-#define BAND_VHF
-#define BAND_UHF
+/**
+ * Driver for ATMEL AT24Cx family of I2C EEPROM devices, used as external non
+ * volatile memory on various radios to store global settings and contact data.
+ */
 
-/* Band limits in Hz */
-#define FREQ_LIMIT_VHF_LO 136000000
-#define FREQ_LIMIT_VHF_HI 174000000
-#define FREQ_LIMIT_UHF_LO 400000000
-#define FREQ_LIMIT_UHF_HI 470000000
+/**
+ * Initialise driver for external EEPROM.
+ */
+void AT24Cx_init();
 
-/* Screen dimensions */
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
+/**
+ * Terminate driver for external EEPROM.
+ */
+void AT24Cx_terminate();
 
-/* Screen pixel format */
-#define PIX_FMT_BW
+/**
+ * Read data from EEPROM memory.
+ *
+ * @param addr: start address for read operation.
+ * @param buf: pointer to a buffer where data is written to.
+ * @param len: number of bytes to read.
+ */
+void AT24Cx_readData(uint32_t addr, void *buf, size_t len);
 
-/* Battery type */
-#define BAT_LIPO_2S
-
-/* Display */
-#define LCD_BKLIGHT GPIOC,4
-#define LCD_CS      GPIOC,8
-#define LCD_RST     GPIOC,9
-#define LCD_RS      GPIOC,10
-#define LCD_CLK     GPIOC,11
-#define LCD_DAT     GPIOC,12
-
-/* Signalling LEDs */
-#define GREEN_LED  GPIOA,17
-#define RED_LED    GPIOC,14
-
-/* Keyboard */
-#define KB_ROW0 GPIOB,19
-#define KB_ROW1 GPIOB,20
-#define KB_ROW2 GPIOB,21
-#define KB_ROW3 GPIOB,22
-#define KB_ROW4 GPIOB,23
-
-#define KB_COL0 GPIOC,0
-#define KB_COL1 GPIOC,1
-#define KB_COL2 GPIOC,2
-#define KB_COL3 GPIOC,3
-
-#define PTT_SW   GPIOA,1
-#define FUNC_SW  GPIOA,2
-#define FUNC2_SW GPIOB,1
-#define MONI_SW  GPIOB,9
-
-/* External flash */
-#define FLASH_CS  GPIOE,6
-#define FLASH_CLK GPIOE,5
-#define FLASH_SDO GPIOE,4
-#define FLASH_SDI GPIOA,19
-
-/* I2C for EEPROM and AT1846S */
-#define I2C_SDA GPIOE,25
-#define I2C_SCL GPIOE,24
-
-#endif
+#endif /* AT24Cx_H */

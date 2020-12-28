@@ -257,6 +257,7 @@ dm1801_src = src + mk22fn512_src + ['platform/targets/DM-1801/platform.c',
                                     'platform/drivers/display/UC1701_GD77.c',
                                     'platform/drivers/keyboard/keyboard_GD77.c',
                                     'platform/drivers/NVM/W25Qx.c',
+                                    'platform/drivers/NVM/AT24Cx_GDx.c',
                                     'platform/drivers/NVM/spiFlash_GDx.c',
                                     'platform/drivers/ADC/ADC0_GDx.c',
                                     'platform/drivers/baseband/rtx_GDx.c']
