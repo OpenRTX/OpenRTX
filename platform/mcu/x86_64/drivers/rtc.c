@@ -58,9 +58,11 @@ curTime_t rtc_getTime()
     t.hour = timeinfo->tm_hour;
     t.minute = timeinfo->tm_min;
     t.second = timeinfo->tm_sec;
-    t.year = timeinfo->tm_year + 1900;
-    t.day = timeinfo->tm_mday;
+    t.day = timeinfo->tm_wday;
+    t.date = timeinfo->tm_mday;
     t.month = timeinfo->tm_mon + 1;
+    // Only last two digits of the year are supported in OpenRTX
+    t.year = (timeinfo->tm_year + 1900) % 100;
 
     return t;
 }
