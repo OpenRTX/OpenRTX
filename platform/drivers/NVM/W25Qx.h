@@ -65,7 +65,7 @@ void W25Qx_sleep();
  * @return: -1 if address is not whithin security registers address range, the
  * number of bytes effectively read otherwise.
  */
-ssize_t W25Qx_readSecurityRegister(uint32_t addr, uint8_t *buf, size_t len);
+ssize_t W25Qx_readSecurityRegister(uint32_t addr, void *buf, size_t len);
 
 /**
  * Read data from flash memory.
@@ -74,6 +74,6 @@ ssize_t W25Qx_readSecurityRegister(uint32_t addr, uint8_t *buf, size_t len);
  * @param buf: pointer to a buffer where data is written to.
  * @param len: number of bytes to read.
  */
-void W25Qx_readData(uint32_t addr, uint8_t *buf, size_t len);
+void W25Qx_readData(uint32_t addr, void *buf, size_t len);
 
 #endif /* W25Qx_H */

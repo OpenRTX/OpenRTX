@@ -69,7 +69,7 @@ void W25Qx_sleep()
     gpio_setPin(FLASH_CS);
 }
 
-ssize_t W25Qx_readSecurityRegister(uint32_t addr, uint8_t* buf, size_t len)
+ssize_t W25Qx_readSecurityRegister(uint32_t addr, void* buf, size_t len)
 {
     uint32_t addrBase  = addr & 0x3000;
     uint32_t addrRange = addr & 0xCFFF;
@@ -92,7 +92,7 @@ ssize_t W25Qx_readSecurityRegister(uint32_t addr, uint8_t* buf, size_t len)
 
     for(size_t i = 0; i < readLen; i++)
     {
-        buf[i] = spiFlash_SendRecv(0x00);
+        ((uint8_t *) buf)[i] = spiFlash_SendRecv(0x00);
     }
 
     gpio_setPin(FLASH_CS);
@@ -100,7 +100,7 @@ ssize_t W25Qx_readSecurityRegister(uint32_t addr, uint8_t* buf, size_t len)
     return ((ssize_t) readLen);
 }
 
-void W25Qx_readData(uint32_t addr, uint8_t* buf, size_t len)
+void W25Qx_readData(uint32_t addr, void* buf, size_t len)
 {
     gpio_clearPin(FLASH_CS);
     (void) spiFlash_SendRecv(CMD_READ);             /* Command        */
@@ -110,7 +110,7 @@ void W25Qx_readData(uint32_t addr, uint8_t* buf, size_t len)
 
     for(size_t i = 0; i < len; i++)
     {
-        buf[i] = spiFlash_SendRecv(0x00);
+        ((uint8_t *) buf)[i] = spiFlash_SendRecv(0x00);
     }
 
     gpio_setPin(FLASH_CS);
