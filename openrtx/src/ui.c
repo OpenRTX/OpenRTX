@@ -653,7 +653,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     input_number = input_getPressedNumber(msg);
                     if(input_set == SET_RX)
                     {
-                        if(input_position == 0)
+                        if(input_position == 1)
                             new_rx_frequency = 0;
                         // Calculate portion of the new RX frequency
                         new_rx_frequency += input_number * 
@@ -670,7 +670,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     }
                     else if(input_set == SET_TX)
                     {
-                        if(input_position == 0)
+                        if(input_position == 1)
                             new_tx_frequency = 0;
                         // Calculate portion of the new TX frequency
                         new_tx_frequency += input_number * 
