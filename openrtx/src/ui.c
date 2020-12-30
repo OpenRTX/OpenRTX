@@ -353,13 +353,23 @@ void _ui_drawVFOMiddleInput(state_t* last_state)
 
     if(input_set == SET_RX)
     {
-        // Replace Rx frequency with underscorses
-        if(input_position <= 1)
-            snprintf(new_rx_freq_buf, sizeof(new_rx_freq_buf), ">Rx:___._____");
-        if(input_position >= 1) 
+        if(input_position == 0)
+        {
+            snprintf(freq_buf, sizeof(freq_buf), ">Rx:%03lu.%05lu",
+                     new_rx_frequency/1000000,
+                     new_rx_frequency%1000000/10);
+            gfx_print(freq1_pos, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
+                      color_white);
+        }
+        else
+        {
+            // Replace Rx frequency with underscorses
+            if(input_position == 1)
+                snprintf(new_rx_freq_buf, sizeof(new_rx_freq_buf), ">Rx:___._____");
             new_rx_freq_buf[insert_pos] = input_char;
-        gfx_print(freq1_pos, new_rx_freq_buf, layout.line1_font, TEXT_ALIGN_CENTER,
-                  color_white);
+            gfx_print(freq1_pos, new_rx_freq_buf, layout.line1_font, TEXT_ALIGN_CENTER,
+                      color_white);
+        }
         snprintf(freq_buf, sizeof(freq_buf), " Tx:%03lu.%05lu",
                  last_state->channel.tx_frequency/1000000,
                  last_state->channel.tx_frequency%1000000/10);
@@ -368,18 +378,28 @@ void _ui_drawVFOMiddleInput(state_t* last_state)
     }
     else if(input_set == SET_TX)
     {
-        // Replace Rx frequency with underscorses
-        if(input_position == 0)
-            snprintf(new_tx_freq_buf, sizeof(new_tx_freq_buf), ">Tx:___._____");
-        if(input_position >= 1) 
-            new_tx_freq_buf[insert_pos] = input_char;
         snprintf(freq_buf, sizeof(freq_buf), " Rx:%03lu.%05lu",
                  new_rx_frequency/1000000,
                  new_rx_frequency%1000000/10);
         gfx_print(freq1_pos, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
                   color_white);
-        gfx_print(freq2_pos, new_tx_freq_buf, layout.line1_font, TEXT_ALIGN_CENTER,
-                  color_white);
+        // Replace Rx frequency with underscorses
+        if(input_position == 0)
+        {
+            snprintf(freq_buf, sizeof(freq_buf), ">Tx:%03lu.%05lu",
+                     new_rx_frequency/1000000,
+                     new_rx_frequency%1000000/10);
+            gfx_print(freq2_pos, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
+                      color_white);
+        }
+        else
+        {
+            if(input_position == 1)
+                snprintf(new_tx_freq_buf, sizeof(new_tx_freq_buf), ">Tx:___._____");
+            new_tx_freq_buf[insert_pos] = input_char;
+            gfx_print(freq2_pos, new_tx_freq_buf, layout.line1_font, TEXT_ALIGN_CENTER,
+                      color_white);
+        }
     }
 }
 
@@ -619,17 +639,9 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN)
                 {
                     if(input_set == SET_RX)
-                    {
                         input_set = SET_TX;
-                        // Reset TX frequency
-                        new_tx_frequency = 0;
-                    }
                     else if(input_set == SET_TX)
-                    {
                         input_set = SET_RX;
-                        // Reset RX frequency
-                        new_rx_frequency = 0;
-                    }
                     // Reset input position
                     input_position = 0;
                 }
@@ -641,6 +653,8 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     input_number = input_getPressedNumber(msg);
                     if(input_set == SET_RX)
                     {
+                        if(input_position == 0)
+                            new_rx_frequency = 0;
                         // Calculate portion of the new RX frequency
                         new_rx_frequency += input_number * 
                             pow(10,(FREQ_DIGITS - input_position + 1));
@@ -656,6 +670,8 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     }
                     else if(input_set == SET_TX)
                     {
+                        if(input_position == 0)
+                            new_tx_frequency = 0;
                         // Calculate portion of the new TX frequency
                         new_tx_frequency += input_number * 
                             pow(10,(FREQ_DIGITS - input_position + 1));
