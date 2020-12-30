@@ -65,6 +65,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <math.h>
 #include <ui.h>
 #include <interfaces/rtx.h>
 #include <interfaces/delays.h>
@@ -77,6 +78,8 @@
 
 // Maximum menu entry length
 #define MAX_ENTRY_LEN 12
+// Frequency digits
+#define FREQ_DIGITS 8
 
 const char *menu_items[6] =
 {
@@ -126,7 +129,17 @@ const color_t yellow_fab413 = {250, 180, 19, 255};
 layout_t layout;
 bool layout_ready = false;
 bool redraw_needed = true;
+
+/** Temporary state variables 
+ *  These variables are used to store additional state
+ *  parameters within a UI FSM state 
+ *  (example: selected menu entry  */
 uint8_t menu_selected = 0;
+uint8_t input_number = 0;
+uint8_t input_position = 0;
+freq_t new_rx_frequency;
+freq_t new_tx_frequency;
+char new_rx_freq_buf[14] = "";
 
 layout_t _ui_calculateLayout()
 {
@@ -237,6 +250,12 @@ void _ui_drawVFOBackground()
     gfx_drawHLine(layout.top_h, 1, color_grey);
     // Print bottom bar line of 1 pixel height
     gfx_drawHLine(SCREEN_HEIGHT - layout.bottom_h - 1, 1, color_grey);
+    // Print transparent OPNRTX on the background
+    point_t splash_origin = {0, SCREEN_HEIGHT / 2 - 6};
+    color_t yellow = yellow_fab413;
+    yellow.alpha = 0.1f * 255;
+    gfx_print(splash_origin, "O P N\nR T X", FONT_SIZE_12PT, TEXT_ALIGN_CENTER,
+              yellow);
 }
 
 void _ui_drawVFOTop(state_t* last_state)
@@ -301,6 +320,41 @@ void _ui_drawVFOMiddle(state_t* last_state)
               color_white);
 }
 
+void _ui_drawVFOMiddleInput(state_t* last_state)
+{
+    // Print VFO frequencies
+    char freq_buf[14] = "";
+    point_t freq1_pos = {0,0};
+    point_t freq2_pos = {0,0};
+    // On radios with 2 rows display use line 1 and 2
+    if(layout.line3_h == 0)
+    {
+        freq1_pos = layout.line1_pos;
+        freq2_pos = layout.line2_pos;
+    }
+    // On radios with 3 rows display use line 2 and 3
+    else
+    {
+        freq1_pos = layout.line2_pos;
+        freq2_pos = layout.line3_pos;
+    }
+    // Replace Rx frequency with underscorses
+    if(input_position == 0)
+        snprintf(new_rx_freq_buf, sizeof(new_rx_freq_buf), "Rx: ___._____");
+    // Add inserted number to string, skipping "Rx: " and "."
+    uint8_t insert_pos = input_position + 4;
+    if(input_position >= 3) insert_pos += 1;
+    char input_char = input_number + '0';
+    new_rx_freq_buf[insert_pos] = input_char;
+    gfx_print(freq1_pos, new_rx_freq_buf, layout.line1_font, TEXT_ALIGN_CENTER,
+              color_white);
+    snprintf(freq_buf, sizeof(freq_buf), "Tx: %03lu.%05lu",
+             last_state->channel.tx_frequency/1000000,
+             last_state->channel.tx_frequency%1000000/10);
+    gfx_print(freq2_pos, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
+              color_white);
+}
+
 void _ui_drawVFOBottom()
 {
     gfx_print(layout.bottom_pos, "OpenRTX", layout.bottom_font,
@@ -335,35 +389,25 @@ void _ui_drawMenuList(point_t pos, const char *entries[],
     }
 }
 
-bool _ui_drawMainVFO(state_t* last_state)
+bool _ui_drawVFOMain(state_t* last_state)
 {
-    bool screen_update = false;
-    // Total GUI redraw
-    if(redraw_needed)
-    {
-        gfx_clearScreen();
-        _ui_drawVFOBackground();
-        point_t splash_origin = {0, SCREEN_HEIGHT / 2 - 6};
-        color_t yellow = yellow_fab413;
-        yellow.alpha = 0.1f * 255;
-        gfx_print(splash_origin, "O P N\nR T X", FONT_SIZE_12PT, TEXT_ALIGN_CENTER,
-                  yellow);
-        _ui_drawVFOTop(last_state);
-        _ui_drawVFOMiddle(last_state);
-        _ui_drawVFOBottom();
-        screen_update = true;
-    }
-    // Partial GUI page redraw
-    // TODO: until gfx_clearRows() is implemented, we need to redraw everything
-    else
-    {
-        gfx_clearScreen();
-        _ui_drawVFOBackground();
-        _ui_drawVFOTop(last_state);
-        _ui_drawVFOMiddle(last_state);
-        _ui_drawVFOBottom();
-        screen_update = true;
-    }
+    gfx_clearScreen();
+    _ui_drawVFOBackground();
+    _ui_drawVFOTop(last_state);
+    _ui_drawVFOMiddle(last_state);
+    _ui_drawVFOBottom();
+    bool screen_update = true;
+    return screen_update;
+}
+
+bool _ui_drawVFOInput(state_t* last_state)
+{
+    gfx_clearScreen();
+    _ui_drawVFOBackground();
+    _ui_drawVFOTop(last_state);
+    _ui_drawVFOMiddleInput(last_state);
+    _ui_drawVFOBottom();
+    bool screen_update = true;
     return screen_update;
 }
 
@@ -497,8 +541,44 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     // Open Menu
                     state.ui_screen = MENU_TOP;
                 else if(input_isNumberPressed(msg))
+                {
                     // Open Frequency input screen
                     state.ui_screen = VFO_INPUT;
+                    // Reset input position
+                    input_position = 0;
+                    // Save pressed number to calculare frequency and show in GUI
+                    input_number = input_getPressedNumber(msg);
+                    // Calculate portion of the new frequency
+                    new_rx_frequency = input_number * pow(10,(FREQ_DIGITS - input_position));
+                }
+                break;
+            // VFO frequency input screen
+            case VFO_INPUT:
+                if(msg.keys & KEY_ENTER)
+                {
+                    // Save inserted frequency
+                    state.channel.rx_frequency = new_rx_frequency;
+                    state.ui_screen = VFO_MAIN;
+                }
+                else if(msg.keys & KEY_ESC)
+                {
+                    state.ui_screen = VFO_MAIN;
+                }
+                else if(input_isNumberPressed(msg))
+                {
+                    // Advance input position
+                    input_position += 1;
+                    // Save pressed number to calculare frequency and show in GUI
+                    input_number = input_getPressedNumber(msg);
+                    // Calculate portion of the new frequency
+                    new_rx_frequency += input_number * pow(10,(FREQ_DIGITS - input_position));
+                    if(input_position >= (FREQ_DIGITS - 1))
+                    {
+                        // Save inserted frequency
+                        state.channel.rx_frequency = new_rx_frequency;
+                        state.ui_screen = VFO_MAIN;
+                    }
+                }
                 break;
             // Top menu screen
             case MENU_TOP:
@@ -592,13 +672,11 @@ bool ui_updateGUI(state_t last_state)
     {
         // VFO main screen
         case VFO_MAIN:
-            screen_update = _ui_drawMainVFO(&last_state);
+            screen_update = _ui_drawVFOMain(&last_state);
             break;
         // VFO frequency input screen
         case VFO_INPUT:
-            screen_update = _ui_drawMainVFO(&last_state);
-            gfx_print(layout.top_pos, "VFO INPUT", layout.top_font, TEXT_ALIGN_CENTER,
-                      color_white);
+            screen_update = _ui_drawVFOInput(&last_state);
             break;
         // Top menu screen
         case MENU_TOP:
