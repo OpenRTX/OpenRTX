@@ -126,6 +126,12 @@ const color_t color_grey = {60, 60, 60, 255};
 const color_t color_white = {255, 255, 255, 255};
 const color_t yellow_fab413 = {250, 180, 19, 255};
 
+enum SetRxTx
+{
+    SET_RX = 0,
+    SET_TX
+};
+
 layout_t layout;
 bool layout_ready = false;
 bool redraw_needed = true;
@@ -137,9 +143,12 @@ bool redraw_needed = true;
 uint8_t menu_selected = 0;
 uint8_t input_number = 0;
 uint8_t input_position = 0;
+uint8_t input_set = 0;
 freq_t new_rx_frequency;
 freq_t new_tx_frequency;
 char new_rx_freq_buf[14] = "";
+char new_tx_freq_buf[14] = "";
+
 
 layout_t _ui_calculateLayout()
 {
@@ -308,12 +317,12 @@ void _ui_drawVFOMiddle(state_t* last_state)
         freq1_pos = layout.line2_pos;
         freq2_pos = layout.line3_pos;
     }
-    snprintf(freq_buf, sizeof(freq_buf), "Rx: %03lu.%05lu",
+    snprintf(freq_buf, sizeof(freq_buf), " Rx:%03lu.%05lu",
              last_state->channel.rx_frequency/1000000,
              last_state->channel.rx_frequency%1000000/10);
     gfx_print(freq1_pos, freq_buf, layout.line1_font, TEXT_ALIGN_CENTER,
               color_white);
-    snprintf(freq_buf, sizeof(freq_buf), "Tx: %03lu.%05lu",
+    snprintf(freq_buf, sizeof(freq_buf), " Tx:%03lu.%05lu",
              last_state->channel.tx_frequency/1000000,
              last_state->channel.tx_frequency%1000000/10);
     gfx_print(freq2_pos, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
@@ -322,8 +331,6 @@ void _ui_drawVFOMiddle(state_t* last_state)
 
 void _ui_drawVFOMiddleInput(state_t* last_state)
 {
-    // Print VFO frequencies
-    char freq_buf[14] = "";
     point_t freq1_pos = {0,0};
     point_t freq2_pos = {0,0};
     // On radios with 2 rows display use line 1 and 2
@@ -338,21 +345,42 @@ void _ui_drawVFOMiddleInput(state_t* last_state)
         freq1_pos = layout.line2_pos;
         freq2_pos = layout.line3_pos;
     }
-    // Replace Rx frequency with underscorses
-    if(input_position == 0)
-        snprintf(new_rx_freq_buf, sizeof(new_rx_freq_buf), "Rx: ___._____");
-    // Add inserted number to string, skipping "Rx: " and "."
-    uint8_t insert_pos = input_position + 4;
-    if(input_position >= 3) insert_pos += 1;
+    // Add inserted number to string, skipping "Rx: "/"Tx: " and "."
+    uint8_t insert_pos = input_position + 3;
+    if(input_position > 3) insert_pos += 1;
     char input_char = input_number + '0';
-    new_rx_freq_buf[insert_pos] = input_char;
-    gfx_print(freq1_pos, new_rx_freq_buf, layout.line1_font, TEXT_ALIGN_CENTER,
-              color_white);
-    snprintf(freq_buf, sizeof(freq_buf), "Tx: %03lu.%05lu",
-             last_state->channel.tx_frequency/1000000,
-             last_state->channel.tx_frequency%1000000/10);
-    gfx_print(freq2_pos, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
-              color_white);
+    char freq_buf[14] = "";
+
+    if(input_set == SET_RX)
+    {
+        // Replace Rx frequency with underscorses
+        if(input_position <= 1)
+            snprintf(new_rx_freq_buf, sizeof(new_rx_freq_buf), ">Rx:___._____");
+        if(input_position >= 1) 
+            new_rx_freq_buf[insert_pos] = input_char;
+        gfx_print(freq1_pos, new_rx_freq_buf, layout.line1_font, TEXT_ALIGN_CENTER,
+                  color_white);
+        snprintf(freq_buf, sizeof(freq_buf), " Tx:%03lu.%05lu",
+                 last_state->channel.tx_frequency/1000000,
+                 last_state->channel.tx_frequency%1000000/10);
+        gfx_print(freq2_pos, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
+                  color_white);
+    }
+    else if(input_set == SET_TX)
+    {
+        // Replace Rx frequency with underscorses
+        if(input_position == 0)
+            snprintf(new_tx_freq_buf, sizeof(new_tx_freq_buf), ">Tx:___._____");
+        if(input_position >= 1) 
+            new_tx_freq_buf[insert_pos] = input_char;
+        snprintf(freq_buf, sizeof(freq_buf), " Rx:%03lu.%05lu",
+                 new_rx_frequency/1000000,
+                 new_rx_frequency%1000000/10);
+        gfx_print(freq1_pos, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
+                  color_white);
+        gfx_print(freq2_pos, new_tx_freq_buf, layout.line1_font, TEXT_ALIGN_CENTER,
+                  color_white);
+    }
 }
 
 void _ui_drawVFOBottom()
@@ -544,25 +572,66 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 {
                     // Open Frequency input screen
                     state.ui_screen = VFO_INPUT;
-                    // Reset input position
-                    input_position = 0;
+                    // Reset input position and selection
+                    input_position = 1;
+                    input_set = SET_RX;
                     // Save pressed number to calculare frequency and show in GUI
                     input_number = input_getPressedNumber(msg);
                     // Calculate portion of the new frequency
-                    new_rx_frequency = input_number * pow(10,(FREQ_DIGITS - input_position));
+                    new_rx_frequency = input_number * 
+                        pow(10,(FREQ_DIGITS - input_position + 1));
+                    new_tx_frequency = 0;
                 }
                 break;
             // VFO frequency input screen
             case VFO_INPUT:
                 if(msg.keys & KEY_ENTER)
                 {
-                    // Save inserted frequency
-                    state.channel.rx_frequency = new_rx_frequency;
-                    state.ui_screen = VFO_MAIN;
+                    // Switch to TX input
+                    if(input_set == SET_RX)
+                    {
+                        input_set = SET_TX;
+                        // Reset input position
+                        input_position = 0;
+                    }
+                    else if(input_set == SET_TX)
+                    {
+                        // Save new frequency setting
+                        // If TX frequency was not set, TX = RX
+                        if(new_tx_frequency == 0)
+                        {
+                            state.channel.rx_frequency = new_rx_frequency;
+                            state.channel.tx_frequency = new_rx_frequency;
+                        }
+                        // Otherwise set both frequencies
+                        else
+                        {
+                            state.channel.rx_frequency = new_rx_frequency;
+                            state.channel.tx_frequency = new_tx_frequency;
+                        }
+                        state.ui_screen = VFO_MAIN;
+                    }
                 }
                 else if(msg.keys & KEY_ESC)
                 {
                     state.ui_screen = VFO_MAIN;
+                }
+                else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN)
+                {
+                    if(input_set == SET_RX)
+                    {
+                        input_set = SET_TX;
+                        // Reset TX frequency
+                        new_tx_frequency = 0;
+                    }
+                    else if(input_set == SET_TX)
+                    {
+                        input_set = SET_RX;
+                        // Reset RX frequency
+                        new_rx_frequency = 0;
+                    }
+                    // Reset input position
+                    input_position = 0;
                 }
                 else if(input_isNumberPressed(msg))
                 {
@@ -570,15 +639,33 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     input_position += 1;
                     // Save pressed number to calculare frequency and show in GUI
                     input_number = input_getPressedNumber(msg);
-                    // Calculate portion of the new frequency
-                    new_rx_frequency += input_number * pow(10,(FREQ_DIGITS - input_position));
-                    if(input_position >= (FREQ_DIGITS - 1))
+                    if(input_set == SET_RX)
                     {
-                        // Save inserted frequency
-                        freq_t offset = state.channel.rx_frequency - state.channel.tx_frequency;
-                        state.channel.rx_frequency = new_rx_frequency;
-                        state.channel.tx_frequency = new_rx_frequency + offset;
-                        state.ui_screen = VFO_MAIN;
+                        // Calculate portion of the new RX frequency
+                        new_rx_frequency += input_number * 
+                            pow(10,(FREQ_DIGITS - input_position + 1));
+                        if(input_position >= (FREQ_DIGITS))
+                        {
+                            // Switch to TX input
+                            input_set = SET_TX;
+                            // Reset input position
+                            input_position = 0;
+                            // Reset TX frequency
+                            new_tx_frequency = 0;
+                        }
+                    }
+                    else if(input_set == SET_TX)
+                    {
+                        // Calculate portion of the new TX frequency
+                        new_tx_frequency += input_number * 
+                            pow(10,(FREQ_DIGITS - input_position + 1));
+                        if(input_position >= (FREQ_DIGITS))
+                        {
+                            // Save both inserted frequencies
+                            state.channel.rx_frequency = new_rx_frequency;
+                            state.channel.tx_frequency = new_tx_frequency;
+                            state.ui_screen = VFO_MAIN;
+                        }
                     }
                 }
                 break;
