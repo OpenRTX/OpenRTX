@@ -575,7 +575,9 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     if(input_position >= (FREQ_DIGITS - 1))
                     {
                         // Save inserted frequency
+                        freq_t offset = state.channel.rx_frequency - state.channel.tx_frequency;
                         state.channel.rx_frequency = new_rx_frequency;
+                        state.channel.tx_frequency = new_rx_frequency + offset;
                         state.ui_screen = VFO_MAIN;
                     }
                 }
