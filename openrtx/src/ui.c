@@ -464,7 +464,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
     {
         state.ui_screen = LOW_BAT;
         if(event.type == EVENT_KBD && event.payload) {
-            state.ui_screen = MAIN_VFO;
+            state.ui_screen = VFO_MAIN;
             state.emergency = true;
         }
         return;
@@ -478,7 +478,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
         switch(state.ui_screen)
         {
             // VFO screen
-            case MAIN_VFO:
+            case VFO_MAIN:
                 if(msg.keys & KEY_UP)
                 {
                     // Advance TX and RX frequency of 12.5KHz
@@ -496,6 +496,9 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 else if(msg.keys & KEY_ENTER)
                     // Open Menu
                     state.ui_screen = MENU_TOP;
+                else if(input_isNumberPressed(msg))
+                    // Open Frequency input screen
+                    state.ui_screen = VFO_INPUT;
                 break;
             // Top menu screen
             case MENU_TOP:
@@ -531,7 +534,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 else if(msg.keys & KEY_ESC)
                 {
                     // Close Menu
-                    state.ui_screen = MAIN_VFO;
+                    state.ui_screen = VFO_MAIN;
                     // Reset menu selection
                     menu_selected = 0;
                 }
@@ -587,9 +590,15 @@ bool ui_updateGUI(state_t last_state)
     // Draw current GUI page
     switch(last_state.ui_screen)
     {
-        // VFO screen
-        case MAIN_VFO:
+        // VFO main screen
+        case VFO_MAIN:
             screen_update = _ui_drawMainVFO(&last_state);
+            break;
+        // VFO frequency input screen
+        case VFO_INPUT:
+            screen_update = _ui_drawMainVFO(&last_state);
+            gfx_print(layout.top_pos, "VFO INPUT", layout.top_font, TEXT_ALIGN_CENTER,
+                      color_white);
             break;
         // Top menu screen
         case MENU_TOP:

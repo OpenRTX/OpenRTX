@@ -17,6 +17,7 @@ openrtx_src = ['openrtx/src/bootstrap.c',
                'openrtx/src/threads.c',
                'openrtx/src/battery.c',
                'openrtx/src/graphics.c',
+               'openrtx/src/input.c',
                'openrtx/src/calibUtils.c']
 
 

@@ -17,61 +17,24 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef UI_H
-#define UI_H
+#ifndef INPUT_H
+#define INPUT_H
 
+#include <inttypes.h>
 #include <stdbool.h>
-#include <state.h>
-#include <interfaces/keyboard.h>
-#include <stdint.h>
-#include <event.h>
 
-enum uiScreen
-{
-    VFO_MAIN = 0,
-    VFO_INPUT,
-    MAIN_MEM,
-    MENU_TOP,
-    MENU_ZONE,
-    MENU_CHANNEL,
-    MENU_CONTACTS,
-    MENU_SMS,
-    MENU_GPS,
-    MENU_SETTINGS,
-    SETTINGS_TIMEDATE,
-    LOW_BAT
-};
-
-/**
- * This function initialises the User Interface, starting the 
- * Finite State Machine describing the user interaction.
+/* This function returns true if at least one number is pressed on the
+ * keyboard.
+ * @param msg: the keyboard queue message
+ * @return true if at least a number is pressed on the keyboard
  */
-void ui_init();
+bool input_isNumberPressed(kbd_msg_t msg);
 
-/**
- * This function writes the OpenRTX splash screen image into the framebuffer.
+/* This function returns the smallest number that is pressed on the keyboard,
+ * 0 if none is pressed.
+ * @param msg: the keyboard queue message
+ * @return the smalled pressed number on the keyboard
  */
-void ui_drawSplashScreen();
+uint8_t input_getPressedNumber(kbd_msg_t msg);
 
-/**
- * This function advances the User Interface FSM, basing on the 
- * current radio state and the keys pressed.
- * @param last_state: A local copy of the previous radio state
- * @param event: An event from other threads
- * @param sync_rtx: If true RTX needs to be synchronized
- */
-void ui_updateFSM(event_t event, bool *sync_rtx);
-
-/**
- * This function redraws the GUI based on the last radio state.
- * @param last_state: A local copy of the previous radio state
- * @return true if a screen refresh is needed after the update
- */
-bool ui_updateGUI(state_t last_state);
-
-/**
- * This function terminates the User Interface.
- */
-void ui_terminate();
-
-#endif /* UI_H */
+#endif /* INPUT_H */
