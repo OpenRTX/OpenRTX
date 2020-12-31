@@ -621,11 +621,12 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     // Reset input position and selection
                     input_position = 1;
                     input_set = SET_RX;
+                    new_rx_frequency = 0;
+                    new_tx_frequency = 0;
                     // Save pressed number to calculare frequency and show in GUI
                     input_number = input_getPressedNumber(msg);
                     // Calculate portion of the new frequency
                     new_rx_frequency = _ui_freq_add_digit(new_rx_frequency, input_position, input_number);
-                    new_tx_frequency = 0;
                 }
                 break;
             // VFO frequency input screen
