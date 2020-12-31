@@ -26,7 +26,7 @@ void rtc_init()
     printf("rtc_init()\n");
 }
 
-void rtc_shutdown()
+void rtc_terminate()
 {
     printf("rtc_shutdown()\n");
 }

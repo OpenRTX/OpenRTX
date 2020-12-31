@@ -125,7 +125,7 @@ void toneGen_init()
     NVIC_EnableIRQ(TIM3_IRQn);
 }
 
-void toneGen_shutdown()
+void toneGen_terminate()
 {
     RCC->APB1ENR &= ~RCC_APB1ENR_TIM3EN;
     __DSB();

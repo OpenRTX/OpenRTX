@@ -31,7 +31,7 @@
 
 void rtc_init() { }
 
-void rtc_shutdown() { }
+void rtc_terminate() { }
 
 void rtc_setTime(curTime_t t)
 {

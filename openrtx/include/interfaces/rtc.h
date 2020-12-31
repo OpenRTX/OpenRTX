@@ -50,7 +50,7 @@ void rtc_init();
 /**
  * Shutdown RTC.
  */
-void rtc_shutdown();
+void rtc_terminate();
 
 /**
  * Set RTC time and calendar registers to a given value.

@@ -39,7 +39,7 @@ void rtc_init()
     while((RCC->BDCR & RCC_BDCR_LSERDY) == 0) ;
 }
 
-void rtc_shutdown()
+void rtc_terminate()
 {
     RCC->BDCR &= ~ RCC_BDCR_RTCEN | RCC_BDCR_LSEON;
 }
