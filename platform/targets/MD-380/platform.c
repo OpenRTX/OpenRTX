@@ -24,6 +24,7 @@
 #include <ADC1_MDx.h>
 #include <calibInfo_MDx.h>
 #include <toneGenerator_MDx.h>
+#include <interfaces/rtc.h>
 
 md3x0Calib_t calibration;
 
@@ -44,11 +45,16 @@ void platform_init()
     gpio_setMode(PTT_SW, INPUT);
 
     /*
-     * Initialise ADC1, for vbat, RSSI, ... 
+     * Initialise ADC1, for vbat, RSSI, ...
      * Configuration of corresponding GPIOs in analog input mode is done inside
      * the driver.
      */
     adc1_init();
+
+    nvm_init();                      /* Initialise non volatile memory manager */
+    nvm_readCalibData(&calibration); /* Load calibration data                  */
+    toneGen_init();                  /* Initialise tone generator              */
+    rtc_init();                      /* Initialise RTC                         */
 
     /*
      * Configure TIM8 for backlight PWM: Fpwm = 100kHz with 8 bit of resolution.
@@ -72,17 +78,6 @@ void platform_init()
     TIM8->CCR1 = 0;
     TIM8->EGR  = TIM_EGR_UG;        /* Update registers */
     TIM8->CR1 |= TIM_CR1_CEN;       /* Start timer */
-
-    /*
-     * Initialise non volatile memory manager and load calibration data.
-     */
-    nvm_init();
-    nvm_readCalibData(&calibration);
-
-    /*
-     * Initialise tone generator
-     */
-    toneGen_init();
 }
 
 void platform_terminate()
@@ -99,11 +94,11 @@ void platform_terminate()
     RCC->APB2ENR &= ~RCC_APB2ENR_TIM8EN;
     __DSB();
 
-    /* Shut down ADC */
+    /* Shut down all the modules */
     adc1_terminate();
-
-    /* Shut down NVM driver */
     nvm_terminate();
+    toneGen_terminate();
+    rtc_terminate();
 }
 
 float platform_getVbat()

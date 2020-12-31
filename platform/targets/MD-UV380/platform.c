@@ -24,6 +24,7 @@
 #include <ADC1_MDx.h>
 #include <calibInfo_MDx.h>
 #include <interfaces/nvmem.h>
+#include <interfaces/rtc.h>
 
 mduv3x0Calib_t calibration;
 
@@ -69,6 +70,10 @@ void platform_init()
      */
     adc1_init();
 
+    nvm_init();                      /* Initialise non volatile memory manager */
+    nvm_readCalibData(&calibration); /* Load calibration data                  */
+    rtc_init();                      /* Initialise RTC                         */
+
     #ifdef ENABLE_BKLIGHT_DIMMING
     /*
      * Configure TIM11 for backlight PWM: Fpwm = 256Hz, 8 bit of resolution.
@@ -98,12 +103,6 @@ void platform_init()
     NVIC_SetPriority(TIM1_TRG_COM_TIM11_IRQn,15);
     NVIC_EnableIRQ(TIM1_TRG_COM_TIM11_IRQn);
     #endif
-
-    /*
-     * Initialise non volatile memory manager and load calibration data.
-     */
-    nvm_init();
-    nvm_readCalibData(&calibration);
 }
 
 void platform_terminate()
@@ -120,11 +119,10 @@ void platform_terminate()
     gpio_clearPin(GREEN_LED);
     gpio_clearPin(RED_LED);
 
-    /* Shut down ADC */
+    /* Shut down all the modules */
     adc1_terminate();
-
-    /* Shut down NVM driver */
     nvm_terminate();
+    rtc_terminate();
 }
 
 float platform_getVbat()
