@@ -65,7 +65,6 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include <math.h>
 #include <ui.h>
 #include <interfaces/rtx.h>
 #include <interfaces/delays.h>
@@ -548,6 +547,16 @@ bool _kbd_number_pressed(kbd_msg_t msg)
     return msg.keys & kbd_num_mask;
 }
 
+freq_t _ui_freq_add_digit(freq_t freq, uint8_t pos, uint8_t number)
+{
+    freq_t coefficient = 10;
+    for(uint8_t i=0; i < FREQ_DIGITS - pos; i++)
+    {
+        coefficient *= 10;
+    }
+    return freq += number * coefficient;
+}
+
 void ui_updateFSM(event_t event, bool *sync_rtx)
 {
     // Check if battery has enough charge to operate
@@ -598,8 +607,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     // Save pressed number to calculare frequency and show in GUI
                     input_number = input_getPressedNumber(msg);
                     // Calculate portion of the new frequency
-                    new_rx_frequency = input_number * 
-                        pow(10,(FREQ_DIGITS - input_position + 1));
+                    new_rx_frequency = _ui_freq_add_digit(new_rx_frequency, input_position, input_number);
                     new_tx_frequency = 0;
                 }
                 break;
@@ -656,8 +664,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         if(input_position == 1)
                             new_rx_frequency = 0;
                         // Calculate portion of the new RX frequency
-                        new_rx_frequency += input_number * 
-                            pow(10,(FREQ_DIGITS - input_position + 1));
+                        new_rx_frequency = _ui_freq_add_digit(new_rx_frequency, input_position, input_number);
                         if(input_position >= (FREQ_DIGITS))
                         {
                             // Switch to TX input
@@ -673,8 +680,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         if(input_position == 1)
                             new_tx_frequency = 0;
                         // Calculate portion of the new TX frequency
-                        new_tx_frequency += input_number * 
-                            pow(10,(FREQ_DIGITS - input_position + 1));
+                        new_tx_frequency = _ui_freq_add_digit(new_tx_frequency, input_position, input_number);
                         if(input_position >= (FREQ_DIGITS))
                         {
                             // Save both inserted frequencies
