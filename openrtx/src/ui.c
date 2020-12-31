@@ -552,6 +552,20 @@ freq_t _ui_freq_add_digit(freq_t freq, uint8_t pos, uint8_t number)
     return freq += number * coefficient;
 }
 
+bool _ui_freq_check_limits(freq_t freq)
+{
+    bool valid = false;
+#ifdef BAND_VHF
+    if(freq >= FREQ_LIMIT_VHF_LO && freq <= FREQ_LIMIT_VHF_HI)
+        valid = true;
+#endif
+#ifdef BAND_UHF
+    if(freq >= FREQ_LIMIT_UHF_LO && freq <= FREQ_LIMIT_UHF_HI)
+        valid = true;
+#endif
+    return valid;
+}
+
 void ui_updateFSM(event_t event, bool *sync_rtx)
 {
     // Check if battery has enough charge to operate
@@ -577,17 +591,25 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
             case VFO_MAIN:
                 if(msg.keys & KEY_UP)
                 {
-                    // Advance TX and RX frequency of 12.5KHz
-                    state.channel.rx_frequency += 12500;
-                    state.channel.tx_frequency += 12500;
-                    *sync_rtx = true;
+                    // Increment TX and RX frequency of 12.5KHz
+                    if(_ui_freq_check_limits(state.channel.rx_frequency + 12500) &&
+                       _ui_freq_check_limits(state.channel.tx_frequency + 12500))
+                    {
+                        state.channel.rx_frequency += 12500;
+                        state.channel.tx_frequency += 12500;
+                        *sync_rtx = true;
+                    }
                 }
                 else if(msg.keys & KEY_DOWN)
                 {
-                    // Advance TX and RX frequency of 12.5KHz
-                    state.channel.rx_frequency -= 12500;
-                    state.channel.tx_frequency -= 12500;
-                    *sync_rtx = true;
+                    // Decrement TX and RX frequency of 12.5KHz
+                    if(_ui_freq_check_limits(state.channel.rx_frequency - 12500) &&
+                       _ui_freq_check_limits(state.channel.tx_frequency - 12500))
+                    {
+                        state.channel.rx_frequency -= 12500;
+                        state.channel.tx_frequency -= 12500;
+                        *sync_rtx = true;
+                    }
                 }
                 else if(msg.keys & KEY_ENTER)
                     // Open Menu
@@ -623,14 +645,21 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         // If TX frequency was not set, TX = RX
                         if(new_tx_frequency == 0)
                         {
-                            state.channel.rx_frequency = new_rx_frequency;
-                            state.channel.tx_frequency = new_rx_frequency;
+                            if(_ui_freq_check_limits(new_rx_frequency))
+                            {
+                                state.channel.rx_frequency = new_rx_frequency;
+                                state.channel.tx_frequency = new_rx_frequency;
+                            }
                         }
                         // Otherwise set both frequencies
                         else
                         {
-                            state.channel.rx_frequency = new_rx_frequency;
-                            state.channel.tx_frequency = new_tx_frequency;
+                            if(_ui_freq_check_limits(new_rx_frequency) && 
+                               _ui_freq_check_limits(new_tx_frequency))
+                            {
+                                state.channel.rx_frequency = new_rx_frequency;
+                                state.channel.tx_frequency = new_tx_frequency;
+                            }
                         }
                         state.ui_screen = VFO_MAIN;
                     }
@@ -679,8 +708,12 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         if(input_position >= (FREQ_DIGITS))
                         {
                             // Save both inserted frequencies
-                            state.channel.rx_frequency = new_rx_frequency;
-                            state.channel.tx_frequency = new_tx_frequency;
+                            if(_ui_freq_check_limits(new_rx_frequency) && 
+                               _ui_freq_check_limits(new_tx_frequency))
+                            {
+                                state.channel.rx_frequency = new_rx_frequency;
+                                state.channel.tx_frequency = new_tx_frequency;
+                            }
                             state.ui_screen = VFO_MAIN;
                         }
                     }
