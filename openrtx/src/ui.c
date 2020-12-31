@@ -542,11 +542,6 @@ bool _ui_drawLowBatteryScreen()
     return true;
 }
 
-bool _kbd_number_pressed(kbd_msg_t msg)
-{
-    return msg.keys & kbd_num_mask;
-}
-
 freq_t _ui_freq_add_digit(freq_t freq, uint8_t pos, uint8_t number)
 {
     freq_t coefficient = 10;
