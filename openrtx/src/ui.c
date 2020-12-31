@@ -596,6 +596,45 @@ freq_t _ui_freq_add_digit(freq_t freq, uint8_t pos, uint8_t number)
 
 curTime_t _ui_timedate_add_digit(curTime_t timedate, uint8_t pos, uint8_t number)
 {
+    switch(pos)
+    {
+        // Set date
+        case 1:
+            timedate.date += number * 10;
+            break;
+        case 2:
+            timedate.date += number;
+            break;
+        // Set month
+        case 3:
+            timedate.month += number * 10;
+            break;
+        case 4:
+            timedate.month += number;
+            break;
+        // Set year
+        case 5:
+            timedate.year += number * 10;
+            break;
+        case 6:
+            timedate.year += number;
+            break;
+        // Set hour
+        case 7:
+            timedate.hour += number * 10;
+            break;
+        case 8:
+            timedate.hour += number;
+            break;
+        // Set minute
+        case 9:
+            timedate.minute += number * 10;
+            break;
+        case 10:
+            timedate.minute += number;
+            break;
+    }
+    return timedate;
 }
 
 bool _ui_freq_check_limits(freq_t freq)
@@ -855,11 +894,10 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
             case SETTINGS_TIMEDATE_SET:
                 if(msg.keys & KEY_ENTER)
                 {
+                    // Save time only if all digits have been inserted
+                    if(input_position < TIMEDATE_DIGITS)
+                        break;
                     // Return to Time&Date menu, saving values
-                    printf("Setting time: %d/%d/%d, %d:%d\n",
-                        new_timedate.date, new_timedate.month,
-                        new_timedate.year, new_timedate.minute,
-                        new_timedate.hour);
                     rtc_setTime(new_timedate);
                     state.ui_screen = SETTINGS_TIMEDATE;
                 }
@@ -870,16 +908,13 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 }
                 else if(input_isNumberPressed(msg))
                 {
+                    // Discard excess digits
+                    if(input_position > TIMEDATE_DIGITS)
+                        break;
                     input_position += 1;
                     input_number = input_getPressedNumber(msg);
                     new_timedate = _ui_timedate_add_digit(new_timedate, 
                                         input_position, input_number);
-                    if(input_position >= TIMEDATE_DIGITS)
-                    {
-                        // Return to Time&Date menu, saving values
-                        rtc_setTime(new_timedate);
-                        state.ui_screen = SETTINGS_TIMEDATE;
-                    }
                 }
                 break;
         }
