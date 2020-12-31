@@ -73,9 +73,9 @@ static const uint16_t kbd_long_interval = OS_CFG_TICK_RATE_HZ * 0.7;
 
 /**
  * Mask for the numeric keys in a key map
- * Numeric keys: bit0->bit9 = 0x1FF
+ * Numeric keys: bit0->bit9 = 0x3FF
  */
-static const uint32_t kbd_num_mask = 0x1FF;
+static const uint32_t kbd_num_mask = 0x3FF;
 
 /**
  * Structure that represents a keyboard event payload
