@@ -79,6 +79,8 @@
 #define MAX_ENTRY_LEN 12
 // Frequency digits
 #define FREQ_DIGITS 8
+// Time & Date digits
+#define TIMEDATE_DIGITS 10
 
 const char *menu_items[6] =
 {
@@ -147,7 +149,9 @@ freq_t new_rx_frequency;
 freq_t new_tx_frequency;
 char new_rx_freq_buf[14] = "";
 char new_tx_freq_buf[14] = "";
-
+curTime_t new_timedate = {0};
+char new_date_buf[9] = "";
+char new_time_buf[9] = "";
 
 layout_t _ui_calculateLayout()
 {
@@ -485,7 +489,7 @@ void _ui_drawSettingsTimeDate(state_t* last_state)
     gfx_print(layout.top_pos, "Time&Date", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print current time and date
-    char date_buf[12] = "";
+    char date_buf[9] = "";
     char time_buf[9] = "";
     snprintf(date_buf, sizeof(date_buf), "%02d/%02d/%02d", 
              last_state->time.date, last_state->time.month, last_state->time.year);
@@ -494,6 +498,44 @@ void _ui_drawSettingsTimeDate(state_t* last_state)
     gfx_print(layout.line2_pos, date_buf, layout.line2_font, TEXT_ALIGN_CENTER,
               color_white);
     gfx_print(layout.line3_pos, time_buf, layout.line3_font, TEXT_ALIGN_CENTER,
+              color_white);
+}
+
+void _ui_drawSettingsTimeDateSet(state_t* last_state)
+{
+    gfx_clearScreen();
+    // Print "Time&Date" on top bar
+    gfx_print(layout.top_pos, "Time&Date", layout.top_font,
+              TEXT_ALIGN_CENTER, color_white);
+    if(input_position <= 0)
+    {
+        strcpy(new_date_buf, "__/__/__");
+        strcpy(new_time_buf, "__:__:00");
+    }
+    else
+    {
+        char input_char = input_number + '0';
+        // Insert date digit
+        if(input_position <= 6)
+        {
+            uint8_t pos = input_position -1;
+            // Skip "/"
+            if(input_position > 2) pos += 1;
+            if(input_position > 4) pos += 1;
+            new_date_buf[pos] = input_char;
+        }
+        // Insert time digit
+        else
+        {
+            uint8_t pos = input_position -7;
+            // Skip ":"
+            if(input_position > 8) pos += 1;
+            new_time_buf[pos] = input_char; 
+        }
+    }
+    gfx_print(layout.line2_pos, new_date_buf, layout.line2_font, TEXT_ALIGN_CENTER,
+              color_white);
+    gfx_print(layout.line3_pos, new_time_buf, layout.line3_font, TEXT_ALIGN_CENTER,
               color_white);
 }
 
@@ -550,6 +592,10 @@ freq_t _ui_freq_add_digit(freq_t freq, uint8_t pos, uint8_t number)
         coefficient *= 10;
     }
     return freq += number * coefficient;
+}
+
+curTime_t _ui_timedate_add_digit(curTime_t timedate, uint8_t pos, uint8_t number)
+{
 }
 
 bool _ui_freq_check_limits(freq_t freq)
@@ -626,7 +672,8 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     // Save pressed number to calculare frequency and show in GUI
                     input_number = input_getPressedNumber(msg);
                     // Calculate portion of the new frequency
-                    new_rx_frequency = _ui_freq_add_digit(new_rx_frequency, input_position, input_number);
+                    new_rx_frequency = _ui_freq_add_digit(new_rx_frequency, 
+                                            input_position, input_number);
                 }
                 break;
             // VFO frequency input screen
@@ -689,8 +736,9 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         if(input_position == 1)
                             new_rx_frequency = 0;
                         // Calculate portion of the new RX frequency
-                        new_rx_frequency = _ui_freq_add_digit(new_rx_frequency, input_position, input_number);
-                        if(input_position >= (FREQ_DIGITS))
+                        new_rx_frequency = _ui_freq_add_digit(new_rx_frequency, 
+                                                input_position, input_number);
+                        if(input_position >= FREQ_DIGITS)
                         {
                             // Switch to TX input
                             input_set = SET_TX;
@@ -705,8 +753,9 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         if(input_position == 1)
                             new_tx_frequency = 0;
                         // Calculate portion of the new TX frequency
-                        new_tx_frequency = _ui_freq_add_digit(new_tx_frequency, input_position, input_number);
-                        if(input_position >= (FREQ_DIGITS))
+                        new_tx_frequency = _ui_freq_add_digit(new_tx_frequency, 
+                                                input_position, input_number);
+                        if(input_position >= FREQ_DIGITS)
                         {
                             // Save both inserted frequencies
                             if(_ui_freq_check_limits(new_rx_frequency) && 
@@ -784,14 +833,53 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     menu_selected = 0;
                 }
                 break;
-            // Time&Date settingsscreen
+            // Time&Date settings screen
             case SETTINGS_TIMEDATE:
-                if(msg.keys & KEY_ESC)
+                if(msg.keys & KEY_ENTER)
+                {
+                    // Switch to set Time&Date mode
+                    state.ui_screen = SETTINGS_TIMEDATE_SET;
+                    // Reset input position and selection
+                    input_position = 0;
+                    memset(&new_timedate, 0, sizeof(curTime_t));
+                }
+                else if(msg.keys & KEY_ESC)
                 {
                     // Return to settings menu
                     state.ui_screen = MENU_SETTINGS;
                     // Reset menu selection
                     menu_selected = 0;
+                }
+                break;
+            // Time&Date settings screen, edit mode
+            case SETTINGS_TIMEDATE_SET:
+                if(msg.keys & KEY_ENTER)
+                {
+                    // Return to Time&Date menu, saving values
+                    printf("Setting time: %d/%d/%d, %d:%d\n",
+                        new_timedate.date, new_timedate.month,
+                        new_timedate.year, new_timedate.minute,
+                        new_timedate.hour);
+                    rtc_setTime(new_timedate);
+                    state.ui_screen = SETTINGS_TIMEDATE;
+                }
+                else if(msg.keys & KEY_ESC)
+                {
+                    // Return to Time&Date menu discarding values
+                    state.ui_screen = SETTINGS_TIMEDATE;
+                }
+                else if(input_isNumberPressed(msg))
+                {
+                    input_position += 1;
+                    input_number = input_getPressedNumber(msg);
+                    new_timedate = _ui_timedate_add_digit(new_timedate, 
+                                        input_position, input_number);
+                    if(input_position >= TIMEDATE_DIGITS)
+                    {
+                        // Return to Time&Date menu, saving values
+                        rtc_setTime(new_timedate);
+                        state.ui_screen = SETTINGS_TIMEDATE;
+                    }
                 }
                 break;
         }
@@ -831,6 +919,11 @@ bool ui_updateGUI(state_t last_state)
         // Time&Date settings screen
         case SETTINGS_TIMEDATE:
             _ui_drawSettingsTimeDate(&last_state);
+            screen_update = true;
+            break;
+        // Time&Date settings screen, edit mode
+        case SETTINGS_TIMEDATE_SET:
+            _ui_drawSettingsTimeDateSet(&last_state);
             screen_update = true;
             break;
         // Low battery screen

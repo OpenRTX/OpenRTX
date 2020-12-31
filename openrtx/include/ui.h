@@ -39,6 +39,7 @@ enum uiScreen
     MENU_GPS,
     MENU_SETTINGS,
     SETTINGS_TIMEDATE,
+    SETTINGS_TIMEDATE_SET,
     LOW_BAT
 };
 
