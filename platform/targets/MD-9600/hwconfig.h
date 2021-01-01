@@ -23,6 +23,9 @@
 
 #include <stm32f4xx.h>
 
+/* Device has a working real time clock */
+#define HAS_RTC
+
 /* Supported radio bands */
 #define BAND_VHF
 #define BAND_UHF

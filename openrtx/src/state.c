@@ -31,7 +31,9 @@ void state_init()
      * or initialize them to sane defaults
      */
     state.radioStateUpdated = true;
+#ifdef HAS_RTC
     state.time = rtc_getTime();
+#endif
     state.v_bat = platform_getVbat();
 
     state.channelInfoUpdated = true;

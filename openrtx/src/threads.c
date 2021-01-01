@@ -237,7 +237,9 @@ static void dev_task(void *arg)
         // Lock mutex and update internal state
         OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
 
+#ifdef HAS_RTC
         state.time = rtc_getTime(); 
+#endif
         state.v_bat = platform_getVbat();
 
         OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);

@@ -97,7 +97,9 @@ const uint8_t menu_num = sizeof(menu_items)/sizeof(menu_items[0]);
 
 const char *settings_items[1] =
 {
+#ifdef HAS_RTC
     "Time & Date"
+#endif
 };
 // Calculate number of settings menu entries
 const uint8_t settings_num = sizeof(settings_items)/sizeof(settings_items[0]);
@@ -150,9 +152,12 @@ freq_t new_rx_frequency;
 freq_t new_tx_frequency;
 char new_rx_freq_buf[14] = "";
 char new_tx_freq_buf[14] = "";
+
+#ifdef HAS_RTC
 curTime_t new_timedate = {0};
 char new_date_buf[9] = "";
 char new_time_buf[9] = "";
+#endif
 
 layout_t _ui_calculateLayout()
 {
@@ -273,12 +278,14 @@ void _ui_drawVFOBackground()
 
 void _ui_drawVFOTop(state_t* last_state)
 {
+#ifdef HAS_RTC
     // Print clock on top bar
     char clock_buf[9] = "";
     snprintf(clock_buf, sizeof(clock_buf), "%02d:%02d:%02d", last_state->time.hour,
              last_state->time.minute, last_state->time.second);
     gfx_print(layout.top_pos, clock_buf, layout.top_font, TEXT_ALIGN_CENTER,
               color_white);
+#endif
 
     // Print battery icon on top bar, use 4 px padding
     float charge = battery_getCharge(last_state->v_bat);
@@ -483,6 +490,7 @@ void _ui_drawMenuSettings()
     _ui_drawMenuList(layout.line1_pos, settings_items, settings_num, menu_selected);
 }
 
+#ifdef HAS_RTC
 void _ui_drawSettingsTimeDate(state_t* last_state)
 {
     gfx_clearScreen();
@@ -541,6 +549,7 @@ void _ui_drawSettingsTimeDateSet(state_t* last_state)
     gfx_print(layout.line3_pos, new_time_buf, layout.line3_font, TEXT_ALIGN_CENTER,
               color_white);
 }
+#endif
 
 void ui_init()
 {
@@ -597,6 +606,7 @@ freq_t _ui_freq_add_digit(freq_t freq, uint8_t pos, uint8_t number)
     return freq += number * coefficient;
 }
 
+#ifdef HAS_RTC
 curTime_t _ui_timedate_add_digit(curTime_t timedate, uint8_t pos, uint8_t number)
 {
     switch(pos)
@@ -639,6 +649,7 @@ curTime_t _ui_timedate_add_digit(curTime_t timedate, uint8_t pos, uint8_t number
     }
     return timedate;
 }
+#endif
 
 bool _ui_freq_check_limits(freq_t freq)
 {
@@ -860,10 +871,12 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     // Open selected menu item
                     switch(menu_selected)
                     {
+#ifdef HAS_RTC
                         // TODO: Add missing submenu states
                         case 0:
                             state.ui_screen = SETTINGS_TIMEDATE;
                             break;
+#endif
                         default:
                             state.ui_screen = MENU_TOP;
                     }
@@ -878,6 +891,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     menu_selected = 0;
                 }
                 break;
+#ifdef HAS_RTC
             // Time&Date settings screen
             case SETTINGS_TIMEDATE:
                 if(msg.keys & KEY_ENTER)
@@ -923,6 +937,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                                         input_position, input_number);
                 }
                 break;
+#endif
         }
     }
 }
@@ -957,6 +972,7 @@ bool ui_updateGUI(state_t last_state)
             _ui_drawMenuSettings();
             screen_update = true;
             break;
+#ifdef HAS_RTC
         // Time&Date settings screen
         case SETTINGS_TIMEDATE:
             _ui_drawSettingsTimeDate(&last_state);
@@ -967,6 +983,7 @@ bool ui_updateGUI(state_t last_state)
             _ui_drawSettingsTimeDateSet(&last_state);
             screen_update = true;
             break;
+#endif
         // Low battery screen
         case LOW_BAT:
             screen_update = _ui_drawLowBatteryScreen();
