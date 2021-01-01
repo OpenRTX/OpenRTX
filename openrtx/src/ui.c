@@ -71,13 +71,14 @@
 #include <interfaces/graphics.h>
 #include <interfaces/keyboard.h>
 #include <interfaces/platform.h>
+#include <interfaces/nvmem.h>
 #include <hwconfig.h>
 #include <string.h>
 #include <battery.h>
 #include <input.h>
 
 // Maximum menu entry length
-#define MAX_ENTRY_LEN 12
+#define MAX_ENTRY_LEN 16
 // Frequency digits
 #define FREQ_DIGITS 8
 // Time & Date digits
@@ -448,6 +449,36 @@ void _ui_drawMenuList(point_t pos, const char *entries[],
     }
 }
 
+void _ui_drawChannelList(point_t pos, uint8_t selected)
+{
+    // Number of menu entries that fit in the screen height
+    uint8_t entries_in_screen = ((SCREEN_HEIGHT - pos.y) / layout.top_h) + 1;
+    uint8_t scroll = 0;
+    char entry_buf[MAX_ENTRY_LEN] = "";
+    int result = 0;
+    for(int item=0; (result == 0) && (pos.y < SCREEN_HEIGHT); item++)
+    {
+        channel_t channel;
+        result = nvm_readChannelData(&channel, item + scroll);
+        // If selection is off the screen, scroll screen
+        if(selected >= entries_in_screen)
+            scroll = selected - entries_in_screen + 1;
+        snprintf(entry_buf, sizeof(entry_buf), "%s", channel.name);
+        if(item + scroll == selected)
+        {
+            // Draw rectangle under selected item, compensating for text height
+            point_t rect_pos = {0, pos.y - layout.top_h + 3};
+            gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.top_h, color_white, true); 
+            gfx_print(pos, entry_buf, layout.top_font, TEXT_ALIGN_LEFT, color_black);
+        }
+        else
+        {
+            gfx_print(pos, entry_buf, layout.top_font, TEXT_ALIGN_LEFT, color_white);
+        }
+        pos.y += layout.top_h;
+    }
+}
+
 void _ui_drawVFOMain(state_t* last_state)
 {
     gfx_clearScreen();
@@ -474,6 +505,16 @@ void _ui_drawMenuTop()
               TEXT_ALIGN_CENTER, color_white);
     // Print menu entries
     _ui_drawMenuList(layout.line1_pos, menu_items, menu_num, menu_selected);
+}
+
+void _ui_drawMenuChannel()
+{
+    gfx_clearScreen();
+    // Print "Channel" on top bar
+    gfx_print(layout.top_pos, "Channel", layout.top_font,
+              TEXT_ALIGN_CENTER, color_white);
+    // Print channel entries
+    _ui_drawChannelList(layout.line1_pos, menu_selected);
 }
 
 void _ui_drawMenuSettings()
@@ -842,6 +883,9 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     switch(menu_selected)
                     {
                         // TODO: Add missing submenu states
+                        case 1:
+                            state.ui_screen = MENU_CHANNEL;
+                            break;
                         case 5:
                             state.ui_screen = MENU_SETTINGS;
                             break;
@@ -855,6 +899,25 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 {
                     // Close Menu
                     state.ui_screen = VFO_MAIN;
+                    // Reset menu selection
+                    menu_selected = 0;
+                }
+                break;
+            // Channel menu screen
+            case MENU_CHANNEL:
+                if(msg.keys & KEY_UP)
+                {
+                    if(menu_selected > 0)
+                        menu_selected -= 1;
+                }
+                else if(msg.keys & KEY_DOWN)
+                {
+                    menu_selected += 1;
+                }
+                else if(msg.keys & KEY_ESC)
+                {
+                    // Return to top menu
+                    state.ui_screen = MENU_TOP;
                     // Reset menu selection
                     menu_selected = 0;
                 }
@@ -958,6 +1021,10 @@ void ui_updateGUI(state_t last_state)
         // Top menu screen
         case MENU_TOP:
             _ui_drawMenuTop();
+            break;
+        // Channel menu screen
+        case MENU_CHANNEL:
+            _ui_drawMenuChannel();
             break;
         // Settings menu screen
         case MENU_SETTINGS:
