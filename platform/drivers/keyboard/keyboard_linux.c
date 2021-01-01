@@ -28,33 +28,28 @@ void kbd_init()
 }
 
 keyboard_t kbd_getKeys() {
-    SDL_Event event;
     keyboard_t keys = 0;
-    while ((SDL_PollEvent(&event)) != 0) {
-        if (event.type == SDL_QUIT)
-            exit(0);
-        //Ignore all non-keyboard events
-        if (event.type != SDL_KEYDOWN) continue;
-        const uint8_t *state = SDL_GetKeyboardState(NULL);
-        if (state[SDL_SCANCODE_0]) keys |= KEY_0;
-        if (state[SDL_SCANCODE_1]) keys |= KEY_1;
-        if (state[SDL_SCANCODE_2]) keys |= KEY_2;
-        if (state[SDL_SCANCODE_3]) keys |= KEY_3;
-        if (state[SDL_SCANCODE_4]) keys |= KEY_4;
-        if (state[SDL_SCANCODE_5]) keys |= KEY_5;
-        if (state[SDL_SCANCODE_6]) keys |= KEY_6;
-        if (state[SDL_SCANCODE_7]) keys |= KEY_7;
-        if (state[SDL_SCANCODE_8]) keys |= KEY_8;
-        if (state[SDL_SCANCODE_9]) keys |= KEY_9;
-        if (state[SDLK_ASTERISK]) keys |= KEY_STAR;
-        if (state[SDL_SCANCODE_ESCAPE]) keys |= KEY_ESC;
-        if (state[SDL_SCANCODE_DOWN]) keys |= KEY_DOWN;
-        if (state[SDL_SCANCODE_UP]) keys |= KEY_UP;
-        if (state[SDL_SCANCODE_RETURN]) keys |= KEY_ENTER;
-        if (state[SDL_SCANCODE_NONUSHASH]) keys |= KEY_HASH;
-        if (state[SDL_SCANCODE_MINUS]) keys |= KEY_F1;
-        if (state[SDLK_PLUS]) keys |= KEY_MONI;
-        return keys;
-    }
+    SDL_PumpEvents();
+    
+    const uint8_t *state = SDL_GetKeyboardState(NULL);
+    if (state[SDL_SCANCODE_0]) keys |= KEY_0;
+    if (state[SDL_SCANCODE_1]) keys |= KEY_1;
+    if (state[SDL_SCANCODE_2]) keys |= KEY_2;
+    if (state[SDL_SCANCODE_3]) keys |= KEY_3;
+    if (state[SDL_SCANCODE_4]) keys |= KEY_4;
+    if (state[SDL_SCANCODE_5]) keys |= KEY_5;
+    if (state[SDL_SCANCODE_6]) keys |= KEY_6;
+    if (state[SDL_SCANCODE_7]) keys |= KEY_7;
+    if (state[SDL_SCANCODE_8]) keys |= KEY_8;
+    if (state[SDL_SCANCODE_9]) keys |= KEY_9;
+    if (state[SDLK_ASTERISK]) keys |= KEY_STAR;
+    if (state[SDL_SCANCODE_ESCAPE]) keys |= KEY_ESC;
+    if (state[SDL_SCANCODE_DOWN]) keys |= KEY_DOWN;
+    if (state[SDL_SCANCODE_UP]) keys |= KEY_UP;
+    if (state[SDL_SCANCODE_RETURN]) keys |= KEY_ENTER;
+    if (state[SDL_SCANCODE_NONUSHASH]) keys |= KEY_HASH;
+    if (state[SDL_SCANCODE_MINUS]) keys |= KEY_F1;
+    if (state[SDLK_PLUS]) keys |= KEY_MONI;
+    return keys;
 }
 
