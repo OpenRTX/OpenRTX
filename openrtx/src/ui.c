@@ -448,26 +448,22 @@ void _ui_drawMenuList(point_t pos, const char *entries[],
     }
 }
 
-bool _ui_drawVFOMain(state_t* last_state)
+void _ui_drawVFOMain(state_t* last_state)
 {
     gfx_clearScreen();
     _ui_drawVFOBackground();
     _ui_drawVFOTop(last_state);
     _ui_drawVFOMiddle(last_state);
     _ui_drawVFOBottom();
-    bool screen_update = true;
-    return screen_update;
 }
 
-bool _ui_drawVFOInput(state_t* last_state)
+void _ui_drawVFOInput(state_t* last_state)
 {
     gfx_clearScreen();
     _ui_drawVFOBackground();
     _ui_drawVFOTop(last_state);
     _ui_drawVFOMiddleInput(last_state);
     _ui_drawVFOBottom();
-    bool screen_update = true;
-    return screen_update;
 }
 
 void _ui_drawMenuTop()
@@ -573,7 +569,7 @@ void ui_drawSplashScreen()
     #endif
 }
 
-bool _ui_drawLowBatteryScreen()
+void _ui_drawLowBatteryScreen()
 {
     gfx_clearScreen();
     uint16_t bat_width = SCREEN_WIDTH / 2;
@@ -593,7 +589,6 @@ bool _ui_drawLowBatteryScreen()
               FONT_SIZE_6PT,
               TEXT_ALIGN_CENTER,
               color_white);
-    return true;
 }
 
 freq_t _ui_freq_add_digit(freq_t freq, uint8_t pos, uint8_t number)
@@ -942,54 +937,47 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
     }
 }
 
-bool ui_updateGUI(state_t last_state)
+void ui_updateGUI(state_t last_state)
 {
     if(!layout_ready)
     {
         layout = _ui_calculateLayout();
         layout_ready = true;
     }
-    // TODO: Improve screen_update logic
-    bool screen_update = false;
     // Draw current GUI page
     switch(last_state.ui_screen)
     {
         // VFO main screen
         case VFO_MAIN:
-            screen_update = _ui_drawVFOMain(&last_state);
+            _ui_drawVFOMain(&last_state);
             break;
         // VFO frequency input screen
         case VFO_INPUT:
-            screen_update = _ui_drawVFOInput(&last_state);
+            _ui_drawVFOInput(&last_state);
             break;
         // Top menu screen
         case MENU_TOP:
             _ui_drawMenuTop();
-            screen_update = true;
             break;
         // Settings menu screen
         case MENU_SETTINGS:
             _ui_drawMenuSettings();
-            screen_update = true;
             break;
 #ifdef HAS_RTC
         // Time&Date settings screen
         case SETTINGS_TIMEDATE:
             _ui_drawSettingsTimeDate(&last_state);
-            screen_update = true;
             break;
         // Time&Date settings screen, edit mode
         case SETTINGS_TIMEDATE_SET:
             _ui_drawSettingsTimeDateSet(&last_state);
-            screen_update = true;
             break;
 #endif
         // Low battery screen
         case LOW_BAT:
-            screen_update = _ui_drawLowBatteryScreen();
+            _ui_drawLowBatteryScreen();
             break;
     }
-    return screen_update;
 }
 
 void ui_terminate()

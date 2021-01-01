@@ -127,15 +127,11 @@ static void ui_task(void *arg)
         }
 
         // Redraw GUI based on last state copy
-        bool renderNeeded = ui_updateGUI(last_state);
-
-        if(renderNeeded)
-        {
-            // Lock display mutex and render display
-            OSMutexPend(&display_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
-            gfx_render();
-            OSMutexPost(&display_mutex, OS_OPT_POST_NONE, &os_err);
-        }
+        ui_updateGUI(last_state);
+        // Lock display mutex and render display
+        OSMutexPend(&display_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
+        gfx_render();
+        OSMutexPost(&display_mutex, OS_OPT_POST_NONE, &os_err);
 
         // We don't need a delay because we lock on incoming events
         // TODO: Enable self refresh when a continuous visualization is enabled
