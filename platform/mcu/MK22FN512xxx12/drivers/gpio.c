@@ -35,23 +35,23 @@ PORT_Type *getPortFromGPio(const GPIO_Type *gpio)
 
     switch(((unsigned int) gpio))
     {
-        case ((unsigned int) GPIOA):
+        case GPIOA_BASE:
             port = PORTA;
             break;
 
-        case ((unsigned int) GPIOB):
+        case GPIOB_BASE:
             port = PORTB;
             break;
 
-        case ((unsigned int) GPIOC):
+        case GPIOC_BASE:
             port = PORTC;
             break;
 
-        case ((unsigned int) GPIOD):
+        case GPIOD_BASE:
             port = PORTD;
             break;
 
-        case ((unsigned int) GPIOE):
+        case GPIOE_BASE:
             port = PORTE;
             break;
 

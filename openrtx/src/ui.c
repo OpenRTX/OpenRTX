@@ -74,6 +74,7 @@
 #include <hwconfig.h>
 #include <string.h>
 #include <battery.h>
+#include <input.h>
 
 // Maximum menu entry length
 #define MAX_ENTRY_LEN 12
@@ -503,6 +504,8 @@ void _ui_drawSettingsTimeDate(state_t* last_state)
 
 void _ui_drawSettingsTimeDateSet(state_t* last_state)
 {
+    (void) last_state;
+
     gfx_clearScreen();
     // Print "Time&Date" on top bar
     gfx_print(layout.top_pos, "Time&Date", layout.top_font,
