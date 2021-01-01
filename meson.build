@@ -245,6 +245,13 @@ dm1801_inc = inc + mk22fn512_inc + ['platform/targets/DM-1801']
 dm1801_def = def + mk22fn512_def + {'PLATFORM_DM1801': ''}
 
 
+## TYT MD-9600
+md9600_src = src + stm32f405_src + ['platform/targets/MD-9600/platform.c']
+
+md9600_inc = inc + stm32f405_inc + ['platform/targets/MD-9600']
+md9600_def = def + stm32f405_def + {'PLATFORM_MDUV380': ''}
+
+
 ##
 ## Compilation defines
 ##
@@ -310,6 +317,15 @@ foreach k, v : dm1801_def
   endif
 endforeach
 
+md9600_args = []
+foreach k, v : md9600_def
+  if v == ''
+    md9600_args += '-D@0@'.format(k)
+  else
+    md9600_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
+
 linux_opts = {'sources': linux_src,
               'c_args': linux_c_args,
               'include_directories': linux_inc,
@@ -345,6 +361,12 @@ dm1801_opts = {'sources': dm1801_src,
                'link_args' : ['-Wl,-T../platform/mcu/MK22FN512xxx12/linker_script.ld',
                               '-Wl,--print-memory-usage'],
                'include_directories':dm1801_inc}
+
+md9600_opts = {'sources': md9600_src,
+               'c_args': md9600_args,
+               'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
+                              '-Wl,--print-memory-usage'],
+               'include_directories': md9600_inc}
 
 ##
 ## Targets
@@ -383,6 +405,12 @@ targets = [
    'opts': dm1801_opts,
    'flashable': true,
    'wrap': 'UV3X0',
+   'load_addr': '0x0800C000'},
+  
+  {'name': 'md9600',
+   'opts': md9600_opts,
+   'flashable': true,
+   'wrap': 'MD9600',
    'load_addr': '0x0800C000'},
   ]
 
