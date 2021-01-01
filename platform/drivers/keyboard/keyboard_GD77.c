@@ -51,7 +51,11 @@ keyboard_t kbd_getKeys()
     if(gpio_readPin(KB_ROW1) == 0) keys |= KEY_2;
     if(gpio_readPin(KB_ROW2) == 0) keys |= KEY_3;
     if(gpio_readPin(KB_ROW3) == 0) keys |= KEY_ENTER;
+    #ifdef PLATFORM_DM1801
+    if(gpio_readPin(KB_ROW4) == 0) keys |= KEY_F4;
+    #else
     if(gpio_readPin(KB_ROW4) == 0) keys |= KEY_RIGHT;
+    #endif
     gpio_setPin(KB_COL0);
 
     gpio_clearPin(KB_COL1);
@@ -60,7 +64,11 @@ keyboard_t kbd_getKeys()
     if(gpio_readPin(KB_ROW1) == 0) keys |= KEY_5;
     if(gpio_readPin(KB_ROW2) == 0) keys |= KEY_6;
     if(gpio_readPin(KB_ROW3) == 0) keys |= KEY_UP;
+    #ifdef PLATFORM_DM1801
+    if(gpio_readPin(KB_ROW4) == 0) keys |= KEY_F3;
+    #else
     if(gpio_readPin(KB_ROW4) == 0) keys |= KEY_LEFT;
+    #endif
     gpio_setPin(KB_COL1);
 
     gpio_clearPin(KB_COL2);
@@ -69,6 +77,9 @@ keyboard_t kbd_getKeys()
     if(gpio_readPin(KB_ROW1) == 0) keys |= KEY_8;
     if(gpio_readPin(KB_ROW2) == 0) keys |= KEY_9;
     if(gpio_readPin(KB_ROW3) == 0) keys |= KEY_DOWN;
+    #ifdef PLATFORM_DM1801
+    if(gpio_readPin(KB_ROW4) == 0) keys |= KEY_RIGHT;
+    #endif
     gpio_setPin(KB_COL2);
 
     gpio_clearPin(KB_COL3);
@@ -77,6 +88,9 @@ keyboard_t kbd_getKeys()
     if(gpio_readPin(KB_ROW1) == 0) keys |= KEY_0;
     if(gpio_readPin(KB_ROW2) == 0) keys |= KEY_HASH;
     if(gpio_readPin(KB_ROW3) == 0) keys |= KEY_ESC;
+    #ifdef PLATFORM_DM1801
+    if(gpio_readPin(KB_ROW4) == 0) keys |= KEY_LEFT;
+    #endif
     gpio_setPin(KB_COL3);
 
     if(gpio_readPin(FUNC_SW) == 0)  keys |= KEY_F1;
