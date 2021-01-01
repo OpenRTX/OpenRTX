@@ -151,6 +151,7 @@ mk22fn512_def = {}
 linux_src = src + ['platform/targets/linux/emulator/emulator.c',
                    'platform/drivers/display/display_libSDL.c',
                    'platform/drivers/keyboard/keyboard_linux.c',
+                   'platform/drivers/NVM/nvmem_linux.c',
                    'platform/mcu/x86_64/drivers/gpio.c',
                    'platform/mcu/x86_64/drivers/delays.c',
                    'platform/mcu/x86_64/drivers/rtc.c',
