@@ -376,7 +376,7 @@ void _ui_drawVFOMiddleInput(state_t* last_state)
         {
             // Replace Rx frequency with underscorses
             if(input_position == 1)
-                snprintf(new_rx_freq_buf, sizeof(new_rx_freq_buf), ">Rx:___._____");
+                strcpy(new_rx_freq_buf, ">Rx:___._____");
             new_rx_freq_buf[insert_pos] = input_char;
             gfx_print(freq1_pos, new_rx_freq_buf, layout.line1_font, TEXT_ALIGN_CENTER,
                       color_white);
@@ -406,7 +406,7 @@ void _ui_drawVFOMiddleInput(state_t* last_state)
         else
         {
             if(input_position == 1)
-                snprintf(new_tx_freq_buf, sizeof(new_tx_freq_buf), ">Tx:___._____");
+                strcpy(new_tx_freq_buf, ">Tx:___._____");
             new_tx_freq_buf[insert_pos] = input_char;
             gfx_print(freq2_pos, new_tx_freq_buf, layout.line1_font, TEXT_ALIGN_CENTER,
                       color_white);
