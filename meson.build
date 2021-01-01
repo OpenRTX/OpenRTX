@@ -416,6 +416,8 @@ targets = [
 
 objcopy = find_program('objcopy', required:false, disabler:true)
 radio_tool = find_program('radio_tool', required:false, disabler:true)
+bin2sgl = find_program('bin2sgl.Linux', required:false, disabler:true)
+gd77_loader = find_program('gd-77_firmware_loader.py', required:false, disabler:true)
 
 foreach t : targets
 
@@ -429,18 +431,38 @@ foreach t : targets
       input : exe,
       command : [objcopy, '-O', 'binary', '@INPUT@', '@OUTPUT@'])
 
-    wrap = custom_target(name+'_wrap',
-      output : name+'_wrap',
-      input : bin,
-      command : [radio_tool,
-                 '--wrap',
-                 '-o', '@OUTPUT@',
-                 '-r', t['wrap'],
-                 '-s', t['load_addr']+':@INPUT@'])
+    # Handle GD77 custom wrapping and flashing tools
+    if name == 'openrtx_gd77'
 
-    custom_target(name+'_flash',
-      input : wrap,
-      output : name+'_flash',
-      command : [radio_tool, '-d', '0', '-f', '-i', '@INPUT@'])
+      wrap = custom_target(name+'_wrap',
+        output : name+'_wrap',
+        input : bin,
+        command : [bin2sgl,
+                   '-f', '@INPUT@',
+                   '&&', 'mv', '@INPUT@.sgl', '@OUTPUT@.sgl'])
+
+      custom_target(name+'_flash',
+        input : wrap,
+        output : name+'_flash',
+        command : [gd77_loader, '-f', '@INPUT@.sgl'])
+
+    else
+
+      wrap = custom_target(name+'_wrap',
+        output : name+'_wrap',
+        input : bin,
+        command : [radio_tool,
+                   '--wrap',
+                   '-o', '@OUTPUT@',
+                   '-r', t['wrap'],
+                   '-s', t['load_addr']+':@INPUT@'])
+
+      custom_target(name+'_flash',
+        input : wrap,
+        output : name+'_flash',
+        command : [radio_tool, '-d', '0', '-f', '-i', '@INPUT@'])
+
+    endif
+
   endif
 endforeach
