@@ -18,9 +18,9 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <gpio.h>
-#include <stdint.h>
+#include <interfaces/gpio.h>
 #include <hwconfig.h>
+#include <stdint.h>
 
 /*
  * Implementation of external flash SPI interface for MDx devices.

@@ -231,7 +231,8 @@ mduv380_def = def + stm32f405_def + {'PLATFORM_MDUV380': ''}
 ## TYT MD-UV380G
 mduv380g_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDx.c',
                                      'platform/drivers/keyboard/keyboard_MDx.c',
-                                     'platform/drivers/NVM/extFlash_MDx.c',
+                                     'platform/drivers/NVM/W25Qx.c',
+                                     'platform/drivers/NVM/spiFlash_MDx.c',
                                      'platform/drivers/NVM/nvmem_MDUV3x0G.c',
                                      'platform/drivers/ADC/ADC1_MDx.c',
                                      'platform/drivers/baseband/rtx_UV3x0.c',
@@ -245,6 +246,10 @@ mduv380g_def = def + stm32f405_def + {'PLATFORM_MDUV380G': ''}
 gd77_src = src + mk22fn512_src + ['platform/targets/GD77/platform.c',
                                   'platform/drivers/display/UC1701_GD77.c',
                                   'platform/drivers/keyboard/keyboard_GD77.c',
+                                  'platform/drivers/NVM/W25Qx.c',
+                                  'platform/drivers/NVM/AT24Cx_GDx.c',
+                                  'platform/drivers/NVM/spiFlash_GDx.c',
+                                  'platform/drivers/NVM/nvmem_GDx.c',
                                   'platform/drivers/ADC/ADC0_GDx.c',
                                   'platform/drivers/baseband/rtx_GDx.c']
 

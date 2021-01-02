@@ -19,11 +19,11 @@
  ***************************************************************************/
 
 #include "AT24Cx.h"
-#include <I2C0.h>
-#include <gpio.h>
-#include <delays.h>
-#include <stdint.h>
+#include <interfaces/gpio.h>
+#include <interfaces/delays.h>
 #include <hwconfig.h>
+#include <stdint.h>
+#include <I2C0.h>
 
 static const uint8_t devAddr = 0xA0;    /* EEPROM I2C address */
 

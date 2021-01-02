@@ -18,8 +18,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <nvmem.h>
-#include <delays.h>
+#include <interfaces/delays.h>
+#include <interfaces/nvmem.h>
 #include <calibInfo_GDx.h>
 #include "AT24Cx.h"
 #include "W25Qx.h"

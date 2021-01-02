@@ -72,4 +72,15 @@
 #define FUNC2_SW GPIOB,1
 #define MONI_SW  GPIOB,9
 
+
+/* External flash */
+#define FLASH_CS  GPIOE,6
+#define FLASH_CLK GPIOE,5
+#define FLASH_SDO GPIOE,4
+#define FLASH_SDI GPIOA,19
+
+/* I2C for EEPROM and AT1846S */
+#define I2C_SDA GPIOE,25
+#define I2C_SCL GPIOE,24
+
 #endif
