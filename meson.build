@@ -223,6 +223,19 @@ mduv380_inc = inc + stm32f405_inc + ['platform/targets/MD-UV380']
 mduv380_def = def + stm32f405_def + {'PLATFORM_MDUV380': ''}
 
 
+## TYT MD-UV380G
+mduv380g_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDx.c',
+                                     'platform/drivers/keyboard/keyboard_MDx.c',
+                                     'platform/drivers/NVM/extFlash_MDx.c',
+                                     'platform/drivers/NVM/nvmem_MDUV3x0G.c',
+                                     'platform/drivers/ADC/ADC1_MDx.c',
+                                     'platform/drivers/baseband/rtx_UV3x0.c',
+                                     'platform/targets/MD-UV380G/platform.c']
+
+mduv380g_inc = inc + stm32f405_inc + ['platform/targets/MD-UV380G']
+mduv380g_def = def + stm32f405_def + {'PLATFORM_MDUV380G': ''}
+
+
 ## Radioddity GD77
 gd77_src = src + mk22fn512_src + ['platform/targets/GD77/platform.c',
                                   'platform/drivers/display/UC1701_GD77.c',
@@ -249,7 +262,7 @@ dm1801_def = def + mk22fn512_def + {'PLATFORM_DM1801': ''}
 md9600_src = src + stm32f405_src + ['platform/targets/MD-9600/platform.c']
 
 md9600_inc = inc + stm32f405_inc + ['platform/targets/MD-9600']
-md9600_def = def + stm32f405_def + {'PLATFORM_MDUV380': ''}
+md9600_def = def + stm32f405_def + {'PLATFORM_MD9600': ''}
 
 
 ##
@@ -296,6 +309,15 @@ foreach k, v : mduv380_def
     mduv380_args += '-D@0@'.format(k)
   else
     mduv380_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
+
+mduv380g_args = []
+foreach k, v : mduv380g_def
+  if v == ''
+    mduv380g_args += '-D@0@'.format(k)
+  else
+    mduv380g_args += '-D@0@=@1@'.format(k, v)
   endif
 endforeach
 
@@ -350,6 +372,12 @@ mduv380_opts = {'sources': mduv380_src,
                                '-Wl,--print-memory-usage'],
                 'include_directories': mduv380_inc}
 
+mduv380g_opts = {'sources': mduv380g_src,
+                 'c_args': mduv380g_args,
+                 'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
+                                '-Wl,--print-memory-usage'],
+                 'include_directories': mduv380g_inc}
+
 gd77_opts = {'sources': gd77_src,
              'c_args': gd77_args,
              'link_args' : ['-Wl,-T../platform/mcu/MK22FN512xxx12/linker_script.ld',
@@ -389,8 +417,14 @@ targets = [
    'wrap': 'MD390',
    'load_addr': '0x0800C000'},
 
-  {'name': 'mduv380g',
+  {'name': 'mduv380',
    'opts': mduv380_opts,
+   'flashable': true,
+   'wrap': 'UV3X0',
+   'load_addr': '0x0800C000'},
+  
+  {'name': 'mduv380g',
+   'opts': mduv380g_opts,
    'flashable': true,
    'wrap': 'UV3X0',
    'load_addr': '0x0800C000'},
