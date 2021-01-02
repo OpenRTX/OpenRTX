@@ -46,18 +46,6 @@ rtxStatus_t rtxStatus;            /* RTX driver status                  */
 uint8_t sqlOpenTsh;               /* Squelch opening threshold          */
 uint8_t sqlCloseTsh;              /* Squelch closing threshold          */
 
-static void printUnsignedInt(unsigned int x)
-{
-    static const char hexdigits[]="0123456789abcdef";
-    char result[]="0x........\r\n";
-    for(int i=9;i>=2;i--)
-    {
-        result[i]=hexdigits[x & 0xf];
-        x>>=4;
-    }
-    puts(result);
-}
-
 /*
  * Helper functions to reduce code mess. They all access 'rtxStatus'
  * internally.
@@ -111,6 +99,18 @@ void _setOpMode()
     }
 }
 
+void _setVcoFrequency()
+{
+    if(rtxStatus.opStatus == RX)
+    {
+        pll_setFrequency(((float) rtxStatus.rxFrequency - IF_FREQ), 5);
+    }
+    else if(rtxStatus.opStatus == TX)
+    {
+        pll_setFrequency(rtxStatus.txFrequency, 5);
+    }
+}
+
 void _enableTxStage()
 {
     if(rtxStatus.txDisable == 1) return;
@@ -119,8 +119,6 @@ void _enableTxStage()
 
     gpio_setPin(RF_APC_SW);
     gpio_clearPin(VCOVCC_SW);
-
-    pll_setFrequency(rtxStatus.txFrequency, 5);
 
     /*
      * Set transmit power. Initial setting is 1W, overridden to 5W if tx power
@@ -135,6 +133,8 @@ void _enableTxStage()
 
     gpio_setPin(TX_STG_EN);
     rtxStatus.opStatus = TX;
+
+    _setVcoFrequency();
 }
 
 void _enableRxStage()
@@ -144,8 +144,6 @@ void _enableRxStage()
     gpio_clearPin(RF_APC_SW);
     gpio_setPin(VCOVCC_SW);
 
-    pll_setFrequency(((float) rtxStatus.rxFrequency - IF_FREQ), 5);
-
     /* Set tuning voltage for input filter */
     uint8_t tuneVoltage = interpCalParameter(rtxStatus.rxFrequency,
                                              calData->rxFreq,
@@ -154,6 +152,8 @@ void _enableRxStage()
 
     gpio_setPin(RX_STG_EN);
     rtxStatus.opStatus = RX;
+
+    _setVcoFrequency();
 }
 
 void _disableRtxStages()
@@ -394,6 +394,7 @@ void rtx_taskFunc()
             _updateC5000IQparams();
             _setCTCSS();
             _updateSqlThresholds();
+            _setVcoFrequency();
 
             /* TODO: temporarily force to RX mode if rtx is off. */
             if(rtxStatus.opStatus == OFF) _enableRxStage();
