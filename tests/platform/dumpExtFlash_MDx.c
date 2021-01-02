@@ -49,7 +49,6 @@ int main()
             (void) extFlash_readData(addr, buf, 16);
             printf("\r\n%lx: ", addr);
             printChunk(buf);
-            puts("\r");
         }
     }
 
