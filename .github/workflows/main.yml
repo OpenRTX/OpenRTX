@@ -7,10 +7,13 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
-    - name: apt-install
+    - name: install-deps
       run: |
         sudo apt update
-        sudo apt install meson gcc pkg-config libsdl2-dev gcc-arm-none-eabi
+        sudo apt install python3-pip gcc pkg-config libsdl2-dev gcc-arm-none-eabi wget ninja-build
+        sudo pip3 install meson
+        wget -O /tmp/radio_tool.deb https://github.com/v0l/radio_tool/releases/download/v0.1.0/radio_tool-0.1.0-Linux.deb
+        sudo dpkg -i /tmp/radio_tool.deb
     - name: meson-setup
       run: |
         cd ${{github.workspace}}
