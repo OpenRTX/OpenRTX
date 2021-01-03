@@ -33,7 +33,7 @@ void create_threads();
 /**
  * Stack size for UI task, in bytes.
  */
-#define UI_TASK_STKSIZE 1024
+#define UI_TASK_STKSIZE 2048
 
 /**
  * Stack size for Keyboard task, in bytes.

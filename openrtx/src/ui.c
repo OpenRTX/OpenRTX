@@ -707,7 +707,7 @@ bool _ui_drawMenuMacro(state_t* last_state) {
         gfx_print(layout.line1_left, "1", layout.top_font, TEXT_ALIGN_LEFT,
                   yellow_fab413);
         char code_str[9] = { 0 };
-        snprintf(code_str, 9, "    %3.1f", last_state->channel.fm.ctcDcs_tx/10);
+        snprintf(code_str, 9, "    %3.1f", last_state->channel.fm.ctcDcs_tx/10.0f);
         gfx_print(layout.line1_left, code_str, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white);
         gfx_print(layout.line1_left, "2       ", layout.top_font, TEXT_ALIGN_CENTER,
@@ -723,24 +723,34 @@ bool _ui_drawMenuMacro(state_t* last_state) {
             snprintf(encdec_str, 9, "        ", last_state->channel.fm.ctcDcs_tx/10);
         gfx_print(layout.line1_left, encdec_str, layout.top_font, TEXT_ALIGN_CENTER,
                   color_white);
-        gfx_print(layout.line1_right, "3       ", layout.top_font, TEXT_ALIGN_RIGHT,
+        gfx_print(layout.line1_right, "3        ", layout.top_font, TEXT_ALIGN_RIGHT,
                   yellow_fab413);
-        char pow_str[4] = { 0 };
-        snprintf(pow_str, 4, "%dW", last_state->channel.power);
+        char pow_str[5] = { 0 };
+        snprintf(pow_str, 5, "%.1gW", last_state->channel.power);
         gfx_print(layout.line1_right, pow_str, layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white);
         // Second row
         gfx_print(layout.line2_left, "4", layout.top_font, TEXT_ALIGN_LEFT,
                   yellow_fab413);
-        char bw_str[6] = { 0 };
-        snprintf(bw_str, 6, "   %2d", last_state->channel.bandwidth);
+        char bw_str[7] = { 0 };
+        switch (last_state->channel.bandwidth) {
+            case BW_12_5:
+                snprintf(bw_str, 7, "  12.5");
+                break;
+            case BW_20:
+                snprintf(bw_str, 7, "    20");
+                break;
+            case BW_25:
+                snprintf(bw_str, 7, "    25");
+                break;
+        }
         gfx_print(layout.line2_left, bw_str, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white);
         gfx_print(layout.line2_left, "5       ", layout.top_font, TEXT_ALIGN_CENTER,
                   yellow_fab413);
         gfx_print(layout.line2_left, "     GPS", layout.top_font, TEXT_ALIGN_CENTER,
                   color_white);
-        gfx_print(layout.line2_right, "6       ", layout.top_font, TEXT_ALIGN_RIGHT,
+        gfx_print(layout.line2_right, "6        ", layout.top_font, TEXT_ALIGN_RIGHT,
                   yellow_fab413);
         gfx_print(layout.line2_right, "Lck", layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white);
@@ -753,7 +763,7 @@ bool _ui_drawMenuMacro(state_t* last_state) {
                   yellow_fab413);
         gfx_print(layout.line3_left, "     B-", layout.top_font, TEXT_ALIGN_CENTER,
                   color_white);
-        gfx_print(layout.line3_right, "9       ", layout.top_font, TEXT_ALIGN_RIGHT,
+        gfx_print(layout.line3_right, "9        ", layout.top_font, TEXT_ALIGN_RIGHT,
                   yellow_fab413);
         gfx_print(layout.line3_right, "Sav", layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white);
