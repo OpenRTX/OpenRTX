@@ -117,11 +117,16 @@ typedef struct layout_t
     uint16_t line_v_pad;
     uint16_t horizontal_pad;
     uint16_t text_v_offset;
-    point_t top_pos;
-    point_t line1_pos;
-    point_t line2_pos;
-    point_t line3_pos;
-    point_t bottom_pos;
+    point_t top_left;
+    point_t line1_left;
+    point_t line2_left;
+    point_t line3_left;
+    point_t bottom_left;
+    point_t top_right;
+    point_t line1_right;
+    point_t line2_right;
+    point_t line3_right;
+    point_t bottom_right;
     fontSize_t top_font;
     fontSize_t line1_font;
     fontSize_t line2_font;
@@ -242,11 +247,16 @@ layout_t _ui_calculateLayout()
     #endif
 
     // Calculate printing positions
-    point_t top_pos    = {horizontal_pad, top_h - status_v_pad - text_v_offset};
-    point_t line1_pos  = {horizontal_pad, top_h + hline_h + line1_h - line_v_pad - text_v_offset};
-    point_t line2_pos  = {horizontal_pad, top_h + hline_h + line1_h + line2_h - line_v_pad - text_v_offset};
-    point_t line3_pos  = {horizontal_pad, top_h + hline_h + line1_h + line2_h + line3_h - line_v_pad - text_v_offset};
-    point_t bottom_pos = {horizontal_pad, top_h + hline_h + line1_h + line2_h + line3_h + hline_h + bottom_h - status_v_pad - text_v_offset};
+    point_t top_left    = {horizontal_pad, top_h - status_v_pad - text_v_offset};
+    point_t line1_left  = {horizontal_pad, top_h + hline_h + line1_h - line_v_pad - text_v_offset};
+    point_t line2_left  = {horizontal_pad, top_h + hline_h + line1_h + line2_h - line_v_pad - text_v_offset};
+    point_t line3_left  = {horizontal_pad, top_h + hline_h + line1_h + line2_h + line3_h - line_v_pad - text_v_offset};
+    point_t bottom_left = {horizontal_pad, top_h + hline_h + line1_h + line2_h + line3_h + hline_h + bottom_h - status_v_pad - text_v_offset};
+    point_t top_right    = {SCREEN_WIDTH - horizontal_pad, top_h - status_v_pad - text_v_offset};
+    point_t line1_right  = {SCREEN_WIDTH - horizontal_pad, top_h + hline_h + line1_h - line_v_pad - text_v_offset};
+    point_t line2_right  = {SCREEN_WIDTH - horizontal_pad, top_h + hline_h + line1_h + line2_h - line_v_pad - text_v_offset};
+    point_t line3_right  = {SCREEN_WIDTH - horizontal_pad, top_h + hline_h + line1_h + line2_h + line3_h - line_v_pad - text_v_offset};
+    point_t bottom_right = {SCREEN_WIDTH - horizontal_pad, top_h + hline_h + line1_h + line2_h + line3_h + hline_h + bottom_h - status_v_pad - text_v_offset};
 
     layout_t new_layout =
     {
@@ -260,11 +270,16 @@ layout_t _ui_calculateLayout()
         line_v_pad,
         horizontal_pad,
         text_v_offset,
-        top_pos,
-        line1_pos,
-        line2_pos,
-        line3_pos,
-        bottom_pos,
+        top_left,
+        line1_left,
+        line2_left,
+        line3_left,
+        bottom_left,
+        top_right,
+        line1_right,
+        line2_right,
+        line3_right,
+        bottom_right,
         top_font,
         line1_font,
         line2_font,
@@ -295,7 +310,7 @@ void _ui_drawVFOTop(state_t* last_state)
     char clock_buf[9] = "";
     snprintf(clock_buf, sizeof(clock_buf), "%02d:%02d:%02d", last_state->time.hour,
              last_state->time.minute, last_state->time.second);
-    gfx_print(layout.top_pos, clock_buf, layout.top_font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.top_left, clock_buf, layout.top_font, TEXT_ALIGN_CENTER,
               color_white);
 #endif
 
@@ -318,7 +333,7 @@ void _ui_drawVFOTop(state_t* last_state)
         strcpy(mode, "DMR");
         break;
     }
-    gfx_print(layout.top_pos, mode, layout.top_font, TEXT_ALIGN_LEFT,
+    gfx_print(layout.top_left, mode, layout.top_font, TEXT_ALIGN_LEFT,
               color_white);
 }
 
@@ -329,12 +344,12 @@ void _ui_drawVFOMiddle(state_t* last_state)
     snprintf(freq_buf, sizeof(freq_buf), " Rx:%03lu.%05lu",
              last_state->channel.rx_frequency/1000000,
              last_state->channel.rx_frequency%1000000/10);
-    gfx_print(layout.line2_pos, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.line2_left, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
               color_white);
     snprintf(freq_buf, sizeof(freq_buf), " Tx:%03lu.%05lu",
              last_state->channel.tx_frequency/1000000,
              last_state->channel.tx_frequency%1000000/10);
-    gfx_print(layout.line3_pos, freq_buf, layout.line3_font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.line3_left, freq_buf, layout.line3_font, TEXT_ALIGN_CENTER,
               color_white);
 }
 
@@ -353,7 +368,7 @@ void _ui_drawVFOMiddleInput(state_t* last_state)
             snprintf(freq_buf, sizeof(freq_buf), ">Rx:%03lu.%05lu",
                      new_rx_frequency/1000000,
                      new_rx_frequency%1000000/10);
-            gfx_print(layout.line2_pos, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
+            gfx_print(layout.line2_left, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
                       color_white);
         }
         else
@@ -362,13 +377,13 @@ void _ui_drawVFOMiddleInput(state_t* last_state)
             if(input_position == 1)
                 strcpy(new_rx_freq_buf, ">Rx:___._____");
             new_rx_freq_buf[insert_pos] = input_char;
-            gfx_print(layout.line2_pos, new_rx_freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
+            gfx_print(layout.line2_left, new_rx_freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
                       color_white);
         }
         snprintf(freq_buf, sizeof(freq_buf), " Tx:%03lu.%05lu",
                  last_state->channel.tx_frequency/1000000,
                  last_state->channel.tx_frequency%1000000/10);
-        gfx_print(layout.line3_pos, freq_buf, layout.line3_font, TEXT_ALIGN_CENTER,
+        gfx_print(layout.line3_left, freq_buf, layout.line3_font, TEXT_ALIGN_CENTER,
                   color_white);
     }
     else if(input_set == SET_TX)
@@ -376,7 +391,7 @@ void _ui_drawVFOMiddleInput(state_t* last_state)
         snprintf(freq_buf, sizeof(freq_buf), " Rx:%03lu.%05lu",
                  new_rx_frequency/1000000,
                  new_rx_frequency%1000000/10);
-        gfx_print(layout.line2_pos, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
+        gfx_print(layout.line2_left, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
                   color_white);
         // Replace Rx frequency with underscorses
         if(input_position == 0)
@@ -384,7 +399,7 @@ void _ui_drawVFOMiddleInput(state_t* last_state)
             snprintf(freq_buf, sizeof(freq_buf), ">Tx:%03lu.%05lu",
                      new_rx_frequency/1000000,
                      new_rx_frequency%1000000/10);
-            gfx_print(layout.line3_pos, freq_buf, layout.line3_font, TEXT_ALIGN_CENTER,
+            gfx_print(layout.line3_left, freq_buf, layout.line3_font, TEXT_ALIGN_CENTER,
                       color_white);
         }
         else
@@ -392,7 +407,7 @@ void _ui_drawVFOMiddleInput(state_t* last_state)
             if(input_position == 1)
                 strcpy(new_tx_freq_buf, ">Tx:___._____");
             new_tx_freq_buf[insert_pos] = input_char;
-            gfx_print(layout.line3_pos, new_tx_freq_buf, layout.line3_font, TEXT_ALIGN_CENTER,
+            gfx_print(layout.line3_left, new_tx_freq_buf, layout.line3_font, TEXT_ALIGN_CENTER,
                       color_white);
         }
     }
@@ -400,7 +415,7 @@ void _ui_drawVFOMiddleInput(state_t* last_state)
 
 void _ui_drawVFOBottom()
 {
-    gfx_print(layout.bottom_pos, "OpenRTX", layout.bottom_font,
+    gfx_print(layout.bottom_left, "OpenRTX", layout.bottom_font,
               TEXT_ALIGN_CENTER, color_white);
 }
 
@@ -484,30 +499,30 @@ void _ui_drawMenuTop()
 {
     gfx_clearScreen();
     // Print "Menu" on top bar
-    gfx_print(layout.top_pos, "Menu", layout.top_font,
+    gfx_print(layout.top_left, "Menu", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print menu entries
-    _ui_drawMenuList(layout.line1_pos, menu_items, menu_num, menu_selected);
+    _ui_drawMenuList(layout.line1_left, menu_items, menu_num, menu_selected);
 }
 
 void _ui_drawMenuChannel()
 {
     gfx_clearScreen();
     // Print "Channel" on top bar
-    gfx_print(layout.top_pos, "Channel", layout.top_font,
+    gfx_print(layout.top_left, "Channel", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print channel entries
-    _ui_drawChannelList(layout.line1_pos, menu_selected);
+    _ui_drawChannelList(layout.line1_left, menu_selected);
 }
 
 void _ui_drawMenuSettings()
 {
     gfx_clearScreen();
     // Print "Settings" on top bar
-    gfx_print(layout.top_pos, "Settings", layout.top_font,
+    gfx_print(layout.top_left, "Settings", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print menu entries
-    _ui_drawMenuList(layout.line1_pos, settings_items, settings_num, menu_selected);
+    _ui_drawMenuList(layout.line1_left, settings_items, settings_num, menu_selected);
 }
 
 #ifdef HAS_RTC
@@ -515,7 +530,7 @@ void _ui_drawSettingsTimeDate(state_t* last_state)
 {
     gfx_clearScreen();
     // Print "Time&Date" on top bar
-    gfx_print(layout.top_pos, "Time&Date", layout.top_font,
+    gfx_print(layout.top_left, "Time&Date", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print current time and date
     char date_buf[9] = "";
@@ -524,9 +539,9 @@ void _ui_drawSettingsTimeDate(state_t* last_state)
              last_state->time.date, last_state->time.month, last_state->time.year);
     snprintf(time_buf, sizeof(time_buf), "%02d:%02d:%02d", 
              last_state->time.hour, last_state->time.minute, last_state->time.second);
-    gfx_print(layout.line2_pos, date_buf, layout.line2_font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.line2_left, date_buf, layout.line2_font, TEXT_ALIGN_CENTER,
               color_white);
-    gfx_print(layout.line3_pos, time_buf, layout.line3_font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.line3_left, time_buf, layout.line3_font, TEXT_ALIGN_CENTER,
               color_white);
 }
 
@@ -536,7 +551,7 @@ void _ui_drawSettingsTimeDateSet(state_t* last_state)
 
     gfx_clearScreen();
     // Print "Time&Date" on top bar
-    gfx_print(layout.top_pos, "Time&Date", layout.top_font,
+    gfx_print(layout.top_left, "Time&Date", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     if(input_position <= 0)
     {
@@ -564,9 +579,9 @@ void _ui_drawSettingsTimeDateSet(state_t* last_state)
             new_time_buf[pos] = input_char; 
         }
     }
-    gfx_print(layout.line2_pos, new_date_buf, layout.line2_font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.line2_left, new_date_buf, layout.line2_font, TEXT_ALIGN_CENTER,
               color_white);
-    gfx_print(layout.line3_pos, new_time_buf, layout.line3_font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.line3_left, new_time_buf, layout.line3_font, TEXT_ALIGN_CENTER,
               color_white);
 }
 #endif
@@ -685,11 +700,11 @@ bool _ui_freq_check_limits(freq_t freq)
 }
 
 bool _ui_drawMenuMacro() {
-        gfx_print(layout.line1_pos, "1 2 3", FONT_SIZE_12PT, TEXT_ALIGN_CENTER,
+        gfx_print(layout.line1_left, "1 2 3", FONT_SIZE_12PT, TEXT_ALIGN_CENTER,
                   color_white);
-        gfx_print(layout.line2_pos, "4 5 6", FONT_SIZE_12PT, TEXT_ALIGN_CENTER,
+        gfx_print(layout.line2_left, "4 5 6", FONT_SIZE_12PT, TEXT_ALIGN_CENTER,
                   color_white);
-        gfx_print(layout.line3_pos, "7 8 9", FONT_SIZE_12PT, TEXT_ALIGN_CENTER,
+        gfx_print(layout.line3_left, "7 8 9", FONT_SIZE_12PT, TEXT_ALIGN_CENTER,
                   color_white);
     return true;
 }
