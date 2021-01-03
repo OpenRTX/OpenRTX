@@ -228,20 +228,6 @@ mduv380_inc = inc + stm32f405_inc + ['platform/targets/MD-UV380']
 mduv380_def = def + stm32f405_def + {'PLATFORM_MDUV380': ''}
 
 
-## TYT MD-UV380G
-mduv380g_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDx.c',
-                                     'platform/drivers/keyboard/keyboard_MDx.c',
-                                     'platform/drivers/NVM/W25Qx.c',
-                                     'platform/drivers/NVM/spiFlash_MDx.c',
-                                     'platform/drivers/NVM/nvmem_MDUV3x0G.c',
-                                     'platform/drivers/ADC/ADC1_MDx.c',
-                                     'platform/drivers/baseband/rtx_UV3x0.c',
-                                     'platform/targets/MD-UV380G/platform.c']
-
-mduv380g_inc = inc + stm32f405_inc + ['platform/targets/MD-UV380G']
-mduv380g_def = def + stm32f405_def + {'PLATFORM_MDUV380G': ''}
-
-
 ## Radioddity GD77
 gd77_src = src + mk22fn512_src + ['platform/targets/GD77/platform.c',
                                   'platform/drivers/display/UC1701_GD77.c',
@@ -327,7 +313,7 @@ foreach k, v : mduv380_def
 endforeach
 
 mduv380g_args = []
-foreach k, v : mduv380g_def
+foreach k, v : mduv380_def
   if v == ''
     mduv380g_args += '-D@0@'.format(k)
   else
@@ -386,11 +372,11 @@ mduv380_opts = {'sources': mduv380_src,
                                '-Wl,--print-memory-usage'],
                 'include_directories': mduv380_inc}
 
-mduv380g_opts = {'sources': mduv380g_src,
+mduv380g_opts = {'sources': mduv380_src,
                  'c_args': mduv380g_args,
                  'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
                                 '-Wl,--print-memory-usage'],
-                 'include_directories': mduv380g_inc}
+                 'include_directories': mduv380_inc}
 
 gd77_opts = {'sources': gd77_src,
              'c_args': gd77_args,
