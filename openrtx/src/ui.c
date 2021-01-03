@@ -186,7 +186,7 @@ layout_t _ui_calculateLayout()
 
     // Top bar font: 8 pt
     const fontSize_t top_font = FONT_SIZE_8PT;
-    // Middle line fonts: 16 pt
+    // Middle line fonts: 12 pt
     const fontSize_t line1_font = FONT_SIZE_12PT;
     const fontSize_t line2_font = FONT_SIZE_12PT;
     const fontSize_t line3_font = FONT_SIZE_12PT;
@@ -206,13 +206,13 @@ layout_t _ui_calculateLayout()
     const uint16_t line_v_pad = 2;
     const uint16_t horizontal_pad = 4;
 
-    // Top bar font: 8 pt
+    // Top bar font: 6 pt
     const fontSize_t top_font = FONT_SIZE_6PT;
-    // Middle line fonts: 16, 16, 8 pt
-    const fontSize_t line1_font = FONT_SIZE_8PT;
+    // Middle line fonts: 5, 8, 8 pt
+    const fontSize_t line1_font = FONT_SIZE_5PT;
     const fontSize_t line2_font = FONT_SIZE_8PT;
-    const fontSize_t line3_font = FONT_SIZE_5PT;
-    // Bottom bar font: 8 pt
+    const fontSize_t line3_font = FONT_SIZE_8PT;
+    // Bottom bar font: 6 pt
     const fontSize_t bottom_font = FONT_SIZE_6PT;
 
     // Radioddity RD-5R
