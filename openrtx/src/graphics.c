@@ -273,7 +273,7 @@ static inline uint16_t get_reset_x(textAlign_t alignment,
         case TEXT_ALIGN_CENTER:
             return (SCREEN_WIDTH - line_size)/2;
         case TEXT_ALIGN_RIGHT:
-            return SCREEN_WIDTH - line_size;
+            return startx - line_size;
     }
     return 0;
 }

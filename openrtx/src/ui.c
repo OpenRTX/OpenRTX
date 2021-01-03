@@ -699,12 +699,44 @@ bool _ui_freq_check_limits(freq_t freq)
     return valid;
 }
 
-bool _ui_drawMenuMacro() {
-        gfx_print(layout.line1_left, "1 2 3", FONT_SIZE_12PT, TEXT_ALIGN_CENTER,
+bool _ui_drawMenuMacro(state_t* last_state) {
+        gfx_print(layout.top_left, "Macro Menu", layout.top_font, TEXT_ALIGN_CENTER,
                   color_white);
-        gfx_print(layout.line2_left, "4 5 6", FONT_SIZE_12PT, TEXT_ALIGN_CENTER,
+        gfx_print(layout.line1_left, "1", layout.top_font, TEXT_ALIGN_LEFT,
+                  yellow_fab413);
+        gfx_print(layout.line1_left, "   71.9", layout.top_font, TEXT_ALIGN_LEFT,
                   color_white);
-        gfx_print(layout.line3_left, "7 8 9", FONT_SIZE_12PT, TEXT_ALIGN_CENTER,
+        gfx_print(layout.line1_left, "2       ", layout.top_font, TEXT_ALIGN_CENTER,
+                  yellow_fab413);
+        gfx_print(layout.line1_left, "     E+D", layout.top_font, TEXT_ALIGN_CENTER,
+                  color_white);
+        gfx_print(layout.line1_right, "3       ", layout.top_font, TEXT_ALIGN_RIGHT,
+                  yellow_fab413);
+        gfx_print(layout.line1_right, "5W", layout.top_font, TEXT_ALIGN_RIGHT,
+                  color_white);
+        gfx_print(layout.line2_left, "4", layout.top_font, TEXT_ALIGN_LEFT,
+                  yellow_fab413);
+        gfx_print(layout.line2_left, "   25", layout.top_font, TEXT_ALIGN_LEFT,
+                  color_white);
+        gfx_print(layout.line2_left, "5       ", layout.top_font, TEXT_ALIGN_CENTER,
+                  yellow_fab413);
+        gfx_print(layout.line2_left, "     GPS", layout.top_font, TEXT_ALIGN_CENTER,
+                  color_white);
+        gfx_print(layout.line2_right, "6       ", layout.top_font, TEXT_ALIGN_RIGHT,
+                  yellow_fab413);
+        gfx_print(layout.line2_right, "Lck", layout.top_font, TEXT_ALIGN_RIGHT,
+                  color_white);
+        gfx_print(layout.line3_left, "7", layout.top_font, TEXT_ALIGN_LEFT,
+                  yellow_fab413);
+        gfx_print(layout.line3_left, "   B+", layout.top_font, TEXT_ALIGN_LEFT,
+                  color_white);
+        gfx_print(layout.line3_left, "8       ", layout.top_font, TEXT_ALIGN_CENTER,
+                  yellow_fab413);
+        gfx_print(layout.line3_left, "     B-", layout.top_font, TEXT_ALIGN_CENTER,
+                  color_white);
+        gfx_print(layout.line3_right, "9       ", layout.top_font, TEXT_ALIGN_RIGHT,
+                  yellow_fab413);
+        gfx_print(layout.line3_right, "Sav", layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white);
     return true;
 }
@@ -1070,7 +1102,7 @@ void ui_updateGUI(state_t last_state)
             break;
         // Macro menu
         case MENU_MACRO:
-            _ui_drawMenuMacro();
+            _ui_drawMenuMacro(&last_state);
             break;
         // Settings menu screen
         case MENU_SETTINGS:
