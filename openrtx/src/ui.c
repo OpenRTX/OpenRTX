@@ -58,8 +58,8 @@
  *      ┌─────────────────────────┐
  *      │  top_status_bar (11 px) │  6 pt (9 px) font with 1 px vertical padding
  *      ├─────────────────────────┤  1 px line
- *      │      Line 1 (19px)      │  8 pt (11 px) font with 4 px vertical padding
  *      │      Line 2 (19px)      │  8 pt (11 px) font with 4 px vertical padding
+ *      │      Line 3 (19px)      │  8 pt (11 px) font with 4 px vertical padding
  *      └─────────────────────────┘
  */
 
@@ -221,9 +221,9 @@ layout_t _ui_calculateLayout()
     // Height and padding shown in diagram at beginning of file
     const uint16_t top_h = 11;
     const uint16_t bottom_h = 0;
-    const uint16_t line1_h = 19;
+    const uint16_t line1_h = 0;
     const uint16_t line2_h = 19;
-    const uint16_t line3_h = 0;
+    const uint16_t line3_h = 19;
     const uint16_t status_v_pad = 1;
     const uint16_t line_v_pad = 4;
     const uint16_t horizontal_pad = 0;
@@ -231,10 +231,10 @@ layout_t _ui_calculateLayout()
     // Top bar font: 8 pt
     const fontSize_t top_font = FONT_SIZE_6PT;
     // Middle line fonts: 16, 16
-    const fontSize_t line1_font = FONT_SIZE_8PT;
     const fontSize_t line2_font = FONT_SIZE_8PT;
+    const fontSize_t line3_font = FONT_SIZE_8PT;
     // Not present in this UI
-    const fontSize_t line3_font = 0;
+    const fontSize_t line1_font = 0;
     const fontSize_t bottom_font = 0;
 
     #else
@@ -326,20 +326,8 @@ void _ui_drawVFOMiddle(state_t* last_state)
 {
     // Print VFO frequencies
     char freq_buf[20] = "";
-    point_t freq1_pos = {0,0};
-    point_t freq2_pos = {0,0};
-    // On radios with 2 rows display use line 1 and 2
-    if(layout.line3_h == 0)
-    {
-        freq1_pos = layout.line1_pos;
-        freq2_pos = layout.line2_pos;
-    }
-    // On radios with 3 rows display use line 2 and 3
-    else
-    {
-        freq1_pos = layout.line2_pos;
-        freq2_pos = layout.line3_pos;
-    }
+    point_t freq1_pos = layout.line2_pos;
+    point_t freq2_pos = layout.line3_pos;
     snprintf(freq_buf, sizeof(freq_buf), " Rx:%03lu.%05lu",
              last_state->channel.rx_frequency/1000000,
              last_state->channel.rx_frequency%1000000/10);
@@ -354,20 +342,8 @@ void _ui_drawVFOMiddle(state_t* last_state)
 
 void _ui_drawVFOMiddleInput(state_t* last_state)
 {
-    point_t freq1_pos = {0,0};
-    point_t freq2_pos = {0,0};
-    // On radios with 2 rows display use line 1 and 2
-    if(layout.line3_h == 0)
-    {
-        freq1_pos = layout.line1_pos;
-        freq2_pos = layout.line2_pos;
-    }
-    // On radios with 3 rows display use line 2 and 3
-    else
-    {
-        freq1_pos = layout.line2_pos;
-        freq2_pos = layout.line3_pos;
-    }
+    point_t freq1_pos = layout.line2_pos;
+    point_t freq2_pos = layout.line3_pos;
     // Add inserted number to string, skipping "Rx: "/"Tx: " and "."
     uint8_t insert_pos = input_position + 3;
     if(input_position > 3) insert_pos += 1;
