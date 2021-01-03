@@ -31,35 +31,35 @@
  *
  *        160x128 display (MD380)            Recommended font size
  *      ┌─────────────────────────┐
- *      │  top_status_bar (16 px) │  8 pt font with 4 px vertical padding
- *      ├─────────────────────────┤
- *      │      Line 1 (32px)      │  16 pt font with 8 px vertical padding
+ *      │  top_status_bar (16 px) │  8 pt (11 px) font with 2 px vertical padding
+ *      ├─────────────────────────┤  1 px line
  *      │                         │
- *      │      Line 2 (32px)      │  16 pt font with 8 px vertical padding
+ *      │      Line 1 (34px)      │  12 pt (18 px) font with 8 px vertical padding
  *      │                         │
- *      │      Line 3 (32px)      │  16 pt font with 8 px vertical padding
+ *      │      Line 2 (30px)      │  12 pt (18 px) font with 6 px vertical padding
  *      │                         │
- *      ├─────────────────────────┤
- *      │bottom_status_bar (16 px)│  8 pt font with 4 px vertical padding
+ *      │      Line 3 (30px)      │  12 pt (18 px) font with 6 px vertical padding
+ *      ├─────────────────────────┤  1 px line
+ *      │bottom_status_bar (16 px)│  8 pt (11 px) font with 2 px vertical padding
  *      └─────────────────────────┘
  *
  *         128x64 display (GD-77)
  *      ┌─────────────────────────┐
- *      │  top_status_bar (8 px)  │  8 pt font without vertical padding
- *      ├─────────────────────────┤
- *      │      Line 1 (20px)      │  16 pt font with 2 px vertical padding
- *      │      Line 2 (20px)      │  16 pt font with 2 px vertical padding
- *      │      Line 3 (8px)       │  8 pt font without vertical padding
- *      ├─────────────────────────┤
- *      │ bottom_status_bar (8 px)│  8 pt font without vertical padding
+ *      │  top_status_bar (11 px) │  6 pt (9 px) font with 1 px vertical padding
+ *      ├─────────────────────────┤  1 px line
+ *      │      Line 1 (10px)      │  6 pt (9 px) font without vertical padding
+ *      │      Line 2 (15px)      │  8 pt (11 px) font with 2 px vertical padding
+ *      │      Line 3 (15px)      │  8 pt (11 px) font with 2 px vertical padding
+ *      ├─────────────────────────┤  1 px line
+ *      │ bottom_status_bar(11 px)│  6 pt (9 px) font with 1 px vertical padding
  *      └─────────────────────────┘
  *
  *         128x48 display (RD-5R)
  *      ┌─────────────────────────┐
- *      │  top_status_bar (8 px)  │  8 pt font without vertical padding
- *      ├─────────────────────────┤
- *      │      Line 1 (15px)      │  16 pt font with 2 px vertical padding
- *      │      Line 2 (15px)      │  16 pt font with 2 px vertical padding
+ *      │  top_status_bar (11 px) │  6 pt (9 px) font with 1 px vertical padding
+ *      ├─────────────────────────┤  1 px line
+ *      │      Line 1 (19px)      │  8 pt (11 px) font with 4 px vertical padding
+ *      │      Line 2 (19px)      │  8 pt (11 px) font with 4 px vertical padding
  *      └─────────────────────────┘
  */
 
@@ -107,13 +107,16 @@ const uint8_t settings_num = sizeof(settings_items)/sizeof(settings_items[0]);
 
 typedef struct layout_t
 {
+    uint16_t hline_h;
     uint16_t top_h;
     uint16_t line1_h;
     uint16_t line2_h;
     uint16_t line3_h;
     uint16_t bottom_h;
-    uint16_t vertical_pad;
+    uint16_t status_v_pad;
+    uint16_t line_v_pad;
     uint16_t horizontal_pad;
+    uint16_t text_v_offset;
     point_t top_pos;
     point_t line1_pos;
     point_t line2_pos;
@@ -162,6 +165,11 @@ char new_time_buf[9] = "";
 
 layout_t _ui_calculateLayout()
 {
+    // Horizontal line height
+    const uint16_t hline_h = 1;
+    // Compensate for fonts printing below the start position
+    const uint16_t text_v_offset = 1;
+
     // Calculate UI layout depending on vertical resolution
     // Tytera MD380, MD-UV380
     #if SCREEN_HEIGHT > 127
@@ -169,11 +177,11 @@ layout_t _ui_calculateLayout()
     // Height and padding shown in diagram at beginning of file
     const uint16_t top_h = 16;
     const uint16_t bottom_h = top_h;
-    const uint16_t line1_h = 32;
-    const uint16_t line2_h = 32;
-    const uint16_t line3_h = 32;
-    const uint16_t line_pad = 8;
-    const uint16_t vertical_pad = 4;
+    const uint16_t line1_h = 34;
+    const uint16_t line2_h = 30;
+    const uint16_t line3_h = 30;
+    const uint16_t status_v_pad = 2;
+    const uint16_t line_v_pad = 6;
     const uint16_t horizontal_pad = 4;
 
     // Top bar font: 8 pt
@@ -189,13 +197,13 @@ layout_t _ui_calculateLayout()
     #elif SCREEN_HEIGHT > 63
 
     // Height and padding shown in diagram at beginning of file
-    const uint16_t top_h = 13;
-    const uint16_t bottom_h = 18;
-    const uint16_t line1_h = 15;
+    const uint16_t top_h = 11;
+    const uint16_t bottom_h = top_h;
+    const uint16_t line1_h = 10;
     const uint16_t line2_h = 15;
-    const uint16_t line3_h = 0;
-    const uint16_t line_pad = 2;
-    const uint16_t vertical_pad = 4;
+    const uint16_t line3_h = 15;
+    const uint16_t status_v_pad = 1;
+    const uint16_t line_v_pad = 2;
     const uint16_t horizontal_pad = 4;
 
     // Top bar font: 8 pt
@@ -211,20 +219,20 @@ layout_t _ui_calculateLayout()
     #elif SCREEN_HEIGHT > 47
 
     // Height and padding shown in diagram at beginning of file
-    const uint16_t top_h = 8;
+    const uint16_t top_h = 11;
     const uint16_t bottom_h = 0;
-    const uint16_t line1_h = 20;
-    const uint16_t line2_h = 20;
+    const uint16_t line1_h = 19;
+    const uint16_t line2_h = 19;
     const uint16_t line3_h = 0;
-    const uint16_t line_pad = 2;
-    const uint16_t vertical_pad = 0;
+    const uint16_t status_v_pad = 1;
+    const uint16_t line_v_pad = 4;
     const uint16_t horizontal_pad = 0;
 
     // Top bar font: 8 pt
-    const fontSize_t top_font = FONT_SIZE_1;
+    const fontSize_t top_font = FONT_SIZE_6PT;
     // Middle line fonts: 16, 16
-    const fontSize_t line1_font = FONT_SIZE_3;
-    const fontSize_t line2_font = FONT_SIZE_3;
+    const fontSize_t line1_font = FONT_SIZE_8PT;
+    const fontSize_t line2_font = FONT_SIZE_8PT;
     // Not present in this UI
     const fontSize_t line3_font = 0;
     const fontSize_t bottom_font = 0;
@@ -234,21 +242,24 @@ layout_t _ui_calculateLayout()
     #endif
 
     // Calculate printing positions
-    point_t top_pos    = {horizontal_pad, top_h - vertical_pad};
-    point_t line1_pos  = {horizontal_pad, top_h + line1_h - line_pad};
-    point_t line2_pos  = {horizontal_pad, top_h + line1_h + line2_h - line_pad};
-    point_t line3_pos  = {horizontal_pad, top_h + line1_h + line2_h + line3_h - line_pad};
-    point_t bottom_pos = {horizontal_pad, top_h + line1_h + line2_h + line3_h + bottom_h - vertical_pad};
+    point_t top_pos    = {horizontal_pad, top_h - status_v_pad - text_v_offset};
+    point_t line1_pos  = {horizontal_pad, top_h + hline_h + line1_h - line_v_pad - text_v_offset};
+    point_t line2_pos  = {horizontal_pad, top_h + hline_h + line1_h + line2_h - line_v_pad - text_v_offset};
+    point_t line3_pos  = {horizontal_pad, top_h + hline_h + line1_h + line2_h + line3_h - line_v_pad - text_v_offset};
+    point_t bottom_pos = {horizontal_pad, top_h + hline_h + line1_h + line2_h + line3_h + hline_h + bottom_h - status_v_pad - text_v_offset};
 
     layout_t new_layout =
     {
+        hline_h,
         top_h,
         line1_h,
         line2_h,
         line3_h,
         bottom_h,
-        vertical_pad,
+        status_v_pad,
+        line_v_pad,
         horizontal_pad,
+        text_v_offset,
         top_pos,
         line1_pos,
         line2_pos,
@@ -265,10 +276,10 @@ layout_t _ui_calculateLayout()
 
 void _ui_drawVFOBackground()
 {
-    // Print top bar line of 1 pixel height
-    gfx_drawHLine(layout.top_h, 1, color_grey);
+    // Print top bar line of hline_h pixel height
+    gfx_drawHLine(layout.top_h, layout.hline_h, color_grey);
     // Print bottom bar line of 1 pixel height
-    gfx_drawHLine(SCREEN_HEIGHT - layout.bottom_h - 1, 1, color_grey);
+    gfx_drawHLine(SCREEN_HEIGHT - layout.bottom_h - 1, layout.hline_h, color_grey);
     // Print transparent OPNRTX on the background
     point_t splash_origin = {0, SCREEN_HEIGHT / 2 - 6};
     color_t yellow = yellow_fab413;
@@ -291,9 +302,9 @@ void _ui_drawVFOTop(state_t* last_state)
     // Print battery icon on top bar, use 4 px padding
     float charge = battery_getCharge(last_state->v_bat);
     uint16_t bat_width = SCREEN_WIDTH / 9;
-    uint16_t bat_height = layout.top_h - layout.vertical_pad;
+    uint16_t bat_height = layout.top_h - (layout.status_v_pad * 2);
     point_t bat_pos = {SCREEN_WIDTH - bat_width - layout.horizontal_pad,
-                       layout.vertical_pad / 2};
+                       layout.status_v_pad};
     gfx_drawBattery(bat_pos, bat_width, bat_height, charge);
 
     // Print radio mode on top bar
@@ -437,7 +448,7 @@ void _ui_drawMenuList(point_t pos, const char *entries[],
         if(item + scroll == selected)
         {
             // Draw rectangle under selected item, compensating for text height
-            point_t rect_pos = {0, pos.y - layout.top_h + 3};
+            point_t rect_pos = {0, pos.y - layout.top_h + (layout.text_v_offset*2)};
             gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.top_h, color_white, true); 
             gfx_print(pos, entry_buf, layout.top_font, TEXT_ALIGN_LEFT, color_black);
         }
