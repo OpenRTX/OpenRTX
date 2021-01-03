@@ -38,6 +38,7 @@ typedef struct
     float v_bat;
 
     uint8_t ui_screen;
+    uint8_t backlight_level;
     uint8_t tuner_mode;
     
     //time_t rx_status_tv;

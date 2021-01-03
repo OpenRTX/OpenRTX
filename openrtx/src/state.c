@@ -36,6 +36,7 @@ void state_init()
 #endif
     state.v_bat = platform_getVbat();
 
+    state.backlight_level = 255;
     state.channelInfoUpdated = true;
     state.channel.mode = FM;
     state.channel.bandwidth = BW_25;

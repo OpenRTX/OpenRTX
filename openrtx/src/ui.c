@@ -162,6 +162,7 @@ freq_t new_tx_frequency;
 char new_rx_freq_buf[14] = "";
 char new_tx_freq_buf[14] = "";
 
+
 #ifdef HAS_RTC
 curTime_t new_timedate = {0};
 char new_date_buf[9] = "";
@@ -733,7 +734,8 @@ bool _ui_drawMenuMacro(state_t* last_state) {
         gfx_print(layout.line2_left, "4", layout.top_font, TEXT_ALIGN_LEFT,
                   yellow_fab413);
         char bw_str[7] = { 0 };
-        switch (last_state->channel.bandwidth) {
+        switch (last_state->channel.bandwidth)
+        {
             case BW_12_5:
                 snprintf(bw_str, 7, "  12.5");
                 break;
@@ -1015,12 +1017,43 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 else if(msg.keys & KEY_MONI)
                 {
                     // Open Macro Menu
-                    _ui_drawDarkOverlay();
                     state.ui_screen = MENU_MACRO;
                 }
                 break;
             // Macro menu
             case MENU_MACRO:
+                _ui_drawDarkOverlay();
+                // If a number is pressed perform the corresponding macro
+                if(!msg.long_press && input_isNumberPressed(msg))
+                {
+                    input_number = input_getPressedNumber(msg);
+                    int32_t new_blight = state.backlight_level;
+                    switch(input_number)
+                    {
+                        case 3:
+                            if (state.channel.power == 1.0f)
+                                state.channel.power = 5.0f;
+                            else
+                                state.channel.power = 1.0f;
+                            break;
+                        case 4:
+                            state.channel.bandwidth++;
+                            state.channel.bandwidth %= 3;
+                            break;
+                        case 7:
+                            new_blight += 10;
+                            new_blight = (new_blight > 255) ? 255 : new_blight;
+                            state.backlight_level = new_blight;
+                            platform_setBacklightLevel(state.backlight_level);
+                            break;
+                        case 8:
+                            new_blight -= 10;
+                            new_blight = (new_blight < 0) ? 0 : new_blight;
+                            state.backlight_level = new_blight;
+                            platform_setBacklightLevel(state.backlight_level);
+                            break;
+                    }
+                }
                 // Exit from this menu when monitor key is released
                 if(!(msg.keys & KEY_MONI))
                     state.ui_screen = VFO_MAIN;
