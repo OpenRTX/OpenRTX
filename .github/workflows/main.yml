@@ -1,0 +1,31 @@
+name: CI
+on:
+  push:
+    branches: [ master ]
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: apt-install
+      run: |
+        sudo apt update
+        sudo apt install meson gcc pkg-config libsdl2-dev gcc-arm-none-eabi
+    - name: meson-setup
+      run: |
+        cd ${{github.workspace}}
+        meson setup build_linux
+        meson setup --cross-file cross_arm.txt build_arm
+    - name: ninja
+      run: |
+        cd ${{github.workspace}}
+        ninja -C build_linux openrtx_linux -j4
+        ninja -C build_arm openrtx_md380_wrap -j4
+        ninja -C build_arm openrtx_md390_wrap -j4
+        ninja -C build_arm openrtx_mduv380_wrap -j4
+    - uses: actions/upload-artifact@v2
+      with:
+        name: release-bins
+        path: |
+          ${{github.workspace}}/build_arm/openrtx_*_wrap
+          ${{github.workspace}}/build_linux/openrtx_linux
