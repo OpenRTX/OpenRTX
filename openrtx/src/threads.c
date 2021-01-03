@@ -183,6 +183,11 @@ static void kbd_task(void *arg)
                     key_ts[k] = now;
                     send_event = true;
                 }
+                // Key has been released
+                else if((prev_keys & (1 << k)) && !(keys & (1 << k)))
+                {
+                    send_event = true;
+                }
             }
         }
         // Some key is kept pressed
