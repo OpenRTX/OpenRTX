@@ -221,11 +221,20 @@ mduv380_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDx.c',
                                      'platform/drivers/NVM/spiFlash_MDx.c',
                                      'platform/drivers/NVM/nvmem_MDUV3x0.c',
                                      'platform/drivers/ADC/ADC1_MDx.c',
+                                     'platform/drivers/tones/toneGenerator_MDx.c',
                                      'platform/drivers/baseband/rtx_UV3x0.c',
                                      'platform/targets/MD-UV380/platform.c']
 
 mduv380_inc = inc + stm32f405_inc + ['platform/targets/MD-UV380']
 mduv380_def = def + stm32f405_def + {'PLATFORM_MDUV380': ''}
+
+
+## TYT MD-9600
+md9600_src = src + stm32f405_src + ['platform/targets/MD-9600/platform.c',
+                                    'platform/drivers/tones/toneGenerator_MDx.c']
+
+md9600_inc = inc + stm32f405_inc + ['platform/targets/MD-9600']
+md9600_def = def + stm32f405_def + {'PLATFORM_MD9600': ''}
 
 
 ## Radioddity GD77
@@ -256,14 +265,6 @@ dm1801_src = src + mk22fn512_src + ['platform/targets/DM-1801/platform.c',
 
 dm1801_inc = inc + mk22fn512_inc + ['platform/targets/DM-1801']
 dm1801_def = def + mk22fn512_def + {'PLATFORM_DM1801': ''}
-
-
-## TYT MD-9600
-md9600_src = src + stm32f405_src + ['platform/targets/MD-9600/platform.c']
-
-md9600_inc = inc + stm32f405_inc + ['platform/targets/MD-9600']
-md9600_def = def + stm32f405_def + {'PLATFORM_MD9600': ''}
-
 
 ##
 ## Compilation defines
