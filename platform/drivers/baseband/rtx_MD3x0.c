@@ -33,8 +33,6 @@
 #include "HR-C5000_MD3x0.h"
 #include "pll_MD3x0.h"
 
-#include <stdio.h>
-
 const freq_t IF_FREQ = 49950000;  /* Intermediate frequency: 49.95MHz   */
 
 OS_MUTEX *cfgMutex;               /* Mutex for incoming config messages */
@@ -180,7 +178,7 @@ void _updateC5000IQparams()
 
 void _setCTCSS()
 {
-    if((rtxStatus.opMode == FM) && (rtxStatus.txTone != 0))
+    if((rtxStatus.opMode == FM) && (rtxStatus.txToneEn != 0))
     {
         float tone = ((float) rtxStatus.txTone) / 10.0f;
         toneGen_setToneFreq(tone);
@@ -306,7 +304,9 @@ void rtx_init(OS_MUTEX *m)
     rtxStatus.txFrequency = 430000000;
     rtxStatus.txPower     = 0.0f;
     rtxStatus.sqlLevel    = 1;
+    rtxStatus.rxToneEn    = 0;
     rtxStatus.rxTone      = 0;
+    rtxStatus.txToneEn    = 0;
     rtxStatus.txTone      = 0;
 }
 

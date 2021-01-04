@@ -40,8 +40,11 @@ typedef struct
     float txPower;          /**< TX power, in W                */
     uint8_t sqlLevel;       /**< Squelch opening level         */
 
-    tone_t rxTone;          /**< RX CTC/DCS tone               */
-    tone_t txTone;          /**< TX CTC/DCS tone               */
+    uint16_t rxToneEn : 1,  /**< RX CTC/DCS tone enable        */
+             rxTone   : 15; /**< RX CTC/DCS tone               */
+
+    uint16_t txToneEn : 1,  /**< TX CTC/DCS tone enable        */
+             txTone   : 15; /**< TX CTC/DCS tone               */
 }
 rtxStatus_t;
 
