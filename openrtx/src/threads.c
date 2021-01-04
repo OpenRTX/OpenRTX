@@ -155,6 +155,9 @@ static void kbd_task(void *arg)
     OS_TICK key_ts[kbd_num_keys];
     OS_TICK now;
 
+    // Allocate bool array to send only one long-press event
+    bool long_press_sent[kbd_num_keys];
+
     // Variable for saving previous and current keyboard status
     keyboard_t prev_keys = 0;
     keyboard_t keys = 0;
@@ -182,6 +185,7 @@ static void kbd_task(void *arg)
                     // Save timestamp
                     key_ts[k] = now;
                     send_event = true;
+                    long_press_sent[k] = false;
                 }
                 // Key has been released
                 else if((prev_keys & (1 << k)) && !(keys & (1 << k)))
@@ -197,10 +201,11 @@ static void kbd_task(void *arg)
             for(uint8_t k=0; k < kbd_num_keys; k++)
             {
                 // The key is pressed and its long-press timer is over
-                if(keys & (1 << k) && (now - key_ts[k]) >= kbd_long_interval)
+                if(keys & (1 << k) && !long_press_sent[k] && (now - key_ts[k]) >= kbd_long_interval)
                 {
                     long_press = true;
                     send_event = true;
+                    long_press_sent[k] = true;
                 }
             }
         }
