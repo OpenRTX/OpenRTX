@@ -735,17 +735,17 @@ bool _ui_drawMenuMacro(state_t* last_state) {
         // Second row
         gfx_print(layout.line2_left, "4", layout.top_font, TEXT_ALIGN_LEFT,
                   yellow_fab413);
-        char bw_str[7] = { 0 };
+        char bw_str[8] = { 0 };
         switch (last_state->channel.bandwidth)
         {
             case BW_12_5:
-                snprintf(bw_str, 7, "  12.5");
+                snprintf(bw_str, 8, "   12.5");
                 break;
             case BW_20:
-                snprintf(bw_str, 7, "    20");
+                snprintf(bw_str, 8, "     20");
                 break;
             case BW_25:
-                snprintf(bw_str, 7, "    25");
+                snprintf(bw_str, 8, "     25");
                 break;
         }
         gfx_print(layout.line2_left, bw_str, layout.top_font, TEXT_ALIGN_LEFT,
@@ -1029,27 +1029,43 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 if(!msg.long_press && input_isNumberPressed(msg))
                 {
                     input_number = input_getPressedNumber(msg);
+                    // Backlight
                     int32_t new_blight = state.backlight_level;
+                    // CTCSS Encode/Decode Selection
+                    bool tone_tx_enable = state.channel.fm.txToneEn;
+                    bool tone_rx_enable = state.channel.fm.rxToneEn;
+                    uint8_t tone_flags = tone_tx_enable << 1 | tone_rx_enable;
                     switch(input_number)
                     {
+                        case 2:
+                            tone_flags++;
+                            tone_flags %= 4;
+                            tone_tx_enable = tone_flags >> 1;
+                            tone_rx_enable = tone_flags & 1;
+                            state.channel.fm.txToneEn = tone_tx_enable;
+                            state.channel.fm.rxToneEn = tone_rx_enable;
+                            *sync_rtx = true;
+                            break;
                         case 3:
                             if (state.channel.power == 1.0f)
                                 state.channel.power = 5.0f;
                             else
                                 state.channel.power = 1.0f;
+                            *sync_rtx = true;
                             break;
                         case 4:
                             state.channel.bandwidth++;
                             state.channel.bandwidth %= 3;
+                            *sync_rtx = true;
                             break;
                         case 7:
-                            new_blight += 10;
+                            new_blight += 25;
                             new_blight = (new_blight > 255) ? 255 : new_blight;
                             state.backlight_level = new_blight;
                             platform_setBacklightLevel(state.backlight_level);
                             break;
                         case 8:
-                            new_blight -= 10;
+                            new_blight -= 25;
                             new_blight = (new_blight < 0) ? 0 : new_blight;
                             state.backlight_level = new_blight;
                             platform_setBacklightLevel(state.backlight_level);
