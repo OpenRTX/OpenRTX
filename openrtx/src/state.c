@@ -44,9 +44,9 @@ void state_init()
     state.channel.rx_frequency = 430000000;
     state.channel.tx_frequency = 430000000;
     state.channel.fm.rxToneEn = 0;
-    state.channel.fm.rxTone = 719;
+    state.channel.fm.rxTone = 2; // 71.9Hz
     state.channel.fm.txToneEn = 1;
-    state.channel.fm.txTone = 719;
+    state.channel.fm.txTone = 2; // 71.9Hz
 
     state.rtxStatus = RTX_OFF;
     state.sqlLevel = 3;

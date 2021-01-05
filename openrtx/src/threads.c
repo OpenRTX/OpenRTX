@@ -119,9 +119,9 @@ static void ui_task(void *arg)
             rtx_cfg.txPower = state.channel.power;
             rtx_cfg.sqlLevel = state.channel.squelch;
             rtx_cfg.rxToneEn = state.channel.fm.rxToneEn;
-            rtx_cfg.rxTone = state.channel.fm.rxTone;
+            rtx_cfg.rxTone = ctcss_tone[state.channel.fm.rxTone];
             rtx_cfg.txToneEn = state.channel.fm.txToneEn;
-            rtx_cfg.txTone = state.channel.fm.txTone;
+            rtx_cfg.txTone = ctcss_tone[state.channel.fm.txTone];
             OSMutexPost(&rtx_mutex, OS_OPT_POST_NONE, &os_err);
 
             rtx_configure(&rtx_cfg);

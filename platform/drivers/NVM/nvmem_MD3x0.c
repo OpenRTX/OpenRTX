@@ -231,9 +231,32 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
     if(channel->mode == FM)
     {
         channel->fm.rxToneEn = chData.ctcss_dcs_receive != 0;
-        channel->fm.rxTone = chData.ctcss_dcs_receive;
         channel->fm.txToneEn = chData.ctcss_dcs_transmit != 0;
-        channel->fm.txTone = chData.ctcss_dcs_transmit;
+        // TODO: Implement binary search to speed up this lookup
+        if (channel->fm.rxToneEn)
+        {
+            for(int i = 0; i < MAX_TONE_INDEX; i++)
+            {
+                if (ctcss_tone[i] == chData.ctcss_dcs_receive)
+                {
+                    channel->fm.rxTone = i;
+                    break;
+                }
+            }
+
+        }
+        if (channel->fm.txToneEn)
+        {
+            for(int i = 0; i < MAX_TONE_INDEX; i++)
+            {
+                if (ctcss_tone[i] == chData.ctcss_dcs_transmit)
+                {
+                    channel->fm.txTone = i;
+                    break;
+                }
+            }
+        }
+        // TODO: Implement warning screen if tone was not found
     }
     else if(channel->mode == DMR)
     {

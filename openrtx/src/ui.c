@@ -707,8 +707,9 @@ bool _ui_drawMenuMacro(state_t* last_state) {
         // First row
         gfx_print(layout.line1_left, "1", layout.top_font, TEXT_ALIGN_LEFT,
                   yellow_fab413);
-        char code_str[9] = { 0 };
-        snprintf(code_str, 9, "    %3.1f", last_state->channel.fm.txTone/10.0f);
+        char code_str[11] = { 0 };
+        snprintf(code_str, 11, "  %6.1f",
+                 ctcss_tone[last_state->channel.fm.txTone]/10.0f);
         gfx_print(layout.line1_left, code_str, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white);
         gfx_print(layout.line1_left, "2       ", layout.top_font, TEXT_ALIGN_CENTER,
@@ -1037,6 +1038,12 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     uint8_t tone_flags = tone_tx_enable << 1 | tone_rx_enable;
                     switch(input_number)
                     {
+                        case 1:
+                            state.channel.fm.txTone++;
+                            state.channel.fm.txTone %= MAX_TONE_INDEX;
+                            state.channel.fm.rxTone = state.channel.fm.txTone;
+                            *sync_rtx = true;
+                            break;
                         case 2:
                             tone_flags++;
                             tone_flags %= 4;
