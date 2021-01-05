@@ -708,20 +708,22 @@ bool _ui_drawMenuMacro(state_t* last_state) {
         gfx_print(layout.line1_left, "1", layout.top_font, TEXT_ALIGN_LEFT,
                   yellow_fab413);
         char code_str[9] = { 0 };
-        snprintf(code_str, 9, "    %3.1f", last_state->channel.fm.ctcDcs_tx/10.0f);
+        snprintf(code_str, 9, "    %3.1f", last_state->channel.fm.txTone/10.0f);
         gfx_print(layout.line1_left, code_str, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white);
         gfx_print(layout.line1_left, "2       ", layout.top_font, TEXT_ALIGN_CENTER,
                   yellow_fab413);
         char encdec_str[9] = { 0 };
-        if (last_state->channel.fm.ctcDcs_tx != 0 && last_state->channel.fm.ctcDcs_rx != 0)
-            snprintf(encdec_str, 9, "     E+D", last_state->channel.fm.ctcDcs_tx/10);
-        else if (last_state->channel.fm.ctcDcs_tx != 0 && last_state->channel.fm.ctcDcs_rx == 0)
-            snprintf(encdec_str, 9, "      E ", last_state->channel.fm.ctcDcs_tx/10);
-        else if (last_state->channel.fm.ctcDcs_tx == 0 && last_state->channel.fm.ctcDcs_rx != 0)
-            snprintf(encdec_str, 9, "      D ", last_state->channel.fm.ctcDcs_tx/10);
+        bool tone_tx_enable = last_state->channel.fm.txToneEn;
+        bool tone_rx_enable = last_state->channel.fm.rxToneEn;
+        if (tone_tx_enable && tone_rx_enable)
+            snprintf(encdec_str, 9, "     E+D");
+        else if (tone_tx_enable && !tone_rx_enable)
+            snprintf(encdec_str, 9, "      E ");
+        else if (!tone_tx_enable && tone_rx_enable)
+            snprintf(encdec_str, 9, "      D ");
         else
-            snprintf(encdec_str, 9, "        ", last_state->channel.fm.ctcDcs_tx/10);
+            snprintf(encdec_str, 9, "        ");
         gfx_print(layout.line1_left, encdec_str, layout.top_font, TEXT_ALIGN_CENTER,
                   color_white);
         gfx_print(layout.line1_right, "3        ", layout.top_font, TEXT_ALIGN_RIGHT,

@@ -43,8 +43,10 @@ enum admit_t
  */
 typedef struct
 {
-    uint16_t ctcDcs_rx;     /**< RX CTCSS or DCS code, squelch opens on match */
-    uint16_t ctcDcs_tx;     /**< TX CTCSS or DCS code, sent alongside voice   */
+    uint16_t rxToneEn : 1,  /**< RX CTC/DCS tone enable                       */
+             rxTone   : 15; /**< RX CTC/DCS tone, squelch opens on match      */
+    uint16_t txToneEn : 1,  /**< TX CTC/DCS tone enable                       */
+             txTone   : 15; /**< TX CTC/DCS tonem sent alongside voidce       */
 } fmInfo_t;
 
 /**

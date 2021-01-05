@@ -263,8 +263,10 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
     /* Load mode-specific parameters */
     if(channel->mode == FM)
     {
-        channel->fm.ctcDcs_rx = chData.ctcss_dcs_receive;
-        channel->fm.ctcDcs_tx = chData.ctcss_dcs_transmit;
+        channel->fm.rxToneEn = chData.ctcss_dcs_receive != 0;
+        channel->fm.rxTone = chData.ctcss_dcs_receive;
+        channel->fm.txToneEn = chData.ctcss_dcs_transmit != 0;
+        channel->fm.txTone = chData.ctcss_dcs_transmit;
     }
     else if(channel->mode == DMR)
     {
