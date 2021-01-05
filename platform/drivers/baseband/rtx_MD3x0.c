@@ -423,7 +423,7 @@ void rtx_taskFunc()
     if(platform_getPttStatus() && (rtxStatus.opStatus != TX))
     {
         _disableRtxStages();
-        toneGen_toneOn();
+        if(rtxStatus.txToneEn != 0) toneGen_toneOn();
         gpio_setPin(MIC_PWR);
         C5000_startAnalogTx();
         _enableTxStage();
