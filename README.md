@@ -11,6 +11,8 @@ however contributions and testing are welcome and accepted.
 
 For information on currently supported radios and features, see the [Development status](https://github.com/n1zzo/OpenRTX/wiki/Development-status) wiki page.
 
+For hardware and software documentation visit [openrtx.org](https://openrtx.org/)
+
 ## Compile and flash
 
 For instructions on how to compile and flash OpenRTX to your radio,
