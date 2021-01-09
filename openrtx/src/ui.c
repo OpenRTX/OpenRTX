@@ -239,7 +239,7 @@ layout_t _ui_calculateLayout()
     return new_layout;
 }
 
-void _ui_drawVFOBackground()
+void _ui_drawMainBackground()
 {
     // Print top bar line of hline_h pixel height
     gfx_drawHLine(layout.top_h, layout.hline_h, color_grey);
@@ -253,7 +253,7 @@ void _ui_drawVFOBackground()
               yellow);
 }
 
-void _ui_drawVFOTop(state_t* last_state)
+void _ui_drawMainTop(state_t* last_state)
 {
 #ifdef HAS_RTC
     // Print clock on top bar
@@ -288,6 +288,22 @@ void _ui_drawVFOTop(state_t* last_state)
 }
 
 void _ui_drawVFOMiddle(state_t* last_state)
+{
+    // Print VFO frequencies
+    char freq_buf[20] = "";
+    snprintf(freq_buf, sizeof(freq_buf), " Rx:%03u.%05u",
+             last_state->channel.rx_frequency/1000000,
+             last_state->channel.rx_frequency%1000000/10);
+    gfx_print(layout.line2_left, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
+              color_white);
+    snprintf(freq_buf, sizeof(freq_buf), " Tx:%03u.%05u",
+             last_state->channel.tx_frequency/1000000,
+             last_state->channel.tx_frequency%1000000/10);
+    gfx_print(layout.line3_left, freq_buf, layout.line3_font, TEXT_ALIGN_CENTER,
+              color_white);
+}
+
+void _ui_drawMEMMiddle(state_t* last_state)
 {
     // Print VFO frequencies
     char freq_buf[20] = "";
@@ -365,26 +381,41 @@ void _ui_drawVFOMiddleInput(state_t* last_state, ui_state_t* ui_state)
 
 void _ui_drawVFOBottom()
 {
-    gfx_print(layout.bottom_left, "OpenRTX", layout.bottom_font,
+    gfx_print(layout.bottom_left, "OpenRTX VFO", layout.bottom_font,
               TEXT_ALIGN_CENTER, color_white);
 }
 
-void _ui_drawVFOMain(state_t* last_state)
+void _ui_drawMEMBottom()
+{
+    gfx_print(layout.bottom_left, "OpenRTX MEM", layout.bottom_font,
+              TEXT_ALIGN_CENTER, color_white);
+}
+
+void _ui_drawMainVFO(state_t* last_state)
 {
     gfx_clearScreen();
-    _ui_drawVFOBackground();
-    _ui_drawVFOTop(last_state);
+    _ui_drawMainBackground();
+    _ui_drawMainTop(last_state);
     _ui_drawVFOMiddle(last_state);
     _ui_drawVFOBottom();
 }
 
-void _ui_drawVFOInput(state_t* last_state)
+void _ui_drawMainVFOInput(state_t* last_state)
 {
     gfx_clearScreen();
-    _ui_drawVFOBackground();
-    _ui_drawVFOTop(last_state);
+    _ui_drawMainBackground();
+    _ui_drawMainTop(last_state);
     _ui_drawVFOMiddleInput(last_state, &ui_state);
     _ui_drawVFOBottom();
+}
+
+void _ui_drawMainMEM(state_t* last_state)
+{
+    gfx_clearScreen();
+    _ui_drawMainBackground();
+    _ui_drawMainTop(last_state);
+    _ui_drawMEMMiddle(last_state);
+    _ui_drawMEMBottom();
 }
 
 void ui_init()
@@ -520,7 +551,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
     {
         state.ui_screen = LOW_BAT;
         if(event.type == EVENT_KBD && event.payload) {
-            state.ui_screen = VFO_MAIN;
+            state.ui_screen = MAIN_VFO;
             state.emergency = true;
         }
         return;
@@ -534,7 +565,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
         switch(state.ui_screen)
         {
             // VFO screen
-            case VFO_MAIN:
+            case MAIN_VFO:
                 if(msg.keys & KEY_UP)
                 {
                     // Increment TX and RX frequency of 12.5KHz
@@ -561,11 +592,18 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 {
                     // Open Menu
                     state.ui_screen = MENU_TOP;
+                    // Save current main state
+                    ui_state.last_main_state = MAIN_VFO;
+                }
+                else if(msg.keys & KEY_ESC)
+                {
+                    // Switch to MEM screen
+                    state.ui_screen = MAIN_MEM;
                 }
                 else if(input_isNumberPressed(msg))
                 {
                     // Open Frequency input screen
-                    state.ui_screen = VFO_INPUT;
+                    state.ui_screen = MAIN_VFO_INPUT;
                     // Reset input position and selection
                     ui_state.input_position = 1;
                     ui_state.input_set = SET_RX;
@@ -585,7 +623,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 }
                 break;
             // VFO frequency input screen
-            case VFO_INPUT:
+            case MAIN_VFO_INPUT:
                 if(msg.keys & KEY_ENTER)
                 {
                     // Switch to TX input
@@ -619,12 +657,12 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                                 *sync_rtx = true;
                             }
                         }
-                        state.ui_screen = VFO_MAIN;
+                        state.ui_screen = MAIN_VFO;
                     }
                 }
                 else if(msg.keys & KEY_ESC)
                 {
-                    state.ui_screen = VFO_MAIN;
+                    state.ui_screen = MAIN_VFO;
                 }
                 else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN)
                 {
@@ -675,7 +713,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                                 state.channel.tx_frequency = ui_state.new_tx_frequency;
                                 *sync_rtx = true;
                             }
-                            state.ui_screen = VFO_MAIN;
+                            state.ui_screen = MAIN_VFO;
                         }
                     }
                 }
@@ -684,6 +722,21 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     // Open Macro Menu
                     _ui_drawDarkOverlay();
                     state.ui_screen = MENU_MACRO;
+                }
+                break;
+            // MEM screen
+            case MAIN_MEM:
+                if(msg.keys & KEY_ENTER)
+                {
+                    // Open Menu
+                    state.ui_screen = MENU_TOP;
+                    // Save current main state
+                    ui_state.last_main_state = MAIN_MEM;
+                }
+                else if(msg.keys & KEY_ESC)
+                {
+                    // Switch to VFO screen
+                    state.ui_screen = MAIN_VFO;
                 }
                 break;
             // Top menu screen
@@ -722,8 +775,8 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 }
                 else if(msg.keys & KEY_ESC)
                 {
-                    // Close Menu
-                    state.ui_screen = VFO_MAIN;
+                    // Close Menu, switch to last main state
+                    state.ui_screen = ui_state.last_main_state;
                     // Reset menu selection
                     ui_state.menu_selected = 0;
                 }
@@ -810,7 +863,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 }
                 // Exit from this menu when monitor key is released
                 if(!(msg.keys & KEY_MONI))
-                    state.ui_screen = VFO_MAIN;
+                    state.ui_screen = MAIN_VFO;
                 break;
             // Settings menu screen
             case MENU_SETTINGS:
@@ -901,12 +954,16 @@ void ui_updateGUI(state_t last_state)
     switch(last_state.ui_screen)
     {
         // VFO main screen
-        case VFO_MAIN:
-            _ui_drawVFOMain(&last_state);
+        case MAIN_VFO:
+            _ui_drawMainVFO(&last_state);
             break;
         // VFO frequency input screen
-        case VFO_INPUT:
-            _ui_drawVFOInput(&last_state);
+        case MAIN_VFO_INPUT:
+            _ui_drawMainVFOInput(&last_state);
+            break;
+        // MEM main screen
+        case MAIN_MEM:
+            _ui_drawMainMEM(&last_state);
             break;
         // Top menu screen
         case MENU_TOP:

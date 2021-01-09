@@ -37,8 +37,8 @@
 
 enum uiScreen
 {
-    VFO_MAIN = 0,
-    VFO_INPUT,
+    MAIN_VFO = 0,
+    MAIN_VFO_INPUT,
     MAIN_MEM,
     MENU_TOP,
     MENU_ZONE,
@@ -114,6 +114,7 @@ typedef struct ui_state_t
     char new_date_buf[9];
     char new_time_buf[9];
 #endif
+    uint8_t last_main_state;
 } ui_state_t;
 
 extern layout_t layout;
