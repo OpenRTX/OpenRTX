@@ -21,7 +21,6 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <ui.h>
-#include <ui_menu.h>
 #include <string.h>
 
 void _ui_drawMenuList(point_t pos, const char *entries[], 

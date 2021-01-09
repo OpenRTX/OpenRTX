@@ -66,13 +66,25 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <ui.h>
-#include <ui_menu.h>
 #include <interfaces/rtx.h>
 #include <interfaces/platform.h>
 #include <interfaces/nvmem.h>
 #include <string.h>
 #include <battery.h>
 #include <input.h>
+
+ /* UI menu functions, their implementation is in "ui_menu.c" */
+extern void _ui_drawMenuList(point_t pos, const char *entries[],
+                            uint8_t num_entries, uint8_t selected);
+extern void _ui_drawChannelList(point_t pos, uint8_t selected);
+extern void _ui_drawMenuTop(ui_state_t* ui_state);
+extern void _ui_drawMenuChannel(ui_state_t* ui_state);
+extern void _ui_drawMenuSettings(ui_state_t* ui_state);
+#ifdef HAS_RTC
+extern void _ui_drawSettingsTimeDate(state_t* last_state, ui_state_t* ui_state);
+extern void _ui_drawSettingsTimeDateSet(state_t* last_state, ui_state_t* ui_state);
+#endif
+extern bool _ui_drawMenuMacro(state_t* last_state);
 
 const char *menu_items[6] =
 {
