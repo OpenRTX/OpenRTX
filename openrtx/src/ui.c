@@ -105,6 +105,12 @@ const char *settings_items[1] =
 // Calculate number of settings menu entries
 const uint8_t settings_num = sizeof(settings_items)/sizeof(settings_items[0]);
 
+/**
+ * Struct containing a set of positions and sizes that get
+ * calculated for the selected display size.
+ * Using these parameters make the UI automatically adapt
+ * To displays of different sizes
+ */
 typedef struct layout_t
 {
     uint16_t hline_h;
@@ -134,6 +140,28 @@ typedef struct layout_t
     fontSize_t bottom_font;
 } layout_t;
 
+/** 
+ * This structs contains state variables internal to the
+ * UI that need to be kept between executions of the UI
+ * This state does not need to be saved on device poweroff
+ */
+typedef struct ui_state_t
+{
+    uint8_t menu_selected;
+    uint8_t input_number;
+    uint8_t input_position;
+    uint8_t input_set;
+    freq_t new_rx_frequency;
+    freq_t new_tx_frequency;
+    char new_rx_freq_buf[14];
+    char new_tx_freq_buf[14];
+#ifdef HAS_RTC
+    curTime_t new_timedate;
+    char new_date_buf[9];
+    char new_time_buf[9];
+#endif
+} ui_state_t;
+
 const color_t color_black = {0, 0, 0, 255};
 const color_t color_grey = {60, 60, 60, 255};
 const color_t color_white = {255, 255, 255, 255};
@@ -146,28 +174,9 @@ enum SetRxTx
 };
 
 layout_t layout;
+ui_state_t ui_state;
 bool layout_ready = false;
 bool redraw_needed = true;
-
-/** Temporary state variables 
- *  These variables are used to store additional state
- *  parameters within a UI FSM state 
- *  (example: selected menu entry  */
-uint8_t menu_selected = 0;
-uint8_t input_number = 0;
-uint8_t input_position = 0;
-uint8_t input_set = 0;
-freq_t new_rx_frequency;
-freq_t new_tx_frequency;
-char new_rx_freq_buf[14] = "";
-char new_tx_freq_buf[14] = "";
-
-
-#ifdef HAS_RTC
-curTime_t new_timedate = {0};
-char new_date_buf[9] = "";
-char new_time_buf[9] = "";
-#endif
 
 layout_t _ui_calculateLayout()
 {
@@ -354,31 +363,31 @@ void _ui_drawVFOMiddle(state_t* last_state)
               color_white);
 }
 
-void _ui_drawVFOMiddleInput(state_t* last_state)
+void _ui_drawVFOMiddleInput(state_t* last_state, ui_state_t* ui_state)
 {
     // Add inserted number to string, skipping "Rx: "/"Tx: " and "."
-    uint8_t insert_pos = input_position + 3;
-    if(input_position > 3) insert_pos += 1;
-    char input_char = input_number + '0';
+    uint8_t insert_pos = ui_state->input_position + 3;
+    if(ui_state->input_position > 3) insert_pos += 1;
+    char input_char = ui_state->input_number + '0';
     char freq_buf[14] = "";
 
-    if(input_set == SET_RX)
+    if(ui_state->input_set == SET_RX)
     {
-        if(input_position == 0)
+        if(ui_state->input_position == 0)
         {
             snprintf(freq_buf, sizeof(freq_buf), ">Rx:%03lu.%05lu",
-                     new_rx_frequency/1000000,
-                     new_rx_frequency%1000000/10);
+                     ui_state->new_rx_frequency/1000000,
+                     ui_state->new_rx_frequency%1000000/10);
             gfx_print(layout.line2_left, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
                       color_white);
         }
         else
         {
             // Replace Rx frequency with underscorses
-            if(input_position == 1)
-                strcpy(new_rx_freq_buf, ">Rx:___._____");
-            new_rx_freq_buf[insert_pos] = input_char;
-            gfx_print(layout.line2_left, new_rx_freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
+            if(ui_state->input_position == 1)
+                strcpy(ui_state->new_rx_freq_buf, ">Rx:___._____");
+            ui_state->new_rx_freq_buf[insert_pos] = input_char;
+            gfx_print(layout.line2_left, ui_state->new_rx_freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
                       color_white);
         }
         snprintf(freq_buf, sizeof(freq_buf), " Tx:%03lu.%05lu",
@@ -387,28 +396,28 @@ void _ui_drawVFOMiddleInput(state_t* last_state)
         gfx_print(layout.line3_left, freq_buf, layout.line3_font, TEXT_ALIGN_CENTER,
                   color_white);
     }
-    else if(input_set == SET_TX)
+    else if(ui_state->input_set == SET_TX)
     {
         snprintf(freq_buf, sizeof(freq_buf), " Rx:%03lu.%05lu",
-                 new_rx_frequency/1000000,
-                 new_rx_frequency%1000000/10);
+                 ui_state->new_rx_frequency/1000000,
+                 ui_state->new_rx_frequency%1000000/10);
         gfx_print(layout.line2_left, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
                   color_white);
         // Replace Rx frequency with underscorses
-        if(input_position == 0)
+        if(ui_state->input_position == 0)
         {
             snprintf(freq_buf, sizeof(freq_buf), ">Tx:%03lu.%05lu",
-                     new_rx_frequency/1000000,
-                     new_rx_frequency%1000000/10);
+                     ui_state->new_rx_frequency/1000000,
+                     ui_state->new_rx_frequency%1000000/10);
             gfx_print(layout.line3_left, freq_buf, layout.line3_font, TEXT_ALIGN_CENTER,
                       color_white);
         }
         else
         {
-            if(input_position == 1)
-                strcpy(new_tx_freq_buf, ">Tx:___._____");
-            new_tx_freq_buf[insert_pos] = input_char;
-            gfx_print(layout.line3_left, new_tx_freq_buf, layout.line3_font, TEXT_ALIGN_CENTER,
+            if(ui_state->input_position == 1)
+                strcpy(ui_state->new_tx_freq_buf, ">Tx:___._____");
+            ui_state->new_tx_freq_buf[insert_pos] = input_char;
+            gfx_print(layout.line3_left, ui_state->new_tx_freq_buf, layout.line3_font, TEXT_ALIGN_CENTER,
                       color_white);
         }
     }
@@ -492,42 +501,42 @@ void _ui_drawVFOInput(state_t* last_state)
     gfx_clearScreen();
     _ui_drawVFOBackground();
     _ui_drawVFOTop(last_state);
-    _ui_drawVFOMiddleInput(last_state);
+    _ui_drawVFOMiddleInput(last_state, &ui_state);
     _ui_drawVFOBottom();
 }
 
-void _ui_drawMenuTop()
+void _ui_drawMenuTop(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     // Print "Menu" on top bar
     gfx_print(layout.top_left, "Menu", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print menu entries
-    _ui_drawMenuList(layout.line1_left, menu_items, menu_num, menu_selected);
+    _ui_drawMenuList(layout.line1_left, menu_items, menu_num, ui_state->menu_selected);
 }
 
-void _ui_drawMenuChannel()
+void _ui_drawMenuChannel(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     // Print "Channel" on top bar
     gfx_print(layout.top_left, "Channel", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print channel entries
-    _ui_drawChannelList(layout.line1_left, menu_selected);
+    _ui_drawChannelList(layout.line1_left, ui_state->menu_selected);
 }
 
-void _ui_drawMenuSettings()
+void _ui_drawMenuSettings(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     // Print "Settings" on top bar
     gfx_print(layout.top_left, "Settings", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print menu entries
-    _ui_drawMenuList(layout.line1_left, settings_items, settings_num, menu_selected);
+    _ui_drawMenuList(layout.line1_left, settings_items, settings_num, ui_state->menu_selected);
 }
 
 #ifdef HAS_RTC
-void _ui_drawSettingsTimeDate(state_t* last_state)
+void _ui_drawSettingsTimeDate(state_t* last_state, ui_state_t* ui_state)
 {
     gfx_clearScreen();
     // Print "Time&Date" on top bar
@@ -546,7 +555,7 @@ void _ui_drawSettingsTimeDate(state_t* last_state)
               color_white);
 }
 
-void _ui_drawSettingsTimeDateSet(state_t* last_state)
+void _ui_drawSettingsTimeDateSet(state_t* last_state, ui_state_t* ui_state)
 {
     (void) last_state;
 
@@ -554,35 +563,35 @@ void _ui_drawSettingsTimeDateSet(state_t* last_state)
     // Print "Time&Date" on top bar
     gfx_print(layout.top_left, "Time&Date", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
-    if(input_position <= 0)
+    if(ui_state->input_position <= 0)
     {
-        strcpy(new_date_buf, "__/__/__");
-        strcpy(new_time_buf, "__:__:00");
+        strcpy(ui_state->new_date_buf, "__/__/__");
+        strcpy(ui_state->new_time_buf, "__:__:00");
     }
     else
     {
-        char input_char = input_number + '0';
+        char input_char = ui_state->input_number + '0';
         // Insert date digit
-        if(input_position <= 6)
+        if(ui_state->input_position <= 6)
         {
-            uint8_t pos = input_position -1;
+            uint8_t pos = ui_state->input_position -1;
             // Skip "/"
-            if(input_position > 2) pos += 1;
-            if(input_position > 4) pos += 1;
-            new_date_buf[pos] = input_char;
+            if(ui_state->input_position > 2) pos += 1;
+            if(ui_state->input_position > 4) pos += 1;
+            ui_state->new_date_buf[pos] = input_char;
         }
         // Insert time digit
         else
         {
-            uint8_t pos = input_position -7;
+            uint8_t pos = ui_state->input_position -7;
             // Skip ":"
-            if(input_position > 8) pos += 1;
-            new_time_buf[pos] = input_char; 
+            if(ui_state->input_position > 8) pos += 1;
+            ui_state->new_time_buf[pos] = input_char; 
         }
     }
-    gfx_print(layout.line2_left, new_date_buf, layout.line2_font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.line2_left, ui_state->new_date_buf, layout.line2_font, TEXT_ALIGN_CENTER,
               color_white);
-    gfx_print(layout.line3_left, new_time_buf, layout.line3_font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.line3_left, ui_state->new_time_buf, layout.line3_font, TEXT_ALIGN_CENTER,
               color_white);
 }
 #endif
@@ -592,6 +601,10 @@ void ui_init()
     redraw_needed = true;
     layout = _ui_calculateLayout();
     layout_ready = true;
+    // Initialize struct ui_state to all zeroes
+    // This syntax is called compound literal
+    // https://stackoverflow.com/questions/6891720/initialize-reset-struct-to-zero-null
+    ui_state = (const struct ui_state_t){ 0 };
 }
 
 void ui_drawSplashScreen()
@@ -838,15 +851,15 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     // Open Frequency input screen
                     state.ui_screen = VFO_INPUT;
                     // Reset input position and selection
-                    input_position = 1;
-                    input_set = SET_RX;
-                    new_rx_frequency = 0;
-                    new_tx_frequency = 0;
+                    ui_state.input_position = 1;
+                    ui_state.input_set = SET_RX;
+                    ui_state.new_rx_frequency = 0;
+                    ui_state.new_tx_frequency = 0;
                     // Save pressed number to calculare frequency and show in GUI
-                    input_number = input_getPressedNumber(msg);
+                    ui_state.input_number = input_getPressedNumber(msg);
                     // Calculate portion of the new frequency
-                    new_rx_frequency = _ui_freq_add_digit(new_rx_frequency, 
-                                            input_position, input_number);
+                    ui_state.new_rx_frequency = _ui_freq_add_digit(ui_state.new_rx_frequency, 
+                                            ui_state.input_position, ui_state.input_number);
                 }
                 else if(msg.keys & KEY_MONI)
                 {
@@ -860,33 +873,33 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 if(msg.keys & KEY_ENTER)
                 {
                     // Switch to TX input
-                    if(input_set == SET_RX)
+                    if(ui_state.input_set == SET_RX)
                     {
-                        input_set = SET_TX;
+                        ui_state.input_set = SET_TX;
                         // Reset input position
-                        input_position = 0;
+                        ui_state.input_position = 0;
                     }
-                    else if(input_set == SET_TX)
+                    else if(ui_state.input_set == SET_TX)
                     {
                         // Save new frequency setting
                         // If TX frequency was not set, TX = RX
-                        if(new_tx_frequency == 0)
+                        if(ui_state.new_tx_frequency == 0)
                         {
-                            if(_ui_freq_check_limits(new_rx_frequency))
+                            if(_ui_freq_check_limits(ui_state.new_rx_frequency))
                             {
-                                state.channel.rx_frequency = new_rx_frequency;
-                                state.channel.tx_frequency = new_rx_frequency;
+                                state.channel.rx_frequency = ui_state.new_rx_frequency;
+                                state.channel.tx_frequency = ui_state.new_rx_frequency;
                                 *sync_rtx = true;
                             }
                         }
                         // Otherwise set both frequencies
                         else
                         {
-                            if(_ui_freq_check_limits(new_rx_frequency) && 
-                               _ui_freq_check_limits(new_tx_frequency))
+                            if(_ui_freq_check_limits(ui_state.new_rx_frequency) && 
+                               _ui_freq_check_limits(ui_state.new_tx_frequency))
                             {
-                                state.channel.rx_frequency = new_rx_frequency;
-                                state.channel.tx_frequency = new_tx_frequency;
+                                state.channel.rx_frequency = ui_state.new_rx_frequency;
+                                state.channel.tx_frequency = ui_state.new_tx_frequency;
                                 *sync_rtx = true;
                             }
                         }
@@ -899,51 +912,51 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 }
                 else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN)
                 {
-                    if(input_set == SET_RX)
-                        input_set = SET_TX;
-                    else if(input_set == SET_TX)
-                        input_set = SET_RX;
+                    if(ui_state.input_set == SET_RX)
+                        ui_state.input_set = SET_TX;
+                    else if(ui_state.input_set == SET_TX)
+                        ui_state.input_set = SET_RX;
                     // Reset input position
-                    input_position = 0;
+                    ui_state.input_position = 0;
                 }
                 else if(input_isNumberPressed(msg))
                 {
                     // Advance input position
-                    input_position += 1;
+                    ui_state.input_position += 1;
                     // Save pressed number to calculare frequency and show in GUI
-                    input_number = input_getPressedNumber(msg);
-                    if(input_set == SET_RX)
+                    ui_state.input_number = input_getPressedNumber(msg);
+                    if(ui_state.input_set == SET_RX)
                     {
-                        if(input_position == 1)
-                            new_rx_frequency = 0;
+                        if(ui_state.input_position == 1)
+                            ui_state.new_rx_frequency = 0;
                         // Calculate portion of the new RX frequency
-                        new_rx_frequency = _ui_freq_add_digit(new_rx_frequency, 
-                                                input_position, input_number);
-                        if(input_position >= FREQ_DIGITS)
+                        ui_state.new_rx_frequency = _ui_freq_add_digit(ui_state.new_rx_frequency, 
+                                                ui_state.input_position, ui_state.input_number);
+                        if(ui_state.input_position >= FREQ_DIGITS)
                         {
                             // Switch to TX input
-                            input_set = SET_TX;
+                            ui_state.input_set = SET_TX;
                             // Reset input position
-                            input_position = 0;
+                            ui_state.input_position = 0;
                             // Reset TX frequency
-                            new_tx_frequency = 0;
+                            ui_state.new_tx_frequency = 0;
                         }
                     }
-                    else if(input_set == SET_TX)
+                    else if(ui_state.input_set == SET_TX)
                     {
-                        if(input_position == 1)
-                            new_tx_frequency = 0;
+                        if(ui_state.input_position == 1)
+                            ui_state.new_tx_frequency = 0;
                         // Calculate portion of the new TX frequency
-                        new_tx_frequency = _ui_freq_add_digit(new_tx_frequency, 
-                                                input_position, input_number);
-                        if(input_position >= FREQ_DIGITS)
+                        ui_state.new_tx_frequency = _ui_freq_add_digit(ui_state.new_tx_frequency, 
+                                                ui_state.input_position, ui_state.input_number);
+                        if(ui_state.input_position >= FREQ_DIGITS)
                         {
                             // Save both inserted frequencies
-                            if(_ui_freq_check_limits(new_rx_frequency) && 
-                               _ui_freq_check_limits(new_tx_frequency))
+                            if(_ui_freq_check_limits(ui_state.new_rx_frequency) && 
+                               _ui_freq_check_limits(ui_state.new_tx_frequency))
                             {
-                                state.channel.rx_frequency = new_rx_frequency;
-                                state.channel.tx_frequency = new_tx_frequency;
+                                state.channel.rx_frequency = ui_state.new_rx_frequency;
+                                state.channel.tx_frequency = ui_state.new_tx_frequency;
                                 *sync_rtx = true;
                             }
                             state.ui_screen = VFO_MAIN;
@@ -961,22 +974,22 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
             case MENU_TOP:
                 if(msg.keys & KEY_UP)
                 {
-                    if(menu_selected > 0)
-                        menu_selected -= 1;
+                    if(ui_state.menu_selected > 0)
+                        ui_state.menu_selected -= 1;
                     else
-                        menu_selected = menu_num-1;
+                        ui_state.menu_selected = menu_num-1;
                 }
                 else if(msg.keys & KEY_DOWN)
                 {
-                    if(menu_selected < menu_num-1)
-                        menu_selected += 1;
+                    if(ui_state.menu_selected < menu_num-1)
+                        ui_state.menu_selected += 1;
                     else
-                        menu_selected = 0;
+                        ui_state.menu_selected = 0;
                 }
                 else if(msg.keys & KEY_ENTER)
                 {
                     // Open selected menu item
-                    switch(menu_selected)
+                    switch(ui_state.menu_selected)
                     {
                         // TODO: Add missing submenu states
                         case 1:
@@ -989,33 +1002,33 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                             state.ui_screen = MENU_TOP;
                     }
                     // Reset menu selection
-                    menu_selected = 0;
+                    ui_state.menu_selected = 0;
                 }
                 else if(msg.keys & KEY_ESC)
                 {
                     // Close Menu
                     state.ui_screen = VFO_MAIN;
                     // Reset menu selection
-                    menu_selected = 0;
+                    ui_state.menu_selected = 0;
                 }
                 break;
             // Channel menu screen
             case MENU_CHANNEL:
                 if(msg.keys & KEY_UP)
                 {
-                    if(menu_selected > 0)
-                        menu_selected -= 1;
+                    if(ui_state.menu_selected > 0)
+                        ui_state.menu_selected -= 1;
                 }
                 else if(msg.keys & KEY_DOWN)
                 {
-                    menu_selected += 1;
+                    ui_state.menu_selected += 1;
                 }
                 else if(msg.keys & KEY_ESC)
                 {
                     // Return to top menu
                     state.ui_screen = MENU_TOP;
                     // Reset menu selection
-                    menu_selected = 0;
+                    ui_state.menu_selected = 0;
                 }
                 else if(msg.keys & KEY_MONI)
                 {
@@ -1029,14 +1042,14 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 // If a number is pressed perform the corresponding macro
                 if(!msg.long_press && input_isNumberPressed(msg))
                 {
-                    input_number = input_getPressedNumber(msg);
+                    ui_state.input_number = input_getPressedNumber(msg);
                     // Backlight
                     int32_t new_blight = state.backlight_level;
                     // CTCSS Encode/Decode Selection
                     bool tone_tx_enable = state.channel.fm.txToneEn;
                     bool tone_rx_enable = state.channel.fm.rxToneEn;
                     uint8_t tone_flags = tone_tx_enable << 1 | tone_rx_enable;
-                    switch(input_number)
+                    switch(ui_state.input_number)
                     {
                         case 1:
                             state.channel.fm.txTone++;
@@ -1088,7 +1101,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 if(msg.keys & KEY_ENTER)
                 {
                     // Open selected menu item
-                    switch(menu_selected)
+                    switch(ui_state.menu_selected)
                     {
 #ifdef HAS_RTC
                         // TODO: Add missing submenu states
@@ -1100,14 +1113,14 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                             state.ui_screen = MENU_TOP;
                     }
                     // Reset menu selection
-                    menu_selected = 0;
+                    ui_state.menu_selected = 0;
                 }
                 else if(msg.keys & KEY_ESC)
                 {
                     // Return to top menu
                     state.ui_screen = MENU_TOP;
                     // Reset menu selection
-                    menu_selected = 0;
+                    ui_state.menu_selected = 0;
                 }
                 break;
 #ifdef HAS_RTC
@@ -1118,15 +1131,15 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     // Switch to set Time&Date mode
                     state.ui_screen = SETTINGS_TIMEDATE_SET;
                     // Reset input position and selection
-                    input_position = 0;
-                    memset(&new_timedate, 0, sizeof(curTime_t));
+                    ui_state.input_position = 0;
+                    memset(&ui_state.new_timedate, 0, sizeof(curTime_t));
                 }
                 else if(msg.keys & KEY_ESC)
                 {
                     // Return to settings menu
                     state.ui_screen = MENU_SETTINGS;
                     // Reset menu selection
-                    menu_selected = 0;
+                    ui_state.menu_selected = 0;
                 }
                 break;
             // Time&Date settings screen, edit mode
@@ -1134,10 +1147,10 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 if(msg.keys & KEY_ENTER)
                 {
                     // Save time only if all digits have been inserted
-                    if(input_position < TIMEDATE_DIGITS)
+                    if(ui_state.input_position < TIMEDATE_DIGITS)
                         break;
                     // Return to Time&Date menu, saving values
-                    rtc_setTime(new_timedate);
+                    rtc_setTime(ui_state.new_timedate);
                     state.ui_screen = SETTINGS_TIMEDATE;
                 }
                 else if(msg.keys & KEY_ESC)
@@ -1148,12 +1161,12 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 else if(input_isNumberPressed(msg))
                 {
                     // Discard excess digits
-                    if(input_position > TIMEDATE_DIGITS)
+                    if(ui_state.input_position > TIMEDATE_DIGITS)
                         break;
-                    input_position += 1;
-                    input_number = input_getPressedNumber(msg);
-                    new_timedate = _ui_timedate_add_digit(new_timedate, 
-                                        input_position, input_number);
+                    ui_state.input_position += 1;
+                    ui_state.input_number = input_getPressedNumber(msg);
+                    ui_state.new_timedate = _ui_timedate_add_digit(ui_state.new_timedate, 
+                                        ui_state.input_position, ui_state.input_number);
                 }
                 break;
 #endif
@@ -1181,11 +1194,11 @@ void ui_updateGUI(state_t last_state)
             break;
         // Top menu screen
         case MENU_TOP:
-            _ui_drawMenuTop();
+            _ui_drawMenuTop(&ui_state);
             break;
         // Channel menu screen
         case MENU_CHANNEL:
-            _ui_drawMenuChannel();
+            _ui_drawMenuChannel(&ui_state);
             break;
         // Macro menu
         case MENU_MACRO:
@@ -1193,16 +1206,16 @@ void ui_updateGUI(state_t last_state)
             break;
         // Settings menu screen
         case MENU_SETTINGS:
-            _ui_drawMenuSettings();
+            _ui_drawMenuSettings(&ui_state);
             break;
 #ifdef HAS_RTC
         // Time&Date settings screen
         case SETTINGS_TIMEDATE:
-            _ui_drawSettingsTimeDate(&last_state);
+            _ui_drawSettingsTimeDate(&last_state, &ui_state);
             break;
         // Time&Date settings screen, edit mode
         case SETTINGS_TIMEDATE_SET:
-            _ui_drawSettingsTimeDateSet(&last_state);
+            _ui_drawSettingsTimeDateSet(&last_state, &ui_state);
             break;
 #endif
         // Low battery screen
