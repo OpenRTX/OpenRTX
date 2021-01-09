@@ -22,9 +22,18 @@
 
 #include <stdbool.h>
 #include <state.h>
+#include <interfaces/graphics.h>
 #include <interfaces/keyboard.h>
 #include <stdint.h>
 #include <event.h>
+#include <hwconfig.h>
+
+// Maximum menu entry length
+#define MAX_ENTRY_LEN 16
+// Frequency digits
+#define FREQ_DIGITS 8
+// Time & Date digits
+#define TIMEDATE_DIGITS 10
 
 enum uiScreen
 {
@@ -43,6 +52,79 @@ enum uiScreen
     SETTINGS_TIMEDATE_SET,
     LOW_BAT
 };
+
+enum SetRxTx
+{
+    SET_RX = 0,
+    SET_TX
+};
+
+/**
+ * Struct containing a set of positions and sizes that get
+ * calculated for the selected display size.
+ * Using these parameters make the UI automatically adapt
+ * To displays of different sizes
+ */
+typedef struct layout_t
+{
+    uint16_t hline_h;
+    uint16_t top_h;
+    uint16_t line1_h;
+    uint16_t line2_h;
+    uint16_t line3_h;
+    uint16_t bottom_h;
+    uint16_t status_v_pad;
+    uint16_t line_v_pad;
+    uint16_t horizontal_pad;
+    uint16_t text_v_offset;
+    point_t top_left;
+    point_t line1_left;
+    point_t line2_left;
+    point_t line3_left;
+    point_t bottom_left;
+    point_t top_right;
+    point_t line1_right;
+    point_t line2_right;
+    point_t line3_right;
+    point_t bottom_right;
+    fontSize_t top_font;
+    fontSize_t line1_font;
+    fontSize_t line2_font;
+    fontSize_t line3_font;
+    fontSize_t bottom_font;
+} layout_t;
+
+/** 
+ * This structs contains state variables internal to the
+ * UI that need to be kept between executions of the UI
+ * This state does not need to be saved on device poweroff
+ */
+typedef struct ui_state_t
+{
+    uint8_t menu_selected;
+    uint8_t input_number;
+    uint8_t input_position;
+    uint8_t input_set;
+    freq_t new_rx_frequency;
+    freq_t new_tx_frequency;
+    char new_rx_freq_buf[14];
+    char new_tx_freq_buf[14];
+#ifdef HAS_RTC
+    curTime_t new_timedate;
+    char new_date_buf[9];
+    char new_time_buf[9];
+#endif
+} ui_state_t;
+
+extern layout_t layout;
+extern const char *menu_items[6];
+extern const char *settings_items[1];
+extern const uint8_t menu_num;
+extern const uint8_t settings_num;
+extern const color_t color_black;
+extern const color_t color_grey;
+extern const color_t color_white;
+extern const color_t yellow_fab413;
 
 /**
  * This function initialises the User Interface, starting the 
