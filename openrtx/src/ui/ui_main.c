@@ -89,7 +89,10 @@ void _ui_drawVFOMiddle(state_t* last_state)
 
 void _ui_drawMEMMiddle(state_t* last_state)
 {
-    // Print VFO frequencies
+    // Print Channel name
+    gfx_print(layout.line1_left, last_state->channel.name, layout.line1_font, TEXT_ALIGN_CENTER,
+              color_white);
+    // Print Channel frequencies
     char freq_buf[20] = "";
     snprintf(freq_buf, sizeof(freq_buf), " Rx:%03u.%05u",
              last_state->channel.rx_frequency/1000000,

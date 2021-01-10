@@ -366,6 +366,12 @@ bool _ui_freq_check_limits(freq_t freq)
     return valid;
 }
 
+bool _ui_channel_valid(channel_t* channel)
+{
+return _ui_freq_check_limits(channel->rx_frequency) &&
+       _ui_freq_check_limits(channel->tx_frequency);
+}
+
 bool _ui_drawDarkOverlay() {
     // TODO: Make this 245 alpha and fix alpha frame swap
     color_t alpha_grey = {0, 0, 0, 255};
@@ -428,8 +434,18 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 }
                 else if(msg.keys & KEY_ESC)
                 {
-                    // Switch to MEM screen
-                    state.ui_screen = MAIN_MEM;
+                    // Try to load selected channel
+                    channel_t channel;
+                    int result = nvm_readChannelData(&channel, state.channel_index);
+                    // Read successful and channel is valid
+                    if(result != -1 && _ui_channel_valid(&channel))
+                    {
+                        // Copy channel read to state
+                        state.channel = channel;
+                        *sync_rtx = true;
+                        // Switch to MEM screen
+                        state.ui_screen = MAIN_MEM;
+                    }
                 }
                 else if(input_isNumberPressed(msg))
                 {

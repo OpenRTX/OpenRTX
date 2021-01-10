@@ -22,6 +22,7 @@
 
 // Simulate CPS with 8 channels
 const uint32_t maxNumChannels = 8;
+const freq_t dummy_base_freq = 145500000;
 
 void nvm_init()
 {
@@ -35,10 +36,11 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
 {
     if(pos > maxNumChannels) return -1;
 
-    /*
-     * Generate dummy channel name
-     */
+    /* Generate dummy channel name */
     snprintf(channel->name, 16, "Channel %d", pos);
+    /* Generate dummy frequency values */
+    channel->rx_frequency = dummy_base_freq + pos * 100000;
+    channel->tx_frequency = dummy_base_freq + pos * 100000;
 
     return 0;
 }

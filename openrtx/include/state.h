@@ -48,6 +48,7 @@ typedef struct
     //bool tx_status;
 
     bool channelInfoUpdated;
+    uint16_t channel_index;
     channel_t channel;
     uint8_t rtxStatus;
     uint8_t sqlLevel;
