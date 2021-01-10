@@ -165,13 +165,17 @@ void _ui_drawVFOMiddleInput(state_t* last_state, ui_state_t* ui_state)
 
 void _ui_drawVFOBottom()
 {
-    gfx_print(layout.bottom_left, "OpenRTX VFO", layout.bottom_font,
+    gfx_print(layout.bottom_left, "VFO", layout.bottom_font,
+              TEXT_ALIGN_LEFT, color_white);
+    gfx_print(layout.bottom_left, "OpenRTX", layout.bottom_font,
               TEXT_ALIGN_CENTER, color_white);
 }
 
 void _ui_drawMEMBottom()
 {
-    gfx_print(layout.bottom_left, "OpenRTX MEM", layout.bottom_font,
+    gfx_print(layout.bottom_left, "MEM", layout.bottom_font,
+              TEXT_ALIGN_LEFT, color_white);
+    gfx_print(layout.bottom_left, "OpenRTX", layout.bottom_font,
               TEXT_ALIGN_CENTER, color_white);
 }
 
