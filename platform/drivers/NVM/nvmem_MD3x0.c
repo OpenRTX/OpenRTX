@@ -210,8 +210,8 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
     channel->rx_only         = chData.rx_only;
     channel->vox             = chData.vox;
     channel->power           = ((chData.power == 1) ? 5.0f : 1.0f);
-    channel->rx_frequency    = _bcd2bin(chData.rx_frequency);
-    channel->tx_frequency    = _bcd2bin(chData.tx_frequency);
+    channel->rx_frequency    = _bcd2bin(chData.rx_frequency) * 10;
+    channel->tx_frequency    = _bcd2bin(chData.tx_frequency) * 10;
     channel->tot             = chData.tot;
     channel->tot_rekey_delay = chData.tot_rekey_delay;
     channel->emSys_index     = chData.emergency_system_index;
