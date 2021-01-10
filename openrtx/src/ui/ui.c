@@ -585,6 +585,36 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     // Switch to VFO screen
                     state.ui_screen = MAIN_VFO;
                 }
+                else if(msg.keys & KEY_UP)
+                {
+                    // Try to load selected channel
+                    channel_t channel;
+                    int result = nvm_readChannelData(&channel, state.channel_index + 1);
+                    // Read successful and channel is valid
+                    if(result != -1 && _ui_channel_valid(&channel))
+                    {
+                        // Set new channel index
+                        state.channel_index += 1;
+                        // Copy channel read to state
+                        state.channel = channel;
+                        *sync_rtx = true;
+                    }
+                }
+                else if(msg.keys & KEY_DOWN)
+                {
+                    // Try to load selected channel
+                    channel_t channel;
+                    int result = nvm_readChannelData(&channel, state.channel_index - 1);
+                    // Read successful and channel is valid
+                    if(result != -1 && _ui_channel_valid(&channel))
+                    {
+                        // Set new channel index
+                        state.channel_index -= 1;
+                        // Copy channel read to state
+                        state.channel = channel;
+                        *sync_rtx = true;
+                    }
+                }
                 break;
             // Top menu screen
             case MENU_TOP:
