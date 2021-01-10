@@ -116,7 +116,7 @@ typedef struct
 }
 mduv3x0Channel_t;
 
-const uint32_t chDataBaseAddr = 0x40000; /**< Base address of channel data         */
+const uint32_t chDataBaseAddr = 0x110000; /**< Base address of channel data         */
 const uint32_t maxNumChannels = 3000;    /**< Maximum number of channels in memory */
 
 /**
@@ -230,8 +230,8 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
     channel->squelch         = chData.squelch;
     channel->rx_only         = chData.rx_only;
     channel->vox             = chData.vox;
-    channel->rx_frequency    = _bcd2bin(chData.rx_frequency);
-    channel->tx_frequency    = _bcd2bin(chData.tx_frequency);
+    channel->rx_frequency    = _bcd2bin(chData.rx_frequency) * 10;
+    channel->tx_frequency    = _bcd2bin(chData.tx_frequency) * 10;
     channel->tot             = chData.tot;
     channel->tot_rekey_delay = chData.tot_rekey_delay;
     channel->emSys_index     = chData.emergency_system_index;
