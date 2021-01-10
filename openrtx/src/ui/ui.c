@@ -151,7 +151,7 @@ layout_t _ui_calculateLayout()
     // Top bar font: 8 pt
     const fontSize_t top_font = FONT_SIZE_8PT;
     // Middle line fonts: 12 pt
-    const fontSize_t line1_font = FONT_SIZE_12PT;
+    const fontSize_t line1_font = FONT_SIZE_9PT;
     const fontSize_t line2_font = FONT_SIZE_12PT;
     const fontSize_t line3_font = FONT_SIZE_12PT;
     // Bottom bar font: 8 pt
