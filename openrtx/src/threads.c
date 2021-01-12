@@ -22,6 +22,7 @@
 #include <ui.h>
 #include <state.h>
 #include <threads.h>
+#include <battery.h>
 #include <interfaces/keyboard.h>
 #include <interfaces/graphics.h>
 #include <interfaces/platform.h>
@@ -249,6 +250,7 @@ static void dev_task(void *arg)
         state.time = rtc_getTime(); 
 #endif
         state.v_bat = platform_getVbat();
+        state.charge = battery_getCharge(state.v_bat);
 
         OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
 

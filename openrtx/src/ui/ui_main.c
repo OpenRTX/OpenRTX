@@ -49,12 +49,11 @@ void _ui_drawMainTop(state_t* last_state)
 #endif
 
     // Print battery icon on top bar, use 4 px padding
-    float charge = battery_getCharge(last_state->v_bat);
     uint16_t bat_width = SCREEN_WIDTH / 9;
     uint16_t bat_height = layout.top_h - (layout.status_v_pad * 2);
     point_t bat_pos = {SCREEN_WIDTH - bat_width - layout.horizontal_pad,
                        layout.status_v_pad};
-    gfx_drawBattery(bat_pos, bat_width, bat_height, charge);
+    gfx_drawBattery(bat_pos, bat_width, bat_height, last_state->charge);
 
     // Print radio mode on top bar
     char mode[4] = "";
