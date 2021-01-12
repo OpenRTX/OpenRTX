@@ -427,10 +427,10 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 }
                 else if(msg.keys & KEY_ENTER)
                 {
+                    // Save current main state
+                    ui_state.last_main_state = state.ui_screen;
                     // Open Menu
                     state.ui_screen = MENU_TOP;
-                    // Save current main state
-                    ui_state.last_main_state = MAIN_VFO;
                 }
                 else if(msg.keys & KEY_ESC)
                 {
@@ -466,6 +466,8 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 }
                 else if(msg.keys & KEY_MONI)
                 {
+                    // Save current main state
+                    ui_state.last_main_state = state.ui_screen;
                     // Open Macro Menu
                     _ui_drawDarkOverlay();
                     state.ui_screen = MENU_MACRO;
@@ -578,10 +580,10 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
             case MAIN_MEM:
                 if(msg.keys & KEY_ENTER)
                 {
+                    // Save current main state
+                    ui_state.last_main_state = state.ui_screen;
                     // Open Menu
                     state.ui_screen = MENU_TOP;
-                    // Save current main state
-                    ui_state.last_main_state = MAIN_MEM;
                 }
                 else if(msg.keys & KEY_ESC)
                 {
@@ -619,6 +621,14 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         state.channel = channel;
                         *sync_rtx = true;
                     }
+                }
+                else if(msg.keys & KEY_MONI)
+                {
+                    // Save current main state
+                    ui_state.last_main_state = state.ui_screen;
+                    // Open Macro Menu
+                    _ui_drawDarkOverlay();
+                    state.ui_screen = MENU_MACRO;
                 }
                 break;
             // Top menu screen
@@ -745,7 +755,8 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 }
                 // Exit from this menu when monitor key is released
                 if(!(msg.keys & KEY_MONI))
-                    state.ui_screen = MAIN_VFO;
+                    // Close Macro Menu, switch to last main state
+                    state.ui_screen = ui_state.last_main_state;
                 break;
             // Settings menu screen
             case MENU_SETTINGS:
