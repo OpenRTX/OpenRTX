@@ -51,6 +51,7 @@ typedef struct
     bool channelInfoUpdated;
     uint16_t channel_index;
     channel_t channel;
+    channel_t vfo_channel;
     uint8_t rtxStatus;
     uint8_t sqlLevel;
     uint8_t voxLevel;

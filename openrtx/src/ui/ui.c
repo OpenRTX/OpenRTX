@@ -440,6 +440,8 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     // Read successful and channel is valid
                     if(result != -1 && _ui_channel_valid(&channel))
                     {
+                        // Save VFO channel
+                        state.vfo_channel = state.channel;
                         // Copy channel read to state
                         state.channel = channel;
                         *sync_rtx = true;
@@ -509,6 +511,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 }
                 else if(msg.keys & KEY_ESC)
                 {
+                    // Cancel frequency input, return to VFO mode
                     state.ui_screen = MAIN_VFO;
                 }
                 else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN)
@@ -582,6 +585,8 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 }
                 else if(msg.keys & KEY_ESC)
                 {
+                    // Restore VFO channel
+                    state.channel = state.vfo_channel;
                     // Switch to VFO screen
                     state.ui_screen = MAIN_VFO;
                 }
