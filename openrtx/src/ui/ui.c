@@ -395,6 +395,86 @@ int _ui_fsm_loadChannel(uint16_t index, bool *sync_rtx) {
     return result;
 }
 
+void _ui_fsm_confirmVFOInput(bool *sync_rtx) {
+    // Switch to TX input
+    if(ui_state.input_set == SET_RX)
+    {
+        ui_state.input_set = SET_TX;
+        // Reset input position
+        ui_state.input_position = 0;
+    }
+    else if(ui_state.input_set == SET_TX)
+    {
+        // Save new frequency setting
+        // If TX frequency was not set, TX = RX
+        if(ui_state.new_tx_frequency == 0)
+        {
+            if(_ui_freq_check_limits(ui_state.new_rx_frequency))
+            {
+                state.channel.rx_frequency = ui_state.new_rx_frequency;
+                state.channel.tx_frequency = ui_state.new_rx_frequency;
+                *sync_rtx = true;
+            }
+        }
+        // Otherwise set both frequencies
+        else
+        {
+            if(_ui_freq_check_limits(ui_state.new_rx_frequency) && 
+               _ui_freq_check_limits(ui_state.new_tx_frequency))
+            {
+                state.channel.rx_frequency = ui_state.new_rx_frequency;
+                state.channel.tx_frequency = ui_state.new_tx_frequency;
+                *sync_rtx = true;
+            }
+        }
+        state.ui_screen = MAIN_VFO;
+    }
+}
+
+void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx) {
+    // Advance input position
+    ui_state.input_position += 1;
+    // Save pressed number to calculate frequency and show in GUI
+    ui_state.input_number = input_getPressedNumber(msg);
+    if(ui_state.input_set == SET_RX)
+    {
+        if(ui_state.input_position == 1)
+            ui_state.new_rx_frequency = 0;
+        // Calculate portion of the new RX frequency
+        ui_state.new_rx_frequency = _ui_freq_add_digit(ui_state.new_rx_frequency, 
+                                ui_state.input_position, ui_state.input_number);
+        if(ui_state.input_position >= FREQ_DIGITS)
+        {
+            // Switch to TX input
+            ui_state.input_set = SET_TX;
+            // Reset input position
+            ui_state.input_position = 0;
+            // Reset TX frequency
+            ui_state.new_tx_frequency = 0;
+        }
+    }
+    else if(ui_state.input_set == SET_TX)
+    {
+        if(ui_state.input_position == 1)
+            ui_state.new_tx_frequency = 0;
+        // Calculate portion of the new TX frequency
+        ui_state.new_tx_frequency = _ui_freq_add_digit(ui_state.new_tx_frequency, 
+                                ui_state.input_position, ui_state.input_number);
+        if(ui_state.input_position >= FREQ_DIGITS)
+        {
+            // Save both inserted frequencies
+            if(_ui_freq_check_limits(ui_state.new_rx_frequency) && 
+               _ui_freq_check_limits(ui_state.new_tx_frequency))
+            {
+                state.channel.rx_frequency = ui_state.new_rx_frequency;
+                state.channel.tx_frequency = ui_state.new_tx_frequency;
+                *sync_rtx = true;
+            }
+            state.ui_screen = MAIN_VFO;
+        }
+    }
+}
+
 void ui_updateFSM(event_t event, bool *sync_rtx)
 {
     // Check if battery has enough charge to operate
@@ -487,39 +567,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
             case MAIN_VFO_INPUT:
                 if(msg.keys & KEY_ENTER)
                 {
-                    // Switch to TX input
-                    if(ui_state.input_set == SET_RX)
-                    {
-                        ui_state.input_set = SET_TX;
-                        // Reset input position
-                        ui_state.input_position = 0;
-                    }
-                    else if(ui_state.input_set == SET_TX)
-                    {
-                        // Save new frequency setting
-                        // If TX frequency was not set, TX = RX
-                        if(ui_state.new_tx_frequency == 0)
-                        {
-                            if(_ui_freq_check_limits(ui_state.new_rx_frequency))
-                            {
-                                state.channel.rx_frequency = ui_state.new_rx_frequency;
-                                state.channel.tx_frequency = ui_state.new_rx_frequency;
-                                *sync_rtx = true;
-                            }
-                        }
-                        // Otherwise set both frequencies
-                        else
-                        {
-                            if(_ui_freq_check_limits(ui_state.new_rx_frequency) && 
-                               _ui_freq_check_limits(ui_state.new_tx_frequency))
-                            {
-                                state.channel.rx_frequency = ui_state.new_rx_frequency;
-                                state.channel.tx_frequency = ui_state.new_tx_frequency;
-                                *sync_rtx = true;
-                            }
-                        }
-                        state.ui_screen = MAIN_VFO;
-                    }
+                    _ui_fsm_confirmVFOInput(sync_rtx);
                 }
                 else if(msg.keys & KEY_ESC)
                 {
@@ -537,47 +585,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 }
                 else if(input_isNumberPressed(msg))
                 {
-                    // Advance input position
-                    ui_state.input_position += 1;
-                    // Save pressed number to calculare frequency and show in GUI
-                    ui_state.input_number = input_getPressedNumber(msg);
-                    if(ui_state.input_set == SET_RX)
-                    {
-                        if(ui_state.input_position == 1)
-                            ui_state.new_rx_frequency = 0;
-                        // Calculate portion of the new RX frequency
-                        ui_state.new_rx_frequency = _ui_freq_add_digit(ui_state.new_rx_frequency, 
-                                                ui_state.input_position, ui_state.input_number);
-                        if(ui_state.input_position >= FREQ_DIGITS)
-                        {
-                            // Switch to TX input
-                            ui_state.input_set = SET_TX;
-                            // Reset input position
-                            ui_state.input_position = 0;
-                            // Reset TX frequency
-                            ui_state.new_tx_frequency = 0;
-                        }
-                    }
-                    else if(ui_state.input_set == SET_TX)
-                    {
-                        if(ui_state.input_position == 1)
-                            ui_state.new_tx_frequency = 0;
-                        // Calculate portion of the new TX frequency
-                        ui_state.new_tx_frequency = _ui_freq_add_digit(ui_state.new_tx_frequency, 
-                                                ui_state.input_position, ui_state.input_number);
-                        if(ui_state.input_position >= FREQ_DIGITS)
-                        {
-                            // Save both inserted frequencies
-                            if(_ui_freq_check_limits(ui_state.new_rx_frequency) && 
-                               _ui_freq_check_limits(ui_state.new_tx_frequency))
-                            {
-                                state.channel.rx_frequency = ui_state.new_rx_frequency;
-                                state.channel.tx_frequency = ui_state.new_tx_frequency;
-                                *sync_rtx = true;
-                            }
-                            state.ui_screen = MAIN_VFO;
-                        }
-                    }
+                    _ui_fsm_insertVFONumber(msg, sync_rtx);
                 }
                 else if(msg.keys & KEY_MONI)
                 {
