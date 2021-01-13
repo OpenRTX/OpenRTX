@@ -308,47 +308,46 @@ freq_t _ui_freq_add_digit(freq_t freq, uint8_t pos, uint8_t number)
 }
 
 #ifdef HAS_RTC
-curTime_t _ui_timedate_add_digit(curTime_t timedate, uint8_t pos, uint8_t number)
+void _ui_timedate_add_digit(curTime_t *timedate, uint8_t pos, uint8_t number)
 {
     switch(pos)
     {
         // Set date
         case 1:
-            timedate.date += number * 10;
+            timedate->date += number * 10;
             break;
         case 2:
-            timedate.date += number;
+            timedate->date += number;
             break;
         // Set month
         case 3:
-            timedate.month += number * 10;
+            timedate->month += number * 10;
             break;
         case 4:
-            timedate.month += number;
+            timedate->month += number;
             break;
         // Set year
         case 5:
-            timedate.year += number * 10;
+            timedate->year += number * 10;
             break;
         case 6:
-            timedate.year += number;
+            timedate->year += number;
             break;
         // Set hour
         case 7:
-            timedate.hour += number * 10;
+            timedate->hour += number * 10;
             break;
         case 8:
-            timedate.hour += number;
+            timedate->hour += number;
             break;
         // Set minute
         case 9:
-            timedate.minute += number * 10;
+            timedate->minute += number * 10;
             break;
         case 10:
-            timedate.minute += number;
+            timedate->minute += number;
             break;
     }
-    return timedate;
 }
 #endif
 
@@ -827,8 +826,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         break;
                     ui_state.input_position += 1;
                     ui_state.input_number = input_getPressedNumber(msg);
-                    ui_state.new_timedate = _ui_timedate_add_digit(ui_state.new_timedate, 
-                                        ui_state.input_position, ui_state.input_number);
+                    _ui_timedate_add_digit(&ui_state.new_timedate, ui_state.input_position, ui_state.input_number);
                 }
                 break;
 #endif
