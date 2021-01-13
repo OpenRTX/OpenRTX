@@ -475,6 +475,58 @@ void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx) {
     }
 }
 
+void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
+    ui_state.input_number = input_getPressedNumber(msg);
+    // Backlight
+    int32_t new_blight = state.backlight_level;
+    // CTCSS Encode/Decode Selection
+    bool tone_tx_enable = state.channel.fm.txToneEn;
+    bool tone_rx_enable = state.channel.fm.rxToneEn;
+    uint8_t tone_flags = tone_tx_enable << 1 | tone_rx_enable;
+    switch(ui_state.input_number)
+    {
+        case 1:
+            state.channel.fm.txTone++;
+            state.channel.fm.txTone %= MAX_TONE_INDEX;
+            state.channel.fm.rxTone = state.channel.fm.txTone;
+            *sync_rtx = true;
+            break;
+        case 2:
+            tone_flags++;
+            tone_flags %= 4;
+            tone_tx_enable = tone_flags >> 1;
+            tone_rx_enable = tone_flags & 1;
+            state.channel.fm.txToneEn = tone_tx_enable;
+            state.channel.fm.rxToneEn = tone_rx_enable;
+            *sync_rtx = true;
+            break;
+        case 3:
+            if (state.channel.power == 1.0f)
+                state.channel.power = 5.0f;
+            else
+                state.channel.power = 1.0f;
+            *sync_rtx = true;
+            break;
+        case 4:
+            state.channel.bandwidth++;
+            state.channel.bandwidth %= 3;
+            *sync_rtx = true;
+            break;
+        case 7:
+            new_blight += 25;
+            new_blight = (new_blight > 255) ? 255 : new_blight;
+            state.backlight_level = new_blight;
+            platform_setBacklightLevel(state.backlight_level);
+            break;
+        case 8:
+            new_blight -= 25;
+            new_blight = (new_blight < 0) ? 0 : new_blight;
+            state.backlight_level = new_blight;
+            platform_setBacklightLevel(state.backlight_level);
+            break;
+    }
+}
+
 void ui_updateFSM(event_t event, bool *sync_rtx)
 {
     // Check if battery has enough charge to operate
@@ -699,55 +751,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 // If a number is pressed perform the corresponding macro
                 if(!msg.long_press && input_isNumberPressed(msg))
                 {
-                    ui_state.input_number = input_getPressedNumber(msg);
-                    // Backlight
-                    int32_t new_blight = state.backlight_level;
-                    // CTCSS Encode/Decode Selection
-                    bool tone_tx_enable = state.channel.fm.txToneEn;
-                    bool tone_rx_enable = state.channel.fm.rxToneEn;
-                    uint8_t tone_flags = tone_tx_enable << 1 | tone_rx_enable;
-                    switch(ui_state.input_number)
-                    {
-                        case 1:
-                            state.channel.fm.txTone++;
-                            state.channel.fm.txTone %= MAX_TONE_INDEX;
-                            state.channel.fm.rxTone = state.channel.fm.txTone;
-                            *sync_rtx = true;
-                            break;
-                        case 2:
-                            tone_flags++;
-                            tone_flags %= 4;
-                            tone_tx_enable = tone_flags >> 1;
-                            tone_rx_enable = tone_flags & 1;
-                            state.channel.fm.txToneEn = tone_tx_enable;
-                            state.channel.fm.rxToneEn = tone_rx_enable;
-                            *sync_rtx = true;
-                            break;
-                        case 3:
-                            if (state.channel.power == 1.0f)
-                                state.channel.power = 5.0f;
-                            else
-                                state.channel.power = 1.0f;
-                            *sync_rtx = true;
-                            break;
-                        case 4:
-                            state.channel.bandwidth++;
-                            state.channel.bandwidth %= 3;
-                            *sync_rtx = true;
-                            break;
-                        case 7:
-                            new_blight += 25;
-                            new_blight = (new_blight > 255) ? 255 : new_blight;
-                            state.backlight_level = new_blight;
-                            platform_setBacklightLevel(state.backlight_level);
-                            break;
-                        case 8:
-                            new_blight -= 25;
-                            new_blight = (new_blight < 0) ? 0 : new_blight;
-                            state.backlight_level = new_blight;
-                            platform_setBacklightLevel(state.backlight_level);
-                            break;
-                    }
+                    _ui_fsm_menuMacro(msg, sync_rtx);
                 }
                 // Exit from this menu when monitor key is released
                 if(!(msg.keys & KEY_MONI))
