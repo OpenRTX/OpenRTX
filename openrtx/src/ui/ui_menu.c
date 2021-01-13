@@ -58,13 +58,13 @@ void _ui_drawChannelList(point_t pos, uint8_t selected)
     uint8_t scroll = 0;
     char entry_buf[MAX_ENTRY_LEN] = "";
     int result = 0;
+    channel_t channel;
     for(int item=0; (result == 0) && (pos.y < SCREEN_HEIGHT); item++)
     {
-        channel_t channel;
-        result = nvm_readChannelData(&channel, item + scroll);
         // If selection is off the screen, scroll screen
         if(selected >= entries_in_screen)
             scroll = selected - entries_in_screen + 1;
+        result = nvm_readChannelData(&channel, item + scroll);
         snprintf(entry_buf, sizeof(entry_buf), "%s", channel.name);
         if(item + scroll == selected)
         {
