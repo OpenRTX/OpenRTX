@@ -379,6 +379,22 @@ bool _ui_drawDarkOverlay() {
     return true;
 }
 
+int _ui_fsm_loadChannel(uint16_t index, bool *sync_rtx) {
+    // Try to load selected channel
+    channel_t channel;
+    int result = nvm_readChannelData(&channel, index);
+    // Read successful and channel is valid
+    if(result != -1 && _ui_channel_valid(&channel))
+    {
+        // Set new channel index
+        state.channel_index = index;
+        // Copy channel read to state
+        state.channel = channel;
+        *sync_rtx = true;
+    }
+    return result;
+}
+
 void ui_updateFSM(event_t event, bool *sync_rtx)
 {
     // Check if battery has enough charge to operate
@@ -433,17 +449,12 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 }
                 else if(msg.keys & KEY_ESC)
                 {
-                    // Try to load selected channel
-                    channel_t channel;
-                    int result = nvm_readChannelData(&channel, state.channel_index);
+                    int result = _ui_fsm_loadChannel(state.channel_index, sync_rtx);
                     // Read successful and channel is valid
-                    if(result != -1 && _ui_channel_valid(&channel))
+                    if(result != -1)
                     {
                         // Save VFO channel
                         state.vfo_channel = state.channel;
-                        // Copy channel read to state
-                        state.channel = channel;
-                        *sync_rtx = true;
                         // Switch to MEM screen
                         state.ui_screen = MAIN_MEM;
                     }
@@ -593,33 +604,11 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 }
                 else if(msg.keys & KEY_UP)
                 {
-                    // Try to load selected channel
-                    channel_t channel;
-                    int result = nvm_readChannelData(&channel, state.channel_index + 1);
-                    // Read successful and channel is valid
-                    if(result != -1 && _ui_channel_valid(&channel))
-                    {
-                        // Set new channel index
-                        state.channel_index += 1;
-                        // Copy channel read to state
-                        state.channel = channel;
-                        *sync_rtx = true;
-                    }
+                    _ui_fsm_loadChannel(state.channel_index + 1, sync_rtx);
                 }
                 else if(msg.keys & KEY_DOWN)
                 {
-                    // Try to load selected channel
-                    channel_t channel;
-                    int result = nvm_readChannelData(&channel, state.channel_index - 1);
-                    // Read successful and channel is valid
-                    if(result != -1 && _ui_channel_valid(&channel))
-                    {
-                        // Set new channel index
-                        state.channel_index -= 1;
-                        // Copy channel read to state
-                        state.channel = channel;
-                        *sync_rtx = true;
-                    }
+                    _ui_fsm_loadChannel(state.channel_index - 1, sync_rtx);
                 }
                 else if(msg.keys & KEY_MONI)
                 {
