@@ -730,7 +730,9 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 }
                 else if(msg.keys & KEY_DOWN)
                 {
-                    ui_state.menu_selected += 1;
+                    channel_t channel;
+                    if(nvm_readChannelData(&channel, ui_state.menu_selected + 1) != -1)
+                        ui_state.menu_selected += 1;
                 }
                 else if(msg.keys & KEY_ESC)
                 {
