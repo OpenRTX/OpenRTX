@@ -59,6 +59,6 @@ int main(void)
     while(true)
     {
         // No low-frequency function at the moment
-        OSTaskSuspend(NULL, &os_err);
+        ;
     }
 }
