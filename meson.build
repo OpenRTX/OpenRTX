@@ -263,7 +263,10 @@ dm1801_src = src + mk22fn512_src + ['platform/targets/DM-1801/platform.c',
                                     'platform/drivers/NVM/spiFlash_GDx.c',
                                     'platform/drivers/NVM/nvmem_GDx.c',
                                     'platform/drivers/ADC/ADC0_GDx.c',
-                                    'platform/drivers/baseband/rtx_GDx.c']
+                                    'platform/drivers/baseband/rtx_GDx.c',
+                                    'platform/drivers/baseband/AT1846S.c',
+                                    'platform/drivers/baseband/HR-C6000.c',
+                                    'platform/drivers/baseband/interfaces_GDx.c']
 
 dm1801_inc = inc + mk22fn512_inc + ['platform/targets/DM-1801']
 dm1801_def = def + mk22fn512_def + {'PLATFORM_DM1801': ''}

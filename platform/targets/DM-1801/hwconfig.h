@@ -82,4 +82,22 @@
 #define I2C_SDA GPIOE,25
 #define I2C_SCL GPIOE,24
 
+/* RTX stage control */
+#define VHF_LNA_EN GPIOC,13
+#define UHF_LNA_EN GPIOC,15
+#define VHF_PA_EN  GPIOE,0
+#define UHF_PA_EN  GPIOE,1
+
+/* Audio control */
+#define AUDIO_AMP_EN GPIOB,0
+#define RX_AUDIO_MUX GPIOC,5
+#define TX_AUDIO_MUX GPIOC,6
+
+#define DMR_RESET GPIOE,2
+#define DMR_SLEEP GPIOE,3
+#define DMR_CS    GPIOD,0
+#define DMR_CLK   GPIOD,1
+#define DMR_MOSI  GPIOD,2
+#define DMR_MISO  GPIOD,3
+
 #endif

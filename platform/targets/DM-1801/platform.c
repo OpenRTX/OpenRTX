@@ -21,6 +21,7 @@
 #include <interfaces/platform.h>
 #include <ADC0_GDx.h>
 #include <interfaces/gpio.h>
+#include <I2C0.h>
 #include <os.h>
 #include "hwconfig.h"
 
@@ -60,6 +61,15 @@ void platform_init()
      */
     adc0_init();
     OSMutexCreate(&adc_mutex, "", &e);
+
+    /*
+     * Initialise I2C driver, once for all the modules
+     */
+    gpio_setMode(I2C_SDA, OPEN_DRAIN);
+    gpio_setMode(I2C_SCL, OPEN_DRAIN);
+    gpio_setAlternateFunction(I2C_SDA, 3);
+    gpio_setAlternateFunction(I2C_SCL, 3);
+    i2c0_init();
 }
 
 void platform_terminate()
