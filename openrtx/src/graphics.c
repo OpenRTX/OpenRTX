@@ -278,7 +278,7 @@ static inline uint16_t get_reset_x(textAlign_t alignment,
     return 0;
 }
 
-void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t alignment, color_t color) {
+point_t gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t alignment, color_t color) {
 
     GFXfont f = fonts[size];
 
@@ -288,6 +288,10 @@ void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t ali
     uint16_t line_size = get_line_size(f, text, len);
     uint16_t reset_x = get_reset_x(alignment, line_size, start.x);
     start.x = reset_x;
+    
+    // Save initial start.y value to calculate vertical size
+    uint16_t saved_start_y = start.y;
+    uint16_t line_h = 0;
 
     /* For each char in the string */
     for(unsigned i = 0; i < len; i++) {
@@ -300,6 +304,7 @@ void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t ali
         int8_t xo = glyph.xOffset,
                yo = glyph.yOffset;
         uint8_t xx, yy, bits = 0, bit = 0;
+        line_h = h;
 
         // Handle newline and carriage return
         if (c == '\n') {
@@ -341,6 +346,30 @@ void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t ali
         }
         start.x += glyph.xAdvance;
     }
+    // Calculate text size
+    point_t text_size = {0, 0};
+    text_size.x = line_size;
+    text_size.y = (saved_start_y - start.y) + line_h;
+    return text_size;
+}
+
+// Print an error message to the center of the screen, surronded by a red (when possible) box
+void gfx_printError(const char *text, fontSize_t size) {
+    // 3 px box padding
+    uint16_t box_padding = 16;
+    color_t white = {255, 255, 255, 255};
+    color_t red =   {255,   0,   0, 255};
+    point_t start = {0, SCREEN_HEIGHT/2 + 5};
+
+    // Print the error message
+    point_t text_size = gfx_print(start, text, size, TEXT_ALIGN_CENTER, white);
+    text_size.x += box_padding;
+    text_size.y += box_padding;
+    point_t box_start = {0, 0};
+    box_start.x = (SCREEN_WIDTH / 2) - (text_size.x / 2);
+    box_start.y = (SCREEN_HEIGHT / 2) - (text_size.y / 2);
+    // Draw the error box
+    gfx_drawRect(box_start, text_size.x, text_size.y, red, false);
 }
 
 /*

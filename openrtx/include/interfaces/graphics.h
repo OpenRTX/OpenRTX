@@ -217,8 +217,16 @@ void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color,
  * @param size: text font size, defined as enum.
  * @param alignment: text alignment type, defined as enum.
  * @param color: text color, in color_t format.
+ * @return text width and height as point_t coordinates
  */
-void gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t alignment, color_t color);
+point_t gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t alignment, color_t color);
+
+/**
+ * Prints an error message surrounded by a red box on the screen.
+ * @param text: text to print.
+ * @param size: text font size, defined as enum.
+ */
+void gfx_printError(const char *text, fontSize_t size);
 
 /**
  * Function to draw battery of arbitrary size.
