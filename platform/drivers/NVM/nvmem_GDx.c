@@ -137,6 +137,56 @@ uint32_t _bcd2bin(uint32_t bcd)
            (bcd & 0x0F);
 }
 
+/**
+ * \internal Utility function for loading band-specific calibration data into
+ * the corresponding data structure.
+ */
+void _loadBandCalData(uint32_t baseAddr, bandCalData_t *cal)
+{
+    W25Qx_readData(baseAddr + 0x08, &(cal->mod1Bias),              2);
+    W25Qx_readData(baseAddr + 0x0A, &(cal->mod2Offset),            1);
+    W25Qx_readData(baseAddr + 0x3F, cal->analogSqlThresh,          8);
+    W25Qx_readData(baseAddr + 0x47, &(cal->noise1_HighTsh_Wb),     1);
+    W25Qx_readData(baseAddr + 0x48, &(cal->noise1_LowTsh_Wb),      1);
+    W25Qx_readData(baseAddr + 0x49, &(cal->noise2_HighTsh_Wb),     1);
+    W25Qx_readData(baseAddr + 0x4A, &(cal->noise2_LowTsh_Wb),      1);
+    W25Qx_readData(baseAddr + 0x4B, &(cal->rssi_HighTsh_Wb),       1);
+    W25Qx_readData(baseAddr + 0x4C, &(cal->rssi_LowTsh_Wb),        1);
+    W25Qx_readData(baseAddr + 0x4D, &(cal->noise1_HighTsh_Nb),     1);
+    W25Qx_readData(baseAddr + 0x4E, &(cal->noise1_LowTsh_Nb),      1);
+    W25Qx_readData(baseAddr + 0x4F, &(cal->noise2_HighTsh_Nb),     1);
+    W25Qx_readData(baseAddr + 0x50, &(cal->noise2_LowTsh_Nb),      1);
+    W25Qx_readData(baseAddr + 0x51, &(cal->rssi_HighTsh_Nb),       1);
+    W25Qx_readData(baseAddr + 0x52, &(cal->rssi_LowTsh_Nb),        1);
+    W25Qx_readData(baseAddr + 0x53, &(cal->RSSILowerThreshold),    1);
+    W25Qx_readData(baseAddr + 0x54, &(cal->RSSIUpperThreshold),    1);
+    W25Qx_readData(baseAddr + 0x55, cal->mod1Amplitude,            8);
+    W25Qx_readData(baseAddr + 0x5D, &(cal->dacDataRange),          1);
+    W25Qx_readData(baseAddr + 0x5E, &(cal->txDev_DTMF),            1);
+    W25Qx_readData(baseAddr + 0x5F, &(cal->txDev_tone),            1);
+    W25Qx_readData(baseAddr + 0x60, &(cal->txDev_CTCSS_wb),        1);
+    W25Qx_readData(baseAddr + 0x61, &(cal->txDev_CTCSS_nb),        1);
+    W25Qx_readData(baseAddr + 0x62, &(cal->txDev_DCS_wb),          1);
+    W25Qx_readData(baseAddr + 0x63, &(cal->txDev_DCS_nb),          1);
+    W25Qx_readData(baseAddr + 0x64, &(cal->PA_drv),                1);
+    W25Qx_readData(baseAddr + 0x65, &(cal->PGA_gain),              1);
+    W25Qx_readData(baseAddr + 0x66, &(cal->analogMicGain),         1);
+    W25Qx_readData(baseAddr + 0x67, &(cal->rxAGCgain),             1);
+    W25Qx_readData(baseAddr + 0x68, &(cal->mixGainWideband),       2);
+    W25Qx_readData(baseAddr + 0x6A, &(cal->mixGainNarrowband),     2);
+    W25Qx_readData(baseAddr + 0x6C, &(cal->rxAudioGainWideband),   1);
+    W25Qx_readData(baseAddr + 0x6D, &(cal->rxAudioGainNarrowband), 1);
+
+    uint8_t txPwr[32] = {0};
+    W25Qx_readData(baseAddr + 0x0B, txPwr, 32);
+
+    for(uint8_t i = 0; i < 16; i++)
+    {
+        cal->txLowPower[i]  = txPwr[2*i];
+        cal->txHighPower[i] = txPwr[2*i+1];
+    }
+}
+
 void nvm_init()
 {
     W25Qx_init();
@@ -156,93 +206,10 @@ void nvm_readCalibData(void *buf)
 
     gdxCalibration_t *calib = ((gdxCalibration_t *) buf);
 
-    /* Load UHF band calibration data */
-    W25Qx_readData(UHF_CAL_BASE + 0x08, &(calib->uhfCal.mod1Bias),              2);
-    W25Qx_readData(UHF_CAL_BASE + 0x0A, &(calib->uhfCal.mod2Offset),            1);
-    W25Qx_readData(UHF_CAL_BASE + 0x3F, calib->uhfCal.analogSqlThresh,          8);
-    W25Qx_readData(UHF_CAL_BASE + 0x47, &(calib->uhfCal.noise1_HighTsh_Wb),     1);
-    W25Qx_readData(UHF_CAL_BASE + 0x48, &(calib->uhfCal.noise1_LowTsh_Wb),      1);
-    W25Qx_readData(UHF_CAL_BASE + 0x49, &(calib->uhfCal.noise2_HighTsh_Wb),     1);
-    W25Qx_readData(UHF_CAL_BASE + 0x4A, &(calib->uhfCal.noise2_LowTsh_Wb),      1);
-    W25Qx_readData(UHF_CAL_BASE + 0x4B, &(calib->uhfCal.rssi_HighTsh_Wb),       1);
-    W25Qx_readData(UHF_CAL_BASE + 0x4C, &(calib->uhfCal.rssi_LowTsh_Wb),        1);
-    W25Qx_readData(UHF_CAL_BASE + 0x4D, &(calib->uhfCal.noise1_HighTsh_Nb),     1);
-    W25Qx_readData(UHF_CAL_BASE + 0x4E, &(calib->uhfCal.noise1_LowTsh_Nb),      1);
-    W25Qx_readData(UHF_CAL_BASE + 0x4F, &(calib->uhfCal.noise2_HighTsh_Nb),     1);
-    W25Qx_readData(UHF_CAL_BASE + 0x50, &(calib->uhfCal.noise2_LowTsh_Nb),      1);
-    W25Qx_readData(UHF_CAL_BASE + 0x51, &(calib->uhfCal.rssi_HighTsh_Nb),       1);
-    W25Qx_readData(UHF_CAL_BASE + 0x52, &(calib->uhfCal.rssi_LowTsh_Nb),        1);
-    W25Qx_readData(UHF_CAL_BASE + 0x53, &(calib->uhfCal.RSSILowerThreshold),    1);
-    W25Qx_readData(UHF_CAL_BASE + 0x54, &(calib->uhfCal.RSSIUpperThreshold),    1);
-    W25Qx_readData(UHF_CAL_BASE + 0x55, calib->uhfCal.mod1Amplitude,            8);
-    W25Qx_readData(UHF_CAL_BASE + 0x5D, &(calib->uhfCal.dacDataRange),          1);
-    W25Qx_readData(UHF_CAL_BASE + 0x5E, &(calib->uhfCal.txDev_DTMF),            1);
-    W25Qx_readData(UHF_CAL_BASE + 0x5F, &(calib->uhfCal.txDev_tone),            1);
-    W25Qx_readData(UHF_CAL_BASE + 0x60, &(calib->uhfCal.txDev_CTCSS_wb),        1);
-    W25Qx_readData(UHF_CAL_BASE + 0x61, &(calib->uhfCal.txDev_CTCSS_nb),        1);
-    W25Qx_readData(UHF_CAL_BASE + 0x62, &(calib->uhfCal.txDev_DCS_wb),          1);
-    W25Qx_readData(UHF_CAL_BASE + 0x63, &(calib->uhfCal.txDev_DCS_nb),          1);
-    W25Qx_readData(UHF_CAL_BASE + 0x64, &(calib->uhfCal.PA_drv),                1);
-    W25Qx_readData(UHF_CAL_BASE + 0x65, &(calib->uhfCal.PGA_gain),              1);
-    W25Qx_readData(UHF_CAL_BASE + 0x66, &(calib->uhfCal.analogMicGain),         1);
-    W25Qx_readData(UHF_CAL_BASE + 0x67, &(calib->uhfCal.rxAGCgain),             1);
-    W25Qx_readData(UHF_CAL_BASE + 0x68, &(calib->uhfCal.mixGainWideband),       2);
-    W25Qx_readData(UHF_CAL_BASE + 0x6A, &(calib->uhfCal.mixGainNarrowband),     2);
-    W25Qx_readData(UHF_CAL_BASE + 0x6C, &(calib->uhfCal.rxAudioGainWideband),   1);
-    W25Qx_readData(UHF_CAL_BASE + 0x6D, &(calib->uhfCal.rxAudioGainNarrowband), 1);
+    _loadBandCalData(VHF_CAL_BASE, &(calib->data[0]));  /* Load VHF band calibration data */
+    _loadBandCalData(UHF_CAL_BASE, &(calib->data[1]));  /* Load UHF band calibration data */
 
-    uint8_t txPwr[32] = {0};
-    W25Qx_readData(UHF_CAL_BASE + 0x0B, txPwr, 32);
-
-    for(uint8_t i = 0; i < 16; i++)
-    {
-        calib->uhfCal.txLowPower[i]  = txPwr[2*i];
-        calib->uhfCal.txHighPower[i] = txPwr[2*i+1];
-    }
-
-    /* Load VHF band calibration data */
-    W25Qx_readData(VHF_CAL_BASE + 0x08, &(calib->vhfCal.mod1Bias),              2);
-    W25Qx_readData(VHF_CAL_BASE + 0x0A, &(calib->vhfCal.mod2Offset),            1);
-    W25Qx_readData(VHF_CAL_BASE + 0x3F, calib->vhfCal.analogSqlThresh,          8);
-    W25Qx_readData(VHF_CAL_BASE + 0x47, &(calib->vhfCal.noise1_HighTsh_Wb),     1);
-    W25Qx_readData(VHF_CAL_BASE + 0x48, &(calib->vhfCal.noise1_LowTsh_Wb),      1);
-    W25Qx_readData(VHF_CAL_BASE + 0x49, &(calib->vhfCal.noise2_HighTsh_Wb),     1);
-    W25Qx_readData(VHF_CAL_BASE + 0x4A, &(calib->vhfCal.noise2_LowTsh_Wb),      1);
-    W25Qx_readData(VHF_CAL_BASE + 0x4B, &(calib->vhfCal.rssi_HighTsh_Wb),       1);
-    W25Qx_readData(VHF_CAL_BASE + 0x4C, &(calib->vhfCal.rssi_LowTsh_Wb),        1);
-    W25Qx_readData(VHF_CAL_BASE + 0x4D, &(calib->vhfCal.noise1_HighTsh_Nb),     1);
-    W25Qx_readData(VHF_CAL_BASE + 0x4E, &(calib->vhfCal.noise1_LowTsh_Nb),      1);
-    W25Qx_readData(VHF_CAL_BASE + 0x4F, &(calib->vhfCal.noise2_HighTsh_Nb),     1);
-    W25Qx_readData(VHF_CAL_BASE + 0x50, &(calib->vhfCal.noise2_LowTsh_Nb),      1);
-    W25Qx_readData(VHF_CAL_BASE + 0x51, &(calib->vhfCal.rssi_HighTsh_Nb),       1);
-    W25Qx_readData(VHF_CAL_BASE + 0x52, &(calib->vhfCal.rssi_LowTsh_Nb),        1);
-    W25Qx_readData(VHF_CAL_BASE + 0x53, &(calib->vhfCal.RSSILowerThreshold),    1);
-    W25Qx_readData(VHF_CAL_BASE + 0x54, &(calib->vhfCal.RSSIUpperThreshold),    1);
-    W25Qx_readData(VHF_CAL_BASE + 0x55, calib->vhfCal.mod1Amplitude,            8);
-    W25Qx_readData(VHF_CAL_BASE + 0x5D, &(calib->vhfCal.dacDataRange),          1);
-    W25Qx_readData(VHF_CAL_BASE + 0x5E, &(calib->vhfCal.txDev_DTMF),            1);
-    W25Qx_readData(VHF_CAL_BASE + 0x5F, &(calib->vhfCal.txDev_tone),            1);
-    W25Qx_readData(VHF_CAL_BASE + 0x60, &(calib->vhfCal.txDev_CTCSS_wb),        1);
-    W25Qx_readData(VHF_CAL_BASE + 0x61, &(calib->vhfCal.txDev_CTCSS_nb),        1);
-    W25Qx_readData(VHF_CAL_BASE + 0x62, &(calib->vhfCal.txDev_DCS_wb),          1);
-    W25Qx_readData(VHF_CAL_BASE + 0x63, &(calib->vhfCal.txDev_DCS_nb),          1);
-    W25Qx_readData(VHF_CAL_BASE + 0x64, &(calib->vhfCal.PA_drv),                1);
-    W25Qx_readData(VHF_CAL_BASE + 0x65, &(calib->vhfCal.PGA_gain),              1);
-    W25Qx_readData(VHF_CAL_BASE + 0x66, &(calib->vhfCal.analogMicGain),         1);
-    W25Qx_readData(VHF_CAL_BASE + 0x67, &(calib->vhfCal.rxAGCgain),             1);
-    W25Qx_readData(VHF_CAL_BASE + 0x68, &(calib->vhfCal.mixGainWideband),       2);
-    W25Qx_readData(VHF_CAL_BASE + 0x6A, &(calib->vhfCal.mixGainNarrowband),     2);
-    W25Qx_readData(VHF_CAL_BASE + 0x6C, &(calib->vhfCal.rxAudioGainWideband),   1);
-    W25Qx_readData(VHF_CAL_BASE + 0x6D, &(calib->vhfCal.rxAudioGainNarrowband), 1);
-
-    W25Qx_readData(VHF_CAL_BASE + 0x0B, txPwr, 32);
     W25Qx_sleep();
-
-    for(uint8_t i = 0; i < 16; i++)
-    {
-        calib->vhfCal.txLowPower[i]  = txPwr[2*i];
-        calib->vhfCal.txHighPower[i] = txPwr[2*i+1];
-    }
 
     /*
      * Finally, load calibration points. These are common among all the GDx

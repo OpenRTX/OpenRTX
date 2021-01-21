@@ -81,8 +81,7 @@ bandCalData_t;
 
 typedef struct
 {
-    bandCalData_t vhfCal;
-    bandCalData_t uhfCal;
+    bandCalData_t data[2];      // Calibration data for VHF (index 0) and UHF (index 1) bands
     freq_t vhfCalPoints[8];     // VHF calibration points for both TX power and mod1Amplitude
     freq_t uhfPwrCalPoints[16]; // UHF calibration points for TX power
     freq_t uhfMod1CalPoints[8]; // UHF calibration points for mod1Amplitude
