@@ -348,7 +348,7 @@ int nvm_readZoneData(zone_t *zone, uint16_t pos)
     // Copy zone channel indexes
     memcpy(zone->member, zoneData.member_a, sizeof(uint16_t) * 16);
     // Copy zone extension channel indexes
-    memcpy(zone->member + 16, zoneExtData.ext_a, sizeof(uint16_t) * 48);
+    memcpy(zone->member[16], zoneExtData.ext_a, sizeof(uint16_t) * 48);
 
     return 0;
 }
