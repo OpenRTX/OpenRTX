@@ -102,4 +102,13 @@ typedef struct
     };
 } channel_t;
 
+/**
+ * Data structure containing all the information of a zone.
+ */
+typedef struct
+{
+    char name[16];              /**< Zone name                             */
+    uint16_t member[64];        /**< Channels 1...64, 0=empty zone         */
+} zone_t;
+
 #endif

@@ -18,6 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <strings.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/delays.h>
 #include <calibInfo_MDx.h>
@@ -25,7 +26,7 @@
 
 /**
  * \internal Data structure matching the one used by original MD3x0 firmware to
- * manage channel data inside nonvolatile flash memory.
+ * manage codeplug data inside nonvolatile flash memory.
  *
  * Taken by dmrconfig repository: https://github.com/sergev/dmrconfig/blob/master/uv380.c
  */
@@ -116,8 +117,27 @@ typedef struct
 }
 mduv3x0Channel_t;
 
+typedef struct {
+    // Bytes 0-31
+    uint16_t name[16];                  // Zone Name (Unicode)
+
+    // Bytes 32-63
+    uint16_t member_a[16];              // Member A: channels 1...16
+} mduv3x0Zone_t;
+
+typedef struct {
+    // Bytes 0-95
+    uint16_t ext_a[48];                 // Member A: channels 17...64
+
+    // Bytes 96-223
+    uint16_t member_b[64];              // Member B: channels 1...64
+} mduv3x0ZoneExt_t;
+
 const uint32_t chDataBaseAddr = 0x110000; /**< Base address of channel data         */
+const uint32_t zoneBaseAddr = 0x149e0; /**< Base address of zones         */
+const uint32_t zoneExtBaseAddr = 0x31000; /**< Base address of zone extensions         */
 const uint32_t maxNumChannels = 3000;    /**< Maximum number of channels in memory */
+const uint32_t maxNumZones = 250;    /**< Maximum number of zones and zone extensions in memory */
 
 /**
  * \internal Utility function to convert 4 byte BCD values into a 32-bit
@@ -298,6 +318,37 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
         channel->dmr.rxColorCode       = chData.colorcode;
         channel->dmr.txColorCode       = chData.colorcode;
     }
+
+    return 0;
+}
+
+int nvm_readZoneData(zone_t *zone, uint16_t pos)
+{
+    if(pos > maxNumZones) return -1;
+
+    W25Qx_wakeup();
+    delayUs(5);
+
+    mduv3x0Zone_t zoneData;
+    mduv3x0ZoneExt_t zoneExtData;
+    uint32_t zoneAddr = zoneBaseAddr + pos * sizeof(mduv3x0Zone_t);
+    uint32_t zoneExtAddr = zoneBaseAddr + pos * sizeof(mduv3x0Zone_t);
+    W25Qx_readData(zoneAddr, ((uint8_t *) &zoneData), sizeof(mduv3x0Zone_t));
+    W25Qx_readData(zoneExtAddr, ((uint8_t *) &zoneExtData), sizeof(mduv3x0ZoneExt_t));
+    W25Qx_sleep();
+
+    /*
+     * Brutally convert channel name from unicode to char by truncating the most
+     * significant byte
+     */
+    for(uint16_t i = 0; i < 16; i++)
+    {
+        zone->name[i] = ((char) (zoneData.name[i] & 0x00FF));
+    }
+    // Copy zone channel indexes
+    memcpy(zone->member, zoneData.member_a, sizeof(uint16_t) * 16);
+    // Copy zone extension channel indexes
+    memcpy(zone->member + 16, zoneExtData.ext_a, sizeof(uint16_t) * 48);
 
     return 0;
 }
