@@ -18,7 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <strings.h>
+#include <wchar.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/delays.h>
 #include <calibInfo_MDx.h>
@@ -244,6 +244,9 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
     W25Qx_readData(readAddr, ((uint8_t *) &chData), sizeof(mduv3x0Channel_t));
     W25Qx_sleep();
 
+    // Check if the channel is empty
+    if(wcslen((wchar_t *) chData.name) == 0) return -1;
+
     channel->mode            = chData.channel_mode - 1;
     channel->bandwidth       = chData.bandwidth;
     channel->admit_criteria  = chData.admit_criteria;
@@ -337,6 +340,8 @@ int nvm_readZoneData(zone_t *zone, uint16_t pos)
     W25Qx_readData(zoneExtAddr, ((uint8_t *) &zoneExtData), sizeof(mduv3x0ZoneExt_t));
     W25Qx_sleep();
 
+    // Check if zone is empty
+    if(wcslen((wchar_t *) zoneData.name) == 0) return -1;
     /*
      * Brutally convert channel name from unicode to char by truncating the most
      * significant byte
