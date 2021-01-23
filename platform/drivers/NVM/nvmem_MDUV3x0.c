@@ -114,8 +114,7 @@ typedef struct
 
     // Bytes 32-63
     uint16_t name[16];
-}
-mduv3x0Channel_t;
+} mduv3x0Channel_t;
 
 typedef struct {
     // Bytes 0-31
@@ -133,11 +132,26 @@ typedef struct {
     uint16_t member_b[64];              // Member B: channels 1...64
 } mduv3x0ZoneExt_t;
 
-const uint32_t chDataBaseAddr = 0x110000; /**< Base address of channel data         */
+typedef struct {
+    // Bytes 0-2
+    uint8_t id[3];                      // Call ID: 1...16777215
+
+    // Byte 3
+    uint8_t type                : 5,    // Call Type: Group Call, Private Call or All Call
+            receive_tone        : 1,    // Call Receive Tone: No or yes
+            _unused2            : 2;    // 0b11
+
+    // Bytes 4-35
+    uint16_t name[16];                  // Contact Name (Unicode)
+} mduv3x0Contact_t;
+
 const uint32_t zoneBaseAddr = 0x149e0; /**< Base address of zones         */
 const uint32_t zoneExtBaseAddr = 0x31000; /**< Base address of zone extensions         */
+const uint32_t chDataBaseAddr = 0x110000; /**< Base address of channel data         */
+const uint32_t contactBaseAddr = 0x140000; /**< Base address of contacts         */
 const uint32_t maxNumChannels = 3000;    /**< Maximum number of channels in memory */
 const uint32_t maxNumZones = 250;    /**< Maximum number of zones and zone extensions in memory */
+const uint32_t maxNumContacts = 10000;    /**< Maximum number of contacts in memory */
 
 /**
  * \internal Utility function to convert 4 byte BCD values into a 32-bit
@@ -234,7 +248,7 @@ void nvm_readCalibData(void *buf)
 
 int nvm_readChannelData(channel_t *channel, uint16_t pos)
 {
-    if(pos > maxNumChannels) return -1;
+    if(pos >= maxNumChannels) return -1;
 
     W25Qx_wakeup();
     delayUs(5);
@@ -327,7 +341,7 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
 
 int nvm_readZoneData(zone_t *zone, uint16_t pos)
 {
-    if(pos > maxNumZones) return -1;
+    if(pos >= maxNumZones) return -1;
 
     W25Qx_wakeup();
     delayUs(5);
@@ -360,6 +374,37 @@ int nvm_readZoneData(zone_t *zone, uint16_t pos)
     {
         zone->member[16 + i] = zoneExtData.ext_a[i];
     }
+
+    return 0;
+}
+
+int nvm_readContactData(contact_t *contact, uint16_t pos)
+{
+    if(pos >= maxNumContacts) return -1;
+
+    W25Qx_wakeup();
+    delayUs(5);
+
+    mduv3x0Contact_t contactData;
+    uint32_t contactAddr = contactBaseAddr + pos * sizeof(mduv3x0Contact_t);
+    W25Qx_readData(contactAddr, ((uint8_t *) &contactData), sizeof(mduv3x0Contact_t));
+    W25Qx_sleep();
+
+    // Check if contact is empty
+    if(wcslen((wchar_t *) contactData.name) == 0) return -1;
+    /*
+     * Brutally convert channel name from unicode to char by truncating the most
+     * significant byte
+     */
+    for(uint16_t i = 0; i < 16; i++)
+    {
+        contact->name[i] = ((char) (contactData.name[i] & 0x00FF));
+    }
+    // Copy contact DMR ID
+    contact->id = (contactData.id[0] | contactData.id[1] << 8 | contactData.id[2] << 16);
+    // Copy contact details
+    contact->type = contactData.type;
+    contact->receive_tone = contactData.receive_tone ? true : false;
 
     return 0;
 }

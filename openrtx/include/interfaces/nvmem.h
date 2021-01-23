@@ -64,4 +64,13 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos);
  */
 int nvm_readZoneData(zone_t *zone, uint16_t pos);
 
+/**
+ * Read one contact from table stored in nonvolatile memory.
+ *
+ * @param contact: pointer to the contact_t data structure to be populated.
+ * @param pos: position, inside the zone table, from which read data.
+ * @return 0 on success, -1 on failure
+ */
+int nvm_readContactData(contact_t *contact, uint16_t pos);
+
 #endif /* NVMEM_H */

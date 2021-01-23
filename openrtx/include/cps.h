@@ -22,6 +22,7 @@
 #define CPS_H
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <interfaces/rtx.h>
 #include <datatypes.h>
 
@@ -108,7 +109,18 @@ typedef struct
 typedef struct
 {
     char name[16];              /**< Zone name                             */
-    uint16_t member[64];        /**< Channels 1...64, 0=empty zone         */
+    uint16_t member[64];        /**< Channel indexes                       */
 } zone_t;
+
+/**
+ * Data structure containing all the information of a contact.
+ */
+typedef struct
+{
+    char name[16];              /**< Contact name                             */
+    uint32_t id;                /**< DMR ID: 24bit number, 1...16777215       */
+    uint8_t type;               /**< Call Type: Group Call, Private Call or All Call */
+    bool receive_tone;          /**< Call Receive Tone: No or yes             */
+} contact_t;
 
 #endif

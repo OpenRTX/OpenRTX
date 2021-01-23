@@ -67,5 +67,20 @@ int main()
         }
         puts("\r");
     }
+    printf("Contacts:\r\n");
+    for(int pos=0,result=0; result != -1; pos++)
+    {
+        contact_t contact;
+        result = nvm_readContactData(&contact, pos);
+        if(result != -1)
+        {
+            printf("Contact n.%d:\r\n", pos+1);
+            printf("  %s\r\n", contact.name);
+            printf("  - DMR ID:%lu\r\n", contact.id);
+            printf("  - Type:%d\r\n", contact.type);
+            printf("  - Receive Tone:%s\r\n",  contact.receive_tone ? "True" : "False");
+        }
+        puts("\r");
+    }
     return 0;
 }
