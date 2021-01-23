@@ -332,7 +332,7 @@ int nvm_readZoneData(zone_t *zone, uint16_t pos)
     mduv3x0Zone_t zoneData;
     mduv3x0ZoneExt_t zoneExtData;
     uint32_t zoneAddr = zoneBaseAddr + pos * sizeof(mduv3x0Zone_t);
-    uint32_t zoneExtAddr = zoneBaseAddr + pos * sizeof(mduv3x0Zone_t);
+    uint32_t zoneExtAddr = zoneExtBaseAddr + pos * sizeof(mduv3x0ZoneExt_t);
     W25Qx_readData(zoneAddr, ((uint8_t *) &zoneData), sizeof(mduv3x0Zone_t));
     W25Qx_readData(zoneExtAddr, ((uint8_t *) &zoneExtData), sizeof(mduv3x0ZoneExt_t));
     W25Qx_sleep();
@@ -346,9 +346,15 @@ int nvm_readZoneData(zone_t *zone, uint16_t pos)
         zone->name[i] = ((char) (zoneData.name[i] & 0x00FF));
     }
     // Copy zone channel indexes
-    memcpy(zone->member, zoneData.member_a, sizeof(uint16_t) * 16);
+    for(uint16_t i = 0; i < 16; i++)
+    {
+        zone->member[i] = zoneData.member_a[i];
+    }
     // Copy zone extension channel indexes
-    memcpy(zone->member[16], zoneExtData.ext_a, sizeof(uint16_t) * 48);
+    for(uint16_t i = 0; i < 48; i++)
+    {
+        zone->member[16 + i] = zoneExtData.ext_a[i];
+    }
 
     return 0;
 }
