@@ -117,11 +117,29 @@ void _enableTxStage()
      * is greater than 1W.
      * TODO: increase granularity
      */
-//     const uint8_t *paramPtr = calData->txLowPower;
-//     if(rtxStatus.txPower > 1.0f) paramPtr = calData->txHighPower;
-//     uint8_t apc = interpCalParameter(rtxStatus.txFrequency, calData->txFreq,
-//                                      paramPtr, 9);
-//     DAC->DHR12L1 = apc * 0xFF;
+    const uint8_t *paramPtr = calData->data[band].txLowPower;
+    if(rtxStatus.txPower > 1.0f) paramPtr = calData->data[band].txHighPower;
+
+    uint16_t pwr = 0;
+    if(band == 0)
+    {
+        /* VHF band */
+        pwr = interpCalParameter(rtxStatus.txFrequency, calData->vhfCalPoints,
+                                 paramPtr, 8);
+    }
+    else
+    {
+        /* UHF band */
+        pwr = interpCalParameter(rtxStatus.txFrequency, calData->uhfPwrCalPoints,
+                                 paramPtr, 16);
+    }
+
+    pwr *= 16;
+    DAC0->DAT[0].DATH = (pwr >> 8) & 0xFF;
+    DAC0->DAT[0].DATL = pwr & 0xFF;
+
+    _setVcoFrequency();
+    AT1846S_setFuncMode(AT1846S_TX);
 
     if(band == 0)
     {
@@ -133,8 +151,6 @@ void _enableTxStage()
     }
 
     rtxStatus.opStatus = TX;
-    _setVcoFrequency();
-    AT1846S_setFuncMode(AT1846S_TX);
 }
 
 void _enableRxStage()
@@ -147,6 +163,9 @@ void _enableRxStage()
     int8_t band = _getBandFromFrequency(rtxStatus.rxFrequency);
     if(band < 0) return;
 
+    _setVcoFrequency();
+    AT1846S_setFuncMode(AT1846S_RX);
+
     if(band == 0)
     {
         gpio_setPin(VHF_LNA_EN);
@@ -157,8 +176,6 @@ void _enableRxStage()
     }
 
     rtxStatus.opStatus = RX;
-    _setVcoFrequency();
-    AT1846S_setFuncMode(AT1846S_RX);
 }
 
 void _disableRtxStages()
@@ -180,10 +197,24 @@ void _updateTuningParams()
 
     AT1846S_setPgaGain(cal->PGA_gain);
     AT1846S_setMicGain(cal->analogMicGain);
-    AT1846S_setTxDeviation(cal->txDev_tone);
     AT1846S_setAgcGain(cal->rxAGCgain);
     AT1846S_setRxAudioGain(cal->rxAudioGainWideband, cal->rxAudioGainNarrowband);
     AT1846S_setPaDrive(cal->PA_drv);
+
+    if(rtxStatus.bandwidth == BW_12_5)
+    {
+        AT1846S_setTxDeviation(cal->mixGainNarrowband);
+        AT1846S_setNoise1Thresholds(cal->noise1_HighTsh_Nb, cal->noise1_LowTsh_Nb);
+        AT1846S_setNoise2Thresholds(cal->noise2_HighTsh_Nb, cal->noise2_LowTsh_Nb);
+        AT1846S_setRssiThresholds(cal->rssi_HighTsh_Nb, cal->rssi_LowTsh_Nb);
+    }
+    else
+    {
+        AT1846S_setTxDeviation(cal->mixGainWideband);
+        AT1846S_setNoise1Thresholds(cal->noise1_HighTsh_Wb, cal->noise1_LowTsh_Wb);
+        AT1846S_setNoise2Thresholds(cal->noise2_HighTsh_Wb, cal->noise2_LowTsh_Wb);
+        AT1846S_setRssiThresholds(cal->rssi_HighTsh_Wb, cal->rssi_LowTsh_Wb);
+    }
 
     C6000_setDacRange(cal->dacDataRange);
     C6000_setMod2Bias(cal->mod2Offset);
@@ -264,6 +295,15 @@ void rtx_init(OS_MUTEX *m)
      * Load calibration data
      */
     calData = ((const gdxCalibration_t *) platform_getCalibrationData());
+
+    /*
+     * Enable and configure DAC for PA drive control
+     */
+    SIM->SCGC6 |= SIM_SCGC6_DAC0_MASK;
+    DAC0->DAT[0].DATL = 0;
+    DAC0->DAT[0].DATH = 0;
+    DAC0->C0   |= DAC_C0_DACRFS_MASK    /* Reference voltage is Vref2 */
+               |  DAC_C0_DACEN_MASK;    /* Enable DAC                 */
 
     /*
      * Enable and configure both AT1846S and HR_C6000
@@ -385,19 +425,19 @@ void rtx_taskFunc()
         }
     }
 
-//     if(platform_getPttStatus() && (rtxStatus.opStatus != TX))
-//     {
-//         _disableRtxStages();
-//         _enableTxStage();
-//         platform_ledOn(RED);
-//     }
-//
-//     if(!platform_getPttStatus() && (rtxStatus.opStatus == TX))
-//     {
-//         _disableRtxStages();
-//         _enableRxStage();
-//         platform_ledOff(RED);
-//     }
+    if(platform_getPttStatus() && (rtxStatus.opStatus != TX))
+    {
+        _disableRtxStages();
+        _enableTxStage();
+        platform_ledOn(RED);
+    }
+
+    if(!platform_getPttStatus() && (rtxStatus.opStatus == TX))
+    {
+        _disableRtxStages();
+        _enableRxStage();
+        platform_ledOff(RED);
+    }
 }
 
 float rtx_getRssi()
