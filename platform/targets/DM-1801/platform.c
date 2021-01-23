@@ -19,8 +19,10 @@
  ***************************************************************************/
 
 #include <interfaces/platform.h>
-#include <ADC0_GDx.h>
+#include <interfaces/nvmem.h>
 #include <interfaces/gpio.h>
+#include <calibInfo_GDx.h>
+#include <ADC0_GDx.h>
 #include <I2C0.h>
 #include <os.h>
 #include "hwconfig.h"
@@ -28,6 +30,8 @@
 /* Mutex for concurrent access to ADC0 */
 OS_MUTEX adc_mutex;
 OS_ERR e;
+
+gdxCalibration_t calibration;
 
 void platform_init()
 {
@@ -70,6 +74,12 @@ void platform_init()
     gpio_setAlternateFunction(I2C_SDA, 3);
     gpio_setAlternateFunction(I2C_SCL, 3);
     i2c0_init();
+
+    /*
+     * Initialise non volatile memory manager and load calibration data.
+     */
+    nvm_init();
+    nvm_readCalibData(&calibration);
 }
 
 void platform_terminate()
@@ -168,4 +178,9 @@ void platform_beepStop()
 void platform_setBacklightLevel(uint8_t level)
 {
     FTM0->CONTROLS[3].CnV = level;
+}
+
+const void *platform_getCalibrationData()
+{
+    return ((const void *) &calibration);
 }
