@@ -30,33 +30,39 @@ int main()
 
     getchar();
     printf("Codeplug Demo!\r\n\r\n");
-    printf("Contacts:\r\n");
-    for(uint16_t pos=0,result=0; result != -1 && pos < 20; pos++)
+    printf("Channels:\r\n");
+    for(int pos=0,result=0; result != -1; pos++)
     {
         channel_t ch;
         result = nvm_readChannelData(&ch, pos);
-        printf("Contact n.%d:\r\n", pos+1);
-        printf("  %s\r\n  TX: %ld\r\n  RX: %ld\r\n  Mode: %s\r\n  Bandwidth: %s\r\n",
-               ch.name,
-               ch.tx_frequency,
-               ch.rx_frequency,
-               (ch.mode == 1) ? "DMR" : "FM",
-               (ch.bandwidth == BW_12_5) ? "12.5kHz" : ((ch.bandwidth == BW_20)
-                                                          ? "20kHz" : "25kHz"));
+        if(result != -1)
+        {
+            printf("Channel n.%d:\r\n", pos+1);
+            printf("  %s\r\n  TX: %ld\r\n  RX: %ld\r\n  Mode: %s\r\n  Bandwidth: %s\r\n",
+                   ch.name,
+                   ch.tx_frequency,
+                   ch.rx_frequency,
+                   (ch.mode == 1) ? "DMR" : "FM",
+                   (ch.bandwidth == BW_12_5) ? "12.5kHz" : ((ch.bandwidth == BW_20)
+                                                              ? "20kHz" : "25kHz"));
+        }
         puts("\r");
     }
     printf("Zones:\r\n");
-    for(uint16_t pos=0,result=0; result != -1 && pos < 5; pos++)
+    for(int pos=0,result=0; result != -1; pos++)
     {
         zone_t zone;
         result = nvm_readZoneData(&zone, pos);
-        printf("Zone n.%d:\r\n", pos+1);
-        printf("  %s\r\n", zone.name);
-        for(int x=0; x < 64; x++)
+        if(result != -1)
         {
-            if(zone.member[x] != 0)
+            printf("Zone n.%d:\r\n", pos+1);
+            printf("  %s\r\n", zone.name);
+            for(int x=0; x < 64; x++)
             {
-                printf("  - Channel %d\r\n", zone.member[x]);
+                if(zone.member[x] != 0)
+                {
+                    printf("  - Index: %d, Channel %d\r\n", x, zone.member[x]);
+                }
             }
         }
         puts("\r");
