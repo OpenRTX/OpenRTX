@@ -200,6 +200,9 @@ void AT1846S_setOpMode(AT1846S_op_t mode)
         i2c_writeReg16(0x58, 0xBC05);
         i2c_writeReg16(0x44, 0x06FF);
         i2c_writeReg16(0x40, 0x0030);
+
+        _maskSetRegister(0x57, 0x0001, 0x00);     /* Audio feedback off   */
+        _maskSetRegister(0x3A, 0x7000, 0x4000);   /* Select voice channel */
     }
 
     _reloadConfig();
@@ -242,9 +245,10 @@ void AT1846S_setAgcGain(uint8_t gain)
     _maskSetRegister(0x44, 0x0F00, agc);
 }
 
-void AT1846S_setTxDeviation(uint8_t dev)
+void AT1846S_setTxDeviation(uint16_t dev)
 {
-    _maskSetRegister(0x59, 0x003F, ((uint16_t) dev));
+    uint16_t value = (dev & 0x03FF) << 6;
+    _maskSetRegister(0x59, 0xFFC0, value);
 }
 
 void AT1846S_setRxAudioGain(uint8_t gainWb, uint8_t gainNb)
@@ -252,6 +256,24 @@ void AT1846S_setRxAudioGain(uint8_t gainWb, uint8_t gainNb)
     uint16_t value = (gainWb & 0x0F) << 8;
     _maskSetRegister(0x44, 0x0F00, value);
     _maskSetRegister(0x44, 0x000F, ((uint16_t) gainNb));
+}
+
+void AT1846S_setNoise1Thresholds(uint8_t highTsh, uint8_t lowTsh)
+{
+    uint16_t value = ((highTsh & 0x1f) << 8) | (lowTsh & 0x1F);
+    i2c_writeReg16(0x48, value);
+}
+
+void AT1846S_setNoise2Thresholds(uint8_t highTsh, uint8_t lowTsh)
+{
+    uint16_t value = ((highTsh & 0x1f) << 8) | (lowTsh & 0x1F);
+    i2c_writeReg16(0x60, value);
+}
+
+void AT1846S_setRssiThresholds(uint8_t highTsh, uint8_t lowTsh)
+{
+    uint16_t value = ((highTsh & 0x1f) << 8) | (lowTsh & 0x1F);
+    i2c_writeReg16(0x3F, value);
 }
 
 void AT1846S_setPaDrive(uint8_t value)

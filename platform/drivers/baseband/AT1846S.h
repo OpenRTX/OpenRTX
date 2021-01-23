@@ -48,73 +48,87 @@ typedef enum
 AT1846S_func_t;
 
 /**
- * 
+ *
  */
 void AT1846S_init();
 
 /**
- * 
+ *
  */
 void AT1846S_postInit();
 
 /**
- * 
+ *
  */
 void AT1846S_setFrequency(const freq_t freq);
 
 /**
- * 
+ *
  */
 void AT1846S_setBandwidth(AT1846S_bw_t band);
 
 /**
- * 
+ *
  */
 void AT1846S_setOpMode(AT1846S_op_t mode);
 
 /**
- * 
+ *
  */
 void AT1846S_setFuncMode(AT1846S_func_t mode);
 
 /**
- * 
+ *
  */
 uint16_t AT1846S_readRSSI();
 
 /**
- * 
+ *
  */
 void AT1846S_setPgaGain(uint8_t gain);
 
 /**
- * 
+ *
  */
 void AT1846S_setMicGain(uint8_t gain);
 
-
 /**
- * 
+ *
  */
-void AT1846S_setTxDeviation(uint8_t dev);
+void AT1846S_setTxDeviation(uint16_t dev);
 
 /**
- * 
+ *
  */
 void AT1846S_setAgcGain(uint8_t gain);
 
 /**
- * 
+ *
  */
 void AT1846S_setRxAudioGain(uint8_t gainWb, uint8_t gainNb);
 
 /**
- * 
+ *
+ */
+void AT1846S_setNoise1Thresholds(uint8_t highTsh, uint8_t lowTsh);
+
+/**
+ *
+ */
+void AT1846S_setNoise2Thresholds(uint8_t highTsh, uint8_t lowTsh);
+
+/**
+ *
+ */
+void AT1846S_setRssiThresholds(uint8_t highTsh, uint8_t lowTsh);
+
+/**
+ *
  */
 void AT1846S_setPaDrive(uint8_t value);
 
 /**
- * 
+ *
  */
 void AT1846S_setAnalogSqlThresh(uint8_t thresh);
 
