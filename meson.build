@@ -248,7 +248,10 @@ gd77_src = src + mk22fn512_src + ['platform/targets/GD77/platform.c',
                                   'platform/drivers/NVM/spiFlash_GDx.c',
                                   'platform/drivers/NVM/nvmem_GDx.c',
                                   'platform/drivers/ADC/ADC0_GDx.c',
-                                  'platform/drivers/baseband/rtx_GDx.c']
+                                  'platform/drivers/baseband/rtx_GDx.c',
+                                  'platform/drivers/baseband/AT1846S.c',
+                                  'platform/drivers/baseband/HR_C6000.c',
+                                  'platform/drivers/baseband/interfaces_GDx.c']
 
 gd77_inc = inc + mk22fn512_inc + ['platform/targets/GD77']
 gd77_def = def + mk22fn512_def + {'PLATFORM_GD77': ''}
