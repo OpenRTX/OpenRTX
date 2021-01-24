@@ -87,7 +87,9 @@ extern void _ui_drawMainMEM(state_t* last_state);
 extern void _ui_drawMenuList(point_t pos, const char *entries[], uint8_t num_entries, uint8_t selected);
 extern void _ui_drawChannelList(point_t pos, uint8_t selected);
 extern void _ui_drawMenuTop(ui_state_t* ui_state);
+extern void _ui_drawMenuZone(ui_state_t* ui_state);
 extern void _ui_drawMenuChannel(ui_state_t* ui_state);
+extern void _ui_drawMenuContacts(ui_state_t* ui_state);
 extern void _ui_drawMenuSettings(ui_state_t* ui_state);
 #ifdef HAS_RTC
 extern void _ui_drawSettingsTimeDate(state_t* last_state);
@@ -700,10 +702,16 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     // Open selected menu item
                     switch(ui_state.menu_selected)
                     {
-                        // TODO: Add missing submenu states
+                        case 0:
+                            state.ui_screen = MENU_ZONE;
+                            break;
                         case 1:
                             state.ui_screen = MENU_CHANNEL;
                             break;
+                        case 2:
+                            state.ui_screen = MENU_CONTACTS;
+                            break;
+                        // TODO: Add missing submenu states
                         case 5:
                             state.ui_screen = MENU_SETTINGS;
                             break;
@@ -721,6 +729,32 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     ui_state.menu_selected = 0;
                 }
                 break;
+            // Zone menu screen
+            case MENU_ZONE:
+                if(msg.keys & KEY_UP)
+                {
+                    if(ui_state.menu_selected > 0)
+                        ui_state.menu_selected -= 1;
+                }
+                else if(msg.keys & KEY_DOWN)
+                {
+                    zone_t zone;
+                    if(nvm_readZoneData(&zone, ui_state.menu_selected + 1) != -1)
+                        ui_state.menu_selected += 1;
+                }
+                else if(msg.keys & KEY_ESC)
+                {
+                    // Return to top menu
+                    state.ui_screen = MENU_TOP;
+                    // Reset menu selection
+                    ui_state.menu_selected = 0;
+                }
+                else if(msg.keys & KEY_MONI)
+                {
+                    // Open Macro Menu
+                    state.ui_screen = MENU_MACRO;
+                }
+                break;
             // Channel menu screen
             case MENU_CHANNEL:
                 if(msg.keys & KEY_UP)
@@ -732,6 +766,32 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 {
                     channel_t channel;
                     if(nvm_readChannelData(&channel, ui_state.menu_selected + 1) != -1)
+                        ui_state.menu_selected += 1;
+                }
+                else if(msg.keys & KEY_ESC)
+                {
+                    // Return to top menu
+                    state.ui_screen = MENU_TOP;
+                    // Reset menu selection
+                    ui_state.menu_selected = 0;
+                }
+                else if(msg.keys & KEY_MONI)
+                {
+                    // Open Macro Menu
+                    state.ui_screen = MENU_MACRO;
+                }
+                break;
+            // Contacts menu screen
+            case MENU_CONTACTS:
+                if(msg.keys & KEY_UP)
+                {
+                    if(ui_state.menu_selected > 0)
+                        ui_state.menu_selected -= 1;
+                }
+                else if(msg.keys & KEY_DOWN)
+                {
+                    contact_t contact;
+                    if(nvm_readContactData(&contact, ui_state.menu_selected + 1) != -1)
                         ui_state.menu_selected += 1;
                 }
                 else if(msg.keys & KEY_ESC)
@@ -863,9 +923,17 @@ void ui_updateGUI(state_t last_state)
         case MENU_TOP:
             _ui_drawMenuTop(&ui_state);
             break;
+        // Zone menu screen
+        case MENU_ZONE:
+            _ui_drawMenuZone(&ui_state);
+            break;
         // Channel menu screen
         case MENU_CHANNEL:
             _ui_drawMenuChannel(&ui_state);
+            break;
+        // Contacts menu screen
+        case MENU_CONTACTS:
+            _ui_drawMenuContacts(&ui_state);
             break;
         // Macro menu
         case MENU_MACRO:
