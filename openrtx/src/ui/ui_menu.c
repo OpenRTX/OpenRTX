@@ -20,8 +20,9 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include <ui.h>
 #include <string.h>
+#include <ui.h>
+#include <interfaces/nvmem.h>
 
 void _ui_drawMenuList(point_t pos, const char *entries[], 
                       uint8_t num_entries, uint8_t selected)
@@ -112,15 +113,15 @@ void _ui_drawMenuSettings(ui_state_t* ui_state)
 }
 
 #ifdef HAS_RTC
-void _ui_drawSettingsTimeDate(state_t* last_state, ui_state_t* ui_state)
+void _ui_drawSettingsTimeDate(state_t* last_state)
 {
     gfx_clearScreen();
     // Print "Time&Date" on top bar
     gfx_print(layout.top_left, "Time&Date", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print current time and date
-    char date_buf[9] = "";
-    char time_buf[9] = "";
+    char date_buf[10] = "";
+    char time_buf[10] = "";
     snprintf(date_buf, sizeof(date_buf), "%02d/%02d/%02d", 
              last_state->time.date, last_state->time.month, last_state->time.year);
     snprintf(time_buf, sizeof(time_buf), "%02d:%02d:%02d", 
@@ -201,8 +202,8 @@ bool _ui_drawMenuMacro(state_t* last_state) {
                   color_white);
         gfx_print(layout.line1_right, "3        ", layout.top_font, TEXT_ALIGN_RIGHT,
                   yellow_fab413);
-        char pow_str[5] = { 0 };
-        snprintf(pow_str, 5, "%.1gW", last_state->channel.power);
+        char pow_str[9] = { 0 };
+        snprintf(pow_str, 9, "%.1gW", last_state->channel.power);
         gfx_print(layout.line1_right, pow_str, layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white);
         // Second row

@@ -90,7 +90,7 @@ extern void _ui_drawMenuTop(ui_state_t* ui_state);
 extern void _ui_drawMenuChannel(ui_state_t* ui_state);
 extern void _ui_drawMenuSettings(ui_state_t* ui_state);
 #ifdef HAS_RTC
-extern void _ui_drawSettingsTimeDate(state_t* last_state, ui_state_t* ui_state);
+extern void _ui_drawSettingsTimeDate(state_t* last_state);
 extern void _ui_drawSettingsTimeDateSet(state_t* last_state, ui_state_t* ui_state);
 #endif
 extern bool _ui_drawMenuMacro(state_t* last_state);
@@ -878,7 +878,7 @@ void ui_updateGUI(state_t last_state)
 #ifdef HAS_RTC
         // Time&Date settings screen
         case SETTINGS_TIMEDATE:
-            _ui_drawSettingsTimeDate(&last_state, &ui_state);
+            _ui_drawSettingsTimeDate(&last_state);
             break;
         // Time&Date settings screen, edit mode
         case SETTINGS_TIMEDATE_SET:
