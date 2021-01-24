@@ -45,3 +45,14 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
 
     return 0;
 }
+
+int nvm_readZoneData(zone_t *zone, uint16_t pos)
+{
+    return -1;
+}
+
+int nvm_readContactData(contact_t *contact, uint16_t pos)
+{
+    return -1;
+}
+
