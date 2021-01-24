@@ -102,14 +102,14 @@ typedef enum
 /**
  * Selection of the fonts, ordered by the fontSize_t enum.
  */
-static GFXfont fonts[] = { TomThumb,           // 5pt
-                           FreeSans6pt7b,      // 6pt
-                           FreeSans8pt7b,      // 8pt
-                           FreeSans9pt7b,      // 9pt
-                           FreeSans12pt7b,     // 12pt
-                           FreeSans16pt7b,     // 16pt
-                           FreeSans18pt7b,     // 16pt
-                           FreeSans24pt7b };   // 24pt
+static GFXfont const fonts[] = { TomThumb,           // 5pt
+                                 FreeSans6pt7b,      // 6pt
+                                 FreeSans8pt7b,      // 8pt
+                                 FreeSans9pt7b,      // 9pt
+                                 FreeSans12pt7b,     // 12pt
+                                 FreeSans16pt7b,     // 16pt
+                                 FreeSans18pt7b,     // 16pt
+                                 FreeSans24pt7b };   // 24pt
 
 /**
  * This function calls the correspondent method of the low level interface display.h
