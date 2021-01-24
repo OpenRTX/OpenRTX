@@ -21,8 +21,10 @@
 #include <stdio.h>
 #include <interfaces/nvmem.h>
 
-// Simulate CPS with 8 channels
-const uint32_t maxNumChannels = 8;
+// Simulate CPS with 16 channels, 16 zones, 16 contacts
+const uint32_t maxNumZones = 16;
+const uint32_t maxNumChannels = 16;
+const uint32_t maxNumContacts = 16;
 const freq_t dummy_base_freq = 145500000;
 
 void nvm_init()
@@ -35,7 +37,7 @@ void nvm_terminate()
 
 int nvm_readChannelData(channel_t *channel, uint16_t pos)
 {
-    if(pos > maxNumChannels) return -1;
+    if(pos >= maxNumChannels) return -1;
 
     /* Generate dummy channel name */
     snprintf(channel->name, 16, "Channel %d", pos);
@@ -48,11 +50,21 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
 
 int nvm_readZoneData(zone_t *zone, uint16_t pos)
 {
-    return -1;
+    if(pos >= maxNumZones) return -1;
+
+    /* Generate dummy zone name */
+    snprintf(zone->name, 16, "Zone %d", pos);
+
+    return 0;
 }
 
 int nvm_readContactData(contact_t *contact, uint16_t pos)
 {
-    return -1;
+    if(pos >= maxNumContacts) return -1;
+
+    /* Generate dummy contact name */
+    snprintf(contact->name, 16, "Contact %d", pos);
+
+    return 0;
 }
 
