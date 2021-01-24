@@ -36,8 +36,14 @@
 #define HAS_RTC
 
 /* Supported radio bands */
-#define BAND_VHF
-#define BAND_UHF
+//since each MD-3?0 is only capable of one band, and we don't (yet?) have a
+//way to query the radio hardware (or pre-existing code) before flash
+//user must specify a VHF or UHF target addendum which will provide
+//either BAND_VHF or BAND_UHF at compile time
+//
+//MD-390 UHF is build target md390 - since the MD-380 VHF model numbers have
+// a V at the end and a regular "MD-380" is UHF, we're carrying the same
+// thing forward to the MD-390, so MD-390 VHF is build target md390v
 
 /* Band limits in Hz */
 #define FREQ_LIMIT_VHF_LO 136000000

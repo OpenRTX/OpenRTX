@@ -36,8 +36,14 @@
 #define HAS_RTC
 
 /* Supported radio bands */
-#define BAND_VHF
-#define BAND_UHF
+//since each MD-380 is only capable of one band, and we don't (yet?) have a
+//way to query the radio hardware (or pre-existing code) before flash
+//user must specify a VHF or UHF target addendum which will provide
+//either BAND_VHF or BAND_UHF at compile time
+//
+//UHF is assumed, since for the FCC IDs on the radios themselves the MD-380 is UHF
+//and MD-380V is VHF
+//that means the build targets ar md380 and md380v respectively
 
 /* Band limits in Hz */
 #define FREQ_LIMIT_VHF_LO 136000000

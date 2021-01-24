@@ -351,6 +351,9 @@ foreach k, v : md9600_def
   endif
 endforeach
 
+band_uhf = ['-DBAND_UHF']
+band_vhf = ['-DBAND_VHF']
+
 linux_opts = {'sources': linux_src,
               'c_args': linux_c_args,
               'include_directories': linux_inc,
@@ -358,13 +361,25 @@ linux_opts = {'sources': linux_src,
               'link_args' : linux_l_args}
 
 md380_opts = {'sources': md380_src,
-              'c_args': md380_args,
+              'c_args': md380_args + band_uhf,
+              'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
+                             '-Wl,--print-memory-usage'],
+              'include_directories': md380_inc}
+
+md380v_opts = {'sources': md380_src,
+              'c_args': md380_args + band_vhf,
               'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
                              '-Wl,--print-memory-usage'],
               'include_directories': md380_inc}
 
 md390_opts = {'sources': md390_src,
-              'c_args': md390_args,
+              'c_args': md390_args + band_uhf,
+              'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
+                             '-Wl,--print-memory-usage'],
+              'include_directories': md390_inc}
+
+md390v_opts = {'sources': md390_src,
+              'c_args': md390_args + band_vhf,
               'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
                              '-Wl,--print-memory-usage'],
               'include_directories': md390_inc}
@@ -414,7 +429,19 @@ targets = [
    'wrap': 'MD380',
    'load_addr': '0x0800C000'},
 
+  {'name': 'md380v',
+   'opts': md380v_opts,
+   'flashable': true,
+   'wrap': 'MD380',
+   'load_addr': '0x0800C000'},
+
   {'name': 'md390',
+   'opts': md390_opts,
+   'flashable': true,
+   'wrap': 'MD390',
+   'load_addr': '0x0800C000'},
+
+  {'name': 'md390v',
    'opts': md390_opts,
    'flashable': true,
    'wrap': 'MD390',
