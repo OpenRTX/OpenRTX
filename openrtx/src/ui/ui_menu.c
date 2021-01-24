@@ -62,89 +62,49 @@ void _ui_drawMenuList(point_t pos, const char *entries[],
     }
 }
 
-void _ui_drawZoneList(point_t pos, uint8_t selected)
+int _ui_getZoneName(char *buf, uint8_t max_len, uint8_t index)
 {
-    // Number of menu entries that fit in the screen height
-    uint8_t entries_in_screen = ((SCREEN_HEIGHT - pos.y) / layout.top_h) + 1;
-    uint8_t scroll = 0;
-    char entry_buf[MAX_ENTRY_LEN] = "";
-    int result = 0;
     zone_t zone;
-    for(int item=0; (result == 0) && (pos.y < SCREEN_HEIGHT); item++)
-    {
-        // If selection is off the screen, scroll screen
-        if(selected >= entries_in_screen)
-            scroll = selected - entries_in_screen + 1;
-        result = nvm_readZoneData(&zone, item + scroll);
-        if(result != -1)
-        {
-            snprintf(entry_buf, sizeof(entry_buf), "%s", zone.name);
-            if(item + scroll == selected)
-            {
-                // Draw rectangle under selected item, compensating for text height
-                point_t rect_pos = {0, pos.y - layout.top_h + 3};
-                gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.top_h, color_white, true); 
-                gfx_print(pos, entry_buf, layout.top_font, TEXT_ALIGN_LEFT, color_black);
-            }
-            else
-            {
-                gfx_print(pos, entry_buf, layout.top_font, TEXT_ALIGN_LEFT, color_white);
-            }
-            pos.y += layout.top_h;
-        }
-    }
+    int result = nvm_readZoneData(&zone, index);
+    if(result != -1)
+        snprintf(buf, max_len, "%s", zone.name);
+    return result;
 }
 
-void _ui_drawChannelList(point_t pos, uint8_t selected)
+int _ui_getChannelName(char *buf, uint8_t max_len, uint8_t index)
 {
-    // Number of menu entries that fit in the screen height
-    uint8_t entries_in_screen = ((SCREEN_HEIGHT - pos.y) / layout.top_h) + 1;
-    uint8_t scroll = 0;
-    char entry_buf[MAX_ENTRY_LEN] = "";
-    int result = 0;
     channel_t channel;
-    for(int item=0; (result == 0) && (pos.y < SCREEN_HEIGHT); item++)
-    {
-        // If selection is off the screen, scroll screen
-        if(selected >= entries_in_screen)
-            scroll = selected - entries_in_screen + 1;
-        result = nvm_readChannelData(&channel, item + scroll);
-        if(result != -1)
-        {
-            snprintf(entry_buf, sizeof(entry_buf), "%s", channel.name);
-            if(item + scroll == selected)
-            {
-                // Draw rectangle under selected item, compensating for text height
-                point_t rect_pos = {0, pos.y - layout.top_h + 3};
-                gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.top_h, color_white, true); 
-                gfx_print(pos, entry_buf, layout.top_font, TEXT_ALIGN_LEFT, color_black);
-            }
-            else
-            {
-                gfx_print(pos, entry_buf, layout.top_font, TEXT_ALIGN_LEFT, color_white);
-            }
-            pos.y += layout.top_h;
-        }
-    }
+    int result = nvm_readChannelData(&channel, index);
+    if(result != -1)
+        snprintf(buf, max_len, "%s", channel.name);
+    return result;
 }
 
-void _ui_drawContactList(point_t pos, uint8_t selected)
+int _ui_getContactName(char *buf, uint8_t max_len, uint8_t index)
+{
+    contact_t contact;
+    int result = nvm_readContactData(&contact, index);
+    if(result != -1)
+        snprintf(buf, max_len, "%s", contact.name);
+    return result;
+}
+
+void _ui_drawCPSList(point_t pos, uint8_t selected, int (*f)(char *buf, uint8_t max_len, uint8_t index))
 {
     // Number of menu entries that fit in the screen height
     uint8_t entries_in_screen = ((SCREEN_HEIGHT - pos.y) / layout.top_h) + 1;
     uint8_t scroll = 0;
     char entry_buf[MAX_ENTRY_LEN] = "";
     int result = 0;
-    contact_t contact;
     for(int item=0; (result == 0) && (pos.y < SCREEN_HEIGHT); item++)
     {
         // If selection is off the screen, scroll screen
         if(selected >= entries_in_screen)
             scroll = selected - entries_in_screen + 1;
-        result = nvm_readContactData(&contact, item + scroll);
+        // Call function pointer to get CPS element name
+        result = (*f)(entry_buf, MAX_ENTRY_LEN, item+scroll);
         if(result != -1)
         {
-            snprintf(entry_buf, sizeof(entry_buf), "%s", contact.name);
             if(item + scroll == selected)
             {
                 // Draw rectangle under selected item, compensating for text height
@@ -178,7 +138,7 @@ void _ui_drawMenuZone(ui_state_t* ui_state)
     gfx_print(layout.top_left, "Zone", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print zone entries
-    _ui_drawZoneList(layout.line1_left, ui_state->menu_selected);
+    _ui_drawCPSList(layout.line1_left, ui_state->menu_selected, _ui_getZoneName);
 }
 
 void _ui_drawMenuChannel(ui_state_t* ui_state)
@@ -188,7 +148,7 @@ void _ui_drawMenuChannel(ui_state_t* ui_state)
     gfx_print(layout.top_left, "Channels", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print channel entries
-    _ui_drawChannelList(layout.line1_left, ui_state->menu_selected);
+    _ui_drawCPSList(layout.line1_left, ui_state->menu_selected, _ui_getChannelName);
 }
 
 void _ui_drawMenuContacts(ui_state_t* ui_state)
@@ -198,7 +158,7 @@ void _ui_drawMenuContacts(ui_state_t* ui_state)
     gfx_print(layout.top_left, "Contacts", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print contact entries
-    _ui_drawContactList(layout.line1_left, ui_state->menu_selected);
+    _ui_drawCPSList(layout.line1_left, ui_state->menu_selected, _ui_getContactName);
 }
 
 void _ui_drawMenuSettings(ui_state_t* ui_state)
