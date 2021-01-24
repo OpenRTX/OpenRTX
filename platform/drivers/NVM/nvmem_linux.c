@@ -18,6 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <stdio.h>
 #include <interfaces/nvmem.h>
 
 // Simulate CPS with 8 channels
