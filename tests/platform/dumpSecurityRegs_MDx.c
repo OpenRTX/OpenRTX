@@ -28,6 +28,31 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+/*
+ *
+ * Use instructions:
+ * setup like normal, e.g. meson setup --cross-file cross_arm.txt build_arm
+ * configure this test: meson configure -Dtest=dumpSecurityRegs_MDx build_arm/
+ * make sure START_TSK_STKSIZE in openrtx/src/bootstrap.c is increased (2048/sizeof(CPU_STK) is a good number) or test will not run
+ * flash like normal, e.g. meson compile -C build_arm openrtx_md380_flash
+ *
+ * Then reboot the radio into this app once it's flashed.
+ * It will print out the registers after you press a button.
+ *
+ * Example: minicom -D /dev/ttyACM0
+ * (ctrl-a o to bring up the menu, serial port setup to choose 115200 8N1)
+ * (ctrl-a l to bring up minicom logging, enter to set the log filename)
+ * press enter key or whatever you like, view output
+ * (ctrl-a q  to close minicom)
+ * the logged output is in that .cap file you named with ctrl-L
+ *
+ * Name it with the model number (MD380, MD380V, MD380G, MD380VG) (or MD390 variants)
+ * and then the serial number, like MD380_SN12345678.cap
+ * put it in this repo under data/tests/dumpSecurityRegs_MDx
+ *
+ *
+ */
+
 #include <stdio.h>
 #include <stdint.h>
 #include <sys/types.h>
