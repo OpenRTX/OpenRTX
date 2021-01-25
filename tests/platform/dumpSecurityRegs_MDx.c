@@ -48,7 +48,9 @@
  *
  * Name it with the model number (MD380, MD380V, MD380G, MD380VG) (or MD390 variants)
  * and then the serial number, like MD380_SN12345678.cap
- * put it in this repo under data/tests/dumpSecurityRegs_MDx
+ *
+ * add these files to https://github.com/OpenRTX/OpenRTX-external-docs/
+ * under /External%20flash%20dumps/MDx%20security%20registers
  *
  *
  */
