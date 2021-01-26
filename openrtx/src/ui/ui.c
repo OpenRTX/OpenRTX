@@ -514,6 +514,13 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
             state.channel.bandwidth %= 3;
             *sync_rtx = true;
             break;
+        case 5:
+            if(state.channel.mode == FM)
+                state.channel.mode = DMR;
+            else if(state.channel.mode == DMR)
+                state.channel.mode = FM;
+            *sync_rtx = true;
+            break;
         case 7:
             new_blight += 25;
             new_blight = (new_blight > 255) ? 255 : new_blight;

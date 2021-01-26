@@ -275,7 +275,17 @@ bool _ui_drawMenuMacro(state_t* last_state) {
                   color_white);
         gfx_print(layout.line2_left, "5       ", layout.top_font, TEXT_ALIGN_CENTER,
                   yellow_fab413);
-        gfx_print(layout.line2_left, "     GPS", layout.top_font, TEXT_ALIGN_CENTER,
+        char mode_str[9] = "";
+        switch(last_state->channel.mode)
+        {
+            case FM:
+            snprintf(mode_str, 9,"      FM");
+            break;
+            case DMR:
+            snprintf(mode_str, 9,"     DMR");
+            break;
+        }
+        gfx_print(layout.line2_left, mode_str, layout.top_font, TEXT_ALIGN_CENTER,
                   color_white);
         gfx_print(layout.line2_right, "6        ", layout.top_font, TEXT_ALIGN_RIGHT,
                   yellow_fab413);
