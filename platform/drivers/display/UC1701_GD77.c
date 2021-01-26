@@ -91,11 +91,9 @@ void display_init()
     gpio_clearPin(LCD_CS);
 
     gpio_clearPin(LCD_RS);      /* RS low -> command mode          */
-//     sendByteToController(0xE2); /* System Reset                 */
     sendByteToController(0x2F); /* Voltage Follower On             */
-    sendByteToController(0x81); /* Set Electronic Volume = 15      */
-    /* TODO variable contrast */
-    sendByteToController(0x15); /* Contrast                        */
+    sendByteToController(0x81); /* Set Electronic Volume           */
+    sendByteToController(0x15); /* Contrast, initial setting       */
     sendByteToController(0xA2); /* Set Bias = 1/9                  */
     sendByteToController(0xA1); /* A0 Set SEG Direction            */
     sendByteToController(0xC0); /* Set COM Direction               */
@@ -130,7 +128,9 @@ void display_renderRow(uint8_t row)
                 count--;
             }
         }
-        for (uint8_t s = 0; s < 8; s++){
+
+        for (uint8_t s = 0; s < 8; s++)
+        {
             sendByteToController(tmp[s]);
         }
     }
@@ -138,7 +138,7 @@ void display_renderRow(uint8_t row)
 
 void display_renderRows(uint8_t startRow, uint8_t endRow)
 {
-        for(uint8_t row = startRow; row < endRow; row++)
+    for(uint8_t row = startRow; row < endRow; row++)
     {
         gpio_clearPin(LCD_RS);            /* RS low -> command mode */
         sendByteToController(0xB0 | row); /* Set Y position         */
@@ -147,7 +147,7 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
         gpio_setPin(LCD_RS);              /* RS high -> data mode   */
         display_renderRow(row);
     }
-        
+
 }
 
 void display_render()
@@ -165,4 +165,11 @@ bool display_renderingInProgress()
 void *display_getFrameBuffer()
 {
     return (void *)(frameBuffer);
+}
+
+void display_setContrast(uint8_t contrast)
+{
+    gpio_clearPin(LCD_RS);               /* RS low -> command mode              */
+    sendByteToController(0x81);          /* Set Electronic Volume               */
+    sendByteToController(contrast >> 2); /* Controller contrast range is 0 - 63 */
 }

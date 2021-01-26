@@ -196,3 +196,9 @@ void *display_getFrameBuffer()
 {
     return (void *) (frameBuffer);
 }
+
+void display_setContrast(uint8_t contrast)
+{
+    printf("Setting display contrast to %d\n", contrast);
+}
+

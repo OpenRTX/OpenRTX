@@ -384,7 +384,7 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
      * this one is made of 16 bit variables.
      */
     DMA2_Stream7->NDTR = (endRow - startRow) * SCREEN_WIDTH * sizeof(uint16_t);
-    DMA2_Stream7->PAR  = ((uint32_t ) frameBuffer + (startRow * SCREEN_WIDTH 
+    DMA2_Stream7->PAR  = ((uint32_t ) frameBuffer + (startRow * SCREEN_WIDTH
                                                      * sizeof(uint16_t)));
     DMA2_Stream7->M0AR = LCD_FSMC_ADDR_DATA;
     DMA2_Stream7->CR = DMA_SxCR_CHSEL         /* Channel 7                   */
@@ -417,4 +417,10 @@ bool display_renderingInProgress()
 void *display_getFrameBuffer()
 {
     return (void *)(frameBuffer);
+}
+
+void display_setContrast(uint8_t contrast)
+{
+    /* This controller does not support contrast regulation */
+    (void) contrast;
 }
