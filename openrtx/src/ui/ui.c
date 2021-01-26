@@ -583,12 +583,12 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 }
                 else if(msg.keys & KEY_ESC)
                 {
+                    // Save VFO channel
+                    state.vfo_channel = state.channel;
                     int result = _ui_fsm_loadChannel(state.channel_index, sync_rtx);
                     // Read successful and channel is valid
                     if(result != -1)
                     {
-                        // Save VFO channel
-                        state.vfo_channel = state.channel;
                         // Switch to MEM screen
                         state.ui_screen = MAIN_MEM;
                     }
