@@ -761,6 +761,18 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                             ui_state.menu_selected += 1;
                     }
                 }
+                else if(msg.keys & KEY_ENTER)
+                {
+                    if(state.ui_screen == MENU_CHANNEL)
+                    {
+                        // If we were in VFO mode, save VFO channel
+                        if(ui_state.last_main_state == MAIN_VFO)
+                            state.vfo_channel = state.channel;
+                        _ui_fsm_loadChannel(ui_state.menu_selected, sync_rtx);
+                        // Switch to MEM screen
+                        state.ui_screen = MAIN_MEM;
+                    }
+                }
                 else if(msg.keys & KEY_ESC)
                 {
                     // Return to top menu
