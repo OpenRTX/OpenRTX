@@ -731,56 +731,8 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 break;
             // Zone menu screen
             case MENU_ZONE:
-                if(msg.keys & KEY_UP)
-                {
-                    if(ui_state.menu_selected > 0)
-                        ui_state.menu_selected -= 1;
-                }
-                else if(msg.keys & KEY_DOWN)
-                {
-                    zone_t zone;
-                    if(nvm_readZoneData(&zone, ui_state.menu_selected + 1) != -1)
-                        ui_state.menu_selected += 1;
-                }
-                else if(msg.keys & KEY_ESC)
-                {
-                    // Return to top menu
-                    state.ui_screen = MENU_TOP;
-                    // Reset menu selection
-                    ui_state.menu_selected = 0;
-                }
-                else if(msg.keys & KEY_MONI)
-                {
-                    // Open Macro Menu
-                    state.ui_screen = MENU_MACRO;
-                }
-                break;
             // Channel menu screen
             case MENU_CHANNEL:
-                if(msg.keys & KEY_UP)
-                {
-                    if(ui_state.menu_selected > 0)
-                        ui_state.menu_selected -= 1;
-                }
-                else if(msg.keys & KEY_DOWN)
-                {
-                    channel_t channel;
-                    if(nvm_readChannelData(&channel, ui_state.menu_selected + 1) != -1)
-                        ui_state.menu_selected += 1;
-                }
-                else if(msg.keys & KEY_ESC)
-                {
-                    // Return to top menu
-                    state.ui_screen = MENU_TOP;
-                    // Reset menu selection
-                    ui_state.menu_selected = 0;
-                }
-                else if(msg.keys & KEY_MONI)
-                {
-                    // Open Macro Menu
-                    state.ui_screen = MENU_MACRO;
-                }
-                break;
             // Contacts menu screen
             case MENU_CONTACTS:
                 if(msg.keys & KEY_UP)
@@ -790,9 +742,24 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 }
                 else if(msg.keys & KEY_DOWN)
                 {
-                    contact_t contact;
-                    if(nvm_readContactData(&contact, ui_state.menu_selected + 1) != -1)
-                        ui_state.menu_selected += 1;
+                    switch(state.ui_screen)
+                    {
+                        case MENU_ZONE:
+                            zone_t zone;
+                            if(nvm_readZoneData(&zone, ui_state.menu_selected + 1) != -1)
+                                ui_state.menu_selected += 1;
+                            break;
+                        case MENU_CHANNEL:
+                            channel_t channel;
+                            if(nvm_readChannelData(&channel, ui_state.menu_selected + 1) != -1)
+                                ui_state.menu_selected += 1;
+                            break;
+                        case MENU_CONTACTS:
+                            contact_t contact;
+                            if(nvm_readContactData(&contact, ui_state.menu_selected + 1) != -1)
+                                ui_state.menu_selected += 1;
+                            break;
+                    }
                 }
                 else if(msg.keys & KEY_ESC)
                 {
@@ -807,7 +774,6 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     state.ui_screen = MENU_MACRO;
                 }
                 break;
-            // Macro menu
             case MENU_MACRO:
                 _ui_drawDarkOverlay();
                 // If a number is pressed perform the corresponding macro
