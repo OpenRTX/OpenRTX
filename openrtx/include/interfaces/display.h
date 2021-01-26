@@ -58,7 +58,7 @@
  *
  * NOTE: framebuffer allocation is the first operation performed, if fails an
  * error message is printed on the virtual COM port and this function returns
- * prematurely, without configuring the display. 
+ * prematurely, without configuring the display.
  * Thus, a dark screen can be symptom of failed allocation.
  */
 void display_init();
@@ -71,7 +71,7 @@ void display_init();
  * Changes to the framebuffer will not be reflected on the display until
  * display_render() or display_renderRows() are called.
  *
- * 
+ *
  * WARNING: no bound check is performed! Do not call free() on the pointer
  * returned, doing so will destroy the framebuffer!
  * @return pointer to framebuffer.
@@ -79,7 +79,7 @@ void display_init();
 void *display_getFrameBuffer();
 
 /**
- * When called, this function terminates the display driver 
+ * When called, this function terminates the display driver
  * and deallocates the framebuffer.
  */
 void display_terminate();
@@ -105,5 +105,13 @@ void display_render();
  * @return false if rendering is not in progress.
  */
 bool display_renderingInProgress();
+
+/**
+ * Set display contrast.
+ * NOTE: not all the display controllers support contrast control, thus on some
+ * targets this function has no effect.
+ * @param contrast: display contrast, normalised value with range 0 - 255.
+ */
+void display_setContrast(uint8_t contrast);
 
 #endif /* DISPLAY_H */
