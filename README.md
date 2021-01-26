@@ -54,4 +54,4 @@ OpenRTX was created by:
 All this was made possible by the huge reverse engineering effort of
 Travis Goodspeed and all the contributors of [md380tools](https://github.com/travisgoodspeed/md380tools).
 A huge thank goes to Roger Clark, and his [OpenGD77](https://github.com/rogerclarkmelbourne/OpenGD77) which not only inspired this project, but as a precursor, provided a working code example for the GD77 radio family.
-Finally, a warm thank you goes to SP5WPP and the [M17](https://m17project.org) community for bringing their libre protocol into our obscure undocumented hardware. 
+Finally, a warm thank you goes to SP5WWP and the [M17](https://m17project.org) community for bringing their libre protocol into our obscure undocumented hardware. 
