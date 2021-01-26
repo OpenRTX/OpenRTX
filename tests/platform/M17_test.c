@@ -1,5 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Federico Izzo IU2NUO, Niccolò Izzo IU2KIN and   *
+ *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
+ *                         Niccolò Izzo IU2KIN                             *
+ *                         Frederik Saraci IU2NRO                          *
  *                         Silvano Seva IU2KWO                             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -26,65 +28,86 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <stdint.h>
 #include <stdio.h>
-#include <app_cfg.h>
+#include <stdbool.h>
+#include <stdlib.h>
 #include <os.h>
-#include <hwconfig.h>
+#include <interfaces/gpio.h>
+#include <interfaces/delays.h>
+#include <interfaces/rtx.h>
+#include <interfaces/platform.h>
+#include "hwconfig.h"
+#include "toneGenerator_MDx.h"
+#include "HR-C5000_MD3x0.h"
 
-/*
- * Entry point for application code, not in this translation unit.
- */
-int main(int argc, char *argv[]);
+OS_MUTEX mutex;
+OS_ERR err;
 
-/*
- * OS startup task, will call main() when all initialisations are done.
- */
-#define START_TSK_STKSIZE 4096/sizeof(CPU_STK)
-static OS_TCB  startTCB;
-static CPU_STK startStk[START_TSK_STKSIZE];
-static void startTask(void *arg);
+static OS_TCB  rtxTCB;
+static CPU_STK rtxStk[512/sizeof(CPU_STK)];
+static void rtxTask(void *arg);
 
-void systemBootstrap()
+int main(void)
 {
-    OS_ERR err;
+    platform_init();
+    toneGen_init();
 
-    OSInit(&err);
+    OSTaskCreate(&rtxTCB, "", rtxTask, 0, 10, &rtxStk[0], 0,
+                 512/sizeof(CPU_STK), 0, 0, 0,
+                 (OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR), &err);
 
-    OSTaskCreate((OS_TCB     *) &startTCB,
-                 (CPU_CHAR   *) " ",
-                 (OS_TASK_PTR ) startTask,
-                 (void       *) 0,
-                 (OS_PRIO     ) APP_CFG_TASK_START_PRIO,
-                 (CPU_STK    *) &startStk[0],
-                 (CPU_STK     ) startStk[START_TSK_STKSIZE / 10u],
-                 (CPU_STK_SIZE) START_TSK_STKSIZE,
-                 (OS_MSG_QTY  ) 0,
-                 (OS_TICK     ) 0,
-                 (void       *) 0,
-                 (OS_OPT      ) (OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR),
-                 (OS_ERR     *) &err);
+    OSMutexCreate(&mutex, "", &err);
+    rtx_init(&mutex);
 
-    OSStart(&err);
 
-    for(;;) ;
+    rtxStatus_t cfg;
+
+    /* Take mutex and update the RTX configuration */
+    OSMutexPend(&mutex, 0, OS_OPT_PEND_BLOCKING, NULL, &err);
+
+    cfg.opMode = FM;
+    cfg.bandwidth = BW_25;
+    cfg.rxFrequency = 430100000;
+    cfg.txFrequency = 430100000;
+    cfg.txPower = 1.0f;
+    cfg.sqlLevel = 3;
+    cfg.rxTone = 0;
+    cfg.txTone = 0;
+
+    OSMutexPost(&mutex, OS_OPT_POST_NONE, &err);
+
+    /* After mutex has been released, post the new configuration */
+    rtx_configure(&cfg);
+
+    while (1)
+    {
+        unsigned char iBias = 0;
+        unsigned char qBias = 0;
+
+        int i = getc(stdin);
+        int q = getc(stdin);
+
+        if(i > 0) iBias = ((unsigned char) i);
+        if(q > 0) qBias = ((unsigned char) q);
+
+        C5000_changeIQbias(iBias, qBias);
+        printf("I: %d, Q: %d\r\n", iBias, qBias);
+
+        OSTimeDlyHMSM(0u, 0u, 0u, 250u, OS_OPT_TIME_HMSM_STRICT, &err);
+    }
+
+    return 0;
 }
 
-static void startTask(void* arg)
+void rtxTask(void* arg)
 {
     (void) arg;
 
-    CPU_Init();
-
-    /* On ARM-based targets setup SysTick */
-    #ifdef __arm__
-    OS_CPU_SysTickInitFreq(SystemCoreClock);
-    #else
-    OS_CPU_SysTickInit();
-    #endif
-
-    /* Jump to application code */
-    main(0, NULL);
-
-    /* If main returns loop indefinitely */
-    for(;;) ;
+    while (1)
+    {
+        rtx_taskFunc();
+        OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &err);
+    }
 }
+

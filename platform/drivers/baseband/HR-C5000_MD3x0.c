@@ -274,3 +274,10 @@ bool C5000_spiInUse()
 {
     return (gpio_readPin(DMR_CS) == 0) ? true :  false;
 }
+
+void C5000_changeIQbias(uint8_t iBias, uint8_t qBias)
+{
+    _writeReg(0x00, 0x02, iBias);
+    _writeReg(0x00, 0x04, qBias);
+}
+

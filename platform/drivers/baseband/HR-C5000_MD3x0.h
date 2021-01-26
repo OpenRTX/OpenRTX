@@ -100,4 +100,10 @@ void C5000_stopAnalogTx();
  */
 bool C5000_spiInUse();
 
+/**
+ * Modify values of registers 0x02 (Bias value for TX, I-channel), and 0x04
+ * (Bias value for TX, Q-channel).
+ */
+void C5000_changeIQbias(uint8_t iBias, uint8_t qBias);
+
 #endif /* C5000_MD3x0_H */
