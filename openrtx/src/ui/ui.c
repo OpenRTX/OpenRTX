@@ -96,6 +96,7 @@ extern void _ui_drawMenuSettings(ui_state_t* ui_state);
 extern void _ui_drawSettingsTimeDate(state_t* last_state);
 extern void _ui_drawSettingsTimeDateSet(state_t* last_state, ui_state_t* ui_state);
 #endif
+extern void _ui_drawSettingsDisplay(state_t* last_state, ui_state_t* ui_state);
 extern bool _ui_drawMacroMenu(state_t* last_state);
 
 const char *menu_items[6] =
@@ -108,11 +109,18 @@ const char *menu_items[6] =
     "Settings"
 };
 
-const char *settings_items[1] =
+const char *settings_items[2] =
 {
 #ifdef HAS_RTC
-    "Time & Date"
+    "Time & Date",
 #endif
+    "Display"
+};
+
+const char *display_items[2] =
+{
+    "Brightness",
+    "Contrast"
 };
 
 // Calculate number of main menu entries
@@ -824,7 +832,21 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 break;
             // Settings menu screen
             case MENU_SETTINGS:
-                if(msg.keys & KEY_ENTER)
+                if(msg.keys & KEY_UP)
+                {
+                    if(ui_state.menu_selected > 0)
+                        ui_state.menu_selected -= 1;
+                    else
+                        ui_state.menu_selected = settings_num-1;
+                }
+                else if(msg.keys & KEY_DOWN)
+                {
+                    if(ui_state.menu_selected < settings_num-1)
+                        ui_state.menu_selected += 1;
+                    else
+                        ui_state.menu_selected = 0;
+                }
+                else if(msg.keys & KEY_ENTER)
                 {
                     // Open selected menu item
                     switch(ui_state.menu_selected)
@@ -834,7 +856,12 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         case 0:
                             state.ui_screen = SETTINGS_TIMEDATE;
                             break;
+                        case 1:
+#else
+                        case 0:
 #endif
+                            state.ui_screen = SETTINGS_DISPLAY;
+                            break;
                         default:
                             state.ui_screen = MENU_TOP;
                     }
@@ -895,6 +922,21 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 }
                 break;
 #endif
+            case SETTINGS_DISPLAY:
+                if(msg.keys & KEY_LEFT)
+                {
+                }
+                else if(msg.keys & KEY_RIGHT)
+                {
+                }
+                else if(msg.keys & KEY_ESC)
+                {
+                    // Return to settings menu
+                    state.ui_screen = MENU_SETTINGS;
+                    // Reset menu selection
+                    ui_state.menu_selected = 0;
+                }
+                break;
         }
     }
 }
@@ -955,6 +997,9 @@ void ui_updateGUI(state_t last_state)
             _ui_drawSettingsTimeDateSet(&last_state, &ui_state);
             break;
 #endif
+        case SETTINGS_DISPLAY:
+            _ui_drawSettingsDisplay(&last_state, &ui_state);
+            break;
         // Low battery screen
         case LOW_BAT:
             _ui_drawLowBatteryScreen();

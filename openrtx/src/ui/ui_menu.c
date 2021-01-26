@@ -52,6 +52,33 @@ void _ui_drawMenuList(point_t pos, const char *entries[],
     }
 }
 
+void _ui_drawSettingsDisplayList(point_t pos, const char *entries[], 
+                                uint8_t num_entries, uint8_t selected)
+{
+    // Number of menu entries that fit in the screen height
+    uint8_t entries_in_screen = ((SCREEN_HEIGHT - pos.y) / layout.top_h) + 1;
+    uint8_t scroll = 0;
+    char entry_buf[MAX_ENTRY_LEN] = "";
+    for(int item=0; (item < num_entries) && (pos.y < SCREEN_HEIGHT); item++)
+    {
+        // If selection is off the screen, scroll screen
+        if(selected >= entries_in_screen)
+            scroll = selected - entries_in_screen + 1;
+        snprintf(entry_buf, sizeof(entry_buf), "%s", entries[item + scroll]);
+        if(item + scroll == selected)
+        {
+            // Draw rectangle under selected item, compensating for text height
+            point_t rect_pos = {0, pos.y - layout.top_h + (layout.text_v_offset*2)};
+            gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.top_h, color_white, true); 
+            gfx_print(pos, entry_buf, layout.top_font, TEXT_ALIGN_LEFT, color_black);
+        }
+        else
+        {
+            gfx_print(pos, entry_buf, layout.top_font, TEXT_ALIGN_LEFT, color_white);
+        }
+        pos.y += layout.top_h;
+    }
+}
 int _ui_getZoneName(char *buf, uint8_t max_len, uint8_t index)
 {
     zone_t zone;
@@ -221,6 +248,16 @@ void _ui_drawSettingsTimeDateSet(state_t* last_state, ui_state_t* ui_state)
               color_white);
 }
 #endif
+
+void _ui_drawSettingsDisplay(state_t* last_state, ui_state_t* ui_state)
+{
+    gfx_clearScreen();
+    // Print "Display" on top bar
+    gfx_print(layout.top_left, "Display", layout.top_font,
+              TEXT_ALIGN_CENTER, color_white);
+    // Print menu entries
+    _ui_drawSettingsDisplayList(layout.line1_left, display_items, settings_num, ui_state->menu_selected);
+}
 
 bool _ui_drawMacroMenu(state_t* last_state) {
         // Header
