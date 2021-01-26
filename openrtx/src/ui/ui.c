@@ -742,23 +742,23 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 }
                 else if(msg.keys & KEY_DOWN)
                 {
-                    switch(state.ui_screen)
+                    if(state.ui_screen == MENU_ZONE)
                     {
-                        case MENU_ZONE:
-                            zone_t zone;
-                            if(nvm_readZoneData(&zone, ui_state.menu_selected + 1) != -1)
-                                ui_state.menu_selected += 1;
-                            break;
-                        case MENU_CHANNEL:
-                            channel_t channel;
-                            if(nvm_readChannelData(&channel, ui_state.menu_selected + 1) != -1)
-                                ui_state.menu_selected += 1;
-                            break;
-                        case MENU_CONTACTS:
-                            contact_t contact;
-                            if(nvm_readContactData(&contact, ui_state.menu_selected + 1) != -1)
-                                ui_state.menu_selected += 1;
-                            break;
+                        zone_t zone;
+                        if(nvm_readZoneData(&zone, ui_state.menu_selected + 1) != -1)
+                            ui_state.menu_selected += 1;
+                    }
+                    else if(state.ui_screen == MENU_CHANNEL)
+                    {
+                        channel_t channel;
+                        if(nvm_readChannelData(&channel, ui_state.menu_selected + 1) != -1)
+                            ui_state.menu_selected += 1;
+                    }
+                    else if(state.ui_screen == MENU_CONTACTS)
+                    {
+                        contact_t contact;
+                        if(nvm_readContactData(&contact, ui_state.menu_selected + 1) != -1)
+                            ui_state.menu_selected += 1;
                     }
                 }
                 else if(msg.keys & KEY_ESC)
