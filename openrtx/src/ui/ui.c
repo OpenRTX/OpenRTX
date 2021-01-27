@@ -925,6 +925,20 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 break;
 #endif
             case SETTINGS_DISPLAY:
+                if(msg.keys & KEY_UP)
+                {
+                    if(ui_state.menu_selected > 0)
+                        ui_state.menu_selected -= 1;
+                    else
+                        ui_state.menu_selected = settings_num-1;
+                }
+                else if(msg.keys & KEY_DOWN)
+                {
+                    if(ui_state.menu_selected < settings_num-1)
+                        ui_state.menu_selected += 1;
+                    else
+                        ui_state.menu_selected = 0;
+                }
                 if(msg.keys & KEY_LEFT)
                 {
                 }
