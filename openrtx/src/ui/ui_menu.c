@@ -24,61 +24,59 @@
 #include <ui.h>
 #include <interfaces/nvmem.h>
 
-void _ui_drawMenuList(point_t pos, const char *entries[], 
-                      uint8_t num_entries, uint8_t selected)
+void _ui_drawMenuList(point_t pos, uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_t max_len, uint8_t index))
 {
     // Number of menu entries that fit in the screen height
     uint8_t entries_in_screen = ((SCREEN_HEIGHT - pos.y) / layout.top_h) + 1;
     uint8_t scroll = 0;
     char entry_buf[MAX_ENTRY_LEN] = "";
-    for(int item=0; (item < num_entries) && (pos.y < SCREEN_HEIGHT); item++)
+    int result = 0;
+    for(int item=0; (result == 0) && (pos.y < SCREEN_HEIGHT); item++)
     {
         // If selection is off the screen, scroll screen
         if(selected >= entries_in_screen)
             scroll = selected - entries_in_screen + 1;
-        snprintf(entry_buf, sizeof(entry_buf), "%s", entries[item + scroll]);
-        if(item + scroll == selected)
+        // Call function pointer to get current menu entry string
+        result = (*getCurrentEntry)(entry_buf, sizeof(entry_buf), item+scroll);
+        if(result != -1)
         {
-            // Draw rectangle under selected item, compensating for text height
-            point_t rect_pos = {0, pos.y - layout.top_h + (layout.text_v_offset*2)};
-            gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.top_h, color_white, true); 
-            gfx_print(pos, entry_buf, layout.top_font, TEXT_ALIGN_LEFT, color_black);
+            if(item + scroll == selected)
+            {
+                // Draw rectangle under selected item, compensating for text height
+                point_t rect_pos = {0, pos.y - layout.top_h + 3};
+                gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.top_h, color_white, true); 
+                gfx_print(pos, entry_buf, layout.top_font, TEXT_ALIGN_LEFT, color_black);
+            }
+            else
+            {
+                gfx_print(pos, entry_buf, layout.top_font, TEXT_ALIGN_LEFT, color_white);
+            }
+            pos.y += layout.top_h;
         }
-        else
-        {
-            gfx_print(pos, entry_buf, layout.top_font, TEXT_ALIGN_LEFT, color_white);
-        }
-        pos.y += layout.top_h;
     }
 }
 
-void _ui_drawSettingsDisplayList(point_t pos, const char *entries[], 
-                                uint8_t num_entries, uint8_t selected)
+int _ui_getMenuTopEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
-    // Number of menu entries that fit in the screen height
-    uint8_t entries_in_screen = ((SCREEN_HEIGHT - pos.y) / layout.top_h) + 1;
-    uint8_t scroll = 0;
-    char entry_buf[MAX_ENTRY_LEN] = "";
-    for(int item=0; (item < num_entries) && (pos.y < SCREEN_HEIGHT); item++)
-    {
-        // If selection is off the screen, scroll screen
-        if(selected >= entries_in_screen)
-            scroll = selected - entries_in_screen + 1;
-        snprintf(entry_buf, sizeof(entry_buf), "%s", entries[item + scroll]);
-        if(item + scroll == selected)
-        {
-            // Draw rectangle under selected item, compensating for text height
-            point_t rect_pos = {0, pos.y - layout.top_h + (layout.text_v_offset*2)};
-            gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.top_h, color_white, true); 
-            gfx_print(pos, entry_buf, layout.top_font, TEXT_ALIGN_LEFT, color_black);
-        }
-        else
-        {
-            gfx_print(pos, entry_buf, layout.top_font, TEXT_ALIGN_LEFT, color_white);
-        }
-        pos.y += layout.top_h;
-    }
+    if(index >= menu_num) return -1;
+    snprintf(buf, max_len, "%s", menu_items[index]);
+    return 0;
 }
+
+int _ui_getSettingsEntryName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= settings_num) return -1;
+    snprintf(buf, max_len, "%s", settings_items[index]);
+    return 0;
+}
+
+int _ui_getDisplayEntryName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= display_num) return -1;
+    snprintf(buf, max_len, "%s", display_items[index]);
+    return 0;
+}
+
 int _ui_getZoneName(char *buf, uint8_t max_len, uint8_t index)
 {
     zone_t zone;
@@ -106,38 +104,6 @@ int _ui_getContactName(char *buf, uint8_t max_len, uint8_t index)
     return result;
 }
 
-void _ui_drawCPSList(point_t pos, uint8_t selected, int (*f)(char *buf, uint8_t max_len, uint8_t index))
-{
-    // Number of menu entries that fit in the screen height
-    uint8_t entries_in_screen = ((SCREEN_HEIGHT - pos.y) / layout.top_h) + 1;
-    uint8_t scroll = 0;
-    char entry_buf[MAX_ENTRY_LEN] = "";
-    int result = 0;
-    for(int item=0; (result == 0) && (pos.y < SCREEN_HEIGHT); item++)
-    {
-        // If selection is off the screen, scroll screen
-        if(selected >= entries_in_screen)
-            scroll = selected - entries_in_screen + 1;
-        // Call function pointer to get CPS element name
-        result = (*f)(entry_buf, MAX_ENTRY_LEN, item+scroll);
-        if(result != -1)
-        {
-            if(item + scroll == selected)
-            {
-                // Draw rectangle under selected item, compensating for text height
-                point_t rect_pos = {0, pos.y - layout.top_h + 3};
-                gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.top_h, color_white, true); 
-                gfx_print(pos, entry_buf, layout.top_font, TEXT_ALIGN_LEFT, color_black);
-            }
-            else
-            {
-                gfx_print(pos, entry_buf, layout.top_font, TEXT_ALIGN_LEFT, color_white);
-            }
-            pos.y += layout.top_h;
-        }
-    }
-}
-
 void _ui_drawMenuTop(ui_state_t* ui_state)
 {
     gfx_clearScreen();
@@ -145,7 +111,7 @@ void _ui_drawMenuTop(ui_state_t* ui_state)
     gfx_print(layout.top_left, "Menu", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print menu entries
-    _ui_drawMenuList(layout.line1_left, menu_items, menu_num, ui_state->menu_selected);
+    _ui_drawMenuList(layout.line1_left, ui_state->menu_selected, _ui_getMenuTopEntryName);
 }
 
 void _ui_drawMenuZone(ui_state_t* ui_state)
@@ -155,7 +121,7 @@ void _ui_drawMenuZone(ui_state_t* ui_state)
     gfx_print(layout.top_left, "Zone", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print zone entries
-    _ui_drawCPSList(layout.line1_left, ui_state->menu_selected, _ui_getZoneName);
+    _ui_drawMenuList(layout.line1_left, ui_state->menu_selected, _ui_getZoneName);
 }
 
 void _ui_drawMenuChannel(ui_state_t* ui_state)
@@ -165,7 +131,7 @@ void _ui_drawMenuChannel(ui_state_t* ui_state)
     gfx_print(layout.top_left, "Channels", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print channel entries
-    _ui_drawCPSList(layout.line1_left, ui_state->menu_selected, _ui_getChannelName);
+    _ui_drawMenuList(layout.line1_left, ui_state->menu_selected, _ui_getChannelName);
 }
 
 void _ui_drawMenuContacts(ui_state_t* ui_state)
@@ -175,7 +141,7 @@ void _ui_drawMenuContacts(ui_state_t* ui_state)
     gfx_print(layout.top_left, "Contacts", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print contact entries
-    _ui_drawCPSList(layout.line1_left, ui_state->menu_selected, _ui_getContactName);
+    _ui_drawMenuList(layout.line1_left, ui_state->menu_selected, _ui_getContactName);
 }
 
 void _ui_drawMenuSettings(ui_state_t* ui_state)
@@ -185,7 +151,17 @@ void _ui_drawMenuSettings(ui_state_t* ui_state)
     gfx_print(layout.top_left, "Settings", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print menu entries
-    _ui_drawMenuList(layout.line1_left, settings_items, settings_num, ui_state->menu_selected);
+    _ui_drawMenuList(layout.line1_left, ui_state->menu_selected, _ui_getSettingsEntryName);
+}
+
+void _ui_drawSettingsDisplay(state_t* last_state, ui_state_t* ui_state)
+{
+    gfx_clearScreen();
+    // Print "Display" on top bar
+    gfx_print(layout.top_left, "Display", layout.top_font,
+              TEXT_ALIGN_CENTER, color_white);
+    // Print display settings entries
+    _ui_drawMenuList(layout.line1_left, ui_state->menu_selected, _ui_getDisplayEntryName);
 }
 
 #ifdef HAS_RTC
@@ -259,7 +235,7 @@ void _ui_drawSettingsDisplay(state_t* last_state, ui_state_t* ui_state)
     _ui_drawSettingsDisplayList(layout.line1_left, display_items, settings_num, ui_state->menu_selected);
 }
 
-bool _ui_drawMacroMenu(state_t* last_state) {
+bool _ui_drawMenuMacro(state_t* last_state) {
         // Header
         gfx_print(layout.top_left, "Macro Menu", layout.top_font, TEXT_ALIGN_CENTER,
                   color_white);

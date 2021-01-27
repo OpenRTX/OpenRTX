@@ -124,6 +124,7 @@ extern const char *settings_items[2];
 extern const char *display_items[2];
 extern const uint8_t menu_num;
 extern const uint8_t settings_num;
+extern const uint8_t display_num;
 extern const color_t color_black;
 extern const color_t color_grey;
 extern const color_t color_white;

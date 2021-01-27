@@ -127,6 +127,8 @@ const char *display_items[2] =
 const uint8_t menu_num = sizeof(menu_items)/sizeof(menu_items[0]);
 // Calculate number of settings menu entries
 const uint8_t settings_num = sizeof(settings_items)/sizeof(settings_items[0]);
+// Calculate number of display settings menu entries
+const uint8_t display_num = sizeof(display_items)/sizeof(display_items[0]);
 
 const color_t color_black = {0, 0, 0, 255};
 const color_t color_grey = {60, 60, 60, 255};
