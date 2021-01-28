@@ -46,6 +46,8 @@ keyboard_t kbd_getKeys() {
     if (state[SDL_SCANCODE_ESCAPE]) keys |= KEY_ESC;
     if (state[SDL_SCANCODE_DOWN]) keys |= KEY_DOWN;
     if (state[SDL_SCANCODE_UP]) keys |= KEY_UP;
+    if (state[SDL_SCANCODE_LEFT]) keys |= KEY_LEFT;
+    if (state[SDL_SCANCODE_RIGHT]) keys |= KEY_RIGHT;
     if (state[SDL_SCANCODE_RETURN]) keys |= KEY_ENTER;
     if (state[SDL_SCANCODE_NONUSHASH]) keys |= KEY_HASH;
     if (state[SDL_SCANCODE_MINUS]) keys |= KEY_F1;

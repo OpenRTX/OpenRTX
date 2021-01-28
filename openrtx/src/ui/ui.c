@@ -543,11 +543,11 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
     }
 #else // Use left and right buttons or relative position knob
     if(msg.keys & KEY_LEFT) {
-        state.sqlLevel = (state.sqlLevel == 15) 15 : state.sqlLevel++;
+        state.sqlLevel = (state.sqlLevel == 0) ? 0 : state.sqlLevel - 1;
         *sync_rtx = true;
     }
     else if(msg.keys & KEY_RIGHT) {
-        state.sqlLevel = (state.sqlLevel == 0) 0 : state.sqlLevel--;
+        state.sqlLevel = (state.sqlLevel == 15) ? 15 : state.sqlLevel + 1;
         *sync_rtx = true;
     }
 #endif
