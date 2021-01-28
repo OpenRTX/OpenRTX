@@ -304,5 +304,12 @@ bool _ui_drawMacroMenu(state_t* last_state) {
                   yellow_fab413);
         gfx_print(layout.line3_right, "Sav", layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white);
-    return true;
+        // Squelch bar
+        uint16_t squelch_width = SCREEN_WIDTH / 16 * last_state->sqlLevel;
+        point_t squelch_pos = { layout.bottom_left.x, layout.bottom_left.y +
+                                                      layout.status_v_pad +
+                                                      layout.text_v_offset -
+                                                      layout.bottom_h };
+        gfx_drawRect(squelch_pos, squelch_width, layout.bottom_h, color_white, true);
+        return true;
 }

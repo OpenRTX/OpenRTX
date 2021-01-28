@@ -72,6 +72,7 @@
 #include <string.h>
 #include <battery.h>
 #include <input.h>
+#include <hwconfig.h>
 
 /* UI main screen functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBackground();
@@ -534,6 +535,20 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
             platform_setBacklightLevel(state.backlight_level);
             break;
     }
+
+#ifdef HAS_ABSOLUTE_KNOB // If the radio has an absolute position knob
+    state.sqlLevel = platform_getChSelector();
+    printf("New squelch value: %d\n\r", state.sqlLevel);
+#else // Use left and right buttons or relative position knob
+    if(msg.keys && KEY_LEFT) {
+        state.sqlLevel++;
+        state.sqlLevel = (state.sqlLevel > 15) 15 : state.sqlLevel;
+    }
+    else if(msg.keys && KEY_RIGHT) {
+        state.sqlLevel--;
+        state.sqlLevel = (state.sqlLevel < 0) 0 : state.sqlLevel;
+    }
+#endif
 }
 
 void ui_updateFSM(event_t event, bool *sync_rtx)

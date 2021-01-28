@@ -54,6 +54,7 @@ typedef struct
     channel_t channel;
     channel_t vfo_channel;
     uint8_t rtxStatus;
+    // Squelch steps from 0 to 15
     uint8_t sqlLevel;
     uint8_t voxLevel;
 
