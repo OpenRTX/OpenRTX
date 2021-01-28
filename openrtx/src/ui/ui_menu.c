@@ -222,7 +222,7 @@ void _ui_drawSettingsTimeDateSet(state_t* last_state, ui_state_t* ui_state)
 }
 #endif
 
-bool _ui_drawMenuMacro(state_t* last_state) {
+bool _ui_drawMacroMenu(state_t* last_state) {
         // Header
         gfx_print(layout.top_left, "Macro Menu", layout.top_font, TEXT_ALIGN_CENTER,
                   color_white);

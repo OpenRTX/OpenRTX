@@ -95,7 +95,7 @@ extern void _ui_drawMenuSettings(ui_state_t* ui_state);
 extern void _ui_drawSettingsTimeDate(state_t* last_state);
 extern void _ui_drawSettingsTimeDateSet(state_t* last_state, ui_state_t* ui_state);
 #endif
-extern bool _ui_drawMenuMacro(state_t* last_state);
+extern bool _ui_drawMacroMenu(state_t* last_state);
 
 const char *menu_items[6] =
 {
@@ -922,7 +922,7 @@ void ui_updateGUI(state_t last_state)
             break;
         // Macro menu
         case MENU_MACRO:
-            _ui_drawMenuMacro(&last_state);
+            _ui_drawMacroMenu(&last_state);
             break;
         // Settings menu screen
         case MENU_SETTINGS:
