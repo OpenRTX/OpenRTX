@@ -118,7 +118,7 @@ static void ui_task(void *arg)
             rtx_cfg.rxFrequency = state.channel.rx_frequency;
             rtx_cfg.txFrequency = state.channel.tx_frequency;
             rtx_cfg.txPower = state.channel.power;
-            rtx_cfg.sqlLevel = state.channel.squelch;
+            rtx_cfg.sqlLevel = state.sqlLevel;
             rtx_cfg.rxToneEn = state.channel.fm.rxToneEn;
             rtx_cfg.rxTone = ctcss_tone[state.channel.fm.rxTone];
             rtx_cfg.txToneEn = state.channel.fm.txToneEn;

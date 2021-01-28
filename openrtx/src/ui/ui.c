@@ -537,16 +537,18 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
     }
 
 #ifdef HAS_ABSOLUTE_KNOB // If the radio has an absolute position knob
-    state.sqlLevel = platform_getChSelector();
-    printf("New squelch value: %d\n\r", state.sqlLevel);
-#else // Use left and right buttons or relative position knob
-    if(msg.keys && KEY_LEFT) {
-        state.sqlLevel++;
-        state.sqlLevel = (state.sqlLevel > 15) 15 : state.sqlLevel;
+    if(msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT) {
+        state.sqlLevel = platform_getChSelector() - 1;
+        *sync_rtx = true;
     }
-    else if(msg.keys && KEY_RIGHT) {
-        state.sqlLevel--;
-        state.sqlLevel = (state.sqlLevel < 0) 0 : state.sqlLevel;
+#else // Use left and right buttons or relative position knob
+    if(msg.keys & KEY_LEFT) {
+        state.sqlLevel = (state.sqlLevel == 15) 15 : state.sqlLevel++;
+        *sync_rtx = true;
+    }
+    else if(msg.keys & KEY_RIGHT) {
+        state.sqlLevel = (state.sqlLevel == 0) 0 : state.sqlLevel--;
+        *sync_rtx = true;
     }
 #endif
 }

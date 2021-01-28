@@ -410,17 +410,18 @@ void rtx_taskFunc()
 
     if(rtxStatus.opStatus == RX)
     {
-        /* Convert back voltage to ADC counts */
-        float sqlValue = (adc1_getMeasurement(1) * 4096.0f)/3300.0f;
-        uint16_t sqlLevel = ((uint16_t) sqlValue) >> 6;
+        // Unmute speaker if rssi is greater than squelch value
+        float rssi = rtx_getRssi();
+        // sqlValue represents 15 steps from -140dBm to -70dBm
+        float rssi_squelch = -140.0f + rtxStatus.sqlLevel * 70.0f / 15.0f;
 
-        if((gpio_readPin(SPK_MUTE) == 1) && (sqlLevel > sqlOpenTsh))
+        if((gpio_readPin(SPK_MUTE) == 1) && (rssi > rssi_squelch))
         {
             gpio_clearPin(SPK_MUTE);
             platform_ledOn(GREEN);
         }
 
-        if((gpio_readPin(SPK_MUTE) == 0) && (sqlLevel < sqlCloseTsh))
+        if((gpio_readPin(SPK_MUTE) == 0) && (rssi < rssi_squelch))
         {
             gpio_setPin(SPK_MUTE);
             platform_ledOff(GREEN);
