@@ -251,6 +251,7 @@ static void dev_task(void *arg)
 #endif
         state.v_bat = platform_getVbat();
         state.charge = battery_getCharge(state.v_bat);
+        state.rssi = rtx_getRssi();
 
         OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
 

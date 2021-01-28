@@ -44,6 +44,13 @@ rtxStatus_t rtxStatus;            /* RTX driver status                  */
 uint8_t sqlOpenTsh;               /* Squelch opening threshold          */
 uint8_t sqlCloseTsh;              /* Squelch closing threshold          */
 
+// RSSI mV to dBm conversion function, gain is constant, while offset values
+// are aligned to calibration frequency test points
+float rssi_gain = 22.0f;
+float rssi_offset[] = {3277.618f, 3654.755f, 3808.191f,
+                       3811.318f, 3804.936f, 3806.591f,
+                       3723.882f, 3621.373f, 3559.782f};
+
 /*
  * Helper functions to reduce code mess. They all access 'rtxStatus'
  * internally.
@@ -443,5 +450,17 @@ void rtx_taskFunc()
 
 float rtx_getRssi()
 {
-    return adc1_getMeasurement(1);
+    // ADC1 returns the RSSI value in mV, we convert it to dBm trough
+    // their derived linear relation
+    float rssi_mv = adc1_getMeasurement(1);
+    float freq = rtxStatus.rxFrequency;
+    int index = 0;
+    if (freq < 401035000.0f)
+        index = 0;
+    else if (freq > 479995000.0f)
+        index = 8;
+    else
+        index = (int)(freq - 400035000.0f)/10000000;
+    float rssi_dbm = (rssi_mv - rssi_offset[index]) / rssi_gain;
+    return rssi_dbm;
 }

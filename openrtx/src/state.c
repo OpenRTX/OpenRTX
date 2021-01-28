@@ -37,6 +37,7 @@ void state_init()
 #endif
     state.v_bat = platform_getVbat();
     state.charge = battery_getCharge(state.v_bat);
+    state.rssi = rtx_getRssi();
 
     state.backlight_level = 255;
     state.channelInfoUpdated = true;

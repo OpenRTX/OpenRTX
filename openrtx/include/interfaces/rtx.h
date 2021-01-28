@@ -110,8 +110,8 @@ rtxStatus_t rtx_getCurrentStatus();
 void rtx_taskFunc();
 
 /**
- * Get current RSSI voltage.
- * @return RSSI voltage.
+ * Get current RSSI in dBm.
+ * @return RSSI value in dBm.
  */
 float rtx_getRssi();
 
