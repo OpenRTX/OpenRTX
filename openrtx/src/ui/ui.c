@@ -811,7 +811,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
             case MENU_MACRO:
                 _ui_drawDarkOverlay();
                 // If a number is pressed perform the corresponding macro
-                if(!msg.long_press && input_isNumberPressed(msg))
+                if(!msg.long_press)
                 {
                     _ui_fsm_menuMacro(msg, sync_rtx);
                 }

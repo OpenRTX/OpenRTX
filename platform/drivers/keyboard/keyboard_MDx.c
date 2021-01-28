@@ -49,6 +49,19 @@ void kbd_terminate()
 
 keyboard_t kbd_getKeys()
 {
+    keyboard_t keys = 0;
+
+    /* Use absolute position knob to emulate left and right buttons */
+    static uint8_t old_pos = 0;
+    uint8_t new_pos = platform_getChSelector();
+    if (old_pos != new_pos) {
+        if (new_pos < old_pos)
+            keys |= KEY_LEFT;
+        else
+            keys |= KEY_RIGHT;
+        old_pos = new_pos;
+    }
+
     /*
      * First of all, configure the row lines as inputs. Since they are in common
      * with the display, their configuration can have been screwed up by display
@@ -73,7 +86,6 @@ keyboard_t kbd_getKeys()
      * this means that we have to put a small delay before reading the GPIOs to
      * allow voltage to settle.
      */
-    keyboard_t keys = 0;
     gpio_setPin(KB_ROW1);
 
     delayUs(1);

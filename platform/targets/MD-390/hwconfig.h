@@ -25,6 +25,9 @@
 /* Device has a working real time clock */
 #define HAS_RTC
 
+/* Device has a channel selection knob */
+#define HAS_ABSOLUTE_KNOB
+
 /* Supported radio bands */
 #define BAND_VHF
 #define BAND_UHF
