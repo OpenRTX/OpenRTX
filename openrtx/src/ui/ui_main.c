@@ -29,12 +29,6 @@ void _ui_drawMainBackground()
     gfx_drawHLine(layout.top_h, layout.hline_h, color_grey);
     // Print bottom bar line of 1 pixel height
     gfx_drawHLine(SCREEN_HEIGHT - layout.bottom_h - 1, layout.hline_h, color_grey);
-    // Print transparent OPNRTX on the background
-    point_t splash_origin = {0, SCREEN_HEIGHT / 2 - 6};
-    color_t yellow = yellow_fab413;
-    yellow.alpha = 0.1f * 255; 
-    gfx_print(splash_origin, "O P N\nR T X", FONT_SIZE_12PT, TEXT_ALIGN_CENTER,
-              yellow);
 }
 
 void _ui_drawMainTop(state_t* last_state)
