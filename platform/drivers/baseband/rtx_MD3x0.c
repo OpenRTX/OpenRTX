@@ -413,7 +413,7 @@ void rtx_taskFunc()
         // Unmute speaker if rssi is greater than squelch value
         float rssi = rtx_getRssi();
         // sqlValue represents 15 steps from -140dBm to -70dBm
-        float rssi_squelch = -140.0f + rtxStatus.sqlLevel * 70.0f / 15.0f;
+        float rssi_squelch = -127.0f + rtxStatus.sqlLevel * 66.0f / 15.0f;
 
         if((gpio_readPin(SPK_MUTE) == 1) && (rssi > rssi_squelch))
         {
