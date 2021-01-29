@@ -137,6 +137,7 @@ const color_t yellow_fab413 = {250, 180, 19, 255};
 
 layout_t layout;
 ui_state_t ui_state;
+settings_t settings;
 bool layout_ready = false;
 bool redraw_needed = true;
 
@@ -271,6 +272,11 @@ void ui_init()
     // This syntax is called compound literal
     // https://stackoverflow.com/questions/6891720/initialize-reset-struct-to-zero-null
     ui_state = (const struct ui_state_t){ 0 };
+    settings = (settings_t){ 0 };
+    // Initialize settings_t
+    // TODO: settings_t should be read from flash memory or from a factory default
+    settings.brightness = 255;
+    settings.contrast = 84;
 }
 
 void ui_drawSplashScreen()
@@ -490,8 +496,6 @@ void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx) {
 
 void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
     ui_state.input_number = input_getPressedNumber(msg);
-    // Backlight
-    int32_t new_blight = state.backlight_level;
     // CTCSS Encode/Decode Selection
     bool tone_tx_enable = state.channel.fm.txToneEn;
     bool tone_rx_enable = state.channel.fm.rxToneEn;
@@ -533,16 +537,12 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
             *sync_rtx = true;
             break;
         case 7:
-            new_blight += 25;
-            new_blight = (new_blight > 255) ? 255 : new_blight;
-            state.backlight_level = new_blight;
-            platform_setBacklightLevel(state.backlight_level);
+            settings.brightness = (settings.brightness + 25 > 255) ? 255 : settings.brightness + 25;
+            platform_setBacklightLevel(settings.brightness);
             break;
         case 8:
-            new_blight -= 25;
-            new_blight = (new_blight < 0) ? 0 : new_blight;
-            state.backlight_level = new_blight;
-            platform_setBacklightLevel(state.backlight_level);
+            settings.brightness = (settings.brightness - 25 < 0) ? 0 : settings.brightness - 25;
+            platform_setBacklightLevel(settings.brightness);
             break;
     }
 

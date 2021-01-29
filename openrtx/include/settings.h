@@ -18,46 +18,14 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdio.h>
-#include <state.h>
-#include <battery.h>
-#include <hwconfig.h>
-#include <interfaces/platform.h>
+#ifndef SETTINGS_H
+#define SETTINGS_H
 
-state_t state;
-
-void state_init()
+typedef struct
 {
-    /*
-     * TODO: Read current state parameters from hardware, 
-     * or initialize them to sane defaults
-     */
-    state.radioStateUpdated = true;
-#ifdef HAS_RTC
-    state.time = rtc_getTime();
-#endif
-    state.v_bat = platform_getVbat();
-    state.charge = battery_getCharge(state.v_bat);
-    state.rssi = rtx_getRssi();
-
-    state.channelInfoUpdated = true;
-    state.channel.mode = FM;
-    state.channel.bandwidth = BW_25;
-    state.channel.power = 1.0;
-    state.channel.rx_frequency = 430000000;
-    state.channel.tx_frequency = 430000000;
-    state.channel.fm.rxToneEn = 0;
-    state.channel.fm.rxTone = 2; // 71.9Hz
-    state.channel.fm.txToneEn = 1;
-    state.channel.fm.txTone = 2; // 71.9Hz
-
-    state.rtxStatus = RTX_OFF;
-#ifdef HAS_ABSOLUTE_KNOB // If the radio has an absolute position knob
-    state.sqlLevel = platform_getChSelector() - 1;
-#else
-    state.sqlLevel = 3;
-#endif
-    state.voxLevel = 0;
-
-    state.emergency = false;
+    uint8_t brightness;
+    uint8_t contrast;
 }
+settings_t;
+
+#endif /* SETTINGS_H */

@@ -27,6 +27,7 @@
 #include <stdint.h>
 #include <event.h>
 #include <hwconfig.h>
+#include <settings.h>
 
 // Maximum menu entry length
 #define MAX_ENTRY_LEN 16
@@ -119,6 +120,7 @@ typedef struct ui_state_t
 } ui_state_t;
 
 extern layout_t layout;
+extern settings_t settings;
 extern const char *menu_items[6];
 extern const char *settings_items[2];
 extern const char *display_items[2];
