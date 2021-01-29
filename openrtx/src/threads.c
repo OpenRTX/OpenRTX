@@ -28,7 +28,7 @@
 #include <interfaces/platform.h>
 #include <hwconfig.h>
 #include <event.h>
-#include <interfaces/rtx.h>
+#include <rtx.h>
 
 /* Mutex for concurrent access to state variable */
 static OS_MUTEX state_mutex;
@@ -100,7 +100,7 @@ static void ui_task(void *arg)
         event_t event = ((event_t) msg);
 
         // Lock mutex, read and write state
-        OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err); 
+        OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
         // React to keypresses and update FSM inside state
         ui_updateFSM(event, &sync_rtx);
         // Update state local copy
@@ -221,12 +221,12 @@ static void kbd_task(void *arg)
             event.type = EVENT_KBD;
             event.payload = msg.value;
             // Send keyboard status in queue
-            OSQPost(&ui_queue, (void *)event.value, sizeof(event_t), 
+            OSQPost(&ui_queue, (void *)event.value, sizeof(event_t),
                     OS_OPT_POST_FIFO + OS_OPT_POST_NO_SCHED, &os_err);
         }
         // Save current keyboard state as previous
         prev_keys = keys;
-        
+
         // Read keyboard state at 20Hz
         OSTimeDlyHMSM(0u, 0u, 0u, 50u, OS_OPT_TIME_HMSM_STRICT, &os_err);
     }
@@ -246,7 +246,7 @@ static void dev_task(void *arg)
         OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
 
 #ifdef HAS_RTC
-        state.time = rtc_getTime(); 
+        state.time = rtc_getTime();
 #endif
         state.v_bat = platform_getVbat();
         state.charge = battery_getCharge(state.v_bat);
@@ -258,9 +258,9 @@ static void dev_task(void *arg)
         event_t dev_msg;
         dev_msg.type = EVENT_STATUS;
         dev_msg.payload = 0;
-        OSQPost(&ui_queue, (void *)dev_msg.value, sizeof(event_t), 
+        OSQPost(&ui_queue, (void *)dev_msg.value, sizeof(event_t),
                 OS_OPT_POST_FIFO + OS_OPT_POST_NO_SCHED, &os_err);
-        
+
         // Execute state update thread every 1s
         OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
     }
@@ -310,7 +310,7 @@ void create_threads()
     OSMutexCreate((OS_MUTEX  *) &display_mutex,
                   (CPU_CHAR  *) "Display Mutex",
                   (OS_ERR    *) &os_err);
-    
+
     // State initialization, execute before starting all tasks
     state_init();
 

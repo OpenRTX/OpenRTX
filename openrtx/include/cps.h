@@ -23,8 +23,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <interfaces/rtx.h>
 #include <datatypes.h>
+#include <rtx.h>
 
 /**
  * \enum admit_t Enumeration type defining the admission criteria to a the
