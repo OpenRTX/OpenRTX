@@ -225,17 +225,7 @@ void _ui_drawSettingsTimeDateSet(state_t* last_state, ui_state_t* ui_state)
 }
 #endif
 
-void _ui_drawSettingsDisplay(state_t* last_state, ui_state_t* ui_state)
-{
-    gfx_clearScreen();
-    // Print "Display" on top bar
-    gfx_print(layout.top_left, "Display", layout.top_font,
-              TEXT_ALIGN_CENTER, color_white);
-    // Print menu entries
-    _ui_drawSettingsDisplayList(layout.line1_left, display_items, settings_num, ui_state->menu_selected);
-}
-
-bool _ui_drawMenuMacro(state_t* last_state) {
+bool _ui_drawMacroMenu(state_t* last_state) {
         // Header
         gfx_print(layout.top_left, "Macro Menu", layout.top_font, TEXT_ALIGN_CENTER,
                   color_white);
