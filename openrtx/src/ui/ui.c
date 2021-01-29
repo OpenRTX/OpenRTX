@@ -494,6 +494,24 @@ void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx) {
     }
 }
 
+void _ui_changeBrightness(int variation)
+{
+    if(variation >= 0)
+        settings.brightness = (255 - settings.brightness < variation) ? 255 : settings.brightness + variation;
+    else
+        settings.brightness = (settings.brightness < -variation) ? 0 : settings.brightness + variation;
+    platform_setBacklightLevel(settings.brightness);
+}
+
+void _ui_changeContrast(int variation)
+{
+    if(variation >= 0)
+        settings.contrast = (255 - settings.contrast < variation) ? 255 : settings.contrast + variation;
+    else
+        settings.contrast = (settings.contrast < -variation) ? 0 : settings.contrast + variation;
+    display_setContrast(settings.contrast);
+}
+
 void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
     ui_state.input_number = input_getPressedNumber(msg);
     // CTCSS Encode/Decode Selection
@@ -537,12 +555,10 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
             *sync_rtx = true;
             break;
         case 7:
-            settings.brightness = (settings.brightness + 25 > 255) ? 255 : settings.brightness + 25;
-            platform_setBacklightLevel(settings.brightness);
+            _ui_changeBrightness(+25);
             break;
         case 8:
-            settings.brightness = (settings.brightness - 25 < 0) ? 0 : settings.brightness - 25;
-            platform_setBacklightLevel(settings.brightness);
+            _ui_changeBrightness(-25);
             break;
     }
 
@@ -941,9 +957,25 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 }
                 if(msg.keys & KEY_LEFT)
                 {
+                    if(strcmp(display_items[ui_state.menu_selected], "Brightness") == 0)
+                    {
+                        _ui_changeBrightness(-25);
+                    }
+                    else if(strcmp(display_items[ui_state.menu_selected], "Contrast") == 0)
+                    {
+                        _ui_changeContrast(-25);
+                    }
                 }
                 else if(msg.keys & KEY_RIGHT)
                 {
+                    if(strcmp(display_items[ui_state.menu_selected], "Brightness") == 0)
+                    {
+                        _ui_changeBrightness(+25);
+                    }
+                    else if(strcmp(display_items[ui_state.menu_selected], "Contrast") == 0)
+                    {
+                        _ui_changeContrast(+25);
+                    }
                 }
                 else if(msg.keys & KEY_ESC)
                 {

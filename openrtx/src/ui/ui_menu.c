@@ -117,9 +117,9 @@ int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= display_num) return -1;
     uint8_t value = 0;
-    if(strcmp(display_items[index], "Brightness"))
+    if(strcmp(display_items[index], "Brightness") == 0)
         value = settings.brightness;
-    else if(strcmp(display_items[index], "Contrast"))
+    else if(strcmp(display_items[index], "Contrast") == 0)
         value = settings.contrast;
     snprintf(buf, max_len, "%d", value);
     return 0;
