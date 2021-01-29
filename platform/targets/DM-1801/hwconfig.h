@@ -40,6 +40,9 @@
 /* Screen pixel format */
 #define PIX_FMT_BW
 
+/* Screen has adjustable contrast */
+#define SCREEN_CONTRAST
+
 /* Battery type */
 #define BAT_LIPO_2S
 

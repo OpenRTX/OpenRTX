@@ -40,6 +40,9 @@
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 
+/* Screen has adjustable contrast */
+#define SCREEN_CONTRAST
+
 /* Screen pixel format */
 #define PIX_FMT_BW
 
