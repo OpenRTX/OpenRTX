@@ -96,7 +96,7 @@ extern void _ui_drawMenuSettings(ui_state_t* ui_state);
 extern void _ui_drawSettingsTimeDate(state_t* last_state);
 extern void _ui_drawSettingsTimeDateSet(state_t* last_state, ui_state_t* ui_state);
 #endif
-extern void _ui_drawSettingsDisplay(state_t* last_state, ui_state_t* ui_state);
+extern void _ui_drawSettingsDisplay(ui_state_t* ui_state);
 extern bool _ui_drawMacroMenu(state_t* last_state);
 
 const char *menu_items[6] =
@@ -1053,7 +1053,7 @@ void ui_updateGUI(state_t last_state)
             break;
 #endif
         case SETTINGS_DISPLAY:
-            _ui_drawSettingsDisplay(&last_state, &ui_state);
+            _ui_drawSettingsDisplay(&ui_state);
             break;
         // Low battery screen
         case LOW_BAT:

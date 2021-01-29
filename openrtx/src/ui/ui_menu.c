@@ -202,7 +202,7 @@ void _ui_drawMenuSettings(ui_state_t* ui_state)
     _ui_drawMenuList(layout.line1_left, ui_state->menu_selected, _ui_getSettingsEntryName);
 }
 
-void _ui_drawSettingsDisplay(state_t* last_state, ui_state_t* ui_state)
+void _ui_drawSettingsDisplay(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     // Print "Display" on top bar
