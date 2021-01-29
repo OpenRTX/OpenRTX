@@ -31,6 +31,7 @@ void _ui_drawMenuList(point_t pos, uint8_t selected, int (*getCurrentEntry)(char
     uint8_t scroll = 0;
     char entry_buf[MAX_ENTRY_LEN] = "";
     int result = 0;
+    color_t text_color = color_white;
     for(int item=0; (result == 0) && (pos.y < SCREEN_HEIGHT); item++)
     {
         // If selection is off the screen, scroll screen
@@ -40,17 +41,52 @@ void _ui_drawMenuList(point_t pos, uint8_t selected, int (*getCurrentEntry)(char
         result = (*getCurrentEntry)(entry_buf, sizeof(entry_buf), item+scroll);
         if(result != -1)
         {
+            text_color = color_white;
             if(item + scroll == selected)
             {
+                text_color = color_black;
                 // Draw rectangle under selected item, compensating for text height
                 point_t rect_pos = {0, pos.y - layout.top_h + 3};
                 gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.top_h, color_white, true); 
-                gfx_print(pos, entry_buf, layout.top_font, TEXT_ALIGN_LEFT, color_black);
             }
-            else
+            gfx_print(pos, entry_buf, layout.top_font, TEXT_ALIGN_LEFT, text_color);
+            pos.y += layout.top_h;
+        }
+    }
+}
+
+void _ui_drawMenuListValue(point_t pos, uint8_t selected, 
+                           int (*getCurrentEntry)(char *buf, uint8_t max_len, uint8_t index), 
+                           int (*getCurrentValue)(char *buf, uint8_t max_len, uint8_t index))
+{
+    // Number of menu entries that fit in the screen height
+    uint8_t entries_in_screen = ((SCREEN_HEIGHT - pos.y) / layout.top_h) + 1;
+    uint8_t scroll = 0;
+    char entry_buf[MAX_ENTRY_LEN] = "";
+    char value_buf[MAX_ENTRY_LEN] = "";
+    int result = 0;
+    color_t text_color = color_white;
+    for(int item=0; (result == 0) && (pos.y < SCREEN_HEIGHT); item++)
+    {
+        // If selection is off the screen, scroll screen
+        if(selected >= entries_in_screen)
+            scroll = selected - entries_in_screen + 1;
+        // Call function pointer to get current menu entry string
+        result = (*getCurrentEntry)(entry_buf, sizeof(entry_buf), item+scroll);
+        // Call function pointer to get current entry value string
+        result = (*getCurrentValue)(value_buf, sizeof(value_buf), item+scroll);
+        if(result != -1)
+        {
+            text_color = color_white;
+            if(item + scroll == selected)
             {
-                gfx_print(pos, entry_buf, layout.top_font, TEXT_ALIGN_LEFT, color_white);
+                text_color = color_black;
+                // Draw rectangle under selected item, compensating for text height
+                point_t rect_pos = {0, pos.y - layout.top_h + 3};
+                gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.top_h, color_white, true); 
             }
+            gfx_print(pos, entry_buf, layout.top_font, TEXT_ALIGN_LEFT, text_color);
+            gfx_print(pos, value_buf, layout.top_font, TEXT_ALIGN_RIGHT, text_color);
             pos.y += layout.top_h;
         }
     }
@@ -71,6 +107,13 @@ int _ui_getSettingsEntryName(char *buf, uint8_t max_len, uint8_t index)
 }
 
 int _ui_getDisplayEntryName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= display_num) return -1;
+    snprintf(buf, max_len, "%s", display_items[index]);
+    return 0;
+}
+
+int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= display_num) return -1;
     snprintf(buf, max_len, "%s", display_items[index]);
@@ -161,7 +204,8 @@ void _ui_drawSettingsDisplay(state_t* last_state, ui_state_t* ui_state)
     gfx_print(layout.top_left, "Display", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print display settings entries
-    _ui_drawMenuList(layout.line1_left, ui_state->menu_selected, _ui_getDisplayEntryName);
+    _ui_drawMenuListValue(layout.line1_left, ui_state->menu_selected, _ui_getDisplayEntryName,
+                           _ui_getDisplayValueName);
 }
 
 #ifdef HAS_RTC
