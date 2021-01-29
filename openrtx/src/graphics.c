@@ -203,6 +203,8 @@ void gfx_drawLine(point_t start, point_t end, color_t color)
 void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color, bool fill)
 {
     if(!initialized) return;
+    if(width == 0) return;
+    if(height == 0) return;
     uint16_t x_max = start.x + width - 1;
     uint16_t y_max = start.y + height - 1;
     bool perimeter = 0;
@@ -436,4 +438,57 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, float perce
     point_t button_start = {start.x + width, start.y + height / 2 - (height / 8) - 1 + (height % 2)};
     point_t button_end =   {start.x + width, start.y + height / 2 + (height / 8)};
     gfx_drawLine(button_start, button_end, white);
+}
+
+/*
+ * Function to draw RSSI-meter of arbitrary size
+ * starting coordinates are relative to the top left point.
+ *
+ * *         *         *         *           *          *           *|
+ * *****************************************                         |
+ * ******************************************    <- RSSI             |
+ * ******************************************                        |  <-- Height (px)
+ * ******************************************                        |
+ * ****************             <-- Squelch                          |
+ * ***************                                                   |
+ * *         *         *         *           *          *           *|
+ * ___________________________________________________________________
+ *
+ * ^
+ * |
+ *
+ * Width (px)
+ *
+ */
+void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi, float squelch) {
+    color_t white =  {255, 255, 255, 255};
+    color_t yellow = {250, 180, 19 , 255};
+    color_t red =    {255, 0,   0  , 255};
+
+    // S-level dots
+    for(int i = 0; i < 11; i++) {
+        color_t color = (i % 3 == 0) ? yellow : white;
+        color = (i > 9) ? red : color;
+        point_t pixel_pos = {i * (width - 1) / 11, start.y};
+        gfx_setPixel(pixel_pos, color);
+        pixel_pos.y += height;
+        gfx_setPixel(pixel_pos, color);
+    }
+    point_t pixel_pos = {width - 1, start.y};
+    gfx_setPixel(pixel_pos, red);
+    pixel_pos.y += height;
+    gfx_setPixel(pixel_pos, red);
+
+    // RSSI bar
+    uint16_t rssi_height = height * 2 / 3;
+    float s_level =  (127.0f + rssi) / 6.0f;
+    uint16_t rssi_width = (s_level < 0.0f) ? 0 : (s_level * (width - 1) / 11);
+    point_t rssi_pos = { start.x, start.y + 1 };
+    gfx_drawRect(rssi_pos, rssi_width, rssi_height, white, true);
+
+    // Squelch bar
+    uint16_t squelch_height = height / 3 - 1;
+    uint16_t squelch_width = width * squelch;
+    point_t squelch_pos = { start.x, start.y + 1 + rssi_height };
+    gfx_drawRect(squelch_pos, squelch_width, squelch_height, white, true);
 }

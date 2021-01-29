@@ -165,20 +165,16 @@ void _ui_drawVFOMiddleInput(state_t* last_state, ui_state_t* ui_state)
     }
 }
 
-void _ui_drawVFOBottom()
+void _ui_drawBottom(state_t *last_state)
 {
-    gfx_print(layout.bottom_left, "VFO", layout.bottom_font,
-              TEXT_ALIGN_LEFT, color_white);
-    gfx_print(layout.bottom_left, "OpenRTX", layout.bottom_font,
-              TEXT_ALIGN_CENTER, color_white);
-}
-
-void _ui_drawMEMBottom()
-{
-    gfx_print(layout.bottom_left, "MEM", layout.bottom_font,
-              TEXT_ALIGN_LEFT, color_white);
-    gfx_print(layout.bottom_left, "OpenRTX", layout.bottom_font,
-              TEXT_ALIGN_CENTER, color_white);
+    // Squelch bar
+    float rssi = last_state->rssi;
+    float squelch = last_state->sqlLevel / 16.0f;
+    point_t smeter_pos = { 0, layout.bottom_left.y +
+                              layout.status_v_pad +
+                              layout.text_v_offset -
+                              layout.bottom_h };
+    gfx_drawSmeter(smeter_pos, SCREEN_WIDTH, layout.bottom_h - 1, rssi, squelch);
 }
 
 void _ui_drawMainVFO(state_t* last_state)
@@ -187,7 +183,7 @@ void _ui_drawMainVFO(state_t* last_state)
     _ui_drawMainBackground();
     _ui_drawMainTop(last_state);
     _ui_drawVFOMiddle(last_state);
-    _ui_drawVFOBottom();
+    _ui_drawBottom(last_state);
 }
 
 void _ui_drawMainVFOInput(state_t* last_state, ui_state_t* ui_state)
@@ -196,7 +192,7 @@ void _ui_drawMainVFOInput(state_t* last_state, ui_state_t* ui_state)
     _ui_drawMainBackground();
     _ui_drawMainTop(last_state);
     _ui_drawVFOMiddleInput(last_state, ui_state);
-    _ui_drawVFOBottom();
+    _ui_drawBottom(last_state);
 }
 
 void _ui_drawMainMEM(state_t* last_state)
@@ -205,5 +201,5 @@ void _ui_drawMainMEM(state_t* last_state)
     _ui_drawMainBackground();
     _ui_drawMainTop(last_state);
     _ui_drawMEMMiddle(last_state);
-    _ui_drawMEMBottom();
+    _ui_drawBottom(last_state);
 }

@@ -238,4 +238,15 @@ void gfx_printError(const char *text, fontSize_t size);
  */
 void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, float percentage);
 
+/**
+ * Function to draw Smeter of arbitrary size.
+ * Starting coordinates are relative to the top left point.
+ * @param start: Smeter start point, in pixel coordinates.
+ * @param width: Smeter width
+ * @param height: Smeter height
+ * @param rssi: rssi level in dBm
+ * @param squelch: squelch level in percentage
+ */
+void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi, float squelch);
+
 #endif /* GRAPHICS_H */
