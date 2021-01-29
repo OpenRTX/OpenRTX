@@ -109,13 +109,18 @@ const char *menu_items[6] =
     "Settings"
 };
 
+#ifdef HAS_RTC
 const char *settings_items[2] =
 {
-#ifdef HAS_RTC
     "Time & Date",
-#endif
     "Display"
 };
+#else
+const char *settings_items[1] =
+{
+    "Display"
+};
+#endif
 
 #ifdef SCREEN_CONTRAST
 const char *display_items[2] =

@@ -121,8 +121,8 @@ typedef struct ui_state_t
 
 extern layout_t layout;
 extern settings_t settings;
-extern const char *menu_items[6];
-extern const char *settings_items[2];
+extern const char *menu_items[];
+extern const char *settings_items[];
 extern const char *display_items[];
 extern const uint8_t menu_num;
 extern const uint8_t settings_num;
