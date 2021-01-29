@@ -117,11 +117,18 @@ const char *settings_items[2] =
     "Display"
 };
 
+#ifdef SCREEN_CONTRAST
 const char *display_items[2] =
 {
     "Brightness",
     "Contrast"
 };
+#else
+const char *display_items[1] =
+{
+    "Brightness",
+};
+#endif
 
 // Calculate number of main menu entries
 const uint8_t menu_num = sizeof(menu_items)/sizeof(menu_items[0]);
@@ -946,11 +953,11 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     if(ui_state.menu_selected > 0)
                         ui_state.menu_selected -= 1;
                     else
-                        ui_state.menu_selected = settings_num-1;
+                        ui_state.menu_selected = display_num-1;
                 }
                 else if(msg.keys & KEY_DOWN)
                 {
-                    if(ui_state.menu_selected < settings_num-1)
+                    if(ui_state.menu_selected < display_num-1)
                         ui_state.menu_selected += 1;
                     else
                         ui_state.menu_selected = 0;
