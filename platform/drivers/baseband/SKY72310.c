@@ -15,11 +15,11 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include "pll_MD3x0.h"
-#include <math.h>
 #include <interfaces/gpio.h>
 #include <interfaces/delays.h>
-#include "hwconfig.h"
+#include <hwconfig.h>
+#include <math.h>
+#include "SKY72310.h"
 
 #define REF_CLK 16800000.0F  /* Reference clock: 16.8MHz                 */
 #define PHD_GAIN 0x1F        /* Phase detector gain: hex value, max 0x1F */
@@ -58,7 +58,7 @@ void _spiSend(uint16_t value)
     gpio_setPin(PLL_CS);
 }
 
-void pll_init()
+void SKY73210_init()
 {
     gpio_setMode(PLL_CLK, OUTPUT);
     gpio_setMode(PLL_DAT, OUTPUT);
@@ -72,14 +72,14 @@ void pll_init()
     _spiSend(0x9000);                         /* Modulation data register                */
 }
 
-void pll_terminate()
+void SKY73210_terminate()
 {
     gpio_setMode(PLL_CLK, INPUT);
     gpio_setMode(PLL_DAT, INPUT);
     gpio_setMode(PLL_CS,  INPUT);
 }
 
-void pll_setFrequency(float freq, uint8_t clkDiv)
+void SKY73210_setFrequency(float freq, uint8_t clkDiv)
 {
     /* Maximum allowable value for reference clock divider is 32 */
     if (clkDiv > 32) clkDiv = 32;
@@ -114,12 +114,12 @@ void pll_setFrequency(float freq, uint8_t clkDiv)
     _spiSend(0x5000 | ((uint16_t)clkDiv - 1));   /* Reference clock divider */
 }
 
-bool pll_locked()
+bool SKY73210_isPllLocked()
 {
     return (gpio_readPin(PLL_LD) == 1) ? true : false;
 }
 
-bool pll_spiInUse()
+bool SKY73210_spiInUse()
 {
     /* If PLL chip select is low, SPI is being used by this driver. */
     return (gpio_readPin(PLL_CS) == 1) ? false : true;

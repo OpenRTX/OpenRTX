@@ -15,50 +15,51 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef PLL_MD3x0_H
-#define PLL_MD3x0_H
+#ifndef SKY73210_H
+#define SKY73210_H
 
 #include <stdint.h>
 #include <stdbool.h>
 
 /**
- * Driver for PLL in MD3x0 radios (MD380 and MD380), which is SKY73210.
+ * Driver for SKY73210 PLL IC.
  *
- * WARNING: the PLL and DMR chips share the SPI MOSI line, thus particular care
- * has to be put to avoid them stomping reciprocally. This driver does not make
- * any check if a SPI transfer is already in progress, deferring the correct bus
- * management to higher level modules. However, a function returning true if the
- * bus is currently in use by this driver is provided.
+ * WARNING: on MD3x0 devices the PLL and DMR chips share the SPI MOSI line,
+ * thus particular care has to be put to avoid them stomping reciprocally.
+ * This driver does not make any check if a SPI transfer is already in progress,
+ * deferring the correct bus management to higher level modules. However,
+ * a function returning true if the bus is currently in use by this driver
+ * is provided.
  */
 
 /**
  * Initialise the PLL.
  */
-void pll_init();
+void SKY73210_init();
 
 /**
  * Terminate PLL driver, bringing GPIOs back to reset state.
  */
-void pll_terminate();
+void SKY73210_terminate();
 
 /**
  * Change VCO frequency.
  * @param freq: new VCO frequency, in Hz.
  * @param clkDiv: reference clock division factor.
  */
-void pll_setFrequency(float freq, uint8_t clkDiv);
+void SKY73210_setFrequency(float freq, uint8_t clkDiv);
 
 /**
  * Check if PLL is locked.
  * @return true if PLL is locked.
  */
-bool pll_locked();
+bool SKY73210_isPllLocked();
 
 /**
  * Check if the SPI bus in common between PLL and DMR chips is in use by this
  * driver.
  * @return true if this driver is using the SPI bus.
  */
-bool pll_spiInUse();
+bool SKY73210_spiInUse();
 
-#endif /* PLL_H */
+#endif /* SKY73210_H */
