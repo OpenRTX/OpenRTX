@@ -39,6 +39,8 @@ uint8_t vtune_rx = 0;   /* Tuning voltage for RX input filter                  *
 uint8_t txpwr_lo = 0;   /* APC voltage for TX output power control, low power  */
 uint8_t txpwr_hi = 0;   /* APC voltage for TX output power control, high power */
 
+enum opmode currOpMode; /* Current operating mode, needed for TX control       */
+
 /*
  * Parameters for RSSI voltage (mV) to input power (dBm) conversion.
  * Gain is constant, while offset values are aligned to calibration frequency
@@ -149,6 +151,7 @@ void radio_setBandwidth(const enum bandwidth bw)
 
 void radio_setOpmode(const enum opmode mode)
 {
+    currOpMode = mode;
     switch(mode)
     {
         case FM:
@@ -217,6 +220,11 @@ void radio_enableTx(const float txPower, const bool enableCss)
     uint8_t apc = (txPower > 1.0f) ? txpwr_hi : txpwr_lo;
     DAC->DHR12L1 = apc * 0xFF;
 
+    if(currOpMode == FM)
+    {
+        C5000_startAnalogTx();
+    }
+
     gpio_setPin(TX_STG_EN);
 
     if(enableCss)
@@ -227,36 +235,42 @@ void radio_enableTx(const float txPower, const bool enableCss)
 
 void radio_disableRtx()
 {
-    toneGen_toneOff();
+    /* If we are currently transmitting, stop tone and C5000 TX */
+    if(gpio_readPin(TX_STG_EN) == 1)
+    {
+        toneGen_toneOff();
+        C5000_stopAnalogTx();
+    }
+
     gpio_clearPin(TX_STG_EN);
     gpio_clearPin(RX_STG_EN);
 }
 
-void radio_updateCalibrationParams(const rtxStatus_t rtxCfg)
+void radio_updateCalibrationParams(const rtxStatus_t* rtxCfg)
 {
     /* Tuning voltage for RX input filter */
-    vtune_rx = interpCalParameter(rtxCfg.rxFrequency, calData->rxFreq,
+    vtune_rx = interpCalParameter(rtxCfg->rxFrequency, calData->rxFreq,
                                   calData->rxSensitivity, 9);
 
     /* APC voltage for TX output power control */
-    txpwr_lo = interpCalParameter(rtxCfg.txFrequency, calData->txFreq,
+    txpwr_lo = interpCalParameter(rtxCfg->txFrequency, calData->txFreq,
                                   calData->txLowPower, 9);
 
-    txpwr_hi = interpCalParameter(rtxCfg.txFrequency, calData->txFreq,
+    txpwr_hi = interpCalParameter(rtxCfg->txFrequency, calData->txFreq,
                                   calData->txHighPower, 9);
 
     /* HR_C5000 modulation amplitude */
     const uint8_t *Ical = calData->sendIrange;
     const uint8_t *Qcal = calData->sendQrange;
 
-    if(rtxCfg.opMode == FM)
+    if(rtxCfg->opMode == FM)
     {
         Ical = calData->analogSendIrange;
         Qcal = calData->analogSendQrange;
     }
 
-    uint8_t I = interpCalParameter(rtxCfg.txFrequency, calData->txFreq, Ical, 9);
-    uint8_t Q = interpCalParameter(rtxCfg.txFrequency, calData->txFreq, Qcal, 9);
+    uint8_t I = interpCalParameter(rtxCfg->txFrequency, calData->txFreq, Ical, 9);
+    uint8_t Q = interpCalParameter(rtxCfg->txFrequency, calData->txFreq, Qcal, 9);
 
     C5000_setModAmplitude(I, Q);
 }

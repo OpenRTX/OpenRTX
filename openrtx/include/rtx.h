@@ -21,10 +21,10 @@
 #ifndef RTX_H
 #define RTX_H
 
-#include <os.h>
-#include <cps.h>
-#include <stdint.h>
 #include <datatypes.h>
+#include <stdint.h>
+#include <cps.h>
+#include <os.h>
 
 typedef struct
 {

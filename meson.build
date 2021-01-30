@@ -20,7 +20,8 @@ openrtx_src = ['openrtx/src/bootstrap.c',
                'openrtx/src/battery.c',
                'openrtx/src/graphics.c',
                'openrtx/src/input.c',
-               'openrtx/src/calibUtils.c']
+               'openrtx/src/calibUtils.c',
+               'openrtx/src/rtx.c']
 
 
 ## Replace main executable with platform test
@@ -191,7 +192,7 @@ md380_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.c',
                                    'platform/drivers/ADC/ADC1_MDx.c',
                                    'platform/drivers/tones/toneGenerator_MDx.c',
                                    'platform/drivers/baseband/pll_MD3x0.c',
-                                   'platform/drivers/baseband/rtx_MD3x0.c',
+                                   'platform/drivers/baseband/radio_MD3x0.c',
                                    'platform/drivers/baseband/HR-C5000_MD3x0.c',
                                    'platform/targets/MD-380/platform.c']
 

@@ -85,7 +85,7 @@ void radio_disableRtx();
 /**
  *
  */
-void radio_updateCalibrationParams(const rtxStatus_t rtxCfg);
+void radio_updateCalibrationParams(const rtxStatus_t *rtxCfg);
 
 /**
  *
