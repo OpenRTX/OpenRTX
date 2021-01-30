@@ -34,7 +34,6 @@ rtxStatus_t rtxStatus;  /* RTX driver status                  */
 
 bool sqlOpen;           /* Flag for squlech open/close        */
 
-
 /*
  * These functions below provide a basic API for audio path management. They
  * will be removed once the audio driver is set up.
@@ -133,10 +132,13 @@ void rtx_init(OS_MUTEX *m)
      * Initialise low-level platform-specific driver
      */
     radio_init();
+
+    _afCtrlInit();
 }
 
 void rtx_terminate()
 {
+    _afCtrlTerminate();
     radio_terminate();
 }
 
@@ -204,14 +206,24 @@ void rtx_taskFunc()
             radio_setCSS(rtxStatus.rxTone, rtxStatus.txTone);
             radio_updateCalibrationParams(&rtxStatus);
 
-            /* Update VCO frequency, it could have been changed meanwhile */
+            /*
+             * If currently transmitting or receiving, update VCO frequency and
+             * call again enableRx/enableTx.
+             * This is done because the new configuration may have changed the
+             * RX and TX frequencies, requiring an update of both the VCO
+             * settings and of some tuning parameters, like APC voltage, which
+             * are managed by enableRx/enableTx.
+             */
             if(rtxStatus.opStatus == TX)
             {
                 radio_setVcoFrequency(rtxStatus.txFrequency, true);
+                radio_enableTx(rtxStatus.txPower, rtxStatus.txToneEn);
             }
-            else
+
+            if(rtxStatus.opStatus == RX)
             {
                 radio_setVcoFrequency(rtxStatus.rxFrequency, false);
+                radio_enableRx();
             }
         }
     }
@@ -219,6 +231,8 @@ void rtx_taskFunc()
     /* TODO: temporarily force to RX mode if rtx is off. */
     if(rtxStatus.opStatus == OFF)
     {
+        radio_disableRtx();
+
         radio_setVcoFrequency(rtxStatus.rxFrequency, false);
         radio_enableRx();
         rtxStatus.opStatus = RX;
