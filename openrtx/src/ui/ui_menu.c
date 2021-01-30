@@ -135,10 +135,14 @@ int _ui_getInfoEntryName(char *buf, uint8_t max_len, uint8_t index)
 int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= info_num) return -1;
-    uint8_t value = 0;
     if(strcmp(info_items[index], "Model") == 0)
-        value = 0;
-    snprintf(buf, max_len, "%d", value);
+        snprintf(buf, max_len, "%s", "");
+    else if(strcmp(info_items[index], "Bat. Voltage") == 0)
+        snprintf(buf, max_len, "%.1fV", last_state.v_bat);
+    else if(strcmp(info_items[index], "Bat. Charge") == 0)
+        snprintf(buf, max_len, "%.1f%%", last_state.charge);
+    else if(strcmp(info_items[index], "RSSI") == 0)
+        snprintf(buf, max_len, "%.1fdBm", last_state.rssi);
     return 0;
 }
 int _ui_getZoneName(char *buf, uint8_t max_len, uint8_t index)
@@ -241,7 +245,7 @@ void _ui_drawSettingsDisplay(ui_state_t* ui_state)
 }
 
 #ifdef HAS_RTC
-void _ui_drawSettingsTimeDate(state_t* last_state)
+void _ui_drawSettingsTimeDate()
 {
     gfx_clearScreen();
     // Print "Time&Date" on top bar
@@ -251,16 +255,16 @@ void _ui_drawSettingsTimeDate(state_t* last_state)
     char date_buf[10] = "";
     char time_buf[10] = "";
     snprintf(date_buf, sizeof(date_buf), "%02d/%02d/%02d", 
-             last_state->time.date, last_state->time.month, last_state->time.year);
+             last_state.time.date, last_state.time.month, last_state.time.year);
     snprintf(time_buf, sizeof(time_buf), "%02d:%02d:%02d", 
-             last_state->time.hour, last_state->time.minute, last_state->time.second);
+             last_state.time.hour, last_state.time.minute, last_state.time.second);
     gfx_print(layout.line2_left, date_buf, layout.line2_font, TEXT_ALIGN_CENTER,
               color_white);
     gfx_print(layout.line3_left, time_buf, layout.line3_font, TEXT_ALIGN_CENTER,
               color_white);
 }
 
-void _ui_drawSettingsTimeDateSet(state_t* last_state, ui_state_t* ui_state)
+void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state)
 {
     (void) last_state;
 
@@ -301,7 +305,7 @@ void _ui_drawSettingsTimeDateSet(state_t* last_state, ui_state_t* ui_state)
 }
 #endif
 
-bool _ui_drawMacroMenu(state_t* last_state) {
+bool _ui_drawMacroMenu() {
         // Header
         gfx_print(layout.top_left, "Macro Menu", layout.top_font, TEXT_ALIGN_CENTER,
                   color_white);
@@ -310,14 +314,14 @@ bool _ui_drawMacroMenu(state_t* last_state) {
                   yellow_fab413);
         char code_str[11] = { 0 };
         snprintf(code_str, 11, "  %6.1f",
-                 ctcss_tone[last_state->channel.fm.txTone]/10.0f);
+                 ctcss_tone[last_state.channel.fm.txTone]/10.0f);
         gfx_print(layout.line1_left, code_str, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white);
         gfx_print(layout.line1_left, "2       ", layout.top_font, TEXT_ALIGN_CENTER,
                   yellow_fab413);
         char encdec_str[9] = { 0 };
-        bool tone_tx_enable = last_state->channel.fm.txToneEn;
-        bool tone_rx_enable = last_state->channel.fm.rxToneEn;
+        bool tone_tx_enable = last_state.channel.fm.txToneEn;
+        bool tone_rx_enable = last_state.channel.fm.rxToneEn;
         if (tone_tx_enable && tone_rx_enable)
             snprintf(encdec_str, 9, "     E+D");
         else if (tone_tx_enable && !tone_rx_enable)
@@ -331,14 +335,14 @@ bool _ui_drawMacroMenu(state_t* last_state) {
         gfx_print(layout.line1_right, "3        ", layout.top_font, TEXT_ALIGN_RIGHT,
                   yellow_fab413);
         char pow_str[9] = { 0 };
-        snprintf(pow_str, 9, "%.1gW", last_state->channel.power);
+        snprintf(pow_str, 9, "%.1gW", last_state.channel.power);
         gfx_print(layout.line1_right, pow_str, layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white);
         // Second row
         gfx_print(layout.line2_left, "4", layout.top_font, TEXT_ALIGN_LEFT,
                   yellow_fab413);
         char bw_str[8] = { 0 };
-        switch (last_state->channel.bandwidth)
+        switch (last_state.channel.bandwidth)
         {
             case BW_12_5:
                 snprintf(bw_str, 8, "   12.5");
@@ -355,7 +359,7 @@ bool _ui_drawMacroMenu(state_t* last_state) {
         gfx_print(layout.line2_left, "5       ", layout.top_font, TEXT_ALIGN_CENTER,
                   yellow_fab413);
         char mode_str[9] = "";
-        switch(last_state->channel.mode)
+        switch(last_state.channel.mode)
         {
             case FM:
             snprintf(mode_str, 9,"      FM");
@@ -384,7 +388,7 @@ bool _ui_drawMacroMenu(state_t* last_state) {
         gfx_print(layout.line3_right, "Sav", layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white);
         // Squelch bar
-        uint16_t squelch_width = SCREEN_WIDTH / 16 * last_state->sqlLevel;
+        uint16_t squelch_width = SCREEN_WIDTH / 16 * last_state.sqlLevel;
         point_t squelch_pos = { layout.bottom_left.x, layout.bottom_left.y +
                                                       layout.status_v_pad +
                                                       layout.text_v_offset -

@@ -31,13 +31,13 @@ void _ui_drawMainBackground()
     gfx_drawHLine(SCREEN_HEIGHT - layout.bottom_h - 1, layout.hline_h, color_grey);
 }
 
-void _ui_drawMainTop(state_t* last_state)
+void _ui_drawMainTop()
 {
 #ifdef HAS_RTC
     // Print clock on top bar
     char clock_buf[9] = "";
-    snprintf(clock_buf, sizeof(clock_buf), "%02d:%02d:%02d", last_state->time.hour,
-             last_state->time.minute, last_state->time.second);
+    snprintf(clock_buf, sizeof(clock_buf), "%02d:%02d:%02d", last_state.time.hour,
+             last_state.time.minute, last_state.time.second);
     gfx_print(layout.top_left, clock_buf, layout.top_font, TEXT_ALIGN_CENTER,
               color_white);
 #endif
@@ -47,11 +47,11 @@ void _ui_drawMainTop(state_t* last_state)
     uint16_t bat_height = layout.top_h - (layout.status_v_pad * 2);
     point_t bat_pos = {SCREEN_WIDTH - bat_width - layout.horizontal_pad,
                        layout.status_v_pad};
-    gfx_drawBattery(bat_pos, bat_width, bat_height, last_state->charge);
+    gfx_drawBattery(bat_pos, bat_width, bat_height, last_state.charge);
 
     // Print radio mode on top bar
     char mode[4] = "";
-    switch(last_state->channel.mode)
+    switch(last_state.channel.mode)
     {
         case FM:
         strcpy(mode, "FM");
@@ -64,42 +64,42 @@ void _ui_drawMainTop(state_t* last_state)
               color_white);
 }
 
-void _ui_drawVFOMiddle(state_t* last_state)
+void _ui_drawVFOMiddle()
 {
     // Print VFO frequencies
     char freq_buf[20] = "";
     snprintf(freq_buf, sizeof(freq_buf), " Rx:%03lu.%05lu",
-             (unsigned long)last_state->channel.rx_frequency/1000000,
-             (unsigned long)last_state->channel.rx_frequency%1000000/10);
+             (unsigned long)last_state.channel.rx_frequency/1000000,
+             (unsigned long)last_state.channel.rx_frequency%1000000/10);
     gfx_print(layout.line2_left, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
               color_white);
     snprintf(freq_buf, sizeof(freq_buf), " Tx:%03lu.%05lu",
-             (unsigned long)last_state->channel.tx_frequency/1000000,
-             (unsigned long)last_state->channel.tx_frequency%1000000/10);
+             (unsigned long)last_state.channel.tx_frequency/1000000,
+             (unsigned long)last_state.channel.tx_frequency%1000000/10);
     gfx_print(layout.line3_left, freq_buf, layout.line3_font, TEXT_ALIGN_CENTER,
               color_white);
 }
 
-void _ui_drawMEMMiddle(state_t* last_state)
+void _ui_drawMEMMiddle()
 {
     // Print Channel name
-    gfx_print(layout.line1_left, last_state->channel.name, layout.line1_font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.line1_left, last_state.channel.name, layout.line1_font, TEXT_ALIGN_CENTER,
               color_white);
     // Print Channel frequencies
     char freq_buf[20] = "";
     snprintf(freq_buf, sizeof(freq_buf), " Rx:%03lu.%05lu",
-             (unsigned long)last_state->channel.rx_frequency/1000000,
-             (unsigned long)last_state->channel.rx_frequency%1000000/10);
+             (unsigned long)last_state.channel.rx_frequency/1000000,
+             (unsigned long)last_state.channel.rx_frequency%1000000/10);
     gfx_print(layout.line2_left, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
               color_white);
     snprintf(freq_buf, sizeof(freq_buf), " Tx:%03lu.%05lu",
-             (unsigned long)last_state->channel.tx_frequency/1000000,
-             (unsigned long)last_state->channel.tx_frequency%1000000/10);
+             (unsigned long)last_state.channel.tx_frequency/1000000,
+             (unsigned long)last_state.channel.tx_frequency%1000000/10);
     gfx_print(layout.line3_left, freq_buf, layout.line3_font, TEXT_ALIGN_CENTER,
               color_white);
 }
 
-void _ui_drawVFOMiddleInput(state_t* last_state, ui_state_t* ui_state)
+void _ui_drawVFOMiddleInput(ui_state_t* ui_state)
 {
     // Add inserted number to string, skipping "Rx: "/"Tx: " and "."
     uint8_t insert_pos = ui_state->input_position + 3;
@@ -127,8 +127,8 @@ void _ui_drawVFOMiddleInput(state_t* last_state, ui_state_t* ui_state)
                       color_white);
         }
         snprintf(freq_buf, sizeof(freq_buf), " Tx:%03lu.%05lu",
-                 (unsigned long)last_state->channel.tx_frequency/1000000,
-                 (unsigned long)last_state->channel.tx_frequency%1000000/10);
+                 (unsigned long)last_state.channel.tx_frequency/1000000,
+                 (unsigned long)last_state.channel.tx_frequency%1000000/10);
         gfx_print(layout.line3_left, freq_buf, layout.line3_font, TEXT_ALIGN_CENTER,
                   color_white);
     }
@@ -159,11 +159,11 @@ void _ui_drawVFOMiddleInput(state_t* last_state, ui_state_t* ui_state)
     }
 }
 
-void _ui_drawBottom(state_t *last_state)
+void _ui_drawBottom()
 {
     // Squelch bar
-    float rssi = last_state->rssi;
-    float squelch = last_state->sqlLevel / 16.0f;
+    float rssi = last_state.rssi;
+    float squelch = last_state.sqlLevel / 16.0f;
     point_t smeter_pos = { 0, layout.bottom_left.y +
                               layout.status_v_pad +
                               layout.text_v_offset -
@@ -171,29 +171,29 @@ void _ui_drawBottom(state_t *last_state)
     gfx_drawSmeter(smeter_pos, SCREEN_WIDTH, layout.bottom_h - 1, rssi, squelch);
 }
 
-void _ui_drawMainVFO(state_t* last_state)
+void _ui_drawMainVFO()
 {
     gfx_clearScreen();
     _ui_drawMainBackground();
-    _ui_drawMainTop(last_state);
-    _ui_drawVFOMiddle(last_state);
-    _ui_drawBottom(last_state);
+    _ui_drawMainTop();
+    _ui_drawVFOMiddle();
+    _ui_drawBottom();
 }
 
-void _ui_drawMainVFOInput(state_t* last_state, ui_state_t* ui_state)
+void _ui_drawMainVFOInput(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     _ui_drawMainBackground();
-    _ui_drawMainTop(last_state);
-    _ui_drawVFOMiddleInput(last_state, ui_state);
-    _ui_drawBottom(last_state);
+    _ui_drawMainTop();
+    _ui_drawVFOMiddleInput(ui_state);
+    _ui_drawBottom();
 }
 
-void _ui_drawMainMEM(state_t* last_state)
+void _ui_drawMainMEM()
 {
     gfx_clearScreen();
     _ui_drawMainBackground();
-    _ui_drawMainTop(last_state);
-    _ui_drawMEMMiddle(last_state);
-    _ui_drawBottom(last_state);
+    _ui_drawMainTop();
+    _ui_drawMEMMiddle();
+    _ui_drawBottom();
 }

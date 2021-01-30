@@ -76,14 +76,14 @@
 
 /* UI main screen functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBackground();
-extern void _ui_drawMainTop(state_t* last_state);
-extern void _ui_drawVFOMiddle(state_t* last_state);
-extern void _ui_drawMEMMiddle(state_t* last_state);
+extern void _ui_drawMainTop();
+extern void _ui_drawVFOMiddle();
+extern void _ui_drawMEMMiddle();
 extern void _ui_drawVFOBottom();
 extern void _ui_drawMEMBottom();
-extern void _ui_drawMainVFO(state_t* last_state);
-extern void _ui_drawMainVFOInput(state_t* last_state, ui_state_t* ui_state);
-extern void _ui_drawMainMEM(state_t* last_state);
+extern void _ui_drawMainVFO();
+extern void _ui_drawMainVFOInput(ui_state_t* ui_state);
+extern void _ui_drawMainMEM();
 /* UI menu functions, their implementation is in "ui_menu.c" */
 extern void _ui_drawMenuList(point_t pos, const char *entries[], uint8_t num_entries, uint8_t selected);
 extern void _ui_drawChannelList(point_t pos, uint8_t selected);
@@ -94,11 +94,11 @@ extern void _ui_drawMenuContacts(ui_state_t* ui_state);
 extern void _ui_drawMenuSettings(ui_state_t* ui_state);
 extern void _ui_drawMenuInfo(ui_state_t* ui_state);
 #ifdef HAS_RTC
-extern void _ui_drawSettingsTimeDate(state_t* last_state);
-extern void _ui_drawSettingsTimeDateSet(state_t* last_state, ui_state_t* ui_state);
+extern void _ui_drawSettingsTimeDate();
+extern void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state);
 #endif
 extern void _ui_drawSettingsDisplay(ui_state_t* ui_state);
-extern bool _ui_drawMacroMenu(state_t* last_state);
+extern bool _ui_drawMacroMenu();
 
 const char *menu_items[7] =
 {
@@ -159,6 +159,7 @@ const color_t color_white = {255, 255, 255, 255};
 const color_t yellow_fab413 = {250, 180, 19, 255};
 
 layout_t layout;
+state_t last_state;
 ui_state_t ui_state;
 settings_t settings;
 bool layout_ready = false;
@@ -602,6 +603,11 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
 #endif
 }
 
+void ui_saveState()
+{
+    last_state = state;
+}
+
 void ui_updateFSM(event_t event, bool *sync_rtx)
 {
     // Check if battery has enough charge to operate
@@ -1039,7 +1045,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
     }
 }
 
-void ui_updateGUI(state_t last_state)
+void ui_updateGUI()
 {
     if(!layout_ready)
     {
@@ -1051,15 +1057,15 @@ void ui_updateGUI(state_t last_state)
     {
         // VFO main screen
         case MAIN_VFO:
-            _ui_drawMainVFO(&last_state);
+            _ui_drawMainVFO();
             break;
         // VFO frequency input screen
         case MAIN_VFO_INPUT:
-            _ui_drawMainVFOInput(&last_state, &ui_state);
+            _ui_drawMainVFOInput(&ui_state);
             break;
         // MEM main screen
         case MAIN_MEM:
-            _ui_drawMainMEM(&last_state);
+            _ui_drawMainMEM();
             break;
         // Top menu screen
         case MENU_TOP:
@@ -1079,7 +1085,7 @@ void ui_updateGUI(state_t last_state)
             break;
         // Macro menu
         case MENU_MACRO:
-            _ui_drawMacroMenu(&last_state);
+            _ui_drawMacroMenu();
             break;
         // Settings menu screen
         case MENU_SETTINGS:
@@ -1092,11 +1098,11 @@ void ui_updateGUI(state_t last_state)
 #ifdef HAS_RTC
         // Time&Date settings screen
         case SETTINGS_TIMEDATE:
-            _ui_drawSettingsTimeDate(&last_state);
+            _ui_drawSettingsTimeDate();
             break;
         // Time&Date settings screen, edit mode
         case SETTINGS_TIMEDATE_SET:
-            _ui_drawSettingsTimeDateSet(&last_state, &ui_state);
+            _ui_drawSettingsTimeDateSet(&ui_state);
             break;
 #endif
         case SETTINGS_DISPLAY:

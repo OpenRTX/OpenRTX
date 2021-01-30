@@ -121,6 +121,8 @@ typedef struct ui_state_t
 } ui_state_t;
 
 extern layout_t layout;
+// Copy of the radio state
+extern state_t last_state;
 extern settings_t settings;
 extern const char *menu_items[];
 extern const char *settings_items[];
@@ -147,6 +149,13 @@ void ui_init();
 void ui_drawSplashScreen();
 
 /**
+ * This function updates the local copy of the radio state
+ * the local copy is called last_state
+ * and is accessible from all the UI code as extern variable.
+ */
+void ui_saveState();
+
+/**
  * This function advances the User Interface FSM, basing on the 
  * current radio state and the keys pressed.
  * @param last_state: A local copy of the previous radio state
@@ -157,9 +166,8 @@ void ui_updateFSM(event_t event, bool *sync_rtx);
 
 /**
  * This function redraws the GUI based on the last radio state.
- * @param last_state: A local copy of the previous radio state
  */
-void ui_updateGUI(state_t last_state);
+void ui_updateGUI();
 
 /**
  * This function terminates the User Interface.
