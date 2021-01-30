@@ -49,6 +49,7 @@ enum uiScreen
     MENU_GPS,
     MENU_MACRO,
     MENU_SETTINGS,
+    MENU_INFO,
     SETTINGS_TIMEDATE,
     SETTINGS_TIMEDATE_SET,
     SETTINGS_DISPLAY,
@@ -124,9 +125,11 @@ extern settings_t settings;
 extern const char *menu_items[];
 extern const char *settings_items[];
 extern const char *display_items[];
+extern const char *info_items[];
 extern const uint8_t menu_num;
 extern const uint8_t settings_num;
 extern const uint8_t display_num;
+extern const uint8_t info_num;
 extern const color_t color_black;
 extern const color_t color_grey;
 extern const color_t color_white;

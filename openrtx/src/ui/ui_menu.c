@@ -125,6 +125,22 @@ int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
     return 0;
 }
 
+int _ui_getInfoEntryName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= info_num) return -1;
+    snprintf(buf, max_len, "%s", info_items[index]);
+    return 0;
+}
+
+int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= info_num) return -1;
+    uint8_t value = 0;
+    if(strcmp(info_items[index], "Model") == 0)
+        value = 0;
+    snprintf(buf, max_len, "%d", value);
+    return 0;
+}
 int _ui_getZoneName(char *buf, uint8_t max_len, uint8_t index)
 {
     zone_t zone;
@@ -200,6 +216,17 @@ void _ui_drawMenuSettings(ui_state_t* ui_state)
               TEXT_ALIGN_CENTER, color_white);
     // Print menu entries
     _ui_drawMenuList(layout.line1_left, ui_state->menu_selected, _ui_getSettingsEntryName);
+}
+
+void _ui_drawMenuInfo(ui_state_t* ui_state)
+{
+    gfx_clearScreen();
+    // Print "Info" on top bar
+    gfx_print(layout.top_left, "Info", layout.top_font,
+              TEXT_ALIGN_CENTER, color_white);
+    // Print menu entries
+    _ui_drawMenuListValue(layout.line1_left, ui_state->menu_selected, _ui_getInfoEntryName,
+                           _ui_getInfoValueName);
 }
 
 void _ui_drawSettingsDisplay(ui_state_t* ui_state)
