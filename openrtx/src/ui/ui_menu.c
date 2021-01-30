@@ -176,60 +176,60 @@ void _ui_drawMenuTop(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     // Print "Menu" on top bar
-    gfx_print(layout.top_left, "Menu", layout.top_font,
+    gfx_print(layout.top_pos, "Menu", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print menu entries
-    _ui_drawMenuList(layout.line1_left, ui_state->menu_selected, _ui_getMenuTopEntryName);
+    _ui_drawMenuList(layout.line1_pos, ui_state->menu_selected, _ui_getMenuTopEntryName);
 }
 
 void _ui_drawMenuZone(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     // Print "Zone" on top bar
-    gfx_print(layout.top_left, "Zone", layout.top_font,
+    gfx_print(layout.top_pos, "Zone", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print zone entries
-    _ui_drawMenuList(layout.line1_left, ui_state->menu_selected, _ui_getZoneName);
+    _ui_drawMenuList(layout.line1_pos, ui_state->menu_selected, _ui_getZoneName);
 }
 
 void _ui_drawMenuChannel(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     // Print "Channel" on top bar
-    gfx_print(layout.top_left, "Channels", layout.top_font,
+    gfx_print(layout.top_pos, "Channels", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print channel entries
-    _ui_drawMenuList(layout.line1_left, ui_state->menu_selected, _ui_getChannelName);
+    _ui_drawMenuList(layout.line1_pos, ui_state->menu_selected, _ui_getChannelName);
 }
 
 void _ui_drawMenuContacts(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     // Print "Contacts" on top bar
-    gfx_print(layout.top_left, "Contacts", layout.top_font,
+    gfx_print(layout.top_pos, "Contacts", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print contact entries
-    _ui_drawMenuList(layout.line1_left, ui_state->menu_selected, _ui_getContactName);
+    _ui_drawMenuList(layout.line1_pos, ui_state->menu_selected, _ui_getContactName);
 }
 
 void _ui_drawMenuSettings(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     // Print "Settings" on top bar
-    gfx_print(layout.top_left, "Settings", layout.top_font,
+    gfx_print(layout.top_pos, "Settings", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print menu entries
-    _ui_drawMenuList(layout.line1_left, ui_state->menu_selected, _ui_getSettingsEntryName);
+    _ui_drawMenuList(layout.line1_pos, ui_state->menu_selected, _ui_getSettingsEntryName);
 }
 
 void _ui_drawMenuInfo(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     // Print "Info" on top bar
-    gfx_print(layout.top_left, "Info", layout.top_font,
+    gfx_print(layout.top_pos, "Info", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print menu entries
-    _ui_drawMenuListValue(layout.line1_left, ui_state->menu_selected, _ui_getInfoEntryName,
+    _ui_drawMenuListValue(layout.line1_pos, ui_state->menu_selected, _ui_getInfoEntryName,
                            _ui_getInfoValueName);
 }
 
@@ -252,10 +252,10 @@ void _ui_drawSettingsDisplay(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     // Print "Display" on top bar
-    gfx_print(layout.top_left, "Display", layout.top_font,
+    gfx_print(layout.top_pos, "Display", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print display settings entries
-    _ui_drawMenuListValue(layout.line1_left, ui_state->menu_selected, _ui_getDisplayEntryName,
+    _ui_drawMenuListValue(layout.line1_pos, ui_state->menu_selected, _ui_getDisplayEntryName,
                            _ui_getDisplayValueName);
 }
 
@@ -264,7 +264,7 @@ void _ui_drawSettingsTimeDate()
 {
     gfx_clearScreen();
     // Print "Time&Date" on top bar
-    gfx_print(layout.top_left, "Time&Date", layout.top_font,
+    gfx_print(layout.top_pos, "Time&Date", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print current time and date
     char date_buf[10] = "";
@@ -273,9 +273,9 @@ void _ui_drawSettingsTimeDate()
              last_state.time.date, last_state.time.month, last_state.time.year);
     snprintf(time_buf, sizeof(time_buf), "%02d:%02d:%02d", 
              last_state.time.hour, last_state.time.minute, last_state.time.second);
-    gfx_print(layout.line2_left, date_buf, layout.line2_font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.line2_pos, date_buf, layout.line2_font, TEXT_ALIGN_CENTER,
               color_white);
-    gfx_print(layout.line3_left, time_buf, layout.line3_font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.line3_pos, time_buf, layout.line3_font, TEXT_ALIGN_CENTER,
               color_white);
 }
 
@@ -285,7 +285,7 @@ void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state)
 
     gfx_clearScreen();
     // Print "Time&Date" on top bar
-    gfx_print(layout.top_left, "Time&Date", layout.top_font,
+    gfx_print(layout.top_pos, "Time&Date", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     if(ui_state->input_position <= 0)
     {
@@ -313,26 +313,26 @@ void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state)
             ui_state->new_time_buf[pos] = input_char; 
         }
     }
-    gfx_print(layout.line2_left, ui_state->new_date_buf, layout.line2_font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.line2_pos, ui_state->new_date_buf, layout.line2_font, TEXT_ALIGN_CENTER,
               color_white);
-    gfx_print(layout.line3_left, ui_state->new_time_buf, layout.line3_font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.line3_pos, ui_state->new_time_buf, layout.line3_font, TEXT_ALIGN_CENTER,
               color_white);
 }
 #endif
 
 bool _ui_drawMacroMenu() {
         // Header
-        gfx_print(layout.top_left, "Macro Menu", layout.top_font, TEXT_ALIGN_CENTER,
+        gfx_print(layout.top_pos, "Macro Menu", layout.top_font, TEXT_ALIGN_CENTER,
                   color_white);
         // First row
-        gfx_print(layout.line1_left, "1", layout.top_font, TEXT_ALIGN_LEFT,
+        gfx_print(layout.line1_pos, "1", layout.top_font, TEXT_ALIGN_LEFT,
                   yellow_fab413);
         char code_str[11] = { 0 };
         snprintf(code_str, 11, "  %6.1f",
                  ctcss_tone[last_state.channel.fm.txTone]/10.0f);
-        gfx_print(layout.line1_left, code_str, layout.top_font, TEXT_ALIGN_LEFT,
+        gfx_print(layout.line1_pos, code_str, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white);
-        gfx_print(layout.line1_left, "2       ", layout.top_font, TEXT_ALIGN_CENTER,
+        gfx_print(layout.line1_pos, "2       ", layout.top_font, TEXT_ALIGN_CENTER,
                   yellow_fab413);
         char encdec_str[9] = { 0 };
         bool tone_tx_enable = last_state.channel.fm.txToneEn;
@@ -345,16 +345,16 @@ bool _ui_drawMacroMenu() {
             snprintf(encdec_str, 9, "      D ");
         else
             snprintf(encdec_str, 9, "        ");
-        gfx_print(layout.line1_left, encdec_str, layout.top_font, TEXT_ALIGN_CENTER,
+        gfx_print(layout.line1_pos, encdec_str, layout.top_font, TEXT_ALIGN_CENTER,
                   color_white);
-        gfx_print(layout.line1_left, "3        ", layout.top_font, TEXT_ALIGN_RIGHT,
+        gfx_print(layout.line1_pos, "3        ", layout.top_font, TEXT_ALIGN_RIGHT,
                   yellow_fab413);
         char pow_str[9] = { 0 };
         snprintf(pow_str, 9, "%.1gW", last_state.channel.power);
-        gfx_print(layout.line1_left, pow_str, layout.top_font, TEXT_ALIGN_RIGHT,
+        gfx_print(layout.line1_pos, pow_str, layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white);
         // Second row
-        gfx_print(layout.line2_left, "4", layout.top_font, TEXT_ALIGN_LEFT,
+        gfx_print(layout.line2_pos, "4", layout.top_font, TEXT_ALIGN_LEFT,
                   yellow_fab413);
         char bw_str[8] = { 0 };
         switch (last_state.channel.bandwidth)
@@ -369,9 +369,9 @@ bool _ui_drawMacroMenu() {
                 snprintf(bw_str, 8, "     25");
                 break;
         }
-        gfx_print(layout.line2_left, bw_str, layout.top_font, TEXT_ALIGN_LEFT,
+        gfx_print(layout.line2_pos, bw_str, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white);
-        gfx_print(layout.line2_left, "5       ", layout.top_font, TEXT_ALIGN_CENTER,
+        gfx_print(layout.line2_pos, "5       ", layout.top_font, TEXT_ALIGN_CENTER,
                   yellow_fab413);
         char mode_str[9] = "";
         switch(last_state.channel.mode)
@@ -383,28 +383,28 @@ bool _ui_drawMacroMenu() {
             snprintf(mode_str, 9,"     DMR");
             break;
         }
-        gfx_print(layout.line2_left, mode_str, layout.top_font, TEXT_ALIGN_CENTER,
+        gfx_print(layout.line2_pos, mode_str, layout.top_font, TEXT_ALIGN_CENTER,
                   color_white);
-        gfx_print(layout.line2_left, "6        ", layout.top_font, TEXT_ALIGN_RIGHT,
+        gfx_print(layout.line2_pos, "6        ", layout.top_font, TEXT_ALIGN_RIGHT,
                   yellow_fab413);
-        gfx_print(layout.line2_left, "Lck", layout.top_font, TEXT_ALIGN_RIGHT,
+        gfx_print(layout.line2_pos, "Lck", layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white);
         // Third row
-        gfx_print(layout.line3_left, "7", layout.top_font, TEXT_ALIGN_LEFT,
+        gfx_print(layout.line3_pos, "7", layout.top_font, TEXT_ALIGN_LEFT,
                   yellow_fab413);
-        gfx_print(layout.line3_left, "    B+", layout.top_font, TEXT_ALIGN_LEFT,
+        gfx_print(layout.line3_pos, "    B+", layout.top_font, TEXT_ALIGN_LEFT,
                   color_white);
-        gfx_print(layout.line3_left, "8       ", layout.top_font, TEXT_ALIGN_CENTER,
+        gfx_print(layout.line3_pos, "8       ", layout.top_font, TEXT_ALIGN_CENTER,
                   yellow_fab413);
-        gfx_print(layout.line3_left, "     B-", layout.top_font, TEXT_ALIGN_CENTER,
+        gfx_print(layout.line3_pos, "     B-", layout.top_font, TEXT_ALIGN_CENTER,
                   color_white);
-        gfx_print(layout.line3_left, "9        ", layout.top_font, TEXT_ALIGN_RIGHT,
+        gfx_print(layout.line3_pos, "9        ", layout.top_font, TEXT_ALIGN_RIGHT,
                   yellow_fab413);
-        gfx_print(layout.line3_left, "Sav", layout.top_font, TEXT_ALIGN_RIGHT,
+        gfx_print(layout.line3_pos, "Sav", layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white);
         // Squelch bar
         uint16_t squelch_width = SCREEN_WIDTH / 16 * last_state.sqlLevel;
-        point_t squelch_pos = { layout.bottom_left.x, layout.bottom_left.y +
+        point_t squelch_pos = { layout.bottom_pos.x, layout.bottom_pos.y +
                                                       layout.status_v_pad +
                                                       layout.text_v_offset -
                                                       layout.bottom_h };

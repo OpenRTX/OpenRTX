@@ -254,16 +254,11 @@ layout_t _ui_calculateLayout()
     #endif
 
     // Calculate printing positions
-    point_t top_left    = {horizontal_pad, top_h - status_v_pad - text_v_offset};
-    point_t line1_left  = {horizontal_pad, top_h + hline_h + line1_h - line_v_pad - text_v_offset};
-    point_t line2_left  = {horizontal_pad, top_h + hline_h + line1_h + line2_h - line_v_pad - text_v_offset};
-    point_t line3_left  = {horizontal_pad, top_h + hline_h + line1_h + line2_h + line3_h - line_v_pad - text_v_offset};
-    point_t bottom_left = {horizontal_pad, top_h + hline_h + line1_h + line2_h + line3_h + hline_h + bottom_h - status_v_pad - text_v_offset};
-    point_t top_right    = {SCREEN_WIDTH - horizontal_pad, top_h - status_v_pad - text_v_offset};
-    point_t line1_right  = {SCREEN_WIDTH - horizontal_pad, top_h + hline_h + line1_h - line_v_pad - text_v_offset};
-    point_t line2_right  = {SCREEN_WIDTH - horizontal_pad, top_h + hline_h + line1_h + line2_h - line_v_pad - text_v_offset};
-    point_t line3_right  = {SCREEN_WIDTH - horizontal_pad, top_h + hline_h + line1_h + line2_h + line3_h - line_v_pad - text_v_offset};
-    point_t bottom_right = {SCREEN_WIDTH - horizontal_pad, top_h + hline_h + line1_h + line2_h + line3_h + hline_h + bottom_h - status_v_pad - text_v_offset};
+    point_t top_pos    = {horizontal_pad, top_h - status_v_pad - text_v_offset};
+    point_t line1_pos  = {horizontal_pad, top_h + hline_h + line1_h - line_v_pad - text_v_offset};
+    point_t line2_pos  = {horizontal_pad, top_h + hline_h + line1_h + line2_h - line_v_pad - text_v_offset};
+    point_t line3_pos  = {horizontal_pad, top_h + hline_h + line1_h + line2_h + line3_h - line_v_pad - text_v_offset};
+    point_t bottom_pos = {horizontal_pad, top_h + hline_h + line1_h + line2_h + line3_h + hline_h + bottom_h - status_v_pad - text_v_offset};
 
     layout_t new_layout =
     {
@@ -277,16 +272,11 @@ layout_t _ui_calculateLayout()
         line_v_pad,
         horizontal_pad,
         text_v_offset,
-        top_left,
-        line1_left,
-        line2_left,
-        line3_left,
-        bottom_left,
-        top_right,
-        line1_right,
-        line2_right,
-        line3_right,
-        bottom_right,
+        top_pos,
+        line1_pos,
+        line2_pos,
+        line3_pos,
+        bottom_pos,
         top_font,
         line1_font,
         line2_font,
