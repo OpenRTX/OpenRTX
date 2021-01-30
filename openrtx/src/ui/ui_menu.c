@@ -347,11 +347,11 @@ bool _ui_drawMacroMenu() {
             snprintf(encdec_str, 9, "        ");
         gfx_print(layout.line1_left, encdec_str, layout.top_font, TEXT_ALIGN_CENTER,
                   color_white);
-        gfx_print(layout.line1_right, "3        ", layout.top_font, TEXT_ALIGN_RIGHT,
+        gfx_print(layout.line1_left, "3        ", layout.top_font, TEXT_ALIGN_RIGHT,
                   yellow_fab413);
         char pow_str[9] = { 0 };
         snprintf(pow_str, 9, "%.1gW", last_state.channel.power);
-        gfx_print(layout.line1_right, pow_str, layout.top_font, TEXT_ALIGN_RIGHT,
+        gfx_print(layout.line1_left, pow_str, layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white);
         // Second row
         gfx_print(layout.line2_left, "4", layout.top_font, TEXT_ALIGN_LEFT,
@@ -385,9 +385,9 @@ bool _ui_drawMacroMenu() {
         }
         gfx_print(layout.line2_left, mode_str, layout.top_font, TEXT_ALIGN_CENTER,
                   color_white);
-        gfx_print(layout.line2_right, "6        ", layout.top_font, TEXT_ALIGN_RIGHT,
+        gfx_print(layout.line2_left, "6        ", layout.top_font, TEXT_ALIGN_RIGHT,
                   yellow_fab413);
-        gfx_print(layout.line2_right, "Lck", layout.top_font, TEXT_ALIGN_RIGHT,
+        gfx_print(layout.line2_left, "Lck", layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white);
         // Third row
         gfx_print(layout.line3_left, "7", layout.top_font, TEXT_ALIGN_LEFT,
@@ -398,9 +398,9 @@ bool _ui_drawMacroMenu() {
                   yellow_fab413);
         gfx_print(layout.line3_left, "     B-", layout.top_font, TEXT_ALIGN_CENTER,
                   color_white);
-        gfx_print(layout.line3_right, "9        ", layout.top_font, TEXT_ALIGN_RIGHT,
+        gfx_print(layout.line3_left, "9        ", layout.top_font, TEXT_ALIGN_RIGHT,
                   yellow_fab413);
-        gfx_print(layout.line3_right, "Sav", layout.top_font, TEXT_ALIGN_RIGHT,
+        gfx_print(layout.line3_left, "Sav", layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white);
         // Squelch bar
         uint16_t squelch_width = SCREEN_WIDTH / 16 * last_state.sqlLevel;
