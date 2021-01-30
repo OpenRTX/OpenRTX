@@ -18,9 +18,8 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include "stm32f4xx.h"
-#include "gpio.h"
-#include "delays.h"
+#include <interfaces/gpio.h>
+#include <interfaces/delays.h>
 #include "toneGenerator_MDx.h"
 #include "hwconfig.h"
 
