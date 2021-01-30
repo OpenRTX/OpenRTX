@@ -83,22 +83,22 @@ void display_init()
     gpio_clearPin(LCD_CLK);
     gpio_clearPin(LCD_DAT);
 
-    gpio_clearPin(LCD_RST);     /* Reset controller                */
+    gpio_clearPin(LCD_RST);     /* Reset controller                          */
     delayMs(1);
     gpio_setPin(LCD_RST);
     delayMs(5);
 
-    gpio_clearPin(LCD_CS);
+    gpio_clearPin(LCD_CS);      /* Bring down CS and keep it low from now on */
 
-    gpio_clearPin(LCD_RS);      /* RS low -> command mode          */
-    sendByteToController(0x2F); /* Voltage Follower On             */
-    sendByteToController(0x81); /* Set Electronic Volume           */
-    sendByteToController(0x15); /* Contrast, initial setting       */
-    sendByteToController(0xA2); /* Set Bias = 1/9                  */
-    sendByteToController(0xA1); /* A0 Set SEG Direction            */
-    sendByteToController(0xC0); /* Set COM Direction               */
-    sendByteToController(0xA4); /* White background, black pixels  */
-    sendByteToController(0xAF); /* Set Display Enable              */
+    gpio_clearPin(LCD_RS);      /* RS low -> command mode                    */
+    sendByteToController(0x2F); /* Voltage Follower On                       */
+    sendByteToController(0x81); /* Set Electronic Volume                     */
+    sendByteToController(0x15); /* Contrast, initial setting                 */
+    sendByteToController(0xA2); /* Set Bias = 1/9                            */
+    sendByteToController(0xA1); /* A0 Set SEG Direction                      */
+    sendByteToController(0xC0); /* Set COM Direction                         */
+    sendByteToController(0xA4); /* White background, black pixels            */
+    sendByteToController(0xAF); /* Set Display Enable                        */
 }
 
 void display_terminate()
@@ -152,9 +152,7 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
 
 void display_render()
 {
-    gpio_clearPin(LCD_CS);
     display_renderRows(0, SCREEN_HEIGHT / 8);
-    gpio_setPin(LCD_CS);
 }
 
 bool display_renderingInProgress()
