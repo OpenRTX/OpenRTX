@@ -18,20 +18,21 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef C5000_MD3x0_H
-#define C5000_MD3x0_H
+#ifndef HRC5000_H
+#define HRC5000_H
 
 #include <stdint.h>
 #include <stdbool.h>
 
 /**
- * Driver for HR_C5000 chip in MD3x0 radios (MD380 and MD390)
+ * Driver for HR_C5000 "baseband" chip.
  *
- * WARNING: the PLL and DMR chips share the SPI MOSI line, thus particular care
- * has to be put to avoid them stomping reciprocally. This driver does not make
- * any check if a SPI transfer is already in progress, deferring the correct bus
- * management to higher level modules. However, a function returning true if the
- * bus is currently in use by this driver is provided.
+ * WARNING: on MD3x0 devices the PLL and DMR chips share the SPI MOSI line,
+ * thus particular care has to be put to avoid them stomping reciprocally.
+ * This driver does not make any check if a SPI transfer is already in progress,
+ * deferring the correct bus management to higher level modules. However,
+ * a function returning true if the bus is currently in use by this driver is
+ * provided.
  */
 
 /**
@@ -90,4 +91,4 @@ void C5000_stopAnalogTx();
  */
 bool C5000_spiInUse();
 
-#endif /* C5000_MD3x0_H */
+#endif /* HRC5000_H */

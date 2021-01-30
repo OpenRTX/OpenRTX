@@ -28,7 +28,7 @@
 #include <ADC1_MDx.h>
 #include <string.h>
 #include <stdlib.h>
-#include "HR-C5000_MD3x0.h"
+#include "HR_C5000.h"
 #include "SKY72310.h"
 
 static const freq_t IF_FREQ = 49950000;  /* Intermediate frequency: 49.95MHz   */

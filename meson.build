@@ -193,7 +193,7 @@ md380_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.c',
                                    'platform/drivers/tones/toneGenerator_MDx.c',
                                    'platform/drivers/baseband/SKY72310.c',
                                    'platform/drivers/baseband/radio_MD3x0.c',
-                                   'platform/drivers/baseband/HR-C5000_MD3x0.c',
+                                   'platform/drivers/baseband/HR_C5000.c',
                                    'platform/targets/MD-380/platform.c']
 
 md380_inc = inc + stm32f405_inc + ['platform/targets/MD-380']
@@ -210,7 +210,7 @@ md390_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.c',
                                    'platform/drivers/tones/toneGenerator_MDx.c',
                                    'platform/drivers/baseband/SKY72310.c',
                                    'platform/drivers/baseband/radio_MD3x0.c',
-                                   'platform/drivers/baseband/HR-C5000_MD3x0.c',
+                                   'platform/drivers/baseband/HR_C5000.c',
                                    'platform/targets/MD-390/platform.c']
 
 md390_inc = inc + stm32f405_inc + ['platform/targets/MD-390']

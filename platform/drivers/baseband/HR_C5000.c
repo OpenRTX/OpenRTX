@@ -18,12 +18,12 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include "HR-C5000_MD3x0.h"
 #include <hwconfig.h>
 #include <interfaces/gpio.h>
 #include <interfaces/delays.h>
 #include <hwconfig.h>
 #include <os.h>
+#include "HR_C5000.h"
 
 const uint8_t initSeq1[] = {0x00, 0x00, 0xFF, 0xB0, 0x00, 0x00, 0x00, 0x00};
 const uint8_t initSeq2[] =
