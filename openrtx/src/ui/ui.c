@@ -93,7 +93,7 @@ extern void _ui_drawMenuChannel(ui_state_t* ui_state);
 extern void _ui_drawMenuContacts(ui_state_t* ui_state);
 extern void _ui_drawMenuSettings(ui_state_t* ui_state);
 extern void _ui_drawMenuInfo(ui_state_t* ui_state);
-extern void _ui_drawMenuAbout(ui_state_t* ui_state);
+extern void _ui_drawMenuAbout();
 #ifdef HAS_RTC
 extern void _ui_drawSettingsTimeDate();
 extern void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state);
@@ -1126,7 +1126,7 @@ void ui_updateGUI()
             break;
         // About menu screen
         case MENU_ABOUT:
-            _ui_drawMenuAbout(&ui_state);
+            _ui_drawMenuAbout();
             break;
 #ifdef HAS_RTC
         // Time&Date settings screen

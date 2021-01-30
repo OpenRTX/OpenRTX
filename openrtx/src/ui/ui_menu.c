@@ -233,7 +233,7 @@ void _ui_drawMenuInfo(ui_state_t* ui_state)
                            _ui_getInfoValueName);
 }
 
-void _ui_drawMenuAbout(ui_state_t* ui_state)
+void _ui_drawMenuAbout()
 {
     gfx_clearScreen();
     ui_drawSplashScreen(false);
