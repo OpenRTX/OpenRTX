@@ -35,8 +35,15 @@ int8_t currTxBand = -1; /* Current band for TX                                 *
 uint8_t txpwr_lo = 0;   /* APC voltage for TX output power control, low power  */
 uint8_t txpwr_hi = 0;   /* APC voltage for TX output power control, high power */
 
-
-
+/**
+ * \internal
+ * Function to identify the current band (VHF or UHF), given an input frequency.
+ *
+ * @param freq frequency in Hz.
+ * @return 0 if the frequency is in the VHF band,
+ *         1 if the frequency is in the UHF band,
+ *        -1 if the band to which the frequency belongs is neither VHF nor UHF.
+ */
 int8_t _getBandFromFrequency(freq_t freq)
 {
     if((freq >= FREQ_LIMIT_VHF_LO) && (freq <= FREQ_LIMIT_VHF_HI)) return 0;
@@ -58,11 +65,16 @@ void radio_init()
     gpio_setMode(UHF_LNA_EN, OUTPUT);
     gpio_setMode(VHF_PA_EN,  OUTPUT);
     gpio_setMode(UHF_PA_EN,  OUTPUT);
+    gpio_setMode(RX_AUDIO_MUX, OUTPUT);
+    gpio_setMode(TX_AUDIO_MUX, OUTPUT);
 
-    gpio_clearPin(VHF_LNA_EN);  /* Turn VHF LNA off */
-    gpio_clearPin(UHF_LNA_EN);  /* Turn UHF LNA off */
-    gpio_clearPin(VHF_PA_EN);   /* Turn VHF PA off  */
-    gpio_clearPin(UHF_PA_EN);   /* Turn UHF PA off  */
+
+    gpio_clearPin(VHF_LNA_EN);      /* Turn VHF LNA off       */
+    gpio_clearPin(UHF_LNA_EN);      /* Turn UHF LNA off       */
+    gpio_clearPin(VHF_PA_EN);       /* Turn VHF PA off        */
+    gpio_clearPin(UHF_PA_EN);       /* Turn UHF PA off        */
+    gpio_clearPin(RX_AUDIO_MUX);    /* Audio out to HR_C6000  */
+    gpio_clearPin(TX_AUDIO_MUX);    /* Audio in to microphone */
 
     /*
      * Enable and configure DAC for PA drive control
@@ -127,6 +139,7 @@ void radio_setOpmode(const enum opmode mode)
 
 void radio_setVcoFrequency(const freq_t frequency, const bool isTransmitting)
 {
+    (void) isTransmitting;
     AT1846S_setFrequency(frequency);
 }
 
