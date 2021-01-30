@@ -159,7 +159,7 @@ linux_src = src + ['platform/targets/linux/emulator/emulator.c',
                    'platform/mcu/x86_64/drivers/gpio.c',
                    'platform/mcu/x86_64/drivers/delays.c',
                    'platform/mcu/x86_64/drivers/rtc.c',
-                   'platform/drivers/baseband/rtx_linux.c',
+                   'platform/drivers/baseband/radio_linux.c',
                    'platform/targets/linux/platform.c',
                    'rtos/uC-OS3/Ports/POSIX/os_cpu_c.c',
                    'rtos/uC-CPU/Posix/cpu_c.c']
