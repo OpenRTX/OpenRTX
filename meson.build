@@ -209,7 +209,7 @@ md390_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.c',
                                    'platform/drivers/ADC/ADC1_MDx.c',
                                    'platform/drivers/tones/toneGenerator_MDx.c',
                                    'platform/drivers/baseband/pll_MD3x0.c',
-                                   'platform/drivers/baseband/rtx_MD3x0.c',
+                                   'platform/drivers/baseband/radio_MD3x0.c',
                                    'platform/drivers/baseband/HR-C5000_MD3x0.c',
                                    'platform/targets/MD-390/platform.c']
 
@@ -225,7 +225,7 @@ mduv380_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.c',
                                      'platform/drivers/NVM/nvmem_MDUV3x0.c',
                                      'platform/drivers/ADC/ADC1_MDx.c',
                                      'platform/drivers/tones/toneGenerator_MDx.c',
-                                     'platform/drivers/baseband/rtx_UV3x0.c',
+                                     'platform/drivers/baseband/radio_UV3x0.c',
                                      'platform/targets/MD-UV380/platform.c']
 
 mduv380_inc = inc + stm32f405_inc + ['platform/targets/MD-UV380']
