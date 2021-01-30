@@ -50,6 +50,7 @@ enum uiScreen
     MENU_MACRO,
     MENU_SETTINGS,
     MENU_INFO,
+    MENU_ABOUT,
     SETTINGS_TIMEDATE,
     SETTINGS_TIMEDATE_SET,
     SETTINGS_DISPLAY,
@@ -128,10 +129,12 @@ extern const char *menu_items[];
 extern const char *settings_items[];
 extern const char *display_items[];
 extern const char *info_items[];
+extern const char *authors[];
 extern const uint8_t menu_num;
 extern const uint8_t settings_num;
 extern const uint8_t display_num;
 extern const uint8_t info_num;
+extern const uint8_t author_num;
 extern const color_t color_black;
 extern const color_t color_grey;
 extern const color_t color_white;
@@ -145,8 +148,10 @@ void ui_init();
 
 /**
  * This function writes the OpenRTX splash screen image into the framebuffer.
+ * @param centered: if true the logo will be printed at the center of
+ * the screen, otherwise it will be printed at the top of the screen.
  */
-void ui_drawSplashScreen();
+void ui_drawSplashScreen(bool centered);
 
 /**
  * This function updates the local copy of the radio state

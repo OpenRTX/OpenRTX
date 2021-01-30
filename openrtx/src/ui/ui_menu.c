@@ -233,6 +233,21 @@ void _ui_drawMenuInfo(ui_state_t* ui_state)
                            _ui_getInfoValueName);
 }
 
+void _ui_drawMenuAbout(ui_state_t* ui_state)
+{
+    gfx_clearScreen();
+    ui_drawSplashScreen(false);
+    char author_buf[MAX_ENTRY_LEN] = "";
+    uint8_t line_h = layout.top_h;
+    point_t pos = {SCREEN_WIDTH / 7, SCREEN_HEIGHT - (line_h * (author_num - 1)) - 5};
+    for(int author = 0; author < author_num; author++)
+    {
+        snprintf(author_buf, MAX_ENTRY_LEN, "%s", authors[author]);
+        gfx_print(pos, author_buf, layout.top_font, TEXT_ALIGN_LEFT, color_white);
+        pos.y += line_h;
+    }
+}
+
 void _ui_drawSettingsDisplay(ui_state_t* ui_state)
 {
     gfx_clearScreen();

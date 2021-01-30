@@ -42,7 +42,7 @@ int main(void)
     ui_init();
 
     // Display splash screen
-    ui_drawSplashScreen();
+    ui_drawSplashScreen(true);
     gfx_render();
 
     // Wait 30ms before turning on backlight to hide random pixels on screen

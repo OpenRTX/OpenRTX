@@ -93,6 +93,7 @@ extern void _ui_drawMenuChannel(ui_state_t* ui_state);
 extern void _ui_drawMenuContacts(ui_state_t* ui_state);
 extern void _ui_drawMenuSettings(ui_state_t* ui_state);
 extern void _ui_drawMenuInfo(ui_state_t* ui_state);
+extern void _ui_drawMenuAbout(ui_state_t* ui_state);
 #ifdef HAS_RTC
 extern void _ui_drawSettingsTimeDate();
 extern void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state);
@@ -100,7 +101,7 @@ extern void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state);
 extern void _ui_drawSettingsDisplay(ui_state_t* ui_state);
 extern bool _ui_drawMacroMenu();
 
-const char *menu_items[7] =
+const char *menu_items[8] =
 {
     "Zone",
     "Channels",
@@ -108,7 +109,8 @@ const char *menu_items[7] =
     "Messages",
     "GPS",
     "Settings",
-    "Info"
+    "Info",
+    "About"
 };
 
 #ifdef HAS_RTC
@@ -143,7 +145,13 @@ const char *info_items[4] =
     "Bat. Charge",
     "RSSI",
 };
-
+const char *authors[4] =
+{
+    "Niccolo' IU2KIN",
+    "Silvano IU2KWO",
+    "Federico IU2NUO",
+    "Fred IU2NRO",
+};
 // Calculate number of main menu entries
 const uint8_t menu_num = sizeof(menu_items)/sizeof(menu_items[0]);
 // Calculate number of settings menu entries
@@ -152,6 +160,8 @@ const uint8_t settings_num = sizeof(settings_items)/sizeof(settings_items[0]);
 const uint8_t display_num = sizeof(display_items)/sizeof(display_items[0]);
 // Calculate number of info menu entries
 const uint8_t info_num = sizeof(info_items)/sizeof(info_items[0]);
+// Calculate number of authors
+const uint8_t author_num = sizeof(authors)/sizeof(authors[0]);
 
 const color_t color_black = {0, 0, 0, 255};
 const color_t color_grey = {60, 60, 60, 255};
@@ -303,16 +313,22 @@ void ui_init()
     settings.contrast = 84;
 }
 
-void ui_drawSplashScreen()
+void ui_drawSplashScreen(bool centered)
 {
     gfx_clearScreen();
-
+    point_t splash_origin = {0,0};
     #ifdef OLD_SPLASH
-    point_t splash_origin = {0, SCREEN_HEIGHT / 2 + 6};
+    if(centered)
+        splash_origin.y = SCREEN_HEIGHT / 2 + 6;
+    else
+        splash_origin.y = SCREEN_HEIGHT / 4;
     gfx_print(splash_origin, "OpenRTX", FONT_SIZE_12PT, TEXT_ALIGN_CENTER,
               yellow_fab413);
     #else
-    point_t splash_origin = {0, SCREEN_HEIGHT / 2 - 6};
+    if(centered)
+        splash_origin.y = SCREEN_HEIGHT / 2 - 6;
+    else
+        splash_origin.y = SCREEN_HEIGHT / 5;
     gfx_print(splash_origin, "O P N\nR T X", FONT_SIZE_12PT, TEXT_ALIGN_CENTER,
               yellow_fab413);
     #endif
@@ -797,6 +813,9 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         case 6:
                             state.ui_screen = MENU_INFO;
                             break;
+                        case 7:
+                            state.ui_screen = MENU_ABOUT;
+                            break;
                         default:
                             state.ui_screen = MENU_TOP;
                     }
@@ -950,6 +969,16 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     ui_state.menu_selected = 0;
                 }
                 break;
+            // About screen
+            case MENU_ABOUT:
+                if(msg.keys & KEY_ESC)
+                {
+                    // Return to top menu
+                    state.ui_screen = MENU_TOP;
+                    // Reset menu selection
+                    ui_state.menu_selected = 0;
+                }
+                break;
 #ifdef HAS_RTC
             // Time&Date settings screen
             case SETTINGS_TIMEDATE:
@@ -1094,6 +1123,10 @@ void ui_updateGUI()
         // Info menu screen
         case MENU_INFO:
             _ui_drawMenuInfo(&ui_state);
+            break;
+        // About menu screen
+        case MENU_ABOUT:
+            _ui_drawMenuAbout(&ui_state);
             break;
 #ifdef HAS_RTC
         // Time&Date settings screen
