@@ -47,7 +47,6 @@ enum uiScreen
     MENU_CONTACTS,
     MENU_SMS,
     MENU_GPS,
-    MENU_MACRO,
     MENU_SETTINGS,
     MENU_INFO,
     MENU_ABOUT,

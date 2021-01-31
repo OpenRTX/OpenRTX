@@ -170,6 +170,7 @@ layout_t layout;
 state_t last_state;
 ui_state_t ui_state;
 settings_t settings;
+bool macro_menu = false;
 bool layout_ready = false;
 bool redraw_needed = true;
 
@@ -428,7 +429,6 @@ return _ui_freq_check_limits(channel->rx_frequency) &&
 }
 
 bool _ui_drawDarkOverlay() {
-    // TODO: Make this 245 alpha and fix alpha frame swap
     color_t alpha_grey = {0, 0, 0, 255};
     point_t origin = {0, 0};
     gfx_drawRect(origin, SCREEN_WIDTH, SCREEN_HEIGHT, alpha_grey, true);
@@ -640,6 +640,15 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
     {
         kbd_msg_t msg;
         msg.value = event.payload;
+        // If MONI is pressed, activate MACRO functions
+        if(msg.keys & KEY_MONI)
+        {
+            macro_menu = true;
+            _ui_fsm_menuMacro(msg, sync_rtx);
+            return;
+        } else {
+            macro_menu = false;
+        }
         switch(state.ui_screen)
         {
             // VFO screen
@@ -700,14 +709,6 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     ui_state.new_rx_frequency = _ui_freq_add_digit(ui_state.new_rx_frequency, 
                                             ui_state.input_position, ui_state.input_number);
                 }
-                else if(msg.keys & KEY_MONI)
-                {
-                    // Save current main state
-                    ui_state.last_main_state = state.ui_screen;
-                    // Open Macro Menu
-                    _ui_drawDarkOverlay();
-                    state.ui_screen = MENU_MACRO;
-                }
                 break;
             // VFO frequency input screen
             case MAIN_VFO_INPUT:
@@ -733,12 +734,6 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 {
                     _ui_fsm_insertVFONumber(msg, sync_rtx);
                 }
-                else if(msg.keys & KEY_MONI)
-                {
-                    // Open Macro Menu
-                    _ui_drawDarkOverlay();
-                    state.ui_screen = MENU_MACRO;
-                }
                 break;
             // MEM screen
             case MAIN_MEM:
@@ -763,14 +758,6 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 else if(msg.keys & KEY_DOWN)
                 {
                     _ui_fsm_loadChannel(state.channel_index - 1, sync_rtx);
-                }
-                else if(msg.keys & KEY_MONI)
-                {
-                    // Save current main state
-                    ui_state.last_main_state = state.ui_screen;
-                    // Open Macro Menu
-                    _ui_drawDarkOverlay();
-                    state.ui_screen = MENU_MACRO;
                 }
                 break;
             // Top menu screen
@@ -878,23 +865,6 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     // Reset menu selection
                     ui_state.menu_selected = 0;
                 }
-                else if(msg.keys & KEY_MONI)
-                {
-                    // Open Macro Menu
-                    state.ui_screen = MENU_MACRO;
-                }
-                break;
-            case MENU_MACRO:
-                _ui_drawDarkOverlay();
-                // If a number is pressed perform the corresponding macro
-                if(!msg.long_press)
-                {
-                    _ui_fsm_menuMacro(msg, sync_rtx);
-                }
-                // Exit from this menu when monitor key is released
-                if(!(msg.keys & KEY_MONI))
-                    // Close Macro Menu, switch to last main state
-                    state.ui_screen = ui_state.last_main_state;
                 break;
             // Settings menu screen
             case MENU_SETTINGS:
@@ -1109,10 +1079,6 @@ void ui_updateGUI()
         case MENU_CONTACTS:
             _ui_drawMenuContacts(&ui_state);
             break;
-        // Macro menu
-        case MENU_MACRO:
-            _ui_drawMacroMenu();
-            break;
         // Settings menu screen
         case MENU_SETTINGS:
             _ui_drawMenuSettings(&ui_state);
@@ -1142,6 +1108,11 @@ void ui_updateGUI()
         case LOW_BAT:
             _ui_drawLowBatteryScreen();
             break;
+    }
+    // If MACRO menu is active draw it
+    if(macro_menu) {
+        _ui_drawDarkOverlay();
+        _ui_drawMacroMenu(&last_state);
     }
 }
 
