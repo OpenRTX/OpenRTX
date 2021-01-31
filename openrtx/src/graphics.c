@@ -166,8 +166,7 @@ inline void gfx_setPixel(point_t pos, color_t color)
     if (color.alpha < 255) {
         uint8_t alpha = color.alpha;
         rgb565_t new_pixel = _true2highColor(color);
-        uint16_t raw_pixel = __builtin_bswap16(
-                *((uint16_t *)buf + pos.x + pos.y*SCREEN_WIDTH));
+        uint16_t raw_pixel = *((uint16_t *)buf + pos.x + pos.y*SCREEN_WIDTH);
         rgb565_t old_pixel = *((rgb565_t*) &raw_pixel);
         rgb565_t pixel = {((255-alpha)*old_pixel.b+alpha*new_pixel.b)/255,
                           ((255-alpha)*old_pixel.g+alpha*new_pixel.g)/255,
