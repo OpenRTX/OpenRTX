@@ -64,37 +64,29 @@ void _ui_drawMainTop()
               color_white);
 }
 
-void _ui_drawVFOMiddle()
+void _ui_drawZoneChannel(bool print_zone)
 {
-    // Print VFO frequencies
-    char freq_buf[20] = "";
-    snprintf(freq_buf, sizeof(freq_buf), " Rx:%03lu.%05lu",
-             (unsigned long)last_state.channel.rx_frequency/1000000,
-             (unsigned long)last_state.channel.rx_frequency%1000000/10);
-    gfx_print(layout.line2_pos, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
-              color_white);
-    snprintf(freq_buf, sizeof(freq_buf), " Tx:%03lu.%05lu",
-             (unsigned long)last_state.channel.tx_frequency/1000000,
-             (unsigned long)last_state.channel.tx_frequency%1000000/10);
-    gfx_print(layout.line3_pos, freq_buf, layout.line3_font, TEXT_ALIGN_CENTER,
-              color_white);
+    if(print_zone)
+    {
+        char zone_buf[20] = "";
+        snprintf(zone_buf, sizeof(zone_buf), "zone: %.13s", "Test Zone");
+        // Print Zone name
+        gfx_print(layout.line1_pos, zone_buf, layout.line1_font, TEXT_ALIGN_LEFT, color_white);
+    }
+    char channel_buf[20] = "";
+    snprintf(channel_buf, sizeof(channel_buf), "  %03d: %.12s", last_state.channel_index,
+                                                             last_state.channel.name);
+    // Print Channel name
+    gfx_print(layout.line2_pos, channel_buf, layout.line2_font, TEXT_ALIGN_LEFT, color_white);
 }
 
-void _ui_drawMEMMiddle()
+void _ui_drawFrequency()
 {
-    // Print Channel name
-    gfx_print(layout.line1_pos, last_state.channel.name, layout.line1_font, TEXT_ALIGN_CENTER,
-              color_white);
-    // Print Channel frequencies
-    char freq_buf[20] = "";
-    snprintf(freq_buf, sizeof(freq_buf), " Rx:%03lu.%05lu",
+    // Print big numbers frequency
+    char freq_buf[10] = "";
+    snprintf(freq_buf, sizeof(freq_buf), "%03lu.%05lu",
              (unsigned long)last_state.channel.rx_frequency/1000000,
              (unsigned long)last_state.channel.rx_frequency%1000000/10);
-    gfx_print(layout.line2_pos, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
-              color_white);
-    snprintf(freq_buf, sizeof(freq_buf), " Tx:%03lu.%05lu",
-             (unsigned long)last_state.channel.tx_frequency/1000000,
-             (unsigned long)last_state.channel.tx_frequency%1000000/10);
     gfx_print(layout.line3_pos, freq_buf, layout.line3_font, TEXT_ALIGN_CENTER,
               color_white);
 }
@@ -114,7 +106,7 @@ void _ui_drawVFOMiddleInput(ui_state_t* ui_state)
             snprintf(freq_buf, sizeof(freq_buf), ">Rx:%03lu.%05lu",
                      (unsigned long)ui_state->new_rx_frequency/1000000,
                      (unsigned long)ui_state->new_rx_frequency%1000000/10);
-            gfx_print(layout.line2_pos, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
+            gfx_print(layout.line1_pos, freq_buf, layout.line1_font, TEXT_ALIGN_CENTER,
                       color_white);
         }
         else
@@ -123,13 +115,13 @@ void _ui_drawVFOMiddleInput(ui_state_t* ui_state)
             if(ui_state->input_position == 1)
                 strcpy(ui_state->new_rx_freq_buf, ">Rx:___._____");
             ui_state->new_rx_freq_buf[insert_pos] = input_char;
-            gfx_print(layout.line2_pos, ui_state->new_rx_freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
+            gfx_print(layout.line1_pos, ui_state->new_rx_freq_buf, layout.line1_font, TEXT_ALIGN_CENTER,
                       color_white);
         }
         snprintf(freq_buf, sizeof(freq_buf), " Tx:%03lu.%05lu",
                  (unsigned long)last_state.channel.tx_frequency/1000000,
                  (unsigned long)last_state.channel.tx_frequency%1000000/10);
-        gfx_print(layout.line3_pos, freq_buf, layout.line3_font, TEXT_ALIGN_CENTER,
+        gfx_print(layout.line2_pos, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
                   color_white);
     }
     else if(ui_state->input_set == SET_TX)
@@ -137,7 +129,7 @@ void _ui_drawVFOMiddleInput(ui_state_t* ui_state)
         snprintf(freq_buf, sizeof(freq_buf), " Rx:%03lu.%05lu",
                  (unsigned long)ui_state->new_rx_frequency/1000000,
                  (unsigned long)ui_state->new_rx_frequency%1000000/10);
-        gfx_print(layout.line2_pos, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
+        gfx_print(layout.line1_pos, freq_buf, layout.line1_font, TEXT_ALIGN_CENTER,
                   color_white);
         // Replace Rx frequency with underscorses
         if(ui_state->input_position == 0)
@@ -145,7 +137,7 @@ void _ui_drawVFOMiddleInput(ui_state_t* ui_state)
             snprintf(freq_buf, sizeof(freq_buf), ">Tx:%03lu.%05lu",
                      (unsigned long)ui_state->new_rx_frequency/1000000,
                      (unsigned long)ui_state->new_rx_frequency%1000000/10);
-            gfx_print(layout.line3_pos, freq_buf, layout.line3_font, TEXT_ALIGN_CENTER,
+            gfx_print(layout.line2_pos, freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
                       color_white);
         }
         else
@@ -153,7 +145,7 @@ void _ui_drawVFOMiddleInput(ui_state_t* ui_state)
             if(ui_state->input_position == 1)
                 strcpy(ui_state->new_tx_freq_buf, ">Tx:___._____");
             ui_state->new_tx_freq_buf[insert_pos] = input_char;
-            gfx_print(layout.line3_pos, ui_state->new_tx_freq_buf, layout.line3_font, TEXT_ALIGN_CENTER,
+            gfx_print(layout.line2_pos, ui_state->new_tx_freq_buf, layout.line2_font, TEXT_ALIGN_CENTER,
                       color_white);
         }
     }
@@ -174,16 +166,14 @@ void _ui_drawBottom()
 void _ui_drawMainVFO()
 {
     gfx_clearScreen();
-    _ui_drawMainBackground();
     _ui_drawMainTop();
-    _ui_drawVFOMiddle();
+    _ui_drawFrequency();
     _ui_drawBottom();
 }
 
 void _ui_drawMainVFOInput(ui_state_t* ui_state)
 {
     gfx_clearScreen();
-    _ui_drawMainBackground();
     _ui_drawMainTop();
     _ui_drawVFOMiddleInput(ui_state);
     _ui_drawBottom();
@@ -192,8 +182,8 @@ void _ui_drawMainVFOInput(ui_state_t* ui_state)
 void _ui_drawMainMEM()
 {
     gfx_clearScreen();
-    _ui_drawMainBackground();
     _ui_drawMainTop();
-    _ui_drawMEMMiddle();
+    _ui_drawZoneChannel(false);
+    _ui_drawFrequency();
     _ui_drawBottom();
 }
