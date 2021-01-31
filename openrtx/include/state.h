@@ -52,6 +52,8 @@ typedef struct
     uint16_t channel_index;
     channel_t channel;
     channel_t vfo_channel;
+    bool zone_enabled;
+    zone_t zone;
     uint8_t rtxStatus;
     // Squelch steps from 0 to 15
     uint8_t sqlLevel;

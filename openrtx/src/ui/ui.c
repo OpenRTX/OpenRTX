@@ -436,8 +436,17 @@ bool _ui_drawDarkOverlay() {
 }
 
 int _ui_fsm_loadChannel(uint16_t index, bool *sync_rtx) {
-    // Try to load selected channel
     channel_t channel;
+    // If a zone is active, get index from current zone
+    if(state.zone_enabled)
+    {
+        // Calculate zone size
+        const uint8_t zone_size = sizeof(state.zone.member)/sizeof(state.zone.member[0]);
+        if(index >= zone_size)
+            return -1;
+        else
+            index = state.zone.member[index];
+    }
     int result = nvm_readChannelData(&channel, index);
     // Read successful and channel is valid
     if(result != -1 && _ui_channel_valid(&channel))
@@ -830,7 +839,8 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     if(state.ui_screen == MENU_ZONE)
                     {
                         zone_t zone;
-                        if(nvm_readZoneData(&zone, ui_state.menu_selected + 1) != -1)
+                        // The index is -1 because the first zone "All channels" is not read from flash
+                        if(nvm_readZoneData(&zone, ui_state.menu_selected) != -1)
                             ui_state.menu_selected += 1;
                     }
                     else if(state.ui_screen == MENU_CHANNEL)
@@ -848,6 +858,31 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 }
                 else if(msg.keys & KEY_ENTER)
                 {
+                    if(state.ui_screen == MENU_ZONE)
+                    {
+                        zone_t newzone;
+                        int result = 0;
+                        // If "All channels" is selected, load default zone
+                        if(ui_state.menu_selected == 0)
+                            state.zone_enabled = false;
+                        else
+                        {
+                            state.zone_enabled = true;
+                            // The index is -1 because the first zone "All channels" is not read from flash
+                            result = nvm_readZoneData(&newzone, ui_state.menu_selected  - 1);
+                        }
+                        if(result != -1)
+                        {
+                            state.zone = newzone;
+                            // If we were in VFO mode, save VFO channel
+                            if(ui_state.last_main_state == MAIN_VFO)
+                                state.vfo_channel = state.channel;
+                            // Load zone first channel
+                            _ui_fsm_loadChannel(0, sync_rtx);
+                            // Switch to MEM screen
+                            state.ui_screen = MAIN_MEM;
+                        }
+                    }
                     if(state.ui_screen == MENU_CHANNEL)
                     {
                         // If we were in VFO mode, save VFO channel

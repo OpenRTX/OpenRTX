@@ -147,10 +147,19 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
 }
 int _ui_getZoneName(char *buf, uint8_t max_len, uint8_t index)
 {
-    zone_t zone;
-    int result = nvm_readZoneData(&zone, index);
-    if(result != -1)
-        snprintf(buf, max_len, "%s", zone.name);
+    int result = 0;
+    // First zone "All channels" is not read from flash
+    if(index == 0)
+    {
+        snprintf(buf, max_len, "All channels");
+    }
+    else
+    {
+        zone_t zone;
+        int result = nvm_readZoneData(&zone, index - 1);
+        if(result != -1)
+            snprintf(buf, max_len, "%s", zone.name);
+    }
     return result;
 }
 

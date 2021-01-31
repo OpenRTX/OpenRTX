@@ -19,6 +19,7 @@
  ***************************************************************************/
 
 #include <stdio.h>
+#include <string.h>
 #include <state.h>
 #include <battery.h>
 #include <hwconfig.h>
@@ -39,7 +40,8 @@ void state_init()
     state.v_bat = platform_getVbat();
     state.charge = battery_getCharge(state.v_bat);
     state.rssi = rtx_getRssi();
-
+    
+    // Set VFO channel default settings
     state.channelInfoUpdated = true;
     state.channel.mode = FM;
     state.channel.bandwidth = BW_25;
@@ -50,7 +52,7 @@ void state_init()
     state.channel.fm.rxTone = 2; // 71.9Hz
     state.channel.fm.txToneEn = 1;
     state.channel.fm.txTone = 2; // 71.9Hz
-
+    state.zone_enabled = false;
     state.rtxStatus = RTX_OFF;
 #ifdef HAS_ABSOLUTE_KNOB // If the radio has an absolute position knob
     state.sqlLevel = platform_getChSelector() - 1;

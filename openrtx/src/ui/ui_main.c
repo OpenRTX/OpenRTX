@@ -64,18 +64,18 @@ void _ui_drawMainTop()
               color_white);
 }
 
-void _ui_drawZoneChannel(bool print_zone)
+void _ui_drawZoneChannel()
 {
-    if(print_zone)
-    {
-        char zone_buf[20] = "";
-        snprintf(zone_buf, sizeof(zone_buf), "zone: %.13s", "Test Zone");
-        // Print Zone name
-        gfx_print(layout.line1_pos, zone_buf, layout.line1_font, TEXT_ALIGN_LEFT, color_white);
-    }
+    char zone_buf[20] = "";
     char channel_buf[20] = "";
+    if(!last_state.zone_enabled)
+        snprintf(zone_buf, sizeof(zone_buf), "zone: %.13s", "All channels");
+    else
+        snprintf(zone_buf, sizeof(zone_buf), "zone: %.13s", last_state.zone.name);
     snprintf(channel_buf, sizeof(channel_buf), "  %03d: %.12s", last_state.channel_index,
                                                              last_state.channel.name);
+    // Print Zone name
+    gfx_print(layout.line1_pos, zone_buf, layout.line1_font, TEXT_ALIGN_LEFT, color_white);
     // Print Channel name
     gfx_print(layout.line2_pos, channel_buf, layout.line2_font, TEXT_ALIGN_LEFT, color_white);
 }
@@ -183,7 +183,7 @@ void _ui_drawMainMEM()
 {
     gfx_clearScreen();
     _ui_drawMainTop();
-    _ui_drawZoneChannel(false);
+    _ui_drawZoneChannel();
     _ui_drawFrequency();
     _ui_drawBottom();
 }
