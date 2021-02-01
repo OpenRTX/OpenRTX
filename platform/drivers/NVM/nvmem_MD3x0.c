@@ -112,8 +112,33 @@ typedef struct
 }
 md3x0Channel_t;
 
+typedef struct {
+    // Bytes 0-31
+    uint16_t name[16];                  // Zone Name (Unicode)
+
+    // Bytes 32-63
+    uint16_t member[16];               // Member: channels 1...16
+} md3x0Zone_t;
+
+typedef struct {
+    // Bytes 0-2
+    uint8_t id[3];                      // Call ID: 1...16777215
+
+    // Byte 3
+    uint8_t type                : 5,    // Call Type: Group Call, Private Call or All Call
+            receive_tone        : 1,    // Call Receive Tone: No or yes
+            _unused2            : 2;    // 0b11
+
+    // Bytes 4-35
+    uint16_t name[16];                  // Contact Name (Unicode)
+} md3x0Contact_t;
+
+const uint32_t zoneBaseAddr = 0x149e0; /**< Base address of zones         */
 const uint32_t chDataBaseAddr = 0x1ee00; /**< Base address of channel data         */
+const uint32_t contactBaseAddr = 0x05f80; /**< Base address of contacts         */
 const uint32_t maxNumChannels = 1000;    /**< Maximum number of channels in memory */
+const uint32_t maxNumZones = 250;    /**< Maximum number of zones in memory */
+const uint32_t maxNumContacts = 10000;    /**< Maximum number of contacts in memory */
 
 /**
  * \internal Utility function to convert 4 byte BCD values into a 32-bit
@@ -271,11 +296,63 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
 
 int nvm_readZoneData(zone_t *zone, uint16_t pos)
 {
-    return -1;
+    if(pos >= maxNumZones) return -1;
+
+    W25Qx_wakeup();
+    delayUs(5);
+
+    md3x0Zone_t zoneData;
+    uint32_t zoneAddr = zoneBaseAddr + pos * sizeof(md3x0Zone_t);
+    W25Qx_readData(zoneAddr, ((uint8_t *) &zoneData), sizeof(md3x0Zone_t));
+    W25Qx_sleep();
+
+    // Check if zone is empty
+    if(wcslen((wchar_t *) zoneData.name) == 0) return -1;
+    /*
+     * Brutally convert channel name from unicode to char by truncating the most
+     * significant byte
+     */
+    for(uint16_t i = 0; i < 16; i++)
+    {
+        zone->name[i] = ((char) (zoneData.name[i] & 0x00FF));
+    }
+    // Copy zone channel indexes
+    for(uint16_t i = 0; i < 16; i++)
+    {
+        zone->member[i] = zoneData.member[i];
+    }
+
+    return 0;
 }
 
 int nvm_readContactData(contact_t *contact, uint16_t pos)
 {
-    return -1;
+    if(pos >= maxNumContacts) return -1;
+
+    W25Qx_wakeup();
+    delayUs(5);
+
+    md3x0Contact_t contactData;
+    uint32_t contactAddr = contactBaseAddr + pos * sizeof(md3x0Contact_t);
+    W25Qx_readData(contactAddr, ((uint8_t *) &contactData), sizeof(md3x0Contact_t));
+    W25Qx_sleep();
+
+    // Check if contact is empty
+    if(wcslen((wchar_t *) contactData.name) == 0) return -1;
+    /*
+     * Brutally convert channel name from unicode to char by truncating the most
+     * significant byte
+     */
+    for(uint16_t i = 0; i < 16; i++)
+    {
+        contact->name[i] = ((char) (contactData.name[i] & 0x00FF));
+    }
+    // Copy contact DMR ID
+    contact->id = (contactData.id[0] | contactData.id[1] << 8 | contactData.id[2] << 16);
+    // Copy contact details
+    contact->type = contactData.type;
+    contact->receive_tone = contactData.receive_tone ? true : false;
+
+    return 0;
 }
 
