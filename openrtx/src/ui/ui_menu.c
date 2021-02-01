@@ -410,12 +410,19 @@ bool _ui_drawMacroMenu() {
                   yellow_fab413);
         gfx_print(layout.line3_pos, "Sav", layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white);
-        // Squelch bar
-        uint16_t squelch_width = SCREEN_WIDTH / 16 * last_state.sqlLevel;
-        point_t squelch_pos = { layout.bottom_pos.x, layout.bottom_pos.y +
-                                                      layout.status_v_pad +
-                                                      layout.text_v_offset -
-                                                      layout.bottom_h };
-        gfx_drawRect(squelch_pos, squelch_width, layout.bottom_h, color_white, true);
+        // Smeter bar
+        float rssi = last_state.rssi;
+        float squelch = last_state.sqlLevel / 16.0f;
+        point_t smeter_pos = { 0, layout.bottom_pos.y +
+                                  layout.status_v_pad +
+                                  layout.text_v_offset -
+                                  layout.bottom_h };
+        gfx_drawSmeter(smeter_pos,
+                       SCREEN_WIDTH,
+                       layout.bottom_h - 1,
+                       rssi,
+                       squelch,
+                       yellow_fab413);
+
         return true;
 }

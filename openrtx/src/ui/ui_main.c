@@ -160,7 +160,7 @@ void _ui_drawBottom()
                               layout.status_v_pad +
                               layout.text_v_offset -
                               layout.bottom_h };
-    gfx_drawSmeter(smeter_pos, SCREEN_WIDTH, layout.bottom_h - 1, rssi, squelch);
+    gfx_drawSmeter(smeter_pos, SCREEN_WIDTH, layout.bottom_h - 1, rssi, squelch, color_white);
 }
 
 void _ui_drawMainVFO()

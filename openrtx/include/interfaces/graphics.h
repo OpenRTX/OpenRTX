@@ -246,7 +246,8 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, float perce
  * @param height: Smeter height
  * @param rssi: rssi level in dBm
  * @param squelch: squelch level in percentage
+ * @param color: color of the squelch and smeter bar
  */
-void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi, float squelch);
+void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi, float squelch, color_t color);
 
 #endif /* GRAPHICS_H */

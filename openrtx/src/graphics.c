@@ -459,7 +459,7 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, float perce
  * Width (px)
  *
  */
-void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi, float squelch) {
+void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi, float squelch, color_t color) {
     color_t white =  {255, 255, 255, 255};
     color_t yellow = {250, 180, 19 , 255};
     color_t red =    {255, 0,   0  , 255};
@@ -483,11 +483,11 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi, 
     float s_level =  (127.0f + rssi) / 6.0f;
     uint16_t rssi_width = (s_level < 0.0f) ? 0 : (s_level * (width - 1) / 11);
     point_t rssi_pos = { start.x, start.y + 1 };
-    gfx_drawRect(rssi_pos, rssi_width, rssi_height, white, true);
+    gfx_drawRect(rssi_pos, rssi_width, rssi_height, color, true);
 
     // Squelch bar
     uint16_t squelch_height = height / 3 - 1;
     uint16_t squelch_width = width * squelch;
     point_t squelch_pos = { start.x, start.y + 1 + rssi_height };
-    gfx_drawRect(squelch_pos, squelch_width, squelch_height, white, true);
+    gfx_drawRect(squelch_pos, squelch_width, squelch_height, color, true);
 }
