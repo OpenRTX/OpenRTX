@@ -19,6 +19,7 @@
  ***************************************************************************/
 
 #include <stdio.h>
+#include <string.h>
 #include <interfaces/nvmem.h>
 
 // Simulate CPS with 16 channels, 16 zones, 16 contacts
@@ -60,7 +61,11 @@ int nvm_readZoneData(zone_t *zone, uint16_t pos)
 
     /* Generate dummy zone name */
     snprintf(zone->name, 16, "Zone %d", pos);
-
+    memset(zone->member, 0, sizeof(zone->member));
+    // Add fake zone member indexes
+    zone->member[0] = pos;
+    zone->member[1] = pos+1;
+    zone->member[2] = pos+2;
     return 0;
 }
 
