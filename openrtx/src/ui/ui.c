@@ -435,24 +435,25 @@ bool _ui_drawDarkOverlay() {
     return true;
 }
 
-int _ui_fsm_loadChannel(uint16_t index, bool *sync_rtx) {
+int _ui_fsm_loadChannel(uint16_t zone_index, bool *sync_rtx) {
+    uint16_t channel_index = zone_index;
     channel_t channel;
     // If a zone is active, get index from current zone
     if(state.zone_enabled)
     {
         // Calculate zone size
         const uint8_t zone_size = sizeof(state.zone.member)/sizeof(state.zone.member[0]);
-        if(index >= zone_size)
+        if(zone_index >= zone_size)
             return -1;
         else
-            index = state.zone.member[index];
+            channel_index = state.zone.member[zone_index];
     }
-    int result = nvm_readChannelData(&channel, index);
+    int result = nvm_readChannelData(&channel, channel_index);
     // Read successful and channel is valid
     if(result != -1 && _ui_channel_valid(&channel))
     {
         // Set new channel index
-        state.channel_index = index;
+        state.channel_index = zone_index;
         // Copy channel read to state
         state.channel = channel;
         *sync_rtx = true;
