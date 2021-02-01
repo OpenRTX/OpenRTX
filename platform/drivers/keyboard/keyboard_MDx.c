@@ -23,6 +23,7 @@
 #include <interfaces/gpio.h>
 #include <interfaces/delays.h>
 #include <interfaces/keyboard.h>
+#include <interfaces/platform.h>
 #include "hwconfig.h"
 
 void kbd_init()
@@ -54,7 +55,8 @@ keyboard_t kbd_getKeys()
     /* Use absolute position knob to emulate left and right buttons */
     static uint8_t old_pos = 0;
     uint8_t new_pos = platform_getChSelector();
-    if (old_pos != new_pos) {
+    if (old_pos != new_pos)
+    {
         if (new_pos < old_pos)
             keys |= KEY_LEFT;
         else
