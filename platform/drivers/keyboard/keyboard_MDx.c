@@ -64,11 +64,33 @@ keyboard_t kbd_getKeys()
         old_pos = new_pos;
     }
 
+
     /*
-     * First of all, configure the row lines as inputs. Since they are in common
-     * with the display, their configuration can have been screwed up by display
-     * driver among two subsequent calls of this function.
+     * The row lines are in common with the display, so we have to configure
+     * them as inputs before scanning. However, before configuring them as inputs,
+     * we put them as outputs and force a low logical level in order to be sure
+     * that any residual charge on both the display controller's inputs and in
+     * the capacitors in parallel to the Dx lines is dissipated.
      */
+    gpio_setMode(LCD_D0, OUTPUT);
+    gpio_setMode(LCD_D1, OUTPUT);
+    gpio_setMode(LCD_D2, OUTPUT);
+    gpio_setMode(LCD_D3, OUTPUT);
+    gpio_setMode(LCD_D4, OUTPUT);
+    gpio_setMode(LCD_D5, OUTPUT);
+    gpio_setMode(LCD_D6, OUTPUT);
+    gpio_setMode(LCD_D7, OUTPUT);
+
+    gpio_clearPin(LCD_D0);
+    gpio_clearPin(LCD_D1);
+    gpio_clearPin(LCD_D2);
+    gpio_clearPin(LCD_D3);
+    gpio_clearPin(LCD_D4);
+    gpio_clearPin(LCD_D5);
+    gpio_clearPin(LCD_D6);
+    gpio_clearPin(LCD_D7);
+
+
     gpio_setMode(LCD_D0, INPUT_PULL_DOWN);
     gpio_setMode(LCD_D1, INPUT_PULL_DOWN);
     gpio_setMode(LCD_D2, INPUT_PULL_DOWN);
