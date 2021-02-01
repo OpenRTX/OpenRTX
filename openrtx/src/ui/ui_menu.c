@@ -30,9 +30,8 @@ void _ui_drawMenuList(point_t pos, uint8_t selected, int (*getCurrentEntry)(char
     uint8_t entries_in_screen = ((SCREEN_HEIGHT - pos.y) / layout.top_h) + 1;
     uint8_t scroll = 0;
     char entry_buf[MAX_ENTRY_LEN] = "";
-    int result = 0;
     color_t text_color = color_white;
-    for(int item=0; (result == 0) && (pos.y < SCREEN_HEIGHT); item++)
+    for(int item=0, result=0; (result == 0) && (pos.y < SCREEN_HEIGHT); item++)
     {
         // If selection is off the screen, scroll screen
         if(selected >= entries_in_screen)
@@ -64,9 +63,8 @@ void _ui_drawMenuListValue(point_t pos, uint8_t selected,
     uint8_t scroll = 0;
     char entry_buf[MAX_ENTRY_LEN] = "";
     char value_buf[MAX_ENTRY_LEN] = "";
-    int result = 0;
     color_t text_color = color_white;
-    for(int item=0; (result == 0) && (pos.y < SCREEN_HEIGHT); item++)
+    for(int item=0, result=0; (result == 0) && (pos.y < SCREEN_HEIGHT); item++)
     {
         // If selection is off the screen, scroll screen
         if(selected >= entries_in_screen)
@@ -145,6 +143,7 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
         snprintf(buf, max_len, "%.1fdBm", last_state.rssi);
     return 0;
 }
+
 int _ui_getZoneName(char *buf, uint8_t max_len, uint8_t index)
 {
     int result = 0;
@@ -156,7 +155,7 @@ int _ui_getZoneName(char *buf, uint8_t max_len, uint8_t index)
     else
     {
         zone_t zone;
-        int result = nvm_readZoneData(&zone, index - 1);
+        result = nvm_readZoneData(&zone, index - 1);
         if(result != -1)
             snprintf(buf, max_len, "%s", zone.name);
     }
