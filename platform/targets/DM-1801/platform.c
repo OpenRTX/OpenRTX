@@ -23,6 +23,7 @@
 #include <interfaces/gpio.h>
 #include <calibInfo_GDx.h>
 #include <ADC0_GDx.h>
+#include <string.h>
 #include <I2C0.h>
 #include <os.h>
 #include "hwconfig.h"
@@ -32,6 +33,7 @@ OS_MUTEX adc_mutex;
 OS_ERR e;
 
 gdxCalibration_t calibration;
+hwInfo_t hwInfo;
 
 void platform_init()
 {
@@ -80,6 +82,17 @@ void platform_init()
      */
     nvm_init();
     nvm_readCalibData(&calibration);
+
+    /* Initialise hardware information structure */
+    hwInfo.uhf_maxFreq = FREQ_LIMIT_UHF_HI/1000000;
+    hwInfo.uhf_minFreq = FREQ_LIMIT_UHF_LO/1000000;
+    hwInfo.vhf_maxFreq = FREQ_LIMIT_VHF_HI/1000000;
+    hwInfo.vhf_minFreq = FREQ_LIMIT_VHF_LO/1000000;
+    hwInfo.uhf_band    = 1;
+    hwInfo.vhf_band    = 1;
+    hwInfo.lcd_type    = 0;
+    memcpy(hwInfo.name, "DM-1801", 7);
+    hwInfo.name[7] = '\0';
 }
 
 void platform_terminate()
@@ -183,4 +196,9 @@ void platform_setBacklightLevel(uint8_t level)
 const void *platform_getCalibrationData()
 {
     return ((const void *) &calibration);
+}
+
+const hwInfo_t *platform_getHwInfo()
+{
+    return &hwInfo;
 }

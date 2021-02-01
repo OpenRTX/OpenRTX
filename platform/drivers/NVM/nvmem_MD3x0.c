@@ -21,6 +21,7 @@
 #include <interfaces/nvmem.h>
 #include <interfaces/delays.h>
 #include <calibInfo_MDx.h>
+#include <wchar.h>
 #include "W25Qx.h"
 
 /**
@@ -214,6 +215,51 @@ void nvm_readCalibData(void *buf)
         calib->rxFreq[i] = ((freq_t) _bcd2bin(freqs[2*i])) * 10;
         calib->txFreq[i] = ((freq_t) _bcd2bin(freqs[2*i+1])) * 10;
     }
+}
+
+void nvm_loadHwInfo(hwInfo_t *info)
+{
+    uint16_t freqMin = 0;
+    uint16_t freqMax = 0;
+    uint8_t  lcdInfo = 0;
+
+    /*
+     * Hardware information data in MD3x0 devices is stored in security register
+     * 0x3000.
+     */
+    W25Qx_wakeup();
+    delayUs(5);
+
+    (void) W25Qx_readSecurityRegister(0x3000, info->name, 8);
+    (void) W25Qx_readSecurityRegister(0x3014, &freqMin, 2);
+    (void) W25Qx_readSecurityRegister(0x3016, &freqMax, 2);
+    (void) W25Qx_readSecurityRegister(0x301D, &lcdInfo, 1);
+    W25Qx_sleep();
+
+    /* Ensure correct null-termination of device name by removing the 0xff. */
+    for(uint8_t i = 0; i < sizeof(info->name); i++)
+    {
+        if(info->name[i] == 0xFF) info->name[i] = '\0';
+    }
+
+    /* These devices are single-band only, either VHF or UHF. */
+    freqMin = ((uint16_t) _bcd2bin(freqMin))/10;
+    freqMax = ((uint16_t) _bcd2bin(freqMax))/10;
+
+    if(freqMin < 200)
+    {
+        info->vhf_maxFreq = freqMax;
+        info->vhf_minFreq = freqMin;
+        info->vhf_band    = 1;
+    }
+    else
+    {
+        info->uhf_maxFreq = freqMax;
+        info->uhf_minFreq = freqMin;
+        info->uhf_band    = 1;
+    }
+
+    info->lcd_type = lcdInfo & 0x03;
 }
 
 int nvm_readChannelData(channel_t *channel, uint16_t pos)

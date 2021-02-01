@@ -21,12 +21,14 @@
 #include <interfaces/gpio.h>
 #include <os.h>
 #include <hwconfig.h>
+#include <string.h>
 #include <ADC1_MDx.h>
 #include <calibInfo_MDx.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/rtc.h>
 
 mduv3x0Calib_t calibration;
+hwInfo_t hwInfo;
 
 #ifdef ENABLE_BKLIGHT_DIMMING
 void TIM1_TRG_COM_TIM11_IRQHandler()
@@ -64,14 +66,17 @@ void platform_init()
     gpio_setMode(PTT_SW, INPUT);
 
     /*
-     * Initialise ADC1, for vbat, RSSI, ... 
+     * Initialise ADC1, for vbat, RSSI, ...
      * Configuration of corresponding GPIOs in analog input mode is done inside
      * the driver.
      */
     adc1_init();
 
+    memset(&hwInfo, 0x00, sizeof(hwInfo));
+
     nvm_init();                      /* Initialise non volatile memory manager */
     nvm_readCalibData(&calibration); /* Load calibration data                  */
+    nvm_loadHwInfo(&hwInfo);         /* Load hardware information data         */
     rtc_init();                      /* Initialise RTC                         */
 
     #ifdef ENABLE_BKLIGHT_DIMMING
@@ -156,7 +161,7 @@ uint8_t platform_getChSelector()
 
 bool platform_getPttStatus()
 {
-    /* PTT line has a pullup resistor with PTT switch closing to ground */ 
+    /* PTT line has a pullup resistor with PTT switch closing to ground */
     return (gpio_readPin(PTT_SW) == 0) ? true : false;
 }
 
@@ -233,4 +238,9 @@ void platform_setBacklightLevel(uint8_t level)
 const void *platform_getCalibrationData()
 {
     return ((const void *) &calibration);
+}
+
+const hwInfo_t *platform_getHwInfo()
+{
+    return &hwInfo;
 }

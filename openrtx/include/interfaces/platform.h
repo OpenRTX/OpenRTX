@@ -33,6 +33,10 @@
  * - Screen backlight control
  */
 
+/**
+ * \enum led_t Enumeration type for platform LED control. To allow for a wide
+ * platform support, LEDs are identified by their color.
+ */
 typedef enum
 {
         GREEN = 0,
@@ -40,6 +44,28 @@ typedef enum
         YELLOW,
         WHITE,
 } led_t;
+
+/**
+ * \struct hwInfo_t Data structure collecting all the hardware-dependent
+ * information: UHF and VHF band support, manufacturer-assigned hardware name
+ * and LCD driver type.
+ */
+typedef struct
+{
+    char name[10];          /* Manufacturer-assigned hardware name.             */
+
+    uint16_t uhf_maxFreq;   /* Upper bound for UHF band, in MHz.               */
+    uint16_t uhf_minFreq;   /* Lower bound for UHF band, in MHz.               */
+
+    uint16_t vhf_maxFreq;   /* Upper bound for VHF band, in MHz.               */
+    uint16_t vhf_minFreq;   /* Lower bound for VHF band, in MHz.               */
+
+    uint8_t  _unused  : 4,
+             uhf_band : 1,  /* Device allows UHF band operation.                */
+             vhf_band : 1,  /* Device allows VHF band operation.                */
+             lcd_type : 2;  /* LCD display type, meaningful only on MDx targets.*/
+} hwInfo_t;
+
 
 /**
  * This function handles device hardware initialization.
@@ -111,8 +137,19 @@ void platform_setBacklightLevel(uint8_t level);
 /**
  * This function returns a pointer to the device-specific calbration data,
  * application code has to cast it to the correct data structure.
+ * WARNING: calling code must ensure that free() is never called on the returned
+ * pointer!
  * @return pointer to device's calibration data.
  */
 const void *platform_getCalibrationData();
+
+/**
+ * This function returns a pointer to a data structure containing all the
+ * hardware information.
+ * WARNING: calling code must ensure that free() is never called on the returned
+ * pointer!
+ * @return pointer to device's hardware information.
+ */
+const hwInfo_t *platform_getHwInfo();
 
 #endif /* PLATFORM_H */

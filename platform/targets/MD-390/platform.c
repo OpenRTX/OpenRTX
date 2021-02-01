@@ -21,12 +21,14 @@
 #include <interfaces/nvmem.h>
 #include <interfaces/platform.h>
 #include <hwconfig.h>
+#include <string.h>
 #include <ADC1_MDx.h>
 #include <calibInfo_MDx.h>
 #include <toneGenerator_MDx.h>
 #include <interfaces/rtc.h>
 
 md3x0Calib_t calibration;
+hwInfo_t hwInfo;
 
 void platform_init()
 {
@@ -45,14 +47,17 @@ void platform_init()
     gpio_setMode(PTT_SW, INPUT);
 
     /*
-     * Initialise ADC1, for vbat, RSSI, ... 
+     * Initialise ADC1, for vbat, RSSI, ...
      * Configuration of corresponding GPIOs in analog input mode is done inside
      * the driver.
      */
     adc1_init();
 
+    memset(&hwInfo, 0x00, sizeof(hwInfo));
+
     nvm_init();                      /* Initialise non volatile memory manager */
     nvm_readCalibData(&calibration); /* Load calibration data                  */
+    nvm_loadHwInfo(&hwInfo);         /* Load hardware information data         */
     toneGen_init();                  /* Initialise tone generator              */
     rtc_init();                      /* Initialise RTC                         */
 
@@ -191,4 +196,9 @@ void platform_setBacklightLevel(uint8_t level)
 const void *platform_getCalibrationData()
 {
     return ((const void *) &calibration);
+}
+
+const hwInfo_t *platform_getHwInfo()
+{
+    return &hwInfo;
 }

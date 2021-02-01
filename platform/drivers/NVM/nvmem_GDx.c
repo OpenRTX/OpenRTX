@@ -233,6 +233,12 @@ void nvm_readCalibData(void *buf)
     calib->vhfCalPoints[7] = 172000000;
 }
 
+void nvm_loadHwInfo(hwInfo_t *info)
+{
+    /* GDx devices does not have any hardware info in the external flash. */
+    (void) info;
+}
+
 int nvm_readChannelData(channel_t *channel, uint16_t pos)
 {
     return -1;

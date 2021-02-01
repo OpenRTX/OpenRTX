@@ -35,6 +35,12 @@ void nvm_terminate()
 {
 }
 
+void nvm_loadHwInfo(hwInfo_t *info)
+{
+    /* Linux devices does not have any hardware info in the external flash. */
+    (void) info;
+}
+
 int nvm_readChannelData(channel_t *channel, uint16_t pos)
 {
     if(pos >= maxNumChannels) return -1;

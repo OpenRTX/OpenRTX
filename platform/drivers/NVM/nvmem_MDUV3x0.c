@@ -246,6 +246,44 @@ void nvm_readCalibData(void *buf)
     }
 }
 
+void nvm_loadHwInfo(hwInfo_t *info)
+{
+    uint16_t vhf_freqMin = 0;
+    uint16_t vhf_freqMax = 0;
+    uint16_t uhf_freqMin = 0;
+    uint16_t uhf_freqMax = 0;
+    uint8_t  lcdInfo = 0;
+
+    /*
+     * Hardware information data in MDUV3x0 devices is stored in security register
+     * 0x3000.
+     */
+    W25Qx_wakeup();
+    delayUs(5);
+
+    (void) W25Qx_readSecurityRegister(0x3000, info->name, 8);
+    (void) W25Qx_readSecurityRegister(0x3014, &uhf_freqMin, 2);
+    (void) W25Qx_readSecurityRegister(0x3016, &uhf_freqMax, 2);
+    (void) W25Qx_readSecurityRegister(0x3018, &vhf_freqMin, 2);
+    (void) W25Qx_readSecurityRegister(0x301a, &vhf_freqMax, 2);
+    (void) W25Qx_readSecurityRegister(0x301D, &lcdInfo, 1);
+    W25Qx_sleep();
+
+    /* Ensure correct null-termination of device name by removing the 0xff. */
+    for(uint8_t i = 0; i < sizeof(info->name); i++)
+    {
+        if(info->name[i] == 0xFF) info->name[i] = '\0';
+    }
+
+    info->vhf_minFreq = ((uint16_t) _bcd2bin(vhf_freqMin))/10;
+    info->vhf_maxFreq = ((uint16_t) _bcd2bin(vhf_freqMax))/10;
+    info->uhf_minFreq = ((uint16_t) _bcd2bin(uhf_freqMin))/10;
+    info->uhf_maxFreq = ((uint16_t) _bcd2bin(uhf_freqMax))/10;
+    info->vhf_band = 1;
+    info->uhf_band = 1;
+    info->lcd_type = lcdInfo & 0x03;
+}
+
 int nvm_readChannelData(channel_t *channel, uint16_t pos)
 {
     if(pos >= maxNumChannels) return -1;
