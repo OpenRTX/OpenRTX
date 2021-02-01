@@ -112,7 +112,7 @@ keyboard_t kbd_getKeys()
      */
     gpio_setPin(KB_ROW1);
 
-    delayUs(1);
+    delayUs(10);
     if(gpio_readPin(LCD_D7)) keys |= KEY_STAR;
     if(gpio_readPin(LCD_D2)) keys |= KEY_3;
     if(gpio_readPin(LCD_D1)) keys |= KEY_2;
@@ -125,7 +125,7 @@ keyboard_t kbd_getKeys()
     gpio_clearPin(KB_ROW1);
     gpio_setPin(KB_ROW2);
 
-    delayUs(1);
+    delayUs(10);
     if(gpio_readPin(LCD_D7)) keys |= KEY_ESC;
     if(gpio_readPin(LCD_D2)) keys |= KEY_DOWN;
     if(gpio_readPin(LCD_D1)) keys |= KEY_UP;
@@ -138,7 +138,7 @@ keyboard_t kbd_getKeys()
     gpio_clearPin(KB_ROW2);
     gpio_setPin(KB_ROW3);
 
-    delayUs(1);
+    delayUs(10);
     if(gpio_readPin(FUNC_SW)) keys |= KEY_F1;
     if(gpio_readPin(MONI_SW)) keys |= KEY_MONI;
 
