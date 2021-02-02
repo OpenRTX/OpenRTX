@@ -23,6 +23,7 @@
 #include <string.h>
 #include <ui.h>
 #include <interfaces/nvmem.h>
+#include <interfaces/platform.h>
 
 void _ui_drawMenuList(point_t pos, uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_t max_len, uint8_t index))
 {
@@ -132,15 +133,24 @@ int _ui_getInfoEntryName(char *buf, uint8_t max_len, uint8_t index)
 
 int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
 {
+    const hwInfo_t* hwinfo = platform_getHwInfo();
     if(index >= info_num) return -1;
-    if(strcmp(info_items[index], "Model") == 0)
-        snprintf(buf, max_len, "%s", "");
     else if(strcmp(info_items[index], "Bat. Voltage") == 0)
         snprintf(buf, max_len, "%.1fV", last_state.v_bat);
     else if(strcmp(info_items[index], "Bat. Charge") == 0)
         snprintf(buf, max_len, "%.1f%%", last_state.charge * 100);
     else if(strcmp(info_items[index], "RSSI") == 0)
         snprintf(buf, max_len, "%.1fdBm", last_state.rssi);
+    if(strcmp(info_items[index], "Model") == 0)
+        snprintf(buf, max_len, "%s", hwinfo->name);
+    if(strcmp(info_items[index], "Band") == 0)
+        snprintf(buf, max_len, "%s %s", hwinfo->vhf_band ? "VHF" : "", hwinfo->uhf_band ? "UHF" : "");
+    else if(strcmp(info_items[index], "VHF") == 0)
+        snprintf(buf, max_len, "%d - %d", hwinfo->vhf_minFreq, hwinfo->vhf_maxFreq);
+    else if(strcmp(info_items[index], "UHF") == 0)
+        snprintf(buf, max_len, "%d - %d", hwinfo->uhf_minFreq, hwinfo->uhf_maxFreq);
+    else if(strcmp(info_items[index], "LCD Type") == 0)
+        snprintf(buf, max_len, "%d", hwinfo->lcd_type);
     return 0;
 }
 

@@ -112,38 +112,42 @@ const char *menu_items[8] =
 };
 
 #ifdef HAS_RTC
-const char *settings_items[2] =
+const char *settings_items[] =
 {
     "Time & Date",
     "Display"
 };
 #else
-const char *settings_items[1] =
+const char *settings_items[] =
 {
     "Display"
 };
 #endif
 
 #ifdef SCREEN_CONTRAST
-const char *display_items[2] =
+const char *display_items[] =
 {
     "Brightness",
     "Contrast"
 };
 #else
-const char *display_items[1] =
+const char *display_items[] =
 {
     "Brightness",
 };
 #endif
-const char *info_items[4] =
+const char *info_items[] =
 {
-    "Model",
     "Bat. Voltage",
     "Bat. Charge",
     "RSSI",
+    "Model",
+    "Band",
+    "VHF",
+    "UHF",
+    "LCD Type"
 };
-const char *authors[4] =
+const char *authors[] =
 {
     "Niccolo' IU2KIN",
     "Silvano IU2KWO",
