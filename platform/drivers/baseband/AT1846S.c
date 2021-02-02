@@ -18,11 +18,10 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include "AT1846S.h"
-#include "interfaces.h"
-#include <calibInfo_GDx.h>
 #include <interfaces/delays.h>
-#include <stdio.h>
+#include <calibInfo_GDx.h>
+#include "interfaces.h"
+#include "AT1846S.h"
 
 void _maskSetRegister(uint8_t reg, uint16_t mask, uint16_t value)
 {

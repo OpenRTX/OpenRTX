@@ -160,6 +160,8 @@ void radio_enableRx()
     gpio_clearPin(UHF_LNA_EN);
     gpio_clearPin(VHF_PA_EN);
     gpio_clearPin(UHF_PA_EN);
+    DAC0->DAT[0].DATH = 0;
+    DAC0->DAT[0].DATL = 0;
 
     if(currRxBand < 0) return;
 
