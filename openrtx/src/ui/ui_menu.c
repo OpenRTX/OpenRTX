@@ -362,7 +362,9 @@ bool _ui_drawMacroMenu() {
         gfx_print(layout.line1_pos, pow_str, layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white);
         // Second row
-        gfx_print(layout.line2_pos, "4", layout.top_font, TEXT_ALIGN_LEFT,
+        // Calculate symmetric second row position, line2_pos is asymmetric like main screen
+        point_t pos_2 = {layout.line1_pos.x, layout.line1_pos.y + (layout.line3_pos.y - layout.line1_pos.y)/2};
+        gfx_print(pos_2, "4", layout.top_font, TEXT_ALIGN_LEFT,
                   yellow_fab413);
         char bw_str[8] = { 0 };
         switch (last_state.channel.bandwidth)
@@ -377,9 +379,9 @@ bool _ui_drawMacroMenu() {
                 snprintf(bw_str, 8, "     25");
                 break;
         }
-        gfx_print(layout.line2_pos, bw_str, layout.top_font, TEXT_ALIGN_LEFT,
+        gfx_print(pos_2, bw_str, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white);
-        gfx_print(layout.line2_pos, "5       ", layout.top_font, TEXT_ALIGN_CENTER,
+        gfx_print(pos_2, "5       ", layout.top_font, TEXT_ALIGN_CENTER,
                   yellow_fab413);
         char mode_str[9] = "";
         switch(last_state.channel.mode)
@@ -391,11 +393,11 @@ bool _ui_drawMacroMenu() {
             snprintf(mode_str, 9,"     DMR");
             break;
         }
-        gfx_print(layout.line2_pos, mode_str, layout.top_font, TEXT_ALIGN_CENTER,
+        gfx_print(pos_2, mode_str, layout.top_font, TEXT_ALIGN_CENTER,
                   color_white);
-        gfx_print(layout.line2_pos, "6        ", layout.top_font, TEXT_ALIGN_RIGHT,
+        gfx_print(pos_2, "6        ", layout.top_font, TEXT_ALIGN_RIGHT,
                   yellow_fab413);
-        gfx_print(layout.line2_pos, "Lck", layout.top_font, TEXT_ALIGN_RIGHT,
+        gfx_print(pos_2, "Lck", layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white);
         // Third row
         gfx_print(layout.line3_pos, "7", layout.top_font, TEXT_ALIGN_LEFT,
