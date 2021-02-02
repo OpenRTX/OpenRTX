@@ -26,13 +26,13 @@
 #include <interfaces/gpio.h>
 #include <hwconfig.h>
 
-
 OS_MUTEX *cfgMutex;     /* Mutex for incoming config messages */
 OS_Q cfgMailbox;        /* Queue for incoming config messages */
 
 rtxStatus_t rtxStatus;  /* RTX driver status                  */
 
-bool sqlOpen;           /* Flag for squlech open/close        */
+bool sqlOpen;           /* Flag for squelch open/close        */
+bool enterRx;           /* Flag for RX mode activation        */
 
 /*
  * These functions below provide a basic API for audio path management. They
@@ -127,6 +127,7 @@ void rtx_init(OS_MUTEX *m)
     rtxStatus.txTone      = 0;
 
     sqlOpen = false;
+    enterRx = false;
 
     /*
      * Initialise low-level platform-specific driver
@@ -225,17 +226,10 @@ void rtx_taskFunc()
                 radio_setVcoFrequency(rtxStatus.rxFrequency, false);
                 radio_enableRx();
             }
+
+            /* TODO: temporarily force to RX mode if rtx is off. */
+            if(rtxStatus.opStatus == OFF) enterRx = true;
         }
-    }
-
-    /* TODO: temporarily force to RX mode if rtx is off. */
-    if(rtxStatus.opStatus == OFF)
-    {
-        radio_disableRtx();
-
-        radio_setVcoFrequency(rtxStatus.rxFrequency, false);
-        radio_enableRx();
-        rtxStatus.opStatus = RX;
     }
 
     /* RX logic */
@@ -259,6 +253,15 @@ void rtx_taskFunc()
             sqlOpen = false;
         }
     }
+    else if((rtxStatus.opMode == OFF) && enterRx)
+    {
+        radio_disableRtx();
+
+        radio_setVcoFrequency(rtxStatus.rxFrequency, false);
+        radio_enableRx();
+        rtxStatus.opStatus = RX;
+        enterRx = false;
+    }
 
     /* TX logic */
     if(platform_getPttStatus() && (rtxStatus.opStatus != TX))
@@ -278,6 +281,7 @@ void rtx_taskFunc()
         radio_disableRtx();
 
         rtxStatus.opStatus = OFF;
+        enterRx = true;
     }
 
     /* Led control logic  */

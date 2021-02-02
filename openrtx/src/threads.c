@@ -314,6 +314,21 @@ void create_threads()
     // State initialization, execute before starting all tasks
     state_init();
 
+    // Create rtx radio thread
+    OSTaskCreate((OS_TCB     *) &rtx_tcb,
+                 (CPU_CHAR   *) "RTX Task",
+                 (OS_TASK_PTR ) rtx_task,
+                 (void       *) 0,
+                 (OS_PRIO     ) 5,
+                 (CPU_STK    *) &rtx_stk[0],
+                 (CPU_STK     ) 0,
+                 (CPU_STK_SIZE) RTX_TASK_STKSIZE/sizeof(CPU_STK),
+                 (OS_MSG_QTY  ) 0,
+                 (OS_TICK     ) 0,
+                 (void       *) 0,
+                 (OS_OPT      ) (OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR),
+                 (OS_ERR     *) &os_err);
+
     // Create UI thread
     OSTaskCreate((OS_TCB     *) &ui_tcb,
                  (CPU_CHAR   *) "UI Task",
@@ -353,21 +368,6 @@ void create_threads()
                  (CPU_STK    *) &dev_stk[0],
                  (CPU_STK     ) 0,
                  (CPU_STK_SIZE) DEV_TASK_STKSIZE/sizeof(CPU_STK),
-                 (OS_MSG_QTY  ) 0,
-                 (OS_TICK     ) 0,
-                 (void       *) 0,
-                 (OS_OPT      ) (OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR),
-                 (OS_ERR     *) &os_err);
-
-    // Create rtx radio thread
-    OSTaskCreate((OS_TCB     *) &rtx_tcb,
-                 (CPU_CHAR   *) "RTX Task",
-                 (OS_TASK_PTR ) rtx_task,
-                 (void       *) 0,
-                 (OS_PRIO     ) 5,
-                 (CPU_STK    *) &rtx_stk[0],
-                 (CPU_STK     ) 0,
-                 (CPU_STK_SIZE) RTX_TASK_STKSIZE/sizeof(CPU_STK),
                  (OS_MSG_QTY  ) 0,
                  (OS_TICK     ) 0,
                  (void       *) 0,
