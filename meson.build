@@ -183,7 +183,7 @@ else
 endif
 
 ## TYT MD380
-md380_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDx.c',
+md380_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.c',
                                    'platform/drivers/keyboard/keyboard_MDx.c',
                                    'platform/drivers/NVM/W25Qx.c',
                                    'platform/drivers/NVM/spiFlash_MDx.c',
@@ -200,7 +200,7 @@ md380_def = def + stm32f405_def + {'PLATFORM_MD380': ''}
 
 
 ## TYT MD390
-md390_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDx.c',
+md390_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.c',
                                    'platform/drivers/keyboard/keyboard_MDx.c',
                                    'platform/drivers/NVM/W25Qx.c',
                                    'platform/drivers/NVM/spiFlash_MDx.c',
@@ -217,7 +217,7 @@ md390_def = def + stm32f405_def + {'PLATFORM_MD390': ''}
 
 
 ## TYT MD-UV380
-mduv380_src = src + stm32f405_src + ['platform/drivers/display/HX83XX_MDx.c',
+mduv380_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.c',
                                      'platform/drivers/keyboard/keyboard_MDx.c',
                                      'platform/drivers/NVM/W25Qx.c',
                                      'platform/drivers/NVM/spiFlash_MDx.c',

@@ -225,15 +225,6 @@ void display_init()
 
     if((lcd_type == 2) || (lcd_type == 3))
     {
-//         writeCmd(0x3a);
-//         writeData(0x05);
-//         writeCmd(0x36);
-//
-//         if(lcd_type == 3)
-//             writeData(8);
-//         else
-//             writeData(0x88);
-
         writeCmd(0xfe);
         writeCmd(0xef);
         writeCmd(0xb4);
@@ -295,10 +286,6 @@ void display_init()
         writeCmd(0xe9);
         writeData(0x00);
         delayMs(20);
-//         writeCmd(0x11);
-//         delayMs(120);
-//         writeCmd(0x29);
-//         writeCmd(0x2c);
     }
     else
     {
@@ -374,17 +361,6 @@ void display_init()
         writeData(0x01);
         writeData(0x04);
         writeData(0x13);
-//         writeCmd(0x3a);
-//         writeData(0x05);
-//         writeCmd(0x36);
-//
-//         if(lcd_type == 1)
-//             writeData(200);
-//         else
-//             writeData(8);
-
-//         writeCmd(0x29);
-//         writeCmd(0x2c);
     }
 
     /*
