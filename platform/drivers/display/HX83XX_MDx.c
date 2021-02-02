@@ -15,16 +15,13 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdio.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
-#include <os.h>
 #include <interfaces/gpio.h>
 #include <interfaces/display.h>
 #include <interfaces/delays.h>
-#include "hwconfig.h"
-#include "stm32f4xx.h"
+#include <interfaces/platform.h>
+#include <hwconfig.h>
+#include <string.h>
+#include <os.h>
 
 /**
  * LCD command set, basic and extended
@@ -214,70 +211,181 @@ void display_init()
     gpio_clearPin(LCD_CS);
 
     /**
-     * The following command sequence has been taken as-is from Tytera original
-     * firmware. Without it, screen needs framebuffer data to be sent very slowly,
+     * The command sequence below has been taken as-is from the LCD initialisation
+     * routine at address 0x0804d1c8 of Tytera's firmware for MD-UV380 radios,
+     * version S18.016.
+     * It has also been cross-checked with the firmware image for MD-380/390 to
+     * ensure that is compatible also with the displays of that radios.
+     * Without this sequence, screen needs framebuffer data to be sent very slowly,
      * otherwise nothing will be rendered.
      * Since we do not have the datasheet for the controller employed in this
-     * screen, we can only copy-and-paste...
+     * screen, we can only do copy-and-paste...
      */
-    writeCmd(0xfe);
-    writeCmd(0xef);
-    writeCmd(0xb4);
-    writeData(0x00);
-    writeCmd(0xff);
-    writeData(0x16);
-    writeCmd(0xfd);
-    writeData(0x4f);
-    writeCmd(0xa4);
-    writeData(0x70);
-    writeCmd(0xe7);
-    writeData(0x94);
-    writeData(0x88);
-    writeCmd(0xea);
-    writeData(0x3a);
-    writeCmd(0xed);
-    writeData(0x11);
-    writeCmd(0xe4);
-    writeData(0xc5);
-    writeCmd(0xe2);
-    writeData(0x80);
-    writeCmd(0xa3);
-    writeData(0x12);
-    writeCmd(0xe3);
-    writeData(0x07);
-    writeCmd(0xe5);
-    writeData(0x10);
-    writeCmd(0xf0);
-    writeData(0x00);
-    writeCmd(0xf1);
-    writeData(0x55);
-    writeCmd(0xf2);
-    writeData(0x05);
-    writeCmd(0xf3);
-    writeData(0x53);
-    writeCmd(0xf4);
-    writeData(0x00);
-    writeCmd(0xf5);
-    writeData(0x00);
-    writeCmd(0xf7);
-    writeData(0x27);
-    writeCmd(0xf8);
-    writeData(0x22);
-    writeCmd(0xf9);
-    writeData(0x77);
-    writeCmd(0xfa);
-    writeData(0x35);
-    writeCmd(0xfb);
-    writeData(0x00);
-    writeCmd(0xfc);
-    writeData(0x00);
-    writeCmd(0xfe);
-    writeCmd(0xef);
-    writeCmd(0xe9);
-    writeData(0x00);
-    delayMs(20);
+    uint8_t lcd_type = platform_getHwInfo()->lcd_type;
 
-    /** The registers and commands below are the same in HX8353-E controller **/
+    if((lcd_type == 2) || (lcd_type == 3))
+    {
+//         writeCmd(0x3a);
+//         writeData(0x05);
+//         writeCmd(0x36);
+//
+//         if(lcd_type == 3)
+//             writeData(8);
+//         else
+//             writeData(0x88);
+
+        writeCmd(0xfe);
+        writeCmd(0xef);
+        writeCmd(0xb4);
+        writeData(0x00);
+        writeCmd(0xff);
+        writeData(0x16);
+        writeCmd(0xfd);
+
+        if(lcd_type == 3)
+            writeData(0x40);
+        else
+            writeData(0x4f);
+
+        writeCmd(0xa4);
+        writeData(0x70);
+        writeCmd(0xe7);
+        writeData(0x94);
+        writeData(0x88);
+        writeCmd(0xea);
+        writeData(0x3a);
+        writeCmd(0xed);
+        writeData(0x11);
+        writeCmd(0xe4);
+        writeData(0xc5);
+        writeCmd(0xe2);
+        writeData(0x80);
+        writeCmd(0xa3);
+        writeData(0x12);
+        writeCmd(0xe3);
+        writeData(0x07);
+        writeCmd(0xe5);
+        writeData(0x10);
+        writeCmd(0xf0);
+        writeData(0x00);
+        writeCmd(0xf1);
+        writeData(0x55);
+        writeCmd(0xf2);
+        writeData(0x05);
+        writeCmd(0xf3);
+        writeData(0x53);
+        writeCmd(0xf4);
+        writeData(0x00);
+        writeCmd(0xf5);
+        writeData(0x00);
+        writeCmd(0xf7);
+        writeData(0x27);
+        writeCmd(0xf8);
+        writeData(0x22);
+        writeCmd(0xf9);
+        writeData(0x77);
+        writeCmd(0xfa);
+        writeData(0x35);
+        writeCmd(0xfb);
+        writeData(0x00);
+        writeCmd(0xfc);
+        writeData(0x00);
+        writeCmd(0xfe);
+        writeCmd(0xef);
+        writeCmd(0xe9);
+        writeData(0x00);
+        delayMs(20);
+//         writeCmd(0x11);
+//         delayMs(120);
+//         writeCmd(0x29);
+//         writeCmd(0x2c);
+    }
+    else
+    {
+        writeCmd(0x11);
+        delayMs(120);
+        writeCmd(0xb1);
+        writeData(0x05);
+        writeData(0x3c);
+        writeData(0x3c);
+        writeCmd(0xb2);
+        writeData(0x05);
+        writeData(0x3c);
+        writeData(0x3c);
+        writeCmd(0xb3);
+        writeData(0x05);
+        writeData(0x3c);
+        writeData(0x3c);
+        writeData(0x05);
+        writeData(0x3c);
+        writeData(0x3c);
+        writeCmd(0xb4);
+        writeData(0x03);
+        writeCmd(0xc0);
+        writeData(0x28);
+        writeData(0x08);
+        writeData(0x04);
+        writeCmd(0xc1);
+        writeData(0xc0);
+        writeCmd(0xc2);
+        writeData(0xd);
+        writeData(0x00);
+        writeCmd(0xc3);
+        writeData(0x8d);
+        writeData(0x2a);
+        writeCmd(0xc4);
+        writeData(0x8d);
+        writeData(0xee);
+        writeCmd(0xc5);
+        writeData(0x1a);
+        writeCmd(0x36);
+        writeData(0x08);
+        writeCmd(0xe0);
+        writeData(0x04);
+        writeData(0x0c);
+        writeData(0x07);
+        writeData(0x0a);
+        writeData(0x2e);
+        writeData(0x30);
+        writeData(0x25);
+        writeData(0x2a);
+        writeData(0x28);
+        writeData(0x26);
+        writeData(0x2e);
+        writeData(0x3a);
+        writeData(0x00);
+        writeData(0x01);
+        writeData(0x03);
+        writeData(0x13);
+        writeCmd(0xe1);
+        writeData(0x04);
+        writeData(0x16);
+        writeData(0x06);
+        writeData(0x0d);
+        writeData(0x2d);
+        writeData(0x26);
+        writeData(0x23);
+        writeData(0x27);
+        writeData(0x27);
+        writeData(0x25);
+        writeData(0x2d);
+        writeData(0x3b);
+        writeData(0x00);
+        writeData(0x01);
+        writeData(0x04);
+        writeData(0x13);
+//         writeCmd(0x3a);
+//         writeData(0x05);
+//         writeCmd(0x36);
+//
+//         if(lcd_type == 1)
+//             writeData(200);
+//         else
+//             writeData(8);
+
+//         writeCmd(0x29);
+//         writeCmd(0x2c);
+    }
 
     /*
      * Configuring screen's memory access control: TYT MD3x0 radios have the screen
@@ -296,12 +404,20 @@ void display_init()
      * - SS  (bit 2): 0 -> refresh screen left-to-right
      * - bit 1 and 0: don't care
      */
+
     writeCmd(CMD_MADCTL);
-    #ifndef DISPLAY_MIRROR_X
-    writeData(0x60);    /* MD390 and similar radios: screen "normal" */
-    #else
-    writeData(0xA0);    /* MD380 and similar radios: screen mirrored */
-    #endif
+    if(lcd_type == 1)
+    {
+        writeData(0x60);    /* Reference case: MD-390(G)  */
+    }
+    else if(lcd_type == 2)
+    {
+        writeData(0x20);    /* Reference case: MD-380V(G) */
+    }
+    else
+    {
+        writeData(0xA0);    /* Reference case: MD-380     */
+    }
 
     writeCmd(CMD_CASET);
     writeData(0x00);
