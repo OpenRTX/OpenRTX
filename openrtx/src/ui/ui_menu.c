@@ -138,7 +138,7 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
     else if(strcmp(info_items[index], "Bat. Voltage") == 0)
         snprintf(buf, max_len, "%.1fV", last_state.v_bat);
     else if(strcmp(info_items[index], "Bat. Charge") == 0)
-        snprintf(buf, max_len, "%.1f%%", last_state.charge);
+        snprintf(buf, max_len, "%.1f%%", last_state.charge * 100);
     else if(strcmp(info_items[index], "RSSI") == 0)
         snprintf(buf, max_len, "%.1fdBm", last_state.rssi);
     return 0;
