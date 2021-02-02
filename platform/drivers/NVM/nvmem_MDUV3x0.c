@@ -116,7 +116,8 @@ typedef struct
     uint16_t name[16];
 } mduv3x0Channel_t;
 
-typedef struct {
+typedef struct
+{
     // Bytes 0-31
     uint16_t name[16];                  // Zone Name (Unicode)
 
@@ -124,7 +125,8 @@ typedef struct {
     uint16_t member_a[16];              // Member A: channels 1...16
 } mduv3x0Zone_t;
 
-typedef struct {
+typedef struct
+{
     // Bytes 0-95
     uint16_t ext_a[48];                 // Member A: channels 17...64
 
@@ -132,7 +134,8 @@ typedef struct {
     uint16_t member_b[64];              // Member B: channels 1...64
 } mduv3x0ZoneExt_t;
 
-typedef struct {
+typedef struct
+{
     // Bytes 0-2
     uint8_t id[3];                      // Call ID: 1...16777215
 
@@ -145,13 +148,13 @@ typedef struct {
     uint16_t name[16];                  // Contact Name (Unicode)
 } mduv3x0Contact_t;
 
-const uint32_t zoneBaseAddr = 0x149e0; /**< Base address of zones         */
-const uint32_t zoneExtBaseAddr = 0x31000; /**< Base address of zone extensions         */
-const uint32_t chDataBaseAddr = 0x110000; /**< Base address of channel data         */
-const uint32_t contactBaseAddr = 0x140000; /**< Base address of contacts         */
-const uint32_t maxNumChannels = 3000;    /**< Maximum number of channels in memory */
-const uint32_t maxNumZones = 250;    /**< Maximum number of zones and zone extensions in memory */
-const uint32_t maxNumContacts = 10000;    /**< Maximum number of contacts in memory */
+const uint32_t zoneBaseAddr    = 0x149e0;   /**< Base address of zones                                 */
+const uint32_t zoneExtBaseAddr = 0x31000;   /**< Base address of zone extensions                       */
+const uint32_t chDataBaseAddr  = 0x110000;  /**< Base address of channel data                          */
+const uint32_t contactBaseAddr = 0x140000;  /**< Base address of contacts                              */
+const uint32_t maxNumChannels  = 3000;      /**< Maximum number of channels in memory                  */
+const uint32_t maxNumZones     = 250;       /**< Maximum number of zones and zone extensions in memory */
+const uint32_t maxNumContacts  = 10000;     /**< Maximum number of contacts in memory                  */
 
 /**
  * \internal Utility function to convert 4 byte BCD values into a 32-bit
@@ -339,32 +342,38 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
     /* Load mode-specific parameters */
     if(channel->mode == FM)
     {
-        channel->fm.rxToneEn = chData.ctcss_dcs_receive != 0;
-        channel->fm.txToneEn = chData.ctcss_dcs_transmit != 0;
+        channel->fm.txToneEn = 0;
+        channel->fm.rxToneEn = 0;
+        uint16_t rx_css = chData.ctcss_dcs_receive;
+        uint16_t tx_css = chData.ctcss_dcs_transmit;
+
         // TODO: Implement binary search to speed up this lookup
-        if (channel->fm.rxToneEn)
+        if((rx_css != 0) && (rx_css != 0xFFFF))
         {
             for(int i = 0; i < MAX_TONE_INDEX; i++)
             {
-                if (ctcss_tone[i] == chData.ctcss_dcs_receive)
+                if(ctcss_tone[i] == ((uint16_t) _bcd2bin(rx_css)))
                 {
                     channel->fm.rxTone = i;
+                    channel->fm.rxToneEn = 1;
                     break;
                 }
             }
-
         }
-        if (channel->fm.txToneEn)
+
+        if((tx_css != 0) && (tx_css != 0xFFFF))
         {
             for(int i = 0; i < MAX_TONE_INDEX; i++)
             {
-                if (ctcss_tone[i] == chData.ctcss_dcs_transmit)
+                if(ctcss_tone[i] == ((uint16_t) _bcd2bin(tx_css)))
                 {
                     channel->fm.txTone = i;
+                    channel->fm.txToneEn = 1;
                     break;
                 }
             }
         }
+
         // TODO: Implement warning screen if tone was not found
     }
     else if(channel->mode == DMR)
