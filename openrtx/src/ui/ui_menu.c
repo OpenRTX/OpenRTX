@@ -281,9 +281,9 @@ void _ui_drawSettingsTimeDate()
              last_state.time.date, last_state.time.month, last_state.time.year);
     snprintf(time_buf, sizeof(time_buf), "%02d:%02d:%02d", 
              last_state.time.hour, last_state.time.minute, last_state.time.second);
-    gfx_print(layout.line2_pos, date_buf, layout.line2_font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.line2_pos, date_buf, layout.input_font, TEXT_ALIGN_CENTER,
               color_white);
-    gfx_print(layout.line3_pos, time_buf, layout.line3_font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.line3_pos, time_buf, layout.input_font, TEXT_ALIGN_CENTER,
               color_white);
 }
 
@@ -321,9 +321,9 @@ void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state)
             ui_state->new_time_buf[pos] = input_char; 
         }
     }
-    gfx_print(layout.line2_pos, ui_state->new_date_buf, layout.line2_font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.line2_pos, ui_state->new_date_buf, layout.input_font, TEXT_ALIGN_CENTER,
               color_white);
-    gfx_print(layout.line3_pos, ui_state->new_time_buf, layout.line3_font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.line3_pos, ui_state->new_time_buf, layout.input_font, TEXT_ALIGN_CENTER,
               color_white);
 }
 #endif

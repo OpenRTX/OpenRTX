@@ -207,6 +207,8 @@ layout_t _ui_calculateLayout()
     const fontSize_t line3_font = FONT_SIZE_16PT;
     // Bottom bar font: 8 pt
     const fontSize_t bottom_font = FONT_SIZE_8PT;
+    // TimeDate/Frequency input font
+    const fontSize_t input_font = FONT_SIZE_12PT;
 
     // Radioddity GD-77
     #elif SCREEN_HEIGHT > 63
@@ -232,6 +234,8 @@ layout_t _ui_calculateLayout()
     const fontSize_t line3_font = FONT_SIZE_12PT;
     // Bottom bar font: 6 pt
     const fontSize_t bottom_font = FONT_SIZE_6PT;
+    // TimeDate/Frequency input font
+    const fontSize_t input_font = FONT_SIZE_8PT;
 
     // Radioddity RD-5R
     #elif SCREEN_HEIGHT > 47
@@ -254,6 +258,8 @@ layout_t _ui_calculateLayout()
     // Middle line fonts: 16, 16
     const fontSize_t line2_font = FONT_SIZE_6PT;
     const fontSize_t line3_font = FONT_SIZE_12PT;
+    // TimeDate/Frequency input font
+    const fontSize_t input_font = FONT_SIZE_8PT;
     // Not present on this resolution
     const fontSize_t line1_font = 0;
     const fontSize_t bottom_font = 0;
@@ -289,7 +295,8 @@ layout_t _ui_calculateLayout()
         line1_font,
         line2_font,
         line3_font,
-        bottom_font
+        bottom_font,
+        input_font
     };
     return new_layout;
 }

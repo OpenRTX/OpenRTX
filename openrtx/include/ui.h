@@ -89,6 +89,7 @@ typedef struct layout_t
     fontSize_t line2_font;
     fontSize_t line3_font;
     fontSize_t bottom_font;
+    fontSize_t input_font;
 } layout_t;
 
 /** 
