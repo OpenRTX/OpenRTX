@@ -40,7 +40,9 @@ void state_init()
     state.v_bat = platform_getVbat();
     state.charge = battery_getCharge(state.v_bat);
     state.rssi = rtx_getRssi();
-    
+ 
+    // Set default channel index (it is 1-based)
+    state.channel_index = 1;
     // Set VFO channel default settings
     state.channelInfoUpdated = true;
     state.channel.mode = FM;

@@ -264,13 +264,14 @@ void nvm_loadHwInfo(hwInfo_t *info)
 
 int nvm_readChannelData(channel_t *channel, uint16_t pos)
 {
-    if(pos > maxNumChannels) return -1;
+    if((pos <= 0) || (pos > maxNumChannels)) return -1;
 
     W25Qx_wakeup();
     delayUs(5);
 
     md3x0Channel_t chData;
-    uint32_t readAddr = chDataBaseAddr + pos * sizeof(md3x0Channel_t);
+    // Note: pos is 1-based because an empty slot in a zone contains index 0
+    uint32_t readAddr = chDataBaseAddr + (pos - 1) * sizeof(md3x0Channel_t);
     W25Qx_readData(readAddr, ((uint8_t *) &chData), sizeof(md3x0Channel_t));
     W25Qx_sleep();
 
@@ -342,13 +343,14 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
 
 int nvm_readZoneData(zone_t *zone, uint16_t pos)
 {
-    if(pos >= maxNumZones) return -1;
+    if((pos <= 0) || (pos > maxNumZones)) return -1;
 
     W25Qx_wakeup();
     delayUs(5);
 
     md3x0Zone_t zoneData;
-    uint32_t zoneAddr = zoneBaseAddr + pos * sizeof(md3x0Zone_t);
+    // Note: pos is 1-based to be consistent with channels
+    uint32_t zoneAddr = zoneBaseAddr + (pos - 1) * sizeof(md3x0Zone_t);
     W25Qx_readData(zoneAddr, ((uint8_t *) &zoneData), sizeof(md3x0Zone_t));
     W25Qx_sleep();
 
@@ -373,13 +375,14 @@ int nvm_readZoneData(zone_t *zone, uint16_t pos)
 
 int nvm_readContactData(contact_t *contact, uint16_t pos)
 {
-    if(pos >= maxNumContacts) return -1;
+    if((pos <= 0) || (pos > maxNumContacts)) return -1;
 
     W25Qx_wakeup();
     delayUs(5);
 
     md3x0Contact_t contactData;
-    uint32_t contactAddr = contactBaseAddr + pos * sizeof(md3x0Contact_t);
+    // Note: pos is 1-based to be consistent with channels
+    uint32_t contactAddr = contactBaseAddr + (pos - 1) * sizeof(md3x0Contact_t);
     W25Qx_readData(contactAddr, ((uint8_t *) &contactData), sizeof(md3x0Contact_t));
     W25Qx_sleep();
 

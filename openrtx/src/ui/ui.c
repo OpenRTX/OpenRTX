@@ -450,10 +450,11 @@ int _ui_fsm_loadChannel(uint16_t zone_index, bool *sync_rtx) {
     {
         // Calculate zone size
         const uint8_t zone_size = sizeof(state.zone.member)/sizeof(state.zone.member[0]);
-        if(zone_index >= zone_size)
+        if((zone_index <= 0) || (zone_index > zone_size))
             return -1;
         else
-            channel_index = state.zone.member[zone_index];
+            // Channel index is 1-based while zone array access is 0-based
+            channel_index = state.zone.member[zone_index - 1];
     }
     int result = nvm_readChannelData(&channel, channel_index);
     // Read successful and channel is valid
@@ -847,20 +848,23 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     if(state.ui_screen == MENU_ZONE)
                     {
                         zone_t zone;
-                        // The index is -1 because the first zone "All channels" is not read from flash
-                        if(nvm_readZoneData(&zone, ui_state.menu_selected) != -1)
+                        // menu_selected is 0-based while channels are 1-based
+                        // menu_selected == 0 corresponds to "All Channels" zone
+                        if(nvm_readZoneData(&zone, ui_state.menu_selected + 1) != -1)
                             ui_state.menu_selected += 1;
                     }
                     else if(state.ui_screen == MENU_CHANNEL)
                     {
                         channel_t channel;
-                        if(nvm_readChannelData(&channel, ui_state.menu_selected + 1) != -1)
+                        // menu_selected is 0-based while channels are 1-based
+                        if(nvm_readChannelData(&channel, ui_state.menu_selected + 2) != -1)
                             ui_state.menu_selected += 1;
                     }
                     else if(state.ui_screen == MENU_CONTACTS)
                     {
                         contact_t contact;
-                        if(nvm_readContactData(&contact, ui_state.menu_selected + 1) != -1)
+                        // menu_selected is 0-based while channels are 1-based
+                        if(nvm_readContactData(&contact, ui_state.menu_selected + 2) != -1)
                             ui_state.menu_selected += 1;
                     }
                 }
@@ -876,8 +880,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         else
                         {
                             state.zone_enabled = true;
-                            // The index is -1 because the first zone "All channels" is not read from flash
-                            result = nvm_readZoneData(&newzone, ui_state.menu_selected  - 1);
+                            result = nvm_readZoneData(&newzone, ui_state.menu_selected);
                         }
                         if(result != -1)
                         {
@@ -886,7 +889,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                             if(ui_state.last_main_state == MAIN_VFO)
                                 state.vfo_channel = state.channel;
                             // Load zone first channel
-                            _ui_fsm_loadChannel(0, sync_rtx);
+                            _ui_fsm_loadChannel(1, sync_rtx);
                             // Switch to MEM screen
                             state.ui_screen = MAIN_MEM;
                         }
@@ -896,7 +899,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         // If we were in VFO mode, save VFO channel
                         if(ui_state.last_main_state == MAIN_VFO)
                             state.vfo_channel = state.channel;
-                        _ui_fsm_loadChannel(ui_state.menu_selected, sync_rtx);
+                        _ui_fsm_loadChannel(ui_state.menu_selected + 1, sync_rtx);
                         // Switch to MEM screen
                         state.ui_screen = MAIN_MEM;
                     }

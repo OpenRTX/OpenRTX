@@ -44,7 +44,7 @@ void nvm_loadHwInfo(hwInfo_t *info)
 
 int nvm_readChannelData(channel_t *channel, uint16_t pos)
 {
-    if(pos >= maxNumChannels) return -1;
+    if((pos <= 0) || (pos > maxNumChannels)) return -1;
 
     /* Generate dummy channel name */
     snprintf(channel->name, 16, "Channel %d", pos);
@@ -57,7 +57,7 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
 
 int nvm_readZoneData(zone_t *zone, uint16_t pos)
 {
-    if(pos >= maxNumZones) return -1;
+    if((pos <= 0) || (pos > maxNumZones)) return -1;
 
     /* Generate dummy zone name */
     snprintf(zone->name, 16, "Zone %d", pos);
@@ -71,7 +71,7 @@ int nvm_readZoneData(zone_t *zone, uint16_t pos)
 
 int nvm_readContactData(contact_t *contact, uint16_t pos)
 {
-    if(pos >= maxNumContacts) return -1;
+    if((pos <= 0) || (pos > maxNumContacts)) return -1;
 
     /* Generate dummy contact name */
     snprintf(contact->name, 16, "Contact %d", pos);

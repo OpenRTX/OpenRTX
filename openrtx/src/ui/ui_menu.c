@@ -155,7 +155,7 @@ int _ui_getZoneName(char *buf, uint8_t max_len, uint8_t index)
     else
     {
         zone_t zone;
-        result = nvm_readZoneData(&zone, index - 1);
+        result = nvm_readZoneData(&zone, index);
         if(result != -1)
             snprintf(buf, max_len, "%s", zone.name);
     }
@@ -165,7 +165,7 @@ int _ui_getZoneName(char *buf, uint8_t max_len, uint8_t index)
 int _ui_getChannelName(char *buf, uint8_t max_len, uint8_t index)
 {
     channel_t channel;
-    int result = nvm_readChannelData(&channel, index);
+    int result = nvm_readChannelData(&channel, index + 1);
     if(result != -1)
         snprintf(buf, max_len, "%s", channel.name);
     return result;
@@ -174,7 +174,7 @@ int _ui_getChannelName(char *buf, uint8_t max_len, uint8_t index)
 int _ui_getContactName(char *buf, uint8_t max_len, uint8_t index)
 {
     contact_t contact;
-    int result = nvm_readContactData(&contact, index);
+    int result = nvm_readContactData(&contact, index + 1);
     if(result != -1)
         snprintf(buf, max_len, "%s", contact.name);
     return result;
