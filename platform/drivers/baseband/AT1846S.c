@@ -222,6 +222,20 @@ void AT1846S_setFuncMode(AT1846S_func_t mode)
     _maskSetRegister(0x30, 0x0060, value);
 }
 
+void AT1846S_enableTxCtcss(tone_t freq)
+{
+    i2c_writeReg16(0x4A, freq*10);
+    i2c_writeReg16(0x4B, 0x0000);
+    i2c_writeReg16(0x4C, 0x0000);
+    _maskSetRegister(0x4E, 0x0600, 0x0600);
+}
+
+void AT1846S_disableCtcss()
+{
+    i2c_writeReg16(0x4A, 0x0000);
+    _maskSetRegister(0x4E, 0x0600, 0x0000); /* Disable TX CTCSS */
+}
+
 uint16_t AT1846S_readRSSI()
 {
     return i2c_readReg16(0x1B);

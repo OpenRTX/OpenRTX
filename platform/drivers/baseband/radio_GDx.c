@@ -30,10 +30,12 @@
 
 const gdxCalibration_t *calData;  /* Pointer to calibration data        */
 
-int8_t currRxBand = -1; /* Current band for RX                                 */
-int8_t currTxBand = -1; /* Current band for TX                                 */
-uint8_t txpwr_lo = 0;   /* APC voltage for TX output power control, low power  */
-uint8_t txpwr_hi = 0;   /* APC voltage for TX output power control, high power */
+int8_t  currRxBand = -1; /* Current band for RX                                 */
+int8_t  currTxBand = -1; /* Current band for TX                                 */
+uint8_t txpwr_lo = 0;    /* APC voltage for TX output power control, low power  */
+uint8_t txpwr_hi = 0;    /* APC voltage for TX output power control, high power */
+tone_t  tx_tone  = 0;
+tone_t  rx_tone  = 0;
 
 /**
  * \internal
@@ -145,8 +147,8 @@ void radio_setVcoFrequency(const freq_t frequency, const bool isTransmitting)
 
 void radio_setCSS(const tone_t rxCss, const tone_t txCss)
 {
-    (void) rxCss;
-    (void) txCss;
+    rx_tone = rxCss;
+    tx_tone = txCss;
 }
 
 bool radio_checkRxDigitalSquelch()
@@ -205,7 +207,10 @@ void radio_enableTx(const float txPower, const bool enableCss)
         gpio_setPin(UHF_PA_EN);
     }
 
-    (void) enableCss;
+    if(enableCss)
+    {
+        AT1846S_enableTxCtcss(tx_tone);
+    }
 }
 
 void radio_disableRtx()
@@ -214,6 +219,7 @@ void radio_disableRtx()
     gpio_clearPin(UHF_LNA_EN);
     gpio_clearPin(VHF_PA_EN);
     gpio_clearPin(UHF_PA_EN);
+    AT1846S_disableCtcss();
     AT1846S_setFuncMode(AT1846S_OFF);
 }
 

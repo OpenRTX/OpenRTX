@@ -80,6 +80,16 @@ void AT1846S_setFuncMode(AT1846S_func_t mode);
 /**
  *
  */
+void AT1846S_enableTxCtcss(tone_t freq);
+
+/**
+ *
+ */
+void AT1846S_disableCtcss();
+
+/**
+ *
+ */
 uint16_t AT1846S_readRSSI();
 
 /**
