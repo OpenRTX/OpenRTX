@@ -163,21 +163,24 @@ inline void gfx_setPixel(point_t pos, color_t color)
 
 #ifdef PIX_FMT_RGB565
     // Blend old pixel value and new one
-    if (color.alpha < 255) {
+    if (color.alpha < 255)
+    {
         uint8_t alpha = color.alpha;
         rgb565_t new_pixel = _true2highColor(color);
-        uint16_t raw_pixel = *((uint16_t *)buf + pos.x + pos.y*SCREEN_WIDTH);
-        rgb565_t old_pixel = *((rgb565_t*) &raw_pixel);
+        rgb565_t old_pixel = buf[pos.x + pos.y*SCREEN_WIDTH];
         rgb565_t pixel = {((255-alpha)*old_pixel.b+alpha*new_pixel.b)/255,
                           ((255-alpha)*old_pixel.g+alpha*new_pixel.g)/255,
                           ((255-alpha)*old_pixel.r+alpha*new_pixel.r)/255};
         buf[pos.x + pos.y*SCREEN_WIDTH] = pixel;
-    } else {
+    }
+    else
+    {
         buf[pos.x + pos.y*SCREEN_WIDTH] = _true2highColor(color);
     }
 #elif defined PIX_FMT_BW
     // Ignore more than half transparent pixels
-    if (color.alpha >= 128) {
+    if (color.alpha >= 128)
+    {
         uint16_t cell = (pos.x + pos.y*SCREEN_WIDTH) / 8;
         uint16_t elem = (pos.x + pos.y*SCREEN_WIDTH) % 8;
         buf[cell] &= ~(1 << elem);
@@ -243,19 +246,18 @@ void gfx_drawVLine(uint16_t x, uint16_t width, color_t color)
  * @param text: the input text
  * @param length: the length of the input text, used for boundary checking
  */
-static inline uint16_t get_line_size(GFXfont f,
-                                     const char *text,
-                                     uint16_t length) {
+static inline uint16_t get_line_size(GFXfont f, const char *text, uint16_t length)
+{
     uint16_t line_size = 0;
-    for(unsigned i = 0;
-        i < length && text[i] != '\n' && text[i] != '\r';
-        i++) {
+    for(unsigned i = 0; i < length && text[i] != '\n' && text[i] != '\r'; i++)
+    {
         GFXglyph glyph = f.glyph[text[i] - f.first];
         if (line_size + glyph.xAdvance < SCREEN_WIDTH)
             line_size += glyph.xAdvance;
         else
             break;
     }
+
     return line_size;
 }
 
@@ -264,9 +266,9 @@ static inline uint16_t get_line_size(GFXfont f,
  * @param alinment: enum representing the text alignment
  * @param line_size: the size of the current text line in pixels
  */
-static inline uint16_t get_reset_x(textAlign_t alignment,
-                                   uint16_t line_size,
-                                   uint16_t startx) {
+static inline uint16_t get_reset_x(textAlign_t alignment, uint16_t line_size,
+                                                          uint16_t startx)
+{
     switch(alignment)
     {
         case TEXT_ALIGN_LEFT:
@@ -276,10 +278,13 @@ static inline uint16_t get_reset_x(textAlign_t alignment,
         case TEXT_ALIGN_RIGHT:
             return SCREEN_WIDTH - line_size - startx;
     }
+
     return 0;
 }
 
-point_t gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t alignment, color_t color) {
+point_t gfx_print(point_t start, const char *text, fontSize_t size,
+                                 textAlign_t alignment, color_t color)
+{
 
     GFXfont f = fonts[size];
 
@@ -289,13 +294,14 @@ point_t gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t 
     uint16_t line_size = get_line_size(f, text, len);
     uint16_t reset_x = get_reset_x(alignment, line_size, start.x);
     start.x = reset_x;
-    
+
     // Save initial start.y value to calculate vertical size
     uint16_t saved_start_y = start.y;
     uint16_t line_h = 0;
 
     /* For each char in the string */
-    for(unsigned i = 0; i < len; i++) {
+    for(unsigned i = 0; i < len; i++)
+    {
         char c = text[i];
         GFXglyph glyph = f.glyph[c - f.first];
         uint8_t *bitmap = f.bitmap;
@@ -308,17 +314,21 @@ point_t gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t 
         line_h = h;
 
         // Handle newline and carriage return
-        if (c == '\n') {
+        if (c == '\n')
+        {
           start.x = reset_x;
           start.y += f.yAdvance;
           continue;
-        } else if (c == '\r') {
+        }
+        else if (c == '\r')
+        {
           start.x = reset_x;
           continue;
         }
 
         // Handle wrap around
-        if (start.x + glyph.xAdvance > SCREEN_WIDTH) {
+        if (start.x + glyph.xAdvance > SCREEN_WIDTH)
+        {
             // Compute size of the first row in pixels
             line_size = get_line_size(f, text, len);
             start.x = reset_x = get_reset_x(alignment, line_size, start.x);
@@ -326,12 +336,17 @@ point_t gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t 
         }
 
         // Draw bitmap
-        for (yy = 0; yy < h; yy++) {
-            for (xx = 0; xx < w; xx++) {
-                if (!(bit++ & 7)) {
+        for (yy = 0; yy < h; yy++)
+        {
+            for (xx = 0; xx < w; xx++)
+            {
+                if (!(bit++ & 7))
+                {
                     bits = bitmap[bo++];
                 }
-                if (bits & 0x80) {
+
+                if (bits & 0x80)
+                {
                     if (start.y + yo + yy < SCREEN_HEIGHT &&
                         start.x + xo + xx < SCREEN_WIDTH &&
                         start.y + yo + yy > 0 &&
@@ -342,9 +357,11 @@ point_t gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t 
 
                     }
                 }
+
                 bits <<= 1;
             }
         }
+
         start.x += glyph.xAdvance;
     }
     // Calculate text size
@@ -355,7 +372,8 @@ point_t gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t 
 }
 
 // Print an error message to the center of the screen, surronded by a red (when possible) box
-void gfx_printError(const char *text, fontSize_t size) {
+void gfx_printError(const char *text, fontSize_t size)
+{
     // 3 px box padding
     uint16_t box_padding = 16;
     color_t white = {255, 255, 255, 255};
@@ -382,8 +400,8 @@ void gfx_printError(const char *text, fontSize_t size) {
  * *  *******       *      |
  * *  *******       **     |
  * *  *******       **     | <-- Height (px)
- * *  *******       *      | 
- * *                *      | 
+ * *  *******       *      |
+ * *                *      |
  *  ****************       |
  *
  * __________________
@@ -394,7 +412,9 @@ void gfx_printError(const char *text, fontSize_t size) {
  * Width (px)
  *
  */
-void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, float percentage) {
+void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
+                                                    float percentage)
+{
     color_t white =  {255, 255, 255, 255};
     color_t black =  {0,   0,   0  , 255};
 
@@ -421,7 +441,8 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, float perce
 
     // Draw the battery fill
     point_t fill_start = {start.x + 2, start.y + 2};
-    gfx_drawRect(fill_start, (int)(((float)(width - 4)) * percentage), height - 4, bat_color, true);
+    gfx_drawRect(fill_start, (int)(((float)(width - 4)) * percentage),
+                 height - 4, bat_color, true);
 
     // Round corners
     point_t top_left = start;
@@ -459,13 +480,16 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, float perce
  * Width (px)
  *
  */
-void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi, float squelch, color_t color) {
+void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
+                                                   float squelch, color_t color)
+{
     color_t white =  {255, 255, 255, 255};
     color_t yellow = {250, 180, 19 , 255};
     color_t red =    {255, 0,   0  , 255};
 
     // S-level dots
-    for(int i = 0; i < 11; i++) {
+    for(int i = 0; i < 11; i++)
+    {
         color_t color = (i % 3 == 0) ? yellow : white;
         color = (i > 9) ? red : color;
         point_t pixel_pos = {i * (width - 1) / 11, start.y};
@@ -473,6 +497,7 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi, 
         pixel_pos.y += height;
         gfx_setPixel(pixel_pos, color);
     }
+
     point_t pixel_pos = {width - 1, start.y};
     gfx_setPixel(pixel_pos, red);
     pixel_pos.y += height;

@@ -241,15 +241,21 @@ void nvm_loadHwInfo(hwInfo_t *info)
 
 int nvm_readChannelData(channel_t *channel, uint16_t pos)
 {
+    (void) channel;
+    (void) pos;
     return -1;
 }
 
 int nvm_readZoneData(zone_t *zone, uint16_t pos)
 {
+    (void) zone;
+    (void) pos;
     return -1;
 }
 
 int nvm_readContactData(contact_t *contact, uint16_t pos)
 {
+    (void) contact;
+    (void) pos;
     return -1;
 }

@@ -12,7 +12,7 @@
 /* stack top in large ram, at an address which, masked with 0x2FFE0000,
    gives 0x20000000
 */
-_stack_top = 0x2001FFFF;
+_stack_top = 0x2001FFFC;
 
 /* temporary set heap end equal to stack top */
 _heap_end = _stack_top;
@@ -33,13 +33,13 @@ MEMORY
 SECTIONS
 {
     . = 0;
-    
+
     /* .text section: code goes to flash */
     .text :
     {
         /* Startup code must go at address 0 */
         KEEP(*(.isr_vector))
-        
+
         *(.text)
         *(.text.*)
         *(.gnu.linkonce.t.*)
@@ -61,7 +61,7 @@ SECTIONS
         /* C++ Static constructors/destructors (eabi) */
         . = ALIGN(4);
         KEEP(*(.init))
-        
+
         . = ALIGN(4);
         __preinit_array_start = .;
         KEEP (*(.preinit_array))

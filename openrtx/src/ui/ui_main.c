@@ -67,7 +67,7 @@ void _ui_drawMainTop()
 void _ui_drawZoneChannel()
 {
     char zone_buf[20] = "";
-    char channel_buf[20] = "";
+    char channel_buf[25] = "";
     if(!last_state.zone_enabled)
         snprintf(zone_buf, sizeof(zone_buf), "zone: %.13s", "All channels");
     else
@@ -83,7 +83,7 @@ void _ui_drawZoneChannel()
 void _ui_drawFrequency()
 {
     // Print big numbers frequency
-    char freq_buf[10] = "";
+    char freq_buf[15] = "";
     snprintf(freq_buf, sizeof(freq_buf), "%03lu.%05lu",
              (unsigned long)last_state.channel.rx_frequency/1000000,
              (unsigned long)last_state.channel.rx_frequency%1000000/10);
