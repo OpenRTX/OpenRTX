@@ -72,9 +72,14 @@ rtos_inc = ['rtos/uC-OS3/Source',
             'rtos/uC-LIB',
             'rtos/uC-LIB/Cfg']
 
+## minmea, a lightweight GPS NMEA 0183 parser library
 
-src = openrtx_src + rtos_src
-inc = openrtx_inc + rtos_inc
+minmea_src = ['minmea/minmea.c']
+
+minmea_inc = ['minmea/include']
+
+src = openrtx_src + rtos_src + minmea_src
+inc = openrtx_inc + rtos_inc + minmea_inc
 
 ##
 ## Definitions

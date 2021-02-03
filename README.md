@@ -32,9 +32,9 @@ To reach out, come to our [M17 Reflector](https://m17.openrtx.org) or into our [
 
 ## License
 
-This software is released under the GNU GPL v3, the modified wrapping scripts
-from Travis Goodspeed are licensed in exchange of two liters of India Pale Ale,
-we still owe you those two liters, Travis!
+This software is released under the GNU GPL v3.
+
+minmea is released under the DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE v2.
 
 ## Disclaimer
 
