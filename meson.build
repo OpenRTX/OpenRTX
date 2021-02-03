@@ -183,8 +183,8 @@ else
   linux_dep = []
 endif
 
-## TYT MD380
-md380_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.c',
+## TYT MD-3x0 family
+md3x0_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.c',
                                    'platform/drivers/keyboard/keyboard_MDx.c',
                                    'platform/drivers/NVM/W25Qx.c',
                                    'platform/drivers/NVM/spiFlash_MDx.c',
@@ -194,28 +194,10 @@ md380_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.c',
                                    'platform/drivers/baseband/SKY72310.c',
                                    'platform/drivers/baseband/radio_MD3x0.c',
                                    'platform/drivers/baseband/HR_C5000.c',
-                                   'platform/targets/MD-380/platform.c']
+                                   'platform/targets/MD-3x0/platform.c']
 
-md380_inc = inc + stm32f405_inc + ['platform/targets/MD-380']
-md380_def = def + stm32f405_def + {'PLATFORM_MD380': ''}
-
-
-## TYT MD390
-md390_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.c',
-                                   'platform/drivers/keyboard/keyboard_MDx.c',
-                                   'platform/drivers/NVM/W25Qx.c',
-                                   'platform/drivers/NVM/spiFlash_MDx.c',
-                                   'platform/drivers/NVM/nvmem_MD3x0.c',
-                                   'platform/drivers/ADC/ADC1_MDx.c',
-                                   'platform/drivers/tones/toneGenerator_MDx.c',
-                                   'platform/drivers/baseband/SKY72310.c',
-                                   'platform/drivers/baseband/radio_MD3x0.c',
-                                   'platform/drivers/baseband/HR_C5000.c',
-                                   'platform/targets/MD-390/platform.c']
-
-md390_inc = inc + stm32f405_inc + ['platform/targets/MD-390']
-md390_def = def + stm32f405_def + {'PLATFORM_MD390': ''}
-
+md3x0_inc = inc + stm32f405_inc + ['platform/targets/MD-3x0']
+md3x0_def = def + stm32f405_def + {'PLATFORM_MD3x0': ''}
 
 ## TYT MD-UV380
 mduv380_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.c',
@@ -295,21 +277,12 @@ foreach k, v : linux_def
   endif
 endforeach
 
-md380_args = []
-foreach k, v : md380_def
+md3x0_args = []
+foreach k, v : md3x0_def
   if v == ''
-    md380_args += '-D@0@'.format(k)
+    md3x0_args += '-D@0@'.format(k)
   else
-    md380_args += '-D@0@=@1@'.format(k, v)
-  endif
-endforeach
-
-md390_args = []
-foreach k, v : md390_def
-  if v == ''
-    md390_args += '-D@0@'.format(k)
-  else
-    md390_args += '-D@0@=@1@'.format(k, v)
+    md3x0_args += '-D@0@=@1@'.format(k, v)
   endif
 endforeach
 
@@ -364,17 +337,11 @@ linux_opts = {'sources': linux_src,
               'dependencies': linux_dep,
               'link_args' : linux_l_args}
 
-md380_opts = {'sources': md380_src,
-              'c_args': md380_args,
+md3x0_opts = {'sources': md3x0_src,
+              'c_args': md3x0_args,
               'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
                              '-Wl,--print-memory-usage'],
-              'include_directories': md380_inc}
-
-md390_opts = {'sources': md390_src,
-              'c_args': md390_args,
-              'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
-                             '-Wl,--print-memory-usage'],
-              'include_directories': md390_inc}
+              'include_directories': md3x0_inc}
 
 mduv380_opts = {'sources': mduv380_src,
                 'c_args': mduv380_args,
@@ -415,16 +382,10 @@ targets = [
    'opts': linux_opts,
    'flashable': false},
 
-  {'name': 'md380',
-   'opts': md380_opts,
+  {'name': 'md3x0',
+   'opts': md3x0_opts,
    'flashable': true,
    'wrap': 'MD380',
-   'load_addr': '0x0800C000'},
-
-  {'name': 'md390',
-   'opts': md390_opts,
-   'flashable': true,
-   'wrap': 'MD390',
    'load_addr': '0x0800C000'},
 
   {'name': 'mduv380',
