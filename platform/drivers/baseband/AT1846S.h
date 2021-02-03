@@ -25,6 +25,10 @@
 #include <stdbool.h>
 #include <datatypes.h>
 
+/**
+ * \enum AT1846S_bw_t Enumeration type defining the bandwidth settings supported
+ * by the AT1846S chip.
+ */
 typedef enum
 {
     AT1846S_BW_12P5 = 0,
@@ -32,6 +36,10 @@ typedef enum
 }
 AT1846S_bw_t;
 
+/**
+ * \enum AT1846S_op_t Enumeration type defining the possible operating mode
+ * configurations for the AT1846S chip.
+ */
 typedef enum
 {
     AT1846S_OP_FM  = 0,
@@ -39,6 +47,9 @@ typedef enum
 }
 AT1846S_op_t;
 
+/**
+ * \enum AT1846S_func_t Enumeration type defining the AT1846S functional modes.
+ */
 typedef enum
 {
     AT1846S_OFF = 0,
@@ -48,98 +59,118 @@ typedef enum
 AT1846S_func_t;
 
 /**
- *
+ * Initialise the AT146S chip.
  */
 void AT1846S_init();
 
 /**
- *
+ * Shut down the AT146S chip.
  */
-void AT1846S_postInit();
+void AT1846S_terminate();
 
 /**
- *
+ * Set the VCO frequency, either for transmission or reception.
+ * @param freq: VCO frequency.
  */
 void AT1846S_setFrequency(const freq_t freq);
 
 /**
- *
+ * Set the transmission and reception bandwidth.
+ * @param band: bandwidth, from \enum AT1846S_bw_t.
  */
-void AT1846S_setBandwidth(AT1846S_bw_t band);
+void AT1846S_setBandwidth(const AT1846S_bw_t band);
 
 /**
- *
+ * Set the operating mode.
+ * @param mode: operating mode, from \enum AT1846S_op_t.
  */
-void AT1846S_setOpMode(AT1846S_op_t mode);
+void AT1846S_setOpMode(const AT1846S_op_t mode);
 
 /**
- *
+ * Set the functional mode.
+ * @param mode: functional mode, from \enum AT1846S_func_t.
  */
-void AT1846S_setFuncMode(AT1846S_func_t mode);
+void AT1846S_setFuncMode(const AT1846S_func_t mode);
 
 /**
- *
+ * Enable the CTCSS tone for transmission.
+ * @param freq: CTCSS tone frequency.
  */
-void AT1846S_enableTxCtcss(tone_t freq);
+void AT1846S_enableTxCtcss(const tone_t freq);
 
 /**
- *
+ * Turn off both transmission CTCSS tone and reception CTCSS tone decoding.
  */
 void AT1846S_disableCtcss();
 
 /**
- *
+ * Get current RSSI value. The raw value from the RSSI register is returned.
+ * @return current RSSI.
  */
 uint16_t AT1846S_readRSSI();
 
 /**
- *
+ * Set the gain of internal programmable gain amplifier.
+ * @param gain: PGA gain.
  */
-void AT1846S_setPgaGain(uint8_t gain);
+void AT1846S_setPgaGain(const uint8_t gain);
 
 /**
- *
+ * Set microphone gain for transmission.
+ * @param gain: microphone gain.
  */
-void AT1846S_setMicGain(uint8_t gain);
+void AT1846S_setMicGain(const uint8_t gain);
 
 /**
- *
+ * Set maximum FM transmission deviation.
+ * @param dev: maximum allowed deviation.
  */
-void AT1846S_setTxDeviation(uint16_t dev);
+void AT1846S_setTxDeviation(const uint16_t dev);
 
 /**
- *
+ * Set the gain for internal automatic gain control system.
+ * @param gain: AGC gain.
  */
-void AT1846S_setAgcGain(uint8_t gain);
+void AT1846S_setAgcGain(const uint8_t gain);
 
 /**
- *
+ * Set audio gain for recepion.
+ * @param gainWb: gain for wideband Rx (25kHz).
+ * @param gainNb: gain for narrowband Rx (12.5kHz).
  */
-void AT1846S_setRxAudioGain(uint8_t gainWb, uint8_t gainNb);
+void AT1846S_setRxAudioGain(const uint8_t gainWb, const uint8_t gainNb);
 
 /**
- *
+ * Set noise1 thresholds for squelch opening and closing.
+ * @param highTsh: upper threshold.
+ * @param lowTsh: lower threshold.
  */
-void AT1846S_setNoise1Thresholds(uint8_t highTsh, uint8_t lowTsh);
+void AT1846S_setNoise1Thresholds(const uint8_t highTsh, const uint8_t lowTsh);
 
 /**
- *
+ * Set noise2 thresholds for squelch opening and closing.
+ * @param highTsh: upper threshold.
+ * @param lowTsh: lower threshold.
  */
-void AT1846S_setNoise2Thresholds(uint8_t highTsh, uint8_t lowTsh);
+void AT1846S_setNoise2Thresholds(const uint8_t highTsh, const uint8_t lowTsh);
 
 /**
- *
+ * Set RSSI thresholds for squelch opening and closing.
+ * @param highTsh: upper threshold.
+ * @param lowTsh: lower threshold.
  */
-void AT1846S_setRssiThresholds(uint8_t highTsh, uint8_t lowTsh);
+void AT1846S_setRssiThresholds(const uint8_t highTsh, const uint8_t lowTsh);
 
 /**
- *
+ * Set PA drive control bits.
+ * @param value: PA drive value.
  */
-void AT1846S_setPaDrive(uint8_t value);
+void AT1846S_setPaDrive(const uint8_t value);
 
 /**
- *
+ * Set threshold for analog FM squelch opening.
+ * @param thresh: squelch threshold.
  */
-void AT1846S_setAnalogSqlThresh(uint8_t thresh);
+void AT1846S_setAnalogSqlThresh(const uint8_t thresh);
 
 #endif /* AT1846S_H */

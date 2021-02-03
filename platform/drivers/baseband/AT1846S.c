@@ -103,6 +103,12 @@ void AT1846S_init()
     i2c_writeReg16(0x43, 0x00BB);
 }
 
+void AT1846S_terminate()
+{
+    AT1846S_disableCtcss();
+    AT1846S_setFuncMode(AT1846S_OFF);
+}
+
 void AT1846S_setFrequency(const freq_t freq)
 {
     /* The value to be written in registers is given by: 0.0016*freqency */
@@ -116,7 +122,7 @@ void AT1846S_setFrequency(const freq_t freq)
     _reloadConfig();
 }
 
-void AT1846S_setBandwidth(AT1846S_bw_t band)
+void AT1846S_setBandwidth(const AT1846S_bw_t band)
 {
     if(band == AT1846S_BW_25)
     {
@@ -175,7 +181,7 @@ void AT1846S_setBandwidth(AT1846S_bw_t band)
     _reloadConfig();
 }
 
-void AT1846S_setOpMode(AT1846S_op_t mode)
+void AT1846S_setOpMode(const AT1846S_op_t mode)
 {
     if(mode == AT1846S_OP_DMR)
     {
@@ -207,7 +213,7 @@ void AT1846S_setOpMode(AT1846S_op_t mode)
     _reloadConfig();
 }
 
-void AT1846S_setFuncMode(AT1846S_func_t mode)
+void AT1846S_setFuncMode(const AT1846S_func_t mode)
 {
     /*
      * Functional mode is controlled by bits 5 (RX on) and 6 (TX on) in register
@@ -241,61 +247,61 @@ uint16_t AT1846S_readRSSI()
     return i2c_readReg16(0x1B);
 }
 
-void AT1846S_setPgaGain(uint8_t gain)
+void AT1846S_setPgaGain(const uint8_t gain)
 {
     uint16_t pga = (gain & 0x1F) << 6;
     _maskSetRegister(0x0A, 0x07C0, pga);
 }
 
-void AT1846S_setMicGain(uint8_t gain)
+void AT1846S_setMicGain(const uint8_t gain)
 {
     _maskSetRegister(0x41, 0x007F, ((uint16_t) gain));
 }
 
-void AT1846S_setAgcGain(uint8_t gain)
+void AT1846S_setAgcGain(const uint8_t gain)
 {
     uint16_t agc = (gain & 0x0F) << 8;
     _maskSetRegister(0x44, 0x0F00, agc);
 }
 
-void AT1846S_setTxDeviation(uint16_t dev)
+void AT1846S_setTxDeviation(const uint16_t dev)
 {
     uint16_t value = (dev & 0x03FF) << 6;
     _maskSetRegister(0x59, 0xFFC0, value);
 }
 
-void AT1846S_setRxAudioGain(uint8_t gainWb, uint8_t gainNb)
+void AT1846S_setRxAudioGain(const uint8_t gainWb, const uint8_t gainNb)
 {
     uint16_t value = (gainWb & 0x0F) << 8;
     _maskSetRegister(0x44, 0x0F00, value);
     _maskSetRegister(0x44, 0x000F, ((uint16_t) gainNb));
 }
 
-void AT1846S_setNoise1Thresholds(uint8_t highTsh, uint8_t lowTsh)
+void AT1846S_setNoise1Thresholds(const uint8_t highTsh, const uint8_t lowTsh)
 {
     uint16_t value = ((highTsh & 0x1f) << 8) | (lowTsh & 0x1F);
     i2c_writeReg16(0x48, value);
 }
 
-void AT1846S_setNoise2Thresholds(uint8_t highTsh, uint8_t lowTsh)
+void AT1846S_setNoise2Thresholds(const uint8_t highTsh, const uint8_t lowTsh)
 {
     uint16_t value = ((highTsh & 0x1f) << 8) | (lowTsh & 0x1F);
     i2c_writeReg16(0x60, value);
 }
 
-void AT1846S_setRssiThresholds(uint8_t highTsh, uint8_t lowTsh)
+void AT1846S_setRssiThresholds(const uint8_t highTsh, const uint8_t lowTsh)
 {
     uint16_t value = ((highTsh & 0x1f) << 8) | (lowTsh & 0x1F);
     i2c_writeReg16(0x3F, value);
 }
 
-void AT1846S_setPaDrive(uint8_t value)
+void AT1846S_setPaDrive(const uint8_t value)
 {
     uint16_t pa = value << 11;
     _maskSetRegister(0x0A, 0x7800, pa);
 }
 
-void AT1846S_setAnalogSqlThresh(uint8_t thresh)
+void AT1846S_setAnalogSqlThresh(const uint8_t thresh)
 {
     i2c_writeReg16(0x49, ((uint16_t) thresh));
 }
