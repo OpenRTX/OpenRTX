@@ -89,22 +89,13 @@ void SKY73210_setFrequency(float freq, uint8_t clkDiv)
     float Ndnd = round(262144*(K - Ndiv - 32.0));
 
     /*
-     * With PLL in fractional mode, dividend range is [-131017 +131071]. If our
-     * computation gives a wrong result, we decrement the reference clock divider
-     * and redo the computations.
-     *
-     * TODO: better investigate on how to put PLL in unsigned dividend mode.
+     * With PLL in fractional mode, dividend range is [-131017 +131071].
+     * When converting from float to uint32_t we have to cast the value to a
+     * signed 18-bit one and increment the divider by one if dividend is negative.
      */
-    if(((uint32_t) Ndnd) >= 131070)
-    {
-        clkDiv -= 1;
-        K = freq/(REF_CLK/((float) clkDiv));
-        Ndiv = floor(K) - 32.0;
-        Ndnd = round(262144*(K - Ndiv - 32.0));
+    uint32_t dnd = ((uint32_t) Ndnd) & 0x03FFFF;
+    if(dnd & 0x20000) Ndiv += 1;
 
-    }
-
-    uint32_t dnd = ((uint32_t) Ndnd);
     uint16_t dndMsb = dnd >> 8;
     uint16_t dndLsb = dnd & 0x00FF;
 
