@@ -28,8 +28,10 @@ openrtx_src = ['openrtx/src/bootstrap.c',
 ## Replace main executable with platform test
 if get_option('test') != ''
   openrtx_src += 'tests/platform/'+get_option('test')+'.c'
+  openrtx_def  = {'RUN_TESTSUITE': ''}
 else
   openrtx_src += 'openrtx/src/main.c'
+  openrtx_def  = {}
 endif
 
 openrtx_inc = ['openrtx/include',
@@ -86,7 +88,7 @@ inc = openrtx_inc + rtos_inc + minmea_inc
 ##
 ## Definitions
 ##
-def = {'DONT_USE_CMSIS_INIT': ''}
+def = openrtx_def + {'DONT_USE_CMSIS_INIT': ''}
 
 ##
 ## MCU-dependent sources and includes

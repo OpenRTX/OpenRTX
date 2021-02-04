@@ -29,7 +29,13 @@ int main(int argc, char *argv[]);
 /*
  * OS startup task, will call main() when all initialisations are done.
  */
+
+#ifdef RUN_TESTSUITE
+#define START_TSK_STKSIZE 4096/sizeof(CPU_STK)
+#else
 #define START_TSK_STKSIZE 512/sizeof(CPU_STK)
+#endif
+
 static OS_TCB  startTCB;
 static CPU_STK startStk[START_TSK_STKSIZE];
 static void startTask(void *arg);
