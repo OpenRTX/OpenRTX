@@ -134,7 +134,7 @@ int main()
     {
         getchar();
 
-        #if defined(PLATFORM_MD380) || defined(PLATFORM_MD390)
+        #ifdef PLATFORM_MD3x0
         printMD3x0calibration();
         #else
         printMDUV3x0calibration();
