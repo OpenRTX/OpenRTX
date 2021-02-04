@@ -151,7 +151,7 @@ int gps_getNmeaSentence(char *buf, const size_t maxLength)
 
     memset(buf, 0x00, maxLength);
     bufPos = 0;
-    maxPos = 0;
+    maxPos = maxLength;
     dataBuf = buf;
 
     NVIC_EnableIRQ(USART3_IRQn);
