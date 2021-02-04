@@ -35,6 +35,7 @@ openrtx_inc = ['openrtx/include',
                'openrtx/include/calibration',
                'platform/drivers/ADC',
                'platform/drivers/NVM',
+               'platform/drivers/GPS',
                'platform/drivers/tones',
                'openrtx/include/fonts/adafruit',
                'platform/drivers/tones',
@@ -199,6 +200,7 @@ md3x0_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.c',
                                    'platform/drivers/baseband/SKY72310.c',
                                    'platform/drivers/baseband/radio_MD3x0.c',
                                    'platform/drivers/baseband/HR_C5000.c',
+                                   'platform/drivers/GPS/GPS_MDx.c',
                                    'platform/targets/MD-3x0/platform.c']
 
 md3x0_inc = inc + stm32f405_inc + ['platform/targets/MD-3x0']

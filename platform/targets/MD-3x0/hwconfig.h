@@ -138,4 +138,8 @@
 #define FM_MUTE  GPIOE,13
 #define MIC_PWR  GPIOA,14
 
+/* GPS, for the devices who have it */
+#define GPS_EN   GPIOD,8
+#define GPS_DATA GPIOD,9
+
 #endif
