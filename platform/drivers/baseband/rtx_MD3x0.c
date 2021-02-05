@@ -137,7 +137,7 @@ void _enableTxStage()
     if(rtxStatus.txPower > 1.0f) paramPtr = calData->txHighPower;
     uint8_t apc = interpCalParameter(rtxStatus.txFrequency, calData->txFreq,
                                      paramPtr, 9);
-    DAC->DHR12L1 = apc * 0xFF;
+    DAC->DHR12L1 = apc * 0x3F;
 
     gpio_setPin(TX_STG_EN);
     rtxStatus.opStatus = TX;
@@ -433,8 +433,8 @@ void rtx_taskFunc()
     if(platform_getPttStatus() && (rtxStatus.opStatus != TX))
     {
         _disableRtxStages();
-        if(rtxStatus.txToneEn != 0) toneGen_toneOn();
-        gpio_setPin(MIC_PWR);
+//         if(rtxStatus.txToneEn != 0) toneGen_toneOn();
+//         gpio_setPin(MIC_PWR);
         C5000_startAnalogTx();
         _enableTxStage();
         platform_ledOn(RED);
@@ -443,8 +443,8 @@ void rtx_taskFunc()
     if(!platform_getPttStatus() && (rtxStatus.opStatus == TX))
     {
         _disableRtxStages();
-        gpio_clearPin(MIC_PWR);
-        toneGen_toneOff();
+//         gpio_clearPin(MIC_PWR);
+//         toneGen_toneOff();
         C5000_stopAnalogTx();
         _enableRxStage();
         platform_ledOff(RED);

@@ -68,8 +68,8 @@ int main(void)
 
     cfg.opMode = FM;
     cfg.bandwidth = BW_25;
-    cfg.rxFrequency = 430100000;
-    cfg.txFrequency = 430100000;
+    cfg.rxFrequency = 435000000;
+    cfg.txFrequency = 435000000;
     cfg.txPower = 1.0f;
     cfg.sqlLevel = 3;
     cfg.rxTone = 0;
