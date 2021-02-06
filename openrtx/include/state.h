@@ -27,6 +27,33 @@
 #include <cps.h>
 
 /**
+ * Data structure representing a single satellite as part of a GPS fix.
+ */
+typedef struct
+{
+    uint8_t id;
+    uint8_t elevation;
+    uint16_t azimuth;
+    uint8_t snr;
+}
+sat_t;
+
+/**
+ * Data structure representing the last state received from the GPS module.
+ */
+typedef struct
+{
+    uint8_t fix_quality;
+    curTime_t timestamp;
+    sat_t satellites[12];
+    float latitude;
+    float longitude;
+    float speed;
+    float tmg;
+}
+gps_t;
+
+/**
  * Part of this structure has been commented because the corresponding
  * functionality is not yet implemented.
  * Uncomment once the related feature is ready
@@ -60,6 +87,7 @@ typedef struct
     uint8_t voxLevel;
 
     bool emergency;
+    gps_t gps_data;
 }
 state_t;
 
