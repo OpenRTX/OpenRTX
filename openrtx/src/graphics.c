@@ -551,13 +551,13 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
     {
         color_t color = (i % 3 == 0) ? yellow : white;
         color = (i > 9) ? red : color;
-        point_t pixel_pos = {i * (width - 1) / 11, start.y};
+        point_t pixel_pos = {start.x + i * (width - 1) / 11, start.y};
         gfx_setPixel(pixel_pos, color);
         pixel_pos.y += height;
         gfx_setPixel(pixel_pos, color);
     }
 
-    point_t pixel_pos = {width - 1, start.y};
+    point_t pixel_pos = {start.x + width - 1, start.y};
     gfx_setPixel(pixel_pos, red);
     pixel_pos.y += height;
     gfx_setPixel(pixel_pos, red);
@@ -566,6 +566,7 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
     uint16_t rssi_height = height * 2 / 3;
     float s_level =  (127.0f + rssi) / 6.0f;
     uint16_t rssi_width = (s_level < 0.0f) ? 0 : (s_level * (width - 1) / 11);
+    rssi_width = (s_level > 10.0f) ? width : rssi_width;
     point_t rssi_pos = { start.x, start.y + 1 };
     gfx_drawRect(rssi_pos, rssi_width, rssi_height, white, true);
 

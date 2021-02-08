@@ -156,11 +156,17 @@ void _ui_drawBottom()
     // Squelch bar
     float rssi = last_state.rssi;
     float squelch = last_state.sqlLevel / 16.0f;
-    point_t smeter_pos = { 0, layout.bottom_pos.y +
-                              layout.status_v_pad +
-                              layout.text_v_offset -
-                              layout.bottom_h };
-    gfx_drawSmeter(smeter_pos, SCREEN_WIDTH, layout.bottom_h - 1, rssi, squelch, color_white);
+    point_t smeter_pos = { layout.horizontal_pad,
+                           layout.bottom_pos.y +
+                           layout.status_v_pad +
+                           layout.text_v_offset -
+                           layout.bottom_h };
+    gfx_drawSmeter(smeter_pos,
+                   SCREEN_WIDTH - 2 * layout.horizontal_pad,
+                   layout.bottom_h - 1,
+                   rssi,
+                   squelch,
+                   color_white);
 }
 
 void _ui_drawMainVFO()
