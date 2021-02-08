@@ -40,7 +40,6 @@ int main()
     gps_init(9600);
     gps_enable();
 
-    int i = 0;
     while(1)
     {
         int len = gps_getNmeaSentence(line, MINMEA_MAX_LENGTH*10);
@@ -117,7 +116,6 @@ int main()
                     printf("Error: Unsupported NMEA sentence!\n\r");
                 } break;
             }
-            i = 0;
         }
     }
 

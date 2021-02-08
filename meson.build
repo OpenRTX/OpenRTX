@@ -21,7 +21,8 @@ openrtx_src = ['openrtx/src/bootstrap.c',
                'openrtx/src/graphics.c',
                'openrtx/src/input.c',
                'openrtx/src/calibUtils.c',
-               'openrtx/src/rtx.c']
+               'openrtx/src/rtx.c',
+               'openrtx/src/gps.c']
 
 
 ## Replace main executable with platform test

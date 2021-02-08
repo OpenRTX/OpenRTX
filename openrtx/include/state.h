@@ -31,10 +31,10 @@
  */
 typedef struct
 {
-    uint8_t id;
-    uint8_t elevation;
-    uint16_t azimuth;
-    uint8_t snr;
+    uint8_t id;           // ID of the satellite
+    uint8_t elevation;    // Elevation in degrees
+    uint16_t azimuth;     // Azimuth in degrees
+    uint8_t snr;          // Quality of the signal in range 0-99
 }
 sat_t;
 
@@ -43,13 +43,17 @@ sat_t;
  */
 typedef struct
 {
-    uint8_t fix_quality;
-    curTime_t timestamp;
-    sat_t satellites[12];
-    float latitude;
-    float longitude;
-    float speed;
-    float tmg;
+    curTime_t timestamp;  // Timestamp of the latest GPS update
+    uint8_t fix_quality;  // 0: no fix, 1: GPS, 2: GPS SPS, 3: GPS PPS
+    uint8_t fix_type;     // 0: no fix, 1: 2D,  2: 3D
+    uint8_t satellites_tracked; // Number of tracked satellites
+    uint8_t satellites_in_view; // Satellites in view
+    sat_t satellites[12]; // Details about satellites in view
+    float latitude;       // Latitude coordinates
+    float longitude;      // Longitude coordinates
+    float speed;          // Ground speed in km/h
+    float tmg_mag;        // Course over ground, degrees, magnetic
+    float tmg_true;       // Course over ground, degrees, true
 }
 gps_t;
 

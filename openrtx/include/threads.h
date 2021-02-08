@@ -50,6 +50,11 @@ void create_threads();
  */
 #define RTX_TASK_STKSIZE 512
 
+/**
+ * Stack size for GPS task, in bytes.
+ */
+#define GPS_TASK_STKSIZE 4096
+
 #else /* __arm__ */
 
 #define UI_TASK_STKSIZE 4096

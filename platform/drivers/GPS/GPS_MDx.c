@@ -20,10 +20,10 @@
 
 #include <interfaces/delays.h>
 #include <interfaces/gpio.h>
+#include <interfaces/gps.h>
 #include <hwconfig.h>
 #include <string.h>
 #include <os.h>
-#include "GPS.h"
 
 static int8_t detectStatus = -1;
 size_t bufPos = 0;

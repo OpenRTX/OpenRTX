@@ -26,9 +26,11 @@
 #include <interfaces/keyboard.h>
 #include <interfaces/graphics.h>
 #include <interfaces/platform.h>
+#include <interfaces/gps.h>
 #include <hwconfig.h>
 #include <event.h>
 #include <rtx.h>
+#include <minmea.h>
 
 /* Mutex for concurrent access to state variable */
 static OS_MUTEX state_mutex;
@@ -70,6 +72,10 @@ static CPU_STK dev_stk[DEV_TASK_STKSIZE/sizeof(CPU_STK)];
 /* Baseband task control block and stack */
 static OS_TCB  rtx_tcb;
 static CPU_STK rtx_stk[RTX_TASK_STKSIZE/sizeof(CPU_STK)];
+
+/* GPS task control block and stack */
+static OS_TCB  gps_tcb;
+static CPU_STK gps_stk[GPS_TASK_STKSIZE/sizeof(CPU_STK)];
 
 /**
  * \internal Task function in charge of updating the UI.
@@ -284,6 +290,69 @@ static void rtx_task(void *arg)
 }
 
 /**
+ * \internal Task function for parsing GPS data and updating radio state.
+ */
+static void gps_task(void *arg)
+{
+    (void) arg;
+    OS_ERR os_err;
+    char line[MINMEA_MAX_LENGTH*10];
+
+    if (!gps_detect(5000))
+        return;
+
+    gps_init(9600);
+    gps_enable();
+
+    while(1)
+    {
+        int len = gps_getNmeaSentence(line, MINMEA_MAX_LENGTH*10);
+        if(len != -1)
+        {
+            // Lock mutex and update internal state
+            OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
+
+            // GPS readout is blocking, no need to delay here
+            gps_taskFunc(line, len, &state.gps_data);
+
+            // Unlock state mutex
+            OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
+
+            // Debug prints
+            printf("Timestamp: %d:%d:%d %d/%d/%d\n\r",
+                   state.gps_data.timestamp.hour,
+                   state.gps_data.timestamp.minute,
+                   state.gps_data.timestamp.second,
+                   state.gps_data.timestamp.date,
+                   state.gps_data.timestamp.month,
+                   state.gps_data.timestamp.year);
+            printf("Fix quality: %d - %d\n\r",
+                   state.gps_data.fix_quality,
+                   state.gps_data.fix_type);
+            printf("Satellites tracked: %d/%d\n\r",
+                   state.gps_data.satellites_tracked,
+                   state.gps_data.satellites_in_view);
+            for(int i = 0; i < state.gps_data.satellites_in_view; i++)
+            {
+                printf("%d - elevation: %d azimuth: %d snr: %d\n\r",
+                   state.gps_data.satellites[i].id,
+                   state.gps_data.satellites[i].elevation,
+                   state.gps_data.satellites[i].azimuth,
+                   state.gps_data.satellites[i].snr);
+            }
+            printf("Coordinates: %f %f\n\r",
+                   state.gps_data.latitude,
+                   state.gps_data.longitude);
+            printf("Speed: %f km/h TMGM: %f deg TMGT: %f deg\n\r",
+                   state.gps_data.speed,
+                   state.gps_data.tmg_mag,
+                   state.gps_data.tmg_true);
+            printf("\n\r\n\r");
+        }
+    }
+}
+
+/**
  * \internal This function creates all the system tasks and mutexes.
  */
 void create_threads()
@@ -359,6 +428,21 @@ void create_threads()
                  (OS_OPT      ) (OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR),
                  (OS_ERR     *) &os_err);
 
+    // Create GPS thread
+    OSTaskCreate((OS_TCB     *) &gps_tcb,
+                 (CPU_CHAR   *) "GPS Task",
+                 (OS_TASK_PTR ) gps_task,
+                 (void       *) 0,
+                 (OS_PRIO     ) 25,
+                 (CPU_STK    *) &gps_stk[0],
+                 (CPU_STK     ) 0,
+                 (CPU_STK_SIZE) GPS_TASK_STKSIZE/sizeof(CPU_STK),
+                 (OS_MSG_QTY  ) 0,
+                 (OS_TICK     ) 0,
+                 (void       *) 0,
+                 (OS_OPT      ) (OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR),
+                 (OS_ERR     *) &os_err);
+
     // Create state thread
     OSTaskCreate((OS_TCB     *) &dev_tcb,
                  (CPU_CHAR   *) "Device Task",
@@ -373,4 +457,5 @@ void create_threads()
                  (void       *) 0,
                  (OS_OPT      ) (OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR),
                  (OS_ERR     *) &os_err);
+
 }
