@@ -88,7 +88,7 @@ void _setOpMode()
     {
         case FM:
             gpio_setPin(RX_AUDIO_MUX);          /* Audio out to amplifier */
-            gpio_clearPin(TX_AUDIO_MUX);        /* Audio in to microphone */
+            gpio_setPin(TX_AUDIO_MUX);          /* Audio in from HR_C6000 */
             AT1846S_setOpMode(AT1846S_OP_FM);
             break;
 
@@ -144,7 +144,7 @@ void _enableTxStage()
                                  paramPtr, 16);
     }
 
-    pwr *= 16;
+    pwr *= 4;
     DAC0->DAT[0].DATH = (pwr >> 8) & 0xFF;
     DAC0->DAT[0].DATL = pwr & 0xFF;
 

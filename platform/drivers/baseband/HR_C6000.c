@@ -117,7 +117,7 @@ void C6000_init()
     gpio_setPin(DMR_SLEEP);
 
     delayMs(10);
-    gpio_clearPin(DMR_SLEEP);         // Exit from sleep pulling down DMR_SLEEP
+//     gpio_clearPin(DMR_SLEEP);         // Exit from sleep pulling down DMR_SLEEP
     delayMs(10);
 
     _writeReg(0x04, 0x0a, 0x81);    //Clock connected to crystal
@@ -133,19 +133,19 @@ void C6000_init()
     _sendSequence(initSeq4, sizeof(initSeq4));
     _sendSequence(initSeq5, sizeof(initSeq5));
     _sendSequence(initSeq6, sizeof(initSeq6));
- 
+
     _writeReg(0x04, 0x00, 0x00);   //Clear all Reset Bits which forces a reset of all internal systems
     _writeReg(0x04, 0x10, 0x6E);   //Set DMR,Tier2,Timeslot Mode, Layer 2, Repeater, Aligned, Slot1
-    _writeReg(0x04, 0x11, 0x80);   //Set LocalChanMode to Default Value 
+    _writeReg(0x04, 0x11, 0x80);   //Set LocalChanMode to Default Value
     _writeReg(0x04, 0x13, 0x00);   //Zero Cend_Band Timing advance
     _writeReg(0x04, 0x1F, 0x10);   //Set LocalEMB  DMR Colour code in upper 4 bits - defaulted to 1, and is updated elsewhere in the code
     _writeReg(0x04, 0x20, 0x00);   //Set LocalAccessPolicy to Impolite
-    _writeReg(0x04, 0x21, 0xA0);   //Set LocalAccessPolicy1 to Polite to Color Code  (unsure why there are two registers for this)   
+    _writeReg(0x04, 0x21, 0xA0);   //Set LocalAccessPolicy1 to Polite to Color Code  (unsure why there are two registers for this)
     _writeReg(0x04, 0x22, 0x26);   //Start Vocoder Decode, I2S mode
     _writeReg(0x04, 0x22, 0x86);   //Start Vocoder Encode, I2S mode
-    _writeReg(0x04, 0x25, 0x0E);   //Undocumented Register 
-    _writeReg(0x04, 0x26, 0x7D);   //Undocumented Register 
-    _writeReg(0x04, 0x27, 0x40);   //Undocumented Register 
+    _writeReg(0x04, 0x25, 0x0E);   //Undocumented Register
+    _writeReg(0x04, 0x26, 0x7D);   //Undocumented Register
+    _writeReg(0x04, 0x27, 0x40);   //Undocumented Register
     _writeReg(0x04, 0x28, 0x7D);   //Undocumented Register
     _writeReg(0x04, 0x29, 0x40);   //Undocumented Register
     _writeReg(0x04, 0x2A, 0x0B);   //Set spi_clk_cnt to default value
@@ -156,7 +156,7 @@ void C6000_init()
     _writeReg(0x04, 0x2F, 0x0B);   //Set I2S Clock Frequency
     _writeReg(0x04, 0x32, 0x02);   //Set LRCK_CNT_H CODEC Operating Frequency to default value
     _writeReg(0x04, 0x33, 0xFF);   //Set LRCK_CNT_L CODEC Operating Frequency to default value
-    _writeReg(0x04, 0x34, 0xF0);   //Set FM Filters on and bandwidth to 12.5Khz 
+    _writeReg(0x04, 0x34, 0xF0);   //Set FM Filters on and bandwidth to 12.5Khz
     _writeReg(0x04, 0x35, 0x28);   //Set FM Modulation Coefficient
     _writeReg(0x04, 0x3E, 0x28);   //Set FM Modulation Offset
     _writeReg(0x04, 0x3F, 0x10);   //Set FM Modulation Limiter
@@ -173,7 +173,7 @@ void C6000_init()
     _writeReg(0x04, 0x01, 0x70);     //set 2 point Mod, swap receive I and Q, receive mode IF (?)    (Presumably changed elsewhere)
     _writeReg(0x04, 0x03, 0x00);   //zero Receive I Offset
     _writeReg(0x04, 0x05, 0x00);   //Zero Receive Q Offset
-    _writeReg(0x04, 0x12, 0x15);     //Set rf_pre_on Receive to transmit switching advance 
+    _writeReg(0x04, 0x12, 0x15);     //Set rf_pre_on Receive to transmit switching advance
     _writeReg(0x04, 0xA1, 0x80);     //According to Datasheet this register is for FM Modulation Setting (?)
     _writeReg(0x04, 0xC0, 0x0A);   //Set RF Signal Advance to 1ms (10x100us)
     _writeReg(0x04, 0x06, 0x21);   //Use SPI vocoder under MCU control
@@ -181,13 +181,13 @@ void C6000_init()
     _writeReg(0x04, 0x08, 0xB8);   //Set IF Frequency M to default 450KHz
     _writeReg(0x04, 0x09, 0x00);   //Set IF Frequency L to default 450KHz
     _writeReg(0x04, 0x0D, 0x10);   //Set Voice Superframe timeout value
-    _writeReg(0x04, 0x0E, 0x8E);   //Register Documented as Reserved 
+    _writeReg(0x04, 0x0E, 0x8E);   //Register Documented as Reserved
     _writeReg(0x04, 0x0F, 0xB8);   //FSK Error Count
     _writeReg(0x04, 0xC2, 0x00);   //Disable Mic Gain AGC
     _writeReg(0x04, 0xE0, 0x8B);   //CODEC under MCU Control, LineOut2 Enabled, Mic_p Enabled, I2S Slave Mode
     _writeReg(0x04, 0xE1, 0x0F);   //Undocumented Register (Probably associated with CODEC)
     _writeReg(0x04, 0xE2, 0x06);   //CODEC  Anti Pop Enabled, DAC Output Enabled
-    _writeReg(0x04, 0xE3, 0x52);   //CODEC Default Settings 
+    _writeReg(0x04, 0xE3, 0x52);   //CODEC Default Settings
     _writeReg(0x04, 0xE4, 0x4A);   //CODEC   LineOut Gain 2dB, Mic Stage 1 Gain 0dB, Mic Stage 2 Gain 30dB
     _writeReg(0x04, 0xE5, 0x1A);   //CODEC Default Setting
 
@@ -225,10 +225,10 @@ void C6000_init()
    _sendSequence(initSeq1, sizeof(initSeq1));
    _writeReg(0x04, 0x10, 0x6E);  //Set DMR, Tier2, Timeslot mode, Layer2, Repeater, Aligned, Slot 1
    _writeReg(0x04, 0x1F, 0x10);  // Set Local EMB. DMR Colour code in upper 4 bits - defaulted to 1, and is updated elsewhere in the code
-   _writeReg(0x04, 0x26, 0x7D);  //Undocumented Register 
-   _writeReg(0x04, 0x27, 0x40);  //Undocumented Register 
-   _writeReg(0x04, 0x28, 0x7D);  //Undocumented Register 
-   _writeReg(0x04, 0x29, 0x40);  //Undocumented Register 
+   _writeReg(0x04, 0x26, 0x7D);  //Undocumented Register
+   _writeReg(0x04, 0x27, 0x40);  //Undocumented Register
+   _writeReg(0x04, 0x28, 0x7D);  //Undocumented Register
+   _writeReg(0x04, 0x29, 0x40);  //Undocumented Register
    _writeReg(0x04, 0x2A, 0x0B);  //Set SPI Clock to default value
    _writeReg(0x04, 0x2B, 0x0B);  //According to Datasheet this is a Read only register For FM Squelch
    _writeReg(0x04, 0x2C, 0x17);  //According to Datasheet this is a Read only register For FM Squelch
@@ -247,7 +247,7 @@ void C6000_init()
    _writeReg(0x04, 0x08, 0xB8);  //Set IF Frequency M to default 450KHz
    _writeReg(0x04, 0x09, 0x00);  //Set IF Frequency l to default 450KHz
    _writeReg(0x04, 0x0D, 0x10);  //Set Voice Superframe timeout value
-   _writeReg(0x04, 0x0E, 0x8E);  //Register Documented as Reserved 
+   _writeReg(0x04, 0x0E, 0x8E);  //Register Documented as Reserved
    _writeReg(0x04, 0x0F, 0xB8);  //FSK Error Count
    _writeReg(0x04, 0xC2, 0x00);  //Disable Mic Gain AGC
    _writeReg(0x04, 0xE0, 0x8B);  //CODEC under MCU Control, LineOut2 Enabled, Mic_p Enabled, I2S Slave Mode
@@ -267,7 +267,7 @@ void C6000_init()
    _writeReg(0x04, 0x10, 0x6E);  //Set DMR, Tier2, Timeslot mode, Layer2, Repeater, Aligned, Slot 1
    _writeReg(0x04, 0x00, 0x3F);  //Reset DMR Protocol and Physical layer modules.
    _writeReg(0x04, 0xE4, 0xCB); //CODEC   LineOut Gain 6dB, Mic Stage 1 Gain 0dB, Mic Stage 2 Gain default is 11 =  33dB
-   
+
    _writeReg(0x04, 0x06, 0x23);
 
 //*/
