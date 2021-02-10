@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <hwconfig.h>
 #include <minmea.h>
-#include <GPS.h>
+#include <interfaces/gps.h>
 
 char line[MINMEA_MAX_LENGTH*10];
 

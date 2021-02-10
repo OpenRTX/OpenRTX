@@ -103,6 +103,10 @@
 #define AMP_EN   GPIOB,9
 #define SPK_MUTE GPIOB,8
 
+/* GPS, for the devices who have it */
+#define GPS_EN   GPIOA,9
+#define GPS_DATA GPIOA,10
+
 /*
  * To enable pwm for display backlight dimming uncomment this directive.
  *

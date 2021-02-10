@@ -217,6 +217,7 @@ mduv380_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.c',
                                      'platform/drivers/ADC/ADC1_MDx.c',
                                      'platform/drivers/tones/toneGenerator_MDx.c',
                                      'platform/drivers/baseband/radio_UV3x0.c',
+                                     'platform/drivers/GPS/GPS_MDx.c',
                                      'platform/targets/MD-UV380/platform.c']
 
 mduv380_inc = inc + stm32f405_inc + ['platform/targets/MD-UV380']
