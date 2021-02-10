@@ -25,8 +25,9 @@
 #include "nvmData_MDUV3x0.h"
 #include "W25Qx.h"
 
-const uint32_t zoneBaseAddr    = 0x149e0;   /**< Base address of zones                                 */
+const uint32_t zoneBaseAddr    = 0x149E0;   /**< Base address of zones                                 */
 const uint32_t zoneExtBaseAddr = 0x31000;   /**< Base address of zone extensions                       */
+const uint32_t vfoChannelBaseAddr = 0x2EF00;  /**< Base address of VFO channel                         */
 const uint32_t chDataBaseAddr  = 0x110000;  /**< Base address of channel data                          */
 const uint32_t contactBaseAddr = 0x140000;  /**< Base address of contacts                              */
 const uint32_t maxNumChannels  = 3000;      /**< Maximum number of channels in memory                  */
@@ -47,6 +48,104 @@ uint32_t _bcd2bin(uint32_t bcd)
            ((bcd >> 8) & 0x0F)  * 100 +
            ((bcd >> 4) & 0x0F)  * 10 +
            (bcd & 0x0F);
+}
+
+/**
+ * Used to read channel data from SPI flash into a channel_t struct
+ */
+int _nvm_readChannelAtAddress(channel_t *channel, uint32_t addr)
+{
+    W25Qx_wakeup();
+    delayUs(5);
+    mduv3x0Channel_t chData;
+    W25Qx_readData(addr, ((uint8_t *) &chData), sizeof(mduv3x0Channel_t));
+    W25Qx_sleep();
+
+    // Check if the channel is empty
+    if(wcslen((wchar_t *) chData.name) == 0) return -1;
+
+    channel->mode            = chData.channel_mode - 1;
+    channel->bandwidth       = chData.bandwidth;
+    channel->admit_criteria  = chData.admit_criteria;
+    channel->squelch         = chData.squelch;
+    channel->rx_only         = chData.rx_only;
+    channel->vox             = chData.vox;
+    channel->rx_frequency    = _bcd2bin(chData.rx_frequency) * 10;
+    channel->tx_frequency    = _bcd2bin(chData.tx_frequency) * 10;
+    channel->tot             = chData.tot;
+    channel->tot_rekey_delay = chData.tot_rekey_delay;
+    channel->emSys_index     = chData.emergency_system_index;
+    channel->scanList_index  = chData.scan_list_index;
+    channel->groupList_index = chData.group_list_index;
+
+    if(chData.power == 3)
+    {
+        channel->power = 5.0f;  /* High power -> 5W */
+    }
+    else if(chData.power == 2)
+    {
+        channel->power = 2.5f;  /* Mid power -> 2.5W */
+    }
+    else
+    {
+        channel->power = 1.0f;  /* Low power -> 1W */
+    }
+
+    /*
+     * Brutally convert channel name from unicode to char by truncating the most
+     * significant byte
+     */
+    for(uint16_t i = 0; i < 16; i++)
+    {
+        channel->name[i] = ((char) (chData.name[i] & 0x00FF));
+    }
+
+    /* Load mode-specific parameters */
+    if(channel->mode == FM)
+    {
+        channel->fm.txToneEn = 0;
+        channel->fm.rxToneEn = 0;
+        uint16_t rx_css = chData.ctcss_dcs_receive;
+        uint16_t tx_css = chData.ctcss_dcs_transmit;
+
+        // TODO: Implement binary search to speed up this lookup
+        if((rx_css != 0) && (rx_css != 0xFFFF))
+        {
+            for(int i = 0; i < MAX_TONE_INDEX; i++)
+            {
+                if(ctcss_tone[i] == ((uint16_t) _bcd2bin(rx_css)))
+                {
+                    channel->fm.rxTone = i;
+                    channel->fm.rxToneEn = 1;
+                    break;
+                }
+            }
+        }
+
+        if((tx_css != 0) && (tx_css != 0xFFFF))
+        {
+            for(int i = 0; i < MAX_TONE_INDEX; i++)
+            {
+                if(ctcss_tone[i] == ((uint16_t) _bcd2bin(tx_css)))
+                {
+                    channel->fm.txTone = i;
+                    channel->fm.txToneEn = 1;
+                    break;
+                }
+            }
+        }
+
+        // TODO: Implement warning screen if tone was not found
+    }
+    else if(channel->mode == DMR)
+    {
+        channel->dmr.contactName_index = chData.contact_name_index;
+        channel->dmr.dmr_timeslot      = chData.repeater_slot;
+        channel->dmr.rxColorCode       = chData.colorcode;
+        channel->dmr.txColorCode       = chData.colorcode;
+    }
+
+    return 0;
 }
 
 void nvm_init()
@@ -164,104 +263,18 @@ void nvm_loadHwInfo(hwInfo_t *info)
     info->lcd_type = lcdInfo & 0x03;
 }
 
+int nvm_readVFOChannelData(channel_t *channel)
+{
+    return _nvm_readChannelAtAddress(channel, vfoChannelBaseAddr);
+}
+
 int nvm_readChannelData(channel_t *channel, uint16_t pos)
 {
     if((pos <= 0) || (pos > maxNumChannels)) return -1;
 
-    W25Qx_wakeup();
-    delayUs(5);
-
-    mduv3x0Channel_t chData;
     // Note: pos is 1-based because an empty slot in a zone contains index 0
     uint32_t readAddr = chDataBaseAddr + (pos - 1) * sizeof(mduv3x0Channel_t);
-    W25Qx_readData(readAddr, ((uint8_t *) &chData), sizeof(mduv3x0Channel_t));
-    W25Qx_sleep();
-
-    // Check if the channel is empty
-    if(wcslen((wchar_t *) chData.name) == 0) return -1;
-
-    channel->mode            = chData.channel_mode - 1;
-    channel->bandwidth       = chData.bandwidth;
-    channel->admit_criteria  = chData.admit_criteria;
-    channel->squelch         = chData.squelch;
-    channel->rx_only         = chData.rx_only;
-    channel->vox             = chData.vox;
-    channel->rx_frequency    = _bcd2bin(chData.rx_frequency) * 10;
-    channel->tx_frequency    = _bcd2bin(chData.tx_frequency) * 10;
-    channel->tot             = chData.tot;
-    channel->tot_rekey_delay = chData.tot_rekey_delay;
-    channel->emSys_index     = chData.emergency_system_index;
-    channel->scanList_index  = chData.scan_list_index;
-    channel->groupList_index = chData.group_list_index;
-
-    if(chData.power == 3)
-    {
-        channel->power = 5.0f;  /* High power -> 5W */
-    }
-    else if(chData.power == 2)
-    {
-        channel->power = 2.5f;  /* Mid power -> 2.5W */
-    }
-    else
-    {
-        channel->power = 1.0f;  /* Low power -> 1W */
-    }
-
-    /*
-     * Brutally convert channel name from unicode to char by truncating the most
-     * significant byte
-     */
-    for(uint16_t i = 0; i < 16; i++)
-    {
-        channel->name[i] = ((char) (chData.name[i] & 0x00FF));
-    }
-
-    /* Load mode-specific parameters */
-    if(channel->mode == FM)
-    {
-        channel->fm.txToneEn = 0;
-        channel->fm.rxToneEn = 0;
-        uint16_t rx_css = chData.ctcss_dcs_receive;
-        uint16_t tx_css = chData.ctcss_dcs_transmit;
-
-        // TODO: Implement binary search to speed up this lookup
-        if((rx_css != 0) && (rx_css != 0xFFFF))
-        {
-            for(int i = 0; i < MAX_TONE_INDEX; i++)
-            {
-                if(ctcss_tone[i] == ((uint16_t) _bcd2bin(rx_css)))
-                {
-                    channel->fm.rxTone = i;
-                    channel->fm.rxToneEn = 1;
-                    break;
-                }
-            }
-        }
-
-        if((tx_css != 0) && (tx_css != 0xFFFF))
-        {
-            for(int i = 0; i < MAX_TONE_INDEX; i++)
-            {
-                if(ctcss_tone[i] == ((uint16_t) _bcd2bin(tx_css)))
-                {
-                    channel->fm.txTone = i;
-                    channel->fm.txToneEn = 1;
-                    break;
-                }
-            }
-        }
-
-        // TODO: Implement warning screen if tone was not found
-    }
-    else if(channel->mode == DMR)
-    {
-        channel->dmr.contactName_index = chData.contact_name_index;
-        channel->dmr.dmr_timeslot      = chData.repeater_slot;
-        channel->dmr.rxColorCode       = chData.colorcode;
-        channel->dmr.txColorCode       = chData.colorcode;
-    }
-
-    return 0;
+    return _nvm_readChannelAtAddress(channel, readAddr);
 }
 
 int nvm_readZoneData(zone_t *zone, uint16_t pos)

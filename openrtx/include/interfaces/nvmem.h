@@ -55,6 +55,14 @@ void nvm_readCalibData(void *buf);
 void nvm_loadHwInfo(hwInfo_t *info);
 
 /**
+ * Read from storage the channel data corresponding to the VFO channel A.
+ *
+ * @param channel: pointer to the channel_t data structure to be populated.
+ * @return 0 on success, -1 on failure
+ */
+int nvm_readVFOChannelData(channel_t *channel);
+
+/**
  * Read one channel entry from table stored in nonvolatile memory.
  *
  * @param channel: pointer to the channel_t data structure to be populated.
