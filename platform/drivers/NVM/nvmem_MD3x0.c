@@ -153,6 +153,11 @@ void nvm_loadHwInfo(hwInfo_t *info)
     info->lcd_type = lcdInfo & 0x03;
 }
 
+/** 
+ * The MD380 stock CPS does not have a VFO channel slot
+ * because the stock firmware does not have a VFO 
+ * To enable this functionality reserve a Flash portion for saving the VFO
+ */
 int nvm_readVFOChannelData(channel_t *channel)
 {
     (void) channel;
