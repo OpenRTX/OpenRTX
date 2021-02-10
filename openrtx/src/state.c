@@ -24,6 +24,7 @@
 #include <battery.h>
 #include <hwconfig.h>
 #include <interfaces/platform.h>
+#include <interfaces/nvmem.h>
 
 state_t state;
 
@@ -43,17 +44,21 @@ void state_init()
  
     // Set default channel index (it is 1-based)
     state.channel_index = 1;
-    // Set VFO channel default settings
     state.channelInfoUpdated = true;
-    state.channel.mode = FM;
-    state.channel.bandwidth = BW_25;
-    state.channel.power = 1.0;
-    state.channel.rx_frequency = 430000000;
-    state.channel.tx_frequency = 430000000;
-    state.channel.fm.rxToneEn = 0;
-    state.channel.fm.rxTone = 2; // 71.9Hz
-    state.channel.fm.txToneEn = 1;
-    state.channel.fm.txTone = 2; // 71.9Hz
+    // Read VFO channel from Flash storage
+    if(nvm_readVFOChannelData(&state.channel) != 0)
+    {
+        // If the read fails set VFO channel default settings
+        state.channel.mode = FM;
+        state.channel.bandwidth = BW_25;
+        state.channel.power = 1.0;
+        state.channel.rx_frequency = 430000000;
+        state.channel.tx_frequency = 430000000;
+        state.channel.fm.rxToneEn = 0;
+        state.channel.fm.rxTone = 2; // 71.9Hz
+        state.channel.fm.txToneEn = 1;
+        state.channel.fm.txTone = 2; // 71.9Hz
+    }
     state.zone_enabled = false;
     state.rtxStatus = RTX_OFF;
 #ifdef HAS_ABSOLUTE_KNOB // If the radio has an absolute position knob

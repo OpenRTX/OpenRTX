@@ -42,6 +42,12 @@ void nvm_loadHwInfo(hwInfo_t *info)
     (void) info;
 }
 
+int nvm_readVFOChannelData(channel_t *channel)
+{
+    (void) channel;
+    return -1;
+}
+
 int nvm_readChannelData(channel_t *channel, uint16_t pos)
 {
     if((pos <= 0) || (pos > maxNumChannels)) return -1;
