@@ -113,7 +113,7 @@ void C5000_init()
     gpio_setMode(DMR_SLEEP, OUTPUT);
 
     gpio_setPin(DMR_CS);
-    gpio_setPin(DMR_SLEEP);         // Exit from sleep pulling down DMR_SLEEP
+    gpio_clearPin(DMR_SLEEP);         // Exit from sleep pulling down DMR_SLEEP
 
     _writeReg(0x00, 0x0A, 0x80);      // Internal clock connected to crystal
     _writeReg(0x00, 0x0B, 0x28);      // PLL M register (multiplier)
