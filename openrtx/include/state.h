@@ -81,7 +81,6 @@ typedef struct
     //time_t tx_status_tv;
     //bool tx_status;
 
-    bool channelInfoUpdated;
     uint16_t channel_index;
     channel_t channel;
     channel_t vfo_channel;

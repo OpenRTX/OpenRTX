@@ -44,7 +44,6 @@ void state_init()
  
     // Set default channel index (it is 1-based)
     state.channel_index = 1;
-    state.channelInfoUpdated = true;
     // Read VFO channel from Flash storage
     if(nvm_readVFOChannelData(&state.channel) != 0)
     {
