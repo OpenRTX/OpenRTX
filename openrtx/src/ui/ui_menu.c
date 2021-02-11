@@ -233,8 +233,9 @@ void _ui_drawMenuContacts(ui_state_t* ui_state)
 void _ui_drawMenuGPS(ui_state_t* ui_state)
 {
     char *fix_buf, *type_buf;
-    char lat_buf[12] = { 0 }, lon_buf[12] = { 0 };
-    char data_buf[18] = { 0 }, track_buf[8] = { 0 };
+    char lat_buf[12] = { 0 };
+    char lon_buf[12] = { 0 };
+    char data_buf[25] = { 0 };
     gfx_clearScreen();
     // Print "GPS" on top bar
     gfx_print(layout.top_pos, "GPS", layout.top_font,
@@ -288,16 +289,17 @@ void _ui_drawMenuGPS(ui_state_t* ui_state)
     snprintf(lon_buf, 12, "%8.6f", last_state.gps_data.longitude);
     gfx_print(layout.line2_pos, lon_buf, layout.top_font, TEXT_ALIGN_RIGHT,
               color_white);
-    snprintf(data_buf, 18, "S %5.2fkm/h\nA %5.2fm",
+    snprintf(data_buf, 25, "S %5.2fkm/h  A %5.2fm",
              last_state.gps_data.speed,
              last_state.gps_data.altitude);
-    gfx_print(layout.line3_pos, data_buf, layout.top_font, TEXT_ALIGN_LEFT,
+    gfx_print(layout.bottom_pos, data_buf, layout.bottom_font, TEXT_ALIGN_CENTER,
               color_white);
-    snprintf(track_buf, 8, "%d/%d",
-             last_state.gps_data.satellites_tracked,
-             last_state.gps_data.satellites_in_view);
-    gfx_print(layout.line3_pos, track_buf, layout.line3_font, TEXT_ALIGN_RIGHT,
-              color_white);
+    // Draw satellites bar graph
+    point_t bar_pos = {layout.line3_pos.x + SCREEN_WIDTH * 1 / 3, SCREEN_HEIGHT / 2};
+    gfx_drawGPSgraph(bar_pos,
+                     (SCREEN_WIDTH * 2 / 3) - layout.horizontal_pad,
+                     SCREEN_HEIGHT / 3,
+                     last_state.gps_data.satellites);
 }
 
 void _ui_drawMenuSettings(ui_state_t* ui_state)

@@ -516,3 +516,54 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
     point_t squelch_pos = { start.x, start.y + 1 + rssi_height };
     gfx_drawRect(squelch_pos, squelch_width, squelch_height, color, true);
 }
+
+/*
+ * Function to draw GPS satellites snr bar graph of arbitrary size
+ * starting coordinates are relative to the top left point.
+ *
+ * ****            |
+ * ****      ****  |
+ * **** **** ****  |  <-- Height (px)
+ * **** **** ****  |
+ * **** **** ****  |
+ * **** **** ****  |
+ *                 |
+ *  N    N+1  N+2  |
+ * __________________
+ *
+ * ^
+ * |
+ *
+ * Width (px)
+ *
+ */
+void gfx_drawGPSgraph(point_t start,
+                      uint16_t width,
+                      uint16_t height,
+                      sat_t *sats)
+{
+    color_t white =  {255, 255, 255, 255};
+    color_t yellow = {250, 180, 19 , 255};
+    color_t red =    {255, 0,   0  , 255};
+    char id_buf[5] = { 0 };
+
+    // SNR Bars and satellite identifiers
+    uint8_t bar_width = (width - 26) / 12;
+    uint8_t bar_height = 1;
+    for(int i = 0; i < 12; i++)
+    {
+        bar_height = (height - 8) * sats[i].snr / 100 + 1;
+        point_t bar_pos = {start.x + 2 + i * (bar_width + 2),
+                           start.y + (height - 8) - bar_height};
+        gfx_drawRect(bar_pos, bar_width, bar_height, white, true);
+        snprintf(id_buf, 5, "%2d ", sats[i].id);
+        point_t id_start = {bar_pos.x, start.y + height};
+        gfx_print(id_start, id_buf, FONT_SIZE_5PT, TEXT_ALIGN_LEFT, white);
+    }
+    uint8_t bars_width = 9 + 11 * (bar_width + 2);
+    point_t left_line_end = {start.x, start.y + height - 9};
+    point_t right_line_start = {start.x + bars_width, start.y};
+    point_t right_line_end = {start.x + bars_width, start.y + height - 9};
+    gfx_drawLine(start, left_line_end, white);
+    gfx_drawLine(right_line_start, right_line_end, white);
+}

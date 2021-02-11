@@ -23,6 +23,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <interfaces/display.h>
+#include <state.h>
 #include <gfxfont.h>
 #include <TomThumb.h>
 #include <FreeSans6pt7b.h>
@@ -249,5 +250,15 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, float perce
  * @param color: color of the squelch and smeter bar
  */
 void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi, float squelch, color_t color);
+
+/**
+ * Function to draw GPS SNR bar graph of arbitrary size.
+ * Starting coordinates are relative to the top left point.
+ * @param start: Bar graph start point, in pixel coordinates.
+ * @param width: Bar graph width
+ * @param height: Bar graph height
+ * @param sats: pointer to the array of satellites data
+ */
+void gfx_drawGPSgraph(point_t start, uint16_t width, uint16_t height, sat_t *sats);
 
 #endif /* GRAPHICS_H */
