@@ -43,7 +43,7 @@ void radio_setBandwidth(const enum bandwidth bw)
 void radio_setOpmode(const enum opmode mode)
 {
     char *mod = (mode == FM) ? "FM" : "DMR";
-    printf("radio_linux: setting opmode to %s", mod);
+    printf("radio_linux: setting opmode to %s\n", mod);
 }
 
 void radio_setVcoFrequency(const freq_t frequency, const bool isTransmitting)
@@ -88,6 +88,7 @@ void radio_updateCalibrationParams(const rtxStatus_t* rtxCfg)
 
 float radio_getRssi(const freq_t rxFreq)
 {
-    printf("radio_linux: requested RSSI at freq %d, returning -100dBm\n", rxFreq);
+    // Commented to reduce verbosity on Linux
+    //printf("radio_linux: requested RSSI at freq %d, returning -100dBm\n", rxFreq);
     return -100.0f;
 }

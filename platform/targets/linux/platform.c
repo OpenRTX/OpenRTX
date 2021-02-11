@@ -91,14 +91,15 @@ void platform_ledOn(led_t led)
             str = "WHITE";
             break;
     }
-
-    printf("platform_ledOn(%s)\n", str);
+    // Commented to reduce verbosity on Linux
+    //printf("platform_ledOn(%s)\n", str);
 }
 
 
 void platform_ledOff(led_t led)
 {
-    printf("platform_ledOff()\n");
+    // Commented to reduce verbosity on Linux
+    //printf("platform_ledOff()\n");
 }
 
 
