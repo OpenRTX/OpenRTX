@@ -230,6 +230,76 @@ void _ui_drawMenuContacts(ui_state_t* ui_state)
     _ui_drawMenuList(layout.line1_pos, ui_state->menu_selected, _ui_getContactName);
 }
 
+void _ui_drawMenuGPS(ui_state_t* ui_state)
+{
+    char *fix_buf, *type_buf;
+    char lat_buf[12] = { 0 }, lon_buf[12] = { 0 };
+    char data_buf[18] = { 0 }, track_buf[8] = { 0 };
+    gfx_clearScreen();
+    // Print "GPS" on top bar
+    gfx_print(layout.top_pos, "GPS", layout.top_font,
+              TEXT_ALIGN_CENTER, color_white);
+    // Print GPS status
+    switch(last_state.gps_data.fix_quality)
+    {
+        case 0:
+            fix_buf = "No fix";
+            break;
+        case 1:
+            fix_buf = "SPS";
+            break;
+        case 2:
+            fix_buf = "DGPS";
+            break;
+        case 3:
+            fix_buf = "PPS";
+            break;
+        default:
+            fix_buf = "ERROR";
+            break;
+    }
+
+    switch(last_state.gps_data.fix_type)
+    {
+        case 1:
+            type_buf = "";
+            break;
+        case 2:
+            type_buf = "2D";
+            break;
+        case 3:
+            type_buf = "3D";
+            break;
+        default:
+            type_buf = "ERROR";
+            break;
+    }
+    gfx_print(layout.line1_pos, fix_buf, layout.top_font, TEXT_ALIGN_LEFT,
+              color_white);
+    gfx_print(layout.line1_pos, "N     ", layout.top_font, TEXT_ALIGN_CENTER,
+              color_white);
+    snprintf(lat_buf, 12, "%8.6f", last_state.gps_data.latitude);
+    gfx_print(layout.line1_pos, lat_buf, layout.top_font, TEXT_ALIGN_RIGHT,
+              color_white);
+    gfx_print(layout.line2_pos, type_buf, layout.top_font, TEXT_ALIGN_LEFT,
+              color_white);
+    gfx_print(layout.line2_pos, "E     ", layout.top_font, TEXT_ALIGN_CENTER,
+              color_white);
+    snprintf(lon_buf, 12, "%8.6f", last_state.gps_data.longitude);
+    gfx_print(layout.line2_pos, lon_buf, layout.top_font, TEXT_ALIGN_RIGHT,
+              color_white);
+    snprintf(data_buf, 18, "S %5.2fkm/h\nA %5.2fm",
+             last_state.gps_data.speed,
+             last_state.gps_data.altitude);
+    gfx_print(layout.line3_pos, data_buf, layout.top_font, TEXT_ALIGN_LEFT,
+              color_white);
+    snprintf(track_buf, 8, "%d/%d",
+             last_state.gps_data.satellites_tracked,
+             last_state.gps_data.satellites_in_view);
+    gfx_print(layout.line3_pos, track_buf, layout.line3_font, TEXT_ALIGN_RIGHT,
+              color_white);
+}
+
 void _ui_drawMenuSettings(ui_state_t* ui_state)
 {
     gfx_clearScreen();

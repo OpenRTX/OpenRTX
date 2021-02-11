@@ -812,6 +812,9 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         case 2:
                             state.ui_screen = MENU_CONTACTS;
                             break;
+                        case 4:
+                            state.ui_screen = MENU_GPS;
+                            break;
                         // TODO: Add missing submenu states
                         case 5:
                             state.ui_screen = MENU_SETTINGS;
@@ -909,6 +912,16 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     }
                 }
                 else if(msg.keys & KEY_ESC)
+                {
+                    // Return to top menu
+                    state.ui_screen = MENU_TOP;
+                    // Reset menu selection
+                    ui_state.menu_selected = 0;
+                }
+                break;
+            // GPS menu screen
+            case MENU_GPS:
+                if(msg.keys & KEY_ESC)
                 {
                     // Return to top menu
                     state.ui_screen = MENU_TOP;
@@ -1128,6 +1141,10 @@ void ui_updateGUI()
         // Contacts menu screen
         case MENU_CONTACTS:
             _ui_drawMenuContacts(&ui_state);
+            break;
+        // GPS menu screen
+        case MENU_GPS:
+            _ui_drawMenuGPS(&ui_state);
             break;
         // Settings menu screen
         case MENU_SETTINGS:

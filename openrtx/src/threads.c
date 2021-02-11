@@ -319,35 +319,35 @@ static void gps_task(void *arg)
             OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
 
             // Debug prints
-            printf("Timestamp: %d:%d:%d %d/%d/%d\n\r",
-                   state.gps_data.timestamp.hour,
-                   state.gps_data.timestamp.minute,
-                   state.gps_data.timestamp.second,
-                   state.gps_data.timestamp.date,
-                   state.gps_data.timestamp.month,
-                   state.gps_data.timestamp.year);
-            printf("Fix quality: %d - %d\n\r",
-                   state.gps_data.fix_quality,
-                   state.gps_data.fix_type);
-            printf("Satellites tracked: %d/%d\n\r",
-                   state.gps_data.satellites_tracked,
-                   state.gps_data.satellites_in_view);
-            for(int i = 0; i < state.gps_data.satellites_in_view; i++)
-            {
-                printf("%d - elevation: %d azimuth: %d snr: %d\n\r",
-                   state.gps_data.satellites[i].id,
-                   state.gps_data.satellites[i].elevation,
-                   state.gps_data.satellites[i].azimuth,
-                   state.gps_data.satellites[i].snr);
-            }
-            printf("Coordinates: %f %f\n\r",
-                   state.gps_data.latitude,
-                   state.gps_data.longitude);
-            printf("Speed: %f km/h TMGM: %f deg TMGT: %f deg\n\r",
-                   state.gps_data.speed,
-                   state.gps_data.tmg_mag,
-                   state.gps_data.tmg_true);
-            printf("\n\r\n\r");
+            //printf("Timestamp: %d:%d:%d %d/%d/%d\n\r",
+            //       state.gps_data.timestamp.hour,
+            //       state.gps_data.timestamp.minute,
+            //       state.gps_data.timestamp.second,
+            //       state.gps_data.timestamp.date,
+            //       state.gps_data.timestamp.month,
+            //       state.gps_data.timestamp.year);
+            //printf("Fix quality: %d - %d\n\r",
+            //       state.gps_data.fix_quality,
+            //       state.gps_data.fix_type);
+            //printf("Satellites tracked: %d/%d\n\r",
+            //       state.gps_data.satellites_tracked,
+            //       state.gps_data.satellites_in_view);
+            //for(int i = 0; i < state.gps_data.satellites_in_view; i++)
+            //{
+            //    printf("%d - elevation: %d azimuth: %d snr: %d\n\r",
+            //       state.gps_data.satellites[i].id,
+            //       state.gps_data.satellites[i].elevation,
+            //       state.gps_data.satellites[i].azimuth,
+            //       state.gps_data.satellites[i].snr);
+            //}
+            //printf("Coordinates: %f %f\n\r",
+            //       state.gps_data.latitude,
+            //       state.gps_data.longitude);
+            //printf("Speed: %f km/h TMGM: %f deg TMGT: %f deg\n\r",
+            //       state.gps_data.speed,
+            //       state.gps_data.tmg_mag,
+            //       state.gps_data.tmg_true);
+            //printf("\n\r\n\r");
         }
     }
 }
