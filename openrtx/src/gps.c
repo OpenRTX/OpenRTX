@@ -51,6 +51,7 @@ void gps_taskFunc(char *line, int len, gps_t *state)
             if (minmea_parse_gga(&frame, line)) {
                 state->fix_quality = frame.fix_quality;
                 state->satellites_tracked = frame.satellites_tracked;
+                state->altitude = minmea_tofloat(&frame.altitude);
             }
         } break;
 

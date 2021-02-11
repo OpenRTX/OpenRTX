@@ -51,6 +51,7 @@ typedef struct
     sat_t satellites[12]; // Details about satellites in view
     float latitude;       // Latitude coordinates
     float longitude;      // Longitude coordinates
+    float altitude;       // Antenna altitude above mean sea level (geoid) in m
     float speed;          // Ground speed in km/h
     float tmg_mag;        // Course over ground, degrees, magnetic
     float tmg_true;       // Course over ground, degrees, true
