@@ -987,6 +987,15 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     if(ui_state.input_position < TIMEDATE_DIGITS)
                         break;
                     // Return to Time&Date menu, saving values
+                    // NOTE: The user inserted a local time, we save an UTC time to the RTC
+                    if(ui_state.new_timedate.hour - state.settings.utc_timezone >= 24) 
+                        ui_state.new_timedate.hour = ui_state.new_timedate.hour - 24 - 
+                        state.settings.utc_timezone;
+                    else if(ui_state.new_timedate.hour - state.settings.utc_timezone < 0)  
+                        ui_state.new_timedate.hour = ui_state.new_timedate.hour + 24 - 
+                        state.settings.utc_timezone;
+                    else
+                        ui_state.new_timedate.hour += state.settings.utc_timezone;
                     rtc_setTime(ui_state.new_timedate);
                     state.ui_screen = SETTINGS_TIMEDATE;
                 }
@@ -999,7 +1008,8 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         break;
                     ui_state.input_position += 1;
                     ui_state.input_number = input_getPressedNumber(msg);
-                    _ui_timedate_add_digit(&ui_state.new_timedate, ui_state.input_position, ui_state.input_number);
+                    _ui_timedate_add_digit(&ui_state.new_timedate, ui_state.input_position, 
+                                            ui_state.input_number);
                 }
                 break;
 #endif

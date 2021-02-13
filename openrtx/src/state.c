@@ -37,6 +37,7 @@ void state_init()
     state.radioStateUpdated = true;
 #ifdef HAS_RTC
     state.time = rtc_getTime();
+    state_applyTimezone();
 #endif
     state.v_bat = platform_getVbat();
     state.charge = battery_getCharge(state.v_bat);
@@ -73,4 +74,14 @@ void state_init()
     state.settings = (settings_t){ 0 };
     state.settings.brightness = 255;
     state.settings.contrast = 84;
+}
+
+state_applyTimezone()
+{
+    if(state.time.hour + state.settings.utc_timezone >= 24) 
+        state.time.hour = state.time.hour - 24 + state.settings.utc_timezone;
+    else if(state.time.hour + state.settings.utc_timezone < 0) 
+        state.time.hour = state.time.hour + 24 + state.settings.utc_timezone;
+    else
+        state.time.hour += state.settings.utc_timezone;
 }
