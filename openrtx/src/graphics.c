@@ -641,7 +641,8 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
 void gfx_drawGPSgraph(point_t start,
                       uint16_t width,
                       uint16_t height,
-                      sat_t *sats)
+                      sat_t *sats,
+                      uint16_t active_sats)
 {
     color_t white =  {255, 255, 255, 255};
     color_t yellow = {250, 180, 19 , 255};
@@ -655,11 +656,11 @@ void gfx_drawGPSgraph(point_t start,
         bar_height = (height - 8) * sats[i].snr / 100 + 1;
         point_t bar_pos = {start.x + 2 + i * (bar_width + 2),
                            start.y + (height - 8) - bar_height};
-        color_t bar_color = (sats[i].active) ? yellow : white;
+        color_t bar_color = (active_sats & 1 << sats[i].id) ? yellow : white;
         gfx_drawRect(bar_pos, bar_width, bar_height, bar_color, true);
         snprintf(id_buf, 5, "%2d ", sats[i].id);
         point_t id_pos = {bar_pos.x, start.y + height};
-        gfx_print(id_pos, id_buf, FONT_SIZE_5PT, TEXT_ALIGN_LEFT, white);
+        gfx_print(id_pos, id_buf, FONT_SIZE_5PT, TEXT_ALIGN_LEFT, bar_color);
     }
     uint8_t bars_width = 9 + 11 * (bar_width + 2);
     point_t left_line_end = {start.x, start.y + height - 9};
@@ -683,19 +684,20 @@ void gfx_drawGPScompass(point_t start,
     gfx_drawCircle(circle_pos, radius, white);
     point_t n_box = {start.x + radius - 5, start.y};
     gfx_drawRect(n_box, 13, 13, black, true);
+    float needle_radius = radius - 4;
     if (active)
     {
         // Needle
         deg = -deg;
         deg -= 90.0f;
-        point_t p1 = {circle_pos.x + radius * COS(deg),
-                      circle_pos.y + radius * SIN(deg)};
-        point_t p2 = {circle_pos.x + radius * COS(deg + 145.0f),
-                      circle_pos.y + radius * SIN(deg + 145.0f)};
-        point_t p3 = {circle_pos.x + radius / 2 * COS(deg + 180.0f),
-                      circle_pos.y + radius / 2 * SIN(deg + 180.0f)};
-        point_t p4 = {circle_pos.x + radius * COS(deg - 145.0f),
-                      circle_pos.y + radius * SIN(deg - 145.0f)};
+        point_t p1 = {circle_pos.x + needle_radius * COS(deg),
+                      circle_pos.y + needle_radius * SIN(deg)};
+        point_t p2 = {circle_pos.x + needle_radius * COS(deg + 145.0f),
+                      circle_pos.y + needle_radius * SIN(deg + 145.0f)};
+        point_t p3 = {circle_pos.x + needle_radius / 2 * COS(deg + 180.0f),
+                      circle_pos.y + needle_radius / 2 * SIN(deg + 180.0f)};
+        point_t p4 = {circle_pos.x + needle_radius * COS(deg - 145.0f),
+                      circle_pos.y + needle_radius * SIN(deg - 145.0f)};
         gfx_drawLine(p1, p2, yellow);
         gfx_drawLine(p2, p3, yellow);
         gfx_drawLine(p3, p4, yellow);

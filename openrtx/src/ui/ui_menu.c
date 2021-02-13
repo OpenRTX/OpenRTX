@@ -316,7 +316,8 @@ void _ui_drawMenuGPS(ui_state_t* ui_state)
     gfx_drawGPSgraph(bar_pos,
                      (SCREEN_WIDTH * 2 / 3) - layout.horizontal_pad,
                      SCREEN_HEIGHT / 3,
-                     last_state.gps_data.satellites);
+                     last_state.gps_data.satellites,
+                     last_state.gps_data.active_sats);
 }
 
 void _ui_drawMenuSettings(ui_state_t* ui_state)

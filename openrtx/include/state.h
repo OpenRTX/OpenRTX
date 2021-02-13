@@ -35,7 +35,6 @@ typedef struct
     uint8_t elevation;    // Elevation in degrees
     uint16_t azimuth;     // Azimuth in degrees
     uint8_t snr;          // Quality of the signal in range 0-99
-    bool active;          // True if this satellite is part of the fix
 }
 sat_t;
 
@@ -50,6 +49,7 @@ typedef struct
     uint8_t satellites_tracked; // Number of tracked satellites
     uint8_t satellites_in_view; // Satellites in view
     sat_t satellites[12]; // Details about satellites in view
+    uint16_t active_sats; // Bitmap representing which sats are part of the fix
     float latitude;       // Latitude coordinates
     float longitude;      // Longitude coordinates
     float altitude;       // Antenna altitude above mean sea level (geoid) in m
