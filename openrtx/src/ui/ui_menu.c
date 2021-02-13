@@ -124,6 +124,29 @@ int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
     return 0;
 }
 
+int _ui_getSettingsGPSEntryName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= settings_gps_num) return -1;
+    snprintf(buf, max_len, "%s", settings_gps_items[index]);
+    return 0;
+}
+
+int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= settings_gps_num) return -1;
+    if(strcmp(settings_gps_items[index], "GPS Enabled") == 0)
+        snprintf(buf, max_len, "%s", (settings.gps_enabled) ? "ON" : "OFF");
+    else if(strcmp(settings_gps_items[index], "GPS Set Time") == 0)
+        snprintf(buf, max_len, "%s", (settings.gps_set_time) ? "ON" : "OFF");
+    else if(strcmp(settings_gps_items[index], "UTC Timezone") == 0)
+        // Add + prefix to positive numbers
+        if(settings.utc_timezone > 0)
+            snprintf(buf, max_len, "+%d", settings.utc_timezone);
+        else
+            snprintf(buf, max_len, "%d", settings.utc_timezone);
+    return 0;
+}
+
 int _ui_getInfoEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= info_num) return -1;
@@ -365,6 +388,18 @@ void _ui_drawSettingsDisplay(ui_state_t* ui_state)
     // Print display settings entries
     _ui_drawMenuListValue(layout.line1_pos, ui_state->menu_selected, _ui_getDisplayEntryName,
                            _ui_getDisplayValueName);
+}
+
+void _ui_drawSettingsGPS(ui_state_t* ui_state)
+{
+    gfx_clearScreen();
+    // Print "GPS Settings" on top bar
+    gfx_print(layout.top_pos, "GPS Settings", layout.top_font,
+              TEXT_ALIGN_CENTER, color_white);
+    // Print display settings entries
+    _ui_drawMenuListValue(layout.line1_pos, ui_state->menu_selected, 
+                          _ui_getSettingsGPSEntryName,
+                          _ui_getSettingsGPSValueName);
 }
 
 #ifdef HAS_RTC

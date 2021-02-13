@@ -128,6 +128,13 @@ const char *display_items[] =
 #endif
 };
 
+const char *settings_gps_items[] =
+{
+    "GPS Enabled",
+    "GPS Set Time",
+    "UTC Timezone"
+};
+
 const char *info_items[] =
 {
     "Bat. Voltage",
@@ -147,15 +154,13 @@ const char *authors[] =
     "Federico IU2NUO",
     "Fred IU2NRO",
 };
-// Calculate number of main menu entries
+
+// Calculate number of menu entries
 const uint8_t menu_num = sizeof(menu_items)/sizeof(menu_items[0]);
-// Calculate number of settings menu entries
 const uint8_t settings_num = sizeof(settings_items)/sizeof(settings_items[0]);
-// Calculate number of display settings menu entries
 const uint8_t display_num = sizeof(display_items)/sizeof(display_items[0]);
-// Calculate number of info menu entries
+const uint8_t settings_gps_num = sizeof(settings_gps_items)/sizeof(settings_gps_items[0]);
 const uint8_t info_num = sizeof(info_items)/sizeof(info_items[0]);
-// Calculate number of authors
 const uint8_t author_num = sizeof(authors)/sizeof(authors[0]);
 
 const color_t color_black = {0, 0, 0, 255};
@@ -1058,6 +1063,37 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     ui_state.menu_selected = 0;
                 }
                 break;
+            case SETTINGS_GPS:
+                if(msg.keys & KEY_UP)
+                    _ui_menuUp(settings_gps_num);
+                else if(msg.keys & KEY_DOWN)
+                    _ui_menuDown(settings_gps_num);
+                if(msg.keys & KEY_LEFT)
+                {
+                    if(strcmp(settings_gps_items[ui_state.menu_selected], "GPS Enabled") == 0)
+                        settings.gps_enabled = !settings.gps_enabled;
+                    else if(strcmp(settings_gps_items[ui_state.menu_selected], "GPS Set Time") == 0)
+                        settings.gps_set_time = !settings.gps_set_time;
+                    else if(strcmp(settings_gps_items[ui_state.menu_selected], "UTC Timezone") == 0)
+                        settings.utc_timezone -= 1;
+                }
+                else if(msg.keys & KEY_RIGHT)
+                {
+                    if(strcmp(settings_gps_items[ui_state.menu_selected], "GPS Enabled") == 0)
+                        settings.gps_enabled = !settings.gps_enabled;
+                    else if(strcmp(settings_gps_items[ui_state.menu_selected], "GPS Set Time") == 0)
+                        settings.gps_set_time = !settings.gps_set_time;
+                    else if(strcmp(settings_gps_items[ui_state.menu_selected], "UTC Timezone") == 0)
+                        settings.utc_timezone += 1;
+                }
+                else if(msg.keys & KEY_ESC)
+                {
+                    // Return to settings menu
+                    state.ui_screen = MENU_SETTINGS;
+                    // Reset menu selection
+                    ui_state.menu_selected = 0;
+                }
+                break;
         }
     }
 }
@@ -1126,8 +1162,13 @@ void ui_updateGUI()
             _ui_drawSettingsTimeDateSet(&ui_state);
             break;
 #endif
+        // Display settings screen
         case SETTINGS_DISPLAY:
             _ui_drawSettingsDisplay(&ui_state);
+            break;
+        // GPS settings screen
+        case SETTINGS_GPS:
+            _ui_drawSettingsGPS(&ui_state);
             break;
         // Low battery screen
         case LOW_BAT:

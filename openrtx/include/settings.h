@@ -25,6 +25,9 @@ typedef struct
 {
     uint8_t brightness;
     uint8_t contrast;
+    bool gps_enabled;
+    bool gps_set_time;
+    int8_t utc_timezone;
 }
 settings_t;
 
