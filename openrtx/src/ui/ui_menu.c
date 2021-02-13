@@ -240,60 +240,70 @@ void _ui_drawMenuGPS(ui_state_t* ui_state)
     // Print "GPS" on top bar
     gfx_print(layout.top_pos, "GPS", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
-    // Print GPS status
-    switch(last_state.gps_data.fix_quality)
+    // Print GPS status, if no fix, hide details
+    if (last_state.gps_data.fix_quality == 0)
     {
-        case 0:
-            fix_buf = "No fix";
-            break;
-        case 1:
-            fix_buf = "SPS";
-            break;
-        case 2:
-            fix_buf = "DGPS";
-            break;
-        case 3:
-            fix_buf = "PPS";
-            break;
-        default:
-            fix_buf = "ERROR";
-            break;
-    }
+        point_t fix_pos = {layout.line2_pos.x, SCREEN_HEIGHT * 2 / 5};
+        gfx_print(fix_pos, "No Fix", layout.line3_font, TEXT_ALIGN_CENTER,
+                  color_white);
+    } else if (last_state.gps_data.fix_quality == 6)
+    {
+        point_t fix_pos = {layout.line2_pos.x, SCREEN_HEIGHT * 2 / 5};
+        gfx_print(fix_pos, "Fix Lost", layout.line3_font, TEXT_ALIGN_CENTER,
+                  color_white);
+    } else
+    {
+        switch(last_state.gps_data.fix_quality)
+        {
+            case 1:
+                fix_buf = "SPS";
+                break;
+            case 2:
+                fix_buf = "DGPS";
+                break;
+            case 3:
+                fix_buf = "PPS";
+                break;
+            default:
+                fix_buf = "ERROR";
+                break;
+        }
 
-    switch(last_state.gps_data.fix_type)
-    {
-        case 1:
-            type_buf = "";
-            break;
-        case 2:
-            type_buf = "2D";
-            break;
-        case 3:
-            type_buf = "3D";
-            break;
-        default:
-            type_buf = "ERROR";
-            break;
+        switch(last_state.gps_data.fix_type)
+        {
+            case 1:
+                type_buf = "";
+                break;
+            case 2:
+                type_buf = "2D";
+                break;
+            case 3:
+                type_buf = "3D";
+                break;
+            default:
+                type_buf = "ERROR";
+                break;
+        }
+        gfx_print(layout.line1_pos, fix_buf, layout.top_font, TEXT_ALIGN_LEFT,
+                  color_white);
+        gfx_print(layout.line1_pos, "N     ", layout.top_font, TEXT_ALIGN_CENTER,
+                  color_white);
+        snprintf(lat_buf, 12, "%8.6f", last_state.gps_data.latitude);
+        gfx_print(layout.line1_pos, lat_buf, layout.top_font, TEXT_ALIGN_RIGHT,
+                  color_white);
+        gfx_print(layout.line2_pos, type_buf, layout.top_font, TEXT_ALIGN_LEFT,
+                  color_white);
+        gfx_print(layout.line2_pos, "E     ", layout.top_font, TEXT_ALIGN_CENTER,
+                  color_white);
+        snprintf(lon_buf, 12, "%8.6f", last_state.gps_data.longitude);
+        gfx_print(layout.line2_pos, lon_buf, layout.top_font, TEXT_ALIGN_RIGHT,
+                  color_white);
+        snprintf(data_buf, 25, "S %5.2fkm/h  A %5.2fm",
+                 last_state.gps_data.speed,
+                 last_state.gps_data.altitude);
+        gfx_print(layout.bottom_pos, data_buf, layout.bottom_font, TEXT_ALIGN_CENTER,
+                  color_white);
     }
-    gfx_print(layout.line1_pos, fix_buf, layout.top_font, TEXT_ALIGN_LEFT,
-              color_white);
-    gfx_print(layout.line1_pos, "N     ", layout.top_font, TEXT_ALIGN_CENTER,
-              color_white);
-    snprintf(lat_buf, 12, "%8.6f", last_state.gps_data.latitude);
-    gfx_print(layout.line1_pos, lat_buf, layout.top_font, TEXT_ALIGN_RIGHT,
-              color_white);
-    gfx_print(layout.line2_pos, type_buf, layout.top_font, TEXT_ALIGN_LEFT,
-              color_white);
-    gfx_print(layout.line2_pos, "E     ", layout.top_font, TEXT_ALIGN_CENTER,
-              color_white);
-    snprintf(lon_buf, 12, "%8.6f", last_state.gps_data.longitude);
-    gfx_print(layout.line2_pos, lon_buf, layout.top_font, TEXT_ALIGN_RIGHT,
-              color_white);
-    snprintf(data_buf, 25, "S %5.2fkm/h  A %5.2fm",
-             last_state.gps_data.speed,
-             last_state.gps_data.altitude);
-    gfx_print(layout.bottom_pos, data_buf, layout.bottom_font, TEXT_ALIGN_CENTER,
-              color_white);
     // Draw compass
     point_t compass_pos = {layout.horizontal_pad * 2, SCREEN_HEIGHT / 2};
     gfx_drawGPScompass(compass_pos, SCREEN_WIDTH / 9, last_state.gps_data.satellites);
