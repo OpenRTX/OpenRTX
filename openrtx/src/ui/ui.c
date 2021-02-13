@@ -650,6 +650,21 @@ void _ui_menuDown(uint8_t menu_entries)
         ui_state.menu_selected = 0;
 }
 
+void _ui_menuBack(uint8_t prev_state)
+{
+    if(ui_state.edit_mode)
+    {
+        ui_state.edit_mode = false;
+    }
+    else
+    {
+        // Return to previous menu
+        state.ui_screen = prev_state;
+        // Reset menu selection
+        ui_state.menu_selected = 0;
+    }
+}
+
 void ui_saveState()
 {
     last_state = state;
@@ -834,12 +849,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     ui_state.menu_selected = 0;
                 }
                 else if(msg.keys & KEY_ESC)
-                {
-                    // Close Menu, switch to last main state
-                    state.ui_screen = ui_state.last_main_state;
-                    // Reset menu selection
-                    ui_state.menu_selected = 0;
-                }
+                    _ui_menuBack(ui_state.last_main_state);
                 break;
             // Zone menu screen
             case MENU_ZONE:
@@ -912,22 +922,12 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     }
                 }
                 else if(msg.keys & KEY_ESC)
-                {
-                    // Return to top menu
-                    state.ui_screen = MENU_TOP;
-                    // Reset menu selection
-                    ui_state.menu_selected = 0;
-                }
+                    _ui_menuBack(MENU_TOP);
                 break;
             // GPS menu screen
             case MENU_GPS:
                 if(msg.keys & KEY_ESC)
-                {
-                    // Return to top menu
-                    state.ui_screen = MENU_TOP;
-                    // Reset menu selection
-                    ui_state.menu_selected = 0;
-                }
+                    _ui_menuBack(MENU_TOP);
                 break;
             // Settings menu screen
             case MENU_SETTINGS:
@@ -949,12 +949,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     ui_state.menu_selected = 0;
                 }
                 else if(msg.keys & KEY_ESC)
-                {
-                    // Return to top menu
-                    state.ui_screen = MENU_TOP;
-                    // Reset menu selection
-                    ui_state.menu_selected = 0;
-                }
+                    _ui_menuBack(MENU_TOP);
                 break;
             // Info menu screen
             case MENU_INFO:
@@ -963,22 +958,12 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 else if(msg.keys & KEY_DOWN)
                     _ui_menuDown(info_num);
                 else if(msg.keys & KEY_ESC)
-                {
-                    // Return to top menu
-                    state.ui_screen = MENU_TOP;
-                    // Reset menu selection
-                    ui_state.menu_selected = 0;
-                }
+                    _ui_menuBack(MENU_TOP);
                 break;
             // About screen
             case MENU_ABOUT:
                 if(msg.keys & KEY_ESC)
-                {
-                    // Return to top menu
-                    state.ui_screen = MENU_TOP;
-                    // Reset menu selection
-                    ui_state.menu_selected = 0;
-                }
+                    _ui_menuBack(MENU_TOP);
                 break;
 #ifdef HAS_RTC
             // Time&Date settings screen
@@ -992,12 +977,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     memset(&ui_state.new_timedate, 0, sizeof(curTime_t));
                 }
                 else if(msg.keys & KEY_ESC)
-                {
-                    // Return to settings menu
-                    state.ui_screen = MENU_SETTINGS;
-                    // Reset menu selection
-                    ui_state.menu_selected = 0;
-                }
+                    _ui_menuBack(MENU_SETTINGS);
                 break;
             // Time&Date settings screen, edit mode
             case SETTINGS_TIMEDATE_SET:
@@ -1011,10 +991,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     state.ui_screen = SETTINGS_TIMEDATE;
                 }
                 else if(msg.keys & KEY_ESC)
-                {
-                    // Return to Time&Date menu discarding values
-                    state.ui_screen = SETTINGS_TIMEDATE;
-                }
+                    _ui_menuBack(SETTINGS_TIMEDATE);
                 else if(input_isNumberPressed(msg))
                 {
                     // Discard excess digits
@@ -1027,11 +1004,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 break;
 #endif
             case SETTINGS_DISPLAY:
-                if(msg.keys & KEY_UP)
-                    _ui_menuUp(display_num);
-                else if(msg.keys & KEY_DOWN)
-                    _ui_menuDown(display_num);
-                if(msg.keys & KEY_LEFT)
+                if(msg.keys & KEY_LEFT || (msg.keys & KEY_UP && ui_state.edit_mode))
                 {
                     if(strcmp(display_items[ui_state.menu_selected], "Brightness") == 0)
                     {
@@ -1042,7 +1015,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         _ui_changeContrast(-25);
                     }
                 }
-                else if(msg.keys & KEY_RIGHT)
+                else if(msg.keys & KEY_RIGHT || (msg.keys & KEY_DOWN && ui_state.edit_mode))
                 {
                     if(strcmp(display_items[ui_state.menu_selected], "Brightness") == 0)
                     {
@@ -1053,20 +1026,17 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         _ui_changeContrast(+25);
                     }
                 }
+                else if(msg.keys & KEY_UP)
+                    _ui_menuUp(display_num);
+                else if(msg.keys & KEY_DOWN)
+                    _ui_menuDown(display_num);
+                else if(msg.keys & KEY_ENTER)
+                    ui_state.edit_mode = !ui_state.edit_mode;
                 else if(msg.keys & KEY_ESC)
-                {
-                    // Return to settings menu
-                    state.ui_screen = MENU_SETTINGS;
-                    // Reset menu selection
-                    ui_state.menu_selected = 0;
-                }
+                    _ui_menuBack(MENU_SETTINGS);
                 break;
             case SETTINGS_GPS:
-                if(msg.keys & KEY_UP)
-                    _ui_menuUp(settings_gps_num);
-                else if(msg.keys & KEY_DOWN)
-                    _ui_menuDown(settings_gps_num);
-                if(msg.keys & KEY_LEFT)
+                if(msg.keys & KEY_LEFT || (msg.keys & KEY_UP && ui_state.edit_mode))
                 {
                     if(strcmp(settings_gps_items[ui_state.menu_selected], "GPS Enabled") == 0)
                         state.settings.gps_enabled = !state.settings.gps_enabled;
@@ -1075,7 +1045,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     else if(strcmp(settings_gps_items[ui_state.menu_selected], "UTC Timezone") == 0)
                         state.settings.utc_timezone -= 1;
                 }
-                else if(msg.keys & KEY_RIGHT)
+                else if(msg.keys & KEY_RIGHT || (msg.keys & KEY_DOWN && ui_state.edit_mode))
                 {
                     if(strcmp(settings_gps_items[ui_state.menu_selected], "GPS Enabled") == 0)
                         state.settings.gps_enabled = !state.settings.gps_enabled;
@@ -1084,13 +1054,14 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     else if(strcmp(settings_gps_items[ui_state.menu_selected], "UTC Timezone") == 0)
                         state.settings.utc_timezone += 1;
                 }
+                else if(msg.keys & KEY_UP)
+                    _ui_menuUp(settings_gps_num);
+                else if(msg.keys & KEY_DOWN)
+                    _ui_menuDown(settings_gps_num);
+                else if(msg.keys & KEY_ENTER)
+                    ui_state.edit_mode = !ui_state.edit_mode;
                 else if(msg.keys & KEY_ESC)
-                {
-                    // Return to settings menu
-                    state.ui_screen = MENU_SETTINGS;
-                    // Reset menu selection
-                    ui_state.menu_selected = 0;
-                }
+                    _ui_menuBack(MENU_SETTINGS);
                 break;
         }
     }

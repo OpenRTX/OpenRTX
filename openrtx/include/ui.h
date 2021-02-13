@@ -99,7 +99,11 @@ typedef struct layout_t
  */
 typedef struct ui_state_t
 {
+    // Index of the currently selected menu entry
     uint8_t menu_selected;
+    // If true we can change a menu entry value with UP/DOWN
+    bool edit_mode;
+    // Variables used for VFO input
     uint8_t input_number;
     uint8_t input_position;
     uint8_t input_set;
@@ -108,10 +112,12 @@ typedef struct ui_state_t
     char new_rx_freq_buf[14];
     char new_tx_freq_buf[14];
 #ifdef HAS_RTC
+    // Variables used for Time & Date input
     curTime_t new_timedate;
     char new_date_buf[9];
     char new_time_buf[9];
 #endif
+    // Which state to return to when we exit menu
     uint8_t last_main_state;
 } ui_state_t;
 
