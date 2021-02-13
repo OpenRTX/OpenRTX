@@ -25,6 +25,7 @@
 #include <stdbool.h>
 #include <interfaces/rtc.h>
 #include <cps.h>
+#include <settings.h>
 
 /**
  * Data structure representing a single satellite as part of a GPS fix.
@@ -93,6 +94,7 @@ typedef struct
 
     bool emergency;
     gps_t gps_data;
+    settings_t settings;
 }
 state_t;
 

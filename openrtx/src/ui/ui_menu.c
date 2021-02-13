@@ -117,9 +117,9 @@ int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
     if(index >= display_num) return -1;
     uint8_t value = 0;
     if(strcmp(display_items[index], "Brightness") == 0)
-        value = settings.brightness;
+        value = last_state.settings.brightness;
     else if(strcmp(display_items[index], "Contrast") == 0)
-        value = settings.contrast;
+        value = last_state.settings.contrast;
     snprintf(buf, max_len, "%d", value);
     return 0;
 }
@@ -135,15 +135,15 @@ int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= settings_gps_num) return -1;
     if(strcmp(settings_gps_items[index], "GPS Enabled") == 0)
-        snprintf(buf, max_len, "%s", (settings.gps_enabled) ? "ON" : "OFF");
+        snprintf(buf, max_len, "%s", (last_state.settings.gps_enabled) ? "ON" : "OFF");
     else if(strcmp(settings_gps_items[index], "GPS Set Time") == 0)
-        snprintf(buf, max_len, "%s", (settings.gps_set_time) ? "ON" : "OFF");
+        snprintf(buf, max_len, "%s", (last_state.settings.gps_set_time) ? "ON" : "OFF");
     else if(strcmp(settings_gps_items[index], "UTC Timezone") == 0)
         // Add + prefix to positive numbers
-        if(settings.utc_timezone > 0)
-            snprintf(buf, max_len, "+%d", settings.utc_timezone);
+        if(last_state.settings.utc_timezone > 0)
+            snprintf(buf, max_len, "+%d", last_state.settings.utc_timezone);
         else
-            snprintf(buf, max_len, "%d", settings.utc_timezone);
+            snprintf(buf, max_len, "%d", last_state.settings.utc_timezone);
     return 0;
 }
 

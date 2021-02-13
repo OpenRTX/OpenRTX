@@ -171,7 +171,6 @@ const color_t yellow_fab413 = {250, 180, 19, 255};
 layout_t layout;
 state_t last_state;
 ui_state_t ui_state;
-settings_t settings;
 bool macro_menu = false;
 bool layout_ready = false;
 bool redraw_needed = true;
@@ -313,11 +312,6 @@ void ui_init()
     // This syntax is called compound literal
     // https://stackoverflow.com/questions/6891720/initialize-reset-struct-to-zero-null
     ui_state = (const struct ui_state_t){ 0 };
-    settings = (settings_t){ 0 };
-    // Initialize settings_t
-    // TODO: settings_t should be read from flash memory or from a factory default
-    settings.brightness = 255;
-    settings.contrast = 84;
 }
 
 void ui_drawSplashScreen(bool centered)
@@ -554,19 +548,23 @@ void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx) {
 void _ui_changeBrightness(int variation)
 {
     if(variation >= 0)
-        settings.brightness = (255 - settings.brightness < variation) ? 255 : settings.brightness + variation;
+        state.settings.brightness = 
+        (255 - state.settings.brightness < variation) ? 255 : state.settings.brightness + variation;
     else
-        settings.brightness = (settings.brightness < -variation) ? 0 : settings.brightness + variation;
-    platform_setBacklightLevel(settings.brightness);
+        state.settings.brightness = 
+        (state.settings.brightness < -variation) ? 0 : state.settings.brightness + variation;
+    platform_setBacklightLevel(state.settings.brightness);
 }
 
 void _ui_changeContrast(int variation)
 {
     if(variation >= 0)
-        settings.contrast = (255 - settings.contrast < variation) ? 255 : settings.contrast + variation;
+        state.settings.contrast = 
+        (255 - state.settings.contrast < variation) ? 255 : state.settings.contrast + variation;
     else
-        settings.contrast = (settings.contrast < -variation) ? 0 : settings.contrast + variation;
-    display_setContrast(settings.contrast);
+        state.settings.contrast = 
+        (state.settings.contrast < -variation) ? 0 : state.settings.contrast + variation;
+    display_setContrast(state.settings.contrast);
 }
 
 void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
@@ -1071,20 +1069,20 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 if(msg.keys & KEY_LEFT)
                 {
                     if(strcmp(settings_gps_items[ui_state.menu_selected], "GPS Enabled") == 0)
-                        settings.gps_enabled = !settings.gps_enabled;
+                        state.settings.gps_enabled = !state.settings.gps_enabled;
                     else if(strcmp(settings_gps_items[ui_state.menu_selected], "GPS Set Time") == 0)
-                        settings.gps_set_time = !settings.gps_set_time;
+                        state.settings.gps_set_time = !state.settings.gps_set_time;
                     else if(strcmp(settings_gps_items[ui_state.menu_selected], "UTC Timezone") == 0)
-                        settings.utc_timezone -= 1;
+                        state.settings.utc_timezone -= 1;
                 }
                 else if(msg.keys & KEY_RIGHT)
                 {
                     if(strcmp(settings_gps_items[ui_state.menu_selected], "GPS Enabled") == 0)
-                        settings.gps_enabled = !settings.gps_enabled;
+                        state.settings.gps_enabled = !state.settings.gps_enabled;
                     else if(strcmp(settings_gps_items[ui_state.menu_selected], "GPS Set Time") == 0)
-                        settings.gps_set_time = !settings.gps_set_time;
+                        state.settings.gps_set_time = !state.settings.gps_set_time;
                     else if(strcmp(settings_gps_items[ui_state.menu_selected], "UTC Timezone") == 0)
-                        settings.utc_timezone += 1;
+                        state.settings.utc_timezone += 1;
                 }
                 else if(msg.keys & KEY_ESC)
                 {
