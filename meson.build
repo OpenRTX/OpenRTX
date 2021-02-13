@@ -273,7 +273,7 @@ dm1801_def = def + mk22fn512_def + {'PLATFORM_DM1801': ''}
 ## Compilation defines
 ##
 linux_c_args = []
-linux_l_args = ['--entry=entry']
+linux_l_args = ['--entry=entry', '-lm']
 
 # Add AddressSanitizer if required
 if get_option('asan')

@@ -23,11 +23,19 @@
  */
 
 #include <os.h>
+#include <math.h>
 #include <string.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <hwconfig.h>
 #include <interfaces/display.h>
 #include <interfaces/graphics.h>
+
+// Variable swap macro
+#define SWAP(x, y) do { typeof(x) t = x; x = y; y = t; } while(0)
+#define DEG_RAD  0.017453292519943295769236907684886
+#define SIN(x) sinf((x) * DEG_RAD)
+#define COS(x) cosf((x) * DEG_RAD)
 
 #ifdef PIX_FMT_RGB565
 /* This specialization is meant for an RGB565 little endian pixel format.
@@ -192,12 +200,45 @@ inline void gfx_setPixel(point_t pos, color_t color)
 void gfx_drawLine(point_t start, point_t end, color_t color)
 {
     if(!initialized) return;
-    for(int y = start.y; y <= end.y; y++)
+    int16_t steep = abs(end.y - start.y) > abs(end.x - start.x);
+
+    if (steep)
     {
-        for(int x = start.x; x <= end.x; x++)
-        {
-            point_t pos = {x, y};
+        SWAP(start.x, start.y);
+        SWAP(end.x, end.y);
+    }
+
+    if (start.x > end.x)
+    {
+        SWAP(start.x, end.x);
+        SWAP(start.y, end.y);
+    }
+
+    int16_t dx, dy;
+    dx = end.x - start.x;
+    dy = abs(end.y - start.y);
+
+    int16_t err = dx >> 1;
+    int16_t ystep;
+
+    if (start.y < end.y)
+        ystep = 1;
+    else
+        ystep = -1;
+
+    for (; start.x<=end.x; start.x++)
+    {
+        point_t pos = {start.y, start.x};
+        if (steep)
             gfx_setPixel(pos, color);
+        else
+            gfx_setPixel(start, color);
+
+        err -= dy;
+        if (err < 0)
+        {
+            start.y += ystep;
+            err += dx;
         }
     }
 }
@@ -604,7 +645,6 @@ void gfx_drawGPSgraph(point_t start,
 {
     color_t white =  {255, 255, 255, 255};
     color_t yellow = {250, 180, 19 , 255};
-    color_t red =    {255, 0,   0  , 255};
     char id_buf[5] = { 0 };
 
     // SNR Bars and satellite identifiers
@@ -631,12 +671,37 @@ void gfx_drawGPSgraph(point_t start,
 
 void gfx_drawGPScompass(point_t start,
                         uint16_t radius,
-                        sat_t *sats)
+                        float deg,
+                        bool active)
 {
     color_t white =  {255, 255, 255, 255};
+    color_t black =  {  0,   0,   0, 255};
+    color_t yellow = {250, 180, 19 , 255};
 
-    point_t n_pos = {start.x + radius, start.y + 3};
-    gfx_print(n_pos, "N", FONT_SIZE_5PT, TEXT_ALIGN_LEFT, white);
+    // Compass circle
     point_t circle_pos = {start.x + radius + 1, start.y + radius + 3};
     gfx_drawCircle(circle_pos, radius, white);
+    point_t n_box = {start.x + radius - 5, start.y};
+    gfx_drawRect(n_box, 13, 13, black, true);
+    if (active)
+    {
+        // Needle
+        deg = -deg;
+        deg -= 90.0f;
+        point_t p1 = {circle_pos.x + radius * COS(deg),
+                      circle_pos.y + radius * SIN(deg)};
+        point_t p2 = {circle_pos.x + radius * COS(deg + 145.0f),
+                      circle_pos.y + radius * SIN(deg + 145.0f)};
+        point_t p3 = {circle_pos.x + radius / 2 * COS(deg + 180.0f),
+                      circle_pos.y + radius / 2 * SIN(deg + 180.0f)};
+        point_t p4 = {circle_pos.x + radius * COS(deg - 145.0f),
+                      circle_pos.y + radius * SIN(deg - 145.0f)};
+        gfx_drawLine(p1, p2, yellow);
+        gfx_drawLine(p2, p3, yellow);
+        gfx_drawLine(p3, p4, yellow);
+        gfx_drawLine(p4, p1, yellow);
+    }
+    // North indicator
+    point_t n_pos = {start.x + radius - 3, start.y + 7};
+    gfx_print(n_pos, "N", FONT_SIZE_6PT, TEXT_ALIGN_LEFT, white);
 }

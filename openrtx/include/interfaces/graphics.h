@@ -275,8 +275,9 @@ void gfx_drawGPSgraph(point_t start, uint16_t width, uint16_t height, sat_t *sat
  * Starting coordinates are relative to the top left point.
  * @param start: Compass start point, in pixel coordinates.
  * @param width: Compass radius
- * @param sats: pointer to the array of satellites data
+ * @param deg: degrees marked by the compass needle
+ * @param active: whether the needle is to be drawn or not
  */
-void gfx_drawGPScompass(point_t start, uint16_t radius, sat_t *sats);
+void gfx_drawGPScompass(point_t start, uint16_t radius, float deg, bool active);
 
 #endif /* GRAPHICS_H */

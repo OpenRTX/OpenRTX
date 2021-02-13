@@ -306,7 +306,11 @@ void _ui_drawMenuGPS(ui_state_t* ui_state)
     }
     // Draw compass
     point_t compass_pos = {layout.horizontal_pad * 2, SCREEN_HEIGHT / 2};
-    gfx_drawGPScompass(compass_pos, SCREEN_WIDTH / 9, last_state.gps_data.satellites);
+    gfx_drawGPScompass(compass_pos,
+                       SCREEN_WIDTH / 9 + 2,
+                       last_state.gps_data.tmg_true,
+                       last_state.gps_data.fix_quality != 0 &&
+                       last_state.gps_data.fix_quality != 6);
     // Draw satellites bar graph
     point_t bar_pos = {layout.line3_pos.x + SCREEN_WIDTH * 1 / 3, SCREEN_HEIGHT / 2};
     gfx_drawGPSgraph(bar_pos,
