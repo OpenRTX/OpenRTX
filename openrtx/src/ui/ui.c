@@ -117,6 +117,7 @@ const char *settings_items[] =
     "Time & Date",
 #endif
     "Display",
+    "GPS"
 };
 
 const char *display_items[] =
@@ -630,6 +631,22 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
 #endif
 }
 
+void _ui_menuUp(uint8_t menu_entries)
+{
+    if(ui_state.menu_selected > 0)
+        ui_state.menu_selected -= 1;
+    else
+        ui_state.menu_selected = menu_entries - 1;
+}
+
+void _ui_menuDown(uint8_t menu_entries)
+{
+    if(ui_state.menu_selected < menu_entries - 1)
+        ui_state.menu_selected += 1;
+    else
+        ui_state.menu_selected = 0;
+}
+
 void ui_saveState()
 {
     last_state = state;
@@ -777,19 +794,9 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
             // Top menu screen
             case MENU_TOP:
                 if(msg.keys & KEY_UP)
-                {
-                    if(ui_state.menu_selected > 0)
-                        ui_state.menu_selected -= 1;
-                    else
-                        ui_state.menu_selected = menu_num-1;
-                }
+                    _ui_menuUp(menu_num);
                 else if(msg.keys & KEY_DOWN)
-                {
-                    if(ui_state.menu_selected < menu_num-1)
-                        ui_state.menu_selected += 1;
-                    else
-                        ui_state.menu_selected = 0;
-                }
+                    _ui_menuDown(menu_num);
                 else if(msg.keys & KEY_ENTER)
                 {
                     // Open selected menu item
@@ -838,10 +845,8 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
             // Contacts menu screen
             case MENU_CONTACTS:
                 if(msg.keys & KEY_UP)
-                {
-                    if(ui_state.menu_selected > 0)
-                        ui_state.menu_selected -= 1;
-                }
+                    // Using 1 as parameter disables menu wrap around
+                    _ui_menuUp(1);
                 else if(msg.keys & KEY_DOWN)
                 {
                     if(state.ui_screen == MENU_ZONE)
@@ -924,38 +929,19 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
             // Settings menu screen
             case MENU_SETTINGS:
                 if(msg.keys & KEY_UP)
-                {
-                    if(ui_state.menu_selected > 0)
-                        ui_state.menu_selected -= 1;
-                    else
-                        ui_state.menu_selected = settings_num-1;
-                }
+                    _ui_menuUp(settings_num);
                 else if(msg.keys & KEY_DOWN)
-                {
-                    if(ui_state.menu_selected < settings_num-1)
-                        ui_state.menu_selected += 1;
-                    else
-                        ui_state.menu_selected = 0;
-                }
+                    _ui_menuDown(settings_num);
                 else if(msg.keys & KEY_ENTER)
                 {
-                    // Open selected menu item
-                    switch(ui_state.menu_selected)
-                    {
-#ifdef HAS_RTC
-                        // TODO: Add missing submenu states
-                        case 0:
-                            state.ui_screen = SETTINGS_TIMEDATE;
-                            break;
-                        case 1:
-#else
-                        case 0:
-#endif
-                            state.ui_screen = SETTINGS_DISPLAY;
-                            break;
-                        default:
-                            state.ui_screen = MENU_TOP;
-                    }
+                    if(strcmp(settings_items[ui_state.menu_selected], "Time & Date") == 0)
+                        state.ui_screen = SETTINGS_TIMEDATE;
+                    else if(strcmp(settings_items[ui_state.menu_selected], "Display") == 0)
+                        state.ui_screen = SETTINGS_DISPLAY;
+                    else if(strcmp(settings_items[ui_state.menu_selected], "GPS") == 0)
+                        state.ui_screen = SETTINGS_GPS;
+                    else
+                        state.ui_screen = MENU_TOP;
                     // Reset menu selection
                     ui_state.menu_selected = 0;
                 }
@@ -970,19 +956,9 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
             // Info menu screen
             case MENU_INFO:
                 if(msg.keys & KEY_UP)
-                {
-                    if(ui_state.menu_selected > 0)
-                        ui_state.menu_selected -= 1;
-                    else
-                        ui_state.menu_selected = info_num-1;
-                }
+                    _ui_menuUp(info_num);
                 else if(msg.keys & KEY_DOWN)
-                {
-                    if(ui_state.menu_selected < info_num-1)
-                        ui_state.menu_selected += 1;
-                    else
-                        ui_state.menu_selected = 0;
-                }
+                    _ui_menuDown(info_num);
                 else if(msg.keys & KEY_ESC)
                 {
                     // Return to top menu
@@ -1049,19 +1025,9 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
 #endif
             case SETTINGS_DISPLAY:
                 if(msg.keys & KEY_UP)
-                {
-                    if(ui_state.menu_selected > 0)
-                        ui_state.menu_selected -= 1;
-                    else
-                        ui_state.menu_selected = display_num-1;
-                }
+                    _ui_menuUp(display_num);
                 else if(msg.keys & KEY_DOWN)
-                {
-                    if(ui_state.menu_selected < display_num-1)
-                        ui_state.menu_selected += 1;
-                    else
-                        ui_state.menu_selected = 0;
-                }
+                    _ui_menuDown(display_num);
                 if(msg.keys & KEY_LEFT)
                 {
                     if(strcmp(display_items[ui_state.menu_selected], "Brightness") == 0)
