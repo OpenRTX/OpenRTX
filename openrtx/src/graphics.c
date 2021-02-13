@@ -642,7 +642,7 @@ void gfx_drawGPSgraph(point_t start,
                       uint16_t width,
                       uint16_t height,
                       sat_t *sats,
-                      uint16_t active_sats)
+                      uint32_t active_sats)
 {
     color_t white =  {255, 255, 255, 255};
     color_t yellow = {250, 180, 19 , 255};
@@ -656,7 +656,7 @@ void gfx_drawGPSgraph(point_t start,
         bar_height = (height - 8) * sats[i].snr / 100 + 1;
         point_t bar_pos = {start.x + 2 + i * (bar_width + 2),
                            start.y + (height - 8) - bar_height};
-        color_t bar_color = (active_sats & 1 << sats[i].id) ? yellow : white;
+        color_t bar_color = (active_sats & 1 << (sats[i].id - 1)) ? yellow : white;
         gfx_drawRect(bar_pos, bar_width, bar_height, bar_color, true);
         snprintf(id_buf, 5, "%2d ", sats[i].id);
         point_t id_pos = {bar_pos.x, start.y + height};

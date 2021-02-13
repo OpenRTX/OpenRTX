@@ -49,7 +49,7 @@ typedef struct
     uint8_t satellites_tracked; // Number of tracked satellites
     uint8_t satellites_in_view; // Satellites in view
     sat_t satellites[12]; // Details about satellites in view
-    uint16_t active_sats; // Bitmap representing which sats are part of the fix
+    uint32_t active_sats; // Bitmap representing which sats are part of the fix
     float latitude;       // Latitude coordinates
     float longitude;      // Longitude coordinates
     float altitude;       // Antenna altitude above mean sea level (geoid) in m

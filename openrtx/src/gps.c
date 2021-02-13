@@ -67,7 +67,7 @@ void gps_taskFunc(char *line, int len, gps_t *state)
                 {
                     if (frame.sats[i] != 0)
                     {
-                        state->active_sats |= 1 << frame.sats[i];
+                        state->active_sats |= 1 << (frame.sats[i] - 1);
                     }
                 }
             }
