@@ -99,7 +99,7 @@ extern void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state);
 extern void _ui_drawSettingsDisplay(ui_state_t* ui_state);
 extern bool _ui_drawMacroMenu();
 
-const char *menu_items[8] =
+const char *menu_items[] =
 {
     "Zone",
     "Channels",
@@ -111,31 +111,22 @@ const char *menu_items[8] =
     "About"
 };
 
+const char *settings_items[] =
+{
 #ifdef HAS_RTC
-const char *settings_items[] =
-{
     "Time & Date",
-    "Display"
-};
-#else
-const char *settings_items[] =
-{
-    "Display"
-};
 #endif
+    "Display",
+};
 
+const char *display_items[] =
+{
+    "Brightness",
 #ifdef SCREEN_CONTRAST
-const char *display_items[] =
-{
-    "Brightness",
     "Contrast"
-};
-#else
-const char *display_items[] =
-{
-    "Brightness",
-};
 #endif
+};
+
 const char *info_items[] =
 {
     "Bat. Voltage",
@@ -147,6 +138,7 @@ const char *info_items[] =
     "UHF",
     "LCD Type"
 };
+
 const char *authors[] =
 {
     "Niccolo' IU2KIN",
