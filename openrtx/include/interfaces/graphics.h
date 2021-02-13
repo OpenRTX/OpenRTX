@@ -204,12 +204,21 @@ void gfx_drawVLine(uint16_t x, uint16_t width, color_t color);
 
 /**
  * Draw a rectangle of specified width, height and color.
+ * @param start: screen position of the rectangle, in pixels
  * @param width: rectangle width, in pixels, borders included.
  * @param height: rectangle height, in pixels, borders included.
  * @param color: border and fill color, in color_t format.
  * @param fill: if true the rectangle will be solid, otherwise it will be empty with a 1-pixel border
  */
 void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color, bool fill);
+
+/**
+ * Draw the outline of a circle of specified radius and color.
+ * @param start: screen position of the center of the circle, in pixels
+ * @param r: circle radius, in pixels, border included.
+ * @param color: border color, in color_t format.
+ */
+void gfx_drawCircle(point_t start, uint16_t r, color_t color);
 
 /**
  * Prints text on the screen.
@@ -260,5 +269,14 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi, 
  * @param sats: pointer to the array of satellites data
  */
 void gfx_drawGPSgraph(point_t start, uint16_t width, uint16_t height, sat_t *sats);
+
+/**
+ * Function to draw a compass of arbitrary size.
+ * Starting coordinates are relative to the top left point.
+ * @param start: Compass start point, in pixel coordinates.
+ * @param width: Compass radius
+ * @param sats: pointer to the array of satellites data
+ */
+void gfx_drawGPScompass(point_t start, uint16_t radius, sat_t *sats);
 
 #endif /* GRAPHICS_H */

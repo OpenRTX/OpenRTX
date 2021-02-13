@@ -228,6 +228,65 @@ void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color,
     }
 }
 
+void gfx_drawCircle(point_t start, uint16_t r, color_t color)
+{
+    int16_t f     = 1 - r;
+    int16_t ddF_x = 1;
+    int16_t ddF_y = -2 * r;
+    int16_t x     = 0;
+    int16_t y     = r;
+
+    point_t pos = start;
+    pos.y += r;
+    gfx_setPixel(pos, color);
+    pos.y -= 2 * r;
+    gfx_setPixel(pos, color);
+    pos.y += r;
+    pos.x += r;
+    gfx_setPixel(pos, color);
+    pos.x -= 2 * r;
+    gfx_setPixel(pos, color);
+
+    while (x < y)
+    {
+        if (f >= 0)
+        {
+            y--;
+            ddF_y += 2;
+            f += ddF_y;
+        }
+
+        x++;
+        ddF_x += 2;
+        f += ddF_x;
+
+        pos.x = start.x + x;
+        pos.y = start.y + y;
+        gfx_setPixel(pos, color);
+        pos.x = start.x - x;
+        pos.y = start.y + y;
+        gfx_setPixel(pos, color);
+        pos.x = start.x + x;
+        pos.y = start.y - y;
+        gfx_setPixel(pos, color);
+        pos.x = start.x - x;
+        pos.y = start.y - y;
+        gfx_setPixel(pos, color);
+        pos.x = start.x + y;
+        pos.y = start.y + x;
+        gfx_setPixel(pos, color);
+        pos.x = start.x - y;
+        pos.y = start.y + x;
+        gfx_setPixel(pos, color);
+        pos.x = start.x + y;
+        pos.y = start.y - x;
+        gfx_setPixel(pos, color);
+        pos.x = start.x - y;
+        pos.y = start.y - x;
+        gfx_setPixel(pos, color);
+    }
+}
+
 void gfx_drawHLine(uint16_t y, uint16_t height, color_t color)
 {
     point_t start = {0, y};
@@ -567,4 +626,16 @@ void gfx_drawGPSgraph(point_t start,
     point_t right_line_end = {start.x + bars_width, start.y + height - 9};
     gfx_drawLine(start, left_line_end, white);
     gfx_drawLine(right_line_start, right_line_end, white);
+}
+
+void gfx_drawGPScompass(point_t start,
+                        uint16_t radius,
+                        sat_t *sats)
+{
+    color_t white =  {255, 255, 255, 255};
+
+    point_t n_pos = {start.x + radius, start.y + 3};
+    gfx_print(n_pos, "N", FONT_SIZE_5PT, TEXT_ALIGN_LEFT, white);
+    point_t circle_pos = {start.x + radius + 1, start.y + radius + 3};
+    gfx_drawCircle(circle_pos, radius, white);
 }
