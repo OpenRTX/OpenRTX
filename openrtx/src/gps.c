@@ -48,7 +48,8 @@ void gps_taskFunc(char *line, int len, gps_t *state)
         case MINMEA_SENTENCE_GGA:
         {
             struct minmea_sentence_gga frame;
-            if (minmea_parse_gga(&frame, line)) {
+            if (minmea_parse_gga(&frame, line))
+            {
                 state->fix_quality = frame.fix_quality;
                 state->satellites_tracked = frame.satellites_tracked;
                 state->altitude = minmea_tofloat(&frame.altitude);
@@ -58,23 +59,45 @@ void gps_taskFunc(char *line, int len, gps_t *state)
         case MINMEA_SENTENCE_GSA:
         {
             struct minmea_sentence_gsa frame;
-            if (minmea_parse_gsa(&frame, line)) {
+            if (minmea_parse_gsa(&frame, line))
+            {
                 state->fix_type = frame.fix_type;
+                for (int i = 0; i < 12; i++)
+                {
+                    if (frame.sats[i] != 0)
+                    {
+                        for (int j = 0; j < 12; j++)
+                        {
+                            if (state->satellites[j].id == frame.sats[i])
+                            {
+                                state->satellites[j].active = true;
+                                break;
+                            }
+                        }
+                    }
+                }
             }
         } break;
 
         case MINMEA_SENTENCE_GSV:
         {
             struct minmea_sentence_gsv frame;
-            if (minmea_parse_gsv(&frame, line)) {
+            if (minmea_parse_gsv(&frame, line))
+            {
                 state->satellites_in_view = frame.total_sats; 
-                for (int i = 0; i < 4; i++) {
+                for (int i = 0; i < 4; i++)
+                {
                     int index = 4 * (frame.msg_nr - 1) + i;
                     state->satellites[index].id = frame.sats[i].nr;
                     state->satellites[index].elevation = frame.sats[i].elevation;
                     state->satellites[index].azimuth = frame.sats[i].azimuth;
                     state->satellites[index].snr = frame.sats[i].snr;
+                    state->satellites[index].active = false;
                 }
+                // Zero out unused satellite slots
+                if (frame.msg_nr == frame.total_msgs && frame.total_msgs < 3)
+                    bzero(&state->satellites[4 * frame.msg_nr],
+                          sizeof(sat_t) * 12 - frame.total_msgs * 4);
             }
         } break;
 

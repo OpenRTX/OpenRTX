@@ -35,6 +35,7 @@ typedef struct
     uint8_t elevation;    // Elevation in degrees
     uint16_t azimuth;     // Azimuth in degrees
     uint8_t snr;          // Quality of the signal in range 0-99
+    bool active;          // True if this satellite is part of the fix
 }
 sat_t;
 

@@ -555,10 +555,11 @@ void gfx_drawGPSgraph(point_t start,
         bar_height = (height - 8) * sats[i].snr / 100 + 1;
         point_t bar_pos = {start.x + 2 + i * (bar_width + 2),
                            start.y + (height - 8) - bar_height};
-        gfx_drawRect(bar_pos, bar_width, bar_height, white, true);
+        color_t bar_color = (sats[i].active) ? yellow : white;
+        gfx_drawRect(bar_pos, bar_width, bar_height, bar_color, true);
         snprintf(id_buf, 5, "%2d ", sats[i].id);
-        point_t id_start = {bar_pos.x, start.y + height};
-        gfx_print(id_start, id_buf, FONT_SIZE_5PT, TEXT_ALIGN_LEFT, white);
+        point_t id_pos = {bar_pos.x, start.y + height};
+        gfx_print(id_pos, id_buf, FONT_SIZE_5PT, TEXT_ALIGN_LEFT, white);
     }
     uint8_t bars_width = 9 + 11 * (bar_width + 2);
     point_t left_line_end = {start.x, start.y + height - 9};
