@@ -262,7 +262,7 @@ void _ui_drawMenuContacts(ui_state_t* ui_state)
     _ui_drawMenuList(layout.line1_pos, ui_state->menu_selected, _ui_getContactName);
 }
 
-void _ui_drawMenuGPS(ui_state_t* ui_state)
+void _ui_drawMenuGPS()
 {
     char *fix_buf, *type_buf;
     char lat_buf[12] = { 0 };

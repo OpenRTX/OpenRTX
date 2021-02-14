@@ -84,12 +84,11 @@ extern void _ui_drawMainVFO();
 extern void _ui_drawMainVFOInput(ui_state_t* ui_state);
 extern void _ui_drawMainMEM();
 /* UI menu functions, their implementation is in "ui_menu.c" */
-extern void _ui_drawMenuList(point_t pos, const char *entries[], uint8_t num_entries, uint8_t selected);
-extern void _ui_drawChannelList(point_t pos, uint8_t selected);
 extern void _ui_drawMenuTop(ui_state_t* ui_state);
 extern void _ui_drawMenuZone(ui_state_t* ui_state);
 extern void _ui_drawMenuChannel(ui_state_t* ui_state);
 extern void _ui_drawMenuContacts(ui_state_t* ui_state);
+extern void _ui_drawMenuGPS();
 extern void _ui_drawMenuSettings(ui_state_t* ui_state);
 extern void _ui_drawMenuInfo(ui_state_t* ui_state);
 extern void _ui_drawMenuAbout();
@@ -98,6 +97,7 @@ extern void _ui_drawSettingsTimeDate();
 extern void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state);
 #endif
 extern void _ui_drawSettingsDisplay(ui_state_t* ui_state);
+extern void _ui_drawSettingsGPS(ui_state_t* ui_state);
 extern bool _ui_drawMacroMenu();
 
 const char *menu_items[] =
@@ -1067,10 +1067,12 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     else if(strcmp(settings_gps_items[ui_state.menu_selected], "GPS Set Time") == 0)
                         state.settings.gps_set_time = !state.settings.gps_set_time;
                     else if(strcmp(settings_gps_items[ui_state.menu_selected], "UTC Timezone") == 0)
+                    {
                         if(msg.keys & KEY_LEFT || msg.keys & KEY_UP)
                             state.settings.utc_timezone -= 1;
                         else if(msg.keys & KEY_RIGHT || msg.keys & KEY_DOWN)
                             state.settings.utc_timezone += 1;
+                    }
                 }
                 else if(msg.keys & KEY_UP)
                     _ui_menuUp(settings_gps_num);
@@ -1125,7 +1127,7 @@ void ui_updateGUI()
             break;
         // GPS menu screen
         case MENU_GPS:
-            _ui_drawMenuGPS(&ui_state);
+            _ui_drawMenuGPS();
             break;
         // Settings menu screen
         case MENU_SETTINGS:
