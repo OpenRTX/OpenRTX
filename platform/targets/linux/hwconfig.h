@@ -21,6 +21,9 @@
 /* Device has a working real time clock */
 #define HAS_RTC
 
+/* Device supports an optional GPS chip */
+#define HAS_GPS
+
 /* Screen has adjustable contrast */
 #define SCREEN_CONTRAST
 
