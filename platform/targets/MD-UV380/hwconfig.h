@@ -25,6 +25,9 @@
 /* Device has a working real time clock */
 #define HAS_RTC
 
+/* Device supports an optional GPS chip */
+#define HAS_GPS
+
 /* Supported radio bands */
 #define BAND_VHF
 #define BAND_UHF
