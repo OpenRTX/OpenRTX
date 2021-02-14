@@ -18,98 +18,13 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <string.h>
 #include <interfaces/delays.h>
 #include <interfaces/nvmem.h>
 #include <calibInfo_GDx.h>
 #include "AT24Cx.h"
 #include "W25Qx.h"
-
-/**
- * \internal Data structure matching the one used by original GDx firmware to
- * manage channel data inside nonvolatile memory.
- *
- * Taken by dmrconfig repository: https://github.com/sergev/dmrconfig/blob/master/gd77.c
- */
-typedef struct
-{
-    // Bytes 0-15
-    uint8_t name[16];
-
-    // Bytes 16-23
-    uint32_t rx_frequency;
-    uint32_t tx_frequency;
-
-    // Byte 24
-    uint8_t channel_mode;
-
-    // Bytes 25-26
-    uint8_t _unused25[2];
-
-    // Bytes 27-28
-    uint8_t tot;
-    uint8_t tot_rekey_delay;
-
-    // Byte 29
-    uint8_t admit_criteria;
-
-    // Bytes 30-31
-    uint8_t _unused30;
-    uint8_t scan_list_index;
-
-    // Bytes 32-35
-    uint16_t ctcss_dcs_receive;
-    uint16_t ctcss_dcs_transmit;
-
-    // Bytes 36-39
-    uint8_t _unused36;
-    uint8_t tx_signaling_syst;
-    uint8_t _unused38;
-    uint8_t rx_signaling_syst;
-
-    // Bytes 40-43
-    uint8_t _unused40;
-    uint8_t privacy_group;
-
-    uint8_t colorcode_tx;
-    uint8_t group_list_index;
-
-    // Bytes 44-47
-    uint8_t colorcode_rx;
-    uint8_t emergency_system_index;
-    uint16_t contact_name_index;
-
-    // Byte 48
-    uint8_t _unused48           : 6,
-            emergency_alarm_ack : 1,
-            data_call_conf      : 1;
-
-    // Byte 49
-    uint8_t private_call_conf   : 1,
-            _unused49_1         : 3,
-            privacy             : 1,
-            _unused49_5         : 1,
-            repeater_slot2      : 1,
-            _unused49_7         : 1;
-
-    // Byte 50
-    uint8_t dcdm                : 1,
-            _unused50_1         : 4,
-            non_ste_frequency   : 1,
-            _unused50_6         : 2;
-
-    // Byte 51
-    uint8_t squelch             : 1,
-            bandwidth           : 1,
-            rx_only             : 1,
-            talkaround          : 1,
-            _unused51_4         : 2,
-            vox                 : 1,
-            power               : 1;
-
-    // Bytes 52-55
-    uint8_t _unused52[4];
-}
-gdxChannel_t;
+#include "nvmData_GDx.h"
 
 #if defined(PLATFORM_GD77)
 static const uint32_t UHF_CAL_BASE = 0x8F000;
@@ -120,6 +35,14 @@ static const uint32_t VHF_CAL_BASE = 0x6F070;
 #else
 #warning GDx calibration: platform not supported
 #endif
+
+//const uint32_t zoneBaseAddr    = 0x149e0;  /**< Base address of zones                */
+const uint32_t channelBaseAddrEEPROM = 0x03790;  /**< Base address of channel data   */
+const uint32_t channelBaseAddrFlash  = 0x7b1c0;  /**< Base address of channel data   */
+const uint32_t contactBaseAddr = 0x87620;  /**< Base address of contacts             */
+const uint32_t maxNumChannels  = 1024;     /**< Maximum number of channels in memory */
+const uint32_t maxNumZones     = 68;      /**< Maximum number of zones in memory    */
+const uint32_t maxNumContacts  = 1024;    /**< Maximum number of contacts in memory */
 
 /**
  * \internal Utility function to convert 4 byte BCD values into a 32-bit
@@ -247,9 +170,120 @@ int nvm_readVFOChannelData(channel_t *channel)
 
 int nvm_readChannelData(channel_t *channel, uint16_t pos)
 {
-    (void) channel;
-    (void) pos;
-    return -1;
+    if((pos <= 0) || (pos > maxNumChannels))
+        return -1;
+        
+    // Channels are organized in 128-channel banks
+    uint8_t bank_num = (pos - 1) / 128;
+    // Note: pos is 1-based because an empty slot in a zone contains index 0
+    uint8_t bank_channel = (pos - 1) % 128;
+
+    // ### Read channel bank bitmap ###
+    uint8_t bitmap[16];
+    // First channel bank (128 channels) is saved in EEPROM
+    if(pos <= 128)
+    {
+        uint32_t readAddr = channelBaseAddrEEPROM + bank_num * sizeof(gdxChannelBank_t);
+        AT24Cx_readData(readAddr, ((uint8_t *) &bitmap), sizeof(bitmap));
+    }
+    // Remaining 7 channel banks (896 channels) are saved in SPI Flash
+    else
+    {
+        W25Qx_wakeup();
+        delayUs(5);
+        uint32_t readAddr = channelBaseAddrFlash + (bank_num - 1) * sizeof(gdxChannelBank_t);
+        W25Qx_readData(readAddr, ((uint8_t *) &bitmap), sizeof(bitmap));
+        W25Qx_sleep();
+    }
+    uint8_t bitmap_byte = bank_channel / 8;
+    uint8_t bitmap_bit = bank_channel % 8;
+    gdxChannelBank_t chBank;
+    // The channel is marked not valid in the bitmap
+    if(!(bitmap[bitmap_byte] & (1 >> bitmap_bit)))
+        return -1;
+    // The channel is marked valid in the bitmap
+    else
+    // ### Read full channel bank ###
+    {
+        // First channel bank (128 channels) is saved in EEPROM
+        if(pos <= 128)
+        {
+            uint32_t readAddr = channelBaseAddrEEPROM + bank_num * sizeof(gdxChannelBank_t);
+            AT24Cx_readData(readAddr, ((uint8_t *) &chBank), sizeof(gdxChannelBank_t));
+        }
+        // Remaining 7 channel banks (896 channels) are saved in SPI Flash
+        else
+        {
+            W25Qx_wakeup();
+            delayUs(5);
+            uint32_t readAddr = channelBaseAddrFlash + (bank_num - 1) * sizeof(gdxChannelBank_t);
+            W25Qx_readData(readAddr, ((uint8_t *) &chBank), sizeof(gdxChannelBank_t));
+            W25Qx_sleep();
+        }
+    }
+    gdxChannel_t chData = chBank.chan[bank_channel];
+    // Copy data to OpenRTX channel_t
+    channel->mode            = chData.channel_mode - 1;
+    channel->bandwidth       = chData.bandwidth;
+    channel->admit_criteria  = chData.admit_criteria;
+    channel->squelch         = chData.squelch;
+    channel->rx_only         = chData.rx_only;
+    channel->vox             = chData.vox;
+    channel->power           = ((chData.power == 1) ? 5.0f : 1.0f);
+    channel->rx_frequency    = _bcd2bin(chData.rx_frequency) * 10;
+    channel->tx_frequency    = _bcd2bin(chData.tx_frequency) * 10;
+    channel->tot             = chData.tot;
+    channel->tot_rekey_delay = chData.tot_rekey_delay;
+    channel->emSys_index     = chData.emergency_system_index;
+    channel->scanList_index  = chData.scan_list_index;
+    channel->groupList_index = chData.group_list_index;
+    memcpy(channel->name, chData.name, sizeof(chData.name));
+
+    /* Load mode-specific parameters */
+    if(channel->mode == FM)
+    {
+        channel->fm.txToneEn = 0;
+        channel->fm.rxToneEn = 0;
+        uint16_t rx_css = chData.ctcss_dcs_receive;
+        uint16_t tx_css = chData.ctcss_dcs_transmit;
+
+        // TODO: Implement binary search to speed up this lookup
+        if((rx_css != 0) && (rx_css != 0xFFFF))
+        {
+            for(int i = 0; i < MAX_TONE_INDEX; i++)
+            {
+                if(ctcss_tone[i] == ((uint16_t) _bcd2bin(rx_css)))
+                {
+                    channel->fm.rxTone = i;
+                    channel->fm.rxToneEn = 1;
+                    break;
+                }
+            }
+        }
+
+        if((tx_css != 0) && (tx_css != 0xFFFF))
+        {
+            for(int i = 0; i < MAX_TONE_INDEX; i++)
+            {
+                if(ctcss_tone[i] == ((uint16_t) _bcd2bin(tx_css)))
+                {
+                    channel->fm.txTone = i;
+                    channel->fm.txToneEn = 1;
+                    break;
+                }
+            }
+        }
+
+        // TODO: Implement warning screen if tone was not found
+    }
+    else if(channel->mode == DMR)
+    {
+        channel->dmr.contactName_index = chData.contact_name_index;
+        channel->dmr.dmr_timeslot      = chData.repeater_slot;
+        channel->dmr.rxColorCode       = chData.colorcode_rx;
+        channel->dmr.txColorCode       = chData.colorcode_tx;
+    }
+    return 0;
 }
 
 int nvm_readZoneData(zone_t *zone, uint16_t pos)
