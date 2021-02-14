@@ -146,11 +146,13 @@ int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
     else if(strcmp(settings_gps_items[index], "GPS Set Time") == 0)
         snprintf(buf, max_len, "%s", (last_state.settings.gps_set_time) ? "ON" : "OFF");
     else if(strcmp(settings_gps_items[index], "UTC Timezone") == 0)
+    {
         // Add + prefix to positive numbers
         if(last_state.settings.utc_timezone > 0)
             snprintf(buf, max_len, "+%d", last_state.settings.utc_timezone);
         else
             snprintf(buf, max_len, "%d", last_state.settings.utc_timezone);
+    }
     return 0;
 }
 
@@ -270,18 +272,15 @@ void _ui_drawMenuGPS(ui_state_t* ui_state)
     // Print "GPS" on top bar
     gfx_print(layout.top_pos, "GPS", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
+    point_t fix_pos = {layout.line2_pos.x, SCREEN_HEIGHT * 2 / 5};
     // Print GPS status, if no fix, hide details
-    if (last_state.gps_data.fix_quality == 0)
-    {
-        point_t fix_pos = {layout.line2_pos.x, SCREEN_HEIGHT * 2 / 5};
-        gfx_print(fix_pos, "No Fix", layout.line3_font, TEXT_ALIGN_CENTER,
-                  color_white);
-    } else if (last_state.gps_data.fix_quality == 6)
-    {
-        point_t fix_pos = {layout.line2_pos.x, SCREEN_HEIGHT * 2 / 5};
-        gfx_print(fix_pos, "Fix Lost", layout.line3_font, TEXT_ALIGN_CENTER,
-                  color_white);
-    } else
+    if(!last_state.settings.gps_enabled)
+        gfx_print(fix_pos, "GPS OFF", layout.line3_font, TEXT_ALIGN_CENTER, color_white);
+    else if (last_state.gps_data.fix_quality == 0)
+        gfx_print(fix_pos, "No Fix", layout.line3_font, TEXT_ALIGN_CENTER, color_white);
+    else if (last_state.gps_data.fix_quality == 6)
+        gfx_print(fix_pos, "Fix Lost", layout.line3_font, TEXT_ALIGN_CENTER, color_white);
+    else
     {
         switch(last_state.gps_data.fix_quality)
         {

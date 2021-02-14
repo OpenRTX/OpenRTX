@@ -67,6 +67,7 @@
 #include <rtx.h>
 #include <interfaces/platform.h>
 #include <interfaces/nvmem.h>
+#include <interfaces/gps.h>
 #include <string.h>
 #include <battery.h>
 #include <input.h>
@@ -1046,23 +1047,30 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     _ui_menuBack(MENU_SETTINGS);
                 break;
             case SETTINGS_GPS:
-                if(msg.keys & KEY_LEFT || (msg.keys & KEY_UP && ui_state.edit_mode))
+                if(msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT || 
+                   ((msg.keys & KEY_UP || msg.keys & KEY_DOWN) && ui_state.edit_mode))
                 {
                     if(strcmp(settings_gps_items[ui_state.menu_selected], "GPS Enabled") == 0)
-                        state.settings.gps_enabled = !state.settings.gps_enabled;
+                    {
+                        // Disable or Enable GPS to stop or start GPS thread
+                        if(state.settings.gps_enabled)
+                        {
+                            state.settings.gps_enabled = !state.settings.gps_enabled;
+                            gps_disable();
+                        }
+                        else
+                        {
+                            state.settings.gps_enabled = !state.settings.gps_enabled;
+                            gps_enable();
+                        }
+                    }
                     else if(strcmp(settings_gps_items[ui_state.menu_selected], "GPS Set Time") == 0)
                         state.settings.gps_set_time = !state.settings.gps_set_time;
                     else if(strcmp(settings_gps_items[ui_state.menu_selected], "UTC Timezone") == 0)
-                        state.settings.utc_timezone -= 1;
-                }
-                else if(msg.keys & KEY_RIGHT || (msg.keys & KEY_DOWN && ui_state.edit_mode))
-                {
-                    if(strcmp(settings_gps_items[ui_state.menu_selected], "GPS Enabled") == 0)
-                        state.settings.gps_enabled = !state.settings.gps_enabled;
-                    else if(strcmp(settings_gps_items[ui_state.menu_selected], "GPS Set Time") == 0)
-                        state.settings.gps_set_time = !state.settings.gps_set_time;
-                    else if(strcmp(settings_gps_items[ui_state.menu_selected], "UTC Timezone") == 0)
-                        state.settings.utc_timezone += 1;
+                        if(msg.keys & KEY_LEFT || msg.keys & KEY_UP)
+                            state.settings.utc_timezone -= 1;
+                        else if(msg.keys & KEY_RIGHT || msg.keys & KEY_DOWN)
+                            state.settings.utc_timezone += 1;
                 }
                 else if(msg.keys & KEY_UP)
                     _ui_menuUp(settings_gps_num);
