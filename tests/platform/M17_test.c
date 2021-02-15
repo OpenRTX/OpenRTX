@@ -86,7 +86,8 @@ int main(void)
     while (1)
     {
         for(uint32_t i = 0; i < 46072; i++) {
-            int16_t value = 0x800 + (m17_buf[i] >> 4);
+            int16_t m17_sample = ((int16_t*)m17_buf)[i];
+            int16_t value = 0x800 + (m17_sample >> 4);
             DAC->DHR12R2 = ((uint16_t) value);
             delayUs(20);
         }
