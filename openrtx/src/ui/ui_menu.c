@@ -327,7 +327,7 @@ void _ui_drawMenuGPS()
         snprintf(lon_buf, 12, "%8.6f", last_state.gps_data.longitude);
         gfx_print(layout.line2_pos, lon_buf, layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white);
-        snprintf(data_buf, 25, "S %5.2fkm/h  A %5.2fm",
+        snprintf(data_buf, 25, "S %5.2fkm/h  A %4.1fm",
                  last_state.gps_data.speed,
                  last_state.gps_data.altitude);
         gfx_print(layout.bottom_pos, data_buf, layout.bottom_font, TEXT_ALIGN_CENTER,
