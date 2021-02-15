@@ -51,19 +51,32 @@ uint16_t pos = 0;
 
 void __attribute__((used)) TIM7_IRQHandler()
 {
+    OSIntEnter();
+
+    TIM7->SR  = 0;
+
     int16_t sample = ((int16_t *) m17_buf)[pos] + 32768;
     uint16_t value = ((uint16_t) sample);
     DAC->DHR12R2 = value >> 4;
 
     pos++;
     if(pos > 46072) pos = 0;
+    if(pos == 0)
+        GPIOB->BSRRL = 1 << 3;
+    else
+        GPIOB->BSRRH = 1 << 3;
+
+    OSIntExit();
 }
 
 
 int main(void)
 {
     platform_init();
-    toneGen_init();
+//     toneGen_init();
+
+    gpio_setMode(GPIOB, 3, OUTPUT);
+    gpio_clearPin(GPIOB, 3);
 
     OSMutexCreate(&mutex, "", &err);
     rtx_init(&mutex);
@@ -71,11 +84,15 @@ int main(void)
     RCC->APB1ENR |= RCC_APB1ENR_TIM7EN;
     __DSB();
 
-    TIM7->CNT  = (42000000/48000) - 1;
+    TIM7->CNT  = 0;
+    TIM7->PSC  = 0;
+    TIM7->ARR  = 1749;//(84000000/48000) - 1;
+    TIM7->EGR  = TIM_EGR_UG;
     TIM7->DIER = TIM_DIER_UIE;
+    TIM7->CR1  = TIM_CR1_CEN;
 
     NVIC_ClearPendingIRQ(TIM7_IRQn);
-    NVIC_SetPriority(TIM7_IRQn, 5);
+    NVIC_SetPriority(TIM7_IRQn, 10);
     NVIC_EnableIRQ(TIM7_IRQn);
 
     rtxStatus_t cfg;
@@ -97,7 +114,6 @@ int main(void)
     /* After mutex has been released, post the new configuration */
     rtx_configure(&cfg);
 
-    TIM7->CR1 |= TIM_CR1_CEN;
 
     while (1)
     {
