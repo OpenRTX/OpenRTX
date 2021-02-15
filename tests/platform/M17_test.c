@@ -45,24 +45,38 @@
 OS_MUTEX mutex;
 OS_ERR err;
 
-static OS_TCB  rtxTCB;
-static CPU_STK rtxStk[512/sizeof(CPU_STK)];
-static void rtxTask(void *arg);
-
 extern int16_t m17_buf[];
+
+uint16_t pos = 0;
+
+void __attribute__((used)) TIM7_IRQHandler()
+{
+    int16_t sample = ((int16_t *) m17_buf)[pos] + 32768;
+    uint16_t value = ((uint16_t) sample);
+    DAC->DHR12R2 = value >> 4;
+
+    pos++;
+    if(pos > 46072) pos = 0;
+}
+
 
 int main(void)
 {
     platform_init();
     toneGen_init();
 
-    OSTaskCreate(&rtxTCB, "", rtxTask, 0, 10, &rtxStk[0], 0,
-                 512/sizeof(CPU_STK), 0, 0, 0,
-                 (OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR), &err);
-
     OSMutexCreate(&mutex, "", &err);
     rtx_init(&mutex);
 
+    RCC->APB1ENR |= RCC_APB1ENR_TIM7EN;
+    __DSB();
+
+    TIM7->CNT  = (42000000/48000) - 1;
+    TIM7->DIER = TIM_DIER_UIE;
+
+    NVIC_ClearPendingIRQ(TIM7_IRQn);
+    NVIC_SetPriority(TIM7_IRQn, 5);
+    NVIC_EnableIRQ(TIM7_IRQn);
 
     rtxStatus_t cfg;
 
@@ -83,28 +97,13 @@ int main(void)
     /* After mutex has been released, post the new configuration */
     rtx_configure(&cfg);
 
-    while (1)
-    {
-        for(uint32_t i = 0; i < 46072; i++) {
-            int16_t m17_sample = ((int16_t*)m17_buf)[i];
-            int16_t value = 0x800 + (m17_sample >> 4);
-            DAC->DHR12R2 = ((uint16_t) value);
-            delayUs(20);
-        }
-        //OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
-    }
-
-    return 0;
-}
-
-void rtxTask(void* arg)
-{
-    (void) arg;
+    TIM7->CR1 |= TIM_CR1_CEN;
 
     while (1)
     {
         rtx_taskFunc();
         OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &err);
     }
-}
 
+    return 0;
+}
