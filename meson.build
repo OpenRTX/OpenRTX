@@ -20,7 +20,8 @@ openrtx_src = ['openrtx/src/bootstrap.c',
                'openrtx/src/battery.c',
                'openrtx/src/graphics.c',
                'openrtx/src/input.c',
-               'openrtx/src/calibUtils.c']
+               'openrtx/src/calibUtils.c',
+               'tests/platform/M17_sample.c']
 
 
 ## Replace main executable with platform test

@@ -33,6 +33,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <os.h>
+#include <inttypes.h>
 #include <interfaces/gpio.h>
 #include <interfaces/delays.h>
 #include <interfaces/rtx.h>
@@ -47,6 +48,8 @@ OS_ERR err;
 static OS_TCB  rtxTCB;
 static CPU_STK rtxStk[512/sizeof(CPU_STK)];
 static void rtxTask(void *arg);
+
+extern int16_t m17_buf[];
 
 int main(void)
 {
@@ -82,19 +85,12 @@ int main(void)
 
     while (1)
     {
-        unsigned char iBias = 0;
-        unsigned char qBias = 0;
-
-        int i = getc(stdin);
-        int q = getc(stdin);
-
-        if(i > 0) iBias = ((unsigned char) i);
-        if(q > 0) qBias = ((unsigned char) q);
-
-        C5000_changeIQbias(iBias, qBias);
-        printf("I: %d, Q: %d\r\n", iBias, qBias);
-
-        OSTimeDlyHMSM(0u, 0u, 0u, 250u, OS_OPT_TIME_HMSM_STRICT, &err);
+        for(uint32_t i = 0; i < 46072; i++) {
+            int16_t value = 0x800 + (m17_buf[i] >> 4);
+            DAC->DHR12R2 = ((uint16_t) value);
+            delayUs(20);
+        }
+        //OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
     }
 
     return 0;
