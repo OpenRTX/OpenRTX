@@ -30,8 +30,8 @@
 float bat_v_min = 3.61f;
 float bat_v_max = 4.15f;
 #elif defined BAT_LIPO_2S
-float bat_v_min = 7.22f;
-float bat_v_max = 8.30f;
+float bat_v_min = 7.10f;
+float bat_v_max = 8.10f;
 #elif defined BAT_LIPO_3S
 float bat_v_min = 10.83;
 float bat_v_max = 12.45;
