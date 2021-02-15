@@ -120,10 +120,10 @@ const char *menu_items[] =
 
 const char *settings_items[] =
 {
+    "Display",
 #ifdef HAS_RTC
     "Time & Date",
 #endif
-    "Display",
 #ifdef HAS_GPS
     "GPS"
 #endif
@@ -830,25 +830,32 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     _ui_menuDown(menu_num);
                 else if(msg.keys & KEY_ENTER)
                 {
-                    // Open selected menu item
-                    if(strcmp(menu_items[ui_state.menu_selected], "Zone") == 0)
-                        state.ui_screen = MENU_ZONE;
-                    else if(strcmp(menu_items[ui_state.menu_selected], "Channels") == 0)
-                        state.ui_screen = MENU_CHANNEL;
-                    else if(strcmp(menu_items[ui_state.menu_selected], "Contacts") == 0)
-                        state.ui_screen = MENU_CONTACTS;
-                    else if(strcmp(menu_items[ui_state.menu_selected], "Messages") == 0)
-                        state.ui_screen = MENU_TOP;
-                    else if(strcmp(menu_items[ui_state.menu_selected], "GPS") == 0)
-                        state.ui_screen = MENU_GPS;
-                    else if(strcmp(menu_items[ui_state.menu_selected], "Settings") == 0)
-                        state.ui_screen = MENU_SETTINGS;
-                    else if(strcmp(menu_items[ui_state.menu_selected], "Info") == 0)
-                        state.ui_screen = MENU_INFO;
-                    else if(strcmp(menu_items[ui_state.menu_selected], "About") == 0)
-                        state.ui_screen = MENU_ABOUT;
-                    else
-                        state.ui_screen = MENU_TOP;
+                    switch(ui_state.menu_selected)
+                    {
+                        case M_ZONE:
+                            state.ui_screen = MENU_ZONE;
+                            break;
+                        case M_CHANNEL:
+                            state.ui_screen = MENU_CHANNEL;
+                            break;
+                        case M_CONTACTS:
+                            state.ui_screen = MENU_CONTACTS;
+                            break;
+#ifdef HAS_GPS
+                        case M_GPS:
+                            state.ui_screen = MENU_GPS;
+                            break;
+#endif
+                        case M_SETTINGS:
+                            state.ui_screen = MENU_SETTINGS;
+                            break;
+                        case M_INFO:
+                            state.ui_screen = MENU_INFO;
+                            break;
+                        case M_ABOUT:
+                            state.ui_screen = MENU_ABOUT;
+                            break;
+                    }
                     // Reset menu selection
                     ui_state.menu_selected = 0;
                 }
@@ -943,16 +950,23 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     _ui_menuDown(settings_num);
                 else if(msg.keys & KEY_ENTER)
                 {
-                    if(strcmp(settings_items[ui_state.menu_selected], "Time & Date") == 0)
-                        state.ui_screen = SETTINGS_TIMEDATE;
-                    else if(strcmp(settings_items[ui_state.menu_selected], "Display") == 0)
-                        state.ui_screen = SETTINGS_DISPLAY;
-#ifdef HAS_GPS
-                    else if(strcmp(settings_items[ui_state.menu_selected], "GPS") == 0)
-                        state.ui_screen = SETTINGS_GPS;
+
+                    switch(ui_state.menu_selected)
+                    {
+                        case S_DISPLAY:
+                            state.ui_screen = SETTINGS_DISPLAY;
+                            break;
+#ifdef HAS_RTC
+                        case S_TIMEDATE:
+                            state.ui_screen = SETTINGS_TIMEDATE;
+                            break;
 #endif
-                    else
-                        state.ui_screen = MENU_TOP;
+#ifdef HAS_GPS
+                        case S_GPS:
+                            state.ui_screen = SETTINGS_GPS;
+                            break;
+#endif
+                    }
                     // Reset menu selection
                     ui_state.menu_selected = 0;
                 }
@@ -1024,24 +1038,30 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
             case SETTINGS_DISPLAY:
                 if(msg.keys & KEY_LEFT || (msg.keys & KEY_UP && ui_state.edit_mode))
                 {
-                    if(strcmp(display_items[ui_state.menu_selected], "Brightness") == 0)
+                    switch(ui_state.menu_selected)
                     {
-                        _ui_changeBrightness(-25);
-                    }
-                    else if(strcmp(display_items[ui_state.menu_selected], "Contrast") == 0)
-                    {
-                        _ui_changeContrast(-25);
+                        case D_BRIGHTNESS:
+                            _ui_changeBrightness(-25);
+                            break;
+#ifdef SCREEN_CONTRAST
+                        case D_CONTRAST:
+                            _ui_changeContrast(-25);
+                            break;
+#endif
                     }
                 }
                 else if(msg.keys & KEY_RIGHT || (msg.keys & KEY_DOWN && ui_state.edit_mode))
                 {
-                    if(strcmp(display_items[ui_state.menu_selected], "Brightness") == 0)
+                    switch(ui_state.menu_selected)
                     {
-                        _ui_changeBrightness(+25);
-                    }
-                    else if(strcmp(display_items[ui_state.menu_selected], "Contrast") == 0)
-                    {
-                        _ui_changeContrast(+25);
+                        case D_BRIGHTNESS:
+                            _ui_changeBrightness(+25);
+                            break;
+#ifdef SCREEN_CONTRAST
+                        case D_CONTRAST:
+                            _ui_changeContrast(+25);
+                            break;
+#endif
                     }
                 }
                 else if(msg.keys & KEY_UP)
@@ -1058,28 +1078,31 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 if(msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT || 
                    ((msg.keys & KEY_UP || msg.keys & KEY_DOWN) && ui_state.edit_mode))
                 {
-                    if(strcmp(settings_gps_items[ui_state.menu_selected], "GPS Enabled") == 0)
+                    switch(ui_state.menu_selected)
                     {
-                        // Disable or Enable GPS to stop or start GPS thread
-                        if(state.settings.gps_enabled)
-                        {
-                            state.settings.gps_enabled = !state.settings.gps_enabled;
-                            gps_disable();
-                        }
-                        else
-                        {
-                            state.settings.gps_enabled = !state.settings.gps_enabled;
-                            gps_enable();
-                        }
-                    }
-                    else if(strcmp(settings_gps_items[ui_state.menu_selected], "GPS Set Time") == 0)
-                        state.settings.gps_set_time = !state.settings.gps_set_time;
-                    else if(strcmp(settings_gps_items[ui_state.menu_selected], "UTC Timezone") == 0)
-                    {
-                        if(msg.keys & KEY_LEFT || msg.keys & KEY_UP)
-                            state.settings.utc_timezone -= 1;
-                        else if(msg.keys & KEY_RIGHT || msg.keys & KEY_DOWN)
-                            state.settings.utc_timezone += 1;
+                        case G_ENABLED:
+                            // Disable or Enable GPS to stop or start GPS thread
+                            if(state.settings.gps_enabled)
+                            {
+                                state.settings.gps_enabled = !state.settings.gps_enabled;
+                                gps_disable();
+                            }
+                            else
+                            {
+                                state.settings.gps_enabled = !state.settings.gps_enabled;
+                                gps_enable();
+                            }
+                            break;
+                        case G_SET_TIME:
+                            state.settings.gps_set_time = !state.settings.gps_set_time;
+                            break;
+                        case G_TIMEZONE:
+                            if(msg.keys & KEY_LEFT || msg.keys & KEY_UP)
+                                state.settings.utc_timezone -= 1;
+                            else if(msg.keys & KEY_RIGHT || msg.keys & KEY_DOWN)
+                                state.settings.utc_timezone += 1;
+                            break;
+
                     }
                 }
                 else if(msg.keys & KEY_UP)

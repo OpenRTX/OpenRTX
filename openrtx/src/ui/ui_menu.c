@@ -123,10 +123,17 @@ int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= display_num) return -1;
     uint8_t value = 0;
-    if(strcmp(display_items[index], "Brightness") == 0)
-        value = last_state.settings.brightness;
-    else if(strcmp(display_items[index], "Contrast") == 0)
-        value = last_state.settings.contrast;
+    switch(index)
+    {
+        case D_BRIGHTNESS:
+            value = last_state.settings.brightness;
+            break;
+#ifdef SCREEN_CONTRAST
+        case D_CONTRAST:
+            value = last_state.settings.contrast;
+            break;
+#endif
+    }
     snprintf(buf, max_len, "%d", value);
     return 0;
 }
@@ -141,17 +148,21 @@ int _ui_getSettingsGPSEntryName(char *buf, uint8_t max_len, uint8_t index)
 int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= settings_gps_num) return -1;
-    if(strcmp(settings_gps_items[index], "GPS Enabled") == 0)
-        snprintf(buf, max_len, "%s", (last_state.settings.gps_enabled) ? "ON" : "OFF");
-    else if(strcmp(settings_gps_items[index], "GPS Set Time") == 0)
-        snprintf(buf, max_len, "%s", (last_state.settings.gps_set_time) ? "ON" : "OFF");
-    else if(strcmp(settings_gps_items[index], "UTC Timezone") == 0)
+    switch(index)
     {
-        // Add + prefix to positive numbers
-        if(last_state.settings.utc_timezone > 0)
-            snprintf(buf, max_len, "+%d", last_state.settings.utc_timezone);
-        else
-            snprintf(buf, max_len, "%d", last_state.settings.utc_timezone);
+        case G_ENABLED:
+            snprintf(buf, max_len, "%s", (last_state.settings.gps_enabled) ? "ON" : "OFF");
+            break;
+        case G_SET_TIME:
+            snprintf(buf, max_len, "%s", (last_state.settings.gps_set_time) ? "ON" : "OFF");
+            break;
+        case G_TIMEZONE:
+            // Add + prefix to positive numbers
+            if(last_state.settings.utc_timezone > 0)
+                snprintf(buf, max_len, "+%d", last_state.settings.utc_timezone);
+            else
+                snprintf(buf, max_len, "%d", last_state.settings.utc_timezone);
+            break;
     }
     return 0;
 }
@@ -167,22 +178,33 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
 {
     const hwInfo_t* hwinfo = platform_getHwInfo();
     if(index >= info_num) return -1;
-    else if(strcmp(info_items[index], "Bat. Voltage") == 0)
-        snprintf(buf, max_len, "%.1fV", last_state.v_bat);
-    else if(strcmp(info_items[index], "Bat. Charge") == 0)
-        snprintf(buf, max_len, "%.1f%%", last_state.charge * 100);
-    else if(strcmp(info_items[index], "RSSI") == 0)
-        snprintf(buf, max_len, "%.1fdBm", last_state.rssi);
-    if(strcmp(info_items[index], "Model") == 0)
-        snprintf(buf, max_len, "%s", hwinfo->name);
-    if(strcmp(info_items[index], "Band") == 0)
-        snprintf(buf, max_len, "%s %s", hwinfo->vhf_band ? "VHF" : "", hwinfo->uhf_band ? "UHF" : "");
-    else if(strcmp(info_items[index], "VHF") == 0)
-        snprintf(buf, max_len, "%d - %d", hwinfo->vhf_minFreq, hwinfo->vhf_maxFreq);
-    else if(strcmp(info_items[index], "UHF") == 0)
-        snprintf(buf, max_len, "%d - %d", hwinfo->uhf_minFreq, hwinfo->uhf_maxFreq);
-    else if(strcmp(info_items[index], "LCD Type") == 0)
-        snprintf(buf, max_len, "%d", hwinfo->lcd_type);
+    switch(index)
+    {
+        case 0: // Battery voltage
+            snprintf(buf, max_len, "%.1fV", last_state.v_bat);
+            break;
+        case 1: // Battery charge
+            snprintf(buf, max_len, "%.1f%%", last_state.charge * 100);
+            break;
+        case 2: // RSSI
+            snprintf(buf, max_len, "%.1fdBm", last_state.rssi);
+            break;
+        case 3: // Model
+            snprintf(buf, max_len, "%s", hwinfo->name);
+            break;
+        case 4: // Band
+            snprintf(buf, max_len, "%s %s", hwinfo->vhf_band ? "VHF" : "", hwinfo->uhf_band ? "UHF" : "");
+            break;
+        case 5: // VHF
+            snprintf(buf, max_len, "%d - %d", hwinfo->vhf_minFreq, hwinfo->vhf_maxFreq);
+            break;
+        case 6: // UHF
+            snprintf(buf, max_len, "%d - %d", hwinfo->uhf_minFreq, hwinfo->uhf_maxFreq);
+            break;
+        case 7: // LCD Type
+            snprintf(buf, max_len, "%d", hwinfo->lcd_type);
+            break;
+    }
     return 0;
 }
 

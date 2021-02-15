@@ -62,6 +62,50 @@ enum SetRxTx
     SET_TX
 };
 
+// This enum is needed to have item numbers that match
+// menu elements even if some elements may be missing (GPS)
+enum menuItems
+{
+    M_ZONE = 0,
+    M_CHANNEL,
+    M_CONTACTS,
+    M_MESSAGES,
+#ifdef HAS_GPS
+    M_GPS,
+#endif
+    M_SETTINGS,
+    M_INFO,
+    M_ABOUT
+};
+
+enum settingsItems
+{
+    S_DISPLAY = 0,
+#ifdef HAS_RTC
+    S_TIMEDATE
+#endif
+#ifdef HAS_GPS
+    ,S_GPS
+#endif
+};
+
+enum displayItems
+{
+    D_BRIGHTNESS = 0
+#ifdef SCREEN_CONTRAST
+    ,D_CONTRAST
+#endif
+};
+
+#ifdef HAS_GPS
+enum settingsGPSItems
+{
+    G_ENABLED = 0,
+    G_SET_TIME,
+    G_TIMEZONE
+};
+#endif
+
 /**
  * Struct containing a set of positions and sizes that get
  * calculated for the selected display size.
