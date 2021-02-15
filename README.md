@@ -21,11 +21,13 @@ For hardware and software documentation visit [openrtx.org](https://openrtx.org/
 ## Flash on MD-3x0 and MD-UV3x0
 
 On TYT MD-3x0 and MD-UV3x0 you can flash our firmware using tarxvf's web based flashing tool.
-Download the latest OpenRTX release for your radio from [the releases page](https://github.com/OpenRTX/OpenRTX/releases).
-Connect your radio to the PC, put it in DFU mode (turn off, keep pressing PTT and the button just above, turn on radio).
-On any operating system, open Chrome/Chromium and navigate to [dmr.tools](https://dmr.tools),
-click on "upgrade", then "Connect Radio(s)", under "Select firmware file" choose "Upload from my computer",
-click on "Choose File", select the latest OpenRTX release you downloaded before, and click on "Upgrade Radio".
+
+- Download the latest OpenRTX release for your radio from [the releases page](https://github.com/OpenRTX/OpenRTX/releases).
+- Connect your radio to the PC, put it in DFU mode (turn off, turn on pressing PTT and the button just above).
+- On any operating system, open Chrome/Chromium and navigate to [dmr.tools](https://dmr.tools),
+- Click on "Upgrade", then "Connect Radio(s)", under "Select firmware file" choose "Upload from my computer",
+- Click on "Choose File", select the latest OpenRTX release you downloaded before, and click on "Upgrade Radio".
+- Reboot your radio
 
 ## Compile and flash
 
