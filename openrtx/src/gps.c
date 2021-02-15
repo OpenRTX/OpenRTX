@@ -34,7 +34,6 @@ void gps_taskFunc(char *line, int len, gps_t *state)
             if (minmea_parse_rmc(&frame, line)) {
                 state->latitude = minmea_tocoord(&frame.latitude);
                 state->longitude = minmea_tocoord(&frame.longitude);
-                state->speed = minmea_tofloat(&frame.speed);
                 state->timestamp.hour = frame.time.hours;
                 state->timestamp.minute = frame.time.minutes;
                 state->timestamp.second = frame.time.seconds;
