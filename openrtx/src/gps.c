@@ -36,7 +36,7 @@ void gps_taskFunc(char *line, int len, gps_t *state)
                 state->longitude = minmea_tocoord(&frame.longitude);
                 state->timestamp.hour = frame.time.hours;
                 state->timestamp.minute = frame.time.minutes;
-                state->timestamp.second = frame.time.seconds;
+                state->timestamp.second = frame.time.seconds - 1;
                 state->timestamp.day = 0;
                 state->timestamp.date = frame.date.day;
                 state->timestamp.month = frame.date.month;
