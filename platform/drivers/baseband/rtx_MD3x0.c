@@ -121,6 +121,8 @@ void _setVcoFrequency()
 
 void _enableTxStage()
 {
+//     if(rtxStatus.txDisable == 1) return;
+
     gpio_clearPin(RX_STG_EN);
 
     gpio_setPin(RF_APC_SW);
@@ -181,7 +183,7 @@ void _updateC5000IQparams()
     uint8_t Q = interpCalParameter(rtxStatus.txFrequency, calData->txFreq, Qcal,
                                    9);
 
-    C5000_setModAmplitude(0, 0);
+    C5000_setModAmplitude(I, Q);
 }
 
 void _setCTCSS()
@@ -299,7 +301,7 @@ void rtx_init(OS_MUTEX *m)
      * Modulation bias settings
      */
     DAC->DHR12R2 = (calData->freqAdjustMid)*4 + 0x600; /* Original FW does this */
-    C5000_setModOffset(0);//calData->freqAdjustMid);
+    C5000_setModOffset(calData->freqAdjustMid);
 
     /*
      * Default initialisation for rtx status

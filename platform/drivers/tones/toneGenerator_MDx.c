@@ -78,7 +78,7 @@ void __attribute__((used)) TIM3_IRQHandler()
     beepTableIndex += beepTableIncr;
 
     TIM3->CCR2 = sineTable[(toneTableIndex >> 16) & 0xFF];
-    TIM3->CCR3 = sineTable[(beepTableIndex >> 16) & 0xFF];
+//     TIM3->CCR3 = sineTable[(beepTableIndex >> 16) & 0xFF];
     TIM3->SR = 0;
 
     if(beepTimerCount > 0)

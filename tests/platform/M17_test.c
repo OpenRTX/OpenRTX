@@ -57,7 +57,8 @@ void __attribute__((used)) TIM7_IRQHandler()
 
     int16_t sample = ((int16_t *) m17_buf)[pos] + 32768;
     uint16_t value = ((uint16_t) sample);
-    DAC->DHR12R2 = value >> 4;
+//     DAC->DHR12R2 = value >> 4;
+    TIM3->CCR3 = value >> 8;
 
     pos++;
     if(pos > 46072) pos = 0;
@@ -73,7 +74,9 @@ void __attribute__((used)) TIM7_IRQHandler()
 int main(void)
 {
     platform_init();
-//     toneGen_init();
+    toneGen_init();
+    toneGen_setBeepFreq(2400.0f);
+    toneGen_beepOn();
 
     gpio_setMode(GPIOB, 3, OUTPUT);
     gpio_clearPin(GPIOB, 3);
