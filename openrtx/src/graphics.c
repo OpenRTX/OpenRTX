@@ -586,20 +586,31 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
     color_t white =  {255, 255, 255, 255};
     color_t yellow = {250, 180, 19 , 255};
     color_t red =    {255, 0,   0  , 255};
+    char buf[4] = { 0 };
 
-    // S-level dots
+    // S-level marks and numbers
     for(int i = 0; i < 11; i++)
     {
         color_t color = (i % 3 == 0) ? yellow : white;
         color = (i > 9) ? red : color;
         point_t pixel_pos = {start.x + i * (width - 1) / 11, start.y};
-        gfx_setPixel(pixel_pos, color);
+        if (i == 10) {
+            pixel_pos.x -= 8;
+            snprintf(buf, 4, "+%d", i);
+        }
+        else
+            snprintf(buf, 4, "%d", i);
+        gfx_print(pixel_pos, buf, FONT_SIZE_5PT, TEXT_ALIGN_LEFT, color);
+        if (i == 10) {
+            pixel_pos.x += 8;
+        }
         pixel_pos.y += height;
         gfx_setPixel(pixel_pos, color);
     }
 
-    point_t pixel_pos = {start.x + width - 1, start.y};
-    gfx_setPixel(pixel_pos, red);
+    point_t pixel_pos = {start.x + width - 11, start.y};
+    gfx_print(pixel_pos, "+20", FONT_SIZE_5PT, TEXT_ALIGN_LEFT, red);
+    pixel_pos.x += 10;
     pixel_pos.y += height;
     gfx_setPixel(pixel_pos, red);
 
