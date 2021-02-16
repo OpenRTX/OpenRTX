@@ -23,6 +23,19 @@
 #include <string.h>
 #include <os.h>
 
+#define MAX_NMEA_LEN 80
+#define NMEA_SAMPLES 8
+
+char test_nmea_sentences [NMEA_SAMPLES][MAX_NMEA_LEN] = {
+    "$GPGGA,223659.522,5333.735,N,00959.130,E,1,12,1.0,0.0,M,0.0,M,,*62",
+    "$GPGSA,A,3,01,02,03,04,05,06,07,08,09,10,11,12,1.0,1.0,1.0*30",
+    "$GPGSV,3,1,12,30,79,066,27,05,63,275,21,07,42,056,,13,40,289,13*76",
+    "$GPGSV,3,2,12,14,36,147,20,28,30,151,,09,13,100,,02,08,226,30*72",
+    "$GPGSV,3,3,12,18,05,333,,15,04,289,22,08,03,066,,27,02,030,*79",
+    "$GPRMC,223659.522,A,5333.735,N,00959.130,E,,,160221,000.0,W*70",
+    "$GPVTG,92.15,T,,M,0.15,N,0.28,K,A*0C"
+};
+
 void gps_init(const uint16_t baud)
 {
     ;
@@ -51,10 +64,15 @@ bool gps_detect(uint16_t timeout)
 int gps_getNmeaSentence(char *buf, const size_t maxLength)
 {
     OS_ERR os_err;
+    static int i = 0;
 
-    // Emulate GPS device by sending NMEA sentence every 1s
-    OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
-    char *nmea_sample = "$GPRMC,083703.000,A,4229.7596,N,00912.5377,E,0.15,92.15,040221,,,A*51";
-    strncpy(buf, nmea_sample, maxLength);
+    // Emulate GPS device by sending NMEA sentences every 1s
+    if(i == 0)
+        OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+    int len = strnlen(test_nmea_sentences[i], MAX_NMEA_LEN);
+    strncpy(buf, test_nmea_sentences[i], MAX_NMEA_LEN);
+    i++;
+    i %= NMEA_SAMPLES;
+    return len;
 }
 
