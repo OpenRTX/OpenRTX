@@ -93,8 +93,8 @@ typedef struct
     uint8_t voxLevel;
 
     bool emergency;
-    gps_t gps_data;
     settings_t settings;
+    gps_t gps_data;
 }
 state_t;
 
