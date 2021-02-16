@@ -71,7 +71,8 @@ uint32_t beepTableIndex = 0; /* Current sine table index for "beep" generator */
 uint32_t beepTableIncr  = 0; /* "beep" sine table index increment per tick    */
 uint32_t beepTimerCount = 0; /* Downcounter for timed "beep"                  */
 
-void __attribute__((used)) TIM3_IRQHandler()
+// void __attribute__((used)) TIM3_IRQHandler()
+void foo()
 {
     OSIntEnter();
     toneTableIndex += toneTableIncr;
