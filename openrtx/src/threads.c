@@ -308,7 +308,14 @@ static void gps_task(void *arg)
         return;
 
     gps_init(9600);
-    gps_enable();
+    // Lock mutex to read internal state
+    OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
+    bool enabled = state.settings.gps_enabled;
+    OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
+    if(enabled)
+        gps_enable();
+    else
+        gps_disable();
 
     while(1)
     {
