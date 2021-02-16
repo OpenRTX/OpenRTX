@@ -118,7 +118,7 @@ int main(void)
     while (1)
     {
         rtx_taskFunc();
-        OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &err);
+        OSTimeDlyHMSM(0u, 0u, 0u, 10u, OS_OPT_TIME_HMSM_STRICT, &err);
     }
 
     return 0;
