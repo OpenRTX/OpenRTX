@@ -25,23 +25,26 @@
 /**
  * This function parses a GPS NMEA sentence and updates radio state
  */
-void gps_taskFunc(char *line, int len, gps_t *state)
+void gps_taskFunc(char *line, int len, state_t *state)
 {
     switch (minmea_sentence_id(line, false)) {
         case MINMEA_SENTENCE_RMC:
         {
             struct minmea_sentence_rmc frame;
             if (minmea_parse_rmc(&frame, line)) {
-                state->latitude = minmea_tocoord(&frame.latitude);
-                state->longitude = minmea_tocoord(&frame.longitude);
-                state->timestamp.hour = frame.time.hours;
-                state->timestamp.minute = frame.time.minutes;
-                state->timestamp.second = frame.time.seconds - 1;
-                state->timestamp.day = 0;
-                state->timestamp.date = frame.date.day;
-                state->timestamp.month = frame.date.month;
-                state->timestamp.year = frame.date.year;
+                state->gps_data.latitude = minmea_tocoord(&frame.latitude);
+                state->gps_data.longitude = minmea_tocoord(&frame.longitude);
+                state->gps_data.timestamp.hour = frame.time.hours;
+                state->gps_data.timestamp.minute = frame.time.minutes;
+                state->gps_data.timestamp.second = frame.time.seconds + 1;
+                state->gps_data.timestamp.day = 0;
+                state->gps_data.timestamp.date = frame.date.day;
+                state->gps_data.timestamp.month = frame.date.month;
+                state->gps_data.timestamp.year = frame.date.year;
             }
+            // Synchronize RTC with GPS UTC clock
+            if(state->settings.gps_set_time)
+                rtc_setTime(state->gps_data.timestamp);
         } break;
 
         case MINMEA_SENTENCE_GGA:
@@ -49,24 +52,24 @@ void gps_taskFunc(char *line, int len, gps_t *state)
             struct minmea_sentence_gga frame;
             if (minmea_parse_gga(&frame, line))
             {
-                state->fix_quality = frame.fix_quality;
-                state->satellites_tracked = frame.satellites_tracked;
-                state->altitude = minmea_tofloat(&frame.altitude);
+                state->gps_data.fix_quality = frame.fix_quality;
+                state->gps_data.satellites_tracked = frame.satellites_tracked;
+                state->gps_data.altitude = minmea_tofloat(&frame.altitude);
             }
         } break;
 
         case MINMEA_SENTENCE_GSA:
         {
-            state->active_sats = 0;
+            state->gps_data.active_sats = 0;
             struct minmea_sentence_gsa frame;
             if (minmea_parse_gsa(&frame, line))
             {
-                state->fix_type = frame.fix_type;
+                state->gps_data.fix_type = frame.fix_type;
                 for (int i = 0; i < 12; i++)
                 {
                     if (frame.sats[i] != 0)
                     {
-                        state->active_sats |= 1 << (frame.sats[i] - 1);
+                        state->gps_data.active_sats |= 1 << (frame.sats[i] - 1);
                     }
                 }
             }
@@ -77,18 +80,18 @@ void gps_taskFunc(char *line, int len, gps_t *state)
             struct minmea_sentence_gsv frame;
             if (minmea_parse_gsv(&frame, line))
             {
-                state->satellites_in_view = frame.total_sats; 
+                state->gps_data.satellites_in_view = frame.total_sats; 
                 for (int i = 0; i < 4; i++)
                 {
                     int index = 4 * (frame.msg_nr - 1) + i;
-                    state->satellites[index].id = frame.sats[i].nr;
-                    state->satellites[index].elevation = frame.sats[i].elevation;
-                    state->satellites[index].azimuth = frame.sats[i].azimuth;
-                    state->satellites[index].snr = frame.sats[i].snr;
+                    state->gps_data.satellites[index].id = frame.sats[i].nr;
+                    state->gps_data.satellites[index].elevation = frame.sats[i].elevation;
+                    state->gps_data.satellites[index].azimuth = frame.sats[i].azimuth;
+                    state->gps_data.satellites[index].snr = frame.sats[i].snr;
                 }
                 // Zero out unused satellite slots
                 if (frame.msg_nr == frame.total_msgs && frame.total_msgs < 3)
-                    bzero(&state->satellites[4 * frame.msg_nr],
+                    bzero(&state->gps_data.satellites[4 * frame.msg_nr],
                           sizeof(sat_t) * 12 - frame.total_msgs * 4);
             }
         } break;
@@ -97,9 +100,9 @@ void gps_taskFunc(char *line, int len, gps_t *state)
         {
             struct minmea_sentence_vtg frame;
             if (minmea_parse_vtg(&frame, line)) {
-                state->speed = minmea_tofloat(&frame.speed_kph);
-                state->tmg_mag = minmea_tofloat(&frame.magnetic_track_degrees);
-                state->tmg_true = minmea_tofloat(&frame.true_track_degrees);
+                state->gps_data.speed = minmea_tofloat(&frame.speed_kph);
+                state->gps_data.tmg_mag = minmea_tofloat(&frame.magnetic_track_degrees);
+                state->gps_data.tmg_true = minmea_tofloat(&frame.true_track_degrees);
             }
 
         } break;

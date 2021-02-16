@@ -319,11 +319,7 @@ static void gps_task(void *arg)
             OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
 
             // GPS readout is blocking, no need to delay here
-            gps_taskFunc(line, len, &state.gps_data);
-
-            // Synchronize RTC with GPS UTC clock
-            if(state.settings.gps_set_time)
-                rtc_setTime(state.gps_data.timestamp);
+            gps_taskFunc(line, len, &state);
 
             // Unlock state mutex
             OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
