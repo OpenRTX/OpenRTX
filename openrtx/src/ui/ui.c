@@ -966,6 +966,8 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                             state.ui_screen = SETTINGS_GPS;
                             break;
 #endif
+                        default:
+                            state.ui_screen = MENU_SETTINGS;
                     }
                     // Reset menu selection
                     ui_state.menu_selected = 0;
@@ -1048,6 +1050,8 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                             _ui_changeContrast(-25);
                             break;
 #endif
+                        default:
+                            state.ui_screen = SETTINGS_DISPLAY;
                     }
                 }
                 else if(msg.keys & KEY_RIGHT || (msg.keys & KEY_DOWN && ui_state.edit_mode))
@@ -1062,6 +1066,8 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                             _ui_changeContrast(+25);
                             break;
 #endif
+                        default:
+                            state.ui_screen = SETTINGS_DISPLAY;
                     }
                 }
                 else if(msg.keys & KEY_UP)
@@ -1102,7 +1108,8 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                             else if(msg.keys & KEY_RIGHT || msg.keys & KEY_DOWN)
                                 state.settings.utc_timezone += 1;
                             break;
-
+                        default:
+                            state.ui_screen = SETTINGS_GPS;
                     }
                 }
                 else if(msg.keys & KEY_UP)
