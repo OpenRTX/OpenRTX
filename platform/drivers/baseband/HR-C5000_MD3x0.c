@@ -257,7 +257,7 @@ void C5000_startAnalogTx()
     _writeReg(0x00, 0x0F, 0xC8);    // ADLinVol, mic volume
 //     _writeReg(0x00, 0x25, 0x0E);
 //     _writeReg(0x00, 0x26, 0xFE);
-    _writeReg(0x00, 0x34, 0x3C);    // Enable pre-emphasis, 25kHz bandwidth
+    _writeReg(0x00, 0x34, 0x1C);    // Enable pre-emphasis, 25kHz bandwidth
     _writeReg(0x00, 0x3E, 0x08);    // "FM Modulation frequency deviation coefficient at the receiving end" (HR_C6000)
     _writeReg(0x00, 0x37, 0xC2);    // Unknown register
 //     _writeReg(0x01, 0x50, 0x00);
