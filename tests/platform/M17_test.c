@@ -76,9 +76,8 @@ void __attribute__((used)) TIM3_IRQHandler()
 
     TIM3->SR = 0;
 
-    int16_t sample = ((int16_t *) m17_buf)[pos] + 32768;
-    uint16_t value = ((uint16_t) sample);
-    TIM3->CCR3 = value >> 8;
+    int8_t sample = -m17_buf[pos] + 128;
+    TIM3->CCR3 = ((uint8_t)sample);
 
     pos++;
     if(pos > 46072) pos = 0;
