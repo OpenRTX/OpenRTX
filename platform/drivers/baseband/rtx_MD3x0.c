@@ -188,11 +188,11 @@ void _updateC5000IQparams()
 
 void _setCTCSS()
 {
-    if((rtxStatus.opMode == FM) && (rtxStatus.txToneEn != 0))
-    {
-        float tone = ((float) rtxStatus.txTone) / 10.0f;
-        toneGen_setToneFreq(tone);
-    }
+//     if((rtxStatus.opMode == FM) && (rtxStatus.txToneEn != 0))
+//     {
+//         float tone = ((float) rtxStatus.txTone) / 10.0f;
+//         toneGen_setToneFreq(tone);
+//     }
 }
 
 void _updateSqlThresholds()

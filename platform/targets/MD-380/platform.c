@@ -63,7 +63,7 @@ void platform_init()
 
     nvm_init();                      /* Initialise non volatile memory manager */
     nvm_readCalibData(&calibration); /* Load calibration data                  */
-    toneGen_init();                  /* Initialise tone generator              */
+//     toneGen_init();                  /* Initialise tone generator              */
     rtc_init();                      /* Initialise RTC                         */
 
     /*
