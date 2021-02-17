@@ -197,31 +197,31 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
     }
     uint8_t bitmap_byte = bank_channel / 8;
     uint8_t bitmap_bit = bank_channel % 8;
-    gdxChannelBank_t chBank;
+    gdxChannel_t chData;
     // The channel is marked not valid in the bitmap
     if(!(bitmap[bitmap_byte] & (1 >> bitmap_bit)))
         return -1;
     // The channel is marked valid in the bitmap
+    // ### Read desired channel from the correct bank ###
     else
-    // ### Read full channel bank ###
     {
+        uint32_t channelOffset = sizeof(bitmap) + (pos - 1) * sizeof(gdxChannel_t);
         // First channel bank (128 channels) is saved in EEPROM
         if(pos <= 128)
         {
-            uint32_t readAddr = channelBaseAddrEEPROM + bank_num * sizeof(gdxChannelBank_t);
-            AT24Cx_readData(readAddr, ((uint8_t *) &chBank), sizeof(gdxChannelBank_t));
+            uint32_t bankAddr = channelBaseAddrEEPROM + bank_num * sizeof(gdxChannelBank_t);
+            AT24Cx_readData(bankAddr + channelOffset, ((uint8_t *) &chData), sizeof(gdxChannel_t));
         }
         // Remaining 7 channel banks (896 channels) are saved in SPI Flash
         else
         {
             W25Qx_wakeup();
             delayUs(5);
-            uint32_t readAddr = channelBaseAddrFlash + (bank_num - 1) * sizeof(gdxChannelBank_t);
-            W25Qx_readData(readAddr, ((uint8_t *) &chBank), sizeof(gdxChannelBank_t));
+            uint32_t bankAddr = channelBaseAddrFlash + bank_num * sizeof(gdxChannelBank_t);
+            W25Qx_readData(bankAddr + channelOffset, ((uint8_t *) &chData), sizeof(gdxChannel_t));
             W25Qx_sleep();
         }
     }
-    gdxChannel_t chData = chBank.chan[bank_channel];
     // Copy data to OpenRTX channel_t
     channel->mode            = chData.channel_mode - 1;
     channel->bandwidth       = chData.bandwidth;
