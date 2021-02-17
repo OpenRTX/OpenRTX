@@ -55,11 +55,12 @@ void __attribute__((used)) TIM7_IRQHandler()
 
     TIM7->SR  = 0;
 
-    int16_t sample = -m17_buf[pos] + 32768;
+    int16_t sample = m17_buf[pos] + 32768;
     TIM3->CCR3 = ((uint16_t) sample) >> 8;
 
     pos++;
-    if(pos > 46072) pos = 0;
+    if(pos > (92160/2)) pos = 0;
+//     if(pos > 46072) pos = 0;
     if(pos == 0)
         GPIOB->BSRRL = 1 << 3;
     else
