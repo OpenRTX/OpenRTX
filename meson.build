@@ -280,6 +280,11 @@ if get_option('asan')
   linux_c_args += '-fsanitize=address'
   linux_l_args += '-fsanitize=address'
 endif
+# Add Undefined Behaviour Sanitizer if required
+if get_option('ubsan')
+  linux_c_args += '-fsanitize=undefined'
+  linux_l_args += '-fsanitize=undefined'
+endif
 
 foreach k, v : linux_def
   if v == ''
