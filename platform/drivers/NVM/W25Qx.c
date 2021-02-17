@@ -24,11 +24,16 @@
 #include <string.h>
 #include <hwconfig.h>
 #include <interfaces/gpio.h>
+#include <interfaces/delays.h>
 
-#define CMD_READ 0x03   /* Read data              */
-#define CMD_RSEC 0x48   /* Read security register */
-#define CMD_WKUP 0xAB   /* Release power down     */
-#define CMD_PDWN 0xB9   /* Power down             */
+#define CMD_WRITE 0x02   /* Read data              */
+#define CMD_READ  0x03   /* Read data              */
+#define CMD_RDSTA 0x05   /* Read status register   */
+#define CMD_WREN  0x06   /* Write enable           */
+#define CMD_ESECT 0x20   /* Erase 4kB sector       */
+#define CMD_RSECR 0x48   /* Read security register */
+#define CMD_WKUP  0xAB   /* Release power down     */
+#define CMD_PDWN  0xB9   /* Power down             */
 
 /*
  * Target-specific SPI interface functions, their implementation can be found
@@ -84,7 +89,7 @@ ssize_t W25Qx_readSecurityRegister(uint32_t addr, void* buf, size_t len)
     }
 
     gpio_clearPin(FLASH_CS);
-    (void) spiFlash_SendRecv(CMD_RSEC);             /* Command        */
+    (void) spiFlash_SendRecv(CMD_RSECR);             /* Command        */
     (void) spiFlash_SendRecv((addr >> 16) & 0xFF);  /* Address high   */
     (void) spiFlash_SendRecv((addr >> 8) & 0xFF);   /* Address middle */
     (void) spiFlash_SendRecv(addr & 0xFF);          /* Address low    */
@@ -115,3 +120,95 @@ void W25Qx_readData(uint32_t addr, void* buf, size_t len)
 
     gpio_setPin(FLASH_CS);
 }
+
+bool W25Qx_eraseSector(uint32_t addr)
+{
+    gpio_clearPin(FLASH_CS);
+    (void) spiFlash_SendRecv(CMD_WREN);             /* Write enable   */
+    gpio_setPin(FLASH_CS);
+
+    delayUs(5);
+
+    gpio_clearPin(FLASH_CS);
+    (void) spiFlash_SendRecv(CMD_ESECT);            /* Command        */
+    (void) spiFlash_SendRecv((addr >> 16) & 0xFF);  /* Address high   */
+    (void) spiFlash_SendRecv((addr >> 8) & 0xFF);   /* Address middle */
+    (void) spiFlash_SendRecv(addr & 0xFF);          /* Address low    */
+    gpio_setPin(FLASH_CS);
+
+    /*
+     * Wait till erase terminates.
+     * Timeout after 500ms, at 250us per tick
+     */
+    uint16_t timeout = 2000;
+    while(timeout > 0)
+    {
+        delayUs(250);
+        timeout--;
+
+        gpio_clearPin(FLASH_CS);
+        (void) spiFlash_SendRecv(CMD_RDSTA);        /* Read status    */
+        uint8_t status = spiFlash_SendRecv(0x00);
+        gpio_setPin(FLASH_CS);
+
+        /* If busy flag is low, we're done */
+        if((status & 0x01) == 0) return true;
+    }
+
+    /* If we get here, we had a timeout */
+    return false;
+}
+
+ssize_t W25Qx_writePage(uint32_t addr, void* buf, size_t len)
+{
+    /* Keep 256-byte boundary to avoid wrap-around when writing */
+    size_t addrRange = addr & 0x0001FF;
+    size_t writeLen  = len;
+    if((addrRange + len) > 0x100)
+    {
+        writeLen = 0x100 - addrRange;
+    }
+
+    gpio_clearPin(FLASH_CS);
+    (void) spiFlash_SendRecv(CMD_WREN);             /* Write enable   */
+    gpio_setPin(FLASH_CS);
+
+    delayUs(5);
+
+    gpio_clearPin(FLASH_CS);
+    (void) spiFlash_SendRecv(CMD_WRITE);            /* Command        */
+    (void) spiFlash_SendRecv((addr >> 16) & 0xFF);  /* Address high   */
+    (void) spiFlash_SendRecv((addr >> 8) & 0xFF);   /* Address middle */
+    (void) spiFlash_SendRecv(addr & 0xFF);          /* Address low    */
+
+    for(size_t i = 0; i < writeLen; i++)
+    {
+        uint8_t value = ((uint8_t *) buf)[i];
+        (void) spiFlash_SendRecv(value);
+    }
+
+    gpio_setPin(FLASH_CS);
+
+    /*
+     * Wait till write terminates.
+     * Timeout after 500ms, at 250us per tick
+     */
+    uint16_t timeout = 2000;
+    while(timeout > 0)
+    {
+        delayUs(250);
+        timeout--;
+
+        gpio_clearPin(FLASH_CS);
+        (void) spiFlash_SendRecv(CMD_RDSTA);        /* Read status    */
+        uint8_t status = spiFlash_SendRecv(0x00);
+        gpio_setPin(FLASH_CS);
+
+        /* If busy flag is low, we're done */
+        if((status & 0x01) == 0) return ((ssize_t) writeLen);
+    }
+
+    /* If we get here, we had a timeout */
+    return -1;
+}
+
