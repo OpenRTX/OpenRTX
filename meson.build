@@ -208,7 +208,8 @@ md3x0_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.c',
                                    'platform/targets/MD-3x0/platform.c']
 
 md3x0_inc = inc + stm32f405_inc + ['platform/targets/MD-3x0']
-md3x0_def = def + stm32f405_def + {'PLATFORM_MD3x0': ''}
+md3x0_def = def + stm32f405_def + {'PLATFORM_MD3x0': '',
+                                   'timegm': 'mktime'}
 
 ## TYT MD-UV380
 mduv380_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.c',
