@@ -49,35 +49,14 @@ extern int16_t m17_buf[];
 
 uint16_t pos = 0;
 
-// void __attribute__((used)) TIM7_IRQHandler()
-// {
-//     OSIntEnter();
-//
-//     TIM7->SR  = 0;
-//
-//     int16_t sample = ((int16_t *) m17_buf)[pos] + 32768;
-//     uint16_t value = ((uint16_t) sample);
-// //     DAC->DHR12R2 = value >> 4;
-//     TIM3->CCR3 = value >> 8;
-//
-//     pos++;
-//     if(pos > 46072) pos = 0;
-//     if(pos == 0)
-//         GPIOB->BSRRL = 1 << 3;
-//     else
-//         GPIOB->BSRRH = 1 << 3;
-//
-//     OSIntExit();
-// }
-
-void __attribute__((used)) TIM3_IRQHandler()
+void __attribute__((used)) TIM7_IRQHandler()
 {
     OSIntEnter();
 
-    TIM3->SR = 0;
+    TIM7->SR  = 0;
 
-    int8_t sample = -m17_buf[pos] + 128;
-    TIM3->CCR3 = ((uint8_t)sample);
+    int16_t sample = m17_buf[pos] + 32768;
+    TIM3->CCR3 = ((uint16_t) sample) >> 8;
 
     pos++;
     if(pos > 46072) pos = 0;
@@ -89,14 +68,9 @@ void __attribute__((used)) TIM3_IRQHandler()
     OSIntExit();
 }
 
-
 int main(void)
 {
     platform_init();
-//     toneGen_init();
-
-//     toneGen_setBeepFreq(2400.0f);
-//     toneGen_beepOn();
 
     gpio_setMode(GPIOB, 3, OUTPUT);
     gpio_clearPin(GPIOB, 3);
@@ -104,45 +78,30 @@ int main(void)
     gpio_setMode(BEEP_OUT,  ALTERNATE);
     gpio_setAlternateFunction(BEEP_OUT,  2);
 
-    /*
-     * Timer configuration:
-     * - APB1 frequency = 42MHz but timer run at twice of this frequency: with
-     * 1:20 prescaler we have Ftick = 4.2MHz
-     * - ARR = 255 (8-bit PWM), gives an update rate of 16.406kHz
-     * - Nominal update rate is 16.384kHz -> error = +22.25Hz
-     */
-    RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
+    RCC->APB1ENR |= RCC_APB1ENR_TIM3EN
+                 |  RCC_APB1ENR_TIM7EN;
     __DSB();
 
     TIM3->ARR   = 0xFF;
-    TIM3->PSC   = 6;
+    TIM3->PSC   = 0;
     TIM3->CCMR2 = TIM_CCMR2_OC3M_2  /* The same for CH3                   */
                 | TIM_CCMR2_OC3M_1
                 | TIM_CCMR2_OC3PE;
-    TIM3->DIER |= TIM_DIER_UIE;     /* Interrupt on counter update        */
     TIM3->CR1  |= TIM_CR1_ARPE;     /* Enable auto preload on reload      */
 
     TIM3->CCER |= TIM_CCER_CC3E;
     TIM3->CR1  |= TIM_CR1_CEN;
 
-    NVIC_SetPriority(TIM3_IRQn, 10);
-    NVIC_EnableIRQ(TIM3_IRQn);
+    TIM7->CNT  = 0;
+    TIM7->PSC  = 0;
+    TIM7->ARR  = 1749;//(84000000/48000) - 1;
+    TIM7->EGR  = TIM_EGR_UG;
+    TIM7->DIER = TIM_DIER_UIE;
+    TIM7->CR1  = TIM_CR1_CEN;
 
-
-//     RCC->APB1ENR |= RCC_APB1ENR_TIM7EN;
-//     __DSB();
-//
-//     TIM7->CNT  = 0;
-//     TIM7->PSC  = 0;
-//     TIM7->ARR  = 1749;//(84000000/48000) - 1;
-//     TIM7->EGR  = TIM_EGR_UG;
-//     TIM7->DIER = TIM_DIER_UIE;
-//     TIM7->CR1  = TIM_CR1_CEN;
-//
-//     NVIC_ClearPendingIRQ(TIM7_IRQn);
-//     NVIC_SetPriority(TIM7_IRQn, 10);
-//     NVIC_EnableIRQ(TIM7_IRQn);
-
+    NVIC_ClearPendingIRQ(TIM7_IRQn);
+    NVIC_SetPriority(TIM7_IRQn, 10);
+    NVIC_EnableIRQ(TIM7_IRQn);
 
     OSMutexCreate(&mutex, "", &err);
     rtx_init(&mutex);
@@ -166,7 +125,7 @@ int main(void)
     rtx_configure(&cfg);
 
 
-    while (1)
+    while(1)
     {
         rtx_taskFunc();
         OSTimeDlyHMSM(0u, 0u, 0u, 10u, OS_OPT_TIME_HMSM_STRICT, &err);
