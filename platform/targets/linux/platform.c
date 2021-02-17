@@ -36,7 +36,7 @@ void platform_terminate()
     printf("Platform terminate\n");
 }
 
-void platform_setBacklightLevel(uint8_t level)
+void platform_setBacklightLevel(__attribute__((unused)) uint8_t level)
 {
     //printf("platform_setBacklightLevel(%u)\n", level);
 }
@@ -72,31 +72,30 @@ bool platform_getPttStatus()
 }
 
 
-void platform_ledOn(led_t led)
+void platform_ledOn(__attribute__((unused)) led_t led)
 {
-    char* str;
-
-    switch(led)
-    {
-        case 0:
-            str = "GREEN";
-            break;
-        case 1:
-            str = "RED";
-            break;
-        case 2:
-            str = "YELLOW";
-            break;
-        case 3:
-            str = "WHITE";
-            break;
-    }
     // Commented to reduce verbosity on Linux
+    //char* str;
+    //switch(led)
+    //{
+    //    case 0:
+    //        str = "GREEN";
+    //        break;
+    //    case 1:
+    //        str = "RED";
+    //        break;
+    //    case 2:
+    //        str = "YELLOW";
+    //        break;
+    //    case 3:
+    //        str = "WHITE";
+    //        break;
+    //}
     //printf("platform_ledOn(%s)\n", str);
 }
 
 
-void platform_ledOff(led_t led)
+void platform_ledOff(__attribute__((unused)) led_t led)
 {
     // Commented to reduce verbosity on Linux
     //printf("platform_ledOff()\n");

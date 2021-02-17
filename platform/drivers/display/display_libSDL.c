@@ -62,7 +62,8 @@ bool inProgress;             /* Flag to signal when rendering is in progress */
  * Internal helper function which fetches pixel at position (x, y) from framebuffer
  * and returns it in SDL-compatible format, which is ARGB8888.
  */
-uint32_t fetchPixelFromFb(unsigned int x, unsigned int y)
+uint32_t fetchPixelFromFb(__attribute__((unused)) unsigned int x,
+                          __attribute__((unused)) unsigned int y)
 {
     uint32_t pixel = 0;
 
@@ -157,7 +158,8 @@ void display_terminate()
     SDL_Quit();
 }
 
-void display_renderRows(uint8_t startRow, uint8_t endRow)
+void display_renderRows(__attribute__((unused)) uint8_t startRow,
+                        __attribute__((unused)) uint8_t endRow)
 {
     PIXEL_SIZE *pixels;
     int pitch = 0;

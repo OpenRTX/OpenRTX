@@ -121,4 +121,10 @@ extern state_t state;
  */
 void state_init();
 
+/**
+ * This function applies the selected timezone after reading the time from
+ * the RTC.
+ */
+void state_applyTimezone();
+
 #endif /* STATE_H */

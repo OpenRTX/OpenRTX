@@ -18,6 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <hwconfig.h>
 #include <os.h>
 #include <ui.h>
 #include <state.h>
@@ -26,13 +27,13 @@
 #include <interfaces/keyboard.h>
 #include <interfaces/graphics.h>
 #include <interfaces/platform.h>
-#ifdef HAS_GPS
-#include <interfaces/gps.h>
-#endif
-#include <hwconfig.h>
 #include <event.h>
 #include <rtx.h>
 #include <minmea.h>
+#ifdef HAS_GPS
+#include <interfaces/gps.h>
+#include <gps.h>
+#endif
 
 /* Mutex for concurrent access to state variable */
 static OS_MUTEX state_mutex;

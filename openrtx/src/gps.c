@@ -18,14 +18,16 @@
  ***************************************************************************/
 
 #include <interfaces/gps.h>
+#include <gps.h>
 #include <minmea.h>
 #include <stdio.h>
 #include <state.h>
+#include <strings.h>
 
 /**
  * This function parses a GPS NMEA sentence and updates radio state
  */
-void gps_taskFunc(char *line, int len, state_t *state)
+void gps_taskFunc(char *line, __attribute__((unused)) int len, state_t *state)
 {
     switch (minmea_sentence_id(line, false)) {
         case MINMEA_SENTENCE_RMC:
@@ -104,7 +106,6 @@ void gps_taskFunc(char *line, int len, state_t *state)
                 state->gps_data.tmg_mag = minmea_tofloat(&frame.magnetic_track_degrees);
                 state->gps_data.tmg_true = minmea_tofloat(&frame.true_track_degrees);
             }
-
         } break;
 
         // Ignore this message as we take data from RMC

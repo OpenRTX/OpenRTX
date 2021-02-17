@@ -76,7 +76,7 @@ void state_init()
     state.settings.contrast = 84;
 }
 
-state_applyTimezone()
+void state_applyTimezone()
 {
     if(state.time.hour + state.settings.utc_timezone >= 24) 
         state.time.hour = state.time.hour - 24 + state.settings.utc_timezone;

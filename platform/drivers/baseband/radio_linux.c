@@ -86,7 +86,7 @@ void radio_updateCalibrationParams(const rtxStatus_t* rtxCfg)
     puts("radio_linux: updateCalibrationParams() called");
 }
 
-float radio_getRssi(const freq_t rxFreq)
+float radio_getRssi(__attribute__((unused)) const freq_t rxFreq)
 {
     // Commented to reduce verbosity on Linux
     //printf("radio_linux: requested RSSI at freq %d, returning -100dBm\n", rxFreq);

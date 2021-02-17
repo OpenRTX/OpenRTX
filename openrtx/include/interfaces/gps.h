@@ -18,8 +18,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef GPS_H
-#define GPS_H
+#ifndef INTERFACES_GPS_H
+#define INTERFACES_GPS_H
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -67,4 +67,4 @@ bool gps_detect(uint16_t timeout);
  */
 int gps_getNmeaSentence(char *buf, const size_t maxLength);
 
-#endif /* GPS_H */
+#endif /* INTERFACES_GPS_H */
