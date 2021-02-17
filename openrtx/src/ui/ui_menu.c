@@ -138,6 +138,7 @@ int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
     return 0;
 }
 
+#ifdef HAS_GPS
 int _ui_getSettingsGPSEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= settings_gps_num) return -1;
@@ -166,6 +167,7 @@ int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
     }
     return 0;
 }
+#endif
 
 int _ui_getInfoEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
@@ -284,6 +286,7 @@ void _ui_drawMenuContacts(ui_state_t* ui_state)
     _ui_drawMenuList(layout.line1_pos, ui_state->menu_selected, _ui_getContactName);
 }
 
+#ifdef HAS_GPS
 void _ui_drawMenuGPS()
 {
     char *fix_buf, *type_buf;
@@ -370,6 +373,7 @@ void _ui_drawMenuGPS()
                      last_state.gps_data.satellites,
                      last_state.gps_data.active_sats);
 }
+#endif
 
 void _ui_drawMenuSettings(ui_state_t* ui_state)
 {
@@ -418,6 +422,7 @@ void _ui_drawSettingsDisplay(ui_state_t* ui_state)
                            _ui_getDisplayValueName);
 }
 
+#ifdef HAS_GPS
 void _ui_drawSettingsGPS(ui_state_t* ui_state)
 {
     gfx_clearScreen();
@@ -429,6 +434,7 @@ void _ui_drawSettingsGPS(ui_state_t* ui_state)
                           _ui_getSettingsGPSEntryName,
                           _ui_getSettingsGPSValueName);
 }
+#endif
 
 #ifdef HAS_RTC
 void _ui_drawSettingsTimeDate()
