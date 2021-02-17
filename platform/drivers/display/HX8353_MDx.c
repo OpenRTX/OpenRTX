@@ -388,7 +388,7 @@ void display_init()
     }
     else if(lcd_type == 2)
     {
-        writeData(0x00);    /* Reference case: MD-380V(G) */
+        writeData(0x30);    /* Reference case: MD-380V(G) */
     }
     else
     {
