@@ -46,6 +46,7 @@ OS_MUTEX mutex;
 OS_ERR err;
 
 extern int16_t m17_buf[];
+extern uint16_t nSamples;
 
 uint16_t pos = 0;
 
@@ -59,7 +60,7 @@ void __attribute__((used)) TIM7_IRQHandler()
     TIM3->CCR3 = ((uint16_t) sample) >> 8;
 
     pos++;
-    if(pos > (92160/2)) pos = 0;
+    if(pos > nSamples) pos = 0;
 //     if(pos > 46072) pos = 0;
     if(pos == 0)
         GPIOB->BSRRL = 1 << 3;
