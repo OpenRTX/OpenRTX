@@ -55,7 +55,7 @@ void __attribute__((used)) TIM7_IRQHandler()
 
     TIM7->SR  = 0;
 
-    int16_t sample = m17_buf[pos] + 32768;
+    int16_t sample = -m17_buf[pos] + 32768;
     TIM3->CCR3 = ((uint16_t) sample) >> 8;
 
     pos++;

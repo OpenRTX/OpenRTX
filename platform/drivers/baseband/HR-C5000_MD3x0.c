@@ -254,7 +254,7 @@ void C5000_startAnalogTx()
 {
     _writeReg(0x00, 0x0D, 0x8C);    // Codec control
     _writeReg(0x00, 0x0E, 0x42);    // Mute HPout and enable MIC 1
-    _writeReg(0x00, 0x0F, 0xC8);    // ADLinVol, mic volume
+    _writeReg(0x00, 0x0F, 0xE8);    // ADLinVol, mic volume
 //     _writeReg(0x00, 0x25, 0x0E);
 //     _writeReg(0x00, 0x26, 0xFE);
     _writeReg(0x00, 0x34, 0x1C);    // Disable pre-emphasis, 25kHz bandwidth
