@@ -62,10 +62,10 @@ void __attribute__((used)) TIM7_IRQHandler()
     pos++;
     if(pos >= nSamples) pos = 0;
 //     if(pos > 46072) pos = 0;
-//     if(pos == 0)
-//         GPIOB->BSRRL = 1 << 3;
-//     else
-//         GPIOB->BSRRH = 1 << 3;
+    if(pos == 0)
+        GPIOB->BSRRL = 1 << 3;
+    else
+        GPIOB->BSRRH = 1 << 3;
 
 //     OSIntExit();
 }
