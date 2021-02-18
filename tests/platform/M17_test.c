@@ -52,7 +52,7 @@ uint16_t pos = 0;
 
 void __attribute__((used)) TIM7_IRQHandler()
 {
-    OSIntEnter();
+//     OSIntEnter();
 
     TIM7->SR  = 0;
 
@@ -62,12 +62,12 @@ void __attribute__((used)) TIM7_IRQHandler()
     pos++;
     if(pos > nSamples) pos = 0;
 //     if(pos > 46072) pos = 0;
-    if(pos == 0)
-        GPIOB->BSRRL = 1 << 3;
-    else
-        GPIOB->BSRRH = 1 << 3;
+//     if(pos == 0)
+//         GPIOB->BSRRL = 1 << 3;
+//     else
+//         GPIOB->BSRRH = 1 << 3;
 
-    OSIntExit();
+//     OSIntExit();
 }
 
 int main(void)
@@ -102,7 +102,7 @@ int main(void)
     TIM7->CR1  = TIM_CR1_CEN;
 
     NVIC_ClearPendingIRQ(TIM7_IRQn);
-    NVIC_SetPriority(TIM7_IRQn, 10);
+    NVIC_SetPriority(TIM7_IRQn, 3);
     NVIC_EnableIRQ(TIM7_IRQn);
 
     OSMutexCreate(&mutex, "", &err);
