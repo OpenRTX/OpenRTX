@@ -137,7 +137,7 @@ void _enableTxStage()
     if(rtxStatus.txPower > 1.0f) paramPtr = calData->txHighPower;
     uint8_t apc = interpCalParameter(rtxStatus.txFrequency, calData->txFreq,
                                      paramPtr, 9);
-    DAC->DHR12L1 = apc * 0xFF;
+    DAC->DHR12L1 = apc * 0x3F;
 
     gpio_setPin(TX_STG_EN);
     rtxStatus.opStatus = TX;
