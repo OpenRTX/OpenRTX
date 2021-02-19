@@ -106,7 +106,7 @@ void platform_terminate()
     adc0_terminate();
 
     /* Finally, remove power supply */
-    gpio_clearPin(PWR_SW, OUTPUT);
+    gpio_clearPin(PWR_SW);
 }
 
 float platform_getVbat()

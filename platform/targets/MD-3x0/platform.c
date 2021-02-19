@@ -108,7 +108,7 @@ void platform_terminate()
     rtc_terminate();
 
     /* Finally, remove power supply */
-    gpio_clearPin(PWR_SW, OUTPUT);
+    gpio_clearPin(PWR_SW);
 }
 
 float platform_getVbat()
