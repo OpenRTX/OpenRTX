@@ -199,7 +199,7 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
     uint8_t bitmap_bit = bank_channel % 8;
     gdxChannel_t chData;
     // The channel is marked not valid in the bitmap
-    if(!(bitmap[bitmap_byte] & (1 >> bitmap_bit)))
+    if(!(bitmap[bitmap_byte] & (1 << bitmap_bit)))
         return -1;
     // The channel is marked valid in the bitmap
     // ### Read desired channel from the correct bank ###
