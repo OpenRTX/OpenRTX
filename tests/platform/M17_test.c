@@ -31,6 +31,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 #include <stdlib.h>
 #include <os.h>
 #include <inttypes.h>
@@ -42,6 +43,7 @@
 #include "toneGenerator_MDx.h"
 #include "HR-C5000_MD3x0.h"
 
+
 OS_MUTEX mutex;
 OS_ERR err;
 
@@ -50,24 +52,12 @@ extern uint16_t nSamples;
 
 uint16_t pos = 0;
 
-void __attribute__((used)) TIM7_IRQHandler()
+void __attribute__((used)) DMA1_Stream2_IRQHandler()
 {
-//     OSIntEnter();
-
-    TIM7->SR  = 0;
-
-    int16_t sample = -m17_buf[pos] + 32768;
-    TIM3->CCR3 = ((uint16_t) sample) >> 8;
-
-    pos++;
-    if(pos >= nSamples) pos = 0;
-//     if(pos > 46072) pos = 0;
-    if(pos == 0)
-        GPIOB->BSRRL = 1 << 3;
-    else
-        GPIOB->BSRRH = 1 << 3;
-
-//     OSIntExit();
+    DMA1->LIFCR |= DMA_LIFCR_CTCIF2 | DMA_LIFCR_CTEIF2;
+    GPIOB->BSRRL = 1 << 3;
+    delayUs(20);
+    GPIOB->BSRRH = 1 << 3;
 }
 
 int main(void)
@@ -80,31 +70,79 @@ int main(void)
     gpio_setMode(BEEP_OUT,  ALTERNATE);
     gpio_setAlternateFunction(BEEP_OUT,  2);
 
+
+    /*
+     * Prepare buffer for 8-bit waveform samples
+     */
+    uint16_t *buf = ((uint16_t *) malloc(nSamples * sizeof(uint16_t)));
+    for(size_t i = 0; i < nSamples; i++)
+    {
+        int16_t sample = 32768 - m17_buf[i];
+        buf[i] = ((uint16_t) sample) >> 8;
+    }
+
+    /*
+     * Enable peripherals
+     */
+    RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
     RCC->APB1ENR |= RCC_APB1ENR_TIM3EN
                  |  RCC_APB1ENR_TIM7EN;
     __DSB();
 
+    /*
+     * PWM for tone generator time base: 328kHz
+     */
     TIM3->ARR   = 0xFF;
     TIM3->PSC   = 0;
-    TIM3->CCMR2 = TIM_CCMR2_OC3M_2  /* The same for CH3                   */
+    TIM3->CCMR2 = TIM_CCMR2_OC3M_2
                 | TIM_CCMR2_OC3M_1
                 | TIM_CCMR2_OC3PE;
-    TIM3->CR1  |= TIM_CR1_ARPE;     /* Enable auto preload on reload      */
+    TIM3->CR1  |= TIM_CR1_ARPE;
 
     TIM3->CCER |= TIM_CCER_CC3E;
     TIM3->CR1  |= TIM_CR1_CEN;
 
+    /*
+     * Timebase for 48kHz sample rate
+     */
     TIM7->CNT  = 0;
     TIM7->PSC  = 0;
     TIM7->ARR  = 1749;//(84000000/48000) - 1;
     TIM7->EGR  = TIM_EGR_UG;
-    TIM7->DIER = TIM_DIER_UIE;
+    TIM7->DIER = TIM_DIER_UDE
+               | TIM_DIER_UIE;
     TIM7->CR1  = TIM_CR1_CEN;
 
-    NVIC_ClearPendingIRQ(TIM7_IRQn);
-    NVIC_SetPriority(TIM7_IRQn, 3);
-    NVIC_EnableIRQ(TIM7_IRQn);
+//     NVIC_ClearPendingIRQ(TIM7_IRQn);
+//     NVIC_SetPriority(TIM7_IRQn, 3);
+//     NVIC_EnableIRQ(TIM7_IRQn);
 
+    /*
+     * DMA stream for sample transfer
+     */
+
+    DMA1_Stream2->NDTR = nSamples;
+    DMA1_Stream2->PAR  = ((uint32_t) &(TIM3->CCR3));
+    DMA1_Stream2->M0AR = ((uint32_t) buf);
+    DMA1_Stream2->CR = DMA_SxCR_CHSEL_0       /* Channel 1                   */
+                     | DMA_SxCR_PL            /* Very high priority          */
+                     | DMA_SxCR_MSIZE_0
+                     | DMA_SxCR_PSIZE_0
+                     | DMA_SxCR_MINC          /* Increment source pointer    */
+                     | DMA_SxCR_CIRC          /* Circular mode               */
+                     | DMA_SxCR_DIR_0         /* Memory to peripheral        */
+                     | DMA_SxCR_TCIE          /* Transfer complete interrupt */
+                     | DMA_SxCR_TEIE          /* Transfer error interrupt    */
+                     | DMA_SxCR_EN;           /* Start transfer              */
+
+    NVIC_ClearPendingIRQ(DMA1_Stream2_IRQn);
+    NVIC_SetPriority(DMA1_Stream2_IRQn, 10);
+    NVIC_EnableIRQ(DMA1_Stream2_IRQn);
+
+
+    /*
+     * Baseband setup
+     */
     OSMutexCreate(&mutex, "", &err);
     rtx_init(&mutex);
     rtxStatus_t cfg;
