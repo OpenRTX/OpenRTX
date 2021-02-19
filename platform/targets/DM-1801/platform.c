@@ -46,6 +46,8 @@ void platform_init()
 
     gpio_setMode(PTT_SW, INPUT);
 
+    gpio_setMode(PWR_SW, OUTPUT);
+
     /*
      * Configure backlight PWM: 58.5kHz, 8 bit resolution
      */
@@ -102,6 +104,9 @@ void platform_terminate()
     gpio_clearPin(GREEN_LED);
 
     adc0_terminate();
+
+    /* Finally, remove power supply */
+    gpio_clearPin(PWR_SW, OUTPUT);
 }
 
 float platform_getVbat()

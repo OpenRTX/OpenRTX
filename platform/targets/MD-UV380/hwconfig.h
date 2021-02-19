@@ -48,6 +48,9 @@
 /* Battery type */
 #define BAT_LIPO_2S
 
+/* Power keep switch */
+#define PWR_SW GPIOA,7
+
 /* Display */
 #define LCD_D0  GPIOD,14
 #define LCD_D1  GPIOD,15
