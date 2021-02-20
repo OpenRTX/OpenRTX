@@ -232,9 +232,9 @@ layout_t _ui_calculateLayout()
     const uint16_t top_pad = 1;
     const uint16_t line1_h = 10;
     const uint16_t line2_h = 10;
-    const uint16_t line3_h = 18;
-    const uint16_t bottom_h = top_h;
-    const uint16_t bottom_pad = 1;
+    const uint16_t line3_h = 16;
+    const uint16_t bottom_h = 8;
+    const uint16_t bottom_pad = 0;
     const uint16_t status_v_pad = 1;
     const uint16_t small_line_v_pad = 1;
     const uint16_t big_line_v_pad = 0;
@@ -245,7 +245,7 @@ layout_t _ui_calculateLayout()
     // Middle line fonts: 5, 8, 8 pt
     const fontSize_t line1_font = FONT_SIZE_6PT;
     const fontSize_t line2_font = FONT_SIZE_6PT;
-    const fontSize_t line3_font = FONT_SIZE_12PT;
+    const fontSize_t line3_font = FONT_SIZE_10PT;
     // Bottom bar font: 6 pt
     const fontSize_t bottom_font = FONT_SIZE_6PT;
     // TimeDate/Frequency input font

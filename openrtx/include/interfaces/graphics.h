@@ -29,6 +29,7 @@
 #include <FreeSans6pt7b.h>
 #include <FreeSans8pt7b.h>
 #include <FreeSans9pt7b.h>
+#include <FreeSans10pt7b.h>
 #include <FreeSans12pt7b.h>
 #include <FreeSans16pt7b.h>
 #include <FreeSans18pt7b.h>
@@ -87,6 +88,7 @@ typedef enum
     FONT_SIZE_6PT,
     FONT_SIZE_8PT,
     FONT_SIZE_9PT,
+    FONT_SIZE_10PT,
     FONT_SIZE_12PT,
     FONT_SIZE_16PT,
     FONT_SIZE_18PT,
@@ -107,6 +109,7 @@ static GFXfont const fonts[] = { TomThumb,           // 5pt
                                  FreeSans6pt7b,      // 6pt
                                  FreeSans8pt7b,      // 8pt
                                  FreeSans9pt7b,      // 9pt
+                                 FreeSans10pt7b,     // 10pt
                                  FreeSans12pt7b,     // 12pt
                                  FreeSans16pt7b,     // 16pt
                                  FreeSans18pt7b,     // 16pt
