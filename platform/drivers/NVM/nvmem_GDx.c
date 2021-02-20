@@ -385,7 +385,27 @@ int nvm_readZoneData(zone_t *zone, uint16_t pos)
 
 int nvm_readContactData(contact_t *contact, uint16_t pos)
 {
-    (void) contact;
-    (void) pos;
-    return -1;
+    if((pos <= 0) || (pos > maxNumContacts)) return -1;
+
+    W25Qx_wakeup();
+    delayUs(5);
+
+    gdxContact_t contactData;
+    // Note: pos is 1-based to be consistent with channels
+    uint32_t contactAddr = contactBaseAddr + (pos - 1) * sizeof(gdxContact_t);
+    W25Qx_readData(contactAddr, ((uint8_t *) &contactData), sizeof(gdxContact_t));
+    W25Qx_sleep();
+
+    // Check if contact is empty
+    if(wcslen((wchar_t *) contactData.name) == 0) return -1;
+    
+    // Copy contact name
+    memcpy(contact->name, contactData.name, sizeof(contactData.name));
+    // Copy contact DMR ID
+    contact->id = (contactData.id[0] | contactData.id[1] << 8 | contactData.id[2] << 16);
+    // Copy contact details
+    contact->type = contactData.type;
+    contact->receive_tone = contactData.receive_tone ? true : false;
+
+    return 0;
 }
