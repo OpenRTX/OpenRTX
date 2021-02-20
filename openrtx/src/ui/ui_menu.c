@@ -29,7 +29,7 @@ void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_
 {
     point_t pos = layout.line1_pos;
     // Number of menu entries that fit in the screen height
-    uint8_t entries_in_screen = (SCREEN_HEIGHT - layout.top_h) / layout.line1_h;
+    uint8_t entries_in_screen = (SCREEN_HEIGHT - 1 - pos.y) / layout.top_h + 1;
     uint8_t scroll = 0;
     char entry_buf[MAX_ENTRY_LEN] = "";
     color_t text_color = color_white;
@@ -62,7 +62,7 @@ void _ui_drawMenuListValue(ui_state_t* ui_state, uint8_t selected,
 {
     point_t pos = layout.line1_pos;
     // Number of menu entries that fit in the screen height
-    uint8_t entries_in_screen = (SCREEN_HEIGHT - layout.top_h) / layout.line1_h;
+    uint8_t entries_in_screen = (SCREEN_HEIGHT - 1 - pos.y) / layout.top_h + 1;
     uint8_t scroll = 0;
     char entry_buf[MAX_ENTRY_LEN] = "";
     char value_buf[MAX_ENTRY_LEN] = "";
