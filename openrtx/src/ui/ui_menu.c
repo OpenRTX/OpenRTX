@@ -401,7 +401,11 @@ void _ui_drawMenuInfo(ui_state_t* ui_state)
 void _ui_drawMenuAbout()
 {
     gfx_clearScreen();
-    ui_drawSplashScreen(false);
+    point_t openrtx_pos = {layout.horizontal_pad, layout.line3_h};
+    if(SCREEN_HEIGHT >= 100)
+        ui_drawSplashScreen(false);
+    else
+        gfx_print(openrtx_pos, "OpenRTX", layout.line3_font, TEXT_ALIGN_CENTER, color_white);
     char author_buf[MAX_ENTRY_LEN] = "";
     uint8_t line_h = layout.menu_h;
     point_t pos = {SCREEN_WIDTH / 7, SCREEN_HEIGHT - (line_h * (author_num - 1)) - 5};
