@@ -25,10 +25,11 @@
 #include <interfaces/nvmem.h>
 #include <interfaces/platform.h>
 
-void _ui_drawMenuList(point_t pos, uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_t max_len, uint8_t index))
+void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_t max_len, uint8_t index))
 {
+    point_t pos = layout.line1_pos;
     // Number of menu entries that fit in the screen height
-    uint8_t entries_in_screen = ((SCREEN_HEIGHT - pos.y) / layout.top_h) + 1;
+    uint8_t entries_in_screen = (SCREEN_HEIGHT - layout.top_h) / layout.line1_h;
     uint8_t scroll = 0;
     char entry_buf[MAX_ENTRY_LEN] = "";
     color_t text_color = color_white;
@@ -55,12 +56,13 @@ void _ui_drawMenuList(point_t pos, uint8_t selected, int (*getCurrentEntry)(char
     }
 }
 
-void _ui_drawMenuListValue(ui_state_t* ui_state, point_t pos, uint8_t selected, 
+void _ui_drawMenuListValue(ui_state_t* ui_state, uint8_t selected, 
                            int (*getCurrentEntry)(char *buf, uint8_t max_len, uint8_t index), 
                            int (*getCurrentValue)(char *buf, uint8_t max_len, uint8_t index))
 {
+    point_t pos = layout.line1_pos;
     // Number of menu entries that fit in the screen height
-    uint8_t entries_in_screen = ((SCREEN_HEIGHT - pos.y) / layout.top_h) + 1;
+    uint8_t entries_in_screen = (SCREEN_HEIGHT - layout.top_h) / layout.line1_h;
     uint8_t scroll = 0;
     char entry_buf[MAX_ENTRY_LEN] = "";
     char value_buf[MAX_ENTRY_LEN] = "";
@@ -253,7 +255,7 @@ void _ui_drawMenuTop(ui_state_t* ui_state)
     gfx_print(layout.top_pos, "Menu", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print menu entries
-    _ui_drawMenuList(layout.line1_pos, ui_state->menu_selected, _ui_getMenuTopEntryName);
+    _ui_drawMenuList(ui_state->menu_selected, _ui_getMenuTopEntryName);
 }
 
 void _ui_drawMenuZone(ui_state_t* ui_state)
@@ -263,7 +265,7 @@ void _ui_drawMenuZone(ui_state_t* ui_state)
     gfx_print(layout.top_pos, "Zone", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print zone entries
-    _ui_drawMenuList(layout.line1_pos, ui_state->menu_selected, _ui_getZoneName);
+    _ui_drawMenuList(ui_state->menu_selected, _ui_getZoneName);
 }
 
 void _ui_drawMenuChannel(ui_state_t* ui_state)
@@ -273,7 +275,7 @@ void _ui_drawMenuChannel(ui_state_t* ui_state)
     gfx_print(layout.top_pos, "Channels", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print channel entries
-    _ui_drawMenuList(layout.line1_pos, ui_state->menu_selected, _ui_getChannelName);
+    _ui_drawMenuList(ui_state->menu_selected, _ui_getChannelName);
 }
 
 void _ui_drawMenuContacts(ui_state_t* ui_state)
@@ -283,7 +285,7 @@ void _ui_drawMenuContacts(ui_state_t* ui_state)
     gfx_print(layout.top_pos, "Contacts", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print contact entries
-    _ui_drawMenuList(layout.line1_pos, ui_state->menu_selected, _ui_getContactName);
+    _ui_drawMenuList(ui_state->menu_selected, _ui_getContactName);
 }
 
 #ifdef HAS_GPS
@@ -382,7 +384,7 @@ void _ui_drawMenuSettings(ui_state_t* ui_state)
     gfx_print(layout.top_pos, "Settings", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print menu entries
-    _ui_drawMenuList(layout.line1_pos, ui_state->menu_selected, _ui_getSettingsEntryName);
+    _ui_drawMenuList(ui_state->menu_selected, _ui_getSettingsEntryName);
 }
 
 void _ui_drawMenuInfo(ui_state_t* ui_state)
@@ -392,7 +394,7 @@ void _ui_drawMenuInfo(ui_state_t* ui_state)
     gfx_print(layout.top_pos, "Info", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print menu entries
-    _ui_drawMenuListValue(ui_state, layout.line1_pos, ui_state->menu_selected, _ui_getInfoEntryName,
+    _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getInfoEntryName,
                            _ui_getInfoValueName);
 }
 
@@ -418,7 +420,7 @@ void _ui_drawSettingsDisplay(ui_state_t* ui_state)
     gfx_print(layout.top_pos, "Display", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print display settings entries
-    _ui_drawMenuListValue(ui_state, layout.line1_pos, ui_state->menu_selected, _ui_getDisplayEntryName,
+    _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getDisplayEntryName,
                            _ui_getDisplayValueName);
 }
 
@@ -430,7 +432,7 @@ void _ui_drawSettingsGPS(ui_state_t* ui_state)
     gfx_print(layout.top_pos, "GPS Settings", layout.top_font,
               TEXT_ALIGN_CENTER, color_white);
     // Print display settings entries
-    _ui_drawMenuListValue(ui_state, layout.line1_pos, ui_state->menu_selected, 
+    _ui_drawMenuListValue(ui_state, ui_state->menu_selected, 
                           _ui_getSettingsGPSEntryName,
                           _ui_getSettingsGPSValueName);
 }
