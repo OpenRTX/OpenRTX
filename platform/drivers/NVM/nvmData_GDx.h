@@ -116,14 +116,19 @@ typedef struct {
 } 
 gdxChannelBank_t;
 
+// This corresponds to OpenGD77 extended zones
+// TODO: Find a way to distinguish between a stock and OpenGD77 CPS
 typedef struct {
-    // Bytes 0-15
     uint8_t name[16];                   // Zone Name
-
-    // Bytes 16-47
-    uint16_t member[16];                // Member: channels 1...16
+    uint16_t member[80];                // Member: channels 1...80
 }
 gdxZone_t;
+
+typedef struct {
+    uint8_t bitmap[32];                 // bit set when zone valid
+    gdxZone_t zone[250];
+}
+gdxZoneBank_t;
 
 typedef struct {
     // Bytes 0-15

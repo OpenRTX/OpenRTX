@@ -36,13 +36,14 @@ static const uint32_t VHF_CAL_BASE = 0x6F070;
 #warning GDx calibration: platform not supported
 #endif
 
-//const uint32_t zoneBaseAddr    = 0x149e0;  /**< Base address of zones                */
-const uint32_t channelBaseAddrEEPROM = 0x03780;  /**< Base address of channel data   */
-const uint32_t channelBaseAddrFlash  = 0x7b1c0;  /**< Base address of channel data   */
-const uint32_t contactBaseAddr = 0x87620;  /**< Base address of contacts             */
-const uint32_t maxNumChannels  = 1024;     /**< Maximum number of channels in memory */
-const uint32_t maxNumZones     = 68;      /**< Maximum number of zones in memory    */
-const uint32_t maxNumContacts  = 1024;    /**< Maximum number of contacts in memory */
+//const uint32_t zoneBaseAddr    = 0x149e0;      /**< Base address of zones                */
+const uint32_t channelBaseAddrEEPROM = 0x03780;  /**< Base address of channel data         */
+const uint32_t channelBaseAddrFlash  = 0x7b1c0;  /**< Base address of channel data         */
+const uint32_t zoneBaseAddr = 0x8010;            /**< Base address of zones                */
+const uint32_t contactBaseAddr = 0x87620;        /**< Base address of contacts             */
+const uint32_t maxNumChannels  = 1024;           /**< Maximum number of channels in memory */
+const uint32_t maxNumZones     = 68;             /**< Maximum number of zones in memory    */
+const uint32_t maxNumContacts  = 1024;           /**< Maximum number of contacts in memory */
 
 /**
  * \internal Utility function to convert 4 byte BCD values into a 32-bit
@@ -288,9 +289,32 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
 
 int nvm_readZoneData(zone_t *zone, uint16_t pos)
 {
-    (void) zone;
-    (void) pos;
-    return -1;
+    if((pos <= 0) || (pos > maxNumZones)) return -1; 
+
+    // ### Read zone bank bitmap ###
+    uint8_t bitmap[32];
+    AT24Cx_readData(zoneBaseAddr, ((uint8_t *) &bitmap), sizeof(bitmap));
+    
+    uint8_t bitmap_byte = pos / 8;
+    uint8_t bitmap_bit = pos % 8;
+    // The zone is marked not valid in the bitmap
+    if(!(bitmap[bitmap_byte] & (1 << bitmap_bit))) return -1;
+
+    gdxZone_t zoneData;
+    // Note: pos is 1-based to be consistent with channels
+    uint32_t zoneAddr = zoneBaseAddr + sizeof(bitmap) + (pos - 1) * sizeof(gdxZone_t);
+    AT24Cx_readData(zoneAddr, ((uint8_t *) &zoneData), sizeof(gdxZone_t));
+
+    // Check if zone is empty
+    if(wcslen((wchar_t *) zoneData.name) == 0) return -1; 
+    
+    memcpy(zone->name, zoneData.name, sizeof(zoneData.name));
+    // Copy zone channel indexes
+    for(uint16_t i = 0; i < 16; i++)
+    {   
+        zone->member[i] = zoneData.member[i];
+    }   
+    return 0;
 }
 
 int nvm_readContactData(contact_t *contact, uint16_t pos)
