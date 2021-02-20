@@ -19,6 +19,7 @@
  ***************************************************************************/
 
 #include <string.h>
+#include <wchar.h>
 #include <interfaces/delays.h>
 #include <interfaces/nvmem.h>
 #include <calibInfo_GDx.h>
@@ -39,6 +40,7 @@ static const uint32_t VHF_CAL_BASE = 0x6F070;
 //const uint32_t zoneBaseAddr    = 0x149e0;      /**< Base address of zones                */
 const uint32_t channelBaseAddrEEPROM = 0x03780;  /**< Base address of channel data         */
 const uint32_t channelBaseAddrFlash  = 0x7b1c0;  /**< Base address of channel data         */
+const uint32_t vfoChannelBaseAddr = 0x7590;      /**< Base address of VFO channel          */
 const uint32_t zoneBaseAddr = 0x8010;            /**< Base address of zones                */
 const uint32_t contactBaseAddr = 0x87620;        /**< Base address of contacts             */
 const uint32_t maxNumChannels  = 1024;           /**< Maximum number of channels in memory */
@@ -165,8 +167,72 @@ void nvm_loadHwInfo(hwInfo_t *info)
 
 int nvm_readVFOChannelData(channel_t *channel)
 {
-    (void) channel;
-    return -1;
+    gdxChannel_t chData;
+    
+    AT24Cx_readData(vfoChannelBaseAddr, ((uint8_t *) &chData), sizeof(gdxChannel_t));
+   
+    // Copy data to OpenRTX channel_t
+    channel->mode            = chData.channel_mode - 1;
+    channel->bandwidth       = chData.bandwidth;
+    channel->admit_criteria  = chData.admit_criteria;
+    channel->squelch         = chData.squelch;
+    channel->rx_only         = chData.rx_only;
+    channel->vox             = chData.vox;
+    channel->power           = ((chData.power == 1) ? 5.0f : 1.0f);
+    channel->rx_frequency    = _bcd2bin(chData.rx_frequency) * 10;
+    channel->tx_frequency    = _bcd2bin(chData.tx_frequency) * 10;
+    channel->tot             = chData.tot;
+    channel->tot_rekey_delay = chData.tot_rekey_delay;
+    channel->emSys_index     = chData.emergency_system_index;
+    channel->scanList_index  = chData.scan_list_index;
+    channel->groupList_index = chData.group_list_index;
+    memcpy(channel->name, chData.name, sizeof(chData.name));
+
+    /* Load mode-specific parameters */
+    if(channel->mode == FM)
+    {
+        channel->fm.txToneEn = 0;
+        channel->fm.rxToneEn = 0;
+        uint16_t rx_css = chData.ctcss_dcs_receive;
+        uint16_t tx_css = chData.ctcss_dcs_transmit;
+
+        // TODO: Implement binary search to speed up this lookup
+        if((rx_css != 0) && (rx_css != 0xFFFF))
+        {
+            for(int i = 0; i < MAX_TONE_INDEX; i++)
+            {
+                if(ctcss_tone[i] == ((uint16_t) _bcd2bin(rx_css)))
+                {
+                    channel->fm.rxTone = i;
+                    channel->fm.rxToneEn = 1;
+                    break;
+                }
+            }
+        }
+
+        if((tx_css != 0) && (tx_css != 0xFFFF))
+        {
+            for(int i = 0; i < MAX_TONE_INDEX; i++)
+            {
+                if(ctcss_tone[i] == ((uint16_t) _bcd2bin(tx_css)))
+                {
+                    channel->fm.txTone = i;
+                    channel->fm.txToneEn = 1;
+                    break;
+                }
+            }
+        }
+
+        // TODO: Implement warning screen if tone was not found
+    }
+    else if(channel->mode == DMR)
+    {
+        channel->dmr.contactName_index = chData.contact_name_index;
+        channel->dmr.dmr_timeslot      = chData.repeater_slot;
+        channel->dmr.rxColorCode       = chData.colorcode_rx;
+        channel->dmr.txColorCode       = chData.colorcode_tx;
+    }
+    return 0;
 }
 
 int nvm_readChannelData(channel_t *channel, uint16_t pos)
