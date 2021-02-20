@@ -29,7 +29,7 @@ void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_
 {
     point_t pos = layout.line1_pos;
     // Number of menu entries that fit in the screen height
-    uint8_t entries_in_screen = (SCREEN_HEIGHT - 1 - pos.y) / layout.top_h + 1;
+    uint8_t entries_in_screen = (SCREEN_HEIGHT - 1 - pos.y) / layout.menu_h + 1;
     uint8_t scroll = 0;
     char entry_buf[MAX_ENTRY_LEN] = "";
     color_t text_color = color_white;
@@ -47,11 +47,11 @@ void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_
             {
                 text_color = color_black;
                 // Draw rectangle under selected item, compensating for text height
-                point_t rect_pos = {0, pos.y - layout.top_h + 3};
-                gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.top_h, color_white, true); 
+                point_t rect_pos = {0, pos.y - layout.menu_h + 3};
+                gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.menu_h, color_white, true); 
             }
-            gfx_print(pos, entry_buf, layout.top_font, TEXT_ALIGN_LEFT, text_color);
-            pos.y += layout.top_h;
+            gfx_print(pos, entry_buf, layout.menu_font, TEXT_ALIGN_LEFT, text_color);
+            pos.y += layout.menu_h;
         }
     }
 }
@@ -62,7 +62,7 @@ void _ui_drawMenuListValue(ui_state_t* ui_state, uint8_t selected,
 {
     point_t pos = layout.line1_pos;
     // Number of menu entries that fit in the screen height
-    uint8_t entries_in_screen = (SCREEN_HEIGHT - 1 - pos.y) / layout.top_h + 1;
+    uint8_t entries_in_screen = (SCREEN_HEIGHT - 1 - pos.y) / layout.menu_h + 1;
     uint8_t scroll = 0;
     char entry_buf[MAX_ENTRY_LEN] = "";
     char value_buf[MAX_ENTRY_LEN] = "";
@@ -90,12 +90,12 @@ void _ui_drawMenuListValue(ui_state_t* ui_state, uint8_t selected,
                     text_color = color_white;
                     full_rect = false;
                 }
-                point_t rect_pos = {0, pos.y - layout.top_h + 3};
-                gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.top_h, color_white, full_rect); 
+                point_t rect_pos = {0, pos.y - layout.menu_h + 3};
+                gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.menu_h, color_white, full_rect); 
             }
-            gfx_print(pos, entry_buf, layout.top_font, TEXT_ALIGN_LEFT, text_color);
-            gfx_print(pos, value_buf, layout.top_font, TEXT_ALIGN_RIGHT, text_color);
-            pos.y += layout.top_h;
+            gfx_print(pos, entry_buf, layout.menu_font, TEXT_ALIGN_LEFT, text_color);
+            gfx_print(pos, value_buf, layout.menu_font, TEXT_ALIGN_RIGHT, text_color);
+            pos.y += layout.menu_h;
         }
     }
 }
@@ -403,7 +403,7 @@ void _ui_drawMenuAbout()
     gfx_clearScreen();
     ui_drawSplashScreen(false);
     char author_buf[MAX_ENTRY_LEN] = "";
-    uint8_t line_h = layout.top_h;
+    uint8_t line_h = layout.menu_h;
     point_t pos = {SCREEN_WIDTH / 7, SCREEN_HEIGHT - (line_h * (author_num - 1)) - 5};
     for(int author = 0; author < author_num; author++)
     {

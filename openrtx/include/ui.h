@@ -119,6 +119,7 @@ typedef struct layout_t
     uint16_t line1_h;
     uint16_t line2_h;
     uint16_t line3_h;
+    uint16_t menu_h;
     uint16_t bottom_h;
     uint16_t status_v_pad;
     uint16_t horizontal_pad;
@@ -134,6 +135,7 @@ typedef struct layout_t
     fontSize_t line3_font;
     fontSize_t bottom_font;
     fontSize_t input_font;
+    fontSize_t menu_font;
 } layout_t;
 
 /** 
