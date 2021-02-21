@@ -699,7 +699,6 @@ void gfx_drawGPScompass(point_t start,
     if (active)
     {
         // Needle
-        deg = -deg;
         deg -= 90.0f;
         point_t p1 = {circle_pos.x + needle_radius * COS(deg),
                       circle_pos.y + needle_radius * SIN(deg)};
