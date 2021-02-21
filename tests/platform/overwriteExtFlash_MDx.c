@@ -34,7 +34,6 @@ void printChunk(void *chunk)
         if((ptr[i] > 0x22) && (ptr[i] < 0x7f)) printf("%c", ptr[i]);
         else printf(".");
     }
-    printf("\r\n");
 }
 
 int main()
@@ -49,17 +48,24 @@ int main()
         // On UV380 flash at 0x5F60 there are 36032 bytes of 0xFF
         uint32_t addr = 0x5F60;
         printf("Read memory @ 0x5F60\r\n");
-        W25Qx_readData(addr, block, 16);
-        printChunk(block);
-        
+        W25Qx_readData(addr, block, 256);
+        for (int offset = 0; offset < 256; offset += 16)
+        {
+            printf("\r\n%lx: ", addr + offset);
+            printChunk(block + offset);
+        }
         block[3] = 0xAA;
-        printf("Write memory @ 0x5F60... ");
+        printf("\r\nWrite memory @ 0x5F60... ");
         bool success = W25Qx_writeData(addr, block, 16);
         printf("%s\r\n", success ? "success" : "failed");
 
         printf("Read memory @ 0x5F60\r\n");
-        W25Qx_readData(addr, block, 16);
-        printChunk(block);
+        W25Qx_readData(addr, block, 256);
+        for (int offset = 0; offset < 256; offset += 16)
+        {
+            printf("\r\n%lx: ", addr + offset);
+            printChunk(block + offset);
+        }
     }
 
     return 0;
