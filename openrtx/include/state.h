@@ -75,10 +75,10 @@ typedef struct
 
     uint8_t ui_screen;
     uint8_t tuner_mode;
-    
+
     //time_t rx_status_tv;
     //bool rx_status;
-    
+
     //time_t tx_status_tv;
     //bool tx_status;
 
@@ -113,7 +113,7 @@ enum RtxStatus
     RTX_TX
 };
 
-extern state_t state;
+state_t state;
 
 /**
  * This function initializes the Radio state, acquiring the information

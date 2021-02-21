@@ -26,22 +26,10 @@
 #include <interfaces/platform.h>
 #include <interfaces/nvmem.h>
 
-state_t state;
-
-const settings_t default_settings =
-{
-    "OPNRTX",  // Settings valid string
-    255,       // Brightness
-    60,        // Contrast
-    0,         // UTC Timezone
-    false,     // GPS enabled
-    true       // GPS set time
-};
-
 void state_init()
 {
     /*
-     * TODO: Read current state parameters from hardware, 
+     * TODO: Read current state parameters from hardware,
      * or initialize them to sane defaults
      */
     state.radioStateUpdated = true;
@@ -52,7 +40,7 @@ void state_init()
     state.v_bat = platform_getVbat();
     state.charge = battery_getCharge(state.v_bat);
     state.rssi = rtx_getRssi();
- 
+
     // Set default channel index (it is 1-based)
     state.channel_index = 1;
     // Read VFO channel from Flash storage
@@ -79,7 +67,7 @@ void state_init()
     state.voxLevel = 0;
 
     state.emergency = false;
-    
+
     // Read settings from flash memory
     int valid = nvm_readSettings(&state.settings);
     // Settings in flash memory were not valid, restoring default settings
@@ -98,10 +86,16 @@ void state_terminate()
 
 void state_applyTimezone()
 {
-    if(state.time.hour + state.settings.utc_timezone >= 24) 
+    if(state.time.hour + state.settings.utc_timezone >= 24)
+    {
         state.time.hour = state.time.hour - 24 + state.settings.utc_timezone;
-    else if(state.time.hour + state.settings.utc_timezone < 0) 
+    }
+    else if(state.time.hour + state.settings.utc_timezone < 0)
+    {
         state.time.hour = state.time.hour + 24 + state.settings.utc_timezone;
+    }
     else
+    {
         state.time.hour += state.settings.utc_timezone;
+    }
 }

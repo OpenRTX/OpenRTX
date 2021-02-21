@@ -30,8 +30,17 @@ typedef struct
     bool gps_enabled;
     bool gps_set_time;
 }
-settings_t;
+__attribute__((packed)) settings_t;
 
-extern const settings_t default_settings;
+
+static const settings_t default_settings =
+{
+    "OPNRTX",  // Settings valid string
+    255,       // Brightness
+    60,        // Contrast
+    0,         // UTC Timezone
+    false,     // GPS enabled
+    true       // GPS set time
+};
 
 #endif /* SETTINGS_H */
