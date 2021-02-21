@@ -98,4 +98,19 @@ bool W25Qx_eraseSector(uint32_t addr);
  */
 ssize_t W25Qx_writePage(uint32_t addr, void *buf, size_t len);
 
+/**
+ * Write data to flash memory.
+ * Copies the 4K block to a memory buffer
+ * Overwrites the specified part
+ * Writes back the 4K block at chunks of 256Bytes.
+ * The write is not performed if the destination content matches the source
+ * Maximum write size = 4096 bytes.
+ * This function fails if you are trying to write across 4K blocks
+ *
+ * @param addr: start address for read operation.
+ * @param buf: pointer to a buffer where data is written to.
+ * @param len: number of bytes to read.
+ */
+bool W25Qx_writeData(uint32_t addr, void *buf, size_t len);
+
 #endif /* W25Qx_H */

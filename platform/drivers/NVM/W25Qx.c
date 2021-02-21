@@ -212,3 +212,56 @@ ssize_t W25Qx_writePage(uint32_t addr, void* buf, size_t len)
     return -1;
 }
 
+bool W25Qx_writeData(uint32_t addr, void* buf, size_t len)
+{
+    // Fail if we are trying to write more than 4K bytes
+    if(len > 4096)
+        return false;
+    // Fail if we are trying to write across 4K blocks, 
+    // this would erase two 4K blocks for one write, which is not good for flash life
+    // We calculate block address using integer division of start and end address
+    uint32_t startBlockAddr = addr / 4096 * 4096;
+    uint32_t endBlockAddr = (addr + len - 1) / 4096 * 4096;
+    if(endBlockAddr != startBlockAddr)
+        return false;
+
+    // Read data from memory to check if it's already correct
+    // Allocate buffer for storing data read from memory
+    uint8_t *flashData;
+    flashData = (uint8_t *) malloc(len);
+    W25Qx_readData(addr, flashData, len);
+    // If data in flash corresponds to the passed data, do not perform the write
+    if(memcmp(buf, flashData, len) == 0)
+    {
+        // Free the buffer buffer
+        free(flashData);
+        return true;
+    }
+    // Free the flash data buffer
+    free(flashData);
+
+    // Perform the actual read-erase-write of flash data
+    // Allocate 4096 bytes block for storing flash block to be erased
+    uint8_t *flashBlock;
+    flashBlock = (uint8_t *) malloc(4096);
+    // Read the 4K block from flash
+    W25Qx_readData(startBlockAddr, flashBlock, 4096);
+    uint32_t blockOffset = addr % 4096;
+    // Overwrite changed portion
+    memcpy(flashBlock + blockOffset, buf, len);
+    // Erase the 4K block
+    if(!W25Qx_eraseSector(startBlockAddr))
+    {
+        // The erase operation failed, return failure
+        free(flashBlock);
+        return false;
+    }
+    // Write back the modified 4K block in 256 bytes chunks
+    for(uint32_t offset = 0; offset < 4096; offset += 256)
+    {
+        W25Qx_writePage(startBlockAddr + offset, flashBlock[offset], 256);
+    }
+    // Free the 4K buffer
+    free(flashBlock);
+    return true;
+}
