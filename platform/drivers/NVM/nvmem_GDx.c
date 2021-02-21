@@ -409,3 +409,16 @@ int nvm_readContactData(contact_t *contact, uint16_t pos)
 
     return 0;
 }
+
+int nvm_readSettings(settings_t *settings)
+{
+    (void) settings;
+    return -1;
+}
+
+int nvm_writeSettings(settings_t *settings)
+{
+    (void) settings;
+    return -1;
+}
+

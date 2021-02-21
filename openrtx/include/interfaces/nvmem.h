@@ -24,6 +24,7 @@
 #include "platform.h"
 #include <stdint.h>
 #include <cps.h>
+#include <settings.h>
 
 /**
  * Interface for nonvolatile memory management, usually an external SPI flash
@@ -88,5 +89,21 @@ int nvm_readZoneData(zone_t *zone, uint16_t pos);
  * @return 0 on success, -1 on failure
  */
 int nvm_readContactData(contact_t *contact, uint16_t pos);
+
+/**
+ * Read OpenRTX settings from storage.
+ *
+ * @param settings: pointer to the settings_t data structure to be populated.
+ * @return 0 on success, -1 on failure
+ */
+int nvm_readSettings(settings_t *settings);
+
+/**
+ * Write OpenRTX settings to storage.
+ *
+ * @param settings: pointer to the settings_t data structure to be written.
+ * @return 0 on success, -1 on failure
+ */
+int nvm_writeSettings(settings_t *settings);
 
 #endif /* NVMEM_H */

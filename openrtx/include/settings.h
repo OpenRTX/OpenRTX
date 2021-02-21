@@ -23,12 +23,15 @@
 
 typedef struct
 {
+    uint8_t valid[6];     // Should contain "OPNRTX" in a valid settings_t
     uint8_t brightness;
     uint8_t contrast;
+    int8_t utc_timezone;
     bool gps_enabled;
     bool gps_set_time;
-    int8_t utc_timezone;
 }
 settings_t;
+
+extern const settings_t default_settings;
 
 #endif /* SETTINGS_H */

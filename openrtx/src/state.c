@@ -28,6 +28,16 @@
 
 state_t state;
 
+const settings_t default_settings =
+{
+    "OPNRTX",  // Settings valid string
+    255,       // Brightness
+    60,        // Contrast
+    0,         // UTC Timezone
+    false,     // GPS enabled
+    true       // GPS set time
+};
+
 void state_init()
 {
     /*
@@ -69,11 +79,15 @@ void state_init()
     state.voxLevel = 0;
 
     state.emergency = false;
-    // Initialize settings_t
-    // TODO: settings_t should be read from flash memory or from a factory default
-    state.settings = (settings_t){ 0 };
-    state.settings.brightness = 255;
-    state.settings.contrast = 84;
+    
+    // Read settings from flash memory
+    int valid = nvm_readSettings(&state.settings);
+    // Settings in flash memory were not valid, restoring default settings
+    if(valid != 0)
+    {
+        state.settings = default_settings;
+        nvm_writeSettings(&state.settings);
+    }
 }
 
 void state_applyTimezone()

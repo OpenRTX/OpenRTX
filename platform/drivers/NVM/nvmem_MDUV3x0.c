@@ -19,6 +19,7 @@
  ***************************************************************************/
 
 #include <wchar.h>
+#include <string.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/delays.h>
 #include <calibInfo_MDx.h>
@@ -33,6 +34,9 @@ const uint32_t contactBaseAddr = 0x140000;  /**< Base address of contacts       
 const uint32_t maxNumChannels  = 3000;      /**< Maximum number of channels in memory                  */
 const uint32_t maxNumZones     = 250;       /**< Maximum number of zones and zone extensions in memory */
 const uint32_t maxNumContacts  = 10000;     /**< Maximum number of contacts in memory                  */
+/* This address has been chosen by OpenRTX to store the settings 
+ * because it is empty (0xFF) and has enough free space */
+const uint32_t settingsAddr  = 0x6000;
 
 /**
  * \internal Utility function to convert 4 byte BCD values into a 32-bit
@@ -347,4 +351,26 @@ int nvm_readContactData(contact_t *contact, uint16_t pos)
     contact->receive_tone = contactData.receive_tone ? true : false;
 
     return 0;
+}
+
+int nvm_readSettings(settings_t *settings)
+{
+    settings_t newSettings;
+    W25Qx_wakeup();
+    delayUs(5);
+    W25Qx_readData(settingsAddr, ((uint8_t *) &newSettings), sizeof(settings_t));
+    W25Qx_sleep();
+    if(memcmp(newSettings.valid, default_settings.valid, 6) != 0)
+        return -1;
+    memcpy(settings, &newSettings, sizeof(settings_t));
+    return 0;
+}
+
+int nvm_writeSettings(settings_t *settings)
+{
+    W25Qx_wakeup();
+    delayUs(5);
+    bool success = W25Qx_writeData(settingsAddr, ((uint8_t *) &settings), sizeof(settings_t));
+    W25Qx_sleep();
+    return success? 0 : -1;
 }
