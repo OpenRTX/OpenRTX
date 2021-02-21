@@ -696,6 +696,13 @@ void ui_saveState()
 
 void ui_updateFSM(event_t event, bool *sync_rtx)
 {
+    // The volume knob has been set to OFF, shutdown the radio
+    if(state.v_bat <= 0)
+    {
+        state_terminate();
+        platform_terminate();
+        return;
+    }
     // Check if battery has enough charge to operate
     float charge = battery_getCharge(state.v_bat);
     if (!state.emergency && charge <= 0)

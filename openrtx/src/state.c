@@ -90,6 +90,12 @@ void state_init()
     }
 }
 
+void state_terminate()
+{
+    // Write settings to flash memory
+    nvm_writeSettings(&state.settings);
+}
+
 void state_applyTimezone()
 {
     if(state.time.hour + state.settings.utc_timezone >= 24) 
