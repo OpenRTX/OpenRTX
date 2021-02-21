@@ -233,7 +233,7 @@ bool W25Qx_writeData(uint32_t addr, void* buf, size_t len)
     // If data in flash corresponds to the passed data, do not perform the write
     if(memcmp(buf, flashData, len) == 0)
     {
-        // Free the buffer buffer
+        // Free the buffer
         free(flashData);
         return true;
     }
@@ -248,7 +248,7 @@ bool W25Qx_writeData(uint32_t addr, void* buf, size_t len)
     W25Qx_readData(startBlockAddr, flashBlock, 4096);
     uint32_t blockOffset = addr % 4096;
     // Overwrite changed portion
-    memcpy(flashBlock + blockOffset, buf, len);
+    memcpy(&flashBlock[blockOffset], buf, len);
     // Erase the 4K block
     if(!W25Qx_eraseSector(startBlockAddr))
     {
@@ -259,7 +259,7 @@ bool W25Qx_writeData(uint32_t addr, void* buf, size_t len)
     // Write back the modified 4K block in 256 bytes chunks
     for(uint32_t offset = 0; offset < 4096; offset += 256)
     {
-        W25Qx_writePage(startBlockAddr + offset, flashBlock[offset], 256);
+        W25Qx_writePage(startBlockAddr + offset, &flashBlock[offset], 256);
     }
     // Free the 4K buffer
     free(flashBlock);
