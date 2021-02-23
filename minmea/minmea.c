@@ -632,7 +632,7 @@ int minmea_gettime(struct timespec *ts, const struct minmea_date *date, const st
     tm.tm_min = time_->minutes;
     tm.tm_sec = time_->seconds;
 
-    time_t timestamp = timegm(&tm); /* See README.md if your system lacks timegm(). */
+    time_t timestamp = mktime(&tm); /* See README.md if your system lacks timegm(). */
     if (timestamp != (time_t)-1) {
         ts->tv_sec = timestamp;
         ts->tv_nsec = time_->microseconds * 1000;

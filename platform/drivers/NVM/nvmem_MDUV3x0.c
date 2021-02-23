@@ -34,7 +34,7 @@ const uint32_t contactBaseAddr = 0x140000;  /**< Base address of contacts       
 const uint32_t maxNumChannels  = 3000;      /**< Maximum number of channels in memory                  */
 const uint32_t maxNumZones     = 250;       /**< Maximum number of zones and zone extensions in memory */
 const uint32_t maxNumContacts  = 10000;     /**< Maximum number of contacts in memory                  */
-/* This address has been chosen by OpenRTX to store the settings 
+/* This address has been chosen by OpenRTX to store the settings
  * because it is empty (0xFF) and has enough free space */
 const uint32_t settingsAddr  = 0x6000;
 

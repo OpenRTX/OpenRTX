@@ -19,7 +19,6 @@ c_args      = [
                '-mthumb',                   # ARM Thumb2 ISA
                '-mfloat-abi=hard',          # Hard floating point support
                '-mfpu=fpv4-sp-d16',
-               '-ffunction-sections',
                '-Os'
               ]
 
