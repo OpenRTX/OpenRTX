@@ -251,6 +251,11 @@ static void dev_task(void *arg)
     (void) arg;
     OS_ERR os_err;
 
+    // Initialise battery voltage, to avoid filter settling transient
+    OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
+    state.v_bat = platform_getVbat();
+    OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
+
     while(1)
     {
         // Lock mutex and update internal state
@@ -260,7 +265,11 @@ static void dev_task(void *arg)
         state.time = rtc_getTime();
         state_applyTimezone();
 #endif
-        state.v_bat = platform_getVbat();
+
+        // Low-pass filtering with a time constant of 10s when updated at 1Hz
+        float vbat = platform_getVbat();
+        state.v_bat = 0.02*vbat + 0.98*state.v_bat;
+
         state.charge = battery_getCharge(state.v_bat);
         state.rssi = rtx_getRssi();
 

@@ -34,6 +34,8 @@ rtxStatus_t rtxStatus;  /* RTX driver status                  */
 bool sqlOpen;           /* Flag for squelch open/close        */
 bool enterRx;           /* Flag for RX mode activation        */
 
+float rssi;             /* Current RSSI in dBm                */
+
 /*
  * These functions below provide a basic API for audio path management. They
  * will be removed once the audio driver is set up.
@@ -133,6 +135,11 @@ void rtx_init(OS_MUTEX *m)
      * Initialise low-level platform-specific driver
      */
     radio_init();
+
+    /*
+     * Initial value for RSSI filter
+     */
+    rssi = radio_getRssi(rtxStatus.rxFrequency);
 
     _afCtrlInit();
 }
@@ -236,9 +243,12 @@ void rtx_taskFunc()
     if(rtxStatus.opStatus == RX)
     {
         /*
-         * RSSI-based squelch mechanism, with 15 levels from -140dBm to -70dBm
+         * RSSI-based squelch mechanism, with 15 levels from -140dBm to -70dBm.
+         *
+         * RSSI value is passed through a filter with a time constant of 60ms
+         * (cut-off frequency of 15Hz) at an update rate of 33.3Hz
          */
-        float rssi = rtx_getRssi();
+        rssi = 0.74*radio_getRssi(rtxStatus.rxFrequency) + 0.26*rssi;
         float squelch = -127.0f + rtxStatus.sqlLevel * 66.0f / 15.0f;
 
         if((sqlOpen == false) && (rssi > (squelch + 0.1f)))
@@ -261,6 +271,9 @@ void rtx_taskFunc()
         radio_enableRx();
         rtxStatus.opStatus = RX;
         enterRx = false;
+
+        /* Reinitialise RSSI filter state */
+        rssi = radio_getRssi(rtxStatus.rxFrequency);
     }
 
     /* TX logic */
@@ -309,5 +322,5 @@ void rtx_taskFunc()
 
 float rtx_getRssi()
 {
-    return radio_getRssi(rtxStatus.rxFrequency);
+    return rssi;
 }

@@ -20,18 +20,12 @@
 #include "ADC1_MDx.h"
 
 /*
- * Ringbuffer of samples to allow for value smoothing through averaging. This
- * buffer is structured as follows:
+ * The sample buffer is structured as follows:
  *
- * | vbat | rssi | vox | vol | vbat | rssi | vox | vol | ...
+ * | vbat | rssi | vox | vol |
  *
- * thus it contains four samples of the four channels. Then, DMA is configured
- * in circular mode with a rollover after 16 transfers, effectively managing
- * this buffer as a ringbuffer for the measurements of the four channels.
- * Then, in adc1_getMeasurement(), the average over the values contained in the
- * ring buffer is performed and returned as the current channel value.
  */
-uint16_t sampleRingBuf[16];
+uint16_t sampleBuf[4];
 
 void adc1_init()
 {
@@ -98,8 +92,8 @@ void adc1_init()
      * - no interrupts
      */
     DMA2_Stream0->PAR = ((uint32_t) &(ADC1->DR));
-    DMA2_Stream0->M0AR = ((uint32_t) &sampleRingBuf);
-    DMA2_Stream0->NDTR = 16;
+    DMA2_Stream0->M0AR = ((uint32_t) &sampleBuf);
+    DMA2_Stream0->NDTR = 4;
     DMA2_Stream0->CR = DMA_SxCR_MSIZE_0     /* Memory size: 16 bit     */
                      | DMA_SxCR_PSIZE_0     /* Peripheral size: 16 bit */
                      | DMA_SxCR_PL_0        /* Medium priority         */
@@ -123,14 +117,6 @@ float adc1_getMeasurement(uint8_t ch)
 {
     if(ch > 3) return 0.0f;
 
-    /* Return the average over the ring buffer */
-    float value = 0.0f;
-    for(uint8_t i = 0; i < 16; i += 4)
-    {
-        value += ((float) sampleRingBuf[i + ch]);
-    }
-    value /= 4.0f;
-
-    /* Return average value converted to mV */
+    float value = ((float) sampleBuf[ch]);
     return (value * 3300.0f)/4096.0f;
 }
