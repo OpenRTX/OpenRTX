@@ -45,42 +45,42 @@ openrtx_inc = ['openrtx/include',
                'platform/drivers/baseband']
 
 ## RTOS
-rtos_src = ['rtos/uC-OS3/Source/__dbg_uCOS-III.c',
-            'rtos/uC-OS3/Source/os_cfg_app.c',
-            'rtos/uC-OS3/Source/os_core.c',
-            'rtos/uC-OS3/Source/os_dbg.c',
-            'rtos/uC-OS3/Source/os_flag.c',
-            'rtos/uC-OS3/Source/os_mem.c',
-            'rtos/uC-OS3/Source/os_msg.c',
-            'rtos/uC-OS3/Source/os_mutex.c',
-            'rtos/uC-OS3/Source/os_prio.c',
-            'rtos/uC-OS3/Source/os_q.c',
-            'rtos/uC-OS3/Source/os_sem.c',
-            'rtos/uC-OS3/Source/os_stat.c',
-            'rtos/uC-OS3/Source/os_task.c',
-            'rtos/uC-OS3/Source/os_tick.c',
-            'rtos/uC-OS3/Source/os_time.c',
-            'rtos/uC-OS3/Source/os_tmr.c',
-            'rtos/uC-OS3/Source/os_var.c',
-            'rtos/uC-OS3/Cfg/os_app_hooks.c',
-            'rtos/uC-CPU/cpu_core.c',
-            'rtos/uC-LIB/lib_ascii.c',
-            'rtos/uC-LIB/lib_math.c',
-            'rtos/uC-LIB/lib_mem.c',
-            'rtos/uC-LIB/lib_str.c']
+rtos_src = ['lib/rtos/uC-OS3/Source/__dbg_uCOS-III.c',
+            'lib/rtos/uC-OS3/Source/os_cfg_app.c',
+            'lib/rtos/uC-OS3/Source/os_core.c',
+            'lib/rtos/uC-OS3/Source/os_dbg.c',
+            'lib/rtos/uC-OS3/Source/os_flag.c',
+            'lib/rtos/uC-OS3/Source/os_mem.c',
+            'lib/rtos/uC-OS3/Source/os_msg.c',
+            'lib/rtos/uC-OS3/Source/os_mutex.c',
+            'lib/rtos/uC-OS3/Source/os_prio.c',
+            'lib/rtos/uC-OS3/Source/os_q.c',
+            'lib/rtos/uC-OS3/Source/os_sem.c',
+            'lib/rtos/uC-OS3/Source/os_stat.c',
+            'lib/rtos/uC-OS3/Source/os_task.c',
+            'lib/rtos/uC-OS3/Source/os_tick.c',
+            'lib/rtos/uC-OS3/Source/os_time.c',
+            'lib/rtos/uC-OS3/Source/os_tmr.c',
+            'lib/rtos/uC-OS3/Source/os_var.c',
+            'lib/rtos/uC-OS3/Cfg/os_app_hooks.c',
+            'lib/rtos/uC-CPU/cpu_core.c',
+            'lib/rtos/uC-LIB/lib_ascii.c',
+            'lib/rtos/uC-LIB/lib_math.c',
+            'lib/rtos/uC-LIB/lib_mem.c',
+            'lib/rtos/uC-LIB/lib_str.c']
 
-rtos_inc = ['rtos/uC-OS3/Source',
-            'rtos/uC-OS3/Cfg',
-            'rtos/uC-CPU',
-            'rtos/uC-CPU/Cfg',
-            'rtos/uC-LIB',
-            'rtos/uC-LIB/Cfg']
+rtos_inc = ['lib/rtos/uC-OS3/Source',
+            'lib/rtos/uC-OS3/Cfg',
+            'lib/rtos/uC-CPU',
+            'lib/rtos/uC-CPU/Cfg',
+            'lib/rtos/uC-LIB',
+            'lib/rtos/uC-LIB/Cfg']
 
 ## minmea, a lightweight GPS NMEA 0183 parser library
 
-minmea_src = ['minmea/minmea.c']
+minmea_src = ['lib/minmea/minmea.c']
 
-minmea_inc = ['minmea/include']
+minmea_inc = ['lib/minmea/include']
 
 src = openrtx_src + rtos_src + minmea_src
 inc = openrtx_inc + rtos_inc + minmea_inc
@@ -112,18 +112,18 @@ stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.c',
                  'platform/mcu/STM32F4xx/drivers/delays.c',
                  'platform/mcu/STM32F4xx/drivers/rtc.c',
                  'platform/mcu/CMSIS/Device/ST/STM32F4xx/Source/system_stm32f4xx.c',
-                 'rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M/os_cpu_c.c',
-                 'rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M/os_cpu_a.s',
-                 'rtos/uC-CPU/ARM-Cortex-M/ARMv7-M/cpu_c.c',
-                 'rtos/uC-CPU/ARM-Cortex-M/ARMv7-M/cpu_a.s']
+                 'lib/rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M/os_cpu_c.c',
+                 'lib/rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M/os_cpu_a.s',
+                 'lib/rtos/uC-CPU/ARM-Cortex-M/ARMv7-M/cpu_c.c',
+                 'lib/rtos/uC-CPU/ARM-Cortex-M/ARMv7-M/cpu_a.s']
 
 stm32f405_inc = ['platform/mcu/CMSIS/Include',
                  'platform/mcu/CMSIS/Device/ST/STM32F4xx/Include',
                  'platform/mcu/STM32F4xx',
                  'platform/mcu/STM32F4xx/drivers',
                  'platform/mcu/STM32F4xx/drivers/usb',
-                 'rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M',
-                 'rtos/uC-CPU/ARM-Cortex-M/ARMv7-M']
+                 'lib/rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M',
+                 'lib/rtos/uC-CPU/ARM-Cortex-M/ARMv7-M']
 
 stm32f405_def = {'STM32F40_41xxx': '', 'HSE_VALUE':'8000000'}
 
@@ -143,16 +143,16 @@ mk22fn512_src = ['platform/mcu/MK22FN512xxx12/boot/startup.c',
                  'platform/mcu/MK22FN512xxx12/drivers/usb/usb_osa_bm.c',
                  'platform/mcu/MK22FN512xxx12/drivers/usb_vcom.c',
                  'platform/mcu/CMSIS/Device/NXP/MK22FN512xxx12/Source/system_MK22F51212.c',
-                 'rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M/os_cpu_c.c',
-                 'rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M/os_cpu_a.s',
-                 'rtos/uC-CPU/ARM-Cortex-M/ARMv7-M/cpu_c.c',
-                 'rtos/uC-CPU/ARM-Cortex-M/ARMv7-M/cpu_a.s']
+                 'lib/rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M/os_cpu_c.c',
+                 'lib/rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M/os_cpu_a.s',
+                 'lib/rtos/uC-CPU/ARM-Cortex-M/ARMv7-M/cpu_c.c',
+                 'lib/rtos/uC-CPU/ARM-Cortex-M/ARMv7-M/cpu_a.s']
 
 mk22fn512_inc = ['platform/mcu/CMSIS/Include',
                  'platform/mcu/CMSIS/Device/NXP/MK22FN512xxx12/Include',
                  'platform/mcu/MK22FN512xxx12/drivers',
-                 'rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M',
-                 'rtos/uC-CPU/ARM-Cortex-M/ARMv7-M']
+                 'lib/rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M',
+                 'lib/rtos/uC-CPU/ARM-Cortex-M/ARMv7-M']
 
 mk22fn512_def = {}
 
@@ -171,8 +171,8 @@ linux_src = src + ['platform/targets/linux/emulator/emulator.c',
                    'platform/mcu/x86_64/drivers/rtc.c',
                    'platform/drivers/baseband/radio_linux.c',
                    'platform/targets/linux/platform.c',
-                   'rtos/uC-OS3/Ports/POSIX/os_cpu_c.c',
-                   'rtos/uC-CPU/Posix/cpu_c.c']
+                   'lib/rtos/uC-OS3/Ports/POSIX/os_cpu_c.c',
+                   'lib/rtos/uC-CPU/Posix/cpu_c.c']
 
 
 # GDx family display emulation
@@ -180,8 +180,8 @@ linux_src = src + ['platform/targets/linux/emulator/emulator.c',
 # MDx family display emulation
 linux_def = def + {'SCREEN_WIDTH': '160', 'SCREEN_HEIGHT': '128', 'PIX_FMT_RGB565': ''}
 
-linux_inc = inc + ['rtos/uC-OS3/Ports/POSIX',
-                   'rtos/uC-CPU/Posix',
+linux_inc = inc + ['lib/rtos/uC-OS3/Ports/POSIX',
+                   'lib/rtos/uC-CPU/Posix',
                    'platform/targets/linux',
                    'platform/targets/linux/emulator']
 
