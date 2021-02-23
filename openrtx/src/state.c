@@ -26,6 +26,8 @@
 #include <interfaces/platform.h>
 #include <interfaces/nvmem.h>
 
+state_t state;
+
 void state_init()
 {
     /*
