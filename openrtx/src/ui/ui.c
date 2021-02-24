@@ -572,10 +572,10 @@ void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx) {
 void _ui_changeBrightness(int variation)
 {
     if(variation >= 0)
-        state.settings.brightness = 
+        state.settings.brightness =
         (255 - state.settings.brightness < variation) ? 255 : state.settings.brightness + variation;
     else
-        state.settings.brightness = 
+        state.settings.brightness =
         (state.settings.brightness < -variation) ? 0 : state.settings.brightness + variation;
     platform_setBacklightLevel(state.settings.brightness);
 }
@@ -583,10 +583,10 @@ void _ui_changeBrightness(int variation)
 void _ui_changeContrast(int variation)
 {
     if(variation >= 0)
-        state.settings.contrast = 
+        state.settings.contrast =
         (255 - state.settings.contrast < variation) ? 255 : state.settings.contrast + variation;
     else
-        state.settings.contrast = 
+        state.settings.contrast =
         (state.settings.contrast < -variation) ? 0 : state.settings.contrast + variation;
     display_setContrast(state.settings.contrast);
 }
@@ -703,12 +703,17 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
         platform_terminate();
         return;
     }
-    // Check if battery has enough charge to operate
-    float charge = battery_getCharge(state.v_bat);
-    if (!state.emergency && charge <= 0)
+
+    // Check if battery has enough charge to operate.
+    // Check is skipped if there is an ongoing transmission, since the voltage
+    // drop caused by the RF PA power absorption causes spurious triggers of
+    // the low battery alert.
+    bool txOngoing = platform_getPttStatus();
+    if ((!state.emergency) && (!txOngoing) && (state.charge <= 0))
     {
         state.ui_screen = LOW_BAT;
-        if(event.type == EVENT_KBD && event.payload) {
+        if(event.type == EVENT_KBD && event.payload)
+        {
             state.ui_screen = MAIN_VFO;
             state.emergency = true;
         }
@@ -726,7 +731,9 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
             macro_menu = true;
             _ui_fsm_menuMacro(msg, sync_rtx);
             return;
-        } else {
+        }
+        else
+        {
             macro_menu = false;
         }
         switch(state.ui_screen)
@@ -1030,11 +1037,11 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         break;
                     // Return to Time&Date menu, saving values
                     // NOTE: The user inserted a local time, we save an UTC time to the RTC
-                    if(ui_state.new_timedate.hour - state.settings.utc_timezone >= 24) 
-                        ui_state.new_timedate.hour = ui_state.new_timedate.hour - 24 - 
+                    if(ui_state.new_timedate.hour - state.settings.utc_timezone >= 24)
+                        ui_state.new_timedate.hour = ui_state.new_timedate.hour - 24 -
                         state.settings.utc_timezone;
-                    else if(ui_state.new_timedate.hour - state.settings.utc_timezone < 0)  
-                        ui_state.new_timedate.hour = ui_state.new_timedate.hour + 24 - 
+                    else if(ui_state.new_timedate.hour - state.settings.utc_timezone < 0)
+                        ui_state.new_timedate.hour = ui_state.new_timedate.hour + 24 -
                         state.settings.utc_timezone;
                     else
                         ui_state.new_timedate.hour += state.settings.utc_timezone;
@@ -1050,7 +1057,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         break;
                     ui_state.input_position += 1;
                     ui_state.input_number = input_getPressedNumber(msg);
-                    _ui_timedate_add_digit(&ui_state.new_timedate, ui_state.input_position, 
+                    _ui_timedate_add_digit(&ui_state.new_timedate, ui_state.input_position,
                                             ui_state.input_number);
                 }
                 break;
@@ -1099,7 +1106,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 break;
 #ifdef HAS_GPS
             case SETTINGS_GPS:
-                if(msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT || 
+                if(msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT ||
                    ((msg.keys & KEY_UP || msg.keys & KEY_DOWN) && ui_state.edit_mode))
                 {
                     switch(ui_state.menu_selected)

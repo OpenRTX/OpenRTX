@@ -251,11 +251,6 @@ static void dev_task(void *arg)
     (void) arg;
     OS_ERR os_err;
 
-    // Initialise battery voltage, to avoid filter settling transient
-    OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
-    state.v_bat = platform_getVbat();
-    OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
-
     while(1)
     {
         // Lock mutex and update internal state
