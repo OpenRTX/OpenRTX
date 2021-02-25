@@ -90,10 +90,11 @@
  */
 static uint16_t frameBuffer[SCREEN_WIDTH * SCREEN_HEIGHT];
 OS_FLAG_GRP renderCompleted;
-OS_ERR err;
 
 void __attribute__((used)) DMA2_Stream7_IRQHandler()
 {
+    OS_ERR err;
+
     OSIntEnter();
     DMA2->HIFCR |= DMA_HIFCR_CTCIF7 | DMA_HIFCR_CTEIF7;    /* Clear flags */
     gpio_setPin(LCD_CS);
@@ -114,6 +115,7 @@ static inline __attribute__((__always_inline__)) void writeData(uint8_t val)
 void display_init()
 {
     /* Create flag for render completion wait */
+    OS_ERR err;
     OSFlagCreate(&renderCompleted, "", 0, &err);
 
     /* Clear framebuffer, setting all pixels to 0xFFFF makes the screen white */
@@ -419,6 +421,7 @@ void display_init()
 
 void display_terminate()
 {
+    OS_ERR err;
     OSFlagDel(&renderCompleted, OS_OPT_DEL_NO_PEND, &err);
 
     /* Shut off FSMC and deallocate framebuffer */
@@ -486,6 +489,7 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
                      | DMA_SxCR_TEIE          /* Transfer error interrupt    */
                      | DMA_SxCR_EN;           /* Start transfer              */
 
+    OS_ERR err;
     OSFlagPend(&renderCompleted, 0x01, 0, OS_OPT_PEND_FLAG_SET_ANY |
                                           OS_OPT_PEND_FLAG_CONSUME |
                                           OS_OPT_PEND_BLOCKING, NULL, &err);

@@ -32,7 +32,6 @@ char  *dataBuf;
 bool   receiving = false;
 
 OS_FLAG_GRP sentenceReady;
-OS_ERR err;
 
 #ifdef PLATFORM_MD3x0
 #define PORT USART3
@@ -76,6 +75,7 @@ void __attribute__((used)) USART1_IRQHandler()
         if((receiving == false) && (bufPos != 0))
         {
             uint8_t flag = (bufPos < maxPos) ? 0x01 : 0x02;
+            OS_ERR err;
             OSFlagPost(&sentenceReady, flag, OS_OPT_POST_FLAG_SET, &err);
         }
     }
@@ -112,11 +112,13 @@ void gps_init(const uint16_t baud)
     NVIC_SetPriority(USART1_IRQn, 14);
     #endif
 
+    OS_ERR err;
     OSFlagCreate(&sentenceReady, "", 0, &err);
 }
 
 void gps_terminate()
 {
+    OS_ERR err;
     OSFlagDel(&sentenceReady, OS_OPT_DEL_NO_PEND, &err);
     gps_disable();
 
@@ -190,6 +192,7 @@ int gps_getNmeaSentence(char *buf, const size_t maxLength)
     NVIC_EnableIRQ(USART1_IRQn);
     #endif
 
+    OS_ERR err;
     OS_FLAGS status = OSFlagPend(&sentenceReady, 0x03, 0,
                                  OS_OPT_PEND_FLAG_SET_ANY |
                                  OS_OPT_PEND_FLAG_CONSUME |

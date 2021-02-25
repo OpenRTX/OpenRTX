@@ -29,6 +29,7 @@ c_link_args = [
                '-mfpu=fpv4-sp-d16',
                '-Wl,--gc-sections',
                '-Wl,-Map,main.map',
+               '-Wl,--warn-common',
                '-nostdlib',
                '-Wl,--start-group',
                '-lc',
