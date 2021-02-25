@@ -22,7 +22,7 @@
 #include <minmea.h>
 #include <stdio.h>
 #include <state.h>
-#include <strings.h>
+#include <string.h>
 
 #define KNOTS2KMH 1.852f
 
@@ -31,6 +31,12 @@
  */
 void gps_taskFunc(char *line, __attribute__((unused)) int len, state_t *state)
 {
+    char nmea_id[3] = { 0 };
+    if (!minmea_talker_id(nmea_id, line))
+        return;
+    // Discard BeiDou sentences as we currently don't support it
+    if (!strncmp(nmea_id, "BD", 3))
+        return;
     switch (minmea_sentence_id(line, false)) {
         case MINMEA_SENTENCE_RMC:
         {
