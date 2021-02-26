@@ -162,7 +162,7 @@ bool W25Qx_eraseSector(uint32_t addr)
 ssize_t W25Qx_writePage(uint32_t addr, void* buf, size_t len)
 {
     /* Keep 256-byte boundary to avoid wrap-around when writing */
-    size_t addrRange = addr & 0x0001FF;
+    size_t addrRange = addr & 0x0000FF;
     size_t writeLen  = len;
     if((addrRange + len) > 0x100)
     {
