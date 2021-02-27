@@ -113,6 +113,22 @@
 #define GPS_EN   GPIOA,9
 #define GPS_DATA GPIOA,10
 
+/* RTX stage control */
+#define VHF_LNA_EN GPIOA,5
+#define UHF_LNA_EN GPIOA,2
+
+/* I2C for AT1846S */
+#define I2C_SDA GPIOC,9
+#define I2C_SCL GPIOA,8
+
+/* HR_C6000 control interface */
+#define DMR_SLEEP GPIOE,6
+#define DMR_CS    GPIOE,2
+#define DMR_CLK   GPIOE,3
+#define DMR_MOSI  GPIOE,4
+#define DMR_MISO  GPIOE,5
+
+
 /*
  * To enable pwm for display backlight dimming uncomment this directive.
  *
