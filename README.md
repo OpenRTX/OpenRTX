@@ -41,6 +41,11 @@ or just run OpenRTX on Linux see the [How to compile](https://github.com/n1zzo/O
 
 To reach out, come to our [M17 Reflector](https://m17.openrtx.org) or into our [Discord Server](https://discord.gg/TbR2FVtMya).
 
+## Donate
+
+To support the development of OpenRTX you can make us a donation using [Liberapay](https://liberapay.com/OpenRTX/donate). \
+If you want to donate some hardware to facilitate OpenRTX porting and development, [contact us](https://github.com/OpenRTX/OpenRTX#contact).
+
 ## License
 
 This software is released under the GNU GPL v3.
