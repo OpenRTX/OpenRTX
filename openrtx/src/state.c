@@ -76,7 +76,8 @@ void state_init()
     if(valid != 0)
     {
         state.settings = default_settings;
-        nvm_writeSettings(&state.settings);
+        // NOTE: Settings writing disabled until DFU is implemented
+        //nvm_writeSettings(&state.settings);
     }
 }
 
