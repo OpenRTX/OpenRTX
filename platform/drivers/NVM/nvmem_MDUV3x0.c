@@ -368,6 +368,9 @@ int nvm_readSettings(settings_t *settings)
 
 int nvm_writeSettings(settings_t *settings)
 {
+    // Disable settings write until DFU is implemented for flash backups
+    return -1;
+
     W25Qx_wakeup();
     delayUs(5);
     bool success = W25Qx_writeData(settingsAddr, ((uint8_t *) &settings), sizeof(settings_t));
