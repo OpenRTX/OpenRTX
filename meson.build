@@ -55,13 +55,28 @@ minmea_src = ['lib/minmea/minmea.c']
 
 minmea_inc = ['lib/minmea/include']
 
-src = openrtx_src + minmea_src
-inc = openrtx_inc + rtos_inc + minmea_inc
+## libopencm3, an open-source firmware library for various ARM Cortex-M microcontrollers
+
+libopencm3_src = ['lib/libopencm3/lib/cm3/vector.c',
+                  'lib/libopencm3/lib/cm3/systick.c',
+                  'lib/libopencm3/lib/cm3/scb.c',
+                  'lib/libopencm3/lib/cm3/nvic.c',
+                  'lib/libopencm3/lib/cm3/assert.c',
+                  'lib/libopencm3/lib/cm3/sync.c',
+                  'lib/libopencm3/lib/cm3/dwt.c']
+
+libopencm3_inc = ['lib/libopencm3/include']
+
+src = openrtx_src + rtos_src + minmea_src + libopencm3_src
+inc = openrtx_inc + rtos_inc + minmea_inc + libopencm3_inc
 
 ##
 ## Definitions
 ##
 def = {'DONT_USE_CMSIS_INIT': ''}
+
+## Define needed by libopencm3
+def = def + {'STM32F4': ''}
 
 ##
 ## MCU-dependent sources and includes
