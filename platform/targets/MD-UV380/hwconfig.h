@@ -106,8 +106,8 @@
 #define FLASH_SDI GPIOB,5
 
 /* Audio control */
-#define AMP_EN   GPIOB,9
-#define SPK_MUTE GPIOB,8
+#define AUDIO_AMP_EN GPIOB,9
+#define SPK_MUTE     GPIOB,8
 
 /* GPS, for the devices who have it */
 #define GPS_EN   GPIOA,9

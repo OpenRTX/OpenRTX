@@ -69,17 +69,14 @@ void i2c_writeReg16(uint8_t reg, uint16_t value)
 
 uint16_t i2c_readReg16(uint8_t reg)
 {
-    uint8_t valHi = 0;
-    uint8_t valLo = 0;
-
     _i2c_start();
     _i2c_write(devAddr);
     _i2c_write(reg);
     _i2c_start();
     _i2c_write(devAddr | 0x01);
-    _i2c_read(valHi);
+    uint8_t valHi = _i2c_read();
     _i2c_ack();
-    _i2c_read(valLo);
+    uint8_t valLo = _i2c_read();
     _i2c_nack();
     _i2c_stop();
 
@@ -92,10 +89,39 @@ uint16_t i2c_readReg16(uint8_t reg)
 
 void uSpi_init()
 {
+    gpio_setMode(DMR_CS,    OUTPUT);
+    gpio_setMode(DMR_CLK,   OUTPUT);
+    gpio_setMode(DMR_MOSI,  OUTPUT);
+    gpio_setMode(DMR_MISO,  OUTPUT);
 }
 
 uint8_t uSpi_sendRecv(uint8_t val)
 {
+    gpio_clearPin(DMR_CLK);
+
+    uint8_t incoming = 0;
+    uint8_t cnt = 0;
+
+    for(; cnt < 8; cnt++)
+    {
+        gpio_setPin(DMR_CLK);
+
+        if(val & (0x80 >> cnt))
+        {
+            gpio_setPin(DMR_MOSI);
+        }
+        else
+        {
+            gpio_clearPin(DMR_MOSI);
+        }
+
+        delayUs(1);
+        gpio_clearPin(DMR_CLK);
+        incoming = (incoming << 1) | gpio_readPin(DMR_MISO);
+        delayUs(1);
+    }
+
+    return incoming;
 }
 
 /*
@@ -197,7 +223,7 @@ void _i2c_write(uint8_t val)
     }
 
     /* Clock cycle for slave ACK/NACK */
-    gpio_setMode(I2C_SDA, INPUT_PULL_UP);
+    gpio_setMode(I2C_SDA, INPUT);
     gpio_clearPin(I2C_SCL);
     delayUs(2);
     gpio_setPin(I2C_SCL);
