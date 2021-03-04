@@ -56,7 +56,7 @@ void pll_terminate();
  * @param freq: new VCO frequency, in Hz.
  * @param clkDiv: reference clock division factor.
  */
-void pll_setFrequency(float freq, uint8_t clkDiv);
+void pll_setFrequency(uint32_t freq, uint8_t clkDiv);
 
 /**
  * Check if PLL is locked.
