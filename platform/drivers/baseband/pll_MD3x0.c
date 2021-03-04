@@ -89,8 +89,11 @@ void pll_terminate()
     gpio_setMode(PLL_CS,  INPUT);
 }
 
-void pll_setFrequency(float freq, uint8_t clkDiv)
+void pll_setFrequency(uint32_t freq, uint8_t clkDiv)
 {
+    /* temporary workaround, this fixes the +1kHz frequency offset at TX */
+    freq-=1000;
+
     /* Maximum allowable value for reference clock divider is 32 */
     if (clkDiv > 32) clkDiv = 32;
 
