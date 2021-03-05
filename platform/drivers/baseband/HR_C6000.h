@@ -37,24 +37,54 @@ void C6000_init();
 void C6000_terminate();
 
 /**
- * 
+ * Set value for two-point modulation offset adjustment. This value usually is
+ * stored in radio calibration data.
+ * @param offset: value for modulation offset adjustment.
  */
 void C6000_setModOffset(uint16_t offset);
 
 /**
- * 
+ * Set values for two-point modulation amplitude adjustment. These values
+ * usually are stored in radio calibration data.
+ * @param iMag: value for modulation offset adjustment.
  */
-void C6000_setMod1Amplitude(uint8_t amplitude);
+void C6000_setModAmplitude(uint8_t iAmp, uint8_t qAmp);
 
 /**
- * 
+ *
  */
 void C6000_setMod2Bias(uint8_t bias);
 
 /**
- * 
+ * Set value for FM-mode modulation factor, a value dependent on bandwidth.
+ * @param mf: value for FM modulation factor.
+ */
+void C6000_setModFactor(uint8_t mf);
+
+/**
+ *
  */
 void C6000_setDacRange(uint8_t value);
+
+/**
+ * Configure chipset for DMR operation.
+ */
+void C6000_dmrMode();
+
+/**
+ * Configure chipset for analog FM operation.
+ */
+void C6000_fmMode();
+
+/**
+ * Start analog FM transmission.
+ */
+void C6000_startAnalogTx();
+
+/**
+ * Stop analog FM transmission.
+ */
+void C6000_stopAnalogTx();
 
 /**
  * Check if SPI common to HR_C6000 and PLL is in use by this driver.

@@ -66,12 +66,12 @@ void C5000_setModAmplitude(uint8_t iAmp, uint8_t qAmp);
 void C5000_setModFactor(uint8_t mf);
 
 /**
- * Configure HR_C5000 chipset for DMR operation.
+ * Configure chipset for DMR operation.
  */
 void C5000_dmrMode();
 
 /**
- * Configure HR_C5000 chipset for analog FM operation.
+ * Configure chipset for analog FM operation.
  */
 void C5000_fmMode();
 

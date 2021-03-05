@@ -277,9 +277,10 @@ void C6000_setModOffset(uint16_t offset)
     _writeReg(0x04, 0x47, offLower);
 }
 
-void C6000_setMod1Amplitude(uint8_t amplitude)
+void C6000_setModAmplitude(uint8_t iAmp, uint8_t qAmp)
 {
-    _writeReg(0x04, 0x46, amplitude);
+    _writeReg(0x00, 0x45, iAmp);    // Mod2 magnitude (HR_C6000)
+    _writeReg(0x00, 0x46, qAmp);    // Mod1 magnitude (HR_C6000)
 }
 
 void C6000_setMod2Bias(uint8_t bias)

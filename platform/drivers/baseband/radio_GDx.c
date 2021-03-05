@@ -304,7 +304,7 @@ void radio_updateCalibrationParams(const rtxStatus_t *rtxCfg)
                                      cal->mod1Amplitude, 8);
     }
 
-    C6000_setMod1Amplitude(mod1Amp);
+    C6000_setModAmplitude(0, mod1Amp);
 }
 
 float radio_getRssi(const freq_t rxFreq)
