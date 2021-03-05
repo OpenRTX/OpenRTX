@@ -52,6 +52,8 @@ This software is released under the GNU GPL v3.
 
 minmea is released under the DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE v2.
 
+The libopencm3 code is released under the terms of the GNU Lesser General Public License (LGPL), version 3 or later.
+
 ## Disclaimer
 
 This project was created for research and amateur radio use only,

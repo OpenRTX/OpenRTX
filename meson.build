@@ -63,7 +63,10 @@ libopencm3_src = ['lib/libopencm3/lib/cm3/vector.c',
                   'lib/libopencm3/lib/cm3/nvic.c',
                   'lib/libopencm3/lib/cm3/assert.c',
                   'lib/libopencm3/lib/cm3/sync.c',
-                  'lib/libopencm3/lib/cm3/dwt.c']
+                  'lib/libopencm3/lib/cm3/dwt.c',
+                  'lib/libopencm3/lib/stm32/common/rcc_common_all.c',
+                  'lib/libopencm3/lib/stm32/common/gpio_common_all.c',
+                  'lib/libopencm3/lib/stm32/common/gpio_common_f0234.c']
 
 libopencm3_inc = ['lib/libopencm3/include']
 
