@@ -139,10 +139,10 @@
 #define MOD2_BIAS GPIOA,5
 
 /* Audio control */
-#define AMP_EN   GPIOB,9
-#define SPK_MUTE GPIOB,8
-#define FM_MUTE  GPIOE,13
-#define MIC_PWR  GPIOA,14
+#define AUDIO_AMP_EN GPIOB,9
+#define SPK_MUTE     GPIOB,8
+#define FM_MUTE      GPIOE,13
+#define MIC_PWR      GPIOA,14
 
 /* GPS, for the devices who have it */
 #define GPS_EN   GPIOD,8

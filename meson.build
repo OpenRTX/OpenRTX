@@ -179,8 +179,11 @@ mduv380_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.cpp',
                                      'platform/drivers/ADC/ADC1_MDx.c',
                                      'platform/drivers/tones/toneGenerator_MDx.c',
                                      'platform/drivers/baseband/radio_UV3x0.c',
-                                     'platform/drivers/GPS/GPS_MDx.cpp',
-                                     'platform/targets/MD-UV380/platform.c']
+                                     'platform/drivers/GPS/GPS_MDx.c',
+                                     'platform/targets/MD-UV380/platform.c',
+                                     'platform/drivers/baseband/AT1846S_UV3x0.c',
+                                     'platform/drivers/baseband/HR_C6000_UV3x0.c',
+                                     'platform/drivers/baseband/interfaces_UV3x0.c']
 
 mduv380_inc = inc + stm32f405_inc + ['platform/targets/MD-UV380']
 mduv380_def = def + stm32f405_def + {'PLATFORM_MDUV380': ''}

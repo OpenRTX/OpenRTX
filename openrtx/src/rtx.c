@@ -43,13 +43,15 @@ float rssi;                 /* Current RSSI in dBm                  */
 
 void _afCtrlInit()
 {
-    #if defined(PLATFORM_MD3x0)
+    #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV380)
     gpio_setMode(SPK_MUTE, OUTPUT);
-    gpio_setMode(AMP_EN,   OUTPUT);
-    gpio_setMode(FM_MUTE,  OUTPUT);
+    gpio_setMode(AUDIO_AMP_EN,   OUTPUT);
     gpio_setMode(MIC_PWR,  OUTPUT);
+    #ifdef PLATFORM_MD3x0
+    gpio_setMode(FM_MUTE,  OUTPUT);
+    #endif
     #elif defined(PLATFORM_GD77) || defined(PLATFORM_DM1801)
-    gpio_setMode(AUDIO_AMP_EN, OUTPUT);
+    gpio_setMode(AUDIO_AUDIO_AMP_EN, OUTPUT);
     #endif
 }
 
@@ -57,20 +59,24 @@ void _afCtrlSpeaker(bool enable)
 {
     if(enable)
     {
-        #if defined(PLATFORM_MD3x0)
-        gpio_setPin(AMP_EN);
-        gpio_setPin(FM_MUTE);
+        #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV380)
+        gpio_setPin(AUDIO_AMP_EN);
         gpio_clearPin(SPK_MUTE);
+        #ifdef PLATFORM_MD3x0
+        gpio_setPin(FM_MUTE);
+        #endif
         #elif defined(PLATFORM_GD77) || defined(PLATFORM_DM1801)
         gpio_setPin(AUDIO_AMP_EN);
         #endif
     }
     else
     {
-        #if defined(PLATFORM_MD3x0)
-        gpio_clearPin(AMP_EN);
-        gpio_clearPin(FM_MUTE);
+        #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV380)
+        gpio_clearPin(AUDIO_AMP_EN);
         gpio_setPin(SPK_MUTE);
+        #ifdef PLATFORM_MD3x0
+        gpio_clearPin(FM_MUTE);
+        #endif
         #elif defined(PLATFORM_GD77) || defined(PLATFORM_DM1801)
         gpio_clearPin(AUDIO_AMP_EN);
         #endif
@@ -81,13 +87,13 @@ void _afCtrlMic(bool enable)
 {
      if(enable)
     {
-        #if defined(PLATFORM_MD3x0)
+        #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV380)
         gpio_setPin(MIC_PWR);
         #endif
     }
     else
     {
-        #if defined(PLATFORM_MD3x0)
+        #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV380)
         gpio_clearPin(MIC_PWR);
         #endif
     }

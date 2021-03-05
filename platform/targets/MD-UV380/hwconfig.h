@@ -108,6 +108,8 @@
 /* Audio control */
 #define AUDIO_AMP_EN GPIOB,9
 #define SPK_MUTE     GPIOB,8
+#define MIC_PWR      GPIOA,13
+#define RX_AUDIO_MUX GPIOD,9
 
 /* GPS, for the devices who have it */
 #define GPS_EN   GPIOA,9
@@ -116,6 +118,10 @@
 /* RTX stage control */
 #define VHF_LNA_EN GPIOA,5
 #define UHF_LNA_EN GPIOA,2
+#define PA_EN_1    GPIOC,5
+#define PA_EN_2    GPIOC,4
+#define PA_SEL_SW  GPIOC,6
+#define APC_REF    GPIOA,4
 
 /* I2C for AT1846S */
 #define I2C_SDA GPIOC,9

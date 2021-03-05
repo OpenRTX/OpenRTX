@@ -187,7 +187,7 @@ void AT1846S_setOpMode(const AT1846S_op_t mode)
 {
     if(mode == AT1846S_OP_DMR)
     {
-        /* DMR mode */
+        /* TODO: DMR mode */
 
     }
     else
@@ -213,6 +213,7 @@ void AT1846S_setFuncMode(const AT1846S_func_t mode)
     uint16_t value = ((uint16_t) mode) << 5;
     if(value > 0x0040) return;
     _maskSetRegister(0x30, 0x0060, value);
+//     i2c_writeReg16(0x44, 0x4ff);
 }
 
 void AT1846S_enableTxCtcss(tone_t freq)
