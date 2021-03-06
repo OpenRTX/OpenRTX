@@ -229,31 +229,15 @@ int main()
 {
     platform_init();
 
-    gpio_setMode(GPIOA, 11, ALTERNATE);
-    gpio_setAlternateFunction(GPIOA, 11, 10);
-    gpio_setOutputSpeed(GPIOA, 11, HIGH);      // 100MHz output speed
-
-    gpio_setMode(GPIOA, 12, ALTERNATE);
-    gpio_setAlternateFunction(GPIOA, 12, 10);
-    gpio_setOutputSpeed(GPIOA, 12, HIGH);      // 100MHz output speed
-
-//     RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
-//     RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
-//     __DSB();
-
     usbd_device *usbd_dev;
     usbd_dev = usbd_init(&otgfs_usb_driver, &dev, &config,
             usb_strings, 3,
             usbd_control_buffer, sizeof(usbd_control_buffer));
-// //
-//     usbd_register_set_config_callback(usbd_dev, cdcacm_set_config);
+
+    usbd_register_set_config_callback(usbd_dev, cdcacm_set_config);
 
     while (1)
     {
-
-        platform_ledOn(GREEN);
         usbd_poll(usbd_dev);
-        platform_ledOff(GREEN);
-        delayMs(100);
     }
 }

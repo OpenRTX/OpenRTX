@@ -17,15 +17,15 @@
  * along with this library.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <string.h>
 #include <libopencm3/cm3/common.h>
 #include <libopencm3/stm32/tools.h>
-#include <libopencm3/stm32/rcc.h>
 #include <libopencm3/usb/usbd.h>
 #include <libopencm3/usb/dwc/otg_fs.h>
+#include <interfaces/gpio.h>
+#include <hwconfig.h>
+#include <string.h>
 #include "usb_private.h"
 #include "usb_dwc_common.h"
-#include <hwconfig.h>
 
 /* Receive FIFO size in 32-bit words. */
 #define RX_FIFO_SIZE 128
@@ -54,7 +54,13 @@ const struct _usbd_driver stm32f107_usb_driver = {
 /** Initialize the USB device controller hardware of the STM32. */
 static usbd_device *stm32f107_usbd_init(void)
 {
-//     rcc_periph_clock_enable(RCC_OTGFS);
+    gpio_setMode(GPIOA, 11, ALTERNATE);
+    gpio_setAlternateFunction(GPIOA, 11, 10);
+    gpio_setOutputSpeed(GPIOA, 11, HIGH);      // 100MHz output speed
+
+    gpio_setMode(GPIOA, 12, ALTERNATE);
+    gpio_setAlternateFunction(GPIOA, 12, 10);
+    gpio_setOutputSpeed(GPIOA, 12, HIGH);      // 100MHz output speed
 
     RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
     RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
@@ -63,10 +69,13 @@ static usbd_device *stm32f107_usbd_init(void)
     OTG_FS_GUSBCFG |= OTG_GUSBCFG_PHYSEL;
 
     /* Wait for AHB idle. */
-//     while (!(OTG_FS_GRSTCTL & OTG_GRSTCTL_AHBIDL));
+    GPIOE->BSRRL = 1;
+    while ((OTG_FS_GRSTCTL & OTG_GRSTCTL_AHBIDL) == 0);
+    GPIOE->BSRRL = 2;
+
     /* Do core soft reset. */
     OTG_FS_GRSTCTL |= OTG_GRSTCTL_CSRST;
-//     while (OTG_FS_GRSTCTL & OTG_GRSTCTL_CSRST);
+    while (OTG_FS_GRSTCTL & OTG_GRSTCTL_CSRST);
 
     if (OTG_FS_CID >= OTG_CID_HAS_VBDEN) {
         /* Enable VBUS detection in device mode and power up the PHY. */
