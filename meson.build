@@ -57,23 +57,13 @@ minmea_inc = ['lib/minmea/include']
 
 ## libopencm3, an open-source firmware library for various ARM Cortex-M microcontrollers
 
-libopencm3_src = ['lib/libopencm3/lib/cm3/vector.c',
-                  'lib/libopencm3/lib/cm3/systick.c',
-                  'lib/libopencm3/lib/cm3/scb.c',
-                  'lib/libopencm3/lib/cm3/nvic.c',
-                  'lib/libopencm3/lib/cm3/assert.c',
-                  'lib/libopencm3/lib/cm3/sync.c',
-                  'lib/libopencm3/lib/cm3/dwt.c',
-                  'lib/libopencm3/lib/stm32/common/rcc_common_all.c',
-                  'lib/libopencm3/lib/stm32/common/gpio_common_all.c',
-                  'lib/libopencm3/lib/stm32/common/gpio_common_f0234.c',
-                  'lib/libopencm3/lib/stm32/f4/rcc.c',
-                  'lib/libopencm3/lib/stm32/f4/vector_chipset.c',
-                  'lib/libopencm3/lib/stm32/f4/vector_nvic.c',
-                  'lib/libopencm3/lib/usb/usb.c',
+libopencm3_src = ['lib/libopencm3/lib/usb/usb.c',
                   'lib/libopencm3/lib/usb/usb_f107.c',
                   'lib/libopencm3/lib/usb/usb_dwc_common.c',
-                  'lib/libopencm3/lib/usb/usb_control.c']
+                  'lib/libopencm3/lib/usb/usb_control.c',
+                  'lib/libopencm3/lib/usb/usb_cdc.c',
+                  'lib/libopencm3/lib/usb/usb_msc.c',
+                  'lib/libopencm3/lib/usb/usb_standard.c']
 
 libopencm3_inc = ['lib/libopencm3/include']
 
