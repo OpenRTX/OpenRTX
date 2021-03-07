@@ -63,7 +63,9 @@ libopencm3_src = ['lib/libopencm3/lib/usb/usb.c',
                   'lib/libopencm3/lib/usb/usb_control.c',
                   'lib/libopencm3/lib/usb/usb_cdc.c',
                   'lib/libopencm3/lib/usb/usb_msc.c',
-                  'lib/libopencm3/lib/usb/usb_standard.c']
+                  'lib/libopencm3/lib/usb/usb_standard.c',
+                  'lib/libopencm3/lib/stm32/common/desig_common_all.c',
+                  'lib/libopencm3/lib/stm32/common/desig_common_v1.c']
 
 libopencm3_inc = ['lib/libopencm3/include']
 

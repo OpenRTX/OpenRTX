@@ -162,10 +162,12 @@ static const struct usb_config_descriptor config = {
 };
 
 static const char * usb_strings[] = {
-    "Black Sphere Technologies",
-    "CDC-ACM Demo",
-    "DEMO",
+    "OpenRTX",
+    "",
+    "",
 };
+
+char usb_serial_number[25];
 
 /* Buffer to be used for control requests. */
 uint8_t usbd_control_buffer[128];
@@ -228,6 +230,12 @@ static void cdcacm_set_config(usbd_device *usbd_dev, uint16_t wValue)
 int main()
 {
     platform_init();
+
+    // Get radio model and MCU serial number
+    const hwInfo_t* hwinfo = platform_getHwInfo();
+    desig_get_unique_id_as_string(usb_serial_number, sizeof(usb_serial_number));
+    usb_strings[1] = hwinfo->name;
+    usb_strings[2] = usb_serial_number;
 
     usbd_device *usbd_dev;
     usbd_dev = usbd_init(&otgfs_usb_driver, &dev, &config,
