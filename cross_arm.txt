@@ -1,20 +1,41 @@
 [binaries]
-c       = 'arm-none-eabi-gcc'
-cpp     = 'arm-none-eabi-g++'
-ld      = 'arm-none-eabi-ld'
-ar      = 'arm-none-eabi-ar'
-as      = 'arm-none-eabi-as'
-size    = 'arm-none-eabi-size'
-objdump = 'arm-none-eabi-objdump'
-objcopy = 'arm-none-eabi-objcopy'
-strip   = 'arm-none-eabi-strip'
-gdb     = 'arm-none-eabi-gdb'
+c       = 'arm-miosix-eabi-gcc'
+cpp     = 'arm-miosix-eabi-g++'
+ld      = 'arm-miosix-eabi-ld'
+ar      = 'arm-miosix-eabi-ar'
+as      = 'arm-miosix-eabi-as'
+size    = 'arm-miosix-eabi-size'
+objdump = 'arm-miosix-eabi-objdump'
+objcopy = 'arm-miosix-eabi-objcopy'
+strip   = 'arm-miosix-eabi-strip'
+gdb     = 'arm-miosix-eabi-gdb'
 terminal= 'x-terminal-emulator'
 openocd = '/usr/local/bin/openocd'
 
 [properties]
 c_args      = [
-               '-fcommon',
+               '-D_DEFAULT_SOURCE=1',
+               '-ffunction-sections',
+               '-Wall',
+               '-Werror=return-type',
+               '-g',
+               '-mcpu=cortex-m4',           # Cortex-M4 CPU
+               '-mthumb',                   # ARM Thumb2 ISA
+               '-mfloat-abi=hard',          # Hard floating point support
+               '-mfpu=fpv4-sp-d16',
+               '-Os'
+              ]
+
+cpp_args    = [
+               '-D_DEFAULT_SOURCE=1',
+               '-ffunction-sections',
+               '-Wall',
+               '-Werror=return-type',
+               '-g',
+               '-fno-exceptions',
+               '-fno-rtti',
+               '-D__NO_EXCEPTIONS',
+               '-std=c++14',
                '-mcpu=cortex-m4',           # Cortex-M4 CPU
                '-mthumb',                   # ARM Thumb2 ISA
                '-mfloat-abi=hard',          # Hard floating point support
@@ -27,16 +48,22 @@ c_link_args = [
                '-mthumb',
                '-mfloat-abi=hard',
                '-mfpu=fpv4-sp-d16',
+               '-fno-exceptions',
+               '-fno-rtti',
+               '-Wl,-L../lib/miosix-kernel',
                '-Wl,--gc-sections',
                '-Wl,-Map,main.map',
                '-Wl,--warn-common',
                '-nostdlib',
-               '-Wl,--start-group',
+               '-lmiosix',
+               '-lstdc++',
                '-lc',
-               '-lgcc',
                '-lm',
-               '-Wl,--end-group'
+               '-lgcc',
+               '-latomic'
               ]
+
+cpp_link_args = c_link_args
 
 [host_machine]
 system = 'none'

@@ -1,32 +1,71 @@
 /*
-    RAM space is organized in this way: the stack begins at the end of
-    the RAM space and grows down towards the base, while the heap begins
-    at the end of the bss space (symbol _end) and grows up towards the
-    end of the RAM.
-
-    WARNING: with this configuration we have an high risk of collision
-    between stack and heap, since none of them is limited. One thing to
-    do in the future is to put this limit to the stack.
+ * C++ enabled linker script for stm32 (1M FLASH, 192K RAM)
+ * Developed by TFT: Terraneo Federico Technologies
+ * Optimized for use with the Miosix kernel
  */
 
-/* stack top in large ram, at an address which, masked with 0x2FFE0000,
-   gives 0x20000000
-*/
-_stack_top = 0x2001FFFC;
+/*
+ * This chip has an unusual quirk that the RAM is divided in two block mapped
+ * at two non contiguous memory addresses. I don't know why they've done that,
+ * probably doing the obvious thing would have made writing code too easy...
+ * Anyway, since hardware can't be changed, we've got to live with that and
+ * try to make use of both RAMs.
+ *
+ * Given the constraints above, this linker script puts:
+ * - read only data and code (.text, .rodata, .eh_*) in FLASH
+ * - .data and .bss in the "small" 64KB RAM
+ * - the 512Byte main (IRQ) stack, stacks and heap in the "large" 128KB RAM.
+ *
+ * Unfortunately thread stacks can't be put in the small RAM as Miosix
+ * allocates them inside the heap.
+ */
 
-/* temporary set heap end equal to stack top */
-_heap_end = _stack_top;
+/*
+ * The main stack is used for interrupt handling by the kernel.
+ *
+ * *** Readme ***
+ * This linker script places the main stack (used by the kernel for interrupts)
+ * at the bottom of the ram, instead of the top. This is done for two reasons:
+ *
+ * - as an optimization for microcontrollers with little ram memory. In fact
+ *   the implementation of malloc from newlib requests memory to the OS in 4KB
+ *   block (except the first block that can be smaller). This is probably done
+ *   for compatibility with OSes with an MMU and paged memory. To see why this
+ *   is bad, consider a microcontroller with 8KB of ram: when malloc finishes
+ *   up the first 4KB it will call _sbrk_r asking for a 4KB block, but this will
+ *   fail because the top part of the ram is used by the main stack. As a
+ *   result, the top part of the memory will not be used by malloc, even if
+ *   available (and it is nearly *half* the ram on an 8KB mcu). By placing the
+ *   main stack at the bottom of the ram, the upper 4KB block will be entirely
+ *   free and available as heap space.
+ *
+ * - In case of main stack overflow the cpu will fault because access to memory
+ *   before the beginning of the ram faults. Instead with the default stack
+ *   placement the main stack will silently collide with the heap.
+ * Note: if increasing the main stack size also increase the ORIGIN value in
+ * the MEMORY definitions below accordingly.
+ */
+_main_stack_size = 0x00000200;                     /* main stack = 512Bytes */
+_main_stack_top  = 0x20000000 + _main_stack_size;
+ASSERT(_main_stack_size   % 8 == 0, "MAIN stack size error");
 
+/* Mapping the heap into the large 128KB RAM */
+_end      = _main_stack_top;
+_heap_end = 0x20020000;                            /* end of available ram  */
 
 /* identify the Entry Point  */
-ENTRY(Reset_Handler)
+ENTRY(_Z13Reset_Handlerv)
 
 /* specify the memory areas  */
 MEMORY
 {
-    flash(rx)   : ORIGIN = 0x0800C000, LENGTH = 1M - 48K
-    smallram(wx) : ORIGIN = 0x10000200, LENGTH = 64K
-    largeram(wx) : ORIGIN = 0x20000000, LENGTH = 128K
+    flash(rx)    : ORIGIN = 0x0800C000, LENGTH = 1M - 48K
+    /*
+     * Note, the small ram starts at 0x10000000 but it is necessary to add the
+     * size of the main stack, so it is 0x10000200.
+     */
+    smallram(wx) : ORIGIN = 0x10000000, LENGTH = 64K
+    largeram(wx) : ORIGIN = 0x20000200, LENGTH = 128K-0x200
 }
 
 /* now define the output sections  */
@@ -61,6 +100,12 @@ SECTIONS
         /* C++ Static constructors/destructors (eabi) */
         . = ALIGN(4);
         KEEP(*(.init))
+
+        . = ALIGN(4);
+        __miosix_init_array_start = .;
+        KEEP (*(SORT(.miosix_init_array.*)))
+        KEEP (*(.miosix_init_array))
+        __miosix_init_array_end = .;
 
         . = ALIGN(4);
         __preinit_array_start = .;
@@ -106,7 +151,7 @@ SECTIONS
     } > flash
     __exidx_end = .;
 
-    /* .data section: global variables go to ram, but also store a copy to
+	/* .data section: global variables go to ram, but also store a copy to
        flash to initialize them */
     .data : ALIGN(8)
     {
@@ -120,16 +165,16 @@ SECTIONS
     _etext = LOADADDR(.data);
 
     /* .bss section: uninitialized global variables go to ram */
+    _bss_start = .;
     .bss :
     {
-        _bss_start = .;
         *(.bss)
         *(.bss.*)
         *(.gnu.linkonce.b.*)
         . = ALIGN(8);
-    } > largeram
+    } > smallram
     _bss_end = .;
 
-    _end = .;
-    PROVIDE(end = .);
+    /*_end = .;*/
+    /*PROVIDE(end = .);*/
 }
