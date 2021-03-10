@@ -19,7 +19,7 @@
  ***************************************************************************/
 
 #include <hwconfig.h>
-#include <os.h>
+#include <pthread.h>
 #include <ui.h>
 #include <state.h>
 #include <threads.h>
@@ -27,8 +27,10 @@
 #include <interfaces/keyboard.h>
 #include <interfaces/graphics.h>
 #include <interfaces/platform.h>
+#include <interfaces/delays.h>
 #include <event.h>
 #include <rtx.h>
+#include <queue.h>
 #include <minmea.h>
 #ifdef HAS_GPS
 #include <interfaces/gps.h>
@@ -36,67 +38,31 @@
 #endif
 
 /* Mutex for concurrent access to state variable */
-static OS_MUTEX state_mutex;
-
-/* Queue for sending and receiving ui update requests */
-static OS_Q ui_queue;
+pthread_mutex_t state_mutex;
 
 /* Mutex for concurrent access to RTX state variable */
-static OS_MUTEX rtx_mutex;
+pthread_mutex_t rtx_mutex;
 
 /* Mutex to avoid reading keyboard during display update */
-static OS_MUTEX display_mutex;
+pthread_mutex_t display_mutex;
 
- /**************************** IMPORTANT NOTE ***********************************
-  *                                                                             *
-  * Rationale for "xx_TASK_STKSIZE/sizeof(CPU_STK)": uC/OS-III manages task     *
-  * stack in terms of CPU_STK elements which, on a 32-bit target, are something *
-  * like uint32_t, that is, one CPU_STK elements takes four bytes.              *
-  *                                                                             *
-  * Now, the majority of the world manages stack in terms of *bytes* and this   *
-  * leads to an excessive RAM usage if not properly managed. For example, if    *
-  * we have, say, xx_TASK_SIZE = 128 with these odd CPU_STK elements we end     *
-  * up eating 128*4 = 512 bytes.                                                *
-  * The simple workaround for this is dividing the stack size by sizeof(CPU_STK)*
-  *******************************************************************************/
-
-/* UI task control block and stack */
-static OS_TCB  ui_tcb;
-static CPU_STK ui_stk[UI_TASK_STKSIZE/sizeof(CPU_STK)];
-
-/* Keyboard task control block and stack */
-static OS_TCB  kbd_tcb;
-static CPU_STK kbd_stk[KBD_TASK_STKSIZE/sizeof(CPU_STK)];
-
-/* Device task control block and stack */
-static OS_TCB  dev_tcb;
-static CPU_STK dev_stk[DEV_TASK_STKSIZE/sizeof(CPU_STK)];
-
-/* Baseband task control block and stack */
-static OS_TCB  rtx_tcb;
-static CPU_STK rtx_stk[RTX_TASK_STKSIZE/sizeof(CPU_STK)];
-
-#ifdef HAS_GPS
-/* GPS task control block and stack */
-static OS_TCB  gps_tcb;
-static CPU_STK gps_stk[GPS_TASK_STKSIZE/sizeof(CPU_STK)];
-#endif
+/* Queue for sending and receiving ui update requests */
+queue_t ui_queue;
 
 /**
  * \internal Task function in charge of updating the UI.
  */
-static void ui_task(void *arg)
+void *ui_task(void *arg)
 {
     (void) arg;
-    OS_ERR os_err;
-    OS_MSG_SIZE msg_size = 0;
-    rtxStatus_t rtx_cfg;
+
     // RTX needs synchronization
     bool sync_rtx = true;
+    rtxStatus_t rtx_cfg;
 
     // Get initial state local copy
-    OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
-    OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
+//     OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
+//     OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
 
     // Initial GUI draw
     ui_updateGUI(last_state);
@@ -106,23 +72,23 @@ static void ui_task(void *arg)
     {
         // Read from the keyboard queue (returns 0 if no message is present)
         // Copy keyboard_t keys from received void * pointer msg
-        void *msg = OSQPend(&ui_queue, 0u, OS_OPT_PEND_BLOCKING,
-                            &msg_size, 0u, &os_err);
-        event_t event = ((event_t) msg);
+        event_t event;
+        event.value = 0;
+        (void) queue_pend(&ui_queue, &event.value, true);
 
         // Lock mutex, read and write state
-        OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
+        pthread_mutex_lock(&state_mutex);
         // React to keypresses and update FSM inside state
         ui_updateFSM(event, &sync_rtx);
         // Update state local copy
         ui_saveState();
         // Unlock mutex
-        OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
+        pthread_mutex_unlock(&state_mutex);
 
         // If synchronization needed take mutex and update RTX configuration
         if(sync_rtx)
         {
-            OSMutexPend(&rtx_mutex, 0, OS_OPT_PEND_BLOCKING, NULL, &os_err);
+            pthread_mutex_lock(&rtx_mutex);
             rtx_cfg.opMode = state.channel.mode;
             rtx_cfg.bandwidth = state.channel.bandwidth;
             rtx_cfg.rxFrequency = state.channel.rx_frequency;
@@ -133,7 +99,7 @@ static void ui_task(void *arg)
             rtx_cfg.rxTone = ctcss_tone[state.channel.fm.rxTone];
             rtx_cfg.txToneEn = state.channel.fm.txToneEn;
             rtx_cfg.txTone = ctcss_tone[state.channel.fm.txTone];
-            OSMutexPost(&rtx_mutex, OS_OPT_POST_NONE, &os_err);
+            pthread_mutex_unlock(&rtx_mutex);
 
             rtx_configure(&rtx_cfg);
             sync_rtx = false;
@@ -142,9 +108,9 @@ static void ui_task(void *arg)
         // Redraw GUI based on last state copy
         ui_updateGUI();
         // Lock display mutex and render display
-        OSMutexPend(&display_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
+        pthread_mutex_lock(&display_mutex);
         gfx_render();
-        OSMutexPost(&display_mutex, OS_OPT_POST_NONE, &os_err);
+        pthread_mutex_unlock(&display_mutex);
 
         // We don't need a delay because we lock on incoming events
         // TODO: Enable self refresh when a continuous visualization is enabled
@@ -156,17 +122,16 @@ static void ui_task(void *arg)
 /**
  * \internal Task function for reading and sending keyboard status.
  */
-static void kbd_task(void *arg)
+void *kbd_task(void *arg)
 {
     (void) arg;
-    OS_ERR os_err;
 
     // Initialize keyboard driver
     kbd_init();
 
     // Allocate timestamp array
-    OS_TICK key_ts[kbd_num_keys];
-    OS_TICK now;
+    long long key_ts[kbd_num_keys];
+    long long now;
 
     // Allocate bool array to send only one long-press event
     bool long_press_sent[kbd_num_keys];
@@ -183,10 +148,10 @@ static void kbd_task(void *arg)
         long_press = false;
         send_event = false;
         // Lock display mutex and read keyboard status
-        OSMutexPend(&display_mutex, 0u, OS_OPT_PEND_NON_BLOCKING, 0u, &os_err);
+        pthread_mutex_lock(&display_mutex);
         keys = kbd_getKeys();
-        OSMutexPost(&display_mutex, OS_OPT_POST_NONE, &os_err);
-        now = OSTimeGet(&os_err);
+        pthread_mutex_unlock(&display_mutex);
+        now = getTick();
         // The key status has changed
         if(keys != prev_keys)
         {
@@ -232,29 +197,27 @@ static void kbd_task(void *arg)
             event.type = EVENT_KBD;
             event.payload = msg.value;
             // Send keyboard status in queue
-            OSQPost(&ui_queue, (void *)event.value, sizeof(event_t),
-                    OS_OPT_POST_FIFO + OS_OPT_POST_NO_SCHED, &os_err);
+            (void) queue_post(&ui_queue, event.value);
         }
         // Save current keyboard state as previous
         prev_keys = keys;
 
         // Read keyboard state at 20Hz
-        OSTimeDlyHMSM(0u, 0u, 0u, 50u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+        sleepFor(0u, 50u);
     }
 }
 
 /**
  * \internal Task function in charge of updating the radio state.
  */
-static void dev_task(void *arg)
+void *dev_task(void *arg)
 {
     (void) arg;
-    OS_ERR os_err;
 
     while(1)
     {
         // Lock mutex and update internal state
-        OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
+        pthread_mutex_lock(&state_mutex);
 
 #ifdef HAS_RTC
         state.time = rtc_getTime();
@@ -268,34 +231,32 @@ static void dev_task(void *arg)
         state.charge = battery_getCharge(state.v_bat);
         state.rssi = rtx_getRssi();
 
-        OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
+        pthread_mutex_unlock(&state_mutex);
 
         // Signal state update to UI thread
         event_t dev_msg;
         dev_msg.type = EVENT_STATUS;
         dev_msg.payload = 0;
-        OSQPost(&ui_queue, (void *)dev_msg.value, sizeof(event_t),
-                OS_OPT_POST_FIFO + OS_OPT_POST_NO_SCHED, &os_err);
+        (void) queue_post(&ui_queue, dev_msg.value);
 
         // Execute state update thread every 1s
-        OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+        sleepFor(1u, 0u);
     }
 }
 
 /**
  * \internal Task function for RTX management.
  */
-static void rtx_task(void *arg)
+void *rtx_task(void *arg)
 {
     (void) arg;
-    OS_ERR os_err;
 
     rtx_init(&rtx_mutex);
 
     while(1)
     {
         rtx_taskFunc();
-        OSTimeDlyHMSM(0u, 0u, 0u, 30u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+        sleepFor(0u, 30u);
     }
 }
 
@@ -303,20 +264,19 @@ static void rtx_task(void *arg)
 /**
  * \internal Task function for parsing GPS data and updating radio state.
  */
-static void gps_task(void *arg)
+void *gps_task(void *arg)
 {
     (void) arg;
-    OS_ERR os_err;
+
     char line[MINMEA_MAX_LENGTH*10];
 
-    if (!gps_detect(5000))
-        return;
+    if (!gps_detect(5000)) return NULL;
 
     gps_init(9600);
     // Lock mutex to read internal state
-    OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
+    pthread_mutex_lock(&state_mutex);
     bool enabled = state.settings.gps_enabled;
-    OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
+    pthread_mutex_unlock(&state_mutex);
     if(enabled)
         gps_enable();
     else
@@ -328,13 +288,13 @@ static void gps_task(void *arg)
         if(len != -1)
         {
             // Lock mutex and update internal state
-            OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
+            pthread_mutex_lock(&state_mutex);
 
             // GPS readout is blocking, no need to delay here
             gps_taskFunc(line, len, &state);
 
             // Unlock state mutex
-            OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
+            pthread_mutex_unlock(&state_mutex);
         }
     }
 }
@@ -345,107 +305,61 @@ static void gps_task(void *arg)
  */
 void create_threads()
 {
-    OS_ERR os_err;
-
     // Create state mutex
-    OSMutexCreate((OS_MUTEX  *) &state_mutex,
-                  (CPU_CHAR  *) "State Mutex",
-                  (OS_ERR    *) &os_err);
-
-    // Create UI event queue
-    OSQCreate((OS_Q      *) &ui_queue,
-              (CPU_CHAR  *) "UI event queue",
-              (OS_MSG_QTY ) 10,
-              (OS_ERR    *) &os_err);
+    pthread_mutex_init(&state_mutex, NULL);
 
     // Create RTX state mutex
-    OSMutexCreate((OS_MUTEX  *) &rtx_mutex,
-                  (CPU_CHAR  *) "RTX Mutex",
-                  (OS_ERR    *) &os_err);
+    pthread_mutex_init(&rtx_mutex, NULL);
 
     // Create display mutex
-    OSMutexCreate((OS_MUTEX  *) &display_mutex,
-                  (CPU_CHAR  *) "Display Mutex",
-                  (OS_ERR    *) &os_err);
+    pthread_mutex_init(&display_mutex, NULL);
+
+    // Create UI event queue
+    queue_init(&ui_queue);
 
     // State initialization, execute before starting all tasks
     state_init();
 
     // Create rtx radio thread
-    OSTaskCreate((OS_TCB     *) &rtx_tcb,
-                 (CPU_CHAR   *) "RTX Task",
-                 (OS_TASK_PTR ) rtx_task,
-                 (void       *) 0,
-                 (OS_PRIO     ) 5,
-                 (CPU_STK    *) &rtx_stk[0],
-                 (CPU_STK     ) 0,
-                 (CPU_STK_SIZE) RTX_TASK_STKSIZE/sizeof(CPU_STK),
-                 (OS_MSG_QTY  ) 0,
-                 (OS_TICK     ) 0,
-                 (void       *) 0,
-                 (OS_OPT      ) (OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR),
-                 (OS_ERR     *) &os_err);
+    pthread_t      rtx_thread;
+    pthread_attr_t rtx_attr;
+
+    pthread_attr_init(&rtx_attr);
+    pthread_attr_setstacksize(&rtx_attr, RTX_TASK_STKSIZE);
+    pthread_create(&rtx_thread, &rtx_attr, rtx_task, NULL);
 
     // Create UI thread
-    OSTaskCreate((OS_TCB     *) &ui_tcb,
-                 (CPU_CHAR   *) "UI Task",
-                 (OS_TASK_PTR ) ui_task,
-                 (void       *) 0,
-                 (OS_PRIO     ) 10,
-                 (CPU_STK    *) &ui_stk[0],
-                 (CPU_STK     ) 0,
-                 (CPU_STK_SIZE) UI_TASK_STKSIZE/sizeof(CPU_STK),
-                 (OS_MSG_QTY  ) 0,
-                 (OS_TICK     ) 0,
-                 (void       *) 0,
-                 (OS_OPT      ) (OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR),
-                 (OS_ERR     *) &os_err);
+    pthread_t      ui_thread;
+    pthread_attr_t ui_attr;
+
+    pthread_attr_init(&ui_attr);
+    pthread_attr_setstacksize(&ui_attr, UI_TASK_STKSIZE);
+    pthread_create(&ui_thread, &ui_attr, ui_task, NULL);
 
     // Create Keyboard thread
-    OSTaskCreate((OS_TCB     *) &kbd_tcb,
-                 (CPU_CHAR   *) "Keyboard Task",
-                 (OS_TASK_PTR ) kbd_task,
-                 (void       *) 0,
-                 (OS_PRIO     ) 20,
-                 (CPU_STK    *) &kbd_stk[0],
-                 (CPU_STK     ) 0,
-                 (CPU_STK_SIZE) KBD_TASK_STKSIZE/4,
-                 (OS_MSG_QTY  ) 0,
-                 (OS_TICK     ) 0,
-                 (void       *) 0,
-                 (OS_OPT      ) (OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR),
-                 (OS_ERR     *) &os_err);
+    pthread_t      kbd_thread;
+    pthread_attr_t kbd_attr;
+
+    pthread_attr_init(&kbd_attr);
+    pthread_attr_setstacksize(&kbd_attr, KBD_TASK_STKSIZE);
+//     pthread_create(&kbd_thread, &kbd_attr, kbd_task, NULL);
 
 #ifdef HAS_GPS
     // Create GPS thread
-    OSTaskCreate((OS_TCB     *) &gps_tcb,
-                 (CPU_CHAR   *) "GPS Task",
-                 (OS_TASK_PTR ) gps_task,
-                 (void       *) 0,
-                 (OS_PRIO     ) 25,
-                 (CPU_STK    *) &gps_stk[0],
-                 (CPU_STK     ) 0,
-                 (CPU_STK_SIZE) GPS_TASK_STKSIZE/sizeof(CPU_STK),
-                 (OS_MSG_QTY  ) 0,
-                 (OS_TICK     ) 0,
-                 (void       *) 0,
-                 (OS_OPT      ) (OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR),
-                 (OS_ERR     *) &os_err);
+    pthread_t      gps_thread;
+    pthread_attr_t gps_attr;
+
+    pthread_attr_init(&gps_attr);
+    pthread_attr_setstacksize(&gps_attr, GPS_TASK_STKSIZE);
+//     pthread_create(&gps_thread, &gps_attr, gps_task, NULL);
+
 #endif
 
     // Create state thread
-    OSTaskCreate((OS_TCB     *) &dev_tcb,
-                 (CPU_CHAR   *) "Device Task",
-                 (OS_TASK_PTR ) dev_task,
-                 (void       *) 0,
-                 (OS_PRIO     ) 30,
-                 (CPU_STK    *) &dev_stk[0],
-                 (CPU_STK     ) 0,
-                 (CPU_STK_SIZE) DEV_TASK_STKSIZE/sizeof(CPU_STK),
-                 (OS_MSG_QTY  ) 0,
-                 (OS_TICK     ) 0,
-                 (void       *) 0,
-                 (OS_OPT      ) (OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR),
-                 (OS_ERR     *) &os_err);
+    pthread_t      state_thread;
+    pthread_attr_t state_attr;
 
+    pthread_attr_init(&state_attr);
+    pthread_attr_setstacksize(&state_attr, DEV_TASK_STKSIZE);
+//     pthread_create(&state_thread, &state_attr, dev_task, NULL);
 }

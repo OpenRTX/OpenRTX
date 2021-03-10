@@ -1,7 +1,7 @@
 ##
 ## OpenRTX - Modular Open Source Radio Firmware
 ##
-project('OpenRTX', 'c',
+project('OpenRTX', ['c', 'cpp'],
   version : '0.1',
   default_options : ['warning_level=3'])
 
@@ -11,8 +11,7 @@ project('OpenRTX', 'c',
 
 ## OpenRTX
 
-openrtx_src = ['openrtx/src/bootstrap.c',
-               'openrtx/src/state.c',
+openrtx_src = ['openrtx/src/state.c',
                'openrtx/src/ui/ui.c',
                'openrtx/src/ui/ui_main.c',
                'openrtx/src/ui/ui_menu.c',
@@ -21,6 +20,7 @@ openrtx_src = ['openrtx/src/bootstrap.c',
                'openrtx/src/graphics.c',
                'openrtx/src/input.c',
                'openrtx/src/calibUtils.c',
+               'openrtx/src/queue.c',
                'openrtx/src/rtx.c',
                'openrtx/src/gps.c']
 
@@ -28,10 +28,8 @@ openrtx_src = ['openrtx/src/bootstrap.c',
 ## Replace main executable with platform test
 if get_option('test') != ''
   openrtx_src += 'tests/platform/'+get_option('test')+'.c'
-  openrtx_def  = {'RUN_TESTSUITE': ''}
 else
   openrtx_src += 'openrtx/src/main.c'
-  openrtx_def  = {}
 endif
 
 openrtx_inc = ['openrtx/include',
@@ -45,36 +43,11 @@ openrtx_inc = ['openrtx/include',
                'platform/drivers/baseband']
 
 ## RTOS
-rtos_src = ['lib/rtos/uC-OS3/Source/__dbg_uCOS-III.c',
-            'lib/rtos/uC-OS3/Source/os_cfg_app.c',
-            'lib/rtos/uC-OS3/Source/os_core.c',
-            'lib/rtos/uC-OS3/Source/os_dbg.c',
-            'lib/rtos/uC-OS3/Source/os_flag.c',
-            'lib/rtos/uC-OS3/Source/os_mem.c',
-            'lib/rtos/uC-OS3/Source/os_msg.c',
-            'lib/rtos/uC-OS3/Source/os_mutex.c',
-            'lib/rtos/uC-OS3/Source/os_prio.c',
-            'lib/rtos/uC-OS3/Source/os_q.c',
-            'lib/rtos/uC-OS3/Source/os_sem.c',
-            'lib/rtos/uC-OS3/Source/os_stat.c',
-            'lib/rtos/uC-OS3/Source/os_task.c',
-            'lib/rtos/uC-OS3/Source/os_tick.c',
-            'lib/rtos/uC-OS3/Source/os_time.c',
-            'lib/rtos/uC-OS3/Source/os_tmr.c',
-            'lib/rtos/uC-OS3/Source/os_var.c',
-            'lib/rtos/uC-OS3/Cfg/os_app_hooks.c',
-            'lib/rtos/uC-CPU/cpu_core.c',
-            'lib/rtos/uC-LIB/lib_ascii.c',
-            'lib/rtos/uC-LIB/lib_math.c',
-            'lib/rtos/uC-LIB/lib_mem.c',
-            'lib/rtos/uC-LIB/lib_str.c']
-
-rtos_inc = ['lib/rtos/uC-OS3/Source',
-            'lib/rtos/uC-OS3/Cfg',
-            'lib/rtos/uC-CPU',
-            'lib/rtos/uC-CPU/Cfg',
-            'lib/rtos/uC-LIB',
-            'lib/rtos/uC-LIB/Cfg']
+rtos_inc = ['lib/miosix-kernel',
+            'lib/miosix-kernel/arch',
+            'lib/miosix-kernel/arch/cortexM4_stm32f4/common',
+            'lib/miosix-kernel/arch/cortexM4_stm32f4/M4_openrtx',
+            'lib/miosix-kernel/config/arch/cortexM4_stm32f4/M4_openrtx']
 
 ## minmea, a lightweight GPS NMEA 0183 parser library
 
@@ -82,13 +55,13 @@ minmea_src = ['lib/minmea/minmea.c']
 
 minmea_inc = ['lib/minmea/include']
 
-src = openrtx_src + rtos_src + minmea_src
+src = openrtx_src + minmea_src
 inc = openrtx_inc + rtos_inc + minmea_inc
 
 ##
 ## Definitions
 ##
-def = openrtx_def + {'DONT_USE_CMSIS_INIT': ''}
+def = {'DONT_USE_CMSIS_INIT': ''}
 
 ##
 ## MCU-dependent sources and includes
@@ -96,8 +69,9 @@ def = openrtx_def + {'DONT_USE_CMSIS_INIT': ''}
 
 ## STM32F405
 
-stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.c',
-                 'platform/mcu/STM32F4xx/boot/libc_integration.c',
+stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.cpp',
+                 'platform/mcu/STM32F4xx/boot/bsp.cpp',
+                 'platform/mcu/STM32F4xx/boot/libc_integration.cpp',
                  'platform/mcu/STM32F4xx/drivers/usb/usb_bsp.c',
                  'platform/mcu/STM32F4xx/drivers/usb/usb_core.c',
                  'platform/mcu/STM32F4xx/drivers/usb/usb_dcd.c',
@@ -109,50 +83,38 @@ stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.c',
                  'platform/mcu/STM32F4xx/drivers/usb/usbd_usr.c',
                  'platform/mcu/STM32F4xx/drivers/gpio.c',
                  'platform/mcu/STM32F4xx/drivers/usb_vcom.c',
-                 'platform/mcu/STM32F4xx/drivers/delays.c',
+                 'platform/mcu/STM32F4xx/drivers/delays.cpp',
                  'platform/mcu/STM32F4xx/drivers/rtc.c',
-                 'platform/mcu/CMSIS/Device/ST/STM32F4xx/Source/system_stm32f4xx.c',
-                 'lib/rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M/os_cpu_c.c',
-                 'lib/rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M/os_cpu_a.s',
-                 'lib/rtos/uC-CPU/ARM-Cortex-M/ARMv7-M/cpu_c.c',
-                 'lib/rtos/uC-CPU/ARM-Cortex-M/ARMv7-M/cpu_a.s']
+                 'platform/mcu/CMSIS/Device/ST/STM32F4xx/Source/system_stm32f4xx.c']
 
 stm32f405_inc = ['platform/mcu/CMSIS/Include',
                  'platform/mcu/CMSIS/Device/ST/STM32F4xx/Include',
                  'platform/mcu/STM32F4xx',
                  'platform/mcu/STM32F4xx/drivers',
-                 'platform/mcu/STM32F4xx/drivers/usb',
-                 'lib/rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M',
-                 'lib/rtos/uC-CPU/ARM-Cortex-M/ARMv7-M']
+                 'platform/mcu/STM32F4xx/drivers/usb']
 
 stm32f405_def = {'STM32F40_41xxx': '', 'HSE_VALUE':'8000000'}
 
 ## MK22FN512
 
-mk22fn512_src = ['platform/mcu/MK22FN512xxx12/boot/startup.c',
-                 'platform/mcu/MK22FN512xxx12/boot/libc_integration.c',
+mk22fn512_src = ['platform/mcu/MK22FN512xxx12/boot/startup.cpp',
+                 'platform/mcu/MK22FN512xxx12/boot/bsp.cpp',
+                 'platform/mcu/MK22FN512xxx12/boot/libc_integration.cpp',
                  'platform/mcu/MK22FN512xxx12/drivers/gpio.c',
-                 'platform/mcu/MK22FN512xxx12/drivers/delays.c',
-                 'platform/mcu/MK22FN512xxx12/drivers/rtc.c',
+                 'platform/mcu/MK22FN512xxx12/drivers/delays.cpp',
                  'platform/mcu/MK22FN512xxx12/drivers/I2C0.c',
-                 'platform/mcu/MK22FN512xxx12/drivers/usb/usb_device_cdc_acm.c',
-                 'platform/mcu/MK22FN512xxx12/drivers/usb/usb_device_ch9.c',
-                 'platform/mcu/MK22FN512xxx12/drivers/usb/usb_device_dci.c',
-                 'platform/mcu/MK22FN512xxx12/drivers/usb/usb_device_descriptor.c',
-                 'platform/mcu/MK22FN512xxx12/drivers/usb/usb_device_khci.c',
-                 'platform/mcu/MK22FN512xxx12/drivers/usb/usb_osa_bm.c',
-                 'platform/mcu/MK22FN512xxx12/drivers/usb_vcom.c',
-                 'platform/mcu/CMSIS/Device/NXP/MK22FN512xxx12/Source/system_MK22F51212.c',
-                 'lib/rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M/os_cpu_c.c',
-                 'lib/rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M/os_cpu_a.s',
-                 'lib/rtos/uC-CPU/ARM-Cortex-M/ARMv7-M/cpu_c.c',
-                 'lib/rtos/uC-CPU/ARM-Cortex-M/ARMv7-M/cpu_a.s']
+#                  'platform/mcu/MK22FN512xxx12/drivers/usb/usb_device_cdc_acm.c',
+#                  'platform/mcu/MK22FN512xxx12/drivers/usb/usb_device_ch9.c',
+#                  'platform/mcu/MK22FN512xxx12/drivers/usb/usb_device_dci.c',
+#                  'platform/mcu/MK22FN512xxx12/drivers/usb/usb_device_descriptor.c',
+#                  'platform/mcu/MK22FN512xxx12/drivers/usb/usb_device_khci.c',
+#                  'platform/mcu/MK22FN512xxx12/drivers/usb/usb_osa_bm.c',
+#                  'platform/mcu/MK22FN512xxx12/drivers/usb_vcom.c',
+                 'platform/mcu/CMSIS/Device/NXP/MK22FN512xxx12/Source/system_MK22F51212.c']
 
 mk22fn512_inc = ['platform/mcu/CMSIS/Include',
                  'platform/mcu/CMSIS/Device/NXP/MK22FN512xxx12/Include',
-                 'platform/mcu/MK22FN512xxx12/drivers',
-                 'lib/rtos/uC-OS3/Ports/ARM-Cortex-M/ARMv7-M',
-                 'lib/rtos/uC-CPU/ARM-Cortex-M/ARMv7-M']
+                 'platform/mcu/MK22FN512xxx12/drivers']
 
 mk22fn512_def = {}
 
@@ -170,9 +132,7 @@ linux_src = src + ['platform/targets/linux/emulator/emulator.c',
                    'platform/mcu/x86_64/drivers/delays.c',
                    'platform/mcu/x86_64/drivers/rtc.c',
                    'platform/drivers/baseband/radio_linux.c',
-                   'platform/targets/linux/platform.c',
-                   'lib/rtos/uC-OS3/Ports/POSIX/os_cpu_c.c',
-                   'lib/rtos/uC-CPU/Posix/cpu_c.c']
+                   'platform/targets/linux/platform.c']
 
 
 # GDx family display emulation
@@ -180,9 +140,7 @@ linux_src = src + ['platform/targets/linux/emulator/emulator.c',
 # MDx family display emulation
 linux_def = def + {'SCREEN_WIDTH': '160', 'SCREEN_HEIGHT': '128', 'PIX_FMT_RGB565': ''}
 
-linux_inc = inc + ['lib/rtos/uC-OS3/Ports/POSIX',
-                   'lib/rtos/uC-CPU/Posix',
-                   'platform/targets/linux',
+linux_inc = inc + ['platform/targets/linux',
                    'platform/targets/linux/emulator']
 
 if not meson.is_cross_build()
@@ -194,7 +152,7 @@ else
 endif
 
 ## TYT MD-3x0 family
-md3x0_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.c',
+md3x0_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.cpp',
                                    'platform/drivers/keyboard/keyboard_MDx.c',
                                    'platform/drivers/NVM/W25Qx.c',
                                    'platform/drivers/NVM/spiFlash_MDx.c',
@@ -204,7 +162,7 @@ md3x0_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.c',
                                    'platform/drivers/baseband/SKY72310.c',
                                    'platform/drivers/baseband/radio_MD3x0.c',
                                    'platform/drivers/baseband/HR_C5000.c',
-                                   'platform/drivers/GPS/GPS_MDx.c',
+                                   'platform/drivers/GPS/GPS_MDx.cpp',
                                    'platform/targets/MD-3x0/platform.c']
 
 md3x0_inc = inc + stm32f405_inc + ['platform/targets/MD-3x0']
@@ -212,7 +170,7 @@ md3x0_def = def + stm32f405_def + {'PLATFORM_MD3x0': '',
                                    'timegm': 'mktime'}
 
 ## TYT MD-UV380
-mduv380_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.c',
+mduv380_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.cpp',
                                      'platform/drivers/keyboard/keyboard_MDx.c',
                                      'platform/drivers/NVM/W25Qx.c',
                                      'platform/drivers/NVM/spiFlash_MDx.c',
@@ -220,7 +178,7 @@ mduv380_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.c',
                                      'platform/drivers/ADC/ADC1_MDx.c',
                                      'platform/drivers/tones/toneGenerator_MDx.c',
                                      'platform/drivers/baseband/radio_UV3x0.c',
-                                     'platform/drivers/GPS/GPS_MDx.c',
+                                     'platform/drivers/GPS/GPS_MDx.cpp',
                                      'platform/targets/MD-UV380/platform.c']
 
 mduv380_inc = inc + stm32f405_inc + ['platform/targets/MD-UV380']
@@ -355,38 +313,44 @@ linux_opts = {'sources': linux_src,
               'dependencies': linux_dep,
               'link_args' : linux_l_args}
 
-md3x0_opts = {'sources': md3x0_src,
-              'c_args': md3x0_args,
+md3x0_opts = {'sources' : md3x0_src,
+              'c_args'  : md3x0_args,
+              'cpp_args': md3x0_args,
               'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
                              '-Wl,--print-memory-usage'],
               'include_directories': md3x0_inc}
 
 mduv380_opts = {'sources': mduv380_src,
                 'c_args': mduv380_args,
+                'cpp_args': mduv380_args,
                 'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
                                '-Wl,--print-memory-usage'],
                 'include_directories': mduv380_inc}
 
 mduv380g_opts = {'sources': mduv380_src,
                  'c_args': mduv380g_args,
+                 'cpp_args': mduv380g_args,
                  'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
                                 '-Wl,--print-memory-usage'],
                  'include_directories': mduv380_inc}
 
 gd77_opts = {'sources': gd77_src,
              'c_args': gd77_args,
+             'cpp_args': gd77_args,
              'link_args' : ['-Wl,-T../platform/mcu/MK22FN512xxx12/linker_script.ld',
                             '-Wl,--print-memory-usage'],
              'include_directories':gd77_inc}
 
 dm1801_opts = {'sources': dm1801_src,
                'c_args': dm1801_args,
+               'cpp_args': dm1801_args,
                'link_args' : ['-Wl,-T../platform/mcu/MK22FN512xxx12/linker_script.ld',
                               '-Wl,--print-memory-usage'],
                'include_directories':dm1801_inc}
 
 md9600_opts = {'sources': md9600_src,
                'c_args': md9600_args,
+               'cpp_args': md9600_args,
                'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
                               '-Wl,--print-memory-usage'],
                'include_directories': md9600_inc}

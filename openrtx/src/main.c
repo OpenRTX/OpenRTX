@@ -18,7 +18,6 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <os.h>
 #include <ui.h>
 #include <stdlib.h>
 #include <inttypes.h>
@@ -26,12 +25,11 @@
 #include <interfaces/platform.h>
 #include <battery.h>
 #include <interfaces/graphics.h>
+#include <interfaces/delays.h>
 #include <hwconfig.h>
 
 int main(void)
 {
-    OS_ERR os_err;
-
     // Initialize platform drivers
     platform_init();
 
@@ -46,11 +44,11 @@ int main(void)
     gfx_render();
 
     // Wait 30ms before turning on backlight to hide random pixels on screen
-    OSTimeDlyHMSM(0u, 0u, 0u, 30u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+    sleepFor(0u, 30u);
     platform_setBacklightLevel(255);
 
     // Keep the splash screen for 1 second
-    OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+    sleepFor(1u, 0u);
 
     // Create OpenRTX threads
     create_threads();

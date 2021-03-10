@@ -26,15 +26,15 @@
 #include <interfaces/gpio.h>
 #include <hwconfig.h>
 
-OS_MUTEX *cfgMutex;     /* Mutex for incoming config messages */
-OS_Q cfgMailbox;        /* Queue for incoming config messages */
+pthread_mutex_t *cfgMutex;  /* Mutex for incoming config messages   */
 
-rtxStatus_t rtxStatus;  /* RTX driver status                  */
+const rtxStatus_t *newCnf;  /* Pointer for incoming config messages */
+rtxStatus_t rtxStatus;      /* RTX driver status                    */
 
-bool sqlOpen;           /* Flag for squelch open/close        */
-bool enterRx;           /* Flag for RX mode activation        */
+bool sqlOpen;               /* Flag for squelch open/close          */
+bool enterRx;               /* Flag for RX mode activation          */
 
-float rssi;             /* Current RSSI in dBm                */
+float rssi;                 /* Current RSSI in dBm                  */
 
 /*
  * These functions below provide a basic API for audio path management. They
@@ -100,17 +100,11 @@ void _afCtrlTerminate()
 }
 
 
-void rtx_init(OS_MUTEX *m)
+void rtx_init(pthread_mutex_t *m)
 {
     /* Initialise mutex for configuration access */
     cfgMutex = m;
-
-    /* Create the message queue for RTX configuration */
-    OS_ERR err;
-    OSQCreate((OS_Q     *) &cfgMailbox,
-              (CPU_CHAR *) "",
-              (OS_MSG_QTY) 1,
-              (OS_ERR   *) &err);
+    newCnf = NULL;
 
     /*
      * Default initialisation for rtx status
@@ -152,28 +146,9 @@ void rtx_terminate()
 
 void rtx_configure(const rtxStatus_t *cfg)
 {
-    OS_ERR err;
-    OSQPost((OS_Q      *) &cfgMailbox,
-            (void      *) cfg,
-            (OS_MSG_SIZE) sizeof(rtxStatus_t *),
-            (OS_OPT     ) OS_OPT_POST_FIFO,
-            (OS_ERR    *) &err);
-
-    /*
-     * In case message queue is not empty, flush the old and unread configuration
-     * and post the new one.
-     */
-    if(err == OS_ERR_Q_MAX)
-    {
-        OSQFlush((OS_Q   *) &cfgMailbox,
-                 (OS_ERR *) &err);
-
-        OSQPost((OS_Q      *) &cfgMailbox,
-                (void      *) cfg,
-                (OS_MSG_SIZE) sizeof(rtxStatus_t *),
-                (OS_OPT     ) OS_OPT_POST_FIFO,
-                (OS_ERR    *) &err);
-    }
+    pthread_mutex_lock(cfgMutex);
+    newCnf = cfg;
+    pthread_mutex_unlock(cfgMutex);
 }
 
 rtxStatus_t rtx_getCurrentStatus()
@@ -183,60 +158,54 @@ rtxStatus_t rtx_getCurrentStatus()
 
 void rtx_taskFunc()
 {
-    OS_ERR err;
-    OS_MSG_SIZE size;
-    void *msg = OSQPend((OS_Q        *) &cfgMailbox,
-                        (OS_TICK      ) 0,
-                        (OS_OPT       ) OS_OPT_PEND_NON_BLOCKING,
-                        (OS_MSG_SIZE *) &size,
-                        (CPU_TS      *) NULL,
-                        (OS_ERR      *) &err);
-
     /* Configuration update logic */
-    if((err == OS_ERR_NONE) && (msg != NULL))
+    bool reconfigure = false;
+    if(pthread_mutex_trylock(cfgMutex) == 0)
     {
-        /* Try locking mutex for read access */
-        OSMutexPend(cfgMutex, 0, OS_OPT_PEND_NON_BLOCKING, NULL, &err);
-
-        if(err == OS_ERR_NONE)
+        if(newCnf != NULL)
         {
             /* Copy new configuration and override opStatus flags */
             uint8_t tmp = rtxStatus.opStatus;
-            memcpy(&rtxStatus, msg, sizeof(rtxStatus_t));
+            memcpy(&rtxStatus, newCnf, sizeof(rtxStatus_t));
             rtxStatus.opStatus = tmp;
 
-            /* Done, release mutex */
-            OSMutexPost(cfgMutex, OS_OPT_POST_NONE, &err);
-
-            /* Update HW configuration */
-            radio_setOpmode(rtxStatus.opMode);
-            radio_setBandwidth(rtxStatus.bandwidth);
-            radio_setCSS(rtxStatus.rxTone, rtxStatus.txTone);
-            radio_updateCalibrationParams(&rtxStatus);
-
-            /*
-             * If currently transmitting or receiving, update VCO frequency and
-             * call again enableRx/enableTx.
-             * This is done because the new configuration may have changed the
-             * RX and TX frequencies, requiring an update of both the VCO
-             * settings and of some tuning parameters, like APC voltage, which
-             * are managed by enableRx/enableTx.
-             */
-            if(rtxStatus.opStatus == TX)
-            {
-                radio_setVcoFrequency(rtxStatus.txFrequency, true);
-                radio_enableTx(rtxStatus.txPower, rtxStatus.txToneEn);
-            }
-
-            if(rtxStatus.opStatus == RX)
-            {
-                radio_setVcoFrequency(rtxStatus.rxFrequency, false);
-                radio_enableRx();
-            }
-
-            /* TODO: temporarily force to RX mode if rtx is off. */
-            if(rtxStatus.opStatus == OFF) enterRx = true;
+            reconfigure = true;
+            newCnf = NULL;
         }
+
+        pthread_mutex_unlock(cfgMutex);
+    }
+
+    if(reconfigure)
+    {
+        /* Update HW configuration */
+        radio_setOpmode(rtxStatus.opMode);
+        radio_setBandwidth(rtxStatus.bandwidth);
+        radio_setCSS(rtxStatus.rxTone, rtxStatus.txTone);
+        radio_updateCalibrationParams(&rtxStatus);
+
+       /*
+        * If currently transmitting or receiving, update VCO frequency and
+        * call again enableRx/enableTx.
+        * This is done because the new configuration may have changed the
+        * RX and TX frequencies, requiring an update of both the VCO
+        * settings and of some tuning parameters, like APC voltage, which
+        * are managed by enableRx/enableTx.
+        */
+        if(rtxStatus.opStatus == TX)
+        {
+            radio_setVcoFrequency(rtxStatus.txFrequency, true);
+            radio_enableTx(rtxStatus.txPower, rtxStatus.txToneEn);
+        }
+
+        if(rtxStatus.opStatus == RX)
+        {
+            radio_setVcoFrequency(rtxStatus.rxFrequency, false);
+            radio_enableRx();
+        }
+
+        /* TODO: temporarily force to RX mode if rtx is off. */
+        if(rtxStatus.opStatus == OFF) enterRx = true;
     }
 
     /* RX logic */

@@ -22,7 +22,6 @@
  * It is suitable for both color, grayscale and B/W display
  */
 
-#include <os.h>
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>

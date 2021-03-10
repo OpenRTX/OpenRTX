@@ -4,7 +4,7 @@
   * @author  MCD Application Team
   * @version V1.1.0
   * @date    19-March-2012
-  * @brief   This file is responsible to offer board support package and is 
+  * @brief   This file is responsible to offer board support package and is
   *          configurable by user.
   ******************************************************************************
   * @attention
@@ -17,21 +17,20 @@
   *
   *        http://www.st.com/software_license_agreement_liberty_v2
   *
-  * Unless required by applicable law or agreed to in writing, software 
-  * distributed under the License is distributed on an "AS IS" BASIS, 
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   * See the License for the specific language governing permissions and
   * limitations under the License.
   *
   ******************************************************************************
-  */ 
+  */
 
 /* Includes ------------------------------------------------------------------*/
 #include "usb_bsp.h"
 #include "usbd_conf.h"
 #include "stm32f4xx.h"
 #include <interfaces/gpio.h>
-#include <os.h>
 #include <interfaces/delays.h>
 
 extern USB_OTG_CORE_HANDLE           USB_OTG_dev;
@@ -98,10 +97,8 @@ void USB_OTG_BSP_mDelay (const uint32_t msec)
     delayMs(msec);
 }
 
-void OTG_FS_IRQHandler(void)
+void _Z17OTG_FS_IRQHandlerv(void)
 {
-    OSIntEnter();
     USBD_OTG_ISR_Handler (&USB_OTG_dev);
-    OSIntExit();
 }
 

@@ -22,6 +22,10 @@
 #include <unistd.h>
 #include "stm32f4xx.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Size of the reception buffer for incoming data from the USB host, in bytes.
  * NOTE: value is equal to the size of one USB bulk transfer, do not change
@@ -52,5 +56,9 @@ ssize_t vcom_writeBlock(const void *buf, size_t len);
 * asked.
 */
 ssize_t vcom_readBlock(void *buf, size_t len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* USB_VCOM_H */
