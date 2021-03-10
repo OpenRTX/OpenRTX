@@ -226,7 +226,7 @@ void *dev_task(void *arg)
 
         // Low-pass filtering with a time constant of 10s when updated at 1Hz
         float vbat = platform_getVbat();
-        state.v_bat = 8.0f;// 0.02*vbat + 0.98*state.v_bat;
+        state.v_bat = 0.02*vbat + 0.98*state.v_bat;
 
         state.charge = battery_getCharge(state.v_bat);
         state.rssi = rtx_getRssi();

@@ -16,22 +16,29 @@
  ***************************************************************************/
 
 #include <interfaces/gpio.h>
-#include "hwconfig.h"
+#include <hwconfig.h>
+#include <stdlib.h>
 #include "ADC1_MDx.h"
+
 
 /*
  * The sample buffer is structured as follows:
  *
  * | vbat | rssi | vox | vol |
  *
+ * NOTE: we are forced to allocate it through a malloc in order to make it be
+ * in the "large" 128kB RAM. This because the linker script maps the .data and
+ * .bss sections in the "small" 64kB CCM RAM, which cannot be reached by the DMA.
  */
-uint16_t sampleBuf[4];
+uint16_t *sampleBuf = NULL;
 
 void adc1_init()
 {
     RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
     RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
     __DSB();
+
+    sampleBuf = ((uint16_t *) malloc(4 * sizeof(uint16_t)));
 
     /*
      * Configure GPIOs to analog input mode:
@@ -71,7 +78,7 @@ void adc1_init()
               | ADC_CR2_ADON;
 
     /* Scan sequence config. */
-    #if  defined(PLATFORM_MD3x0)
+    #if defined(PLATFORM_MD3x0)
     ADC1->SQR1 = 3 << 20;    /* Four channels to be converted          */
     ADC1->SQR3 |= (1 << 0)   /* CH1, battery voltage on PA1            */
                |  (8 << 5)   /* CH8, RSSI value on PB0                 */
@@ -92,7 +99,7 @@ void adc1_init()
      * - no interrupts
      */
     DMA2_Stream0->PAR = ((uint32_t) &(ADC1->DR));
-    DMA2_Stream0->M0AR = ((uint32_t) &sampleBuf);
+    DMA2_Stream0->M0AR = ((uint32_t) sampleBuf);
     DMA2_Stream0->NDTR = 4;
     DMA2_Stream0->CR = DMA_SxCR_MSIZE_0     /* Memory size: 16 bit     */
                      | DMA_SxCR_PSIZE_0     /* Peripheral size: 16 bit */
@@ -107,6 +114,8 @@ void adc1_init()
 
 void adc1_terminate()
 {
+    free(sampleBuf);
+    sampleBuf = NULL;
     DMA2_Stream0->CR &= ~DMA_SxCR_EN;
     ADC1->CR2 &= ~ADC_CR2_ADON;
     RCC->APB2ENR &= ~RCC_APB2ENR_ADC1EN;
@@ -115,7 +124,7 @@ void adc1_terminate()
 
 float adc1_getMeasurement(uint8_t ch)
 {
-    if(ch > 3) return 0.0f;
+    if((ch > 3) || (sampleBuf == NULL)) return 0.0f;
 
     float value = ((float) sampleBuf[ch]);
     return (value * 3300.0f)/4096.0f;
