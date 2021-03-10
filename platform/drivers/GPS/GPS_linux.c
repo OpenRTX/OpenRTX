@@ -19,9 +19,9 @@
  ***************************************************************************/
 
 #include <interfaces/gps.h>
+#include <interfaces/delays.h>
 #include <hwconfig.h>
 #include <string.h>
-#include <os.h>
 
 #define MAX_NMEA_LEN 80
 #define NMEA_SAMPLES 8
@@ -63,12 +63,11 @@ bool gps_detect(__attribute__((unused)) uint16_t timeout)
 
 int gps_getNmeaSentence(char *buf, const size_t maxLength)
 {
-    OS_ERR os_err;
     static int i = 0;
 
     // Emulate GPS device by sending NMEA sentences every 1s
     if(i == 0)
-        OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+        sleepFor(1u, 0u);
     size_t len = strnlen(test_nmea_sentences[i], MAX_NMEA_LEN);
     if (len > maxLength)
         return -1;
