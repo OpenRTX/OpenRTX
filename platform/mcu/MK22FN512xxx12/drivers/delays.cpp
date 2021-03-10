@@ -16,9 +16,10 @@
  ***************************************************************************/
 
 #include <interfaces/delays.h>
+#include <miosix.h>
 
 /**
- * Implementation of the delay functions for STM32F405 MCU.
+ * Implementation of the delay functions for MK22FN512 MCU.
  */
 
 void delayUs(unsigned int useconds)
@@ -48,4 +49,15 @@ void delayMs(unsigned int mseconds)
                      "           addlo r1, r1, #1 \n"
                      "           blo   ___loop_m  \n"::"r"(count):"r1");
     }
+}
+
+void sleepFor(unsigned int seconds, unsigned int mseconds)
+{
+    unsigned int time = (seconds * 1000) + mseconds;
+    miosix::Thread::sleep(time);
+}
+
+long long getTick()
+{
+    return miosix::getTick();
 }

@@ -40,6 +40,19 @@ void delayUs(unsigned int useconds);
  */
 void delayMs(unsigned int mseconds);
 
+/**
+ * Puts the calling thread in a sleeping state for the specified amount of time.
+ * @param seconds: sleep time, seconds.
+ * @param mseconds: sleep time, milliseconds.
+ */
+void sleepFor(unsigned int seconds, unsigned int mseconds);
+
+/**
+ * Get the current value of the system tick.
+ * @return current system tick value.
+ */
+long long getTick();
+
 #ifdef __cplusplus
 }
 #endif
