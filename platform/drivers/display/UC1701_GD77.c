@@ -22,7 +22,6 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include <os.h>
 #include <interfaces/gpio.h>
 #include <interfaces/display.h>
 #include <interfaces/delays.h>
@@ -65,7 +64,7 @@ void display_init()
     frameBuffer = (uint8_t *) malloc(fbSize);
     if(frameBuffer == NULL)
     {
-        printf("*** LCD ERROR: cannot allocate framebuffer! ***");
+        puts("*** LCD ERROR: cannot allocate framebuffer! ***");
         return;
     }
 

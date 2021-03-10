@@ -25,12 +25,11 @@
 #include <ADC0_GDx.h>
 #include <string.h>
 #include <I2C0.h>
-#include <os.h>
+#include <pthread.h>
 #include "hwconfig.h"
 
 /* Mutex for concurrent access to ADC0 */
-OS_MUTEX adc_mutex;
-OS_ERR e;
+pthread_mutex_t adc_mutex;
 
 gdxCalibration_t calibration;
 hwInfo_t hwInfo;
@@ -68,7 +67,7 @@ void platform_init()
      * Initialise ADC
      */
     adc0_init();
-    OSMutexCreate(&adc_mutex, "", &e);
+    pthread_mutex_init(&adc_mutex, NULL);
 
     /*
      * Initialise I2C driver, once for all the modules
@@ -104,6 +103,7 @@ void platform_terminate()
     gpio_clearPin(GREEN_LED);
 
     adc0_terminate();
+    pthread_mutex_destroy(&adc_mutex);
 
     /* Finally, remove power supply */
     gpio_clearPin(PWR_SW);
@@ -112,9 +112,9 @@ void platform_terminate()
 float platform_getVbat()
 {
     float value = 0.0f;
-    OSMutexPend(&adc_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &e);
+    pthread_mutex_lock(&adc_mutex);
     value = adc0_getMeasurement(1);
-    OSMutexPost(&adc_mutex, OS_OPT_POST_NONE, &e);
+    pthread_mutex_unlock(&adc_mutex);
 
     return (value * 3.0f)/1000.0f;
 }
@@ -122,9 +122,9 @@ float platform_getVbat()
 float platform_getMicLevel()
 {
     float value = 0.0f;
-    OSMutexPend(&adc_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &e);
+    pthread_mutex_lock(&adc_mutex);
     value = adc0_getMeasurement(3);
-    OSMutexPost(&adc_mutex, OS_OPT_POST_NONE, &e);
+    pthread_mutex_unlock(&adc_mutex);
 
     return value;
 }

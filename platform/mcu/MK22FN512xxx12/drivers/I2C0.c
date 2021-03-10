@@ -19,11 +19,10 @@
  ***************************************************************************/
 
 #include "I2C0.h"
-#include <os.h>
+#include <pthread.h>
 #include <MK22F51212.h>
 
-OS_MUTEX i2c_mutex;
-OS_ERR err;
+pthread_mutex_t mutex;
 
 void i2c0_init()
 {
@@ -33,7 +32,7 @@ void i2c0_init()
     I2C0->F    = 0x2C;              /* Divide bus clock by 576           */
     I2C0->C1  |= I2C_C1_IICEN(1);   /* Enable I2C module                 */
 
-    OSMutexCreate(&i2c_mutex, "", &err);
+    pthread_mutex_init(&mutex, NULL);
 }
 
 void i2c0_terminate()
@@ -43,7 +42,7 @@ void i2c0_terminate()
     I2C0->C1   &= ~I2C_C1_IICEN(1);
     SIM->SCGC4 &= ~SIM_SCGC4_I2C0(1);
 
-    OSMutexDel(&i2c_mutex, OS_OPT_DEL_NO_PEND, &err);
+    pthread_mutex_destroy(&mutex);
 }
 
 void i2c0_write(uint8_t addr, void* buf, size_t len, bool sendStop)
@@ -121,9 +120,7 @@ bool i2c0_busy()
 
 bool i2c0_lockDevice()
 {
-    OSMutexPend(&i2c_mutex, 0, OS_OPT_PEND_NON_BLOCKING, NULL, &err);
-
-    if(err == OS_ERR_NONE)
+    if(pthread_mutex_trylock(&mutex) == 0)
     {
         return true;
     }
@@ -133,10 +130,10 @@ bool i2c0_lockDevice()
 
 void i2c0_lockDeviceBlocking()
 {
-    OSMutexPend(&i2c_mutex, 0, OS_OPT_PEND_BLOCKING, NULL, &err);
+    pthread_mutex_lock(&mutex);
 }
 
 void i2c0_releaseDevice()
 {
-    OSMutexPost(&i2c_mutex, OS_OPT_POST_NONE, &err);
+    pthread_mutex_unlock(&mutex);
 }
