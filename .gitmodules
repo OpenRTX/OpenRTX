@@ -1,0 +1,4 @@
+[submodule "lib/miosix-kernel"]
+	path = lib/miosix-kernel
+	url = https://github.com/OpenRTX/miosix-kernel.git
+        branch = release
