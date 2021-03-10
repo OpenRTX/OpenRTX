@@ -22,7 +22,6 @@
 #include <interfaces/gpio.h>
 #include <interfaces/delays.h>
 #include <hwconfig.h>
-#include <os.h>
 #include "HR_C5000.h"
 
 const uint8_t initSeq1[] = {0x00, 0x00, 0xFF, 0xB0, 0x00, 0x00, 0x00, 0x00};
@@ -108,8 +107,8 @@ void C5000_init()
     _writeReg(0x00, 0x0A, 0x80);      // Internal clock connected to crystal
     _writeReg(0x00, 0x0B, 0x28);      // PLL M register (multiplier)
     _writeReg(0x00, 0x0C, 0x33);      // PLL input and output dividers
-    OS_ERR err;
-    OSTimeDly(1, OS_OPT_TIME_DLY, &err);
+
+    delayMs(1);
     _writeReg(0x00, 0x0A, 0x00);      // Internal clock connected to PLL
     _writeReg(0x00, 0xBA, 0x22);      // Built-in codec clock freq. (HR_C6000)
     _writeReg(0x00, 0xBB, 0x11);      // Output clock operating freq. (HR_C6000)
@@ -178,8 +177,7 @@ void C5000_dmrMode()
     _sendSequence(initSeq2, sizeof(initSeq2));
     _writeReg(0x00, 0x00, 0x28);
 
-    OS_ERR err;
-    OSTimeDly(1, OS_OPT_TIME_DLY, &err);
+    delayMs(1);
 
     _writeReg(0x00, 0x14, 0x59);
     _writeReg(0x00, 0x15, 0xF5);

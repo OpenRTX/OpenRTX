@@ -18,9 +18,9 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <os.h>
 #include <stdio.h>
 #include <interfaces/platform.h>
+#include <interfaces/delays.h>
 
 int main()
 {
@@ -28,12 +28,10 @@ int main()
 
     while(1)
     {
-        OS_ERR e;
-
         platform_ledOn(GREEN);
-        OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &e);
+        delayMs(1000);
         platform_ledOff(GREEN);
-        OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &e);
+        delayMs(1000);
     }
 
     return 0;

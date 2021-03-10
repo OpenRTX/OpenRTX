@@ -21,7 +21,8 @@
 #include <interfaces/platform.h>
 #include <hwconfig.h>
 #include <string.h>
-#include <os.h>
+#include <miosix.h>
+#include <kernel/scheduler/scheduler.h>
 
 /**
  * LCD command set, basic and extended
@@ -85,21 +86,31 @@
 #define LCD_FSMC_ADDR_DATA    0x60040000
 
 /*
- * LCD framebuffer, statically allocated.
+ * LCD framebuffer, dynamically allocated.
  * Pixel format is RGB565, 16 bit per pixel
  */
-static uint16_t frameBuffer[SCREEN_WIDTH * SCREEN_HEIGHT];
-OS_FLAG_GRP renderCompleted;
+static uint16_t *frameBuffer;
 
-void __attribute__((used)) DMA2_Stream7_IRQHandler()
+using namespace miosix;
+Thread *lcdWaiting = 0;
+
+void __attribute__((used)) DmaImpl()
 {
-    OS_ERR err;
-
-    OSIntEnter();
     DMA2->HIFCR |= DMA_HIFCR_CTCIF7 | DMA_HIFCR_CTEIF7;    /* Clear flags */
     gpio_setPin(LCD_CS);
-    OSFlagPost(&renderCompleted, 0x01, OS_OPT_POST_FLAG_SET, &err);
-    OSIntExit();
+
+    if(lcdWaiting == 0) return;
+    lcdWaiting->IRQwakeup();
+    if(lcdWaiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
+        Scheduler::IRQfindNextThread();
+    lcdWaiting = 0;
+}
+
+void __attribute__((naked)) DMA2_Stream7_IRQHandler()
+{
+    saveContext();
+    asm volatile("bl _Z7DmaImplv");
+    restoreContext();
 }
 
 static inline __attribute__((__always_inline__)) void writeCmd(uint8_t cmd)
@@ -114,11 +125,13 @@ static inline __attribute__((__always_inline__)) void writeData(uint8_t val)
 
 void display_init()
 {
-    /* Create flag for render completion wait */
-    OS_ERR err;
-    OSFlagCreate(&renderCompleted, "", 0, &err);
 
-    /* Clear framebuffer, setting all pixels to 0xFFFF makes the screen white */
+    /* Allocate and clear framebuffer, setting all pixels to 0xFFFF makes the
+     * screen white.
+     *
+     * TODO: handle the case when memory allocation fails!
+     */
+    frameBuffer = ((uint16_t *) malloc(SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(uint16_t)));
     memset(frameBuffer, 0xFF, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(uint16_t));
 
     /*
@@ -421,8 +434,7 @@ void display_init()
 
 void display_terminate()
 {
-    OS_ERR err;
-    OSFlagDel(&renderCompleted, OS_OPT_DEL_NO_PEND, &err);
+    free(frameBuffer);
 
     /* Shut off FSMC and deallocate framebuffer */
     RCC->AHB3ENR &= ~RCC_AHB3ENR_FSMCEN;
@@ -489,10 +501,21 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
                      | DMA_SxCR_TEIE          /* Transfer error interrupt    */
                      | DMA_SxCR_EN;           /* Start transfer              */
 
-    OS_ERR err;
-    OSFlagPend(&renderCompleted, 0x01, 0, OS_OPT_PEND_FLAG_SET_ANY |
-                                          OS_OPT_PEND_FLAG_CONSUME |
-                                          OS_OPT_PEND_BLOCKING, NULL, &err);
+    /*
+     * Put the calling thread in waiting status until render completes.
+     */
+    {
+        FastInterruptDisableLock dLock;
+        lcdWaiting = Thread::IRQgetCurrentThread();
+        do
+        {
+            Thread::IRQwait();
+            {
+                FastInterruptEnableLock eLock(dLock);
+                Thread::yield();
+            }
+        } while(lcdWaiting);
+    }
 }
 
 void display_render()

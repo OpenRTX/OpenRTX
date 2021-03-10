@@ -25,6 +25,10 @@
 #include <stdint.h>
 #include <rtx.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * This file provides a common interface for the platform-dependent low-level
  * rtx driver. Top level application code normally does not have to call directly
@@ -91,5 +95,9 @@ void radio_updateCalibrationParams(const rtxStatus_t *rtxCfg);
  *
  */
 float radio_getRssi(const freq_t rxFreq);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* RADIO_H */

@@ -17,9 +17,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <os.h>
 #include <interfaces/rtc.h>
-#include "stm32f4xx.h"
+#include <stm32f4xx.h>
 
 void rtc_init()
 {
@@ -69,13 +68,11 @@ void rtc_setTime(curTime_t t)
     time &= RTC_TR_HT | RTC_TR_HU | RTC_TR_MNT | RTC_TR_MNU | RTC_TR_ST | RTC_TR_SU;
 
     /* Enter initialisation mode and update registers */
-//     CPU_CRITICAL_ENTER();
     RTC->ISR |= RTC_ISR_INIT;
     while((RTC->ISR & RTC_ISR_INITF) == 0) ;
     RTC->TR = time;
     RTC->DR = date;
     RTC->ISR &= ~RTC_ISR_INIT;
-//     CPU_CRITICAL_EXIT();
 }
 
 void rtc_setHour(uint8_t hours, uint8_t minutes, uint8_t seconds)
@@ -122,17 +119,13 @@ void rtc_dstSet()
 {
     /* If BKP bit is set, DST has been already set */
     if(RTC->CR & RTC_CR_BCK) return;
-//     CPU_CRITICAL_ENTER();
     RTC->CR |= RTC_CR_BCK | RTC_CR_ADD1H;
-//     CPU_CRITICAL_EXIT();
 }
 
 void rtc_dstClear()
 {
     /* If BKP bit is cleared, DST has been already removed */
     if((RTC->CR & RTC_CR_BCK) == 0) return;
-//     CPU_CRITICAL_ENTER();
     RTC->CR &= ~RTC_CR_BCK;
     RTC->CR |= RTC_CR_SUB1H;
-//     CPU_CRITICAL_EXIT();
 }

@@ -23,15 +23,18 @@
 #include <interfaces/gps.h>
 #include <hwconfig.h>
 #include <string.h>
-#include <os.h>
+#include <miosix.h>
+#include <kernel/scheduler/scheduler.h>
 
-int8_t detectStatus = -1;
-size_t bufPos = 0;
-size_t maxPos = 0;
-char  *dataBuf;
-bool   receiving = false;
+int8_t  detectStatus = -1;
+size_t  bufPos = 0;
+size_t  maxPos = 0;
+char    *dataBuf;
+bool    receiving = false;
+uint8_t status = 0;
 
-OS_FLAG_GRP sentenceReady;
+using namespace miosix;
+Thread *gpsWaiting = 0;
 
 #ifdef PLATFORM_MD3x0
 #define PORT USART3
@@ -39,11 +42,8 @@ OS_FLAG_GRP sentenceReady;
 #define PORT USART1
 #endif
 
-#ifdef PLATFORM_MD3x0
-void __attribute__((used)) USART3_IRQHandler()
-#else
-void __attribute__((used)) USART1_IRQHandler()
-#endif
+
+void __attribute__((used)) GpsUsartImpl()
 {
     if(PORT->SR & USART_SR_RXNE)
     {
@@ -74,13 +74,28 @@ void __attribute__((used)) USART1_IRQHandler()
 
         if((receiving == false) && (bufPos != 0))
         {
-            uint8_t flag = (bufPos < maxPos) ? 0x01 : 0x02;
-            OS_ERR err;
-            OSFlagPost(&sentenceReady, flag, OS_OPT_POST_FLAG_SET, &err);
+            status = (bufPos < maxPos) ? 0x01 : 0x02;
+
+            if(gpsWaiting == 0) return;
+            gpsWaiting->IRQwakeup();
+            if(gpsWaiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
+                Scheduler::IRQfindNextThread();
+            gpsWaiting = 0;
         }
     }
 
     PORT->SR = 0;
+}
+
+#ifdef PLATFORM_MD3x0
+void __attribute__((naked)) USART3_IRQHandler()
+#else
+void __attribute__((naked)) USART1_IRQHandler()
+#endif
+{
+    saveContext();
+    asm volatile("bl _Z12GpsUsartImplv");
+    restoreContext();
 }
 
 
@@ -111,15 +126,10 @@ void gps_init(const uint16_t baud)
     NVIC_ClearPendingIRQ(USART1_IRQn);
     NVIC_SetPriority(USART1_IRQn, 14);
     #endif
-
-    OS_ERR err;
-    OSFlagCreate(&sentenceReady, "", 0, &err);
 }
 
 void gps_terminate()
 {
-    OS_ERR err;
-    OSFlagDel(&sentenceReady, OS_OPT_DEL_NO_PEND, &err);
     gps_disable();
 
     #ifdef PLATFORM_MD3x0
@@ -192,11 +202,21 @@ int gps_getNmeaSentence(char *buf, const size_t maxLength)
     NVIC_EnableIRQ(USART1_IRQn);
     #endif
 
-    OS_ERR err;
-    OS_FLAGS status = OSFlagPend(&sentenceReady, 0x03, 0,
-                                 OS_OPT_PEND_FLAG_SET_ANY |
-                                 OS_OPT_PEND_FLAG_CONSUME |
-                                 OS_OPT_PEND_BLOCKING, NULL, &err);
+    /*
+     * Put the calling thread in waiting status until a complete sentence is ready.
+     */
+    {
+        FastInterruptDisableLock dLock;
+        gpsWaiting = Thread::IRQgetCurrentThread();
+        do
+        {
+            Thread::IRQwait();
+            {
+                FastInterruptEnableLock eLock(dLock);
+                Thread::yield();
+            }
+        } while(gpsWaiting);
+    }
 
     #ifdef PLATFORM_MD3x0
     NVIC_DisableIRQ(USART3_IRQn);

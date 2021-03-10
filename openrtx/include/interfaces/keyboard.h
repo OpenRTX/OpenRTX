@@ -22,7 +22,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <os_cfg_app.h>
+#include <board_settings.h>
 
 /**
  * The following enum provides a set of flags to be used to check which buttons
@@ -69,7 +69,7 @@ static const uint8_t kbd_num_keys = 29;
 /**
  * Time interval in ticks after which a keypress is considered a long-press
  */
-static const uint16_t kbd_long_interval = OS_CFG_TICK_RATE_HZ * 0.7;
+static const uint16_t kbd_long_interval = TICK_FREQ * 0.7;
 
 /**
  * Mask for the numeric keys in a key map
@@ -97,7 +97,7 @@ typedef union
 
 /**
  * We encode the status of all the keys with a uint32_t value
- * To check which buttons are pressed one can bit-mask the 
+ * To check which buttons are pressed one can bit-mask the
  * keys value with one of the enum values defined in key.
  * Example:
  * keyboard_t keys = kbd_getKeys();
@@ -119,7 +119,7 @@ void kbd_terminate();
 /**
  * When called, this function takes a snapshot of the current configuration of
  * all the keyboard buttons and returns it as a 32-bit variable.
- * 
+ *
  * @return an uint32_t representing the current keyboard configuration.
  */
 keyboard_t kbd_getKeys();

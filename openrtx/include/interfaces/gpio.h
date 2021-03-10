@@ -20,6 +20,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * GPIO functional modes.
  * For more details see microcontroller's reference manual.
@@ -105,5 +109,9 @@ void gpio_togglePin(void *port, uint8_t pin);
  * @return 1 if pin is at high logic level, 0 if pin is at low logic level.
  */
 uint8_t gpio_readPin(const void *port, uint8_t pin);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GPIO_H */
