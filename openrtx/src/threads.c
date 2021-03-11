@@ -20,6 +20,7 @@
 
 #include <hwconfig.h>
 #include <pthread.h>
+#include <sched.h>
 #include <ui.h>
 #include <state.h>
 #include <threads.h>
@@ -326,6 +327,14 @@ void create_threads()
 
     pthread_attr_init(&rtx_attr);
     pthread_attr_setstacksize(&rtx_attr, RTX_TASK_STKSIZE);
+
+    #ifdef _MIOSIX
+    // Max priority for RTX thread when running with miosix rtos
+    struct sched_param param;
+    param.sched_priority = sched_get_priority_max(0);
+    pthread_attr_setschedparam(&rtx_attr, &param);
+    #endif
+
     pthread_create(&rtx_thread, &rtx_attr, rtx_task, NULL);
 
     // Create UI thread

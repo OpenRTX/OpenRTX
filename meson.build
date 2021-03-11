@@ -93,7 +93,8 @@ stm32f405_inc = ['platform/mcu/CMSIS/Include',
                  'platform/mcu/STM32F4xx/drivers',
                  'platform/mcu/STM32F4xx/drivers/usb']
 
-stm32f405_def = {'STM32F40_41xxx': '', 'HSE_VALUE':'8000000'}
+stm32f405_def = {'STM32F40_41xxx': '', 'HSE_VALUE':'8000000',
+                 '_POSIX_PRIORITY_SCHEDULING':''}
 
 ## MK22FN512
 
@@ -116,7 +117,7 @@ mk22fn512_inc = ['platform/mcu/CMSIS/Include',
                  'platform/mcu/CMSIS/Device/NXP/MK22FN512xxx12/Include',
                  'platform/mcu/MK22FN512xxx12/drivers']
 
-mk22fn512_def = {}
+mk22fn512_def = {'_POSIX_PRIORITY_SCHEDULING':''}
 
 ##
 ## Platform specializations
