@@ -104,13 +104,13 @@ mk22fn512_src = ['platform/mcu/MK22FN512xxx12/boot/startup.cpp',
                  'platform/mcu/MK22FN512xxx12/drivers/gpio.c',
                  'platform/mcu/MK22FN512xxx12/drivers/delays.cpp',
                  'platform/mcu/MK22FN512xxx12/drivers/I2C0.c',
-#                  'platform/mcu/MK22FN512xxx12/drivers/usb/usb_device_cdc_acm.c',
-#                  'platform/mcu/MK22FN512xxx12/drivers/usb/usb_device_ch9.c',
-#                  'platform/mcu/MK22FN512xxx12/drivers/usb/usb_device_dci.c',
-#                  'platform/mcu/MK22FN512xxx12/drivers/usb/usb_device_descriptor.c',
-#                  'platform/mcu/MK22FN512xxx12/drivers/usb/usb_device_khci.c',
-#                  'platform/mcu/MK22FN512xxx12/drivers/usb/usb_osa_bm.c',
-#                  'platform/mcu/MK22FN512xxx12/drivers/usb_vcom.c',
+                 'platform/mcu/MK22FN512xxx12/drivers/usb/usb_device_cdc_acm.c',
+                 'platform/mcu/MK22FN512xxx12/drivers/usb/usb_device_ch9.c',
+                 'platform/mcu/MK22FN512xxx12/drivers/usb/usb_device_dci.c',
+                 'platform/mcu/MK22FN512xxx12/drivers/usb/usb_device_descriptor.c',
+                 'platform/mcu/MK22FN512xxx12/drivers/usb/usb_device_khci.c',
+                 'platform/mcu/MK22FN512xxx12/drivers/usb/usb_osa_bm.c',
+                 'platform/mcu/MK22FN512xxx12/drivers/usb_vcom.c',
                  'platform/mcu/CMSIS/Device/NXP/MK22FN512xxx12/Source/system_MK22F51212.c']
 
 mk22fn512_inc = ['platform/mcu/CMSIS/Include',
@@ -233,7 +233,7 @@ dm1801_def = def + mk22fn512_def + {'PLATFORM_DM1801': ''}
 ## Compilation defines
 ##
 linux_c_args = []
-linux_l_args = ['--entry=entry', '-lm']
+linux_l_args = ['-lm']
 
 # Add AddressSanitizer if required
 if get_option('asan')

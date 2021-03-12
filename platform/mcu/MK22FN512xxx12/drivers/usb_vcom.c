@@ -619,7 +619,7 @@ void vcom_init()
         return;
     }
 
-    NVIC_SetPriority(USB0_IRQn, 3);
+    NVIC_SetPriority(USB0_IRQn, 14);
     NVIC_EnableIRQ(USB0_IRQn);
 
     USB_DeviceRun(cdcVcom.deviceHandle);

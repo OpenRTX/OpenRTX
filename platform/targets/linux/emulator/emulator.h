@@ -32,7 +32,8 @@
 #define SCREEN_HEIGHT 128
 #endif
 
-enum choices {
+enum choices
+{
     VAL_RSSI=1,
     VAL_BAT,
     VAL_MIC,
@@ -43,7 +44,8 @@ enum choices {
     EXIT
 };
 
-typedef struct {
+typedef struct
+{
     float RSSI;
     float Vbat;
     float micLevel;
@@ -53,5 +55,7 @@ typedef struct {
 } radio_state;
 
 extern radio_state Radio_State;
+
+void emulator_start();
 
 #endif /* EMULATOR_H */

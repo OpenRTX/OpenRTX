@@ -21,6 +21,10 @@
 #include <stdint.h>
 #include <unistd.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Initialise USB virtual com port. Parameters: 115200 baud, 8N1.
  * @return zero on success, negative value on failure.
@@ -44,5 +48,9 @@ ssize_t vcom_writeBlock(const void *buf, size_t len);
 * asked.
 */
 ssize_t vcom_readBlock(void *buf, size_t len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* USB_VCOM_H */

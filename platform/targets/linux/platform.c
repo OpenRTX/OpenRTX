@@ -29,6 +29,8 @@ void platform_init()
     snprintf(hwInfo.name, 10, "Linux");
     hwInfo.vhf_band = 1;
     hwInfo.uhf_band = 1;
+
+    emulator_start();
 }
 
 void platform_terminate()

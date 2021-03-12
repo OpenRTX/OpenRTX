@@ -27,9 +27,8 @@
 
 radio_state Radio_State = {12, 8.2f, 3, 4, 1, false};
 
-void systemBootstrap();
-
-int CLIMenu() {
+int CLIMenu()
+{
     int choice = 0;
     printf("Select the value to change:\n");
     printf("1 -> RSSI\n");
@@ -41,20 +40,23 @@ int CLIMenu() {
     printf("7 -> Print current state\n");
     printf("8 -> Exit\n");
     printf("> ");
-    do {
+    do
+    {
         scanf("%d", &choice);
     } while (choice < 1 || choice > 8);
     printf("\033[1;1H\033[2J");
     return choice;
 }
 
-void updateValue(float *curr_value) {
+void updateValue(float *curr_value)
+{
     printf("Current value: %f\n", *curr_value);
     printf("New value: \n");
     scanf("%f", curr_value);
 }
 
-void printState() {
+void printState()
+{
     printf("\nCurrent state\n");
     printf("RSSI   : %f\n", Radio_State.RSSI);
     printf("Battery: %f\n", Radio_State.Vbat);
@@ -65,16 +67,14 @@ void printState() {
 
 }
 
-void *startRadio() {
-    systemBootstrap();
-    return NULL;
-}
-
-void *startCLIMenu() {
+void *startCLIMenu()
+{
     int choice;
-    do {
+    do
+    {
         choice = CLIMenu();
-        switch (choice) {
+        switch (choice)
+        {
             case VAL_RSSI:
                 updateValue(&Radio_State.RSSI);
                 break;
@@ -100,48 +100,18 @@ void *startCLIMenu() {
                 continue;
         }
     } while (choice != EXIT);
-    printf("exiting\n");
+    printf("73\n");
     exit(0);
 }
 
 
-int emulator_main() {
-    pthread_t cli_thread, radio_thread;
-    int err1, err2 = 0;
+void emulator_start()
+{
+    pthread_t cli_thread;
+    int err = pthread_create(&cli_thread, NULL, startCLIMenu, NULL);
 
-    err1 = pthread_create(&cli_thread, NULL, startCLIMenu, NULL);
-    err2 = pthread_create(&radio_thread, NULL, startRadio, NULL);
-
-    if (err1 | err2) {
-        printf("An error occurred starting the threads: %d, %d\n", err1, err2);
-        return 1;
+    if(err)
+    {
+        printf("An error occurred starting the emulator thread: %d\n", err);
     }
-    pthread_join(cli_thread, NULL);
-
-    printf("73\n");
-    return 0;
 }
-
-
-void entry() {
-    __asm__(
-    "xorl %ebp, %ebp\n\t"
-    "mov %RDX, %R9\n\t"
-
-    #ifdef __ILP32__
-    "mov (%rsp), %esi\n\t"
-    "add $4, %esp\n\t"
-    #else
-    "popq %rsi\n\t"
-    #endif
-    "mov %RSP, %RDX\n\t"
-    "and  $~15, %RSP\n\t"
-    "pushq %rax\n\t"
-    "pushq %rsp\n\t"
-    "mov __libc_csu_fini@GOTPCREL(%rip), %R8\n\t"
-    "mov __libc_csu_init@GOTPCREL(%rip), %RCX\n\t"
-    "mov emulator_main@GOTPCREL(%rip), %RDI\n\t"
-    "call *__libc_start_main@GOTPCREL(%rip)\n\t"
-    "hlt\n\t");
-}
-
