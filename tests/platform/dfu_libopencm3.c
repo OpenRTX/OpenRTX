@@ -282,33 +282,33 @@ static enum usbd_request_return_codes dfu_control_request(
         && (req->bRequest == DFU_DNLOAD)
     ) {
 
-        //if(req->wLength) {
-        //    if(req->wLength > dfu_function.wTransferSize) {
-        //        dfu_state = STATE_DFU_ERROR;
-        //        dfu_status = DFU_STATUS_ERR_UNKNOWN;
-        //        return USBD_REQ_NOTSUPP;
-        //    }
+        if(req->wLength) {
+            if(req->wLength > dfu_function.wTransferSize) {
+                dfu_state = STATE_DFU_ERROR;
+                dfu_status = DFU_STATUS_ERR_UNKNOWN;
+                return USBD_REQ_NOTSUPP;
+            }
 
-        //    if(dfu_address + req->wLength > MAIN_MEMORY_MAX) {
-        //        dfu_state = STATE_DFU_ERROR;
-        //        dfu_status = DFU_STATUS_ERR_ADDRESS;
-        //        return USBD_REQ_HANDLED;
-        //    }
+            if(dfu_address + req->wLength > SPI_FLASH_SIZE) {
+                dfu_state = STATE_DFU_ERROR;
+                dfu_status = DFU_STATUS_ERR_ADDRESS;
+                return USBD_REQ_HANDLED;
+            }
 
-        //    dfu_status = DFU_STATUS_OK;
-        //    dfu_state = STATE_DFU_DNLOAD_SYNC;
+            dfu_status = DFU_STATUS_OK;
+            dfu_state = STATE_DFU_DNLOAD_SYNC;
 
-        //    dfu_write(*buf, req->wLength);
+            dfu_write(*buf, req->wLength);
 
-        //    dfu_block_num = req->wValue;
-        //    dfu_bytes += req->wLength;
+            dfu_block_num = req->wValue;
+            dfu_bytes += req->wLength;
 
-        //    return USBD_REQ_HANDLED;
-        //} else {
-        //    dfu_status = DFU_STATUS_OK;
-        //    dfu_state = STATE_DFU_MANIFEST_SYNC;
-        //    return USBD_REQ_HANDLED;
-        //}
+            return USBD_REQ_HANDLED;
+        } else {
+            dfu_status = DFU_STATUS_OK;
+            dfu_state = STATE_DFU_MANIFEST_SYNC;
+            return USBD_REQ_HANDLED;
+        }
     }
 
     if(
