@@ -24,14 +24,16 @@
 #include <interfaces/delays.h>
 #include <interfaces/gpio.h>
 #include <hwconfig.h>
+#include "W25Qx.h"
 
 #define NULL 0
 
 #define DFU_INTERFACE_NUMBER 0
 #define CONFIGURATION_VALUE 1
 // FIXME: inset a proper address here
-#define MAIN_PROGRAM_BASE 0x0
-#define MAIN_MEMORY_MAX 0xC00000
+#define SPI_FLASH_BASE 0x0
+#define SPI_FLASH_SIZE 0x1000000
+#define BLOCK_SIZE 512
 
 static uint32_t erased_sectors = 0;
 
@@ -93,7 +95,7 @@ const struct usb_dfu_descriptor dfu_function = {
         // download capable (bitCanDnload)
         USB_DFU_CAN_DOWNLOAD |
         // upload capable (bitCanUpload)
-        // USB_DFU_CAN_UPLOAD |
+        USB_DFU_CAN_UPLOAD |
         // device is able to communicate via USB after Manifestation phase.
         // (bitManifestationTolerant)
         USB_DFU_MANIFEST_TOLERANT
@@ -111,7 +113,7 @@ const struct usb_dfu_descriptor dfu_function = {
     .wDetachTimeout = 0,
     // Maximum number of bytes that the device can accept per control-write
     // transaction.
-    .wTransferSize = sizeof(usbd_control_buffer),
+    .wTransferSize = BLOCK_SIZE,
     // Numeric expression identifying the version of the DFU Specification
     // release.
     .bcdDFUVersion = 0x0110,
@@ -164,6 +166,7 @@ static const char * usb_strings[] = {
     "OpenRTX",
     "",
     "",
+    "DFU 1.1 @SPI Flash Memory",
 };
 
 char usb_serial_number[25];
@@ -249,9 +252,10 @@ struct dfu_getstatus_payload {
 
 uint8_t dfu_status = DFU_STATUS_OK;
 uint8_t dfu_state = STATE_DFU_IDLE;
-uint32_t dfu_address = MAIN_PROGRAM_BASE;
+uint32_t dfu_address = SPI_FLASH_BASE;
 uint32_t dfu_bytes = 0;
 uint16_t dfu_block_num = 0;
+uint8_t dfu_buffer[512] = { 0 };
 
 void dfu_write(uint8_t *data, uint32_t length) {
     printf("Writing to address %d\n\r", dfu_address);
@@ -278,48 +282,51 @@ static enum usbd_request_return_codes dfu_control_request(
         && (req->bRequest == DFU_DNLOAD)
     ) {
 
-        if(req->wLength) {
-            if(req->wLength > dfu_function.wTransferSize) {
-                dfu_state = STATE_DFU_ERROR;
-                dfu_status = DFU_STATUS_ERR_UNKNOWN;
-                return USBD_REQ_NOTSUPP;
-            }
+        //if(req->wLength) {
+        //    if(req->wLength > dfu_function.wTransferSize) {
+        //        dfu_state = STATE_DFU_ERROR;
+        //        dfu_status = DFU_STATUS_ERR_UNKNOWN;
+        //        return USBD_REQ_NOTSUPP;
+        //    }
 
-            if(dfu_address + req->wLength > MAIN_MEMORY_MAX) {
-                dfu_state = STATE_DFU_ERROR;
-                dfu_status = DFU_STATUS_ERR_ADDRESS;
-                return USBD_REQ_HANDLED;
-            }
+        //    if(dfu_address + req->wLength > MAIN_MEMORY_MAX) {
+        //        dfu_state = STATE_DFU_ERROR;
+        //        dfu_status = DFU_STATUS_ERR_ADDRESS;
+        //        return USBD_REQ_HANDLED;
+        //    }
 
-            dfu_status = DFU_STATUS_OK;
-            dfu_state = STATE_DFU_DNLOAD_SYNC;
+        //    dfu_status = DFU_STATUS_OK;
+        //    dfu_state = STATE_DFU_DNLOAD_SYNC;
 
-            dfu_write(*buf, req->wLength);
+        //    dfu_write(*buf, req->wLength);
 
-            dfu_block_num = req->wValue;
-            dfu_bytes += req->wLength;
+        //    dfu_block_num = req->wValue;
+        //    dfu_bytes += req->wLength;
 
-            return USBD_REQ_HANDLED;
-        } else {
-            dfu_status = DFU_STATUS_OK;
-            dfu_state = STATE_DFU_MANIFEST_SYNC;
-            return USBD_REQ_HANDLED;
-        }
+        //    return USBD_REQ_HANDLED;
+        //} else {
+        //    dfu_status = DFU_STATUS_OK;
+        //    dfu_state = STATE_DFU_MANIFEST_SYNC;
+        //    return USBD_REQ_HANDLED;
+        //}
     }
 
     if(
         ((req->bmRequestType & USB_REQ_TYPE_DIRECTION) == USB_REQ_TYPE_IN)
         && (req->bRequest == DFU_UPLOAD)
     ) {
-        // uint32_t wLength;
-        // uint8_t *data;
-
-        // wLength = req->wLength;
-        // data = *buf;
-
-        // // TODO read
-
-        // return USBD_REQ_HANDLED;
+        // If the host is trying to read past the flash size, halt transaction
+        if (req->wValue * 512 >= SPI_FLASH_SIZE)
+        {
+            *len = 0;
+            return USBD_REQ_HANDLED;
+        }
+        // Otherwise read from MD380 SPI Flash
+        W25Qx_wakeup();
+        delayUs(5);
+        W25Qx_readData(dfu_address + req->wValue * 512, dfu_buffer, req->wLength);
+        *buf = dfu_buffer;
+        return USBD_REQ_HANDLED;
     }
 
     if(
@@ -383,7 +390,7 @@ static enum usbd_request_return_codes dfu_control_request(
 void dfu_reset(void) {
     dfu_status = DFU_STATUS_OK;
     dfu_state = STATE_DFU_IDLE;
-    dfu_address = MAIN_PROGRAM_BASE;
+    dfu_address = SPI_FLASH_BASE;
     dfu_bytes = 0;
     dfu_block_num = 0;
     erased_sectors = 0;
@@ -440,7 +447,7 @@ int main()
 
     usbd_device *usbd_dev;
     usbd_dev = usbd_init(&otgfs_usb_driver, &dev, &config,
-            usb_strings, 3,
+            usb_strings, 4,
             usbd_control_buffer, sizeof(usbd_control_buffer));
 
     usbd_register_set_config_callback(usbd_dev, dfu_set_config);
