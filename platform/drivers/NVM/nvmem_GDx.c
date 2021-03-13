@@ -172,7 +172,7 @@ int nvm_readVFOChannelData(channel_t *channel)
     AT24Cx_readData(vfoChannelBaseAddr, ((uint8_t *) &chData), sizeof(gdxChannel_t));
    
     // Copy data to OpenRTX channel_t
-    channel->mode            = chData.channel_mode - 1;
+    channel->mode            = chData.channel_mode;
     channel->bandwidth       = chData.bandwidth;
     channel->admit_criteria  = chData.admit_criteria;
     channel->squelch         = chData.squelch;
@@ -290,7 +290,7 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
         }
     }
     // Copy data to OpenRTX channel_t
-    channel->mode            = chData.channel_mode - 1;
+    channel->mode            = chData.channel_mode;
     channel->bandwidth       = chData.bandwidth;
     channel->admit_criteria  = chData.admit_criteria;
     channel->squelch         = chData.squelch;
