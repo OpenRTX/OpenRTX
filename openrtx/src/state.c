@@ -88,7 +88,8 @@ void state_init()
 void state_terminate()
 {
     // Write settings to flash memory
-    nvm_writeSettings(&state.settings);
+    // NOTE: Disable writing settings to flash until persistence is implemented
+    //nvm_writeSettings(&state.settings);
 }
 
 void state_applyTimezone()
