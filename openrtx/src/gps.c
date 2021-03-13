@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <state.h>
 #include <string.h>
+#include <stdbool.h>
 
 #define KNOTS2KMH 1.852f
 
@@ -32,16 +33,28 @@
 void gps_taskFunc(char *line, __attribute__((unused)) int len, state_t *state)
 {
     char nmea_id[3] = { 0 };
+
+    // Little mechanism to ensure that RTC is synced with GPS time only once.
+    static bool isRtcSyncronised = false;
+    if(!state->settings.gps_set_time)
+    {
+        isRtcSyncronised = false;
+    }
+
     if (!minmea_talker_id(nmea_id, line))
         return;
+
     // Discard BeiDou sentences as we currently don't support it
     if (!strncmp(nmea_id, "BD", 3))
         return;
-    switch (minmea_sentence_id(line, false)) {
+
+    switch (minmea_sentence_id(line, false))
+    {
         case MINMEA_SENTENCE_RMC:
         {
             struct minmea_sentence_rmc frame;
-            if (minmea_parse_rmc(&frame, line)) {
+            if (minmea_parse_rmc(&frame, line))
+            {
                 state->gps_data.latitude = minmea_tocoord(&frame.latitude);
                 state->gps_data.longitude = minmea_tocoord(&frame.longitude);
                 state->gps_data.timestamp.hour = frame.time.hours;
@@ -52,9 +65,14 @@ void gps_taskFunc(char *line, __attribute__((unused)) int len, state_t *state)
                 state->gps_data.timestamp.month = frame.date.month;
                 state->gps_data.timestamp.year = frame.date.year;
             }
+
             // Synchronize RTC with GPS UTC clock
-            if(state->settings.gps_set_time)
+            if((state->settings.gps_set_time) && (!isRtcSyncronised))
+            {
                 rtc_setTime(state->gps_data.timestamp);
+                isRtcSyncronised = true;
+            }
+
             state->gps_data.tmg_true = minmea_tofloat(&frame.course);
             state->gps_data.speed = minmea_tofloat(&frame.speed) * KNOTS2KMH;
         } break;
@@ -92,7 +110,7 @@ void gps_taskFunc(char *line, __attribute__((unused)) int len, state_t *state)
             struct minmea_sentence_gsv frame;
             if (minmea_parse_gsv(&frame, line))
             {
-                state->gps_data.satellites_in_view = frame.total_sats; 
+                state->gps_data.satellites_in_view = frame.total_sats;
                 for (int i = 0; i < 4; i++)
                 {
                     int index = 4 * (frame.msg_nr - 1) + i;
@@ -103,15 +121,18 @@ void gps_taskFunc(char *line, __attribute__((unused)) int len, state_t *state)
                 }
                 // Zero out unused satellite slots
                 if (frame.msg_nr == frame.total_msgs && frame.total_msgs < 3)
+                {
                     bzero(&state->gps_data.satellites[4 * frame.msg_nr],
                           sizeof(sat_t) * 12 - frame.total_msgs * 4);
+                }
             }
         } break;
 
         case MINMEA_SENTENCE_VTG:
         {
             struct minmea_sentence_vtg frame;
-            if (minmea_parse_vtg(&frame, line)) {
+            if (minmea_parse_vtg(&frame, line))
+            {
                 state->gps_data.speed = minmea_tofloat(&frame.speed_kph);
                 state->gps_data.tmg_mag = minmea_tofloat(&frame.magnetic_track_degrees);
                 state->gps_data.tmg_true = minmea_tofloat(&frame.true_track_degrees);
