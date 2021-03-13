@@ -46,7 +46,7 @@ void state_init()
     // Set default channel index (it is 1-based)
     state.channel_index = 1;
     // Read VFO channel from Flash storage
-    // HACK: Temporarily disabled to fix splash screen freeze on GD-77
+    // NOTE: Disable reading VFO from flash until persistence is implemented
     //if(nvm_readVFOChannelData(&state.channel) != 0)
     if(1)
     {
@@ -73,9 +73,11 @@ void state_init()
     state.emergency = false;
 
     // Read settings from flash memory
-    int valid = nvm_readSettings(&state.settings);
+    // NOTE: Disable reading VFO from flash until persistence is implemented
+    //int valid = nvm_readSettings(&state.settings);
     // Settings in flash memory were not valid, restoring default settings
-    if(valid != 0)
+    //if(valid != 0)
+    if(1)
     {
         state.settings = default_settings;
         // NOTE: Settings writing disabled until DFU is implemented
