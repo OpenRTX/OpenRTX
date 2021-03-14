@@ -146,6 +146,12 @@ void rtx_terminate()
 
 void rtx_configure(const rtxStatus_t *cfg)
 {
+    /*
+     * NOTE: an incoming configuration may overwrite a preceding one not yet
+     * read by the radio task. This mechanism ensures that the radio driver
+     * always gets the most recent configuration.
+     */
+
     pthread_mutex_lock(cfgMutex);
     newCnf = cfg;
     pthread_mutex_unlock(cfgMutex);
@@ -158,7 +164,7 @@ rtxStatus_t rtx_getCurrentStatus()
 
 void rtx_taskFunc()
 {
-    /* Configuration update logic */
+    /* Check if there is a pending new configuration and, in case, read it. */
     bool reconfigure = false;
     if(pthread_mutex_trylock(cfgMutex) == 0)
     {
@@ -215,9 +221,18 @@ void rtx_taskFunc()
          * RSSI-based squelch mechanism, with 15 levels from -140dBm to -70dBm.
          *
          * RSSI value is passed through a filter with a time constant of 60ms
-         * (cut-off frequency of 15Hz) at an update rate of 33.3Hz
+         * (cut-off frequency of 15Hz) at an update rate of 33.3Hz.
+         *
+         * The low pass filter skips an update step if a new configuration has
+         * just been applied. This is a workaround for the AT1846S returning a
+         * full-scale RSSI value immediately after one of its parameters changed,
+         * thus causing the squelch to open briefly.
          */
-        rssi = 0.74*radio_getRssi(rtxStatus.rxFrequency) + 0.26*rssi;
+        if(!reconfigure)
+        {
+            rssi = 0.74*radio_getRssi(rtxStatus.rxFrequency) + 0.26*rssi;
+        }
+
         float squelch = -127.0f + rtxStatus.sqlLevel * 66.0f / 15.0f;
 
         if((sqlOpen == false) && (rssi > (squelch + 0.1f)))
