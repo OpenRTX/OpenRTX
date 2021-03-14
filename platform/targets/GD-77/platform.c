@@ -104,6 +104,8 @@ void platform_terminate()
     adc0_terminate();
     pthread_mutex_destroy(&adc_mutex);
 
+    i2c0_terminate();
+
     /* Finally, remove power supply */
     gpio_clearPin(PWR_SW);
 }

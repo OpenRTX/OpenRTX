@@ -29,19 +29,15 @@ static const uint8_t devAddr = 0xA0;    /* EEPROM I2C address */
 
 void AT24Cx_init()
 {
-    gpio_setMode(I2C_SDA, OPEN_DRAIN);
-    gpio_setMode(I2C_SCL, OPEN_DRAIN);
-    gpio_setAlternateFunction(I2C_SDA, 3);
-    gpio_setAlternateFunction(I2C_SCL, 3);
-
-    i2c0_init();
+    /*
+     * Nothing to do here, on GDx devices the I2C bus is initialised in
+     * platform_init() before starting all the other modules.
+     */
 }
 
 void AT24Cx_terminate()
 {
-    i2c0_terminate();
-    gpio_setMode(I2C_SDA, INPUT);
-    gpio_setMode(I2C_SCL, INPUT);
+
 }
 
 void AT24Cx_readData(uint32_t addr, void* buf, size_t len)
