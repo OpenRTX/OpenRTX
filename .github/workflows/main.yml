@@ -11,8 +11,8 @@ jobs:
       run: |
         sudo apt update
         sudo apt install python3-pip gcc pkg-config libsdl2-dev wget ninja-build
-        wget -O /tmp/miosix https://miosix.org/toolchain/MiosixToolchainInstaller.run
-        sudo sh /tmp/miosix/MiosixToolchainInstaller.run
+        wget -O /tmp/MiosixToolchainInstaller.run https://miosix.org/toolchain/MiosixToolchainInstaller.run
+        sudo sh /tmp/MiosixToolchainInstaller.run
         sudo pip3 install meson
         wget -O /tmp/radio_tool.deb https://github.com/v0l/radio_tool/releases/download/v0.1.0/radio_tool-0.1.0-Linux.deb
         sudo dpkg -i /tmp/radio_tool.deb
