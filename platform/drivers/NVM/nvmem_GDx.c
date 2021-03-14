@@ -356,19 +356,21 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
 int nvm_readZoneData(zone_t *zone, uint16_t pos)
 {
     if((pos <= 0) || (pos > maxNumZones)) return -1; 
-
+    
+    // zone number is 1-based to be consistent with channels
+    // Convert to 0-based index to fetch data from flash
+    uint16_t index = pos - 1;
     // ### Read zone bank bitmap ###
     uint8_t bitmap[32];
     AT24Cx_readData(zoneBaseAddr, ((uint8_t *) &bitmap), sizeof(bitmap));
     
-    uint8_t bitmap_byte = pos / 8;
-    uint8_t bitmap_bit = pos % 8;
+    uint8_t bitmap_byte = index / 8;
+    uint8_t bitmap_bit = index % 8;
     // The zone is marked not valid in the bitmap
     if(!(bitmap[bitmap_byte] & (1 << bitmap_bit))) return -1;
 
     gdxZone_t zoneData;
-    // Note: pos is 1-based to be consistent with channels
-    uint32_t zoneAddr = zoneBaseAddr + sizeof(bitmap) + (pos - 1) * sizeof(gdxZone_t);
+    uint32_t zoneAddr = zoneBaseAddr + sizeof(bitmap) + index * sizeof(gdxZone_t);
     AT24Cx_readData(zoneAddr, ((uint8_t *) &zoneData), sizeof(gdxZone_t));
 
     // Check if zone is empty
