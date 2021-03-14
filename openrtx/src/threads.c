@@ -337,14 +337,6 @@ void create_threads()
 
     pthread_create(&rtx_thread, &rtx_attr, rtx_task, NULL);
 
-    // Create UI thread
-    pthread_t      ui_thread;
-    pthread_attr_t ui_attr;
-
-    pthread_attr_init(&ui_attr);
-    pthread_attr_setstacksize(&ui_attr, UI_TASK_STKSIZE);
-    pthread_create(&ui_thread, &ui_attr, ui_task, NULL);
-
     // Create Keyboard thread
     pthread_t      kbd_thread;
     pthread_attr_t kbd_attr;

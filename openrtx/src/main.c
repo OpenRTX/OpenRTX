@@ -28,6 +28,8 @@
 #include <interfaces/delays.h>
 #include <hwconfig.h>
 
+extern void *ui_task(void *arg);
+
 int main(void)
 {
     // Initialize platform drivers
@@ -35,6 +37,7 @@ int main(void)
 
     // Initialize display and graphics driver
     gfx_init();
+
     // Set default contrast
     display_setContrast(default_settings.contrast);
 
@@ -55,10 +58,6 @@ int main(void)
     // Create OpenRTX threads
     create_threads();
 
-    // Auxiliary functions loop
-    while(true)
-    {
-        // No low-frequency function at the moment
-        ;
-    }
+    // Jump to the UI task
+    ui_task(NULL);
 }
