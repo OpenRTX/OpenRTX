@@ -37,7 +37,7 @@ static const settings_t default_settings =
 {
     "OPNRTX",  // Settings valid string
     255,       // Brightness
-    60,        // Contrast
+    71,        // Contrast
     0,         // UTC Timezone
     false,     // GPS enabled
     true       // GPS set time

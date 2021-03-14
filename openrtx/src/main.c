@@ -33,8 +33,10 @@ int main(void)
     // Initialize platform drivers
     platform_init();
 
-    // Initialize graphics driver
+    // Initialize display and graphics driver
     gfx_init();
+    // Set default contrast
+    display_setContrast(default_settings.contrast);
 
     // Initialize user interface
     ui_init();
