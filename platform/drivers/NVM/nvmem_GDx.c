@@ -113,6 +113,21 @@ void _loadBandCalData(uint32_t baseAddr, bandCalData_t *cal)
     }
 }
 
+// Strings in GD-77 codeplug are terminated with 0xFF,
+// replace 0xFF terminator with 0x00 to be compatible with C strings
+
+void _addStringTerminator(char *buf, uint8_t max_len)
+{
+    for(int i=0; i<max_len; i++)
+    {
+        if(buf[i] == 0xFF)
+        {
+            buf[i] = 0x00;
+            break;
+        }
+    }
+}
+
 void nvm_init()
 {
     W25Qx_init();
@@ -187,6 +202,8 @@ int nvm_readVFOChannelData(channel_t *channel)
     channel->scanList_index  = chData.scan_list_index;
     channel->groupList_index = chData.group_list_index;
     memcpy(channel->name, chData.name, sizeof(chData.name));
+    // Terminate string with 0x00 instead of 0xFF
+    _addStringTerminator(channel->name, sizeof(chData.name));
 
     /* Load mode-specific parameters */
     if(channel->mode == FM)
@@ -305,6 +322,8 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
     channel->scanList_index  = chData.scan_list_index;
     channel->groupList_index = chData.group_list_index;
     memcpy(channel->name, chData.name, sizeof(chData.name));
+    // Terminate string with 0x00 instead of 0xFF
+    _addStringTerminator(channel->name, sizeof(chData.name));
 
     /* Load mode-specific parameters */
     if(channel->mode == FM)
@@ -377,6 +396,8 @@ int nvm_readZoneData(zone_t *zone, uint16_t pos)
     if(wcslen((wchar_t *) zoneData.name) == 0) return -1; 
     
     memcpy(zone->name, zoneData.name, sizeof(zoneData.name));
+    // Terminate string with 0x00 instead of 0xFF
+    _addStringTerminator(zone->name, sizeof(zoneData.name));
     // Copy zone channel indexes
     for(uint16_t i = 0; i < 16; i++)
     {   
@@ -403,6 +424,8 @@ int nvm_readContactData(contact_t *contact, uint16_t pos)
     
     // Copy contact name
     memcpy(contact->name, contactData.name, sizeof(contactData.name));
+    // Terminate string with 0x00 instead of 0xFF
+    _addStringTerminator(contact->name, sizeof(contactData.name));
     // Copy contact DMR ID
     contact->id = (contactData.id[0] | contactData.id[1] << 8 | contactData.id[2] << 16);
     // Copy contact details
