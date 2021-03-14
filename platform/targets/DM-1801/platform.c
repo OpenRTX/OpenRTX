@@ -79,10 +79,12 @@ void platform_init()
     i2c0_init();
 
     /*
-     * Initialise non volatile memory manager and load calibration data.
+     * Initialise non volatile memory manager and zero calibration data.
+     * Actual loading of calibration data is deferred to the first call of
+     * platform_getCalibrationData().
      */
     nvm_init();
-    nvm_readCalibData(&calibration);
+    memset(&calibration, 0x00, sizeof(gdxCalibration_t));
 
     /* Initialise hardware information structure */
     hwInfo.uhf_maxFreq = FREQ_LIMIT_UHF_HI/1000000;
@@ -202,6 +204,12 @@ void platform_setBacklightLevel(uint8_t level)
 
 const void *platform_getCalibrationData()
 {
+    /* The first time this function is called, load calibration data from flash */
+    if(calibration.vhfCalPoints[0] == 0)
+    {
+        nvm_readCalibData(&calibration);
+    }
+
     return ((const void *) &calibration);
 }
 
