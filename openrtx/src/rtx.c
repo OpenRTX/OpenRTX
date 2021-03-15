@@ -22,6 +22,9 @@
 #include <interfaces/radio.h>
 #include <string.h>
 #include <rtx.h>
+#ifdef PLATFORM_MDUV380
+#include "../../platform/drivers/baseband/HR_C6000.h"
+#endif
 
 #include <interfaces/gpio.h>
 #include <hwconfig.h>
@@ -252,6 +255,28 @@ void rtx_taskFunc()
             _afCtrlSpeaker(false);
             sqlOpen = false;
         }
+
+        /*
+         * Unfortunately on MD-UV3x0 radios the volume knob does not regulate
+         * the amplitude of the analog signal towards the audio amplifier but it
+         * rather serves to provide a digital value to be fed into the HR_C6000
+         * lineout DAC gain. We thus have to place the #ifdef'd piece of code
+         * below to keep the real volume level consistent with the knob position.
+         * Knob position is given by an analog signal in the range 0 - 1500mV,
+         * which has to be mapped in a range between 1 and 31.
+         */
+        #ifdef PLATFORM_MDUV380
+        float   level  = (platform_getVolumeLevel() / 1560.0f) * 30.0f;
+        uint8_t volume = ((uint8_t) (level + 0.5f));
+
+        /* Update HR_C6000 gain only if volume changed */
+        static uint8_t old_volume = 0;
+        if(volume != old_volume)
+        {
+            C6000_setDacGain(volume + 1);
+            old_volume = volume;
+        }
+        #endif
     }
     else if((rtxStatus.opMode == OFF) && enterRx)
     {

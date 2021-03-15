@@ -288,7 +288,7 @@ void C6000_setMod2Bias(uint8_t bias)
     _writeReg(0x04, 0x04, bias);
 }
 
-void C6000_setDacRange(uint8_t value)
+void C6000_setDacGain(uint8_t value)
 {
     uint8_t dacData = value + 1;
     if(dacData > 31) dacData = 31;

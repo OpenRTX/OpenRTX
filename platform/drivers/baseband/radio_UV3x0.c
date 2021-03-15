@@ -226,6 +226,7 @@ void radio_disableRtx()
     gpio_clearPin(UHF_LNA_EN);
     gpio_clearPin(PA_EN_1);
     gpio_clearPin(PA_EN_2);
+    DAC->DHR12L1 = 0;
     AT1846S_disableCtcss();
     AT1846S_setFuncMode(AT1846S_OFF);
     C6000_stopAnalogTx();
@@ -243,19 +244,24 @@ void radio_updateCalibrationParams(const rtxStatus_t *rtxCfg)
     if(currRxBand > 0) modBias = calData->uhfCal.freqAdjustMid;
     C6000_setModOffset(modBias);
 
-    freq_t  *txCalPoints = calData->vhfCal.txFreq;
-    uint8_t *loPwrCal    = calData->vhfCal.txLowPower;
-    uint8_t *hiPwrCal    = calData->vhfCal.txLowPower;
-    uint8_t *qRangeCal   = (rtxCfg->opMode == FM) ?
-    calData->vhfCal.analogSendQrange : calData->vhfCal.sendQrange;
+    /*
+     * Discarding "const" qualifier to suppress compiler warnings.
+     * This operation is safe anyway because calibration data is only read.
+     */
+    mduv3x0Calib_t *cal  = ((mduv3x0Calib_t *) calData);
+    freq_t  *txCalPoints = cal->vhfCal.txFreq;
+    uint8_t *loPwrCal    = cal->vhfCal.txLowPower;
+    uint8_t *hiPwrCal    = cal->vhfCal.txLowPower;
+    uint8_t *qRangeCal   = (rtxCfg->opMode == FM) ? cal->vhfCal.analogSendQrange
+                                                  : cal->vhfCal.sendQrange;
 
     if(currTxBand > 0)
     {
-        txCalPoints = calData->uhfCal.txFreq;
-        loPwrCal    = calData->uhfCal.txLowPower;
-        hiPwrCal    = calData->uhfCal.txLowPower;
-        qRangeCal   = (rtxCfg->opMode == FM) ? calData->uhfCal.analogSendQrange
-                                             : calData->uhfCal.sendQrange;
+        txCalPoints = cal->uhfCal.txFreq;
+        loPwrCal    = cal->uhfCal.txLowPower;
+        hiPwrCal    = cal->uhfCal.txLowPower;
+        qRangeCal   = (rtxCfg->opMode == FM) ? cal->uhfCal.analogSendQrange
+                                             : cal->uhfCal.sendQrange;
     }
 
     /* APC voltage for TX output power control */

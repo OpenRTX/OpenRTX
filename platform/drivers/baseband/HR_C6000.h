@@ -62,9 +62,11 @@ void C6000_setMod2Bias(uint8_t bias);
 void C6000_setModFactor(uint8_t mf);
 
 /**
- *
+ * Configure the gain of lineout DAC stage. Allowed range is 1 - 31 and each
+ * step corresponds to a variation of 1.5dB.
+ * @param value: gain for the DAC stage.
  */
-void C6000_setDacRange(uint8_t value);
+void C6000_setDacGain(uint8_t value);
 
 /**
  * Configure chipset for DMR operation.
