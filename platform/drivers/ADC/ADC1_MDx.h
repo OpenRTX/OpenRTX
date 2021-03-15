@@ -49,9 +49,9 @@ void adc1_terminate();
 /**
  * Get current measurement of a given channel, mapped as below:
  * - channel 0: battery voltage
- * - channel 1: RSSI level
- * - channel 2: vox level
- * - channel 3: volume level
+ * - channel 1: volume level
+ * - channel 2: RSSI level
+ * - channel 3: vox level
  *
  * NOTE: the mapping above DOES NOT correspond to the physical ADC channel
  * mapping!

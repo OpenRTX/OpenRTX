@@ -72,6 +72,7 @@
 #define RED_LED    GPIOE,1
 
 /* Analog inputs */
+#define AIN_VOLUME GPIOA,0
 #define AIN_VBAT   GPIOA,1
 
 /* Channel selection rotary encoder */

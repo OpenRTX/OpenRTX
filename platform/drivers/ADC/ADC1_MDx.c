@@ -24,7 +24,7 @@
 /*
  * The sample buffer is structured as follows:
  *
- * | vbat | rssi | vox | vol |
+ * | vbat | vol | rssi | vox |
  *
  * NOTE: we are forced to allocate it through a malloc in order to make it be
  * in the "large" 128kB RAM. This because the linker script maps the .data and
@@ -48,8 +48,8 @@ void adc1_init()
      * - PB0: RSSI level
      */
     gpio_setMode(AIN_VBAT,   INPUT_ANALOG);
-    #if  defined(PLATFORM_MD3x0)
     gpio_setMode(AIN_VOLUME, INPUT_ANALOG);
+    #if  defined(PLATFORM_MD3x0)
     gpio_setMode(AIN_MIC,    INPUT_ANALOG);
     gpio_setMode(AIN_RSSI,   INPUT_ANALOG);
     #endif
@@ -85,8 +85,9 @@ void adc1_init()
                |  (3 << 10)  /* CH3, vox level on PA3                  */
                |  (0 << 15); /* CH0, volume potentiometer level on PA0 */
     #else
-    ADC1->SQR1 = 0;          /* Convert one channel                    */
-    ADC1->SQR3 |= (1 << 0);  /* CH1, battery voltage on PA1            */
+    ADC1->SQR1 = 1 << 20;    /* Convert two channel                    */
+    ADC1->SQR3 |= (1 << 0)   /* CH1, battery voltage on PA1            */
+               |  (0 << 15); /* CH0, volume potentiometer level on PA0 */
     #endif
 
     /* DMA2 Stream 0 configuration:
