@@ -16,6 +16,8 @@ jobs:
         sudo pip3 install meson
         wget -O /tmp/radio_tool.deb https://github.com/v0l/radio_tool/releases/download/v0.1.0/radio_tool-0.1.0-Linux.deb
         sudo dpkg -i /tmp/radio_tool.deb
+    - name: Checkout submodules
+      uses: textbook/git-checkout-submodule-action@master
     - name: meson-setup
       run: |
         cd ${{github.workspace}}
