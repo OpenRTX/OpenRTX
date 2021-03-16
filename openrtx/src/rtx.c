@@ -19,6 +19,7 @@
  ***************************************************************************/
 
 #include <interfaces/platform.h>
+#include <interfaces/delays.h>
 #include <interfaces/radio.h>
 #include <string.h>
 #include <rtx.h>
@@ -64,6 +65,7 @@ void _afCtrlSpeaker(bool enable)
     {
         #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV380)
         gpio_setPin(AUDIO_AMP_EN);
+        delayMs(10);
         gpio_clearPin(SPK_MUTE);
         #ifdef PLATFORM_MD3x0
         gpio_setPin(FM_MUTE);
@@ -75,8 +77,8 @@ void _afCtrlSpeaker(bool enable)
     else
     {
         #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV380)
-        gpio_clearPin(AUDIO_AMP_EN);
         gpio_setPin(SPK_MUTE);
+        gpio_clearPin(AUDIO_AMP_EN);
         #ifdef PLATFORM_MD3x0
         gpio_clearPin(FM_MUTE);
         #endif
@@ -294,6 +296,7 @@ void rtx_taskFunc()
     /* TX logic */
     if(platform_getPttStatus() && (rtxStatus.opStatus != TX))
     {
+        _afCtrlSpeaker(false);
         radio_disableRtx();
 
         _afCtrlMic(true);
