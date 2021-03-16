@@ -14,7 +14,7 @@ Currently OpenRTX is being actively developed for the following radios:
 This firmware is *highly experimental* and is not in a usable state right now,
 however contributions and testing are welcome and accepted.
 
-For information on currently supported radios and features, see the [Development status](https://github.com/n1zzo/OpenRTX/wiki/Development-status) wiki page.
+For information on currently supported radios and features, see the [Supported Platforms](https://openrtx.org/#/platforms) page on our website.
 
 For hardware and software documentation visit [openrtx.org](https://openrtx.org/)
 
@@ -32,7 +32,7 @@ On TYT MD-3x0 and MD-UV3x0 you can flash our firmware using tarxvf's web based f
 ## Compile and flash
 
 For instructions on how to compile and flash OpenRTX to your radio,
-or just run OpenRTX on Linux see the [How to compile](https://github.com/n1zzo/OpenRTX/wiki/How-to-compile) wiki page.
+or just run OpenRTX on Linux see the [Compilation instructions](https://openrtx.org/#/compiling) page on our website.
 
 ## Screenshots
 <img src="assets/splash.gif" width="200" height="auto">
