@@ -49,20 +49,22 @@ void AT1846S_init()
     i2c_writeReg16(0x30, 0x0001);   /* Soft reset              */
     delayMs(100);
 
-    i2c_writeReg16(0x30, 0x0004);
+    i2c_writeReg16(0x30, 0x0004);   // Set pdn_reg (power down pin)
 
-    i2c_writeReg16(0x04, 0x0FD0);
-    i2c_writeReg16(0x0A, 0x7C20);
+    i2c_writeReg16(0x04, 0x0FD0);   // Set clk_mode to 25.6MHz/26MHz
+    i2c_writeReg16(0x0A, 0x7C20);   // Set 0x0A to its default value
     i2c_writeReg16(0x13, 0xA100);
-    i2c_writeReg16(0x1F, 0x1001);
+    i2c_writeReg16(0x1F, 0x1001);   // Set gpio0 to ctcss_out/css_int/css_cmp
+                                    // and gpio6 to sq, sq&ctcss/cdcss when sq_out_set=1
     i2c_writeReg16(0x31, 0x0031);
     i2c_writeReg16(0x33, 0x44A5);
     i2c_writeReg16(0x34, 0x2B89);
-    i2c_writeReg16(0x41, 0x4122);
+    i2c_writeReg16(0x41, 0x4122);   // Set voice_gain_tx (voice digital gain) to 0x22
     i2c_writeReg16(0x42, 0x1052);
     i2c_writeReg16(0x43, 0x0100);
-    i2c_writeReg16(0x44, 0x07FF);
-    i2c_writeReg16(0x59, 0x0B90);
+    i2c_writeReg16(0x44, 0x07FF);   // Set gain_tx (voice digital gain after tx ADC downsample) to 0x7
+    i2c_writeReg16(0x59, 0x0B90);   // Set c_dev (CTCSS/CDCSS TX FM deviation) to 0x10
+                                    // and xmitter_dev (voice/subaudio TX FM deviation) to 0x2E
     i2c_writeReg16(0x47, 0x7F2F);
     i2c_writeReg16(0x4F, 0x2C62);
     i2c_writeReg16(0x53, 0x0094);
@@ -70,27 +72,38 @@ void AT1846S_init()
     i2c_writeReg16(0x55, 0x0081);
     i2c_writeReg16(0x56, 0x0B02);
     i2c_writeReg16(0x57, 0x1C00);
-    i2c_writeReg16(0x58, 0x9CDD);
+    i2c_writeReg16(0x58, 0x9CDD);   // Set ctcss_lpfil_bw to 250Hz bandwidth
+                                    // and bypass ctcss_highpass_filter
+                                    // and bypass ctcss_lowpass_filter
+                                    // and enable void_lowpass_filter
+                                    // and bypass voice_highpass_filter
+                                    // and bypass pre/de-emphasis
+                                    // and bypass vox_highpass_filter
+                                    // and bypass vox_lowpass_filter
+                                    // and enable rssi_lpfil_bw
     i2c_writeReg16(0x5A, 0x06DB);
     i2c_writeReg16(0x63, 0x16AD);
-    i2c_writeReg16(0x67, 0x0628);
-    i2c_writeReg16(0x68, 0x05E5);
-    i2c_writeReg16(0x69, 0x0555);
-    i2c_writeReg16(0x6A, 0x04B8);
-    i2c_writeReg16(0x6B, 0x02FE);
-    i2c_writeReg16(0x6C, 0x01DD);
-    i2c_writeReg16(0x6D, 0x00B1);
-    i2c_writeReg16(0x6E, 0x0F82);
-    i2c_writeReg16(0x6F, 0x017A);
-    i2c_writeReg16(0x70, 0x004C);
-    i2c_writeReg16(0x71, 0x0F1D);
-    i2c_writeReg16(0x72, 0x0D91);
-    i2c_writeReg16(0x73, 0x0A3E);
-    i2c_writeReg16(0x74, 0x090F);
-    i2c_writeReg16(0x75, 0x0833);
-    i2c_writeReg16(0x76, 0x0806);
+    i2c_writeReg16(0x67, 0x0628);   // Set DTMF C0 697Hz to ???
+    i2c_writeReg16(0x68, 0x05E5);   // Set DTMF C1 770Hz to 13MHz and 26MHz
+    i2c_writeReg16(0x69, 0x0555);   // Set DTMF C2 852Hz to ???
+    i2c_writeReg16(0x6A, 0x04B8);   // Set DTMF C3 941Hz to ???
+    i2c_writeReg16(0x6B, 0x02FE);   // Set DTMF C4 1209Hz to 13MHz and 26MHz
+    i2c_writeReg16(0x6C, 0x01DD);   // Set DTMF C5 1336Hz
+    i2c_writeReg16(0x6D, 0x00B1);   // Set DTMF C6 1477Hz
+    i2c_writeReg16(0x6E, 0x0F82);   // Set DTMF C7 1633Hz
+    i2c_writeReg16(0x6F, 0x017A);   // Set DTMF C0 2nd harmonic
+    i2c_writeReg16(0x70, 0x004C);   // Set DTMF C1 2nd harmonic
+    i2c_writeReg16(0x71, 0x0F1D);   // Set DTMF C2 2nd harmonic
+    i2c_writeReg16(0x72, 0x0D91);   // Set DTMF C3 2nd harmonic
+    i2c_writeReg16(0x73, 0x0A3E);   // Set DTMF C4 2nd harmonic
+    i2c_writeReg16(0x74, 0x090F);   // Set DTMF C5 2nd harmonic
+    i2c_writeReg16(0x75, 0x0833);   // Set DTMF C6 2nd harmonic
+    i2c_writeReg16(0x76, 0x0806);   // Set DTMF C7 2nd harmonic
 
-    i2c_writeReg16(0x30, 0x40A4);
+    i2c_writeReg16(0x30, 0x40A4);   // Set pdn_pin (power down enable)
+                                    // and set rx_on
+                                    // and set mute when rxno
+                                    // and set xtal_mode to 26MHz/13MHz
     delayMs(100);
 
     i2c_writeReg16(0x30, 0x40A6);   /* Start calibration       */
