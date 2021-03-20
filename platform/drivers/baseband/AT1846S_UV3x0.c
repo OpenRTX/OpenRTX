@@ -47,7 +47,7 @@ static inline void _reloadConfig()
 void AT1846S_init()
 {
     i2c_writeReg16(0x30, 0x0001);   /* Soft reset              */
-    delayMs(100);
+    delayMs(160);
 
     i2c_writeReg16(0x30, 0x0004);   // Set pdn_reg (power down pin)
 
@@ -104,12 +104,12 @@ void AT1846S_init()
                                     // and set rx_on
                                     // and set mute when rxno
                                     // and set xtal_mode to 26MHz/13MHz
-    delayMs(100);
+    delayMs(160);
 
     i2c_writeReg16(0x30, 0x40A6);   /* Start calibration       */
-    delayMs(100);
+    delayMs(160);
     i2c_writeReg16(0x30, 0x4006);   /* Stop calibration        */
-    delayMs(100);
+    delayMs(160);
 
     i2c_writeReg16(0x40, 0x0031);
 }
