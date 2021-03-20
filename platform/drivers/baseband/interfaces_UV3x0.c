@@ -24,14 +24,13 @@
 #include <interfaces/platform.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdbool.h>
 #include "interfaces.h"
 
 void _i2c_start();
 void _i2c_stop();
-void _i2c_ack();
-void _i2c_nack();
 void _i2c_write(uint8_t val);
-uint8_t _i2c_read();
+uint8_t _i2c_read(bool ack);
 
 /*
  * Implementation of AT1846S I2C interface.
@@ -46,6 +45,8 @@ void i2c_init()
 {
     gpio_setMode(I2C_SDA, INPUT);
     gpio_setMode(I2C_SCL, OUTPUT);
+    gpio_setOutputSpeed(I2C_SDA, HIGH);
+    gpio_setOutputSpeed(I2C_SCL, HIGH);
     gpio_clearPin(I2C_SCL);
 }
 
@@ -74,10 +75,8 @@ uint16_t i2c_readReg16(uint8_t reg)
     _i2c_write(reg);
     _i2c_start();
     _i2c_write(devAddr | 0x01);
-    uint8_t valHi = _i2c_read();
-    _i2c_ack();
-    uint8_t valLo = _i2c_read();
-    _i2c_nack();
+    uint8_t valHi = _i2c_read(true);
+    uint8_t valLo = _i2c_read(false);
     _i2c_stop();
 
     return (valHi << 8) | valLo;
@@ -132,8 +131,12 @@ void _i2c_start()
 {
     gpio_setMode(I2C_SDA, OUTPUT);
 
+    /*
+     * Lines commented to keep SCL high when idle
+     *
     gpio_clearPin(I2C_SCL);
     delayUs(2);
+    */
 
     gpio_setPin(I2C_SDA);
     delayUs(2);
@@ -164,38 +167,12 @@ void _i2c_stop()
     gpio_setPin(I2C_SDA);
     delayUs(2);
 
+    /*
+     * Lines commented to keep SCL high when idle
+     *
     gpio_clearPin(I2C_SCL);
     delayUs(2);
-}
-
-void _i2c_ack()
-{
-    gpio_setMode(I2C_SDA, OUTPUT);
-    gpio_clearPin(I2C_SDA);
-
-    gpio_clearPin(I2C_SCL);
-    delayUs(2);
-
-    gpio_setPin(I2C_SCL);
-    delayUs(2);
-
-    gpio_clearPin(I2C_SCL);
-    delayUs(2);
-}
-
-void _i2c_nack()
-{
-    gpio_setMode(I2C_SDA, OUTPUT);
-    gpio_setPin(I2C_SDA);
-
-    gpio_clearPin(I2C_SCL);
-    delayUs(2);
-
-    gpio_setPin(I2C_SCL);
-    delayUs(2);
-
-    gpio_clearPin(I2C_SCL);
-    delayUs(2);
+    */
 }
 
 void _i2c_write(uint8_t val)
@@ -224,15 +201,21 @@ void _i2c_write(uint8_t val)
 
     /* Clock cycle for slave ACK/NACK */
     gpio_setMode(I2C_SDA, INPUT);
+
     gpio_clearPin(I2C_SCL);
     delayUs(2);
     gpio_setPin(I2C_SCL);
     delayUs(2);
     gpio_clearPin(I2C_SCL);
+
+    /* Asserting SDA pin allows to fastly bring the line to idle state */
+    gpio_setMode(I2C_SDA, OUTPUT);
+    gpio_setPin(I2C_SDA);
+
     delayUs(8);
 }
 
-uint8_t _i2c_read()
+uint8_t _i2c_read(bool ack)
 {
     gpio_setMode(I2C_SDA, INPUT);
     gpio_clearPin(I2C_SCL);
@@ -240,6 +223,7 @@ uint8_t _i2c_read()
     uint8_t value = 0;
     for(uint8_t i = 0; i < 8; i++)
     {
+        delayUs(2);
         gpio_setPin(I2C_SCL);
         delayUs(2);
 
@@ -247,8 +231,21 @@ uint8_t _i2c_read()
         value |= gpio_readPin(I2C_SDA);
 
         gpio_clearPin(I2C_SCL);
-        delayUs(2);
     }
+
+    /*
+     * Set ACK/NACK state BEFORE putting SDA gpio to output mode.
+     * This avoids spurious spikes which can be interpreted as NACKs
+     */
+    ack ? gpio_clearPin(I2C_SDA) : gpio_setPin(I2C_SDA);
+    gpio_setMode(I2C_SDA, OUTPUT);
+
+    /* Clock cycle for ACK/NACK */
+    delayUs(2);
+    gpio_setPin(I2C_SCL);
+    delayUs(2);
+    gpio_clearPin(I2C_SCL);
+    delayUs(2);
 
     return value;
 }
