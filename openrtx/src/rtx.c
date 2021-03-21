@@ -110,6 +110,36 @@ void _afCtrlTerminate()
     _afCtrlSpeaker(false);
 }
 
+/*
+ * Unfortunately on MD-UV3x0 radios the volume knob does not regulate
+ * the amplitude of the analog signal towards the audio amplifier but it
+ * rather serves to provide a digital value to be fed into the HR_C6000
+ * lineout DAC gain. We thus have to place the #ifdef'd piece of code
+ * below to keep the real volume level consistent with the knob position.
+ * Knob position is given by an analog signal in the range 0 - 1500mV,
+ * which has to be mapped in a range between 1 and 31.
+ */
+void _afSetVolume()
+{
+    float   level  = (platform_getVolumeLevel() / 1560.0f) * 30.0f;
+    uint8_t volume = ((uint8_t) (level + 0.5f));
+
+    // Mute volume when knob is set below 10%
+    if(volume < 1)
+        _afCtrlSpeaker(false);
+    else
+    {
+        _afCtrlSpeaker(true);
+        /* Update HR_C6000 gain only if volume changed */
+        static uint8_t old_volume = 0;
+        if(volume != old_volume)
+        {
+            // Setting HR_C6000 volume to 0 = max volume
+            C6000_setDacGain(volume);
+            old_volume = volume;
+        }
+    }
+}
 
 void rtx_init(pthread_mutex_t *m)
 {
@@ -257,28 +287,11 @@ void rtx_taskFunc()
             _afCtrlSpeaker(false);
             sqlOpen = false;
         }
-
-        /*
-         * Unfortunately on MD-UV3x0 radios the volume knob does not regulate
-         * the amplitude of the analog signal towards the audio amplifier but it
-         * rather serves to provide a digital value to be fed into the HR_C6000
-         * lineout DAC gain. We thus have to place the #ifdef'd piece of code
-         * below to keep the real volume level consistent with the knob position.
-         * Knob position is given by an analog signal in the range 0 - 1500mV,
-         * which has to be mapped in a range between 1 and 31.
-         */
         #ifdef PLATFORM_MDUV380
-        float   level  = (platform_getVolumeLevel() / 1560.0f) * 30.0f;
-        uint8_t volume = ((uint8_t) (level + 0.5f));
-
-        /* Update HR_C6000 gain only if volume changed */
-        static uint8_t old_volume = 0;
-        if(volume != old_volume)
-        {
-            C6000_setDacGain(volume + 1);
-            old_volume = volume;
-        }
+        // Set output volume by changing the HR_C6000 DAC gain
+        _afSetVolume();
         #endif
+        
     }
     else if((rtxStatus.opMode == OFF) && enterRx)
     {
