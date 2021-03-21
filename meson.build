@@ -275,15 +275,6 @@ foreach k, v : mduv380_def
   endif
 endforeach
 
-mduv380g_args = []
-foreach k, v : mduv380_def
-  if v == ''
-    mduv380g_args += '-D@0@'.format(k)
-  else
-    mduv380g_args += '-D@0@=@1@'.format(k, v)
-  endif
-endforeach
-
 gd77_args = []
 foreach k, v : gd77_def
   if v == ''
@@ -331,13 +322,6 @@ mduv380_opts = {'sources': mduv380_src,
                                '-Wl,--print-memory-usage'],
                 'include_directories': mduv380_inc}
 
-mduv380g_opts = {'sources': mduv380_src,
-                 'c_args': mduv380g_args,
-                 'cpp_args': mduv380g_args,
-                 'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
-                                '-Wl,--print-memory-usage'],
-                 'include_directories': mduv380_inc}
-
 gd77_opts = {'sources': gd77_src,
              'c_args': gd77_args,
              'cpp_args': gd77_args,
@@ -380,19 +364,13 @@ targets = [
    'wrap': 'UV3X0',
    'load_addr': '0x0800C000'},
 
-  {'name': 'mduv380g',
-   'opts': mduv380g_opts,
-   'flashable': true,
-   'wrap': 'UV3X0',
-   'load_addr': '0x0800C000'},
-
-   {'name': 'gd77',
+  {'name': 'gd77',
    'opts': gd77_opts,
    'flashable': true,
    'wrap': 'UV3X0',
    'load_addr': '0x0800C000'},
 
-   {'name': 'dm1801',
+  {'name': 'dm1801',
    'opts': dm1801_opts,
    'flashable': true,
    'wrap': 'UV3X0',
