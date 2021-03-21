@@ -171,7 +171,7 @@ md3x0_def = def + stm32f405_def + {'PLATFORM_MD3x0': '',
                                    'timegm': 'mktime'}
 
 ## TYT MD-UV380
-mduv380_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.cpp',
+mduv3x0_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.cpp',
                                      'platform/drivers/keyboard/keyboard_MDx.c',
                                      'platform/drivers/NVM/W25Qx.c',
                                      'platform/drivers/NVM/spiFlash_MDx.c',
@@ -185,8 +185,8 @@ mduv380_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.cpp',
                                      'platform/drivers/baseband/HR_C6000_UV3x0.c',
                                      'platform/drivers/baseband/interfaces_UV3x0.c']
 
-mduv380_inc = inc + stm32f405_inc + ['platform/targets/MD-UV380']
-mduv380_def = def + stm32f405_def + {'PLATFORM_MDUV380': ''}
+mduv3x0_inc = inc + stm32f405_inc + ['platform/targets/MD-UV380']
+mduv3x0_def = def + stm32f405_def + {'PLATFORM_MDUV380': ''}
 
 
 ## TYT MD-9600
@@ -266,12 +266,12 @@ foreach k, v : md3x0_def
   endif
 endforeach
 
-mduv380_args = []
-foreach k, v : mduv380_def
+mduv3x0_args = []
+foreach k, v : mduv3x0_def
   if v == ''
-    mduv380_args += '-D@0@'.format(k)
+    mduv3x0_args += '-D@0@'.format(k)
   else
-    mduv380_args += '-D@0@=@1@'.format(k, v)
+    mduv3x0_args += '-D@0@=@1@'.format(k, v)
   endif
 endforeach
 
@@ -315,12 +315,12 @@ md3x0_opts = {'sources' : md3x0_src,
                              '-Wl,--print-memory-usage'],
               'include_directories': md3x0_inc}
 
-mduv380_opts = {'sources': mduv380_src,
-                'c_args': mduv380_args,
-                'cpp_args': mduv380_args,
+mduv3x0_opts = {'sources': mduv3x0_src,
+                'c_args': mduv3x0_args,
+                'cpp_args': mduv3x0_args,
                 'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
                                '-Wl,--print-memory-usage'],
-                'include_directories': mduv380_inc}
+                'include_directories': mduv3x0_inc}
 
 gd77_opts = {'sources': gd77_src,
              'c_args': gd77_args,
@@ -358,8 +358,8 @@ targets = [
    'wrap': 'MD380',
    'load_addr': '0x0800C000'},
 
-  {'name': 'mduv380',
-   'opts': mduv380_opts,
+  {'name': 'mduv3x0',
+   'opts': mduv3x0_opts,
    'flashable': true,
    'wrap': 'UV3X0',
    'load_addr': '0x0800C000'},

@@ -28,7 +28,7 @@ jobs:
         cd ${{github.workspace}}
         ninja -C build_linux openrtx_linux -j4
         ninja -C build_arm openrtx_md3x0_wrap -j4
-        ninja -C build_arm openrtx_mduv380_wrap -j4
+        ninja -C build_arm openrtx_mduv3x0_wrap -j4
     - uses: actions/upload-artifact@v2
       with:
         name: release-bins
