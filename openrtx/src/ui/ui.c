@@ -647,11 +647,12 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
         *sync_rtx = true;
     }
 #else // Use left and right buttons or relative position knob
-    if(msg.keys & KEY_LEFT) {
+    // NOTE: Use up and down for UV380 which has not yet a functional knob
+    if(msg.keys & KEY_LEFT || msg.keys & KEY_DOWN) {
         state.sqlLevel = (state.sqlLevel == 0) ? 0 : state.sqlLevel - 1;
         *sync_rtx = true;
     }
-    else if(msg.keys & KEY_RIGHT) {
+    else if(msg.keys & KEY_RIGHT || msg.keys & KEY_UP) {
         state.sqlLevel = (state.sqlLevel == 15) ? 15 : state.sqlLevel + 1;
         *sync_rtx = true;
     }
