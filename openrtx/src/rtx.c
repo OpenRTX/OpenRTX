@@ -290,10 +290,12 @@ void rtx_taskFunc()
             sqlOpen = false;
         }
         #ifdef PLATFORM_MDUV380
-        // Set output volume by changing the HR_C6000 DAC gain
-        _afSetVolume();
+        if(sqlOpen == true)
+        {
+            // Set output volume by changing the HR_C6000 DAC gain
+            _afSetVolume();
+        }
         #endif
-        
     }
     else if((rtxStatus.opMode == OFF) && enterRx)
     {
