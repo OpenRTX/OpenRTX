@@ -119,6 +119,7 @@ void _afCtrlTerminate()
  * Knob position is given by an analog signal in the range 0 - 1500mV,
  * which has to be mapped in a range between 1 and 31.
  */
+#ifdef PLATFORM_MDUV380
 void _afSetVolume()
 {
     float   level  = (platform_getVolumeLevel() / 1560.0f) * 30.0f;
@@ -140,6 +141,7 @@ void _afSetVolume()
         }
     }
 }
+#endif
 
 void rtx_init(pthread_mutex_t *m)
 {
