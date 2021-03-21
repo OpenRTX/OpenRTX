@@ -45,8 +45,6 @@ void i2c_init()
 {
     gpio_setMode(I2C_SDA, INPUT);
     gpio_setMode(I2C_SCL, OUTPUT);
-    gpio_setOutputSpeed(I2C_SDA, HIGH);
-    gpio_setOutputSpeed(I2C_SCL, HIGH);
     gpio_clearPin(I2C_SCL);
 }
 
@@ -199,25 +197,26 @@ void _i2c_write(uint8_t val)
         delayUs(2);
     }
 
-    /* Clock cycle for slave ACK/NACK */
-    gpio_setMode(I2C_SDA, INPUT);
-
+    /* Ensure SCL is low before releasing SDA */
     gpio_clearPin(I2C_SCL);
+
+    /* Clock cycle for slave ACK/NACK */
+    gpio_setMode(I2C_SDA, INPUT_PULL_UP);
     delayUs(2);
     gpio_setPin(I2C_SCL);
     delayUs(2);
     gpio_clearPin(I2C_SCL);
+    delayUs(1);
 
     /* Asserting SDA pin allows to fastly bring the line to idle state */
-    gpio_setMode(I2C_SDA, OUTPUT);
     gpio_setPin(I2C_SDA);
-
-    delayUs(8);
+    gpio_setMode(I2C_SDA, OUTPUT);
+    delayUs(6);
 }
 
 uint8_t _i2c_read(bool ack)
 {
-    gpio_setMode(I2C_SDA, INPUT);
+    gpio_setMode(I2C_SDA, INPUT_PULL_UP);
     gpio_clearPin(I2C_SCL);
 
     uint8_t value = 0;
@@ -237,8 +236,10 @@ uint8_t _i2c_read(bool ack)
      * Set ACK/NACK state BEFORE putting SDA gpio to output mode.
      * This avoids spurious spikes which can be interpreted as NACKs
      */
-    ack ? gpio_clearPin(I2C_SDA) : gpio_setPin(I2C_SDA);
+    gpio_clearPin(I2C_SDA);
     gpio_setMode(I2C_SDA, OUTPUT);
+    delayUs(2);
+    if(!ack) gpio_setPin(I2C_SDA);
 
     /* Clock cycle for ACK/NACK */
     delayUs(2);
