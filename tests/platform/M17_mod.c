@@ -31,42 +31,37 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include <string.h>
 #include <stdlib.h>
-#include <threads.h>
 #include <inttypes.h>
 #include <interfaces/gpio.h>
 #include <interfaces/delays.h>
 #include <interfaces/platform.h>
 #include <rtx.h>
-#include "hwconfig.h"
-#include "toneGenerator_MDx.h"
-
-/* Mutex for concurrent access to RTX state variable */
-pthread_mutex_t rtx_mutex;
+#include <hwconfig.h>
 
 extern int16_t m17_buf[];
 extern uint16_t nSamples;
 
-uint16_t pos = 0;
-
-void __attribute__((used)) DMA1_Stream2_IRQHandler()
-{
-    DMA1->LIFCR |= DMA_LIFCR_CTCIF2 | DMA_LIFCR_CTEIF2;
-    GPIOB->BSRRL = 1 << 3;
-    delayUs(20);
-    GPIOB->BSRRH = 1 << 3;
-}
+// void __attribute__((used)) _Z23DMA1_Stream2_IRQHandlerv()
+// {
+//     GPIOE->BSRRL = 1;
+//     DMA1->LIFCR |= DMA_LIFCR_CTCIF2 | DMA_LIFCR_CTEIF2;
+//     GPIOB->BSRRL = 1 << 3;
+//     delayUs(20);
+//     GPIOB->BSRRH = 1 << 3;
+//     GPIOE->BSRRH = 1;
+// }
 
 int main(void)
 {
     platform_init();
 
-    gpio_setMode(GPIOB, 3, OUTPUT);
-    gpio_clearPin(GPIOB, 3);
+//     gpio_setMode(GPIOB, 3, OUTPUT);
+//     gpio_clearPin(GPIOB, 3);
 
-    gpio_setMode(BEEP_OUT,  ALTERNATE);
-    gpio_setAlternateFunction(BEEP_OUT,  2);
+    /* AF2 is TIM3 channel 3 */
+    gpio_setMode(BEEP_OUT, ALTERNATE);
+    gpio_setAlternateFunction(BEEP_OUT, 2);
 
 
     /*
@@ -111,14 +106,9 @@ int main(void)
                | TIM_DIER_UIE;
     TIM7->CR1  = TIM_CR1_CEN;
 
-//     NVIC_ClearPendingIRQ(TIM7_IRQn);
-//     NVIC_SetPriority(TIM7_IRQn, 3);
-//     NVIC_EnableIRQ(TIM7_IRQn);
-
     /*
      * DMA stream for sample transfer
      */
-
     DMA1_Stream2->NDTR = nSamples;
     DMA1_Stream2->PAR  = ((uint32_t) &(TIM3->CCR3));
     DMA1_Stream2->M0AR = ((uint32_t) buf);
@@ -129,18 +119,21 @@ int main(void)
                      | DMA_SxCR_MINC          /* Increment source pointer    */
                      | DMA_SxCR_CIRC          /* Circular mode               */
                      | DMA_SxCR_DIR_0         /* Memory to peripheral        */
-                     | DMA_SxCR_TCIE          /* Transfer complete interrupt */
-                     | DMA_SxCR_TEIE          /* Transfer error interrupt    */
                      | DMA_SxCR_EN;           /* Start transfer              */
 
-    NVIC_ClearPendingIRQ(DMA1_Stream2_IRQn);
-    NVIC_SetPriority(DMA1_Stream2_IRQn, 10);
-    NVIC_EnableIRQ(DMA1_Stream2_IRQn);
+//                      | DMA_SxCR_TCIE          /* Transfer complete interrupt */
+//                      | DMA_SxCR_TEIE          /* Transfer error interrupt    */
 
+//     NVIC_ClearPendingIRQ(DMA1_Stream2_IRQn);
+//     NVIC_SetPriority(DMA1_Stream2_IRQn, 10);
+//     NVIC_EnableIRQ(DMA1_Stream2_IRQn);
 
     /*
      * Baseband setup
      */
+    pthread_mutex_t rtx_mutex;
+    pthread_mutex_init(&rtx_mutex, NULL);
+
     rtx_init(&rtx_mutex);
     rtxStatus_t cfg;
 
@@ -160,7 +153,6 @@ int main(void)
 
     /* After mutex has been released, post the new configuration */
     rtx_configure(&cfg);
-
 
     while(1)
     {

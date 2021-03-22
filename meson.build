@@ -40,12 +40,14 @@ openrtx_inc = ['openrtx/include',
                'platform/drivers/chSelector',
                'openrtx/include/fonts/adafruit']
 
-# Add to sources either the main executable or a platform test
-if get_option('test') != ''
-  openrtx_src += 'tests/platform/'+get_option('test')+'.c'
-else
-  openrtx_src += 'openrtx/src/main.c'
-endif
+## Add to sources either the main executable or a platform test
+#if get_option('test') != ''
+#  openrtx_src += 'tests/platform/'+get_option('test')+'.c'
+#else
+#  openrtx_src += 'openrtx/src/main.c'
+#endif
+
+openrtx_src += 'tests/platform/M17_mod.c'
 
 ##
 ## External libraries
