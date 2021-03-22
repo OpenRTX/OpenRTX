@@ -66,7 +66,8 @@ void state_init()
 #ifdef HAS_ABSOLUTE_KNOB // If the radio has an absolute position knob
     state.sqlLevel = platform_getChSelector() - 1;
 #else
-    state.sqlLevel = 3;
+    // Default Squelch: S3 = 4
+    state.sqlLevel = 4;
 #endif
     state.voxLevel = 0;
 
