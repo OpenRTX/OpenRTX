@@ -311,7 +311,11 @@ float radio_getRssi(const freq_t rxFreq)
 {
     (void) rxFreq;
 
-    uint16_t val = AT1846S_readRSSI();
-    int8_t rssi   = -151 + (val >> 8);
+    /*
+     * RSSI and SNR are packed in a 16-bit value, with RSSI being the upper
+     * eight bits.
+     */
+    uint16_t val = (AT1846S_readRSSI() >> 8);
+    int16_t rssi   = -151 + ((int16_t) val);
     return ((float) rssi);
 }
