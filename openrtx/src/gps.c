@@ -66,8 +66,9 @@ void gps_taskFunc(char *line, __attribute__((unused)) int len, state_t *state)
                 state->gps_data.timestamp.year = frame.date.year;
             }
 
-            // Synchronize RTC with GPS UTC clock
-            if((state->settings.gps_set_time) && (!isRtcSyncronised))
+            // Synchronize RTC with GPS UTC clock, only when fix is done
+            if((state->settings.gps_set_time) &&
+               (state->gps_data.fix_quality > 0) && (!isRtcSyncronised))
             {
                 rtc_setTime(state->gps_data.timestamp);
                 isRtcSyncronised = true;
