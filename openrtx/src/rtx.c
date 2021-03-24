@@ -213,25 +213,25 @@ void rtx_taskFunc()
 
         float squelch = -127.0f + rtxStatus.sqlLevel * 66.0f / 15.0f;
 
-        if((sqlOpen == false) && (rssi > (squelch + 0.1f)))
-        {
-            audio_enableAmp();
-            sqlOpen = true;
-        }
+        //if((sqlOpen == false) && (rssi > (squelch + 0.1f)))
+        //{
+        //    audio_enableAmp();
+        //    sqlOpen = true;
+        //}
 
-        if((sqlOpen == true) && (rssi < (squelch - 0.1f)))
-        {
-            audio_disableAmp();
-            sqlOpen = false;
-        }
+        //if((sqlOpen == true) && (rssi < (squelch - 0.1f)))
+        //{
+        //    audio_disableAmp();
+        //    sqlOpen = false;
+        //}
 
-        #ifdef PLATFORM_MDUV3x0
-        if(sqlOpen == true)
-        {
-            // Set output volume by changing the HR_C6000 DAC gain
-            _setVolume();
-        }
-        #endif
+        //#ifdef PLATFORM_MDUV3x0
+        //if(sqlOpen == true)
+        //{
+        //    // Set output volume by changing the HR_C6000 DAC gain
+        //    _setVolume();
+        //}
+        //#endif
     }
     else if((rtxStatus.opMode == OFF) && enterRx)
     {
