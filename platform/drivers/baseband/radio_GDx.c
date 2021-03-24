@@ -256,7 +256,7 @@ void radio_updateCalibrationParams(const rtxStatus_t *rtxCfg)
         AT1846S_setRssiThresholds(cal->rssi_HighTsh_Wb, cal->rssi_LowTsh_Wb);
     }
 
-    C6000_setDacRange(cal->dacDataRange);
+    C6000_setDacGain(cal->dacDataRange);
     C6000_setMod2Bias(cal->mod2Offset);
     C6000_setModOffset(cal->mod1Bias);
 

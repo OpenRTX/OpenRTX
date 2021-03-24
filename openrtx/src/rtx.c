@@ -55,7 +55,7 @@ void _afCtrlInit()
     gpio_setMode(FM_MUTE,  OUTPUT);
     #endif
     #elif defined(PLATFORM_GD77) || defined(PLATFORM_DM1801)
-    gpio_setMode(AUDIO_AUDIO_AMP_EN, OUTPUT);
+    gpio_setMode(AUDIO_AMP_EN, OUTPUT);
     #endif
 }
 
