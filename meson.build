@@ -385,8 +385,8 @@ targets = [
 
 objcopy = find_program('objcopy', required:false, disabler:true)
 radio_tool = find_program('radio_tool', required:false, disabler:true)
-bin2sgl = find_program('bin2sgl.Linux', required:false, disabler:true)
-gd77_loader = find_program('gd-77_firmware_loader.py', required:false, disabler:true)
+bin2sgl = find_program('scripts/bin2sgl.Linux', required:false, disabler:true)
+gd77_loader = find_program('scripts/gd-77_firmware_loader.py', required:false, disabler:true)
 
 foreach t : targets
 
