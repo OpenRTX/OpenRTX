@@ -349,9 +349,13 @@ void _ui_drawMenuGPS()
                   color_white);
         gfx_print(layout.line2_pos, type_buf, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white);
-        gfx_print(layout.line2_pos, "E     ", layout.top_font, TEXT_ALIGN_CENTER,
+        // Convert from signed longitude, to unsigned + direction
+        float longitude = last_state.gps_data.longitude;
+        char *direction = (longitude < 0) ? "W     " : "E     ";
+        longitude = (longitude < 0) ? -longitude : longitude;
+        gfx_print(layout.line2_pos, direction, layout.top_font, TEXT_ALIGN_CENTER,
                   color_white);
-        snprintf(lon_buf, 12, "%8.6f", last_state.gps_data.longitude);
+        snprintf(lon_buf, 12, "%8.6f", longitude);
         gfx_print(layout.line2_pos, lon_buf, layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white);
         snprintf(data_buf, 25, "S %4.1fkm/h  A %4.1fm",
