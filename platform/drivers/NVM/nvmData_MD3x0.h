@@ -110,7 +110,7 @@ typedef struct
     // Bytes 32-63
     uint16_t name[16];
 }
-md3x0Channel_t;
+__attribute__((packed)) md3x0Channel_t;
 
 typedef struct
 {
@@ -120,7 +120,7 @@ typedef struct
     // Bytes 32-63
     uint16_t member[16];    // Member: channels 1...16
 }
-md3x0Zone_t;
+__attribute__((packed)) md3x0Zone_t;
 
 typedef struct
 {
@@ -135,6 +135,6 @@ typedef struct
     // Bytes 4-35
     uint16_t name[16];          // Contact Name (Unicode)
 }
-md3x0Contact_t;
+__attribute__((packed)) md3x0Contact_t;
 
 #endif /* NVMDATA_MD3x0_H */

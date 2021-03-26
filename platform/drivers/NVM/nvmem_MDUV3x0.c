@@ -66,6 +66,7 @@ int _nvm_readChannelAtAddress(channel_t *channel, uint32_t addr)
     W25Qx_sleep();
 
     // Check if the channel is empty
+    #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
     if(wcslen((wchar_t *) chData.name) == 0) return -1;
 
     channel->mode            = chData.channel_mode - 1;
@@ -298,6 +299,7 @@ int nvm_readZoneData(zone_t *zone, uint16_t pos)
     W25Qx_sleep();
 
     // Check if zone is empty
+    #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
     if(wcslen((wchar_t *) zoneData.name) == 0) return -1;
     /*
      * Brutally convert channel name from unicode to char by truncating the most

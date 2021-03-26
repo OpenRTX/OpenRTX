@@ -136,9 +136,10 @@ typedef struct layout_t
     fontSize_t bottom_font;
     fontSize_t input_font;
     fontSize_t menu_font;
-} layout_t;
+}
+__attribute__((packed)) layout_t;
 
-/** 
+/**
  * This structs contains state variables internal to the
  * UI that need to be kept between executions of the UI
  * This state does not need to be saved on device poweroff
@@ -165,7 +166,8 @@ typedef struct ui_state_t
 #endif
     // Which state to return to when we exit menu
     uint8_t last_main_state;
-} ui_state_t;
+}
+__attribute__((packed)) ui_state_t;
 
 extern layout_t layout;
 // Copy of the radio state
@@ -188,7 +190,7 @@ extern const color_t color_white;
 extern const color_t yellow_fab413;
 
 /**
- * This function initialises the User Interface, starting the 
+ * This function initialises the User Interface, starting the
  * Finite State Machine describing the user interaction.
  */
 void ui_init();
@@ -208,7 +210,7 @@ void ui_drawSplashScreen(bool centered);
 void ui_saveState();
 
 /**
- * This function advances the User Interface FSM, basing on the 
+ * This function advances the User Interface FSM, basing on the
  * current radio state and the keys pressed.
  * @param last_state: A local copy of the previous radio state
  * @param event: An event from other threads

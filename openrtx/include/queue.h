@@ -38,7 +38,8 @@ typedef struct queue_t
     uint8_t write_pos;
     uint8_t msg_num;
     uint32_t buffer[MSG_QTY];
-} queue_t;
+}
+queue_t;
 
 /**
  *

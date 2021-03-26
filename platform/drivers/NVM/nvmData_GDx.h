@@ -108,13 +108,13 @@ typedef struct {
     // Bytes 52-55
     uint8_t _unused52[4];               // 0
 }
-gdxChannel_t;
+__attribute__((packed)) gdxChannel_t;
 
 typedef struct {
     uint8_t bitmap[16];                 // bit set when channel valid
     gdxChannel_t chan[128];
-} 
-gdxChannelBank_t;
+}
+__attribute__((packed)) gdxChannelBank_t;
 
 // This corresponds to OpenGD77 extended zones
 // TODO: Find a way to distinguish between a stock and OpenGD77 CPS
@@ -122,13 +122,13 @@ typedef struct {
     uint8_t name[16];                   // Zone Name
     uint16_t member[80];                // Member: channels 1...80
 }
-gdxZone_t;
+__attribute__((packed)) gdxZone_t;
 
 typedef struct {
     uint8_t bitmap[32];                 // bit set when zone valid
     gdxZone_t zone[250];
 }
-gdxZoneBank_t;
+__attribute__((packed)) gdxZoneBank_t;
 
 typedef struct {
     // Bytes 0-15
@@ -145,6 +145,6 @@ typedef struct {
     uint8_t ring_style;                 // Ring style: 0-10
     uint8_t _unused23;                  // 0xff for used contact, 0 for blank entry
 }
-gdxContact_t;
+__attribute__((packed)) gdxContact_t;
 
 #endif /* NVMDATA_GDx_H */
