@@ -290,7 +290,7 @@ float radio_getRssi(const freq_t rxFreq)
     if(rxFreq < 401035000) offset_index = 0;
     if(rxFreq > 479995000) offset_index = 8;
 
-    float rssi_mv  = adc1_getMeasurement(2);
+    float rssi_mv  = adc1_getMeasurement(ADC_RSSI_CH);
     float rssi_dbm = (rssi_mv - rssi_offset[offset_index]) / rssi_gain;
     return rssi_dbm;
 }

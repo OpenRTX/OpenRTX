@@ -21,12 +21,36 @@
 #include <stdint.h>
 
 /**
- * Driver for ADC1, used to continuously sample the following channels:
- * - ADC1_CH0 (PA0): output value of the volume potentiometer;
- * - ADC1_CH1 (PA1): battery voltage through 1:3 resistor divider;
- * - ADC1_CH3 (PA3): vox level;
- * - ADC1_CH8 (PB0): RSSI level;
+ * Driver for ADC1, used on all the MDx devices to continuously sample battery
+ * voltage and other values.
+ *
+ * Channel mapping for MDx platforms:
+ *
+ *                                +--------+----------+---------+
+ *                                | MD-3x0 | MD-UV3x0 | MD-9600 |
+ * +-----+------+-----------------+--------+----------+---------+
+ * | PA0 | IN0  | volume level    |   x    |    x     |         |
+ * | PA1 | IN1  | supply voltage  |   x    |    x     |    x    |
+ * | PA3 | IN3  | mic level (VOX) |   x    |    x     |    x    |
+ * | PA6 | IN6  | mic SW2 line    |        |          |    x    |
+ * | PA7 | IN7  | mic SW1 line    |        |          |    x    |
+ * | PB0 | IN8  |    RSSI         |   x    |          |    x    |
+ * | PB1 | IN9  |                 |        |          |    x    |
+ * | PC5 | IN15 | heatsink temp.  |        |          |    x    |
+ * +-----+------+-----------------+--------+----------+---------+
  */
+
+enum adcCh
+{
+    ADC_VOL_CH   = 0,
+    ADC_VBAT_CH  = 1,
+    ADC_VOX_CH   = 2,
+    ADC_RSSI_CH  = 3,
+    ADC_SW1_CH   = 4,
+    ADC_SW2_CH   = 5,
+    ADC_RSSI2_CH = 6,
+    ADC_HTEMP_CH = 7
+};
 
 /**
  * Initialise and start ADC1 and DMA2 Stream 0.
@@ -47,16 +71,12 @@ void adc1_init();
 void adc1_terminate();
 
 /**
- * Get current measurement of a given channel, mapped as below:
- * - channel 0: battery voltage
- * - channel 1: volume level
- * - channel 2: RSSI level
- * - channel 3: vox level
+ * Get current measurement of a given channel.
  *
- * NOTE: the mapping above DOES NOT correspond to the physical ADC channel
- * mapping!
+ * NOTE: the mapping provided in enum adcCh DOES NOT correspond to the physical
+ * ADC channel mapping!
  *
- * @param ch: channel number, between 0 and 3.
+ * @param ch: channel number.
  * @return current value of the specified channel in mV.
  */
 float adc1_getMeasurement(uint8_t ch);

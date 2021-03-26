@@ -24,13 +24,21 @@
 /*
  * The sample buffer is structured as follows:
  *
- * | vbat | vol | rssi | vox |
+ * | vol | vbat | vox | rssi | sw1 | sw2 | rssi2 | htemp |
  *
  * NOTE: we are forced to allocate it through a malloc in order to make it be
  * in the "large" 128kB RAM. This because the linker script maps the .data and
  * .bss sections in the "small" 64kB CCM RAM, which cannot be reached by the DMA.
  */
 uint16_t *sampleBuf = NULL;
+
+#if defined(PLATFORM_MD9600)
+static const size_t nChannels = 8;
+#elif defined(PLATFORM_MD3x0)
+static const size_t nChannels = 4;
+#else
+static const size_t nChannels = 2;
+#endif
 
 void adc1_init()
 {
@@ -42,16 +50,18 @@ void adc1_init()
 
     /*
      * Configure GPIOs to analog input mode:
-     * - PA0: volume potentiometer level
-     * - PA1: battery voltage
-     * - PA3: vox level
-     * - PB0: RSSI level
      */
     gpio_setMode(AIN_VBAT,   INPUT_ANALOG);
     gpio_setMode(AIN_VOLUME, INPUT_ANALOG);
-    #if  defined(PLATFORM_MD3x0)
-    gpio_setMode(AIN_MIC,    INPUT_ANALOG);
-    gpio_setMode(AIN_RSSI,   INPUT_ANALOG);
+    #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MD9600)
+    gpio_setMode(AIN_MIC,   INPUT_ANALOG);
+    gpio_setMode(AIN_RSSI,  INPUT_ANALOG);
+    #if defined(PLATFORM_MD9600)
+    gpio_setMode(AIN_SW2,   INPUT_ANALOG);
+    gpio_setMode(AIN_SW1,   INPUT_ANALOG);
+    gpio_setMode(AIN_RSSI2, INPUT_ANALOG);
+    gpio_setMode(AIN_HTEMP, INPUT_ANALOG);
+    #endif
     #endif
 
     /*
@@ -64,7 +74,11 @@ void adc1_init()
     ADC1->SMPR2 = ADC_SMPR2_SMP0
                 | ADC_SMPR2_SMP1
                 | ADC_SMPR2_SMP3
-                | ADC_SMPR2_SMP8;
+                | ADC_SMPR2_SMP6
+                | ADC_SMPR2_SMP7
+                | ADC_SMPR2_SMP8
+                | ADC_SMPR2_SMP9;
+    ADC1->SMPR1 = ADC_SMPR1_SMP15;
 
     /*
      * No overrun interrupt, 12-bit resolution, no analog watchdog, no
@@ -78,7 +92,17 @@ void adc1_init()
               | ADC_CR2_ADON;
 
     /* Scan sequence config. */
-    #if defined(PLATFORM_MD3x0)
+    #if defined(PLATFORM_MD9600)
+    ADC1->SQR1 = 7 << 20;    /* Eight channels to be converted          */
+    ADC1->SQR3 |= (0 << 0)   /* CH0,  volume potentiometer level on PA0 */
+               |  (1 << 5)   /* CH1,  battery voltage on PA1            */
+               |  (3 << 10)  /* CH3,  vox level on PA3                  */
+               |  (8 << 15)  /* CH8,  RSSI value on PB0                 */
+               |  (7 << 20)  /* CH7,  SW1 value on PA7                  */
+               |  (6 << 25); /* CH6,  SW2 value on PA6                  */
+    ADC1->SQR2 |= (9  << 0)  /* CH9,  RSSI2 value on PB1                */
+               |  (15 << 5); /* CH15, HTEMP value on PC5                */
+    #elif defined(PLATFORM_MD3x0)
     ADC1->SQR1 = 3 << 20;    /* Four channels to be converted          */
     ADC1->SQR3 |= (1 << 0)   /* CH1, battery voltage on PA1            */
                |  (0 << 5)   /* CH0, volume potentiometer level on PA0 */
@@ -86,8 +110,8 @@ void adc1_init()
                |  (3 << 15); /* CH3, vox level on PA3                  */
     #else
     ADC1->SQR1 = 1 << 20;    /* Convert two channel                    */
-    ADC1->SQR3 |= (1 << 0)   /* CH1, battery voltage on PA1            */
-               |  (0 << 15); /* CH0, volume potentiometer level on PA0 */
+    ADC1->SQR3 |= (0 << 0)   /* CH0, volume potentiometer level on PA0 */
+               |  (1 << 5);  /* CH1, battery voltage on PA1            */
     #endif
 
     /* DMA2 Stream 0 configuration:
@@ -101,7 +125,7 @@ void adc1_init()
      */
     DMA2_Stream0->PAR = ((uint32_t) &(ADC1->DR));
     DMA2_Stream0->M0AR = ((uint32_t) sampleBuf);
-    DMA2_Stream0->NDTR = 4;
+    DMA2_Stream0->NDTR = nChannels;
     DMA2_Stream0->CR = DMA_SxCR_MSIZE_0     /* Memory size: 16 bit     */
                      | DMA_SxCR_PSIZE_0     /* Peripheral size: 16 bit */
                      | DMA_SxCR_PL_0        /* Medium priority         */
@@ -125,7 +149,7 @@ void adc1_terminate()
 
 float adc1_getMeasurement(uint8_t ch)
 {
-    if((ch > 3) || (sampleBuf == NULL)) return 0.0f;
+    if((ch > (nChannels-1)) || (sampleBuf == NULL)) return 0.0f;
 
     float value = ((float) sampleBuf[ch]);
     return (value * 3300.0f)/4096.0f;

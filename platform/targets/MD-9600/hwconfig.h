@@ -62,7 +62,14 @@
 #define LCD_CS      GPIOD,14
 
 /* Analog inputs */
+#define AIN_VOLUME GPIOA,0
 #define AIN_VBAT   GPIOA,1
+#define AIN_MIC    GPIOA,3
+#define AIN_SW2    GPIOA,6
+#define AIN_SW1    GPIOA,7
+#define AIN_RSSI   GPIOB,0
+#define AIN_RSSI2  GPIOB,1
+#define AIN_HTEMP  GPIOC,5
 
 /* Channel selection rotary encoder */
 #define CH_SELECTOR_0 GPIOB,10

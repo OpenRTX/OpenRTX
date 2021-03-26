@@ -186,7 +186,7 @@ float platform_getVbat()
      * adc1_getMeasurement returns a value in mV. Thus, to have effective
      * battery voltage multiply by three and divide by 1000
      */
-    return adc1_getMeasurement(0)*3.0f/1000.0f;
+    return adc1_getMeasurement(ADC_VBAT_CH)*3.0f/1000.0f;
 }
 
 float platform_getMicLevel()
@@ -196,7 +196,7 @@ float platform_getMicLevel()
 
 float platform_getVolumeLevel()
 {
-    return adc1_getMeasurement(1);
+    return adc1_getMeasurement(ADC_VOL_CH);
 }
 
 int8_t platform_getChSelector()
