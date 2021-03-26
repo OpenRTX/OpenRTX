@@ -25,8 +25,10 @@
 #include <hwconfig.h>
 
 static const char hexdigits[]="0123456789abcdef";
-void printUnsignedInt(unsigned int x)
+void printUnsignedInt(uint16_t val)
 {
+    int16_t x = val >> 4;
+
     char result[]="....\r";
     for(int i=3;i>=0;i--)
     {
@@ -58,9 +60,9 @@ int main()
 
     /*
      * TIM2 for conversion triggering via TIM2_TRGO, that is counter reload.
-     * AP1 frequency is 42MHz, configure for 8kHz interrupt rate.
+     * AP1 frequency is 42MHz but timer runs at 84MHz, configure for 8kHz interrupt rate.
      */
-    TIM2->PSC = 41;     /* Tick rate 1MHz     */
+    TIM2->PSC = 83;     /* Tick rate 1MHz     */
     TIM2->ARR = 124;    /* Overflow rate 8kHz */
     TIM2->CNT = 0;
     TIM2->EGR = TIM_EGR_UG;
