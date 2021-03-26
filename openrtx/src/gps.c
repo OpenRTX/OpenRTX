@@ -108,9 +108,16 @@ void gps_taskFunc(char *line, __attribute__((unused)) int len, state_t *state)
 
         case MINMEA_SENTENCE_GSV:
         {
+            // Parse only sentences 1 - 3, maximum 12 satellites
             struct minmea_sentence_gsv frame;
-            if (minmea_parse_gsv(&frame, line))
+            if (minmea_parse_gsv(&frame, line) && (frame.msg_nr < 3))
             {
+                // When the first sentence arrives, clear all the old data
+                if (frame.msg_nr == 1)
+                {
+                    bzero(&state->gps_data.satellites[0], 12 * sizeof(sat_t));
+                }
+
                 state->gps_data.satellites_in_view = frame.total_sats;
                 for (int i = 0; i < 4; i++)
                 {
@@ -119,12 +126,6 @@ void gps_taskFunc(char *line, __attribute__((unused)) int len, state_t *state)
                     state->gps_data.satellites[index].elevation = frame.sats[i].elevation;
                     state->gps_data.satellites[index].azimuth = frame.sats[i].azimuth;
                     state->gps_data.satellites[index].snr = frame.sats[i].snr;
-                }
-                // Zero out unused satellite slots
-                if (frame.msg_nr == frame.total_msgs && frame.total_msgs < 3)
-                {
-                    bzero(&state->gps_data.satellites[4 * frame.msg_nr],
-                          sizeof(sat_t) * 12 - frame.total_msgs * 4);
                 }
             }
         } break;
