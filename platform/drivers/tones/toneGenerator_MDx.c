@@ -26,7 +26,7 @@
  * Sine table for PWM-based sinewave generation, containing 256 samples over one
  * period of a 64Hz sinewave. This gives a PWM base frequency of 16.384kHz.
  */
-uint8_t sineTable[] =
+static const uint8_t sineTable[] =
 {
     128,131,134,137,140,143,146,149,152,155,158,162,165,167,170,173,176,179,182,
     185,188,190,193,196,198,201,203,206,208,211,213,215,218,220,222,224,226,228,
