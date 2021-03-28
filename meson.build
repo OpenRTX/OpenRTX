@@ -124,6 +124,7 @@ stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.cpp',
                  'platform/mcu/STM32F4xx/drivers/usb_vcom.c',
                  'platform/mcu/STM32F4xx/drivers/delays.cpp',
                  'platform/mcu/STM32F4xx/drivers/rtc.c',
+                 'platform/mcu/STM32F4xx/drivers/SPI2.c',
                  'platform/mcu/CMSIS/Device/ST/STM32F4xx/Source/system_stm32f4xx.c']
 
 stm32f405_inc = ['platform/mcu/CMSIS/Include',
@@ -224,8 +225,15 @@ mduv3x0_def = def + stm32f405_def + {'PLATFORM_MDUV3x0': '', 'timegm': 'mktime'}
 ## TYT MD-9600
 ##
 md9600_src = src + stm32f405_src + ['platform/targets/MD-9600/platform.c',
-                                    'platform/drivers/tones/toneGenerator_MDx.cpp',
-                                    'platform/drivers/keyboard/keyboard_MD9600.c']
+                                    'platform/drivers/display/ST7567_MD9600.c',
+                                    'platform/drivers/keyboard/keyboard_MD9600.c',
+                                    'platform/drivers/tones/toneGenerator_MDx.c',
+                                    'platform/drivers/NVM/nvmem_MD9600.c',
+                                    'platform/drivers/baseband/radio_MD9600.c',
+                                    'platform/drivers/NVM/W25Qx.c',
+                                    'platform/drivers/ADC/ADC1_MDx.c',
+                                    'platform/drivers/GPS/GPS_MDx.cpp',
+                                    'platform/drivers/NVM/spiFlash_MD9600.c']
 
 md9600_inc = inc + stm32f405_inc + ['platform/targets/MD-9600']
 md9600_def = def + stm32f405_def + {'PLATFORM_MD9600': ''}
