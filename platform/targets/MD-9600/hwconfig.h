@@ -58,7 +58,7 @@
 /* Display */
 #define LCD_BKLIGHT GPIOC,6
 #define LCD_RST     GPIOD,12
-#define LCD_RS      GPIOC,13
+#define LCD_RS      GPIOD,13
 #define LCD_CS      GPIOD,14
 
 /* Analog inputs */

@@ -26,6 +26,7 @@
 #include <calibInfo_MDx.h>
 #include <toneGenerator_MDx.h>
 #include <interfaces/rtc.h>
+#include <SPI2.h>
 
 hwInfo_t hwInfo;
 
@@ -46,11 +47,24 @@ void platform_init()
      * Configuration of corresponding GPIOs in analog input mode is done inside
      * the driver.
      */
-//     adc1_init();
+    adc1_init();
+
+    /*
+     * Initialise SPI2 for external flash and LCD
+     */
+    gpio_setMode(SPI2_CLK, ALTERNATE);
+    gpio_setMode(SPI2_SDO, ALTERNATE);
+    gpio_setMode(SPI2_SDI, ALTERNATE);
+    gpio_setAlternateFunction(SPI2_CLK, 5); /* SPI2 is on AF5 */
+    gpio_setAlternateFunction(SPI2_SDO, 5);
+    gpio_setAlternateFunction(SPI2_SDI, 5);
+
+    spi2_init();
+
 
     memset(&hwInfo, 0x00, sizeof(hwInfo));
 
-//     nvm_init();                      /* Initialise non volatile memory manager */
+    nvm_init();                      /* Initialise non volatile memory manager */
     toneGen_init();                  /* Initialise tone generator              */
     rtc_init();                      /* Initialise RTC                         */
 
@@ -89,7 +103,7 @@ void platform_terminate()
     __DSB();
 
     /* Shut down all the modules */
-//     adc1_terminate();
+    adc1_terminate();
     toneGen_terminate();
     rtc_terminate();
 
