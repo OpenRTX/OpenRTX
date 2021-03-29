@@ -123,11 +123,11 @@ void platform_terminate()
 float platform_getVbat()
 {
     /*
-     * Battery voltage is measured through an 1:3 voltage divider and
+     * Battery voltage is measured through an 1:5.7 voltage divider and
      * adc1_getMeasurement returns a value in mV. Thus, to have effective
-     * battery voltage multiply by three and divide by 1000
+     * battery voltage multiply by the ratio and divide by 1000
      */
-    return 0.0f;
+    return (adc1_getMeasurement(ADC_VBAT_CH)*5.7f)/1000.0f;
 }
 
 float platform_getMicLevel()
