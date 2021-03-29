@@ -51,6 +51,9 @@ int main()
     gpio_setMode(MIC_PWR,   OUTPUT);
     gpio_setPin(MIC_PWR);
 
+    /* Enable pull-up resistor on PA3 (AIN_MIC)
+    GPIOA->PUPDR |= 1 << 6; */
+
     delayMs(3000);
 
     RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
