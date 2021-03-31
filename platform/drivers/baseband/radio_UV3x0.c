@@ -251,7 +251,7 @@ void radio_updateCalibrationParams(const rtxStatus_t *rtxCfg)
     mduv3x0Calib_t *cal  = ((mduv3x0Calib_t *) calData);
     freq_t  *txCalPoints = cal->vhfCal.txFreq;
     uint8_t *loPwrCal    = cal->vhfCal.txLowPower;
-    uint8_t *hiPwrCal    = cal->vhfCal.txLowPower;
+    uint8_t *hiPwrCal    = cal->vhfCal.txHighPower;
     uint8_t *qRangeCal   = (rtxCfg->opMode == FM) ? cal->vhfCal.analogSendQrange
                                                   : cal->vhfCal.sendQrange;
 
@@ -259,7 +259,7 @@ void radio_updateCalibrationParams(const rtxStatus_t *rtxCfg)
     {
         txCalPoints = cal->uhfCal.txFreq;
         loPwrCal    = cal->uhfCal.txLowPower;
-        hiPwrCal    = cal->uhfCal.txLowPower;
+        hiPwrCal    = cal->uhfCal.txHighPower;
         qRangeCal   = (rtxCfg->opMode == FM) ? cal->uhfCal.analogSendQrange
                                              : cal->uhfCal.sendQrange;
     }
