@@ -25,10 +25,8 @@
 #include <hwconfig.h>
 
 static const char hexdigits[]="0123456789abcdef";
-void printUnsignedInt(uint16_t val)
+void printUnsignedInt(uint16_t x)
 {
-    int16_t x = val >> 4;
-
     char result[]="....\r";
     for(int i=3;i>=0;i--)
     {
@@ -113,7 +111,6 @@ int main()
               |  ADC_CR2_EXTSEL_2   /* 0b0110 TIM2_TRGO trig. source */
               |  ADC_CR2_DDS        /* Enable DMA data transfer      */
               |  ADC_CR2_DMA
-              |  ADC_CR2_ALIGN
               |  ADC_CR2_ADON;      /* Enable ADC                    */
 
     while((DMA2_Stream0->CR & DMA_SxCR_EN) == 1)
