@@ -111,6 +111,7 @@ int main()
               |  ADC_CR2_EXTSEL_2   /* 0b0110 TIM2_TRGO trig. source */
               |  ADC_CR2_DDS        /* Enable DMA data transfer      */
               |  ADC_CR2_DMA
+              |  ADC_CR2_ALIGN
               |  ADC_CR2_ADON;      /* Enable ADC                    */
 
     while((DMA2_Stream0->CR & DMA_SxCR_EN) == 1)
