@@ -175,17 +175,23 @@ void C6000_terminate()
 
 void C6000_setModOffset(uint16_t offset)
 {
-    uint8_t offUpper = (offset >> 8) & 0x03;
-    uint8_t offLower = offset & 0xFF;
+    /*
+     * Same as original TYT firmware.
+     * Reference: functions @0802e7d4 and @080546cc in S18.16 binary image
+     */
+    uint8_t offUpper = (offset < 0x80) ? 0x03 : 0x00;
+    uint8_t offLower = offset + 0x80;
 
-    _writeReg(0x04, 0x48, offUpper);
-    _writeReg(0x04, 0x47, offLower);
+    _writeReg(0x04, 0x48, offUpper);    // Two-point bias, upper value
+    _writeReg(0x04, 0x47, offLower);    // Two-point bias, lower value
+
+    _writeReg(0x04, 0x04, offLower);    // Bias value for TX, Q-channel
 }
 
 void C6000_setModAmplitude(uint8_t iAmp, uint8_t qAmp)
 {
-    _writeReg(0x00, 0x45, iAmp);    // Mod2 magnitude (HR_C6000)
-    _writeReg(0x00, 0x46, qAmp);    // Mod1 magnitude (HR_C6000)
+    _writeReg(0x04, 0x45, iAmp);    // Mod2 magnitude (HR_C6000)
+    _writeReg(0x04, 0x46, qAmp);    // Mod1 magnitude (HR_C6000)
 }
 
 void C6000_setMod2Bias(uint8_t bias)
