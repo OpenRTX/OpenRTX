@@ -23,7 +23,7 @@
 #include <interfaces/radio.h>
 #include <string.h>
 #include <rtx.h>
-#ifdef PLATFORM_MDUV380
+#ifdef PLATFORM_MDUV3x0
 #include "../../platform/drivers/baseband/HR_C6000.h"
 #endif
 
@@ -47,7 +47,7 @@ float rssi;                 /* Current RSSI in dBm                  */
 
 void _afCtrlInit()
 {
-    #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV380)
+    #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
     gpio_setMode(SPK_MUTE, OUTPUT);
     gpio_setMode(AUDIO_AMP_EN,   OUTPUT);
     gpio_setMode(MIC_PWR,  OUTPUT);
@@ -63,7 +63,7 @@ void _afCtrlSpeaker(bool enable)
 {
     if(enable)
     {
-        #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV380)
+        #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
         gpio_setPin(AUDIO_AMP_EN);
         delayMs(10);
         gpio_clearPin(SPK_MUTE);
@@ -76,7 +76,7 @@ void _afCtrlSpeaker(bool enable)
     }
     else
     {
-        #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV380)
+        #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
         gpio_setPin(SPK_MUTE);
         gpio_clearPin(AUDIO_AMP_EN);
         #ifdef PLATFORM_MD3x0
@@ -92,13 +92,13 @@ void _afCtrlMic(bool enable)
 {
      if(enable)
     {
-        #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV380)
+        #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
         gpio_setPin(MIC_PWR);
         #endif
     }
     else
     {
-        #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV380)
+        #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
         gpio_clearPin(MIC_PWR);
         #endif
     }
@@ -119,7 +119,7 @@ void _afCtrlTerminate()
  * Knob position is given by an analog signal in the range 0 - 1500mV,
  * which has to be mapped in a range between 1 and 31.
  */
-#ifdef PLATFORM_MDUV380
+#ifdef PLATFORM_MDUV3x0
 void _afSetVolume()
 {
     float   level  = (platform_getVolumeLevel() / 1560.0f) * 30.0f;
@@ -289,7 +289,7 @@ void rtx_taskFunc()
             _afCtrlSpeaker(false);
             sqlOpen = false;
         }
-        #ifdef PLATFORM_MDUV380
+        #ifdef PLATFORM_MDUV3x0
         if(sqlOpen == true)
         {
             // Set output volume by changing the HR_C6000 DAC gain

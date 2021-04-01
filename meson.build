@@ -180,13 +180,13 @@ mduv3x0_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.cpp',
                                      'platform/drivers/tones/toneGenerator_MDx.c',
                                      'platform/drivers/baseband/radio_UV3x0.c',
                                      'platform/drivers/GPS/GPS_MDx.cpp',
-                                     'platform/targets/MD-UV380/platform.c',
+                                     'platform/targets/MD-UV3x0/platform.c',
                                      'platform/drivers/baseband/AT1846S_UV3x0.c',
                                      'platform/drivers/baseband/HR_C6000_UV3x0.c',
                                      'platform/drivers/baseband/interfaces_UV3x0.c']
 
-mduv3x0_inc = inc + stm32f405_inc + ['platform/targets/MD-UV380']
-mduv3x0_def = def + stm32f405_def + {'PLATFORM_MDUV380': ''}
+mduv3x0_inc = inc + stm32f405_inc + ['platform/targets/MD-UV3x0']
+mduv3x0_def = def + stm32f405_def + {'PLATFORM_MDUV3x0': ''}
 
 
 ## TYT MD-9600

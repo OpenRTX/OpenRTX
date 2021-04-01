@@ -74,6 +74,7 @@
 /* Analog inputs */
 #define AIN_VOLUME GPIOA,0
 #define AIN_VBAT   GPIOA,1
+#define AIN_MIC    GPIOA,3
 
 /* Channel selection rotary encoder */
 #define CH_SELECTOR_0 GPIOE,14
