@@ -63,14 +63,22 @@ keyboard_t kbd_getKeys()
     keyboard_t keys = 0;
 
     /* Use absolute position knob to emulate left and right buttons */
-    static uint8_t old_pos = 0;
-    uint8_t new_pos = platform_getChSelector();
+    static int8_t old_pos = 0;
+    int8_t new_pos = platform_getChSelector();
     if (old_pos != new_pos)
     {
-        if (new_pos < old_pos)
+        int8_t diff = old_pos - new_pos;
+        if (diff < 0)
             keys |= KEY_LEFT;
-        else
+        else if (diff > 0)
             keys |= KEY_RIGHT;
+        else
+        {
+            if (old_pos < 0)
+                keys |= KEY_LEFT;
+            else
+                keys |= KEY_RIGHT;
+        }
         old_pos = new_pos;
     }
 

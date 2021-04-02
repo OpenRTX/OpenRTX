@@ -111,7 +111,7 @@ float platform_getVolumeLevel();
 /**
  * This function reads and returns the current channel selector level.
  */
-uint8_t platform_getChSelector();
+int8_t platform_getChSelector();
 
 /**
  * This function reads and returns the current PTT status.

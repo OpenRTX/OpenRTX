@@ -33,7 +33,7 @@
 
 typedef struct
 {
-    uint8_t valid[6];     // Should contain "OPNRTX" in a valid settings_t
+    uint8_t valid[7];     // Should contain "OPNRTX" in a valid settings_t
     uint8_t brightness;
     uint8_t contrast;
     int8_t utc_timezone;
