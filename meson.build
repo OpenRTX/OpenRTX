@@ -55,8 +55,12 @@ minmea_src = ['lib/minmea/minmea.c']
 
 minmea_inc = ['lib/minmea/include']
 
+## QDEC, a very simple, header only, quadrature decoding library
+
+qdec_inc = ['lib/qdec/include']
+
 src = openrtx_src + minmea_src
-inc = openrtx_inc + rtos_inc + minmea_inc
+inc = openrtx_inc + rtos_inc + minmea_inc + qdec_inc
 
 ##
 ## Definitions
