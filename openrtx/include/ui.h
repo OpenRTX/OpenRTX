@@ -167,7 +167,7 @@ typedef struct ui_state_t
     // Which state to return to when we exit menu
     uint8_t last_main_state;
 }
-__attribute__((packed)) ui_state_t;
+ui_state_t;
 
 extern layout_t layout;
 // Copy of the radio state
