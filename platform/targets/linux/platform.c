@@ -62,7 +62,7 @@ float platform_getVolumeLevel()
 }
 
 
-uint8_t platform_getChSelector()
+int8_t platform_getChSelector()
 {
     return Radio_State.chSelector;
 }

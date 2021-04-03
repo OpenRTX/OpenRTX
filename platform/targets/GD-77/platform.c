@@ -138,7 +138,7 @@ float platform_getVolumeLevel()
     return 0.0f;
 }
 
-uint8_t platform_getChSelector()
+int8_t platform_getChSelector()
 {
     /* GD77 does not have a channel selector */
     return 0;

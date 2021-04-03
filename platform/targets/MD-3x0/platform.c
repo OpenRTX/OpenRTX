@@ -131,7 +131,7 @@ float platform_getVolumeLevel()
     return adc1_getMeasurement(3);
 }
 
-uint8_t platform_getChSelector()
+int8_t platform_getChSelector()
 {
     static const uint8_t rsPositions[] = { 11, 14, 10, 15, 6, 3, 7, 2, 12, 13,
                                            9, 16, 5, 4, 8, 1 };
