@@ -1064,7 +1064,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 break;
 #endif
             case SETTINGS_DISPLAY:
-                if(msg.keys & KEY_LEFT || (msg.keys & KEY_UP && ui_state.edit_mode))
+                if(msg.keys & KEY_LEFT || (msg.keys & KEY_DOWN && ui_state.edit_mode))
                 {
                     switch(ui_state.menu_selected)
                     {
@@ -1080,7 +1080,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                             state.ui_screen = SETTINGS_DISPLAY;
                     }
                 }
-                else if(msg.keys & KEY_RIGHT || (msg.keys & KEY_DOWN && ui_state.edit_mode))
+                else if(msg.keys & KEY_RIGHT || (msg.keys & KEY_UP && ui_state.edit_mode))
                 {
                     switch(ui_state.menu_selected)
                     {
