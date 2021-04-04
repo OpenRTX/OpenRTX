@@ -79,8 +79,8 @@ uint64_t benchmark(uint32_t n)
         color_t color_red = {255, 0, 0, 255};
         color_t color_white = {255, 255, 255, 255};
         gfx_drawRect(origin, 160, 20, color_red, 1);
-        char *buffer = "KEK";
-        gfx_print(origin, buffer, FONT_SIZE_24PT, TEXT_ALIGN_LEFT,color_white);
+        gfx_print(origin, buffer, FONT_SIZE_24PT, TEXT_ALIGN_LEFT,
+                  color_white, "KEK");
 
         dummy += kbd_getKeys();
 

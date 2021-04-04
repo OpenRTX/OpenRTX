@@ -33,19 +33,18 @@ void platform_test()
     point_t pos_line2 = {0, 9};
     point_t pos_line3 = {0, 17};
     color_t color_white = {255, 255, 255};
-    char *buf = "Platform Test";
-    gfx_print(pos_line1, buf, FONT_SIZE_1, TEXT_ALIGN_LEFT, color_white);
+    gfx_print(pos_line1, FONT_SIZE_1, TEXT_ALIGN_LEFT,
+              color_white, "Platform Test");
     float vBat = platform_getVbat();
     float micLevel = platform_getMicLevel();
     float volumeLevel = platform_getVolumeLevel();
     uint8_t currentCh = platform_getChSelector();
     bool ptt = platform_getPttStatus();
-    char buf2[26] = "";
-    snprintf(buf2, sizeof(buf2), "bat:%.2f mic:%.2f", vBat, micLevel);
-    char buf3[26] = "";
-    snprintf(buf3, sizeof(buf3), "vol:%.2f ch:%d ptt:%s", volumeLevel, currentCh, ptt?"on":"off");
-    gfx_print(pos_line2, buf2, FONT_SIZE_1, TEXT_ALIGN_LEFT, color_white);
-    gfx_print(pos_line3, buf3, FONT_SIZE_1, TEXT_ALIGN_LEFT, color_white);
+    gfx_print(pos_line2, FONT_SIZE_1, TEXT_ALIGN_LEFT, 
+              color_white, "bat:%.2f mic:%.2f", vBat, micLevel);
+    gfx_print(pos_line3, FONT_SIZE_1, TEXT_ALIGN_LEFT, 
+              color_white, "vol:%.2f ch:%d ptt:%s", volumeLevel, 
+              currentCh, ptt?"on":"off");
     gfx_render();
     while(gfx_renderingInProgress());
     OSTimeDlyHMSM(0u, 0u, 0u, 250u, OS_OPT_TIME_HMSM_STRICT, &os_err);
@@ -61,7 +60,6 @@ int main(void)
 
     point_t origin = {0, SCREEN_HEIGHT / 2};
     color_t color_yellow = {250, 180, 19};
-    char *buffer = "OpenRTX";
 
     OS_ERR os_err;
 
@@ -69,7 +67,8 @@ int main(void)
     while(1)
     {
         gfx_clearScreen();
-        gfx_print(origin, buffer, FONT_SIZE_4, TEXT_ALIGN_CENTER, color_yellow);
+        gfx_print(origin, FONT_SIZE_4, TEXT_ALIGN_CENTER, 
+                  color_yellow, "OpenRTX");
         //gfx_render();
         //while(gfx_renderingInProgress());
         platform_test();

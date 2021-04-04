@@ -43,9 +43,9 @@ int main(void)
     // Print splash screen
     point_t splash_origin = {0, SCREEN_HEIGHT / 2};
     color_t color_yellow_fab413 = {250, 180, 19};
-    char *splash_buf = "OpenRTX";
     gfx_clearScreen();
-    gfx_print(splash_origin, splash_buf, FONT_SIZE_4, TEXT_ALIGN_CENTER, color_yellow_fab413);
+    gfx_print(splash_origin, FONT_SIZE_4, TEXT_ALIGN_CENTER,
+              color_yellow_fab413, "OpenRTX");
     gfx_render();
     while(gfx_renderingInProgress());
     OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);

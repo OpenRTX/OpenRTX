@@ -44,11 +44,10 @@ void *print_keys(keyboard_t keys) {
     //count set bits to check how many keys are being pressed
     int i = __builtin_popcount(keys);
     while (i > 0) {
-        char *buf[15];
         //position of the first set bit
         int pos = __builtin_ctz(keys);
-        sprintf(buf, "Pressed: %s", keys_list[pos + 1]);
-        gfx_print(origin, buf, FONT_SIZE_8PT, TEXT_ALIGN_LEFT, color_green);
+        gfx_print(origin, FONT_SIZE_8PT, TEXT_ALIGN_LEFT, 
+                  color_green, "Pressed: %s", keys_list[pos + 1]);
         origin.y += 9;
         //unset the bit we already handled
         keys &= ~(1 << pos);
@@ -78,12 +77,11 @@ int main(void) {
 
     point_t title_origin = {0, SCREEN_HEIGHT / 9};
 
-    char *title_buf = "Keyboard demo";
-
     // UI update infinite loop
     while (1) {
         gfx_clearScreen();
-        gfx_print(title_origin, title_buf, FONT_SIZE_8PT, TEXT_ALIGN_CENTER, color_red);
+        gfx_print(title_origin, FONT_SIZE_8PT, TEXT_ALIGN_CENTER, 
+                  color_red, "Keyboard demo");
         keyboard_t keys = kbd_getKeys();
         if (keys != 0)
             print_keys(keys);

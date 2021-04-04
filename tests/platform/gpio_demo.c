@@ -37,7 +37,7 @@ void printBits(uint16_t value, point_t pos)
     }
 
     color_t color_white = {255, 255, 255};
-    gfx_print(pos, buf, FONT_SIZE_1, TEXT_ALIGN_LEFT, color_white);
+    gfx_print(pos, FONT_SIZE_1, TEXT_ALIGN_LEFT, color_white, buf);
 }
 
 int main(void)

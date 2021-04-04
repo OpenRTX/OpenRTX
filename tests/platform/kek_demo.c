@@ -98,8 +98,8 @@ static void gfxThread(void *arg)
         color_t color_red = {255, 0, 0};
         color_t color_white = {255, 255, 255};
         gfx_drawRect(origin, SCREEN_WIDTH, 20, color_red, 1);
-        char *buffer = "KEK";
-        gfx_print(origin, buffer, FONT_SIZE_4, TEXT_ALIGN_LEFT,color_white);
+        gfx_print(origin, FONT_SIZE_4, TEXT_ALIGN_LEFT, 
+                  color_white, "KEK");
         gfx_render();
         while(gfx_renderingInProgress()) ;
         pos += 20;

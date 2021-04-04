@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <hwconfig.h>
+#include <stdarg.h>
 #include <interfaces/display.h>
 #include <interfaces/graphics.h>
 
@@ -381,9 +382,16 @@ static inline uint16_t get_reset_x(textAlign_t alignment, uint16_t line_size,
     return 0;
 }
 
-point_t gfx_print(point_t start, const char *text, fontSize_t size,
-                                 textAlign_t alignment, color_t color)
+point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment, 
+                  color_t color, const char *fmt, ... )
 {
+    va_list ap;
+    
+    char text[128];
+    
+    va_start(ap, fmt);
+    vsnprintf(text, sizeof(text)-1, fmt, ap);
+    va_end(ap);
 
     GFXfont f = fonts[size];
 
@@ -480,7 +488,7 @@ void gfx_printError(const char *text, fontSize_t size)
     point_t start = {0, SCREEN_HEIGHT/2 + 5};
 
     // Print the error message
-    point_t text_size = gfx_print(start, text, size, TEXT_ALIGN_CENTER, white);
+    point_t text_size = gfx_print(start, size, TEXT_ALIGN_CENTER, white, text);
     text_size.x += box_padding;
     text_size.y += box_padding;
     point_t box_start = {0, 0};
@@ -585,7 +593,6 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
     color_t white =  {255, 255, 255, 255};
     color_t yellow = {250, 180, 19 , 255};
     color_t red =    {255, 0,   0  , 255};
-    char buf[4] = { 0 };
 
     // S-level marks and numbers
     for(int i = 0; i < 11; i++)
@@ -595,11 +602,10 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
         point_t pixel_pos = {start.x + i * (width - 1) / 11, start.y};
         if (i == 10) {
             pixel_pos.x -= 8;
-            snprintf(buf, 4, "+%d", i);
+            gfx_print(pixel_pos, FONT_SIZE_5PT, TEXT_ALIGN_LEFT, color, "+%d", i);
         }
         else
-            snprintf(buf, 4, "%d", i);
-        gfx_print(pixel_pos, buf, FONT_SIZE_5PT, TEXT_ALIGN_LEFT, color);
+            gfx_print(pixel_pos, FONT_SIZE_5PT, TEXT_ALIGN_LEFT, color, "%d", i);
         if (i == 10) {
             pixel_pos.x += 8;
         }
@@ -608,7 +614,7 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
     }
 
     point_t pixel_pos = {start.x + width - 11, start.y};
-    gfx_print(pixel_pos, "+20", FONT_SIZE_5PT, TEXT_ALIGN_LEFT, red);
+    gfx_print(pixel_pos, FONT_SIZE_5PT, TEXT_ALIGN_LEFT, red, "+20");
     pixel_pos.x += 10;
     pixel_pos.y += height;
     gfx_setPixel(pixel_pos, red);
@@ -656,7 +662,6 @@ void gfx_drawGPSgraph(point_t start,
 {
     color_t white =  {255, 255, 255, 255};
     color_t yellow = {250, 180, 19 , 255};
-    char id_buf[5] = { 0 };
 
     // SNR Bars and satellite identifiers
     uint8_t bar_width = (width - 26) / 12;
@@ -668,9 +673,9 @@ void gfx_drawGPSgraph(point_t start,
                            start.y + (height - 8) - bar_height};
         color_t bar_color = (active_sats & 1 << (sats[i].id - 1)) ? yellow : white;
         gfx_drawRect(bar_pos, bar_width, bar_height, bar_color, true);
-        snprintf(id_buf, 5, "%2d ", sats[i].id);
         point_t id_pos = {bar_pos.x, start.y + height};
-        gfx_print(id_pos, id_buf, FONT_SIZE_5PT, TEXT_ALIGN_LEFT, bar_color);
+        gfx_print(id_pos, FONT_SIZE_5PT, TEXT_ALIGN_LEFT, 
+                  bar_color, "%2d ", sats[i].id);
     }
     uint8_t bars_width = 9 + 11 * (bar_width + 2);
     point_t left_line_end = {start.x, start.y + height - 9};
@@ -714,5 +719,5 @@ void gfx_drawGPScompass(point_t start,
     }
     // North indicator
     point_t n_pos = {start.x + radius - 3, start.y + 7};
-    gfx_print(n_pos, "N", FONT_SIZE_6PT, TEXT_ALIGN_LEFT, white);
+    gfx_print(n_pos, FONT_SIZE_6PT, TEXT_ALIGN_LEFT, white, "N");
 }

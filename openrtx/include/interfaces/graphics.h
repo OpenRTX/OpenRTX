@@ -226,13 +226,13 @@ void gfx_drawCircle(point_t start, uint16_t r, color_t color);
 /**
  * Prints text on the screen.
  * @param start: text line start point, in pixel coordinates.
- * @param text: text to print.
  * @param size: text font size, defined as enum.
  * @param alignment: text alignment type, defined as enum.
  * @param color: text color, in color_t format.
+ * @param fmt: printf style format string
  * @return text width and height as point_t coordinates
  */
-point_t gfx_print(point_t start, const char *text, fontSize_t size, textAlign_t alignment, color_t color);
+point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment, color_t color, const char* fmt, ... );
 
 /**
  * Prints an error message surrounded by a red box on the screen.
