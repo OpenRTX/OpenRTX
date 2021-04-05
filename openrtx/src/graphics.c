@@ -385,6 +385,13 @@ static inline uint16_t get_reset_x(textAlign_t alignment, uint16_t line_size,
     return 0;
 }
 
+uint16_t gfx_getLineY(uint8_t cur, uint8_t tot, uint16_t startY, uint16_t endY)
+{
+    // e.g. to print 2 lines we need 3 padding spaces
+    uint16_t step = (endY - startY) / (tot + 1);
+    return startY + (step * cur);
+}
+
 point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment, 
                   color_t color, const char *fmt, ... )
 {

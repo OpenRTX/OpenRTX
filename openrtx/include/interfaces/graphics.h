@@ -224,6 +224,16 @@ void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color,
 void gfx_drawCircle(point_t start, uint16_t r, color_t color);
 
 /**
+ * Calculates printing position to fit a number of text lines on the screen space.
+ * @param cur: current line number over total (1-based)
+ * @param tot: number of lines to fit in screen
+ * @param startY: starting Y coordinate to leave space for top bar
+ * @param endY: ending Y coordinate to leave space for bottom bar
+ * @return Y coordinates for text printing
+ */
+uint16_t gfx_getLineY(uint8_t cur, uint8_t tot, uint16_t startY, uint16_t endY);
+
+/**
  * Prints text on the screen.
  * @param start: text line start point, in pixel coordinates.
  * @param size: text font size, defined as enum.
