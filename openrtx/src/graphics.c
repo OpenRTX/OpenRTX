@@ -95,6 +95,7 @@ bw_t _color2bw(color_t true_color)
 bool initialized = 0;
 PIXEL_T *buf;
 uint16_t fbSize;
+char text[32];
 
 void gfx_init()
 {
@@ -111,6 +112,8 @@ void gfx_init()
     if((fbSize * 8) < (SCREEN_HEIGHT * SCREEN_WIDTH)) fbSize += 1;
     fbSize *= sizeof(uint8_t);
 #endif
+    // Clear text buffer
+    memset(text, 0x00, 32);
 }
 
 void gfx_terminate()
@@ -386,9 +389,7 @@ point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment,
                   color_t color, const char *fmt, ... )
 {
     va_list ap;
-    
-    char text[128];
-    
+     
     va_start(ap, fmt);
     vsnprintf(text, sizeof(text)-1, fmt, ap);
     va_end(ap);
