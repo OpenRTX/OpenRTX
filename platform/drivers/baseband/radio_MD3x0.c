@@ -73,7 +73,7 @@ void radio_init()
 
     gpio_clearPin(PLL_PWR);    /* PLL off                                           */
     gpio_setPin(VCOVCC_SW);    /* VCOVCC high enables RX VCO, TX VCO if low         */
-    gpio_clearPin(WN_SW);      /* 25kHz bandwidth                                   */
+    gpio_setPin(WN_SW);        /* 25kHz bandwidth                                   */
     gpio_clearPin(DMR_SW);     /* Disconnect HR_C5000 input IF signal and audio out */
     gpio_clearPin(FM_SW);      /* Disconnect analog FM audio path                   */
     gpio_clearPin(RF_APC_SW);  /* Disable RF power control                          */
@@ -130,17 +130,17 @@ void radio_setBandwidth(const enum bandwidth bw)
     switch(bw)
     {
         case BW_12_5:
-            gpio_setPin(WN_SW);
+            gpio_clearPin(WN_SW);
             C5000_setModFactor(0x1E);
             break;
 
         case BW_20:
-            gpio_clearPin(WN_SW);
+            gpio_setPin(WN_SW);
             C5000_setModFactor(0x30);
             break;
 
         case BW_25:
-            gpio_clearPin(WN_SW);
+            gpio_setPin(WN_SW);
             C5000_setModFactor(0x3C);
             break;
 

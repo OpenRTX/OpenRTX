@@ -81,9 +81,9 @@ void adc1_init()
     #if defined(PLATFORM_MD3x0)
     ADC1->SQR1 = 3 << 20;    /* Four channels to be converted          */
     ADC1->SQR3 |= (1 << 0)   /* CH1, battery voltage on PA1            */
-               |  (8 << 5)   /* CH8, RSSI value on PB0                 */
-               |  (3 << 10)  /* CH3, vox level on PA3                  */
-               |  (0 << 15); /* CH0, volume potentiometer level on PA0 */
+               |  (0 << 5)   /* CH0, volume potentiometer level on PA0 */
+               |  (8 << 10)  /* CH8, RSSI value on PB0                 */
+               |  (3 << 15); /* CH3, vox level on PA3                  */
     #else
     ADC1->SQR1 = 1 << 20;    /* Convert two channel                    */
     ADC1->SQR3 |= (1 << 0)   /* CH1, battery voltage on PA1            */
