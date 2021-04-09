@@ -136,8 +136,7 @@ typedef struct layout_t
     fontSize_t bottom_font;
     fontSize_t input_font;
     fontSize_t menu_font;
-}
-__attribute__((packed)) layout_t;
+} layout_t;
 
 /**
  * This structs contains state variables internal to the
