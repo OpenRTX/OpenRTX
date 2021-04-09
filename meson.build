@@ -163,7 +163,7 @@ md3x0_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.cpp',
                                    'platform/drivers/NVM/spiFlash_MDx.c',
                                    'platform/drivers/NVM/nvmem_MD3x0.c',
                                    'platform/drivers/ADC/ADC1_MDx.c',
-                                   'platform/drivers/tones/toneGenerator_MDx.c',
+                                   'platform/drivers/tones/toneGenerator_MDx.cpp',
                                    'platform/drivers/baseband/SKY72310.c',
                                    'platform/drivers/baseband/radio_MD3x0.c',
                                    'platform/drivers/baseband/HR_C5000.c',
@@ -181,7 +181,7 @@ mduv3x0_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.cpp',
                                      'platform/drivers/NVM/spiFlash_MDx.c',
                                      'platform/drivers/NVM/nvmem_MDUV3x0.c',
                                      'platform/drivers/ADC/ADC1_MDx.c',
-                                     'platform/drivers/tones/toneGenerator_MDx.c',
+                                     'platform/drivers/tones/toneGenerator_MDx.cpp',
                                      'platform/drivers/baseband/radio_UV3x0.c',
                                      'platform/drivers/GPS/GPS_MDx.cpp',
                                      'platform/targets/MD-UV3x0/platform.c',
@@ -195,7 +195,7 @@ mduv3x0_def = def + stm32f405_def + {'PLATFORM_MDUV3x0': ''}
 
 ## TYT MD-9600
 md9600_src = src + stm32f405_src + ['platform/targets/MD-9600/platform.c',
-                                    'platform/drivers/tones/toneGenerator_MDx.c']
+                                    'platform/drivers/tones/toneGenerator_MDx.cpp']
 
 md9600_inc = inc + stm32f405_inc + ['platform/targets/MD-9600']
 md9600_def = def + stm32f405_def + {'PLATFORM_MD9600': ''}

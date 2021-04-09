@@ -22,12 +22,27 @@
 #define TONE_GENERATOR_H
 
 #include <stdint.h>
+#include <stdlib.h>
+#include <stdbool.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
- * Tone generator for MDxx380 family, used for both CTCSS tones and user
- * interface "beeps".
- * This driver uses TIM3 of STM32F405 mcu in PWM mode to generate sinewaves
- * using a precomputed sine table.
+ * Tone generator for MDx family, used primarily for CTCSS tones and user
+ * interface "beeps". It also provides a means to encode AFSK/4FSK data and to
+ * reproduce arbitrary audio samples.
+ *
+ * WARNING: this driver implements a priority mechanism between "beeps", FSK
+ * modulation and audio playback. A request for FSK modulation or audio playback
+ * always interrupts the generation of a "beep" tone and generation of "beep"
+ * tones is disabled when FSK modulation or audio playback is active.
+ *
+ * This driver uses the following peripherals of the STM32F405 MCU:
+ * - TIM3 as high-frequency PWM timebase.
+ * - TIM14 as timebase for CTCSS and "beeps" through a sine table.
+ * - TIM7 and DMA1_Stream2 for AFSK, 4FSK and playback of audio streams.
  */
 
 /**
@@ -42,9 +57,10 @@ void toneGen_terminate();
 
 /**
  * Set frequency for CTCSS tone generation.
+ *
  * @param toneFreq: CTCSS tone frequency.
  */
-void toneGen_setToneFreq(float toneFreq);
+void toneGen_setToneFreq(const float toneFreq);
 
 /**
  * Activate generation of CTCSS tone.
@@ -57,26 +73,58 @@ void toneGen_toneOn();
 void toneGen_toneOff();
 
 /**
- * Set frequency for user interface "beep".
- * @param beepFreq: frequency of "beep" tone.
+ * Activate generation of a "beep" tone, with a given duration.
+ * Audio is sent both to the speaker and to the rtx baseband IC.
+ *
+ * @param beepFreq: frequency of "beep" tone in Hz.
+ * @param volume: "beep" output volume, range 0 - 255.
+ * @param duration: tone duration in milliseconds, zero for infinite duration.
  */
-void toneGen_setBeepFreq(float beepFreq);
+void toneGen_beepOn(const float beepFreq, const uint8_t volume,
+                    const uint32_t duration);
 
 /**
- * Activate generation of "beep" tone.
- */
-void toneGen_beepOn();
-
-/**
- * Terminate generation of "beep" tone.
+ * Terminate generation of "beep" tone, irrespectively of its duration.
  */
 void toneGen_beepOff();
 
 /**
- * Activate generation of "beep" tone with automatic termination after a given
- * amount of time.
- * @param duration: duration of "beep" tone, in milliseconds.
+ * Encode a given data stream using Bell 202 scheme at 1200 baud, sending the
+ * audio stream to both the speaker and the rtx baseband IC.
+ * This function blocks the execution flow until all data has been sent.
+ *
+ * @param buf: pointer to a buffer containing data to be encoded.
+ * @param len: length of the data buffer.
  */
-void toneGen_timedBeep(uint16_t duration);
+void toneGen_encodeAFSK1200(const uint8_t *buf, const size_t len);
+
+/**
+ * Reproduce an audio stream, sending audio stream to both the speaker and the
+ * rtx baseband IC.
+ * This function blocks the execution flow until all data has been sent.
+ *
+ * WARNING: the underlying peripheral accepts ONLY 16 bit transfers, while the
+ * PWM resolution is 8 bit. Thus, the sample buffer MUST be of uint16_t elements
+ * and, when filling it with data, one must remember that the upper 8 bit are
+ * DISCARDED.
+ *
+ * @param buf: pointer to a buffer containing the audio samples.
+ * @param len: length of the data buffer.
+ * @param sampleRate: sample rate of the audio stream in samples per second.
+ */
+void toneGen_playAudioStream(const uint16_t *buf, const size_t len,
+                             const uint32_t sampleRate);
+
+/**
+ * Get the current status of the "beep"/AFSK/audio generator stage.
+ *
+ * @return true if the tone generator is busy.
+ */
+bool toneGen_toneStatus();
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* TONE_GENERATOR_H */
