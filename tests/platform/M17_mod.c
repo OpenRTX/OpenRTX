@@ -39,6 +39,9 @@
 #include <rtx.h>
 #include <hwconfig.h>
 
+/* Uncomment this to transmit a carrier-only signal */
+// #define CARRIER_TEST
+
 /* Uncomment this to transmit 187.5Hz tone instead of M17 signal */
 // #define CW_TEST
 
@@ -73,19 +76,6 @@ int main(void)
     gpio_setMode(BEEP_OUT, ALTERNATE);
     gpio_setAlternateFunction(BEEP_OUT, 2);
 
-
-    /*
-     * Prepare buffer for 8-bit waveform samples
-     */
-    #ifndef CW_TEST
-    uint16_t *buf = ((uint16_t *) malloc(nSamples * sizeof(uint16_t)));
-    for(size_t i = 0; i < nSamples; i++)
-    {
-        int16_t sample = 32768 - m17_buf[i];
-        buf[i] = ((uint16_t) sample) >> 8;
-    }
-    #endif
-
     /*
      * Enable peripherals
      */
@@ -107,6 +97,10 @@ int main(void)
     TIM3->CCER |= TIM_CCER_CC3E;
     TIM3->CR1  |= TIM_CR1_CEN;
 
+    #ifdef CARRIER_TEST
+    TIM3->CCR3 = 0;
+    #else
+
     /*
      * Timebase for 48kHz sample rate
      */
@@ -117,6 +111,18 @@ int main(void)
     TIM7->DIER = TIM_DIER_UDE
                | TIM_DIER_UIE;
     TIM7->CR1  = TIM_CR1_CEN;
+
+    /*
+     * Prepare buffer for 8-bit waveform samples
+     */
+    #ifndef CW_TEST
+    uint16_t *buf = ((uint16_t *) malloc(nSamples * sizeof(uint16_t)));
+    for(size_t i = 0; i < nSamples; i++)
+    {
+        int16_t sample = 32768 - m17_buf[i];
+        buf[i] = ((uint16_t) sample) >> 8;
+    }
+    #endif
 
     /*
      * DMA stream for sample transfer
@@ -137,6 +143,8 @@ int main(void)
                      | DMA_SxCR_CIRC          /* Circular mode               */
                      | DMA_SxCR_DIR_0         /* Memory to peripheral        */
                      | DMA_SxCR_EN;           /* Start transfer              */
+    #endif
+
     /*
      * Baseband setup
      */
