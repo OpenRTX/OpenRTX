@@ -385,28 +385,15 @@ static inline uint16_t get_reset_x(textAlign_t alignment, uint16_t line_size,
     return 0;
 }
 
-uint16_t gfx_getLineY(uint8_t cur, uint8_t tot, uint16_t startY, uint16_t endY)
+point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment, 
+                        color_t color, const char *buf)
 {
-    // e.g. to print 2 lines we need 3 padding spaces
-    uint16_t step = (endY - startY) / (tot + 1);
-    return startY + (step * cur);
-}
-
-point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment, 
-                  color_t color, const char *fmt, ... )
-{
-    va_list ap;
-     
-    va_start(ap, fmt);
-    vsnprintf(text, sizeof(text)-1, fmt, ap);
-    va_end(ap);
-
     GFXfont f = fonts[size];
 
-    size_t len = strlen(text);
+    size_t len = strlen(buf);
 
     // Compute size of the first row in pixels
-    uint16_t line_size = get_line_size(f, text, len);
+    uint16_t line_size = get_line_size(f, buf, len);
     uint16_t reset_x = get_reset_x(alignment, line_size, start.x);
     start.x = reset_x;
 
@@ -417,7 +404,7 @@ point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment,
     /* For each char in the string */
     for(unsigned i = 0; i < len; i++)
     {
-        char c = text[i];
+        char c = buf[i];
         GFXglyph glyph = f.glyph[c - f.first];
         uint8_t *bitmap = f.bitmap;
 
@@ -445,7 +432,7 @@ point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment,
         if (start.x + glyph.xAdvance > SCREEN_WIDTH)
         {
             // Compute size of the first row in pixels
-            line_size = get_line_size(f, text, len);
+            line_size = get_line_size(f, buf, len);
             start.x = reset_x = get_reset_x(alignment, line_size, start.x);
             start.y += f.yAdvance;
         }
@@ -484,6 +471,40 @@ point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment,
     text_size.x = line_size;
     text_size.y = (saved_start_y - start.y) + line_h;
     return text_size;
+}
+
+point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment, 
+                  color_t color, const char *fmt, ... )
+{
+    // Get format string and arguments from var char
+    va_list ap; 
+    va_start(ap, fmt);
+    vsnprintf(text, sizeof(text)-1, fmt, ap);
+    va_end(ap);
+
+    return gfx_printBuffer(start, size, alignment, color, text);
+}
+
+point_t gfx_printLine(uint8_t cur, uint8_t tot, uint16_t startY, uint16_t endY, uint16_t startX,
+                      fontSize_t size, textAlign_t alignment, color_t color, const char* fmt, ... )
+{
+    // Get format string and arguments from var char
+    va_list ap; 
+    va_start(ap, fmt);
+    vsnprintf(text, sizeof(text)-1, fmt, ap);
+    va_end(ap);
+    
+    // If endY is 0 set it to default value = SCREEN_HEIGHT
+    if(endY == 0)
+        endY = SCREEN_HEIGHT;
+
+    // Calculate print coordinates
+    // e.g. to print 2 lines we need 3 padding spaces
+    uint16_t step = (endY - startY) / (tot + 1);
+    uint16_t printY = startY + (step * cur);
+
+    point_t start = {startX, printY};
+    return gfx_printBuffer(start, size, alignment, color, text);
 }
 
 // Print an error message to the center of the screen, surronded by a red (when possible) box

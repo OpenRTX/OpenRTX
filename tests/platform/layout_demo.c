@@ -40,10 +40,8 @@ int main(void)
             gfx_clearScreen();
             for(int cur=1; cur<=tot; cur++)
             {
-                uint16_t y = gfx_getLineY(cur, tot, 0, SCREEN_HEIGHT);
-                point_t pos = {0, y};
-                gfx_print(pos, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
-                          color_white, "Line %2d of %2d", cur, tot);
+                gfx_printLine(cur, tot, 0, 0, 0, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
+                              color_white, "Line %2d of %2d", cur, tot);
             }
             gfx_render();
             // Sleep for 1 second

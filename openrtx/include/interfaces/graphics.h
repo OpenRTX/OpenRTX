@@ -224,17 +224,7 @@ void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color,
 void gfx_drawCircle(point_t start, uint16_t r, color_t color);
 
 /**
- * Calculates printing position to fit a number of text lines on the screen space.
- * @param cur: current line number over total (1-based)
- * @param tot: number of lines to fit in screen
- * @param startY: starting Y coordinate to leave space for top bar
- * @param endY: ending Y coordinate to leave space for bottom bar
- * @return Y coordinates for text printing
- */
-uint16_t gfx_getLineY(uint8_t cur, uint8_t tot, uint16_t startY, uint16_t endY);
-
-/**
- * Prints text on the screen.
+ * Prints text on the screen at the specified coordinates.
  * @param start: text line start point, in pixel coordinates.
  * @param size: text font size, defined as enum.
  * @param alignment: text alignment type, defined as enum.
@@ -243,6 +233,23 @@ uint16_t gfx_getLineY(uint8_t cur, uint8_t tot, uint16_t startY, uint16_t endY);
  * @return text width and height as point_t coordinates
  */
 point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment, color_t color, const char* fmt, ... );
+
+/**
+ * Prints text on the screen, calculating the print position.
+ * The print position is calculated to fit the desired number of lines in the vertical space
+ * @param cur: current line number over total (1-based)
+ * @param tot: number of lines to fit in screen
+ * @param startY: starting Y coordinate to leave space for top bar
+ * @param endY: ending Y coordinate to leave space for bottom bar
+ * @param startX: starting X coordinate to leave space on the screen sides
+ * @param size: text font size, defined as enum.
+ * @param alignment: text alignment type, defined as enum.
+ * @param color: text color, in color_t format.
+ * @param fmt: printf style format string
+ * @return text width and height as point_t coordinates
+ */
+point_t gfx_printLine(uint8_t cur, uint8_t tot, uint16_t startY, uint16_t endY, uint16_t startX, 
+                      fontSize_t size, textAlign_t alignment, color_t color, const char* fmt, ... );
 
 /**
  * Prints an error message surrounded by a red box on the screen.
