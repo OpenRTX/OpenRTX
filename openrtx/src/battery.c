@@ -42,7 +42,14 @@ float bat_v_max = 0.0;
 #error Please define a battery type into platform/targets/.../hwconfig.h
 #endif
 
-float battery_getCharge(float vbat) {
-    // Perform a linear interpolation between minimum and maximum charge values
+float battery_getCharge(float vbat)
+{
+    #ifndef BAT_NONE
+    // Perform a linear interpolation between minimum and maximum charge values.
     return (vbat - bat_v_min) / (bat_v_max - bat_v_min);
+    #else
+    // Return full charge if no battery is present.
+    (void) vbat;
+    return 1.0f;
+    #endif
 }

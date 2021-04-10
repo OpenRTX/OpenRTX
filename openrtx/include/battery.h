@@ -20,10 +20,11 @@
 #ifndef BATTERY_H
 #define BATTERY_H
 
-/* This function uses battery charge tables to convert a battery voltage into a
+/**
+ * This function uses battery charge tables to convert a battery voltage into a
  * charge percentage.
- * @param vbat: the voltage read from the battery in volt
- * @return the charge percentage
+ * @param vbat: the voltage read from the battery in volt.
+ * @return the charge percentage.
  */
 float battery_getCharge(float vbat);
 
