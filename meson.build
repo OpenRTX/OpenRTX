@@ -2,14 +2,16 @@
 ## OpenRTX - Modular Open Source Radio Firmware
 ##
 project('OpenRTX', ['c', 'cpp'],
-  version : '0.1',
+  version : '0.3.1',
   default_options : ['warning_level=3'])
 
 ##
-## Here are listed all the platform independent source files
+## ----------------- Platform-independent source files -------------------------
 ##
 
-## OpenRTX
+##
+## OpenRTX sources
+##
 
 openrtx_src = ['openrtx/src/state.c',
                'openrtx/src/ui/ui.c',
@@ -24,14 +26,6 @@ openrtx_src = ['openrtx/src/state.c',
                'openrtx/src/rtx.c',
                'openrtx/src/gps.c']
 
-
-## Replace main executable with platform test
-if get_option('test') != ''
-  openrtx_src += 'tests/platform/'+get_option('test')+'.c'
-else
-  openrtx_src += 'openrtx/src/main.c'
-endif
-
 openrtx_inc = ['openrtx/include',
                'openrtx/include/calibration',
                'platform/drivers/ADC',
@@ -42,36 +36,77 @@ openrtx_inc = ['openrtx/include',
                'platform/drivers/tones',
                'platform/drivers/baseband']
 
+# Add to sources either the main executable or a platform test
+if get_option('test') != ''
+  openrtx_src += 'tests/platform/'+get_option('test')+'.c'
+else
+  openrtx_src += 'openrtx/src/main.c'
+endif
+
+##
+## External libraries
+##
+
+# minmea, a lightweight GPS NMEA 0183 parser library
+minmea_src = ['lib/minmea/minmea.c']
+minmea_inc = ['lib/minmea/include']
+
+# QDEC, a very simple, header only, quadrature decoding library
+qdec_inc = ['lib/qdec/include']
+
+##
 ## RTOS
+##
 rtos_inc = ['lib/miosix-kernel',
             'lib/miosix-kernel/arch',
             'lib/miosix-kernel/arch/cortexM4_stm32f4/common',
             'lib/miosix-kernel/arch/cortexM4_stm32f4/M4_openrtx',
             'lib/miosix-kernel/config/arch/cortexM4_stm32f4/M4_openrtx']
 
-## minmea, a lightweight GPS NMEA 0183 parser library
-
-minmea_src = ['lib/minmea/minmea.c']
-
-minmea_inc = ['lib/minmea/include']
-
-## QDEC, a very simple, header only, quadrature decoding library
-
-qdec_inc = ['lib/qdec/include']
 
 src = openrtx_src + minmea_src
 inc = openrtx_inc + rtos_inc + minmea_inc + qdec_inc
-
-##
-## Definitions
-##
 def = {'DONT_USE_CMSIS_INIT': ''}
 
 ##
-## MCU-dependent sources and includes
+## --------------------- Family-dependent source files -------------------------
 ##
 
+##
+## TYT MDx family
+##
+
+mdx_src = ['platform/drivers/ADC/ADC1_MDx.c',
+           'platform/drivers/GPS/GPS_MDx.cpp',
+           'platform/drivers/NVM/W25Qx.c',
+           'platform/drivers/NVM/spiFlash_MDx.c',
+           'platform/drivers/display/HX8353_MDx.cpp',
+           'platform/drivers/keyboard/keyboard_MDx.c',
+           'platform/drivers/tones/toneGenerator_MDx.cpp']
+
+##
+## GDx family: Radioddity GD-77 and Baofeng DM-1801
+##
+
+gdx_src = ['platform/drivers/NVM/W25Qx.c',
+           'platform/drivers/NVM/AT24Cx_GDx.c',
+           'platform/drivers/NVM/spiFlash_GDx.c',
+           'platform/drivers/NVM/nvmem_GDx.c',
+           'platform/drivers/ADC/ADC0_GDx.c',
+           'platform/drivers/baseband/radio_GDx.c',
+           'platform/drivers/baseband/AT1846S.c',
+           'platform/drivers/baseband/HR_C6000.c',
+           'platform/drivers/baseband/interfaces_GDx.c',
+           'platform/drivers/display/UC1701_GD77.c',
+           'platform/drivers/keyboard/keyboard_GD77.c',]
+
+##
+## --------------------- MCU-dependent source files ----------------------------
+##
+
+##
 ## STM32F405
+##
 
 stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.cpp',
                  'platform/mcu/STM32F4xx/boot/bsp.cpp',
@@ -100,7 +135,9 @@ stm32f405_inc = ['platform/mcu/CMSIS/Include',
 stm32f405_def = {'STM32F40_41xxx': '', 'HSE_VALUE':'8000000',
                  '_POSIX_PRIORITY_SCHEDULING':''}
 
+##
 ## MK22FN512
+##
 
 mk22fn512_src = ['platform/mcu/MK22FN512xxx12/boot/startup.cpp',
                  'platform/mcu/MK22FN512xxx12/boot/bsp.cpp',
@@ -124,10 +161,12 @@ mk22fn512_inc = ['platform/mcu/CMSIS/Include',
 mk22fn512_def = {'_POSIX_PRIORITY_SCHEDULING':''}
 
 ##
-## Platform specializations
+## ----------------------- Platform specializations ----------------------------
 ##
 
+##
 ## Linux
+##
 linux_src = src + ['platform/targets/linux/emulator/emulator.c',
                    'platform/drivers/display/display_libSDL.c',
                    'platform/drivers/keyboard/keyboard_linux.c',
@@ -156,89 +195,60 @@ else
   linux_dep = []
 endif
 
+##
 ## TYT MD-3x0 family
-md3x0_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.cpp',
-                                   'platform/drivers/keyboard/keyboard_MDx.c',
-                                   'platform/drivers/NVM/W25Qx.c',
-                                   'platform/drivers/NVM/spiFlash_MDx.c',
-                                   'platform/drivers/NVM/nvmem_MD3x0.c',
-                                   'platform/drivers/ADC/ADC1_MDx.c',
-                                   'platform/drivers/tones/toneGenerator_MDx.cpp',
-                                   'platform/drivers/baseband/SKY72310.c',
-                                   'platform/drivers/baseband/radio_MD3x0.c',
-                                   'platform/drivers/baseband/HR_C5000.c',
-                                   'platform/drivers/GPS/GPS_MDx.cpp',
-                                   'platform/targets/MD-3x0/platform.c']
+##
+md3x0_src = src + mdx_src + stm32f405_src + ['platform/drivers/NVM/nvmem_MD3x0.c',
+                                             'platform/drivers/baseband/SKY72310.c',
+                                             'platform/drivers/baseband/radio_MD3x0.c',
+                                             'platform/drivers/baseband/HR_C5000.c',
+                                             'platform/targets/MD-3x0/platform.c']
 
 md3x0_inc = inc + stm32f405_inc + ['platform/targets/MD-3x0']
-md3x0_def = def + stm32f405_def + {'PLATFORM_MD3x0': '',
-                                   'timegm': 'mktime'}
+md3x0_def = def + stm32f405_def + {'PLATFORM_MD3x0': '', 'timegm': 'mktime'}
 
+##
 ## TYT MD-UV380
-mduv3x0_src = src + stm32f405_src + ['platform/drivers/display/HX8353_MDx.cpp',
-                                     'platform/drivers/keyboard/keyboard_MDx.c',
-                                     'platform/drivers/NVM/W25Qx.c',
-                                     'platform/drivers/NVM/spiFlash_MDx.c',
-                                     'platform/drivers/NVM/nvmem_MDUV3x0.c',
-                                     'platform/drivers/ADC/ADC1_MDx.c',
-                                     'platform/drivers/tones/toneGenerator_MDx.cpp',
-                                     'platform/drivers/baseband/radio_UV3x0.c',
-                                     'platform/drivers/GPS/GPS_MDx.cpp',
-                                     'platform/targets/MD-UV3x0/platform.c',
-                                     'platform/drivers/baseband/AT1846S_UV3x0.c',
-                                     'platform/drivers/baseband/HR_C6000_UV3x0.c',
-                                     'platform/drivers/baseband/interfaces_UV3x0.c']
+##
+mduv3x0_src = src + mdx_src + stm32f405_src + ['platform/drivers/NVM/nvmem_MDUV3x0.c',
+                                               'platform/drivers/baseband/radio_UV3x0.c',
+                                               'platform/targets/MD-UV3x0/platform.c',
+                                               'platform/drivers/baseband/AT1846S_UV3x0.c',
+                                               'platform/drivers/baseband/HR_C6000_UV3x0.c',
+                                               'platform/drivers/baseband/interfaces_UV3x0.c']
 
 mduv3x0_inc = inc + stm32f405_inc + ['platform/targets/MD-UV3x0']
-mduv3x0_def = def + stm32f405_def + {'PLATFORM_MDUV3x0': ''}
+mduv3x0_def = def + stm32f405_def + {'PLATFORM_MDUV3x0': '', 'timegm': 'mktime'}
 
-
+##
 ## TYT MD-9600
+##
 md9600_src = src + stm32f405_src + ['platform/targets/MD-9600/platform.c',
                                     'platform/drivers/tones/toneGenerator_MDx.cpp']
 
 md9600_inc = inc + stm32f405_inc + ['platform/targets/MD-9600']
 md9600_def = def + stm32f405_def + {'PLATFORM_MD9600': ''}
 
-
+##
 ## Radioddity GD-77
-gd77_src = src + mk22fn512_src + ['platform/targets/GD-77/platform.c',
-                                  'platform/drivers/display/UC1701_GD77.c',
-                                  'platform/drivers/keyboard/keyboard_GD77.c',
-                                  'platform/drivers/NVM/W25Qx.c',
-                                  'platform/drivers/NVM/AT24Cx_GDx.c',
-                                  'platform/drivers/NVM/spiFlash_GDx.c',
-                                  'platform/drivers/NVM/nvmem_GDx.c',
-                                  'platform/drivers/ADC/ADC0_GDx.c',
-                                  'platform/drivers/baseband/radio_GDx.c',
-                                  'platform/drivers/baseband/AT1846S.c',
-                                  'platform/drivers/baseband/HR_C6000.c',
-                                  'platform/drivers/baseband/interfaces_GDx.c']
+##
+gd77_src = src + gdx_src + mk22fn512_src + ['platform/targets/GD-77/platform.c']
 
 gd77_inc = inc + mk22fn512_inc + ['platform/targets/GD-77']
 gd77_def = def + mk22fn512_def + {'PLATFORM_GD77': ''}
 
-
+##
 ## Baofeng DM-1801
-dm1801_src = src + mk22fn512_src + ['platform/targets/DM-1801/platform.c',
-                                    'platform/drivers/display/UC1701_GD77.c',
-                                    'platform/drivers/keyboard/keyboard_GD77.c',
-                                    'platform/drivers/NVM/W25Qx.c',
-                                    'platform/drivers/NVM/AT24Cx_GDx.c',
-                                    'platform/drivers/NVM/spiFlash_GDx.c',
-                                    'platform/drivers/NVM/nvmem_GDx.c',
-                                    'platform/drivers/ADC/ADC0_GDx.c',
-                                    'platform/drivers/baseband/radio_GDx.c',
-                                    'platform/drivers/baseband/AT1846S.c',
-                                    'platform/drivers/baseband/HR_C6000.c',
-                                    'platform/drivers/baseband/interfaces_GDx.c']
+##
+dm1801_src = src + gdx_src + mk22fn512_src + ['platform/targets/DM-1801/platform.c']
 
 dm1801_inc = inc + mk22fn512_inc + ['platform/targets/DM-1801']
 dm1801_def = def + mk22fn512_def + {'PLATFORM_DM1801': ''}
 
 ##
-## Compilation defines
+## -------------------------- Compilation arguments ----------------------------
 ##
+
 linux_c_args = []
 linux_l_args = ['-lm']
 
@@ -348,8 +358,9 @@ md9600_opts = {'sources': md9600_src,
                'include_directories': md9600_inc}
 
 ##
-## Targets
+## ---------------------------- Compilation targets ----------------------------
 ##
+
 targets = [
 
   {'name': 'linux',
@@ -387,9 +398,9 @@ targets = [
    'load_addr': '0x0800C000'},
   ]
 
-objcopy = find_program('objcopy', required:false, disabler:true)
-radio_tool = find_program('radio_tool', required:false, disabler:true)
-bin2sgl = find_program('scripts/bin2sgl.Linux', required:false, disabler:true)
+objcopy     = find_program('objcopy',                          required:false, disabler:true)
+radio_tool  = find_program('radio_tool',                       required:false, disabler:true)
+bin2sgl     = find_program('scripts/bin2sgl.Linux',            required:false, disabler:true)
 gd77_loader = find_program('scripts/gd-77_firmware_loader.py', required:false, disabler:true)
 
 foreach t : targets
