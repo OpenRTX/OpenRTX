@@ -41,9 +41,8 @@ void _ui_drawMainTop()
 #endif
     // If the radio has no built-in battery, print input voltage
 #ifdef BAT_NONE
-    char volt_buf[6] = "";
-    snprintf(volt_buf, sizeof(volt_buf), "%.1fV", last_state.v_bat);
-    gfx_print(layout.top_pos, volt_buf, layout.top_font, TEXT_ALIGN_RIGHT, color_white);
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_RIGHT,
+              color_white,"%.1fV", last_state.v_bat);
 #else
     // Otherwise print battery icon on top bar, use 4 px padding
     uint16_t bat_width = SCREEN_WIDTH / 9;
@@ -56,11 +55,11 @@ void _ui_drawMainTop()
     switch(last_state.channel.mode)
     {
         case FM:
-        gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT, 
+        gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white, "FM");
         break;
         case DMR:
-        gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT, 
+        gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white, "DMR");
         break;
     }
@@ -70,21 +69,21 @@ void _ui_drawZoneChannel()
 {
     // Print Zone name
     if(!last_state.zone_enabled)
-        gfx_print(layout.line1_pos, layout.line1_font, TEXT_ALIGN_LEFT, 
+        gfx_print(layout.line1_pos, layout.line1_font, TEXT_ALIGN_LEFT,
                   color_white, "zone: All channels");
     else
-        gfx_print(layout.line1_pos, layout.line1_font, TEXT_ALIGN_LEFT, 
+        gfx_print(layout.line1_pos, layout.line1_font, TEXT_ALIGN_LEFT,
                   color_white,  "zone: %.13s", last_state.zone.name);
     // Print Channel name
-    gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_LEFT, 
-              color_white, "  %03d: %.12s", 
+    gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_LEFT,
+              color_white, "  %03d: %.12s",
               last_state.channel_index, last_state.channel.name);
 }
 
 void _ui_drawFrequency()
 {
     // Print big numbers frequency
-    gfx_print(layout.line3_pos, layout.line3_font, TEXT_ALIGN_CENTER, 
+    gfx_print(layout.line3_pos, layout.line3_font, TEXT_ALIGN_CENTER,
               color_white, "%03lu.%05lu",
               (unsigned long)last_state.channel.rx_frequency/1000000,
               (unsigned long)last_state.channel.rx_frequency%1000000/10);

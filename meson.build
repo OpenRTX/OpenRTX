@@ -79,9 +79,6 @@ def = {'DONT_USE_CMSIS_INIT': ''}
 mdx_src = ['platform/drivers/ADC/ADC1_MDx.c',
            'platform/drivers/GPS/GPS_MDx.cpp',
            'platform/drivers/NVM/W25Qx.c',
-           'platform/drivers/NVM/spiFlash_MDx.c',
-           'platform/drivers/display/HX8353_MDx.cpp',
-           'platform/drivers/keyboard/keyboard_MDx.c',
            'platform/drivers/tones/toneGenerator_MDx.cpp']
 
 ##
@@ -200,9 +197,12 @@ endif
 ## TYT MD-3x0 family
 ##
 md3x0_src = src + mdx_src + stm32f405_src + ['platform/drivers/NVM/nvmem_MD3x0.c',
+                                             'platform/drivers/NVM/spiFlash_MD3x.c',
                                              'platform/drivers/baseband/SKY72310.c',
                                              'platform/drivers/baseband/radio_MD3x0.c',
                                              'platform/drivers/baseband/HR_C5000.c',
+                                             'platform/drivers/keyboard/keyboard_MD3x.c',
+                                             'platform/drivers/display/HX8353_MD3x.cpp',
                                              'platform/targets/MD-3x0/platform.c']
 
 md3x0_inc = inc + stm32f405_inc + ['platform/targets/MD-3x0']
@@ -212,8 +212,11 @@ md3x0_def = def + stm32f405_def + {'PLATFORM_MD3x0': '', 'timegm': 'mktime'}
 ## TYT MD-UV380
 ##
 mduv3x0_src = src + mdx_src + stm32f405_src + ['platform/drivers/NVM/nvmem_MDUV3x0.c',
-                                               'platform/drivers/baseband/radio_UV3x0.c',
+                                               'platform/drivers/NVM/spiFlash_MD3x.c',
                                                'platform/targets/MD-UV3x0/platform.c',
+                                               'platform/drivers/keyboard/keyboard_MD3x.c',
+                                               'platform/drivers/display/HX8353_MD3x.cpp',
+                                               'platform/drivers/baseband/radio_UV3x0.c',
                                                'platform/drivers/baseband/AT1846S_UV3x0.c',
                                                'platform/drivers/baseband/HR_C6000_UV3x0.c',
                                                'platform/drivers/baseband/interfaces_UV3x0.c']
@@ -224,16 +227,12 @@ mduv3x0_def = def + stm32f405_def + {'PLATFORM_MDUV3x0': '', 'timegm': 'mktime'}
 ##
 ## TYT MD-9600
 ##
-md9600_src = src + stm32f405_src + ['platform/targets/MD-9600/platform.c',
-                                    'platform/drivers/display/ST7567_MD9600.c',
-                                    'platform/drivers/keyboard/keyboard_MD9600.c',
-                                    'platform/drivers/tones/toneGenerator_MDx.c',
-                                    'platform/drivers/NVM/nvmem_MD9600.c',
-                                    'platform/drivers/baseband/radio_MD9600.c',
-                                    'platform/drivers/NVM/W25Qx.c',
-                                    'platform/drivers/ADC/ADC1_MDx.c',
-                                    'platform/drivers/GPS/GPS_MDx.cpp',
-                                    'platform/drivers/NVM/spiFlash_MD9600.c']
+md9600_src = src + mdx_src + stm32f405_src + ['platform/targets/MD-9600/platform.c',
+                                              'platform/drivers/display/ST7567_MD9600.c',
+                                              'platform/drivers/keyboard/keyboard_MD9600.c',
+                                              'platform/drivers/baseband/radio_MD9600.c',
+                                              'platform/drivers/NVM/nvmem_MD9600.c',
+                                              'platform/drivers/NVM/spiFlash_MD9600.c']
 
 md9600_inc = inc + stm32f405_inc + ['platform/targets/MD-9600']
 md9600_def = def + stm32f405_def + {'PLATFORM_MD9600': ''}
