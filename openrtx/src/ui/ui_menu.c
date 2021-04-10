@@ -447,16 +447,17 @@ void _ui_drawSettingsGPS(ui_state_t* ui_state)
 void _ui_drawSettingsTimeDate()
 {
     gfx_clearScreen();
+    curTime_t local_time = state_getLocalTime(last_state.time);
     // Print "Time&Date" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER, 
               color_white, "Time&Date");
     // Print current time and date
     gfx_print(layout.line2_pos, layout.input_font, TEXT_ALIGN_CENTER,
               color_white, "%02d/%02d/%02d", 
-              last_state.time.date, last_state.time.month, last_state.time.year);
+              local_time.date, local_time.month, local_time.year);
     gfx_print(layout.line3_pos, layout.input_font, TEXT_ALIGN_CENTER,
               color_white, "%02d:%02d:%02d", 
-              last_state.time.hour, last_state.time.minute, last_state.time.second);
+              local_time.hour, local_time.minute, local_time.second);
 }
 
 void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state)

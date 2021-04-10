@@ -222,7 +222,6 @@ void *dev_task(void *arg)
 
 #ifdef HAS_RTC
         state.time = rtc_getTime();
-        state_applyTimezone();
 #endif
 
         // Low-pass filtering with a time constant of 10s when updated at 1Hz

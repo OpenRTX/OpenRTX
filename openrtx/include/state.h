@@ -128,9 +128,15 @@ void state_init();
 void state_terminate();
 
 /**
- * This function applies the selected timezone after reading the time from
- * the RTC.
+ * The RTC and state.time are set to UTC time
+ * Use this function to get local time from UTC time based on timezone setting
  */
-void state_applyTimezone();
+curTime_t state_getLocalTime(curTime_t utc_time);
+
+/**
+ * The RTC and state.time are set to UTC time
+ * Use this function to get UTC time from local time based on timezone setting
+ */
+curTime_t state_getUTCTime(curTime_t local_time);
 
 #endif /* STATE_H */

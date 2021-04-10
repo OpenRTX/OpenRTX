@@ -35,9 +35,10 @@ void _ui_drawMainTop()
 {
 #ifdef HAS_RTC
     // Print clock on top bar
+    curTime_t local_time = state_getLocalTime(last_state.time);
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, "%02d:%02d:%02d", last_state.time.hour,
-              last_state.time.minute, last_state.time.second);
+              color_white, "%02d:%02d:%02d", local_time.hour,
+              local_time.minute, local_time.second);
 #endif
     // If the radio has no built-in battery, print input voltage
 #ifdef BAT_NONE
