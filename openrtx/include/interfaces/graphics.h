@@ -260,8 +260,8 @@ point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment,
  * The print position is calculated to fit the desired number of lines in the vertical space
  * @param cur: current line number over total (1-based)
  * @param tot: number of lines to fit in screen
- * @param startY: starting Y coordinate to leave space for top bar
- * @param endY: ending Y coordinate to leave space for bottom bar
+ * @param startY: starting Y coordinate to leave space at the top, use 0 to leave no space
+ * @param endY: ending Y coordinate to leave space at the bottom, use 0 to leave no space
  * @param startX: starting X coordinate to leave space on the screen sides
  * @param size: text font size, defined as enum.
  * @param alignment: text alignment type, defined as enum.

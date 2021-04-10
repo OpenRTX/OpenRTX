@@ -492,8 +492,9 @@ point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment,
     return gfx_printBuffer(start, size, alignment, color, text);
 }
 
-point_t gfx_printLine(uint8_t cur, uint8_t tot, uint16_t startY, uint16_t endY, uint16_t startX,
-                      fontSize_t size, textAlign_t alignment, color_t color, const char* fmt, ... )
+point_t gfx_printLine(uint8_t cur, uint8_t tot, uint16_t startY, uint16_t endY, 
+                      uint16_t startX, fontSize_t size, textAlign_t alignment, 
+                      color_t color, const char* fmt, ... )
 {
     // Get format string and arguments from var char
     va_list ap; 
@@ -501,21 +502,18 @@ point_t gfx_printLine(uint8_t cur, uint8_t tot, uint16_t startY, uint16_t endY, 
     vsnprintf(text, sizeof(text)-1, fmt, ap);
     va_end(ap);
     
+    // Estimate font height by reading the gliph | height
+    uint8_t fontH = gfx_getFontHeight(size);
+    
     // If endY is 0 set it to default value = SCREEN_HEIGHT
-    if(endY == 0)
-        endY = SCREEN_HEIGHT;
+    if(endY == 0) endY = SCREEN_HEIGHT;
 
     // Calculate print coordinates
-    // e.g. to print 2 lines we need 3 padding spaces
-    uint16_t step = (endY - startY) / (tot + 1);
-    uint16_t printY = startY + (step * cur);
-
-    // Estimate font height by reading the gliph | height
-    uint8_t h = gfx_getFontHeight(size);
-
-    // gfx_printBuffer() prints over the starting point
-    // Add half print_height to get vertically centered prints
-    printY += (h / 2);
+    uint16_t height = endY - startY;
+    // to print 2 lines we need 3 padding spaces
+    uint16_t gap = (height - (fontH * tot)) / (tot + 1);
+    // We need a gap and a line height for each line
+    uint16_t printY = startY + (cur * (gap + fontH));
 
     point_t start = {startX, printY};
     return gfx_printBuffer(start, size, alignment, color, text);
