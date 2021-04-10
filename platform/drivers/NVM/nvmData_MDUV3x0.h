@@ -24,10 +24,12 @@
 #include <stdint.h>
 
 /**
- * \internal Data structures matching the one used by original MD3x0 firmware to
- * manage codeplug data inside nonvolatile flash memory.
+ * \internal Data structures matching the one used by original firmware 
+ * of MDUV3x0 and MD9600 to manage codeplug data inside nonvolatile flash memory.
  *
- * Taken by dmrconfig repository: https://github.com/sergev/dmrconfig/blob/master/uv380.c
+ * Taken by dmrconfig repository: 
+ * https://github.com/sergev/dmrconfig/blob/master/uv380.c
+ * https://github.com/sergev/dmrconfig/blob/master/md9600.c
  */
 typedef struct
 {
