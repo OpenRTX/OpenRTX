@@ -27,26 +27,13 @@
 #include <interfaces/rtc.h>
 #include <qdec.h>
 
+#ifdef ENABLE_BKLIGHT_DIMMING
+#include <backlight.h>
+#endif
+
 mduv3x0Calib_t calibration;
 hwInfo_t hwInfo;
 static int8_t knob_pos = 0;
-
-#ifdef ENABLE_BKLIGHT_DIMMING
-void _Z29TIM1_TRG_COM_TIM11_IRQHandlerv()
-{
-    if(TIM11->SR & TIM_SR_CC1IF)
-    {
-        gpio_clearPin(LCD_BKLIGHT); /* Clear pin on compare match */
-    }
-
-    if(TIM11->SR & TIM_SR_UIF)
-    {
-        gpio_setPin(LCD_BKLIGHT);   /* Set pin on counter reload */
-    }
-
-    TIM11->SR = 0;
-}
-#endif
 
 /*
  * Note that this interrupt handler currently assumes only the encoder will
@@ -90,9 +77,6 @@ void platform_init()
     gpio_setMode(GREEN_LED, OUTPUT);
     gpio_setMode(RED_LED,   OUTPUT);
 
-    gpio_setMode(LCD_BKLIGHT, OUTPUT);
-    gpio_clearPin(LCD_BKLIGHT);
-
     gpio_setMode(CH_SELECTOR_0, INPUT_PULL_UP);
     gpio_setMode(CH_SELECTOR_1, INPUT_PULL_UP);
 
@@ -126,44 +110,20 @@ void platform_init()
     rtc_init();                      /* Initialise RTC                         */
 
     #ifdef ENABLE_BKLIGHT_DIMMING
-    /*
-     * Configure TIM11 for backlight PWM: Fpwm = 256Hz, 8 bit of resolution.
-     * APB2 freq. is 84MHz but timer runs at twice this frequency, then:
-     * PSC = 2564 to have Ftick = 65.52kHz
-     * With ARR = 256, Fpwm is 256Hz;
-     */
-    RCC->APB2ENR |= RCC_APB2ENR_TIM11EN;
-    __DSB();
-
-    TIM11->ARR = 255;
-    TIM11->PSC = 2563;
-    TIM11->CNT = 0;
-    TIM11->CR1   |= TIM_CR1_ARPE;
-    TIM11->CCMR1 |= TIM_CCMR1_OC1M_2
-                 |  TIM_CCMR1_OC1M_1
-                 |  TIM_CCMR1_OC1PE;
-    TIM11->CCER  |= TIM_CCER_CC1E;
-    TIM11->CCR1 = 0;
-    TIM11->EGR  = TIM_EGR_UG;        /* Update registers            */
-    TIM11->SR   = 0;                 /* Clear interrupt flags       */
-    TIM11->DIER = TIM_DIER_CC1IE     /* Interrupt on compare match  */
-                | TIM_DIER_UIE;      /* Interrupt on counter reload */
-    TIM11->CR1 |= TIM_CR1_CEN;       /* Start timer                 */
-
-    NVIC_ClearPendingIRQ(TIM1_TRG_COM_TIM11_IRQn);
-    NVIC_SetPriority(TIM1_TRG_COM_TIM11_IRQn,15);
-    NVIC_EnableIRQ(TIM1_TRG_COM_TIM11_IRQn);
+    backlight_init();                /* Initialise backlight driver            */
+    #else
+    gpio_setMode(LCD_BKLIGHT, OUTPUT);
+    gpio_clearPin(LCD_BKLIGHT);
     #endif
 }
 
 void platform_terminate()
 {
     /* Shut down backlight */
-    gpio_clearPin(LCD_BKLIGHT);
-
     #ifdef ENABLE_BKLIGHT_DIMMING
-    RCC->APB2ENR &= ~RCC_APB2ENR_TIM11EN;
-    __DSB();
+    backlight_terminate();
+    #else
+    gpio_clearPin(LCD_BKLIGHT);
     #endif
 
     /* Shut down LEDs */
@@ -259,31 +219,6 @@ void platform_beepStop()
     /* TODO */
 }
 
-void platform_setBacklightLevel(uint8_t level)
-{
-    /*
-     * Little workaround for the following nasty behaviour: if CCR1 value is
-     * zero, a waveform with 99% duty cycle is generated. This is because we are
-     * emulating pwm with interrupts.
-     */
-    if(level > 1)
-    {
-        #ifdef ENABLE_BKLIGHT_DIMMING
-        TIM11->CCR1 = level;
-        TIM11->CR1 |= TIM_CR1_CEN;
-        #else
-        gpio_setPin(LCD_BKLIGHT);
-        #endif
-    }
-    else
-    {
-        #ifdef ENABLE_BKLIGHT_DIMMING
-        TIM11->CR1 &= ~TIM_CR1_CEN;
-        #endif
-        gpio_clearPin(LCD_BKLIGHT);
-    }
-}
-
 const void *platform_getCalibrationData()
 {
     return ((const void *) &calibration);
@@ -293,3 +228,22 @@ const hwInfo_t *platform_getHwInfo()
 {
     return &hwInfo;
 }
+
+/*
+ * NOTE: when backligth dimming is enabled, the implementation of this API
+ * function is provided in platform/drivers/backlight/backlight_MDx.c to avoid
+ * an useless function call.
+ */
+#ifndef ENABLE_BKLIGHT_DIMMING
+void platform_setBacklightLevel(uint8_t level)
+{
+    if(level > 1)
+    {
+        gpio_setPin(LCD_BKLIGHT);
+    }
+    else
+    {
+        gpio_clearPin(LCD_BKLIGHT);
+    }
+}
+#endif

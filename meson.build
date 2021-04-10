@@ -32,9 +32,9 @@ openrtx_inc = ['openrtx/include',
                'platform/drivers/NVM',
                'platform/drivers/GPS',
                'platform/drivers/tones',
-               'openrtx/include/fonts/adafruit',
-               'platform/drivers/tones',
-               'platform/drivers/baseband']
+               'platform/drivers/baseband',
+               'platform/drivers/backlight',
+               'openrtx/include/fonts/adafruit']
 
 # Add to sources either the main executable or a platform test
 if get_option('test') != ''
@@ -79,6 +79,7 @@ def = {'DONT_USE_CMSIS_INIT': ''}
 mdx_src = ['platform/drivers/ADC/ADC1_MDx.c',
            'platform/drivers/GPS/GPS_MDx.cpp',
            'platform/drivers/NVM/W25Qx.c',
+           'platform/drivers/backlight/backlight_MDx.c',
            'platform/drivers/tones/toneGenerator_MDx.cpp']
 
 ##
@@ -90,6 +91,7 @@ gdx_src = ['platform/drivers/NVM/W25Qx.c',
            'platform/drivers/NVM/spiFlash_GDx.c',
            'platform/drivers/NVM/nvmem_GDx.c',
            'platform/drivers/ADC/ADC0_GDx.c',
+           'platform/drivers/backlight/backlight_GDx.c',
            'platform/drivers/baseband/radio_GDx.c',
            'platform/drivers/baseband/AT1846S.c',
            'platform/drivers/baseband/HR_C6000.c',

@@ -22,6 +22,7 @@
 #include <interfaces/platform.h>
 #include <hwconfig.h>
 #include <string.h>
+#include <backlight.h>
 #include <ADC1_MDx.h>
 #include <calibInfo_MDx.h>
 #include <toneGenerator_MDx.h>
@@ -32,9 +33,6 @@ hwInfo_t hwInfo;
 
 void platform_init()
 {
-    gpio_setMode(LCD_BKLIGHT, ALTERNATE);
-    gpio_setAlternateFunction(LCD_BKLIGHT, 3);
-
     gpio_setMode(CH_SELECTOR_0, INPUT_PULL_UP);
     gpio_setMode(CH_SELECTOR_1, INPUT_PULL_UP);
 
@@ -77,40 +75,13 @@ void platform_init()
     nvm_init();                      /* Initialise non volatile memory manager */
     toneGen_init();                  /* Initialise tone generator              */
     rtc_init();                      /* Initialise RTC                         */
-
-    /*
-     * Configure TIM8 for backlight PWM: Fpwm = 100kHz with 8 bit of resolution.
-     * APB2 freq. is 84MHz, but timer runs at twice this frequency.
-     * Then: PSC = 655 to have Ftick = 256.097kHz
-     * With ARR = 256, Fpwm is 100kHz;
-     * Backlight pin is connected to TIM8 CR1.
-     */
-    RCC->APB2ENR |= RCC_APB2ENR_TIM8EN;
-    __DSB();
-
-    TIM8->ARR = 255;
-    TIM8->PSC = 654;
-    TIM8->CNT = 0;
-    TIM8->CR1   |= TIM_CR1_ARPE;    /* LCD backlight is on PC6, TIM8-CH1 */
-    TIM8->CCMR1 |= TIM_CCMR1_OC1M_2
-                |  TIM_CCMR1_OC1M_1
-                |  TIM_CCMR1_OC1PE;
-    TIM8->CCER  |= TIM_CCER_CC1E;
-    TIM8->BDTR  |= TIM_BDTR_MOE;
-    TIM8->CCR1 = 0;
-    TIM8->EGR  = TIM_EGR_UG;        /* Update registers */
-    TIM8->CR1 |= TIM_CR1_CEN;       /* Start timer */
+    backlight_init();                /* Initialise backlight driver            */
 }
 
 void platform_terminate()
 {
     /* Shut down backlight */
-    gpio_setMode(LCD_BKLIGHT, OUTPUT);
-    gpio_clearPin(LCD_BKLIGHT);
-
-    /* Shut down timer */
-    RCC->APB2ENR &= ~RCC_APB2ENR_TIM8EN;
-    __DSB();
+    backlight_terminate();
 
     /* Shut down all the modules */
     adc1_terminate();
@@ -179,11 +150,6 @@ void platform_beepStop()
     /* TODO */
 }
 
-void platform_setBacklightLevel(uint8_t level)
-{
-    TIM8->CCR1 = level;
-}
-
 const void *platform_getCalibrationData()
 {
     return NULL;
@@ -193,3 +159,10 @@ const hwInfo_t *platform_getHwInfo()
 {
     return &hwInfo;
 }
+
+/*
+ * NOTE: implementation of this API function is provided in
+ * platform/drivers/backlight/backlight_MDx.c
+ */
+// void platform_setBacklightLevel(uint8_t level)
+

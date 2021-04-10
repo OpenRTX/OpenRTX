@@ -26,6 +26,7 @@
 #include <string.h>
 #include <I2C0.h>
 #include <pthread.h>
+#include <backlight.h>
 #include "hwconfig.h"
 
 /* Mutex for concurrent access to ADC0 */
@@ -40,28 +41,14 @@ void platform_init()
     gpio_setMode(GREEN_LED, OUTPUT);
     gpio_setMode(RED_LED,   OUTPUT);
 
-    gpio_setMode(LCD_BKLIGHT, OUTPUT);
-    gpio_clearPin(LCD_BKLIGHT);
-
     gpio_setMode(PTT_SW, INPUT);
 
     gpio_setMode(PWR_SW, OUTPUT);
 
     /*
-     * Configure backlight PWM: 58.5kHz, 8 bit resolution
+     * Initialise backlight driver
      */
-    SIM->SCGC6 |= SIM_SCGC6_FTM0(1); /* Enable clock */
-
-    FTM0->CONTROLS[3].CnSC = FTM_CnSC_MSB(1)
-                           | FTM_CnSC_ELSB(1); /* Edge-aligned PWM, clear on match */
-    FTM0->CONTROLS[3].CnV  = 0;
-
-    FTM0->MOD  = 0xFF;                         /* Reload value          */
-    FTM0->SC   = FTM_SC_PS(3)                  /* Prescaler divide by 8 */
-               | FTM_SC_CLKS(1);               /* Enable timer          */
-
-    gpio_setMode(LCD_BKLIGHT, OUTPUT);
-    gpio_setAlternateFunction(LCD_BKLIGHT, 2);
+    backlight_init();
 
     /*
      * Initialise ADC
@@ -100,7 +87,9 @@ void platform_init()
 
 void platform_terminate()
 {
-    gpio_clearPin(LCD_BKLIGHT);
+    /* Shut down backlight */
+    backlight_terminate();
+
     gpio_clearPin(RED_LED);
     gpio_clearPin(GREEN_LED);
 
@@ -197,11 +186,6 @@ void platform_beepStop()
     /* TODO */
 }
 
-void platform_setBacklightLevel(uint8_t level)
-{
-    FTM0->CONTROLS[3].CnV = level;
-}
-
 const void *platform_getCalibrationData()
 {
     /* The first time this function is called, load calibration data from flash */
@@ -217,3 +201,10 @@ const hwInfo_t *platform_getHwInfo()
 {
     return &hwInfo;
 }
+
+
+/*
+ * NOTE: implementation of this API function is provided in
+ * platform/drivers/backlight/backlight_GDx.c
+ */
+// void platform_setBacklightLevel(uint8_t level)
