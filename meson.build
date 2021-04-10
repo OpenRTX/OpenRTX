@@ -97,8 +97,8 @@ gdx_src = ['platform/drivers/NVM/W25Qx.c',
            'platform/drivers/baseband/AT1846S.c',
            'platform/drivers/baseband/HR_C6000.c',
            'platform/drivers/baseband/interfaces_GDx.c',
-           'platform/drivers/display/UC1701_GD77.c',
-           'platform/drivers/keyboard/keyboard_GD77.c',]
+           'platform/drivers/display/UC1701_GDx.c',
+           'platform/drivers/keyboard/keyboard_GDx.c',]
 
 ##
 ## --------------------- MCU-dependent source files ----------------------------
