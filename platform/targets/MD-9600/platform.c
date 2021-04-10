@@ -41,6 +41,7 @@ void platform_init()
     gpio_setMode(PTT_SW, INPUT);
 
     gpio_setMode(PWR_SW, OUTPUT);
+    gpio_setPin(PWR_SW);
 
     /*
      * Initialise ADC1, for vbat, RSSI, ...
@@ -140,7 +141,7 @@ float platform_getVolumeLevel()
     return 0.0f;
 }
 
-uint8_t platform_getChSelector()
+int8_t platform_getChSelector()
 {
     static const uint8_t rsPositions[] = { 1, 4, 2, 3};
     int pos = gpio_readPin(CH_SELECTOR_0)
