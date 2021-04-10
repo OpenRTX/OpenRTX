@@ -66,11 +66,11 @@ bool _compareVoltages(const int voltage, const int reference)
 
 static const uint32_t micKeymap[5][4] =
 {
-    {  KEY_1,  KEY_2,   KEY_3,   KEY_F1 },
-    {  KEY_4,  KEY_5,   KEY_6,   KEY_F2 },
-    {  KEY_7,  KEY_8,   KEY_9,   KEY_F3 },
-    {KEY_STAR, KEY_0,  KEY_HASH, KEY_F4 },
-    {   0    , KEY_F5,  KEY_UP, KEY_DOWN}
+    {  KEY_1,  KEY_2,   KEY_3,    KEY_F1   },
+    {  KEY_4,  KEY_5,   KEY_6,    KEY_F2   },
+    {  KEY_7,  KEY_8,   KEY_9,   KEY_ENTER },
+    {KEY_STAR, KEY_0,  KEY_HASH,  KEY_ESC  },
+    {   0    , KEY_F5,  KEY_UP,  KEY_DOWN  }
 };
 
 
