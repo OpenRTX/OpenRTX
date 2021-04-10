@@ -224,6 +224,26 @@ void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color,
 void gfx_drawCircle(point_t start, uint16_t r, color_t color);
 
 /**
+ * Estimates the maximum font height by reading the gliph | height
+ * @param size: text font size, defined as enum.
+ * @return font height
+ */
+uint8_t gfx_getFontHeight(fontSize_t size);
+
+/**
+ * Prints text on the screen at the specified coordinates.
+ * Reads text from a given char buffer
+ * @param start: text line start point, in pixel coordinates.
+ * @param size: text font size, defined as enum.
+ * @param alignment: text alignment type, defined as enum.
+ * @param color: text color, in color_t format.
+ * @param buf: char buffer
+ * @return text width and height as point_t coordinates
+ */
+point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment, 
+                        color_t color, const char *buf);
+
+/**
  * Prints text on the screen at the specified coordinates.
  * @param start: text line start point, in pixel coordinates.
  * @param size: text font size, defined as enum.
@@ -232,7 +252,8 @@ void gfx_drawCircle(point_t start, uint16_t r, color_t color);
  * @param fmt: printf style format string
  * @return text width and height as point_t coordinates
  */
-point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment, color_t color, const char* fmt, ... );
+point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment, 
+                  color_t color, const char* fmt, ... );
 
 /**
  * Prints text on the screen, calculating the print position.
@@ -248,8 +269,9 @@ point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment, color_t
  * @param fmt: printf style format string
  * @return text width and height as point_t coordinates
  */
-point_t gfx_printLine(uint8_t cur, uint8_t tot, uint16_t startY, uint16_t endY, uint16_t startX, 
-                      fontSize_t size, textAlign_t alignment, color_t color, const char* fmt, ... );
+point_t gfx_printLine(uint8_t cur, uint8_t tot, uint16_t startY, uint16_t endY, 
+                      uint16_t startX, fontSize_t size, textAlign_t alignment, 
+                      color_t color, const char* fmt, ... );
 
 /**
  * Prints an error message surrounded by a red box on the screen.

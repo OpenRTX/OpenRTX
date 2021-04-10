@@ -385,6 +385,13 @@ static inline uint16_t get_reset_x(textAlign_t alignment, uint16_t line_size,
     return 0;
 }
 
+uint8_t gfx_getFontHeight(fontSize_t size)
+{
+    GFXfont f = fonts[size];
+    GFXglyph glyph = f.glyph['|' - f.first];
+    return glyph.height;
+}
+
 point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment, 
                         color_t color, const char *buf)
 {
@@ -502,6 +509,13 @@ point_t gfx_printLine(uint8_t cur, uint8_t tot, uint16_t startY, uint16_t endY, 
     // e.g. to print 2 lines we need 3 padding spaces
     uint16_t step = (endY - startY) / (tot + 1);
     uint16_t printY = startY + (step * cur);
+
+    // Estimate font height by reading the gliph | height
+    uint8_t h = gfx_getFontHeight(size);
+
+    // gfx_printBuffer() prints over the starting point
+    // Add half print_height to get vertically centered prints
+    printY += (h / 2);
 
     point_t start = {startX, printY};
     return gfx_printBuffer(start, size, alignment, color, text);
