@@ -34,6 +34,7 @@ openrtx_inc = ['openrtx/include',
                'platform/drivers/tones',
                'platform/drivers/baseband',
                'platform/drivers/backlight',
+               'platform/drivers/chSelector',
                'openrtx/include/fonts/adafruit']
 
 # Add to sources either the main executable or a platform test
@@ -218,6 +219,7 @@ mduv3x0_src = src + mdx_src + stm32f405_src + ['platform/drivers/NVM/nvmem_MDUV3
                                                'platform/targets/MD-UV3x0/platform.c',
                                                'platform/drivers/keyboard/keyboard_MD3x.c',
                                                'platform/drivers/display/HX8353_MD3x.cpp',
+                                               'platform/drivers/chSelector/chSelector_UV3x0.c',
                                                'platform/drivers/baseband/radio_UV3x0.c',
                                                'platform/drivers/baseband/AT1846S_UV3x0.c',
                                                'platform/drivers/baseband/HR_C6000_UV3x0.c',
@@ -232,6 +234,7 @@ mduv3x0_def = def + stm32f405_def + {'PLATFORM_MDUV3x0': '', 'timegm': 'mktime'}
 md9600_src = src + mdx_src + stm32f405_src + ['platform/targets/MD-9600/platform.c',
                                               'platform/drivers/display/ST7567_MD9600.c',
                                               'platform/drivers/keyboard/keyboard_MD9600.c',
+                                              'platform/drivers/chSelector/chSelector_MD9600.c',
                                               'platform/drivers/baseband/radio_MD9600.c',
                                               'platform/drivers/NVM/nvmem_MD9600.c',
                                               'platform/drivers/NVM/spiFlash_MD9600.c']

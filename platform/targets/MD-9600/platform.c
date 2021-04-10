@@ -28,6 +28,7 @@
 #include <toneGenerator_MDx.h>
 #include <interfaces/rtc.h>
 #include <SPI2.h>
+#include <chSelector.h>
 
 hwInfo_t hwInfo;
 
@@ -76,6 +77,7 @@ void platform_init()
     toneGen_init();                  /* Initialise tone generator              */
     rtc_init();                      /* Initialise RTC                         */
     backlight_init();                /* Initialise backlight driver            */
+    chSelector_init();               /* Initialise channel selector handler    */
 }
 
 void platform_terminate()
@@ -87,6 +89,7 @@ void platform_terminate()
     adc1_terminate();
     toneGen_terminate();
     rtc_terminate();
+    chSelector_terminate();
 
     /* Finally, remove power supply */
     gpio_clearPin(PWR_SW);
@@ -110,15 +113,6 @@ float platform_getMicLevel()
 float platform_getVolumeLevel()
 {
     return 0.0f;
-}
-
-int8_t platform_getChSelector()
-{
-    static const uint8_t rsPositions[] = { 1, 4, 2, 3};
-    int pos = gpio_readPin(CH_SELECTOR_0)
-            | (gpio_readPin(CH_SELECTOR_1) << 1);
-
-    return rsPositions[pos];
 }
 
 bool platform_getPttStatus()
@@ -159,6 +153,12 @@ const hwInfo_t *platform_getHwInfo()
 {
     return &hwInfo;
 }
+
+/*
+ * NOTE: implementation of this API function is provided in
+ * platform/drivers/chSelector/chSelector_MD9600.c
+ */
+// int8_t platform_getChSelector()
 
 /*
  * NOTE: implementation of this API function is provided in

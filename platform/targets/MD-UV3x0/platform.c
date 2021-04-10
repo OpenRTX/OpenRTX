@@ -25,7 +25,7 @@
 #include <calibInfo_MDx.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/rtc.h>
-#include <qdec.h>
+#include <chSelector.h>
 
 #ifdef ENABLE_BKLIGHT_DIMMING
 #include <backlight.h>
@@ -33,63 +33,12 @@
 
 mduv3x0Calib_t calibration;
 hwInfo_t hwInfo;
-static int8_t knob_pos = 0;
-
-/*
- * Note that this interrupt handler currently assumes only the encoder will
- * ever cause this interrupt to fire
- */
-void _Z20EXTI15_10_IRQHandlerv()
-{
-    /* State storage */
-    static uint8_t last_state = 0;
-
-    /* Read curent pin state */
-    uint8_t pin_state = gpio_readPin(CH_SELECTOR_1)<<1 | gpio_readPin(CH_SELECTOR_0);
-    /* Look up next state */
-    uint8_t next_state = HALF_STEP_STATE_TRANSITIONS[last_state][pin_state];
-    /* update state for next call */
-    last_state = next_state & QDECODER_STATE_BITMASK;
-
-    /* Mask out events to switch on */
-    uint8_t event = next_state & QDECODER_EVENT_BITMASK;
-
-    /* Update file global knob_pos variable */
-    switch (event)
-    {
-        case QDECODER_EVENT_CW:
-            knob_pos++;
-            break;
-        case QDECODER_EVENT_CCW:
-            knob_pos--;
-            break;
-        default:
-            break;
-    }
-
-    /* Clear pin change flags */
-    EXTI->PR = EXTI_PR_PR11 | EXTI_PR_PR14;
-}
 
 void platform_init()
 {
     /* Configure GPIOs */
     gpio_setMode(GREEN_LED, OUTPUT);
     gpio_setMode(RED_LED,   OUTPUT);
-
-    gpio_setMode(CH_SELECTOR_0, INPUT_PULL_UP);
-    gpio_setMode(CH_SELECTOR_1, INPUT_PULL_UP);
-
-    EXTI->IMR  |= EXTI_IMR_MR11 | EXTI_IMR_MR14;
-    EXTI->RTSR |= EXTI_RTSR_TR11 | EXTI_RTSR_TR14;
-    EXTI->FTSR |= EXTI_FTSR_TR11 | EXTI_FTSR_TR14;
-
-    SYSCFG->EXTICR[2] |= SYSCFG_EXTICR3_EXTI11_PB;
-    SYSCFG->EXTICR[3] |= SYSCFG_EXTICR4_EXTI14_PE;
-
-    NVIC_ClearPendingIRQ(EXTI15_10_IRQn);
-    NVIC_SetPriority(EXTI15_10_IRQn, 15);
-    NVIC_EnableIRQ(EXTI15_10_IRQn);
 
     gpio_setMode(PTT_SW, INPUT_PULL_UP);
 
@@ -108,6 +57,7 @@ void platform_init()
     nvm_readCalibData(&calibration); /* Load calibration data                  */
     nvm_loadHwInfo(&hwInfo);         /* Load hardware information data         */
     rtc_init();                      /* Initialise RTC                         */
+    chSelector_init();               /* Initialise channel selector handler    */
 
     #ifdef ENABLE_BKLIGHT_DIMMING
     backlight_init();                /* Initialise backlight driver            */
@@ -134,6 +84,7 @@ void platform_terminate()
     adc1_terminate();
     nvm_terminate();
     rtc_terminate();
+    chSelector_terminate();
 
     /* Finally, remove power supply */
     gpio_clearPin(PWR_SW);
@@ -157,15 +108,6 @@ float platform_getMicLevel()
 float platform_getVolumeLevel()
 {
     return adc1_getMeasurement(ADC_VOL_CH);
-}
-
-int8_t platform_getChSelector()
-{
-    /*
-     * The knob_pos variable is set in the EXTI15_10 interrupt handler
-     * this is safe because interrupt nesting is not allowed.
-     */
-    return knob_pos;
 }
 
 bool platform_getPttStatus()
@@ -228,6 +170,12 @@ const hwInfo_t *platform_getHwInfo()
 {
     return &hwInfo;
 }
+
+/*
+ * NOTE: implementation of this API function is provided in
+ * platform/drivers/chSelector/chSelector_MDUV3x0.c
+ */
+// int8_t platform_getChSelector()
 
 /*
  * NOTE: when backligth dimming is enabled, the implementation of this API
