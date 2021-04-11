@@ -184,28 +184,31 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
     if(index >= info_num) return -1;
     switch(index)
     {
-        case 0: // Battery voltage
+        case 0: // Git Version
+            snprintf(buf, max_len, "%s", GIT_VERSION);
+            break;
+        case 1: // Battery voltage
             snprintf(buf, max_len, "%.1fV", last_state.v_bat);
             break;
-        case 1: // Battery charge
+        case 2: // Battery charge
             snprintf(buf, max_len, "%.1f%%", last_state.charge * 100);
             break;
-        case 2: // RSSI
+        case 3: // RSSI
             snprintf(buf, max_len, "%.1fdBm", last_state.rssi);
             break;
-        case 3: // Model
+        case 4: // Model
             snprintf(buf, max_len, "%s", hwinfo->name);
             break;
-        case 4: // Band
+        case 5: // Band
             snprintf(buf, max_len, "%s %s", hwinfo->vhf_band ? "VHF" : "", hwinfo->uhf_band ? "UHF" : "");
             break;
-        case 5: // VHF
+        case 6: // VHF
             snprintf(buf, max_len, "%d - %d", hwinfo->vhf_minFreq, hwinfo->vhf_maxFreq);
             break;
-        case 6: // UHF
+        case 7: // UHF
             snprintf(buf, max_len, "%d - %d", hwinfo->uhf_minFreq, hwinfo->uhf_maxFreq);
             break;
-        case 7: // LCD Type
+        case 8: // LCD Type
             snprintf(buf, max_len, "%d", hwinfo->lcd_type);
             break;
     }

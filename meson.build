@@ -69,6 +69,14 @@ src = openrtx_src + minmea_src
 inc = openrtx_inc + rtos_inc + minmea_inc + qdec_inc
 def = {'DONT_USE_CMSIS_INIT': ''}
 
+## Add git commit or tag to print in OpenRTX
+r = run_command('git', 'describe', '--tags', '--dirty')
+if r.returncode() != 0
+  # it failed
+endif
+git_version = '"'+r.stdout().strip()+'"'
+def = def + {'GIT_VERSION': git_version}
+
 ##
 ## --------------------- Family-dependent source files -------------------------
 ##

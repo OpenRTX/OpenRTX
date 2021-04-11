@@ -148,6 +148,7 @@ const char *settings_gps_items[] =
 
 const char *info_items[] =
 {
+    "",
     "Bat. Voltage",
     "Bat. Charge",
     "RSSI",

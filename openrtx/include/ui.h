@@ -29,7 +29,7 @@
 #include <hwconfig.h>
 
 // Maximum menu entry length
-#define MAX_ENTRY_LEN 16
+#define MAX_ENTRY_LEN 21
 // Frequency digits
 #define FREQ_DIGITS 8
 // Time & Date digits
