@@ -109,7 +109,6 @@ const char *menu_items[] =
     "Zone",
     "Channels",
     "Contacts",
-    "Messages",
 #ifdef HAS_GPS
     "GPS",
 #endif
