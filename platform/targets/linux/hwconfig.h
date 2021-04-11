@@ -24,9 +24,6 @@
 /* Device supports an optional GPS chip */
 #define HAS_GPS
 
-/* Screen has adjustable contrast */
-#define SCREEN_CONTRAST
-
 /* Supported radio bands */
 #define BAND_VHF
 #define BAND_UHF
