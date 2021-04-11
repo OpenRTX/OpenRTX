@@ -120,8 +120,11 @@ bool platform_pwrButtonStatus()
 {
     /*
      * When power knob is set to off, battery voltage measurement returns 0V.
+     * Here we set the threshold to 1V since, with knob in off position, there
+     * is always a bit of noise in the ADC measurement making the returned
+     * voltage not to be exactly zero.
      */
-    return (adc1_getMeasurement(ADC_VBAT_CH) > 0.0f) ? true : false;
+    return (platform_getVbat() > 1.0f) ? true : false;
 }
 
 void platform_ledOn(led_t led)

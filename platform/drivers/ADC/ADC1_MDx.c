@@ -104,8 +104,8 @@ void adc1_init()
                |  (15 << 5); /* CH15, HTEMP value on PC5                */
     #elif defined(PLATFORM_MD3x0)
     ADC1->SQR1 = 3 << 20;    /* Four channels to be converted          */
-    ADC1->SQR3 |= (1 << 0)   /* CH1, battery voltage on PA1            */
-               |  (0 << 5)   /* CH0, volume potentiometer level on PA0 */
+    ADC1->SQR3 |= (0 << 0)   /* CH0, volume potentiometer level on PA0 */
+               |  (1 << 5)   /* CH1, battery voltage on PA1            */
                |  (8 << 10)  /* CH8, RSSI value on PB0                 */
                |  (3 << 15); /* CH3, vox level on PA3                  */
     #else
