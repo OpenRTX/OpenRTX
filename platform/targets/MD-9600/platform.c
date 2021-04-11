@@ -20,6 +20,7 @@
 #include <interfaces/gpio.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/platform.h>
+#include <interfaces/delays.h>
 #include <hwconfig.h>
 #include <string.h>
 #include <backlight.h>
@@ -34,13 +35,11 @@ hwInfo_t hwInfo;
 
 void platform_init()
 {
-    gpio_setMode(CH_SELECTOR_0, INPUT_PULL_UP);
-    gpio_setMode(CH_SELECTOR_1, INPUT_PULL_UP);
-
-    gpio_setMode(PTT_SW, INPUT);
-
+    /* Enable 8V power supply rail */
     gpio_setMode(PWR_SW, OUTPUT);
     gpio_setPin(PWR_SW);
+
+    gpio_setMode(PTT_SW, INPUT);
 
     /*
      * Initialise ADC1, for vbat, RSSI, ...
@@ -93,6 +92,13 @@ void platform_terminate()
 
     /* Finally, remove power supply */
     gpio_clearPin(PWR_SW);
+
+    /*
+     * MD-9600 does not have a proper power on/off mechanism and the MCU is
+     * always powered. Thus, for turn off, perform a system reset.
+     */
+    NVIC_SystemReset();
+    while(1) ;
 }
 
 float platform_getVbat()
@@ -119,6 +125,61 @@ bool platform_getPttStatus()
 {
     /* PTT line has a pullup resistor with PTT switch closing to ground */
     return (gpio_readPin(PTT_SW) == 0) ? true : false;
+}
+
+bool platform_pwrButtonStatus()
+{
+    /*
+     * The power on/off button, when pressed, connects keyboard coloumn 3 to
+     * row 3. Here we set coloumn to input with pull up mode and row to output
+     * mode, consistently with keyboard driver.
+     */
+
+    gpio_setMode(KB_COL3, INPUT_PULL_UP);
+    gpio_setMode(KB_ROW3, OUTPUT);
+
+    /*
+     * Critical section to avoid stomping the keyboard driver.
+     * Also, working at register level to keep it as short as possible
+     */
+    __disable_irq();
+    uint32_t prevRowState = GPIOD->ODR & (1 << 4);  /* Row 3 is PD4 */
+    GPIOD->BSRRH = 1 << 4;                          /* PD4 low      */
+    delayUs(10);
+    uint32_t btnStatus = GPIOE->IDR & 0x01;         /* Col 3 is PE0 */
+    GPIOD->ODR |= prevRowState;                     /* Restore PD4  */
+    __enable_irq();
+
+    /*
+     * Power button API requires this function to return true if power is
+     * enabled. To comply to the requirement this function behaves in this way:
+     * - if button is not pressed, return current status of PWR_SW.
+     * - if button is pressed and PWR_SW is low, return true as user wants to
+     *   turn the radio on.
+     * - if button is pressed and PWR_SW is high, return false as user wants to
+     *   turn the radio off.
+     */
+
+    /*
+     * Power button follows an active-low logic: btnStatus is low when button
+     * is pressed
+     */
+    if(btnStatus == 0)
+    {
+        if(gpio_readPin(PWR_SW))
+        {
+            /* Power switch high and button pressed: request to turn off */
+            return false;
+        }
+        else
+        {
+            /* Power switch low and button pressed: request to turn on */
+            return true;
+        }
+    }
+
+    /* We get here if power button is not pressed, just return PWR_SW status */
+    return gpio_readPin(PWR_SW) ? true : false;
 }
 
 void platform_ledOn(led_t led)

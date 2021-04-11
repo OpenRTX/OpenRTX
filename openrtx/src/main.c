@@ -32,6 +32,19 @@ extern void *ui_task(void *arg);
 
 int main(void)
 {
+    // MD-9600 does not have a proper power on/off mechanism and the MCU is
+    // always powered on. We thus need to place a busy wait on the power on
+    // button to manage the on/off mechanism.
+    // A do-while block is used to avoid re-powering on after a power off due to
+    // MCU rebooting before user stops pressing the power button.
+    #ifdef PLATFORM_MD9600
+    do
+    {
+        sleepFor(1, 0);
+    }
+    while(!platform_pwrButtonStatus());
+    #endif
+
     // Initialize platform drivers
     platform_init();
 

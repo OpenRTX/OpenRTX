@@ -140,6 +140,14 @@ bool platform_getPttStatus()
     return (gpio_readPin(PTT_SW) == 0) ? true : false;
 }
 
+bool platform_pwrButtonStatus()
+{
+    /*
+     * When power knob is set to off, battery voltage measurement returns 0V.
+     */
+    return (platform_getVbat() > 0.0f) ? true : false:
+}
+
 void platform_ledOn(led_t led)
 {
     switch(led)

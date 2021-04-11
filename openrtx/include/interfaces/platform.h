@@ -109,6 +109,13 @@ int8_t platform_getChSelector();
 bool platform_getPttStatus();
 
 /**
+ * This function reads and returns the current status of the power on/power off
+ * button or switch.
+ * @return true if power is enabled, false otherwise.
+ */
+bool platform_pwrButtonStatus();
+
+/**
  * This function turns on the selected led.
  * @param led: which led to control
  */
