@@ -106,8 +106,8 @@ void adc1_init()
     ADC1->SQR1 = 3 << 20;    /* Four channels to be converted          */
     ADC1->SQR3 |= (0 << 0)   /* CH0, volume potentiometer level on PA0 */
                |  (1 << 5)   /* CH1, battery voltage on PA1            */
-               |  (8 << 10)  /* CH8, RSSI value on PB0                 */
-               |  (3 << 15); /* CH3, vox level on PA3                  */
+               |  (3 << 10)  /* CH3, vox level on PA3                  */
+               |  (8 << 15); /* CH8, RSSI value on PB0                 */
     #else
     ADC1->SQR1 = 1 << 20;    /* Convert two channel                    */
     ADC1->SQR3 |= (0 << 0)   /* CH0, volume potentiometer level on PA0 */
