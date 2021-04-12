@@ -188,6 +188,7 @@ linux_src = src + ['platform/targets/linux/emulator/emulator.c',
                    'platform/mcu/x86_64/drivers/delays.c',
                    'platform/mcu/x86_64/drivers/rtc.c',
                    'platform/drivers/baseband/radio_linux.c',
+                   'platform/drivers/audio/audio_linux.c',
                    'platform/targets/linux/platform.c']
 
 
