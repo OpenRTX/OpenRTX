@@ -18,8 +18,11 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <miosix.h>
 #include <memory_profiling.h>
+
+#ifdef _MIOSIX
+
+#include <miosix.h>
 
 /*
  * Provide a C-callable wrapper for the corresponding miosix functions.
@@ -60,3 +63,42 @@ unsigned int getCurrentFreeHeap()
     //return miosix::MemoryProfiling::getCurrentFreeHeap();
     return getAbsoluteFreeHeap();
 }
+
+#else
+
+/*
+ * No memory profiling is possible on x86/64 machines, thus all the functions
+ * return 0.
+ */
+
+unsigned int getStackSize()
+{
+    return 0;
+}
+
+unsigned int getAbsoluteFreeStack()
+{
+    return 0;
+}
+
+unsigned int getCurrentFreeStack()
+{
+    return 0;
+}
+
+unsigned int getHeapSize()
+{
+    return 0;
+}
+
+unsigned int getAbsoluteFreeHeap()
+{
+    return 0;
+}
+
+unsigned int getCurrentFreeHeap()
+{
+    return 0;
+}
+
+#endif
