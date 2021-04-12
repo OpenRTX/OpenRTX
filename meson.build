@@ -24,7 +24,8 @@ openrtx_src = ['openrtx/src/state.c',
                'openrtx/src/calibUtils.c',
                'openrtx/src/queue.c',
                'openrtx/src/rtx.c',
-               'openrtx/src/gps.c']
+               'openrtx/src/gps.c',
+               'openrtx/src/memory_profiling.cpp']
 
 openrtx_inc = ['openrtx/include',
                'openrtx/include/calibration',
