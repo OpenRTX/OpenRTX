@@ -71,6 +71,9 @@ void radio_init()
     gpio_setMode(TX_STG_EN, OUTPUT);
     gpio_setMode(RX_STG_EN, OUTPUT);
 
+    gpio_setMode(FM_MUTE,  OUTPUT);
+    gpio_clearPin(FM_MUTE);
+
     gpio_clearPin(PLL_PWR);    /* PLL off                                           */
     gpio_setPin(VCOVCC_SW);    /* VCOVCC high enables RX VCO, TX VCO if low         */
     gpio_setPin(WN_SW);        /* 25kHz bandwidth                                   */
@@ -205,6 +208,11 @@ void radio_enableRx()
     DAC->DHR12L1 = vtune_rx * 0xFF;
 
     gpio_setPin(RX_STG_EN);
+
+    if(currOpMode == FM)
+    {
+        gpio_setPin(FM_MUTE);
+    }
 }
 
 void radio_enableTx(const float txPower, const bool enableCss)
@@ -244,6 +252,7 @@ void radio_disableRtx()
 
     gpio_clearPin(TX_STG_EN);
     gpio_clearPin(RX_STG_EN);
+    gpio_clearPin(FM_MUTE);
 }
 
 void radio_updateCalibrationParams(const rtxStatus_t* rtxCfg)

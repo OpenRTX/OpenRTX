@@ -89,6 +89,7 @@ def = def + {'GIT_VERSION': git_version}
 mdx_src = ['platform/drivers/ADC/ADC1_MDx.c',
            'platform/drivers/GPS/GPS_MDx.cpp',
            'platform/drivers/NVM/W25Qx.c',
+           'platform/drivers/audio/audio_MDx.c',
            'platform/drivers/backlight/backlight_MDx.c',
            'platform/drivers/tones/toneGenerator_MDx.cpp']
 
@@ -107,7 +108,8 @@ gdx_src = ['platform/drivers/NVM/W25Qx.c',
            'platform/drivers/baseband/HR_C6000.c',
            'platform/drivers/baseband/interfaces_GDx.c',
            'platform/drivers/display/UC1701_GDx.c',
-           'platform/drivers/keyboard/keyboard_GDx.c',]
+           'platform/drivers/keyboard/keyboard_GDx.c',
+           'platform/drivers/audio/audio_GDx.c']
 
 ##
 ## --------------------- MCU-dependent source files ----------------------------

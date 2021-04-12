@@ -21,14 +21,12 @@
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
 #include <interfaces/radio.h>
+#include <interfaces/audio.h>
 #include <string.h>
 #include <rtx.h>
 #ifdef PLATFORM_MDUV3x0
 #include "../../platform/drivers/baseband/HR_C6000.h"
 #endif
-
-#include <interfaces/gpio.h>
-#include <hwconfig.h>
 
 pthread_mutex_t *cfgMutex;  /* Mutex for incoming config messages   */
 
@@ -41,76 +39,6 @@ bool enterRx;               /* Flag for RX mode activation          */
 float rssi;                 /* Current RSSI in dBm                  */
 
 /*
- * These functions below provide a basic API for audio path management. They
- * will be removed once the audio driver is set up.
- */
-
-void _afCtrlInit()
-{
-    #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
-    gpio_setMode(SPK_MUTE, OUTPUT);
-    gpio_setMode(AUDIO_AMP_EN,   OUTPUT);
-    gpio_setMode(MIC_PWR,  OUTPUT);
-    #ifdef PLATFORM_MD3x0
-    gpio_setMode(FM_MUTE,  OUTPUT);
-    #endif
-    #elif defined(PLATFORM_GD77) || defined(PLATFORM_DM1801)
-    gpio_setMode(AUDIO_AMP_EN, OUTPUT);
-    #endif
-}
-
-void _afCtrlSpeaker(bool enable)
-{
-    if(enable)
-    {
-        #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
-        gpio_setPin(AUDIO_AMP_EN);
-        delayMs(10);
-        gpio_clearPin(SPK_MUTE);
-        #ifdef PLATFORM_MD3x0
-        gpio_setPin(FM_MUTE);
-        #endif
-        #elif defined(PLATFORM_GD77) || defined(PLATFORM_DM1801)
-        gpio_setPin(AUDIO_AMP_EN);
-        #endif
-    }
-    else
-    {
-        #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
-        gpio_setPin(SPK_MUTE);
-        gpio_clearPin(AUDIO_AMP_EN);
-        #ifdef PLATFORM_MD3x0
-        gpio_clearPin(FM_MUTE);
-        #endif
-        #elif defined(PLATFORM_GD77) || defined(PLATFORM_DM1801)
-        gpio_clearPin(AUDIO_AMP_EN);
-        #endif
-    }
-}
-
-void _afCtrlMic(bool enable)
-{
-     if(enable)
-    {
-        #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
-        gpio_setPin(MIC_PWR);
-        #endif
-    }
-    else
-    {
-        #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
-        gpio_clearPin(MIC_PWR);
-        #endif
-    }
-}
-
-void _afCtrlTerminate()
-{
-    _afCtrlMic(false);
-    _afCtrlSpeaker(false);
-}
-
-/*
  * Unfortunately on MD-UV3x0 radios the volume knob does not regulate
  * the amplitude of the analog signal towards the audio amplifier but it
  * rather serves to provide a digital value to be fed into the HR_C6000
@@ -120,17 +48,17 @@ void _afCtrlTerminate()
  * which has to be mapped in a range between 1 and 31.
  */
 #ifdef PLATFORM_MDUV3x0
-void _afSetVolume()
+void _setVolume()
 {
     float   level  = (platform_getVolumeLevel() / 1560.0f) * 30.0f;
     uint8_t volume = ((uint8_t) (level + 0.5f));
 
     // Mute volume when knob is set below 10%
     if(volume < 1)
-        _afCtrlSpeaker(false);
+        audio_disableAmp();
     else
     {
-        _afCtrlSpeaker(true);
+        audio_enableAmp();
         /* Update HR_C6000 gain only if volume changed */
         static uint8_t old_volume = 0;
         if(volume != old_volume)
@@ -177,13 +105,10 @@ void rtx_init(pthread_mutex_t *m)
      * Initial value for RSSI filter
      */
     rssi = radio_getRssi(rtxStatus.rxFrequency);
-
-    _afCtrlInit();
 }
 
 void rtx_terminate()
 {
-    _afCtrlTerminate();
     radio_terminate();
 }
 
@@ -280,20 +205,21 @@ void rtx_taskFunc()
 
         if((sqlOpen == false) && (rssi > (squelch + 0.1f)))
         {
-            _afCtrlSpeaker(true);
+            audio_enableAmp();
             sqlOpen = true;
         }
 
         if((sqlOpen == true) && (rssi < (squelch - 0.1f)))
         {
-            _afCtrlSpeaker(false);
+            audio_disableAmp();
             sqlOpen = false;
         }
+
         #ifdef PLATFORM_MDUV3x0
         if(sqlOpen == true)
         {
             // Set output volume by changing the HR_C6000 DAC gain
-            _afSetVolume();
+            _setVolume();
         }
         #endif
     }
@@ -313,10 +239,10 @@ void rtx_taskFunc()
     /* TX logic */
     if(platform_getPttStatus() && (rtxStatus.opStatus != TX))
     {
-        _afCtrlSpeaker(false);
+        audio_disableAmp();
         radio_disableRtx();
 
-        _afCtrlMic(true);
+        audio_enableMic();
         radio_setVcoFrequency(rtxStatus.txFrequency, true);
         radio_enableTx(rtxStatus.txPower, rtxStatus.txToneEn);
 
@@ -325,7 +251,7 @@ void rtx_taskFunc()
 
     if(!platform_getPttStatus() && (rtxStatus.opStatus == TX))
     {
-        _afCtrlMic(false);
+        audio_disableMic();
         radio_disableRtx();
 
         rtxStatus.opStatus = OFF;

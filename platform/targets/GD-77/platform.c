@@ -20,6 +20,7 @@
 
 #include <interfaces/platform.h>
 #include <interfaces/nvmem.h>
+#include <interfaces/audio.h>
 #include <interfaces/gpio.h>
 #include <calibInfo_GDx.h>
 #include <ADC0_GDx.h>
@@ -44,15 +45,9 @@ void platform_init()
 
     gpio_setMode(PWR_SW, OUTPUT);
 
-    /*
-     * Initialise backlight driver
-     */
-    backlight_init();
-
-    /*
-     * Initialise ADC
-     */
-    adc0_init();
+    backlight_init();                /* Initialise backlight driver        */
+    audio_init();                    /* Initialise audio management module */
+    adc0_init();                     /* Initialise ADC                     */
     pthread_mutex_init(&adc_mutex, NULL);
 
     /*
@@ -96,6 +91,7 @@ void platform_terminate()
     pthread_mutex_destroy(&adc_mutex);
 
     i2c0_terminate();
+    audio_terminate();
 
     /* Finally, remove power supply */
     gpio_clearPin(PWR_SW);

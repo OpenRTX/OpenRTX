@@ -27,6 +27,7 @@
 #include <calibInfo_MDx.h>
 #include <toneGenerator_MDx.h>
 #include <interfaces/rtc.h>
+#include <interfaces/audio.h>
 
 md3x0Calib_t calibration;
 hwInfo_t hwInfo;
@@ -64,6 +65,7 @@ void platform_init()
     toneGen_init();                  /* Initialise tone generator              */
     rtc_init();                      /* Initialise RTC                         */
     backlight_init();                /* Initialise backlight driver            */
+    audio_init();                    /* Initialise audio management module     */
 }
 
 void platform_terminate()
@@ -80,6 +82,7 @@ void platform_terminate()
     nvm_terminate();
     toneGen_terminate();
     rtc_terminate();
+    audio_terminate();
 
     /* Finally, remove power supply */
     gpio_clearPin(PWR_SW);
