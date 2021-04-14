@@ -24,6 +24,12 @@
 #include <interfaces/gpio.h>
 #include <hwconfig.h>
 
+/*
+ * Uncomment this directive to sample audio coming from RTX stage instead of the
+ * one from microphone.
+ */
+// #define SAMPLE_RTX_AUDIO
+
 static const char hexdigits[]="0123456789abcdef";
 void printUnsignedInt(uint16_t x)
 {
@@ -45,9 +51,14 @@ int main()
 
     gpio_setMode(GREEN_LED, OUTPUT);
     gpio_setMode(RED_LED,   OUTPUT);
-    gpio_setMode(AIN_MIC,   INPUT_ANALOG);
     gpio_setMode(MIC_PWR,   OUTPUT);
     gpio_setPin(MIC_PWR);
+
+    #ifdef SAMPLE_RTX_AUDIO
+    gpio_setMode(GPIOC, 13, INPUT_ANALOG);
+    #else
+    gpio_setMode(AIN_MIC, INPUT_ANALOG);
+    #endif
 
     /* Enable pull-up resistor on PA3 (AIN_MIC)
     GPIOA->PUPDR |= 1 << 6; */
@@ -98,7 +109,12 @@ int main()
                 | ADC_SMPR2_SMP8;
 
     ADC1->SQR1 = 0;    /* One channel to be converted */
-    ADC1->SQR3 = 3;    /* CH3, vox level on PA3       */
+
+    #ifdef SAMPLE_RTX_AUDIO
+    ADC1->SQR3 = 13;   /* CH13, audio from RTX on PC13 */
+    #else
+    ADC1->SQR3 = 3;    /* CH3, vox level on PA3        */
+    #endif
 
     /*
      * No overrun interrupt, 12-bit resolution, no analog watchdog, no
