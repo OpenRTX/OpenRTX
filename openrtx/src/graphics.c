@@ -387,7 +387,7 @@ static inline uint16_t get_reset_x(textAlign_t alignment, uint16_t line_size,
 
 uint8_t gfx_getFontHeight(fontSize_t size)
 {
-    GFXfont f = fonts[size];
+    GFXfont f = *fonts[size];
     GFXglyph glyph = f.glyph['|' - f.first];
     return glyph.height;
 }
@@ -395,7 +395,7 @@ uint8_t gfx_getFontHeight(fontSize_t size)
 point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment, 
                         color_t color, const char *buf)
 {
-    GFXfont f = fonts[size];
+    GFXfont f = *fonts[size];
 
     size_t len = strlen(buf);
 

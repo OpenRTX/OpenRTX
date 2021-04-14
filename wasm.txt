@@ -1,0 +1,44 @@
+[binaries]
+c = 'emcc'
+cpp = 'em++'
+ar = 'emar'
+
+[built-in options]
+c_args = [
+	'-s', 'WASM=1' , 
+	'-pthread' , 
+	'-s', 'USE_SDL=2', 
+	'-s', 'USE_PTHREADS=1',
+	'-s', 'EXPORT_ALL=1', 
+	'-s', 'PTHREAD_POOL_SIZE=6'
+	]
+c_link_args = [
+	'-s','EXPORT_ALL=1',
+	'-pthread',
+	'-s', 'USE_SDL=2',
+	'-s', 'USE_PTHREADS=1',
+	'-s', 'PTHREAD_POOL_SIZE=6'
+	]
+cpp_args = [
+	'-s', 'WASM=1' , 
+	'-pthread' , 
+	'-s', 'USE_SDL=2', 
+	'-s', 'USE_PTHREADS=1',
+	'-s', 'EXPORT_ALL=1', 
+	'-s', 'PTHREAD_POOL_SIZE=6'
+	]
+cpp_link_args = [
+	'-s','EXPORT_ALL=1',
+	'-pthread',
+	'-s', 'USE_SDL=2',
+	'-s', 'USE_PTHREADS=1',
+	'-s', 'PTHREAD_POOL_SIZE=6'
+	]
+
+[host_machine]
+
+system = 'emscripten'
+cpu_family = 'wasm32'
+cpu = 'wasm32'
+endian = 'little'
+
