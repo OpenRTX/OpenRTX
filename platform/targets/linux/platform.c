@@ -29,8 +29,9 @@ void platform_init()
     snprintf(hwInfo.name, 10, "Linux");
     hwInfo.vhf_band = 1;
     hwInfo.uhf_band = 1;
-
+#ifndef WASM
     emulator_start();
+#endif
 }
 
 void platform_terminate()

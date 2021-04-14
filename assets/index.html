@@ -1,0 +1,206 @@
+<html>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <head>
+        <title>OpenRTX Emulator</title>
+        <style>
+body {
+                height: 100vh;
+                width: 100vw;
+                margin: 0;
+                display: flex;
+                justify-content: center;
+            }
+
+            #rtx-radio{
+                position: relative;
+                display: block;
+                height: inherit;
+            }
+
+            #rtx-radio > img{
+                height: inherit;
+            }
+
+            #rtx-radio > .container {
+                /*aggiusta rispetto all'immagine*/
+
+                top: 70.5%;
+                bottom: 9.3%;
+                left: 21.8%;
+                right: 21%;
+
+                position: absolute;
+                display: flex;
+                flex-direction: column;
+            }
+
+            #rtx-radio #canvas{
+                position: absolute;
+                top: 47%;
+                left: 22%;
+                height: 21vh;
+                width: 27vh !important;
+            }
+
+            #rtx-radio > .container  > .row {
+                display: flex;
+                flex-grow: 1;
+
+                /* spaziamento tra righe tra le celle */
+                padding: 2% 0;
+            }
+
+            #rtx-radio > .container  > .row:last-of-type{
+                padding-top: 0;
+            }
+            #rtx-radio > .container  > .row:first-of-type{
+                padding-bottom: 0;
+            }
+
+            #rtx-radio > .container  > .row  > .cell{
+                flex-grow: 1;
+
+                /* per debug e capire dov'Ã¨ l'area cliccabile */
+                border: 3px solid #F00;
+
+                /* spaziamento tra colonne tra le celle */
+                margin: 0 2%;
+                border-radius: 0.8vh;
+            }
+
+            #rtx-radio > .container  > .row  > .cell:last-of-type{
+                margin-right: 0;
+            }
+            #rtx-radio > .container  > .row  > .cell:first-of-type{
+                margin-left: 0;
+            }
+        </style>
+    </head>
+    <body>
+<div id="rtx-radio">
+    <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex=-1></canvas>
+
+      <!--<canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex=-1></canvas>-->
+
+            <img src="radio.jpg" class="rtx-radio-img" />
+            <div class="container">
+                <div class="row">
+                    <div class="cell" id="enter" onClick="triggerKeyboardEvent()"></div>
+                    <div class="cell" id="up" onClick="triggerKeyboardEvent()"></div>
+                    <div class="cell" id="down" onClick="triggerKeyboardEvent()"></div>
+                    <div class="cell" id="esc" onClick="triggerKeyboardEvent()"></div>
+                </div>
+                <div class="row">
+                    <div class="cell" id="1" onClick="triggerKeyboardEvent()"></div>
+                    <div class="cell" id="2" onClick="triggerKeyboardEvent()"></div>
+                    <div class="cell" id="3" onClick="triggerKeyboardEvent()"></div>
+                    <div class="cell" id="*" onClick="triggerKeyboardEvent()"></div>
+                </div>
+                <div class="row">
+                    <div class="cell" id="4" onClick="triggerKeyboardEvent()"></div>
+                    <div class="cell" id="5" onClick="triggerKeyboardEvent()"></div>
+                    <div class="cell" id="6" onClick="triggerKeyboardEvent()"></div>
+                    <div class="cell" id="0" onClick="triggerKeyboardEvent()"></div>
+
+                </div>
+                <div class="row">
+                    <div class="cell" id="7" onClick="triggerKeyboardEvent()"></div>
+                    <div class="cell" id="8" onClick="triggerKeyboardEvent()"></div>
+                    <div class="cell" id="9" onClick="triggerKeyboardEvent()"></div>
+                    <div class="cell" id="#" onClick="triggerKeyboardEvent()"></div>
+
+                </div>
+            </div>
+        </div>
+    <textarea id="output" rows="8"></textarea>
+
+    </body>
+
+
+
+        <script type='text/javascript'>
+      var Module = {
+        preRun: [],
+        postRun: [],
+        print: (function() {
+          var element = document.getElementById('output');
+          if (element) element.value = ''; // clear browser cache
+          return function(text) {
+            if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+            console.log(text);
+            if (element) {
+              element.value += text + "\n";
+              element.scrollTop = element.scrollHeight; // focus on bottom
+            }
+          };
+        })(),
+        printErr: function(text) {
+          if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+          console.error(text);
+        },
+        canvas: (function() {
+          var canvas = document.getElementById('canvas');
+
+          // As a default initial behavior, pop up an alert when webgl context is lost. To make your
+          // application robust, you may want to override this behavior before shipping!
+          // See http://www.khronos.org/registry/webgl/specs/latest/1.0/#5.15.2
+          canvas.addEventListener("webglcontextlost", function(e) { alert('WebGL context lost. You will need to reload the page.'); e.preventDefault(); }, false);
+
+          return canvas;
+        })(),
+        totalDependencies: 0,
+      };
+      window.onerror = function(event) {
+        // TODO: do not warn on ok events like simulating an infinite loop or exitStatus
+      };
+    </script>
+
+    <script type="text/javascript">
+        var keys = {};
+        keys["enter"] = 13;
+        keys["esc"] = 27;
+        keys["up"] = 38;
+        keys["down"] = 40;
+        keys["*"] = 106;
+        keys["0"] = 48;
+        keys["1"] = 49;
+        keys["2"] = 50;
+        keys["3"] = 51;
+        keys["4"] = 52;
+        keys["5"] = 53;
+        keys["6"] = 54;
+        keys["7"] = 55;
+        keys["8"] = 56;
+        keys["9"] = 57;
+
+    function triggerKeyboardEvent()
+    {
+        var key = event.srcElement.id;
+        var keyCode = keys[key];
+        console.log(key + ":" + keyCode);
+        var el = document;
+        var eventObj =  document.createEvent("Events");
+        eventObj.initEvent("keydown", true, true);
+        eventObj.keyCode = keyCode;
+        eventObj.which = keyCode;
+        el.dispatchEvent(eventObj);
+        setTimeout(function() {
+            triggerKeyUp(keyCode);
+        }, 200)
+
+    } 
+    function triggerKeyUp(keyCode){
+        eventObj = document.createEvent("Events");
+        eventObj.initEvent("keyup", true, true);
+        eventObj.keyCode = keyCode;
+        eventObj.which = keyCode;
+        document.dispatchEvent(eventObj);
+    }
+var canvas = document.getElementById("canvas");
+canvas.style.width = "320px";
+    </script>
+        <script async type="text/javascript" src="openrtx_wasm.js"></script>
+
+</html>
+

@@ -208,6 +208,8 @@ else
   linux_dep = []
 endif
 
+wasm_def = linux_def + {'WASM':''}
+
 ##
 ## TYT MD-3x0 family
 ##
@@ -296,6 +298,16 @@ foreach k, v : linux_def
   endif
 endforeach
 
+wasm_c_args = []
+wasm_l_args = ['-lm']
+foreach k, v : wasm_def
+  if v == ''
+    wasm_c_args += '-D@0@'.format(k)
+  else
+    wasm_c_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
+
 md3x0_args = []
 foreach k, v : md3x0_def
   if v == ''
@@ -347,6 +359,12 @@ linux_opts = {'sources': linux_src,
               'dependencies': linux_dep,
               'link_args' : linux_l_args}
 
+wasm_opts = {'sources': linux_src,
+              'c_args': wasm_c_args,
+              'include_directories': linux_inc,
+              'dependencies': linux_dep,
+              'link_args' : wasm_l_args}
+
 md3x0_opts = {'sources' : md3x0_src,
               'c_args'  : md3x0_args,
               'cpp_args': md3x0_args,
@@ -390,6 +408,10 @@ targets = [
 
   {'name': 'linux',
    'opts': linux_opts,
+   'flashable': false},
+
+  {'name': 'wasm',
+   'opts': wasm_opts,
    'flashable': false},
 
   {'name': 'md3x0',

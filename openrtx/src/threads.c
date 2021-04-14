@@ -37,6 +37,12 @@
 #include <interfaces/gps.h>
 #include <gps.h>
 #endif
+#ifdef WASM
+#include <emscripten.h>
+#define BLOCKING false
+#elif
+#define BLOCKING true
+#endif
 
 /* Mutex for concurrent access to state variable */
 pthread_mutex_t state_mutex;
@@ -50,6 +56,63 @@ pthread_mutex_t display_mutex;
 /* Queue for sending and receiving ui update requests */
 queue_t ui_queue;
 
+
+bool sync_rtx = true;
+rtxStatus_t rtx_cfg;
+
+/* UI loop function */
+void *ui_loop(void *arg)
+{
+    (void) arg;
+    
+    // Read from the keyboard queue (returns 0 if no message is present)
+    // Copy keyboard_t keys from received void * pointer msg
+    event_t event;
+    event.value = 0;
+    (void) queue_pend(&ui_queue, &event.value, BLOCKING);
+
+    // Lock mutex, read and write state
+    pthread_mutex_lock(&state_mutex);
+    // React to keypresses and update FSM inside state
+    ui_updateFSM(event, &sync_rtx);
+    // Update state local copy
+    ui_saveState();
+    // Unlock mutex
+    pthread_mutex_unlock(&state_mutex);
+
+    // If synchronization needed take mutex and update RTX configuration
+    if(sync_rtx)
+    {
+        pthread_mutex_lock(&rtx_mutex);
+        rtx_cfg.opMode = state.channel.mode;
+        rtx_cfg.bandwidth = state.channel.bandwidth;
+        rtx_cfg.rxFrequency = state.channel.rx_frequency;
+        rtx_cfg.txFrequency = state.channel.tx_frequency;
+        rtx_cfg.txPower = state.channel.power;
+        rtx_cfg.sqlLevel = state.sqlLevel;
+        rtx_cfg.rxToneEn = state.channel.fm.rxToneEn;
+        rtx_cfg.rxTone = ctcss_tone[state.channel.fm.rxTone];
+        rtx_cfg.txToneEn = state.channel.fm.txToneEn;
+        rtx_cfg.txTone = ctcss_tone[state.channel.fm.txTone];
+        pthread_mutex_unlock(&rtx_mutex);
+
+        rtx_configure(&rtx_cfg);
+        sync_rtx = false;
+    }
+
+    // Redraw GUI based on last state copy
+    ui_updateGUI();
+    // Lock display mutex and render display
+    pthread_mutex_lock(&display_mutex);
+    gfx_render();
+    pthread_mutex_unlock(&display_mutex);
+
+    // We don't need a delay because we lock on incoming events
+    // TODO: Enable self refresh when a continuous visualization is enabled
+    // Update UI at ~33 FPS
+    //OSTimeDlyHMSM(0u, 0u, 0u, 30u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+}
+
 /**
  * \internal Task function in charge of updating the UI.
  */
@@ -57,67 +120,23 @@ void *ui_task(void *arg)
 {
     (void) arg;
 
-    // RTX needs synchronization
-    bool sync_rtx = true;
-    rtxStatus_t rtx_cfg;
-
     // Get initial state local copy
 //     OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
 //     OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
 
     // Initial GUI draw
-    ui_updateGUI(last_state);
+    ui_updateGUI();
     gfx_render();
 
+#ifdef WASM
+    emscripten_set_main_loop(ui_loop, 15, 0);
+#elif
     while(1)
     {
-        // Read from the keyboard queue (returns 0 if no message is present)
-        // Copy keyboard_t keys from received void * pointer msg
-        event_t event;
-        event.value = 0;
-        (void) queue_pend(&ui_queue, &event.value, true);
-
-        // Lock mutex, read and write state
-        pthread_mutex_lock(&state_mutex);
-        // React to keypresses and update FSM inside state
-        ui_updateFSM(event, &sync_rtx);
-        // Update state local copy
-        ui_saveState();
-        // Unlock mutex
-        pthread_mutex_unlock(&state_mutex);
-
-        // If synchronization needed take mutex and update RTX configuration
-        if(sync_rtx)
-        {
-            pthread_mutex_lock(&rtx_mutex);
-            rtx_cfg.opMode = state.channel.mode;
-            rtx_cfg.bandwidth = state.channel.bandwidth;
-            rtx_cfg.rxFrequency = state.channel.rx_frequency;
-            rtx_cfg.txFrequency = state.channel.tx_frequency;
-            rtx_cfg.txPower = state.channel.power;
-            rtx_cfg.sqlLevel = state.sqlLevel;
-            rtx_cfg.rxToneEn = state.channel.fm.rxToneEn;
-            rtx_cfg.rxTone = ctcss_tone[state.channel.fm.rxTone];
-            rtx_cfg.txToneEn = state.channel.fm.txToneEn;
-            rtx_cfg.txTone = ctcss_tone[state.channel.fm.txTone];
-            pthread_mutex_unlock(&rtx_mutex);
-
-            rtx_configure(&rtx_cfg);
-            sync_rtx = false;
-        }
-
-        // Redraw GUI based on last state copy
-        ui_updateGUI();
-        // Lock display mutex and render display
-        pthread_mutex_lock(&display_mutex);
-        gfx_render();
-        pthread_mutex_unlock(&display_mutex);
-
-        // We don't need a delay because we lock on incoming events
-        // TODO: Enable self refresh when a continuous visualization is enabled
-        // Update UI at ~33 FPS
-        //OSTimeDlyHMSM(0u, 0u, 0u, 30u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+        ui_loop();
     }
+#endif
+
 }
 
 /**
