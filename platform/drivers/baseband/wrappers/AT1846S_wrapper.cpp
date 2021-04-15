@@ -18,8 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/delays.h>
-#include "new/AT1846S.h"
+#include "AT1846S_wrapper.h"
 #include "AT1846S.h"
 
 void AT1846S_init()
