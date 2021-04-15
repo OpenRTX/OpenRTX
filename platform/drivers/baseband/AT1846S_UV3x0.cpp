@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
+ *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
  *                         Niccolò Izzo IU2KIN                             *
  *                         Frederik Saraci IU2NRO                          *
  *                         Silvano Seva IU2KWO                             *
@@ -18,35 +18,14 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <interfaces/gpio.h>
 #include <interfaces/delays.h>
-#include "interfaces.h"
+#include <hwconfig.h>
 #include "AT1846S.h"
 
-void _maskSetRegister(uint8_t reg, uint16_t mask, uint16_t value)
+void AT1846S::init()
 {
-    uint16_t regVal = i2c_readReg16(reg);
-    regVal = (regVal & ~mask) | (value & mask);
-    i2c_writeReg16(reg, regVal);
-}
-
-/*
- * NOTE: after some main AT1846S parameters (frequency, bandwidth, ...) are changed,
- * the chip must be "cycled" to make them effective. Cycling consists of turning
- * both TX and RX off and then switch back to the desired functionality.
- *
- * The function _reloadConfig() provides an helper to do this.
- */
-static inline void _reloadConfig()
-{
-    uint16_t reg = i2c_readReg16(0x30);    /* Get current op. status */
-    i2c_writeReg16(0x30, reg & 0xFF9F);    /* RX and TX off          */
-    i2c_writeReg16(0x30, reg);             /* Restore op. status     */
-}
-
-
-void AT1846S_init()
-{
-    i2c_writeReg16(0x30, 0x0001);   /* Soft reset              */
+    i2c_writeReg16(0x30, 0x0001);   // Soft reset
     delayMs(160);
 
     i2c_writeReg16(0x30, 0x0004);   // Set pdn_reg (power down pin)
@@ -106,39 +85,19 @@ void AT1846S_init()
                                     // and set xtal_mode to 26MHz/13MHz
     delayMs(160);
 
-    i2c_writeReg16(0x30, 0x40A6);   /* Start calibration       */
+    i2c_writeReg16(0x30, 0x40A6);   // Start calibration
     delayMs(160);
-    i2c_writeReg16(0x30, 0x4006);   /* Stop calibration        */
+    i2c_writeReg16(0x30, 0x4006);   // Stop calibration
     delayMs(160);
 
     i2c_writeReg16(0x40, 0x0031);
 }
 
-void AT1846S_terminate()
+void AT1846S::setBandwidth(const AT1846S_BW band)
 {
-    AT1846S_disableCtcss();
-    AT1846S_setFuncMode(AT1846S_OFF);
-}
-
-void AT1846S_setFrequency(const freq_t freq)
-{
-    /* The value to be written in registers is given by: 0.0016*freqency */
-    uint32_t val = (freq/1000)*16;
-    uint16_t fHi = (val >> 16) & 0xFFFF;
-    uint16_t fLo = val & 0xFFFF;
-
-    i2c_writeReg16(0x05, 0x8763);
-    i2c_writeReg16(0x29, fHi);
-    i2c_writeReg16(0x2A, fLo);
-
-    _reloadConfig();
-}
-
-void AT1846S_setBandwidth(const AT1846S_bw_t band)
-{
-    if(band == AT1846S_BW_25)
+    if(band == AT1846S_BW::_25)
     {
-        /* 25kHz bandwidth */
+        // 25kHz bandwidth
         i2c_writeReg16(0x15, 0x1F00);
         i2c_writeReg16(0x32, 0x7564);
         i2c_writeReg16(0x3A, 0x04C3);
@@ -162,11 +121,11 @@ void AT1846S_setBandwidth(const AT1846S_bw_t band)
         i2c_writeReg16(0x0F, 0x3F84);
         i2c_writeReg16(0x12, 0xE0EB);
         i2c_writeReg16(0x7F, 0x0000);
-        _maskSetRegister(0x30, 0x3000, 0x3000);
+        maskSetRegister(0x30, 0x3000, 0x3000);
     }
     else
     {
-        /* 12.5kHz bandwidth */
+        // 12.5kHz bandwidth
         i2c_writeReg16(0x15, 0x1100);
         i2c_writeReg16(0x32, 0x4495);
         i2c_writeReg16(0x3A, 0x00C3);
@@ -190,119 +149,208 @@ void AT1846S_setBandwidth(const AT1846S_bw_t band)
         i2c_writeReg16(0x0F, 0x3F44);
         i2c_writeReg16(0x12, 0xE0EB);
         i2c_writeReg16(0x7F, 0x0000);
-        _maskSetRegister(0x30, 0x3000, 0x0000);
+        maskSetRegister(0x30, 0x3000, 0x0000);
     }
 
-    _reloadConfig();
+    reloadConfig();
 }
 
-void AT1846S_setOpMode(const AT1846S_op_t mode)
+void AT1846S::setOpMode(const AT1846S_OpMode mode)
 {
-    if(mode == AT1846S_OP_DMR)
+    if(mode == AT1846S_OpMode::DMR)
     {
-        /* TODO: DMR mode */
+        // TODO: DMR mode
 
     }
     else
     {
-        /* FM mode */
+        // FM mode
         i2c_writeReg16(0x58, 0x9C1D);
         i2c_writeReg16(0x40, 0x0030);
     }
 
-    _reloadConfig();
+    reloadConfig();
 }
 
-void AT1846S_setFuncMode(const AT1846S_func_t mode)
+/*
+ * Implementation of AT1846S I2C interface.
+ *
+ * On MD-UV3x0 the I2C interface towars the AT1846S is not connected to any
+ * hardware peripheral and has to be implemented in software by bit-banging.
+ */
+
+void _i2c_start();
+void _i2c_stop();
+void _i2c_write(uint8_t val);
+uint8_t _i2c_read(bool ack);
+
+static constexpr uint8_t devAddr = 0x5C;
+
+void AT1846S::i2c_init()
+{
+    gpio_setMode(I2C_SDA, INPUT);
+    gpio_setMode(I2C_SCL, OUTPUT);
+    gpio_clearPin(I2C_SCL);
+}
+
+void AT1846S::i2c_writeReg16(uint8_t reg, uint16_t value)
 {
     /*
-     * Functional mode is controlled by bits 5 (RX on) and 6 (TX on) in register
-     * 0x30. With a cast and shift we can do it easily...
-     *
-     * Note about sanity check: if value is greater than 0x0040 we are trying to
-     * turn on both RX and TX, which is NOT good.
+     * Beware of endianness!
+     * When writing an AT1846S register, bits 15:8 must be sent first, followed
+     * by bits 7:0.
      */
+    uint8_t valHi = (value >> 8) & 0xFF;
+    uint8_t valLo = value & 0xFF;
 
-    uint16_t value = ((uint16_t) mode) << 5;
-    if(value > 0x0040) return;
-    _maskSetRegister(0x30, 0x0060, value);
-//     i2c_writeReg16(0x44, 0x4ff);
+    _i2c_start();
+    _i2c_write(devAddr);
+    _i2c_write(reg);
+    _i2c_write(valHi);
+    _i2c_write(valLo);
+    _i2c_stop();
 }
 
-void AT1846S_enableTxCtcss(tone_t freq)
+uint16_t AT1846S::i2c_readReg16(uint8_t reg)
 {
-    i2c_writeReg16(0x4A, freq*10);
-    i2c_writeReg16(0x4B, 0x0000);
-    i2c_writeReg16(0x4C, 0x0000);
-    _maskSetRegister(0x4E, 0x0600, 0x0600);
+    _i2c_start();
+    _i2c_write(devAddr);
+    _i2c_write(reg);
+    _i2c_start();
+    _i2c_write(devAddr | 0x01);
+    uint8_t valHi = _i2c_read(true);
+    uint8_t valLo = _i2c_read(false);
+    _i2c_stop();
+
+    return (valHi << 8) | valLo;
 }
 
-void AT1846S_disableCtcss()
+/*
+ * Software I2C routine
+ */
+
+void _i2c_start()
 {
-    i2c_writeReg16(0x4A, 0x0000);
-    _maskSetRegister(0x4E, 0x0600, 0x0000); /* Disable TX CTCSS */
+    gpio_setMode(I2C_SDA, OUTPUT);
+
+    /*
+     * Lines commented to keep SCL high when idle
+     *
+    gpio_clearPin(I2C_SCL);
+    delayUs(2);
+    */
+
+    gpio_setPin(I2C_SDA);
+    delayUs(2);
+
+    gpio_setPin(I2C_SCL);
+    delayUs(2);
+
+    gpio_clearPin(I2C_SDA);
+    delayUs(2);
+
+    gpio_clearPin(I2C_SCL);
+    delayUs(6);
 }
 
-uint16_t AT1846S_readRSSI()
+void _i2c_stop()
 {
-    return i2c_readReg16(0x1B);
+    gpio_setMode(I2C_SDA, OUTPUT);
+
+    gpio_clearPin(I2C_SCL);
+    delayUs(2);
+
+    gpio_clearPin(I2C_SDA);
+    delayUs(2);
+
+    gpio_setPin(I2C_SCL);
+    delayUs(2);
+
+    gpio_setPin(I2C_SDA);
+    delayUs(2);
+
+    /*
+     * Lines commented to keep SCL high when idle
+     *
+    gpio_clearPin(I2C_SCL);
+    delayUs(2);
+    */
 }
 
-void AT1846S_setPgaGain(const uint8_t gain)
+void _i2c_write(uint8_t val)
 {
-    uint16_t pga = (gain & 0x1F) << 6;
-    _maskSetRegister(0x0A, 0x07C0, pga);
+    gpio_setMode(I2C_SDA, OUTPUT);
+
+    for(uint8_t i = 0; i < 8; i++)
+    {
+        gpio_clearPin(I2C_SCL);
+        delayUs(1);
+
+        if(val & 0x80)
+        {
+            gpio_setPin(I2C_SDA);
+        }
+        else
+        {
+            gpio_clearPin(I2C_SDA);
+        }
+
+        val <<= 1;
+        delayUs(1);
+        gpio_setPin(I2C_SCL);
+        delayUs(2);
+    }
+
+    /* Ensure SCL is low before releasing SDA */
+    gpio_clearPin(I2C_SCL);
+
+    /* Clock cycle for slave ACK/NACK */
+    gpio_setMode(I2C_SDA, INPUT_PULL_UP);
+    delayUs(2);
+    gpio_setPin(I2C_SCL);
+    delayUs(2);
+    gpio_clearPin(I2C_SCL);
+    delayUs(1);
+
+    /* Asserting SDA pin allows to fastly bring the line to idle state */
+    gpio_setPin(I2C_SDA);
+    gpio_setMode(I2C_SDA, OUTPUT);
+    delayUs(6);
 }
 
-void AT1846S_setMicGain(const uint8_t gain)
+uint8_t _i2c_read(bool ack)
 {
-    _maskSetRegister(0x41, 0x007F, ((uint16_t) gain));
-}
+    gpio_setMode(I2C_SDA, INPUT_PULL_UP);
+    gpio_clearPin(I2C_SCL);
 
-void AT1846S_setAgcGain(const uint8_t gain)
-{
-    uint16_t agc = (gain & 0x0F) << 8;
-    _maskSetRegister(0x44, 0x0F00, agc);
-}
+    uint8_t value = 0;
+    for(uint8_t i = 0; i < 8; i++)
+    {
+        delayUs(2);
+        gpio_setPin(I2C_SCL);
+        delayUs(2);
 
-void AT1846S_setTxDeviation(const uint16_t dev)
-{
-    uint16_t value = (dev & 0x03FF) << 6;
-    _maskSetRegister(0x59, 0xFFC0, value);
-}
+        value <<= 1;
+        value |= gpio_readPin(I2C_SDA);
 
-void AT1846S_setRxAudioGain(const uint8_t gainWb, const uint8_t gainNb)
-{
-    uint16_t value = (gainWb & 0x0F) << 8;
-    _maskSetRegister(0x44, 0x0F00, value);
-    _maskSetRegister(0x44, 0x000F, ((uint16_t) gainNb));
-}
+        gpio_clearPin(I2C_SCL);
+    }
 
-void AT1846S_setNoise1Thresholds(const uint8_t highTsh, const uint8_t lowTsh)
-{
-    uint16_t value = ((highTsh & 0x1f) << 8) | (lowTsh & 0x1F);
-    i2c_writeReg16(0x48, value);
-}
+    /*
+     * Set ACK/NACK state BEFORE putting SDA gpio to output mode.
+     * This avoids spurious spikes which can be interpreted as NACKs
+     */
+    gpio_clearPin(I2C_SDA);
+    gpio_setMode(I2C_SDA, OUTPUT);
+    delayUs(2);
+    if(!ack) gpio_setPin(I2C_SDA);
 
-void AT1846S_setNoise2Thresholds(const uint8_t highTsh, const uint8_t lowTsh)
-{
-    uint16_t value = ((highTsh & 0x1f) << 8) | (lowTsh & 0x1F);
-    i2c_writeReg16(0x60, value);
-}
+    /* Clock cycle for ACK/NACK */
+    delayUs(2);
+    gpio_setPin(I2C_SCL);
+    delayUs(2);
+    gpio_clearPin(I2C_SCL);
+    delayUs(2);
 
-void AT1846S_setRssiThresholds(const uint8_t highTsh, const uint8_t lowTsh)
-{
-    uint16_t value = ((highTsh & 0x1f) << 8) | (lowTsh & 0x1F);
-    i2c_writeReg16(0x3F, value);
-}
-
-void AT1846S_setPaDrive(const uint8_t value)
-{
-    uint16_t pa = value << 11;
-    _maskSetRegister(0x0A, 0x7800, pa);
-}
-
-void AT1846S_setAnalogSqlThresh(const uint8_t thresh)
-{
-    i2c_writeReg16(0x49, ((uint16_t) thresh));
+    return value;
 }

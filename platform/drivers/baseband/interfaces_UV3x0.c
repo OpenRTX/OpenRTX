@@ -27,58 +27,6 @@
 #include <stdbool.h>
 #include "interfaces.h"
 
-void _i2c_start();
-void _i2c_stop();
-void _i2c_write(uint8_t val);
-uint8_t _i2c_read(bool ack);
-
-/*
- * Implementation of AT1846S I2C interface.
- *
- * NOTE: on GDx devices the I2C bus is shared between the EEPROM and the AT1846S,
- * so we have to acquire exclusive ownership before exchanging data
- */
-
-static const uint8_t devAddr = 0x5C;
-
-void i2c_init()
-{
-    gpio_setMode(I2C_SDA, INPUT);
-    gpio_setMode(I2C_SCL, OUTPUT);
-    gpio_clearPin(I2C_SCL);
-}
-
-void i2c_writeReg16(uint8_t reg, uint16_t value)
-{
-    /*
-     * Beware of endianness!
-     * When writing an AT1846S register, bits 15:8 must be sent first, followed
-     * by bits 7:0.
-     */
-    uint8_t valHi = (value >> 8) & 0xFF;
-    uint8_t valLo = value & 0xFF;
-
-    _i2c_start();
-    _i2c_write(devAddr);
-    _i2c_write(reg);
-    _i2c_write(valHi);
-    _i2c_write(valLo);
-    _i2c_stop();
-}
-
-uint16_t i2c_readReg16(uint8_t reg)
-{
-    _i2c_start();
-    _i2c_write(devAddr);
-    _i2c_write(reg);
-    _i2c_start();
-    _i2c_write(devAddr | 0x01);
-    uint8_t valHi = _i2c_read(true);
-    uint8_t valLo = _i2c_read(false);
-    _i2c_stop();
-
-    return (valHi << 8) | valLo;
-}
 
 /*
  * Implementation of HR_C6000 "user" SPI interface.

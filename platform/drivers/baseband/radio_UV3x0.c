@@ -25,7 +25,7 @@
 #include <calibUtils.h>
 #include <hwconfig.h>
 #include "HR_C6000.h"
-#include "AT1846S.h"
+#include "AT1846S_wrapper.h"
 
 const mduv3x0Calib_t *calData; /* Pointer to calibration data                   */
 
@@ -277,11 +277,6 @@ float radio_getRssi(const freq_t rxFreq)
 {
     (void) rxFreq;
 
-    /*
-     * RSSI and SNR are packed in a 16-bit value, with RSSI being the upper
-     * eight bits.
-     */
-    uint16_t val = (AT1846S_readRSSI() >> 8);
-    int16_t rssi   = -151 + ((int16_t) val);
+    int16_t rssi = AT1846S_readRSSI();
     return ((float) rssi);
 }

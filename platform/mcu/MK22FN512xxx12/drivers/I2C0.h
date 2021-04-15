@@ -25,6 +25,10 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Initialise I2C peripheral with a bus clock frequency of ~100kHz.
  * NOTE: this driver does not configure the I2C GPIOs, which have to be put in
@@ -81,5 +85,9 @@ void i2c0_lockDeviceBlocking();
  * Release exclusive ownership on the I2C peripheral.
  */
 void i2c0_releaseDevice();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* I2C0_H */

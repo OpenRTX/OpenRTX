@@ -22,6 +22,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * \brief CTCSS and DCS type definition.
  *
@@ -40,5 +44,9 @@ typedef unsigned int tone_t;
  * Frequency type unit in Hz, able to hold SHF frequencies.
  */
 typedef uint32_t freq_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* DATATYPES_H */

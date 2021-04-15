@@ -27,49 +27,6 @@
 #include <I2C0.h>
 #include "interfaces.h"
 
-/*
- * Implementation of AT1846S I2C interface.
- *
- * NOTE: on GDx devices the I2C bus is shared between the EEPROM and the AT1846S,
- * so we have to acquire exclusive ownership before exchanging data
- */
-
-static const uint8_t devAddr = 0xE2;
-
-void i2c_init()
-{
-    /* I2C already init'd by platform support package */
-}
-
-void i2c_writeReg16(uint8_t reg, uint16_t value)
-{
-    /*
-     * Beware of endianness!
-     * When writing an AT1846S register, bits 15:8 must be sent first, followed
-     * by bits 7:0.
-     */
-    uint8_t buf[3];
-    buf[0] = reg;
-    buf[1] = (value >> 8) & 0xFF;
-    buf[2] = value & 0xFF;
-
-    i2c0_lockDeviceBlocking();
-    i2c0_write(devAddr, buf, 3, true);
-    i2c0_releaseDevice();
-}
-
-uint16_t i2c_readReg16(uint8_t reg)
-{
-    uint16_t value = 0;
-
-    i2c0_lockDeviceBlocking();
-    i2c0_write(devAddr, &reg, 1, false);
-    i2c0_read(devAddr, &value, 2);
-    i2c0_releaseDevice();
-
-    /* Correction for AT1846S sending register data in big endian format */
-    return __builtin_bswap16(value);
-}
 
 /*
  * Implementation of HR_C6000 "user" SPI interface.

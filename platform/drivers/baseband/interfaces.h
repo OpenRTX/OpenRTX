@@ -30,22 +30,6 @@
  * to be platform-agnostic, and the platform-specific communication busses.
  */
 
-
-/**
- * Initialise I2C subsystem.
- */
-void i2c_init();
-
-/**
- * AT1846S specific: write a device register.
- */
-void i2c_writeReg16(uint8_t reg, uint16_t value);
-
-/**
- * AT1846S specific: read a device register.
- */
-uint16_t i2c_readReg16(uint8_t reg);
-
 /**
  * HR_C5000 and HR_C6000: initialise "user" SPI interface, the one for chip
  * configuration.

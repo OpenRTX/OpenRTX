@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
+ *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
  *                         Niccolò Izzo IU2KIN                             *
  *                         Frederik Saraci IU2NRO                          *
  *                         Silvano Seva IU2KWO                             *
@@ -26,151 +26,311 @@
 #include <datatypes.h>
 
 /**
- * \enum AT1846S_bw_t Enumeration type defining the bandwidth settings supported
- * by the AT1846S chip.
+ * Enumeration type defining the bandwidth settings supported by the AT1846S chip.
  */
-typedef enum
+enum class AT1846S_BW : uint8_t
 {
-    AT1846S_BW_12P5 = 0,
-    AT1846S_BW_25   = 1
-}
-AT1846S_bw_t;
+    _12P5 = 0,    ///< 12.5kHz bandwidth.
+    _25   = 1     ///< 25kHz bandwidth.
+};
 
 /**
- * \enum AT1846S_op_t Enumeration type defining the possible operating mode
- * configurations for the AT1846S chip.
+ * Enumeration type defining the possible operating mode configurations for the
+ * AT1846S chip.
  */
-typedef enum
+enum class AT1846S_OpMode : uint8_t
 {
-    AT1846S_OP_FM  = 0,
-    AT1846S_OP_DMR = 1
-}
-AT1846S_op_t;
+    FM  = 0,      ///< Analog FM operation.
+    DMR = 1       ///< DMR operation.
+};
 
 /**
- * \enum AT1846S_func_t Enumeration type defining the AT1846S functional modes.
+ * Enumeration type defining the AT1846S functional modes.
  */
-typedef enum
+enum class AT1846S_FuncMode : uint8_t
 {
-    AT1846S_OFF = 0,
-    AT1846S_RX  = 1,
-    AT1846S_TX  = 2,
-}
-AT1846S_func_t;
+    OFF = 0,      ///< Both TX and RX off.
+    RX  = 1,      ///< RX enabled.
+    TX  = 2,      ///< TX enabled.
+};
 
 /**
- * Initialise the AT146S chip.
+ * Low-level driver for AT1846S "radio on a chip" integrated circuit.
  */
-void AT1846S_init();
 
-/**
- * Shut down the AT146S chip.
- */
-void AT1846S_terminate();
+class AT1846S
+{
+public:
 
-/**
- * Set the VCO frequency, either for transmission or reception.
- * @param freq: VCO frequency.
- */
-void AT1846S_setFrequency(const freq_t freq);
+    /**
+     * \return a reference to the instance of the AT1846S class (singleton).
+     */
+    static AT1846S& instance()
+    {
+        static AT1846S instance;
+        return instance;
+    }
 
-/**
- * Set the transmission and reception bandwidth.
- * @param band: bandwidth, from \enum AT1846S_bw_t.
- */
-void AT1846S_setBandwidth(const AT1846S_bw_t band);
+    /**
+     * Destructor.
+     * When called it implicitly shuts down the AT146S chip.
+     */
+    ~AT1846S()
+    {
+        terminate();
+    }
 
-/**
- * Set the operating mode.
- * @param mode: operating mode, from \enum AT1846S_op_t.
- */
-void AT1846S_setOpMode(const AT1846S_op_t mode);
+    /**
+     * Initialise the AT146S chip.
+     */
+    void init();
 
-/**
- * Set the functional mode.
- * @param mode: functional mode, from \enum AT1846S_func_t.
- */
-void AT1846S_setFuncMode(const AT1846S_func_t mode);
+    /**
+     * Shut down the AT146S chip.
+     */
+    inline void terminate()
+    {
+        disableCtcss();
+        setFuncMode(AT1846S_FuncMode::OFF);
+    }
 
-/**
- * Enable the CTCSS tone for transmission.
- * @param freq: CTCSS tone frequency.
- */
-void AT1846S_enableTxCtcss(const tone_t freq);
+    /**
+     * Set the VCO frequency, either for transmission or reception.
+     * @param freq: VCO frequency.
+     */
+    void setFrequency(const freq_t freq)
+    {
+        // The value to be written in registers is given by: 0.0016*freqency
+        uint32_t val = (freq/1000)*16;
+        uint16_t fHi = (val >> 16) & 0xFFFF;
+        uint16_t fLo = val & 0xFFFF;
 
-/**
- * Turn off both transmission CTCSS tone and reception CTCSS tone decoding.
- */
-void AT1846S_disableCtcss();
+        i2c_writeReg16(0x29, fHi);
+        i2c_writeReg16(0x2A, fLo);
 
-/**
- * Get current RSSI value. The raw value from the RSSI register is returned.
- * @return current RSSI.
- */
-uint16_t AT1846S_readRSSI();
+        reloadConfig();
+    }
 
-/**
- * Set the gain of internal programmable gain amplifier.
- * @param gain: PGA gain.
- */
-void AT1846S_setPgaGain(const uint8_t gain);
+    /**
+     * Set the transmission and reception bandwidth.
+     * @param band: bandwidth.
+     */
+    void setBandwidth(const AT1846S_BW band);
 
-/**
- * Set microphone gain for transmission.
- * @param gain: microphone gain.
- */
-void AT1846S_setMicGain(const uint8_t gain);
+    /**
+     * Set the operating mode.
+     * @param mode: operating mode.
+     */
+    void setOpMode(const AT1846S_OpMode mode);
 
-/**
- * Set maximum FM transmission deviation.
- * @param dev: maximum allowed deviation.
- */
-void AT1846S_setTxDeviation(const uint16_t dev);
+    /**
+     * Set the functional mode.
+     * @param mode: functional mode.
+     */
+    void setFuncMode(const AT1846S_FuncMode mode)
+    {
+        /*
+         * Functional mode is controlled by bits 5 (RX on) and 6 (TX on) in
+         * register 0x30. With a cast and shift we can set it easily.
+         */
 
-/**
- * Set the gain for internal automatic gain control system.
- * @param gain: AGC gain.
- */
-void AT1846S_setAgcGain(const uint8_t gain);
+        uint16_t value = static_cast< uint16_t >(mode) << 5;
+        maskSetRegister(0x30, 0x0060, value);
+    }
 
-/**
- * Set audio gain for recepion.
- * @param gainWb: gain for wideband Rx (25kHz).
- * @param gainNb: gain for narrowband Rx (12.5kHz).
- */
-void AT1846S_setRxAudioGain(const uint8_t gainWb, const uint8_t gainNb);
+    /**
+     * Enable the CTCSS tone for transmission.
+     * @param freq: CTCSS tone frequency.
+     */
+    void enableTxCtcss(const tone_t freq)
+    {
+        i2c_writeReg16(0x4A, freq*10);
+        i2c_writeReg16(0x4B, 0x0000);
+        i2c_writeReg16(0x4C, 0x0000);
+        maskSetRegister(0x4E, 0x0600, 0x0600);
+    }
 
-/**
- * Set noise1 thresholds for squelch opening and closing.
- * @param highTsh: upper threshold.
- * @param lowTsh: lower threshold.
- */
-void AT1846S_setNoise1Thresholds(const uint8_t highTsh, const uint8_t lowTsh);
+    /**
+     * Turn off both transmission CTCSS tone and reception CTCSS tone decoding.
+     */
+    inline void disableCtcss()
+    {
+        i2c_writeReg16(0x4A, 0x0000);
+        maskSetRegister(0x4E, 0x0600, 0x0000); // Disable TX CTCSS
+    }
 
-/**
- * Set noise2 thresholds for squelch opening and closing.
- * @param highTsh: upper threshold.
- * @param lowTsh: lower threshold.
- */
-void AT1846S_setNoise2Thresholds(const uint8_t highTsh, const uint8_t lowTsh);
+    /**
+     * Get current RSSI value.
+     * @return current RSSI in dBm.
+     */
+    inline int16_t readRSSI()
+    {
+        // RSSI value is contained in the upper 8 bits of register 0x1B.
+        return -137 + static_cast< int16_t >(i2c_readReg16(0x1B) >> 8);
+    }
 
-/**
- * Set RSSI thresholds for squelch opening and closing.
- * @param highTsh: upper threshold.
- * @param lowTsh: lower threshold.
- */
-void AT1846S_setRssiThresholds(const uint8_t highTsh, const uint8_t lowTsh);
+    /**
+     * Set the gain of internal programmable gain amplifier.
+     * @param gain: PGA gain.
+     */
+    inline void setPgaGain(const uint8_t gain)
+    {
+        uint16_t pga = (gain & 0x1F) << 6;
+        maskSetRegister(0x0A, 0x07C0, pga);
+    }
 
-/**
- * Set PA drive control bits.
- * @param value: PA drive value.
- */
-void AT1846S_setPaDrive(const uint8_t value);
+    /**
+     * Set microphone gain for transmission.
+     * @param gain: microphone gain.
+     */
+    inline void setMicGain(const uint8_t gain)
+    {
+        maskSetRegister(0x41, 0x007F, ((uint16_t) gain));
+    }
 
-/**
- * Set threshold for analog FM squelch opening.
- * @param thresh: squelch threshold.
- */
-void AT1846S_setAnalogSqlThresh(const uint8_t thresh);
+    /**
+     * Set maximum FM transmission deviation.
+     * @param dev: maximum allowed deviation.
+     */
+    inline void setTxDeviation(const uint16_t dev)
+    {
+        uint16_t value = (dev & 0x03FF) << 6;
+        maskSetRegister(0x59, 0xFFC0, value);
+    }
+
+    /**
+     * Set the gain for internal automatic gain control system.
+     * @param gain: AGC gain.
+     */
+    inline void setAgcGain(const uint8_t gain)
+    {
+        uint16_t agc = (gain & 0x0F) << 8;
+        maskSetRegister(0x44, 0x0F00, agc);
+    }
+
+    /**
+     * Set audio gain for recepion.
+     * @param gainWb: gain for wideband Rx (25kHz).
+     * @param gainNb: gain for narrowband Rx (12.5kHz).
+     */
+    inline void setRxAudioGain(const uint8_t gainWb, const uint8_t gainNb)
+    {
+        uint16_t value = (gainWb & 0x0F) << 8;
+        maskSetRegister(0x44, 0x0F00, value);
+        maskSetRegister(0x44, 0x000F, ((uint16_t) gainNb));
+    }
+
+    /**
+     * Set noise1 thresholds for squelch opening and closing.
+     * @param highTsh: upper threshold.
+     * @param lowTsh: lower threshold.
+     */
+    inline void setNoise1Thresholds(const uint8_t highTsh, const uint8_t lowTsh)
+    {
+        uint16_t value = ((highTsh & 0x1f) << 8) | (lowTsh & 0x1F);
+        i2c_writeReg16(0x48, value);
+    }
+
+    /**
+     * Set noise2 thresholds for squelch opening and closing.
+     * @param highTsh: upper threshold.
+     * @param lowTsh: lower threshold.
+     */
+    inline void setNoise2Thresholds(const uint8_t highTsh, const uint8_t lowTsh)
+    {
+        uint16_t value = ((highTsh & 0x1f) << 8) | (lowTsh & 0x1F);
+        i2c_writeReg16(0x60, value);
+    }
+
+    /**
+     * Set RSSI thresholds for squelch opening and closing.
+     * @param highTsh: upper threshold.
+     * @param lowTsh: lower threshold.
+     */
+    inline void setRssiThresholds(const uint8_t highTsh, const uint8_t lowTsh)
+    {
+        uint16_t value = ((highTsh & 0x1f) << 8) | (lowTsh & 0x1F);
+        i2c_writeReg16(0x3F, value);
+    }
+
+    /**
+     * Set PA drive control bits.
+     * @param value: PA drive value.
+     */
+    inline void setPaDrive(const uint8_t value)
+    {
+        uint16_t pa = value << 11;
+        maskSetRegister(0x0A, 0x7800, pa);
+    }
+
+    /**
+     * Set threshold for analog FM squelch opening.
+     * @param thresh: squelch threshold.
+     */
+    inline void setAnalogSqlThresh(const uint8_t thresh)
+    {
+        i2c_writeReg16(0x49, ((uint16_t) thresh));
+    }
+
+private:
+
+    /**
+     * Constructor.
+     */
+    AT1846S()
+    {
+        i2c_init();
+    }
+
+    /**
+     * Helper function to set/clear some specific bits in a register.
+     *
+     * @param reg: address of the register to be changed.
+     * @param mask: bitmask to select which bits to change. To modify the i-th
+     * bit in the register, set its value to "1" in the bitmask.
+     * @param value: New value for the masked bits.
+     */
+    inline void maskSetRegister(const uint8_t reg, const uint16_t mask,
+                                const uint16_t value)
+    {
+        uint16_t regVal = i2c_readReg16(reg);
+        regVal = (regVal & ~mask) | (value & mask);
+        i2c_writeReg16(reg, regVal);
+    }
+
+    /**
+     * Helper function to be called to make effective some of the AT1846S
+     * configuration, when changed with TX or RX active.
+     * It has been observed that, to make effective a change in some of the main
+     * AT1846S parameters, the chip must be "power cycled" by turning it off and
+     * then switching back the previous functionality.
+     */
+    inline void reloadConfig()
+    {
+        uint16_t funcMode = i2c_readReg16(0x30) & 0x0060;   // Get current op. status
+        maskSetRegister(0x30, 0x0060, 0x0000);              // RX and TX off
+        maskSetRegister(0x30, 0x0060, funcMode);            // Restore op. status
+    }
+
+    /**
+     * Initialise the I2C interface.
+     */
+    void i2c_init();
+
+    /**
+     * Write one register via I2C interface.
+     *
+     * @param reg: address of the register to be written.
+     * @param value: value to be written to the register.
+     */
+    void i2c_writeReg16(const uint8_t reg, const uint16_t value);
+
+    /**
+     * Read one register via I2C interface.
+     *
+     * @param reg: address of the register to be read.
+     */
+    uint16_t i2c_readReg16(const uint8_t reg);
+};
 
 #endif /* AT1846S_H */
