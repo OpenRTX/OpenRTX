@@ -46,7 +46,7 @@ typedef struct
     uint16_t txToneEn : 1,  /**< TX CTC/DCS tone enable        */
              txTone   : 15; /**< TX CTC/DCS tone               */
 }
-__attribute__((packed)) rtxStatus_t;
+rtxStatus_t;
 
 /**
  * \enum bandwidth Enumeration type defining the current rtx bandwidth.
