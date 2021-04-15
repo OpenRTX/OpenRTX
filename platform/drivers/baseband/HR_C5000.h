@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
+ *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
  *                         Niccolò Izzo IU2KIN                             *
  *                         Frederik Saraci IU2NRO                          *
  *                         Silvano Seva IU2KWO                             *
@@ -21,74 +21,18 @@
 #ifndef HRC5000_H
 #define HRC5000_H
 
-#include <stdint.h>
-#include <stdbool.h>
+#include "HR_Cx000.h"
 
-/**
- * Driver for HR_C5000 "baseband" chip.
- *
- * WARNING: on MD3x0 devices the PLL and DMR chips share the SPI MOSI line,
- * thus particular care has to be put to avoid them stomping reciprocally.
- * This driver does not make any check if a SPI transfer is already in progress,
- * deferring the correct bus management to higher level modules. However,
- * a function returning true if the bus is currently in use by this driver is
- * provided.
- */
+enum class C5000_SpiOpModes : uint8_t
+{
+    CONFIG = 0,     ///< Main configuration registers.
+    AUX    = 1,     ///< Auxiliary configuration registers.
+    DATA   = 2,     ///< Data register.
+    SOUND  = 3,     ///< Voice prompt sample register.
+    CMX638 = 4,     ///< CMX638 configuration register.
+    AMBE3K = 5      ///< AMBE3000 configuration register.
+};
 
-/**
- * Initialise the HR_C5000 driver.
- */
-void C5000_init();
+using HR_C5000 = HR_Cx000 < C5000_SpiOpModes >;
 
-/**
- * Terminate the HR_C5000 driver.
- */
-void C5000_terminate();
-
-/**
- * Set value for two-point modulation offset adjustment. This value usually is
- * stored in radio calibration data.
- * @param offset: value for modulation offset adjustment.
- */
-void C5000_setModOffset(uint8_t offset);
-
-/**
- * Set values for two-point modulation amplitude adjustment. These values
- * usually are stored in radio calibration data.
- * @param iMag: value for modulation offset adjustment.
- */
-void C5000_setModAmplitude(uint8_t iAmp, uint8_t qAmp);
-
-/**
- * Set value for FM-mode modulation factor, a value dependent on bandwidth.
- * @param mf: value for FM modulation factor.
- */
-void C5000_setModFactor(uint8_t mf);
-
-/**
- * Configure chipset for DMR operation.
- */
-void C5000_dmrMode();
-
-/**
- * Configure chipset for analog FM operation.
- */
-void C5000_fmMode();
-
-/**
- * Start analog FM transmission.
- */
-void C5000_startAnalogTx();
-
-/**
- * Stop analog FM transmission.
- */
-void C5000_stopAnalogTx();
-
-/**
- * Check if SPI common to HR_C5000 and PLL is in use by this driver.
- * @retur true if SPI lines are being used by this driver.
- */
-bool C5000_spiInUse();
-
-#endif /* HRC5000_H */
+#endif // HRC5000_H

@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
+ *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
  *                         Niccolò Izzo IU2KIN                             *
  *                         Frederik Saraci IU2NRO                          *
  *                         Silvano Seva IU2KWO                             *
@@ -21,77 +21,19 @@
 #ifndef HRC6000_H
 #define HRC6000_H
 
-#include <stdint.h>
-#include <stdbool.h>
+#include "HR_Cx000.h"
 
-#include <calibInfo_GDx.h>
+enum class C6000_SpiOpModes : uint8_t
+{
+    AUX    = 1,     ///< Auxiliary configuration registers.
+    DATA   = 2,     ///< Write TX data register and read RX data register.
+    SOUND  = 3,     ///< Voice prompt sample register.
+    CONFIG = 4,     ///< Main configuration registers.
+    AMBE3K = 5,     ///< AMBE3000 configuration register.
+    DATA_R = 6,     ///< Write RX data register and read TX data register.
+    AMBE1K = 7      ///< AMBE1000 configuration register.
+};
 
-/**
- * Initialise the HR_C6000 driver.
- */
-void C6000_init();
-
-/**
- * Terminate the HR_C6000 driver.
- */
-void C6000_terminate();
-
-/**
- * Set value for two-point modulation offset adjustment. This value usually is
- * stored in radio calibration data.
- * @param offset: value for modulation offset adjustment.
- */
-void C6000_setModOffset(uint16_t offset);
-
-/**
- * Set values for two-point modulation amplitude adjustment. These values
- * usually are stored in radio calibration data.
- * @param iMag: value for modulation offset adjustment.
- */
-void C6000_setModAmplitude(uint8_t iAmp, uint8_t qAmp);
-
-/**
- *
- */
-void C6000_setMod2Bias(uint8_t bias);
-
-/**
- * Set value for FM-mode modulation factor, a value dependent on bandwidth.
- * @param mf: value for FM modulation factor.
- */
-void C6000_setModFactor(uint8_t mf);
-
-/**
- * Configure the gain of lineout DAC stage. Allowed range is 1 - 31 and each
- * step corresponds to a variation of 1.5dB.
- * @param value: gain for the DAC stage.
- */
-void C6000_setDacGain(uint8_t value);
-
-/**
- * Configure chipset for DMR operation.
- */
-void C6000_dmrMode();
-
-/**
- * Configure chipset for analog FM operation.
- */
-void C6000_fmMode();
-
-/**
- * Start analog FM transmission.
- */
-void C6000_startAnalogTx();
-
-/**
- * Stop analog FM transmission.
- */
-void C6000_stopAnalogTx();
-
-/**
- * Check if SPI common to HR_C6000 and PLL is in use by this driver.
- * @return true if SPI lines are being used by this driver.
- */
-bool C6000_spiInUse();
+using HR_C6000 = HR_Cx000 < C6000_SpiOpModes >;
 
 #endif /* HRC6000_H */
