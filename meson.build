@@ -27,7 +27,7 @@ openrtx_src = ['openrtx/src/state.c',
                'openrtx/src/gps.c',
                'openrtx/src/dsp.cpp',
                'openrtx/src/memory_profiling.cpp',
-               'tests/platform/M17_6dB_v2.c']
+               'tests/platform/M17_unfiltered.c']
 
 openrtx_inc = ['openrtx/include',
                'openrtx/include/calibration',

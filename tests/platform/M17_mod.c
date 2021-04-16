@@ -37,6 +37,7 @@
 #include <interfaces/delays.h>
 #include <interfaces/platform.h>
 #include <rtx.h>
+#include <dsp.h>
 #include <hwconfig.h>
 
 /* Uncomment this to transmit a carrier-only signal */
@@ -111,6 +112,13 @@ int main(void)
     TIM7->DIER = TIM_DIER_UDE
                | TIM_DIER_UIE;
     TIM7->CR1  = TIM_CR1_CEN;
+
+    /*
+     * Apply PWM compensation on M17 baseband
+     */
+    #ifndef CW_TEST
+    dsp_pwmCompensate(m17_buf, nSamples);
+    #endif
 
     /*
      * Prepare buffer for 8-bit waveform samples
