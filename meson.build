@@ -25,6 +25,7 @@ openrtx_src = ['openrtx/src/state.c',
                'openrtx/src/queue.c',
                'openrtx/src/rtx.c',
                'openrtx/src/gps.c',
+               'openrtx/src/dsp.cpp',
                'openrtx/src/memory_profiling.cpp']
 
 openrtx_inc = ['openrtx/include',
