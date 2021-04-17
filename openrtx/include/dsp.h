@@ -53,7 +53,7 @@ extern "C" {
  * @param buffer: the buffer to be used as both source and destination.
  * @param length: the length of the input buffer.
  */
-void dsp_pwmCompensate(audio_sample_t *buffer, uint16_t length);
+void dsp_pwmCompensate(audio_sample_t *src, uint16_t *dst, uint16_t length);
 
 /*
  * Remove any DC bias from the audio buffer passed as parameter.
@@ -76,7 +76,7 @@ void dsp_dcRemoval(audio_sample_t *buffer, uint16_t length);
  * @param taps: an array of coefficients which defines the transfer function.
  */
 template<size_t order>
-void dsp_applyFIR(audio_sample_t *buffer,
+void dsp_applyFIR(audio_sample_t *src, uint16_t *dst,
                   uint16_t length,
                   std::array<float, order> taps);
 

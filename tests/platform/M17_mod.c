@@ -39,6 +39,7 @@
 #include <rtx.h>
 #include <dsp.h>
 #include <hwconfig.h>
+#include <string.h>
 
 /* Uncomment this to transmit a carrier-only signal */
 // #define CARRIER_TEST
@@ -114,41 +115,21 @@ int main(void)
     TIM7->CR1  = TIM_CR1_CEN;
 
     /*
-     * Apply PWM compensation on M17 baseband
-     */
-    #ifndef CW_TEST
-//     dsp_pwmCompensate(m17_buf, nSamples);
-    #endif
-
-    float u  = 0;
-    float y  = 0;
-    float uo = 0;
-    float yo = 0;
-
-    const float a =  77654867.0f;
-    const float b = -72000000.0f;
-    const float c =  29654867.0f;
-    const float d = -24000000.0f;
-
-    /*
-     * Prepare buffer for 8-bit waveform samples
+     * Prepare buffer for 8-bit waveform samples.
+     * The function dsp_pwmCompensate passes the raw samples through a FIR
+     * compensation filter and also converts them to 8-bit values ready for
+     * PWM-based signal generation.
      */
     #ifndef CW_TEST
     uint16_t *buf = ((uint16_t *) malloc(nSamples * sizeof(uint16_t)));
-    for(size_t i = 0; i < nSamples; i++)
-    {
-//         int16_t sample = -32768 + m17_buf[i];
+
+    dsp_pwmCompensate(m17_buf, buf, nSamples);
+
+//     for(size_t i = 0; i < nSamples; i++)
+//     {
+//         int16_t sample = 32768 - m17_buf[i];
 //         buf[i] = ((uint16_t) sample) >> 8;
-
-        u  = ((float) m17_buf[i]);
-        y  = (a/c)*u + (b/c)*uo - (d/c)*yo;
-        uo = u;
-        yo = y;
-
-        int16_t result = ((int16_t) (y * 0.3333333f));
-        result = -32768 + result;
-        buf[i] = ((uint16_t) result) >> 8;
-    }
+//     }
     #endif
 
     /*

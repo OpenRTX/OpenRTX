@@ -31,21 +31,59 @@
 #include <dsp.h>
 
 /*
+ * FIR coefficients for compensation of the frequency response of the PWM
+ * low-pass filter.
+ * Tuned by looking to the spectrum of the signal after R340.
+ */
+static const std::array<float, 64> taps =
+{
+    -9.40491031717385e-005, -0.000848001423782242,  -0.00109696032444328,
+    -0.00104009729188586,   -0.000822117903939996,  -0.000457814705725243,
+    -0.000209097107096209,   1.45158986394931e-005,  6.14910127074833e-005,
+     0.000143087188490481,   9.88939489392696e-005,  0.000152346137163944,
+     7.61712103354242e-005,  0.000127707968067034,   2.69971997984194e-005,
+     9.63336944939915e-005, -1.98038819464503e-005,  8.50942057427035e-005,
+    -5.48180598514983e-005,  9.74029020847998e-005, -8.65051888156317e-005,
+     0.0001371524305419,    -0.000126819029918826,   0.000216559008857725,
+     0.000207354394275457,   0.000372153326183805,  -0.000415059574080058,
+     0.000760696908477235,  -0.00111729560780114,    0.00235614927731939,
+    -0.00580022821729115,    0.0279272947591763,     1.60023134906622,
+     0.766395461102808,      0.216986452747805,     -0.273079694215707,
+    -0.490419526390855,     -0.450207206012097,     -0.295047379903978,
+    -0.150800551243769,     -0.0679868999770298,    -0.0316469951519529,
+    -0.0126912958098696,     0.00516416837372523,    0.0203256371277265,
+     0.0282234781085812,     0.0279427582235168,     0.0239288255039896,
+     0.0196805882520023,     0.0165109464311636,     0.0131027879536979,
+     0.008924413230651,      0.00420241867002624,    0.000241697547977826,
+    -0.00252844621925366,   -0.0041180698440322,    -0.00521809743800184,
+    -0.00591484004204968,   -0.0061514672437905,    -0.00549741278280048,
+    -0.0040722701928889,    -0.00215228473946483,   -0.000386139756393536,
+     0.000951056484550573
+};
+
+/*
  * Applies a generic FIR filter on the audio buffer passed as parameter.
  * The buffer will be processed in place to save memory.
  */
 template<size_t order>
-void dsp_applyFIR(audio_sample_t *buffer,
-                  uint16_t length,
+void dsp_applyFIR(audio_sample_t *src, uint16_t *dst, uint16_t length,
                   std::array<float, order> taps)
 {
-    for(int i = length - 1; i >= 0; i--) {
+    for(int i = length - 1; i >= 0; i--)
+    {
         float acc = 0.0f;
-        for(uint16_t j = 0; j < order; j++) {
+        for(uint16_t j = 0; j < order; j++)
+        {
             if (i >= j)
-                acc += buffer[i - j] * taps[j];
+            {
+                float value = ((float) src[i - j]);     // Get buffer element
+                value /= 2.9f;                          // Reduce amplitude to avoid saturation when filtering
+                acc += value * taps[j];                 // Apply tap
+            }
         }
-        buffer[i] = (audio_sample_t) acc;
+
+        int16_t sample = 32768 - ((int16_t) acc);       // Convert to 8-bit 0-255 value for PWM signal generation
+        dst[i] = ((uint16_t) sample) >> 8;
     }
 }
 
@@ -53,11 +91,9 @@ void dsp_applyFIR(audio_sample_t *buffer,
  * Compensate for the filtering applied by the PWM output over the modulated
  * signal. The buffer will be processed in place to save memory.
  */
-void dsp_pwmCompensate(audio_sample_t *buffer, uint16_t length)
+void dsp_pwmCompensate(audio_sample_t *src, uint16_t *dst, uint16_t length)
 {
-    // FIR filter designed by Wojciech SP5WWP
-    std::array<float, 5> taps = { 0.01f, -0.05f, 0.88, -0.05f, 0.01f };
-    dsp_applyFIR(buffer, length, taps);
+    dsp_applyFIR(src, dst, length, taps);
 }
 
 /*
