@@ -52,6 +52,8 @@ This software is released under the GNU GPL v3.
 
 minmea is released under the DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE v2.
 
+Code for STM32F405 USB driver is released under the MCD-ST Liberty SW License Agreement V2.
+
 ## Disclaimer
 
 This project was created for research and amateur radio use only,
@@ -67,7 +69,8 @@ OpenRTX was created by:
 - Federico Amedeo Izzo IU2NUO <federico@izzo.pro>
 - Frederik Saraci IU2NRO <frederik.saraci@gmail.com>
 
-All this was made possible by the huge reverse engineering effort of
-Travis Goodspeed and all the contributors of [md380tools](https://github.com/travisgoodspeed/md380tools).
+All this was made possible by the huge reverse engineering effort of Travis Goodspeed and all the contributors of [md380tools](https://github.com/travisgoodspeed/md380tools).
+
 A huge thank goes to Roger Clark, and his [OpenGD77](https://github.com/rogerclarkmelbourne/OpenGD77) which not only inspired this project, but as a precursor, provided a working code example for the GD77 radio family.
-Finally, a warm thank you goes to SP5WWP and the [M17](https://m17project.org) community for bringing their libre protocol into our obscure undocumented hardware. 
+
+Finally, a warm thank you goes to SP5WWP and the [M17](https://m17project.org) community for bringing their libre protocol into our obscure undocumented hardware.
