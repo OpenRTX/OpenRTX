@@ -123,13 +123,13 @@ int main(void)
     #ifndef CW_TEST
     uint16_t *buf = ((uint16_t *) malloc(nSamples * sizeof(uint16_t)));
 
-    dsp_pwmCompensate(m17_buf, buf, nSamples);
+//     dsp_pwmCompensate(m17_buf, buf, nSamples);
 
-//     for(size_t i = 0; i < nSamples; i++)
-//     {
-//         int16_t sample = 32768 - m17_buf[i];
-//         buf[i] = ((uint16_t) sample) >> 8;
-//     }
+    for(size_t i = 0; i < nSamples; i++)
+    {
+        int16_t sample = 32768 - m17_buf[i];
+        buf[i] = ((uint16_t) sample) >> 8;
+    }
     #endif
 
     /*
