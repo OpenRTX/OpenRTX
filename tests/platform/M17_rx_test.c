@@ -30,9 +30,16 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <dsp.h>
 #include <interfaces/delays.h>
 #include <interfaces/gpio.h>
 #include <hwconfig.h>
+#include <interfaces/platform.h>
+#include <inttypes.h>
+#include <rtx.h>
+#include <stdbool.h>
+#include <stdint.h>
 
 /*
  * Uncomment this directive to sample audio coming from RTX stage instead of the
@@ -54,7 +61,7 @@ void printUnsignedInt(uint16_t x)
 
 int main()
 {
-//     platform_init();
+    platform_init();
 
     static const size_t numSamples = 45*1024;       // 80kB
     uint16_t *sampleBuf = ((uint16_t *) malloc(numSamples * sizeof(uint16_t)));
@@ -126,8 +133,35 @@ int main()
               |  ADC_CR2_ALIGN
               |  ADC_CR2_ADON;      /* Enable ADC                    */
 
+    /*
+     * Baseband setup
+     */
+    pthread_mutex_t rtx_mutex;
+    pthread_mutex_init(&rtx_mutex, NULL);
+
+    rtx_init(&rtx_mutex);
+    rtxStatus_t cfg;
+
+    /* Take mutex and update the RTX configuration */
+    pthread_mutex_lock(&rtx_mutex);
+
+    cfg.opMode = FM;
+    cfg.bandwidth = BW_25;
+    cfg.rxFrequency = 435000000;
+    cfg.txFrequency = 435000000;
+    cfg.txPower = 1.0f;
+    cfg.sqlLevel = 3;
+    cfg.rxTone = 0;
+    cfg.txTone = 0;
+
+    pthread_mutex_unlock(&rtx_mutex);
+
+    /* After mutex has been released, post the new configuration */
+    rtx_configure(&cfg);
+
     while((DMA2_Stream0->CR & DMA_SxCR_EN) == 1)
     {
+        rtx_taskFunc();
         gpio_togglePin(GREEN_LED);
         delayMs(250);
     }
