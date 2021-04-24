@@ -16,10 +16,10 @@ jobs:
         sudo pip3 install meson
         wget -O /tmp/radio_tool.deb https://github.com/v0l/radio_tool/releases/download/v0.1.0/radio_tool-0.1.0-Linux.deb
         sudo dpkg -i /tmp/radio_tool.deb
-        sudo wget -O /usr/bin/bin2sgl https://raw.githubusercontent.com/rogerclarkmelbourne/OpenGD77/master/firmware/tools/bin2sgl
-        sudo wget -O /usr/bin/bin2sgl.Linux https://raw.githubusercontent.com/rogerclarkmelbourne/OpenGD77/master/firmware/tools/bin2sgl.Linux
-        sudo wget -O /usr/bin/gd-77_firmware_loader.py https://raw.githubusercontent.com/rogerclarkmelbourne/OpenGD77/master/tools/Python/FirmwareLoader/gd-77_firmware_loader.py
-        sudo chmod +x /usr/bin/bin2sgl /usr/bin/bin2sgl.Linux /usr/bin/gd-77_firmware_loader.py
+#       sudo wget -O /usr/bin/bin2sgl https://raw.githubusercontent.com/rogerclarkmelbourne/OpenGD77/master/firmware/tools/bin2sgl
+#       sudo wget -O /usr/bin/bin2sgl.Linux https://raw.githubusercontent.com/rogerclarkmelbourne/OpenGD77/master/firmware/tools/bin2sgl.Linux
+#       sudo wget -O /usr/bin/gd-77_firmware_loader.py https://raw.githubusercontent.com/rogerclarkmelbourne/OpenGD77/master/tools/Python/FirmwareLoader/gd-77_firmware_loader.py
+#       sudo chmod +x /usr/bin/bin2sgl /usr/bin/bin2sgl.Linux /usr/bin/gd-77_firmware_loader.py
     - name: Checkout submodules
       uses: textbook/git-checkout-submodule-action@master
     - name: meson-setup
@@ -33,8 +33,8 @@ jobs:
         ninja -C build_linux openrtx_linux -j4
         ninja -C build_arm openrtx_md3x0_wrap -j4
         ninja -C build_arm openrtx_mduv3x0_wrap -j4
-        ninja -C build_arm openrtx_gd77_wrap -j4
-        ninja -C build_arm openrtx_dm1801_wrap -j4
+        ninja -C build_arm openrtx_gd77_bin -j4
+        ninja -C build_arm openrtx_dm1801_bin -j4
     - uses: actions/upload-artifact@v2
       with:
         name: release-bins
