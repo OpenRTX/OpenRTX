@@ -132,11 +132,11 @@ int main(void)
     float yo  = 0.0f;
     float yoo = 0.0f;
 
-    const float a =  398602962493896470516.0f;
-    const float b = -506406784057617177000.0f;
-    const float c =  149705886840820312500.0f;
-    const float d =  48548221588134762641.0f;
-    const float e = -6890773773193359750.0f;
+    const float a =  4982680082321166792352.0f;
+    const float b = -6330013275146484168000.0f;
+    const float c =  1871109008789062500000.0f;
+    const float d =  548027992248535162477.0f;
+    const float e = -24496793746948241250.0f;
     const float f =  244617462158203125.0f;
 
 
