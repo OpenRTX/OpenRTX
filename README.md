@@ -6,7 +6,7 @@ with modularity, flexibility and performance in mind.
 
 Currently OpenRTX is being actively developed for the following radios:
 
-- TYT MD-380/390
+- TYT MD-380/390 **UHF versions only**
 - TYT MD-UV380/390
 - TYT MD-9600
 - Radioddity GD77
@@ -17,6 +17,8 @@ however contributions and testing are welcome and accepted.
 For information on currently supported radios and features, see the [Supported Platforms](https://openrtx.org/#/platforms) page on our website.
 
 For hardware and software documentation visit [openrtx.org](https://openrtx.org/)
+
+**WARNING: DO NOT flash the OpenRTX firmware on an MD-380V(G) or MD-390V(G)! The codebase has not been fully tested on these devices.**
 
 ## Flash on MD-3x0 and MD-UV3x0
 
@@ -70,4 +72,4 @@ OpenRTX was created by:
 All this was made possible by the huge reverse engineering effort of
 Travis Goodspeed and all the contributors of [md380tools](https://github.com/travisgoodspeed/md380tools).
 A huge thank goes to Roger Clark, and his [OpenGD77](https://github.com/rogerclarkmelbourne/OpenGD77) which not only inspired this project, but as a precursor, provided a working code example for the GD77 radio family.
-Finally, a warm thank you goes to SP5WWP and the [M17](https://m17project.org) community for bringing their libre protocol into our obscure undocumented hardware. 
+Finally, a warm thank you goes to SP5WWP and the [M17](https://m17project.org) community for bringing their libre protocol into our obscure undocumented hardware.
