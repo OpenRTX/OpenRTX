@@ -150,7 +150,7 @@ int main(void)
         yo  = y;
         int16_t result = ((int16_t) (y * 0.5f));
 
-        int16_t sample = -32768 + result;
+        int16_t sample = 32768 - result;
         buf[i] = ((uint16_t) sample) >> 8;
     }
     #endif
