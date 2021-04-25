@@ -125,9 +125,32 @@ int main(void)
 
 //     dsp_pwmCompensate(m17_buf, buf, nSamples);
 
+    float u   = 0.0f;
+    float y   = 0.0f;
+    float uo  = 0.0f;
+    float uoo = 0.0f;
+    float yo  = 0.0f;
+    float yoo = 0.0f;
+
+    const float a =  398602962493896470516.0f;
+    const float b = -506406784057617177000.0f;
+    const float c =  149705886840820312500.0f;
+    const float d =  48548221588134762641.0f;
+    const float e = -6890773773193359750.0f;
+    const float f =  244617462158203125.0f;
+
+
     for(size_t i = 0; i < nSamples; i++)
     {
-        int16_t sample = 32768 - m17_buf[i];
+        u   = ((float) m17_buf[i]);
+        y   = (a/d)*u + (b/d)*uo + (c/d)*uoo - (e/d)*yo - (f/d)*yoo;
+        uoo = uo;
+        uo  = u;
+        yoo = yo;
+        yo  = y;
+        int16_t result = ((int16_t) (y * 0.5f));
+
+        int16_t sample = -32768 + result;
         buf[i] = ((uint16_t) sample) >> 8;
     }
     #endif
