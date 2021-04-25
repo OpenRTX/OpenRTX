@@ -6,7 +6,7 @@ with modularity, flexibility and performance in mind.
 
 Currently OpenRTX is being actively developed for the following radios:
 
-- TYT MD-380/390
+- TYT MD-380/390 **UHF versions only**
 - TYT MD-UV380/390
 - TYT MD-9600
 - Radioddity GD77
@@ -17,6 +17,8 @@ however contributions and testing are welcome and accepted.
 For information on currently supported radios and features, see the [Supported Platforms](https://openrtx.org/#/platforms) page on our website.
 
 For hardware and software documentation visit [openrtx.org](https://openrtx.org/)
+
+**WARNING: DO NOT flash the OpenRTX firmware on an MD-380V(G) or MD-390V(G)! The codebase has not been fully tested on these devices.**
 
 ## Flash on MD-3x0 and MD-UV3x0
 
