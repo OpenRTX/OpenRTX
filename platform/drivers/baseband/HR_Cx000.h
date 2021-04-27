@@ -154,6 +154,15 @@ public:
     void setDacGain(uint8_t value);
 
     /**
+     * Set the gain for the incoming audio from both the microphone and line-in
+     * sources. This value affects the modulation level in analog FM mode and
+     * it must be correctly tuned to avoid distorsions.
+     *
+     * @param value: gain value. Allowed range is 0-31.
+     */
+    void setInputGain(uint8_t value);
+
+    /**
      * Configure chipset for DMR operation.
      */
     void dmrMode();

@@ -46,6 +46,21 @@ void HR_Cx000< C6000_SpiOpModes >::setDacGain(uint8_t value)
     writeReg(C6000_SpiOpModes::CONFIG, 0x37, (0x80 | value));
 }
 
+template <>
+void HR_Cx000< C5000_SpiOpModes >::setInputGain(uint8_t value)
+{
+    // Mic gain is controlled by bytes 7:3 of register 0x0F (ADLinVol).
+    if(value > 31) value = 31;
+    writeReg(C5000_SpiOpModes::CONFIG, 0x0F, value << 3);
+}
+
+template <>
+void HR_Cx000< C6000_SpiOpModes >::setInputGain(uint8_t value)
+{
+    // TODO: Experiments needed for identification of HR_C6000 mic gain register.
+    (void) value;
+}
+
 ScopedChipSelect::ScopedChipSelect()
 {
     gpio_clearPin(DMR_CS);
