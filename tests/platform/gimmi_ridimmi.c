@@ -35,7 +35,7 @@
  */
 // #define SAMPLE_RTX_AUDIO
 
-static const size_t numSamples = 45*1024;       // 80kB
+static const size_t numSamples = 35*1024;       // 70kB
 
 void recordMic(uint16_t *buffer)
 {
@@ -85,7 +85,7 @@ void recordMic(uint16_t *buffer)
     ADC1->SQR1 = 0;    /* One channel to be converted */
 
     #ifdef SAMPLE_RTX_AUDIO
-    ADC1->SQR3 = 13;   /* CH13, audio from RTX on PC13 */
+    ADC1->SQR3 = 13;   /* CH13, audio from RTX on PC3  */
     #else
     ADC1->SQR3 = 3;    /* CH3, vox level on PA3        */
     #endif
@@ -101,8 +101,14 @@ void recordMic(uint16_t *buffer)
               |  ADC_CR2_EXTSEL_2   /* 0b0110 TIM2_TRGO trig. source */
               |  ADC_CR2_DDS        /* Enable DMA data transfer      */
               |  ADC_CR2_DMA
-              |  ADC_CR2_ALIGN
               |  ADC_CR2_ADON;      /* Enable ADC                    */
+
+    /* Wait until DMA transfer ends, meanwhile blink the green led */
+    while((DMA2_Stream0->CR & DMA_SxCR_EN) == 1)
+    {
+        gpio_togglePin(GREEN_LED);
+        delayMs(250);
+    }
 }
 
 void playbackSpk(uint16_t *buffer)
@@ -129,11 +135,11 @@ void playbackSpk(uint16_t *buffer)
     TIM3->CR1  |= TIM_CR1_CEN;
 
     /*
-     * Timebase for 48kHz sample rate
+     * Timebase for 8kHz sample rate
      */
     TIM7->CNT  = 0;
     TIM7->PSC  = 0;
-    TIM7->ARR  = 1749;//(84000000/48000) - 1;
+    TIM7->ARR  = (84000000/8000) - 1;
     TIM7->EGR  = TIM_EGR_UG;
     TIM7->DIER = TIM_DIER_UDE;
     TIM7->CR1  = TIM_CR1_CEN;
@@ -166,7 +172,7 @@ void playbackSpk(uint16_t *buffer)
 int main()
 {
 //     platform_init();
-    
+
     uint16_t *sampleBuf = ((uint16_t *) malloc(numSamples * sizeof(uint16_t)));
 
     gpio_setMode(GREEN_LED, OUTPUT);
@@ -175,13 +181,10 @@ int main()
     gpio_setPin(MIC_PWR);
 
     #ifdef SAMPLE_RTX_AUDIO
-    gpio_setMode(GPIOC, 13, INPUT_ANALOG);
+    gpio_setMode(GPIOC, 3, INPUT_ANALOG);
     #else
     gpio_setMode(AIN_MIC, INPUT_ANALOG);
     #endif
-
-    /* Enable pull-up resistor on PA3 (AIN_MIC)
-    GPIOA->PUPDR |= 1 << 6; */
 
     /* AF2 is TIM3 channel 3 */
     gpio_setMode(BEEP_OUT, ALTERNATE);
@@ -191,17 +194,12 @@ int main()
 
     recordMic(sampleBuf);
 
-    while((DMA2_Stream0->CR & DMA_SxCR_EN) == 1)
-    {
-        gpio_togglePin(GREEN_LED);
-        delayMs(250);
-    }
-
+    /* End of recording, play sound */
     gpio_clearPin(GREEN_LED);
     gpio_setPin(RED_LED);
 
     delayMs(2000);
-    
+
     playbackSpk(sampleBuf);
 
     while(1) ;
