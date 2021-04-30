@@ -23,6 +23,10 @@
 #include <datatypes.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * This function allows to obtain the value of a given calibration parameter for
  * frequencies outside the calibration points. It works by searching the two
@@ -41,5 +45,10 @@
  */
 uint8_t interpCalParameter(const freq_t freq, const freq_t *calPoints,
                            const uint8_t *param, const uint8_t elems);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CALIB_UTILS_H */

@@ -20,6 +20,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Driver for ADC1, used on all the MDx devices to continuously sample battery
  * voltage and other values.
@@ -80,5 +84,9 @@ void adc1_terminate();
  * @return current value of the specified channel in mV.
  */
 float adc1_getMeasurement(uint8_t ch);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ADC1_H */

@@ -61,12 +61,13 @@ void rtx_init(pthread_mutex_t *m)
     /*
      * Initialise low-level platform-specific driver
      */
-    radio_init();
+    radio_init(&rtxStatus);
+    radio_updateConfiguration();
 
     /*
      * Initial value for RSSI filter
      */
-    rssi         = radio_getRssi(rtxStatus.rxFrequency);
+    rssi         = radio_getRssi();
     reinitFilter = false;
 }
 
@@ -127,6 +128,9 @@ void rtx_taskFunc()
          */
         if(currMode->getID() != rtxStatus.opMode)
         {
+            // Forward opMode change also to radio driver
+            radio_setOpmode(static_cast< enum opmode >(rtxStatus.opMode));
+
             currMode->disable();
             rtxStatus.opStatus = OFF;
 
@@ -139,6 +143,9 @@ void rtx_taskFunc()
 
             currMode->enable();
         }
+
+        // Tell radio driver that there was a change in its configuration.
+        radio_updateConfiguration();
     }
 
     /*
@@ -163,11 +170,11 @@ void rtx_taskFunc()
         {
             if(!reinitFilter)
             {
-                rssi = 0.74*radio_getRssi(rtxStatus.rxFrequency) + 0.26*rssi;
+                rssi = 0.74*radio_getRssi() + 0.26*rssi;
             }
             else
             {
-                rssi = radio_getRssi(rtxStatus.rxFrequency);
+                rssi = radio_getRssi();
                 reinitFilter = false;
             }
         }

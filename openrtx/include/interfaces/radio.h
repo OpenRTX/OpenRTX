@@ -39,7 +39,7 @@ extern "C" {
 /**
  * Initialise low-level radio transceiver.
  */
-void radio_init();
+void radio_init(const rtxStatus_t *rtxState);
 
 /**
  * Shut down low-level radio transceiver.
@@ -49,22 +49,7 @@ void radio_terminate();
 /**
  *
  */
-void radio_setBandwidth(const enum bandwidth bw);
-
-/**
- *
- */
 void radio_setOpmode(const enum opmode mode);
-
-/**
- *
- */
-void radio_setVcoFrequency(const freq_t frequency, const bool isTransmitting);
-
-/**
- *
- */
-void radio_setCSS(const tone_t rxCss, const tone_t txCss);
 
 /**
  *
@@ -79,7 +64,7 @@ void radio_enableRx();
 /**
  *
  */
-void radio_enableTx(const float txPower, const bool enableCss);
+void radio_enableTx();
 
 /**
  *
@@ -89,12 +74,17 @@ void radio_disableRtx();
 /**
  *
  */
-void radio_updateCalibrationParams(const rtxStatus_t *rtxCfg);
+void radio_updateConfiguration();
 
 /**
  *
  */
-float radio_getRssi(const freq_t rxFreq);
+float radio_getRssi();
+
+/**
+ *
+ */
+enum opstatus radio_getStatus();
 
 #ifdef __cplusplus
 }

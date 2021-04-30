@@ -26,13 +26,19 @@
 #include <cps.h>
 #include <pthread.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct
 {
-    uint8_t opMode    : 2,  /**< Operating mode (FM, DMR, ...) */
-            bandwidth : 2,  /**< Channel bandwidth             */
+    uint8_t opMode;         /**< Operating mode (FM, DMR, ...) */
+
+    uint8_t bandwidth : 2,  /**< Channel bandwidth             */
             txDisable : 1,  /**< Disable TX operation          */
             scan      : 1,  /**< Scan enabled                  */
-            opStatus  : 2;  /**< Operating status (OFF, ...)   */
+            opStatus  : 2,  /**< Operating status (OFF, ...)   */
+            _padding  : 2;  /**< Padding to 8 bits             */
 
     freq_t rxFrequency;     /**< RX frequency, in Hz           */
     freq_t txFrequency;     /**< TX frequency, in Hz           */
@@ -118,5 +124,9 @@ void rtx_taskFunc();
  * @return RSSI value in dBm.
  */
 float rtx_getRssi();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* RTX_H */
