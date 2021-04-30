@@ -23,13 +23,15 @@ openrtx_src = ['openrtx/src/state.c',
                'openrtx/src/input.c',
                'openrtx/src/calibUtils.c',
                'openrtx/src/queue.c',
-               'openrtx/src/rtx.c',
+               'openrtx/src/rtx/rtx.cpp',
+               'openrtx/src/rtx/OpMode_FM.cpp',
                'openrtx/src/gps.c',
                'openrtx/src/dsp.cpp',
                'openrtx/src/memory_profiling.cpp']
 
 openrtx_inc = ['openrtx/include',
                'openrtx/include/calibration',
+               'openrtx/include/rtx',
                'platform/drivers/ADC',
                'platform/drivers/NVM',
                'platform/drivers/GPS',
@@ -91,6 +93,7 @@ mdx_src = ['platform/drivers/ADC/ADC1_MDx.c',
            'platform/drivers/GPS/GPS_MDx.cpp',
            'platform/drivers/NVM/W25Qx.c',
            'platform/drivers/audio/audio_MDx.c',
+           'platform/drivers/baseband/HR_Cx000.cpp',
            'platform/drivers/backlight/backlight_MDx.c',
            'platform/drivers/tones/toneGenerator_MDx.cpp']
 
@@ -105,10 +108,10 @@ gdx_src = ['platform/drivers/NVM/W25Qx.c',
            'platform/drivers/ADC/ADC0_GDx.c',
            'platform/drivers/backlight/backlight_GDx.c',
            'platform/drivers/baseband/radio_GDx.c',
-           'platform/drivers/baseband/AT1846S_wrapper.cpp',
-           'platform/drivers/baseband/AT1846S_GDx.cpp',
-           'platform/drivers/baseband/HR_C6000.c',
-           'platform/drivers/baseband/interfaces_GDx.c',
+#            'platform/drivers/baseband/AT1846S_wrapper.cpp',
+#            'platform/drivers/baseband/AT1846S_GDx.cpp',
+#            'platform/drivers/baseband/HR_C6000.c',
+#            'platform/drivers/baseband/interfaces_GDx.c',
            'platform/drivers/display/UC1701_GDx.c',
            'platform/drivers/keyboard/keyboard_GDx.c',
            'platform/drivers/audio/audio_GDx.c']
@@ -216,8 +219,8 @@ endif
 md3x0_src = src + mdx_src + stm32f405_src + ['platform/drivers/NVM/nvmem_MD3x0.c',
                                              'platform/drivers/NVM/spiFlash_MD3x.c',
                                              'platform/drivers/baseband/SKY72310.c',
-                                             'platform/drivers/baseband/radio_MD3x0.c',
-                                             'platform/drivers/baseband/HR_C5000.c',
+                                             'platform/drivers/baseband/radio_MD3x0.cpp',
+                                             'platform/drivers/baseband/HR_C5000_MDx.cpp',
                                              'platform/drivers/keyboard/keyboard_MD3x.c',
                                              'platform/drivers/display/HX8353_MD3x.cpp',
                                              'platform/targets/MD-3x0/platform.c']
@@ -234,11 +237,11 @@ mduv3x0_src = src + mdx_src + stm32f405_src + ['platform/drivers/NVM/nvmem_MDUV3
                                                'platform/drivers/keyboard/keyboard_MD3x.c',
                                                'platform/drivers/display/HX8353_MD3x.cpp',
                                                'platform/drivers/chSelector/chSelector_UV3x0.c',
-                                               'platform/drivers/baseband/radio_UV3x0.c',
-                                               'platform/drivers/baseband/AT1846S_wrapper.cpp',
-                                               'platform/drivers/baseband/AT1846S_UV3x0.cpp',
-                                               'platform/drivers/baseband/HR_C6000_UV3x0.c',
-                                               'platform/drivers/baseband/interfaces_UV3x0.c']
+                                               'platform/drivers/baseband/radio_UV3x0.c']
+#                                                'platform/drivers/baseband/AT1846S_wrapper.cpp',
+#                                                'platform/drivers/baseband/AT1846S_UV3x0.cpp',
+#                                                'platform/drivers/baseband/HR_C6000_UV3x0.c',
+#                                                'platform/drivers/baseband/interfaces_UV3x0.c']
 
 mduv3x0_inc = inc + stm32f405_inc + ['platform/targets/MD-UV3x0']
 mduv3x0_def = def + stm32f405_def + {'PLATFORM_MDUV3x0': '', 'timegm': 'mktime'}

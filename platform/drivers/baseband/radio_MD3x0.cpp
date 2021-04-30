@@ -144,6 +144,7 @@ void radio_init(const rtxStatus_t *rtxState)
 void radio_terminate()
 {
     SKY73210_terminate();
+    C5000.terminate();
 
     gpio_clearPin(PLL_PWR);    // PLL off
     gpio_clearPin(DMR_SW);     // Disconnect HR_C5000 input IF signal and audio out

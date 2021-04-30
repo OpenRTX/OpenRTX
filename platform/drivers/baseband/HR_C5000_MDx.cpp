@@ -131,7 +131,7 @@ void HR_Cx000< M >::dmrMode()
     writeReg(M::CONFIG, 0x1F, 0x10);
     writeReg(M::CONFIG, 0x0D, 0x8C);
     writeReg(M::CONFIG, 0x0E, 0x44);
-    writeReg(M::CONFIG, 0x0F, 0xC8);
+//     writeReg(M::CONFIG, 0x0F, 0xC8);
     writeReg(M::CONFIG, 0x37, 0xC2);
     writeReg(M::CONFIG, 0x25, 0x0E);
     writeReg(M::CONFIG, 0x26, 0xFD);
@@ -157,8 +157,8 @@ void HR_Cx000< M >::fmMode()
     writeReg(M::CONFIG, 0x06, 0x00);    // VoCoder control
     sendSequence(initSeq2, sizeof(initSeq2));
     writeReg(M::CONFIG, 0x0D, 0x8C);    // Codec control
-    writeReg(M::CONFIG, 0x0E, 0x44);    // Mute HPout and enable MIC 1
-    writeReg(M::CONFIG, 0x0F, 0xC8);    // ADLinVol, mic volume
+    writeReg(M::CONFIG, 0x0E, 0x40);    // Mute HPout
+//     writeReg(M::CONFIG, 0x0F, 0xC8);    // ADLinVol, mic volume
 //     writeReg(M::CONFIG, 0x25, 0x0E);
 //     writeReg(M::CONFIG, 0x26, 0xFE);
     writeReg(M::CONFIG, 0x83, 0xFF);    // Clear all interrupt flags
@@ -177,7 +177,7 @@ void HR_Cx000<M>::startAnalogTx(const TxAudioSource source, const FmConfig cfg)
 
     writeReg(M::CONFIG, 0x0D, 0x8C);    // Codec control
     writeReg(M::CONFIG, 0x0E, audioCfg);
-    writeReg(M::CONFIG, 0x0F, 0xC8);    // ADLinVol, mic volume
+//     writeReg(M::CONFIG, 0x0F, 0xC8);    // ADLinVol, mic volume
 //     writeReg(M::CONFIG, 0x25, 0x0E);
 //     writeReg(M::CONFIG, 0x26, 0xFE);
     writeReg(M::CONFIG, 0x34, static_cast< uint8_t >(cfg));

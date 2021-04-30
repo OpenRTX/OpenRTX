@@ -117,7 +117,7 @@ void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
         }
         #endif
     }
-    else if((status->opMode == OFF) && enterRx)
+    else if((status->opStatus == OFF) && enterRx)
     {
         radio_disableRtx();
 
