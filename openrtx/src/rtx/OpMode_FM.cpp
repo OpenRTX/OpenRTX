@@ -25,6 +25,10 @@
 #include <OpMode_FM.h>
 #include <rtx.h>
 
+#ifdef PLATFORM_MDUV3x0
+#include "../../../drivers/baseband/HR_C6000.h"
+#endif
+
 /**
  * \internal
  * On MD-UV3x0 radios the volume knob does not regulate the amplitude of the
@@ -55,7 +59,7 @@ void _setVolume()
         if(volume != old_volume)
         {
             // Setting HR_C6000 volume to 0 = max volume
-            C6000_setDacGain(volume);
+            HR_C6000::instance().setDacGain(volume);
             old_volume = volume;
         }
     }

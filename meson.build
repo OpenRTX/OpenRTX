@@ -237,11 +237,9 @@ mduv3x0_src = src + mdx_src + stm32f405_src + ['platform/drivers/NVM/nvmem_MDUV3
                                                'platform/drivers/keyboard/keyboard_MD3x.c',
                                                'platform/drivers/display/HX8353_MD3x.cpp',
                                                'platform/drivers/chSelector/chSelector_UV3x0.c',
-                                               'platform/drivers/baseband/radio_UV3x0.c']
-#                                                'platform/drivers/baseband/AT1846S_wrapper.cpp',
-#                                                'platform/drivers/baseband/AT1846S_UV3x0.cpp',
-#                                                'platform/drivers/baseband/HR_C6000_UV3x0.c',
-#                                                'platform/drivers/baseband/interfaces_UV3x0.c']
+                                               'platform/drivers/baseband/radio_UV3x0.cpp',
+                                               'platform/drivers/baseband/AT1846S_UV3x0.cpp',
+                                               'platform/drivers/baseband/HR_C6000_UV3x0.cpp']
 
 mduv3x0_inc = inc + stm32f405_inc + ['platform/targets/MD-UV3x0']
 mduv3x0_def = def + stm32f405_def + {'PLATFORM_MDUV3x0': '', 'timegm': 'mktime'}
