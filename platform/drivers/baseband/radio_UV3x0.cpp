@@ -33,8 +33,10 @@ const rtxStatus_t    *config;   // Pointer to data structure with radio configur
 
 int8_t  currRxBand = -1;        // Current band for RX
 int8_t  currTxBand = -1;        // Current band for TX
-uint8_t txpwr_lo = 0;           // APC voltage for TX output power control, low power
-uint8_t txpwr_hi = 0;           // APC voltage for TX output power control, high power
+uint8_t txpwr_lo   = 0;         // APC voltage for TX output power control, low power
+uint8_t txpwr_hi   = 0;         // APC voltage for TX output power control, high power
+uint8_t rxModBias  = 0;         // VCXO bias for RX
+uint8_t txModBias  = 0;         // VCXO bias for TX
 
 enum opstatus radioStatus;      // Current operating status
 
@@ -82,7 +84,7 @@ void radio_init(const rtxStatus_t *rtxState)
     gpio_clearPin(PA_EN_2);
     gpio_clearPin(PA_SEL_SW);
 
-    /* TODO: keep audio connected to HR_C6000, for volume control */
+    // TODO: keep audio connected to HR_C6000, for volume control
     gpio_setMode(RX_AUDIO_MUX, OUTPUT);
     gpio_setPin(RX_AUDIO_MUX);
 
@@ -150,6 +152,7 @@ void radio_enableRx()
 
     if(currRxBand < 0) return;
 
+    C6000.setModOffset(rxModBias);
     at1846s.setFrequency(config->rxFrequency);
     at1846s.setFuncMode(AT1846S_FuncMode::RX);
 
@@ -174,6 +177,7 @@ void radio_enableTx()
     gpio_clearPin(PA_EN_1);
     gpio_clearPin(PA_EN_2);
 
+    C6000.setModOffset(txModBias);
     at1846s.setFrequency(config->txFrequency);
 
     // Constrain output power between 1W and 5W.
@@ -250,16 +254,21 @@ void radio_updateConfiguration()
 
     if((currRxBand < 0) || (currTxBand < 0)) return;
 
-    /* TCXO bias voltage */
-    uint8_t modBias = calData->vhfCal.freqAdjustMid;
-    if(currRxBand > 0) modBias = calData->uhfCal.freqAdjustMid;
-    C6000.setModOffset(modBias);
+    /*
+     * VCXO bias voltage, separated values for TX and RX to allow for cross-band
+     * operation.
+     */
+    txModBias = calData->vhfCal.freqAdjustMid;
+    rxModBias = calData->vhfCal.freqAdjustMid;
+    if(currRxBand > 0) rxModBias = calData->uhfCal.freqAdjustMid;
+    if(currTxBand > 0) txModBias = calData->uhfCal.freqAdjustMid;
 
     /*
      * Discarding "const" qualifier to suppress compiler warnings.
      * This operation is safe anyway because calibration data is only read.
      */
     mduv3x0Calib_t *cal  = const_cast< mduv3x0Calib_t * >(calData);
+    uint8_t calPoints    = 5;
     freq_t  *txCalPoints = cal->vhfCal.txFreq;
     uint8_t *loPwrCal    = cal->vhfCal.txLowPower;
     uint8_t *hiPwrCal    = cal->vhfCal.txHighPower;
@@ -267,6 +276,7 @@ void radio_updateConfiguration()
                                                   : cal->vhfCal.sendQrange;
     if(currTxBand > 0)
     {
+        calPoints   = 9;
         txCalPoints = cal->uhfCal.txFreq;
         loPwrCal    = cal->uhfCal.txLowPower;
         hiPwrCal    = cal->uhfCal.txHighPower;
@@ -274,24 +284,26 @@ void radio_updateConfiguration()
                                              : cal->uhfCal.sendQrange;
     }
 
-    /* APC voltage for TX output power control */
-    txpwr_lo = interpCalParameter(config->txFrequency, txCalPoints, loPwrCal, 9);
-    txpwr_hi = interpCalParameter(config->txFrequency, txCalPoints, hiPwrCal, 9);
+    // APC voltage for TX output power control
+    txpwr_lo = interpCalParameter(config->txFrequency, txCalPoints, loPwrCal,
+                                                                    calPoints);
+    txpwr_hi = interpCalParameter(config->txFrequency, txCalPoints, hiPwrCal,
+                                                                    calPoints);
 
-    /* HR_C6000 modulation amplitude */
-    uint8_t Q = interpCalParameter(config->txFrequency, txCalPoints, qRangeCal, 9);
+    // HR_C6000 modulation amplitude
+    uint8_t Q = interpCalParameter(config->txFrequency, txCalPoints, qRangeCal,
+                                                                     calPoints);
     C6000.setModAmplitude(0, Q);
 
     // Set bandwidth, force 12.5kHz for DMR mode
-//     enum bandwidth bandwidth = static_cast< enum bandwidth >(config->bandwidth);
-//     if((bandwidth == BW_12_5) || (config->opMode == DMR))
-//     {
-//         at1846s.setBandwidth(AT1846S_BW::_12P5);
-//     }
-//     else
-//     {
+    if((config->bandwidth == BW_12_5) || (config->opMode == DMR))
+    {
+        at1846s.setBandwidth(AT1846S_BW::_12P5);
+    }
+    else
+    {
         at1846s.setBandwidth(AT1846S_BW::_25);
-//     }
+    }
 
     /*
      * Update VCO frequency and tuning parameters if current operating status
