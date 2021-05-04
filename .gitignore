@@ -49,3 +49,8 @@ build_*
 
 # gutentags
 tags
+
+# Meson submodules
+subprojects/*
+!subprojects/*.wrap
+!subprojects/packagefiles
