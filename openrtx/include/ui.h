@@ -40,6 +40,8 @@ enum uiScreen
     MAIN_VFO = 0,
     MAIN_VFO_INPUT,
     MAIN_MEM,
+    MODE_VFO,
+    MODE_MEM,
     MENU_TOP,
     MENU_ZONE,
     MENU_CHANNEL,

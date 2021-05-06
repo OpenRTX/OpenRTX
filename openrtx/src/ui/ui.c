@@ -85,6 +85,8 @@ extern void _ui_drawMEMBottom();
 extern void _ui_drawMainVFO();
 extern void _ui_drawMainVFOInput(ui_state_t* ui_state);
 extern void _ui_drawMainMEM();
+extern void _ui_drawModeVFO();
+extern void _ui_drawModeMEM();
 /* UI menu functions, their implementation is in "ui_menu.c" */
 extern void _ui_drawMenuTop(ui_state_t* ui_state);
 extern void _ui_drawMenuZone(ui_state_t* ui_state);
@@ -779,6 +781,11 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         state.ui_screen = MAIN_MEM;
                     }
                 }
+                else if(msg.keys & KEY_F1)
+                {
+                    // Switch to Digital Mode VFO screen
+                    state.ui_screen = MODE_VFO;
+                }
                 else if(input_isNumberPressed(msg))
                 {
                     // Open Frequency input screen
@@ -845,6 +852,46 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
                 {
                     _ui_fsm_loadChannel(state.channel_index - 1, sync_rtx);
+                }
+                break;
+            // Digital Mode VFO screen
+            case MODE_VFO:
+                if(msg.keys & KEY_ENTER)
+                {
+                    // Save current main state
+                    ui_state.last_main_state = state.ui_screen;
+                    // Open Menu
+                    state.ui_screen = MENU_TOP;
+                }
+                else if(msg.keys & KEY_ESC)
+                {
+                    // Switch to VFO screen
+                    state.ui_screen = MAIN_VFO;
+                }
+                else if(msg.keys & KEY_F1)
+                {
+                    // Switch to Main VFO screen
+                    state.ui_screen = MAIN_VFO;
+                }
+                break;
+            // Digital Mode MEM screen
+            case MODE_MEM:
+                if(msg.keys & KEY_ENTER)
+                {
+                    // Save current main state
+                    ui_state.last_main_state = state.ui_screen;
+                    // Open Menu
+                    state.ui_screen = MENU_TOP;
+                }
+                else if(msg.keys & KEY_ESC)
+                {
+                    // Switch to MEM screen
+                    state.ui_screen = MAIN_MEM;
+                }
+                else if(msg.keys & KEY_F1)
+                {
+                    // Switch to Main MEM screen
+                    state.ui_screen = MAIN_MEM;
                 }
                 break;
             // Top menu screen
@@ -1172,6 +1219,14 @@ void ui_updateGUI()
         // MEM main screen
         case MAIN_MEM:
             _ui_drawMainMEM();
+            break;
+        // Digital Mode VFO screen
+        case MODE_VFO:
+            _ui_drawModeVFO();
+            break;
+        // Digital Mode MEM screen
+        case MODE_MEM:
+            _ui_drawModeMEM();
             break;
         // Top menu screen
         case MENU_TOP:
