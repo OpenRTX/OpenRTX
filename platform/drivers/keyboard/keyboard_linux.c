@@ -50,7 +50,7 @@ keyboard_t kbd_getKeys() {
     if (state[SDL_SCANCODE_RIGHT]) keys |= KEY_RIGHT;
     if (state[SDL_SCANCODE_RETURN]) keys |= KEY_ENTER;
     if (state[SDL_SCANCODE_NONUSHASH]) keys |= KEY_HASH;
-    if (state[SDL_SCANCODE_MINUS]) keys |= KEY_F1;
+    if (state[SDL_SCANCODE_N]) keys |= KEY_F1;
     if (state[SDL_SCANCODE_M]) keys |= KEY_MONI;
     if (state[SDL_SCANCODE_PAGEUP]) keys |= KNOB_LEFT;
     if (state[SDL_SCANCODE_PAGEDOWN]) keys |= KNOB_RIGHT;

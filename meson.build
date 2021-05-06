@@ -22,6 +22,7 @@ def = {'VCOM_ENABLED' : ''}
 openrtx_src = ['openrtx/src/state.c',
                'openrtx/src/ui/ui.c',
                'openrtx/src/ui/ui_main.c',
+               'openrtx/src/ui/ui_mode.c',
                'openrtx/src/ui/ui_menu.c',
                'openrtx/src/threads.c',
                'openrtx/src/battery.c',

@@ -145,22 +145,40 @@ void _ui_drawVFOMiddleInput(ui_state_t* ui_state)
     }
 }
 
-void _ui_drawBottom()
+void _ui_drawMainBottom()
 {
     // Squelch bar
     float rssi = last_state.rssi;
     float squelch = last_state.sqlLevel / 16.0f;
-    point_t smeter_pos = { layout.horizontal_pad,
-                           layout.bottom_pos.y +
-                           layout.status_v_pad +
-                           layout.text_v_offset -
-                           layout.bottom_h };
-    gfx_drawSmeter(smeter_pos,
-                   SCREEN_WIDTH - 2 * layout.horizontal_pad,
-                   layout.bottom_h - 1,
-                   rssi,
-                   squelch,
-                   color_white);
+    point_t meter_pos = { layout.horizontal_pad,
+                          layout.bottom_pos.y +
+                          layout.status_v_pad +
+                          layout.text_v_offset -
+                          layout.bottom_h };
+    uint16_t meter_height = layout.bottom_h - 1; 
+    switch(last_state.channel.mode)
+    {
+        case FM:
+            gfx_drawSmeter(meter_pos,
+                           SCREEN_WIDTH - 2 * layout.horizontal_pad,
+                           meter_height,
+                           rssi,
+                           squelch,
+                           color_white);
+            break;
+        case DMR:
+            meter_height = (meter_height / 2);
+            gfx_drawLevelMeter(meter_pos,
+                               SCREEN_WIDTH - 2 * layout.horizontal_pad,
+                               meter_height,
+                               255);
+            meter_pos.y += meter_height;
+            gfx_drawSmeterNoSquelch(meter_pos,
+                                    SCREEN_WIDTH - 2 * layout.horizontal_pad,
+                                    meter_height,
+                                    rssi);
+            break;
+    }
 }
 
 void _ui_drawMainVFO()
@@ -168,7 +186,7 @@ void _ui_drawMainVFO()
     gfx_clearScreen();
     _ui_drawMainTop();
     _ui_drawFrequency();
-    _ui_drawBottom();
+    _ui_drawMainBottom();
 }
 
 void _ui_drawMainVFOInput(ui_state_t* ui_state)
@@ -176,7 +194,7 @@ void _ui_drawMainVFOInput(ui_state_t* ui_state)
     gfx_clearScreen();
     _ui_drawMainTop();
     _ui_drawVFOMiddleInput(ui_state);
-    _ui_drawBottom();
+    _ui_drawMainBottom();
 }
 
 void _ui_drawMainMEM()
@@ -185,5 +203,5 @@ void _ui_drawMainMEM()
     _ui_drawMainTop();
     _ui_drawZoneChannel();
     _ui_drawFrequency();
-    _ui_drawBottom();
+    _ui_drawMainBottom();
 }
