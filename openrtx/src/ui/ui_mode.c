@@ -25,6 +25,7 @@
 
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainTop();
+extern void _ui_drawMainBottom();
 
 void _ui_drawModeVFOMiddle()
 {
@@ -59,6 +60,7 @@ void _ui_drawModeVFO()
     gfx_clearScreen();
     _ui_drawMainTop();
     _ui_drawModeVFOMiddle();
+    _ui_drawMainBottom();
 }
 
 void _ui_drawModeMEM()
@@ -66,4 +68,5 @@ void _ui_drawModeMEM()
     gfx_clearScreen();
     _ui_drawMainTop();
     _ui_drawModeMEMMiddle();
+    _ui_drawMainBottom();
 }
