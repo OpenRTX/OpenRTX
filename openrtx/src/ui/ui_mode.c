@@ -31,7 +31,7 @@ void _ui_drawModeVFOMiddle()
 {
     // Print VFO RX Frequency on line 1 of 4
     gfx_printLine(1, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, layout.horizontal_pad, layout.line1_font, 
-                  TEXT_ALIGN_LEFT, color_white, "rx: %03lu.%05lu",
+                  TEXT_ALIGN_CENTER, color_white, "%03lu.%05lu",
                   (unsigned long)last_state.channel.rx_frequency/1000000,
                   (unsigned long)last_state.channel.rx_frequency%1000000/10);
     // Print Module / Talkgroup on line 2 of 4
@@ -46,7 +46,8 @@ void _ui_drawModeMEMMiddle()
 {
     // Print Channel name on line 1 of 4
     gfx_printLine(1, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, layout.horizontal_pad, layout.line1_font, 
-                  TEXT_ALIGN_LEFT, color_white, "ch: %.12s", last_state.channel.name);
+                  TEXT_ALIGN_CENTER, color_white, "%03d: %.12s", 
+                  last_state.channel_index, last_state.channel.name);
     // Print Module Frequency on line 2 of 4
     gfx_printLine(2, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, layout.horizontal_pad, layout.line1_font, 
                   TEXT_ALIGN_LEFT, color_white, "mo:");
