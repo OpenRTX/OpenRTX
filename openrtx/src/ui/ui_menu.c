@@ -593,12 +593,22 @@ bool _ui_drawMacroMenu() {
                                layout.status_v_pad +
                                layout.text_v_offset -
                                layout.bottom_h };
-        gfx_drawSmeter(smeter_pos,
-                       SCREEN_WIDTH - 2 * layout.horizontal_pad,
-                       layout.bottom_h - 1,
-                       rssi,
-                       squelch,
-                       yellow_fab413);
-
+        switch(last_state.channel.mode)
+        {   
+            case FM: 
+            gfx_drawSmeter(smeter_pos,
+                           SCREEN_WIDTH - 2 * layout.horizontal_pad,
+                           layout.bottom_h - 1,
+                           rssi,
+                           squelch,
+                           yellow_fab413);
+            break;
+            case DMR:
+            gfx_drawSmeterNoSquelch(smeter_pos,
+                                    SCREEN_WIDTH - 2 * layout.horizontal_pad,
+                                    layout.bottom_h - 1,
+                                    rssi);
+            break;
+        } 
         return true;
 }

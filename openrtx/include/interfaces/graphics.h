@@ -298,9 +298,20 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, float perce
  * @param height: Smeter height
  * @param rssi: rssi level in dBm
  * @param squelch: squelch level in percentage
- * @param color: color of the squelch and smeter bar
+ * @param color: color of the squelch bar
  */
 void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi, float squelch, color_t color);
+
+/**
+ * Function to draw Smeter of arbitrary size.
+ * Version without squelch bar for digital protocols
+ * Starting coordinates are relative to the top left point.
+ * @param start: Smeter start point, in pixel coordinates.
+ * @param width: Smeter width
+ * @param height: Smeter height
+ * @param rssi: rssi level in dBm
+ */
+void gfx_drawSmeterNoSquelch(point_t start, uint16_t width, uint16_t height, float rssi);
 
 /**
  * Function to draw GPS SNR bar graph of arbitrary size.
