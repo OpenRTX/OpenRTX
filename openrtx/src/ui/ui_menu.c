@@ -25,6 +25,9 @@
 #include <interfaces/nvmem.h>
 #include <interfaces/platform.h>
 
+/* UI main screen helper functions, their implementation is in "ui_main.c" */
+extern void _ui_drawMainBottom();
+
 void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_t max_len, uint8_t index))
 {
     point_t pos = layout.line1_pos;
@@ -585,37 +588,8 @@ bool _ui_drawMacroMenu() {
                   yellow_fab413, "9        ");
         gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white, "Sav");
-        // Smeter bar
-        float rssi = last_state.rssi;
-        float squelch = last_state.sqlLevel / 16.0f;
-        point_t meter_pos = { layout.horizontal_pad,
-                               layout.bottom_pos.y +
-                               layout.status_v_pad +
-                               layout.text_v_offset -
-                               layout.bottom_h };
-        uint16_t meter_height = layout.bottom_h - 1;
-        switch(last_state.channel.mode)
-        {   
-            case FM: 
-            gfx_drawSmeter(meter_pos,
-                           SCREEN_WIDTH - 2 * layout.horizontal_pad,
-                           meter_height,
-                           rssi,
-                           squelch,
-                           yellow_fab413);
-            break;
-            case DMR:
-                meter_height = (meter_height / 2); 
-                gfx_drawLevelMeter(meter_pos,
-                                   SCREEN_WIDTH - 2 * layout.horizontal_pad,
-                                   meter_height,
-                                   255);
-                meter_pos.y += meter_height;
-                gfx_drawSmeterNoSquelch(meter_pos,
-                                        SCREEN_WIDTH - 2 * layout.horizontal_pad,
-                                        meter_height,
-                                        rssi);
-            break;
-        } 
+        
+        // Draw S-meter bar
+        _ui_drawMainBottom();
         return true;
 }

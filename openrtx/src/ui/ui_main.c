@@ -155,28 +155,24 @@ void _ui_drawMainBottom()
                           layout.status_v_pad +
                           layout.text_v_offset -
                           layout.bottom_h };
+    uint16_t meter_width = SCREEN_WIDTH - 2 * layout.horizontal_pad; 
     uint16_t meter_height = layout.bottom_h - 1; 
     switch(last_state.channel.mode)
     {
         case FM:
             gfx_drawSmeter(meter_pos,
-                           SCREEN_WIDTH - 2 * layout.horizontal_pad,
+                           meter_width,
                            meter_height,
                            rssi,
                            squelch,
-                           color_white);
+                           yellow_fab413);
             break;
         case DMR:
-            meter_height = (meter_height / 2);
-            gfx_drawLevelMeter(meter_pos,
-                               SCREEN_WIDTH - 2 * layout.horizontal_pad,
-                               meter_height,
-                               255);
-            meter_pos.y += meter_height;
-            gfx_drawSmeterNoSquelch(meter_pos,
-                                    SCREEN_WIDTH - 2 * layout.horizontal_pad,
-                                    meter_height,
-                                    rssi);
+            gfx_drawSmeterLevel(meter_pos,
+                                meter_width,
+                                meter_height,
+                                rssi,
+                                255);
             break;
     }
 }

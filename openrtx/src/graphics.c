@@ -403,7 +403,6 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
     uint16_t line_size = get_line_size(f, buf, len);
     uint16_t reset_x = get_reset_x(alignment, line_size, start.x);
     start.x = reset_x;
-
     // Save initial start.y value to calculate vertical size
     uint16_t saved_start_y = start.y;
     uint16_t line_h = 0;
@@ -612,14 +611,14 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
  * Function to draw RSSI-meter of arbitrary size
  * starting coordinates are relative to the top left point.
  *
- * 1     2     3     4     5     6     7     8     9     +10    +20|
+ * *     *     *     *     *     *     *     *      *      *      *|
+ * ***************             <-- Squelch                         |
+ * ***************                                                 |
  * ******************************************                      |
  * ******************************************    <- RSSI           |
  * ******************************************                      |  <-- Height (px)
  * ******************************************                      |
- * ****************             <-- Squelch                        |
- * ***************                                                 |
- * *     *     *     *     *     *     *     *      *      *      *|
+ * 1     2     3     4     5     6     7     8     9     +10    +20|
  * _________________________________________________________________
  *
  * ^
@@ -635,54 +634,62 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
     color_t yellow = {250, 180, 19 , 255};
     color_t red =    {255, 0,   0  , 255};
 
+    fontSize_t font = FONT_SIZE_5PT;
+    uint8_t font_height =  gfx_getFontHeight(font);
+    uint16_t bar_height = (height - 3 - font_height);
+
     // S-level marks and numbers
-    for(int i = 0; i < 11; i++)
+    for(int i = 0; i < 12; i++)
     {
         color_t color = (i % 3 == 0) ? yellow : white;
         color = (i > 9) ? red : color;
         point_t pixel_pos = {start.x + i * (width - 1) / 11, start.y};
+        gfx_setPixel(pixel_pos, color);
+        pixel_pos.y += height;
         if (i == 10) {
             pixel_pos.x -= 8;
-            gfx_print(pixel_pos, FONT_SIZE_5PT, TEXT_ALIGN_LEFT, color, "+%d", i);
+            gfx_print(pixel_pos, font, TEXT_ALIGN_LEFT, color, "+%d", i);
+        }
+        else if(i == 11){
+            pixel_pos.x -= 10;
+            gfx_print(pixel_pos, font, TEXT_ALIGN_LEFT, red, "+20");
         }
         else
-            gfx_print(pixel_pos, FONT_SIZE_5PT, TEXT_ALIGN_LEFT, color, "%d", i);
+            gfx_print(pixel_pos, font, TEXT_ALIGN_LEFT, color, "%d", i);
         if (i == 10) {
             pixel_pos.x += 8;
         }
-        pixel_pos.y += height;
-        gfx_setPixel(pixel_pos, color);
     }
 
-    point_t pixel_pos = {start.x + width - 11, start.y};
-    gfx_print(pixel_pos, FONT_SIZE_5PT, TEXT_ALIGN_LEFT, red, "+20");
-    pixel_pos.x += 10;
-    pixel_pos.y += height;
-    gfx_setPixel(pixel_pos, red);
-
+    // Squelch bar
+    uint16_t squelch_height = bar_height / 3 ;
+    uint16_t squelch_width = width * squelch;
+    point_t squelch_pos = {start.x, start.y + 2};
+    gfx_drawRect(squelch_pos, squelch_width, squelch_height, color, true);
+    
     // RSSI bar
-    uint16_t rssi_height = height * 2 / 3;
+    uint16_t rssi_height = bar_height * 2 / 3;
     float s_level =  (127.0f + rssi) / 6.0f;
     uint16_t rssi_width = (s_level < 0.0f) ? 0 : (s_level * (width - 1) / 11);
     rssi_width = (s_level > 10.0f) ? width : rssi_width;
-    point_t rssi_pos = { start.x, start.y + 1 };
+    point_t rssi_pos = { start.x, start.y + 2 + squelch_height};
     gfx_drawRect(rssi_pos, rssi_width, rssi_height, white, true);
-
-    // Squelch bar
-    uint16_t squelch_height = height / 3 - 1;
-    uint16_t squelch_width = width * squelch;
-    point_t squelch_pos = { start.x, start.y + 1 + rssi_height };
-    gfx_drawRect(squelch_pos, squelch_width, squelch_height, color, true);
 }
 
 /*
- * Function to draw RSSI-meter of arbitrary size
+ * Function to draw RSSI-meter with level-meter of arbitrary size
  * Version without squelch bar for digital protocols
  * starting coordinates are relative to the top left point.
  *
+ * *             *                *               *               *|
  * ******************************************                      |
- * ******************************************    <- RSSI           |
+ * ******************************************    <- level          |
+ * ******************************************                      |
+ * ******************************************                      |
+ * *             *                *               *               *|
  * ******************************************                      |  <-- Height (px)
+ * ******************************************    <- RSSI           |
+ * ******************************************                      |
  * ******************************************                      |
  * 1     2     3     4     5     6     7     8     9     +10    +20|
  * _________________________________________________________________
@@ -693,24 +700,50 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
  * Width (px)
  *
  */
-void gfx_drawSmeterNoSquelch(point_t start, uint16_t width, uint16_t height, float rssi)
+void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, float rssi, 
+                         uint8_t level)
 {
+    color_t red =    {255, 0,   0  , 255};
+    color_t green =  {0,   255,   0, 255};
     color_t white =  {255, 255, 255, 255};
     color_t yellow = {250, 180, 19 , 255};
-    color_t red =    {255, 0,   0  , 255};
 
     fontSize_t font = FONT_SIZE_5PT;
     uint8_t font_height =  gfx_getFontHeight(font);
+    uint16_t bar_height = (height - 6 - font_height) / 2;
+   
+    // Level meter marks
+    for(int i = 0; i <= 4; i++)
+    {
+        point_t pixel_pos = {start.x + i * (width - 1) / 4, start.y};
+        gfx_setPixel(pixel_pos, white);
+        pixel_pos.y += (bar_height + 3);
+        gfx_setPixel(pixel_pos, white);
+    }
+    // Level bar
+    uint16_t level_width = (level / 255 * width);
+    point_t level_pos = { start.x, start.y + 2 };
+    gfx_drawRect(level_pos, level_width, bar_height, green, true);
+    // RSSI bar
+    float s_level =  (127.0f + rssi) / 6.0f;
+    uint16_t rssi_width = (s_level < 0.0f) ? 0 : (s_level * (width - 1) / 11);
+    rssi_width = (s_level > 10.0f) ? width : rssi_width;
+    point_t rssi_pos = {start.x, start.y + 5 + bar_height};
+    gfx_drawRect(rssi_pos, rssi_width, bar_height, white, true);
     // S-level marks and numbers
-    for(int i = 0; i < 11; i++)
+    for(int i = 0; i < 12; i++)
     {
         color_t color = (i % 3 == 0) ? yellow : white;
         color = (i > 9) ? red : color;
-        point_t pixel_pos = {start.x + i * (width - 1) / 11, start.y};
-        pixel_pos.y += ((height - 1) + font_height);
+        point_t pixel_pos = {start.x + i * (width - 1) / 11, 
+                             start.y + height};
         if (i == 10) {
             pixel_pos.x -= 8;
             gfx_print(pixel_pos, font, TEXT_ALIGN_LEFT, color, "+%d", i);
+        }
+        else if(i == 11){
+            pixel_pos.x -= 10;
+            gfx_print(pixel_pos, font, TEXT_ALIGN_LEFT, red, "+20");
         }
         else
             gfx_print(pixel_pos, font, TEXT_ALIGN_LEFT, color, "%d", i);
@@ -718,56 +751,6 @@ void gfx_drawSmeterNoSquelch(point_t start, uint16_t width, uint16_t height, flo
             pixel_pos.x += 8;
         }
     }
-
-    point_t pixel_pos = {start.x + width - 11, start.y};
-    pixel_pos.y += ((height - 1) + font_height);
-    gfx_print(pixel_pos, font, TEXT_ALIGN_LEFT, red, "+20");
-
-    // RSSI bar
-    uint16_t rssi_height = height - 4;
-    float s_level =  (127.0f + rssi) / 6.0f;
-    uint16_t rssi_width = (s_level < 0.0f) ? 0 : (s_level * (width - 1) / 11);
-    rssi_width = (s_level > 10.0f) ? width : rssi_width;
-    point_t rssi_pos = { start.x, start.y + 1 };
-    gfx_drawRect(rssi_pos, rssi_width, rssi_height, white, true);
-}
-
-/*
- * Function to draw level meter of arbitrary size
- * starting coordinates are relative to the top left point.
- *
- * *             *                *               *               *|
- * ******************************************                      |
- * ******************************************    <- level          |
- * ******************************************                      |  <-- Height (px)
- * ******************************************                      |
- * *             *                *               *               *|
- * _________________________________________________________________
- *
- * ^
- * |
- *
- * Width (px)
- *
- */
-void gfx_drawLevelMeter(point_t start, uint16_t width, uint16_t height, uint8_t level)
-{
-    color_t white =  {255, 255, 255, 255};
-
-    // S-level marks and numbers
-    for(int i = 0; i <= 4; i++)
-    {
-        point_t pixel_pos = {start.x + i * (width - 1) / 4, start.y};
-        gfx_setPixel(pixel_pos, white);
-        pixel_pos.y += (height - 1);
-        gfx_setPixel(pixel_pos, white);
-    }
-
-    // Level bar
-    uint16_t level_height = height - 4;
-    uint16_t level_width = (level / 255 * width);
-    point_t level_pos = { start.x, start.y + 2 };
-    gfx_drawRect(level_pos, level_width, level_height, white, true);
 }
 
 /*
