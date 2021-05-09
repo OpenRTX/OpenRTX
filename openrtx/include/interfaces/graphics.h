@@ -314,6 +314,16 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi, 
 void gfx_drawSmeterNoSquelch(point_t start, uint16_t width, uint16_t height, float rssi);
 
 /**
+ * Function to draw level meter of arbitrary size.
+ * Starting coordinates are relative to the top left point.
+ * @param start: level meter start point, in pixel coordinates.
+ * @param width: level meter width
+ * @param height: level meter height
+ * @param level: level in range {0, 255}
+ */
+void gfx_drawLevelMeter(point_t start, uint16_t width, uint16_t height, uint8_t level);
+
+/**
  * Function to draw GPS SNR bar graph of arbitrary size.
  * Starting coordinates are relative to the top left point.
  * @param start: Bar graph start point, in pixel coordinates.

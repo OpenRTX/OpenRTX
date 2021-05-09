@@ -588,26 +588,33 @@ bool _ui_drawMacroMenu() {
         // Smeter bar
         float rssi = last_state.rssi;
         float squelch = last_state.sqlLevel / 16.0f;
-        point_t smeter_pos = { layout.horizontal_pad,
+        point_t meter_pos = { layout.horizontal_pad,
                                layout.bottom_pos.y +
                                layout.status_v_pad +
                                layout.text_v_offset -
                                layout.bottom_h };
+        uint16_t meter_height = layout.bottom_h - 1;
         switch(last_state.channel.mode)
         {   
             case FM: 
-            gfx_drawSmeter(smeter_pos,
+            gfx_drawSmeter(meter_pos,
                            SCREEN_WIDTH - 2 * layout.horizontal_pad,
-                           layout.bottom_h - 1,
+                           meter_height,
                            rssi,
                            squelch,
                            yellow_fab413);
             break;
             case DMR:
-            gfx_drawSmeterNoSquelch(smeter_pos,
-                                    SCREEN_WIDTH - 2 * layout.horizontal_pad,
-                                    layout.bottom_h - 1,
-                                    rssi);
+                meter_height = (meter_height / 2); 
+                gfx_drawLevelMeter(meter_pos,
+                                   SCREEN_WIDTH - 2 * layout.horizontal_pad,
+                                   meter_height,
+                                   255);
+                meter_pos.y += meter_height;
+                gfx_drawSmeterNoSquelch(meter_pos,
+                                        SCREEN_WIDTH - 2 * layout.horizontal_pad,
+                                        meter_height,
+                                        rssi);
             break;
         } 
         return true;
