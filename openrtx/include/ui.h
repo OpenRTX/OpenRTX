@@ -121,6 +121,7 @@ typedef struct layout_t
     uint16_t line3_h;
     uint16_t menu_h;
     uint16_t bottom_h;
+    uint16_t bottom_pad;
     uint16_t status_v_pad;
     uint16_t horizontal_pad;
     uint16_t text_v_offset;

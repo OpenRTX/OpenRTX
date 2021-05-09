@@ -303,25 +303,16 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, uint8_t per
 void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi, float squelch, color_t color);
 
 /**
- * Function to draw Smeter of arbitrary size.
+ * Function to draw Smeter + level meter of arbitrary size.
  * Version without squelch bar for digital protocols
  * Starting coordinates are relative to the top left point.
  * @param start: Smeter start point, in pixel coordinates.
  * @param width: Smeter width
  * @param height: Smeter height
  * @param rssi: rssi level in dBm
- */
-void gfx_drawSmeterNoSquelch(point_t start, uint16_t width, uint16_t height, float rssi);
-
-/**
- * Function to draw level meter of arbitrary size.
- * Starting coordinates are relative to the top left point.
- * @param start: level meter start point, in pixel coordinates.
- * @param width: level meter width
- * @param height: level meter height
  * @param level: level in range {0, 255}
  */
-void gfx_drawLevelMeter(point_t start, uint16_t width, uint16_t height, uint8_t level);
+void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, float rssi, uint8_t level);
 
 /**
  * Function to draw GPS SNR bar graph of arbitrary size.
