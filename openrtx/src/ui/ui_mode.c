@@ -29,8 +29,9 @@ extern void _ui_drawMainBottom();
 
 void _ui_drawModeVFOFreq()
 {
-    // Print VFO RX Frequency on line 1 of 4
-    gfx_printLine(1, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, layout.horizontal_pad, layout.line1_font, 
+    // Print VFO RX Frequency on line 1 of 3
+    gfx_printLine(1, 3, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
+                  layout.horizontal_pad, layout.mode_font_big, 
                   TEXT_ALIGN_CENTER, color_white, "%03lu.%05lu",
                   (unsigned long)last_state.channel.rx_frequency/1000000,
                   (unsigned long)last_state.channel.rx_frequency%1000000/10);
@@ -38,8 +39,9 @@ void _ui_drawModeVFOFreq()
 
 void _ui_drawMEMChannel()
 {
-    // Print Channel name on line 1 of 4
-    gfx_printLine(1, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, layout.horizontal_pad, layout.line1_font, 
+    // Print Channel name on line 1 of 3
+    gfx_printLine(1, 3, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
+                  layout.horizontal_pad, layout.mode_font_small, 
                   TEXT_ALIGN_CENTER, color_white, "%03d: %.12s", 
                   last_state.channel_index, last_state.channel.name);
 }
@@ -71,25 +73,25 @@ void _ui_drawModeDetails()
             snprintf(encdec_str, 9, " ");
 
         // Print Bandwidth info
-        gfx_printLine(2, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
-                      layout.horizontal_pad, layout.line1_font,
-                      TEXT_ALIGN_CENTER, color_white, "BW:%s", bw_str);
+        gfx_printLine(2, 3, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
+                      layout.horizontal_pad, layout.mode_font_small,
+                      TEXT_ALIGN_LEFT, color_white, "BW:%s", bw_str);
         // Print Tone and encdec info
-        gfx_printLine(3, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
-                      layout.horizontal_pad, layout.line1_font, 
-                      TEXT_ALIGN_CENTER, color_white, "T:%4.1f  S:%s",
+        gfx_printLine(3, 3, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
+                      layout.horizontal_pad, layout.mode_font_small, 
+                      TEXT_ALIGN_LEFT, color_white, "T:%4.1f   S:%s",
                       ctcss_tone[last_state.channel.fm.txTone]/10.0f,
                       encdec_str);
         break;
         case DMR:
-        // Print Module Frequency on line 2 of 4
-        gfx_printLine(2, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
-                      layout.horizontal_pad, layout.line1_font,
-                      TEXT_ALIGN_LEFT, color_white, "mo:");
-        // Print User ID on line 3 of 4
-        gfx_printLine(3, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
-                      layout.horizontal_pad, layout.line1_font, 
-                      TEXT_ALIGN_LEFT, color_white, "id:");
+        // Print Module Frequency on line 2 of 3
+        gfx_printLine(2, 3, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
+                      layout.horizontal_pad, layout.mode_font_small,
+                      TEXT_ALIGN_LEFT, color_white, "TG:");
+        // Print User ID on line 3 of 3
+        gfx_printLine(3, 3, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
+                      layout.horizontal_pad, layout.mode_font_small, 
+                      TEXT_ALIGN_LEFT, color_white, "ID:");
         break;
     }
 }

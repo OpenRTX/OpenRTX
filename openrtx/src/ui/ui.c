@@ -228,6 +228,10 @@ layout_t _ui_calculateLayout()
     const fontSize_t input_font = FONT_SIZE_12PT;
     // Menu font
     const fontSize_t menu_font = FONT_SIZE_8PT;
+    // Mode screen frequency font: 12 pt
+    const fontSize_t mode_font_big = FONT_SIZE_12PT;
+    // Mode screen details font: 9 pt
+    const fontSize_t mode_font_small = FONT_SIZE_9PT;
 
     // Radioddity GD-77
     #elif SCREEN_HEIGHT > 63
@@ -258,6 +262,10 @@ layout_t _ui_calculateLayout()
     const fontSize_t input_font = FONT_SIZE_8PT;
     // Menu font
     const fontSize_t menu_font = FONT_SIZE_6PT;
+    // Mode screen frequency font: 9 pt
+    const fontSize_t mode_font_big = FONT_SIZE_9PT;
+    // Mode screen details font: 6 pt
+    const fontSize_t mode_font_small = FONT_SIZE_6PT;
 
     // Radioddity RD-5R
     #elif SCREEN_HEIGHT > 47
@@ -285,6 +293,10 @@ layout_t _ui_calculateLayout()
     const fontSize_t input_font = FONT_SIZE_8PT;
     // Menu font
     const fontSize_t menu_font = FONT_SIZE_6PT;
+    // Mode screen frequency font: 9 pt
+    const fontSize_t mode_font_big = FONT_SIZE_9PT;
+    // Mode screen details font: 6 pt
+    const fontSize_t mode_font_small = FONT_SIZE_6PT;
     // Not present on this resolution
     const fontSize_t line1_font = 0;
     const fontSize_t bottom_font = 0;
@@ -323,7 +335,9 @@ layout_t _ui_calculateLayout()
         line3_font,
         bottom_font,
         input_font,
-        menu_font
+        menu_font,
+        mode_font_big,
+        mode_font_small
     };
     return new_layout;
 }

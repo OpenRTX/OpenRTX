@@ -136,6 +136,8 @@ typedef struct layout_t
     fontSize_t bottom_font;
     fontSize_t input_font;
     fontSize_t menu_font;
+    fontSize_t mode_font_big;
+    fontSize_t mode_font_small;
 } layout_t;
 
 /**
