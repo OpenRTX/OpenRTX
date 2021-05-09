@@ -27,40 +27,79 @@
 extern void _ui_drawMainTop();
 extern void _ui_drawMainBottom();
 
-void _ui_drawModeVFOMiddle()
+void _ui_drawModeVFOFreq()
 {
     // Print VFO RX Frequency on line 1 of 4
     gfx_printLine(1, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, layout.horizontal_pad, layout.line1_font, 
                   TEXT_ALIGN_CENTER, color_white, "%03lu.%05lu",
                   (unsigned long)last_state.channel.rx_frequency/1000000,
                   (unsigned long)last_state.channel.rx_frequency%1000000/10);
-    // Print Module / Talkgroup on line 2 of 4
-    gfx_printLine(2, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, layout.horizontal_pad, layout.line1_font, 
-                  TEXT_ALIGN_LEFT, color_white, "mo:");
-    // Print User ID on line 3 of 4
-    gfx_printLine(3, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, layout.horizontal_pad, layout.line1_font, 
-                  TEXT_ALIGN_LEFT, color_white, "id:");
 }
 
-void _ui_drawModeMEMMiddle()
+void _ui_drawMEMChannel()
 {
     // Print Channel name on line 1 of 4
     gfx_printLine(1, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, layout.horizontal_pad, layout.line1_font, 
                   TEXT_ALIGN_CENTER, color_white, "%03d: %.12s", 
                   last_state.channel_index, last_state.channel.name);
-    // Print Module Frequency on line 2 of 4
-    gfx_printLine(2, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, layout.horizontal_pad, layout.line1_font, 
-                  TEXT_ALIGN_LEFT, color_white, "mo:");
-    // Print User ID on line 3 of 4
-    gfx_printLine(3, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, layout.horizontal_pad, layout.line1_font, 
-                  TEXT_ALIGN_LEFT, color_white, "id:");
+}
+
+void _ui_drawModeDetails()
+{
+    char bw_str[8] = { 0 };
+    char encdec_str[9] = { 0 };
+    switch(last_state.channel.mode)
+    {
+        case FM:
+        // Get Bandwith string
+        if(last_state.channel.bandwidth == BW_12_5)
+            snprintf(bw_str, 8, "12.5");
+        else if(last_state.channel.bandwidth == BW_20)
+            snprintf(bw_str, 8, "20");
+        else if(last_state.channel.bandwidth == BW_25)
+            snprintf(bw_str, 8, "25");
+        // Get encdec string
+        bool tone_tx_enable = last_state.channel.fm.txToneEn;
+        bool tone_rx_enable = last_state.channel.fm.rxToneEn;
+        if (tone_tx_enable && tone_rx_enable)
+            snprintf(encdec_str, 9, "E+D");
+        else if (tone_tx_enable && !tone_rx_enable)
+            snprintf(encdec_str, 9, "E");
+        else if (!tone_tx_enable && tone_rx_enable)
+            snprintf(encdec_str, 9, "D");
+        else
+            snprintf(encdec_str, 9, " ");
+
+        // Print Bandwidth info
+        gfx_printLine(2, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
+                      layout.horizontal_pad, layout.line1_font,
+                      TEXT_ALIGN_CENTER, color_white, "BW:%s", bw_str);
+        // Print Tone and encdec info
+        gfx_printLine(3, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
+                      layout.horizontal_pad, layout.line1_font, 
+                      TEXT_ALIGN_CENTER, color_white, "T:%4.1f  S:%s",
+                      ctcss_tone[last_state.channel.fm.txTone]/10.0f,
+                      encdec_str);
+        break;
+        case DMR:
+        // Print Module Frequency on line 2 of 4
+        gfx_printLine(2, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
+                      layout.horizontal_pad, layout.line1_font,
+                      TEXT_ALIGN_LEFT, color_white, "mo:");
+        // Print User ID on line 3 of 4
+        gfx_printLine(3, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
+                      layout.horizontal_pad, layout.line1_font, 
+                      TEXT_ALIGN_LEFT, color_white, "id:");
+        break;
+    }
 }
 
 void _ui_drawModeVFO()
 {
     gfx_clearScreen();
     _ui_drawMainTop();
-    _ui_drawModeVFOMiddle();
+    _ui_drawModeVFOFreq();
+    _ui_drawModeDetails();
     _ui_drawMainBottom();
 }
 
@@ -68,6 +107,7 @@ void _ui_drawModeMEM()
 {
     gfx_clearScreen();
     _ui_drawMainTop();
-    _ui_drawModeMEMMiddle();
+    _ui_drawMEMChannel();
+    _ui_drawModeDetails();
     _ui_drawMainBottom();
 }
