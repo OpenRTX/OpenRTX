@@ -63,15 +63,61 @@ int main()
 {
     platform_init();
 
+    
     static const size_t numSamples = 45*1024;       // 80kB
     uint16_t *sampleBuf = ((uint16_t *) malloc(numSamples * sizeof(uint16_t)));
 
-    gpio_setMode(GREEN_LED, OUTPUT);
-    gpio_setMode(RED_LED,   OUTPUT);
+    /*
+     * Baseband setup
+     */
+    pthread_mutex_t rtx_mutex;
+    pthread_mutex_init(&rtx_mutex, NULL);
 
-    gpio_setMode(GPIOC, 3, INPUT_ANALOG);
+    rtx_init(&rtx_mutex);
+    rtxStatus_t cfg;
 
-    delayMs(3000);
+    /* Take mutex and update the RTX configuration */
+    pthread_mutex_lock(&rtx_mutex);
+
+    cfg.opMode = FM;
+    cfg.bandwidth = BW_25;
+    cfg.rxFrequency = 435000000;
+    cfg.txFrequency = 435000000;
+    cfg.txPower = 1.0f;
+    cfg.sqlLevel = 3;
+    cfg.rxTone = 0;
+    cfg.txTone = 0;
+
+    pthread_mutex_unlock(&rtx_mutex);
+
+    /* After mutex has been released, post the new configuration */
+    rtx_configure(&cfg);
+    rtx_taskFunc();
+    
+    delayMs(1000);
+    
+    platform_ledOn(GREEN);
+
+    /* Print RSSI */
+    // while(1)
+    // {
+    //     rtx_taskFunc();
+    //     delayMs(25);
+    //     printf("RSSI: %f\n", rtx_getRssi()); 
+    // }
+
+    /* 
+     * ADC and DMA Setup 
+     */ 
+
+    gpio_setMode(GPIOC, 3, INPUT_ANALOG);       // platform_init() also configures ADC1. 
+                                                // DMA2 Stream 0 is used. 
+
+    DMA2_Stream0->CR = 0;                       // stop DMA and ADC
+    DMA2->HIFCR = 0xFFFF;                       // clear DMA interrupt flags from stoping
+    DMA2->LIFCR = 0xFFFF;                      
+    ADC1->CR1 = 0;                              // and reset control registers from 
+    ADC1->CR2 = 0;                              // platform_init()  
 
     RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
     RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
@@ -117,7 +163,7 @@ int main()
                 | ADC_SMPR2_SMP8;
 
     ADC1->SQR1 = 0;    /* One channel to be converted */
-    ADC1->SQR3 = 13;   /* CH13, audio from RTX on PC13 */
+    ADC1->SQR3 = 13;   /* CH13, audio from RTX on PC3 */
 
     /*
      * No overrun interrupt, 12-bit resolution, no analog watchdog, no
@@ -133,48 +179,26 @@ int main()
               |  ADC_CR2_ALIGN
               |  ADC_CR2_ADON;      /* Enable ADC                    */
 
-    /*
-     * Baseband setup
-     */
-    pthread_mutex_t rtx_mutex;
-    pthread_mutex_init(&rtx_mutex, NULL);
-
-    rtx_init(&rtx_mutex);
-    rtxStatus_t cfg;
-
-    /* Take mutex and update the RTX configuration */
-    pthread_mutex_lock(&rtx_mutex);
-
-    cfg.opMode = FM;
-    cfg.bandwidth = BW_25;
-    cfg.rxFrequency = 435000000;
-    cfg.txFrequency = 435000000;
-    cfg.txPower = 1.0f;
-    cfg.sqlLevel = 3;
-    cfg.rxTone = 0;
-    cfg.txTone = 0;
-
-    pthread_mutex_unlock(&rtx_mutex);
-
-    /* After mutex has been released, post the new configuration */
-    rtx_configure(&cfg);
-
+    /* Flash LED while DMA is running */
     while((DMA2_Stream0->CR & DMA_SxCR_EN) == 1)
     {
-        rtx_taskFunc();
-        gpio_togglePin(GREEN_LED);
-        delayMs(250);
+        gpio_togglePin(GREEN_LED);   
+        delayMs(100);
     }
 
-    gpio_clearPin(GREEN_LED);
-    gpio_setPin(RED_LED);
+    /* Dump samples */ 
 
+    platform_ledOff(GREEN); 
+    platform_ledOn(RED);
     delayMs(10000);
 
     for(size_t i = 0; i < numSamples; i++)
     {
+        //printf("%d\n", sampleBuf[i]);
         printUnsignedInt(sampleBuf[i]);
     }
+
+    platform_ledOff(RED);   // why doesn't this turn off? 
 
     while(1) ;
 
