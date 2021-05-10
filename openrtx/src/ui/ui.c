@@ -243,7 +243,7 @@ layout_t _ui_calculateLayout()
     const uint16_t line2_h = 10;
     const uint16_t line3_h = 16;
     const uint16_t menu_h = 10;
-    const uint16_t bottom_h = 8;
+    const uint16_t bottom_h = 15;
     const uint16_t bottom_pad = 0;
     const uint16_t status_v_pad = 1;
     const uint16_t small_line_v_pad = 1;
