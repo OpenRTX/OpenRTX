@@ -104,6 +104,7 @@ extern void _ui_drawSettingsTimeDate();
 extern void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state);
 #endif
 extern void _ui_drawSettingsDisplay(ui_state_t* ui_state);
+extern void _ui_drawSettingsM17();
 extern bool _ui_drawMacroMenu();
 
 const char *menu_items[] =
@@ -126,8 +127,9 @@ const char *settings_items[] =
     "Time & Date",
 #endif
 #ifdef HAS_GPS
-    "GPS"
+    "GPS",
 #endif
+    "M17"    
 };
 
 const char *display_items[] =
@@ -1053,6 +1055,9 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                             state.ui_screen = SETTINGS_GPS;
                             break;
 #endif
+                        case S_M17:
+                            state.ui_screen = SETTINGS_M17;
+                            break;
                         default:
                             state.ui_screen = MENU_SETTINGS;
                     }
@@ -1209,6 +1214,11 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     _ui_menuBack(MENU_SETTINGS);
                 break;
 #endif
+            // M17 Settings
+            case SETTINGS_M17:
+                if(msg.keys & KEY_ESC)
+                    _ui_menuBack(MENU_SETTINGS);
+                break;
         }
     }
 }
@@ -1297,6 +1307,10 @@ void ui_updateGUI()
             _ui_drawSettingsGPS(&ui_state);
             break;
 #endif
+        // M17 settings screen
+        case SETTINGS_M17:
+            _ui_drawSettingsM17();
+            break;
         // Low battery screen
         case LOW_BAT:
             _ui_drawLowBatteryScreen();
