@@ -513,6 +513,21 @@ void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state)
 }
 #endif
 
+void _ui_drawSettingsM17()
+{
+    gfx_clearScreen();
+    // Print "M17 Settings" on top bar
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER, 
+              color_white, "M17 Settings");
+    gfx_printLine(1, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
+                  layout.horizontal_pad, layout.menu_font,
+                  TEXT_ALIGN_LEFT, color_white, "Callsign:");
+    // Print M17 current callsign
+    gfx_printLine(1, 1, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
+                  layout.horizontal_pad, layout.input_font,
+                  TEXT_ALIGN_CENTER, color_white, last_state.settings.callsign);
+}
+
 bool _ui_drawMacroMenu() {
         // Header
         gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,

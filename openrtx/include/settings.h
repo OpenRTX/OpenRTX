@@ -31,6 +31,7 @@ typedef struct
     int8_t utc_timezone;
     bool gps_enabled;
     bool gps_set_time;
+    char callsign[10];    // Plaintext callsign, used for M17
 }
 __attribute__((packed)) settings_t;
 
@@ -46,7 +47,8 @@ static const settings_t default_settings =
 #endif
     0,                // UTC Timezone
     false,            // GPS enabled
-    true              // GPS set time
+    true,             // GPS set time
+    ""                // Empty callsign
 };
 
 #endif /* SETTINGS_H */
