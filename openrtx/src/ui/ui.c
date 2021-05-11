@@ -70,6 +70,7 @@
 #ifdef HAS_GPS
 #include <interfaces/gps.h>
 #endif
+#include <interfaces/delays.h>
 #include <string.h>
 #include <battery.h>
 #include <input.h>
@@ -168,6 +169,38 @@ const char *authors[] =
     "Silvano IU2KWO",
     "Federico IU2NUO",
     "Fred IU2NRO",
+};
+
+const char *ITU_T_symbols_lcase[] =
+{
+    " 0",
+    ",.?1",
+    "abc2",
+    "def3",
+    "ghi4",
+    "jkl5",
+    "mno6",
+    "pqrs7",
+    "tuv8",
+    "wxyz9",
+    "*",
+    "#"
+};
+
+const char *ITU_T_symbols_ucase[] =
+{
+    " 0",
+    ",.?1",
+    "ABC2",
+    "DEF3",
+    "GHI4",
+    "JKL5",
+    "MNO6",
+    "PQRS7",
+    "TUV8",
+    "WXYZ9",
+    "*",
+    "#"
 };
 
 // Calculate number of menu entries
@@ -706,22 +739,35 @@ void _ui_menuBack(uint8_t prev_state)
     }
 }
 
-int _ui_textInput(char *buf, uint8_t max_len, keyboard_t keys)
+void _ui_textInputITU_T(char *buf, uint8_t max_len, kbd_msg_t msg)
 {
-    int result = 0;
-    // First zone "All channels" is not read from flash
-    if(index == 0)
+    if(ui_state.input_position >= max_len)
+        return;
+    long long now = getTick();
+    // Get currently pressed number key
+    uint8_t num_key =input_getPressedNumber(msg);
+    // Different key pressed, advance input position
+    if(ui_state.input_number != num_key)
+        ui_state.input_position += 1;
+    // First keypress for current position
+    if(ui_state.last_keypress == 0)
     {
-        snprintf(buf, max_len, "All channels");
+        ui_state.last_keypress = now;
+    }
+    // After time interval, advance input position and reset symbol selection and timestamp
+    else if((ui_state.last_keypress - now) > kbd_long_interval)
+    {
+        ui_state.input_position += 1;
+        ui_state.input_set = 0;
+        ui_state.last_keypress = 0;
     }
     else
     {
-        zone_t zone;
-        result = nvm_readZoneData(&zone, index);
-        if(result != -1)
-            snprintf(buf, max_len, "%s", zone.name);
+        // Same key pressed, advance symbol selection
+        ui_state.input_set += 1;
     }
-    return result;
+    buf[ui_state.input_position] = ITU_T_symbols_lcase[ui_state.input_number]
+                                                      [ui_state.input_set];
 }
 
 void ui_saveState()
@@ -1234,10 +1280,36 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
 #endif
             // M17 Settings
             case SETTINGS_M17:
-                if(msg.keys & KEY_ENTER)
-                    ui_state.edit_mode = !ui_state.edit_mode;
-                else if(msg.keys & KEY_ESC)
-                    _ui_menuBack(MENU_SETTINGS);
+                if(ui_state.edit_mode)
+                {
+                    if(msg.keys & KEY_ENTER)
+                    {
+                        // Save selected callsign and disable input mode
+                        strcpy(state.settings.callsign, ui_state.new_callsign);
+                        ui_state.edit_mode = false;
+                    }
+                    else if(msg.keys & KEY_ESC)
+                        // Discard selected callsign and disable input mode
+                        ui_state.edit_mode = false;
+                    else if(input_isNumberPressed(msg))
+                        _ui_textInputITU_T(ui_state.new_callsign, 9, msg);
+                }
+                else
+                {
+                    if(msg.keys & KEY_ENTER)
+                    {
+                        // Enable callsign input
+                        ui_state.edit_mode = true;
+                        // Reset text input variables
+                        ui_state.input_position = 0;
+                        ui_state.input_number = 0;
+                        ui_state.last_keypress = 0;
+                        memset(&ui_state.new_callsign, 0, 9);
+                        ui_state.new_callsign[0] = '_';
+                    }
+                    else if(msg.keys & KEY_ESC)
+                        _ui_menuBack(MENU_SETTINGS);
+                }
                 break;
         }
     }

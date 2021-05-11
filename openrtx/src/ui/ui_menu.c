@@ -516,10 +516,25 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
     gfx_printLine(1, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
                   layout.horizontal_pad, layout.menu_font,
                   TEXT_ALIGN_LEFT, color_white, "Callsign:");
-    // Print M17 current callsign
-    gfx_printLine(1, 1, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
-                  layout.horizontal_pad, layout.input_font,
-                  TEXT_ALIGN_CENTER, color_white, last_state.settings.callsign);
+    if(ui_state->edit_mode)
+    {
+        uint16_t rect_width = SCREEN_WIDTH - (layout.horizontal_pad * 2);
+        uint16_t rect_height = (SCREEN_HEIGHT - (layout.top_h + layout.bottom_h))/2;
+        point_t rect_origin = {(SCREEN_WIDTH - rect_width) / 2, 
+                               (SCREEN_HEIGHT - rect_height) / 2};
+        gfx_drawRect(rect_origin, rect_width, rect_height, color_white, false);
+        // Print M17 callsign being typed
+        gfx_printLine(1, 1, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
+                      layout.horizontal_pad, layout.input_font,
+                      TEXT_ALIGN_CENTER, color_white, ui_state->new_callsign);
+    }
+    else    
+    {
+        // Print M17 current callsign
+        gfx_printLine(1, 1, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
+                      layout.horizontal_pad, layout.input_font,
+                      TEXT_ALIGN_CENTER, color_white, last_state.settings.callsign);
+    }
 }
 
 bool _ui_drawMacroMenu() {
