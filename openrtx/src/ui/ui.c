@@ -70,6 +70,7 @@
 #ifdef HAS_GPS
 #include <interfaces/gps.h>
 #endif
+#include <interfaces/delays.h>
 #include <string.h>
 #include <battery.h>
 #include <input.h>
@@ -104,7 +105,7 @@ extern void _ui_drawSettingsTimeDate();
 extern void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state);
 #endif
 extern void _ui_drawSettingsDisplay(ui_state_t* ui_state);
-extern void _ui_drawSettingsM17();
+extern void _ui_drawSettingsM17(ui_state_t* ui_state);
 extern bool _ui_drawMacroMenu();
 
 const char *menu_items[] =
@@ -168,6 +169,22 @@ const char *authors[] =
     "Silvano IU2KWO",
     "Federico IU2NUO",
     "Fred IU2NRO",
+};
+
+const char *symbols_ITU_T_E161[] =
+{
+    " 0",
+    ",.?1",
+    "abc2ABC",
+    "def3DEF",
+    "ghi4GHI",
+    "jkl5JKL",
+    "mno6MNO",
+    "pqrs7PQRS",
+    "tuv8TUV",
+    "wxyz9WXYZ",
+    "*",
+    "#"
 };
 
 // Calculate number of menu entries
@@ -706,6 +723,37 @@ void _ui_menuBack(uint8_t prev_state)
     }
 }
 
+void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg)
+{
+    if(ui_state.input_position >= max_len)
+        return;
+    long long now = getTick();
+    // Get currently pressed number key
+    uint8_t num_key = input_getPressedNumber(msg);
+    // Get number of symbols related to currently pressed key
+    uint8_t num_symbols = strlen(symbols_ITU_T_E161[num_key]);
+    // Reset reference values on first function call
+    if(ui_state.input_position == 0 && ui_state.input_set == 0)
+    {
+        ui_state.input_number = num_key;
+        ui_state.last_keypress = now;
+    }
+    // Different key pressed, advance input position
+    if(ui_state.input_number != num_key || (now - ui_state.last_keypress) > kbd_long_interval)
+    {
+        ui_state.input_position += 1;
+        ui_state.input_set = 0;
+    }
+    // Same key pressed, advance symbol choice
+    else
+        ui_state.input_set = (ui_state.input_set + 1) % num_symbols;
+    // Update reference values
+    ui_state.input_number = num_key;
+    ui_state.last_keypress = now;
+    // After time interval, advance input position and reset symbol selection and timestamp
+    buf[ui_state.input_position] = symbols_ITU_T_E161[num_key][ui_state.input_set];
+}
+
 void ui_saveState()
 {
     last_state = state;
@@ -1216,8 +1264,37 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
 #endif
             // M17 Settings
             case SETTINGS_M17:
-                if(msg.keys & KEY_ESC)
-                    _ui_menuBack(MENU_SETTINGS);
+                if(ui_state.edit_mode)
+                {
+                    if(msg.keys & KEY_ENTER)
+                    {
+                        // Save selected callsign and disable input mode
+                        strcpy(state.settings.callsign, ui_state.new_callsign);
+                        ui_state.edit_mode = false;
+                    }
+                    else if(msg.keys & KEY_ESC)
+                        // Discard selected callsign and disable input mode
+                        ui_state.edit_mode = false;
+                    else if(input_isNumberPressed(msg))
+                        _ui_textInputKeypad(ui_state.new_callsign, 9, msg);
+                }
+                else
+                {
+                    if(msg.keys & KEY_ENTER)
+                    {
+                        // Enable callsign input
+                        ui_state.edit_mode = true;
+                        // Reset text input variables
+                        ui_state.input_number = 0;
+                        ui_state.input_position = 0;
+                        ui_state.input_set = 0;
+                        ui_state.last_keypress = 0;
+                        memset(&ui_state.new_callsign, 0, 9);
+                        ui_state.new_callsign[0] = '_';
+                    }
+                    else if(msg.keys & KEY_ESC)
+                        _ui_menuBack(MENU_SETTINGS);
+                }
                 break;
         }
     }
@@ -1309,7 +1386,7 @@ void ui_updateGUI()
 #endif
         // M17 settings screen
         case SETTINGS_M17:
-            _ui_drawSettingsM17();
+            _ui_drawSettingsM17(&ui_state);
             break;
         // Low battery screen
         case LOW_BAT:
