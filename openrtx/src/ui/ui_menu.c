@@ -507,7 +507,7 @@ void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state)
 }
 #endif
 
-void _ui_drawSettingsM17()
+void _ui_drawSettingsM17(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     // Print "M17 Settings" on top bar

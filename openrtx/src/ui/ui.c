@@ -104,7 +104,7 @@ extern void _ui_drawSettingsTimeDate();
 extern void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state);
 #endif
 extern void _ui_drawSettingsDisplay(ui_state_t* ui_state);
-extern void _ui_drawSettingsM17();
+extern void _ui_drawSettingsM17(ui_state_t* ui_state);
 extern bool _ui_drawMacroMenu();
 
 const char *menu_items[] =
@@ -706,6 +706,24 @@ void _ui_menuBack(uint8_t prev_state)
     }
 }
 
+int _ui_textInput(char *buf, uint8_t max_len, keyboard_t keys)
+{
+    int result = 0;
+    // First zone "All channels" is not read from flash
+    if(index == 0)
+    {
+        snprintf(buf, max_len, "All channels");
+    }
+    else
+    {
+        zone_t zone;
+        result = nvm_readZoneData(&zone, index);
+        if(result != -1)
+            snprintf(buf, max_len, "%s", zone.name);
+    }
+    return result;
+}
+
 void ui_saveState()
 {
     last_state = state;
@@ -1216,7 +1234,9 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
 #endif
             // M17 Settings
             case SETTINGS_M17:
-                if(msg.keys & KEY_ESC)
+                if(msg.keys & KEY_ENTER)
+                    ui_state.edit_mode = !ui_state.edit_mode;
+                else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_SETTINGS);
                 break;
         }
@@ -1309,7 +1329,7 @@ void ui_updateGUI()
 #endif
         // M17 settings screen
         case SETTINGS_M17:
-            _ui_drawSettingsM17();
+            _ui_drawSettingsM17(&ui_state);
             break;
         // Low battery screen
         case LOW_BAT:
