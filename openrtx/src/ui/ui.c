@@ -1285,8 +1285,9 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         // Enable callsign input
                         ui_state.edit_mode = true;
                         // Reset text input variables
-                        ui_state.input_position = 0;
                         ui_state.input_number = 0;
+                        ui_state.input_position = 0;
+                        ui_state.input_set = 0;
                         ui_state.last_keypress = 0;
                         memset(&ui_state.new_callsign, 0, 9);
                         ui_state.new_callsign[0] = '_';
