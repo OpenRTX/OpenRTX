@@ -1,0 +1,4 @@
+[wrap-git]
+url = https://github.com/libopencm3/libopencm3.git
+revision = 44928416eacb4c8d7774b1385c7f38fb226d080b
+patch_directory = libopencm3

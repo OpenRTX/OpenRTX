@@ -57,6 +57,10 @@ minmea_inc = ['lib/minmea/include']
 # QDEC, a very simple, header only, quadrature decoding library
 qdec_inc = ['lib/qdec/include']
 
+# libopencm3: an open-source firmware library for various ARM Cortex-M microcontrollers
+libopencm3_proj = subproject('libopencm3')
+libopencm3_dep = libopencm3_proj.get_variable('libopencm3_dep')
+
 ##
 ## RTOS
 ##
@@ -353,35 +357,40 @@ md3x0_opts = {'sources' : md3x0_src,
               'cpp_args': md3x0_args,
               'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
                              '-Wl,--print-memory-usage'],
-              'include_directories': md3x0_inc}
+              'include_directories': md3x0_inc,
+              'dependencies': libopencm3_dep}
 
 mduv3x0_opts = {'sources': mduv3x0_src,
                 'c_args': mduv3x0_args,
                 'cpp_args': mduv3x0_args,
                 'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
                                '-Wl,--print-memory-usage'],
-                'include_directories': mduv3x0_inc}
+                'include_directories': mduv3x0_inc,
+                'dependencies': libopencm3_dep}
 
 gd77_opts = {'sources': gd77_src,
              'c_args': gd77_args,
              'cpp_args': gd77_args,
              'link_args' : ['-Wl,-T../platform/mcu/MK22FN512xxx12/linker_script.ld',
                             '-Wl,--print-memory-usage'],
-             'include_directories':gd77_inc}
+             'include_directories':gd77_inc,
+             'dependencies': libopencm3_dep}
 
 dm1801_opts = {'sources': dm1801_src,
                'c_args': dm1801_args,
                'cpp_args': dm1801_args,
                'link_args' : ['-Wl,-T../platform/mcu/MK22FN512xxx12/linker_script.ld',
                               '-Wl,--print-memory-usage'],
-               'include_directories':dm1801_inc}
+               'include_directories':dm1801_inc,
+               'dependencies': libopencm3_dep}
 
 md9600_opts = {'sources': md9600_src,
                'c_args': md9600_args,
                'cpp_args': md9600_args,
                'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
                               '-Wl,--print-memory-usage'],
-               'include_directories': md9600_inc}
+               'include_directories': md9600_inc,
+               'dependencies': libopencm3_dep}
 
 ##
 ## ---------------------------- Compilation targets ----------------------------
