@@ -152,6 +152,9 @@ stm32f405_inc = ['platform/mcu/CMSIS/Include',
 stm32f405_def = {'STM32F40_41xxx': '', 'HSE_VALUE':'8000000',
                  '_POSIX_PRIORITY_SCHEDULING':''}
 
+# Define for libopencm3
+stm32f405_def = stm32f405_def + {'STM32F4': ''}
+
 ##
 ## MK22FN512
 ##

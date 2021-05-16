@@ -21,9 +21,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <libopencm3/stm32/rcc.h>
 #include <libopencm3/usb/usbd.h>
 #include <libopencm3/usb/dfu.h>
-//#include <libopencm3/stm32/desig.h>
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
 #include <interfaces/gpio.h>
