@@ -25,14 +25,16 @@
 #include <calibUtils.h>
 #include <hwconfig.h>
 #include <algorithm>
+#include "radioUtils.h"
 #include "HR_C6000.h"
 #include "AT1846S.h"
+
 
 const mduv3x0Calib_t *calData;  // Pointer to calibration data
 const rtxStatus_t    *config;   // Pointer to data structure with radio configuration
 
-int8_t  currRxBand = -1;        // Current band for RX
-int8_t  currTxBand = -1;        // Current band for TX
+Band    currRxBand = BND_NONE;  // Current band for RX
+Band    currTxBand = BND_NONE;  // Current band for TX
 uint8_t txpwr_lo   = 0;         // APC voltage for TX output power control, low power
 uint8_t txpwr_hi   = 0;         // APC voltage for TX output power control, high power
 uint8_t rxModBias  = 0;         // VCXO bias for RX
@@ -42,22 +44,6 @@ enum opstatus radioStatus;      // Current operating status
 
 HR_C6000& C6000  = HR_C6000::instance();  // HR_C5000 driver
 AT1846S& at1846s = AT1846S::instance();   // AT1846S driver
-
-/**
- * \internal
- * Function to identify the current band (VHF or UHF), given an input frequency.
- *
- * @param freq frequency in Hz.
- * @return 0 if the frequency is in the VHF band,
- *         1 if the frequency is in the UHF band,
- *        -1 if the band to which the frequency belongs is neither VHF nor UHF.
- */
-int8_t _getBandFromFrequency(freq_t freq)
-{
-    if((freq >= FREQ_LIMIT_VHF_LO) && (freq <= FREQ_LIMIT_VHF_HI)) return 0;
-    if((freq >= FREQ_LIMIT_UHF_LO) && (freq <= FREQ_LIMIT_UHF_HI)) return 1;
-    return -1;
-}
 
 void radio_init(const rtxStatus_t *rtxState)
 {
@@ -150,13 +136,13 @@ void radio_enableRx()
     gpio_clearPin(UHF_LNA_EN);
     DAC->DHR12R1 = 0;
 
-    if(currRxBand < 0) return;
+    if(currRxBand == BND_NONE) return;
 
     C6000.setModOffset(rxModBias);
     at1846s.setFrequency(config->rxFrequency);
     at1846s.setFuncMode(AT1846S_FuncMode::RX);
 
-    if(currRxBand == 0)
+    if(currRxBand == BND_VHF)
     {
         gpio_setPin(VHF_LNA_EN);
     }
@@ -209,7 +195,7 @@ void radio_enableTx()
 
     gpio_setPin(PA_EN_1);
 
-    if(currTxBand == 0)
+    if(currTxBand == BND_VHF)
     {
         gpio_clearPin(PA_SEL_SW);
     }
@@ -249,10 +235,10 @@ void radio_disableRtx()
 
 void radio_updateConfiguration()
 {
-    currRxBand = _getBandFromFrequency(config->rxFrequency);
-    currTxBand = _getBandFromFrequency(config->txFrequency);
+    currRxBand = getBandFromFrequency(config->rxFrequency);
+    currTxBand = getBandFromFrequency(config->txFrequency);
 
-    if((currRxBand < 0) || (currTxBand < 0)) return;
+    if((currRxBand == BND_NONE) || (currTxBand == BND_NONE)) return;
 
     /*
      * VCXO bias voltage, separated values for TX and RX to allow for cross-band
@@ -260,8 +246,8 @@ void radio_updateConfiguration()
      */
     txModBias = calData->vhfCal.freqAdjustMid;
     rxModBias = calData->vhfCal.freqAdjustMid;
-    if(currRxBand > 0) rxModBias = calData->uhfCal.freqAdjustMid;
-    if(currTxBand > 0) txModBias = calData->uhfCal.freqAdjustMid;
+    if(currRxBand == BND_UHF) rxModBias = calData->uhfCal.freqAdjustMid;
+    if(currTxBand == BND_UHF) txModBias = calData->uhfCal.freqAdjustMid;
 
     /*
      * Discarding "const" qualifier to suppress compiler warnings.
@@ -274,7 +260,7 @@ void radio_updateConfiguration()
     uint8_t *hiPwrCal    = cal->vhfCal.txHighPower;
     uint8_t *qRangeCal   = (config->opMode == FM) ? cal->vhfCal.analogSendQrange
                                                   : cal->vhfCal.sendQrange;
-    if(currTxBand > 0)
+    if(currTxBand == BND_UHF)
     {
         calPoints   = 9;
         txCalPoints = cal->uhfCal.txFreq;

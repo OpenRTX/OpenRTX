@@ -215,8 +215,8 @@ public:
      */
     inline void setRxAudioGain(const uint8_t gainWb, const uint8_t gainNb)
     {
-        uint16_t value = (gainWb & 0x0F) << 8;
-        maskSetRegister(0x44, 0x0F00, value);
+        uint16_t value = (gainWb & 0x0F) << 4;
+        maskSetRegister(0x44, 0x00F0, value);
         maskSetRegister(0x44, 0x000F, ((uint16_t) gainNb));
     }
 
@@ -227,7 +227,7 @@ public:
      */
     inline void setNoise1Thresholds(const uint8_t highTsh, const uint8_t lowTsh)
     {
-        uint16_t value = ((highTsh & 0x1f) << 8) | (lowTsh & 0x1F);
+        uint16_t value = ((highTsh & 0x1F) << 8) | (lowTsh & 0x1F);
         i2c_writeReg16(0x48, value);
     }
 
@@ -238,7 +238,7 @@ public:
      */
     inline void setNoise2Thresholds(const uint8_t highTsh, const uint8_t lowTsh)
     {
-        uint16_t value = ((highTsh & 0x1f) << 8) | (lowTsh & 0x1F);
+        uint16_t value = ((highTsh & 0x1F) << 8) | (lowTsh & 0x1F);
         i2c_writeReg16(0x60, value);
     }
 
@@ -249,7 +249,7 @@ public:
      */
     inline void setRssiThresholds(const uint8_t highTsh, const uint8_t lowTsh)
     {
-        uint16_t value = ((highTsh & 0x1f) << 8) | (lowTsh & 0x1F);
+        uint16_t value = ((highTsh & 0x1F) << 8) | (lowTsh & 0x1F);
         i2c_writeReg16(0x3F, value);
     }
 
