@@ -69,7 +69,7 @@ uint32_t _bcd2bin(uint32_t bcd)
  */
 void _loadBandCalData(uint32_t baseAddr, bandCalData_t *cal)
 {
-    W25Qx_readData(baseAddr + 0x08, &(cal->mod1Bias),              2);
+    W25Qx_readData(baseAddr + 0x08, &(cal->modBias),               2);
     W25Qx_readData(baseAddr + 0x0A, &(cal->mod2Offset),            1);
     W25Qx_readData(baseAddr + 0x3F, cal->analogSqlThresh,          8);
     W25Qx_readData(baseAddr + 0x47, &(cal->noise1_HighTsh_Wb),     1);
@@ -87,7 +87,7 @@ void _loadBandCalData(uint32_t baseAddr, bandCalData_t *cal)
     W25Qx_readData(baseAddr + 0x53, &(cal->RSSILowerThreshold),    1);
     W25Qx_readData(baseAddr + 0x54, &(cal->RSSIUpperThreshold),    1);
     W25Qx_readData(baseAddr + 0x55, cal->mod1Amplitude,            8);
-    W25Qx_readData(baseAddr + 0x5D, &(cal->dacDataRange),          1);
+    W25Qx_readData(baseAddr + 0x5D, &(cal->digAudioGain),          1);
     W25Qx_readData(baseAddr + 0x5E, &(cal->txDev_DTMF),            1);
     W25Qx_readData(baseAddr + 0x5F, &(cal->txDev_tone),            1);
     W25Qx_readData(baseAddr + 0x60, &(cal->txDev_CTCSS_wb),        1);
@@ -100,8 +100,8 @@ void _loadBandCalData(uint32_t baseAddr, bandCalData_t *cal)
     W25Qx_readData(baseAddr + 0x67, &(cal->rxAGCgain),             1);
     W25Qx_readData(baseAddr + 0x68, &(cal->mixGainWideband),       2);
     W25Qx_readData(baseAddr + 0x6A, &(cal->mixGainNarrowband),     2);
-    W25Qx_readData(baseAddr + 0x6C, &(cal->rxAudioGainWideband),   1);
-    W25Qx_readData(baseAddr + 0x6D, &(cal->rxAudioGainNarrowband), 1);
+    W25Qx_readData(baseAddr + 0x6C, &(cal->rxDacGain),             1);
+    W25Qx_readData(baseAddr + 0x6D, &(cal->rxVoiceGain),           1);
 
     uint8_t txPwr[32] = {0};
     W25Qx_readData(baseAddr + 0x0B, txPwr, 32);
@@ -161,7 +161,7 @@ void nvm_readCalibData(void *buf)
     for(uint8_t i = 0; i < 16; i++)
     {
         uint8_t ii = i/2;
-        calib->uhfMod1CalPoints[ii] = 405000000 + (5000000 * ii);
+        calib->uhfCalPoints[ii]     = 405000000 + (5000000 * ii);
         calib->uhfPwrCalPoints[i]   = 400000000 + (5000000 * i);
     }
 
@@ -183,9 +183,9 @@ void nvm_loadHwInfo(hwInfo_t *info)
 int nvm_readVFOChannelData(channel_t *channel)
 {
     gdxChannel_t chData;
-    
+
     AT24Cx_readData(vfoChannelBaseAddr, ((uint8_t *) &chData), sizeof(gdxChannel_t));
-   
+
     // Copy data to OpenRTX channel_t
     channel->mode            = chData.channel_mode;
     channel->bandwidth       = chData.bandwidth;
@@ -256,7 +256,7 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
 {
     if((pos <= 0) || (pos > maxNumChannels))
         return -1;
-        
+
     // Channels are organized in 128-channel banks
     uint8_t bank_num = (pos - 1) / 128;
     // Note: pos is 1-based because an empty slot in a zone contains index 0
@@ -374,15 +374,15 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
 
 int nvm_readZoneData(zone_t *zone, uint16_t pos)
 {
-    if((pos <= 0) || (pos > maxNumZones)) return -1; 
-    
+    if((pos <= 0) || (pos > maxNumZones)) return -1;
+
     // zone number is 1-based to be consistent with channels
     // Convert to 0-based index to fetch data from flash
     uint16_t index = pos - 1;
     // ### Read zone bank bitmap ###
     uint8_t bitmap[32];
     AT24Cx_readData(zoneBaseAddr, ((uint8_t *) &bitmap), sizeof(bitmap));
-    
+
     uint8_t bitmap_byte = index / 8;
     uint8_t bitmap_bit = index % 8;
     // The zone is marked not valid in the bitmap
@@ -393,16 +393,16 @@ int nvm_readZoneData(zone_t *zone, uint16_t pos)
     AT24Cx_readData(zoneAddr, ((uint8_t *) &zoneData), sizeof(gdxZone_t));
 
     // Check if zone is empty
-    if(wcslen((wchar_t *) zoneData.name) == 0) return -1; 
-    
+    if(wcslen((wchar_t *) zoneData.name) == 0) return -1;
+
     memcpy(zone->name, zoneData.name, sizeof(zoneData.name));
     // Terminate string with 0x00 instead of 0xFF
     _addStringTerminator(zone->name, sizeof(zoneData.name));
     // Copy zone channel indexes
     for(uint16_t i = 0; i < 16; i++)
-    {   
+    {
         zone->member[i] = zoneData.member[i];
-    }   
+    }
     return 0;
 }
 
@@ -421,7 +421,7 @@ int nvm_readContactData(contact_t *contact, uint16_t pos)
 
     // Check if contact is empty
     if(wcslen((wchar_t *) contactData.name) == 0) return -1;
-    
+
     // Copy contact name
     memcpy(contact->name, contactData.name, sizeof(contactData.name));
     // Terminate string with 0x00 instead of 0xFF

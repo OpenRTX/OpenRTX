@@ -185,7 +185,7 @@ public:
      */
     inline void setMicGain(const uint8_t gain)
     {
-        maskSetRegister(0x41, 0x007F, ((uint16_t) gain));
+        maskSetRegister(0x41, 0x007F, static_cast< uint16_t >(gain));
     }
 
     /**
@@ -210,14 +210,15 @@ public:
 
     /**
      * Set audio gain for recepion.
-     * @param gainWb: gain for wideband Rx (25kHz).
-     * @param gainNb: gain for narrowband Rx (12.5kHz).
+     * @param analogDacGain: "analog DAC gain" in AT1846S manual.
+     * @param digitalGain: "digital voice gain" in AT1846S manual.
      */
-    inline void setRxAudioGain(const uint8_t gainWb, const uint8_t gainNb)
+    inline void setRxAudioGain(const uint8_t analogDacGain,
+                               const uint8_t digitalGain)
     {
-        uint16_t value = (gainWb & 0x0F) << 4;
+        uint16_t value = (analogDacGain & 0x0F) << 4;
         maskSetRegister(0x44, 0x00F0, value);
-        maskSetRegister(0x44, 0x000F, ((uint16_t) gainNb));
+        maskSetRegister(0x44, 0x000F, static_cast< uint16_t >(digitalGain));
     }
 
     /**
@@ -269,7 +270,7 @@ public:
      */
     inline void setAnalogSqlThresh(const uint8_t thresh)
     {
-        i2c_writeReg16(0x49, ((uint16_t) thresh));
+        i2c_writeReg16(0x49, static_cast< uint16_t >(thresh));
     }
 
 private:

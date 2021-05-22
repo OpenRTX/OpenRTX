@@ -33,7 +33,7 @@ typedef struct
     uint16_t _DigitalTxGainNarrowband; // 0x002 IF Gain, TX Fine
     uint16_t _DigitalRxGainWideband;   // 0x004 IF Gain, RX Coarse
     uint16_t _DigitalTxGainWideband;   // 0x006 IF Gain, TX Coarse
-    uint16_t mod1Bias;                 // 0x008
+    uint16_t modBias;                  // 0x008
     uint8_t mod2Offset;                // 0x00A
     uint8_t txLowPower[16];            // 0x00B - 0x02A
     uint8_t txHighPower[16];           // 0x00B - 0x02A
@@ -58,7 +58,7 @@ typedef struct
 
     uint8_t mod1Amplitude[8];          // 0x055
 
-    uint8_t dacDataRange;              // 0x05D
+    uint8_t digAudioGain;              // 0x05D
 
     uint8_t txDev_DTMF;                // 0x05E
     uint8_t txDev_tone;                // 0x05F
@@ -74,8 +74,8 @@ typedef struct
 
     uint16_t mixGainWideband;          // 0x068
     uint16_t mixGainNarrowband;        // 0x06A
-    uint8_t rxAudioGainWideband;       // 0x06C
-    uint8_t rxAudioGainNarrowband;     // 0x06D
+    uint8_t rxDacGain;                 // 0x06C
+    uint8_t rxVoiceGain;               // 0x06D
 }
 bandCalData_t;
 
@@ -84,7 +84,7 @@ typedef struct
     bandCalData_t data[2];      // Calibration data for VHF (index 0) and UHF (index 1) bands
     freq_t vhfCalPoints[8];     // VHF calibration points for both TX power and mod1Amplitude
     freq_t uhfPwrCalPoints[16]; // UHF calibration points for TX power
-    freq_t uhfMod1CalPoints[8]; // UHF calibration points for mod1Amplitude
+    freq_t uhfCalPoints[8];     // UHF calibration points for mod1Amplitude
 }
 gdxCalibration_t;
 
