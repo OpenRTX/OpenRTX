@@ -22,7 +22,8 @@
 #define AUDIO_STREAM_H
 
 #include <stdint.h>
-#include <audio_path.h>
+#include <sys/types.h>
+#include <interfaces/audio_path.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,9 +43,9 @@ typedef struct
     audio_sample_t *data;
     size_t len;
 }
-dataBlock_t
+dataBlock_t;
 
-typedef int8_t streamId
+typedef int8_t streamId;
 
 /************************** Input Stream Functions *************************/
 
