@@ -33,6 +33,10 @@ void usb_init()
     gpio_setMode(GPIOA, 12, ALTERNATE);
     gpio_setAlternateFunction(GPIOA, 12, 10);
     gpio_setOutputSpeed(GPIOA, 12, HIGH);      // 100MHz output speed
+
+    RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
+    RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
+    __DSB();
 }
 
 void usb_terminate()
