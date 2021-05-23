@@ -96,7 +96,8 @@ mdx_src = ['platform/drivers/ADC/ADC1_MDx.c',
            'platform/drivers/NVM/W25Qx.c',
            'platform/drivers/audio/audio_MDx.c',
            'platform/drivers/backlight/backlight_MDx.c',
-           'platform/drivers/tones/toneGenerator_MDx.cpp']
+           'platform/drivers/tones/toneGenerator_MDx.cpp',
+           'platform/drivers/USB/usb_stm32f4.c']
 
 ##
 ## GDx family: Radioddity GD-77 and Baofeng DM-1801
