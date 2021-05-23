@@ -20,6 +20,7 @@
 
 #include <libopencm3/usb/usbd.h>
 #include <libopencm3/usb/cdc.h>
+#include <libopencm3/stm32/desig.h>
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
 #include <interfaces/gpio.h>
