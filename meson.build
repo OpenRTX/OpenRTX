@@ -250,7 +250,7 @@ md9600_src = src + mdx_src + stm32f405_src + ['platform/targets/MD-9600/platform
                                               'platform/drivers/display/ST7567_MD9600.c',
                                               'platform/drivers/keyboard/keyboard_MD9600.c',
                                               'platform/drivers/chSelector/chSelector_MD9600.c',
-                                              'platform/drivers/baseband/radio_MD9600.c',
+                                              'platform/drivers/baseband/radio_MD9600.cpp',
                                               'platform/drivers/NVM/nvmem_MD9600.c',
                                               'platform/drivers/NVM/spiFlash_MD9600.c']
 

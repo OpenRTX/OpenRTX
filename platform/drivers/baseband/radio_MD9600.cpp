@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
+ *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
  *                         Niccolò Izzo IU2KIN                             *
  *                         Frederik Saraci IU2NRO                          *
  *                         Silvano Seva IU2KWO                             *
@@ -19,36 +19,20 @@
  ***************************************************************************/
 
 #include <interfaces/radio.h>
-#include <stdio.h>
 
-void radio_init()
+void radio_init(const rtxStatus_t *rtxState)
 {
+    (void) rtxState;
 }
 
 void radio_terminate()
 {
-}
 
-void radio_setBandwidth(const enum bandwidth bw)
-{
-    (void) bw;
 }
 
 void radio_setOpmode(const enum opmode mode)
 {
     (void) mode;
-}
-
-void radio_setVcoFrequency(const freq_t frequency, const bool isTransmitting)
-{
-    (void) frequency;
-    (void) isTransmitting;
-}
-
-void radio_setCSS(const tone_t rxCss, const tone_t txCss)
-{
-    (void) rxCss;
-    (void) txCss;
 }
 
 bool radio_checkRxDigitalSquelch()
@@ -58,25 +42,30 @@ bool radio_checkRxDigitalSquelch()
 
 void radio_enableRx()
 {
+
 }
 
-void radio_enableTx(const float txPower, const bool enableCss)
+void radio_enableTx()
 {
-    (void) txPower;
-    (void) enableCss;
+
 }
 
 void radio_disableRtx()
 {
+
 }
 
-void radio_updateCalibrationParams(const rtxStatus_t* rtxCfg)
+void radio_updateConfiguration()
 {
-    (void) rtxCfg;
+
 }
 
-float radio_getRssi(const freq_t rxFreq)
+float radio_getRssi()
 {
-    (void) rxFreq;
-    return -100.0f;
+    return -154.0f;
+}
+
+enum opstatus radio_getStatus()
+{
+    return OFF;
 }
