@@ -35,9 +35,10 @@ static const freq_t IF_FREQ = 49950000;  // Intermediate frequency: 49.95MHz
 const md3x0Calib_t *calData;             // Pointer to calibration data
 const rtxStatus_t  *config;              // Pointer to data structure with radio configuration
 
-uint8_t vtune_rx = 0;                    // Tuning voltage for RX input filter
-uint8_t txpwr_lo = 0;                    // APC voltage for TX output power control, low power
-uint8_t txpwr_hi = 0;                    // APC voltage for TX output power control, high power
+bool    isVhfBand = false;               // True if rtx stage is for VHF band
+uint8_t vtune_rx  = 0;                   // Tuning voltage for RX input filter
+uint8_t txpwr_lo  = 0;                   // APC voltage for TX output power control, low power
+uint8_t txpwr_hi  = 0;                   // APC voltage for TX output power control, high power
 
 enum opstatus radioStatus;               // Current operating status
 
@@ -88,6 +89,7 @@ void radio_init(const rtxStatus_t *rtxState)
 
     config      = rtxState;
     radioStatus = OFF;
+    isVhfBand   = (platform_getHwInfo()->vhf_band == 1) ? true : false;
 
     /*
      * Configure RTX GPIOs
@@ -200,7 +202,18 @@ void radio_enableRx()
     gpio_setPin(VCOVCC_SW);            // Enable RX VCO
 
     // Set PLL frequency and filter tuning voltage
-    SKY73210_setFrequency(config->rxFrequency - IF_FREQ, 5);
+    float pllFreq = static_cast< float >(config->rxFrequency);
+    if(isVhfBand)
+    {
+        pllFreq += static_cast< float >(IF_FREQ);
+        pllFreq *= 2.0f;
+    }
+    else
+    {
+        pllFreq -= static_cast< float >(IF_FREQ);
+    }
+
+    SKY73210_setFrequency(pllFreq, 5);
     DAC->DHR12L1 = vtune_rx * 0xFF;
 
     gpio_setPin(RX_STG_EN);            // Enable RX LNA
@@ -222,10 +235,12 @@ void radio_enableTx()
     gpio_setPin(RF_APC_SW);     // APC/TV in power control mode
     gpio_clearPin(VCOVCC_SW);   // Enable TX VCO
 
-    // Set PLL frequency and TX output power
-    SKY73210_setFrequency(config->txFrequency, 5);
+    // Set PLL frequency.
+    float pllFreq = static_cast< float >(config->txFrequency);
+    if(isVhfBand) pllFreq *= 2.0f;
+    SKY73210_setFrequency(pllFreq, 5);
 
-    // Constrain output power between 1W and 5W.
+    // Set TX output power, constrain between 1W and 5W.
     float power  = std::max(std::min(config->txPower, 5.0f), 1.0f);
     float pwrHi  = static_cast< float >(txpwr_hi);
     float pwrLo  = static_cast< float >(txpwr_lo);
