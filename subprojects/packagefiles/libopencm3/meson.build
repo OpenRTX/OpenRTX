@@ -13,7 +13,7 @@ libopencm3_src = ['lib/usb/usb.c',
 # Configure libopencm3 for STM32F4, TODO: add different options for other MCUs if needed
 add_project_arguments('-DSTM32F4', language : 'c')
 
-libopencm3 = shared_library('libopencm3',
+libopencm3 = static_library('libopencm3',
                             libopencm3_src,
                             include_directories : libopencm3_inc,
                             install : false)
