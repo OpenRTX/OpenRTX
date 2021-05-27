@@ -3,7 +3,7 @@
 ##
 project('OpenRTX', ['c', 'cpp'],
   version : '0.3.1',
-  default_options : ['warning_level=3'])
+  default_options : ['warning_level=3', 'b_staticpic=false'])
 
 ##
 ## ----------------- Platform-independent source files -------------------------
