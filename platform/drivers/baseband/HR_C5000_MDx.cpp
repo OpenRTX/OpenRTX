@@ -47,16 +47,16 @@ template< class M >
 void HR_Cx000< M >::init()
 {
     gpio_setMode(DMR_SLEEP, OUTPUT);
-    gpio_clearPin(DMR_SLEEP);             // Exit from sleep pulling down DMR_SLEEP
+    gpio_clearPin(DMR_SLEEP);           // Exit from sleep pulling down DMR_SLEEP
 
-    writeReg(M::CONFIG, 0x0A, 0x80);      // Internal clock connected to crystal
-    writeReg(M::CONFIG, 0x0B, 0x28);      // PLL M register (multiplier)
-    writeReg(M::CONFIG, 0x0C, 0x33);      // PLL input and output dividers
+    writeReg(M::CONFIG, 0x0A, 0x80);    // Internal clock connected to crystal
+    writeReg(M::CONFIG, 0x0B, 0x28);    // PLL M register (multiplier)
+    writeReg(M::CONFIG, 0x0C, 0x33);    // PLL input and output dividers
 
     delayMs(1);
-    writeReg(M::CONFIG, 0x0A, 0x00);      // Internal clock connected to PLL
-    writeReg(M::CONFIG, 0xBA, 0x22);      // Built-in codec clock freq. (HR_C6000)
-    writeReg(M::CONFIG, 0xBB, 0x11);      // Output clock operating freq. (HR_C6000)
+    writeReg(M::CONFIG, 0x0A, 0x00);    // Internal clock connected to PLL
+    writeReg(M::CONFIG, 0xBA, 0x22);    // Built-in codec clock freq. (HR_C6000)
+    writeReg(M::CONFIG, 0xBB, 0x11);    // Output clock operating freq. (HR_C6000)
 }
 
 template< class M >
@@ -158,9 +158,6 @@ void HR_Cx000< M >::fmMode()
     sendSequence(initSeq2, sizeof(initSeq2));
     writeReg(M::CONFIG, 0x0D, 0x8C);    // Codec control
     writeReg(M::CONFIG, 0x0E, 0x40);    // Mute HPout
-//     writeReg(M::CONFIG, 0x0F, 0xC8);    // ADLinVol, mic volume
-//     writeReg(M::CONFIG, 0x25, 0x0E);
-//     writeReg(M::CONFIG, 0x26, 0xFE);
     writeReg(M::CONFIG, 0x83, 0xFF);    // Clear all interrupt flags
     writeReg(M::CONFIG, 0x87, 0x00);    // Disable "stop" interrupts
     writeReg(M::CONFIG, 0x81, 0x00);    // Mask other interrupts
@@ -168,8 +165,8 @@ void HR_Cx000< M >::fmMode()
     writeReg(M::CONFIG, 0x00, 0x28);    // Reset register
 }
 
-template< class M>
-void HR_Cx000<M>::startAnalogTx(const TxAudioSource source, const FmConfig cfg)
+template< class M >
+void HR_Cx000< M >::startAnalogTx(const TxAudioSource source, const FmConfig cfg)
 {
     uint8_t audioCfg = 0x40;                                // Mute HPout
     if(source == TxAudioSource::MIC)     audioCfg |= 0x04;  // Mic1En
@@ -177,14 +174,9 @@ void HR_Cx000<M>::startAnalogTx(const TxAudioSource source, const FmConfig cfg)
 
     writeReg(M::CONFIG, 0x0D, 0x8C);    // Codec control
     writeReg(M::CONFIG, 0x0E, audioCfg);
-//     writeReg(M::CONFIG, 0x0F, 0xC8);    // ADLinVol, mic volume
-//     writeReg(M::CONFIG, 0x25, 0x0E);
-//     writeReg(M::CONFIG, 0x26, 0xFE);
     writeReg(M::CONFIG, 0x34, static_cast< uint8_t >(cfg));
     writeReg(M::CONFIG, 0x3E, 0x08);    // "FM Modulation frequency deviation coefficient at the receiving end" (HR_C6000)
     writeReg(M::CONFIG, 0x37, 0xC2);    // Unknown register
-//     writeReg(M::AUX, 0x50, 0x00);
-//     writeReg(M::AUX, 0x51, 0x00);
     writeReg(M::CONFIG, 0x60, 0x80);    // Enable analog voice transmission
 }
 
@@ -197,8 +189,8 @@ void HR_Cx000< M >::stopAnalogTx()
 /*
  * SPI interface driver
  */
-template<class M>
-void HR_Cx000<M>::uSpi_init()
+template< class M >
+void HR_Cx000< M >::uSpi_init()
 {
     gpio_setMode(DMR_CS,    OUTPUT);
     gpio_setMode(DMR_CLK,   OUTPUT);
