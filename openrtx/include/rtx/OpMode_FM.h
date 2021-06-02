@@ -83,7 +83,8 @@ public:
 
 private:
 
-    bool sqlOpen;   ///< Flag for current squelch status.
+    bool rfSqlOpen; ///< Flag for RF squelch status (analog squelch).
+    bool sqlOpen;   ///< Flag for squelch status.
     bool enterRx;   ///< Flag for RX management.
 };
 

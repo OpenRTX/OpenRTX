@@ -96,6 +96,7 @@ public:
 
     /**
      * Set the VCO frequency, either for transmission or reception.
+     *
      * @param freq: VCO frequency.
      */
     void setFrequency(const freq_t freq)
@@ -113,18 +114,21 @@ public:
 
     /**
      * Set the transmission and reception bandwidth.
+     *
      * @param band: bandwidth.
      */
     void setBandwidth(const AT1846S_BW band);
 
     /**
      * Set the operating mode.
+     *
      * @param mode: operating mode.
      */
     void setOpMode(const AT1846S_OpMode mode);
 
     /**
      * Set the functional mode.
+     *
      * @param mode: functional mode.
      */
     void setFuncMode(const AT1846S_FuncMode mode)
@@ -140,14 +144,42 @@ public:
 
     /**
      * Enable the CTCSS tone for transmission.
+     *
      * @param freq: CTCSS tone frequency.
      */
     void enableTxCtcss(const tone_t freq)
     {
-        i2c_writeReg16(0x4A, freq*10);
-        i2c_writeReg16(0x4B, 0x0000);
+        i2c_writeReg16(0x4A, freq*10);          // Set CTCSS1 frequency reg.
+        i2c_writeReg16(0x4B, 0x0000);           // Clear CDCSS bits
         i2c_writeReg16(0x4C, 0x0000);
-        maskSetRegister(0x4E, 0x0600, 0x0600);
+        maskSetRegister(0x4E, 0x0600, 0x0600);  // Enable CTCSS TX
+    }
+
+    /**
+     * Enable the CTCSS tone detection during reception.
+     *
+     * @param freq: CTCSS tone frequency.
+     */
+    void enableRxCtcss(const tone_t freq)
+    {
+        i2c_writeReg16(0x4D, freq*10);          // Set CTCSS2 frequency reg.
+        i2c_writeReg16(0x5B, getCtcssThreshFromTone(freq));
+        maskSetRegister(0x3A, 0x001F, 0x0008);  // Enable CTCSS2 freq. detection
+    }
+
+    /**
+     * Check if CTCSS tone is detected when in RX mode.
+     *
+     * @return true if the RX CTCSS tone is being detected.
+     */
+    inline bool rxCtcssDetected()
+    {
+        // Check if CTCSS detection is enabled: if not, return false.
+        if((i2c_readReg16(0x3A) & 0x0008) == 0) return false;
+
+        // Check CTCSS2 compare flag
+        uint16_t reg  = i2c_readReg16(0x1C);
+        return ((reg & 0x100) != 0);
     }
 
     /**
@@ -155,12 +187,15 @@ public:
      */
     inline void disableCtcss()
     {
-        i2c_writeReg16(0x4A, 0x0000);
-        maskSetRegister(0x4E, 0x0600, 0x0000); // Disable TX CTCSS
+        maskSetRegister(0x4E, 0x0600, 0x0000);  // Disable TX CTCSS
+        maskSetRegister(0x3A, 0x001F, 0x0000);  // Disable CTCSS freq. detection
+        i2c_writeReg16(0x4A, 0x0000);           // Clear CTCSS1 frequency reg.
+        i2c_writeReg16(0x4D, 0x0000);           // Clear CTCSS2 frequency reg.
     }
 
     /**
      * Get current RSSI value.
+     *
      * @return current RSSI in dBm.
      */
     inline int16_t readRSSI()
@@ -171,6 +206,7 @@ public:
 
     /**
      * Set the gain of internal programmable gain amplifier.
+     *
      * @param gain: PGA gain.
      */
     inline void setPgaGain(const uint8_t gain)
@@ -181,6 +217,7 @@ public:
 
     /**
      * Set microphone gain for transmission.
+     *
      * @param gain: microphone gain.
      */
     inline void setMicGain(const uint8_t gain)
@@ -190,6 +227,7 @@ public:
 
     /**
      * Set maximum FM transmission deviation.
+     *
      * @param dev: maximum allowed deviation.
      */
     inline void setTxDeviation(const uint16_t dev)
@@ -200,6 +238,7 @@ public:
 
     /**
      * Set the gain for internal automatic gain control system.
+     *
      * @param gain: AGC gain.
      */
     inline void setAgcGain(const uint8_t gain)
@@ -210,6 +249,7 @@ public:
 
     /**
      * Set audio gain for recepion.
+     *
      * @param analogDacGain: "analog DAC gain" in AT1846S manual.
      * @param digitalGain: "digital voice gain" in AT1846S manual.
      */
@@ -223,6 +263,7 @@ public:
 
     /**
      * Set noise1 thresholds for squelch opening and closing.
+     *
      * @param highTsh: upper threshold.
      * @param lowTsh: lower threshold.
      */
@@ -234,6 +275,7 @@ public:
 
     /**
      * Set noise2 thresholds for squelch opening and closing.
+     *
      * @param highTsh: upper threshold.
      * @param lowTsh: lower threshold.
      */
@@ -245,6 +287,7 @@ public:
 
     /**
      * Set RSSI thresholds for squelch opening and closing.
+     *
      * @param highTsh: upper threshold.
      * @param lowTsh: lower threshold.
      */
@@ -256,6 +299,7 @@ public:
 
     /**
      * Set PA drive control bits.
+     *
      * @param value: PA drive value.
      */
     inline void setPaDrive(const uint8_t value)
@@ -266,6 +310,7 @@ public:
 
     /**
      * Set threshold for analog FM squelch opening.
+     *
      * @param thresh: squelch threshold.
      */
     inline void setAnalogSqlThresh(const uint8_t thresh)
@@ -332,6 +377,67 @@ private:
      * @param reg: address of the register to be read.
      */
     uint16_t i2c_readReg16(const uint8_t reg);
+
+    /**
+     * This function returns the value to be written into the AT1846S CTCSS
+     * threshold register when enabling the detection in RX mode.
+     * Values were obtained from the function contained in TYT firmware for
+     * MD-UV380 version S18.16 at address 0x0806ba2c.
+     *
+     * @param tone: tone_t variable specifying the CTCSS tone.
+     * @return an uint16_t value to be written directly into AT1846S
+     *         CTCSS threshold register.
+     */
+    uint16_t getCtcssThreshFromTone(const tone_t tone)
+    {
+        switch(tone)
+        {
+            case 670:  return 0x0C0D; break;    // 67.0 Hz
+            case 693:  return 0x0C0C; break;    // 69.3 Hz
+            case 719:  return 0x0B0B; break;    // 71.9 Hz
+            case 744:                           // 74.4 Hz
+            case 770:  return 0x0A0A; break;    // 77.0 Hz
+            case 797:                           // 79.7 Hz
+            case 825:  return 0x0909; break;    // 82.5 Hz
+            case 854:                           // 85.4 Hz
+            case 885:  return 0x0808; break;    // 88.5 Hz
+            case 915:                           // 91.5 Hz
+            case 948:  return 0x0707; break;    // 94.8 Hz
+            case 974:  return 0x0706; break;    // 97.4 Hz
+            case 1000:                          // 100.0Hz
+            case 1034: return 0x0606; break;    // 103.4Hz
+            case 1072:                          // 107.2Hz
+            case 1109: return 0x0605; break;    // 110.9Hz
+            case 1148: return 0x0505; break;    // 114.8Hz
+            case 1188:                          // 118.8Hz
+            case 1230: return 0x0504; break;    // 123.0Hz
+            case 1273:                          // 127.3Hz
+            case 1318: return 0x0404; break;    // 131.8Hz
+            case 1365:                          // 136.5Hz
+            case 1413:                          // 141.3Hz
+            case 1462: return 0x0403; break;    // 146.2Hz
+            case 1514: return 0x0504; break;    // 151.4Hz
+            case 1567:                          // 156.7Hz
+            case 1622:                          // 162.2Hz
+            case 1679:                          // 167.9Hz
+            case 1713:                          // 171.3Hz
+            case 1799: return 0x0403; break;    // 179.9Hz
+            case 1862: return 0x0400; break;    // 186.2Hz
+            case 1928: return 0x0302; break;    // 192.8Hz
+            case 2035:                          // 203.5Hz
+            case 2107:                          // 210.7Hz
+            case 2181:                          // 218.1Hz
+            case 2257: return 0x0302; break;    // 225.7Hz
+            case 2336:                          // 233.6Hz
+            case 2418:                          // 241.8Hz
+            case 2503: return 0x0300; break;    // 250.3Hz
+
+                                                // 159.8Hz, 165.5Hz, 173.8Hz,
+                                                // 177.3Hz, 183.5Hz, 189.9Hz,
+                                                // 196.6Hz, 199.5Hz, 206.5Hz,
+            default:   return 0x0505; break;    // 229.1Hz, 254.1Hz
+        }
+    }
 };
 
 #endif /* AT1846S_H */

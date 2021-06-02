@@ -191,7 +191,7 @@ void radio_setOpmode(const enum opmode mode)
 
 bool radio_checkRxDigitalSquelch()
 {
-    return true;
+    return false;
 }
 
 void radio_enableRx()

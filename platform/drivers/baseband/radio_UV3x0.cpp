@@ -125,7 +125,7 @@ void radio_setOpmode(const enum opmode mode)
 
 bool radio_checkRxDigitalSquelch()
 {
-    return true;
+    return at1846s.rxCtcssDetected();
 }
 
 void radio_enableRx()
@@ -149,6 +149,11 @@ void radio_enableRx()
     else
     {
         gpio_setPin(UHF_LNA_EN);
+    }
+
+    if(config->rxToneEn)
+    {
+        at1846s.enableRxCtcss(config->rxTone);
     }
 
     radioStatus = RX;
@@ -225,10 +230,10 @@ void radio_disableRtx()
     // If we are currently transmitting, stop tone and C6000 TX
     if(radioStatus == TX)
     {
-        at1846s.disableCtcss();
         C6000.stopAnalogTx();
     }
 
+    at1846s.disableCtcss();
     at1846s.setFuncMode(AT1846S_FuncMode::OFF);
     radioStatus = OFF;
 }

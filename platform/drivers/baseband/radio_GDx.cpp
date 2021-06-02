@@ -119,7 +119,7 @@ void radio_setOpmode(const enum opmode mode)
 
 bool radio_checkRxDigitalSquelch()
 {
-    return true;
+    return at1846s.rxCtcssDetected();
 }
 
 void radio_enableRx()
@@ -152,6 +152,11 @@ void radio_enableRx()
     }
 
     radioStatus = RX;
+
+    if(config->rxToneEn)
+    {
+        at1846s.enableRxCtcss(config->rxTone);
+    }
 }
 
 void radio_enableTx()
@@ -204,11 +209,12 @@ void radio_disableRtx()
 
     if(radioStatus == TX)
     {
-        at1846s.disableCtcss();
+        // Set PA drive voltage to 0V
         DAC0->DAT[0].DATH = 0;
         DAC0->DAT[0].DATL = 0;
     }
 
+    at1846s.disableCtcss();
     at1846s.setFuncMode(AT1846S_FuncMode::OFF);
     radioStatus = OFF;
 }

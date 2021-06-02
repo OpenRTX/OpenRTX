@@ -66,7 +66,7 @@ void _setVolume()
 }
 #endif
 
-OpMode_FM::OpMode_FM() : sqlOpen(false), enterRx(true)
+OpMode_FM::OpMode_FM() : rfSqlOpen(false), sqlOpen(false), enterRx(true)
 {
 }
 
@@ -77,8 +77,9 @@ OpMode_FM::~OpMode_FM()
 void OpMode_FM::enable()
 {
     // When starting, close squelch and prepare for entering in RX mode.
-    sqlOpen = false;
-    enterRx = true;
+    rfSqlOpen = false;
+    sqlOpen   = false;
+    enterRx   = true;
 }
 
 void OpMode_FM::disable()
@@ -87,8 +88,9 @@ void OpMode_FM::disable()
     audio_disableAmp();
     audio_disableMic();
     radio_disableRtx();
-    sqlOpen = false;
-    enterRx = false;
+    rfSqlOpen = false;
+    sqlOpen   = false;
+    enterRx   = false;
 }
 
 void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
@@ -98,28 +100,34 @@ void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
     // RX logic
     if(status->opStatus == RX)
     {
+        // RF squelch mechanism
         float squelch = -127.0f + status->sqlLevel * 66.0f / 15.0f;
         float rssi    = rtx_getRssi();
+        if((rfSqlOpen == false) && (rssi > (squelch + 0.1f))) rfSqlOpen = true;
+        if((rfSqlOpen == true)  && (rssi < (squelch - 0.1f))) rfSqlOpen = false;
 
-        if((sqlOpen == false) && (rssi > (squelch + 0.1f)))
+        // Local flags for current RF and tone squelch status
+        bool rfSql   = ((status->rxToneEn == 0) && (rfSqlOpen == true));
+        bool toneSql = ((status->rxToneEn == 1) && radio_checkRxDigitalSquelch());
+
+        // Audio control
+        if((sqlOpen == false) && (rfSql || toneSql))
         {
             audio_enableAmp();
             sqlOpen = true;
         }
 
-        if((sqlOpen == true) && (rssi < (squelch - 0.1f)))
+        if((sqlOpen == true) && (rfSql == false) && (toneSql == false))
         {
             audio_disableAmp();
             sqlOpen = false;
         }
 
         #ifdef PLATFORM_MDUV3x0
-        if(sqlOpen == true)
-        {
-            // Set output volume by changing the HR_C6000 DAC gain
-            _setVolume();
-        }
+        // Set output volume by changing the HR_C6000 DAC gain
+        if(sqlOpen == true) _setVolume();
         #endif
+
     }
     else if((status->opStatus == OFF) && enterRx)
     {
@@ -130,7 +138,7 @@ void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
         enterRx = false;
     }
 
-    /* TX logic */
+    // TX logic
     if(platform_getPttStatus() && (status->opStatus != TX) &&
                                   (status->txDisable == 0))
     {
@@ -156,13 +164,20 @@ void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
     switch(status->opStatus)
     {
         case RX:
-            if(sqlOpen)
+            if(radio_checkRxDigitalSquelch())
             {
-                platform_ledOn(GREEN);
+                platform_ledOn(GREEN);  // Red + green LEDs ("orange"): tone squelch open
+                platform_ledOn(RED);
+            }
+            else if(rfSqlOpen)
+            {
+                platform_ledOn(GREEN);  // Green LED only: RF squelch open
+                platform_ledOff(RED);
             }
             else
             {
                 platform_ledOff(GREEN);
+                platform_ledOff(RED);
             }
 
             break;
