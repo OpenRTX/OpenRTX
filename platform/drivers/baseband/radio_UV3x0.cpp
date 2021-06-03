@@ -100,6 +100,14 @@ void radio_terminate()
     RCC->APB1ENR &= ~RCC_APB1ENR_DACEN;
 }
 
+void radio_tuneVcxo(const int16_t vhfOffset, const int16_t uhfOffset)
+{
+    //TODO: this part will be implemented in the future, when proved to be
+    // necessary.
+    (void) vhfOffset;
+    (void) uhfOffset;
+}
+
 void radio_setOpmode(const enum opmode mode)
 {
     switch(mode)

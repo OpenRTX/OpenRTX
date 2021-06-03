@@ -33,6 +33,13 @@ void radio_terminate()
     puts("radio_linux: terminate() called");
 }
 
+void radio_tuneVcxo(const int16_t vhfOffset, const int16_t uhfOffset)
+{
+    (void) vhfOffset;
+    (void) uhfOffset;
+    puts("radio_linux: tuneVcxo() called");
+}
+
 void radio_setOpmode(const enum opmode mode)
 {
     std::string mStr(" ");

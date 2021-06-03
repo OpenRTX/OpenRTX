@@ -23,14 +23,16 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-/* This function returns true if at least one number is pressed on the
+/**
+ * This function returns true if at least one number is pressed on the
  * keyboard.
  * @param msg: the keyboard queue message
  * @return true if at least a number is pressed on the keyboard
  */
 bool input_isNumberPressed(kbd_msg_t msg);
 
-/* This function returns the smallest number that is pressed on the keyboard,
+/**
+ * This function returns the smallest number that is pressed on the keyboard,
  * 0 if none is pressed.
  * @param msg: the keyboard queue message
  * @return the smalled pressed number on the keyboard

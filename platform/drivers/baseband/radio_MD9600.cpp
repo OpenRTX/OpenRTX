@@ -30,6 +30,12 @@ void radio_terminate()
 
 }
 
+void radio_tuneVcxo(const int16_t vhfOffset, const int16_t uhfOffset)
+{
+    (void) vhfOffset;
+    (void) uhfOffset;
+}
+
 void radio_setOpmode(const enum opmode mode)
 {
     (void) mode;
@@ -37,7 +43,7 @@ void radio_setOpmode(const enum opmode mode)
 
 bool radio_checkRxDigitalSquelch()
 {
-    return true;
+    return false;
 }
 
 void radio_enableRx()

@@ -160,6 +160,29 @@ void radio_terminate()
     RCC->APB1ENR &= ~RCC_APB1ENR_DACEN;
 }
 
+void radio_tuneVcxo(const int16_t vhfOffset, const int16_t uhfOffset)
+{
+    (void) vhfOffset;
+
+    /*
+     * Adjust VCXO bias voltage acting on the value stored in MCU's DAC.
+     * Data from calibration is first converted to int16_t, then the value for
+     * the DAC register is computed according to which is done inside TYT's
+     * firmware.
+     * The signed offset is then added to this value, the result is constrained
+     * in the range [0 4095], converted to uint16_t and written into the DAC
+     * register.
+     *
+     * NOTE: we deliberately chose not to update the HR_C5000 modulation offset
+     * register, as we still have to deeply understand how TYT computes
+     * the values written there.
+     */
+    int16_t calValue  = static_cast< int16_t >(calData->freqAdjustMid);
+    int16_t oscTune   = (calValue*4 + 0x600) + uhfOffset;
+    oscTune           = std::max(std::min(oscTune, int16_t(4095)), int16_t(0));
+    DAC->DHR12R2      = static_cast< uint16_t >(oscTune);
+}
+
 void radio_setOpmode(const enum opmode mode)
 {
     switch(mode)
