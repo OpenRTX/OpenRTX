@@ -53,8 +53,8 @@ void radio_setOpmode(const enum opmode mode)
 
 bool radio_checkRxDigitalSquelch()
 {
-    puts("radio_linux: radio_checkRxDigitalSquelch(), returning 'true'");
-    return true;
+//     puts("radio_linux: radio_checkRxDigitalSquelch(), returning 'false'");
+    return false;
 }
 
 void radio_enableRx()
