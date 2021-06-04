@@ -1,0 +1,4 @@
+[wrap-git]
+url = https://github.com/mobilinkd/m17-cxx-demod
+revision = 3b92abe332ac6faec6e142027fca21a801b3c6b1
+patch_directory = m17cxx

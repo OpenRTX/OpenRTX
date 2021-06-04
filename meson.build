@@ -3,7 +3,9 @@
 ##
 project('OpenRTX', ['c', 'cpp'],
   version : '0.3.1',
-  default_options : ['warning_level=3'])
+  default_options : ['warning_level=3', 'b_staticpic=false'])
+
+cmake = import('cmake')
 
 ##
 ## Optional defines, common to all souces (e.g. to enable debugging)
@@ -65,6 +67,19 @@ minmea_inc = ['lib/minmea/include']
 
 # QDEC, a very simple, header only, quadrature decoding library
 qdec_inc = ['lib/qdec/include']
+
+# m17-cxx-demod, M17 encoding and decoding library, made by mobilinkd
+m17cxx_opt = cmake.subproject_options()
+m17cxx_opt.add_cmake_defines({'Threads_FOUND': true})
+m17cxx_proj = cmake.subproject('m17cxx', options : m17cxx_opt)
+m17cxx_lib = m17cxx_proj.dependency('m17cxx')
+
+# David Rowe's codec2 is needed by M17, included as a submodule
+codec2_opt = cmake.subproject_options()
+codec2_opt.add_cmake_defines({'UNITTEST': false})
+codec2_opt.add_cmake_defines({'BUILD_SHARED_LIBS': false})
+codec2_proj = cmake.subproject('codec2', options : codec2_opt)
+codec2_lib = codec2_proj.dependency('codec2')
 
 ##
 ## RTOS
@@ -363,6 +378,7 @@ md3x0_opts = {'sources' : md3x0_src,
               'cpp_args': md3x0_args,
               'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
                              '-Wl,--print-memory-usage'],
+              'dependencies': [codec2_lib, m17cxx_lib],
               'include_directories': md3x0_inc}
 
 mduv3x0_opts = {'sources': mduv3x0_src,
@@ -370,6 +386,7 @@ mduv3x0_opts = {'sources': mduv3x0_src,
                 'cpp_args': mduv3x0_args,
                 'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
                                '-Wl,--print-memory-usage'],
+                'dependencies': [codec2_lib, m17cxx_lib],
                 'include_directories': mduv3x0_inc}
 
 gd77_opts = {'sources': gd77_src,
