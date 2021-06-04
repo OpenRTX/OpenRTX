@@ -61,6 +61,15 @@ typedef struct
 gps_t;
 
 /**
+ * Data structure representing the settings of the M17 mode.
+ */
+typedef struct
+{
+    char callsign[10];
+}
+m17_t;
+
+/**
  * Part of this structure has been commented because the corresponding
  * functionality is not yet implemented.
  * Uncomment once the related feature is ready
@@ -95,6 +104,7 @@ typedef struct
     bool emergency;
     settings_t settings;
     gps_t gps_data;
+    m17_t m17_data;
 }
 state_t;
 
