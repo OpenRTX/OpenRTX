@@ -29,7 +29,8 @@
 #define M17_RTX_SAMPLE_RATE   48000
 
 // FRAME = SYNCWORD + PAYLOAD
-#define M17_AUDIO_SIZE        368
+#define M17_AUDIO_SIZE        320
+#define M17_CODEC2_SIZE       368
 #define M17_FRAME_SAMPLES     1920
 #define M17_SYNCWORD_SYMBOLS  8
 #define M17_PAYLOAD_SYMBOLS   184
@@ -121,7 +122,7 @@ private:
      * Modulates and one M17 frame
      */
     void output_frame(std::array<uint8_t, 2> sync_word,
-                      const std::array<int8_t, M17_AUDIO_SIZE>& frame);
+                      const std::array<int8_t, M17_CODEC2_SIZE>& frame);
 
     /*
      * Generates and modulates the M17 preamble alone, used to start an M17
