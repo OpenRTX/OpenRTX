@@ -1,8 +1,8 @@
 /***************************************************************************
  *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
+ *                         Niccolò Izzo IU2KIN,                            *
+ *                         Silvano Seva IU2KWO,                            *
  *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -18,40 +18,24 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef THREADS_H
-#define THREADS_H
+#ifndef M17_H
+#define M17_H
 
-#include <stddef.h>
+#define M17_VOICE_SAMPLE_RATE 8000
+#define M17_RTX_SAMPLE_RATE   48000
 
-/**
- * Spawn all the threads for the various functionalities.
- */
-void create_threads();
-
-/**
- * Stack size for Keyboard task, in bytes.
- */
-#define KBD_TASK_STKSIZE 512
-
-/**
- * Stack size for state update task, in bytes.
- */
-#define DEV_TASK_STKSIZE 512
+// FRAME = SYNCWORD + PAYLOAD
+#define M17_AUDIO_SIZE        368
+#define M17_FRAME_SAMPLES     1920
+#define M17_SYNCWORD_SYMBOLS  8
+#define M17_PAYLOAD_SYMBOLS   184
+#define M17_FRAME_SYMBOLS     192
+#define M17_FRAME_BYTES       48
 
 /**
- * Stack size for baseband control task, in bytes.
+ * This function modulates a single M17 frame, capturing the input audio from
+ * the microphone and pushing the output audio to the RTX.
  */
-#define RTX_TASK_STKSIZE 512
+void m17_modulate();
 
-/**
- * Stack size for GPS task, in bytes.
- */
-#define GPS_TASK_STKSIZE 2048
-
-/**
- * Stack size for M17 task, in bytes.
- */
-// TODO: Properly size this
-#define M17_TASK_STKSIZE 512
-
-#endif /* THREADS_H */
+#endif /* M17_H */

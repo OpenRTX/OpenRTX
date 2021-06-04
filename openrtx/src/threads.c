@@ -29,6 +29,7 @@
 #include <interfaces/graphics.h>
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
+#include <interfaces/audio_path.h>
 #include <event.h>
 #include <rtx.h>
 #include <queue.h>
