@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-using audio_sample_t = uint16_t;
+using stream_sample_t = uint16_t;
 
 enum BufMode
 {
@@ -40,7 +40,7 @@ enum BufMode
 
 typedef struct
 {
-    audio_sample_t *data;
+    stream_sample_t *data;
     size_t len;
 }
 dataBlock_t;
@@ -67,7 +67,7 @@ typedef int8_t streamId;
  */
 streamId inputStream_start(const AudioSource source,
                            const AudioPriority prio,   
-                           audio_sample_t* const buf,
+                           const stream_sample_t* buf,
                            const size_t bufLength, 
                            const BufMode mode,
                            const uint32_t sampleRate);
@@ -109,7 +109,7 @@ void inputStream_stop(streamId id);
  */
 streamId outputStream_start(const AudioSink destination,
                             const AudioPriority prio,
-                            const audio_sample_t* const buf,
+                            const stream_sample_t* const buf,
                             const size_t length,
                             const uint32_t sampleRate);
                        
