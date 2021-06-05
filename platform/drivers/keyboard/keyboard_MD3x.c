@@ -52,22 +52,22 @@ keyboard_t kbd_getKeys()
 {
     keyboard_t keys = 0;
 
-    /* Use absolute position knob to emulate left and right buttons */
+    /* Read channel knob to send KNOB_LEFT and KNOB_RIGHT events */
     static int8_t old_pos = 0;
     int8_t new_pos = platform_getChSelector();
     if (old_pos != new_pos)
     {
-        int8_t diff = old_pos - new_pos;
+        int8_t diff = new_pos - old_pos;
         if (diff < 0)
-            keys |= KEY_LEFT;
+            keys |= KNOB_LEFT;
         else if (diff > 0)
-            keys |= KEY_RIGHT;
+            keys |= KNOB_RIGHT;
         else
         {
             if (old_pos < 0)
-                keys |= KEY_LEFT;
+                keys |= KNOB_LEFT;
             else
-                keys |= KEY_RIGHT;
+                keys |= KNOB_RIGHT;
         }
         old_pos = new_pos;
     }

@@ -645,11 +645,11 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
     }
 #else // Use left and right buttons or relative position knob
     // NOTE: Use up and down for UV380 which has not yet a functional knob
-    if(msg.keys & KEY_LEFT || msg.keys & KEY_DOWN) {
+    if(msg.keys & KEY_LEFT || msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT) {
         state.sqlLevel = (state.sqlLevel == 0) ? 0 : state.sqlLevel - 1;
         *sync_rtx = true;
     }
-    else if(msg.keys & KEY_RIGHT || msg.keys & KEY_UP) {
+    else if(msg.keys & KEY_RIGHT || msg.keys & KEY_UP || msg.keys & KNOB_RIGHT) {
         state.sqlLevel = (state.sqlLevel == 15) ? 15 : state.sqlLevel + 1;
         *sync_rtx = true;
     }
@@ -738,7 +738,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
         {
             // VFO screen
             case MAIN_VFO:
-                if(msg.keys & KEY_UP)
+                if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
                 {
                     // Increment TX and RX frequency of 12.5KHz
                     if(_ui_freq_check_limits(state.channel.rx_frequency + 12500) &&
@@ -749,7 +749,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         *sync_rtx = true;
                     }
                 }
-                else if(msg.keys & KEY_DOWN)
+                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
                 {
                     // Decrement TX and RX frequency of 12.5KHz
                     if(_ui_freq_check_limits(state.channel.rx_frequency - 12500) &&
@@ -838,20 +838,20 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     // Switch to VFO screen
                     state.ui_screen = MAIN_VFO;
                 }
-                else if(msg.keys & KEY_UP)
+                else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
                 {
                     _ui_fsm_loadChannel(state.channel_index + 1, sync_rtx);
                 }
-                else if(msg.keys & KEY_DOWN)
+                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
                 {
                     _ui_fsm_loadChannel(state.channel_index - 1, sync_rtx);
                 }
                 break;
             // Top menu screen
             case MENU_TOP:
-                if(msg.keys & KEY_UP)
+                if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
                     _ui_menuUp(menu_num);
-                else if(msg.keys & KEY_DOWN)
+                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
                     _ui_menuDown(menu_num);
                 else if(msg.keys & KEY_ENTER)
                 {
@@ -893,10 +893,10 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
             case MENU_CHANNEL:
             // Contacts menu screen
             case MENU_CONTACTS:
-                if(msg.keys & KEY_UP)
+                if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
                     // Using 1 as parameter disables menu wrap around
                     _ui_menuUp(1);
-                else if(msg.keys & KEY_DOWN)
+                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
                 {
                     if(state.ui_screen == MENU_ZONE)
                     {
@@ -969,9 +969,9 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
 #endif
             // Settings menu screen
             case MENU_SETTINGS:
-                if(msg.keys & KEY_UP)
+                if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
                     _ui_menuUp(settings_num);
-                else if(msg.keys & KEY_DOWN)
+                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
                     _ui_menuDown(settings_num);
                 else if(msg.keys & KEY_ENTER)
                 {
@@ -1002,9 +1002,9 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 break;
             // Info menu screen
             case MENU_INFO:
-                if(msg.keys & KEY_UP)
+                if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
                     _ui_menuUp(info_num);
-                else if(msg.keys & KEY_DOWN)
+                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
                     _ui_menuDown(info_num);
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_TOP);
@@ -1057,7 +1057,8 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 break;
 #endif
             case SETTINGS_DISPLAY:
-                if(msg.keys & KEY_LEFT || (msg.keys & KEY_DOWN && ui_state.edit_mode))
+                if(msg.keys & KEY_LEFT || (ui_state.edit_mode &&
+                   (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)))
                 {
                     switch(ui_state.menu_selected)
                     {
@@ -1073,7 +1074,8 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                             state.ui_screen = SETTINGS_DISPLAY;
                     }
                 }
-                else if(msg.keys & KEY_RIGHT || (msg.keys & KEY_UP && ui_state.edit_mode))
+                else if(msg.keys & KEY_RIGHT || (ui_state.edit_mode &&
+                        (msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)))
                 {
                     switch(ui_state.menu_selected)
                     {
@@ -1089,9 +1091,9 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                             state.ui_screen = SETTINGS_DISPLAY;
                     }
                 }
-                else if(msg.keys & KEY_UP)
+                else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
                     _ui_menuUp(display_num);
-                else if(msg.keys & KEY_DOWN)
+                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
                     _ui_menuDown(display_num);
                 else if(msg.keys & KEY_ENTER)
                     ui_state.edit_mode = !ui_state.edit_mode;
@@ -1101,7 +1103,9 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
 #ifdef HAS_GPS
             case SETTINGS_GPS:
                 if(msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT ||
-                   ((msg.keys & KEY_UP || msg.keys & KEY_DOWN) && ui_state.edit_mode))
+                   (ui_state.edit_mode &&
+                   (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT ||
+                    msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)))
                 {
                     switch(ui_state.menu_selected)
                     {
@@ -1122,18 +1126,20 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                             state.settings.gps_set_time = !state.settings.gps_set_time;
                             break;
                         case G_TIMEZONE:
-                            if(msg.keys & KEY_LEFT || msg.keys & KEY_UP)
+                            if(msg.keys & KEY_LEFT || msg.keys & KEY_UP || 
+                               msg.keys & KNOB_LEFT)
                                 state.settings.utc_timezone -= 1;
-                            else if(msg.keys & KEY_RIGHT || msg.keys & KEY_DOWN)
+                            else if(msg.keys & KEY_RIGHT || msg.keys & KEY_DOWN || 
+                                    msg.keys & KNOB_RIGHT)
                                 state.settings.utc_timezone += 1;
                             break;
                         default:
                             state.ui_screen = SETTINGS_GPS;
                     }
                 }
-                else if(msg.keys & KEY_UP)
+                else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
                     _ui_menuUp(settings_gps_num);
-                else if(msg.keys & KEY_DOWN)
+                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
                     _ui_menuDown(settings_gps_num);
                 else if(msg.keys & KEY_ENTER)
                     ui_state.edit_mode = !ui_state.edit_mode;

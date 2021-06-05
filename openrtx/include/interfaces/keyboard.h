@@ -57,8 +57,8 @@ enum key
     KEY_F6    = (1 << 24),  /* Function button (device specific) */
     KEY_F7    = (1 << 25),  /* Function button (device specific) */
     KEY_F8    = (1 << 26),  /* Function button (device specific) */
-    KEY_F9    = (1 << 27),  /* Function button (device specific) */
-    KEY_F10   = (1 << 28),  /* Function button (device specific) */
+    KNOB_LEFT = (1 << 27),  /* Knob rotated counter clockwise    */
+    KNOB_RIGHT = (1 << 28), /* Knob rotated clockwise            */
 };
 
 /**
@@ -87,9 +87,9 @@ typedef union
 {
     struct
     {
-        uint32_t _padding   : 2,
-                 long_press : 1,
-                 keys       : 29;
+        uint32_t long_press : 1,
+                 keys       : 29,
+                 _padding   : 2;
     };
 
     uint32_t value;
