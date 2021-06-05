@@ -53,8 +53,18 @@ void state_init()
         state.channel.mode = FM;
         state.channel.bandwidth = BW_25;
         state.channel.power = 1.0;
-        state.channel.rx_frequency = 430000000;
-        state.channel.tx_frequency = 430000000;
+        const hwInfo_t* hwinfo = platform_getHwInfo();
+        // Set initial frequency based on supported bands
+        if(hwinfo->uhf_band)
+        {
+            state.channel.rx_frequency = 430000000;
+            state.channel.tx_frequency = 430000000;
+        }
+        else if(hwinfo->vhf_band)
+        {
+            state.channel.rx_frequency = 144000000;
+            state.channel.tx_frequency = 144000000;
+        }
         state.channel.fm.rxToneEn = 0;
         state.channel.fm.rxTone = 2; // 71.9Hz
         state.channel.fm.txToneEn = 1;
