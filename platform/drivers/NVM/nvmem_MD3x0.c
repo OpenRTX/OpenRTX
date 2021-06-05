@@ -153,9 +153,9 @@ void nvm_loadHwInfo(hwInfo_t *info)
     info->lcd_type = lcdInfo & 0x03;
 }
 
-/** 
+/**
  * The MD380 stock CPS does not have a VFO channel slot
- * because the stock firmware does not have a VFO 
+ * because the stock firmware does not have a VFO
  * To enable this functionality reserve a Flash portion for saving the VFO
  */
 int nvm_readVFOChannelData(channel_t *channel)
@@ -177,7 +177,7 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
     W25Qx_readData(readAddr, ((uint8_t *) &chData), sizeof(md3x0Channel_t));
     W25Qx_sleep();
 
-    channel->mode            = chData.channel_mode - 1;
+    channel->mode            = chData.channel_mode;
     channel->bandwidth       = chData.bandwidth;
     channel->admit_criteria  = chData.admit_criteria;
     channel->squelch         = chData.squelch;
@@ -263,6 +263,7 @@ int nvm_readZoneData(zone_t *zone, uint16_t pos)
     W25Qx_sleep();
 
     // Check if zone is empty
+    #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
     if(wcslen((wchar_t *) zoneData.name) == 0) return -1;
     /*
      * Brutally convert channel name from unicode to char by truncating the most
@@ -295,6 +296,7 @@ int nvm_readContactData(contact_t *contact, uint16_t pos)
     W25Qx_sleep();
 
     // Check if contact is empty
+    #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
     if(wcslen((wchar_t *) contactData.name) == 0) return -1;
     /*
      * Brutally convert channel name from unicode to char by truncating the most
@@ -316,12 +318,12 @@ int nvm_readContactData(contact_t *contact, uint16_t pos)
 int nvm_readSettings(settings_t *settings)
 {
     (void) settings;
-    return -1; 
+    return -1;
 }
 
 int nvm_writeSettings(settings_t *settings)
 {
     (void) settings;
-    return -1; 
+    return -1;
 }
 

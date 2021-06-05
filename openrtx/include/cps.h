@@ -77,12 +77,14 @@ __attribute__((packed)) dmrInfo_t;
  */
 typedef struct
 {
-    uint8_t mode           : 1, /**< Operating mode                           */
-            bandwidth      : 2, /**< Bandwidth                                */
+    uint8_t mode;               /**< Operating mode                           */
+
+    uint8_t bandwidth      : 2, /**< Bandwidth                                */
             admit_criteria : 2, /**< Admit criterion                          */
             squelch        : 1, /**< Squelch type: 0 = tight, 1 = normal      */
             rx_only        : 1, /**< 1 means RX-only channel                  */
-            vox            : 1; /**< VOX enable                               */
+            vox            : 1, /**< VOX enable                               */
+            _padding       : 1; /**< Padding to 8 bits                        */
 
     float power;                /**< Transmission power, in watt              */
 

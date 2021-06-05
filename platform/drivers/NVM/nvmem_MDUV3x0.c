@@ -69,7 +69,7 @@ int _nvm_readChannelAtAddress(channel_t *channel, uint32_t addr)
     #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
     if(wcslen((wchar_t *) chData.name) == 0) return -1;
 
-    channel->mode            = chData.channel_mode - 1;
+    channel->mode            = chData.channel_mode;
     channel->bandwidth       = chData.bandwidth;
     channel->admit_criteria  = chData.admit_criteria;
     channel->squelch         = chData.squelch;
