@@ -501,23 +501,15 @@ void _ui_fsm_confirmVFOInput(bool *sync_rtx) {
         // If TX frequency was not set, TX = RX
         if(ui_state.new_tx_frequency == 0)
         {
-            if(_ui_freq_check_limits(ui_state.new_rx_frequency))
-            {
-                state.channel.rx_frequency = ui_state.new_rx_frequency;
-                state.channel.tx_frequency = ui_state.new_rx_frequency;
-                *sync_rtx = true;
-            }
+            ui_state.new_tx_frequency = ui_state.new_rx_frequency;
         }
-        // Otherwise set both frequencies
-        else
+        // Apply new frequencies if they are valid
+        if(_ui_freq_check_limits(ui_state.new_rx_frequency) &&
+           _ui_freq_check_limits(ui_state.new_tx_frequency))
         {
-            if(_ui_freq_check_limits(ui_state.new_rx_frequency) &&
-               _ui_freq_check_limits(ui_state.new_tx_frequency))
-            {
-                state.channel.rx_frequency = ui_state.new_rx_frequency;
-                state.channel.tx_frequency = ui_state.new_tx_frequency;
-                *sync_rtx = true;
-            }
+            state.channel.rx_frequency = ui_state.new_rx_frequency;
+            state.channel.tx_frequency = ui_state.new_tx_frequency;
+            *sync_rtx = true;
         }
         state.ui_screen = MAIN_VFO;
     }
