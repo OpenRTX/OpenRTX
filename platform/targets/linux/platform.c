@@ -26,9 +26,15 @@ void platform_init()
 {
     //printf("Platform init\n");
     // Fill hwinfo struct
+    memset(&hwInfo, 0x00, sizeof(hwInfo));
     snprintf(hwInfo.name, 10, "Linux");
-    hwInfo.vhf_band = 1;
-    hwInfo.uhf_band = 1;
+    // Frequencies are in MHz                                                   
+    hwInfo.vhf_maxFreq = 174;                                                    
+    hwInfo.vhf_minFreq = 136;                                                    
+    hwInfo.vhf_band    = 1;                                                      
+    hwInfo.uhf_maxFreq = 480;                                                    
+    hwInfo.uhf_minFreq = 400;                                                    
+    hwInfo.uhf_band    = 1;   
 
     emulator_start();
 }

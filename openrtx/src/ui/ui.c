@@ -436,14 +436,21 @@ void _ui_timedate_add_digit(curTime_t *timedate, uint8_t pos, uint8_t number)
 bool _ui_freq_check_limits(freq_t freq)
 {
     bool valid = false;
-#ifdef BAND_VHF
-    if(freq >= FREQ_LIMIT_VHF_LO && freq <= FREQ_LIMIT_VHF_HI)
-        valid = true;
-#endif
-#ifdef BAND_UHF
-    if(freq >= FREQ_LIMIT_UHF_LO && freq <= FREQ_LIMIT_UHF_HI)
-        valid = true;
-#endif
+    const hwInfo_t* hwinfo = platform_getHwInfo();
+    if(hwinfo->vhf_band)
+    {
+        // hwInfo_t frequencies are in MHz
+        if(freq >= (hwinfo->vhf_minFreq * 1000000) && 
+           freq <= (hwinfo->vhf_maxFreq * 1000000))
+        valid = true; 
+    }
+    if(hwinfo->uhf_band)
+    {
+        // hwInfo_t frequencies are in MHz
+        if(freq >= (hwinfo->uhf_minFreq * 1000000) && 
+           freq <= (hwinfo->uhf_maxFreq * 1000000))
+        valid = true; 
+    }
     return valid;
 }
 
