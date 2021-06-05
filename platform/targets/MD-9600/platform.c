@@ -29,6 +29,7 @@
 #include <toneGenerator_MDx.h>
 #include <interfaces/rtc.h>
 #include <interfaces/audio.h>
+#include <interfaces/usb.h>
 #include <SPI2.h>
 #include <chSelector.h>
 
@@ -79,6 +80,7 @@ void platform_init()
     backlight_init();                /* Initialise backlight driver            */
     chSelector_init();               /* Initialise channel selector handler    */
     audio_init();                    /* Initialise audio management module     */
+    usb_init();                      /* Initialise USB driver                  */
 }
 
 void platform_terminate()
