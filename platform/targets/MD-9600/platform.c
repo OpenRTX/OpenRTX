@@ -61,14 +61,14 @@ void platform_init()
 
     spi2_init();
 
-    /* TODO temporary initialisation */
+    /* TODO: Hardcode hwInfo until we implement reading from flash */
     memset(&hwInfo, 0x00, sizeof(hwInfo));
-    hwInfo.uhf_maxFreq = FREQ_LIMIT_UHF_HI/1000000;
-    hwInfo.uhf_minFreq = FREQ_LIMIT_UHF_LO/1000000;
-    hwInfo.vhf_maxFreq = FREQ_LIMIT_VHF_HI/1000000;
-    hwInfo.vhf_minFreq = FREQ_LIMIT_VHF_LO/1000000;
-    hwInfo.uhf_band    = 1;
+    hwInfo.vhf_maxFreq = 174;
+    hwInfo.vhf_minFreq = 136;
     hwInfo.vhf_band    = 1;
+    hwInfo.uhf_maxFreq = 480;
+    hwInfo.uhf_minFreq = 400;
+    hwInfo.uhf_band    = 1;
     hwInfo.lcd_type    = 0;
     memcpy(hwInfo.name, "MD-9600", 7);
     hwInfo.name[8] = '\0';

@@ -31,16 +31,6 @@
 /* Device has a channel selection knob */
 #define HAS_ABSOLUTE_KNOB
 
-/* Supported radio bands */
-#define BAND_VHF
-#define BAND_UHF
-
-/* Band limits in Hz */
-#define FREQ_LIMIT_VHF_LO 136000000
-#define FREQ_LIMIT_VHF_HI 174000000
-#define FREQ_LIMIT_UHF_LO 400000000
-#define FREQ_LIMIT_UHF_HI 480000000
-
 /* Screen dimensions */
 #define SCREEN_WIDTH 160
 #define SCREEN_HEIGHT 128
