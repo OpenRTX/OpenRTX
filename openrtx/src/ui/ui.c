@@ -834,6 +834,8 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 {
                     // Restore VFO channel
                     state.channel = state.vfo_channel;
+                    // Update RTX configuration
+                    *sync_rtx = true;
                     // Switch to VFO screen
                     state.ui_screen = MAIN_VFO;
                 }
