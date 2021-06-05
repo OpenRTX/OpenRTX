@@ -62,11 +62,12 @@ void *ui_task(void *arg)
     rtxStatus_t rtx_cfg;
 
     // Get initial state local copy
-//     OSMutexPend(&state_mutex, 0u, OS_OPT_PEND_BLOCKING, 0u, &os_err);
-//     OSMutexPost(&state_mutex, OS_OPT_POST_NONE, &os_err);
+    pthread_mutex_lock(&state_mutex);
+    ui_saveState();
+    pthread_mutex_unlock(&state_mutex);
 
     // Initial GUI draw
-    ui_updateGUI(last_state);
+    ui_updateGUI();
     gfx_render();
 
     while(1)
