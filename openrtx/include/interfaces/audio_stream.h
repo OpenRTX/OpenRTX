@@ -24,6 +24,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <interfaces/audio_path.h>
+#include <array>
 
 #ifdef __cplusplus
 extern "C" {
@@ -122,5 +123,13 @@ void outputStream_stop(streamId id);
 #ifdef __cplusplus
 }
 #endif
+
+/**
+ * Get a chunk of data, blocking function.
+ * If buffer management is configured to BUF_LINEAR this function also starts a
+ * new data acquisition.
+ */
+template <size_t N>
+std::array<stream_sample_t, N> inputStream_getData(streamId id);
 
 #endif /* AUDIO_STREAM_H */
