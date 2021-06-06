@@ -307,7 +307,7 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
         }
     }
     // Copy data to OpenRTX channel_t
-    channel->mode            = chData.channel_mode;
+    channel->mode            = chData.channel_mode + 1;
     channel->bandwidth       = chData.bandwidth;
     channel->admit_criteria  = chData.admit_criteria;
     channel->squelch         = chData.squelch;
