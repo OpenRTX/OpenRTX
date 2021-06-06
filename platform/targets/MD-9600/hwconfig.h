@@ -23,6 +23,9 @@
 
 #include <stm32f4xx.h>
 
+/* Enable Serial over USB support */
+//#define VCOM_ENABLED
+
 /* Device has a working real time clock */
 #define HAS_RTC
 
