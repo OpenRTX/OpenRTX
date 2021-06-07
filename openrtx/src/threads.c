@@ -204,8 +204,8 @@ void *kbd_task(void *arg)
         // Save current keyboard state as previous
         prev_keys = keys;
 
-        // Read keyboard state at 20Hz
-        sleepFor(0u, 50u);
+        // Read keyboard state at 40Hz
+        sleepFor(0u, 25u);
     }
 }
 
