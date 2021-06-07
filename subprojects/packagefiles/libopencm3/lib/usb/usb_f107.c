@@ -53,8 +53,12 @@ const struct _usbd_driver stm32f107_usb_driver = {
 /** Initialize the USB device controller hardware of the STM32. */
 static usbd_device *stm32f107_usbd_init(void)
 {
-    // RCC is handled in OpenRTX USB driver
-	//rcc_periph_clock_enable(RCC_OTGFS);
+
+    /* Peripheral clock enabling is handled in OpenRTX USB driver
+     *
+     * rcc_periph_clock_enable(RCC_OTGFS);
+     */
+
 	OTG_FS_GUSBCFG |= OTG_GUSBCFG_PHYSEL;
 
 	/* Wait for AHB idle. */
@@ -63,13 +67,21 @@ static usbd_device *stm32f107_usbd_init(void)
 	OTG_FS_GRSTCTL |= OTG_GRSTCTL_CSRST;
 	while (OTG_FS_GRSTCTL & OTG_GRSTCTL_CSRST);
 
-	if (OTG_FS_CID >= OTG_CID_HAS_VBDEN) {
+    /*
+     * The if below has been commented out as a workaround to an isse with
+     * MD-UV380: this device seems to not have a pullup resistor on the D+ line
+     * and this causes issues with VBUS detection and makes the radio not to
+     * enumerate when conneted to a computer
+     */
+
+	//if (OTG_FS_CID >= OTG_CID_HAS_VBDEN) {
 		/* Enable VBUS detection in device mode and power up the PHY. */
 		OTG_FS_GCCFG |= OTG_GCCFG_VBDEN | OTG_GCCFG_PWRDWN;
-	} else {
+	//} else {
 		/* Enable VBUS sensing in device mode and power up the PHY. */
-		OTG_FS_GCCFG |= OTG_GCCFG_VBUSBSEN | OTG_GCCFG_PWRDWN;
-	}
+	//	OTG_FS_GCCFG |= OTG_GCCFG_VBUSBSEN | OTG_GCCFG_PWRDWN;
+	//}
+
 	/* Explicitly enable DP pullup (not all cores do this by default) */
 	OTG_FS_DCTL &= ~OTG_DCTL_SDIS;
 
