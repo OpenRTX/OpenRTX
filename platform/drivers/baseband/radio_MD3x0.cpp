@@ -201,7 +201,7 @@ void radio_setOpmode(const enum opmode mode)
             gpio_clearPin(DMR_SW);      // Disconnect analog paths for DMR
             gpio_setPin(FM_SW);         // Enable analog RX stage after superhet
             C5000.fmMode();             // HR_C5000 in FM mode
-            C5000.setInputGain(0xC8);   // Input gain, as per TYT firmware
+            C5000.setInputGain(0x19);   // Input gain, as per TYT firmware
             break;
 
         case DMR:
@@ -214,7 +214,7 @@ void radio_setOpmode(const enum opmode mode)
             gpio_clearPin(DMR_SW);      // Disconnect analog paths for DMR
             gpio_setPin(FM_SW);         // Enable analog RX stage after superhet
             C5000.fmMode();             // HR_C5000 in FM mode
-            C5000.setInputGain(0xA0);   // Input gain, found experimentally
+            C5000.setInputGain(0x14);   // Input gain, found experimentally
             break;
 
         default:
