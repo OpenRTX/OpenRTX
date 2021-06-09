@@ -20,15 +20,44 @@
 #ifndef USB_H
 #define USB_H
 
+#include <stdint.h>
+#include <unistd.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
- * This function initialises the USB subsystem, configuring the GPIOs as
- * needed.
+ * Initialise the USB driver.
  */
 void usb_init();
 
 /**
- * When called, this function terminates the USB driver.
+ * Shut down the USB driver.
  */
 void usb_terminate();
+
+/**
+* Write a block of data. This function blocks until all data have been sent.
+* \param buffer buffer where take data to write.
+* \param size buffer size
+* \return number of bytes written or a negative number on failure.
+*/
+ssize_t usb_vcom_writeBlock(const void *buf, size_t len);
+
+/**
+* Read a block of data, nonblocking function.
+* \param buffer buffer where read data will be stored.
+* \param size buffer size.
+* \return number of bytes read or a negative number on failure. Note that
+* it is normal for this function to return less character than the amount
+* asked.
+*/
+ssize_t usb_vcom_readBlock(void *buf, size_t len);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* USB_H */

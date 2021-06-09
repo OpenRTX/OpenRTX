@@ -2,8 +2,7 @@
  *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
  *                         Niccolò Izzo IU2KIN                             *
  *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO,                            *
- *                         Federico Terraneo                               *
+ *                         Silvano Seva IU2KWO                             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -19,55 +18,32 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-/***********************************************************************
-* bsp.cpp Part of the Miosix Embedded OS.
-* Board support package, this file initializes hardware.
-************************************************************************/
-
-#include <interfaces/bsp.h>
-#include <kernel/kernel.h>
-#include <kernel/sync.h>
+#include <interfaces/gpio.h>
+#include <interfaces/platform.h>
 #include <hwconfig.h>
+#include "usb_bsp.h"
 
-namespace miosix
+void usb_bsp_init()
 {
+    gpio_setMode(GPIOA, 11, ALTERNATE);
+    gpio_setAlternateFunction(GPIOA, 11, 10);
+    gpio_setOutputSpeed(GPIOA, 11, HIGH);      // 100MHz output speed
 
-//
-// Initialization
-//
+    gpio_setMode(GPIOA, 12, ALTERNATE);
+    gpio_setAlternateFunction(GPIOA, 12, 10);
+    gpio_setOutputSpeed(GPIOA, 12, HIGH);      // 100MHz output speed
 
-void IRQbspInit()
-{
-   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN
-                |  RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIODEN
-                |  RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_GPIOHEN;
-    RCC_SYNC();
+    RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
+    RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
+    __DSB();
 
-    GPIOA->OSPEEDR=0xaaaaaaaa; //Default to 50MHz speed for all GPIOS
-    GPIOB->OSPEEDR=0xaaaaaaaa;
-    GPIOC->OSPEEDR=0xaaaaaaaa;
-    GPIOD->OSPEEDR=0xaaaaaaaa;
-    GPIOE->OSPEEDR=0xaaaaaaaa;
-    GPIOH->OSPEEDR=0xaaaaaaaa;
+    NVIC_ClearPendingIRQ(OTG_FS_IRQn);
+    NVIC_SetPriority(OTG_FS_IRQn, 14);
+    NVIC_EnableIRQ(OTG_FS_IRQn);
 }
 
-void bspInit2()
+void usb_bsp_terminate()
 {
+    RCC->AHB2ENR &= ~RCC_AHB2ENR_OTGFSEN;
+    __DSB();
 }
-
-//
-// Shutdown and reboot
-//
-
-void shutdown()
-{
-    reboot();
-}
-
-void reboot()
-{
-    disableInterrupts();
-    miosix_private::IRQsystemReboot();
-}
-
-} //namespace miosix

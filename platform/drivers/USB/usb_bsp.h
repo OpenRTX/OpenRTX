@@ -1,7 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
  *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
  *                         Silvano Seva IU2KWO                             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -18,27 +17,18 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdint.h>
-#include <stdlib.h>
-#include <interfaces/gpio.h>
-#include <interfaces/platform.h>
-#include "hwconfig.h"
+#ifndef USB_BSP_H
+#define USB_BSP_H
 
-void usb_init()
-{
-    gpio_setMode(GPIOA, 11, ALTERNATE);
-    gpio_setAlternateFunction(GPIOA, 11, 10);
-    gpio_setOutputSpeed(GPIOA, 11, HIGH);      // 100MHz output speed
+/**
+ * This function initialises the USB hardware peripheral, the GPIOs and the
+ * clock tree.
+ */
+void usb_bsp_init();
 
-    gpio_setMode(GPIOA, 12, ALTERNATE);
-    gpio_setAlternateFunction(GPIOA, 12, 10);
-    gpio_setOutputSpeed(GPIOA, 12, HIGH);      // 100MHz output speed
+/**
+ * When called, this function shuts down the USB hardware peripheral.
+ */
+void usb_bsp_terminate();
 
-    RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
-    RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
-    __DSB();
-}
-
-void usb_terminate()
-{
-}
+#endif /* USB_BSP_H */

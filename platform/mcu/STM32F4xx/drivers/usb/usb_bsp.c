@@ -97,8 +97,8 @@ void USB_OTG_BSP_mDelay (const uint32_t msec)
     delayMs(msec);
 }
 
-void _Z17OTG_FS_IRQHandlerv(void)
-{
-    USBD_OTG_ISR_Handler (&USB_OTG_dev);
-}
+// void __attribute__((weak)) _Z17OTG_FS_IRQHandlerv(void)
+// {
+//     USBD_OTG_ISR_Handler (&USB_OTG_dev);
+// }
 

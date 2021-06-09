@@ -26,7 +26,8 @@ openrtx_src = ['openrtx/src/state.c',
                'openrtx/src/rtx.c',
                'openrtx/src/gps.c',
                'openrtx/src/dsp.cpp',
-               'openrtx/src/memory_profiling.cpp']
+               'openrtx/src/memory_profiling.cpp',
+               'platform/drivers/USB/usb.c']
 
 openrtx_inc = ['openrtx/include',
                'openrtx/include/calibration',
@@ -97,7 +98,7 @@ mdx_src = ['platform/drivers/ADC/ADC1_MDx.c',
            'platform/drivers/audio/audio_MDx.c',
            'platform/drivers/backlight/backlight_MDx.c',
            'platform/drivers/tones/toneGenerator_MDx.cpp',
-           'platform/drivers/USB/usb_stm32f4.c']
+           'platform/drivers/USB/usb_bsp_MDx.c']
 
 ##
 ## GDx family: Radioddity GD-77 and Baofeng DM-1801
@@ -128,17 +129,7 @@ gdx_src = ['platform/drivers/NVM/W25Qx.c',
 stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.cpp',
                  'platform/mcu/STM32F4xx/boot/bsp.cpp',
                  'platform/mcu/STM32F4xx/boot/libc_integration.cpp',
-                 'platform/mcu/STM32F4xx/drivers/usb/usb_bsp.c',
-                 'platform/mcu/STM32F4xx/drivers/usb/usb_core.c',
-                 'platform/mcu/STM32F4xx/drivers/usb/usb_dcd.c',
-                 'platform/mcu/STM32F4xx/drivers/usb/usb_dcd_int.c',
-                 'platform/mcu/STM32F4xx/drivers/usb/usbd_desc.c',
-                 'platform/mcu/STM32F4xx/drivers/usb/usbd_core.c',
-                 'platform/mcu/STM32F4xx/drivers/usb/usbd_ioreq.c',
-                 'platform/mcu/STM32F4xx/drivers/usb/usbd_req.c',
-                 'platform/mcu/STM32F4xx/drivers/usb/usbd_usr.c',
                  'platform/mcu/STM32F4xx/drivers/gpio.c',
-                 'platform/mcu/STM32F4xx/drivers/usb_vcom.c',
                  'platform/mcu/STM32F4xx/drivers/delays.cpp',
                  'platform/mcu/STM32F4xx/drivers/rtc.c',
                  'platform/mcu/STM32F4xx/drivers/SPI2.c',
@@ -147,8 +138,7 @@ stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.cpp',
 stm32f405_inc = ['platform/mcu/CMSIS/Include',
                  'platform/mcu/CMSIS/Device/ST/STM32F4xx/Include',
                  'platform/mcu/STM32F4xx',
-                 'platform/mcu/STM32F4xx/drivers',
-                 'platform/mcu/STM32F4xx/drivers/usb']
+                 'platform/mcu/STM32F4xx/drivers']
 
 stm32f405_def = {'STM32F40_41xxx': '', 'HSE_VALUE':'8000000',
                  '_POSIX_PRIORITY_SCHEDULING':''}
