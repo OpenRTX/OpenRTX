@@ -24,13 +24,14 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <interfaces/audio_path.h>
-#include <array>
+
+typedef uint16_t stream_sample_t;
 
 #ifdef __cplusplus
+#include <array>
+
 extern "C" {
 #endif
-
-using stream_sample_t = uint16_t;
 
 enum BufMode
 {
@@ -48,14 +49,12 @@ dataBlock_t;
 
 typedef int8_t streamId;
 
-/************************** Input Stream Functions *************************/
-
 /**
  * Try to activate the sampler to acquire an input audio stream.
  * This will open the required audio path and start the data streaming.
- * If the path is not available or busy with another process, 
+ * If the path is not available or busy with another process,
  * this function will return an error.
- * If a stream is opened with a higher priority than a current stream using the same 
+ * If a stream is opened with a higher priority than a current stream using the same
  * source, the new stream takes over the previous stream.
  *
  * @param source: input source specifier.
@@ -66,11 +65,11 @@ typedef int8_t streamId;
  * @param sampleRate: sample rate, in Hz.
  * @return a unique identifier for the stream or -1 if the stream could not be opened.
  */
-streamId inputStream_start(const AudioSource source,
-                           const AudioPriority prio,   
+streamId inputStream_start(const enum AudioSource source,
+                           const enum AudioPriority prio,
                            const stream_sample_t* buf,
-                           const size_t bufLength, 
-                           const BufMode mode,
+                           const size_t bufLength,
+                           const enum BufMode mode,
                            const uint32_t sampleRate);
 
 /**
@@ -93,13 +92,11 @@ dataBlock_t inputStream_getData(streamId id);
  */
 void inputStream_stop(streamId id);
 
-/*************************** Output Stream Functions **************************/
-
 /**
  * Send and audio stream to a given output.
  * This function blocks until all data has been sent.
- * If a stream is opened with a higher priority than a current stream using the same 
- * source, the new stream takes over the previous stream.
+ * If a stream is opened with a higher priority than a current stream using the
+ * same source, the new stream takes over the previous stream.
  *
  * @param destination: destination of the output stream.
  * @param prio: priority of the requester
@@ -108,28 +105,34 @@ void inputStream_stop(streamId id);
  * @param sampleRate: sample rate in Hz.
  * @return a unique identifier for the stream or -1 if the stream could not be opened.
  */
-streamId outputStream_start(const AudioSink destination,
-                            const AudioPriority prio,
+streamId outputStream_start(const enum AudioSink destination,
+                            const enum AudioPriority prio,
                             const stream_sample_t* const buf,
                             const size_t length,
                             const uint32_t sampleRate);
-                       
+
 /**
  * Interrupt a currently ongoing output stream before its natural ending.
  * @param id: identifier of the stream to be stopped
  */
-void outputStream_stop(streamId id);                        
+void outputStream_stop(streamId id);
 
 #ifdef __cplusplus
 }
-#endif
 
 /**
  * Get a chunk of data, blocking function.
- * If buffer management is configured to BUF_LINEAR this function also starts a
- * new data acquisition.
+ * This specialized API works when DMA is configured in BUF_CIRC_DOUBLE mode,
+ * returning a std::array containing the current samples. Two arrays are used
+ * to perform a double buffering, the two are returned in an interleaved way.
+ *
+ * @return std::array pointer containing the acquired samples, nullptr if
+ * another thread is pending on this function.
+ * @param id: identifier of the stream to get data from
  */
 template <size_t N>
-std::array<stream_sample_t, N> inputStream_getData(streamId id);
+std::array<stream_sample_t, N> *inputStream_getDataDoubleBuffer(streamId id);
+
+#endif
 
 #endif /* AUDIO_STREAM_H */
