@@ -595,8 +595,8 @@ bool _ui_drawMacroMenu() {
             case FM:
             snprintf(mode_str, 9,"      FM");
             break;
-            case DMR:
-            snprintf(mode_str, 9,"     DMR");
+            case M17:
+            snprintf(mode_str, 9,"     M17");
             break;
         }
         gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER,
