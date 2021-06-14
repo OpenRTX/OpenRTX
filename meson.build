@@ -27,7 +27,8 @@ openrtx_src = ['openrtx/src/state.c',
                'openrtx/src/rtx/OpMode_FM.cpp',
                'openrtx/src/gps.c',
                'openrtx/src/dsp.cpp',
-               'openrtx/src/memory_profiling.cpp']
+               'openrtx/src/memory_profiling.cpp',
+               'tests/platform/M17_unfiltered.c']
 
 openrtx_inc = ['openrtx/include',
                'openrtx/include/calibration',
@@ -45,7 +46,7 @@ openrtx_inc = ['openrtx/include',
 if get_option('test') != ''
   openrtx_src += 'tests/platform/'+get_option('test')+'.c'
 else
-  openrtx_src += 'openrtx/src/main.c'
+  openrtx_src += 'tests/platform/M17_mod.c'
 endif
 
 ##
@@ -225,7 +226,8 @@ md3x0_src = src + mdx_src + stm32f405_src + ['platform/drivers/NVM/nvmem_MD3x0.c
                                              'platform/targets/MD-3x0/platform.c']
 
 md3x0_inc = inc + stm32f405_inc + ['platform/targets/MD-3x0']
-md3x0_def = def + stm32f405_def + {'PLATFORM_MD3x0': '', 'timegm': 'mktime'}
+md3x0_def = def + stm32f405_def + {'PLATFORM_MD3x0': '', 'timegm': 'mktime',
+                                   'VCOM_ENABLED': ''}
 
 ##
 ## TYT MD-UV380
