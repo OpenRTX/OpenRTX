@@ -22,6 +22,7 @@
 #define OPMODE_M17_H
 
 #include "OpMode.h"
+#include "interfaces/audio_stream.h"
 #include <M17Modulator.h>
 #include <array>
 
@@ -110,19 +111,23 @@ private:
     streamId input_id = 0; ///< Input audio stream identifier
     lsf_t lsf = { 0 };     ///< Link Setup Frame data structure
 
-    // Input audio stream, PCM_16 8KHz
-    std::array<stream_sample_t, 2 * M17_AUDIO_SIZE> input_buffer = { 0 };
+    // Input audio stream, PCM_16 8KHz, double buffer
+    stream_sample_t *input = nullptr;
+    std::array<int8_t, M17_FRAME_SYMBOLS> *symbols = nullptr;
+    std::array<int16_t, M17_FRAME_SAMPLES> *baseband = nullptr;
 
     /*
      * Pushes the modulated baseband signal into the RTX sink, to transmit M17
      */
-    void output_baseband(std::array<audio_sample_t, M17_FRAME_SAMPLES>& baseband);
+    void output_baseband_stm32(std::array<audio_sample_t, M17_FRAME_SAMPLES> *baseband);
+
+    void output_baseband_linux(std::array<audio_sample_t, M17_FRAME_SAMPLES> *baseband);
 
     /*
      * Modulates and one M17 frame
      */
     void output_frame(std::array<uint8_t, 2> sync_word,
-                      const std::array<int8_t, M17_CODEC2_SIZE>& frame);
+                      const std::array<int8_t, M17_CODEC2_SIZE> *frame);
 
     /*
      * Generates and modulates the M17 preamble alone, used to start an M17

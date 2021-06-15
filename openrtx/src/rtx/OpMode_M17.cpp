@@ -28,9 +28,13 @@
 #include <interfaces/audio.h>
 #include <interfaces/audio_path.h>
 #include <interfaces/audio_stream.h>
+#include <hwconfig.h>
 #include <OpMode_M17.h>
 #include <M17Modulator.h>
 #include <rtx.h>
+
+#include <iostream>
+#include <fstream>
 
 // Generated using scikit-commpy
 const auto rrc_taps = std::experimental::make_array<double>(
@@ -74,30 +78,37 @@ int8_t bits_to_symbol(uint8_t bits)
 /*
  * Converts bits of binary data into encoding symbols
  */
-template <typename T, size_t N>
-void bits_to_symbols(const std::array<T, N>& bits,
-                     std::array<int8_t, N / 2>& symbols)
+template <typename T, size_t N, size_t M>
+void bits_to_symbols(const std::array<T, N> *bits,
+                     std::array<int8_t, M> *symbols,
+                     std::size_t offset = 0)
 {
+    // Check that destination array has enough space
+    static_assert(M >= N / 2);
+
     size_t index = 0;
     for (size_t i = 0; i != N; i += 2)
     {
-        symbols[index++] = bits_to_symbol((bits[i] << 1) | bits[i + 1]);
+        (*symbols)[offset + index++] = bits_to_symbol(((*bits)[i] << 1) | (*bits)[i + 1]);
     }
 }
 
 /*
  * Converts bytes of binary data into encoding symbols
  */
-template <typename T, size_t N>
-void bytes_to_symbols(const std::array<T, N>& bytes,
-                      std::array<int8_t, N * 4>& symbols)
+template <typename T, size_t N, size_t M>
+void bytes_to_symbols(const std::array<T, N> *bytes,
+                      std::array<int8_t, M> *symbols)
 {
+    // Check that destination array has enough space
+    static_assert(M >= N * 4);
+
     size_t index = 0;
-    for (auto b : bytes)
+    for (auto b : *bytes)
     {
         for (size_t i = 0; i != 4; ++i)
         {
-            symbols[index++] = bits_to_symbol(b >> 6);
+            (*symbols)[index++] = bits_to_symbol(b >> 6);
             b <<= 2;
         }
     }
@@ -106,88 +117,111 @@ void bytes_to_symbols(const std::array<T, N>& bytes,
 /*
  * Converts symbols into the modulated waveform of the baseband
  */
-void symbols_to_baseband(const std::array<int8_t, M17_FRAME_SYMBOLS>& symbols,
-                    std::array<audio_sample_t, M17_FRAME_SAMPLES>& baseband)
+void symbols_to_baseband(const std::array<int8_t, M17_FRAME_SYMBOLS> *symbols,
+                    std::array<audio_sample_t, M17_FRAME_SAMPLES> *baseband)
 {
     using namespace mobilinkd;
 
     static BaseFirFilter<double, std::tuple_size<decltype(rrc_taps)>::value> rrc = makeFirFilter(rrc_taps);
 
-    baseband.fill(0);
-    for (size_t i = 0; i != symbols.size(); ++i)
+    baseband->fill(0);
+    for (size_t i = 0; i != symbols->size(); ++i)
     {
-        baseband[i * 10] = symbols[i];
+        (*baseband)[i * 10] = (*symbols)[i];
     }
 
-    for (auto& b : baseband)
+    for (auto& b : *baseband)
     {
         b = rrc(b) * 25.0;
     }
 }
 
-/* 
+/*
  * Converts int16_t used by the modulator into uint8_t used by the PWM,
  * packed in a uint16_t array, as required by the STM32 DMA
  */
-void baseband_to_stream(const std::array<audio_sample_t, M17_FRAME_SAMPLES>& baseband,
-                        std::array<stream_sample_t, M17_FRAME_SAMPLES>& stream)
+void baseband_to_pwm_stm32(const std::array<audio_sample_t, M17_FRAME_SAMPLES> *baseband)
 {
-    for (int i = 0; i < M17_FRAME_SAMPLES; i++)
-    {
-        // XXX: This code relies on the CPU performing arithmetic right shift
-        stream[i] = static_cast<stream_sample_t> ((baseband[i] >> 8) + 128);
-    }
+    // TODO: convert from int16_t to uint8_t (packed into uint16_t)
+    //for (int i = 0; i < M17_FRAME_SAMPLES; i++)
+    //{
+    //    // XXX: This code relies on the CPU performing arithmetic right shift
+    //    (*stream)[i] = static_cast<stream_sample_t> (((*baseband)[i] >> 8) + 128);
+    //}
 }
 
 /*
- * Converts 12 bit unsigned values packed into uint16_t into int16_t samples.
+ * Converts 12 bit unsigned values packed into uint16_t into int16_t samples,
+ * perform in-place conversion to save space.
  */
-void stream_to_audio(const std::array<stream_sample_t, M17_AUDIO_SIZE>& stream,
-                     std::array<audio_sample_t, M17_AUDIO_SIZE>& audio)
+void stream_to_audio(std::array<audio_sample_t, M17_AUDIO_SIZE> *audio)
 {
     for (int i = 0; i < M17_AUDIO_SIZE; i++)
     {
-        audio[i] = static_cast<audio_sample_t> (stream[i] - 2048);
+        (*audio)[i] = (*audio)[i] << 3;
     }
 }
 
 /*
  * Pushes the modulated baseband signal into the RTX sink, to transmit M17
  */
-void OpMode_M17::output_baseband(std::array<audio_sample_t, M17_FRAME_SAMPLES>& baseband)
+void OpMode_M17::output_baseband_stm32(std::array<audio_sample_t, M17_FRAME_SAMPLES> *baseband)
 {
-    std::array<stream_sample_t, M17_FRAME_SAMPLES> stream = { 0 };
-
     // TODO: Apply PWM compensation FIR filter
+    // TODO: Change phase
+    // TODO: in-place cast to uint8_t packed into uint16_t for PWM
 
-    baseband_to_stream(baseband, stream);
+    baseband_to_pwm_stm32(baseband);
     streamId output_id = outputStream_start(SINK_RTX,
                                             PRIO_TX,
-                                            stream.data(),
+                                            (stream_sample_t *)baseband->data(),
                                             M17_FRAME_SAMPLES,
                                             M17_RTX_SAMPLE_RATE);
+}
+
+std::array<audio_sample_t, M17_AUDIO_SIZE> *input_audio_linux()
+{
+    std::array<audio_sample_t, M17_AUDIO_SIZE> *audio = new std::array<audio_sample_t, M17_AUDIO_SIZE>;
+    std::ifstream infile;
+    infile.open ("./m17_input.raw", std::ios::in | std::ios::binary);
+    infile.read((char *)audio->data(), M17_AUDIO_SIZE * sizeof(int16_t));
+    infile.close();
+    return audio;
+}
+
+void OpMode_M17::output_baseband_linux(std::array<audio_sample_t, M17_FRAME_SAMPLES> *baseband)
+{
+    std::ofstream outfile;
+    outfile.open ("./m17_output.raw", std::ios::out | std::ios::binary);
+    for(auto s : *baseband)
+    {
+        outfile << s;
+    }
+    outfile.close();
 }
 
 /*
  * Modulates and one M17 frame
  */
 void OpMode_M17::output_frame(std::array<uint8_t, 2> sync_word,
-                  const std::array<int8_t, M17_CODEC2_SIZE>& frame)
+                  const std::array<int8_t, M17_CODEC2_SIZE> *frame)
 {
-    std::array<int8_t, M17_SYNCWORD_SYMBOLS> syncword_symbols = { 0 };
-    std::array<int8_t, M17_PAYLOAD_SYMBOLS> payload_symbols = { 0 };
-    std::array<int8_t, M17_FRAME_SYMBOLS> frame_symbols = { 0 };
-    std::array<audio_sample_t, M17_FRAME_SAMPLES> frame_baseband = { 0 };
+    for(int i = 0; i < M17_CODEC2_SIZE; i++) {
+        printf("%02x ", (*frame)[i]);
+        if (i % 80 == 0)
+            printf("\n");
+    }
 
-    bytes_to_symbols(sync_word, syncword_symbols);
-    bits_to_symbols(frame, payload_symbols);
-    auto fit = std::copy(syncword_symbols.begin(),
-                         syncword_symbols.end(),
-                         frame_symbols.begin());
-    std::copy(payload_symbols.begin(),
-              payload_symbols.end(), fit);
-    symbols_to_baseband(frame_symbols, frame_baseband);
-    output_baseband(frame_baseband);
+    bytes_to_symbols(&sync_word, symbols);
+    bits_to_symbols(frame, symbols, M17_SYNCWORD_SYMBOLS);
+    symbols_to_baseband(symbols, baseband);
+#if defined(PLATFORM_MDUV3x0) | defined(PLATFORM_MD3x0)
+    output_baseband_stm32(baseband);
+#elif defined(PLATFORM_LINUX)
+    output_baseband_linux(baseband);
+#else
+#error M17 protocol is not supported on this platform
+#endif
 }
 
 /*
@@ -197,13 +231,17 @@ void OpMode_M17::output_frame(std::array<uint8_t, 2> sync_word,
 void OpMode_M17::send_preamble()
 {
     std::array<uint8_t, M17_FRAME_BYTES> preamble_bytes = { 0x77 };
-    std::array<int8_t, M17_FRAME_SYMBOLS> preamble_symbols = { 0 };
-    std::array<int16_t, M17_FRAME_SAMPLES> preamble_baseband = { 0 };
 
     // Preamble is simple... bytes -> symbols -> baseband.
-    bytes_to_symbols(preamble_bytes, preamble_symbols);
-    symbols_to_baseband(preamble_symbols, preamble_baseband);
-    output_baseband(preamble_baseband);
+    bytes_to_symbols(&preamble_bytes, symbols);
+    symbols_to_baseband(symbols, baseband);
+#if defined(PLATFORM_MDUV3x0) | defined(PLATFORM_MD3x0)
+    output_baseband_stm32(baseband);
+#elif defined(PLATFORM_LINUX)
+    output_baseband_linux(baseband);
+#else
+#error M17 protocol is not supported on this platform
+#endif
 }
 
 constexpr std::array<uint8_t, 2> SYNC_WORD = {0x32, 0x43};
@@ -219,12 +257,11 @@ lsf_t OpMode_M17::send_lsf(const std::string& src, const std::string& dest)
 
     lsf_t result;
     result.fill(0);
-    
+
+    // TODO: statically allocate these into heap and create them at init, deallocate at stop
     M17Randomizer<M17_CODEC2_SIZE> randomizer;
     PolynomialInterleaver<45, 92, M17_CODEC2_SIZE> interleaver;
     CRC16<0x5935, 0xFFFF> crc;
-
-    std::cerr << "Sending link setup." << std::endl;
 
     mobilinkd::LinkSetupFrame::call_t callsign;
     callsign.fill(0);
@@ -281,7 +318,7 @@ lsf_t OpMode_M17::send_lsf(const std::string& src, const std::string& dest)
 
     interleaver.interleave(punctured);
     randomizer.randomize(punctured);
-    output_frame(LSF_SYNC_WORD, punctured);
+    output_frame(LSF_SYNC_WORD, &punctured);
 
     return result;
 }
@@ -397,7 +434,7 @@ void OpMode_M17::send_audio_frame(const lich_segment_t& lich, const data_frame_t
 
     interleaver.interleave(temp);
     randomizer.randomize(temp);
-    output_frame(DATA_SYNC_WORD, temp);
+    output_frame(DATA_SYNC_WORD, &temp);
 }
 
 void OpMode_M17::m17_modulate(const lsf_t& lsf)
@@ -412,7 +449,7 @@ void OpMode_M17::m17_modulate(const lsf_t& lsf)
         auto lich_segment = make_lich_segment(segment, i);
         std::copy(lich_segment.begin(), lich_segment.end(), lich[i].begin());
     }
-    
+
     struct CODEC2* codec2 = ::codec2_create(CODEC2_MODE_3200);
 
     M17Randomizer<M17_AUDIO_SIZE> randomizer;
@@ -421,26 +458,37 @@ void OpMode_M17::m17_modulate(const lsf_t& lsf)
     uint16_t frame_number = 0;
     uint8_t lich_segment = 0;
 
+#if defined(PLATFORM_MDUV3x0) | defined(PLATFORM_MD3x0)
     // Get audio chunk from the microphone stream
-    audio_frame_t audio;
-    std::array<stream_sample_t, M17_AUDIO_SIZE> stream = 
+    std::array<stream_sample_t, M17_AUDIO_SIZE> *stream =
         inputStream_getData<M17_AUDIO_SIZE>(input_id);
-    stream_to_audio(stream, audio);
+    std::array<audio_sample_t, M17_AUDIO_SIZE> *audio =
+        reinterpret_cast<std::array<audio_sample_t, M17_AUDIO_SIZE>(stream);
+    stream_to_audio(audio);
+#elif defined(PLATFORM_LINUX)
+    std::array<audio_sample_t, M17_AUDIO_SIZE> *audio =
+        input_audio_linux();
+#else
+#error M17 protocol is not supported on this platform
+#endif
 
     // TODO: Apply DC removal filter
 
-    auto data = make_data_frame(frame_number++, encode(codec2, audio));
+    auto data = make_data_frame(frame_number++, encode(codec2, *audio));
     if (frame_number == 0x8000) frame_number = 0;
     send_audio_frame(lich[lich_segment++], data);
     if (lich_segment == lich.size()) lich_segment = 0;
-    audio.fill(0);
+    audio->fill(0);
 
     // TODO: Set frame counter MSB when last frame is sent
 }
 
 OpMode_M17::OpMode_M17() : enterRx(true),
                            input_id(0),
-                           input_buffer({0})
+                           lsf({0}),
+                           input(nullptr),
+                           symbols(nullptr),
+                           baseband(nullptr)
 {
 }
 
@@ -450,16 +498,25 @@ OpMode_M17::~OpMode_M17()
 
 void OpMode_M17::enable()
 {
+    // Allocate arrays for M17 processing
+    input = (stream_sample_t *) malloc(2 * M17_AUDIO_SIZE * sizeof(stream_sample_t));
+    symbols = new std::array<int8_t, M17_FRAME_SYMBOLS>;
+    symbols->fill({ 0 });
+    baseband = new std::array<int16_t, M17_FRAME_SAMPLES>;
+    baseband->fill({ 0 });
+
     // When starting, close squelch and prepare for entering in RX mode.
     enterRx   = true;
 
     // Start sampling from the microphone
     input_id = inputStream_start(SOURCE_MIC,
                                  PRIO_TX,
-                                 input_buffer.data(),
+                                 input,
                                  M17_AUDIO_SIZE,
                                  BUF_CIRC_DOUBLE,
                                  M17_VOICE_SAMPLE_RATE);
+
+    printf("M17 enabled!\n");
 }
 
 void OpMode_M17::disable()
@@ -471,10 +528,18 @@ void OpMode_M17::disable()
     audio_disableMic();
     radio_disableRtx();
     enterRx   = false;
+
+    // Deallocate arrays to save space
+    free(input);
+    delete(symbols);
+    delete(baseband);
+
+    printf("M17 disabled!\n");
 }
 
 void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
 {
+    printf("M17 update!\n");
     (void) newCfg;
 
     // RX logic

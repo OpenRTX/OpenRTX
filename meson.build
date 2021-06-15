@@ -37,7 +37,8 @@ openrtx_src = ['openrtx/src/state.c',
                'openrtx/src/rtx/OpMode_M17.cpp',
                'openrtx/src/gps.c',
                'openrtx/src/dsp.cpp',
-               'openrtx/src/memory_profiling.cpp']
+               'openrtx/src/memory_profiling.cpp',
+               'openrtx/src/audio_stream.c']
 
 openrtx_inc = ['openrtx/include',
                'openrtx/include/calibration',
@@ -371,7 +372,7 @@ endforeach
 linux_opts = {'sources': linux_src,
               'c_args': linux_c_args,
               'include_directories': linux_inc,
-              'dependencies': linux_dep,
+              'dependencies': [linux_dep, codec2_lib, m17cxx_lib],
               'link_args' : linux_l_args}
 
 md3x0_opts = {'sources' : md3x0_src,
