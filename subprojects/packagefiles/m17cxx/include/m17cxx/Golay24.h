@@ -205,7 +205,7 @@ constexpr uint32_t encode24(uint16_t data)
     return ((codeword << 1) | parity(codeword));
 }
 
-bool decode(uint32_t input, uint32_t& output)
+static bool decode(uint32_t input, uint32_t& output)
 {
     auto syndrm = syndrome(input >> 1);
     auto it = std::lower_bound(LUT.begin(), LUT.end(), syndrm,
