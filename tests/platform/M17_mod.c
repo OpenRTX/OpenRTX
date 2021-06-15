@@ -31,13 +31,11 @@
 #include <hwconfig.h>
 #include <string.h>
 
-#include <stdio.h>
-
 /* Uncomment this to transmit a carrier-only signal */
 // #define CARRIER_TEST
 
 /* Uncomment this to transmit 187.5Hz tone instead of M17 signal */
-#define CW_TEST
+// #define CW_TEST
 
 extern int16_t m17_buf[];
 extern uint16_t nSamples;
@@ -61,6 +59,24 @@ const uint16_t sine[] =
     25,27,29,31,33,35,37,40,42,44,47,49,52,54,57,59,62,65,67,70,73,76,79,82,85,
     88,90,93,97,100,103,106,109,112,115,118,121,124
 };
+
+inline void startSignal()
+{
+    #ifdef CW_TEST
+    DMA1_Stream2->NDTR = 256;
+    #else
+    DMA1_Stream2->NDTR = nSamples;
+    #endif
+
+    DMA1_Stream2->CR |= DMA_SxCR_EN;
+    TIM7->CR1         = TIM_CR1_CEN;
+}
+
+inline void stopSignal()
+{
+    DMA1_Stream2->CR &= ~DMA_SxCR_EN;
+    TIM7->CR1        &= ~TIM_CR1_CEN;
+}
 
 int main(void)
 {
@@ -104,7 +120,6 @@ int main(void)
     TIM7->EGR  = TIM_EGR_UG;
     TIM7->DIER = TIM_DIER_UDE
                | TIM_DIER_UIE;
-    TIM7->CR1  = TIM_CR1_CEN;
 
     /*
      * Prepare buffer for 8-bit waveform samples.
@@ -147,27 +162,22 @@ int main(void)
     }
     #endif
 
-//     GPIOE->BSRRL = 1;
-
     /*
      * DMA stream for sample transfer
      */
     #ifdef CW_TEST
-    DMA1_Stream2->NDTR = 256;
     DMA1_Stream2->M0AR = ((uint32_t) &sine);
     #else
-    DMA1_Stream2->NDTR = nSamples;
     DMA1_Stream2->M0AR = ((uint32_t) buf);
     #endif
     DMA1_Stream2->PAR  = ((uint32_t) &(TIM3->CCR3));
-    DMA1_Stream2->CR = DMA_SxCR_CHSEL_0       /* Channel 1                   */
-                     | DMA_SxCR_PL            /* Very high priority          */
+    DMA1_Stream2->CR = DMA_SxCR_CHSEL_0       /* Channel 1                */
+                     | DMA_SxCR_PL            /* Very high priority       */
                      | DMA_SxCR_MSIZE_0
                      | DMA_SxCR_PSIZE_0
-                     | DMA_SxCR_MINC          /* Increment source pointer    */
-                     | DMA_SxCR_CIRC          /* Circular mode               */
-                     | DMA_SxCR_DIR_0         /* Memory to peripheral        */
-                     | DMA_SxCR_EN;           /* Start transfer              */
+                     | DMA_SxCR_MINC          /* Increment source pointer */
+                     | DMA_SxCR_CIRC          /* Circular mode            */
+                     | DMA_SxCR_DIR_0;        /* Memory to peripheral     */
     #endif
 
     /*
@@ -176,7 +186,7 @@ int main(void)
     rtxStatus_t cfg;
     memset(&cfg, 0x00, sizeof(rtxStatus_t));
 
-    cfg.opMode      = FM;
+    cfg.opMode      = M17;
     cfg.bandwidth   = BW_25;
     cfg.rxFrequency = 435000000;
     cfg.txFrequency = 435000000;
@@ -198,16 +208,16 @@ int main(void)
         {
             transmitting = true;
             radio_enableTx();
+            startSignal();
             platform_ledOn(RED);
-//             puts("aa\r\n");
         }
 
         if(transmitting && !platform_getPttStatus())
         {
             transmitting = false;
             radio_disableRtx();
+            stopSignal();
             platform_ledOff(RED);
-//             puts("bb\r\n");
         }
 
         delayMs(10);
