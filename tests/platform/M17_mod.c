@@ -60,7 +60,7 @@ const uint16_t sine[] =
     88,90,93,97,100,103,106,109,112,115,118,121,124
 };
 
-inline void startSignal()
+void startSignal()
 {
     #ifdef CW_TEST
     DMA1_Stream2->NDTR = 256;
@@ -72,7 +72,7 @@ inline void startSignal()
     TIM7->CR1         = TIM_CR1_CEN;
 }
 
-inline void stopSignal()
+void stopSignal()
 {
     DMA1_Stream2->CR &= ~DMA_SxCR_EN;
     TIM7->CR1        &= ~TIM_CR1_CEN;
