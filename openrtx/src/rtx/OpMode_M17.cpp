@@ -206,11 +206,24 @@ void OpMode_M17::output_baseband_linux(std::array<audio_sample_t, M17_FRAME_SAMP
 void OpMode_M17::output_frame(std::array<uint8_t, 2> sync_word,
                   const std::array<int8_t, M17_CODEC2_SIZE> *frame)
 {
-    for(int i = 0; i < M17_CODEC2_SIZE; i++) {
-        printf("%02x ", (*frame)[i]);
-        if (i % 80 == 0)
-            printf("\n");
+    for (size_t i = 0; i < sync_word.size(); i += 2) {
+        printf("%02x", sync_word[i]);
+        printf("%02x ", sync_word[i+1]);
     }
+    for (size_t i = 0; i != frame->size(); i += 8)
+    {
+        uint8_t c = 0;
+        for (size_t j = 0; j != 8; ++j)
+        {
+            c <<= 1;
+            c |= (*frame)[i + j];
+        }
+        if (i % 16 == 0)
+            printf("%02x", c);
+        else
+            printf("%02x ", c);
+    }
+    printf("\n");
 
     bytes_to_symbols(&sync_word, symbols);
     bits_to_symbols(frame, symbols, M17_SYNCWORD_SYMBOLS);
@@ -230,7 +243,14 @@ void OpMode_M17::output_frame(std::array<uint8_t, 2> sync_word,
  */
 void OpMode_M17::send_preamble()
 {
-    std::array<uint8_t, M17_FRAME_BYTES> preamble_bytes = { 0x77 };
+    std::array<uint8_t, M17_FRAME_BYTES> preamble_bytes = { 0 };
+    preamble_bytes.fill(0x77);
+
+    for (size_t i = 0; i < preamble_bytes.size(); i += 2) {
+        printf("%02x", preamble_bytes[i]);
+        printf("%02x ", preamble_bytes[i+1]);
+    }
+    printf("\n");
 
     // Preamble is simple... bytes -> symbols -> baseband.
     bytes_to_symbols(&preamble_bytes, symbols);
@@ -539,7 +559,6 @@ void OpMode_M17::disable()
 
 void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
 {
-    printf("M17 update!\n");
     (void) newCfg;
 
     // RX logic
@@ -557,8 +576,7 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
     }
 
     // TX logic
-    if(platform_getPttStatus() && (status->opStatus != TX) &&
-                                  (status->txDisable == 0))
+    if(platform_getPttStatus() && (status->txDisable == 0))
     {
         // Entering Tx mode right now, setup transmission
         if(status->opStatus != TX)
