@@ -23,15 +23,16 @@
 
 #include <stdint.h>
 #include <sys/types.h>
-#include <interfaces/audio_path.h>
-
-typedef uint16_t stream_sample_t;
+#include "audio_path.h"
 
 #ifdef __cplusplus
 #include <array>
 
 extern "C" {
 #endif
+
+typedef uint16_t stream_sample_t;
+typedef int8_t   streamId;
 
 enum BufMode
 {
@@ -47,21 +48,19 @@ typedef struct
 }
 dataBlock_t;
 
-typedef int8_t streamId;
-
 /**
- * Try to activate the sampler to acquire an input audio stream.
- * This will open the required audio path and start the data streaming.
- * If the path is not available or busy with another process,
- * this function will return an error.
- * If a stream is opened with a higher priority than a current stream using the same
- * source, the new stream takes over the previous stream.
+ * Start the acquisition of an incoming audio stream, also opening the
+ * corresponding audio path. If a stream is opened from the same source but
+ * with an higher priority than the one currently open, the new stream takes
+ * over the previous one.
+ * The function returns an error when the audio path is not available or the
+ * selected stream is already in use by another process with higher priority.
  *
  * @param source: input source specifier.
- * @param prio: priority of the requester
+ * @param prio: priority of the requester.
  * @param buf: pointer to a buffer used for management of sampled data.
  * @param bufLength: length of the buffer, in elements.
- * @param mode: buffer management mode
+ * @param mode: buffer management mode.
  * @param sampleRate: sample rate, in Hz.
  * @return a unique identifier for the stream or -1 if the stream could not be opened.
  */
@@ -73,14 +72,14 @@ streamId inputStream_start(const enum AudioSource source,
                            const uint32_t sampleRate);
 
 /**
- * Get a chunk of data, blocking function.
+ * Get a chunk of data from an already opened input stream, blocking function.
  * If buffer management is configured to BUF_LINEAR this function also starts a
  * new data acquisition.
  *
+ * @param id: identifier of the stream from which data is get.
  * @return dataBlock_t containing a pointer to the chunk head and its length. If
  * another thread is pending on this function, it returns immediately a dataBlock_t
  * cointaining < NULL, 0 >.
- * @param id: identifier of the stream to get data from
  */
 dataBlock_t inputStream_getData(streamId id);
 
@@ -88,18 +87,19 @@ dataBlock_t inputStream_getData(streamId id);
  * Release the current input stream, allowing for a new call of startInputStream.
  * If this function is called when sampler is running, acquisition is stopped and
  * any thread waiting on getData() is woken up and given a partial result.
+ *
  * @param id: identifier of the stream to be stopped
  */
 void inputStream_stop(streamId id);
 
 /**
- * Send and audio stream to a given output.
- * This function blocks until all data has been sent.
- * If a stream is opened with a higher priority than a current stream using the
- * same source, the new stream takes over the previous stream.
+ * Send an audio stream to a given output, this function blocks until all data
+ * has been sent.
+ * If a stream is opened from the same source but with an higher priority than
+ * the one currently open, the new stream takes over the previous one.
  *
  * @param destination: destination of the output stream.
- * @param prio: priority of the requester
+ * @param prio: priority of the requester.
  * @param buf: buffer containing the audio samples.
  * @param length: length of the buffer, in elements.
  * @param sampleRate: sample rate in Hz.
@@ -113,7 +113,8 @@ streamId outputStream_start(const enum AudioSink destination,
 
 /**
  * Interrupt a currently ongoing output stream before its natural ending.
- * @param id: identifier of the stream to be stopped
+ *
+ * @param id: identifier of the stream to be stopped.
  */
 void outputStream_stop(streamId id);
 
@@ -121,17 +122,16 @@ void outputStream_stop(streamId id);
 }
 
 /**
- * Get a chunk of data, blocking function.
- * This specialized API works when DMA is configured in BUF_CIRC_DOUBLE mode,
- * returning a std::array containing the current samples. Two arrays are used
- * to perform a double buffering, the two are returned in an interleaved way.
+ * Get a chunk of data from an already opened input stream, blocking function.
+ * If buffer management is configured to BUF_LINEAR this function also starts a
+ * new data acquisition.
  *
- * @return std::array pointer containing the acquired samples, nullptr if
- * another thread is pending on this function.
- * @param id: identifier of the stream to get data from
+ * @param id: identifier of the stream to get data from.
+ * @return std::array pointer containing the acquired samples, nullptr if another
+ * thread is pending on this function.
  */
 template <size_t N>
-std::array<stream_sample_t, N> *inputStream_getDataDoubleBuffer(streamId id);
+std::array<stream_sample_t, N> *inputStream_getData(streamId id);
 
 #endif
 

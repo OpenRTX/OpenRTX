@@ -39,39 +39,37 @@ enum AudioSink
 {
     SINK_SPK,          ///< Send audio signal to the speaker
     SINK_RTX,          ///< Send audio signal to the transceiver
-    SINK_MCU           ///< Send audio signal from a memory buffer
+    SINK_MCU           ///< Send audio signal to a memory buffer
 };
 
 enum AudioPriority
 {
-    PRIO_BEEP = 1,     ///< Beeps have the lowest priority
-    PRIO_RX,           ///< Rx can take over beeps
-    PRIO_PROMPT,       ///< Voice prompt can take over Rx or beep
-    PRIO_TX            ///< Tx can always take over and will never be interrupted
+    PRIO_BEEP = 1,     ///< Priority level of system beeps
+    PRIO_RX,           ///< Priority level of incoming audio from RX stage
+    PRIO_PROMPT,       ///< Priority level of voice prompts
+    PRIO_TX            ///< Priority level of outward audio directed to TX stage
 };
 
 typedef int8_t pathId;
 
-/********************* Priority Management Functions ***********************/
-
 /**
- * Try to connect an audio path
- * Returns an error if the path is already used with a higher priority
- * 
- * @param source: identifier of the input audio peripheral
- * @param sink: identifier of the output audio peripheral
- * @param prio: priority of the requester
- * @return a unique identifier of the opened path or -1 if path is already used.
+ * Try to connect an audio path, returns an error if the path is already used
+ * with an higher priority.
+ *
+ * @param source: identifier of the input audio peripheral.
+ * @param sink: identifier of the output audio peripheral.
+ * @param prio: priority of the requester.
+ * @return a unique identifier of the opened path or -1 if path is already in use.
  */
 pathId audioPath_open(enum AudioSource source,
                       enum AudioSink sink,
                       enum AudioPriority prio);
 
 /**
- * Release an audio path
- * 
- * @param id: identifier of the previously opened path
- * @return true on success, false on error
+ * Release an audio path.
+ *
+ * @param id: identifier of the previously opened path.
+ * @return true on success, false on error.
  */
 bool audioPath_close(pathId id);
 
