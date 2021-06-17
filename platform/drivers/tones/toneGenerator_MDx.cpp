@@ -49,15 +49,15 @@ static const uint8_t sineTable[] =
 
 static const uint32_t baseSineFreq = 35;
 
-uint32_t toneTableIndex = 0; /* Current sine table index for CTCSS generator   */
-uint32_t toneTableIncr  = 0; /* CTCSS sine table index increment per tick      */
+uint32_t toneTableIndex = 0; // Current sine table index for CTCSS generator
+uint32_t toneTableIncr  = 0; // CTCSS sine table index increment per tick
 
-uint32_t beepTableIndex = 0; /* Current sine table index for "beep" generator  */
-uint32_t beepTableIncr  = 0; /* "beep" sine table index increment per tick     */
-uint32_t beepTimerCount = 0; /* Downcounter for timed "beep"                   */
-uint8_t  beepVolume     = 0; /* "beep" volume level                            */
+uint32_t beepTableIndex = 0; // Current sine table index for "beep" generator
+uint32_t beepTableIncr  = 0; // "beep" sine table index increment per tick
+uint32_t beepTimerCount = 0; // Downcounter for timed "beep"
+uint8_t  beepVolume     = 0; // "beep" volume level
 
-bool tonesLocked = false;    /* If true tone channel is in use by FSK/playback */
+bool tonesLocked = false;    // If true tone channel is in use by FSK/playback
 
 using namespace miosix;
 Thread *dmaWaiting = 0;
@@ -88,7 +88,7 @@ void __attribute__((used)) TIM8_TRG_COM_TIM14_IRQHandler()
         }
     }
 
-    /* Shutdown timers if both compare channels are inactive */
+    // Shutdown timers if both compare channels are inactive
     if((TIM3->CCER & (TIM_CCER_CC2E | TIM_CCER_CC3E)) == 0)
     {
         TIM3->CR1  &= ~TIM_CR1_CEN;
@@ -140,13 +140,13 @@ void toneGen_init()
 
     TIM3->ARR   = 0xFF;
     TIM3->PSC   = 2;
-    TIM3->CCMR1 = TIM_CCMR1_OC2M_2  /* CH2 in PWM mode 1, preload enabled */
+    TIM3->CCMR1 = TIM_CCMR1_OC2M_2  // CH2 in PWM mode 1, preload enabled
                 | TIM_CCMR1_OC2M_1
                 | TIM_CCMR1_OC2PE;
-    TIM3->CCMR2 = TIM_CCMR2_OC3M_2  /* The same for CH3                   */
+    TIM3->CCMR2 = TIM_CCMR2_OC3M_2  // The same for CH3
                 | TIM_CCMR2_OC3M_1
                 | TIM_CCMR2_OC3PE;
-    TIM3->CR1  |= TIM_CR1_ARPE;     /* Enable auto preload on reload      */
+    TIM3->CR1  |= TIM_CR1_ARPE;     // Enable auto preload on reload
 
     /*
      * TIM14 configuration:
@@ -206,7 +206,7 @@ void toneGen_beepOn(const float beepFreq, const uint8_t volume,
                     const uint32_t duration)
 {
     {
-        /* Do not generate "beep" if the PWM channel is busy, critical section */
+        // Do not generate "beep" if the PWM channel is busy, critical section
         FastInterruptDisableLock dLock;
         if(tonesLocked) return;
     }
@@ -249,7 +249,7 @@ void toneGen_playAudioStream(const uint16_t* buf, const size_t len,
     if((buf == NULL) || (len == 0) || (sampleRate == 0)) return;
 
     {
-        /* Critical section to avoid race conditions on "tonesLocked" */
+        // Critical section to avoid race conditions on "tonesLocked"
         FastInterruptDisableLock dLock;
         tonesLocked    = true;
         beepTimerCount = 0;
@@ -277,26 +277,26 @@ void toneGen_playAudioStream(const uint16_t* buf, const size_t len,
     DMA1_Stream2->NDTR = len;
     DMA1_Stream2->PAR  = ((uint32_t) &(TIM3->CCR3));
     DMA1_Stream2->M0AR = ((uint32_t) buf);
-    DMA1_Stream2->CR = DMA_SxCR_CHSEL_0       /* Channel 1                   */
-                     | DMA_SxCR_PL            /* Very high priority          */
-                     | DMA_SxCR_MSIZE_0       /* 16 bit source size          */
-                     | DMA_SxCR_PSIZE_0       /* 16 bit destination size     */
-                     | DMA_SxCR_MINC          /* Increment source pointer    */
-                     | DMA_SxCR_DIR_0         /* Memory to peripheral        */
-                     | DMA_SxCR_TCIE          /* Transfer complete interrupt */
-                     | DMA_SxCR_TEIE          /* Transfer error interrupt    */
-                     | DMA_SxCR_EN;           /* Enable transfer             */
+    DMA1_Stream2->CR = DMA_SxCR_CHSEL_0       // Channel 1
+                     | DMA_SxCR_PL            // Very high priority
+                     | DMA_SxCR_MSIZE_0       // 16 bit source size
+                     | DMA_SxCR_PSIZE_0       // 16 bit destination size
+                     | DMA_SxCR_MINC          // Increment source pointer
+                     | DMA_SxCR_DIR_0         // Memory to peripheral
+                     | DMA_SxCR_TCIE          // Transfer complete interrupt
+                     | DMA_SxCR_TEIE          // Transfer error interrupt
+                     | DMA_SxCR_EN;           // Enable transfer
 
     NVIC_ClearPendingIRQ(DMA1_Stream2_IRQn);
     NVIC_SetPriority(DMA1_Stream2_IRQn, 10);
     NVIC_EnableIRQ(DMA1_Stream2_IRQn);
 
-    /* Enable compare channel */
+    // Enable compare channel
     TIM3->CCR3 = 0;
     TIM3->CCER |= TIM_CCER_CC3E;
     TIM3->CR1  |= TIM_CR1_CEN;
 
-    /* Start timer */
+    // Start timer for DMA transfer triggering
     TIM7->CR1 = TIM_CR1_CEN;
 
     /*
@@ -315,7 +315,7 @@ void toneGen_playAudioStream(const uint16_t* buf, const size_t len,
         } while(dmaWaiting);
     }
 
-    /* End of transfer, turn off TIM7 and DMA */
+    // End of transfer, turn off TIM7 and DMA
     TIM7->CR1   = 0;
     TIM3->CCER &= ~TIM_CCER_CC3E;
 
@@ -323,9 +323,27 @@ void toneGen_playAudioStream(const uint16_t* buf, const size_t len,
     RCC->APB1ENR &= ~RCC_APB1ENR_TIM7EN;
     __DSB();
 
-    /* Finally, unlock tones */
+    // Finally, unlock tones
     FastInterruptDisableLock dLock;
     tonesLocked = false;
+}
+
+void toneGen_stopAudioStream()
+{
+    // Critical section to avoid race conditions
+    FastInterruptDisableLock dLock;
+
+    // Stop DMA triggering timer and TIM3 compare channel
+    TIM7->CR1   = 0;
+    TIM3->CCER &= ~TIM_CCER_CC3E;
+
+    // Shut down TIM7 and DMA
+    RCC->AHB1ENR &= ~RCC_AHB1ENR_DMA1EN;
+    RCC->APB1ENR &= ~RCC_APB1ENR_TIM7EN;
+
+    // Unlock tones and wake up the thread waiting for completion
+    tonesLocked = false;
+    if(dmaWaiting) dmaWaiting->IRQwakeup();
 }
 
 bool toneGen_toneStatus()
