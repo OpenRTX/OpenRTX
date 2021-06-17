@@ -101,7 +101,8 @@ void toneGen_encodeAFSK1200(const uint8_t *buf, const size_t len);
 /**
  * Reproduce an audio stream, sending audio stream to both the speaker and the
  * rtx baseband IC.
- * This function blocks the execution flow until all data has been sent.
+ * This function blocks the execution flow until all data has been sent or the
+ * reproduction is interrupted by calling the corresponding function.
  *
  * WARNING: the underlying peripheral accepts ONLY 16 bit transfers, while the
  * PWM resolution is 8 bit. Thus, the sample buffer MUST be of uint16_t elements
@@ -114,6 +115,12 @@ void toneGen_encodeAFSK1200(const uint8_t *buf, const size_t len);
  */
 void toneGen_playAudioStream(const uint16_t *buf, const size_t len,
                              const uint32_t sampleRate);
+
+/**
+ * Interrupt the ongoing reproduction of an audio stream, also making the
+ * toneGen_playAudioStream return to the caller.
+ */
+void toneGen_stopAudioStream();
 
 /**
  * Get the current status of the "beep"/AFSK/audio generator stage.
