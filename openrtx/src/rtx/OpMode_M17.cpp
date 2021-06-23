@@ -31,6 +31,7 @@
 #include <hwconfig.h>
 #include <OpMode_M17.h>
 #include <M17Modulator.h>
+#include <LinkSetupFrame.h>
 #include <rtx.h>
 
 #include <iostream>
@@ -72,7 +73,6 @@ int8_t bits_to_symbol(uint8_t bits)
         case 2: return -1;
         case 3: return -3;
     }
-    abort();
 }
 
 /*
@@ -296,9 +296,9 @@ lsf_t OpMode_M17::send_lsf(const std::string& src, const std::string& dest)
         encoded_dest = mobilinkd::LinkSetupFrame::encode_callsign(callsign);
      }
 
-    auto rit = std::copy(encoded_src.begin(), encoded_src.end(), result.begin());
-    std::copy(encoded_dest.begin(), encoded_dest.end(), rit);
-    result[12] = 0;
+    auto rit = std::copy(encoded_dest.begin(), encoded_dest.end(), result.begin());
+    std::copy(encoded_src.begin(), encoded_src.end(), rit);
+    result[12] = 5;
     result[13] = 5;
 
     crc.reset();
@@ -589,12 +589,14 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
 
             status->opStatus = TX;
 
-            char *source_address = status->source_address;
-            char *destination_address = status->destination_address;
+            //char *source_address = status->source_address;
+            std::string source_address("IU2KIN");
+            //char *destination_address = status->destination_address;
+            std::string destination_address("\0\0\0\0\0\0");
 
             // Send Link Setup Frame
             send_preamble();
-            auto lsf = send_lsf(source_address, destination_address);
+            lsf = send_lsf(source_address, destination_address);
         } else {
             // Transmission is ongoing, just modulate
             m17_modulate(lsf);
