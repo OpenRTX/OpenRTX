@@ -32,6 +32,7 @@
 #include <OpMode_M17.h>
 #include <M17Modulator.h>
 #include <LinkSetupFrame.h>
+#include <cstring>
 #include <rtx.h>
 
 #include <iostream>
@@ -73,6 +74,7 @@ int8_t bits_to_symbol(uint8_t bits)
         case 2: return -1;
         case 3: return -3;
     }
+    abort();
 }
 
 /*
@@ -118,7 +120,7 @@ void bytes_to_symbols(const std::array<T, N> *bytes,
  * Converts symbols into the modulated waveform of the baseband
  */
 void symbols_to_baseband(const std::array<int8_t, M17_FRAME_SYMBOLS> *symbols,
-                    std::array<audio_sample_t, M17_FRAME_SAMPLES> *baseband)
+                         std::array<audio_sample_t, M17_FRAME_SAMPLES> *baseband)
 {
     using namespace mobilinkd;
 
@@ -132,7 +134,7 @@ void symbols_to_baseband(const std::array<int8_t, M17_FRAME_SYMBOLS> *symbols,
 
     for (auto& b : *baseband)
     {
-        b = rrc(b) * 25.0;
+        b = rrc(b) * 7168.0;
     }
 }
 
@@ -179,26 +181,27 @@ void OpMode_M17::output_baseband_stm32(std::array<audio_sample_t, M17_FRAME_SAMP
                                             M17_RTX_SAMPLE_RATE);
 }
 
-std::array<audio_sample_t, M17_AUDIO_SIZE> *input_audio_linux()
+#if defined(PLATFORM_LINUX)
+// Test M17 on linux
+std::array<audio_sample_t, M17_AUDIO_SIZE> *OpMode_M17::input_audio_linux()
 {
+    if (!infile)
+        exit(0);
     std::array<audio_sample_t, M17_AUDIO_SIZE> *audio = new std::array<audio_sample_t, M17_AUDIO_SIZE>;
-    std::ifstream infile;
-    infile.open ("./m17_input.raw", std::ios::in | std::ios::binary);
     infile.read((char *)audio->data(), M17_AUDIO_SIZE * sizeof(int16_t));
-    infile.close();
     return audio;
 }
 
 void OpMode_M17::output_baseband_linux(std::array<audio_sample_t, M17_FRAME_SAMPLES> *baseband)
 {
-    std::ofstream outfile;
-    outfile.open ("./m17_output.raw", std::ios::out | std::ios::binary);
+    FILE *outfile = fopen ("./m17_output.raw", "ab");
     for(auto s : *baseband)
     {
-        outfile << s;
+        fwrite(&s, sizeof(s), 1, outfile);
     }
-    outfile.close();
+    fclose(outfile);
 }
+#endif
 
 /*
  * Modulates and one M17 frame
@@ -206,28 +209,11 @@ void OpMode_M17::output_baseband_linux(std::array<audio_sample_t, M17_FRAME_SAMP
 void OpMode_M17::output_frame(std::array<uint8_t, 2> sync_word,
                   const std::array<int8_t, M17_CODEC2_SIZE> *frame)
 {
-    for (size_t i = 0; i < sync_word.size(); i += 2) {
-        printf("%02x", sync_word[i]);
-        printf("%02x ", sync_word[i+1]);
-    }
-    for (size_t i = 0; i != frame->size(); i += 8)
-    {
-        uint8_t c = 0;
-        for (size_t j = 0; j != 8; ++j)
-        {
-            c <<= 1;
-            c |= (*frame)[i + j];
-        }
-        if (i % 16 == 0)
-            printf("%02x", c);
-        else
-            printf("%02x ", c);
-    }
-    printf("\n");
-
     bytes_to_symbols(&sync_word, symbols);
     bits_to_symbols(frame, symbols, M17_SYNCWORD_SYMBOLS);
+
     symbols_to_baseband(symbols, baseband);
+
 #if defined(PLATFORM_MDUV3x0) | defined(PLATFORM_MD3x0)
     output_baseband_stm32(baseband);
 #elif defined(PLATFORM_LINUX)
@@ -245,12 +231,6 @@ void OpMode_M17::send_preamble()
 {
     std::array<uint8_t, M17_FRAME_BYTES> preamble_bytes = { 0 };
     preamble_bytes.fill(0x77);
-
-    for (size_t i = 0; i < preamble_bytes.size(); i += 2) {
-        printf("%02x", preamble_bytes[i]);
-        printf("%02x ", preamble_bytes[i+1]);
-    }
-    printf("\n");
 
     // Preamble is simple... bytes -> symbols -> baseband.
     bytes_to_symbols(&preamble_bytes, symbols);
@@ -285,6 +265,7 @@ lsf_t OpMode_M17::send_lsf(const std::string& src, const std::string& dest)
 
     mobilinkd::LinkSetupFrame::call_t callsign;
     callsign.fill(0);
+
     std::copy(src.begin(), src.end(), callsign.begin());
     auto encoded_src = mobilinkd::LinkSetupFrame::encode_callsign(callsign);
 
@@ -457,50 +438,43 @@ void OpMode_M17::send_audio_frame(const lich_segment_t& lich, const data_frame_t
     output_frame(DATA_SYNC_WORD, &temp);
 }
 
-void OpMode_M17::m17_modulate(const lsf_t& lsf)
+void OpMode_M17::m17_modulate(bool last_frame)
 {
     using namespace mobilinkd;
-
-    lich_t lich;
-    for (size_t i = 0; i != lich.size(); ++i)
-    {
-        std::array<uint8_t, 5> segment;
-        std::copy(lsf.begin() + i * 5, lsf.begin() + (i + 1) * 5, segment.begin());
-        auto lich_segment = make_lich_segment(segment, i);
-        std::copy(lich_segment.begin(), lich_segment.end(), lich[i].begin());
-    }
-
-    struct CODEC2* codec2 = ::codec2_create(CODEC2_MODE_3200);
-
-    M17Randomizer<M17_AUDIO_SIZE> randomizer;
-    CRC16<0x5935, 0xFFFF> crc;
-
-    uint16_t frame_number = 0;
-    uint8_t lich_segment = 0;
 
 #if defined(PLATFORM_MDUV3x0) | defined(PLATFORM_MD3x0)
     // Get audio chunk from the microphone stream
     std::array<stream_sample_t, M17_AUDIO_SIZE> *stream =
         inputStream_getData<M17_AUDIO_SIZE>(input_id);
     std::array<audio_sample_t, M17_AUDIO_SIZE> *audio =
-        reinterpret_cast<std::array<audio_sample_t, M17_AUDIO_SIZE>(stream);
+        reinterpret_cast<std::array<audio_sample_t, M17_AUDIO_SIZE>*>(stream);
     stream_to_audio(audio);
 #elif defined(PLATFORM_LINUX)
-    std::array<audio_sample_t, M17_AUDIO_SIZE> *audio =
-        input_audio_linux();
+    std::array<audio_sample_t, M17_AUDIO_SIZE> *audio = input_audio_linux();
 #else
 #error M17 protocol is not supported on this platform
 #endif
 
     // TODO: Apply DC removal filter
 
-    auto data = make_data_frame(frame_number++, encode(codec2, *audio));
-    if (frame_number == 0x8000) frame_number = 0;
-    send_audio_frame(lich[lich_segment++], data);
-    if (lich_segment == lich.size()) lich_segment = 0;
-    audio->fill(0);
+    if (!last_frame)
+    {
+        auto data = make_data_frame(frame_number++, encode(codec2, *audio));
+        if (frame_number == 0x8000) frame_number = 0;
+        send_audio_frame(lich[lich_segment++], data);
+        if (lich_segment == lich.size()) lich_segment = 0;
+    }
+    else
+    {
+        auto data = make_data_frame(frame_number | 0x8000, encode(codec2, *audio));
+        send_audio_frame(lich[lich_segment], data);
+    }
 
-    // TODO: Set frame counter MSB when last frame is sent
+#if defined(PLATFORM_LINUX)
+    // Test M17 on linux
+    delete audio;
+#endif
+
 }
 
 OpMode_M17::OpMode_M17() : enterRx(true),
@@ -520,6 +494,7 @@ void OpMode_M17::enable()
 {
     // Allocate arrays for M17 processing
     input = (stream_sample_t *) malloc(2 * M17_AUDIO_SIZE * sizeof(stream_sample_t));
+    memset(input, 0x00, 2 * M17_AUDIO_SIZE * sizeof(stream_sample_t));
     symbols = new std::array<int8_t, M17_FRAME_SYMBOLS>;
     symbols->fill({ 0 });
     baseband = new std::array<int16_t, M17_FRAME_SAMPLES>;
@@ -536,7 +511,12 @@ void OpMode_M17::enable()
                                  BUF_CIRC_DOUBLE,
                                  M17_VOICE_SAMPLE_RATE);
 
-    printf("M17 enabled!\n");
+#if defined(PLATFORM_LINUX)
+    // Test M17 on linux
+    infile.open ("./m17_input.raw", std::ios::in | std::ios::binary);
+    FILE *outfile = fopen ("./m17_output.raw", "wb");
+    fclose(outfile);
+#endif
 }
 
 void OpMode_M17::disable()
@@ -551,10 +531,13 @@ void OpMode_M17::disable()
 
     // Deallocate arrays to save space
     free(input);
-    delete(symbols);
-    delete(baseband);
+    delete symbols;
+    delete baseband;
 
-    printf("M17 disabled!\n");
+#if defined(PLATFORM_LINUX)
+    // Test M17 on linux
+    infile.close();
+#endif
 }
 
 void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
@@ -597,15 +580,30 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
             // Send Link Setup Frame
             send_preamble();
             lsf = send_lsf(source_address, destination_address);
+
+            // Setup LICH for use in following modulation
+            for (size_t i = 0; i != lich.size(); ++i)
+            {
+                std::array<uint8_t, 5> segment;
+                std::copy(lsf.begin() + i * 5, lsf.begin() + (i + 1) * 5, segment.begin());
+                auto lich_segment = make_lich_segment(segment, i);
+                std::copy(lich_segment.begin(), lich_segment.end(), lich[i].begin());
+            }
+
+            // Maybe allocate this during enable and deallocate during disable?
+            codec2 = ::codec2_create(CODEC2_MODE_3200);
         } else {
             // Transmission is ongoing, just modulate
-            m17_modulate(lsf);
+            m17_modulate(false);
         }
     }
 
     // PTT is off, transition to Rx state
     if(!platform_getPttStatus() && (status->opStatus == TX))
     {
+        // Send last audio frame
+        m17_modulate(true);
+
         audio_disableMic();
         radio_disableRtx();
 

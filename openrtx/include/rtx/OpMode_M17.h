@@ -22,9 +22,15 @@
 #define OPMODE_M17_H
 
 #include "OpMode.h"
-#include "interfaces/audio_stream.h"
+#include <interfaces/audio_stream.h>
+#include <hwconfig.h>
 #include <M17Modulator.h>
 #include <array>
+
+#if defined(PLATFORM_LINUX)
+#include <iostream>
+#include <fstream>
+#endif
 
 #define M17_VOICE_SAMPLE_RATE 8000
 #define M17_RTX_SAMPLE_RATE   48000
@@ -107,21 +113,32 @@ public:
 
 private:
 
-    bool enterRx;          ///< Flag for RX management.
-    streamId input_id = 0; ///< Input audio stream identifier
-    lsf_t lsf = { 0 };     ///< Link Setup Frame data structure
+    bool enterRx;                  ///< Flag for RX management.
+    streamId input_id = 0;         ///< Input audio stream identifier
+    lsf_t lsf = { 0 };             ///< Link Setup Frame data structure
+    lich_t lich = { 0 };           ///< Link Information Channel
+    struct CODEC2* codec2 = { 0 }; ///< Codec2 data structure
+
+    uint16_t frame_number = 0;     ///< Number of frame in the sequence
+    uint8_t lich_segment = 0;      ///< LICH segment to be used
 
     // Input audio stream, PCM_16 8KHz, double buffer
     stream_sample_t *input = nullptr;
     std::array<int8_t, M17_FRAME_SYMBOLS> *symbols = nullptr;
     std::array<int16_t, M17_FRAME_SAMPLES> *baseband = nullptr;
 
+#if defined(PLATFORM_LINUX)
+    // Test M17 on linux
+    std::ifstream infile;
+    std::array<audio_sample_t, M17_AUDIO_SIZE> *input_audio_linux();
+    void output_baseband_linux(std::array<audio_sample_t, M17_FRAME_SAMPLES> *baseband);
+#endif
+
     /*
      * Pushes the modulated baseband signal into the RTX sink, to transmit M17
      */
     void output_baseband_stm32(std::array<audio_sample_t, M17_FRAME_SAMPLES> *baseband);
 
-    void output_baseband_linux(std::array<audio_sample_t, M17_FRAME_SAMPLES> *baseband);
 
     /*
      * Modulates and one M17 frame
@@ -168,7 +185,7 @@ private:
     /*
      * Starts the modulation of a single audio frame captured from the mic.
      */
-    void m17_modulate(const lsf_t& lsf);
+    void m17_modulate(bool last_frame);
 };
 
 #endif /* OPMODE_M17_H */
