@@ -34,6 +34,7 @@
 #include <LinkSetupFrame.h>
 #include <cstring>
 #include <rtx.h>
+#include <dsp.h>
 
 #include <iostream>
 #include <fstream>
@@ -142,21 +143,19 @@ void symbols_to_baseband(const std::array<int8_t, M17_FRAME_SYMBOLS> *symbols,
  * Converts int16_t used by the modulator into uint8_t used by the PWM,
  * packed in a uint16_t array, as required by the STM32 DMA
  */
-void baseband_to_pwm_stm32(const std::array<audio_sample_t, M17_FRAME_SAMPLES> *baseband)
+void baseband_to_pwm_stm32(std::array<audio_sample_t, M17_FRAME_SAMPLES> *baseband)
 {
-    // TODO: convert from int16_t to uint8_t (packed into uint16_t)
-    //for (int i = 0; i < M17_FRAME_SAMPLES; i++)
-    //{
-    //    // XXX: This code relies on the CPU performing arithmetic right shift
-    //    (*stream)[i] = static_cast<stream_sample_t> (((*baseband)[i] >> 8) + 128);
-    //}
+    for (int i = 0; i < M17_AUDIO_SIZE; i++)
+    {
+        (*baseband)[i] = ((*baseband)[i] >> 8) + 128;
+    }
 }
 
 /*
- * Converts 12 bit unsigned values packed into uint16_t into int16_t samples,
+ * Converts 12-bit unsigned values packed into uint16_t into int16_t samples,
  * perform in-place conversion to save space.
  */
-void stream_to_audio(std::array<audio_sample_t, M17_AUDIO_SIZE> *audio)
+void adc_to_audio(std::array<audio_sample_t, M17_AUDIO_SIZE> *audio)
 {
     for (int i = 0; i < M17_AUDIO_SIZE; i++)
     {
@@ -165,24 +164,48 @@ void stream_to_audio(std::array<audio_sample_t, M17_AUDIO_SIZE> *audio)
 }
 
 /*
+ * Receives audio from the STM32 ADCs, connected to the radio's mic
+ */
+std::array<audio_sample_t, M17_AUDIO_SIZE> *OpMode_M17::input_audio_stm32()
+{
+    // Get audio chunk from the microphone stream
+    std::array<stream_sample_t, M17_AUDIO_SIZE> *stream =
+        inputStream_getData<M17_AUDIO_SIZE>(input_id);
+    std::array<audio_sample_t, M17_AUDIO_SIZE> *audio =
+        reinterpret_cast<std::array<audio_sample_t, M17_AUDIO_SIZE>*>(stream);
+    // Convert 12-bit unsigned values into 16-bit signed
+    adc_to_audio(audio);
+    // Apply DC removal filter
+    dsp_dcRemoval(audio->data(), audio->size());
+
+    return audio;
+}
+
+/*
  * Pushes the modulated baseband signal into the RTX sink, to transmit M17
  */
 void OpMode_M17::output_baseband_stm32(std::array<audio_sample_t, M17_FRAME_SAMPLES> *baseband)
 {
-    // TODO: Apply PWM compensation FIR filter
-    // TODO: Change phase
-    // TODO: in-place cast to uint8_t packed into uint16_t for PWM
-
+    // Apply PWM compensation FIR filter
+    dsp_pwmCompensate(baseband->data(), baseband->size());
+    // Invert phase
+    dsp_invertPhase(baseband->data(), baseband->size());
+    // In-place cast to uint8_t packed into uint16_t for PWM
     baseband_to_pwm_stm32(baseband);
+    std::array<stream_sample_t, M17_FRAME_SAMPLES> *stream =
+        reinterpret_cast<std::array<stream_sample_t, M17_FRAME_SAMPLES>*>(baseband);
+
     streamId output_id = outputStream_start(SINK_RTX,
                                             PRIO_TX,
-                                            (stream_sample_t *)baseband->data(),
+                                            (stream_sample_t *)stream->data(),
                                             M17_FRAME_SAMPLES,
                                             M17_RTX_SAMPLE_RATE);
 }
 
 #if defined(PLATFORM_LINUX)
-// Test M17 on linux
+/*
+ * Reads the input audio from a file on Linux
+ */
 std::array<audio_sample_t, M17_AUDIO_SIZE> *OpMode_M17::input_audio_linux()
 {
     if (!infile)
@@ -192,6 +215,9 @@ std::array<audio_sample_t, M17_AUDIO_SIZE> *OpMode_M17::input_audio_linux()
     return audio;
 }
 
+/*
+ * Pushes the output baseband on a file in Linux
+ */
 void OpMode_M17::output_baseband_linux(std::array<audio_sample_t, M17_FRAME_SAMPLES> *baseband)
 {
     FILE *outfile = fopen ("./m17_output.raw", "ab");
@@ -201,6 +227,7 @@ void OpMode_M17::output_baseband_linux(std::array<audio_sample_t, M17_FRAME_SAMP
     }
     fclose(outfile);
 }
+
 #endif
 
 /*
@@ -443,26 +470,21 @@ void OpMode_M17::m17_modulate(bool last_frame)
     using namespace mobilinkd;
 
 #if defined(PLATFORM_MDUV3x0) | defined(PLATFORM_MD3x0)
-    // Get audio chunk from the microphone stream
-    std::array<stream_sample_t, M17_AUDIO_SIZE> *stream =
-        inputStream_getData<M17_AUDIO_SIZE>(input_id);
-    std::array<audio_sample_t, M17_AUDIO_SIZE> *audio =
-        reinterpret_cast<std::array<audio_sample_t, M17_AUDIO_SIZE>*>(stream);
-    stream_to_audio(audio);
+    std::array<audio_sample_t, M17_AUDIO_SIZE> *audio = input_audio_stm32();
 #elif defined(PLATFORM_LINUX)
     std::array<audio_sample_t, M17_AUDIO_SIZE> *audio = input_audio_linux();
 #else
 #error M17 protocol is not supported on this platform
 #endif
 
-    // TODO: Apply DC removal filter
-
     if (!last_frame)
     {
         auto data = make_data_frame(frame_number++, encode(codec2, *audio));
-        if (frame_number == 0x8000) frame_number = 0;
+        if (frame_number == 0x8000)
+            frame_number = 0;
         send_audio_frame(lich[lich_segment++], data);
-        if (lich_segment == lich.size()) lich_segment = 0;
+        if (lich_segment == lich.size())
+            lich_segment = 0;
     }
     else
     {
@@ -573,7 +595,8 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
             status->opStatus = TX;
 
             //char *source_address = status->source_address;
-            std::string source_address("IU2KIN");
+            std::string source_address(status->source_address);
+            // TODO: Allow destinations different than broadcast
             //char *destination_address = status->destination_address;
             std::string destination_address("\0\0\0\0\0\0");
 

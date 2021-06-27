@@ -127,17 +127,31 @@ private:
     std::array<int8_t, M17_FRAME_SYMBOLS> *symbols = nullptr;
     std::array<int16_t, M17_FRAME_SAMPLES> *baseband = nullptr;
 
-#if defined(PLATFORM_LINUX)
-    // Test M17 on linux
-    std::ifstream infile;
-    std::array<audio_sample_t, M17_AUDIO_SIZE> *input_audio_linux();
-    void output_baseband_linux(std::array<audio_sample_t, M17_FRAME_SAMPLES> *baseband);
-#endif
+#if defined(PLATFORM_MDUV3x0) | defined(PLATFORM_MD3x0)
+    /*
+     * Receives audio from the STM32 ADCs, connected to the radio's mic
+     */
+    std::array<audio_sample_t, M17_AUDIO_SIZE> *input_audio_stm32();
 
     /*
      * Pushes the modulated baseband signal into the RTX sink, to transmit M17
      */
     void output_baseband_stm32(std::array<audio_sample_t, M17_FRAME_SAMPLES> *baseband);
+#elif defined(PLATFORM_LINUX)
+    std::ifstream infile;
+
+    /*
+     * Reads the input audio from a file on Linux
+     */
+    std::array<audio_sample_t, M17_AUDIO_SIZE> *input_audio_linux()
+
+    /*
+     * Pushes the output baseband on a file in Linux
+     */
+    void output_baseband_linux(std::array<audio_sample_t, M17_FRAME_SAMPLES> *baseband);
+#else
+#error M17 protocol is not supported on this platform
+#endif
 
 
     /*
