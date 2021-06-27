@@ -68,3 +68,14 @@ void dsp_dcRemoval(audio_sample_t *buffer, uint16_t length)
         buffer[i] -= mean;
     }
 }
+
+/*
+ * Inverts the phase of the audio buffer passed as paramenter.
+ * The buffer will be processed in place to save memory.
+ */
+void dsp_invertPhase(audio_sample_t *buffer, uint16_t length)
+{
+    for (int i = 0; i < length; i++) {
+        buffer[i] = -buffer[i];
+    }
+}
