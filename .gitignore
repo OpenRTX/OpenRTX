@@ -54,3 +54,6 @@ tags
 subprojects/*
 !subprojects/*.wrap
 !subprojects/packagefiles
+
+# M17 test file
+m17_output.raw

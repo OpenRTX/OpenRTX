@@ -143,7 +143,7 @@ private:
     /*
      * Reads the input audio from a file on Linux
      */
-    std::array<audio_sample_t, M17_AUDIO_SIZE> *input_audio_linux()
+    std::array<audio_sample_t, M17_AUDIO_SIZE> *input_audio_linux();
 
     /*
      * Pushes the output baseband on a file in Linux
