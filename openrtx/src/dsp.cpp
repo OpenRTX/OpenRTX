@@ -57,9 +57,11 @@ void dsp_applyFIR(audio_sample_t *buffer,
                   uint16_t length,
                   std::array<float, order> taps)
 {
-    for(int i = length - 1; i >= 0; i--) {
+    for(int i = length - 1; i >= 0; i--)
+    {
         float acc = 0.0f;
-        for(uint16_t j = 0; j < order; j++) {
+        for(uint16_t j = 0; j < order; j++)
+        {
             if (i >= j)
                 acc += buffer[i - j] * taps[j];
         }

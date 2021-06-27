@@ -54,6 +54,15 @@ void dsp_pwmCompensate(audio_sample_t *buffer, size_t length);
  */
 void dsp_dcRemoval(audio_sample_t *buffer, size_t length);
 
+/*
+ * Inverts the phase of the audio buffer passed as paramenter.
+ * The buffer will be processed in place to save memory.
+ *
+ * @param buffer: the buffer to be used as both source and destination.
+ * @param length: the length of the input buffer.
+ */
+void dsp_invertPhase(audio_sample_t *buffer, uint16_t length);
+
 #ifdef __cplusplus
 }
 
