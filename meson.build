@@ -70,10 +70,8 @@ minmea_inc = ['lib/minmea/include']
 qdec_inc = ['lib/qdec/include']
 
 # m17-cxx-demod, M17 encoding and decoding library, made by mobilinkd
-m17cxx_opt = cmake.subproject_options()
-m17cxx_opt.add_cmake_defines({'Threads_FOUND': true})
-m17cxx_proj = cmake.subproject('m17cxx', options : m17cxx_opt)
-m17cxx_lib = m17cxx_proj.dependency('m17cxx')
+m17cxx_proj = subproject('m17cxx')
+m17cxx_dep = m17cxx_proj.get_variable('m17cxx_dep')
 
 # David Rowe's codec2 is needed by M17, included as a submodule
 codec2_opt = cmake.subproject_options()
@@ -84,7 +82,7 @@ codec2_opt.append_compile_args('c', '-DCODEC2_MODE_3200_EN=1')
 codec2_opt.append_compile_args('c', '-DCODEC2_MODE_1600_EN=1')
 codec2_opt.append_compile_args('c', '-DFREEDV_MODE_EN_DEFAULT=0')
 codec2_proj = cmake.subproject('codec2', options : codec2_opt)
-codec2_lib = codec2_proj.dependency('codec2')
+codec2_dep = codec2_proj.dependency('codec2')
 
 ##
 ## RTOS
@@ -377,7 +375,7 @@ endforeach
 linux_opts = {'sources': linux_src,
               'c_args': linux_c_args,
               'include_directories': linux_inc,
-              'dependencies': [linux_dep, codec2_lib, m17cxx_lib],
+              'dependencies': [linux_dep, codec2_dep, m17cxx_dep],
               'link_args' : linux_l_args}
 
 md3x0_opts = {'sources' : md3x0_src,
@@ -385,7 +383,7 @@ md3x0_opts = {'sources' : md3x0_src,
               'cpp_args': md3x0_args,
               'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
                              '-Wl,--print-memory-usage'],
-              'dependencies': [codec2_lib, m17cxx_lib],
+              'dependencies': [codec2_dep, m17cxx_dep],
               'include_directories': md3x0_inc}
 
 mduv3x0_opts = {'sources': mduv3x0_src,
@@ -393,7 +391,7 @@ mduv3x0_opts = {'sources': mduv3x0_src,
                 'cpp_args': mduv3x0_args,
                 'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
                                '-Wl,--print-memory-usage'],
-                'dependencies': [codec2_lib, m17cxx_lib],
+                'dependencies': [codec2_dep, m17cxx_dep],
                 'include_directories': mduv3x0_inc}
 
 gd77_opts = {'sources': gd77_src,
