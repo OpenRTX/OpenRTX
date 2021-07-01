@@ -50,7 +50,7 @@ void state_init()
     if(1)
     {
         // If the read fails set VFO channel default settings
-        state.channel.mode = FM;
+        state.channel.mode = M17;
         state.channel.bandwidth = BW_25;
         state.channel.power = 1.0;
         const hwInfo_t* hwinfo = platform_getHwInfo();

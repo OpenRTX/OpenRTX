@@ -40,7 +40,7 @@
 #include <fstream>
 
 // Generated using scikit-commpy
-const auto rrc_taps = std::experimental::make_array<double>(
+const auto rrc_taps = std::experimental::make_array<float>(
     -0.009265784007800534, -0.006136551625729697, -0.001125978562075172, 0.004891777252042491,
     0.01071805138282269, 0.01505751553351295, 0.01679337935001369, 0.015256245142156299,
     0.01042830577908502, 0.003031522725559901,  -0.0055333532968188165, -0.013403099825723372,
@@ -75,7 +75,7 @@ int8_t bits_to_symbol(uint8_t bits)
         case 2: return -1;
         case 3: return -3;
     }
-    abort();
+    return 0;
 }
 
 /*
@@ -125,7 +125,7 @@ void symbols_to_baseband(const std::array<int8_t, M17_FRAME_SYMBOLS> *symbols,
 {
     using namespace mobilinkd;
 
-    static BaseFirFilter<double, std::tuple_size<decltype(rrc_taps)>::value> rrc = makeFirFilter(rrc_taps);
+    static BaseFirFilter<float, std::tuple_size<decltype(rrc_taps)>::value> rrc = makeFirFilter(rrc_taps);
 
     baseband->fill(0);
     for (size_t i = 0; i != symbols->size(); ++i)
