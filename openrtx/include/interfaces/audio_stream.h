@@ -131,7 +131,18 @@ void outputStream_stop(streamId id);
  * thread is pending on this function.
  */
 template <size_t N>
-std::array<stream_sample_t, N> *inputStream_getData(streamId id);
+std::array<stream_sample_t, N> *inputStream_getData(streamId id)
+{
+    /*
+     * Call corresponding C API then use placement new to obtain a std::array
+     * from the pointer returned. This is possible only if sizes are equal, thus
+     * an equality check is preformed and a nullptr is returned in case of
+     * mismatch.
+     */
+    dataBlock_t buffer = inputStream_getData(id);
+    if(buffer.len != N) return nullptr;
+    return new (buffer.data) std::array<stream_sample_t, N>;
+}
 
 #endif
 
