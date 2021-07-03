@@ -293,14 +293,14 @@ lsf_t OpMode_M17::send_lsf(const std::string& src, const std::string& dest)
     mobilinkd::LinkSetupFrame::call_t callsign;
     callsign.fill(0);
 
-    std::copy(src.begin(), src.end(), callsign.begin());
+    std::copy_n(src.begin(), callsign.size(), callsign.begin());
     auto encoded_src = mobilinkd::LinkSetupFrame::encode_callsign(callsign);
 
      mobilinkd::LinkSetupFrame::encoded_call_t encoded_dest = {0xff,0xff,0xff,0xff,0xff,0xff};
      if (!dest.empty())
      {
         callsign.fill(0);
-        std::copy(dest.begin(), dest.end(), callsign.begin());
+        std::copy_n(dest.begin(), callsign.size(), callsign.begin());
         encoded_dest = mobilinkd::LinkSetupFrame::encode_callsign(callsign);
      }
 
@@ -342,7 +342,7 @@ lsf_t OpMode_M17::send_lsf(const std::string& src, const std::string& dest)
 
     std::array<int8_t, M17_CODEC2_SIZE> punctured;
     auto size = puncture(encoded, punctured, P1);
-    assert(size == M17_CODEC2_SIZE);
+    //assert(size == M17_CODEC2_SIZE);
 
     interleaver.interleave(punctured);
     randomizer.randomize(punctured);
