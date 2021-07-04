@@ -49,3 +49,9 @@ build_*
 
 # gutentags
 tags
+
+#ignore log files
+*.log
+
+#ignore linux openrtx emulator history file
+.emulatorsh_history

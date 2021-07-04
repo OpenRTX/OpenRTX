@@ -1,0 +1,3 @@
+key enter down down down down down enter
+sleep 5000
+screenshot SAT.bmp

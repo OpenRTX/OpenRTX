@@ -1,0 +1,6 @@
+sleep 3000
+screenshot noptt.bmp
+key 1 2 3
+ptt
+sleep 1000
+screenshot ptt.bmp
