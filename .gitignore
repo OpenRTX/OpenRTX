@@ -50,6 +50,14 @@ build_*
 # gutentags
 tags
 
+
 # subprojects
 subprojects/radio_tool
 subprojects/codec2
+
+#ignore log files
+*.log
+
+#ignore linux openrtx emulator history file
+.emulatorsh_history
+

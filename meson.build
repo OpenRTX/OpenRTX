@@ -309,7 +309,7 @@ dm1801_def = def + mk22fn512_def + {'PLATFORM_DM1801': ''}
 
 linux_c_args   = ['-DPLATFORM_LINUX']
 linux_cpp_args = ['-std=c++14', '-DPLATFORM_LINUX']
-linux_l_args   = ['-lm']
+linux_l_args   = ['-lm', '-lreadline']
 
 # Add AddressSanitizer if required
 if get_option('asan')
