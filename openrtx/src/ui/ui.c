@@ -649,19 +649,25 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
     switch(ui_state.input_number)
     {
         case 1:
-            state.channel.fm.txTone++;
-            state.channel.fm.txTone %= MAX_TONE_INDEX;
-            state.channel.fm.rxTone = state.channel.fm.txTone;
-            *sync_rtx = true;
+            if(state.channel.mode == FM)
+            {
+                state.channel.fm.txTone++;
+                state.channel.fm.txTone %= MAX_TONE_INDEX;
+                state.channel.fm.rxTone = state.channel.fm.txTone;
+                *sync_rtx = true;
+            }
             break;
         case 2:
-            tone_flags++;
-            tone_flags %= 4;
-            tone_tx_enable = tone_flags >> 1;
-            tone_rx_enable = tone_flags & 1;
-            state.channel.fm.txToneEn = tone_tx_enable;
-            state.channel.fm.rxToneEn = tone_rx_enable;
-            *sync_rtx = true;
+            if(state.channel.mode == FM)
+            {
+                tone_flags++;
+                tone_flags %= 4;
+                tone_tx_enable = tone_flags >> 1;
+                tone_rx_enable = tone_flags & 1;
+                state.channel.fm.txToneEn = tone_tx_enable;
+                state.channel.fm.rxToneEn = tone_rx_enable;
+                *sync_rtx = true;
+            }
             break;
         case 3:
             if (state.channel.power == 1.0f)
@@ -671,9 +677,12 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
             *sync_rtx = true;
             break;
         case 4:
-            state.channel.bandwidth++;
-            state.channel.bandwidth %= 3;
-            *sync_rtx = true;
+            if(state.channel.mode == FM)
+            {
+                state.channel.bandwidth++;
+                state.channel.bandwidth %= 3;
+                *sync_rtx = true;
+            }
             break;
         case 5:
             // Cycle through radio modes
