@@ -146,9 +146,11 @@ void symbols_to_baseband(const std::array<int8_t, M17_FRAME_SYMBOLS> *symbols,
  */
 void baseband_to_pwm_stm32(std::array<audio_sample_t, M17_FRAME_SAMPLES> *baseband)
 {
-    for (int i = 0; i < M17_AUDIO_SIZE; i++)
+    for (int i = 0; i < M17_FRAME_SAMPLES; i++)
     {
-        (*baseband)[i] = ((*baseband)[i] >> 8) + 128;
+        int32_t pos_sample = (*baseband)[i] + 32768;
+        uint16_t shifted_sample = pos_sample >> 8;
+        (*baseband)[i] = shifted_sample;
     }
 }
 
