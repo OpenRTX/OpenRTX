@@ -544,24 +544,41 @@ bool _ui_drawMacroMenu() {
         // First row
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   yellow_fab413, "1");
-        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
-                  color_white, "  %6.1f",
-                  ctcss_tone[last_state.channel.fm.txTone]/10.0f);
+        if (last_state.channel.mode == FM)
+        {
+            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
+                      color_white, "  %6.1f",
+                      ctcss_tone[last_state.channel.fm.txTone]/10.0f);
+        }
+        else if (last_state.channel.mode == M17)
+        {
+            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
+                      color_white, "          ");
+        }
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   yellow_fab413, "2       ");
-        char encdec_str[9] = { 0 };
-        bool tone_tx_enable = last_state.channel.fm.txToneEn;
-        bool tone_rx_enable = last_state.channel.fm.rxToneEn;
-        if (tone_tx_enable && tone_rx_enable)
-            snprintf(encdec_str, 9, "     E+D");
-        else if (tone_tx_enable && !tone_rx_enable)
-            snprintf(encdec_str, 9, "      E ");
-        else if (!tone_tx_enable && tone_rx_enable)
-            snprintf(encdec_str, 9, "      D ");
-        else
-            snprintf(encdec_str, 9, "        ");
-        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
-                  color_white, encdec_str);
+        if (last_state.channel.mode == FM)
+        {
+            char encdec_str[9] = { 0 };
+            bool tone_tx_enable = last_state.channel.fm.txToneEn;
+            bool tone_rx_enable = last_state.channel.fm.rxToneEn;
+            if (tone_tx_enable && tone_rx_enable)
+                snprintf(encdec_str, 9, "     E+D");
+            else if (tone_tx_enable && !tone_rx_enable)
+                snprintf(encdec_str, 9, "      E ");
+            else if (!tone_tx_enable && tone_rx_enable)
+                snprintf(encdec_str, 9, "      D ");
+            else
+                snprintf(encdec_str, 9, "        ");
+            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
+                      color_white, encdec_str);
+        }
+        else if (last_state.channel.mode == M17)
+        {
+            char encdec_str[9] = "        ";
+            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
+                      color_white, encdec_str);
+        }
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                   yellow_fab413, "3        ");
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
@@ -572,21 +589,30 @@ bool _ui_drawMacroMenu() {
                         (layout.line3_pos.y - layout.line1_pos.y)/2};
         gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
                   yellow_fab413, "4");
-        char bw_str[8] = { 0 };
-        switch (last_state.channel.bandwidth)
+        if (last_state.channel.mode == FM)
         {
-            case BW_12_5:
-                snprintf(bw_str, 8, "   12.5");
-                break;
-            case BW_20:
-                snprintf(bw_str, 8, "     20");
-                break;
-            case BW_25:
-                snprintf(bw_str, 8, "     25");
-                break;
+            char bw_str[8] = { 0 };
+            switch (last_state.channel.bandwidth)
+            {
+                case BW_12_5:
+                    snprintf(bw_str, 8, "   12.5");
+                    break;
+                case BW_20:
+                    snprintf(bw_str, 8, "     20");
+                    break;
+                case BW_25:
+                    snprintf(bw_str, 8, "     25");
+                    break;
+            }
+            gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
+                      color_white, bw_str);
         }
-        gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
-                  color_white, bw_str);
+        else if (last_state.channel.mode == M17)
+        {
+            gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
+                      color_white, "       ");
+
+        }
         gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER,
                   yellow_fab413, "5       ");
         char mode_str[9] = "";
