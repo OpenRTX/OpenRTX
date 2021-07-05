@@ -32,6 +32,7 @@ openrtx_src = ['openrtx/src/state.c',
                'openrtx/src/rtx/rtx.cpp',
                'openrtx/src/rtx/OpMode_FM.cpp',
                'openrtx/src/gps.c',
+               'openrtx/src/satellite.c',
                'openrtx/src/dsp.cpp',
                'openrtx/src/memory_profiling.cpp']
 
@@ -90,6 +91,43 @@ def = def + {'GIT_VERSION': git_version}
 ##
 ## --------------------- Family-dependent source files -------------------------
 ##
+
+
+## maidenhead has functions for converting maidenhead grid squares  (FN41)
+## back and forth from the standard latitude and longitude degree coordinate system
+maidenhead_src = ['lib/maidenhead/maidenhead.c']
+maidenhead_inc = ['lib/maidenhead/']
+
+## lunar and sat_code are used for orbit prediction capabilities
+lunar_src = [
+'lib/lunar/alt_az.cpp',
+'lib/lunar/precess.cpp',
+'lib/lunar/miscell.cpp',
+'lib/lunar/obliquit.cpp',
+'lib/lunar/nutation.cpp',
+'lib/lunar/date.cpp',
+  ]
+lunar_inc = ['lib/lunar/']
+satcode_src = [
+'lib/sat_code/sgp.cpp',
+'lib/sat_code/sgp.cpp',
+'lib/sat_code/sgp4.cpp',
+'lib/sat_code/sgp8.cpp',
+'lib/sat_code/sdp4.cpp',
+'lib/sat_code/sdp8.cpp',
+'lib/sat_code/deep.cpp',
+'lib/sat_code/basics.cpp',
+'lib/sat_code/get_el.cpp',
+'lib/sat_code/common.cpp',
+'lib/sat_code/tle_out.cpp',
+'lib/sat_code/observe.cpp',
+  ]
+satcode_inc = ['lib/sat_code/']
+
+
+#overrides existing src/inc values
+src = openrtx_src + minmea_src + maidenhead_src + lunar_src + satcode_src
+inc = openrtx_inc + rtos_inc + minmea_inc + qdec_inc + maidenhead_inc + lunar_inc + satcode_inc
 
 ##
 ## TYT MDx family

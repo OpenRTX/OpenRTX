@@ -55,6 +55,10 @@ enum uiScreen
     MENU_CHANNEL,
     MENU_CONTACTS,
     MENU_GPS,
+    MENU_SAT_CHOOSE,
+    MENU_SAT_TRACK,
+    MENU_SAT_PASS,
+    MENU_SAT_PREDICT,
     MENU_SETTINGS,
     MENU_INFO,
     MENU_ABOUT,
@@ -80,6 +84,7 @@ enum menuItems
     M_CONTACTS,
 #ifdef HAS_GPS
     M_GPS,
+    M_SAT,
 #endif
     M_SETTINGS,
     M_INFO,
@@ -173,6 +178,7 @@ typedef struct ui_state_t
 #endif
     // Which state to return to when we exit menu
     uint8_t last_main_state;
+    keyboard_t keys;
 }
 ui_state_t;
 

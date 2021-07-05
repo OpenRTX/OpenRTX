@@ -47,7 +47,7 @@ typedef struct
     uint16_t azimuth;     // Azimuth in degrees
     uint8_t snr;          // Quality of the signal in range 0-99
 }
-sat_t;
+gps_sat_t;
 
 /**
  * Data structure representing the last state received from the GPS module.
@@ -59,7 +59,7 @@ typedef struct
     uint8_t fix_type;     // 0: no fix, 1: 2D,  2: 3D
     uint8_t satellites_tracked; // Number of tracked satellites
     uint8_t satellites_in_view; // Satellites in view
-    sat_t satellites[12]; // Details about satellites in view
+    gps_sat_t satellites[12]; // Details about satellites in view
     uint32_t active_sats; // Bitmap representing which sats are part of the fix
     float latitude;       // Latitude coordinates
     float longitude;      // Longitude coordinates

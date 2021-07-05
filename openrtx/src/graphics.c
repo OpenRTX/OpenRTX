@@ -708,7 +708,7 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
 void gfx_drawGPSgraph(point_t start,
                       uint16_t width,
                       uint16_t height,
-                      sat_t *sats,
+                      gps_sat_t *sats,
                       uint32_t active_sats)
 {
     color_t white =  {255, 255, 255, 255};
@@ -771,4 +771,132 @@ void gfx_drawGPScompass(point_t start,
     // North indicator
     point_t n_pos = {start.x + radius - 3, start.y + 7};
     gfx_print(n_pos, FONT_SIZE_6PT, TEXT_ALIGN_LEFT, white, "N");
+}
+void gfx_drawPolarDelta(point_t polar_center,
+                        float az, float el, float polar_radius,
+                        uint16_t radius,
+                        float deg, color_t color){
+    point_t relpos = azel_deg_to_xy( az, el, polar_radius);
+    point_t pos = offset_point( polar_center, 1, relpos );
+    gfx_drawDeltaArrow( pos, radius, deg, color);
+}
+void gfx_drawDeltaArrow(point_t start,
+                        uint16_t radius,
+                        float deg, color_t color)
+{
+    color_t white =  {255, 255, 255, 255};
+    color_t black =  {  0,   0,   0, 255};
+    color_t yellow = {250, 180, 19 , 255};
+
+    // Compass circle
+    point_t circle_pos = {start.x + radius + 1, start.y + radius + 3};
+    point_t n_box = {start.x + radius - 5, start.y};
+    float needle_radius = radius - 4;
+    // Needle
+    deg -= 90.0f;
+    point_t p1 = {circle_pos.x + needle_radius * COS(deg),
+        circle_pos.y + needle_radius * SIN(deg)};
+    point_t p2 = {circle_pos.x + needle_radius * COS(deg + 145.0f),
+        circle_pos.y + needle_radius * SIN(deg + 145.0f)};
+    point_t p3 = {circle_pos.x + needle_radius / 2 * COS(deg + 180.0f),
+        circle_pos.y + needle_radius / 2 * SIN(deg + 180.0f)};
+    point_t p4 = {circle_pos.x + needle_radius * COS(deg - 145.0f),
+        circle_pos.y + needle_radius * SIN(deg - 145.0f)};
+    gfx_drawLine(p1, p2, color);
+    gfx_drawLine(p2, p3, color);
+    gfx_drawLine(p3, p4, color);
+    gfx_drawLine(p4, p1, color);
+}
+void gfx_drawPolarAzElPlot(point_t center, int radius, color_t color){
+    int r1 = radius;
+    int r2 = r1/2; // 45 degrees
+    int font_size = FONT_SIZE_5PT;
+    //gfx_drawHLine( center.y, 1, color );
+    //gfx_drawVLine( center.x, 1, color );
+    point_t az_top = {center.x-1, center.y-r1+6};
+    point_t az_right = {center.x+r1-5, center.y+2};
+    point_t az_left = {center.x-r1+3, center.y+2};
+    point_t az_bot = {center.x-1, center.y+r1};
+    if( radius > 40 ){ 
+        font_size = FONT_SIZE_8PT;
+        az_top.x = center.x-5; 
+        az_top.y = center.y-r1+12;
+        az_right.x = center.x+r1-12;
+        az_right.y = center.y+5;
+        az_left.x = center.x-r1+4;
+        az_left.y = center.y+5;
+        az_bot.x = center.x-1-3;
+        az_bot.y = center.y+r1-3;
+    }
+    gfx_drawCircle(center, r1, color);
+    gfx_drawCircle(center, r2, color);
+    gfx_print(az_top, font_size, TEXT_ALIGN_LEFT, color,  "N");
+    gfx_print(az_right, font_size, TEXT_ALIGN_LEFT, color,"E");
+    gfx_print(az_left, font_size, TEXT_ALIGN_LEFT, color, "W");
+    gfx_print(az_bot, font_size, TEXT_ALIGN_LEFT, color,  "S");
+}
+void gfx_drawPolar( point_t center, int radius, float az, float el, int character, color_t color){
+    point_t char_offset = {0,0};
+    char printbuf[2]={0};
+    if( character == '+' ){ //center of cross
+        char_offset.x = -4;
+        char_offset.y = 3;
+    } 
+    if( character == '>' ){ //tip of point
+        char_offset.x = -7;
+        char_offset.y = 3;
+    } 
+    if( character == '<' ){ //tip of point
+        char_offset.x = 0;
+        char_offset.y = 3;
+    } 
+    if( character == '^' ){ //tip of point
+        char_offset.x = -3;
+        char_offset.y = 10;
+    } 
+    if( character == 'v' ){ //tip of point
+        char_offset.x = -3;
+        char_offset.y = 0;
+    } 
+    if( character == 'V' ){ //tip of point
+        char_offset.x = -5;
+        char_offset.y = -1;
+    } 
+    point_t relsatpos = azel_deg_to_xy( az, el, radius);
+    point_t finalpos = offset_point(center, 2, char_offset, relsatpos );
+    if( character == 0 ){
+        gfx_setPixel(finalpos, color);
+    } else {
+        snprintf(printbuf, 2, "%c", character);
+        gfx_print(finalpos, FONT_SIZE_8PT, TEXT_ALIGN_LEFT, color,  printbuf);
+    }
+}
+point_t azel_deg_to_xy( float az_deg, float elev_deg, float radius){
+    /*printf("azel: %.2f %.2f\n", az_deg, elev_deg);*/
+    point_t ret = {0,0};
+    float az_r = (az_deg -90) * PI/180; 
+    float r0 = (90-elev_deg)/90*radius;
+    int spx = r0 * cos(az_r);
+    int spy = r0 * sin(az_r);
+    ret.x = spx;
+    ret.y = spy;
+    return ret;
+}
+void test_azel_deg_to_xy(){
+    point_t in_azel = {90,0}; //so east and at max deflection
+    int radius = 10;
+    point_t out_xy = azel_deg_to_xy( in_azel.x, in_azel.y, radius);
+    if( out_xy.x != 10 || out_xy.y != 0 ){
+        printf("Error! Got %d %d\n", out_xy.x, out_xy.y);
+    }
+}
+point_t offset_point( point_t center, int num, ... ){
+    va_list args;
+    va_start(args, num);
+    for( int i = 0; i < num; i++ ){
+        point_t offset = va_arg(args, point_t);
+        center.x += offset.x;
+        center.y += offset.y;
+    }
+    return center;
 }

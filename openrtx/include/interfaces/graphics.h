@@ -30,6 +30,9 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
+#define PI  3.141592653589793238462643383279
+
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <interfaces/display.h>
@@ -77,8 +80,8 @@
  */
 typedef struct point_t
 {
-    uint16_t x;
-    uint16_t y;
+    int16_t x;
+    int16_t y;
 } point_t;
 
 /**
@@ -321,7 +324,7 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi, 
  * @param sats: pointer to the array of satellites data
  * @param active_sats: bitset representing which sats are part of the fix
  */
-void gfx_drawGPSgraph(point_t start, uint16_t width, uint16_t height, sat_t *sats, uint32_t active_sats);
+void gfx_drawGPSgraph(point_t start, uint16_t width, uint16_t height, gps_sat_t *sats, uint32_t active_sats);
 
 /**
  * Function to draw a compass of arbitrary size.
@@ -332,5 +335,16 @@ void gfx_drawGPSgraph(point_t start, uint16_t width, uint16_t height, sat_t *sat
  * @param active: whether the needle is to be drawn or not
  */
 void gfx_drawGPScompass(point_t start, uint16_t radius, float deg, bool active);
+
+void gfx_drawPolarDelta(point_t polar_center,
+                        float az, float el, float polar_radius,
+                        uint16_t radius,
+                        float deg, color_t color);
+void gfx_drawDeltaArrow(point_t start, uint16_t radius, float deg, color_t color);
+
+void gfx_drawPolarAzElPlot(point_t center, int radius, color_t color);
+void gfx_drawPolar( point_t center, int radius, float az, float el, int character, color_t color);
+point_t azel_deg_to_xy( float az_deg, float elev_deg, float radius);
+point_t offset_point( point_t center, int num, ... );
 
 #endif /* GRAPHICS_H */

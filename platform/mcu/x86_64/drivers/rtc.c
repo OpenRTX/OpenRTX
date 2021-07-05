@@ -63,7 +63,8 @@ curTime_t rtc_getTime()
     time_t rawtime;
     struct tm * timeinfo;
     time ( &rawtime );
-    timeinfo = localtime ( &rawtime );
+    timeinfo = gmtime ( &rawtime ); 
+    //radio expects UTC time from GPS (well, close enough anyway), so give it gmtime instead of localtime
 
     t.hour = timeinfo->tm_hour;
     t.minute = timeinfo->tm_min;

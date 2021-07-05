@@ -79,11 +79,13 @@
 #include <interfaces/nvmem.h>
 #ifdef HAS_GPS
 #include <interfaces/gps.h>
+#include <satellite.h>
 #endif
 #include <string.h>
 #include <battery.h>
 #include <input.h>
 #include <hwconfig.h>
+
 
 /* UI main screen functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBackground();
@@ -102,7 +104,13 @@ extern void _ui_drawMenuChannel(ui_state_t* ui_state);
 extern void _ui_drawMenuContacts(ui_state_t* ui_state);
 #ifdef HAS_GPS
 extern void _ui_drawMenuGPS();
+extern void _ui_drawMenuSAT();
 extern void _ui_drawSettingsGPS(ui_state_t* ui_state);
+extern void _ui_drawMenuSatChoose(ui_state_t* ui_state);
+extern void _ui_drawMenuSatTrack(ui_state_t* ui_state);
+extern void _ui_drawMenuSatPass(ui_state_t* ui_state);
+extern void _ui_drawMenuSatPredict(ui_state_t* ui_state);
+extern void init_sat_global();
 #endif
 extern void _ui_drawMenuSettings(ui_state_t* ui_state);
 extern void _ui_drawMenuInfo(ui_state_t* ui_state);
@@ -121,6 +129,7 @@ const char *menu_items[] =
     "Contacts",
 #ifdef HAS_GPS
     "GPS",
+    "SAT",
 #endif
     "Settings",
     "Info",
@@ -190,6 +199,8 @@ const color_t color_black = {0, 0, 0, 255};
 const color_t color_grey = {60, 60, 60, 255};
 const color_t color_white = {255, 255, 255, 255};
 const color_t yellow_fab413 = {250, 180, 19, 255};
+const color_t color_red = {0xff, 0,0, 0xff};
+const color_t color_green = {0x00, 0xff,0, 0xff};
 
 layout_t layout;
 state_t last_state;
@@ -346,6 +357,7 @@ void ui_init()
     // This syntax is called compound literal
     // https://stackoverflow.com/questions/6891720/initialize-reset-struct-to-zero-null
     ui_state = (const struct ui_state_t){ 0 };
+    init_sat_global();
 }
 
 void ui_drawSplashScreen(bool centered)
@@ -727,12 +739,14 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
         }
         return;
     }
+    ui_state.keys = 0; 
 
     // Process pressed keys
     if(event.type == EVENT_KBD)
     {
         kbd_msg_t msg;
         msg.value = event.payload;
+        ui_state.keys = msg.keys; 
         // If MONI is pressed, activate MACRO functions
         if(msg.keys & KEY_MONI)
         {
@@ -880,6 +894,13 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         case M_GPS:
                             state.ui_screen = MENU_GPS;
                             break;
+                        case M_SAT: 
+                            //can be broken out of GPS-only if:
+                            // UI for location entry (e.g. FN41sq)
+                            // only useful if time is still accurate, which is harder without gps
+                            state.ui_screen = MENU_SAT_CHOOSE;
+                            break;
+
 #endif
                         case M_SETTINGS:
                             state.ui_screen = MENU_SETTINGS;
@@ -975,6 +996,40 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
             case MENU_GPS:
                 if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_TOP);
+                break;
+            case MENU_SAT_CHOOSE:
+                if(msg.keys & KEY_ESC)
+                    _ui_menuBack(MENU_TOP);
+                if(msg.keys & KEY_UP)
+                    _ui_menuUp(num_satellites+1);
+                else if(msg.keys & KEY_DOWN)
+                    _ui_menuDown(num_satellites+1);
+                if(msg.keys & KEY_ENTER)
+                    state.ui_screen = MENU_SAT_TRACK;
+                if(msg.keys & KEY_5)
+                    state.ui_screen = MENU_SAT_PREDICT;
+                break;
+            case MENU_SAT_TRACK:
+                if(msg.keys & KEY_ESC)
+                    _ui_menuBack(MENU_SAT_CHOOSE);
+                if(msg.keys & KEY_ENTER){
+                    //state.ui_screen = MENU_SAT_PASS;
+                    ;
+                    //I would like to allow for calc'ing and showing passes,
+                    //but would like nvm and to address accuracy issues
+                    //first
+                }
+                break;
+            case MENU_SAT_PASS:
+                //still accessible from the "Current Sky" entry
+                if(msg.keys & KEY_ESC)
+                    state.ui_screen = MENU_SAT_TRACK; 
+                    //menu_selected is reset by using menuBack! so don't!
+                    //we mustn't lose which satellite we've selected!
+                break;
+            case MENU_SAT_PREDICT:
+                if(msg.keys & KEY_ESC)
+                    _ui_menuBack(MENU_SAT_CHOOSE);
                 break;
 #endif
             // Settings menu screen
@@ -1203,6 +1258,18 @@ void ui_updateGUI()
         // GPS menu screen
         case MENU_GPS:
             _ui_drawMenuGPS();
+            break;
+        case MENU_SAT_CHOOSE:
+            _ui_drawMenuSatChoose(&ui_state);
+            break;
+        case MENU_SAT_TRACK:
+            _ui_drawMenuSatTrack(&ui_state);
+            break;
+        case MENU_SAT_PASS:
+            _ui_drawMenuSatPass(&ui_state);
+            break;
+        case MENU_SAT_PREDICT:
+            _ui_drawMenuSatPredict(&ui_state);
             break;
 #endif
         // Settings menu screen

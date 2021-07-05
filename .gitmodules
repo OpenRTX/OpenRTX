@@ -1,4 +1,19 @@
 [submodule "lib/miosix-kernel"]
 	path = lib/miosix-kernel
 	url = https://github.com/OpenRTX/miosix-kernel.git
-        branch = release
+	branch = release
+
+[submodule "lib/lunar"]
+	path = lib/lunar
+	url = https://github.com/Bill-Gray/lunar.git
+	branch = release
+
+[submodule "lib/sat_code"]
+	path = lib/sat_code
+	url = https://github.com/Bill-Gray/sat_code.git
+	branch = release
+
+[submodule "lib/maidenhead"]
+	path = lib/maidenhead
+	url = https://github.com/tarxvftech/maidenhead.git
+	branch = release

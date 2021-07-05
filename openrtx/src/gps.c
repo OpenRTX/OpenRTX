@@ -125,7 +125,7 @@ void gps_taskFunc(char *line, __attribute__((unused)) int len, state_t *state)
                 // When the first sentence arrives, clear all the old data
                 if (frame.msg_nr == 1)
                 {
-                    bzero(&state->gps_data.satellites[0], 12 * sizeof(sat_t));
+                    bzero(&state->gps_data.satellites[0], 12 * sizeof(gps_sat_t));
                 }
 
                 state->gps_data.satellites_in_view = frame.total_sats;
