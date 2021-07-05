@@ -600,7 +600,6 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
             //char *source_address = status->source_address;
             std::string source_address(status->source_address);
             // TODO: Allow destinations different than broadcast
-            //char *destination_address = status->destination_address;
             std::string destination_address("\0\0\0\0\0\0");
 
             // Send Link Setup Frame
@@ -615,9 +614,6 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
                 auto lich_segment = make_lich_segment(segment, i);
                 std::copy(lich_segment.begin(), lich_segment.end(), lich[i].begin());
             }
-
-            // Maybe allocate this during enable and deallocate during disable?
-            codec2 = ::codec2_create(CODEC2_MODE_3200);
         } else {
             // Transmission is ongoing, just modulate
             m17_modulate(false);
