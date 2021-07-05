@@ -18,15 +18,16 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <ui.h>
-#include <stdlib.h>
-#include <inttypes.h>
-#include <threads.h>
 #include <interfaces/platform.h>
-#include <battery.h>
 #include <interfaces/graphics.h>
 #include <interfaces/delays.h>
+#include <errorLog.h>
+#include <inttypes.h>
 #include <hwconfig.h>
+#include <threads.h>
+#include <battery.h>
+#include <stdlib.h>
+#include <ui.h>
 
 extern void *ui_task(void *arg);
 
@@ -43,6 +44,10 @@ int main(void)
         sleepFor(1, 0);
     }
     while(!platform_pwrButtonStatus());
+    #endif
+
+    #ifdef ERRLOG_ENABLE
+    errorLog_init();
     #endif
 
     // Initialize platform drivers
@@ -67,6 +72,24 @@ int main(void)
 
     // Keep the splash screen for 1 second
     sleepFor(1u, 0u);
+
+    #ifdef ERRLOG_ENABLE
+    if(errorLog_notEmpty())
+    {
+        point_t point = {5,20};
+        errorLog_printMessage(point);
+
+        while(!platform_getPttStatus())
+        {
+            platform_ledOn(RED);
+            delayMs(100);
+            platform_ledOff(RED);
+            delayMs(100);
+        }
+
+        errorLog_clear();
+    }
+    #endif
 
     // Create OpenRTX threads
     create_threads();
