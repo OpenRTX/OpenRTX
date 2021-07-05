@@ -22,9 +22,35 @@
 
 void dsp_pwmCompensate(audio_sample_t *buffer, uint16_t length)
 {
-    // FIR filter designed by Wojciech SP5WWP
-    std::array<float, 5> taps = { 0.01f, -0.05f, 0.88, -0.05f, 0.01f };
-    dsp_applyFIR(buffer, length, taps);
+    float u   = 0.0f;   // Current input value
+    float y   = 0.0f;   // Current output value
+    float uo  = 0.0f;   // u(k-1)
+    float uoo = 0.0f;   // u(k-2)
+    float yo  = 0.0f;   // y(k-1)
+    float yoo = 0.0f;   // y(k-2)
+
+    static constexpr float a =  4982680082321166792352.0f;
+    static constexpr float b = -6330013275146484168000.0f;
+    static constexpr float c =  1871109008789062500000.0f;
+    static constexpr float d =  548027992248535162477.0f;
+    static constexpr float e = -24496793746948241250.0f;
+    static constexpr float f =  244617462158203125.0f;
+
+    // Initialise filter with first two values, for smooth transient.
+    if(length <= 2) return;
+    uoo = static_cast< float >(buffer[0]);
+    uo  = static_cast< float >(buffer[1]);
+
+    for(size_t i = 2; i < length; i++)
+    {
+        u   = static_cast< float >(buffer[i]);
+        y   = (a/d)*u + (b/d)*uo + (c/d)*uoo - (e/d)*yo - (f/d)*yoo;
+        uoo = uo;
+        uo  = u;
+        yoo = yo;
+        yo  = y;
+        buffer[i] = static_cast< audio_sample_t >(y * 0.5f);
+    }
 }
 
 void dsp_dcRemoval(audio_sample_t *buffer, size_t length)
@@ -49,6 +75,14 @@ void dsp_dcRemoval(audio_sample_t *buffer, size_t length)
         buffer[i]  = u - uo + static_cast< audio_sample_t >(yold);
         uo = u;
         yo = buffer[i];
+    }
+}
+
+void dsp_invertPhase(audio_sample_t *buffer, uint16_t length)
+{
+    for(uint16_t i = 0; i < length; i++)
+    {
+        buffer[i] = -buffer[i];
     }
 }
 
