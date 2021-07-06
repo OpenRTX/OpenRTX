@@ -35,9 +35,13 @@
 #include <cstring>
 #include <rtx.h>
 #include <dsp.h>
+#include <stdio.h>
 
 #include <iostream>
 #include <fstream>
+
+// Enable bitstream output on serial console
+//#define M17_DEBUG
 
 // Generated using scikit-commpy
 const auto rrc_taps = std::experimental::make_array<float>(
@@ -239,6 +243,24 @@ void OpMode_M17::output_baseband_linux(std::array<audio_sample_t, M17_FRAME_SAMP
 void OpMode_M17::output_frame(std::array<uint8_t, 2> sync_word,
                   const std::array<int8_t, M17_CODEC2_SIZE> *frame)
 {
+#if defined M17_DEBUG
+    for (auto c : sync_word)
+    {
+        printf("%"PRIx8" ", c);
+    }
+    for (size_t i = 0; i != frame->size(); i += 8)
+    {
+        uint8_t c = 0;
+        for (size_t j = 0; j != 8; ++j)
+        {
+            c <<= 1;
+            c |= (*frame)[i + j];
+        }
+        printf("%"PRIx8" ", c);
+    }
+    printf("\n");
+#endif
+
     bytes_to_symbols(&sync_word, symbols);
     bits_to_symbols(frame, symbols, M17_SYNCWORD_SYMBOLS);
 
@@ -261,6 +283,14 @@ void OpMode_M17::send_preamble()
 {
     std::array<uint8_t, M17_FRAME_BYTES> preamble_bytes = { 0 };
     preamble_bytes.fill(0x77);
+
+#if defined M17_DEBUG
+    for (auto c : preamble_bytes)
+    {
+        printf("%"PRIx8" ", c);
+    }
+    printf("\n");
+#endif
 
     // Preamble is simple... bytes -> symbols -> baseband.
     bytes_to_symbols(&preamble_bytes, symbols);

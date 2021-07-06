@@ -48,10 +48,4 @@ void create_threads();
  */
 #define GPS_TASK_STKSIZE 2048
 
-/**
- * Stack size for M17 task, in bytes.
- */
-// TODO: Properly size this
-#define M17_TASK_STKSIZE 512
-
 #endif /* THREADS_H */
