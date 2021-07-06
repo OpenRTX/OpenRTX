@@ -28,8 +28,7 @@
  * MDx radios have only one output stream device, via PWM-based tone generator,
  * connected to both the speaker and HR_Cx000 audio input.
  */
-int priority = PRIO_BEEP - 1;
-bool streamStarted = false;
+int priority = PRIO_BEEP;
 
 streamId outputStream_start(const enum AudioSink destination,
                             const enum AudioPriority prio,
@@ -37,27 +36,20 @@ streamId outputStream_start(const enum AudioSink destination,
                             const size_t length,
                             const uint32_t sampleRate)
 {
-    if(destination == SINK_MCU) return -1;          /* This device cannot sink to buffer          */
-    if(prio <= priority) return -1;                 /* Requested priority is lower than current   */
-    if(streamStarted) toneGen_stopAudioStream();    /* Stop an ongoing stream with lower priority */
+    if(destination == SINK_MCU) return -1;              /* This device cannot sink to buffer             */
+    if(toneGen_toneBusy())                              /* Check if a stream is already running          */
+    {
+        if(prio < priority) return -1;                  /* Requested priority is lower than current      */
+        if(prio > priority) toneGen_stopAudioStream();  /* Stop an ongoing stream with lower priority    */
+        if(!toneGen_waitForStreamEnd()) return -1;      /* Same priority, wait for current stream to end */
+    }
 
-    /* These assigments must be thread-safe */
+    /* This assigment must be thread-safe */
     __disable_irq();
     priority = prio;
-    streamStarted = true;
     __enable_irq();
 
-    toneGen_playAudioStream(buf, length, sampleRate);
-
-    /*
-     * Both this (from API specification) and the above functions are blocking,
-     * thus when we get here the strem is finished
-     */
-    __disable_irq();
-    streamStarted = false;
-    priority = PRIO_BEEP - 1;
-    __enable_irq();
-
+    toneGen_playAudioStream(buf, length, sampleRate);   /* Start the stream, nonblocking function        */
     return 0;
 }
 
@@ -65,12 +57,6 @@ void outputStream_stop(streamId id)
 {
     (void) id;
 
-    if(!streamStarted) return;
+    if(!toneGen_toneBusy()) return;
     toneGen_stopAudioStream();
-
-    /* Critical section */
-    __disable_irq();
-    streamStarted = false;
-    priority = PRIO_BEEP - 1;
-    __enable_irq();
 }

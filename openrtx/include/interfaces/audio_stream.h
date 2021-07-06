@@ -93,8 +93,9 @@ dataBlock_t inputStream_getData(streamId id);
 void inputStream_stop(streamId id);
 
 /**
- * Send an audio stream to a given output, this function blocks until all data
- * has been sent.
+ * Send an audio stream to a given output. This function returns immediately if
+ * there is not another stream already running, otherwise it will block the
+ * caller until the previous stream terminates.
  * If a stream is opened from the same source but with an higher priority than
  * the one currently open, the new stream takes over the previous one.
  *
