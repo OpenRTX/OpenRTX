@@ -94,7 +94,11 @@ void __attribute__((naked)) USART1_IRQHandler()
 #endif
 {
     saveContext();
+    #if defined(PLATFORM_MD3x0) && defined(MD3x0_ENABLE_DBG)
+    asm volatile("bl _Z13usart3irqImplv");
+    #else
     asm volatile("bl _Z12GpsUsartImplv");
+    #endif
     restoreContext();
 }
 
@@ -117,7 +121,7 @@ void gps_init(const uint16_t baud)
     PORT->BRR = quot/2 + (quot & 1);
     PORT->CR3 |= USART_CR3_ONEBIT;
     PORT->CR1 = USART_CR1_RE
-                | USART_CR1_RXNEIE;
+              | USART_CR1_RXNEIE;
 
     #ifdef PLATFORM_MD3x0
     NVIC_ClearPendingIRQ(USART3_IRQn);
