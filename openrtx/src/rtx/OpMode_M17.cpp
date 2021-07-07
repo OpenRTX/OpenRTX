@@ -264,12 +264,12 @@ void OpMode_M17::output_frame(std::array<uint8_t, 2> sync_word,
     bytes_to_symbols(&sync_word, symbols);
     bits_to_symbols(frame, symbols, M17_SYNCWORD_SYMBOLS);
 
-    symbols_to_baseband(symbols, baseband);
+    symbols_to_baseband(symbols, active_baseband);
 
 #if defined(PLATFORM_MDUV3x0) | defined(PLATFORM_MD3x0)
-    output_baseband_stm32(baseband);
+    output_baseband_stm32(active_baseband);
 #elif defined(PLATFORM_LINUX)
-    output_baseband_linux(baseband);
+    output_baseband_linux(active_baseband);
 #else
 #error M17 protocol is not supported on this platform
 #endif
@@ -294,11 +294,11 @@ void OpMode_M17::send_preamble()
 
     // Preamble is simple... bytes -> symbols -> baseband.
     bytes_to_symbols(&preamble_bytes, symbols);
-    symbols_to_baseband(symbols, baseband);
+    symbols_to_baseband(symbols, active_baseband);
 #if defined(PLATFORM_MDUV3x0) | defined(PLATFORM_MD3x0)
-    output_baseband_stm32(baseband);
+    output_baseband_stm32(active_baseband);
 #elif defined(PLATFORM_LINUX)
-    output_baseband_linux(baseband);
+    output_baseband_linux(active_baseband);
 #else
 #error M17 protocol is not supported on this platform
 #endif
@@ -536,7 +536,9 @@ OpMode_M17::OpMode_M17() : enterRx(true),
                            lsf({0}),
                            input(nullptr),
                            symbols(nullptr),
-                           baseband(nullptr)
+                           baseband_a(nullptr),
+                           baseband_b(nullptr),
+                           active_baseband(nullptr)
 {
 }
 
@@ -546,13 +548,17 @@ OpMode_M17::~OpMode_M17()
 
 void OpMode_M17::enable()
 {
+    // Allocate codec2 encoder
+    codec2 = ::codec2_create(CODEC2_MODE_3200);
     // Allocate arrays for M17 processing
     input = (stream_sample_t *) malloc(2 * M17_AUDIO_SIZE * sizeof(stream_sample_t));
     memset(input, 0x00, 2 * M17_AUDIO_SIZE * sizeof(stream_sample_t));
     symbols = new std::array<int8_t, M17_FRAME_SYMBOLS>;
     symbols->fill({ 0 });
-    baseband = new std::array<int16_t, M17_FRAME_SAMPLES>;
-    baseband->fill({ 0 });
+    baseband_a = new std::array<int16_t, M17_FRAME_SAMPLES>;
+    baseband_a->fill({ 0 });
+    baseband_b = new std::array<int16_t, M17_FRAME_SAMPLES>;
+    baseband_b->fill({ 0 });
 
     // When starting, close squelch and prepare for entering in RX mode.
     enterRx   = true;
@@ -588,11 +594,13 @@ void OpMode_M17::disable()
     radio_disableRtx();
     enterRx   = false;
 
+    // FIXME: These make the radio crash
     // Deallocate arrays to save space
-    free(input);
-    delete symbols;
-    delete baseband;
-
+    //free(input);
+    //delete symbols;
+    //delete baseband_a;
+    //delete baseband_b;
+    //codec2_destroy(codec2);
 }
 
 void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
@@ -616,6 +624,12 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
     // TX logic
     if(platform_getPttStatus() && (status->txDisable == 0))
     {
+        // Swap active output buffer
+        if (active_baseband == baseband_a)
+            active_baseband = baseband_b;
+        else
+            active_baseband = baseband_a;
+
         // Entering Tx mode right now, setup transmission
         if(status->opStatus != TX)
         {

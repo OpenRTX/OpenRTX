@@ -122,10 +122,12 @@ private:
     uint16_t frame_number = 0;     ///< Number of frame in the sequence
     uint8_t lich_segment = 0;      ///< LICH segment to be used
 
-    // Input audio stream, PCM_16 8KHz, double buffer
+    // Input audio stream, PCM_16 8KHz, double buffered
     stream_sample_t *input = nullptr;
     std::array<int8_t, M17_FRAME_SYMBOLS> *symbols = nullptr;
-    std::array<int16_t, M17_FRAME_SAMPLES> *baseband = nullptr;
+    std::array<int16_t, M17_FRAME_SAMPLES> *baseband_a = nullptr;
+    std::array<int16_t, M17_FRAME_SAMPLES> *baseband_b = nullptr;
+    std::array<int16_t, M17_FRAME_SAMPLES> *active_baseband = nullptr;
 
 #if defined(PLATFORM_MDUV3x0) | defined(PLATFORM_MD3x0)
     /*
