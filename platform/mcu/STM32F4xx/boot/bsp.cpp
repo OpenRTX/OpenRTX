@@ -29,6 +29,7 @@
 #include <kernel/sync.h>
 #include <hwconfig.h>
 #include "../drivers/usb_vcom.h"
+#include "../drivers/USART3.h"
 
 namespace miosix
 {
@@ -50,6 +51,11 @@ void IRQbspInit()
     GPIOD->OSPEEDR=0xaaaaaaaa;
     GPIOE->OSPEEDR=0xaaaaaaaa;
     GPIOH->OSPEEDR=0xaaaaaaaa;
+
+    #ifdef MD3x0_ENABLE_DBG
+    usart3_init(115200);
+    usart3_IRQwrite("starting...\r\n");
+    #endif
 }
 
 void bspInit2()
