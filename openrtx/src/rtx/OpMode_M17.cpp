@@ -389,9 +389,9 @@ lsf_t OpMode_M17::send_lsf(const std::string& src, const std::string& dest)
  */
 codec_frame_t OpMode_M17::encode(struct CODEC2* codec2, const audio_frame_t& audio)
 {
-    codec_frame_t result;
-    codec2_encode(codec2, &result[0], const_cast<audio_sample_t*>(&audio[0]));
-    codec2_encode(codec2, &result[8], const_cast<audio_sample_t*>(&audio[160]));
+    codec_frame_t result = { 0 };
+    //codec2_encode(codec2, &result[0], const_cast<audio_sample_t*>(&audio[0]));
+    //codec2_encode(codec2, &result[8], const_cast<audio_sample_t*>(&audio[160]));
     return result;
 }
 
@@ -549,7 +549,7 @@ OpMode_M17::~OpMode_M17()
 void OpMode_M17::enable()
 {
     // Allocate codec2 encoder
-    codec2 = ::codec2_create(CODEC2_MODE_3200);
+    //codec2 = ::codec2_create(CODEC2_MODE_3200);
     // Allocate arrays for M17 processing
     input = (stream_sample_t *) malloc(2 * M17_AUDIO_SIZE * sizeof(stream_sample_t));
     memset(input, 0x00, 2 * M17_AUDIO_SIZE * sizeof(stream_sample_t));
