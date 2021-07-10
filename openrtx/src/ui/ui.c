@@ -639,7 +639,7 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
     }
 
 #ifdef HAS_ABSOLUTE_KNOB // If the radio has an absolute position knob
-    if(msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT) {
+    if(msg.keys & KNOB_LEFT || msg.keys & KNOB_RIGHT) {
         state.sqlLevel = platform_getChSelector() - 1;
         *sync_rtx = true;
     }
