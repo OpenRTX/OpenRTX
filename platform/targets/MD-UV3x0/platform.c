@@ -43,7 +43,8 @@ void platform_init()
 
     gpio_setMode(PTT_SW, INPUT_PULL_UP);
 
-    gpio_setMode(PWR_SW, OUTPUT);
+    gpio_setMode(PTT_SW,  INPUT);
+    gpio_setMode(PTT_EXT, INPUT);
 
     /*
      * Initialise ADC1, for vbat, RSSI, ...
@@ -116,7 +117,9 @@ float platform_getVolumeLevel()
 bool platform_getPttStatus()
 {
     /* PTT line has a pullup resistor with PTT switch closing to ground */
-    return (gpio_readPin(PTT_SW) == 0) ? true : false;
+    uint8_t intPttStatus = gpio_readPin(PTT_SW);
+    uint8_t extPttStatus = gpio_readPin(PTT_EXT);
+    return ((intPttStatus == 0) || (extPttStatus == 0)) ? true : false;
 }
 
 bool platform_pwrButtonStatus()
