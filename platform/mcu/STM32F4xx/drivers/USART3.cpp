@@ -132,6 +132,8 @@ void usart3_terminate()
 
 ssize_t usart3_readBlock(void *buffer, size_t size, off_t where)
 {
+    (void) where;
+
     miosix::Lock< miosix::FastMutex > l(rxMutex);
     char *buf = reinterpret_cast< char* >(buffer);
     size_t result = 0;
@@ -164,6 +166,8 @@ ssize_t usart3_readBlock(void *buffer, size_t size, off_t where)
 
 ssize_t usart3_writeBlock(void *buffer, size_t size, off_t where)
 {
+    (void) where;
+
     miosix::Lock< miosix::FastMutex > l(txMutex);
     const char *buf = reinterpret_cast< const char* >(buffer);
     for(size_t i = 0; i < size; i++)
