@@ -168,7 +168,12 @@ stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.cpp',
                  'platform/mcu/STM32F4xx/drivers/rtc.c',
                  'platform/mcu/STM32F4xx/drivers/SPI2.c',
                  'platform/mcu/STM32F4xx/drivers/USART3.cpp',
-                 'platform/mcu/CMSIS/Device/ST/STM32F4xx/Source/system_stm32f4xx.c']
+                 'platform/mcu/CMSIS/Device/ST/STM32F4xx/Source/system_stm32f4xx.c',
+                 'platform/mcu/CMSIS/DSP/Source/CommonTables/arm_common_tables.c',
+                 'platform/mcu/CMSIS/DSP/Source/CommonTables/arm_const_structs.c',
+                 'platform/mcu/CMSIS/DSP/Source/TransformFunctions/arm_rfft_f32.c',
+                 'platform/mcu/CMSIS/DSP/Source/TransformFunctions/arm_cfft_f32.c',
+                 'platform/mcu/CMSIS/DSP/Source/BasicMathFunctions/arm_scale_f32.c']
 
 stm32f405_inc = ['platform/mcu/CMSIS/Include',
                  'platform/mcu/CMSIS/Device/ST/STM32F4xx/Include',
