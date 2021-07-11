@@ -23,7 +23,15 @@ c_args      = [
                '-mthumb',                   # ARM Thumb2 ISA
                '-mfloat-abi=hard',          # Hard floating point support
                '-mfpu=fpv4-sp-d16',
-               '-Os'
+               '-Os',
+               '-fsingle-precision-constant',
+               '-D__FPU_PRESENT=1',
+               '-D__FPU_USED=1',
+               '-std=gnu11',
+               '-DSTM32F40_41xxx',
+               '-DCORTEX_M4',
+               '-DARM_MATH_CM4',
+               '-DFDV_ARM_MATH'
               ]
 
 cpp_args    = [
