@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <ui.h>
 #include <string.h>
+#include <rtx.h>
 
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainTop();
@@ -50,6 +51,9 @@ void _ui_drawModeDetails()
 {
     char bw_str[8] = { 0 };
     char encdec_str[9] = { 0 };
+        
+    rtxStatus_t cfg = rtx_getCurrentStatus();
+    
     switch(last_state.channel.mode)
     {
         case FM:
@@ -84,7 +88,7 @@ void _ui_drawModeDetails()
                       encdec_str);
         break;
         case DMR:
-        // Print Module Frequency on line 2 of 3
+        // Print talkgroup on line 2 of 3
         gfx_printLine(2, 3, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
                       layout.horizontal_pad, layout.mode_font_small,
                       TEXT_ALIGN_LEFT, color_white, "TG:");
@@ -92,6 +96,16 @@ void _ui_drawModeDetails()
         gfx_printLine(3, 3, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
                       layout.horizontal_pad, layout.mode_font_small, 
                       TEXT_ALIGN_LEFT, color_white, "ID:");
+        break;
+        case M17:
+        // Print M17 Source ID on line 2 of 3
+        gfx_printLine(2, 3, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
+                      layout.horizontal_pad, layout.mode_font_small, 
+                      TEXT_ALIGN_LEFT, color_white, "Src ID: %s", cfg.source_address);
+        // Print M17 Destination ID on line 3 of 3
+        gfx_printLine(3, 3, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
+                      layout.horizontal_pad, layout.mode_font_small, 
+                      TEXT_ALIGN_LEFT, color_white, "Dst ID: %s", cfg.destination_address);
         break;
     }
 }
