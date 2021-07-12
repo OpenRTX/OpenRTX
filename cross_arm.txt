@@ -31,7 +31,8 @@ c_args      = [
                '-DSTM32F40_41xxx',
                '-DCORTEX_M4',
                '-DARM_MATH_CM4',
-               '-DFDV_ARM_MATH'
+               '-DFDV_ARM_MATH',
+               '-D__EMBEDDED__'
               ]
 
 cpp_args    = [

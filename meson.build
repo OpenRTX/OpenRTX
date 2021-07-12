@@ -81,6 +81,8 @@ codec2_opt.append_compile_args('c', '-DCODEC2_MODE_EN_DEFAULT=0')
 codec2_opt.append_compile_args('c', '-DCODEC2_MODE_3200_EN=1')
 codec2_opt.append_compile_args('c', '-DCODEC2_MODE_1600_EN=1')
 codec2_opt.append_compile_args('c', '-DFREEDV_MODE_EN_DEFAULT=0')
+codec2_opt.set_override_option('CMAKE_C_FLAGS_DEBUG', '')
+codec2_opt.set_override_option('CMAKE_C_FLAGS_RELEASE', '')
 codec2_proj = cmake.subproject('codec2', options : codec2_opt)
 codec2_dep = codec2_proj.dependency('codec2')
 

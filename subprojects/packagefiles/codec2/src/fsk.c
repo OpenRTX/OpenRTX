@@ -194,8 +194,11 @@ struct FSK * fsk_create_core(int Fs, int Rs, int M, int P, int Nsym, int f1_tx, 
     
     fsk->ppm = 0;
     
+
+#ifndef __EMBEDDED__
     fsk->stats = (struct MODEM_STATS*)malloc(sizeof(struct MODEM_STATS)); assert(fsk->stats != NULL);
     stats_init(fsk);
+#endif
     fsk->normalise_eye = 1;
     
     return fsk;
@@ -882,13 +885,16 @@ void fsk_demod_core(struct FSK *fsk, uint8_t rx_bits[], float rx_filt[], COMP fs
     int neyesamp_dec = ceil(((float)P*2)/MODEM_STATS_EYE_IND_MAX);
     neyesamp = (P*2)/neyesamp_dec;
     assert(neyesamp <= MODEM_STATS_EYE_IND_MAX);
+#ifndef __EMBEDDED__
     fsk->stats->neyesamp = neyesamp;
+#endif
 
     neyeoffset = high_sample+1;
     
     int eye_traces = MODEM_STATS_ET_MAX/M;
     int ind;
     
+#ifndef __EMBEDDED__
     fsk->stats->neyetr = fsk->mode*eye_traces;
     for( i=0; i<eye_traces; i++){
         for ( m=0; m<M; m++){
@@ -926,6 +932,7 @@ void fsk_demod_core(struct FSK *fsk, uint8_t rx_bits[], float rx_filt[], COMP fs
 
     for(i=0; i<M; i++)
         fsk->stats->f_est[i] = f_est[i];
+#endif
     
     /* Dump some internal samples */
     modem_probe_samp_f("t_EbNodB",&(fsk->EbNodB),1);
@@ -971,6 +978,7 @@ static void stats_init(struct FSK *fsk) {
     int neyesamp_dec = ceil(((float)P*2)/MODEM_STATS_EYE_IND_MAX);
     int neyesamp = (P*2)/neyesamp_dec;
     assert(neyesamp <= MODEM_STATS_EYE_IND_MAX);
+#ifndef __EMBEDDED__
     fsk->stats->neyesamp = neyesamp;
     
     int eye_traces = MODEM_STATS_ET_MAX/M;
@@ -986,6 +994,7 @@ static void stats_init(struct FSK *fsk) {
     }
 
     fsk->stats->rx_timing = fsk->stats->snr_est = 0;
+#endif
     
 }
 
@@ -1018,10 +1027,12 @@ void fsk_get_demod_stats(struct FSK *fsk, struct MODEM_STATS *stats){
     stats->rx_timing = fsk->stats->rx_timing;
     stats->foff = fsk->stats->foff;
 
+#ifndef __EMBEDDED__
     stats->neyesamp = fsk->stats->neyesamp;
     stats->neyetr = fsk->stats->neyetr;
     memcpy(stats->rx_eye, fsk->stats->rx_eye, sizeof(stats->rx_eye));
     memcpy(stats->f_est, fsk->stats->f_est, fsk->mode*sizeof(float));
+#endif
         
     /* these fields not used for FSK so set to something sensible */
 
