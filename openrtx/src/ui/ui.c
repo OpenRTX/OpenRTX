@@ -754,6 +754,14 @@ void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg)
     buf[ui_state.input_position] = symbols_ITU_T_E161[num_key][ui_state.input_set];
 }
 
+void _ui_textInputDel(char *buf)
+{
+    buf[ui_state.input_position] = 0;
+    if(ui_state.input_position > 0)
+        ui_state.input_position--;
+    ui_state.input_set = 0;
+}
+
 void ui_saveState()
 {
     last_state = state;
@@ -1275,6 +1283,9 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     else if(msg.keys & KEY_ESC)
                         // Discard selected callsign and disable input mode
                         ui_state.edit_mode = false;
+                    else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN || 
+                            msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
+                        _ui_textInputDel(ui_state.new_callsign);
                     else if(input_isNumberPressed(msg))
                         _ui_textInputKeypad(ui_state.new_callsign, 9, msg);
                 }
