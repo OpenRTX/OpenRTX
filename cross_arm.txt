@@ -32,7 +32,15 @@ c_args      = [
                '-DCORTEX_M4',
                '-DARM_MATH_CM4',
                '-DFDV_ARM_MATH',
-               '-D__EMBEDDED__'
+               '-D__EMBEDDED__',
+               '-DARM_DSP_CONFIG_TABLES',
+               '-DARM_FFT_ALLOW_TABLES',
+               '-DARM_TABLE_BITREVIDX_FLT_128',
+               '-DARM_TABLE_TWIDDLECOEF_F32_128',
+               '-DARM_TABLE_BITREVIDX_FLT_256',
+               '-DARM_TABLE_TWIDDLECOEF_F32_256',
+               '-DARM_TABLE_BITREVIDX_FLT_512',
+               '-DARM_TABLE_TWIDDLECOEF_F32_512'
               ]
 
 cpp_args    = [
