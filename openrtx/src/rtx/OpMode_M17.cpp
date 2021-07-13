@@ -69,6 +69,15 @@ const auto rrc_taps = std::experimental::make_array<float>(
     -0.001125978562075172, -0.006136551625729697, -0.009265784007800534
 );
 
+const std::array<uint8_t, 46> mobilinkd::detail::DC = {
+    0xd6, 0xb5, 0xe2, 0x30, 0x82, 0xFF, 0x84, 0x62,
+    0xba, 0x4e, 0x96, 0x90, 0xd8, 0x98, 0xdd, 0x5d,
+    0x0c, 0xc8, 0x52, 0x43, 0x91, 0x1d, 0xf8, 0x6e,
+    0x68, 0x2F, 0x35, 0xda, 0x14, 0xea, 0xcd, 0x76,
+    0x19, 0x8d, 0xd5, 0x80, 0xd1, 0x33, 0x87, 0x13,
+    0x57, 0x18, 0x2d, 0x29, 0x78, 0xc3
+};
+
 /*
  * Converts bits of binary data into an encoding symbol
  */
@@ -327,14 +336,15 @@ lsf_t OpMode_M17::send_lsf(const std::string& src, const std::string& dest)
     mobilinkd::LinkSetupFrame::call_t callsign;
     callsign.fill(0);
 
-    std::copy_n(src.begin(), callsign.size(), callsign.begin());
+    std::copy_n(src.begin(), std::min(src.size(), callsign.size()), callsign.begin());
+    std::copy(src.begin(), src.end(), callsign.begin());
     auto encoded_src = mobilinkd::LinkSetupFrame::encode_callsign(callsign);
 
      mobilinkd::LinkSetupFrame::encoded_call_t encoded_dest = {0xff,0xff,0xff,0xff,0xff,0xff};
      if (!dest.empty())
      {
         callsign.fill(0);
-        std::copy_n(dest.begin(), callsign.size(), callsign.begin());
+        std::copy_n(dest.begin(), std::min(dest.size(), callsign.size()), callsign.begin());
         encoded_dest = mobilinkd::LinkSetupFrame::encode_callsign(callsign);
      }
 
