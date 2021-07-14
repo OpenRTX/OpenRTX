@@ -130,18 +130,24 @@ keyboard_t keyname2keyboard(char * name){
     "KEY_0", "KEY_1", "KEY_2", "KEY_3", "KEY_4", "KEY_5", "KEY_6", "KEY_7",
     "KEY_8", "KEY_9", "KEY_STAR", "KEY_HASH", "KEY_ENTER", "KEY_ESC", "KEY_UP",
     "KEY_DOWN", "KEY_LEFT", "KEY_RIGHT", "KEY_MONI", "KEY_F1", "KEY_F2", "KEY_F3",
-    "KEY_F4", "KEY_F5", "KEY_F6", "KEY_F7", "KEY_F8", "KEY_F9", "KEY_F10",
+    "KEY_F4", "KEY_F5", "KEY_F6", "KEY_F7", "KEY_F8", "KNOB_LEFT", "KNOB_RIGHT",
     };
     int numnames = sizeof(names)/sizeof(char*);
     for( int i = 0; i < numnames; i++ ){
-        if( strcasecmp(name,names[i]+4) == 0 ){ //notice case insensitive
+        if( strcasecmp(name,names[i]+4) == 0 || strcasecmp(name, names[i]) == 0 ){ //notice case insensitive
             /*printf("MATCH with %s\n", names[i]);*/
-            //+4 to skip the KEY_ on all the names
+            //+4 to skip the KEY_ on all the names, non +4 to allow for KNOB_LEFT.
+            //This also means you can write KEY_LEFT as "KEY_LEFT", or "LEFT" and KNOB_LEFT as "KNOB_LEFT" or "_LEFT" 
+            
             //so if name == "2", this whole function will return equivalent to KEY_2 cpp define
             //and if name=="LEFT", then you get equivalent to KEY_LEFT cpp define
+            //and if name=="_LEFT", then you get equivalent to KNOB_LEFT cpp define
+            //and if name=="KNOB_LEFT", then you get equivalent to KNOB_LEFT cpp define
+            //and if name=="KEY_2", then you get equivalent to KEY_2 cpp define of course
             return (1 << i); 
             //order matters a great deal in names array, has to match
             //the bit field generated in interface/keyboard.h 
+            //so double check that with every update
         }
     }
     return 0;
