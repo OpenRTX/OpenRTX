@@ -660,6 +660,11 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
 
             // Send Link Setup Frame
             send_preamble();
+            // Swap active output buffer
+            if (active_baseband == baseband_a)
+                active_baseband = baseband_b;
+            else
+                active_baseband = baseband_a;
             lsf = send_lsf(source_address, destination_address);
 
             // Setup LICH for use in following modulation
