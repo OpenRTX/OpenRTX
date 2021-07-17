@@ -15,7 +15,6 @@ namespace detail
 
 // M17 randomization matrix.
 extern const std::array<uint8_t, 46> DC;
-
 }
 
 template <size_t N = 368>

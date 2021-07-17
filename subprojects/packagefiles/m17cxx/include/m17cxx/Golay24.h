@@ -4,10 +4,9 @@
 #pragma once
 
 #include <array>
+#include <cstdint>
 #include <algorithm>
 #include <utility>
-//#include <iostream>
-//#include <iomanip>
 
 namespace mobilinkd {
 
@@ -92,12 +91,9 @@ struct __attribute__((packed)) SyndromeMapEntry
     {
         return s;
     }
-
     uint32_t a{0};
     uint16_t b{0};
 };
-
-
 
 /**
  * Calculate the syndrome of a [23,12] Golay codeword.

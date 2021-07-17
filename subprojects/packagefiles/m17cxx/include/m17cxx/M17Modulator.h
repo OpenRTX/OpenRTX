@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <experimental/array>
 #include <future>
+#include <iostream>
 #include <memory>
 
 namespace mobilinkd

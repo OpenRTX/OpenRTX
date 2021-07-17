@@ -16,7 +16,9 @@ struct LinkSetupFrame
     using call_t = std::array<char,10>;             // NUL-terminated C-string.
     using encoded_call_t = std::array<uint8_t, 6>;
     using frame_t = std::array<uint8_t, 30>;
-    //using nonce_t = std::string_view;               // std::span would be better here.
+    
+    static constexpr encoded_call_t BROADCAST_ADDRESS = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+    static constexpr call_t BROADCAST_CALL = {'B', 'R', 'O', 'A', 'D', 'C', 'A', 'S', 'T', 0};
 
     enum TxType { PACKET, STREAM };
     enum DataType { DT_RESERVED, DATA, VOICE, MIXED };
@@ -92,12 +94,19 @@ struct LinkSetupFrame
     {
         static const char callsign_map[] = "xABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-/.";
 
+        call_t result;
+
+        if (callsign == BROADCAST_ADDRESS)
+        {
+            result = BROADCAST_CALL;
+            return result;
+        }
+
         uint64_t encoded = 0;       // This only works on little endian architectures.
         auto p = reinterpret_cast<uint8_t*>(&encoded);
         std::copy(callsign.rbegin(), callsign.rend(), p);
 
         // decode each base-40 digit and map them to the appriate character.
-        call_t result;
         result.fill(0);
         size_t index = 0;
         while (encoded)
@@ -108,7 +117,6 @@ struct LinkSetupFrame
 
         return result;
     }
-
 
     LinkSetupFrame()
     {}

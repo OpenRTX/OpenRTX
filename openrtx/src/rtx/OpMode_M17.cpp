@@ -409,19 +409,12 @@ codec_frame_t OpMode_M17::encode(struct CODEC2* codec2, const audio_frame_t& aud
 
 data_frame_t OpMode_M17::make_data_frame(uint16_t frame_number, const codec_frame_t& payload)
 {
-    std::array<uint8_t, 20> data;   // FN, Audio, CRC = 2 + 16 + 2;
+    std::array<uint8_t, 18> data;   // FN, Audio = 2 + 16;
     data[0] = uint8_t((frame_number >> 8) & 0xFF);
     data[1] = uint8_t(frame_number & 0xFF);
     std::copy(payload.begin(), payload.end(), data.begin() + 2);
 
-    mobilinkd::CRC16<0x5935, 0xFFFF> crc;
-    crc.reset();
-    for (size_t i = 0; i != 18; ++i) crc(data[i]);
-    auto checksum = crc.get_bytes();
-    data[18] = checksum[0];
-    data[19] = checksum[1];
-
-    std::array<uint8_t, 328> encoded;
+    std::array<uint8_t, 296> encoded;
     size_t index = 0;
     uint32_t memory = 0;
     for (auto b : data)
