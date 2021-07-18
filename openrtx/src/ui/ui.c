@@ -187,6 +187,22 @@ const char *symbols_ITU_T_E161[] =
     "#"
 };
 
+const char *symbols_ITU_T_E161_callsign[] =
+{
+    "0",
+    "1",
+    "ABC2",
+    "DEF3",
+    "GHI4",
+    "JKL5",
+    "MNO6",
+    "PQRS7",
+    "TUV8",
+    "WXYZ9",
+    "",
+    ""
+};
+
 // Calculate number of menu entries
 const uint8_t menu_num = sizeof(menu_items)/sizeof(menu_items[0]);
 const uint8_t settings_num = sizeof(settings_items)/sizeof(settings_items[0]);
@@ -723,7 +739,17 @@ void _ui_menuBack(uint8_t prev_state)
     }
 }
 
-void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg)
+void _ui_textInputReset(char *buf)
+{
+    ui_state.input_number = 0;
+    ui_state.input_position = 0;
+    ui_state.input_set = 0;
+    ui_state.last_keypress = 0;
+    memset(buf, 0, 9);
+    buf[0] = '_';
+}
+
+void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg, bool callsign)
 {
     if(ui_state.input_position >= max_len)
         return;
@@ -731,34 +757,51 @@ void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg)
     // Get currently pressed number key
     uint8_t num_key = input_getPressedNumber(msg);
     // Get number of symbols related to currently pressed key
-    uint8_t num_symbols = strlen(symbols_ITU_T_E161[num_key]);
-    // Reset reference values on first function call
-    if(ui_state.input_position == 0 && ui_state.input_set == 0)
-    {
-        ui_state.input_number = num_key;
-        ui_state.last_keypress = now;
-    }
-    // Different key pressed, advance input position
-    if(ui_state.input_number != num_key || (now - ui_state.last_keypress) > kbd_long_interval)
-    {
-        ui_state.input_position += 1;
-        ui_state.input_set = 0;
-    }
-    // Same key pressed, advance symbol choice
+    uint8_t num_symbols = 0;
+    if(callsign)
+        num_symbols = strlen(symbols_ITU_T_E161_callsign[num_key]);
     else
-        ui_state.input_set = (ui_state.input_set + 1) % num_symbols;
+        num_symbols = strlen(symbols_ITU_T_E161[num_key]);
+   
+    // Skip keypad logic for first keypress
+    if(ui_state.last_keypress != 0)
+    {
+        // Same key pressed and timeout not expired: cycle over chars of current key
+        if((ui_state.input_number == num_key) && ((now - ui_state.last_keypress) < kbd_long_interval))
+        {
+            ui_state.input_set = (ui_state.input_set + 1) % num_symbols;
+        }
+        // Differnt key pressed: save current char and change key
+        else
+        {
+            ui_state.input_position += 1;
+            ui_state.input_set = 0;
+        }
+    }
+    // Show current character on buffer
+    if(callsign)
+        buf[ui_state.input_position] = symbols_ITU_T_E161_callsign[num_key][ui_state.input_set];
+    else
+        buf[ui_state.input_position] = symbols_ITU_T_E161[num_key][ui_state.input_set];
     // Update reference values
     ui_state.input_number = num_key;
     ui_state.last_keypress = now;
-    // After time interval, advance input position and reset symbol selection and timestamp
-    buf[ui_state.input_position] = symbols_ITU_T_E161[num_key][ui_state.input_set];
+}
+
+void _ui_textInputConfirm(char *buf)
+{
+    buf[ui_state.input_position + 1] = '\0';
 }
 
 void _ui_textInputDel(char *buf)
 {
-    buf[ui_state.input_position] = 0;
+    buf[ui_state.input_position] = '\0';
+    // Move back input cursor
     if(ui_state.input_position > 0)
         ui_state.input_position--;
+    // If we deleted the initial character, reset starting condition
+    else
+        ui_state.last_keypress = 0;
     ui_state.input_set = 0;
 }
 
@@ -1276,6 +1319,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 {
                     if(msg.keys & KEY_ENTER)
                     {
+                        _ui_textInputConfirm(ui_state.new_callsign);
                         // Save selected callsign and disable input mode
                         strcpy(state.settings.callsign, ui_state.new_callsign);
                         ui_state.edit_mode = false;
@@ -1287,7 +1331,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                             msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
                         _ui_textInputDel(ui_state.new_callsign);
                     else if(input_isNumberPressed(msg))
-                        _ui_textInputKeypad(ui_state.new_callsign, 9, msg);
+                        _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
                 }
                 else
                 {
@@ -1296,12 +1340,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         // Enable callsign input
                         ui_state.edit_mode = true;
                         // Reset text input variables
-                        ui_state.input_number = 0;
-                        ui_state.input_position = 0;
-                        ui_state.input_set = 0;
-                        ui_state.last_keypress = 0;
-                        memset(&ui_state.new_callsign, 0, 9);
-                        ui_state.new_callsign[0] = '_';
+                        _ui_textInputReset(ui_state.new_callsign);
                     }
                     else if(msg.keys & KEY_ESC)
                         _ui_menuBack(MENU_SETTINGS);
