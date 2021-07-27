@@ -399,11 +399,18 @@ lsf_t OpMode_M17::send_lsf(const std::string& src, const std::string& dest)
  * Encodes 2 frames of data.  Caller must ensure that the audio is
  * padded with 0s if the incoming data is incomplete.
  */
-codec_frame_t OpMode_M17::encode(struct CODEC2* codec2, const audio_frame_t& audio)
+codec_frame_t OpMode_M17::encode(struct CODEC2* codec2, audio_frame_t& audio)
 {
     codec_frame_t result = { 0 };
-    codec2_encode(codec2, &result[0], const_cast<audio_sample_t*>(&audio[0]));
-    codec2_encode(codec2, &result[8], const_cast<audio_sample_t*>(&audio[160]));
+    codec2_encode(codec2, &result[0], &(audio.data()[0]));
+    codec2_encode(codec2, &result[8], &(audio.data()[160]));
+
+    //for (size_t i = 0; i != 16; i++)
+    //{
+    //    iprintf("%02x ", result[i]);
+    //}
+    //iprintf("\n\r");
+
     return result;
 }
 

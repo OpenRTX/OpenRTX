@@ -177,8 +177,7 @@ private:
      * Encodes 2 frames of data.  Caller must ensure that the audio is
      * padded with 0s if the incoming data is incomplete.
      */
-    codec_frame_t encode(struct CODEC2* codec2,
-                                     const audio_frame_t& audio);
+    codec_frame_t encode(struct CODEC2* codec2, audio_frame_t& audio);
 
     /**
      * Encodes a single M17 data frame.
