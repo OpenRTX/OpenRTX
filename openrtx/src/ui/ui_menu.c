@@ -539,7 +539,7 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
         // Print M17 current callsign
         gfx_printLine(1, 1, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
                       layout.horizontal_pad, layout.input_font,
-                      TEXT_ALIGN_CENTER, color_white, last_state.settings.callsign);
+                      TEXT_ALIGN_CENTER, color_white, last_state.m17_data.callsign);
     }
 }
 
