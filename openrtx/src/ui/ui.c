@@ -1330,7 +1330,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     {
                         _ui_textInputConfirm(ui_state.new_callsign);
                         // Save selected callsign and disable input mode
-                        strcpy(state.settings.callsign, ui_state.new_callsign);
+                        strcpy(state.m17_data.callsign, ui_state.new_callsign);
                         ui_state.edit_mode = false;
                     }
                     else if(msg.keys & KEY_ESC)
