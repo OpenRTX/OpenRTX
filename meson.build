@@ -53,7 +53,7 @@ openrtx_inc = ['openrtx/include',
 
 # Add to sources either the main executable or a platform test
 if get_option('test') != ''
-  openrtx_src += 'tests/platform/'+get_option('test')+'.c'
+  openrtx_src += 'tests/platform/'+get_option('test')
 else
   openrtx_src += 'openrtx/src/main.c'
 endif
