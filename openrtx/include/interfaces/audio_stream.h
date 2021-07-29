@@ -126,6 +126,12 @@ void outputStream_stop(streamId id);
  * Get a chunk of data from an already opened input stream, blocking function.
  * If buffer management is configured to BUF_LINEAR this function also starts a
  * new data acquisition.
+ * Application code MUST ensure that the template parameter specifying the size
+ * of the returned std::array matches the size of the expected buffer, i.e.
+ * if acquisition is configured as double circular buffer, the template parameter
+ * must be set to one half of the buffer passed to inputStream_start.
+ * If there is a mismatch between the size of the std::array and the size of the
+ * data block returned (which is deterministic), a nullptr is returned.
  *
  * @param id: identifier of the stream to get data from.
  * @return std::array pointer containing the acquired samples, nullptr if another

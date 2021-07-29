@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
+ *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
  *                         Niccolò Izzo IU2KIN,                            *
  *                         Frederik Saraci IU2NRO,                         *
  *                         Silvano Seva IU2KWO                             *
@@ -28,15 +28,15 @@
 #include <hwconfig.h>
 #include <dsp.h>
 
-/*
- * Uncomment this directive to sample audio coming from RTX stage instead of the
- * one from microphone.
- */
-// #define SAMPLE_RTX_AUDIO
+/*********************************************
+ * EFFECTIVE MEMORY OCCUPATION IS TWICE THIS *
+ * NUMBER, AS SAMPLES OCCUPY TWO BYTES EACH  *
+ *********************************************/
+static const size_t numSamples = 45*1024;
+
 
 using audio_sample_t = int16_t;
 typedef uint16_t stream_sample_t;
-static const size_t numSamples = 45*1024;       // 80kB
 
 static const char hexdigits[]="0123456789abcdef";
 void printSignedInt(audio_sample_t x)
@@ -54,9 +54,9 @@ void printSignedInt(audio_sample_t x)
  * Converts 12-bit unsigned values packed into uint16_t into int16_t samples,
  * perform in-place conversion to save space.
  */
-void adc_to_audio_stm32(std::array<audio_sample_t, numSamples> *audio)
+void adc_to_audio_stm32(std::array<audio_sample_t, numSamples/2> *audio)
 {
-    for (int i = 0; i < numSamples; i++)
+    for (int i = 0; i < numSamples/2; i++)
     {
         (*audio)[i] = (*audio)[i] << 3;
     }
@@ -64,7 +64,7 @@ void adc_to_audio_stm32(std::array<audio_sample_t, numSamples> *audio)
 
 void *mic_task(void *arg)
 {
-    uint16_t *sampleBuf = ((uint16_t *) malloc(2 * numSamples * sizeof(uint16_t)));
+    uint16_t *sampleBuf = ((uint16_t *) malloc(numSamples * sizeof(uint16_t)));
 
     gpio_setMode(GREEN_LED, OUTPUT);
     gpio_setMode(RED_LED,   OUTPUT);
@@ -87,12 +87,15 @@ void *mic_task(void *arg)
     gpio_setPin(RED_LED);
 
     // Get audio chunk from the microphone stream
-    std::array<stream_sample_t, numSamples> *stream =
-        inputStream_getData<numSamples>(input_id);
-    std::array<audio_sample_t, numSamples> *audio =
-        reinterpret_cast<std::array<audio_sample_t, numSamples>*>(stream);
+    std::array<stream_sample_t, numSamples/2> *stream =
+        inputStream_getData<numSamples/2>(input_id);
+
+    std::array<audio_sample_t, numSamples/2> *audio =
+        reinterpret_cast<std::array<audio_sample_t, numSamples/2>*>(stream);
+
     // Convert 12-bit unsigned values into 16-bit signed
     adc_to_audio_stm32(audio);
+
     // Apply DC removal filter
     dsp_dcRemoval(audio->data(), audio->size());
 
