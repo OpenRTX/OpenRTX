@@ -580,7 +580,7 @@ void OpMode_M17::enable()
     input_id = inputStream_start(SOURCE_MIC,
                                  PRIO_TX,
                                  input,
-                                 M17_AUDIO_SIZE,
+                                 2 * M17_AUDIO_SIZE,
                                  BUF_CIRC_DOUBLE,
                                  M17_VOICE_SAMPLE_RATE);
 #elif defined(PLATFORM_LINUX)
