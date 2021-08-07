@@ -39,7 +39,7 @@ using audio_sample_t = int16_t;
 typedef uint16_t stream_sample_t;
 
 static const char hexdigits[]="0123456789abcdef";
-void printSignedInt(audio_sample_t x)
+void printUnsignedInt(uint16_t x)
 {
     char result[]="....\r";
     for(int i=3;i>=0;i--)
@@ -50,19 +50,7 @@ void printSignedInt(audio_sample_t x)
     puts(result);
 }
 
-/*
- * Converts 12-bit unsigned values packed into uint16_t into int16_t samples,
- * perform in-place conversion to save space.
- */
-void adc_to_audio_stm32(std::array<audio_sample_t, numSamples/2> *audio)
-{
-    for (int i = 0; i < numSamples/2; i++)
-    {
-        (*audio)[i] = (*audio)[i] << 3;
-    }
-}
-
-void *mic_task(void *arg)
+int main()
 {
     uint16_t *sampleBuf = ((uint16_t *) malloc(numSamples * sizeof(uint16_t)));
 
@@ -70,61 +58,53 @@ void *mic_task(void *arg)
     gpio_setMode(RED_LED,   OUTPUT);
     gpio_setMode(MIC_PWR,   OUTPUT);
     gpio_setPin(MIC_PWR);
-    gpio_setPin(GREEN_LED);
+
+    delayMs(1000);
 
     // Initialize audio stream
     streamId input_id = inputStream_start(SOURCE_MIC,
                                           PRIO_TX,
                                           sampleBuf,
                                           numSamples,
-                                          BUF_CIRC_DOUBLE,
+                                          BUF_CIRC,
                                           8000);
 
-    delayMs(3000);
-
     // Record
-    gpio_clearPin(GREEN_LED);
-    gpio_setPin(RED_LED);
+    gpio_setPin(GREEN_LED);
 
     // Get audio chunk from the microphone stream
-    std::array<stream_sample_t, numSamples/2> *stream =
-        inputStream_getData<numSamples/2>(input_id);
+    std::array<stream_sample_t, numSamples> *stream =
+        inputStream_getData<numSamples>(input_id);
 
-    std::array<audio_sample_t, numSamples/2> *audio =
-        reinterpret_cast<std::array<audio_sample_t, numSamples/2>*>(stream);
+    // stop stream here, otherwise samples will be overwritten while we're
+    // trying to process them
+    inputStream_stop(input_id);
 
-    // Convert 12-bit unsigned values into 16-bit signed
-    adc_to_audio_stm32(audio);
+    // Amplify signal by multiplying by 8
+    for(size_t i = 0; i < stream->size(); i++) stream->at(i) <<= 3;
+
+    std::array<audio_sample_t, numSamples> *audio =
+        reinterpret_cast<std::array<audio_sample_t, numSamples>*>(stream);
 
     // Apply DC removal filter
     dsp_dcRemoval(audio->data(), audio->size());
 
+    gpio_clearPin(GREEN_LED);
     delayMs(10000);
+    gpio_setPin(RED_LED);
 
-    for(size_t i = 0; i < audio->size(); i++)
+    for(size_t i = 0; i < stream->size(); i++)
     {
-        printSignedInt((*audio)[i]);
+        printUnsignedInt(stream->at(i));
     }
 
-    // Terminate microphone sampling
-    inputStream_stop(input_id);
-
-    return 0;
-}
-
-int main()
-{
-//     platform_init();
-
-    // Create mic input thread
-    pthread_t      mic_thread;
-    pthread_attr_t mic_attr;
-
-    pthread_attr_init(&mic_attr);
-    pthread_attr_setstacksize(&mic_attr, 16 * 1024);
-    pthread_create(&mic_thread, &mic_attr, mic_task, NULL);
-
-    while(1) ;
+    while(1)
+    {
+        gpio_clearPin(RED_LED);
+        delayMs(500);
+        gpio_setPin(RED_LED);
+        delayMs(500);
+    }
 
     return 0;
 }

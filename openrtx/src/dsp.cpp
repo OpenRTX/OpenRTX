@@ -64,19 +64,18 @@ void dsp_pwmCompensate(audio_sample_t *buffer, uint16_t length)
 void dsp_dcRemoval(audio_sample_t *buffer, uint16_t length)
 {
     // Compute the average of all the samples
-    float acc = 0.0f;
+    float mean = 0.0f;
     for(uint16_t i = 0; i < length; i++)
     {
-        acc += static_cast< float >(buffer[i]);
+        mean += static_cast< float >(buffer[i]);
     }
 
-    float mean = acc / static_cast< float >(length);
+    mean /= static_cast< float >(length);
 
     // Subtract it to all the samples
     for(uint16_t i = 0; i < length; i++)
     {
-        float value = static_cast< float >(buffer[i]);
-        buffer[i]   = static_cast< audio_sample_t >(value - mean);
+        buffer[i] -= static_cast< audio_sample_t >(mean + 0.5f);
     }
 }
 
