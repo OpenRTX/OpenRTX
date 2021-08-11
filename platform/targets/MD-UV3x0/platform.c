@@ -42,7 +42,7 @@ void platform_init()
     gpio_setMode(RED_LED,   OUTPUT);
 
     gpio_setMode(PTT_SW, INPUT_PULL_UP);
-    gpio_setMode(PTT_EXT, INPUT);
+    gpio_setMode(PTT_EXT, INPUT_PULL_UP);
 
     /*
      * Initialise ADC1, for vbat, RSSI, ...
