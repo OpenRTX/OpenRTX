@@ -61,17 +61,23 @@ void _setBandwidth(const enum bandwidth bw)
     switch(bw)
     {
         case BW_12_5:
+            #ifndef MDx_ENABLE_SWD
             gpio_clearPin(WN_SW);
+            #endif
             C5000.setModFactor(0x1E);
             break;
 
         case BW_20:
+            #ifndef MDx_ENABLE_SWD
             gpio_setPin(WN_SW);
+            #endif
             C5000.setModFactor(0x30);
             break;
 
         case BW_25:
+            #ifndef MDx_ENABLE_SWD
             gpio_setPin(WN_SW);
+            #endif
             C5000.setModFactor(0x3C);
             break;
 
@@ -97,7 +103,9 @@ void radio_init(const rtxStatus_t *rtxState)
     gpio_setMode(PLL_PWR,   OUTPUT);
     gpio_setMode(VCOVCC_SW, OUTPUT);
     gpio_setMode(DMR_SW,    OUTPUT);
+    #ifndef MDx_ENABLE_SWD
     gpio_setMode(WN_SW,     OUTPUT);
+    #endif
     gpio_setMode(FM_SW,     OUTPUT);
     gpio_setMode(RF_APC_SW, OUTPUT);
     gpio_setMode(TX_STG_EN, OUTPUT);
@@ -108,7 +116,9 @@ void radio_init(const rtxStatus_t *rtxState)
 
     gpio_clearPin(PLL_PWR);    // PLL off
     gpio_setPin(VCOVCC_SW);    // VCOVCC high enables RX VCO, TX VCO if low
+    #ifndef MDx_ENABLE_SWD
     gpio_setPin(WN_SW);        // 25kHz bandwidth
+    #endif
     gpio_clearPin(DMR_SW);     // Disconnect HR_C5000 input IF signal and audio out
     gpio_clearPin(FM_SW);      // Disconnect analog FM audio path
     gpio_clearPin(RF_APC_SW);  // Disable TX power control

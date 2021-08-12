@@ -6,6 +6,12 @@ project('OpenRTX', ['c', 'cpp'],
   default_options : ['warning_level=3'])
 
 ##
+## Optional defines, common to all souces (e.g. to enable debugging)
+##
+
+def = { }
+
+##
 ## ----------------- Platform-independent source files -------------------------
 ##
 
@@ -71,7 +77,7 @@ rtos_inc = ['lib/miosix-kernel',
 
 src = openrtx_src + minmea_src
 inc = openrtx_inc + rtos_inc + minmea_inc + qdec_inc
-def = {'DONT_USE_CMSIS_INIT': ''}
+def = def + {'DONT_USE_CMSIS_INIT': ''}
 
 ## Add git commit or tag to print in OpenRTX
 r = run_command('git', 'describe', '--tags', '--dirty')

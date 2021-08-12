@@ -52,6 +52,18 @@ void IRQbspInit()
     GPIOE->OSPEEDR=0xaaaaaaaa;
     GPIOH->OSPEEDR=0xaaaaaaaa;
 
+    /*
+     * Enable SWD interface on PA13 and PA14 (Tytera's bootloader disables this
+     * functionality).
+     * NOTE: these pins are used also for other functions (MIC power and wide/
+     * narrow FM reception), thus they cannot be always used for debugging!
+     */
+    #ifdef MDx_ENABLE_SWD
+    GPIOA->MODER  &= ~0x3C000000;   // Clear current setting
+    GPIOA->MODER  |= 0x28000000;    // Put back to alternate function
+    GPIOA->AFR[1] &= ~0x0FF00000;   // SWD is AF0
+    #endif
+
     #ifdef MD3x0_ENABLE_DBG
     usart3_init(115200);
     usart3_IRQwrite("starting...\r\n");
