@@ -49,15 +49,28 @@ void adc0_terminate()
     SIM->SCGC6 &= ~SIM_SCGC6_ADC0(1);
 }
 
-float adc0_getMeasurement(uint8_t ch)
+uint16_t adc0_getRawSample(uint8_t ch)
 {
-    if(ch > 32) return 0.0f;
+    if(ch > 32) return 0;
 
     /* Conversion is automatically initiated by writing to this register */
     ADC0->SC1[0] = ADC_SC1_ADCH(ch);
 
     while(((ADC0->SC1[0]) & ADC_SC1_COCO_MASK) == 0) ;
 
-    uint16_t sample = ADC0->R[0];
-    return ((float) sample) * 3300.0f/65536.0f;
+    return ADC0->R[0];
+}
+
+uint16_t adc0_getMeasurement(uint8_t ch)
+{
+    /*
+     * To avoid using floats, we convert the raw ADC sample to mV using 16.16
+     * fixed point math. The equation for conversion is (sample * 3300)/4096 but,
+     * since converting the raw ADC sample to 16.16 notation requires a left
+     * shift by 16 and dividing by 4096 is equivalent to shifting right by 12,
+     * we just shift left by four and then multiply by 3300.
+     * With respect to using floats, maximum error is -1mV.
+     */
+    uint32_t sample = (adc0_getRawSample(ch) << 4) * 3300;
+    return ((uint16_t) (sample >> 16));
 }
