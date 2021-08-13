@@ -76,11 +76,14 @@ void __attribute__((used)) GpsUsartImpl()
         {
             status = (bufPos < maxPos) ? 0x01 : 0x02;
 
-            if(gpsWaiting == 0) return;
-            gpsWaiting->IRQwakeup();
-            if(gpsWaiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-                Scheduler::IRQfindNextThread();
-            gpsWaiting = 0;
+            if(gpsWaiting)
+            {
+                gpsWaiting->IRQwakeup();
+                if(gpsWaiting->IRQgetPriority()>
+                    Thread::IRQgetCurrentThread()->IRQgetPriority())
+                        Scheduler::IRQfindNextThread();
+                gpsWaiting = 0;
+            }
         }
     }
 
