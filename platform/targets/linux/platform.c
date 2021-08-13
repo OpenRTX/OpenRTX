@@ -29,13 +29,13 @@ void platform_init()
     // Fill hwinfo struct
     memset(&hwInfo, 0x00, sizeof(hwInfo));
     snprintf(hwInfo.name, 10, "Linux");
-    // Frequencies are in MHz                                                   
-    hwInfo.vhf_maxFreq = 174;                                                    
-    hwInfo.vhf_minFreq = 136;                                                    
-    hwInfo.vhf_band    = 1;                                                      
-    hwInfo.uhf_maxFreq = 480;                                                    
-    hwInfo.uhf_minFreq = 400;                                                    
-    hwInfo.uhf_band    = 1;   
+    // Frequencies are in MHz
+    hwInfo.vhf_maxFreq = 174;
+    hwInfo.vhf_minFreq = 136;
+    hwInfo.vhf_band    = 1;
+    hwInfo.uhf_maxFreq = 480;
+    hwInfo.uhf_minFreq = 400;
+    hwInfo.uhf_band    = 1;
 
     emulator_start();
 }
@@ -57,15 +57,23 @@ float platform_getVbat()
 }
 
 
-float platform_getMicLevel()
+uint8_t platform_getMicLevel()
 {
-    return Radio_State.micLevel;
+    float level = Radio_State.micLevel;
+    if(level < 0.0f)   level = 0.0f;
+    if(level > 255.0f) level = 255.0f;
+
+    return ((uint8_t) level);
 }
 
 
-float platform_getVolumeLevel()
+uint8_t platform_getVolumeLevel()
 {
-    return Radio_State.volumeLevel;
+    float level = Radio_State.volumeLevel;
+    if(level < 0.0f)   level = 0.0f;
+    if(level > 255.0f) level = 255.0f;
+
+    return ((uint8_t) level);
 }
 
 

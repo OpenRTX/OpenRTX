@@ -102,14 +102,24 @@ float platform_getVbat()
     return adc1_getMeasurement(ADC_VBAT_CH)*3.0f/1000.0f;
 }
 
-float platform_getMicLevel()
+uint8_t platform_getMicLevel()
 {
-    return 0.0f;
+    /* Value from ADC is 12 bit wide: shift right by four to get 0 - 255 */
+    return (adc1_getRawSample(ADC_VOX_CH) >> 4);
 }
 
-float platform_getVolumeLevel()
+uint8_t platform_getVolumeLevel()
 {
-    return adc1_getMeasurement(ADC_VOL_CH);
+    /*
+     * Knob position corresponds to an analog signal in the range 0 - 1600mV,
+     * converted to a value in range 0 - 255 using fixed point math: divide by
+     * 1600 and then multiply by 256.
+     */
+    uint16_t value = adc1_getMeasurement(ADC_VOL_CH);
+    if(value > 1599) value = 1599;
+    uint32_t level = value << 16;
+    level /= 1600;
+    return ((uint8_t) (level >> 8));
 }
 
 bool platform_getPttStatus()

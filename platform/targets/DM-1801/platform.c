@@ -69,12 +69,12 @@ void platform_init()
     memset(&calibration, 0x00, sizeof(gdxCalibration_t));
 
     /* Initialise hardware information structure */
-    hwInfo.vhf_maxFreq = 174;                                                   
-    hwInfo.vhf_minFreq = 136;                                                   
-    hwInfo.vhf_band    = 1;                                                     
-    hwInfo.uhf_maxFreq = 470;                                                   
-    hwInfo.uhf_minFreq = 400;                                                   
-    hwInfo.uhf_band    = 1;  
+    hwInfo.vhf_maxFreq = 174;
+    hwInfo.vhf_minFreq = 136;
+    hwInfo.vhf_band    = 1;
+    hwInfo.uhf_maxFreq = 470;
+    hwInfo.uhf_minFreq = 400;
+    hwInfo.uhf_band    = 1;
     hwInfo.lcd_type    = 0;
     memcpy(hwInfo.name, "DM-1801", 7);
     hwInfo.name[7] = '\0';
@@ -100,28 +100,27 @@ void platform_terminate()
 
 float platform_getVbat()
 {
-    float value = 0.0f;
     pthread_mutex_lock(&adc_mutex);
-    value = adc0_getMeasurement(1);
+    uint16_t value = adc0_getMeasurement(1);
     pthread_mutex_unlock(&adc_mutex);
 
-    return (value * 3.0f)/1000.0f;
+    return (((float) value) * 3.0f)/1000.0f;
 }
 
-float platform_getMicLevel()
+uint8_t platform_getMicLevel()
 {
-    float value = 0.0f;
     pthread_mutex_lock(&adc_mutex);
-    value = adc0_getMeasurement(3);
+    uint16_t value = adc0_getRawSample(3);
     pthread_mutex_unlock(&adc_mutex);
 
-    return value;
+    /* Value from ADC is 12 bit wide: shift right by four to get 0 - 255 */
+    return value >> 4;
 }
 
-float platform_getVolumeLevel()
+uint8_t platform_getVolumeLevel()
 {
     /* TODO */
-    return 0.0f;
+    return 0;
 }
 
 int8_t platform_getChSelector()
