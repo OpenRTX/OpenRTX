@@ -240,7 +240,7 @@ uint8_t gfx_getFontHeight(fontSize_t size);
  * @param buf: char buffer
  * @return text width and height as point_t coordinates
  */
-point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment, 
+point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
                         color_t color, const char *buf);
 
 /**
@@ -252,7 +252,7 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
  * @param fmt: printf style format string
  * @return text width and height as point_t coordinates
  */
-point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment, 
+point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment,
                   color_t color, const char* fmt, ... );
 
 /**
@@ -269,8 +269,8 @@ point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment,
  * @param fmt: printf style format string
  * @return text width and height as point_t coordinates
  */
-point_t gfx_printLine(uint8_t cur, uint8_t tot, uint16_t startY, uint16_t endY, 
-                      uint16_t startX, fontSize_t size, textAlign_t alignment, 
+point_t gfx_printLine(uint8_t cur, uint8_t tot, uint16_t startY, uint16_t endY,
+                      uint16_t startX, fontSize_t size, textAlign_t alignment,
                       color_t color, const char* fmt, ... );
 
 /**
@@ -288,7 +288,7 @@ void gfx_printError(const char *text, fontSize_t size);
  * @param height: battery icon height
  * @param percentage: battery charge percentage
  */
-void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, float percentage);
+void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, uint8_t percentage);
 
 /**
  * Function to draw Smeter of arbitrary size.

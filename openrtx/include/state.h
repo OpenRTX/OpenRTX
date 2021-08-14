@@ -69,8 +69,8 @@ typedef struct
 {
     bool radioStateUpdated;
     curTime_t time;
-    float v_bat;
-    float charge;
+    uint16_t v_bat;
+    uint8_t charge;
     float rssi;
 
     uint8_t ui_screen;

@@ -392,7 +392,7 @@ uint8_t gfx_getFontHeight(fontSize_t size)
     return glyph.height;
 }
 
-point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment, 
+point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
                         color_t color, const char *buf)
 {
     GFXfont f = fonts[size];
@@ -480,11 +480,11 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
     return text_size;
 }
 
-point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment, 
+point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment,
                   color_t color, const char *fmt, ... )
 {
     // Get format string and arguments from var char
-    va_list ap; 
+    va_list ap;
     va_start(ap, fmt);
     vsnprintf(text, sizeof(text)-1, fmt, ap);
     va_end(ap);
@@ -492,19 +492,19 @@ point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment,
     return gfx_printBuffer(start, size, alignment, color, text);
 }
 
-point_t gfx_printLine(uint8_t cur, uint8_t tot, uint16_t startY, uint16_t endY, 
-                      uint16_t startX, fontSize_t size, textAlign_t alignment, 
+point_t gfx_printLine(uint8_t cur, uint8_t tot, uint16_t startY, uint16_t endY,
+                      uint16_t startX, fontSize_t size, textAlign_t alignment,
                       color_t color, const char* fmt, ... )
 {
     // Get format string and arguments from var char
-    va_list ap; 
+    va_list ap;
     va_start(ap, fmt);
     vsnprintf(text, sizeof(text)-1, fmt, ap);
     va_end(ap);
-    
+
     // Estimate font height by reading the gliph | height
     uint8_t fontH = gfx_getFontHeight(size);
-    
+
     // If endY is 0 set it to default value = SCREEN_HEIGHT
     if(endY == 0) endY = SCREEN_HEIGHT;
 
@@ -561,13 +561,13 @@ void gfx_printError(const char *text, fontSize_t size)
  *
  */
 void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
-                                                    float percentage)
+                                                    uint8_t percentage)
 {
     color_t white =  {255, 255, 255, 255};
     color_t black =  {0,   0,   0  , 255};
 
     // Cap percentage to 1
-    percentage = (percentage > 1.0f) ? 1.0f : percentage;
+    percentage = (percentage > 100) ? 100 : percentage;
 
 #ifdef PIX_FMT_RGB565
     color_t green =  {0,   255, 0  , 255};
@@ -576,9 +576,9 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
 
     // Select color according to percentage
     color_t bat_color = yellow;
-    if (percentage < 0.3)
+    if (percentage < 30)
         bat_color = red;
-    else if (percentage > 0.6)
+    else if (percentage > 60)
         bat_color = green;
 #elif defined PIX_FMT_BW
     color_t bat_color = white;
@@ -589,8 +589,8 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
 
     // Draw the battery fill
     point_t fill_start = {start.x + 2, start.y + 2};
-    gfx_drawRect(fill_start, (int)(((float)(width - 4)) * percentage),
-                 height - 4, bat_color, true);
+    int fillWidth = ((width - 4) * percentage) / 100;
+    gfx_drawRect(fill_start, fillWidth, height - 4, bat_color, true);
 
     // Round corners
     point_t top_left = start;
@@ -715,7 +715,7 @@ void gfx_drawGPSgraph(point_t start,
         color_t bar_color = (active_sats & 1 << (sats[i].id - 1)) ? yellow : white;
         gfx_drawRect(bar_pos, bar_width, bar_height, bar_color, true);
         point_t id_pos = {bar_pos.x, start.y + height};
-        gfx_print(id_pos, FONT_SIZE_5PT, TEXT_ALIGN_LEFT, 
+        gfx_print(id_pos, FONT_SIZE_5PT, TEXT_ALIGN_LEFT,
                   bar_color, "%2d ", sats[i].id);
     }
     uint8_t bars_width = 9 + 11 * (bar_width + 2);

@@ -363,7 +363,7 @@ void _ui_drawLowBatteryScreen()
     uint16_t bat_width = SCREEN_WIDTH / 2;
     uint16_t bat_height = SCREEN_HEIGHT / 3;
     point_t bat_pos = {SCREEN_WIDTH / 4, SCREEN_HEIGHT / 8};
-    gfx_drawBattery(bat_pos, bat_width, bat_height, 0.1f);
+    gfx_drawBattery(bat_pos, bat_width, bat_height, 10);
     point_t text_pos_1 = {0, SCREEN_HEIGHT * 2 / 3};
     point_t text_pos_2 = {0, SCREEN_HEIGHT * 2 / 3 + 16};
 
@@ -440,16 +440,16 @@ bool _ui_freq_check_limits(freq_t freq)
     if(hwinfo->vhf_band)
     {
         // hwInfo_t frequencies are in MHz
-        if(freq >= (hwinfo->vhf_minFreq * 1000000) && 
+        if(freq >= (hwinfo->vhf_minFreq * 1000000) &&
            freq <= (hwinfo->vhf_maxFreq * 1000000))
-        valid = true; 
+        valid = true;
     }
     if(hwinfo->uhf_band)
     {
         // hwInfo_t frequencies are in MHz
-        if(freq >= (hwinfo->uhf_minFreq * 1000000) && 
+        if(freq >= (hwinfo->uhf_minFreq * 1000000) &&
            freq <= (hwinfo->uhf_maxFreq * 1000000))
-        valid = true; 
+        valid = true;
     }
     return valid;
 }
@@ -1126,10 +1126,10 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                             state.settings.gps_set_time = !state.settings.gps_set_time;
                             break;
                         case G_TIMEZONE:
-                            if(msg.keys & KEY_LEFT || msg.keys & KEY_UP || 
+                            if(msg.keys & KEY_LEFT || msg.keys & KEY_UP ||
                                msg.keys & KNOB_LEFT)
                                 state.settings.utc_timezone -= 1;
-                            else if(msg.keys & KEY_RIGHT || msg.keys & KEY_DOWN || 
+                            else if(msg.keys & KEY_RIGHT || msg.keys & KEY_DOWN ||
                                     msg.keys & KNOB_RIGHT)
                                 state.settings.utc_timezone += 1;
                             break;

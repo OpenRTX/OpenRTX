@@ -225,9 +225,14 @@ void *dev_task(void *arg)
         state.time = rtc_getTime();
 #endif
 
-        // Low-pass filtering with a time constant of 10s when updated at 1Hz
-        float vbat = platform_getVbat();
-        state.v_bat = 0.02*vbat + 0.98*state.v_bat;
+        /*
+         * Low-pass filtering with a time constant of 10s when updated at 1Hz
+         * Original computation: state.v_bat = 0.02*vbat + 0.98*state.v_bat
+         * Peak error is 18mV when input voltage is 49mV.
+         */
+        uint16_t vbat = platform_getVbat();
+        state.v_bat  -= (state.v_bat * 2) / 100;
+        state.v_bat  += (vbat * 2) / 100;
 
         state.charge = battery_getCharge(state.v_bat);
         state.rssi = rtx_getRssi();
