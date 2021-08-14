@@ -104,14 +104,17 @@ void platform_terminate()
     while(1) ;
 }
 
-float platform_getVbat()
+uint16_t platform_getVbat()
 {
     /*
      * Battery voltage is measured through an 1:5.7 voltage divider and
-     * adc1_getMeasurement returns a value in mV. Thus, to have effective
-     * battery voltage multiply by the ratio and divide by 1000
+     * adc1_getMeasurement returns a value in mV. To have effective battery
+     * voltage we have to multiply by the ratio: with a simple trick we can do
+     * it also without using floats and with a maximum error of -1mV.
      */
-    return (adc1_getMeasurement(ADC_VBAT_CH)*5.7f)/1000.0f;
+
+    uint16_t vbat = adc1_getMeasurement(ADC_VBAT_CH);
+    return (vbat * 6) - ((vbat * 3) / 10);
 }
 
 uint8_t platform_getMicLevel()

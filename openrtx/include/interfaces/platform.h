@@ -84,9 +84,9 @@ void platform_init();
 void platform_terminate();
 
 /**
- * This function reads and returns the current battery voltage in volt.
+ * This function reads and returns the current battery voltage in millivolt.
  */
-float platform_getVbat();
+uint16_t platform_getVbat();
 
 /**
  * This function reads and returns the current microphone input level as a

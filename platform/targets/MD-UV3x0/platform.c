@@ -92,14 +92,14 @@ void platform_terminate()
     gpio_clearPin(PWR_SW);
 }
 
-float platform_getVbat()
+uint16_t platform_getVbat()
 {
     /*
      * Battery voltage is measured through an 1:3 voltage divider and
      * adc1_getMeasurement returns a value in mV. Thus, to have effective
-     * battery voltage multiply by three and divide by 1000
+     * battery voltage, multiply by three.
      */
-    return adc1_getMeasurement(ADC_VBAT_CH)*3.0f/1000.0f;
+    return adc1_getMeasurement(ADC_VBAT_CH) * 3;
 }
 
 uint8_t platform_getMicLevel()

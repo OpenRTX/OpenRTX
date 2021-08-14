@@ -51,9 +51,12 @@ void platform_setBacklightLevel(__attribute__((unused)) uint8_t level)
 }
 
 // Simulate a fully charged lithium battery
-float platform_getVbat()
+uint16_t platform_getVbat()
 {
-    return Radio_State.Vbat;
+    float voltage = Radio_State.Vbat;
+    if(voltage < 0.0f)  voltage = 0.0f;
+    if(voltage > 65.0f) voltage = 65.0f;
+    return ((uint16_t) voltage);
 }
 
 
