@@ -64,13 +64,11 @@ uint16_t adc0_getRawSample(uint8_t ch)
 uint16_t adc0_getMeasurement(uint8_t ch)
 {
     /*
-     * To avoid using floats, we convert the raw ADC sample to mV using 16.16
-     * fixed point math. The equation for conversion is (sample * 3300)/4096 but,
-     * since converting the raw ADC sample to 16.16 notation requires a left
-     * shift by 16 and dividing by 4096 is equivalent to shifting right by 12,
-     * we just shift left by four and then multiply by 3300.
+     * ADC data width is 16 bit: to convert from ADC samples to voltage in mV,
+     * first multiply by 3300 and then divide the result by 65536 by right
+     * shifting it of 16 positions.
      * With respect to using floats, maximum error is -1mV.
      */
-    uint32_t sample = (adc0_getRawSample(ch) << 4) * 3300;
+    uint32_t sample = adc0_getRawSample(ch) * 3300;
     return ((uint16_t) (sample >> 16));
 }
