@@ -140,8 +140,6 @@ set(CODEC2_SRCS
     codec2_fifo.c
     fdmdv.c
     fm.c
-    fsk.c
-    fmfsk.c
     kiss_fft.c
     kiss_fftr.c
     linreg.c
@@ -164,13 +162,6 @@ set(CODEC2_SRCS
     codebooknewamp2.c
     codebooknewamp2_energy.c
     golay23.c
-    freedv_api.c
-    freedv_1600.c
-    freedv_700.c
-    freedv_2020.c
-    freedv_fsk.c
-    freedv_vhf_framing.c
-    freedv_data_channel.c
     varicode.c
     modem_stats.c
     ofdm.c
