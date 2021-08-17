@@ -32,7 +32,7 @@ int priority = PRIO_BEEP;
 
 streamId outputStream_start(const enum AudioSink destination,
                             const enum AudioPriority prio,
-                            const stream_sample_t* const buf,
+                            stream_sample_t * const buf,
                             const size_t length,
                             const uint32_t sampleRate)
 {
@@ -49,7 +49,30 @@ streamId outputStream_start(const enum AudioSink destination,
     priority = prio;
     __enable_irq();
 
-    toneGen_playAudioStream(buf, length, sampleRate);   /* Start the stream, nonblocking function        */
+    /*
+     * Convert buffer elements from int16_t to unsigned 8 bit values, as required
+     * by MDx tone generator. Processing can be done in-place because the API
+     * mandates that the function caller does not modify the buffer content once
+     * this function has been called. Code below exploits Cortex M4 SIMD
+     * instructions for fast execution.
+     */
+
+    uint32_t *data = ((uint32_t *) buf);
+    for(size_t i = 0; i < length/2; i++)
+    {
+        uint32_t value = __SADD16(data[i], 0x80008000);
+        data[i]        = (value >> 8) & 0x00FF00FF;
+    }
+
+    /* Handle last element in case of odd buffer length */
+    if((length % 2) != 0)
+    {
+        int16_t value   = buf[length - 1] + 32768;
+        buf[length - 1] = ((uint16_t) value) >> 8;
+    }
+
+    /* Start the stream, nonblocking function */
+    toneGen_playAudioStream(((uint16_t *) buf), length, sampleRate);
     return 0;
 }
 

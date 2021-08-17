@@ -86,7 +86,7 @@ void __attribute__((naked)) DMA2_Stream2_IRQHandler()
 
 streamId inputStream_start(const enum AudioSource source,
                            const enum AudioPriority prio,
-                           const stream_sample_t* buf,
+                           stream_sample_t * const buf,
                            const size_t bufLength,
                            const enum BufMode mode,
                            const uint32_t sampleRate)

@@ -31,8 +31,8 @@
 extern "C" {
 #endif
 
-typedef uint16_t stream_sample_t;
-typedef int8_t   streamId;
+typedef int16_t stream_sample_t;
+typedef int8_t  streamId;
 
 enum BufMode
 {
@@ -66,7 +66,7 @@ dataBlock_t;
  */
 streamId inputStream_start(const enum AudioSource source,
                            const enum AudioPriority prio,
-                           const stream_sample_t* buf,
+                           stream_sample_t * const buf,
                            const size_t bufLength,
                            const enum BufMode mode,
                            const uint32_t sampleRate);
@@ -99,6 +99,9 @@ void inputStream_stop(streamId id);
  * If a stream is opened from the same source but with an higher priority than
  * the one currently open, the new stream takes over the previous one.
  *
+ * WARNING: the caller must ensure that buffer content is not modified while the
+ * stream is being reproduced.
+ *
  * @param destination: destination of the output stream.
  * @param prio: priority of the requester.
  * @param buf: buffer containing the audio samples.
@@ -108,7 +111,7 @@ void inputStream_stop(streamId id);
  */
 streamId outputStream_start(const enum AudioSink destination,
                             const enum AudioPriority prio,
-                            const stream_sample_t* const buf,
+                            stream_sample_t * const buf,
                             const size_t length,
                             const uint32_t sampleRate);
 
