@@ -30,17 +30,10 @@
 #include <interfaces/audio_stream.h>
 #include <hwconfig.h>
 #include <OpMode_M17.h>
-#include <M17Modulator.h>
-#include <LinkSetupFrame.h>
 #include <cstring>
 #include <rtx.h>
 #include <dsp.h>
 #include <stdio.h>
-
-#if defined(PLATFORM_LINUX)
-#include <iostream>
-#include <fstream>
-#endif
 
 // Enable bitstream output on serial console
 //#define M17_DEBUG
@@ -69,7 +62,8 @@ const auto rrc_taps = std::experimental::make_array<float>(
     -0.001125978562075172, -0.006136551625729697, -0.009265784007800534
 );
 
-const std::array<uint8_t, 46> mobilinkd::detail::DC = {
+const std::array<uint8_t, 46> mobilinkd::detail::DC =
+{
     0xd6, 0xb5, 0xe2, 0x30, 0x82, 0xFF, 0x84, 0x62,
     0xba, 0x4e, 0x96, 0x90, 0xd8, 0x98, 0xdd, 0x5d,
     0x0c, 0xc8, 0x52, 0x43, 0x91, 0x1d, 0xf8, 0x6e,
@@ -81,7 +75,7 @@ const std::array<uint8_t, 46> mobilinkd::detail::DC = {
 /*
  * Converts bits of binary data into an encoding symbol
  */
-int8_t bits_to_symbol(uint8_t bits)
+static constexpr int8_t bits_to_symbol(uint8_t bits)
 {
     switch (bits)
     {
@@ -107,7 +101,8 @@ void bits_to_symbols(const std::array<T, N> *bits,
     size_t index = 0;
     for (size_t i = 0; i != N; i += 2)
     {
-        (*symbols)[offset + index++] = bits_to_symbol(((*bits)[i] << 1) | (*bits)[i + 1]);
+        symbols->at(offset + index++) = bits_to_symbol((bits->at(i) << 1) |
+                                                        bits->at(i + 1));
     }
 }
 
@@ -126,7 +121,7 @@ void bytes_to_symbols(const std::array<T, N> *bytes,
     {
         for (size_t i = 0; i != 4; ++i)
         {
-            (*symbols)[index++] = bits_to_symbol(b >> 6);
+            symbols->at(index++) = bits_to_symbol(b >> 6);
             b <<= 2;
         }
     }
@@ -145,7 +140,7 @@ void symbols_to_baseband(const std::array<int8_t, M17_FRAME_SYMBOLS> *symbols,
     baseband->fill(0);
     for (size_t i = 0; i != symbols->size(); ++i)
     {
-        (*baseband)[i * 10] = (*symbols)[i];
+        baseband->at(i * 10) = symbols->at(i);
     }
 
     for (auto& b : *baseband)
@@ -154,7 +149,7 @@ void symbols_to_baseband(const std::array<int8_t, M17_FRAME_SYMBOLS> *symbols,
     }
 }
 
-#if defined(PLATFORM_MDUV3x0) | defined(PLATFORM_MD3x0)
+#if defined(PLATFORM_MDUV3x0) || defined(PLATFORM_MD3x0)
 /*
  * Converts int16_t used by the modulator into uint8_t used by the PWM,
  * packed in a uint16_t array, as required by the STM32 DMA
@@ -163,210 +158,262 @@ void baseband_to_pwm_stm32(std::array<audio_sample_t, M17_FRAME_SAMPLES> *baseba
 {
     for (int i = 0; i < M17_FRAME_SAMPLES; i++)
     {
-        int32_t pos_sample = (*baseband)[i] + 32768;
+        int32_t pos_sample = baseband->at(i) + 32768;
         uint16_t shifted_sample = pos_sample >> 8;
-        (*baseband)[i] = shifted_sample;
+        baseband->at(i) = shifted_sample;
     }
 }
-
-/*
- * Converts 12-bit unsigned values packed into uint16_t into int16_t samples,
- * perform in-place conversion to save space.
- */
-void adc_to_audio_stm32(std::array<audio_sample_t, M17_AUDIO_SIZE> *audio)
-{
-    for (int i = 0; i < M17_AUDIO_SIZE; i++)
-    {
-        (*audio)[i] = (*audio)[i] << 3;
-    }
-}
-
-/*
- * Receives audio from the STM32 ADCs, connected to the radio's mic
- */
-std::array<audio_sample_t, M17_AUDIO_SIZE> *OpMode_M17::input_audio_stm32()
-{
-    // Get audio chunk from the microphone stream
-    std::array<stream_sample_t, M17_AUDIO_SIZE> *stream =
-        inputStream_getData<M17_AUDIO_SIZE>(input_id);
-    std::array<audio_sample_t, M17_AUDIO_SIZE> *audio =
-        reinterpret_cast<std::array<audio_sample_t, M17_AUDIO_SIZE>*>(stream);
-    // Convert 12-bit unsigned values into 16-bit signed
-    adc_to_audio_stm32(audio);
-    // Apply DC removal filter
-    dsp_dcRemoval(audio->data(), audio->size());
-
-    return audio;
-}
-
-/*
- * Pushes the modulated baseband signal into the RTX sink, to transmit M17
- */
-void OpMode_M17::output_baseband_stm32(std::array<audio_sample_t, M17_FRAME_SAMPLES> *baseband)
-{
-    // Apply PWM compensation FIR filter
-    dsp_pwmCompensate(baseband->data(), baseband->size());
-    // Invert phase
-    dsp_invertPhase(baseband->data(), baseband->size());
-    // In-place cast to uint8_t packed into uint16_t for PWM
-    baseband_to_pwm_stm32(baseband);
-    std::array<stream_sample_t, M17_FRAME_SAMPLES> *stream =
-        reinterpret_cast<std::array<stream_sample_t, M17_FRAME_SAMPLES>*>(baseband);
-
-    streamId output_id = outputStream_start(SINK_RTX,
-                                            PRIO_TX,
-                                            (stream_sample_t *)stream->data(),
-                                            M17_FRAME_SAMPLES,
-                                            M17_RTX_SAMPLE_RATE);
-}
-
-#elif defined(PLATFORM_LINUX)
-/*
- * Reads the input audio from a file on Linux
- */
-std::array<audio_sample_t, M17_AUDIO_SIZE> *OpMode_M17::input_audio_linux()
-{
-    if (!infile)
-        exit(0);
-    std::array<audio_sample_t, M17_AUDIO_SIZE> *audio = new std::array<audio_sample_t, M17_AUDIO_SIZE>;
-    infile.read((char *)audio->data(), M17_AUDIO_SIZE * sizeof(int16_t));
-    return audio;
-}
-
-/*
- * Pushes the output baseband on a file in Linux
- */
-void OpMode_M17::output_baseband_linux(std::array<audio_sample_t, M17_FRAME_SAMPLES> *baseband)
-{
-    FILE *outfile = fopen ("./m17_output.raw", "ab");
-    for(auto s : *baseband)
-    {
-        fwrite(&s, sizeof(s), 1, outfile);
-    }
-    fclose(outfile);
-}
-
 #endif
+//
+// /*
+//  * Converts 12-bit unsigned values packed into uint16_t into int16_t samples,
+//  * perform in-place conversion to save space.
+//  */
+// void adc_to_audio_stm32(std::array<audio_sample_t, M17_AUDIO_SIZE> *audio)
+// {
+//     for (int i = 0; i < M17_AUDIO_SIZE; i++)
+//     {
+//         (*audio)[i] = (*audio)[i] << 3;
+//     }
+// }
+//
+// /*
+//  * Receives audio from the STM32 ADCs, connected to the radio's mic
+//  */
+// std::array<audio_sample_t, M17_AUDIO_SIZE> *OpMode_M17::input_audio_stm32()
+// {
+//     // Get audio chunk from the microphone stream
+//     std::array<stream_sample_t, M17_AUDIO_SIZE> *stream =
+//         inputStream_getData<M17_AUDIO_SIZE>(input_id);
+//     std::array<audio_sample_t, M17_AUDIO_SIZE> *audio =
+//         reinterpret_cast<std::array<audio_sample_t, M17_AUDIO_SIZE>*>(stream);
+//     // Convert 12-bit unsigned values into 16-bit signed
+//     adc_to_audio_stm32(audio);
+//     // Apply DC removal filter
+//     dsp_dcRemoval(audio->data(), audio->size());
+//
+//     return audio;
+// }
+//
+// /*
+//  * Pushes the modulated baseband signal into the RTX sink, to transmit M17
+//  */
+// void OpMode_M17::output_baseband_stm32(std::array<audio_sample_t, M17_FRAME_SAMPLES> *baseband)
+// {
+//     // Apply PWM compensation FIR filter
+//     dsp_pwmCompensate(baseband->data(), baseband->size());
+//     // Invert phase
+//     dsp_invertPhase(baseband->data(), baseband->size());
+//     // In-place cast to uint8_t packed into uint16_t for PWM
+//     baseband_to_pwm_stm32(baseband);
+//     std::array<stream_sample_t, M17_FRAME_SAMPLES> *stream =
+//         reinterpret_cast<std::array<stream_sample_t, M17_FRAME_SAMPLES>*>(baseband);
+//
+//     streamId output_id = outputStream_start(SINK_RTX,
+//                                             PRIO_TX,
+//                                             (stream_sample_t *)stream->data(),
+//                                             M17_FRAME_SAMPLES,
+//                                             M17_RTX_SAMPLE_RATE);
+// }
 
-/*
- * Modulates and one M17 frame
- */
-void OpMode_M17::output_frame(std::array<uint8_t, 2> sync_word,
-                  const std::array<int8_t, M17_CODEC2_SIZE> *frame)
+constexpr std::array<uint8_t, 2> SYNC_WORD      = {0x32, 0x43};
+constexpr std::array<uint8_t, 2> LSF_SYNC_WORD  = {0x55, 0xF7};
+constexpr std::array<uint8_t, 2> DATA_SYNC_WORD = {0xFF, 0x5D};
+
+OpMode_M17::OpMode_M17() : enterRx(true),
+                           input(nullptr),
+                           symbols(nullptr),
+                           active_outBuffer(nullptr),
+                           idle_outBuffer(nullptr)
 {
-#if defined M17_DEBUG
-    for (auto c : sync_word)
+    lsf.clear();
+    dataFrame.clear();
+}
+
+OpMode_M17::~OpMode_M17()
+{
+}
+
+void OpMode_M17::enable()
+{
+    // Allocate codec2 encoder
+    codec2 = ::codec2_create(CODEC2_MODE_3200);
+
+    // Allocate arrays for M17 processing
+    symbols = new std::array<int8_t, M17_FRAME_SYMBOLS>;
+    symbols->fill(0x00);
+
+    active_outBuffer = new std::array<int16_t, M17_FRAME_SAMPLES>;
+    active_outBuffer->fill(0x00);
+
+    idle_outBuffer = new std::array<int16_t, M17_FRAME_SAMPLES>;
+    idle_outBuffer->fill(0x00);
+
+    // When starting, close squelch and prepare for entering in RX mode.
+    enterRx   = true;
+
+    // Start sampling from the microphone
+    input = new stream_sample_t[2 * M17_AUDIO_SIZE];
+    memset(input, 0x00, 2 * M17_AUDIO_SIZE * sizeof(stream_sample_t));
+
+    input_id = inputStream_start(SOURCE_MIC,
+                                 PRIO_TX,
+                                 input,
+                                 2 * M17_AUDIO_SIZE,
+                                 BUF_CIRC_DOUBLE,
+                                 M17_VOICE_SAMPLE_RATE);
+}
+
+void OpMode_M17::disable()
+{
+    // Terminate microphone sampling
+    inputStream_stop(input_id);
+
+    // Clean shutdown.
+    audio_disableAmp();
+    audio_disableMic();
+    radio_disableRtx();
+    enterRx   = false;
+
+    // Deallocate arrays to save space
+    delete symbols;
+    delete active_outBuffer;
+    delete idle_outBuffer;
+    delete[] input;
+    codec2_destroy(codec2);
+}
+
+void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
+{
+    (void) newCfg;
+
+    // RX logic
+    if(status->opStatus == RX)
     {
-        printf("%"PRIx8" ", c);
+        // TODO: Implement M17 Rx
     }
-    for (size_t i = 0; i != frame->size(); i += 8)
+    else if((status->opStatus == OFF) && enterRx)
     {
-        uint8_t c = 0;
-        for (size_t j = 0; j != 8; ++j)
+        radio_disableRtx();
+
+        radio_enableRx();
+        status->opStatus = RX;
+        enterRx = false;
+    }
+
+    // TX logic
+    if(platform_getPttStatus() && (status->txDisable == 0))
+    {
+
+        // Entering Tx mode right now, setup transmission
+        if(status->opStatus != TX)
         {
-            c <<= 1;
-            c |= (*frame)[i + j];
+            audio_disableAmp();
+            radio_disableRtx();
+
+            audio_enableMic();
+            radio_enableTx();
+
+            status->opStatus = TX;
+
+            // TODO: Allow destinations different than broadcast
+            std::string source_address(status->source_address);
+            std::string destination_address("\0\0\0\0\0\0\0\0\0");
+
+            // Start sending the preamble
+            send_preamble();
+
+            // Assemble and send the Link Setup Frame
+            send_lsf(source_address, destination_address);
+
+            // Setup LICH for use in following modulation
+            for(uint8_t i = 0; i < 6; i++) make_lich_segment(i);
         }
-        printf("%"PRIx8" ", c);
+        else
+        {
+            // Transmission is ongoing, just modulate
+            send_dataFrame(false);
+        }
     }
-    printf("\n");
-#endif
 
-    bytes_to_symbols(&sync_word, symbols);
-    bits_to_symbols(frame, symbols, M17_SYNCWORD_SYMBOLS);
+    // PTT is off, transition to Rx state
+    if(!platform_getPttStatus() && (status->opStatus == TX))
+    {
+        // Send last audio frame
+        send_dataFrame(true);
 
-    symbols_to_baseband(symbols, active_baseband);
+        audio_disableMic();
+        radio_disableRtx();
 
-#if defined(PLATFORM_MDUV3x0) | defined(PLATFORM_MD3x0)
-    output_baseband_stm32(active_baseband);
-#elif defined(PLATFORM_LINUX)
-    output_baseband_linux(active_baseband);
-#else
-#error M17 protocol is not supported on this platform
-#endif
+        status->opStatus = OFF;
+        enterRx = true;
+    }
+
+    // Led control logic
+    switch(status->opStatus)
+    {
+        case RX:
+            // TODO: Implement Rx LEDs
+            break;
+
+        case TX:
+            platform_ledOff(GREEN);
+            platform_ledOn(RED);
+            break;
+
+        default:
+            platform_ledOff(GREEN);
+            platform_ledOff(RED);
+            break;
+    }
 }
 
-/*
- * Generates and modulates the M17 preamble alone, used to start an M17
- * transmission
- */
 void OpMode_M17::send_preamble()
 {
-    std::array<uint8_t, M17_FRAME_BYTES> preamble_bytes = { 0 };
+    std::array<uint8_t, M17_FRAME_BYTES> preamble_bytes;
     preamble_bytes.fill(0x77);
-
-#if defined M17_DEBUG
-    for (auto c : preamble_bytes)
-    {
-        printf("%"PRIx8" ", c);
-    }
-    printf("\n");
-#endif
 
     // Preamble is simple... bytes -> symbols -> baseband.
     bytes_to_symbols(&preamble_bytes, symbols);
-    symbols_to_baseband(symbols, active_baseband);
-#if defined(PLATFORM_MDUV3x0) | defined(PLATFORM_MD3x0)
-    output_baseband_stm32(active_baseband);
-#elif defined(PLATFORM_LINUX)
-    output_baseband_linux(active_baseband);
-#else
-#error M17 protocol is not supported on this platform
-#endif
+    symbols_to_baseband(symbols, idle_outBuffer);
+    output_baseband();
 }
 
-constexpr std::array<uint8_t, 2> SYNC_WORD = {0x32, 0x43};
-constexpr std::array<uint8_t, 2> LSF_SYNC_WORD = {0x55, 0xF7};
-constexpr std::array<uint8_t, 2> DATA_SYNC_WORD = {0xFF, 0x5D};
-
-/*
- * Sends the Link Setup Frame
- */
-lsf_t OpMode_M17::send_lsf(const std::string& src, const std::string& dest)
+void OpMode_M17::send_lsf(const std::string& src, const std::string& dest)
 {
-    using namespace mobilinkd;
+    lsf.clear();
+    lsf.setSource(src);
+    lsf.setDestination(dest);
 
-    lsf_t result;
-    result.fill(0);
+    auto type = lsf.getType();
 
-    M17Randomizer<M17_CODEC2_SIZE> randomizer;
-    PolynomialInterleaver<45, 92, M17_CODEC2_SIZE> interleaver;
-    CRC16<0x5935, 0xFFFF> crc;
+    type.stream   = 1;    // Stream
+    type.dataType = 2;    // Voice data
+    type.CAN      = 0xA;  // Channel access number
 
-    mobilinkd::LinkSetupFrame::call_t callsign;
-    callsign.fill(0);
+    lsf.setType(type);
 
-    std::copy_n(src.begin(), std::min(src.size(), callsign.size()), callsign.begin());
-    std::copy(src.begin(), src.end(), callsign.begin());
-    auto encoded_src = mobilinkd::LinkSetupFrame::encode_callsign(callsign);
+    mobilinkd::M17Randomizer<M17_CODEC2_SIZE> randomizer;
+    mobilinkd::PolynomialInterleaver<45, 92, M17_CODEC2_SIZE> interleaver;
+    mobilinkd::CRC16<0x5935, 0xFFFF> crc;
 
-     mobilinkd::LinkSetupFrame::encoded_call_t encoded_dest = {0xff,0xff,0xff,0xff,0xff,0xff};
-     if (!dest.empty())
-     {
-        callsign.fill(0);
-        std::copy_n(dest.begin(), std::min(dest.size(), callsign.size()), callsign.begin());
-        encoded_dest = mobilinkd::LinkSetupFrame::encode_callsign(callsign);
-     }
-
-    auto rit = std::copy(encoded_dest.begin(), encoded_dest.end(), result.begin());
-    std::copy(encoded_src.begin(), encoded_src.end(), rit);
-    result[12] = 5;
-    result[13] = 5;
-
+    auto *ptr = reinterpret_cast< uint8_t *>(&lsf.getData());
     crc.reset();
-    for (size_t i = 0; i != 28; ++i)
+
+    for(size_t i = 0; i < 28; ++i)
     {
-        crc(result[i]);
+        crc(ptr[i]);
     }
-    auto checksum = crc.get_bytes();
-    result[28] = checksum[0];
-    result[29] = checksum[1];
+
+    lsf.getData().crc = __builtin_bswap16(crc.get());
 
     std::array<uint8_t, 488> encoded;
     size_t index = 0;
     uint32_t memory = 0;
-    for (auto b : result)
+
+    for(size_t i = 0; i < sizeof(lsf_t); i++)
     {
+        uint8_t b = ptr[i];
         for (size_t i = 0; i != 8; ++i)
         {
             uint32_t x = (b & 0x80) >> 7;
@@ -376,6 +423,7 @@ lsf_t OpMode_M17::send_lsf(const std::string& src, const std::string& dest)
             encoded[index++] = mobilinkd::convolve_bit(027, memory);
         }
     }
+
     // Flush the encoder.
     for (size_t i = 0; i != 4; ++i)
     {
@@ -385,47 +433,46 @@ lsf_t OpMode_M17::send_lsf(const std::string& src, const std::string& dest)
     }
 
     std::array<int8_t, M17_CODEC2_SIZE> punctured;
-    auto size = puncture(encoded, punctured, P1);
+    auto size = mobilinkd::puncture(encoded, punctured, mobilinkd::P1);
     //assert(size == M17_CODEC2_SIZE);
 
     interleaver.interleave(punctured);
     randomizer.randomize(punctured);
     output_frame(LSF_SYNC_WORD, &punctured);
-
-    return result;
 }
 
-/**
- * Encodes 2 frames of data.  Caller must ensure that the audio is
- * padded with 0s if the incoming data is incomplete.
- */
-codec_frame_t OpMode_M17::encode(struct CODEC2* codec2, audio_frame_t& audio)
+void OpMode_M17::send_dataFrame(bool last_frame)
 {
-    codec_frame_t result = { 0 };
-    codec2_encode(codec2, &result[0], &(audio.data()[0]));
-    codec2_encode(codec2, &result[8], &(audio.data()[160]));
+    dataFrame.clear();
+    dataFrame.setFrameNumber(frame_number);
+    frame_number = (frame_number + 1) & 0x07FF;
 
-    //for (size_t i = 0; i != 16; i++)
-    //{
-    //    iprintf("%02x ", result[i]);
-    //}
-    //iprintf("\n\r");
+    if(last_frame) dataFrame.lastFrame();
 
-    return result;
-}
+// #if defined(PLATFORM_MDUV3x0) | defined(PLATFORM_MD3x0)
+//     std::array<audio_sample_t, M17_AUDIO_SIZE> *audio = input_audio_stm32();
+// #elif defined(PLATFORM_LINUX)
+//     std::array<audio_sample_t, M17_AUDIO_SIZE> *audio = input_audio_linux();
+// #else
+// #error M17 protocol is not supported on this platform
+// #endif
 
-data_frame_t OpMode_M17::make_data_frame(uint16_t frame_number, const codec_frame_t& payload)
-{
-    std::array<uint8_t, 18> data;   // FN, Audio = 2 + 16;
-    data[0] = uint8_t((frame_number >> 8) & 0xFF);
-    data[1] = uint8_t(frame_number & 0xFF);
-    std::copy(payload.begin(), payload.end(), data.begin() + 2);
+//     codec2_encode(codec2, &dataFrame.payload()[0], &(audio.data()[0]));
+//     codec2_encode(codec2, &dataFrame.payload()[8], &(audio.data()[160]));
 
-    std::array<uint8_t, 296> encoded;
-    size_t index = 0;
-    uint32_t memory = 0;
-    for (auto b : data)
+    for(size_t i = 0; i < dataFrame.payload().size(); i++)
     {
+        dataFrame.payload()[i] = 'A' + i;
+    }
+
+    auto *ptr = reinterpret_cast< uint8_t *>(&dataFrame.getData());
+    std::array<uint8_t, 296> encoded;
+    size_t index    = 0;
+    uint32_t memory = 0;
+
+    for(size_t i = 0; i < sizeof(dataFrame_t); i++)
+    {
+        uint8_t b = ptr[i];
         for (size_t i = 0; i != 8; ++i)
         {
             uint32_t x = (b & 0x80) >> 7;
@@ -435,6 +482,7 @@ data_frame_t OpMode_M17::make_data_frame(uint16_t frame_number, const codec_fram
             encoded[index++] = mobilinkd::convolve_bit(027, memory);
         }
     }
+
     // Flush the encoder.
     for (size_t i = 0; i != 4; ++i)
     {
@@ -445,16 +493,54 @@ data_frame_t OpMode_M17::make_data_frame(uint16_t frame_number, const codec_fram
 
     data_frame_t punctured;
     auto size = mobilinkd::puncture(encoded, punctured, mobilinkd::P2);
-    assert(size == 272);
-    return punctured;
+//     assert(size == 272);
+
+    // Add LICH segment to coded data and send
+    std::array<int8_t, M17_CODEC2_SIZE> temp;
+    auto it = std::copy(lich[lich_segment].begin(), lich[lich_segment].end(),
+                        temp.begin());
+    std::copy(punctured.begin(), punctured.end(), it);
+
+    mobilinkd::M17Randomizer<M17_CODEC2_SIZE> randomizer;
+    mobilinkd::PolynomialInterleaver<45, 92, M17_CODEC2_SIZE> interleaver;
+
+    interleaver.interleave(temp);
+    randomizer.randomize(temp);
+    output_frame(DATA_SYNC_WORD, &temp);
 }
 
-/**
- * Encode each LSF segment into a Golay-encoded LICH segment bitstream.
- */
-lich_segment_t OpMode_M17::make_lich_segment(std::array<uint8_t, 5> segment, uint8_t segment_number)
+void OpMode_M17::output_frame(std::array<uint8_t, 2> sync_word,
+                  const std::array<int8_t, M17_CODEC2_SIZE> *frame)
 {
-    lich_segment_t result;
+
+    bytes_to_symbols(&sync_word, symbols);
+    bits_to_symbols(frame, symbols, M17_SYNCWORD_SYMBOLS);
+
+    symbols_to_baseband(symbols, idle_outBuffer);
+    output_baseband();
+}
+
+void OpMode_M17::output_baseband()
+{
+//     #if defined(PLATFORM_MDUV3x0) | defined(PLATFORM_MD3x0)
+
+    // Apply PWM compensation FIR filter
+    dsp_pwmCompensate(idle_outBuffer->data(), idle_outBuffer->size());
+
+    // Invert phase
+    dsp_invertPhase(idle_outBuffer->data(), idle_outBuffer->size());
+    std::swap(idle_outBuffer, active_outBuffer);
+
+    outputStream_start(SINK_RTX, PRIO_TX,
+                       reinterpret_cast< stream_sample_t *>(active_outBuffer->data()),
+                       active_outBuffer->size(), M17_RTX_SAMPLE_RATE);
+}
+
+void OpMode_M17::make_lich_segment(uint8_t segment_number)
+{
+    lich_segment_t& result = lich[segment_number];
+    auto segment = lsf.getSegment(segment_number).data;
+
     uint16_t tmp;
     uint32_t encoded;
 
@@ -488,227 +574,5 @@ lich_segment_t OpMode_M17::make_lich_segment(std::array<uint8_t, 5> segment, uin
     {
         result[i] = (encoded & (1 << 23)) != 0;
         encoded <<= 1;
-    }
-
-    return result;
-}
-
-void OpMode_M17::send_audio_frame(const lich_segment_t& lich, const data_frame_t& data)
-{
-    using namespace mobilinkd;
-
-    std::array<int8_t, M17_CODEC2_SIZE> temp;
-    auto it = std::copy(lich.begin(), lich.end(), temp.begin());
-    std::copy(data.begin(), data.end(), it);
-
-    M17Randomizer<M17_CODEC2_SIZE> randomizer;
-    PolynomialInterleaver<45, 92, M17_CODEC2_SIZE> interleaver;
-
-    interleaver.interleave(temp);
-    randomizer.randomize(temp);
-    output_frame(DATA_SYNC_WORD, &temp);
-}
-
-void OpMode_M17::m17_modulate(bool last_frame)
-{
-    using namespace mobilinkd;
-
-#if defined(PLATFORM_MDUV3x0) | defined(PLATFORM_MD3x0)
-    std::array<audio_sample_t, M17_AUDIO_SIZE> *audio = input_audio_stm32();
-#elif defined(PLATFORM_LINUX)
-    std::array<audio_sample_t, M17_AUDIO_SIZE> *audio = input_audio_linux();
-#else
-#error M17 protocol is not supported on this platform
-#endif
-
-    if (!last_frame)
-    {
-        auto data = make_data_frame(frame_number++, encode(codec2, *audio));
-        if (frame_number == 0x8000)
-            frame_number = 0;
-        send_audio_frame(lich[lich_segment++], data);
-        if (lich_segment == lich.size())
-            lich_segment = 0;
-    }
-    else
-    {
-        auto data = make_data_frame(frame_number | 0x8000, encode(codec2, *audio));
-        send_audio_frame(lich[lich_segment], data);
-    }
-
-#if defined(PLATFORM_LINUX)
-    // Test M17 on linux
-    delete audio;
-#endif
-
-}
-
-OpMode_M17::OpMode_M17() : enterRx(true),
-                           input_id(0),
-                           lsf({0}),
-                           input(nullptr),
-                           symbols(nullptr),
-                           baseband_a(nullptr),
-                           baseband_b(nullptr),
-                           active_baseband(nullptr)
-{
-}
-
-OpMode_M17::~OpMode_M17()
-{
-}
-
-void OpMode_M17::enable()
-{
-    // Allocate codec2 encoder
-    codec2 = ::codec2_create(CODEC2_MODE_3200);
-    // Allocate arrays for M17 processing
-    input = (stream_sample_t *) malloc(2 * M17_AUDIO_SIZE * sizeof(stream_sample_t));
-    memset(input, 0x00, 2 * M17_AUDIO_SIZE * sizeof(stream_sample_t));
-    symbols = new std::array<int8_t, M17_FRAME_SYMBOLS>;
-    symbols->fill({ 0 });
-    baseband_a = new std::array<int16_t, M17_FRAME_SAMPLES>;
-    baseband_a->fill({ 0 });
-    baseband_b = new std::array<int16_t, M17_FRAME_SAMPLES>;
-    baseband_b->fill({ 0 });
-
-    // When starting, close squelch and prepare for entering in RX mode.
-    enterRx   = true;
-
-#if defined(PLATFORM_MDUV3x0) | defined(PLATFORM_MD3x0)
-    // Start sampling from the microphone
-    input_id = inputStream_start(SOURCE_MIC,
-                                 PRIO_TX,
-                                 input,
-                                 2 * M17_AUDIO_SIZE,
-                                 BUF_CIRC_DOUBLE,
-                                 M17_VOICE_SAMPLE_RATE);
-#elif defined(PLATFORM_LINUX)
-    // Test M17 on linux
-    infile.open ("./m17_input.raw", std::ios::in | std::ios::binary);
-    FILE *outfile = fopen ("./m17_output.raw", "wb");
-    fclose(outfile);
-#endif
-}
-
-void OpMode_M17::disable()
-{
-#if defined(PLATFORM_MDUV3x0) | defined(PLATFORM_MD3x0)
-    // Terminate microphone sampling
-    inputStream_stop(input_id);
-#elif defined(PLATFORM_LINUX)
-    // Test M17 on linux
-    infile.close();
-#endif
-    // Clean shutdown.
-    audio_disableAmp();
-    audio_disableMic();
-    radio_disableRtx();
-    enterRx   = false;
-
-    // FIXME: These make the radio crash
-    // Deallocate arrays to save space
-    //free(input);
-    //delete symbols;
-    //delete baseband_a;
-    //delete baseband_b;
-    //codec2_destroy(codec2);
-}
-
-void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
-{
-    (void) newCfg;
-
-    // RX logic
-    if(status->opStatus == RX)
-    {
-        // TODO: Implement M17 Rx
-    }
-    else if((status->opStatus == OFF) && enterRx)
-    {
-        radio_disableRtx();
-
-        radio_enableRx();
-        status->opStatus = RX;
-        enterRx = false;
-    }
-
-    // TX logic
-    if(platform_getPttStatus() && (status->txDisable == 0))
-    {
-        // Swap active output buffer
-        if (active_baseband == baseband_a)
-            active_baseband = baseband_b;
-        else
-            active_baseband = baseband_a;
-
-        // Entering Tx mode right now, setup transmission
-        if(status->opStatus != TX)
-        {
-            audio_disableAmp();
-            radio_disableRtx();
-
-            audio_enableMic();
-            radio_enableTx();
-
-            status->opStatus = TX;
-
-            //char *source_address = status->source_address;
-            std::string source_address(status->source_address);
-            // TODO: Allow destinations different than broadcast
-            std::string destination_address("\0\0\0\0\0\0");
-
-            // Send Link Setup Frame
-            send_preamble();
-            // Swap active output buffer
-            if (active_baseband == baseband_a)
-                active_baseband = baseband_b;
-            else
-                active_baseband = baseband_a;
-            lsf = send_lsf(source_address, destination_address);
-
-            // Setup LICH for use in following modulation
-            for (size_t i = 0; i != lich.size(); ++i)
-            {
-                std::array<uint8_t, 5> segment;
-                std::copy(lsf.begin() + i * 5, lsf.begin() + (i + 1) * 5, segment.begin());
-                auto lich_segment = make_lich_segment(segment, i);
-                std::copy(lich_segment.begin(), lich_segment.end(), lich[i].begin());
-            }
-        } else {
-            // Transmission is ongoing, just modulate
-            m17_modulate(false);
-        }
-    }
-
-    // PTT is off, transition to Rx state
-    if(!platform_getPttStatus() && (status->opStatus == TX))
-    {
-        // Send last audio frame
-        m17_modulate(true);
-
-        audio_disableMic();
-        radio_disableRtx();
-
-        status->opStatus = OFF;
-        enterRx = true;
-    }
-
-    // Led control logic
-    switch(status->opStatus)
-    {
-        case RX:
-            // TODO: Implement Rx LEDs
-            break;
-
-        case TX:
-            platform_ledOff(GREEN);
-            platform_ledOn(RED);
-            break;
-
-        default:
-            platform_ledOff(GREEN);
-            platform_ledOff(RED);
-            break;
     }
 }
