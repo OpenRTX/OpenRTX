@@ -31,7 +31,7 @@
 
 using call_t    = std::array< uint8_t, 6 >;    // Data type for encoded callsign
 using meta_t    = std::array< uint8_t, 14 >;   // Data type for LSF metadata field
-using payload_t = std::array< uint8_t, 8 >;    // Data type for frame payload field
+using payload_t = std::array< uint8_t, 16 >;   // Data type for frame payload field
 
 
 /**
