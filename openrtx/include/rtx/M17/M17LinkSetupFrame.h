@@ -123,7 +123,12 @@ public:
      * Compute a new CRC over the frame content and update the corresponding
      * field.
      */
-    void updateCrc();
+    void updateCrc()
+    {
+        // Compute CRC over the first 28 bytes, then store it in big endian format.
+        uint16_t crc = crc16(&data, 28);
+        data.crc     = __builtin_bswap16(crc);
+    }
 
     /**
      * Get underlying data structure.
@@ -159,6 +164,35 @@ public:
     }
 
 private:
+
+    /**
+     * Compute the CRC16 of a given chunk of data using the polynomial 0x5935
+     * with an initial value set to 0xFFFF, as per M17 specification.
+     *
+     * \param data: pointer to the data block.
+     * \param len: lenght of the data block, in bytes.
+     * \return computed CRC16 over the data block.
+     */
+    uint16_t crc16(const void *data, const size_t len)
+    {
+        const uint8_t *ptr = reinterpret_cast< const uint8_t *>(data);
+        uint16_t crc = 0xFFFF;
+
+        for(size_t i = 0; i < len; i++)
+        {
+            crc ^= (ptr[i] << 8);
+
+            for(uint8_t j = 0; j < 8; j++)
+            {
+                if(crc & 0x8000)
+                    crc = (crc << 1) ^ 0x5935;
+                else
+                    crc = (crc << 1);
+            }
+        }
+
+        return crc;
+    }
 
     lsf_t data;    ///< Underlying frame data.
 };

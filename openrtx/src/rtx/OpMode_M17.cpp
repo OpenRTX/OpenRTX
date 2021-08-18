@@ -387,28 +387,18 @@ void OpMode_M17::send_lsf(const std::string& src, const std::string& dest)
     lsf.setSource(src);
     if(!dest.empty()) lsf.setDestination(dest);
 
-    auto type = lsf.getType();
-
+    streamType_t type;
     type.stream   = 1;    // Stream
     type.dataType = 2;    // Voice data
     type.CAN      = 0xA;  // Channel access number
 
     lsf.setType(type);
+    lsf.updateCrc();
 
     mobilinkd::M17Randomizer<M17_CODEC2_SIZE> randomizer;
     mobilinkd::PolynomialInterleaver<45, 92, M17_CODEC2_SIZE> interleaver;
-    mobilinkd::CRC16<0x5935, 0xFFFF> crc;
 
     auto *ptr = reinterpret_cast< uint8_t *>(&lsf.getData());
-    crc.reset();
-
-    for(size_t i = 0; i < 28; ++i)
-    {
-        crc(ptr[i]);
-    }
-
-    lsf.getData().crc = __builtin_bswap16(crc.get());
-
     std::array<uint8_t, 488> encoded;
     size_t index = 0;
     uint32_t memory = 0;
