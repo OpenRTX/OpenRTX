@@ -25,9 +25,11 @@
 #error This header is C++ only!
 #endif
 
+#include <cstring>
 #include <string>
+#include <array>
 #include "M17Datatypes.h"
-#include "M17callsign.h"
+#include "M17Callsign.h"
 
 /**
  * This class describes and handles an M17 Link Setup Frame.
@@ -57,8 +59,7 @@ public:
      */
     void clear()
     {
-        auto *ptr = reinterpret_cast< uint8_t *>(&data);
-        std::fill(ptr, ptr + sizeof(lsf_t), 0x00);
+        memset(&data, 0x00, sizeof(lsf_t));
         data.dst.fill(0xFF);
     }
 
@@ -161,6 +162,18 @@ public:
         }
 
         return chunk;
+    }
+
+    /**
+     * Dump the frame content to a std::array.
+     *
+     * \return std::array containing the content of the frame.
+     */
+    std::array< uint8_t, sizeof(lsf_t) > toArray()
+    {
+        std::array< uint8_t, sizeof(lsf_t) > frame;
+        memcpy(frame.data(), &data, frame.size());
+        return frame;
     }
 
 private:
