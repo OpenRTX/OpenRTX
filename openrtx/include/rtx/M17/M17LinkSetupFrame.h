@@ -31,6 +31,8 @@
 
 /**
  * This class describes and handles an M17 Link Setup Frame.
+ * By default the frame contains a broadcast destination address, unless a
+ * specific address is set by calling the corresponding function.
  */
 class M17LinkSetupFrame
 {
@@ -50,12 +52,14 @@ public:
     ~M17LinkSetupFrame(){ }
 
     /**
-     * Clear the frame content, filling it with zeroes.
+     * Clear the frame content, filling it with zeroes and resetting the
+     * destination address to broadcast.
      */
     void clear()
     {
         auto *ptr = reinterpret_cast< uint8_t *>(&data);
         std::fill(ptr, ptr + sizeof(lsf_t), 0x00);
+        data.dst.fill(0xFF);
     }
 
     /**

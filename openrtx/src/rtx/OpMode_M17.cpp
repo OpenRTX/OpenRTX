@@ -35,6 +35,8 @@
 #include <dsp.h>
 #include <stdio.h>
 
+#include <toneGenerator_MDx.h>
+
 // Enable bitstream output on serial console
 //#define M17_DEBUG
 
@@ -318,7 +320,7 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
 
             // TODO: Allow destinations different than broadcast
             std::string source_address(status->source_address);
-            std::string destination_address("\0\0\0\0\0\0\0\0\0");
+            std::string destination_address;
 
             // Start sending the preamble
             send_preamble();
@@ -383,7 +385,7 @@ void OpMode_M17::send_lsf(const std::string& src, const std::string& dest)
 {
     lsf.clear();
     lsf.setSource(src);
-    lsf.setDestination(dest);
+    if(!dest.empty()) lsf.setDestination(dest);
 
     auto type = lsf.getType();
 
