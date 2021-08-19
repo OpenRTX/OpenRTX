@@ -32,6 +32,7 @@
 using call_t    = std::array< uint8_t, 6 >;    // Data type for encoded callsign
 using meta_t    = std::array< uint8_t, 14 >;   // Data type for LSF metadata field
 using payload_t = std::array< uint8_t, 16 >;   // Data type for frame payload field
+using lich_t    = std::array< uint8_t, 12 >;   // Data type for Golay(24,12) encoded LICH data
 
 
 /**
@@ -48,18 +49,6 @@ typedef struct
     uint16_t            : 4;    //< Reserved, padding to 16 bit
 }
 __attribute__((packed)) streamType_t;
-
-
-/**
- * Data structure specifying the conted of one Link Setup Frame chunk.
- */
-typedef struct
-{
-    std::array< uint8_t, 5 > data;
-    uint8_t                  cnt : 3;
-    uint8_t                      : 5;
-}
-__attribute__((packed)) lsfChunk_t;
 
 
 /**
@@ -81,7 +70,6 @@ __attribute__((packed)) lsf_t;
  */
 typedef struct
 {
-//     lsfChunk_t LICH;      //< Link Information CHannel
     uint16_t   frameNum;  //< Frame number
     payload_t  payload;   //< Payload data
 }

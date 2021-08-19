@@ -30,6 +30,7 @@
 #include <array>
 #include "M17Datatypes.h"
 #include "M17Callsign.h"
+#include "M17Golay.h"
 
 /**
  * This class describes and handles an M17 Link Setup Frame.
@@ -143,25 +144,35 @@ public:
 
     /**
      * Generate one of the six possible LSF chunks for embedding in data frame's
-     * LICH field.
+     * LICH field. Output is the Golay (24,12) encoded LSF chunk.
      *
      * @param segmentNum: segment number.
-     * @return LSF chunk.
+     * @return Golay (24,12) encoded LSF chunk.
      */
-    lsfChunk_t getSegment(const uint8_t segmentNum)
+    lich_t generateLichSegment(const uint8_t segmentNum)
     {
-        lsfChunk_t chunk;
+        lich_t result;
+        std::array< uint16_t, 4 > blocks;
 
-        chunk.cnt = segmentNum % 6;
-        auto *ptr = reinterpret_cast< uint8_t *>(&data);
+        uint8_t num    = segmentNum % 6;
+        uint8_t *chunk = reinterpret_cast< uint8_t *>(&data) + num;
 
-        // Copy five bytes from LSF block to the corresponding segment
-        for(uint8_t i = 0; i < 5; i++)
+        // Partition chunk data in 12-bit blocks for Golay(24,12) encoding.
+        blocks[0] = chunk[0] << 4 | ((chunk[1] >> 4) & 0x0F);
+        blocks[1] = ((chunk[1] & 0x0F) << 8) | chunk[2];
+        blocks[2] = chunk[3] << 4 | ((chunk[4] >> 4) & 0x0F);
+        blocks[3] = ((chunk[4] & 0x0F) << 8) | (num << 5);
+
+        // Encode each block and assemble the final data block.
+        // NOTE: shift and bitswap required to genereate big-endian data.
+        for(size_t i = 0; i < blocks.size(); i++)
         {
-            chunk.data[i] = ptr[chunk.cnt + i];
+            uint32_t encoded = golay_encode24(blocks[i]);
+            encoded          = __builtin_bswap32(encoded << 8);
+            memcpy(&result[3*i], &encoded, 3);
         }
 
-        return chunk;
+        return result;
     }
 
     /**
