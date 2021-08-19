@@ -18,10 +18,10 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <FirFilter.h>
-#include <dsp.h>
 #include <toneGenerator_MDx.h>
 #include <experimental/array>
+#include <FirFilter.h>
+#include <dsp.h>
 
 #include "M17/M17CodePuncturing.h"
 #include "M17/M17Decorrelator.h"
@@ -135,6 +135,9 @@ void M17Transmitter::send(const payload_t& payload)
                         lichSegments[currentLich].end(),
                         frame.begin());
     std::copy(punctured.begin(), punctured.end(), it);
+
+    // Increment LICH counter after copy
+    currentLich = (currentLich + 1) % lichSegments.size();
 
     interleave(frame);
     decorrelate(frame);

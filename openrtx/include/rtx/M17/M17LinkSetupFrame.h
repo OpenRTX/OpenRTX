@@ -146,18 +146,29 @@ public:
      * Generate one of the six possible LSF chunks for embedding in data frame's
      * LICH field. Output is the Golay (24,12) encoded LSF chunk.
      *
-     * @param segmentNum: segment number.
+     * @param segmentNum: segment number, between 0 and 5.
      * @return Golay (24,12) encoded LSF chunk.
      */
     lich_t generateLichSegment(const uint8_t segmentNum)
     {
-        lich_t result;
-        std::array< uint16_t, 4 > blocks;
+        /*
+         * The M17 protocol specification prescribes that the content of the
+         * link setup frame is continuously transmitted alongside data frames
+         * by partitioning it in 6 chunks of five bites each and cyclically
+         * transmitting these chunks.
+         * With a bit of pointer math, we extract the data for each of the
+         * chunks by casting the a pointer lsf_t data structure to uint8_t
+         * and adjusting it to make it point to the start of each block of
+         * five bytes, as specified by the segmentNum parameter.
+         *
+         */
 
+        // Set up pointer to the beginning of the specified 5-byte chunk
         uint8_t num    = segmentNum % 6;
-        uint8_t *chunk = reinterpret_cast< uint8_t *>(&data) + num;
+        uint8_t *chunk = reinterpret_cast< uint8_t* >(&data) + (num * 5);
 
         // Partition chunk data in 12-bit blocks for Golay(24,12) encoding.
+        std::array< uint16_t, 4 > blocks;
         blocks[0] = chunk[0] << 4 | ((chunk[1] >> 4) & 0x0F);
         blocks[1] = ((chunk[1] & 0x0F) << 8) | chunk[2];
         blocks[2] = chunk[3] << 4 | ((chunk[4] >> 4) & 0x0F);
@@ -165,6 +176,7 @@ public:
 
         // Encode each block and assemble the final data block.
         // NOTE: shift and bitswap required to genereate big-endian data.
+        lich_t result;
         for(size_t i = 0; i < blocks.size(); i++)
         {
             uint32_t encoded = golay_encode24(blocks[i]);
