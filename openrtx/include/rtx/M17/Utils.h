@@ -67,4 +67,23 @@ inline void setBit(std::array< uint8_t, N >& array, const size_t pos,
                (bit ? mask : 0x00);
 }
 
+/**
+ *
+ */
+inline std::array< int8_t, 4 > byteToSymbols(uint8_t value)
+{
+    static constexpr int8_t LUT[] = { +1, +3, -1, -3};
+    std::array< int8_t, 4 > symbols;
+
+    symbols[3] = LUT[value & 0x03];
+    value >>= 2;
+    symbols[2] = LUT[value & 0x03];
+    value >>= 2;
+    symbols[1] = LUT[value & 0x03];
+    value >>= 2;
+    symbols[0] = LUT[value & 0x03];
+
+    return symbols;
+}
+
 #endif /* UTILS_H */

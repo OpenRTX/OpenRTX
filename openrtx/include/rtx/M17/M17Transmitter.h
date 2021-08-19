@@ -27,6 +27,7 @@
 
 #include <string>
 #include <array>
+#include "M17/M17ConvolutionalEncoder.h"
 #include "M17LinkSetupFrame.h"
 #include "M17Frame.h"
 
@@ -52,17 +53,51 @@ public:
     /**
      *
      */
-    void send(const std::array< uint8_t, 8 >& payload);
+    void send(const payload_t& payload);
 
     /**
      *
      */
-    void stop(const std::array< uint8_t, 8 >& payload = {0});
+    void stop(const payload_t& payload = {0});
 
 private:
 
-    M17LinkSetupFrame lsf;
-    M17Frame        frame;
+    static constexpr size_t M17_RTX_SAMPLE_RATE = 48000;
+    static constexpr size_t M17_FRAME_SAMPLES   = 1920;
+    static constexpr size_t M17_FRAME_SYMBOLS   = 192;
+    static constexpr size_t M17_FRAME_SIZE      = 46;
+
+    /**
+     *
+     */
+    void sendPreamble();
+
+    /**
+     *
+     */
+    void sendData(const std::array< uint8_t, 2 >& sync,
+                  const std::array< uint8_t, M17_FRAME_SIZE >& frame);
+
+    /**
+     *
+     */
+    void encodeSymbols(const std::array< uint8_t, 2 >& sync,
+                       const std::array< uint8_t, M17_FRAME_SIZE >& frame);
+
+    /**
+     *
+     */
+    void generateBaseband();
+
+    M17ConvolutionalEncoder      encoder;
+    M17LinkSetupFrame                lsf;
+    M17Frame                   dataFrame;
+    std::array< lich_t, 6 > lichSegments;
+    uint8_t                  currentLich;
+    uint16_t                 frameNumber;
+    std::array< int16_t, M17_FRAME_SYMBOLS > symbols;
+    std::array< int16_t, M17_FRAME_SAMPLES > active_outBuffer;
+    std::array< int16_t, M17_FRAME_SAMPLES > idle_outBuffer;
 };
 
 #endif /* M17TRANSMITTER_H */

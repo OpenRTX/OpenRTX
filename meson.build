@@ -35,6 +35,7 @@ openrtx_src = ['openrtx/src/state.c',
                'openrtx/src/rtx/rtx.cpp',
                'openrtx/src/rtx/OpMode_FM.cpp',
                'openrtx/src/rtx/OpMode_M17.cpp',
+               'openrtx/src/rtx/M17Transmitter.cpp',
                'openrtx/src/gps.c',
                'openrtx/src/dsp.cpp',
                'openrtx/src/memory_profiling.cpp']

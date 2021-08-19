@@ -28,6 +28,7 @@
 #endif
 
 #include <cstdint>
+#include <cstddef>
 
 /**
  * Convolutional encoder tailored on M17 protocol specifications, requiring a

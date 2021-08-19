@@ -24,31 +24,10 @@
 #include "OpMode.h"
 #include <interfaces/audio_stream.h>
 #include <hwconfig.h>
-#include <M17Modulator.h>
+#include "M17/M17Transmitter.h"
 #include <array>
 
-#include "M17/M17LinkSetupFrame.h"
-#include "M17/M17Frame.h"
-
-#define M17_VOICE_SAMPLE_RATE 8000
-#define M17_RTX_SAMPLE_RATE   48000
-
-// FRAME = SYNCWORD + PAYLOAD
-#define M17_AUDIO_SIZE        320
-#define M17_CODEC2_SIZE       368
-#define M17_FRAME_SAMPLES     1920
-#define M17_SYNCWORD_SYMBOLS  8
-#define M17_PAYLOAD_SYMBOLS   184
-#define M17_FRAME_SYMBOLS     192
-#define M17_FRAME_BYTES       48
-
-using audio_sample_t = int16_t;
-using lich_segment_t = std::array<uint8_t, 96>;
-using lich_t         = std::array<lich_segment_t, 6>;
-using queue_t        = mobilinkd::queue<audio_sample_t, 320>;
-using audio_frame_t  = std::array<audio_sample_t, 320>;
-using codec_frame_t  = std::array<uint8_t, 16>;
-using data_frame_t   = std::array<int8_t, 272>;
+// #include "codec2/codec2.h"
 
 /**
  * Specialisation of the OpMode class for the management of M17 operating mode.
@@ -112,50 +91,14 @@ private:
 
     bool enterRx;                 ///< Flag for RX management.
     streamId input_id = 0;        ///< Input audio stream identifier
-    M17LinkSetupFrame lsf;        ///< Link Setup Frame data structure
-    M17Frame    dataFrame;
-    lich_t lich = { 0 };          ///< Link Information Channel
-    struct CODEC2* codec2;        ///< Codec2 data structure
-
-    uint16_t frame_number = 0;    ///< Number of frame in the sequence
-    uint8_t lich_segment  = 0;    ///< LICH segment to be used
+//     struct CODEC2* codec2;        ///< Codec2 data structure
 
     // Input audio stream, PCM_16 8KHz, double buffered
-    stream_sample_t *input = nullptr;
-    std::array<int8_t,  M17_FRAME_SYMBOLS> *symbols          = nullptr;
-    std::array<int16_t, M17_FRAME_SAMPLES> *active_outBuffer = nullptr;
-    std::array<int16_t, M17_FRAME_SAMPLES> *idle_outBuffer   = nullptr;
+    stream_sample_t *input;
 
-    /*
-     * Transmit M17 preamble sequence.
-     */
-    void send_preamble();
+    M17Transmitter *tx;
 
-    /*
-     * Assemble and transmit the Link Setup Frame.
-     */
-    void send_lsf(const std::string& src, const std::string& dest);
-
-    /**
-     * Assemble and transmit one data frame.
-     */
-    void send_dataFrame(bool last_frame);
-
-    /*
-     * Modulates and one M17 frame
-     */
-    void output_frame(std::array<uint8_t, 2> sync_word,
-                      const std::array<int8_t, M17_CODEC2_SIZE> *frame);
-
-    /**
-     * Generate baseband signal.
-     */
-    void output_baseband();
-
-    /**
-     * Encode each LSF segment into a Golay-encoded LICH segment bitstream.
-     */
-    void make_lich_segment(uint8_t segment_number);
+    void sendData(bool last);
 };
 
 #endif /* OPMODE_M17_H */
