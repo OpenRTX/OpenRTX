@@ -18,8 +18,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef M17DATATYPES_H
-#define M17DATATYPES_H
+#ifndef M17_DATATYPES_H
+#define M17_DATATYPES_H
 
 #include <cstdint>
 #include <array>
@@ -75,4 +75,4 @@ typedef struct
 }
 __attribute__((packed)) dataFrame_t;
 
-#endif /* M17DATATYPES_H */
+#endif /* M17_DATATYPES_H */

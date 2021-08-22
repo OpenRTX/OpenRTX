@@ -20,8 +20,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef M17CONVOLUTIONALENCODER_H
-#define M17CONVOLUTIONALENCODER_H
+#ifndef M17_CONVOLUTIONAL_ENCODER_H
+#define M17_CONVOLUTIONAL_ENCODER_H
 
 #ifndef __cplusplus
 #error This header is C++ only!
@@ -111,4 +111,4 @@ private:
     uint8_t memory = 0;    ///< Convolutional encoder memory.
 };
 
-#endif /* M17CONVOLUTIONALENCODER_H */
+#endif /* M17_CONVOLUTIONAL_ENCODER_H */

@@ -4,6 +4,7 @@
  *                         Frederik Saraci IU2NRO                          *
  *                         Silvano Seva IU2KWO                             *
  *                                                                         *
+ *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
  *   the Free Software Foundation; either version 3 of the License, or     *
@@ -18,38 +19,52 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef M17_CALLSIGN_H
-#define M17_CALLSIGN_H
+#ifndef M17_UTILS_H
+#define M17_UTILS_H
 
 #ifndef __cplusplus
 #error This header is C++ only!
 #endif
 
-#include <string>
-#include "M17Datatypes.h"
+#include <array>
+
 
 /**
- * Encode a callsign in base-40 format, starting with the right-most character.
- * The final value is written out in "big-endian" form, with the most-significant
- * value first, leading to 0-padding of callsigns shorter than nine characters.
+ * Utility function allowing to retrieve the value of a single bit from an array
+ * of bytes. Bits are counted scanning from left to right, thus bit number zero
+ * is the leftmost bit of array[0].
  *
- * \param callsign the callsign to encode.
- * \param encodedCall call_t data structure where to put the encoded data.
- * \param strict a flag (disabled by default) which indicates whether invalid
- * characters are allowed and assigned a value of 0 or not allowed, making the
- * function return an error.
- * @return true if the callsign was successfully encoded, false on error.
+ * \param array: byte array.
+ * \param pos: bit position inside the array.
+ * \return value of the indexed bit, as boolean variable.
  */
-bool encode_callsign(const std::string& callsign, call_t& encodedCall,
-                     bool strict = false);
+template < size_t N >
+inline bool getBit(const std::array< uint8_t, N >& array, const size_t pos)
+{
+    size_t i = pos / 8;
+    size_t j = pos % 8;
+    return (array[i] >> (7 - j)) & 0x01;
+}
+
 
 /**
- * Decode a base-40 encoded callsign to its text representation. This decodes
- * a 6-byte big-endian value into a string of up to 9 characters.
+ * Utility function allowing to set the value of a single bit from an array
+ * of bytes. Bits are counted scanning from left to right, thus bit number zero
+ * is the leftmost bit of array[0].
  *
- * \param encodedCall base-40 encoded callsign.
- * \return a string containing the decoded text.
+ * \param array: byte array.
+ * \param pos: bit position inside the array.
+ * \param bit: bit value to be set.
  */
-std::string decode_callsign(const call_t& encodedCall);
+template < size_t N >
+inline void setBit(std::array< uint8_t, N >& array, const size_t pos,
+                   const bool bit)
+{
+    size_t i     = pos / 8;
+    size_t j     = pos % 8;
+    uint8_t mask = 1 << (7 - j);
+    array[i] = (array[i] & ~mask) |
+               (bit ? mask : 0x00);
+}
 
-#endif /* M17_CALLSIGN_H */
+#endif /* M17_UTILS_H */

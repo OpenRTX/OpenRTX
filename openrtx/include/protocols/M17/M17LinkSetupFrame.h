@@ -18,8 +18,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef M17LINKSETUPFRAME_H
-#define M17LINKSETUPFRAME_H
+#ifndef M17_LINKSETUPFRAME_H
+#define M17_LINKSETUPFRAME_H
 
 #ifndef __cplusplus
 #error This header is C++ only!
@@ -125,4 +125,4 @@ private:
     lsf_t data;    ///< Underlying frame data.
 };
 
-#endif /* M17LINKSETUPFRAME_H */
+#endif /* M17_LINKSETUPFRAME_H */
