@@ -33,11 +33,14 @@ openrtx_src = ['openrtx/src/state.c',
                'openrtx/src/rtx/OpMode_FM.cpp',
                'openrtx/src/gps.c',
                'openrtx/src/dsp.cpp',
-               'openrtx/src/memory_profiling.cpp']
+               'openrtx/src/memory_profiling.cpp',
+               'openrtx/src/protocols/M17/M17Callsign.cpp',
+               'openrtx/src/protocols/M17/M17LinkSetupFrame.cpp']
 
 openrtx_inc = ['openrtx/include',
                'openrtx/include/calibration',
                'openrtx/include/rtx',
+               'openrtx/include/protocols',
                'platform/drivers/ADC',
                'platform/drivers/NVM',
                'platform/drivers/GPS',
