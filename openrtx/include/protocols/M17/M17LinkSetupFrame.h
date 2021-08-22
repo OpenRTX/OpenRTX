@@ -104,6 +104,15 @@ public:
     lsf_t& getData();
 
     /**
+     * Generate one of the six possible LSF chunks for embedding in data frame's
+     * LICH field. Output is the Golay (24,12) encoded LSF chunk.
+     *
+     * @param segmentNum: segment number, between 0 and 5.
+     * @return Golay (24,12) encoded LSF chunk.
+     */
+    lich_t generateLichSegment(const uint8_t segmentNum);
+
+    /**
      * Dump the frame content to a std::array.
      *
      * \return std::array containing the content of the frame.
