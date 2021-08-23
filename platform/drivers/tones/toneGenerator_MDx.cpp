@@ -24,9 +24,6 @@
 #include <interfaces/gpio.h>
 #include <kernel/scheduler/scheduler.h>
 
-#include <interfaces/delays.h>
-#include <stdio.h>
-
 /*
  * Sine table for PWM-based sinewave generation, containing 256 samples over one
  * period of a 35Hz sinewave. This gives a PWM base frequency of 8.96kHz.
@@ -101,9 +98,19 @@ void __attribute__((used)) TIM8_TRG_COM_TIM14_IRQHandler()
  */
 void __attribute__((used)) DMA_Handler()
 {
-    DMA1->LIFCR |= DMA_LIFCR_CTCIF2 | DMA_LIFCR_CTEIF2;
+    DMA1->LIFCR |= DMA_LIFCR_CTCIF2         // Clear interrupt flags
+                | DMA_LIFCR_CTEIF2;
 
-    if(dmaWaiting == 0) return;
+    TIM7->CR1   = 0;                        // End of transfer, stop TIM7
+    TIM3->CCER &= ~TIM_CCER_CC3E;           // Turn off compare channel
+
+    RCC->AHB1ENR &= ~RCC_AHB1ENR_DMA1EN;    // Turn off DMA
+    RCC->APB1ENR &= ~RCC_APB1ENR_TIM7EN;    // Turn off TIM7
+    __DSB();
+
+    tonesLocked = false;                    // Finally, unlock tones
+
+    if(dmaWaiting == 0) return;             // Wake up eventual pending threads
     dmaWaiting->IRQwakeup();
     if(dmaWaiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
         Scheduler::IRQfindNextThread();
@@ -298,13 +305,24 @@ void toneGen_playAudioStream(const uint16_t* buf, const size_t len,
 
     // Start timer for DMA transfer triggering
     TIM7->CR1 = TIM_CR1_CEN;
+}
 
+bool toneGen_waitForStreamEnd()
+{
     /*
-     * Put the calling thread in waiting status until transfer completes
+     * Critical section. Check if:
+     *  - there is no transfer in progress, in which case waiting is useless.
+     *  - there is another thread pending on transfer completion.
+     *
+     * If both these conditions are false, put the calling thread in waiting
+     * status until transfer completes.
      */
     {
         FastInterruptDisableLock dLock;
-        dmaWaiting = Thread::IRQgetCurrentThread();
+        Thread *curThread = Thread::IRQgetCurrentThread();
+        if(tonesLocked == false) return false;
+        if((dmaWaiting != 0) && (dmaWaiting != curThread)) return false;
+        dmaWaiting = curThread;
         do
         {
             Thread::IRQwait();
@@ -315,17 +333,8 @@ void toneGen_playAudioStream(const uint16_t* buf, const size_t len,
         } while(dmaWaiting);
     }
 
-    // End of transfer, turn off TIM7 and DMA
-    TIM7->CR1   = 0;
-    TIM3->CCER &= ~TIM_CCER_CC3E;
-
-    RCC->AHB1ENR &= ~RCC_AHB1ENR_DMA1EN;
-    RCC->APB1ENR &= ~RCC_APB1ENR_TIM7EN;
-    __DSB();
-
-    // Finally, unlock tones
-    FastInterruptDisableLock dLock;
-    tonesLocked = false;
+    // Outside critical section, here we finished waiting and everything is ok.
+    return true;
 }
 
 void toneGen_stopAudioStream()
@@ -346,7 +355,7 @@ void toneGen_stopAudioStream()
     if(dmaWaiting) dmaWaiting->IRQwakeup();
 }
 
-bool toneGen_toneStatus()
+bool toneGen_toneBusy()
 {
     /*
      * Tone section is busy whenever CC3E bit in TIM3 CCER register is set.
