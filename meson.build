@@ -295,8 +295,9 @@ dm1801_def = def + mk22fn512_def + {'PLATFORM_DM1801': ''}
 ## -------------------------- Compilation arguments ----------------------------
 ##
 
-linux_c_args = []
-linux_l_args = ['-lm']
+linux_c_args   = ['-DPLATFORM_LINUX']
+linux_cpp_args = ['-std=c++14', '-DPLATFORM_LINUX']
+linux_l_args   = ['-lm']
 
 # Add AddressSanitizer if required
 if get_option('asan')
@@ -364,6 +365,7 @@ endforeach
 
 linux_opts = {'sources': linux_src,
               'c_args': linux_c_args,
+              'cpp_args' : linux_cpp_args,
               'include_directories': linux_inc,
               'dependencies': linux_dep,
               'link_args' : linux_l_args}

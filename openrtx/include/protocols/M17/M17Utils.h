@@ -26,6 +26,8 @@
 #error This header is C++ only!
 #endif
 
+#include <cstddef>
+#include <cstdint>
 #include <array>
 
 
