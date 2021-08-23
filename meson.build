@@ -31,10 +31,13 @@ openrtx_src = ['openrtx/src/state.c',
                'openrtx/src/queue.c',
                'openrtx/src/rtx/rtx.cpp',
                'openrtx/src/rtx/OpMode_FM.cpp',
+               'openrtx/src/rtx/OpMode_M17.cpp',
                'openrtx/src/gps.c',
                'openrtx/src/dsp.cpp',
                'openrtx/src/memory_profiling.cpp',
                'openrtx/src/protocols/M17/M17Callsign.cpp',
+               'openrtx/src/protocols/M17/M17Modulator.cpp',
+               'openrtx/src/protocols/M17/M17Transmitter.cpp',
                'openrtx/src/protocols/M17/M17LinkSetupFrame.cpp']
 
 openrtx_inc = ['openrtx/include',
