@@ -63,6 +63,10 @@ void _ui_drawMainTop()
         gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white, "DMR");
         break;
+        case M17:
+        gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT,
+                  color_white, "M17");
+        break;
     }
 }
 
@@ -165,6 +169,13 @@ void _ui_drawMainBottom()
                            yellow_fab413);
             break;
         case DMR:
+            gfx_drawSmeterLevel(meter_pos,
+                                meter_width,
+                                meter_height,
+                                rssi,
+                                255);
+            break;
+        case M17:
             gfx_drawSmeterLevel(meter_pos,
                                 meter_width,
                                 meter_height,

@@ -676,9 +676,12 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
             *sync_rtx = true;
             break;
         case 5:
+            // Cycle through radio modes
             if(state.channel.mode == FM)
                 state.channel.mode = DMR;
             else if(state.channel.mode == DMR)
+                state.channel.mode = M17;
+            else if(state.channel.mode == M17)
                 state.channel.mode = FM;
             *sync_rtx = true;
             break;
