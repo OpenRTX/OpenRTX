@@ -121,6 +121,13 @@ void rtx_taskFunc()
 
     if(reconfigure)
     {
+        // Force TX and RX tone squelch to off for OpModes different from FM.
+        if(rtxStatus.opMode != FM)
+        {
+            rtxStatus.txToneEn = 0;
+            rtxStatus.rxToneEn = 0;
+        }
+
         /*
          * Handle change of opMode:
          * - deactivate current opMode and switch operating status to "OFF";
