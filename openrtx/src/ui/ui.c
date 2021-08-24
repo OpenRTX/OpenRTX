@@ -98,6 +98,7 @@ extern void _ui_drawMenuGPS();
 extern void _ui_drawSettingsGPS(ui_state_t* ui_state);
 #endif
 extern void _ui_drawMenuSettings(ui_state_t* ui_state);
+extern void _ui_drawMenuTest(ui_state_t* ui_state);
 extern void _ui_drawMenuInfo(ui_state_t* ui_state);
 extern void _ui_drawMenuAbout();
 #ifdef HAS_RTC
@@ -108,6 +109,9 @@ extern void _ui_drawSettingsDisplay(ui_state_t* ui_state);
 extern void _ui_drawSettingsM17(ui_state_t* ui_state);
 extern bool _ui_drawMacroMenu();
 
+// Functions that react to keypresses
+extern void _ui_eventMenuTest(ui_state_t* ui_state, event_t event);
+
 const char *menu_items[] =
 {
     "Zone",
@@ -117,6 +121,7 @@ const char *menu_items[] =
     "GPS",
 #endif
     "Settings",
+    "Test",
     "Info",
     "About"
 };
@@ -149,6 +154,12 @@ const char *settings_gps_items[] =
     "UTC Timezone"
 };
 #endif
+
+const char *test_items[] =
+{
+    "Mic->MCU test",
+    "RF->MCU test",
+};
 
 const char *info_items[] =
 {
@@ -211,6 +222,7 @@ const uint8_t display_num = sizeof(display_items)/sizeof(display_items[0]);
 const uint8_t settings_gps_num = sizeof(settings_gps_items)/sizeof(settings_gps_items[0]);
 #endif
 const uint8_t info_num = sizeof(info_items)/sizeof(info_items[0]);
+const uint8_t test_num = sizeof(test_items)/sizeof(test_items[0]);
 const uint8_t author_num = sizeof(authors)/sizeof(authors[0]);
 
 const color_t color_black = {0, 0, 0, 255};
@@ -1040,6 +1052,10 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         case M_SETTINGS:
                             state.ui_screen = MENU_SETTINGS;
                             break;
+                        case M_TEST:
+                            state.ui_screen = MENU_TEST;
+                            ui_state.input_set = 0;
+                            break;
                         case M_INFO:
                             state.ui_screen = MENU_INFO;
                             break;
@@ -1168,6 +1184,10 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 }
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_TOP);
+                break;
+            // Test menu screen
+            case MENU_TEST:
+                _ui_eventMenuTest(&ui_state, event);
                 break;
             // Info menu screen
             case MENU_INFO:
@@ -1409,6 +1429,10 @@ void ui_updateGUI()
         // Settings menu screen
         case MENU_SETTINGS:
             _ui_drawMenuSettings(&ui_state);
+            break;
+        // Test menu screen
+        case MENU_TEST:
+            _ui_drawMenuTest(&ui_state);
             break;
         // Info menu screen
         case MENU_INFO:
