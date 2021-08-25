@@ -507,21 +507,24 @@ void _ui_drawMenuSatSkyView(ui_state_t * ui_state, int whichsat, int passidx, in
     //+- radius for zoom, +- plot_center for pan
     //0 means reset
     //
-    //very easy to get a crash right now, in hw and sw emulator both
-    //i think from drawing pixels beyond where we are supposed to - 
-    //usually to negative pixels seems to be the issue
+    //normalize this away from pixels 
+    //and store the zoom coords not as a modification of plot center
+    //but as an azel to center! that way we can zoom in on whats under our viewport
+    //without things sliding away on us
+    static sat_azel_t viewport_center = {0, 0, 90, 0}; 
     static int radius = SCREEN_WIDTH/2/1.5;
-    static point_t plot_center = {SCREEN_WIDTH/2, SCREEN_HEIGHT/2+5};
+    point_t plot_center = {SCREEN_WIDTH/2, SCREEN_HEIGHT/2+5};
 
     if( ui_state->keys & KEY_0 ){
         radius = SCREEN_WIDTH/2/1.5;
-        plot_center.x = SCREEN_WIDTH/2;
-        plot_center.y = SCREEN_HEIGHT/2+5;
+        viewport_center.az = 0;
+        viewport_center.elev = 90;
     }
     //the more zoomed in we are, the more things i want to print for each satellite or star
     //az, el, speed, next pass, etc
     //as we zoom in a LOT and get more space
     //want to make the font larger too
+    //
     if( ui_state->keys & KEY_UP ){
         radius *= 1.1;
     }
@@ -529,17 +532,22 @@ void _ui_drawMenuSatSkyView(ui_state_t * ui_state, int whichsat, int passidx, in
         radius = radius*10/11;
     }
     if( ui_state->keys & KEY_2 ){
-        plot_center.y += 5;
+        viewport_center.elev += 500 * 1/radius;
     }
     if( ui_state->keys & KEY_8 ){
-        plot_center.y -= 5;
+        viewport_center.elev -= 500 * 1/radius;
     }
     if( ui_state->keys & KEY_4 ){
-        plot_center.x += 5;
+        viewport_center.az -= 500 * 1/radius;
     }
     if( ui_state->keys & KEY_6 ){
-        plot_center.x -= 5;
+        viewport_center.az += 500 * 1/radius;
     }
+    point_t viewport_offset = azel_deg_to_xy( viewport_center.az, viewport_center.elev, radius);
+    viewport_offset.x *= -1; 
+    viewport_offset.y *= -1;
+    plot_center = offset_point( plot_center, 1, viewport_offset);
+    
     gfx_drawPolarAzElPlot( plot_center, radius, color_grey );
     
     /*int retrograde = degrees(tle->xincl) > 90;*/
@@ -657,7 +665,7 @@ void _ui_drawMenuSatSkyView(ui_state_t * ui_state, int whichsat, int passidx, in
             if( brt < 0x20 ) brt = 0x20;
             color_t clr = {0xff, 0xff, 0x00, brt};
             color_t clr2 = {0xff, 0xff, 0x00, 0x30};
-            if( i < radius / 5 ){ //5 is just an eyeball magic number
+            if( i < radius / 2 ){ //just an eyeball magic number
                 //the more zoomed in we are, the more names of stars we print!
                 //desired: r=30, i <= 1
                 //desired: r=60, i <= 2
