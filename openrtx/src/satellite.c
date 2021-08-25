@@ -15,6 +15,7 @@
 double curTime_to_julian_day(curTime_t t)
 {
     //TODO this is suspect and must be proven.
+    //assumes t is in UTC! if it's actually GPS time, we'll be off by (at least) 15 seconds (number of leap seconds since GPS 0 )
     
     //expects t to be after year 2000
     //many thanks to Peter Baum, and his "Date Algorithms" reference.
@@ -171,13 +172,13 @@ topo_pos_t getObserverPosition(){
     }
     return obs;
 }
-sat_calc_t calcSatNow( tle_t tle, state_t last_state ){
+sat_pos_t calcSatNow( tle_t tle, state_t last_state ){
     double jd;
     topo_pos_t obs = getObserverPosition();
     jd = curTime_to_julian_day(last_state.time);
     return calcSat(tle, jd, obs);
 }
-sat_calc_t  calcSat( tle_t tle, double time_jd, topo_pos_t observer_degrees)
+sat_pos_t  calcSat( tle_t tle, double time_jd, topo_pos_t observer_degrees)
 {
     topo_pos_t obs = { //observer_degrees, but in radians
         RAD(observer_degrees.lat),
@@ -246,11 +247,11 @@ sat_calc_t  calcSat( tle_t tle, double time_jd, topo_pos_t observer_degrees)
     ra_dec_to_az_alt(time_jd, obs.lat, obs.lon, ra, dec, &az, &elev);
     /*printf("POS: %.4f,%.4f,%.4f\n", pos[0], pos[1], pos[2] );*/
     /*printf("VEL: %.4f,%.4f,%.4f\n", vel[0], vel[1], vel[2] );*/
-    sat_calc_t ret;
-    ret.az = az;
-    ret.elev = elev;
-    ret.ra = ra;
-    ret.dec = dec;
+    sat_pos_t ret;
+    ret.az = DEG(az);
+    ret.elev = DEG(elev);
+    ret.ra = DEG(ra);
+    ret.dec = DEG(dec);
     ret.dist = dist_to_satellite;
     ret.jd = time_jd;
     ret.satid = tle.norad_number;
@@ -280,7 +281,7 @@ double sat_nextpass(
     //search for when a pass comes over the horizon
     while( jd < start_jd + search_time_days ) { //search next N day(s)
         jd += coarse_interval; //increment by ~30s
-        sat_calc_t s = calcSat( tle, jd, observer);
+        sat_pos_t s = calcSat( tle, jd, observer);
         aboveHorizonAtJD = s.elev >= 0;
         i++;
         if( aboveHorizonAtJD ) {
@@ -289,7 +290,7 @@ double sat_nextpass(
         }
     }
     while( aboveHorizonAtJD ) {
-        sat_calc_t s = calcSat( tle, jd, observer);
+        sat_pos_t s = calcSat( tle, jd, observer);
         aboveHorizonAtJD = s.elev >= 0;
         i++;
         //could speed this up by bisect bracketing the transition from - to +
@@ -298,251 +299,6 @@ double sat_nextpass(
     }
     return jd;
 }
-/*sat_pass_t sat_getpass(){*/
-/*}*/
-sat_pos_t calc2pos( sat_calc_t c ){
-    sat_pos_t p = { c.jd, c.az, c.elev, c.dist };
-    return p;
-}
-/*sat_getpass_points(sat_pass_t pass, int points, sat_pos_t * out){*/
-    /*[>pass.rise.jd;<]*/
-    /*[>pass.max.jd;<]*/
-    /*[>pass.set.jd;<]*/
-/*}*/
-
-
-
-
-/*
-   struct misc_for_sat_tracking {
-   char manual_gridsquare[9]; //to be converted to latlon for positioning when gps is missing or still warming up
-//tle_t * tle; //pointer to
-//julian day, to be recalculculated every second when rtc is queried
-//double jd = curTime_to_julian_day(last_state.time);
-//decimal time in hours
-//double UT = (double)last_state.time.hour + ((double)last_state.time.minute)/60 + ((double) last_state.time.second)/3600;
-};
-
-void x(){
-tle_t tle;
-//replace this with a system of storing
-//tle_t's in codeplug area later
-//
-//iss
-char * line1 = "1 25544U 98067A   21090.24132166  .00001671  00000-0  38531-4 0  9996";
-char * line2 = "2 25544  51.6473   8.2465 0003085 162.7840 356.2009 15.48967005276518";
-
-int err_val = parse_elements( line1, line2, &tle );
-
-//printf("JD %.6f\r\n", jd);
-//snprintf(sbuf, 25, "JD %.6f", jd);
-//gfx_print(layout.line3_pos, sbuf, FONT_SIZE_8PT, TEXT_ALIGN_CENTER, color_white);
-
-//TODO:
-//drawing system for illustrating a pass?
-//need a satellite selection view
-//  and then eventually
-//a pass list view
-//a pass detail view
-//details we care about: most important, time and max elev
-//rise time, duration, max elev, start and stop azimuths
-
-double latr = lat*PI/180; //sat code works in radians
-double lonr = lon*PI/180; //so r for radians
-double ra = 0;
-double dec = 0;
-
-double dist = 0;
-double ra2 = 0;
-double dec2 = 0;
-double dist2 = 0;
-
-double toff_jd = time_offset/(24*60*60);
-calcSat( tle, jd, latr, lonr, alt, &ra, &dec, &dist);
-calcSat( tle, jd + toff_jd, latr, lonr, alt, &ra2, &dec2, &dist2);
-float toff_dist = dist-dist2; //km difference
-float radial_v = (toff_dist)/time_offset; //km/s
-float freq = 433e6; //MHz
-int doppler_offset = freq*radial_v/300000; //hz
-
-double az = 0;
-double elev = 0;
-ra_dec_to_az_alt(jd, latr, lonr, ra, dec, &az, &elev);
-//replace with lunars:
-//void DLL_FUNC full_ra_dec_to_alt_az( const DPT DLLPTR *ra_dec,
-//            DPT DLLPTR *alt_az,
-////           DPT DLLPTR *loc_epoch, const DPT DLLPTR *latlon,
-//         const double jd_utc, double DLLPTR *hr_ang)
-
-elev *= 180/PI; //radians to degrees
-az *= 180/PI;
-
-//double pass = nextpass_jd(tle, jd, lat, lon, alt ); //works in degrees
-//int pass_diff = (pass - UT)*3600; //diff is seconds until (+) or since (-) the mark timestamp
-
-
-double pass_start_jd = 2459306.456495;
-double pass_duration_jd = .025; //~90s
-double pass_end_jd = pass_start_jd + pass_duration_jd;
-
-char * pass_state;
-double mark = pass_start_jd;
-//mark is the time we care about most - e.g. before a pass, it's the time the pass starts
-//or during a pass, it's the LOS time (when the sat will go below the horizon)
-if( UT < pass_start_jd ){
-    //before this pass comes over the horizon
-    pass_state = "AOS";
-    mark = pass_start_jd;
-} else if ( UT > pass_start_jd && UT < pass_end_jd ){
-    //during the pass
-    pass_state = "LOS";
-    mark = pass_end_jd;
-} else {
-    //now it's gone over the horizon, so same as the elif above (just will be a
-    //negative number to show it was in the past)
-    //left here for clarity to show the actual LOS condition
-    pass_state = "LOS";
-    mark = pass_end_jd;
-}
-int diff = (mark - UT)*3600; //diff is seconds until (+) or since (-) the mark timestamp
-const char * sat_name = "ISS";
-
-if( diff > 60 || diff < -60 ){
-    //if we're too far before or after the mark time, it
-    //makes more sense to show something else rather than, say, 12387123 seconds
-    //therefore print the time of the mark time
-    int mark_h = 0;
-    int mark_m = 0;
-    snprintf(sbuf, 25, "%s %s %02d:%02d", sat_name, pass_state, mark_h, mark_m);
-    gfx_print(layout.line3_pos, sbuf, FONT_SIZE_8PT, TEXT_ALIGN_CENTER, color_white);
-} else {
-    //will look like these examples:
-    //"AOS 30s" meaning it'll come over the horizon in 30s
-    //or "LOS 90s" meaning it's in your sky now and will be back over the horizon in 90s
-    //or "LOS -30s" meaning it went over the horizon 30 seconds ago
-    snprintf(sbuf, 25, "%s %s %ds", sat_name, pass_state, diff);
-    gfx_print(layout.line3_pos, sbuf, FONT_SIZE_8PT, TEXT_ALIGN_CENTER, color_white);
-}
-
-}
-
-skip
-
-double jd = curTime_to_julian_day(last_state.time);
-static double jd_offset = 0;
-if( jd_offset == 0 ){
-    jd_offset = pass_azel[0].jd - jd;
-}
-jd = jd + jd_offset;
-for( int i = 0; i < num_points_pass; i++){
-    sat_pos_t p = pass_azel[i];
-    if( p.jd <= jd ){
-        az = p.az;
-        elev = p.elev;
-    } else {
-        printf("pass[%d]\n", i);
-        break;
-    }
-}
-
-gfx_clearScreen();
-//I've been using this to keep an eye on alignment, but remove later
-//gfx_drawVLine(SCREEN_WIDTH/2, 1, color_grey);
-//gfx_drawHLine(SCREEN_HEIGHT/2, 1, color_grey);
-_ui_drawMainBackground();
-_ui_drawMainTop();
-_ui_drawBottom();
-
-//get a position. This will be used all over the place.
-if( ! last_state.settings.gps_enabled || last_state.gps_data.fix_quality == 0 ){
-    //fix_type is 1 sometimes when it shouldn't be, have to use fix_quality
-
-    //TODO: need a way to show gps enabled/disable, gps fix/nofix
-    //gfx_print(layout.line3_pos, "no gps fix", FONT_SIZE_12PT, TEXT_ALIGN_CENTER, color_white);
-
-    //TODO pull from manual position data rather than hardcoding
-    lat =  41.70011;
-    lon = -70.29947;
-    //alt = 0; //msl geoid meters
-} else {
-    lat = last_state.gps_data.latitude;
-    lon = last_state.gps_data.longitude;
-    //alt = last_state.gps_data.altitude; //msl geoid meters
-}
-
-// left side
-// relative coordinates to satellite
-snprintf(sbuf, 25, "AZ %.1f", az);
-gfx_print(layout.line1_pos, sbuf, FONT_SIZE_8PT, TEXT_ALIGN_LEFT, color_white);
-snprintf(sbuf, 25, "EL %.1f", elev);
-gfx_print(layout.line2_pos, sbuf, FONT_SIZE_8PT, TEXT_ALIGN_LEFT, color_white);
-
-//right side
-//doppler correction readout
-snprintf(sbuf, 25, "%.1fk DOP", ((float)doppler_offset)/1000);
-//gfx_print(layout.line1_pos, sbuf, FONT_SIZE_8PT, TEXT_ALIGN_RIGHT, color_white);
-//draw gridsquare text
-lat_lon_to_maidenhead(lat, lon, gridsquare, 3); //precision=3 here means 6 characters like FN41uq
-gfx_print(layout.line1_pos, gridsquare, FONT_SIZE_8PT, TEXT_ALIGN_RIGHT, color_white);
-
-//center bottom - show
-//satellite and AOS/LOS countdown
-//gfx_print(layout.line3_pos, "ISS AOS 30s", FONT_SIZE_8PT, TEXT_ALIGN_CENTER, color_white);
-
-//draw Az/El
-int r1 = SCREEN_WIDTH/2/4; //0 degrees elev
-int r2 = r1/2; // 45 degrees
-point_t az_center = {SCREEN_WIDTH/2, SCREEN_HEIGHT/2-5};
-point_t az_top = {SCREEN_WIDTH/2-1, SCREEN_HEIGHT/2-5-r1+6};
-point_t az_right = {SCREEN_WIDTH/2+r1-5, SCREEN_HEIGHT/2-3};
-point_t az_left = {SCREEN_WIDTH/2-r1+3, SCREEN_HEIGHT/2-3};
-point_t az_bot = {SCREEN_WIDTH/2-1, SCREEN_HEIGHT/2-5+r1};
-gfx_drawCircle(az_center, r1, color_grey);
-gfx_drawCircle(az_center, r2, color_grey);
-gfx_print(az_top,  "N", FONT_SIZE_5PT, TEXT_ALIGN_LEFT, color_grey);
-gfx_print(az_right,"E", FONT_SIZE_5PT, TEXT_ALIGN_LEFT, color_grey);
-gfx_print(az_left, "W", FONT_SIZE_5PT, TEXT_ALIGN_LEFT, color_grey);
-gfx_print(az_bot,  "S", FONT_SIZE_5PT, TEXT_ALIGN_LEFT, color_grey);
-
-
-point_t plus_ctr_offset_8pt = {-4,2};
-point_t relsatpos = azel_deg_to_xy( az, elev, r1);
-point_t satpos = offset_point(az_center, 2, plus_ctr_offset_8pt, relsatpos );
-
-gfx_print(satpos,  "+", FONT_SIZE_8PT, TEXT_ALIGN_LEFT, yellow_fab413);
-
-for( int i = 0; i < num_points_pass; i+=2 ){
-    point_t offset = azel_deg_to_xy( pass_azel[i].az, pass_azel[i].elev, r1);
-    point_t set = offset_point( az_center, 1, offset);
-    gfx_setPixel(set, color_white);
-}
-char * pass_state;
-double mark;
-double pass_start_jd = pass_azel[0].jd;
-double pass_end_jd = pass_azel[num_points_pass-1].jd;
-//mark is the time we care about most - e.g. before a pass, it's the time the pass starts
-//or during a pass, it's the LOS time (when the sat will go below the horizon)
-if( jd < pass_start_jd ){
-    //before this pass comes over the horizon
-    pass_state = "AOS";
-    mark = pass_start_jd;
-} else if ( jd > pass_start_jd && jd < pass_end_jd ){
-    //during the pass
-    pass_state = "LOS";
-    mark = pass_end_jd;
-} else {
-    //now it's gone over the horizon, so same as the elif above (just will be a
-    //negative number to show it was in the past)
-    //left here for clarity to show the actual LOS condition
-    pass_state = "LOS";
-    mark = pass_end_jd;
-}
-float diff = (mark - jd)*86400; //diff is seconds until (+) or since (-) the mark timestamp
-//printf("%f\n",diff);
-const char * sat_name = "ISS";
-snprintf(sbuf, 25, "%s %s %.0fs", sat_name, pass_state, diff);
-gfx_print(layout.line3_pos, sbuf, FONT_SIZE_8PT, TEXT_ALIGN_CENTER, color_white);
-*/
 
 void game_move(game_obj_2d_t * o, unsigned long long td){
     o->x += (o->spdx)*td/1000;
@@ -596,41 +352,41 @@ void init_sat_global(){
     parse_elements( line1, line2, &by702_tle );
 
 
-    sat_calc_t empty1 = {0};
+    sat_pos_t empty1 = {0};
     sat_pass_t empty2 = {0};
 
-    sat_sat_t  iss = {"ISS", {1,0,0,0, 0,0,0,0}, iss_tle, empty1, empty2 };
-    sat_sat_t  ao92 = {"AO-92", {2,0,0,0, 0,0,0,0}, ao92_tle, empty1, empty2 };
-    /*sat_sat_t  by702 = {"BY70-2", {3,0,0,0, 0,0,0,0}, by702_tle, empty1, empty2 };*/
-    memcpy(&satellites[0], &iss, sizeof(sat_sat_t));
-    memcpy(&satellites[1], &ao92, sizeof(sat_sat_t));
-    /*memcpy(&satellites[2], &by702, sizeof(sat_sat_t));*/
+    sat_mem_t  iss = {"ISS", {1,0,0,0, 0,0,0,0}, iss_tle, empty1, empty2 };
+    sat_mem_t  ao92 = {"AO-92", {2,0,0,0, 0,0,0,0}, ao92_tle, empty1, empty2 };
+    /*sat_mem_t  by702 = {"BY70-2", {3,0,0,0, 0,0,0,0}, by702_tle, empty1, empty2 };*/
+    memcpy(&satellites[0], &iss, sizeof(sat_mem_t));
+    memcpy(&satellites[1], &ao92, sizeof(sat_mem_t));
+    /*memcpy(&satellites[2], &by702, sizeof(sat_mem_t));*/
     tle_t tle;
     /*line1 = "1 27607U 02058C   21097.75620756 -.00000013  00000-0  18517-4 0  9995";*/
     /*line2 = "2 27607  64.5557 194.5275 0033184  48.5078 311.8864 14.75731425984124";*/
     /*parse_elements( line1, line2, &tle );*/
-    /*sat_sat_t  saudisat = {"saudisat 1c", {4,0,0,0, 0,0,0,0}, tle, empty1, empty2 };*/
-    /*memcpy(&satellites[3], &saudisat, sizeof(sat_sat_t));*/
+    /*sat_mem_t  saudisat = {"saudisat 1c", {4,0,0,0, 0,0,0,0}, tle, empty1, empty2 };*/
+    /*memcpy(&satellites[3], &saudisat, sizeof(sat_mem_t));*/
 
     line1 = "1 43192U 18015A   21097.94807139  .00003611  00000-0  13646-3 0  9998";
     line2 = "2 43192  97.4754 233.0410 0015968 128.3940  17.8444 15.27529340176826";
     parse_elements( line1, line2, &tle );
-    sat_sat_t  fmn1 = {"FMN1", {5,0,0,0, 0,0,0,0}, tle, empty1, empty2 };
-    memcpy(&satellites[2], &fmn1, sizeof(sat_sat_t));
+    sat_mem_t  fmn1 = {"FMN1", {5,0,0,0, 0,0,0,0}, tle, empty1, empty2 };
+    memcpy(&satellites[2], &fmn1, sizeof(sat_mem_t));
 
     line1 = "1 07530U 74089B   21097.73155343 -.00000035  00000-0  63996-4 0  9999";
     line2 = "2 07530 101.8477  72.3275 0012304 156.4477  17.2774 12.53648185122865";
     parse_elements( line1, line2, &tle );
-    sat_sat_t  oscar7 = {"oscar7", {5,0,0,0, 0,0,0,0}, tle, empty1, empty2 };
-    memcpy(&satellites[3], &oscar7, sizeof(sat_sat_t));
+    sat_mem_t  oscar7 = {"oscar7", {5,0,0,0, 0,0,0,0}, tle, empty1, empty2 };
+    memcpy(&satellites[3], &oscar7, sizeof(sat_mem_t));
 
     line1 = "1 43678U 18084H   21097.88856453 -.00000230  00000-0 -17049-4 0  9997";
     line2 = "2 43678  97.9114 222.8511 0008587 287.9394  72.0894 14.91724574132912";
     parse_elements( line1, line2, &tle );
-    sat_sat_t  po101 = {"PO-101", {5,0,0,0, 0,0,0,0}, tle, empty1, empty2 };
-    memcpy(&satellites[4], &po101, sizeof(sat_sat_t));
+    sat_mem_t  po101 = {"PO-101", {5,0,0,0, 0,0,0,0}, tle, empty1, empty2 };
+    memcpy(&satellites[4], &po101, sizeof(sat_mem_t));
 }
-sat_sat_t satellites[5] = {0};
+sat_mem_t satellites[5] = {0};
 int num_satellites = 5;
 star_t stars[] = {
     // { name, right ascension, declination, magnitude }

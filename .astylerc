@@ -1,6 +1,11 @@
-style=1tbs
+style=allman
 indent=spaces=4
-pad-oper
 pad-comma
+pad-oper
 add-braces
+keep-one-line-blocks
+keep-one-line-statements
+add-one-line-braces
+align-pointer=name
+align-reference=name
 verbose
