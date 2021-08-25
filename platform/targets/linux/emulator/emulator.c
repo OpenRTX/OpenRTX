@@ -105,10 +105,11 @@ void _test_skq(){
     //clear it out now
     while( shellkeyq_get() );
 }
-int shell_ready( 
-        __attribute__((unused)) void * _self, 
-        __attribute__((unused)) int _argc, 
-        __attribute__((unused)) char ** _argv ){
+int shell_ready( void * _self, int _argc, char ** _argv ){
+    (void) _self;
+    (void) _argc;
+    (void) _argv;
+
     while( _skq_in > _skq_out ){ 
         usleep(10*1000); //sleep until keyboard is caught up
     }
@@ -153,7 +154,8 @@ keyboard_t keyname2keyboard(char * name){
     return 0;
 }
 
-int pressKey( __attribute__((unused)) void * _self, int _argc, char ** _argv ){
+int pressKey( void * _self, int _argc, char ** _argv ){
+    (void) _self;
     //press a couple keys in sequence
     /*_climenu_option * self = (_climenu_option*) _self;*/
     printf("Press Keys: [\n");
@@ -180,9 +182,10 @@ int pressKey( __attribute__((unused)) void * _self, int _argc, char ** _argv ){
     shell_ready(NULL,0,NULL);
     return SH_CONTINUE; // continue
 } 
-int pressMultiKeys( __attribute__((unused)) void * _self, int _argc, char ** _argv ){
+int pressMultiKeys(  void * _self, int _argc, char ** _argv ){
 //pressMultiKeys allows for key combos by sending all the keys specified in one keyboard_t
     /*_climenu_option * self = (_climenu_option*) _self;*/
+    (void) _self;
     printf("Press Keys: [\n");
     keyboard_t combo = 0;
     for( int i = 0; i < _argc; i++ ){
@@ -213,7 +216,8 @@ int template(void * _self, int _argc, char ** _argv ){
     return SH_CONTINUE; // continue
 }
 
-int screenshot(__attribute__((unused)) void * _self, int _argc, char ** _argv ){
+int screenshot(void * _self, int _argc, char ** _argv ){
+    (void) _self;
     char * filename = "screenshot.bmp";
     if( _argc && _argv[0] != NULL ){
         filename = _argv[0];
@@ -222,7 +226,7 @@ int screenshot(__attribute__((unused)) void * _self, int _argc, char ** _argv ){
     //screenshot_display returns 0 if ok, which is same as SH_CONTINUE
 }
 /*
-int record_start(__attribute__((unused)) void * _self, int _argc, char ** _argv ){
+int record_start(void * _self, int _argc, char ** _argv ){
     char * filename = "screen.mkv";
     if( _argc && _argv[0] != NULL ){
         filename = _argv[0];
@@ -233,9 +237,9 @@ int record_start(__attribute__((unused)) void * _self, int _argc, char ** _argv 
     return SH_ERR;
 }
 int record_stop(
-        __attribute__((unused)) void * _self, 
-        __attribute__((unused)) int _argc, 
-        __attribute__((unused)) char ** _argv ){
+        void * _self, 
+        int _argc, 
+        char ** _argv ){
     return SH_ERR;
 }
 */
@@ -251,16 +255,16 @@ int setFloat(void * _self, int _argc, char ** _argv ){
     return SH_CONTINUE; // continue
 
 }
-int toggleVariable(
-        __attribute__((unused)) void * _self, 
-        __attribute__((unused)) int _argc, 
-        __attribute__((unused)) char ** _argv ){
+int toggleVariable( void * _self, int _argc, char ** _argv ){
+    (void) _argc;
+    (void) _argv;
     _climenu_option * self = (_climenu_option*) _self;
     *(int*)self->var = ! *(int*)self->var; //yeah, maybe this got a little out of hand
     return SH_CONTINUE; // continue
 
 }
-int shell_sleep( __attribute__((unused)) void * _self, int _argc, char ** _argv ){
+int shell_sleep( void * _self, int _argc, char ** _argv ){
+    (void) _self;
     if( ! _argc || _argv[0] == NULL ){
         printf("Provide a number in milliseconds to sleep as an argument\n");
         return SH_ERR;
@@ -270,18 +274,24 @@ int shell_sleep( __attribute__((unused)) void * _self, int _argc, char ** _argv 
     return SH_CONTINUE;
 }
 int shell_quit( 
-        __attribute__((unused)) void * _self,  
-        __attribute__((unused)) int _argc,  
-        __attribute__((unused)) char ** _argv ){
+        void * _self,  
+        int _argc,  
+        char ** _argv ){
+    (void) _self;
+    (void) _argc;
+    (void) _argv;
     printf("QUIT: 73!\n");
     //could remove history entries here, if we wanted
     return SH_EXIT_OK; //normal quit
 }
 int printState(
-        __attribute__((unused))  void * _self, 
-        __attribute__((unused)) int _argc, 
-        __attribute__((unused)) char **_argv)
+        void * _self, 
+        int _argc, 
+        char **_argv)
 {
+    (void) _self;
+    (void) _argc;
+    (void) _argv;
     printf("\nCurrent state\n");
     printf("RSSI   : %f\n", Radio_State.RSSI);
     printf("Battery: %f\n", Radio_State.Vbat);
@@ -292,9 +302,12 @@ int printState(
     return SH_CONTINUE;
 }
 int shell_nop(
-        __attribute__((unused)) void * _self, 
-        __attribute__((unused)) int _argc, 
-        __attribute__((unused)) char ** _argv ){
+        void * _self, 
+        int _argc, 
+        char ** _argv ){
+    (void) _self;
+    (void) _argc;
+    (void) _argv;
     //do nothing! what it says on the tin
     return SH_CONTINUE; 
 }
@@ -336,9 +349,12 @@ int num_options = (sizeof( _options )/ sizeof(_climenu_option));
 
 
 int shell_help(
-        __attribute__((unused)) void * _self, 
-        __attribute__((unused)) int _argc, 
-        __attribute__((unused)) char ** _argv ){
+        void * _self, 
+        int _argc, 
+        char ** _argv ){
+    (void) _self;
+    (void) _argc;
+    (void) _argv;
     printf("OpenRTX emulator shell\n\n");
     for( int i = 0; i < num_options; i++ ){
         _climenu_option * o = &_options[i];
