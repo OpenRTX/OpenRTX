@@ -179,8 +179,10 @@ void gfx_fillScreen(color_t color)
 
 inline void gfx_setPixel(point_t pos, color_t color)
 {
-    if (pos.x >= SCREEN_WIDTH || pos.y >= SCREEN_HEIGHT)
+    if (pos.x >= SCREEN_WIDTH || pos.y >= SCREEN_HEIGHT || pos.x < 0 || pos.y < 0)
+    {
         return; // off the screen
+    }
 
 #ifdef PIX_FMT_RGB565
     // Blend old pixel value and new one
