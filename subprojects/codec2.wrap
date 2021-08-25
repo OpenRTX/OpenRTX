@@ -1,0 +1,4 @@
+[wrap-git]
+url = https://github.com/drowe67/codec2
+revision = a298f3789d7ef9e829049ebe14da8845d97ba8c1
+patch_directory = codec2

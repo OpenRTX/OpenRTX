@@ -3,13 +3,13 @@
 ##
 project('OpenRTX', ['c', 'cpp'],
   version : '0.3.1',
-  default_options : ['warning_level=3'])
+  default_options : ['warning_level=3', 'b_staticpic=false'])
 
 ##
 ## Optional defines, common to all souces (e.g. to enable debugging)
 ##
 
-def = { }
+def = {'VCOM_ENABLED' : ''}
 
 ##
 ## ----------------- Platform-independent source files -------------------------
@@ -64,6 +64,10 @@ minmea_inc = ['lib/minmea/include']
 
 # QDEC, a very simple, header only, quadrature decoding library
 qdec_inc = ['lib/qdec/include']
+
+# CODEC2, open source speech codec
+codec2_proj = subproject('codec2')
+codec2_dep  = codec2_proj.get_variable('codec2_dep')
 
 ##
 ## RTOS
@@ -363,6 +367,7 @@ md3x0_opts = {'sources' : md3x0_src,
               'cpp_args': md3x0_args,
               'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
                              '-Wl,--print-memory-usage'],
+              'dependencies': [codec2_dep],
               'include_directories': md3x0_inc}
 
 mduv3x0_opts = {'sources': mduv3x0_src,
@@ -370,6 +375,7 @@ mduv3x0_opts = {'sources': mduv3x0_src,
                 'cpp_args': mduv3x0_args,
                 'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
                                '-Wl,--print-memory-usage'],
+                'dependencies': [codec2_dep],
                 'include_directories': mduv3x0_inc}
 
 gd77_opts = {'sources': gd77_src,
