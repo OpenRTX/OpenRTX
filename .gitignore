@@ -49,3 +49,6 @@ build_*
 
 # gutentags
 tags
+
+# subprojects
+subprojects/radio_tool
