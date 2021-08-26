@@ -14,14 +14,14 @@
 
 double curTime_to_julian_day(curTime_t t)
 {
-    //TODO this is suspect and must be proven.
-    //assumes t is in UTC! if it's actually GPS time, we'll be off by (at least) 15 seconds (number of leap seconds since GPS 0 )
+    //t appears to correctly be UTC which we expect, good.
+    //this appears to be correct to within at least a second
     
     //expects t to be after year 2000
     //many thanks to Peter Baum, and his "Date Algorithms" reference.
-    uint8_t s = t.second; //.day is the _weekday_, date is day-of-month
-    uint8_t m = t.minute; //.day is the _weekday_, date is day-of-month
-    uint8_t h = t.hour; //.day is the _weekday_, date is day-of-month
+    uint8_t s = t.second; 
+    uint8_t m = t.minute; 
+    uint8_t h = t.hour; 
     uint8_t D = t.date; //.day is the _weekday_, date is day-of-month
     uint8_t M = t.month;
     short Y = CENTURY + t.year;
@@ -44,38 +44,6 @@ double curTime_to_julian_day(curTime_t t)
     /*printf("jd: %.6f\n",jd);*/
     return jd;
 }
-/*
-   void test_curTime_to_julian_day(){
-   curTime_t t;
-   }
-   curTime_t julian_day_to_curTime( double jd ){
-//expects jd to be after year 2000
-curTime_t t;
-long Z = jd - 1721118.5;
-double R = jd - 1721118.5 - Z;
-double G = Z - .25;
-//TODO unfinished:
-//
-A = INT(G / 36524.25)
-B = A -INT(A / 4)
-year = INT((B+G) / 365.25)
-C = B + Z -INT(365.25 * year)
-month = FIX((5 * C + 456) / 153)
-day = C -FIX((153 * month -457) / 5) + R
-if(month>12){year++;month-=12;}
-//
-
-t.second = 0;
-t.minute = 0;
-t.hour = 0;
-
-t.date = D;
-t.month = M;
-t.year = 2000-Y;
-return t;
-
-}
-*/
 double jd_to_j2k(double jd)
 {
     return jd - 2451545.0;
@@ -135,7 +103,8 @@ void ra_dec_to_az_alt(double jd,
         *alt_out = alt;
         return;
     } else {
-        //replace with lunar alt_az.cpp functions
+        //replace above with lunar alt_az.cpp functions
+        //gives bad data, haven't dug into why yet
         DPT radec = {ra, dec};
         DPT altaz = {0};
         DPT latlon = {latitude, longitude};
@@ -276,27 +245,29 @@ double sat_nextpass(
 
     int aboveHorizonAtJD = 0;
     int i = 0;
-    double coarse_interval = 30.0 / 86400; //30 seconds in decimal days
-    double fine_interval = 1.0 / 86400; //30 seconds in decimal days
-    //search for when a pass comes over the horizon
+    double coarse_interval = 60.0 / 86400; //60 seconds in decimal days
+    double fine_interval = 1.0 / 86400; //1 second in decimal days
+    //search for when a pass comes over the horizon in larger steps
     while( jd < start_jd + search_time_days ) { //search next N day(s)
-        jd += coarse_interval; //increment by ~30s
+        jd += coarse_interval; 
         sat_pos_t s = calcSat( tle, jd, observer);
-        aboveHorizonAtJD = s.elev >= 0;
+        aboveHorizonAtJD = s.elev >= 0;  //temp change to 10 degrees for comparing against heavens above
         i++;
         if( aboveHorizonAtJD ) {
             //we found a pass!
             break;
         }
     }
+    //and since we found a pass, let's go figure out exactly where it is (in a super naive way)
     while( aboveHorizonAtJD ) {
         sat_pos_t s = calcSat( tle, jd, observer);
         aboveHorizonAtJD = s.elev >= 0;
         i++;
         //could speed this up by bisect bracketing the transition from - to +
         //should also find the end of the pass going + to -
-        jd -= fine_interval; // <1s
+        jd -= fine_interval; 
     }
+    printf("found pass at jd %f\n", jd);
     return jd;
 }
 
@@ -339,8 +310,11 @@ void init_sat_global(){
     //This also implies updating TLEs requires a firmware update.
     //This is a temporary measure until nvm is ready.
     tle_t iss_tle = {0};
-    char * line1 = "1 25544U 98067A   21098.03858124  .00002197  00000-0  48233-4 0  9994";
-    char * line2 = "2 25544  51.6464 329.6848 0002834 196.2120 269.0598 15.48873021277729";
+    /*char * line1 = "1 25544U 98067A   21237.38973297  .00001768  00000-0  40876-4 0  9994";*/
+    /*char * line2 = "2 25544  51.6460   0.5085 0002745 311.1101  88.9633 15.48514705299320";*/
+    char * line1 = "1 25544U 98067A   21238.16818934  .00001738  00000-0  40314-4 0  9991";
+    char * line2 = "2 25544  51.6461 356.6596 0002738 315.3214 107.2420 15.48517921299441";
+
     parse_elements( line1, line2, &iss_tle );
     tle_t ao92_tle = {0};
     line1 = "1 43137U 18004AC  21097.60567794  .00001372  00000-0  57805-4 0  9996";

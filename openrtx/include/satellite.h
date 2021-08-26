@@ -94,9 +94,9 @@ double sat_nextpass (
     double start_jd,
     //how long in decimal days to search from start_jd
     double search_time_days,
-    //observer location, in degrees latitude and longitude, and altitude in meters
+    //observer location, in degrees latitude and longitude, and altitude in meters 
     topo_pos_t observer
-);
+); //TODO convert to a satellite pass type
 
 
 

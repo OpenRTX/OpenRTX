@@ -573,6 +573,7 @@ void _ui_drawMenuSatSkyView(ui_state_t * ui_state, int whichsat, int passidx, in
                     "%s", selected.name);
         }
     } else {
+        (void) passidx;
         //draw a pass and current position for only a specific satellite
         sat_azel_t pass_azel[] = {
             {2459315.240168, 287.3, 1.2,2430.8},
@@ -700,16 +701,26 @@ void _ui_drawMenuSatTrack(ui_state_t * ui_state)
     _ui_drawMainTop();
     topo_pos_t obs = getObserverPosition();
     double jd = curTime_to_julian_day(last_state.time);
+
     if( ui_state->menu_selected == 0 ){ 
         //first menu entry (0) is to show all satellites in sky view
         _ui_drawMenuSatSkyView(ui_state, 0, 0, 1);
         return;
     }
     _ui_drawMainBackground(); 
-    _ui_drawBottom();
+    //_ui_drawBottom();
     int idx = ui_state->menu_selected - 1; //because 0 is "all sats"
     sat_mem_t selected = satellites[ idx ]; 
     sat_pos_t sat = calcSat( selected.tle, jd, obs);
+    static double tdiff = 0;
+    static double nextpass = 0;
+    if( tdiff <= 0 ){
+        nextpass = sat_nextpass( selected.tle, 2459452.83, 0.5, obs);
+    }
+    tdiff = (nextpass - jd) * 24 * 60 * 60; //seconds
+    gfx_print(layout.bottom_pos, FONT_SIZE_8PT, TEXT_ALIGN_LEFT, color_white,
+            "AOS %ds", (int)tdiff);
+    /*printf( "next pass %s JD: %lf\n", selected.name, nextpass);*/
 
     // left side
     // relative coordinates to satellite
