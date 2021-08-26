@@ -72,9 +72,7 @@ void IRQbspInit()
 
 void bspInit2()
 {
-#ifdef VCOM_ENABLED
     vcom_init();
-#endif
 }
 
 //
