@@ -31,7 +31,7 @@
 #include <dsp.h>
 
 static const size_t audioBufSize = 320;
-static const size_t dataBufSize  = 8*1024;
+static const size_t dataBufSize  = 2*1024;
 
 void *mic_task(void *arg)
 {
@@ -48,20 +48,14 @@ void *mic_task(void *arg)
 
     platform_ledOn(GREEN);
 
-    int16_t audio[160] = {0};
     size_t pos = 0;
     while(pos < dataBufSize)
     {
         dataBlock_t data = inputStream_getData(id);
-        memcpy(audio, data.data, 160);
 
-        dsp_dcRemoval(audio, 160);
-        for(size_t i = 0; i < 160; i++)
-        {
-            audio[i] <<= 3;
-        }
-
-        codec2_encode(codec2, dataBuf + pos, audio);
+        for(size_t i = 0; i < data.len; i++) data.data[i] <<= 3;
+        dsp_dcRemoval(data.data, data.len);
+        codec2_encode(codec2, &dataBuf[pos], data.data);
         pos += 8;
     }
 
