@@ -511,14 +511,26 @@ void _ui_drawMenuSatSkyView(ui_state_t * ui_state, int whichsat, int passidx, in
     //and store the zoom coords not as a modification of plot center
     //but as an azel to center! that way we can zoom in on whats under our viewport
     //without things sliding away on us
-    static sat_azel_t viewport_center = {0, 0, 90, 0}; 
+    static point_t viewport_center = {0, 0};
+    int screen_scale = SCREEN_HEIGHT/2;
     static int radius = SCREEN_WIDTH/2/1.5;
+    static int snap_item = -1;
     point_t plot_center = {SCREEN_WIDTH/2, SCREEN_HEIGHT/2+5};
+
+
+    //TODO draw scale in degrees/arcseconds, etc
+    //90/radius is degrees per pixel
+    //debug prints
+    //gfx_print(layout.bottom_pos, FONT_SIZE_5PT, TEXT_ALIGN_RIGHT, color_grey, "r=%dpx",radius );
+    float deg_per_pix = 90.0 / radius;
+    float pix_per_deg = radius/90.0;
+    gfx_print(layout.bottom_pos, FONT_SIZE_5PT, TEXT_ALIGN_LEFT, color_grey, "1px=%f deg", deg_per_pix);
+    //gfx_print(layout.bottom_pos, FONT_SIZE_5PT, TEXT_ALIGN_RIGHT, color_grey, "trk%d", snap_item);
 
     if( ui_state->keys & KEY_0 ){
         radius = SCREEN_WIDTH/2/1.5;
-        viewport_center.az = 0;
-        viewport_center.elev = 90;
+        viewport_center.x = 0;
+        viewport_center.y = 0;
     }
     //the more zoomed in we are, the more things i want to print for each satellite or star
     //az, el, speed, next pass, etc
@@ -526,27 +538,31 @@ void _ui_drawMenuSatSkyView(ui_state_t * ui_state, int whichsat, int passidx, in
     //want to make the font larger too
     //
     if( ui_state->keys & KEY_UP ){
-        radius *= 1.1;
+        radius *= 1.2;
+        viewport_center.x *= 1.2;
+        viewport_center.y *= 1.2;
     }
     if( ui_state->keys & KEY_DOWN ){
-        radius = radius*10/11;
+        radius /= 1.2;
+        viewport_center.x /= 1.2;
+        viewport_center.y /= 1.2;
     }
     if( ui_state->keys & KEY_2 ){
-        viewport_center.elev += 500 * 1/radius;
+        viewport_center.y += fmax(screen_scale * 10/ radius, 1);
     }
     if( ui_state->keys & KEY_8 ){
-        viewport_center.elev -= 500 * 1/radius;
+        viewport_center.y -= fmax(screen_scale * 10/ radius, 1);
     }
     if( ui_state->keys & KEY_4 ){
-        viewport_center.az -= 500 * 1/radius;
+        viewport_center.x += fmax(screen_scale * 10/ radius, 1);
     }
     if( ui_state->keys & KEY_6 ){
-        viewport_center.az += 500 * 1/radius;
+        viewport_center.x -= fmax(screen_scale * 10/ radius, 1);
     }
-    point_t viewport_offset = azel_deg_to_xy( viewport_center.az, viewport_center.elev, radius);
-    viewport_offset.x *= -1; 
-    viewport_offset.y *= -1;
-    plot_center = offset_point( plot_center, 1, viewport_offset);
+    if( ui_state->keys & KEY_1 ){
+        snap_item++; //continued in whichsat == 0 section below!
+    }
+    plot_center = offset_point( plot_center, 1, viewport_center);
     
     gfx_drawPolarAzElPlot( plot_center, radius, color_grey );
     
@@ -559,18 +575,44 @@ void _ui_drawMenuSatSkyView(ui_state_t * ui_state, int whichsat, int passidx, in
         for( int i = 0; i < num_satellites; i++){
             point_t temppos = {0,0};
             sat_mem_t selected = satellites[ i ]; 
+            double jd_1s = 1.0 / 86400; //1 second in decimal days
             sat_pos_t sat = calcSat( selected.tle, jd, obs);
             if( sat.elev < -15 ){
                 continue;
             }
-
             gfx_drawPolar( plot_center, radius, sat.az, sat.elev, '+', yellow_fab413 );
+
+
+            //draws a little trail of where it was two times in the past
+            //hoping that shows motion well enough, with the fab413 -> white -> grey indicating age of data
+            //ideally we'd save a number of track histories (with decreasing granularity as data ages)
+            //and just draw those, rather than recalculating old stuff
+            //...but that's a TODO later maybe, we'll see how this goes
+            sat_pos_t sat_p2 = calcSat( selected.tle, jd-60*jd_1s, obs);
+            sat_pos_t sat_p1 = calcSat( selected.tle, jd-30*jd_1s, obs);
+            gfx_drawPolar( plot_center, radius, sat_p2.az, sat_p2.elev, 0, color_grey );
+            gfx_drawPolar( plot_center, radius, sat_p1.az, sat_p1.elev, 0, color_white );
+
+
             point_t pos = azel_deg_to_xy( sat.az, sat.elev, radius);
+            if( snap_item == i ){
+                viewport_center.x = -1*pos.x;
+                viewport_center.y = -1*pos.y;
+                //mult -1 because the viewport gets shifted away in the opposite direction
+                //(if you want the (1,1) corner of a piece of paper to
+                //be centered on your desk when the center of the desk and
+                //center of the paper are in the same place, you have to
+                //move the paper in the (-1,-1) direction
+                gfx_print(layout.bottom_pos, FONT_SIZE_5PT, TEXT_ALIGN_RIGHT, color_white, "TRK: %s", selected.name);
+            }
             point_t text_offset = {6,6};
 
             temppos = offset_point( plot_center, 2, pos, text_offset);
             gfx_print(temppos, FONT_SIZE_5PT, TEXT_ALIGN_LEFT, color_white,
                     "%s", selected.name);
+        }
+        if( snap_item >= num_satellites ){ //if snap_item is 1 and num_satellites is 1, zero indexing means we're past it and should reset already
+            snap_item = -1; //reset
         }
     } else {
         (void) passidx;
@@ -658,28 +700,39 @@ void _ui_drawMenuSatSkyView(ui_state_t * ui_state, int whichsat, int passidx, in
             az = DEG(az);
             alt = DEG(alt);
             /*printf("%.1f %.1f %.0f %.0f\n", ra, dec, az, alt);*/
-            if( alt < 0 ){
+            if( alt < -2.5 ){ 
+                //draw stars that are juuust below the horizon
                 continue;
             }
-            uint8_t brt = 0xff - stars[i].mag * 0xff;
-            if( stars[i].mag < 0 ) brt = 0xff;
-            if( brt < 0x20 ) brt = 0x20;
+            int brt_scale = 0xff;
+            if( stars[i].mag > 5 && radius < screen_scale*3 ){
+                //too dim, not zoomed in enough to see it
+                continue; 
+            }
+            if( radius > screen_scale * 3){
+                brt_scale <<= 2;
+            }
+            if( radius > screen_scale * 8){
+                brt_scale <<= 2;
+            }
+            int brt = pow(2.51,-1*stars[i].mag)*brt_scale;
+            if( brt > 0xff ) brt = 0xff;
+            if( brt < 0x10 ) brt = 0x10;
+
             color_t clr = {0xff, 0xff, 0x00, brt};
             color_t clr2 = {0xff, 0xff, 0x00, 0x30};
-            if( i < radius / 2 ){ //just an eyeball magic number
+            if( i < pow(log2(fmax(radius,58)-55),2) || radius > screen_scale * 12){ //just an eyeball magic number
                 //the more zoomed in we are, the more names of stars we print!
-                //desired: r=30, i <= 1
-                //desired: r=60, i <= 2
-                //desired: r=90, i <= half
-                //desired: r>=90, all i
                 point_t relpos = azel_deg_to_xy( az, alt, radius);
-                point_t offset = {3, 3};
+                point_t offset = {3,3};
+                fontSize_t ft= FONT_SIZE_5PT;
                 point_t pos = offset_point( plot_center, 2, relpos, offset );
-                gfx_print(pos, FONT_SIZE_5PT, TEXT_ALIGN_LEFT, clr2, stars[i].name);
+                gfx_print(pos, ft, TEXT_ALIGN_LEFT, clr2, stars[i].name);
             }
             gfx_drawPolar( plot_center, radius, az, alt, 0, clr );
         }
     }
+
 
 }
 void _ui_drawMenuSatPass(ui_state_t* ui_state){
@@ -712,6 +765,7 @@ void _ui_drawMenuSatTrack(ui_state_t * ui_state)
     int idx = ui_state->menu_selected - 1; //because 0 is "all sats"
     sat_mem_t selected = satellites[ idx ]; 
     sat_pos_t sat = calcSat( selected.tle, jd, obs);
+    //TODO recalculate when we re-enter from a different satellite entry
     static double tdiff = 0;
     static double nextpass = 0;
     if( tdiff <= 0 ){

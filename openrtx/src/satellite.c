@@ -202,12 +202,12 @@ sat_pos_t  calcSat( tle_t tle, double time_jd, topo_pos_t observer_degrees)
         err_val = SDP8( t_since, &tle, sat_params, pos, NULL);
         break;
     default:
-        printf( "? How did we get here? ephem = %d\n", ephem);
+        /*printf( "? How did we get here? ephem = %d\n", ephem);*/
         err_val = 0;
         break;
     }
     if( err_val ) {
-        printf( "Ephemeris error %d\n", err_val);
+        /*printf( "Ephemeris error %d\n", err_val);*/
     }
     get_satellite_ra_dec_delta( observer_loc, pos, &ra, &dec, &dist_to_satellite);
     epoch_of_date_to_j2000( time_jd, &ra, &dec);
@@ -267,7 +267,7 @@ double sat_nextpass(
         //should also find the end of the pass going + to -
         jd -= fine_interval; 
     }
-    printf("found pass at jd %f\n", jd);
+    //printf("found pass at jd %f\n", jd);
     return jd;
 }
 
@@ -310,58 +310,17 @@ void init_sat_global(){
     //This also implies updating TLEs requires a firmware update.
     //This is a temporary measure until nvm is ready.
     tle_t iss_tle = {0};
-    /*char * line1 = "1 25544U 98067A   21237.38973297  .00001768  00000-0  40876-4 0  9994";*/
-    /*char * line2 = "2 25544  51.6460   0.5085 0002745 311.1101  88.9633 15.48514705299320";*/
     char * line1 = "1 25544U 98067A   21238.16818934  .00001738  00000-0  40314-4 0  9991";
     char * line2 = "2 25544  51.6461 356.6596 0002738 315.3214 107.2420 15.48517921299441";
 
     parse_elements( line1, line2, &iss_tle );
-    tle_t ao92_tle = {0};
-    line1 = "1 43137U 18004AC  21097.60567794  .00001372  00000-0  57805-4 0  9996";
-    line2 = "2 43137  97.4110 172.3573 0010557 100.0964 260.1465 15.25009246179867";
-    parse_elements( line1, line2, &ao92_tle );
-    tle_t by702_tle = {0};
-    line1 = "1 45857U 20042B   21097.77977101  .00001190  00000-0  17671-3 0  9991";
-    line2 = "2 45857  97.9857 174.2638 0012834  86.0351 274.2313 14.76828112 41117";
-    parse_elements( line1, line2, &by702_tle );
-
-
     sat_pos_t empty1 = {0};
     sat_pass_t empty2 = {0};
-
     sat_mem_t  iss = {"ISS", {1,0,0,0, 0,0,0,0}, iss_tle, empty1, empty2 };
-    sat_mem_t  ao92 = {"AO-92", {2,0,0,0, 0,0,0,0}, ao92_tle, empty1, empty2 };
-    /*sat_mem_t  by702 = {"BY70-2", {3,0,0,0, 0,0,0,0}, by702_tle, empty1, empty2 };*/
     memcpy(&satellites[0], &iss, sizeof(sat_mem_t));
-    memcpy(&satellites[1], &ao92, sizeof(sat_mem_t));
-    /*memcpy(&satellites[2], &by702, sizeof(sat_mem_t));*/
-    tle_t tle;
-    /*line1 = "1 27607U 02058C   21097.75620756 -.00000013  00000-0  18517-4 0  9995";*/
-    /*line2 = "2 27607  64.5557 194.5275 0033184  48.5078 311.8864 14.75731425984124";*/
-    /*parse_elements( line1, line2, &tle );*/
-    /*sat_mem_t  saudisat = {"saudisat 1c", {4,0,0,0, 0,0,0,0}, tle, empty1, empty2 };*/
-    /*memcpy(&satellites[3], &saudisat, sizeof(sat_mem_t));*/
-
-    line1 = "1 43192U 18015A   21097.94807139  .00003611  00000-0  13646-3 0  9998";
-    line2 = "2 43192  97.4754 233.0410 0015968 128.3940  17.8444 15.27529340176826";
-    parse_elements( line1, line2, &tle );
-    sat_mem_t  fmn1 = {"FMN1", {5,0,0,0, 0,0,0,0}, tle, empty1, empty2 };
-    memcpy(&satellites[2], &fmn1, sizeof(sat_mem_t));
-
-    line1 = "1 07530U 74089B   21097.73155343 -.00000035  00000-0  63996-4 0  9999";
-    line2 = "2 07530 101.8477  72.3275 0012304 156.4477  17.2774 12.53648185122865";
-    parse_elements( line1, line2, &tle );
-    sat_mem_t  oscar7 = {"oscar7", {5,0,0,0, 0,0,0,0}, tle, empty1, empty2 };
-    memcpy(&satellites[3], &oscar7, sizeof(sat_mem_t));
-
-    line1 = "1 43678U 18084H   21097.88856453 -.00000230  00000-0 -17049-4 0  9997";
-    line2 = "2 43678  97.9114 222.8511 0008587 287.9394  72.0894 14.91724574132912";
-    parse_elements( line1, line2, &tle );
-    sat_mem_t  po101 = {"PO-101", {5,0,0,0, 0,0,0,0}, tle, empty1, empty2 };
-    memcpy(&satellites[4], &po101, sizeof(sat_mem_t));
 }
 sat_mem_t satellites[5] = {0};
-int num_satellites = 5;
+int num_satellites = 1;
 star_t stars[] = {
     // { name, right ascension, declination, magnitude }
     {"Polaris",         2+32/60,  89.3,  1.99},
@@ -435,6 +394,6 @@ star_t stars[] = {
     {"Suhail",          9+ 8/60, -43.4,  2.23},
     {"Mizar",          13+24/60,  54.9,  2.23},
     {"Sadr",           20+22/60,  40.3,  2.23},
-
+#include "stars.table"
 };
 int num_stars = sizeof( stars ) / sizeof( star_t );

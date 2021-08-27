@@ -864,6 +864,14 @@ void gfx_drawPolar( point_t center, int radius, float az, float el, int characte
         char_offset.x = -5;
         char_offset.y = -1;
     } 
+    if( character == 'x' ){ //center of cross
+        char_offset.x = -4;
+        char_offset.y = 3;
+    } 
+    if( character == 'X' ){ //center of cross-ish, haven't gotten pixel perfect
+        char_offset.x = -4;
+        char_offset.y = 4;
+    } 
     point_t relsatpos = azel_deg_to_xy( az, el, radius);
     point_t finalpos = offset_point(center, 2, char_offset, relsatpos );
     if( character == 0 ){

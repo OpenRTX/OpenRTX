@@ -9,7 +9,7 @@ project('OpenRTX', ['c', 'cpp'],
 ## Optional defines, common to all souces (e.g. to enable debugging)
 ##
 
-def = { }
+def = {'VCOM_ENABLED' : '' }
 
 ##
 ## ----------------- Platform-independent source files -------------------------
