@@ -321,7 +321,7 @@ void init_sat_global(){
 }
 sat_mem_t satellites[5] = {0};
 int num_satellites = 1;
-star_t stars[] = {
+const star_t stars[] = {
     // { name, right ascension, declination, magnitude }
     {"Polaris",         2+32/60,  89.3,  1.99},
     {"Sirius",          6+45/40, -16.7, -1.46},
@@ -394,6 +394,8 @@ star_t stars[] = {
     {"Suhail",          9+ 8/60, -43.4,  2.23},
     {"Mizar",          13+24/60,  54.9,  2.23},
     {"Sadr",           20+22/60,  40.3,  2.23},
-#include "stars.table"
+#include "stars.table" //~3150 more stars 
+    //(not individually named, constellation abbreviations for the names)
+//ahahaha yeah no, uses way too much space
 };
 int num_stars = sizeof( stars ) / sizeof( star_t );

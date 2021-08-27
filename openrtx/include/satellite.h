@@ -67,7 +67,7 @@ typedef struct {
 
 extern sat_mem_t satellites[];
 extern int num_satellites;
-extern star_t stars[];
+extern const star_t stars[];
 extern int num_stars;
 
 
