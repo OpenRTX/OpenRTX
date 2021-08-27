@@ -29,12 +29,12 @@
 using namespace miosix;
 
 
-bool    inUse     = false;       // Flag to determine if the input stream is already open.
-Thread  *sWaiting = 0;           // Thread waiting on interrupt.
-uint32_t bufAddr  = 0;           // Start address of data buffer, fixed.
-uint32_t bufCurr  = 0;           // Buffer address to be returned to application.
-size_t   bufLen   = 0;           // Buffer length.
-uint8_t  bufMode  = BUF_LINEAR;  // Buffer management mode.
+bool            inUse     = false;       // Flag to determine if the input stream is already open.
+Thread          *sWaiting = 0;           // Thread waiting on interrupt.
+stream_sample_t *bufAddr  = 0;           // Start address of data buffer, fixed.
+stream_sample_t *bufCurr  = 0;           // Buffer address to be returned to application.
+size_t          bufLen    = 0;           // Buffer length.
+uint8_t         bufMode   = BUF_LINEAR;  // Buffer management mode.
 
 void __attribute__((used)) DmaHandlerImpl()
 {
@@ -107,7 +107,7 @@ streamId inputStream_start(const enum AudioSource source,
     }
 
     bufMode = mode;
-    bufAddr = reinterpret_cast< uint32_t >(buf);
+    bufAddr = buf;
     bufLen  = bufLength;
 
     RCC->APB2ENR |= RCC_APB2ENR_ADC2EN;    // Enable ADC
@@ -237,7 +237,7 @@ dataBlock_t inputStream_getData(streamId id)
     {
         // Reload DMA configuration then start DMA and ADC, stopped in ISR
         DMA2_Stream2->PAR  = reinterpret_cast< uint32_t >(&(ADC2->DR));
-        DMA2_Stream2->M0AR = bufAddr;
+        DMA2_Stream2->M0AR = reinterpret_cast< uint32_t >(bufAddr);
         DMA2_Stream2->NDTR = bufLen;
         DMA2_Stream2->CR  |= DMA_SxCR_EN;
         ADC2->CR2         |= ADC_CR2_ADON;
@@ -261,7 +261,7 @@ dataBlock_t inputStream_getData(streamId id)
     }
 
     dataBlock_t block;
-    block.data = reinterpret_cast< stream_sample_t *>(bufCurr);
+    block.data = bufCurr;
     block.len  = bufLen;
     if(bufMode == BUF_CIRC_DOUBLE) block.len /= 2;
 
