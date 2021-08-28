@@ -75,16 +75,26 @@ extern const star_t stars[];
 extern int num_stars;
 
 
+//But first, we have to talk about units.
+//_rad and _deg suffixes indicate non-standard units where necessary, or where it might just be ambiguous
+//
+//RA (Right Ascension) is assumed to be in hours. 
+//      You can convert RA_hrs to RA_deg with the HRS2DEG() macro (which is just *15)
+//DEC (Declination) is assumed to be in degrees 
+//latitude and longitude are assumed to be in degrees
+//
+
 double curTime_to_julian_day(curTime_t t);
 topo_pos_t getObserverPosition();
 curTime_t julian_day_to_curTime(double jd);
 double jd_to_j2k(double jd);
-double local_sidereal_degrees(double j2k, double longitude_rad);
-double hour_angle_degrees(double local_sidereal_time, double right_ascension);
+double local_sidereal_degrees(double j2k, double longitude);
+double hour_angle_degrees(double lst_deg, double ra_hrs);
 void ra_dec_to_az_alt(double jd,
-                      double latitude, double longitude, //radians, both
-                      double ra, double dec, //...units?
-                      double* az_out, double* alt_out);
+                      double latitude, double longitude, 
+                      double ra_hrs, double dec_deg, 
+                      double* az_out_deg, double* alt_out_deg);
+
 sat_pos_t  calcSatNow(tle_t tle, state_t last_state);
 sat_pos_t  calcSat(tle_t tle, double time_jd, topo_pos_t observer_degrees);
 point_t azel_deg_to_xy(float az_deg, float elev_deg, float radius);
@@ -117,7 +127,8 @@ void game_move(game_obj_2d_t* o, unsigned long long td);
 void game_addvel(game_obj_2d_t* o, float vel, float rot);
 void game_obj_init(game_obj_2d_t* o);
 void game_obj_screenwrap(game_obj_2d_t* o);
-#define DEG(x) ( x*180/PI )
-#define RAD(x) ( x*PI/180 )
+#define DEG(x) ( (x)*180/PI )
+#define RAD(x) ( (x)*PI/180 )
+#define HRS2DEG(x) ((x)*15)
 
 #endif

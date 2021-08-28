@@ -24,7 +24,7 @@ double curTime_to_julian_day(curTime_t t)
     uint8_t h = t.hour; 
     uint8_t D = t.date; //.day is the _weekday_, date is day-of-month
     uint8_t M = t.month;
-    short Y = CENTURY + t.year;
+    short Y = CENTURY + t.year; //CENTURY is from rtc interface
     /*printf("%04d/%02d/%02d  %02d:%02d:%02d\n", Y,M,D,h,m,s);*/
 
     int Z = Y + (M - 14) / 12; //relies on int truncation
@@ -59,65 +59,115 @@ double wrap( double in, double max)
     }
     return in;
 }
-double local_sidereal_degrees(double j2k, double longitude_rad )
+double UT_dechrs_from_jd(double jd){
+    double UT = 24 * (jd - floor(jd) + .5);
+    return UT;
+}
+double local_sidereal_degrees(double j2k, double longitude )
 {
-    double UT = 24 * (j2k - floor(j2k) + .5);
+    double UT = UT_dechrs_from_jd(j2k); //hours, naturally
     /*printf("J2K: %.6f \n", j2k);*/
     /*printf("UT: %.6f \n", UT);*/
     double degrees_rotation_per_day = .985647;
     double gmst_j2k_correction = 100.46;
-    double lond = DEG(longitude_rad);
-    double local_sidereal_time = gmst_j2k_correction + degrees_rotation_per_day * j2k + lond + 15 * UT;
+    double local_sidereal_time = gmst_j2k_correction + degrees_rotation_per_day * j2k + longitude + 15 * UT;
     local_sidereal_time = wrap(local_sidereal_time, 360);
     return local_sidereal_time;
 }
-double hour_angle_degrees( double local_sidereal_time, double right_ascension)
+double hour_angle_degrees( double lst_deg, double ra_hrs)
 {
-    double ha = local_sidereal_time - right_ascension;
+    double ha = lst_deg - HRS2DEG(ra_hrs);
     ha = wrap( ha, 360 );
-    return ha;
+    //note that hour angle is in range -PI,PI in liblunar...and we're 0,360
+    return ha; //hour angle is in degrees
 }
+void ra_dec_to_alt_az( const double hr_ang, const double dec, double *alt, double *az, const double lat)
+{
+   double temp, cos_lat = cos( lat);
 
+   *alt = asine( sin( lat) * sin( dec) + cos_lat * cos( dec) * cos( hr_ang));
+   if( cos_lat < .00001)         /* polar case */
+      *az = hr_ang;
+   else
+      {   
+      temp = (sin( dec) - sin( *alt) * sin( lat)) / (cos( *alt) * cos_lat);
+      temp = PI - acose( temp);
+      *az = ((sin( hr_ang) < 0.) ? temp : -temp);
+      }   
+}
 void ra_dec_to_az_alt(double jd,
                       double latitude, double longitude,
-                      double ra, double dec,
-                      double * az_out, double * alt_out)
+                      double ra_hrs, double dec_deg,
+                      double * az_out_deg, double * alt_out_deg)
 {
     if( 1 ){
         double j2k = jd_to_j2k(jd);
-        double lst = local_sidereal_degrees(j2k, longitude); //✔
+        double lst = local_sidereal_degrees(j2k, longitude); 
         /*printf("lst %.4f\n", lst);*/
-        double ha = RAD(hour_angle_degrees(lst, DEG(ra) ));
+        double ha = RAD(hour_angle_degrees(lst, ra_hrs )); //radians
+        /*printf("HA mine = %f\n", DEG(ha));*/
 
-        latitude = latitude;
+        double latrad = RAD(latitude);
+        double dec = RAD(dec_deg);
 
-        double A = cos(ha) * cos(dec) * cos(latitude) - sin(dec) * sin(latitude);
-        double B = sin(ha) * cos(dec);
-        double C = cos(ha) * cos(dec) * sin(latitude) + sin(dec) * cos(latitude);
-        double az = atan2(B, A) + PI;
-        double alt = asin(C);
+        double alt = asin( sin(latrad) * sin(dec) + cos(latrad)*cos(dec)*cos(ha));
+        double A = acos(
+                (sin(dec) - sin(alt)*sin(latrad))
+                /
+                (cos(alt)*cos(latrad))
+                );
+        double az = sin(ha) < 0? A: 2*PI-A;
 
         az = wrap(az, 2 * PI);
 
-        *az_out = az;
-        *alt_out = alt;
+        *az_out_deg = DEG(az);
+        *alt_out_deg = DEG(alt);
         return;
     } else {
-        //replace above with lunar alt_az.cpp functions
-        //gives bad data, haven't dug into why yet
-        DPT radec = {ra, dec};
-        DPT altaz = {0};
-        DPT latlon = {latitude, longitude};
+        /*DPT radec = {RAD(dec_deg), RAD(HRS2DEG(ra_hrs))}; // from looking at precess.cpp, both expected to be in suitable form for sin,cos etc*/
+
+        //full_ra_dec_to_alt_az
+        //DPT ra_dec comes in
+        //gets pushed to precess_pt, which spits out a DPT loc_at_epoch
+        //DPT ra_dec is renamed DPT ipt (in point)
+        //temp_ipt[0] = -ipt->x  <-RA
+        //temp_ipt[1] = ipt->y <- DEC
+        //precess_ra_dec:
+        //      where temp_ipt[0] is "old_ra"
+        //      so:
+        //loc_at_epoch->x = -temp_opt[0] <- RA
+        //loc_at_epoch->y = -temp_opt[1] <- DEC
+        //when loc_at_epoch is handed to ra_dec_to_alt_az, ra_dec.y is DEC!
+        //so DPT radec is correct {ra,dec}
+        //
+        DPT radec = {RAD(HRS2DEG(ra_hrs)), RAD(dec_deg)}; 
+        // from looking at precess.cpp, both expected to be in suitable form for sin,cos etc
+            //so needs to be radians
+        /*DPT latlon = {RAD(latitude), RAD(longitude)};*/
+        DPT latlon = {RAD(longitude), RAD(latitude)}; //x,y; and x is _longitude_! BAD NAMING!
+        //BEWARE -- lunar library stores data in DPT
+        //BUT!
+        //DPT alt_az = {double x, y}
+        //and they consistently use it y, then x!
+        //which means when you use it, latlon is stored x=lon, y=lat 
+        //alt_az is stored alt=y, az=x
+        DPT altaz = {0}; 
+        //by convention, alt should be (-PI,PI), az should be (0,2*PI)
+        //except there is some evidence in liblunar that az is likely to be (-PI,PI)
+        //hence the +PI in there at the end
+        double j2k = jd_to_j2k(jd);
+        double ha;
         full_ra_dec_to_alt_az(
                 &radec, // DPT *ra_dec,
                 &altaz, //DPT *alt_az,
                 NULL, //DPT *loc_epoch, 
                 &latlon, //DPT *latlon,
                 jd, //double jd_utc, 
-                NULL //double *hr_ang
+                &ha //double *hr_ang
                 );
-        *alt_out = altaz.x;
-        *az_out = altaz.y;
+        *alt_out_deg = DEG(altaz.y); 
+        *az_out_deg  = DEG(altaz.x +PI);
+        /*printf("ha = %f\n", DEG(ha+PI));*/
     }
 }
 
@@ -149,7 +199,7 @@ sat_pos_t calcSatNow( tle_t tle, state_t last_state ){
 }
 sat_pos_t  calcSat( tle_t tle, double time_jd, topo_pos_t observer_degrees)
 {
-    topo_pos_t obs = { //observer_degrees, but in radians
+    topo_pos_t obs = { //observer position, but in radians
         RAD(observer_degrees.lat),
         RAD(observer_degrees.lon),
         observer_degrees.alt
@@ -213,13 +263,13 @@ sat_pos_t  calcSat( tle_t tle, double time_jd, topo_pos_t observer_degrees)
     epoch_of_date_to_j2000( time_jd, &ra, &dec);
     double az = 0;
     double elev = 0;
-    ra_dec_to_az_alt(time_jd, obs.lat, obs.lon, ra, dec, &az, &elev);
+    ra_dec_to_az_alt(time_jd, DEG(obs.lat), DEG(obs.lon), DEG(ra)/15, DEG(dec), &az, &elev);
     /*printf("POS: %.4f,%.4f,%.4f\n", pos[0], pos[1], pos[2] );*/
     /*printf("VEL: %.4f,%.4f,%.4f\n", vel[0], vel[1], vel[2] );*/
     sat_pos_t ret;
-    ret.az = DEG(az);
-    ret.elev = DEG(elev);
-    ret.ra = DEG(ra);
+    ret.az = az;
+    ret.elev = elev;
+    ret.ra = DEG(ra)/15;
     ret.dec = DEG(dec);
     ret.dist = dist_to_satellite;
     ret.jd = time_jd;
@@ -251,7 +301,7 @@ double sat_nextpass(
     while( jd < start_jd + search_time_days ) { //search next N day(s)
         jd += coarse_interval; 
         sat_pos_t s = calcSat( tle, jd, observer);
-        aboveHorizonAtJD = s.elev >= 0;  //temp change to 10 degrees for comparing against heavens above
+        aboveHorizonAtJD = s.elev >= 0;  
         i++;
         if( aboveHorizonAtJD ) {
             //we found a pass!
