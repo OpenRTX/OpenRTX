@@ -59,14 +59,14 @@ double wrap( double in, double max)
     }
     return in;
 }
-double local_sidereal_degrees(double j2k, double longitude )
+double local_sidereal_degrees(double j2k, double longitude_rad )
 {
     double UT = 24 * (j2k - floor(j2k) + .5);
     /*printf("J2K: %.6f \n", j2k);*/
     /*printf("UT: %.6f \n", UT);*/
     double degrees_rotation_per_day = .985647;
     double gmst_j2k_correction = 100.46;
-    double lond = DEG(longitude);
+    double lond = DEG(longitude_rad);
     double local_sidereal_time = gmst_j2k_correction + degrees_rotation_per_day * j2k + lond + 15 * UT;
     local_sidereal_time = wrap(local_sidereal_time, 360);
     return local_sidereal_time;
@@ -394,8 +394,9 @@ const star_t stars[] = {
     {"Suhail",          9+ 8/60, -43.4,  2.23},
     {"Mizar",          13+24/60,  54.9,  2.23},
     {"Sadr",           20+22/60,  40.3,  2.23},
-#include "stars.table" //~3150 more stars 
+//#include "data/stars/stars.table" //~3150 more stars 
     //(not individually named, constellation abbreviations for the names)
 //ahahaha yeah no, uses way too much space
+//and WAY too long to draw, damn!
 };
 int num_stars = sizeof( stars ) / sizeof( star_t );

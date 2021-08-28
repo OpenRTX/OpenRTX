@@ -9,7 +9,7 @@ project('OpenRTX', ['c', 'cpp'],
 ## Optional defines, common to all souces (e.g. to enable debugging)
 ##
 
-def = {'VCOM_ENABLED' : '' }
+def = {}
 
 ##
 ## ----------------- Platform-independent source files -------------------------
@@ -50,9 +50,9 @@ openrtx_inc = ['openrtx/include',
 
 # Add to sources either the main executable or a platform test
 if get_option('test') != ''
-  openrtx_src += 'tests/platform/'+get_option('test')+'.c'
+  main = ['tests/platform/'+get_option('test')+'.c']
 else
-  openrtx_src += 'openrtx/src/main.c'
+  main = ['openrtx/src/main.c']
 endif
 
 ##
@@ -123,11 +123,14 @@ satcode_src = [
 'lib/sat_code/observe.cpp',
   ]
 satcode_inc = ['lib/sat_code/']
+tle_data_inc = ['data/tles/']
+star_data_inc = ['data/stars/']
+
 
 
 #overrides existing src/inc values
 src = openrtx_src + minmea_src + maidenhead_src + lunar_src + satcode_src
-inc = openrtx_inc + rtos_inc + minmea_inc + qdec_inc + maidenhead_inc + lunar_inc + satcode_inc
+inc = openrtx_inc + rtos_inc + minmea_inc + qdec_inc + maidenhead_inc + lunar_inc + satcode_inc + tle_data_inc + star_data_inc
 
 ##
 ## TYT MDx family
@@ -229,7 +232,18 @@ mk22fn512_def = {'_POSIX_PRIORITY_SCHEDULING':''}
 ##
 ## Linux
 ##
-linux_src = src + ['platform/targets/linux/emulator/emulator.c',
+linux_src = main + src + ['platform/targets/linux/emulator/emulator.c',
+                   'platform/drivers/display/display_libSDL.c',
+                   'platform/drivers/keyboard/keyboard_linux.c',
+                   'platform/drivers/NVM/nvmem_linux.c',
+                   'platform/drivers/GPS/GPS_linux.c',
+                   'platform/mcu/x86_64/drivers/gpio.c',
+                   'platform/mcu/x86_64/drivers/delays.c',
+                   'platform/mcu/x86_64/drivers/rtc.c',
+                   'platform/drivers/baseband/radio_linux.cpp',
+                   'platform/drivers/audio/audio_linux.c',
+                   'platform/targets/linux/platform.c']
+linux_test_src = src + ['platform/targets/linux/emulator/emulator.c',
                    'platform/drivers/display/display_libSDL.c',
                    'platform/drivers/keyboard/keyboard_linux.c',
                    'platform/drivers/NVM/nvmem_linux.c',
@@ -261,7 +275,7 @@ endif
 ##
 ## TYT MD-3x0 family
 ##
-md3x0_src = src + mdx_src + stm32f405_src + ['platform/drivers/NVM/nvmem_MD3x0.c',
+md3x0_src = main + src + mdx_src + stm32f405_src + ['platform/drivers/NVM/nvmem_MD3x0.c',
                                              'platform/drivers/NVM/spiFlash_MD3x.c',
                                              'platform/drivers/baseband/SKY72310.c',
                                              'platform/drivers/baseband/radio_MD3x0.cpp',
@@ -276,7 +290,7 @@ md3x0_def = def + stm32f405_def + {'PLATFORM_MD3x0': '', 'timegm': 'mktime'}
 ##
 ## TYT MD-UV380
 ##
-mduv3x0_src = src + mdx_src + stm32f405_src + ['platform/drivers/NVM/nvmem_MDUV3x0.c',
+mduv3x0_src = main + src + mdx_src + stm32f405_src + ['platform/drivers/NVM/nvmem_MDUV3x0.c',
                                                'platform/drivers/NVM/spiFlash_MD3x.c',
                                                'platform/targets/MD-UV3x0/platform.c',
                                                'platform/drivers/keyboard/keyboard_MD3x.c',
@@ -292,7 +306,7 @@ mduv3x0_def = def + stm32f405_def + {'PLATFORM_MDUV3x0': '', 'timegm': 'mktime'}
 ##
 ## TYT MD-9600
 ##
-md9600_src = src + mdx_src + stm32f405_src + ['platform/targets/MD-9600/platform.c',
+md9600_src = main + src + mdx_src + stm32f405_src + ['platform/targets/MD-9600/platform.c',
                                               'platform/drivers/display/ST7567_MD9600.c',
                                               'platform/drivers/keyboard/keyboard_MD9600.c',
                                               'platform/drivers/chSelector/chSelector_MD9600.c',
@@ -306,7 +320,7 @@ md9600_def = def + stm32f405_def + {'PLATFORM_MD9600': ''}
 ##
 ## Radioddity GD-77
 ##
-gd77_src = src + gdx_src + mk22fn512_src + ['platform/targets/GD-77/platform.c']
+gd77_src = main + src + gdx_src + mk22fn512_src + ['platform/targets/GD-77/platform.c']
 
 gd77_inc = inc + mk22fn512_inc + ['platform/targets/GD-77']
 gd77_def = def + mk22fn512_def + {'PLATFORM_GD77': ''}
@@ -314,7 +328,7 @@ gd77_def = def + mk22fn512_def + {'PLATFORM_GD77': ''}
 ##
 ## Baofeng DM-1801
 ##
-dm1801_src = src + gdx_src + mk22fn512_src + ['platform/targets/DM-1801/platform.c']
+dm1801_src = main + src + gdx_src + mk22fn512_src + ['platform/targets/DM-1801/platform.c']
 
 dm1801_inc = inc + mk22fn512_inc + ['platform/targets/DM-1801']
 dm1801_def = def + mk22fn512_def + {'PLATFORM_DM1801': ''}
@@ -389,6 +403,7 @@ foreach k, v : md9600_def
     md9600_args += '-D@0@=@1@'.format(k, v)
   endif
 endforeach
+
 
 linux_opts = {'sources': linux_src,
               'c_args': linux_c_args,
@@ -477,6 +492,9 @@ objcopy     = find_program('objcopy',                          required:false, d
 bin2sgl     = find_program('scripts/bin2sgl.Linux',            required:false, disabler:true)
 gd77_loader = find_program('scripts/gd-77_firmware_loader.py', required:false, disabler:true)
 
+
+
+
 foreach t : targets
 
   name = 'openrtx_'+t['name']
@@ -523,4 +541,20 @@ foreach t : targets
     endif
 
   endif
+endforeach
+
+
+## TESTS
+unittests = [
+  'test_satellite.c'
+  ]
+foreach t : unittests
+  test_src = linux_test_src + [ 'tests/unit/' + t ]
+  test_opts = {'sources': test_src,
+                'c_args': linux_c_args,
+                'include_directories': linux_inc,
+                'dependencies': linux_dep,
+                'link_args' : linux_l_args}
+  e = executable(t,kwargs:test_opts)
+  test(t,e)
 endforeach

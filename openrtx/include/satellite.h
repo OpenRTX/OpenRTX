@@ -8,6 +8,10 @@
 
 #define radial_vel_offset_sec 5  //was time_offset
 //double time_offset = 5;
+//
+#include "state.h"
+#include "interfaces/rtc.h"
+#include "interfaces/graphics.h"
 
 typedef struct {
     float ra;
@@ -75,11 +79,11 @@ double curTime_to_julian_day(curTime_t t);
 topo_pos_t getObserverPosition();
 curTime_t julian_day_to_curTime(double jd);
 double jd_to_j2k(double jd);
-double local_sidereal_degrees(double j2k, double longitude);
+double local_sidereal_degrees(double j2k, double longitude_rad);
 double hour_angle_degrees(double local_sidereal_time, double right_ascension);
 void ra_dec_to_az_alt(double jd,
-                      double latitude, double longitude,
-                      double ra, double dec,
+                      double latitude, double longitude, //radians, both
+                      double ra, double dec, //...units?
                       double* az_out, double* alt_out);
 sat_pos_t  calcSatNow(tle_t tle, state_t last_state);
 sat_pos_t  calcSat(tle_t tle, double time_jd, topo_pos_t observer_degrees);
