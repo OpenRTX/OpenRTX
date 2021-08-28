@@ -4,9 +4,8 @@
 #include <math.h>
 
 int close_enough(double a, double b, double plusminus){
-	fprintf(stderr,"|%f - %f| = %f +- %f ", a, b, fabs(a-b), plusminus);
-	fprintf(stderr,"%d ", fabs(a-b) < plusminus);
-	fprintf(stderr,fabs(a-b) < plusminus ? "PASS\n": "FAIL\n");
+	fprintf(stderr,fabs(a-b) < plusminus ? "PASS\t": "FAIL\t");
+	fprintf(stderr,"|%f \t- %f| = %f +- %f \n", a, b, fabs(a-b), plusminus);
 	return fabs(a-b) < plusminus;
 }
 
@@ -108,28 +107,39 @@ int test_nextpass(){
 	char * line2 = "2 25544  51.6458 347.3122 0002703 322.9106 210.2991 15.48528782299732";
 	tle_t tle;
 	parse_elements( line1, line2, &tle);
-
-	//ISS 2021 08 28
-	//2021 08 28 13:28:55 local (UTC) it crosses the horizon up
-	//pass starts at 2459455.06175
-	double jd_expected = 2459455.06175;
-	//and az 307.83
-	double az_expected = 307.83;
-	//
-	//search start at 12:30 (after last pass has ended but before this one)
-	double jd_start = 2459455.02083;
 	topo_pos_t obs = {41.6726, -70.4629, 0};
-	double nextpass = sat_nextpass( tle, jd_start, .1, obs);
-	sat_pos_t start = calcSat( tle, nextpass, obs);
-	fprintf(stderr,"azel %f %f radec %f %f \n", start.az, start.elev, start.ra, start.dec);
 
-	double one_second = 1.0/86400; //jd is decimal days, so 1 second is just the inverse of number of seconds in a day
-	if( !close_enough(nextpass,  jd_expected, one_second) || !close_enough( start.az, az_expected, 1) ){
-		fprintf(stderr, "Failed %s in %s in line %d\n", fn_name, __FILE__,__LINE__);
-		fprintf(stderr, "Input: custom ISS tle check 1\n");
-		fprintf(stderr, "pass start off by %f seconds\n", 24*60*60*(nextpass - jd_expected));
-		fprintf(stderr, "pass az off by %f degrees\n", (start.az - az_expected));
-		errors++;
+
+	//all passes with the same TLE and location:
+	double passes[][2] = {
+	//ISS: 2021 08 28 13:28:55 local (UTC) it crosses the horizon up
+	//pass starts at 2459455.06175 //and az 307.83
+		{2459455.06175, 307.83},
+	//and some more:
+		{2459454.99437, 304.63},
+		{2459455.12907, 295.86},
+		{2459455.75959, 183.60},
+		{2459455.82579, 234.30},
+	};
+	int num_passes = 4;
+
+	double thirty_minutes = 30*60.0/86400;
+	for( int i = 0; i < num_passes; i++){
+		double jd_expected = passes[i][0];
+		double az_expected = passes[i][1];
+		double jd_start = jd_expected - thirty_minutes;
+		double nextpass = sat_nextpass( tle, jd_start, .1, obs);
+		sat_pos_t start = calcSat( tle, nextpass, obs);
+
+		double one_second = 1.0/86400; //jd is decimal days, so 1 second is just the inverse of number of seconds in a day
+		if( !close_enough(nextpass,  jd_expected, 10*one_second) || !close_enough( start.az, az_expected, 5) ){
+			fprintf(stderr, "Failed %s in %s in line %d\n", fn_name, __FILE__,__LINE__);
+			fprintf(stderr, "Input: custom ISS tle check 1\n");
+			fprintf(stderr, "pass start off by %f seconds\n", 24*60*60*(nextpass - jd_expected));
+			fprintf(stderr, "pass az off by %f degrees\n", (start.az - az_expected));
+			fprintf(stderr,"azel %f %f radec %f %f \n", start.az, start.elev, start.ra, start.dec);
+			errors++;
+		}
 	}
 
 
