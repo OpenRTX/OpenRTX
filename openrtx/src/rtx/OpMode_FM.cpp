@@ -192,4 +192,7 @@ void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
             platform_ledOff(RED);
             break;
     }
+
+    // Sleep thread for 30ms for 33Hz update rate
+    sleepFor(0u, 30u);
 }
