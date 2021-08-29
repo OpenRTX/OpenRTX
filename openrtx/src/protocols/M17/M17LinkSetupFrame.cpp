@@ -23,6 +23,7 @@
 #include <M17/M17Callsign.h>
 #include <M17/M17LinkSetupFrame.h>
 
+
 M17LinkSetupFrame::M17LinkSetupFrame()
 {
     clear();
@@ -52,17 +53,16 @@ void M17LinkSetupFrame::setDestination(const std::string& callsign)
 streamType_t M17LinkSetupFrame::getType()
 {
     // NOTE: M17 fields are big-endian, we need to swap bytes
-    uint16_t *a = reinterpret_cast< uint16_t* >(&data.type);
-    uint16_t  b = __builtin_bswap16(*a);
-    return *reinterpret_cast< streamType_t* >(&b);
+    streamType_t type = data.type;
+    type.value = __builtin_bswap16(type.value);
+    return type;
 }
 
 void M17LinkSetupFrame::setType(streamType_t type)
 {
     // NOTE: M17 fields are big-endian, we need to swap bytes
-    uint16_t *a = reinterpret_cast< uint16_t* >(&type);
-    uint16_t  b = __builtin_bswap16(*a);
-    data.type   = *reinterpret_cast< streamType_t* >(&b);
+    type.value = __builtin_bswap16(type.value);
+    data.type  = type;
 }
 
 meta_t& M17LinkSetupFrame::metadata()

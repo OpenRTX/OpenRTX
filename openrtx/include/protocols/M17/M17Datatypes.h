@@ -39,16 +39,21 @@ using lich_t    = std::array< uint8_t, 12 >;   // Data type for Golay(24,12) enc
  * This structure provides bit field definitions for the "TYPE" field
  * contained in an M17 Link Setup Frame.
  */
-typedef struct
+typedef union
 {
-    uint16_t stream     : 1;    //< Packet/stream indicator: 0 = packet, 1 = stream
-    uint16_t dataType   : 2;    //< Data type indicator
-    uint16_t encType    : 2;    //< Encryption type
-    uint16_t encSubType : 2;    //< Encryption subtype
-    uint16_t CAN        : 4;    //< Channel Access Number
-    uint16_t            : 4;    //< Reserved, padding to 16 bit
+    struct __attribute__((packed))
+    {
+        uint16_t stream     : 1;    //< Packet/stream indicator: 0 = packet, 1 = stream
+        uint16_t dataType   : 2;    //< Data type indicator
+        uint16_t encType    : 2;    //< Encryption type
+        uint16_t encSubType : 2;    //< Encryption subtype
+        uint16_t CAN        : 4;    //< Channel Access Number
+        uint16_t            : 4;    //< Reserved, padding to 16 bit
+    };
+
+    uint16_t value;
 }
-__attribute__((packed)) streamType_t;
+streamType_t;
 
 
 /**
