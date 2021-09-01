@@ -36,28 +36,28 @@ typedef int16_t audio_sample_t;
 extern "C" {
 #endif
 
-/*
+/**
  * Compensate for the filtering applied by the PWM output over the modulated
- * signal. The buffer will be processed in place to save memory.
+ * signal. The buffer is be processed in place to save memory.
  *
  * @param buffer: the buffer to be used as both source and destination.
  * @param length: the length of the input buffer.
  */
-void dsp_pwmCompensate(audio_sample_t *buffer, uint16_t length);
+void dsp_pwmCompensate(audio_sample_t *buffer, size_t length);
 
-/*
- * Remove any DC bias from the audio buffer passed as parameter.
- * The buffer will be processed in place to save memory.
+/**
+ * Remove the DC offset from a collection of audio samples, processing data
+ * in-place.
  *
- * @param buffer: the buffer to be used as both source and destination.
- * @param length: the length of the input buffer.
+ * @param buffer: buffer containing the audio samples.
+ * @param length: number of samples contained in the buffer.
  */
-void dsp_dcRemoval(audio_sample_t *buffer, uint16_t length);
+void dsp_dcRemoval(audio_sample_t *buffer, size_t length);
 
 #ifdef __cplusplus
 }
 
-/*
+/**
  * Applies a generic FIR filter on the audio buffer passed as parameter.
  * The buffer will be processed in place to save memory.
  *

@@ -20,10 +20,38 @@
 
 #include <dsp.h>
 
-/*
- * Applies a generic FIR filter on the audio buffer passed as parameter.
- * The buffer will be processed in place to save memory.
- */
+void dsp_pwmCompensate(audio_sample_t *buffer, uint16_t length)
+{
+    // FIR filter designed by Wojciech SP5WWP
+    std::array<float, 5> taps = { 0.01f, -0.05f, 0.88, -0.05f, 0.01f };
+    dsp_applyFIR(buffer, length, taps);
+}
+
+void dsp_dcRemoval(audio_sample_t *buffer, size_t length)
+{
+    /*
+     * Removal of DC component performed using an high-pass filter with
+     * transfer function G(z) = (z - 1)/(z - 0.99).
+     * Recursive implementation of the filter is:
+     * y(k) = u(k) - u(k-1) + 0.99*y(k-1)
+     */
+
+    if(length < 2) return;
+
+    audio_sample_t uo = buffer[0];
+    audio_sample_t yo = 0;
+    static constexpr float alpha = 0.99f;
+
+    for(size_t i = 1; i < length; i++)
+    {
+        float yold = static_cast< float >(yo) * alpha;
+        audio_sample_t u = buffer[i];
+        buffer[i]  = u - uo + static_cast< audio_sample_t >(yold);
+        uo = u;
+        yo = buffer[i];
+    }
+}
+
 template<size_t order>
 void dsp_applyFIR(audio_sample_t *buffer,
                   uint16_t length,
@@ -36,35 +64,5 @@ void dsp_applyFIR(audio_sample_t *buffer,
                 acc += buffer[i - j] * taps[j];
         }
         buffer[i] = (audio_sample_t) acc;
-    }
-}
-
-/*
- * Compensate for the filtering applied by the PWM output over the modulated
- * signal. The buffer will be processed in place to save memory.
- */
-void dsp_pwmCompensate(audio_sample_t *buffer, uint16_t length)
-{
-    // FIR filter designed by Wojciech SP5WWP
-    std::array<float, 5> taps = { 0.01f, -0.05f, 0.88, -0.05f, 0.01f };
-    dsp_applyFIR(buffer, length, taps);
-}
-
-/*
- * Remove any DC bias from the audio buffer passed as parameter.
- * The buffer will be processed in place to save memory.
- */
-void dsp_dcRemoval(audio_sample_t *buffer, uint16_t length)
-{
-    // Compute the average of all the samples
-    float acc = 0.0f;
-    for (int i = 0; i < length; i++) {
-        acc += buffer[i];
-    }
-    float mean = acc / (float) length;
-
-    // Subtract it to all the samples
-    for (int i = 0; i < length; i++) {
-        buffer[i] -= mean;
     }
 }
