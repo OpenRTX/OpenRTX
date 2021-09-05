@@ -58,7 +58,7 @@ void M17Transmitter::start(const std::string& src, const std::string& dst)
     streamType_t type;
     type.stream   = 1;    // Stream
     type.dataType = 2;    // Voice data
-    type.CAN      = 0xA;  // Channel access number
+    type.CAN      = 0;  // Channel access number
 
     lsf.setType(type);
     lsf.updateCrc();
