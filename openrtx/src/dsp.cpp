@@ -20,7 +20,7 @@
 
 #include <dsp.h>
 
-void dsp_pwmCompensate(audio_sample_t *buffer, uint16_t length)
+void dsp_pwmCompensate(audio_sample_t *buffer, size_t length)
 {
     float u   = 0.0f;   // Current input value
     float y   = 0.0f;   // Current output value
