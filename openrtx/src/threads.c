@@ -103,6 +103,10 @@ void *ui_task(void *arg)
             rtx_cfg.txTone = ctcss_tone[state.channel.fm.txTone];
             pthread_mutex_unlock(&rtx_mutex);
 
+            // Copy new M17 source and destination addresses
+            strncpy(rtx_cfg.source_address, state.m17_data.callsign, 10);
+            strncpy(rtx_cfg.destination_address, "", 10);
+
             rtx_configure(&rtx_cfg);
             sync_rtx = false;
         }

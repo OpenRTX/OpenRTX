@@ -77,9 +77,9 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
             audio_enableMic();
             radio_enableTx();
 
-            // TODO: Allow destinations different than broadcast
-            std::string source_address("OPNRTX");
-            m17Tx.start(source_address);
+            std::string source_address(status->source_address);
+            std::string destination_address(status->destination_address);
+            m17Tx.start(source_address, destination_address);
 
             status->opStatus = TX;
         }
