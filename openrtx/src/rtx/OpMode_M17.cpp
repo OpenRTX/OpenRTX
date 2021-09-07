@@ -18,12 +18,60 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <interfaces/audio_stream.h>
+#include <interfaces/audio_path.h>
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
 #include <interfaces/audio.h>
 #include <interfaces/radio.h>
+#include <kernel/queue.h>
 #include <OpMode_M17.h>
+#include <codec2.h>
+#include <miosix.h>
 #include <rtx.h>
+#include <dsp.h>
+#include <vector>
+
+using namespace miosix;
+
+using encoded_t = std::array<uint8_t, 8>;
+Queue< encoded_t, 2 > audioQueue;
+Thread *c2thread;
+
+
+void c2Func(void *arg)
+{
+    struct CODEC2 *codec2     = codec2_create(CODEC2_MODE_3200);
+    stream_sample_t *audioBuf = new stream_sample_t[320];
+    streamId micId = inputStream_start(SOURCE_MIC, PRIO_TX, audioBuf, 320,
+                                       BUF_CIRC_DOUBLE, 8000);
+
+    encoded_t encoded;
+
+    while(!Thread::testTerminate())
+    {
+        dataBlock_t audio = inputStream_getData(micId);
+
+        if(audio.data != NULL)
+        {
+            // Pre-amplification stage
+            for(size_t i = 0; i < audio.len; i++) audio.data[i] <<= 3;
+
+            // DC removal
+            dsp_dcRemoval(audio.data, audio.len);
+
+            // Post-amplification stage
+            for(size_t i = 0; i < audio.len; i++) audio.data[i] *= 20;
+
+            codec2_encode(codec2, encoded.data(), audio.data);
+            audioQueue.put(encoded);
+        }
+    }
+
+    codec2_destroy(codec2);
+    inputStream_stop(micId);
+}
+
 
 OpMode_M17::OpMode_M17() : enterRx(true), m17Tx(modulator)
 {
@@ -36,12 +84,15 @@ OpMode_M17::~OpMode_M17()
 
 void OpMode_M17::enable()
 {
+    c2thread = Thread::create(c2Func, 16384);
     modulator.init();
     enterRx = true;
 }
 
 void OpMode_M17::disable()
 {
+    c2thread->terminate();
+    c2thread->join();
     enterRx = false;
     modulator.terminate();
 }
@@ -126,13 +177,10 @@ void OpMode_M17::sendData(bool lastFrame)
 {
     payload_t dataFrame;
 
-    // TODO: temporarily data frame is filled with pseudorandom data
-    static unsigned int nSeed = 5323;
-    for(size_t i = 0; i < dataFrame.size(); i++)
-    {
-        nSeed = (8253729 * nSeed + 2396403);
-        dataFrame[i] = nSeed % 256;
-    }
-
+    encoded_t data;
+    audioQueue.get(data);
+    auto it = std::copy(data.begin(), data.end(), dataFrame.begin());
+    audioQueue.get(data);
+    std::copy(data.begin(), data.end(), it);
     m17Tx.send(dataFrame, lastFrame);
 }
