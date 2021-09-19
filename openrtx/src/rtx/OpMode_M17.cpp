@@ -24,36 +24,39 @@
 #include <interfaces/delays.h>
 #include <interfaces/audio.h>
 #include <interfaces/radio.h>
-#include <kernel/queue.h>
 #include <OpMode_M17.h>
 #include <codec2.h>
-#include <miosix.h>
+#include <memory>
+#include <vector>
 #include <rtx.h>
 #include <dsp.h>
-#include <vector>
 
-using namespace miosix;
+using namespace std;
 
-using encoded_t = std::array<uint8_t, 8>;
-Queue< encoded_t, 2 > audioQueue;
-Thread *c2thread;
+pthread_t       codecThread;        // Thread running CODEC2
+pthread_mutex_t codecMtx;           // Mutex for shared access between codec and rtx threads
+pthread_cond_t  codecCv;            // Condition variable for data ready
+bool            runCodec;           // Flag signalling that codec is running
+bool            newData;            // Flag signalling that new data is available
+array< uint8_t, 16 > encodedData;   // Buffer for encoded data
 
-
-void c2Func(void *arg)
+void *threadFunc(void *arg)
 {
-    struct CODEC2 *codec2     = codec2_create(CODEC2_MODE_3200);
-    stream_sample_t *audioBuf = new stream_sample_t[320];
-    streamId micId = inputStream_start(SOURCE_MIC, PRIO_TX, audioBuf, 320,
+    struct CODEC2 *codec2 = codec2_create(CODEC2_MODE_3200);
+    unique_ptr< stream_sample_t > audioBuf(new stream_sample_t[320]);
+    streamId micId = inputStream_start(SOURCE_MIC, PRIO_TX,
+                                       audioBuf.get(), 320,
                                        BUF_CIRC_DOUBLE, 8000);
 
-    encoded_t encoded;
+    size_t pos = 0;
 
-    while(!Thread::testTerminate())
+    while(runCodec)
     {
         dataBlock_t audio = inputStream_getData(micId);
 
         if(audio.data != NULL)
         {
+            #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
             // Pre-amplification stage
             for(size_t i = 0; i < audio.len; i++) audio.data[i] <<= 3;
 
@@ -61,15 +64,38 @@ void c2Func(void *arg)
             dsp_dcRemoval(audio.data, audio.len);
 
             // Post-amplification stage
-            for(size_t i = 0; i < audio.len; i++) audio.data[i] *= 20;
+            for(size_t i = 0; i < audio.len; i++) audio.data[i] *= 4;
+            #endif
 
-            codec2_encode(codec2, encoded.data(), audio.data);
-            audioQueue.put(encoded);
+            // CODEC2 encodes 160ms of speech into 8 bytes: here we write the
+            // new encoded data into a buffer of 16 bytes writing the first
+            // half and then the second one, sequentially.
+            // Data ready flag is rised once all the 16 bytes contain new data.
+            uint8_t *curPos = encodedData.data() + 8*pos;
+            codec2_encode(codec2, curPos, audio.data);
+            pos++;
+            if(pos >= 2)
+            {
+                pthread_mutex_lock(&codecMtx);
+                newData = true;
+                pthread_cond_signal(&codecCv);
+                pthread_mutex_unlock(&codecMtx);
+                pos = 0;
+            }
         }
     }
 
+    // Unlock waiting thread(s)
+    pthread_mutex_lock(&codecMtx);
+    newData = true;
+    pthread_cond_signal(&codecCv);
+    pthread_mutex_unlock(&codecMtx);
+
+    // Tear down codec and input stream
     codec2_destroy(codec2);
     inputStream_stop(micId);
+
+    return NULL;
 }
 
 
@@ -84,15 +110,30 @@ OpMode_M17::~OpMode_M17()
 
 void OpMode_M17::enable()
 {
-    c2thread = Thread::create(c2Func, 16384);
+    // Start CODEC2 thread
+    runCodec = true;
+    newData  = false;
+
+    pthread_mutex_init(&codecMtx, NULL);
+    pthread_cond_init(&codecCv, NULL);
+
+    pthread_attr_t codecAttr;
+    pthread_attr_init(&codecAttr);
+    pthread_attr_setstacksize(&codecAttr, 16384);
+    pthread_create(&codecThread, &codecAttr, threadFunc, NULL);
+
     modulator.init();
     enterRx = true;
 }
 
 void OpMode_M17::disable()
 {
-    c2thread->terminate();
-    c2thread->join();
+    // Shut down CODEC2 thread and wait until it effectively stops
+    runCodec = false;
+    pthread_join(codecThread, NULL);
+    pthread_mutex_destroy(&codecMtx);
+    pthread_cond_destroy(&codecCv);
+
     enterRx = false;
     modulator.terminate();
 }
@@ -177,10 +218,15 @@ void OpMode_M17::sendData(bool lastFrame)
 {
     payload_t dataFrame;
 
-    encoded_t data;
-    audioQueue.get(data);
-    auto it = std::copy(data.begin(), data.end(), dataFrame.begin());
-    audioQueue.get(data);
-    std::copy(data.begin(), data.end(), it);
+    // Wait until there are 16 bytes of compressed speech, then send them
+    pthread_mutex_lock(&codecMtx);
+    while(newData == false)
+    {
+        pthread_cond_wait(&codecCv, &codecMtx);
+    }
+    newData = false;
+    pthread_mutex_unlock(&codecMtx);
+
+    std::copy(encodedData.begin(), encodedData.end(), dataFrame.begin());
     m17Tx.send(dataFrame, lastFrame);
 }
