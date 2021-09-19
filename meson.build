@@ -306,6 +306,16 @@ dm1801_inc = inc + mk22fn512_inc + ['platform/targets/DM-1801']
 dm1801_def = def + mk22fn512_def + {'PLATFORM_DM1801': ''}
 
 ##
+## Module 17
+##
+mod17_src = src + stm32f405_src + ['platform/targets/Module17/platform.c',
+                                   'platform/drivers/baseband/radio_Mod17.cpp',
+                                   'platform/drivers/audio/audio_Mod17.c']
+
+mod17_inc = inc + stm32f405_inc + ['platform/targets/Module17']
+mod17_def = def + stm32f405_def + {'PLATFORM_MOD17': ''}
+
+##
 ## -------------------------- Compilation arguments ----------------------------
 ##
 
@@ -377,6 +387,15 @@ foreach k, v : md9600_def
   endif
 endforeach
 
+mod17_args = []
+foreach k, v : mod17_def
+  if v == ''
+    mod17_args += '-D@0@'.format(k)
+  else
+    mod17_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
+
 linux_opts = {'sources': linux_src,
               'c_args': linux_c_args,
               'cpp_args' : linux_cpp_args,
@@ -387,7 +406,7 @@ linux_opts = {'sources': linux_src,
 md3x0_opts = {'sources' : md3x0_src,
               'c_args'  : md3x0_args,
               'cpp_args': md3x0_args,
-              'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
+              'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld',
                              '-Wl,--print-memory-usage'],
               'dependencies': [codec2_dep],
               'include_directories': md3x0_inc}
@@ -395,7 +414,7 @@ md3x0_opts = {'sources' : md3x0_src,
 mduv3x0_opts = {'sources': mduv3x0_src,
                 'c_args': mduv3x0_args,
                 'cpp_args': mduv3x0_args,
-                'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
+                'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld',
                                '-Wl,--print-memory-usage'],
                 'dependencies': [codec2_dep],
                 'include_directories': mduv3x0_inc}
@@ -419,10 +438,17 @@ dm1801_opts = {'sources': dm1801_src,
 md9600_opts = {'sources': md9600_src,
                'c_args': md9600_args,
                'cpp_args': md9600_args,
-               'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
+               'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld',
                               '-Wl,--print-memory-usage'],
                'dependencies': [codec2_dep],
                'include_directories': md9600_inc}
+
+mod17_opts  = {'sources': mod17_src,
+               'c_args': mod17_args,
+               'cpp_args': mod17_args,
+               'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_Mod17.ld',
+                              '-Wl,--print-memory-usage'],
+               'include_directories': mod17_inc}
 
 ##
 ## ---------------------------- Compilation targets ----------------------------
@@ -463,6 +489,12 @@ targets = [
    'flashable': true,
    'wrap': 'MD9600',
    'load_addr': '0x0800C000'},
+
+   {'name': 'mod17',
+   'opts': mod17_opts,
+   'flashable': true,
+   'wrap': ' ',
+   'load_addr': ' '},
   ]
 
 radio_tool  = find_program('radio_tool')
