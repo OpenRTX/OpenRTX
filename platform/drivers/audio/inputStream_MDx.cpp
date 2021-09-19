@@ -231,7 +231,12 @@ streamId inputStream_start(const enum AudioSource source,
 
 dataBlock_t inputStream_getData(streamId id)
 {
-    (void) id;
+    dataBlock_t block;
+    block.data = NULL;
+    block.len  = 0;
+
+    // Invalid stream ID, return an empty data block
+    if(id < 0) return block;
 
     if(bufMode == BUF_LINEAR)
     {
@@ -260,7 +265,6 @@ dataBlock_t inputStream_getData(streamId id)
         }while(sWaiting);
     }
 
-    dataBlock_t block;
     block.data = bufCurr;
     block.len  = bufLen;
     if(bufMode == BUF_CIRC_DOUBLE) block.len /= 2;
@@ -270,14 +274,23 @@ dataBlock_t inputStream_getData(streamId id)
 
 void inputStream_stop(streamId id)
 {
-    (void) id;
+    if(id < 0) return;
+
+    TIM2->CR1        &= ~TIM_CR1_CEN;       // Shut down timebase
+    ADC2->CR2        &= ~ADC_CR2_ADON;      // Shut down ADC
+    DMA2_Stream2->CR &= ~DMA_SxCR_EN;       // Shut down DMA transfer
 
     RCC->APB2ENR &= ~RCC_APB2ENR_ADC2EN;    // Disable ADC
     RCC->APB1ENR &= ~RCC_APB1ENR_TIM2EN;    // Disable conv. timebase timer
-    RCC->AHB1ENR &= ~RCC_AHB1ENR_DMA2EN;    // Disable DMA
     __DSB();
 
-    // Critical section, release inUse flag
-    FastInterruptDisableLock dLock;
-    inUse = false;
+    // Critical section: release inUse flag, invalidate (partial) data, wake up
+    // thread.
+    {
+        FastInterruptDisableLock dLock;
+        inUse   = false;
+        bufCurr = 0;
+        bufLen  = 0;
+        if(sWaiting != 0) sWaiting->IRQwakeup();
+    }
 }
