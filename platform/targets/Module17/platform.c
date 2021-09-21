@@ -39,6 +39,7 @@
 #include <toneGenerator_MDx.h>
 #include <interfaces/rtc.h>
 #include <interfaces/audio.h>
+#include <SPI2.h>
 
 void platform_init()
 {
@@ -46,6 +47,18 @@ void platform_init()
     gpio_setMode(PTT_LED,  OUTPUT);
     gpio_setMode(SYNC_LED, OUTPUT);
     gpio_setMode(ERR_LED,  OUTPUT);
+
+    /*
+     * Initialise SPI2 for external flash and LCD
+     */
+    gpio_setMode(SPI2_CLK, ALTERNATE);
+    gpio_setMode(SPI2_SDO, ALTERNATE);
+    gpio_setMode(SPI2_SDI, ALTERNATE);
+    gpio_setAlternateFunction(SPI2_CLK, 5); /* SPI2 is on AF5 */
+    gpio_setAlternateFunction(SPI2_SDO, 5);
+    gpio_setAlternateFunction(SPI2_SDI, 5);
+
+    spi2_init();
 }
 
 void platform_terminate()
@@ -88,12 +101,44 @@ bool platform_pwrButtonStatus()
 
 void platform_ledOn(led_t led)
 {
-    (void) led;
+    switch(led)
+    {
+        case RED:
+            gpio_setPin(PTT_LED);
+            break;
+
+        case GREEN:
+            gpio_setPin(SYNC_LED);
+            break;
+
+        case YELLOW:
+            gpio_setPin(ERR_LED);
+            break;
+
+        default:
+            break;
+    }
 }
 
 void platform_ledOff(led_t led)
 {
-    (void) led;
+    switch(led)
+    {
+        case RED:
+            gpio_clearPin(PTT_LED);
+            break;
+
+        case GREEN:
+            gpio_clearPin(SYNC_LED);
+            break;
+
+        case YELLOW:
+            gpio_clearPin(ERR_LED);
+            break;
+
+        default:
+            break;
+    }
 }
 
 void platform_beepStart(uint16_t freq)

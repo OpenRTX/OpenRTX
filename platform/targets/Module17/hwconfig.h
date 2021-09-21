@@ -40,6 +40,10 @@
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 
+/* Screen has adjustable contrast */
+#define SCREEN_CONTRAST
+#define DEFAULT_CONTRAST 91
+
 /* Screen pixel format */
 #define PIX_FMT_BW
 
@@ -50,5 +54,14 @@
 #define PTT_LED  GPIOE,13
 #define SYNC_LED GPIOE,14
 #define ERR_LED  GPIOE,15
+
+/* Display */
+#define LCD_RST	    GPIOB,11
+#define LCD_RS	    GPIOB,12
+#define LCD_CS	    GPIOB,10
+#define LCD_BKLIGHT GPIOE,15
+#define SPI2_CLK    GPIOB,13
+#define SPI2_SDO    GPIOB,14
+#define SPI2_SDI    GPIOB,15
 
 #endif
