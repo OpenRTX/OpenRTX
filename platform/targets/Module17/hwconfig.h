@@ -3,6 +3,7 @@
  *                         Niccolò Izzo IU2KIN,                            *
  *                         Frederik Saraci IU2NRO,                         *
  *                         Silvano Seva IU2KWO                             *
+ *                         Mathis Schmieder DB9MAT                         *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -30,6 +31,10 @@
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 
+/* Screen has adjustable contrast */
+#define SCREEN_CONTRAST
+#define DEFAULT_CONTRAST 91
+
 /* Screen pixel format */
 #define PIX_FMT_BW
 
@@ -37,8 +42,17 @@
 #define BAT_NONE
 
 /* Signalling LEDs */
-#define PTT_LED  GPIOE,13
-#define SYNC_LED GPIOE,14
-#define ERR_LED  GPIOE,15
+#define PTT_LED     GPIOE,13
+#define SYNC_LED    GPIOE,14
+#define ERR_LED     GPIOE,15
+
+/* Display */
+#define LCD_RST     GPIOB,11
+#define LCD_RS      GPIOB,12
+#define LCD_CS      GPIOB,10
+#define LCD_BKLIGHT GPIOE,15
+#define SPI2_CLK    GPIOB,13
+#define SPI2_SDO    GPIOB,14
+#define SPI2_SDI    GPIOB,15
 
 #endif

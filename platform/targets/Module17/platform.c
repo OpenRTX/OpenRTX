@@ -3,6 +3,7 @@
  *                         Niccolò Izzo IU2KIN,                            *
  *                         Frederik Saraci IU2NRO,                         *
  *                         Silvano Seva IU2KWO                             *
+ *                         Mathis Schmieder DB9MAT                         *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -23,10 +24,7 @@
 #include <interfaces/platform.h>
 #include <hwconfig.h>
 #include <string.h>
-#include <ADC1_MDx.h>
 #include <backlight.h>
-#include <calibInfo_MDx.h>
-#include <toneGenerator_MDx.h>
 #include <interfaces/rtc.h>
 #include <interfaces/audio.h>
 
@@ -78,12 +76,44 @@ bool platform_pwrButtonStatus()
 
 void platform_ledOn(led_t led)
 {
-    (void) led;
+    switch(led)
+    {
+        case RED:
+            gpio_setPin(PTT_LED);
+            break;
+
+        case GREEN:
+            gpio_setPin(SYNC_LED);
+            break;
+
+        case YELLOW:
+            gpio_setPin(ERR_LED);
+            break;
+
+        default:
+            break;
+    }
 }
 
 void platform_ledOff(led_t led)
 {
-    (void) led;
+    switch(led)
+    {
+        case RED:
+            gpio_clearPin(PTT_LED);
+            break;
+
+        case GREEN:
+            gpio_clearPin(SYNC_LED);
+            break;
+
+        case YELLOW:
+            gpio_clearPin(ERR_LED);
+            break;
+
+        default:
+            break;
+    }
 }
 
 void platform_beepStart(uint16_t freq)
