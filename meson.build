@@ -293,6 +293,7 @@ mod17_src = src + stm32f405_src + ['platform/targets/Module17/platform.c',
                                    'platform/drivers/keyboard/keyboard_Mod17.c',
                                    'platform/drivers/NVM/nvmem_Mod17.c',
                                    'platform/drivers/baseband/radio_Mod17.cpp',
+                                   'platform/drivers/audio/inputStream_Mod17.cpp',
                                    'platform/drivers/audio/audio_Mod17.c']
 
 mod17_inc = inc + stm32f405_inc + ['platform/targets/Module17']
