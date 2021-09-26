@@ -158,6 +158,7 @@ void _ui_drawMainBottom()
     uint16_t meter_height = layout.bottom_h; 
     point_t meter_pos = { layout.horizontal_pad, 
                           SCREEN_HEIGHT - meter_height - layout.bottom_pad};
+    uint8_t mic_level = platform_getMicLevel();
     switch(last_state.channel.mode)
     {
         case FM:
@@ -173,14 +174,14 @@ void _ui_drawMainBottom()
                                 meter_width,
                                 meter_height,
                                 rssi,
-                                255);
+                                mic_level);
             break;
         case M17:
             gfx_drawSmeterLevel(meter_pos,
                                 meter_width,
                                 meter_height,
                                 rssi,
-                                255);
+                                mic_level);
             break;
     }
 }

@@ -721,7 +721,7 @@ void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, float r
         gfx_setPixel(pixel_pos, white);
     }
     // Level bar
-    uint16_t level_width = (level / 255 * width);
+    uint16_t level_width = (level / 255.0 * width);
     point_t level_pos = { start.x, start.y + 2 };
     gfx_drawRect(level_pos, level_width, bar_height, green, true);
     // RSSI bar
