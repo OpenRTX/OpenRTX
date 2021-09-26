@@ -107,7 +107,7 @@ void _ui_eventMenuTestMic(kbd_msg_t msg, bool *sync_rtx)
         {
             rec_state = REC_STANDBY;
             platform_ledOff(GREEN);
-            _bufferPlaybackStop();
+            //_bufferPlaybackStop();
         }
         break;
     }
