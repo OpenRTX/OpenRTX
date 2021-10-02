@@ -34,6 +34,10 @@ void platform_init()
     gpio_setMode(PTT_LED,  OUTPUT);
     gpio_setMode(SYNC_LED, OUTPUT);
     gpio_setMode(ERR_LED,  OUTPUT);
+
+    gpio_setMode(PTT_SW,  INPUT);
+    gpio_setMode(PTT_OUT, OUTPUT);
+    gpio_clearPin(PTT_OUT);
 }
 
 void platform_terminate()
@@ -66,12 +70,13 @@ int8_t platform_getChSelector()
 
 bool platform_getPttStatus()
 {
-    return false;
+    /* PTT line has a pullup resistor with PTT switch closing to ground */
+    return (gpio_readPin(PTT_SW) == 0) ? true : false;
 }
 
 bool platform_pwrButtonStatus()
 {
-    return false;
+    return true;
 }
 
 void platform_ledOn(led_t led)
