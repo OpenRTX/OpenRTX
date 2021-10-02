@@ -110,8 +110,8 @@ streamId outputStream_start(const enum AudioSink destination,
     }
 
     /* Configure GPIOs */
-    gpio_setMode(GPIOA, 4, INPUT_ANALOG);    /* Baseband TX */
-    gpio_setMode(GPIOA, 5, INPUT_ANALOG);    /* Spk output  */
+    gpio_setMode(BASEBAND_TX, INPUT_ANALOG);    /* Baseband TX */
+    gpio_setMode(AUDIO_SPK,   INPUT_ANALOG);    /* Spk output  */
 
     /*
      * Enable peripherals

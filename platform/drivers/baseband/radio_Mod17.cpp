@@ -20,6 +20,8 @@
 
 #include <interfaces/platform.h>
 #include <interfaces/radio.h>
+#include <interfaces/gpio.h>
+#include <hwconfig.h>
 
 void radio_init(const rtxStatus_t *rtxState)
 {
@@ -48,11 +50,12 @@ bool radio_checkRxDigitalSquelch()
 
 void radio_enableRx()
 {
+	gpio_clearPin(PTT_OUT);
 }
 
 void radio_enableTx()
 {
-
+	gpio_setPin(PTT_OUT);
 }
 
 void radio_disableRtx()

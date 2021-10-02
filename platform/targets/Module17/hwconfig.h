@@ -55,4 +55,21 @@
 #define SPI2_SDO    GPIOB,14
 #define SPI2_SDI    GPIOB,15
 
+/* Keyboard */
+#define ESC_SW      GPIOD,1
+#define RIGHT_SW    GPIOD,2
+#define UP_SW       GPIOD,3
+#define DOWN_SW     GPIOD,4
+#define LEFT_SW     GPIOB,9
+#define ENTER_SW    GPIOB,8
+
+#define PTT_SW      GPIOD,8
+#define PTT_OUT     GPIOD,10
+
+/* Audio */
+#define AUDIO_MIC   GPIOA,2
+#define AUDIO_SPK   GPIOA,5
+#define BASEBAND_RX GPIOA,1
+#define BASEBAND_TX GPIOA,4
+
 #endif
