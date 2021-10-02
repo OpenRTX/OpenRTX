@@ -90,9 +90,9 @@ void display_init()
     gpio_clearPin(LCD_RS);
 
     gpio_clearPin(LCD_RST); /* Reset controller                          */
-    delayMs(1);
+    delayMs(50);
     gpio_setPin(LCD_RST);
-    delayMs(5);
+    delayMs(50);
 
     gpio_clearPin(LCD_CS);
 

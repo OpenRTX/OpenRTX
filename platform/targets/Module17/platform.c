@@ -44,6 +44,14 @@ void platform_init()
     gpio_setMode(PTT_LED,  OUTPUT);
     gpio_setMode(SYNC_LED, OUTPUT);
     gpio_setMode(ERR_LED,  OUTPUT);
+
+    gpio_setMode(PTT_SW,  INPUT);
+    gpio_setMode(PTT_OUT, OUTPUT);
+    gpio_setMode(AUDIO_SPK, OUTPUT);
+
+    gpio_clearPin(AUDIO_SPK);
+    gpio_clearPin(PTT_OUT);
+
 }
 
 void platform_terminate()
@@ -76,12 +84,13 @@ int8_t platform_getChSelector()
 
 bool platform_getPttStatus()
 {
-    return false;
+    uint8_t PttStatus = !gpio_readPin(PTT_SW);
+    return PttStatus;	
 }
 
 bool platform_pwrButtonStatus()
 {
-    return false;
+    return true;
 }
 
 void platform_ledOn(led_t led)

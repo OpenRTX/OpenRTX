@@ -215,12 +215,12 @@ streamId inputStream_start(const enum AudioSource source,
     switch(source)
     {
         case SOURCE_MIC:
-            gpio_setMode(GPIOA, 2, INPUT_ANALOG);
+            gpio_setMode(AUDIO_MIC, INPUT_ANALOG);
             ADC2->SQR3 = 2;
             break;
 
         case SOURCE_RTX:
-            gpio_setMode(GPIOA, 1, INPUT_ANALOG);
+            gpio_setMode(BASEBAND_RX, INPUT_ANALOG);
             ADC2->SQR3 = 1;
             break;
 
