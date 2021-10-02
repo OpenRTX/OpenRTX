@@ -47,9 +47,7 @@ void platform_init()
 
     gpio_setMode(PTT_SW,  INPUT);
     gpio_setMode(PTT_OUT, OUTPUT);
-    gpio_setMode(AUDIO_SPK, OUTPUT);
 
-    gpio_clearPin(AUDIO_SPK);
     gpio_clearPin(PTT_OUT);
 
 }
