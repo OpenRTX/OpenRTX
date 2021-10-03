@@ -82,5 +82,40 @@ size_t puncture(const std::array< uint8_t, IN  >& input,
     return bit_count;
 }
 
+/**
+ * Apply the inverse puncturing scheme to a byte array, thus expanding its bits.
+ *
+ * \param input: input byte array, containing puntured data.
+ * \param output: output byte array, containing depuntured data.
+ * \param puncture: puncturing matrix, stored as an array of 8 bit values.
+ * \return number of zero bits added to the input sequence for depunturing.
+ */
+template < size_t IN, size_t OUT, size_t P >
+size_t depuncture(const std::array< uint8_t, IN  >& input,
+                        std::array< uint8_t, OUT >& output,
+                  const std::array< uint8_t, P   >& puncture)
+{
+    size_t inpIndex   = 0;
+    size_t punctIndex = 0;
+    size_t bit_count  = 0;
+
+    for(size_t i = 0; i < 8*OUT && inpIndex < 8*IN; i++)
+    {
+        if(puncture[punctIndex++])
+        {
+            setBit(output, i, getBit(input, inpIndex++));
+        }
+        else
+        {
+            setBit(output, i, 0);
+            bit_count++;
+        }
+
+        if(punctIndex == P) punctIndex = 0;
+    }
+
+    return bit_count;
+}
+
 
 #endif /* M17_CODE_PUNCTURING_H */
