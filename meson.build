@@ -73,8 +73,14 @@ minmea_inc = ['lib/minmea/include']
 qdec_inc = ['lib/qdec/include']
 
 # CODEC2, open source speech codec
-codec2_proj = subproject('codec2')
-codec2_dep  = codec2_proj.get_variable('codec2_dep')
+# Compile from sources only when targeting a platform different from x86/x64
+if meson.is_cross_build()
+  codec2_proj = subproject('codec2')
+  codec2_dep  = codec2_proj.get_variable('codec2_dep')
+else
+  codec2_dep  = dependency('codec2')
+endif
+
 
 ##
 ## RTOS
@@ -212,6 +218,7 @@ linux_src = src + ['platform/targets/linux/emulator/emulator.c',
                    'platform/mcu/x86_64/drivers/rtc.c',
                    'platform/drivers/baseband/radio_linux.cpp',
                    'platform/drivers/audio/audio_linux.c',
+                   'platform/drivers/audio/inputStream_linux.c',
                    'platform/targets/linux/platform.c']
 
 
@@ -226,9 +233,9 @@ linux_inc = inc + ['platform/targets/linux',
 if not meson.is_cross_build()
   sdl_dep = dependency('SDL2')
   threads_dep = dependency('threads')
-  linux_dep = [sdl_dep, threads_dep]
+  linux_dep = [sdl_dep, threads_dep, codec2_dep]
 else
-  linux_dep = []
+  linux_dep = [ ]
 endif
 
 ##
