@@ -81,9 +81,9 @@ enum menuItems
 
 enum settingsItems
 {
-    S_DISPLAY = 0,
+    S_DISPLAY = 0
 #ifdef HAS_RTC
-    S_TIMEDATE
+    ,S_TIMEDATE
 #endif
 #ifdef HAS_GPS
     ,S_GPS

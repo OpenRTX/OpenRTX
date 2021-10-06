@@ -137,7 +137,8 @@ gdx_src = ['platform/drivers/NVM/W25Qx.c',
            'platform/drivers/baseband/HR_C6000_GDx.cpp',
            'platform/drivers/display/UC1701_GDx.c',
            'platform/drivers/keyboard/keyboard_GDx.c',
-           'platform/drivers/audio/audio_GDx.c']
+           'platform/drivers/audio/audio_GDx.c',
+           'platform/drivers/audio/inputStream_GDx.c']
 
 ##
 ## --------------------- MCU-dependent source files ----------------------------
@@ -399,6 +400,7 @@ gd77_opts = {'sources': gd77_src,
              'cpp_args': gd77_args,
              'link_args' : ['-Wl,-T../platform/mcu/MK22FN512xxx12/linker_script.ld',
                             '-Wl,--print-memory-usage'],
+             'dependencies': [codec2_dep],
              'include_directories':gd77_inc}
 
 dm1801_opts = {'sources': dm1801_src,
@@ -406,6 +408,7 @@ dm1801_opts = {'sources': dm1801_src,
                'cpp_args': dm1801_args,
                'link_args' : ['-Wl,-T../platform/mcu/MK22FN512xxx12/linker_script.ld',
                               '-Wl,--print-memory-usage'],
+               'dependencies': [codec2_dep],
                'include_directories':dm1801_inc}
 
 md9600_opts = {'sources': md9600_src,
@@ -413,6 +416,7 @@ md9600_opts = {'sources': md9600_src,
                'cpp_args': md9600_args,
                'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
                               '-Wl,--print-memory-usage'],
+               'dependencies': [codec2_dep],
                'include_directories': md9600_inc}
 
 ##
