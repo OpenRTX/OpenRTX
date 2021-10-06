@@ -27,7 +27,7 @@
 pthread_mutex_t *cfgMutex;      // Mutex for incoming config messages
 
 const rtxStatus_t *newCnf;      // Pointer for incoming config messages
-rtxStatus_t rtxStatus = { 0 };  // RTX driver status
+rtxStatus_t rtxStatus;          // RTX driver status
 
 float rssi;                     // Current RSSI in dBm
 bool  reinitFilter;             // Flag for RSSI filter re-initialisation

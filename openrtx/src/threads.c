@@ -35,6 +35,7 @@
 #include <minmea.h>
 #ifdef HAS_GPS
 #include <interfaces/gps.h>
+#include <string.h>
 #include <gps.h>
 #endif
 

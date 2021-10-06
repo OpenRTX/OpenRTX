@@ -42,6 +42,8 @@ array< uint8_t, 16 > encodedData;   // Buffer for encoded data
 
 void *threadFunc(void *arg)
 {
+    (void) arg;
+
     struct CODEC2 *codec2 = codec2_create(CODEC2_MODE_3200);
     unique_ptr< stream_sample_t > audioBuf(new stream_sample_t[320]);
     streamId micId = inputStream_start(SOURCE_MIC, PRIO_TX,
