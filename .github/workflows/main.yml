@@ -10,7 +10,7 @@ jobs:
     - name: install-deps
       run: |
         sudo apt update
-        sudo apt install python3-pip gcc pkg-config libsdl2-dev wget ninja-build
+        sudo apt install python3-pip gcc pkg-config libsdl2-dev wget ninja-build codec2
         wget -O /tmp/MiosixToolchainInstaller.run https://miosix.org/toolchain/MiosixToolchainInstaller.run
         sudo sh /tmp/MiosixToolchainInstaller.run
         sudo pip3 install meson
