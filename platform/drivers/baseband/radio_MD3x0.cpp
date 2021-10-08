@@ -300,7 +300,7 @@ void radio_enableTx()
 
     gpio_setPin(TX_STG_EN);     // Enable TX PA
 
-    if(config->opMode == FM && config->txToneEn == 1)
+    if(config->txToneEn == 1)
     {
         toneGen_toneOn();       // Enable CTSS
     }
