@@ -86,4 +86,10 @@ All this was made possible by the huge reverse engineering effort of Travis Good
 
 A huge thank goes to Roger Clark, and his [OpenGD77](https://github.com/rogerclarkmelbourne/OpenGD77) which not only inspired this project, but as a precursor, provided a working code example for the GD77 radio family.
 
-Finally, a warm thank you goes to SP5WWP and the [M17](https://m17project.org) community for bringing their libre protocol into our obscure undocumented hardware.
+A warm thank you goes to SP5WWP and the [M17](https://m17project.org) community for bringing their libre protocol into our obscure undocumented hardware.
+
+Also thank you for donating hardware to the project:
+* M17 Project
+* laurivosandi
+
+And thanks to everyone who donated via [LiberaPay](https://liberapay.com/OpenRTX/donate).
