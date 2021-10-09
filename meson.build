@@ -2,8 +2,14 @@
 ## OpenRTX - Modular Open Source Radio Firmware
 ##
 project('OpenRTX', ['c', 'cpp'],
-  version : '0.3.1',
-  default_options : ['warning_level=3'])
+  version : '0.3.2',
+  default_options : ['warning_level=3', 'b_staticpic=false'])
+
+##
+## Optional defines, common to all souces (e.g. to enable debugging)
+##
+
+def = {'VCOM_ENABLED' : ''}
 
 ##
 ## ----------------- Platform-independent source files -------------------------
@@ -16,6 +22,7 @@ project('OpenRTX', ['c', 'cpp'],
 openrtx_src = ['openrtx/src/state.c',
                'openrtx/src/ui/ui.c',
                'openrtx/src/ui/ui_main.c',
+               'openrtx/src/ui/ui_mode.c',
                'openrtx/src/ui/ui_menu.c',
                'openrtx/src/threads.c',
                'openrtx/src/battery.c',
@@ -25,13 +32,19 @@ openrtx_src = ['openrtx/src/state.c',
                'openrtx/src/queue.c',
                'openrtx/src/rtx/rtx.cpp',
                'openrtx/src/rtx/OpMode_FM.cpp',
+               'openrtx/src/rtx/OpMode_M17.cpp',
                'openrtx/src/gps.c',
                'openrtx/src/dsp.cpp',
-               'openrtx/src/memory_profiling.cpp']
+               'openrtx/src/memory_profiling.cpp',
+               'openrtx/src/protocols/M17/M17Callsign.cpp',
+               'openrtx/src/protocols/M17/M17Modulator.cpp',
+               'openrtx/src/protocols/M17/M17Transmitter.cpp',
+               'openrtx/src/protocols/M17/M17LinkSetupFrame.cpp']
 
 openrtx_inc = ['openrtx/include',
                'openrtx/include/calibration',
                'openrtx/include/rtx',
+               'openrtx/include/protocols',
                'platform/drivers/ADC',
                'platform/drivers/NVM',
                'platform/drivers/GPS',
@@ -59,6 +72,16 @@ minmea_inc = ['lib/minmea/include']
 # QDEC, a very simple, header only, quadrature decoding library
 qdec_inc = ['lib/qdec/include']
 
+# CODEC2, open source speech codec
+# Compile from sources only when targeting a platform different from x86/x64
+if meson.is_cross_build()
+  codec2_proj = subproject('codec2')
+  codec2_dep  = codec2_proj.get_variable('codec2_dep')
+else
+  codec2_dep  = dependency('codec2')
+endif
+
+
 ##
 ## RTOS
 ##
@@ -71,7 +94,7 @@ rtos_inc = ['lib/miosix-kernel',
 
 src = openrtx_src + minmea_src
 inc = openrtx_inc + rtos_inc + minmea_inc + qdec_inc
-def = {'DONT_USE_CMSIS_INIT': ''}
+def = def + {'DONT_USE_CMSIS_INIT': ''}
 
 ## Add git commit or tag to print in OpenRTX
 r = run_command('git', 'describe', '--tags', '--dirty')
@@ -93,6 +116,7 @@ mdx_src = ['platform/drivers/ADC/ADC1_MDx.c',
            'platform/drivers/GPS/GPS_MDx.cpp',
            'platform/drivers/NVM/W25Qx.c',
            'platform/drivers/audio/audio_MDx.c',
+           'platform/drivers/audio/inputStream_MDx.cpp',
            'platform/drivers/baseband/HR_Cx000.cpp',
            'platform/drivers/backlight/backlight_MDx.c',
            'platform/drivers/tones/toneGenerator_MDx.cpp']
@@ -113,7 +137,8 @@ gdx_src = ['platform/drivers/NVM/W25Qx.c',
            'platform/drivers/baseband/HR_C6000_GDx.cpp',
            'platform/drivers/display/UC1701_GDx.c',
            'platform/drivers/keyboard/keyboard_GDx.c',
-           'platform/drivers/audio/audio_GDx.c']
+           'platform/drivers/audio/audio_GDx.c',
+           'platform/drivers/audio/inputStream_GDx.c']
 
 ##
 ## --------------------- MCU-dependent source files ----------------------------
@@ -140,6 +165,7 @@ stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.cpp',
                  'platform/mcu/STM32F4xx/drivers/delays.cpp',
                  'platform/mcu/STM32F4xx/drivers/rtc.c',
                  'platform/mcu/STM32F4xx/drivers/SPI2.c',
+                 'platform/mcu/STM32F4xx/drivers/USART3.cpp',
                  'platform/mcu/CMSIS/Device/ST/STM32F4xx/Source/system_stm32f4xx.c']
 
 stm32f405_inc = ['platform/mcu/CMSIS/Include',
@@ -193,6 +219,7 @@ linux_src = src + ['platform/targets/linux/emulator/emulator.c',
                    'platform/mcu/x86_64/drivers/rtc.c',
                    'platform/drivers/baseband/radio_linux.cpp',
                    'platform/drivers/audio/audio_linux.c',
+                   'platform/drivers/audio/inputStream_linux.c',
                    'platform/targets/linux/platform.c']
 
 
@@ -207,9 +234,9 @@ linux_inc = inc + ['platform/targets/linux',
 if not meson.is_cross_build()
   sdl_dep = dependency('SDL2')
   threads_dep = dependency('threads')
-  linux_dep = [sdl_dep, threads_dep]
+  linux_dep = [sdl_dep, threads_dep, codec2_dep]
 else
-  linux_dep = []
+  linux_dep = [ ]
 endif
 
 ##
@@ -277,8 +304,9 @@ dm1801_def = def + mk22fn512_def + {'PLATFORM_DM1801': ''}
 ## -------------------------- Compilation arguments ----------------------------
 ##
 
-linux_c_args = []
-linux_l_args = ['-lm', '-lreadline']
+linux_c_args   = ['-DPLATFORM_LINUX']
+linux_cpp_args = ['-std=c++14', '-DPLATFORM_LINUX']
+linux_l_args   = ['-lm', '-lreadline']
 
 # Add AddressSanitizer if required
 if get_option('asan')
@@ -346,6 +374,7 @@ endforeach
 
 linux_opts = {'sources': linux_src,
               'c_args': linux_c_args,
+              'cpp_args' : linux_cpp_args,
               'include_directories': linux_inc,
               'dependencies': linux_dep,
               'link_args' : linux_l_args}
@@ -355,6 +384,7 @@ md3x0_opts = {'sources' : md3x0_src,
               'cpp_args': md3x0_args,
               'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
                              '-Wl,--print-memory-usage'],
+              'dependencies': [codec2_dep],
               'include_directories': md3x0_inc}
 
 mduv3x0_opts = {'sources': mduv3x0_src,
@@ -362,6 +392,7 @@ mduv3x0_opts = {'sources': mduv3x0_src,
                 'cpp_args': mduv3x0_args,
                 'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
                                '-Wl,--print-memory-usage'],
+                'dependencies': [codec2_dep],
                 'include_directories': mduv3x0_inc}
 
 gd77_opts = {'sources': gd77_src,
@@ -369,6 +400,7 @@ gd77_opts = {'sources': gd77_src,
              'cpp_args': gd77_args,
              'link_args' : ['-Wl,-T../platform/mcu/MK22FN512xxx12/linker_script.ld',
                             '-Wl,--print-memory-usage'],
+             'dependencies': [codec2_dep],
              'include_directories':gd77_inc}
 
 dm1801_opts = {'sources': dm1801_src,
@@ -376,6 +408,7 @@ dm1801_opts = {'sources': dm1801_src,
                'cpp_args': dm1801_args,
                'link_args' : ['-Wl,-T../platform/mcu/MK22FN512xxx12/linker_script.ld',
                               '-Wl,--print-memory-usage'],
+               'dependencies': [codec2_dep],
                'include_directories':dm1801_inc}
 
 md9600_opts = {'sources': md9600_src,
@@ -383,6 +416,7 @@ md9600_opts = {'sources': md9600_src,
                'cpp_args': md9600_args,
                'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script.ld',
                               '-Wl,--print-memory-usage'],
+               'dependencies': [codec2_dep],
                'include_directories': md9600_inc}
 
 ##
@@ -426,8 +460,8 @@ targets = [
    'load_addr': '0x0800C000'},
   ]
 
+radio_tool  = find_program('radio_tool')
 objcopy     = find_program('objcopy',                          required:false, disabler:true)
-radio_tool  = find_program('radio_tool',                       required:false, disabler:true)
 bin2sgl     = find_program('scripts/bin2sgl.Linux',            required:false, disabler:true)
 gd77_loader = find_program('scripts/gd-77_firmware_loader.py', required:false, disabler:true)
 

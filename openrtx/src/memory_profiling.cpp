@@ -65,13 +65,7 @@ unsigned int getAbsoluteFreeHeap()
 
 unsigned int getCurrentFreeHeap()
 {
-    /*
-     * BUG: calling getCurrentFreeHeap() leads to a program crash.
-     * Investigation about this issue has to be deferred until a working error
-     * handler is implemented.
-     */
-    //return miosix::MemoryProfiling::getCurrentFreeHeap();
-    return getAbsoluteFreeHeap();
+    return miosix::MemoryProfiling::getCurrentFreeHeap();
 }
 
 #else

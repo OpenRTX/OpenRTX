@@ -34,6 +34,7 @@
 #include <ADC1_MDx.h>
 #include <calibInfo_MDx.h>
 #include <interfaces/nvmem.h>
+#include <toneGenerator_MDx.h>
 #include <interfaces/rtc.h>
 #include <interfaces/audio.h>
 #include <chSelector.h>
@@ -52,8 +53,7 @@ void platform_init()
     gpio_setMode(RED_LED,   OUTPUT);
 
     gpio_setMode(PTT_SW, INPUT_PULL_UP);
-
-    gpio_setMode(PWR_SW, OUTPUT);
+    gpio_setMode(PTT_EXT, INPUT_PULL_UP);
 
     /*
      * Initialise ADC1, for vbat, RSSI, ...
@@ -67,6 +67,7 @@ void platform_init()
     nvm_init();                      /* Initialise non volatile memory manager */
     nvm_readCalibData(&calibration); /* Load calibration data                  */
     nvm_loadHwInfo(&hwInfo);         /* Load hardware information data         */
+    toneGen_init();                  /* Initialise tone generator              */
     rtc_init();                      /* Initialise RTC                         */
     chSelector_init();               /* Initialise channel selector handler    */
     audio_init();                    /* Initialise audio management module     */
@@ -96,6 +97,7 @@ void platform_terminate()
     adc1_terminate();
     nvm_terminate();
     rtc_terminate();
+    toneGen_terminate();
     chSelector_terminate();
     audio_terminate();
 
@@ -103,30 +105,42 @@ void platform_terminate()
     gpio_clearPin(PWR_SW);
 }
 
-float platform_getVbat()
+uint16_t platform_getVbat()
 {
     /*
      * Battery voltage is measured through an 1:3 voltage divider and
      * adc1_getMeasurement returns a value in mV. Thus, to have effective
-     * battery voltage multiply by three and divide by 1000
+     * battery voltage, multiply by three.
      */
-    return adc1_getMeasurement(ADC_VBAT_CH)*3.0f/1000.0f;
+    return adc1_getMeasurement(ADC_VBAT_CH) * 3;
 }
 
-float platform_getMicLevel()
+uint8_t platform_getMicLevel()
 {
-    return 0.0f;
+    /* Value from ADC is 12 bit wide: shift right by four to get 0 - 255 */
+    return (adc1_getRawSample(ADC_VOX_CH) >> 4);
 }
 
-float platform_getVolumeLevel()
+uint8_t platform_getVolumeLevel()
 {
-    return adc1_getMeasurement(ADC_VOL_CH);
+    /*
+     * Knob position corresponds to an analog signal in the range 0 - 1600mV,
+     * converted to a value in range 0 - 255 using fixed point math: divide by
+     * 1600 and then multiply by 256.
+     */
+    uint16_t value = adc1_getMeasurement(ADC_VOL_CH);
+    if(value > 1599) value = 1599;
+    uint32_t level = value << 16;
+    level /= 1600;
+    return ((uint8_t) (level >> 8));
 }
 
 bool platform_getPttStatus()
 {
     /* PTT line has a pullup resistor with PTT switch closing to ground */
-    return (gpio_readPin(PTT_SW) == 0) ? true : false;
+    uint8_t intPttStatus = gpio_readPin(PTT_SW);
+    uint8_t extPttStatus = gpio_readPin(PTT_EXT);
+    return ((intPttStatus == 0) || (extPttStatus == 0)) ? true : false;
 }
 
 bool platform_pwrButtonStatus()

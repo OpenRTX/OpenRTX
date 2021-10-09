@@ -25,9 +25,6 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-
-#define PLATFORM_LINUX
-
 /* Device has a working real time clock */
 #define HAS_RTC
 

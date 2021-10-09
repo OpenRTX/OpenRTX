@@ -33,9 +33,6 @@
 
 #include "MK22F51212.h"
 
-/* Enable Serial over USB support */
-//#define VCOM_ENABLED
-
 /* Screen dimensions */
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64

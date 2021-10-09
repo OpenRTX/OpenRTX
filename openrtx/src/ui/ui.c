@@ -80,6 +80,7 @@
 #ifdef HAS_GPS
 #include <interfaces/gps.h>
 #endif
+#include <interfaces/delays.h>
 #include <string.h>
 #include <battery.h>
 #include <input.h>
@@ -95,6 +96,8 @@ extern void _ui_drawMEMBottom();
 extern void _ui_drawMainVFO();
 extern void _ui_drawMainVFOInput(ui_state_t* ui_state);
 extern void _ui_drawMainMEM();
+extern void _ui_drawModeVFO();
+extern void _ui_drawModeMEM();
 /* UI menu functions, their implementation is in "ui_menu.c" */
 extern void _ui_drawMenuTop(ui_state_t* ui_state);
 extern void _ui_drawMenuZone(ui_state_t* ui_state);
@@ -112,6 +115,7 @@ extern void _ui_drawSettingsTimeDate();
 extern void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state);
 #endif
 extern void _ui_drawSettingsDisplay(ui_state_t* ui_state);
+extern void _ui_drawSettingsM17(ui_state_t* ui_state);
 extern bool _ui_drawMacroMenu();
 
 const char *menu_items[] =
@@ -134,8 +138,9 @@ const char *settings_items[] =
     "Time & Date",
 #endif
 #ifdef HAS_GPS
-    "GPS"
+    "GPS",
 #endif
+    "M17"    
 };
 
 const char *display_items[] =
@@ -174,6 +179,38 @@ const char *authors[] =
     "Silvano IU2KWO",
     "Federico IU2NUO",
     "Fred IU2NRO",
+};
+
+const char *symbols_ITU_T_E161[] =
+{
+    " 0",
+    ",.?1",
+    "abc2ABC",
+    "def3DEF",
+    "ghi4GHI",
+    "jkl5JKL",
+    "mno6MNO",
+    "pqrs7PQRS",
+    "tuv8TUV",
+    "wxyz9WXYZ",
+    "-/*",
+    "#"
+};
+
+const char *symbols_ITU_T_E161_callsign[] =
+{
+    "0",
+    "1",
+    "ABC2",
+    "DEF3",
+    "GHI4",
+    "JKL5",
+    "MNO6",
+    "PQRS7",
+    "TUV8",
+    "WXYZ9",
+    "-/",
+    ""
 };
 
 // Calculate number of menu entries
@@ -216,7 +253,7 @@ layout_t _ui_calculateLayout()
     const uint16_t line2_h = 20;
     const uint16_t line3_h = 40;
     const uint16_t menu_h = 16;
-    const uint16_t bottom_h = 20;
+    const uint16_t bottom_h = 23;
     const uint16_t bottom_pad = top_pad;
     const uint16_t status_v_pad = 2;
     const uint16_t small_line_v_pad = 2;
@@ -236,6 +273,10 @@ layout_t _ui_calculateLayout()
     const fontSize_t input_font = FONT_SIZE_12PT;
     // Menu font
     const fontSize_t menu_font = FONT_SIZE_8PT;
+    // Mode screen frequency font: 12 pt
+    const fontSize_t mode_font_big = FONT_SIZE_12PT;
+    // Mode screen details font: 9 pt
+    const fontSize_t mode_font_small = FONT_SIZE_9PT;
 
     // Radioddity GD-77
     #elif SCREEN_HEIGHT > 63
@@ -247,7 +288,7 @@ layout_t _ui_calculateLayout()
     const uint16_t line2_h = 10;
     const uint16_t line3_h = 16;
     const uint16_t menu_h = 10;
-    const uint16_t bottom_h = 8;
+    const uint16_t bottom_h = 15;
     const uint16_t bottom_pad = 0;
     const uint16_t status_v_pad = 1;
     const uint16_t small_line_v_pad = 1;
@@ -266,6 +307,10 @@ layout_t _ui_calculateLayout()
     const fontSize_t input_font = FONT_SIZE_8PT;
     // Menu font
     const fontSize_t menu_font = FONT_SIZE_6PT;
+    // Mode screen frequency font: 9 pt
+    const fontSize_t mode_font_big = FONT_SIZE_9PT;
+    // Mode screen details font: 6 pt
+    const fontSize_t mode_font_small = FONT_SIZE_6PT;
 
     // Radioddity RD-5R
     #elif SCREEN_HEIGHT > 47
@@ -293,6 +338,10 @@ layout_t _ui_calculateLayout()
     const fontSize_t input_font = FONT_SIZE_8PT;
     // Menu font
     const fontSize_t menu_font = FONT_SIZE_6PT;
+    // Mode screen frequency font: 9 pt
+    const fontSize_t mode_font_big = FONT_SIZE_9PT;
+    // Mode screen details font: 6 pt
+    const fontSize_t mode_font_small = FONT_SIZE_6PT;
     // Not present on this resolution
     const fontSize_t line1_font = 0;
     const fontSize_t bottom_font = 0;
@@ -317,6 +366,7 @@ layout_t _ui_calculateLayout()
         line3_h,
         menu_h,
         bottom_h,
+        bottom_pad,
         status_v_pad,
         horizontal_pad,
         text_v_offset,
@@ -331,7 +381,9 @@ layout_t _ui_calculateLayout()
         line3_font,
         bottom_font,
         input_font,
-        menu_font
+        menu_font,
+        mode_font_big,
+        mode_font_small
     };
     return new_layout;
 }
@@ -373,7 +425,7 @@ void _ui_drawLowBatteryScreen()
     uint16_t bat_width = SCREEN_WIDTH / 2;
     uint16_t bat_height = SCREEN_HEIGHT / 3;
     point_t bat_pos = {SCREEN_WIDTH / 4, SCREEN_HEIGHT / 8};
-    gfx_drawBattery(bat_pos, bat_width, bat_height, 0.1f);
+    gfx_drawBattery(bat_pos, bat_width, bat_height, 10);
     point_t text_pos_1 = {0, SCREEN_HEIGHT * 2 / 3};
     point_t text_pos_2 = {0, SCREEN_HEIGHT * 2 / 3 + 16};
 
@@ -450,16 +502,16 @@ bool _ui_freq_check_limits(freq_t freq)
     if(hwinfo->vhf_band)
     {
         // hwInfo_t frequencies are in MHz
-        if(freq >= (hwinfo->vhf_minFreq * 1000000) && 
+        if(freq >= (hwinfo->vhf_minFreq * 1000000) &&
            freq <= (hwinfo->vhf_maxFreq * 1000000))
-        valid = true; 
+        valid = true;
     }
     if(hwinfo->uhf_band)
     {
         // hwInfo_t frequencies are in MHz
-        if(freq >= (hwinfo->uhf_minFreq * 1000000) && 
+        if(freq >= (hwinfo->uhf_minFreq * 1000000) &&
            freq <= (hwinfo->uhf_maxFreq * 1000000))
-        valid = true; 
+        valid = true;
     }
     return valid;
 }
@@ -607,19 +659,25 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
     switch(ui_state.input_number)
     {
         case 1:
-            state.channel.fm.txTone++;
-            state.channel.fm.txTone %= MAX_TONE_INDEX;
-            state.channel.fm.rxTone = state.channel.fm.txTone;
-            *sync_rtx = true;
+            if(state.channel.mode == FM)
+            {
+                state.channel.fm.txTone++;
+                state.channel.fm.txTone %= MAX_TONE_INDEX;
+                state.channel.fm.rxTone = state.channel.fm.txTone;
+                *sync_rtx = true;
+            }
             break;
         case 2:
-            tone_flags++;
-            tone_flags %= 4;
-            tone_tx_enable = tone_flags >> 1;
-            tone_rx_enable = tone_flags & 1;
-            state.channel.fm.txToneEn = tone_tx_enable;
-            state.channel.fm.rxToneEn = tone_rx_enable;
-            *sync_rtx = true;
+            if(state.channel.mode == FM)
+            {
+                tone_flags++;
+                tone_flags %= 4;
+                tone_tx_enable = tone_flags >> 1;
+                tone_rx_enable = tone_flags & 1;
+                state.channel.fm.txToneEn = tone_tx_enable;
+                state.channel.fm.rxToneEn = tone_rx_enable;
+                *sync_rtx = true;
+            }
             break;
         case 3:
             if (state.channel.power == 1.0f)
@@ -629,14 +687,20 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
             *sync_rtx = true;
             break;
         case 4:
-            state.channel.bandwidth++;
-            state.channel.bandwidth %= 3;
-            *sync_rtx = true;
+            if(state.channel.mode == FM)
+            {
+                state.channel.bandwidth++;
+                state.channel.bandwidth %= 3;
+                *sync_rtx = true;
+            }
             break;
         case 5:
+            // Cycle through radio modes
             if(state.channel.mode == FM)
                 state.channel.mode = DMR;
             else if(state.channel.mode == DMR)
+                state.channel.mode = M17;
+            else if(state.channel.mode == M17)
                 state.channel.mode = FM;
             *sync_rtx = true;
             break;
@@ -649,7 +713,7 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
     }
 
 #ifdef HAS_ABSOLUTE_KNOB // If the radio has an absolute position knob
-    if(msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT) {
+    if(msg.keys & KNOB_LEFT || msg.keys & KNOB_RIGHT) {
         state.sqlLevel = platform_getChSelector() - 1;
         *sync_rtx = true;
     }
@@ -695,6 +759,72 @@ void _ui_menuBack(uint8_t prev_state)
         // Reset menu selection
         ui_state.menu_selected = 0;
     }
+}
+
+void _ui_textInputReset(char *buf)
+{
+    ui_state.input_number = 0;
+    ui_state.input_position = 0;
+    ui_state.input_set = 0;
+    ui_state.last_keypress = 0;
+    memset(buf, 0, 9);
+    buf[0] = '_';
+}
+
+void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg, bool callsign)
+{
+    if(ui_state.input_position >= max_len)
+        return;
+    long long now = getTick();
+    // Get currently pressed number key
+    uint8_t num_key = input_getPressedNumber(msg);
+    // Get number of symbols related to currently pressed key
+    uint8_t num_symbols = 0;
+    if(callsign)
+        num_symbols = strlen(symbols_ITU_T_E161_callsign[num_key]);
+    else
+        num_symbols = strlen(symbols_ITU_T_E161[num_key]);
+   
+    // Skip keypad logic for first keypress
+    if(ui_state.last_keypress != 0)
+    {
+        // Same key pressed and timeout not expired: cycle over chars of current key
+        if((ui_state.input_number == num_key) && ((now - ui_state.last_keypress) < kbd_long_interval))
+        {
+            ui_state.input_set = (ui_state.input_set + 1) % num_symbols;
+        }
+        // Differnt key pressed: save current char and change key
+        else
+        {
+            ui_state.input_position += 1;
+            ui_state.input_set = 0;
+        }
+    }
+    // Show current character on buffer
+    if(callsign)
+        buf[ui_state.input_position] = symbols_ITU_T_E161_callsign[num_key][ui_state.input_set];
+    else
+        buf[ui_state.input_position] = symbols_ITU_T_E161[num_key][ui_state.input_set];
+    // Update reference values
+    ui_state.input_number = num_key;
+    ui_state.last_keypress = now;
+}
+
+void _ui_textInputConfirm(char *buf)
+{
+    buf[ui_state.input_position + 1] = '\0';
+}
+
+void _ui_textInputDel(char *buf)
+{
+    buf[ui_state.input_position] = '\0';
+    // Move back input cursor
+    if(ui_state.input_position > 0)
+        ui_state.input_position--;
+    // If we deleted the initial character, reset starting condition
+    else
+        ui_state.last_keypress = 0;
+    ui_state.input_set = 0;
 }
 
 void ui_saveState()
@@ -789,6 +919,11 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         state.ui_screen = MAIN_MEM;
                     }
                 }
+                else if(msg.keys & KEY_F1)
+                {
+                    // Switch to Digital Mode VFO screen
+                    state.ui_screen = MODE_VFO;
+                }
                 else if(input_isNumberPressed(msg))
                 {
                     // Open Frequency input screen
@@ -848,6 +983,11 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     // Switch to VFO screen
                     state.ui_screen = MAIN_VFO;
                 }
+                else if(msg.keys & KEY_F1)
+                {
+                    // Switch to Digital Mode MEM screen
+                    state.ui_screen = MODE_MEM;
+                }
                 else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
                 {
                     _ui_fsm_loadChannel(state.channel_index + 1, sync_rtx);
@@ -855,6 +995,156 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
                 {
                     _ui_fsm_loadChannel(state.channel_index - 1, sync_rtx);
+                }
+                break;
+            // Digital Mode VFO screen
+            case MODE_VFO:
+                if(state.channel.mode == M17)
+                {
+                    // Dst ID input
+                    if(ui_state.edit_mode)
+                    {
+                        if(msg.keys & KEY_ENTER)
+                        {
+                            _ui_textInputConfirm(ui_state.new_callsign);
+                            // Save selected dst ID and disable input mode
+                            strncpy(state.m17_data.dst_addr, ui_state.new_callsign, 10);
+                            ui_state.edit_mode = false;
+                            *sync_rtx = true;
+                        }
+                        else if(msg.keys & KEY_ESC)
+                            // Discard selected dst ID and disable input mode
+                            ui_state.edit_mode = false;
+                        else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
+                                msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
+                            _ui_textInputDel(ui_state.new_callsign);
+                        else if(input_isNumberPressed(msg))
+                            _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
+                    }
+                    else
+                    {
+                        if(msg.keys & KEY_ENTER)
+                        {
+                            // Save current main state
+                            ui_state.last_main_state = state.ui_screen;
+                            // Open Menu
+                            state.ui_screen = MENU_TOP;
+                        }
+                        else if(msg.keys & KEY_ESC)
+                        {
+                            // Switch to VFO screen
+                            state.ui_screen = MAIN_VFO;
+                        }
+                        else if(msg.keys & KEY_F1)
+                        {
+                            // Switch to Main VFO screen
+                            state.ui_screen = MAIN_VFO;
+                        }
+                        else if(input_isNumberPressed(msg))
+                        {
+                            // Enable dst ID input
+                            ui_state.edit_mode = true;
+                            // Reset text input variables
+                            _ui_textInputReset(ui_state.new_callsign);
+                            // Type first character
+                            _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
+                        }
+                    }
+                }
+                else
+                {
+                    if(msg.keys & KEY_ENTER)
+                    {
+                        // Save current main state
+                        ui_state.last_main_state = state.ui_screen;
+                        // Open Menu
+                        state.ui_screen = MENU_TOP;
+                    }
+                    else if(msg.keys & KEY_ESC)
+                    {
+                        // Switch to VFO screen
+                        state.ui_screen = MAIN_VFO;
+                    }
+                    else if(msg.keys & KEY_F1)
+                    {
+                        // Switch to Main VFO screen
+                        state.ui_screen = MAIN_VFO;
+                    }
+                }
+                break;
+            // Digital Mode MEM screen
+            case MODE_MEM:
+                if(state.channel.mode == M17)
+                {
+                    // Dst ID input
+                    if(ui_state.edit_mode)
+                    {
+                        if(msg.keys & KEY_ENTER)
+                        {
+                            _ui_textInputConfirm(ui_state.new_callsign);
+                            // Save selected dst ID and disable input mode
+                            strncpy(state.m17_data.dst_addr, ui_state.new_callsign, 10);
+                            ui_state.edit_mode = false;
+                            *sync_rtx = true;
+                        }
+                        else if(msg.keys & KEY_ESC)
+                            // Discard selected dst ID and disable input mode
+                            ui_state.edit_mode = false;
+                        else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
+                                msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
+                            _ui_textInputDel(ui_state.new_callsign);
+                        else if(input_isNumberPressed(msg))
+                            _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
+                    }
+                    else
+                    {
+                        if(msg.keys & KEY_ENTER)
+                        {
+                            // Save current main state
+                            ui_state.last_main_state = state.ui_screen;
+                            // Open Menu
+                            state.ui_screen = MENU_TOP;
+                        }
+                        else if(msg.keys & KEY_ESC)
+                        {
+                            // Switch to MEM screen
+                            state.ui_screen = MAIN_MEM;
+                        }
+                        else if(msg.keys & KEY_F1)
+                        {
+                            // Switch to Main MEM screen
+                            state.ui_screen = MAIN_MEM;
+                        }
+                        else if(input_isNumberPressed(msg))
+                        {
+                            // Enable dst ID input
+                            ui_state.edit_mode = true;
+                            // Reset text input variables
+                            _ui_textInputReset(ui_state.new_callsign);
+                            // Type first character
+                            _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
+                        }
+                    }
+                }
+                else
+                {
+                    if(msg.keys & KEY_ENTER)
+                    {
+                        // Save current main state
+                        ui_state.last_main_state = state.ui_screen;
+                        // Open Menu
+                        state.ui_screen = MENU_TOP;
+                    }
+                    else if(msg.keys & KEY_ESC)
+                    {
+                        // Switch to MEM screen
+                        state.ui_screen = MAIN_MEM;
+                    }
+                    else if(msg.keys & KEY_F1)
+                    {
+                        // Switch to Main MEM screen
+                        state.ui_screen = MAIN_MEM;
+                    }
                 }
                 break;
             // Top menu screen
@@ -1001,6 +1291,9 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                             state.ui_screen = SETTINGS_GPS;
                             break;
 #endif
+                        case S_M17:
+                            state.ui_screen = SETTINGS_M17;
+                            break;
                         default:
                             state.ui_screen = MENU_SETTINGS;
                     }
@@ -1136,10 +1429,10 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                             state.settings.gps_set_time = !state.settings.gps_set_time;
                             break;
                         case G_TIMEZONE:
-                            if(msg.keys & KEY_LEFT || msg.keys & KEY_UP || 
+                            if(msg.keys & KEY_LEFT || msg.keys & KEY_UP ||
                                msg.keys & KNOB_LEFT)
                                 state.settings.utc_timezone -= 1;
-                            else if(msg.keys & KEY_RIGHT || msg.keys & KEY_DOWN || 
+                            else if(msg.keys & KEY_RIGHT || msg.keys & KEY_DOWN ||
                                     msg.keys & KNOB_RIGHT)
                                 state.settings.utc_timezone += 1;
                             break;
@@ -1157,6 +1450,40 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     _ui_menuBack(MENU_SETTINGS);
                 break;
 #endif
+            // M17 Settings
+            case SETTINGS_M17:
+                if(ui_state.edit_mode)
+                {
+                    if(msg.keys & KEY_ENTER)
+                    {
+                        _ui_textInputConfirm(ui_state.new_callsign);
+                        // Save selected callsign and disable input mode
+                        strncpy(state.m17_data.callsign, ui_state.new_callsign, 10);
+                        ui_state.edit_mode = false;
+                        *sync_rtx = true;
+                    }
+                    else if(msg.keys & KEY_ESC)
+                        // Discard selected callsign and disable input mode
+                        ui_state.edit_mode = false;
+                    else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN || 
+                            msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
+                        _ui_textInputDel(ui_state.new_callsign);
+                    else if(input_isNumberPressed(msg))
+                        _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
+                }
+                else
+                {
+                    if(msg.keys & KEY_ENTER)
+                    {
+                        // Enable callsign input
+                        ui_state.edit_mode = true;
+                        // Reset text input variables
+                        _ui_textInputReset(ui_state.new_callsign);
+                    }
+                    else if(msg.keys & KEY_ESC)
+                        _ui_menuBack(MENU_SETTINGS);
+                }
+                break;
         }
     }
 }
@@ -1182,6 +1509,14 @@ void ui_updateGUI()
         // MEM main screen
         case MAIN_MEM:
             _ui_drawMainMEM();
+            break;
+        // Digital Mode VFO screen
+        case MODE_VFO:
+            _ui_drawModeVFO(&ui_state);
+            break;
+        // Digital Mode MEM screen
+        case MODE_MEM:
+            _ui_drawModeMEM(&ui_state);
             break;
         // Top menu screen
         case MENU_TOP:
@@ -1237,6 +1572,10 @@ void ui_updateGUI()
             _ui_drawSettingsGPS(&ui_state);
             break;
 #endif
+        // M17 settings screen
+        case SETTINGS_M17:
+            _ui_drawSettingsM17(&ui_state);
+            break;
         // Low battery screen
         case LOW_BAT:
             _ui_drawLowBatteryScreen();

@@ -402,7 +402,7 @@ uint8_t gfx_getFontHeight(fontSize_t size)
     return glyph.height;
 }
 
-point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment, 
+point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
                         color_t color, const char *buf)
 {
     GFXfont f = fonts[size];
@@ -413,7 +413,6 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
     uint16_t line_size = get_line_size(f, buf, len);
     uint16_t reset_x = get_reset_x(alignment, line_size, start.x);
     start.x = reset_x;
-
     // Save initial start.y value to calculate vertical size
     uint16_t saved_start_y = start.y;
     uint16_t line_h = 0;
@@ -490,11 +489,11 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
     return text_size;
 }
 
-point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment, 
+point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment,
                   color_t color, const char *fmt, ... )
 {
     // Get format string and arguments from var char
-    va_list ap; 
+    va_list ap;
     va_start(ap, fmt);
     vsnprintf(text, sizeof(text)-1, fmt, ap);
     va_end(ap);
@@ -502,19 +501,19 @@ point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment,
     return gfx_printBuffer(start, size, alignment, color, text);
 }
 
-point_t gfx_printLine(uint8_t cur, uint8_t tot, uint16_t startY, uint16_t endY, 
-                      uint16_t startX, fontSize_t size, textAlign_t alignment, 
+point_t gfx_printLine(uint8_t cur, uint8_t tot, uint16_t startY, uint16_t endY,
+                      uint16_t startX, fontSize_t size, textAlign_t alignment,
                       color_t color, const char* fmt, ... )
 {
     // Get format string and arguments from var char
-    va_list ap; 
+    va_list ap;
     va_start(ap, fmt);
     vsnprintf(text, sizeof(text)-1, fmt, ap);
     va_end(ap);
-    
+
     // Estimate font height by reading the gliph | height
     uint8_t fontH = gfx_getFontHeight(size);
-    
+
     // If endY is 0 set it to default value = SCREEN_HEIGHT
     if(endY == 0) endY = SCREEN_HEIGHT;
 
@@ -571,13 +570,13 @@ void gfx_printError(const char *text, fontSize_t size)
  *
  */
 void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
-                                                    float percentage)
+                                                    uint8_t percentage)
 {
     color_t white =  {255, 255, 255, 255};
     color_t black =  {0,   0,   0  , 255};
 
     // Cap percentage to 1
-    percentage = (percentage > 1.0f) ? 1.0f : percentage;
+    percentage = (percentage > 100) ? 100 : percentage;
 
 #ifdef PIX_FMT_RGB565
     color_t green =  {0,   255, 0  , 255};
@@ -586,9 +585,9 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
 
     // Select color according to percentage
     color_t bat_color = yellow;
-    if (percentage < 0.3)
+    if (percentage < 30)
         bat_color = red;
-    else if (percentage > 0.6)
+    else if (percentage > 60)
         bat_color = green;
 #elif defined PIX_FMT_BW
     color_t bat_color = white;
@@ -599,8 +598,8 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
 
     // Draw the battery fill
     point_t fill_start = {start.x + 2, start.y + 2};
-    gfx_drawRect(fill_start, (int)(((float)(width - 4)) * percentage),
-                 height - 4, bat_color, true);
+    int fillWidth = ((width - 4) * percentage) / 100;
+    gfx_drawRect(fill_start, fillWidth, height - 4, bat_color, true);
 
     // Round corners
     point_t top_left = start;
@@ -622,15 +621,15 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
  * Function to draw RSSI-meter of arbitrary size
  * starting coordinates are relative to the top left point.
  *
- * *         *         *         *           *          *           *|
- * *****************************************                         |
- * ******************************************    <- RSSI             |
- * ******************************************                        |  <-- Height (px)
- * ******************************************                        |
- * ****************             <-- Squelch                          |
- * ***************                                                   |
- * *         *         *         *           *          *           *|
- * ___________________________________________________________________
+ * *     *     *     *     *     *     *     *      *      *      *|
+ * ***************             <-- Squelch                         |
+ * ***************                                                 |
+ * ******************************************                      |
+ * ******************************************    <- RSSI           |
+ * ******************************************                      |  <-- Height (px)
+ * ******************************************                      |
+ * 1     2     3     4     5     6     7     8     9     +10    +20|
+ * _________________________________________________________________
  *
  * ^
  * |
@@ -645,44 +644,123 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
     color_t yellow = {250, 180, 19 , 255};
     color_t red =    {255, 0,   0  , 255};
 
+    fontSize_t font = FONT_SIZE_5PT;
+    uint8_t font_height =  gfx_getFontHeight(font);
+    uint16_t bar_height = (height - 3 - font_height);
+
     // S-level marks and numbers
-    for(int i = 0; i < 11; i++)
+    for(int i = 0; i < 12; i++)
     {
         color_t color = (i % 3 == 0) ? yellow : white;
         color = (i > 9) ? red : color;
         point_t pixel_pos = {start.x + i * (width - 1) / 11, start.y};
+        gfx_setPixel(pixel_pos, color);
+        pixel_pos.y += height;
         if (i == 10) {
             pixel_pos.x -= 8;
-            gfx_print(pixel_pos, FONT_SIZE_5PT, TEXT_ALIGN_LEFT, color, "+%d", i);
+            gfx_print(pixel_pos, font, TEXT_ALIGN_LEFT, color, "+%d", i);
+        }
+        else if(i == 11){
+            pixel_pos.x -= 10;
+            gfx_print(pixel_pos, font, TEXT_ALIGN_LEFT, red, "+20");
         }
         else
-            gfx_print(pixel_pos, FONT_SIZE_5PT, TEXT_ALIGN_LEFT, color, "%d", i);
+            gfx_print(pixel_pos, font, TEXT_ALIGN_LEFT, color, "%d", i);
         if (i == 10) {
             pixel_pos.x += 8;
         }
-        pixel_pos.y += height;
-        gfx_setPixel(pixel_pos, color);
     }
 
-    point_t pixel_pos = {start.x + width - 11, start.y};
-    gfx_print(pixel_pos, FONT_SIZE_5PT, TEXT_ALIGN_LEFT, red, "+20");
-    pixel_pos.x += 10;
-    pixel_pos.y += height;
-    gfx_setPixel(pixel_pos, red);
-
+    // Squelch bar
+    uint16_t squelch_height = bar_height / 3 ;
+    uint16_t squelch_width = width * squelch;
+    point_t squelch_pos = {start.x, start.y + 2};
+    gfx_drawRect(squelch_pos, squelch_width, squelch_height, color, true);
+    
     // RSSI bar
-    uint16_t rssi_height = height * 2 / 3;
+    uint16_t rssi_height = bar_height * 2 / 3;
     float s_level =  (127.0f + rssi) / 6.0f;
     uint16_t rssi_width = (s_level < 0.0f) ? 0 : (s_level * (width - 1) / 11);
     rssi_width = (s_level > 10.0f) ? width : rssi_width;
-    point_t rssi_pos = { start.x, start.y + 1 };
+    point_t rssi_pos = { start.x, start.y + 2 + squelch_height};
     gfx_drawRect(rssi_pos, rssi_width, rssi_height, white, true);
+}
 
-    // Squelch bar
-    uint16_t squelch_height = height / 3 - 1;
-    uint16_t squelch_width = width * squelch;
-    point_t squelch_pos = { start.x, start.y + 1 + rssi_height };
-    gfx_drawRect(squelch_pos, squelch_width, squelch_height, color, true);
+/*
+ * Function to draw RSSI-meter with level-meter of arbitrary size
+ * Version without squelch bar for digital protocols
+ * starting coordinates are relative to the top left point.
+ *
+ * *             *                *               *               *|
+ * ******************************************                      |
+ * ******************************************    <- level          |
+ * ******************************************                      |
+ * ******************************************                      |
+ * *             *                *               *               *|
+ * ******************************************                      |  <-- Height (px)
+ * ******************************************    <- RSSI           |
+ * ******************************************                      |
+ * ******************************************                      |
+ * 1     2     3     4     5     6     7     8     9     +10    +20|
+ * _________________________________________________________________
+ *
+ * ^
+ * |
+ *
+ * Width (px)
+ *
+ */
+void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, float rssi, 
+                         uint8_t level)
+{
+    color_t red =    {255, 0,   0  , 255};
+    color_t green =  {0,   255,   0, 255};
+    color_t white =  {255, 255, 255, 255};
+    color_t yellow = {250, 180, 19 , 255};
+
+    fontSize_t font = FONT_SIZE_5PT;
+    uint8_t font_height =  gfx_getFontHeight(font);
+    uint16_t bar_height = (height - 6 - font_height) / 2;
+   
+    // Level meter marks
+    for(int i = 0; i <= 4; i++)
+    {
+        point_t pixel_pos = {start.x + i * (width - 1) / 4, start.y};
+        gfx_setPixel(pixel_pos, white);
+        pixel_pos.y += (bar_height + 3);
+        gfx_setPixel(pixel_pos, white);
+    }
+    // Level bar
+    uint16_t level_width = (level / 255.0 * width);
+    point_t level_pos = { start.x, start.y + 2 };
+    gfx_drawRect(level_pos, level_width, bar_height, green, true);
+    // RSSI bar
+    float s_level =  (127.0f + rssi) / 6.0f;
+    uint16_t rssi_width = (s_level < 0.0f) ? 0 : (s_level * (width - 1) / 11);
+    rssi_width = (s_level > 10.0f) ? width : rssi_width;
+    point_t rssi_pos = {start.x, start.y + 5 + bar_height};
+    gfx_drawRect(rssi_pos, rssi_width, bar_height, white, true);
+    // S-level marks and numbers
+    for(int i = 0; i < 12; i++)
+    {
+        color_t color = (i % 3 == 0) ? yellow : white;
+        color = (i > 9) ? red : color;
+        point_t pixel_pos = {start.x + i * (width - 1) / 11, 
+                             start.y + height};
+        if (i == 10) {
+            pixel_pos.x -= 8;
+            gfx_print(pixel_pos, font, TEXT_ALIGN_LEFT, color, "+%d", i);
+        }
+        else if(i == 11){
+            pixel_pos.x -= 10;
+            gfx_print(pixel_pos, font, TEXT_ALIGN_LEFT, red, "+20");
+        }
+        else
+            gfx_print(pixel_pos, font, TEXT_ALIGN_LEFT, color, "%d", i);
+        if (i == 10) {
+            pixel_pos.x += 8;
+        }
+    }
 }
 
 /*
@@ -725,7 +803,7 @@ void gfx_drawGPSgraph(point_t start,
         color_t bar_color = (active_sats & 1 << (sats[i].id - 1)) ? yellow : white;
         gfx_drawRect(bar_pos, bar_width, bar_height, bar_color, true);
         point_t id_pos = {bar_pos.x, start.y + height};
-        gfx_print(id_pos, FONT_SIZE_5PT, TEXT_ALIGN_LEFT, 
+        gfx_print(id_pos, FONT_SIZE_5PT, TEXT_ALIGN_LEFT,
                   bar_color, "%2d ", sats[i].id);
     }
     uint8_t bars_width = 9 + 11 * (bar_width + 2);

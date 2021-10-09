@@ -107,30 +107,34 @@ void platform_terminate()
     gpio_clearPin(PWR_SW);
 }
 
-float platform_getVbat()
+uint16_t platform_getVbat()
 {
-    float value = 0.0f;
     pthread_mutex_lock(&adc_mutex);
-    value = adc0_getMeasurement(1);
+    uint16_t value = adc0_getMeasurement(1);
     pthread_mutex_unlock(&adc_mutex);
 
-    return (value * 3.0f)/1000.0f;
+    /*
+     * Battery voltage is measured through an 1:3 voltage divider and
+     * adc1_getMeasurement returns a value in mV. Thus, to have effective
+     * battery voltage, multiply by three.
+     */
+    return value * 3;
 }
 
-float platform_getMicLevel()
+uint8_t platform_getMicLevel()
 {
-    float value = 0.0f;
     pthread_mutex_lock(&adc_mutex);
-    value = adc0_getMeasurement(3);
+    uint16_t value = adc0_getRawSample(3);
     pthread_mutex_unlock(&adc_mutex);
 
-    return value;
+    /* Value from ADC is 12 bit wide: shift right by four to get 0 - 255 */
+    return value >> 4;
 }
 
-float platform_getVolumeLevel()
+uint8_t platform_getVolumeLevel()
 {
     /* TODO */
-    return 0.0f;
+    return 0;
 }
 
 int8_t platform_getChSelector()

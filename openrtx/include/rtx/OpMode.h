@@ -31,6 +31,7 @@
 #ifndef OPMODE_H
 #define OPMODE_H
 
+#include <interfaces/delays.h>
 #include "rtx.h"
 
 /**
@@ -85,6 +86,7 @@ public:
     {
         (void) status;
         (void) newCfg;
+        sleepFor(0u, 30u);
     }
 
     /**

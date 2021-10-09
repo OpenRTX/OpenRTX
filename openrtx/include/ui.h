@@ -50,6 +50,8 @@ enum uiScreen
     MAIN_VFO = 0,
     MAIN_VFO_INPUT,
     MAIN_MEM,
+    MODE_VFO,
+    MODE_MEM,
     MENU_TOP,
     MENU_ZONE,
     MENU_CHANNEL,
@@ -62,6 +64,7 @@ enum uiScreen
     SETTINGS_TIMEDATE_SET,
     SETTINGS_DISPLAY,
     SETTINGS_GPS,
+    SETTINGS_M17,
     LOW_BAT
 };
 
@@ -88,13 +91,14 @@ enum menuItems
 
 enum settingsItems
 {
-    S_DISPLAY = 0,
+    S_DISPLAY = 0
 #ifdef HAS_RTC
-    S_TIMEDATE
+    ,S_TIMEDATE
 #endif
 #ifdef HAS_GPS
     ,S_GPS
 #endif
+    ,S_M17
 };
 
 enum displayItems
@@ -129,6 +133,7 @@ typedef struct layout_t
     uint16_t line3_h;
     uint16_t menu_h;
     uint16_t bottom_h;
+    uint16_t bottom_pad;
     uint16_t status_v_pad;
     uint16_t horizontal_pad;
     uint16_t text_v_offset;
@@ -144,6 +149,8 @@ typedef struct layout_t
     fontSize_t bottom_font;
     fontSize_t input_font;
     fontSize_t menu_font;
+    fontSize_t mode_font_big;
+    fontSize_t mode_font_small;
 } layout_t;
 
 /**
@@ -161,6 +168,7 @@ typedef struct ui_state_t
     uint8_t input_number;
     uint8_t input_position;
     uint8_t input_set;
+    long long last_keypress;
     freq_t new_rx_frequency;
     freq_t new_tx_frequency;
     char new_rx_freq_buf[14];
@@ -171,6 +179,7 @@ typedef struct ui_state_t
     char new_date_buf[9];
     char new_time_buf[9];
 #endif
+    char new_callsign[10];
     // Which state to return to when we exit menu
     uint8_t last_main_state;
 }

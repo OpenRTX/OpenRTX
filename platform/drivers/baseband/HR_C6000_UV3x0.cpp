@@ -215,7 +215,7 @@ void HR_Cx000< M >::startAnalogTx(const TxAudioSource source, const FmConfig cfg
     if(source == TxAudioSource::LINE_IN) audioCfg |= 0x02;
 
     writeReg(M::CONFIG, 0xE2, 0x00);    // Mic preamp disabled, anti-pop disabled
-    writeReg(M::CONFIG, 0xE4, 0x23);    // Lineout gain, first and second stage mic gain
+//     writeReg(M::CONFIG, 0xE4, 0x23);    // Lineout gain, first and second stage mic gain
     writeReg(M::CONFIG, 0xC2, 0x00);    // Codec AGC gain
     writeReg(M::CONFIG, 0xA1, 0x80);    // FM_mod, all modes cleared
     writeReg(M::CONFIG, 0x83, 0xFF);    // Clear all interrupt flags

@@ -43,6 +43,7 @@
 #include <rtx.h>
 #include <queue.h>
 #include <minmea.h>
+#include <string.h>
 #ifdef HAS_GPS
 #include <interfaces/gps.h>
 #include <gps.h>
@@ -112,6 +113,10 @@ void *ui_task(void *arg)
             rtx_cfg.txToneEn = state.channel.fm.txToneEn;
             rtx_cfg.txTone = ctcss_tone[state.channel.fm.txTone];
             pthread_mutex_unlock(&rtx_mutex);
+
+            // Copy new M17 source and destination addresses
+            strncpy(rtx_cfg.source_address, state.m17_data.callsign, 10);
+            strncpy(rtx_cfg.destination_address, state.m17_data.dst_addr, 10);
 
             rtx_configure(&rtx_cfg);
             sync_rtx = false;
@@ -235,9 +240,14 @@ void *dev_task(void *arg)
         state.time = rtc_getTime();
 #endif
 
-        // Low-pass filtering with a time constant of 10s when updated at 1Hz
-        float vbat = platform_getVbat();
-        state.v_bat = 0.02*vbat + 0.98*state.v_bat;
+        /*
+         * Low-pass filtering with a time constant of 10s when updated at 1Hz
+         * Original computation: state.v_bat = 0.02*vbat + 0.98*state.v_bat
+         * Peak error is 18mV when input voltage is 49mV.
+         */
+        uint16_t vbat = platform_getVbat();
+        state.v_bat  -= (state.v_bat * 2) / 100;
+        state.v_bat  += (vbat * 2) / 100;
 
         state.charge = battery_getCharge(state.v_bat);
         state.rssi = rtx_getRssi();
@@ -267,11 +277,10 @@ void *rtx_task(void *arg)
     while(1)
     {
         rtx_taskFunc();
-        sleepFor(0u, 30u);
     }
 }
 
-#ifdef HAS_GPS
+#if defined(HAS_GPS) && !defined(MD3x0_ENABLE_DBG)
 /**
  * \internal Task function for parsing GPS data and updating radio state.
  */
@@ -355,7 +364,7 @@ void create_threads()
     pthread_attr_setstacksize(&kbd_attr, KBD_TASK_STKSIZE);
     pthread_create(&kbd_thread, &kbd_attr, kbd_task, NULL);
 
-#ifdef HAS_GPS
+#if defined(HAS_GPS) && !defined(MD3x0_ENABLE_DBG)
     // Create GPS thread
     pthread_t      gps_thread;
     pthread_attr_t gps_attr;

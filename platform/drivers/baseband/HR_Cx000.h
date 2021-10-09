@@ -168,9 +168,12 @@ public:
      * sources. This value affects the modulation level in analog FM mode and
      * it must be correctly tuned to avoid distorsions.
      *
-     * @param value: gain value. Allowed range is 0-31.
+     * HR_C5000 gain ranges from -34.5dB to +12dB
+     * HR_C6000 gain ranges from -12dB to +36dB
+     *
+     * @param value: gain value in dB.
      */
-    void setInputGain(uint8_t value);
+    void setInputGain(int8_t value);
 
     /**
      * Configure chipset for DMR operation.

@@ -32,9 +32,6 @@
 
 #include <stm32f4xx.h>
 
-/* Enable Serial over USB support */
-//#define VCOM_ENABLED
-
 /* Device has a working real time clock */
 #define HAS_RTC
 
@@ -90,7 +87,8 @@
 #define CH_SELECTOR_3 GPIOB,11
 
 /* Push-to-talk switch */
-#define PTT_SW GPIOE,11
+#define PTT_SW  GPIOE,11
+#define PTT_EXT GPIOE,12
 
 /*
  * Keyboard. Here we define only rows, since coloumn lines are the same as

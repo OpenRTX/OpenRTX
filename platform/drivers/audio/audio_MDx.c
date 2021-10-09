@@ -38,13 +38,17 @@ void audio_init()
     gpio_setMode(SPK_MUTE,     OUTPUT);
     #ifndef PLATFORM_MD9600
     gpio_setMode(AUDIO_AMP_EN, OUTPUT);
+    #ifndef MDx_ENABLE_SWD
     gpio_setMode(MIC_PWR,      OUTPUT);
+    #endif
     #endif
 
     gpio_setPin(SPK_MUTE);          /* Speaker muted   */
     #ifndef PLATFORM_MD9600
     gpio_clearPin(AUDIO_AMP_EN);    /* Audio PA off    */
+    #ifndef MDx_ENABLE_SWD
     gpio_clearPin(MIC_PWR);         /* Mic preamp. off */
+    #endif
     #endif
 }
 
@@ -53,20 +57,22 @@ void audio_terminate()
     gpio_setPin(SPK_MUTE);          /* Speaker muted   */
     #ifndef PLATFORM_MD9600
     gpio_clearPin(AUDIO_AMP_EN);    /* Audio PA off    */
+    #ifndef MDx_ENABLE_SWD
     gpio_clearPin(MIC_PWR);         /* Mic preamp. off */
+    #endif
     #endif
 }
 
 void audio_enableMic()
 {
-    #ifndef PLATFORM_MD9600
+    #if !defined(PLATFORM_MD9600) && !defined(MDx_ENABLE_SWD)
     gpio_setPin(MIC_PWR);
     #endif
 }
 
 void audio_disableMic()
 {
-    #ifndef PLATFORM_MD9600
+    #if !defined(PLATFORM_MD9600) && !defined(MDx_ENABLE_SWD)
     gpio_clearPin(MIC_PWR);
     #endif
 }

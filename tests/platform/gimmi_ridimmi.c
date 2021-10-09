@@ -200,9 +200,17 @@ int main()
     gpio_setMode(BEEP_OUT, ALTERNATE);
     gpio_setAlternateFunction(BEEP_OUT, 2);
 
+    gpio_setPin(GREEN_LED);
+
     delayMs(3000);
 
     recordMic(sampleBuf);
+
+    /* Convert samples from 12 bit to 8 bit, as required by PWM audio */
+    for(size_t i = 0; i < numSamples; i++)
+    {
+        sampleBuf[i] >>= 4;
+    }
 
     /* End of recording, play sound */
     gpio_clearPin(GREEN_LED);

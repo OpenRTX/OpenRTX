@@ -83,6 +83,18 @@ typedef struct
 __attribute__((packed)) dmrInfo_t;
 
 /**
+ * Data structure containing all and only the information for M17 channels.
+ */
+typedef struct
+{
+    uint8_t  rxCan : 4,         /**< Channel Access Number for RX squelch     */
+             txCan : 4;         /**< Channel Access Number for TX squelch     */
+
+    uint16_t contactName_index; /**< Index to retrieve data from contact list */
+}
+__attribute__((packed)) m17Info_t;
+
+/**
  * Data structure containing all the information of a channel, either FM or DMR.
  */
 typedef struct
@@ -114,6 +126,7 @@ typedef struct
     {
         fmInfo_t  fm;           /**< Information block for FM channels        */
         dmrInfo_t dmr;          /**< Information block for DMR channels       */
+        m17Info_t m17;          /**< Information block for M17 channels       */
     };
 }
 __attribute__((packed)) channel_t;

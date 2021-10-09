@@ -92,6 +92,9 @@ void state_init()
 
     state.emergency = false;
 
+    // Initialize M17_data
+    strncpy(state.m17_data.callsign, "OPNRTX", 10);
+
     // Read settings from flash memory
     // NOTE: Disable reading VFO from flash until persistence is implemented
     //int valid = nvm_readSettings(&state.settings);

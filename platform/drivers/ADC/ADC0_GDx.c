@@ -59,15 +59,26 @@ void adc0_terminate()
     SIM->SCGC6 &= ~SIM_SCGC6_ADC0(1);
 }
 
-float adc0_getMeasurement(uint8_t ch)
+uint16_t adc0_getRawSample(uint8_t ch)
 {
-    if(ch > 32) return 0.0f;
+    if(ch > 32) return 0;
 
     /* Conversion is automatically initiated by writing to this register */
     ADC0->SC1[0] = ADC_SC1_ADCH(ch);
 
     while(((ADC0->SC1[0]) & ADC_SC1_COCO_MASK) == 0) ;
 
-    uint16_t sample = ADC0->R[0];
-    return ((float) sample) * 3300.0f/65536.0f;
+    return ADC0->R[0];
+}
+
+uint16_t adc0_getMeasurement(uint8_t ch)
+{
+    /*
+     * ADC data width is 16 bit: to convert from ADC samples to voltage in mV,
+     * first multiply by 3300 and then divide the result by 65536 by right
+     * shifting it of 16 positions.
+     * With respect to using floats, maximum error is -1mV.
+     */
+    uint32_t sample = adc0_getRawSample(ch) * 3300;
+    return ((uint16_t) (sample >> 16));
 }

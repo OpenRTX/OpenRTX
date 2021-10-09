@@ -35,6 +35,9 @@
 #include <interfaces/nvmem.h>
 #include <interfaces/platform.h>
 
+/* UI main screen helper functions, their implementation is in "ui_main.c" */
+extern void _ui_drawMainBottom();
+
 void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_t max_len, uint8_t index))
 {
     point_t pos = layout.line1_pos;
@@ -58,7 +61,7 @@ void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_
                 text_color = color_black;
                 // Draw rectangle under selected item, compensating for text height
                 point_t rect_pos = {0, pos.y - layout.menu_h + 3};
-                gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.menu_h, color_white, true); 
+                gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.menu_h, color_white, true);
             }
             gfx_print(pos, layout.menu_font, TEXT_ALIGN_LEFT, text_color, entry_buf);
             pos.y += layout.menu_h;
@@ -66,8 +69,8 @@ void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_
     }
 }
 
-void _ui_drawMenuListValue(ui_state_t* ui_state, uint8_t selected, 
-                           int (*getCurrentEntry)(char *buf, uint8_t max_len, uint8_t index), 
+void _ui_drawMenuListValue(ui_state_t* ui_state, uint8_t selected,
+                           int (*getCurrentEntry)(char *buf, uint8_t max_len, uint8_t index),
                            int (*getCurrentValue)(char *buf, uint8_t max_len, uint8_t index))
 {
     point_t pos = layout.line1_pos;
@@ -101,7 +104,7 @@ void _ui_drawMenuListValue(ui_state_t* ui_state, uint8_t selected,
                     full_rect = false;
                 }
                 point_t rect_pos = {0, pos.y - layout.menu_h + 3};
-                gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.menu_h, color_white, full_rect); 
+                gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.menu_h, color_white, full_rect);
             }
             gfx_print(pos, layout.menu_font, TEXT_ALIGN_LEFT, text_color, entry_buf);
             gfx_print(pos, layout.menu_font, TEXT_ALIGN_RIGHT, text_color, value_buf);
@@ -198,10 +201,16 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
             snprintf(buf, max_len, "%s", GIT_VERSION);
             break;
         case 1: // Battery voltage
-            snprintf(buf, max_len, "%.1fV", last_state.v_bat);
+        {
+            // Compute integer part and mantissa of voltage value, adding 50mV
+            // to mantissa for rounding to nearest integer
+            uint16_t volt  = last_state.v_bat / 1000;
+            uint16_t mvolt = ((last_state.v_bat - volt * 1000) + 50) / 100;
+            snprintf(buf, max_len, "%d.%dV", volt, mvolt);
+        }
             break;
         case 2: // Battery charge
-            snprintf(buf, max_len, "%.1f%%", last_state.charge * 100);
+            snprintf(buf, max_len, "%d%%", last_state.charge);
             break;
         case 3: // RSSI
             snprintf(buf, max_len, "%.1fdBm", last_state.rssi);
@@ -265,7 +274,7 @@ void _ui_drawMenuTop(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     // Print "Menu" on top bar
-    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER, 
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "Menu");
     // Print menu entries
     _ui_drawMenuList(ui_state->menu_selected, _ui_getMenuTopEntryName);
@@ -275,7 +284,7 @@ void _ui_drawMenuZone(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     // Print "Zone" on top bar
-    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER, 
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "Zone");
     // Print zone entries
     _ui_drawMenuList(ui_state->menu_selected, _ui_getZoneName);
@@ -285,7 +294,7 @@ void _ui_drawMenuChannel(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     // Print "Channel" on top bar
-    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER, 
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "Channels");
     // Print channel entries
     _ui_drawMenuList(ui_state->menu_selected, _ui_getChannelName);
@@ -295,7 +304,7 @@ void _ui_drawMenuContacts(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     // Print "Contacts" on top bar
-    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER, 
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "Contacts");
     // Print contact entries
     _ui_drawMenuList(ui_state->menu_selected, _ui_getContactName);
@@ -307,18 +316,18 @@ void _ui_drawMenuGPS()
     char *fix_buf, *type_buf;
     gfx_clearScreen();
     // Print "GPS" on top bar
-    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER, 
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "GPS");
     point_t fix_pos = {layout.line2_pos.x, SCREEN_HEIGHT * 2 / 5};
     // Print GPS status, if no fix, hide details
     if(!last_state.settings.gps_enabled)
-        gfx_print(fix_pos, layout.line3_font, TEXT_ALIGN_CENTER, 
+        gfx_print(fix_pos, layout.line3_font, TEXT_ALIGN_CENTER,
                   color_white, "GPS OFF");
     else if (last_state.gps_data.fix_quality == 0)
-        gfx_print(fix_pos, layout.line3_font, TEXT_ALIGN_CENTER, 
+        gfx_print(fix_pos, layout.line3_font, TEXT_ALIGN_CENTER,
                   color_white, "No Fix");
     else if (last_state.gps_data.fix_quality == 6)
-        gfx_print(fix_pos, layout.line3_font, TEXT_ALIGN_CENTER, 
+        gfx_print(fix_pos, layout.line3_font, TEXT_ALIGN_CENTER,
                   color_white, "Fix Lost");
     else
     {
@@ -395,7 +404,7 @@ void _ui_drawMenuSettings(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     // Print "Settings" on top bar
-    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER, 
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "Settings");
     // Print menu entries
     _ui_drawMenuList(ui_state->menu_selected, _ui_getSettingsEntryName);
@@ -405,7 +414,7 @@ void _ui_drawMenuInfo(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     // Print "Info" on top bar
-    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER, 
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "Info");
     // Print menu entries
     _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getInfoEntryName,
@@ -419,13 +428,13 @@ void _ui_drawMenuAbout()
     if(SCREEN_HEIGHT >= 100)
         ui_drawSplashScreen(false);
     else
-        gfx_print(openrtx_pos, layout.line3_font, TEXT_ALIGN_CENTER, 
+        gfx_print(openrtx_pos, layout.line3_font, TEXT_ALIGN_CENTER,
                   color_white, "OpenRTX");
     uint8_t line_h = layout.menu_h;
     point_t pos = {SCREEN_WIDTH / 7, SCREEN_HEIGHT - (line_h * (author_num - 1)) - 5};
     for(int author = 0; author < author_num; author++)
     {
-        gfx_print(pos, layout.top_font, TEXT_ALIGN_LEFT, 
+        gfx_print(pos, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white, "%s", authors[author]);
         pos.y += line_h;
     }
@@ -435,7 +444,7 @@ void _ui_drawSettingsDisplay(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     // Print "Display" on top bar
-    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER, 
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "Display");
     // Print display settings entries
     _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getDisplayEntryName,
@@ -447,10 +456,10 @@ void _ui_drawSettingsGPS(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     // Print "GPS Settings" on top bar
-    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER, 
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "GPS Settings");
     // Print display settings entries
-    _ui_drawMenuListValue(ui_state, ui_state->menu_selected, 
+    _ui_drawMenuListValue(ui_state, ui_state->menu_selected,
                           _ui_getSettingsGPSEntryName,
                           _ui_getSettingsGPSValueName);
 }
@@ -462,14 +471,14 @@ void _ui_drawSettingsTimeDate()
     gfx_clearScreen();
     curTime_t local_time = state_getLocalTime(last_state.time);
     // Print "Time&Date" on top bar
-    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER, 
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "Time&Date");
     // Print current time and date
     gfx_print(layout.line2_pos, layout.input_font, TEXT_ALIGN_CENTER,
-              color_white, "%02d/%02d/%02d", 
+              color_white, "%02d/%02d/%02d",
               local_time.date, local_time.month, local_time.year);
     gfx_print(layout.line3_pos, layout.input_font, TEXT_ALIGN_CENTER,
-              color_white, "%02d:%02d:%02d", 
+              color_white, "%02d:%02d:%02d",
               local_time.hour, local_time.minute, local_time.second);
 }
 
@@ -479,7 +488,7 @@ void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state)
 
     gfx_clearScreen();
     // Print "Time&Date" on top bar
-    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER, 
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "Time&Date");
     if(ui_state->input_position <= 0)
     {
@@ -504,7 +513,7 @@ void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state)
             uint8_t pos = ui_state->input_position -7;
             // Skip ":"
             if(ui_state->input_position > 8) pos += 1;
-            ui_state->new_time_buf[pos] = input_char; 
+            ui_state->new_time_buf[pos] = input_char;
         }
     }
     gfx_print(layout.line2_pos, layout.input_font, TEXT_ALIGN_CENTER,
@@ -514,6 +523,36 @@ void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state)
 }
 #endif
 
+void _ui_drawSettingsM17(ui_state_t* ui_state)
+{
+    gfx_clearScreen();
+    // Print "M17 Settings" on top bar
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER, 
+              color_white, "M17 Settings");
+    gfx_printLine(1, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
+                  layout.horizontal_pad, layout.menu_font,
+                  TEXT_ALIGN_LEFT, color_white, "Callsign:");
+    if(ui_state->edit_mode)
+    {
+        uint16_t rect_width = SCREEN_WIDTH - (layout.horizontal_pad * 2);
+        uint16_t rect_height = (SCREEN_HEIGHT - (layout.top_h + layout.bottom_h))/2;
+        point_t rect_origin = {(SCREEN_WIDTH - rect_width) / 2, 
+                               (SCREEN_HEIGHT - rect_height) / 2};
+        gfx_drawRect(rect_origin, rect_width, rect_height, color_white, false);
+        // Print M17 callsign being typed
+        gfx_printLine(1, 1, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
+                      layout.horizontal_pad, layout.input_font,
+                      TEXT_ALIGN_CENTER, color_white, ui_state->new_callsign);
+    }
+    else    
+    {
+        // Print M17 current callsign
+        gfx_printLine(1, 1, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
+                      layout.horizontal_pad, layout.input_font,
+                      TEXT_ALIGN_CENTER, color_white, last_state.m17_data.callsign);
+    }
+}
+
 bool _ui_drawMacroMenu() {
         // Header
         gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
@@ -521,49 +560,75 @@ bool _ui_drawMacroMenu() {
         // First row
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   yellow_fab413, "1");
-        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
-                  color_white, "  %6.1f",
-                  ctcss_tone[last_state.channel.fm.txTone]/10.0f);
+        if (last_state.channel.mode == FM)
+        {
+            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
+                      color_white, "  %6.1f",
+                      ctcss_tone[last_state.channel.fm.txTone]/10.0f);
+        }
+        else if (last_state.channel.mode == M17)
+        {
+            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
+                      color_white, "          ");
+        }
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   yellow_fab413, "2       ");
-        char encdec_str[9] = { 0 };
-        bool tone_tx_enable = last_state.channel.fm.txToneEn;
-        bool tone_rx_enable = last_state.channel.fm.rxToneEn;
-        if (tone_tx_enable && tone_rx_enable)
-            snprintf(encdec_str, 9, "     E+D");
-        else if (tone_tx_enable && !tone_rx_enable)
-            snprintf(encdec_str, 9, "      E ");
-        else if (!tone_tx_enable && tone_rx_enable)
-            snprintf(encdec_str, 9, "      D ");
-        else
-            snprintf(encdec_str, 9, "        ");
-        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
-                  color_white, encdec_str);
+        if (last_state.channel.mode == FM)
+        {
+            char encdec_str[9] = { 0 };
+            bool tone_tx_enable = last_state.channel.fm.txToneEn;
+            bool tone_rx_enable = last_state.channel.fm.rxToneEn;
+            if (tone_tx_enable && tone_rx_enable)
+                snprintf(encdec_str, 9, "     E+D");
+            else if (tone_tx_enable && !tone_rx_enable)
+                snprintf(encdec_str, 9, "      E ");
+            else if (!tone_tx_enable && tone_rx_enable)
+                snprintf(encdec_str, 9, "      D ");
+            else
+                snprintf(encdec_str, 9, "        ");
+            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
+                      color_white, encdec_str);
+        }
+        else if (last_state.channel.mode == M17)
+        {
+            char encdec_str[9] = "        ";
+            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
+                      color_white, encdec_str);
+        }
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                   yellow_fab413, "3        ");
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white, "%.1gW", last_state.channel.power);
         // Second row
         // Calculate symmetric second row position, line2_pos is asymmetric like main screen
-        point_t pos_2 = {layout.line1_pos.x, layout.line1_pos.y + 
+        point_t pos_2 = {layout.line1_pos.x, layout.line1_pos.y +
                         (layout.line3_pos.y - layout.line1_pos.y)/2};
         gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
                   yellow_fab413, "4");
-        char bw_str[8] = { 0 };
-        switch (last_state.channel.bandwidth)
+        if (last_state.channel.mode == FM)
         {
-            case BW_12_5:
-                snprintf(bw_str, 8, "   12.5");
-                break;
-            case BW_20:
-                snprintf(bw_str, 8, "     20");
-                break;
-            case BW_25:
-                snprintf(bw_str, 8, "     25");
-                break;
+            char bw_str[8] = { 0 };
+            switch (last_state.channel.bandwidth)
+            {
+                case BW_12_5:
+                    snprintf(bw_str, 8, "   12.5");
+                    break;
+                case BW_20:
+                    snprintf(bw_str, 8, "     20");
+                    break;
+                case BW_25:
+                    snprintf(bw_str, 8, "     25");
+                    break;
+            }
+            gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
+                      color_white, bw_str);
         }
-        gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
-                  color_white, bw_str);
+        else if (last_state.channel.mode == M17)
+        {
+            gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
+                      color_white, "       ");
+
+        }
         gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER,
                   yellow_fab413, "5       ");
         char mode_str[9] = "";
@@ -574,6 +639,9 @@ bool _ui_drawMacroMenu() {
             break;
             case DMR:
             snprintf(mode_str, 9,"     DMR");
+            break;
+            case M17:
+            snprintf(mode_str, 9,"     M17");
             break;
         }
         gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER,
@@ -595,20 +663,8 @@ bool _ui_drawMacroMenu() {
                   yellow_fab413, "9        ");
         gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white, "Sav");
-        // Smeter bar
-        float rssi = last_state.rssi;
-        float squelch = last_state.sqlLevel / 16.0f;
-        point_t smeter_pos = { layout.horizontal_pad,
-                               layout.bottom_pos.y +
-                               layout.status_v_pad +
-                               layout.text_v_offset -
-                               layout.bottom_h };
-        gfx_drawSmeter(smeter_pos,
-                       SCREEN_WIDTH - 2 * layout.horizontal_pad,
-                       layout.bottom_h - 1,
-                       rssi,
-                       squelch,
-                       yellow_fab413);
-
+        
+        // Draw S-meter bar
+        _ui_drawMainBottom();
         return true;
 }

@@ -28,6 +28,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <interfaces/platform.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <ui.h>
@@ -72,6 +73,10 @@ void _ui_drawMainTop()
         case DMR:
         gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white, "DMR");
+        break;
+        case M17:
+        gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT,
+                  color_white, "M17");
         break;
     }
 }
@@ -155,22 +160,41 @@ void _ui_drawVFOMiddleInput(ui_state_t* ui_state)
     }
 }
 
-void _ui_drawBottom()
+void _ui_drawMainBottom()
 {
     // Squelch bar
     float rssi = last_state.rssi;
     float squelch = last_state.sqlLevel / 16.0f;
-    point_t smeter_pos = { layout.horizontal_pad,
-                           layout.bottom_pos.y +
-                           layout.status_v_pad +
-                           layout.text_v_offset -
-                           layout.bottom_h };
-    gfx_drawSmeter(smeter_pos,
-                   SCREEN_WIDTH - 2 * layout.horizontal_pad,
-                   layout.bottom_h - 1,
-                   rssi,
-                   squelch,
-                   color_white);
+    uint16_t meter_width = SCREEN_WIDTH - 2 * layout.horizontal_pad; 
+    uint16_t meter_height = layout.bottom_h; 
+    point_t meter_pos = { layout.horizontal_pad, 
+                          SCREEN_HEIGHT - meter_height - layout.bottom_pad};
+    uint8_t mic_level = platform_getMicLevel();
+    switch(last_state.channel.mode)
+    {
+        case FM:
+            gfx_drawSmeter(meter_pos,
+                           meter_width,
+                           meter_height,
+                           rssi,
+                           squelch,
+                           yellow_fab413);
+            break;
+        case DMR:
+            gfx_drawSmeterLevel(meter_pos,
+                                meter_width,
+                                meter_height,
+                                rssi,
+                                mic_level);
+            break;
+        case M17:
+            gfx_drawSmeterLevel(meter_pos,
+                                meter_width,
+                                meter_height,
+                                rssi,
+                                mic_level);
+            break;
+    }
 }
 
 void _ui_drawMainVFO()
@@ -178,7 +202,7 @@ void _ui_drawMainVFO()
     gfx_clearScreen();
     _ui_drawMainTop();
     _ui_drawFrequency();
-    _ui_drawBottom();
+    _ui_drawMainBottom();
 }
 
 void _ui_drawMainVFOInput(ui_state_t* ui_state)
@@ -186,7 +210,7 @@ void _ui_drawMainVFOInput(ui_state_t* ui_state)
     gfx_clearScreen();
     _ui_drawMainTop();
     _ui_drawVFOMiddleInput(ui_state);
-    _ui_drawBottom();
+    _ui_drawMainBottom();
 }
 
 void _ui_drawMainMEM()
@@ -195,5 +219,5 @@ void _ui_drawMainMEM()
     _ui_drawMainTop();
     _ui_drawZoneChannel();
     _ui_drawFrequency();
-    _ui_drawBottom();
+    _ui_drawMainBottom();
 }

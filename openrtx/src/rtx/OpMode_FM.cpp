@@ -46,14 +46,14 @@
  * digital value to be fed into the HR_C6000 lineout DAC gain. We thus have to
  * provide the helper function below to keep the real volume level consistent
  * with the knob position.
- * Current knob position corresponds to an analog signal in the range 0 - 1500mV,
- * which has to be mapped in a range between 1 and 31.
  */
 #ifdef PLATFORM_MDUV3x0
 void _setVolume()
 {
-    float   level  = (platform_getVolumeLevel() / 1560.0f) * 30.0f;
-    uint8_t volume = ((uint8_t) (level + 0.5f));
+    // Volume level range is 0 - 255, by right shifting by 3 we get a value in
+    // range 0 - 31.
+    uint8_t volume = platform_getVolumeLevel();
+    volume >>= 3;
 
     // Mute volume when knob is set below 10%
     if(volume < 1)
@@ -202,4 +202,7 @@ void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
             platform_ledOff(RED);
             break;
     }
+
+    // Sleep thread for 30ms for 33Hz update rate
+    sleepFor(0u, 30u);
 }

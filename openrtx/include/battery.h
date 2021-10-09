@@ -30,12 +30,13 @@
 #ifndef BATTERY_H
 #define BATTERY_H
 
+#include <stdint.h>
+
 /**
- * This function uses battery charge tables to convert a battery voltage into a
- * charge percentage.
- * @param vbat: the voltage read from the battery in volt.
- * @return the charge percentage.
+ * This function computes the battery's state of charge given its current voltage.
+ * @param vbat: battery voltage in millivolt.
+ * @return state of charge percentage, from 0% to 100%.
  */
-float battery_getCharge(float vbat);
+uint8_t battery_getCharge(uint16_t vbat);
 
 #endif /* BATTERY_H */

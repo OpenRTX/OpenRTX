@@ -55,3 +55,7 @@ tags
 
 #ignore linux openrtx emulator history file
 .emulatorsh_history
+
+# subprojects
+subprojects/radio_tool
+subprojects/codec2

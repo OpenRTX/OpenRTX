@@ -41,10 +41,17 @@ void adc0_init();
 void adc0_terminate();
 
 /**
+ * Get current measurement of a given channel returning the raw ADC value.
+ * @param ch: channel number.
+ * @return current value of the specified channel, in ADC counts.
+ */
+uint16_t adc0_getRawSample(uint8_t ch);
+
+/**
  * Get current measurement of a given channel.
  * @param ch: channel number.
  * @return current value of the specified channel in mV.
  */
-float adc0_getMeasurement(uint8_t ch);
+uint16_t adc0_getMeasurement(uint8_t ch);
 
 #endif /* ADC0_H */

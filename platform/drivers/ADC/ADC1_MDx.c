@@ -27,36 +27,18 @@
 
 #include <interfaces/gpio.h>
 #include <hwconfig.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include "ADC1_MDx.h"
 
-
-/*
- * The sample buffer is structured as follows:
- *
- * | vol | vbat | vox | rssi | sw1 | sw2 | rssi2 | htemp |
- *
- * NOTE: we are forced to allocate it through a malloc in order to make it be
- * in the "large" 128kB RAM. This because the linker script maps the .data and
- * .bss sections in the "small" 64kB CCM RAM, which cannot be reached by the DMA.
- */
-uint16_t *sampleBuf = NULL;
-
-#if defined(PLATFORM_MD9600)
-static const size_t nChannels = 8;
-#elif defined(PLATFORM_MD3x0)
-static const size_t nChannels = 4;
-#else
-static const size_t nChannels = 2;
-#endif
+pthread_mutex_t adcMutex;
 
 void adc1_init()
 {
-    RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
-    RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
-    __DSB();
+    pthread_mutex_init(&adcMutex, NULL);
 
-    sampleBuf = ((uint16_t *) malloc(4 * sizeof(uint16_t)));
+    RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
+    __DSB();
 
     /*
      * Configure GPIOs to analog input mode:
@@ -76,91 +58,63 @@ void adc1_init()
 
     /*
      * ADC clock is APB2 frequency divided by 8, giving 10.5MHz.
-     * We set the sample time of each channel to 480 ADC cycles and we have to
-     * scan four channels: given that a conversion takes 12 cycles, we have a
-     * total conversion time of ~187us.
+     * We set the sample time of each channel to 84 ADC cycles and we have that
+     * a conversion takes 12 cycles: total conversion time is then of ~9us.
      */
-    ADC->CCR |= ADC_CCR_ADCPRE;
-    ADC1->SMPR2 = ADC_SMPR2_SMP0
-                | ADC_SMPR2_SMP1
-                | ADC_SMPR2_SMP3
-                | ADC_SMPR2_SMP6
-                | ADC_SMPR2_SMP7
-                | ADC_SMPR2_SMP8
-                | ADC_SMPR2_SMP9;
-    ADC1->SMPR1 = ADC_SMPR1_SMP15;
+    ADC->CCR   |= ADC_CCR_ADCPRE;
+    ADC1->SMPR2 = ADC_SMPR2_SMP0_2
+                | ADC_SMPR2_SMP1_2
+                | ADC_SMPR2_SMP3_2
+                | ADC_SMPR2_SMP6_2
+                | ADC_SMPR2_SMP7_2
+                | ADC_SMPR2_SMP8_2
+                | ADC_SMPR2_SMP9_2;
+    ADC1->SMPR1 = ADC_SMPR1_SMP15_2;
 
     /*
-     * No overrun interrupt, 12-bit resolution, no analog watchdog, no
-     * discontinuous mode, enable scan mode, no end of conversion interrupts,
-     * enable continuous conversion (free-running).
+     * Convert one channel, no overrun interrupt, 12-bit resolution,
+     * no analog watchdog, discontinuous mode, no end of conversion interrupts,
+     * turn on ADC.
      */
-    ADC1->CR1 |= ADC_CR1_SCAN;
-    ADC1->CR2 |= ADC_CR2_DMA
-              | ADC_CR2_DDS
-              | ADC_CR2_CONT
-              | ADC_CR2_ADON;
-
-    /* Scan sequence config. */
-    #if defined(PLATFORM_MD9600)
-    ADC1->SQR1 = 7 << 20;    /* Eight channels to be converted          */
-    ADC1->SQR3 |= (0 << 0)   /* CH0,  volume potentiometer level on PA0 */
-               |  (1 << 5)   /* CH1,  battery voltage on PA1            */
-               |  (3 << 10)  /* CH3,  vox level on PA3                  */
-               |  (8 << 15)  /* CH8,  RSSI value on PB0                 */
-               |  (7 << 20)  /* CH7,  SW1 value on PA7                  */
-               |  (6 << 25); /* CH6,  SW2 value on PA6                  */
-    ADC1->SQR2 |= (9  << 0)  /* CH9,  RSSI2 value on PB1                */
-               |  (15 << 5); /* CH15, HTEMP value on PC5                */
-    #elif defined(PLATFORM_MD3x0)
-    ADC1->SQR1 = 3 << 20;    /* Four channels to be converted          */
-    ADC1->SQR3 |= (0 << 0)   /* CH0, volume potentiometer level on PA0 */
-               |  (1 << 5)   /* CH1, battery voltage on PA1            */
-               |  (3 << 10)  /* CH3, vox level on PA3                  */
-               |  (8 << 15); /* CH8, RSSI value on PB0                 */
-    #else
-    ADC1->SQR1 = 1 << 20;    /* Convert two channel                    */
-    ADC1->SQR3 |= (0 << 0)   /* CH0, volume potentiometer level on PA0 */
-               |  (1 << 5);  /* CH1, battery voltage on PA1            */
-    #endif
-
-    /* DMA2 Stream 0 configuration:
-     * - channel 0: ADC1
-     * - low priority
-     * - half-word transfer, both memory and peripheral
-     * - increment memory
-     * - circular mode
-     * - peripheral-to-memory transfer
-     * - no interrupts
-     */
-    DMA2_Stream0->PAR = ((uint32_t) &(ADC1->DR));
-    DMA2_Stream0->M0AR = ((uint32_t) sampleBuf);
-    DMA2_Stream0->NDTR = nChannels;
-    DMA2_Stream0->CR = DMA_SxCR_MSIZE_0     /* Memory size: 16 bit     */
-                     | DMA_SxCR_PSIZE_0     /* Peripheral size: 16 bit */
-                     | DMA_SxCR_PL_0        /* Medium priority         */
-                     | DMA_SxCR_MINC        /* Increment memory        */
-                     | DMA_SxCR_CIRC        /* Circular mode           */
-                     | DMA_SxCR_EN;
-
-    /* Finally, start conversion */
-    ADC1->CR2 |= ADC_CR2_SWSTART;
+    ADC1->SQR1 = 0;
+    ADC1->CR2  = ADC_CR2_ADON;
 }
 
 void adc1_terminate()
 {
-    free(sampleBuf);
-    sampleBuf = NULL;
-    DMA2_Stream0->CR &= ~DMA_SxCR_EN;
-    ADC1->CR2 &= ~ADC_CR2_ADON;
+    pthread_mutex_destroy(&adcMutex);
+
+    ADC1->CR2    &= ~ADC_CR2_ADON;
     RCC->APB2ENR &= ~RCC_APB2ENR_ADC1EN;
     __DSB();
 }
 
-float adc1_getMeasurement(uint8_t ch)
+uint16_t adc1_getRawSample(uint8_t ch)
 {
-    if((ch > (nChannels-1)) || (sampleBuf == NULL)) return 0.0f;
+    if(ch > 15) return 0;
 
-    float value = ((float) sampleBuf[ch]);
-    return (value * 3300.0f)/4096.0f;
+    pthread_mutex_lock(&adcMutex);
+
+    ADC1->SQR3 = ch;
+    ADC1->CR2 |= ADC_CR2_SWSTART;
+    while((ADC1->SR & ADC_SR_EOC) == 0) ;
+    uint16_t value = ADC1->DR;
+
+    pthread_mutex_unlock(&adcMutex);
+
+    return value;
+}
+
+uint16_t adc1_getMeasurement(uint8_t ch)
+{
+    /*
+     * To avoid using floats, we convert the raw ADC sample to mV using 16.16
+     * fixed point math. The equation for conversion is (sample * 3300)/4096 but,
+     * since converting the raw ADC sample to 16.16 notation requires a left
+     * shift by 16 and dividing by 4096 is equivalent to shifting right by 12,
+     * we just shift left by four and then multiply by 3300.
+     * With respect to using floats, maximum error is -1mV.
+     */
+    uint32_t sample = (adc1_getRawSample(ch) << 4) * 3300;
+    return ((uint16_t) (sample >> 16));
 }

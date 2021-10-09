@@ -29,6 +29,7 @@
 #include <interfaces/gpio.h>
 #include <stdio.h>
 #include "emulator.h"
+#include <SDL2/SDL.h>
 
 hwInfo_t hwInfo;
 
@@ -38,13 +39,13 @@ void platform_init()
     // Fill hwinfo struct
     memset(&hwInfo, 0x00, sizeof(hwInfo));
     snprintf(hwInfo.name, 10, "Linux");
-    // Frequencies are in MHz                                                   
-    hwInfo.vhf_maxFreq = 174;                                                    
-    hwInfo.vhf_minFreq = 136;                                                    
-    hwInfo.vhf_band    = 1;                                                      
-    hwInfo.uhf_maxFreq = 480;                                                    
-    hwInfo.uhf_minFreq = 400;                                                    
-    hwInfo.uhf_band    = 1;   
+    // Frequencies are in MHz
+    hwInfo.vhf_maxFreq = 174;
+    hwInfo.vhf_minFreq = 136;
+    hwInfo.vhf_band    = 1;
+    hwInfo.uhf_maxFreq = 480;
+    hwInfo.uhf_minFreq = 400;
+    hwInfo.uhf_band    = 1;
 
     emulator_start();
 }
@@ -60,21 +61,32 @@ void platform_setBacklightLevel(__attribute__((unused)) uint8_t level)
 }
 
 // Simulate a fully charged lithium battery
-float platform_getVbat()
+uint16_t platform_getVbat()
 {
-    return Radio_State.Vbat;
+    float voltage = Radio_State.Vbat;
+    if(voltage < 0.0f)  voltage = 0.0f;
+    if(voltage > 65.0f) voltage = 65.0f;
+    return ((uint16_t) voltage);
 }
 
 
-float platform_getMicLevel()
+uint8_t platform_getMicLevel()
 {
-    return Radio_State.micLevel;
+    float level = Radio_State.micLevel;
+    if(level < 0.0f)   level = 0.0f;
+    if(level > 255.0f) level = 255.0f;
+
+    return ((uint8_t) level);
 }
 
 
-float platform_getVolumeLevel()
+uint8_t platform_getVolumeLevel()
 {
-    return Radio_State.volumeLevel;
+    float level = Radio_State.volumeLevel;
+    if(level < 0.0f)   level = 0.0f;
+    if(level > 255.0f) level = 255.0f;
+
+    return ((uint8_t) level);
 }
 
 
@@ -86,7 +98,13 @@ int8_t platform_getChSelector()
 
 bool platform_getPttStatus()
 {
-    return Radio_State.PttStatus;
+    // Read P key status from SDL
+    SDL_PumpEvents();
+    const uint8_t *state = SDL_GetKeyboardState(NULL);
+    if (state[SDL_SCANCODE_P])
+        return true;
+    else
+        return false;
 }
 
 bool platform_pwrButtonStatus()

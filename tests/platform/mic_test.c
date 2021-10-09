@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
+ *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
  *                         Niccolò Izzo IU2KIN,                            *
  *                         Frederik Saraci IU2NRO,                         *
  *                         Silvano Seva IU2KWO                             *
@@ -31,129 +31,47 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <interfaces/delays.h>
-#include <interfaces/gpio.h>
-#include <hwconfig.h>
-
-/*
- * Uncomment this directive to sample audio coming from RTX stage instead of the
- * one from microphone.
- */
-// #define SAMPLE_RTX_AUDIO
-
-static const char hexdigits[]="0123456789abcdef";
-void printUnsignedInt(uint16_t x)
-{
-    char result[]="....\r";
-    for(int i=3;i>=0;i--)
-    {
-        result[i]=hexdigits[x & 0xf];
-        x>>=4;
-    }
-    puts(result);
-}
+#include <interfaces/audio.h>
+#include <interfaces/audio_path.h>
+#include <interfaces/audio_stream.h>
+#include <interfaces/platform.h>
+#include <dsp.h>
 
 int main()
 {
-//     platform_init();
+    platform_init();
 
-    static const size_t numSamples = 45*1024;       // 80kB
-    uint16_t *sampleBuf = ((uint16_t *) malloc(numSamples * sizeof(uint16_t)));
+    static const size_t numSamples = 45*1024;       // 90kB
+    stream_sample_t *sampleBuf = ((stream_sample_t *) malloc(numSamples *
+                                                      sizeof(stream_sample_t)));
 
-    gpio_setMode(GREEN_LED, OUTPUT);
-    gpio_setMode(RED_LED,   OUTPUT);
-    gpio_setMode(MIC_PWR,   OUTPUT);
-    gpio_setPin(MIC_PWR);
+    audio_enableMic();
+    streamId id = inputStream_start(SOURCE_MIC, PRIO_TX, sampleBuf, numSamples,
+                                    BUF_LINEAR, 8000);
 
-    #ifdef SAMPLE_RTX_AUDIO
-    gpio_setMode(GPIOC, 13, INPUT_ANALOG);
-    #else
-    gpio_setMode(AIN_MIC, INPUT_ANALOG);
-    #endif
+    sleepFor(3u, 0u);
+    platform_ledOn(GREEN);
 
-    /* Enable pull-up resistor on PA3 (AIN_MIC)
-    GPIOA->PUPDR |= 1 << 6; */
+    dataBlock_t audio = inputStream_getData(id);
 
-    delayMs(3000);
+    platform_ledOff(GREEN);
+    platform_ledOn(RED);
+    sleepFor(10u, 0u);
 
-    RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
-    RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
-    RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
-    __DSB();
+    // Pre-processing gain
+    for(size_t i = 0; i < audio.len; i++) audio.data[i] <<= 3;
 
-    /*
-     * TIM2 for conversion triggering via TIM2_TRGO, that is counter reload.
-     * AP1 frequency is 42MHz but timer runs at 84MHz, configure for 8kHz interrupt rate.
-     */
-    TIM2->PSC = 83;     /* Tick rate 1MHz     */
-    TIM2->ARR = 124;    /* Overflow rate 8kHz */
-    TIM2->CNT = 0;
-    TIM2->EGR = TIM_EGR_UG;
-    TIM2->CR2 = TIM_CR2_MMS_1;
-    TIM2->CR1 = TIM_CR1_CEN;
+    // DC removal
+    dsp_dcRemoval(audio.data, audio.len);
 
-    /* DMA2 Stream 0 configuration:
-     * - channel 0: ADC1
-     * - low priority
-     * - half-word transfer, both memory and peripheral
-     * - increment memory
-     * - peripheral-to-memory transfer
-     * - no interrupts
-     */
-    DMA2_Stream0->PAR = ((uint32_t) &(ADC1->DR));
-    DMA2_Stream0->M0AR = ((uint32_t) sampleBuf);
-    DMA2_Stream0->NDTR = numSamples;
-    DMA2_Stream0->CR = DMA_SxCR_MSIZE_0     /* Memory size: 16 bit     */
-                     | DMA_SxCR_PSIZE_0     /* Peripheral size: 16 bit */
-                     | DMA_SxCR_PL_0        /* Medium priority         */
-                     | DMA_SxCR_MINC        /* Increment memory        */
-                     | DMA_SxCR_EN;
+    // Post-processing gain
+    for(size_t i = 0; i < audio.len; i++) audio.data[i] *= 10;
 
-    /*
-     * ADC clock is APB2 frequency divided by 8, giving 10.5MHz.
-     * A conversion takes 12 cycles.
-     */
-    ADC->CCR |= ADC_CCR_ADCPRE;
-    ADC1->SMPR2 = ADC_SMPR2_SMP0
-                | ADC_SMPR2_SMP1
-                | ADC_SMPR2_SMP3
-                | ADC_SMPR2_SMP8;
 
-    ADC1->SQR1 = 0;    /* One channel to be converted */
-
-    #ifdef SAMPLE_RTX_AUDIO
-    ADC1->SQR3 = 13;   /* CH13, audio from RTX on PC13 */
-    #else
-    ADC1->SQR3 = 3;    /* CH3, vox level on PA3        */
-    #endif
-
-    /*
-     * No overrun interrupt, 12-bit resolution, no analog watchdog, no
-     * discontinuous mode, enable scan mode, no end of conversion interrupts,
-     * enable continuous conversion (free-running).
-     */
-    ADC1->CR1 |= ADC_CR1_DISCEN;
-    ADC1->CR2 |= ADC_CR2_EXTEN_0    /* Trigger on rising edge        */
-              |  ADC_CR2_EXTSEL_1
-              |  ADC_CR2_EXTSEL_2   /* 0b0110 TIM2_TRGO trig. source */
-              |  ADC_CR2_DDS        /* Enable DMA data transfer      */
-              |  ADC_CR2_DMA
-              |  ADC_CR2_ALIGN
-              |  ADC_CR2_ADON;      /* Enable ADC                    */
-
-    while((DMA2_Stream0->CR & DMA_SxCR_EN) == 1)
+    uint16_t *ptr = ((uint16_t *) audio.data);
+    for(size_t i = 0; i < audio.len; i++)
     {
-        gpio_togglePin(GREEN_LED);
-        delayMs(250);
-    }
-
-    gpio_clearPin(GREEN_LED);
-    gpio_setPin(RED_LED);
-
-    delayMs(10000);
-
-    for(size_t i = 0; i < numSamples; i++)
-    {
-        printUnsignedInt(sampleBuf[i]);
+        iprintf("%04x ", ptr[i]);
     }
 
     while(1) ;
