@@ -57,7 +57,7 @@ void _ui_drawMEMChannel()
                   last_state.channel_index, last_state.channel.name);
 }
 
-void _ui_drawModeDetails()
+void _ui_drawModeDetails(ui_state_t* ui_state)
 {
     char bw_str[8] = { 0 };
     char encdec_str[9] = { 0 };
@@ -113,27 +113,36 @@ void _ui_drawModeDetails()
                       layout.horizontal_pad, layout.mode_font_small, 
                       TEXT_ALIGN_LEFT, color_white, "Src ID: %s", cfg.source_address);
         // Print M17 Destination ID on line 3 of 3
-        gfx_printLine(3, 3, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
-                      layout.horizontal_pad, layout.mode_font_small, 
-                      TEXT_ALIGN_LEFT, color_white, "Dst ID: %s", cfg.destination_address);
+        if(ui_state->edit_mode)
+        {
+            gfx_printLine(3, 3, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
+                          layout.horizontal_pad, layout.mode_font_small, 
+                          TEXT_ALIGN_LEFT, color_white, "Dst ID: %s_", ui_state->new_callsign);
+        }
+        else
+        {
+            gfx_printLine(3, 3, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
+                          layout.horizontal_pad, layout.mode_font_small, 
+                          TEXT_ALIGN_LEFT, color_white, "Dst ID: %s", cfg.destination_address);
+        }
         break;
     }
 }
 
-void _ui_drawModeVFO()
+void _ui_drawModeVFO(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     _ui_drawMainTop();
     _ui_drawModeVFOFreq();
-    _ui_drawModeDetails();
+    _ui_drawModeDetails(ui_state);
     _ui_drawMainBottom();
 }
 
-void _ui_drawModeMEM()
+void _ui_drawModeMEM(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     _ui_drawMainTop();
     _ui_drawMEMChannel();
-    _ui_drawModeDetails();
+    _ui_drawModeDetails(ui_state);
     _ui_drawMainBottom();
 }
