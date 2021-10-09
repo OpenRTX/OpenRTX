@@ -73,9 +73,9 @@ static const uint16_t kbd_long_interval = TICK_FREQ * 0.7;
 
 /**
  * Mask for the numeric keys in a key map
- * Numeric keys: bit0->bit9 = 0x3FF
+ * Numeric keys: bit0->bit11 = 0xFFF
  */
-static const uint32_t kbd_num_mask = 0x3FF;
+static const uint32_t kbd_num_mask = 0xFFF;
 
 /**
  * Structure that represents a keyboard event payload

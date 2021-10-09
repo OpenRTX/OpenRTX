@@ -183,7 +183,7 @@ const char *symbols_ITU_T_E161[] =
     "pqrs7PQRS",
     "tuv8TUV",
     "wxyz9WXYZ",
-    "*",
+    "-/*",
     "#"
 };
 
@@ -199,7 +199,7 @@ const char *symbols_ITU_T_E161_callsign[] =
     "PQRS7",
     "TUV8",
     "WXYZ9",
-    "",
+    "-/",
     ""
 };
 
@@ -973,6 +973,11 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     // Switch to VFO screen
                     state.ui_screen = MAIN_VFO;
                 }
+                else if(msg.keys & KEY_F1)
+                {
+                    // Switch to Digital Mode MEM screen
+                    state.ui_screen = MODE_MEM;
+                }
                 else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
                 {
                     _ui_fsm_loadChannel(state.channel_index + 1, sync_rtx);
@@ -984,42 +989,152 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 break;
             // Digital Mode VFO screen
             case MODE_VFO:
-                if(msg.keys & KEY_ENTER)
+                if(state.channel.mode == M17)
                 {
-                    // Save current main state
-                    ui_state.last_main_state = state.ui_screen;
-                    // Open Menu
-                    state.ui_screen = MENU_TOP;
+                    // Dst ID input
+                    if(ui_state.edit_mode)
+                    {
+                        if(msg.keys & KEY_ENTER)
+                        {
+                            _ui_textInputConfirm(ui_state.new_callsign);
+                            // Save selected dst ID and disable input mode
+                            strncpy(state.m17_data.dst_addr, ui_state.new_callsign, 10);
+                            ui_state.edit_mode = false;
+                            *sync_rtx = true;
+                        }
+                        else if(msg.keys & KEY_ESC)
+                            // Discard selected dst ID and disable input mode
+                            ui_state.edit_mode = false;
+                        else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
+                                msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
+                            _ui_textInputDel(ui_state.new_callsign);
+                        else if(input_isNumberPressed(msg))
+                            _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
+                    }
+                    else
+                    {
+                        if(msg.keys & KEY_ENTER)
+                        {
+                            // Save current main state
+                            ui_state.last_main_state = state.ui_screen;
+                            // Open Menu
+                            state.ui_screen = MENU_TOP;
+                        }
+                        else if(msg.keys & KEY_ESC)
+                        {
+                            // Switch to VFO screen
+                            state.ui_screen = MAIN_VFO;
+                        }
+                        else if(msg.keys & KEY_F1)
+                        {
+                            // Switch to Main VFO screen
+                            state.ui_screen = MAIN_VFO;
+                        }
+                        else if(input_isNumberPressed(msg))
+                        {
+                            // Enable dst ID input
+                            ui_state.edit_mode = true;
+                            // Reset text input variables
+                            _ui_textInputReset(ui_state.new_callsign);
+                            // Type first character
+                            _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
+                        }
+                    }
                 }
-                else if(msg.keys & KEY_ESC)
+                else
                 {
-                    // Switch to VFO screen
-                    state.ui_screen = MAIN_VFO;
-                }
-                else if(msg.keys & KEY_F1)
-                {
-                    // Switch to Main VFO screen
-                    state.ui_screen = MAIN_VFO;
+                    if(msg.keys & KEY_ENTER)
+                    {
+                        // Save current main state
+                        ui_state.last_main_state = state.ui_screen;
+                        // Open Menu
+                        state.ui_screen = MENU_TOP;
+                    }
+                    else if(msg.keys & KEY_ESC)
+                    {
+                        // Switch to VFO screen
+                        state.ui_screen = MAIN_VFO;
+                    }
+                    else if(msg.keys & KEY_F1)
+                    {
+                        // Switch to Main VFO screen
+                        state.ui_screen = MAIN_VFO;
+                    }
                 }
                 break;
             // Digital Mode MEM screen
             case MODE_MEM:
-                if(msg.keys & KEY_ENTER)
+                if(state.channel.mode == M17)
                 {
-                    // Save current main state
-                    ui_state.last_main_state = state.ui_screen;
-                    // Open Menu
-                    state.ui_screen = MENU_TOP;
+                    // Dst ID input
+                    if(ui_state.edit_mode)
+                    {
+                        if(msg.keys & KEY_ENTER)
+                        {
+                            _ui_textInputConfirm(ui_state.new_callsign);
+                            // Save selected dst ID and disable input mode
+                            strncpy(state.m17_data.dst_addr, ui_state.new_callsign, 10);
+                            ui_state.edit_mode = false;
+                            *sync_rtx = true;
+                        }
+                        else if(msg.keys & KEY_ESC)
+                            // Discard selected dst ID and disable input mode
+                            ui_state.edit_mode = false;
+                        else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
+                                msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
+                            _ui_textInputDel(ui_state.new_callsign);
+                        else if(input_isNumberPressed(msg))
+                            _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
+                    }
+                    else
+                    {
+                        if(msg.keys & KEY_ENTER)
+                        {
+                            // Save current main state
+                            ui_state.last_main_state = state.ui_screen;
+                            // Open Menu
+                            state.ui_screen = MENU_TOP;
+                        }
+                        else if(msg.keys & KEY_ESC)
+                        {
+                            // Switch to MEM screen
+                            state.ui_screen = MAIN_MEM;
+                        }
+                        else if(msg.keys & KEY_F1)
+                        {
+                            // Switch to Main MEM screen
+                            state.ui_screen = MAIN_MEM;
+                        }
+                        else if(input_isNumberPressed(msg))
+                        {
+                            // Enable dst ID input
+                            ui_state.edit_mode = true;
+                            // Reset text input variables
+                            _ui_textInputReset(ui_state.new_callsign);
+                            // Type first character
+                            _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
+                        }
+                    }
                 }
-                else if(msg.keys & KEY_ESC)
+                else
                 {
-                    // Switch to MEM screen
-                    state.ui_screen = MAIN_MEM;
-                }
-                else if(msg.keys & KEY_F1)
-                {
-                    // Switch to Main MEM screen
-                    state.ui_screen = MAIN_MEM;
+                    if(msg.keys & KEY_ENTER)
+                    {
+                        // Save current main state
+                        ui_state.last_main_state = state.ui_screen;
+                        // Open Menu
+                        state.ui_screen = MENU_TOP;
+                    }
+                    else if(msg.keys & KEY_ESC)
+                    {
+                        // Switch to MEM screen
+                        state.ui_screen = MAIN_MEM;
+                    }
+                    else if(msg.keys & KEY_F1)
+                    {
+                        // Switch to Main MEM screen
+                        state.ui_screen = MAIN_MEM;
+                    }
                 }
                 break;
             // Top menu screen
@@ -1387,11 +1502,11 @@ void ui_updateGUI()
             break;
         // Digital Mode VFO screen
         case MODE_VFO:
-            _ui_drawModeVFO();
+            _ui_drawModeVFO(&ui_state);
             break;
         // Digital Mode MEM screen
         case MODE_MEM:
-            _ui_drawModeMEM();
+            _ui_drawModeMEM(&ui_state);
             break;
         // Top menu screen
         case MENU_TOP:
