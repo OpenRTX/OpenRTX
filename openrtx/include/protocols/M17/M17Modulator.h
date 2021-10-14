@@ -57,13 +57,17 @@ public:
 
     /**
      * Generate and transmit the baseband signal obtained by 4FSK modulation of
-     * a given block of data.
+     * a given block of data. When called for the first time, this function
+     * starts baseband transmission.
      *
      * @param sync: synchronisation word to be prepended to data block.
      * @param data: data block to be transmitted.
+     * @param isLast: flag signalling that current block is the last one being
+     * transmitted.
      */
     void send(const std::array< uint8_t, 2 >& sync,
-              const std::array< uint8_t, 46 >& data);
+              const std::array< uint8_t, 46 >& data,
+              const bool isLast = false);
 
 private:
 
@@ -110,6 +114,8 @@ private:
     int16_t      *baseband_buffer;    ///< Buffer for baseband audio handling.
     dataBuffer_t *activeBuffer;       ///< Half baseband buffer, in transmission.
     dataBuffer_t *idleBuffer;         ///< Half baseband buffer, free for processing.
+    bool         txRunning;           ///< Transmission running.
+    bool         stopTx;              ///< Stop transmission request.
 };
 
 #endif /* M17_MODULATOR_H */

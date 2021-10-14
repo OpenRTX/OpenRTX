@@ -120,5 +120,6 @@ void M17Transmitter::send(const payload_t& payload, const bool isLast)
 
     interleave(frame);
     decorrelate(frame);
-    modulator.send(DATA_SYNC_WORD, frame);
+
+    modulator.send(DATA_SYNC_WORD, frame, isLast);
 }

@@ -113,9 +113,11 @@ void toneGen_encodeAFSK1200(const uint8_t *buf, const size_t len);
  * @param buf: pointer to a buffer containing the audio samples.
  * @param len: length of the data buffer.
  * @param sampleRate: sample rate of the audio stream in samples per second.
+ * @param circMode: treat buf as a double circular buffer, continuously
+ * reproducing its content.
  */
 void toneGen_playAudioStream(const uint16_t *buf, const size_t len,
-                             const uint32_t sampleRate);
+                             const uint32_t sampleRate, const bool circMode);
 
 /**
  * When called, this function blocks the execution flow until the reproduction
@@ -128,7 +130,7 @@ bool toneGen_waitForStreamEnd();
 
 /**
  * Interrupt the ongoing reproduction of an audio stream, also making the
- * toneGen_playAudioStream return to the caller.
+ * toneGen_waitForStreamEnd return to the caller.
  */
 void toneGen_stopAudioStream();
 
