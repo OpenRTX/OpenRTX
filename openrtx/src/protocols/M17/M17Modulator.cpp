@@ -89,9 +89,10 @@ void M17Modulator::init()
      */
 
     baseband_buffer = new int16_t[2 * M17_FRAME_SAMPLES];
-    activeBuffer    = new (baseband_buffer) dataBuffer_t;
+    idleBuffer      = new (baseband_buffer) dataBuffer_t;
     int16_t *ptr    = baseband_buffer + activeBuffer->size();
-    idleBuffer      = new (ptr) dataBuffer_t;
+    activeBuffer    = new (ptr) dataBuffer_t;
+    txRunning       = false;
 }
 
 void M17Modulator::terminate()
@@ -103,7 +104,8 @@ void M17Modulator::terminate()
 }
 
 void M17Modulator::send(const std::array< uint8_t, 2 >& sync,
-                        const std::array< uint8_t, 46 >& data)
+                        const std::array< uint8_t, 46 >& data,
+                        const bool isLast)
 {
     auto sync1 = byteToSymbols(sync[0]);
     auto sync2 = byteToSymbols(sync[1]);
@@ -116,6 +118,9 @@ void M17Modulator::send(const std::array< uint8_t, 2 >& sync,
         auto sym = byteToSymbols(data[i]);
         it       = std::copy(sym.begin(), sym.end(), it);
     }
+
+    // If last frame, signal stop of transmission
+    if(isLast) stopTx = true;
 
     generateBaseband();
     emitBaseband();
@@ -149,11 +154,29 @@ void M17Modulator::emitBaseband()
         idleBuffer->at(i) = shifted_sample;
     }
 
-    toneGen_waitForStreamEnd();
-    std::swap(idleBuffer, activeBuffer);
+    if(txRunning == false)
+    {
+        // First run, start transmission
+        toneGen_playAudioStream(reinterpret_cast< uint16_t *>(baseband_buffer),
+                                2*M17_FRAME_SAMPLES, M17_RTX_SAMPLE_RATE, true);
+        txRunning = true;
+        stopTx    = false;
+    }
+    else
+    {
+        // Transmission is ongoing, syncronise with stream end before proceeding
+        toneGen_waitForStreamEnd();
 
-    toneGen_playAudioStream(reinterpret_cast< uint16_t *>(activeBuffer->data()),
-                            activeBuffer->size(), M17_RTX_SAMPLE_RATE);
+        // Check if transmission stop is requested
+        if(stopTx == true)
+        {
+            toneGen_stopAudioStream();
+            stopTx    = false;
+            txRunning = false;
+        }
+    }
+
+    std::swap(idleBuffer, activeBuffer);
 }
 #elif defined(PLATFORM_LINUX)
 void M17Modulator::emitBaseband()

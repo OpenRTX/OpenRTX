@@ -54,7 +54,8 @@ uint32_t beepTableIncr  = 0; // "beep" sine table index increment per tick
 uint32_t beepTimerCount = 0; // Downcounter for timed "beep"
 uint8_t  beepVolume     = 0; // "beep" volume level
 
-bool tonesLocked = false;    // If true tone channel is in use by FSK/playback
+bool tonesLocked  = false;   // If true tone channel is in use by FSK/playback
+bool circularMode = false;   // Circular mode enabled
 
 using namespace miosix;
 Thread *dmaWaiting = 0;
@@ -98,19 +99,22 @@ void __attribute__((used)) TIM8_TRG_COM_TIM14_IRQHandler()
  */
 void __attribute__((used)) DMA_Handler()
 {
-    DMA1->LIFCR |= DMA_LIFCR_CTCIF2         // Clear interrupt flags
+    DMA1->LIFCR |= DMA_LIFCR_CTCIF2             // Clear interrupt flags
+                | DMA_LIFCR_CHTIF2
                 | DMA_LIFCR_CTEIF2;
 
-    TIM7->CR1   = 0;                        // End of transfer, stop TIM7
-    TIM3->CCER &= ~TIM_CCER_CC3E;           // Turn off compare channel
+    if(circularMode == false)
+    {
 
-    RCC->AHB1ENR &= ~RCC_AHB1ENR_DMA1EN;    // Turn off DMA
-    RCC->APB1ENR &= ~RCC_APB1ENR_TIM7EN;    // Turn off TIM7
-    __DSB();
+        TIM7->CR1     = 0;                      // End of transfer, stop TIM7
+        TIM3->CCER   &= ~TIM_CCER_CC3E;         // Turn off compare channel
+        RCC->APB1ENR &= ~RCC_APB1ENR_TIM7EN;    // Turn off TIM7
+        __DSB();
 
-    tonesLocked = false;                    // Finally, unlock tones
+        tonesLocked = false;                    // Finally, unlock tones
+    }
 
-    if(dmaWaiting == 0) return;             // Wake up eventual pending threads
+    if(dmaWaiting == 0) return;                 // Wake up eventual pending threads
     dmaWaiting->IRQwakeup();
     if(dmaWaiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
         Scheduler::IRQfindNextThread();
@@ -251,7 +255,7 @@ void toneGen_encodeAFSK1200(const uint8_t* buf, const size_t len)
 }
 
 void toneGen_playAudioStream(const uint16_t* buf, const size_t len,
-                             const uint32_t sampleRate)
+                             const uint32_t sampleRate, const bool circMode)
 {
     if((buf == NULL) || (len == 0) || (sampleRate == 0)) return;
 
@@ -270,7 +274,7 @@ void toneGen_playAudioStream(const uint16_t* buf, const size_t len,
      * Timebase for triggering of DMA transfers.
      * Bus frequency is 84MHz.
      */
-    uint32_t ratio = (84000000/sampleRate) - 1;
+    uint32_t ratio = (84000000/sampleRate);
 
     TIM7->CNT  = 0;
     TIM7->PSC  = 0;
@@ -291,9 +295,18 @@ void toneGen_playAudioStream(const uint16_t* buf, const size_t len,
                      | DMA_SxCR_MINC          // Increment source pointer
                      | DMA_SxCR_DIR_0         // Memory to peripheral
                      | DMA_SxCR_TCIE          // Transfer complete interrupt
-                     | DMA_SxCR_TEIE          // Transfer error interrupt
-                     | DMA_SxCR_EN;           // Enable transfer
+                     | DMA_SxCR_TEIE;         // Transfer error interrupt
 
+    if(circMode)
+    {
+        DMA1_Stream2->CR |= DMA_SxCR_CIRC     // Circular buffer mode
+                         |  DMA_SxCR_HTIE;    // Half transfer interrupt
+        circularMode = true;
+    }
+
+    DMA1_Stream2->CR |= DMA_SxCR_EN;           // Enable transfer
+
+    // Enable DMA interrupts
     NVIC_ClearPendingIRQ(DMA1_Stream2_IRQn);
     NVIC_SetPriority(DMA1_Stream2_IRQn, 10);
     NVIC_EnableIRQ(DMA1_Stream2_IRQn);
@@ -346,13 +359,27 @@ void toneGen_stopAudioStream()
     TIM7->CR1   = 0;
     TIM3->CCER &= ~TIM_CCER_CC3E;
 
-    // Shut down TIM7 and DMA
-    RCC->AHB1ENR &= ~RCC_AHB1ENR_DMA1EN;
+    // Stop DMA transfer and clear pending interrupt flags
+    DMA1_Stream2->CR   = 0;
+    DMA1_Stream2->M0AR = 0;
+    DMA1->LIFCR       |= DMA_LIFCR_CTCIF2
+                      |  DMA_LIFCR_CHTIF2
+                      |  DMA_LIFCR_CTEIF2;
+
+    // Shut down TIM7 clock
     RCC->APB1ENR &= ~RCC_APB1ENR_TIM7EN;
+    __DSB();
 
     // Unlock tones and wake up the thread waiting for completion
     tonesLocked = false;
-    if(dmaWaiting) dmaWaiting->IRQwakeup();
+    if(dmaWaiting)
+    {
+        dmaWaiting->IRQwakeup();
+        dmaWaiting = 0;
+    }
+
+    // Clear flag for circular double buffered mode
+    circularMode = false;
 }
 
 bool toneGen_toneBusy()
