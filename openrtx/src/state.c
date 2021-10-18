@@ -72,12 +72,7 @@ void state_init()
     }
     state.zone_enabled = false;
     state.rtxStatus = RTX_OFF;
-#ifdef HAS_ABSOLUTE_KNOB // If the radio has an absolute position knob
-    state.sqlLevel = platform_getChSelector() - 1;
-#else
-    // Default Squelch: S3 = 4
-    state.sqlLevel = 4;
-#endif
+    state.sqlLevel = 4;     // Default Squelch: S3 = 4
     state.voxLevel = 0;
 
     state.emergency = false;
@@ -131,7 +126,7 @@ curTime_t state_getUTCTime(curTime_t local_time)
         utc_time.hour = utc_time.hour - 24 - state.settings.utc_timezone;
         utc_time.date += 1;
     }
-    else if(utc_time.hour - state.settings.utc_timezone < 0) 
+    else if(utc_time.hour - state.settings.utc_timezone < 0)
     {
         utc_time.hour = utc_time.hour + 24 - state.settings.utc_timezone;
         local_time.date -= 1;
