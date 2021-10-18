@@ -101,8 +101,12 @@ void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
     if(status->opStatus == RX)
     {
         // RF squelch mechanism
+        // This turns squelch (0 to 15) into RSSI (-127.0dbm to -61dbm)
         float squelch = -127.0f + status->sqlLevel * 66.0f / 15.0f;
         float rssi    = rtx_getRssi();
+
+        // Provide a bit of hysteresis, only change state if the RSSI has
+        // moved more than .1dbm on either side of the current squelch setting.
         if((rfSqlOpen == false) && (rssi > (squelch + 0.1f))) rfSqlOpen = true;
         if((rfSqlOpen == true)  && (rssi < (squelch - 0.1f))) rfSqlOpen = false;
 
@@ -158,6 +162,7 @@ void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
 
         status->opStatus = OFF;
         enterRx = true;
+        sqlOpen = false;  // Force squelch to be redetected.
     }
 
     // Led control logic
