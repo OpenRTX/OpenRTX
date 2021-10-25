@@ -111,7 +111,7 @@ lich_t M17LinkSetupFrame::generateLichSegment(const uint8_t segmentNum)
     lich_t result;
     for(size_t i = 0; i < blocks.size(); i++)
     {
-        uint32_t encoded = golay_encode24(blocks[i]);
+        uint32_t encoded = golay24_encode(blocks[i]);
         encoded          = __builtin_bswap32(encoded << 8);
         memcpy(&result[3*i], &encoded, 3);
     }
