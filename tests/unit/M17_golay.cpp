@@ -71,10 +71,17 @@ int main()
         // Less than four errors should be corrected.
         if(decoded == value) correcting_ok = true;
 
-        printf("Value %04x, emask %08x errs %d -> d %s, c %s\n", value, emask,
-               __builtin_popcount(emask),
+        int input_error_count = __builtin_popcount(emask);
+
+        printf("Value %04x, emask %08x errs %d -> d %s, c %s\n",
+               value,
+               emask,
+               input_error_count,
                decoding_ok   ? "OK" : "FAIL",
                correcting_ok ? "OK" : "FAIL");
+
+        if(input_error_count <= 4 && (!decoding_ok || !correcting_ok))
+            return -1;
     }
 
     return 0;
