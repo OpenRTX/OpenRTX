@@ -512,3 +512,10 @@ foreach t : targets
 
   endif
 endforeach
+
+##
+## ----------------------------------- Unit Tests ------------------------------
+##
+
+dummy_test = executable('dummy', 'tests/unit/dummy.c')
+test('Dummy Unit Test', dummy_test)
