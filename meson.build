@@ -594,5 +594,10 @@ unit_test_opts = {'c_args': linux_c_args,
                   'link_args' : linux_l_args}
 unit_test_src = openrtx_src + minmea_src + linux_platform_src
 
-dummy_test = executable('dummy', 'tests/unit/dummy.c')
-test('Dummy Unit Test', dummy_test)
+#dummy_test = executable('dummy', 'tests/unit/dummy.c')
+#test('Dummy Unit Test', dummy_test)
+
+m17_golay_test = executable('m17_golay_test',
+                            sources: unit_test_src + ['tests/unit/M17_golay.cpp'],
+                            kwargs: unit_test_opts)
+test('M17 Golay Unit Test', m17_golay_test)
