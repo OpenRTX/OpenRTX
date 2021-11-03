@@ -1,8 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2021 by Alain Carlucci                                  *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -18,8 +15,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef M17_MODULATOR_H
-#define M17_MODULATOR_H
+#ifndef M17_LOOKUP_MODULATOR_H
+#define M17_LOOKUP_MODULATOR_H
 
 #ifndef __cplusplus
 #error This header is C++ only!
@@ -31,20 +28,22 @@
 
 /**
  * Modulator device for M17 protocol.
+ *
+ * This modulator uses lookup tables to perform 4FSK.
  */
-class M17Modulator
+class M17LookupModulator
 {
 public:
 
     /**
      * Constructor.
      */
-    M17Modulator();
+    M17LookupModulator();
 
     /**
      * Destructor.
      */
-    ~M17Modulator();
+    ~M17LookupModulator();
 
     /**
      * Allocate buffers for baseband audio generation and initialise modulator.
@@ -85,18 +84,14 @@ private:
      * @param value: value to be encoded in 4FSK symbols.
      * @return std::array containing the four symbols obtained by 4FSK encoding.
      */
-    inline std::array< int8_t, 4 > byteToSymbols(uint8_t value)
+    inline std::array< uint8_t, 4 > byteToSymbols(uint8_t value)
     {
-        static constexpr int8_t LUT[] = { +1, +3, -1, -3};
-        std::array< int8_t, 4 > symbols;
+        std::array< uint8_t, 4 > symbols;
 
-        symbols[3] = LUT[value & 0x03];
-        value >>= 2;
-        symbols[2] = LUT[value & 0x03];
-        value >>= 2;
-        symbols[1] = LUT[value & 0x03];
-        value >>= 2;
-        symbols[0] = LUT[value & 0x03];
+        symbols[3] = 1 + (value & 0x03);
+        symbols[2] = 1 + ((value >> 2) & 0x03);
+        symbols[1] = 1 + ((value >> 4) & 0x03);
+        symbols[0] = 1 + ((value >> 6) & 0x03);
 
         return symbols;
     }

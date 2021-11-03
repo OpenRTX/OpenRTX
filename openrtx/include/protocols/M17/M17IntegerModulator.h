@@ -1,8 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2021 by Alain Carlucci                                  *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -18,8 +15,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef M17_MODULATOR_H
-#define M17_MODULATOR_H
+#ifndef M17_INTEGER_MODULATOR_H
+#define M17_INTEGER_MODULATOR_H
 
 #ifndef __cplusplus
 #error This header is C++ only!
@@ -31,20 +28,22 @@
 
 /**
  * Modulator device for M17 protocol.
+ *
+ * This modulator uses integer arithmetic to perform 4FSK.
  */
-class M17Modulator
+class M17IntegerModulator
 {
 public:
 
     /**
      * Constructor.
      */
-    M17Modulator();
+    M17IntegerModulator();
 
     /**
      * Destructor.
      */
-    ~M17Modulator();
+    ~M17IntegerModulator();
 
     /**
      * Allocate buffers for baseband audio generation and initialise modulator.
@@ -91,12 +90,9 @@ private:
         std::array< int8_t, 4 > symbols;
 
         symbols[3] = LUT[value & 0x03];
-        value >>= 2;
-        symbols[2] = LUT[value & 0x03];
-        value >>= 2;
-        symbols[1] = LUT[value & 0x03];
-        value >>= 2;
-        symbols[0] = LUT[value & 0x03];
+        symbols[2] = LUT[(value >> 2) & 0x03];
+        symbols[1] = LUT[(value >> 4) & 0x03];
+        symbols[0] = LUT[(value >> 6) & 0x03];
 
         return symbols;
     }

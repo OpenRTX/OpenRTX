@@ -3,6 +3,7 @@
  *                         Niccolò Izzo IU2KIN,                            *
  *                         Silvano Seva IU2KWO,                            *
  *                         Frederik Saraci IU2NRO                          *
+ *                         Alain Carlucci                                  *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -132,6 +133,124 @@ private:
     const std::array< float, N >& taps;    ///< FIR filter coefficients.
     std::array< float, N >        hist;    ///< History of past inputs.
     size_t                        pos;     ///< Current position in history.
+};
+
+/**
+ * Class for FIR filter with configurable coefficients.
+ * Adapted from the original implementation by Rob Riggs, Mobilinkd LLC.
+ */
+template <size_t N>
+class LookupFir
+{
+public:
+    /**
+     * Constructor.
+     *
+     * @param taps: reference to a std::array of floating poing values
+     * representing the FIR filter coefficients.
+     */
+    LookupFir(const std::array<std::array<int32_t, N>, 5>& taps) : taps(taps), pos(0)
+    {
+        reset();
+    }
+
+    /**
+     * Destructor.
+     */
+    ~LookupFir() {}
+
+    /**
+     * Perform one step of the FIR filter, computing a new output value given
+     * the input value and the history of previous input values.
+     *
+     * @param input: FIR input value for the current time step.
+     * @return FIR output as a function of the current and past input values.
+     */
+    int32_t operator()(const uint8_t& input)
+    {
+        hist[pos] = input;
+
+        int32_t result = 0;
+
+        for (size_t i = 0; i < N; i++)
+        {
+            uint8_t idx = (pos + i) % 256;
+            result += taps[hist[idx]][i];
+        }
+
+        result >>= 3;
+
+        pos = (pos + 256 - 1) % 256;
+        return result;
+    }
+
+    /**
+     * Reset FIR history, clearing the memory of past values.
+     */
+    void reset()
+    {
+        hist.fill(0);
+        pos = 0;
+    }
+
+private:
+    const std::array<std::array<int32_t, N>, 5>& taps;  ///< FIR filter coeffs.
+    std::array<uint32_t, 256> hist;  ///< History of past inputs.
+    uint8_t pos;                     ///< Current position in history.
+};
+
+template <size_t N>
+class IntegerFir
+{
+public:
+    /**
+     * Constructor.
+     *
+     * @param taps: reference to a std::array of floating poing values
+     * representing the FIR filter coefficients.
+     */
+    IntegerFir(const std::array<int32_t, N>& taps) : taps(taps), pos(0) { reset(); }
+
+    /**
+     * Destructor.
+     */
+    ~IntegerFir() {}
+
+    /**
+     * Perform one step of the FIR filter, computing a new output value given
+     * the input value and the history of previous input values.
+     *
+     * @param input: FIR input value for the current time step.
+     * @return FIR output as a function of the current and past input values.
+     */
+    int32_t operator()(const int8_t& input)
+    {
+        hist[pos] = input;
+
+        int32_t result = 0;
+
+        for (size_t i = 0; i < N; i++)
+            result += hist[(pos + i) % 256] * taps[i];
+
+        result >>= 5;
+
+        pos = (pos + 256 - 1) % 256;
+        return result;
+    }
+
+    /**
+     * Reset FIR history, clearing the memory of past values.
+     */
+    void reset()
+    {
+        hist.fill(0);
+        pos = 0;
+    }
+
+private:
+    const std::array<int32_t, N>& taps;  ///< FIR filter coeffs.
+    std::array<int32_t, 256> hist;       ///< History of past inputs.
+    uint8_t pos;                         ///< Current position in history.
 };
 
 #endif // __cplusplus

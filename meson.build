@@ -38,6 +38,8 @@ openrtx_src = ['openrtx/src/state.c',
                'openrtx/src/memory_profiling.cpp',
                'openrtx/src/protocols/M17/M17Callsign.cpp',
                'openrtx/src/protocols/M17/M17Modulator.cpp',
+               'openrtx/src/protocols/M17/M17IntegerModulator.cpp',
+               'openrtx/src/protocols/M17/M17LookupModulator.cpp',
                'openrtx/src/protocols/M17/M17Transmitter.cpp',
                'openrtx/src/protocols/M17/M17LinkSetupFrame.cpp']
 
@@ -529,3 +531,6 @@ unit_test_src = openrtx_src + minmea_src + linux_platform_src
 
 dummy_test = executable('dummy', 'tests/unit/dummy.c')
 test('Dummy Unit Test', dummy_test)
+
+m17mod_test = executable('m17mod', 'tests/unit/test_m17mod.cpp')
+test('M17Mod Unit Test', m17mod_test)
