@@ -18,22 +18,22 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <interfaces/delays.h>
+#include <dsp.h>
 #include <interfaces/audio.h>
 #include <interfaces/audio_path.h>
 #include <interfaces/audio_stream.h>
+#include <interfaces/delays.h>
 #include <interfaces/platform.h>
-#include <dsp.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 int main()
 {
     platform_init();
 
-    static const size_t numSamples = 45*1024;       // 90kB
-    stream_sample_t *sampleBuf = ((stream_sample_t *) malloc(numSamples *
-                                                      sizeof(stream_sample_t)));
+    static const size_t numSamples = 45 * 1024;  // 90kB
+    stream_sample_t* sampleBuf =
+        ((stream_sample_t*)malloc(numSamples * sizeof(stream_sample_t)));
 
     audio_enableMic();
     streamId id = inputStream_start(SOURCE_MIC, PRIO_TX, sampleBuf, numSamples,
@@ -49,22 +49,22 @@ int main()
     sleepFor(10u, 0u);
 
     // Pre-processing gain
-    for(size_t i = 0; i < audio.len; i++) audio.data[i] <<= 3;
+    for (size_t i = 0; i < audio.len; i++) audio.data[i] <<= 3;
 
     // DC removal
     dsp_dcRemoval(audio.data, audio.len);
 
     // Post-processing gain
-    for(size_t i = 0; i < audio.len; i++) audio.data[i] *= 10;
+    for (size_t i = 0; i < audio.len; i++) audio.data[i] *= 10;
 
-
-    uint16_t *ptr = ((uint16_t *) audio.data);
-    for(size_t i = 0; i < audio.len; i++)
+    uint16_t* ptr = ((uint16_t*)audio.data);
+    for (size_t i = 0; i < audio.len; i++)
     {
         iprintf("%04x ", ptr[i]);
     }
 
-    while(1) ;
+    while (1)
+        ;
 
     return 0;
 }

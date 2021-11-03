@@ -18,8 +18,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/gpio.h>
 #include <hwconfig.h>
+#include <interfaces/gpio.h>
 #include <stdint.h>
 
 /*
@@ -29,7 +29,8 @@
 uint8_t spiFlash_SendRecv(uint8_t val)
 {
     SPI1->DR = val;
-    while((SPI1->SR & SPI_SR_RXNE) == 0) ;
+    while ((SPI1->SR & SPI_SR_RXNE) == 0)
+        ;
     return SPI1->DR;
 }
 
@@ -45,12 +46,11 @@ void spiFlash_init()
     RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
     __DSB();
 
-    SPI1->CR1 = SPI_CR1_SSM     /* Software managment of nCS */
-              | SPI_CR1_SSI     /* Force internal nCS        */
-              | SPI_CR1_BR_2    /* Fclock: 84MHz/64 = 1.3MHz */
-              | SPI_CR1_BR_0
-              | SPI_CR1_MSTR    /* Master mode               */
-              | SPI_CR1_SPE;    /* Enable peripheral         */
+    SPI1->CR1 = SPI_CR1_SSM                   /* Software managment of nCS */
+                | SPI_CR1_SSI                 /* Force internal nCS        */
+                | SPI_CR1_BR_2                /* Fclock: 84MHz/64 = 1.3MHz */
+                | SPI_CR1_BR_0 | SPI_CR1_MSTR /* Master mode               */
+                | SPI_CR1_SPE;                /* Enable peripheral         */
 }
 
 void spiFlash_terminate()

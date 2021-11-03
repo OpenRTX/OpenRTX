@@ -467,8 +467,5 @@ static const GFXglyph TomThumbGlyphs[] PROGMEM = {
 #endif                     /* (TOMTHUMB_USE_EXTENDED) */
 };
 
-static const GFXfont TomThumb PROGMEM = {(uint8_t *)TomThumbBitmaps,
-    (GFXglyph *)TomThumbGlyphs,
-    0x20,
-    0x7E,
-    6};
+static const GFXfont TomThumb PROGMEM = {
+    (uint8_t*)TomThumbBitmaps, (GFXglyph*)TomThumbGlyphs, 0x20, 0x7E, 6};

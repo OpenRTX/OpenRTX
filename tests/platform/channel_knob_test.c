@@ -18,11 +18,11 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdio.h>
-#include <interfaces/platform.h>
+#include <hwconfig.h>
 #include <interfaces/delays.h>
 #include <interfaces/gpio.h>
-#include <hwconfig.h>
+#include <interfaces/platform.h>
+#include <stdio.h>
 
 int main()
 {
@@ -31,10 +31,10 @@ int main()
     gpio_setMode(CH_SELECTOR_0, INPUT_PULL_UP);
     gpio_setMode(CH_SELECTOR_1, INPUT_PULL_UP);
 
-    while(1)
+    while (1)
     {
         iprintf("%d %d\r\n", gpio_readPin(CH_SELECTOR_0),
-                             gpio_readPin(CH_SELECTOR_1));
+                gpio_readPin(CH_SELECTOR_1));
         delayMs(1000);
     }
 

@@ -20,40 +20,41 @@
 
 #include <dsp.h>
 
-void dsp_pwmCompensate(audio_sample_t *buffer, size_t length)
+void dsp_pwmCompensate(audio_sample_t* buffer, size_t length)
 {
-    float u   = 0.0f;   // Current input value
-    float y   = 0.0f;   // Current output value
-    float uo  = 0.0f;   // u(k-1)
-    float uoo = 0.0f;   // u(k-2)
-    float yo  = 0.0f;   // y(k-1)
-    float yoo = 0.0f;   // y(k-2)
+    float u   = 0.0f;  // Current input value
+    float y   = 0.0f;  // Current output value
+    float uo  = 0.0f;  // u(k-1)
+    float uoo = 0.0f;  // u(k-2)
+    float yo  = 0.0f;  // y(k-1)
+    float yoo = 0.0f;  // y(k-2)
 
-    static constexpr float a =  4982680082321166792352.0f;
+    static constexpr float a = 4982680082321166792352.0f;
     static constexpr float b = -6330013275146484168000.0f;
-    static constexpr float c =  1871109008789062500000.0f;
-    static constexpr float d =  548027992248535162477.0f;
+    static constexpr float c = 1871109008789062500000.0f;
+    static constexpr float d = 548027992248535162477.0f;
     static constexpr float e = -24496793746948241250.0f;
-    static constexpr float f =  244617462158203125.0f;
+    static constexpr float f = 244617462158203125.0f;
 
     // Initialise filter with first two values, for smooth transient.
-    if(length <= 2) return;
-    uoo = static_cast< float >(buffer[0]);
-    uo  = static_cast< float >(buffer[1]);
+    if (length <= 2) return;
+    uoo = static_cast<float>(buffer[0]);
+    uo  = static_cast<float>(buffer[1]);
 
-    for(size_t i = 2; i < length; i++)
+    for (size_t i = 2; i < length; i++)
     {
-        u   = static_cast< float >(buffer[i]);
-        y   = (a/d)*u + (b/d)*uo + (c/d)*uoo - (e/d)*yo - (f/d)*yoo;
-        uoo = uo;
-        uo  = u;
-        yoo = yo;
-        yo  = y;
-        buffer[i] = static_cast< audio_sample_t >(y * 0.5f);
+        u = static_cast<float>(buffer[i]);
+        y = (a / d) * u + (b / d) * uo + (c / d) * uoo - (e / d) * yo -
+            (f / d) * yoo;
+        uoo       = uo;
+        uo        = u;
+        yoo       = yo;
+        yo        = y;
+        buffer[i] = static_cast<audio_sample_t>(y * 0.5f);
     }
 }
 
-void dsp_dcRemoval(audio_sample_t *buffer, size_t length)
+void dsp_dcRemoval(audio_sample_t* buffer, size_t length)
 {
     /*
      * Removal of DC component performed using an high-pass filter with
@@ -62,43 +63,41 @@ void dsp_dcRemoval(audio_sample_t *buffer, size_t length)
      * y(k) = u(k) - u(k-1) + 0.99*y(k-1)
      */
 
-    if(length < 2) return;
+    if (length < 2) return;
 
-    audio_sample_t uo = buffer[0];
-    audio_sample_t yo = 0;
+    audio_sample_t uo            = buffer[0];
+    audio_sample_t yo            = 0;
     static constexpr float alpha = 0.99f;
 
-    for(size_t i = 1; i < length; i++)
+    for (size_t i = 1; i < length; i++)
     {
-        float yold = static_cast< float >(yo) * alpha;
+        float yold       = static_cast<float>(yo) * alpha;
         audio_sample_t u = buffer[i];
-        buffer[i]  = u - uo + static_cast< audio_sample_t >(yold);
-        uo = u;
-        yo = buffer[i];
+        buffer[i]        = u - uo + static_cast<audio_sample_t>(yold);
+        uo               = u;
+        yo               = buffer[i];
     }
 }
 
-void dsp_invertPhase(audio_sample_t *buffer, uint16_t length)
+void dsp_invertPhase(audio_sample_t* buffer, uint16_t length)
 {
-    for(uint16_t i = 0; i < length; i++)
+    for (uint16_t i = 0; i < length; i++)
     {
         buffer[i] = -buffer[i];
     }
 }
 
-template<size_t order>
-void dsp_applyFIR(audio_sample_t *buffer,
-                  uint16_t length,
+template <size_t order>
+void dsp_applyFIR(audio_sample_t* buffer, uint16_t length,
                   std::array<float, order> taps)
 {
-    for(int i = length - 1; i >= 0; i--)
+    for (int i = length - 1; i >= 0; i--)
     {
         float acc = 0.0f;
-        for(uint16_t j = 0; j < order; j++)
+        for (uint16_t j = 0; j < order; j++)
         {
-            if (i >= j)
-                acc += buffer[i - j] * taps[j];
+            if (i >= j) acc += buffer[i - j] * taps[j];
         }
-        buffer[i] = (audio_sample_t) acc;
+        buffer[i] = (audio_sample_t)acc;
     }
 }

@@ -18,19 +18,21 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdio.h>
-#include <stdint.h>
-#include <sys/types.h>
 #include <W25Qx.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <sys/types.h>
 
-void printChunk(void *chunk)
+void printChunk(void* chunk)
 {
-    uint8_t *ptr = ((uint8_t *) chunk);
-    for(size_t i = 0; i < 16; i++) printf("%02x ", ptr[i]);
-    for(size_t i = 0; i < 16; i++)
+    uint8_t* ptr = ((uint8_t*)chunk);
+    for (size_t i = 0; i < 16; i++) printf("%02x ", ptr[i]);
+    for (size_t i = 0; i < 16; i++)
     {
-        if((ptr[i] > 0x22) && (ptr[i] < 0x7f)) printf("%c", ptr[i]);
-        else printf(".");
+        if ((ptr[i] > 0x22) && (ptr[i] < 0x7f))
+            printf("%c", ptr[i]);
+        else
+            printf(".");
     }
 }
 
@@ -41,7 +43,7 @@ void printSecurityRegister(uint32_t reg)
     W25Qx_readSecurityRegister(reg, secRegister, 256);
     W25Qx_sleep();
 
-    for(uint32_t addr = 0; addr < 256; addr += 16)
+    for (uint32_t addr = 0; addr < 256; addr += 16)
     {
         printf("\r\n%02lx: ", addr);
         printChunk(&(secRegister[addr]));
@@ -52,7 +54,7 @@ int main()
 {
     W25Qx_init();
 
-    while(1)
+    while (1)
     {
         getchar();
 

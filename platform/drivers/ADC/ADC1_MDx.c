@@ -15,11 +15,12 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/gpio.h>
+#include "ADC1_MDx.h"
+
 #include <hwconfig.h>
+#include <interfaces/gpio.h>
 #include <pthread.h>
 #include <stdlib.h>
-#include "ADC1_MDx.h"
 
 pthread_mutex_t adcMutex;
 
@@ -33,32 +34,28 @@ void adc1_init()
     /*
      * Configure GPIOs to analog input mode:
      */
-    gpio_setMode(AIN_VBAT,   INPUT_ANALOG);
+    gpio_setMode(AIN_VBAT, INPUT_ANALOG);
     gpio_setMode(AIN_VOLUME, INPUT_ANALOG);
-    #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MD9600)
-    gpio_setMode(AIN_MIC,   INPUT_ANALOG);
-    gpio_setMode(AIN_RSSI,  INPUT_ANALOG);
-    #if defined(PLATFORM_MD9600)
-    gpio_setMode(AIN_SW2,   INPUT_ANALOG);
-    gpio_setMode(AIN_SW1,   INPUT_ANALOG);
+#if defined(PLATFORM_MD3x0) || defined(PLATFORM_MD9600)
+    gpio_setMode(AIN_MIC, INPUT_ANALOG);
+    gpio_setMode(AIN_RSSI, INPUT_ANALOG);
+#if defined(PLATFORM_MD9600)
+    gpio_setMode(AIN_SW2, INPUT_ANALOG);
+    gpio_setMode(AIN_SW1, INPUT_ANALOG);
     gpio_setMode(AIN_RSSI2, INPUT_ANALOG);
     gpio_setMode(AIN_HTEMP, INPUT_ANALOG);
-    #endif
-    #endif
+#endif
+#endif
 
     /*
      * ADC clock is APB2 frequency divided by 8, giving 10.5MHz.
      * We set the sample time of each channel to 84 ADC cycles and we have that
      * a conversion takes 12 cycles: total conversion time is then of ~9us.
      */
-    ADC->CCR   |= ADC_CCR_ADCPRE;
-    ADC1->SMPR2 = ADC_SMPR2_SMP0_2
-                | ADC_SMPR2_SMP1_2
-                | ADC_SMPR2_SMP3_2
-                | ADC_SMPR2_SMP6_2
-                | ADC_SMPR2_SMP7_2
-                | ADC_SMPR2_SMP8_2
-                | ADC_SMPR2_SMP9_2;
+    ADC->CCR |= ADC_CCR_ADCPRE;
+    ADC1->SMPR2 = ADC_SMPR2_SMP0_2 | ADC_SMPR2_SMP1_2 | ADC_SMPR2_SMP3_2 |
+                  ADC_SMPR2_SMP6_2 | ADC_SMPR2_SMP7_2 | ADC_SMPR2_SMP8_2 |
+                  ADC_SMPR2_SMP9_2;
     ADC1->SMPR1 = ADC_SMPR1_SMP15_2;
 
     /*
@@ -74,20 +71,21 @@ void adc1_terminate()
 {
     pthread_mutex_destroy(&adcMutex);
 
-    ADC1->CR2    &= ~ADC_CR2_ADON;
+    ADC1->CR2 &= ~ADC_CR2_ADON;
     RCC->APB2ENR &= ~RCC_APB2ENR_ADC1EN;
     __DSB();
 }
 
 uint16_t adc1_getRawSample(uint8_t ch)
 {
-    if(ch > 15) return 0;
+    if (ch > 15) return 0;
 
     pthread_mutex_lock(&adcMutex);
 
     ADC1->SQR3 = ch;
     ADC1->CR2 |= ADC_CR2_SWSTART;
-    while((ADC1->SR & ADC_SR_EOC) == 0) ;
+    while ((ADC1->SR & ADC_SR_EOC) == 0)
+        ;
     uint16_t value = ADC1->DR;
 
     pthread_mutex_unlock(&adcMutex);
@@ -99,12 +97,12 @@ uint16_t adc1_getMeasurement(uint8_t ch)
 {
     /*
      * To avoid using floats, we convert the raw ADC sample to mV using 16.16
-     * fixed point math. The equation for conversion is (sample * 3300)/4096 but,
-     * since converting the raw ADC sample to 16.16 notation requires a left
-     * shift by 16 and dividing by 4096 is equivalent to shifting right by 12,
-     * we just shift left by four and then multiply by 3300.
-     * With respect to using floats, maximum error is -1mV.
+     * fixed point math. The equation for conversion is (sample * 3300)/4096
+     * but, since converting the raw ADC sample to 16.16 notation requires a
+     * left shift by 16 and dividing by 4096 is equivalent to shifting right by
+     * 12, we just shift left by four and then multiply by 3300. With respect to
+     * using floats, maximum error is -1mV.
      */
     uint32_t sample = (adc1_getRawSample(ch) << 4) * 3300;
-    return ((uint16_t) (sample >> 16));
+    return ((uint16_t)(sample >> 16));
 }

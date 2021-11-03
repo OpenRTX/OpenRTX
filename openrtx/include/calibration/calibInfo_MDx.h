@@ -45,8 +45,8 @@ typedef struct
     uint8_t freqAdjustHigh;
     uint8_t freqAdjustMid;
     uint8_t freqAdjustLow;
-    freq_t  rxFreq[9];
-    freq_t  txFreq[9];
+    freq_t rxFreq[9];
+    freq_t txFreq[9];
     uint8_t txHighPower[9];
     uint8_t txLowPower[9];
     uint8_t rxSensitivity[9];
@@ -71,14 +71,13 @@ typedef struct
     uint8_t rxQpartial[9];
     uint8_t analogSendIrange[9];
     uint8_t analogSendQrange[9];
-}
-md3x0Calib_t;
+} md3x0Calib_t;
 
 typedef struct
 {
     uint8_t freqAdjustMid;
-    freq_t  rxFreq[5];
-    freq_t  txFreq[5];
+    freq_t rxFreq[5];
+    freq_t txFreq[5];
     uint8_t txHighPower[5];
     uint8_t txMidPower[5];
     uint8_t txLowPower[5];
@@ -95,14 +94,13 @@ typedef struct
     uint8_t sendQrange[5];
     uint8_t analogSendIrange[5];
     uint8_t analogSendQrange[5];
-}
-VhfCalib_t;
+} VhfCalib_t;
 
 typedef struct
 {
     uint8_t freqAdjustMid;
-    freq_t  rxFreq[9];
-    freq_t  txFreq[9];
+    freq_t rxFreq[9];
+    freq_t txFreq[9];
     uint8_t txHighPower[9];
     uint8_t txMidPower[9];
     uint8_t txLowPower[9];
@@ -119,8 +117,7 @@ typedef struct
     uint8_t sendQrange[9];
     uint8_t analogSendIrange[9];
     uint8_t analogSendQrange[9];
-}
-UhfCalib_t;
+} UhfCalib_t;
 
 /**
  * \brief Calibration data for MD-UV3x0.
@@ -135,7 +132,6 @@ typedef struct
     uint8_t rssi4;
     VhfCalib_t vhfCal;
     UhfCalib_t uhfCal;
-}
-mduv3x0Calib_t;
+} mduv3x0Calib_t;
 
 #endif /* CALIBINFO_MDX_H */

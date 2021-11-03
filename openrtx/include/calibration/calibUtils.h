@@ -39,13 +39,12 @@ extern "C" {
  * @param param: pointer to the vector containing the values for the calibration
  * parameter, it must have the same length of the one containing the frequencies
  * of calibration points.
- * @param elems: number of elements of both the vectors for calibration parameter
- * and frequencies.
+ * @param elems: number of elements of both the vectors for calibration
+ * parameter and frequencies.
  * @return value for the calibration parameter at the given frequency point.
  */
-uint8_t interpCalParameter(const freq_t freq, const freq_t *calPoints,
-                           const uint8_t *param, const uint8_t elems);
-
+uint8_t interpCalParameter(const freq_t freq, const freq_t* calPoints,
+                           const uint8_t* param, const uint8_t elems);
 
 #ifdef __cplusplus
 }

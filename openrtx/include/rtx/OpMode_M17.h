@@ -21,9 +21,11 @@
 #ifndef OPMODE_M17_H
 #define OPMODE_M17_H
 
-#include <M17/M17Transmitter.h>
 #include <M17/M17Modulator.h>
+#include <M17/M17Transmitter.h>
+
 #include <array>
+
 #include "OpMode.h"
 
 /**
@@ -31,8 +33,7 @@
  */
 class OpMode_M17 : public OpMode
 {
-public:
-
+   public:
     /**
      * Constructor.
      */
@@ -66,12 +67,13 @@ public:
      * Application code has to call this function periodically, to ensure proper
      * functionality.
      *
-     * @param status: pointer to the rtxStatus_t structure containing the current
-     * RTX status. Internal FSM may change the current value of the opStatus flag.
-     * @param newCfg: flag used inform the internal FSM that a new RTX configuration
-     * has been applied.
+     * @param status: pointer to the rtxStatus_t structure containing the
+     * current RTX status. Internal FSM may change the current value of the
+     * opStatus flag.
+     * @param newCfg: flag used inform the internal FSM that a new RTX
+     * configuration has been applied.
      */
-    virtual void update(rtxStatus_t *const status, const bool newCfg) override;
+    virtual void update(rtxStatus_t* const status, const bool newCfg) override;
 
     /**
      * Get the mode identifier corresponding to the OpMode class.
@@ -83,8 +85,7 @@ public:
         return M17;
     }
 
-private:
-
+   private:
     /**
      * Send an M17 frame over the air.
      *
@@ -93,9 +94,9 @@ private:
      */
     void sendData(const bool lastFrame = false);
 
-    bool enterRx;                ///< Flag for RX management.
-    M17Modulator   modulator;    ///< M17 modulator.
-    M17Transmitter m17Tx;        ///< M17 transmission manager.
+    bool enterRx;            ///< Flag for RX management.
+    M17Modulator modulator;  ///< M17 modulator.
+    M17Transmitter m17Tx;    ///< M17 transmission manager.
 };
 
 #endif /* OPMODE_M17_H */

@@ -18,24 +18,25 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdio.h>
-#include <stdint.h>
-#include <interfaces/keyboard.h>
 #include <SDL2/SDL.h>
+#include <interfaces/keyboard.h>
+#include <stdint.h>
+#include <stdio.h>
 
 extern keyboard_t shellkeyq_get();
 
 void kbd_init()
 {
 }
-keyboard_t kbd_getKeys() {
+keyboard_t kbd_getKeys()
+{
     keyboard_t keys = 0;
     SDL_PumpEvents();
 
-    //this pulls in emulated keypresses from the command shell
+    // this pulls in emulated keypresses from the command shell
     keys |= shellkeyq_get();
-    
-    const uint8_t *state = SDL_GetKeyboardState(NULL);
+
+    const uint8_t* state = SDL_GetKeyboardState(NULL);
     if (state[SDL_SCANCODE_0]) keys |= KEY_0;
     if (state[SDL_SCANCODE_1]) keys |= KEY_1;
     if (state[SDL_SCANCODE_2]) keys |= KEY_2;
@@ -60,4 +61,3 @@ keyboard_t kbd_getKeys() {
     if (state[SDL_SCANCODE_PAGEDOWN]) keys |= KNOB_RIGHT;
     return keys;
 }
-

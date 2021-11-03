@@ -25,9 +25,9 @@
 /**
  * Low-level driver for correct handling of channel selector knobs connected to
  * a quadrature encoder.
- * This header file only provides the API for driver initialisation and shutdown,
- * while the readout of current encoder position is provided by target-specific
- * sources by implementating platform_getChSelector().
+ * This header file only provides the API for driver initialisation and
+ * shutdown, while the readout of current encoder position is provided by
+ * target-specific sources by implementating platform_getChSelector().
  */
 
 /**

@@ -35,16 +35,16 @@
  *
  * \param data: input byte array.
  */
-template < size_t N >
-void interleave(std::array< uint8_t, N >& data)
+template <size_t N>
+void interleave(std::array<uint8_t, N>& data)
 {
-    std::array< uint8_t, N > interleaved;
+    std::array<uint8_t, N> interleaved;
 
     static constexpr size_t F1 = 45;
     static constexpr size_t F2 = 92;
-    static constexpr size_t NB = N*8;
+    static constexpr size_t NB = N * 8;
 
-    for(size_t i = 0; i < NB; i++)
+    for (size_t i = 0; i < NB; i++)
     {
         size_t index = ((F1 * i) + (F2 * i * i)) % NB;
         setBit(interleaved, index, getBit(data, i));
@@ -54,22 +54,22 @@ void interleave(std::array< uint8_t, N >& data)
 }
 
 /**
- * Perform the deinterleaving operation on a block of data previously interleaved
- * using the quadratic permutation polynomial from M17 protocol specification.
- * Polynomial used is P(x) = 45*x + 92*x^2.
+ * Perform the deinterleaving operation on a block of data previously
+ * interleaved using the quadratic permutation polynomial from M17 protocol
+ * specification. Polynomial used is P(x) = 45*x + 92*x^2.
  *
  * \param data: input byte array.
  */
-template < size_t N >
-void deinterleave(std::array< uint8_t, N >& data)
+template <size_t N>
+void deinterleave(std::array<uint8_t, N>& data)
 {
-    std::array< uint8_t, N > deinterleaved;
+    std::array<uint8_t, N> deinterleaved;
 
     static constexpr size_t F1 = 45;
     static constexpr size_t F2 = 92;
-    static constexpr size_t NB = N*8;
+    static constexpr size_t NB = N * 8;
 
-    for(size_t i = 0; i < NB; i++)
+    for (size_t i = 0; i < NB; i++)
     {
         size_t index = ((F1 * i) + (F2 * i * i)) % NB;
         setBit(deinterleaved, i, getBit(data, index));

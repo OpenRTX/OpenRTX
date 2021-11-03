@@ -37,20 +37,20 @@
 #define GPIOK "PK"
 
 /* Signalling LEDs */
-#define GREEN_LED  "GREEN_LED",0
-#define RED_LED    "RED_LED",1
+#define GREEN_LED "GREEN_LED", 0
+#define RED_LED "RED_LED", 1
 
 /* Analog inputs */
-#define AIN_VOLUME "AIN_VOLUME",0
-#define AIN_VBAT   "AIN_VBAT",1
-#define AIN_MIC    "AIN_MIC",3
-#define AIN_RSSI   "AIN_RSSI",0
+#define AIN_VOLUME "AIN_VOLUME", 0
+#define AIN_VBAT "AIN_VBAT", 1
+#define AIN_MIC "AIN_MIC", 3
+#define AIN_RSSI "AIN_RSSI", 0
 
 /* Channel selection rotary encoder */
-#define CH_SELECTOR_0 "CH_SELECTOR_0",14
-#define CH_SELECTOR_1 "CH_SELECTOR_1",15
-#define CH_SELECTOR_2 "CH_SELECTOR_2",10
-#define CH_SELECTOR_3 "CH_SELECTOR_3",11
+#define CH_SELECTOR_0 "CH_SELECTOR_0", 14
+#define CH_SELECTOR_1 "CH_SELECTOR_1", 15
+#define CH_SELECTOR_2 "CH_SELECTOR_2", 10
+#define CH_SELECTOR_3 "CH_SELECTOR_3", 11
 
 /* Push-to-talk switch */
-#define PTT_SW "PTT_SW",11
+#define PTT_SW "PTT_SW", 11

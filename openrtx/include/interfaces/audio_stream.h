@@ -23,6 +23,7 @@
 
 #include <stdint.h>
 #include <sys/types.h>
+
 #include "audio_path.h"
 
 #ifdef __cplusplus
@@ -32,21 +33,22 @@ extern "C" {
 #endif
 
 typedef int16_t stream_sample_t;
-typedef int8_t  streamId;
+typedef int8_t streamId;
 
 enum BufMode
 {
-    BUF_LINEAR,        ///< Linear buffer mode, conversion stops when full.
-    BUF_CIRC,          ///< Circular buffer mode, conversion never stops, thread woken up when full.
-    BUF_CIRC_DOUBLE    ///< Circular double buffer mode, conversion never stops, thread woken up whenever half of the buffer is full.
+    BUF_LINEAR,  ///< Linear buffer mode, conversion stops when full.
+    BUF_CIRC,    ///< Circular buffer mode, conversion never stops, thread woken
+                 ///< up when full.
+    BUF_CIRC_DOUBLE  ///< Circular double buffer mode, conversion never stops,
+                     ///< thread woken up whenever half of the buffer is full.
 };
 
 typedef struct
 {
-    stream_sample_t *data;
+    stream_sample_t* data;
     size_t len;
-}
-dataBlock_t;
+} dataBlock_t;
 
 /**
  * Start the acquisition of an incoming audio stream, also opening the
@@ -62,14 +64,13 @@ dataBlock_t;
  * @param bufLength: length of the buffer, in elements.
  * @param mode: buffer management mode.
  * @param sampleRate: sample rate, in Hz.
- * @return a unique identifier for the stream or -1 if the stream could not be opened.
+ * @return a unique identifier for the stream or -1 if the stream could not be
+ * opened.
  */
 streamId inputStream_start(const enum AudioSource source,
                            const enum AudioPriority prio,
-                           stream_sample_t * const buf,
-                           const size_t bufLength,
-                           const enum BufMode mode,
-                           const uint32_t sampleRate);
+                           stream_sample_t* const buf, const size_t bufLength,
+                           const enum BufMode mode, const uint32_t sampleRate);
 
 /**
  * Get a chunk of data from an already opened input stream, blocking function.
@@ -78,15 +79,16 @@ streamId inputStream_start(const enum AudioSource source,
  *
  * @param id: identifier of the stream from which data is get.
  * @return dataBlock_t containing a pointer to the chunk head and its length. If
- * another thread is pending on this function, it returns immediately a dataBlock_t
- * cointaining < NULL, 0 >.
+ * another thread is pending on this function, it returns immediately a
+ * dataBlock_t cointaining < NULL, 0 >.
  */
 dataBlock_t inputStream_getData(streamId id);
 
 /**
- * Release the current input stream, allowing for a new call of startInputStream.
- * If this function is called when sampler is running, acquisition is stopped and
- * any thread waiting on getData() is woken up and given a partial result.
+ * Release the current input stream, allowing for a new call of
+ * startInputStream. If this function is called when sampler is running,
+ * acquisition is stopped and any thread waiting on getData() is woken up and
+ * given a partial result.
  *
  * @param id: identifier of the stream to be stopped
  */
@@ -107,12 +109,12 @@ void inputStream_stop(streamId id);
  * @param buf: buffer containing the audio samples.
  * @param length: length of the buffer, in elements.
  * @param sampleRate: sample rate in Hz.
- * @return a unique identifier for the stream or -1 if the stream could not be opened.
+ * @return a unique identifier for the stream or -1 if the stream could not be
+ * opened.
  */
 streamId outputStream_start(const enum AudioSink destination,
                             const enum AudioPriority prio,
-                            stream_sample_t * const buf,
-                            const size_t length,
+                            stream_sample_t* const buf, const size_t length,
                             const uint32_t sampleRate);
 
 /**
@@ -131,17 +133,17 @@ void outputStream_stop(streamId id);
  * new data acquisition.
  * Application code MUST ensure that the template parameter specifying the size
  * of the returned std::array matches the size of the expected buffer, i.e.
- * if acquisition is configured as double circular buffer, the template parameter
- * must be set to one half of the buffer passed to inputStream_start.
+ * if acquisition is configured as double circular buffer, the template
+ * parameter must be set to one half of the buffer passed to inputStream_start.
  * If there is a mismatch between the size of the std::array and the size of the
  * data block returned (which is deterministic), a nullptr is returned.
  *
  * @param id: identifier of the stream to get data from.
- * @return std::array pointer containing the acquired samples, nullptr if another
- * thread is pending on this function.
+ * @return std::array pointer containing the acquired samples, nullptr if
+ * another thread is pending on this function.
  */
 template <size_t N>
-std::array<stream_sample_t, N> *inputStream_getData(streamId id)
+std::array<stream_sample_t, N>* inputStream_getData(streamId id)
 {
     /*
      * Call corresponding C API then use placement new to obtain a std::array
@@ -150,7 +152,7 @@ std::array<stream_sample_t, N> *inputStream_getData(streamId id)
      * mismatch.
      */
     dataBlock_t buffer = inputStream_getData(id);
-    if(buffer.len != N) return nullptr;
+    if (buffer.len != N) return nullptr;
     return new (buffer.data) std::array<stream_sample_t, N>;
 }
 

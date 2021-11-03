@@ -21,8 +21,8 @@
 #ifndef HRC6000_WRAPPER_H
 #define HRC6000_WRAPPER_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -94,4 +94,4 @@ void C6000_stopAnalogTx();
 }
 #endif
 
-#endif // HRC6000_WRAPPER_H
+#endif  // HRC6000_WRAPPER_H

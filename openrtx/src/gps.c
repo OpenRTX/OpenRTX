@@ -17,36 +17,34 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/gps.h>
 #include <gps.h>
+#include <interfaces/gps.h>
 #include <minmea.h>
-#include <stdio.h>
 #include <state.h>
-#include <string.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
 
 #define KNOTS2KMH 1.852f
 
 /**
  * This function parses a GPS NMEA sentence and updates radio state
  */
-void gps_taskFunc(char *line, __attribute__((unused)) int len, state_t *state)
+void gps_taskFunc(char* line, __attribute__((unused)) int len, state_t* state)
 {
-    char nmea_id[3] = { 0 };
+    char nmea_id[3] = {0};
 
     // Little mechanism to ensure that RTC is synced with GPS time only once.
     static bool isRtcSyncronised = false;
-    if(!state->settings.gps_set_time)
+    if (!state->settings.gps_set_time)
     {
         isRtcSyncronised = false;
     }
 
-    if (!minmea_talker_id(nmea_id, line))
-        return;
+    if (!minmea_talker_id(nmea_id, line)) return;
 
     // Discard BeiDou sentences as we currently don't support it
-    if (!strncmp(nmea_id, "BD", 3))
-        return;
+    if (!strncmp(nmea_id, "BD", 3)) return;
 
     switch (minmea_sentence_id(line, false))
     {
@@ -55,39 +53,41 @@ void gps_taskFunc(char *line, __attribute__((unused)) int len, state_t *state)
             struct minmea_sentence_rmc frame;
             if (minmea_parse_rmc(&frame, line))
             {
-                state->gps_data.latitude = minmea_tocoord(&frame.latitude);
+                state->gps_data.latitude  = minmea_tocoord(&frame.latitude);
                 state->gps_data.longitude = minmea_tocoord(&frame.longitude);
-                state->gps_data.timestamp.hour = frame.time.hours;
+                state->gps_data.timestamp.hour   = frame.time.hours;
                 state->gps_data.timestamp.minute = frame.time.minutes;
                 state->gps_data.timestamp.second = frame.time.seconds;
-                state->gps_data.timestamp.day = 0;
-                state->gps_data.timestamp.date = frame.date.day;
-                state->gps_data.timestamp.month = frame.date.month;
-                state->gps_data.timestamp.year = frame.date.year;
+                state->gps_data.timestamp.day    = 0;
+                state->gps_data.timestamp.date   = frame.date.day;
+                state->gps_data.timestamp.month  = frame.date.month;
+                state->gps_data.timestamp.year   = frame.date.year;
             }
 
             // Synchronize RTC with GPS UTC clock, only when fix is done
-            if((state->settings.gps_set_time) &&
-               (state->gps_data.fix_quality > 0) && (!isRtcSyncronised))
+            if ((state->settings.gps_set_time) &&
+                (state->gps_data.fix_quality > 0) && (!isRtcSyncronised))
             {
                 rtc_setTime(state->gps_data.timestamp);
                 isRtcSyncronised = true;
             }
 
             state->gps_data.tmg_true = minmea_tofloat(&frame.course);
-            state->gps_data.speed = minmea_tofloat(&frame.speed) * KNOTS2KMH;
-        } break;
+            state->gps_data.speed    = minmea_tofloat(&frame.speed) * KNOTS2KMH;
+        }
+        break;
 
         case MINMEA_SENTENCE_GGA:
         {
             struct minmea_sentence_gga frame;
             if (minmea_parse_gga(&frame, line))
             {
-                state->gps_data.fix_quality = frame.fix_quality;
+                state->gps_data.fix_quality        = frame.fix_quality;
                 state->gps_data.satellites_tracked = frame.satellites_tracked;
                 state->gps_data.altitude = minmea_tofloat(&frame.altitude);
             }
-        } break;
+        }
+        break;
 
         case MINMEA_SENTENCE_GSA:
         {
@@ -104,7 +104,8 @@ void gps_taskFunc(char *line, __attribute__((unused)) int len, state_t *state)
                     }
                 }
             }
-        } break;
+        }
+        break;
 
         case MINMEA_SENTENCE_GSV:
         {
@@ -123,12 +124,15 @@ void gps_taskFunc(char *line, __attribute__((unused)) int len, state_t *state)
                 {
                     int index = 4 * (frame.msg_nr - 1) + i;
                     state->gps_data.satellites[index].id = frame.sats[i].nr;
-                    state->gps_data.satellites[index].elevation = frame.sats[i].elevation;
-                    state->gps_data.satellites[index].azimuth = frame.sats[i].azimuth;
+                    state->gps_data.satellites[index].elevation =
+                        frame.sats[i].elevation;
+                    state->gps_data.satellites[index].azimuth =
+                        frame.sats[i].azimuth;
                     state->gps_data.satellites[index].snr = frame.sats[i].snr;
                 }
             }
-        } break;
+        }
+        break;
 
         case MINMEA_SENTENCE_VTG:
         {
@@ -136,20 +140,28 @@ void gps_taskFunc(char *line, __attribute__((unused)) int len, state_t *state)
             if (minmea_parse_vtg(&frame, line))
             {
                 state->gps_data.speed = minmea_tofloat(&frame.speed_kph);
-                state->gps_data.tmg_mag = minmea_tofloat(&frame.magnetic_track_degrees);
-                state->gps_data.tmg_true = minmea_tofloat(&frame.true_track_degrees);
+                state->gps_data.tmg_mag =
+                    minmea_tofloat(&frame.magnetic_track_degrees);
+                state->gps_data.tmg_true =
+                    minmea_tofloat(&frame.true_track_degrees);
             }
-        } break;
+        }
+        break;
 
         // Ignore this message as we take data from RMC
-        case MINMEA_SENTENCE_GLL: break;
+        case MINMEA_SENTENCE_GLL:
+            break;
 
         // These messages are never sent by the Jumpstar JS-M710 Module
-        case MINMEA_SENTENCE_GST: break;
-        case MINMEA_SENTENCE_ZDA: break;
+        case MINMEA_SENTENCE_GST:
+            break;
+        case MINMEA_SENTENCE_ZDA:
+            break;
 
         // Error handling
-        case MINMEA_INVALID: break;
-        case MINMEA_UNKNOWN: break;
+        case MINMEA_INVALID:
+            break;
+        case MINMEA_UNKNOWN:
+            break;
     }
 }

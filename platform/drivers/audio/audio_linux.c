@@ -18,9 +18,9 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <hwconfig.h>
 #include <interfaces/audio.h>
 #include <interfaces/gpio.h>
-#include <hwconfig.h>
 
 void audio_init()
 {

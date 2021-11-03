@@ -18,26 +18,27 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <sys/types.h>
+
 #include "W25Qx.h"
 
-
-//static const uint32_t sector_address = 0x80000;
-static const uint32_t block_address  = 0x3f000;
-
+// static const uint32_t sector_address = 0x80000;
+static const uint32_t block_address = 0x3f000;
 
 uint8_t block[256] = {0};
 
-void printChunk(void *chunk)
+void printChunk(void* chunk)
 {
-    uint8_t *ptr = ((uint8_t *) chunk);
-    for(size_t i = 0; i < 16; i++) printf("%02x ", ptr[i]);
-    for(size_t i = 0; i < 16; i++)
+    uint8_t* ptr = ((uint8_t*)chunk);
+    for (size_t i = 0; i < 16; i++) printf("%02x ", ptr[i]);
+    for (size_t i = 0; i < 16; i++)
     {
-        if((ptr[i] > 0x22) && (ptr[i] < 0x7f)) printf("%c", ptr[i]);
-        else printf(".");
+        if ((ptr[i] > 0x22) && (ptr[i] < 0x7f))
+            printf("%c", ptr[i]);
+        else
+            printf(".");
     }
 }
 
@@ -46,35 +47,34 @@ int main()
     W25Qx_init();
     W25Qx_wakeup();
 
-    while(1)
+    while (1)
     {
         getchar();
 
         printf("Attempting write... ");
 
-        for(size_t i = 0; i < 256; i++)
+        for (size_t i = 0; i < 256; i++)
         {
-            //block[i] = 'a' + (i % 16);
+            // block[i] = 'a' + (i % 16);
             block[i] = 0x00;
         }
 
+        for (uint32_t i = 0; i < 16; i++)
+            W25Qx_writePage(block_address + i * 256, block, 256);
 
-        for(uint32_t i = 0; i < 16; i++)
-            W25Qx_writePage(block_address+i * 256, block, 256);
-
-        for(uint32_t pos = 0; pos < 0x1000; pos += 16)
+        for (uint32_t pos = 0; pos < 0x1000; pos += 16)
         {
             uint8_t buf[16];
-            (void) W25Qx_readData(block_address + pos, buf, 16);
+            (void)W25Qx_readData(block_address + pos, buf, 16);
             printf("\r\n%02lx: ", block_address + pos);
             printChunk(buf);
         }
 
-        //printf("\r\n\r\nAttempting erase... ");
-        //bool ok = W25Qx_eraseSector(sector_address);
-        //printf("%d\r\n", ok);
+        // printf("\r\n\r\nAttempting erase... ");
+        // bool ok = W25Qx_eraseSector(sector_address);
+        // printf("%d\r\n", ok);
 
-        //for(uint32_t pos = 0; pos < 0xFF; pos += 16)
+        // for(uint32_t pos = 0; pos < 0xFF; pos += 16)
         //{
         //    uint8_t buf[16];
         //    (void) W25Qx_readData(block_address + pos, buf, 16);

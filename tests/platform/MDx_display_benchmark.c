@@ -18,13 +18,13 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/graphics.h>
-#include <interfaces/platform.h>
-#include <interfaces/keyboard.h>
 #include <hwconfig.h>
+#include <interfaces/graphics.h>
+#include <interfaces/keyboard.h>
+#include <interfaces/platform.h>
+#include <os.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <os.h>
 
 uint64_t benchmark(uint32_t n);
 
@@ -54,33 +54,32 @@ int main()
 
     uint32_t numIterations = 128;
 
-    while(1)
+    while (1)
     {
         getchar();
 
         uint64_t tot_ticks = benchmark(numIterations);
 
-        float totalTime_s = ((float)(tot_ticks * clkDivider))/168000000.0f;
+        float totalTime_s = ((float)(tot_ticks * clkDivider)) / 168000000.0f;
         printf("Average values over %ld iterations:\r\n", numIterations);
-        printf("- %lld ticks\r\n- %f ms\r\n", tot_ticks, totalTime_s*1000.0f);
-
+        printf("- %lld ticks\r\n- %f ms\r\n", tot_ticks, totalTime_s * 1000.0f);
     }
 }
 
 uint64_t benchmark(uint32_t n)
 {
     uint64_t totalTime = 0;
-    uint32_t dummy = 0;
+    uint32_t dummy     = 0;
 
-    for(uint32_t i = 0; i < n; i++)
+    for (uint32_t i = 0; i < n; i++)
     {
         gfx_clearScreen();
-        point_t origin = {0, i % 128};
-        color_t color_red = {255, 0, 0, 255};
+        point_t origin      = {0, i % 128};
+        color_t color_red   = {255, 0, 0, 255};
         color_t color_white = {255, 255, 255, 255};
         gfx_drawRect(origin, 160, 20, color_red, 1);
-        gfx_print(origin, buffer, FONT_SIZE_24PT, TEXT_ALIGN_LEFT,
-                  color_white, "KEK");
+        gfx_print(origin, buffer, FONT_SIZE_24PT, TEXT_ALIGN_LEFT, color_white,
+                  "KEK");
 
         dummy += kbd_getKeys();
 
@@ -90,5 +89,5 @@ uint64_t benchmark(uint32_t n)
         totalTime += TIM9->CNT;
     }
 
-    return totalTime/n;
+    return totalTime / n;
 }

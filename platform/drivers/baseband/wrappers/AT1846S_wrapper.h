@@ -21,9 +21,9 @@
 #ifndef AT1846S_WRAPPER_H
 #define AT1846S_WRAPPER_H
 
-#include <stdint.h>
-#include <stdbool.h>
 #include <datatypes.h>
+#include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,8 +42,7 @@ typedef enum
 {
     AT1846S_BW_12P5 = 0,
     AT1846S_BW_25   = 1
-}
-AT1846S_bw_t;
+} AT1846S_bw_t;
 
 /**
  * \enum AT1846S_op_t Enumeration type defining the possible operating mode
@@ -53,8 +52,7 @@ typedef enum
 {
     AT1846S_OP_FM  = 0,
     AT1846S_OP_DMR = 1
-}
-AT1846S_op_t;
+} AT1846S_op_t;
 
 /**
  * \enum AT1846S_func_t Enumeration type defining the AT1846S functional modes.
@@ -64,8 +62,7 @@ typedef enum
     AT1846S_OFF = 0,
     AT1846S_RX  = 1,
     AT1846S_TX  = 2,
-}
-AT1846S_func_t;
+} AT1846S_func_t;
 
 /**
  * Initialise the AT146S chip.

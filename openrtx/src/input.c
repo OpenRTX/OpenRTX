@@ -17,10 +17,10 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <input.h>
 #include <interfaces/keyboard.h>
 #include <inttypes.h>
 #include <stdbool.h>
-#include <input.h>
 
 bool input_isNumberPressed(kbd_msg_t msg)
 {
@@ -30,7 +30,6 @@ bool input_isNumberPressed(kbd_msg_t msg)
 uint8_t input_getPressedNumber(kbd_msg_t msg)
 {
     uint32_t masked_input = msg.keys & kbd_num_mask;
-    if (masked_input == 0)
-        return 0;
+    if (masked_input == 0) return 0;
     return __builtin_ctz(msg.keys & kbd_num_mask);
 }

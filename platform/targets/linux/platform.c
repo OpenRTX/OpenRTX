@@ -15,17 +15,18 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <interfaces/gpio.h>
-#include <stdio.h>
-#include "emulator.h"
 #include <SDL2/SDL.h>
+#include <interfaces/gpio.h>
+#include <interfaces/platform.h>
+#include <stdio.h>
+
+#include "emulator.h"
 
 hwInfo_t hwInfo;
 
 void platform_init()
 {
-    //printf("Platform init\n");
+    // printf("Platform init\n");
     // Fill hwinfo struct
     memset(&hwInfo, 0x00, sizeof(hwInfo));
     snprintf(hwInfo.name, 10, "Linux");
@@ -47,50 +48,46 @@ void platform_terminate()
 
 void platform_setBacklightLevel(__attribute__((unused)) uint8_t level)
 {
-    //printf("platform_setBacklightLevel(%u)\n", level);
+    // printf("platform_setBacklightLevel(%u)\n", level);
 }
 
 // Simulate a fully charged lithium battery
 uint16_t platform_getVbat()
 {
     float voltage = Radio_State.Vbat;
-    if(voltage < 0.0f)  voltage = 0.0f;
-    if(voltage > 65.0f) voltage = 65.0f;
-    return ((uint16_t) voltage);
+    if (voltage < 0.0f) voltage = 0.0f;
+    if (voltage > 65.0f) voltage = 65.0f;
+    return ((uint16_t)voltage);
 }
-
 
 uint8_t platform_getMicLevel()
 {
     float level = Radio_State.micLevel;
-    if(level < 0.0f)   level = 0.0f;
-    if(level > 255.0f) level = 255.0f;
+    if (level < 0.0f) level = 0.0f;
+    if (level > 255.0f) level = 255.0f;
 
-    return ((uint8_t) level);
+    return ((uint8_t)level);
 }
-
 
 uint8_t platform_getVolumeLevel()
 {
     float level = Radio_State.volumeLevel;
-    if(level < 0.0f)   level = 0.0f;
-    if(level > 255.0f) level = 255.0f;
+    if (level < 0.0f) level = 0.0f;
+    if (level > 255.0f) level = 255.0f;
 
-    return ((uint8_t) level);
+    return ((uint8_t)level);
 }
-
 
 int8_t platform_getChSelector()
 {
     return Radio_State.chSelector;
 }
 
-
 bool platform_getPttStatus()
 {
     // Read P key status from SDL
     SDL_PumpEvents();
-    const uint8_t *state = SDL_GetKeyboardState(NULL);
+    const uint8_t* state = SDL_GetKeyboardState(NULL);
     if (state[SDL_SCANCODE_P])
         return true;
     else
@@ -106,8 +103,8 @@ bool platform_pwrButtonStatus()
 void platform_ledOn(__attribute__((unused)) led_t led)
 {
     // Commented to reduce verbosity on Linux
-    //char* str;
-    //switch(led)
+    // char* str;
+    // switch(led)
     //{
     //    case 0:
     //        str = "GREEN";
@@ -122,34 +119,31 @@ void platform_ledOn(__attribute__((unused)) led_t led)
     //        str = "WHITE";
     //        break;
     //}
-    //printf("platform_ledOn(%s)\n", str);
+    // printf("platform_ledOn(%s)\n", str);
 }
-
 
 void platform_ledOff(__attribute__((unused)) led_t led)
 {
     // Commented to reduce verbosity on Linux
-    //printf("platform_ledOff()\n");
+    // printf("platform_ledOff()\n");
 }
-
 
 void platform_beepStart(uint16_t freq)
 {
     printf("platform_beepStart(%u)\n", freq);
 }
 
-
 void platform_beepStop()
 {
     printf("platform_beepStop()\n");
 }
 
-const void *platform_getCalibrationData()
+const void* platform_getCalibrationData()
 {
     return NULL;
 }
 
-const hwInfo_t *platform_getHwInfo()
+const hwInfo_t* platform_getHwInfo()
 {
     return &hwInfo;
 }

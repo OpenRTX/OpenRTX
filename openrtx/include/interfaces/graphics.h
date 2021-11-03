@@ -20,20 +20,20 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <interfaces/display.h>
-#include <state.h>
-#include <gfxfont.h>
-#include <TomThumb.h>
-#include <FreeSans6pt7b.h>
-#include <FreeSans8pt7b.h>
-#include <FreeSans9pt7b.h>
 #include <FreeSans10pt7b.h>
 #include <FreeSans12pt7b.h>
 #include <FreeSans16pt7b.h>
 #include <FreeSans18pt7b.h>
 #include <FreeSans24pt7b.h>
+#include <FreeSans6pt7b.h>
+#include <FreeSans8pt7b.h>
+#include <FreeSans9pt7b.h>
+#include <TomThumb.h>
+#include <gfxfont.h>
+#include <interfaces/display.h>
+#include <state.h>
+#include <stdbool.h>
+#include <stdint.h>
 
 /**
  * Standard high-level graphic interface for all display types.
@@ -105,48 +105,48 @@ typedef enum
 /**
  * Selection of the fonts, ordered by the fontSize_t enum.
  */
-static GFXfont const fonts[] = { TomThumb,           // 5pt
-                                 FreeSans6pt7b,      // 6pt
-                                 FreeSans8pt7b,      // 8pt
-                                 FreeSans9pt7b,      // 9pt
-                                 FreeSans10pt7b,     // 10pt
-                                 FreeSans12pt7b,     // 12pt
-                                 FreeSans16pt7b,     // 16pt
-                                 FreeSans18pt7b,     // 16pt
-                                 FreeSans24pt7b };   // 24pt
+static GFXfont const fonts[] = {TomThumb,         // 5pt
+                                FreeSans6pt7b,    // 6pt
+                                FreeSans8pt7b,    // 8pt
+                                FreeSans9pt7b,    // 9pt
+                                FreeSans10pt7b,   // 10pt
+                                FreeSans12pt7b,   // 12pt
+                                FreeSans16pt7b,   // 16pt
+                                FreeSans18pt7b,   // 16pt
+                                FreeSans24pt7b};  // 24pt
 
 /**
- * This function calls the correspondent method of the low level interface display.h
- * It initializes the display.
+ * This function calls the correspondent method of the low level interface
+ * display.h It initializes the display.
  */
 void gfx_init();
 
 /**
- * This function calls the correspondent method of the low level interface display.h
- * It terminates the display driver and deallocates the framebuffer.
+ * This function calls the correspondent method of the low level interface
+ * display.h It terminates the display driver and deallocates the framebuffer.
  */
 void gfx_terminate();
 
 /**
- * This function calls the correspondent method of the low level interface display.h
- * Copy a given section, between two given rows, of framebuffer content to the
- * display.
+ * This function calls the correspondent method of the low level interface
+ * display.h Copy a given section, between two given rows, of framebuffer
+ * content to the display.
  * @param startRow: first row of the framebuffer section to be copied
  * @param endRow: last row of the framebuffer section to be copied
  */
 void gfx_renderRows(uint8_t startRow, uint8_t endRow);
 
 /**
- * This function calls the correspondent method of the low level interface display.h
- * Copy framebuffer content to the display internal buffer. To be called
- * whenever there is need to update the display.
+ * This function calls the correspondent method of the low level interface
+ * display.h Copy framebuffer content to the display internal buffer. To be
+ * called whenever there is need to update the display.
  */
 void gfx_render();
 
 /**
- * This function calls the correspondent method of the low level interface display.h
- * Check if framebuffer is being copied to the screen or not, in which case it
- * can be modified without problems.
+ * This function calls the correspondent method of the low level interface
+ * display.h Check if framebuffer is being copied to the screen or not, in which
+ * case it can be modified without problems.
  * @return false if rendering is not in progress.
  */
 bool gfx_renderingInProgress();
@@ -188,7 +188,6 @@ void gfx_setPixel(point_t pos, color_t color);
  */
 void gfx_drawLine(point_t start, point_t end, color_t color);
 
-
 /**
  * Draw a horizontal line with specified vertical position and width.
  * @param y: vertical position, in pixel coordinates.
@@ -211,9 +210,11 @@ void gfx_drawVLine(uint16_t x, uint16_t width, color_t color);
  * @param width: rectangle width, in pixels, borders included.
  * @param height: rectangle height, in pixels, borders included.
  * @param color: border and fill color, in color_t format.
- * @param fill: if true the rectangle will be solid, otherwise it will be empty with a 1-pixel border
+ * @param fill: if true the rectangle will be solid, otherwise it will be empty
+ * with a 1-pixel border
  */
-void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color, bool fill);
+void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color,
+                  bool fill);
 
 /**
  * Draw the outline of a circle of specified radius and color.
@@ -241,7 +242,7 @@ uint8_t gfx_getFontHeight(fontSize_t size);
  * @return text width and height as point_t coordinates
  */
 point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
-                        color_t color, const char *buf);
+                        color_t color, const char* buf);
 
 /**
  * Prints text on the screen at the specified coordinates.
@@ -253,15 +254,18 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
  * @return text width and height as point_t coordinates
  */
 point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment,
-                  color_t color, const char* fmt, ... );
+                  color_t color, const char* fmt, ...);
 
 /**
  * Prints text on the screen, calculating the print position.
- * The print position is calculated to fit the desired number of lines in the vertical space
+ * The print position is calculated to fit the desired number of lines in the
+ * vertical space
  * @param cur: current line number over total (1-based)
  * @param tot: number of lines to fit in screen
- * @param startY: starting Y coordinate to leave space at the top, use 0 to leave no space
- * @param endY: ending Y coordinate to leave space at the bottom, use 0 to leave no space
+ * @param startY: starting Y coordinate to leave space at the top, use 0 to
+ * leave no space
+ * @param endY: ending Y coordinate to leave space at the bottom, use 0 to leave
+ * no space
  * @param startX: starting X coordinate to leave space on the screen sides
  * @param size: text font size, defined as enum.
  * @param alignment: text alignment type, defined as enum.
@@ -271,14 +275,14 @@ point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment,
  */
 point_t gfx_printLine(uint8_t cur, uint8_t tot, uint16_t startY, uint16_t endY,
                       uint16_t startX, fontSize_t size, textAlign_t alignment,
-                      color_t color, const char* fmt, ... );
+                      color_t color, const char* fmt, ...);
 
 /**
  * Prints an error message surrounded by a red box on the screen.
  * @param text: text to print.
  * @param size: text font size, defined as enum.
  */
-void gfx_printError(const char *text, fontSize_t size);
+void gfx_printError(const char* text, fontSize_t size);
 
 /**
  * Function to draw battery of arbitrary size.
@@ -288,7 +292,8 @@ void gfx_printError(const char *text, fontSize_t size);
  * @param height: battery icon height
  * @param percentage: battery charge percentage
  */
-void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, uint8_t percentage);
+void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
+                     uint8_t percentage);
 
 /**
  * Function to draw Smeter of arbitrary size.
@@ -300,7 +305,8 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, uint8_t per
  * @param squelch: squelch level in percentage
  * @param color: color of the squelch bar
  */
-void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi, float squelch, color_t color);
+void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
+                    float squelch, color_t color);
 
 /**
  * Function to draw Smeter + level meter of arbitrary size.
@@ -312,7 +318,8 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi, 
  * @param rssi: rssi level in dBm
  * @param level: level in range {0, 255}
  */
-void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, float rssi, uint8_t level);
+void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height,
+                         float rssi, uint8_t level);
 
 /**
  * Function to draw GPS SNR bar graph of arbitrary size.
@@ -323,7 +330,8 @@ void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, float r
  * @param sats: pointer to the array of satellites data
  * @param active_sats: bitset representing which sats are part of the fix
  */
-void gfx_drawGPSgraph(point_t start, uint16_t width, uint16_t height, sat_t *sats, uint32_t active_sats);
+void gfx_drawGPSgraph(point_t start, uint16_t width, uint16_t height,
+                      sat_t* sats, uint32_t active_sats);
 
 /**
  * Function to draw a compass of arbitrary size.

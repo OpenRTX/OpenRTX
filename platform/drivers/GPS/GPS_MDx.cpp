@@ -18,23 +18,23 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <hwconfig.h>
 #include <interfaces/delays.h>
 #include <interfaces/gpio.h>
 #include <interfaces/gps.h>
-#include <hwconfig.h>
-#include <string.h>
-#include <miosix.h>
 #include <kernel/scheduler/scheduler.h>
+#include <miosix.h>
+#include <string.h>
 
-int8_t  detectStatus = -1;
-size_t  bufPos = 0;
-size_t  maxPos = 0;
-char    *dataBuf;
-bool    receiving = false;
+int8_t detectStatus = -1;
+size_t bufPos       = 0;
+size_t maxPos       = 0;
+char* dataBuf;
+bool receiving = false;
 uint8_t status = 0;
 
 using namespace miosix;
-Thread *gpsWaiting = 0;
+Thread* gpsWaiting = 0;
 
 #ifdef PLATFORM_MD3x0
 #define PORT USART3
@@ -42,21 +42,20 @@ Thread *gpsWaiting = 0;
 #define PORT USART1
 #endif
 
-
 void __attribute__((used)) GpsUsartImpl()
 {
-    if(PORT->SR & USART_SR_RXNE)
+    if (PORT->SR & USART_SR_RXNE)
     {
         char value = PORT->DR;
 
-        if((receiving == false) && (value == '$') && (bufPos == 0))
+        if ((receiving == false) && (value == '$') && (bufPos == 0))
         {
             receiving = true;
         }
 
-        if(receiving)
+        if (receiving)
         {
-            if(bufPos == maxPos)
+            if (bufPos == maxPos)
             {
                 receiving = false;
             }
@@ -65,23 +64,23 @@ void __attribute__((used)) GpsUsartImpl()
             dataBuf[bufPos] = value;
             bufPos += 1;
 
-            if((prevChar == '\r') && (value == '\n'))
+            if ((prevChar == '\r') && (value == '\n'))
             {
                 receiving = false;
                 bufPos -= 1;
             }
         }
 
-        if((receiving == false) && (bufPos != 0))
+        if ((receiving == false) && (bufPos != 0))
         {
             status = (bufPos < maxPos) ? 0x01 : 0x02;
 
-            if(gpsWaiting)
+            if (gpsWaiting)
             {
                 gpsWaiting->IRQwakeup();
-                if(gpsWaiting->IRQgetPriority()>
+                if (gpsWaiting->IRQgetPriority() >
                     Thread::IRQgetCurrentThread()->IRQgetPriority())
-                        Scheduler::IRQfindNextThread();
+                    Scheduler::IRQfindNextThread();
                 gpsWaiting = 0;
             }
         }
@@ -97,53 +96,51 @@ void __attribute__((naked)) USART1_IRQHandler()
 #endif
 {
     saveContext();
-    #if defined(PLATFORM_MD3x0) && defined(MD3x0_ENABLE_DBG)
+#if defined(PLATFORM_MD3x0) && defined(MD3x0_ENABLE_DBG)
     asm volatile("bl _Z13usart3irqImplv");
-    #else
+#else
     asm volatile("bl _Z12GpsUsartImplv");
-    #endif
+#endif
     restoreContext();
 }
 
-
 void gps_init(const uint16_t baud)
 {
-    gpio_setMode(GPS_EN,   OUTPUT);
+    gpio_setMode(GPS_EN, OUTPUT);
     gpio_setMode(GPS_DATA, ALTERNATE);
     gpio_setAlternateFunction(GPS_DATA, 7);
 
-    #ifdef PLATFORM_MD3x0
-    const unsigned int quot = 2*42000000/baud;  /* APB1 clock is 42MHz */
+#ifdef PLATFORM_MD3x0
+    const unsigned int quot = 2 * 42000000 / baud; /* APB1 clock is 42MHz */
     RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
-    #else
-    const unsigned int quot = 2*84000000/baud;  /* APB2 clock is 84MHz */
+#else
+    const unsigned int quot = 2 * 84000000 / baud; /* APB2 clock is 84MHz */
     RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
-    #endif
+#endif
     __DSB();
 
-    PORT->BRR = quot/2 + (quot & 1);
+    PORT->BRR = quot / 2 + (quot & 1);
     PORT->CR3 |= USART_CR3_ONEBIT;
-    PORT->CR1 = USART_CR1_RE
-              | USART_CR1_RXNEIE;
+    PORT->CR1 = USART_CR1_RE | USART_CR1_RXNEIE;
 
-    #ifdef PLATFORM_MD3x0
+#ifdef PLATFORM_MD3x0
     NVIC_ClearPendingIRQ(USART3_IRQn);
     NVIC_SetPriority(USART3_IRQn, 14);
-    #else
+#else
     NVIC_ClearPendingIRQ(USART1_IRQn);
     NVIC_SetPriority(USART1_IRQn, 14);
-    #endif
+#endif
 }
 
 void gps_terminate()
 {
     gps_disable();
 
-    #ifdef PLATFORM_MD3x0
+#ifdef PLATFORM_MD3x0
     RCC->APB1ENR &= ~RCC_APB1ENR_USART3EN;
-    #else
+#else
     RCC->APB2ENR &= ~RCC_APB2ENR_USART1EN;
-    #endif
+#endif
 }
 
 void gps_enable()
@@ -157,22 +154,22 @@ void gps_disable()
     gpio_clearPin(GPS_EN);
     PORT->CR1 &= ~USART_CR1_UE;
 
-    #ifdef PLATFORM_MD3x0
+#ifdef PLATFORM_MD3x0
     NVIC_DisableIRQ(USART3_IRQn);
-    #else
+#else
     NVIC_DisableIRQ(USART1_IRQn);
-    #endif
+#endif
 }
 
 bool gps_detect(uint16_t timeout)
 {
-    if(detectStatus == -1)
+    if (detectStatus == -1)
     {
         gpio_setMode(GPS_DATA, INPUT_PULL_DOWN);
-        gpio_setMode(GPS_EN,   OUTPUT);
+        gpio_setMode(GPS_EN, OUTPUT);
         gpio_setPin(GPS_EN);
 
-        while((gpio_readPin(GPS_DATA) == 0) && (timeout > 0))
+        while ((gpio_readPin(GPS_DATA) == 0) && (timeout > 0))
         {
             delayMs(1);
             timeout--;
@@ -181,7 +178,7 @@ bool gps_detect(uint16_t timeout)
         gpio_clearPin(GPS_EN);
         gpio_setMode(GPS_EN, INPUT);
 
-        if(timeout > 0)
+        if (timeout > 0)
         {
             detectStatus = 1;
         }
@@ -194,23 +191,24 @@ bool gps_detect(uint16_t timeout)
     return (detectStatus == 1) ? true : false;
 }
 
-int gps_getNmeaSentence(char *buf, const size_t maxLength)
+int gps_getNmeaSentence(char* buf, const size_t maxLength)
 {
-    if(detectStatus != 1) return -1;
+    if (detectStatus != 1) return -1;
 
     memset(buf, 0x00, maxLength);
-    bufPos = 0;
-    maxPos = maxLength;
+    bufPos  = 0;
+    maxPos  = maxLength;
     dataBuf = buf;
 
-    #ifdef PLATFORM_MD3x0
+#ifdef PLATFORM_MD3x0
     NVIC_EnableIRQ(USART3_IRQn);
-    #else
+#else
     NVIC_EnableIRQ(USART1_IRQn);
-    #endif
+#endif
 
     /*
-     * Put the calling thread in waiting status until a complete sentence is ready.
+     * Put the calling thread in waiting status until a complete sentence is
+     * ready.
      */
     {
         FastInterruptDisableLock dLock;
@@ -222,20 +220,19 @@ int gps_getNmeaSentence(char *buf, const size_t maxLength)
                 FastInterruptEnableLock eLock(dLock);
                 Thread::yield();
             }
-        } while(gpsWaiting);
+        } while (gpsWaiting);
     }
 
-    #ifdef PLATFORM_MD3x0
+#ifdef PLATFORM_MD3x0
     NVIC_DisableIRQ(USART3_IRQn);
-    #else
+#else
     NVIC_DisableIRQ(USART1_IRQn);
-    #endif
+#endif
 
-    if(status & 0x01)
+    if (status & 0x01)
     {
         return bufPos;
     }
 
     return -1;
 }
-

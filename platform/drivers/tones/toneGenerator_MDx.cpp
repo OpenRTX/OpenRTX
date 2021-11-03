@@ -19,45 +19,50 @@
  ***************************************************************************/
 
 #include "toneGenerator_MDx.h"
-#include <miosix.h>
+
 #include <hwconfig.h>
 #include <interfaces/gpio.h>
 #include <kernel/scheduler/scheduler.h>
+#include <miosix.h>
 
 /*
  * Sine table for PWM-based sinewave generation, containing 256 samples over one
  * period of a 35Hz sinewave. This gives a PWM base frequency of 8.96kHz.
  */
-static const uint8_t sineTable[] =
-{
-    128,131,134,137,140,143,146,149,152,155,158,162,165,167,170,173,176,179,182,
-    185,188,190,193,196,198,201,203,206,208,211,213,215,218,220,222,224,226,228,
-    230,232,234,235,237,238,240,241,243,244,245,246,248,249,250,250,251,252,253,
-    253,254,254,254,255,255,255,255,255,255,255,254,254,254,253,253,252,251,250,
-    250,249,248,246,245,244,243,241,240,238,237,235,234,232,230,228,226,224,222,
-    220,218,215,213,211,208,206,203,201,198,196,193,190,188,185,182,179,176,173,
-    170,167,165,162,158,155,152,149,146,143,140,137,134,131,128,124,121,118,115,
-    112,109,106,103,100,97,93,90,88,85,82,79,76,73,70,67,65,62,59,57,54,52,49,47,
-    44,42,40,37,35,33,31,29,27,25,23,21,20,18,17,15,14,12,11,10,9,7,6,5,5,4,3,2,
-    2,1,1,1,0,0,0,0,0,0,0,1,1,1,2,2,3,4,5,5,6,7,9,10,11,12,14,15,17,18,20,21,23,
-    25,27,29,31,33,35,37,40,42,44,47,49,52,54,57,59,62,65,67,70,73,76,79,82,85,
-    88,90,93,97,100,103,106,109,112,115,118,121,124
-};
+static const uint8_t sineTable[] = {
+    128, 131, 134, 137, 140, 143, 146, 149, 152, 155, 158, 162, 165, 167, 170,
+    173, 176, 179, 182, 185, 188, 190, 193, 196, 198, 201, 203, 206, 208, 211,
+    213, 215, 218, 220, 222, 224, 226, 228, 230, 232, 234, 235, 237, 238, 240,
+    241, 243, 244, 245, 246, 248, 249, 250, 250, 251, 252, 253, 253, 254, 254,
+    254, 255, 255, 255, 255, 255, 255, 255, 254, 254, 254, 253, 253, 252, 251,
+    250, 250, 249, 248, 246, 245, 244, 243, 241, 240, 238, 237, 235, 234, 232,
+    230, 228, 226, 224, 222, 220, 218, 215, 213, 211, 208, 206, 203, 201, 198,
+    196, 193, 190, 188, 185, 182, 179, 176, 173, 170, 167, 165, 162, 158, 155,
+    152, 149, 146, 143, 140, 137, 134, 131, 128, 124, 121, 118, 115, 112, 109,
+    106, 103, 100, 97,  93,  90,  88,  85,  82,  79,  76,  73,  70,  67,  65,
+    62,  59,  57,  54,  52,  49,  47,  44,  42,  40,  37,  35,  33,  31,  29,
+    27,  25,  23,  21,  20,  18,  17,  15,  14,  12,  11,  10,  9,   7,   6,
+    5,   5,   4,   3,   2,   2,   1,   1,   1,   0,   0,   0,   0,   0,   0,
+    0,   1,   1,   1,   2,   2,   3,   4,   5,   5,   6,   7,   9,   10,  11,
+    12,  14,  15,  17,  18,  20,  21,  23,  25,  27,  29,  31,  33,  35,  37,
+    40,  42,  44,  47,  49,  52,  54,  57,  59,  62,  65,  67,  70,  73,  76,
+    79,  82,  85,  88,  90,  93,  97,  100, 103, 106, 109, 112, 115, 118, 121,
+    124};
 
 static const uint32_t baseSineFreq = 35;
 
-uint32_t toneTableIndex = 0; // Current sine table index for CTCSS generator
-uint32_t toneTableIncr  = 0; // CTCSS sine table index increment per tick
+uint32_t toneTableIndex = 0;  // Current sine table index for CTCSS generator
+uint32_t toneTableIncr  = 0;  // CTCSS sine table index increment per tick
 
-uint32_t beepTableIndex = 0; // Current sine table index for "beep" generator
-uint32_t beepTableIncr  = 0; // "beep" sine table index increment per tick
-uint32_t beepTimerCount = 0; // Downcounter for timed "beep"
-uint8_t  beepVolume     = 0; // "beep" volume level
+uint32_t beepTableIndex = 0;  // Current sine table index for "beep" generator
+uint32_t beepTableIncr  = 0;  // "beep" sine table index increment per tick
+uint32_t beepTimerCount = 0;  // Downcounter for timed "beep"
+uint8_t beepVolume      = 0;  // "beep" volume level
 
-bool tonesLocked = false;    // If true tone channel is in use by FSK/playback
+bool tonesLocked = false;  // If true tone channel is in use by FSK/playback
 
 using namespace miosix;
-Thread *dmaWaiting = 0;
+Thread* dmaWaiting = 0;
 
 /*
  * TIM14 interrupt handler, used to manage generation of CTCSS and "beep" tones.
@@ -71,24 +76,25 @@ void __attribute__((used)) TIM8_TRG_COM_TIM14_IRQHandler()
 
     TIM3->CCR2 = sineTable[(toneTableIndex >> 16) & 0xFF];
 
-    if(!tonesLocked)
+    if (!tonesLocked)
     {
-        TIM3->CCR3 = (sineTable[(beepTableIndex >> 16) & 0xFF] * beepVolume) >> 8;
+        TIM3->CCR3 =
+            (sineTable[(beepTableIndex >> 16) & 0xFF] * beepVolume) >> 8;
     }
 
-    if(beepTimerCount > 0)
+    if (beepTimerCount > 0)
     {
         beepTimerCount--;
-        if(beepTimerCount == 0)
+        if (beepTimerCount == 0)
         {
             TIM3->CCER &= ~TIM_CCER_CC3E;
         }
     }
 
     // Shutdown timers if both compare channels are inactive
-    if((TIM3->CCER & (TIM_CCER_CC2E | TIM_CCER_CC3E)) == 0)
+    if ((TIM3->CCER & (TIM_CCER_CC2E | TIM_CCER_CC3E)) == 0)
     {
-        TIM3->CR1  &= ~TIM_CR1_CEN;
+        TIM3->CR1 &= ~TIM_CR1_CEN;
         TIM14->CR1 &= ~TIM_CR1_CEN;
     }
 }
@@ -98,21 +104,22 @@ void __attribute__((used)) TIM8_TRG_COM_TIM14_IRQHandler()
  */
 void __attribute__((used)) DMA_Handler()
 {
-    DMA1->LIFCR |= DMA_LIFCR_CTCIF2         // Clear interrupt flags
-                | DMA_LIFCR_CTEIF2;
+    DMA1->LIFCR |= DMA_LIFCR_CTCIF2  // Clear interrupt flags
+                   | DMA_LIFCR_CTEIF2;
 
-    TIM7->CR1   = 0;                        // End of transfer, stop TIM7
-    TIM3->CCER &= ~TIM_CCER_CC3E;           // Turn off compare channel
+    TIM7->CR1 = 0;                 // End of transfer, stop TIM7
+    TIM3->CCER &= ~TIM_CCER_CC3E;  // Turn off compare channel
 
-    RCC->AHB1ENR &= ~RCC_AHB1ENR_DMA1EN;    // Turn off DMA
-    RCC->APB1ENR &= ~RCC_APB1ENR_TIM7EN;    // Turn off TIM7
+    RCC->AHB1ENR &= ~RCC_AHB1ENR_DMA1EN;  // Turn off DMA
+    RCC->APB1ENR &= ~RCC_APB1ENR_TIM7EN;  // Turn off TIM7
     __DSB();
 
-    tonesLocked = false;                    // Finally, unlock tones
+    tonesLocked = false;  // Finally, unlock tones
 
-    if(dmaWaiting == 0) return;             // Wake up eventual pending threads
+    if (dmaWaiting == 0) return;  // Wake up eventual pending threads
     dmaWaiting->IRQwakeup();
-    if(dmaWaiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
+    if (dmaWaiting->IRQgetPriority() >
+        Thread::IRQgetCurrentThread()->IRQgetPriority())
         Scheduler::IRQfindNextThread();
     dmaWaiting = 0;
 }
@@ -132,9 +139,9 @@ void toneGen_init()
      * - "beep" output is on PC8 (on MD380), that is TIM3-CH3, AF2
      */
     gpio_setMode(CTCSS_OUT, ALTERNATE);
-    gpio_setMode(BEEP_OUT,  ALTERNATE);
+    gpio_setMode(BEEP_OUT, ALTERNATE);
     gpio_setAlternateFunction(CTCSS_OUT, 2);
-    gpio_setAlternateFunction(BEEP_OUT,  2);
+    gpio_setAlternateFunction(BEEP_OUT, 2);
 
     /*
      * TIM3 configuration:
@@ -148,12 +155,10 @@ void toneGen_init()
     TIM3->ARR   = 0xFF;
     TIM3->PSC   = 2;
     TIM3->CCMR1 = TIM_CCMR1_OC2M_2  // CH2 in PWM mode 1, preload enabled
-                | TIM_CCMR1_OC2M_1
-                | TIM_CCMR1_OC2PE;
+                  | TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2PE;
     TIM3->CCMR2 = TIM_CCMR2_OC3M_2  // The same for CH3
-                | TIM_CCMR2_OC3M_1
-                | TIM_CCMR2_OC3PE;
-    TIM3->CR1  |= TIM_CR1_ARPE;     // Enable auto preload on reload
+                  | TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3PE;
+    TIM3->CR1 |= TIM_CR1_ARPE;  // Enable auto preload on reload
 
     /*
      * TIM14 configuration:
@@ -163,11 +168,11 @@ void toneGen_init()
     RCC->APB1ENR |= RCC_APB1ENR_TIM14EN;
     __DSB();
 
-    TIM14->PSC  = 0;                /* 1:1 prescaler               */
+    TIM14->PSC  = 0; /* 1:1 prescaler               */
     TIM14->ARR  = 9375;
     TIM14->CNT  = 0;
-    TIM14->EGR  = TIM_EGR_UG;       /* Update registers            */
-    TIM14->DIER = TIM_DIER_UIE;     /* Interrupt on counter update */
+    TIM14->EGR  = TIM_EGR_UG;   /* Update registers            */
+    TIM14->DIER = TIM_DIER_UIE; /* Interrupt on counter update */
 
     NVIC_SetPriority(TIM8_TRG_COM_TIM14_IRQn, 10);
     NVIC_EnableIRQ(TIM8_TRG_COM_TIM14_IRQn);
@@ -175,16 +180,15 @@ void toneGen_init()
 
 void toneGen_terminate()
 {
-    RCC->APB1ENR &= ~(RCC_APB1ENR_TIM3EN  |
-                      RCC_APB1ENR_TIM14EN |
-                      RCC_APB1ENR_TIM7EN);
+    RCC->APB1ENR &=
+        ~(RCC_APB1ENR_TIM3EN | RCC_APB1ENR_TIM14EN | RCC_APB1ENR_TIM7EN);
     RCC->AHB1ENR &= ~RCC_AHB1ENR_DMA1EN;
     __DSB();
 
     dmaWaiting->wakeup();
 
     gpio_setMode(CTCSS_OUT, INPUT);
-    gpio_setMode(BEEP_OUT,  INPUT);
+    gpio_setMode(BEEP_OUT, INPUT);
 }
 
 void toneGen_setToneFreq(float toneFreq)
@@ -194,13 +198,13 @@ void toneGen_setToneFreq(float toneFreq)
      * sinewave stored in the PWM table
      */
     float dividend = toneFreq * 65536.0f;
-    toneTableIncr = ((uint32_t) dividend)/baseSineFreq;
+    toneTableIncr  = ((uint32_t)dividend) / baseSineFreq;
 }
 
 void toneGen_toneOn()
 {
     TIM3->CCER |= TIM_CCER_CC2E;
-    TIM3->CR1  |= TIM_CR1_CEN;
+    TIM3->CR1 |= TIM_CR1_CEN;
     TIM14->CR1 |= TIM_CR1_CEN;
 }
 
@@ -215,21 +219,21 @@ void toneGen_beepOn(const float beepFreq, const uint8_t volume,
     {
         // Do not generate "beep" if the PWM channel is busy, critical section
         FastInterruptDisableLock dLock;
-        if(tonesLocked) return;
+        if (tonesLocked) return;
     }
 
     float dividend = beepFreq * 65536.0f;
-    beepTableIncr  = ((uint32_t) dividend)/baseSineFreq;
+    beepTableIncr  = ((uint32_t)dividend) / baseSineFreq;
     beepVolume     = volume;
 
     /*
      * Duration is in milliseconds, while counter update rate is 8.96kHz.
      * Thus, the value for downcounter is (duration * 8960)/1000.
      */
-    beepTimerCount = (duration * 8960)/1000;
+    beepTimerCount = (duration * 8960) / 1000;
 
     TIM3->CCER |= TIM_CCER_CC3E;
-    TIM3->CR1  |= TIM_CR1_CEN;
+    TIM3->CR1 |= TIM_CR1_CEN;
     TIM14->CR1 |= TIM_CR1_CEN;
 }
 
@@ -240,20 +244,20 @@ void toneGen_beepOff()
      * Locking interrupts to avoid race conditions.
      */
     FastInterruptDisableLock dLock;
-    if(tonesLocked) return;
+    if (tonesLocked) return;
     TIM3->CCER &= ~TIM_CCER_CC3E;
 }
 
 void toneGen_encodeAFSK1200(const uint8_t* buf, const size_t len)
 {
-    (void) buf;
-    (void) len;
+    (void)buf;
+    (void)len;
 }
 
 void toneGen_playAudioStream(const uint16_t* buf, const size_t len,
                              const uint32_t sampleRate)
 {
-    if((buf == NULL) || (len == 0) || (sampleRate == 0)) return;
+    if ((buf == NULL) || (len == 0) || (sampleRate == 0)) return;
 
     {
         // Critical section to avoid race conditions on "tonesLocked"
@@ -270,7 +274,7 @@ void toneGen_playAudioStream(const uint16_t* buf, const size_t len,
      * Timebase for triggering of DMA transfers.
      * Bus frequency is 84MHz.
      */
-    uint32_t ratio = (84000000/sampleRate) - 1;
+    uint32_t ratio = (84000000 / sampleRate) - 1;
 
     TIM7->CNT  = 0;
     TIM7->PSC  = 0;
@@ -282,17 +286,17 @@ void toneGen_playAudioStream(const uint16_t* buf, const size_t len,
      * DMA stream for sample transfer
      */
     DMA1_Stream2->NDTR = len;
-    DMA1_Stream2->PAR  = ((uint32_t) &(TIM3->CCR3));
-    DMA1_Stream2->M0AR = ((uint32_t) buf);
-    DMA1_Stream2->CR = DMA_SxCR_CHSEL_0       // Channel 1
-                     | DMA_SxCR_PL            // Very high priority
-                     | DMA_SxCR_MSIZE_0       // 16 bit source size
-                     | DMA_SxCR_PSIZE_0       // 16 bit destination size
-                     | DMA_SxCR_MINC          // Increment source pointer
-                     | DMA_SxCR_DIR_0         // Memory to peripheral
-                     | DMA_SxCR_TCIE          // Transfer complete interrupt
-                     | DMA_SxCR_TEIE          // Transfer error interrupt
-                     | DMA_SxCR_EN;           // Enable transfer
+    DMA1_Stream2->PAR  = ((uint32_t) & (TIM3->CCR3));
+    DMA1_Stream2->M0AR = ((uint32_t)buf);
+    DMA1_Stream2->CR   = DMA_SxCR_CHSEL_0  // Channel 1
+                       | DMA_SxCR_PL       // Very high priority
+                       | DMA_SxCR_MSIZE_0  // 16 bit source size
+                       | DMA_SxCR_PSIZE_0  // 16 bit destination size
+                       | DMA_SxCR_MINC     // Increment source pointer
+                       | DMA_SxCR_DIR_0    // Memory to peripheral
+                       | DMA_SxCR_TCIE     // Transfer complete interrupt
+                       | DMA_SxCR_TEIE     // Transfer error interrupt
+                       | DMA_SxCR_EN;      // Enable transfer
 
     NVIC_ClearPendingIRQ(DMA1_Stream2_IRQn);
     NVIC_SetPriority(DMA1_Stream2_IRQn, 10);
@@ -301,7 +305,7 @@ void toneGen_playAudioStream(const uint16_t* buf, const size_t len,
     // Enable compare channel
     TIM3->CCR3 = 0;
     TIM3->CCER |= TIM_CCER_CC3E;
-    TIM3->CR1  |= TIM_CR1_CEN;
+    TIM3->CR1 |= TIM_CR1_CEN;
 
     // Start timer for DMA transfer triggering
     TIM7->CR1 = TIM_CR1_CEN;
@@ -319,9 +323,9 @@ bool toneGen_waitForStreamEnd()
      */
     {
         FastInterruptDisableLock dLock;
-        Thread *curThread = Thread::IRQgetCurrentThread();
-        if(tonesLocked == false) return false;
-        if((dmaWaiting != 0) && (dmaWaiting != curThread)) return false;
+        Thread* curThread = Thread::IRQgetCurrentThread();
+        if (tonesLocked == false) return false;
+        if ((dmaWaiting != 0) && (dmaWaiting != curThread)) return false;
         dmaWaiting = curThread;
         do
         {
@@ -330,7 +334,7 @@ bool toneGen_waitForStreamEnd()
                 FastInterruptEnableLock eLock(dLock);
                 Thread::yield();
             }
-        } while(dmaWaiting);
+        } while (dmaWaiting);
     }
 
     // Outside critical section, here we finished waiting and everything is ok.
@@ -343,7 +347,7 @@ void toneGen_stopAudioStream()
     FastInterruptDisableLock dLock;
 
     // Stop DMA triggering timer and TIM3 compare channel
-    TIM7->CR1   = 0;
+    TIM7->CR1 = 0;
     TIM3->CCER &= ~TIM_CCER_CC3E;
 
     // Shut down TIM7 and DMA
@@ -352,7 +356,7 @@ void toneGen_stopAudioStream()
 
     // Unlock tones and wake up the thread waiting for completion
     tonesLocked = false;
-    if(dmaWaiting) dmaWaiting->IRQwakeup();
+    if (dmaWaiting) dmaWaiting->IRQwakeup();
 }
 
 bool toneGen_toneBusy()

@@ -25,16 +25,15 @@
 #error This header is C++ only!
 #endif
 
-#include <cstdint>
 #include <array>
+#include <cstdint>
 
 /**
  * Modulator device for M17 protocol.
  */
 class M17Modulator
 {
-public:
-
+   public:
     /**
      * Constructor.
      */
@@ -62,11 +61,10 @@ public:
      * @param sync: synchronisation word to be prepended to data block.
      * @param data: data block to be transmitted.
      */
-    void send(const std::array< uint8_t, 2 >& sync,
-              const std::array< uint8_t, 46 >& data);
+    void send(const std::array<uint8_t, 2>& sync,
+              const std::array<uint8_t, 46>& data);
 
-private:
-
+   private:
     /**
      * Generate baseband stream from symbol stream.
      */
@@ -84,10 +82,10 @@ private:
      * @param value: value to be encoded in 4FSK symbols.
      * @return std::array containing the four symbols obtained by 4FSK encoding.
      */
-    inline std::array< int8_t, 4 > byteToSymbols(uint8_t value)
+    inline std::array<int8_t, 4> byteToSymbols(uint8_t value)
     {
-        static constexpr int8_t LUT[] = { +1, +3, -1, -3};
-        std::array< int8_t, 4 > symbols;
+        static constexpr int8_t LUT[] = {+1, +3, -1, -3};
+        std::array<int8_t, 4> symbols;
 
         symbols[3] = LUT[value & 0x03];
         value >>= 2;
@@ -104,12 +102,12 @@ private:
     static constexpr size_t M17_FRAME_SAMPLES   = 1920;
     static constexpr size_t M17_FRAME_SYMBOLS   = 192;
 
-    using dataBuffer_t = std::array< int16_t, M17_FRAME_SAMPLES >;
+    using dataBuffer_t = std::array<int16_t, M17_FRAME_SAMPLES>;
 
-    std::array< int16_t, M17_FRAME_SYMBOLS > symbols;
-    int16_t      *baseband_buffer;    ///< Buffer for baseband audio handling.
-    dataBuffer_t *activeBuffer;       ///< Half baseband buffer, in transmission.
-    dataBuffer_t *idleBuffer;         ///< Half baseband buffer, free for processing.
+    std::array<int16_t, M17_FRAME_SYMBOLS> symbols;
+    int16_t* baseband_buffer;    ///< Buffer for baseband audio handling.
+    dataBuffer_t* activeBuffer;  ///< Half baseband buffer, in transmission.
+    dataBuffer_t* idleBuffer;    ///< Half baseband buffer, free for processing.
 };
 
 #endif /* M17_MODULATOR_H */

@@ -25,8 +25,9 @@
 #error This header is C++ only!
 #endif
 
-#include <string>
 #include <array>
+#include <string>
+
 #include "M17Datatypes.h"
 
 /**
@@ -36,8 +37,7 @@
  */
 class M17LinkSetupFrame
 {
-public:
-
+   public:
     /**
      * Constructor.
      */
@@ -117,10 +117,9 @@ public:
      *
      * \return std::array containing the content of the frame.
      */
-    std::array< uint8_t, sizeof(lsf_t) > toArray();
+    std::array<uint8_t, sizeof(lsf_t)> toArray();
 
-private:
-
+   private:
     /**
      * Compute the CRC16 of a given chunk of data using the polynomial 0x5935
      * with an initial value set to 0xFFFF, as per M17 specification.
@@ -129,9 +128,9 @@ private:
      * \param len: lenght of the data block, in bytes.
      * \return computed CRC16 over the data block.
      */
-    uint16_t crc16(const void *data, const size_t len);
+    uint16_t crc16(const void* data, const size_t len);
 
-    lsf_t data;    ///< Underlying frame data.
+    lsf_t data;  ///< Underlying frame data.
 };
 
 #endif /* M17_LINKSETUPFRAME_H */

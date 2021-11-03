@@ -18,9 +18,9 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/gpio.h>
-#include <interfaces/delays.h>
 #include <hwconfig.h>
+#include <interfaces/delays.h>
+#include <interfaces/gpio.h>
 #include <stdint.h>
 
 /*
@@ -32,12 +32,12 @@
 uint8_t spiFlash_SendRecv(uint8_t val)
 {
     uint8_t data = 0;
-    for(uint8_t i = 0; i < 8; i++)
+    for (uint8_t i = 0; i < 8; i++)
     {
         gpio_clearPin(FLASH_CLK);
         delayUs(1);
 
-        if((val << i) & 0x80)
+        if ((val << i) & 0x80)
         {
             gpio_setPin(FLASH_SDO);
         }

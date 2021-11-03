@@ -18,8 +18,8 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -70,7 +70,7 @@ void display_init();
  * returned, doing so will destroy the framebuffer!
  * @return pointer to framebuffer.
  */
-void *display_getFrameBuffer();
+void* display_getFrameBuffer();
 
 /**
  * When called, this function terminates the display driver

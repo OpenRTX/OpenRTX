@@ -32,15 +32,15 @@
 
 typedef struct
 {
-    uint8_t hour   : 5;    /* Hours (0-23)            */
-    uint8_t minute : 6;    /* Minutes (0-59)          */
-    uint8_t second : 6;    /* Seconds (0-59)          */
-    uint8_t day    : 3;    /* Day of the week (1-7)   */
-    uint8_t date   : 5;    /* Day of the month (1-31) */
-    uint8_t month  : 4;    /* Month (1-12)            */
-    uint8_t year   : 7;    /* Year (0-99)             */
-    uint8_t        : 4;    /* Padding to 40 bits      */
-}curTime_t;
+    uint8_t hour   : 5; /* Hours (0-23)            */
+    uint8_t minute : 6; /* Minutes (0-59)          */
+    uint8_t second : 6; /* Seconds (0-59)          */
+    uint8_t day    : 3; /* Day of the week (1-7)   */
+    uint8_t date   : 5; /* Day of the month (1-31) */
+    uint8_t month  : 4; /* Month (1-12)            */
+    uint8_t year   : 7; /* Year (0-99)             */
+    uint8_t        : 4; /* Padding to 40 bits      */
+} curTime_t;
 
 /**
  * Initialise and start RTC.

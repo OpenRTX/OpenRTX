@@ -23,9 +23,9 @@
 
 /**
  * Low-level driver for backlight dimming control.
- * This header file only provides the API for driver initialisation and shutdown,
- * while effective setting of backlight level is provided by target-specific
- * sources by implementating platform_setBacklightLevel().
+ * This header file only provides the API for driver initialisation and
+ * shutdown, while effective setting of backlight level is provided by
+ * target-specific sources by implementating platform_setBacklightLevel().
  */
 
 /**

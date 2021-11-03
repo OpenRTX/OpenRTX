@@ -23,7 +23,8 @@
 #include <stdint.h>
 
 /**
- * This function computes the battery's state of charge given its current voltage.
+ * This function computes the battery's state of charge given its current
+ * voltage.
  * @param vbat: battery voltage in millivolt.
  * @return state of charge percentage, from 0% to 100%.
  */

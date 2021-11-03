@@ -27,6 +27,7 @@
 
 #include <cstring>
 #include <string>
+
 #include "M17Datatypes.h"
 
 /**
@@ -34,8 +35,7 @@
  */
 class M17Frame
 {
-public:
-
+   public:
     /**
      * Constructor.
      */
@@ -47,7 +47,9 @@ public:
     /**
      * Destructor.
      */
-    ~M17Frame(){ }
+    ~M17Frame()
+    {
+    }
 
     /**
      * Clear the frame content, filling it with zeroes.
@@ -65,7 +67,7 @@ public:
     void setFrameNumber(const uint16_t seqNum)
     {
         // NOTE: M17 fields are big-endian, we need to swap bytes
-        data.frameNum = __builtin_bswap16(seqNum &  0x7fff);
+        data.frameNum = __builtin_bswap16(seqNum & 0x7fff);
     }
 
     /**
@@ -103,16 +105,15 @@ public:
      *
      * \return std::array containing the content of the frame.
      */
-    std::array< uint8_t, sizeof(dataFrame_t) > toArray()
+    std::array<uint8_t, sizeof(dataFrame_t)> toArray()
     {
-        std::array< uint8_t, sizeof(dataFrame_t) > frame;
+        std::array<uint8_t, sizeof(dataFrame_t)> frame;
         memcpy(frame.data(), &data, frame.size());
         return frame;
     }
 
-private:
-
-    dataFrame_t data;   ///< Underlying frame data.
+   private:
+    dataFrame_t data;  ///< Underlying frame data.
 };
 
 #endif /* M17_FRAME_H */

@@ -20,13 +20,13 @@
 #ifndef UI_H
 #define UI_H
 
-#include <stdbool.h>
-#include <state.h>
-#include <interfaces/graphics.h>
-#include <interfaces/keyboard.h>
-#include <stdint.h>
 #include <event.h>
 #include <hwconfig.h>
+#include <interfaces/graphics.h>
+#include <interfaces/keyboard.h>
+#include <state.h>
+#include <stdbool.h>
+#include <stdint.h>
 
 // Maximum menu entry length
 #define MAX_ENTRY_LEN 21
@@ -83,19 +83,23 @@ enum settingsItems
 {
     S_DISPLAY = 0
 #ifdef HAS_RTC
-    ,S_TIMEDATE
+    ,
+    S_TIMEDATE
 #endif
 #ifdef HAS_GPS
-    ,S_GPS
+    ,
+    S_GPS
 #endif
-    ,S_M17
+    ,
+    S_M17
 };
 
 enum displayItems
 {
     D_BRIGHTNESS = 0
 #ifdef SCREEN_CONTRAST
-    ,D_CONTRAST
+    ,
+    D_CONTRAST
 #endif
 };
 
@@ -172,18 +176,17 @@ typedef struct ui_state_t
     char new_callsign[10];
     // Which state to return to when we exit menu
     uint8_t last_main_state;
-}
-ui_state_t;
+} ui_state_t;
 
 extern layout_t layout;
 // Copy of the radio state
 extern state_t last_state;
-extern const char *menu_items[];
-extern const char *settings_items[];
-extern const char *display_items[];
-extern const char *settings_gps_items[];
-extern const char *info_items[];
-extern const char *authors[];
+extern const char* menu_items[];
+extern const char* settings_items[];
+extern const char* display_items[];
+extern const char* settings_gps_items[];
+extern const char* info_items[];
+extern const char* authors[];
 extern const uint8_t menu_num;
 extern const uint8_t settings_num;
 extern const uint8_t display_num;
@@ -222,7 +225,7 @@ void ui_saveState();
  * @param event: An event from other threads
  * @param sync_rtx: If true RTX needs to be synchronized
  */
-void ui_updateFSM(event_t event, bool *sync_rtx);
+void ui_updateFSM(event_t event, bool* sync_rtx);
 
 /**
  * This function redraws the GUI based on the last radio state.

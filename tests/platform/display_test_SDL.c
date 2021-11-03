@@ -25,23 +25,22 @@
  * the driver source file.
  */
 
-#include <interfaces/display.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <stdint.h>
 #include <SDL2/SDL.h>
-#undef main     //necessary to avoid conflicts with SDL_main
-
+#include <interfaces/display.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <unistd.h>
+#undef main  // necessary to avoid conflicts with SDL_main
 
 void drawRect(int x, int y, int width, int height, uint16_t color)
 {
-    int x_max = x + width;
-    int y_max = y + height;
-    uint16_t *buf = (uint16_t *)(display_getFrameBuffer());
+    int x_max     = x + width;
+    int y_max     = y + height;
+    uint16_t* buf = (uint16_t*)(display_getFrameBuffer());
 
-    for(int i=y; i < y_max; i++)
+    for (int i = y; i < y_max; i++)
     {
-        for(int j=x; j < x_max; j++)
+        for (int j = x; j < x_max; j++)
         {
             buf[j + i * SCREEN_WIDTH] = color;
         }
@@ -68,13 +67,13 @@ int main()
      */
     SDL_Event eventListener;
 
-    while(1)
+    while (1)
     {
         display_render();
         SDL_PollEvent(&eventListener);
-        if(eventListener.type == SDL_QUIT) break;
+        if (eventListener.type == SDL_QUIT) break;
     }
-    
+
     display_terminate();
     return 0;
 }

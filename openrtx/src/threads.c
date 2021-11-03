@@ -18,25 +18,25 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <hwconfig.h>
-#include <pthread.h>
-#include <sched.h>
-#include <ui.h>
-#include <state.h>
-#include <threads.h>
 #include <battery.h>
-#include <interfaces/keyboard.h>
-#include <interfaces/graphics.h>
-#include <interfaces/platform.h>
-#include <interfaces/delays.h>
 #include <event.h>
-#include <rtx.h>
-#include <queue.h>
+#include <hwconfig.h>
+#include <interfaces/delays.h>
+#include <interfaces/graphics.h>
+#include <interfaces/keyboard.h>
+#include <interfaces/platform.h>
 #include <minmea.h>
+#include <pthread.h>
+#include <queue.h>
+#include <rtx.h>
+#include <sched.h>
+#include <state.h>
 #include <string.h>
+#include <threads.h>
+#include <ui.h>
 #ifdef HAS_GPS
-#include <interfaces/gps.h>
 #include <gps.h>
+#include <interfaces/gps.h>
 #endif
 
 /* Mutex for concurrent access to state variable */
@@ -54,9 +54,9 @@ queue_t ui_queue;
 /**
  * \internal Task function in charge of updating the UI.
  */
-void *ui_task(void *arg)
+void* ui_task(void* arg)
 {
-    (void) arg;
+    (void)arg;
 
     // RTX needs synchronization
     bool sync_rtx = true;
@@ -71,13 +71,13 @@ void *ui_task(void *arg)
     ui_updateGUI();
     gfx_render();
 
-    while(1)
+    while (1)
     {
         // Read from the keyboard queue (returns 0 if no message is present)
         // Copy keyboard_t keys from received void * pointer msg
         event_t event;
         event.value = 0;
-        (void) queue_pend(&ui_queue, &event.value, true);
+        (void)queue_pend(&ui_queue, &event.value, true);
 
         // Lock mutex, read and write state
         pthread_mutex_lock(&state_mutex);
@@ -89,19 +89,19 @@ void *ui_task(void *arg)
         pthread_mutex_unlock(&state_mutex);
 
         // If synchronization needed take mutex and update RTX configuration
-        if(sync_rtx)
+        if (sync_rtx)
         {
             pthread_mutex_lock(&rtx_mutex);
-            rtx_cfg.opMode = state.channel.mode;
-            rtx_cfg.bandwidth = state.channel.bandwidth;
+            rtx_cfg.opMode      = state.channel.mode;
+            rtx_cfg.bandwidth   = state.channel.bandwidth;
             rtx_cfg.rxFrequency = state.channel.rx_frequency;
             rtx_cfg.txFrequency = state.channel.tx_frequency;
-            rtx_cfg.txPower = state.channel.power;
-            rtx_cfg.sqlLevel = state.sqlLevel;
-            rtx_cfg.rxToneEn = state.channel.fm.rxToneEn;
-            rtx_cfg.rxTone = ctcss_tone[state.channel.fm.rxTone];
-            rtx_cfg.txToneEn = state.channel.fm.txToneEn;
-            rtx_cfg.txTone = ctcss_tone[state.channel.fm.txTone];
+            rtx_cfg.txPower     = state.channel.power;
+            rtx_cfg.sqlLevel    = state.sqlLevel;
+            rtx_cfg.rxToneEn    = state.channel.fm.rxToneEn;
+            rtx_cfg.rxTone      = ctcss_tone[state.channel.fm.rxTone];
+            rtx_cfg.txToneEn    = state.channel.fm.txToneEn;
+            rtx_cfg.txTone      = ctcss_tone[state.channel.fm.txTone];
             pthread_mutex_unlock(&rtx_mutex);
 
             // Copy new M17 source and destination addresses
@@ -122,16 +122,16 @@ void *ui_task(void *arg)
         // We don't need a delay because we lock on incoming events
         // TODO: Enable self refresh when a continuous visualization is enabled
         // Update UI at ~33 FPS
-        //OSTimeDlyHMSM(0u, 0u, 0u, 30u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+        // OSTimeDlyHMSM(0u, 0u, 0u, 30u, OS_OPT_TIME_HMSM_STRICT, &os_err);
     }
 }
 
 /**
  * \internal Task function for reading and sending keyboard status.
  */
-void *kbd_task(void *arg)
+void* kbd_task(void* arg)
 {
-    (void) arg;
+    (void)arg;
 
     // Initialize keyboard driver
     kbd_init();
@@ -145,11 +145,11 @@ void *kbd_task(void *arg)
 
     // Variable for saving previous and current keyboard status
     keyboard_t prev_keys = 0;
-    keyboard_t keys = 0;
-    bool long_press = false;
-    bool send_event = false;
+    keyboard_t keys      = 0;
+    bool long_press      = false;
+    bool send_event      = false;
 
-    while(1)
+    while (1)
     {
         // Reset flags and get current time
         long_press = false;
@@ -160,51 +160,52 @@ void *kbd_task(void *arg)
         pthread_mutex_unlock(&display_mutex);
         now = getTick();
         // The key status has changed
-        if(keys != prev_keys)
+        if (keys != prev_keys)
         {
-            for(uint8_t k=0; k < kbd_num_keys; k++)
+            for (uint8_t k = 0; k < kbd_num_keys; k++)
             {
                 // Key has been pressed
-                if(!(prev_keys & (1 << k)) && (keys & (1 << k)))
+                if (!(prev_keys & (1 << k)) && (keys & (1 << k)))
                 {
                     // Save timestamp
-                    key_ts[k] = now;
-                    send_event = true;
+                    key_ts[k]          = now;
+                    send_event         = true;
                     long_press_sent[k] = false;
                 }
                 // Key has been released
-                else if((prev_keys & (1 << k)) && !(keys & (1 << k)))
+                else if ((prev_keys & (1 << k)) && !(keys & (1 << k)))
                 {
                     send_event = true;
                 }
             }
         }
         // Some key is kept pressed
-        else if(keys != 0)
+        else if (keys != 0)
         {
             // Check for saved timestamp to trigger long-presses
-            for(uint8_t k=0; k < kbd_num_keys; k++)
+            for (uint8_t k = 0; k < kbd_num_keys; k++)
             {
                 // The key is pressed and its long-press timer is over
-                if(keys & (1 << k) && !long_press_sent[k] && (now - key_ts[k]) >= kbd_long_interval)
+                if (keys & (1 << k) && !long_press_sent[k] &&
+                    (now - key_ts[k]) >= kbd_long_interval)
                 {
-                    long_press = true;
-                    send_event = true;
+                    long_press         = true;
+                    send_event         = true;
                     long_press_sent[k] = true;
                 }
             }
         }
-        if(send_event)
+        if (send_event)
         {
             kbd_msg_t msg;
             msg.long_press = long_press;
-            msg.keys = keys;
+            msg.keys       = keys;
             // Send event_t as void * message to use with OSQPost
             event_t event;
-            event.type = EVENT_KBD;
+            event.type    = EVENT_KBD;
             event.payload = msg.value;
             // Send keyboard status in queue
-            (void) queue_post(&ui_queue, event.value);
+            (void)queue_post(&ui_queue, event.value);
         }
         // Save current keyboard state as previous
         prev_keys = keys;
@@ -217,11 +218,11 @@ void *kbd_task(void *arg)
 /**
  * \internal Task function in charge of updating the radio state.
  */
-void *dev_task(void *arg)
+void* dev_task(void* arg)
 {
-    (void) arg;
+    (void)arg;
 
-    while(1)
+    while (1)
     {
         // Lock mutex and update internal state
         pthread_mutex_lock(&state_mutex);
@@ -236,19 +237,19 @@ void *dev_task(void *arg)
          * Peak error is 18mV when input voltage is 49mV.
          */
         uint16_t vbat = platform_getVbat();
-        state.v_bat  -= (state.v_bat * 2) / 100;
-        state.v_bat  += (vbat * 2) / 100;
+        state.v_bat -= (state.v_bat * 2) / 100;
+        state.v_bat += (vbat * 2) / 100;
 
         state.charge = battery_getCharge(state.v_bat);
-        state.rssi = rtx_getRssi();
+        state.rssi   = rtx_getRssi();
 
         pthread_mutex_unlock(&state_mutex);
 
         // Signal state update to UI thread
         event_t dev_msg;
-        dev_msg.type = EVENT_STATUS;
+        dev_msg.type    = EVENT_STATUS;
         dev_msg.payload = 0;
-        (void) queue_post(&ui_queue, dev_msg.value);
+        (void)queue_post(&ui_queue, dev_msg.value);
 
         // Execute state update thread every 1s
         sleepFor(1u, 0u);
@@ -258,13 +259,13 @@ void *dev_task(void *arg)
 /**
  * \internal Task function for RTX management.
  */
-void *rtx_task(void *arg)
+void* rtx_task(void* arg)
 {
-    (void) arg;
+    (void)arg;
 
     rtx_init(&rtx_mutex);
 
-    while(1)
+    while (1)
     {
         rtx_taskFunc();
     }
@@ -274,11 +275,11 @@ void *rtx_task(void *arg)
 /**
  * \internal Task function for parsing GPS data and updating radio state.
  */
-void *gps_task(void *arg)
+void* gps_task(void* arg)
 {
-    (void) arg;
+    (void)arg;
 
-    char line[MINMEA_MAX_LENGTH*10];
+    char line[MINMEA_MAX_LENGTH * 10];
 
     if (!gps_detect(5000)) return NULL;
 
@@ -287,15 +288,15 @@ void *gps_task(void *arg)
     pthread_mutex_lock(&state_mutex);
     bool enabled = state.settings.gps_enabled;
     pthread_mutex_unlock(&state_mutex);
-    if(enabled)
+    if (enabled)
         gps_enable();
     else
         gps_disable();
 
-    while(1)
+    while (1)
     {
-        int len = gps_getNmeaSentence(line, MINMEA_MAX_LENGTH*10);
-        if(len != -1)
+        int len = gps_getNmeaSentence(line, MINMEA_MAX_LENGTH * 10);
+        if (len != -1)
         {
             // Lock mutex and update internal state
             pthread_mutex_lock(&state_mutex);
@@ -331,23 +332,23 @@ void create_threads()
     state_init();
 
     // Create rtx radio thread
-    pthread_t      rtx_thread;
+    pthread_t rtx_thread;
     pthread_attr_t rtx_attr;
 
     pthread_attr_init(&rtx_attr);
     pthread_attr_setstacksize(&rtx_attr, RTX_TASK_STKSIZE);
 
-    #ifdef _MIOSIX
+#ifdef _MIOSIX
     // Max priority for RTX thread when running with miosix rtos
     struct sched_param param;
     param.sched_priority = sched_get_priority_max(0);
     pthread_attr_setschedparam(&rtx_attr, &param);
-    #endif
+#endif
 
     pthread_create(&rtx_thread, &rtx_attr, rtx_task, NULL);
 
     // Create Keyboard thread
-    pthread_t      kbd_thread;
+    pthread_t kbd_thread;
     pthread_attr_t kbd_attr;
 
     pthread_attr_init(&kbd_attr);
@@ -356,7 +357,7 @@ void create_threads()
 
 #if defined(HAS_GPS) && !defined(MD3x0_ENABLE_DBG)
     // Create GPS thread
-    pthread_t      gps_thread;
+    pthread_t gps_thread;
     pthread_attr_t gps_attr;
 
     pthread_attr_init(&gps_attr);
@@ -365,7 +366,7 @@ void create_threads()
 #endif
 
     // Create state thread
-    pthread_t      state_thread;
+    pthread_t state_thread;
     pthread_attr_t state_attr;
 
     pthread_attr_init(&state_attr);

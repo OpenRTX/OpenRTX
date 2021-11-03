@@ -16,25 +16,26 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <interfaces/delays.h>
+#include <interfaces/gpio.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <interfaces/gpio.h>
-#include <interfaces/delays.h>
-#include "toneGenerator_MDx.h"
+
 #include "hwconfig.h"
+#include "toneGenerator_MDx.h"
 
 int main()
 {
-    gpio_setMode(SPK_MUTE, OUTPUT);     // Turn on speaker
+    gpio_setMode(SPK_MUTE, OUTPUT);  // Turn on speaker
     gpio_clearPin(SPK_MUTE);
 
-    gpio_setMode(AMP_EN, OUTPUT);     // Turn on audio amplifier
+    gpio_setMode(AMP_EN, OUTPUT);  // Turn on audio amplifier
     gpio_setPin(AMP_EN);
 
     toneGen_init();
     toneGen_setBeepFreq(440.0f);
 
-    while(1)
+    while (1)
     {
         toneGen_beepOn();
         delayMs(500);

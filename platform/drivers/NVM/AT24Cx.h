@@ -46,6 +46,6 @@ void AT24Cx_terminate();
  * @param buf: pointer to a buffer where data is written to.
  * @param len: number of bytes to read.
  */
-void AT24Cx_readData(uint32_t addr, void *buf, size_t len);
+void AT24Cx_readData(uint32_t addr, void* buf, size_t len);
 
 #endif /* AT24Cx_H */

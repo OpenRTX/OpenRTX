@@ -21,8 +21,8 @@
 #ifndef RADIO_UTILS_H
 #define RADIO_UTILS_H
 
-#include <stdint.h>
 #include <datatypes.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,8 +53,8 @@ enum Band
  */
 inline Band getBandFromFrequency(const freq_t freq)
 {
-    if((freq >= BAND_VHF_LO) && (freq <= BAND_VHF_HI)) return BND_VHF;
-    if((freq >= BAND_UHF_LO) && (freq <= BAND_UHF_HI)) return BND_UHF;
+    if ((freq >= BAND_VHF_LO) && (freq <= BAND_VHF_HI)) return BND_VHF;
+    if ((freq >= BAND_UHF_LO) && (freq <= BAND_UHF_HI)) return BND_UHF;
     return BND_NONE;
 }
 

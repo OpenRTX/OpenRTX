@@ -18,28 +18,29 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdio.h>
+#include <interfaces/delays.h>
+#include <interfaces/display.h>
+#include <interfaces/gpio.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <interfaces/gpio.h>
-#include <interfaces/display.h>
-#include <interfaces/delays.h>
+
 #include "hwconfig.h"
 
 /*
  * LCD framebuffer, allocated on the heap by display_init().
  * Pixel format is black and white, one bit per pixel
  */
-static uint8_t *frameBuffer;
+static uint8_t* frameBuffer;
 
 void sendByteToController(uint8_t value)
 {
-    for(uint8_t i = 0; i < 8; i++)
+    for (uint8_t i = 0; i < 8; i++)
     {
         gpio_clearPin(LCD_CLK);
 
-        if(value & 0x80)
+        if (value & 0x80)
         {
             gpio_setPin(LCD_DAT);
         }
@@ -56,13 +57,14 @@ void sendByteToController(uint8_t value)
 void display_init()
 {
     /* Framebuffer size, in bytes */
-    unsigned int fbSize = (SCREEN_HEIGHT * SCREEN_WIDTH)/8;
-    if((fbSize * 8) < (SCREEN_HEIGHT * SCREEN_WIDTH)) fbSize += 1; /* Compensate for eventual truncation error in division */
+    unsigned int fbSize = (SCREEN_HEIGHT * SCREEN_WIDTH) / 8;
+    if ((fbSize * 8) < (SCREEN_HEIGHT * SCREEN_WIDTH))
+        fbSize += 1; /* Compensate for eventual truncation error in division */
     fbSize *= sizeof(uint8_t);
 
     /* Allocate framebuffer */
-    frameBuffer = (uint8_t *) malloc(fbSize);
-    if(frameBuffer == NULL)
+    frameBuffer = (uint8_t*)malloc(fbSize);
+    if (frameBuffer == NULL)
     {
         puts("*** LCD ERROR: cannot allocate framebuffer! ***");
         return;
@@ -71,9 +73,9 @@ void display_init()
     /* Clear framebuffer, setting all pixels to 0x00 makes the screen white */
     memset(frameBuffer, 0x00, fbSize);
 
-    gpio_setMode(LCD_CS,  OUTPUT);
+    gpio_setMode(LCD_CS, OUTPUT);
     gpio_setMode(LCD_RST, OUTPUT);
-    gpio_setMode(LCD_RS,  OUTPUT);
+    gpio_setMode(LCD_RS, OUTPUT);
     gpio_setMode(LCD_CLK, OUTPUT);
     gpio_setMode(LCD_DAT, OUTPUT);
 
@@ -82,12 +84,12 @@ void display_init()
     gpio_clearPin(LCD_CLK);
     gpio_clearPin(LCD_DAT);
 
-    gpio_clearPin(LCD_RST);     /* Reset controller                          */
+    gpio_clearPin(LCD_RST); /* Reset controller                          */
     delayMs(1);
     gpio_setPin(LCD_RST);
     delayMs(5);
 
-    gpio_clearPin(LCD_CS);      /* Bring down CS and keep it low from now on */
+    gpio_clearPin(LCD_CS); /* Bring down CS and keep it low from now on */
 
     gpio_clearPin(LCD_RS);      /* RS low -> command mode                    */
     sendByteToController(0x2F); /* Voltage Follower On                       */
@@ -102,7 +104,7 @@ void display_init()
 
 void display_terminate()
 {
-    if(frameBuffer != NULL)
+    if (frameBuffer != NULL)
     {
         free(frameBuffer);
     }
@@ -111,14 +113,14 @@ void display_terminate()
 void display_renderRow(uint8_t row)
 {
     /* magic stuff */
-    uint8_t *buf = (frameBuffer + 128 * row);
-    for (uint8_t i = 0; i<16; i++)
+    uint8_t* buf = (frameBuffer + 128 * row);
+    for (uint8_t i = 0; i < 16; i++)
     {
         uint8_t tmp[8] = {0};
         for (uint8_t j = 0; j < 8; j++)
         {
-            uint8_t tmp_buf = buf[j*16 + i];
-            int count = __builtin_popcount(tmp_buf);
+            uint8_t tmp_buf = buf[j * 16 + i];
+            int count       = __builtin_popcount(tmp_buf);
             while (count > 0)
             {
                 int pos = __builtin_ctz(tmp_buf);
@@ -137,16 +139,15 @@ void display_renderRow(uint8_t row)
 
 void display_renderRows(uint8_t startRow, uint8_t endRow)
 {
-    for(uint8_t row = startRow; row < endRow; row++)
+    for (uint8_t row = startRow; row < endRow; row++)
     {
         gpio_clearPin(LCD_RS);            /* RS low -> command mode */
         sendByteToController(0xB0 | row); /* Set Y position         */
         sendByteToController(0x10);       /* Set X position         */
         sendByteToController(0x04);
-        gpio_setPin(LCD_RS);              /* RS high -> data mode   */
+        gpio_setPin(LCD_RS); /* RS high -> data mode   */
         display_renderRow(row);
     }
-
 }
 
 void display_render()
@@ -159,14 +160,15 @@ bool display_renderingInProgress()
     return (gpio_readPin(LCD_CS) == 0);
 }
 
-void *display_getFrameBuffer()
+void* display_getFrameBuffer()
 {
-    return (void *)(frameBuffer);
+    return (void*)(frameBuffer);
 }
 
 void display_setContrast(uint8_t contrast)
 {
-    gpio_clearPin(LCD_RS);               /* RS low -> command mode              */
-    sendByteToController(0x81);          /* Set Electronic Volume               */
-    sendByteToController(contrast >> 2); /* Controller contrast range is 0 - 63 */
+    gpio_clearPin(LCD_RS);      /* RS low -> command mode              */
+    sendByteToController(0x81); /* Set Electronic Volume               */
+    sendByteToController(contrast >>
+                         2); /* Controller contrast range is 0 - 63 */
 }

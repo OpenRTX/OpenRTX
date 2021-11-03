@@ -22,10 +22,10 @@
 #define QUEUE_H
 
 #include <pthread.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 // Ring buffer size (MAX = 255)
 #define MSG_QTY 10
@@ -38,27 +38,26 @@ typedef struct queue_t
     uint8_t write_pos;
     uint8_t msg_num;
     uint32_t buffer[MSG_QTY];
-}
-queue_t;
+} queue_t;
 
 /**
  *
  */
-void queue_init(queue_t *q);
+void queue_init(queue_t* q);
 
 /**
  *
  */
-void queue_terminate(queue_t *q);
+void queue_terminate(queue_t* q);
 
 /**
  *
  */
-bool queue_pend(queue_t *q, uint32_t *msg, bool blocking);
+bool queue_pend(queue_t* q, uint32_t* msg, bool blocking);
 
 /**
  *
  */
-bool queue_post(queue_t *q, uint32_t msg);
+bool queue_post(queue_t* q, uint32_t msg);
 
 #endif

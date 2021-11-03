@@ -20,8 +20,8 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,10 +43,10 @@ extern "C" {
  */
 typedef enum
 {
-        GREEN = 0,
-        RED,
-        YELLOW,
-        WHITE,
+    GREEN = 0,
+    RED,
+    YELLOW,
+    WHITE,
 } led_t;
 
 /**
@@ -56,20 +56,18 @@ typedef enum
  */
 typedef struct
 {
-    char name[10];          /* Manufacturer-assigned hardware name.             */
+    char name[10]; /* Manufacturer-assigned hardware name.             */
 
-    uint16_t uhf_maxFreq;   /* Upper bound for UHF band, in MHz.                */
-    uint16_t uhf_minFreq;   /* Lower bound for UHF band, in MHz.                */
+    uint16_t uhf_maxFreq; /* Upper bound for UHF band, in MHz.                */
+    uint16_t uhf_minFreq; /* Lower bound for UHF band, in MHz.                */
 
-    uint16_t vhf_maxFreq;   /* Upper bound for VHF band, in MHz.                */
-    uint16_t vhf_minFreq;   /* Lower bound for VHF band, in MHz.                */
+    uint16_t vhf_maxFreq; /* Upper bound for VHF band, in MHz.                */
+    uint16_t vhf_minFreq; /* Lower bound for VHF band, in MHz.                */
 
-    uint8_t  _unused  : 4,
-             uhf_band : 1,  /* Device allows UHF band operation.                */
-             vhf_band : 1,  /* Device allows VHF band operation.                */
-             lcd_type : 2;  /* LCD display type, meaningful only on MDx targets.*/
+    uint8_t _unused : 4, uhf_band : 1, /* Device allows UHF band operation. */
+        vhf_band : 1, /* Device allows VHF band operation.                */
+        lcd_type : 2; /* LCD display type, meaningful only on MDx targets.*/
 } hwInfo_t;
-
 
 /**
  * This function handles device hardware initialization.
@@ -154,7 +152,7 @@ void platform_setBacklightLevel(uint8_t level);
  * pointer!
  * @return pointer to device's calibration data.
  */
-const void *platform_getCalibrationData();
+const void* platform_getCalibrationData();
 
 /**
  * This function returns a pointer to a data structure containing all the
@@ -163,7 +161,7 @@ const void *platform_getCalibrationData();
  * pointer!
  * @return pointer to device's hardware information.
  */
-const hwInfo_t *platform_getHwInfo();
+const hwInfo_t* platform_getHwInfo();
 
 #ifdef __cplusplus
 }

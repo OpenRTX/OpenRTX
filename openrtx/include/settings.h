@@ -25,30 +25,27 @@
 
 typedef struct
 {
-    uint8_t valid[7];     // Should contain "OPNRTX" in a valid settings_t
+    uint8_t valid[7];  // Should contain "OPNRTX" in a valid settings_t
     uint8_t brightness;
     uint8_t contrast;
     int8_t utc_timezone;
     bool gps_enabled;
     bool gps_set_time;
-    char callsign[10];    // Plaintext callsign, for future use
-}
-__attribute__((packed)) settings_t;
+    char callsign[10];  // Plaintext callsign, for future use
+} __attribute__((packed)) settings_t;
 
-
-static const settings_t default_settings =
-{
-    "OPNRTX",         // Settings valid string
-    255,              // Brightness
+static const settings_t default_settings = {
+    "OPNRTX",  // Settings valid string
+    255,       // Brightness
 #ifdef SCREEN_CONTRAST
-    DEFAULT_CONTRAST, // Contrast
+    DEFAULT_CONTRAST,  // Contrast
 #else
-    255,              // Contrast
+    255,  // Contrast
 #endif
-    0,                // UTC Timezone
-    false,            // GPS enabled
-    true,             // GPS set time
-    ""                // Empty callsign
+    0,      // UTC Timezone
+    false,  // GPS enabled
+    true,   // GPS set time
+    ""      // Empty callsign
 };
 
 #endif /* SETTINGS_H */

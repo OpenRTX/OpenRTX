@@ -18,15 +18,15 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <interfaces/nvmem.h>
 #include <stdio.h>
 #include <string.h>
-#include <interfaces/nvmem.h>
 
 // Simulate CPS with 16 channels, 16 zones, 16 contacts
-const uint32_t maxNumZones = 16;
+const uint32_t maxNumZones    = 16;
 const uint32_t maxNumChannels = 16;
 const uint32_t maxNumContacts = 16;
-const freq_t dummy_base_freq = 145500000;
+const freq_t dummy_base_freq  = 145500000;
 
 void nvm_init()
 {
@@ -36,21 +36,21 @@ void nvm_terminate()
 {
 }
 
-void nvm_loadHwInfo(hwInfo_t *info)
+void nvm_loadHwInfo(hwInfo_t* info)
 {
     /* Linux devices does not have any hardware info in the external flash. */
-    (void) info;
+    (void)info;
 }
 
-int nvm_readVFOChannelData(channel_t *channel)
+int nvm_readVFOChannelData(channel_t* channel)
 {
-    (void) channel;
+    (void)channel;
     return -1;
 }
 
-int nvm_readChannelData(channel_t *channel, uint16_t pos)
+int nvm_readChannelData(channel_t* channel, uint16_t pos)
 {
-    if((pos <= 0) || (pos > maxNumChannels)) return -1;
+    if ((pos <= 0) || (pos > maxNumChannels)) return -1;
 
     /* Generate dummy channel name */
     snprintf(channel->name, 16, "Channel %d", pos);
@@ -61,23 +61,23 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
     return 0;
 }
 
-int nvm_readZoneData(zone_t *zone, uint16_t pos)
+int nvm_readZoneData(zone_t* zone, uint16_t pos)
 {
-    if((pos <= 0) || (pos > maxNumZones)) return -1;
+    if ((pos <= 0) || (pos > maxNumZones)) return -1;
 
     /* Generate dummy zone name */
     snprintf(zone->name, 16, "Zone %d", pos);
     memset(zone->member, 0, sizeof(zone->member));
     // Add fake zone member indexes
     zone->member[0] = pos;
-    zone->member[1] = pos+1;
-    zone->member[2] = pos+2;
+    zone->member[1] = pos + 1;
+    zone->member[2] = pos + 2;
     return 0;
 }
 
-int nvm_readContactData(contact_t *contact, uint16_t pos)
+int nvm_readContactData(contact_t* contact, uint16_t pos)
 {
-    if((pos <= 0) || (pos > maxNumContacts)) return -1;
+    if ((pos <= 0) || (pos > maxNumContacts)) return -1;
 
     /* Generate dummy contact name */
     snprintf(contact->name, 16, "Contact %d", pos);
@@ -85,15 +85,14 @@ int nvm_readContactData(contact_t *contact, uint16_t pos)
     return 0;
 }
 
-int nvm_readSettings(settings_t *settings)
+int nvm_readSettings(settings_t* settings)
 {
-    (void) settings;
-    return -1; 
+    (void)settings;
+    return -1;
 }
 
-int nvm_writeSettings(settings_t *settings)
+int nvm_writeSettings(settings_t* settings)
 {
-    (void) settings;
-    return -1; 
+    (void)settings;
+    return -1;
 }
-

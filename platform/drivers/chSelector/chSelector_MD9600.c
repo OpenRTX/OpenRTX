@@ -18,27 +18,27 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <interfaces/gpio.h>
 #include <hwconfig.h>
+#include <interfaces/gpio.h>
+#include <interfaces/platform.h>
 #include <qdec.h>
+
 #include "chSelector.h"
 
-static uint8_t last_state = 0;  /* State storage */
-static int8_t knob_pos    = 0;  /* Knob position */
-
+static uint8_t last_state = 0; /* State storage */
+static int8_t knob_pos    = 0; /* Knob position */
 
 /* Name of interrupt handler is mangled for C++ compatibility */
 void _Z20EXTI15_10_IRQHandlerv()
 {
-    if(EXTI->PR & (EXTI_PR_PR10 | EXTI_PR_PR11))
+    if (EXTI->PR & (EXTI_PR_PR10 | EXTI_PR_PR11))
     {
         /* Clear interrupt flags */
         EXTI->PR = EXTI_PR_PR10 | EXTI_PR_PR11;
 
         /* Read curent pin state */
-        uint8_t pin_state = (gpio_readPin(CH_SELECTOR_1) << 1)
-                          |  gpio_readPin(CH_SELECTOR_0);
+        uint8_t pin_state =
+            (gpio_readPin(CH_SELECTOR_1) << 1) | gpio_readPin(CH_SELECTOR_0);
 
         /* Look up next state */
         uint8_t next_state = HALF_STEP_STATE_TRANSITIONS[last_state][pin_state];
@@ -50,7 +50,7 @@ void _Z20EXTI15_10_IRQHandlerv()
         uint8_t event = next_state & QDECODER_EVENT_BITMASK;
 
         /* Update knob_pos variable */
-        switch(event)
+        switch (event)
         {
             case QDECODER_EVENT_CW:
                 knob_pos++;
@@ -64,7 +64,6 @@ void _Z20EXTI15_10_IRQHandlerv()
     }
 }
 
-
 void chSelector_init()
 {
     gpio_setMode(CH_SELECTOR_0, INPUT_PULL_UP);
@@ -73,12 +72,11 @@ void chSelector_init()
     /*
      * Configure GPIO interrupts: encoder signal is on PB10 and PB11
      */
-    EXTI->IMR  |= EXTI_IMR_MR10  | EXTI_IMR_MR11;
+    EXTI->IMR |= EXTI_IMR_MR10 | EXTI_IMR_MR11;
     EXTI->RTSR |= EXTI_RTSR_TR10 | EXTI_RTSR_TR11;
     EXTI->FTSR |= EXTI_FTSR_TR10 | EXTI_FTSR_TR11;
 
-    SYSCFG->EXTICR[2] |= SYSCFG_EXTICR3_EXTI10_PB
-                      |  SYSCFG_EXTICR3_EXTI11_PB;
+    SYSCFG->EXTICR[2] |= SYSCFG_EXTICR3_EXTI10_PB | SYSCFG_EXTICR3_EXTI11_PB;
 
     NVIC_ClearPendingIRQ(EXTI15_10_IRQn);
     NVIC_SetPriority(EXTI15_10_IRQn, 15);
@@ -90,7 +88,6 @@ void chSelector_terminate()
     EXTI->IMR &= ~(EXTI_IMR_MR10 | EXTI_IMR_MR11);
     NVIC_DisableIRQ(EXTI15_10_IRQn);
 }
-
 
 /*
  * This function is defined in platform.h

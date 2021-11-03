@@ -21,9 +21,9 @@
 #ifndef TONE_GENERATOR_H
 #define TONE_GENERATOR_H
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -96,7 +96,7 @@ void toneGen_beepOff();
  * @param buf: pointer to a buffer containing data to be encoded.
  * @param len: length of the data buffer.
  */
-void toneGen_encodeAFSK1200(const uint8_t *buf, const size_t len);
+void toneGen_encodeAFSK1200(const uint8_t* buf, const size_t len);
 
 /**
  * Reproduce an audio stream, sending audio stream to both the speaker and the
@@ -114,7 +114,7 @@ void toneGen_encodeAFSK1200(const uint8_t *buf, const size_t len);
  * @param len: length of the data buffer.
  * @param sampleRate: sample rate of the audio stream in samples per second.
  */
-void toneGen_playAudioStream(const uint16_t *buf, const size_t len,
+void toneGen_playAudioStream(const uint16_t* buf, const size_t len,
                              const uint32_t sampleRate);
 
 /**
@@ -138,7 +138,6 @@ void toneGen_stopAudioStream();
  * @return true if the tone generator is busy.
  */
 bool toneGen_toneBusy();
-
 
 #ifdef __cplusplus
 }

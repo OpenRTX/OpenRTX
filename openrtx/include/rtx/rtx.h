@@ -21,10 +21,10 @@
 #ifndef RTX_H
 #define RTX_H
 
-#include <datatypes.h>
-#include <stdint.h>
 #include <cps.h>
+#include <datatypes.h>
 #include <pthread.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,42 +32,41 @@ extern "C" {
 
 typedef struct
 {
-    uint8_t opMode;         /**< Operating mode (FM, DMR, ...) */
+    uint8_t opMode; /**< Operating mode (FM, DMR, ...) */
 
-    uint8_t bandwidth : 2,  /**< Channel bandwidth             */
-            txDisable : 1,  /**< Disable TX operation          */
-            scan      : 1,  /**< Scan enabled                  */
-            opStatus  : 2,  /**< Operating status (OFF, ...)   */
-            _padding  : 2;  /**< Padding to 8 bits             */
+    uint8_t bandwidth : 2, /**< Channel bandwidth             */
+        txDisable     : 1, /**< Disable TX operation          */
+        scan          : 1, /**< Scan enabled                  */
+        opStatus      : 2, /**< Operating status (OFF, ...)   */
+        _padding      : 2; /**< Padding to 8 bits             */
 
-    freq_t rxFrequency;     /**< RX frequency, in Hz           */
-    freq_t txFrequency;     /**< TX frequency, in Hz           */
+    freq_t rxFrequency; /**< RX frequency, in Hz           */
+    freq_t txFrequency; /**< TX frequency, in Hz           */
 
-    float txPower;          /**< TX power, in W                */
-    uint8_t sqlLevel;       /**< Squelch opening level         */
+    float txPower;    /**< TX power, in W                */
+    uint8_t sqlLevel; /**< Squelch opening level         */
 
     uint16_t rxToneEn : 1,  /**< RX CTC/DCS tone enable        */
-             rxTone   : 15; /**< RX CTC/DCS tone               */
+        rxTone        : 15; /**< RX CTC/DCS tone               */
 
     uint16_t txToneEn : 1,  /**< TX CTC/DCS tone enable        */
-             txTone   : 15; /**< TX CTC/DCS tone               */
+        txTone        : 15; /**< TX CTC/DCS tone               */
 
-    uint8_t  rxCan : 4,     /**< M17 Channel Access Number for RX squelch */
-             txCan : 4;     /**< M17 Channel Access Number for TX squelch */
+    uint8_t rxCan     : 4, /**< M17 Channel Access Number for RX squelch */
+        txCan         : 4; /**< M17 Channel Access Number for TX squelch */
 
-    char     source_address[10];      /**< M17 call source address */
-    char     destination_address[10]; /**< M17 call routing address */
-}
-rtxStatus_t;
+    char source_address[10];      /**< M17 call source address */
+    char destination_address[10]; /**< M17 call routing address */
+} rtxStatus_t;
 
 /**
  * \enum bandwidth Enumeration type defining the current rtx bandwidth.
  */
 enum bandwidth
 {
-    BW_12_5 = 0,    /**< 12.5kHz bandwidth */
-    BW_20   = 1,    /**< 20kHz bandwidth   */
-    BW_25   = 2     /**< 25kHz bandwidth   */
+    BW_12_5 = 0, /**< 12.5kHz bandwidth */
+    BW_20   = 1, /**< 20kHz bandwidth   */
+    BW_25   = 2  /**< 25kHz bandwidth   */
 };
 
 /**
@@ -75,10 +74,10 @@ enum bandwidth
  */
 enum opmode
 {
-    NONE = 0,        /**< No opMode selected */
-    FM   = 1,        /**< Analog FM          */
-    DMR  = 2,        /**< DMR                */
-    M17  = 3         /**< M17                */
+    NONE = 0, /**< No opMode selected */
+    FM   = 1, /**< Analog FM          */
+    DMR  = 2, /**< DMR                */
+    M17  = 3  /**< M17                */
 };
 
 /**
@@ -86,18 +85,17 @@ enum opmode
  */
 enum opstatus
 {
-    OFF = 0,        /**< OFF          */
-    RX  = 1,        /**< Receiving    */
-    TX  = 2         /**< Transmitting */
+    OFF = 0, /**< OFF          */
+    RX  = 1, /**< Receiving    */
+    TX  = 2  /**< Transmitting */
 };
-
 
 /**
  * Initialise rtx stage.
  * @param m: pointer to the mutex protecting the shared configuration data
  * structure.
  */
-void rtx_init(pthread_mutex_t *m);
+void rtx_init(pthread_mutex_t* m);
 
 /**
  * Shut down rtx stage
@@ -107,11 +105,12 @@ void rtx_terminate();
 /**
  * Post a new RTX configuration on the internal message queue. Data structure
  * \b must be protected by the same mutex whose pointer has been passed as a
- * parameter to rtx_init(). This driver only copies its content into the internal
- * data structure, eventual garbage collection has to be performed by caller.
+ * parameter to rtx_init(). This driver only copies its content into the
+ * internal data structure, eventual garbage collection has to be performed by
+ * caller.
  * @param cfg: pointer to a structure containing the new RTX configuration.
  */
-void rtx_configure(const rtxStatus_t *cfg);
+void rtx_configure(const rtxStatus_t* cfg);
 
 /**
  * Obtain a copy of the RTX driver's internal status data structure.

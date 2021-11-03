@@ -18,65 +18,66 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/audio_stream.h>
-#include <interfaces/audio_path.h>
-#include <interfaces/platform.h>
-#include <interfaces/delays.h>
-#include <interfaces/audio.h>
-#include <interfaces/radio.h>
 #include <OpMode_M17.h>
 #include <codec2.h>
+#include <dsp.h>
+#include <interfaces/audio.h>
+#include <interfaces/audio_path.h>
+#include <interfaces/audio_stream.h>
+#include <interfaces/delays.h>
+#include <interfaces/platform.h>
+#include <interfaces/radio.h>
+#include <rtx.h>
+
 #include <memory>
 #include <vector>
-#include <rtx.h>
-#include <dsp.h>
 
 using namespace std;
 
-pthread_t       codecThread;        // Thread running CODEC2
-pthread_mutex_t codecMtx;           // Mutex for shared access between codec and rtx threads
-pthread_cond_t  codecCv;            // Condition variable for data ready
-bool            runCodec;           // Flag signalling that codec is running
-bool            newData;            // Flag signalling that new data is available
-array< uint8_t, 16 > encodedData;   // Buffer for encoded data
+pthread_t codecThread;  // Thread running CODEC2
+pthread_mutex_t
+    codecMtx;  // Mutex for shared access between codec and rtx threads
+pthread_cond_t codecCv;          // Condition variable for data ready
+bool runCodec;                   // Flag signalling that codec is running
+bool newData;                    // Flag signalling that new data is available
+array<uint8_t, 16> encodedData;  // Buffer for encoded data
 
-void *threadFunc(void *arg)
+void* threadFunc(void* arg)
 {
-    (void) arg;
+    (void)arg;
 
-    struct CODEC2 *codec2 = codec2_create(CODEC2_MODE_3200);
-    unique_ptr< stream_sample_t > audioBuf(new stream_sample_t[320]);
-    streamId micId = inputStream_start(SOURCE_MIC, PRIO_TX,
-                                       audioBuf.get(), 320,
+    struct CODEC2* codec2 = codec2_create(CODEC2_MODE_3200);
+    unique_ptr<stream_sample_t> audioBuf(new stream_sample_t[320]);
+    streamId micId = inputStream_start(SOURCE_MIC, PRIO_TX, audioBuf.get(), 320,
                                        BUF_CIRC_DOUBLE, 8000);
 
     size_t pos = 0;
 
-    while(runCodec)
+    while (runCodec)
     {
         dataBlock_t audio = inputStream_getData(micId);
 
-        if(audio.data != NULL)
+        if (audio.data != NULL)
         {
-            #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
+#if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
             // Pre-amplification stage
-            for(size_t i = 0; i < audio.len; i++) audio.data[i] <<= 3;
+            for (size_t i = 0; i < audio.len; i++) audio.data[i] <<= 3;
 
             // DC removal
             dsp_dcRemoval(audio.data, audio.len);
 
             // Post-amplification stage
-            for(size_t i = 0; i < audio.len; i++) audio.data[i] *= 4;
-            #endif
+            for (size_t i = 0; i < audio.len; i++) audio.data[i] *= 4;
+#endif
 
             // CODEC2 encodes 160ms of speech into 8 bytes: here we write the
             // new encoded data into a buffer of 16 bytes writing the first
             // half and then the second one, sequentially.
             // Data ready flag is rised once all the 16 bytes contain new data.
-            uint8_t *curPos = encodedData.data() + 8*pos;
+            uint8_t* curPos = encodedData.data() + 8 * pos;
             codec2_encode(codec2, curPos, audio.data);
             pos++;
-            if(pos >= 2)
+            if (pos >= 2)
             {
                 pthread_mutex_lock(&codecMtx);
                 newData = true;
@@ -100,10 +101,8 @@ void *threadFunc(void *arg)
     return NULL;
 }
 
-
 OpMode_M17::OpMode_M17() : enterRx(true), m17Tx(modulator)
 {
-
 }
 
 OpMode_M17::~OpMode_M17()
@@ -140,30 +139,30 @@ void OpMode_M17::disable()
     modulator.terminate();
 }
 
-void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
+void OpMode_M17::update(rtxStatus_t* const status, const bool newCfg)
 {
-    (void) newCfg;
+    (void)newCfg;
 
     // RX logic
-    if(status->opStatus == RX)
+    if (status->opStatus == RX)
     {
         // TODO: Implement M17 Rx
         sleepFor(0u, 30u);
     }
-    else if((status->opStatus == OFF) && enterRx)
+    else if ((status->opStatus == OFF) && enterRx)
     {
         radio_disableRtx();
 
         radio_enableRx();
         status->opStatus = RX;
-        enterRx = false;
+        enterRx          = false;
     }
 
     // TX logic
-    if(platform_getPttStatus() && (status->txDisable == 0))
+    if (platform_getPttStatus() && (status->txDisable == 0))
     {
         // Enter Tx mode, setup transmission
-        if(status->opStatus != TX)
+        if (status->opStatus != TX)
         {
             audio_disableAmp();
             radio_disableRtx();
@@ -185,7 +184,7 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
     }
 
     // PTT is off, transition to Rx state
-    if(!platform_getPttStatus() && (status->opStatus == TX))
+    if (!platform_getPttStatus() && (status->opStatus == TX))
     {
         // Send last audio frame
         sendData(true);
@@ -194,11 +193,11 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
         radio_disableRtx();
 
         status->opStatus = OFF;
-        enterRx = true;
+        enterRx          = true;
     }
 
     // Led control logic
-    switch(status->opStatus)
+    switch (status->opStatus)
     {
         case RX:
             // TODO: Implement Rx LEDs
@@ -222,7 +221,7 @@ void OpMode_M17::sendData(bool lastFrame)
 
     // Wait until there are 16 bytes of compressed speech, then send them
     pthread_mutex_lock(&codecMtx);
-    while(newData == false)
+    while (newData == false)
     {
         pthread_cond_wait(&codecCv, &codecMtx);
     }

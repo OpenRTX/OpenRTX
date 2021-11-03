@@ -28,28 +28,22 @@
 #endif
 
 #include <experimental/array>
-#include "M17Utils.h"
 
+#include "M17Utils.h"
 
 /**
  * Puncture matrix for linx setup frame.
  */
-static constexpr auto LSF_puncture = std::experimental::make_array< uint8_t >
-(
-    1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1,
-    0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1,
-    1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1
-);
+static constexpr auto LSF_puncture = std::experimental::make_array<uint8_t>(
+    1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1,
+    1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1,
+    0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1);
 
 /**
  *  Puncture matrix for audio frames.
  */
-static constexpr auto Audio_puncture = std::experimental::make_array< uint8_t >
-(
-    1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 0
-);
-
+static constexpr auto Audio_puncture =
+    std::experimental::make_array<uint8_t>(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0);
 
 /**
  * Apply a given puncturing scheme to a byte array.
@@ -59,24 +53,24 @@ static constexpr auto Audio_puncture = std::experimental::make_array< uint8_t >
  * \param puncture: puncturing matrix, stored as an array of 8 bit values.
  * \return resulting bit count after punturing.
  */
-template < size_t IN, size_t OUT, size_t P >
-size_t puncture(const std::array< uint8_t, IN  >& input,
-                      std::array< uint8_t, OUT >& output,
-                const std::array< uint8_t, P   >& puncture)
+template <size_t IN, size_t OUT, size_t P>
+size_t puncture(const std::array<uint8_t, IN>& input,
+                std::array<uint8_t, OUT>& output,
+                const std::array<uint8_t, P>& puncture)
 {
     size_t outIndex   = 0;
     size_t punctIndex = 0;
     size_t bit_count  = 0;
 
-    for(size_t i = 0; i < 8*IN && outIndex < 8*OUT; i++)
+    for (size_t i = 0; i < 8 * IN && outIndex < 8 * OUT; i++)
     {
-        if(puncture[punctIndex++])
+        if (puncture[punctIndex++])
         {
             setBit(output, outIndex++, getBit(input, i));
             bit_count++;
         }
 
-        if(punctIndex == P) punctIndex = 0;
+        if (punctIndex == P) punctIndex = 0;
     }
 
     return bit_count;
@@ -90,18 +84,18 @@ size_t puncture(const std::array< uint8_t, IN  >& input,
  * \param puncture: puncturing matrix, stored as an array of 8 bit values.
  * \return number of zero bits added to the input sequence for depunturing.
  */
-template < size_t IN, size_t OUT, size_t P >
-size_t depuncture(const std::array< uint8_t, IN  >& input,
-                        std::array< uint8_t, OUT >& output,
-                  const std::array< uint8_t, P   >& puncture)
+template <size_t IN, size_t OUT, size_t P>
+size_t depuncture(const std::array<uint8_t, IN>& input,
+                  std::array<uint8_t, OUT>& output,
+                  const std::array<uint8_t, P>& puncture)
 {
     size_t inpIndex   = 0;
     size_t punctIndex = 0;
     size_t bit_count  = 0;
 
-    for(size_t i = 0; i < 8*OUT && inpIndex < 8*IN; i++)
+    for (size_t i = 0; i < 8 * OUT && inpIndex < 8 * IN; i++)
     {
-        if(puncture[punctIndex++])
+        if (puncture[punctIndex++])
         {
             setBit(output, i, getBit(input, inpIndex++));
         }
@@ -111,11 +105,10 @@ size_t depuncture(const std::array< uint8_t, IN  >& input,
             bit_count++;
         }
 
-        if(punctIndex == P) punctIndex = 0;
+        if (punctIndex == P) punctIndex = 0;
     }
 
     return bit_count;
 }
-
 
 #endif /* M17_CODE_PUNCTURING_H */

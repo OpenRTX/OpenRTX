@@ -46,7 +46,7 @@ extern "C" {
  * @param buffer: the buffer to be used as both source and destination.
  * @param length: the length of the input buffer.
  */
-void dsp_pwmCompensate(audio_sample_t *buffer, size_t length);
+void dsp_pwmCompensate(audio_sample_t* buffer, size_t length);
 
 /**
  * Remove the DC offset from a collection of audio samples, processing data
@@ -55,7 +55,7 @@ void dsp_pwmCompensate(audio_sample_t *buffer, size_t length);
  * @param buffer: buffer containing the audio samples.
  * @param length: number of samples contained in the buffer.
  */
-void dsp_dcRemoval(audio_sample_t *buffer, size_t length);
+void dsp_dcRemoval(audio_sample_t* buffer, size_t length);
 
 /*
  * Inverts the phase of the audio buffer passed as paramenter.
@@ -64,7 +64,7 @@ void dsp_dcRemoval(audio_sample_t *buffer, size_t length);
  * @param buffer: the buffer to be used as both source and destination.
  * @param length: the length of the input buffer.
  */
-void dsp_invertPhase(audio_sample_t *buffer, uint16_t length);
+void dsp_invertPhase(audio_sample_t* buffer, uint16_t length);
 
 #ifdef __cplusplus
 }
@@ -73,18 +73,17 @@ void dsp_invertPhase(audio_sample_t *buffer, uint16_t length);
  * Class for FIR filter with configurable coefficients.
  * Adapted from the original implementation by Rob Riggs, Mobilinkd LLC.
  */
-template < size_t N >
+template <size_t N>
 class Fir
 {
-public:
-
+   public:
     /**
      * Constructor.
      *
-     * @param taps: reference to a std::array of floating poing values representing
-     * the FIR filter coefficients.
+     * @param taps: reference to a std::array of floating poing values
+     * representing the FIR filter coefficients.
      */
-    Fir(const std::array< float, N >& taps) : taps(taps), pos(0)
+    Fir(const std::array<float, N>& taps) : taps(taps), pos(0)
     {
         reset();
     }
@@ -92,7 +91,9 @@ public:
     /**
      * Destructor.
      */
-    ~Fir() { }
+    ~Fir()
+    {
+    }
 
     /**
      * Perform one step of the FIR filter, computing a new output value given
@@ -104,14 +105,14 @@ public:
     float operator()(const float& input)
     {
         hist[pos++] = input;
-        if(pos >= N) pos = 0;
+        if (pos >= N) pos = 0;
 
-        float  result = 0.0;
-        size_t index  = pos;
+        float result = 0.0;
+        size_t index = pos;
 
-        for(size_t i = 0; i < N; i++)
+        for (size_t i = 0; i < N; i++)
         {
-            index   = (index != 0 ? index - 1 : N - 1);
+            index = (index != 0 ? index - 1 : N - 1);
             result += hist[index] * taps[i];
         }
 
@@ -127,13 +128,12 @@ public:
         pos = 0;
     }
 
-private:
-
-    const std::array< float, N >& taps;    ///< FIR filter coefficients.
-    std::array< float, N >        hist;    ///< History of past inputs.
-    size_t                        pos;     ///< Current position in history.
+   private:
+    const std::array<float, N>& taps;  ///< FIR filter coefficients.
+    std::array<float, N> hist;         ///< History of past inputs.
+    size_t pos;                        ///< Current position in history.
 };
 
-#endif // __cplusplus
+#endif  // __cplusplus
 
 #endif /* DSP_H */

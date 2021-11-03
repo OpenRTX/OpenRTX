@@ -47,9 +47,9 @@ static uint32_t golay_encode24(const uint16_t& data)
 {
     // Compute [23,12] Golay codeword
     uint32_t codeword = data & 0x0FFFF;
-    for(size_t i = 0; i < 12; i++)
+    for (size_t i = 0; i < 12; i++)
     {
-        if(codeword & 0x01) codeword ^= 0x0C75;
+        if (codeword & 0x01) codeword ^= 0x0C75;
         codeword >>= 1;
     }
 

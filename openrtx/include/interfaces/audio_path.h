@@ -30,24 +30,24 @@ extern "C" {
 
 enum AudioSource
 {
-    SOURCE_MIC,        ///< Receive audio signal from the microphone
-    SOURCE_RTX,        ///< Receive audio signal from the transceiver
-    SOURCE_MCU         ///< Receive audio signal from a memory buffer
+    SOURCE_MIC,  ///< Receive audio signal from the microphone
+    SOURCE_RTX,  ///< Receive audio signal from the transceiver
+    SOURCE_MCU   ///< Receive audio signal from a memory buffer
 };
 
 enum AudioSink
 {
-    SINK_SPK,          ///< Send audio signal to the speaker
-    SINK_RTX,          ///< Send audio signal to the transceiver
-    SINK_MCU           ///< Send audio signal to a memory buffer
+    SINK_SPK,  ///< Send audio signal to the speaker
+    SINK_RTX,  ///< Send audio signal to the transceiver
+    SINK_MCU   ///< Send audio signal to a memory buffer
 };
 
 enum AudioPriority
 {
-    PRIO_BEEP = 1,     ///< Priority level of system beeps
-    PRIO_RX,           ///< Priority level of incoming audio from RX stage
-    PRIO_PROMPT,       ///< Priority level of voice prompts
-    PRIO_TX            ///< Priority level of outward audio directed to TX stage
+    PRIO_BEEP = 1,  ///< Priority level of system beeps
+    PRIO_RX,        ///< Priority level of incoming audio from RX stage
+    PRIO_PROMPT,    ///< Priority level of voice prompts
+    PRIO_TX         ///< Priority level of outward audio directed to TX stage
 };
 
 typedef int8_t pathId;
@@ -59,10 +59,10 @@ typedef int8_t pathId;
  * @param source: identifier of the input audio peripheral.
  * @param sink: identifier of the output audio peripheral.
  * @param prio: priority of the requester.
- * @return a unique identifier of the opened path or -1 if path is already in use.
+ * @return a unique identifier of the opened path or -1 if path is already in
+ * use.
  */
-pathId audioPath_open(enum AudioSource source,
-                      enum AudioSink sink,
+pathId audioPath_open(enum AudioSource source, enum AudioSink sink,
                       enum AudioPriority prio);
 
 /**

@@ -17,20 +17,20 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <ADC1_MDx.h>
+#include <SPI2.h>
+#include <backlight.h>
+#include <calibInfo_MDx.h>
+#include <chSelector.h>
+#include <hwconfig.h>
+#include <interfaces/audio.h>
+#include <interfaces/delays.h>
 #include <interfaces/gpio.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/platform.h>
-#include <interfaces/delays.h>
-#include <hwconfig.h>
-#include <string.h>
-#include <backlight.h>
-#include <ADC1_MDx.h>
-#include <calibInfo_MDx.h>
-#include <toneGenerator_MDx.h>
 #include <interfaces/rtc.h>
-#include <interfaces/audio.h>
-#include <SPI2.h>
-#include <chSelector.h>
+#include <string.h>
+#include <toneGenerator_MDx.h>
 
 hwInfo_t hwInfo;
 
@@ -73,12 +73,12 @@ void platform_init()
     memcpy(hwInfo.name, "MD-9600", 7);
     hwInfo.name[8] = '\0';
 
-    nvm_init();                      /* Initialise non volatile memory manager */
-    toneGen_init();                  /* Initialise tone generator              */
-    rtc_init();                      /* Initialise RTC                         */
-    backlight_init();                /* Initialise backlight driver            */
-    chSelector_init();               /* Initialise channel selector handler    */
-    audio_init();                    /* Initialise audio management module     */
+    nvm_init();        /* Initialise non volatile memory manager */
+    toneGen_init();    /* Initialise tone generator              */
+    rtc_init();        /* Initialise RTC                         */
+    backlight_init();  /* Initialise backlight driver            */
+    chSelector_init(); /* Initialise channel selector handler    */
+    audio_init();      /* Initialise audio management module     */
 }
 
 void platform_terminate()
@@ -101,7 +101,8 @@ void platform_terminate()
      * always powered. Thus, for turn off, perform a system reset.
      */
     NVIC_SystemReset();
-    while(1) ;
+    while (1)
+        ;
 }
 
 uint16_t platform_getVbat()
@@ -131,10 +132,10 @@ uint8_t platform_getVolumeLevel()
      * 1600 and then multiply by 256.
      */
     uint16_t value = adc1_getMeasurement(ADC_VOL_CH);
-    if(value > 1599) value = 1599;
+    if (value > 1599) value = 1599;
     uint32_t level = value << 16;
     level /= 1600;
-    return ((uint8_t) (level >> 8));
+    return ((uint8_t)(level >> 8));
 }
 
 bool platform_getPttStatus()
@@ -159,11 +160,11 @@ bool platform_pwrButtonStatus()
      * Also, working at register level to keep it as short as possible
      */
     __disable_irq();
-    uint32_t prevRowState = GPIOD->ODR & (1 << 4);  /* Row 3 is PD4 */
-    GPIOD->BSRRH = 1 << 4;                          /* PD4 low      */
+    uint32_t prevRowState = GPIOD->ODR & (1 << 4); /* Row 3 is PD4 */
+    GPIOD->BSRRH          = 1 << 4;                /* PD4 low      */
     delayUs(10);
-    uint32_t btnStatus = GPIOE->IDR & 0x01;         /* Col 3 is PE0 */
-    GPIOD->ODR |= prevRowState;                     /* Restore PD4  */
+    uint32_t btnStatus = GPIOE->IDR & 0x01; /* Col 3 is PE0 */
+    GPIOD->ODR |= prevRowState;             /* Restore PD4  */
     __enable_irq();
 
     /*
@@ -180,9 +181,9 @@ bool platform_pwrButtonStatus()
      * Power button follows an active-low logic: btnStatus is low when button
      * is pressed
      */
-    if(btnStatus == 0)
+    if (btnStatus == 0)
     {
-        if(gpio_readPin(PWR_SW))
+        if (gpio_readPin(PWR_SW))
         {
             /* Power switch high and button pressed: request to turn off */
             return false;
@@ -201,19 +202,19 @@ bool platform_pwrButtonStatus()
 void platform_ledOn(led_t led)
 {
     /* No LEDs on this platform */
-    (void) led;
+    (void)led;
 }
 
 void platform_ledOff(led_t led)
 {
     /* No LEDs on this platform */
-    (void) led;
+    (void)led;
 }
 
 void platform_beepStart(uint16_t freq)
 {
     /* TODO */
-    (void) freq;
+    (void)freq;
 }
 
 void platform_beepStop()
@@ -221,12 +222,12 @@ void platform_beepStop()
     /* TODO */
 }
 
-const void *platform_getCalibrationData()
+const void* platform_getCalibrationData()
 {
     return NULL;
 }
 
-const hwInfo_t *platform_getHwInfo()
+const hwInfo_t* platform_getHwInfo()
 {
     return &hwInfo;
 }
@@ -242,4 +243,3 @@ const hwInfo_t *platform_getHwInfo()
  * platform/drivers/backlight/backlight_MDx.c
  */
 // void platform_setBacklightLevel(uint8_t level)
-

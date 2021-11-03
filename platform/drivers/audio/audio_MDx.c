@@ -18,68 +18,68 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/audio.h>
-#include <interfaces/gpio.h>
-#include <interfaces/delays.h>
 #include <hwconfig.h>
+#include <interfaces/audio.h>
+#include <interfaces/delays.h>
+#include <interfaces/gpio.h>
 
 void audio_init()
 {
-    gpio_setMode(SPK_MUTE,     OUTPUT);
-    #ifndef PLATFORM_MD9600
+    gpio_setMode(SPK_MUTE, OUTPUT);
+#ifndef PLATFORM_MD9600
     gpio_setMode(AUDIO_AMP_EN, OUTPUT);
-    #ifndef MDx_ENABLE_SWD
-    gpio_setMode(MIC_PWR,      OUTPUT);
-    #endif
-    #endif
+#ifndef MDx_ENABLE_SWD
+    gpio_setMode(MIC_PWR, OUTPUT);
+#endif
+#endif
 
-    gpio_setPin(SPK_MUTE);          /* Speaker muted   */
-    #ifndef PLATFORM_MD9600
-    gpio_clearPin(AUDIO_AMP_EN);    /* Audio PA off    */
-    #ifndef MDx_ENABLE_SWD
-    gpio_clearPin(MIC_PWR);         /* Mic preamp. off */
-    #endif
-    #endif
+    gpio_setPin(SPK_MUTE); /* Speaker muted   */
+#ifndef PLATFORM_MD9600
+    gpio_clearPin(AUDIO_AMP_EN); /* Audio PA off    */
+#ifndef MDx_ENABLE_SWD
+    gpio_clearPin(MIC_PWR); /* Mic preamp. off */
+#endif
+#endif
 }
 
 void audio_terminate()
 {
-    gpio_setPin(SPK_MUTE);          /* Speaker muted   */
-    #ifndef PLATFORM_MD9600
-    gpio_clearPin(AUDIO_AMP_EN);    /* Audio PA off    */
-    #ifndef MDx_ENABLE_SWD
-    gpio_clearPin(MIC_PWR);         /* Mic preamp. off */
-    #endif
-    #endif
+    gpio_setPin(SPK_MUTE); /* Speaker muted   */
+#ifndef PLATFORM_MD9600
+    gpio_clearPin(AUDIO_AMP_EN); /* Audio PA off    */
+#ifndef MDx_ENABLE_SWD
+    gpio_clearPin(MIC_PWR); /* Mic preamp. off */
+#endif
+#endif
 }
 
 void audio_enableMic()
 {
-    #if !defined(PLATFORM_MD9600) && !defined(MDx_ENABLE_SWD)
+#if !defined(PLATFORM_MD9600) && !defined(MDx_ENABLE_SWD)
     gpio_setPin(MIC_PWR);
-    #endif
+#endif
 }
 
 void audio_disableMic()
 {
-    #if !defined(PLATFORM_MD9600) && !defined(MDx_ENABLE_SWD)
+#if !defined(PLATFORM_MD9600) && !defined(MDx_ENABLE_SWD)
     gpio_clearPin(MIC_PWR);
-    #endif
+#endif
 }
 
 void audio_enableAmp()
 {
-    #ifndef PLATFORM_MD9600
+#ifndef PLATFORM_MD9600
     gpio_setPin(AUDIO_AMP_EN);
-    #endif
-    sleepFor(0, 10);                /* 10ms anti-pop delay */
+#endif
+    sleepFor(0, 10); /* 10ms anti-pop delay */
     gpio_clearPin(SPK_MUTE);
 }
 
 void audio_disableAmp()
 {
     gpio_setPin(SPK_MUTE);
-    #ifndef PLATFORM_MD9600
+#ifndef PLATFORM_MD9600
     gpio_clearPin(AUDIO_AMP_EN);
-    #endif
+#endif
 }

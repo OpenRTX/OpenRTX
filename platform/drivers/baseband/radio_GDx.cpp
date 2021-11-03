@@ -18,35 +18,39 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <interfaces/radio.h>
-#include <interfaces/gpio.h>
 #include <calibInfo_GDx.h>
 #include <calibUtils.h>
 #include <hwconfig.h>
+#include <interfaces/gpio.h>
+#include <interfaces/platform.h>
+#include <interfaces/radio.h>
+
 #include <algorithm>
-#include "radioUtils.h"
-#include "HR_C6000.h"
+
 #include "AT1846S.h"
+#include "HR_C6000.h"
+#include "radioUtils.h"
 
-const gdxCalibration_t *calData;  // Pointer to calibration data
-const rtxStatus_t      *config;   // Pointer to data structure with radio configuration
+const gdxCalibration_t* calData;  // Pointer to calibration data
+const rtxStatus_t*
+    config;  // Pointer to data structure with radio configuration
 
-Band    currRxBand  = BND_NONE;   // Current band for RX
-Band    currTxBand  = BND_NONE;   // Current band for TX
-uint16_t apcVoltage = 0;          // APC voltage for TX output power control
+Band currRxBand     = BND_NONE;  // Current band for RX
+Band currTxBand     = BND_NONE;  // Current band for TX
+uint16_t apcVoltage = 0;         // APC voltage for TX output power control
 
-enum opstatus radioStatus;        // Current operating status
+enum opstatus radioStatus;  // Current operating status
 
 HR_C6000& C6000  = HR_C6000::instance();  // HR_C5000 driver
 AT1846S& at1846s = AT1846S::instance();   // AT1846S driver
 
-void radio_init(const rtxStatus_t *rtxState)
+void radio_init(const rtxStatus_t* rtxState)
 {
     /*
      * Load calibration data
      */
-    calData = reinterpret_cast< const gdxCalibration_t * >(platform_getCalibrationData());
+    calData = reinterpret_cast<const gdxCalibration_t*>(
+        platform_getCalibrationData());
 
     config      = rtxState;
     radioStatus = OFF;
@@ -56,18 +60,17 @@ void radio_init(const rtxStatus_t *rtxState)
      */
     gpio_setMode(VHF_LNA_EN, OUTPUT);
     gpio_setMode(UHF_LNA_EN, OUTPUT);
-    gpio_setMode(VHF_PA_EN,  OUTPUT);
-    gpio_setMode(UHF_PA_EN,  OUTPUT);
+    gpio_setMode(VHF_PA_EN, OUTPUT);
+    gpio_setMode(UHF_PA_EN, OUTPUT);
     gpio_setMode(RX_AUDIO_MUX, OUTPUT);
     gpio_setMode(TX_AUDIO_MUX, OUTPUT);
 
-
-    gpio_clearPin(VHF_LNA_EN);      // Turn VHF LNA off
-    gpio_clearPin(UHF_LNA_EN);      // Turn UHF LNA off
-    gpio_clearPin(VHF_PA_EN);       // Turn VHF PA off
-    gpio_clearPin(UHF_PA_EN);       // Turn UHF PA off
-    gpio_clearPin(RX_AUDIO_MUX);    // Audio out to HR_C6000
-    gpio_clearPin(TX_AUDIO_MUX);    // Audio in to microphone
+    gpio_clearPin(VHF_LNA_EN);    // Turn VHF LNA off
+    gpio_clearPin(UHF_LNA_EN);    // Turn UHF LNA off
+    gpio_clearPin(VHF_PA_EN);     // Turn VHF PA off
+    gpio_clearPin(UHF_PA_EN);     // Turn UHF PA off
+    gpio_clearPin(RX_AUDIO_MUX);  // Audio out to HR_C6000
+    gpio_clearPin(TX_AUDIO_MUX);  // Audio in to microphone
 
     /*
      * Enable and configure DAC for PA drive control
@@ -75,8 +78,8 @@ void radio_init(const rtxStatus_t *rtxState)
     SIM->SCGC6 |= SIM_SCGC6_DAC0_MASK;
     DAC0->DAT[0].DATL = 0;
     DAC0->DAT[0].DATH = 0;
-    DAC0->C0   |= DAC_C0_DACRFS_MASK    // Reference voltage is Vref2
-               |  DAC_C0_DACEN_MASK;    // Enable DAC
+    DAC0->C0 |= DAC_C0_DACRFS_MASK    // Reference voltage is Vref2
+                | DAC_C0_DACEN_MASK;  // Enable DAC
 
     /*
      * Enable and configure both AT1846S and HR_C6000
@@ -98,25 +101,25 @@ void radio_terminate()
 
 void radio_tuneVcxo(const int16_t vhfOffset, const int16_t uhfOffset)
 {
-    //TODO: this part will be implemented in the future, when proved to be
+    // TODO: this part will be implemented in the future, when proved to be
     // necessary.
-    (void) vhfOffset;
-    (void) uhfOffset;
+    (void)vhfOffset;
+    (void)uhfOffset;
 }
 
 void radio_setOpmode(const enum opmode mode)
 {
-    switch(mode)
+    switch (mode)
     {
         case FM:
-            gpio_setPin(RX_AUDIO_MUX);              // Audio out to amplifier
-            gpio_clearPin(TX_AUDIO_MUX);            // Audio in to microphone
+            gpio_setPin(RX_AUDIO_MUX);    // Audio out to amplifier
+            gpio_clearPin(TX_AUDIO_MUX);  // Audio in to microphone
             at1846s.setOpMode(AT1846S_OpMode::FM);
             break;
 
         case DMR:
-            gpio_clearPin(RX_AUDIO_MUX);             // Audio out to HR_C6000
-            gpio_setPin(TX_AUDIO_MUX);               // Audio in from HR_C6000
+            gpio_clearPin(RX_AUDIO_MUX);  // Audio out to HR_C6000
+            gpio_setPin(TX_AUDIO_MUX);    // Audio in from HR_C6000
             at1846s.setOpMode(AT1846S_OpMode::DMR);
             break;
 
@@ -139,7 +142,7 @@ void radio_enableRx()
     DAC0->DAT[0].DATH = 0;
     DAC0->DAT[0].DATL = 0;
 
-    if(currRxBand == BND_NONE) return;
+    if (currRxBand == BND_NONE) return;
 
     // Adjust reference oscillator bias and offset.
     C6000.writeCfgRegister(0x04, calData->data[currRxBand].mod2Offset);
@@ -150,7 +153,7 @@ void radio_enableRx()
     at1846s.setFuncMode(AT1846S_FuncMode::RX);
 
     // Enable RX LNA
-    if(currRxBand == BND_VHF)
+    if (currRxBand == BND_VHF)
     {
         gpio_setPin(VHF_LNA_EN);
     }
@@ -161,7 +164,7 @@ void radio_enableRx()
 
     radioStatus = RX;
 
-    if(config->rxToneEn)
+    if (config->rxToneEn)
     {
         at1846s.enableRxCtcss(config->rxTone);
     }
@@ -169,14 +172,14 @@ void radio_enableRx()
 
 void radio_enableTx()
 {
-    if(config->txDisable == 1) return;
+    if (config->txDisable == 1) return;
 
     gpio_clearPin(VHF_LNA_EN);
     gpio_clearPin(UHF_LNA_EN);
     gpio_clearPin(VHF_PA_EN);
     gpio_clearPin(UHF_PA_EN);
 
-    if(currTxBand == BND_NONE) return;
+    if (currTxBand == BND_NONE) return;
 
     // Adjust reference oscillator bias and offset.
     C6000.writeCfgRegister(0x04, calData->data[currTxBand].mod2Offset);
@@ -188,10 +191,10 @@ void radio_enableTx()
 
     // Set APC voltage
     DAC0->DAT[0].DATH = (apcVoltage >> 8) & 0xFF;
-    DAC0->DAT[0].DATL =  apcVoltage & 0xFF;
+    DAC0->DAT[0].DATL = apcVoltage & 0xFF;
 
     // Enable TX PA
-    if(currTxBand == BND_VHF)
+    if (currTxBand == BND_VHF)
     {
         gpio_setPin(VHF_PA_EN);
     }
@@ -200,7 +203,7 @@ void radio_enableTx()
         gpio_setPin(UHF_PA_EN);
     }
 
-    if(config->txToneEn)
+    if (config->txToneEn)
     {
         at1846s.enableTxCtcss(config->txTone);
     }
@@ -215,7 +218,7 @@ void radio_disableRtx()
     gpio_clearPin(VHF_PA_EN);
     gpio_clearPin(UHF_PA_EN);
 
-    if(radioStatus == TX)
+    if (radioStatus == TX)
     {
         // Set PA drive voltage to 0V
         DAC0->DAT[0].DATH = 0;
@@ -232,40 +235,46 @@ void radio_updateConfiguration()
     currRxBand = getBandFromFrequency(config->rxFrequency);
     currTxBand = getBandFromFrequency(config->txFrequency);
 
-    if((currRxBand == BND_NONE) || (currTxBand == BND_NONE)) return;
+    if ((currRxBand == BND_NONE) || (currTxBand == BND_NONE)) return;
 
     /*
      * Parameters dependent on RX frequency only
      */
-    const bandCalData_t *cal = &(calData->data[currRxBand]);
+    const bandCalData_t* cal = &(calData->data[currRxBand]);
 
     at1846s.setRxAudioGain(cal->rxDacGain, cal->rxVoiceGain);
 
-    if(config->bandwidth == BW_12_5)
+    if (config->bandwidth == BW_12_5)
     {
-        at1846s.setNoise1Thresholds(cal->noise1_HighTsh_Nb, cal->noise1_LowTsh_Nb);
-        at1846s.setNoise2Thresholds(cal->noise2_HighTsh_Nb, cal->noise2_LowTsh_Nb);
+        at1846s.setNoise1Thresholds(cal->noise1_HighTsh_Nb,
+                                    cal->noise1_LowTsh_Nb);
+        at1846s.setNoise2Thresholds(cal->noise2_HighTsh_Nb,
+                                    cal->noise2_LowTsh_Nb);
         at1846s.setRssiThresholds(cal->rssi_HighTsh_Nb, cal->rssi_LowTsh_Nb);
     }
     else
     {
-        at1846s.setNoise1Thresholds(cal->noise1_HighTsh_Wb, cal->noise1_LowTsh_Wb);
-        at1846s.setNoise2Thresholds(cal->noise2_HighTsh_Wb, cal->noise2_LowTsh_Wb);
+        at1846s.setNoise1Thresholds(cal->noise1_HighTsh_Wb,
+                                    cal->noise1_LowTsh_Wb);
+        at1846s.setNoise2Thresholds(cal->noise2_HighTsh_Wb,
+                                    cal->noise2_LowTsh_Wb);
         at1846s.setRssiThresholds(cal->rssi_HighTsh_Wb, cal->rssi_LowTsh_Wb);
     }
 
-    C6000.writeCfgRegister(0x37, cal->digAudioGain);    // DACDATA gain
+    C6000.writeCfgRegister(0x37, cal->digAudioGain);  // DACDATA gain
 
     uint8_t sqlTresh = 0;
-    if(currRxBand == BND_VHF)
+    if (currRxBand == BND_VHF)
     {
-        sqlTresh = interpCalParameter(config->rxFrequency, calData->vhfCalPoints,
-                                      cal->analogSqlThresh, 8);
+        sqlTresh =
+            interpCalParameter(config->rxFrequency, calData->vhfCalPoints,
+                               cal->analogSqlThresh, 8);
     }
     else
     {
-        sqlTresh = interpCalParameter(config->rxFrequency, calData->uhfCalPoints,
-                                      cal->analogSqlThresh, 8);
+        sqlTresh =
+            interpCalParameter(config->rxFrequency, calData->uhfCalPoints,
+                               cal->analogSqlThresh, 8);
     }
 
     at1846s.setAnalogSqlThresh(sqlTresh);
@@ -282,14 +291,16 @@ void radio_updateConfiguration()
     uint8_t txpwr_lo = 0;
     uint8_t txpwr_hi = 0;
 
-    if(currTxBand == BND_VHF)
+    if (currTxBand == BND_VHF)
     {
         /* VHF band */
-        txpwr_lo = interpCalParameter(config->txFrequency, calData->vhfCalPoints,
-                                      calData->data[currTxBand].txLowPower, 8);
+        txpwr_lo =
+            interpCalParameter(config->txFrequency, calData->vhfCalPoints,
+                               calData->data[currTxBand].txLowPower, 8);
 
-        txpwr_hi = interpCalParameter(config->txFrequency, calData->vhfCalPoints,
-                                      calData->data[currTxBand].txHighPower, 8);
+        txpwr_hi =
+            interpCalParameter(config->txFrequency, calData->vhfCalPoints,
+                               calData->data[currTxBand].txHighPower, 8);
 
         mod1Amp = interpCalParameter(config->txFrequency, calData->vhfCalPoints,
                                      cal->mod1Amplitude, 8);
@@ -297,11 +308,13 @@ void radio_updateConfiguration()
     else
     {
         /* UHF band */
-        txpwr_lo = interpCalParameter(config->txFrequency, calData->uhfPwrCalPoints,
-                                      calData->data[currTxBand].txLowPower, 16);
+        txpwr_lo =
+            interpCalParameter(config->txFrequency, calData->uhfPwrCalPoints,
+                               calData->data[currTxBand].txLowPower, 16);
 
-        txpwr_hi = interpCalParameter(config->txFrequency, calData->uhfPwrCalPoints,
-                                      calData->data[currTxBand].txHighPower, 16);
+        txpwr_hi =
+            interpCalParameter(config->txFrequency, calData->uhfPwrCalPoints,
+                               calData->data[currTxBand].txHighPower, 16);
 
         mod1Amp = interpCalParameter(config->txFrequency, calData->uhfCalPoints,
                                      cal->mod1Amplitude, 8);
@@ -311,13 +324,13 @@ void radio_updateConfiguration()
 
     // Calculate APC voltage, constraining output power between 1W and 5W.
     float power = std::max(std::min(config->txPower, 5.0f), 1.0f);
-    float pwrHi = static_cast< float >(txpwr_hi);
-    float pwrLo = static_cast< float >(txpwr_lo);
-    float apc   = pwrLo + (pwrHi - pwrLo)/4.0f*(power - 1.0f);
-    apcVoltage  = static_cast< uint16_t >(apc) * 16;
+    float pwrHi = static_cast<float>(txpwr_hi);
+    float pwrLo = static_cast<float>(txpwr_lo);
+    float apc   = pwrLo + (pwrHi - pwrLo) / 4.0f * (power - 1.0f);
+    apcVoltage  = static_cast<uint16_t>(apc) * 16;
 
     // Set bandwidth and TX deviation, force 12.5kHz for DMR mode
-    if((config->bandwidth == BW_12_5) || (config->opMode == DMR))
+    if ((config->bandwidth == BW_12_5) || (config->opMode == DMR))
     {
         at1846s.setBandwidth(AT1846S_BW::_12P5);
         at1846s.setTxDeviation(calData->data[currTxBand].mixGainNarrowband);
@@ -334,13 +347,13 @@ void radio_updateConfiguration()
      * This is done by calling again the corresponding functions, which is safe
      * to do and avoids code duplication.
      */
-    if(radioStatus == RX) radio_enableRx();
-    if(radioStatus == TX) radio_enableTx();
+    if (radioStatus == RX) radio_enableRx();
+    if (radioStatus == TX) radio_enableTx();
 }
 
 float radio_getRssi()
 {
-    return static_cast< float >(at1846s.readRSSI());
+    return static_cast<float>(at1846s.readRSSI());
 }
 
 enum opstatus radio_getStatus()

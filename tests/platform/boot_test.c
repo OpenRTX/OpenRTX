@@ -18,15 +18,15 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdio.h>
-#include <interfaces/platform.h>
 #include <interfaces/delays.h>
+#include <interfaces/platform.h>
+#include <stdio.h>
 
 int main()
 {
     platform_init();
 
-    while(1)
+    while (1)
     {
         platform_ledOn(GREEN);
         delayMs(1000);

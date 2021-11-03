@@ -1,9 +1,10 @@
-#include <stdio.h>
 #include "queue.h"
 
-void queue_init(queue_t *q)
+#include <stdio.h>
+
+void queue_init(queue_t* q)
 {
-    if(q == NULL) return;
+    if (q == NULL) return;
     pthread_mutex_init(&q->mutex, NULL);
     pthread_cond_init(&q->not_empty, NULL);
     q->read_pos  = 0;
@@ -11,25 +12,25 @@ void queue_init(queue_t *q)
     q->msg_num   = 0;
 }
 
-void queue_terminate(queue_t *q)
+void queue_terminate(queue_t* q)
 {
-    if(q == NULL) return;
+    if (q == NULL) return;
     pthread_mutex_destroy(&q->mutex);
     pthread_cond_destroy(&q->not_empty);
 }
 
-bool queue_pend(queue_t *q, uint32_t *msg, bool blocking)
+bool queue_pend(queue_t* q, uint32_t* msg, bool blocking)
 {
-    if((q == NULL) || (msg == NULL)) return false;
+    if ((q == NULL) || (msg == NULL)) return false;
 
     pthread_mutex_lock(&q->mutex);
 
     // The queue is empty
-    if(q->msg_num == 0)
+    if (q->msg_num == 0)
     {
-        if(blocking)
+        if (blocking)
         {
-            while(q->msg_num == 0)
+            while (q->msg_num == 0)
             {
                 pthread_cond_wait(&q->not_empty, &q->mutex);
             }
@@ -51,13 +52,13 @@ bool queue_pend(queue_t *q, uint32_t *msg, bool blocking)
     return true;
 }
 
-bool queue_post(queue_t *q, uint32_t msg)
+bool queue_post(queue_t* q, uint32_t msg)
 {
-    if(q == NULL) return false;
+    if (q == NULL) return false;
 
     pthread_mutex_lock(&q->mutex);
 
-    if(q->msg_num < MSG_QTY)
+    if (q->msg_num < MSG_QTY)
     {
         q->buffer[q->write_pos] = msg;
 
@@ -65,7 +66,7 @@ bool queue_post(queue_t *q, uint32_t msg)
         q->write_pos = (q->write_pos + 1) % MSG_QTY;
 
         // Signal that the queue is not empty
-        if(q->msg_num == 0)
+        if (q->msg_num == 0)
         {
             pthread_cond_signal(&q->not_empty);
         }

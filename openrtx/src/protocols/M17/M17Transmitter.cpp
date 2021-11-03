@@ -26,15 +26,13 @@
 static constexpr std::array<uint8_t, 2> LSF_SYNC_WORD  = {0x55, 0xF7};
 static constexpr std::array<uint8_t, 2> DATA_SYNC_WORD = {0xFF, 0x5D};
 
-M17Transmitter::M17Transmitter(M17Modulator& modulator) : modulator(modulator),
-                                                currentLich(0), frameNumber(0)
+M17Transmitter::M17Transmitter(M17Modulator& modulator)
+    : modulator(modulator), currentLich(0), frameNumber(0)
 {
-
 }
 
 M17Transmitter::~M17Transmitter()
 {
-
 }
 
 void M17Transmitter::start(const std::string& src)
@@ -53,18 +51,18 @@ void M17Transmitter::start(const std::string& src, const std::string& dst)
     // Fill the Link Setup Frame
     lsf.clear();
     lsf.setSource(src);
-    if(!dst.empty()) lsf.setDestination(dst);
+    if (!dst.empty()) lsf.setDestination(dst);
 
     streamType_t type;
-    type.stream   = 1;    // Stream
-    type.dataType = 2;    // Voice data
+    type.stream   = 1;  // Stream
+    type.dataType = 2;  // Voice data
     type.CAN      = 0;  // Channel access number
 
     lsf.setType(type);
     lsf.updateCrc();
 
     // Generate the Golay(24,12) LICH segments
-    for(size_t i = 0; i < lichSegments.size(); i++)
+    for (size_t i = 0; i < lichSegments.size(); i++)
     {
         lichSegments[i] = lsf.generateLichSegment(i);
     }
@@ -81,7 +79,7 @@ void M17Transmitter::start(const std::string& src, const std::string& dst)
     decorrelate(punctured);
 
     // Send preamble
-    std::array<uint8_t, 2>  preamble_sync;
+    std::array<uint8_t, 2> preamble_sync;
     std::array<uint8_t, 46> preamble_bytes;
     preamble_sync.fill(0x77);
     preamble_bytes.fill(0x77);
@@ -96,7 +94,7 @@ void M17Transmitter::send(const payload_t& payload, const bool isLast)
     dataFrame.clear();
     dataFrame.setFrameNumber(frameNumber);
     frameNumber = (frameNumber + 1) & 0x07FF;
-    if(isLast) dataFrame.lastFrame();
+    if (isLast) dataFrame.lastFrame();
     std::copy(payload.begin(), payload.end(), dataFrame.payload().begin());
 
     // Encode frame
@@ -111,8 +109,7 @@ void M17Transmitter::send(const payload_t& payload, const bool isLast)
     // Add LICH segment to coded data and send
     std::array<uint8_t, 46> frame;
     auto it = std::copy(lichSegments[currentLich].begin(),
-                        lichSegments[currentLich].end(),
-                        frame.begin());
+                        lichSegments[currentLich].end(), frame.begin());
     std::copy(punctured.begin(), punctured.end(), it);
 
     // Increment LICH counter after copy

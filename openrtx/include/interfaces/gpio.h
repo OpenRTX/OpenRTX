@@ -30,14 +30,14 @@ extern "C" {
  */
 enum Mode
 {
-    INPUT              =  0, ///Floating Input
-    INPUT_PULL_UP      =  1, ///Pullup   Input
-    INPUT_PULL_DOWN    =  2, ///Pulldown Input
-    INPUT_ANALOG       =  3, ///Analog   Input
-    OUTPUT             =  4, ///Push Pull  Output
-    OPEN_DRAIN         =  5, ///Open Drain Output
-    ALTERNATE          =  6, ///Alternate function
-    ALTERNATE_OD       =  7, ///Alternate Open Drain
+    INPUT           = 0,  /// Floating Input
+    INPUT_PULL_UP   = 1,  /// Pullup   Input
+    INPUT_PULL_DOWN = 2,  /// Pulldown Input
+    INPUT_ANALOG    = 3,  /// Analog   Input
+    OUTPUT          = 4,  /// Push Pull  Output
+    OPEN_DRAIN      = 5,  /// Open Drain Output
+    ALTERNATE       = 6,  /// Alternate function
+    ALTERNATE_OD    = 7,  /// Alternate Open Drain
 };
 
 /**
@@ -46,10 +46,10 @@ enum Mode
  */
 enum Speed
 {
-    LOW    = 0x0,   /// 2MHz for STM32
-    MEDIUM = 0x1,   /// 25MHz for STM32
-    FAST   = 0x2,   /// 50MHz for STM32
-    HIGH   = 0x3    /// 100MHz for STM32
+    LOW    = 0x0,  /// 2MHz for STM32
+    MEDIUM = 0x1,  /// 25MHz for STM32
+    FAST   = 0x2,  /// 50MHz for STM32
+    HIGH   = 0x3   /// 100MHz for STM32
 };
 
 /**
@@ -58,7 +58,7 @@ enum Speed
  * @param pin: GPIO pin number, between 0 and 15.
  * @param mode: GPIO functional mode to be set.
  */
-void gpio_setMode(void *port, uint8_t pin, enum Mode mode);
+void gpio_setMode(void* port, uint8_t pin, enum Mode mode);
 
 /**
  * Map alternate function to GPIO pin. The pin has to be configured in alternate
@@ -68,7 +68,7 @@ void gpio_setMode(void *port, uint8_t pin, enum Mode mode);
  * @param afNum: alternate function number, retrieved from mapping table in
  * microcontroller's datasheet.
  */
-void gpio_setAlternateFunction(void *port, uint8_t pin, uint8_t afNum);
+void gpio_setAlternateFunction(void* port, uint8_t pin, uint8_t afNum);
 
 /**
  * Configure GPIO pin maximum output speed.
@@ -76,7 +76,7 @@ void gpio_setAlternateFunction(void *port, uint8_t pin, uint8_t afNum);
  * @param pin: GPIO pin number, between 0 and 15.
  * @param spd: GPIO output speed to be set.
  */
-void gpio_setOutputSpeed(void *port, uint8_t pin, enum Speed spd);
+void gpio_setOutputSpeed(void* port, uint8_t pin, enum Speed spd);
 
 /**
  * Set GPIO pin to high logic level.
@@ -84,7 +84,7 @@ void gpio_setOutputSpeed(void *port, uint8_t pin, enum Speed spd);
  * @param port: GPIO port, it has to be equal to GPIOA_BASE, GPIOB_BASE, ...
  * @param pin: GPIO pin number, between 0 and 15.
  */
-void gpio_setPin(void *port, uint8_t pin);
+void gpio_setPin(void* port, uint8_t pin);
 
 /**
  * Set GPIO pin to low logic level.
@@ -92,7 +92,7 @@ void gpio_setPin(void *port, uint8_t pin);
  * @param port: GPIO port, it has to be equal to GPIOA_BASE, GPIOB_BASE, ...
  * @param pin: GPIO pin number, between 0 and 15.
  */
-void gpio_clearPin(void *port, uint8_t pin);
+void gpio_clearPin(void* port, uint8_t pin);
 
 /**
  * Toggle logic level of a GPIO pin, with respect to its state before calling
@@ -100,7 +100,7 @@ void gpio_clearPin(void *port, uint8_t pin);
  * @param port: GPIO port, it has to be equal to GPIOA_BASE, GPIOB_BASE, ...
  * @param pin: GPIO pin number, between 0 and 15.
  */
-void gpio_togglePin(void *port, uint8_t pin);
+void gpio_togglePin(void* port, uint8_t pin);
 
 /**
  * Read GPIO pin's logic level.
@@ -108,7 +108,7 @@ void gpio_togglePin(void *port, uint8_t pin);
  * @param pin: GPIO pin number, between 0 and 15.
  * @return 1 if pin is at high logic level, 0 if pin is at low logic level.
  */
-uint8_t gpio_readPin(const void *port, uint8_t pin);
+uint8_t gpio_readPin(const void* port, uint8_t pin);
 
 #ifdef __cplusplus
 }

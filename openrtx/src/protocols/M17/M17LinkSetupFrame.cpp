@@ -18,11 +18,11 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <cstring>
-#include <M17/M17Golay.h>
 #include <M17/M17Callsign.h>
+#include <M17/M17Golay.h>
 #include <M17/M17LinkSetupFrame.h>
 
+#include <cstring>
 
 M17LinkSetupFrame::M17LinkSetupFrame()
 {
@@ -31,7 +31,6 @@ M17LinkSetupFrame::M17LinkSetupFrame()
 
 M17LinkSetupFrame::~M17LinkSetupFrame()
 {
-
 }
 
 void M17LinkSetupFrame::clear()
@@ -54,7 +53,7 @@ streamType_t M17LinkSetupFrame::getType()
 {
     // NOTE: M17 fields are big-endian, we need to swap bytes
     streamType_t type = data.type;
-    type.value = __builtin_bswap16(type.value);
+    type.value        = __builtin_bswap16(type.value);
     return type;
 }
 
@@ -97,10 +96,10 @@ lich_t M17LinkSetupFrame::generateLichSegment(const uint8_t segmentNum)
 
     // Set up pointer to the beginning of the specified 5-byte chunk
     uint8_t num    = segmentNum % 6;
-    uint8_t *chunk = reinterpret_cast< uint8_t* >(&data) + (num * 5);
+    uint8_t* chunk = reinterpret_cast<uint8_t*>(&data) + (num * 5);
 
     // Partition chunk data in 12-bit blocks for Golay(24,12) encoding.
-    std::array< uint16_t, 4 > blocks;
+    std::array<uint16_t, 4> blocks;
     blocks[0] = chunk[0] << 4 | ((chunk[1] >> 4) & 0x0F);
     blocks[1] = ((chunk[1] & 0x0F) << 8) | chunk[2];
     blocks[2] = chunk[3] << 4 | ((chunk[4] >> 4) & 0x0F);
@@ -109,35 +108,35 @@ lich_t M17LinkSetupFrame::generateLichSegment(const uint8_t segmentNum)
     // Encode each block and assemble the final data block.
     // NOTE: shift and bitswap required to genereate big-endian data.
     lich_t result;
-    for(size_t i = 0; i < blocks.size(); i++)
+    for (size_t i = 0; i < blocks.size(); i++)
     {
         uint32_t encoded = golay_encode24(blocks[i]);
         encoded          = __builtin_bswap32(encoded << 8);
-        memcpy(&result[3*i], &encoded, 3);
+        memcpy(&result[3 * i], &encoded, 3);
     }
 
     return result;
 }
 
-std::array< uint8_t, sizeof(lsf_t) > M17LinkSetupFrame::toArray()
+std::array<uint8_t, sizeof(lsf_t)> M17LinkSetupFrame::toArray()
 {
-    std::array< uint8_t, sizeof(lsf_t) > frame;
+    std::array<uint8_t, sizeof(lsf_t)> frame;
     memcpy(frame.data(), &data, frame.size());
     return frame;
 }
 
-uint16_t M17LinkSetupFrame::crc16(const void *data, const size_t len)
+uint16_t M17LinkSetupFrame::crc16(const void* data, const size_t len)
 {
-    const uint8_t *ptr = reinterpret_cast< const uint8_t *>(data);
-    uint16_t crc = 0xFFFF;
+    const uint8_t* ptr = reinterpret_cast<const uint8_t*>(data);
+    uint16_t crc       = 0xFFFF;
 
-    for(size_t i = 0; i < len; i++)
+    for (size_t i = 0; i < len; i++)
     {
         crc ^= (ptr[i] << 8);
 
-        for(uint8_t j = 0; j < 8; j++)
+        for (uint8_t j = 0; j < 8; j++)
         {
-            if(crc & 0x8000)
+            if (crc & 0x8000)
                 crc = (crc << 1) ^ 0x5935;
             else
                 crc = (crc << 1);

@@ -18,15 +18,15 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <interfaces/platform.h>
 #include <os.h>
 #include <stdio.h>
-#include <interfaces/platform.h>
 
 int main()
 {
     platform_init();
 
-    while(1)
+    while (1)
     {
         OS_ERR err;
         printf("Hello world\n");

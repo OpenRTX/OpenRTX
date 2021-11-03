@@ -21,44 +21,42 @@
 #ifndef STATE_H
 #define STATE_H
 
-#include <datatypes.h>
-#include <stdbool.h>
-#include <interfaces/rtc.h>
 #include <cps.h>
+#include <datatypes.h>
+#include <interfaces/rtc.h>
 #include <settings.h>
+#include <stdbool.h>
 
 /**
  * Data structure representing a single satellite as part of a GPS fix.
  */
 typedef struct
 {
-    uint8_t id;           // ID of the satellite
-    uint8_t elevation;    // Elevation in degrees
-    uint16_t azimuth;     // Azimuth in degrees
-    uint8_t snr;          // Quality of the signal in range 0-99
-}
-sat_t;
+    uint8_t id;         // ID of the satellite
+    uint8_t elevation;  // Elevation in degrees
+    uint16_t azimuth;   // Azimuth in degrees
+    uint8_t snr;        // Quality of the signal in range 0-99
+} sat_t;
 
 /**
  * Data structure representing the last state received from the GPS module.
  */
 typedef struct
 {
-    curTime_t timestamp;  // Timestamp of the latest GPS update
-    uint8_t fix_quality;  // 0: no fix, 1: GPS, 2: GPS SPS, 3: GPS PPS
-    uint8_t fix_type;     // 0: no fix, 1: 2D,  2: 3D
-    uint8_t satellites_tracked; // Number of tracked satellites
-    uint8_t satellites_in_view; // Satellites in view
-    sat_t satellites[12]; // Details about satellites in view
-    uint32_t active_sats; // Bitmap representing which sats are part of the fix
-    float latitude;       // Latitude coordinates
-    float longitude;      // Longitude coordinates
-    float altitude;       // Antenna altitude above mean sea level (geoid) in m
-    float speed;          // Ground speed in km/h
-    float tmg_mag;        // Course over ground, degrees, magnetic
-    float tmg_true;       // Course over ground, degrees, true
-}
-gps_t;
+    curTime_t timestamp;         // Timestamp of the latest GPS update
+    uint8_t fix_quality;         // 0: no fix, 1: GPS, 2: GPS SPS, 3: GPS PPS
+    uint8_t fix_type;            // 0: no fix, 1: 2D,  2: 3D
+    uint8_t satellites_tracked;  // Number of tracked satellites
+    uint8_t satellites_in_view;  // Satellites in view
+    sat_t satellites[12];        // Details about satellites in view
+    uint32_t active_sats;  // Bitmap representing which sats are part of the fix
+    float latitude;        // Latitude coordinates
+    float longitude;       // Longitude coordinates
+    float altitude;        // Antenna altitude above mean sea level (geoid) in m
+    float speed;           // Ground speed in km/h
+    float tmg_mag;         // Course over ground, degrees, magnetic
+    float tmg_true;        // Course over ground, degrees, true
+} gps_t;
 
 /**
  * Data structure representing the settings of the M17 mode.
@@ -67,8 +65,7 @@ typedef struct
 {
     char callsign[10];
     char dst_addr[10];
-}
-m17_t;
+} m17_t;
 
 /**
  * Part of this structure has been commented because the corresponding
@@ -86,11 +83,11 @@ typedef struct
     uint8_t ui_screen;
     uint8_t tuner_mode;
 
-    //time_t rx_status_tv;
-    //bool rx_status;
+    // time_t rx_status_tv;
+    // bool rx_status;
 
-    //time_t tx_status_tv;
-    //bool tx_status;
+    // time_t tx_status_tv;
+    // bool tx_status;
 
     uint16_t channel_index;
     channel_t channel;
@@ -106,8 +103,7 @@ typedef struct
     settings_t settings;
     gps_t gps_data;
     m17_t m17_data;
-}
-state_t;
+} state_t;
 
 enum TunerMode
 {

@@ -19,6 +19,7 @@
  ***************************************************************************/
 
 #include "HR_C6000_wrapper.h"
+
 #include "HR_C6000.h"
 
 void C6000_init()
@@ -68,8 +69,8 @@ void C6000_fmMode()
 
 void C6000_startAnalogTx()
 {
-    HR_C6000::instance().startAnalogTx(TxAudioSource::MIC, FmConfig::PREEMPH_EN |
-                                                           FmConfig::BW_25kHz);
+    HR_C6000::instance().startAnalogTx(
+        TxAudioSource::MIC, FmConfig::PREEMPH_EN | FmConfig::BW_25kHz);
 }
 
 void C6000_stopAnalogTx()

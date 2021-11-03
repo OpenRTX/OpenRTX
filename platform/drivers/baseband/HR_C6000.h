@@ -25,15 +25,15 @@
 
 enum class C6000_SpiOpModes : uint8_t
 {
-    AUX    = 1,     ///< Auxiliary configuration registers.
-    DATA   = 2,     ///< Write TX data register and read RX data register.
-    SOUND  = 3,     ///< Voice prompt sample register.
-    CONFIG = 4,     ///< Main configuration registers.
-    AMBE3K = 5,     ///< AMBE3000 configuration register.
-    DATA_R = 6,     ///< Write RX data register and read TX data register.
-    AMBE1K = 7      ///< AMBE1000 configuration register.
+    AUX    = 1,  ///< Auxiliary configuration registers.
+    DATA   = 2,  ///< Write TX data register and read RX data register.
+    SOUND  = 3,  ///< Voice prompt sample register.
+    CONFIG = 4,  ///< Main configuration registers.
+    AMBE3K = 5,  ///< AMBE3000 configuration register.
+    DATA_R = 6,  ///< Write RX data register and read TX data register.
+    AMBE1K = 7   ///< AMBE1000 configuration register.
 };
 
-using HR_C6000 = HR_Cx000 < C6000_SpiOpModes >;
+using HR_C6000 = HR_Cx000<C6000_SpiOpModes>;
 
 #endif /* HRC6000_H */

@@ -19,17 +19,18 @@
  ***************************************************************************/
 
 #include <interfaces/platform.h>
-#include <stdio.h>
 #include <stdint.h>
-#include <ui.h>
+#include <stdio.h>
 #include <string.h>
+#include <ui.h>
 
 void _ui_drawMainBackground()
 {
     // Print top bar line of hline_h pixel height
     gfx_drawHLine(layout.top_h, layout.hline_h, color_grey);
     // Print bottom bar line of 1 pixel height
-    gfx_drawHLine(SCREEN_HEIGHT - layout.bottom_h - 1, layout.hline_h, color_grey);
+    gfx_drawHLine(SCREEN_HEIGHT - layout.bottom_h - 1, layout.hline_h,
+                  color_grey);
 }
 
 void _ui_drawMainTop()
@@ -37,53 +38,53 @@ void _ui_drawMainTop()
 #ifdef HAS_RTC
     // Print clock on top bar
     curTime_t local_time = state_getLocalTime(last_state.time);
-    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, "%02d:%02d:%02d", local_time.hour,
-              local_time.minute, local_time.second);
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER, color_white,
+              "%02d:%02d:%02d", local_time.hour, local_time.minute,
+              local_time.second);
 #endif
     // If the radio has no built-in battery, print input voltage
 #ifdef BAT_NONE
-    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_RIGHT,
-              color_white,"%.1fV", last_state.v_bat);
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_RIGHT, color_white,
+              "%.1fV", last_state.v_bat);
 #else
     // Otherwise print battery icon on top bar, use 4 px padding
-    uint16_t bat_width = SCREEN_WIDTH / 9;
+    uint16_t bat_width  = SCREEN_WIDTH / 9;
     uint16_t bat_height = layout.top_h - (layout.status_v_pad * 2);
-    point_t bat_pos = {SCREEN_WIDTH - bat_width - layout.horizontal_pad,
+    point_t bat_pos     = {SCREEN_WIDTH - bat_width - layout.horizontal_pad,
                        layout.status_v_pad};
     gfx_drawBattery(bat_pos, bat_width, bat_height, last_state.charge);
 #endif
     // Print radio mode on top bar
-    switch(last_state.channel.mode)
+    switch (last_state.channel.mode)
     {
         case FM:
-        gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT,
-                  color_white, "FM");
-        break;
+            gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT,
+                      color_white, "FM");
+            break;
         case DMR:
-        gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT,
-                  color_white, "DMR");
-        break;
+            gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT,
+                      color_white, "DMR");
+            break;
         case M17:
-        gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT,
-                  color_white, "M17");
-        break;
+            gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT,
+                      color_white, "M17");
+            break;
     }
 }
 
 void _ui_drawZoneChannel()
 {
     // Print Zone name
-    if(!last_state.zone_enabled)
+    if (!last_state.zone_enabled)
         gfx_print(layout.line1_pos, layout.line1_font, TEXT_ALIGN_LEFT,
                   color_white, "zone: All channels");
     else
         gfx_print(layout.line1_pos, layout.line1_font, TEXT_ALIGN_LEFT,
-                  color_white,  "zone: %.13s", last_state.zone.name);
+                  color_white, "zone: %.13s", last_state.zone.name);
     // Print Channel name
-    gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_LEFT,
-              color_white, "  %03d: %.12s",
-              last_state.channel_index, last_state.channel.name);
+    gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_LEFT, color_white,
+              "  %03d: %.12s", last_state.channel_index,
+              last_state.channel.name);
 }
 
 void _ui_drawFrequency()
@@ -91,57 +92,58 @@ void _ui_drawFrequency()
     // Print big numbers frequency
     gfx_print(layout.line3_pos, layout.line3_font, TEXT_ALIGN_CENTER,
               color_white, "%03lu.%05lu",
-              (unsigned long)last_state.channel.rx_frequency/1000000,
-              (unsigned long)last_state.channel.rx_frequency%1000000/10);
+              (unsigned long)last_state.channel.rx_frequency / 1000000,
+              (unsigned long)last_state.channel.rx_frequency % 1000000 / 10);
 }
 
 void _ui_drawVFOMiddleInput(ui_state_t* ui_state)
 {
     // Add inserted number to string, skipping "Rx: "/"Tx: " and "."
     uint8_t insert_pos = ui_state->input_position + 3;
-    if(ui_state->input_position > 3) insert_pos += 1;
+    if (ui_state->input_position > 3) insert_pos += 1;
     char input_char = ui_state->input_number + '0';
 
-    if(ui_state->input_set == SET_RX)
+    if (ui_state->input_set == SET_RX)
     {
-        if(ui_state->input_position == 0)
+        if (ui_state->input_position == 0)
         {
             gfx_print(layout.line2_pos, layout.input_font, TEXT_ALIGN_CENTER,
                       color_white, ">Rx:%03lu.%05lu",
-                      (unsigned long)ui_state->new_rx_frequency/1000000,
-                      (unsigned long)ui_state->new_rx_frequency%1000000/10);
+                      (unsigned long)ui_state->new_rx_frequency / 1000000,
+                      (unsigned long)ui_state->new_rx_frequency % 1000000 / 10);
         }
         else
         {
             // Replace Rx frequency with underscorses
-            if(ui_state->input_position == 1)
+            if (ui_state->input_position == 1)
                 strcpy(ui_state->new_rx_freq_buf, ">Rx:___._____");
             ui_state->new_rx_freq_buf[insert_pos] = input_char;
             gfx_print(layout.line2_pos, layout.input_font, TEXT_ALIGN_CENTER,
                       color_white, ui_state->new_rx_freq_buf);
         }
-        gfx_print(layout.line3_pos, layout.input_font, TEXT_ALIGN_CENTER,
-                  color_white, " Tx:%03lu.%05lu",
-                  (unsigned long)last_state.channel.tx_frequency/1000000,
-                  (unsigned long)last_state.channel.tx_frequency%1000000/10);
+        gfx_print(
+            layout.line3_pos, layout.input_font, TEXT_ALIGN_CENTER, color_white,
+            " Tx:%03lu.%05lu",
+            (unsigned long)last_state.channel.tx_frequency / 1000000,
+            (unsigned long)last_state.channel.tx_frequency % 1000000 / 10);
     }
-    else if(ui_state->input_set == SET_TX)
+    else if (ui_state->input_set == SET_TX)
     {
         gfx_print(layout.line2_pos, layout.input_font, TEXT_ALIGN_CENTER,
                   color_white, " Rx:%03lu.%05lu",
-                  (unsigned long)ui_state->new_rx_frequency/1000000,
-                  (unsigned long)ui_state->new_rx_frequency%1000000/10);
+                  (unsigned long)ui_state->new_rx_frequency / 1000000,
+                  (unsigned long)ui_state->new_rx_frequency % 1000000 / 10);
         // Replace Rx frequency with underscorses
-        if(ui_state->input_position == 0)
+        if (ui_state->input_position == 0)
         {
             gfx_print(layout.line3_pos, layout.input_font, TEXT_ALIGN_CENTER,
                       color_white, ">Tx:%03lu.%05lu",
-                      (unsigned long)ui_state->new_rx_frequency/1000000,
-                      (unsigned long)ui_state->new_rx_frequency%1000000/10);
+                      (unsigned long)ui_state->new_rx_frequency / 1000000,
+                      (unsigned long)ui_state->new_rx_frequency % 1000000 / 10);
         }
         else
         {
-            if(ui_state->input_position == 1)
+            if (ui_state->input_position == 1)
                 strcpy(ui_state->new_tx_freq_buf, ">Tx:___._____");
             ui_state->new_tx_freq_buf[insert_pos] = input_char;
             gfx_print(layout.line3_pos, layout.input_font, TEXT_ALIGN_CENTER,
@@ -153,35 +155,25 @@ void _ui_drawVFOMiddleInput(ui_state_t* ui_state)
 void _ui_drawMainBottom()
 {
     // Squelch bar
-    float rssi = last_state.rssi;
-    float squelch = last_state.sqlLevel / 16.0f;
-    uint16_t meter_width = SCREEN_WIDTH - 2 * layout.horizontal_pad; 
-    uint16_t meter_height = layout.bottom_h; 
-    point_t meter_pos = { layout.horizontal_pad, 
-                          SCREEN_HEIGHT - meter_height - layout.bottom_pad};
-    uint8_t mic_level = platform_getMicLevel();
-    switch(last_state.channel.mode)
+    float rssi            = last_state.rssi;
+    float squelch         = last_state.sqlLevel / 16.0f;
+    uint16_t meter_width  = SCREEN_WIDTH - 2 * layout.horizontal_pad;
+    uint16_t meter_height = layout.bottom_h;
+    point_t meter_pos     = {layout.horizontal_pad,
+                         SCREEN_HEIGHT - meter_height - layout.bottom_pad};
+    uint8_t mic_level     = platform_getMicLevel();
+    switch (last_state.channel.mode)
     {
         case FM:
-            gfx_drawSmeter(meter_pos,
-                           meter_width,
-                           meter_height,
-                           rssi,
-                           squelch,
+            gfx_drawSmeter(meter_pos, meter_width, meter_height, rssi, squelch,
                            yellow_fab413);
             break;
         case DMR:
-            gfx_drawSmeterLevel(meter_pos,
-                                meter_width,
-                                meter_height,
-                                rssi,
+            gfx_drawSmeterLevel(meter_pos, meter_width, meter_height, rssi,
                                 mic_level);
             break;
         case M17:
-            gfx_drawSmeterLevel(meter_pos,
-                                meter_width,
-                                meter_height,
-                                rssi,
+            gfx_drawSmeterLevel(meter_pos, meter_width, meter_height, rssi,
                                 mic_level);
             break;
     }

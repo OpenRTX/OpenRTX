@@ -19,6 +19,7 @@
  ***************************************************************************/
 
 #include "AT1846S_wrapper.h"
+
 #include "AT1846S.h"
 
 void AT1846S_init()
@@ -40,21 +41,21 @@ void AT1846S_setBandwidth(const AT1846S_bw_t band)
 {
     // Conversion is safe: the fields in AT1846S_bw_t enum and in AT1846S_BW
     // enum class concide.
-    AT1846S::instance().setBandwidth(static_cast< AT1846S_BW >(band));
+    AT1846S::instance().setBandwidth(static_cast<AT1846S_BW>(band));
 }
 
 void AT1846S_setOpMode(const AT1846S_op_t mode)
 {
     // Conversion is safe: the fields in AT1846S_op_t enum and in AT1846S_OpMode
     // enum class concide.
-    AT1846S::instance().setOpMode(static_cast< AT1846S_OpMode >(mode));
+    AT1846S::instance().setOpMode(static_cast<AT1846S_OpMode>(mode));
 }
 
 void AT1846S_setFuncMode(const AT1846S_func_t mode)
 {
     // Conversion is safe: the fields in AT1846S_func_t enum and in
     // AT1846S_FuncMode enum class concide.
-    AT1846S::instance().setFuncMode(static_cast< AT1846S_FuncMode >(mode));
+    AT1846S::instance().setFuncMode(static_cast<AT1846S_FuncMode>(mode));
 }
 
 void AT1846S_enableTxCtcss(tone_t freq)

@@ -19,6 +19,7 @@
  ***************************************************************************/
 
 #include "HR_C5000_wrapper.h"
+
 #include "HR_C5000.h"
 
 void C5000_init()
@@ -58,8 +59,8 @@ void C5000_fmMode()
 
 void C5000_startAnalogTx()
 {
-    HR_C5000::instance().startAnalogTx(TxAudioSource::MIC, FmConfig::PREEMPH_EN |
-                                                           FmConfig::BW_25kHz);
+    HR_C5000::instance().startAnalogTx(
+        TxAudioSource::MIC, FmConfig::PREEMPH_EN | FmConfig::BW_25kHz);
 }
 
 void C5000_stopAnalogTx()

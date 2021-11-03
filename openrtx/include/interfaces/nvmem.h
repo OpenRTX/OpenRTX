@@ -21,10 +21,11 @@
 #ifndef NVMEM_H
 #define NVMEM_H
 
-#include "platform.h"
-#include <stdint.h>
 #include <cps.h>
 #include <settings.h>
+#include <stdint.h>
+
+#include "platform.h"
 
 /**
  * Interface for nonvolatile memory management, usually an external SPI flash
@@ -46,14 +47,14 @@ void nvm_terminate();
  *
  * @param buf: destination buffer for calibration data.
  */
-void nvm_readCalibData(void *buf);
+void nvm_readCalibData(void* buf);
 
 /**
  * Load all or some hardware information parameters from nonvolatile memory.
  *
  * @param info: destination data structure for hardware information data.
  */
-void nvm_loadHwInfo(hwInfo_t *info);
+void nvm_loadHwInfo(hwInfo_t* info);
 
 /**
  * Read from storage the channel data corresponding to the VFO channel A.
@@ -61,7 +62,7 @@ void nvm_loadHwInfo(hwInfo_t *info);
  * @param channel: pointer to the channel_t data structure to be populated.
  * @return 0 on success, -1 on failure
  */
-int nvm_readVFOChannelData(channel_t *channel);
+int nvm_readVFOChannelData(channel_t* channel);
 
 /**
  * Read one channel entry from table stored in nonvolatile memory.
@@ -70,7 +71,7 @@ int nvm_readVFOChannelData(channel_t *channel);
  * @param pos: position, inside the channel table, from which read data.
  * @return 0 on success, -1 on failure
  */
-int nvm_readChannelData(channel_t *channel, uint16_t pos);
+int nvm_readChannelData(channel_t* channel, uint16_t pos);
 
 /**
  * Read one zone from table stored in nonvolatile memory.
@@ -79,7 +80,7 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos);
  * @param pos: position, inside the zone table, from which read data.
  * @return 0 on success, -1 on failure
  */
-int nvm_readZoneData(zone_t *zone, uint16_t pos);
+int nvm_readZoneData(zone_t* zone, uint16_t pos);
 
 /**
  * Read one contact from table stored in nonvolatile memory.
@@ -88,7 +89,7 @@ int nvm_readZoneData(zone_t *zone, uint16_t pos);
  * @param pos: position, inside the zone table, from which read data.
  * @return 0 on success, -1 on failure
  */
-int nvm_readContactData(contact_t *contact, uint16_t pos);
+int nvm_readContactData(contact_t* contact, uint16_t pos);
 
 /**
  * Read OpenRTX settings from storage.
@@ -96,7 +97,7 @@ int nvm_readContactData(contact_t *contact, uint16_t pos);
  * @param settings: pointer to the settings_t data structure to be populated.
  * @return 0 on success, -1 on failure
  */
-int nvm_readSettings(settings_t *settings);
+int nvm_readSettings(settings_t* settings);
 
 /**
  * Write OpenRTX settings to storage.
@@ -104,6 +105,6 @@ int nvm_readSettings(settings_t *settings);
  * @param settings: pointer to the settings_t data structure to be written.
  * @return 0 on success, -1 on failure
  */
-int nvm_writeSettings(settings_t *settings);
+int nvm_writeSettings(settings_t* settings);
 
 #endif /* NVMEM_H */

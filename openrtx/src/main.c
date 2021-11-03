@@ -18,32 +18,31 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <ui.h>
-#include <stdlib.h>
-#include <inttypes.h>
-#include <threads.h>
-#include <interfaces/platform.h>
 #include <battery.h>
-#include <interfaces/graphics.h>
-#include <interfaces/delays.h>
 #include <hwconfig.h>
+#include <interfaces/delays.h>
+#include <interfaces/graphics.h>
+#include <interfaces/platform.h>
+#include <inttypes.h>
+#include <stdlib.h>
+#include <threads.h>
+#include <ui.h>
 
-extern void *ui_task(void *arg);
+extern void* ui_task(void* arg);
 
 int main(void)
 {
-    // MD-9600 does not have a proper power on/off mechanism and the MCU is
-    // always powered on. We thus need to place a busy wait on the power on
-    // button to manage the on/off mechanism.
-    // A do-while block is used to avoid re-powering on after a power off due to
-    // MCU rebooting before user stops pressing the power button.
-    #ifdef PLATFORM_MD9600
+// MD-9600 does not have a proper power on/off mechanism and the MCU is
+// always powered on. We thus need to place a busy wait on the power on
+// button to manage the on/off mechanism.
+// A do-while block is used to avoid re-powering on after a power off due to
+// MCU rebooting before user stops pressing the power button.
+#ifdef PLATFORM_MD9600
     do
     {
         sleepFor(1, 0);
-    }
-    while(!platform_pwrButtonStatus());
-    #endif
+    } while (!platform_pwrButtonStatus());
+#endif
 
     // Initialize platform drivers
     platform_init();

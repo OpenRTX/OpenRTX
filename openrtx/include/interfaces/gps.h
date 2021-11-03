@@ -22,8 +22,8 @@
 #define INTERFACES_GPS_H
 
 #include <stdbool.h>
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -69,7 +69,7 @@ bool gps_detect(uint16_t timeout);
  * @param maxLength: maximum writable length inside the buffer.
  * @return number of characters written in the buffer or -1 on error.
  */
-int gps_getNmeaSentence(char *buf, const size_t maxLength);
+int gps_getNmeaSentence(char* buf, const size_t maxLength);
 
 #ifdef __cplusplus
 }

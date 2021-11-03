@@ -18,19 +18,19 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <hwconfig.h>
 #include <interfaces/audio.h>
 #include <interfaces/gpio.h>
-#include <hwconfig.h>
 
 void audio_init()
 {
     gpio_setMode(AUDIO_AMP_EN, OUTPUT);
-    gpio_clearPin(AUDIO_AMP_EN);    /* Audio PA off    */
+    gpio_clearPin(AUDIO_AMP_EN); /* Audio PA off    */
 }
 
 void audio_terminate()
 {
-    gpio_clearPin(AUDIO_AMP_EN);    /* Audio PA off    */
+    gpio_clearPin(AUDIO_AMP_EN); /* Audio PA off    */
 }
 
 void audio_enableMic()

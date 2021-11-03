@@ -19,12 +19,13 @@
  ***************************************************************************/
 
 #include <interfaces/radio.h>
+
 #include <cstdio>
 #include <string>
 
-void radio_init(const rtxStatus_t *rtxState)
+void radio_init(const rtxStatus_t* rtxState)
 {
-    (void) rtxState;
+    (void)rtxState;
     puts("radio_linux: init() called");
 }
 
@@ -35,25 +36,26 @@ void radio_terminate()
 
 void radio_tuneVcxo(const int16_t vhfOffset, const int16_t uhfOffset)
 {
-    (void) vhfOffset;
-    (void) uhfOffset;
+    (void)vhfOffset;
+    (void)uhfOffset;
     puts("radio_linux: tuneVcxo() called");
 }
 
 void radio_setOpmode(const enum opmode mode)
 {
     std::string mStr(" ");
-    if(mode == NONE) mStr = "NONE";
-    if(mode == FM)   mStr = "FM";
-    if(mode == DMR)  mStr = "DMR";
-    if(mode == M17)  mStr = "M17";
+    if (mode == NONE) mStr = "NONE";
+    if (mode == FM) mStr = "FM";
+    if (mode == DMR) mStr = "DMR";
+    if (mode == M17) mStr = "M17";
 
     printf("radio_linux: setting opmode to %s\n", mStr.c_str());
 }
 
 bool radio_checkRxDigitalSquelch()
 {
-//     puts("radio_linux: radio_checkRxDigitalSquelch(), returning 'false'");
+    //     puts("radio_linux: radio_checkRxDigitalSquelch(), returning
+    //     'false'");
     return false;
 }
 
@@ -80,7 +82,8 @@ void radio_updateConfiguration()
 float radio_getRssi()
 {
     // Commented to reduce verbosity on Linux
-    // printf("radio_linux: requested RSSI at freq %d, returning -100dBm\n", rxFreq);
+    // printf("radio_linux: requested RSSI at freq %d, returning -100dBm\n",
+    // rxFreq);
     return -100.0f;
 }
 

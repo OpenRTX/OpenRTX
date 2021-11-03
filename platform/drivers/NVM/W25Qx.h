@@ -21,8 +21,8 @@
 #ifndef W25Qx_H
 #define W25Qx_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <sys/types.h>
 
 /**
@@ -60,13 +60,14 @@ void W25Qx_sleep();
  * NOTE: If a read operation goes beyond the 256 byte boundary, length will be
  * truncated to the one reaching the end of the register.
  *
- * @param addr: start address for read operation, must be the full register address.
+ * @param addr: start address for read operation, must be the full register
+ * address.
  * @param buf: pointer to a buffer where data is written to.
  * @param len: number of bytes to read.
  * @return: -1 if address is not whithin security registers address range, the
  * number of bytes effectively read otherwise.
  */
-ssize_t W25Qx_readSecurityRegister(uint32_t addr, void *buf, size_t len);
+ssize_t W25Qx_readSecurityRegister(uint32_t addr, void* buf, size_t len);
 
 /**
  * Read data from flash memory.
@@ -75,7 +76,7 @@ ssize_t W25Qx_readSecurityRegister(uint32_t addr, void *buf, size_t len);
  * @param buf: pointer to a buffer where data is written to.
  * @param len: number of bytes to read.
  */
-void W25Qx_readData(uint32_t addr, void *buf, size_t len);
+void W25Qx_readData(uint32_t addr, void* buf, size_t len);
 
 /**
  * Erase a 4kB sector.
@@ -88,15 +89,15 @@ bool W25Qx_eraseSector(uint32_t addr);
 
 /**
  * Write data to a 256-byte flash memory page.
- * NOTE: if data size goes beyond the 256 byte boundary, length will be truncated
- * to the one reaching the end of the page.
+ * NOTE: if data size goes beyond the 256 byte boundary, length will be
+ * truncated to the one reaching the end of the page.
  *
  * @param addr: start address for write operation.
  * @param buf: pointer to data buffer.
  * @param len: number of bytes to written.
  * @return: -1 on error, the number of bytes effectively written otherwise.
  */
-ssize_t W25Qx_writePage(uint32_t addr, void *buf, size_t len);
+ssize_t W25Qx_writePage(uint32_t addr, void* buf, size_t len);
 
 /**
  * Write data to flash memory.
@@ -111,6 +112,6 @@ ssize_t W25Qx_writePage(uint32_t addr, void *buf, size_t len);
  * @param buf: pointer to a buffer where data is written to.
  * @param len: number of bytes to read.
  */
-bool W25Qx_writeData(uint32_t addr, void *buf, size_t len);
+bool W25Qx_writeData(uint32_t addr, void* buf, size_t len);
 
 #endif /* W25Qx_H */

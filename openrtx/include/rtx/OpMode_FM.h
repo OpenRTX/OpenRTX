@@ -30,8 +30,7 @@
 
 class OpMode_FM : public OpMode
 {
-public:
-
+   public:
     /**
      * Constructor.
      */
@@ -52,7 +51,8 @@ public:
 
     /**
      * Disable the operating mode. This function ensures that, after being
-     * called, the radio, the audio amplifier and the microphone are in OFF state.
+     * called, the radio, the audio amplifier and the microphone are in OFF
+     * state.
      *
      * Application must ensure this function is being called when exiting the
      * current operating mode.
@@ -64,12 +64,13 @@ public:
      * Application code has to call this function periodically, to ensure proper
      * functionality.
      *
-     * @param status: pointer to the rtxStatus_t structure containing the current
-     * RTX status. Internal FSM may change the current value of the opStatus flag.
-     * @param newCfg: flag used inform the internal FSM that a new RTX configuration
-     * has been applied.
+     * @param status: pointer to the rtxStatus_t structure containing the
+     * current RTX status. Internal FSM may change the current value of the
+     * opStatus flag.
+     * @param newCfg: flag used inform the internal FSM that a new RTX
+     * configuration has been applied.
      */
-    virtual void update(rtxStatus_t *const status, const bool newCfg) override;
+    virtual void update(rtxStatus_t* const status, const bool newCfg) override;
 
     /**
      * Get the mode identifier corresponding to the OpMode class.
@@ -81,11 +82,10 @@ public:
         return FM;
     }
 
-private:
-
-    bool rfSqlOpen; ///< Flag for RF squelch status (analog squelch).
-    bool sqlOpen;   ///< Flag for squelch status.
-    bool enterRx;   ///< Flag for RX management.
+   private:
+    bool rfSqlOpen;  ///< Flag for RF squelch status (analog squelch).
+    bool sqlOpen;    ///< Flag for squelch status.
+    bool enterRx;    ///< Flag for RX management.
 };
 
 #endif /* OPMODE_FM_H */

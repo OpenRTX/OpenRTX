@@ -18,25 +18,27 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdio.h>
-#include <stdint.h>
 #include <interfaces/platform.h>
+#include <stdint.h>
+#include <stdio.h>
 
 int main()
 {
     platform_init();
 
-    const hwInfo_t *info = platform_getHwInfo();
+    const hwInfo_t* info = platform_getHwInfo();
 
-    while(1)
+    while (1)
     {
         getchar();
         puts("** Hardware information **\r\n\r");
         printf("- Hardware name: %s\r\n", info->name);
-        printf("- Band support: VHF %s, UHF %s\r\n", info->vhf_band ? "yes" : "no",
-                                                   info->uhf_band ? "yes" : "no");
-        printf("- VHF band range: %d - %d MHz\r\n", info->vhf_minFreq, info->vhf_maxFreq);
-        printf("- UHF band range: %d - %d MHz\r\n", info->uhf_minFreq, info->uhf_maxFreq);
+        printf("- Band support: VHF %s, UHF %s\r\n",
+               info->vhf_band ? "yes" : "no", info->uhf_band ? "yes" : "no");
+        printf("- VHF band range: %d - %d MHz\r\n", info->vhf_minFreq,
+               info->vhf_maxFreq);
+        printf("- UHF band range: %d - %d MHz\r\n", info->uhf_minFreq,
+               info->uhf_maxFreq);
         printf("- Display type: %d\r\n\r\n", info->lcd_type);
     }
 

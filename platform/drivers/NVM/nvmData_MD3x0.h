@@ -27,56 +27,38 @@
  * \internal Data structures matching the one used by original MD3x0 firmware to
  * manage channel data inside nonvolatile flash memory.
  *
- * Taken by dmrconfig repository: https://github.com/sergev/dmrconfig/blob/master/md380.c
+ * Taken by dmrconfig repository:
+ * https://github.com/sergev/dmrconfig/blob/master/md380.c
  */
 typedef struct
 {
     // Byte 0
-    uint8_t channel_mode        : 2,
-            bandwidth           : 2,
-            autoscan            : 1,
-            squelch             : 1,
-            _unused1            : 1,
-            lone_worker         : 1;
+    uint8_t channel_mode : 2, bandwidth : 2, autoscan : 1, squelch : 1,
+        _unused1 : 1, lone_worker : 1;
 
     // Byte 1
-    uint8_t talkaround          : 1,
-            rx_only             : 1,
-            repeater_slot       : 2,
-            colorcode           : 4;
+    uint8_t talkaround : 1, rx_only : 1, repeater_slot : 2, colorcode : 4;
 
     // Byte 2
-    uint8_t privacy_no          : 4,
-            privacy             : 2,
-            private_call_conf   : 1,
-            data_call_conf      : 1;
+    uint8_t privacy_no : 4, privacy : 2, private_call_conf : 1,
+        data_call_conf       : 1;
 
     // Byte 3
-    uint8_t rx_ref_frequency    : 2,
-            _unused2            : 1,
-            emergency_alarm_ack : 1,
-            _unused3            : 2,
-            uncompressed_udp    : 1,
-            display_pttid_dis   : 1;
+    uint8_t rx_ref_frequency : 2, _unused2 : 1, emergency_alarm_ack : 1,
+        _unused3 : 2, uncompressed_udp : 1, display_pttid_dis : 1;
 
     // Byte 4
-    uint8_t tx_ref_frequency    : 2,
-            _unused4            : 2,
-            vox                 : 1,
-            power               : 1,
-            admit_criteria      : 2;
+    uint8_t tx_ref_frequency : 2, _unused4 : 2, vox : 1, power : 1,
+        admit_criteria : 2;
 
     // Byte 5
-    uint8_t _unused5            : 4,
-            in_call_criteria    : 2,
-            _unused6            : 2;
+    uint8_t _unused5 : 4, in_call_criteria : 2, _unused6 : 2;
 
     // Bytes 6-7
     uint16_t contact_name_index;
 
     // Bytes 8-9
-    uint8_t tot                 : 6,
-            _unused13           : 2;
+    uint8_t tot : 6, _unused13 : 2;
     uint8_t tot_rekey_delay;
 
     // Bytes 10-11
@@ -109,32 +91,29 @@ typedef struct
 
     // Bytes 32-63
     uint16_t name[16];
-}
-__attribute__((packed)) md3x0Channel_t;
+} __attribute__((packed)) md3x0Channel_t;
 
 typedef struct
 {
     // Bytes 0-31
-    uint16_t name[16];      // Zone Name (Unicode)
+    uint16_t name[16];  // Zone Name (Unicode)
 
     // Bytes 32-63
-    uint16_t member[16];    // Member: channels 1...16
-}
-__attribute__((packed)) md3x0Zone_t;
+    uint16_t member[16];  // Member: channels 1...16
+} __attribute__((packed)) md3x0Zone_t;
 
 typedef struct
 {
     // Bytes 0-2
-    uint8_t id[3];              // Call ID: 1...16777215
+    uint8_t id[3];  // Call ID: 1...16777215
 
     // Byte 3
-    uint8_t type         : 5,   // Call Type: Group Call, Private Call or All Call
-            receive_tone : 1,   // Call Receive Tone: No or yes
-            _unused2     : 2;   // 0b11
+    uint8_t type     : 5,  // Call Type: Group Call, Private Call or All Call
+        receive_tone : 1,  // Call Receive Tone: No or yes
+        _unused2     : 2;  // 0b11
 
     // Bytes 4-35
-    uint16_t name[16];          // Contact Name (Unicode)
-}
-__attribute__((packed)) md3x0Contact_t;
+    uint16_t name[16];  // Contact Name (Unicode)
+} __attribute__((packed)) md3x0Contact_t;
 
 #endif /* NVMDATA_MD3x0_H */

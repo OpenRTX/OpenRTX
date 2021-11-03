@@ -18,16 +18,17 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <interfaces/nvmem.h>
+#include <ADC0_GDx.h>
+#include <I2C0.h>
+#include <backlight.h>
+#include <calibInfo_GDx.h>
 #include <interfaces/audio.h>
 #include <interfaces/gpio.h>
-#include <calibInfo_GDx.h>
-#include <ADC0_GDx.h>
-#include <string.h>
-#include <I2C0.h>
+#include <interfaces/nvmem.h>
+#include <interfaces/platform.h>
 #include <pthread.h>
-#include <backlight.h>
+#include <string.h>
+
 #include "hwconfig.h"
 
 pthread_mutex_t adc_mutex;
@@ -39,15 +40,15 @@ void platform_init()
 {
     /* Configure GPIOs */
     gpio_setMode(GREEN_LED, OUTPUT);
-    gpio_setMode(RED_LED,   OUTPUT);
+    gpio_setMode(RED_LED, OUTPUT);
 
     gpio_setMode(PTT_SW, INPUT);
 
     gpio_setMode(PWR_SW, OUTPUT);
 
-    backlight_init();                /* Initialise backlight driver        */
-    audio_init();                    /* Initialise audio management module */
-    adc0_init();                     /* Initialise ADC                     */
+    backlight_init(); /* Initialise backlight driver        */
+    audio_init();     /* Initialise audio management module */
+    adc0_init();      /* Initialise ADC                     */
     pthread_mutex_init(&adc_mutex, NULL);
 
     /*
@@ -152,7 +153,7 @@ bool platform_pwrButtonStatus()
 
 void platform_ledOn(led_t led)
 {
-    switch(led)
+    switch (led)
     {
         case GREEN:
             gpio_setPin(GREEN_LED);
@@ -169,7 +170,7 @@ void platform_ledOn(led_t led)
 
 void platform_ledOff(led_t led)
 {
-    switch(led)
+    switch (led)
     {
         case GREEN:
             gpio_clearPin(GREEN_LED);
@@ -188,7 +189,7 @@ void platform_beepStart(uint16_t freq)
 {
     /* TODO */
 
-    (void) freq;
+    (void)freq;
 }
 
 void platform_beepStop()
@@ -196,22 +197,22 @@ void platform_beepStop()
     /* TODO */
 }
 
-const void *platform_getCalibrationData()
+const void* platform_getCalibrationData()
 {
-    /* The first time this function is called, load calibration data from flash */
-    if(calibration.vhfCalPoints[0] == 0)
+    /* The first time this function is called, load calibration data from flash
+     */
+    if (calibration.vhfCalPoints[0] == 0)
     {
         nvm_readCalibData(&calibration);
     }
 
-    return ((const void *) &calibration);
+    return ((const void*)&calibration);
 }
 
-const hwInfo_t *platform_getHwInfo()
+const hwInfo_t* platform_getHwInfo()
 {
     return &hwInfo;
 }
-
 
 /*
  * NOTE: implementation of this API function is provided in

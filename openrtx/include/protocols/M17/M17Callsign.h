@@ -26,12 +26,14 @@
 #endif
 
 #include <string>
+
 #include "M17Datatypes.h"
 
 /**
  * Encode a callsign in base-40 format, starting with the right-most character.
- * The final value is written out in "big-endian" form, with the most-significant
- * value first, leading to 0-padding of callsigns shorter than nine characters.
+ * The final value is written out in "big-endian" form, with the
+ * most-significant value first, leading to 0-padding of callsigns shorter than
+ * nine characters.
  *
  * \param callsign the callsign to encode.
  * \param encodedCall call_t data structure where to put the encoded data.

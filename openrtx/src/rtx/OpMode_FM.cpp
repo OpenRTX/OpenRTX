@@ -18,11 +18,11 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <interfaces/delays.h>
-#include <interfaces/radio.h>
-#include <interfaces/audio.h>
 #include <OpMode_FM.h>
+#include <interfaces/audio.h>
+#include <interfaces/delays.h>
+#include <interfaces/platform.h>
+#include <interfaces/radio.h>
 #include <rtx.h>
 
 #ifdef PLATFORM_MDUV3x0
@@ -46,7 +46,7 @@ void _setVolume()
     volume >>= 3;
 
     // Mute volume when knob is set below 10%
-    if(volume < 1)
+    if (volume < 1)
     {
         audio_disableAmp();
     }
@@ -56,7 +56,7 @@ void _setVolume()
 
         // Update HR_C6000 gain only if volume changed
         static uint8_t old_volume = 0;
-        if(volume != old_volume)
+        if (volume != old_volume)
         {
             // Setting HR_C6000 volume to 0 = max volume
             HR_C6000::instance().setDacGain(volume);
@@ -93,12 +93,12 @@ void OpMode_FM::disable()
     enterRx   = false;
 }
 
-void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
+void OpMode_FM::update(rtxStatus_t* const status, const bool newCfg)
 {
-    (void) newCfg;
+    (void)newCfg;
 
     // RX logic
-    if(status->opStatus == RX)
+    if (status->opStatus == RX)
     {
         // RF squelch mechanism
         // This turns squelch (0 to 15) into RSSI (-127.0dbm to -61dbm)
@@ -107,44 +107,44 @@ void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
 
         // Provide a bit of hysteresis, only change state if the RSSI has
         // moved more than .1dbm on either side of the current squelch setting.
-        if((rfSqlOpen == false) && (rssi > (squelch + 0.1f))) rfSqlOpen = true;
-        if((rfSqlOpen == true)  && (rssi < (squelch - 0.1f))) rfSqlOpen = false;
+        if ((rfSqlOpen == false) && (rssi > (squelch + 0.1f))) rfSqlOpen = true;
+        if ((rfSqlOpen == true) && (rssi < (squelch - 0.1f))) rfSqlOpen = false;
 
         // Local flags for current RF and tone squelch status
-        bool rfSql   = ((status->rxToneEn == 0) && (rfSqlOpen == true));
-        bool toneSql = ((status->rxToneEn == 1) && radio_checkRxDigitalSquelch());
+        bool rfSql = ((status->rxToneEn == 0) && (rfSqlOpen == true));
+        bool toneSql =
+            ((status->rxToneEn == 1) && radio_checkRxDigitalSquelch());
 
         // Audio control
-        if((sqlOpen == false) && (rfSql || toneSql))
+        if ((sqlOpen == false) && (rfSql || toneSql))
         {
             audio_enableAmp();
             sqlOpen = true;
         }
 
-        if((sqlOpen == true) && (rfSql == false) && (toneSql == false))
+        if ((sqlOpen == true) && (rfSql == false) && (toneSql == false))
         {
             audio_disableAmp();
             sqlOpen = false;
         }
 
-        #ifdef PLATFORM_MDUV3x0
+#ifdef PLATFORM_MDUV3x0
         // Set output volume by changing the HR_C6000 DAC gain
-        if(sqlOpen == true) _setVolume();
-        #endif
-
+        if (sqlOpen == true) _setVolume();
+#endif
     }
-    else if((status->opStatus == OFF) && enterRx)
+    else if ((status->opStatus == OFF) && enterRx)
     {
         radio_disableRtx();
 
         radio_enableRx();
         status->opStatus = RX;
-        enterRx = false;
+        enterRx          = false;
     }
 
     // TX logic
-    if(platform_getPttStatus() && (status->opStatus != TX) &&
-                                  (status->txDisable == 0))
+    if (platform_getPttStatus() && (status->opStatus != TX) &&
+        (status->txDisable == 0))
     {
         audio_disableAmp();
         radio_disableRtx();
@@ -155,26 +155,27 @@ void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
         status->opStatus = TX;
     }
 
-    if(!platform_getPttStatus() && (status->opStatus == TX))
+    if (!platform_getPttStatus() && (status->opStatus == TX))
     {
         audio_disableMic();
         radio_disableRtx();
 
         status->opStatus = OFF;
-        enterRx = true;
-        sqlOpen = false;  // Force squelch to be redetected.
+        enterRx          = true;
+        sqlOpen          = false;  // Force squelch to be redetected.
     }
 
     // Led control logic
-    switch(status->opStatus)
+    switch (status->opStatus)
     {
         case RX:
-            if(radio_checkRxDigitalSquelch())
+            if (radio_checkRxDigitalSquelch())
             {
-                platform_ledOn(GREEN);  // Red + green LEDs ("orange"): tone squelch open
+                platform_ledOn(
+                    GREEN);  // Red + green LEDs ("orange"): tone squelch open
                 platform_ledOn(RED);
             }
-            else if(rfSqlOpen)
+            else if (rfSqlOpen)
             {
                 platform_ledOn(GREEN);  // Green LED only: RF squelch open
                 platform_ledOff(RED);

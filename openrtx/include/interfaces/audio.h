@@ -21,9 +21,9 @@
 #ifndef AUDIO_H
 #define AUDIO_H
 
+#include <rtx.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <rtx.h>
 
 #ifdef __cplusplus
 extern "C" {

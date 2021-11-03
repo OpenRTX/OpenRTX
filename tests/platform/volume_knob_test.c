@@ -18,18 +18,17 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdio.h>
-#include <interfaces/platform.h>
+#include <hwconfig.h>
 #include <interfaces/delays.h>
 #include <interfaces/gpio.h>
-#include <hwconfig.h>
+#include <interfaces/platform.h>
+#include <stdio.h>
 
 int main()
 {
     platform_init();
 
-
-    while(1)
+    while (1)
     {
         printf("%f\r\n", platform_getVolumeLevel());
         delayMs(500);

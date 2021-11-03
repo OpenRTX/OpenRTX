@@ -19,32 +19,33 @@
 
 #include <calibUtils.h>
 
-uint8_t interpCalParameter(const freq_t freq, const freq_t *calPoints,
-                           const uint8_t *param, const uint8_t elems)
+uint8_t interpCalParameter(const freq_t freq, const freq_t* calPoints,
+                           const uint8_t* param, const uint8_t elems)
 {
-
-    if(freq <= calPoints[0])         return param[0];
-    if(freq >= calPoints[elems - 1]) return param[elems - 1];
+    if (freq <= calPoints[0]) return param[0];
+    if (freq >= calPoints[elems - 1]) return param[elems - 1];
 
     /* Find calibration point nearest to target frequency */
     uint8_t pos = 0;
-    for(; pos < elems; pos++)
+    for (; pos < elems; pos++)
     {
-        if(calPoints[pos] >= freq) break;
+        if (calPoints[pos] >= freq) break;
     }
 
     uint8_t interpValue = 0;
-    freq_t  delta = calPoints[pos] - calPoints[pos - 1];
+    freq_t delta        = calPoints[pos] - calPoints[pos - 1];
 
-    if(param[pos - 1] < param[pos])
+    if (param[pos - 1] < param[pos])
     {
         interpValue = param[pos - 1] + ((freq - calPoints[pos - 1]) *
-                                        (param[pos] - param[pos - 1]))/delta;
+                                        (param[pos] - param[pos - 1])) /
+                                           delta;
     }
     else
     {
         interpValue = param[pos - 1] - ((freq - calPoints[pos - 1]) *
-                                       (param[pos - 1] - param[pos]))/delta;
+                                        (param[pos - 1] - param[pos])) /
+                                           delta;
     }
 
     return interpValue;
