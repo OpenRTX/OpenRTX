@@ -1,0 +1,34 @@
+---
+BasedOnStyle: Google
+AlignConsecutiveBitFields: AcrossEmptyLinesAndComments
+AlignTrailingComments: 'true'
+AlignConsecutiveAssignments: Consecutive
+AllowShortFunctionsOnASingleLine: 'false'
+ColumnLimit: '80'
+DerivePointerAlignment: 'false'
+IndentExternBlock: NoIndent
+IndentWidth: '4'
+NamespaceIndentation: Inner
+
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel:  'true'
+  AfterClass:      'true'
+  AfterControlStatement: Always
+  AfterEnum:       'true'
+  AfterFunction:   'true'
+  AfterNamespace:  'true'
+  AfterObjCDeclaration: 'true'
+  AfterStruct:     'true'
+  AfterUnion:      'true'
+  AfterExternBlock: 'false'
+  BeforeCatch:     'true'
+  BeforeElse:      'true'
+  BeforeLambdaBody: 'true'
+  BeforeWhile:     'false'
+  IndentBraces:    'false'
+  SplitEmptyFunction: 'true'
+  SplitEmptyRecord: 'true'
+  SplitEmptyNamespace: 'true'
+
+...
