@@ -54,11 +54,13 @@ openrtx_inc = ['openrtx/include',
                'platform/drivers/chSelector',
                'openrtx/include/fonts/adafruit']
 
+main_src = []
+
 # Add to sources either the main executable or a platform test
 if get_option('test') != ''
-  openrtx_src += 'tests/platform/'+get_option('test')+'.c'
+  main_src += 'tests/platform/'+get_option('test')+'.c'
 else
-  openrtx_src += 'openrtx/src/main.c'
+  main_src += 'openrtx/src/main.c'
 endif
 
 ##
@@ -92,7 +94,7 @@ rtos_inc = ['lib/miosix-kernel',
             'lib/miosix-kernel/config/arch/cortexM4_stm32f4/M4_openrtx']
 
 
-src = openrtx_src + minmea_src
+src = openrtx_src + main_src + minmea_src
 inc = openrtx_inc + rtos_inc + minmea_inc + qdec_inc
 def = def + {'DONT_USE_CMSIS_INIT': ''}
 
@@ -209,18 +211,19 @@ mk22fn512_def = {'_POSIX_PRIORITY_SCHEDULING':''}
 ##
 ## Linux
 ##
-linux_src = src + ['platform/targets/linux/emulator/emulator.c',
-                   'platform/drivers/display/display_libSDL.c',
-                   'platform/drivers/keyboard/keyboard_linux.c',
-                   'platform/drivers/NVM/nvmem_linux.c',
-                   'platform/drivers/GPS/GPS_linux.c',
-                   'platform/mcu/x86_64/drivers/gpio.c',
-                   'platform/mcu/x86_64/drivers/delays.c',
-                   'platform/mcu/x86_64/drivers/rtc.c',
-                   'platform/drivers/baseband/radio_linux.cpp',
-                   'platform/drivers/audio/audio_linux.c',
-                   'platform/drivers/audio/inputStream_linux.c',
-                   'platform/targets/linux/platform.c']
+linux_platform_src = ['platform/targets/linux/emulator/emulator.c',
+                      'platform/drivers/display/display_libSDL.c',
+                      'platform/drivers/keyboard/keyboard_linux.c',
+                      'platform/drivers/NVM/nvmem_linux.c',
+                      'platform/drivers/GPS/GPS_linux.c',
+                      'platform/mcu/x86_64/drivers/gpio.c',
+                      'platform/mcu/x86_64/drivers/delays.c',
+                      'platform/mcu/x86_64/drivers/rtc.c',
+                      'platform/drivers/baseband/radio_linux.cpp',
+                      'platform/drivers/audio/audio_linux.c',
+                      'platform/drivers/audio/inputStream_linux.c',
+                      'platform/targets/linux/platform.c']
+linux_src = src + linux_platform_src
 
 
 # GDx family display emulation
@@ -516,6 +519,13 @@ endforeach
 ##
 ## ----------------------------------- Unit Tests ------------------------------
 ##
+
+unit_test_opts = {'c_args': linux_c_args,
+                  'cpp_args' : linux_cpp_args,
+                  'include_directories': linux_inc,
+                  'dependencies': linux_dep,
+                  'link_args' : linux_l_args}
+unit_test_src = openrtx_src + minmea_src + linux_platform_src
 
 dummy_test = executable('dummy', 'tests/unit/dummy.c')
 test('Dummy Unit Test', dummy_test)
