@@ -65,7 +65,7 @@ gps_t;
  */
 typedef struct
 {
-    char callsign[10];
+//     char callsign[10];
     char dst_addr[10];
 }
 m17_t;

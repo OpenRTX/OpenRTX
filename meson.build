@@ -117,6 +117,7 @@ def = def + {'GIT_VERSION': git_version}
 mdx_src = ['platform/drivers/ADC/ADC1_MDx.c',
            'platform/drivers/GPS/GPS_MDx.cpp',
            'platform/drivers/NVM/W25Qx.c',
+           'platform/drivers/NVM/nvmem_settings_MDx.c',
            'platform/drivers/audio/audio_MDx.c',
            'platform/drivers/audio/inputStream_MDx.cpp',
            'platform/drivers/baseband/HR_Cx000.cpp',

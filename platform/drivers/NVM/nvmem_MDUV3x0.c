@@ -268,10 +268,14 @@ void nvm_loadHwInfo(hwInfo_t *info)
     info->lcd_type = lcdInfo & 0x03;
 }
 
+/*
+TODO: temporarily implemented in "nvmem_settings_MDx.c"
+
 int nvm_readVFOChannelData(channel_t *channel)
 {
     return _nvm_readChannelAtAddress(channel, vfoChannelBaseAddr);
 }
+*/
 
 int nvm_readChannelData(channel_t *channel, uint16_t pos)
 {
@@ -355,6 +359,9 @@ int nvm_readContactData(contact_t *contact, uint16_t pos)
     return 0;
 }
 
+/*
+TODO: temporarily implemented in "nvmem_settings_MDx.c"
+
 int nvm_readSettings(settings_t *settings)
 {
     settings_t newSettings;
@@ -367,8 +374,9 @@ int nvm_readSettings(settings_t *settings)
     memcpy(settings, &newSettings, sizeof(settings_t));
     return 0;
 }
+*/
 
-int nvm_writeSettings(settings_t *settings)
+int nvm_writeSettings(const settings_t *settings)
 {
     // Disable settings write until DFU is implemented for flash backups
     return -1;

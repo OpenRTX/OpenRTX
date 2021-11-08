@@ -31,30 +31,27 @@ state_t state;
 void state_init()
 {
     /*
-     * TODO: Read current state parameters from hardware,
-     * or initialize them to sane defaults
+     * Try loading settings from nonvolatile memory and default to sane values
+     * in case of failure.
      */
-    state.radioStateUpdated = true;
-#ifdef HAS_RTC
-    state.time = rtc_getTime();
-#endif
-    state.v_bat = platform_getVbat();
-    state.charge = battery_getCharge(state.v_bat);
-    state.rssi = rtx_getRssi();
-
-    // Set default channel index (it is 1-based)
-    state.channel_index = 1;
-    // Read VFO channel from Flash storage
-    // NOTE: Disable reading VFO from flash until persistence is implemented
-    //if(nvm_readVFOChannelData(&state.channel) != 0)
-    if(1)
+    if(nvm_readSettings(&state.settings) != 0)
     {
-        // If the read fails set VFO channel default settings
-        state.channel.mode = FM;
+        state.settings = default_settings;
+        strncpy(state.settings.callsign, "OPNRTX", 10);
+    }
+
+    /*
+     * Try loading VFO configuration from nonvolatile memory and default to sane
+     * values in case of failure.
+     */
+    if(nvm_readVFOChannelData(&state.channel) != 0)
+    {
+        state.channel.mode      = FM;
         state.channel.bandwidth = BW_25;
-        state.channel.power = 1.0;
-        const hwInfo_t* hwinfo = platform_getHwInfo();
+        state.channel.power     = 1.0;
+
         // Set initial frequency based on supported bands
+        const hwInfo_t* hwinfo  = platform_getHwInfo();
         if(hwinfo->uhf_band)
         {
             state.channel.rx_frequency = 430000000;
@@ -65,39 +62,33 @@ void state_init()
             state.channel.rx_frequency = 144000000;
             state.channel.tx_frequency = 144000000;
         }
+
         state.channel.fm.rxToneEn = 0;
-        state.channel.fm.rxTone = 2; // 71.9Hz
+        state.channel.fm.rxTone   = 2; // 71.9Hz
         state.channel.fm.txToneEn = 1;
-        state.channel.fm.txTone = 2; // 71.9Hz
+        state.channel.fm.txTone   = 2; // 71.9Hz
     }
-    state.zone_enabled = false;
-    state.rtxStatus = RTX_OFF;
-    state.settings.sqlLevel = 4;     // Default Squelch: S3 = 4
-    state.settings.voxLevel = 0;
 
-    state.emergency = false;
+    /*
+     * Initialise remaining fields
+     */
+    state.radioStateUpdated = true;
+#ifdef HAS_RTC
+    state.time = rtc_getTime();
+#endif
+    state.v_bat  = platform_getVbat();
+    state.charge = battery_getCharge(state.v_bat);
+    state.rssi   = rtx_getRssi();
 
-    // Initialize M17_data
-    strncpy(state.m17_data.callsign, "OPNRTX", 10);
-
-    // Read settings from flash memory
-    // NOTE: Disable reading VFO from flash until persistence is implemented
-    //int valid = nvm_readSettings(&state.settings);
-    // Settings in flash memory were not valid, restoring default settings
-    //if(valid != 0)
-    if(1)
-    {
-        state.settings = default_settings;
-        // NOTE: Settings writing disabled until DFU is implemented
-        //nvm_writeSettings(&state.settings);
-    }
+    state.channel_index = 1;    // Set default channel index (it is 1-based)
+    state.zone_enabled  = false;
+    state.rtxStatus     = RTX_OFF;
+    state.emergency     = false;
 }
 
 void state_terminate()
 {
-    // Write settings to flash memory
-    // NOTE: Disable writing settings to flash until persistence is implemented
-    //nvm_writeSettings(&state.settings);
+    nvm_writeSettingsAndVfo(&state.settings, &state.channel);
 }
 
 curTime_t state_getLocalTime(curTime_t utc_time)

@@ -441,9 +441,15 @@ int nvm_readSettings(settings_t *settings)
     return -1;
 }
 
-int nvm_writeSettings(settings_t *settings)
+int nvm_writeSettings(const settings_t *settings)
 {
     (void) settings;
     return -1;
 }
 
+int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
+{
+    (void) settings;
+    (void) vfo;
+    return -1;
+}

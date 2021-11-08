@@ -104,6 +104,15 @@ int nvm_readSettings(settings_t *settings);
  * @param settings: pointer to the settings_t data structure to be written.
  * @return 0 on success, -1 on failure
  */
-int nvm_writeSettings(settings_t *settings);
+int nvm_writeSettings(const settings_t *settings);
+
+/**
+ * Write OpenRTX settings and VFO channel configuration to storage.
+ *
+ * @param settings: pointer to the settings_t data structure to be written.
+ * @param vfo: pointer to the VFO data structure to be written.
+ * @return 0 on success, -1 on failure
+ */
+int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo);
 
 #endif /* NVMEM_H */

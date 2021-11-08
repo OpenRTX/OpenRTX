@@ -157,12 +157,15 @@ void nvm_loadHwInfo(hwInfo_t *info)
  * The MD380 stock CPS does not have a VFO channel slot
  * because the stock firmware does not have a VFO
  * To enable this functionality reserve a Flash portion for saving the VFO
- */
+ *
+ * TODO: temporarily implemented in "nvmem_settings_MDx.c"
+
 int nvm_readVFOChannelData(channel_t *channel)
 {
     (void) channel;
     return -1;
 }
+*/
 
 int nvm_readChannelData(channel_t *channel, uint16_t pos)
 {
@@ -315,15 +318,19 @@ int nvm_readContactData(contact_t *contact, uint16_t pos)
     return 0;
 }
 
+/*
+
+TODO: temporarily implemented in "nvmem_settings_MDx.c"
+
 int nvm_readSettings(settings_t *settings)
 {
     (void) settings;
     return -1;
 }
+*/
 
-int nvm_writeSettings(settings_t *settings)
+int nvm_writeSettings(const settings_t *settings)
 {
     (void) settings;
     return -1;
 }
-

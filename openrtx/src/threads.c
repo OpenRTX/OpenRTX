@@ -105,7 +105,7 @@ void *ui_task(void *arg)
             pthread_mutex_unlock(&rtx_mutex);
 
             // Copy new M17 source and destination addresses
-            strncpy(rtx_cfg.source_address, state.m17_data.callsign, 10);
+            strncpy(rtx_cfg.source_address, state.settings.callsign, 10);
             strncpy(rtx_cfg.destination_address, state.m17_data.dst_addr, 10);
 
             rtx_configure(&rtx_cfg);
