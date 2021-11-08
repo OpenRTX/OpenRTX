@@ -36,7 +36,7 @@ void gps_taskFunc(char *line, __attribute__((unused)) int len, state_t *state)
 
     // Little mechanism to ensure that RTC is synced with GPS time only once.
     static bool isRtcSyncronised = false;
-    if(!state->settings.gps_set_time)
+    if(!state->gps_set_time)
     {
         isRtcSyncronised = false;
     }
@@ -67,7 +67,7 @@ void gps_taskFunc(char *line, __attribute__((unused)) int len, state_t *state)
             }
 
             // Synchronize RTC with GPS UTC clock, only when fix is done
-            if((state->settings.gps_set_time) &&
+            if((state->gps_set_time) &&
                (state->gps_data.fix_quality > 0) && (!isRtcSyncronised))
             {
                 rtc_setTime(state->gps_data.timestamp);

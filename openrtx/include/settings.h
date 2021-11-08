@@ -25,29 +25,29 @@
 
 typedef struct
 {
-    uint8_t valid[7];     // Should contain "OPNRTX" in a valid settings_t
-    uint8_t brightness;
-    uint8_t contrast;
-    int8_t utc_timezone;
-    bool gps_enabled;
-    bool gps_set_time;
-    char callsign[10];    // Plaintext callsign, for future use
+    uint8_t brightness;     // Display brightness
+    uint8_t contrast;       // Display contrast
+    uint8_t sqlLevel;       // Squelch level
+    uint8_t voxLevel;       // Vox level
+    int8_t utc_timezone;    // Timezone
+    bool gps_enabled;       // GPS active
+    char callsign[10];      // Plaintext callsign, for future use
 }
 __attribute__((packed)) settings_t;
 
 
 static const settings_t default_settings =
 {
-    "OPNRTX",         // Settings valid string
     255,              // Brightness
 #ifdef SCREEN_CONTRAST
     DEFAULT_CONTRAST, // Contrast
 #else
     255,              // Contrast
 #endif
+    4,                // Squelch level, 4 = S3
+    0,                // Vox level
     0,                // UTC Timezone
     false,            // GPS enabled
-    true,             // GPS set time
     ""                // Empty callsign
 };
 

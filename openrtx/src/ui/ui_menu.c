@@ -160,7 +160,7 @@ int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
             snprintf(buf, max_len, "%s", (last_state.settings.gps_enabled) ? "ON" : "OFF");
             break;
         case G_SET_TIME:
-            snprintf(buf, max_len, "%s", (last_state.settings.gps_set_time) ? "ON" : "OFF");
+            snprintf(buf, max_len, "%s", (last_state.gps_set_time) ? "ON" : "OFF");
             break;
         case G_TIMEZONE:
             // Add + prefix to positive numbers

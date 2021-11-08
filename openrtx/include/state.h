@@ -98,13 +98,11 @@ typedef struct
     bool zone_enabled;
     zone_t zone;
     uint8_t rtxStatus;
-    // Squelch steps from 0 to 15
-    uint8_t sqlLevel;
-    uint8_t voxLevel;
 
     bool emergency;
     settings_t settings;
     gps_t gps_data;
+    bool gps_set_time;
     m17_t m17_data;
 }
 state_t;

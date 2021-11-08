@@ -154,7 +154,7 @@ void _ui_drawMainBottom()
 {
     // Squelch bar
     float rssi = last_state.rssi;
-    float squelch = last_state.sqlLevel / 16.0f;
+    float squelch = last_state.settings.sqlLevel / 16.0f;
     uint16_t meter_width = SCREEN_WIDTH - 2 * layout.horizontal_pad; 
     uint16_t meter_height = layout.bottom_h; 
     point_t meter_pos = { layout.horizontal_pad, 

@@ -704,18 +704,26 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
 
 #ifdef HAS_ABSOLUTE_KNOB // If the radio has an absolute position knob
     if(msg.keys & KNOB_LEFT || msg.keys & KNOB_RIGHT) {
-        state.sqlLevel = platform_getChSelector() - 1;
+        state.settings.sqlLevel = platform_getChSelector() - 1;
         *sync_rtx = true;
     }
 #else // Use left and right buttons or relative position knob
     // NOTE: Use up and down for UV380 which has not yet a functional knob
-    if(msg.keys & KEY_LEFT || msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT) {
-        state.sqlLevel = (state.sqlLevel == 0) ? 0 : state.sqlLevel - 1;
-        *sync_rtx = true;
+    if(msg.keys & KEY_LEFT || msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
+    {
+        if(state.settings.sqlLevel > 0)
+        {
+            state.settings.sqlLevel -= 1;
+            *sync_rtx = true;
+        }
     }
-    else if(msg.keys & KEY_RIGHT || msg.keys & KEY_UP || msg.keys & KNOB_RIGHT) {
-        state.sqlLevel = (state.sqlLevel == 15) ? 15 : state.sqlLevel + 1;
-        *sync_rtx = true;
+    else if(msg.keys & KEY_RIGHT || msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
+    {
+        if(state.settings.sqlLevel < 15)
+        {
+            state.settings.sqlLevel += 1;
+            *sync_rtx = true;
+        }
     }
 #endif
 }
@@ -1416,7 +1424,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                             }
                             break;
                         case G_SET_TIME:
-                            state.settings.gps_set_time = !state.settings.gps_set_time;
+                            state.gps_set_time = !state.gps_set_time;
                             break;
                         case G_TIMEZONE:
                             if(msg.keys & KEY_LEFT || msg.keys & KEY_UP ||

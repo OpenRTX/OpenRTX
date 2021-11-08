@@ -72,8 +72,8 @@ void state_init()
     }
     state.zone_enabled = false;
     state.rtxStatus = RTX_OFF;
-    state.sqlLevel = 4;     // Default Squelch: S3 = 4
-    state.voxLevel = 0;
+    state.settings.sqlLevel = 4;     // Default Squelch: S3 = 4
+    state.settings.voxLevel = 0;
 
     state.emergency = false;
 
