@@ -107,11 +107,11 @@ private:
         return symbols;
     }
 
-    static constexpr size_t M17_RTX_SAMPLE_RATE = 48000;
-    static constexpr size_t M17_FRAME_SAMPLES   = 1920;
+    static constexpr size_t M17_TX_SAMPLE_RATE = 48000;
+    static constexpr size_t M17_FRAME_SAMPLES_48K   = 1920;
     static constexpr size_t M17_FRAME_SYMBOLS   = 192;
 
-    using dataBuffer_t = std::array< int16_t, M17_FRAME_SAMPLES >;
+    using dataBuffer_t = std::array< int16_t, M17_FRAME_SAMPLES_48K >;
 
     std::array< int16_t, M17_FRAME_SYMBOLS > symbols;
     int16_t      *baseband_buffer;    ///< Buffer for baseband audio handling.
