@@ -52,7 +52,7 @@ void M17Modulator::init()
      * placement new.
      */
 
-    baseband_buffer = new int16_t[2 * M17_FRAME_SAMPLES];
+    baseband_buffer = new int16_t[2 * M17_FRAME_SAMPLES_48K];
     idleBuffer      = new (baseband_buffer) dataBuffer_t;
     int16_t *ptr    = baseband_buffer + activeBuffer->size();
     activeBuffer    = new (ptr) dataBuffer_t;
@@ -111,7 +111,7 @@ void M17Modulator::emitBaseband()
      dsp_pwmCompensate(idleBuffer->data(), idleBuffer->size());
      dsp_invertPhase(idleBuffer->data(), idleBuffer->size());
 
-    for(size_t i = 0; i < M17_FRAME_SAMPLES; i++)
+    for(size_t i = 0; i < M17_FRAME_SAMPLES_48K; i++)
     {
         int32_t pos_sample = idleBuffer->at(i) + 32768;
         uint16_t shifted_sample = pos_sample >> 8;
@@ -122,7 +122,7 @@ void M17Modulator::emitBaseband()
     {
         // First run, start transmission
         toneGen_playAudioStream(reinterpret_cast< uint16_t *>(baseband_buffer),
-                                2*M17_FRAME_SAMPLES, M17_RTX_SAMPLE_RATE, true);
+                                2*M17_FRAME_SAMPLES_48K, M17_TX_SAMPLE_RATE, true);
         txRunning = true;
         stopTx    = false;
     }
