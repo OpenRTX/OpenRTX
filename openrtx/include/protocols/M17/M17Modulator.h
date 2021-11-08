@@ -28,6 +28,9 @@
 #include <cstdint>
 #include <array>
 
+namespace M17
+{
+
 /**
  * Modulator device for M17 protocol.
  */
@@ -117,5 +120,7 @@ private:
     bool         txRunning;           ///< Transmission running.
     bool         stopTx;              ///< Stop transmission request.
 };
+
+} /* M17 */
 
 #endif /* M17_MODULATOR_H */

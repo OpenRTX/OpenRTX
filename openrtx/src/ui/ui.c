@@ -742,7 +742,7 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
     switch(ui_state.input_number)
     {
         case 1:
-            if(state.channel.mode == FM)
+            if(state.channel.mode == OPMODE_FM)
             {
                 state.channel.fm.txTone++;
                 state.channel.fm.txTone %= MAX_TONE_INDEX;
@@ -751,7 +751,7 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             }
             break;
         case 2:
-            if(state.channel.mode == FM)
+            if(state.channel.mode == OPMODE_FM)
             {
                 tone_flags++;
                 tone_flags %= 4;
@@ -770,7 +770,7 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             *sync_rtx = true;
             break;
         case 4:
-            if(state.channel.mode == FM)
+            if(state.channel.mode == OPMODE_FM)
             {
                 state.channel.bandwidth++;
                 state.channel.bandwidth %= 3;
@@ -779,12 +779,12 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             break;
         case 5:
             // Cycle through radio modes
-            if(state.channel.mode == FM)
-                state.channel.mode = DMR;
-            else if(state.channel.mode == DMR)
-                state.channel.mode = M17;
-            else if(state.channel.mode == M17)
-                state.channel.mode = FM;
+            if(state.channel.mode == OPMODE_FM)
+                state.channel.mode = OPMODE_DMR;
+            else if(state.channel.mode == OPMODE_DMR)
+                state.channel.mode = OPMODE_M17;
+            else if(state.channel.mode == OPMODE_M17)
+                state.channel.mode = OPMODE_FM;
             *sync_rtx = true;
             break;
         case 7:
@@ -1104,7 +1104,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 break;
             // Digital Mode VFO screen
             case MODE_VFO:
-                if(state.channel.mode == M17)
+                if(state.channel.mode == OPMODE_M17)
                 {
                     // Dst ID input
                     if(ui_state.edit_mode)
@@ -1179,7 +1179,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 break;
             // Digital Mode MEM screen
             case MODE_MEM:
-                if(state.channel.mode == M17)
+                if(state.channel.mode == OPMODE_M17)
                 {
                     // Dst ID input
                     if(ui_state.edit_mode)

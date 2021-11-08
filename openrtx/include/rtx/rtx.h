@@ -75,10 +75,10 @@ enum bandwidth
  */
 enum opmode
 {
-    NONE = 0,        /**< No opMode selected */
-    FM   = 1,        /**< Analog FM          */
-    DMR  = 2,        /**< DMR                */
-    M17  = 3         /**< M17                */
+    OPMODE_NONE = 0,        /**< No opMode selected */
+    OPMODE_FM   = 1,        /**< Analog FM          */
+    OPMODE_DMR  = 2,        /**< DMR                */
+    OPMODE_M17  = 3         /**< M17                */
 };
 
 /**

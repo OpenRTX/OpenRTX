@@ -23,6 +23,9 @@
 #include <M17/M17Interleaver.h>
 #include <M17/M17Transmitter.h>
 
+namespace M17
+{
+
 static constexpr std::array<uint8_t, 2> LSF_SYNC_WORD  = {0x55, 0xF7};
 static constexpr std::array<uint8_t, 2> DATA_SYNC_WORD = {0xFF, 0x5D};
 
@@ -123,3 +126,5 @@ void M17Transmitter::send(const payload_t& payload, const bool isLast)
 
     modulator.send(DATA_SYNC_WORD, frame, isLast);
 }
+
+} /* M17 */

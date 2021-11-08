@@ -679,20 +679,20 @@ bool _ui_drawMacroMenu()
         // First row
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   yellow_fab413, "1");
-        if (last_state.channel.mode == FM)
+        if (last_state.channel.mode == OPMODE_FM)
         {
             gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
                       color_white, "  %6.1f",
                       ctcss_tone[last_state.channel.fm.txTone]/10.0f);
         }
-        else if (last_state.channel.mode == M17)
+        else if (last_state.channel.mode == OPMODE_M17)
         {
             gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
                       color_white, "          ");
         }
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   yellow_fab413, "2       ");
-        if (last_state.channel.mode == FM)
+        if (last_state.channel.mode == OPMODE_FM)
         {
             char encdec_str[9] = { 0 };
             bool tone_tx_enable = last_state.channel.fm.txToneEn;
@@ -708,7 +708,7 @@ bool _ui_drawMacroMenu()
             gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
                       color_white, encdec_str);
         }
-        else if (last_state.channel.mode == M17)
+        else if (last_state.channel.mode == OPMODE_M17)
         {
             char encdec_str[9] = "        ";
             gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
@@ -724,7 +724,7 @@ bool _ui_drawMacroMenu()
                         (layout.line3_pos.y - layout.line1_pos.y)/2};
         gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
                   yellow_fab413, "4");
-        if (last_state.channel.mode == FM)
+        if (last_state.channel.mode == OPMODE_FM)
         {
             char bw_str[8] = { 0 };
             switch (last_state.channel.bandwidth)
@@ -742,7 +742,7 @@ bool _ui_drawMacroMenu()
             gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
                       color_white, bw_str);
         }
-        else if (last_state.channel.mode == M17)
+        else if (last_state.channel.mode == OPMODE_M17)
         {
             gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
                       color_white, "       ");
@@ -753,13 +753,13 @@ bool _ui_drawMacroMenu()
         char mode_str[9] = "";
         switch(last_state.channel.mode)
         {
-            case FM:
+            case OPMODE_FM:
             snprintf(mode_str, 9,"      FM");
             break;
-            case DMR:
+            case OPMODE_DMR:
             snprintf(mode_str, 9,"     DMR");
             break;
-            case M17:
+            case OPMODE_M17:
             snprintf(mode_str, 9,"     M17");
             break;
         }

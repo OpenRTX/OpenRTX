@@ -112,18 +112,18 @@ void radio_setOpmode(const enum opmode mode)
 {
     switch(mode)
     {
-        case FM:
+        case OPMODE_FM:
             at1846s.setOpMode(AT1846S_OpMode::FM);  // AT1846S in FM mode
             C6000.fmMode();                         // HR_C6000 in FM mode
             C6000.setInputGain(-3);                 // Input gain in dB, as per TYT firmware
             break;
 
-        case DMR:
+        case OPMODE_DMR:
             at1846s.setOpMode(AT1846S_OpMode::DMR);
 //             C6000.dmrMode();
             break;
 
-        case M17:
+        case OPMODE_M17:
             at1846s.setOpMode(AT1846S_OpMode::DMR); // AT1846S in DMR mode, disables RX filter
             C6000.fmMode();                         // HR_C6000 in FM mode
             C6000.setInputGain(+3);                 // Input gain in dB, found experimentally
@@ -191,7 +191,7 @@ void radio_enableTx()
 
     switch(config->opMode)
     {
-        case FM:
+        case OPMODE_FM:
         {
             FmConfig cfg = (config->bandwidth == BW_12_5) ? FmConfig::BW_12p5kHz
                                                           : FmConfig::BW_25kHz;
@@ -199,7 +199,7 @@ void radio_enableTx()
         }
             break;
 
-        case M17:
+        case OPMODE_M17:
             C6000.startAnalogTx(TxAudioSource::LINE_IN, FmConfig::BW_25kHz);
             break;
 

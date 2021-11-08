@@ -31,6 +31,9 @@
 #include <stdio.h>
 #endif
 
+namespace M17
+{
+
 M17Modulator::M17Modulator()
 {
 
@@ -98,7 +101,7 @@ void M17Modulator::generateBaseband()
     for(size_t i = 0; i < idleBuffer->size(); i++)
     {
         float elem = static_cast< float >(idleBuffer->at(i));
-        idleBuffer->at(i) = static_cast< int16_t >(rrc(elem) * 7168.0);
+        idleBuffer->at(i) = static_cast< int16_t >(M17::rrc(elem) * 7168.0);
     }
 }
 
@@ -156,3 +159,5 @@ void M17Modulator::emitBaseband()
 #else
 void M17Modulator::emitBaseband() { }
 #endif
+
+} /* M17 */

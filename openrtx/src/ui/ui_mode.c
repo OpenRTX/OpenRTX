@@ -56,7 +56,7 @@ void _ui_drawModeDetails(ui_state_t* ui_state)
     
     switch(last_state.channel.mode)
     {
-        case FM:
+        case OPMODE_FM:
         // Get Bandwith string
         if(last_state.channel.bandwidth == BW_12_5)
             snprintf(bw_str, 8, "12.5");
@@ -87,7 +87,7 @@ void _ui_drawModeDetails(ui_state_t* ui_state)
                       ctcss_tone[last_state.channel.fm.txTone]/10.0f,
                       encdec_str);
         break;
-        case DMR:
+        case OPMODE_DMR:
         // Print talkgroup on line 2 of 3
         gfx_printLine(2, 3, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
                       layout.horizontal_pad, layout.mode_font_small,
@@ -97,7 +97,7 @@ void _ui_drawModeDetails(ui_state_t* ui_state)
                       layout.horizontal_pad, layout.mode_font_small, 
                       TEXT_ALIGN_LEFT, color_white, "ID:");
         break;
-        case M17:
+        case OPMODE_M17:
         // Print M17 Source ID on line 2 of 3
         gfx_printLine(2, 3, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
                       layout.horizontal_pad, layout.mode_font_small, 
