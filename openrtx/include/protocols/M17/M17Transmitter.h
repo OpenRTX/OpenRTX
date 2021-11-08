@@ -32,6 +32,9 @@
 #include "M17Frame.h"
 #include "M17Modulator.h"
 
+namespace M17
+{
+
 /**
  * M17 transmitter.
  */
@@ -86,5 +89,7 @@ private:
     uint8_t                  currentLich;    ///< Index of current LSF chunk.
     uint16_t                 frameNumber;    ///< Current frame number.
 };
+
+} /* M17 */
 
 #endif /* M17TRANSMITTER_H */

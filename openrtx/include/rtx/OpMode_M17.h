@@ -80,7 +80,7 @@ public:
      */
     virtual opmode getID() override
     {
-        return M17;
+        return OPMODE_M17;
     }
 
     /**
@@ -104,8 +104,8 @@ private:
     void sendData(const bool lastFrame = false);
 
     bool enterRx;                ///< Flag for RX management.
-    M17Modulator   modulator;    ///< M17 modulator.
-    M17Transmitter m17Tx;        ///< M17 transmission manager.
+    M17::M17Modulator   modulator;    ///< M17 modulator.
+    M17::M17Transmitter m17Tx;        ///< M17 transmission manager.
 };
 
 #endif /* OPMODE_M17_H */

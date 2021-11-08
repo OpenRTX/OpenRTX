@@ -86,7 +86,7 @@ public:
      */
     virtual opmode getID()
     {
-        return NONE;
+        return OPMODE_NONE;
     }
 
     /**

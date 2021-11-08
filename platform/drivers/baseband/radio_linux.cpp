@@ -43,10 +43,10 @@ void radio_tuneVcxo(const int16_t vhfOffset, const int16_t uhfOffset)
 void radio_setOpmode(const enum opmode mode)
 {
     std::string mStr(" ");
-    if(mode == NONE) mStr = "NONE";
-    if(mode == FM)   mStr = "FM";
-    if(mode == DMR)  mStr = "DMR";
-    if(mode == M17)  mStr = "M17";
+    if(mode == OPMODE_NONE) mStr = "NONE";
+    if(mode == OPMODE_FM)   mStr = "FM";
+    if(mode == OPMODE_DMR)  mStr = "DMR";
+    if(mode == OPMODE_M17)  mStr = "M17";
 
     printf("radio_linux: setting opmode to %s\n", mStr.c_str());
 }

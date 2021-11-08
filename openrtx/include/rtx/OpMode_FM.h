@@ -78,7 +78,7 @@ public:
      */
     virtual opmode getID() override
     {
-        return FM;
+        return OPMODE_FM;
     }
 
     /**

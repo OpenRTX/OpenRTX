@@ -56,15 +56,15 @@ void _ui_drawMainTop()
     // Print radio mode on top bar
     switch(last_state.channel.mode)
     {
-        case FM:
+        case OPMODE_FM:
         gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white, "FM");
         break;
-        case DMR:
+        case OPMODE_DMR:
         gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white, "DMR");
         break;
-        case M17:
+        case OPMODE_M17:
         gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white, "M17");
         break;
@@ -165,7 +165,7 @@ void _ui_drawMainBottom()
     uint8_t mic_level = platform_getMicLevel();
     switch(last_state.channel.mode)
     {
-        case FM:
+        case OPMODE_FM:
             gfx_drawSmeter(meter_pos,
                            meter_width,
                            meter_height,
@@ -173,14 +173,14 @@ void _ui_drawMainBottom()
                            squelch,
                            yellow_fab413);
             break;
-        case DMR:
+        case OPMODE_DMR:
             gfx_drawSmeterLevel(meter_pos,
                                 meter_width,
                                 meter_height,
                                 rssi,
                                 mic_level);
             break;
-        case M17:
+        case OPMODE_M17:
             gfx_drawSmeterLevel(meter_pos,
                                 meter_width,
                                 meter_height,

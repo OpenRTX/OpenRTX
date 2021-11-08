@@ -197,20 +197,20 @@ void radio_setOpmode(const enum opmode mode)
 {
     switch(mode)
     {
-        case FM:
+        case OPMODE_FM:
             gpio_clearPin(DMR_SW);      // Disconnect analog paths for DMR
             gpio_setPin(FM_SW);         // Enable analog RX stage after superhet
             C5000.fmMode();             // HR_C5000 in FM mode
             C5000.setInputGain(+3);     // Input gain in dB, as per TYT firmware
             break;
 
-        case DMR:
+        case OPMODE_DMR:
             gpio_clearPin(FM_SW);       // Disable analog RX stage after superhet
             gpio_setPin(DMR_SW);        // Enable analog paths for DMR
             //C5000_dmrMode();
             break;
 
-        case M17:
+        case OPMODE_M17:
             gpio_clearPin(DMR_SW);      // Disconnect analog paths for DMR
             gpio_setPin(FM_SW);         // Enable analog RX stage after superhet
             C5000.fmMode();             // HR_C5000 in FM mode
@@ -282,7 +282,7 @@ void radio_enableTx()
 
     switch(config->opMode)
     {
-        case FM:
+        case OPMODE_FM:
         {
             FmConfig cfg = (config->bandwidth == BW_12_5) ? FmConfig::BW_12p5kHz
                                                           : FmConfig::BW_25kHz;
@@ -290,7 +290,7 @@ void radio_enableTx()
         }
             break;
 
-        case M17:
+        case OPMODE_M17:
             C5000.startAnalogTx(TxAudioSource::LINE_IN, FmConfig::BW_25kHz);
             break;
 

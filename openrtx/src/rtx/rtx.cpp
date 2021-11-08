@@ -46,7 +46,7 @@ void rtx_init(pthread_mutex_t *m)
     /*
      * Default initialisation for rtx status
      */
-    rtxStatus.opMode      = NONE;
+    rtxStatus.opMode      = OPMODE_NONE;
     rtxStatus.bandwidth   = BW_25;
     rtxStatus.txDisable   = 0;
     rtxStatus.opStatus    = OFF;
@@ -76,7 +76,7 @@ void rtx_init(pthread_mutex_t *m)
 void rtx_terminate()
 {
     rtxStatus.opStatus = OFF;
-    rtxStatus.opMode   = NONE;
+    rtxStatus.opMode   = OPMODE_NONE;
     currMode->disable();
     radio_terminate();
 }
@@ -122,7 +122,7 @@ void rtx_taskFunc()
     if(reconfigure)
     {
         // Force TX and RX tone squelch to off for OpModes different from FM.
-        if(rtxStatus.opMode != FM)
+        if(rtxStatus.opMode != OPMODE_FM)
         {
             rtxStatus.txToneEn = 0;
             rtxStatus.rxToneEn = 0;
@@ -145,9 +145,9 @@ void rtx_taskFunc()
 
             switch(rtxStatus.opMode)
             {
-                case NONE: currMode = &noMode;  break;
-                case FM:   currMode = &fmMode;  break;
-                case M17:  currMode = &m17Mode; break;
+                case OPMODE_NONE: currMode = &noMode;  break;
+                case OPMODE_FM:   currMode = &fmMode;  break;
+                case OPMODE_M17:  currMode = &m17Mode; break;
                 default:   currMode = &noMode;
             }
 
