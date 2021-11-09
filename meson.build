@@ -169,6 +169,7 @@ stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.cpp',
                  'platform/mcu/STM32F4xx/drivers/rtc.c',
                  'platform/mcu/STM32F4xx/drivers/SPI2.c',
                  'platform/mcu/STM32F4xx/drivers/USART3.cpp',
+                 'platform/mcu/STM32F4xx/drivers/flash.c',
                  'platform/mcu/CMSIS/Device/ST/STM32F4xx/Source/system_stm32f4xx.c']
 
 stm32f405_inc = ['platform/mcu/CMSIS/Include',

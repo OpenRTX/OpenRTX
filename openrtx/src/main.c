@@ -48,11 +48,14 @@ int main(void)
     // Initialize platform drivers
     platform_init();
 
+    // Initialize radio state
+    state_init();
+
     // Initialize display and graphics driver
     gfx_init();
 
     // Set default contrast
-    display_setContrast(default_settings.contrast);
+    display_setContrast(state.settings.contrast);
 
     // Initialize user interface
     ui_init();
@@ -63,7 +66,7 @@ int main(void)
 
     // Wait 30ms before turning on backlight to hide random pixels on screen
     sleepFor(0u, 30u);
-    platform_setBacklightLevel(255);
+    platform_setBacklightLevel(state.settings.brightness);
 
     // Keep the splash screen for 1 second
     sleepFor(1u, 0u);

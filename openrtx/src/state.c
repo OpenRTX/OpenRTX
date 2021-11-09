@@ -34,7 +34,7 @@ void state_init()
      * Try loading settings from nonvolatile memory and default to sane values
      * in case of failure.
      */
-    if(nvm_readSettings(&state.settings) != 0)
+    if(nvm_readSettings(&state.settings) < 0)
     {
         state.settings = default_settings;
         strncpy(state.settings.callsign, "OPNRTX", 10);
@@ -44,7 +44,7 @@ void state_init()
      * Try loading VFO configuration from nonvolatile memory and default to sane
      * values in case of failure.
      */
-    if(nvm_readVFOChannelData(&state.channel) != 0)
+    if(nvm_readVFOChannelData(&state.channel) < 0)
     {
         state.channel.mode      = FM;
         state.channel.bandwidth = BW_25;

@@ -21,18 +21,112 @@
 #include <string.h>
 #include <interfaces/nvmem.h>
 #include <cps.h>
+#include "flash.h"
 
-int nvm_readSettings(settings_t *settings)
+
+typedef struct
 {
-    return -1;
+    uint32_t magic;
+    uint32_t flags[64];
+    struct dataBlock
+    {
+        settings_t settings;
+        channel_t  vfoData;
+    }
+    data[2048];
 }
+__attribute__((packed)) memory_t;
+
+static const uint32_t validMagic  = 0x5854524F;    // "ORTX"
+static const uint32_t baseAddress = 0x080E0000;
+memory_t *memory = ((memory_t *) baseAddress);
+
+
+/**
+ * \internal
+ * Utility function to find the currently active data block inside memory, that
+ * is the one containing the last saved settings.
+ *
+ * @return number currently active data block or -1 if memory data is invalid.
+ */
+int findActiveBlock()
+{
+    if(memory->magic != validMagic) return -1;
+
+    uint16_t block = 0;
+    for(; block < 64; block++)
+    {
+        if(memory->flags[block] != 0x00000000)
+        {
+            break;
+        }
+    }
+
+    uint16_t bit = 0;
+    for(; bit < 32; bit++)
+    {
+        if((memory->flags[block] & (1 << bit)) != 0)
+        {
+            break;
+        }
+    }
+
+    block = (block * 32) + bit;
+    return block - 1;
+}
+
+
 
 int nvm_readVFOChannelData(channel_t *channel)
 {
-    return -1;
+    int block = findActiveBlock();
+    if(block < 0) return -1;
+    memcpy(channel, &(memory->data[block].vfoData), sizeof(channel_t));
+    return 0;
+}
+
+int nvm_readSettings(settings_t *settings)
+{
+    int block = findActiveBlock();
+    if(block < 0) return -1;
+    memcpy(settings, &(memory->data[block].settings), sizeof(settings_t));
+    return 0;
 }
 
 int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
 {
-    return -1;
+    uint32_t addr = 0;
+    int block = findActiveBlock();
+
+    /*
+     * Memory never initialised or save space finished: erase all the sector.
+     * On STM32F405 the settings are saved in sector 11, starting at address
+     * 0x08060000.
+     */
+    if((block < 0) || (block >= 2047))
+    {
+        flash_eraseSector(11);
+        addr = ((uint32_t) &(memory->magic));
+        flash_write(addr, &validMagic, sizeof(validMagic));
+        block = 0;
+    }
+    else
+    {
+        block += 1;
+    }
+
+    // Save settings
+    addr = ((uint32_t) &(memory->data[block].settings));
+    flash_write(addr, settings, sizeof(settings_t));
+
+    // Save VFO configuration
+    addr = ((uint32_t) &(memory->data[block].vfoData));
+    flash_write(addr, vfo, sizeof(channel_t));
+
+    // Update the flags marking used data blocks
+    uint32_t flag = ~(1 << (block % 32));
+    addr = ((uint32_t) &(memory->flags[block / 32]));
+    flash_write(addr, &flag, sizeof(uint32_t));
+
+    return 0;
 }

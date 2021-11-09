@@ -45,6 +45,9 @@ void platform_init()
     gpio_setMode(PTT_SW, INPUT_PULL_UP);
     gpio_setMode(PTT_EXT, INPUT_PULL_UP);
 
+    gpio_setMode(PWR_SW, OUTPUT);
+    gpio_setPin(PWR_SW);
+
     /*
      * Initialise ADC1, for vbat, RSSI, ...
      * Configuration of corresponding GPIOs in analog input mode is done inside
@@ -141,7 +144,7 @@ bool platform_pwrButtonStatus()
      * is always a bit of noise in the ADC measurement making the returned
      * voltage not to be exactly zero.
      */
-    return (platform_getVbat() > 1.0f) ? true : false;
+    return (platform_getVbat() > 1000) ? true : false;
 }
 
 void platform_ledOn(led_t led)

@@ -59,7 +59,8 @@ ENTRY(_Z13Reset_Handlerv)
 /* specify the memory areas  */
 MEMORY
 {
-    flash(rx)    : ORIGIN = 0x0800C000, LENGTH = 1M - 48K
+    /* Reserve space for bootloader and settings */
+    flash(rx)    : ORIGIN = 0x0800C000, LENGTH = 1M - 48K - 128K
     /*
      * Note, the small ram starts at 0x10000000 but it is necessary to add the
      * size of the main stack, so it is 0x10000200.

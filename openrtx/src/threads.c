@@ -327,9 +327,6 @@ void create_threads()
     // Create UI event queue
     queue_init(&ui_queue);
 
-    // State initialization, execute before starting all tasks
-    state_init();
-
     // Create rtx radio thread
     pthread_t      rtx_thread;
     pthread_attr_t rtx_attr;

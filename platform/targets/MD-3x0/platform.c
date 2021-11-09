@@ -38,9 +38,6 @@ void platform_init()
     gpio_setMode(GREEN_LED, OUTPUT);
     gpio_setMode(RED_LED, OUTPUT);
 
-    gpio_setMode(LCD_BKLIGHT, ALTERNATE);
-    gpio_setAlternateFunction(LCD_BKLIGHT, 3);
-
     gpio_setMode(CH_SELECTOR_0, INPUT);
     gpio_setMode(CH_SELECTOR_1, INPUT);
     gpio_setMode(CH_SELECTOR_2, INPUT);
@@ -50,6 +47,7 @@ void platform_init()
     gpio_setMode(PTT_EXT, INPUT);
 
     gpio_setMode(PWR_SW, OUTPUT);
+    gpio_setPin(PWR_SW);
 
     /*
      * Initialise ADC1, for vbat, RSSI, ...
@@ -146,7 +144,7 @@ bool platform_pwrButtonStatus()
      * is always a bit of noise in the ADC measurement making the returned
      * voltage not to be exactly zero.
      */
-    return (platform_getVbat() > 1.0f) ? true : false;
+    return (platform_getVbat() > 1000) ? true : false;
 }
 
 void platform_ledOn(led_t led)
