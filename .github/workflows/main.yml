@@ -6,7 +6,10 @@ jobs:
   build:
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: install-deps
       run: |
         sudo apt update
@@ -20,8 +23,6 @@ jobs:
 #       sudo wget -O /usr/bin/bin2sgl.Linux https://raw.githubusercontent.com/rogerclarkmelbourne/OpenGD77/master/firmware/tools/bin2sgl.Linux
 #       sudo wget -O /usr/bin/gd-77_firmware_loader.py https://raw.githubusercontent.com/rogerclarkmelbourne/OpenGD77/master/tools/Python/FirmwareLoader/gd-77_firmware_loader.py
 #       sudo chmod +x /usr/bin/bin2sgl /usr/bin/bin2sgl.Linux /usr/bin/gd-77_firmware_loader.py
-    - name: Checkout submodules
-      uses: textbook/git-checkout-submodule-action@master
     - name: meson-setup
       run: |
         cd ${{github.workspace}}
