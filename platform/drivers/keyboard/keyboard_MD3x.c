@@ -26,6 +26,8 @@
 #include <interfaces/platform.h>
 #include "hwconfig.h"
 
+static int8_t old_pos = 0;
+
 void kbd_init()
 {
     /* Set the two row lines as outputs */
@@ -35,6 +37,9 @@ void kbd_init()
     gpio_clearPin(KB_ROW1);
     gpio_clearPin(KB_ROW2);
     gpio_clearPin(KB_ROW3);
+
+    /* Initialise old position */
+    old_pos = platform_getChSelector();
 }
 
 void kbd_terminate()
@@ -53,7 +58,6 @@ keyboard_t kbd_getKeys()
     keyboard_t keys = 0;
 
     /* Read channel knob to send KNOB_LEFT and KNOB_RIGHT events */
-    static int8_t old_pos = 0;
     int8_t new_pos = platform_getChSelector();
     if (old_pos != new_pos)
     {
