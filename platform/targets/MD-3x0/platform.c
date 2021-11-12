@@ -80,7 +80,6 @@ void platform_terminate()
     adc1_terminate();
     nvm_terminate();
     toneGen_terminate();
-    rtc_terminate();
     audio_terminate();
 
     /* Finally, remove power supply */

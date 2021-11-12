@@ -89,7 +89,6 @@ void platform_terminate()
     /* Shut down all the modules */
     adc1_terminate();
     nvm_terminate();
-    rtc_terminate();
     toneGen_terminate();
     chSelector_terminate();
     audio_terminate();
