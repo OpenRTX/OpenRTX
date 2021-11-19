@@ -88,6 +88,14 @@ void state_init()
 
 void state_terminate()
 {
+    /*
+     * Never store a brightness of 0 to avoid booting with a black screen
+     */
+    if(state.settings.brightness == 0)
+    {
+        state.settings.brightness = 25;
+    }
+
     nvm_writeSettingsAndVfo(&state.settings, &state.channel);
 }
 
