@@ -224,6 +224,8 @@ ui_state_t ui_state;
 bool macro_menu = false;
 bool layout_ready = false;
 bool redraw_needed = true;
+bool standby = false;
+long long last_event_tick = 0;
 
 layout_t _ui_calculateLayout()
 {
@@ -863,9 +865,23 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
         return;
     }
 
+    long long now = getTick();
+    if (!standby && (now - last_event_tick >= 30000)) // 30 sec
+    {
+        standby = true;
+        platform_setBacklightLevel(0);
+    }
+
     // Process pressed keys
     if(event.type == EVENT_KBD)
     {
+        last_event_tick = now;
+	if (standby)
+	{
+	    standby = false;
+            platform_setBacklightLevel(state.settings.brightness);
+	}
+
         kbd_msg_t msg;
         msg.value = event.payload;
         // If MONI is pressed, activate MACRO functions
