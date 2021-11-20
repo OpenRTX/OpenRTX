@@ -43,8 +43,8 @@ void platform_init()
     gpio_setMode(CH_SELECTOR_2, INPUT);
     gpio_setMode(CH_SELECTOR_3, INPUT);
 
-    gpio_setMode(PTT_SW,  INPUT);
-    gpio_setMode(PTT_EXT, INPUT);
+    gpio_setMode(PTT_SW,  INPUT_PULL_UP);
+    gpio_setMode(PTT_EXT, INPUT_PULL_UP);
 
     gpio_setMode(PWR_SW, OUTPUT);
     gpio_setPin(PWR_SW);
