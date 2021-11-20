@@ -88,11 +88,14 @@ void _ui_drawZoneChannel()
 
 void _ui_drawFrequency()
 {
+  unsigned long frequency = platform_getPttStatus() ?
+       frequency = last_state.channel.tx_frequency : last_state.channel.rx_frequency;
+
     // Print big numbers frequency
     gfx_print(layout.line3_pos, layout.line3_font, TEXT_ALIGN_CENTER,
               color_white, "%03lu.%05lu",
-              (unsigned long)last_state.channel.rx_frequency/1000000,
-              (unsigned long)last_state.channel.rx_frequency%1000000/10);
+              (unsigned long)frequency/1000000,
+              (unsigned long)frequency%1000000/10);
 }
 
 void _ui_drawVFOMiddleInput(ui_state_t* ui_state)
