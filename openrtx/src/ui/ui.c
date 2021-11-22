@@ -707,9 +707,12 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
         state.settings.sqlLevel = platform_getChSelector() - 1;
         *sync_rtx = true;
     }
+
+    if(msg.keys & KEY_LEFT || msg.keys & KEY_DOWN)
 #else // Use left and right buttons or relative position knob
     // NOTE: Use up and down for UV380 which has not yet a functional knob
     if(msg.keys & KEY_LEFT || msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
+#endif
     {
         if(state.settings.sqlLevel > 0)
         {
@@ -717,7 +720,12 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
             *sync_rtx = true;
         }
     }
+
+#ifdef HAS_ABSOLUTE_KNOB
+    else if(msg.keys & KEY_RIGHT || msg.keys & KEY_UP)
+#else
     else if(msg.keys & KEY_RIGHT || msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
+#endif
     {
         if(state.settings.sqlLevel < 15)
         {
@@ -725,7 +733,6 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
             *sync_rtx = true;
         }
     }
-#endif
 }
 
 void _ui_menuUp(uint8_t menu_entries)
