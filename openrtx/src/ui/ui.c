@@ -224,6 +224,8 @@ ui_state_t ui_state;
 bool macro_menu = false;
 bool layout_ready = false;
 bool redraw_needed = true;
+
+#define STANDBY_LIMIT 30000 // 30s - TODO: move into a setting
 bool standby = false;
 long long last_event_tick = 0;
 
@@ -642,6 +644,27 @@ void _ui_changeContrast(int variation)
     display_setContrast(state.settings.contrast);
 }
 
+void _ui_enterStandby()
+{
+    if(standby)
+        return;
+
+    standby = true;
+    platform_setBacklightLevel(0);
+}
+
+bool _ui_exitStandby(long long now)
+{
+    last_event_tick = now;
+
+    if(!standby)
+        return false;
+
+    standby = false;
+    platform_setBacklightLevel(state.settings.brightness);
+    return true;
+}
+
 void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
     ui_state.input_number = input_getPressedNumber(msg);
     // CTCSS Encode/Decode Selection
@@ -866,24 +889,17 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
     }
 
     long long now = getTick();
-    if (!standby && (now - last_event_tick >= 30000)) // 30 sec
-    {
-        standby = true;
-        platform_setBacklightLevel(0);
-    }
-
     // Process pressed keys
     if(event.type == EVENT_KBD)
     {
-        last_event_tick = now;
-	if (standby)
-	{
-	    standby = false;
-            platform_setBacklightLevel(state.settings.brightness);
-	}
-
         kbd_msg_t msg;
         msg.value = event.payload;
+
+        // If we get out of standby, we ignore the kdb event
+        // unless is the MONI key for the MACRO functions
+        if (_ui_exitStandby(now) && !(msg.keys & KEY_MONI))
+            return;
+
         // If MONI is pressed, activate MACRO functions
         if(msg.keys & KEY_MONI)
         {
@@ -1505,6 +1521,19 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         _ui_menuBack(MENU_SETTINGS);
                 }
                 break;
+        }
+    }
+    else if(event.type == EVENT_STATUS)
+    {
+        if (txOngoing) //TODO: check for open squelch
+	{
+	    _ui_exitStandby(now);
+	    return;
+	}
+
+	if (!standby && (now - last_event_tick >= STANDBY_LIMIT))
+        {
+	    _ui_enterStandby();
         }
     }
 }
