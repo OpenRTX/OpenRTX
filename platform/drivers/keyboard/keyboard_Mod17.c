@@ -45,8 +45,8 @@ keyboard_t kbd_getKeys()
 {
     keyboard_t keys = 0;
 
-    if(gpio_readPin(ENTER_SW) == 1) keys |= KEY_ESC;
-    if(gpio_readPin(ESC_SW)   == 1) keys |= KEY_ENTER;
+    if(gpio_readPin(ENTER_SW) == 1) keys |= KEY_ENTER;
+    if(gpio_readPin(ESC_SW)   == 1) keys |= KEY_ESC;
     if(gpio_readPin(LEFT_SW)  == 1) keys |= KEY_LEFT;
     if(gpio_readPin(RIGHT_SW) == 1) keys |= KEY_RIGHT;
     if(gpio_readPin(UP_SW)    == 1) keys |= KEY_UP;
