@@ -100,8 +100,7 @@ void display_init()
     spi2_sendRecv(0xAE);  // SH110X_DISPLAYOFF,                
     spi2_sendRecv(0xd5);  // SH110X_SETDISPLAYCLOCKDIV, 0x51,
     spi2_sendRecv(0x51);
-    spi2_sendRecv(0x20);  // SH110X_MEMORYMODE,                
-    spi2_sendRecv(0x00);
+    //spi2_sendRecv(0x20);  // SH110X_MEMORYMODE,                
     spi2_sendRecv(0x81);  // SH110X_SETCONTRAST, 0x4F,  
     spi2_sendRecv(0x4F);
     spi2_sendRecv(0xAD);  // SH110X_DCDC, 0x8A,                
@@ -140,20 +139,15 @@ void display_renderRow(uint8_t row)
 
 	for(uint16_t i=0; i<64; i++)
 	{
-		//for(uint8_t k=0; k<8; k++)
+		uint8_t out=0, tmp=buf[i*16 + 15-row];
+
+		for(uint8_t j=0; j<8; j++)
 		{
-			//spi2_sendRecv(buf[(j+1)*16 - (16-row)]);
-			uint8_t out=0, tmp=buf[i*16 + 15-row];
-
-			for(uint8_t j=0; j<8; j++)
-			{
-				out|=((tmp>>(7-j))&1)<<j;
-			}
-			
-			spi2_sendRecv(out);
+			out|=((tmp>>(7-j))&1)<<j;
 		}
+			
+		spi2_sendRecv(out);
 	}
-
 }
 
 void display_renderRows(uint8_t startRow, uint8_t endRow)
