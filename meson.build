@@ -453,6 +453,7 @@ mod17_opts  = {'sources': mod17_src,
                'cpp_args': mod17_args,
                'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_Mod17.ld',
                               '-Wl,--print-memory-usage'],
+               'dependencies': [codec2_dep],
                'include_directories': mod17_inc}
 
 ##
