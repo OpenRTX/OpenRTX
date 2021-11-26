@@ -15,6 +15,16 @@
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
  *   GNU General Public License for more details.                          *
  *                                                                         *
+ *   As a special exception, if other files instantiate templates or use   *
+ *   macros or inline functions from this file, or you compile this file   *
+ *   and link it with other works to produce a work based on this file,    *
+ *   this file does not by itself cause the resulting work to be covered   *
+ *   by the GNU General Public License. However the source code for this   *
+ *   file must still be made available in accordance with the GNU General  *
+ *   Public License. This exception does not invalidate any other reasons  *
+ *   why a work based on this file might be covered by the GNU General     *
+ *   Public License.                                                       *
+ *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
@@ -42,34 +52,37 @@
 #define BAT_NONE
 
 /* Signalling LEDs */
-#define PTT_LED     GPIOE,13
-#define SYNC_LED    GPIOE,14
-#define ERR_LED     GPIOE,15
+#define PTT_LED     GPIOC,8
+#define SYNC_LED    GPIOC,9
+#define ERR_LED     GPIOA,8
 
 /* Display */
-#define LCD_RST     GPIOB,11
-#define LCD_RS      GPIOB,12
-#define LCD_CS      GPIOB,10
-#define LCD_BKLIGHT GPIOE,15
+#define LCD_RST     GPIOC,7
+#define LCD_RS      GPIOC,6
+#define LCD_CS      GPIOB,14
+//#define LCD_BKLIGHT GPIOE,15
 #define SPI2_CLK    GPIOB,13
-#define SPI2_SDO    GPIOB,14
+#define SPI2_SDO    GPIOB,9 //UNUSED
 #define SPI2_SDI    GPIOB,15
 
 /* Keyboard */
-#define ESC_SW      GPIOD,1
-#define RIGHT_SW    GPIOD,2
-#define UP_SW       GPIOD,3
-#define DOWN_SW     GPIOD,4
-#define LEFT_SW     GPIOB,9
-#define ENTER_SW    GPIOB,8
+#define ESC_SW          GPIOB,8
+#define RIGHT_SW  GPIOB,11
+#define UP_SW   GPIOB,10
+#define DOWN_SW   GPIOC,2
+#define LEFT_SW   GPIOC,3
+#define ENTER_SW  GPIOB,12
 
-#define PTT_SW      GPIOD,8
-#define PTT_OUT     GPIOD,10
+#define PTT_SW    GPIOC,13
+#define PTT_OUT   GPIOD,2
 
 /* Audio */
-#define AUDIO_MIC   GPIOA,2
-#define AUDIO_SPK   GPIOA,5
+#define AUDIO_MIC GPIOA,2
+#define AUDIO_SPK GPIOA,5
 #define BASEBAND_RX GPIOA,1
 #define BASEBAND_TX GPIOA,4
+#define SPK_MUTE GPIOB,1
+#define MIC_MUTE GPIOC,4
+#define MIC_GAIN GPIOC,5
 
 #endif
