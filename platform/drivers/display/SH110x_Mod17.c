@@ -79,42 +79,36 @@ void display_init()
     gpio_setPin(LCD_CS);
     gpio_clearPin(LCD_RS);
 
-    gpio_clearPin(LCD_RST); /* Reset controller                          */
-    delayMs(1);
+    gpio_clearPin(LCD_RST); /* Reset controller                */
+    delayMs(50);
     gpio_setPin(LCD_RST);
-    delayMs(5);
+    delayMs(50);
 
     gpio_clearPin(LCD_CS);
 
-    gpio_clearPin(LCD_RS);  /* RS low -> command mode                                   */
-    spi2_sendRecv(0xAE);    /* Disable Display                                          */
-    spi2_sendRecv(0x20);    /* Set Memory Addressing Mode to horizontal addressing Mode */
+    gpio_clearPin(LCD_RS);  /* RS low -> command mode          */
+    spi2_sendRecv(0xAE);    /* SH110X_DISPLAYOFF               */
+    spi2_sendRecv(0xD5);    /* SH110X_SETDISPLAYCLOCKDIV, 0x51 */
+    spi2_sendRecv(0x51);
+    spi2_sendRecv(0x81);    /* SH110X_SETCONTRAST, 0x4F        */
+    spi2_sendRecv(0x4F);
+    spi2_sendRecv(0xAD);    /* SH110X_DCDC, 0x8A               */
+    spi2_sendRecv(0x8A);
+    spi2_sendRecv(0xA1);    /* SH110X_SEGREMAP                 */
+    spi2_sendRecv(0xC0);    /* SH110X_COMSCANINC               */
+    spi2_sendRecv(0xDC);    /* SH110X_SETDISPSTARTLINE, 0x0    */
     spi2_sendRecv(0x00);
-    spi2_sendRecv(0xB0);    /* Set Page Start Address for Page Addressing Mode          */
-    spi2_sendRecv(0xC8);    /* Set COM Output Scan Direction                            */
-    spi2_sendRecv(0x00);    /* Set low column address                                   */
-    spi2_sendRecv(0x10);    /* Set high column address                                  */
-    spi2_sendRecv(0x40);    /* Set start line address                                   */
-    spi2_sendRecv(0x81);    /* Set contrast                                             */
-    spi2_sendRecv(0xCF);
-    spi2_sendRecv(0xA1);    /* Set segment re-map 0 to 127                              */
-    spi2_sendRecv(0xA6);    /* Set normal color                                         */
-    spi2_sendRecv(0xA8);    /* Set multiplex ratio (1 to 64)                            */
-    spi2_sendRecv(0x3F);
-    spi2_sendRecv(0xA4);    /* Output follows RAM content                               */
-    spi2_sendRecv(0xD3);    /* Set display offset                                       */
-    spi2_sendRecv(0x00);    /* Not offset                                               */
-    spi2_sendRecv(0xD5);    /* Set display clock divide ratio/oscillator frequency      */
-    spi2_sendRecv(0xF0);    /* Set divide ratio                                         */
-    spi2_sendRecv(0xD9);    /* Set pre-charge period                                    */
+    spi2_sendRecv(0xD3);    /* SH110X_SETDISPLAYOFFSET, 0x60   */
+    spi2_sendRecv(0x60);
+    spi2_sendRecv(0xD9);    /* SH110X_SETPRECHARGE, 0x22       */
     spi2_sendRecv(0x22);
-    spi2_sendRecv(0xDA);    /* Set com pins hardware configuration                      */
-    spi2_sendRecv(0x12);
-    spi2_sendRecv(0xDB);    /* Set vcomh                                                */
-    spi2_sendRecv(0x40);
-    spi2_sendRecv(0x8D);    /* Set DC-DC enable                                         */
-    spi2_sendRecv(0x14);
-    spi2_sendRecv(0xAF);    /* Enable Display                                           */
+    spi2_sendRecv(0xDB);    /* SH110X_SETVCOMDETECT, 0x35      */
+    spi2_sendRecv(0x35);
+    spi2_sendRecv(0xA8);    /* SH110X_SETMULTIPLEX, 0x3F       */
+    spi2_sendRecv(0x3F);
+    spi2_sendRecv(0xA4);    /* SH110X_DISPLAYALLON_RESUME      */
+    spi2_sendRecv(0xA6);    /* SH110X_NORMALDISPLAY            */
+    spi2_sendRecv(0xAF);    /* SH110x_DISPLAYON                */
     gpio_setPin(LCD_CS);
 }
 
@@ -128,45 +122,23 @@ void display_terminate()
     spi2_terminate();
 }
 
-void display_renderRow(uint8_t row)
-{
-    /* magic stuff */
-    uint8_t *buf = (frameBuffer + 128 * row);
-    for (uint8_t i = 0; i<16; i++)
-    {
-        uint8_t tmp[8] = {0};
-        for (uint8_t j = 0; j < 8; j++)
-        {
-            uint8_t tmp_buf = buf[j*16 + i];
-            int count = __builtin_popcount(tmp_buf);
-            while (count > 0)
-            {
-                int pos = __builtin_ctz(tmp_buf);
-                tmp[pos] |= 1UL << j;
-                tmp_buf &= ~(1 << pos);
-                count--;
-            }
-        }
-
-        for (uint8_t s = 0; s < 8; s++)
-        {
-            (void) spi2_sendRecv(tmp[s]);
-        }
-    }
-}
-
 void display_renderRows(uint8_t startRow, uint8_t endRow)
 {
     gpio_clearPin(LCD_CS);
 
-    for(uint8_t row = startRow; row < endRow; row++)
+    for(uint8_t y = startRow; y < endRow; y++)
     {
-        gpio_clearPin(LCD_RS);            /* RS low -> command mode */
-        (void) spi2_sendRecv(0xB0 | row); /* Set Y position         */
-        (void) spi2_sendRecv(0x00);       /* Set X position         */
-        (void) spi2_sendRecv(0x10);
-        gpio_setPin(LCD_RS);              /* RS high -> data mode   */
-        display_renderRow(row);
+        for(uint8_t x = 0; x < SCREEN_WIDTH/8; x++)
+        {
+            gpio_clearPin(LCD_RS);              /* RS low -> command mode */
+            (void) spi2_sendRecv(y & 0x0F);     /* Set Y position         */
+            (void) spi2_sendRecv(0x10 | ((y >> 4) & 0x07));
+            (void) spi2_sendRecv(0xB0 | x);     /* Set X position         */
+            gpio_setPin(LCD_RS);                /* RS high -> data mode   */
+
+            size_t pos = x + y * (SCREEN_WIDTH/8);
+            spi2_sendRecv(frameBuffer[pos]);
+        }
     }
 
     gpio_setPin(LCD_CS);
@@ -174,7 +146,7 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
 
 void display_render()
 {
-    display_renderRows(0, SCREEN_HEIGHT / 8);
+    display_renderRows(0, SCREEN_HEIGHT);
 }
 
 bool display_renderingInProgress()

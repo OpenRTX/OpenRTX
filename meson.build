@@ -309,7 +309,7 @@ dm1801_def = def + mk22fn512_def + {'PLATFORM_DM1801': ''}
 ## Module 17
 ##
 mod17_src = src + stm32f405_src + ['platform/targets/Module17/platform.c',
-                                   'platform/drivers/display/SSD1306_Mod17.c',
+                                   'platform/drivers/display/SH110x_Mod17.c',
                                    'platform/drivers/keyboard/keyboard_Mod17.c',
                                    'platform/drivers/NVM/nvmem_Mod17.c',
                                    'platform/drivers/baseband/radio_Mod17.cpp',
