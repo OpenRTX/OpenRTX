@@ -14,16 +14,6 @@
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
  *   GNU General Public License for more details.                          *
  *                                                                         *
- *   As a special exception, if other files instantiate templates or use   *
- *   macros or inline functions from this file, or you compile this file   *
- *   and link it with other works to produce a work based on this file,    *
- *   this file does not by itself cause the resulting work to be covered   *
- *   by the GNU General Public License. However the source code for this   *
- *   file must still be made available in accordance with the GNU General  *
- *   Public License. This exception does not invalidate any other reasons  *
- *   why a work based on this file might be covered by the GNU General     *
- *   Public License.                                                       *
- *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
@@ -64,14 +54,14 @@ bool radio_checkRxDigitalSquelch()
 
 void radio_enableRx()
 {
-	radioStatus = RX;
-	gpio_clearPin(PTT_OUT);
+    radioStatus = RX;
+    gpio_clearPin(PTT_OUT);
 }
 
 void radio_enableTx()
 {
-	radioStatus = TX;
-	gpio_setPin(PTT_OUT);
+    radioStatus = TX;
+    gpio_setPin(PTT_OUT);
 }
 
 void radio_disableRtx()
@@ -81,8 +71,7 @@ void radio_disableRtx()
 
 void radio_updateConfiguration()
 {
-    if(radioStatus == RX) radio_enableRx();
-    if(radioStatus == TX) radio_enableTx();
+
 }
 
 float radio_getRssi()
