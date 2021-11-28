@@ -52,10 +52,12 @@ typedef struct
     float volumeLevel;
     float chSelector;
     bool PttStatus;
+    bool PowerOff;
 } radio_state;
 
 extern radio_state Radio_State;
 
 void emulator_start();
+void emulator_process_sdl_events();
 
 #endif /* EMULATOR_H */
