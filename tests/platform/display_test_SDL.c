@@ -51,7 +51,6 @@ void drawRect(int x, int y, int width, int height, uint16_t color)
 int main()
 {
     display_init();
-    display_setBacklightLevel(254);
 
     /* Horizontal red line */
     drawRect(0, 10, SCREEN_WIDTH, 20, 0xF800);
