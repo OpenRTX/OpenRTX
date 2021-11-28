@@ -197,7 +197,7 @@ uint32_t fetchPixelFromFb(unsigned int x, unsigned int y)
 
 void display_init()
 {
-    if (SDL_Init(SDL_INIT_VIDEO) < 0)
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0)
     {
         printf("SDL video init error!!\n");
 

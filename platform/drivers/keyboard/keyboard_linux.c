@@ -21,43 +21,21 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <interfaces/keyboard.h>
-#include <SDL2/SDL.h>
 
 extern keyboard_t shellkeyq_get();
+extern keyboard_t sdl_getKeys();
 
 void kbd_init()
 {
 }
+
 keyboard_t kbd_getKeys() {
     keyboard_t keys = 0;
-    SDL_PumpEvents();
 
     //this pulls in emulated keypresses from the command shell
     keys |= shellkeyq_get();
+    keys |= sdl_getKeys();
     
-    const uint8_t *state = SDL_GetKeyboardState(NULL);
-    if (state[SDL_SCANCODE_0]) keys |= KEY_0;
-    if (state[SDL_SCANCODE_1]) keys |= KEY_1;
-    if (state[SDL_SCANCODE_2]) keys |= KEY_2;
-    if (state[SDL_SCANCODE_3]) keys |= KEY_3;
-    if (state[SDL_SCANCODE_4]) keys |= KEY_4;
-    if (state[SDL_SCANCODE_5]) keys |= KEY_5;
-    if (state[SDL_SCANCODE_6]) keys |= KEY_6;
-    if (state[SDL_SCANCODE_7]) keys |= KEY_7;
-    if (state[SDL_SCANCODE_8]) keys |= KEY_8;
-    if (state[SDL_SCANCODE_9]) keys |= KEY_9;
-    if (state[SDLK_ASTERISK]) keys |= KEY_STAR;
-    if (state[SDL_SCANCODE_ESCAPE]) keys |= KEY_ESC;
-    if (state[SDL_SCANCODE_DOWN]) keys |= KEY_DOWN;
-    if (state[SDL_SCANCODE_UP]) keys |= KEY_UP;
-    if (state[SDL_SCANCODE_LEFT]) keys |= KEY_LEFT;
-    if (state[SDL_SCANCODE_RIGHT]) keys |= KEY_RIGHT;
-    if (state[SDL_SCANCODE_RETURN]) keys |= KEY_ENTER;
-    if (state[SDL_SCANCODE_NONUSHASH]) keys |= KEY_HASH;
-    if (state[SDL_SCANCODE_N]) keys |= KEY_F1;
-    if (state[SDL_SCANCODE_M]) keys |= KEY_MONI;
-    if (state[SDL_SCANCODE_PAGEUP]) keys |= KNOB_LEFT;
-    if (state[SDL_SCANCODE_PAGEDOWN]) keys |= KNOB_RIGHT;
     return keys;
 }
 

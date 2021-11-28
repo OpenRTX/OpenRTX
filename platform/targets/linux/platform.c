@@ -16,6 +16,7 @@
  ***************************************************************************/
 
 #include <interfaces/platform.h>
+#include <interfaces/graphics.h>
 #include <interfaces/gpio.h>
 #include <stdio.h>
 #include "emulator.h"
@@ -43,6 +44,9 @@ void platform_init()
 void platform_terminate()
 {
     printf("Platform terminate\n");
+    gfx_terminate();
+
+    exit(0);
 }
 
 void platform_setBacklightLevel(__attribute__((unused)) uint8_t level)
@@ -89,7 +93,6 @@ int8_t platform_getChSelector()
 bool platform_getPttStatus()
 {
     // Read P key status from SDL
-    SDL_PumpEvents();
     const uint8_t *state = SDL_GetKeyboardState(NULL);
     if (state[SDL_SCANCODE_P])
         return true;
@@ -100,7 +103,7 @@ bool platform_getPttStatus()
 bool platform_pwrButtonStatus()
 {
     /* Suppose radio is always on */
-    return true;
+    return !Radio_State.PowerOff;
 }
 
 void platform_ledOn(__attribute__((unused)) led_t led)
