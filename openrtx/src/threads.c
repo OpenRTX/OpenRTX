@@ -38,10 +38,6 @@
 #include <interfaces/gps.h>
 #include <gps.h>
 #endif
-#ifdef PLATFORM_LINUX
-#include <emulator.h>
-#endif
-
 
 /* Mutex for concurrent access to state variable */
 pthread_mutex_t state_mutex;
@@ -77,10 +73,6 @@ void *ui_task(void *arg)
 
     while(1)
     {
-	#ifdef PLATFORM_LINUX
-	emulator_process_sdl_events();
-	#endif
-
         // Read from the keyboard queue (returns 0 if no message is present)
         // Copy keyboard_t keys from received void * pointer msg
         event_t event;
