@@ -278,7 +278,8 @@ void sdl_task()
 	    }
 	}
 
-	if (chan_can_recv(&fb_sync))
+	// we update the window only if there is a something ready to render
+	if (chan_can_send(&fb_sync))
 	{
 	    PIXEL_SIZE *pixels;
 	    int pitch = 0;
@@ -287,9 +288,8 @@ void sdl_task()
 		SDL_Log("SDL_lock failed: %s", SDL_GetError());
 	    }
 
-	    void *fb;
-	    chan_recv(&fb_sync, &fb);
-	    memcpy(pixels, fb, sizeof(PIXEL_SIZE) * SCREEN_HEIGHT * SCREEN_WIDTH);
+	    chan_send(&fb_sync, pixels);
+	    chan_recv(&fb_sync, NULL);
 
 	    SDL_UnlockTexture(displayTexture);
 	    SDL_RenderCopy(renderer, displayTexture, NULL, NULL);

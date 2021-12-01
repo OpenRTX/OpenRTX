@@ -130,20 +130,23 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
 
     if(sdl_ready)
     {
+        // receive a texture pixel map
+        void *fb;
+        chan_recv(&fb_sync, &fb);
 #ifdef PIX_FMT_RGB565
-       chan_send(&fb_sync, frameBuffer);
+	memcpy(fb, frameBuffer, sizeof(PIXEL_SIZE) * SCREEN_HEIGHT * SCREEN_WIDTH);
 #else
-       //TODO free
-       PIXEL_SIZE *pixels = malloc(sizeof(uint16_t) * SCREEN_HEIGHT * SCREEN_WIDTH);
-       for (unsigned int x = 0; x < SCREEN_WIDTH; x++)
-       {
-	   for (unsigned int y = startRow; y < endRow; y++)
-	   {
-	       pixels[x + y * SCREEN_WIDTH] = fetchPixelFromFb(x, y);
-	   }
-       }
-       chan_send(&fb_sync, (void *)pixels);
+        for (unsigned int x = 0; x < SCREEN_WIDTH; x++)
+	{
+	    for (unsigned int y = startRow; y < endRow; y++)
+	    {
+		pixels[x + y * SCREEN_WIDTH] = fetchPixelFromFb(x, y);
+	    }
+	}
 #endif
+	// signal the SDL main loop to proceed with rendering
+	void *done = {0};
+	chan_send(&fb_sync, done);
     }
 
     inProgress = false;
