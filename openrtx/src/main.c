@@ -88,5 +88,6 @@ int main(void)
     pthread_create(&ui_thread, NULL, ui_task, NULL);
 
     sdl_task();
+    pthread_join(ui_thread, NULL);
 #endif
 }
