@@ -20,21 +20,23 @@
 
 
 #include "emulator.h"
+#include "sdl_engine.h"
 
 #include <pthread.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <interfaces/keyboard.h>
 #include <SDL2/SDL.h>
 
 #include <readline/readline.h>
 #include <readline/history.h>
 
+/* Custom SDL Event to request a screenshot */
+extern Uint32 SDL_Screenshot_Event;
 
 radio_state Radio_State = {12, 8.2f, 3, 4, 1, false, false};
-
-extern int screenshot_display(const char *filename);
 
 typedef int (*_climenu_fn)(void *self, int argc, char **argv);
 
@@ -250,8 +252,14 @@ int screenshot(void *_self, int _argc, char **_argv)
     {
         filename = _argv[0];
     }
-    return screenshot_display(filename) == 0 ? SH_CONTINUE : SH_ERR;
-    //screenshot_display returns 0 if ok, which is same as SH_CONTINUE
+
+    SDL_Event e;
+    SDL_zero(e);
+    e.type = SDL_Screenshot_Event;
+    e.user.data1 = malloc(sizeof(filename));
+    strcpy(e.user.data1, filename);
+
+    return SDL_PushEvent(&e) == 1 ? SH_CONTINUE : SH_ERR;
 }
 /*
     int record_start(void * _self, int _argc, char ** _argv ){
@@ -528,116 +536,15 @@ void *startCLIMenu()
     Radio_State.PowerOff = true;
 }
 
-
 void emulator_start()
 {
+    init_sdl();
+
     pthread_t cli_thread;
     int err = pthread_create(&cli_thread, NULL, startCLIMenu, NULL);
 
     if(err)
     {
-        printf("An error occurred starting the emulator thread: %d\n", err);
-    }
-}
-
-keyboard_t sdl_keys;
-keyboard_t sdl_getKeys() { return sdl_keys; }
-
-bool sdk_key_code_to_key(SDL_KeyCode sym, keyboard_t *key)
-{
-      switch (sym) {
-      case SDLK_0:
-	  *key = KEY_0;
-	  return true;
-      case SDLK_1:
-	  *key = KEY_1;
-	  return true;
-      case SDLK_2:
-	  *key = KEY_2;
-	  return true;
-      case SDLK_3:
-	  *key = KEY_3;
-	  return true;
-      case SDLK_4:
-	  *key = KEY_4;
-	  return true;
-      case SDLK_5:
-	  *key = KEY_5;
-	  return true;
-      case SDLK_6:
-	  *key = KEY_6;
-	  return true;
-      case SDLK_7:
-	  *key = KEY_7;
-	  return true;
-      case SDLK_8:
-	  *key = KEY_8;
-	  return true;
-      case SDLK_9:
-	  *key = KEY_9;
-	  return true;
-      case SDLK_ASTERISK:
-	  *key = KEY_STAR;
-	  return true;
-      case SDLK_ESCAPE:
-	  *key = KEY_ESC;
-	  return true;
-      case SDLK_LEFT:
-	  *key = KEY_LEFT;
-	  return true;
-      case SDLK_RIGHT:
-	  *key = KEY_RIGHT;
-	  return true;
-      case SDLK_RETURN:
-	  *key = KEY_ENTER;
-	  return true;
-      case SDLK_HASH:
-	  *key = KEY_HASH;
-	  return true;
-      case SDLK_n:
-	  *key = KEY_F1;
-	  return true;
-      case SDLK_m:
-	  *key = KEY_MONI;
-	  return true;
-      case SDLK_PAGEUP:
-	  *key = KNOB_LEFT;
-	  return true;
-      case SDLK_PAGEDOWN:
-	  *key = KNOB_RIGHT;
-	  return true;
-      case SDLK_UP:
-	  *key = KEY_UP;
-	  return true;
-      case SDLK_DOWN:
-	  *key = KEY_DOWN;
-	  return true;
-      default:
-	  return false;
-      }
-}
-
-void emulator_process_sdl_events()
-{
-    Uint32 now = SDL_GetTicks();
-
-    SDL_Event ev = { 0 };
-    keyboard_t key = 0;
-
-    SDL_PollEvent( &ev);
-
-    switch (ev.type) {
-    case SDL_QUIT:
-	Radio_State.PowerOff = true;
-	break;
-    case SDL_KEYDOWN:
-	if (sdk_key_code_to_key(ev.key.keysym.sym, &key))
-	    sdl_keys |= key;
-	break;
-    case SDL_KEYUP:
-	if (sdk_key_code_to_key(ev.key.keysym.sym, &key))
-	    sdl_keys ^= key;
-
-	break;
+        printf("An error occurred starting the emulator CLI thread: %d\n", err);
     }
 }

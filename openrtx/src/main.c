@@ -27,6 +27,9 @@
 #include <interfaces/graphics.h>
 #include <interfaces/delays.h>
 #include <hwconfig.h>
+#ifdef PLATFORM_LINUX
+#include <emulator/sdl_engine.h>
+#endif
 
 extern void *ui_task(void *arg);
 
@@ -74,6 +77,16 @@ int main(void)
     // Create OpenRTX threads
     create_threads();
 
+#ifndef PLATFORM_LINUX
     // Jump to the UI task
     ui_task(NULL);
+#else
+    // macOS requires SDL main loop to run on the main thread.
+    // Here we create a new thread for ui_task and utilize the masin thread for
+    // the SDL main loop.
+    pthread_t      ui_thread;
+    pthread_create(&ui_thread, NULL, ui_task, NULL);
+
+    sdl_task();
+#endif
 }
