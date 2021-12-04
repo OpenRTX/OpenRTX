@@ -41,11 +41,21 @@
 #define PIXEL_SIZE uint32_t
 #endif
 
-/* Initialize the SDL engine. Must be called in the Main Thread */
+/**
+ * Initialize the SDL engine. Must be called in the Main Thread.
+ */
 void init_sdl();
-/* SDL main loop. Must be called in the Main Thread */
+
+/**
+ * SDL main loop. Must be called in the Main Thread.
+ */
 void sdl_task();
-/* Thread-safe check to verify if the application entered the SDL main loop. */
+
+/**
+ * Thread-safe check to verify if the application entered the SDL main loop.
+ *
+ * @return true after sdl_task() started.
+ */
 bool sdl_main_loop_ready();
 
 #endif /* SDL_ENGINE_H */
