@@ -117,6 +117,8 @@ void display_terminate()
     {}         /* Wait until current render finishes */
     printf("Terminating SDL display emulator, goodbye!\n");
     free(frameBuffer);
+    chan_close(&fb_sync);
+    chan_terminate(&fb_sync);
 }
 
 void display_renderRows(uint8_t startRow, uint8_t endRow)
