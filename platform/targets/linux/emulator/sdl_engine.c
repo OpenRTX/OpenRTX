@@ -22,8 +22,6 @@
 #include <interfaces/keyboard.h>
 #include <SDL2/SDL.h>
 
-int screenshot_display(const char *filename);
-
 /* Shared channel to receive frame buffer updates */
 chan_t fb_sync;
 
@@ -43,7 +41,8 @@ keyboard_t      sdl_keys;       /* Store the keyboard status */
 
 bool sdk_key_code_to_key(SDL_KeyCode sym, keyboard_t *key)
 {
-      switch (sym) {
+      switch (sym)
+      {
       case SDLK_0:
 	  *key = KEY_0;
 	  return true;
