@@ -85,7 +85,8 @@ void display_init()
      */
 #ifdef PIX_FMT_BW
     unsigned int fbSize = (SCREEN_HEIGHT * SCREEN_WIDTH)/8;
-    if((fbSize * 8) < (SCREEN_HEIGHT * SCREEN_WIDTH)) fbSize += 1; /* Compensate for eventual truncation error in division */
+    /* Compensate for eventual truncation error in division */
+    if((fbSize * 8) < (SCREEN_HEIGHT * SCREEN_WIDTH)) fbSize += 1;
     fbSize *= sizeof(uint8_t);
 #endif
 
@@ -134,19 +135,19 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
         void *fb;
         chan_recv(&fb_sync, &fb);
 #ifdef PIX_FMT_RGB565
-	memcpy(fb, frameBuffer, sizeof(PIXEL_SIZE) * SCREEN_HEIGHT * SCREEN_WIDTH);
+        memcpy(fb, frameBuffer, sizeof(PIXEL_SIZE) * SCREEN_HEIGHT * SCREEN_WIDTH);
 #else
         for (unsigned int x = 0; x < SCREEN_WIDTH; x++)
-	{
-	    for (unsigned int y = startRow; y < endRow; y++)
-	    {
-		pixels[x + y * SCREEN_WIDTH] = fetchPixelFromFb(x, y);
-	    }
-	}
+        {
+            for (unsigned int y = startRow; y < endRow; y++)
+            {
+                pixels[x + y * SCREEN_WIDTH] = fetchPixelFromFb(x, y);
+            }
+        }
 #endif
-	// signal the SDL main loop to proceed with rendering
-	void *done = {0};
-	chan_send(&fb_sync, done);
+        // signal the SDL main loop to proceed with rendering
+        void *done = {0};
+        chan_send(&fb_sync, done);
     }
 
     inProgress = false;
