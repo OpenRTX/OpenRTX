@@ -215,7 +215,7 @@ mk22fn512_def = {'_POSIX_PRIORITY_SCHEDULING':''}
 ## Linux
 ##
 linux_platform_src = ['platform/targets/linux/emulator/emulator.c',
-		      'platform/targets/linux/emulator/sdl_engine.c',
+                      'platform/targets/linux/emulator/sdl_engine.c',
                       'platform/drivers/display/display_libSDL.c',
                       'platform/drivers/keyboard/keyboard_linux.c',
                       'platform/drivers/NVM/nvmem_linux.c',

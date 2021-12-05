@@ -19,7 +19,7 @@
 
 void chan_init(chan_t *c)
 {
-    if(c == NULL) return;
+    if (c == NULL) return;
 
     pthread_mutex_init(&c->m_meta, NULL);
     pthread_mutex_init(&c->m_read, NULL);
@@ -38,12 +38,12 @@ void chan_send(chan_t *c, void *data)
     pthread_mutex_lock(&c->m_write);
     pthread_mutex_lock(&c->m_meta);
 
-    if(c->closed)
+    if (c->closed)
     {
-	pthread_mutex_unlock(&c->m_meta);
-	pthread_mutex_unlock(&c->m_write);
+        pthread_mutex_unlock(&c->m_meta);
+        pthread_mutex_unlock(&c->m_write);
 
-	return;
+        return;
     }
 
     c->data = data;
@@ -52,7 +52,7 @@ void chan_send(chan_t *c, void *data)
     // notify the waiting reader that data is ready
     if (c->reader)
     {
-	pthread_cond_signal(&c->c_writer);
+        pthread_cond_signal(&c->c_writer);
     }
 
     // wait until data is consumed
@@ -69,24 +69,24 @@ void chan_recv(chan_t *c, void **data)
     pthread_mutex_lock(&c->m_meta);
 
     // wait for a writer
-    while(!c->closed && !c->writer)
+    while (!c->closed && !c->writer)
     {
-	c->reader = true;
-	pthread_cond_wait(&c->c_writer, &c->m_meta);
-	c->reader = false;
+        c->reader = true;
+        pthread_cond_wait(&c->c_writer, &c->m_meta);
+        c->reader = false;
     }
 
-    if(c->closed)
+    if (c->closed)
     {
-	pthread_mutex_unlock(&c->m_meta);
-	pthread_mutex_unlock(&c->m_read);
+        pthread_mutex_unlock(&c->m_meta);
+        pthread_mutex_unlock(&c->m_read);
 
-	return;
+        return;
     }
 
     if (data != NULL)
     {
-	*data = c->data;
+        *data = c->data;
     }
 
     // notify the waiting writer that the reader consumed the data
@@ -120,9 +120,9 @@ void chan_close(chan_t *c)
     pthread_mutex_lock(&c->m_meta);
     if (!c->closed)
     {
-	c->closed = true;
-	pthread_cond_broadcast(&c->c_reader);
-	pthread_cond_broadcast(&c->c_writer);
+        c->closed = true;
+        pthread_cond_broadcast(&c->c_reader);
+        pthread_cond_broadcast(&c->c_writer);
     }
     pthread_mutex_unlock(&c->m_meta);
 }
