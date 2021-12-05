@@ -41,77 +41,77 @@ keyboard_t      sdl_keys;       /* Store the keyboard status */
 
 bool sdk_key_code_to_key(SDL_KeyCode sym, keyboard_t *key)
 {
-      switch (sym)
-      {
-      case SDLK_0:
-	  *key = KEY_0;
-	  return true;
-      case SDLK_1:
-	  *key = KEY_1;
-	  return true;
-      case SDLK_2:
-	  *key = KEY_2;
-	  return true;
-      case SDLK_3:
-	  *key = KEY_3;
-	  return true;
-      case SDLK_4:
-	  *key = KEY_4;
-	  return true;
-      case SDLK_5:
-	  *key = KEY_5;
-	  return true;
-      case SDLK_6:
-	  *key = KEY_6;
-	  return true;
-      case SDLK_7:
-	  *key = KEY_7;
-	  return true;
-      case SDLK_8:
-	  *key = KEY_8;
-	  return true;
-      case SDLK_9:
-	  *key = KEY_9;
-	  return true;
-      case SDLK_ASTERISK:
-	  *key = KEY_STAR;
-	  return true;
-      case SDLK_ESCAPE:
-	  *key = KEY_ESC;
-	  return true;
-      case SDLK_LEFT:
-	  *key = KEY_LEFT;
-	  return true;
-      case SDLK_RIGHT:
-	  *key = KEY_RIGHT;
-	  return true;
-      case SDLK_RETURN:
-	  *key = KEY_ENTER;
-	  return true;
-      case SDLK_HASH:
-	  *key = KEY_HASH;
-	  return true;
-      case SDLK_n:
-	  *key = KEY_F1;
-	  return true;
-      case SDLK_m:
-	  *key = KEY_MONI;
-	  return true;
-      case SDLK_PAGEUP:
-	  *key = KNOB_LEFT;
-	  return true;
-      case SDLK_PAGEDOWN:
-	  *key = KNOB_RIGHT;
-	  return true;
-      case SDLK_UP:
-	  *key = KEY_UP;
-	  return true;
-      case SDLK_DOWN:
-	  *key = KEY_DOWN;
-	  return true;
-      default:
-	  return false;
-      }
+    switch (sym)
+    {
+    case SDLK_0:
+        *key = KEY_0;
+        return true;
+    case SDLK_1:
+        *key = KEY_1;
+        return true;
+    case SDLK_2:
+        *key = KEY_2;
+        return true;
+    case SDLK_3:
+        *key = KEY_3;
+        return true;
+    case SDLK_4:
+        *key = KEY_4;
+        return true;
+    case SDLK_5:
+        *key = KEY_5;
+        return true;
+    case SDLK_6:
+        *key = KEY_6;
+        return true;
+    case SDLK_7:
+        *key = KEY_7;
+        return true;
+    case SDLK_8:
+        *key = KEY_8;
+        return true;
+    case SDLK_9:
+        *key = KEY_9;
+        return true;
+    case SDLK_ASTERISK:
+        *key = KEY_STAR;
+        return true;
+    case SDLK_ESCAPE:
+        *key = KEY_ESC;
+        return true;
+    case SDLK_LEFT:
+        *key = KEY_LEFT;
+        return true;
+    case SDLK_RIGHT:
+        *key = KEY_RIGHT;
+        return true;
+    case SDLK_RETURN:
+        *key = KEY_ENTER;
+        return true;
+    case SDLK_HASH:
+        *key = KEY_HASH;
+        return true;
+    case SDLK_n:
+        *key = KEY_F1;
+        return true;
+    case SDLK_m:
+        *key = KEY_MONI;
+        return true;
+    case SDLK_PAGEUP:
+        *key = KNOB_LEFT;
+        return true;
+    case SDLK_PAGEDOWN:
+        *key = KNOB_RIGHT;
+        return true;
+    case SDLK_UP:
+        *key = KEY_UP;
+        return true;
+    case SDLK_DOWN:
+        *key = KEY_DOWN;
+        return true;
+    default:
+        return false;
+    }
 }
 
 int screenshot_display(const char *filename)
@@ -242,58 +242,59 @@ void sdl_task()
     pthread_mutex_unlock(&mu);
 
     SDL_Event ev = { 0 };
-    while(!Radio_State.PowerOff)
+    while (!Radio_State.PowerOff)
     {
-	keyboard_t key = 0;
-	if(SDL_PollEvent(&ev) == 1)
-	{
-	    switch (ev.type)
-	    {
-	    case SDL_QUIT:
-		Radio_State.PowerOff = true;
-		break;
-	    case SDL_KEYDOWN:
-		if (sdk_key_code_to_key(ev.key.keysym.sym, &key))
-		{
-		    pthread_mutex_lock(&mu);
-		    sdl_keys |= key;
-		    pthread_mutex_unlock(&mu);
-		}
-		break;
-	    case SDL_KEYUP:
-		if (sdk_key_code_to_key(ev.key.keysym.sym, &key))
-		{
-		    pthread_mutex_lock(&mu);
-		    sdl_keys ^= key;
-		    pthread_mutex_unlock(&mu);
-		}
-		break;
-	    }
-	    if( ev.type == SDL_Screenshot_Event)
-	    {
-		char *filename = (char *)ev.user.data1;
-		screenshot_display(filename);
-		free(ev.user.data1);
-	    }
-	}
+        keyboard_t key = 0;
+        if (SDL_PollEvent(&ev) == 1)
+        {
+            switch (ev.type)
+            {
+            case SDL_QUIT:
+                Radio_State.PowerOff = true;
+                break;
+            case SDL_KEYDOWN:
+                if (sdk_key_code_to_key(ev.key.keysym.sym, &key))
+                {
+                    pthread_mutex_lock(&mu);
+                    sdl_keys |= key;
+                    pthread_mutex_unlock(&mu);
+                }
+                break;
+            case SDL_KEYUP:
+                if (sdk_key_code_to_key(ev.key.keysym.sym, &key))
+                {
+                    pthread_mutex_lock(&mu);
+                    sdl_keys ^= key;
+                    pthread_mutex_unlock(&mu);
+                }
+                break;
+            }
+            if (ev.type == SDL_Screenshot_Event)
+            {
+                char *filename = (char *)ev.user.data1;
+                screenshot_display(filename);
+                free(ev.user.data1);
+            }
+        }
 
-	// we update the window only if there is a something ready to render
-	if (chan_can_send(&fb_sync))
-	{
-	    PIXEL_SIZE *pixels;
-	    int pitch = 0;
-	    if (SDL_LockTexture(displayTexture, NULL, (void **) &pixels, &pitch) < 0)
-	    {
-		SDL_Log("SDL_lock failed: %s", SDL_GetError());
-	    }
+        // we update the window only if there is a something ready to render
+        if (chan_can_send(&fb_sync))
+        {
+            PIXEL_SIZE *pixels;
+            int pitch = 0;
+            if (SDL_LockTexture(displayTexture, NULL,
+                                (void **) &pixels, &pitch) < 0)
+            {
+                SDL_Log("SDL_lock failed: %s", SDL_GetError());
+            }
 
-	    chan_send(&fb_sync, pixels);
-	    chan_recv(&fb_sync, NULL);
+            chan_send(&fb_sync, pixels);
+            chan_recv(&fb_sync, NULL);
 
-	    SDL_UnlockTexture(displayTexture);
-	    SDL_RenderCopy(renderer, displayTexture, NULL, NULL);
-	    SDL_RenderPresent(renderer);
-	}
+            SDL_UnlockTexture(displayTexture);
+            SDL_RenderCopy(renderer, displayTexture, NULL, NULL);
+            SDL_RenderPresent(renderer);
+        }
     } /* while(!Radio_State.PowerOff) */
 
     SDL_DestroyWindow(window);
@@ -307,7 +308,7 @@ void init_sdl()
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0)
     {
         printf("SDL video init error!!\n");
-	exit(1);
+        exit(1);
     }
 
     // Register an SDL custom event type to handle screenshot requests
@@ -316,18 +317,18 @@ void init_sdl()
     chan_init(&fb_sync);
 
     window = SDL_CreateWindow("OpenRTX",
-			      SDL_WINDOWPOS_UNDEFINED,
-			      SDL_WINDOWPOS_UNDEFINED,
-			      SCREEN_WIDTH * 3, SCREEN_HEIGHT * 3,
-			      SDL_WINDOW_SHOWN );
+                              SDL_WINDOWPOS_UNDEFINED,
+                              SDL_WINDOWPOS_UNDEFINED,
+                              SCREEN_WIDTH * 3, SCREEN_HEIGHT * 3,
+                              SDL_WINDOW_SHOWN );
 
     renderer = SDL_CreateRenderer(window, -1, 0);
     SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
     displayTexture = SDL_CreateTexture(renderer,
-				       PIXEL_FORMAT,
-				       SDL_TEXTUREACCESS_STREAMING,
-				       SCREEN_WIDTH,
-				       SCREEN_HEIGHT);
+                                       PIXEL_FORMAT,
+                                       SDL_TEXTUREACCESS_STREAMING,
+                                       SCREEN_WIDTH,
+                                       SCREEN_HEIGHT);
     SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer, displayTexture, NULL, NULL);
     SDL_RenderPresent(renderer);
