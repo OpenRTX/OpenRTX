@@ -53,15 +53,8 @@ void _setVolume()
     else
     {
         audio_enableAmp();
-
-        // Update HR_C6000 gain only if volume changed
-        static uint8_t old_volume = 0;
-        if(volume != old_volume)
-        {
-            // Setting HR_C6000 volume to 0 = max volume
-            HR_C6000::instance().setDacGain(volume);
-            old_volume = volume;
-        }
+        // Setting HR_C6000 volume to 0 = max volume
+        HR_C6000::instance().setDacGain(volume);
     }
 }
 #endif
