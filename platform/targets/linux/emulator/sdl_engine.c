@@ -39,90 +39,114 @@ pthread_mutex_t mu;
 bool            ready = false;  /* Signal if the main loop is ready */
 keyboard_t      sdl_keys;       /* Store the keyboard status */
 
-bool sdk_key_code_to_key(SDL_KeyCode sym, keyboard_t *key)
+bool sdk_key_code_to_key(SDL_Keycode sym, keyboard_t *key)
 {
     switch (sym)
     {
-    case SDLK_0:
-        *key = KEY_0;
-        return true;
-    case SDLK_1:
-        *key = KEY_1;
-        return true;
-    case SDLK_2:
-        *key = KEY_2;
-        return true;
-    case SDLK_3:
-        *key = KEY_3;
-        return true;
-    case SDLK_4:
-        *key = KEY_4;
-        return true;
-    case SDLK_5:
-        *key = KEY_5;
-        return true;
-    case SDLK_6:
-        *key = KEY_6;
-        return true;
-    case SDLK_7:
-        *key = KEY_7;
-        return true;
-    case SDLK_8:
-        *key = KEY_8;
-        return true;
-    case SDLK_9:
-        *key = KEY_9;
-        return true;
-    case SDLK_ASTERISK:
-        *key = KEY_STAR;
-        return true;
-    case SDLK_ESCAPE:
-        *key = KEY_ESC;
-        return true;
-    case SDLK_LEFT:
-        *key = KEY_LEFT;
-        return true;
-    case SDLK_RIGHT:
-        *key = KEY_RIGHT;
-        return true;
-    case SDLK_RETURN:
-        *key = KEY_ENTER;
-        return true;
-    case SDLK_HASH:
-        *key = KEY_HASH;
-        return true;
-    case SDLK_n:
-        *key = KEY_F1;
-        return true;
-    case SDLK_m:
-        *key = KEY_MONI;
-        return true;
-    case SDLK_PAGEUP:
-        *key = KNOB_LEFT;
-        return true;
-    case SDLK_PAGEDOWN:
-        *key = KNOB_RIGHT;
-        return true;
-    case SDLK_UP:
-        *key = KEY_UP;
-        return true;
-    case SDLK_DOWN:
-        *key = KEY_DOWN;
-        return true;
-    default:
-        return false;
+        case SDLK_0:
+            *key = KEY_0;
+            return true;
+
+        case SDLK_1:
+            *key = KEY_1;
+            return true;
+
+        case SDLK_2:
+            *key = KEY_2;
+            return true;
+
+        case SDLK_3:
+            *key = KEY_3;
+            return true;
+
+        case SDLK_4:
+            *key = KEY_4;
+            return true;
+
+        case SDLK_5:
+            *key = KEY_5;
+            return true;
+
+        case SDLK_6:
+            *key = KEY_6;
+            return true;
+
+        case SDLK_7:
+            *key = KEY_7;
+            return true;
+
+        case SDLK_8:
+            *key = KEY_8;
+            return true;
+
+        case SDLK_9:
+            *key = KEY_9;
+            return true;
+
+        case SDLK_ASTERISK:
+            *key = KEY_STAR;
+            return true;
+
+        case SDLK_ESCAPE:
+            *key = KEY_ESC;
+            return true;
+
+        case SDLK_LEFT:
+            *key = KEY_LEFT;
+            return true;
+
+        case SDLK_RIGHT:
+            *key = KEY_RIGHT;
+            return true;
+
+        case SDLK_RETURN:
+            *key = KEY_ENTER;
+            return true;
+
+        case SDLK_HASH:
+            *key = KEY_HASH;
+            return true;
+
+        case SDLK_n:
+            *key = KEY_F1;
+            return true;
+
+        case SDLK_m:
+            *key = KEY_MONI;
+            return true;
+
+        case SDLK_PAGEUP:
+            *key = KNOB_LEFT;
+            return true;
+
+        case SDLK_PAGEDOWN:
+            *key = KNOB_RIGHT;
+            return true;
+
+        case SDLK_UP:
+            *key = KEY_UP;
+            return true;
+
+        case SDLK_DOWN:
+            *key = KEY_DOWN;
+            return true;
+
+        default:
+            return false;
     }
 }
 
 int screenshot_display(const char *filename)
 {
-    //https://stackoverflow.com/a/48176678
-    //user1902824
-    //modified to keep renderer and display texture references in the body rather than as a parameter
-    SDL_Renderer * ren = renderer;
-    SDL_Texture * tex = displayTexture;
+    /*
+     * https://stackoverflow.com/a/48176678
+     * user1902824
+     * modified to keep renderer and display texture references in the body
+     * rather than as a parameter
+     */
+    SDL_Renderer *ren = renderer;
+    SDL_Texture  *tex = displayTexture;
     int err = 0;
-
 
     SDL_Texture *ren_tex;
     SDL_Surface *surf;
@@ -139,6 +163,7 @@ int screenshot_display(const char *filename)
 
     /* Get information about texture we want to save */
     st = SDL_QueryTexture(tex, NULL, NULL, &w, &h);
+
     if (st != 0)
     {
         SDL_Log("Failed querying texture: %s\n", SDL_GetError());
@@ -147,6 +172,7 @@ int screenshot_display(const char *filename)
     }
 
     ren_tex = SDL_CreateTexture(ren, format, SDL_TEXTUREACCESS_TARGET, w, h);
+
     if (!ren_tex)
     {
         SDL_Log("Failed creating render texture: %s\n", SDL_GetError());
@@ -159,52 +185,66 @@ int screenshot_display(const char *filename)
      * can access
      */
     st = SDL_SetRenderTarget(ren, ren_tex);
+
     if (st != 0)
     {
         SDL_Log("Failed setting render target: %s\n", SDL_GetError());
         err++;
         goto cleanup;
     }
+
     SDL_SetRenderDrawColor(ren, 0x00, 0x00, 0x00, 0x00);
     SDL_RenderClear(ren);
     st = SDL_RenderCopy(ren, tex, NULL, NULL);
+
     if (st != 0)
     {
         SDL_Log("Failed copying texture data: %s\n", SDL_GetError());
         err++;
         goto cleanup;
     }
+
     /* Create buffer to hold texture data and load it */
     pixels = malloc(w * h * SDL_BYTESPERPIXEL(format));
+
     if (!pixels)
     {
         SDL_Log("Failed allocating memory\n");
         err++;
         goto cleanup;
     }
-    st = SDL_RenderReadPixels(ren, NULL, format, pixels, w * SDL_BYTESPERPIXEL(format));
+
+    st = SDL_RenderReadPixels(ren, NULL, format, pixels,
+                              w * SDL_BYTESPERPIXEL(format));
     if (st != 0)
     {
         SDL_Log("Failed reading pixel data: %s\n", SDL_GetError());
         err++;
         goto cleanup;
     }
+
     /* Copy pixel data over to surface */
-    surf = SDL_CreateRGBSurfaceWithFormatFrom(pixels, w, h, SDL_BITSPERPIXEL(format), w * SDL_BYTESPERPIXEL(format), format);
+    surf = SDL_CreateRGBSurfaceWithFormatFrom(pixels, w, h,
+                                              SDL_BITSPERPIXEL(format),
+                                              w * SDL_BYTESPERPIXEL(format),
+                                              format);
     if (!surf)
     {
         SDL_Log("Failed creating new surface: %s\n", SDL_GetError());
         err++;
         goto cleanup;
     }
+
     /* Save result to an image */
     st = SDL_SaveBMP(surf, filename);
+
     if (st != 0)
     {
         SDL_Log("Failed saving image: %s\n", SDL_GetError());
         err++;
         goto cleanup;
     }
+
     SDL_Log("Saved texture as BMP to \"%s\"\n", filename);
 
 cleanup:
@@ -242,6 +282,7 @@ void sdl_task()
     pthread_mutex_unlock(&mu);
 
     SDL_Event ev = { 0 };
+
     while (!Radio_State.PowerOff)
     {
         keyboard_t key = 0;
@@ -249,25 +290,27 @@ void sdl_task()
         {
             switch (ev.type)
             {
-            case SDL_QUIT:
-                Radio_State.PowerOff = true;
-                break;
-            case SDL_KEYDOWN:
-                if (sdk_key_code_to_key(ev.key.keysym.sym, &key))
-                {
-                    pthread_mutex_lock(&mu);
-                    sdl_keys |= key;
-                    pthread_mutex_unlock(&mu);
-                }
-                break;
-            case SDL_KEYUP:
-                if (sdk_key_code_to_key(ev.key.keysym.sym, &key))
-                {
-                    pthread_mutex_lock(&mu);
-                    sdl_keys ^= key;
-                    pthread_mutex_unlock(&mu);
-                }
-                break;
+                case SDL_QUIT:
+                    Radio_State.PowerOff = true;
+                    break;
+
+                case SDL_KEYDOWN:
+                    if (sdk_key_code_to_key(ev.key.keysym.sym, &key))
+                    {
+                        pthread_mutex_lock(&mu);
+                        sdl_keys |= key;
+                        pthread_mutex_unlock(&mu);
+                    }
+                    break;
+
+                case SDL_KEYUP:
+                    if (sdk_key_code_to_key(ev.key.keysym.sym, &key))
+                    {
+                        pthread_mutex_lock(&mu);
+                        sdl_keys ^= key;
+                        pthread_mutex_unlock(&mu);
+                    }
+                    break;
             }
             if (ev.type == SDL_Screenshot_Event)
             {
@@ -282,6 +325,7 @@ void sdl_task()
         {
             PIXEL_SIZE *pixels;
             int pitch = 0;
+
             if (SDL_LockTexture(displayTexture, NULL,
                                 (void **) &pixels, &pitch) < 0)
             {
@@ -295,7 +339,7 @@ void sdl_task()
             SDL_RenderCopy(renderer, displayTexture, NULL, NULL);
             SDL_RenderPresent(renderer);
         }
-    } /* while(!Radio_State.PowerOff) */
+    }
 
     SDL_DestroyWindow(window);
     SDL_Quit();

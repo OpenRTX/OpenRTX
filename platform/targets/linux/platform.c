@@ -26,10 +26,10 @@ hwInfo_t hwInfo;
 
 void platform_init()
 {
-    //printf("Platform init\n");
     // Fill hwinfo struct
     memset(&hwInfo, 0x00, sizeof(hwInfo));
     snprintf(hwInfo.name, 10, "Linux");
+
     // Frequencies are in MHz
     hwInfo.vhf_maxFreq = 174;
     hwInfo.vhf_minFreq = 136;
@@ -49,9 +49,9 @@ void platform_terminate()
     exit(0);
 }
 
-void platform_setBacklightLevel(__attribute__((unused)) uint8_t level)
+void platform_setBacklightLevel(uint8_t level)
 {
-    //printf("platform_setBacklightLevel(%u)\n", level);
+    (void) level;
 }
 
 // Simulate a fully charged lithium battery
@@ -63,7 +63,6 @@ uint16_t platform_getVbat()
     return ((uint16_t) voltage);
 }
 
-
 uint8_t platform_getMicLevel()
 {
     float level = Radio_State.micLevel;
@@ -72,7 +71,6 @@ uint8_t platform_getMicLevel()
 
     return ((uint8_t) level);
 }
-
 
 uint8_t platform_getVolumeLevel()
 {
@@ -83,17 +81,16 @@ uint8_t platform_getVolumeLevel()
     return ((uint8_t) level);
 }
 
-
 int8_t platform_getChSelector()
 {
     return Radio_State.chSelector;
 }
 
-
 bool platform_getPttStatus()
 {
     // Read P key status from SDL
     const uint8_t *state = SDL_GetKeyboardState(NULL);
+
     if (state[SDL_SCANCODE_P])
         return true;
     else
@@ -106,41 +103,20 @@ bool platform_pwrButtonStatus()
     return !Radio_State.PowerOff;
 }
 
-void platform_ledOn(__attribute__((unused)) led_t led)
+void platform_ledOn(led_t led)
 {
-    // Commented to reduce verbosity on Linux
-    //char* str;
-    //switch(led)
-    //{
-    //    case 0:
-    //        str = "GREEN";
-    //        break;
-    //    case 1:
-    //        str = "RED";
-    //        break;
-    //    case 2:
-    //        str = "YELLOW";
-    //        break;
-    //    case 3:
-    //        str = "WHITE";
-    //        break;
-    //}
-    //printf("platform_ledOn(%s)\n", str);
+    (void) led;
 }
 
-
-void platform_ledOff(__attribute__((unused)) led_t led)
+void platform_ledOff(led_t led)
 {
-    // Commented to reduce verbosity on Linux
-    //printf("platform_ledOff()\n");
+    (void) led;
 }
-
 
 void platform_beepStart(uint16_t freq)
 {
     printf("platform_beepStart(%u)\n", freq);
 }
-
 
 void platform_beepStop()
 {

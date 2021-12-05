@@ -72,20 +72,20 @@ void _dump_skq()
 }
 void shellkeyq_put(keyboard_t keys)
 {
-    //note - we must allow keys == 0 to be inserted because otherwise a queue full of
-    // [1,1,1,1,1] is simulating HOLDING 1, and we sometimes (well, often) want
-    // [1,0,1,0,1,0] to simulate separate keypresses
-    // this, of course, relies on the kbd_thread getting just one element off the queue
-    // for every kbd_getKeys().
+    // note - we must allow keys == 0 to be inserted because otherwise a queue
+    // full of [1,1,1,1,1] is simulating HOLDING 1, and we sometimes
+    // (well, often) want [1,0,1,0,1,0] to simulate separate keypresses
+    // this, of course, relies on the kbd_thread getting just one element off
+    // the queue for every kbd_getKeys().
     if(_skq_in > _skq_out + _skq_cap)
     {
         printf("too many keys!\n");
         return;
     }
+
     _shellkeyq[ _skq_tail ] = keys;
     _skq_in++;
     _skq_tail = (_skq_tail + 1) % _skq_cap;
-    /*printf("head: %d tail: %d in %d out %d\n", _skq_head, _skq_tail, _skq_in, _skq_out);*/
 }
 keyboard_t shellkeyq_get()
 {
@@ -96,8 +96,6 @@ keyboard_t shellkeyq_get()
         _shellkeyq[ _skq_head ] = 0;
         _skq_out++;
         _skq_head = (_skq_head + 1) % _skq_cap;
-        /*printf("head: %d tail: %d in %d out %d\n", _skq_head, _skq_tail, _skq_in, _skq_out);*/
-        /*_dump_skq();*/
         return out;
     }
     else
@@ -132,41 +130,50 @@ int shell_ready(void *_self, int _argc, char **_argv)
 
 keyboard_t keyname2keyboard(char *name)
 {
-    /*  The line noise at the end of this comment is a vim macro for taking the keyboard.h
-        interface and putting it into the format further below
-        You can load it into vim register k with "kyy
-        and run the macro with @k (and then you can repeat a macro register application with @@ )
-        (substitute k with any register you like)
-        Once you've got all the names quoted, you can J them all together into a nice block.
-
-        _i"ElC",
-
-    */
+    /*  The line noise at the end of this comment is a vim macro for taking the
+     *  keyboard.h interface and putting it into the format further below.
+     *  You can load it into vim register k with "kyy and run the macro with @k
+     *  (and then you can repeat a macro register application with @@ )
+     *  (substitute k with any register you like)
+     *  Once you've got all the names quoted, you can J them all together into
+     *  a nice block.
+     *
+     *   _i"ElC",
+     *
+     */
     char *names[] =
     {
         "KEY_0", "KEY_1", "KEY_2", "KEY_3", "KEY_4", "KEY_5", "KEY_6", "KEY_7",
-        "KEY_8", "KEY_9", "KEY_STAR", "KEY_HASH", "KEY_ENTER", "KEY_ESC", "KEY_UP",
-        "KEY_DOWN", "KEY_LEFT", "KEY_RIGHT", "KEY_MONI", "KEY_F1", "KEY_F2", "KEY_F3",
-        "KEY_F4", "KEY_F5", "KEY_F6", "KEY_F7", "KEY_F8", "KNOB_LEFT", "KNOB_RIGHT",
+        "KEY_8", "KEY_9", "KEY_STAR", "KEY_HASH", "KEY_ENTER", "KEY_ESC",
+        "KEY_UP","KEY_DOWN", "KEY_LEFT", "KEY_RIGHT", "KEY_MONI", "KEY_F1",
+        "KEY_F2", "KEY_F3", "KEY_F4", "KEY_F5", "KEY_F6", "KEY_F7", "KEY_F8",
+        "KNOB_LEFT", "KNOB_RIGHT",
     };
+
     int numnames = sizeof(names) / sizeof(char *);
+
     for(int i = 0; i < numnames; i++)
     {
-        if(strcasecmp(name, names[i] + 4) == 0 || strcasecmp(name, names[i]) == 0) //notice case insensitive
-        {
-            /*printf("MATCH with %s\n", names[i]);*/
-            //+4 to skip the KEY_ on all the names, non +4 to allow for KNOB_LEFT.
-            //This also means you can write KEY_LEFT as "KEY_LEFT", or "LEFT" and KNOB_LEFT as "KNOB_LEFT" or "_LEFT"
+       /*
+        * +4 to skip the KEY_ on all the names, non +4 to allow for KNOB_LEFT.
+        * This also means you can write KEY_LEFT as "KEY_LEFT", or "LEFT" and
+        * KNOB_LEFT as "KNOB_LEFT" or "_LEFT"
+        *
+        * so if name == "2", this whole function will return equivalent to KEY_2 cpp define
+        * and if name=="LEFT", then you get equivalent to KEY_LEFT cpp define
+        * and if name=="_LEFT", then you get equivalent to KNOB_LEFT cpp define
+        * and if name=="KNOB_LEFT", then you get equivalent to KNOB_LEFT cpp define
+        * and if name=="KEY_2", then you get equivalent to KEY_2 cpp define.
+        *
+        * Of course order matters a great deal in names array, has to match the
+        * bit field generated in interface/keyboard.h so double check that with
+        * every update
+        */
 
-            //so if name == "2", this whole function will return equivalent to KEY_2 cpp define
-            //and if name=="LEFT", then you get equivalent to KEY_LEFT cpp define
-            //and if name=="_LEFT", then you get equivalent to KNOB_LEFT cpp define
-            //and if name=="KNOB_LEFT", then you get equivalent to KNOB_LEFT cpp define
-            //and if name=="KEY_2", then you get equivalent to KEY_2 cpp define of course
+        if((strcasecmp(name, names[i] + 4) == 0) ||
+           (strcasecmp(name, names[i]) == 0))       //notice case insensitive
+        {
             return (1 << i);
-            //order matters a great deal in names array, has to match
-            //the bit field generated in interface/keyboard.h
-            //so double check that with every update
         }
     }
     return 0;
@@ -175,10 +182,10 @@ keyboard_t keyname2keyboard(char *name)
 int pressKey(void *_self, int _argc, char **_argv)
 {
     (void) _self;
-    //press a couple keys in sequence
-    /*_climenu_option * self = (_climenu_option*) _self;*/
+
     printf("Press Keys: [\n");
     keyboard_t last = 0;
+
     for(int i = 0; i < _argc; i++)
     {
         if(_argv[i] != NULL)
@@ -187,13 +194,14 @@ int pressKey(void *_self, int _argc, char **_argv)
             keyboard_t press = keyname2keyboard(_argv[i]);
             if(press == last)
             {
-                //otherwise if you send key ENTER DOWN DOWN DOWN DOWN DOWN
-                //it will just hold DOWN for (5/(kbd_task_hz)) seconds
-                //so we need to give it a 0 value to get a 'release'
-                //so the next input is recognized as separate
-                //we only need to do this if we have two identical keys back to back,
-                //because keyboard_t will have a zero for this key's
-                //flag on other keys, which gives us the release we need
+                /* otherwise if you send key ENTER DOWN DOWN DOWN DOWN DOWN
+                 * it will just hold DOWN for (5/(kbd_task_hz)) seconds
+                 * so we need to give it a 0 value to get a 'release'
+                 * so the next input is recognized as separate
+                 * we only need to do this if we have two identical keys back
+                 * to back, because keyboard_t will have a zero for this key's
+                 * flag on other keys, which gives us the release we need
+                 */
                 shellkeyq_put(0);
             }
             shellkeyq_put(press);
@@ -204,13 +212,15 @@ int pressKey(void *_self, int _argc, char **_argv)
     shell_ready(NULL, 0, NULL);
     return SH_CONTINUE; // continue
 }
+
+// pressMultiKeys allows for key combos by sending all the keys specified in
+// one keyboard_t
 int pressMultiKeys(void *_self, int _argc, char **_argv)
 {
-//pressMultiKeys allows for key combos by sending all the keys specified in one keyboard_t
-    /*_climenu_option * self = (_climenu_option*) _self;*/
     (void) _self;
     printf("Press Keys: [\n");
     keyboard_t combo = 0;
+
     for(int i = 0; i < _argc; i++)
     {
         if(_argv[i] != NULL)
@@ -219,15 +229,12 @@ int pressMultiKeys(void *_self, int _argc, char **_argv)
             combo |= keyname2keyboard(_argv[i]);
         }
     }
+
     shellkeyq_put(combo);
     printf("\t]\n");
     shell_ready(NULL, 0, NULL);
     return SH_CONTINUE; // continue
 }
-//need another function to press them in sequence by loading up a queue for keypress_from_shell to pull from
-
-
-
 
 int template(void *_self, int _argc, char **_argv)
 {
@@ -241,6 +248,7 @@ int template(void *_self, int _argc, char **_argv)
             printf("\tArgs:\t%s\n", _argv[i]);
         }
     }
+
     return SH_CONTINUE; // continue
 }
 
@@ -248,6 +256,7 @@ int screenshot(void *_self, int _argc, char **_argv)
 {
     (void) _self;
     char *filename = "screenshot.bmp";
+
     if(_argc && _argv[0] != NULL)
     {
         filename = _argv[0];
@@ -261,24 +270,7 @@ int screenshot(void *_self, int _argc, char **_argv)
 
     return SDL_PushEvent(&e) == 1 ? SH_CONTINUE : SH_ERR;
 }
-/*
-    int record_start(void * _self, int _argc, char ** _argv ){
-    char * filename = "screen.mkv";
-    if( _argc && _argv[0] != NULL ){
-        filename = _argv[0];
-    }
-    //id="xwininfo -name 'OpenRTX' | grep id: |cut -d ' ' -f 4";
-    //system("ffmpeg -f x11grab -show_region 1 -region_border 10 -window_id 0x2600016 -i :0.0 out.mkv");
-    //https://stackoverflow.com/questions/14764873/how-do-i-detect-when-the-contents-of-an-x11-window-have-changed
-    return SH_ERR;
-    }
-    int record_stop(
-        void * _self,
-        int _argc,
-        char ** _argv ){
-    return SH_ERR;
-    }
-*/
+
 int setFloat(void *_self, int _argc, char **_argv)
 {
     _climenu_option *self = (_climenu_option *) _self;
@@ -292,39 +284,47 @@ int setFloat(void *_self, int _argc, char **_argv)
         sscanf(_argv[0], "%f", (float *)self->var);
         printf("%s is %f\n", self->name,  *(float *)(self->var));
     }
+
     return SH_CONTINUE; // continue
 
 }
+
 int toggleVariable(void *_self, int _argc, char **_argv)
 {
     (void) _argc;
     (void) _argv;
     _climenu_option *self = (_climenu_option *) _self;
     *(int *)self->var = ! *(int *)self->var; //yeah, maybe this got a little out of hand
-    return SH_CONTINUE; // continue
 
+    return SH_CONTINUE; // continue
 }
+
 int shell_sleep(void *_self, int _argc, char **_argv)
 {
     (void) _self;
+
     if(! _argc || _argv[0] == NULL)
     {
         printf("Provide a number in milliseconds to sleep as an argument\n");
         return SH_ERR;
     }
+
     useconds_t sleepus = atoi(_argv[0]) * 1000;
     usleep(sleepus);
     return SH_CONTINUE;
 }
+
 int shell_quit( void *_self, int _argc, char **_argv)
 {
     (void) _self;
     (void) _argc;
     (void) _argv;
     printf("QUIT: 73!\n");
+
     //could remove history entries here, if we wanted
     return SH_EXIT_OK; //normal quit
 }
+
 int printState( void *_self, int _argc, char **_argv)
 {
     (void) _self;
@@ -339,6 +339,7 @@ int printState( void *_self, int _argc, char **_argv)
     printf("PTT    : %s\n\n", Radio_State.PttStatus ? "true" : "false");
     return SH_CONTINUE;
 }
+
 int shell_nop( void *_self, int _argc, char **_argv)
 {
     (void) _self;
@@ -348,52 +349,36 @@ int shell_nop( void *_self, int _argc, char **_argv)
     return SH_CONTINUE;
 }
 
-int shell_help(void *_self, int _argc, char **_argv);
+// Forward declaration needed to include function pointer in the table below
+int shell_help( void *_self, int _argc, char **_argv);
 
 _climenu_option _options[] =
 {
     /* name/shortcut   description            var reference, if available    method to call */
-    {"rssi",      "Set rssi", (void *) &Radio_State.RSSI,       setFloat },
-    {"vbat",      "Set vbat", (void *) &Radio_State.Vbat,       setFloat },
-    {"mic",       "Set miclevel", (void *) &Radio_State.micLevel,   setFloat },
-    {"volume",    "Set volume", (void *) &Radio_State.volumeLevel, setFloat },
-    {"channel",   "Set channel", (void *) &Radio_State.chSelector, setFloat },
-    {"ptt",       "Toggle PTT", (void *) &Radio_State.PttStatus,  toggleVariable },
-    {
-        "key",       "Press keys in sequence (e.g. 'key ENTER DOWN ENTER' will descend through two menus)",
-        NULL,   pressKey
+    {"rssi",    "Set rssi",     (void *) &Radio_State.RSSI,        setFloat },
+    {"vbat",    "Set vbat",     (void *) &Radio_State.Vbat,        setFloat },
+    {"mic",     "Set miclevel", (void *) &Radio_State.micLevel,    setFloat },
+    {"volume",  "Set volume",   (void *) &Radio_State.volumeLevel, setFloat },
+    {"channel", "Set channel",  (void *) &Radio_State.chSelector,  setFloat },
+    {"ptt",     "Toggle PTT",   (void *) &Radio_State.PttStatus,   toggleVariable },
+    {"key",     "Press keys in sequence (e.g. 'key ENTER DOWN ENTER' will descend through two menus)",
+                                NULL,   pressKey
     },
-    {
-        "keycombo",  "Press a bunch of keys simultaneously ",
-        NULL,   pressMultiKeys
+    {"keycombo", "Press a bunch of keys simultaneously", NULL, pressMultiKeys },
+    {"show",     "Show current radio state (ptt, rssi, etc)", NULL, printState},
+    {"screenshot", "[screenshot.bmp] Save screenshot to first arg or screenshot.bmp if none given",
+                                NULL,   screenshot
     },
-    {
-        "show",      "Show current radio state (ptt, rssi, etc)",
-        NULL,   printState
-    },
-
-    {
-        "screenshot", "[screenshot.bmp] Save screenshot to first arg or screenshot.bmp if none given",
-        NULL,   screenshot
-    },
-    /*{"record_start", "[screen.mkv] Automatically save a video of the remaining session (or until record_stop is called)",*/
-    /*NULL,   record_start },*/
-    /*{"record_stop",  "Stop the running recording, or no-op if none started",*/
-    /*NULL,   record_stop },*/
-    {"sleep",     "Wait some number of ms",   NULL,   shell_sleep },
-    {"help",      "Print this help",          NULL,   shell_help },
-    {
-        "nop",       "Do nothing (useful for comments)",
-        NULL,   shell_nop
-    },
+    {"sleep",   "Wait some number of ms",           NULL,   shell_sleep },
+    {"help",    "Print this help",                  NULL,   shell_help },
+    {"nop",     "Do nothing (useful for comments)", NULL,   shell_nop},
+    {"quit",    "Quit, close the emulator",         NULL,   shell_quit },
     /*{"ready",     */
     /*"Wait until ready. Currently supports keyboard, so will wait until all keyboard events are processed,"*/
     /*"but is already implied by key and keycombo so there's not much direct use for it right now",*/
     /*NULL,   shell_ready },*/
-    {"quit",      "Quit, close the emulator", NULL,   shell_quit },
 };
 int num_options = (sizeof(_options) / sizeof(_climenu_option));
-
 
 int shell_help( void *_self, int _argc, char **_argv)
 {
@@ -401,11 +386,13 @@ int shell_help( void *_self, int _argc, char **_argv)
     (void) _argc;
     (void) _argv;
     printf("OpenRTX emulator shell\n\n");
+
     for(int i = 0; i < num_options; i++)
     {
         _climenu_option *o = &_options[i];
         printf("%10s -> %s\n", o->name, o->description);
     }
+
     return SH_CONTINUE;
 }
 
@@ -415,15 +402,19 @@ _climenu_option *findMenuOption(char *tok)
     for(int i = 0; i < num_options; i++)
     {
         _climenu_option *o = &_options[i];
+
+        /*
+         * strncmp like this allows for typing shortcuts like just "r" instead
+         * of the full "rssi". Priority for conflicts (like if there's "s"
+         * which could mean either "show" or "screenshot" ) is set by ordering
+         * in the _options array
+         */
         if(strncmp(tok, o->name, strlen(tok)) == 0)
         {
-            //strncmp like this allows for typing shortcuts like just "r" instead of the full "rssi"
-            //priority for conflicts (like if there's "s" which could mean
-            // either "show" or "screenshot" )
-            //is set by ordering in the _options array
             return o;
         }
     }
+
     return NULL;
 }
 
@@ -437,17 +428,21 @@ void striptoken(char *token)
         }
     }
 }
+
 int process_line(char *line)
 {
     char *token = strtok(line, " ");
+
     if(token == NULL)
     {
         return SH_ERR;
     }
+
     striptoken(token);
     _climenu_option *o = findMenuOption(token);
     char *args[12] = {NULL};
     int i = 0;
+
     for(i = 0; i < 12; i++)
     {
         //immediately strtok again since first is a command rest are args
@@ -459,10 +454,12 @@ int process_line(char *line)
         striptoken(token);
         args[i] = token;
     }
+
     if(token != NULL)
     {
         printf("\nGot too many arguments, args truncated \n");
     }
+
     if(o != NULL)
     {
         if(o->fn != NULL)
@@ -480,18 +477,18 @@ int process_line(char *line)
         return SH_WHAT; //not understood
     }
 }
+
 void *startCLIMenu()
 {
     printf("\n\n");
     char *histfile = ".emulatorsh_history";
     shell_help(NULL, 0, NULL);
-    /*printf("\n> ");*/
     int ret = SH_CONTINUE;
     using_history();
     read_history(histfile);
+
     do
     {
-        /*char * r = fgets(shellbuf, 255, stdin);*/
         char *r = readline(">");
         if(r == NULL)
         {
@@ -506,31 +503,37 @@ void *startCLIMenu()
         {
             ret = SH_CONTINUE;
         }
+
         switch(ret)
         {
-        default:
-            fflush(stdout);
-            break;
-        case SH_WHAT:
-            printf("?\n(type h or help for help)\n");
-            ret = SH_CONTINUE; //i'd rather just fall through, but the compiler warns. blech.
-            /*printf("\n>");*/
-            break;
-        case SH_CONTINUE:
-            /*printf("\n>");*/
-            break;
-        case SH_EXIT_OK:
-            //normal quit
-            break;
-        case SH_ERR:
-            //error
-            printf("Error running that command\n");
-            ret = SH_CONTINUE;
-            break;
+            default:
+                fflush(stdout);
+                break;
+
+            case SH_WHAT:
+                printf("?\n(type h or help for help)\n");
+                ret = SH_CONTINUE;
+                /*printf("\n>");*/
+                break;
+
+            case SH_CONTINUE:
+                /*printf("\n>");*/
+                break;
+
+            case SH_EXIT_OK:
+                //normal quit
+                break;
+
+            case SH_ERR:
+                //error
+                printf("Error running that command\n");
+                ret = SH_CONTINUE;
+                break;
         }
         free(r); //free the string allocated by readline
     }
     while(ret == SH_CONTINUE);
+
     fflush(stdout);
     write_history(histfile);
     Radio_State.PowerOff = true;
