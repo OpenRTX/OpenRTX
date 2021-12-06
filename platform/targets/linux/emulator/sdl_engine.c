@@ -19,6 +19,7 @@
 
 #include <stdlib.h>
 #include <pthread.h>
+#include <state.h>
 #include <interfaces/keyboard.h>
 #include <SDL2/SDL.h>
 
@@ -38,6 +39,8 @@ Uint32 SDL_Screenshot_Event;
 pthread_mutex_t mu;
 bool            ready = false;  /* Signal if the main loop is ready */
 keyboard_t      sdl_keys;       /* Store the keyboard status */
+
+extern state_t state;
 
 bool sdk_key_code_to_key(SDL_Keycode sym, keyboard_t *key)
 {
@@ -272,6 +275,23 @@ keyboard_t sdl_getKeys()
     return keys;
 }
 
+bool set_brightness(uint8_t brightness)
+{
+    /*
+     * When this texture is rendered, during the copy operation each source
+     * color channel is modulated by the appropriate color value according to
+     * the following formula:
+     * srcC = srcC * (color / 255)
+     *
+     * Color modulation is not always supported by the renderer;
+     * it will return -1 if color modulation is not supported.
+     */
+    return SDL_SetTextureColorMod(displayTexture,
+                                  brightness,
+                                  brightness,
+                                  brightness) == 0;
+}
+
 /*
  * SDL main loop. Due to macOS restrictions, this must run on the Main Thread.
  */
@@ -333,6 +353,7 @@ void sdl_task()
             }
 
             chan_send(&fb_sync, pixels);
+            set_brightness(state.settings.brightness);
             chan_recv(&fb_sync, NULL);
 
             SDL_UnlockTexture(displayTexture);
@@ -374,6 +395,12 @@ void init_sdl()
                                        SCREEN_WIDTH,
                                        SCREEN_HEIGHT);
     SDL_RenderClear(renderer);
+
+    if(!set_brightness(state.settings.brightness))
+    {
+         SDL_Log("Cannot apply brightness: %s", SDL_GetError());
+    }
+
     SDL_RenderCopy(renderer, displayTexture, NULL, NULL);
     SDL_RenderPresent(renderer);
 }
