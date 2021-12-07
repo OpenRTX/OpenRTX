@@ -1526,7 +1526,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
     }
     else if(event.type == EVENT_STATUS)
     {
-        if (txOngoing) //TODO: check for open squelch
+        if (txOngoing || rtx_rxSquelchOpen())
 	{
 	    _ui_exitStandby(now);
 	    return;
