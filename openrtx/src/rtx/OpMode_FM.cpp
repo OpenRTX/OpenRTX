@@ -194,3 +194,8 @@ void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
     // Sleep thread for 30ms for 33Hz update rate
     sleepFor(0u, 30u);
 }
+
+bool OpMode_FM::rxSquelchOpen()
+{
+    return sqlOpen;
+}

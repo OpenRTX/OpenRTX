@@ -83,6 +83,16 @@ public:
         return M17;
     }
 
+    /**
+     * Check if RX squelch is open.
+     *
+     * @return true if RX squelch is open.
+     */
+    virtual bool rxSquelchOpen() override
+    {
+        return false;
+    }
+
 private:
 
     /**

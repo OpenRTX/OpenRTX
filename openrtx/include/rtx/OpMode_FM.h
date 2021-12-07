@@ -81,6 +81,13 @@ public:
         return FM;
     }
 
+    /**
+     * Check if RX squelch is open.
+     *
+     * @return true if RX squelch is open.
+     */
+    virtual bool rxSquelchOpen() override;
+
 private:
 
     bool rfSqlOpen; ///< Flag for RF squelch status (analog squelch).

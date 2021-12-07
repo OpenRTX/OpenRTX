@@ -88,6 +88,16 @@ public:
     {
         return NONE;
     }
+
+    /**
+     * Check if RX squelch is open.
+     *
+     * @return true if RX squelch is open.
+     */
+    virtual bool rxSquelchOpen()
+    {
+        return false;
+    }
 };
 
 #endif /* OPMODE_H */
