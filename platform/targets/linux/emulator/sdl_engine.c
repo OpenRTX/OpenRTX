@@ -32,6 +32,8 @@ SDL_Texture  *displayTexture;
 
 /* Custom SDL Event to request a screenshot */
 Uint32 SDL_Screenshot_Event;
+/* Custom SDL Event to change backlight */
+Uint32 SDL_Backlight_Event;
 
 /*
  *  Mutex protected variables
@@ -338,6 +340,11 @@ void sdl_task()
                 screenshot_display(filename);
                 free(ev.user.data1);
             }
+            else if (ev.type == SDL_Backlight_Event)
+            {
+                set_brightness(*((uint8_t*)ev.user.data1));
+                free(ev.user.data1);
+            }
         }
 
         // we update the window only if there is a something ready to render
@@ -353,7 +360,6 @@ void sdl_task()
             }
 
             chan_send(&fb_sync, pixels);
-            set_brightness(state.settings.brightness);
             chan_recv(&fb_sync, NULL);
 
             SDL_UnlockTexture(displayTexture);
@@ -376,8 +382,9 @@ void init_sdl()
         exit(1);
     }
 
-    // Register an SDL custom event type to handle screenshot requests
-    SDL_Screenshot_Event = SDL_RegisterEvents(1);
+    // Register SDL custom events to handle screenshot requests and backlight
+    SDL_Screenshot_Event = SDL_RegisterEvents(2);
+    SDL_Backlight_Event = SDL_Screenshot_Event+1;
 
     chan_init(&fb_sync);
 

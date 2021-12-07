@@ -22,6 +22,9 @@
 #include "emulator.h"
 #include <SDL2/SDL.h>
 
+/* Custom SDL Event to adjust backlight */
+extern Uint32 SDL_Backlight_Event;
+
 hwInfo_t hwInfo;
 
 void platform_init()
@@ -51,7 +54,14 @@ void platform_terminate()
 
 void platform_setBacklightLevel(uint8_t level)
 {
-    (void) level;
+    SDL_Event e;
+    SDL_zero(e);
+    e.type = SDL_Backlight_Event;
+    e.user.data1 = malloc(sizeof(uint8_t));
+    uint8_t *data = (uint8_t *)e.user.data1;
+    *data = level;
+
+    SDL_PushEvent(&e);
 }
 
 // Simulate a fully charged lithium battery
