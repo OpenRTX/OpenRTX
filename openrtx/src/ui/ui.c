@@ -385,6 +385,7 @@ layout_t _ui_calculateLayout()
 
 void ui_init()
 {
+    last_event_tick = getTick();
     redraw_needed = true;
     layout = _ui_calculateLayout();
     layout_ready = true;
