@@ -131,6 +131,13 @@ void rtx_taskFunc();
  */
 float rtx_getRssi();
 
+/**
+ * Get current status of the RX squelch. This function is thread-safe and can
+ * be called also from threads other than the one running the RTX task.
+ * @return true if RX squelch is open.
+ */
+bool rtx_rxSquelchOpen();
+
 #ifdef __cplusplus
 }
 #endif

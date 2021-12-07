@@ -207,3 +207,8 @@ float rtx_getRssi()
 {
     return rssi;
 }
+
+bool rtx_rxSquelchOpen()
+{
+    return currMode->rxSquelchOpen();
+}
