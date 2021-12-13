@@ -28,6 +28,26 @@
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBottom();
 
+const char *display_timer_values[] =
+{
+    "Off",
+    "5 s",
+    "10 s",
+    "15 s",
+    "20 s",
+    "25 s",
+    "30 s",
+    "1 min",
+    "2 min",
+    "3 min",
+    "4 min",
+    "5 min",
+    "15 min",
+    "30 min",
+    "45 min",
+    "1 hour"
+};
+
 void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_t max_len, uint8_t index))
 {
     point_t pos = layout.line1_pos;
@@ -138,6 +158,10 @@ int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
             value = last_state.settings.contrast;
             break;
 #endif
+        case D_TIMER:
+            snprintf(buf, max_len, "%s",
+                     display_timer_values[last_state.settings.brightness_timer]);
+            return 0;
     }
     snprintf(buf, max_len, "%d", value);
     return 0;

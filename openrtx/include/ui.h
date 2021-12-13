@@ -97,6 +97,7 @@ enum displayItems
 #ifdef SCREEN_CONTRAST
     ,D_CONTRAST
 #endif
+    ,D_TIMER
 };
 
 #ifdef HAS_GPS
