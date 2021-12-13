@@ -588,17 +588,20 @@ endforeach
 ## ----------------------------------- Unit Tests ------------------------------
 ##
 
-unit_test_opts = {'c_args': linux_c_args,
-                  'cpp_args' : linux_cpp_args,
+unit_test_opts = {'c_args'             : linux_c_args,
+                  'cpp_args'           : linux_cpp_args,
                   'include_directories': linux_inc,
-                  'dependencies': linux_dep,
-                  'link_args' : linux_l_args}
+                  'dependencies'       : linux_dep,
+                  'link_args'          : linux_l_args}
 unit_test_src = openrtx_src + minmea_src + linux_platform_src
 
-#dummy_test = executable('dummy', 'tests/unit/dummy.c')
-#test('Dummy Unit Test', dummy_test)
-
 m17_golay_test = executable('m17_golay_test',
-                            sources: unit_test_src + ['tests/unit/M17_golay.cpp'],
-                            kwargs: unit_test_opts)
-test('M17 Golay Unit Test', m17_golay_test)
+                            sources : unit_test_src + ['tests/unit/M17_golay.cpp'],
+                            kwargs  : unit_test_opts)
+
+m17_viterbi_test = executable('m17_viterbi_test',
+                               sources : unit_test_src + ['tests/unit/M17_viterbi.cpp'],
+                               kwargs  : unit_test_opts)
+
+test('M17 Golay Unit Test',   m17_golay_test)
+test('M17 Viterbi Unit Test', m17_viterbi_test)
