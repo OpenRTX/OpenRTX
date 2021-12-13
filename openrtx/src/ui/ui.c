@@ -137,8 +137,9 @@ const char *display_items[] =
 {
     "Brightness",
 #ifdef SCREEN_CONTRAST
-    "Contrast"
+    "Contrast",
 #endif
+    "Timer"
 };
 
 #ifdef HAS_GPS
@@ -642,6 +643,17 @@ void _ui_changeContrast(int variation)
         state.settings.contrast =
         (state.settings.contrast < -variation) ? 0 : state.settings.contrast + variation;
     display_setContrast(state.settings.contrast);
+}
+
+void _ui_changeTimer(int variation)
+{
+    if ((state.settings.brightness_timer == TIMER_OFF && variation < 0) ||
+        (state.settings.brightness_timer == TIMER_1H && variation > 0))
+    {
+        return;
+    }
+
+    state.settings.brightness_timer += variation;
 }
 
 bool _ui_checkStandby(long long time_since_last_event)
@@ -1449,6 +1461,9 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                             _ui_changeContrast(-4);
                             break;
 #endif
+                        case D_TIMER:
+                            _ui_changeTimer(-1);
+                            break;
                         default:
                             state.ui_screen = SETTINGS_DISPLAY;
                     }
@@ -1466,6 +1481,9 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                             _ui_changeContrast(+4);
                             break;
 #endif
+                        case D_TIMER:
+                            _ui_changeTimer(+1);
+                            break;
                         default:
                             state.ui_screen = SETTINGS_DISPLAY;
                     }
