@@ -23,15 +23,37 @@
 
 #include <hwconfig.h>
 
+typedef enum
+{
+    TIMER_OFF =  0,
+    TIMER_5S  =  1,
+    TIMER_10S =  2,
+    TIMER_15S =  3,
+    TIMER_20S =  4,
+    TIMER_25S =  5,
+    TIMER_30S =  6,
+    TIMER_1M  =  7,
+    TIMER_2M  =  8,
+    TIMER_3M  =  9,
+    TIMER_4M  = 10,
+    TIMER_5M  = 11,
+    TIMER_15M = 12,
+    TIMER_30M = 13,
+    TIMER_45M = 14,
+    TIMER_1H  = 15
+}
+display_timer_t;
+
 typedef struct
 {
-    uint8_t brightness;     // Display brightness
-    uint8_t contrast;       // Display contrast
-    uint8_t sqlLevel;       // Squelch level
-    uint8_t voxLevel;       // Vox level
-    int8_t utc_timezone;    // Timezone
-    bool gps_enabled;       // GPS active
-    char callsign[10];      // Plaintext callsign, for future use
+    uint8_t brightness;                  // Display brightness
+    uint8_t contrast;                    // Display contrast
+    uint8_t sqlLevel;                    // Squelch level
+    uint8_t voxLevel;                    // Vox level
+    int8_t utc_timezone;                 // Timezone
+    bool gps_enabled;                    // GPS active
+    char callsign[10];                   // Plaintext callsign, for future use
+    display_timer_t brightness_timer;    // Standby timer
 }
 __attribute__((packed)) settings_t;
 
@@ -48,7 +70,8 @@ static const settings_t default_settings =
     0,                // Vox level
     0,                // UTC Timezone
     false,            // GPS enabled
-    ""                // Empty callsign
+    "",               // Empty callsign
+    TIMER_30S         // 30 seconds
 };
 
 #endif /* SETTINGS_H */

@@ -225,7 +225,6 @@ bool macro_menu = false;
 bool layout_ready = false;
 bool redraw_needed = true;
 
-#define STANDBY_LIMIT 30000 // 30s - TODO: move into a setting
 bool standby = false;
 long long last_event_tick = 0;
 
@@ -643,6 +642,45 @@ void _ui_changeContrast(int variation)
         state.settings.contrast =
         (state.settings.contrast < -variation) ? 0 : state.settings.contrast + variation;
     display_setContrast(state.settings.contrast);
+}
+
+bool _ui_checkStandby(long long time_since_last_event)
+{
+    if (standby)
+    {
+        return false;
+    }
+
+    switch (state.settings.brightness_timer)
+    {
+    case TIMER_OFF:
+        return false;
+    case TIMER_5S:
+    case TIMER_10S:
+    case TIMER_15S:
+    case TIMER_20S:
+    case TIMER_25S:
+    case TIMER_30S:
+        return time_since_last_event >=
+            (5000 * state.settings.brightness_timer);
+    case TIMER_1M:
+    case TIMER_2M:
+    case TIMER_3M:
+    case TIMER_4M:
+    case TIMER_5M:
+        return time_since_last_event >=
+            (60000 * (state.settings.brightness_timer - (TIMER_1M - 1)));
+    case TIMER_15M:
+    case TIMER_30M:
+    case TIMER_45M:
+        return time_since_last_event >=
+            (60000 * 15 * (state.settings.brightness_timer - (TIMER_15M - 1)));
+    case TIMER_1H:
+        return time_since_last_event >= 60 * 60 * 1000;
+    }
+
+    // unreachable code
+    return false;
 }
 
 void _ui_enterStandby()
@@ -1527,14 +1565,14 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
     else if(event.type == EVENT_STATUS)
     {
         if (txOngoing || rtx_rxSquelchOpen())
-	{
-	    _ui_exitStandby(now);
-	    return;
-	}
-
-	if (!standby && (now - last_event_tick >= STANDBY_LIMIT))
         {
-	    _ui_enterStandby();
+            _ui_exitStandby(now);
+            return;
+        }
+
+        if (_ui_checkStandby(now - last_event_tick))
+        {
+            _ui_enterStandby();
         }
     }
 }
