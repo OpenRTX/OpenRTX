@@ -46,16 +46,16 @@ display_timer_t;
 
 typedef struct
 {
-    uint8_t brightness;                  // Display brightness
-    uint8_t contrast;                    // Display contrast
-    uint8_t sqlLevel;                    // Squelch level
-    uint8_t voxLevel;                    // Vox level
-    int8_t utc_timezone;                 // Timezone
-    bool gps_enabled;                    // GPS active
-    char callsign[10];                   // Plaintext callsign, for future use
+    uint8_t brightness;               // Display brightness
+    uint8_t contrast;                 // Display contrast
+    uint8_t sqlLevel;                 // Squelch level
+    uint8_t voxLevel;                 // Vox level
+    int8_t utc_timezone;              // Timezone
+    bool gps_enabled;                 // GPS active
+    char callsign[10];                // Plaintext callsign, for future use
     struct
     {
-        uint8_t brightness_timer : 4,    // Standby timer
+        uint8_t display_timer : 4,    // Standby timer
                 not_in_use : 4;
     };
 }

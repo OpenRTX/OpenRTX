@@ -647,13 +647,13 @@ void _ui_changeContrast(int variation)
 
 void _ui_changeTimer(int variation)
 {
-    if ((state.settings.brightness_timer == TIMER_OFF && variation < 0) ||
-        (state.settings.brightness_timer == TIMER_1H && variation > 0))
+    if ((state.settings.display_timer == TIMER_OFF && variation < 0) ||
+        (state.settings.display_timer == TIMER_1H && variation > 0))
     {
         return;
     }
 
-    state.settings.brightness_timer += variation;
+    state.settings.display_timer += variation;
 }
 
 bool _ui_checkStandby(long long time_since_last_event)
@@ -663,7 +663,7 @@ bool _ui_checkStandby(long long time_since_last_event)
         return false;
     }
 
-    switch (state.settings.brightness_timer)
+    switch (state.settings.display_timer)
     {
     case TIMER_OFF:
         return false;
@@ -674,19 +674,19 @@ bool _ui_checkStandby(long long time_since_last_event)
     case TIMER_25S:
     case TIMER_30S:
         return time_since_last_event >=
-            (5000 * state.settings.brightness_timer);
+            (5000 * state.settings.display_timer);
     case TIMER_1M:
     case TIMER_2M:
     case TIMER_3M:
     case TIMER_4M:
     case TIMER_5M:
         return time_since_last_event >=
-            (60000 * (state.settings.brightness_timer - (TIMER_1M - 1)));
+            (60000 * (state.settings.display_timer - (TIMER_1M - 1)));
     case TIMER_15M:
     case TIMER_30M:
     case TIMER_45M:
         return time_since_last_event >=
-            (60000 * 15 * (state.settings.brightness_timer - (TIMER_15M - 1)));
+            (60000 * 15 * (state.settings.display_timer - (TIMER_15M - 1)));
     case TIMER_1H:
         return time_since_last_event >= 60 * 60 * 1000;
     }
