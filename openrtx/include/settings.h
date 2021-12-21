@@ -46,14 +46,15 @@ display_timer_t;
 
 typedef struct
 {
-    uint8_t brightness;                  // Display brightness
-    uint8_t contrast;                    // Display contrast
-    uint8_t sqlLevel;                    // Squelch level
-    uint8_t voxLevel;                    // Vox level
-    int8_t utc_timezone;                 // Timezone
-    bool gps_enabled;                    // GPS active
-    char callsign[10];                   // Plaintext callsign, for future use
-    display_timer_t brightness_timer;    // Standby timer
+    uint8_t brightness;           // Display brightness
+    uint8_t contrast;             // Display contrast
+    uint8_t sqlLevel;             // Squelch level
+    uint8_t voxLevel;             // Vox level
+    int8_t utc_timezone;          // Timezone
+    bool gps_enabled;             // GPS active
+    char callsign[10];            // Plaintext callsign, for future use
+    uint8_t display_timer : 4,    // Standby timer
+            not_in_use    : 4;
 }
 __attribute__((packed)) settings_t;
 
@@ -71,7 +72,8 @@ static const settings_t default_settings =
     0,                // UTC Timezone
     false,            // GPS enabled
     "",               // Empty callsign
-    TIMER_30S         // 30 seconds
+    TIMER_30S,        // 30 seconds
+    0                 // not in use
 };
 
 #endif /* SETTINGS_H */
