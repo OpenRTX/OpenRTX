@@ -83,4 +83,7 @@
 #define SOFTPOT_RX 0x2E
 #define SOFTPOT_TX 0x2F
 
+/* M17 demodulation */
+#define M17_SPS 5
+
 #endif

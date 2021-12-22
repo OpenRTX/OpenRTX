@@ -42,6 +42,7 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/protocols/M17/M17DSP.cpp',
                'openrtx/src/protocols/M17/M17Callsign.cpp',
                'openrtx/src/protocols/M17/M17Modulator.cpp',
+               'openrtx/src/protocols/M17/M17Demodulator.cpp',
                'openrtx/src/protocols/M17/M17Transmitter.cpp',
                'openrtx/src/protocols/M17/M17LinkSetupFrame.cpp']
 
@@ -603,5 +604,15 @@ m17_viterbi_test = executable('m17_viterbi_test',
                                sources : unit_test_src + ['tests/unit/M17_viterbi.cpp'],
                                kwargs  : unit_test_opts)
 
+m17_demodulator_test = executable('m17_demodulator_test',
+                            sources: unit_test_src + ['tests/unit/M17_demodulator.cpp'],
+                            kwargs: unit_test_opts)
+
+m17_rrc_test = executable('m17_rrc_test',
+                          sources: unit_test_src + ['tests/unit/M17_rrc.cpp'],
+                          kwargs: unit_test_opts)
+
 test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
+test('M17 Demodulator Test', m17_demodulator_test)
+test('M17 RRC Test', m17_rrc_test)
