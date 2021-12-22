@@ -24,7 +24,7 @@ namespace M17
 {
 
 /*
- * Coefficients for M17 RRC filter
+ * Coefficients for M17 RRC filter for 48KHz sample rate
  */
 const std::array<float, 79> rrc_taps = {
     -0.009265784007800534,  -0.006136551625729697,  -0.001125978562075172,

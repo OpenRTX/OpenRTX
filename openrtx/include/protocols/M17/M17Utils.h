@@ -29,6 +29,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <array>
+#include <assert.h>
 
 
 /**
@@ -67,6 +68,42 @@ inline void setBit(std::array< uint8_t, N >& array, const size_t pos,
     uint8_t mask = 1 << (7 - j);
     array[i] = (array[i] & ~mask) |
                (bit ? mask : 0x00);
+}
+
+/**
+ * Utility function allowing to set the value of a symbol on an array
+ * of bytes. Symbols are packed putting the most significant bit first,
+ * symbols are filled from the least significant bit pair to the most
+ * significant bit pair.
+ *
+ * \param array: byte array.
+ * \param pos: symbol position inside the array.
+ * \param symbol: symbol to be set, either -3, -1, +1, +3.
+ */
+template < size_t N >
+inline void setSymbol(std::array< uint8_t, N >& array, const size_t pos,
+                   const int8_t symbol)
+{
+    switch(symbol) {
+        case +3:
+            setBit<N> (array, 2 * pos    , 0);
+            setBit<N> (array, 2 * pos + 1, 1);
+            break;
+        case +1:
+            setBit<N> (array, 2 * pos    , 0);
+            setBit<N> (array, 2 * pos + 1, 0);
+            break;
+        case -1:
+            setBit<N> (array, 2 * pos    , 1);
+            setBit<N> (array, 2 * pos + 1, 0);
+            break;
+        case -3:
+            setBit<N> (array, 2 * pos    , 1);
+            setBit<N> (array, 2 * pos + 1, 1);
+            break;
+        default:
+            assert("Error: storing unknown M17 symbol!");
+    }
 }
 
 #endif /* M17_UTILS_H */

@@ -139,4 +139,7 @@
 #define GPS_EN   GPIOD,8
 #define GPS_DATA GPIOD,9
 
+/* M17 demodulation */
+#define M17_SPS 5
+
 #endif

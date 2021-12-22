@@ -27,8 +27,19 @@
 #error This header is C++ only!
 #endif
 
+#include <array>
+#include <cstdint>
+#include <cstddef>
+#include <interfaces/audio_stream.h>
+#include <hwconfig.h>
+
 namespace M17
 {
+
+typedef struct {
+    int32_t index;
+    bool lsf;
+} sync_t;
 
 class M17Demodulator
 {
@@ -65,34 +76,138 @@ public:
     void stopBasebandSampling();
 
     /**
-     * Returns the next frame decoded from the baseband signal
+     * Returns the a frame decoded from the baseband signal.
      */
-    const std::array<uint8_t, 48>& nextFrame();
+    const std::array<uint8_t, 48> &getFrame();
 
-};
+    /**
+     * Returns a flag indicating whether the decoded frame is an LSF.
+     */
+    bool isFrameLSF();
+
+    /**
+     * Demodulates data from the ADC and fills the idle frame
+     * Everytime this function is called a whole ADC buffer is consumed
+     */
+    void update();
 
 private:
 
-    /**
-     * M17 syncword symbols after RRC sampled at 5 samples per symbol;
+    /*
+     * We are sampling @ 24KHz so an M17 frame has half the samples,
+     * our input buffer contains half M17 frame.
      */
-    uint8_t syncword[] = { };
+    // TODO: Select correct RRC filter according to sample rate
+    static constexpr size_t M17_RX_SAMPLE_RATE     = 24000;
+    static constexpr size_t M17_FRAME_SAMPLES_24K  = 960;
+    static constexpr size_t M17_FRAME_SYMBOLS      = 192;
+    static constexpr size_t M17_SYNCWORD_SYMBOLS   = 8;
+    static constexpr size_t M17_CONV_THRESHOLD     = 50000;
+    static constexpr size_t M17_SAMPLES_PER_SYMBOL = M17_SPS;
+    static constexpr size_t M17_INPUT_BUF_SIZE     = M17_FRAME_SAMPLES_24K / 2;
+    static constexpr size_t M17_FRAME_BYTES        = M17_FRAME_SYMBOLS / 4;
+    static constexpr float conv_stats_alpha        = 0.0009765625f;
+    static constexpr float conv_threshold_factor   = 3.65;
+    static constexpr float qnt_maxmin_alpha        = 0.999f;
 
-    using dataBuffer_t = std::array< int16_t, M17_FRAME_SAMPLES >;
-    using dataFrame_t =  std::array< int8_t, M17_FRAME_SYMBOLS >;
+    /**
+     * M17 syncwords;
+     */
+    int8_t lsf_syncword[M17_SYNCWORD_SYMBOLS] =    { +3, +3, +3, +3, -3, -3, +3, -3 };
+    int8_t stream_syncword[M17_SYNCWORD_SYMBOLS] = { -3, -3, -3, -3, +3, +3, -3, +3 };
 
+    using dataBuffer_t = std::array< int16_t, M17_FRAME_SAMPLES_24K >;
+    using dataFrame_t =  std::array< uint8_t, M17_FRAME_BYTES >;
+
+    /*
+     * Buffers
+     */
+    streamId     basebandId;       ///< Id of the baseband input stream.
     int16_t      *baseband_buffer; ///< Buffer for baseband audio handling.
-    dataBuffer_t *activeBuffer;    ///< Half baseband buffer, in reception.
-    dataBuffer_t *idleBuffer;      ///< Half baseband buffer, to be processed.
+    dataBlock_t  baseband;         ///< Half buffer, free to be processed.
+    uint16_t     *rawFrame;        ///< Analog values to be quantized.
+    uint16_t     rawFrameIndex;    ///< Index for filling the raw frame.
     dataFrame_t  *activeFrame;     ///< Half frame, in demodulation.
     dataFrame_t  *idleFrame;       ///< Half frame, free to be processed.
+    bool         isLSF;            ///< Indicates that we demodualated an LSF.
+    bool         locked;           ///< A syncword was detected.
+
+    /*
+     * State variables
+     */
+    bool         m17RxEnabled;     ///< M17 Reception Enabled
+
+    /*
+     * Convolution statistics computation
+     */
+    float conv_ema = 0.0f;
+    float conv_emvar = 0.0f;
+
+    /*
+     * Quantization statistics computation
+     */
+    float qnt_max = 0.0f;
+    float qnt_min = 0.0f;
 
     /**
-     * Finds the index of the next syncword in the baseband stream.
+     * Resets the exponential mean and variance/stddev computation.
+     */
+    void resetCorrelationStats();
+
+    /**
+     * Updates the mean and variance with the given value.
+     *
+     * @param value: value to be added to the exponential moving
+     * average/variance computation
+     */
+    void updateCorrelationStats(int32_t value);
+
+    /**
+     * Returns the standard deviation from all the passed values.
+     *
+     * @returns float numerical value of the standard deviation
+     */
+    float getCorrelationStddev();
+
+    void resetQuantizationStats();
+
+    void updateQuantizationStats(uint32_t offset);
+
+    float getQuantizationMax();
+
+    float getQuantizationMin();
+
+    /**
+     * Computes the convolution between a stride of samples starting from
+     * a given offset and a target waveform.
+     *
+     * @param offset: the offset in the active buffer where to start the stride
+     * @param target: a buffer containing the target waveform to be convoluted
+     * @param target_size: the number of symbols of the target waveform
+     * @return uint16_t numerical value of the convolution
+     */
+    int32_t convolution(size_t offset, int8_t *target, size_t target_size);
+
+    /**
+     * Finds the index of the next frame syncword in the baseband stream.
      *
      * @param baseband: buffer containing the sampled baseband signal
      * @param offset: offset of the buffer after which syncword are searched
      * @return uint16_t index of the first syncword in the buffer after the offset
-     */ uint16_t nextSyncWord(int16_t *baseband);
+     */
+    sync_t nextFrameSync(uint32_t offset);
+
+    /**
+     * Takes the value from the input baseband at a given offsets and quantizes
+     * it leveraging the quantization max and min hold statistics.
+     *
+     * @param offset: the offset in the input baseband
+     * @return int8_t quantized symbol
+     */
+    int8_t quantize(int32_t offset);
+
+};
+
+} /* M17 */
 
 #endif /* M17_DEMODULATOR_H */
