@@ -39,7 +39,7 @@
 #define PIX_FMT_BW
 
 /* Device has no battery */
-#define BAT_NONE
+#define BAT_MOD17
 
 /* Signalling LEDs */
 #define PTT_LED     GPIOC,8
@@ -74,5 +74,13 @@
 #define SPK_MUTE    GPIOB,1
 #define MIC_MUTE    GPIOC,4
 #define MIC_GAIN    GPIOC,5
+
+#define AIN_VBAT   GPIOA,3
+
+/* I2C for MCP4551 */
+#define I2C_SDA GPIOB,7
+#define I2C_SCL GPIOB,6
+#define SOFTPOT_RX 0x2E
+#define SOFTPOT_TX 0x2F
 
 #endif

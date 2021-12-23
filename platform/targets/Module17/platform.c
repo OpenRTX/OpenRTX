@@ -27,6 +27,9 @@
 #include <backlight.h>
 #include <interfaces/rtc.h>
 #include <interfaces/audio.h>
+#include <ADC1_Mod17.h>
+#include <interfaces/nvmem.h>
+#include <MCP4551.h>
 
 void platform_init()
 {
@@ -39,6 +42,14 @@ void platform_init()
     gpio_setMode(PTT_OUT, OUTPUT);
     gpio_clearPin(PTT_OUT);
 
+    nvm_init();
+    adc1_init();
+    i2c_init();
+    mcp4551_init(SOFTPOT_RX);
+    mcp4551_init(SOFTPOT_TX);
+    //mcp4551_setWiper(SOFTPOT_RX, MCP4551_WIPER_A);
+    //mcp4551_setWiper(SOFTPOT_TX, MCP4551_WIPER_A);
+
     audio_init();
 }
 
@@ -48,11 +59,15 @@ void platform_terminate()
     gpio_clearPin(PTT_LED);
     gpio_clearPin(SYNC_LED);
     gpio_clearPin(ERR_LED);
+
+    adc1_terminate();
+    nvm_terminate();
+    audio_terminate();
 }
 
 uint16_t platform_getVbat()
 {
-    return 0;
+   return adc1_getMeasurement(ADC_VBAT_CH)*5;
 }
 
 uint8_t platform_getMicLevel()

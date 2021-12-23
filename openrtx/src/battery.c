@@ -35,6 +35,9 @@ static const uint16_t bat_v_max = 0x0819;   // 8.10V
 #elif defined BAT_LIPO_3S
 static const uint16_t bat_v_min = 0x0AD4;   // 10.83V
 static const uint16_t bat_v_max = 0x0C73;   // 12.45V
+#elif defined BAT_MOD17
+static const uint16_t bat_v_min = 0x0600;   // 6.00V
+static const uint16_t bat_v_max = 0x0DCD;   // 13.8V
 #elif defined BAT_NONE
 static const uint16_t bat_v_min = 0;
 static const uint16_t bat_v_max = 0;
