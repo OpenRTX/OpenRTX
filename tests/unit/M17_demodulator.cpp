@@ -75,7 +75,7 @@ int main()
     for(size_t i = 0; i < baseband_samples; i++)
     {
         float elem = static_cast< float >(baseband_buffer[i]);
-        filtered_buffer[i] = static_cast< int16_t >(M17::rrc(0.10 * elem));
+        filtered_buffer[i] = static_cast< int16_t >(M17::rrc(elem));
     }
     fwrite(filtered_buffer, baseband_samples, 2, baseband_out);
     fclose(baseband_out);
@@ -89,7 +89,7 @@ int main()
     m17Demodulator.baseband = baseband;
     baseband.data = filtered_buffer;
 
-    FILE *output_csv_1 = fopen("M17_clock_recovery_output_1.csv", "w");
+    FILE *output_csv_1 = fopen("M17_demodulator_output_1.csv", "w");
     fprintf(output_csv_1, "Input,RRCSignal,LSFConvolution,FrameConvolution,Stddev\n");
     // Test convolution
     m17Demodulator.resetCorrelationStats();
@@ -139,7 +139,7 @@ int main()
     } while (syncword.index != -1);
     fclose(syncword_ref);
 
-    FILE *output_csv_2 = fopen("M17_clock_recovery_output_2.csv", "w");
+    FILE *output_csv_2 = fopen("M17_demodulator_output_2.csv", "w");
     fprintf(output_csv_2, "RRCSignal,SyncDetect,QntMax,QntMin,Symbol\n");
     uint32_t detect = 0, symbol = 0;
     offset = 0;
