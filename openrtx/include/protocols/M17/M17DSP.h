@@ -36,7 +36,7 @@ namespace M17
 /*
  * Coefficients for M17 RRC filter
  */
-extern const std::array<float, 79> rrc_taps;
+extern const std::array<float, 81> rrc_taps;
 
 /*
  * FIR implementation of the RRC filter for baseband audio generation.

@@ -84,7 +84,7 @@ void M17Demodulator::stopBasebandSampling()
 
 void M17Demodulator::resetCorrelationStats() {
     conv_ema = 0.0f;
-    conv_emvar = 10000000000.0f;
+    conv_emvar = 1000000000.0f;
 }
 
 /**
