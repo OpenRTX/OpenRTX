@@ -36,7 +36,8 @@
 namespace M17
 {
 
-typedef struct {
+typedef struct
+{
     int32_t index;
     bool lsf;
 } sync_t;
@@ -113,7 +114,7 @@ private:
     /**
      * M17 syncwords;
      */
-    int8_t lsf_syncword[M17_SYNCWORD_SYMBOLS] =    { +3, +3, +3, +3, -3, -3, +3, -3 };
+    int8_t lsf_syncword[M17_SYNCWORD_SYMBOLS]    = { +3, +3, +3, +3, -3, -3, +3, -3 };
     int8_t stream_syncword[M17_SYNCWORD_SYMBOLS] = { -3, -3, -3, -3, +3, +3, -3, +3 };
 
     using dataBuffer_t = std::array< int16_t, M17_FRAME_SAMPLES_24K >;
