@@ -274,16 +274,19 @@ void radio_updateConfiguration()
     freq_t  *txCalPoints = cal->vhfCal.txFreq;
     uint8_t *loPwrCal    = cal->vhfCal.txLowPower;
     uint8_t *hiPwrCal    = cal->vhfCal.txHighPower;
-    uint8_t *qRangeCal   = (config->opMode == FM) ? cal->vhfCal.analogSendQrange
-                                                  : cal->vhfCal.sendQrange;
+    uint8_t *qRangeCal   = (config->opMode == OPMODE_FM)
+                         ? cal->vhfCal.analogSendQrange
+                         : cal->vhfCal.sendQrange;
+
     if(currTxBand == BND_UHF)
     {
         calPoints   = 9;
         txCalPoints = cal->uhfCal.txFreq;
         loPwrCal    = cal->uhfCal.txLowPower;
         hiPwrCal    = cal->uhfCal.txHighPower;
-        qRangeCal   = (config->opMode == FM) ? cal->uhfCal.analogSendQrange
-                                             : cal->uhfCal.sendQrange;
+        qRangeCal   = (config->opMode == OPMODE_FM)
+                    ? cal->uhfCal.analogSendQrange
+                    : cal->uhfCal.sendQrange;
     }
 
     // APC voltage for TX output power control

@@ -108,13 +108,13 @@ void radio_setOpmode(const enum opmode mode)
 {
     switch(mode)
     {
-        case FM:
+        case OPMODE_FM:
             gpio_setPin(RX_AUDIO_MUX);              // Audio out to amplifier
             gpio_clearPin(TX_AUDIO_MUX);            // Audio in to microphone
             at1846s.setOpMode(AT1846S_OpMode::FM);
             break;
 
-        case DMR:
+        case OPMODE_DMR:
             gpio_clearPin(RX_AUDIO_MUX);             // Audio out to HR_C6000
             gpio_setPin(TX_AUDIO_MUX);               // Audio in from HR_C6000
             at1846s.setOpMode(AT1846S_OpMode::DMR);
@@ -317,7 +317,7 @@ void radio_updateConfiguration()
     apcVoltage  = static_cast< uint16_t >(apc) * 16;
 
     // Set bandwidth and TX deviation, force 12.5kHz for DMR mode
-    if((config->bandwidth == BW_12_5) || (config->opMode == DMR))
+    if((config->bandwidth == BW_12_5) || (config->opMode == OPMODE_DMR))
     {
         at1846s.setBandwidth(AT1846S_BW::_12P5);
         at1846s.setTxDeviation(calData->data[currTxBand].mixGainNarrowband);

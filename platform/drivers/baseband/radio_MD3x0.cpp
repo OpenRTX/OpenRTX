@@ -251,7 +251,7 @@ void radio_enableRx()
 
     gpio_setPin(RX_STG_EN);            // Enable RX LNA
 
-    if(config->opMode == FM)
+    if(config->opMode == OPMODE_FM)
     {
         gpio_setPin(FM_MUTE);          // In FM mode, unmute audio path towards speaker
     }
@@ -341,7 +341,7 @@ void radio_updateConfiguration()
     const uint8_t *Ical = calData->sendIrange;
     const uint8_t *Qcal = calData->sendQrange;
 
-    if(config->opMode == FM)
+    if(config->opMode == OPMODE_FM)
     {
         Ical = calData->analogSendIrange;
         Qcal = calData->analogSendQrange;
@@ -354,7 +354,7 @@ void radio_updateConfiguration()
 
     // Set bandwidth, force 12.5kHz for DMR mode
     enum bandwidth bandwidth = static_cast< enum bandwidth >(config->bandwidth);
-    if(config->opMode == DMR) bandwidth = BW_12_5;
+    if(config->opMode == OPMODE_DMR) bandwidth = BW_12_5;
     _setBandwidth(bandwidth);
 
     // Set CTCSS tone

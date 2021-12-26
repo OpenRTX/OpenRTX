@@ -5,7 +5,7 @@
 channel_t get_default_channel()
 {
     channel_t channel;
-    channel.mode      = FM;
+    channel.mode      = OPMODE_FM;
     channel.bandwidth = BW_25;
     channel.power     = 1.0;
 
@@ -24,7 +24,7 @@ channel_t get_default_channel()
 
     channel.fm.rxToneEn = 0; //disabled
     channel.fm.rxTone   = 0; //and no ctcss/dcs selected
-    channel.fm.txToneEn = 0; 
-    channel.fm.txTone   = 0; 
+    channel.fm.txToneEn = 0;
+    channel.fm.txTone   = 0;
     return channel;
 }
