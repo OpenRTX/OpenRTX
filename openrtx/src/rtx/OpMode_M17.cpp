@@ -125,6 +125,7 @@ void OpMode_M17::enable()
     pthread_create(&codecThread, &codecAttr, threadFunc, NULL);
 
     modulator.init();
+    demodulator.init();
     enterRx = true;
 }
 
@@ -138,6 +139,7 @@ void OpMode_M17::disable()
 
     enterRx = false;
     modulator.terminate();
+    demodulator.terminate();
 }
 
 void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
@@ -148,6 +150,7 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
     if(status->opStatus == RX)
     {
         // TODO: Implement M17 Rx
+        demodulator.update();
         sleepFor(0u, 30u);
     }
     else if((status->opStatus == OFF) && enterRx)

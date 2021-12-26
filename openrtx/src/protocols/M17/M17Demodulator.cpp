@@ -24,12 +24,6 @@
 #include <interfaces/audio_stream.h>
 #include <math.h>
 
-#if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
-#include <toneGenerator_MDx.h>
-#elif defined(PLATFORM_LINUX)
-#include <stdio.h>
-#endif
-
 namespace M17
 {
 
@@ -82,7 +76,8 @@ void M17Demodulator::stopBasebandSampling()
      inputStream_stop(basebandId);
 }
 
-void M17Demodulator::resetCorrelationStats() {
+void M17Demodulator::resetCorrelationStats()
+{
     conv_ema = 0.0f;
     conv_emvar = 20000000000.0f;
 }
@@ -94,9 +89,9 @@ void M17Demodulator::resetCorrelationStats() {
 void M17Demodulator::updateCorrelationStats(int32_t value)
 {
     float delta = (float) value - conv_ema;
-    float incr = conv_stats_alpha * delta;
-    conv_ema += incr;
-    conv_emvar = (1.0f - conv_stats_alpha) * (conv_emvar + delta * incr);
+    float incr  = conv_stats_alpha * delta;
+    conv_ema   += incr;
+    conv_emvar  = (1.0f - conv_stats_alpha) * (conv_emvar + delta * incr);
 }
 
 float M17Demodulator::getCorrelationStddev()
@@ -104,21 +99,31 @@ float M17Demodulator::getCorrelationStddev()
     return sqrt(conv_emvar);
 }
 
-void M17Demodulator::resetQuantizationStats() {
+void M17Demodulator::resetQuantizationStats()
+{
     qnt_max = 0.0f;
 }
 
 void M17Demodulator::updateQuantizationStats(uint32_t offset)
 {
     auto value = baseband.data[offset];
-    if (value > qnt_max) {
+    if (value > qnt_max)
+    {
         qnt_max = value;
-    } else
+    }
+    else
+    {
         qnt_max *= qnt_maxmin_alpha;
-    if (value < qnt_min) {
+    }
+
+    if (value < qnt_min)
+    {
         qnt_min = value;
-    } else
+    }
+    else
+    {
         qnt_min *= qnt_maxmin_alpha;
+    }
 }
 
 float M17Demodulator::getQuantizationMax()

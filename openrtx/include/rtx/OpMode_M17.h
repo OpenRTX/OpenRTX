@@ -22,6 +22,7 @@
 #define OPMODE_M17_H
 
 #include <M17/M17Transmitter.h>
+#include <M17/M17Demodulator.h>
 #include <M17/M17Modulator.h>
 #include <array>
 #include "OpMode.h"
@@ -105,6 +106,7 @@ private:
 
     bool enterRx;                ///< Flag for RX management.
     M17::M17Modulator   modulator;    ///< M17 modulator.
+    M17::M17Demodulator demodulator;  ///< M17 demodulator.
     M17::M17Transmitter m17Tx;        ///< M17 transmission manager.
 };
 
