@@ -83,11 +83,10 @@ int main()
     M17::M17Demodulator m17Demodulator = M17::M17Demodulator();
     m17Demodulator.init();
     dataBlock_t baseband = { nullptr, 0 };
-    baseband.data = baseband_buffer;
+    baseband.data = filtered_buffer;
     baseband.len = baseband_samples;
     dataBlock_t old_baseband = m17Demodulator.baseband;
     m17Demodulator.baseband = baseband;
-    baseband.data = filtered_buffer;
 
     FILE *output_csv_1 = fopen("M17_demodulator_output_1.csv", "w");
     fprintf(output_csv_1, "Input,RRCSignal,LSFConvolution,FrameConvolution,Stddev\n");
@@ -109,7 +108,8 @@ int main()
                 baseband.data[i],
                 lsf_conv,
                 stream_conv,
-                3.65 * m17Demodulator.getCorrelationStddev());
+                m17Demodulator.conv_threshold_factor *
+                m17Demodulator.getCorrelationStddev());
     }
     fclose(output_csv_1);
 
@@ -126,6 +126,7 @@ int main()
         fscanf(syncword_ref, "%d\n", &expected_syncword);
         syncword = m17Demodulator.nextFrameSync(offset);
         offset = syncword.index + m17Demodulator.M17_SYNCWORD_SYMBOLS * M17_SPS;
+        //printf("%d\n", syncword.index);
         if (syncword.index != expected_syncword)
         {
             fprintf(stderr, "Error in syncwords detection #%d!\n", i);
