@@ -84,7 +84,7 @@ void M17Demodulator::stopBasebandSampling()
 
 void M17Demodulator::resetCorrelationStats() {
     conv_ema = 0.0f;
-    conv_emvar = 1000000000.0f;
+    conv_emvar = 20000000000.0f;
 }
 
 /**
@@ -204,7 +204,7 @@ void M17Demodulator::update()
         for(size_t i = 0; i < baseband.len; i++)
         {
             float elem = static_cast< float >(baseband.data[i]);
-            baseband.data[i] = static_cast< int16_t >(M17::rrc(elem) * 0.10);
+            baseband.data[i] = static_cast< int16_t >(M17::rrc(elem));
         }
 
         // If we locked a syncword just demodulate samples

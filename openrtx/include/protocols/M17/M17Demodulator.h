@@ -106,8 +106,8 @@ private:
     static constexpr size_t M17_SAMPLES_PER_SYMBOL = M17_SPS;
     static constexpr size_t M17_INPUT_BUF_SIZE     = M17_FRAME_SAMPLES_24K / 2;
     static constexpr size_t M17_FRAME_BYTES        = M17_FRAME_SYMBOLS / 4;
-    static constexpr float conv_stats_alpha        = 0.0009765625f;
-    static constexpr float conv_threshold_factor   = 3.65;
+    static constexpr float conv_stats_alpha        = 0.0001f;
+    static constexpr float conv_threshold_factor   = 3.70;
     static constexpr float qnt_maxmin_alpha        = 0.999f;
 
     /**
