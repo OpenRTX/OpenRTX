@@ -52,7 +52,7 @@ int main(void)
     /* Take mutex and update the RTX configuration */
     OSMutexPend(&mutex, 0, OS_OPT_PEND_BLOCKING, NULL, &err);
 
-    cfg.opMode = FM;
+    cfg.opMode = OPMODE_FM;
     cfg.bandwidth = BW_25;
     cfg.rxFrequency = rptFreq;
     cfg.txFrequency = rptFreq + rptShift;

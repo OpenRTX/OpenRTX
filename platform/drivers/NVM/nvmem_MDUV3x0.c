@@ -106,7 +106,7 @@ int _nvm_readChannelAtAddress(channel_t *channel, uint32_t addr)
     }
 
     /* Load mode-specific parameters */
-    if(channel->mode == FM)
+    if(channel->mode == OPMODE_FM)
     {
         channel->fm.txToneEn = 0;
         channel->fm.rxToneEn = 0;
@@ -142,7 +142,7 @@ int _nvm_readChannelAtAddress(channel_t *channel, uint32_t addr)
 
         // TODO: Implement warning screen if tone was not found
     }
-    else if(channel->mode == DMR)
+    else if(channel->mode == OPMODE_DMR)
     {
         channel->dmr.contactName_index = chData.contact_name_index;
         channel->dmr.dmr_timeslot      = chData.repeater_slot;
