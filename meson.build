@@ -511,6 +511,7 @@ radio_tool  = find_program('radio_tool')
 objcopy     = find_program('objcopy',                          required:false, disabler:true)
 bin2sgl     = find_program('scripts/bin2sgl.Linux',            required:false, disabler:true)
 gd77_loader = find_program('scripts/gd-77_firmware_loader.py', required:false, disabler:true)
+dfu_util    = find_program('dfu-util',                         required:false, disabler:true)
 
 foreach t : targets
 
@@ -538,6 +539,14 @@ foreach t : targets
         input : wrap,
         output : name+'_flash',
         command : [gd77_loader, '-f', '@INPUT@.sgl'])
+
+    # Module17 also uses dfu-tool for flashing
+    elif name == 'openrtx_mod17'
+
+      custom_target(name+'_flash',
+        input : bin,
+        output : name+'_flash',
+        command : [dfu_util, '-d', '0483:df11', '-a', '0', '-D', '@INPUT@', '-s', '0x08000000'])
 
     else
 
