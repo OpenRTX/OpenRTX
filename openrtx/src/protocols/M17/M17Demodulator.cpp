@@ -23,6 +23,7 @@
 #include <M17/M17Utils.h>
 #include <interfaces/audio_stream.h>
 #include <math.h>
+#include <cstring>
 
 namespace M17
 {
@@ -50,6 +51,8 @@ void M17Demodulator::init()
     activeFrame     = new dataFrame_t;
     rawFrame        = new uint16_t[M17_FRAME_SYMBOLS];
     idleFrame       = new dataFrame_t;
+    frameIndex      = 0;
+    phase           = 0;
 }
 
 void M17Demodulator::terminate()
@@ -144,8 +147,14 @@ int32_t M17Demodulator::convolution(size_t offset,
     int32_t conv = 0;
     for(uint32_t i = 0; i < target_size; i++)
     {
-        conv += (int32_t) target[i] *
-            (int32_t) this->baseband.data[offset + i * M17_SAMPLES_PER_SYMBOL];
+        int16_t sample_index = offset + i * M17_SAMPLES_PER_SYMBOL;
+        int16_t sample = 0;
+        // When we are at negative indices use bridge buffer
+        if (sample_index < 0)
+            sample = basebandBridge[M17_BRIDGE_SIZE + sample_index];
+        else
+            sample = baseband.data[sample_index];
+        conv += (int32_t) target[i] * (int32_t) sample;
     }
     return conv;
 }
@@ -178,11 +187,16 @@ sync_t M17Demodulator::nextFrameSync(uint32_t offset)
 
 int8_t M17Demodulator::quantize(int32_t offset)
 {
-    if (baseband.data[offset] > getQuantizationMax() * 2 / 3)
+    int16_t sample = 0;
+    if (offset < 0) // When we are at negative offsets use bridge buffer
+        sample = basebandBridge[M17_BRIDGE_SIZE + offset];
+    else            // Otherwise use regular data buffer
+        sample = baseband.data[offset];
+    if (sample > getQuantizationMax() * 2 / 3)
         return +3;
-    else if (baseband.data[offset] < getQuantizationMin() * 2 / 3)
+    else if (sample < getQuantizationMin() * 2 / 3)
         return -3;
-    else if (baseband.data[offset] > 0)
+    else if (sample > 0)
         return +1;
     else
         return -1;
@@ -200,6 +214,9 @@ bool M17Demodulator::isFrameLSF()
 
 void M17Demodulator::update()
 {
+    M17::sync_t syncword = { -1, false };
+    int16_t offset = -(int16_t) M17_BRIDGE_SIZE;
+    uint16_t decoded_syms = 0;
     // Read samples from the ADC
     baseband = inputStream_getData(basebandId);
 
@@ -211,41 +228,58 @@ void M17Demodulator::update()
             float elem = static_cast< float >(baseband.data[i]);
             baseband.data[i] = static_cast< int16_t >(M17::rrc(elem));
         }
-
-        // If we locked a syncword just demodulate samples
-        if (locked)
+        // If we are not locked search for a syncword
+        if (!locked)
         {
-
-        }
-        else // Otherwise find next syncword
-        {
-            M17::sync_t syncword = { -1, false };
-            uint16_t offset = 0;
-            syncword = nextFrameSync(offset);
-            if (syncword.index != -1)
+            syncword = nextFrameSync(-M17_SYNCWORD_SYMBOLS * M17_SAMPLES_PER_SYMBOL);
+            if (syncword.index != -1) // Lock was just acquired
             {
                 locked = true;
-                // Set a flag to mark LSF
                 isLSF = syncword.lsf;
-                // Next syncword does not overlap with current syncword
-                offset = syncword.index + M17_SAMPLES_PER_SYMBOL;
-                // Slice the input buffer to extract a frame and quantize
-                for(uint16_t i = 0; i < M17_FRAME_SYMBOLS; i++)
-                {
-                    // Quantize
-                    uint16_t symbol_index = syncword.index + 2 +
-                                            M17_SAMPLES_PER_SYMBOL * i;
-                    updateQuantizationStats(baseband.data[symbol_index]);
-                    int8_t symbol = quantize(symbol_index);
-                    setSymbol<M17_FRAME_BYTES>(*activeFrame, i, symbol);
-                    // If the frame buffer is full switch active and idle frame
-                    if (rawFrameIndex == M17_FRAME_SYMBOLS)
-                        std::swap(activeFrame, idleFrame);
-                }
-                // If we have some samples left, try to decode the syncword
-                // If decoding fails, signal lock is lost
+                offset = syncword.index + 2;
+                // DEBUG: prints
+                if (isLSF)
+                    printf("Found LSF!\n");
+                else
+                    printf("Found SYNC!\n");
             }
         }
+        else // Lock was inherited from previous frame
+            offset = phase;
+        // While we are locked, demodulate available samples
+        while (locked && offset < (int16_t) M17_FRAME_SAMPLES_24K)
+        {
+            // Slice the input buffer to extract a frame and quantize
+            uint16_t symbol_index = offset + M17_SAMPLES_PER_SYMBOL * decoded_syms;
+            updateQuantizationStats(baseband.data[symbol_index]);
+            int8_t symbol = quantize(symbol_index);
+            setSymbol<M17_FRAME_BYTES>(*activeFrame, frameIndex, symbol);
+            frameIndex++;
+            // If the frame buffer is full switch active and idle frame
+            if (frameIndex == M17_FRAME_SYMBOLS)
+            {
+                std::swap(activeFrame, idleFrame);
+                frameIndex = 0;
+                // DEBUG: print idleFrame bytes
+                for(size_t i = 0; i < idleFrame->size(); i+=2)
+                {
+                    if (i % 16 == 14)
+                        printf("\n");
+                    printf(" %02X%02X", (*idleFrame)[i], (*idleFrame)[i+1]);
+                }
+            }
+            if (frameIndex == 1 &&
+                ((*activeFrame)[0] != stream_syncword_bytes[0] ||
+                 (*activeFrame)[1] != stream_syncword_bytes[1])) // Lock is lost
+                locked = false;
+        }
+        // Compute phase of next buffer
+        phase = offset % M17_SAMPLES_PER_SYMBOL +
+                (M17_INPUT_BUF_SIZE % M17_SAMPLES_PER_SYMBOL);
+        // copy N samples to bridge buffer
+        memcpy(basebandBridge,
+               baseband.data + M17_FRAME_SAMPLES_24K - M17_BRIDGE_SIZE,
+               sizeof(int16_t) * M17_BRIDGE_SIZE);
     }
 }
 

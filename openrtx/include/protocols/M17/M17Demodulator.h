@@ -110,12 +110,15 @@ private:
     static constexpr float conv_stats_alpha        = 0.0001f;
     static constexpr float conv_threshold_factor   = 3.70;
     static constexpr float qnt_maxmin_alpha        = 0.999f;
+    static constexpr size_t M17_BRIDGE_SIZE        = M17_SAMPLES_PER_SYMBOL *
+                                                     M17_SYNCWORD_SYMBOLS;
 
     /**
      * M17 syncwords;
      */
     int8_t lsf_syncword[M17_SYNCWORD_SYMBOLS]    = { +3, +3, +3, +3, -3, -3, +3, -3 };
     int8_t stream_syncword[M17_SYNCWORD_SYMBOLS] = { -3, -3, -3, -3, +3, +3, -3, +3 };
+    uint8_t stream_syncword_bytes[2]             = {0xff, 0x5d};
 
     using dataBuffer_t = std::array< int16_t, M17_FRAME_SAMPLES_24K >;
     using dataFrame_t =  std::array< uint8_t, M17_FRAME_BYTES >;
@@ -127,11 +130,13 @@ private:
     int16_t      *baseband_buffer; ///< Buffer for baseband audio handling.
     dataBlock_t  baseband;         ///< Half buffer, free to be processed.
     uint16_t     *rawFrame;        ///< Analog values to be quantized.
-    uint16_t     rawFrameIndex;    ///< Index for filling the raw frame.
+    uint16_t     frameIndex;       ///< Index for filling the raw frame.
     dataFrame_t  *activeFrame;     ///< Half frame, in demodulation.
     dataFrame_t  *idleFrame;       ///< Half frame, free to be processed.
     bool         isLSF;            ///< Indicates that we demodualated an LSF.
     bool         locked;           ///< A syncword was detected.
+    int16_t      basebandBridge[M17_BRIDGE_SIZE] = { 0 }; ///< Bridge buffer
+    uint16_t     phase;            ///< Phase of the signal w.r.t. sampling
 
     /*
      * State variables
