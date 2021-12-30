@@ -177,7 +177,7 @@ private:
 
     void resetQuantizationStats();
 
-    void updateQuantizationStats(uint32_t offset);
+    void updateQuantizationStats(int32_t offset);
 
     float getQuantizationMax();
 
@@ -192,7 +192,7 @@ private:
      * @param target_size: the number of symbols of the target waveform
      * @return uint16_t numerical value of the convolution
      */
-    int32_t convolution(size_t offset, int8_t *target, size_t target_size);
+    int32_t convolution(int32_t offset, int8_t *target, size_t target_size);
 
     /**
      * Finds the index of the next frame syncword in the baseband stream.
@@ -201,7 +201,7 @@ private:
      * @param offset: offset of the buffer after which syncword are searched
      * @return uint16_t index of the first syncword in the buffer after the offset
      */
-    sync_t nextFrameSync(uint32_t offset);
+    sync_t nextFrameSync(int32_t offset);
 
     /**
      * Takes the value from the input baseband at a given offsets and quantizes
