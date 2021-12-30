@@ -22,6 +22,7 @@
 #include <M17/M17DSP.h>
 #include <M17/M17Utils.h>
 #include <interfaces/audio_stream.h>
+#include <interfaces/gpio.h>
 #include <math.h>
 #include <cstring>
 
@@ -46,13 +47,14 @@ void M17Demodulator::init()
      * placement new.
      */
 
-    baseband_buffer = new int16_t[M17_FRAME_SAMPLES_24K];
+    baseband_buffer = new int16_t[2 * M17_INPUT_BUF_SIZE];
     baseband        = { nullptr, 0 };
     activeFrame     = new dataFrame_t;
     rawFrame        = new uint16_t[M17_FRAME_SYMBOLS];
     idleFrame       = new dataFrame_t;
     frameIndex      = 0;
     phase           = 0;
+    locked          = false;
 }
 
 void M17Demodulator::terminate()
@@ -66,7 +68,6 @@ void M17Demodulator::terminate()
 
 void M17Demodulator::startBasebandSampling()
 {
-
     basebandId = inputStream_start(SOURCE_RTX, PRIO_RX,
                                    baseband_buffer,
                                    M17_INPUT_BUF_SIZE,
@@ -107,21 +108,26 @@ void M17Demodulator::resetQuantizationStats()
     qnt_max = 0.0f;
 }
 
-void M17Demodulator::updateQuantizationStats(uint32_t offset)
+void M17Demodulator::updateQuantizationStats(int32_t offset)
 {
-    auto value = baseband.data[offset];
-    if (value > qnt_max)
+    // If offset is negative use bridge buffer
+    int16_t sample = 0;
+    if (offset < 0) // When we are at negative offsets use bridge buffer
+        sample = basebandBridge[M17_BRIDGE_SIZE + offset];
+    else            // Otherwise use regular data buffer
+        sample = baseband.data[offset];
+    if (sample > qnt_max)
     {
-        qnt_max = value;
+        qnt_max = sample;
     }
     else
     {
         qnt_max *= qnt_maxmin_alpha;
     }
 
-    if (value < qnt_min)
+    if (sample < qnt_min)
     {
-        qnt_min = value;
+        qnt_min = sample;
     }
     else
     {
@@ -139,7 +145,7 @@ float M17Demodulator::getQuantizationMin()
     return qnt_min;
 }
 
-int32_t M17Demodulator::convolution(size_t offset,
+int32_t M17Demodulator::convolution(int32_t offset,
                                     int8_t *target,
                                     size_t target_size)
 {
@@ -147,7 +153,7 @@ int32_t M17Demodulator::convolution(size_t offset,
     int32_t conv = 0;
     for(uint32_t i = 0; i < target_size; i++)
     {
-        int16_t sample_index = offset + i * M17_SAMPLES_PER_SYMBOL;
+        int32_t sample_index = offset + i * M17_SAMPLES_PER_SYMBOL;
         int16_t sample = 0;
         // When we are at negative indices use bridge buffer
         if (sample_index < 0)
@@ -159,15 +165,19 @@ int32_t M17Demodulator::convolution(size_t offset,
     return conv;
 }
 
-sync_t M17Demodulator::nextFrameSync(uint32_t offset)
+sync_t M17Demodulator::nextFrameSync(int32_t offset)
 {
     sync_t syncword = { -1, false };
     // Find peaks in the correlation between the baseband and the frame syncword
     // Leverage the fact LSF syncword is the opposite of the frame syncword
     // to detect both syncwords at once.
-    for(uint32_t i = offset; syncword.index == -1 && i < baseband.len; i++)
+    for(int32_t i = offset; syncword.index == -1 && i < (int32_t) baseband.len; i++)
     {
+        // If we are not locked search for a syncword
         int32_t conv = convolution(i, stream_syncword, M17_SYNCWORD_SYMBOLS);
+        //printf("%d, ", conv);
+        //if (i % 8 == 0)
+        //    printf("\r\n");
         updateCorrelationStats(conv);
         // Positive correlation peak -> frame syncword
         if (conv > getCorrelationStddev() * conv_threshold_factor)
@@ -188,6 +198,8 @@ sync_t M17Demodulator::nextFrameSync(uint32_t offset)
 int8_t M17Demodulator::quantize(int32_t offset)
 {
     int16_t sample = 0;
+    int16_t zero = getQuantizationMin() +
+                   (getQuantizationMax() - getQuantizationMin()) / 2;
     if (offset < 0) // When we are at negative offsets use bridge buffer
         sample = basebandBridge[M17_BRIDGE_SIZE + offset];
     else            // Otherwise use regular data buffer
@@ -196,7 +208,7 @@ int8_t M17Demodulator::quantize(int32_t offset)
         return +3;
     else if (sample < getQuantizationMin() * 2 / 3)
         return -3;
-    else if (sample > 0)
+    else if (sample > zero)
         return +1;
     else
         return -1;
@@ -214,8 +226,9 @@ bool M17Demodulator::isFrameLSF()
 
 void M17Demodulator::update()
 {
-    M17::sync_t syncword = { -1, false };
-    int16_t offset = -(int16_t) M17_BRIDGE_SIZE;
+    M17::sync_t syncword = { 0, false };
+    int32_t offset = -(int32_t) M17_BRIDGE_SIZE;
+    int32_t phase = 0;
     uint16_t decoded_syms = 0;
     // Read samples from the ADC
     baseband = inputStream_getData(basebandId);
@@ -228,59 +241,82 @@ void M17Demodulator::update()
             float elem = static_cast< float >(baseband.data[i]);
             baseband.data[i] = static_cast< int16_t >(M17::rrc(elem));
         }
-        // If we are not locked search for a syncword
-        if (!locked)
+        // Process the buffer
+        while(syncword.index != -1 && (offset + 1 + phase +
+              (int32_t) M17_SAMPLES_PER_SYMBOL * decoded_syms <
+              (int32_t) baseband.len))
         {
-            syncword = nextFrameSync(-M17_SYNCWORD_SYMBOLS * M17_SAMPLES_PER_SYMBOL);
-            if (syncword.index != -1) // Lock was just acquired
+            // If we are not locked search for a syncword
+            if (!locked)
             {
-                locked = true;
-                isLSF = syncword.lsf;
-                offset = syncword.index + 2;
-                // DEBUG: prints
-                if (isLSF)
-                    printf("Found LSF!\n");
-                else
-                    printf("Found SYNC!\n");
-            }
-        }
-        else // Lock was inherited from previous frame
-            offset = phase;
-        // While we are locked, demodulate available samples
-        while (locked && offset < (int16_t) M17_FRAME_SAMPLES_24K)
-        {
-            // Slice the input buffer to extract a frame and quantize
-            uint16_t symbol_index = offset + M17_SAMPLES_PER_SYMBOL * decoded_syms;
-            updateQuantizationStats(baseband.data[symbol_index]);
-            int8_t symbol = quantize(symbol_index);
-            setSymbol<M17_FRAME_BYTES>(*activeFrame, frameIndex, symbol);
-            frameIndex++;
-            // If the frame buffer is full switch active and idle frame
-            if (frameIndex == M17_FRAME_SYMBOLS)
-            {
-                std::swap(activeFrame, idleFrame);
-                frameIndex = 0;
-                // DEBUG: print idleFrame bytes
-                for(size_t i = 0; i < idleFrame->size(); i+=2)
+                //printf("\nSearching at offset: %d\n", offset);
+                syncword = nextFrameSync(offset);
+                if (syncword.index != -1) // Lock was just acquired
                 {
-                    if (i % 16 == 14)
-                        printf("\n");
-                    printf(" %02X%02X", (*idleFrame)[i], (*idleFrame)[i+1]);
+                    locked = true;
+#ifdef PLATFORM_MOD17
+                    gpio_setPin(SYNC_LED);
+#endif // PLATFORM_MOD17
+                    isLSF = syncword.lsf;
+                    offset = syncword.index + 1;
+                    // DEBUG: prints
+                    //if (isLSF)
+                    //    printf("\nFound LSF at position %d!\r\n", syncword.index);
+                    //else
+                    //    printf("\nFound SYNC at position %d!\r\n", syncword.index);
                 }
             }
-            if (frameIndex == 1 &&
-                ((*activeFrame)[0] != stream_syncword_bytes[0] ||
-                 (*activeFrame)[1] != stream_syncword_bytes[1])) // Lock is lost
-                locked = false;
+            // While we are locked, demodulate available samples
+            while (locked)
+            {
+                // Slice the input buffer to extract a frame and quantize
+                int32_t symbol_index = offset + 1 + phase + M17_SAMPLES_PER_SYMBOL * decoded_syms;
+                updateQuantizationStats(baseband.data[symbol_index]);
+                int8_t symbol = quantize(symbol_index);
+                setSymbol<M17_FRAME_BYTES>(*activeFrame, frameIndex, symbol);
+                decoded_syms++;
+                frameIndex++;
+                //printf("%2d ", symbol);
+                //if (decoded_syms % 16 == 0)
+                //    printf("\n");
+                // If the frame buffer is full switch active and idle frame
+                if (frameIndex == M17_FRAME_SYMBOLS)
+                {
+                    std::swap(activeFrame, idleFrame);
+                    frameIndex = 0;
+                    // DEBUG: print idleFrame bytes
+                    //for(size_t i = 0; i < idleFrame->size(); i+=2)
+                    //{
+                    //    if (i % 16 == 14)
+                    //        printf("\r\n");
+                    //    printf(" %02X%02X", (*idleFrame)[i], (*idleFrame)[i+1]);
+                    //}
+                }
+                if (frameIndex == M17_SYNCWORD_SYMBOLS &&
+                    ((*activeFrame)[0] != stream_syncword_bytes[0] ||
+                     (*activeFrame)[1] != stream_syncword_bytes[1])) // Lock is lost
+                {
+                    locked = false;
+                    std::swap(activeFrame, idleFrame);
+                    frameIndex = 0;
+#ifdef PLATFORM_MOD17
+                    gpio_clearPin(SYNC_LED);
+#endif // PLATFORM_MOD17
+                }
+            }
         }
-        // Compute phase of next buffer
-        phase = offset % M17_SAMPLES_PER_SYMBOL +
-                (M17_INPUT_BUF_SIZE % M17_SAMPLES_PER_SYMBOL);
-        // copy N samples to bridge buffer
+        // We are at the end of the buffer
+        if (locked) {
+            // Compute phase of next buffer
+            phase = offset % M17_SAMPLES_PER_SYMBOL +
+                    (M17_INPUT_BUF_SIZE % M17_SAMPLES_PER_SYMBOL);
+        }
+        // Copy last N samples to bridge buffer
         memcpy(basebandBridge,
-               baseband.data + M17_FRAME_SAMPLES_24K - M17_BRIDGE_SIZE,
+               baseband.data + baseband.len - M17_BRIDGE_SIZE,
                sizeof(int16_t) * M17_BRIDGE_SIZE);
     }
+    //printf("END\n");
 }
 
 } /* M17 */
