@@ -35,6 +35,10 @@ using payload_t = std::array< uint8_t, 16 >;   // Data type for frame payload fi
 using lich_t    = std::array< uint8_t, 12 >;   // Data type for Golay(24,12) encoded LICH data
 
 
+static constexpr std::array<uint8_t, 2> LSF_SYNC_WORD  = {0x55, 0xF7};  // LSF sync word
+static constexpr std::array<uint8_t, 2> DATA_SYNC_WORD = {0xFF, 0x5D};  // Stream data sync word
+
+
 /**
  * This structure provides bit field definitions for the "TYPE" field
  * contained in an M17 Link Setup Frame.
@@ -49,35 +53,11 @@ typedef union
         uint16_t encSubType : 2;    //< Encryption subtype
         uint16_t CAN        : 4;    //< Channel Access Number
         uint16_t            : 4;    //< Reserved, padding to 16 bit
-    };
+    }
+    fields;
 
     uint16_t value;
 }
 streamType_t;
-
-
-/**
- * Data structure corresponding to a full M17 Link Setup Frame.
- */
-typedef struct
-{
-    call_t       dst;    //< Destination callsign
-    call_t       src;    //< Source callsign
-    streamType_t type;   //< Stream type information
-    meta_t       meta;   //< Metadata
-    uint16_t     crc;    //< CRC
-}
-__attribute__((packed)) lsf_t;
-
-
-/**
- * Data structure corresponding to a full M17 data frame.
- */
-typedef struct
-{
-    uint16_t   frameNum;  //< Frame number
-    payload_t  payload;   //< Payload data
-}
-__attribute__((packed)) dataFrame_t;
 
 #endif /* M17_DATATYPES_H */

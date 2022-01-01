@@ -26,9 +26,6 @@
 namespace M17
 {
 
-static constexpr std::array<uint8_t, 2> LSF_SYNC_WORD  = {0x55, 0xF7};
-static constexpr std::array<uint8_t, 2> DATA_SYNC_WORD = {0xFF, 0x5D};
-
 M17Transmitter::M17Transmitter(M17Modulator& modulator) : modulator(modulator),
                                                 currentLich(0), frameNumber(0)
 {
@@ -59,9 +56,9 @@ void M17Transmitter::start(const std::string& src, const std::string& dst)
     if(!dst.empty()) lsf.setDestination(dst);
 
     streamType_t type;
-    type.stream   = 1;    // Stream
-    type.dataType = 2;    // Voice data
-    type.CAN      = 0;  // Channel access number
+    type.fields.stream   = 1;    // Stream
+    type.fields.dataType = 2;    // Voice data
+    type.fields.CAN      = 0;  // Channel access number
 
     lsf.setType(type);
     lsf.updateCrc();
@@ -75,7 +72,7 @@ void M17Transmitter::start(const std::string& src, const std::string& dst)
     // Encode the LSF, then puncture and decorrelate its data
     std::array<uint8_t, 61> encoded;
     encoder.reset();
-    encoder.encode(&lsf.getData(), encoded.data(), sizeof(lsf_t));
+    encoder.encode(lsf.getData(), encoded.data(), sizeof(M17LinkSetupFrame));
     encoded[60] = encoder.flush();
 
     std::array<uint8_t, 46> punctured;
@@ -105,7 +102,7 @@ void M17Transmitter::send(const payload_t& payload, const bool isLast)
     // Encode frame
     std::array<uint8_t, 37> encoded;
     encoder.reset();
-    encoder.encode(&dataFrame.getData(), encoded.data(), sizeof(dataFrame_t));
+    encoder.encode(dataFrame.getData(), encoded.data(), sizeof(M17Frame));
     encoded[36] = encoder.flush();
 
     std::array<uint8_t, 34> punctured;

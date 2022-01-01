@@ -89,30 +89,28 @@ public:
     }
 
     /**
-     * Get underlying data structure.
+     * Get underlying data.
      *
-     * @return a reference to the underlying dataFrame_t data structure.
+     * @return a pointer to const uint8_t allowing direct access to frame data.
      */
-    dataFrame_t& getData()
+    const uint8_t *getData()
     {
-        return data;
-    }
-
-    /**
-     * Dump the frame content to a std::array.
-     *
-     * \return std::array containing the content of the frame.
-     */
-    std::array< uint8_t, sizeof(dataFrame_t) > toArray()
-    {
-        std::array< uint8_t, sizeof(dataFrame_t) > frame;
-        memcpy(frame.data(), &data, frame.size());
-        return frame;
+        return reinterpret_cast < const uint8_t * > (&data);
     }
 
 private:
 
-    dataFrame_t data;   ///< Underlying frame data.
+    /**
+     * Data structure corresponding to a full M17 data frame.
+     */
+    typedef struct
+    {
+        uint16_t   frameNum;  ///< Frame number
+        payload_t  payload;   ///< Payload data
+    }
+    __attribute__((packed)) dataFrame_t;
+
+    dataFrame_t data;         ///< Underlying frame data.
 };
 
 #endif /* M17_FRAME_H */
