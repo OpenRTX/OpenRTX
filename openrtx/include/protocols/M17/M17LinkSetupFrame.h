@@ -62,11 +62,25 @@ public:
     void setSource(const std::string& callsign);
 
     /**
+     * Get source callsign.
+     *
+     * @return: string containing the source callsign.
+     */
+    std::string getSource();
+
+    /**
      * Set destination callsign.
      *
      * @param callsign: string containing the destination callsign.
      */
     void setDestination(const std::string& callsign);
+
+    /**
+     * Get destination callsign.
+     *
+     * @return: string containing the destination callsign.
+     */
+    std::string getDestination();
 
     /**
      * Get stream type field.
@@ -97,11 +111,20 @@ public:
     void updateCrc();
 
     /**
-     * Get underlying data structure.
+     * Check if frame data is valid that is, if the CRC computed over the LSF
+     * fields matches the one carried by the LSF itself.
      *
-     * @return a reference to the underlying dataFrame_t data structure.
+     * @return true if CRC of LSF data matches the one stored in the LSF itself,
+     * false otherwise.
      */
-    lsf_t& getData();
+    bool valid();
+
+    /**
+     * Get underlying data.
+     *
+     * @return a pointer to const uint8_t allowing direct access to LSF data.
+     */
+    const uint8_t *getData();
 
     /**
      * Generate one of the six possible LSF chunks for embedding in data frame's
@@ -111,13 +134,6 @@ public:
      * @return Golay (24,12) encoded LSF chunk.
      */
     lich_t generateLichSegment(const uint8_t segmentNum);
-
-    /**
-     * Dump the frame content to a std::array.
-     *
-     * \return std::array containing the content of the frame.
-     */
-    std::array< uint8_t, sizeof(lsf_t) > toArray();
 
 private:
 
@@ -131,7 +147,20 @@ private:
      */
     uint16_t crc16(const void *data, const size_t len);
 
-    lsf_t data;    ///< Underlying frame data.
+    /**
+     * Data structure corresponding to a full M17 Link Setup Frame.
+     */
+    typedef struct
+    {
+        call_t       dst;    ///< Destination callsign
+        call_t       src;    ///< Source callsign
+        streamType_t type;   ///< Stream type information
+        meta_t       meta;   ///< Metadata
+        uint16_t     crc;    ///< CRC
+    }
+    __attribute__((packed)) lsf_t;
+
+    lsf_t data;              ///< Underlying frame data.
 };
 
 #endif /* M17_LINKSETUPFRAME_H */

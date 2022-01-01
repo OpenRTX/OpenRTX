@@ -45,9 +45,19 @@ void M17LinkSetupFrame::setSource(const std::string& callsign)
     encode_callsign(callsign, data.src);
 }
 
+std::string M17LinkSetupFrame::getSource()
+{
+    return decode_callsign(data.src);
+}
+
 void M17LinkSetupFrame::setDestination(const std::string& callsign)
 {
     encode_callsign(callsign, data.dst);
+}
+
+std::string M17LinkSetupFrame::getDestination()
+{
+    return decode_callsign(data.dst);
 }
 
 streamType_t M17LinkSetupFrame::getType()
@@ -77,9 +87,17 @@ void M17LinkSetupFrame::updateCrc()
     data.crc     = __builtin_bswap16(crc);
 }
 
-lsf_t& M17LinkSetupFrame::getData()
+bool M17LinkSetupFrame::valid()
 {
-    return data;
+    uint16_t crc = crc16(&data, 28);
+    if(data.crc == __builtin_bswap16(crc)) return true;
+
+    return false;
+}
+
+const uint8_t * M17LinkSetupFrame::getData()
+{
+    return reinterpret_cast < const uint8_t * >(&data);
 }
 
 lich_t M17LinkSetupFrame::generateLichSegment(const uint8_t segmentNum)
@@ -117,13 +135,6 @@ lich_t M17LinkSetupFrame::generateLichSegment(const uint8_t segmentNum)
     }
 
     return result;
-}
-
-std::array< uint8_t, sizeof(lsf_t) > M17LinkSetupFrame::toArray()
-{
-    std::array< uint8_t, sizeof(lsf_t) > frame;
-    memcpy(frame.data(), &data, frame.size());
-    return frame;
 }
 
 uint16_t M17LinkSetupFrame::crc16(const void *data, const size_t len)
