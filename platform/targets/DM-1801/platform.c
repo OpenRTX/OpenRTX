@@ -44,7 +44,9 @@ void platform_init()
 
     gpio_setMode(PTT_SW, INPUT);
 
+    #ifndef DISABLE_KEEP_ON
     gpio_setMode(PWR_SW, OUTPUT);
+    #endif
 
     backlight_init();                /* Initialise backlight driver        */
     audio_init();                    /* Initialise audio management module */
