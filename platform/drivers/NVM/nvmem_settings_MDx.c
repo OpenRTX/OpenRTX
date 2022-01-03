@@ -23,7 +23,10 @@
 #include <cps.h>
 #include "flash.h"
 
-
+/*
+ * Data structure defining the memory layout used for saving and restore
+ * of user settings and VFO configuration.
+ */
 typedef struct
 {
     uint32_t magic;
@@ -37,7 +40,10 @@ typedef struct
 }
 __attribute__((packed)) memory_t;
 
-static const uint32_t validMagic  = 0x5854524F;    // "ORTX"
+// Legacy magic number, from previous versions
+static const uint32_t legacyMagic = 0x5854524F;    // "ORTX"
+
+static const uint32_t validMagic  = 0x5854504F;    // "OPTX"
 static const uint32_t baseAddress = 0x080E0000;
 memory_t *memory = ((memory_t *) baseAddress);
 
@@ -45,13 +51,17 @@ memory_t *memory = ((memory_t *) baseAddress);
 /**
  * \internal
  * Utility function to find the currently active data block inside memory, that
- * is the one containing the last saved settings.
+ * is the one containing the last saved settings. Blocks containing legacy data
+ * are marked with numbers starting from 4096.
  *
  * @return number currently active data block or -1 if memory data is invalid.
  */
 int findActiveBlock()
 {
-    if(memory->magic != validMagic) return -1;
+    if((memory->magic != validMagic) && (memory->magic != legacyMagic))
+    {
+        return -1;     // Invalid memory data
+    }
 
     uint16_t block = 0;
     for(; block < 64; block++)
@@ -72,6 +82,10 @@ int findActiveBlock()
     }
 
     block = (block * 32) + bit;
+
+    // Mark block as containing legacy data by adding 4096.
+    if(memory->magic == legacyMagic) block += 4096;
+
     return block - 1;
 }
 
@@ -80,16 +94,45 @@ int findActiveBlock()
 int nvm_readVFOChannelData(channel_t *channel)
 {
     int block = findActiveBlock();
+
+    // Invalid data found
     if(block < 0) return -1;
-    memcpy(channel, &(memory->data[block].vfoData), sizeof(channel_t));
+
+    // Try loading data, if "block" is greater than 2048 the pointer will be
+    // overwritten below without harm.
+    uint8_t *ptr = ((uint8_t *) &(memory->data[block].vfoData));
+
+    // Check if we have to load legacy data.
+    if(block > 2048)
+    {
+        block -= 4096;
+        ptr    = ((uint8_t *) &(memory->data[block].vfoData));
+        ptr   -= 1;
+    }
+
+    memcpy(channel, ptr, sizeof(channel_t));
     return 0;
 }
 
 int nvm_readSettings(settings_t *settings)
 {
     int block = findActiveBlock();
+
+    // Invalid data found
     if(block < 0) return -1;
-    memcpy(settings, &(memory->data[block].settings), sizeof(settings_t));
+
+    // Check if we have to load legacy data.
+    if(block > 2048)
+    {
+        block -= 4096;
+        memcpy(settings, &(memory->data[block].settings), sizeof(settings_t));
+        settings->display_timer = TIMER_30S;
+    }
+    else
+    {
+        memcpy(settings, &(memory->data[block].settings), sizeof(settings_t));
+    }
+
     return 0;
 }
 
