@@ -34,9 +34,9 @@ using meta_t    = std::array< uint8_t, 14 >;   // Data type for LSF metadata fie
 using payload_t = std::array< uint8_t, 16 >;   // Data type for frame payload field
 using lich_t    = std::array< uint8_t, 12 >;   // Data type for Golay(24,12) encoded LICH data
 
-
-static constexpr std::array<uint8_t, 2> LSF_SYNC_WORD  = {0x55, 0xF7};  // LSF sync word
-static constexpr std::array<uint8_t, 2> DATA_SYNC_WORD = {0xFF, 0x5D};  // Stream data sync word
+static constexpr std::array<uint8_t, 2> LSF_SYNC_WORD    = {0x55, 0xF7};  // LSF sync word
+static constexpr std::array<uint8_t, 2> DATA_SYNC_WORD   = {0xFF, 0x5D};  // Stream data sync word
+static constexpr std::array<uint8_t, 2> PACKET_SYNC_WORD = {0x75, 0xFF};  // Packet data sync word
 
 
 /**

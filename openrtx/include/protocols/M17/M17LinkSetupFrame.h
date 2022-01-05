@@ -29,6 +29,8 @@
 #include <array>
 #include "M17Datatypes.h"
 
+class M17FrameDecoder;
+
 /**
  * This class describes and handles an M17 Link Setup Frame.
  * By default the frame contains a broadcast destination address, unless a
@@ -157,6 +159,9 @@ private:
         uint16_t     crc;    ///< CRC
     }
     data;                    ///< Frame data.
+
+    // Frame decoder class needs to access raw frame data
+    friend class M17FrameDecoder;
 };
 
 #endif /* M17_LINKSETUPFRAME_H */
