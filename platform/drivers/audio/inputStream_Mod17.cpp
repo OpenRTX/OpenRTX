@@ -156,12 +156,6 @@ streamId inputStream_start(const enum AudioSource source,
             bufCurr = bufAddr;                  // Return all the buffer
             break;
 
-        case BUF_CIRC:
-            DMA2_Stream2->CR |= DMA_SxCR_CIRC   // Circular mode
-                             |  DMA_SxCR_TCIE;  // Interrupt on transfer end
-            bufCurr = bufAddr;                  // Return all the buffer
-            break;
-
         case BUF_CIRC_DOUBLE:
             DMA2_Stream2->CR |= DMA_SxCR_CIRC   // Circular mode
                              |  DMA_SxCR_HTIE   // Interrupt on half transfer
@@ -222,7 +216,7 @@ streamId inputStream_start(const enum AudioSource source,
             break;
     }
 
-    if((mode == BUF_CIRC) || (mode == BUF_CIRC_DOUBLE))
+    if(mode == BUF_CIRC_DOUBLE)
     {
         DMA2_Stream2->CR |= DMA_SxCR_EN;    // Enable DMA
         ADC2->CR2        |= ADC_CR2_ADON;   // Enable ADC
