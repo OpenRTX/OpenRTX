@@ -29,6 +29,8 @@
 #include <string>
 #include "M17Datatypes.h"
 
+class M17FrameDecoder;
+
 /**
  * This class describes and handles a generic M17 data frame.
  */
@@ -131,6 +133,9 @@ private:
                                                    ///< Frame data.
     static constexpr uint16_t EOS_BIT = 0x0080;    ///< End Of Stream bit.
     static constexpr uint16_t FN_MASK = 0x7FFF;    ///< Bitmask for frame number.
+
+    // Frame decoder class needs to access raw frame data
+    friend class M17FrameDecoder;
 };
 
 #endif /* M17_FRAME_H */
