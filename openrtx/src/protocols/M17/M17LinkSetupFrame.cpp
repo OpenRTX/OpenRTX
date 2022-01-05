@@ -36,7 +36,7 @@ M17LinkSetupFrame::~M17LinkSetupFrame()
 
 void M17LinkSetupFrame::clear()
 {
-    memset(&data, 0x00, sizeof(lsf_t));
+    memset(&data, 0x00, sizeof(data));
     data.dst.fill(0xFF);
 }
 

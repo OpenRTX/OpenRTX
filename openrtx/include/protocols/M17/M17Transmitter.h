@@ -29,7 +29,7 @@
 #include <array>
 #include "M17ConvolutionalEncoder.h"
 #include "M17LinkSetupFrame.h"
-#include "M17Frame.h"
+#include "M17StreamFrame.h"
 #include "M17Modulator.h"
 
 namespace M17
@@ -83,7 +83,7 @@ private:
 
     M17ConvolutionalEncoder      encoder;    ///< Convolutional encoder.
     M17LinkSetupFrame                lsf;    ///< Link Setup Frame handler.
-    M17Frame                   dataFrame;    ///< Data frame Handler.
+    M17StreamFrame             dataFrame;    ///< Data frame Handler.
     M17Modulator&              modulator;    ///< 4FSK modulator.
     std::array< lich_t, 6 > lichSegments;    ///< Encoded LSF chunks for LICH generation.
     uint8_t                  currentLich;    ///< Index of current LSF chunk.

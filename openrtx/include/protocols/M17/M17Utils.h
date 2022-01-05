@@ -102,7 +102,7 @@ inline void setSymbol(std::array< uint8_t, N >& array, const size_t pos,
             setBit<N> (array, 2 * pos + 1, 1);
             break;
         default:
-            assert("Error: storing unknown M17 symbol!");
+            assert("Error: unknown M17 symbol!");
     }
 }
 

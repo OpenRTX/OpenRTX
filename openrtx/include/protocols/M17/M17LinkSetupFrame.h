@@ -147,10 +147,8 @@ private:
      */
     uint16_t crc16(const void *data, const size_t len);
 
-    /**
-     * Data structure corresponding to a full M17 Link Setup Frame.
-     */
-    typedef struct
+
+    struct __attribute__((packed))
     {
         call_t       dst;    ///< Destination callsign
         call_t       src;    ///< Source callsign
@@ -158,9 +156,7 @@ private:
         meta_t       meta;   ///< Metadata
         uint16_t     crc;    ///< CRC
     }
-    __attribute__((packed)) lsf_t;
-
-    lsf_t data;              ///< Underlying frame data.
+    data;                    ///< Frame data.
 };
 
 #endif /* M17_LINKSETUPFRAME_H */
