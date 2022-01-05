@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2021 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -32,14 +32,14 @@
 /**
  * This class describes and handles a generic M17 data frame.
  */
-class M17Frame
+class M17StreamFrame
 {
 public:
 
     /**
      * Constructor.
      */
-    M17Frame()
+    M17StreamFrame()
     {
         clear();
     }
@@ -47,14 +47,14 @@ public:
     /**
      * Destructor.
      */
-    ~M17Frame(){ }
+    ~M17StreamFrame(){ }
 
     /**
      * Clear the frame content, filling it with zeroes.
      */
     void clear()
     {
-        memset(&data, 0x00, sizeof(dataFrame_t));
+        memset(&data, 0x00, sizeof(data));
     }
 
     /**
@@ -65,7 +65,18 @@ public:
     void setFrameNumber(const uint16_t seqNum)
     {
         // NOTE: M17 fields are big-endian, we need to swap bytes
-        data.frameNum = __builtin_bswap16(seqNum &  0x7fff);
+        data.frameNum = __builtin_bswap16(seqNum & FN_MASK);
+    }
+
+    /**
+     * Get frame sequence number.
+     *
+     * @return frame number, between 0 and 0x7FFF.
+     */
+    uint16_t getFrameNumber()
+    {
+        // NOTE: M17 fields are big-endian, we need to swap bytes
+        return __builtin_bswap16(data.frameNum);
     }
 
     /**
@@ -74,7 +85,18 @@ public:
      */
     void lastFrame()
     {
-        data.frameNum |= 0x0080;
+        data.frameNum |= EOS_BIT;
+    }
+
+    /**
+     * Check if this frame is the last one that is, get the value of the EOS
+     * bit.
+     *
+     * @return true if the frame has the EOS bit set.
+     */
+    bool isLastFrame()
+    {
+        return ((data.frameNum & EOS_BIT) != 0) ? true : false;
     }
 
     /**
@@ -100,17 +122,15 @@ public:
 
 private:
 
-    /**
-     * Data structure corresponding to a full M17 data frame.
-     */
-    typedef struct
+    struct __attribute__((packed))
     {
-        uint16_t   frameNum;  ///< Frame number
-        payload_t  payload;   ///< Payload data
+        uint16_t   frameNum;  // Frame number
+        payload_t  payload;   // Payload data
     }
-    __attribute__((packed)) dataFrame_t;
-
-    dataFrame_t data;         ///< Underlying frame data.
+    data;
+                                                   ///< Frame data.
+    static constexpr uint16_t EOS_BIT = 0x0080;    ///< End Of Stream bit.
+    static constexpr uint16_t FN_MASK = 0x7FFF;    ///< Bitmask for frame number.
 };
 
 #endif /* M17_FRAME_H */

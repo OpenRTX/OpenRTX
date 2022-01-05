@@ -102,7 +102,7 @@ void M17Transmitter::send(const payload_t& payload, const bool isLast)
     // Encode frame
     std::array<uint8_t, 37> encoded;
     encoder.reset();
-    encoder.encode(dataFrame.getData(), encoded.data(), sizeof(M17Frame));
+    encoder.encode(dataFrame.getData(), encoded.data(), sizeof(M17StreamFrame));
     encoded[36] = encoder.flush();
 
     std::array<uint8_t, 34> punctured;
