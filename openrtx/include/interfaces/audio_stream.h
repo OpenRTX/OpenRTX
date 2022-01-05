@@ -26,8 +26,6 @@
 #include "audio_path.h"
 
 #ifdef __cplusplus
-#include <array>
-
 extern "C" {
 #endif
 
@@ -37,7 +35,6 @@ typedef int8_t  streamId;
 enum BufMode
 {
     BUF_LINEAR,        ///< Linear buffer mode, conversion stops when full.
-    BUF_CIRC,          ///< Circular buffer mode, conversion never stops, thread woken up when full.
     BUF_CIRC_DOUBLE    ///< Circular double buffer mode, conversion never stops, thread woken up whenever half of the buffer is full.
 };
 
@@ -94,8 +91,9 @@ void inputStream_stop(streamId id);
 
 /**
  * Send an audio stream to a given output. This function returns immediately if
- * there is not another stream already running, otherwise it will block the
- * caller until the previous stream terminates.
+ * there is not another stream already running with the same destination and
+ * priority of the ones specified, otherwise it will block the caller until the
+ * previous stream terminates.
  * If a stream is opened from the same source but with an higher priority than
  * the one currently open, the new stream takes over the previous one.
  *
@@ -124,36 +122,6 @@ void outputStream_stop(streamId id);
 
 #ifdef __cplusplus
 }
-
-/**
- * Get a chunk of data from an already opened input stream, blocking function.
- * If buffer management is configured to BUF_LINEAR this function also starts a
- * new data acquisition.
- * Application code MUST ensure that the template parameter specifying the size
- * of the returned std::array matches the size of the expected buffer, i.e.
- * if acquisition is configured as double circular buffer, the template parameter
- * must be set to one half of the buffer passed to inputStream_start.
- * If there is a mismatch between the size of the std::array and the size of the
- * data block returned (which is deterministic), a nullptr is returned.
- *
- * @param id: identifier of the stream to get data from.
- * @return std::array pointer containing the acquired samples, nullptr if another
- * thread is pending on this function.
- */
-template <size_t N>
-std::array<stream_sample_t, N> *inputStream_getData(streamId id)
-{
-    /*
-     * Call corresponding C API then use placement new to obtain a std::array
-     * from the pointer returned. This is possible only if sizes are equal, thus
-     * an equality check is preformed and a nullptr is returned in case of
-     * mismatch.
-     */
-    dataBlock_t buffer = inputStream_getData(id);
-    if(buffer.len != N) return nullptr;
-    return new (buffer.data) std::array<stream_sample_t, N>;
-}
-
 #endif
 
 #endif /* AUDIO_STREAM_H */
