@@ -64,7 +64,7 @@ M17FrameType M17FrameDecoder::decodeFrame(const std::array< uint8_t, 48 >& frame
     }
 
     // Stream data frame
-    if(syncWord == DATA_SYNC_WORD)
+    if(syncWord == STREAM_SYNC_WORD)
     {
         decodeStream(data);
         return M17FrameType::STREAM;
@@ -78,7 +78,7 @@ void M17FrameDecoder::decodeLSF(const std::array< uint8_t, 46 >& data)
 {
     std::array< uint8_t, sizeof(M17LinkSetupFrame) > tmp;
 
-    viterbi.decodePunctured(data, tmp, LSF_puncture);
+    viterbi.decodePunctured(data, tmp, LSF_PUNCTURE);
     memcpy(&lsf.data, tmp.data(), tmp.size());
 }
 
@@ -118,7 +118,7 @@ void M17FrameDecoder::decodeStream(const std::array< uint8_t, 46 >& data)
     begin     += lich.size();
     std::copy(begin, data.end(), punctured.begin());
 
-    viterbi.decodePunctured(punctured, tmp, Audio_puncture);
+    viterbi.decodePunctured(punctured, tmp, DATA_PUNCTURE);
     memcpy(&streamFrame.data, tmp.data(), tmp.size());
 }
 

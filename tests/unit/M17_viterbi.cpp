@@ -67,13 +67,13 @@ int main()
     encoded[36] = encoder.flush();
 
     array<uint8_t, 34> punctured;
-    puncture(encoded, punctured, Audio_puncture);
+    puncture(encoded, punctured, DATA_PUNCTURE);
 
     generateErrors(punctured);
 
     array< uint8_t, 18 > result;
     M17Viterbi decoder;
-    decoder.decodePunctured(punctured, result, Audio_puncture);
+    decoder.decodePunctured(punctured, result, DATA_PUNCTURE);
 
     for(size_t i = 0; i < result.size(); i++)
     {
