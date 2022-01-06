@@ -35,9 +35,8 @@ using payload_t = std::array< uint8_t, 16 >;   // Data type for frame payload fi
 using lich_t    = std::array< uint8_t, 12 >;   // Data type for Golay(24,12) encoded LICH data
 
 static constexpr std::array<uint8_t, 2> LSF_SYNC_WORD    = {0x55, 0xF7};  // LSF sync word
-static constexpr std::array<uint8_t, 2> DATA_SYNC_WORD   = {0xFF, 0x5D};  // Stream data sync word
+static constexpr std::array<uint8_t, 2> STREAM_SYNC_WORD = {0xFF, 0x5D};  // Stream data sync word
 static constexpr std::array<uint8_t, 2> PACKET_SYNC_WORD = {0x75, 0xFF};  // Packet data sync word
-
 
 /**
  * This structure provides bit field definitions for the "TYPE" field

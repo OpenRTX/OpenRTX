@@ -76,7 +76,7 @@ void M17Transmitter::start(const std::string& src, const std::string& dst)
     encoded[60] = encoder.flush();
 
     std::array<uint8_t, 46> punctured;
-    puncture(encoded, punctured, LSF_puncture);
+    puncture(encoded, punctured, LSF_PUNCTURE);
     interleave(punctured);
     decorrelate(punctured);
 
@@ -106,7 +106,7 @@ void M17Transmitter::send(const payload_t& payload, const bool isLast)
     encoded[36] = encoder.flush();
 
     std::array<uint8_t, 34> punctured;
-    puncture(encoded, punctured, Audio_puncture);
+    puncture(encoded, punctured, DATA_PUNCTURE);
 
     // Add LICH segment to coded data and send
     std::array<uint8_t, 46> frame;
@@ -121,7 +121,7 @@ void M17Transmitter::send(const payload_t& payload, const bool isLast)
     interleave(frame);
     decorrelate(frame);
 
-    modulator.send(DATA_SYNC_WORD, frame, isLast);
+    modulator.send(STREAM_SYNC_WORD, frame, isLast);
 }
 
 } /* M17 */
