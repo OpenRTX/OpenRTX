@@ -43,6 +43,7 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/protocols/M17/M17Callsign.cpp',
                'openrtx/src/protocols/M17/M17Modulator.cpp',
                'openrtx/src/protocols/M17/M17Demodulator.cpp',
+               'openrtx/src/protocols/M17/M17FrameEncoder.cpp',
                'openrtx/src/protocols/M17/M17FrameDecoder.cpp',
                'openrtx/src/protocols/M17/M17Transmitter.cpp',
                'openrtx/src/protocols/M17/M17LinkSetupFrame.cpp']

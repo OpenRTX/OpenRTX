@@ -38,7 +38,7 @@ void M17FrameDecoder::reset()
     streamFrame.clear();
 }
 
-M17FrameType M17FrameDecoder::decodeFrame(const std::array< uint8_t, 48 >& frame)
+M17FrameType M17FrameDecoder::decodeFrame(const frame_t& frame)
 {
     std::array< uint8_t, 2 >  syncWord;
     std::array< uint8_t, 46 > data;

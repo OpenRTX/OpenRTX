@@ -69,7 +69,7 @@ public:
      * @param frame: byte array containg frame data.
      * @return the type of frame recognized.
      */
-    M17FrameType decodeFrame(const std::array< uint8_t, 48 >& frame);
+    M17FrameType decodeFrame(const frame_t& frame);
 
     /**
      * Get the latest Link Setup Frame decoded. Check of the validity of the
