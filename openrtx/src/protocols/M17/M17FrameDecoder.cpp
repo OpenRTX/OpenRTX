@@ -94,15 +94,17 @@ void M17FrameDecoder::decodeStream(const std::array< uint8_t, 46 >& data)
     if(decodeOk)
     {
         // Append LICH segment
-        uint8_t segmentNum = lsfSegment[5];
+        uint8_t segmentNum  = lsfSegment[5];
+        uint8_t segmentSize = lsfSegment.size() - 1;
         uint8_t *ptr = reinterpret_cast < uint8_t * >(&lsfFromLich.data);
-        memcpy(ptr + segmentNum, lsfSegment.data(), 5);
+        ptr += segmentNum * segmentSize;
+        memcpy(ptr, lsfSegment.data(), segmentSize);
 
         // Mark this segment as present
         lsfSegmentMap |= 1 << segmentNum;
 
         // Check if we have received all the five LICH segments
-        if(lsfSegmentMap == 0x1F)
+        if(lsfSegmentMap == 0x3F)
         {
             if(lsfFromLich.valid()) lsf = lsfFromLich;
             lsfSegmentMap = 0;
