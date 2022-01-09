@@ -84,6 +84,6 @@
 #define SOFTPOT_TX 0x2F
 
 /* M17 demodulation */
-#define M17_SPS 5
+#define M17_RX_SAMPLE_RATE 24000
 
 #endif

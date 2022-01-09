@@ -56,4 +56,4 @@
 #define PTT_SW "PTT_SW",11
 
 /* M17 demodulation */
-#define M17_SPS 10
+#define M17_RX_SAMPLE_RATE 48000
