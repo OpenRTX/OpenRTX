@@ -54,6 +54,7 @@ tags
 # subprojects
 subprojects/radio_tool
 subprojects/codec2
+subprojects/tinyusb
 
 #ignore log files
 *.log

@@ -85,6 +85,9 @@ else
   codec2_dep  = dependency('codec2')
 endif
 
+# tinyusb, An open source cross-platform USB stack for embedded system
+tinyusb_proj = subproject('tinyusb')
+tinyusb_dep  = tinyusb_proj.get_variable('tinyusb_dep')
 
 ##
 ## RTOS
@@ -418,7 +421,7 @@ md3x0_opts = {'sources' : md3x0_src,
               'cpp_args': md3x0_args,
               'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld',
                              '-Wl,--print-memory-usage'],
-              'dependencies': [codec2_dep],
+              'dependencies': [codec2_dep, tinyusb_dep],
               'include_directories': md3x0_inc}
 
 mduv3x0_opts = {'sources': mduv3x0_src,
@@ -426,7 +429,7 @@ mduv3x0_opts = {'sources': mduv3x0_src,
                 'cpp_args': mduv3x0_args,
                 'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld',
                                '-Wl,--print-memory-usage'],
-                'dependencies': [codec2_dep],
+                'dependencies': [codec2_dep, tinyusb_dep],
                 'include_directories': mduv3x0_inc}
 
 gd77_opts = {'sources': gd77_src,
@@ -450,7 +453,7 @@ md9600_opts = {'sources': md9600_src,
                'cpp_args': md9600_args,
                'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld',
                               '-Wl,--print-memory-usage'],
-               'dependencies': [codec2_dep],
+               'dependencies': [codec2_dep, tinyusb_dep],
                'include_directories': md9600_inc}
 
 mod17_opts  = {'sources': mod17_src,
@@ -458,7 +461,7 @@ mod17_opts  = {'sources': mod17_src,
                'cpp_args': mod17_args,
                'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_Mod17.ld',
                               '-Wl,--print-memory-usage'],
-               'dependencies': [codec2_dep],
+               'dependencies': [codec2_dep, tinyusb_dep],
                'include_directories': mod17_inc}
 
 ##
