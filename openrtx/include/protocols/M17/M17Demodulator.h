@@ -99,12 +99,12 @@ private:
      * our input buffer contains half M17 frame.
      */
     // TODO: Select correct RRC filter according to sample rate
-    static constexpr size_t M17_RX_SAMPLE_RATE     = 24000;
+    static constexpr size_t M17_SYMBOL_RATE        = 4800;
     static constexpr size_t M17_FRAME_SAMPLES_24K  = 960;
     static constexpr size_t M17_FRAME_SYMBOLS      = 192;
     static constexpr size_t M17_SYNCWORD_SYMBOLS   = 8;
     static constexpr size_t M17_CONV_THRESHOLD     = 50000;
-    static constexpr size_t M17_SAMPLES_PER_SYMBOL = M17_SPS;
+    static constexpr size_t M17_SAMPLES_PER_SYMBOL = M17_RX_SAMPLE_RATE / M17_SYMBOL_RATE;
     static constexpr size_t M17_INPUT_BUF_SIZE     = M17_FRAME_SAMPLES_24K / 2;
     static constexpr size_t M17_FRAME_BYTES        = M17_FRAME_SYMBOLS / 4;
     static constexpr float conv_stats_alpha        = 0.0001f;

@@ -92,7 +92,7 @@ int main()
     fprintf(output_csv_1, "Input,RRCSignal,LSFConvolution,FrameConvolution,Stddev\n");
     // Test convolution
     m17Demodulator.resetCorrelationStats();
-    for(unsigned i = 0; i < baseband_samples - m17Demodulator.M17_SYNCWORD_SYMBOLS * M17_SPS; i++)
+    for(unsigned i = 0; i < baseband_samples - m17Demodulator.M17_SYNCWORD_SYMBOLS * m17Demodulator.M17_SAMPLES_PER_SYMBOL; i++)
     {
         int32_t lsf_conv =
             m17Demodulator.convolution(i,
@@ -125,7 +125,7 @@ int main()
         int expected_syncword = 0;
         fscanf(syncword_ref, "%d\n", &expected_syncword);
         syncword = m17Demodulator.nextFrameSync(offset);
-        offset = syncword.index + m17Demodulator.M17_SYNCWORD_SYMBOLS * M17_SPS;
+        offset = syncword.index + m17Demodulator.M17_SYNCWORD_SYMBOLS * m17Demodulator.M17_SAMPLES_PER_SYMBOL;
         //printf("%d\n", syncword.index);
         if (syncword.index != expected_syncword)
         {
@@ -147,14 +147,14 @@ int main()
     syncword = { -1, false };
     m17Demodulator.resetCorrelationStats();
     syncword = m17Demodulator.nextFrameSync(offset);
-    for(unsigned i = 0; i < baseband_samples - m17Demodulator.M17_SYNCWORD_SYMBOLS * M17_SPS; i++)
+    for(unsigned i = 0; i < baseband_samples - m17Demodulator.M17_SYNCWORD_SYMBOLS * m17Demodulator.M17_SAMPLES_PER_SYMBOL; i++)
     {
         if ((int) i == syncword.index + 2) {
             if (syncword.lsf)
                 detect = -40000;
             else
                 detect = 40000;
-            syncword = m17Demodulator.nextFrameSync(syncword.index + m17Demodulator.M17_SYNCWORD_SYMBOLS * M17_SPS);
+            syncword = m17Demodulator.nextFrameSync(syncword.index + m17Demodulator.M17_SYNCWORD_SYMBOLS * m17Demodulator.M17_SAMPLES_PER_SYMBOL);
         } else if (((int) i % 10) == ((syncword.index + 2) % 10)) {
             m17Demodulator.updateQuantizationStats(i);
             symbol = m17Demodulator.quantize(i) * 10000;
@@ -228,7 +228,6 @@ int main()
     }
     printf("Failed decoding %d/%d bytes!\n", failed_bytes, total_bytes);
 
-    // TODO: keep aside end of last buffer and use at beginning of the next buffer
     // TODO: when stream is over pad with zeroes to avoid corrupting the last symbols
 
     m17Demodulator.baseband = old_baseband;
