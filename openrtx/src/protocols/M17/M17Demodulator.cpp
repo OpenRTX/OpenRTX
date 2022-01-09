@@ -25,6 +25,7 @@
 #include <interfaces/gpio.h>
 #include <math.h>
 #include <cstring>
+#include <stdio.h>
 
 namespace M17
 {
@@ -55,6 +56,15 @@ void M17Demodulator::init()
     frameIndex      = 0;
     phase           = 0;
     locked          = false;
+
+#ifndef PLATFORM_MOD17
+    FILE *csv_log = fopen("demod_log_1.csv", "w");
+    fprintf(csv_log, "Signal,Convolution,Threshold\n");
+    fclose(csv_log);
+    csv_log = fopen("demod_log_2.csv", "w");
+    fprintf(csv_log, "Sample,Max,Min,Symbol,I\n");
+    fclose(csv_log);
+#endif // PLATFORM_MOD17
 }
 
 void M17Demodulator::terminate()
@@ -73,6 +83,8 @@ void M17Demodulator::startBasebandSampling()
                                    M17_INPUT_BUF_SIZE,
                                    BUF_CIRC_DOUBLE,
                                    M17_RX_SAMPLE_RATE);
+    // Clean start of the demodulation statistics
+    resetCorrelationStats();
 }
 
 void M17Demodulator::stopBasebandSampling()
@@ -124,7 +136,6 @@ void M17Demodulator::updateQuantizationStats(int32_t offset)
     {
         qnt_max *= qnt_maxmin_alpha;
     }
-
     if (sample < qnt_min)
     {
         qnt_min = sample;
@@ -167,6 +178,9 @@ int32_t M17Demodulator::convolution(int32_t offset,
 
 sync_t M17Demodulator::nextFrameSync(int32_t offset)
 {
+#ifndef PLATFORM_MOD17
+    FILE *csv_log = fopen("demod_log_1.csv", "a");
+#endif
     sync_t syncword = { -1, false };
     // Find peaks in the correlation between the baseband and the frame syncword
     // Leverage the fact LSF syncword is the opposite of the frame syncword
@@ -175,10 +189,8 @@ sync_t M17Demodulator::nextFrameSync(int32_t offset)
     {
         // If we are not locked search for a syncword
         int32_t conv = convolution(i, stream_syncword, M17_SYNCWORD_SYMBOLS);
-        //printf("%d, ", conv);
-        //if (i % 8 == 0)
-        //    printf("\r\n");
         updateCorrelationStats(conv);
+        updateQuantizationStats(baseband.data[i]);
         // Positive correlation peak -> frame syncword
         if (conv > getCorrelationStddev() * conv_threshold_factor)
         {
@@ -227,11 +239,13 @@ bool M17Demodulator::isFrameLSF()
 void M17Demodulator::update()
 {
     M17::sync_t syncword = { 0, false };
-    int32_t offset = -(int32_t) M17_BRIDGE_SIZE;
-    int32_t phase = 0;
+    int32_t offset = locked ? 0 : -(int32_t) M17_BRIDGE_SIZE;
     uint16_t decoded_syms = 0;
     // Read samples from the ADC
     baseband = inputStream_getData(basebandId);
+#ifndef PLATFORM_MOD17
+    FILE *csv_log = fopen("demod_log_2.csv", "a");
+#endif
 
     if(baseband.data != NULL)
     {
@@ -242,14 +256,14 @@ void M17Demodulator::update()
             baseband.data[i] = static_cast< int16_t >(M17::rrc(elem));
         }
         // Process the buffer
-        while(syncword.index != -1 && (offset + 1 + phase +
+        while(syncword.index != -1 &&
+              (offset + 1 + phase +
               (int32_t) M17_SAMPLES_PER_SYMBOL * decoded_syms <
               (int32_t) baseband.len))
         {
             // If we are not locked search for a syncword
             if (!locked)
             {
-                //printf("\nSearching at offset: %d\n", offset);
                 syncword = nextFrameSync(offset);
                 if (syncword.index != -1) // Lock was just acquired
                 {
@@ -259,42 +273,47 @@ void M17Demodulator::update()
 #endif // PLATFORM_MOD17
                     isLSF = syncword.lsf;
                     offset = syncword.index + 1;
-                    // DEBUG: prints
-                    //if (isLSF)
-                    //    printf("\nFound LSF at position %d!\r\n", syncword.index);
-                    //else
-                    //    printf("\nFound SYNC at position %d!\r\n", syncword.index);
                 }
             }
             // While we are locked, demodulate available samples
-            while (locked)
+            else
             {
                 // Slice the input buffer to extract a frame and quantize
                 int32_t symbol_index = offset + 1 + phase + M17_SAMPLES_PER_SYMBOL * decoded_syms;
                 updateQuantizationStats(baseband.data[symbol_index]);
                 int8_t symbol = quantize(symbol_index);
+#ifndef PLATFORM_MOD17
+                fprintf(csv_log, "%" PRId16 ",%f,%f,%d,%d\n",
+                        baseband.data[symbol_index],
+                        getQuantizationMax() * 2 / 3,
+                        getQuantizationMin() * 2 / 3,
+                        symbol * 10000,
+                        symbol_index);
+#endif
                 setSymbol<M17_FRAME_BYTES>(*activeFrame, frameIndex, symbol);
                 decoded_syms++;
                 frameIndex++;
-                //printf("%2d ", symbol);
-                //if (decoded_syms % 16 == 0)
-                //    printf("\n");
                 // If the frame buffer is full switch active and idle frame
                 if (frameIndex == M17_FRAME_SYMBOLS)
                 {
                     std::swap(activeFrame, idleFrame);
                     frameIndex = 0;
+#ifndef PLATFORM_MOD17
                     // DEBUG: print idleFrame bytes
-                    //for(size_t i = 0; i < idleFrame->size(); i+=2)
-                    //{
-                    //    if (i % 16 == 14)
-                    //        printf("\r\n");
-                    //    printf(" %02X%02X", (*idleFrame)[i], (*idleFrame)[i+1]);
-                    //}
+                    for(size_t i = 0; i < idleFrame->size(); i+=2)
+                    {
+                        if (i % 16 == 14)
+                            printf("\r\n");
+                        printf(" %02X%02X", (*idleFrame)[i], (*idleFrame)[i+1]);
+                    }
+#endif
                 }
+                // Check if the decoded syncword matches with frame or lsf sync
                 if (frameIndex == M17_SYNCWORD_SYMBOLS &&
                     ((*activeFrame)[0] != stream_syncword_bytes[0] ||
-                     (*activeFrame)[1] != stream_syncword_bytes[1])) // Lock is lost
+                     (*activeFrame)[1] != stream_syncword_bytes[1]) &&
+                    ((*activeFrame)[0] != lsf_syncword_bytes[0] ||
+                     (*activeFrame)[1] != lsf_syncword_bytes[1]))
                 {
                     locked = false;
                     std::swap(activeFrame, idleFrame);
@@ -306,17 +325,23 @@ void M17Demodulator::update()
             }
         }
         // We are at the end of the buffer
-        if (locked) {
+        if (locked)
+        {
             // Compute phase of next buffer
             phase = offset % M17_SAMPLES_PER_SYMBOL +
                     (M17_INPUT_BUF_SIZE % M17_SAMPLES_PER_SYMBOL);
         }
-        // Copy last N samples to bridge buffer
-        memcpy(basebandBridge,
-               baseband.data + baseband.len - M17_BRIDGE_SIZE,
-               sizeof(int16_t) * M17_BRIDGE_SIZE);
+        else
+        {
+            // Copy last N samples to bridge buffer
+            memcpy(basebandBridge,
+                   baseband.data + (baseband.len - M17_BRIDGE_SIZE),
+                   sizeof(int16_t) * M17_BRIDGE_SIZE);
+        }
     }
-    //printf("END\n");
+#ifndef PLATFORM_MOD17
+    fclose(csv_log);
+#endif
 }
 
 } /* M17 */
