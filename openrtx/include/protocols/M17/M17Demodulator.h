@@ -118,6 +118,7 @@ private:
      */
     int8_t lsf_syncword[M17_SYNCWORD_SYMBOLS]    = { +3, +3, +3, +3, -3, -3, +3, -3 };
     int8_t stream_syncword[M17_SYNCWORD_SYMBOLS] = { -3, -3, -3, -3, +3, +3, -3, +3 };
+    uint8_t lsf_syncword_bytes[2]                = {0x55, 0xf7};
     uint8_t stream_syncword_bytes[2]             = {0xff, 0x5d};
 
     using dataBuffer_t = std::array< int16_t, M17_FRAME_SAMPLES_24K >;
