@@ -18,6 +18,7 @@
 #include <interfaces/platform.h>
 #include <interfaces/graphics.h>
 #include <interfaces/gpio.h>
+#include <interfaces/nvmem.h>
 #include <stdio.h>
 #include "emulator.h"
 #include <SDL2/SDL.h>
@@ -29,6 +30,8 @@ hwInfo_t hwInfo;
 
 void platform_init()
 {
+    nvm_init();
+
     // Fill hwinfo struct
     memset(&hwInfo, 0x00, sizeof(hwInfo));
     snprintf(hwInfo.name, 10, "Linux");
