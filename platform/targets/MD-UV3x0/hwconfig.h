@@ -22,6 +22,10 @@
 
 #include <stm32f4xx.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Device has a working real time clock */
 #define HAS_RTC
 
@@ -150,4 +154,8 @@
  * #define ENABLE_BKLIGHT_DIMMING
  */
 
+#ifdef __cplusplus
+}
 #endif
+
+#endif /* HWCONFIG_H */

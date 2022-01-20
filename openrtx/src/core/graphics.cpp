@@ -30,9 +30,9 @@
 #include <stdarg.h>
 #include <interfaces/display.h>
 #include <interfaces/graphics.h>
+#include <climits>
 
 // Variable swap macro
-#define SWAP(x, y) do { typeof(x) t = x; x = y; y = t; } while(0)
 #define DEG_RAD  0.017453292519943295769236907684886
 #define SIN(x) sinf((x) * DEG_RAD)
 #define COS(x) cosf((x) * DEG_RAD)
@@ -207,14 +207,28 @@ void gfx_drawLine(point_t start, point_t end, color_t color)
 
     if (steep)
     {
-        SWAP(start.x, start.y);
-        SWAP(end.x, end.y);
+        uint16_t tmp;
+        // Swap start.x and start.y
+        tmp = start.x;
+        start.x = start.y;
+        start.y = tmp;
+        // Swap end.x and end.y
+        tmp = end.x;
+        end.x = end.y;
+        end.y = tmp;
     }
 
     if (start.x > end.x)
     {
-        SWAP(start.x, end.x);
-        SWAP(start.y, end.y);
+        uint16_t tmp;
+        // Swap start.x and end.x
+        tmp = start.x;
+        start.x = end.x;
+        end.x = tmp;
+        // Swap start.y and end.y
+        tmp = start.y;
+        start.y = end.y;
+        end.y = tmp;
     }
 
     int16_t dx, dy;
@@ -839,4 +853,30 @@ void gfx_drawGPScompass(point_t start,
     // North indicator
     point_t n_pos = {start.x + radius - 3, start.y + 7};
     gfx_print(n_pos, FONT_SIZE_6PT, TEXT_ALIGN_LEFT, white, "N");
+}
+
+void gfx_plotData(point_t start,
+                  uint16_t width,
+                  uint16_t height,
+                  std::deque<int16_t> data)
+{
+    gfx_clearScreen();
+    uint16_t horizontal_pos = start.x;
+    color_t white = {255, 255, 255, 255};
+    point_t prev_pos {0, 0}, pos{0, 0};
+    bool first_iteration = true;
+    for (auto d : data)
+    {
+        horizontal_pos++;
+        if (horizontal_pos > start.x + width)
+            break;
+        pos.x = horizontal_pos;
+        pos.y = start.y + height / 2 + (float) d / (2 * SHRT_MAX) * height;
+        if (!first_iteration)
+            gfx_drawLine(prev_pos, pos, white);
+        prev_pos = pos;
+        if (first_iteration)
+            first_iteration = false;
+    }
+    gfx_render();
 }

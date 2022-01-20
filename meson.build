@@ -22,7 +22,7 @@ def = {}
 openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/threads.c',
                'openrtx/src/core/battery.c',
-               'openrtx/src/core/graphics.c',
+               'openrtx/src/core/graphics.cpp',
                'openrtx/src/core/input.c',
                'openrtx/src/core/calibUtils.c',
                'openrtx/src/core/queue.c',
@@ -353,19 +353,23 @@ linux_l_args   = ['-lm', '-lreadline']
 # Add AddressSanitizer if required
 if get_option('asan')
   linux_c_args += '-fsanitize=address'
+  linux_cpp_args += '-fsanitize=address'
   linux_l_args += '-fsanitize=address'
 endif
 # Add Undefined Behaviour Sanitizer if required
 if get_option('ubsan')
   linux_c_args += '-fsanitize=undefined'
+  linux_cpp_args += '-fsanitize=undefined'
   linux_l_args += '-fsanitize=undefined'
 endif
 
 foreach k, v : linux_def
   if v == ''
     linux_c_args += '-D@0@'.format(k)
+    linux_cpp_args += '-D@0@'.format(k)
   else
     linux_c_args += '-D@0@=@1@'.format(k, v)
+    linux_cpp_args += '-D@0@=@1@'.format(k, v)
   endif
 endforeach
 

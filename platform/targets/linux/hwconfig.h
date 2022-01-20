@@ -15,6 +15,13 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#ifndef HWCONFIG_H
+#define HWCONFIG_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Device has a working real time clock */
 #define HAS_RTC
 
@@ -57,3 +64,9 @@
 
 /* M17 demodulation */
 #define M17_RX_SAMPLE_RATE 48000
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* HWCONFIG_H */

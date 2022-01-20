@@ -23,6 +23,10 @@
 
 #include <stm32f4xx.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Device has a working real time clock */
 #define HAS_RTC
 
@@ -101,4 +105,8 @@
 #define DMR_MOSI  GPIOE,4
 #define DMR_MISO  GPIOE,5
 
+#ifdef __cplusplus
+}
 #endif
+
+#endif /* HWCONFIG_H */
