@@ -22,6 +22,10 @@
 
 #include <stm32f4xx.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Device has a working real time clock */
 #define HAS_RTC
 
@@ -142,4 +146,8 @@
 /* M17 demodulation */
 #define M17_RX_SAMPLE_RATE 24000
 
+#ifdef __cplusplus
+}
 #endif
+
+#endif /* HWCONFIG_H */

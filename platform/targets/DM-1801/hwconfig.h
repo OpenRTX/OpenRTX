@@ -23,6 +23,10 @@
 
 #include "MK22F51212.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Screen dimensions */
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
@@ -98,4 +102,8 @@
 #define DMR_MOSI  GPIOD,2
 #define DMR_MISO  GPIOD,3
 
+#ifdef __cplusplus
+}
 #endif
+
+#endif /* HWCONFIG_H */

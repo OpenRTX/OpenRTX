@@ -35,6 +35,12 @@
 #include <FreeSans18pt7b.h>
 #include <FreeSans24pt7b.h>
 
+#ifdef __cplusplus
+#include <deque>
+
+extern "C" {
+#endif
+
 /**
  * Standard high-level graphic interface for all display types.
  * This interface is based on the lower level interface display.h
@@ -334,5 +340,19 @@ void gfx_drawGPSgraph(point_t start, uint16_t width, uint16_t height, sat_t *sat
  * @param active: whether the needle is to be drawn or not
  */
 void gfx_drawGPScompass(point_t start, uint16_t radius, float deg, bool active);
+
+#ifdef __cplusplus
+}
+
+/**
+ * Function to plot a collection of data on the screen.
+ * Starting coordinates are relative to the top left point.
+ * @param start: Plot start point, in pixel coordinates.
+ * @param width: Plot width
+ * @param height: Plot height
+ * @param data: pointer to the deque containing data
+ */
+void gfx_plotData(point_t start, uint16_t width, uint16_t height, std::deque<int16_t> data);
+#endif
 
 #endif /* GRAPHICS_H */
