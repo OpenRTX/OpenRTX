@@ -89,14 +89,25 @@ void toneGen_beepOn(const float beepFreq, const uint8_t volume,
 void toneGen_beepOff();
 
 /**
- * Encode a given data stream using Bell 202 scheme at 1200 baud, sending the
- * audio stream to both the speaker and the rtx baseband IC.
- * This function blocks the execution flow until all data has been sent.
- *
- * @param buf: pointer to a buffer containing data to be encoded.
- * @param len: length of the data buffer.
+ * Disable the generation of "beep" tones until the unlock function is called.
+ * This function supports recursive call: multiple subsequent calls require an
+ * equal number of calls of the unlock function to effectively unlock beeps.
+ * This function can be called safely from an interrupt routine.
  */
-void toneGen_encodeAFSK1200(const uint8_t *buf, const size_t len);
+void toneGen_lockBeep();
+
+/**
+ * Enable the generation of "beep" tones previously unlocked.
+ * This function can be called safely from an interrupt routine.
+ */
+void toneGen_unlockBeep();
+
+/**
+ * Check if generation of "beep" tones is disabled.
+ *
+ * @return if generation of "beep" tones is disabled.
+ */
+bool toneGen_beepLocked();
 
 /**
  * Reproduce an audio stream, sending audio stream to both the speaker and the
