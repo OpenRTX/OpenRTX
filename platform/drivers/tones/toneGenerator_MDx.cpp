@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2020 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -53,8 +53,8 @@ uint32_t beepTableIndex = 0; // Current sine table index for "beep" generator
 uint32_t beepTableIncr  = 0; // "beep" sine table index increment per tick
 uint32_t beepTimerCount = 0; // Downcounter for timed "beep"
 uint8_t  beepVolume     = 0; // "beep" volume level
+uint8_t  beepLockCount  = 0; // Counter for management of "beep" generation locking
 
-bool tonesLocked  = false;   // If true tone channel is in use by FSK/playback
 bool circularMode = false;   // Circular mode enabled
 
 using namespace miosix;
@@ -72,7 +72,7 @@ void __attribute__((used)) TIM8_TRG_COM_TIM14_IRQHandler()
 
     TIM3->CCR2 = sineTable[(toneTableIndex >> 16) & 0xFF];
 
-    if(!tonesLocked)
+    if(beepLockCount == 0)
     {
         TIM3->CCR3 = (sineTable[(beepTableIndex >> 16) & 0xFF] * beepVolume) >> 8;
     }
@@ -111,7 +111,7 @@ void __attribute__((used)) DMA_Handler()
         RCC->APB1ENR &= ~RCC_APB1ENR_TIM7EN;    // Turn off TIM7
         __DSB();
 
-        tonesLocked = false;                    // Finally, unlock tones
+        toneGen_unlockBeep();                   // Finally, unlock tones
     }
 
     if(dmaWaiting == 0) return;                 // Wake up eventual pending threads
@@ -219,7 +219,7 @@ void toneGen_beepOn(const float beepFreq, const uint8_t volume,
     {
         // Do not generate "beep" if the PWM channel is busy, critical section
         FastInterruptDisableLock dLock;
-        if(tonesLocked) return;
+        if(beepLockCount > 0) return;
     }
 
     float dividend = beepFreq * 65536.0f;
@@ -244,14 +244,36 @@ void toneGen_beepOff()
      * Locking interrupts to avoid race conditions.
      */
     FastInterruptDisableLock dLock;
-    if(tonesLocked) return;
+    if(beepLockCount > 0) return;
     TIM3->CCER &= ~TIM_CCER_CC3E;
 }
 
-void toneGen_encodeAFSK1200(const uint8_t* buf, const size_t len)
+void toneGen_lockBeep()
 {
-    (void) buf;
-    (void) len;
+    // Critical section, disable interrupts only if they are active
+    bool interrupts = areInterruptsEnabled();
+    if(interrupts) fastDisableInterrupts();
+
+    if(beepLockCount < 255) beepLockCount++;
+    beepTimerCount = 0;
+
+    if(interrupts) fastEnableInterrupts();
+}
+
+void toneGen_unlockBeep()
+{
+    // Critical section, disable interrupts only if they are active
+    bool interrupts = areInterruptsEnabled();
+    if(interrupts) fastDisableInterrupts();
+
+    if(beepLockCount > 0) beepLockCount--;
+
+    if(interrupts) fastEnableInterrupts();
+}
+
+bool toneGen_beepLocked()
+{
+    return (beepLockCount > 0) ? true : false;
 }
 
 void toneGen_playAudioStream(const uint16_t* buf, const size_t len,
@@ -259,12 +281,7 @@ void toneGen_playAudioStream(const uint16_t* buf, const size_t len,
 {
     if((buf == NULL) || (len == 0) || (sampleRate == 0)) return;
 
-    {
-        // Critical section to avoid race conditions on "tonesLocked"
-        FastInterruptDisableLock dLock;
-        tonesLocked    = true;
-        beepTimerCount = 0;
-    }
+    toneGen_lockBeep();
 
     RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
     RCC->APB1ENR |= RCC_APB1ENR_TIM7EN;
@@ -333,7 +350,7 @@ bool toneGen_waitForStreamEnd()
     {
         FastInterruptDisableLock dLock;
         Thread *curThread = Thread::IRQgetCurrentThread();
-        if(tonesLocked == false) return false;
+        if(toneGen_beepLocked() == false) return false;
         if((dmaWaiting != 0) && (dmaWaiting != curThread)) return false;
         dmaWaiting = curThread;
         do
@@ -371,7 +388,8 @@ void toneGen_stopAudioStream()
     __DSB();
 
     // Unlock tones and wake up the thread waiting for completion
-    tonesLocked = false;
+    toneGen_unlockBeep();
+
     if(dmaWaiting)
     {
         dmaWaiting->IRQwakeup();
