@@ -144,7 +144,7 @@ extern "C" {
 #define GPS_DATA GPIOD,9
 
 /* M17 demodulation */
-#define M17_RX_SAMPLE_RATE 24000
+#define M17_RX_SAMPLE_RATE 48000
 
 #ifdef __cplusplus
 }

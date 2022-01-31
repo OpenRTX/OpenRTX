@@ -54,7 +54,7 @@ void M17Modulator::init()
 
     baseband_buffer = new int16_t[2 * M17_FRAME_SAMPLES_48K];
     idleBuffer      = new (baseband_buffer) dataBuffer_t;
-    int16_t *ptr    = baseband_buffer + activeBuffer->size();
+    int16_t *ptr    = baseband_buffer + M17_FRAME_SAMPLES_48K;
     activeBuffer    = new (ptr) dataBuffer_t;
     txRunning       = false;
 }

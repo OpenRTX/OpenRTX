@@ -3,7 +3,6 @@
  *                         Niccolò Izzo IU2KIN,                            *
  *                         Frederik Saraci IU2NRO,                         *
  *                         Silvano Seva IU2KWO                             *
- *                         Mathis Schmieder DB9MAT                         *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -19,71 +18,43 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef HWCONFIG_H
-#define HWCONFIG_H
+#include <stdio.h>
+#include <stdlib.h>
+#include <interfaces/delays.h>
+#include <interfaces/audio.h>
+#include <interfaces/audio_path.h>
+#include <interfaces/audio_stream.h>
+#include <interfaces/platform.h>
+#include <dsp.h>
 
-#include <stm32f4xx.h>
+int main()
+{
+    platform_init();
 
-/* Device has a working real time clock */
-#define HAS_RTC
+    static const size_t numSamples = 45*1024;       // 90kB
+    stream_sample_t *sampleBuf = ((stream_sample_t *) malloc(numSamples *
+                                                      sizeof(stream_sample_t)));
 
-/* Screen dimensions */
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
+    audio_enableMic();
+    streamId id = inputStream_start(SOURCE_RTX, PRIO_TX, sampleBuf, numSamples,
+                                    BUF_LINEAR, 24000);
 
-/* Screen has adjustable contrast */
-#define SCREEN_CONTRAST
-#define DEFAULT_CONTRAST 91
+    sleepFor(3u, 0u);
+    platform_ledOn(GREEN);
 
-/* Screen pixel format */
-#define PIX_FMT_BW
+    dataBlock_t audio = inputStream_getData(id);
 
-/* Device has no battery */
-#define BAT_MOD17
+    platform_ledOff(GREEN);
+    platform_ledOn(RED);
+    sleepFor(10u, 0u);
 
-/* Signalling LEDs */
-#define PTT_LED     GPIOC,8
-#define SYNC_LED    GPIOC,9
-#define ERR_LED     GPIOA,8
+    uint16_t *ptr = ((uint16_t *) audio.data);
+    for(size_t i = 0; i < audio.len; i++)
+    {
+        iprintf("%04x ", __builtin_bswap16(ptr[i]));
+    }
 
-/* Display */
-#define LCD_RST     GPIOC,7
-#define LCD_RS      GPIOC,6
-#define LCD_CS      GPIOB,14
-#define SPI2_CLK    GPIOB,13
-#define SPI2_SDO    GPIOB,9     // UNUSED
-#define SPI2_SDI    GPIOB,15
-//#define LCD_BKLIGHT GPIOE,15
+    while(1) ;
 
-/* Keyboard */
-#define ESC_SW      GPIOB,8
-#define RIGHT_SW    GPIOB,11
-#define UP_SW       GPIOB,10
-#define DOWN_SW     GPIOC,2
-#define LEFT_SW     GPIOC,3
-#define ENTER_SW    GPIOB,12
-
-#define PTT_SW      GPIOC,13
-#define PTT_OUT     GPIOD,2
-
-/* Audio */
-#define AUDIO_MIC   GPIOA,2
-#define AUDIO_SPK   GPIOA,5
-#define BASEBAND_RX GPIOA,1
-#define BASEBAND_TX GPIOA,4
-#define SPK_MUTE    GPIOB,1
-#define MIC_MUTE    GPIOC,4
-#define MIC_GAIN    GPIOC,5
-
-#define AIN_VBAT   GPIOA,3
-
-/* I2C for MCP4551 */
-#define I2C_SDA GPIOB,7
-#define I2C_SCL GPIOB,6
-#define SOFTPOT_RX 0x2E
-#define SOFTPOT_TX 0x2F
-
-/* M17 demodulation */
-#define M17_RX_SAMPLE_RATE 48000
-
-#endif
+    return 0;
+}
