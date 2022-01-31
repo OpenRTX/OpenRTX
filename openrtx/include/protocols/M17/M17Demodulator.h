@@ -32,6 +32,7 @@
 #include <cstddef>
 #include <interfaces/audio_stream.h>
 #include <hwconfig.h>
+#include <deque>
 
 namespace M17
 {
@@ -45,6 +46,11 @@ typedef struct
 class M17Demodulator
 {
 public:
+
+    /**
+     * Deque containing the sliced samples
+     */
+    std::deque<int16_t> samples_fifo;
 
     /**
      * Constructor.
@@ -98,18 +104,17 @@ private:
      * We are sampling @ 24KHz so an M17 frame has half the samples,
      * our input buffer contains half M17 frame.
      */
-    // TODO: Select correct RRC filter according to sample rate
     static constexpr size_t M17_SYMBOL_RATE        = 4800;
     static constexpr size_t M17_FRAME_SAMPLES_24K  = 960;
     static constexpr size_t M17_FRAME_SYMBOLS      = 192;
     static constexpr size_t M17_SYNCWORD_SYMBOLS   = 8;
     static constexpr size_t M17_CONV_THRESHOLD     = 50000;
     static constexpr size_t M17_SAMPLES_PER_SYMBOL = M17_RX_SAMPLE_RATE / M17_SYMBOL_RATE;
-    static constexpr size_t M17_INPUT_BUF_SIZE     = M17_FRAME_SAMPLES_24K / 2;
+    static constexpr size_t M17_INPUT_BUF_SIZE     = 2 * M17_FRAME_SAMPLES_24K;
     static constexpr size_t M17_FRAME_BYTES        = M17_FRAME_SYMBOLS / 4;
     static constexpr float conv_stats_alpha        = 0.0001f;
+    static constexpr float qnt_stats_alpha         = 0.99999f;
     static constexpr float conv_threshold_factor   = 3.70;
-    static constexpr float qnt_maxmin_alpha        = 0.999f;
     static constexpr size_t M17_BRIDGE_SIZE        = M17_SAMPLES_PER_SYMBOL *
                                                      M17_SYNCWORD_SYMBOLS;
 
@@ -153,6 +158,7 @@ private:
     /*
      * Quantization statistics computation
      */
+    float qnt_ema = 0.0f;
     float qnt_max = 0.0f;
     float qnt_min = 0.0f;
 
@@ -162,7 +168,7 @@ private:
     void resetCorrelationStats();
 
     /**
-     * Updates the mean and variance with the given value.
+     * Updates the mean and variance with the given correlation value.
      *
      * @param value: value to be added to the exponential moving
      * average/variance computation
@@ -170,18 +176,51 @@ private:
     void updateCorrelationStats(int32_t value);
 
     /**
-     * Returns the standard deviation from all the passed values.
+     * Returns the exponential moving average from all the correlation values.
+     *
+     * @returns float numerical value of the exponential moving average
+     */
+    float getCorrelationEma();
+
+    /**
+     * Returns the standard deviation from all the correlation values.
      *
      * @returns float numerical value of the standard deviation
      */
     float getCorrelationStddev();
 
+    /**
+     * Resets the quantization max, min and ema computation.
+     */
     void resetQuantizationStats();
 
+    /**
+     * Updates the max, min and ema for the received samples.
+     *
+     * @param offset: index value to be added to the exponential moving
+     * average/variance computation
+     */
     void updateQuantizationStats(int32_t offset);
 
+    /**
+     * Returns the exponential moving average from of the sliced samples.
+     *
+     * @returns float numerical value of the exponential moving average
+     */
+    float getQuantizationEma();
+
+    /**
+     * Returns the max hold of the sliced samples.
+     *
+     * @returns float numerical value of the max hold
+     */
     float getQuantizationMax();
 
+    /**
+     * Returns the min hold of the sliced samples.
+     *
+     * @returns float numerical value of the min hold
+     */
     float getQuantizationMin();
 
     /**

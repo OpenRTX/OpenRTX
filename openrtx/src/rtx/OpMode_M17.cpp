@@ -149,8 +149,7 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
     // RX logic
     if(status->opStatus == RX)
     {
-        // TODO: Implement M17 Rx
-        // demodulator.update();
+        demodulator.update();
         sleepFor(0u, 30u);
     }
     else if((status->opStatus == OFF) && enterRx)
@@ -159,6 +158,7 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
 
         radio_enableRx();
         status->opStatus = RX;
+        demodulator.startBasebandSampling();
         enterRx = false;
     }
 
@@ -168,6 +168,7 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
         // Enter Tx mode, setup transmission
         if(status->opStatus != TX)
         {
+            demodulator.stopBasebandSampling();
             audio_disableAmp();
             radio_disableRtx();
 

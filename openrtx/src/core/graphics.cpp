@@ -871,7 +871,11 @@ void gfx_plotData(point_t start,
         if (horizontal_pos > start.x + width)
             break;
         pos.x = horizontal_pos;
-        pos.y = start.y + height / 2 + (float) d / (2 * SHRT_MAX) * height;
+        pos.y = start.y + height / 2 + (float) d * 4 / (2 * SHRT_MAX) * height;
+        if (pos.y > SCREEN_HEIGHT)
+            pos.y = SCREEN_HEIGHT;
+        if (pos.y < 0)
+            pos.y = 0;
         if (!first_iteration)
             gfx_drawLine(prev_pos, pos, white);
         prev_pos = pos;

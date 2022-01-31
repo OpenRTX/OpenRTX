@@ -26,6 +26,12 @@
 #include <math.h>
 #include <cstring>
 #include <stdio.h>
+#include <interfaces/graphics.h>
+#include <deque>
+
+#ifdef PLATFORM_LINUX
+#include <emulator.h>
+#endif
 
 namespace M17
 {
@@ -57,9 +63,9 @@ void M17Demodulator::init()
     phase           = 0;
     locked          = false;
 
-#ifndef PLATFORM_MOD17
+#ifdef PLATFORM_LINUX
     FILE *csv_log = fopen("demod_log_1.csv", "w");
-    fprintf(csv_log, "Signal,Convolution,Threshold\n");
+    fprintf(csv_log, "Signal,Convolution,Threshold,Offset\n");
     fclose(csv_log);
     csv_log = fopen("demod_log_2.csv", "w");
     fprintf(csv_log, "Sample,Max,Min,Symbol,I\n");
@@ -95,7 +101,7 @@ void M17Demodulator::stopBasebandSampling()
 void M17Demodulator::resetCorrelationStats()
 {
     conv_ema = 0.0f;
-    conv_emvar = 20000000000.0f;
+    conv_emvar = 1000000000.0f;
 }
 
 /**
@@ -110,6 +116,11 @@ void M17Demodulator::updateCorrelationStats(int32_t value)
     conv_emvar  = (1.0f - conv_stats_alpha) * (conv_emvar + delta * incr);
 }
 
+float M17Demodulator::getCorrelationEma()
+{
+    return conv_ema;
+}
+
 float M17Demodulator::getCorrelationStddev()
 {
     return sqrt(conv_emvar);
@@ -117,7 +128,9 @@ float M17Demodulator::getCorrelationStddev()
 
 void M17Demodulator::resetQuantizationStats()
 {
+    qnt_ema = 0.0f;
     qnt_max = 0.0f;
+    qnt_min = 0.0f;
 }
 
 void M17Demodulator::updateQuantizationStats(int32_t offset)
@@ -128,22 +141,24 @@ void M17Demodulator::updateQuantizationStats(int32_t offset)
         sample = basebandBridge[M17_BRIDGE_SIZE + offset];
     else            // Otherwise use regular data buffer
         sample = baseband.data[offset];
-    if (sample > qnt_max)
-    {
-        qnt_max = sample;
-    }
+    // Compute symbols exponential moving average
+    float delta = (float) sample - qnt_ema;
+    qnt_ema += conv_stats_alpha * delta;
+    // Remove DC offset
+    int16_t s = sample - (int16_t) qnt_ema;
+    if (s > qnt_max)
+        qnt_max = s;
     else
-    {
-        qnt_max *= qnt_maxmin_alpha;
-    }
-    if (sample < qnt_min)
-    {
-        qnt_min = sample;
-    }
+        qnt_max *= qnt_stats_alpha;
+    if (s < qnt_min)
+        qnt_min = s;
     else
-    {
-        qnt_min *= qnt_maxmin_alpha;
-    }
+        qnt_min *= qnt_stats_alpha;
+}
+
+float M17Demodulator::getQuantizationEma()
+{
+    return qnt_ema;
 }
 
 float M17Demodulator::getQuantizationMax()
@@ -178,49 +193,70 @@ int32_t M17Demodulator::convolution(int32_t offset,
 
 sync_t M17Demodulator::nextFrameSync(int32_t offset)
 {
-#ifndef PLATFORM_MOD17
+#ifdef PLATFORM_LINUX
     FILE *csv_log = fopen("demod_log_1.csv", "a");
 #endif
     sync_t syncword = { -1, false };
     // Find peaks in the correlation between the baseband and the frame syncword
     // Leverage the fact LSF syncword is the opposite of the frame syncword
-    // to detect both syncwords at once.
-    for(int32_t i = offset; syncword.index == -1 && i < (int32_t) baseband.len; i++)
+    // to detect both syncwords at once. Stop early because convolution needs
+    // access samples ahead of the starting offset.
+    for(int32_t i = offset;
+        syncword.index == -1 &&
+        i < (int32_t) baseband.len - (int32_t) M17_BRIDGE_SIZE;
+        i++)
     {
         // If we are not locked search for a syncword
         int32_t conv = convolution(i, stream_syncword, M17_SYNCWORD_SYMBOLS);
         updateCorrelationStats(conv);
-        updateQuantizationStats(baseband.data[i]);
+        updateQuantizationStats(i);
+        int16_t sample = 0;
+        if (i < 0) // When we are at negative offsets use bridge buffer
+            sample = basebandBridge[M17_BRIDGE_SIZE + i];
+        else            // Otherwise use regular data buffer
+            sample = baseband.data[i];
+#ifdef PLATFORM_LINUX
+        fprintf(csv_log, "%" PRId16 ",%d,%f,%d\n",
+                sample,
+                conv - (int32_t) getCorrelationEma(),
+                conv_threshold_factor * getCorrelationStddev(),
+                i);
+#endif
         // Positive correlation peak -> frame syncword
-        if (conv > getCorrelationStddev() * conv_threshold_factor)
+        if (conv - (int32_t) getCorrelationEma() >
+            getCorrelationStddev() * conv_threshold_factor)
         {
             syncword.lsf = false;
             syncword.index = i;
         }
         // Negative correlation peak -> LSF syncword
-        else if (conv < -(getCorrelationStddev() * conv_threshold_factor))
+        else if (conv - (int32_t) getCorrelationEma() <
+                 -(getCorrelationStddev() * conv_threshold_factor))
         {
             syncword.lsf = true;
             syncword.index = i;
         }
     }
+#ifdef PLATFORM_LINUX
+    fclose(csv_log);
+#endif
     return syncword;
 }
 
 int8_t M17Demodulator::quantize(int32_t offset)
 {
     int16_t sample = 0;
-    int16_t zero = getQuantizationMin() +
-                   (getQuantizationMax() - getQuantizationMin()) / 2;
     if (offset < 0) // When we are at negative offsets use bridge buffer
         sample = basebandBridge[M17_BRIDGE_SIZE + offset];
     else            // Otherwise use regular data buffer
         sample = baseband.data[offset];
-    if (sample > getQuantizationMax() * 2 / 3)
+    // DC offset removal
+    int16_t s = sample - (int16_t) getQuantizationEma();
+    if (s > getQuantizationMax() / 2)
         return +3;
-    else if (sample < getQuantizationMin() * 2 / 3)
+    else if (s < getQuantizationMin() / 2)
         return -3;
-    else if (sample > zero)
+    else if (s > 0)
         return +1;
     else
         return -1;
@@ -243,7 +279,7 @@ void M17Demodulator::update()
     uint16_t decoded_syms = 0;
     // Read samples from the ADC
     baseband = inputStream_getData(basebandId);
-#ifndef PLATFORM_MOD17
+#ifdef PLATFORM_LINUX
     FILE *csv_log = fopen("demod_log_2.csv", "a");
 #endif
 
@@ -254,10 +290,13 @@ void M17Demodulator::update()
         {
             float elem = static_cast< float >(baseband.data[i]);
             baseband.data[i] = static_cast< int16_t >(M17::rrc(elem));
+            //samples_fifo.push_back(baseband.data[i]);
+            //if (samples_fifo.size() > SCREEN_WIDTH)
+            //    samples_fifo.pop_front();
         }
         // Process the buffer
         while(syncword.index != -1 &&
-              (offset + 1 + phase +
+              (offset + phase +
               (int32_t) M17_SAMPLES_PER_SYMBOL * decoded_syms <
               (int32_t) baseband.len))
         {
@@ -268,26 +307,23 @@ void M17Demodulator::update()
                 if (syncword.index != -1) // Lock was just acquired
                 {
                     locked = true;
-#ifdef PLATFORM_MOD17
-                    gpio_setPin(SYNC_LED);
-#endif // PLATFORM_MOD17
                     isLSF = syncword.lsf;
-                    offset = syncword.index + 1;
+                    offset = syncword.index + 2;
                 }
             }
             // While we are locked, demodulate available samples
             else
             {
                 // Slice the input buffer to extract a frame and quantize
-                int32_t symbol_index = offset + 1 + phase + M17_SAMPLES_PER_SYMBOL * decoded_syms;
-                updateQuantizationStats(baseband.data[symbol_index]);
+                int32_t symbol_index = offset + phase + M17_SAMPLES_PER_SYMBOL * decoded_syms;
+                updateQuantizationStats(symbol_index);
                 int8_t symbol = quantize(symbol_index);
-#ifndef PLATFORM_MOD17
+#ifdef PLATFORM_LINUX
                 fprintf(csv_log, "%" PRId16 ",%f,%f,%d,%d\n",
-                        baseband.data[symbol_index],
-                        getQuantizationMax() * 2 / 3,
-                        getQuantizationMin() * 2 / 3,
-                        symbol * 10000,
+                        baseband.data[symbol_index] - (int16_t) qnt_ema,
+                        getQuantizationMax() / 2,
+                        getQuantizationMin() / 2,
+                        symbol * 666,
                         symbol_index);
 #endif
                 setSymbol<M17_FRAME_BYTES>(*activeFrame, frameIndex, symbol);
@@ -298,15 +334,13 @@ void M17Demodulator::update()
                 {
                     std::swap(activeFrame, idleFrame);
                     frameIndex = 0;
-#ifndef PLATFORM_MOD17
                     // DEBUG: print idleFrame bytes
-                    for(size_t i = 0; i < idleFrame->size(); i+=2)
-                    {
-                        if (i % 16 == 14)
-                            printf("\r\n");
-                        printf(" %02X%02X", (*idleFrame)[i], (*idleFrame)[i+1]);
-                    }
-#endif
+                    //for(size_t i = 0; i < idleFrame->size(); i+=2)
+                    //{
+                    //    if (i % 16 == 14)
+                    //        printf("\r\n");
+                    //    printf(" %02X%02X", (*idleFrame)[i], (*idleFrame)[i+1]);
+                    //}
                 }
                 // Check if the decoded syncword matches with frame or lsf sync
                 if (frameIndex == M17_SYNCWORD_SYMBOLS &&
@@ -320,6 +354,11 @@ void M17Demodulator::update()
                     frameIndex = 0;
 #ifdef PLATFORM_MOD17
                     gpio_clearPin(SYNC_LED);
+#endif // PLATFORM_MOD17
+                } else if (frameIndex == M17_SYNCWORD_SYMBOLS)
+                {
+#ifdef PLATFORM_MOD17
+                    gpio_setPin(SYNC_LED);
 #endif // PLATFORM_MOD17
                 }
             }
@@ -339,7 +378,8 @@ void M17Demodulator::update()
                    sizeof(int16_t) * M17_BRIDGE_SIZE);
         }
     }
-#ifndef PLATFORM_MOD17
+    //gfx_plotData({0, 0}, SCREEN_WIDTH, SCREEN_HEIGHT, samples_fifo);
+#ifdef PLATFORM_LINUX
     fclose(csv_log);
 #endif
 }
