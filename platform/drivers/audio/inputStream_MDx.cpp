@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2021 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,6 +25,7 @@
 #include <hwconfig.h>
 #include <stdbool.h>
 #include <miosix.h>
+#include <timers.h>
 
 using namespace miosix;
 
@@ -120,8 +121,8 @@ streamId inputStream_start(const enum AudioSource source,
      * AP1 frequency is 42MHz but timer runs at 84MHz, tick rate is 1MHz,
      * reload register is configured based on desired sample rate.
      */
-    TIM2->PSC = 83;
-    TIM2->ARR = (1000000/sampleRate) - 1;
+    tim_setUpdateFreqency(TIM2, sampleRate, 84000000);
+
     TIM2->CNT = 0;
     TIM2->EGR = TIM_EGR_UG;
     TIM2->CR2 = TIM_CR2_MMS_1;
@@ -181,14 +182,15 @@ streamId inputStream_start(const enum AudioSource source,
     /*
      * ADC2 configuration.
      *
-     * ADC clock is APB2 frequency divided by 8, giving 10.5MHz.
-     * Channel sample time set to 144 cycles, total conversion time 156 cycles.
+     * ADC clock is APB2 frequency divided by 4, giving 21MHz.
+     * Channel sample time set to 84 cycles, total conversion time is 100
+     * cycles: this leads to a maximum sampling frequency of 210kHz.
      * Convert one channel only, no overrun interrupt, 12-bit resolution,
      * no analog watchdog, discontinuous mode, no end of conversion interrupts.
      */
-    ADC->CCR   |= ADC_CCR_ADCPRE;
-    ADC2->SMPR2 = ADC_SMPR2_SMP2
-                | ADC_SMPR2_SMP1;
+    ADC->CCR   |= ADC_CCR_ADCPRE_0;
+    ADC2->SMPR2 = ADC_SMPR2_SMP2_2
+                | ADC_SMPR2_SMP1_2;
     ADC2->SQR1  = 0;                // Convert one channel
     ADC2->CR1 |= ADC_CR1_DISCEN;
     ADC2->CR2 |= ADC_CR2_EXTEN_0    // Trigger on rising edge
