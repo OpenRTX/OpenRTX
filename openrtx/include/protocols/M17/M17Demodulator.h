@@ -252,6 +252,11 @@ private:
      */
     int8_t quantize(int32_t offset);
 
+    /**
+     * Compute Hamming Distance between two bytes
+     */
+    uint8_t hammingDistance(uint8_t x, uint8_t y);
+
 };
 
 } /* M17 */
