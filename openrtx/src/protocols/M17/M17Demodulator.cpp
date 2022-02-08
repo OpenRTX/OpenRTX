@@ -101,7 +101,7 @@ void M17Demodulator::stopBasebandSampling()
 void M17Demodulator::resetCorrelationStats()
 {
     conv_ema = 0.0f;
-    conv_emvar = 1000000000.0f;
+    conv_emvar = 800000000.0f;
 }
 
 /**
@@ -308,7 +308,7 @@ void M17Demodulator::update()
                 {
                     locked = true;
                     isLSF = syncword.lsf;
-                    offset = syncword.index + 2;
+                    offset = syncword.index + 1;
                 }
             }
             // While we are locked, demodulate available samples
