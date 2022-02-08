@@ -272,6 +272,11 @@ bool M17Demodulator::isFrameLSF()
     return isLSF;
 }
 
+uint8_t M17Demodulator::hammingDistance(uint8_t x, uint8_t y)
+{
+    return __builtin_popcount(x ^ y);
+}
+
 void M17Demodulator::update()
 {
     M17::sync_t syncword = { 0, false };
@@ -282,6 +287,7 @@ void M17Demodulator::update()
 #ifdef PLATFORM_LINUX
     FILE *csv_log = fopen("demod_log_2.csv", "a");
 #endif
+
 
     if(baseband.data != NULL)
     {
@@ -342,12 +348,12 @@ void M17Demodulator::update()
                     //    printf(" %02X%02X", (*idleFrame)[i], (*idleFrame)[i+1]);
                     //}
                 }
-                // Check if the decoded syncword matches with frame or lsf sync
+                // If syncword is not valid, lock is lost, accept 2 bit errors
                 if (frameIndex == M17_SYNCWORD_SYMBOLS &&
-                    ((*activeFrame)[0] != stream_syncword_bytes[0] ||
-                     (*activeFrame)[1] != stream_syncword_bytes[1]) &&
-                    ((*activeFrame)[0] != lsf_syncword_bytes[0] ||
-                     (*activeFrame)[1] != lsf_syncword_bytes[1]))
+                    (hammingDistance((*activeFrame)[0], stream_syncword_bytes[0]) +
+                     hammingDistance((*activeFrame)[1], stream_syncword_bytes[1]) > 2) &&
+                    (hammingDistance((*activeFrame)[0], lsf_syncword_bytes[0]) +
+                     hammingDistance((*activeFrame)[1], lsf_syncword_bytes[1]) > 2))
                 {
                     locked = false;
                     std::swap(activeFrame, idleFrame);
