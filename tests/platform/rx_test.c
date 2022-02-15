@@ -37,7 +37,7 @@ int main()
 
     audio_enableMic();
     streamId id = inputStream_start(SOURCE_RTX, PRIO_TX, sampleBuf, numSamples,
-                                    BUF_LINEAR, 24000);
+                                    BUF_LINEAR, 48000);
 
     sleepFor(3u, 0u);
     platform_ledOn(GREEN);
