@@ -315,6 +315,7 @@ void M17Demodulator::update()
                     locked = true;
                     isLSF = syncword.lsf;
                     offset = syncword.index + 1;
+                    frameIndex = 0;
                 }
             }
             // While we are locked, demodulate available samples
@@ -330,7 +331,7 @@ void M17Demodulator::update()
                         getQuantizationMax() / 2,
                         getQuantizationMin() / 2,
                         symbol * 666,
-                        symbol_index);
+                        frameIndex == 0 ? 2300 : symbol_index);
 #endif
                 setSymbol<M17_FRAME_BYTES>(*activeFrame, frameIndex, symbol);
                 decoded_syms++;
@@ -341,12 +342,12 @@ void M17Demodulator::update()
                     std::swap(activeFrame, idleFrame);
                     frameIndex = 0;
                     // DEBUG: print idleFrame bytes
-                    //for(size_t i = 0; i < idleFrame->size(); i+=2)
-                    //{
-                    //    if (i % 16 == 14)
-                    //        printf("\r\n");
-                    //    printf(" %02X%02X", (*idleFrame)[i], (*idleFrame)[i+1]);
-                    //}
+                    for(size_t i = 0; i < idleFrame->size(); i+=2)
+                    {
+                        if (i % 16 == 14)
+                            printf("\r\n");
+                        printf(" %02X%02X", (*idleFrame)[i], (*idleFrame)[i+1]);
+                    }
                 }
                 // If syncword is not valid, lock is lost, accept 2 bit errors
                 if (frameIndex == M17_SYNCWORD_SYMBOLS &&

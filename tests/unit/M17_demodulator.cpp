@@ -149,13 +149,13 @@ int main()
     syncword = m17Demodulator.nextFrameSync(offset);
     for(unsigned i = 0; i < baseband_samples - m17Demodulator.M17_SYNCWORD_SYMBOLS * m17Demodulator.M17_SAMPLES_PER_SYMBOL; i++)
     {
-        if ((int) i == syncword.index + 2) {
+        if ((int) i == (syncword.index + 1)) {
             if (syncword.lsf)
                 detect = -4000;
             else
                 detect = 4000;
             syncword = m17Demodulator.nextFrameSync(syncword.index + m17Demodulator.M17_SYNCWORD_SYMBOLS * m17Demodulator.M17_SAMPLES_PER_SYMBOL);
-        } else if (((int) i % 10) == ((syncword.index + 2) % 10)) {
+        } else if (((int) i % 10) == ((syncword.index + 1) % 10)) {
             m17Demodulator.updateQuantizationStats(i);
             symbol = m17Demodulator.quantize(i) * 1000;
             detect = 3000;
