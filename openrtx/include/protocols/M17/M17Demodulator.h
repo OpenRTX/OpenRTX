@@ -1,9 +1,9 @@
 /***************************************************************************
- *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Wojciech Kaczmarski SP5WWP                      *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2021 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Wojciech Kaczmarski SP5WWP               *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -33,6 +33,7 @@
 #include <interfaces/audio_stream.h>
 #include <hwconfig.h>
 #include <deque>
+#include "M17Datatypes.h"
 
 namespace M17
 {
@@ -46,11 +47,6 @@ typedef struct
 class M17Demodulator
 {
 public:
-
-    /**
-     * Deque containing the sliced samples
-     */
-    std::deque<int16_t> samples_fifo;
 
     /**
      * Constructor.
@@ -84,19 +80,24 @@ public:
 
     /**
      * Returns the a frame decoded from the baseband signal.
+     *
+     * @return reference to the internal data structure containing the last
+     * decoded frame.
      */
-    const std::array<uint8_t, 48> &getFrame();
+    const frame_t& getFrame();
 
     /**
-     * Returns a flag indicating whether the decoded frame is an LSF.
+     * @return true if the last decoded frame is an LSF.
      */
     bool isFrameLSF();
 
     /**
-     * Demodulates data from the ADC and fills the idle frame
-     * Everytime this function is called a whole ADC buffer is consumed
+     * Demodulates data from the ADC and fills the idle frame.
+     * Everytime this function is called a whole ADC buffer is consumed.
+     *
+     * @return true if a new frame has been fully decoded.
      */
-    void update();
+    bool update();
 
 private:
 
@@ -127,7 +128,6 @@ private:
     uint8_t stream_syncword_bytes[2]             = {0xff, 0x5d};
 
     using dataBuffer_t = std::array< int16_t, M17_FRAME_SAMPLES_24K >;
-    using dataFrame_t =  std::array< uint8_t, M17_FRAME_BYTES >;
 
     /*
      * Buffers
@@ -137,10 +137,11 @@ private:
     dataBlock_t  baseband;         ///< Half buffer, free to be processed.
     uint16_t     *rawFrame;        ///< Analog values to be quantized.
     uint16_t     frameIndex;       ///< Index for filling the raw frame.
-    dataFrame_t  *activeFrame;     ///< Half frame, in demodulation.
-    dataFrame_t  *idleFrame;       ///< Half frame, free to be processed.
+    frame_t      *activeFrame;     ///< Half frame, in demodulation.
+    frame_t      *idleFrame;       ///< Half frame, free to be processed.
     bool         isLSF;            ///< Indicates that we demodualated an LSF.
     bool         locked;           ///< A syncword was detected.
+    bool         newFrame;         ///< A new frame has been fully decoded.
     int16_t      basebandBridge[M17_BRIDGE_SIZE] = { 0 }; ///< Bridge buffer
     uint16_t     phase;            ///< Phase of the signal w.r.t. sampling
 
@@ -161,6 +162,11 @@ private:
     float qnt_ema = 0.0f;
     float qnt_max = 0.0f;
     float qnt_min = 0.0f;
+
+    /**
+     * Deque containing the sliced samples
+     */
+    // std::deque<int16_t> samples_fifo;
 
     /**
      * Resets the exponential mean and variance/stddev computation.

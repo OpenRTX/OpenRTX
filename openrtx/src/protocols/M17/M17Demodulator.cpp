@@ -1,8 +1,10 @@
 /***************************************************************************
- *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2021 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Wojciech Kaczmarski SP5WWP               *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
+ *                                                                         *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -56,21 +58,22 @@ void M17Demodulator::init()
 
     baseband_buffer = new int16_t[2 * M17_INPUT_BUF_SIZE];
     baseband        = { nullptr, 0 };
-    activeFrame     = new dataFrame_t;
+    activeFrame     = new frame_t;
     rawFrame        = new uint16_t[M17_FRAME_SYMBOLS];
-    idleFrame       = new dataFrame_t;
+    idleFrame       = new frame_t;
     frameIndex      = 0;
     phase           = 0;
     locked          = false;
+    newFrame        = false;
 
-#ifdef PLATFORM_LINUX
+    #ifdef PLATFORM_LINUX
     FILE *csv_log = fopen("demod_log_1.csv", "w");
     fprintf(csv_log, "Signal,Convolution,Threshold,Offset\n");
     fclose(csv_log);
     csv_log = fopen("demod_log_2.csv", "w");
     fprintf(csv_log, "Sample,Max,Min,Symbol,I\n");
     fclose(csv_log);
-#endif // PLATFORM_MOD17
+    #endif // PLATFORM_MOD17
 }
 
 void M17Demodulator::terminate()
@@ -193,9 +196,9 @@ int32_t M17Demodulator::convolution(int32_t offset,
 
 sync_t M17Demodulator::nextFrameSync(int32_t offset)
 {
-#ifdef PLATFORM_LINUX
+    #ifdef PLATFORM_LINUX
     FILE *csv_log = fopen("demod_log_1.csv", "a");
-#endif
+    #endif
     sync_t syncword = { -1, false };
     // Find peaks in the correlation between the baseband and the frame syncword
     // Leverage the fact LSF syncword is the opposite of the frame syncword
@@ -215,13 +218,13 @@ sync_t M17Demodulator::nextFrameSync(int32_t offset)
             sample = basebandBridge[M17_BRIDGE_SIZE + i];
         else            // Otherwise use regular data buffer
             sample = baseband.data[i];
-#ifdef PLATFORM_LINUX
+        #ifdef PLATFORM_LINUX
         fprintf(csv_log, "%" PRId16 ",%d,%f,%d\n",
                 sample,
                 conv - (int32_t) getCorrelationEma(),
                 conv_threshold_factor * getCorrelationStddev(),
                 i);
-#endif
+        #endif
         // Positive correlation peak -> frame syncword
         if (conv - (int32_t) getCorrelationEma() >
             getCorrelationStddev() * conv_threshold_factor)
@@ -237,9 +240,9 @@ sync_t M17Demodulator::nextFrameSync(int32_t offset)
             syncword.index = i;
         }
     }
-#ifdef PLATFORM_LINUX
+    #ifdef PLATFORM_LINUX
     fclose(csv_log);
-#endif
+    #endif
     return syncword;
 }
 
@@ -262,8 +265,10 @@ int8_t M17Demodulator::quantize(int32_t offset)
         return -1;
 }
 
-const std::array<uint8_t, 48> &M17Demodulator::getFrame()
+const frame_t& M17Demodulator::getFrame()
 {
+    // When a frame is read is not new anymore
+    newFrame = false;
     return *activeFrame;
 }
 
@@ -277,16 +282,16 @@ uint8_t M17Demodulator::hammingDistance(uint8_t x, uint8_t y)
     return __builtin_popcount(x ^ y);
 }
 
-void M17Demodulator::update()
+bool M17Demodulator::update()
 {
     M17::sync_t syncword = { 0, false };
     int32_t offset = locked ? 0 : -(int32_t) M17_BRIDGE_SIZE;
     uint16_t decoded_syms = 0;
     // Read samples from the ADC
     baseband = inputStream_getData(basebandId);
-#ifdef PLATFORM_LINUX
+    #ifdef PLATFORM_LINUX
     FILE *csv_log = fopen("demod_log_2.csv", "a");
-#endif
+    #endif
 
 
     if(baseband.data != NULL)
@@ -300,6 +305,7 @@ void M17Demodulator::update()
             //if (samples_fifo.size() > SCREEN_WIDTH)
             //    samples_fifo.pop_front();
         }
+
         // Process the buffer
         while(syncword.index != -1 &&
               (offset + phase +
@@ -325,22 +331,25 @@ void M17Demodulator::update()
                 int32_t symbol_index = offset + phase + M17_SAMPLES_PER_SYMBOL * decoded_syms;
                 updateQuantizationStats(symbol_index);
                 int8_t symbol = quantize(symbol_index);
-#ifdef PLATFORM_LINUX
+                #ifdef PLATFORM_LINUX
                 fprintf(csv_log, "%" PRId16 ",%f,%f,%d,%d\n",
                         baseband.data[symbol_index] - (int16_t) qnt_ema,
                         getQuantizationMax() / 2,
                         getQuantizationMin() / 2,
                         symbol * 666,
                         frameIndex == 0 ? 2300 : symbol_index);
-#endif
+                #endif
                 setSymbol<M17_FRAME_BYTES>(*activeFrame, frameIndex, symbol);
                 decoded_syms++;
                 frameIndex++;
+
                 // If the frame buffer is full switch active and idle frame
                 if (frameIndex == M17_FRAME_SYMBOLS)
                 {
                     std::swap(activeFrame, idleFrame);
                     frameIndex = 0;
+                    newFrame   = true;
+
                     // DEBUG: print idleFrame bytes
                     for(size_t i = 0; i < idleFrame->size(); i+=2)
                     {
@@ -349,8 +358,9 @@ void M17Demodulator::update()
                         printf(" %02X%02X", (*idleFrame)[i], (*idleFrame)[i+1]);
                     }
                 }
+
                 // If syncword is not valid, lock is lost, accept 2 bit errors
-                if (frameIndex == M17_SYNCWORD_SYMBOLS &&
+                if ((frameIndex == M17_SYNCWORD_SYMBOLS) &&
                     (hammingDistance((*activeFrame)[0], stream_syncword_bytes[0]) +
                      hammingDistance((*activeFrame)[1], stream_syncword_bytes[1]) > 2) &&
                     (hammingDistance((*activeFrame)[0], lsf_syncword_bytes[0]) +
@@ -359,22 +369,25 @@ void M17Demodulator::update()
                     locked = false;
                     std::swap(activeFrame, idleFrame);
                     frameIndex = 0;
-#ifdef PLATFORM_MOD17
+                    newFrame   = true;
+                    #ifdef PLATFORM_MOD17
                     gpio_clearPin(SYNC_LED);
-#endif // PLATFORM_MOD17
-                } else if (frameIndex == M17_SYNCWORD_SYMBOLS)
+                    #endif // PLATFORM_MOD17
+                }
+                else if (frameIndex == M17_SYNCWORD_SYMBOLS)
                 {
-#ifdef PLATFORM_MOD17
+                    #ifdef PLATFORM_MOD17
                     gpio_setPin(SYNC_LED);
-#endif // PLATFORM_MOD17
+                    #endif // PLATFORM_MOD17
                 }
             }
         }
+
         // We are at the end of the buffer
         if (locked)
         {
             // Compute phase of next buffer
-            phase = offset % M17_SAMPLES_PER_SYMBOL +
+            phase = (offset % M17_SAMPLES_PER_SYMBOL) +
                     (M17_INPUT_BUF_SIZE % M17_SAMPLES_PER_SYMBOL);
         }
         else
@@ -386,9 +399,11 @@ void M17Demodulator::update()
         }
     }
     //gfx_plotData({0, 0}, SCREEN_WIDTH, SCREEN_HEIGHT, samples_fifo);
-#ifdef PLATFORM_LINUX
+    #ifdef PLATFORM_LINUX
     fclose(csv_log);
-#endif
+    #endif
+
+    return newFrame;
 }
 
 } /* M17 */
