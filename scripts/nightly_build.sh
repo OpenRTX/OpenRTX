@@ -16,6 +16,37 @@
 # *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
 # ***************************************************************************/
 
+# Help
+help()
+{
+   # Display Help
+   echo "Script to build openrtx binaries and copy them to a server"
+   echo
+   echo "Syntax: nightly_build.sh [-t] <destination>"
+   echo "options:"
+   echo  "-t    Add timestamp and hash to filename"  
+   echo "-h     Print this Help."
+   echo
+}
+
+# Default to file without details
+T=0
+
+# Parse options
+while getopts "t" option; do
+   case $option in
+      t)
+         T=1
+         ;;
+      h) # display Help
+         help
+         exit;;
+      \?) # incorrect option
+         echo "Error: Invalid option"
+         exit;;
+   esac
+done
+
 #Exporting Paths in case we execute from crontab
 export PATH="$HOME/.local/bin:$HOME/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
 #Determing where the script is
@@ -24,19 +55,34 @@ MY_PATH="`( cd \"$MY_PATH\" && pwd )`"  # absolutized and normalized
 #Jumping in main OpenRTX folder
 cd $MY_PATH/..
 
-#Preperation
+
+TARGETS=(
+	"openrtx_md3x0_wrap" 
+	"openrtx_mduv3x0_wrap" 
+	"openrtx_gd77_wrap" 
+	"openrtx_dm1801_wrap"
+)
+
+#Preparation
 rm -rf build_arm
 git reset --hard
 git clean -fd
 git pull
+
 #Building
+
 meson setup --cross-file cross_arm.txt build_arm
-meson compile -C build_arm openrtx_md3x0_wrap
-meson compile -C build_arm openrtx_mduv3x0_wrap
-#meson compile -C build_arm openrtx_md9600
-meson compile -C build_arm openrtx_gd77_wrap
-meson compile -C build_arm openrtx_dm1801_wrap
-#SCP
+
+for i in "${!TARGETS[@]}"; do
+   meson compile -C build_arm "${TARGETS[$i]}"
+   if [ "$T" -eq "1" ]; then
+     GIT_HASH=`git rev-parse --short HEAD`
+     DATE=`date '+%Y%m%d'`
+     mv build_arm/${TARGETS[$i]}* "build_arm/${TARGETS[$i]}-$DATE-$GIT_HASH-nightly.bin"  
+   fi 
+done
+
 cd build_arm
 #Using command line option to upload to a scp server
-scp *_wrap* $1
+scp *_wrap* "${@: -1}"
+
