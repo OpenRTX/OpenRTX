@@ -27,6 +27,7 @@ add_project_arguments('-DCODEC2_MODE_EN_DEFAULT=0', language : 'c')
 add_project_arguments('-DCODEC2_MODE_3200_EN=1'   , language : 'c')
 add_project_arguments('-DCODEC2_MODE_1600_EN=1'   , language : 'c')
 add_project_arguments('-DFREEDV_MODE_EN_DEFAULT=0', language : 'c')
+add_project_arguments('-w'                        , language : 'c')
 
 codec2 = static_library('codec2',
                         codec2_src,
