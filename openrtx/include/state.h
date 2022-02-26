@@ -133,7 +133,6 @@ void state_init();
 /**
  * Write default values to OpenRTX settings and VFO Channel configuration
  * Writes out to flash and calls state_init again to reload it immediately
- * 
  */
 void defaultSettingsAndVfo();
 

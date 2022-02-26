@@ -57,12 +57,16 @@ void platform_terminate()
 
 void platform_setBacklightLevel(uint8_t level)
 {
+    // Saturate level to 100 and convert value to 0 - 255
+    if(level > 100) level = 100;
+    uint16_t value = (2 * level) + (level * 55)/100;
+
     SDL_Event e;
     SDL_zero(e);
     e.type = SDL_Backlight_Event;
     e.user.data1 = malloc(sizeof(uint8_t));
     uint8_t *data = (uint8_t *)e.user.data1;
-    *data = level;
+    *data = ((uint8_t) value);
 
     SDL_PushEvent(&e);
 }

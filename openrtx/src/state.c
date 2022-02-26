@@ -32,7 +32,7 @@ state_t state;
 
 void defaultSettingsAndVfo()
 {
-    
+
     //don't need to lock state mutex because this is called from a section
     //that already does that - ui_updatefsm runs in a critical section in
     //the ui thread
@@ -77,6 +77,9 @@ void state_init()
     state.zone_enabled  = false;
     state.rtxStatus     = RTX_OFF;
     state.emergency     = false;
+
+    // Force brightness field to be in range 0 - 100
+    if(state.settings.brightness > 100) state.settings.brightness = 100;
 }
 
 void state_terminate()
@@ -86,7 +89,7 @@ void state_terminate()
      */
     if(state.settings.brightness == 0)
     {
-        state.settings.brightness = 25;
+        state.settings.brightness = 5;
     }
 
     nvm_writeSettingsAndVfo(&state.settings, &state.channel);

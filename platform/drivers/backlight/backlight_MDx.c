@@ -70,7 +70,10 @@ void backlight_terminate()
  */
 void platform_setBacklightLevel(uint8_t level)
 {
-    TIM8->CCR1 = level;
+    if(level > 100) level = 100;
+
+    // Convert value to 0 - 255
+    TIM8->CCR1 = (2 * level) + (level * 55)/100;
 }
 
 #elif defined(ENABLE_BKLIGHT_DIMMING)   /* MD-UV3x0 AND dimming enabled */
@@ -155,7 +158,9 @@ void platform_setBacklightLevel(uint8_t level)
      */
     if(level > 1)
     {
-        TIM11->CCR1 = level;
+        if(level > 100) level = 100;
+
+        TIM11->CCR1 = (2 * level) + (level * 55)/100;
         TIM11->CR1 |= TIM_CR1_CEN;
     }
     else

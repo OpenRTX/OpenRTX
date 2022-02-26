@@ -541,7 +541,7 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     // Print "M17 Settings" on top bar
-    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER, 
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "M17 Settings");
     gfx_printLine(1, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
                   layout.horizontal_pad, layout.menu_font,
@@ -550,7 +550,7 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
     {
         uint16_t rect_width = SCREEN_WIDTH - (layout.horizontal_pad * 2);
         uint16_t rect_height = (SCREEN_HEIGHT - (layout.top_h + layout.bottom_h))/2;
-        point_t rect_origin = {(SCREEN_WIDTH - rect_width) / 2, 
+        point_t rect_origin = {(SCREEN_WIDTH - rect_width) / 2,
                                (SCREEN_HEIGHT - rect_height) / 2};
         gfx_drawRect(rect_origin, rect_width, rect_height, color_white, false);
         // Print M17 callsign being typed
@@ -558,7 +558,7 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
                       layout.horizontal_pad, layout.input_font,
                       TEXT_ALIGN_CENTER, color_white, ui_state->new_callsign);
     }
-    else    
+    else
     {
         // Print M17 current callsign
         gfx_printLine(1, 1, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
@@ -566,11 +566,14 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
                       TEXT_ALIGN_CENTER, color_white, last_state.settings.callsign);
     }
 }
+
 void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state)
 {
+    (void) ui_state;
+
     static int drawcnt = 0;
     gfx_clearScreen();
-    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER, 
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "Reset to Defaults");
 
     //text will flash yellow and white based on update rate of screen
@@ -580,11 +583,12 @@ void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state)
                   TEXT_ALIGN_CENTER, textcolor, "To reset:");
     gfx_printLine(2, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
                   layout.horizontal_pad, layout.top_font,
-                  TEXT_ALIGN_CENTER, textcolor, "Press Enter 2x");
+                  TEXT_ALIGN_CENTER, textcolor, "Press Enter twice");
     drawcnt++;
 }
 
-bool _ui_drawMacroMenu() {
+bool _ui_drawMacroMenu()
+{
         // Header
         gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   color_white, "Macro Menu");
@@ -694,7 +698,7 @@ bool _ui_drawMacroMenu() {
                   yellow_fab413, "9        ");
         gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white, "Sav");
-        
+
         // Draw S-meter bar
         _ui_drawMainBottom();
         return true;

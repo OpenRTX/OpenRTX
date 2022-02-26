@@ -53,5 +53,8 @@ void backlight_terminate()
  */
 void platform_setBacklightLevel(uint8_t level)
 {
-    FTM0->CONTROLS[3].CnV = level;
+    if(level > 100) level = 100;
+
+    // Convert value to 0 - 255
+    FTM0->CONTROLS[3].CnV = (2 * level) + (level * 55)/100;
 }

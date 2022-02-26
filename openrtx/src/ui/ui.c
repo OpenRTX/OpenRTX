@@ -553,7 +553,8 @@ int _ui_fsm_loadChannel(uint16_t zone_index, bool *sync_rtx) {
     return result;
 }
 
-void _ui_fsm_confirmVFOInput(bool *sync_rtx) {
+void _ui_fsm_confirmVFOInput(bool *sync_rtx)
+{
     // Switch to TX input
     if(ui_state.input_set == SET_RX)
     {
@@ -581,7 +582,8 @@ void _ui_fsm_confirmVFOInput(bool *sync_rtx) {
     }
 }
 
-void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx) {
+void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx)
+{
     // Advance input position
     ui_state.input_position += 1;
     // Save pressed number to calculate frequency and show in GUI
@@ -627,12 +629,13 @@ void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx) {
 
 void _ui_changeBrightness(int variation)
 {
-    if(variation >= 0)
-        state.settings.brightness =
-        (255 - state.settings.brightness < variation) ? 255 : state.settings.brightness + variation;
-    else
-        state.settings.brightness =
-        (state.settings.brightness < -variation) ? 0 : state.settings.brightness + variation;
+    state.settings.brightness += variation;
+
+    // Max value for brightness is 100, min value is set to 5 to avoid complete
+    //  display shutdown.
+    if(state.settings.brightness > 100) state.settings.brightness = 100;
+    if(state.settings.brightness < 5)   state.settings.brightness = 5;
+
     platform_setBacklightLevel(state.settings.brightness);
 }
 
@@ -718,7 +721,8 @@ bool _ui_exitStandby(long long now)
     return true;
 }
 
-void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
+void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
+{
     ui_state.input_number = input_getPressedNumber(msg);
     // CTCSS Encode/Decode Selection
     bool tone_tx_enable = state.channel.fm.txToneEn;
@@ -773,10 +777,10 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx) {
             *sync_rtx = true;
             break;
         case 7:
-            _ui_changeBrightness(+25);
+            _ui_changeBrightness(+5);
             break;
         case 8:
-            _ui_changeBrightness(-25);
+            _ui_changeBrightness(-5);
             break;
     }
 
@@ -867,7 +871,7 @@ void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg, bool callsig
         num_symbols = strlen(symbols_ITU_T_E161_callsign[num_key]);
     else
         num_symbols = strlen(symbols_ITU_T_E161[num_key]);
-   
+
     // Skip keypad logic for first keypress
     if(ui_state.last_keypress != 0)
     {
@@ -1459,7 +1463,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     switch(ui_state.menu_selected)
                     {
                         case D_BRIGHTNESS:
-                            _ui_changeBrightness(-25);
+                            _ui_changeBrightness(-5);
                             break;
 #ifdef SCREEN_CONTRAST
                         case D_CONTRAST:
@@ -1479,7 +1483,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     switch(ui_state.menu_selected)
                     {
                         case D_BRIGHTNESS:
-                            _ui_changeBrightness(+25);
+                            _ui_changeBrightness(+5);
                             break;
 #ifdef SCREEN_CONTRAST
                         case D_CONTRAST:
@@ -1564,7 +1568,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     else if(msg.keys & KEY_ESC)
                         // Discard selected callsign and disable input mode
                         ui_state.edit_mode = false;
-                    else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN || 
+                    else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
                             msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
                         _ui_textInputDel(ui_state.new_callsign);
                     else if(input_isNumberPressed(msg))

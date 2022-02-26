@@ -142,7 +142,7 @@ void platform_beepStop();
 
 /**
  * This function sets the screen backlight to the specified level.
- * @param level: backlight level, from 0 (backlight off) to 255 (backlight at
+ * @param level: backlight level, from 0 (backlight off) to 100 (backlight at
  * full brightness).
  */
 void platform_setBacklightLevel(uint8_t level);

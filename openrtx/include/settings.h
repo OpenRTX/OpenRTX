@@ -61,7 +61,7 @@ __attribute__((packed)) settings_t;
 
 static const settings_t default_settings =
 {
-    255,              // Brightness
+    100,              // Brightness
 #ifdef SCREEN_CONTRAST
     DEFAULT_CONTRAST, // Contrast
 #else
