@@ -106,6 +106,7 @@ extern void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state);
 #endif
 extern void _ui_drawSettingsDisplay(ui_state_t* ui_state);
 extern void _ui_drawSettingsM17(ui_state_t* ui_state);
+extern void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state);
 extern bool _ui_drawMacroMenu();
 
 const char *menu_items[] =
@@ -130,7 +131,8 @@ const char *settings_items[] =
 #ifdef HAS_GPS
     "GPS",
 #endif
-    "M17"    
+    "M17",
+    "Default Settings"
 };
 
 const char *display_items[] =
@@ -1382,6 +1384,9 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         case S_M17:
                             state.ui_screen = SETTINGS_M17;
                             break;
+                        case S_RESET2DEFAULTS:
+                            state.ui_screen = SETTINGS_RESET2DEFAULTS;
+                            break;
                         default:
                             state.ui_screen = MENU_SETTINGS;
                     }
@@ -1578,6 +1583,32 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         _ui_menuBack(MENU_SETTINGS);
                 }
                 break;
+            case SETTINGS_RESET2DEFAULTS:
+                if(! ui_state.edit_mode){
+                    //require a confirmation ENTER, then another
+                    //edit_mode is slightly misused to allow for this
+                    if(msg.keys & KEY_ENTER)
+                    {
+                        ui_state.edit_mode = true;
+                    }
+                    else if(msg.keys & KEY_ESC)
+                    {
+                        _ui_menuBack(MENU_SETTINGS);
+                    }
+                } else {
+                    if(msg.keys & KEY_ENTER)
+                    {
+                        ui_state.edit_mode = false;
+                        defaultSettingsAndVfo();
+                        _ui_menuBack(MENU_SETTINGS);
+                    }
+                    else if(msg.keys & KEY_ESC)
+                    {
+                        ui_state.edit_mode = false;
+                        _ui_menuBack(MENU_SETTINGS);
+                    }
+                }
+                break;
         }
     }
     else if(event.type == EVENT_STATUS)
@@ -1682,6 +1713,10 @@ void ui_updateGUI()
         // M17 settings screen
         case SETTINGS_M17:
             _ui_drawSettingsM17(&ui_state);
+            break;
+        // Screen to support resetting Settings and VFO to defaults
+        case SETTINGS_RESET2DEFAULTS:
+            _ui_drawSettingsReset2Defaults(&ui_state);
             break;
         // Low battery screen
         case LOW_BAT:

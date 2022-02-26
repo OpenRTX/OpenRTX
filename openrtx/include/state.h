@@ -131,6 +131,13 @@ extern state_t state;
 void state_init();
 
 /**
+ * Write default values to OpenRTX settings and VFO Channel configuration
+ * Writes out to flash and calls state_init again to reload it immediately
+ * 
+ */
+void defaultSettingsAndVfo();
+
+/**
  * This function terminates the Radio state,
  * Saving persistent settings to flash.
  */
@@ -147,5 +154,6 @@ curTime_t state_getLocalTime(curTime_t utc_time);
  * Use this function to get UTC time from local time based on timezone setting
  */
 curTime_t state_getUTCTime(curTime_t local_time);
+
 
 #endif /* STATE_H */

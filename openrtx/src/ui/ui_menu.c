@@ -566,6 +566,23 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
                       TEXT_ALIGN_CENTER, color_white, last_state.settings.callsign);
     }
 }
+void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state)
+{
+    static int drawcnt = 0;
+    gfx_clearScreen();
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER, 
+              color_white, "Reset to Defaults");
+
+    //text will flash yellow and white based on update rate of screen
+    color_t textcolor = drawcnt % 2 == 0 ? color_white : yellow_fab413;
+    gfx_printLine(1, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
+                  layout.horizontal_pad, layout.top_font,
+                  TEXT_ALIGN_CENTER, textcolor, "To reset:");
+    gfx_printLine(2, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
+                  layout.horizontal_pad, layout.top_font,
+                  TEXT_ALIGN_CENTER, textcolor, "Press Enter 2x");
+    drawcnt++;
+}
 
 bool _ui_drawMacroMenu() {
         // Header
