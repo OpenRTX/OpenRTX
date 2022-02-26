@@ -40,9 +40,6 @@ typedef struct
 }
 __attribute__((packed)) memory_t;
 
-// Legacy magic number, from previous versions
-static const uint32_t legacyMagic = 0x5854524F;    // "ORTX"
-
 static const uint32_t validMagic  = 0x5854504F;    // "OPTX"
 static const uint32_t baseAddress = 0x080E0000;
 memory_t *memory = ((memory_t *) baseAddress);
@@ -58,7 +55,7 @@ memory_t *memory = ((memory_t *) baseAddress);
  */
 int findActiveBlock()
 {
-    if((memory->magic != validMagic) && (memory->magic != legacyMagic))
+    if(memory->magic != validMagic)
     {
         return -1;     // Invalid memory data
     }
@@ -82,10 +79,6 @@ int findActiveBlock()
     }
 
     block = (block * 32) + bit;
-
-    // Mark block as containing legacy data by adding 4096.
-    if(memory->magic == legacyMagic) block += 4096;
-
     return block - 1;
 }
 
@@ -98,19 +91,8 @@ int nvm_readVFOChannelData(channel_t *channel)
     // Invalid data found
     if(block < 0) return -1;
 
-    // Try loading data, if "block" is greater than 2048 the pointer will be
-    // overwritten below without harm.
-    uint8_t *ptr = ((uint8_t *) &(memory->data[block].vfoData));
+    memcpy(channel, &(memory->data[block].vfoData), sizeof(channel_t));
 
-    // Check if we have to load legacy data.
-    if(block > 2048)
-    {
-        block -= 4096;
-        ptr    = ((uint8_t *) &(memory->data[block].vfoData));
-        ptr   -= 1;
-    }
-
-    memcpy(channel, ptr, sizeof(channel_t));
     return 0;
 }
 
@@ -121,17 +103,7 @@ int nvm_readSettings(settings_t *settings)
     // Invalid data found
     if(block < 0) return -1;
 
-    // Check if we have to load legacy data.
-    if(block > 2048)
-    {
-        block -= 4096;
-        memcpy(settings, &(memory->data[block].settings), sizeof(settings_t));
-        settings->display_timer = TIMER_30S;
-    }
-    else
-    {
-        memcpy(settings, &(memory->data[block].settings), sizeof(settings_t));
-    }
+    memcpy(settings, &(memory->data[block].settings), sizeof(settings_t));
 
     return 0;
 }
