@@ -65,10 +65,9 @@ void state_init()
     /*
      * Initialise remaining fields
      */
-    state.radioStateUpdated = true;
-#ifdef HAS_RTC
+    #ifdef HAS_RTC
     state.time = rtc_getTime();
-#endif
+    #endif
     state.v_bat  = platform_getVbat();
     state.charge = battery_getCharge(state.v_bat);
     state.rssi   = rtx_getRssi();
@@ -93,6 +92,25 @@ void state_terminate()
     }
 
     nvm_writeSettingsAndVfo(&state.settings, &state.channel);
+}
+
+void state_update()
+{
+    /*
+     * Low-pass filtering with a time constant of 10s when updated at 1Hz
+     * Original computation: state.v_bat = 0.02*vbat + 0.98*state.v_bat
+     * Peak error is 18mV when input voltage is 49mV.
+     */
+    uint16_t vbat = platform_getVbat();
+    state.v_bat  -= (state.v_bat * 2) / 100;
+    state.v_bat  += (vbat * 2) / 100;
+
+    state.charge = battery_getCharge(state.v_bat);
+    state.rssi = rtx_getRssi();
+
+    #ifdef HAS_RTC
+    state.time = rtc_getTime();
+    #endif
 }
 
 curTime_t state_getLocalTime(curTime_t utc_time)
