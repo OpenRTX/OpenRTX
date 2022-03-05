@@ -62,7 +62,7 @@ main_src = []
 # Add to sources either the main executable or a platform test
 if get_option('test') != ''
   main_src += 'tests/platform/'+get_option('test')+'.c'
-  def      += {'DISABLE_KEEP_ON' : ''}
+  def      += {'RUNNING_TESTSUITE' : ''}
 else
   main_src += 'openrtx/src/main.c'
 endif

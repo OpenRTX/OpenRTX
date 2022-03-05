@@ -45,7 +45,7 @@ void platform_init()
     gpio_setMode(PTT_SW, INPUT_PULL_UP);
     gpio_setMode(PTT_EXT, INPUT_PULL_UP);
 
-    #ifndef DISABLE_KEEP_ON
+    #ifndef RUNNING_TESTSUITE
     gpio_setMode(PWR_SW, OUTPUT);
     gpio_setPin(PWR_SW);
     #endif
