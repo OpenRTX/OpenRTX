@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020, 2021 by Silvano Seva IU2KWO                       *
+ *   Copyright (C) 2020 - 2022 by Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -32,10 +32,17 @@ extern "C" {
  */
 int _write_r(struct _reent *ptr, int fd, const void *buf, size_t cnt)
 {
+    #ifdef ENABLE_STDIO
     if(fd == STDOUT_FILENO || fd == STDERR_FILENO)
     {
         return vcom_writeBlock(buf, cnt);
     }
+    #else
+    (void) ptr;
+    (void) fd;
+    (void) buf;
+    (void) cnt;
+    #endif
 
     /* If fd is not stdout or stderr */
     ptr->_errno = EBADF;
@@ -50,6 +57,7 @@ int _read_r(struct _reent *ptr, int fd, void *buf, size_t cnt)
 {
     int ret = -1;
 
+    #ifdef ENABLE_STDIO
     if(fd == STDIN_FILENO)
     {
         for(;;)
@@ -68,6 +76,13 @@ int _read_r(struct _reent *ptr, int fd, void *buf, size_t cnt)
         ptr->_errno = EBADF;
         ret = -1;
     }
+    #else
+    (void) ptr;
+    (void) fd;
+    (void) buf;
+    (void) cnt;
+    ptr->_errno = EBADF;
+    #endif
 
     return ret;
 }
