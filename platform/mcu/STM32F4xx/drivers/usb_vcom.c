@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2020 - 2022 by Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -15,7 +15,9 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include "usbd_core.h"
 #include "usb_defines.h"
 #include "usbd_desc.h"
@@ -23,6 +25,7 @@
 #include "usbd_usr.h"
 #include "usbd_req.h"
 
+#include <interfaces/delays.h>
 #include "usb_vcom.h"
 
 /* Common USB OTG handle, also defined as 'extern' in other modules */
@@ -49,6 +52,8 @@ struct rb
     size_t writePtr;
 }
 rxRingBuf;
+
+bool txDone;    /* Flag for end of data transmission. */
 
 /* USB CDC device Configuration Descriptor */
 uint8_t usbd_cdc_CfgDesc[USB_CDC_CONFIG_DESC_SIZ] =
@@ -212,8 +217,22 @@ int vcom_init()
 
 ssize_t vcom_writeBlock(const void* buf, size_t len)
 {
-    uint32_t rv = DCD_EP_Tx (&USB_OTG_dev, CDC_IN_EP, (uint8_t*) buf, len);
-    if(rv != 0) return -1;
+    txDone = false;
+    DCD_EP_Tx (&USB_OTG_dev, CDC_IN_EP, (uint8_t*) buf, len);
+
+    uint16_t timeout = 0;
+
+    while(!txDone)
+    {
+        delayMs(1);
+        timeout++;
+        if(timeout > 500)
+        {
+            DCD_EP_Flush(&USB_OTG_dev, CDC_IN_EP);
+            return -1;
+        }
+    }
+
     return len;
 }
 
@@ -377,6 +396,8 @@ static uint8_t  usbd_cdc_DataIn (void *pdev, uint8_t epnum)
     (void) pdev;
     (void) epnum;
 
+    txDone = true;
+
     return USBD_OK;
 }
 
@@ -451,7 +472,7 @@ static uint16_t VCP_Ctrl (uint32_t Cmd, uint8_t* Buf, uint32_t Len)
         Buf[3] = (uint8_t)(linecoding.bitrate >> 24);
         Buf[4] = linecoding.format;
         Buf[5] = linecoding.paritytype;
-        Buf[6] = linecoding.datatype; 
+        Buf[6] = linecoding.datatype;
     }
 
     return USBD_OK;
