@@ -28,7 +28,25 @@
 extern "C" {
 #endif
 
+/**
+ * Send an XMODEM packet over the serial port.
+ *
+ * @param data: pointer to payload data.
+ * @param size: data size, must be either 128 or 1024 byte.
+ * @param blockNum: packet sequence number.
+ */
 void xmodem_sendPacket(const void *data, size_t size, uint8_t blockNum);
+
+/**
+ * Send data using the XMODEM protocol, blocking function.
+ * Data transfer begins when the start command from the receiving endpoint is
+ * detected.
+ *
+ * @param size: data size.
+ * @param callback: pointer to a callback function in charge of providing data
+ * for the new packets being sent.
+ */
+ssize_t xmodem_sendData(size_t size, int (*callback)(uint8_t *, size_t));
 
 #ifdef __cplusplus
 }
