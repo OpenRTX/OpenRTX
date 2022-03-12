@@ -48,6 +48,9 @@ enum uiScreen
     MENU_CONTACTS,
     MENU_GPS,
     MENU_SETTINGS,
+    MENU_BACKUP_RESTORE,
+    MENU_BACKUP,
+    MENU_RESTORE,
     MENU_INFO,
     MENU_ABOUT,
     SETTINGS_TIMEDATE,
@@ -76,6 +79,7 @@ enum menuItems
     M_GPS,
 #endif
     M_SETTINGS,
+    M_BACKUP_RESTORE,
     M_INFO,
     M_ABOUT
 };
@@ -91,6 +95,12 @@ enum settingsItems
 #endif
     ,S_M17
     ,S_RESET2DEFAULTS
+};
+
+enum backupRestoreItems
+{
+    BR_BACKUP = 0,
+    BR_RESTORE
 };
 
 enum displayItems
@@ -185,12 +195,14 @@ extern const char *menu_items[];
 extern const char *settings_items[];
 extern const char *display_items[];
 extern const char *settings_gps_items[];
+extern const char *backup_restore_items[];
 extern const char *info_items[];
 extern const char *authors[];
 extern const uint8_t menu_num;
 extern const uint8_t settings_num;
 extern const uint8_t display_num;
 extern const uint8_t settings_gps_num;
+extern const uint8_t backup_restore_num;
 extern const uint8_t info_num;
 extern const uint8_t author_num;
 extern const color_t color_black;

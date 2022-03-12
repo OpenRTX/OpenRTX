@@ -198,6 +198,13 @@ int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
 }
 #endif
 
+int _ui_getBackupRestoreEntryName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= backup_restore_num) return -1;
+    snprintf(buf, max_len, "%s", backup_restore_items[index]);
+    return 0;
+}
+
 int _ui_getInfoEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= info_num) return -1;
@@ -422,6 +429,44 @@ void _ui_drawMenuSettings(ui_state_t* ui_state)
               color_white, "Settings");
     // Print menu entries
     _ui_drawMenuList(ui_state->menu_selected, _ui_getSettingsEntryName);
+}
+
+void _ui_drawMenuBackupRestore(ui_state_t* ui_state)
+{
+    gfx_clearScreen();
+    // Print "Backup & Restore" on top bar
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
+              color_white, "Backup & Restore");
+    // Print menu entries
+    _ui_drawMenuList(ui_state->menu_selected, _ui_getBackupRestoreEntryName);
+}
+
+void _ui_drawMenuBackup(ui_state_t* ui_state)
+{
+    gfx_clearScreen();
+    // Print "Flash Backup" on top bar
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
+              color_white, "Flash Backup");
+    // Print backup message
+    gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+              color_white, "Connect to RTXTool");
+    gfx_print(layout.line3_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+              color_white, "to backup flash.");
+    // TODO: Add call to xmodem send function
+}
+
+void _ui_drawMenuRestore(ui_state_t* ui_state)
+{
+    gfx_clearScreen();
+    // Print "Flash Backup" on top bar
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
+              color_white, "Flash Restore");
+    // Print backup message
+    gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+              color_white, "Connect to RTXTool");
+    gfx_print(layout.line3_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+              color_white, "to restore flash.");
+    // TODO: Add call to xmodem receive function
 }
 
 void _ui_drawMenuInfo(ui_state_t* ui_state)

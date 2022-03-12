@@ -98,6 +98,9 @@ extern void _ui_drawMenuGPS();
 extern void _ui_drawSettingsGPS(ui_state_t* ui_state);
 #endif
 extern void _ui_drawMenuSettings(ui_state_t* ui_state);
+extern void _ui_drawMenuBackupRestore(ui_state_t* ui_state);
+extern void _ui_drawMenuBackup(ui_state_t* ui_state);
+extern void _ui_drawMenuRestore(ui_state_t* ui_state);
 extern void _ui_drawMenuInfo(ui_state_t* ui_state);
 extern void _ui_drawMenuAbout();
 #ifdef HAS_RTC
@@ -118,6 +121,7 @@ const char *menu_items[] =
     "GPS",
 #endif
     "Settings",
+    "Backup & Restore",
     "Info",
     "About"
 };
@@ -152,6 +156,12 @@ const char *settings_gps_items[] =
     "UTC Timezone"
 };
 #endif
+
+const char *backup_restore_items[] =
+{
+    "Backup",
+    "Restore"
+};
 
 const char *info_items[] =
 {
@@ -213,6 +223,7 @@ const uint8_t display_num = sizeof(display_items)/sizeof(display_items[0]);
 #ifdef HAS_GPS
 const uint8_t settings_gps_num = sizeof(settings_gps_items)/sizeof(settings_gps_items[0]);
 #endif
+const uint8_t backup_restore_num = sizeof(backup_restore_items)/sizeof(backup_restore_items[0]);
 const uint8_t info_num = sizeof(info_items)/sizeof(info_items[0]);
 const uint8_t author_num = sizeof(authors)/sizeof(authors[0]);
 
@@ -1268,6 +1279,9 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         case M_SETTINGS:
                             state.ui_screen = MENU_SETTINGS;
                             break;
+                        case M_BACKUP_RESTORE:
+                            state.ui_screen = MENU_BACKUP_RESTORE;
+                            break;
                         case M_INFO:
                             state.ui_screen = MENU_INFO;
                             break;
@@ -1393,6 +1407,32 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                             break;
                         default:
                             state.ui_screen = MENU_SETTINGS;
+                    }
+                    // Reset menu selection
+                    ui_state.menu_selected = 0;
+                }
+                else if(msg.keys & KEY_ESC)
+                    _ui_menuBack(MENU_TOP);
+                break;
+            // Flash backup and restore menu screen
+            case MENU_BACKUP_RESTORE:
+                if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                    _ui_menuUp(settings_num);
+                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                    _ui_menuDown(settings_num);
+                else if(msg.keys & KEY_ENTER)
+                {
+
+                    switch(ui_state.menu_selected)
+                    {
+                        case BR_BACKUP:
+                            state.ui_screen = MENU_BACKUP;
+                            break;
+                        case BR_RESTORE:
+                            state.ui_screen = MENU_RESTORE;
+                            break;
+                        default:
+                            state.ui_screen = MENU_BACKUP_RESTORE;
                     }
                     // Reset menu selection
                     ui_state.menu_selected = 0;
@@ -1685,6 +1725,18 @@ void ui_updateGUI()
         // Settings menu screen
         case MENU_SETTINGS:
             _ui_drawMenuSettings(&ui_state);
+            break;
+        // Flash backup and restore screen
+        case MENU_BACKUP_RESTORE:
+            _ui_drawMenuBackupRestore(&ui_state);
+            break;
+        // Flash backup screen
+        case MENU_BACKUP:
+            _ui_drawMenuBackup(&ui_state);
+            break;
+        // Flash restore screen
+        case MENU_RESTORE:
+            _ui_drawMenuRestore(&ui_state);
             break;
         // Info menu screen
         case MENU_INFO:
