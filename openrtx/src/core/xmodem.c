@@ -25,16 +25,15 @@
 #include <string.h>
 #include <crc.h>
 
-#define SOH     (0x01)  /* start of 128-byte data packet */
-#define STX     (0x02)  /* start of 1024-byte data packet */
-#define EOT     (0x04)  /* End Of Transmission */
-#define ACK     (0x06)  /* ACKnowledge, receive OK */
-#define NAK     (0x15)  /* Negative ACKnowledge, receiver ERROR, retry */
-#define CAN     (0x18)  /* two CAN in succession will abort transfer */
-#define CRC     (0x43)  /* 'C' == 0x43, request 16-bit CRC, use in place of first NAK for CRC mode */
-#define ABT1    (0x41)  /* 'A' == 0x41, assume try abort by user typing */
-#define ABT2    (0x61)  /* 'a' == 0x61, assume try abort by user typing */
-
+#define SOH     (0x01)  // start of 128-byte data packet
+#define STX     (0x02)  // start of 1024-byte data packet
+#define EOT     (0x04)  // End Of Transmission
+#define ACK     (0x06)  // ACKnowledge, receive OK
+#define NAK     (0x15)  // Negative ACKnowledge, receiver ERROR, retry
+#define CAN     (0x18)  // two CAN in succession will abort transfer
+#define CRC     (0x43)  // 'C' == 0x43, request 16-bit CRC, use in place of first NAK for CRC mode
+#define ABT1    (0x41)  // 'A' == 0x41, assume try abort by user typing
+#define ABT2    (0x61)  // 'a' == 0x61, assume try abort by user typing
 
 /**
  * @internal
@@ -84,6 +83,39 @@ void xmodem_sendPacket(const void *data, size_t size, uint8_t blockNum)
     buf[0] = crc >> 8;
     buf[1] = crc & 0xFF;
     vcom_writeBlock(buf, 2);
+}
+
+size_t xmodem_receivePacket(void* data, uint8_t expectedBlockNum)
+{
+    // Get first byte
+    uint8_t status = 0;
+    while((status != STX) && (status != SOH))
+    {
+        waitForData(&status, 1);
+    }
+
+    // Get sequence number
+    uint8_t seq[2] = {0};
+    waitForData(seq, 2);
+
+    // Determine payload size and get data
+    size_t blockSize = 128;
+    if(status == STX) blockSize = 1024;
+    waitForData(((uint8_t *) data), blockSize);
+
+    // Get CRC
+    uint8_t crc[2] = {0};
+    waitForData(crc, 2);
+
+    // First sanity check: sequence number
+    if((seq[0] ^ seq[1]) != 0xFF)  return 0;
+    if(expectedBlockNum != seq[0]) return 0;
+
+    // Second sanity check: CRC
+    uint16_t dataCrc = crc_ccitt(data, blockSize);
+    if((crc[0] != (dataCrc >> 8)) || (crc[1] != (dataCrc & 0xFF))) return 0;
+
+    return blockSize;
 }
 
 ssize_t xmodem_sendData(size_t size, ssize_t (*callback)(uint8_t *, size_t))
@@ -157,4 +189,53 @@ ssize_t xmodem_sendData(size_t size, ssize_t (*callback)(uint8_t *, size_t))
     }
 
     return sentSize;
+}
+
+ssize_t xmodem_receiveData(size_t size, void (*callback)(uint8_t *, size_t))
+{
+    uint8_t dataBuf[1024];
+    uint8_t command  = 0;
+    uint8_t blockNum = 1;
+    size_t  rcvdSize = 0;
+
+    // Request data transfer in CRC mode
+    command = CRC;
+    vcom_writeBlock(&command, 1);
+
+    while(rcvdSize < size)
+    {
+        size_t blockSize = xmodem_receivePacket(dataBuf, blockNum);
+        if(blockSize == 0)
+        {
+            // Bad packet, send NACK
+            command = NAK;
+        }
+        else
+        {
+            // New data arrived
+            size_t delta = size - rcvdSize;
+            if(blockSize < delta) delta = blockSize;
+            callback(dataBuf, delta);
+
+            rcvdSize += delta;
+            blockNum++;
+
+            // ACK and go on
+            command = ACK;
+        }
+
+        vcom_writeBlock(&command, 1);
+    }
+
+    // Wait for EOT from the sender, ACK and return
+    uint8_t status = 0;
+    while(status != EOT)
+    {
+        waitForData(&status, 1);
+    }
+
+    command = ACK;
+    vcom_writeBlock(&command, 1);
+
+    return rcvdSize;
 }
