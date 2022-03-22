@@ -29,6 +29,7 @@
 #include <interfaces/graphics.h>
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
+#include <interfaces/radio.h>
 #include <event.h>
 #include <rtx.h>
 #include <queue.h>
@@ -251,7 +252,18 @@ void *rtx_task(void *arg)
     while(1)
     {
         rtx_taskFunc();
+
+        // TODO: implement a cleaner shutdown procedure
+        if(state.rtxShutdown == true)
+        {
+            radio_disableRtx();
+            platform_ledOff(RED);
+            platform_ledOff(GREEN);
+            break;
+        }
     }
+
+    return NULL;
 }
 
 #if defined(HAS_GPS) && !defined(MD3x0_ENABLE_DBG)

@@ -118,7 +118,7 @@ size_t xmodem_receivePacket(void* data, uint8_t expectedBlockNum)
     return blockSize;
 }
 
-ssize_t xmodem_sendData(size_t size, ssize_t (*callback)(uint8_t *, size_t))
+ssize_t xmodem_sendData(size_t size, int (*callback)(uint8_t *, size_t))
 {
     // Wait for the start command from the receiver, only CRC mode is supported.
     uint8_t cmd = 0;

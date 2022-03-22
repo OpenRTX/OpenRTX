@@ -21,6 +21,7 @@
 #ifndef XMODEM_H
 #define XMODEM_H
 
+#include <sys/types.h>
 #include <stdint.h>
 #include <stddef.h>
 

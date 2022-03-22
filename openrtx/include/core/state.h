@@ -97,6 +97,7 @@ typedef struct
     bool       zone_enabled;
     zone_t     zone;
     uint8_t    rtxStatus;
+    bool       rtxShutdown;
 
     bool       emergency;
     settings_t settings;

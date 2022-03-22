@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <backup.h>
 #include <ui.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/platform.h>
@@ -443,30 +444,68 @@ void _ui_drawMenuBackupRestore(ui_state_t* ui_state)
 
 void _ui_drawMenuBackup(ui_state_t* ui_state)
 {
+    (void) ui_state;
+
     gfx_clearScreen();
     // Print "Flash Backup" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "Flash Backup");
     // Print backup message
-    gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+    point_t line = layout.line2_pos;
+    gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
               color_white, "Connect to RTXTool");
-    gfx_print(layout.line3_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-              color_white, "to backup flash.");
-    // TODO: Add call to xmodem send function
+    line.y += 18;
+    gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
+              color_white, "to backup flash and");
+    line.y += 18;
+    gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
+              color_white, "press PTT to start.");
+
+    // Shutdown RF stage
+    state.rtxShutdown = true;
+
+    #ifndef PLATFORM_LINUX
+    if(platform_getPttStatus() == 1)
+    {
+        platform_ledOn(GREEN);
+        eflash_dump();
+        platform_terminate();
+        NVIC_SystemReset();
+    }
+    #endif
 }
 
 void _ui_drawMenuRestore(ui_state_t* ui_state)
 {
+    (void) ui_state;
+
     gfx_clearScreen();
     // Print "Flash Backup" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "Flash Restore");
     // Print backup message
-    gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+    point_t line = layout.line2_pos;
+    gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
               color_white, "Connect to RTXTool");
-    gfx_print(layout.line3_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-              color_white, "to restore flash.");
-    // TODO: Add call to xmodem receive function
+    line.y += 18;
+    gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
+              color_white, "to restore flash and");
+    line.y += 18;
+    gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
+              color_white, "press PTT to start.");
+
+    // Shutdown RF stage
+    state.rtxShutdown = true;
+
+    #ifndef PLATFORM_LINUX
+    if(platform_getPttStatus() == 1)
+    {
+        platform_ledOn(GREEN);
+        eflash_restore();
+        platform_terminate();
+        NVIC_SystemReset();
+    }
+    #endif
 }
 
 void _ui_drawMenuInfo(ui_state_t* ui_state)

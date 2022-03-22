@@ -31,7 +31,6 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/dsp.cpp',
                'openrtx/src/core/cps.c',
                'openrtx/src/core/crc.c',
-               'openrtx/src/core/xmodem.c',
                'openrtx/src/core/memory_profiling.cpp',
                'openrtx/src/ui/ui.c',
                'openrtx/src/ui/ui_main.c',
@@ -124,7 +123,9 @@ def = def + {'GIT_VERSION': git_version}
 ## TYT MDx family
 ##
 
-mdx_src = ['platform/drivers/ADC/ADC1_MDx.c',
+mdx_src = ['openrtx/src/core/xmodem.c',
+           'openrtx/src/core/backup.c',
+           'platform/drivers/ADC/ADC1_MDx.c',
            'platform/drivers/GPS/GPS_MDx.cpp',
            'platform/drivers/NVM/W25Qx.c',
            'platform/drivers/NVM/nvmem_settings_MDx.c',
@@ -140,7 +141,9 @@ mdx_src = ['platform/drivers/ADC/ADC1_MDx.c',
 ## GDx family: Radioddity GD-77 and Baofeng DM-1801
 ##
 
-gdx_src = ['platform/drivers/NVM/W25Qx.c',
+gdx_src = ['openrtx/src/core/xmodem.c',
+           'openrtx/src/core/backup.c',
+           'platform/drivers/NVM/W25Qx.c',
            'platform/drivers/NVM/AT24Cx_GDx.c',
            'platform/drivers/NVM/spiFlash_GDx.c',
            'platform/drivers/NVM/nvmem_GDx.c',
