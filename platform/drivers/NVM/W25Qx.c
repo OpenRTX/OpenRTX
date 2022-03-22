@@ -34,6 +34,7 @@
 #define CMD_RSECR 0x48   /* Read security register */
 #define CMD_WKUP  0xAB   /* Release power down     */
 #define CMD_PDWN  0xB9   /* Power down             */
+#define CMD_ECHIP 0xC7   /* Full chip erase        */
 
 /*
  * Target-specific SPI interface functions, their implementation can be found
@@ -144,6 +145,41 @@ bool W25Qx_eraseSector(uint32_t addr)
     while(timeout > 0)
     {
         delayUs(250);
+        timeout--;
+
+        gpio_clearPin(FLASH_CS);
+        (void) spiFlash_SendRecv(CMD_RDSTA);        /* Read status    */
+        uint8_t status = spiFlash_SendRecv(0x00);
+        gpio_setPin(FLASH_CS);
+
+        /* If busy flag is low, we're done */
+        if((status & 0x01) == 0) return true;
+    }
+
+    /* If we get here, we had a timeout */
+    return false;
+}
+
+bool W25Qx_eraseChip()
+{
+    gpio_clearPin(FLASH_CS);
+    (void) spiFlash_SendRecv(CMD_WREN);     /* Write enable */
+    gpio_setPin(FLASH_CS);
+
+    delayUs(5);
+
+    gpio_clearPin(FLASH_CS);
+    (void) spiFlash_SendRecv(CMD_ECHIP);    /* Command */
+    gpio_setPin(FLASH_CS);
+
+    /*
+     * Wait till erase terminates.
+     * Timeout after 200s, at 20ms per tick
+     */
+    uint16_t timeout = 10000;
+    while(timeout > 0)
+    {
+        delayMs(20);
         timeout--;
 
         gpio_clearPin(FLASH_CS);
