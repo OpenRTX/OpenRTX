@@ -157,9 +157,9 @@ void gfx_clearScreen()
 void gfx_fillScreen(color_t color)
 {
     if(!initialized) return;
-    for(int y = 0; y < SCREEN_HEIGHT; y++)
+    for(uint16_t y = 0; y < SCREEN_HEIGHT; y++)
     {
-        for(int x = 0; x < SCREEN_WIDTH; x++)
+        for(uint16_t x = 0; x < SCREEN_WIDTH; x++)
         {
             point_t pos = {x, y};
             gfx_setPixel(pos, color);
@@ -179,9 +179,10 @@ inline void gfx_setPixel(point_t pos, color_t color)
         uint8_t alpha = color.alpha;
         rgb565_t new_pixel = _true2highColor(color);
         rgb565_t old_pixel = buf[pos.x + pos.y*SCREEN_WIDTH];
-        rgb565_t pixel = {((255-alpha)*old_pixel.b+alpha*new_pixel.b)/255,
-                          ((255-alpha)*old_pixel.g+alpha*new_pixel.g)/255,
-                          ((255-alpha)*old_pixel.r+alpha*new_pixel.r)/255};
+        rgb565_t pixel;
+        pixel.r = ((255-alpha)*old_pixel.b+alpha*new_pixel.b)/255;
+        pixel.g = ((255-alpha)*old_pixel.g+alpha*new_pixel.g)/255;
+        pixel.b = ((255-alpha)*old_pixel.r+alpha*new_pixel.r)/255;
         buf[pos.x + pos.y*SCREEN_WIDTH] = pixel;
     }
     else
@@ -270,9 +271,9 @@ void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color,
     bool perimeter = 0;
     if(x_max > (SCREEN_WIDTH - 1)) x_max = SCREEN_WIDTH - 1;
     if(y_max > (SCREEN_HEIGHT - 1)) y_max = SCREEN_HEIGHT - 1;
-    for(int y = start.y; y <= y_max; y++)
+    for(uint16_t y = start.y; y <= y_max; y++)
     {
-        for(int x = start.x; x <= x_max; x++)
+        for(uint16_t x = start.x; x <= x_max; x++)
         {
             if(y == start.y || y == y_max || x == start.x || x == x_max) perimeter = 1;
             else perimeter = 0;
@@ -474,7 +475,9 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
                         start.y + yo + yy > 0 &&
                         start.x + xo + xx > 0)
                     {
-                        point_t pos = {start.x + xo + xx, start.y + yo + yy};
+                        point_t pos;
+                        pos.x = start.x + xo + xx;
+                        pos.y = start.y + yo + yy;
                         gfx_setPixel(pos, color);
 
                     }
@@ -601,23 +604,36 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
     gfx_drawRect(start, width, height, white, false);
 
     // Draw the battery fill
-    point_t fill_start = {start.x + 2, start.y + 2};
+    point_t fill_start;
+    fill_start.x = start.x + 2;
+    fill_start.y = start.y + 2;
     int fillWidth = ((width - 4) * percentage) / 100;
     gfx_drawRect(fill_start, fillWidth, height - 4, bat_color, true);
 
     // Round corners
-    point_t top_left = start;
-    point_t top_right = {start.x + width - 1, start.y};
-    point_t bottom_left = {start.x, start.y + height - 1};
-    point_t bottom_right = {start.x + width - 1, start.y + height - 1};
+    point_t top_left     = start;
+    point_t top_right    = start;
+    point_t bottom_left  = start;
+    point_t bottom_right = start;
+
+    top_right.x    += width - 1;
+    bottom_left.y  += height - 1;
+    bottom_right.x += width - 1;
+    bottom_right.y += height - 1;
+
     gfx_setPixel(top_left, black);
     gfx_setPixel(top_right, black);
     gfx_setPixel(bottom_left, black);
     gfx_setPixel(bottom_right, black);
 
     // Draw the button
-    point_t button_start = {start.x + width, start.y + height / 2 - (height / 8) - 1 + (height % 2)};
-    point_t button_end =   {start.x + width, start.y + height / 2 + (height / 8)};
+    point_t button_start;
+    point_t button_end;
+
+    button_start.x = start.x + width;
+    button_start.y = start.y + height / 2 - (height / 8) - 1 + (height % 2);
+    button_end.x   = start.x + width;
+    button_end.y   = start.y + height / 2 + (height / 8);
     gfx_drawLine(button_start, button_end, white);
 }
 
@@ -657,7 +673,8 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
     {
         color_t color = (i % 3 == 0) ? yellow : white;
         color = (i > 9) ? red : color;
-        point_t pixel_pos = {start.x + i * (width - 1) / 11, start.y};
+        point_t pixel_pos = start;
+        pixel_pos.x += i * (width - 1) / 11;
         gfx_setPixel(pixel_pos, color);
         pixel_pos.y += height;
         if (i == 10) {
@@ -678,15 +695,15 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
     // Squelch bar
     uint16_t squelch_height = bar_height / 3 ;
     uint16_t squelch_width = width * squelch;
-    point_t squelch_pos = {start.x, start.y + 2};
+    point_t squelch_pos = {start.x, (uint8_t) (start.y + 2)};
     gfx_drawRect(squelch_pos, squelch_width, squelch_height, color, true);
-    
+
     // RSSI bar
     uint16_t rssi_height = bar_height * 2 / 3;
     float s_level =  (127.0f + rssi) / 6.0f;
     uint16_t rssi_width = (s_level < 0.0f) ? 0 : (s_level * (width - 1) / 11);
     rssi_width = (s_level > 10.0f) ? width : rssi_width;
-    point_t rssi_pos = { start.x, start.y + 2 + squelch_height};
+    point_t rssi_pos = { start.x, (uint8_t) (start.y + 2 + squelch_height)};
     gfx_drawRect(rssi_pos, rssi_width, rssi_height, white, true);
 }
 
@@ -714,7 +731,7 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
  * Width (px)
  *
  */
-void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, float rssi, 
+void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, float rssi,
                          uint8_t level)
 {
     color_t red =    {255, 0,   0  , 255};
@@ -725,32 +742,35 @@ void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, float r
     fontSize_t font = FONT_SIZE_5PT;
     uint8_t font_height =  gfx_getFontHeight(font);
     uint16_t bar_height = (height - 6 - font_height) / 2;
-   
+
     // Level meter marks
     for(int i = 0; i <= 4; i++)
     {
-        point_t pixel_pos = {start.x + i * (width - 1) / 4, start.y};
+        point_t pixel_pos = start;
+        pixel_pos.x += i * (width - 1) / 4;
         gfx_setPixel(pixel_pos, white);
         pixel_pos.y += (bar_height + 3);
         gfx_setPixel(pixel_pos, white);
     }
     // Level bar
     uint16_t level_width = (level / 255.0 * width);
-    point_t level_pos = { start.x, start.y + 2 };
+    point_t level_pos = { start.x, (uint8_t) (start.y + 2)};
     gfx_drawRect(level_pos, level_width, bar_height, green, true);
     // RSSI bar
     float s_level =  (127.0f + rssi) / 6.0f;
     uint16_t rssi_width = (s_level < 0.0f) ? 0 : (s_level * (width - 1) / 11);
     rssi_width = (s_level > 10.0f) ? width : rssi_width;
-    point_t rssi_pos = {start.x, start.y + 5 + bar_height};
+    point_t rssi_pos = {start.x, (uint8_t) (start.y + 5 + bar_height)};
     gfx_drawRect(rssi_pos, rssi_width, bar_height, white, true);
     // S-level marks and numbers
     for(int i = 0; i < 12; i++)
     {
         color_t color = (i % 3 == 0) ? yellow : white;
         color = (i > 9) ? red : color;
-        point_t pixel_pos = {start.x + i * (width - 1) / 11, 
-                             start.y + height};
+        point_t pixel_pos = start;
+        pixel_pos.x += i * (width - 1) / 11;
+        pixel_pos.y += height;
+
         if (i == 10) {
             pixel_pos.x -= 8;
             gfx_print(pixel_pos, font, TEXT_ALIGN_LEFT, color, "+%d", i);
@@ -802,18 +822,25 @@ void gfx_drawGPSgraph(point_t start,
     for(int i = 0; i < 12; i++)
     {
         bar_height = (height - 8) * sats[i].snr / 100 + 1;
-        point_t bar_pos = {start.x + 2 + i * (bar_width + 2),
-                           start.y + (height - 8) - bar_height};
+        point_t bar_pos = start;
+        bar_pos.x += 2 + i * (bar_width + 2);
+        bar_pos.y += (height - 8) - bar_height;
         color_t bar_color = (active_sats & 1 << (sats[i].id - 1)) ? yellow : white;
         gfx_drawRect(bar_pos, bar_width, bar_height, bar_color, true);
-        point_t id_pos = {bar_pos.x, start.y + height};
+        point_t id_pos = {bar_pos.x, (uint8_t) (start.y + height)};
         gfx_print(id_pos, FONT_SIZE_5PT, TEXT_ALIGN_LEFT,
                   bar_color, "%2d ", sats[i].id);
     }
     uint8_t bars_width = 9 + 11 * (bar_width + 2);
-    point_t left_line_end = {start.x, start.y + height - 9};
-    point_t right_line_start = {start.x + bars_width, start.y};
-    point_t right_line_end = {start.x + bars_width, start.y + height - 9};
+    point_t left_line_end    = start;
+    point_t right_line_start = start;
+    point_t right_line_end   = start;
+
+    left_line_end.y    += height - 9;
+    right_line_start.x += bars_width;
+    right_line_end.x   += bars_width;
+    right_line_end.y   += height - 9;
+
     gfx_drawLine(start, left_line_end, white);
     gfx_drawLine(right_line_start, right_line_end, white);
 }
@@ -828,30 +855,33 @@ void gfx_drawGPScompass(point_t start,
     color_t yellow = {250, 180, 19 , 255};
 
     // Compass circle
-    point_t circle_pos = {start.x + radius + 1, start.y + radius + 3};
+    point_t circle_pos = start;
+    circle_pos.x += radius + 1;
+    circle_pos.y += radius + 3;
     gfx_drawCircle(circle_pos, radius, white);
-    point_t n_box = {start.x + radius - 5, start.y};
+    point_t n_box = {(uint8_t)(start.x + radius - 5), start.y};
     gfx_drawRect(n_box, 13, 13, black, true);
     float needle_radius = radius - 4;
     if (active)
     {
         // Needle
         deg -= 90.0f;
-        point_t p1 = {circle_pos.x + needle_radius * COS(deg),
-                      circle_pos.y + needle_radius * SIN(deg)};
-        point_t p2 = {circle_pos.x + needle_radius * COS(deg + 145.0f),
-                      circle_pos.y + needle_radius * SIN(deg + 145.0f)};
-        point_t p3 = {circle_pos.x + needle_radius / 2 * COS(deg + 180.0f),
-                      circle_pos.y + needle_radius / 2 * SIN(deg + 180.0f)};
-        point_t p4 = {circle_pos.x + needle_radius * COS(deg - 145.0f),
-                      circle_pos.y + needle_radius * SIN(deg - 145.0f)};
+        point_t p1 = {(uint8_t)(circle_pos.x + needle_radius * COS(deg)),
+                      (uint8_t)(circle_pos.y + needle_radius * SIN(deg))};
+        point_t p2 = {(uint8_t)(circle_pos.x + needle_radius * COS(deg + 145.0f)),
+                      (uint8_t)(circle_pos.y + needle_radius * SIN(deg + 145.0f))};
+        point_t p3 = {(uint8_t)(circle_pos.x + needle_radius / 2 * COS(deg + 180.0f)),
+                      (uint8_t)(circle_pos.y + needle_radius / 2 * SIN(deg + 180.0f))};
+        point_t p4 = {(uint8_t)(circle_pos.x + needle_radius * COS(deg - 145.0f)),
+                      (uint8_t)(circle_pos.y + needle_radius * SIN(deg - 145.0f))};
         gfx_drawLine(p1, p2, yellow);
         gfx_drawLine(p2, p3, yellow);
         gfx_drawLine(p3, p4, yellow);
         gfx_drawLine(p4, p1, yellow);
     }
     // North indicator
-    point_t n_pos = {start.x + radius - 3, start.y + 7};
+    point_t n_pos = {(uint8_t)(start.x + radius - 3),
+                     (uint8_t)(start.y + 7)};
     gfx_print(n_pos, FONT_SIZE_6PT, TEXT_ALIGN_LEFT, white, "N");
 }
 
@@ -874,8 +904,6 @@ void gfx_plotData(point_t start,
         pos.y = start.y + height / 2 + (float) d * 4 / (2 * SHRT_MAX) * height;
         if (pos.y > SCREEN_HEIGHT)
             pos.y = SCREEN_HEIGHT;
-        if (pos.y < 0)
-            pos.y = 0;
         if (!first_iteration)
             gfx_drawLine(prev_pos, pos, white);
         prev_pos = pos;
