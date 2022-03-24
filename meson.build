@@ -337,7 +337,7 @@ mod17_src = src + stm32f405_src + ['platform/targets/Module17/platform.c',
                                    'platform/drivers/NVM/nvmem_Mod17.c',
                                    'platform/drivers/baseband/radio_Mod17.cpp',
                                    'platform/drivers/audio/inputStream_Mod17.cpp',
-                                   'platform/drivers/audio/outputStream_Mod17.c',
+                                   'platform/drivers/audio/outputStream_Mod17.cpp',
                                    'platform/drivers/audio/audio_Mod17.c',
                                    'platform/drivers/baseband/MCP4551_Mod17.cpp']
 

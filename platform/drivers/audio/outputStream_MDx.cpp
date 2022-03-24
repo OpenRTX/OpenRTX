@@ -68,8 +68,7 @@ void __attribute__((used)) DMA_Handler()
     else
         idleBuf = bufAddr + (bufLen / 2);
 
-    // Stop transfer for linear buffer mode, pending termination request or
-    // DMA error.
+    // Stop transfer for linear buffer mode or pending termination request.
     if((circularMode == false) || (reqFinish == true))
     {
         stopTransfer();
@@ -80,7 +79,7 @@ void __attribute__((used)) DMA_Handler()
                 |  DMA_LIFCR_CHTIF2
                 |  DMA_LIFCR_CTEIF2;
 
-                // Finally, wake up eventual pending threads
+    // Finally, wake up eventual pending threads
     if(dmaWaiting == 0) return;
     dmaWaiting->IRQwakeup();
     if(dmaWaiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
