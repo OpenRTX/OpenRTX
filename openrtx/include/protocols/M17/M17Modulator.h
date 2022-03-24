@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2021 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,6 +25,7 @@
 #error This header is C++ only!
 #endif
 
+#include <interfaces/audio_stream.h>
 #include <cstdint>
 #include <array>
 
@@ -107,18 +108,16 @@ private:
         return symbols;
     }
 
-    static constexpr size_t M17_TX_SAMPLE_RATE = 48000;
-    static constexpr size_t M17_FRAME_SAMPLES_48K   = 1920;
-    static constexpr size_t M17_FRAME_SYMBOLS   = 192;
-
-    using dataBuffer_t = std::array< int16_t, M17_FRAME_SAMPLES_48K >;
+    static constexpr size_t M17_TX_SAMPLE_RATE    = 48000;
+    static constexpr size_t M17_FRAME_SAMPLES_48K = 1920;
+    static constexpr size_t M17_FRAME_SYMBOLS     = 192;
 
     std::array< int16_t, M17_FRAME_SYMBOLS > symbols;
-    int16_t      *baseband_buffer;    ///< Buffer for baseband audio handling.
-    dataBuffer_t *activeBuffer;       ///< Half baseband buffer, in transmission.
-    dataBuffer_t *idleBuffer;         ///< Half baseband buffer, free for processing.
-    bool         txRunning;           ///< Transmission running.
-    bool         stopTx;              ///< Stop transmission request.
+    stream_sample_t  *baseband_buffer;  ///< Buffer for baseband audio handling.
+    stream_sample_t  *idleBuffer;       ///< Half baseband buffer, free for processing.
+    streamId         outStream;         ///< Baseband output stream ID.
+    bool             txRunning;         ///< Transmission running.
+    bool             stopTx;            ///< Stop transmission request.
 };
 
 } /* M17 */
