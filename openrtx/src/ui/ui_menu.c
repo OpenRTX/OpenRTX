@@ -464,15 +464,15 @@ void _ui_drawMenuBackup(ui_state_t* ui_state)
     // Shutdown RF stage
     state.rtxShutdown = true;
 
-    #ifndef PLATFORM_LINUX
     if(platform_getPttStatus() == 1)
     {
         platform_ledOn(GREEN);
+        #if !defined(PLATFORM_LINUX) && !defined(PLATFORM_MOD17)
         eflash_dump();
         platform_terminate();
         NVIC_SystemReset();
+        #endif
     }
-    #endif
 }
 
 void _ui_drawMenuRestore(ui_state_t* ui_state)
@@ -497,15 +497,15 @@ void _ui_drawMenuRestore(ui_state_t* ui_state)
     // Shutdown RF stage
     state.rtxShutdown = true;
 
-    #ifndef PLATFORM_LINUX
     if(platform_getPttStatus() == 1)
     {
         platform_ledOn(GREEN);
+        #if !defined(PLATFORM_LINUX) && !defined(PLATFORM_MOD17)
         eflash_restore();
         platform_terminate();
         NVIC_SystemReset();
+        #endif
     }
-    #endif
 }
 
 void _ui_drawMenuInfo(ui_state_t* ui_state)
