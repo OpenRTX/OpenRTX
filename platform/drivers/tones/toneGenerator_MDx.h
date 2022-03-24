@@ -31,8 +31,8 @@ extern "C" {
 
 /**
  * Tone generator for MDx family, used primarily for CTCSS tones and user
- * interface "beeps". It also provides a means to encode AFSK/4FSK data and to
- * reproduce arbitrary audio samples.
+ * interface "beeps". It also provides an high-frequency PWM timebase to encode
+ * AFSK/4FSK data and to reproduce arbitrary audio samples.
  *
  * WARNING: this driver implements a priority mechanism between "beeps", FSK
  * modulation and audio playback. A request for FSK modulation or audio playback
@@ -42,7 +42,6 @@ extern "C" {
  * This driver uses the following peripherals of the STM32F405 MCU:
  * - TIM3 as high-frequency PWM timebase.
  * - TIM14 as timebase for CTCSS and "beeps" through a sine table.
- * - TIM7 and DMA1_Stream2 for AFSK, 4FSK and playback of audio streams.
  */
 
 /**
@@ -108,42 +107,6 @@ void toneGen_unlockBeep();
  * @return if generation of "beep" tones is disabled.
  */
 bool toneGen_beepLocked();
-
-/**
- * Reproduce an audio stream, sending audio stream to both the speaker and the
- * rtx baseband IC.
- * This function returns immediately and the stream is reproduced in background.
- * The calling thread can be made waiting for transfer completion by calling the
- * corresponding API function.
- *
- * WARNING: the underlying peripheral accepts ONLY 16 bit transfers, while the
- * PWM resolution is 8 bit. Thus, the sample buffer MUST be of uint16_t elements
- * and, when filling it with data, one must remember that the upper 8 bit are
- * DISCARDED.
- *
- * @param buf: pointer to a buffer containing the audio samples.
- * @param len: length of the data buffer.
- * @param sampleRate: sample rate of the audio stream in samples per second.
- * @param circMode: treat buf as a double circular buffer, continuously
- * reproducing its content.
- */
-void toneGen_playAudioStream(const uint16_t *buf, const size_t len,
-                             const uint32_t sampleRate, const bool circMode);
-
-/**
- * When called, this function blocks the execution flow until the reproduction
- * of a previously started audio stream or AFSK modulation terminates.
- *
- * @return false if there is no ongoing stream or if another thread is already
- * pending, true otherwise.
- */
-bool toneGen_waitForStreamEnd();
-
-/**
- * Interrupt the ongoing reproduction of an audio stream, also making the
- * toneGen_waitForStreamEnd return to the caller.
- */
-void toneGen_stopAudioStream();
 
 /**
  * Get the current status of the "beep"/AFSK/audio generator stage.
