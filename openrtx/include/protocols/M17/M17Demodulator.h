@@ -42,7 +42,8 @@ typedef struct
 {
     int32_t index;
     bool lsf;
-} sync_t;
+}
+sync_t;
 
 class M17Demodulator
 {
@@ -153,20 +154,15 @@ private:
     /*
      * Convolution statistics computation
      */
-    float conv_ema = 0.0f;
+    float conv_ema   = 0.0f;    /// Exponential moving average from all the correlation values.
     float conv_emvar = 0.0f;
 
     /*
      * Quantization statistics computation
      */
-    float qnt_ema = 0.0f;
-    float qnt_max = 0.0f;
-    float qnt_min = 0.0f;
-
-    /**
-     * Deque containing the sliced samples
-     */
-    // std::deque<int16_t> samples_fifo;
+    float qnt_ema = 0.0f;   ///< Exponential moving average from of the sliced samples.
+    float qnt_max = 0.0f;   ///< Max hold of the sliced samples
+    float qnt_min = 0.0f;   ///< Min hold of the sliced samples.
 
     /**
      * Resets the exponential mean and variance/stddev computation.
@@ -180,13 +176,6 @@ private:
      * average/variance computation
      */
     void updateCorrelationStats(int32_t value);
-
-    /**
-     * Returns the exponential moving average from all the correlation values.
-     *
-     * @returns float numerical value of the exponential moving average
-     */
-    float getCorrelationEma();
 
     /**
      * Returns the standard deviation from all the correlation values.
@@ -207,27 +196,6 @@ private:
      * average/variance computation
      */
     void updateQuantizationStats(int32_t offset);
-
-    /**
-     * Returns the exponential moving average from of the sliced samples.
-     *
-     * @returns float numerical value of the exponential moving average
-     */
-    float getQuantizationEma();
-
-    /**
-     * Returns the max hold of the sliced samples.
-     *
-     * @returns float numerical value of the max hold
-     */
-    float getQuantizationMax();
-
-    /**
-     * Returns the min hold of the sliced samples.
-     *
-     * @returns float numerical value of the min hold
-     */
-    float getQuantizationMin();
 
     /**
      * Computes the convolution between a stride of samples starting from
