@@ -23,6 +23,7 @@
 #include <interfaces/gpio.h>
 #include <data_conversion.h>
 #include <hwconfig.h>
+#include <timers.h>
 #include <miosix.h>
 
 static int    priority     = PRIO_BEEP;
@@ -43,16 +44,13 @@ static Thread *dmaWaiting = 0;
  */
 void stopTransfer()
 {
-    // Shutdown timer
-    TIM7->CR1 &= ~TIM_CR1_CEN;
-
-    // Disable DAC channels and clear underrun flags
-    DAC->CR   &= ~(DAC_CR_EN1 | DAC_CR_EN2);
-    DAC->SR   |= DAC_SR_DMAUDR1 | DAC_SR_DMAUDR2;
+    TIM7->CR1 = 0;    // Shutdown timer
+    DAC->CR   = 0;    // Disable DAC channels
+    DAC->SR   = 0;    // Clear status flags
 
     // Stop DMA transfers
-    DMA1_Stream5->CR &= ~DMA_SxCR_EN;
-    DMA1_Stream6->CR &= ~DMA_SxCR_EN;
+    DMA1_Stream5->CR = 0;
+    DMA1_Stream6->CR = 0;
 
     // Clear flags
     running      = false;
@@ -227,12 +225,11 @@ streamId outputStream_start(const enum AudioSink destination,
 
     /*
      * TIM7 for conversion triggering via TIM7_TRGO, that is counter reload.
-     * AP1 frequency is 42MHz but timer runs at 84MHz, tick rate is 1MHz,
+     * APB1 frequency is 42MHz but timer runs at 84MHz, tick rate is 1MHz,
      * reload register is configured based on desired sample rate.
      */
+    tim_setUpdateFreqency(TIM7, sampleRate, 84000000);
     TIM7->CNT = 0;
-    TIM7->PSC = 0;
-    TIM7->ARR = 84000000/sampleRate;
     TIM7->EGR = TIM_EGR_UG;
     TIM7->CR2 = TIM_CR2_MMS_1;
     TIM7->CR1 = TIM_CR1_CEN;
