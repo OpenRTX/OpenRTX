@@ -22,6 +22,7 @@
 #include <interfaces/audio_stream.h>
 #include <toneGenerator_MDx.h>
 #include <data_conversion.h>
+#include <timers.h>
 #include <miosix.h>
 
 static int    priority     = PRIO_BEEP;
@@ -141,9 +142,8 @@ streamId outputStream_start(const enum AudioSink destination,
      * Timebase for triggering of DMA transfers.
      * Bus frequency for TIM7 is 84MHz.
      */
+    tim_setUpdateFreqency(TIM7, sampleRate, 84000000);
     TIM7->CNT  = 0;
-    TIM7->PSC  = 0;
-    TIM7->ARR  = 84000000/sampleRate;
     TIM7->EGR  = TIM_EGR_UG;
     TIM7->DIER = TIM_DIER_UDE;
 
