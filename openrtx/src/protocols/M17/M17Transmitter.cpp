@@ -23,8 +23,7 @@
 #include <M17/M17Interleaver.h>
 #include <M17/M17Transmitter.h>
 
-namespace M17
-{
+using namespace M17;
 
 M17Transmitter::M17Transmitter(M17Modulator& modulator) : modulator(modulator),
                                                 currentLich(0), frameNumber(0)
@@ -123,5 +122,3 @@ void M17Transmitter::send(const payload_t& payload, const bool isLast)
 
     modulator.send(STREAM_SYNC_WORD, frame, isLast);
 }
-
-} /* M17 */

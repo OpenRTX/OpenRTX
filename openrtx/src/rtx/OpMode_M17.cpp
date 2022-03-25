@@ -108,21 +108,13 @@ OpMode_M17::OpMode_M17() : enterRx(true), m17Tx(modulator)
 
 OpMode_M17::~OpMode_M17()
 {
+
 }
 
 void OpMode_M17::enable()
 {
-    // Start CODEC2 thread
-    runCodec = true;
-    newData  = false;
-
     pthread_mutex_init(&codecMtx, NULL);
     pthread_cond_init(&codecCv, NULL);
-
-    pthread_attr_t codecAttr;
-    pthread_attr_init(&codecAttr);
-    pthread_attr_setstacksize(&codecAttr, 16384);
-    pthread_create(&codecThread, &codecAttr, threadFunc, NULL);
 
     modulator.init();
     demodulator.init();
@@ -131,9 +123,7 @@ void OpMode_M17::enable()
 
 void OpMode_M17::disable()
 {
-    // Shut down CODEC2 thread and wait until it effectively stops
-    runCodec = false;
-    pthread_join(codecThread, NULL);
+    stopCodec();
     pthread_mutex_destroy(&codecMtx);
     pthread_cond_destroy(&codecCv);
 
@@ -174,6 +164,7 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
 
             audio_enableMic();
             radio_enableTx();
+            startCodec();
 
             std::string source_address(status->source_address);
             std::string destination_address(status->destination_address);
@@ -196,6 +187,7 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
 
         audio_disableMic();
         radio_disableRtx();
+        stopCodec();
 
         status->opStatus = OFF;
         enterRx = true;
@@ -235,4 +227,22 @@ void OpMode_M17::sendData(bool lastFrame)
 
     std::copy(encodedData.begin(), encodedData.end(), dataFrame.begin());
     m17Tx.send(dataFrame, lastFrame);
+}
+
+void OpMode_M17::startCodec()
+{
+    runCodec = true;
+    newData  = false;
+
+    pthread_attr_t codecAttr;
+    pthread_attr_init(&codecAttr);
+    pthread_attr_setstacksize(&codecAttr, 16384);
+    pthread_create(&codecThread, &codecAttr, threadFunc, NULL);
+}
+
+void OpMode_M17::stopCodec()
+{
+    // Shut down CODEC2 thread and wait until it effectively stops
+    runCodec = false;
+    pthread_join(codecThread, NULL);
 }

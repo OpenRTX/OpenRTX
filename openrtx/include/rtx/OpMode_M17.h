@@ -104,6 +104,16 @@ private:
      */
     void sendData(const bool lastFrame = false);
 
+    /**
+     * Start CODEC2 thread.
+     */
+    void startCodec();
+
+    /**
+     * Stop CODEC2 thread.
+     */
+    void stopCodec();
+
     bool enterRx;                ///< Flag for RX management.
     M17::M17Modulator   modulator;    ///< M17 modulator.
     M17::M17Demodulator demodulator;  ///< M17 demodulator.
