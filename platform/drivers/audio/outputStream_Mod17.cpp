@@ -54,7 +54,10 @@ void stopTransfer()
     DMA1_Stream5->CR &= ~DMA_SxCR_EN;
     DMA1_Stream6->CR &= ~DMA_SxCR_EN;
 
-    running = false;
+    // Clear flags
+    running      = false;
+    reqFinish    = false;
+    circularMode = false;
 }
 
 /**
@@ -75,21 +78,15 @@ void __attribute__((used)) DMA_Handler()
         stopTransfer();
     }
 
-    // Clear interrupt flags for stream 5
-    if(DMA1->HISR & 0x00000F40)
-    {
-        DMA1->HIFCR = DMA_HIFCR_CTEIF5
-                    | DMA_HIFCR_CTCIF5
-                    | DMA_HIFCR_CHTIF5;
-    }
+    // Clear interrupt flags for stream 5 and 6
+    uint32_t mask = DMA_HISR_TEIF5
+                  | DMA_HISR_TCIF5
+                  | DMA_HISR_HTIF5
+                  | DMA_HISR_TEIF6
+                  | DMA_HISR_TCIF6
+                  | DMA_HISR_HTIF6;
 
-    // Clear interrupt flags for stream 6
-    if(DMA1->HISR & 0x003D0000)
-    {
-        DMA1->HIFCR = DMA_HIFCR_CTEIF6
-                    | DMA_HIFCR_CTCIF6
-                    | DMA_HIFCR_CHTIF6;
-    }
+    DMA1->HIFCR = DMA1->HISR & mask;
 
     // Finally, wake up eventual pending threads
     if(dmaWaiting == 0) return;
