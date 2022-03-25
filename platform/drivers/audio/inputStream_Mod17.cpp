@@ -30,12 +30,12 @@
 using namespace miosix;
 
 
-bool            inUse     = false;       // Flag to determine if the input stream is already open.
-Thread          *sWaiting = 0;           // Thread waiting on interrupt.
-stream_sample_t *bufAddr  = 0;           // Start address of data buffer, fixed.
-stream_sample_t *bufCurr  = 0;           // Buffer address to be returned to application.
-size_t          bufLen    = 0;           // Buffer length.
-uint8_t         bufMode   = BUF_LINEAR;  // Buffer management mode.
+static bool             inUse    = false;       // Flag to determine if the input stream is already open.
+static Thread          *sWaiting = 0;           // Thread waiting on interrupt.
+static stream_sample_t *bufAddr  = 0;           // Start address of data buffer, fixed.
+static stream_sample_t *bufCurr  = 0;           // Buffer address to be returned to application.
+static size_t           bufLen   = 0;           // Buffer length.
+static uint8_t          bufMode  = BUF_LINEAR;  // Buffer management mode.
 
 void __attribute__((used)) DmaHandlerImpl()
 {
@@ -227,7 +227,12 @@ streamId inputStream_start(const enum AudioSource source,
 
 dataBlock_t inputStream_getData(streamId id)
 {
-    (void) id;
+    dataBlock_t block;
+    block.data = NULL;
+    block.len  = 0;
+
+    // Invalid stream ID, return an empty data block
+    if(id < 0) return block;
 
     if(bufMode == BUF_LINEAR)
     {
@@ -253,10 +258,9 @@ dataBlock_t inputStream_getData(streamId id)
                 Thread::yield();
             }
 
-        }while(sWaiting);
+        }while((sWaiting != 0) && (inUse == true));
     }
 
-    dataBlock_t block;
     block.data = bufCurr;
     block.len  = bufLen;
     if(bufMode == BUF_CIRC_DOUBLE) block.len /= 2;
@@ -266,14 +270,21 @@ dataBlock_t inputStream_getData(streamId id)
 
 void inputStream_stop(streamId id)
 {
-    (void) id;
+    if(id < 0) return;
+
+    TIM2->CR1        = 0;   // Shut down timebase
+    ADC2->CR2        = 0;   // Shut down ADC
+    DMA2_Stream2->CR = 0;   // Shut down DMA transfer
 
     RCC->APB2ENR &= ~RCC_APB2ENR_ADC2EN;    // Disable ADC
     RCC->APB1ENR &= ~RCC_APB1ENR_TIM2EN;    // Disable conv. timebase timer
     RCC->AHB1ENR &= ~RCC_AHB1ENR_DMA2EN;    // Disable DMA
     __DSB();
 
-    // Critical section, release inUse flag
+    // Critical section: release inUse flag and invalidate (partial) data.
+    // Releasing the "inUse" flag cause the wake up of pending threads.
     FastInterruptDisableLock dLock;
-    inUse = false;
+    bufCurr = 0;
+    bufLen  = 0;
+    inUse   = false;
 }
