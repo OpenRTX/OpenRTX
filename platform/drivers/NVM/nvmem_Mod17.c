@@ -42,8 +42,18 @@ void nvm_loadHwInfo(hwInfo_t *info)
 
 int nvm_readVFOChannelData(channel_t *channel)
 {
-    (void) channel;
-    return -1;
+    // Module 17 has no channels: just load default values for it
+    channel->mode         = OPMODE_M17;
+    channel->bandwidth    = BW_12_5;
+    channel->power        = 1.0;
+    channel->rx_frequency = 430000000;
+    channel->tx_frequency = 430000000;
+    channel->fm.rxToneEn  = 0; //disabled
+    channel->fm.rxTone    = 0; //and no ctcss/dcs selected
+    channel->fm.txToneEn  = 0;
+    channel->fm.txTone    = 0;
+
+    return 0;
 }
 
 int nvm_readChannelData(channel_t *channel, uint16_t pos)
