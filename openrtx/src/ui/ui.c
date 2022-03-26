@@ -66,6 +66,7 @@
 #include <ui.h>
 #include <rtx.h>
 #include <interfaces/platform.h>
+#include <interfaces/cps_io.h>
 #include <interfaces/nvmem.h>
 #ifdef HAS_GPS
 #include <interfaces/gps.h>
@@ -551,7 +552,7 @@ int _ui_fsm_loadChannel(uint16_t bank_index, bool *sync_rtx) {
             // Channel index is 1-based while bank array access is 0-based
             channel_index = state.bank.member[bank_index - 1];
     }
-    int result = nvm_readChannelData(&channel, channel_index);
+    int result = cps_readChannelData(&channel, channel_index);
     // Read successful and channel is valid
     if(result != -1 && _ui_channel_valid(&channel))
     {
@@ -1311,21 +1312,21 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         bank_t bank;
                         // menu_selected is 0-based while channels are 1-based
                         // menu_selected == 0 corresponds to "All Channels" bank
-                        if(nvm_readBankData(&bank, ui_state.menu_selected + 1) != -1)
+                        if(cps_readBankData(&bank, ui_state.menu_selected + 1) != -1)
                             ui_state.menu_selected += 1;
                     }
                     else if(state.ui_screen == MENU_CHANNEL)
                     {
                         channel_t channel;
                         // menu_selected is 0-based while channels are 1-based
-                        if(nvm_readChannelData(&channel, ui_state.menu_selected + 2) != -1)
+                        if(cps_readChannelData(&channel, ui_state.menu_selected + 2) != -1)
                             ui_state.menu_selected += 1;
                     }
                     else if(state.ui_screen == MENU_CONTACTS)
                     {
                         contact_t contact;
                         // menu_selected is 0-based while channels are 1-based
-                        if(nvm_readContactData(&contact, ui_state.menu_selected + 2) != -1)
+                        if(cps_readContactData(&contact, ui_state.menu_selected + 2) != -1)
                             ui_state.menu_selected += 1;
                     }
                 }
@@ -1341,7 +1342,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         else
                         {
                             state.bank_enabled = true;
-                            result = nvm_readBankData(&newbank, ui_state.menu_selected);
+                            result = cps_readBankData(&newbank, ui_state.menu_selected);
                         }
                         if(result != -1)
                         {

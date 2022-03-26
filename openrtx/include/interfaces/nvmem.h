@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2020 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -21,10 +21,14 @@
 #ifndef NVMEM_H
 #define NVMEM_H
 
-#include "platform.h"
 #include <stdint.h>
 #include <cps.h>
 #include <settings.h>
+#include "platform.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Interface for nonvolatile memory management, usually an external SPI flash
@@ -64,33 +68,6 @@ void nvm_loadHwInfo(hwInfo_t *info);
 int nvm_readVFOChannelData(channel_t *channel);
 
 /**
- * Read one channel entry from table stored in nonvolatile memory.
- *
- * @param channel: pointer to the channel_t data structure to be populated.
- * @param pos: position, inside the channel table, from which read data.
- * @return 0 on success, -1 on failure
- */
-int nvm_readChannelData(channel_t *channel, uint16_t pos);
-
-/**
- * Read one bank from table stored in nonvolatile memory.
- *
- * @param bank: pointer to the bank_t data structure to be populated.
- * @param pos: position, inside the bank table, from which read data.
- * @return 0 on success, -1 on failure
- */
-int nvm_readBankData(bank_t *bank, uint16_t pos);
-
-/**
- * Read one contact from table stored in nonvolatile memory.
- *
- * @param contact: pointer to the contact_t data structure to be populated.
- * @param pos: position, inside the bank table, from which read data.
- * @return 0 on success, -1 on failure
- */
-int nvm_readContactData(contact_t *contact, uint16_t pos);
-
-/**
  * Read OpenRTX settings from storage.
  *
  * @param settings: pointer to the settings_t data structure to be populated.
@@ -114,5 +91,9 @@ int nvm_writeSettings(const settings_t *settings);
  * @return 0 on success, -1 on failure
  */
 int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* NVMEM_H */

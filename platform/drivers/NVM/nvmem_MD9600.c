@@ -57,7 +57,7 @@ uint32_t _bcd2bin(uint32_t bcd)
 /**
  * Used to read channel data from SPI flash into a channel_t struct
  */
-int _nvm_readChannelAtAddress(channel_t *channel, uint32_t addr)
+int _cps_readChannelAtAddress(channel_t *channel, uint32_t addr)
 {
     W25Qx_wakeup();
     delayUs(5);
@@ -173,20 +173,20 @@ TODO: temporarily implemented in "nvmem_settings_MDx.c"
 
 int nvm_readVFOChannelData(channel_t *channel)
 {
-    return _nvm_readChannelAtAddress(channel, vfoChannelBaseAddr);
+    return _cps_readChannelAtAddress(channel, vfoChannelBaseAddr);
 }
 */
 
-int nvm_readChannelData(channel_t *channel, uint16_t pos)
+int cps_readChannelData(channel_t *channel, uint16_t pos)
 {
     if((pos <= 0) || (pos > maxNumChannels)) return -1;
 
     // Note: pos is 1-based because an empty slot in a zone contains index 0
     uint32_t readAddr = chDataBaseAddr + (pos - 1) * sizeof(mduv3x0Channel_t);
-    return _nvm_readChannelAtAddress(channel, readAddr);
+    return _cps_readChannelAtAddress(channel, readAddr);
 }
 
-int nvm_readBankData(bank_t* bank, uint16_t pos)
+int cps_readBankData(bank_t* bank, uint16_t pos)
 {
     if((pos <= 0) || (pos > maxNumZones)) return -1;
 
@@ -227,7 +227,7 @@ int nvm_readBankData(bank_t* bank, uint16_t pos)
     return 0;
 }
 
-int nvm_readContactData(contact_t *contact, uint16_t pos)
+int cps_readContactData(contact_t *contact, uint16_t pos)
 {
     if((pos <= 0) || (pos > maxNumContacts)) return -1;
 

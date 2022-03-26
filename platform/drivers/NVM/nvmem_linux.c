@@ -111,7 +111,7 @@ int _nvm_write(const char *path, const void *data, size_t size)
  * \param size: the size of the data to read
  * \return 0 on success, -1 on failure
  */
-int _nvm_read(const char *path, void *data, size_t size)
+int _cps_read(const char *path, void *data, size_t size)
 {
     printf("Reading %s\n", path);
 
@@ -231,10 +231,10 @@ void nvm_loadHwInfo(hwInfo_t *info)
 
 int nvm_readVFOChannelData(channel_t *channel)
 {
-    return _nvm_read(memory_paths[P_VFO], channel, sizeof(channel_t));
+    return _cps_read(memory_paths[P_VFO], channel, sizeof(channel_t));
 }
 
-int nvm_readChannelData(channel_t *channel, uint16_t pos)
+int cps_readChannelData(channel_t *channel, uint16_t pos)
 {
     if((pos <= 0) || (pos > maxNumChannels)) return -1;
 
@@ -247,7 +247,7 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
     return 0;
 }
 
-int nvm_readBankData(bank_t* bank, uint16_t pos)
+int cps_readBankData(bank_t* bank, uint16_t pos)
 {
     if((pos <= 0) || (pos > maxNumZones)) return -1;
 
@@ -261,7 +261,7 @@ int nvm_readBankData(bank_t* bank, uint16_t pos)
     return 0;
 }
 
-int nvm_readContactData(contact_t *contact, uint16_t pos)
+int cps_readContactData(contact_t *contact, uint16_t pos)
 {
     if((pos <= 0) || (pos > maxNumContacts)) return -1;
 
@@ -273,7 +273,7 @@ int nvm_readContactData(contact_t *contact, uint16_t pos)
 
 int nvm_readSettings(settings_t *settings)
 {
-    return _nvm_read(memory_paths[P_SETTINGS], settings, sizeof(settings_t));
+    return _cps_read(memory_paths[P_SETTINGS], settings, sizeof(settings_t));
 }
 
 int nvm_writeSettings(const settings_t *settings)

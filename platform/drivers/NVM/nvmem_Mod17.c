@@ -56,21 +56,21 @@ int nvm_readVFOChannelData(channel_t *channel)
     return 0;
 }
 
-int nvm_readChannelData(channel_t *channel, uint16_t pos)
+int cps_readChannelData(channel_t *channel, uint16_t pos)
 {
     (void) channel;
     (void) pos;
     return -1;
 }
 
-int nvm_readBankData(bank_t* bank, uint16_t pos)
+int cps_readBankData(bank_t* bank, uint16_t pos)
 {
     (void) bank;
     (void) pos;
     return -1;
 }
 
-int nvm_readContactData(contact_t *contact, uint16_t pos)
+int cps_readContactData(contact_t *contact, uint16_t pos)
 {
     (void) contact;
     (void) pos;

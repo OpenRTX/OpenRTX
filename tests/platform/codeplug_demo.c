@@ -34,7 +34,7 @@ int main()
     for(int pos=0,result=0; result != -1; pos++)
     {
         channel_t ch;
-        result = nvm_readChannelData(&ch, pos);
+        result = cps_readChannelData(&ch, pos);
         if(result != -1)
         {
             printf("Channel n.%d:\r\n", pos+1);
@@ -52,7 +52,7 @@ int main()
     for(int pos=0,result=0; result != -1; pos++)
     {
         zone_t bank;
-        result = nvm_readZoneData(&bank, pos);
+        result = cps_readZoneData(&bank, pos);
         if(result != -1)
         {
             printf("Zone n.%d:\r\n", pos+1);
@@ -71,7 +71,7 @@ int main()
     for(int pos=0,result=0; result != -1; pos++)
     {
         contact_t contact;
-        result = nvm_readContactData(&contact, pos);
+        result = cps_readContactData(&contact, pos);
         if(result != -1)
         {
             printf("Contact n.%d:\r\n", pos+1);

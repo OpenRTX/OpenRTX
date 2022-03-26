@@ -22,6 +22,7 @@
 #include <wchar.h>
 #include <interfaces/delays.h>
 #include <interfaces/nvmem.h>
+#include <interfaces/cps_io.h>
 #include <calibInfo_GDx.h>
 #include "AT24Cx.h"
 #include "W25Qx.h"
@@ -252,7 +253,7 @@ int nvm_readVFOChannelData(channel_t *channel)
     return 0;
 }
 
-int nvm_readChannelData(channel_t *channel, uint16_t pos)
+int cps_readChannelData(channel_t *channel, uint16_t pos)
 {
     if((pos <= 0) || (pos > maxNumChannels))
         return -1;
@@ -372,7 +373,7 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
     return 0;
 }
 
-int nvm_readBankData(bank_t* bank, uint16_t pos)
+int cps_readBankData(bank_t* bank, uint16_t pos)
 {
     if((pos <= 0) || (pos > maxNumZones)) return -1;
 
@@ -406,7 +407,7 @@ int nvm_readBankData(bank_t* bank, uint16_t pos)
     return 0;
 }
 
-int nvm_readContactData(contact_t *contact, uint16_t pos)
+int cps_readContactData(contact_t *contact, uint16_t pos)
 {
     if((pos <= 0) || (pos > maxNumContacts)) return -1;
 
