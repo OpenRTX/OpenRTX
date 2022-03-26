@@ -125,8 +125,8 @@ typedef struct {
 __attribute__((packed)) gdxZone_t;
 
 typedef struct {
-    uint8_t bitmap[32];                 // bit set when zone valid
-    gdxZone_t zone[250];
+    uint8_t bitmap[32];                 // bit set when bank valid
+    gdxZone_t bank[250];
 }
 __attribute__((packed)) gdxZoneBank_t;
 

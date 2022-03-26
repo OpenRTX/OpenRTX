@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2020 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -259,7 +259,7 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
 
     // Channels are organized in 128-channel banks
     uint8_t bank_num = (pos - 1) / 128;
-    // Note: pos is 1-based because an empty slot in a zone contains index 0
+    // Note: pos is 1-based because an empty slot in a bank contains index 0
     uint8_t bank_channel = (pos - 1) % 128;
 
     // ### Read channel bank bitmap ###
@@ -372,36 +372,36 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
     return 0;
 }
 
-int nvm_readZoneData(zone_t *zone, uint16_t pos)
+int nvm_readBankData(bank_t* bank, uint16_t pos)
 {
     if((pos <= 0) || (pos > maxNumZones)) return -1;
 
-    // zone number is 1-based to be consistent with channels
+    // bank number is 1-based to be consistent with channels
     // Convert to 0-based index to fetch data from flash
     uint16_t index = pos - 1;
-    // ### Read zone bank bitmap ###
+    // ### Read bank bank bitmap ###
     uint8_t bitmap[32];
     AT24Cx_readData(zoneBaseAddr, ((uint8_t *) &bitmap), sizeof(bitmap));
 
     uint8_t bitmap_byte = index / 8;
     uint8_t bitmap_bit = index % 8;
-    // The zone is marked not valid in the bitmap
+    // The bank is marked not valid in the bitmap
     if(!(bitmap[bitmap_byte] & (1 << bitmap_bit))) return -1;
 
     gdxZone_t zoneData;
     uint32_t zoneAddr = zoneBaseAddr + sizeof(bitmap) + index * sizeof(gdxZone_t);
     AT24Cx_readData(zoneAddr, ((uint8_t *) &zoneData), sizeof(gdxZone_t));
 
-    // Check if zone is empty
+    // Check if bank is empty
     if(wcslen((wchar_t *) zoneData.name) == 0) return -1;
 
-    memcpy(zone->name, zoneData.name, sizeof(zoneData.name));
+    memcpy(bank->name, zoneData.name, sizeof(zoneData.name));
     // Terminate string with 0x00 instead of 0xFF
-    _addStringTerminator(zone->name, sizeof(zoneData.name));
-    // Copy zone channel indexes
+    _addStringTerminator(bank->name, sizeof(zoneData.name));
+    // Copy bank channel indexes
     for(uint16_t i = 0; i < 16; i++)
     {
-        zone->member[i] = zoneData.member[i];
+        bank->member[i] = zoneData.member[i];
     }
     return 0;
 }

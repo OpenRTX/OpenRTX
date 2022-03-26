@@ -43,7 +43,7 @@ enum uiScreen
     MODE_VFO,
     MODE_MEM,
     MENU_TOP,
-    MENU_ZONE,
+    MENU_BANK,
     MENU_CHANNEL,
     MENU_CONTACTS,
     MENU_GPS,
@@ -72,7 +72,7 @@ enum SetRxTx
 // menu elements even if some elements may be missing (GPS)
 enum menuItems
 {
-    M_ZONE = 0,
+    M_BANK = 0,
     M_CHANNEL,
     M_CONTACTS,
 #ifdef HAS_GPS

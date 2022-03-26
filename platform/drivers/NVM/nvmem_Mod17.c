@@ -63,9 +63,9 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
     return -1;
 }
 
-int nvm_readZoneData(zone_t *zone, uint16_t pos)
+int nvm_readBankData(bank_t* bank, uint16_t pos)
 {
-    (void) zone;
+    (void) bank;
     (void) pos;
     return -1;
 }

@@ -94,8 +94,8 @@ typedef struct
     uint16_t   channel_index;
     channel_t  channel;
     channel_t  vfo_channel;
-    bool       zone_enabled;
-    zone_t     zone;
+    bool       bank_enabled;
+    bank_t     bank;
     uint8_t    rtxStatus;
     bool       rtxShutdown;
 

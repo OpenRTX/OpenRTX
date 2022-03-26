@@ -256,20 +256,20 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
     return 0;
 }
 
-int _ui_getZoneName(char *buf, uint8_t max_len, uint8_t index)
+int _ui_getBankName(char *buf, uint8_t max_len, uint8_t index)
 {
     int result = 0;
-    // First zone "All channels" is not read from flash
+    // First bank "All channels" is not read from flash
     if(index == 0)
     {
         snprintf(buf, max_len, "All channels");
     }
     else
     {
-        zone_t zone;
-        result = nvm_readZoneData(&zone, index);
+        bank_t bank;
+        result = nvm_readBankData(&bank, index);
         if(result != -1)
-            snprintf(buf, max_len, "%s", zone.name);
+            snprintf(buf, max_len, "%s", bank.name);
     }
     return result;
 }
@@ -302,14 +302,14 @@ void _ui_drawMenuTop(ui_state_t* ui_state)
     _ui_drawMenuList(ui_state->menu_selected, _ui_getMenuTopEntryName);
 }
 
-void _ui_drawMenuZone(ui_state_t* ui_state)
+void _ui_drawMenuBank(ui_state_t* ui_state)
 {
     gfx_clearScreen();
-    // Print "Zone" on top bar
+    // Print "Bank" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, "Zone");
-    // Print zone entries
-    _ui_drawMenuList(ui_state->menu_selected, _ui_getZoneName);
+              color_white, "Bank");
+    // Print bank entries
+    _ui_drawMenuList(ui_state->menu_selected, _ui_getBankName);
 }
 
 void _ui_drawMenuChannel(ui_state_t* ui_state)

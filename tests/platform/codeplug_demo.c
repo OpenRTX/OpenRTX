@@ -51,17 +51,17 @@ int main()
     printf("Zones:\r\n");
     for(int pos=0,result=0; result != -1; pos++)
     {
-        zone_t zone;
-        result = nvm_readZoneData(&zone, pos);
+        zone_t bank;
+        result = nvm_readZoneData(&bank, pos);
         if(result != -1)
         {
             printf("Zone n.%d:\r\n", pos+1);
-            printf("  %s\r\n", zone.name);
+            printf("  %s\r\n", bank.name);
             for(int x=0; x < 64; x++)
             {
-                if(zone.member[x] != 0)
+                if(bank.member[x] != 0)
                 {
-                    printf("  - Index: %d, Channel %d\r\n", x, zone.member[x]);
+                    printf("  - Index: %d, Channel %d\r\n", x, bank.member[x]);
                 }
             }
         }

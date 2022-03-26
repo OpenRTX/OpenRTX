@@ -71,15 +71,15 @@ void _ui_drawMainTop()
     }
 }
 
-void _ui_drawZoneChannel()
+void _ui_drawBankChannel()
 {
-    // Print Zone name
-    if(!last_state.zone_enabled)
+    // Print Bank name
+    if(!last_state.bank_enabled)
         gfx_print(layout.line1_pos, layout.line1_font, TEXT_ALIGN_LEFT,
-                  color_white, "zone: All channels");
+                  color_white, "bank: All channels");
     else
         gfx_print(layout.line1_pos, layout.line1_font, TEXT_ALIGN_LEFT,
-                  color_white,  "zone: %.13s", last_state.zone.name);
+                  color_white,  "bank: %.13s", last_state.bank.name);
     // Print Channel name
     gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_LEFT,
               color_white, "  %03d: %.12s",
@@ -158,9 +158,9 @@ void _ui_drawMainBottom()
     // Squelch bar
     float rssi = last_state.rssi;
     float squelch = last_state.settings.sqlLevel / 16.0f;
-    uint16_t meter_width = SCREEN_WIDTH - 2 * layout.horizontal_pad; 
-    uint16_t meter_height = layout.bottom_h; 
-    point_t meter_pos = { layout.horizontal_pad, 
+    uint16_t meter_width = SCREEN_WIDTH - 2 * layout.horizontal_pad;
+    uint16_t meter_height = layout.bottom_h;
+    point_t meter_pos = { layout.horizontal_pad,
                           SCREEN_HEIGHT - meter_height - layout.bottom_pad};
     uint8_t mic_level = platform_getMicLevel();
     switch(last_state.channel.mode)
@@ -210,7 +210,7 @@ void _ui_drawMainMEM()
 {
     gfx_clearScreen();
     _ui_drawMainTop();
-    _ui_drawZoneChannel();
+    _ui_drawBankChannel();
     _ui_drawFrequency();
     _ui_drawMainBottom();
 }

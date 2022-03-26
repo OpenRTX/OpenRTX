@@ -123,14 +123,14 @@ __attribute__((packed)) channel_t;
 
 
 /**
- * Data structure containing all the information of a zone.
+ * Data structure containing all the information of a bank.
  */
 typedef struct
 {
-    char name[16];              /**< Zone name                             */
+    char name[16];              /**< Bank name                             */
     uint16_t member[64];        /**< Channel indexes                       */
 }
-__attribute__((packed)) zone_t;
+__attribute__((packed)) bank_t;
 
 /**
  * Data structure containing all the information of a contact.

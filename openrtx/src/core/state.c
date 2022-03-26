@@ -73,7 +73,7 @@ void state_init()
     state.rssi   = rtx_getRssi();
 
     state.channel_index = 1;    // Set default channel index (it is 1-based)
-    state.zone_enabled  = false;
+    state.bank_enabled  = false;
     state.rtxStatus     = RTX_OFF;
     state.rtxShutdown   = false;
     state.emergency     = false;

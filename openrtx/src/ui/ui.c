@@ -90,7 +90,7 @@ extern void _ui_drawModeVFO();
 extern void _ui_drawModeMEM();
 /* UI menu functions, their implementation is in "ui_menu.c" */
 extern void _ui_drawMenuTop(ui_state_t* ui_state);
-extern void _ui_drawMenuZone(ui_state_t* ui_state);
+extern void _ui_drawMenuBank(ui_state_t* ui_state);
 extern void _ui_drawMenuChannel(ui_state_t* ui_state);
 extern void _ui_drawMenuContacts(ui_state_t* ui_state);
 #ifdef HAS_GPS
@@ -114,7 +114,7 @@ extern bool _ui_drawMacroMenu();
 
 const char *menu_items[] =
 {
-    "Zone",
+    "Banks",
     "Channels",
     "Contacts",
 #ifdef HAS_GPS
@@ -537,26 +537,26 @@ bool _ui_drawDarkOverlay() {
     return true;
 }
 
-int _ui_fsm_loadChannel(uint16_t zone_index, bool *sync_rtx) {
-    uint16_t channel_index = zone_index;
+int _ui_fsm_loadChannel(uint16_t bank_index, bool *sync_rtx) {
+    uint16_t channel_index = bank_index;
     channel_t channel;
-    // If a zone is active, get index from current zone
-    if(state.zone_enabled)
+    // If a bank is active, get index from current bank
+    if(state.bank_enabled)
     {
-        // Calculate zone size
-        const uint8_t zone_size = sizeof(state.zone.member)/sizeof(state.zone.member[0]);
-        if((zone_index <= 0) || (zone_index > zone_size))
+        // Calculate bank size
+        const uint8_t bank_size = sizeof(state.bank.member)/sizeof(state.bank.member[0]);
+        if((bank_index <= 0) || (bank_index > bank_size))
             return -1;
         else
-            // Channel index is 1-based while zone array access is 0-based
-            channel_index = state.zone.member[zone_index - 1];
+            // Channel index is 1-based while bank array access is 0-based
+            channel_index = state.bank.member[bank_index - 1];
     }
     int result = nvm_readChannelData(&channel, channel_index);
     // Read successful and channel is valid
     if(result != -1 && _ui_channel_valid(&channel))
     {
         // Set new channel index
-        state.channel_index = zone_index;
+        state.channel_index = bank_index;
         // Copy channel read to state
         state.channel = channel;
         *sync_rtx = true;
@@ -1262,8 +1262,8 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 {
                     switch(ui_state.menu_selected)
                     {
-                        case M_ZONE:
-                            state.ui_screen = MENU_ZONE;
+                        case M_BANK:
+                            state.ui_screen = MENU_BANK;
                             break;
                         case M_CHANNEL:
                             state.ui_screen = MENU_CHANNEL;
@@ -1296,7 +1296,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     _ui_menuBack(ui_state.last_main_state);
                 break;
             // Zone menu screen
-            case MENU_ZONE:
+            case MENU_BANK:
             // Channel menu screen
             case MENU_CHANNEL:
             // Contacts menu screen
@@ -1306,12 +1306,12 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     _ui_menuUp(1);
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
                 {
-                    if(state.ui_screen == MENU_ZONE)
+                    if(state.ui_screen == MENU_BANK)
                     {
-                        zone_t zone;
+                        bank_t bank;
                         // menu_selected is 0-based while channels are 1-based
-                        // menu_selected == 0 corresponds to "All Channels" zone
-                        if(nvm_readZoneData(&zone, ui_state.menu_selected + 1) != -1)
+                        // menu_selected == 0 corresponds to "All Channels" bank
+                        if(nvm_readBankData(&bank, ui_state.menu_selected + 1) != -1)
                             ui_state.menu_selected += 1;
                     }
                     else if(state.ui_screen == MENU_CHANNEL)
@@ -1331,25 +1331,25 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 }
                 else if(msg.keys & KEY_ENTER)
                 {
-                    if(state.ui_screen == MENU_ZONE)
+                    if(state.ui_screen == MENU_BANK)
                     {
-                        zone_t newzone;
+                        bank_t newbank;
                         int result = 0;
-                        // If "All channels" is selected, load default zone
+                        // If "All channels" is selected, load default bank
                         if(ui_state.menu_selected == 0)
-                            state.zone_enabled = false;
+                            state.bank_enabled = false;
                         else
                         {
-                            state.zone_enabled = true;
-                            result = nvm_readZoneData(&newzone, ui_state.menu_selected);
+                            state.bank_enabled = true;
+                            result = nvm_readBankData(&newbank, ui_state.menu_selected);
                         }
                         if(result != -1)
                         {
-                            state.zone = newzone;
+                            state.bank = newbank;
                             // If we were in VFO mode, save VFO channel
                             if(ui_state.last_main_state == MAIN_VFO)
                                 state.vfo_channel = state.channel;
-                            // Load zone first channel
+                            // Load bank first channel
                             _ui_fsm_loadChannel(1, sync_rtx);
                             // Switch to MEM screen
                             state.ui_screen = MAIN_MEM;
@@ -1705,8 +1705,8 @@ void ui_updateGUI()
             _ui_drawMenuTop(&ui_state);
             break;
         // Zone menu screen
-        case MENU_ZONE:
-            _ui_drawMenuZone(&ui_state);
+        case MENU_BANK:
+            _ui_drawMenuBank(&ui_state);
             break;
         // Channel menu screen
         case MENU_CHANNEL:

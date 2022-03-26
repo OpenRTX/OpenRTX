@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2020 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -247,17 +247,17 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
     return 0;
 }
 
-int nvm_readZoneData(zone_t *zone, uint16_t pos)
+int nvm_readBankData(bank_t* bank, uint16_t pos)
 {
     if((pos <= 0) || (pos > maxNumZones)) return -1;
 
-    /* Generate dummy zone name */
-    snprintf(zone->name, 16, "Zone %d", pos);
-    memset(zone->member, 0, sizeof(zone->member));
-    // Add fake zone member indexes
-    zone->member[0] = pos;
-    zone->member[1] = pos+1;
-    zone->member[2] = pos+2;
+    /* Generate dummy bank name */
+    snprintf(bank->name, 16, "Zone %d", pos);
+    memset(bank->member, 0, sizeof(bank->member));
+    // Add fake bank member indexes
+    bank->member[0] = pos;
+    bank->member[1] = pos+1;
+    bank->member[2] = pos+2;
     return 0;
 }
 

@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2020 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -252,7 +252,7 @@ int nvm_readChannelData(channel_t *channel, uint16_t pos)
     return 0;
 }
 
-int nvm_readZoneData(zone_t *zone, uint16_t pos)
+int nvm_readBankData(bank_t* bank, uint16_t pos)
 {
     if((pos <= 0) || (pos > maxNumZones)) return -1;
 
@@ -274,12 +274,12 @@ int nvm_readZoneData(zone_t *zone, uint16_t pos)
      */
     for(uint16_t i = 0; i < 16; i++)
     {
-        zone->name[i] = ((char) (zoneData.name[i] & 0x00FF));
+        bank->name[i] = ((char) (zoneData.name[i] & 0x00FF));
     }
     // Copy zone channel indexes
     for(uint16_t i = 0; i < 16; i++)
     {
-        zone->member[i] = zoneData.member[i];
+        bank->member[i] = zoneData.member[i];
     }
 
     return 0;
