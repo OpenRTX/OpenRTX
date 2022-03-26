@@ -25,21 +25,9 @@
 #include <hwconfig.h>
 #include <interfaces/platform.h>
 #include <interfaces/nvmem.h>
-
 #include <cps.h>
 
 state_t state;
-
-void defaultSettingsAndVfo()
-{
-
-    //don't need to lock state mutex because this is called from a section
-    //that already does that - ui_updatefsm runs in a critical section in
-    //the ui thread
-    channel_t default_vfo = get_default_channel();
-    nvm_writeSettingsAndVfo( &default_settings, &default_vfo );
-    state_init();
-}
 
 void state_init()
 {
@@ -59,7 +47,7 @@ void state_init()
      */
     if(nvm_readVFOChannelData(&state.channel) < 0)
     {
-        state.channel = get_default_channel();
+        state.channel = cps_getDefaultChannel();
     }
 
     /*
@@ -112,6 +100,12 @@ void state_update()
     #ifdef HAS_RTC
     state.time = rtc_getTime();
     #endif
+}
+
+void state_resetSettingsAndVfo()
+{
+    state.settings = default_settings;
+    state.channel  = cps_getDefaultChannel();
 }
 
 curTime_t state_getLocalTime(curTime_t utc_time)

@@ -23,10 +23,10 @@
 #include <interfaces/radio.h>
 #include <interfaces/gpio.h>
 #include <calibInfo_MDx.h>
-#include <calibUtils.h>
 #include <hwconfig.h>
 #include <ADC1_MDx.h>
 #include <algorithm>
+#include <utils.h>
 #include "HR_C5000.h"
 #include "SKY72310.h"
 

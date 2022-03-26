@@ -26,14 +26,14 @@
 #include "nvmData_MDUV3x0.h"
 #include "W25Qx.h"
 
-const uint32_t zoneBaseAddr    = 0x149E0;   /**< Base address of zones                  */
-const uint32_t zoneExtBaseAddr = 0x31000;   /**< Base address of zone extensions        */
-const uint32_t vfoChannelBaseAddr = 0x2EF00;  /**< Base address of VFO channel          */
-const uint32_t chDataBaseAddr  = 0x110000;  /**< Base address of channel data           */
-const uint32_t contactBaseAddr = 0x140000;  /**< Base address of contacts               */
-const uint32_t maxNumChannels  = 3000;      /**< Maximum number of channels in memory   */
-const uint32_t maxNumZones     = 250;       /**< Maximum number of zones and zone extensions in memory */
-const uint32_t maxNumContacts  = 10000;     /**< Maximum number of contacts in memory   */
+const uint32_t zoneBaseAddr       = 0x149E0;   /**< Base address of zones                                 */
+const uint32_t zoneExtBaseAddr    = 0x31000;   /**< Base address of zone extensions                       */
+const uint32_t vfoChannelBaseAddr = 0x2EF00;   /**< Base address of VFO channel                           */
+const uint32_t chDataBaseAddr     = 0x110000;  /**< Base address of channel data                          */
+const uint32_t contactBaseAddr    = 0x140000;  /**< Base address of contacts                              */
+const uint32_t maxNumChannels     = 3000;      /**< Maximum number of channels in memory                  */
+const uint32_t maxNumZones        = 250;       /**< Maximum number of zones and zone extensions in memory */
+const uint32_t maxNumContacts     = 10000;     /**< Maximum number of contacts in memory                  */
 /* This address has been chosen by OpenRTX to store the settings
  * because it is empty (0xFF) and has enough free space */
 const uint32_t settingsAddr  = 0x6000;
@@ -71,29 +71,23 @@ int _cps_readChannelAtAddress(channel_t *channel, uint32_t addr)
 
     channel->mode            = chData.channel_mode;
     channel->bandwidth       = chData.bandwidth;
-    channel->admit_criteria  = chData.admit_criteria;
-    channel->squelch         = chData.squelch;
     channel->rx_only         = chData.rx_only;
-    channel->vox             = chData.vox;
     channel->rx_frequency    = _bcd2bin(chData.rx_frequency) * 10;
     channel->tx_frequency    = _bcd2bin(chData.tx_frequency) * 10;
-    channel->tot             = chData.tot;
-    channel->tot_rekey_delay = chData.tot_rekey_delay;
-    channel->emSys_index     = chData.emergency_system_index;
     channel->scanList_index  = chData.scan_list_index;
     channel->groupList_index = chData.group_list_index;
 
     if(chData.power == 3)
     {
-        channel->power = 5.0f;  /* High power -> 5W */
+        channel->power = 135;  /* High power -> 5W = 37dBm */
     }
     else if(chData.power == 2)
     {
-        channel->power = 2.5f;  /* Mid power -> 2.5W */
+        channel->power = 120;  /* Mid power -> 2.5W = 34dBm */
     }
     else
     {
-        channel->power = 1.0f;  /* Low power -> 1W */
+        channel->power = 100;  /* Low power -> 1W = 30dBm */
     }
 
     /*
@@ -181,6 +175,8 @@ int cps_readChannelData(channel_t *channel, uint16_t pos)
 {
     if((pos <= 0) || (pos > maxNumChannels)) return -1;
 
+    memset(channel, 0x00, sizeof(channel_t));
+
     // Note: pos is 1-based because an empty slot in a zone contains index 0
     uint32_t readAddr = chDataBaseAddr + (pos - 1) * sizeof(mduv3x0Channel_t);
     return _cps_readChannelAtAddress(channel, readAddr);
@@ -250,11 +246,17 @@ int cps_readContactData(contact_t *contact, uint16_t pos)
     {
         contact->name[i] = ((char) (contactData.name[i] & 0x00FF));
     }
+
+    contact->mode = DMR;
+
     // Copy contact DMR ID
-    contact->id = (contactData.id[0] | contactData.id[1] << 8 | contactData.id[2] << 16);
+    contact->info.dmr.id = contactData.id[0]
+                         | (contactData.id[1] << 8)
+                         | (contactData.id[2] << 16);
+
     // Copy contact details
-    contact->type = contactData.type;
-    contact->receive_tone = contactData.receive_tone ? true : false;
+    contact->info.dmr.contactType = contactData.type;
+    contact->info.dmr.rx_tone     = contactData.receive_tone ? true : false;
 
     return 0;
 }

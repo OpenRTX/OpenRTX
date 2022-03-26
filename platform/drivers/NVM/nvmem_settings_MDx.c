@@ -40,7 +40,7 @@ typedef struct
 }
 __attribute__((packed)) memory_t;
 
-static const uint32_t validMagic  = 0x5854504F;    // "OPTX"
+static const uint32_t validMagic  = 0x584E504F;    // "OPNX"
 static const uint32_t baseAddress = 0x080E0000;
 memory_t *memory = ((memory_t *) baseAddress);
 

@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <backup.h>
+#include <utils.h>
 #include <ui.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/cps_io.h>
@@ -718,7 +719,7 @@ bool _ui_drawMacroMenu()
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                   yellow_fab413, "3        ");
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
-                  color_white, "%.1gW", last_state.channel.power);
+                  color_white, "%.1gW", dBmToWatt(last_state.channel.power));
         // Second row
         // Calculate symmetric second row position, line2_pos is asymmetric like main screen
         point_t pos_2 = {layout.line1_pos.x, layout.line1_pos.y +

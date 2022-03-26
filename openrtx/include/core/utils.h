@@ -1,7 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN,                            *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2020 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN,                     *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -32,6 +32,7 @@ extern "C" {
  * frequencies outside the calibration points. It works by searching the two
  * calibration points containing the target frequency and then by linearly
  * interpolating the calibration parameter among these two points.
+ *
  * @param freq: target frequency for which a calibration value has to be
  * computed.
  * @param calPoints: pointer to the vector containing the frequencies of the
@@ -46,6 +47,15 @@ extern "C" {
 uint8_t interpCalParameter(const freq_t freq, const freq_t *calPoints,
                            const uint8_t *param, const uint8_t elems);
 
+/**
+ * Convert from "OpenRTX dBm" to watt.
+ * In OpenRTX cps power is stored as the coefficient n of the equation
+ * P(dBm) = 10 + 2*0.2.
+ *
+ * @param n: coefficient of the dBm equation.
+ * @return power in watt.
+ */
+float dBmToWatt(const uint8_t n);
 
 #ifdef __cplusplus
 }

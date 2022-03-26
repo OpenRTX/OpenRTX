@@ -183,6 +183,8 @@ void nvm_loadHwInfo(hwInfo_t *info)
 
 int nvm_readVFOChannelData(channel_t *channel)
 {
+    memset(channel, 0x00, sizeof(channel_t));
+
     gdxChannel_t chData;
 
     AT24Cx_readData(vfoChannelBaseAddr, ((uint8_t *) &chData), sizeof(gdxChannel_t));
@@ -190,17 +192,10 @@ int nvm_readVFOChannelData(channel_t *channel)
     // Copy data to OpenRTX channel_t
     channel->mode            = chData.channel_mode + 1;
     channel->bandwidth       = chData.bandwidth;
-    channel->admit_criteria  = chData.admit_criteria;
-    channel->squelch         = chData.squelch;
     channel->rx_only         = chData.rx_only;
-    channel->vox             = chData.vox;
-    channel->power           = ((chData.power == 1) ? 5.0f : 1.0f);
+    channel->power           = ((chData.power == 1) ? 135 : 100);
     channel->rx_frequency    = _bcd2bin(chData.rx_frequency) * 10;
     channel->tx_frequency    = _bcd2bin(chData.tx_frequency) * 10;
-    channel->tot             = chData.tot;
-    channel->tot_rekey_delay = chData.tot_rekey_delay;
-    channel->emSys_index     = chData.emergency_system_index;
-    channel->scanList_index  = chData.scan_list_index;
     channel->groupList_index = chData.group_list_index;
     memcpy(channel->name, chData.name, sizeof(chData.name));
     // Terminate string with 0x00 instead of 0xFF
@@ -258,6 +253,8 @@ int cps_readChannelData(channel_t *channel, uint16_t pos)
     if((pos <= 0) || (pos > maxNumChannels))
         return -1;
 
+    memset(channel, 0x00, sizeof(channel_t));
+
     // Channels are organized in 128-channel banks
     uint8_t bank_num = (pos - 1) / 128;
     // Note: pos is 1-based because an empty slot in a bank contains index 0
@@ -310,16 +307,10 @@ int cps_readChannelData(channel_t *channel, uint16_t pos)
     // Copy data to OpenRTX channel_t
     channel->mode            = chData.channel_mode + 1;
     channel->bandwidth       = chData.bandwidth;
-    channel->admit_criteria  = chData.admit_criteria;
-    channel->squelch         = chData.squelch;
     channel->rx_only         = chData.rx_only;
-    channel->vox             = chData.vox;
-    channel->power           = ((chData.power == 1) ? 5.0f : 1.0f);
+    channel->power           = ((chData.power == 1) ? 135 : 100);
     channel->rx_frequency    = _bcd2bin(chData.rx_frequency) * 10;
     channel->tx_frequency    = _bcd2bin(chData.tx_frequency) * 10;
-    channel->tot             = chData.tot;
-    channel->tot_rekey_delay = chData.tot_rekey_delay;
-    channel->emSys_index     = chData.emergency_system_index;
     channel->scanList_index  = chData.scan_list_index;
     channel->groupList_index = chData.group_list_index;
     memcpy(channel->name, chData.name, sizeof(chData.name));
@@ -427,11 +418,17 @@ int cps_readContactData(contact_t *contact, uint16_t pos)
     memcpy(contact->name, contactData.name, sizeof(contactData.name));
     // Terminate string with 0x00 instead of 0xFF
     _addStringTerminator(contact->name, sizeof(contactData.name));
+
+    contact->mode = DMR;
+
     // Copy contact DMR ID
-    contact->id = (contactData.id[0] | contactData.id[1] << 8 | contactData.id[2] << 16);
+    contact->info.dmr.id = contactData.id[0]
+                         | (contactData.id[1] << 8)
+                         | (contactData.id[2] << 16);
+
     // Copy contact details
-    contact->type = contactData.type;
-    contact->receive_tone = contactData.receive_tone ? true : false;
+    contact->info.dmr.contactType = contactData.type;
+    contact->info.dmr.rx_tone     = contactData.receive_tone ? true : false;
 
     return 0;
 }

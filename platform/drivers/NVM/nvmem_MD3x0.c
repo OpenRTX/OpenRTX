@@ -21,6 +21,7 @@
 #include <interfaces/nvmem.h>
 #include <interfaces/delays.h>
 #include <calibInfo_MDx.h>
+#include <string.h>
 #include <wchar.h>
 #include "nvmData_MD3x0.h"
 #include "W25Qx.h"
@@ -171,6 +172,8 @@ int cps_readChannelData(channel_t *channel, uint16_t pos)
 {
     if((pos <= 0) || (pos > maxNumChannels)) return -1;
 
+    memset(channel, 0x00, sizeof(channel_t));
+
     W25Qx_wakeup();
     delayUs(5);
 
@@ -182,16 +185,10 @@ int cps_readChannelData(channel_t *channel, uint16_t pos)
 
     channel->mode            = chData.channel_mode;
     channel->bandwidth       = chData.bandwidth;
-    channel->admit_criteria  = chData.admit_criteria;
-    channel->squelch         = chData.squelch;
     channel->rx_only         = chData.rx_only;
-    channel->vox             = chData.vox;
-    channel->power           = ((chData.power == 1) ? 5.0f : 1.0f);
+    channel->power           = ((chData.power == 1) ? 135 : 100);
     channel->rx_frequency    = _bcd2bin(chData.rx_frequency) * 10;
     channel->tx_frequency    = _bcd2bin(chData.tx_frequency) * 10;
-    channel->tot             = chData.tot;
-    channel->tot_rekey_delay = chData.tot_rekey_delay;
-    channel->emSys_index     = chData.emergency_system_index;
     channel->scanList_index  = chData.scan_list_index;
     channel->groupList_index = chData.group_list_index;
 
@@ -309,11 +306,17 @@ int cps_readContactData(contact_t *contact, uint16_t pos)
     {
         contact->name[i] = ((char) (contactData.name[i] & 0x00FF));
     }
+
+    contact->mode = DMR;
+
     // Copy contact DMR ID
-    contact->id = (contactData.id[0] | contactData.id[1] << 8 | contactData.id[2] << 16);
+    contact->info.dmr.id = contactData.id[0]
+                         | (contactData.id[1] << 8)
+                         | (contactData.id[2] << 16);
+
     // Copy contact details
-    contact->type = contactData.type;
-    contact->receive_tone = contactData.receive_tone ? true : false;
+    contact->info.dmr.contactType = contactData.type;
+    contact->info.dmr.rx_tone     = contactData.receive_tone ? true : false;
 
     return 0;
 }

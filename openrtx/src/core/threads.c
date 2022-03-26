@@ -35,6 +35,7 @@
 #include <queue.h>
 #include <minmea.h>
 #include <string.h>
+#include <utils.h>
 #ifdef HAS_GPS
 #include <interfaces/gps.h>
 #include <gps.h>
@@ -92,20 +93,22 @@ void *ui_task(void *arg)
         // If synchronization needed take mutex and update RTX configuration
         if(sync_rtx)
         {
+            float power = dBmToWatt(state.channel.power);
+
             pthread_mutex_lock(&rtx_mutex);
-            rtx_cfg.opMode = state.channel.mode;
-            rtx_cfg.bandwidth = state.channel.bandwidth;
+            rtx_cfg.opMode      = state.channel.mode;
+            rtx_cfg.bandwidth   = state.channel.bandwidth;
             rtx_cfg.rxFrequency = state.channel.rx_frequency;
             rtx_cfg.txFrequency = state.channel.tx_frequency;
-            rtx_cfg.txPower = state.channel.power;
-            rtx_cfg.sqlLevel = state.settings.sqlLevel;
-            rtx_cfg.rxToneEn = state.channel.fm.rxToneEn;
-            rtx_cfg.rxTone = ctcss_tone[state.channel.fm.rxTone];
-            rtx_cfg.txToneEn = state.channel.fm.txToneEn;
-            rtx_cfg.txTone = ctcss_tone[state.channel.fm.txTone];
+            rtx_cfg.txPower     = power;
+            rtx_cfg.sqlLevel    = state.settings.sqlLevel;
+            rtx_cfg.rxToneEn    = state.channel.fm.rxToneEn;
+            rtx_cfg.rxTone      = ctcss_tone[state.channel.fm.rxTone];
+            rtx_cfg.txToneEn    = state.channel.fm.txToneEn;
+            rtx_cfg.txTone      = ctcss_tone[state.channel.fm.txTone];
 
             // Copy new M17 source and destination addresses
-            strncpy(rtx_cfg.source_address, state.settings.callsign, 10);
+            strncpy(rtx_cfg.source_address,      state.settings.callsign, 10);
             strncpy(rtx_cfg.destination_address, state.m17_data.dst_addr, 10);
 
             pthread_mutex_unlock(&rtx_mutex);
@@ -298,7 +301,7 @@ void *gps_task(void *arg)
             pthread_mutex_lock(&state_mutex);
 
             // GPS readout is blocking, no need to delay here
-            gps_taskFunc(line, len, &state);
+            gps_taskFunc(line, len);
 
             // Unlock state mutex
             pthread_mutex_unlock(&state_mutex);

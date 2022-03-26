@@ -26,49 +26,17 @@
 #include <interfaces/rtc.h>
 #include <cps.h>
 #include <settings.h>
-
-/**
- * Data structure representing a single satellite as part of a GPS fix.
- */
-typedef struct
-{
-    uint8_t  id;          // ID of the satellite
-    uint8_t  elevation;   // Elevation in degrees
-    uint16_t azimuth;     // Azimuth in degrees
-    uint8_t  snr;         // Quality of the signal in range 0-99
-}
-sat_t;
-
-/**
- * Data structure representing the last state received from the GPS module.
- */
-typedef struct
-{
-    curTime_t timestamp;            // Timestamp of the latest GPS update
-    uint8_t   fix_quality;          // 0: no fix, 1: GPS, 2: GPS SPS, 3: GPS PPS
-    uint8_t   fix_type;             // 0: no fix, 1: 2D,  2: 3D
-    uint8_t   satellites_tracked;   // Number of tracked satellites
-    uint8_t   satellites_in_view;   // Satellites in view
-    sat_t     satellites[12];       // Details about satellites in view
-    uint32_t  active_sats;          // Bitmap representing which sats are part of the fix
-    float     latitude;             // Latitude coordinates
-    float     longitude;            // Longitude coordinates
-    float     altitude;             // Antenna altitude above mean sea level (geoid) in m
-    float     speed;                // Ground speed in km/h
-    float     tmg_mag;              // Course over ground, degrees, magnetic
-    float     tmg_true;             // Course over ground, degrees, true
-}
-gps_t;
+#include <gps.h>
 
 /**
  * Data structure representing the settings of the M17 mode.
  */
 typedef struct
 {
-//     char callsign[10];
     char dst_addr[10];
 }
 m17_t;
+
 
 /**
  * Part of this structure has been commented because the corresponding
@@ -84,12 +52,6 @@ typedef struct
 
     uint8_t    ui_screen;
     uint8_t    tuner_mode;
-
-    //time_t rx_status_tv;
-    //bool rx_status;
-
-    //time_t tx_status_tv;
-    //bool tx_status;
 
     uint16_t   channel_index;
     channel_t  channel;
@@ -131,12 +93,6 @@ extern state_t state;
 void state_init();
 
 /**
- * Write default values to OpenRTX settings and VFO Channel configuration.
- * Writes out to flash and calls state_init again to reload it immediately.
- */
-void defaultSettingsAndVfo();
-
-/**
  * This function terminates the radio state saving persistent settings to flash.
  */
 void state_terminate();
@@ -145,6 +101,11 @@ void state_terminate();
  * Update radio state fetching data from device drivers.
  */
 void state_update();
+
+/**
+ * Reset the fields of radio state containing user settings and VFO channel.
+ */
+void state_resetSettingsAndVfo();
 
 /**
  * The RTC and state.time are set to UTC time

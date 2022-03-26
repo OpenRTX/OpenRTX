@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN,                            *
- *                         Frederik Saraci IU2NRO,                         *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2020  - 2022 by Federico Amedeo Izzo IU2NUO,            *
+ *                                 Niccolò Izzo IU2KIN,                    *
+ *                                 Frederik Saraci IU2NRO,                 *
+ *                                 Silvano Seva IU2KWO                     *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -26,129 +26,262 @@
 #include <datatypes.h>
 #include <rtx.h>
 
-/**
- * \enum admit_t Enumeration type defining the admission criteria to a the
- * channel.
- */
-enum admit_t
-{
-    ALWAYS = 0,  /**< Always transmit when PTT is pressed         */
-    FREE   = 1,  /**< Transmit only if channel si free            */
-    TONE   = 2,  /**< Transmit on matching tone                   */
-    COLOR  = 3   /**< Transmit only if color code is not used yet */
-};
+// Magic number to identify the binary file
+#define CPS_MAGIC 0x52545843
+// Codeplug version v0.1
+#define CPS_VERSION_MAJOR  0
+#define CPS_VERSION_MINOR  1
+#define CPS_VERSION_NUMBER (CPS_VERSION_MAJOR << 8) | CPS_VERSION_MINOR
+
+
+/******************************************************************************
+ *                         FM MODE                                            *
+ ******************************************************************************/
 
 /**
- * Data structure containing all and only the information for analog FM channels,
- * like CTC/DCS tones.
+ * Data structure containing the tone information for analog FM channels.
+ * This is just a lookup table for the CTCSS frequencies and is not actually
+ * present in the codeplug binary data.
  */
 #define MAX_TONE_INDEX 50
-static const uint16_t ctcss_tone[MAX_TONE_INDEX] = {
+static const uint16_t ctcss_tone[MAX_TONE_INDEX] =
+{
     670, 693, 719, 744, 770, 797, 825, 854, 885, 915, 948, 974, 1000, 1034,
     1072, 1109, 1148, 1188, 1230, 1273, 1318, 1365, 1413, 1462, 1514, 1567,
     1598, 1622, 1655, 1679, 1713, 1738, 1773, 1799, 1835, 1862, 1899, 1928,
     1966, 1995, 2035, 2065, 2107, 2181, 2257, 2291, 2336, 2418, 2503, 2541
 };
 
+/**
+ * Data structure defining an analog-specific channel information such as tones.
+ */
 typedef struct
 {
-    uint8_t rxToneEn : 1, /**< RX CTC/DCS tone enable                        */
-            rxTone   : 7; /**< RX CTC/DCS tone index, squelch opens on match */
-    uint8_t txToneEn : 1, /**< TX CTC/DCS tone enable                        */
-            txTone   : 7; /**< TX CTC/DCS tone index, sent alongside voice   */
+    uint8_t rxToneEn : 1,   //< RX CTC/DCS tone enable
+            rxTone   : 7;   //< RX CTC/DCS tone index
+    uint8_t txToneEn : 1,   //< TX CTC/DCS tone enable
+            txTone   : 7;   //< TX CTC/DCS tone index
 }
-__attribute__((packed)) fmInfo_t;
+__attribute__((packed)) fmInfo_t; // 2B
+
+
+
+/******************************************************************************
+ *                         DMR MODE                                           *
+ ******************************************************************************/
 
 /**
  * Data structure containing all and only the information for DMR channels.
  */
 typedef struct
 {
-    uint8_t  rxColorCode : 4,   /**< Color code for RX squelch opening        */
-             txColorCode : 4;   /**< Color code sent during transmission      */
+    uint8_t  rxColorCode : 4,      //< Color code for RX squelch opening
+             txColorCode : 4;      //< Color code sent during transmission
 
-    uint8_t  dmr_timeslot;      /**< DMR timeslot, either 1 or 2              */
-    uint16_t contactName_index; /**< Index to retrieve data from contact list */
+    uint8_t  dmr_timeslot;         //< DMR timeslot, either 1 or 2
+    uint16_t contactName_index;    //< Index to retrieve contact from list
 }
-__attribute__((packed)) dmrInfo_t;
+__attribute__((packed)) dmrInfo_t; // 4B
+
+/**
+ * Enumeration type defining the types of a DMR contact.
+ */
+enum dmrContactType_t
+{
+    GROUP   = 0,    //< Group contact (Talkgroup)
+    PRIVATE = 1,    //< Private contact
+    ALL     = 2     //< Broadcast call
+};
+
+/**
+ * Data structure describing a DMR contact entry.
+ */
+typedef struct
+{
+    uint32_t id;                //< DMR id
+
+    uint8_t contactType : 2,    //< Call type
+            rx_tone     : 1,    //< Call receive tone
+            _unused     : 5;    //< Padding
+}
+__attribute__((packed)) dmrContact_t; // 5B
+
+
+
+/******************************************************************************
+ *                         M17 MODE                                           *
+ ******************************************************************************/
+
+/**
+ * M17 channel modes.
+ */
+enum m17mode_t
+{
+    DIGITAL_VOICE      = 1,     //< Digital Voice
+    DIGITAL_DATA       = 2,     //< Digital Data
+    DIGITAL_VOICE_DATA = 3      //< Digital Voice and Data
+};
+
+/**
+ * M17 channel encryption.
+ */
+enum m17crypto_t
+{
+    PLAIN     = 0,              //< No encryption, plaintext data is sent
+    AES256    = 1,              //< AES-256 Encryption
+    SCRAMBLER = 2               //< Scrambler
+};
+
+/**
+ * M17 gps operation.
+ */
+enum m17gps_t
+{
+    NO_GPS   = 0,               //< No GPS information is sent
+    GPS_META = 1                //< GPS position is sent along with payload
+};
 
 /**
  * Data structure containing all and only the information for M17 channels.
  */
 typedef struct
 {
-    uint8_t  rxCan : 4,         /**< Channel Access Number for RX squelch     */
-             txCan : 4;         /**< Channel Access Number for TX squelch     */
-
-    uint16_t contactName_index; /**< Index to retrieve data from contact list */
+    uint8_t  rxCan : 4,         //< Channel Access Number for RX
+             txCan : 4;         //< Channel Access Number for TX
+    uint8_t  mode  : 4,         //< Channel operation mode
+             encr  : 4;         //< Encryption mode
+    uint8_t gps_mode;           //< Channel GPS mode
+    uint16_t contactName_index; //< Index to retrieve data from contact list
 }
-__attribute__((packed)) m17Info_t;
+__attribute__((packed)) m17Info_t; // 5B
 
 /**
- * Data structure containing all the information of a channel, either FM or DMR.
+ * Data structure describing M17-specific contact fields.
  */
 typedef struct
 {
-    uint8_t mode;               /**< Operating mode                           */
+    uint8_t address[6];         //< M17 encoded address
+}
+__attribute__((packed)) m17Contact_t; // 6B
 
-    uint8_t bandwidth      : 2, /**< Bandwidth                                */
-            admit_criteria : 2, /**< Admit criterion                          */
-            squelch        : 1, /**< Squelch type: 0 = tight, 1 = normal      */
-            rx_only        : 1, /**< 1 means RX-only channel                  */
-            vox            : 1, /**< VOX enable                               */
-            _padding       : 1; /**< Padding to 8 bits                        */
 
-    float power;                /**< Transmission power, in watt              */
 
-    freq_t rx_frequency;        /**< RX Frequency, in Hz                      */
-    freq_t tx_frequency;        /**< TX Frequency, in Hz                      */
+/******************************************************************************
+ *                         COMMON DATA STRUCTURES                             *
+ ******************************************************************************/
 
-    uint8_t tot;                /**< TOT x 15sec: 0-Infinite, 1=15s...33=495s */
-    uint8_t tot_rekey_delay;    /**< TOT Rekey Delay: 0...255s                */
+/**
+ * Data structure for geolocation data
+ */
+typedef struct
+{
+    int8_t   ch_lat_int;    //< Latitude integer part
+    uint16_t ch_lat_dec;    //< Latitude decimal part
+    int16_t  ch_lon_int;    //< Longitude integer part
+    uint16_t ch_lon_dec;    //< Longitude decimal part
+    uint16_t ch_altitude;   //< Meters MSL. Stored +500
+}
+__attribute__((packed)) geo_t; // 9B
 
-    uint8_t emSys_index;        /**< Emergency System: None, System1...32     */
-    uint8_t scanList_index;     /**< Scan List: None, ScanList1...250         */
-    uint8_t groupList_index;    /**< Group List: None, GroupList1...128       */
+/**
+ * Data structure containing all the information of a channel.
+ */
+typedef struct
+{
+    uint8_t mode;                  //< Operating mode
 
-    char name[16];              /**< Channel name                             */
+    uint8_t bandwidth      : 2,    //< Bandwidth
+            rx_only        : 1,    //< 1 means RX-only channel
+            _unused        : 5;    //< Padding to 8 bits
+
+    uint8_t power;                 //< P = 10dBm + n*0.2dBm, we store n
+
+    freq_t  rx_frequency;          //< RX Frequency, in Hz
+    freq_t  tx_frequency;          //< TX Frequency, in Hz
+
+    uint8_t scanList_index;        //< Scan List: None, ScanList1...250
+    uint8_t groupList_index;       //< Group List: None, GroupList1...128
+
+    char    name[16];              //< Channel name
+    char    descr[16];             //< Description of the channel
+    geo_t   ch_location;           //< Transmitter geolocation
 
     union
     {
-        fmInfo_t  fm;           /**< Information block for FM channels        */
-        dmrInfo_t dmr;          /**< Information block for DMR channels       */
-        m17Info_t m17;          /**< Information block for M17 channels       */
+        fmInfo_t  fm;              //< Information block for FM channels
+        dmrInfo_t dmr;             //< Information block for DMR channels
+        m17Info_t m17;             //< Information block for M17 channels
     };
 }
-__attribute__((packed)) channel_t;
-
+__attribute__((packed)) channel_t; // 59B
 
 /**
- * Data structure containing all the information of a bank.
+ * Data structure describing a codeplug contact.
  */
 typedef struct
 {
-    char name[16];              /**< Bank name                             */
-    uint16_t member[64];        /**< Channel indexes                       */
+    char    name[16];           //< Display name of the contact
+    uint8_t mode;               //< Operating mode
+
+    union
+    {
+        dmrContact_t  dmr;      //< DMR specific contact info
+        m17Contact_t  m17;      //< M17 specific contact info
+    }
+    info; // 6B
+}
+__attribute__((packed)) contact_t; // 23B
+
+/**
+ * Data structure containing all the information of a bank.
+ * Legacy data structure for brackwards compatibility.
+ */
+typedef struct
+{
+    char name[16];              //< Bank name
+    uint16_t member[64];        //< Channel indexes
 }
 __attribute__((packed)) bank_t;
 
 /**
- * Data structure containing all the information of a contact.
+ * Data structure describing a bank header.
  */
 typedef struct
 {
-    char name[16];              /**< Contact name                             */
-    uint32_t id;                /**< DMR ID: 24bit number, 1...16777215       */
-    uint8_t type;               /**< Call Type: Group Call, Private Call or All Call */
-    bool receive_tone;          /**< Call Receive Tone: No or yes             */
+    char     name[16];
+    uint16_t ch_count;          //< Count of all the channels in this bank
 }
-__attribute__((packed)) contact_t;
+__attribute__((packed)) bankHdr_t; // 18B + 2 * ch_count
 
-/*
+
+/**
+ * The codeplug binary structure is composed by:
+ * - A header struct
+ * - A variable length array of all the contacts
+ * - A variable length array of all the channels
+ * - A variable length array of the offsets to reach each bank
+ * - A binary dense structure of all the banks
+ */
+typedef struct
+{
+    uint64_t magic;             //< Magic number "RTXC"
+    uint16_t version_number;    //< Version number for the cps structure
+    char     author[16];        //< Author of the codeplug
+    char     descr[16];         //< Description of the codeplug
+    uint64_t timestamp;         //< unix timestamp of the codeplug
+
+    uint16_t ct_count;          //< Number of stored contacts
+    uint16_t ch_count;          //< Number of stored channels
+    uint16_t b_count;           //< Number of stored banks
+}
+__attribute__((packed)) cps_header_t; // 52B
+
+/**
  * Create and return a viable channel for this radio.
  * Suitable for default VFO settings or the creation of a new channel.
- * Needs to be generated by a function frequency settings require details from the running hardware on limitations
+ * Needs to be generated by a function frequency settings require details from
+ * the running hardware on limitations.
  */
-channel_t get_default_channel();
+channel_t cps_getDefaultChannel();
 
-#endif
+#endif // CPS_H

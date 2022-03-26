@@ -1,8 +1,7 @@
 #include <interfaces/platform.h>
 #include <cps.h>
 
-
-channel_t get_default_channel()
+channel_t cps_getDefaultChannel()
 {
     channel_t channel;
     channel.mode      = OPMODE_FM;

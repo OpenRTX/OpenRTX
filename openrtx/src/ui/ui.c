@@ -764,10 +764,10 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             }
             break;
         case 3:
-            if (state.channel.power == 1.0f)
-                state.channel.power = 5.0f;
+            if (state.channel.power == 100)
+                state.channel.power = 135;
             else
-                state.channel.power = 1.0f;
+                state.channel.power = 100;
             *sync_rtx = true;
             break;
         case 4:
@@ -1644,7 +1644,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     if(msg.keys & KEY_ENTER)
                     {
                         ui_state.edit_mode = false;
-                        defaultSettingsAndVfo();
+                        state_resetSettingsAndVfo();
                         _ui_menuBack(MENU_SETTINGS);
                     }
                     else if(msg.keys & KEY_ESC)

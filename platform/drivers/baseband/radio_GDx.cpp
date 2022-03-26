@@ -22,9 +22,9 @@
 #include <interfaces/radio.h>
 #include <interfaces/gpio.h>
 #include <calibInfo_GDx.h>
-#include <calibUtils.h>
 #include <hwconfig.h>
 #include <algorithm>
+#include <utils.h>
 #include "radioUtils.h"
 #include "HR_C6000.h"
 #include "AT1846S.h"

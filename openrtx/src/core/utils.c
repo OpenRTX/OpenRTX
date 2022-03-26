@@ -1,7 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN,                            *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2020 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN,                     *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -17,7 +17,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <calibUtils.h>
+#include <utils.h>
+#include <math.h>
 
 uint8_t interpCalParameter(const freq_t freq, const freq_t *calPoints,
                            const uint8_t *param, const uint8_t elems)
@@ -48,4 +49,12 @@ uint8_t interpCalParameter(const freq_t freq, const freq_t *calPoints,
     }
 
     return interpValue;
+}
+
+float dBmToWatt(const uint8_t n)
+{
+    float dBm   = 10.0f + ((float) n) * 0.2f;
+    float power = pow(10.0f, (dBm - 30.0f)/10.0f);
+
+    return power;
 }
