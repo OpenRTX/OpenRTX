@@ -44,13 +44,14 @@ static Thread *dmaWaiting = 0;
  */
 void stopTransfer()
 {
-    TIM7->CR1 = 0;    // Shutdown timer
-    DAC->CR   = 0;    // Disable DAC channels
-    DAC->SR   = 0;    // Clear status flags
-
     // Stop DMA transfers
     DMA1_Stream5->CR = 0;
     DMA1_Stream6->CR = 0;
+
+    TIM7->CR1    = 0;              // Shutdown timer
+    DAC->CR     &= ~DAC_CR_EN2;    // Disable only channel 2
+    DAC->SR      = 0;              // Clear status flags
+    DAC->DHR12R1 = 2048;           // Set channel 1 (RTX) to VDD/2 when idle
 
     // Clear flags
     running      = false;

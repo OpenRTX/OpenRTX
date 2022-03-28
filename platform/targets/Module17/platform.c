@@ -42,6 +42,12 @@ void platform_init()
     gpio_setMode(PTT_OUT, OUTPUT);
     gpio_clearPin(PTT_OUT);
 
+    /* Set analog output for baseband signal to an idle level of VDD/2 */
+    gpio_setMode(BASEBAND_TX, INPUT_ANALOG);
+    RCC->APB1ENR |= RCC_APB1ENR_DACEN;
+    DAC->CR      |= DAC_CR_EN1;
+    DAC->DHR12R1  = 2048;
+
     nvm_init();
     adc1_init();
     i2c_init();
