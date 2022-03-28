@@ -49,8 +49,8 @@ void stopTransfer()
     DMA1_Stream6->CR = 0;
 
     TIM7->CR1    = 0;              // Shutdown timer
-    DAC->CR     &= ~DAC_CR_EN2;    // Disable only channel 2
     DAC->SR      = 0;              // Clear status flags
+    DAC->CR      = DAC_CR_EN1;     // Keep only channel 1 active
     DAC->DHR12R1 = 2048;           // Set channel 1 (RTX) to VDD/2 when idle
 
     // Clear flags

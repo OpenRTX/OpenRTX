@@ -111,6 +111,7 @@ private:
     static constexpr size_t M17_TX_SAMPLE_RATE    = 48000;
     static constexpr size_t M17_FRAME_SAMPLES_48K = 1920;
     static constexpr size_t M17_FRAME_SYMBOLS     = 192;
+    static constexpr float  M17_RRC_GAIN          = 7168.0f;
 
     std::array< int16_t, M17_FRAME_SYMBOLS > symbols;
     stream_sample_t  *baseband_buffer;  ///< Buffer for baseband audio handling.
