@@ -57,7 +57,7 @@ typedef struct
     channel_t  channel;
     channel_t  vfo_channel;
     bool       bank_enabled;
-    bank_t     bank;
+    uint16_t   bank;
     uint8_t    rtxStatus;
     bool       rtxShutdown;
 

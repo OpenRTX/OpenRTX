@@ -68,3 +68,6 @@ subprojects/tinyusb
 
 # Compiled script
 scripts/get_demod_log
+
+# OpenRTX Codeplugs
+*.rtxc

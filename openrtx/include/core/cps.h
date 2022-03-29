@@ -27,11 +27,12 @@
 #include <rtx.h>
 
 // Magic number to identify the binary file
-#define CPS_MAGIC 0x52545843
+#define CPS_MAGIC 0x43585452
 // Codeplug version v0.1
 #define CPS_VERSION_MAJOR  0
 #define CPS_VERSION_MINOR  1
 #define CPS_VERSION_NUMBER (CPS_VERSION_MAJOR << 8) | CPS_VERSION_MINOR
+#define CPS_STR_SIZE 32
 
 
 /******************************************************************************
@@ -202,8 +203,8 @@ typedef struct
     uint8_t scanList_index;        //< Scan List: None, ScanList1...250
     uint8_t groupList_index;       //< Group List: None, GroupList1...128
 
-    char    name[16];              //< Channel name
-    char    descr[16];             //< Description of the channel
+    char    name[CPS_STR_SIZE];              //< Channel name
+    char    descr[CPS_STR_SIZE];             //< Description of the channel
     geo_t   ch_location;           //< Transmitter geolocation
 
     union
@@ -220,7 +221,7 @@ __attribute__((packed)) channel_t; // 59B
  */
 typedef struct
 {
-    char    name[16];           //< Display name of the contact
+    char    name[CPS_STR_SIZE];           //< Display name of the contact
     uint8_t mode;               //< Operating mode
 
     union
@@ -233,26 +234,16 @@ typedef struct
 __attribute__((packed)) contact_t; // 23B
 
 /**
- * Data structure containing all the information of a bank.
- * Legacy data structure for brackwards compatibility.
- */
-typedef struct
-{
-    char name[16];              //< Bank name
-    uint16_t member[64];        //< Channel indexes
-}
-__attribute__((packed)) bank_t;
-
-/**
  * Data structure describing a bank header.
+ * A bank is a variable size structure composed of a bank header and a
+ * variable length array of uint32_t each representing a channel index.
  */
 typedef struct
 {
-    char     name[16];
+    char     name[CPS_STR_SIZE];
     uint16_t ch_count;          //< Count of all the channels in this bank
 }
 __attribute__((packed)) bankHdr_t; // 18B + 2 * ch_count
-
 
 /**
  * The codeplug binary structure is composed by:
@@ -266,8 +257,8 @@ typedef struct
 {
     uint64_t magic;             //< Magic number "RTXC"
     uint16_t version_number;    //< Version number for the cps structure
-    char     author[16];        //< Author of the codeplug
-    char     descr[16];         //< Description of the codeplug
+    char     author[CPS_STR_SIZE];        //< Author of the codeplug
+    char     descr[CPS_STR_SIZE];         //< Description of the codeplug
     uint64_t timestamp;         //< unix timestamp of the codeplug
 
     uint16_t ct_count;          //< Number of stored contacts

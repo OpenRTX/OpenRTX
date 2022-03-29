@@ -32,6 +32,35 @@ extern "C" {
  * Interface for codeplug memory management.
  */
 
+/**
+ * Open a codeplug identified by its name.
+ *
+ * @param name: name of the codeplug, if omitted the default codeplug is used
+ * @return 0 on success, -1 on failure
+ */
+int cps_open(char *cps_name);
+
+/**
+ * Close a codeplug.
+ */
+void cps_close();
+
+/**
+ * Initializes a new cps or clears cps data if one already exists.
+ *
+ * @param cps_name: codeplug name, if empty the default cps is initialized
+ * @return 0 on success, -1 on failure
+ */
+int cps_create(char *cps_name);
+
+/**
+ * Read one contact from table stored in nonvolatile memory.
+ *
+ * @param contact: pointer to the contact_t data structure to be populated.
+ * @param pos: position, inside the bank table, from which read data.
+ * @return 0 on success, -1 on failure
+ */
+int cps_readContactData(contact_t *contact, uint16_t pos);
 
 /**
  * Read one channel entry from table stored in nonvolatile memory.
@@ -43,23 +72,22 @@ extern "C" {
 int cps_readChannelData(channel_t *channel, uint16_t pos);
 
 /**
- * Read one bank from the codeplug stored in the radio's filesystem.
+ * Read one bank header from the codeplug stored in the radio's filesystem.
  *
- * @param bank: pointer to the struct to be populated with the bank data.
+ * @param b_header: pointer to the struct to be populated with the bank header.
  * @param pos: position, inside the bank table, from which read data.
  * @return 0 on success, -1 on failure
  */
-int cps_readBankData(bank_t *bank, uint16_t pos);
+int cps_readBankHeader(bankHdr_t *b_header, uint16_t pos);
 
 /**
- * Read one contact from table stored in nonvolatile memory.
+ * Read one channel index from a bank of the codeplug stored in NVM.
  *
- * @param contact: pointer to the contact_t data structure to be populated.
- * @param pos: position, inside the bank table, from which read data.
- * @return 0 on success, -1 on failure
+ * @param bank_pos: position of the bank inside the cps.
+ * @param ch_pos: position of the channel index inside the bank.
+ * @return the retrieved channel index on success, -1 on failure
  */
-int cps_readContactData(contact_t *contact, uint16_t pos);
-
+int32_t cps_readBankData(uint16_t bank_pos, uint16_t ch_pos);
 
 #ifdef __cplusplus
 }

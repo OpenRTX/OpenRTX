@@ -268,8 +268,8 @@ int _ui_getBankName(char *buf, uint8_t max_len, uint8_t index)
     }
     else
     {
-        bank_t bank;
-        result = cps_readBankData(&bank, index);
+        bankHdr_t bank;
+        result = cps_readBankHeader(&bank, index);
         if(result != -1)
             snprintf(buf, max_len, "%s", bank.name);
     }

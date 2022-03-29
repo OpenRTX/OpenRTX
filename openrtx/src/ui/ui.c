@@ -538,26 +538,25 @@ bool _ui_drawDarkOverlay() {
     return true;
 }
 
-int _ui_fsm_loadChannel(uint16_t bank_index, bool *sync_rtx) {
-    uint16_t channel_index = bank_index;
+int _ui_fsm_loadChannel(uint16_t channel_index, bool *sync_rtx) {
     channel_t channel;
     // If a bank is active, get index from current bank
     if(state.bank_enabled)
     {
-        // Calculate bank size
-        const uint8_t bank_size = sizeof(state.bank.member)/sizeof(state.bank.member[0]);
-        if((bank_index <= 0) || (bank_index > bank_size))
+        bankHdr_t bank = { 0 };
+        cps_readBankHeader(&bank, state.bank);
+        if((channel_index <= 0) || (channel_index > bank.ch_count))
             return -1;
         else
             // Channel index is 1-based while bank array access is 0-based
-            channel_index = state.bank.member[bank_index - 1];
+            channel_index = cps_readBankData(state.bank, channel_index);
     }
     int result = cps_readChannelData(&channel, channel_index);
     // Read successful and channel is valid
     if(result != -1 && _ui_channel_valid(&channel))
     {
         // Set new channel index
-        state.channel_index = bank_index;
+        state.channel_index = channel_index;
         // Copy channel read to state
         state.channel = channel;
         *sync_rtx = true;
@@ -1309,24 +1308,23 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 {
                     if(state.ui_screen == MENU_BANK)
                     {
-                        bank_t bank;
-                        // menu_selected is 0-based while channels are 1-based
-                        // menu_selected == 0 corresponds to "All Channels" bank
-                        if(cps_readBankData(&bank, ui_state.menu_selected + 1) != -1)
+                        bankHdr_t bank;
+                        // manu_selected is 0-based
+                        // bank 0 means "All Channel" mode
+                        // banks (1, n) are mapped to banks (0, n-1)
+                        if(cps_readBankHeader(&bank, ui_state.menu_selected + 1) != -1)
                             ui_state.menu_selected += 1;
                     }
                     else if(state.ui_screen == MENU_CHANNEL)
                     {
                         channel_t channel;
-                        // menu_selected is 0-based while channels are 1-based
-                        if(cps_readChannelData(&channel, ui_state.menu_selected + 2) != -1)
+                        if(cps_readChannelData(&channel, ui_state.menu_selected + 1) != -1)
                             ui_state.menu_selected += 1;
                     }
                     else if(state.ui_screen == MENU_CONTACTS)
                     {
                         contact_t contact;
-                        // menu_selected is 0-based while channels are 1-based
-                        if(cps_readContactData(&contact, ui_state.menu_selected + 2) != -1)
+                        if(cps_readContactData(&contact, ui_state.menu_selected + 1) != -1)
                             ui_state.menu_selected += 1;
                     }
                 }
@@ -1334,7 +1332,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 {
                     if(state.ui_screen == MENU_BANK)
                     {
-                        bank_t newbank;
+                        bankHdr_t newbank;
                         int result = 0;
                         // If "All channels" is selected, load default bank
                         if(ui_state.menu_selected == 0)
@@ -1342,11 +1340,11 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         else
                         {
                             state.bank_enabled = true;
-                            result = cps_readBankData(&newbank, ui_state.menu_selected);
+                            result = cps_readBankHeader(&newbank, ui_state.menu_selected - 1);
                         }
                         if(result != -1)
                         {
-                            state.bank = newbank;
+                            state.bank = ui_state.menu_selected - 1;
                             // If we were in VFO mode, save VFO channel
                             if(ui_state.last_main_state == MAIN_VFO)
                                 state.vfo_channel = state.channel;

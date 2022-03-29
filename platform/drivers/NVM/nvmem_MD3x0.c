@@ -23,31 +23,8 @@
 #include <calibInfo_MDx.h>
 #include <string.h>
 #include <wchar.h>
-#include "nvmData_MD3x0.h"
+#include <utils.h>
 #include "W25Qx.h"
-
-const uint32_t zoneBaseAddr    = 0x149e0;  /**< Base address of zones                */
-const uint32_t chDataBaseAddr  = 0x1ee00;  /**< Base address of channel data         */
-const uint32_t contactBaseAddr = 0x05f80;  /**< Base address of contacts             */
-const uint32_t maxNumChannels  = 1000;     /**< Maximum number of channels in memory */
-const uint32_t maxNumZones     = 250;      /**< Maximum number of zones in memory    */
-const uint32_t maxNumContacts  = 10000;    /**< Maximum number of contacts in memory */
-
-/**
- * \internal Utility function to convert 4 byte BCD values into a 32-bit
- * unsigned integer ones.
- */
-uint32_t _bcd2bin(uint32_t bcd)
-{
-    return ((bcd >> 28) & 0x0F) * 10000000 +
-           ((bcd >> 24) & 0x0F) * 1000000 +
-           ((bcd >> 20) & 0x0F) * 100000 +
-           ((bcd >> 16) & 0x0F) * 10000 +
-           ((bcd >> 12) & 0x0F) * 1000 +
-           ((bcd >> 8) & 0x0F)  * 100 +
-           ((bcd >> 4) & 0x0F)  * 10 +
-           (bcd & 0x0F);
-}
 
 void nvm_init()
 {
@@ -104,8 +81,8 @@ void nvm_readCalibData(void *buf)
      */
     for(uint8_t i = 0; i < 9; i++)
     {
-        calib->rxFreq[i] = ((freq_t) _bcd2bin(freqs[2*i])) * 10;
-        calib->txFreq[i] = ((freq_t) _bcd2bin(freqs[2*i+1])) * 10;
+        calib->rxFreq[i] = ((freq_t) bcd2bin(freqs[2*i])) * 10;
+        calib->txFreq[i] = ((freq_t) bcd2bin(freqs[2*i+1])) * 10;
     }
 }
 
@@ -135,8 +112,8 @@ void nvm_loadHwInfo(hwInfo_t *info)
     }
 
     /* These devices are single-band only, either VHF or UHF. */
-    freqMin = ((uint16_t) _bcd2bin(freqMin))/10;
-    freqMax = ((uint16_t) _bcd2bin(freqMax))/10;
+    freqMin = ((uint16_t) bcd2bin(freqMin))/10;
+    freqMax = ((uint16_t) bcd2bin(freqMax))/10;
 
     if(freqMin < 200)
     {
@@ -167,159 +144,6 @@ int nvm_readVFOChannelData(channel_t *channel)
     return -1;
 }
 */
-
-int cps_readChannelData(channel_t *channel, uint16_t pos)
-{
-    if((pos <= 0) || (pos > maxNumChannels)) return -1;
-
-    memset(channel, 0x00, sizeof(channel_t));
-
-    W25Qx_wakeup();
-    delayUs(5);
-
-    md3x0Channel_t chData;
-    // Note: pos is 1-based because an empty slot in a zone contains index 0
-    uint32_t readAddr = chDataBaseAddr + (pos - 1) * sizeof(md3x0Channel_t);
-    W25Qx_readData(readAddr, ((uint8_t *) &chData), sizeof(md3x0Channel_t));
-    W25Qx_sleep();
-
-    channel->mode            = chData.channel_mode;
-    channel->bandwidth       = chData.bandwidth;
-    channel->rx_only         = chData.rx_only;
-    channel->power           = ((chData.power == 1) ? 135 : 100);
-    channel->rx_frequency    = _bcd2bin(chData.rx_frequency) * 10;
-    channel->tx_frequency    = _bcd2bin(chData.tx_frequency) * 10;
-    channel->scanList_index  = chData.scan_list_index;
-    channel->groupList_index = chData.group_list_index;
-
-    /*
-     * Brutally convert channel name from unicode to char by truncating the most
-     * significant byte
-     */
-    for(uint16_t i = 0; i < 16; i++)
-    {
-        channel->name[i] = ((char) (chData.name[i] & 0x00FF));
-    }
-
-    /* Load mode-specific parameters */
-    if(channel->mode == OPMODE_FM)
-    {
-        channel->fm.txToneEn = 0;
-        channel->fm.rxToneEn = 0;
-        uint16_t rx_css = chData.ctcss_dcs_receive;
-        uint16_t tx_css = chData.ctcss_dcs_transmit;
-
-        // TODO: Implement binary search to speed up this lookup
-        if((rx_css != 0) && (rx_css != 0xFFFF))
-        {
-            for(int i = 0; i < MAX_TONE_INDEX; i++)
-            {
-                if(ctcss_tone[i] == ((uint16_t) _bcd2bin(rx_css)))
-                {
-                    channel->fm.rxTone = i;
-                    channel->fm.rxToneEn = 1;
-                    break;
-                }
-            }
-        }
-
-        if((tx_css != 0) && (tx_css != 0xFFFF))
-        {
-            for(int i = 0; i < MAX_TONE_INDEX; i++)
-            {
-                if(ctcss_tone[i] == ((uint16_t) _bcd2bin(tx_css)))
-                {
-                    channel->fm.txTone = i;
-                    channel->fm.txToneEn = 1;
-                    break;
-                }
-            }
-        }
-
-        // TODO: Implement warning screen if tone was not found
-    }
-    else if(channel->mode == OPMODE_DMR)
-    {
-        channel->dmr.contactName_index = chData.contact_name_index;
-        channel->dmr.dmr_timeslot      = chData.repeater_slot;
-        channel->dmr.rxColorCode       = chData.colorcode;
-        channel->dmr.txColorCode       = chData.colorcode;
-    }
-
-    return 0;
-}
-
-int cps_readBankData(bank_t* bank, uint16_t pos)
-{
-    if((pos <= 0) || (pos > maxNumZones)) return -1;
-
-    W25Qx_wakeup();
-    delayUs(5);
-
-    md3x0Zone_t zoneData;
-    // Note: pos is 1-based to be consistent with channels
-    uint32_t zoneAddr = zoneBaseAddr + (pos - 1) * sizeof(md3x0Zone_t);
-    W25Qx_readData(zoneAddr, ((uint8_t *) &zoneData), sizeof(md3x0Zone_t));
-    W25Qx_sleep();
-
-    // Check if zone is empty
-    #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
-    if(wcslen((wchar_t *) zoneData.name) == 0) return -1;
-    /*
-     * Brutally convert channel name from unicode to char by truncating the most
-     * significant byte
-     */
-    for(uint16_t i = 0; i < 16; i++)
-    {
-        bank->name[i] = ((char) (zoneData.name[i] & 0x00FF));
-    }
-    // Copy zone channel indexes
-    for(uint16_t i = 0; i < 16; i++)
-    {
-        bank->member[i] = zoneData.member[i];
-    }
-
-    return 0;
-}
-
-int cps_readContactData(contact_t *contact, uint16_t pos)
-{
-    if((pos <= 0) || (pos > maxNumContacts)) return -1;
-
-    W25Qx_wakeup();
-    delayUs(5);
-
-    md3x0Contact_t contactData;
-    // Note: pos is 1-based to be consistent with channels
-    uint32_t contactAddr = contactBaseAddr + (pos - 1) * sizeof(md3x0Contact_t);
-    W25Qx_readData(contactAddr, ((uint8_t *) &contactData), sizeof(md3x0Contact_t));
-    W25Qx_sleep();
-
-    // Check if contact is empty
-    #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
-    if(wcslen((wchar_t *) contactData.name) == 0) return -1;
-    /*
-     * Brutally convert channel name from unicode to char by truncating the most
-     * significant byte
-     */
-    for(uint16_t i = 0; i < 16; i++)
-    {
-        contact->name[i] = ((char) (contactData.name[i] & 0x00FF));
-    }
-
-    contact->mode = DMR;
-
-    // Copy contact DMR ID
-    contact->info.dmr.id = contactData.id[0]
-                         | (contactData.id[1] << 8)
-                         | (contactData.id[2] << 16);
-
-    // Copy contact details
-    contact->info.dmr.contactType = contactData.type;
-    contact->info.dmr.rx_tone     = contactData.receive_tone ? true : false;
-
-    return 0;
-}
 
 /*
 

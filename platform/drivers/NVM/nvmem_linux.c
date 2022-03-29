@@ -234,43 +234,6 @@ int nvm_readVFOChannelData(channel_t *channel)
     return _cps_read(memory_paths[P_VFO], channel, sizeof(channel_t));
 }
 
-int cps_readChannelData(channel_t *channel, uint16_t pos)
-{
-    if((pos <= 0) || (pos > maxNumChannels)) return -1;
-
-    /* Generate dummy channel name */
-    snprintf(channel->name, 16, "Channel %d", pos);
-    /* Generate dummy frequency values */
-    channel->rx_frequency = dummy_base_freq + pos * 100000;
-    channel->tx_frequency = dummy_base_freq + pos * 100000;
-
-    return 0;
-}
-
-int cps_readBankData(bank_t* bank, uint16_t pos)
-{
-    if((pos <= 0) || (pos > maxNumZones)) return -1;
-
-    /* Generate dummy bank name */
-    snprintf(bank->name, 16, "Zone %d", pos);
-    memset(bank->member, 0, sizeof(bank->member));
-    // Add fake bank member indexes
-    bank->member[0] = pos;
-    bank->member[1] = pos+1;
-    bank->member[2] = pos+2;
-    return 0;
-}
-
-int cps_readContactData(contact_t *contact, uint16_t pos)
-{
-    if((pos <= 0) || (pos > maxNumContacts)) return -1;
-
-    /* Generate dummy contact name */
-    snprintf(contact->name, 16, "Contact %d", pos);
-
-    return 0;
-}
-
 int nvm_readSettings(settings_t *settings)
 {
     return _cps_read(memory_paths[P_SETTINGS], settings, sizeof(settings_t));

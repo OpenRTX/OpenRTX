@@ -155,6 +155,7 @@ gdx_src = ['openrtx/src/core/xmodem.c',
            'platform/drivers/NVM/AT24Cx_GDx.c',
            'platform/drivers/NVM/spiFlash_GDx.c',
            'platform/drivers/NVM/nvmem_GDx.c',
+           'platform/drivers/CPS/cps_io_native_GDx.c',
            'platform/drivers/ADC/ADC0_GDx.c',
            'platform/drivers/backlight/backlight_GDx.c',
            'platform/drivers/baseband/radio_GDx.cpp',
@@ -250,7 +251,9 @@ linux_platform_src = ['platform/targets/linux/emulator/emulator.c',
                       'platform/drivers/audio/audio_linux.c',
                       'platform/drivers/audio/inputStream_linux.c',
                       'platform/drivers/audio/outputStream_linux.c',
-                      'platform/targets/linux/platform.c']
+                      'platform/targets/linux/platform.c',
+                      'openrtx/src/core/cps_io_libc.c']
+
 linux_src = src + linux_platform_src
 
 
@@ -274,6 +277,7 @@ endif
 ## TYT MD-3x0 family
 ##
 md3x0_src = src + mdx_src + stm32f405_src + ['platform/drivers/NVM/nvmem_MD3x0.c',
+                                             'platform/drivers/CPS/cps_io_native_MD3x0.c',
                                              'platform/drivers/NVM/spiFlash_MD3x.c',
                                              'platform/drivers/baseband/SKY72310.c',
                                              'platform/drivers/baseband/radio_MD3x0.cpp',
@@ -290,6 +294,7 @@ md3x0_def = def + stm32f405_def + {'PLATFORM_MD3x0': '', 'timegm': 'mktime'}
 ##
 mduv3x0_src = src + mdx_src + stm32f405_src + ['platform/drivers/NVM/nvmem_MDUV3x0.c',
                                                'platform/drivers/NVM/spiFlash_MD3x.c',
+                                               'platform/drivers/CPS/cps_io_native_MDUV3x0.c',
                                                'platform/targets/MD-UV3x0/platform.c',
                                                'platform/drivers/keyboard/keyboard_MD3x.c',
                                                'platform/drivers/display/HX8353_MD3x.cpp',
@@ -310,7 +315,8 @@ md9600_src = src + mdx_src + stm32f405_src + ['platform/targets/MD-9600/platform
                                               'platform/drivers/chSelector/chSelector_MD9600.c',
                                               'platform/drivers/baseband/radio_MD9600.cpp',
                                               'platform/drivers/NVM/nvmem_MD9600.c',
-                                              'platform/drivers/NVM/spiFlash_MD9600.c']
+                                              'platform/drivers/NVM/spiFlash_MD9600.c',
+                                              'platform/drivers/CPS/cps_io_native_MD9600.c']
 
 md9600_inc = inc + stm32f405_inc + ['platform/targets/MD-9600']
 md9600_def = def + stm32f405_def + {'PLATFORM_MD9600': ''}
@@ -339,6 +345,7 @@ mod17_src = src + stm32f405_src + ['platform/targets/Module17/platform.c',
                                    'platform/drivers/ADC/ADC1_Mod17.c',
                                    'platform/drivers/keyboard/keyboard_Mod17.c',
                                    'platform/drivers/NVM/nvmem_Mod17.c',
+                                   'platform/drivers/CPS/cps_io_native_Mod17.c',
                                    'platform/drivers/baseband/radio_Mod17.cpp',
                                    'platform/drivers/audio/inputStream_Mod17.cpp',
                                    'platform/drivers/audio/outputStream_Mod17.cpp',
@@ -635,7 +642,12 @@ m17_rrc_test = executable('m17_rrc_test',
                           sources: unit_test_src + ['tests/unit/M17_rrc.cpp'],
                           kwargs: unit_test_opts)
 
+cps_test = executable('cps_test',
+                      sources : unit_test_src + ['tests/unit/cps.c'],
+                      kwargs  : unit_test_opts)
+
 test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
-test('M17 Demodulator Test', m17_demodulator_test)
-test('M17 RRC Test', m17_rrc_test)
+test('M17 Demodulator Test',  m17_demodulator_test)
+test('M17 RRC Test',          m17_rrc_test)
+test('Codeplug Test',         cps_test)

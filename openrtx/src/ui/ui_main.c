@@ -77,13 +77,16 @@ void _ui_drawBankChannel()
     if(!last_state.bank_enabled)
         gfx_print(layout.line1_pos, layout.line1_font, TEXT_ALIGN_LEFT,
                   color_white, "bank: All channels");
-    else
+    else {
+        bankHdr_t bank = { 0 };
+        cps_readBankHeader(&bank, last_state.bank);
         gfx_print(layout.line1_pos, layout.line1_font, TEXT_ALIGN_LEFT,
-                  color_white,  "bank: %.13s", last_state.bank.name);
+                  color_white,  "bank: %.13s", bank.name);
+    }
     // Print Channel name
     gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_LEFT,
               color_white, "  %03d: %.12s",
-              last_state.channel_index, last_state.channel.name);
+              last_state.channel_index + 1, last_state.channel.name);
 }
 
 void _ui_drawFrequency()

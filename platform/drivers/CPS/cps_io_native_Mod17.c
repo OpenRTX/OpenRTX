@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
+ *   Copyright (C) 2022 by Federico Amedeo Izzo IU2NUO,                    *
  *                         Niccolò Izzo IU2KIN                             *
  *                         Frederik Saraci IU2NRO                          *
  *                         Silvano Seva IU2KWO                             *
@@ -18,59 +18,58 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/nvmem.h>
+#include <interfaces/cps_io.h>
 
-void nvm_init()
+
+/**
+ * This function does not apply to address-based codeplugs
+ */
+int cps_open(char *cps_name)
 {
-
-}
-
-void nvm_terminate()
-{
-
-}
-
-void nvm_readCalibData(void *buf)
-{
-    (void) buf;
-}
-
-void nvm_loadHwInfo(hwInfo_t *info)
-{
-    (void) info;
-}
-
-int nvm_readVFOChannelData(channel_t *channel)
-{
-    // Module 17 has no channels: just load default values for it
-    channel->mode         = OPMODE_M17;
-    channel->bandwidth    = BW_12_5;
-    channel->power        = 1.0;
-    channel->rx_frequency = 430000000;
-    channel->tx_frequency = 430000000;
-    channel->fm.rxToneEn  = 0; //disabled
-    channel->fm.rxTone    = 0; //and no ctcss/dcs selected
-    channel->fm.txToneEn  = 0;
-    channel->fm.txTone    = 0;
-
+    (void) cps_name;
     return 0;
 }
 
-int nvm_readSettings(settings_t *settings)
+/**
+ * This function does not apply to address-based codeplugs
+ */
+void cps_close()
 {
-    (void) settings;
+}
+
+/**
+ * This function does not apply to address-based codeplugs
+ */
+int cps_create(char *cps_name)
+{
+    (void) cps_name;
+    return 0;
+}
+
+int cps_readChannelData(channel_t *channel, uint16_t pos)
+{
+    (void) channel;
+    (void) pos;
     return -1;
 }
 
-int nvm_writeSettings(const settings_t *settings)
+int cps_readBankHeader(bankHdr_t *b_header, uint16_t pos)
 {
-    (void) settings;
+    (void) b_header;
+    (void) pos;
     return -1;
 }
 
-int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
+int32_t cps_readBankData(uint16_t bank_pos, uint16_t ch_pos)
 {
-    (void) settings;
-    (void) vfo;
+    (void) bank_pos;
+    (void) ch_pos;
+    return -1;
+}
+
+int cps_readContactData(contact_t *contact, uint16_t pos)
+{
+    (void) contact;
+    (void) pos;
     return -1;
 }
