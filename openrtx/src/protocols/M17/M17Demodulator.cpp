@@ -276,7 +276,6 @@ bool M17Demodulator::update()
     FILE *csv_log = fopen("demod_log_2.csv", "a");
     #endif
 
-
     if(baseband.data != NULL)
     {
         // Apply RRC on the baseband buffer
@@ -287,10 +286,11 @@ bool M17Demodulator::update()
         }
 
         // Process the buffer
-        int32_t symbol_index = 0;
         while((syncword.index != -1) &&
-              (symbol_index < static_cast< int32_t > (baseband.len)))
+              ((static_cast< int32_t >(M17_SAMPLES_PER_SYMBOL * decoded_syms) +
+                offset + phase) < static_cast < int32_t >(baseband.len)))
         {
+
             // If we are not locked search for a syncword
             if (!locked)
             {
@@ -307,9 +307,9 @@ bool M17Demodulator::update()
             else
             {
                 // Slice the input buffer to extract a frame and quantize
-                symbol_index = offset
-                             + phase
-                             + (M17_SAMPLES_PER_SYMBOL * decoded_syms);
+                int32_t symbol_index = offset
+                                     + phase
+                                     + (M17_SAMPLES_PER_SYMBOL * decoded_syms);
 
                 updateQuantizationStats(symbol_index);
                 int8_t symbol = quantize(symbol_index);
@@ -317,8 +317,8 @@ bool M17Demodulator::update()
                 #ifdef PLATFORM_LINUX
                 fprintf(csv_log, "%" PRId16 ",%f,%f,%d,%d\n",
                         baseband.data[symbol_index] - (int16_t) qnt_ema,
-                        getQuantizationMax() / 2,
-                        getQuantizationMin() / 2,
+                        qnt_max / 2,
+                        qnt_min / 2,
                         symbol * 666,
                         frameIndex == 0 ? 2300 : symbol_index);
                 #endif
