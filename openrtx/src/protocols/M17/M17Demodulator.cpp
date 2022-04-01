@@ -191,13 +191,14 @@ sync_t M17Demodulator::nextFrameSync(int32_t offset)
         int32_t conv = convolution(i, stream_syncword, M17_SYNCWORD_SYMBOLS);
         updateCorrelationStats(conv);
         updateQuantizationStats(i);
+
+        #ifdef PLATFORM_LINUX
         int16_t sample = 0;
         if (i < 0) // When we are at negative offsets use bridge buffer
             sample = basebandBridge[M17_BRIDGE_SIZE + i];
         else            // Otherwise use regular data buffer
             sample = baseband.data[i];
 
-        #ifdef PLATFORM_LINUX
         fprintf(csv_log, "%" PRId16 ",%d,%f,%d\n",
                 sample,
                 conv - static_cast< int32_t >(conv_ema),
