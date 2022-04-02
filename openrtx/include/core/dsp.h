@@ -40,22 +40,44 @@ extern "C" {
 #endif
 
 /**
+ * Data structure holding the internal state of a filter.
+ */
+typedef struct
+{
+    float u[3];         // input values u(k), u(k-1), u(k-2)
+    float y[3];         // output values y(k), y(k-1), y(k-2)
+    bool  initialised;  // state variables initialised
+}
+filter_state_t;
+
+
+/**
+ * Reset the filter state variables.
+ *
+ * @param state: pointer to the data structure containing the filter state.
+ */
+void dsp_resetFilterState(filter_state_t *state);
+
+/**
  * Compensate for the filtering applied by the PWM output over the modulated
  * signal. The buffer is be processed in place to save memory.
  *
+ * @param state: pointer to the data structure containing the filter state.
  * @param buffer: the buffer to be used as both source and destination.
  * @param length: the length of the input buffer.
  */
-void dsp_pwmCompensate(audio_sample_t *buffer, size_t length);
+void dsp_pwmCompensate(filter_state_t *state, audio_sample_t *buffer,
+                       size_t length);
 
 /**
  * Remove the DC offset from a collection of audio samples, processing data
  * in-place.
  *
+ * @param state: pointer to the data structure containing the filter state.
  * @param buffer: buffer containing the audio samples.
  * @param length: number of samples contained in the buffer.
  */
-void dsp_dcRemoval(audio_sample_t *buffer, size_t length);
+void dsp_dcRemoval(filter_state_t *state, audio_sample_t *buffer, size_t length);
 
 /*
  * Inverts the phase of the audio buffer passed as paramenter.
