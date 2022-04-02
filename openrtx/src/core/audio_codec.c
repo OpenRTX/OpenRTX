@@ -44,6 +44,14 @@ static uint8_t          writePos;
 static uint8_t          numElements;
 static uint64_t         dataBuffer[BUF_SIZE];
 
+#ifdef PLATFORM_MOD17
+static const uint8_t micGainPre  = 4;
+static const uint8_t micGainPost = 6;
+#else
+static const uint8_t micGainPre  = 8;
+static const uint8_t micGainPost = 4;
+#endif
+
 static void *encodeFunc(void *arg);
 static void *decodeFunc(void *arg);
 static void startThread(void *(*func) (void *));
@@ -174,15 +182,15 @@ static void *encodeFunc(void *arg)
 
         if(audio.data != NULL)
         {
-            #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
+            #ifndef PLATFORM_LINUX
             // Pre-amplification stage
-            for(size_t i = 0; i < audio.len; i++) audio.data[i] <<= 3;
+            for(size_t i = 0; i < audio.len; i++) audio.data[i] *= micGainPre;
 
             // DC removal
             dsp_dcRemoval(audio.data, audio.len);
 
             // Post-amplification stage
-            for(size_t i = 0; i < audio.len; i++) audio.data[i] *= 4;
+            for(size_t i = 0; i < audio.len; i++) audio.data[i] *= micGainPost;
             #endif
 
             // CODEC2 encodes 160ms of speech into 8 bytes: here we write the
