@@ -30,12 +30,12 @@
 using namespace miosix;
 
 
-bool            inUse     = false;       // Flag to determine if the input stream is already open.
-Thread          *sWaiting = 0;           // Thread waiting on interrupt.
-stream_sample_t *bufAddr  = 0;           // Start address of data buffer, fixed.
-stream_sample_t *bufCurr  = 0;           // Buffer address to be returned to application.
-size_t          bufLen    = 0;           // Buffer length.
-uint8_t         bufMode   = BUF_LINEAR;  // Buffer management mode.
+static bool            inUse     = false;       // Flag to determine if the input stream is already open.
+static Thread          *sWaiting = 0;           // Thread waiting on interrupt.
+static stream_sample_t *bufAddr  = 0;           // Start address of data buffer, fixed.
+static stream_sample_t *bufCurr  = 0;           // Buffer address to be returned to application.
+static size_t          bufLen    = 0;           // Buffer length.
+static uint8_t         bufMode   = BUF_LINEAR;  // Buffer management mode.
 
 void __attribute__((used)) DmaHandlerImpl()
 {
@@ -206,7 +206,7 @@ streamId inputStream_start(const enum AudioSource source,
             break;
 
         case SOURCE_RTX:
-            gpio_setMode(GPIOC, 13, INPUT_ANALOG);
+            gpio_setMode(GPIOC, 3, INPUT_ANALOG);
             ADC2->SQR3 = 13;
             break;
 
