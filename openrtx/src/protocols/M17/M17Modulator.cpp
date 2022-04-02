@@ -19,7 +19,6 @@
  ***************************************************************************/
 
 #include <new>
-#include <dsp.h>
 #include <cstddef>
 #include <cstring>
 #include <experimental/array>
@@ -54,6 +53,9 @@ void M17Modulator::init()
     baseband_buffer = new int16_t[2 * M17_FRAME_SAMPLES_48K];
     idleBuffer      = baseband_buffer;
     txRunning       = false;
+    #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
+    dsp_resetFilterState(&pwmFilterState);
+    #endif
 }
 
 void M17Modulator::terminate()
@@ -106,7 +108,7 @@ void M17Modulator::generateBaseband()
 void M17Modulator::emitBaseband()
 {
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
-    dsp_pwmCompensate(idleBuffer, M17_FRAME_SAMPLES_48K);
+    dsp_pwmCompensate(&pwmFilterState, idleBuffer, M17_FRAME_SAMPLES_48K);
     dsp_invertPhase(idleBuffer, M17_FRAME_SAMPLES_48K);
     #endif
 
@@ -135,6 +137,9 @@ void M17Modulator::emitBaseband()
         stopTx     = false;
         txRunning  = false;
         idleBuffer = baseband_buffer;
+        #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
+        dsp_resetFilterState(&pwmFilterState);
+        #endif
     }
     else
     {

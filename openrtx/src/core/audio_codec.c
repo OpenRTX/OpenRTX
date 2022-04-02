@@ -174,6 +174,9 @@ static void *encodeFunc(void *arg)
 {
     (void) arg;
 
+    filter_state_t dcrState;
+    dsp_resetFilterState(&dcrState);
+
     codec2 = codec2_create(CODEC2_MODE_3200);
 
     while(running)
@@ -187,7 +190,7 @@ static void *encodeFunc(void *arg)
             for(size_t i = 0; i < audio.len; i++) audio.data[i] *= micGainPre;
 
             // DC removal
-            dsp_dcRemoval(audio.data, audio.len);
+            dsp_dcRemoval(&dcrState, audio.data, audio.len);
 
             // Post-amplification stage
             for(size_t i = 0; i < audio.len; i++) audio.data[i] *= micGainPost;

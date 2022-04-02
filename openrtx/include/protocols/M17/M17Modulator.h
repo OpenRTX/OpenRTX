@@ -28,6 +28,7 @@
 #include <interfaces/audio_stream.h>
 #include <cstdint>
 #include <array>
+#include <dsp.h>
 
 namespace M17
 {
@@ -125,6 +126,10 @@ private:
     streamId         outStream;         ///< Baseband output stream ID.
     bool             txRunning;         ///< Transmission running.
     bool             stopTx;            ///< Stop transmission request.
+
+    #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
+    filter_state_t   pwmFilterState;
+    #endif
 };
 
 } /* M17 */

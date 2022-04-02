@@ -20,15 +20,22 @@
 
 #include <dsp.h>
 
-void dsp_pwmCompensate(audio_sample_t *buffer, size_t length)
+void dsp_resetFilterState(filter_state_t *state)
 {
-    float u   = 0.0f;   // Current input value
-    float y   = 0.0f;   // Current output value
-    float uo  = 0.0f;   // u(k-1)
-    float uoo = 0.0f;   // u(k-2)
-    float yo  = 0.0f;   // y(k-1)
-    float yoo = 0.0f;   // y(k-2)
+    state->u[0] = 0.0f;
+    state->u[1] = 0.0f;
+    state->u[2] = 0.0f;
 
+    state->y[0] = 0.0f;
+    state->y[1] = 0.0f;
+    state->y[2] = 0.0f;
+
+    state->initialised = false;
+}
+
+void dsp_pwmCompensate(filter_state_t *state, audio_sample_t *buffer,
+                       size_t length)
+{
     static constexpr float a =  4982680082321166792352.0f;
     static constexpr float b = -6330013275146484168000.0f;
     static constexpr float c =  1871109008789062500000.0f;
@@ -38,22 +45,32 @@ void dsp_pwmCompensate(audio_sample_t *buffer, size_t length)
 
     // Initialise filter with first two values, for smooth transient.
     if(length <= 2) return;
-    uoo = static_cast< float >(buffer[0]);
-    uo  = static_cast< float >(buffer[1]);
+
+    if(state->initialised == false)
+    {
+        state->u[2] = static_cast< float >(buffer[0]);
+        state->u[1] = static_cast< float >(buffer[1]);
+        state->initialised = true;
+    }
 
     for(size_t i = 2; i < length; i++)
     {
-        u   = static_cast< float >(buffer[i]);
-        y   = (a/d)*u + (b/d)*uo + (c/d)*uoo - (e/d)*yo - (f/d)*yoo;
-        uoo = uo;
-        uo  = u;
-        yoo = yo;
-        yo  = y;
-        buffer[i] = static_cast< audio_sample_t >(y * 0.5f);
+        state->u[0] = static_cast< float >(buffer[i]);
+        state->y[0] = (a/d)*(state->u[0])
+                    + (b/d)*(state->u[1])
+                    + (c/d)*(state->u[2])
+                    - (e/d)*(state->y[1])
+                    - (f/d)*(state->y[2]);
+
+        state->u[2] = state->u[1];
+        state->u[1] = state->u[0];
+        state->y[2] = state->y[1];
+        state->y[1] = state->y[0];
+        buffer[i] = static_cast< audio_sample_t >((state->y[0] * 0.5f) + 0.5f);
     }
 }
 
-void dsp_dcRemoval(audio_sample_t *buffer, size_t length)
+void dsp_dcRemoval(filter_state_t *state, audio_sample_t *buffer, size_t length)
 {
     /*
      * Removal of DC component performed using an high-pass filter with
@@ -64,19 +81,25 @@ void dsp_dcRemoval(audio_sample_t *buffer, size_t length)
 
     if(length < 2) return;
 
-    audio_sample_t uo = buffer[0];
-    audio_sample_t yo = 0;
+    if(state->initialised == false)
+    {
+        state->u[1] = static_cast< float >(buffer[0]);
+        state->initialised = true;
+    }
+
     static constexpr float alpha = 0.99f;
 
     for(size_t i = 1; i < length; i++)
     {
-        float yold = static_cast< float >(yo) * alpha;
-        audio_sample_t u = buffer[i];
-        buffer[i]  = u - uo + static_cast< audio_sample_t >(yold);
-        uo = u;
-        yo = buffer[i];
+        state->u[0] = static_cast< float >(buffer[i]);
+        state->y[0] = (state->u[0])
+                    - (state->u[1])
+                    + alpha * (state->y[1]);
+
+        state->u[1] = state->u[0];
+        state->y[1] = state->y[0];
+        buffer[i] = static_cast< audio_sample_t >(state->y[0] + 0.5f);
     }
-    buffer[0] = buffer[1];
 }
 
 void dsp_invertPhase(audio_sample_t *buffer, uint16_t length)
