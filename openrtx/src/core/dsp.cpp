@@ -76,6 +76,7 @@ void dsp_dcRemoval(audio_sample_t *buffer, size_t length)
         uo = u;
         yo = buffer[i];
     }
+    buffer[0] = buffer[1];
 }
 
 void dsp_invertPhase(audio_sample_t *buffer, uint16_t length)

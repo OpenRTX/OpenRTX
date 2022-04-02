@@ -46,7 +46,7 @@ static uint64_t         dataBuffer[BUF_SIZE];
 
 #ifdef PLATFORM_MOD17
 static const uint8_t micGainPre  = 4;
-static const uint8_t micGainPost = 6;
+static const uint8_t micGainPost = 3;
 #else
 static const uint8_t micGainPre  = 8;
 static const uint8_t micGainPost = 4;
