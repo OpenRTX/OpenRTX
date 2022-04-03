@@ -1,9 +1,9 @@
 /***************************************************************************
- *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN,                            *
- *                         Frederik Saraci IU2NRO,                         *
- *                         Silvano Seva IU2KWO                             *
- *                         Mathis Schmieder DB9MAT                         *
+ *   Copyright (C) 2021 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN,                     *
+ *                                Frederik Saraci IU2NRO,                  *
+ *                                Silvano Seva IU2KWO                      *
+ *                                Mathis Schmieder DB9MAT                  *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -82,8 +82,5 @@
 #define I2C_SCL GPIOB,6
 #define SOFTPOT_RX 0x2E
 #define SOFTPOT_TX 0x2F
-
-/* M17 demodulation */
-#define M17_RX_SAMPLE_RATE 48000
 
 #endif
