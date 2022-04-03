@@ -163,7 +163,8 @@ gdx_src = ['openrtx/src/core/xmodem.c',
            'platform/drivers/display/UC1701_GDx.c',
            'platform/drivers/keyboard/keyboard_GDx.c',
            'platform/drivers/audio/audio_GDx.c',
-           'platform/drivers/audio/inputStream_GDx.c']
+           'platform/drivers/audio/inputStream_GDx.c',
+           'platform/drivers/audio/outputStream_GDx.c']
 
 ##
 ## --------------------- MCU-dependent source files ----------------------------
