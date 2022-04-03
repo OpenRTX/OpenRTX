@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Frederik Saraci IU2NRO                          *
+ *   Copyright (C) 2020 - 2022 by Frederik Saraci IU2NRO                   *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -61,9 +61,6 @@ extern "C" {
 
 /* Push-to-talk switch */
 #define PTT_SW "PTT_SW",11
-
-/* M17 demodulation */
-#define M17_RX_SAMPLE_RATE 48000
 
 #ifdef __cplusplus
 }

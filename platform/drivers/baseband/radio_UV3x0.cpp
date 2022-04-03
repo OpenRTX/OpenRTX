@@ -301,7 +301,7 @@ void radio_updateConfiguration()
     C6000.setModAmplitude(0, Q);
 
     // Set bandwidth, force 12.5kHz for DMR mode
-    if((config->bandwidth == BW_12_5) || (config->opMode == DMR))
+    if((config->bandwidth == BW_12_5) || (config->opMode == OPMODE_DMR))
     {
         at1846s.setBandwidth(AT1846S_BW::_12P5);
     }

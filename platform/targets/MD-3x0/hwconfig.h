@@ -1,7 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2020 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -142,9 +142,6 @@ extern "C" {
 /* GPS, for the devices who have it */
 #define GPS_EN   GPIOD,8
 #define GPS_DATA GPIOD,9
-
-/* M17 demodulation */
-#define M17_RX_SAMPLE_RATE 48000
 
 #ifdef __cplusplus
 }
