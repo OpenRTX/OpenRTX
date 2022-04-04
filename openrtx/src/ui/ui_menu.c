@@ -269,7 +269,7 @@ int _ui_getBankName(char *buf, uint8_t max_len, uint8_t index)
     else
     {
         bankHdr_t bank;
-        result = cps_readBankHeader(&bank, index);
+        result = cps_readBankHeader(&bank, index - 1);
         if(result != -1)
             snprintf(buf, max_len, "%s", bank.name);
     }
@@ -279,7 +279,7 @@ int _ui_getBankName(char *buf, uint8_t max_len, uint8_t index)
 int _ui_getChannelName(char *buf, uint8_t max_len, uint8_t index)
 {
     channel_t channel;
-    int result = cps_readChannelData(&channel, index + 1);
+    int result = cps_readChannel(&channel, index);
     if(result != -1)
         snprintf(buf, max_len, "%s", channel.name);
     return result;
@@ -288,7 +288,7 @@ int _ui_getChannelName(char *buf, uint8_t max_len, uint8_t index)
 int _ui_getContactName(char *buf, uint8_t max_len, uint8_t index)
 {
     contact_t contact;
-    int result = cps_readContactData(&contact, index + 1);
+    int result = cps_readContact(&contact, index);
     if(result != -1)
         snprintf(buf, max_len, "%s", contact.name);
     return result;

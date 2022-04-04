@@ -60,7 +60,7 @@ int cps_create(char *cps_name);
  * @param pos: position, inside the bank table, from which read data.
  * @return 0 on success, -1 on failure
  */
-int cps_readContactData(contact_t *contact, uint16_t pos);
+int cps_readContact(contact_t *contact, uint16_t pos);
 
 /**
  * Read one channel entry from table stored in nonvolatile memory.
@@ -69,7 +69,7 @@ int cps_readContactData(contact_t *contact, uint16_t pos);
  * @param pos: position, inside the channel table, from which read data.
  * @return 0 on success, -1 on failure
  */
-int cps_readChannelData(channel_t *channel, uint16_t pos);
+int cps_readChannel(channel_t *channel, uint16_t pos);
 
 /**
  * Read one bank header from the codeplug stored in the radio's filesystem.
@@ -84,10 +84,121 @@ int cps_readBankHeader(bankHdr_t *b_header, uint16_t pos);
  * Read one channel index from a bank of the codeplug stored in NVM.
  *
  * @param bank_pos: position of the bank inside the cps.
- * @param ch_pos: position of the channel index inside the bank.
+ * @param pos: position of the channel index inside the bank.
  * @return the retrieved channel index on success, -1 on failure
  */
-int32_t cps_readBankData(uint16_t bank_pos, uint16_t ch_pos);
+int32_t cps_readBankData(uint16_t bank_pos, uint16_t pos);
+
+/**
+ * Overwrite one contact to the codeplug stored in nonvolatile memory.
+ *
+ * @param contact: data structure to be written.
+ * @param pos: position, inside the contact table, in which to insert data.
+ * @return 0 on success, -1 on failure
+ */
+int cps_writeContact(contact_t contact, uint16_t pos);
+
+/**
+ * Overwrite one channel to the codeplug stored in nonvolatile memory.
+ *
+ * @param channel: data structure to be written.
+ * @param pos: position, inside the channel table, in which to insert data.
+ * @return 0 on success, -1 on failure
+ */
+int cps_writeChannel(channel_t channel, uint16_t pos);
+
+/**
+ * Overwrite one bank header to the codeplug stored in nonvolatile memory.
+ *
+ * @param b_header: data structure to be written.
+ * @param pos: position, inside the bank table, in which to insert data.
+ * @return 0 on success, -1 on failure
+ */
+int cps_writeBankHeader(bankHdr_t b_header, uint16_t pos);
+
+/**
+ * Write one channel index in a bank entry stored in the codeplug.
+ *
+ * @param ch: index of the new channel to be written
+ * @param bank_pos: index of the bank to be written.
+ * @param pos: position, inside the bank table, in which to write data.
+ * @return 0 on success, -1 on failure
+ */
+int cps_writeBankData(uint32_t ch, uint16_t bank_pos, uint16_t pos);
+
+/**
+ * Insert one contact to the codeplug stored in nonvolatile memory,
+ * updating channels accordingly.
+ *
+ * @param contact: data structure to be written.
+ * @param pos: position, inside the contact table, in which to insert data.
+ * @return 0 on success, -1 on failure
+ */
+int cps_insertContact(contact_t contact, uint16_t pos);
+
+/**
+ * Insert one channel to the codeplug stored in nonvolatile memory,
+ * updating banks accordingly.
+ *
+ * @param channel: data structure to be written.
+ * @param pos: position, inside the channel table, in which to insert data.
+ * @return 0 on success, -1 on failure
+ */
+int cps_insertChannel(channel_t channel, uint16_t pos);
+
+/**
+ * Insert one bank header to the codeplug stored in nonvolatile memory.
+ *
+ * @param bank: data structure to be written.
+ * @param pos: position, inside the bank table, in which to insert data.
+ * @return 0 on success, -1 on failure
+ */
+int cps_insertBankHeader(bankHdr_t b_header, uint16_t pos);
+
+/**
+ * Insert one channel index in a bank entry stored in the codeplug.
+ *
+ * @param ch: index of the new channel to be written
+ * @param bank_pos: index of the bank to be written.
+ * @param pos: position, inside the bank table, in which to insert data.
+ * @return 0 on success, -1 on failure
+ */
+int cps_insertBankData(uint32_t ch, uint16_t bank_pos, uint16_t pos);
+
+/**
+ * Delete one contact to the codeplug stored in nonvolatile memory,
+ * updating channels accordingly.
+ *
+ * @param pos: position, inside the contact table, to delete
+ * @return 0 on success, -1 on failure
+ */
+int cps_deleteContact(uint16_t pos);
+
+/**
+ * Delete one channel to the codeplug stored in nonvolatile memory,
+ * updating banks accordingly.
+ *
+ * @param pos: position, inside the channel table, to delete
+ * @return 0 on success, -1 on failure
+ */
+int cps_deleteChannel(channel_t channel, uint16_t pos);
+
+/**
+ * Delete one bank header to the codeplug stored in nonvolatile memory.
+ *
+ * @param pos: position, inside the bank table, to delete
+ * @return 0 on success, -1 on failure
+ */
+int cps_deleteBankHeader(uint16_t pos);
+
+/**
+ * Delete one bank entry to the codeplug stored in nonvolatile memory.
+ *
+ * @param bank_pos: index of the bank to be deleted
+ * @param pos: position, inside the bank table, to delete
+ * @return 0 on success, -1 on failure
+ */
+int cps_deleteBankData(uint16_t bank_pos, uint16_t pos);
 
 #ifdef __cplusplus
 }

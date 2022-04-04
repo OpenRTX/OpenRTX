@@ -80,7 +80,7 @@ typedef struct
              txColorCode : 4;      //< Color code sent during transmission
 
     uint8_t  dmr_timeslot;         //< DMR timeslot, either 1 or 2
-    uint16_t contactName_index;    //< Index to retrieve contact from list
+    uint16_t contact_index;        //< Index to retrieve contact from list
 }
 __attribute__((packed)) dmrInfo_t; // 4B
 
@@ -152,7 +152,7 @@ typedef struct
     uint8_t  mode  : 4,         //< Channel operation mode
              encr  : 4;         //< Encryption mode
     uint8_t gps_mode;           //< Channel GPS mode
-    uint16_t contactName_index; //< Index to retrieve data from contact list
+    uint16_t contact_index;     //< Index to retrieve data from contact list
 }
 __attribute__((packed)) m17Info_t; // 5B
 
@@ -203,8 +203,8 @@ typedef struct
     uint8_t scanList_index;        //< Scan List: None, ScanList1...250
     uint8_t groupList_index;       //< Group List: None, GroupList1...128
 
-    char    name[CPS_STR_SIZE];              //< Channel name
-    char    descr[CPS_STR_SIZE];             //< Description of the channel
+    char    name[CPS_STR_SIZE];    //< Channel name
+    char    descr[CPS_STR_SIZE];   //< Description of the channel
     geo_t   ch_location;           //< Transmitter geolocation
 
     union
@@ -221,7 +221,7 @@ __attribute__((packed)) channel_t; // 59B
  */
 typedef struct
 {
-    char    name[CPS_STR_SIZE];           //< Display name of the contact
+    char    name[CPS_STR_SIZE]; //< Display name of the contact
     uint8_t mode;               //< Operating mode
 
     union
@@ -231,7 +231,7 @@ typedef struct
     }
     info; // 6B
 }
-__attribute__((packed)) contact_t; // 23B
+__attribute__((packed)) contact_t; // 39B
 
 /**
  * Data structure describing a bank header.
@@ -241,7 +241,7 @@ __attribute__((packed)) contact_t; // 23B
 typedef struct
 {
     char     name[CPS_STR_SIZE];
-    uint16_t ch_count;          //< Count of all the channels in this bank
+    uint16_t ch_count;             //< Count of all the channels in this bank
 }
 __attribute__((packed)) bankHdr_t; // 18B + 2 * ch_count
 
@@ -255,17 +255,17 @@ __attribute__((packed)) bankHdr_t; // 18B + 2 * ch_count
  */
 typedef struct
 {
-    uint64_t magic;             //< Magic number "RTXC"
-    uint16_t version_number;    //< Version number for the cps structure
-    char     author[CPS_STR_SIZE];        //< Author of the codeplug
-    char     descr[CPS_STR_SIZE];         //< Description of the codeplug
-    uint64_t timestamp;         //< unix timestamp of the codeplug
+    uint64_t magic;                //< Magic number "RTXC"
+    uint16_t version_number;       //< Version number for the cps structure
+    char     author[CPS_STR_SIZE]; //< Author of the codeplug
+    char     descr[CPS_STR_SIZE];  //< Description of the codeplug
+    uint64_t timestamp;            //< unix timestamp of the codeplug
 
-    uint16_t ct_count;          //< Number of stored contacts
-    uint16_t ch_count;          //< Number of stored channels
-    uint16_t b_count;           //< Number of stored banks
+    uint16_t ct_count;             //< Number of stored contacts
+    uint16_t ch_count;             //< Number of stored channels
+    uint16_t b_count;              //< Number of stored banks
 }
-__attribute__((packed)) cps_header_t; // 52B
+__attribute__((packed)) cps_header_t; // 88B
 
 /**
  * Create and return a viable channel for this radio.

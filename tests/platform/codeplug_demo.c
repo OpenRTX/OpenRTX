@@ -34,7 +34,7 @@ int main()
     for(int pos=0,result=0; result != -1; pos++)
     {
         channel_t ch;
-        result = cps_readChannelData(&ch, pos);
+        result = cps_readChannel(&ch, pos);
         if(result != -1)
         {
             printf("Channel n.%d:\r\n", pos+1);
@@ -71,7 +71,7 @@ int main()
     for(int pos=0,result=0; result != -1; pos++)
     {
         contact_t contact;
-        result = cps_readContactData(&contact, pos);
+        result = cps_readContact(&contact, pos);
         if(result != -1)
         {
             printf("Contact n.%d:\r\n", pos+1);

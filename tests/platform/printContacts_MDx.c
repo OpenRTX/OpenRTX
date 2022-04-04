@@ -35,7 +35,7 @@ int main()
         getchar();
 
         channel_t ch;
-        cps_readChannelData(&ch, pos);
+        cps_readChannel(&ch, pos);
         printf("Contact entry %d:\r\n", pos+1);
         printf("  %s\r\n  TX: %ld\r\n  RX: %ld\r\n  Mode: %s\r\n  Bandwidth: %s\r\n",
                ch.name,

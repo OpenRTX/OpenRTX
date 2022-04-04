@@ -46,7 +46,7 @@ int cps_create(char *cps_name)
     return 0;
 }
 
-int cps_readChannelData(channel_t *channel, uint16_t pos)
+int cps_readChannel(channel_t *channel, uint16_t pos)
 {
     (void) channel;
     (void) pos;
@@ -67,7 +67,7 @@ int32_t cps_readBankData(uint16_t bank_pos, uint16_t ch_pos)
     return -1;
 }
 
-int cps_readContactData(contact_t *contact, uint16_t pos)
+int cps_readContact(contact_t *contact, uint16_t pos)
 {
     (void) contact;
     (void) pos;

@@ -551,7 +551,7 @@ int _ui_fsm_loadChannel(uint16_t channel_index, bool *sync_rtx) {
             // Channel index is 1-based while bank array access is 0-based
             channel_index = cps_readBankData(state.bank, channel_index);
     }
-    int result = cps_readChannelData(&channel, channel_index);
+    int result = cps_readChannel(&channel, channel_index);
     // Read successful and channel is valid
     if(result != -1 && _ui_channel_valid(&channel))
     {
@@ -1312,19 +1312,19 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         // manu_selected is 0-based
                         // bank 0 means "All Channel" mode
                         // banks (1, n) are mapped to banks (0, n-1)
-                        if(cps_readBankHeader(&bank, ui_state.menu_selected + 1) != -1)
+                        if(cps_readBankHeader(&bank, ui_state.menu_selected) != -1)
                             ui_state.menu_selected += 1;
                     }
                     else if(state.ui_screen == MENU_CHANNEL)
                     {
                         channel_t channel;
-                        if(cps_readChannelData(&channel, ui_state.menu_selected + 1) != -1)
+                        if(cps_readChannel(&channel, ui_state.menu_selected + 1) != -1)
                             ui_state.menu_selected += 1;
                     }
                     else if(state.ui_screen == MENU_CONTACTS)
                     {
                         contact_t contact;
-                        if(cps_readContactData(&contact, ui_state.menu_selected + 1) != -1)
+                        if(cps_readContact(&contact, ui_state.menu_selected + 1) != -1)
                             ui_state.menu_selected += 1;
                     }
                 }
@@ -1359,7 +1359,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         // If we were in VFO mode, save VFO channel
                         if(ui_state.last_main_state == MAIN_VFO)
                             state.vfo_channel = state.channel;
-                        _ui_fsm_loadChannel(ui_state.menu_selected + 1, sync_rtx);
+                        _ui_fsm_loadChannel(ui_state.menu_selected, sync_rtx);
                         // Switch to MEM screen
                         state.ui_screen = MAIN_MEM;
                     }
