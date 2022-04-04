@@ -26,8 +26,6 @@
 #include <string.h>
 #include <dsp.h>
 
-#include <stdio.h>
-
 #define BUF_SIZE 4
 
 static struct CODEC2   *codec2;
@@ -38,6 +36,7 @@ static bool             running;
 static pthread_t        codecThread;
 static pthread_mutex_t  mutex;
 static pthread_cond_t   not_empty;
+static pthread_cond_t   not_full;
 
 static uint8_t          readPos;
 static uint8_t          writePos;
@@ -69,6 +68,7 @@ void codec_init()
 
     pthread_mutex_init(&mutex, NULL);
     pthread_cond_init(&not_empty, NULL);
+    pthread_cond_init(&not_full, NULL);
 }
 
 void codec_terminate()
@@ -77,6 +77,7 @@ void codec_terminate()
 
     pthread_mutex_destroy(&mutex);
     pthread_cond_destroy(&not_empty);
+    pthread_cond_destroy(&not_full);
 
     if(audioBuf != NULL) free(audioBuf);
 }
@@ -105,8 +106,9 @@ bool codec_startDecode(const enum AudioSink destination)
     if(running) return false;
     if(audioBuf == NULL) return false;
 
+    memset(audioBuf, 0x00, 320 * sizeof(stream_sample_t));
     audioStream = outputStream_start(destination, PRIO_RX, audioBuf, 320,
-                                    BUF_CIRC_DOUBLE, 8000);
+                                     BUF_CIRC_DOUBLE, 8000);
 
     if(audioStream == -1) return false;
 
@@ -153,7 +155,8 @@ bool codec_popFrame(uint8_t *frame, const bool blocking)
     numElements -= 1;
     pthread_mutex_unlock(&mutex);
 
-    // Do memcpy after mutex unlock to reduce time inside the critical section
+    // Do memcpy after mutex unlock to reduce execution time spent inside the
+    //  critical section
     memcpy(frame, &element, 8);
 
     return true;
@@ -161,10 +164,38 @@ bool codec_popFrame(uint8_t *frame, const bool blocking)
 
 bool codec_pushFrame(const uint8_t *frame, const bool blocking)
 {
-    (void) frame;
-    (void) blocking;
+    if(running == false) return false;
 
-    return false;
+    // Copy data to a temporary variable before mutex lock to reduce execution
+    // time spent inside the critical section
+    uint64_t element;
+    memcpy(&element, frame, 8);
+
+    pthread_mutex_lock(&mutex);
+
+    if((numElements >= BUF_SIZE) && (blocking == false))
+    {
+        // No space available and non-blocking call: unlock mutex and return
+        pthread_mutex_unlock(&mutex);
+        return false;
+    }
+
+    // The call is blocking: wait until there is some free space
+    while(numElements >= BUF_SIZE)
+    {
+        pthread_cond_wait(&not_full, &mutex);
+    }
+
+    // There is free space, push data into the queue
+    dataBuffer[writePos] = element;
+    writePos = (writePos + 1) % BUF_SIZE;
+
+    // Signal that the queue is not empty
+    if(numElements == 0) pthread_cond_signal(&not_empty);
+    numElements += 1;
+
+    pthread_mutex_unlock(&mutex);
+    return true;
 }
 
 
@@ -231,7 +262,44 @@ static void *decodeFunc(void *arg)
 {
     (void) arg;
 
-    running = false;
+    codec2 = codec2_create(CODEC2_MODE_3200);
+
+    while(running)
+    {
+        // Try popping data from the queue
+        uint64_t frame   = 0;
+        bool     newData = false;
+
+        pthread_mutex_lock(&mutex);
+
+        if(numElements != 0)
+        {
+            frame        = dataBuffer[readPos];
+            readPos      = (readPos + 1) % BUF_SIZE;
+            if(numElements >= BUF_SIZE) pthread_cond_signal(&not_full);
+            numElements -= 1;
+            newData      = true;
+        }
+
+        pthread_mutex_unlock(&mutex);
+
+        stream_sample_t *audioBuf = outputStream_getIdleBuffer(audioStream);
+
+        if(newData)
+        {
+            codec2_decode(codec2, audioBuf, ((uint8_t *) &frame));
+        }
+        else
+        {
+            memset(audioBuf, 0x00, 160 * sizeof(stream_sample_t));
+        }
+
+        outputStream_sync(audioStream, true);
+    }
+
+    outputStream_stop(audioStream);
+    codec2_destroy(codec2);
+
     return NULL;
 }
 
