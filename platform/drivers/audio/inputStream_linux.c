@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2021 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,10 +25,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-stream_sample_t *buffer = NULL;
-size_t bufferLength = 0;
-bool first_half = true;
-FILE *baseband_file = NULL;
+static stream_sample_t *buffer        = NULL;
+static size_t           bufferLength  = 0;
+static bool             first_half    = true;
+static FILE            *baseband_file = NULL;
 
 streamId inputStream_start(const enum AudioSource source,
                            const enum AudioPriority prio,
@@ -59,26 +59,32 @@ dataBlock_t inputStream_getData(streamId id)
     (void) id;
 
     dataBlock_t block;
-    block.len  = bufferLength;
+
+    block.len = bufferLength / 2;
+
     if (first_half)
     {
         first_half = false;
         block.data = buffer;
-    } else
+    }
+    else
     {
         first_half = true;
-        block.data = buffer + bufferLength;
+        block.data = buffer + (bufferLength / 2);
     }
+
     size_t read_items = fread(block.data, 2, block.len, baseband_file);
+
     if (read_items != block.len)
     {
         exit(-1);
     }
+
     return block;
 }
 
 void inputStream_stop(streamId id)
 {
-    fclose(baseband_file);
     (void) id;
+    fclose(baseband_file);
 }
