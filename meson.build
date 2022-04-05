@@ -248,6 +248,7 @@ linux_platform_src = ['platform/targets/linux/emulator/emulator.c',
                       'platform/drivers/baseband/radio_linux.cpp',
                       'platform/drivers/audio/audio_linux.c',
                       'platform/drivers/audio/inputStream_linux.c',
+                      'platform/drivers/audio/outputStream_linux.c',
                       'platform/targets/linux/platform.c']
 linux_src = src + linux_platform_src
 
