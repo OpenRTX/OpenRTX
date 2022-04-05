@@ -55,7 +55,7 @@ void M17Demodulator::init()
      * placement new.
      */
 
-    baseband_buffer = new int16_t[2 * M17_INPUT_BUF_SIZE];
+    baseband_buffer = new int16_t[2 * M17_SAMPLE_BUF_SIZE];
     baseband        = { nullptr, 0 };
     activeFrame     = new frame_t;
     rawFrame        = new uint16_t[M17_FRAME_SYMBOLS];
@@ -88,7 +88,7 @@ void M17Demodulator::startBasebandSampling()
 {
     basebandId = inputStream_start(SOURCE_RTX, PRIO_RX,
                                    baseband_buffer,
-                                   M17_INPUT_BUF_SIZE,
+                                   2 * M17_SAMPLE_BUF_SIZE,
                                    BUF_CIRC_DOUBLE,
                                    M17_RX_SAMPLE_RATE);
     // Clean start of the demodulation statistics
@@ -113,9 +113,9 @@ void M17Demodulator::resetCorrelationStats()
 void M17Demodulator::updateCorrelationStats(int32_t value)
 {
     float delta = (float) value - conv_ema;
-    float incr  = conv_stats_alpha * delta;
+    float incr  = CONV_STATS_ALPHA * delta;
     conv_ema   += incr;
-    conv_emvar  = (1.0f - conv_stats_alpha) * (conv_emvar + delta * incr);
+    conv_emvar  = (1.0f - CONV_STATS_ALPHA) * (conv_emvar + delta * incr);
 }
 
 float M17Demodulator::getCorrelationStddev()
@@ -140,17 +140,17 @@ void M17Demodulator::updateQuantizationStats(int32_t offset)
         sample = baseband.data[offset];
     // Compute symbols exponential moving average
     float delta = (float) sample - qnt_ema;
-    qnt_ema += conv_stats_alpha * delta;
+    qnt_ema += CONV_STATS_ALPHA * delta;
     // Remove DC offset
     int16_t s = sample - (int16_t) qnt_ema;
     if (s > qnt_max)
         qnt_max = s;
     else
-        qnt_max *= qnt_stats_alpha;
+        qnt_max *= QNT_STATS_ALPHA;
     if (s < qnt_min)
         qnt_min = s;
     else
-        qnt_min *= qnt_stats_alpha;
+        qnt_min *= QNT_STATS_ALPHA;
 }
 
 int32_t M17Demodulator::convolution(int32_t offset,
@@ -202,20 +202,20 @@ sync_t M17Demodulator::nextFrameSync(int32_t offset)
         fprintf(csv_log, "%" PRId16 ",%d,%f,%d\n",
                 sample,
                 conv - static_cast< int32_t >(conv_ema),
-                conv_threshold_factor * getCorrelationStddev(),
+                CONV_THRESHOLD_FACTOR * getCorrelationStddev(),
                 i);
         #endif
 
         // Positive correlation peak -> frame syncword
         if ((conv - static_cast< int32_t >(conv_ema)) >
-            (getCorrelationStddev() * conv_threshold_factor))
+            (getCorrelationStddev() * CONV_THRESHOLD_FACTOR))
         {
             syncword.lsf = false;
             syncword.index = i;
         }
         // Negative correlation peak -> LSF syncword
         else if ((conv - static_cast< int32_t >(conv_ema)) <
-                 -(getCorrelationStddev() * conv_threshold_factor))
+                 -(getCorrelationStddev() * CONV_THRESHOLD_FACTOR))
         {
             syncword.lsf = true;
             syncword.index = i;
@@ -257,6 +257,11 @@ const frame_t& M17Demodulator::getFrame()
 bool M17Demodulator::isFrameLSF()
 {
     return isLSF;
+}
+
+bool M17::M17Demodulator::isLocked()
+{
+    return locked;
 }
 
 uint8_t M17Demodulator::hammingDistance(uint8_t x, uint8_t y)
@@ -373,7 +378,7 @@ bool M17Demodulator::update()
         {
             // Compute phase of next buffer
             phase = (offset % M17_SAMPLES_PER_SYMBOL) +
-                    (M17_INPUT_BUF_SIZE % M17_SAMPLES_PER_SYMBOL);
+                    (baseband.len % M17_SAMPLES_PER_SYMBOL);
         }
         else
         {
