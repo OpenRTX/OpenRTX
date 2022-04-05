@@ -100,36 +100,40 @@ public:
      */
     bool update();
 
+    /**
+     * @return true if a demodulator is locked on an M17 stream.
+     */
+    bool isLocked();
+
 private:
 
-    /*
-     * We are sampling @ 24KHz so an M17 frame has half the samples,
-     * our input buffer contains half M17 frame.
+    /**
+     * M17 baseband signal sampled at 48kHz, half of an M17 frame is processed
+     * at each update of the demodulator.
      */
     static constexpr size_t M17_SYMBOL_RATE        = 4800;
-    static constexpr size_t M17_FRAME_SAMPLES_24K  = 960;
     static constexpr size_t M17_FRAME_SYMBOLS      = 192;
     static constexpr size_t M17_SYNCWORD_SYMBOLS   = 8;
-    static constexpr size_t M17_CONV_THRESHOLD     = 50000;
     static constexpr size_t M17_RX_SAMPLE_RATE     = 48000;
+
     static constexpr size_t M17_SAMPLES_PER_SYMBOL = M17_RX_SAMPLE_RATE / M17_SYMBOL_RATE;
-    static constexpr size_t M17_INPUT_BUF_SIZE     = 2 * M17_FRAME_SAMPLES_24K;
     static constexpr size_t M17_FRAME_BYTES        = M17_FRAME_SYMBOLS / 4;
-    static constexpr float conv_stats_alpha        = 0.001f;
-    static constexpr float qnt_stats_alpha         = 0.9f;
-    static constexpr float conv_threshold_factor   = 3.40;
-    static constexpr size_t M17_BRIDGE_SIZE        = M17_SAMPLES_PER_SYMBOL *
-                                                     M17_SYNCWORD_SYMBOLS;
+    static constexpr size_t M17_FRAME_SAMPLES      = M17_FRAME_SYMBOLS * M17_SAMPLES_PER_SYMBOL;
+    static constexpr size_t M17_SAMPLE_BUF_SIZE    = M17_FRAME_SAMPLES / 2;
+    static constexpr size_t M17_BRIDGE_SIZE        = M17_SAMPLES_PER_SYMBOL * M17_SYNCWORD_SYMBOLS;
+
+    static constexpr size_t M17_CONV_THRESHOLD     = 50000;
+    static constexpr float  CONV_STATS_ALPHA       = 0.001f;
+    static constexpr float  QNT_STATS_ALPHA        = 0.9f;
+    static constexpr float  CONV_THRESHOLD_FACTOR  = 3.40;
 
     /**
      * M17 syncwords;
      */
-    int8_t lsf_syncword[M17_SYNCWORD_SYMBOLS]    = { +3, +3, +3, +3, -3, -3, +3, -3 };
-    int8_t stream_syncword[M17_SYNCWORD_SYMBOLS] = { -3, -3, -3, -3, +3, +3, -3, +3 };
-    uint8_t lsf_syncword_bytes[2]                = {0x55, 0xf7};
-    uint8_t stream_syncword_bytes[2]             = {0xff, 0x5d};
-
-    using dataBuffer_t = std::array< int16_t, M17_FRAME_SAMPLES_24K >;
+    int8_t  lsf_syncword[M17_SYNCWORD_SYMBOLS]    = { +3, +3, +3, +3, -3, -3, +3, -3 };
+    int8_t  stream_syncword[M17_SYNCWORD_SYMBOLS] = { -3, -3, -3, -3, +3, +3, -3, +3 };
+    uint8_t lsf_syncword_bytes[2]                 = {0x55, 0xf7};
+    uint8_t stream_syncword_bytes[2]              = {0xff, 0x5d};
 
     /*
      * Buffers
