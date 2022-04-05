@@ -117,7 +117,6 @@ int test_createComplexCPS() {
     cps_insertBankData(2, 1, 0);
     cps_insertBankData(3, 1, 1);
     cps_insertBankData(4, 1, 2);
-    cps_insertBankData(5, 1, 3);
     cps_close();
     return 0;
 }
@@ -135,20 +134,20 @@ int test_createOOOCPS() {
     channel_t ch5 = { M17, 0, 0, 0, 0, 0, 0, 0, 0, "Test channel 5", "", {0}, {{0}} };
     bankHdr_t b1 = { "Test Bank 1", 0 };
     bankHdr_t b2 = { "Test Bank 2", 0 };
-    cps_insertContact(ct2, 0);
     cps_insertContact(ct1, 0);
-    cps_insertBankHeader(b2, 0);
+    cps_insertContact(ct2, 1);
     cps_insertBankHeader(b1, 0);
+    cps_insertBankHeader(b2, 1);
     cps_insertChannel(ch5, 0);
-    cps_insertBankData(0, 0, 0);
+    cps_insertBankData(0, 1, 0);
     cps_insertChannel(ch4, 0);
-    cps_insertBankData(0, 0, 1);
+    cps_insertBankData(0, 1, 0);
     cps_insertChannel(ch3, 0);
     cps_insertBankData(0, 1, 0);
     cps_insertChannel(ch2, 0);
-    cps_insertBankData(0, 1, 1);
+    cps_insertBankData(0, 0, 0);
     cps_insertChannel(ch1, 0);
-    cps_insertBankData(0, 1, 2);
+    cps_insertBankData(0, 0, 0);
     cps_close();
     return 0;
 }

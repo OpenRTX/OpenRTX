@@ -538,25 +538,24 @@ bool _ui_drawDarkOverlay() {
     return true;
 }
 
-int _ui_fsm_loadChannel(uint16_t channel_index, bool *sync_rtx) {
+int _ui_fsm_loadChannel(int16_t channel_index, bool *sync_rtx) {
     channel_t channel;
+    int32_t selected_channel = channel_index;
     // If a bank is active, get index from current bank
     if(state.bank_enabled)
     {
         bankHdr_t bank = { 0 };
         cps_readBankHeader(&bank, state.bank);
-        if((channel_index <= 0) || (channel_index > bank.ch_count))
+        if((channel_index < 0) || (channel_index >= bank.ch_count))
             return -1;
-        else
-            // Channel index is 1-based while bank array access is 0-based
-            channel_index = cps_readBankData(state.bank, channel_index);
+        channel_index = cps_readBankData(state.bank, channel_index);
     }
     int result = cps_readChannel(&channel, channel_index);
     // Read successful and channel is valid
     if(result != -1 && _ui_channel_valid(&channel))
     {
         // Set new channel index
-        state.channel_index = channel_index;
+        state.channel_index = selected_channel;
         // Copy channel read to state
         state.channel = channel;
         *sync_rtx = true;
@@ -1349,7 +1348,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                             if(ui_state.last_main_state == MAIN_VFO)
                                 state.vfo_channel = state.channel;
                             // Load bank first channel
-                            _ui_fsm_loadChannel(1, sync_rtx);
+                            _ui_fsm_loadChannel(0, sync_rtx);
                             // Switch to MEM screen
                             state.ui_screen = MAIN_MEM;
                         }
