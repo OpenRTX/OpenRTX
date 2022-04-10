@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2021 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   Adapted from original code written by Phil Karn KA9Q                  *
  *                                                                         *
@@ -32,6 +32,9 @@
 #include <array>
 #include <bitset>
 #include "M17Utils.h"
+
+namespace M17
+{
 
 /**
  * Hard decision Viterbi decoder tailored on M17 protocol specifications,
@@ -216,4 +219,6 @@ private:
     std::array< std::bitset< NumStates >, 244 > history;
 };
 
-#endif /* M17_VITERBI_H */
+}      // namespace M17
+
+#endif // M17_VITERBI_H

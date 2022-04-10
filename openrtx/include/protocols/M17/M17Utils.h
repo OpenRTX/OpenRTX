@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2021 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -31,6 +31,8 @@
 #include <array>
 #include <assert.h>
 
+namespace M17
+{
 
 /**
  * Utility function allowing to retrieve the value of a single bit from an array
@@ -106,4 +108,6 @@ inline void setSymbol(std::array< uint8_t, N >& array, const size_t pos,
     }
 }
 
-#endif /* M17_UTILS_H */
+}      // namespace M17
+
+#endif // M17_UTILS_H

@@ -27,15 +27,16 @@
 #include <rtx.h>
 
 using namespace std;
+using namespace M17;
 
-OpMode_M17::OpMode_M17() : enterRx(true), m17Tx(modulator)
+OpMode_M17::OpMode_M17() : enterRx(false), locked(false), m17Tx(modulator)
 {
 
 }
 
 OpMode_M17::~OpMode_M17()
 {
-
+    disable();
 }
 
 void OpMode_M17::enable()
@@ -43,6 +44,7 @@ void OpMode_M17::enable()
     codec_init();
     modulator.init();
     demodulator.init();
+    locked  = false;
     enterRx = true;
 }
 
@@ -50,6 +52,9 @@ void OpMode_M17::disable()
 {
     enterRx = false;
     codec_terminate();
+    audio_disableAmp();
+    audio_disableMic();
+    radio_disableRtx();
     modulator.terminate();
     demodulator.terminate();
 }
@@ -61,16 +66,36 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
     // RX logic
     if(status->opStatus == RX)
     {
-        demodulator.update();
-        sleepFor(0u, 30u);
+        bool newData = demodulator.update();
+        locked       = demodulator.isLocked();
+
+        if(locked && newData)
+        {
+            auto& frame = demodulator.getFrame();
+            auto type   = decoder.decodeFrame(frame);
+
+            if(type == M17FrameType::STREAM)
+            {
+                M17StreamFrame sf = decoder.getStreamFrame();
+                codec_pushFrame(sf.payload().data(),     false);
+                codec_pushFrame(sf.payload().data() + 8, false);
+            }
+        }
     }
     else if((status->opStatus == OFF) && enterRx)
     {
         radio_disableRtx();
 
-        radio_enableRx();
-        status->opStatus = RX;
+        audio_disableMic();
+        audio_enableAmp();
+        codec_stop();
+        codec_startDecode(SINK_SPK);
+
+        decoder.reset();
         demodulator.startBasebandSampling();
+        radio_enableRx();
+
+        status->opStatus = RX;
         enterRx = false;
     }
 
@@ -81,17 +106,20 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
         if(status->opStatus != TX)
         {
             demodulator.stopBasebandSampling();
-            audio_disableAmp();
             radio_disableRtx();
+            audio_disableAmp();
+            codec_stop();
 
             audio_enableMic();
-            radio_enableTx();
             codec_startEncode(SOURCE_MIC);
+
+            radio_enableTx();
 
             std::string source_address(status->source_address);
             std::string destination_address(status->destination_address);
             m17Tx.start(source_address, destination_address);
 
+            locked = false;
             status->opStatus = TX;
         }
         else
@@ -107,8 +135,8 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
         // Send last audio frame
         sendData(true);
 
-        audio_disableMic();
         radio_disableRtx();
+        audio_disableMic();
         codec_stop();
 
         status->opStatus = OFF;
@@ -119,7 +147,12 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
     switch(status->opStatus)
     {
         case RX:
-            // TODO: Implement Rx LEDs
+
+            if(locked)
+                platform_ledOn(GREEN);
+            else
+                platform_ledOff(GREEN);
+
             break;
 
         case TX:

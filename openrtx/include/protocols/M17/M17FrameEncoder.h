@@ -31,6 +31,9 @@
 #include "M17LinkSetupFrame.h"
 #include "M17StreamFrame.h"
 
+namespace M17
+{
+
 /**
  * M17 frame encoder.
  */
@@ -89,4 +92,6 @@ private:
     uint16_t                 streamFrameNumber; ///< Current frame number.
 };
 
-#endif /* M17FRAMEENCODER_H */
+}      // namespace M17
+
+#endif // M17FRAMEENCODER_H

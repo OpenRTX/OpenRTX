@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2021 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   Adapted from original code written by Rob Riggs, Mobilinkd LLC        *
  *                                                                         *
@@ -28,6 +28,9 @@
 #endif
 
 #include "M17Utils.h"
+
+namespace M17
+{
 
 /**
  * Interleave a block of data using the quadratic permutation polynomial from
@@ -78,4 +81,6 @@ void deinterleave(std::array< uint8_t, N >& data)
     std::copy(deinterleaved.begin(), deinterleaved.end(), data.begin());
 }
 
-#endif /* M17_INTERLEAVER_H */
+}      // namespace M17
+
+#endif // M17_INTERLEAVER_H

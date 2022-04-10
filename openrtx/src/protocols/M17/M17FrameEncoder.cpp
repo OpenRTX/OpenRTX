@@ -23,6 +23,8 @@
 #include <M17/M17Interleaver.h>
 #include <M17/M17FrameEncoder.h>
 
+using namespace M17;
+
 M17FrameEncoder::M17FrameEncoder() : currentLich(0), streamFrameNumber(0)
 {
     reset();

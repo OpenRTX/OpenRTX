@@ -25,6 +25,7 @@
 #include <M17/M17CodePuncturing.h>
 #include <algorithm>
 
+using namespace M17;
 
 M17FrameDecoder::M17FrameDecoder() { }
 

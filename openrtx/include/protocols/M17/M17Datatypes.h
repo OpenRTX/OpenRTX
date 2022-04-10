@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2021 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -28,6 +28,8 @@
 #error This header is C++ only!
 #endif
 
+namespace M17
+{
 
 using call_t    = std::array< uint8_t, 6 >;    // Data type for encoded callsign
 using meta_t    = std::array< uint8_t, 14 >;   // Data type for LSF metadata field
@@ -60,4 +62,6 @@ typedef union
 }
 streamType_t;
 
-#endif /* M17_DATATYPES_H */
+}      // namespace M17
+
+#endif // M17_DATATYPES_H
