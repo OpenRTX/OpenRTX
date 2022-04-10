@@ -21,6 +21,7 @@
 #ifndef OPMODE_M17_H
 #define OPMODE_M17_H
 
+#include <M17/M17FrameDecoder.h>
 #include <M17/M17Transmitter.h>
 #include <M17/M17Demodulator.h>
 #include <M17/M17Modulator.h>
@@ -103,10 +104,12 @@ private:
      */
     void sendData(const bool lastFrame = false);
 
-    bool enterRx;                     ///< Flag for RX management.
-    M17::M17Modulator   modulator;    ///< M17 modulator.
-    M17::M17Demodulator demodulator;  ///< M17 demodulator.
-    M17::M17Transmitter m17Tx;        ///< M17 transmission manager.
+    bool enterRx;                      ///< Flag for RX management.
+    bool locked;                       ///< Demodulator locked on data stream.
+    M17::M17Modulator    modulator;    ///< M17 modulator.
+    M17::M17Demodulator  demodulator;  ///< M17 demodulator.
+    M17::M17Transmitter  m17Tx;        ///< M17 transmission manager.
+    M17::M17FrameDecoder decoder;      ///< M17 frame decoder
 };
 
 #endif /* OPMODE_M17_H */

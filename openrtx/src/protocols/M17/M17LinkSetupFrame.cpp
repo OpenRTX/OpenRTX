@@ -23,6 +23,7 @@
 #include <M17/M17Callsign.h>
 #include <M17/M17LinkSetupFrame.h>
 
+using namespace M17;
 
 M17LinkSetupFrame::M17LinkSetupFrame()
 {

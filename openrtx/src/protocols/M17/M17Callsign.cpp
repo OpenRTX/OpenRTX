@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2021 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   Adapted from original code written by Rob Riggs, Mobilinkd LLC        *
  *                                                                         *
@@ -23,8 +23,8 @@
 #include <string>
 #include <M17/M17Callsign.h>
 
-bool encode_callsign(const std::string& callsign, call_t& encodedCall,
-                     bool strict)
+bool M17::encode_callsign(const std::string& callsign, call_t& encodedCall,
+                          bool strict)
 {
     encodedCall.fill(0x00);
     if(callsign.size() > 9) return false;
@@ -67,7 +67,7 @@ bool encode_callsign(const std::string& callsign, call_t& encodedCall,
     return true;
 }
 
-std::string decode_callsign(const call_t& encodedCall)
+std::string M17::decode_callsign(const call_t& encodedCall)
 {
     // First of all, check if encoded address is a broadcast one
     bool isBroadcast = true;

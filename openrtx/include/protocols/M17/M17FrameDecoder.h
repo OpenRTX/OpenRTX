@@ -31,6 +31,9 @@
 #include "M17Viterbi.h"
 #include "M17StreamFrame.h"
 
+namespace M17
+{
+
 enum class M17FrameType : uint8_t
 {
     PREAMBLE   = 0,    ///< Frame contains a preamble.
@@ -128,4 +131,6 @@ private:
     M17Viterbi        viterbi;          ///< Viterbi decoder.
 };
 
-#endif /* M17FRAMEDECODER_H */
+}      // namespace M17
+
+#endif // M17FRAMEDECODER_H

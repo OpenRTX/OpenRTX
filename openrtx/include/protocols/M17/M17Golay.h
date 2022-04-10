@@ -1,9 +1,9 @@
 /***************************************************************************
- *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Wojciech Kaczmarski SP5WWP                      *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2021 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Wojciech Kaczmarski SP5WWP               *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -28,6 +28,9 @@
 #endif
 
 #include <cstdint>
+
+namespace M17
+{
 
 namespace Golay24
 {
@@ -170,4 +173,6 @@ static inline uint16_t golay24_decode(const uint32_t& codeword)
     return ((codeword ^ errors) >> 12) & 0x0FFF;
 }
 
-#endif /* M17_GOLAY_H */
+}      // namespace M17
+
+#endif // M17_GOLAY_H

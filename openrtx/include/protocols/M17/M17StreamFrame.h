@@ -18,8 +18,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef M17_FRAME_H
-#define M17_FRAME_H
+#ifndef M17_STREAM_FRAME_H
+#define M17_STREAM_FRAME_H
 
 #ifndef __cplusplus
 #error This header is C++ only!
@@ -28,6 +28,9 @@
 #include <cstring>
 #include <string>
 #include "M17Datatypes.h"
+
+namespace M17
+{
 
 class M17FrameDecoder;
 
@@ -138,4 +141,6 @@ private:
     friend class M17FrameDecoder;
 };
 
-#endif /* M17_FRAME_H */
+}      // namespace M17
+
+#endif // M17_STREAM_FRAME_H

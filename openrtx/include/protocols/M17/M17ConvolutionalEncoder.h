@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2021 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   Adapted from original code written by Rob Riggs, Mobilinkd LLC        *
  *                                                                         *
@@ -29,6 +29,9 @@
 
 #include <cstdint>
 #include <cstddef>
+
+namespace M17
+{
 
 /**
  * Convolutional encoder tailored on M17 protocol specifications, requiring a
@@ -111,4 +114,6 @@ private:
     uint8_t memory = 0;    ///< Convolutional encoder memory.
 };
 
-#endif /* M17_CONVOLUTIONAL_ENCODER_H */
+}      // namespace M17
+
+#endif // M17_CONVOLUTIONAL_ENCODER_H
