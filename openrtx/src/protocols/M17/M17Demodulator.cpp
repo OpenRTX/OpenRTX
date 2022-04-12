@@ -93,6 +93,8 @@ void M17Demodulator::startBasebandSampling()
                                    M17_RX_SAMPLE_RATE);
     // Clean start of the demodulation statistics
     resetCorrelationStats();
+    // DC removal filter reset
+    dsp_resetFilterState(&dsp_state);
 }
 
 void M17Demodulator::stopBasebandSampling()
@@ -102,8 +104,7 @@ void M17Demodulator::stopBasebandSampling()
 
 void M17Demodulator::resetCorrelationStats()
 {
-    conv_ema   = 0.0f;
-    conv_emvar = 800000000.0f;
+    conv_emvar = 80000000.0f;
 }
 
 /**
@@ -112,10 +113,8 @@ void M17Demodulator::resetCorrelationStats()
  */
 void M17Demodulator::updateCorrelationStats(int32_t value)
 {
-    float delta = (float) value - conv_ema;
-    float incr  = CONV_STATS_ALPHA * delta;
-    conv_ema   += incr;
-    conv_emvar  = (1.0f - CONV_STATS_ALPHA) * (conv_emvar + delta * incr);
+    float incr  = CONV_STATS_ALPHA * static_cast<float>(value);
+    conv_emvar  = (1.0f - CONV_STATS_ALPHA) * (conv_emvar + static_cast<float>(value) * incr);
 }
 
 float M17Demodulator::getCorrelationStddev()
@@ -201,21 +200,19 @@ sync_t M17Demodulator::nextFrameSync(int32_t offset)
 
         fprintf(csv_log, "%" PRId16 ",%d,%f,%d\n",
                 sample,
-                conv - static_cast< int32_t >(conv_ema),
+                conv,
                 CONV_THRESHOLD_FACTOR * getCorrelationStddev(),
                 i);
         #endif
 
         // Positive correlation peak -> frame syncword
-        if ((conv - static_cast< int32_t >(conv_ema)) >
-            (getCorrelationStddev() * CONV_THRESHOLD_FACTOR))
+        if (conv > (getCorrelationStddev() * CONV_THRESHOLD_FACTOR))
         {
             syncword.lsf = false;
             syncword.index = i;
         }
         // Negative correlation peak -> LSF syncword
-        else if ((conv - static_cast< int32_t >(conv_ema)) <
-                 -(getCorrelationStddev() * CONV_THRESHOLD_FACTOR))
+        else if (conv < -(getCorrelationStddev() * CONV_THRESHOLD_FACTOR))
         {
             syncword.lsf = true;
             syncword.index = i;
@@ -277,6 +274,9 @@ bool M17Demodulator::update()
 
     // Read samples from the ADC
     baseband = inputStream_getData(basebandId);
+
+    // Apply DC removal filter
+    dsp_dcRemoval(&dsp_state, baseband.data, baseband.len);
 
     #ifdef PLATFORM_LINUX
     FILE *csv_log = fopen("demod_log_2.csv", "a");
