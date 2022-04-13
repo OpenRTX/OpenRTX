@@ -124,7 +124,6 @@ float M17Demodulator::getCorrelationStddev()
 
 void M17Demodulator::resetQuantizationStats()
 {
-    qnt_ema = 0.0f;
     qnt_max = 0.0f;
     qnt_min = 0.0f;
 }
@@ -137,17 +136,12 @@ void M17Demodulator::updateQuantizationStats(int32_t offset)
         sample = basebandBridge[M17_BRIDGE_SIZE + offset];
     else            // Otherwise use regular data buffer
         sample = baseband.data[offset];
-    // Compute symbols exponential moving average
-    float delta = (float) sample - qnt_ema;
-    qnt_ema += CONV_STATS_ALPHA * delta;
-    // Remove DC offset
-    int16_t s = sample - (int16_t) qnt_ema;
-    if (s > qnt_max)
-        qnt_max = s;
+    if (sample > qnt_max)
+        qnt_max = sample;
     else
         qnt_max *= QNT_STATS_ALPHA;
-    if (s < qnt_min)
-        qnt_min = s;
+    if (sample < qnt_min)
+        qnt_min = sample;
     else
         qnt_min *= QNT_STATS_ALPHA;
 }
@@ -232,13 +226,11 @@ int8_t M17Demodulator::quantize(int32_t offset)
         sample = basebandBridge[M17_BRIDGE_SIZE + offset];
     else            // Otherwise use regular data buffer
         sample = baseband.data[offset];
-    // DC offset removal
-    int16_t s = sample - static_cast< int16_t >(qnt_ema);
-    if (s > static_cast< int16_t >(qnt_max) / 2)
+    if (sample > static_cast< int16_t >(qnt_max) / 2)
         return +3;
-    else if (s < static_cast< int16_t >(qnt_min) / 2)
+    else if (sample < static_cast< int16_t >(qnt_min) / 2)
         return -3;
-    else if (s > 0)
+    else if (sample > 0)
         return +1;
     else
         return -1;
@@ -301,11 +293,12 @@ bool M17Demodulator::update()
             if (!locked)
             {
                 syncword = nextFrameSync(offset);
-                if (syncword.index != -1) // Lock was just acquired
+                if (syncword.index != -1) // Valid syncword found
                 {
                     locked = true;
                     isLSF  = syncword.lsf;
                     offset = syncword.index + 1;
+                    phase = 0;
                     frameIndex = 0;
                 }
             }

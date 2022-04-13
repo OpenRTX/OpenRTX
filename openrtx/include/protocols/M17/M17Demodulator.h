@@ -123,8 +123,8 @@ private:
     static constexpr size_t M17_SAMPLE_BUF_SIZE    = M17_FRAME_SAMPLES / 2;
     static constexpr size_t M17_BRIDGE_SIZE        = M17_SAMPLES_PER_SYMBOL * M17_SYNCWORD_SYMBOLS;
 
-    static constexpr float  CONV_STATS_ALPHA       = 0.01f;
-    static constexpr float  QNT_STATS_ALPHA        = 0.995f;
+    static constexpr float  CONV_STATS_ALPHA       = 0.001f;
+    static constexpr float  QNT_STATS_ALPHA        = 0.999f;
     static constexpr float  CONV_THRESHOLD_FACTOR  = 3.40;
 
     /**
@@ -164,7 +164,6 @@ private:
     /*
      * Quantization statistics computation
      */
-    float qnt_ema = 0.0f;   ///< Exponential moving average from of the sliced samples.
     float qnt_max = 0.0f;   ///< Max hold of the sliced samples
     float qnt_min = 0.0f;   ///< Min hold of the sliced samples.
 
