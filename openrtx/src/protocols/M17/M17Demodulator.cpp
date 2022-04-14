@@ -66,11 +66,8 @@ void M17Demodulator::init()
     newFrame        = false;
 
     #ifdef PLATFORM_LINUX
-    FILE *csv_log = fopen("demod_log_1.csv", "w");
-    fprintf(csv_log, "Signal,Convolution,Threshold,Offset\n");
-    fclose(csv_log);
-    csv_log = fopen("demod_log_2.csv", "w");
-    fprintf(csv_log, "Sample,Max,Min,Symbol,I\n");
+    FILE *csv_log = fopen("demod_log.csv", "w");
+    fprintf(csv_log, "Signal,Convolution,Threshold,Offset,Sample,Max,Min,Symbol,I\n");
     fclose(csv_log);
     #endif // PLATFORM_MOD17
 }
@@ -124,8 +121,8 @@ float M17Demodulator::getCorrelationStddev()
 
 void M17Demodulator::resetQuantizationStats()
 {
-    qnt_max = 0.0f;
-    qnt_min = 0.0f;
+    qnt_pos_avg = 0.0f;
+    qnt_neg_avg = 0.0f;
 }
 
 void M17Demodulator::updateQuantizationStats(int32_t offset)
@@ -136,14 +133,28 @@ void M17Demodulator::updateQuantizationStats(int32_t offset)
         sample = basebandBridge[M17_BRIDGE_SIZE + offset];
     else            // Otherwise use regular data buffer
         sample = baseband.data[offset];
-    if (sample > qnt_max)
-        qnt_max = sample;
+    if (sample > 0)
+    {
+        // If the FIFO is not full just push a new sample
+        if (qnt_pos_fifo.size() >= QNT_SMA_WINDOW)
+        {
+            qnt_pos_avg += 1 / static_cast<float>(QNT_SMA_WINDOW) *
+                           (sample - qnt_pos_fifo.back());
+            qnt_pos_fifo.pop_back();
+        }
+        qnt_pos_fifo.push_front(sample);
+    }
     else
-        qnt_max *= QNT_STATS_ALPHA;
-    if (sample < qnt_min)
-        qnt_min = sample;
-    else
-        qnt_min *= QNT_STATS_ALPHA;
+    {
+        // If the FIFO is not full just push a new sample
+        if (qnt_neg_fifo.size() >= QNT_SMA_WINDOW)
+        {
+            qnt_neg_avg += 1 / static_cast<float>(QNT_SMA_WINDOW) *
+                           (sample - qnt_neg_fifo.back());
+            qnt_neg_fifo.pop_back();
+        }
+        qnt_neg_fifo.push_front(sample);
+    }
 }
 
 int32_t M17Demodulator::convolution(int32_t offset,
@@ -169,7 +180,7 @@ int32_t M17Demodulator::convolution(int32_t offset,
 sync_t M17Demodulator::nextFrameSync(int32_t offset)
 {
     #ifdef PLATFORM_LINUX
-    FILE *csv_log = fopen("demod_log_1.csv", "a");
+    FILE *csv_log = fopen("demod_log.csv", "a");
     #endif
 
     sync_t syncword = { -1, false };
@@ -192,11 +203,12 @@ sync_t M17Demodulator::nextFrameSync(int32_t offset)
         else            // Otherwise use regular data buffer
             sample = baseband.data[i];
 
-        fprintf(csv_log, "%" PRId16 ",%d,%f,%d\n",
+        fprintf(csv_log, "%" PRId16 ",%d,%f,%d,%" PRId16 ",%f,%f,%d,%d\n",
                 sample,
-                conv,
-                CONV_THRESHOLD_FACTOR * getCorrelationStddev(),
-                i);
+                conv / 10,
+                CONV_THRESHOLD_FACTOR * getCorrelationStddev() / 10,
+                i,
+                0,0.0,0.0,0,0);
         #endif
 
         // Positive correlation peak -> frame syncword
@@ -226,9 +238,9 @@ int8_t M17Demodulator::quantize(int32_t offset)
         sample = basebandBridge[M17_BRIDGE_SIZE + offset];
     else            // Otherwise use regular data buffer
         sample = baseband.data[offset];
-    if (sample > static_cast< int16_t >(qnt_max) / 2)
+    if (sample > static_cast< int16_t >(qnt_pos_avg))
         return +3;
-    else if (sample < static_cast< int16_t >(qnt_min) / 2)
+    else if (sample < static_cast< int16_t >(qnt_neg_avg))
         return -3;
     else if (sample > 0)
         return +1;
@@ -271,7 +283,7 @@ bool M17Demodulator::update()
     dsp_dcRemoval(&dsp_state, baseband.data, baseband.len);
 
     #ifdef PLATFORM_LINUX
-    FILE *csv_log = fopen("demod_log_2.csv", "a");
+    FILE *csv_log = fopen("demod_log.csv", "a");
     #endif
 
     if(baseband.data != NULL)
@@ -314,12 +326,13 @@ bool M17Demodulator::update()
                 int8_t symbol = quantize(symbol_index);
 
                 #ifdef PLATFORM_LINUX
-                fprintf(csv_log, "%" PRId16 ",%f,%f,%d,%d\n",
-                        baseband.data[symbol_index] - (int16_t) qnt_ema,
-                        qnt_max / 2,
-                        qnt_min / 2,
+                fprintf(csv_log, "%" PRId16 ",%d,%f,%d,%" PRId16 ",%f,%f,%d,%d\n",
+                        0,0,0.0,0,
+                        baseband.data[symbol_index],
+                        qnt_pos_avg,
+                        qnt_neg_avg,
                         symbol * 666,
-                        frameIndex == 0 ? 2300 : symbol_index);
+                        frameIndex);
                 #endif
 
                 setSymbol<M17_FRAME_BYTES>(*activeFrame, frameIndex, symbol);

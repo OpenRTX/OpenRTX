@@ -124,8 +124,8 @@ private:
     static constexpr size_t M17_BRIDGE_SIZE        = M17_SAMPLES_PER_SYMBOL * M17_SYNCWORD_SYMBOLS;
 
     static constexpr float  CONV_STATS_ALPHA       = 0.001f;
-    static constexpr float  QNT_STATS_ALPHA        = 0.999f;
     static constexpr float  CONV_THRESHOLD_FACTOR  = 3.40;
+    static constexpr int16_t QNT_SMA_WINDOW        = 40;
 
     /**
      * M17 syncwords;
@@ -164,8 +164,10 @@ private:
     /*
      * Quantization statistics computation
      */
-    float qnt_max = 0.0f;   ///< Max hold of the sliced samples
-    float qnt_min = 0.0f;   ///< Min hold of the sliced samples.
+    std::deque<int16_t> qnt_pos_fifo;
+    std::deque<int16_t> qnt_neg_fifo;
+    float qnt_pos_avg = 0.0f;   ///< Rolling average of positive samples
+    float qnt_neg_avg = 0.0f;   ///< Rolling average of negative samples
 
     /*
      * DSP filter state
