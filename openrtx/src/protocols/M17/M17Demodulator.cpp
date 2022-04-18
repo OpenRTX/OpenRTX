@@ -209,6 +209,7 @@ sync_t M17Demodulator::nextFrameSync(int32_t offset)
                 CONV_THRESHOLD_FACTOR * getCorrelationStddev() / 10,
                 i,
                 0,0.0,0.0,0,0);
+        fflush(csv_log);
         #endif
 
         // Positive correlation peak -> frame syncword
@@ -238,9 +239,9 @@ int8_t M17Demodulator::quantize(int32_t offset)
         sample = basebandBridge[M17_BRIDGE_SIZE + offset];
     else            // Otherwise use regular data buffer
         sample = baseband.data[offset];
-    if (sample > static_cast< int16_t >(qnt_pos_avg))
+    if (sample > static_cast< int16_t >(qnt_pos_avg * 0.067))
         return +3;
-    else if (sample < static_cast< int16_t >(qnt_neg_avg))
+    else if (sample < static_cast< int16_t >(qnt_neg_avg * 0.067))
         return -3;
     else if (sample > 0)
         return +1;
@@ -309,7 +310,7 @@ bool M17Demodulator::update()
                 {
                     locked = true;
                     isLSF  = syncword.lsf;
-                    offset = syncword.index + 1;
+                    offset = syncword.index + 4;
                     phase = 0;
                     frameIndex = 0;
                 }
@@ -326,13 +327,36 @@ bool M17Demodulator::update()
                 int8_t symbol = quantize(symbol_index);
 
                 #ifdef PLATFORM_LINUX
+                for (int i = 0; i < 4; i++)
+                {
+                    if ((symbol_index - 4 + i) >= 0)
+                    fprintf(csv_log, "%" PRId16 ",%d,%f,%d,%" PRId16 ",%f,%f,%d,%d\n",
+                            0,0,0.0,symbol_index - 4 + i,
+                            baseband.data[symbol_index - 4 + i],
+                            qnt_pos_avg,
+                            qnt_neg_avg,
+                            0,
+                            frameIndex);
+                }
                 fprintf(csv_log, "%" PRId16 ",%d,%f,%d,%" PRId16 ",%f,%f,%d,%d\n",
-                        0,0,0.0,0,
+                        0,0,0.0,symbol_index,
                         baseband.data[symbol_index],
                         qnt_pos_avg,
                         qnt_neg_avg,
                         symbol * 666,
                         frameIndex);
+                for (int i = 0; i < 5; i++)
+                {
+                    if ((symbol_index + i + 1) < static_cast<int32_t> (baseband.len))
+                    fprintf(csv_log, "%" PRId16 ",%d,%f,%d,%" PRId16 ",%f,%f,%d,%d\n",
+                            0,0,0.0,symbol_index + i + 1,
+                            baseband.data[symbol_index + i + 1],
+                            qnt_pos_avg,
+                            qnt_neg_avg,
+                            0,
+                            frameIndex);
+                }
+                fflush(csv_log);
                 #endif
 
                 setSymbol<M17_FRAME_BYTES>(*activeFrame, frameIndex, symbol);
@@ -358,23 +382,28 @@ bool M17Demodulator::update()
                                    + hammingDistance((*activeFrame)[1],
                                                      lsf_syncword_bytes[1]);
 
-                if ((frameIndex == M17_SYNCWORD_SYMBOLS) &&
-                    (hammingSync > 2) && (hammingLsf > 2))
+                if (frameIndex == M17_SYNCWORD_SYMBOLS)
                 {
-                    locked = false;
-                    std::swap(activeFrame, idleFrame);
-                    frameIndex = 0;
-                    newFrame   = true;
+                    // Too many errors in the syncword, lock is lost
+                    if ((hammingSync > 1) && (hammingLsf > 1))
+                    {
+                        locked = false;
+                        std::swap(activeFrame, idleFrame);
+                        frameIndex = 0;
+                        newFrame   = true;
 
-                    #ifdef PLATFORM_MOD17
-                    gpio_clearPin(SYNC_LED);
-                    #endif // PLATFORM_MOD17
-                }
-                else if (frameIndex == M17_SYNCWORD_SYMBOLS)
-                {
-                    #ifdef PLATFORM_MOD17
-                    gpio_setPin(SYNC_LED);
-                    #endif // PLATFORM_MOD17
+                        #ifdef PLATFORM_MOD17
+                        gpio_clearPin(SYNC_LED);
+                        #endif // PLATFORM_MOD17
+                    }
+                    // Correct syncword found
+                    else
+                    {
+                        #ifdef PLATFORM_MOD17
+                        gpio_setPin(SYNC_LED);
+                        #endif // PLATFORM_MOD17
+
+                    }
                 }
             }
         }
@@ -383,8 +412,7 @@ bool M17Demodulator::update()
         if (locked)
         {
             // Compute phase of next buffer
-            phase = (offset % M17_SAMPLES_PER_SYMBOL) +
-                    (baseband.len % M17_SAMPLES_PER_SYMBOL);
+            phase = (static_cast<int32_t> (phase) + offset + baseband.len) % M17_SAMPLES_PER_SYMBOL;
         }
         else
         {
