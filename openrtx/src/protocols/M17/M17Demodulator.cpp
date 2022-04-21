@@ -60,7 +60,7 @@ void M17Demodulator::init()
     activeFrame     = new frame_t;
     rawFrame        = new uint16_t[M17_FRAME_SYMBOLS];
     idleFrame       = new frame_t;
-    frameIndex      = 0;
+    frame_index     = 0;
     phase           = 0;
     locked          = false;
     newFrame        = false;
@@ -90,6 +90,7 @@ void M17Demodulator::startBasebandSampling()
                                    M17_RX_SAMPLE_RATE);
     // Clean start of the demodulation statistics
     resetCorrelationStats();
+    resetQuantizationStats();
     // DC removal filter reset
     dsp_resetFilterState(&dsp_state);
 }
@@ -135,25 +136,39 @@ void M17Demodulator::updateQuantizationStats(int32_t offset)
         sample = baseband.data[offset];
     if (sample > 0)
     {
-        // If the FIFO is not full just push a new sample
-        if (qnt_pos_fifo.size() >= QNT_SMA_WINDOW)
+        qnt_pos_fifo.push_front(sample);
+        // FIFO not full, compute traditional average
+        if (qnt_pos_fifo.size() <= QNT_SMA_WINDOW)
+        {
+            int32_t acc = 0;
+            for(auto e : qnt_pos_fifo)
+                acc += e;
+            qnt_pos_avg = acc / static_cast<float>(qnt_pos_fifo.size());
+        }
+        else
         {
             qnt_pos_avg += 1 / static_cast<float>(QNT_SMA_WINDOW) *
                            (sample - qnt_pos_fifo.back());
             qnt_pos_fifo.pop_back();
         }
-        qnt_pos_fifo.push_front(sample);
     }
     else
     {
-        // If the FIFO is not full just push a new sample
-        if (qnt_neg_fifo.size() >= QNT_SMA_WINDOW)
+        qnt_neg_fifo.push_front(sample);
+        // FIFO not full, compute traditional average
+        if (qnt_neg_fifo.size() <= QNT_SMA_WINDOW)
+        {
+            int32_t acc = 0;
+            for(auto e : qnt_neg_fifo)
+                acc += e;
+            qnt_neg_avg = acc / static_cast<float>(qnt_neg_fifo.size());
+        }
+        else
         {
             qnt_neg_avg += 1 / static_cast<float>(QNT_SMA_WINDOW) *
                            (sample - qnt_neg_fifo.back());
             qnt_neg_fifo.pop_back();
         }
-        qnt_neg_fifo.push_front(sample);
     }
 }
 
@@ -194,7 +209,6 @@ sync_t M17Demodulator::nextFrameSync(int32_t offset)
         // If we are not locked search for a syncword
         int32_t conv = convolution(i, stream_syncword, M17_SYNCWORD_SYMBOLS);
         updateCorrelationStats(conv);
-        updateQuantizationStats(i);
 
         #ifdef PLATFORM_LINUX
         int16_t sample = 0;
@@ -239,9 +253,9 @@ int8_t M17Demodulator::quantize(int32_t offset)
         sample = basebandBridge[M17_BRIDGE_SIZE + offset];
     else            // Otherwise use regular data buffer
         sample = baseband.data[offset];
-    if (sample > static_cast< int16_t >(qnt_pos_avg * 0.067))
+    if (sample > static_cast< int16_t >(qnt_pos_avg / 1.7))
         return +3;
-    else if (sample < static_cast< int16_t >(qnt_neg_avg * 0.067))
+    else if (sample < static_cast< int16_t >(qnt_neg_avg / 1.7))
         return -3;
     else if (sample > 0)
         return +1;
@@ -312,7 +326,7 @@ bool M17Demodulator::update()
                     isLSF  = syncword.lsf;
                     offset = syncword.index + 4;
                     phase = 0;
-                    frameIndex = 0;
+                    frame_index = 0;
                 }
             }
             // While we are locked, demodulate available samples
@@ -322,8 +336,9 @@ bool M17Demodulator::update()
                 int32_t symbol_index = offset
                                      + phase
                                      + (M17_SAMPLES_PER_SYMBOL * decoded_syms);
-
-                updateQuantizationStats(symbol_index);
+                // Update quantization stats only on syncwords
+                if (frame_index < M17_SYNCWORD_SYMBOLS)
+                    updateQuantizationStats(symbol_index);
                 int8_t symbol = quantize(symbol_index);
 
                 #ifdef PLATFORM_LINUX
@@ -333,63 +348,64 @@ bool M17Demodulator::update()
                     fprintf(csv_log, "%" PRId16 ",%d,%f,%d,%" PRId16 ",%f,%f,%d,%d\n",
                             0,0,0.0,symbol_index - 4 + i,
                             baseband.data[symbol_index - 4 + i],
-                            qnt_pos_avg,
-                            qnt_neg_avg,
+                            qnt_pos_avg / 1.7,
+                            qnt_neg_avg / 1.7,
                             0,
-                            frameIndex);
+                            frame_index);
                 }
                 fprintf(csv_log, "%" PRId16 ",%d,%f,%d,%" PRId16 ",%f,%f,%d,%d\n",
                         0,0,0.0,symbol_index,
                         baseband.data[symbol_index],
-                        qnt_pos_avg,
-                        qnt_neg_avg,
+                        qnt_pos_avg / 1.7,
+                        qnt_neg_avg / 1.7,
                         symbol * 666,
-                        frameIndex);
+                        frame_index);
                 for (int i = 0; i < 5; i++)
                 {
                     if ((symbol_index + i + 1) < static_cast<int32_t> (baseband.len))
                     fprintf(csv_log, "%" PRId16 ",%d,%f,%d,%" PRId16 ",%f,%f,%d,%d\n",
                             0,0,0.0,symbol_index + i + 1,
                             baseband.data[symbol_index + i + 1],
-                            qnt_pos_avg,
-                            qnt_neg_avg,
+                            qnt_pos_avg / 1.7,
+                            qnt_neg_avg / 1.7,
                             0,
-                            frameIndex);
+                            frame_index);
                 }
                 fflush(csv_log);
                 #endif
 
-                setSymbol<M17_FRAME_BYTES>(*activeFrame, frameIndex, symbol);
+                setSymbol<M17_FRAME_BYTES>(*activeFrame, frame_index, symbol);
                 decoded_syms++;
-                frameIndex++;
+                frame_index++;
 
                 // If the frame buffer is full switch active and idle frame
-                if (frameIndex == M17_FRAME_SYMBOLS)
+                if (frame_index == M17_FRAME_SYMBOLS)
                 {
                     std::swap(activeFrame, idleFrame);
-                    frameIndex = 0;
+                    frame_index = 0;
                     newFrame   = true;
                 }
 
-                // If syncword is not valid, lock is lost, accept 2 bit errors
-                uint8_t hammingSync = hammingDistance((*activeFrame)[0],
-                                                      stream_syncword_bytes[0])
-                                    + hammingDistance((*activeFrame)[1],
-                                                      stream_syncword_bytes[1]);
-
-                uint8_t hammingLsf = hammingDistance((*activeFrame)[0],
-                                                     lsf_syncword_bytes[0])
-                                   + hammingDistance((*activeFrame)[1],
-                                                     lsf_syncword_bytes[1]);
-
-                if (frameIndex == M17_SYNCWORD_SYMBOLS)
+                if (frame_index == M17_SYNCWORD_SYMBOLS)
                 {
+
+                    // If syncword is not valid, lock is lost, accept 2 bit errors
+                    uint8_t hammingSync = hammingDistance((*activeFrame)[0],
+                                                          stream_syncword_bytes[0])
+                                        + hammingDistance((*activeFrame)[1],
+                                                          stream_syncword_bytes[1]);
+
+                    uint8_t hammingLsf = hammingDistance((*activeFrame)[0],
+                                                         lsf_syncword_bytes[0])
+                                       + hammingDistance((*activeFrame)[1],
+                                                         lsf_syncword_bytes[1]);
+
                     // Too many errors in the syncword, lock is lost
                     if ((hammingSync > 1) && (hammingLsf > 1))
                     {
                         locked = false;
                         std::swap(activeFrame, idleFrame);
-                        frameIndex = 0;
+                        frame_index = 0;
                         newFrame   = true;
 
                         #ifdef PLATFORM_MOD17
