@@ -146,7 +146,8 @@ private:
     frame_t      *activeFrame;     ///< Half frame, in demodulation.
     frame_t      *idleFrame;       ///< Half frame, free to be processed.
     bool         isLSF;            ///< Indicates that we demodualated an LSF.
-    bool         locked;           ///< A syncword was detected.
+    bool         syncDetected;     ///< A syncword was detected.
+    bool         locked;           ///< A syncword was correctly demodulated.
     bool         newFrame;         ///< A new frame has been fully decoded.
     int16_t      basebandBridge[M17_BRIDGE_SIZE] = { 0 }; ///< Bridge buffer
     uint16_t     phase;            ///< Phase of the signal w.r.t. sampling
