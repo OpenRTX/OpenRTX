@@ -62,6 +62,7 @@ void M17Demodulator::init()
     idleFrame       = new frame_t;
     frame_index     = 0;
     phase           = 0;
+    syncDetected    = false;
     locked          = false;
     newFrame        = false;
 
@@ -206,7 +207,6 @@ sync_t M17Demodulator::nextFrameSync(int32_t offset)
     int32_t maxLen = static_cast < int32_t >(baseband.len - M17_BRIDGE_SIZE);
     for(int32_t i = offset; (syncword.index == -1) && (i < maxLen); i++)
     {
-        // If we are not locked search for a syncword
         int32_t conv = convolution(i, stream_syncword, M17_SYNCWORD_SYMBOLS);
         updateCorrelationStats(conv);
 
@@ -288,7 +288,7 @@ uint8_t M17Demodulator::hammingDistance(uint8_t x, uint8_t y)
 bool M17Demodulator::update()
 {
     M17::sync_t syncword = { 0, false };
-    int32_t offset = locked ? 0 : -(int32_t) M17_BRIDGE_SIZE;
+    int32_t offset = syncDetected ? 0 : -(int32_t) M17_BRIDGE_SIZE;
     uint16_t decoded_syms = 0;
 
     // Read samples from the ADC
@@ -316,20 +316,20 @@ bool M17Demodulator::update()
                 offset + phase) < static_cast < int32_t >(baseband.len)))
         {
 
-            // If we are not locked search for a syncword
-            if (!locked)
+            // If we are not demodulating a syncword, search for one
+            if (!syncDetected)
             {
                 syncword = nextFrameSync(offset);
                 if (syncword.index != -1) // Valid syncword found
                 {
-                    locked = true;
+                    syncDetected = true;
                     isLSF  = syncword.lsf;
                     offset = syncword.index + 4;
                     phase = 0;
                     frame_index = 0;
                 }
             }
-            // While we are locked, demodulate available samples
+            // While we detected a syncword, demodulate available samples
             else
             {
                 // Slice the input buffer to extract a frame and quantize
@@ -403,29 +403,21 @@ bool M17Demodulator::update()
                     // Too many errors in the syncword, lock is lost
                     if ((hammingSync > 1) && (hammingLsf > 1))
                     {
+                        syncDetected = false;
                         locked = false;
                         std::swap(activeFrame, idleFrame);
                         frame_index = 0;
                         newFrame   = true;
-
-                        #ifdef PLATFORM_MOD17
-                        gpio_clearPin(SYNC_LED);
-                        #endif // PLATFORM_MOD17
                     }
                     // Correct syncword found
                     else
-                    {
-                        #ifdef PLATFORM_MOD17
-                        gpio_setPin(SYNC_LED);
-                        #endif // PLATFORM_MOD17
-
-                    }
+                        locked = true;
                 }
             }
         }
 
         // We are at the end of the buffer
-        if (locked)
+        if (syncDetected)
         {
             // Compute phase of next buffer
             phase = (static_cast<int32_t> (phase) + offset + baseband.len) % M17_SAMPLES_PER_SYMBOL;
