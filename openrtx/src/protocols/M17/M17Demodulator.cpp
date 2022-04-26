@@ -103,7 +103,7 @@ void M17Demodulator::stopBasebandSampling()
 
 void M17Demodulator::resetCorrelationStats()
 {
-    conv_emvar = 80000000.0f;
+    conv_emvar = 40000000.0f;
 }
 
 /**
@@ -307,7 +307,7 @@ bool M17Demodulator::update()
         for(size_t i = 0; i < baseband.len; i++)
         {
             float elem = static_cast< float >(baseband.data[i]);
-            baseband.data[i] = static_cast< int16_t >(M17::rrc(elem));
+            baseband.data[i] = static_cast< int16_t >(M17::rrc_24k(elem));
         }
 
         // Process the buffer
@@ -324,7 +324,7 @@ bool M17Demodulator::update()
                 {
                     syncDetected = true;
                     isLSF  = syncword.lsf;
-                    offset = syncword.index + 4;
+                    offset = syncword.index + 1;
                     phase = 0;
                     frame_index = 0;
                 }

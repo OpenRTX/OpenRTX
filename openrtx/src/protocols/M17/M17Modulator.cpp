@@ -99,7 +99,7 @@ void M17Modulator::generateBaseband()
     for(size_t i = 0; i < M17_FRAME_SAMPLES_48K; i++)
     {
         float elem    = static_cast< float >(idleBuffer[i]);
-        idleBuffer[i] = static_cast< int16_t >((M17::rrc(elem) * M17_RRC_GAIN)
+        idleBuffer[i] = static_cast< int16_t >((M17::rrc_48k(elem) * M17_RRC_GAIN)
                                                 - M17_RRC_OFFSET);
     }
 }
