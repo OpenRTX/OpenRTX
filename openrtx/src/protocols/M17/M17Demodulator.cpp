@@ -254,9 +254,9 @@ int8_t M17Demodulator::quantize(int32_t offset)
         sample = basebandBridge[M17_BRIDGE_SIZE + offset];
     else            // Otherwise use regular data buffer
         sample = baseband.data[offset];
-    if (sample > static_cast< int16_t >(qnt_pos_avg / 1.7))
+    if (sample > static_cast< int16_t >(qnt_pos_avg / 2.1))
         return +3;
-    else if (sample < static_cast< int16_t >(qnt_neg_avg / 1.7))
+    else if (sample < static_cast< int16_t >(qnt_neg_avg / 2.1))
         return -3;
     else if (sample > 0)
         return +1;
@@ -343,32 +343,32 @@ bool M17Demodulator::update()
                 int8_t symbol = quantize(symbol_index);
 
                 #ifdef PLATFORM_LINUX
-                for (int i = 0; i < 4; i++)
+                for (int i = 0; i < 2; i++)
                 {
-                    if ((symbol_index - 4 + i) >= 0)
+                    if ((symbol_index - 2 + i) >= 0)
                     fprintf(csv_log, "%" PRId16 ",%d,%f,%d,%" PRId16 ",%f,%f,%d,%d\n",
-                            0,0,0.0,symbol_index - 4 + i,
-                            baseband.data[symbol_index - 4 + i],
-                            qnt_pos_avg / 1.7,
-                            qnt_neg_avg / 1.7,
+                            0,0,0.0,symbol_index - 2 + i,
+                            baseband.data[symbol_index - 2 + i],
+                            qnt_pos_avg / 2.1,
+                            qnt_neg_avg / 2.1,
                             0,
                             frame_index);
                 }
                 fprintf(csv_log, "%" PRId16 ",%d,%f,%d,%" PRId16 ",%f,%f,%d,%d\n",
                         0,0,0.0,symbol_index,
                         baseband.data[symbol_index],
-                        qnt_pos_avg / 1.7,
-                        qnt_neg_avg / 1.7,
+                        qnt_pos_avg / 2.1,
+                        qnt_neg_avg / 2.1,
                         symbol * 666,
                         frame_index);
-                for (int i = 0; i < 5; i++)
+                for (int i = 0; i < 2; i++)
                 {
                     if ((symbol_index + i + 1) < static_cast<int32_t> (baseband.len))
                     fprintf(csv_log, "%" PRId16 ",%d,%f,%d,%" PRId16 ",%f,%f,%d,%d\n",
                             0,0,0.0,symbol_index + i + 1,
                             baseband.data[symbol_index + i + 1],
-                            qnt_pos_avg / 1.7,
-                            qnt_neg_avg / 1.7,
+                            qnt_pos_avg / 2.1,
+                            qnt_neg_avg / 2.1,
                             0,
                             frame_index);
                 }
