@@ -115,7 +115,7 @@ private:
     static constexpr size_t M17_SYMBOL_RATE        = 4800;
     static constexpr size_t M17_FRAME_SYMBOLS      = 192;
     static constexpr size_t M17_SYNCWORD_SYMBOLS   = 8;
-    static constexpr size_t M17_RX_SAMPLE_RATE     = 48000;
+    static constexpr size_t M17_RX_SAMPLE_RATE     = 24000;
 
     static constexpr size_t M17_SAMPLES_PER_SYMBOL = M17_RX_SAMPLE_RATE / M17_SYMBOL_RATE;
     static constexpr size_t M17_FRAME_BYTES        = M17_FRAME_SYMBOLS / 4;
@@ -123,7 +123,7 @@ private:
     static constexpr size_t M17_SAMPLE_BUF_SIZE    = M17_FRAME_SAMPLES / 2;
     static constexpr size_t M17_BRIDGE_SIZE        = M17_SAMPLES_PER_SYMBOL * M17_SYNCWORD_SYMBOLS;
 
-    static constexpr float  CONV_STATS_ALPHA       = 0.001f;
+    static constexpr float  CONV_STATS_ALPHA       = 0.005f;
     static constexpr float  CONV_THRESHOLD_FACTOR  = 3.40;
     static constexpr int16_t QNT_SMA_WINDOW        = 8;
 
