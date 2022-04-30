@@ -44,7 +44,8 @@ M17Demodulator::M17Demodulator()
 
 M17Demodulator::~M17Demodulator()
 {
-    terminate();
+    // TODO
+    // terminate();
 }
 
 void M17Demodulator::init()

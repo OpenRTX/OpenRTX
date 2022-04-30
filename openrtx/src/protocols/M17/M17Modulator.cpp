@@ -39,7 +39,8 @@ M17Modulator::M17Modulator()
 
 M17Modulator::~M17Modulator()
 {
-    terminate();
+    // TODO
+    // terminate();
 }
 
 void M17Modulator::init()
