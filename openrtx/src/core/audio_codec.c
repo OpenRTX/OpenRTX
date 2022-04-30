@@ -123,6 +123,8 @@ bool codec_startDecode(const enum AudioSink destination)
 
 void codec_stop()
 {
+    if(running == false) return;
+
     running = false;
     pthread_join(codecThread, NULL);
 }
