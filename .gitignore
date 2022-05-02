@@ -56,9 +56,12 @@ subprojects/radio_tool
 subprojects/codec2
 subprojects/tinyusb
 
-#ignore log files
+# ignore log files
 *.log
 
-#ignore linux openrtx emulator history file
+# ignore linux openrtx emulator history file
 .emulatorsh_history
 
+# ignore bin2sgl
+!scripts/bin2sgl.Linux.bin
+!scripts/bin2sgl.exe

@@ -523,7 +523,11 @@ targets = [
 
 radio_tool  = find_program('radio_tool')
 objcopy     = find_program('objcopy',                          required:false, disabler:true)
-bin2sgl     = find_program('scripts/bin2sgl.Linux',            required:false, disabler:true)
+if build_machine.system() == 'linux'
+  bin2sgl     = find_program('scripts/bin2sgl.Linux',          required:false, disabler:true)
+elif build_machine.system() == 'windows'
+  bin2sgl     = find_program('scripts/bin2sgl.exe',            required:false, disabler:true)
+endif
 gd77_loader = find_program('scripts/gd-77_firmware_loader.py', required:false, disabler:true)
 dfu_util    = find_program('dfu-util',                         required:false, disabler:true)
 
@@ -542,17 +546,24 @@ foreach t : targets
     # Handle GD77 custom wrapping and flashing tools
     if name == 'openrtx_gd77'
 
+if build_machine.system() == 'linux'
       wrap = custom_target(name+'_wrap',
-        output : name+'_wrap',
+        output : name+'_wrap.sgl',
         input : bin,
         command : [bin2sgl,
                    '-f', '@INPUT@',
-                   '&&', 'mv', '@INPUT@.sgl', '@OUTPUT@.sgl'])
+                   '&&', 'mv', '@INPUT@.sgl', '@OUTPUT@'])
+elif build_machine.system() == 'windows'
+      wrap = custom_target(name+'_wrap',
+        output : name+'_bin.sgl',
+        input : bin,
+        command : [bin2sgl, '@INPUT@'])
+endif
 
       custom_target(name+'_flash',
         input : wrap,
         output : name+'_flash',
-        command : [gd77_loader, '-f', '@INPUT@.sgl'])
+        command : [gd77_loader, '-f', '@INPUT@'])
 
     # Module17 also uses dfu-tool for flashing
     elif name == 'openrtx_mod17'
