@@ -185,7 +185,7 @@ void vpQueuePrompt(uint16_t prompt)
 	}
 }
 
-
+// This function spells out a string letter by letter.
 void vpQueueString(char *promptString, VoicePromptFlags_T flags)
 {
 	const char indexedSymbols[] = "!,@:?()~/[]<>=$'`&|_^{}"; // handles most of them in indexed order, must match order of vps.
@@ -273,7 +273,10 @@ void vpQueueInteger(int32_t value)
 	vpQueueString(buf, 0);
 }
 
-void vpQueueLanguageString(const char * const *stringTableStringPtr)
+// This function looks up a voice prompt corresponding to a string table entry.
+// These are stored in the voice data after the voice prompts with no corresponding string table entry, hence the offset calculation:
+// NUM_VOICE_PROMPTS + (stringTableStringPtr - currentLanguage->languageName)
+void vpQueueStringTableEntry(const char * const *stringTableStringPtr)
 {
 	if (stringTableStringPtr == NULL)
 	{
