@@ -25,7 +25,7 @@
 #include <ui.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/platform.h>
-#include <ui/uiStrings.h>
+#include <ui/UIStrings.h>
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBottom();
 
