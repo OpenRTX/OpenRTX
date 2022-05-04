@@ -359,7 +359,7 @@ def buildDataPack(filename,voiceName,outputFileName):
     headerTOCSize = (MAX_PROMPTS * 4) + 4 + 4
     outBuf = bytearray(headerTOCSize)
     outBuf[0:3]  = bytes([0x56, 0x50, 0x00, 0x00])#Magic number
-    outBuf[4:7]  = bytes([0x07, 0x00, 0x00, 0x00])#Version number
+    outBuf[4:7]  = bytes([0x04, 0x00, 0x09, 0x06])#Version number
     outBuf[8:11] = bytes([0x00, 0x00, 0x00, 0x00])#First prompt audio is at offset zero
     bufPos=12;
     cumulativelength=0;
