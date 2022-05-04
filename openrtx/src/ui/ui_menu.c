@@ -25,7 +25,7 @@
 #include <ui.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/platform.h>
-
+#include <ui/uiStrings.h>
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBottom();
 
@@ -182,10 +182,10 @@ int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
     switch(index)
     {
         case G_ENABLED:
-            snprintf(buf, max_len, "%s", (last_state.settings.gps_enabled) ? "ON" : "OFF");
+            snprintf(buf, max_len, "%s", (last_state.settings.gps_enabled) ? currentLanguage->on : currentLanguage->off);
             break;
         case G_SET_TIME:
-            snprintf(buf, max_len, "%s", (last_state.gps_set_time) ? "ON" : "OFF");
+            snprintf(buf, max_len, "%s", (last_state.gps_set_time) ? currentLanguage->on : currentLanguage->off);
             break;
         case G_TIMEZONE:
             // Add + prefix to positive numbers
