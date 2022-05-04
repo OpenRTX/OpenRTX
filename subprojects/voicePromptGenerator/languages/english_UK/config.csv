@@ -1,0 +1,7 @@
+Wordlist_file,Voice_name,Voice_pack_name,Download,Encode,Createpack,Volume_change_db,Remove_silence,Audio_tempo
+wordlist_english_UK.csv,Matthew,english_uk_matthew.vpr,y,y,y,0,n,
+wordlist_english_UK.csv,Amy,english_uk_amy.vpr,y,y,y,0,n,
+wordlist_english_UK.csv,Brian,english_uk_brian.vpr,y,y,y,0,n,
+wordlist_english_UK.csv,Nicole,english_AU_nicole.vpr,y,y,y,0,n,
+wordlist_english_UK.csv,Emma,english_uk_emma.vpr,y,y,y,0,n,
+wordlist_english_UK.csv,Russell,english_au_russell.vpr,y,y,y,0,n,
