@@ -84,6 +84,10 @@ OpenRTX was created by:
 - Federico Amedeo Izzo IU2NUO <federico@izzo.pro>
 - Frederik Saraci IU2NRO <frederik.saraci@gmail.com>
 
+Our wholehearted thanks to the contributions from the community:
+
+- Joseph Stephen VK7JS, which implemented voice prompts
+
 All this was made possible by the huge reverse engineering effort of Travis Goodspeed and all the contributors of [md380tools](https://github.com/travisgoodspeed/md380tools).
 
 A huge thank goes to Roger Clark, and his [OpenGD77](https://github.com/rogerclarkmelbourne/OpenGD77) which not only inspired this project, but as a precursor, provided a working code example for the GD77 radio family.
