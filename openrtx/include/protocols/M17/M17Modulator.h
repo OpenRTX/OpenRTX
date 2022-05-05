@@ -116,7 +116,7 @@ private:
     static constexpr float  M17_RRC_GAIN          = 15000.0f;
     static constexpr float  M17_RRC_OFFSET        = 11500.0f;
     #else
-    static constexpr float  M17_RRC_GAIN          = 7168.0f;
+    static constexpr float  M17_RRC_GAIN          = 23000.0f;
     static constexpr float  M17_RRC_OFFSET        = 0.0f;
     #endif
 

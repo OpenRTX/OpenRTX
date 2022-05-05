@@ -142,7 +142,7 @@ public:
     inline void setModFactor(const uint8_t mf)
     {
         writeReg(M::CONFIG, 0x35, mf);      // FM modulation factor
-        writeReg(M::CONFIG, 0x3F, 0x04);    // FM Limiting modulation factor (HR_C6000)
+        writeReg(M::CONFIG, 0x3F, 0x07);    // FM Limiting modulation factor (HR_C6000)
     }
 
     /**
