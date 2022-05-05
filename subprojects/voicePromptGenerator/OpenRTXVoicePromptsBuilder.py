@@ -228,8 +228,7 @@ def downloadPollyPro(voiceName,fileStub,promptText,speechSpeed):
                     hasDownloaded = True
                     retval = True
             else:
-                print("Error requesting sound " +m17
-                resp)
+                print("Error requesting sound " + resp)
                 retval=False
 #    else:
 #        print("Download skipping " + file_name)
