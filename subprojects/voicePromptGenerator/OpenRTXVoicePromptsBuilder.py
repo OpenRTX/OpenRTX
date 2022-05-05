@@ -23,7 +23,7 @@ CREATE_NO_WINDOW = 0x08000000
 DETACHED_PROCESS = 0x00000008
 overwrite=False
 gain='0'
-atempo='1.75'
+atempo='1.0'
 removeSilenceAtStart = False
 # PollyPro is not working
 forceTTSMP3Usage = True
