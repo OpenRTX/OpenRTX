@@ -185,21 +185,42 @@ void vpQueuePrompt(uint16_t prompt)
 	}
 }
 
+static bool GetSymbolVPIfItShouldBeAnnounced(char symbol, VoicePromptFlags_T flags, voicePrompt_t* vp)
+{
+	*vp=PROMPT_SILENCE;
+	
+	const char indexedSymbols[] = "%.+-*#!,@:?()~/[]<>=$'`&|_^{}"; // Must match order of symbols in voicePrompt_t enum.
+	const char commonSymbols[] = "%.+-*#";
+	
+	bool announceCommonSymbols = (flags & vpAnnounceCommonSymbols) ? true : false;
+	bool announceLessCommonSymbols=(flags & vpAnnounceLessCommonSymbols) ? true : false;
+	
+	char* symbolPtr = strchr(indexedSymbols, symbol);
+	
+	if (symbolPtr == NULL)
+	{// we don't have a prompt for this character.
+		return (flags&vpAnnounceASCIIValueForUnknownChars) ? true : false;
+	}
+	
+	bool commonSymbol= strchr(commonSymbols, symbol) != NULL;
+	
+	*vp = PROMPT_PERCENT+(symbolPtr-indexedSymbols);
+	
+	return ((commonSymbol && announceCommonSymbols) || (!commonSymbol && announceLessCommonSymbols));
+}
+
 // This function spells out a string letter by letter.
 void vpQueueString(char *promptString, VoicePromptFlags_T flags)
 {
-	const char indexedSymbols[] = "%.+-*#!,@:?()~/[]<>=$'`&|_^{}"; // handles must match order of vps.
-	const char commonSymbols[] = "%.+-*#"; // handles must match order of vps.
-	
 	if (voicePromptIsActive)
 	{
 		vpInit();
 	}
-	bool announceCommonSymbols = (flags & vpAnnounceCommonSymbols) ? true : false;
-	bool announceLessCommonSymbols=(flags & vpAnnounceLessCommonSymbols) ? true : false;
 	
 	while (*promptString != 0)
 	{
+		voicePrompt_t vp = PROMPT_SILENCE;
+		
 		if ((*promptString >= '0') && (*promptString <= '9'))
 		{
 			vpQueuePrompt(*promptString - '0' + PROMPT_0);
@@ -224,31 +245,15 @@ void vpQueueString(char *promptString, VoicePromptFlags_T flags)
 		{
 			vpQueuePrompt(PROMPT_SPACE);
 		}
-		else if (announceCommonSymbols  || announceLessCommonSymbols)
+		else if (GetSymbolVPIfItShouldBeAnnounced(*promptString, flags, &vp))
 		{
-			char* symbolPtr = strchr(indexedSymbols, *promptString);
-			if (symbolPtr != NULL)
-			{
-				bool commonSymbol= strchr(commonSymbols, *symbolPtr) != NULL;
-				
-				if ((commonSymbol && announceCommonSymbols) || (!commonSymbol && announceLessCommonSymbols))
-				{
-					vpQueuePrompt(PROMPT_PERCENT+(symbolPtr-indexedSymbols));
-				}
-				else
-				{
-					vpQueuePrompt(PROMPT_SILENCE);
-				}
-			}
-			else if (flags&vpAnnounceASCIIValueForUnknownChars)
+			if (vp != PROMPT_SILENCE)
+				vpQueuePrompt(vp);
+			else // announce ASCII
 			{
 				int32_t val = *promptString;
 				vpQueueLanguageString(&currentLanguage->dtmf_code); // just the word "code" as we don't have character.
 				vpQueueInteger(val);
-			}
-			else
-			{
-				vpQueuePrompt(PROMPT_SILENCE);
 			}
 		}
 		else
