@@ -316,3 +316,32 @@ bool vpHasDataToPlay(void)
 	return (vpCurrentSequence.Length > 0);
 }
 
+static void removeUnnecessaryZerosFromVoicePrompts(char *str)
+{
+	const int NUM_DECIMAL_PLACES = 1;
+	int len = strlen(str);
+	for(int i = len; i > 2; i--)
+	{
+		if ((str[i - 1] != '0') || (str[i - (NUM_DECIMAL_PLACES + 1)] == '.'))
+		{
+			str[i] = 0;
+			return;
+		}
+	}
+}
+
+void vpQueueFrequency(freq_t freq, bool includeMHz)
+{
+	char buffer[10];
+
+	snprintf(buffer, 10, "%d.%05d", (freq / 1000000), ((freq%1000000)/10));
+	removeUnnecessaryZerosFromVoicePrompts(buffer);
+	
+	vpQueueString(buffer);
+
+	if (includeMHz)
+	{
+		vpQueuePrompt(PROMPT_MEGAHERTZ);
+	}
+}
+
