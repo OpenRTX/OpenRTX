@@ -337,11 +337,11 @@ void vpQueueFrequency(freq_t freq, bool includeMHz)
 	snprintf(buffer, 10, "%d.%05d", (freq / 1000000), ((freq%1000000)/10));
 	removeUnnecessaryZerosFromVoicePrompts(buffer);
 	
-	voicePromptsAppendString(buffer);
+	vpQueueString(buffer);
 
 	if (includeMHz)
 	{
-		voicePromptsAppendPrompt(PROMPT_MEGAHERTZ);
+		vpQueuePrompt(PROMPT_MEGAHERTZ);
 	}
 }
 
