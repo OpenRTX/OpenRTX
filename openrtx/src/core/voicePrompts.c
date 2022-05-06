@@ -252,8 +252,10 @@ void vpQueueString(char *promptString, VoicePromptFlags_T flags)
 			}
 		}
 		else
+		{
 			// otherwise just add silence
 			vpQueuePrompt(PROMPT_SILENCE);
+		}
 		
 		promptString++;
 	}
