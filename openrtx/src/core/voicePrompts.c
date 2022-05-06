@@ -18,7 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 #include <ctype.h>
-#include "core/vp.h"
+#include "core/voicePrompts.h"
 #include "ui/UIStrings.h"
 const uint32_t VOICE_PROMPTS_DATA_MAGIC = 0x5056;//'VP'
 const uint32_t VOICE_PROMPTS_DATA_VERSION = 0x1000; // v1000 OpenRTX
