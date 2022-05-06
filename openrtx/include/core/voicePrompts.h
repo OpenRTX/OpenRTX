@@ -168,6 +168,8 @@ void vpAppendPrompt(uint16_t prompt);// Append an individual prompt item. This c
 void vpQueueString(char *promptString, VoicePromptFlags_T flags);
 void vpQueueInteger(int32_t value); // Append a signed integer
 void vpQueueStringTableEntry(const char * const *);//Append a text string from the current language e.g. currentLanguage->off
+void vpQueueFrequency(freq_t freq, bool includeMHz);
+
 void vpPlay(void);// Starts prompt playback
 extern bool vpIsPlaying(void);
 bool vpHasDataToPlay(void);
