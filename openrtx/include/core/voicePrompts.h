@@ -142,7 +142,9 @@ NUM_VOICE_PROMPTS,
 	__MAKE_ENUM_16BITS = INT16_MAX
 } voicePrompt_t;
 
+// PROMPT_VOICE_NAME is always the very last prompt after the indexed prompts from the strings table.
 #define PROMPT_VOICE_NAME (NUM_VOICE_PROMPTS + (sizeof(stringsTable_t)/sizeof(char*)))
+
 typedef enum
 {
 	vpAnnounceCaps=0x01,
