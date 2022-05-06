@@ -29,7 +29,6 @@ in the voicePrompts generator project.
 typedef enum
 {
 PROMPT_SILENCE, //  
-PROMPT_POINT, // POINT
 PROMPT_0, // 0
 PROMPT_1, // 1
 PROMPT_2, // 2
@@ -104,18 +103,19 @@ PROMPT_VOLTS, // Volts
 PROMPT_MILLIWATTS, // Milliwatts
 PROMPT_WATT, // Wattt
 PROMPT_WATTS, // Watts
-PROMPT_PERCENT, // Percent
 PROMPT_RECEIVE, // Receive
 PROMPT_TRANSMIT, // Transmit
 PROMPT_MODE, // Mode
 PROMPT_DMR, // D M R
 PROMPT_FM, // F M
 PROMPT_M17, // M seventeen
+PROMPT_SPACE, // space
+PROMPT_PERCENT, // Percent
+PROMPT_POINT, // POINT
 PROMPT_PLUS, // Plus
 PROMPT_MINUS, // Minus
 PROMPT_STAR, // Star
 PROMPT_HASH, // Hash
-PROMPT_SPACE, // space
 PROMPT_EXCLAIM, // exclaim
 PROMPT_COMMA, // comma
 PROMPT_AT, // at
@@ -142,13 +142,18 @@ NUM_VOICE_PROMPTS,
 	__MAKE_ENUM_16BITS = INT16_MAX
 } voicePrompt_t;
 
+// PROMPT_VOICE_NAME is always the very last prompt after the indexed prompts from the strings table.
 #define PROMPT_VOICE_NAME (NUM_VOICE_PROMPTS + (sizeof(stringsTable_t)/sizeof(char*)))
+
 typedef enum
 {
 	vpAnnounceCaps=0x01,
 	vpAnnounceCustomPrompts=0x02,
-	vpAnnounceSpaceAndSymbols=0x04,
-	vpAnnouncePhoneticRendering=0x08,
+	vpAnnounceSpace=0x04,
+	vpAnnounceCommonSymbols=0x08,
+	vpAnnounceLessCommonSymbols=0x10,
+	vpAnnounceASCIIValueForUnknownChars=0x20,
+	vpAnnouncePhoneticRendering=0x40,
 } VoicePromptFlags_T;
 
 extern bool voicePromptDataIsLoaded;

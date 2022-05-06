@@ -188,11 +188,16 @@ void vpQueuePrompt(uint16_t prompt)
 // This function spells out a string letter by letter.
 void vpQueueString(char *promptString, VoicePromptFlags_T flags)
 {
-	const char indexedSymbols[] = "!,@:?()~/[]<>=$'`&|_^{}"; // handles most of them in indexed order, must match order of vps.
+	const char indexedSymbols[] = "%.+-*#!,@:?()~/[]<>=$'`&|_^{}"; // handles must match order of vps.
+	const char commonSymbols[] = "%.+-*#"; // handles must match order of vps.
+	
 	if (voicePromptIsActive)
 	{
 		vpInit();
 	}
+	bool announceCommonSymbols = (flags & vpAnnounceCommonSymbols) ? true : false;
+	bool announceLessCommonSymbols=(flags & vpAnnounceLessCommonSymbols) ? true : false;
+	
 	while (*promptString != 0)
 	{
 		if ((*promptString >= '0') && (*promptString <= '9'))
@@ -215,52 +220,42 @@ void vpQueueString(char *promptString, VoicePromptFlags_T flags)
 			else
 				vpQueuePrompt(*promptString - 'a' + PROMPT_A);
 		}
-		else if (*promptString == '.')
+		else if ((*promptString==' ') && (flags&vpAnnounceSpace))
 		{
-			vpQueuePrompt(PROMPT_POINT);
+			vpQueuePrompt(PROMPT_SPACE);
 		}
-		else if (*promptString == '+')
+		else if (announceCommonSymbols  || announceLessCommonSymbols)
 		{
-			vpQueuePrompt(PROMPT_PLUS);
-		}
-		else if (*promptString == '-')
-		{
-			vpQueuePrompt(PROMPT_MINUS);
-		}
-		else if (*promptString == '%')
-		{
-			vpQueuePrompt(PROMPT_PERCENT);
-		}
-		else if (*promptString == '*')
-		{
-			vpQueuePrompt(PROMPT_STAR);
-		}
-		else if (*promptString == '#')
-		{
-			vpQueuePrompt(PROMPT_HASH);
-		}
-		else if (flags&(vpAnnounceSpaceAndSymbols))
-		{
-			if (*promptString==' ')
-				vpQueuePrompt(PROMPT_SPACE);
-			else
+			char* symbolPtr = strchr(indexedSymbols, *promptString);
+			if (symbolPtr != NULL)
 			{
-				char* ptr=strchr(indexedSymbols, *promptString);
-				if (ptr)
+				bool commonSymbol= strchr(commonSymbols, *symbolPtr) != NULL;
+				
+				if ((commonSymbol && announceCommonSymbols) || (!commonSymbol && announceLessCommonSymbols))
 				{
-					vpQueuePrompt(PROMPT_EXCLAIM+(ptr-indexedSymbols));
+					vpQueuePrompt(PROMPT_PERCENT+(symbolPtr-indexedSymbols));
 				}
 				else
 				{
-					int32_t val = *promptString;
-					vpQueueLanguageString(&currentLanguage->dtmf_code); // just the word "code" as we don't have character.
-					vpQueueInteger(val);
+					vpQueuePrompt(PROMPT_SILENCE);
 				}
+			}
+			else if (flags&vpAnnounceASCIIValueForUnknownChars)
+			{
+				int32_t val = *promptString;
+				vpQueueLanguageString(&currentLanguage->dtmf_code); // just the word "code" as we don't have character.
+				vpQueueInteger(val);
+			}
+			else
+			{
+				vpQueuePrompt(PROMPT_SILENCE);
 			}
 		}
 		else
+		{
 			// otherwise just add silence
 			vpQueuePrompt(PROMPT_SILENCE);
+		}
 		
 		promptString++;
 	}
