@@ -95,6 +95,7 @@ PROMPT_CAP, // cap
 PROMPT_HERTZ, // hertz
 PROMPT_KILOHERTZ, // Kilohertz
 PROMPT_MEGAHERTZ, // Megahertz
+PROMPT_CHANNEL,
 PROMPT_VFO, // V F O
 PROMPT_MILLISECONDS, // Milliseconds
 PROMPT_SECONDS, // Seconds
@@ -155,6 +156,13 @@ typedef enum
 	vpAnnounceASCIIValueForUnknownChars=0x20,
 	vpAnnouncePhoneticRendering=0x40,
 } VoicePromptFlags_T;
+
+typedef enum
+{
+	vpqInit=0x01, // stop any voice prompts already in progress.
+	vpqPlayImmediately=0x02, // call play after queue.
+	vpqIncludeDescriptions=0x04
+} VoicePromptQueueFlags_T;
 
 extern bool voicePromptDataIsLoaded;
 extern const uint32_t VOICE_PROMPTS_FLASH_HEADER_ADDRESS;
