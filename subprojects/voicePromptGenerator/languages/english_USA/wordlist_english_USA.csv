@@ -80,7 +80,6 @@ PROMPT_TRANSMIT,,,Transmit
 PROMPT_MODE,,,Mode
 PROMPT_DMR,,,D M R
 PROMPT_FM,,,F M
-PROMPT_M17,,,M seventeen
 PROMPT_SPACE,,,space
 PROMPT_PERCENT,,,Percent
 PROMPT_POINT,,,POINT
@@ -114,3 +113,36 @@ PROMPT_RIGHT_BRACE,,,right brace
 LANGUAGE_NAME,,,English
 off,,,Off
 on,,,On
+zone,,,Zone
+channels,,,Channels
+contacts,,,Contacts
+gps,,,GPS
+settings,,,Settings
+backupAndRestore,,,Backup & Restore
+info,,,Info
+about,,,About
+display,,,Display
+timeAndDate,,,Time & Date
+m17,,,M17
+defaultSettings,,,Default Settings
+brightness,,,Brightness
+contrast,,,Contrast
+timer,,,Timer
+gpsEnabled,,,GPS Enabled
+gpsSetTime,,,GPS Set Time
+UTCTimeZone,,,UTC Timezone
+backup,,,Backup
+restore,,,Restore
+batteryVoltage,,,Bat. Voltage
+batteryCharge,,,Bat. Charge
+RSSI,,,RSSI
+model,,,Model
+band,,,Band
+VHF,,,V H F
+UHF,,,U H F
+LCDType,,,LCD Type
+Niccolo,,,Niccolo' IU2KIN
+Silvano,,,Silvano IU2KWO
+Federico,,,Federico IU2NUO
+Fred,,,Fred IU2NRO
+Joseph,,,Joseph VK7JS
