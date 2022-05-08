@@ -3,7 +3,7 @@
  *                         Niccolò Izzo IU2KIN                             *
  *                         Frederik Saraci IU2NRO                          *
  *                         Silvano Seva IU2KWO                             *
- *                         Joseph Stephen VK7JS                            * 
+ *                         Joseph Stephen VK7JS                            *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
  *   the Free Software Foundation; either version 3 of the License, or     *
@@ -20,18 +20,11 @@
 /*
 This string table's order must not be altered as voice prompts will be indexed in the same order as these strings.
 */
-#ifndef UIStrings_h_included
-#define UIStrings_h_included
-#define NUM_LANGUAGES 1
+#include "ui/UIStrings.h"
+ #include "ui/EnglishStrings.h"
+ 
+ // add more languages here.
+ const stringsTable_t languages[NUM_LANGUAGES]={ englishStrings };
+  // default to English.
+ const stringsTable_t* currentLanguage=&languages[0];
 
-typedef struct
-{
-	const char* languageName;
-	const char* off;
-	const char* on;
-} stringsTable_t;
-
-extern const stringsTable_t languages[];
-extern const stringsTable_t* currentLanguage;
-
-#endif

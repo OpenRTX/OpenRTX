@@ -22,32 +22,38 @@
 #include "ui/UIStrings.h"
 const uint32_t VOICE_PROMPTS_DATA_MAGIC = 0x5056;//'VP'
 const uint32_t VOICE_PROMPTS_DATA_VERSION = 0x1000; // v1000 OpenRTX
+// Must match the number of voice prompts allowed by the generator script.
 #define VOICE_PROMPTS_TOC_SIZE 350
-static void getM17Data(int offset,int length);
+// This gets the data for a voice prompt to be demodulated using Codec2.
+// The offset is relative to the start of the voice prompt data.
+// The length is the length in bytes of the data. 
+static void GetCodec2Data(int offset,int length);
 
 typedef struct
 {
 	uint32_t magic;
 	uint32_t version;
 } voicePromptsDataHeader_t;
-
-
-
-const uint32_t VOICE_PROMPTS_FLASH_HEADER_ADDRESS 		= 0x8F400; // todo figure this out for OpenRTX
+// ToDo: may be a file on flashdisk.
+// ToDo figure this out for OpenRTX
+// Address of voice prompt header for checking version etc.
+const uint32_t VOICE_PROMPTS_FLASH_HEADER_ADDRESS 		= 0x8F400;
+// Start of actual voice prompt data.
 static uint32_t vpFlashDataAddress;// = VOICE_PROMPTS_FLASH_HEADER_ADDRESS + sizeof(voicePromptsDataHeader_t) + sizeof(uint32_t)*VOICE_PROMPTS_TOC_SIZE ;
-// TODO figure out M17 frame equivalent.
-// 76 x 27 byte ambe frames
-#define M17_DATA_BUFFER_SIZE  2052
+// TODO figure out Codec2 frame equivalent.
+// 76 x 27 byte Codec2 frames
+#define Codec2DataBufferSize  2052
 
 bool voicePromptDataIsLoaded = false;
 static bool voicePromptIsActive = false;
+// Uninitialized is -1.
 static int promptDataPosition = -1;
 static int currentPromptLength = -1;
-
+// Number of ms from end of playing prompt to disabling amp.
 #define PROMPT_TAIL  30
 static int promptTail = 0;
 
-static uint8_t M17Data[M17_DATA_BUFFER_SIZE];
+static uint8_t Codec2Data[Codec2DataBufferSize];
 
 #define VOICE_PROMPTS_SEQUENCE_BUFFER_SIZE 128
 
@@ -70,11 +76,11 @@ uint32_t tableOfContents[VOICE_PROMPTS_TOC_SIZE];
 void vpCacheInit(void)
 {
 	voicePromptsDataHeader_t header;
-
-	SPI_Flash_read(VOICE_PROMPTS_FLASH_HEADER_ADDRESS,(uint8_t *)&header,sizeof(voicePromptsDataHeader_t));
+// ToDo not sure where this is coming from yet.
+	//SPI_Flash_read(VOICE_PROMPTS_FLASH_HEADER_ADDRESS,(uint8_t *)&header,sizeof(voicePromptsDataHeader_t));
 
 	if (vpCheckHeader((uint32_t *)&header))
-	{
+	{// ToDo see above 
 		voicePromptDataIsLoaded = SPI_Flash_read(VOICE_PROMPTS_FLASH_HEADER_ADDRESS + sizeof(voicePromptsDataHeader_t), (uint8_t *)&tableOfContents, sizeof(uint32_t) * VOICE_PROMPTS_TOC_SIZE);
 		vpFlashDataAddress =  VOICE_PROMPTS_FLASH_HEADER_ADDRESS + sizeof(voicePromptsDataHeader_t) + sizeof(uint32_t)*VOICE_PROMPTS_TOC_SIZE ;
 	}
@@ -88,11 +94,11 @@ bool vpCheckHeader(uint32_t *bufferAddress)
 	return ((header->magic == VOICE_PROMPTS_DATA_MAGIC) && (header->version == VOICE_PROMPTS_DATA_VERSION));
 }
 
-static void getM17Data(int offset,int length)
+static void GetCodec2Data(int offset,int length)
 {
-	if (length <= M17_DATA_BUFFER_SIZE)
-	{
-		SPI_Flash_read(vpFlashDataAddress + offset, (uint8_t *)&M17Data, length);
+	if (length <= Codec2DataBufferSize)
+	{// ToDo where are we reading this from?
+		SPI_Flash_read(vpFlashDataAddress + offset, (uint8_t *)&Codec2Data, length);
 	}
 }
 
@@ -101,10 +107,10 @@ void vpTick(void)
 	if (voicePromptIsActive)
 	{
 		if (promptDataPosition < currentPromptLength)
-		{
+		{// ToDo figure out buffering.
 			//if (wavbuffer_count <= (WAV_BUFFER_COUNT / 2))
 			{
-//				codecDecode((uint8_t *)&M17Data[promptDataPosition], 3);
+//				codecDecode((uint8_t *)&Codec2Data[promptDataPosition], 3);
 				promptDataPosition += 27;
 			}
 
@@ -119,7 +125,7 @@ void vpTick(void)
 
 				int promptNumber = vpCurrentSequence.Buffer[vpCurrentSequence.Pos];
 				currentPromptLength = tableOfContents[promptNumber + 1] - tableOfContents[promptNumber];
-				getM17Data(tableOfContents[promptNumber], currentPromptLength);
+				GetCodec2Data(tableOfContents[promptNumber], currentPromptLength);
 			}
 			else
 			{
@@ -139,7 +145,7 @@ void vpTick(void)
 			promptTail--;
 
 			if ((promptTail == 0) && trxCarrierDetected() && (trxGetMode() == RADIO_MODE_ANALOG))
-			{
+			{// ToDo disable amp.
 				//GPIO_PinWrite(GPIO_RX_audio_mux, Pin_RX_audio_mux, 1); // Set the audio path to AT1846 -> audio amp.
 			}
 		}
@@ -185,7 +191,8 @@ void vpQueuePrompt(uint16_t prompt)
 	}
 }
 
-static bool GetSymbolVPIfItShouldBeAnnounced(char symbol, VoicePromptFlags_T flags, voicePrompt_t* vp)
+static bool GetSymbolVPIfItShouldBeAnnounced(char symbol, 
+VoicePromptFlags_T flags, voicePrompt_t* vp)
 {
 	*vp=PROMPT_SILENCE;
 	
@@ -274,7 +281,8 @@ void vpQueueInteger(int32_t value)
 }
 
 // This function looks up a voice prompt corresponding to a string table entry.
-// These are stored in the voice data after the voice prompts with no corresponding string table entry, hence the offset calculation:
+// These are stored in the voice data after the voice prompts with no 
+// corresponding string table entry, hence the offset calculation:
 // NUM_VOICE_PROMPTS + (stringTableStringPtr - currentLanguage->languageName)
 void vpQueueStringTableEntry(const char * const *stringTableStringPtr)
 {
@@ -295,7 +303,7 @@ void vpPlay(void)
 		vpCurrentSequence.Pos = 0;
 		
 		currentPromptLength = tableOfContents[promptNumber + 1] - tableOfContents[promptNumber];
-		getM17Data(tableOfContents[promptNumber], currentPromptLength);
+		GetCodec2Data(tableOfContents[promptNumber], currentPromptLength);
 		
 //		GPIO_PinWrite(GPIO_RX_audio_mux, Pin_RX_audio_mux, 0);// set the audio mux HR-C6000 -> audio amp
 		//enableAudioAmp(AUDIO_AMP_MODE_PROMPT);
@@ -315,33 +323,3 @@ bool vpHasDataToPlay(void)
 {
 	return (vpCurrentSequence.Length > 0);
 }
-
-static void removeUnnecessaryZerosFromVoicePrompts(char *str)
-{
-	const int NUM_DECIMAL_PLACES = 1;
-	int len = strlen(str);
-	for(int i = len; i > 2; i--)
-	{
-		if ((str[i - 1] != '0') || (str[i - (NUM_DECIMAL_PLACES + 1)] == '.'))
-		{
-			str[i] = 0;
-			return;
-		}
-	}
-}
-
-void vpQueueFrequency(freq_t freq, bool includeMHz)
-{
-	char buffer[10];
-
-	snprintf(buffer, 10, "%d.%05d", (freq / 1000000), ((freq%1000000)/10));
-	removeUnnecessaryZerosFromVoicePrompts(buffer);
-	
-	vpQueueString(buffer);
-
-	if (includeMHz)
-	{
-		vpQueuePrompt(PROMPT_MEGAHERTZ);
-	}
-}
-

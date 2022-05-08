@@ -17,21 +17,13 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
-/*
-This string table's order must not be altered as voice prompts will be indexed in the same order as these strings.
-*/
-#ifndef UIStrings_h_included
-#define UIStrings_h_included
-#define NUM_LANGUAGES 1
-
-typedef struct
+#ifndef EnglishStrings_h_included
+#define EnglishStrings_h_included
+#include "ui/UIStrings.h"
+const stringsTable_t englishStrings =
 {
-	const char* languageName;
-	const char* off;
-	const char* on;
-} stringsTable_t;
-
-extern const stringsTable_t languages[];
-extern const stringsTable_t* currentLanguage;
-
-#endif
+	.languageName="English",
+	.off = "OFF",
+	.on="ON",
+};
+#endif //EnglishStrings_h_included

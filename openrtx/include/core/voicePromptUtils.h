@@ -16,7 +16,8 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
- // This file contains functions for announcing radio functions using the building blocks in voicePrompts.h/c.
+ // This file contains functions for announcing radio operations using the 
+ // building blocks in voicePrompts.h/c.
  #ifndef VOICE_PROMPT_UTILS_H_INCLUDED
   #define VOICE_PROMPT_UTILS_H_INCLUDED
  
@@ -24,9 +25,10 @@
 #include "ui/UIStrings.h"
 #include "cps.h"
  
- void announceChannelName(channel_t* channel, uint16_t channelIndex, VoicePromptQueueFlags_T flags);
- void announceFrequencies(freq_t rx, freq_t tx, VoicePromptQueueFlags_T flags);
+void announceChannelName(channel_t* channel, uint16_t channelIndex, VoicePromptQueueFlags_T flags);
+void announceFrequencies(freq_t rx, freq_t tx, VoicePromptQueueFlags_T flags);
 void announceRadioMode(uint8_t mode, VoicePromptQueueFlags_T flags);
-void vpAnnounceChannelSummary(channel_t* channel, VoicePromptQueueFlags_T flags);
+void announceChannelSummary(channel_t* channel, uint16_t channelIndex,
+VoicePromptQueueFlags_T flags);
  
 #endif //VOICE_PROMPT_UTILS_H_INCLUDED

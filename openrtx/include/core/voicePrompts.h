@@ -19,12 +19,14 @@
 #ifndef voice_prompts_h_included
 #define voice_prompts_h_included
 /*
-Please note, these prompts represent spoken words or phrases which are not in the UI string table.
-For example letters of the alphabet, digits, and descriptive words not displayed in the UI
-The voice prompt data file stores these first, then after the data for these prompts, the data for the indexed string table phrases.
+Please note, these prompts represent spoken words or phrases which are not in 
+the UI string table, for example letters of the alphabet, digits, and 
+descriptive words not displayed in the UI.
+The voice prompt data file stores these first, then after the data for these 
+prompts, the data for the indexed string table phrases.
 */
-/* Please note! this enum must match the order of prompts defined in the wordlist.csv file 
-in the voicePrompts generator project. 
+/* Please note! this enum must match the order of prompts defined in the 
+wordlist.csv file in the voicePrompts generator project. 
 */
 typedef enum
 {
@@ -143,7 +145,8 @@ NUM_VOICE_PROMPTS,
 	__MAKE_ENUM_16BITS = INT16_MAX
 } voicePrompt_t;
 
-// PROMPT_VOICE_NAME is always the very last prompt after the indexed prompts from the strings table.
+// PROMPT_VOICE_NAME is always the very last prompt after the indexed prompts 
+// from the strings table.
 #define PROMPT_VOICE_NAME (NUM_VOICE_PROMPTS + (sizeof(stringsTable_t)/sizeof(char*)))
 
 typedef enum
@@ -170,13 +173,22 @@ extern const uint32_t VOICE_PROMPTS_FLASH_HEADER_ADDRESS;
 void vpCacheInit(void);
 // event driven to play a voice prompt in progress.
 void vpTick(void);
-
-void vpInit(void);// Call before building the prompt sequence
-void vpAppendPrompt(uint16_t prompt);// Append an individual prompt item. This can be a single letter number or a phrase
+// Call before building the prompt sequence to clear prompt in progress.
+void vpInit(void);
+// This function appends an individual prompt item to the prompt queue. 
+// This can be a single letter, number, or a phrase.
+void vpAppendPrompt(uint16_t prompt);
+// This function appends the spelling of a complete string to the queue.
+// It is used to pronounce strings for which we do not have a recorded voice 
+//prompt.
 void vpQueueString(char *promptString, VoicePromptFlags_T flags);
-void vpQueueInteger(int32_t value); // Append a signed integer
-void vpQueueStringTableEntry(const char * const *);//Append a text string from the current language e.g. currentLanguage->off
-void vpQueueFrequency(freq_t freq, bool includeMHz);
+ // This function appends a signed integer to the queue.
+void vpQueueInteger(int32_t value);
+// This function appends a text string from the current language to the queue.
+// e.g. currentLanguage->off
+// These are recorded prompts which correspond  to the strings in the strings 
+// table.
+void vpQueueStringTableEntry(const char * const *);
 
 void vpPlay(void);// Starts prompt playback
 extern bool vpIsPlaying(void);
