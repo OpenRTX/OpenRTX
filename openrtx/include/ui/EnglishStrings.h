@@ -1,9 +1,9 @@
 /***************************************************************************
- *   Copyright (C) 2019 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN,                            *
+ *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
+ *                         Niccolò Izzo IU2KIN                             *
+ *                         Frederik Saraci IU2NRO                          *
  *                         Silvano Seva IU2KWO                             *
- *                         Joseph Stephen VK7JS                            *
- *                         Roger Clark  VK3KYY                             *
+ *                         Joseph Stephen VK7JS                            * 
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
  *   the Free Software Foundation; either version 3 of the License, or     *
@@ -17,19 +17,13 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
- // This file contains functions for announcing radio operations using the 
- // building blocks in voicePrompts.h/c.
- #ifndef VOICE_PROMPT_UTILS_H_INCLUDED
-  #define VOICE_PROMPT_UTILS_H_INCLUDED
- 
- #include "core/voicePrompts.h"
+#ifndef EnglishStrings_h_included
+#define EnglishStrings_h_included
 #include "ui/UIStrings.h"
-#include "cps.h"
- 
-void announceChannelName(channel_t* channel, uint16_t channelIndex, VoicePromptQueueFlags_T flags);
-void announceFrequencies(freq_t rx, freq_t tx, VoicePromptQueueFlags_T flags);
-void announceRadioMode(uint8_t mode, VoicePromptQueueFlags_T flags);
-void announceChannelSummary(channel_t* channel, uint16_t channelIndex,
-VoicePromptQueueFlags_T flags);
- 
-#endif //VOICE_PROMPT_UTILS_H_INCLUDED
+const stringsTable_t englishStrings =
+{
+	.languageName="English",
+	.off = "OFF",
+	.on="ON",
+};
+#endif //EnglishStrings_h_included

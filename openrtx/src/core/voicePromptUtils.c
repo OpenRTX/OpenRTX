@@ -33,7 +33,22 @@ static void vpPlayIfNeeded(VoicePromptQueueFlags_T flags)
 		vpPlay();
 }
 
-void announceChannelName(channel_t* channel, uint16_t channelIndex, VoicePromptQueueFlags_T flags)
+static void removeUnnecessaryZerosFromVoicePrompts(char *str)
+{
+	const int NUM_DECIMAL_PLACES = 1;
+	int len = strlen(str);
+	for(int i = len; i > 2; i--)
+	{
+		if ((str[i - 1] != '0') || (str[i - (NUM_DECIMAL_PLACES + 1)] == '.'))
+		{
+			str[i] = 0;
+			return;
+		}
+	}
+}
+
+void announceChannelName(channel_t* channel, uint16_t channelIndex, 
+VoicePromptQueueFlags_T flags)
 {
 	vpInitIfNeeded(flags);
 	
@@ -51,18 +66,31 @@ void announceChannelName(channel_t* channel, uint16_t channelIndex, VoicePromptQ
 	vpPlayIfNeeded(flags);
 }
 
+static void vpQueueFrequency(freq_t freq)
+{
+		char buffer[10];
+
+	snprintf(buffer, 10, "%d.%05d", (freq / 1000000), ((freq%1000000)/10));
+	removeUnnecessaryZerosFromVoicePrompts(buffer);
+	
+	vpQueueString(buffer);
+
+	vpQueuePrompt(PROMPT_MEGAHERTZ);
+}
+
 void announceFrequencies(freq_t rx, freq_t tx, VoicePromptQueueFlags_T flags)
 {
 	vpInitIfNeeded(flags);
-		// if rx and tx frequencies differ, announce both, otherwise just announce one.
+		// if rx and tx frequencies differ, announce both, otherwise just announce 
+		// one.
 	if rx==tx)
-		announceFrequency(rx);
+		vpQueueFrequency(rx);
 	else
 	{
 		vpQueuePrompt(PROMPT_RECEIVE);
-		announceFrequency(rx);
+		vpQueueFrequency(rx);
 		vpQueuePrompt(PROMPT_TRANSMIT);
-		announceFrequency(tx);
+		vpQueueFrequency(tx);
 	}
 	vpPlayIfNeeded(flags);
 } 
@@ -90,12 +118,15 @@ void announceRadioMode(uint8_t mode, VoicePromptQueueFlags_T flags)
 	vpPlayIfNeeded(flags);
 }
 
-void vpAnnounceChannelSummary(channel_t* channel, uint16_t channelIndex, bool init, VoicePromptQueueFlags_T flags)
+void vpAnnounceChannelSummary(channel_t* channel, uint16_t channelIndex, 
+VoicePromptQueueFlags_T flags)
 {
 	 	if (!channel) return;
-	vpInitIfNeeded(flags);
 		
-		VoicePromptQueueFlags_T localFlags=flags&vpqIncludeDescriptions; // mask off init and play because this function will handle init and play.
+	vpInitIfNeeded(flags);
+	
+	// mask off init and play because this function will handle init and play.
+	VoicePromptQueueFlags_T localFlags=flags&vpqIncludeDescriptions; 
 		
 	announceChannelName(channel, channelIndex, localFlags);
 	announceFrequencies(channel->rx_frequency , channel->tx_frequency, localFlags);

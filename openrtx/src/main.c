@@ -30,6 +30,7 @@
 #ifdef PLATFORM_LINUX
 #include <emulator/sdl_engine.h>
 #endif
+#include <voicePromptUtils.h>
 
 extern void *ui_task(void *arg);
 

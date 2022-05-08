@@ -1,9 +1,9 @@
 /***************************************************************************
- *   Copyright (C) 2019 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN,                            *
+ *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
+ *                         Niccolò Izzo IU2KIN                             *
+ *                         Frederik Saraci IU2NRO                          *
  *                         Silvano Seva IU2KWO                             *
- *                         Joseph Stephen VK7JS                            *
- *                         Roger Clark  VK3KYY                             *
+ *                         Joseph Stephen VK7JS                            * 
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
  *   the Free Software Foundation; either version 3 of the License, or     *
@@ -17,19 +17,14 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
- // This file contains functions for announcing radio operations using the 
- // building blocks in voicePrompts.h/c.
- #ifndef VOICE_PROMPT_UTILS_H_INCLUDED
-  #define VOICE_PROMPT_UTILS_H_INCLUDED
- 
- #include "core/voicePrompts.h"
+/*
+This string table's order must not be altered as voice prompts will be indexed in the same order as these strings.
+*/
 #include "ui/UIStrings.h"
-#include "cps.h"
+ #include "ui/EnglishStrings.h"
  
-void announceChannelName(channel_t* channel, uint16_t channelIndex, VoicePromptQueueFlags_T flags);
-void announceFrequencies(freq_t rx, freq_t tx, VoicePromptQueueFlags_T flags);
-void announceRadioMode(uint8_t mode, VoicePromptQueueFlags_T flags);
-void announceChannelSummary(channel_t* channel, uint16_t channelIndex,
-VoicePromptQueueFlags_T flags);
- 
-#endif //VOICE_PROMPT_UTILS_H_INCLUDED
+ // add more languages here.
+ const stringsTable_t languages[NUM_LANGUAGES]={ englishStrings };
+  // default to English.
+ const stringsTable_t* currentLanguage=&languages[0];
+

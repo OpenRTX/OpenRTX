@@ -20,6 +20,8 @@
 /*
 This string table's order must not be altered as voice prompts will be indexed in the same order as these strings.
 */
+#ifndef UIStrings_h_included
+#define UIStrings_h_included
 #define NUM_LANGUAGES 1
 
 typedef struct
@@ -29,13 +31,7 @@ typedef struct
 	const char* on;
 } stringsTable_t;
 
-const stringsTable_t englishStrings =
-{
-	.languageName="English",
-	.off = "OFF",
-	.on="ON",
-};
+extern const stringsTable_t languages[];
+extern const stringsTable_t* currentLanguage;
 
-const stringsTable_t languages[NUM_LANGUAGES]={englishStrings}; // add more languages here.
-const stringsTable_t* currentLanguage=&languages[0]; // default to English.
-
+#endif
