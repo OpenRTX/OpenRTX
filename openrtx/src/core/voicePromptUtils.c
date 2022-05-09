@@ -17,18 +17,21 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
  // This file contains functions for announcing radio functions using the building blocks in voicePrompts.h/c.
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
  
  #include "core/voicePromptUtils.h"
 
 static void vpInitIfNeeded(VoicePromptQueueFlags_T flags)
 {
-	if (flags&vpqInit)
+	if (flags & vpqInit)
 		vpInit();
 }
 
 static void vpPlayIfNeeded(VoicePromptQueueFlags_T flags)
 {
-	if (flags&vpqPlayImmediatley)
+	if (flags & vpqPlayImmediately)
 		vpPlay();
 }
 
@@ -51,7 +54,7 @@ VoicePromptQueueFlags_T flags)
 {
 	vpInitIfNeeded(flags);
 	
-	if (flags&vpqIncludeDescriptions)
+	if (flags & vpqIncludeDescriptions)
 	{
 		vpQueuePrompt(PROMPT_CHANNEL);
 	}
@@ -59,20 +62,24 @@ VoicePromptQueueFlags_T flags)
 	
 	// Only queue the name if it is not the same as the raw number.
 	// Otherwise the radio will say channel 1 1 for channel 1.
-	if (strcmp(atoi(channelIndex), channel->name) != 0)
-		vpQueueString(channel->name);
+	char numAsStr[16]="\0";
+    snprintf(numAsStr, 16, "%d", channelIndex);
+	if (strcmp(numAsStr, channel->name) != 0)
+		vpQueueString(channel->name, flags);
 	
 	vpPlayIfNeeded(flags);
 }
 
 static void vpQueueFrequency(freq_t freq)
 {
-		char buffer[10];
-
-	snprintf(buffer, 10, "%d.%05d", (freq / 1000000), ((freq%1000000)/10));
+		char buffer[16];
+	int mhz = (freq / 1000000);
+	int khz = ((freq%1000000) / 10);
+	
+	snprintf(buffer, 16, "%d.%05d", mhz, khz);
 	removeUnnecessaryZerosFromVoicePrompts(buffer);
 	
-	vpQueueString(buffer);
+	vpQueueString(buffer, vpAnnounceCommonSymbols);
 
 	vpQueuePrompt(PROMPT_MEGAHERTZ);
 }
@@ -80,7 +87,9 @@ static void vpQueueFrequency(freq_t freq)
 void announceFrequencies(freq_t rx, freq_t tx, VoicePromptQueueFlags_T flags)
 {
 	vpInitIfNeeded(flags);
-	if (rx==tx)
+		// if rx and tx frequencies differ, announce both, otherwise just announce 
+		// one.
+	if (rx == tx)
 		vpQueueFrequency(rx);
 	else
 	{
@@ -96,7 +105,7 @@ void announceRadioMode(uint8_t mode, VoicePromptQueueFlags_T flags)
 {
 	vpInitIfNeeded(flags);
 
-	if (flags&vpqIncludeDescriptions)
+	if (flags & vpqIncludeDescriptions)
 		vpQueuePrompt(PROMPT_MODE);
 	
 	switch(mode)
@@ -108,7 +117,7 @@ void announceRadioMode(uint8_t mode, VoicePromptQueueFlags_T flags)
 			vpQueuePrompt(PROMPT_FM);
 			break;
 		case OPMODE_M17:
-			vpQueuePrompt(PROMPT_M17);
+			vpQueueStringTableEntry(&currentLanguage->m17);
 			break;
 	}
 	
@@ -123,7 +132,7 @@ VoicePromptQueueFlags_T flags)
 	vpInitIfNeeded(flags);
 	
 	// mask off init and play because this function will handle init and play.
-	VoicePromptQueueFlags_T localFlags=flags&vpqIncludeDescriptions; 
+	VoicePromptQueueFlags_T localFlags=flags & vpqIncludeDescriptions; 
 		
 	announceChannelName(channel, channelIndex, localFlags);
 	announceFrequencies(channel->rx_frequency , channel->tx_frequency, localFlags);

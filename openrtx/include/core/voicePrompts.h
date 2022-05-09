@@ -18,6 +18,10 @@
  ***************************************************************************/
 #ifndef voice_prompts_h_included
 #define voice_prompts_h_included
+
+#include <datatypes.h>
+#include <stdbool.h>
+
 /*
 Please note, these prompts represent spoken words or phrases which are not in 
 the UI string table, for example letters of the alphabet, digits, and 
@@ -111,6 +115,7 @@ PROMPT_TRANSMIT, // Transmit
 PROMPT_MODE, // Mode
 PROMPT_DMR, // D M R
 PROMPT_FM, // F M
+PROMPT_CHARACTER, // character
 PROMPT_SPACE, // space
 PROMPT_PERCENT, // Percent
 PROMPT_POINT, // POINT
@@ -141,7 +146,6 @@ PROMPT_UNDERLINE, // underline
 PROMPT_CARET, // caret
 PROMPT_LEFT_BRACE, // left brace
 NUM_VOICE_PROMPTS,
-	__MAKE_ENUM_16BITS = INT16_MAX
 } voicePrompt_t;
 
 // PROMPT_VOICE_NAME is always the very last prompt after the indexed prompts 
@@ -176,7 +180,7 @@ void vpTick(void);
 void vpInit(void);
 // This function appends an individual prompt item to the prompt queue. 
 // This can be a single letter, number, or a phrase.
-void vpAppendPrompt(uint16_t prompt);
+void vpQueuePrompt(uint16_t prompt);
 // This function appends the spelling of a complete string to the queue.
 // It is used to pronounce strings for which we do not have a recorded voice 
 //prompt.

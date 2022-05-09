@@ -17,9 +17,13 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 #include <ctype.h>
 #include "core/voicePrompts.h"
 #include "ui/UIStrings.h"
+
 const uint32_t VOICE_PROMPTS_DATA_MAGIC = 0x5056;//'VP'
 const uint32_t VOICE_PROMPTS_DATA_VERSION = 0x1000; // v1000 OpenRTX
 // Must match the number of voice prompts allowed by the generator script.
@@ -81,7 +85,7 @@ void vpCacheInit(void)
 
 	if (vpCheckHeader((uint32_t *)&header))
 	{// ToDo see above 
-		voicePromptDataIsLoaded = SPI_Flash_read(VOICE_PROMPTS_FLASH_HEADER_ADDRESS + sizeof(voicePromptsDataHeader_t), (uint8_t *)&tableOfContents, sizeof(uint32_t) * VOICE_PROMPTS_TOC_SIZE);
+		voicePromptDataIsLoaded = false; //SPI_Flash_read(VOICE_PROMPTS_FLASH_HEADER_ADDRESS + sizeof(voicePromptsDataHeader_t), (uint8_t *)&tableOfContents, sizeof(uint32_t) * VOICE_PROMPTS_TOC_SIZE);
 		vpFlashDataAddress =  VOICE_PROMPTS_FLASH_HEADER_ADDRESS + sizeof(voicePromptsDataHeader_t) + sizeof(uint32_t)*VOICE_PROMPTS_TOC_SIZE ;
 	}
 
@@ -96,9 +100,11 @@ bool vpCheckHeader(uint32_t *bufferAddress)
 
 static void GetCodec2Data(int offset,int length)
 {
-	if (length <= Codec2DataBufferSize)
+	if ((offset >= 0) && (length <= Codec2DataBufferSize))
 	{// ToDo where are we reading this from?
-		SPI_Flash_read(vpFlashDataAddress + offset, (uint8_t *)&Codec2Data, length);
+		// Just so we can build,
+		;
+		//SPI_Flash_read(vpFlashDataAddress + offset, (uint8_t *)&Codec2Data, length);
 	}
 }
 
@@ -144,10 +150,10 @@ void vpTick(void)
 		{
 			promptTail--;
 
-			if ((promptTail == 0) && trxCarrierDetected() && (trxGetMode() == RADIO_MODE_ANALOG))
-			{// ToDo disable amp.
+			/*if ((promptTail == 0) && trxCarrierDetected() && (trxGetMode() == RADIO_MODE_ANALOG))
+			{// ToDo enable amp.
 				//GPIO_PinWrite(GPIO_RX_audio_mux, Pin_RX_audio_mux, 1); // Set the audio path to AT1846 -> audio amp.
-			}
+			}*/
 		}
 	}
 }
@@ -259,7 +265,7 @@ void vpQueueString(char *promptString, VoicePromptFlags_T flags)
 			else // announce ASCII
 			{
 				int32_t val = *promptString;
-				vpQueueLanguageString(&currentLanguage->dtmf_code); // just the word "code" as we don't have character.
+				vpQueuePrompt(PROMPT_CHARACTER); // just the word "code" as we don't have character.
 				vpQueueInteger(val);
 			}
 		}
@@ -276,7 +282,7 @@ void vpQueueString(char *promptString, VoicePromptFlags_T flags)
 void vpQueueInteger(int32_t value)
 {
 	char buf[12] = {0}; // min: -2147483648, max: 2147483647
-	itoa(value, buf, 10);
+    snprintf(buf, 12, "%d", value);
 	vpQueueString(buf, 0);
 }
 
@@ -290,7 +296,7 @@ void vpQueueStringTableEntry(const char * const *stringTableStringPtr)
 	{
 		return;
 	}
-	vpQueuePrompt(NUM_VOICE_PROMPTS + (stringTableStringPtr - currentLanguage->languageName));
+	vpQueuePrompt(NUM_VOICE_PROMPTS + (stringTableStringPtr - &currentLanguage->languageName));
 }
 
 void vpPlay(void)
