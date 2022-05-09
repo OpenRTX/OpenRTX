@@ -118,11 +118,11 @@ channels,,,Channels
 contacts,,,Contacts
 gps,,,GPS
 settings,,,Settings
-backupAndRestore,,,Backup & Restore
+backupAndRestore,,,Backup and Restore
 info,,,Info
 about,,,About
 display,,,Display
-timeAndDate,,,Time & Date
+timeAndDate,,,Time and Date
 m17,,,M17
 defaultSettings,,,Default Settings
 brightness,,,Brightness
@@ -133,14 +133,14 @@ gpsSetTime,,,GPS Set Time
 UTCTimeZone,,,UTC Timezone
 backup,,,Backup
 restore,,,Restore
-batteryVoltage,,,Bat. Voltage
-batteryCharge,,,Bat. Charge
+batteryVoltage,,,Batterty Voltage
+batteryCharge,,,Battery Charge
 RSSI,,,RSSI
 model,,,Model
 band,,,Band
 VHF,,,V H F
 UHF,,,U H F
-LCDType,,,LCD Type
+LCDType,,,L C D Type
 Niccolo,,,Niccolo' IU2KIN
 Silvano,,,Silvano IU2KWO
 Federico,,,Federico IU2NUO

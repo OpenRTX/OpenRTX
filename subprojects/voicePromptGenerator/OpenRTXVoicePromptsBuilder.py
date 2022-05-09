@@ -146,10 +146,10 @@ def wavSendData(ser,buf,radioStart,length):
         remaining -= transferSize
     return True
 
-def convert2AMBE(ser,infile,outfile):
+def convertToCodec2(ser,infile,outfile):
 
     with open(infile,'rb') as f:
-        ambBuf = bytearray(16*1024)# arbitary 16k buffer
+        Codec2Buf = bytearray(16*1024)# arbitary 16k buffer
         buf = bytearray(f.read())
         f.close();
         sendCommand(ser,0, 0, 0, 0, 0, 0, "")#show CPS screen as this disables the radio etc
@@ -157,8 +157,8 @@ def convert2AMBE(ser,infile,outfile):
         wavBufPos = 0
 
         bufLen = len(buf)
-        ambBufPos=0;
-        ambFrameBuf = bytearray(27)
+        Codec2BufPos=0;
+        Codec2FrameBuf = bytearray(27)
         startPos=0
         #if (infile[0:11] !="PROMPT_SPACE"):
         #    stripSilence = True;
@@ -169,7 +169,7 @@ def convert2AMBE(ser,infile,outfile):
             if (startPos == len(buf)):
                 startPos = 0
 
-        print("Compress to AMBE "+infile + " pos:+" + str(startPos));
+        print("Compress to Codec2 "+infile + " pos:+" + str(startPos));
 
         wavBufPos = startPos
 
@@ -180,14 +180,14 @@ def convert2AMBE(ser,infile,outfile):
             #print("sent " + str(transferLen));
             wavSendData(ser,buf[wavBufPos:wavBufPos+transferLen],0,transferLen)
 
-            getMemoryArea(ser,ambFrameBuf,8,0,0,27)# mode 8 is read from AMBE
-            ambBuf[ambBufPos:ambBufPos+27] = ambFrameBuf
+            getMemoryArea(ser,Codec2FrameBuf,8,0,0,27)# mode 8 is read from Codec2
+            Codec2Buf[Codec2BufPos:Codec2BufPos+27] = Codec2FrameBuf
             wavBufPos = wavBufPos + 960
-            ambBufPos = ambBufPos + 27
+            Codec2BufPos = Codec2BufPos + 27
 
         sendCommand(ser,5, 0, 0, 0, 0, 0, "")# close CPS screen
         with open(outfile,'wb') as f:
-            f.write(ambBuf[0:ambBufPos])
+            f.write(Codec2Buf[0:Codec2BufPos])
 
         #print("")#newline
 
@@ -216,7 +216,7 @@ def downloadPollyPro(voiceName,fileStub,promptText,speechSpeed):
 
     mp3FileName = voiceName + "/" +fileStub+".mp3"
     rawFileName = voiceName + "/" +fileStub+".raw"
-    m17Filename = voiceName + "/" +fileStub+".m17"
+    Codec2Filename = voiceName + "/" +fileStub+".co2"
     if (not os.path.exists(mp3FileName) or overwrite==True):
         with urllib.request.urlopen("https://voicepolly.pro/speech-converter.php", data) as f:
             resp = f.read().decode('utf-8')
@@ -235,8 +235,8 @@ def downloadPollyPro(voiceName,fileStub,promptText,speechSpeed):
 
     if (hasDownloaded == True or not os.path.exists(rawFileName) or overwrite == True):
         convertToRaw(mp3FileName,rawFileName)
-        if (os.path.exists(m17Filename)):
-            os.remove(m17Filename)# ambe file is now out of date, so delete it
+        if (os.path.exists(Codec2Filename)):
+            os.remove(Codec2Filename)# Codec2 file is now out of date, so delete it
 
     return retval
 
@@ -252,7 +252,7 @@ def downloadTTSMP3(voiceName,fileStub,promptText):
 
     mp3FileName = voiceName + "/" +fileStub+".mp3"
     rawFileName = voiceName + "/" +fileStub+".raw"
-    m17Filename = voiceName + "/" +fileStub+".m17"
+    Codec2Filename = voiceName + "/" +fileStub+".co2"
     hasDownloaded = False
 
     if (not os.path.exists(mp3FileName) or overwrite==True):
@@ -278,8 +278,8 @@ def downloadTTSMP3(voiceName,fileStub,promptText):
 
     if (hasDownloaded == True or not os.path.exists(rawFileName) or overwrite == True):
         convertToRaw(mp3FileName,rawFileName)
-        if (os.path.exists(m17Filename)):
-            os.remove(m17Filename)# ambe file is now out of date, so delete it
+        if (os.path.exists(Codec2Filename)):
+            os.remove(Codec2Filename)# codec2 file is now out of date, so delete it
 
     return True
 
@@ -318,8 +318,8 @@ def downloadSpeechForWordList(filename,voiceName):
 
 
 def encodeFile(ser,fileStub):
-    if ((not os.path.exists(fileStub+".m17")) or overwrite==True):
-        convert2AMBE(ser,fileStub+".raw",fileStub+".m17")
+    if ((not os.path.exists(fileStub+".co2")) or overwrite==True):
+        convertToCodec2(ser,fileStub+".raw",fileStub+".co2")
         #os.remove(fileStub+".raw")
 ##    else:
 ##       print("Encode skipping " + fileStub)
@@ -344,12 +344,12 @@ def buildDataPack(filename,voiceName,outputFileName):
         reader = csv.DictReader(filter(lambda row: row[0]!='#', csvfile))
         for row in reader:
             promptName = row['PromptName'].strip()
-            infile = voiceName+"/" + promptName+".m17"
+            infile = voiceName+"/" + promptName+".co2"
             with open(infile,'rb') as f:
                 promptsDict[promptName] = bytearray(f.read())
                 f.close()
         promptName = "PROMPT_VOICE_NAME"
-        infile = voiceName+"/" + promptName+".m17"
+        infile = voiceName+"/" + promptName+".co2"
         with open(infile,'rb') as f:
             promptsDict[promptName] = bytearray(f.read())
             f.close()
@@ -506,15 +506,16 @@ def main():
                 if (download=='y' or download=='Y'):
                     if (downloadSpeechForWordList(wordlistFilename,voiceName)==False):
                      sys.exit(2)
+# Encode to codec2 here.
+                #if (encode=='y' or encode=='Y'):
+                    #ser = serialInit(serialDev)
 
-                if (encode=='y' or encode=='Y'):
-                    ser = serialInit(serialDev)
-
-                    encodeWordList(ser,wordlistFilename,voiceName,True)
-                    if (ser.is_open):
-                        ser.close()
-                if (createPack=='y' or createPack=='Y'):
-                    buildDataPack(wordlistFilename,voiceName,voicePackName)
+                    #encodeWordList(ser,wordlistFilename,voiceName,True)
+                    #if (ser.is_open):
+                        #ser.close()
+                        # call buildDataPack once the codec2 conversion has been implemented.
+                #if (createPack=='y' or createPack=='Y'):
+                    #buildDataPack(wordlistFilename,voiceName,voicePackName)
 
         sys.exit(0)
 
