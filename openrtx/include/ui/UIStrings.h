@@ -19,6 +19,7 @@
  ***************************************************************************/
 /*
 This string table's order must not be altered as voice prompts will be indexed in the same order as these strings.
+Also, menus may be printed using string table offsets.
 */
 #ifndef UIStrings_h_included
 #define UIStrings_h_included
@@ -62,6 +63,20 @@ typedef struct
 	const char* Federico;
 	const char* Fred;
 	const char* Joseph;
+	const char* allChannels;
+	const char* menu;
+	const char* gpsOff;
+	const char* noFix;
+	const char* fixLost;
+	const char* error;
+	const char* flashBackup;
+	const char* connectToRTXTool;
+	const char* toBackupFlashAnd;
+	const char* pressPTTToStart;
+	const char* flashRestore;
+	const char* toRestoreFlashAnd;
+	const char* openRTX;
+	const char* gpsSettings;
 } stringsTable_t;
 
 extern const stringsTable_t languages[];
