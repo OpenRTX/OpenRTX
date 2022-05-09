@@ -74,9 +74,9 @@ void dsp_dcRemoval(filter_state_t *state, audio_sample_t *buffer, size_t length)
 {
     /*
      * Removal of DC component performed using an high-pass filter with
-     * transfer function G(z) = (z - 1)/(z - 0.99).
+     * transfer function G(z) = (z - 1)/(z - 0.999).
      * Recursive implementation of the filter is:
-     * y(k) = u(k) - u(k-1) + 0.99*y(k-1)
+     * y(k) = u(k) - u(k-1) + 0.999*y(k-1)
      */
 
     if(length < 2) return;
@@ -87,7 +87,7 @@ void dsp_dcRemoval(filter_state_t *state, audio_sample_t *buffer, size_t length)
         state->initialised = true;
     }
 
-    static constexpr float alpha = 0.99f;
+    static constexpr float alpha = 0.999f;
 
     for(size_t i = 1; i < length; i++)
     {
