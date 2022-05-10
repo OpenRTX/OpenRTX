@@ -23,6 +23,7 @@
 #include <stdint.h>
 #include <ui.h>
 #include <string.h>
+#include "ui/UIStrings.h"
 
 void _ui_drawMainBackground()
 {
@@ -74,12 +75,13 @@ void _ui_drawMainTop()
 void _ui_drawZoneChannel()
 {
     // Print Zone name
-    if(!last_state.zone_enabled)
-        gfx_print(layout.line1_pos, layout.line1_font, TEXT_ALIGN_LEFT,
-                  color_white, "zone: All channels");
-    else
-        gfx_print(layout.line1_pos, layout.line1_font, TEXT_ALIGN_LEFT,
-                  color_white,  "zone: %.13s", last_state.zone.name);
+	char buf[16] = "\0";
+	snprintf(buf, 16, "%s: %.13s", currentLanguage->zone, last_state.zone_enabled 
+	? last_state.zone.name 
+	: currentLanguage->allChannels);
+	
+	gfx_print(layout.line1_pos, layout.line1_font, TEXT_ALIGN_LEFT,
+                  color_white, buf);
     // Print Channel name
     gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_LEFT,
               color_white, "  %03d: %.12s",
