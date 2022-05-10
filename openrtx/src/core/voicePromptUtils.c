@@ -48,6 +48,14 @@ static void removeUnnecessaryZerosFromVoicePrompts(char *str)
 		}
 	}
 }
+void announceVFO()
+{
+	vpInit();
+	
+	vpQueuePrompt(PROMPT_VFO);
+	
+	vpPlay();	
+}
 
 void announceChannelName(channel_t* channel, uint16_t channelIndex, 
 VoicePromptQueueFlags_T flags)
@@ -111,10 +119,10 @@ void announceRadioMode(uint8_t mode, VoicePromptQueueFlags_T flags)
 	switch(mode)
 	{
 		case OPMODE_DMR:
-			vpQueueStringTableEntry(currentLanguage->dmr);
+			vpQueueStringTableEntry(&currentLanguage->dmr);
 			break;
 		case OPMODE_FM:
-			vpQueueStringTableEntry(currentLanguage->fm);
+			vpQueueStringTableEntry(&currentLanguage->fm);
 			break;
 		case OPMODE_M17:
 			vpQueueStringTableEntry(&currentLanguage->m17);
@@ -141,3 +149,45 @@ VoicePromptQueueFlags_T flags)
 	vpPlayIfNeeded(flags);
 }
  
+void AnnounceInputChar(char ch)
+{
+	char buf[2] = "\0";
+	buf[0] = ch;
+	
+		vpInit();
+		
+	uint8_t flags = vpAnnounceCaps | vpAnnounceSpace | vpAnnounceCommonSymbols | vpAnnounceLessCommonSymbols;
+		
+	vpQueueString(buf, flags);
+	
+	vpPlay();
+}
+
+void announceInputReceiveOrTransmit(bool tx, VoicePromptQueueFlags_T flags)
+{
+	vpInitIfNeeded(flags);
+	
+	if (tx)
+		vpQueuePrompt(PROMPT_TRANSMIT);
+	else
+		vpQueuePrompt(PROMPT_RECEIVE);
+		
+	vpPlayIfNeeded(flags);
+}
+
+void ReplayLastPrompt()
+{
+	if (vpIsPlaying())
+		vpTerminate();
+	else
+		vpPlay();
+}
+
+void announceError()
+{
+	vpInit();
+		
+	vpQueueStringTableEntry(&currentLanguage->error);
+	
+	vpPlay();
+}	
