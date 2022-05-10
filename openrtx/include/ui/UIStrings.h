@@ -77,6 +77,12 @@ typedef struct
 	const char* toRestoreFlashAnd;
 	const char* openRTX;
 	const char* gpsSettings;
+	const char* callsign;
+	const char* m17settings;
+	const char* resetToDefaults;
+	const char* toReset;
+	const char* pressEnterTwice;
+	const char* macroMenu;
 } stringsTable_t;
 
 extern const stringsTable_t languages[];

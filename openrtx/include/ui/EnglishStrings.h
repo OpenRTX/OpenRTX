@@ -72,5 +72,11 @@ const stringsTable_t englishStrings =
 	.toRestoreFlashAnd = "to restore flash and",
 	.openRTX = "OpenRTX",
 	.gpsSettings = "GPS Settings",
+	.m17settings = "M17 Settings",
+	.callsign = "Callsign:",
+	.resetToDefaults = "Reset to Defaults",
+	.toReset = "To reset:",
+	.pressEnterTwice = "Press Enter twice",
+	.macroMenu = "Macro Menu",
 };
 #endif //EnglishStrings_h_included

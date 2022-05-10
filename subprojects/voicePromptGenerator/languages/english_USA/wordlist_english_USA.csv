@@ -161,3 +161,9 @@ flashRestore,,,Flash restore
 toRestoreFlashAnd,,,to restore flash and
 openRTX,,,Open R T X
 gpsSettings,,,GPS Settings
+m17settings,,,M17 Settings
+callsign,,,Callsign
+resetToDefaults,,,Reset to Defaults
+toReset,,,To reset
+pressEnterTwice,,,Press Enter twice.
+macroMenu,,,Macro Menu
