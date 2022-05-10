@@ -25,11 +25,14 @@
  #include "voicePrompts.h"
 #include "ui/UIStrings.h"
 #include "cps.h"
- 
+void announceVFO();
 void announceChannelName(channel_t* channel, uint16_t channelIndex, VoicePromptQueueFlags_T flags);
 void announceFrequencies(freq_t rx, freq_t tx, VoicePromptQueueFlags_T flags);
 void announceRadioMode(uint8_t mode, VoicePromptQueueFlags_T flags);
 void announceChannelSummary(channel_t* channel, uint16_t channelIndex,
 VoicePromptQueueFlags_T flags);
- 
+void AnnounceInputChar(char ch);
+void announceInputReceiveOrTransmit(bool tx, VoicePromptQueueFlags_T flags);
+void ReplayLastPrompt();
+void announceError();
 #endif //VOICE_PROMPT_UTILS_H_INCLUDED

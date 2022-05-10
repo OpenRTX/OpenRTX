@@ -3,7 +3,6 @@
  *                         Niccolò Izzo IU2KIN,                            *
  *                         Silvano Seva IU2KWO                             *
  *                         Joseph Stephen VK7JS                            *
- *                         Roger Clark  VK3KYY                             *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
  *   the Free Software Foundation; either version 3 of the License, or     *
@@ -48,6 +47,14 @@ static void removeUnnecessaryZerosFromVoicePrompts(char *str)
 			return;
 		}
 	}
+}
+void announceVFO()
+{
+	vpInit();
+	
+	vpQueuePrompt(PROMPT_VFO);
+	
+	vpPlay();	
 }
 
 void announceChannelName(channel_t* channel, uint16_t channelIndex, 
@@ -112,10 +119,10 @@ void announceRadioMode(uint8_t mode, VoicePromptQueueFlags_T flags)
 	switch(mode)
 	{
 		case DMR:
-			vpQueueStringTableEntry(currentLanguage->dmr);
+			vpQueueStringTableEntry(&currentLanguage->dmr);
 			break;
 		case FM:
-			vpQueueStringTableEntry(currentLanguage->fm);
+			vpQueueStringTableEntry(&currentLanguage->fm);
 			break;
 		case M17:
 			vpQueueStringTableEntry(&currentLanguage->m17);
@@ -141,4 +148,46 @@ VoicePromptQueueFlags_T flags)
 	
 	vpPlayIfNeeded(flags);
 }
- 
+
+void AnnounceInputChar(char ch)
+{
+	char buf[2] = "\0";
+	buf[0] = ch;
+	
+		vpInit();
+		
+	uint8_t flags = vpAnnounceCaps | vpAnnounceSpace | vpAnnounceCommonSymbols | vpAnnounceLessCommonSymbols;
+		
+	vpQueueString(buf, flags);
+	
+	vpPlay();
+}
+
+void announceInputReceiveOrTransmit(bool tx, VoicePromptQueueFlags_T flags)
+{
+	vpInitIfNeeded(flags);
+	
+	if (tx)
+		vpQueuePrompt(PROMPT_TRANSMIT);
+	else
+		vpQueuePrompt(PROMPT_RECEIVE);
+		
+	vpPlayIfNeeded(flags);
+}
+
+void ReplayLastPrompt()
+{
+	if (vpIsPlaying())
+		vpTerminate();
+	else
+		vpPlay();
+}
+
+void announceError()
+{
+	vpInit();
+		
+	vpQueueStringTableEntry(&currentLanguage->error);
+	
+	vpPlay();
+}	
