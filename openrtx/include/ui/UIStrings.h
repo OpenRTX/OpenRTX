@@ -40,7 +40,9 @@ typedef struct
 	const char* about;
 	const char* display;
 	const char* timeAndDate;
+	const char* fm;
 	const char* m17;
+	const char* dmr;
 	const char* defaultSettings;
 	const char* brightness;
 	const char* contrast;
@@ -77,6 +79,12 @@ typedef struct
 	const char* toRestoreFlashAnd;
 	const char* openRTX;
 	const char* gpsSettings;
+	const char* callsign;
+	const char* m17settings;
+	const char* resetToDefaults;
+	const char* toReset;
+	const char* pressEnterTwice;
+	const char* macroMenu;
 } stringsTable_t;
 
 extern const stringsTable_t languages[];

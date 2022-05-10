@@ -113,8 +113,6 @@ PROMPT_WATTS, // Watts
 PROMPT_RECEIVE, // Receive
 PROMPT_TRANSMIT, // Transmit
 PROMPT_MODE, // Mode
-PROMPT_DMR, // D M R
-PROMPT_FM, // F M
 PROMPT_CHARACTER, // character
 PROMPT_SPACE, // space
 PROMPT_PERCENT, // Percent

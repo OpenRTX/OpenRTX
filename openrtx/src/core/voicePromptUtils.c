@@ -111,10 +111,10 @@ void announceRadioMode(uint8_t mode, VoicePromptQueueFlags_T flags)
 	switch(mode)
 	{
 		case OPMODE_DMR:
-			vpQueuePrompt(PROMPT_DMR);
+			vpQueueStringTableEntry(currentLanguage->dmr);
 			break;
 		case OPMODE_FM:
-			vpQueuePrompt(PROMPT_FM);
+			vpQueueStringTableEntry(currentLanguage->fm);
 			break;
 		case OPMODE_M17:
 			vpQueueStringTableEntry(&currentLanguage->m17);

@@ -35,7 +35,9 @@ const stringsTable_t englishStrings =
 	.about = "About",
 	.display = "Display",
 	.timeAndDate = "Time & Date",
+	.fm = "FM",
 	.m17 = "M17",
+	.dmr = "DMR",
 	.defaultSettings = "Default Settings",
 	.brightness = "Brightness",
 	.contrast = "Contrast",
@@ -72,5 +74,11 @@ const stringsTable_t englishStrings =
 	.toRestoreFlashAnd = "to restore flash and",
 	.openRTX = "OpenRTX",
 	.gpsSettings = "GPS Settings",
+	.m17settings = "M17 Settings",
+	.callsign = "Callsign:",
+	.resetToDefaults = "Reset to Defaults",
+	.toReset = "To reset:",
+	.pressEnterTwice = "Press Enter twice",
+	.macroMenu = "Macro Menu",
 };
 #endif //EnglishStrings_h_included

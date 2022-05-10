@@ -611,10 +611,10 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
     gfx_clearScreen();
     // Print "M17 Settings" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, "M17 Settings");
+              color_white, currentLanguage->m17settings);
     gfx_printLine(1, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
                   layout.horizontal_pad, layout.menu_font,
-                  TEXT_ALIGN_LEFT, color_white, "Callsign:");
+                  TEXT_ALIGN_LEFT, color_white, currentLanguage->callsign);
     if(ui_state->edit_mode)
     {
         uint16_t rect_width = SCREEN_WIDTH - (layout.horizontal_pad * 2);
@@ -645,29 +645,31 @@ void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state)
 
     gfx_clearScreen();
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, "Reset to Defaults");
+              color_white, currentLanguage->resetToDefaults);
 
     // Make text flash yellow once every 1s
     color_t textcolor = drawcnt % 2 == 0 ? color_white : yellow_fab413;
     gfx_printLine(1, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
                   layout.horizontal_pad, layout.top_font,
-                  TEXT_ALIGN_CENTER, textcolor, "To reset:");
+                  TEXT_ALIGN_CENTER, textcolor, currentLanguage->toReset);
     gfx_printLine(2, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
                   layout.horizontal_pad, layout.top_font,
-                  TEXT_ALIGN_CENTER, textcolor, "Press Enter twice");
+                  TEXT_ALIGN_CENTER, textcolor, currentLanguage->pressEnterTwice);
 
     if((getTick() - lastDraw) > 1000)
     {
         drawcnt++;
         lastDraw = getTick();
     }
+
+    drawcnt++;
 }
 
 bool _ui_drawMacroMenu()
 {
         // Header
         gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-                  color_white, "Macro Menu");
+                  color_white, currentLanguage->macroMenu);
         // First row
         if (last_state.channel.mode == OPMODE_FM)
         {
