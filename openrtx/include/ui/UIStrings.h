@@ -40,7 +40,9 @@ typedef struct
 	const char* about;
 	const char* display;
 	const char* timeAndDate;
+	const char* fm;
 	const char* m17;
+	const char* dmr;
 	const char* defaultSettings;
 	const char* brightness;
 	const char* contrast;

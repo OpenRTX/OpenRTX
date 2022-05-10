@@ -59,15 +59,15 @@ void _ui_drawMainTop()
     {
         case FM:
         gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT,
-                  color_white, "FM");
+                  color_white, currentLanguage->fm);
         break;
         case DMR:
         gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT,
-                  color_white, "DMR");
+                  color_white, currentLanguage->dmr);
         break;
         case M17:
         gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT,
-                  color_white, "M17");
+                  color_white, currentLanguage->m17);
         break;
     }
 }

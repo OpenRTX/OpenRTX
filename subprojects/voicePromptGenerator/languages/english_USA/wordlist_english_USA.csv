@@ -78,8 +78,6 @@ PROMPT_WATTS,,,Watts
 PROMPT_RECEIVE,,,Receive
 PROMPT_TRANSMIT,,,Transmit
 PROMPT_MODE,,,Mode
-PROMPT_DMR,,,D M R
-PROMPT_FM,,,F M
 PROMPT_CHARACTER,,,character
 PROMPT_SPACE,,,space
 PROMPT_PERCENT,,,Percent
@@ -124,7 +122,9 @@ info,,,Info
 about,,,About
 display,,,Display
 timeAndDate,,,Time and Date
+fm,,,F M
 m17,,,M17
+dmr,,,D M R
 defaultSettings,,,Default Settings
 brightness,,,Brightness
 contrast,,,Contrast
