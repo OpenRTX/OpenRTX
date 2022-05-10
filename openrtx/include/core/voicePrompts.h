@@ -181,7 +181,7 @@ typedef enum
 	vpHigh
 } VoicePromptVerbosity_T;
 
-extern bool voicePromptDataIsLoaded;
+extern bool vpDataIsLoaded;
 extern const uint32_t VOICE_PROMPTS_FLASH_HEADER_ADDRESS;
 extern VoicePromptVerbosity_T vpLevel;
 // Loads just the TOC from Flash and stores in RAM for fast access.

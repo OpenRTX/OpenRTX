@@ -48,7 +48,7 @@ static uint32_t vpFlashDataAddress;// = VOICE_PROMPTS_FLASH_HEADER_ADDRESS + siz
 // 76 x 27 byte Codec2 frames
 #define Codec2DataBufferSize  2052
 
-bool voicePromptDataIsLoaded = false;
+bool vpDataIsLoaded = false;
  VoicePromptVerbosity_T vpLevel = vpHigh;
 
 static bool voicePromptIsActive = false;
@@ -87,10 +87,11 @@ void vpCacheInit(void)
 
 	if (vpCheckHeader((uint32_t *)&header))
 	{// ToDo see above 
-		voicePromptDataIsLoaded = false; //SPI_Flash_read(VOICE_PROMPTS_FLASH_HEADER_ADDRESS + sizeof(voicePromptsDataHeader_t), (uint8_t *)&tableOfContents, sizeof(uint32_t) * VOICE_PROMPTS_TOC_SIZE);
+		vpDataIsLoaded = false; //SPI_Flash_read(VOICE_PROMPTS_FLASH_HEADER_ADDRESS + sizeof(voicePromptsDataHeader_t), (uint8_t *)&tableOfContents, sizeof(uint32_t) * VOICE_PROMPTS_TOC_SIZE);
 		vpFlashDataAddress =  VOICE_PROMPTS_FLASH_HEADER_ADDRESS + sizeof(voicePromptsDataHeader_t) + sizeof(uint32_t)*VOICE_PROMPTS_TOC_SIZE ;
 	}
-
+	if (!vpDataIsLoaded)
+		vpLevel = vpNone;
 }
 
 bool vpCheckHeader(uint32_t *bufferAddress)
