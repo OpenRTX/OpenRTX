@@ -145,7 +145,6 @@ private:
     uint16_t     frame_index;      ///< Index for filling the raw frame.
     frame_t      *activeFrame;     ///< Half frame, in demodulation.
     frame_t      *idleFrame;       ///< Half frame, free to be processed.
-    bool         isLSF;            ///< Indicates that we demodualated an LSF.
     bool         syncDetected;     ///< A syncword was detected.
     bool         locked;           ///< A syncword was correctly demodulated.
     bool         newFrame;         ///< A new frame has been fully decoded.
