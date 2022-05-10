@@ -48,6 +48,8 @@ static uint32_t vpFlashDataAddress;// = VOICE_PROMPTS_FLASH_HEADER_ADDRESS + siz
 #define Codec2DataBufferSize  2052
 
 bool voicePromptDataIsLoaded = false;
+ VoicePromptVerbosity_T vpLevel = vpHigh;
+
 static bool voicePromptIsActive = false;
 // Uninitialized is -1.
 static int promptDataPosition = -1;
@@ -185,6 +187,9 @@ void vpInit(void)
 
 void vpQueuePrompt(uint16_t prompt)
 {
+	if (vpLevel < vpLow) 
+		return;
+	
 	if (voicePromptIsActive)
 	{
 		vpInit();
@@ -224,6 +229,9 @@ VoicePromptFlags_T flags, voicePrompt_t* vp)
 // This function spells out a string letter by letter.
 void vpQueueString(char *promptString, VoicePromptFlags_T flags)
 {
+	if (vpLevel < vpLow) 
+		return;
+
 	if (voicePromptIsActive)
 	{
 		vpInit();
@@ -280,6 +288,9 @@ void vpQueueString(char *promptString, VoicePromptFlags_T flags)
 
 void vpQueueInteger(int32_t value)
 {
+	if (vpLevel < vpLow) 
+		return;
+
 	char buf[12] = {0}; // min: -2147483648, max: 2147483647
 	itoa(value, buf, 10);
 	vpQueueString(buf, 0);
@@ -291,6 +302,9 @@ void vpQueueInteger(int32_t value)
 // NUM_VOICE_PROMPTS + (stringTableStringPtr - currentLanguage->languageName)
 void vpQueueStringTableEntry(const char * const *stringTableStringPtr)
 {
+	if (vpLevel < vpLow) 
+		return;
+
 	if (stringTableStringPtr == NULL)
 	{
 		return;
@@ -300,6 +314,9 @@ void vpQueueStringTableEntry(const char * const *stringTableStringPtr)
 
 void vpPlay(void)
 {
+	if (vpLevel < vpLow) 
+		return;
+
 	if ((voicePromptIsActive == false) && (vpCurrentSequence.Length > 0))
 	{
 		voicePromptIsActive = true;// Start the playback

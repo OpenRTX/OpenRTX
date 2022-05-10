@@ -140,8 +140,10 @@ VoicePromptQueueFlags_T flags)
 	vpInitIfNeeded(flags);
 	
 	// mask off init and play because this function will handle init and play.
-	VoicePromptQueueFlags_T localFlags=flags & vpqIncludeDescriptions; 
-		
+	VoicePromptQueueFlags_T localFlags=flags & ~(vpqInit | vpqPlayImmediately); 
+	if (vpLevel == vpHigh)
+		localFlags |= vpqIncludeDescriptions;
+	
 	announceChannelName(channel, channelIndex, localFlags);
 	announceFrequencies(channel->rx_frequency , channel->tx_frequency, localFlags);
 	announceRadioMode(channel->mode,  localFlags);
