@@ -172,8 +172,18 @@ typedef enum
 	vpqIncludeDescriptions=0x04
 } VoicePromptQueueFlags_T;
 
+typedef enum
+{
+	vpNone=0,
+	vpBeep,
+	vpLow,
+	vpMedium,
+	vpHigh
+} VoicePromptVerbosity_T;
+
 extern bool voicePromptDataIsLoaded;
 extern const uint32_t VOICE_PROMPTS_FLASH_HEADER_ADDRESS;
+extern VoicePromptVerbosity_T vpLevel;
 // Loads just the TOC from Flash and stores in RAM for fast access.
 void vpCacheInit(void);
 // event driven to play a voice prompt in progress.
