@@ -271,11 +271,6 @@ const frame_t& M17Demodulator::getFrame()
     return *activeFrame;
 }
 
-bool M17Demodulator::isFrameLSF()
-{
-    return isLSF;
-}
-
 bool M17::M17Demodulator::isLocked()
 {
     return locked;
@@ -324,7 +319,6 @@ bool M17Demodulator::update()
                 if (syncword.index != -1) // Valid syncword found
                 {
                     syncDetected = true;
-                    isLSF  = syncword.lsf;
                     offset = syncword.index + 1;
                     phase = 0;
                     frame_index = 0;
@@ -402,7 +396,7 @@ bool M17Demodulator::update()
                                                          lsf_syncword_bytes[1]);
 
                     // Too many errors in the syncword, lock is lost
-                    if ((hammingSync > 1) && (hammingLsf > 1))
+                    if ((hammingSync > 4) && (hammingLsf > 4))
                     {
                         syncDetected = false;
                         locked = false;

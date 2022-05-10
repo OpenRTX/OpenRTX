@@ -65,7 +65,9 @@ M17FrameType M17FrameDecoder::decodeFrame(const frame_t& frame)
     }
 
     // Stream data frame
-    if(syncWord == STREAM_SYNC_WORD)
+    uint8_t hd = __builtin_popcount(syncWord[0] ^ STREAM_SYNC_WORD[0])
+               + __builtin_popcount(syncWord[1] ^ STREAM_SYNC_WORD[1]);
+    if(hd <= 4)
     {
         decodeStream(data);
         return M17FrameType::STREAM;
