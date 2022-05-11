@@ -167,6 +167,7 @@ typedef enum
 
 typedef enum
 {
+	vpqDefault = 0,
 	vpqInit=0x01, // stop any voice prompts already in progress.
 	vpqPlayImmediately=0x02, // call play after queue.
 	vpqIncludeDescriptions=0x04

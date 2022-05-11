@@ -78,7 +78,7 @@ VoicePromptQueueFlags_T flags)
 	vpPlayIfNeeded(flags);
 }
 
-static void vpQueueFrequency(freq_t freq)
+void vpQueueFrequency(freq_t freq)
 {
 		char buffer[16];
 	int mhz = (freq / 1000000);
@@ -185,11 +185,11 @@ void ReplayLastPrompt()
 		vpPlay();
 }
 
-void announceError()
+void announceError(VoicePromptQueueFlags_T flags)
 {
-	vpInit();
+	vpInitIfNeeded(flags);
 		
 	vpQueueStringTableEntry(&currentLanguage->error);
 	
-	vpPlay();
+	vpPlayIfNeeded(flags);
 }	
