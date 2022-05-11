@@ -126,7 +126,7 @@ void radio_setOpmode(const enum opmode mode)
         case OPMODE_M17:
             at1846s.setOpMode(AT1846S_OpMode::DMR); // AT1846S in DMR mode, disables RX filter
             C6000.fmMode();                         // HR_C6000 in FM mode
-            C6000.setInputGain(+3);                 // Input gain in dB, found experimentally
+            C6000.setInputGain(+6);                 // Input gain in dB, found experimentally
             break;
 
         default:
