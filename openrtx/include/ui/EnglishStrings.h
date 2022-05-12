@@ -80,5 +80,7 @@ const stringsTable_t englishStrings =
 	.toReset = "To reset:",
 	.pressEnterTwice = "Press Enter twice",
 	.macroMenu = "Macro Menu",
+	.forEmergencyUse = "For emergency use",
+	.pressAnyButton = "press any button.",
 };
 #endif //EnglishStrings_h_included

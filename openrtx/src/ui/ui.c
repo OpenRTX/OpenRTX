@@ -418,7 +418,7 @@ void ui_drawSplashScreen(bool centered)
         splash_origin.y = SCREEN_HEIGHT / 2 + 6;
     else
         splash_origin.y = SCREEN_HEIGHT / 4;
-    gfx_print(splash_origin, FONT_SIZE_12PT, TEXT_ALIGN_CENTER, yellow_fab413, "OpenRTX");
+    gfx_print(splash_origin, FONT_SIZE_12PT, TEXT_ALIGN_CENTER, yellow_fab413, currentLanguage->openRTX);
     #else
     if(centered)
         splash_origin.y = SCREEN_HEIGHT / 2 - 6;
@@ -442,12 +442,12 @@ void _ui_drawLowBatteryScreen()
               FONT_SIZE_6PT,
               TEXT_ALIGN_CENTER,
               color_white,
-              "For emergency use");
+              currentLanguage->forEmergencyUse);
     gfx_print(text_pos_2,
               FONT_SIZE_6PT,
               TEXT_ALIGN_CENTER,
               color_white,
-              "press any button.");
+              currentLanguage->pressAnyButton);
 }
 
 freq_t _ui_freq_add_digit(freq_t freq, uint8_t pos, uint8_t number)

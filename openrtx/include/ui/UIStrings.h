@@ -85,6 +85,8 @@ typedef struct
 	const char* toReset;
 	const char* pressEnterTwice;
 	const char* macroMenu;
+	const char* forEmergencyUse;
+	const char* pressAnyButton;
 } stringsTable_t;
 
 extern const stringsTable_t languages[];
