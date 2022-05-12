@@ -29,10 +29,11 @@
 #include <interfaces/delays.h>
 #include <memory_profiling.h>
 #include <ui/UIStrings.h>
+#include <core/voicePromptUtils.h>
 
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBottom();
-
+static int priorMenuIndex = -1;
 const char *display_timer_values[] =
 {
     "Off",
@@ -52,6 +53,31 @@ const char *display_timer_values[] =
     "45 min",
     "1 hour"
 };
+
+bool DidSelectedMenuItemChange(uint8_t index)
+{
+	if (priorMenuIndex == -1)
+		return true;
+	bool result = index != priorMenuIndex;
+	priorMenuIndex = index;
+	return result;
+}
+
+static void announceMenuItemIfNeeded(uint8_t index, char* name, char* value)
+{
+	if (!name || !*name)
+		return;
+
+	if (!DidSelectedMenuItemChange(index))
+		return;
+
+	announceText(name, vpqInit);
+
+	if (value && *value)
+		announceText(name, vpqDefault);
+
+	vpPlay();
+}
 
 void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_t max_len, uint8_t index))
 {
@@ -77,6 +103,7 @@ void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_
                 // Draw rectangle under selected item, compensating for text height
                 point_t rect_pos = {0, pos.y - layout.menu_h + 3};
                 gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.menu_h, color_white, true);
+				announceMenuItemIfNeeded(item+scroll, entry_buf, NULL);
             }
             gfx_print(pos, layout.menu_font, TEXT_ALIGN_LEFT, text_color, entry_buf);
             pos.y += layout.menu_h;
@@ -120,6 +147,11 @@ void _ui_drawMenuListValue(ui_state_t* ui_state, uint8_t selected,
                 }
                 point_t rect_pos = {0, pos.y - layout.menu_h + 3};
                 gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.menu_h, color_white, full_rect);
+				if (!ui_state->edit_mode)
+				{// If in edit mode, only want to speak the char being entered,,
+			//not repeat the entire display.
+					announceMenuItemIfNeeded(item+scroll, entry_buf, value_buf);
+				}
             }
             gfx_print(pos, layout.menu_font, TEXT_ALIGN_LEFT, text_color, entry_buf);
             gfx_print(pos, layout.menu_font, TEXT_ALIGN_RIGHT, text_color, value_buf);

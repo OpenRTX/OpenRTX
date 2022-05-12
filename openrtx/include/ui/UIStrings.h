@@ -92,4 +92,6 @@ typedef struct
 extern const stringsTable_t languages[];
 extern const stringsTable_t* currentLanguage;
 
+int GetEnglishStringTableOffset( char* text);
+
 #endif
