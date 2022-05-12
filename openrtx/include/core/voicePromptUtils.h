@@ -36,4 +36,12 @@ void AnnounceInputChar(char ch);
 void announceInputReceiveOrTransmit(bool tx, VoicePromptQueueFlags_T flags);
 void ReplayLastPrompt();
 void announceError(VoicePromptQueueFlags_T flags);
+
+/* 
+This function first tries to see if we have a prompt for the text 
+passed in and if so, queues it, but if not, just spells the text 
+character by character.
+*/
+void announceText( char* text, VoicePromptQueueFlags_T flags);
+
 #endif //VOICE_PROMPT_UTILS_H_INCLUDED

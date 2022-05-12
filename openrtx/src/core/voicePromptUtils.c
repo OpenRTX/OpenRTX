@@ -193,3 +193,20 @@ void announceError(VoicePromptQueueFlags_T flags)
 	
 	vpPlayIfNeeded(flags);
 }	
+
+void announceText( char* text, VoicePromptQueueFlags_T flags)
+{
+		if (!text || !*text)
+		return;
+	
+	vpInitIfNeeded(flags);
+	// see if we have a prompt for this string.
+	int offset = GetEnglishStringTableOffset(text);
+	
+	if (offset != -1)
+		vpQueueStringTableEntry((const char* const *)(&currentLanguage + offset));
+	else // just spel it out
+		vpQueueString(text, (flags&~(vpqInit|vpqPlayImmediately)));
+		
+	vpPlayIfNeeded(flags);
+}
