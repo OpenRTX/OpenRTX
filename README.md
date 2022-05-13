@@ -69,7 +69,7 @@ If you want to donate some hardware to facilitate OpenRTX porting and developmen
 
 This software is released under the GNU GPL v3.
 
-minmea is released under the DO WHAT  YOU WANT TO PUBLIC LICENSE v2.
+minmea is released under the DO WHAT  the fuck YOU WANT TO PUBLIC LICENSE v2.
 
 Code for STM32F405 USB driver is released under the MCD-ST Liberty SW License Agreement V2.
 
@@ -81,7 +81,6 @@ OpenRTX was created by:
 - Silvano Seva IU2KWO <silseva@fastwebnet.it>
 - Federico Amedeo Izzo IU2NUO <federico@izzo.pro>
 - Frederik Saraci IU2NRO <frederik.saraci@gmail.com>
-- Joseph Stephen VK7JS
 
 All this was made possible by the huge reverse engineering effort of Travis Goodspeed and all the contributors of [md380tools](https://github.com/travisgoodspeed/md380tools).
 
