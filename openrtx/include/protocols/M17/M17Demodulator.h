@@ -122,7 +122,8 @@ private:
     static constexpr size_t M17_FRAME_BYTES        = M17_FRAME_SYMBOLS / 4;
     static constexpr size_t M17_FRAME_SAMPLES      = M17_FRAME_SYMBOLS * M17_SAMPLES_PER_SYMBOL;
     static constexpr size_t M17_SAMPLE_BUF_SIZE    = M17_FRAME_SAMPLES / 2;
-    static constexpr size_t M17_BRIDGE_SIZE        = M17_SAMPLES_PER_SYMBOL * M17_SYNCWORD_SYMBOLS;
+    static constexpr size_t M17_SYNCWORD_SAMPLES   = M17_SAMPLES_PER_SYMBOL * M17_SYNCWORD_SYMBOLS;
+    static constexpr size_t M17_BRIDGE_SIZE        = M17_SYNCWORD_SAMPLES;
 
     static constexpr float  CONV_STATS_ALPHA       = 0.005f;
     static constexpr float  CONV_THRESHOLD_FACTOR  = 3.40;
@@ -239,9 +240,19 @@ private:
 
     /**
      * Compute Hamming Distance between two bytes
+     *
+     * @param x: first byte
+     * @param y: second byte
      */
     uint8_t hammingDistance(uint8_t x, uint8_t y);
 
+    /**
+     * Perform a limited search for a syncword using correlation
+     *
+     * @param offset: sample index right after a syncword
+     * @return int32_t sample of the beginning of a syncword
+     */
+    int32_t syncwordSweep(int32_t offset);
 };
 
 } /* M17 */

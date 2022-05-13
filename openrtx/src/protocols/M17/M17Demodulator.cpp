@@ -309,6 +309,25 @@ uint8_t M17Demodulator::hammingDistance(uint8_t x, uint8_t y)
     return __builtin_popcount(x ^ y);
 }
 
+int32_t M17Demodulator::syncwordSweep(int32_t offset)
+{
+    int32_t max_conv = 0, max_index = 0;
+    // Start from 5 samples behind, end 5 samples after
+    for(int i = -5; i <= 5; i++)
+    {
+        // TODO: Extend for LSF and BER syncwords
+        int32_t conv = convolution(offset + i,
+                                   stream_syncword,
+                                   M17_SYNCWORD_SYMBOLS);
+        if (conv > max_conv)
+        {
+            max_conv = conv;
+            max_index = i;
+        }
+    }
+    return max_index;
+}
+
 bool M17Demodulator::update()
 {
     M17::sync_t syncword = { 0, false };
@@ -392,11 +411,16 @@ bool M17Demodulator::update()
                     std::swap(activeFrame, idleFrame);
                     frame_index = 0;
                     newFrame   = true;
+
+                    // Locate syncword to correct clock skew between Tx and Rx
+                    int32_t expected_sync =
+                        offset + phase + M17_SAMPLES_PER_SYMBOL * decoded_syms;
+                    int32_t new_sync = syncwordSweep(expected_sync);
+                    phase += new_sync;
                 }
 
                 if (frame_index == M17_SYNCWORD_SYMBOLS)
                 {
-
                     // If syncword is not valid, lock is lost, accept 2 bit errors
                     uint8_t hammingSync = hammingDistance((*activeFrame)[0],
                                                           stream_syncword_bytes[0])
@@ -409,7 +433,7 @@ bool M17Demodulator::update()
                                                          lsf_syncword_bytes[1]);
 
                     // Too many errors in the syncword, lock is lost
-                    if ((hammingSync > 4) && (hammingLsf > 4))
+                    if ((hammingSync > 2) && (hammingLsf > 2))
                     {
                         syncDetected = false;
                         locked = false;
