@@ -136,17 +136,6 @@ private:
     uint8_t lsf_syncword_bytes[2]                 = {0x55, 0xf7};
     uint8_t stream_syncword_bytes[2]              = {0xff, 0x5d};
 
-    typedef struct {
-        int16_t sample;
-        int32_t conv;
-        float conv_th;
-        int32_t sample_index;
-        float qnt_pos_avg;
-        float qnt_neg_avg;
-        int32_t symbol;
-        int32_t frame_index;
-    } demod_log;
-
     /*
      * Buffers
      */
@@ -162,9 +151,6 @@ private:
     bool         newFrame;         ///< A new frame has been fully decoded.
     int16_t      basebandBridge[M17_BRIDGE_SIZE] = { 0 }; ///< Bridge buffer
     uint16_t     phase;            ///< Phase of the signal w.r.t. sampling
-#ifdef PLATFORM_LINUX
-    FILE *csv_log;                 ///< Used under Linux to hold the log file
-#endif
 
     /*
      * State variables
@@ -255,11 +241,6 @@ private:
      * Compute Hamming Distance between two bytes
      */
     uint8_t hammingDistance(uint8_t x, uint8_t y);
-
-    /**
-     * Append a sample to the log
-     */
-    void appendLog(demod_log *log);
 
 };
 

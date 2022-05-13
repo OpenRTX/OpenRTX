@@ -24,18 +24,73 @@
 #include <M17/M17DSP.h>
 #include <M17/M17Utils.h>
 #include <interfaces/audio_stream.h>
-#include <interfaces/gpio.h>
 #include <math.h>
 #include <cstring>
 #include <stdio.h>
-#include <interfaces/graphics.h>
 #include <deque>
+#include <ringbuf.h>
+#include <usb_vcom.h>
 
-#ifdef PLATFORM_LINUX
-#include <emulator.h>
-#endif
+// #define ENABLE_DEMOD_LOG
 
 using namespace M17;
+
+#ifdef ENABLE_DEMOD_LOG
+typedef struct
+{
+    int16_t sample;
+    int32_t conv;
+    float conv_th;
+    int32_t sample_index;
+    float qnt_pos_avg;
+    float qnt_neg_avg;
+    int32_t symbol;
+    int32_t frame_index;
+}
+log_entry_t;
+
+static RingBuffer< log_entry_t, 128 > logBuf;
+static bool      logRunning;
+static pthread_t logThread;
+
+void *logFunc(void *arg)
+{
+    (void) arg;
+
+    #ifdef PLATFORM_LINUX
+    FILE *csv_log = fopen("demod_log.csv", "w");
+    fprintf(csv_log, "Sample,Convolution,Threshold,Index,Max,Min,Symbol,I\n");
+    #endif
+
+    while(logRunning)
+    {
+        log_entry_t entry;
+        logBuf.pop(entry, true);
+
+        #ifdef PLATFORM_LINUX
+        fprintf(csv_log, "%" PRId16 ",%d,%f,%d,%f,%f,%d,%d\n",
+                entry.sample,
+                entry.conv,
+                entry.conv_th,
+                entry.sample_index,
+                entry.qnt_pos_avg,
+                entry.qnt_neg_avg,
+                entry.symbol,
+                entry.frame_index);
+        fflush(csv_log);
+        #else
+        vcom_writeBlock(&entry, sizeof(log_entry_t));
+        #endif
+    }
+
+    #ifdef PLATFORM_LINUX
+    fclose(csv_log);
+    #endif
+
+    return NULL;
+}
+#endif
+
 
 M17Demodulator::M17Demodulator()
 {
@@ -67,10 +122,10 @@ void M17Demodulator::init()
     locked          = false;
     newFrame        = false;
 
-#ifdef PLATFORM_LINUX
-    csv_log = fopen("demod_log.csv", "w");
-    fprintf(csv_log, "Sample,Convolution,Threshold,Index,Max,Min,Symbol,I\n");
-#endif // PLATFORM_MOD17
+    #ifdef ENABLE_DEMOD_LOG
+    logRunning = true;
+    pthread_create(&logThread, NULL, logFunc, NULL);
+    #endif
 }
 
 void M17Demodulator::terminate()
@@ -80,9 +135,10 @@ void M17Demodulator::terminate()
     delete activeFrame;
     delete[] rawFrame;
     delete idleFrame;
-#ifdef PLATFORM_LINUX
-    fclose(csv_log);
-#endif
+
+    #ifdef ENABLE_DEMOD_LOG
+    logRunning = false;
+    #endif
 }
 
 void M17Demodulator::startBasebandSampling()
@@ -188,14 +244,19 @@ sync_t M17Demodulator::nextFrameSync(int32_t offset)
         int32_t conv = convolution(i, stream_syncword, M17_SYNCWORD_SYMBOLS);
         updateCorrelationStats(conv);
 
+        #ifdef ENABLE_DEMOD_LOG
         // Log syncword search
-        demod_log log = {
+        log_entry_t log =
+        {
             (i < 0) ? basebandBridge[M17_BRIDGE_SIZE + i] : baseband.data[i],
             conv,
             CONV_THRESHOLD_FACTOR * getCorrelationStddev(),
             i,
-            0.0,0.0,0,0};
-        appendLog(&log);
+            0.0,0.0,0,0
+        };
+
+        logBuf.push(log, false);
+        #endif
 
         // Positive correlation peak -> frame syncword
         if (conv > (getCorrelationStddev() * CONV_THRESHOLD_FACTOR))
@@ -248,25 +309,6 @@ uint8_t M17Demodulator::hammingDistance(uint8_t x, uint8_t y)
     return __builtin_popcount(x ^ y);
 }
 
-#ifdef PLATFORM_LINUX
-void M17Demodulator::appendLog(demod_log *log) {
-    fprintf(csv_log, "%" PRId16 ",%d,%f,%d,%f,%f,%d,%d\n",
-        log->sample,
-        log->conv,
-        log->conv_th,
-        log->sample_index,
-        log->qnt_pos_avg,
-        log->qnt_neg_avg,
-        log->symbol,
-        log->frame_index);
-    fflush(csv_log);
-}
-#else
-void M17Demodulator::appendLog(demod_log *log) {
-    // TODO: Add log to circular queue
-}
-#endif
-
 bool M17Demodulator::update()
 {
     M17::sync_t syncword = { 0, false };
@@ -318,22 +360,27 @@ bool M17Demodulator::update()
                     updateQuantizationStats(frame_index, symbol_index);
                 int8_t symbol = quantize(symbol_index);
 
+                #ifdef ENABLE_DEMOD_LOG
                 // Log quantization
                 for (int i = -2; i <= 2; i++)
                 {
                     if ((symbol_index + i) >= 0 &&
                         (symbol_index + i) < static_cast<int32_t> (baseband.len))
                     {
-                        demod_log log = {
+                        log_entry_t log =
+                        {
                             baseband.data[symbol_index + i],
                             0,0.0,symbol_index + i,
                             qnt_pos_avg / 2.0f,
                             qnt_neg_avg / 2.0f,
                             symbol,
-                            frame_index};
-                        appendLog(&log);
+                            frame_index
+                        };
+
+                        logBuf.push(log, false);
                     }
                 }
+                #endif
 
                 setSymbol<M17_FRAME_BYTES>(*activeFrame, frame_index, symbol);
                 decoded_syms++;
