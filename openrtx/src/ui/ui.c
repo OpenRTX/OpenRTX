@@ -1048,7 +1048,8 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     ui_state.last_main_state = state.ui_screen;
                     // Open Menu
                     state.ui_screen = MENU_TOP;
-					// ToDo announce the menu name and selected item.
+					// ToDo announce the menu name.
+					// The selected item will be announced when the item is first selected.
                 }
                 else if(msg.keys & KEY_ESC)
                 {

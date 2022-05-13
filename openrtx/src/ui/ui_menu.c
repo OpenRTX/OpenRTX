@@ -29,7 +29,10 @@
 #include <core/voicePromptUtils.h>
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBottom();
-static int priorMenuIndex = -1;
+
+static char priorSelectedMenuName[21] = "\0";
+static char priorSelectedMenuValue[21] = "\0";
+
 const char *display_timer_values[] =
 {
     "Off",
@@ -50,21 +53,38 @@ const char *display_timer_values[] =
     "1 hour"
 };
 
-bool DidSelectedMenuItemChange(uint8_t index)
-{
-	if (priorMenuIndex == -1)
+bool DidSelectedMenuItemChange(char* menuName, char* menuValue)
+{// menu name can't be empty.
+	if (!menuName || !*menuName) 
+		return false;
+	// If value is supplied it can't be empty but it does not have to be supplied.
+	if (menuValue && !*menuValue) 
+		return false;
+	
+	if (strcmp(menuName, priorSelectedMenuName) != 0)
+	{
+		strcpy(priorSelectedMenuName, menuName);
+		if (menuValue)
+			strcpy(priorSelectedMenuValue, menuValue);
+		
 		return true;
-	bool result = index != priorMenuIndex;
-	priorMenuIndex = index;
-	return result;
+	}
+	
+	if (menuValue && strcmp(menuValue, priorSelectedMenuValue) != 0)
+	{
+		strcpy(priorSelectedMenuValue, menuValue);
+		return true;
+	}
+	
+	return false;
 }
 
-static void announceMenuItemIfNeeded(uint8_t index, char* name, char* value)
+static void announceMenuItemIfNeeded(char* name, char* value)
 {
 	if (!name || !*name)
 		return;
 	
-	if (!DidSelectedMenuItemChange(index))
+	if (!DidSelectedMenuItemChange(name, value))
 		return;
 	
 	announceText(name, vpqInit);
@@ -99,7 +119,7 @@ void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_
                 // Draw rectangle under selected item, compensating for text height
                 point_t rect_pos = {0, pos.y - layout.menu_h + 3};
                 gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.menu_h, color_white, true);
-				announceMenuItemIfNeeded(item+scroll, entry_buf, NULL);
+				announceMenuItemIfNeeded(entry_buf, NULL);
             }
             gfx_print(pos, layout.menu_font, TEXT_ALIGN_LEFT, text_color, entry_buf);
             pos.y += layout.menu_h;
@@ -146,7 +166,7 @@ void _ui_drawMenuListValue(ui_state_t* ui_state, uint8_t selected,
 				if (!ui_state->edit_mode)
 				{// If in edit mode, only want to speak the char being entered,, 
 			//not repeat the entire display.
-					announceMenuItemIfNeeded(item+scroll, entry_buf, value_buf);
+					announceMenuItemIfNeeded(entry_buf, value_buf);
 				}
             }
             gfx_print(pos, layout.menu_font, TEXT_ALIGN_LEFT, text_color, entry_buf);
