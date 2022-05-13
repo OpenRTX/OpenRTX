@@ -220,7 +220,7 @@ private:
      * @param offset: index value to be added to the exponential moving
      * average/variance computation
      */
-    void updateQuantizationStats(int32_t offset);
+    void updateQuantizationStats(int32_t frame_index, int32_t symbol_index);
 
     /**
      * Computes the convolution between a stride of samples starting from

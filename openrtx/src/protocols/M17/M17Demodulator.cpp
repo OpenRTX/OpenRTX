@@ -130,49 +130,27 @@ void M17Demodulator::resetQuantizationStats()
     qnt_neg_avg = 0.0f;
 }
 
-void M17Demodulator::updateQuantizationStats(int32_t offset)
+void M17Demodulator::updateQuantizationStats(int32_t frame_index,
+                                             int32_t symbol_index)
 {
-    // If offset is negative use bridge buffer
-    int16_t sample = 0;
-    if (offset < 0) // When we are at negative offsets use bridge buffer
-        sample = basebandBridge[M17_BRIDGE_SIZE + offset];
-    else            // Otherwise use regular data buffer
-        sample = baseband.data[offset];
+    int16_t sample = baseband.data[symbol_index];
     if (sample > 0)
-    {
         qnt_pos_fifo.push_front(sample);
-        // FIFO not full, compute traditional average
-        if (qnt_pos_fifo.size() <= QNT_SMA_WINDOW)
-        {
+    else
+        qnt_neg_fifo.push_front(sample);
+    // If we reached end of the syncword, compute average and reset queue
+    if(frame_index == M17_SYNCWORD_SYMBOLS - 1)
+    {
             int32_t acc = 0;
             for(auto e : qnt_pos_fifo)
                 acc += e;
             qnt_pos_avg = acc / static_cast<float>(qnt_pos_fifo.size());
-        }
-        else
-        {
-            qnt_pos_avg += 1 / static_cast<float>(QNT_SMA_WINDOW) *
-                           (sample - qnt_pos_fifo.back());
-            qnt_pos_fifo.pop_back();
-        }
-    }
-    else
-    {
-        qnt_neg_fifo.push_front(sample);
-        // FIFO not full, compute traditional average
-        if (qnt_neg_fifo.size() <= QNT_SMA_WINDOW)
-        {
-            int32_t acc = 0;
+            acc = 0;
             for(auto e : qnt_neg_fifo)
                 acc += e;
             qnt_neg_avg = acc / static_cast<float>(qnt_neg_fifo.size());
-        }
-        else
-        {
-            qnt_neg_avg += 1 / static_cast<float>(QNT_SMA_WINDOW) *
-                           (sample - qnt_neg_fifo.back());
-            qnt_neg_fifo.pop_back();
-        }
+            qnt_pos_fifo.clear();
+            qnt_neg_fifo.clear();
     }
 }
 
@@ -243,9 +221,9 @@ int8_t M17Demodulator::quantize(int32_t offset)
         sample = basebandBridge[M17_BRIDGE_SIZE + offset];
     else            // Otherwise use regular data buffer
         sample = baseband.data[offset];
-    if (sample > static_cast< int16_t >(qnt_pos_avg / 2.1))
+    if (sample > static_cast< int16_t >(qnt_pos_avg / 2.0))
         return +3;
-    else if (sample < static_cast< int16_t >(qnt_neg_avg / 2.1))
+    else if (sample < static_cast< int16_t >(qnt_neg_avg / 2.0))
         return -3;
     else if (sample > 0)
         return +1;
@@ -337,7 +315,7 @@ bool M17Demodulator::update()
                                      + (M17_SAMPLES_PER_SYMBOL * decoded_syms);
                 // Update quantization stats only on syncwords
                 if (frame_index < M17_SYNCWORD_SYMBOLS)
-                    updateQuantizationStats(symbol_index);
+                    updateQuantizationStats(frame_index, symbol_index);
                 int8_t symbol = quantize(symbol_index);
 
                 // Log quantization
@@ -349,8 +327,8 @@ bool M17Demodulator::update()
                         demod_log log = {
                             baseband.data[symbol_index + i],
                             0,0.0,symbol_index + i,
-                            qnt_pos_avg / 2.1f,
-                            qnt_neg_avg / 2.1f,
+                            qnt_pos_avg / 2.0f,
+                            qnt_neg_avg / 2.0f,
                             symbol,
                             frame_index};
                         appendLog(&log);
