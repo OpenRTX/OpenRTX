@@ -93,9 +93,17 @@ static void announceMenuItemIfNeeded(char* name, char* value)
 	if (!DidSelectedMenuItemChange(name, value))
 		return;
 
-	announceText(name, vpqInit);
+	// See if we are already in the middle of speaking a menu item.
+	// e.g. when changing a value with left or right, we don't want to repeat the
+	// prompt if arrowing rapidly.
+	bool voicePromptWasPlaying=vpIsPlaying();
+	// Stop any prompt in progress and clear the buffer.
+	vpInit();
+	// If no value is supplied, or, no prompt is in progress, announce the name.
+	if (!voicePromptWasPlaying || !value || !*value)
+		announceText(name, vpqDefault);
 
-	if (value && *value)
+    if (value && *value)
 		announceText(name, vpqDefault);
 
 	vpPlay();
