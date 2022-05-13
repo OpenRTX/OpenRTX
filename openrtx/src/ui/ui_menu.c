@@ -30,8 +30,8 @@
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBottom();
 
-static char priorSelectedMenuName[21] = "\0";
-static char priorSelectedMenuValue[21] = "\0";
+static char priorSelectedMenuName[MAX_ENTRY_LEN] = "\0";
+static char priorSelectedMenuValue[MAX_ENTRY_LEN] = "\0";
 
 const char *display_timer_values[] =
 {
@@ -66,7 +66,8 @@ bool DidSelectedMenuItemChange(char* menuName, char* menuValue)
 		strcpy(priorSelectedMenuName, menuName);
 		if (menuValue)
 			strcpy(priorSelectedMenuValue, menuValue);
-		
+		else
+			*priorSelectedMenuValue = '\0'; // reset it since we've changed menu item.
 		return true;
 	}
 	
