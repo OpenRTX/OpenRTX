@@ -1,0 +1,167 @@
+/***************************************************************************
+ *   Copyright (C) 2022 by Federico Amedeo Izzo IU2NUO,                    *
+ *                         Niccolò Izzo IU2KIN                             *
+ *                         Frederik Saraci IU2NRO                          *
+ *                         Silvano Seva IU2KWO                             *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 3 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
+ ***************************************************************************/
+
+#ifndef RINGBUF_H
+#define RINGBUF_H
+
+#ifndef __cplusplus
+#error This header is C++ only!
+#endif
+
+#include <pthread.h>
+#include <cstdint>
+
+/**
+ * Class implementing a statically allocated circular buffer with blocking and
+ * non-blocking push and pop functions.
+ */
+template < typename T, size_t N >
+class RingBuffer
+{
+public:
+
+    /**
+     * Constructor.
+     */
+    RingBuffer() : readPos(0), writePos(0), numElements(0)
+    {
+        pthread_mutex_init(&mutex, NULL);
+        pthread_cond_init(&not_empty, NULL);
+        pthread_cond_init(&not_full, NULL);
+    }
+
+    /**
+     * Destructor.
+     */
+    ~RingBuffer()
+    {
+        pthread_mutex_destroy(&mutex);
+        pthread_cond_destroy(&not_empty);
+        pthread_cond_destroy(&not_full);
+    }
+
+    /**
+     * Push an element to the buffer.
+     *
+     * @param elem: element to be pushed.
+     * @param blocking: if set to true, when the buffer is full this function
+     * blocks the execution flow until at least one empty slot is available.
+     * @return true if the element has been successfully pushed to the queue,
+     * false if the queue is empty.
+     */
+    bool push(const T& elem, bool blocking)
+    {
+        pthread_mutex_lock(&mutex);
+
+        if((numElements >= N) && (blocking == false))
+        {
+            // No space available and non-blocking call: unlock mutex and return
+            pthread_mutex_unlock(&mutex);
+            return false;
+        }
+
+        // The call is blocking: wait until there is some free space
+        while(numElements >= N)
+        {
+            pthread_cond_wait(&not_full, &mutex);
+        }
+
+        // There is free space, push data into the queue
+        data[writePos] = elem;
+        writePos = (writePos + 1) % N;
+
+        // Signal that the queue is not empty
+        if(numElements == 0) pthread_cond_signal(&not_empty);
+        numElements += 1;
+
+        pthread_mutex_unlock(&mutex);
+        return true;
+    }
+
+    /**
+     * Pop an element from the buffer.
+     *
+     * @param elem: place where to store the popped element.
+     * @param blocking: if set to true, when the buffer is empty this function
+     * blocks the execution flow until at least one element is available.
+     * @return true if the element has been successfully popped from the queue,
+     * false if the queue is empty.
+     */
+    bool pop(T& elem, bool blocking)
+    {
+        pthread_mutex_lock(&mutex);
+
+        if(numElements == 0)
+        {
+            if(blocking)
+            {
+                while(numElements == 0)
+                {
+                    pthread_cond_wait(&not_empty, &mutex);
+                }
+            }
+            else
+            {
+                pthread_mutex_unlock(&mutex);
+                return false;
+            }
+        }
+
+        elem         = data[readPos];
+        readPos      = (readPos + 1) % N;
+        numElements -= 1;
+        pthread_mutex_unlock(&mutex);
+
+        return true;
+    }
+
+    /**
+     * Check if the buffer is empty.
+     *
+     * @return true if the buffer is empty.
+     */
+    bool empty()
+    {
+        return numElements == 0;
+    }
+
+    /**
+     * Check if the buffer is full.
+     *
+     * @return true if the buffer is full.
+     */
+    bool full()
+    {
+        return numElements >= N;
+    }
+
+private:
+
+    size_t readPos;      ///< Read pointer.
+    size_t writePos;     ///< Write pointer.
+    size_t numElements;  ///< Number of elements currently present.
+    T      data[N];      ///< Data storage.
+
+    pthread_mutex_t mutex;      ///< Mutex for concurrent access.
+    pthread_cond_t  not_empty;  ///< Queue not empty condition.
+    pthread_cond_t  not_full;   ///< Queue not full condition.
+};
+
+#endif  // RINGBUF_H
