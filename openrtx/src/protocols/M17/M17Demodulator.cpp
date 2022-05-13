@@ -67,11 +67,10 @@ void M17Demodulator::init()
     locked          = false;
     newFrame        = false;
 
-    #ifdef PLATFORM_LINUX
-    FILE *csv_log = fopen("demod_log.csv", "w");
-    fprintf(csv_log, "Signal,Convolution,Threshold,Offset,Sample,Max,Min,Symbol,I\n");
-    fclose(csv_log);
-    #endif // PLATFORM_MOD17
+#ifdef PLATFORM_LINUX
+    csv_log = fopen("demod_log.csv", "w");
+    fprintf(csv_log, "Sample,Convolution,Threshold,Index,Max,Min,Symbol,I\n");
+#endif // PLATFORM_MOD17
 }
 
 void M17Demodulator::terminate()
@@ -81,6 +80,9 @@ void M17Demodulator::terminate()
     delete activeFrame;
     delete[] rawFrame;
     delete idleFrame;
+#ifdef PLATFORM_LINUX
+    fclose(csv_log);
+#endif
 }
 
 void M17Demodulator::startBasebandSampling()
@@ -196,9 +198,6 @@ int32_t M17Demodulator::convolution(int32_t offset,
 
 sync_t M17Demodulator::nextFrameSync(int32_t offset)
 {
-    #ifdef PLATFORM_LINUX
-    FILE *csv_log = fopen("demod_log.csv", "a");
-    #endif
 
     sync_t syncword = { -1, false };
     // Find peaks in the correlation between the baseband and the frame syncword
@@ -211,21 +210,14 @@ sync_t M17Demodulator::nextFrameSync(int32_t offset)
         int32_t conv = convolution(i, stream_syncword, M17_SYNCWORD_SYMBOLS);
         updateCorrelationStats(conv);
 
-        #ifdef PLATFORM_LINUX
-        int16_t sample = 0;
-        if (i < 0) // When we are at negative offsets use bridge buffer
-            sample = basebandBridge[M17_BRIDGE_SIZE + i];
-        else            // Otherwise use regular data buffer
-            sample = baseband.data[i];
-
-        fprintf(csv_log, "%" PRId16 ",%d,%f,%d,%" PRId16 ",%f,%f,%d,%d\n",
-                sample,
-                conv / 10,
-                CONV_THRESHOLD_FACTOR * getCorrelationStddev() / 10,
-                i,
-                0,0.0,0.0,0,0);
-        fflush(csv_log);
-        #endif
+        // Log syncword search
+        demod_log log = {
+            (i < 0) ? basebandBridge[M17_BRIDGE_SIZE + i] : baseband.data[i],
+            conv,
+            CONV_THRESHOLD_FACTOR * getCorrelationStddev(),
+            i,
+            0.0,0.0,0,0};
+        appendLog(&log);
 
         // Positive correlation peak -> frame syncword
         if (conv > (getCorrelationStddev() * CONV_THRESHOLD_FACTOR))
@@ -241,9 +233,6 @@ sync_t M17Demodulator::nextFrameSync(int32_t offset)
         }
     }
 
-    #ifdef PLATFORM_LINUX
-    fclose(csv_log);
-    #endif
     return syncword;
 }
 
@@ -281,6 +270,25 @@ uint8_t M17Demodulator::hammingDistance(uint8_t x, uint8_t y)
     return __builtin_popcount(x ^ y);
 }
 
+#ifdef PLATFORM_LINUX
+void M17Demodulator::appendLog(demod_log *log) {
+    fprintf(csv_log, "%" PRId16 ",%d,%f,%d,%f,%f,%d,%d\n",
+        log->sample,
+        log->conv,
+        log->conv_th,
+        log->sample_index,
+        log->qnt_pos_avg,
+        log->qnt_neg_avg,
+        log->symbol,
+        log->frame_index);
+    fflush(csv_log);
+}
+#else
+void M17Demodulator::appendLog(demod_log *log) {
+    // TODO: Add log to circular queue
+}
+#endif
+
 bool M17Demodulator::update()
 {
     M17::sync_t syncword = { 0, false };
@@ -292,10 +300,6 @@ bool M17Demodulator::update()
 
     // Apply DC removal filter
     dsp_dcRemoval(&dsp_state, baseband.data, baseband.len);
-
-    #ifdef PLATFORM_LINUX
-    FILE *csv_log = fopen("demod_log.csv", "a");
-    #endif
 
     if(baseband.data != NULL)
     {
@@ -336,38 +340,22 @@ bool M17Demodulator::update()
                     updateQuantizationStats(symbol_index);
                 int8_t symbol = quantize(symbol_index);
 
-                #ifdef PLATFORM_LINUX
-                for (int i = 0; i < 2; i++)
+                // Log quantization
+                for (int i = -2; i <= 2; i++)
                 {
-                    if ((symbol_index - 2 + i) >= 0)
-                    fprintf(csv_log, "%" PRId16 ",%d,%f,%d,%" PRId16 ",%f,%f,%d,%d\n",
-                            0,0,0.0,symbol_index - 2 + i,
-                            baseband.data[symbol_index - 2 + i],
-                            qnt_pos_avg / 2.1,
-                            qnt_neg_avg / 2.1,
-                            0,
-                            frame_index);
+                    if ((symbol_index + i) >= 0 &&
+                        (symbol_index + i) < static_cast<int32_t> (baseband.len))
+                    {
+                        demod_log log = {
+                            baseband.data[symbol_index + i],
+                            0,0.0,symbol_index + i,
+                            qnt_pos_avg / 2.1f,
+                            qnt_neg_avg / 2.1f,
+                            symbol,
+                            frame_index};
+                        appendLog(&log);
+                    }
                 }
-                fprintf(csv_log, "%" PRId16 ",%d,%f,%d,%" PRId16 ",%f,%f,%d,%d\n",
-                        0,0,0.0,symbol_index,
-                        baseband.data[symbol_index],
-                        qnt_pos_avg / 2.1,
-                        qnt_neg_avg / 2.1,
-                        symbol * 666,
-                        frame_index);
-                for (int i = 0; i < 2; i++)
-                {
-                    if ((symbol_index + i + 1) < static_cast<int32_t> (baseband.len))
-                    fprintf(csv_log, "%" PRId16 ",%d,%f,%d,%" PRId16 ",%f,%f,%d,%d\n",
-                            0,0,0.0,symbol_index + i + 1,
-                            baseband.data[symbol_index + i + 1],
-                            qnt_pos_avg / 2.1,
-                            qnt_neg_avg / 2.1,
-                            0,
-                            frame_index);
-                }
-                fflush(csv_log);
-                #endif
 
                 setSymbol<M17_FRAME_BYTES>(*activeFrame, frame_index, symbol);
                 decoded_syms++;
@@ -425,10 +413,6 @@ bool M17Demodulator::update()
                    sizeof(int16_t) * M17_BRIDGE_SIZE);
         }
     }
-
-    #ifdef PLATFORM_LINUX
-    fclose(csv_log);
-    #endif
 
     return newFrame;
 }
