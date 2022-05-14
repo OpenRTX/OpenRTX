@@ -148,6 +148,13 @@ VoicePromptQueueFlags_T flags)
 	announceFrequencies(channel->rx_frequency , channel->tx_frequency, localFlags);
 	announceRadioMode(channel->mode,  localFlags);
 	
+	if ((channel->mode == FM) && (channel->fm.rxToneEn || channel->fm.txToneEn))
+	{
+		announceCTCSS(channel->fm.rxToneEn, channel->fm.rxTone, 
+channel->fm.txToneEn, channel->fm.txTone, 
+localFlags);
+	}
+	
 	vpPlayIfNeeded(flags);
 }
 
