@@ -43,6 +43,7 @@ void announceChannelName(channel_t* channel, uint16_t channelIndex, VoicePromptQ
 void vpQueueFrequency(freq_t freq);
 void announceFrequencies(freq_t rx, freq_t tx, VoicePromptQueueFlags_T flags);
 void announceRadioMode(uint8_t mode, VoicePromptQueueFlags_T flags);
+void announceBandwidth(uint8_t bandwidth, VoicePromptQueueFlags_T flags);
 void announceChannelSummary(channel_t* channel, uint16_t channelIndex,
 VoicePromptQueueFlags_T flags);
 void AnnounceInputChar(char ch);
@@ -57,4 +58,5 @@ character by character.
 */
 void announceText( char* text, VoicePromptQueueFlags_T flags);
 void announceCTCSS(bool rxToneEnabled, uint8_t rxTone, bool txToneEnabled, uint8_t txTone, VoicePromptQueueFlags_T flags);
+void anouncePower(float power, VoicePromptQueueFlags_T flags);
 #endif //VOICE_PROMPT_UTILS_H_INCLUDED
