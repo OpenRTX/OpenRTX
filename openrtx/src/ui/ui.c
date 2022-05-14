@@ -826,6 +826,7 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             else if(state.channel.mode == M17)
                 state.channel.mode = FM;
             *sync_rtx = true;
+			announceRadioMode(state.channel.mode, queueFlags);
             break;
         case 7:
             _ui_changeBrightness(+5);
