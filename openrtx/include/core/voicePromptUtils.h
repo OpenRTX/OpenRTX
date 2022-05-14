@@ -25,6 +25,19 @@
  #include "voicePrompts.h"
 #include "ui/UIStrings.h"
 #include "cps.h"
+
+/*
+Please Note!
+
+Many of the functions take queue flags because sometimes messages must be 
+played in sequence (i.e. the announceXX functions may be called one after the 
+other) and thus the init must only be sent prior to the first message queued 
+and the play must only be invoked after the last message queued.
+
+When an announceXX function is called in isolation, vpqInit|vpqPlayImmediately 
+should be used to ensure that the message interupts the current prompt and 
+plays immediately.
+*/
 void announceVFO();
 void announceChannelName(channel_t* channel, uint16_t channelIndex, VoicePromptQueueFlags_T flags);
 void vpQueueFrequency(freq_t freq);
@@ -43,5 +56,5 @@ passed in and if so, queues it, but if not, just spells the text
 character by character.
 */
 void announceText( char* text, VoicePromptQueueFlags_T flags);
-
+void announceCTCSS(bool rxToneEnabled, uint8_t rxTone, bool txToneEnabled, uint8_t txTone, VoicePromptQueueFlags_T flags);
 #endif //VOICE_PROMPT_UTILS_H_INCLUDED
