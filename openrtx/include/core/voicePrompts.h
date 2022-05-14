@@ -117,6 +117,7 @@ PROMPT_SOURCE_ID, // Source ID
 PROMPT_DEST_ID, // Destination ID
 PROMPT_DMR_ID, // DMR ID
 PROMPT_TALKGROUP, // Talk group
+PROMPT_TONE, // tone
 PROMPT_CHARACTER, // character
 PROMPT_SPACE, // space
 PROMPT_PERCENT, // Percent

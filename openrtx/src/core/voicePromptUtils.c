@@ -210,3 +210,48 @@ void announceText( char* text, VoicePromptQueueFlags_T flags)
 		
 	vpPlayIfNeeded(flags);
 }
+
+void announceCTCSS(bool rxToneEnabled, uint8_t rxTone, bool txToneEnabled, uint8_t txTone, VoicePromptQueueFlags_T flags)
+{
+	vpInitIfNeeded(flags);
+	
+	if (!rxToneEnabled && !txToneEnabled)
+	{
+		vpQueuePrompt(PROMPT_TONE);
+		vpQueueStringTableEntry(&currentLanguage->off);
+		vpPlayIfNeeded(flags);
+		return;
+	}
+	
+	char buffer[16] = "\0";
+
+	// If the rx and tx tones are the same and both are enabled, just say Tone.
+	if ((rxToneEnabled && txToneEnabled) && (rxTone == txTone))
+	{
+		vpQueuePrompt(PROMPT_TONE);
+		snprintf(buffer, 16, "%3.1f", ctcss_tone[rxTone]/10.0f);
+		vpQueueString(buffer, vpqDefault);
+		vpQueuePrompt(PROMPT_HERTZ);
+		vpPlayIfNeeded(flags);
+		return;
+	}
+	// speak the individual rx and tx tones.
+	if (rxToneEnabled)
+	{
+		vpQueuePrompt(PROMPT_RECEIVE);
+		vpQueuePrompt(PROMPT_TONE);
+		snprintf(buffer, 16, "%3.1f", ctcss_tone[rxTone]/10.0f);
+		vpQueueString(buffer, vpqDefault);
+		vpQueuePrompt(PROMPT_HERTZ);
+	}
+	if (txToneEnabled)
+	{
+		vpQueuePrompt(PROMPT_TRANSMIT);
+		vpQueuePrompt(PROMPT_TONE);
+		snprintf(buffer, 16, "%3.1f", ctcss_tone[txTone]/10.0f);
+		vpQueueString(buffer, vpqDefault);
+		vpQueuePrompt(PROMPT_HERTZ);
+	}
+	
+	vpPlayIfNeeded(flags);
+}
