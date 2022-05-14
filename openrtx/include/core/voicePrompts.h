@@ -115,6 +115,7 @@ PROMPT_TRANSMIT, // Transmit
 PROMPT_MODE, // Mode
 PROMPT_BANDWIDTH, // bandwidth
 PROMPT_POWER, // power
+PROMPT_SQUELCH, // squelch
 PROMPT_SOURCE_ID, // Source ID
 PROMPT_DEST_ID, // Destination ID
 PROMPT_DMR_ID, // DMR ID
@@ -156,7 +157,13 @@ NUM_VOICE_PROMPTS,
 // PROMPT_VOICE_NAME is always the very last prompt after the indexed prompts 
 // from the strings table.
 #define PROMPT_VOICE_NAME (NUM_VOICE_PROMPTS + (sizeof(stringsTable_t)/sizeof(char*)))
-
+/*
+These flags govern how vpQueueString operates.
+For example, when editing, it is desireable to hear spaces, capitals and 
+extended symbols.
+When just arrowing through menus, spaces, extended symbols etc should not be 
+announced.
+*/
 typedef enum
 {
 	vpAnnounceCaps=0x01,
@@ -167,7 +174,14 @@ typedef enum
 	vpAnnounceASCIIValueForUnknownChars=0x20,
 	vpAnnouncePhoneticRendering=0x40,
 } VoicePromptFlags_T;
-
+/*
+These queuing flags determine if speech is interrupted, played immediately, whether prompts are queued for values, etc.
+They are necessary because for example if you call the announceXX functions 
+consecutively, it is only desireable to initially stop speech in progress 
+and only play after the last prompt is queued.
+If however calling an announceXX function in isolation, normally any prompt in 
+progress should be interrupted and play should be called immediately.
+*/
 typedef enum
 {
 	vpqDefault = 0,
@@ -175,7 +189,12 @@ typedef enum
 	vpqPlayImmediately=0x02, // call play after queue.
 	vpqIncludeDescriptions=0x04
 } VoicePromptQueueFlags_T;
-
+/*
+These values correspond to prompts in the wordlistXX.csv file in the 
+voicePromptGenerator subproject.
+They must not be reordered.
+They correspond to prompts for which there are no string table entries.
+*/
 typedef enum
 {
 	vpNone=0,
