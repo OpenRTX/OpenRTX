@@ -73,7 +73,7 @@ VoicePromptQueueFlags_T flags)
 	char numAsStr[16]="\0";
     snprintf(numAsStr, 16, "%d", channelIndex);
 	if (strcmp(numAsStr, channel->name) != 0)
-		vpQueueString(channel->name, flags);
+		vpQueueString(channel->name, vpAnnounceCommonSymbols);
 	
 	vpPlayIfNeeded(flags);
 }
@@ -132,6 +132,39 @@ void announceRadioMode(uint8_t mode, VoicePromptQueueFlags_T flags)
 	vpPlayIfNeeded(flags);
 }
 
+void announceBandwidth(uint8_t bandwidth, VoicePromptQueueFlags_T flags)
+{
+		if (bandwidth > BW_25)
+		bandwidth = BW_25; // should probably never happen!
+
+	vpInitIfNeeded(flags);
+	
+		if (flags & vpqIncludeDescriptions)
+		vpQueuePrompt(PROMPT_BANDWIDTH);
+	
+	char* bandwidths[]={"12.5", "20", "25"};
+	vpQueueString(bandwidths[bandwidth], vpAnnounceCommonSymbols);
+	vpQueuePrompt(PROMPT_KILOHERTZ);
+	
+	vpPlayIfNeeded(flags);
+}
+
+void anouncePower(float power, VoicePromptQueueFlags_T flags)
+{
+		vpInitIfNeeded(flags);
+		
+	char buffer[16] = "\0";
+//joe
+	if (flags & vpqIncludeDescriptions)
+		vpQueuePrompt(PROMPT_POWER);
+	
+	snprintf(buffer, 16, "%1.1f", power);
+	vpQueueString(buffer, vpAnnounceCommonSymbols);
+	vpQueuePrompt(PROMPT_WATTS);
+	
+	vpPlayIfNeeded(flags);
+}
+
 void vpAnnounceChannelSummary(channel_t* channel, uint16_t channelIndex, 
 VoicePromptQueueFlags_T flags)
 {
@@ -148,12 +181,19 @@ VoicePromptQueueFlags_T flags)
 	announceFrequencies(channel->rx_frequency , channel->tx_frequency, localFlags);
 	announceRadioMode(channel->mode,  localFlags);
 	
-	if ((channel->mode == OPMODE_FM) && (channel->fm.rxToneEn || channel->fm.txToneEn))
+	if (channel->mode == OPMODE_FM)
 	{
-		announceCTCSS(channel->fm.rxToneEn, channel->fm.rxTone, 
-channel->fm.txToneEn, channel->fm.txTone, 
-localFlags);
+		announceBandwidth(channel->bandwidth, localFlags);
+		
+		if (channel->fm.rxToneEn || channel->fm.txToneEn)
+		{
+			announceCTCSS(channel->fm.rxToneEn, channel->fm.rxTone, 
+	channel->fm.txToneEn, channel->fm.txTone, 
+	localFlags);
+		}
 	}
+	// Todo M17 and DMR info.
+	anouncePower(channel->power, localFlags);
 	
 	vpPlayIfNeeded(flags);
 }

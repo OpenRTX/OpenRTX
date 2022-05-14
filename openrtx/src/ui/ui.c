@@ -772,6 +772,10 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
     bool tone_tx_enable = state.channel.fm.txToneEn;
     bool tone_rx_enable = state.channel.fm.rxToneEn;
     uint8_t tone_flags = tone_tx_enable << 1 | tone_rx_enable;
+	VoicePromptQueueFlags_T queueFlags=vpqInit | vpqPlayImmediately;
+	if (!vpIsPlaying())
+		queueFlags |= vpqIncludeDescriptions;
+	
     switch(ui_state.input_number)
     {
         case 1:
@@ -783,7 +787,7 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
                 *sync_rtx = true;
 				announceCTCSS(state.channel.fm.rxToneEn, state.channel.fm.rxTone, 
 				state.channel.fm.txToneEn, state.channel.fm.txTone, 
-				(vpqInit | vpqPlayImmediately));
+				queueFlags);
             }
             break;
         case 2:
@@ -807,7 +811,7 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
                 *sync_rtx = true;
 				announceCTCSS(state.channel.fm.rxToneEn, state.channel.fm.rxTone, 
 				state.channel.fm.txToneEn, state.channel.fm.txTone, 
-				(vpqInit | vpqPlayImmediately));
+				queueFlags);
             }
             break;
         case 4:
@@ -816,6 +820,7 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
                 state.channel.bandwidth++;
                 state.channel.bandwidth %= 3;
                 *sync_rtx = true;
+				announceBandwidth(state.channel.bandwidth, queueFlags);
             }
             break;
         case 5:
@@ -834,6 +839,7 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             else
                 state.channel.power = 100;
             *sync_rtx = true;
+			anouncePower(state.channel.power, queueFlags);
             break;
         break;
         case 7:

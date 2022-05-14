@@ -113,6 +113,8 @@ PROMPT_WATTS, // Watts
 PROMPT_RECEIVE, // Receive
 PROMPT_TRANSMIT, // Transmit
 PROMPT_MODE, // Mode
+PROMPT_BANDWIDTH, // bandwidth
+PROMPT_POWER, // power
 PROMPT_SOURCE_ID, // Source ID
 PROMPT_DEST_ID, // Destination ID
 PROMPT_DMR_ID, // DMR ID
