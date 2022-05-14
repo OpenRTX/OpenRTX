@@ -832,6 +832,7 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             else //catch any invalid states so they don't get locked out
                 state.channel.mode = OPMODE_FM;
             *sync_rtx = true;
+			announceRadioMode(state.channel.mode, queueFlags);
             break;
         case 6:
             if (state.channel.power == 100)
