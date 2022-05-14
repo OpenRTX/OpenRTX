@@ -165,7 +165,7 @@ void anouncePower(float power, VoicePromptQueueFlags_T flags)
 	vpPlayIfNeeded(flags);
 }
 
-void vpAnnounceChannelSummary(channel_t* channel, uint16_t channelIndex, 
+void announceChannelSummary(channel_t* channel, uint16_t channelIndex, 
 VoicePromptQueueFlags_T flags)
 {
 	 	if (!channel) return;
@@ -298,6 +298,30 @@ void announceCTCSS(bool rxToneEnabled, uint8_t rxTone, bool txToneEnabled, uint8
 		vpQueueString(buffer, vpqDefault);
 		vpQueuePrompt(PROMPT_HERTZ);
 	}
+	
+	vpPlayIfNeeded(flags);
+}
+
+void announceBrightness(uint8_t brightness, VoicePromptQueueFlags_T flags)
+{
+	vpInitIfNeeded(flags);
+	
+	if (flags & vpqIncludeDescriptions)
+		vpQueueStringTableEntry(&currentLanguage->brightness);
+		
+	vpQueueInteger(brightness);
+	
+	vpPlayIfNeeded(flags);
+}
+
+void announceSquelch(uint8_t squelch, VoicePromptQueueFlags_T flags)
+{
+	vpInitIfNeeded(flags);
+	
+	if (flags & vpqIncludeDescriptions)
+		vpQueuePrompt(PROMPT_SQUELCH);
+		
+	vpQueueInteger(squelch);
 	
 	vpPlayIfNeeded(flags);
 }

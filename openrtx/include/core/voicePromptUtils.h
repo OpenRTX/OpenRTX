@@ -59,4 +59,7 @@ character by character.
 void announceText( char* text, VoicePromptQueueFlags_T flags);
 void announceCTCSS(bool rxToneEnabled, uint8_t rxTone, bool txToneEnabled, uint8_t txTone, VoicePromptQueueFlags_T flags);
 void anouncePower(float power, VoicePromptQueueFlags_T flags);
+void announceBrightness(uint8_t brightness, VoicePromptQueueFlags_T flags);
+void announceSquelch(uint8_t squelch, VoicePromptQueueFlags_T flags);
+
 #endif //VOICE_PROMPT_UTILS_H_INCLUDED

@@ -830,9 +830,11 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             break;
         case 7:
             _ui_changeBrightness(+5);
+			announceBrightness(state.settings.brightness, queueFlags);
             break;
         case 8:
             _ui_changeBrightness(-5);
+			announceBrightness(state.settings.brightness, queueFlags);
             break;
     }
 
@@ -840,6 +842,7 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
     if(msg.keys & KNOB_LEFT || msg.keys & KNOB_RIGHT) {
         state.settings.sqlLevel = platform_getChSelector() - 1;
         *sync_rtx = true;
+		announceSquelch(state.settings.sqlLevel, queueFlags);
     }
 
     if(msg.keys & KEY_LEFT || msg.keys & KEY_DOWN)
@@ -852,6 +855,7 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
         {
             state.settings.sqlLevel -= 1;
             *sync_rtx = true;
+			announceSquelch(state.settings.sqlLevel, queueFlags);
         }
     }
 
@@ -865,6 +869,7 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
         {
             state.settings.sqlLevel += 1;
             *sync_rtx = true;
+			announceSquelch(state.settings.sqlLevel, queueFlags);
         }
     }
 }
