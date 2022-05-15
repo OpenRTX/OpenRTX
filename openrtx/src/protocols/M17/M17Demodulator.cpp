@@ -29,9 +29,9 @@
 #include <stdio.h>
 #include <deque>
 #include <ringbuf.h>
+#ifndef PLATFORM_LINUX
 #include <usb_vcom.h>
-
-// #define ENABLE_DEMOD_LOG
+#endif
 
 using namespace M17;
 
@@ -49,7 +49,13 @@ typedef struct
 }
 log_entry_t;
 
-static RingBuffer< log_entry_t, 128 > logBuf;
+#ifdef PLATFORM_LINUX
+#define LOG_QUEUE 160000
+#else
+#define LOG_QUEUE 1024
+#endif
+
+static RingBuffer< log_entry_t, LOG_QUEUE > logBuf;
 static bool      logRunning;
 static pthread_t logThread;
 

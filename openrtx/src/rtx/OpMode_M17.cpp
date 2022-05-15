@@ -77,8 +77,10 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
             if(type == M17FrameType::STREAM)
             {
                 M17StreamFrame sf = decoder.getStreamFrame();
+                #ifndef ENABLE_DEMOD_LOG
                 codec_pushFrame(sf.payload().data(),     false);
                 codec_pushFrame(sf.payload().data() + 8, false);
+                #endif
             }
         }
     }
@@ -89,7 +91,9 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
         audio_disableMic();
         audio_enableAmp();
         codec_stop();
+        #ifndef ENABLE_DEMOD_LOG
         codec_startDecode(SINK_SPK);
+        #endif
 
         decoder.reset();
         demodulator.startBasebandSampling();
