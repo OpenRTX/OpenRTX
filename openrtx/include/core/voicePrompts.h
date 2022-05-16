@@ -185,10 +185,11 @@ typedef enum
 	vpAnnouncePhoneticRendering=0x40,
 } VoicePromptFlags_T;
 /*
-These queuing flags determine if speech is interrupted, played immediately, whether prompts are queued for values, etc.
+These queuing flags determine if speech is interrupted, played 
+immediately, whether prompts are queued for values, etc.
 They are necessary because for example if you call the announceXX functions 
-consecutively, it is only desireable to initially stop speech in progress 
-and only play after the last prompt is queued.
+consecutively, it is only desireable to initially stop speech in 
+progress and only play after the last prompt is queued.
 If however calling an announceXX function in isolation, normally any prompt in 
 progress should be interrupted and play should be called immediately.
 */
