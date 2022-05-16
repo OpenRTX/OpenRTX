@@ -151,6 +151,16 @@ PROMPT_BAR, // bar
 PROMPT_UNDERLINE, // underline
 PROMPT_CARET, // caret
 PROMPT_LEFT_BRACE, // left brace
+PROMPT_CUSTOM1, // Hotspot
+PROMPT_CUSTOM2, // ClearNode
+PROMPT_CUSTOM3, // ShariNode
+PROMPT_CUSTOM4, // MicroHub
+PROMPT_CUSTOM5, // Openspot
+PROMPT_CUSTOM6, // repeater
+PROMPT_CUSTOM7, // BlindHams
+PROMPT_CUSTOM8, // Allstar
+PROMPT_CUSTOM9, // parrot
+PROMPT_CUSTOM10, // unused
 NUM_VOICE_PROMPTS,
 } voicePrompt_t;
 
@@ -203,6 +213,12 @@ typedef enum
 	vpMedium,
 	vpHigh
 } VoicePromptVerbosity_T;
+
+typedef struct
+{
+	const char* userWord;
+	const voicePrompt_t vp;
+} userDictEntry;
 
 extern bool vpDataIsLoaded;
 extern const uint32_t VOICE_PROMPTS_FLASH_HEADER_ADDRESS;
