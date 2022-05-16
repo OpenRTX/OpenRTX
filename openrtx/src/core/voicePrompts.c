@@ -78,6 +78,20 @@ static vpSequence_t vpCurrentSequence =
 
 uint32_t tableOfContents[VOICE_PROMPTS_TOC_SIZE];
 
+const userDictEntry userDictionary[]=
+{
+	{"hotspot", PROMPT_CUSTOM1}, // Hotspot
+	{"clearnode", PROMPT_CUSTOM2}, // ClearNode
+	{"sharinode", PROMPT_CUSTOM3}, // ShariNode
+	{"microhub", PROMPT_CUSTOM4}, // MicroHub
+	{"openspot", PROMPT_CUSTOM5}, // Openspot
+	{"repeater", PROMPT_CUSTOM6}, // repeater
+	{"blindhams", PROMPT_CUSTOM7}, // BlindHams
+		{"allstar", PROMPT_CUSTOM8}, // Allstar
+	{"parrot", PROMPT_CUSTOM9}, // Parrot
+	{"channel",PROMPT_CHANNEL},
+	{0, 0}
+};
 
 void vpCacheInit(void)
 {
@@ -203,6 +217,23 @@ void vpQueuePrompt(uint16_t prompt)
 	}
 }
 
+static uint16_t UserDictLookup(char* ptr, int* advanceBy)
+{
+	if (!ptr || !*ptr) return 0;
+	
+	for (int index=0; userDictionary[index].userWord!=0; ++index)
+	{
+		int len=strlen(userDictionary[index].userWord);
+		if (strncasecmp(userDictionary[index].userWord, ptr, len)==0)
+		{
+			*advanceBy=len;
+			return userDictionary[index].vp;
+		}
+	}
+
+	return 0;
+}
+
 static bool GetSymbolVPIfItShouldBeAnnounced(char symbol, 
 VoicePromptFlags_T flags, voicePrompt_t* vp)
 {
@@ -241,9 +272,15 @@ void vpQueueString(char *promptString, VoicePromptFlags_T flags)
 	
 	while (*promptString != 0)
 	{
-		voicePrompt_t vp = PROMPT_SILENCE;
-		
-		if ((*promptString >= '0') && (*promptString <= '9'))
+		int advanceBy=0;
+		voicePrompt_t vp = UserDictLookup(promptString, &advanceBy);
+		if (vp)
+		{
+			vpQueuePrompt(vp);
+			promptString += advanceBy;
+			continue;
+		}
+		else if ((*promptString >= '0') && (*promptString <= '9'))
 		{
 			vpQueuePrompt(*promptString - '0' + PROMPT_0);
 		}
