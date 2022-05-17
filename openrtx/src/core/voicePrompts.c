@@ -23,6 +23,7 @@
 #include <ctype.h>
 #include "core/voicePrompts.h"
 #include "ui/UIStrings.h"
+#include <state.h>
 
 const uint32_t VOICE_PROMPTS_DATA_MAGIC = 0x5056;//'VP'
 const uint32_t VOICE_PROMPTS_DATA_VERSION = 0x1000; // v1000 OpenRTX
@@ -49,8 +50,7 @@ static uint32_t vpFlashDataAddress;// = VOICE_PROMPTS_FLASH_HEADER_ADDRESS + siz
 #define Codec2DataBufferSize  2052
 
 bool vpDataIsLoaded = false;
- VoicePromptVerbosity_T vpLevel = vpHigh;
-
+ 
 static bool voicePromptIsActive = false;
 // Uninitialized is -1.
 static int promptDataPosition = -1;
@@ -105,7 +105,7 @@ void vpCacheInit(void)
 		vpFlashDataAddress =  VOICE_PROMPTS_FLASH_HEADER_ADDRESS + sizeof(voicePromptsDataHeader_t) + sizeof(uint32_t)*VOICE_PROMPTS_TOC_SIZE ;
 	}
 	if (!vpDataIsLoaded)
-		vpLevel = vpNone;
+		state.settings.vpLevel = vpNone;
 }
 
 bool vpCheckHeader(uint32_t *bufferAddress)
@@ -203,7 +203,7 @@ void vpInit(void)
 
 void vpQueuePrompt(uint16_t prompt)
 {
-	if (vpLevel < vpLow) 
+	if (state.settings.vpLevel < vpLow) 
 		return;
 	
 	if (voicePromptIsActive)
@@ -262,7 +262,7 @@ VoicePromptFlags_T flags, voicePrompt_t* vp)
 // This function spells out a string letter by letter.
 void vpQueueString(char *promptString, VoicePromptFlags_T flags)
 {
-	if (vpLevel < vpLow) 
+	if (state.settings.vpLevel < vpLow) 
 		return;
 
 	if (voicePromptIsActive)
@@ -270,6 +270,8 @@ void vpQueueString(char *promptString, VoicePromptFlags_T flags)
 		vpInit();
 	}
 	
+	if (state.settings.vpPhoneticSpell)
+		flags|=vpAnnouncePhoneticRendering;
 	while (*promptString != 0)
 	{
 		int advanceBy=0;
@@ -327,7 +329,7 @@ void vpQueueString(char *promptString, VoicePromptFlags_T flags)
 
 void vpQueueInteger(int32_t value)
 {
-	if (vpLevel < vpLow) 
+	if (state.settings.vpLevel < vpLow) 
 		return;
 
 	char buf[12] = {0}; // min: -2147483648, max: 2147483647
@@ -341,7 +343,7 @@ void vpQueueInteger(int32_t value)
 // NUM_VOICE_PROMPTS + (stringTableStringPtr - currentLanguage->languageName)
 void vpQueueStringTableEntry(const char * const *stringTableStringPtr)
 {
-	if (vpLevel < vpLow) 
+	if (state.settings.vpLevel < vpLow) 
 		return;
 
 	if (stringTableStringPtr == NULL)
@@ -353,7 +355,7 @@ void vpQueueStringTableEntry(const char * const *stringTableStringPtr)
 
 void vpPlay(void)
 {
-	if (vpLevel < vpLow) 
+	if (state.settings.vpLevel < vpLow) 
 		return;
 
 	if ((voicePromptIsActive == false) && (vpCurrentSequence.Length > 0))

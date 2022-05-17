@@ -200,12 +200,7 @@ typedef enum
 	vpqPlayImmediately=0x02, // call play after queue.
 	vpqIncludeDescriptions=0x04
 } VoicePromptQueueFlags_T;
-/*
-These values correspond to prompts in the wordlistXX.csv file in the 
-voicePromptGenerator subproject.
-They must not be reordered.
-They correspond to prompts for which there are no string table entries.
-*/
+
 typedef enum
 {
 	vpNone=0,
