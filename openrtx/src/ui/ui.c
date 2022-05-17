@@ -1015,7 +1015,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
     {
         kbd_msg_t msg;
         msg.value = event.payload;
-
+		bool f1Handled = false;
         // If we get out of standby, we ignore the kdb event
         // unless is the MONI key for the MACRO functions
         if (_ui_exitStandby(now) && !(msg.keys & KEY_MONI))
@@ -1085,9 +1085,18 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 }
                 else if(msg.keys & KEY_F1)
                 {
-                    // Switch to Digital Mode VFO screen
-                    state.ui_screen = MODE_VFO;
-					announceVFO();
+					if (state.settings.vpLevel > vpBeep)
+					{// quick press repeat vp, long press summary.
+						if (msg.long_press)
+							announceChannelSummary(&state.channel, 0, (vpqInit|vpqPlayImmediately));
+						else
+							ReplayLastPrompt();
+						f1Handled = true;
+					}
+					else
+					{                    // Switch to Digital Mode VFO screen
+						state.ui_screen = MODE_VFO;
+					}
                 }
                 else if(input_isNumberPressed(msg))
                 {
@@ -1158,8 +1167,20 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 }
                 else if(msg.keys & KEY_F1)
                 {
-                    // Switch to Digital Mode MEM screen
-                    state.ui_screen = MODE_MEM;
+					if (state.settings.vpLevel > vpBeep)
+					{// quick press repeat vp, long press summary.
+						if (msg.long_press)
+							announceChannelSummary(&state.channel, state.channel_index, 
+						(vpqInit|vpqPlayImmediately));
+						else
+							ReplayLastPrompt();
+						f1Handled=true;
+					}
+					else
+					{
+						// Switch to Digital Mode MEM screen
+						state.ui_screen = MODE_MEM;
+					}
                 }
                 else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
                 {
@@ -1722,6 +1743,12 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 }
                 break;
         }
+		
+		if (!f1Handled && (msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
+		{
+			ReplayLastPrompt();
+		}
+
     }
     else if(event.type == EVENT_STATUS)
     {

@@ -155,7 +155,7 @@ void anouncePower(float power, VoicePromptQueueFlags_T flags)
 		vpInitIfNeeded(flags);
 		
 	char buffer[16] = "\0";
-//joe
+	
 	if (flags & vpqIncludeDescriptions)
 		vpQueuePrompt(PROMPT_POWER);
 	
@@ -177,8 +177,12 @@ VoicePromptQueueFlags_T flags)
 	VoicePromptQueueFlags_T localFlags=flags & ~(vpqInit | vpqPlayImmediately); 
 	if (state.settings.vpLevel == vpHigh)
 		localFlags |= vpqIncludeDescriptions;
-	
-	announceChannelName(channel, channelIndex, localFlags);
+	// if VFO mode, announce VFO.
+	// channelIndex will be 0 if called from VFO mode.
+	if (channelIndex == 0)
+		vpQueuePrompt(PROMPT_VFO);
+	else
+		announceChannelName(channel, channelIndex, localFlags);
 	announceFrequencies(channel->rx_frequency , channel->tx_frequency, localFlags);
 	announceRadioMode(channel->mode,  localFlags);
 	if (channel->mode == FM)
