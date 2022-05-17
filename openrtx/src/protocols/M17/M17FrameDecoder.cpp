@@ -23,6 +23,7 @@
 #include <M17/M17Interleaver.h>
 #include <M17/M17Decorrelator.h>
 #include <M17/M17CodePuncturing.h>
+#include <M17/M17Utils.h>
 #include <algorithm>
 
 using namespace M17;
@@ -51,30 +52,58 @@ M17FrameType M17FrameDecoder::decodeFrame(const frame_t& frame)
     decorrelate(data);
     deinterleave(data);
 
+    auto type = getFrameType(syncWord);
+
+    switch(type)
+    {
+        case M17FrameType::LINK_SETUP:
+            decodeLSF(data);
+            break;
+
+        case M17FrameType::STREAM:
+            decodeStream(data);
+            break;
+
+        default:
+            break;
+    }
+
+    return type;
+}
+
+M17FrameType M17FrameDecoder::getFrameType(const std::array< uint8_t, 2 >& syncWord)
+{
     // Preamble
-    if((syncWord[0] == 0x77) && (syncWord[1] == 0x77))
+    M17FrameType type   = M17FrameType::PREAMBLE;
+    uint8_t minDistance = hammingDistance(syncWord[0], 0x77)
+                        + hammingDistance(syncWord[1], 0x77);
+
+    // Link setup frame
+    uint8_t hammDistance = hammingDistance(syncWord[0], LSF_SYNC_WORD[0])
+                         + hammingDistance(syncWord[1], LSF_SYNC_WORD[1]);
+    if(hammDistance < minDistance)
     {
-        return M17FrameType::PREAMBLE;
+        type = M17FrameType::LINK_SETUP;
+        minDistance = hammDistance;
     }
 
-    // Link Setup Frame
-    if(syncWord == LSF_SYNC_WORD)
+    // Stream frame
+    hammDistance = hammingDistance(syncWord[0], STREAM_SYNC_WORD[0])
+                 + hammingDistance(syncWord[1], STREAM_SYNC_WORD[1]);
+    if(hammDistance < minDistance)
     {
-        decodeLSF(data);
-        return M17FrameType::LINK_SETUP;
+        type = M17FrameType::STREAM;
+        minDistance = hammDistance;
     }
 
-    // Stream data frame
-    uint8_t hd = __builtin_popcount(syncWord[0] ^ STREAM_SYNC_WORD[0])
-               + __builtin_popcount(syncWord[1] ^ STREAM_SYNC_WORD[1]);
-    if(hd <= 4)
+    // Check value of minimum hamming distance found, if exceeds the allowed
+    // limit consider the frame as of unknown type.
+    if(minDistance > MAX_SYNC_HAMM_DISTANCE)
     {
-        decodeStream(data);
-        return M17FrameType::STREAM;
+        type = M17FrameType::UNKNOWN;
     }
 
-    // If we get here, we received an unknown frame
-    return M17FrameType::UNKNOWN;
+    return type;
 }
 
 void M17FrameDecoder::decodeLSF(const std::array< uint8_t, 46 >& data)

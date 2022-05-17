@@ -239,14 +239,6 @@ private:
     int8_t quantize(int32_t offset);
 
     /**
-     * Compute Hamming Distance between two bytes
-     *
-     * @param x: first byte
-     * @param y: second byte
-     */
-    uint8_t hammingDistance(uint8_t x, uint8_t y);
-
-    /**
      * Perform a limited search for a syncword using correlation
      *
      * @param offset: sample index right after a syncword

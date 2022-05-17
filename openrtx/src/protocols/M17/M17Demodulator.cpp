@@ -310,11 +310,6 @@ bool M17::M17Demodulator::isLocked()
     return locked;
 }
 
-uint8_t M17Demodulator::hammingDistance(uint8_t x, uint8_t y)
-{
-    return __builtin_popcount(x ^ y);
-}
-
 int32_t M17Demodulator::syncwordSweep(int32_t offset)
 {
     int32_t max_conv = 0, max_index = 0;

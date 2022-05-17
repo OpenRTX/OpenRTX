@@ -25,6 +25,7 @@
 #error This header is C++ only!
 #endif
 
+#include <cstdint>
 #include <string>
 #include <array>
 #include "M17LinkSetupFrame.h"
@@ -98,6 +99,17 @@ public:
 private:
 
     /**
+     * Determine frame type by searching which syncword among the standard M17
+     * ones has the minumum hamming distance from the given one. If the hamming
+     * distance exceeds a masimum absolute threshold the frame is declared of
+     * unknown type.
+     *
+     * @param syncWord: frame syncword.
+     * @return frame type based on the given syncword.
+     */
+    M17FrameType getFrameType(const std::array< uint8_t, 2 >& syncWord);
+
+    /**
      * Decode Link Setup Frame data and update the internal LSF field with
      * the new frame data.
      *
@@ -129,6 +141,9 @@ private:
     M17LinkSetupFrame lsfFromLich;      ///< LSF assembled from LICH segments.
     M17StreamFrame    streamFrame;      ///< Latest stream dat frame received.
     M17Viterbi        viterbi;          ///< Viterbi decoder.
+
+    ///< Maximum allowed hamming distance when determining the frame type.
+    static constexpr uint8_t MAX_SYNC_HAMM_DISTANCE = 4;
 };
 
 }      // namespace M17

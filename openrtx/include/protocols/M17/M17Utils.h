@@ -39,9 +39,9 @@ namespace M17
  * of bytes. Bits are counted scanning from left to right, thus bit number zero
  * is the leftmost bit of array[0].
  *
- * \param array: byte array.
- * \param pos: bit position inside the array.
- * \return value of the indexed bit, as boolean variable.
+ * @param array: byte array.
+ * @param pos: bit position inside the array.
+ * @return value of the indexed bit, as boolean variable.
  */
 template < size_t N >
 inline bool getBit(const std::array< uint8_t, N >& array, const size_t pos)
@@ -57,9 +57,9 @@ inline bool getBit(const std::array< uint8_t, N >& array, const size_t pos)
  * of bytes. Bits are counted scanning from left to right, thus bit number zero
  * is the leftmost bit of array[0].
  *
- * \param array: byte array.
- * \param pos: bit position inside the array.
- * \param bit: bit value to be set.
+ * @param array: byte array.
+ * @param pos: bit position inside the array.
+ * @param bit: bit value to be set.
  */
 template < size_t N >
 inline void setBit(std::array< uint8_t, N >& array, const size_t pos,
@@ -78,9 +78,9 @@ inline void setBit(std::array< uint8_t, N >& array, const size_t pos,
  * symbols are filled from the least significant bit pair to the most
  * significant bit pair.
  *
- * \param array: byte array.
- * \param pos: symbol position inside the array.
- * \param symbol: symbol to be set, either -3, -1, +1, +3.
+ * @param array: byte array.
+ * @param pos: symbol position inside the array.
+ * @param symbol: symbol to be set, either -3, -1, +1, +3.
  */
 template < size_t N >
 inline void setSymbol(std::array< uint8_t, N >& array, const size_t pos,
@@ -106,6 +106,18 @@ inline void setSymbol(std::array< uint8_t, N >& array, const size_t pos,
         default:
             assert("Error: unknown M17 symbol!");
     }
+}
+
+/**
+ * Compute the hamming distance between two bytes.
+ *
+ * @param x: first byte.
+ * @param y: second byte.
+ * @return hamming distance between x and y.
+ */
+static inline uint8_t hammingDistance(const uint8_t x, const uint8_t y)
+{
+    return __builtin_popcount(x ^ y);
 }
 
 }      // namespace M17
