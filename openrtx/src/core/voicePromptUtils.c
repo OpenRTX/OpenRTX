@@ -20,7 +20,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
- 
+ #include <state.h>
+
  #include "core/voicePromptUtils.h"
 
 static void vpInitIfNeeded(VoicePromptQueueFlags_T flags)
@@ -174,7 +175,7 @@ VoicePromptQueueFlags_T flags)
 	
 	// mask off init and play because this function will handle init and play.
 	VoicePromptQueueFlags_T localFlags=flags & ~(vpqInit | vpqPlayImmediately); 
-	if (vpLevel == vpHigh)
+	if (state.settings.vpLevel == vpHigh)
 		localFlags |= vpqIncludeDescriptions;
 	
 	announceChannelName(channel, channelIndex, localFlags);
