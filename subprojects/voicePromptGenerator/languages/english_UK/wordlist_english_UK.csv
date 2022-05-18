@@ -153,6 +153,10 @@ timer,,,Timer
 gpsEnabled,,,GPS Enabled
 gpsSetTime,,,GPS Set Time
 UTCTimeZone,,,UTC Timezone
+voice,,,Voice
+level,,,Level
+phonetic,,,Phonetic spell
+beep,,,beep
 backup,,,Backup
 restore,,,Restore
 batteryVoltage,,,Batterty Voltage
