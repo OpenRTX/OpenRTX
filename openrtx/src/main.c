@@ -63,7 +63,8 @@ int main(void)
 
     // Initialize user interface
     ui_init();
-
+    // Checks to see if voice prompts are loaded and initializes them.
+    vpCacheInit();
     // Display splash screen
     ui_drawSplashScreen(true);
     gfx_render();
