@@ -65,3 +65,7 @@ subprojects/tinyusb
 # ignore bin2sgl
 !scripts/bin2sgl.Linux.bin
 !scripts/bin2sgl.exe
+
+# Codec2 binaries for windows
+!scripts/c2dec.exe
+!scripts/c2enc.exe
