@@ -23,6 +23,7 @@
 #include <interfaces/delays.h>
 #include <interfaces/cps_io.h>
 #include <interfaces/gps.h>
+#include <voicePrompts.h>
 #include <graphics.h>
 #include <openrtx.h>
 #include <threads.h>
@@ -43,6 +44,7 @@ void openrtx_init()
     gfx_init();         // Initialize display and graphics driver
     kbd_init();         // Initialize keyboard driver
     ui_init();          // Initialize user interface
+    vpCacheInit();      // Checks to see if voice prompts are loaded and initializes them
     #ifdef SCREEN_CONTRAST
     display_setContrast(state.settings.contrast);
     #endif

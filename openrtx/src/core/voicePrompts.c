@@ -21,6 +21,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
+#include "interfaces/keyboard.h"
 #include "core/voicePrompts.h"
 #include "ui/UIStrings.h"
 #include <state.h>
@@ -104,8 +105,16 @@ void vpCacheInit(void)
 		vpDataIsLoaded = false; //SPI_Flash_read(VOICE_PROMPTS_FLASH_HEADER_ADDRESS + sizeof(voicePromptsDataHeader_t), (uint8_t *)&tableOfContents, sizeof(uint32_t) * VOICE_PROMPTS_TOC_SIZE);
 		vpFlashDataAddress =  VOICE_PROMPTS_FLASH_HEADER_ADDRESS + sizeof(voicePromptsDataHeader_t) + sizeof(uint32_t)*VOICE_PROMPTS_TOC_SIZE ;
 	}
-	if (!vpDataIsLoaded)
-		state.settings.vpLevel = vpNone;
+	if (vpDataIsLoaded)
+	{// if the hash key is down, set vpLevel to high, if beep or less.
+		if ((kbd_getKeys() & KEY_HASH) && (state.settings.vpLevel <= vpBeep))
+			state.settings.vpLevel = vpHigh; 
+	}
+	else
+	{ // ensure we at least have beeps in the event no voice prompts are loaded.
+		if (state.settings.vpLevel > vpBeep)
+			state.settings.vpLevel = vpBeep; 
+	}
 }
 
 bool vpCheckHeader(uint32_t *bufferAddress)
