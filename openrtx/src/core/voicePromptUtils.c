@@ -197,7 +197,18 @@ VoicePromptQueueFlags_T flags)
 	localFlags);
 		}
 	}
-	// Todo M17 and DMR info.
+	else if (channel->mode == OPMODE_M17)
+	{
+		announceContactWithIndex(channel->m17.contact_index, localFlags);
+	}
+	else if (channel->mode == OPMODE_DMR)
+	{
+		announceContactWithIndex(channel->dmr.contact_index, localFlags);
+		// Force announcement of the words timeslot and colorcode to avoid ambiguity. 
+		announceTimeslot(channel->dmr.dmr_timeslot, (localFlags | vpqIncludeDescriptions));
+		announceColorCode(channel->dmr.rxColorCode, channel->dmr.txColorCode, (localFlags | vpqIncludeDescriptions));
+	}
+
 	anouncePower(channel->power, localFlags);
 	
 	vpPlayIfNeeded(flags);
@@ -328,6 +339,69 @@ void announceSquelch(uint8_t squelch, VoicePromptQueueFlags_T flags)
 		vpQueuePrompt(PROMPT_SQUELCH);
 		
 	vpQueueInteger(squelch);
+	
+	vpPlayIfNeeded(flags);
+}
+
+void announceContact(contact_t* contact, VoicePromptQueueFlags_T flags)
+{
+	if (!contact)
+		return;
+	
+	vpInitIfNeeded(flags);
+	
+	if (flags & vpqIncludeDescriptions)
+		vpQueuePrompt(PROMPT_CONTACT);
+	
+	if (contact->name[0])
+		vpQueueString(contact->name, vpAnnounceCommonSymbols);
+
+	vpPlayIfNeeded(flags);
+}
+
+void announceContactWithIndex(uint16_t index, VoicePromptQueueFlags_T flags)
+{
+	if (index == 0)
+		return;
+	
+	contact_t contact;
+	
+	if (cps_readContact(&contact, index) == -1)
+		return;
+	
+	announceContact(&contact, flags);
+}
+
+void announceTimeslot(uint8_t timeslot, VoicePromptQueueFlags_T flags)
+{
+	vpInitIfNeeded(flags);
+	
+	if (flags & vpqIncludeDescriptions)
+		vpQueuePrompt(PROMPT_TIMESLOT);
+	
+	vpQueueInteger(timeslot);
+	
+	vpPlayIfNeeded(flags);
+}
+
+void  announceColorCode(uint8_t rxColorCode, uint8_t txColorCode, VoicePromptQueueFlags_T flags)
+{
+	vpInitIfNeeded(flags);
+	
+	if (flags & vpqIncludeDescriptions)
+		vpQueuePrompt(PROMPT_COLORCODE);
+	
+	if (rxColorCode == txColorCode)
+	{
+		vpQueueInteger(rxColorCode);
+	}
+	else
+	{
+		vpQueuePrompt(PROMPT_RECEIVE);
+		vpQueueInteger(rxColorCode);
+		vpQueuePrompt(PROMPT_TRANSMIT);
+		vpQueueInteger(txColorCode);
+	}
 	
 	vpPlayIfNeeded(flags);
 }
