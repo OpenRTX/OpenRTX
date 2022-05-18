@@ -61,5 +61,9 @@ void announceCTCSS(bool rxToneEnabled, uint8_t rxTone, bool txToneEnabled, uint8
 void anouncePower(float power, VoicePromptQueueFlags_T flags);
 void announceBrightness(uint8_t brightness, VoicePromptQueueFlags_T flags);
 void announceSquelch(uint8_t squelch, VoicePromptQueueFlags_T flags);
+void announceContact(contact_t* contact, VoicePromptQueueFlags_T flags);
+void announceContactWithIndex(uint16_t index, VoicePromptQueueFlags_T flags);
+void announceTimeslot(uint8_t timeslot, VoicePromptQueueFlags_T flags);
+void  announceColorCode(uint8_t rxColorCode, uint8_t txColorCode, VoicePromptQueueFlags_T flags);
 
 #endif //VOICE_PROMPT_UTILS_H_INCLUDED
