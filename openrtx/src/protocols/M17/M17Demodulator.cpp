@@ -136,6 +136,9 @@ void M17Demodulator::init()
 
 void M17Demodulator::terminate()
 {
+    // Ensure proper termination of baseband sampling
+    inputStream_stop(basebandId);
+
     // Delete the buffers and deallocate memory.
     delete[] baseband_buffer;
     delete activeFrame;
