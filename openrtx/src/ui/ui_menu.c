@@ -265,6 +265,43 @@ int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
 }
 #endif
 
+int _ui_getVoiceEntryName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= settings_voice_num) return -1;
+    snprintf(buf, max_len, "%s", settings_voice_items[index]);
+    return 0;
+}
+
+int _ui_getVoiceValueName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= settings_voice_num) return -1;
+    uint8_t value = 0;
+    switch(index)
+    {
+        case VP_LEVEL:
+		{
+            value = last_state.settings.vpLevel;
+			switch (value)
+			{
+				case vpNone:
+				    snprintf(buf, max_len, "%s", currentLanguage->off);
+					break;
+				case vpBeep:
+				    snprintf(buf, max_len, "%s", currentLanguage->beep);
+					break;
+				default:
+								    snprintf(buf, max_len, "%s %d", currentLanguage->level, (value-vpBeep));
+					break;
+			}
+            break;
+		}
+        case VP_PHONETIC:
+			snprintf(buf, max_len, "%s", last_state.settings.vpPhoneticSpell ? currentLanguage->on : currentLanguage->off);
+            break;
+    }
+	return 0;
+}
+
 int _ui_getBackupRestoreEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= backup_restore_num) return -1;
@@ -696,6 +733,17 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
                       layout.horizontal_pad, layout.input_font,
                       TEXT_ALIGN_CENTER, color_white, last_state.settings.callsign);
     }
+}
+
+void _ui_drawSettingsVoicePrompts(ui_state_t* ui_state)
+{
+    gfx_clearScreen();
+    // Print "Voice" on top bar
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
+              color_white, currentLanguage->voice);
+    // Print voice settings entries
+    _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getVoiceEntryName,
+                           _ui_getVoiceValueName);
 }
 
 void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state)

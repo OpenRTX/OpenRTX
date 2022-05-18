@@ -50,6 +50,10 @@ typedef struct
 	const char* gpsEnabled;
 	const char* gpsSetTime;
 		const char* UTCTimeZone;
+	const char* voice;
+	const char* level;
+	const char* phonetic;
+	const char* beep;
 	const char* backup;
 	const char* restore;
 	const char* batteryVoltage;
