@@ -202,14 +202,7 @@ VoicePromptQueueFlags_T flags)
 	}
 	else if (channel->mode == M17)
 	{
-		if (state.m17_data.dst_addr[0])
-		{
-			if (localFlags & vpqIncludeDescriptions)
-				vpQueuePrompt(PROMPT_DEST_ID);
-			vpQueueString(state.m17_data.dst_addr, vpAnnounceCommonSymbols);
-		}
-		else if (channel->m17.contactName_index)
-		announceContactWithIndex(channel->m17.contactName_index, localFlags);
+		announceM17Info(channel, localFlags);
 	}
 	else if (channel->mode == DMR)
 	{
@@ -430,7 +423,24 @@ void announceZone(VoicePromptQueueFlags_T flags)
 	if (state.zone_enabled)
 		vpQueueString(state.zone.name, vpAnnounceCommonSymbols);
 	else
-		vpQueueStringTableEntry(currentLanguage->allChannels);
+		vpQueueStringTableEntry(&currentLanguage->allChannels);
+	
+	vpPlayIfNeeded(flags);
+}
+
+void announceM17Info(channel_t* channel, VoicePromptQueueFlags_T flags)
+{
+	if (!channel) return;
+	
+	vpInitIfNeeded(flags);
+	if (state.m17_data.dst_addr[0])
+	{
+		if (flags & vpqIncludeDescriptions)
+			vpQueuePrompt(PROMPT_DEST_ID);
+		vpQueueString(state.m17_data.dst_addr, vpAnnounceCommonSymbols);
+	}
+	else if (channel->m17.contactName_index)
+		announceContactWithIndex(channel->m17.contactName_index, flags);
 	
 	vpPlayIfNeeded(flags);
 }
