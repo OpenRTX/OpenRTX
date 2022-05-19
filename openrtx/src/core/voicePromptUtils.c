@@ -179,15 +179,14 @@ void anouncePower(float power, VoicePromptQueueFlags_T flags)
 	vpPlayIfNeeded(flags);
 }
 
-void announceChannelSummary(channel_t* channel, uint16_t channelIndex, 
-VoicePromptQueueFlags_T flags)
+void announceChannelSummary(channel_t* channel, uint16_t channelIndex, uint16_t bank)
 {
 	 	if (!channel) return;
 		
-	vpInitIfNeeded(flags);
+	vpInit();
 	
 	// mask off init and play because this function will handle init and play.
-	VoicePromptQueueFlags_T localFlags=flags & ~(vpqInit | vpqPlayImmediately); 
+	VoicePromptQueueFlags_T localFlags= vpqAddSeparatingSilence; 
 	// Force on the descriptions for level 3.
 	if (state.settings.vpLevel == vpHigh)
 		localFlags |= vpqIncludeDescriptions;
@@ -235,7 +234,7 @@ VoicePromptQueueFlags_T flags)
 	if (channelIndex > 0) // i.e. not called from VFO.
 		announceBank(bank, localFlags);
 		
-	vpPlayIfNeeded(flags);
+	vpPlay();
 }
  
 void AnnounceInputChar(char ch)
@@ -466,13 +465,14 @@ void announceM17Info(channel_t* channel, VoicePromptQueueFlags_T flags)
 }
 
 #ifdef GPS_PRESENT
-void announceGPSInfo(VoicePromptQueueFlags_T flags)
+void announceGPSInfo()
 {
 	if (!state.settings.gps_enabled)
 		return;
 	
-	vpInitIfNeeded(flags);
-	if (flags & vpqIncludeDescriptions)
+	vpInit();
+	VoicePromptQueueFlags_T flags = vpqIncludeDescriptions | vpqAddSeparatingSilence;
+	
 		vpQueueStringTableEntry(&currentLanguage->gps);
 
 	switch (state.gps_data.fix_quality)
@@ -494,9 +494,12 @@ void announceGPSInfo(VoicePromptQueueFlags_T flags)
 		break;
 	default:
 		vpQueueStringTableEntry(&currentLanguage->error);
-		vpPlayIfNeeded(flags);
+		
+		vpPlay();
+		
 		return;
 	}
+	addSilenceIfNeeded(flags);
 	
 	switch(state.gps_data.fix_type)
 	{
@@ -540,7 +543,7 @@ void announceGPSInfo(VoicePromptQueueFlags_T flags)
 	vpQueuePrompt(PROMPT_SATELLITES);
 	vpQueueInteger(__builtin_popcount(state.gps_data.active_sats));
 	
-	vpPlayIfNeeded(flags);
+	vpPlay();
 }
 #endif // GPS_PRESENT
 

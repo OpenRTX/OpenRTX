@@ -1167,14 +1167,14 @@ void ui_updateFSM(bool *sync_rtx)
                     }
                     else if(msg.keys & KEY_F1)
                     {
-				    	if (state.settings.vpLevel > vpBeep)
-				    	{// quick press repeat vp, long press summary.
-				    		if (msg.long_press)
-				    			announceChannelSummary(&state.channel, 0, (vpqInit | vpqPlayImmediately));
-				    		else
-				    			ReplayLastPrompt();
-				    		f1Handled = true;
-				    	}
+					    if (state.settings.vpLevel > vpBeep)
+					    {// quick press repeat vp, long press summary.
+					    	if (msg.long_press)
+					    		announceChannelSummary(&state.channel, 0, state.bank);
+					    	else
+					    		ReplayLastPrompt();
+					    	f1Handled = true;
+					    }
                     }
                     else if(input_isNumberPressed(msg))
                     {
@@ -1253,15 +1253,14 @@ void ui_updateFSM(bool *sync_rtx)
                             ui_state.edit_mode = false;
                         else if(msg.keys & KEY_F1)
                         {
-				        	if (state.settings.vpLevel > vpBeep)
-				        	{// quick press repeat vp, long press summary.
-				        		if (msg.long_press)
-				        			announceChannelSummary(&state.channel, state.channel_index, 
-				        		(vpqInit|vpqPlayImmediately));
-				        		else
-				        			ReplayLastPrompt();
-				        		f1Handled=true;
-				        	}
+					        if (state.settings.vpLevel > vpBeep)
+					        {// quick press repeat vp, long press summary.
+					        	if (msg.long_press)
+					        		announceChannelSummary(&state.channel, state.channel_index, state.bank);
+					        	else
+					        		ReplayLastPrompt();
+					        	f1Handled=true;
+					        }
                         }
                         else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
                                 msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
@@ -1436,7 +1435,15 @@ void ui_updateFSM(bool *sync_rtx)
 #ifdef GPS_PRESENT
             // GPS menu screen
             case MENU_GPS:
-                if(msg.keys & KEY_ESC)
+				if ((msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
+				{// quick press repeat vp, long press summary.
+					if (msg.long_press)
+						announceGPSInfo();
+					else
+						ReplayLastPrompt();
+					f1Handled = true;
+				}
+                else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_TOP);
                 break;
 #endif
