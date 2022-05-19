@@ -293,7 +293,7 @@ int _ui_getVoiceValueName(char *buf, uint8_t max_len, uint8_t index)
 				    snprintf(buf, max_len, "%s", currentLanguage->beep);
 					break;
 				default:
-								    snprintf(buf, max_len, "%s %d", currentLanguage->level, (value-vpBeep));
+								    snprintf(buf, max_len, "%d", (value-vpBeep));
 					break;
 			}
             break;
