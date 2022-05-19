@@ -20,6 +20,7 @@
 /*
 This string table's order must not be altered as voice prompts will be indexed in the same order as these strings.
 */
+#include <string.h>
 #include "ui/UIStrings.h"
  #include "ui/EnglishStrings.h"
  #include <stdint.h>
