@@ -20,6 +20,7 @@
 /*
 This string table's order must not be altered as voice prompts will be indexed in the same order as these strings.
 */
+#include <string.h>
 #include "ui/UIStrings.h"
  #include "ui/EnglishStrings.h"
  #include <stdint.h>
@@ -46,8 +47,8 @@ int GetEnglishStringTableOffset( char* text)
 	for (uint8_t i = 0; i < stringCount; ++i)
 	{
 		uint16_t offset = (i * sizeof(char*));
-		const char* const * strPtr =(const char* const *) (&englishStrings + offset);
-		if (strcmp(text, strPtr) == 0)
+		const char* const * strPtr =(const char* const*) (&englishStrings + offset);
+		if (strcmp(text, *strPtr) == 0)
 		{
 			return offset;
 		}

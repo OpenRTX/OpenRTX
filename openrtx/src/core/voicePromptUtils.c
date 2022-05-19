@@ -504,12 +504,16 @@ void announceGPSInfo(VoicePromptQueueFlags_T flags)
 	vpQueuePrompt(PROMPT_SPEED);
 	snprintf(buffer, 16, "%4.1fkm/h", state.gps_data.speed);
 	vpQueueString(buffer, vpAnnounceCommonSymbols);
+	
 	vpQueuePrompt(PROMPT_ALTITUDE);
 	snprintf(buffer, 16, "%4.1fm", state.gps_data.altitude);
 	vpQueueString(buffer, vpAnnounceCommonSymbols);
+	
 	vpQueuePrompt(PROMPT_COMPASS);
-	vpQueueInteger(state.gps_data.tmg_true);
+	snprintf(buffer, 16, "%3.1f", state.gps_data.tmg_true);
+	vpQueueString(buffer, vpAnnounceCommonSymbols);
 	vpQueuePrompt(PROMPT_DEGREES);
+	
 	vpQueuePrompt(PROMPT_SATELLITES);
 	vpQueueInteger(__builtin_popcount(state.gps_data.active_sats));
 	
