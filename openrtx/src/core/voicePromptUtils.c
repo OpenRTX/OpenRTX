@@ -39,6 +39,15 @@ static void vpPlayIfNeeded(VoicePromptQueueFlags_T flags)
 		vpPlay();
 }
 
+static void addSilenceIfNeeded(VoicePromptQueueFlags_T flags)
+{
+	if ((flags & vpqAddSeparatingSilence) == 0)
+		return;
+	
+	vpQueuePrompt(PROMPT_SILENCE);
+	vpQueuePrompt(PROMPT_SILENCE);
+}
+
 static void removeUnnecessaryZerosFromVoicePrompts(char *str)
 {
 	const int NUM_DECIMAL_PLACES = 1;
@@ -52,6 +61,7 @@ static void removeUnnecessaryZerosFromVoicePrompts(char *str)
 		}
 	}
 }
+
 void announceVFO()
 {
 	vpInit();
@@ -181,6 +191,8 @@ VoicePromptQueueFlags_T flags)
 	// Force on the descriptions for level 3.
 	if (state.settings.vpLevel == vpHigh)
 		localFlags |= vpqIncludeDescriptions;
+	// ensure we add silence between various fields.
+	localFlags |= vpqAddSeparatingSilence;
 	// if VFO mode, announce VFO.
 	// channelIndex will be 0 if called from VFO mode.
 	if (channelIndex == 0)
@@ -192,7 +204,8 @@ VoicePromptQueueFlags_T flags)
 	if (channel->mode == FM)
 	{
 		announceBandwidth(channel->bandwidth, localFlags);
-		
+		addSilenceIfNeeded(localFlags);
+	
 		if (channel->fm.rxToneEn || channel->fm.txToneEn)
 		{
 			announceCTCSS(channel->fm.rxToneEn, channel->fm.rxTone, 
@@ -202,18 +215,22 @@ VoicePromptQueueFlags_T flags)
 	}
 	else if (channel->mode == M17)
 	{
+		addSilenceIfNeeded(localFlags);
 		announceM17Info(channel, localFlags);
 	}
 	else if (channel->mode == DMR)
 	{
+		addSilenceIfNeeded(localFlags);
 		announceContactWithIndex(channel->dmr.contactName_index, localFlags);
 		// Force announcement of the words timeslot and colorcode to avoid ambiguity. 
 		announceTimeslot(channel->dmr.dmr_timeslot, (localFlags | vpqIncludeDescriptions));
 		announceColorCode(channel->dmr.rxColorCode, channel->dmr.txColorCode, (localFlags | vpqIncludeDescriptions));
 	}
+	addSilenceIfNeeded(localFlags);
 
 	anouncePower(channel->power, localFlags);
-	
+	addSilenceIfNeeded(localFlags);
+
 	if (channelIndex > 0) // i.e. not called from VFO.
 		announceZone(localFlags);
 		
@@ -487,7 +504,8 @@ void announceGPSInfo(VoicePromptQueueFlags_T flags)
 		vpQueueString("3D", vpAnnounceCommonSymbols);
 		break;
 	}
-    // lat/long
+	addSilenceIfNeeded(flags);
+	// lat/long
 	char buffer[16] = "\0";
 	vpQueuePrompt(PROMPT_LATITUDE);
 	snprintf(buffer, 16, "%8.6f", state.gps_data.latitude);
@@ -500,20 +518,22 @@ void announceGPSInfo(VoicePromptQueueFlags_T flags)
 	vpQueuePrompt(PROMPT_LONGITUDE);
 	vpQueueString(buffer, vpAnnounceCommonSymbols);
 	vpQueuePrompt(direction);
+	addSilenceIfNeeded(flags);
 	// speed/altitude:
 	vpQueuePrompt(PROMPT_SPEED);
 	snprintf(buffer, 16, "%4.1fkm/h", state.gps_data.speed);
 	vpQueueString(buffer, vpAnnounceCommonSymbols);
-	
 	vpQueuePrompt(PROMPT_ALTITUDE);
 	snprintf(buffer, 16, "%4.1fm", state.gps_data.altitude);
 	vpQueueString(buffer, vpAnnounceCommonSymbols);
-	
+	addSilenceIfNeeded(flags);
+
 	vpQueuePrompt(PROMPT_COMPASS);
 	snprintf(buffer, 16, "%3.1f", state.gps_data.tmg_true);
 	vpQueueString(buffer, vpAnnounceCommonSymbols);
 	vpQueuePrompt(PROMPT_DEGREES);
-	
+	addSilenceIfNeeded(flags);
+
 	vpQueuePrompt(PROMPT_SATELLITES);
 	vpQueueInteger(__builtin_popcount(state.gps_data.active_sats));
 	
@@ -538,7 +558,7 @@ options rapidly.
 */
 VoicePromptQueueFlags_T GetQueueFlagsForVoiceLevel()
 {
-	VoicePromptQueueFlags_T flags = vpqInit;
+	VoicePromptQueueFlags_T flags = vpqInit | vpqAddSeparatingSilence;
 	
 	uint8_t vpLevel = state.settings.vpLevel;
 	switch (vpLevel)
