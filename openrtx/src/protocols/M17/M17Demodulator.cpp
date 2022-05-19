@@ -334,7 +334,7 @@ int32_t M17Demodulator::syncwordSweep(int32_t offset)
 
 bool M17Demodulator::update()
 {
-    M17::sync_t syncword = { 0, false };
+    sync_t syncword = { 0, false };
     int32_t offset = syncDetected ? 0 : -(int32_t) M17_BRIDGE_SIZE;
     uint16_t decoded_syms = 0;
 
@@ -427,14 +427,14 @@ bool M17Demodulator::update()
                 {
                     // If syncword is not valid, lock is lost, accept 2 bit errors
                     uint8_t hammingSync = hammingDistance((*activeFrame)[0],
-                                                          stream_syncword_bytes[0])
+                                                          STREAM_SYNC_WORD[0])
                                         + hammingDistance((*activeFrame)[1],
-                                                          stream_syncword_bytes[1]);
+                                                          STREAM_SYNC_WORD[1]);
 
                     uint8_t hammingLsf = hammingDistance((*activeFrame)[0],
-                                                         lsf_syncword_bytes[0])
+                                                         LSF_SYNC_WORD[0])
                                        + hammingDistance((*activeFrame)[1],
-                                                         lsf_syncword_bytes[1]);
+                                                         LSF_SYNC_WORD[1]);
 
                     // Too many errors in the syncword, lock is lost
                     if ((hammingSync > 2) && (hammingLsf > 2))

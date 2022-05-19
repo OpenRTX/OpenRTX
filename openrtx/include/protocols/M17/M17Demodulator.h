@@ -35,7 +35,8 @@
 #include <dsp.h>
 #include <deque>
 #include <stdio.h>
-#include "M17Datatypes.h"
+#include <M17/M17Datatypes.h>
+#include <M17/M17Constants.h>
 
 namespace M17
 {
@@ -110,16 +111,12 @@ public:
 private:
 
     /**
-     * M17 baseband signal sampled at 48kHz, half of an M17 frame is processed
+     * M17 baseband signal sampled at 24kHz, half of an M17 frame is processed
      * at each update of the demodulator.
      */
-    static constexpr size_t M17_SYMBOL_RATE        = 4800;
-    static constexpr size_t M17_FRAME_SYMBOLS      = 192;
-    static constexpr size_t M17_SYNCWORD_SYMBOLS   = 8;
     static constexpr size_t M17_RX_SAMPLE_RATE     = 24000;
 
     static constexpr size_t M17_SAMPLES_PER_SYMBOL = M17_RX_SAMPLE_RATE / M17_SYMBOL_RATE;
-    static constexpr size_t M17_FRAME_BYTES        = M17_FRAME_SYMBOLS / 4;
     static constexpr size_t M17_FRAME_SAMPLES      = M17_FRAME_SYMBOLS * M17_SAMPLES_PER_SYMBOL;
     static constexpr size_t M17_SAMPLE_BUF_SIZE    = M17_FRAME_SAMPLES / 2;
     static constexpr size_t M17_SYNCWORD_SAMPLES   = M17_SAMPLES_PER_SYMBOL * M17_SYNCWORD_SYMBOLS;
@@ -134,8 +131,6 @@ private:
      */
     int8_t  lsf_syncword[M17_SYNCWORD_SYMBOLS]    = { +3, +3, +3, +3, -3, -3, +3, -3 };
     int8_t  stream_syncword[M17_SYNCWORD_SYMBOLS] = { -3, -3, -3, -3, +3, +3, -3, +3 };
-    uint8_t lsf_syncword_bytes[2]                 = {0x55, 0xf7};
-    uint8_t stream_syncword_bytes[2]              = {0xff, 0x5d};
 
     /*
      * Buffers

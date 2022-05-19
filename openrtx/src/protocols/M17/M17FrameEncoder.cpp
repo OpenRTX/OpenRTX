@@ -22,6 +22,7 @@
 #include <M17/M17Decorrelator.h>
 #include <M17/M17Interleaver.h>
 #include <M17/M17FrameEncoder.h>
+#include <M17/M17Constants.h>
 
 using namespace M17;
 

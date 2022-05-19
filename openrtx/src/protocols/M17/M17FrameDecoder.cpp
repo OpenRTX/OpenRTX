@@ -23,6 +23,7 @@
 #include <M17/M17Interleaver.h>
 #include <M17/M17Decorrelator.h>
 #include <M17/M17CodePuncturing.h>
+#include <M17/M17Constants.h>
 #include <M17/M17Utils.h>
 #include <algorithm>
 

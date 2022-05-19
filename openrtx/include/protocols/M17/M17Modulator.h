@@ -26,6 +26,7 @@
 #endif
 
 #include <interfaces/audio_stream.h>
+#include <M17/M17Constants.h>
 #include <cstdint>
 #include <array>
 #include <dsp.h>
@@ -86,32 +87,10 @@ private:
      */
     void emitBaseband();
 
-    /**
-     * Utility function to encode a given byte of data into 4FSK symbols. Each
-     * byte is encoded in four symbols.
-     *
-     * @param value: value to be encoded in 4FSK symbols.
-     * @return std::array containing the four symbols obtained by 4FSK encoding.
-     */
-    inline std::array< int8_t, 4 > byteToSymbols(uint8_t value)
-    {
-        static constexpr int8_t LUT[] = { +1, +3, -1, -3};
-        std::array< int8_t, 4 > symbols;
+    static constexpr size_t M17_TX_SAMPLE_RATE     = 48000;
+    static constexpr size_t M17_SAMPLES_PER_SYMBOL = M17_TX_SAMPLE_RATE / M17_SYMBOL_RATE;
+    static constexpr size_t M17_FRAME_SAMPLES      = M17_FRAME_SYMBOLS * M17_SAMPLES_PER_SYMBOL;
 
-        symbols[3] = LUT[value & 0x03];
-        value >>= 2;
-        symbols[2] = LUT[value & 0x03];
-        value >>= 2;
-        symbols[1] = LUT[value & 0x03];
-        value >>= 2;
-        symbols[0] = LUT[value & 0x03];
-
-        return symbols;
-    }
-
-    static constexpr size_t M17_TX_SAMPLE_RATE    = 48000;
-    static constexpr size_t M17_FRAME_SAMPLES_48K = 1920;
-    static constexpr size_t M17_FRAME_SYMBOLS     = 192;
     #ifdef PLATFORM_MOD17
     static constexpr float  M17_RRC_GAIN          = 15000.0f;
     static constexpr float  M17_RRC_OFFSET        = 11500.0f;

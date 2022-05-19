@@ -23,6 +23,7 @@
 #include <cstring>
 #include <experimental/array>
 #include <M17/M17Modulator.h>
+#include <M17/M17Utils.h>
 #include <M17/M17DSP.h>
 
 #if defined(PLATFORM_LINUX)
@@ -51,7 +52,7 @@ void M17Modulator::init()
      * placement new.
      */
 
-    baseband_buffer = new int16_t[2 * M17_FRAME_SAMPLES_48K];
+    baseband_buffer = new int16_t[2 * M17_FRAME_SAMPLES];
     idleBuffer      = baseband_buffer;
     txRunning       = false;
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
@@ -90,14 +91,14 @@ void M17Modulator::send(const std::array< uint8_t, 2 >& sync,
 
 void M17Modulator::generateBaseband()
 {
-    memset(idleBuffer, 0x00, M17_FRAME_SAMPLES_48K * sizeof(stream_sample_t));
+    memset(idleBuffer, 0x00, M17_FRAME_SAMPLES * sizeof(stream_sample_t));
 
     for(size_t i = 0; i < symbols.size(); i++)
     {
         idleBuffer[i * 10] = symbols[i];
     }
 
-    for(size_t i = 0; i < M17_FRAME_SAMPLES_48K; i++)
+    for(size_t i = 0; i < M17_FRAME_SAMPLES; i++)
     {
         float elem    = static_cast< float >(idleBuffer[i]);
         elem          = M17::rrc_48k(elem * M17_RRC_GAIN) - M17_RRC_OFFSET;
@@ -109,8 +110,8 @@ void M17Modulator::generateBaseband()
 void M17Modulator::emitBaseband()
 {
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
-    dsp_pwmCompensate(&pwmFilterState, idleBuffer, M17_FRAME_SAMPLES_48K);
-    dsp_invertPhase(idleBuffer, M17_FRAME_SAMPLES_48K);
+    dsp_pwmCompensate(&pwmFilterState, idleBuffer, M17_FRAME_SAMPLES);
+    dsp_invertPhase(idleBuffer, M17_FRAME_SAMPLES);
     #endif
 
     if(txRunning == false)
@@ -119,7 +120,7 @@ void M17Modulator::emitBaseband()
         outStream = outputStream_start(SINK_RTX,
                                        PRIO_TX,
                                        baseband_buffer,
-                                       2*M17_FRAME_SAMPLES_48K,
+                                       2*M17_FRAME_SAMPLES,
                                        BUF_CIRC_DOUBLE,
                                        M17_TX_SAMPLE_RATE);
         txRunning = true;
@@ -152,7 +153,7 @@ void M17Modulator::emitBaseband()
 {
     FILE *outfile = fopen("/tmp/m17_output.raw", "ab");
 
-    for(size_t i = 0; i < M17_FRAME_SAMPLES_48K; i++)
+    for(size_t i = 0; i < M17_FRAME_SAMPLES; i++)
     {
         auto s = idleBuffer[i];
         fwrite(&s, sizeof(s), 1, outfile);

@@ -72,6 +72,20 @@ inline void setBit(std::array< uint8_t, N >& array, const size_t pos,
                (bit ? mask : 0x00);
 }
 
+
+/**
+ * Compute the hamming distance between two bytes.
+ *
+ * @param x: first byte.
+ * @param y: second byte.
+ * @return hamming distance between x and y.
+ */
+static inline uint8_t hammingDistance(const uint8_t x, const uint8_t y)
+{
+    return __builtin_popcount(x ^ y);
+}
+
+
 /**
  * Utility function allowing to set the value of a symbol on an array
  * of bytes. Symbols are packed putting the most significant bit first,
@@ -84,9 +98,10 @@ inline void setBit(std::array< uint8_t, N >& array, const size_t pos,
  */
 template < size_t N >
 inline void setSymbol(std::array< uint8_t, N >& array, const size_t pos,
-                   const int8_t symbol)
+                      const int8_t symbol)
 {
-    switch(symbol) {
+    switch(symbol)
+    {
         case +3:
             setBit<N> (array, 2 * pos    , 0);
             setBit<N> (array, 2 * pos + 1, 1);
@@ -108,16 +123,28 @@ inline void setSymbol(std::array< uint8_t, N >& array, const size_t pos,
     }
 }
 
+
 /**
- * Compute the hamming distance between two bytes.
+ * Utility function to encode a given byte of data into 4FSK symbols. Each
+ * byte is encoded in four symbols.
  *
- * @param x: first byte.
- * @param y: second byte.
- * @return hamming distance between x and y.
+ * @param value: value to be encoded in 4FSK symbols.
+ * @return std::array containing the four symbols obtained by 4FSK encoding.
  */
-static inline uint8_t hammingDistance(const uint8_t x, const uint8_t y)
+inline std::array< int8_t, 4 > byteToSymbols(uint8_t value)
 {
-    return __builtin_popcount(x ^ y);
+    static constexpr int8_t LUT[] = { +1, +3, -1, -3};
+    std::array< int8_t, 4 > symbols;
+
+    symbols[3] = LUT[value & 0x03];
+    value >>= 2;
+    symbols[2] = LUT[value & 0x03];
+    value >>= 2;
+    symbols[1] = LUT[value & 0x03];
+    value >>= 2;
+    symbols[0] = LUT[value & 0x03];
+
+    return symbols;
 }
 
 }      // namespace M17
