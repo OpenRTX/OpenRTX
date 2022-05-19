@@ -69,3 +69,5 @@ subprojects/tinyusb
 # Codec2 binaries for windows
 !scripts/c2dec.exe
 !scripts/c2enc.exe
+!scripts/libcodec2.so
+!scripts/libcodec2.dll
