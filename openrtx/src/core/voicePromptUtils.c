@@ -20,9 +20,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
- #include <state.h>
-
- #include "core/voicePromptUtils.h"
+#include <state.h>
+#include "interfaces/nvmem.h"
+#include "core/voicePromptUtils.h"
 
 static void vpInitIfNeeded(VoicePromptQueueFlags_T flags)
 {
@@ -32,7 +32,10 @@ static void vpInitIfNeeded(VoicePromptQueueFlags_T flags)
 
 static void vpPlayIfNeeded(VoicePromptQueueFlags_T flags)
 {
-	if (flags & vpqPlayImmediately)
+	uint8_t vpLevel = state.settings.vpLevel;
+	
+	if ((flags & vpqPlayImmediately)
+			|| ((flags & vpqPlayImmediatelyAtMediumOrHigher) && (vpLevel >= vpMedium)))
 		vpPlay();
 }
 
@@ -175,6 +178,7 @@ VoicePromptQueueFlags_T flags)
 	
 	// mask off init and play because this function will handle init and play.
 	VoicePromptQueueFlags_T localFlags=flags & ~(vpqInit | vpqPlayImmediately); 
+	// Force on the descriptions for level 3.
 	if (state.settings.vpLevel == vpHigh)
 		localFlags |= vpqIncludeDescriptions;
 	// if VFO mode, announce VFO.
@@ -405,4 +409,49 @@ void  announceColorCode(uint8_t rxColorCode, uint8_t txColorCode, VoicePromptQue
 	}
 	
 	vpPlayIfNeeded(flags);
+}
+/*
+there are 5 levels of verbosity:
+
+vpNone: no voice or beeps.
+vpBeep: beeps only.
+vpLow: menus talk, but channel and frequency changes are indicated with a beep 
+and only voiced on demand with f1.
+vpMedium: menus, channel and frequency changes talk but with extra 
+descriptions eliminated unless ambiguity would result. E.g. We'd say "FM" 
+rather than "Mode: FM" in the channel summary.
+vpHigh: like vpMedium except with extra descriptions: e.g. "Mode fm".
+Also, if a voice prompt is in progress, e.g. changing a menu item, the descriptions are eliminated.
+e.g. changing ctcss tones would not repeat "ctcss" when arrowing through the 
+options rapidly.
+*/
+VoicePromptQueueFlags_T GetQueueFlagsForVoiceLevel()
+{
+	VoicePromptQueueFlags_T flags = vpqInit;
+	
+	uint8_t vpLevel = state.settings.vpLevel;
+	switch (vpLevel)
+	{
+	case vpNone:
+	case vpBeep:
+		return vpqDefault;
+	// play some immediately, other things on demand.
+	case vpLow:
+		flags |= vpqPlayImmediatelyAtMediumOrHigher;
+		break;
+	// play all immediatley but without extra descriptions
+	case vpMedium:
+	{
+		flags |= vpqPlayImmediately;
+		break;
+	}
+	// play immediatley with descriptions unless speech is in progress.
+	case vpHigh:
+		flags |= vpqPlayImmediately;
+		if (!vpIsPlaying())
+			flags |= vpqIncludeDescriptions;
+		break;
+	}
+	
+	return flags;
 }
