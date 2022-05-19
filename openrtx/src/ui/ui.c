@@ -1111,7 +1111,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
 					if (state.settings.vpLevel > vpBeep)
 					{// quick press repeat vp, long press summary.
 						if (msg.long_press)
-							announceChannelSummary(&state.channel, 0, (vpqInit | vpqPlayImmediately));
+							announceChannelSummary(&state.channel, 0);
 						else
 							ReplayLastPrompt();
 						f1Handled = true;
@@ -1193,8 +1193,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
 					if (state.settings.vpLevel > vpBeep)
 					{// quick press repeat vp, long press summary.
 						if (msg.long_press)
-							announceChannelSummary(&state.channel, state.channel_index, 
-						(vpqInit | vpqPlayImmediately));
+							announceChannelSummary(&state.channel, state.channel_index);
 						else
 							ReplayLastPrompt();
 						f1Handled=true;
@@ -1483,7 +1482,15 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
 #ifdef HAS_GPS
             // GPS menu screen
             case MENU_GPS:
-                if(msg.keys & KEY_ESC)
+				if ((msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
+				{// quick press repeat vp, long press summary.
+					if (msg.long_press)
+						announceGPSInfo();
+					else
+						ReplayLastPrompt();
+					f1Handled = true;
+				}
+                else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_TOP);
                 break;
 #endif
