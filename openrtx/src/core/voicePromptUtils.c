@@ -444,7 +444,68 @@ void announceM17Info(channel_t* channel, VoicePromptQueueFlags_T flags)
 	
 	vpPlayIfNeeded(flags);
 }
+
+#ifdef HAS_GPS
+void announceGPSInfo(VoicePromptQueueFlags_T flags)
+{
+	if (!state.settings.gps_enabled)
+		return;
 	
+	vpInitIfNeeded(flags);
+	if (flags & vpqIncludeDescriptions)
+		vpQueueStringTableEntry(&currentLanguage->gps);
+
+	switch (state.gps_data.fix_quality)
+	{
+	case 0:
+		vpQueueStringTableEntry(&currentLanguage->noFix);
+		break;
+	case 1:
+		vpQueueString("SPS", vpAnnounceCommonSymbols);
+		break;
+	case 2:
+		vpQueueString("DGPS", vpAnnounceCommonSymbols);
+		break;
+	case 3:
+		vpQueueString("PPS", vpAnnounceCommonSymbols);
+		break;
+	case 6:
+		vpQueueStringTableEntry(&currentLanguage->fixLost);
+		break;
+	default:
+		vpQueueStringTableEntry(&currentLanguage->error);
+		vpPlayIfNeeded(flags);
+		return;
+	}
+	
+	switch(state.gps_data.fix_type)
+	{
+	case 2:
+		vpQueueString("2D", vpAnnounceCommonSymbols);
+		break;
+	case 3:
+		vpQueueString("3D", vpAnnounceCommonSymbols);
+		break;
+	}
+    // lat/long
+	char buffer[16] = "\0";
+	snprintf(buffer, 16, "%8.6f N", state.gps_data.latitude);
+	vpQueueString(buffer, vpAnnounceCommonSymbols);
+	float longitude = state.gps_data.longitude;
+	const char *direction = (longitude < 0) ? "W" : "E";
+	longitude = (longitude < 0) ? -longitude : longitude;
+	snprintf(buffer, 16, "%8.6f %s", longitude, direction);
+	vpQueueString(buffer, vpAnnounceCommonSymbols);
+	// speed/altitude:
+	snprintf(buffer, 16, "%4.1fkm/h", state.gps_data.speed);
+	vpQueueString(buffer, vpAnnounceCommonSymbols);
+	snprintf(buffer, 16, "%4.1fm", state.gps_data.altitude);
+	vpQueueString(buffer, vpAnnounceCommonSymbols);
+	
+	vpPlayIfNeeded(flags);
+}
+#endif // HAS_GPS
+
 /*
 there are 5 levels of verbosity:
 
