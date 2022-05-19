@@ -132,6 +132,9 @@ PROMPT_LATITUDE, // latitude
 PROMPT_LONGITUDE, // longitude
 PROMPT_SPEED, // speed
 PROMPT_ALTITUDE, // altitude
+PROMPT_SATELLITES, // satellites
+PROMPT_COMPASS, // compass
+PROMPT_DEGREES, // degrees
 PROMPT_CHARACTER, // character
 PROMPT_SPACE, // space
 PROMPT_PERCENT, // Percent
