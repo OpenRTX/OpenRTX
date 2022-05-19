@@ -66,6 +66,9 @@ void announceTimeslot(uint8_t timeslot, VoicePromptQueueFlags_T flags);
 void  announceColorCode(uint8_t rxColorCode, uint8_t txColorCode, VoicePromptQueueFlags_T flags);
 void announceBank(uint16_t bank, VoicePromptQueueFlags_T flags);
 void announceM17Info(channel_t* channel, VoicePromptQueueFlags_T flags);
+#ifdef GPS_PRESENT
+void announceGPSInfo(VoicePromptQueueFlags_T flags);
+#endif // GPS_PRESENT
 
 VoicePromptQueueFlags_T GetQueueFlagsForVoiceLevel();
 
