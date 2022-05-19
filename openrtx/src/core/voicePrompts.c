@@ -334,6 +334,9 @@ void vpQueueString(char *promptString, VoicePromptFlags_T flags)
 		
 		promptString++;
 	}
+	if (flags & vpqAddSeparatingSilence)
+		vpQueuePrompt(PROMPT_SILENCE);
+
 }
 
 void vpQueueInteger(int32_t value)

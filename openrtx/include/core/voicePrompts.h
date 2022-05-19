@@ -217,7 +217,8 @@ typedef enum
 	vpqInit=0x01, // stop any voice prompts already in progress.
 	vpqPlayImmediately=0x02, // call play after queue at all levels.
 	vpqPlayImmediatelyAtMediumOrHigher =0x04,
-	vpqIncludeDescriptions=0x08
+	vpqIncludeDescriptions=0x08,
+	vpqAddSeparatingSilence=0x10
 } VoicePromptQueueFlags_T;
 
 typedef enum
