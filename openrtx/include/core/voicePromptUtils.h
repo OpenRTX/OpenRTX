@@ -64,6 +64,7 @@ void announceContact(contact_t* contact, VoicePromptQueueFlags_T flags);
 void announceContactWithIndex(uint16_t index, VoicePromptQueueFlags_T flags);
 void announceTimeslot(uint8_t timeslot, VoicePromptQueueFlags_T flags);
 void  announceColorCode(uint8_t rxColorCode, uint8_t txColorCode, VoicePromptQueueFlags_T flags);
+void announceBank(uint16_t bank, VoicePromptQueueFlags_T flags);
 VoicePromptQueueFlags_T GetQueueFlagsForVoiceLevel();
 
 #endif //VOICE_PROMPT_UTILS_H_INCLUDED

@@ -203,6 +203,13 @@ VoicePromptQueueFlags_T flags)
 	}
 	else if (channel->mode == OPMODE_M17)
 	{
+		if (state.m17_data.dst_addr[0])
+		{
+			if (localFlags & vpqIncludeDescriptions)
+				vpQueuePrompt(PROMPT_DEST_ID);
+			vpQueueString(state.m17_data.dst_addr, vpAnnounceCommonSymbols);
+		}
+		else if (channel->m17.contact_index)
 		announceContactWithIndex(channel->m17.contact_index, localFlags);
 	}
 	else if (channel->mode == OPMODE_DMR)
@@ -215,6 +222,9 @@ VoicePromptQueueFlags_T flags)
 
 	anouncePower(channel->power, localFlags);
 	
+	if (channelIndex > 0) // i.e. not called from VFO.
+		announceBank(bank, localFlags);
+		
 	vpPlayIfNeeded(flags);
 }
  
@@ -409,6 +419,25 @@ void  announceColorCode(uint8_t rxColorCode, uint8_t txColorCode, VoicePromptQue
 	
 	vpPlayIfNeeded(flags);
 }
+
+void announceBank(uint16_t bank, VoicePromptQueueFlags_T flags)
+{
+	vpInitIfNeeded(flags);
+	if (flags & vpqIncludeDescriptions)
+		vpQueueStringTableEntry(&currentLanguage->banks);
+
+	if (state.bank_enabled)
+	{
+		bankHdr_t bank_hdr = { 0 };
+		cps_readBankHeader(&bank_hdr, bank);
+		vpQueueString(bank_hdr.name, vpAnnounceCommonSymbols);
+	}
+	else
+		vpQueueStringTableEntry(currentLanguage->allChannels);
+	
+	vpPlayIfNeeded(flags);
+}
+	
 /*
 there are 5 levels of verbosity:
 
@@ -452,5 +481,6 @@ VoicePromptQueueFlags_T GetQueueFlagsForVoiceLevel()
 		break;
 	}
 	
-	return flags;
+return flags;
 }
+
