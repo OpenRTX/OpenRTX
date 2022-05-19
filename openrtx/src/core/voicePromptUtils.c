@@ -202,6 +202,13 @@ VoicePromptQueueFlags_T flags)
 	}
 	else if (channel->mode == M17)
 	{
+		if (state.m17_data.dst_addr[0])
+		{
+			if (localFlags & vpqIncludeDescriptions)
+				vpQueuePrompt(PROMPT_DEST_ID);
+			vpQueueString(state.m17_data.dst_addr, vpAnnounceCommonSymbols);
+		}
+		else if (channel->m17.contactName_index)
 		announceContactWithIndex(channel->m17.contactName_index, localFlags);
 	}
 	else if (channel->mode == DMR)
@@ -214,6 +221,9 @@ VoicePromptQueueFlags_T flags)
 
 	anouncePower(channel->power, localFlags);
 	
+	if (channelIndex > 0) // i.e. not called from VFO.
+		announceZone(localFlags);
+		
 	vpPlayIfNeeded(flags);
 }
 
@@ -410,6 +420,21 @@ void  announceColorCode(uint8_t rxColorCode, uint8_t txColorCode, VoicePromptQue
 	
 	vpPlayIfNeeded(flags);
 }
+
+void announceZone(VoicePromptQueueFlags_T flags)
+{
+	vpInitIfNeeded(flags);
+	if (flags & vpqIncludeDescriptions)
+		vpQueueStringTableEntry(&currentLanguage->zone);
+
+	if (state.zone_enabled)
+		vpQueueString(state.zone.name, vpAnnounceCommonSymbols);
+	else
+		vpQueueStringTableEntry(currentLanguage->allChannels);
+	
+	vpPlayIfNeeded(flags);
+}
+	
 /*
 there are 5 levels of verbosity:
 
@@ -453,5 +478,6 @@ VoicePromptQueueFlags_T GetQueueFlagsForVoiceLevel()
 		break;
 	}
 	
-	return flags;
+return flags;
 }
+
