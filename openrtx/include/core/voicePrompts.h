@@ -195,13 +195,18 @@ consecutively, it is only desireable to initially stop speech in
 progress and only play after the last prompt is queued.
 If however calling an announceXX function in isolation, normally any prompt in 
 progress should be interrupted and play should be called immediately.
+At Voice level 1, changing channels in memory mode or frequencies in VFO mode 
+is indicated by a beep however if F1 is pressed, we will still say the current 
+channel name or frequency. This is accomplished by queueing but not playing a 
+prompt.
 */
 typedef enum
 {
 	vpqDefault = 0,
 	vpqInit=0x01, // stop any voice prompts already in progress.
-	vpqPlayImmediately=0x02, // call play after queue.
-	vpqIncludeDescriptions=0x04
+	vpqPlayImmediately=0x02, // call play after queue at all levels.
+	vpqPlayImmediatelyAtMediumOrHigher =0x04,
+	vpqIncludeDescriptions=0x08
 } VoicePromptQueueFlags_T;
 
 typedef enum

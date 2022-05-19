@@ -87,6 +87,9 @@ bool DidSelectedMenuItemChange(char* menuName, char* menuValue)
 
 static void announceMenuItemIfNeeded(char* name, char* value)
 {
+	if (state.settings.vpLevel <= vpLow)
+		return;
+
 	if (!name || !*name)
 		return;
 
