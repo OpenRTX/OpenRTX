@@ -89,6 +89,14 @@ PROMPT_TIMESLOT,,,timeslot
 PROMPT_COLORCODE,,,color code
 PROMPT_TONE,,,tone
 PROMPT_CONTACT,,,contact
+PROMPT_NORTH,,,north
+PROMPT_SOUTH,,,south
+PROMPT_EAST,,,east
+PROMPT_WEST,,,west
+PROMPT_LATITUDE,,,latitude
+PROMPT_LONGITUDE,,,longitude
+PROMPT_SPEED,,,speed
+PROMPT_ALTITUDE,,,altitude
 PROMPT_CHARACTER,,,character
 PROMPT_SPACE,,,space
 PROMPT_PERCENT,,,Percent

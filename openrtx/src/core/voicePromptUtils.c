@@ -489,16 +489,22 @@ void announceGPSInfo(VoicePromptQueueFlags_T flags)
 	}
     // lat/long
 	char buffer[16] = "\0";
-	snprintf(buffer, 16, "%8.6f N", state.gps_data.latitude);
+	vpQueuePrompt(PROMPT_LATITUDE);
+	snprintf(buffer, 16, "%8.6f", state.gps_data.latitude);
 	vpQueueString(buffer, vpAnnounceCommonSymbols);
+	vpQueuePrompt(PROMPT_NORTH);
 	float longitude = state.gps_data.longitude;
-	const char *direction = (longitude < 0) ? "W" : "E";
+	voicePrompt_t direction = (longitude < 0) ? PROMPT_WEST : PROMPT_EAST;
 	longitude = (longitude < 0) ? -longitude : longitude;
-	snprintf(buffer, 16, "%8.6f %s", longitude, direction);
+	snprintf(buffer, 16, "%8.6f", longitude);
+	vpQueuePrompt(PROMPT_LONGITUDE);
 	vpQueueString(buffer, vpAnnounceCommonSymbols);
+	vpQueuePrompt(direction);
 	// speed/altitude:
+	vpQueuePrompt(PROMPT_SPEED);
 	snprintf(buffer, 16, "%4.1fkm/h", state.gps_data.speed);
 	vpQueueString(buffer, vpAnnounceCommonSymbols);
+	vpQueuePrompt(PROMPT_ALTITUDE);
 	snprintf(buffer, 16, "%4.1fm", state.gps_data.altitude);
 	vpQueueString(buffer, vpAnnounceCommonSymbols);
 	
