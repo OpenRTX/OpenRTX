@@ -68,6 +68,7 @@ void announceM17Info(channel_t* channel, VoicePromptQueueFlags_T flags);
 #ifdef GPS_PRESENT
 void announceGPSInfo();
 #endif // GPS_PRESENT
+void announceAboutScreen();
 
 VoicePromptQueueFlags_T GetQueueFlagsForVoiceLevel();
 
