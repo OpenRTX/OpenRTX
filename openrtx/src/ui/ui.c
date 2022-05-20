@@ -1587,7 +1587,15 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
 #ifdef HAS_RTC
             // Time&Date settings screen
             case SETTINGS_TIMEDATE:
-                if(msg.keys & KEY_ENTER)
+                if ((msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
+				{// quick press repeat vp, long press summary.
+					if (msg.long_press)
+						announceSettingsTimeDate();
+					else
+						ReplayLastPrompt();
+					f1Handled = true;
+				}
+				else if(msg.keys & KEY_ENTER)
                 {
                     // Switch to set Time&Date mode
                     state.ui_screen = SETTINGS_TIMEDATE_SET;

@@ -585,6 +585,28 @@ void announceRestoreScreen()
 	vpPlay();
 }
 
+#ifdef HAS_RTC
+void announceSettingsTimeDate()
+{
+	vpInit();
+	
+	vpQueueStringTableEntry(&currentLanguage->timeAndDate);
+	
+	curTime_t local_time = state_getLocalTime(state.time);
+
+	char buffer[16] = "\0";
+	snprintf(buffer, 16, "%02d/%02d/%02d",
+              local_time.date, local_time.month, local_time.year);
+	vpQueueString(buffer, (vpAnnounceCommonSymbols | vpAnnounceLessCommonSymbols));
+
+	snprintf(buffer, 16, "%02d:%02d:%02d",
+              local_time.hour, local_time.minute, local_time.second);
+	vpQueueString(buffer, (vpAnnounceCommonSymbols | vpAnnounceLessCommonSymbols));
+	
+	vpPlay();
+}
+#endif // HAS_RTC
+
 /*
 there are 5 levels of verbosity:
 

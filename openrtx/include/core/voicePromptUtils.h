@@ -72,7 +72,9 @@ void announceGPSInfo();
 void announceAboutScreen();
 void announceBackupScreen();
 void announceRestoreScreen();
-
+#ifdef HAS_RTC
+void announceSettingsTimeDate();
+#endif // HAS_RTC
 VoicePromptQueueFlags_T GetQueueFlagsForVoiceLevel();
 
 #endif //VOICE_PROMPT_UTILS_H_INCLUDED
