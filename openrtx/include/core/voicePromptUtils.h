@@ -71,7 +71,9 @@ void announceGPSInfo();
 void announceAboutScreen();
 void announceBackupScreen();
 void announceRestoreScreen();
-
+#ifdef RTC_PRESENT
+void announceSettingsTimeDate();
+#endif // RTC_PRESENT
 VoicePromptQueueFlags_T GetQueueFlagsForVoiceLevel();
 
 #endif //VOICE_PROMPT_UTILS_H_INCLUDED
