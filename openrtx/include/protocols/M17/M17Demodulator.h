@@ -37,6 +37,7 @@
 #include <stdio.h>
 #include <M17/M17Datatypes.h>
 #include <M17/M17Constants.h>
+#include <cmath>
 
 namespace M17
 {
@@ -116,11 +117,14 @@ private:
      */
     static constexpr size_t M17_RX_SAMPLE_RATE     = 24000;
 
+
     static constexpr size_t M17_SAMPLES_PER_SYMBOL = M17_RX_SAMPLE_RATE / M17_SYMBOL_RATE;
     static constexpr size_t M17_FRAME_SAMPLES      = M17_FRAME_SYMBOLS * M17_SAMPLES_PER_SYMBOL;
     static constexpr size_t M17_SAMPLE_BUF_SIZE    = M17_FRAME_SAMPLES / 2;
     static constexpr size_t M17_SYNCWORD_SAMPLES   = M17_SAMPLES_PER_SYMBOL * M17_SYNCWORD_SYMBOLS;
-    static constexpr size_t M17_BRIDGE_SIZE        = M17_SYNCWORD_SAMPLES;
+    static constexpr int8_t SYNC_SWEEP_WIDTH       = 10;
+    static constexpr int8_t SYNC_SWEEP_OFFSET      = ceil(SYNC_SWEEP_WIDTH / M17_SAMPLES_PER_SYMBOL);
+    static constexpr size_t M17_BRIDGE_SIZE        = M17_SYNCWORD_SAMPLES + 2 * SYNC_SWEEP_WIDTH;
 
     static constexpr float  CONV_STATS_ALPHA       = 0.005f;
     static constexpr float  CONV_THRESHOLD_FACTOR  = 3.40;
@@ -146,7 +150,7 @@ private:
     bool         locked;           ///< A syncword was correctly demodulated.
     bool         newFrame;         ///< A new frame has been fully decoded.
     int16_t      basebandBridge[M17_BRIDGE_SIZE] = { 0 }; ///< Bridge buffer
-    uint16_t     phase;            ///< Phase of the signal w.r.t. sampling
+    int16_t      phase;            ///< Phase of the signal w.r.t. sampling
 
     /*
      * State variables
@@ -161,10 +165,12 @@ private:
     /*
      * Quantization statistics computation
      */
-    std::deque<int16_t> qnt_pos_fifo;
-    std::deque<int16_t> qnt_neg_fifo;
-    float qnt_pos_avg = 0.0f;   ///< Rolling average of positive samples
-    float qnt_neg_avg = 0.0f;   ///< Rolling average of negative samples
+    int8_t       qnt_pos_cnt;      ///< Number of received positive samples
+    int8_t       qnt_neg_cnt;      ///< Number of received negative samples
+    int32_t      qnt_pos_acc;      ///< Accumulator for quantization average
+    int32_t      qnt_neg_acc;      ///< Accumulator for quantization average
+    float qnt_pos_avg = 0.0f;      ///< Rolling average of positive samples
+    float qnt_neg_avg = 0.0f;      ///< Rolling average of negative samples
 
     /*
      * DSP filter state

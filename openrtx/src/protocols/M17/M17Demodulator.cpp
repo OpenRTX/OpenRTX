@@ -198,24 +198,31 @@ void M17Demodulator::resetQuantizationStats()
 void M17Demodulator::updateQuantizationStats(int32_t frame_index,
                                              int32_t symbol_index)
 {
-    int16_t sample = baseband.data[symbol_index];
-    if (sample > 0)
-        qnt_pos_fifo.push_front(sample);
+    int16_t sample = 0;
+    // When we are at negative indices use bridge buffer
+    if (symbol_index < 0)
+        sample = basebandBridge[M17_BRIDGE_SIZE + symbol_index];
     else
-        qnt_neg_fifo.push_front(sample);
+        sample = baseband.data[symbol_index];
+    if (sample > 0)
+    {
+        qnt_pos_acc += sample;
+        qnt_pos_cnt++;
+    }
+    else
+    {
+        qnt_neg_acc += sample;
+        qnt_neg_cnt++;
+    }
     // If we reached end of the syncword, compute average and reset queue
     if(frame_index == M17_SYNCWORD_SYMBOLS - 1)
     {
-            int32_t acc = 0;
-            for(auto e : qnt_pos_fifo)
-                acc += e;
-            qnt_pos_avg = acc / static_cast<float>(qnt_pos_fifo.size());
-            acc = 0;
-            for(auto e : qnt_neg_fifo)
-                acc += e;
-            qnt_neg_avg = acc / static_cast<float>(qnt_neg_fifo.size());
-            qnt_pos_fifo.clear();
-            qnt_neg_fifo.clear();
+        qnt_pos_avg = qnt_pos_acc / static_cast<float>(qnt_pos_cnt);
+        qnt_neg_avg = qnt_neg_acc / static_cast<float>(qnt_neg_cnt);
+        qnt_pos_acc = 0;
+        qnt_neg_acc = 0;
+        qnt_pos_cnt = 0;
+        qnt_neg_cnt = 0;
     }
 }
 
@@ -247,7 +254,7 @@ sync_t M17Demodulator::nextFrameSync(int32_t offset)
     // Leverage the fact LSF syncword is the opposite of the frame syncword
     // to detect both syncwords at once. Stop early because convolution needs
     // access samples ahead of the starting offset.
-    int32_t maxLen = static_cast < int32_t >(baseband.len - M17_BRIDGE_SIZE);
+    int32_t maxLen = static_cast < int32_t >(baseband.len - M17_SYNCWORD_SAMPLES);
     for(int32_t i = offset; (syncword.index == -1) && (i < maxLen); i++)
     {
         int32_t conv = convolution(i, stream_syncword, M17_SYNCWORD_SYMBOLS);
@@ -291,9 +298,9 @@ int8_t M17Demodulator::quantize(int32_t offset)
         sample = basebandBridge[M17_BRIDGE_SIZE + offset];
     else            // Otherwise use regular data buffer
         sample = baseband.data[offset];
-    if (sample > static_cast< int16_t >(qnt_pos_avg / 2.0))
+    if (sample > static_cast< int16_t >(qnt_pos_avg / 1.5f))
         return +3;
-    else if (sample < static_cast< int16_t >(qnt_neg_avg / 2.0))
+    else if (sample < static_cast< int16_t >(qnt_neg_avg / 1.5f))
         return -3;
     else if (sample > 0)
         return +1;
@@ -308,7 +315,7 @@ const frame_t& M17Demodulator::getFrame()
     return *activeFrame;
 }
 
-bool M17::M17Demodulator::isLocked()
+bool M17Demodulator::isLocked()
 {
     return locked;
 }
@@ -317,12 +324,30 @@ int32_t M17Demodulator::syncwordSweep(int32_t offset)
 {
     int32_t max_conv = 0, max_index = 0;
     // Start from 5 samples behind, end 5 samples after
-    for(int i = -5; i <= 5; i++)
+    for(int i = -SYNC_SWEEP_WIDTH; i <= SYNC_SWEEP_WIDTH; i++)
     {
         // TODO: Extend for LSF and BER syncwords
         int32_t conv = convolution(offset + i,
                                    stream_syncword,
                                    M17_SYNCWORD_SYMBOLS);
+#ifdef ENABLE_DEMOD_LOG
+    int16_t sample;
+    if (offset + i < 0)
+        sample = basebandBridge[M17_BRIDGE_SIZE + offset + i];
+    else
+        sample = baseband.data[offset + i];
+    log_entry_t log;
+        log =
+        {
+            sample,
+            conv,
+            0.0,
+            offset + i,
+            0.0,0.0,0,0
+        };
+
+        logBuf.push(log, false);
+#endif
         if (conv > max_conv)
         {
             max_conv = conv;
@@ -341,11 +366,11 @@ bool M17Demodulator::update()
     // Read samples from the ADC
     baseband = inputStream_getData(basebandId);
 
-    // Apply DC removal filter
-    dsp_dcRemoval(&dsp_state, baseband.data, baseband.len);
-
     if(baseband.data != NULL)
     {
+        // Apply DC removal filter
+        dsp_dcRemoval(&dsp_state, baseband.data, baseband.len);
+
         // Apply RRC on the baseband buffer
         for(size_t i = 0; i < baseband.len; i++)
         {
@@ -354,9 +379,7 @@ bool M17Demodulator::update()
         }
 
         // Process the buffer
-        while((syncword.index != -1) &&
-              ((static_cast< int32_t >(M17_SAMPLES_PER_SYMBOL * decoded_syms) +
-                offset + phase) < static_cast < int32_t >(baseband.len)))
+        while(syncword.index != -1)
         {
 
             // If we are not demodulating a syncword, search for one
@@ -369,6 +392,7 @@ bool M17Demodulator::update()
                     offset = syncword.index + 1;
                     phase = 0;
                     frame_index = 0;
+                    decoded_syms = 0;
                 }
             }
             // While we detected a syncword, demodulate available samples
@@ -378,6 +402,8 @@ bool M17Demodulator::update()
                 int32_t symbol_index = offset
                                      + phase
                                      + (M17_SAMPLES_PER_SYMBOL * decoded_syms);
+                if (symbol_index >= static_cast<int32_t>(baseband.len))
+                    break;
                 // Update quantization stats only on syncwords
                 if (frame_index < M17_SYNCWORD_SYMBOLS)
                     updateQuantizationStats(frame_index, symbol_index);
@@ -393,9 +419,9 @@ bool M17Demodulator::update()
                         log_entry_t log =
                         {
                             baseband.data[symbol_index + i],
-                            0,0.0,symbol_index + i,
-                            qnt_pos_avg / 2.0f,
-                            qnt_neg_avg / 2.0f,
+                            phase,0.0,symbol_index + i,
+                            qnt_pos_avg / 1.5f,
+                            qnt_neg_avg / 1.5f,
                             symbol,
                             frame_index
                         };
@@ -408,20 +434,6 @@ bool M17Demodulator::update()
                 setSymbol<M17_FRAME_BYTES>(*activeFrame, frame_index, symbol);
                 decoded_syms++;
                 frame_index++;
-
-                // If the frame buffer is full switch active and idle frame
-                if (frame_index == M17_FRAME_SYMBOLS)
-                {
-                    std::swap(activeFrame, idleFrame);
-                    frame_index = 0;
-                    newFrame   = true;
-
-                    // Locate syncword to correct clock skew between Tx and Rx
-                    int32_t expected_sync =
-                        offset + phase + M17_SAMPLES_PER_SYMBOL * decoded_syms;
-                    int32_t new_sync = syncwordSweep(expected_sync);
-                    phase += new_sync;
-                }
 
                 if (frame_index == M17_SYNCWORD_SYMBOLS)
                 {
@@ -444,10 +456,32 @@ bool M17Demodulator::update()
                         std::swap(activeFrame, idleFrame);
                         frame_index = 0;
                         newFrame   = true;
+                        phase = 0;
                     }
                     // Correct syncword found
                     else
                         locked = true;
+                }
+
+                // Locate syncword to correct clock skew between Tx and Rx
+                if (frame_index == M17_SYNCWORD_SYMBOLS + SYNC_SWEEP_OFFSET)
+                {
+                    // Find index (possibly negative) of the syncword
+                    int32_t expected_sync =
+                        offset + phase +
+                        M17_SAMPLES_PER_SYMBOL * decoded_syms -
+                        M17_SYNCWORD_SAMPLES -
+                        SYNC_SWEEP_OFFSET * M17_SAMPLES_PER_SYMBOL;
+                    int32_t sync_skew = syncwordSweep(expected_sync);
+                    phase += sync_skew;
+                }
+
+                // If the frame buffer is full switch active and idle frame
+                if (frame_index == M17_FRAME_SYMBOLS)
+                {
+                    std::swap(activeFrame, idleFrame);
+                    frame_index = 0;
+                    newFrame   = true;
                 }
             }
         }
@@ -458,13 +492,10 @@ bool M17Demodulator::update()
             // Compute phase of next buffer
             phase = (static_cast<int32_t> (phase) + offset + baseband.len) % M17_SAMPLES_PER_SYMBOL;
         }
-        else
-        {
-            // Copy last N samples to bridge buffer
-            memcpy(basebandBridge,
-                   baseband.data + (baseband.len - M17_BRIDGE_SIZE),
-                   sizeof(int16_t) * M17_BRIDGE_SIZE);
-        }
+        // Copy last N samples to bridge buffer
+        memcpy(basebandBridge,
+               baseband.data + (baseband.len - M17_BRIDGE_SIZE),
+               sizeof(int16_t) * M17_BRIDGE_SIZE);
     }
 
     return newFrame;
