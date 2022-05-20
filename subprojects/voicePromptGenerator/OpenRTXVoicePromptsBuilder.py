@@ -423,7 +423,7 @@ def main():
                     atempo = cfg_atempo
 
                 ## Add audio tempo value to the filename
-                voicePackName = voicePackName.replace('.vpr', '-' + atempo + '.vpr');
+                voicePackName = voicePackName.replace('.vpc', '-' + atempo + '.vpc');
 
                 print("Processing " + wordlistFilename+" "+voiceName+" "+voicePackName)
 

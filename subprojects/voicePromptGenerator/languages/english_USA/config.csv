@@ -1,6 +1,6 @@
 Wordlist_file,Voice_name,Voice_pack_name,Download,Encode,Createpack,Volume_change_db,Remove_silence,Audio_tempo
-wordlist_english_USA.csv,Matthew,english_usa_matthew.vpr,y,y,y,0,n,
-wordlist_english_USA.csv,Joanna,english_usa_joanna.vpr,y,y,y,0,n,
-wordlist_english_USA.csv,Joey,english_usa_joey.vpr,y,y,y,0,n,
-wordlist_english_USA.csv,Kendra,english_usa_kendra.vpr,y,y,y,0,n,
-wordlist_english_USA.csv,Kimberly,english_usa_kimberly.vpr,y,y,y,0,n,
+wordlist_english_USA.csv,Matthew,english_usa_matthew.vpc,y,y,y,0,n,
+wordlist_english_USA.csv,Joanna,english_usa_joanna.vpc,y,y,y,0,n,
+wordlist_english_USA.csv,Joey,english_usa_joey.vpc,y,y,y,0,n,
+wordlist_english_USA.csv,Kendra,english_usa_kendra.vpc,y,y,y,0,n,
+wordlist_english_USA.csv,Kimberly,english_usa_kimberly.vpc,y,y,y,0,n,
