@@ -1573,7 +1573,15 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 break;
             // About screen
             case MENU_ABOUT:
-                if(msg.keys & KEY_ESC)
+				if ((msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
+				{// quick press repeat vp, long press summary.
+					if (msg.long_press)
+						announceAboutScreen();
+					else
+						ReplayLastPrompt();
+					f1Handled = true;
+				}
+                else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_TOP);
                 break;
 #ifdef HAS_RTC

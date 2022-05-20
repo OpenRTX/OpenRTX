@@ -543,6 +543,20 @@ void announceGPSInfo()
 	vpPlay();
 }
 #endif // HAS_GPS
+void announceAboutScreen()
+{
+	vpInit();
+	
+	vpQueueStringTableEntry(&currentLanguage->openRTX);
+	
+	vpQueueStringTableEntry(&currentLanguage->Niccolo);
+	vpQueueStringTableEntry(&currentLanguage->Silvano);
+	vpQueueStringTableEntry(&currentLanguage->Federico);
+	vpQueueStringTableEntry(&currentLanguage->Fred);
+	vpQueueStringTableEntry(&currentLanguage->Joseph);
+	
+	vpPlay();
+}
 
 /*
 there are 5 levels of verbosity:
