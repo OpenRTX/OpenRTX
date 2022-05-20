@@ -543,6 +543,7 @@ void announceGPSInfo()
 	vpPlay();
 }
 #endif // HAS_GPS
+
 void announceAboutScreen()
 {
 	vpInit();
@@ -554,6 +555,32 @@ void announceAboutScreen()
 	vpQueueStringTableEntry(&currentLanguage->Federico);
 	vpQueueStringTableEntry(&currentLanguage->Fred);
 	vpQueueStringTableEntry(&currentLanguage->Joseph);
+	
+	vpPlay();
+}
+
+void announceBackupScreen()
+{
+	vpInit();
+	
+	vpQueueStringTableEntry(&currentLanguage->flashBackup);
+	
+	vpQueueStringTableEntry(&currentLanguage->connectToRTXTool);
+	vpQueueStringTableEntry(&currentLanguage->toBackupFlashAnd);
+	vpQueueStringTableEntry(&currentLanguage->pressPTTToStart);
+	
+	vpPlay();
+}
+
+void announceRestoreScreen()
+{
+	vpInit();
+	
+	vpQueueStringTableEntry(&currentLanguage->flashRestore);
+	
+	vpQueueStringTableEntry(&currentLanguage->connectToRTXTool);
+	vpQueueStringTableEntry(&currentLanguage->toRestoreFlashAnd);
+	vpQueueStringTableEntry(&currentLanguage->pressPTTToStart);
 	
 	vpPlay();
 }
