@@ -146,51 +146,6 @@ def wavSendData(ser,buf,radioStart,length):
         remaining -= transferSize
     return True
 
-def convertToCodec2(ser,infile,outfile):
-
-    with open(infile,'rb') as f:
-        Codec2Buf = bytearray(16*1024)# arbitary 16k buffer
-        buf = bytearray(f.read())
-        f.close();
-        sendCommand(ser,0, 0, 0, 0, 0, 0, "")#show CPS screen as this disables the radio etc
-        sendCommand(ser,6, 5, 0, 0, 0, 0,  "")#codecInitInternalBuffers
-        wavBufPos = 0
-
-        bufLen = len(buf)
-        Codec2BufPos=0;
-        Codec2FrameBuf = bytearray(27)
-        startPos=0
-        #if (infile[0:11] !="PROMPT_SPACE"):
-        #    stripSilence = True;
-
-        if (removeSilenceAtStart==True):
-            while (startPos<len(buf) and  buf[startPos]==0 and buf[(startPos+1)]==0):
-               startPos = startPos + 2;
-            if (startPos == len(buf)):
-                startPos = 0
-
-        print("Compress to Codec2 "+infile + " pos:+" + str(startPos));
-
-        wavBufPos = startPos
-
-        while (wavBufPos < bufLen):
-            #print('.', end='')
-            sendCommand(ser,6, 6, 0, 0, 0, 0,  "")#codecInitInternalBuffers
-            transferLen = min(960,bufLen-wavBufPos)
-            #print("sent " + str(transferLen));
-            wavSendData(ser,buf[wavBufPos:wavBufPos+transferLen],0,transferLen)
-
-            getMemoryArea(ser,Codec2FrameBuf,8,0,0,27)# mode 8 is read from Codec2
-            Codec2Buf[Codec2BufPos:Codec2BufPos+27] = Codec2FrameBuf
-            wavBufPos = wavBufPos + 960
-            Codec2BufPos = Codec2BufPos + 27
-
-        sendCommand(ser,5, 0, 0, 0, 0, 0, "")# close CPS screen
-        with open(outfile,'wb') as f:
-            f.write(Codec2Buf[0:Codec2BufPos])
-
-        #print("")#newline
-
 
 def convertToRaw(inFile,outFile):
     print("ConvertToRaw "+ inFile + " -> " + outFile + " gain="+gain + " tempo="+atempo)
@@ -200,6 +155,14 @@ def convertToRaw(inFile,outFile):
     elif os.name == 'posix':
         subprocess.call(callArgs)#'-af','silenceremove=1:0:-50dB'
 
+
+def convertToCodec2(inFile,outFile):
+    print("ConvertToCodec2 "+ inFile + " -> " + outFile)
+    callArgs = ['c2enc','3200',inFile,outFile]
+    if os.name == 'nt':
+        subprocess.call(callArgs, creationflags=CREATE_NO_WINDOW)
+    elif os.name == 'posix':
+        subprocess.call(callArgs)
 
 
 def downloadPollyPro(voiceName,fileStub,promptText,speechSpeed):
@@ -216,7 +179,7 @@ def downloadPollyPro(voiceName,fileStub,promptText,speechSpeed):
 
     mp3FileName = voiceName + "/" +fileStub+".mp3"
     rawFileName = voiceName + "/" +fileStub+".raw"
-    Codec2Filename = voiceName + "/" +fileStub+".co2"
+    Codec2Filename = voiceName + "/" +fileStub+".c2"
     if (not os.path.exists(mp3FileName) or overwrite==True):
         with urllib.request.urlopen("https://voicepolly.pro/speech-converter.php", data) as f:
             resp = f.read().decode('utf-8')
@@ -237,7 +200,8 @@ def downloadPollyPro(voiceName,fileStub,promptText,speechSpeed):
         convertToRaw(mp3FileName,rawFileName)
         if (os.path.exists(Codec2Filename)):
             os.remove(Codec2Filename)# Codec2 file is now out of date, so delete it
-
+    if (not os.path.exists(Codec2Filename)):
+        convertToCodec2(rawFileName, Codec2Filename)
     return retval
 
 def downloadTTSMP3(voiceName,fileStub,promptText):
@@ -252,7 +216,7 @@ def downloadTTSMP3(voiceName,fileStub,promptText):
 
     mp3FileName = voiceName + "/" +fileStub+".mp3"
     rawFileName = voiceName + "/" +fileStub+".raw"
-    Codec2Filename = voiceName + "/" +fileStub+".co2"
+    Codec2Filename = voiceName + "/" +fileStub+".c2"
     hasDownloaded = False
 
     if (not os.path.exists(mp3FileName) or overwrite==True):
@@ -280,7 +244,8 @@ def downloadTTSMP3(voiceName,fileStub,promptText):
         convertToRaw(mp3FileName,rawFileName)
         if (os.path.exists(Codec2Filename)):
             os.remove(Codec2Filename)# codec2 file is now out of date, so delete it
-
+    if (not os.path.exists(Codec2Filename)):
+        convertToCodec2(rawFileName,Codec2Filename)
     return True
 
 
@@ -316,27 +281,6 @@ def downloadSpeechForWordList(filename,voiceName):
         return retval
 
 
-
-def encodeFile(ser,fileStub):
-    if ((not os.path.exists(fileStub+".co2")) or overwrite==True):
-        convertToCodec2(ser,fileStub+".raw",fileStub+".co2")
-        #os.remove(fileStub+".raw")
-##    else:
-##       print("Encode skipping " + fileStub)
-
-def encodeWordList(ser,filename,voiceName,forceReEncode):
-    with open(filename,"r",encoding='utf-8') as csvfile:
-        reader = csv.DictReader(filter(lambda row: row[0]!='#', csvfile))
-        for row in reader:
-            promptName = row['PromptName'].strip()
-            fileStub = voiceName + "/" + promptName
-
-            encodeFile(ser,fileStub)
-        promptName = "PROMPT_VOICE_NAME"
-        fileStub = voiceName + "/" + promptName
-
-        encodeFile(ser,fileStub)
-
 def buildDataPack(filename,voiceName,outputFileName):
     print("Building...")
     promptsDict={}#create an empty dictionary
@@ -344,12 +288,12 @@ def buildDataPack(filename,voiceName,outputFileName):
         reader = csv.DictReader(filter(lambda row: row[0]!='#', csvfile))
         for row in reader:
             promptName = row['PromptName'].strip()
-            infile = voiceName+"/" + promptName+".co2"
+            infile = voiceName+"/" + promptName+".c2"
             with open(infile,'rb') as f:
                 promptsDict[promptName] = bytearray(f.read())
                 f.close()
         promptName = "PROMPT_VOICE_NAME"
-        infile = voiceName+"/" + promptName+".co2"
+        infile = voiceName+"/" + promptName+".c2"
         with open(infile,'rb') as f:
             promptsDict[promptName] = bytearray(f.read())
             f.close()
@@ -415,17 +359,6 @@ def main():
     voiceName = ""#Matthew or Nicole etc
     configName = ""
 
-    # Default tty
-    if (platform.system() == 'Windows'):
-        serialDev = "COM71"
-    else:
-        serialDev = "/dev/ttyACM0"
-    #Automatically search for the OpenGD77 device port
-    for port in serial.tools.list_ports.comports():
-        if (port.description.find("OpenGD77")==0):
-            #print("Found OpenGD77 on port "+port.device);
-            serialDev = port.device
-            
     # Command line argument parsing
     try:
         ##opts, args = getopt.getopt(sys.argv[1:], "hof:n:seb:d:c:g:Tt:")
@@ -506,16 +439,10 @@ def main():
                 if (download=='y' or download=='Y'):
                     if (downloadSpeechForWordList(wordlistFilename,voiceName)==False):
                      sys.exit(2)
-# Encode to codec2 here.
-                #if (encode=='y' or encode=='Y'):
-                    #ser = serialInit(serialDev)
 
-                    #encodeWordList(ser,wordlistFilename,voiceName,True)
-                    #if (ser.is_open):
-                        #ser.close()
-                        # call buildDataPack once the codec2 conversion has been implemented.
-                #if (createPack=='y' or createPack=='Y'):
-                    #buildDataPack(wordlistFilename,voiceName,voicePackName)
+                        # call buildDataPack
+                if (createPack=='y' or createPack=='Y'):
+                    buildDataPack(wordlistFilename,voiceName,voicePackName)
 
         sys.exit(0)
 
@@ -532,13 +459,6 @@ def main():
     #    if opt in ("-s"):
     #        if (downloadSpeechForWordList(fileName,voiceName)==False):
     #            sys.exit(2)
-
-    for opt, arg in opts:
-        if opt in ("-e"):
-            ser = serialInit(serialDev)
-            encodeWordList(ser,fileName,voiceName,True)
-            if (ser.is_open):
-                ser.close()
 
     for opt, arg in opts:
         if opt in ("-b"):
