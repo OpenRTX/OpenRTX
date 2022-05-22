@@ -560,7 +560,11 @@ void _ui_drawMenuBackup(ui_state_t* ui_state)
     line.y += 18;
     gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->pressPTTToStart);
-
+	// read this screen.
+	announceBackupScreen();
+	if (!platform_getPttStatus())
+		return;
+	
     // Shutdown RF stage
     state.rtxShutdown = true;
 
@@ -593,6 +597,10 @@ void _ui_drawMenuRestore(ui_state_t* ui_state)
     line.y += 18;
     gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->pressPTTToStart);
+			  
+	announceRestoreScreen();
+	if (!platform_getPttStatus())
+		return;
 
     // Shutdown RF stage
     state.rtxShutdown = true;
