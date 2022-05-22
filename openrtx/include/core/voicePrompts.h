@@ -135,6 +135,7 @@ PROMPT_ALTITUDE, // altitude
 PROMPT_SATELLITES, // satellites
 PROMPT_COMPASS, // compass
 PROMPT_DEGREES, // degrees
+PROMPT_VP_UNAVAILABLE, // Voice prompts will be unavailable during this operation.
 PROMPT_CHARACTER, // character
 PROMPT_SPACE, // space
 PROMPT_PERCENT, // Percent
