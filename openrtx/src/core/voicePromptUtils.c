@@ -568,6 +568,7 @@ void announceBackupScreen()
 	vpQueueStringTableEntry(&currentLanguage->connectToRTXTool);
 	vpQueueStringTableEntry(&currentLanguage->toBackupFlashAnd);
 	vpQueueStringTableEntry(&currentLanguage->pressPTTToStart);
+	vpQueuePrompt(PROMPT_VP_UNAVAILABLE);
 	
 	vpPlay();
 }
@@ -581,6 +582,7 @@ void announceRestoreScreen()
 	vpQueueStringTableEntry(&currentLanguage->connectToRTXTool);
 	vpQueueStringTableEntry(&currentLanguage->toRestoreFlashAnd);
 	vpQueueStringTableEntry(&currentLanguage->pressPTTToStart);
+	vpQueuePrompt(PROMPT_VP_UNAVAILABLE);
 	
 	vpPlay();
 }
