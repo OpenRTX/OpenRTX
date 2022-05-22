@@ -567,6 +567,11 @@ void _ui_drawMenuBackup(ui_state_t* ui_state)
     gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->pressPTTToStart);
 
+    // read this screen.
+	announceBackupScreen();
+	if (!platform_getPttStatus())
+		return;
+
     state.devStatus     = DATATRANSFER;
     state.backup_eflash = true;
 }
@@ -589,6 +594,10 @@ void _ui_drawMenuRestore(ui_state_t* ui_state)
     line.y += 18;
     gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->pressPTTToStart);
+
+	announceRestoreScreen();
+	if (!platform_getPttStatus())
+		return;
 
     state.devStatus      = DATATRANSFER;
     state.restore_eflash = true;
