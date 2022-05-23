@@ -106,8 +106,8 @@ static void announceMenuItemIfNeeded(char* name, char* value)
 	if (!voicePromptWasPlaying || !value || !*value)
 		announceText(name, vpqDefault);
 
-    if (value && *value)
-		announceText(name, vpqDefault);
+	if (value && *value)
+		announceText(value, vpqDefault);
 
 	vpPlay();
 }
