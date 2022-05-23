@@ -47,7 +47,7 @@ int GetEnglishStringTableOffset( char* text)
 	for (uint8_t i = 0; i < stringCount; ++i)
 	{
 		uint16_t offset = (i * sizeof(char*));
-		const char* const * strPtr =(const char* const*) (&englishStrings + offset);
+		const char* const * strPtr =(const char* const*) (&englishStrings.languageName + offset);
 		if (strcmp(text, *strPtr) == 0)
 		{
 			return offset;
