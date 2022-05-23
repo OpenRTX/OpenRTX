@@ -286,7 +286,7 @@ void announceText( char* text, VoicePromptQueueFlags_T flags)
 	int offset = GetEnglishStringTableOffset(text);
 	
 	if (offset != -1)
-		vpQueueStringTableEntry((const char* const *)(&currentLanguage + offset));
+		vpQueueStringTableEntry((const char* const *)(&currentLanguage->languageName + offset));
 	else // just spel it out
 		vpQueueString(text, (flags&~(vpqInit|vpqPlayImmediately)));
 		
