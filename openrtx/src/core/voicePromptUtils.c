@@ -185,13 +185,10 @@ void announceChannelSummary(channel_t* channel, uint16_t channelIndex)
 		
 	vpInit();
 	
-	// mask off init and play because this function will handle init and play.
 	VoicePromptQueueFlags_T localFlags= vpqAddSeparatingSilence; 
 	// Force on the descriptions for level 3.
 	if (state.settings.vpLevel == vpHigh)
 		localFlags |= vpqIncludeDescriptions;
-	// ensure we add silence between various fields.
-	localFlags |= vpqAddSeparatingSilence;
 	// if VFO mode, announce VFO.
 	// channelIndex will be 0 if called from VFO mode.
 	if (channelIndex == 0)
