@@ -36,6 +36,9 @@
 using namespace M17;
 
 #ifdef ENABLE_DEMOD_LOG
+
+#include <atomic>
+
 typedef struct
 {
     int16_t sample;
@@ -56,10 +59,14 @@ log_entry_t;
 #endif
 
 static RingBuffer< log_entry_t, LOG_QUEUE > logBuf;
+static std::atomic_bool dumpData;
 static bool      logRunning;
+static bool      trigEnable;
+static bool      triggered;
+static uint8_t   trigCnt;
 static pthread_t logThread;
 
-void *logFunc(void *arg)
+static void *logFunc(void *arg)
 {
     (void) arg;
 
@@ -68,25 +75,39 @@ void *logFunc(void *arg)
     fprintf(csv_log, "Sample,Convolution,Threshold,Index,Max,Min,Symbol,I\n");
     #endif
 
+    uint8_t emptyCtr = 0;
+
     while(logRunning)
     {
-        log_entry_t entry;
-        logBuf.pop(entry, true);
+        if(dumpData)
+        {
+            // Log up to four entries filled with zeroes before terminating
+            // the dump.
+            log_entry_t entry;
+            memset(&entry, 0x00, sizeof(log_entry_t));
+            if(logBuf.pop(entry, false) == false) emptyCtr++;
 
-        #ifdef PLATFORM_LINUX
-        fprintf(csv_log, "%" PRId16 ",%d,%f,%d,%f,%f,%d,%d\n",
-                entry.sample,
-                entry.conv,
-                entry.conv_th,
-                entry.sample_index,
-                entry.qnt_pos_avg,
-                entry.qnt_neg_avg,
-                entry.symbol,
-                entry.frame_index);
-        fflush(csv_log);
-        #else
-        vcom_writeBlock(&entry, sizeof(log_entry_t));
-        #endif
+            if(emptyCtr >= 4)
+            {
+                dumpData = false;
+                emptyCtr = 0;
+            }
+
+            #ifdef PLATFORM_LINUX
+            fprintf(csv_log, "%" PRId16 ",%d,%f,%d,%f,%f,%d,%d\n",
+                    entry.sample,
+                    entry.conv,
+                    entry.conv_th,
+                    entry.sample_index,
+                    entry.qnt_pos_avg,
+                    entry.qnt_neg_avg,
+                    entry.symbol,
+                    entry.frame_index);
+            fflush(csv_log);
+            #else
+            vcom_writeBlock(&entry, sizeof(log_entry_t));
+            #endif
+        }
     }
 
     #ifdef PLATFORM_LINUX
@@ -95,6 +116,29 @@ void *logFunc(void *arg)
 
     return NULL;
 }
+
+static inline void pushLog(const log_entry_t& e)
+{
+    /*
+     * 1) do not push data to log while dump is in progress
+     * 2) if triggered, increase the counter
+     * 3) log twenty entries after the trigger and then start dump
+     * 4) if buffer is full, erase the oldest element
+     * 5) push data without blocking
+     */
+
+    if(dumpData) return;
+    if(triggered) trigCnt++;
+    if(trigCnt >= 20)
+    {
+        dumpData  = true;
+        triggered = false;
+        trigCnt   = 0;
+    }
+    if(logBuf.full()) logBuf.eraseElement();
+    logBuf.push(e, false);
+}
+
 #endif
 
 
@@ -130,6 +174,10 @@ void M17Demodulator::init()
 
     #ifdef ENABLE_DEMOD_LOG
     logRunning = true;
+    triggered  = false;
+    dumpData   = false;
+    trigEnable = false;
+    trigCnt    = 0;
     pthread_create(&logThread, NULL, logFunc, NULL);
     #endif
 }
@@ -271,7 +319,7 @@ sync_t M17Demodulator::nextFrameSync(int32_t offset)
             0.0,0.0,0,0
         };
 
-        logBuf.push(log, false);
+        pushLog(log);
         #endif
 
         // Positive correlation peak -> frame syncword
@@ -346,7 +394,7 @@ int32_t M17Demodulator::syncwordSweep(int32_t offset)
             0.0,0.0,0,0
         };
 
-        logBuf.push(log, false);
+        pushLog(log);
 #endif
         if (conv > max_conv)
         {
@@ -426,7 +474,7 @@ bool M17Demodulator::update()
                             frame_index
                         };
 
-                        logBuf.push(log, false);
+                        pushLog(log);
                     }
                 }
                 #endif
@@ -457,10 +505,24 @@ bool M17Demodulator::update()
                         frame_index = 0;
                         newFrame   = true;
                         phase = 0;
+
+                        #ifdef ENABLE_DEMOD_LOG
+                        // Trigger a data dump when lock is lost.
+                        if((dumpData == false) && (trigEnable == true))
+                        {
+                            trigEnable = false;
+                            triggered  = true;
+                        }
+                        #endif
                     }
                     // Correct syncword found
                     else
+                    {
+                        #ifdef ENABLE_DEMOD_LOG
+                        trigEnable = true;
+                        #endif
                         locked = true;
+                    }
                 }
 
                 // Locate syncword to correct clock skew between Tx and Rx
