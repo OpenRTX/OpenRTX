@@ -108,25 +108,27 @@ public:
     {
         pthread_mutex_lock(&mutex);
 
-        if(numElements == 0)
+        if((numElements == 0) && (blocking == false))
         {
-            if(blocking)
-            {
-                while(numElements == 0)
-                {
-                    pthread_cond_wait(&not_empty, &mutex);
-                }
-            }
-            else
-            {
-                pthread_mutex_unlock(&mutex);
-                return false;
-            }
+            // No elements present and non-blocking call: unlock mutex and return
+            pthread_mutex_unlock(&mutex);
+            return false;
         }
 
-        elem         = data[readPos];
-        readPos      = (readPos + 1) % N;
+        // The call is blocking: wait until there is something into the queue
+        while(numElements == 0)
+        {
+            pthread_cond_wait(&not_empty, &mutex);
+        }
+
+        // At least one element present pop one.
+        elem    = data[readPos];
+        readPos = (readPos + 1) % N;
+
+        // Signal that the queue is no more full
+        if(numElements >= N) pthread_cond_signal(&not_full);
         numElements -= 1;
+
         pthread_mutex_unlock(&mutex);
 
         return true;
@@ -150,6 +152,27 @@ public:
     bool full()
     {
         return numElements >= N;
+    }
+
+    /**
+     * Discard one element from the buffer's tail, creating a new empty slot.
+     * In case the buffer is full calling this function unlocks the eventual
+     * threads waiting to push data.
+     */
+    void eraseElement()
+    {
+        // Nothing to erase
+        if(numElements == 0) return;
+
+        pthread_mutex_lock(&mutex);
+
+        // Chomp away one element just by advancing the read pointer.
+        readPos = (readPos + 1) % N;
+
+        if(numElements >= N) pthread_cond_signal(&not_full);
+        numElements -= 1;
+
+        pthread_mutex_unlock(&mutex);
     }
 
 private:
