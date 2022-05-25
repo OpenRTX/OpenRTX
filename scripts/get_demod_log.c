@@ -69,14 +69,16 @@ typedef struct
 {
     int16_t sample;
     int32_t conv;
-    float conv_th;
+    float   conv_th;
     int32_t sample_index;
-    float qnt_pos_avg;
-    float qnt_neg_avg;
+    float   qnt_pos_avg;
+    float   qnt_neg_avg;
     int32_t symbol;
     int32_t frame_index;
+    uint8_t flags;
+    uint8_t _empty;
 }
-log_entry_t;
+__attribute__((packed)) log_entry_t;
 
 int main() {
     //char *portname = "/dev/ttyACM0";
@@ -92,11 +94,11 @@ int main() {
     set_blocking (fd, 0);                // set no blocking
     log_entry_t log = { 0 };
     FILE *csv_log = fopen("serial_demod_log.csv", "w");
-    fprintf(csv_log, "Sample,Convolution,Threshold,Index,Max,Min,Symbol,I\n");
+    fprintf(csv_log, "Sample,Convolution,Threshold,Index,Max,Min,Symbol,I,Flags\n");
     while(true)
     {
         read(fd, &log, sizeof(log));
-        fprintf(csv_log, "%" PRId16 ",%d,%f,%d,%f,%f,%d,%d\n",
+        fprintf(csv_log, "%" PRId16 ",%d,%f,%d,%f,%f,%d,%d,%d\n",
                 log.sample,
                 log.conv,
                 log.conv_th,
@@ -104,7 +106,8 @@ int main() {
                 log.qnt_pos_avg,
                 log.qnt_neg_avg,
                 log.symbol,
-                log.frame_index);
+                log.frame_index,
+                log.flags);
         fflush(csv_log);
     }
     fclose(csv_log);

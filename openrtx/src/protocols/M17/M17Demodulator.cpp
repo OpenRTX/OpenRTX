@@ -27,30 +27,31 @@
 #include <math.h>
 #include <cstring>
 #include <stdio.h>
-#include <deque>
-#include <ringbuf.h>
-#ifndef PLATFORM_LINUX
-#include <usb_vcom.h>
-#endif
 
 using namespace M17;
 
 #ifdef ENABLE_DEMOD_LOG
 
+#include <ringbuf.h>
 #include <atomic>
+#ifndef PLATFORM_LINUX
+#include <usb_vcom.h>
+#endif
 
 typedef struct
 {
     int16_t sample;
     int32_t conv;
-    float conv_th;
+    float   conv_th;
     int32_t sample_index;
-    float qnt_pos_avg;
-    float qnt_neg_avg;
+    float   qnt_pos_avg;
+    float   qnt_neg_avg;
     int32_t symbol;
     int32_t frame_index;
+    uint8_t flags;
+    uint8_t _empty;
 }
-log_entry_t;
+__attribute__((packed)) log_entry_t;
 
 #ifdef PLATFORM_LINUX
 #define LOG_QUEUE 160000
@@ -63,7 +64,7 @@ static std::atomic_bool dumpData;
 static bool      logRunning;
 static bool      trigEnable;
 static bool      triggered;
-static uint8_t   trigCnt;
+static uint32_t  trigCnt;
 static pthread_t logThread;
 
 static void *logFunc(void *arg)
@@ -72,7 +73,7 @@ static void *logFunc(void *arg)
 
     #ifdef PLATFORM_LINUX
     FILE *csv_log = fopen("demod_log.csv", "w");
-    fprintf(csv_log, "Sample,Convolution,Threshold,Index,Max,Min,Symbol,I\n");
+    fprintf(csv_log, "Sample,Convolution,Threshold,Index,Max,Min,Symbol,I,Flags\n");
     #endif
 
     uint8_t emptyCtr = 0;
@@ -87,14 +88,14 @@ static void *logFunc(void *arg)
             memset(&entry, 0x00, sizeof(log_entry_t));
             if(logBuf.pop(entry, false) == false) emptyCtr++;
 
-            if(emptyCtr >= 4)
+            if(emptyCtr >= 100)
             {
                 dumpData = false;
                 emptyCtr = 0;
             }
 
             #ifdef PLATFORM_LINUX
-            fprintf(csv_log, "%" PRId16 ",%d,%f,%d,%f,%f,%d,%d\n",
+            fprintf(csv_log, "%" PRId16 ",%d,%f,%d,%f,%f,%d,%d,%d\n",
                     entry.sample,
                     entry.conv,
                     entry.conv_th,
@@ -102,7 +103,8 @@ static void *logFunc(void *arg)
                     entry.qnt_pos_avg,
                     entry.qnt_neg_avg,
                     entry.symbol,
-                    entry.frame_index);
+                    entry.frame_index
+                    entry.flags);
             fflush(csv_log);
             #else
             vcom_writeBlock(&entry, sizeof(log_entry_t));
@@ -122,14 +124,14 @@ static inline void pushLog(const log_entry_t& e)
     /*
      * 1) do not push data to log while dump is in progress
      * 2) if triggered, increase the counter
-     * 3) log twenty entries after the trigger and then start dump
+     * 3) fill half of the buffer with entries after the trigger, then start dump
      * 4) if buffer is full, erase the oldest element
      * 5) push data without blocking
      */
 
     if(dumpData) return;
     if(triggered) trigCnt++;
-    if(trigCnt >= 20)
+    if(trigCnt >= LOG_QUEUE/2)
     {
         dumpData  = true;
         triggered = false;
@@ -309,15 +311,16 @@ sync_t M17Demodulator::nextFrameSync(int32_t offset)
         updateCorrelationStats(conv);
 
         #ifdef ENABLE_DEMOD_LOG
-        // Log syncword search
-        log_entry_t log =
-        {
-            (i < 0) ? basebandBridge[M17_BRIDGE_SIZE + i] : baseband.data[i],
-            conv,
-            CONV_THRESHOLD_FACTOR * getCorrelationStddev(),
-            i,
-            0.0,0.0,0,0
-        };
+        log_entry_t log;
+        log.sample       = (i < 0) ? basebandBridge[M17_BRIDGE_SIZE + i] : baseband.data[i];
+        log.conv         = conv;
+        log.conv_th      = CONV_THRESHOLD_FACTOR * getCorrelationStddev();
+        log.sample_index = i;
+        log.qnt_pos_avg  = 0.0;
+        log.qnt_neg_avg  = 0.0;
+        log.symbol       = 0;
+        log.frame_index  = 0;
+        log.flags        = 1;
 
         pushLog(log);
         #endif
@@ -378,24 +381,27 @@ int32_t M17Demodulator::syncwordSweep(int32_t offset)
         int32_t conv = convolution(offset + i,
                                    stream_syncword,
                                    M17_SYNCWORD_SYMBOLS);
-#ifdef ENABLE_DEMOD_LOG
-    int16_t sample;
-    if (offset + i < 0)
-        sample = basebandBridge[M17_BRIDGE_SIZE + offset + i];
-    else
-        sample = baseband.data[offset + i];
-    log_entry_t log;
-        log =
-        {
-            sample,
-            conv,
-            0.0,
-            offset + i,
-            0.0,0.0,0,0
-        };
+        #ifdef ENABLE_DEMOD_LOG
+        int16_t sample;
+        if (offset + i < 0)
+            sample = basebandBridge[M17_BRIDGE_SIZE + offset + i];
+        else
+            sample = baseband.data[offset + i];
+
+        log_entry_t log;
+        log.sample       = sample;
+        log.conv         = conv;
+        log.conv_th      = 0.0;
+        log.sample_index = offset + i;
+        log.qnt_pos_avg  = 0.0;
+        log.qnt_neg_avg  = 0.0;
+        log.symbol       = 0;
+        log.frame_index  = 0;
+        log.flags        = 2;
 
         pushLog(log);
-#endif
+        #endif
+
         if (conv > max_conv)
         {
             max_conv = conv;
@@ -464,22 +470,23 @@ bool M17Demodulator::update()
                     if ((symbol_index + i) >= 0 &&
                         (symbol_index + i) < static_cast<int32_t> (baseband.len))
                     {
-                        log_entry_t log =
-                        {
-                            baseband.data[symbol_index + i],
-                            phase,0.0,symbol_index + i,
-                            qnt_pos_avg / 1.5f,
-                            qnt_neg_avg / 1.5f,
-                            symbol,
-                            frame_index
-                        };
+                        log_entry_t log;
+                        log.sample       = baseband.data[symbol_index + i];
+                        log.conv         = 0;
+                        log.conv_th      = 0.0;
+                        log.sample_index = symbol_index + i;
+                        log.qnt_pos_avg  = qnt_pos_avg / 1.5f;
+                        log.qnt_neg_avg  = qnt_neg_avg / 1.5f;
+                        log.symbol       = symbol;
+                        log.frame_index  = frame_index;
+                        log.flags        = 3;
 
                         pushLog(log);
                     }
                 }
                 #endif
 
-                setSymbol<M17_FRAME_BYTES>(*activeFrame, frame_index, symbol);
+                setSymbol(*activeFrame, frame_index, symbol);
                 decoded_syms++;
                 frame_index++;
 
@@ -503,24 +510,27 @@ bool M17Demodulator::update()
                         locked = false;
                         std::swap(activeFrame, idleFrame);
                         frame_index = 0;
-                        newFrame   = true;
+                        newFrame    = true;
                         phase = 0;
 
                         #ifdef ENABLE_DEMOD_LOG
-                        // Trigger a data dump when lock is lost.
+                        // Pre-arm the log trigger.
+                        trigEnable = true;
+                        #endif
+
+                    }
+                    // Correct syncword found
+                    else
+                    {
+                        #ifdef ENABLE_DEMOD_LOG
+                        // Trigger a data dump when lock is re-acquired.
                         if((dumpData == false) && (trigEnable == true))
                         {
                             trigEnable = false;
                             triggered  = true;
                         }
                         #endif
-                    }
-                    // Correct syncword found
-                    else
-                    {
-                        #ifdef ENABLE_DEMOD_LOG
-                        trigEnable = true;
-                        #endif
+
                         locked = true;
                     }
                 }
