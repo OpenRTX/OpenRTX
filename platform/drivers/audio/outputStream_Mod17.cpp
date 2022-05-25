@@ -42,7 +42,7 @@ static Thread *dmaWaiting = 0;
  * \internal
  * Stop an ongoing transfer, deactivating timers and DMA stream.
  */
-void stopTransfer()
+static inline void stopTransfer()
 {
     // Stop DMA transfers
     DMA1_Stream5->CR = 0;
@@ -53,10 +53,11 @@ void stopTransfer()
     DAC->CR      = DAC_CR_EN1;     // Keep only channel 1 active
     DAC->DHR12R1 = 1365;           // Set channel 1 (RTX) to about 1.1V when idle
 
-    // Clear flags
+    // Clear flags and restore priority level
     running      = false;
     reqFinish    = false;
     circularMode = false;
+    priority     = PRIO_BEEP;
 }
 
 /**

@@ -132,10 +132,12 @@ void M17Modulator::emitBaseband()
         outputStream_sync(outStream, true);
     }
 
-    // Check if transmission stop is requested
+    // Check if transmission stop is requested, if so stop the output stream
+    // and wait until its effective termination.
     if(stopTx == true)
     {
         outputStream_stop(outStream);
+        outputStream_sync(outStream, false);
         stopTx     = false;
         txRunning  = false;
         idleBuffer = baseband_buffer;

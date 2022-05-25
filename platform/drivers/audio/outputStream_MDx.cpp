@@ -52,10 +52,11 @@ static inline void stopTransfer()
     // Re-activate "beeps"
     toneGen_unlockBeep();
 
-    // Finally, clear flags
+    // Finally, clear flags and restore priority level
     running      = false;
     reqFinish    = false;
     circularMode = false;
+    priority     = PRIO_BEEP;
 }
 
 /**
