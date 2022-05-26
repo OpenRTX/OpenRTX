@@ -92,6 +92,9 @@ static void *logFunc(void *arg)
             {
                 dumpData = false;
                 emptyCtr = 0;
+                #ifdef PLATFORM_LINUX
+                logRunning = false;
+                #endif
             }
 
             #ifdef PLATFORM_LINUX
@@ -103,7 +106,7 @@ static void *logFunc(void *arg)
                     entry.qnt_pos_avg,
                     entry.qnt_neg_avg,
                     entry.symbol,
-                    entry.frame_index
+                    entry.frame_index,
                     entry.flags);
             fflush(csv_log);
             #else
@@ -114,6 +117,7 @@ static void *logFunc(void *arg)
 
     #ifdef PLATFORM_LINUX
     fclose(csv_log);
+    exit(-1);
     #endif
 
     return NULL;
@@ -217,6 +221,9 @@ void M17Demodulator::startBasebandSampling()
 void M17Demodulator::stopBasebandSampling()
 {
      inputStream_stop(basebandId);
+     phase = 0;
+     syncDetected = false;
+     locked = false;
 }
 
 void M17Demodulator::resetCorrelationStats()
@@ -320,7 +327,7 @@ sync_t M17Demodulator::nextFrameSync(int32_t offset)
         log.qnt_neg_avg  = 0.0;
         log.symbol       = 0;
         log.frame_index  = 0;
-        log.flags        = 1;
+        log.flags        = 0;//1;
 
         pushLog(log);
         #endif
@@ -397,7 +404,7 @@ int32_t M17Demodulator::syncwordSweep(int32_t offset)
         log.qnt_neg_avg  = 0.0;
         log.symbol       = 0;
         log.frame_index  = 0;
-        log.flags        = 2;
+        log.flags        = 0;//2;
 
         pushLog(log);
         #endif
@@ -414,7 +421,7 @@ int32_t M17Demodulator::syncwordSweep(int32_t offset)
 bool M17Demodulator::update()
 {
     sync_t syncword = { 0, false };
-    int32_t offset = syncDetected ? 0 : -(int32_t) M17_BRIDGE_SIZE;
+    phase = (syncDetected) ? phase % M17_SAMPLES_PER_SYMBOL : -M17_BRIDGE_SIZE;
     uint16_t decoded_syms = 0;
 
     // Read samples from the ADC
@@ -439,12 +446,11 @@ bool M17Demodulator::update()
             // If we are not demodulating a syncword, search for one
             if (!syncDetected)
             {
-                syncword = nextFrameSync(offset);
+                syncword = nextFrameSync(phase);
                 if (syncword.index != -1) // Valid syncword found
                 {
                     syncDetected = true;
-                    offset = syncword.index + 1;
-                    phase = 0;
+                    phase = syncword.index + 1;
                     frame_index = 0;
                     decoded_syms = 0;
                 }
@@ -453,9 +459,8 @@ bool M17Demodulator::update()
             else
             {
                 // Slice the input buffer to extract a frame and quantize
-                int32_t symbol_index = offset
-                                     + phase
-                                     + (M17_SAMPLES_PER_SYMBOL * decoded_syms);
+                int32_t symbol_index = phase
+                    + (M17_SAMPLES_PER_SYMBOL * decoded_syms);
                 if (symbol_index >= static_cast<int32_t>(baseband.len))
                     break;
                 // Update quantization stats only on syncwords
@@ -472,14 +477,15 @@ bool M17Demodulator::update()
                     {
                         log_entry_t log;
                         log.sample       = baseband.data[symbol_index + i];
-                        log.conv         = 0;
+                        log.conv         = phase;
                         log.conv_th      = 0.0;
                         log.sample_index = symbol_index + i;
                         log.qnt_pos_avg  = qnt_pos_avg / 1.5f;
                         log.qnt_neg_avg  = qnt_neg_avg / 1.5f;
                         log.symbol       = symbol;
                         log.frame_index  = frame_index;
-                        log.flags        = 3;
+                        log.flags        = 0;
+                        if(i == 0) log.flags = 1;
 
                         pushLog(log);
                     }
@@ -540,7 +546,7 @@ bool M17Demodulator::update()
                 {
                     // Find index (possibly negative) of the syncword
                     int32_t expected_sync =
-                        offset + phase +
+                        phase +
                         M17_SAMPLES_PER_SYMBOL * decoded_syms -
                         M17_SYNCWORD_SAMPLES -
                         SYNC_SWEEP_OFFSET * M17_SAMPLES_PER_SYMBOL;
@@ -557,18 +563,15 @@ bool M17Demodulator::update()
                 }
             }
         }
-
-        // We are at the end of the buffer
-        if (syncDetected)
-        {
-            // Compute phase of next buffer
-            phase = (static_cast<int32_t> (phase) + offset + baseband.len) % M17_SAMPLES_PER_SYMBOL;
-        }
         // Copy last N samples to bridge buffer
         memcpy(basebandBridge,
                baseband.data + (baseband.len - M17_BRIDGE_SIZE),
                sizeof(int16_t) * M17_BRIDGE_SIZE);
     }
+    #ifdef PLATFORM_LINUX
+    if (baseband.data == NULL)
+        dumpData = true;
+    #endif
 
     return newFrame;
 }

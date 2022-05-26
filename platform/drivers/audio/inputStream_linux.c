@@ -77,7 +77,8 @@ dataBlock_t inputStream_getData(streamId id)
 
     if (read_items != block.len)
     {
-        exit(-1);
+        block.data = NULL;
+        return block;
     }
 
     return block;

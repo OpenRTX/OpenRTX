@@ -118,13 +118,13 @@ private:
     static constexpr size_t M17_RX_SAMPLE_RATE     = 24000;
 
 
-    static constexpr size_t M17_SAMPLES_PER_SYMBOL = M17_RX_SAMPLE_RATE / M17_SYMBOL_RATE;
-    static constexpr size_t M17_FRAME_SAMPLES      = M17_FRAME_SYMBOLS * M17_SAMPLES_PER_SYMBOL;
-    static constexpr size_t M17_SAMPLE_BUF_SIZE    = M17_FRAME_SAMPLES / 2;
-    static constexpr size_t M17_SYNCWORD_SAMPLES   = M17_SAMPLES_PER_SYMBOL * M17_SYNCWORD_SYMBOLS;
-    static constexpr int8_t SYNC_SWEEP_WIDTH       = 10;
-    static constexpr int8_t SYNC_SWEEP_OFFSET      = ceil(SYNC_SWEEP_WIDTH / M17_SAMPLES_PER_SYMBOL);
-    static constexpr size_t M17_BRIDGE_SIZE        = M17_SYNCWORD_SAMPLES + 2 * SYNC_SWEEP_WIDTH;
+    static constexpr size_t  M17_SAMPLES_PER_SYMBOL = M17_RX_SAMPLE_RATE / M17_SYMBOL_RATE;
+    static constexpr size_t  M17_FRAME_SAMPLES      = M17_FRAME_SYMBOLS * M17_SAMPLES_PER_SYMBOL;
+    static constexpr size_t  M17_SAMPLE_BUF_SIZE    = M17_FRAME_SAMPLES / 2;
+    static constexpr size_t  M17_SYNCWORD_SAMPLES   = M17_SAMPLES_PER_SYMBOL * M17_SYNCWORD_SYMBOLS;
+    static constexpr int8_t  SYNC_SWEEP_WIDTH       = 10;
+    static constexpr int8_t  SYNC_SWEEP_OFFSET      = ceil(SYNC_SWEEP_WIDTH / M17_SAMPLES_PER_SYMBOL);
+    static constexpr int16_t M17_BRIDGE_SIZE        = M17_SYNCWORD_SAMPLES + 2 * SYNC_SWEEP_WIDTH;
 
     static constexpr float  CONV_STATS_ALPHA       = 0.005f;
     static constexpr float  CONV_THRESHOLD_FACTOR  = 3.40;
