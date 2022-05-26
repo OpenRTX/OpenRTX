@@ -97,14 +97,32 @@ public:
 private:
 
     /**
-     * Send an M17 frame over the air.
+     * Function handling the OFF operating state.
      *
-     * @param lastFrame: set to true to indicate that current frame is the last
-     * frame of the currently active transmission.
+     * @param status: pointer to the rtxStatus_t structure containing the
+     * current RTX status.
      */
-    void sendData(const bool lastFrame = false);
+    void offState(rtxStatus_t *const status);
 
-    bool enterRx;                      ///< Flag for RX management.
+    /**
+     * Function handling the RX operating state.
+     *
+     * @param status: pointer to the rtxStatus_t structure containing the
+     * current RTX status.
+     */
+    void rxState(rtxStatus_t *const status);
+
+    /**
+     * Function handling the TX operating state.
+     *
+     * @param status: pointer to the rtxStatus_t structure containing the
+     * current RTX status.
+     */
+    void txState(rtxStatus_t *const status);
+
+
+    bool startRx;                      ///< Flag for RX management.
+    bool startTx;                      ///< Flag for TX management.
     bool locked;                       ///< Demodulator locked on data stream.
     M17::M17Modulator    modulator;    ///< M17 modulator.
     M17::M17Demodulator  demodulator;  ///< M17 demodulator.

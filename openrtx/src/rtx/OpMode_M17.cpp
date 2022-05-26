@@ -29,7 +29,8 @@
 using namespace std;
 using namespace M17;
 
-OpMode_M17::OpMode_M17() : enterRx(false), locked(false), m17Tx(modulator)
+OpMode_M17::OpMode_M17() : startRx(false), startTx(false), locked(false),
+                           m17Tx(modulator)
 {
 
 }
@@ -45,12 +46,14 @@ void OpMode_M17::enable()
     modulator.init();
     demodulator.init();
     locked  = false;
-    enterRx = true;
+    startRx = true;
+    startTx = false;
 }
 
 void OpMode_M17::disable()
 {
-    enterRx = false;
+    startRx = false;
+    startTx = false;
     codec_terminate();
     audio_disableAmp();
     audio_disableMic();
@@ -63,84 +66,23 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
 {
     (void) newCfg;
 
-    // RX logic
-    if(status->opStatus == RX)
+    // Main FSM logic
+    switch(status->opStatus)
     {
-        bool newData = demodulator.update();
-        locked       = demodulator.isLocked();
+        case OFF:
+            offState(status);
+            break;
 
-        if(locked && newData)
-        {
-            auto& frame = demodulator.getFrame();
-            auto type   = decoder.decodeFrame(frame);
+        case RX:
+            rxState(status);
+            break;
 
-            if(type == M17FrameType::STREAM)
-            {
-                M17StreamFrame sf = decoder.getStreamFrame();
-                codec_pushFrame(sf.payload().data(),     false);
-                codec_pushFrame(sf.payload().data() + 8, false);
-            }
-        }
-    }
-    else if((status->opStatus == OFF) && enterRx)
-    {
-        radio_disableRtx();
+        case TX:
+            txState(status);
+            break;
 
-        audio_disableMic();
-        audio_enableAmp();
-        codec_stop();
-        codec_startDecode(SINK_SPK);
-
-        decoder.reset();
-        demodulator.startBasebandSampling();
-        radio_enableRx();
-
-        status->opStatus = RX;
-        enterRx = false;
-    }
-
-    // TX logic
-    if(platform_getPttStatus() && (status->txDisable == 0))
-    {
-        // Enter Tx mode, setup transmission
-        if(status->opStatus != TX)
-        {
-            demodulator.stopBasebandSampling();
-            radio_disableRtx();
-            audio_disableAmp();
-            codec_stop();
-
-            audio_enableMic();
-            codec_startEncode(SOURCE_MIC);
-
-            radio_enableTx();
-
-            std::string source_address(status->source_address);
-            std::string destination_address(status->destination_address);
-            m17Tx.start(source_address, destination_address);
-
-            locked = false;
-            status->opStatus = TX;
-        }
-        else
-        {
-            // Transmission is ongoing, just modulate
-            sendData(false);
-        }
-    }
-
-    // PTT is off, transition to Rx state
-    if(!platform_getPttStatus() && (status->opStatus == TX))
-    {
-        // Send last audio frame
-        sendData(true);
-
-        radio_disableRtx();
-        audio_disableMic();
-        codec_stop();
-
-        status->opStatus = OFF;
-        enterRx = true;
+        default:
+            break;
     }
 
     // Led control logic
@@ -167,13 +109,94 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
     }
 }
 
-void OpMode_M17::sendData(bool lastFrame)
+void OpMode_M17::offState(rtxStatus_t *const status)
 {
+    radio_disableRtx();
+
+    audio_disableMic();
+    audio_disableAmp();
+    codec_stop();
+
+    if(startRx)
+    {
+        status->opStatus = RX;
+    }
+
+    if(platform_getPttStatus() && (status->txDisable == 0))
+    {
+        startTx = true;
+        status->opStatus = TX;
+    }
+}
+
+void OpMode_M17::rxState(rtxStatus_t *const status)
+{
+    if(startRx)
+    {
+        decoder.reset();
+        demodulator.startBasebandSampling();
+
+        audio_enableAmp();
+        codec_startDecode(SINK_SPK);
+
+        radio_enableRx();
+
+        startRx = false;
+    }
+
+    bool newData = demodulator.update();
+    locked       = demodulator.isLocked();
+
+    if(locked && newData)
+    {
+        auto& frame = demodulator.getFrame();
+        auto type   = decoder.decodeFrame(frame);
+
+        if(type == M17FrameType::STREAM)
+        {
+            M17StreamFrame sf = decoder.getStreamFrame();
+            codec_pushFrame(sf.payload().data(),     false);
+            codec_pushFrame(sf.payload().data() + 8, false);
+        }
+    }
+
+    if(platform_getPttStatus())
+    {
+        demodulator.stopBasebandSampling();
+        locked = false;
+        status->opStatus = OFF;
+    }
+}
+
+void OpMode_M17::txState(rtxStatus_t *const status)
+{
+    if(startTx)
+    {
+        audio_enableMic();
+        codec_startEncode(SOURCE_MIC);
+
+        radio_enableTx();
+
+        std::string source_address(status->source_address);
+        std::string destination_address(status->destination_address);
+        m17Tx.start(source_address, destination_address);
+
+        startTx = false;
+    }
+
     payload_t dataFrame;
+    bool      lastFrame = false;
 
     // Wait until there are 16 bytes of compressed speech, then send them
     codec_popFrame(dataFrame.data(),     true);
     codec_popFrame(dataFrame.data() + 8, true);
+
+    if(platform_getPttStatus() == false)
+    {
+        lastFrame = true;
+        startRx   = true;
+        status->opStatus = OFF;
+    }
 
     m17Tx.send(dataFrame, lastFrame);
 }
