@@ -142,10 +142,9 @@ private:
     streamId     basebandId;       ///< Id of the baseband input stream.
     int16_t      *baseband_buffer; ///< Buffer for baseband audio handling.
     dataBlock_t  baseband;         ///< Half buffer, free to be processed.
-    uint16_t     *rawFrame;        ///< Analog values to be quantized.
     uint16_t     frame_index;      ///< Index for filling the raw frame.
-    frame_t      *activeFrame;     ///< Half frame, in demodulation.
-    frame_t      *idleFrame;       ///< Half frame, free to be processed.
+    frame_t      *demodFrame;      ///< Frame being demodulated.
+    frame_t      *readyFrame;      ///< Fully demodulated frame to be returned.
     bool         syncDetected;     ///< A syncword was detected.
     bool         locked;           ///< A syncword was correctly demodulated.
     bool         newFrame;         ///< A new frame has been fully decoded.

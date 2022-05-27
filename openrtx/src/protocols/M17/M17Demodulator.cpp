@@ -169,9 +169,8 @@ void M17Demodulator::init()
 
     baseband_buffer = new int16_t[2 * M17_SAMPLE_BUF_SIZE];
     baseband        = { nullptr, 0 };
-    activeFrame     = new frame_t;
-    rawFrame        = new uint16_t[M17_FRAME_SYMBOLS];
-    idleFrame       = new frame_t;
+    demodFrame      = new frame_t;
+    readyFrame      = new frame_t;
     frame_index     = 0;
     phase           = 0;
     syncDetected    = false;
@@ -195,9 +194,8 @@ void M17Demodulator::terminate()
 
     // Delete the buffers and deallocate memory.
     delete[] baseband_buffer;
-    delete activeFrame;
-    delete[] rawFrame;
-    delete idleFrame;
+    delete demodFrame;
+    delete readyFrame;
 
     #ifdef ENABLE_DEMOD_LOG
     logRunning = false;
@@ -327,7 +325,7 @@ sync_t M17Demodulator::nextFrameSync(int32_t offset)
         log.qnt_neg_avg  = 0.0;
         log.symbol       = 0;
         log.frame_index  = 0;
-        log.flags        = 0;//1;
+        log.flags        = 1;
 
         pushLog(log);
         #endif
@@ -370,7 +368,7 @@ const frame_t& M17Demodulator::getFrame()
 {
     // When a frame is read is not new anymore
     newFrame = false;
-    return *activeFrame;
+    return *readyFrame;
 }
 
 bool M17Demodulator::isLocked()
@@ -404,7 +402,7 @@ int32_t M17Demodulator::syncwordSweep(int32_t offset)
         log.qnt_neg_avg  = 0.0;
         log.symbol       = 0;
         log.frame_index  = 0;
-        log.flags        = 0;//2;
+        log.flags        = 2;
 
         pushLog(log);
         #endif
@@ -415,6 +413,7 @@ int32_t M17Demodulator::syncwordSweep(int32_t offset)
             max_index = i;
         }
     }
+
     return max_index;
 }
 
@@ -447,11 +446,12 @@ bool M17Demodulator::update()
             if (!syncDetected)
             {
                 syncword = nextFrameSync(phase);
+
                 if (syncword.index != -1) // Valid syncword found
                 {
-                    syncDetected = true;
                     phase = syncword.index + 1;
-                    frame_index = 0;
+                    syncDetected = true;
+                    frame_index  = 0;
                     decoded_syms = 0;
                 }
             }
@@ -484,40 +484,37 @@ bool M17Demodulator::update()
                         log.qnt_neg_avg  = qnt_neg_avg / 1.5f;
                         log.symbol       = symbol;
                         log.frame_index  = frame_index;
-                        log.flags        = 0;
-                        if(i == 0) log.flags = 1;
+                        log.flags        = 3;
+                        if(i == 0) log.flags += 8;
 
                         pushLog(log);
                     }
                 }
                 #endif
 
-                setSymbol(*activeFrame, frame_index, symbol);
+                setSymbol(*demodFrame, frame_index, symbol);
                 decoded_syms++;
                 frame_index++;
 
                 if (frame_index == M17_SYNCWORD_SYMBOLS)
                 {
                     // If syncword is not valid, lock is lost, accept 2 bit errors
-                    uint8_t hammingSync = hammingDistance((*activeFrame)[0],
+                    uint8_t hammingSync = hammingDistance((*demodFrame)[0],
                                                           STREAM_SYNC_WORD[0])
-                                        + hammingDistance((*activeFrame)[1],
+                                        + hammingDistance((*demodFrame)[1],
                                                           STREAM_SYNC_WORD[1]);
 
-                    uint8_t hammingLsf = hammingDistance((*activeFrame)[0],
+                    uint8_t hammingLsf = hammingDistance((*demodFrame)[0],
                                                          LSF_SYNC_WORD[0])
-                                       + hammingDistance((*activeFrame)[1],
+                                       + hammingDistance((*demodFrame)[1],
                                                          LSF_SYNC_WORD[1]);
 
                     // Too many errors in the syncword, lock is lost
                     if ((hammingSync > 2) && (hammingLsf > 2))
                     {
                         syncDetected = false;
-                        locked = false;
-                        std::swap(activeFrame, idleFrame);
-                        frame_index = 0;
-                        newFrame    = true;
-                        phase = 0;
+                        locked       = false;
+                        phase        = 0;
 
                         #ifdef ENABLE_DEMOD_LOG
                         // Pre-arm the log trigger.
@@ -554,21 +551,23 @@ bool M17Demodulator::update()
                     phase += sync_skew;
                 }
 
-                // If the frame buffer is full switch active and idle frame
+                // If the frame buffer is full switch demod and ready frame
                 if (frame_index == M17_FRAME_SYMBOLS)
                 {
-                    std::swap(activeFrame, idleFrame);
+                    std::swap(demodFrame, readyFrame);
                     frame_index = 0;
-                    newFrame   = true;
+                    newFrame    = true;
                 }
             }
         }
+
         // Copy last N samples to bridge buffer
         memcpy(basebandBridge,
                baseband.data + (baseband.len - M17_BRIDGE_SIZE),
                sizeof(int16_t) * M17_BRIDGE_SIZE);
     }
-    #ifdef PLATFORM_LINUX
+
+    #if defined(PLATFORM_LINUX) && defined(ENABLE_DEMOD_LOG)
     if (baseband.data == NULL)
         dumpData = true;
     #endif
