@@ -18,15 +18,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <ui.h>
-#include <stdlib.h>
-#include <inttypes.h>
-#include <threads.h>
-#include <interfaces/platform.h>
-#include <battery.h>
-#include <interfaces/graphics.h>
-#include <interfaces/delays.h>
-#include <hwconfig.h>
+#include <openrtx.h>
+
 #ifdef PLATFORM_LINUX
 #include <emulator/sdl_engine.h>
 #endif
@@ -48,46 +41,18 @@ int main(void)
     while(!platform_pwrButtonStatus());
     #endif
 
-    // Initialize platform drivers
-    platform_init();
-
-    // Initialize radio state
-    state_init();
-
-    // Initialize display and graphics driver
-    gfx_init();
-
-    // Set default contrast
-    display_setContrast(state.settings.contrast);
-
-    // Initialize user interface
-    ui_init();
-
-    // Display splash screen
-    ui_drawSplashScreen(true);
-    gfx_render();
-
-    // Wait 30ms before turning on backlight to hide random pixels on screen
-    sleepFor(0u, 30u);
-    platform_setBacklightLevel(state.settings.brightness);
-
-    // Keep the splash screen for 1 second
-    sleepFor(1u, 0u);
-
-    // Create OpenRTX threads
-    create_threads();
+    openrtx_init();
 
 #ifndef PLATFORM_LINUX
-    // Jump to the UI task
-    ui_task(NULL);
+    openrtx_run();
 #else
     // macOS requires SDL main loop to run on the main thread.
-    // Here we create a new thread for ui_task and utilize the masin thread for
-    // the SDL main loop.
-    pthread_t      ui_thread;
-    pthread_create(&ui_thread, NULL, ui_task, NULL);
+    // Here we create a new thread for OpenRTX main program and utilize the main
+    // thread for the SDL main loop.
+    pthread_t openrtx_thread;
+    pthread_create(&openrtx_thread, NULL, openrtx_run, NULL);
 
     sdl_task();
-    pthread_join(ui_thread, NULL);
+    pthread_join(openrtx_thread, NULL);
 #endif
 }

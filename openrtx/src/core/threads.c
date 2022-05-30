@@ -69,6 +69,9 @@ void *ui_task(void *arg)
     ui_saveState();
     pthread_mutex_unlock(&state_mutex);
 
+    // Keep the splash screen for 1 second
+    sleepFor(1u, 0u);
+
     // Initial GUI draw
     ui_updateGUI();
     gfx_render();
