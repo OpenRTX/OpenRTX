@@ -77,6 +77,20 @@
 #include <hwconfig.h>
 #include "core/voicePromptUtils.h"
 
+// 0 not latched, a positive number start timer which counts down to 0 at which 
+// time latch automatically disabled.
+// If a subsequent key is pressed before timeout, timer restarts.
+static uint16_t functionLatched = 0;
+// 3000 ms.
+#define FUNCTION_LATCH_TIMEOUT 3000
+// When a key is pressed while Moni is latched, the latch timer is restarted.
+static void RestartFunctionLatchTimer()
+{
+	if (functionLatched == 0) return;
+	
+	functionLatched = FUNCTION_LATCH_TIMEOUT;
+}
+
 /* UI main screen functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBackground();
 extern void _ui_drawMainTop();
@@ -139,7 +153,7 @@ const char *settings_items[] =
     "GPS",
 #endif
     "M17",
-	"Voice",
+	"Accessibility",
     "Default Settings"
 };
 
@@ -787,6 +801,8 @@ bool _ui_exitStandby(long long now)
 void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
 {
     ui_state.input_number = input_getPressedNumber(msg);
+	if (ui_state.input_number != 0)
+		RestartFunctionLatchTimer(); // reset the timer.
     // CTCSS Encode/Decode Selection
     bool tone_tx_enable = state.channel.fm.txToneEn;
     bool tone_rx_enable = state.channel.fm.rxToneEn;
@@ -865,6 +881,7 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
         state.settings.sqlLevel = platform_getChSelector() - 1;
         *sync_rtx = true;
 		announceSquelch(state.settings.sqlLevel, queueFlags);
+		RestartFunctionLatchTimer(); // reset the timer.
     }
 
     if(msg.keys & KEY_LEFT || msg.keys & KEY_DOWN)
@@ -878,6 +895,7 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             state.settings.sqlLevel -= 1;
             *sync_rtx = true;
 			announceSquelch(state.settings.sqlLevel, queueFlags);
+			RestartFunctionLatchTimer(); // reset the timer.
         }
     }
 
@@ -892,6 +910,7 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             state.settings.sqlLevel += 1;
             *sync_rtx = true;
 			announceSquelch(state.settings.sqlLevel, queueFlags);
+			RestartFunctionLatchTimer(); // reset the timer.
         }
     }
 }
@@ -1045,9 +1064,22 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
             return;
 
         // If MONI is pressed, activate MACRO functions
-        if(msg.keys & KEY_MONI)
+		bool moniPressed=(msg.keys & KEY_MONI) ? true : false;
+        if(moniPressed || (functionLatched > 0))
         {
             macro_menu = true;
+			// long press moni on its own latches function.
+			if (moniPressed && msg.long_press && !input_getPressedNumber(msg))
+			{
+				functionLatched = FUNCTION_LATCH_TIMEOUT; // 3000 ms.
+				// Need to play beep to alert latch state enabled.
+			}
+			else if (functionLatched > 0)
+			{
+				functionLatched--; // count down.
+				//if (functionLatched==0)
+					// need to beep to alert latch timed out.
+			}
             _ui_fsm_menuMacro(msg, sync_rtx);
             return;
         }
