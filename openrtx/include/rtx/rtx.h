@@ -55,8 +55,9 @@ typedef struct
     uint8_t  rxCan : 4,     /**< M17 Channel Access Number for RX squelch */
              txCan : 4;     /**< M17 Channel Access Number for TX squelch */
 
-    char     source_address[10];      /**< M17 call source address */
+    char     source_address[10];      /**< M17 call source address  */
     char     destination_address[10]; /**< M17 call routing address */
+    bool     invertRxPhase;           /**< M17 RX phase inversion   */
 }
 rtxStatus_t;
 

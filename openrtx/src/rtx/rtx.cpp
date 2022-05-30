@@ -46,18 +46,19 @@ void rtx_init(pthread_mutex_t *m)
     /*
      * Default initialisation for rtx status
      */
-    rtxStatus.opMode      = OPMODE_NONE;
-    rtxStatus.bandwidth   = BW_25;
-    rtxStatus.txDisable   = 0;
-    rtxStatus.opStatus    = OFF;
-    rtxStatus.rxFrequency = 430000000;
-    rtxStatus.txFrequency = 430000000;
-    rtxStatus.txPower     = 0.0f;
-    rtxStatus.sqlLevel    = 1;
-    rtxStatus.rxToneEn    = 0;
-    rtxStatus.rxTone      = 0;
-    rtxStatus.txToneEn    = 0;
-    rtxStatus.txTone      = 0;
+    rtxStatus.opMode        = OPMODE_NONE;
+    rtxStatus.bandwidth     = BW_25;
+    rtxStatus.txDisable     = 0;
+    rtxStatus.opStatus      = OFF;
+    rtxStatus.rxFrequency   = 430000000;
+    rtxStatus.txFrequency   = 430000000;
+    rtxStatus.txPower       = 0.0f;
+    rtxStatus.sqlLevel      = 1;
+    rtxStatus.rxToneEn      = 0;
+    rtxStatus.rxTone        = 0;
+    rtxStatus.txToneEn      = 0;
+    rtxStatus.txTone        = 0;
+    rtxStatus.invertRxPhase = false;
     currMode = &noMode;
 
     /*

@@ -109,6 +109,13 @@ public:
      */
     bool isLocked();
 
+    /**
+     * Invert baseband signal phase before decoding.
+     *
+     * @param status: if set to true signal phase is inverted.
+     */
+    void invertPhase(const bool status);
+
 private:
 
     /**
@@ -150,6 +157,7 @@ private:
     bool         newFrame;         ///< A new frame has been fully decoded.
     int16_t      basebandBridge[M17_BRIDGE_SIZE] = { 0 }; ///< Bridge buffer
     int16_t      phase;            ///< Phase of the signal w.r.t. sampling
+    bool         invPhase;         ///< Invert signal phase
 
     /*
      * State variables

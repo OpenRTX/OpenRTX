@@ -66,6 +66,12 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
 {
     (void) newCfg;
 
+    // Force inversion of RX phase for MD3x0 VHF radios
+    #ifdef PLATFORM_MD3x0
+    const hwInfo_t* hwinfo = platform_getHwInfo();
+    status->invertRxPhase |= hwinfo->vhf_band;
+    #endif
+
     // Main FSM logic
     switch(status->opStatus)
     {
@@ -135,6 +141,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
     {
         decoder.reset();
         demodulator.startBasebandSampling();
+        demodulator.invertPhase(status->invertRxPhase);
 
         audio_enableAmp();
         codec_startDecode(SINK_SPK);

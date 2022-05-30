@@ -435,7 +435,8 @@ bool M17Demodulator::update()
         for(size_t i = 0; i < baseband.len; i++)
         {
             float elem = static_cast< float >(baseband.data[i]);
-            baseband.data[i] = static_cast< int16_t >(M17::rrc_24k(elem));
+            if(invPhase) elem = 0.0f - elem;
+            baseband.data[i]  = static_cast< int16_t >(M17::rrc_24k(elem));
         }
 
         // Process the buffer
@@ -573,4 +574,9 @@ bool M17Demodulator::update()
     #endif
 
     return newFrame;
+}
+
+void M17Demodulator::invertPhase(const bool status)
+{
+    invPhase = status;
 }
