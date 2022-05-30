@@ -80,15 +80,30 @@
 // 0 not latched, a positive number start timer which counts down to 0 at which 
 // time latch automatically disabled.
 // If a subsequent key is pressed before timeout, timer restarts.
-static uint16_t functionLatched = 0;
+static uint16_t functionLatchTimer = 0;
 // 3000 ms.
 #define FUNCTION_LATCH_TIMEOUT 3000
 // When a key is pressed while Moni is latched, the latch timer is restarted.
 static void RestartFunctionLatchTimer()
 {
-	if (functionLatched == 0) return;
+	if (functionLatchTimer == 0) return;
 	
-	functionLatched = FUNCTION_LATCH_TIMEOUT;
+	functionLatchTimer = getTick() + FUNCTION_LATCH_TIMEOUT;
+}
+
+static void ReleaseFunctionLatchIfNeeded()
+{
+	if (functionLatchTimer == 0) return;
+	
+	if (getTick() < functionLatchTimer)
+		return;
+	
+	functionLatchTimer=0;
+}
+
+static void SetFunctionLatchTimer()
+{
+	functionLatchTimer= getTick() + FUNCTION_LATCH_TIMEOUT;
 }
 
 /* UI main screen functions, their implementation is in "ui_main.c" */
@@ -1065,20 +1080,18 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
 
         // If MONI is pressed, activate MACRO functions
 		bool moniPressed=(msg.keys & KEY_MONI) ? true : false;
-        if(moniPressed || (functionLatched > 0))
+        if(moniPressed || ((functionLatchTimer > 0) && (getTick() < functionLatchTimer) ))
         {
             macro_menu = true;
 			// long press moni on its own latches function.
 			if (moniPressed && msg.long_press && !input_getPressedNumber(msg))
 			{
-				functionLatched = FUNCTION_LATCH_TIMEOUT; // 3000 ms.
+				SetFunctionLatchTimer(); // 3000 ms.
 				// Need to play beep to alert latch state enabled.
 			}
-			else if (functionLatched > 0)
+			else
 			{
-				functionLatched--; // count down.
-				//if (functionLatched==0)
-					// need to beep to alert latch timed out.
+				ReleaseFunctionLatchIfNeeded();
 			}
             _ui_fsm_menuMacro(msg, sync_rtx);
             return;
