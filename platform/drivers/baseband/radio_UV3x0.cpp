@@ -153,6 +153,18 @@ void radio_enableRx()
     at1846s.setFrequency(config->rxFrequency);
     at1846s.setFuncMode(AT1846S_FuncMode::RX);
 
+    /*
+     * Force silencing of audio output when RX is enabled with M17 operating
+     * mode selected. Avoids the spillover of baseband signal towards the
+     * speaker.
+     *
+     * TODO: improve this solution.
+     */
+    if(config->opMode == OPMODE_M17)
+    {
+        C6000.writeCfgRegister(0xE0, 0x00);
+    }
+
     if(currRxBand == BND_VHF)
     {
         gpio_setPin(VHF_LNA_EN);
