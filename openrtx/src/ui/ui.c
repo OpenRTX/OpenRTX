@@ -107,7 +107,10 @@ static void SetFunctionLatchTimer()
 {
 	functionLatchTimer= getTick() + FUNCTION_LATCH_TIMEOUT;
 }
-
+static bool FunctionKeyIsLatched()
+{
+	return (functionLatchTimer > 0) && (getTick() < functionLatchTimer);
+}
 /* UI main screen functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBackground();
 extern void _ui_drawMainTop();
@@ -1100,8 +1103,8 @@ void ui_updateFSM(bool *sync_rtx)
 
         // If MONI is pressed, activate MACRO functions
 		bool moniPressed=(msg.keys & KEY_MONI) ? true : false;
-        if(moniPressed || ((functionLatchTimer > 0) && (getTick() < functionLatchTimer) ))
-        {
+        if(moniPressed || FunctionKeyIsLatched())
+        {	
             macro_menu = true;
 			// long press moni on its own latches function.
 			if (moniPressed && msg.long_press && !input_getPressedNumber(msg))
