@@ -159,8 +159,18 @@ void AT1846S::setOpMode(const AT1846S_OpMode mode)
 {
     if(mode == AT1846S_OpMode::DMR)
     {
-        // TODO: DMR mode
-
+        //
+        // TODO: values copy-pasted from GD77 driver, they seems to work well
+        // at least with M17
+        //
+        i2c_writeReg16(0x3A, 0x00C2);
+        i2c_writeReg16(0x33, 0x45F5);
+        i2c_writeReg16(0x41, 0x4731);
+        i2c_writeReg16(0x42, 0x1036);
+        i2c_writeReg16(0x43, 0x00BB);
+        i2c_writeReg16(0x58, 0xBCFD);
+        i2c_writeReg16(0x44, 0x06CC);
+        i2c_writeReg16(0x40, 0x0031);
     }
     else
     {
