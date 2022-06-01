@@ -19,27 +19,32 @@ For information on currently supported radios and features, see the [Supported P
 
 For hardware and software documentation visit [openrtx.org](https://openrtx.org/)
 
-## Compiling and flashing
+## Obtaining the firmware
 
 **Warning: read the Disclaimer section first!**
 
-For instructions on how to compile and flash OpenRTX to your radio,
-or just run OpenRTX on Linux see the [Compilation instructions](https://openrtx.org/#/compiling) page on our website.
+Pre-built binary images of the OpenRTX firmware for each one of the supported devices are available on [the releases page](https://github.com/OpenRTX/OpenRTX/releases): to flash them on your radio you can use the OEM firmware upgrade tool or, alternatively and for TYT MD-3x0 and MD-UV3x0 radios only, you can also use the [radio_tool](https://github.com/v0l/radio_tool) program or tarxvf's web based flashing tool [dmr.tools](https://dmr.tools).
 
+Between releases, pre-built binary images containing the latest firmware updates are available through nightly builds from the master branch.
+The nightly builds are available here:
+- on [Phil DF5PMF's page](https://openrtx.schinken-radio.de/nightly/)
+- on the [OpenRTX nightly builds page](https://files.openrtx.org/nightly/)
 
-On TYT MD-3x0 and MD-UV3x0 you can flash our firmware using tarxvf's web based flashing tool.
+Finally, the instructions on how to compile the OpenRTX firmware, also in its emulator version on Linux, are available on the [compilation instructions](https://openrtx.org/#/compiling) page on our website.
 
-- Download the latest OpenRTX release for your radio from [the releases page](https://github.com/OpenRTX/OpenRTX/releases).
-- Connect your radio to the PC, put it in DFU mode (turn off, turn on pressing PTT and the button just above).
-- On linux, macOS and Android, open Chrome/Chromium and navigate to [dmr.tools](https://dmr.tools),
-- Click on "Upgrade", then "Connect Radio(s)", under "Select firmware file" choose "Upload from my computer",
-- Click on "Choose File", select the latest OpenRTX release you downloaded before, and click on "Upgrade Radio".
-- Reboot your radio
+If you need detailed instructions on how to flash the firmware to your radio look at the [dedicated page](https://openrtx.org/#/user_guide) on OpenRTX's website or reach us on our channels!
 
+## M17 support
 
-If you want to try the latest available firmware and you do not want to go
-through all the compilation process, Phil DF5PMF kindly provides nightly builds
-of the master branch [here](https://openrtx.schinken-radio.de/nightly/).
+From the release version 0.3.3 the OpenRTX firmware provides experimental support for the M17 digital voice mode.
+
+Currently the radios supporting this digital mode are the following:
+- MD-380, MD-390 and RT3 **UHF version** support both modulation and demodulation.
+- MD-380, MD-390 and RT3 **VHF version** support **only** demodulation, modulation is a work in progress.
+- MD-UV380 and MD-UV390 support support both modulation and demodulation.
+- GD77 and DM-1801 currently **do not support** the new digital voice mode.
+
+To make the digital mode work, some modding is required: refer to the [dedicated page](https://openrtx.org/#/hw_mods) on our website for the details.
 
 ## Disclaimer
 
@@ -52,9 +57,6 @@ image obtained from the sources made available through this repository does it
 at its own risk. We always test all the code on our devices before publishing it
 on the repository, however we cannot guarantee the absolute absence of bugs and
 potential side effects.
-
-## Screenshots
-<img src="assets/splash.gif" width="200" height="auto">
 
 ## Contact
 
