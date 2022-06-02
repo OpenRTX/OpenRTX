@@ -47,6 +47,9 @@ class InputStream
                 uint32_t sampleRate)
         : m_run_thread(true), m_func_running(false)
     {
+        if (bufLength % 2)
+            throw std::runtime_error("Invalid bufLength: " +
+                                     std::to_string(bufLength));
         m_db_ready[0] = m_db_ready[1] = false;
 
         changeId();
@@ -113,8 +116,10 @@ class InputStream
                 if (!m_run_thread) return {NULL, 0};
 
                 // Return the buffer contents
-                auto* pos = m_buf;
-                m_buf += m_bufLength / 2 * id;
+                auto* pos      = m_buf + id * (m_bufLength / 2);
+                m_db_ready[id] = 0;
+
+                // Update the read buffer
                 m_db_curread = (id + 1) % 2;
                 return {pos, m_bufLength / 2};
             }
@@ -222,15 +227,14 @@ class InputStream
             m_func_running = false;
         };
 
-        using std::chrono::milliseconds;
+        using std::chrono::microseconds;
 
         if (m_sampleRate > 0)
         {
             // Do a piecewise-sleep so that it's easily interruptible
-            int msec = sz * 1000 / m_sampleRate;
-            while (msec > 10)
+            uint64_t microsec = sz * 1000000 / m_sampleRate;
+            while (microsec > 10000)
             {
-                printf("Wait 10ms: %d\n", msec);
                 if (!m_run_thread)
                 {
                     // Early exit if the class is being deallocated
@@ -238,10 +242,10 @@ class InputStream
                     return false;
                 }
 
-                std::this_thread::sleep_for(milliseconds(10));
-                msec -= 10;
+                std::this_thread::sleep_for(microseconds(10000));
+                microsec -= 10000;
             }
-            std::this_thread::sleep_for(milliseconds(msec));
+            std::this_thread::sleep_for(microseconds(microsec));
         }
 
         if (!m_run_thread)
@@ -254,11 +258,9 @@ class InputStream
         // Fill the buffer
         while (i < sz)
         {
-            printf("Read: %lu/%lu\n", i, sz);
             auto n = fread(dest + i, 2, sz - i, m_fp);
-            printf("Ret: %lu\n", n);
+            if (n < (sz - i)) fseek(m_fp, 0, SEEK_SET);
             i += n;
-            fseek(m_fp, 0, SEEK_SET);
         }
 
         assert(i == sz);
