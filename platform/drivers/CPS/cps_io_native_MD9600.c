@@ -27,9 +27,9 @@
 #include "cps_data_MDUV3x0.h"
 #include "W25Qx.h"
 
+//static const uint32_t vfoChannelBaseAddr = 0x2EF00; /**< Base address of VFO channel                           */
 static const uint32_t zoneBaseAddr       = 0x149E0;   /**< Base address of zones                                 */
 static const uint32_t zoneExtBaseAddr    = 0x31000;   /**< Base address of zone extensions                       */
-static const uint32_t vfoChannelBaseAddr = 0x2EF00;   /**< Base address of VFO channel                           */
 static const uint32_t chDataBaseAddr     = 0x110000;  /**< Base address of channel data                          */
 static const uint32_t contactBaseAddr    = 0x140000;  /**< Base address of contacts                              */
 static const uint32_t maxNumChannels     = 3000;      /**< Maximum number of channels in memory                  */

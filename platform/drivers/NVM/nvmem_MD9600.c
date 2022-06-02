@@ -38,6 +38,7 @@ void nvm_terminate()
 
 void nvm_readCalibData(void *buf)
 {
+    (void) buf;
     return;
 }
 
@@ -71,5 +72,6 @@ int nvm_readSettings(settings_t *settings)
 int nvm_writeSettings(const settings_t *settings)
 {
     // Disable settings write until DFU is implemented for flash backups
+    (void) settings;
     return -1;
 }

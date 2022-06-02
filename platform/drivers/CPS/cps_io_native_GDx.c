@@ -27,10 +27,10 @@
 #include "W25Qx.h"
 #include "cps_data_GDx.h"
 
-//static const uint32_t zoneBaseAddr    = 0x149e0;      /**< Base address of zones                */
+//static const uint32_t zoneBaseAddr        = 0x149e0;  /**< Base address of zones                */
+//static const uint32_t vfoChannelBaseAddr  = 0x7590;   /**< Base address of VFO channel          */
 static const uint32_t channelBaseAddrEEPROM = 0x03780;  /**< Base address of channel data         */
 static const uint32_t channelBaseAddrFlash  = 0x7b1c0;  /**< Base address of channel data         */
-static const uint32_t vfoChannelBaseAddr    = 0x7590;   /**< Base address of VFO channel          */
 static const uint32_t zoneBaseAddr          = 0x8010;   /**< Base address of zones                */
 static const uint32_t contactBaseAddr       = 0x87620;  /**< Base address of contacts             */
 static const uint32_t maxNumChannels        = 1024;     /**< Maximum number of channels in memory */
