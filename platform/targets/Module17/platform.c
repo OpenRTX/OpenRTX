@@ -53,7 +53,7 @@ void platform_init()
     i2c_init();
     mcp4551_init(SOFTPOT_RX);
     mcp4551_init(SOFTPOT_TX);
-    mcp4551_setWiper(SOFTPOT_TX, 0x100);
+    mcp4551_setWiper(SOFTPOT_TX, 0x090);
     //mcp4551_setWiper(SOFTPOT_RX, MCP4551_WIPER_A);
 
     audio_init();
