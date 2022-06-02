@@ -10,6 +10,7 @@ IndentExternBlock: NoIndent
 IndentWidth: '4'
 NamespaceIndentation: Inner
 
+BinPackParameters: 'false'
 BreakBeforeBraces: Custom
 BraceWrapping:
   AfterCaseLabel:  'true'
