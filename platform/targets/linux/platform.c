@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Frederik Saraci IU2NRO                          *
+ *   Copyright (C) 2020 - 2022 by Frederik Saraci IU2NRO                   *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *

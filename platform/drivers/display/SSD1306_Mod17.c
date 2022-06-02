@@ -1,9 +1,9 @@
 /***************************************************************************
- *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
- *                         Mathis Schmieder DB9MAT                         *
+ *   Copyright (C) 2021 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
+ *                                Mathis Schmieder DB9MAT                  *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -14,16 +14,6 @@
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
  *   GNU General Public License for more details.                          *
- *                                                                         *
- *   As a special exception, if other files instantiate templates or use   *
- *   macros or inline functions from this file, or you compile this file   *
- *   and link it with other works to produce a work based on this file,    *
- *   this file does not by itself cause the resulting work to be covered   *
- *   by the GNU General Public License. However the source code for this   *
- *   file must still be made available in accordance with the GNU General  *
- *   Public License. This exception does not invalidate any other reasons  *
- *   why a work based on this file might be covered by the GNU General     *
- *   Public License.                                                       *
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
@@ -97,28 +87,28 @@ void display_init()
     gpio_clearPin(LCD_CS);
 
     gpio_clearPin(LCD_RS);  /* RS low -> command mode                                   */
-    spi2_sendRecv(0xAE);  // SH110X_DISPLAYOFF,                
+    spi2_sendRecv(0xAE);  // SH110X_DISPLAYOFF,
     spi2_sendRecv(0xd5);  // SH110X_SETDISPLAYCLOCKDIV, 0x51,
     spi2_sendRecv(0x51);
-    //spi2_sendRecv(0x20);  // SH110X_MEMORYMODE,                
-    spi2_sendRecv(0x81);  // SH110X_SETCONTRAST, 0x4F,  
+    //spi2_sendRecv(0x20);  // SH110X_MEMORYMODE,
+    spi2_sendRecv(0x81);  // SH110X_SETCONTRAST, 0x4F,
     spi2_sendRecv(0x4F);
-    spi2_sendRecv(0xAD);  // SH110X_DCDC, 0x8A,                
+    spi2_sendRecv(0xAD);  // SH110X_DCDC, 0x8A,
     spi2_sendRecv(0x8A);
-    spi2_sendRecv(0xA0);  // SH110X_SEGREMAP,                  
-    spi2_sendRecv(0xC0);  // SH110X_COMSCANINC,                
-    spi2_sendRecv(0xDC);  // SH110X_SETDISPSTARTLINE, 0x0,     
+    spi2_sendRecv(0xA0);  // SH110X_SEGREMAP,
+    spi2_sendRecv(0xC0);  // SH110X_COMSCANINC,
+    spi2_sendRecv(0xDC);  // SH110X_SETDISPSTARTLINE, 0x0,
     spi2_sendRecv(0x00);
-    spi2_sendRecv(0xd3);  // SH110X_SETDISPLAYOFFSET, 0x60,    
+    spi2_sendRecv(0xd3);  // SH110X_SETDISPLAYOFFSET, 0x60,
     spi2_sendRecv(0x60);
-    spi2_sendRecv(0xd9);  // SH110X_SETPRECHARGE, 0x22,        
+    spi2_sendRecv(0xd9);  // SH110X_SETPRECHARGE, 0x22,
     spi2_sendRecv(0x22);
-    spi2_sendRecv(0xdb);  // SH110X_SETVCOMDETECT, 0x35,       
+    spi2_sendRecv(0xdb);  // SH110X_SETVCOMDETECT, 0x35,
     spi2_sendRecv(0x35);
-    spi2_sendRecv(0xa8);  // SH110X_SETMULTIPLEX, 0x3F,        
+    spi2_sendRecv(0xa8);  // SH110X_SETMULTIPLEX, 0x3F,
     spi2_sendRecv(0x3f);
-    spi2_sendRecv(0xa4);  // SH110X_DISPLAYALLON_RESUME, 	    
-    spi2_sendRecv(0xa6);  // SH110X_NORMALDISPLAY,                 	
+    spi2_sendRecv(0xa4);  // SH110X_DISPLAYALLON_RESUME,
+    spi2_sendRecv(0xa6);  // SH110X_NORMALDISPLAY,
     spi2_sendRecv(0xAF);  // SH110x_DISPLAYON
     gpio_setPin(LCD_CS);
 }
@@ -145,7 +135,7 @@ void display_renderRow(uint8_t row)
 		{
 			out|=((tmp>>(7-j))&1)<<j;
 		}
-			
+
 		spi2_sendRecv(out);
 	}
 }
@@ -153,7 +143,7 @@ void display_renderRow(uint8_t row)
 void display_renderRows(uint8_t startRow, uint8_t endRow)
 {
     gpio_clearPin(LCD_CS);
- 
+
     for(uint8_t row = startRow; row <= endRow; row++)
     {
         gpio_clearPin(LCD_RS);            /* RS low -> command mode */
@@ -163,7 +153,7 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
         gpio_setPin(LCD_RS);              /* RS high -> data mode   */
         display_renderRow(row);
     }
- 
+
     gpio_setPin(LCD_CS);
 }
 

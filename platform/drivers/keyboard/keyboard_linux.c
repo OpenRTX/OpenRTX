@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2020 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -35,7 +35,7 @@ keyboard_t kbd_getKeys() {
     //this pulls in emulated keypresses from the command shell
     keys |= shellkeyq_get();
     keys |= sdl_getKeys();
-    
+
     return keys;
 }
 

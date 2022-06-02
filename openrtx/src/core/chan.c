@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 by Alessio Caiazza IU5BON                          *
+ *   Copyright (C) 2021 - 2022 by Alessio Caiazza IU5BON                   *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -14,6 +14,7 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
+
 #include "chan.h"
 #include <pthread.h>
 

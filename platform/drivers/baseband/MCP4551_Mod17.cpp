@@ -1,9 +1,9 @@
 /***************************************************************************
- *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
- *                         Mathis Schmieder DB9MAT                         *
+ *   Copyright (C) 2021 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
+ *                                Mathis Schmieder DB9MAT                  *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -50,7 +50,7 @@ void mcp4551_init(uint8_t addr)
 void mcp4551_setWiper(uint8_t devAddr, uint16_t value)
 {
     _i2c_start();
-    _i2c_write(devAddr << 1);    
+    _i2c_write(devAddr << 1);
     uint8_t temp = ((value >> 8 & 0x01) | MCP4551_CMD_WRITE);
     _i2c_write(temp);
     temp = (value & 0xFF);
@@ -70,7 +70,7 @@ void mcp4551_setWiper(uint8_t devAddr, uint16_t value)
     _i2c_stop();
 
     return (valHi << 8) | valLo;
-} */   
+} */
 
 /*
  * Software I2C routine

@@ -1,5 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Silvano Seva IU2KWO and Niccolò Izzo IU2KIN     *
+ *   Copyright (C) 2020 - 2022 by Silvano Seva IU2KWO                      *
+ *                            and Niccolò Izzo IU2KIN                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *

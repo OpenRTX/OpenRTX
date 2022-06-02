@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2021 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -24,10 +24,10 @@
 #include <stdint.h>
 
 /**
- * \internal Data structures matching the one used by original firmware 
+ * \internal Data structures matching the one used by original firmware
  * of MDUV3x0 and MD9600 to manage codeplug data inside nonvolatile flash memory.
  *
- * Taken by dmrconfig repository: 
+ * Taken by dmrconfig repository:
  * https://github.com/sergev/dmrconfig/blob/master/uv380.c
  * https://github.com/sergev/dmrconfig/blob/master/md9600.c
  */
