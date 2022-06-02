@@ -28,11 +28,9 @@
 #include <cstdio>
 #include <functional>
 #include <map>
-#include <stdexcept>
+#include <memory>
 #include <string>
 #include <thread>
-#include <tuple>
-#include <utility>
 
 streamId gNextAvailableStreamId = 0;
 
@@ -48,11 +46,13 @@ class InputStream
         : m_run_thread(true), m_func_running(false)
     {
         if (bufLength % 2)
-            throw std::runtime_error("Invalid bufLength: " +
-                                     std::to_string(bufLength));
-        m_db_ready[0] = m_db_ready[1] = false;
+        {
+            fprintf(stderr, "InputStream error: invalid bufLength %lu\n",
+                    bufLength);
+            return;
+        }
 
-        changeId();
+        m_db_ready[0] = m_db_ready[1] = false;
 
         std::string sourceString;
         switch (source)
@@ -69,17 +69,34 @@ class InputStream
             default:
                 break;
         }
+
         m_fp = fopen((sourceString + ".raw").c_str(), "rb");
         if (!m_fp)
-            throw std::runtime_error("Cannot open: " + sourceString + ".raw");
+        {
+            fprintf(stderr, "InputStream error: cannot open: %s.raw\n",
+                    sourceString.c_str());
+            return;
+        }
 
         fseek(m_fp, 0, SEEK_END);
         m_size = ftell(m_fp);
         fseek(m_fp, 0, SEEK_SET);
         if (m_size % 2 || m_size == 0)
-            throw std::runtime_error("Invalid file: " + sourceString + ".raw");
+        {
+            fprintf(stderr, "InputStream error: invalid file: %s.raw\n",
+                    sourceString.c_str());
+            return;
+        }
 
+        m_valid = true;
+
+        changeId();
         setStreamData(priority, buf, bufLength, mode, sampleRate);
+    }
+
+    bool isValid() const
+    {
+        return m_valid;
     }
 
     ~InputStream()
@@ -91,6 +108,8 @@ class InputStream
 
     dataBlock_t getDataBlock()
     {
+        if (!m_valid) return {nullptr, 0};
+
         switch (m_mode)
         {
             case BufMode::BUF_LINEAR:
@@ -150,6 +169,8 @@ class InputStream
                        BufMode mode,
                        uint32_t sampleRate)
     {
+        if (!m_valid) return;
+
         stopThread();
         m_run_thread = true;  // set it as runnable again
 
@@ -174,15 +195,17 @@ class InputStream
     }
 
    private:
-    FILE* m_fp;
-    uint64_t m_size;
+    bool m_valid    = false;
+    FILE* m_fp      = nullptr;
+    uint64_t m_size = 0;
+
     streamId m_id;
     AudioPriority m_prio;
     BufMode m_mode;
-    uint32_t m_sampleRate;
+    uint32_t m_sampleRate = 0;
 
-    stream_sample_t* m_buf;
-    size_t m_bufLength;
+    stream_sample_t* m_buf = nullptr;
+    size_t m_bufLength     = 0;
 
     size_t m_db_curwrite = 0;
     size_t m_db_curread  = 0;
@@ -279,7 +302,7 @@ class InputStream
     }
 };
 
-std::map<AudioSource, InputStream> gOpenStreams;
+std::map<AudioSource, std::unique_ptr<InputStream>> gOpenStreams;
 
 streamId inputStream_start(const enum AudioSource source,
                            const enum AudioPriority priority,
@@ -292,32 +315,34 @@ streamId inputStream_start(const enum AudioSource source,
     if (it != gOpenStreams.end())
     {
         auto& inputStream = it->second;
-        if (inputStream.priority() >= priority) return -1;
+        if (inputStream->priority() >= priority) return -1;
 
-        inputStream.changeId();
-        inputStream.setStreamData(priority, buf, bufLength, mode, sampleRate);
+        inputStream->changeId();
+        inputStream->setStreamData(priority, buf, bufLength, mode, sampleRate);
 
-        return inputStream.id();
+        return inputStream->id();
     }
 
-    // New stream: allocate directly in the std::map
-    auto res = gOpenStreams.emplace(
-        std::piecewise_construct, std::forward_as_tuple(source),
-        std::forward_as_tuple(source, priority, buf, bufLength, mode,
-                              sampleRate));
+    auto stream = std::make_unique<InputStream>(source, priority, buf,
+                                                bufLength, mode, sampleRate);
 
-    if (!res.second) return -1;
+    if (!stream->isValid()) return -1;
 
-    return res.first->second.id();
+    const auto id = stream->id();
+
+    // New stream, move it into the map
+    gOpenStreams[source] = std::move(stream);
+
+    return id;
 }
 
 dataBlock_t inputStream_getData(streamId id)
 {
     InputStream* stream = nullptr;
     for (auto& i : gOpenStreams)
-        if (i.second.id() == id)
+        if (i.second->id() == id)
         {
-            stream = &i.second;
+            stream = i.second.get();
             break;
         }
 
@@ -331,7 +356,7 @@ void inputStream_stop(streamId id)
     AudioSource src;
     bool found = false;
     for (auto& i : gOpenStreams)
-        if (i.second.id() == id)
+        if (i.second->id() == id)
         {
             found = true;
             src   = i.first;
