@@ -83,6 +83,7 @@
 static uint16_t functionLatchTimer = 0;
 // 3000 ms.
 #define FUNCTION_LATCH_TIMEOUT 3000
+
 // When a key is pressed while Moni is latched, the latch timer is restarted.
 static void RestartFunctionLatchTimer()
 {
@@ -99,16 +100,20 @@ static void ReleaseFunctionLatchIfNeeded()
 		return;
 	
 	functionLatchTimer=0;
+	// Play beep for function latch release.
 }
 
 static void SetFunctionLatchTimer()
 {
 	functionLatchTimer= getTick() + FUNCTION_LATCH_TIMEOUT;
+	// Play beep for set function latch.
 }
+
 static bool FunctionKeyIsLatched()
 {
 	return (functionLatchTimer > 0) && (getTick() < functionLatchTimer);
 }
+
 /* UI main screen functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBackground();
 extern void _ui_drawMainTop();
@@ -1090,7 +1095,6 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
 			if (moniPressed && msg.long_press && !input_getPressedNumber(msg))
 			{
 				SetFunctionLatchTimer(); // 3000 ms.
-				// Need to play beep to alert latch state enabled.
 			}
 			else
 			{
