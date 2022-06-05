@@ -155,8 +155,7 @@ M17Demodulator::M17Demodulator()
 
 M17Demodulator::~M17Demodulator()
 {
-    // TODO
-    // terminate();
+    terminate();
 }
 
 void M17Demodulator::init()
@@ -167,10 +166,10 @@ void M17Demodulator::init()
      * placement new.
      */
 
-    baseband_buffer = new int16_t[2 * M17_SAMPLE_BUF_SIZE];
+    baseband_buffer = std::make_unique< int16_t[] >(2 * M17_SAMPLE_BUF_SIZE);
+    demodFrame      = std::make_unique< frame_t >();
+    readyFrame      = std::make_unique< frame_t >();
     baseband        = { nullptr, 0 };
-    demodFrame      = new frame_t;
-    readyFrame      = new frame_t;
     frame_index     = 0;
     phase           = 0;
     syncDetected    = false;
@@ -193,9 +192,9 @@ void M17Demodulator::terminate()
     inputStream_stop(basebandId);
 
     // Delete the buffers and deallocate memory.
-    delete[] baseband_buffer;
-    delete demodFrame;
-    delete readyFrame;
+    baseband_buffer.reset();
+    demodFrame.reset();
+    readyFrame.reset();
 
     #ifdef ENABLE_DEMOD_LOG
     logRunning = false;
@@ -205,7 +204,7 @@ void M17Demodulator::terminate()
 void M17Demodulator::startBasebandSampling()
 {
     basebandId = inputStream_start(SOURCE_RTX, PRIO_RX,
-                                   baseband_buffer,
+                                   baseband_buffer.get(),
                                    2 * M17_SAMPLE_BUF_SIZE,
                                    BUF_CIRC_DOUBLE,
                                    M17_RX_SAMPLE_RATE);
@@ -555,7 +554,7 @@ bool M17Demodulator::update()
                 // If the frame buffer is full switch demod and ready frame
                 if (frame_index == M17_FRAME_SYMBOLS)
                 {
-                    std::swap(demodFrame, readyFrame);
+                    demodFrame.swap(readyFrame);
                     frame_index = 0;
                     newFrame    = true;
                 }

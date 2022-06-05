@@ -27,17 +27,15 @@
 #error This header is C++ only!
 #endif
 
-#include <array>
 #include <cstdint>
 #include <cstddef>
-#include <interfaces/audio_stream.h>
-#include <hwconfig.h>
+#include <memory>
+#include <array>
 #include <dsp.h>
-#include <deque>
-#include <stdio.h>
+#include <cmath>
+#include <interfaces/audio_stream.h>
 #include <M17/M17Datatypes.h>
 #include <M17/M17Constants.h>
-#include <cmath>
 
 namespace M17
 {
@@ -146,18 +144,18 @@ private:
     /*
      * Buffers
      */
-    streamId     basebandId;       ///< Id of the baseband input stream.
-    int16_t      *baseband_buffer; ///< Buffer for baseband audio handling.
-    dataBlock_t  baseband;         ///< Half buffer, free to be processed.
-    uint16_t     frame_index;      ///< Index for filling the raw frame.
-    frame_t      *demodFrame;      ///< Frame being demodulated.
-    frame_t      *readyFrame;      ///< Fully demodulated frame to be returned.
-    bool         syncDetected;     ///< A syncword was detected.
-    bool         locked;           ///< A syncword was correctly demodulated.
-    bool         newFrame;         ///< A new frame has been fully decoded.
-    int16_t      basebandBridge[M17_BRIDGE_SIZE] = { 0 }; ///< Bridge buffer
-    int16_t      phase;            ///< Phase of the signal w.r.t. sampling
-    bool         invPhase;         ///< Invert signal phase
+    std::unique_ptr< int16_t[] > baseband_buffer; ///< Buffer for baseband audio handling.
+    streamId                     basebandId;      ///< Id of the baseband input stream.
+    dataBlock_t                  baseband;        ///< Data block with samples to be processed.
+    uint16_t                     frame_index;     ///< Index for filling the raw frame.
+    std::unique_ptr<frame_t >    demodFrame;      ///< Frame being demodulated.
+    std::unique_ptr<frame_t >    readyFrame;      ///< Fully demodulated frame to be returned.
+    bool                         syncDetected;    ///< A syncword was detected.
+    bool                         locked;          ///< A syncword was correctly demodulated.
+    bool                         newFrame;        ///< A new frame has been fully decoded.
+    int16_t                      basebandBridge[M17_BRIDGE_SIZE] = { 0 }; ///< Bridge buffer
+    int16_t                      phase;           ///< Phase of the signal w.r.t. sampling
+    bool                         invPhase;        ///< Invert signal phase
 
     /*
      * State variables
