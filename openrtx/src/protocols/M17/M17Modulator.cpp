@@ -40,8 +40,7 @@ M17Modulator::M17Modulator()
 
 M17Modulator::~M17Modulator()
 {
-    // TODO
-    // terminate();
+    terminate();
 }
 
 void M17Modulator::init()
@@ -52,8 +51,8 @@ void M17Modulator::init()
      * placement new.
      */
 
-    baseband_buffer = new int16_t[2 * M17_FRAME_SAMPLES];
-    idleBuffer      = baseband_buffer;
+    baseband_buffer = std::make_unique< int16_t[] >(2 * M17_FRAME_SAMPLES);
+    idleBuffer      = baseband_buffer.get();
     txRunning       = false;
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
     dsp_resetFilterState(&pwmFilterState);
@@ -62,8 +61,15 @@ void M17Modulator::init()
 
 void M17Modulator::terminate()
 {
+    // Terminate an ongoing stream, if present
+    if(txRunning)
+    {
+        outputStream_terminate(outStream);
+        txRunning = false;
+    }
+
     // Deallocate memory.
-    delete[] baseband_buffer;
+    baseband_buffer.reset();
 }
 
 void M17Modulator::send(const std::array< uint8_t, 2 >& sync,
@@ -119,7 +125,7 @@ void M17Modulator::emitBaseband()
         // First run, start transmission
         outStream = outputStream_start(SINK_RTX,
                                        PRIO_TX,
-                                       baseband_buffer,
+                                       baseband_buffer.get(),
                                        2*M17_FRAME_SAMPLES,
                                        BUF_CIRC_DOUBLE,
                                        M17_TX_SAMPLE_RATE);
@@ -140,7 +146,7 @@ void M17Modulator::emitBaseband()
         outputStream_sync(outStream, false);
         stopTx     = false;
         txRunning  = false;
-        idleBuffer = baseband_buffer;
+        idleBuffer = baseband_buffer.get();
         #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
         dsp_resetFilterState(&pwmFilterState);
         #endif

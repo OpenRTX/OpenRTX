@@ -28,6 +28,7 @@
 #include <interfaces/audio_stream.h>
 #include <M17/M17Constants.h>
 #include <cstdint>
+#include <memory>
 #include <array>
 #include <dsp.h>
 
@@ -100,11 +101,11 @@ private:
     #endif
 
     std::array< int16_t, M17_FRAME_SYMBOLS > symbols;
-    stream_sample_t  *baseband_buffer;  ///< Buffer for baseband audio handling.
-    stream_sample_t  *idleBuffer;       ///< Half baseband buffer, free for processing.
-    streamId         outStream;         ///< Baseband output stream ID.
-    bool             txRunning;         ///< Transmission running.
-    bool             stopTx;            ///< Stop transmission request.
+    std::unique_ptr< int16_t[] > baseband_buffer;  ///< Buffer for baseband audio handling.
+    stream_sample_t              *idleBuffer;      ///< Half baseband buffer, free for processing.
+    streamId                     outStream;        ///< Baseband output stream ID.
+    bool                         txRunning;        ///< Transmission running.
+    bool                         stopTx;           ///< Stop transmission request.
 
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
     filter_state_t   pwmFilterState;
