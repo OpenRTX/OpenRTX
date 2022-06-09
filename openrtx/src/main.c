@@ -24,8 +24,6 @@
 #include <emulator/sdl_engine.h>
 #endif
 
-extern void *ui_task(void *arg);
-
 int main(void)
 {
     // MD-9600 does not have a proper power on/off mechanism and the MCU is

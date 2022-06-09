@@ -300,7 +300,9 @@ void sdlEngine_init()
                                        SCREEN_WIDTH,
                                        SCREEN_HEIGHT);
     SDL_RenderClear(renderer);
-    SDL_RenderPresent(renderer);
+
+    // Setting brightness also triggers a render
+    set_brightness(state.settings.brightness);
 }
 
 /*

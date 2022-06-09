@@ -77,7 +77,7 @@ uint16_t platform_getVbat()
     float voltage = emulator_state.vbat;
     if(voltage < 0.0f)  voltage = 0.0f;
     if(voltage > 65.0f) voltage = 65.0f;
-    return ((uint16_t) voltage);
+    return ((uint16_t) (voltage * 1000.0f));
 }
 
 uint8_t platform_getMicLevel()
@@ -108,7 +108,7 @@ bool platform_getPttStatus()
     // Read P key status from SDL
     const uint8_t *state = SDL_GetKeyboardState(NULL);
 
-    if (state[SDL_SCANCODE_P])
+    if ((state[SDL_SCANCODE_P] != 0) || (emulator_state.PTTstatus == true))
         return true;
     else
         return false;
