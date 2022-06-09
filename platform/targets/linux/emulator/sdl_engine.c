@@ -259,10 +259,15 @@ static bool set_brightness(uint8_t brightness)
      * Color modulation is not always supported by the renderer;
      * it will return -1 if color modulation is not supported.
      */
-    return SDL_SetTextureColorMod(displayTexture,
-                                  brightness,
-                                  brightness,
-                                  brightness) == 0;
+    int colMod = SDL_SetTextureColorMod(displayTexture,
+                                        brightness,
+                                        brightness,
+                                        brightness) == 0;
+
+    SDL_RenderCopy(renderer, displayTexture, NULL, NULL);
+    SDL_RenderPresent(renderer);
+
+    return colMod;
 }
 
 
