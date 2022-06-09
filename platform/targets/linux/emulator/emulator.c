@@ -18,25 +18,32 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-
-#include "emulator.h"
-#include "sdl_engine.h"
-
 #include <pthread.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <interfaces/keyboard.h>
 #include <SDL2/SDL.h>
 
 #include <readline/readline.h>
 #include <readline/history.h>
 
+#include "emulator.h"
+#include "sdl_engine.h"
+
 /* Custom SDL Event to request a screenshot */
 extern Uint32 SDL_Screenshot_Event;
 
-radio_state Radio_State = {12, 8.2f, 3, 4, 1, false, false};
+emulator_state_t emulator_state =
+{
+    12,       // RSSI
+    8.2f,     // Vbat
+    3,        // mic level
+    4,        // volume level
+    1,        // chSelector
+    false,    // PTT status
+    false     // power off
+};
 
 typedef int (*_climenu_fn)(void *self, int argc, char **argv);
 
@@ -46,7 +53,8 @@ typedef struct
     char *description;
     void *var;
     _climenu_fn fn;
-} _climenu_option;
+}
+_climenu_option;
 
 enum shell_retvals
 {
@@ -56,21 +64,35 @@ enum shell_retvals
     SH_EXIT_OK = 2,
 };
 
+static keyboard_t _shellkeyq[25] = {0};
+static int _skq_cap = 25;
+static int _skq_head;
+static int _skq_tail;
+static int _skq_in;
+static int _skq_out;
 
-keyboard_t _shellkeyq[25] = {0};
-int _skq_cap = 25;
-int _skq_head;
-int _skq_tail;
-int _skq_in;
-int _skq_out;
-void _dump_skq()
-{
-    for(int i = 0; i < _skq_cap; i++)
-    {
-        printf("skq[%d] == %d\n", i, _shellkeyq[i]);
-    }
-}
-void shellkeyq_put(keyboard_t keys)
+// NOTE: unused function
+// static void _dump_skq()
+// {
+//     for(int i = 0; i < _skq_cap; i++)
+//     {
+//         printf("skq[%d] == %d\n", i, _shellkeyq[i]);
+//     }
+// }
+
+// NOTE: unused function
+// static void _test_skq()
+// {
+//     for(int i = 0; i < 257; i++)
+//     {
+//         shellkeyq_put(i + 1);
+//     }
+//
+//     //clear it out now
+//     while(emulator_getKeys());
+// }
+
+static void shellkeyq_put(keyboard_t keys)
 {
     // note - we must allow keys == 0 to be inserted because otherwise a queue
     // full of [1,1,1,1,1] is simulating HOLDING 1, and we sometimes
@@ -87,35 +109,8 @@ void shellkeyq_put(keyboard_t keys)
     _skq_in++;
     _skq_tail = (_skq_tail + 1) % _skq_cap;
 }
-keyboard_t shellkeyq_get()
-{
-    if(_skq_in > _skq_out)
-    {
-        //only if we've fallen behind and there's data in there:
-        keyboard_t out = _shellkeyq[ _skq_head ];
-        _shellkeyq[ _skq_head ] = 0;
-        _skq_out++;
-        _skq_head = (_skq_head + 1) % _skq_cap;
-        return out;
-    }
-    else
-    {
-        return 0; //no keys
-    }
-}
-void _test_skq()
-{
-    for(int i = 0; i < 257; i++)
-    {
-        shellkeyq_put(i + 1);
-    }
 
-    //clear it out now
-    while(shellkeyq_get());
-}
-
-
-int shell_ready(void *_self, int _argc, char **_argv)
+static int shell_ready(void *_self, int _argc, char **_argv)
 {
     (void) _self;
     (void) _argc;
@@ -128,7 +123,7 @@ int shell_ready(void *_self, int _argc, char **_argv)
     return SH_CONTINUE;
 }
 
-keyboard_t keyname2keyboard(char *name)
+static keyboard_t keyname2keyboard(char *name)
 {
     /*  The line noise at the end of this comment is a vim macro for taking the
      *  keyboard.h interface and putting it into the format further below.
@@ -179,7 +174,7 @@ keyboard_t keyname2keyboard(char *name)
     return 0;
 }
 
-int pressKey(void *_self, int _argc, char **_argv)
+static int pressKey(void *_self, int _argc, char **_argv)
 {
     (void) _self;
 
@@ -215,7 +210,7 @@ int pressKey(void *_self, int _argc, char **_argv)
 
 // pressMultiKeys allows for key combos by sending all the keys specified in
 // one keyboard_t
-int pressMultiKeys(void *_self, int _argc, char **_argv)
+static int pressMultiKeys(void *_self, int _argc, char **_argv)
 {
     (void) _self;
     printf("Press Keys: [\n");
@@ -236,23 +231,24 @@ int pressMultiKeys(void *_self, int _argc, char **_argv)
     return SH_CONTINUE; // continue
 }
 
-int template(void *_self, int _argc, char **_argv)
-{
-    _climenu_option *self = (_climenu_option *) _self;
-    printf("%s\n\t%s\n", self->name, self->description);
+// NOTE: unused function
+// static int template(void *_self, int _argc, char **_argv)
+// {
+//     _climenu_option *self = (_climenu_option *) _self;
+//     printf("%s\n\t%s\n", self->name, self->description);
+//
+//     for(int i = 0; i < _argc; i++)
+//     {
+//         if(_argv[i] != NULL)
+//         {
+//             printf("\tArgs:\t%s\n", _argv[i]);
+//         }
+//     }
+//
+//     return SH_CONTINUE; // continue
+// }
 
-    for(int i = 0; i < _argc; i++)
-    {
-        if(_argv[i] != NULL)
-        {
-            printf("\tArgs:\t%s\n", _argv[i]);
-        }
-    }
-
-    return SH_CONTINUE; // continue
-}
-
-int screenshot(void *_self, int _argc, char **_argv)
+static int screenshot(void *_self, int _argc, char **_argv)
 {
     (void) _self;
     char *filename = "screenshot.bmp";
@@ -271,7 +267,7 @@ int screenshot(void *_self, int _argc, char **_argv)
     return SDL_PushEvent(&e) == 1 ? SH_CONTINUE : SH_ERR;
 }
 
-int setFloat(void *_self, int _argc, char **_argv)
+static int setFloat(void *_self, int _argc, char **_argv)
 {
     _climenu_option *self = (_climenu_option *) _self;
 
@@ -289,7 +285,7 @@ int setFloat(void *_self, int _argc, char **_argv)
 
 }
 
-int toggleVariable(void *_self, int _argc, char **_argv)
+static int toggleVariable(void *_self, int _argc, char **_argv)
 {
     (void) _argc;
     (void) _argv;
@@ -299,7 +295,7 @@ int toggleVariable(void *_self, int _argc, char **_argv)
     return SH_CONTINUE; // continue
 }
 
-int shell_sleep(void *_self, int _argc, char **_argv)
+static int shell_sleep(void *_self, int _argc, char **_argv)
 {
     (void) _self;
 
@@ -314,7 +310,7 @@ int shell_sleep(void *_self, int _argc, char **_argv)
     return SH_CONTINUE;
 }
 
-int shell_quit( void *_self, int _argc, char **_argv)
+static int shell_quit( void *_self, int _argc, char **_argv)
 {
     (void) _self;
     (void) _argc;
@@ -325,22 +321,22 @@ int shell_quit( void *_self, int _argc, char **_argv)
     return SH_EXIT_OK; //normal quit
 }
 
-int printState( void *_self, int _argc, char **_argv)
+static int printState( void *_self, int _argc, char **_argv)
 {
     (void) _self;
     (void) _argc;
     (void) _argv;
     printf("\nCurrent state\n");
-    printf("RSSI   : %f\n", Radio_State.RSSI);
-    printf("Battery: %f\n", Radio_State.Vbat);
-    printf("Mic    : %f\n", Radio_State.micLevel);
-    printf("Volume : %f\n", Radio_State.volumeLevel);
-    printf("Channel: %f\n", Radio_State.chSelector);
-    printf("PTT    : %s\n\n", Radio_State.PttStatus ? "true" : "false");
+    printf("RSSI   : %f\n",   emulator_state.RSSI);
+    printf("Battery: %f\n",   emulator_state.vbat);
+    printf("Mic    : %f\n",   emulator_state.micLevel);
+    printf("Volume : %f\n",   emulator_state.volumeLevel);
+    printf("Channel: %f\n",   emulator_state.chSelector);
+    printf("PTT    : %s\n\n", emulator_state.PTTstatus ? "true" : "false");
     return SH_CONTINUE;
 }
 
-int shell_nop( void *_self, int _argc, char **_argv)
+static int shell_nop( void *_self, int _argc, char **_argv)
 {
     (void) _self;
     (void) _argc;
@@ -350,17 +346,17 @@ int shell_nop( void *_self, int _argc, char **_argv)
 }
 
 // Forward declaration needed to include function pointer in the table below
-int shell_help( void *_self, int _argc, char **_argv);
+static int shell_help( void *_self, int _argc, char **_argv);
 
-_climenu_option _options[] =
+static _climenu_option _options[] =
 {
     /* name/shortcut   description            var reference, if available    method to call */
-    {"rssi",    "Set rssi",     (void *) &Radio_State.RSSI,        setFloat },
-    {"vbat",    "Set vbat",     (void *) &Radio_State.Vbat,        setFloat },
-    {"mic",     "Set miclevel", (void *) &Radio_State.micLevel,    setFloat },
-    {"volume",  "Set volume",   (void *) &Radio_State.volumeLevel, setFloat },
-    {"channel", "Set channel",  (void *) &Radio_State.chSelector,  setFloat },
-    {"ptt",     "Toggle PTT",   (void *) &Radio_State.PttStatus,   toggleVariable },
+    {"rssi",    "Set rssi",     (void *) &emulator_state.RSSI,        setFloat },
+    {"vbat",    "Set vbat",     (void *) &emulator_state.vbat,        setFloat },
+    {"mic",     "Set miclevel", (void *) &emulator_state.micLevel,    setFloat },
+    {"volume",  "Set volume",   (void *) &emulator_state.volumeLevel, setFloat },
+    {"channel", "Set channel",  (void *) &emulator_state.chSelector,  setFloat },
+    {"ptt",     "Toggle PTT",   (void *) &emulator_state.PTTstatus,   toggleVariable },
     {"key",     "Press keys in sequence (e.g. 'key ENTER DOWN ENTER' will descend through two menus)",
                                 NULL,   pressKey
     },
@@ -378,9 +374,10 @@ _climenu_option _options[] =
     /*"but is already implied by key and keycombo so there's not much direct use for it right now",*/
     /*NULL,   shell_ready },*/
 };
-int num_options = (sizeof(_options) / sizeof(_climenu_option));
 
-int shell_help( void *_self, int _argc, char **_argv)
+static const int num_options = (sizeof(_options) / sizeof(_climenu_option));
+
+static int shell_help( void *_self, int _argc, char **_argv)
 {
     (void) _self;
     (void) _argc;
@@ -396,8 +393,7 @@ int shell_help( void *_self, int _argc, char **_argv)
     return SH_CONTINUE;
 }
 
-
-_climenu_option *findMenuOption(char *tok)
+static _climenu_option *findMenuOption(char *tok)
 {
     for(int i = 0; i < num_options; i++)
     {
@@ -418,7 +414,7 @@ _climenu_option *findMenuOption(char *tok)
     return NULL;
 }
 
-void striptoken(char *token)
+static void striptoken(char *token)
 {
     for(size_t i = 0; i < strlen(token); i++)
     {
@@ -429,7 +425,7 @@ void striptoken(char *token)
     }
 }
 
-int process_line(char *line)
+static int process_line(char *line)
 {
     char *token = strtok(line, " ");
 
@@ -490,6 +486,7 @@ void *startCLIMenu()
     do
     {
         char *r = readline(">");
+
         if(r == NULL)
         {
             ret = SH_EXIT_OK;
@@ -522,6 +519,7 @@ void *startCLIMenu()
 
             case SH_EXIT_OK:
                 //normal quit
+                emulator_state.powerOff = true;
                 break;
 
             case SH_ERR:
@@ -530,14 +528,18 @@ void *startCLIMenu()
                 ret = SH_CONTINUE;
                 break;
         }
+
         free(r); //free the string allocated by readline
     }
-    while(ret == SH_CONTINUE);
+    while((ret == SH_CONTINUE) && (emulator_state.powerOff == false));
 
     fflush(stdout);
     write_history(histfile);
-    Radio_State.PowerOff = true;
+
+    return NULL;
 }
+
+
 
 void emulator_start()
 {
@@ -549,5 +551,22 @@ void emulator_start()
     if(err)
     {
         printf("An error occurred starting the emulator CLI thread: %d\n", err);
+    }
+}
+
+keyboard_t emulator_getKeys()
+{
+    if(_skq_in > _skq_out)
+    {
+        //only if we've fallen behind and there's data in there:
+        keyboard_t out = _shellkeyq[ _skq_head ];
+        _shellkeyq[ _skq_head ] = 0;
+        _skq_out++;
+        _skq_head = (_skq_head + 1) % _skq_cap;
+        return out;
+    }
+    else
+    {
+        return 0; //no keys
     }
 }

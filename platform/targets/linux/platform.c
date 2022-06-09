@@ -74,7 +74,7 @@ void platform_setBacklightLevel(uint8_t level)
 // Simulate a fully charged lithium battery
 uint16_t platform_getVbat()
 {
-    float voltage = Radio_State.Vbat;
+    float voltage = emulator_state.vbat;
     if(voltage < 0.0f)  voltage = 0.0f;
     if(voltage > 65.0f) voltage = 65.0f;
     return ((uint16_t) voltage);
@@ -82,7 +82,7 @@ uint16_t platform_getVbat()
 
 uint8_t platform_getMicLevel()
 {
-    float level = Radio_State.micLevel;
+    float level = emulator_state.micLevel;
     if(level < 0.0f)   level = 0.0f;
     if(level > 255.0f) level = 255.0f;
 
@@ -91,7 +91,7 @@ uint8_t platform_getMicLevel()
 
 uint8_t platform_getVolumeLevel()
 {
-    float level = Radio_State.volumeLevel;
+    float level = emulator_state.volumeLevel;
     if(level < 0.0f)   level = 0.0f;
     if(level > 255.0f) level = 255.0f;
 
@@ -100,7 +100,7 @@ uint8_t platform_getVolumeLevel()
 
 int8_t platform_getChSelector()
 {
-    return Radio_State.chSelector;
+    return emulator_state.chSelector;
 }
 
 bool platform_getPttStatus()
@@ -117,7 +117,7 @@ bool platform_getPttStatus()
 bool platform_pwrButtonStatus()
 {
     /* Suppose radio is always on */
-    return !Radio_State.PowerOff;
+    return !emulator_state.powerOff;
 }
 
 void platform_ledOn(led_t led)

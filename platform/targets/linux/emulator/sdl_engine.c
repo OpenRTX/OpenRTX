@@ -312,7 +312,7 @@ void sdlEngine_run()
 
     SDL_Event ev = { 0 };
 
-    while (!Radio_State.PowerOff)
+    while (!emulator_state.powerOff)
     {
         keyboard_t key = 0;
 
@@ -321,7 +321,7 @@ void sdlEngine_run()
             switch (ev.type)
             {
                 case SDL_QUIT:
-                    Radio_State.PowerOff = true;
+                    emulator_state.powerOff = true;
                     break;
 
                 case SDL_KEYDOWN:
