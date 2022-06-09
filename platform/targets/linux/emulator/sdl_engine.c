@@ -14,37 +14,26 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
-#include "sdl_engine.h"
-#include "emulator.h"
 
 #include <stdlib.h>
 #include <pthread.h>
 #include <state.h>
-#include <interfaces/keyboard.h>
-#include <SDL2/SDL.h>
+#include "sdl_engine.h"
+#include "emulator.h"
 
-/* Shared channel to receive frame buffer updates */
-chan_t fb_sync;
+chan_t fb_sync;                 // Shared channel to receive frame buffer updates
+Uint32 SDL_Screenshot_Event;    // Shared custom SDL event to request a screenshot
+Uint32 SDL_Backlight_Event;     // Shared custom SDL event to change backlight
 
-SDL_Window   *window;
-SDL_Renderer *renderer;
-SDL_Texture  *displayTexture;
+static SDL_Window   *window;
+static SDL_Renderer *renderer;
+static SDL_Texture  *displayTexture;
 
-/* Custom SDL Event to request a screenshot */
-Uint32 SDL_Screenshot_Event;
-/* Custom SDL Event to change backlight */
-Uint32 SDL_Backlight_Event;
+static bool       ready = false;  // Signal if the main loop is ready
+static keyboard_t sdl_keys;       // Store the keyboard status
 
-/*
- *  Mutex protected variables
- */
-pthread_mutex_t mu;
-bool            ready = false;  /* Signal if the main loop is ready */
-keyboard_t      sdl_keys;       /* Store the keyboard status */
 
-extern state_t state;
-
-bool sdk_key_code_to_key(SDL_Keycode sym, keyboard_t *key)
+static bool sdk_key_code_to_key(SDL_Keycode sym, keyboard_t *key)
 {
     switch (sym)
     {
@@ -141,7 +130,7 @@ bool sdk_key_code_to_key(SDL_Keycode sym, keyboard_t *key)
     }
 }
 
-int screenshot_display(const char *filename)
+static int screenshot_display(const char *filename)
 {
     /*
      * https://stackoverflow.com/a/48176678
@@ -259,25 +248,7 @@ cleanup:
     return err;
 }
 
-bool sdl_main_loop_ready()
-{
-    pthread_mutex_lock(&mu);
-    bool is_ready = ready;
-    pthread_mutex_unlock(&mu);
-
-    return is_ready;
-}
-
-keyboard_t sdl_getKeys()
-{
-    pthread_mutex_lock(&mu);
-    keyboard_t keys = sdl_keys;
-    pthread_mutex_unlock(&mu);
-
-    return keys;
-}
-
-bool set_brightness(uint8_t brightness)
+static bool set_brightness(uint8_t brightness)
 {
     /*
      * When this texture is rendered, during the copy operation each source
@@ -294,20 +265,52 @@ bool set_brightness(uint8_t brightness)
                                   brightness) == 0;
 }
 
+
+
+void sdlEngine_init()
+{
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0)
+    {
+        printf("SDL video init error!!\n");
+        exit(1);
+    }
+
+    // Register SDL custom events to handle screenshot requests and backlight
+    SDL_Screenshot_Event = SDL_RegisterEvents(2);
+    SDL_Backlight_Event = SDL_Screenshot_Event+1;
+
+    chan_init(&fb_sync);
+
+    window = SDL_CreateWindow("OpenRTX",
+                              SDL_WINDOWPOS_UNDEFINED,
+                              SDL_WINDOWPOS_UNDEFINED,
+                              SCREEN_WIDTH * 3, SCREEN_HEIGHT * 3,
+                              SDL_WINDOW_SHOWN );
+
+    renderer = SDL_CreateRenderer(window, -1, 0);
+    SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
+    displayTexture = SDL_CreateTexture(renderer,
+                                       PIXEL_FORMAT,
+                                       SDL_TEXTUREACCESS_STREAMING,
+                                       SCREEN_WIDTH,
+                                       SCREEN_HEIGHT);
+    SDL_RenderClear(renderer);
+    SDL_RenderPresent(renderer);
+}
+
 /*
  * SDL main loop. Due to macOS restrictions, this must run on the Main Thread.
  */
-void sdl_task()
+void sdlEngine_run()
 {
-    pthread_mutex_lock(&mu);
     ready = true;
-    pthread_mutex_unlock(&mu);
 
     SDL_Event ev = { 0 };
 
     while (!Radio_State.PowerOff)
     {
         keyboard_t key = 0;
+
         if (SDL_PollEvent(&ev) == 1)
         {
             switch (ev.type)
@@ -319,21 +322,18 @@ void sdl_task()
                 case SDL_KEYDOWN:
                     if (sdk_key_code_to_key(ev.key.keysym.sym, &key))
                     {
-                        pthread_mutex_lock(&mu);
                         sdl_keys |= key;
-                        pthread_mutex_unlock(&mu);
                     }
                     break;
 
                 case SDL_KEYUP:
                     if (sdk_key_code_to_key(ev.key.keysym.sym, &key))
                     {
-                        pthread_mutex_lock(&mu);
                         sdl_keys ^= key;
-                        pthread_mutex_unlock(&mu);
                     }
                     break;
             }
+
             if (ev.type == SDL_Screenshot_Event)
             {
                 char *filename = (char *)ev.user.data1;
@@ -372,42 +372,20 @@ void sdl_task()
     SDL_Quit();
 }
 
-void init_sdl()
+bool sdlEngine_ready()
 {
-    pthread_mutex_init(&mu, NULL);
+    /*
+     * bool is an atomic data type for x86 and it can be returned safely without
+     * incurring in data races between threads.
+     */
+    return ready;
+}
 
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0)
-    {
-        printf("SDL video init error!!\n");
-        exit(1);
-    }
-
-    // Register SDL custom events to handle screenshot requests and backlight
-    SDL_Screenshot_Event = SDL_RegisterEvents(2);
-    SDL_Backlight_Event = SDL_Screenshot_Event+1;
-
-    chan_init(&fb_sync);
-
-    window = SDL_CreateWindow("OpenRTX",
-                              SDL_WINDOWPOS_UNDEFINED,
-                              SDL_WINDOWPOS_UNDEFINED,
-                              SCREEN_WIDTH * 3, SCREEN_HEIGHT * 3,
-                              SDL_WINDOW_SHOWN );
-
-    renderer = SDL_CreateRenderer(window, -1, 0);
-    SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
-    displayTexture = SDL_CreateTexture(renderer,
-                                       PIXEL_FORMAT,
-                                       SDL_TEXTUREACCESS_STREAMING,
-                                       SCREEN_WIDTH,
-                                       SCREEN_HEIGHT);
-    SDL_RenderClear(renderer);
-
-    if(!set_brightness(state.settings.brightness))
-    {
-         SDL_Log("Cannot apply brightness: %s", SDL_GetError());
-    }
-
-    SDL_RenderCopy(renderer, displayTexture, NULL, NULL);
-    SDL_RenderPresent(renderer);
+keyboard_t sdlEngine_getKeys()
+{
+    /*
+     * keyboard_t is an atomic data type for x86 and it can be returned safely
+     * without incurring in data races between threads.
+     */
+    return sdl_keys;
 }

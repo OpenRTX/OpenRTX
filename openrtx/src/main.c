@@ -52,7 +52,7 @@ int main(void)
     pthread_t openrtx_thread;
     pthread_create(&openrtx_thread, NULL, openrtx_run, NULL);
 
-    sdl_task();
+    sdlEngine_run();
     pthread_join(openrtx_thread, NULL);
 #endif
 }

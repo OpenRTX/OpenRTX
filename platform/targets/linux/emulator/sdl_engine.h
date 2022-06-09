@@ -17,9 +17,10 @@
 #ifndef SDL_ENGINE_H
 #define SDL_ENGINE_H
 
-#include "chan.h"
+#include <interfaces/keyboard.h>
 #include <SDL2/SDL.h>
 #include <stdbool.h>
+#include <chan.h>
 
 /*
  * Screen dimensions, adjust basing on the size of the screen you need to
@@ -44,18 +45,25 @@
 /**
  * Initialize the SDL engine. Must be called in the Main Thread.
  */
-void init_sdl();
+void sdlEngine_init();
 
 /**
  * SDL main loop. Must be called in the Main Thread.
  */
-void sdl_task();
+void sdlEngine_run();
 
 /**
  * Thread-safe check to verify if the application entered the SDL main loop.
  *
  * @return true after sdl_task() started.
  */
-bool sdl_main_loop_ready();
+bool sdlEngine_ready();
+
+/**
+ * Thread-safe function returning the keys currently being pressed.
+ *
+ * @return a keyboard_t bit field with the keys currently being pressed.
+ */
+keyboard_t sdlEngine_getKeys();
 
 #endif /* SDL_ENGINE_H */

@@ -541,7 +541,7 @@ void *startCLIMenu()
 
 void emulator_start()
 {
-    init_sdl();
+    sdlEngine_init();
 
     pthread_t cli_thread;
     int err = pthread_create(&cli_thread, NULL, startCLIMenu, NULL);
