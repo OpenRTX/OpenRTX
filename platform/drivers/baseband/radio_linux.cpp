@@ -18,6 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <emulator/emulator.h>
 #include <interfaces/radio.h>
 #include <cstdio>
 #include <string>
@@ -81,7 +82,7 @@ float radio_getRssi()
 {
     // Commented to reduce verbosity on Linux
     // printf("radio_linux: requested RSSI at freq %d, returning -100dBm\n", rxFreq);
-    return -100.0f;
+    return emulator_state.RSSI;
 }
 
 enum opstatus radio_getStatus()

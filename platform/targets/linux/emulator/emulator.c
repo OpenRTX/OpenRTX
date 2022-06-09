@@ -36,7 +36,7 @@ extern Uint32 SDL_Screenshot_Event;
 
 emulator_state_t emulator_state =
 {
-    12,       // RSSI
+    -100.0f,  // RSSI
     8.2f,     // Vbat
     3,        // mic level
     4,        // volume level
