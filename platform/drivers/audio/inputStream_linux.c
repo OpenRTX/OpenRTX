@@ -87,5 +87,7 @@ dataBlock_t inputStream_getData(streamId id)
 void inputStream_stop(streamId id)
 {
     (void) id;
+    if(baseband_file == NULL) return;
     fclose(baseband_file);
+    baseband_file = NULL;
 }

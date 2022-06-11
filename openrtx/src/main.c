@@ -24,8 +24,6 @@
 #include <emulator/sdl_engine.h>
 #endif
 
-extern void *ui_task(void *arg);
-
 int main(void)
 {
     // MD-9600 does not have a proper power on/off mechanism and the MCU is
@@ -52,7 +50,7 @@ int main(void)
     pthread_t openrtx_thread;
     pthread_create(&openrtx_thread, NULL, openrtx_run, NULL);
 
-    sdl_task();
+    sdlEngine_run();
     pthread_join(openrtx_thread, NULL);
 #endif
 }

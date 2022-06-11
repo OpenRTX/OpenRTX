@@ -20,6 +20,7 @@
 #ifndef EMULATOR_H
 #define EMULATOR_H
 
+#include <interfaces/keyboard.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <SDL2/SDL.h>
@@ -47,17 +48,19 @@ enum choices
 typedef struct
 {
     float RSSI;
-    float Vbat;
+    float vbat;
     float micLevel;
     float volumeLevel;
     float chSelector;
-    bool PttStatus;
-    bool PowerOff;
-} radio_state;
+    bool  PTTstatus;
+    bool  powerOff;
+}
+emulator_state_t;
 
-extern radio_state Radio_State;
+extern emulator_state_t emulator_state;
 
 void emulator_start();
-void emulator_process_sdl_events();
+
+keyboard_t emulator_getKeys();
 
 #endif /* EMULATOR_H */

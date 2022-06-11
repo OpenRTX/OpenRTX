@@ -129,7 +129,7 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
     inProgress = true;
     if(!sdl_ready)
     {
-        sdl_ready = sdl_main_loop_ready();
+        sdl_ready = sdlEngine_ready();
     }
 
     if(sdl_ready)
