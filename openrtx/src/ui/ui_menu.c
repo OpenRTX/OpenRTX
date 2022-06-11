@@ -228,7 +228,7 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
         {
             // Compute integer part and mantissa of voltage value, adding 50mV
             // to mantissa for rounding to nearest integer
-            uint16_t volt  = last_state.v_bat / 1000;
+            uint16_t volt  = (last_state.v_bat + 50) / 1000;
             uint16_t mvolt = ((last_state.v_bat - volt * 1000) + 50) / 100;
             snprintf(buf, max_len, "%d.%dV", volt, mvolt);
         }
