@@ -886,7 +886,7 @@ void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg, bool callsig
     if(ui_state.last_keypress != 0)
     {
         // Same key pressed and timeout not expired: cycle over chars of current key
-        if((ui_state.input_number == num_key) && ((now - ui_state.last_keypress) < kbd_long_interval))
+        if((ui_state.input_number == num_key) && ((now - ui_state.last_keypress) < input_longPressTimeout))
         {
             ui_state.input_set = (ui_state.input_set + 1) % num_symbols;
         }

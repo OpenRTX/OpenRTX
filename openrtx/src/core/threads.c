@@ -25,7 +25,6 @@
 #include <state.h>
 #include <threads.h>
 #include <battery.h>
-#include <interfaces/keyboard.h>
 #include <interfaces/graphics.h>
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
@@ -36,6 +35,7 @@
 #include <minmea.h>
 #include <string.h>
 #include <utils.h>
+#include <input.h>
 #ifdef HAS_GPS
 #include <interfaces/gps.h>
 #include <gps.h>
@@ -144,69 +144,16 @@ void *kbd_task(void *arg)
     // Initialize keyboard driver
     kbd_init();
 
-    // Allocate timestamp array
-    long long key_ts[kbd_num_keys];
-    long long now;
-
-    // Allocate bool array to send only one long-press event
-    bool long_press_sent[kbd_num_keys];
-
-    // Variable for saving previous and current keyboard status
-    keyboard_t prev_keys = 0;
-    keyboard_t keys = 0;
-    bool long_press = false;
-    bool send_event = false;
-
     while(1)
     {
-        // Reset flags and get current time
-        long_press = false;
-        send_event = false;
-        // Lock display mutex and read keyboard status
+        kbd_msg_t msg;
+
         pthread_mutex_lock(&display_mutex);
-        keys = kbd_getKeys();
+        bool event = input_scanKeyboard(&msg);
         pthread_mutex_unlock(&display_mutex);
-        now = getTick();
-        // The key status has changed
-        if(keys != prev_keys)
+
+        if(event)
         {
-            for(uint8_t k=0; k < kbd_num_keys; k++)
-            {
-                // Key has been pressed
-                if(!(prev_keys & (1 << k)) && (keys & (1 << k)))
-                {
-                    // Save timestamp
-                    key_ts[k] = now;
-                    send_event = true;
-                    long_press_sent[k] = false;
-                }
-                // Key has been released
-                else if((prev_keys & (1 << k)) && !(keys & (1 << k)))
-                {
-                    send_event = true;
-                }
-            }
-        }
-        // Some key is kept pressed
-        else if(keys != 0)
-        {
-            // Check for saved timestamp to trigger long-presses
-            for(uint8_t k=0; k < kbd_num_keys; k++)
-            {
-                // The key is pressed and its long-press timer is over
-                if(keys & (1 << k) && !long_press_sent[k] && (now - key_ts[k]) >= kbd_long_interval)
-                {
-                    long_press = true;
-                    send_event = true;
-                    long_press_sent[k] = true;
-                }
-            }
-        }
-        if(send_event)
-        {
-            kbd_msg_t msg;
-            msg.long_press = long_press;
-            msg.keys = keys;
             // Send event_t as void * message to use with OSQPost
             event_t event;
             event.type = EVENT_KBD;
@@ -214,8 +161,6 @@ void *kbd_task(void *arg)
             // Send keyboard status in queue
             (void) queue_post(&ui_queue, event.value);
         }
-        // Save current keyboard state as previous
-        prev_keys = keys;
 
         // Read keyboard state at 40Hz
         sleepFor(0u, 25u);
