@@ -439,7 +439,15 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
         // Handle newline and carriage return
         if (c == '\n')
         {
-          start.x = reset_x;
+          if(alignment!=TEXT_ALIGN_CENTER)
+          {
+            start.x = reset_x;
+          }
+          else
+          {
+            line_size = get_line_size(f, &buf[i+1], len-(i+1));
+            start.x = reset_x = get_reset_x(alignment, line_size, start.x);
+          }
           start.y += f.yAdvance;
           continue;
         }
