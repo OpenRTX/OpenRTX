@@ -26,15 +26,14 @@
 #include <miosix.h>
 #include <kernel/scheduler/scheduler.h>
 
-int8_t  detectStatus = -1;
-size_t  bufPos = 0;
-size_t  maxPos = 0;
-char    *dataBuf;
-bool    receiving = false;
-uint8_t status = 0;
+static int8_t detectStatus = -1;
+static size_t bufPos = 0;
+static size_t maxPos = 0;
+static char   *dataBuf;
+static bool   receiving = false;
 
 using namespace miosix;
-Thread *gpsWaiting = 0;
+static Thread *gpsWaiting = 0;
 
 #ifdef PLATFORM_MD3x0
 #define PORT USART3
@@ -74,7 +73,8 @@ void __attribute__((used)) GpsUsartImpl()
 
         if((receiving == false) && (bufPos != 0))
         {
-            status = (bufPos < maxPos) ? 0x01 : 0x02;
+            // NMEA sentence received, turn off serial port
+            PORT->CR1 &= ~USART_CR1_UE;
 
             if(gpsWaiting)
             {
@@ -127,10 +127,8 @@ void gps_init(const uint16_t baud)
               | USART_CR1_RXNEIE;
 
     #ifdef PLATFORM_MD3x0
-    NVIC_ClearPendingIRQ(USART3_IRQn);
     NVIC_SetPriority(USART3_IRQn, 14);
     #else
-    NVIC_ClearPendingIRQ(USART1_IRQn);
     NVIC_SetPriority(USART1_IRQn, 14);
     #endif
 }
@@ -149,7 +147,15 @@ void gps_terminate()
 void gps_enable()
 {
     gpio_setPin(GPS_EN);
-    PORT->CR1 |= USART_CR1_UE;
+
+    // Enable IRQ
+    #ifdef PLATFORM_MD3x0
+    NVIC_ClearPendingIRQ(USART3_IRQn);
+    NVIC_EnableIRQ(USART3_IRQn);
+    #else
+    NVIC_ClearPendingIRQ(USART1_IRQn);
+    NVIC_EnableIRQ(USART1_IRQn);
+    #endif
 }
 
 void gps_disable()
@@ -162,6 +168,9 @@ void gps_disable()
     #else
     NVIC_DisableIRQ(USART1_IRQn);
     #endif
+
+    receiving = false;
+    bufPos    = 0;
 }
 
 bool gps_detect(uint16_t timeout)
@@ -199,16 +208,23 @@ int gps_getNmeaSentence(char *buf, const size_t maxLength)
     if(detectStatus != 1) return -1;
 
     memset(buf, 0x00, maxLength);
-    bufPos = 0;
-    maxPos = maxLength;
+    bufPos  = 0;
+    maxPos  = maxLength;
     dataBuf = buf;
 
-    #ifdef PLATFORM_MD3x0
-    NVIC_EnableIRQ(USART3_IRQn);
-    #else
-    NVIC_EnableIRQ(USART1_IRQn);
-    #endif
+    // Enable serial port
+    PORT->CR1 |= USART_CR1_UE;
 
+    return 0;
+}
+
+bool gps_nmeaSentenceReady()
+{
+    return (receiving == false) && (bufPos > 0);
+}
+
+void gps_waitForNmeaSentence()
+{
     /*
      * Put the calling thread in waiting status until a complete sentence is ready.
      */
@@ -222,20 +238,7 @@ int gps_getNmeaSentence(char *buf, const size_t maxLength)
                 FastInterruptEnableLock eLock(dLock);
                 Thread::yield();
             }
-        } while(gpsWaiting);
+        }
+        while(gpsWaiting);
     }
-
-    #ifdef PLATFORM_MD3x0
-    NVIC_DisableIRQ(USART3_IRQn);
-    #else
-    NVIC_DisableIRQ(USART1_IRQn);
-    #endif
-
-    if(status & 0x01)
-    {
-        return bufPos;
-    }
-
-    return -1;
 }
-

@@ -36,6 +36,7 @@ extern "C" {
 /**
  * Initialise the GPS driver.
  * This function does not turn on the GPS module.
+ *
  * @param baud: baud rate of GPS serial interface.
  */
 void gps_init(const uint16_t baud);
@@ -58,18 +59,34 @@ void gps_disable();
 /**
  * Detect if a GPS module is present in the system, it can be called also
  * when driver is not initialised.
+ *
  * @param timeout: timeout for GPS detection, in milliseconds.
  * @return true if a GPS module is present, false otherwise.
  */
 bool gps_detect(uint16_t timeout);
 
 /**
- * Read a NMEA sentence from the GPS module, blocking function.
+ * Start the acquisition of a new NMEA sentence from the GPS module.
+ * The function returns immediately and acquisition is stopped when a complete
+ * sentence is received or maximum buffer length is reached.
+ *
  * @param buf: buffer to which the NMEA sentence is written.
  * @param maxLength: maximum writable length inside the buffer.
  * @return number of characters written in the buffer or -1 on error.
  */
 int gps_getNmeaSentence(char *buf, const size_t maxLength);
+
+/**
+ * Check if a newly acquired NMEA sentence is available.
+ *
+ * @return true if a NMEA sentence has been read from the GPS.
+ */
+bool gps_nmeaSentenceReady();
+
+/**
+ * Wait until a new NMEA sentence is ready, blocking the execution flow.
+ */
+void gps_waitForNmeaSentence();
 
 #ifdef __cplusplus
 }

@@ -30,10 +30,8 @@
 /**
  * This function parses a GPS NMEA sentence and updates radio state
  */
-void gps_taskFunc(char *line, int len)
+void gps_taskFunc(char *line)
 {
-    (void) len;
-
     char nmea_id[3] = { 0 };
 
     // Little mechanism to ensure that RTC is synced with GPS time only once.

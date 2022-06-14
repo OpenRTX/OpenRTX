@@ -26,7 +26,8 @@
 #define MAX_NMEA_LEN 80
 #define NMEA_SAMPLES 8
 
-char test_nmea_sentences [NMEA_SAMPLES][MAX_NMEA_LEN] = {
+char test_nmea_sentences [NMEA_SAMPLES][MAX_NMEA_LEN] =
+{
     "$GPGGA,223659.522,5333.735,N,00959.130,E,1,12,1.0,0.0,M,0.0,M,,*62",
     "$GPGSA,A,3,01,02,03,04,05,06,07,08,09,10,11,12,1.0,1.0,1.0*30",
     "$GPGSV,3,1,12,30,79,066,27,05,63,275,21,07,42,056,,13,40,289,13*76",
@@ -36,28 +37,30 @@ char test_nmea_sentences [NMEA_SAMPLES][MAX_NMEA_LEN] = {
     "$GPVTG,92.15,T,,M,0.15,N,0.28,K,A*0C"
 };
 
-void gps_init(__attribute__((unused)) const uint16_t baud)
+void gps_init(const uint16_t baud)
 {
-    ;
+    (void) baud;
+    return;
 }
 
 void gps_terminate()
 {
-    ;
+    return;
 }
 
 void gps_enable()
 {
-    ;
+    return;
 }
 
 void gps_disable()
 {
-    ;
+    return;
 }
 
-bool gps_detect(__attribute__((unused)) uint16_t timeout)
+bool gps_detect(uint16_t timeout)
 {
+    (void) timeout;
     return true;
 }
 
@@ -75,5 +78,15 @@ int gps_getNmeaSentence(char *buf, const size_t maxLength)
     i++;
     i %= NMEA_SAMPLES;
     return len;
+}
+
+bool gps_nmeaSentenceReady()
+{
+    return true;
+}
+
+void gps_waitForNmeaSentence()
+{
+    return;
 }
 

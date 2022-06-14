@@ -61,6 +61,6 @@ gps_t;
  * if available, enabled and ready, decode NMEA sentences and update
  * the radio state with the retrieved data.
  */
-void gps_taskFunc(char *line, int len);
+void gps_taskFunc(char *line);
 
 #endif /* GPS_H */
