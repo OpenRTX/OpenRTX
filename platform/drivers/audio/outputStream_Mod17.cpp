@@ -176,10 +176,10 @@ streamId outputStream_start(const enum AudioSink destination,
 
     if(destination == SINK_RTX)
     {
-        DAC->CR = DAC_CR_DMAEN1     // Enable DMA mode
-                | DAC_CR_TSEL1_1    // TIM7 TRGO as trigger source
-                | DAC_CR_TEN1       // Enable trigger input
-                | DAC_CR_EN1;       // Enable DAC
+        DAC->CR |= DAC_CR_DMAEN1     // Enable DMA mode
+                |  DAC_CR_TSEL1_1    // TIM7 TRGO as trigger source
+                |  DAC_CR_TEN1       // Enable trigger input
+                |  DAC_CR_EN1;       // Enable DAC
 
         DMA1_Stream5->NDTR = length;
         DMA1_Stream5->PAR  = reinterpret_cast< uint32_t >(&(DAC->DHR12R1));
@@ -201,10 +201,10 @@ streamId outputStream_start(const enum AudioSink destination,
     }
     else
     {
-        DAC->CR = DAC_CR_DMAEN2     // Enable DMA mode
-                | DAC_CR_TSEL2_1    // TIM7 TRGO as trigger source
-                | DAC_CR_TEN2       // Enable trigger input
-                | DAC_CR_EN2;       // Enable DAC
+        DAC->CR |= DAC_CR_DMAEN2     // Enable DMA mode
+                |  DAC_CR_TSEL2_1    // TIM7 TRGO as trigger source
+                |  DAC_CR_TEN2       // Enable trigger input
+                |  DAC_CR_EN2;       // Enable DAC
 
         DMA1_Stream6->NDTR = length;
         DMA1_Stream6->PAR  = reinterpret_cast< uint32_t >(&(DAC->DHR12R2));
