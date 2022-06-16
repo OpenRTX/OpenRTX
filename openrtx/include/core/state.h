@@ -45,7 +45,7 @@ m17_t;
  */
 typedef struct
 {
-    curTime_t  time;
+    datetime_t time;
     uint16_t   v_bat;
     uint8_t    charge;
     float      rssi;
@@ -106,18 +106,5 @@ void state_update();
  * Reset the fields of radio state containing user settings and VFO channel.
  */
 void state_resetSettingsAndVfo();
-
-/**
- * The RTC and state.time are set to UTC time
- * Use this function to get local time from UTC time based on timezone setting
- */
-curTime_t state_getLocalTime(curTime_t utc_time);
-
-/**
- * The RTC and state.time are set to UTC time
- * Use this function to get UTC time from local time based on timezone setting
- */
-curTime_t state_getUTCTime(curTime_t local_time);
-
 
 #endif /* STATE_H */

@@ -40,19 +40,19 @@ sat_t;
  */
 typedef struct
 {
-    curTime_t timestamp;            // Timestamp of the latest GPS update
-    uint8_t   fix_quality;          // 0: no fix, 1: GPS, 2: GPS SPS, 3: GPS PPS
-    uint8_t   fix_type;             // 0: no fix, 1: 2D,  2: 3D
-    uint8_t   satellites_tracked;   // Number of tracked satellites
-    uint8_t   satellites_in_view;   // Satellites in view
-    sat_t     satellites[12];       // Details about satellites in view
-    uint32_t  active_sats;          // Bitmap representing which sats are part of the fix
-    float     latitude;             // Latitude coordinates
-    float     longitude;            // Longitude coordinates
-    float     altitude;             // Antenna altitude above mean sea level (geoid) in m
-    float     speed;                // Ground speed in km/h
-    float     tmg_mag;              // Course over ground, degrees, magnetic
-    float     tmg_true;             // Course over ground, degrees, true
+    datetime_t timestamp;            // Timestamp of the latest GPS update
+    uint8_t    fix_quality;          // 0: no fix, 1: GPS, 2: GPS SPS, 3: GPS PPS
+    uint8_t    fix_type;             // 0: no fix, 1: 2D,  2: 3D
+    uint8_t    satellites_tracked;   // Number of tracked satellites
+    uint8_t    satellites_in_view;   // Satellites in view
+    sat_t      satellites[12];       // Details about satellites in view
+    uint32_t   active_sats;          // Bitmap representing which sats are part of the fix
+    float      latitude;             // Latitude coordinates
+    float      longitude;            // Longitude coordinates
+    float      altitude;             // Antenna altitude above mean sea level (geoid) in m
+    float      speed;                // Ground speed in km/h
+    float      tmg_mag;              // Course over ground, degrees, magnetic
+    float      tmg_true;             // Course over ground, degrees, true
 }
 gps_t;
 

@@ -569,7 +569,8 @@ void _ui_drawSettingsGPS(ui_state_t* ui_state)
 void _ui_drawSettingsTimeDate()
 {
     gfx_clearScreen();
-    curTime_t local_time = state_getLocalTime(last_state.time);
+    datetime_t local_time = utcToLocalTime(last_state.time,
+                                           last_state.settings.utc_timezone);
     // Print "Time&Date" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "Time&Date");

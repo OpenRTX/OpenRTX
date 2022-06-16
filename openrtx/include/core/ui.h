@@ -178,7 +178,7 @@ typedef struct ui_state_t
     char new_tx_freq_buf[14];
 #ifdef HAS_RTC
     // Variables used for Time & Date input
-    curTime_t new_timedate;
+    datetime_t new_timedate;
     char new_date_buf[9];
     char new_time_buf[9];
 #endif

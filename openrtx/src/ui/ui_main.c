@@ -37,7 +37,8 @@ void _ui_drawMainTop()
 {
 #ifdef HAS_RTC
     // Print clock on top bar
-    curTime_t local_time = state_getLocalTime(last_state.time);
+    datetime_t local_time = utcToLocalTime(last_state.time,
+                                           last_state.settings.utc_timezone);
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "%02d:%02d:%02d", local_time.hour,
               local_time.minute, local_time.second);

@@ -31,8 +31,10 @@ void rtc_terminate()
     printf("rtc_shutdown()\n");
 }
 
-void rtc_setTime(__attribute__((unused)) curTime_t t)
+void rtc_setTime(datetime_t t)
 {
+    (void) t;
+
     printf("rtc_setTime(t)\n");
 }
 
@@ -46,9 +48,9 @@ void rtc_setDate(uint8_t date, uint8_t month, uint8_t year)
     printf("rtc_setDate(%d, %d, %d)\n", date, month, year);
 }
 
-curTime_t rtc_getTime()
+datetime_t rtc_getTime()
 {
-    curTime_t t;
+    datetime_t t;
 
     time_t rawtime;
     struct tm * timeinfo;

@@ -43,7 +43,7 @@ void rtc_terminate()
     RCC->BDCR &= ~ RCC_BDCR_RTCEN | RCC_BDCR_LSEON;
 }
 
-void rtc_setTime(curTime_t t)
+void rtc_setTime(datetime_t t)
 {
     /*
      * Convert values to BCD representation placing data in the correct
@@ -77,7 +77,7 @@ void rtc_setTime(curTime_t t)
 
 void rtc_setHour(uint8_t hours, uint8_t minutes, uint8_t seconds)
 {
-    curTime_t t = rtc_getTime();
+    datetime_t t = rtc_getTime();
     t.hour   = hours;
     t.minute = minutes;
     t.second = seconds;
@@ -86,16 +86,16 @@ void rtc_setHour(uint8_t hours, uint8_t minutes, uint8_t seconds)
 
 void rtc_setDate(uint8_t date, uint8_t month, uint8_t year)
 {
-    curTime_t t = rtc_getTime();
+    datetime_t t = rtc_getTime();
     t.date  = date;
     t.month = month;
     t.year  = year;
     rtc_setTime(t);
 }
 
-curTime_t rtc_getTime()
+datetime_t rtc_getTime()
 {
-    curTime_t t;
+    datetime_t t;
 
     /*
      * Obtain time and date values in BCD format from RTC registers, and fill

@@ -20,6 +20,7 @@
 #ifndef RTC_H
 #define RTC_H
 
+#include <datetime.h>
 #include <stdint.h>
 
 /**
@@ -29,18 +30,6 @@
  * Depending on hardware, RTC is active also when radio is powered off, thanks
  * to the internal lithium backup battery.
  */
-
-typedef struct
-{
-    uint8_t hour   : 5;    /* Hours (0-23)            */
-    uint8_t minute : 6;    /* Minutes (0-59)          */
-    uint8_t second : 6;    /* Seconds (0-59)          */
-    uint8_t day    : 3;    /* Day of the week (1-7)   */
-    uint8_t date   : 5;    /* Day of the month (1-31) */
-    uint8_t month  : 4;    /* Month (1-12)            */
-    uint8_t year   : 7;    /* Year (0-99)             */
-    uint8_t        : 4;    /* Padding to 40 bits      */
-}curTime_t;
 
 /**
  * Initialise and start RTC.
@@ -57,7 +46,7 @@ void rtc_terminate();
  * @param t: struct of type curTime_t, whose content is used to initialise both
  * clock and calendar registers.
  */
-void rtc_setTime(curTime_t t);
+void rtc_setTime(datetime_t t);
 
 /**
  * Set RTC clock keeping untouched the calendar part.
@@ -79,7 +68,7 @@ void rtc_setDate(uint8_t date, uint8_t month, uint8_t year);
  * Get current date and time.
  * @return structure of type curTime_t with current clock and calendar values.
  */
-curTime_t rtc_getTime();
+datetime_t rtc_getTime();
 
 /**
  * Activate daylight saving time (DST), adding one hour to the current time.

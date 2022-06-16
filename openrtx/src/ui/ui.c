@@ -461,7 +461,7 @@ freq_t _ui_freq_add_digit(freq_t freq, uint8_t pos, uint8_t number)
 }
 
 #ifdef HAS_RTC
-void _ui_timedate_add_digit(curTime_t *timedate, uint8_t pos, uint8_t number)
+void _ui_timedate_add_digit(datetime_t *timedate, uint8_t pos, uint8_t number)
 {
     switch(pos)
     {
@@ -1461,7 +1461,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     state.ui_screen = SETTINGS_TIMEDATE_SET;
                     // Reset input position and selection
                     ui_state.input_position = 0;
-                    memset(&ui_state.new_timedate, 0, sizeof(curTime_t));
+                    memset(&ui_state.new_timedate, 0, sizeof(datetime_t));
                 }
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_SETTINGS);
@@ -1475,7 +1475,8 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         break;
                     // Return to Time&Date menu, saving values
                     // NOTE: The user inserted a local time, we must save an UTC time
-                    curTime_t utc_time = state_getUTCTime(ui_state.new_timedate);
+                    datetime_t utc_time = localTimeToUtc(ui_state.new_timedate,
+                                                         state.settings.utc_timezone);
                     rtc_setTime(utc_time);
                     state.time = utc_time;
                     state.ui_screen = SETTINGS_TIMEDATE;
