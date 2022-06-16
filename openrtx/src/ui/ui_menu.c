@@ -27,6 +27,7 @@
 #include <interfaces/nvmem.h>
 #include <interfaces/cps_io.h>
 #include <interfaces/platform.h>
+#include <memory_profiling.h>
 
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBottom();
@@ -239,19 +240,22 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
         case 3: // RSSI
             snprintf(buf, max_len, "%.1fdBm", last_state.rssi);
             break;
-        case 4: // Model
+        case 4: // Heap usage
+            snprintf(buf, max_len, "%dB", getHeapSize() - getCurrentFreeHeap());
+            break;
+        case 5: // Model
             snprintf(buf, max_len, "%s", hwinfo->name);
             break;
-        case 5: // Band
+        case 6: // Band
             snprintf(buf, max_len, "%s %s", hwinfo->vhf_band ? "VHF" : "", hwinfo->uhf_band ? "UHF" : "");
             break;
-        case 6: // VHF
+        case 7: // VHF
             snprintf(buf, max_len, "%d - %d", hwinfo->vhf_minFreq, hwinfo->vhf_maxFreq);
             break;
-        case 7: // UHF
+        case 8: // UHF
             snprintf(buf, max_len, "%d - %d", hwinfo->uhf_minFreq, hwinfo->uhf_maxFreq);
             break;
-        case 8: // LCD Type
+        case 9: // LCD Type
             snprintf(buf, max_len, "%d", hwinfo->lcd_type);
             break;
     }
