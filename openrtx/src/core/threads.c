@@ -226,36 +226,17 @@ void *gps_task(void *arg)
 {
     (void) arg;
 
-    char line[MINMEA_MAX_LENGTH*10];
-
     if (!gps_detect(5000)) return NULL;
 
     gps_init(9600);
-    // Lock mutex to read internal state
-    pthread_mutex_lock(&state_mutex);
-    bool enabled = state.settings.gps_enabled;
-    pthread_mutex_unlock(&state_mutex);
-    if(enabled)
-        gps_enable();
-    else
-        gps_disable();
 
     while(1)
     {
-        int status = gps_getNmeaSentence(line, MINMEA_MAX_LENGTH*10);
-        gps_waitForNmeaSentence();
+        pthread_mutex_lock(&state_mutex);
+        gps_taskFunc();
+        pthread_mutex_unlock(&state_mutex);
 
-        if(status != -1)
-        {
-            // Lock mutex and update internal state
-            pthread_mutex_lock(&state_mutex);
-
-            // GPS readout is blocking, no need to delay here
-            gps_taskFunc(line);
-
-            // Unlock state mutex
-            pthread_mutex_unlock(&state_mutex);
-        }
+        sleepFor(0u, 100u);
     }
 }
 #endif

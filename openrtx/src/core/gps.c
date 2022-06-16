@@ -27,33 +27,46 @@
 
 #define KNOTS2KMH 1.852f
 
-/**
- * This function parses a GPS NMEA sentence and updates radio state
- */
-void gps_taskFunc(char *line)
-{
-    char nmea_id[3] = { 0 };
+static char sentence[MINMEA_MAX_LENGTH + 1];
+static bool isRtcSyncronised  = false;
+static bool gpsEnabled        = false;
+static bool readNewSentence   = true;
 
-    // Little mechanism to ensure that RTC is synced with GPS time only once.
-    static bool isRtcSyncronised = false;
-    if(!state.gps_set_time)
+void gps_taskFunc()
+{
+    // Handle GPS turn on/off
+    if(state.settings.gps_enabled != gpsEnabled)
     {
-        isRtcSyncronised = false;
+        gpsEnabled = state.settings.gps_enabled;
+
+        if(gpsEnabled)
+            gps_enable();
+        else
+            gps_disable();
     }
 
-    if (!minmea_talker_id(nmea_id, line))
+    // GPS disabled, nothing to do
+    if(gpsEnabled == false) return;
+
+    if(readNewSentence)
+    {
+        // Acquire a new NMEA sentence from GPS
+        int status = gps_getNmeaSentence(sentence, MINMEA_MAX_LENGTH + 1);
+        if(status != 0) return;
+        readNewSentence = false;
+    }
+
+    if(gps_nmeaSentenceReady() == false)
         return;
 
-    // Discard BeiDou sentences as we currently don't support it
-    if (!strncmp(nmea_id, "BD", 3))
-        return;
-
-    switch (minmea_sentence_id(line, false))
+    // Parse the sentence and request a new one
+    readNewSentence = true;
+    switch(minmea_sentence_id(sentence, false))
     {
         case MINMEA_SENTENCE_RMC:
         {
             struct minmea_sentence_rmc frame;
-            if (minmea_parse_rmc(&frame, line))
+            if (minmea_parse_rmc(&frame, sentence))
             {
                 state.gps_data.latitude = minmea_tocoord(&frame.latitude);
                 state.gps_data.longitude = minmea_tocoord(&frame.longitude);
@@ -76,24 +89,26 @@ void gps_taskFunc(char *line)
 
             state.gps_data.tmg_true = minmea_tofloat(&frame.course);
             state.gps_data.speed = minmea_tofloat(&frame.speed) * KNOTS2KMH;
-        } break;
+        }
+        break;
 
         case MINMEA_SENTENCE_GGA:
         {
             struct minmea_sentence_gga frame;
-            if (minmea_parse_gga(&frame, line))
+            if (minmea_parse_gga(&frame, sentence))
             {
                 state.gps_data.fix_quality = frame.fix_quality;
                 state.gps_data.satellites_tracked = frame.satellites_tracked;
                 state.gps_data.altitude = minmea_tofloat(&frame.altitude);
             }
-        } break;
+        }
+        break;
 
         case MINMEA_SENTENCE_GSA:
         {
             state.gps_data.active_sats = 0;
             struct minmea_sentence_gsa frame;
-            if (minmea_parse_gsa(&frame, line))
+            if (minmea_parse_gsa(&frame, sentence))
             {
                 state.gps_data.fix_type = frame.fix_type;
                 for (int i = 0; i < 12; i++)
@@ -104,13 +119,14 @@ void gps_taskFunc(char *line)
                     }
                 }
             }
-        } break;
+        }
+        break;
 
         case MINMEA_SENTENCE_GSV:
         {
             // Parse only sentences 1 - 3, maximum 12 satellites
             struct minmea_sentence_gsv frame;
-            if (minmea_parse_gsv(&frame, line) && (frame.msg_nr < 3))
+            if (minmea_parse_gsv(&frame, sentence) && (frame.msg_nr < 3))
             {
                 // When the first sentence arrives, clear all the old data
                 if (frame.msg_nr == 1)
@@ -128,18 +144,20 @@ void gps_taskFunc(char *line)
                     state.gps_data.satellites[index].snr = frame.sats[i].snr;
                 }
             }
-        } break;
+        }
+        break;
 
         case MINMEA_SENTENCE_VTG:
         {
             struct minmea_sentence_vtg frame;
-            if (minmea_parse_vtg(&frame, line))
+            if (minmea_parse_vtg(&frame, sentence))
             {
                 state.gps_data.speed = minmea_tofloat(&frame.speed_kph);
                 state.gps_data.tmg_mag = minmea_tofloat(&frame.magnetic_track_degrees);
                 state.gps_data.tmg_true = minmea_tofloat(&frame.true_track_degrees);
             }
-        } break;
+        }
+        break;
 
         // Ignore this message as we take data from RMC
         case MINMEA_SENTENCE_GLL: break;

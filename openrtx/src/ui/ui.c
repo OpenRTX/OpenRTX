@@ -1555,17 +1555,10 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                     switch(ui_state.menu_selected)
                     {
                         case G_ENABLED:
-                            // Disable or Enable GPS to stop or start GPS thread
                             if(state.settings.gps_enabled)
-                            {
                                 state.settings.gps_enabled = 0;
-                                gps_disable();
-                            }
                             else
-                            {
                                 state.settings.gps_enabled = 1;
-                                gps_enable();
-                            }
                             break;
                         case G_SET_TIME:
                             state.gps_set_time = !state.gps_set_time;

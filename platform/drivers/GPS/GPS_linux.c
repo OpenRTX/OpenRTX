@@ -20,11 +20,14 @@
 
 #include <interfaces/gps.h>
 #include <interfaces/delays.h>
+#include <sys/time.h>
 #include <hwconfig.h>
 #include <string.h>
 
 #define MAX_NMEA_LEN 80
 #define NMEA_SAMPLES 8
+
+static long long startTime;
 
 char test_nmea_sentences [NMEA_SAMPLES][MAX_NMEA_LEN] =
 {
@@ -71,18 +74,34 @@ int gps_getNmeaSentence(char *buf, const size_t maxLength)
     // Emulate GPS device by sending NMEA sentences every 1s
     if(i == 0)
         sleepFor(1u, 0u);
+
     size_t len = strnlen(test_nmea_sentences[i], MAX_NMEA_LEN);
+
     if (len > maxLength)
         return -1;
+
     strncpy(buf, test_nmea_sentences[i], maxLength);
     i++;
     i %= NMEA_SAMPLES;
-    return len;
+
+    // Save the current timestamp for sentence ready emulation
+    struct timeval te;
+    gettimeofday(&te, NULL);
+    startTime = te.tv_sec*1000LL + te.tv_usec/1000;
+
+    return 0;
 }
 
 bool gps_nmeaSentenceReady()
 {
-    return true;
+    // Return new sentence ready only after 1s from start
+    struct timeval te;
+    gettimeofday(&te, NULL);
+    long long currTime = te.tv_sec*1000LL + te.tv_usec/1000;
+
+    if((currTime -  startTime) > 1000) return true;
+
+    return false;
 }
 
 void gps_waitForNmeaSentence()
