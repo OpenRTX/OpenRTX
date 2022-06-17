@@ -84,7 +84,7 @@ void state_init()
     state.channel_index = 1;    // Set default channel index (it is 1-based)
     state.bank_enabled  = false;
     state.rtxStatus     = RTX_OFF;
-    state.rtxShutdown   = false;
+    state.shutdown      = false;
     state.emergency     = false;
 
     // Force brightness field to be in range 0 - 100

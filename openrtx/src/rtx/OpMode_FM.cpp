@@ -78,6 +78,8 @@ void OpMode_FM::enable()
 void OpMode_FM::disable()
 {
     // Clean shutdown.
+    platform_ledOff(GREEN);
+    platform_ledOff(RED);
     audio_disableAmp();
     audio_disableMic();
     radio_disableRtx();

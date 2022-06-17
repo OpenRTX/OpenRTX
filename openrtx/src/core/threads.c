@@ -144,7 +144,7 @@ void *kbd_task(void *arg)
     // Initialize keyboard driver
     kbd_init();
 
-    while(1)
+    while(state.shutdown == false)
     {
         kbd_msg_t msg;
 
@@ -165,6 +165,8 @@ void *kbd_task(void *arg)
         // Read keyboard state at 40Hz
         sleepFor(0u, 25u);
     }
+
+    return NULL;
 }
 
 /**
@@ -174,7 +176,7 @@ void *dev_task(void *arg)
 {
     (void) arg;
 
-    while(1)
+    while(state.shutdown == false)
     {
         // Lock mutex and update internal state
         pthread_mutex_lock(&state_mutex);
@@ -190,6 +192,8 @@ void *dev_task(void *arg)
         // Execute state update thread every 1s
         sleepFor(1u, 0u);
     }
+
+    return NULL;
 }
 
 /**
@@ -201,19 +205,12 @@ void *rtx_task(void *arg)
 
     rtx_init(&rtx_mutex);
 
-    while(1)
+    while(state.shutdown == false)
     {
         rtx_taskFunc();
-
-        // TODO: implement a cleaner shutdown procedure
-        if(state.rtxShutdown == true)
-        {
-            radio_disableRtx();
-            platform_ledOff(RED);
-            platform_ledOff(GREEN);
-            break;
-        }
     }
+
+    rtx_terminate();
 
     return NULL;
 }
@@ -230,7 +227,7 @@ void *gps_task(void *arg)
 
     gps_init(9600);
 
-    while(1)
+    while(state.shutdown == false)
     {
         pthread_mutex_lock(&state_mutex);
         gps_taskFunc();
@@ -238,6 +235,10 @@ void *gps_task(void *arg)
 
         sleepFor(0u, 100u);
     }
+
+    gps_terminate();
+
+    return NULL;
 }
 #endif
 

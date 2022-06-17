@@ -467,8 +467,8 @@ void _ui_drawMenuBackup(ui_state_t* ui_state)
     gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
               color_white, "press PTT to start.");
 
-    // Shutdown RF stage
-    state.rtxShutdown = true;
+    // Shutdown all the other parts
+    state.shutdown = true;
 
     if(platform_getPttStatus() == 1)
     {
@@ -500,8 +500,8 @@ void _ui_drawMenuRestore(ui_state_t* ui_state)
     gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
               color_white, "press PTT to start.");
 
-    // Shutdown RF stage
-    state.rtxShutdown = true;
+    // Shutdown all the other parts
+    state.shutdown = true;
 
     if(platform_getPttStatus() == 1)
     {
