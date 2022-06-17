@@ -203,7 +203,7 @@ const char *symbols_ITU_T_E161[] =
 
 const char *symbols_ITU_T_E161_callsign[] =
 {
-    "0",
+    "0 ",
     "1",
     "ABC2",
     "DEF3",
