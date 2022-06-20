@@ -39,7 +39,7 @@
 #define PIX_FMT_BW
 
 /* Device has no battery */
-#define BAT_MOD17
+#define BAT_NONE
 
 /* Signalling LEDs */
 #define PTT_LED     GPIOC,8
