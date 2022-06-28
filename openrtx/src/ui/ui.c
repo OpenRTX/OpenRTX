@@ -171,7 +171,6 @@ const char *info_items[] =
     "Bat. Charge",
     "RSSI",
     "Used heap",
-    "Model",
     "Band",
     "VHF",
     "UHF",
