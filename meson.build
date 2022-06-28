@@ -278,7 +278,8 @@ linux_inc = inc + ['platform/targets/linux',
 if not meson.is_cross_build()
   sdl_dep = dependency('SDL2')
   threads_dep = dependency('threads')
-  linux_dep = [sdl_dep, threads_dep, codec2_dep]
+  pulse_dep = dependency('libpulse')
+  linux_dep = [sdl_dep, threads_dep, pulse_dep, codec2_dep]
 else
   linux_dep = [ ]
 endif
@@ -371,7 +372,7 @@ mod17_def = def + stm32f405_def + {'PLATFORM_MOD17': ''}
 
 linux_c_args   = ['-DPLATFORM_LINUX']
 linux_cpp_args = ['-std=c++14', '-DPLATFORM_LINUX']
-linux_l_args   = ['-lm', '-lreadline']
+linux_l_args   = ['-lm', '-lreadline', '-lpulse-simple']
 
 # Add AddressSanitizer if required
 if get_option('asan')
@@ -689,9 +690,14 @@ linux_inputStream_test = executable('linux_inputStream_test',
                                     sources : unit_test_src + ['tests/unit/linux_inputStream_test.cpp'],
                                     kwargs  : unit_test_opts)
 
+sine_test = executable('sine_test',
+                      sources : unit_test_src + ['tests/unit/play_sine.c'],
+                      kwargs  : unit_test_opts)
+
 test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
 test('M17 Demodulator Test',  m17_demodulator_test)
 test('M17 RRC Test',          m17_rrc_test)
 test('Codeplug Test',         cps_test)
 test('Linux InputStream Test', linux_inputStream_test)
+test('Sine Test',              sine_test)
