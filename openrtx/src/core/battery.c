@@ -73,7 +73,10 @@ uint8_t battery_getCharge(uint16_t vbat)
     uint32_t range  = bat_v_max - bat_v_min;
     uint32_t result = ((diff << 8) / range) * 100;
     result         += 128;
-    return result >> 8;
+    result         >>= 8;
+    if(result > 100) result = 100;
+
+    return result;
 
     #endif
 }
