@@ -74,7 +74,7 @@ void state_init()
     /*
      * Initialise remaining fields
      */
-    #ifdef HAS_RTC
+    #ifdef RTC_PRESENT
     state.time = rtc_getTime();
     #endif
     state.v_bat  = platform_getVbat();
@@ -118,7 +118,7 @@ void state_update()
     state.charge = battery_getCharge(state.v_bat);
     state.rssi = rtx_getRssi();
 
-    #ifdef HAS_RTC
+    #ifdef RTC_PRESENT
     state.time = rtc_getTime();
     #endif
 }

@@ -27,10 +27,10 @@ extern "C" {
 #endif
 
 /* Device has a working real time clock */
-#define HAS_RTC
+#define RTC_PRESENT
 
 /* Device supports an optional GPS chip */
-#define HAS_GPS
+#define GPS_PRESENT
 
 /* Device has a channel selection knob */
 #define HAS_ABSOLUTE_KNOB

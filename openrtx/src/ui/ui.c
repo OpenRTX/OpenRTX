@@ -68,7 +68,7 @@
 #include <interfaces/platform.h>
 #include <interfaces/cps_io.h>
 #include <interfaces/nvmem.h>
-#ifdef HAS_GPS
+#ifdef GPS_PRESENT
 #include <interfaces/gps.h>
 #endif
 #include <interfaces/delays.h>
@@ -94,7 +94,7 @@ extern void _ui_drawMenuTop(ui_state_t* ui_state);
 extern void _ui_drawMenuBank(ui_state_t* ui_state);
 extern void _ui_drawMenuChannel(ui_state_t* ui_state);
 extern void _ui_drawMenuContacts(ui_state_t* ui_state);
-#ifdef HAS_GPS
+#ifdef GPS_PRESENT
 extern void _ui_drawMenuGPS();
 extern void _ui_drawSettingsGPS(ui_state_t* ui_state);
 #endif
@@ -104,7 +104,7 @@ extern void _ui_drawMenuBackup(ui_state_t* ui_state);
 extern void _ui_drawMenuRestore(ui_state_t* ui_state);
 extern void _ui_drawMenuInfo(ui_state_t* ui_state);
 extern void _ui_drawMenuAbout();
-#ifdef HAS_RTC
+#ifdef RTC_PRESENT
 extern void _ui_drawSettingsTimeDate();
 extern void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state);
 #endif
@@ -118,7 +118,7 @@ const char *menu_items[] =
     "Banks",
     "Channels",
     "Contacts",
-#ifdef HAS_GPS
+#ifdef GPS_PRESENT
     "GPS",
 #endif
     "Settings",
@@ -130,10 +130,10 @@ const char *menu_items[] =
 const char *settings_items[] =
 {
     "Display",
-#ifdef HAS_RTC
+#ifdef RTC_PRESENT
     "Time & Date",
 #endif
-#ifdef HAS_GPS
+#ifdef GPS_PRESENT
     "GPS",
 #endif
     "M17",
@@ -149,7 +149,7 @@ const char *display_items[] =
     "Timer"
 };
 
-#ifdef HAS_GPS
+#ifdef GPS_PRESENT
 const char *settings_gps_items[] =
 {
     "GPS Enabled",
@@ -222,7 +222,7 @@ const char *symbols_ITU_T_E161_callsign[] =
 const uint8_t menu_num = sizeof(menu_items)/sizeof(menu_items[0]);
 const uint8_t settings_num = sizeof(settings_items)/sizeof(settings_items[0]);
 const uint8_t display_num = sizeof(display_items)/sizeof(display_items[0]);
-#ifdef HAS_GPS
+#ifdef GPS_PRESENT
 const uint8_t settings_gps_num = sizeof(settings_gps_items)/sizeof(settings_gps_items[0]);
 #endif
 const uint8_t backup_restore_num = sizeof(backup_restore_items)/sizeof(backup_restore_items[0]);
@@ -461,7 +461,7 @@ freq_t _ui_freq_add_digit(freq_t freq, uint8_t pos, uint8_t number)
     return freq += number * coefficient;
 }
 
-#ifdef HAS_RTC
+#ifdef RTC_PRESENT
 void _ui_timedate_add_digit(datetime_t *timedate, uint8_t pos, uint8_t number)
 {
     switch(pos)
@@ -1272,7 +1272,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         case M_CONTACTS:
                             state.ui_screen = MENU_CONTACTS;
                             break;
-#ifdef HAS_GPS
+#ifdef GPS_PRESENT
                         case M_GPS:
                             state.ui_screen = MENU_GPS;
                             break;
@@ -1368,7 +1368,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_TOP);
                 break;
-#ifdef HAS_GPS
+#ifdef GPS_PRESENT
             // GPS menu screen
             case MENU_GPS:
                 if(msg.keys & KEY_ESC)
@@ -1389,12 +1389,12 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         case S_DISPLAY:
                             state.ui_screen = SETTINGS_DISPLAY;
                             break;
-#ifdef HAS_RTC
+#ifdef RTC_PRESENT
                         case S_TIMEDATE:
                             state.ui_screen = SETTINGS_TIMEDATE;
                             break;
 #endif
-#ifdef HAS_GPS
+#ifdef GPS_PRESENT
                         case S_GPS:
                             state.ui_screen = SETTINGS_GPS;
                             break;
@@ -1454,7 +1454,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_TOP);
                 break;
-#ifdef HAS_RTC
+#ifdef RTC_PRESENT
             // Time&Date settings screen
             case SETTINGS_TIMEDATE:
                 if(msg.keys & KEY_ENTER)
@@ -1547,7 +1547,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_SETTINGS);
                 break;
-#ifdef HAS_GPS
+#ifdef GPS_PRESENT
             case SETTINGS_GPS:
                 if(msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT ||
                    (ui_state.edit_mode &&
@@ -1710,7 +1710,7 @@ void ui_updateGUI()
         case MENU_CONTACTS:
             _ui_drawMenuContacts(&ui_state);
             break;
-#ifdef HAS_GPS
+#ifdef GPS_PRESENT
         // GPS menu screen
         case MENU_GPS:
             _ui_drawMenuGPS();
@@ -1740,7 +1740,7 @@ void ui_updateGUI()
         case MENU_ABOUT:
             _ui_drawMenuAbout();
             break;
-#ifdef HAS_RTC
+#ifdef RTC_PRESENT
         // Time&Date settings screen
         case SETTINGS_TIMEDATE:
             _ui_drawSettingsTimeDate();
@@ -1754,7 +1754,7 @@ void ui_updateGUI()
         case SETTINGS_DISPLAY:
             _ui_drawSettingsDisplay(&ui_state);
             break;
-#ifdef HAS_GPS
+#ifdef GPS_PRESENT
         // GPS settings screen
         case SETTINGS_GPS:
             _ui_drawSettingsGPS(&ui_state);

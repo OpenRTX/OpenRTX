@@ -36,7 +36,7 @@
 #include <string.h>
 #include <utils.h>
 #include <input.h>
-#ifdef HAS_GPS
+#ifdef GPS_PRESENT
 #include <interfaces/gps.h>
 #include <gps.h>
 #endif
@@ -215,7 +215,7 @@ void *rtx_task(void *arg)
     return NULL;
 }
 
-#if defined(HAS_GPS) && !defined(MD3x0_ENABLE_DBG)
+#if defined(GPS_PRESENT) && !defined(MD3x0_ENABLE_DBG)
 /**
  * \internal Task function for parsing GPS data and updating radio state.
  */
@@ -283,7 +283,7 @@ void create_threads()
     pthread_attr_setstacksize(&kbd_attr, KBD_TASK_STKSIZE);
     pthread_create(&kbd_thread, &kbd_attr, kbd_task, NULL);
 
-#if defined(HAS_GPS) && !defined(MD3x0_ENABLE_DBG)
+#if defined(GPS_PRESENT) && !defined(MD3x0_ENABLE_DBG)
     // Create GPS thread
     pthread_t      gps_thread;
     pthread_attr_t gps_attr;
