@@ -42,31 +42,29 @@
 pthread_mutex_t rtx_mutex;
 
 /**
- * \internal Task function in charge of updating the UI.
+ * \internal Task function managing user input and UI
  */
 void *ui_task(void *arg)
 {
     (void) arg;
 
-    bool        sync_rtx = true;
-    rtxStatus_t rtx_cfg;
     kbd_msg_t   kbd_msg;
-
-    // Initialize keyboard driver
-    kbd_init();
-
-    // Get initial state local copy
-    ui_saveState();
+    rtxStatus_t rtx_cfg;
+    bool        sync_rtx = true;
+    long long   time     = 0;
 
     // Keep the splash screen for 1 second
     sleepFor(1u, 0u);
 
-    // Initial GUI draw
+    // Load initial state and perform a GUI draw
+    ui_saveState();
     ui_updateGUI();
     gfx_render();
 
     while(1)
     {
+        time = getTick();
+
         // Scan keyboard
         bool kbd_event = input_scanKeyboard(&kbd_msg);
         if(kbd_event)
@@ -77,18 +75,10 @@ void *ui_task(void *arg)
             ui_pushEvent(event);
         }
 
-        // Lock mutex, read and write state
-        pthread_mutex_lock(&state_mutex);
-        // React to keypresses and update FSM inside state
-        ui_updateFSM(&sync_rtx);
-        // Update state local copy
-        ui_saveState();
-        // Unlock mutex
-        pthread_mutex_unlock(&state_mutex);
-
-        // Redraw GUI based on last state copy
-        ui_updateGUI();
-        gfx_render();
+        pthread_mutex_lock(&state_mutex);   // Lock r/w access to radio state
+        ui_updateFSM(&sync_rtx);            // Update UI FSM
+        ui_saveState();                     // Save local state copy
+        pthread_mutex_unlock(&state_mutex); // Unlock r/w access to radio state
 
         // If synchronization needed take mutex and update RTX configuration
         if(sync_rtx)
@@ -117,32 +107,30 @@ void *ui_task(void *arg)
             sync_rtx = false;
         }
 
+        // Update UI and render on screen
+        ui_updateGUI();
+        gfx_render();
+
         // 40Hz update rate for keyboard and UI
-        sleepFor(0, 25);
+        time += 25;
+        sleepUntil(time);
     }
 }
 
 /**
- * \internal Task function in charge of updating the radio state.
+ * \internal Task function in charge of managing the device and update the
+ * global state variable.
  */
 void *dev_task(void *arg)
 {
     (void) arg;
 
-    #if defined(GPS_PRESENT) && !defined(MD3x0_ENABLE_DBG)
-    bool gpsPresent = gps_detect(5000);
-
-    pthread_mutex_lock(&state_mutex);
-    state.gpsDetected = gpsPresent;
-    pthread_mutex_unlock(&state_mutex);
-
-    if(state.gpsDetected) gps_init(9600);
-    #endif
-
-    uint8_t tick_5ms = 0;
+    long long time     = 0;
+    uint8_t   tick_5ms = 0;
 
     while(state.shutdown == false)
     {
+        time = getTick();
         tick_5ms++;
 
         #if defined(GPS_PRESENT) && !defined(MD3x0_ENABLE_DBG)
@@ -162,7 +150,8 @@ void *dev_task(void *arg)
         }
 
         // Run this loop once every 5ms
-        sleepFor(0u, 5u);
+        time += 5;
+        sleepUntil(time);
     }
 
     #if defined(GPS_PRESENT)
@@ -215,11 +204,11 @@ void create_threads()
 
     pthread_create(&rtx_thread, &rtx_attr, rtx_task, NULL);
 
-    // Create state thread
-    pthread_t      state_thread;
-    pthread_attr_t state_attr;
+    // Create UI thread
+    pthread_t      ui_thread;
+    pthread_attr_t ui_attr;
 
-    pthread_attr_init(&state_attr);
-    pthread_attr_setstacksize(&state_attr, DEV_TASK_STKSIZE);
-    pthread_create(&state_thread, &state_attr, dev_task, NULL);
+    pthread_attr_init(&ui_attr);
+    pthread_attr_setstacksize(&ui_attr, UI_TASK_STKSIZE);
+    pthread_create(&ui_thread, &ui_attr, ui_task, NULL);
 }

@@ -21,45 +21,46 @@
 #include <interfaces/platform.h>
 #include <interfaces/graphics.h>
 #include <interfaces/delays.h>
+#include <interfaces/gps.h>
 #include <threads.h>
 #include <openrtx.h>
 #include <ui.h>
 
-extern void *ui_task(void *arg);
+extern void *dev_task(void *arg);
 
 void openrtx_init()
 {
-    // Initialize platform drivers
-    platform_init();
+    platform_init();    // Initialize low-level platform drivers
+    state_init();       // Initialize radio state
 
-    // Initialize radio state
-    state_init();
-
-    // Initialize display and graphics driver
-    gfx_init();
-
-    // Set default contrast
+    gfx_init();         // Initialize display and graphics driver
+    kbd_init();         // Initialize keyboard driver
+    ui_init();          // Initialize user interface
+    #ifdef SCREEN_CONTRAST
     display_setContrast(state.settings.contrast);
+    #endif
 
-    // Initialize user interface
-    ui_init();
+    // Display splash screen, turn on backlight after a suitable time to
+    // hide random pixels during render process
+    ui_drawSplashScreen(true);
+    gfx_render();
+    sleepFor(0u, 30u);
+    platform_setBacklightLevel(state.settings.brightness);
+
+    // Detect and initialise GPS
+    #if defined(GPS_PRESENT)
+    state.gpsDetected = gps_detect(1000);
+    if(state.gpsDetected) gps_init(9600);
+    #endif
 }
 
 void *openrtx_run()
 {
-    // Display splash screen
-    ui_drawSplashScreen(true);
-    gfx_render();
-
-    // Wait 30ms before turning on backlight to hide random pixels on screen
-    sleepFor(0u, 30u);
-    platform_setBacklightLevel(state.settings.brightness);
-
     // Start the OpenRTX threads
     create_threads();
 
-    // Jump to the UI task
-    ui_task(NULL);
+    // Jump to the device management task
+    dev_task(NULL);
 
     return NULL;
 }

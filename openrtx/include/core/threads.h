@@ -34,6 +34,11 @@ void create_threads();
 #define DEV_TASK_STKSIZE 2048
 
 /**
+ * Stack size for UI management, in bytes.
+ */
+#define UI_TASK_STKSIZE 2048
+
+/**
  * Stack size for baseband control task, in bytes.
  */
 #define RTX_TASK_STKSIZE 512
