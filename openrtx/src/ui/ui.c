@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2020 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -242,6 +242,11 @@ bool redraw_needed = true;
 
 bool standby = false;
 long long last_event_tick = 0;
+
+// UI event queue
+uint8_t evQueue_rdPos;
+uint8_t evQueue_wrPos;
+event_t evQueue[MAX_NUM_EVENTS];
 
 layout_t _ui_calculateLayout()
 {
@@ -929,7 +934,7 @@ void ui_saveState()
     last_state = state;
 }
 
-void ui_updateFSM(event_t event, bool *sync_rtx)
+void ui_updateFSM(bool *sync_rtx)
 {
     // User wants to power off the radio, so shutdown.
     if(!platform_pwrButtonStatus())
@@ -939,6 +944,14 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
         platform_terminate();
         return;
     }
+
+    // Check for events
+    if(evQueue_wrPos == evQueue_rdPos) return;
+
+    // Pop an event from the queue
+    uint8_t newTail = (evQueue_rdPos + 1) % MAX_NUM_EVENTS;
+    event_t event   = evQueue[evQueue_rdPos];
+    evQueue_rdPos   = newTail;
 
     // Check if battery has enough charge to operate.
     // Check is skipped if there is an ongoing transmission, since the voltage
@@ -1777,6 +1790,19 @@ void ui_updateGUI()
         _ui_drawDarkOverlay();
         _ui_drawMacroMenu(&last_state);
     }
+}
+
+bool ui_pushEvent(const event_t event)
+{
+    uint8_t newHead = (evQueue_wrPos + 1) % MAX_NUM_EVENTS;
+
+    // Queue is full
+    if(newHead == evQueue_rdPos) return false;
+
+    evQueue[evQueue_wrPos] = event;
+    evQueue_wrPos = newHead;
+
+    return true;
 }
 
 void ui_terminate()

@@ -34,6 +34,8 @@
 #define FREQ_DIGITS 8
 // Time & Date digits
 #define TIMEDATE_DIGITS 10
+// Max number of UI events
+#define MAX_NUM_EVENTS 16
 
 enum uiScreen
 {
@@ -218,6 +220,7 @@ void ui_init();
 
 /**
  * This function writes the OpenRTX splash screen image into the framebuffer.
+ *
  * @param centered: if true the logo will be printed at the center of
  * the screen, otherwise it will be printed at the top of the screen.
  */
@@ -233,16 +236,23 @@ void ui_saveState();
 /**
  * This function advances the User Interface FSM, basing on the
  * current radio state and the keys pressed.
- * @param last_state: A local copy of the previous radio state
- * @param event: An event from other threads
+ *
  * @param sync_rtx: If true RTX needs to be synchronized
  */
-void ui_updateFSM(event_t event, bool *sync_rtx);
+void ui_updateFSM(bool *sync_rtx);
 
 /**
  * This function redraws the GUI based on the last radio state.
  */
 void ui_updateGUI();
+
+/**
+ * Push an event to the UI event queue.
+ *
+ * @param event: event to be pushed.
+ * @return true on success false on failure.
+ */
+bool ui_pushEvent(const event_t event);
 
 /**
  * This function terminates the User Interface.

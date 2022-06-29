@@ -27,7 +27,7 @@
  */
 enum eventType_t
 {
-    EVENT_KBD = 0,
+    EVENT_KBD    = 0,
     EVENT_STATUS = 1
 };
 

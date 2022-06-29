@@ -31,7 +31,6 @@
 #include <interfaces/radio.h>
 #include <event.h>
 #include <rtx.h>
-#include <queue.h>
 #include <minmea.h>
 #include <string.h>
 #include <utils.h>
@@ -49,9 +48,6 @@ pthread_mutex_t rtx_mutex;
 
 /* Mutex to avoid reading keyboard during display update */
 pthread_mutex_t display_mutex;
-
-/* Queue for sending and receiving ui update requests */
-queue_t ui_queue;
 
 /**
  * \internal Task function in charge of updating the UI.
@@ -78,16 +74,10 @@ void *ui_task(void *arg)
 
     while(1)
     {
-        // Read from the keyboard queue (returns 0 if no message is present)
-        // Copy keyboard_t keys from received void * pointer msg
-        event_t event;
-        event.value = 0;
-        (void) queue_pend(&ui_queue, &event.value, true);
-
         // Lock mutex, read and write state
         pthread_mutex_lock(&state_mutex);
         // React to keypresses and update FSM inside state
-        ui_updateFSM(event, &sync_rtx);
+        ui_updateFSM(&sync_rtx);
         // Update state local copy
         ui_saveState();
         // Unlock mutex
@@ -127,10 +117,7 @@ void *ui_task(void *arg)
         gfx_render();
         pthread_mutex_unlock(&display_mutex);
 
-        // We don't need a delay because we lock on incoming events
-        // TODO: Enable self refresh when a continuous visualization is enabled
-        // Update UI at ~33 FPS
-        //OSTimeDlyHMSM(0u, 0u, 0u, 30u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+        sleepFor(0u, 30u);
     }
 }
 
@@ -158,8 +145,7 @@ void *kbd_task(void *arg)
             event_t event;
             event.type = EVENT_KBD;
             event.payload = msg.value;
-            // Send keyboard status in queue
-            (void) queue_post(&ui_queue, event.value);
+            ui_pushEvent(event);
         }
 
         // Read keyboard state at 40Hz
@@ -187,7 +173,7 @@ void *dev_task(void *arg)
         event_t dev_msg;
         dev_msg.type = EVENT_STATUS;
         dev_msg.payload = 0;
-        (void) queue_post(&ui_queue, dev_msg.value);
+        ui_pushEvent(dev_msg);
 
         // Execute state update thread every 1s
         sleepFor(1u, 0u);
@@ -255,9 +241,6 @@ void create_threads()
 
     // Create display mutex
     pthread_mutex_init(&display_mutex, NULL);
-
-    // Create UI event queue
-    queue_init(&ui_queue);
 
     // Create rtx radio thread
     pthread_t      rtx_thread;
