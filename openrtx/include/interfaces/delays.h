@@ -49,6 +49,13 @@ void delayMs(unsigned int mseconds);
 void sleepFor(unsigned int seconds, unsigned int mseconds);
 
 /**
+ * Puts the calling thread in a sleeping state until the system time reaches
+ * the target value passed as parameter.
+ * @param timestamp: traget timestamp for the wakeup.
+ */
+void sleepUntil(long long timestamp);
+
+/**
  * Get the current value of the system tick.
  * @return current system tick value.
  */

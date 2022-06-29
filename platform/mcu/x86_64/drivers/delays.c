@@ -40,6 +40,13 @@ void sleepFor(unsigned int seconds, unsigned int mseconds)
     delayMs(time);
 }
 
+void sleepUntil(long long timestamp)
+{
+    long long delta = timestamp - getTick();
+    if(delta <= 0) return;
+    delayMs(delta);
+}
+
 long long getTick()
 {
     /*

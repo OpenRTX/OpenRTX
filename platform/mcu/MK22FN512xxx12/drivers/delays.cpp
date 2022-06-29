@@ -58,6 +58,11 @@ void sleepFor(unsigned int seconds, unsigned int mseconds)
     miosix::Thread::sleep(time);
 }
 
+void sleepUntil(long long timestamp)
+{
+    miosix::Thread::sleepUntil(timestamp);
+}
+
 long long getTick()
 {
     return miosix::getTick();
