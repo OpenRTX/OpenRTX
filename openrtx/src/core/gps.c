@@ -46,11 +46,12 @@ void gps_taskFunc()
     }
 
     // GPS disabled, nothing to do
-    if(gpsEnabled == false) return;
+    if(gpsEnabled == false)
+        return;
 
+    // Acquire a new NMEA sentence from GPS
     if(readNewSentence)
     {
-        // Acquire a new NMEA sentence from GPS
         int status = gps_getNmeaSentence(sentence, MINMEA_MAX_LENGTH + 1);
         if(status != 0) return;
         readNewSentence = false;
@@ -59,36 +60,34 @@ void gps_taskFunc()
     if(gps_nmeaSentenceReady() == false)
         return;
 
-    // Parse the sentence and request a new one
-    readNewSentence = true;
-    switch(minmea_sentence_id(sentence, false))
+    // Parse the sentence. Work on a local state copy to minimize the time
+    // spent with the state mutex locked
+    gps_t gps_data;
+    pthread_mutex_lock(&state_mutex);
+    gps_data = state.gps_data;
+    pthread_mutex_unlock(&state_mutex);
+
+    int32_t sId = minmea_sentence_id(sentence, false);
+    switch(sId)
     {
         case MINMEA_SENTENCE_RMC:
         {
             struct minmea_sentence_rmc frame;
             if (minmea_parse_rmc(&frame, sentence))
             {
-                state.gps_data.latitude = minmea_tocoord(&frame.latitude);
-                state.gps_data.longitude = minmea_tocoord(&frame.longitude);
-                state.gps_data.timestamp.hour = frame.time.hours;
-                state.gps_data.timestamp.minute = frame.time.minutes;
-                state.gps_data.timestamp.second = frame.time.seconds;
-                state.gps_data.timestamp.day = 0;
-                state.gps_data.timestamp.date = frame.date.day;
-                state.gps_data.timestamp.month = frame.date.month;
-                state.gps_data.timestamp.year = frame.date.year;
+                gps_data.latitude = minmea_tocoord(&frame.latitude);
+                gps_data.longitude = minmea_tocoord(&frame.longitude);
+                gps_data.timestamp.hour = frame.time.hours;
+                gps_data.timestamp.minute = frame.time.minutes;
+                gps_data.timestamp.second = frame.time.seconds;
+                gps_data.timestamp.day = 0;
+                gps_data.timestamp.date = frame.date.day;
+                gps_data.timestamp.month = frame.date.month;
+                gps_data.timestamp.year = frame.date.year;
             }
 
-            // Synchronize RTC with GPS UTC clock, only when fix is done
-            if((state.gps_set_time) &&
-               (state.gps_data.fix_quality > 0) && (!isRtcSyncronised))
-            {
-                rtc_setTime(state.gps_data.timestamp);
-                isRtcSyncronised = true;
-            }
-
-            state.gps_data.tmg_true = minmea_tofloat(&frame.course);
-            state.gps_data.speed = minmea_tofloat(&frame.speed) * KNOTS2KMH;
+            gps_data.tmg_true = minmea_tofloat(&frame.course);
+            gps_data.speed = minmea_tofloat(&frame.speed) * KNOTS2KMH;
         }
         break;
 
@@ -97,25 +96,25 @@ void gps_taskFunc()
             struct minmea_sentence_gga frame;
             if (minmea_parse_gga(&frame, sentence))
             {
-                state.gps_data.fix_quality = frame.fix_quality;
-                state.gps_data.satellites_tracked = frame.satellites_tracked;
-                state.gps_data.altitude = minmea_tofloat(&frame.altitude);
+                gps_data.fix_quality = frame.fix_quality;
+                gps_data.satellites_tracked = frame.satellites_tracked;
+                gps_data.altitude = minmea_tofloat(&frame.altitude);
             }
         }
         break;
 
         case MINMEA_SENTENCE_GSA:
         {
-            state.gps_data.active_sats = 0;
+            gps_data.active_sats = 0;
             struct minmea_sentence_gsa frame;
             if (minmea_parse_gsa(&frame, sentence))
             {
-                state.gps_data.fix_type = frame.fix_type;
+                gps_data.fix_type = frame.fix_type;
                 for (int i = 0; i < 12; i++)
                 {
                     if (frame.sats[i] != 0)
                     {
-                        state.gps_data.active_sats |= 1 << (frame.sats[i] - 1);
+                        gps_data.active_sats |= 1 << (frame.sats[i] - 1);
                     }
                 }
             }
@@ -131,17 +130,17 @@ void gps_taskFunc()
                 // When the first sentence arrives, clear all the old data
                 if (frame.msg_nr == 1)
                 {
-                    bzero(&state.gps_data.satellites[0], 12 * sizeof(sat_t));
+                    bzero(&gps_data.satellites[0], 12 * sizeof(sat_t));
                 }
 
-                state.gps_data.satellites_in_view = frame.total_sats;
+                gps_data.satellites_in_view = frame.total_sats;
                 for (int i = 0; i < 4; i++)
                 {
                     int index = 4 * (frame.msg_nr - 1) + i;
-                    state.gps_data.satellites[index].id = frame.sats[i].nr;
-                    state.gps_data.satellites[index].elevation = frame.sats[i].elevation;
-                    state.gps_data.satellites[index].azimuth = frame.sats[i].azimuth;
-                    state.gps_data.satellites[index].snr = frame.sats[i].snr;
+                    gps_data.satellites[index].id = frame.sats[i].nr;
+                    gps_data.satellites[index].elevation = frame.sats[i].elevation;
+                    gps_data.satellites[index].azimuth = frame.sats[i].azimuth;
+                    gps_data.satellites[index].snr = frame.sats[i].snr;
                 }
             }
         }
@@ -152,9 +151,9 @@ void gps_taskFunc()
             struct minmea_sentence_vtg frame;
             if (minmea_parse_vtg(&frame, sentence))
             {
-                state.gps_data.speed = minmea_tofloat(&frame.speed_kph);
-                state.gps_data.tmg_mag = minmea_tofloat(&frame.magnetic_track_degrees);
-                state.gps_data.tmg_true = minmea_tofloat(&frame.true_track_degrees);
+                gps_data.speed = minmea_tofloat(&frame.speed_kph);
+                gps_data.tmg_mag = minmea_tofloat(&frame.magnetic_track_degrees);
+                gps_data.tmg_true = minmea_tofloat(&frame.true_track_degrees);
             }
         }
         break;
@@ -170,4 +169,28 @@ void gps_taskFunc()
         case MINMEA_INVALID: break;
         case MINMEA_UNKNOWN: break;
     }
+
+    // Update GPS data inside radio state
+    pthread_mutex_lock(&state_mutex);
+    state.gps_data = gps_data;
+    pthread_mutex_unlock(&state_mutex);
+
+    // Synchronize RTC with GPS UTC clock, only when fix is done
+    if(state.gps_set_time)
+    {
+        if((sId == MINMEA_SENTENCE_RMC) &&
+           (gps_data.fix_quality > 0)   &&
+           (isRtcSyncronised == false))
+        {
+            rtc_setTime(gps_data.timestamp);
+            isRtcSyncronised = true;
+        }
+    }
+    else
+    {
+        isRtcSyncronised = false;
+    }
+
+    // Finally, trigger the acquisition of a new NMEA sentence
+    readNewSentence = true;
 }

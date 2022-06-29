@@ -21,11 +21,12 @@
 #ifndef STATE_H
 #define STATE_H
 
-#include <datatypes.h>
-#include <stdbool.h>
 #include <interfaces/rtc.h>
-#include <cps.h>
+#include <datatypes.h>
 #include <settings.h>
+#include <pthread.h>
+#include <stdbool.h>
+#include <cps.h>
 #include <gps.h>
 
 /**
@@ -86,15 +87,17 @@ enum RtxStatus
 };
 
 extern state_t state;
+extern pthread_mutex_t state_mutex;
 
 /**
- * This function initializes the Radio state, acquiring the information
- * needed to populate it from device drivers.
+ * Initialise radio state mutex and radio state variable, reading the
+ * informations from device drivers.
  */
 void state_init();
 
 /**
- * This function terminates the radio state saving persistent settings to flash.
+ * Terminate the radio state saving persistent settings to flash and destroy
+ * the state mutex.
  */
 void state_terminate();
 

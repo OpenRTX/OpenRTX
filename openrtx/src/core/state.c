@@ -29,9 +29,12 @@
 #include <interfaces/cps_io.h>
 
 state_t state;
+pthread_mutex_t state_mutex;
 
 void state_init()
 {
+    pthread_mutex_init(&state_mutex, NULL);
+
     /*
      * Try loading settings from nonvolatile memory and default to sane values
      * in case of failure.
@@ -102,10 +105,13 @@ void state_terminate()
     }
 
     nvm_writeSettingsAndVfo(&state.settings, &state.channel);
+    pthread_mutex_destroy(&state_mutex);
 }
 
 void state_update()
 {
+    pthread_mutex_lock(&state_mutex);
+
     /*
      * Low-pass filtering with a time constant of 10s when updated at 1Hz
      * Original computation: state.v_bat = 0.02*vbat + 0.98*state.v_bat
@@ -121,6 +127,8 @@ void state_update()
     #ifdef RTC_PRESENT
     state.time = rtc_getTime();
     #endif
+
+    pthread_mutex_unlock(&state_mutex);
 }
 
 void state_resetSettingsAndVfo()

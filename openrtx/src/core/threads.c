@@ -38,9 +38,6 @@
 #include <gps.h>
 #endif
 
-/* Mutex for concurrent access to state variable */
-pthread_mutex_t state_mutex;
-
 /* Mutex for concurrent access to RTX state variable */
 pthread_mutex_t rtx_mutex;
 
@@ -144,17 +141,13 @@ void *dev_task(void *arg)
 
     while(state.shutdown == false)
     {
-        // Lock mutex and update internal state
-        pthread_mutex_lock(&state_mutex);
+        // Update radio state
         state_update();
-        pthread_mutex_unlock(&state_mutex);
 
         #if defined(GPS_PRESENT) && !defined(MD3x0_ENABLE_DBG)
         if(state.gpsDetected)
         {
-            pthread_mutex_lock(&state_mutex);
             gps_taskFunc();
-            pthread_mutex_unlock(&state_mutex);
         }
         #endif
 
@@ -199,9 +192,6 @@ void *rtx_task(void *arg)
  */
 void create_threads()
 {
-    // Create state mutex
-    pthread_mutex_init(&state_mutex, NULL);
-
     // Create RTX state mutex
     pthread_mutex_init(&rtx_mutex, NULL);
 
