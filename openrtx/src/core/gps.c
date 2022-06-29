@@ -27,7 +27,7 @@
 
 #define KNOTS2KMH 1.852f
 
-static char sentence[MINMEA_MAX_LENGTH + 1];
+static char sentence[2*MINMEA_MAX_LENGTH];
 static bool isRtcSyncronised  = false;
 static bool gpsEnabled        = false;
 static bool readNewSentence   = true;
@@ -52,13 +52,21 @@ void gps_taskFunc()
     // Acquire a new NMEA sentence from GPS
     if(readNewSentence)
     {
-        int status = gps_getNmeaSentence(sentence, MINMEA_MAX_LENGTH + 1);
+        int status = gps_getNmeaSentence(sentence, 2*MINMEA_MAX_LENGTH);
         if(status != 0) return;
         readNewSentence = false;
     }
 
+    // Waiting for a sentence...
     if(gps_nmeaSentenceReady() == false)
         return;
+
+    // Discard all non-GPS sentences
+    if((sentence[0] != '$') || (sentence[1] != 'G'))
+    {
+        readNewSentence = true;
+        return;
+    }
 
     // Parse the sentence. Work on a local state copy to minimize the time
     // spent with the state mutex locked

@@ -139,26 +139,30 @@ void *dev_task(void *arg)
     if(state.gpsDetected) gps_init(9600);
     #endif
 
+    uint8_t tick_5ms = 0;
+
     while(state.shutdown == false)
     {
-        // Update radio state
-        state_update();
+        tick_5ms++;
 
         #if defined(GPS_PRESENT) && !defined(MD3x0_ENABLE_DBG)
         if(state.gpsDetected)
-        {
             gps_taskFunc();
-        }
         #endif
 
-        // Signal state update to UI thread
-        event_t dev_msg;
-        dev_msg.type = EVENT_STATUS;
-        dev_msg.payload = 0;
-        ui_pushEvent(dev_msg);
+        // Update radio state and push an event to the UI every 100ms
+        if((tick_5ms % 20) == 0)
+        {
+            state_update();
 
-        // 10Hz update rate
-        sleepFor(0u, 100u);
+            event_t dev_msg;
+            dev_msg.type = EVENT_STATUS;
+            dev_msg.payload = 0;
+            ui_pushEvent(dev_msg);
+        }
+
+        // Run this loop once every 5ms
+        sleepFor(0u, 5u);
     }
 
     #if defined(GPS_PRESENT)
