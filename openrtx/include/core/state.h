@@ -65,6 +65,7 @@ typedef struct
     settings_t settings;
     gps_t      gps_data;
     bool       gps_set_time;
+    bool       gpsDetected;
     m17_t      m17_data;
 }
 state_t;
