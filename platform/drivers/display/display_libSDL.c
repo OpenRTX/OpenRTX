@@ -32,7 +32,7 @@
 #include <string.h>
 #include <SDL2/SDL.h>
 
-void *frameBuffer;           /* Pointer to framebuffer */
+void *frameBuffer = NULL;    /* Pointer to framebuffer */
 bool inProgress;             /* Flag to signal when rendering is in progress */
 
 /*
@@ -52,7 +52,7 @@ uint32_t fetchPixelFromFb(unsigned int x, unsigned int y)
     (void) y;
     uint32_t pixel = 0;
 
-#ifdef PIX_FMT_BW
+    #ifdef PIX_FMT_BW
     /*
      * Black and white 1bpp format: framebuffer is an array of uint8_t, where
      * each cell contains the values of eight pixels, one per bit.
@@ -61,9 +61,9 @@ uint32_t fetchPixelFromFb(unsigned int x, unsigned int y)
     unsigned int cell = (x + y*SCREEN_WIDTH) / 8;
     unsigned int elem = (x + y*SCREEN_WIDTH) % 8;
     if(fb[cell] & (1 << elem)) pixel = 0xFFFFFFFF;
-#endif
+    #endif
 
-#ifdef PIX_FMT_GRAYSC
+    #ifdef PIX_FMT_GRAYSC
     /*
      * Convert from 8bpp grayscale to ARGB8888, we have to do nothing more that
      * replicating the pixel value for the three components
@@ -72,7 +72,8 @@ uint32_t fetchPixelFromFb(unsigned int x, unsigned int y)
     uint8_t px = fb[x + y*SCREEN_WIDTH];
 
     pixel = 0xFF000000 | (px << 16) | (px << 8) | px;
-#endif
+    #endif
+
     return pixel;
 }
 
@@ -84,28 +85,28 @@ void display_init()
      * bit represents a pixel. We have to allocate
      * (SCREEN_HEIGHT * SCREEN_WIDTH)/8 elements
      */
-#ifdef PIX_FMT_BW
+    #ifdef PIX_FMT_BW
     unsigned int fbSize = (SCREEN_HEIGHT * SCREEN_WIDTH)/8;
     /* Compensate for eventual truncation error in division */
     if((fbSize * 8) < (SCREEN_HEIGHT * SCREEN_WIDTH)) fbSize += 1;
     fbSize *= sizeof(uint8_t);
-#endif
+    #endif
 
     /*
      * Grayscale pixel format: framebuffer type is uint8_t where each element
      * controls one pixel
      */
-#ifdef PIX_FMT_GRAYSC
+    #ifdef PIX_FMT_GRAYSC
     unsigned int fbSize = SCREEN_HEIGHT * SCREEN_WIDTH * sizeof(uint8_t);
-#endif
+    #endif
 
     /*
      * RGB565 pixel format: framebuffer type is uint16_t where each element
      * controls one pixel
      */
-#ifdef PIX_FMT_RGB565
+    #ifdef PIX_FMT_RGB565
     unsigned int fbSize = SCREEN_HEIGHT * SCREEN_WIDTH * sizeof(uint16_t);
-#endif
+    #endif
 
     frameBuffer = malloc(fbSize);
     memset(frameBuffer, 0xFFFF, fbSize);
@@ -114,12 +115,11 @@ void display_init()
 
 void display_terminate()
 {
-    while (inProgress)
-    {}         /* Wait until current render finishes */
-    printf("Terminating SDL display emulator, goodbye!\n");
-    free(frameBuffer);
+    while (inProgress){ }         /* Wait until current render finishes */
     chan_close(&fb_sync);
     chan_terminate(&fb_sync);
+    if(frameBuffer != NULL) free(frameBuffer);
+    frameBuffer = NULL;
 }
 
 void display_renderRows(uint8_t startRow, uint8_t endRow)
@@ -137,9 +137,9 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
         // receive a texture pixel map
         void *fb;
         chan_recv(&fb_sync, &fb);
-#ifdef PIX_FMT_RGB565
+        #ifdef PIX_FMT_RGB565
         memcpy(fb, frameBuffer, sizeof(PIXEL_SIZE) * SCREEN_HEIGHT * SCREEN_WIDTH);
-#else
+        #else
         for (unsigned int x = 0; x < SCREEN_WIDTH; x++)
         {
             for (unsigned int y = startRow; y < endRow; y++)
@@ -147,7 +147,7 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
                 pixels[x + y * SCREEN_WIDTH] = fetchPixelFromFb(x, y);
             }
         }
-#endif
+        #endif
         // signal the SDL main loop to proceed with rendering
         void *done = {0};
         chan_send(&fb_sync, done);

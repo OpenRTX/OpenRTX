@@ -50,8 +50,6 @@ void platform_init()
 void platform_terminate()
 {
     printf("Platform terminate\n");
-    gfx_terminate();
-
     exit(0);
 }
 

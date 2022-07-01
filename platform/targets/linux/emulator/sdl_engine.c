@@ -375,6 +375,10 @@ void sdlEngine_run()
         }
     }
 
+    printf("Terminating SDL display emulator, goodbye!\n");
+
+    SDL_DestroyTexture(displayTexture);
+    SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
 }
