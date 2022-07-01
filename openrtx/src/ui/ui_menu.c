@@ -21,7 +21,6 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-#include <backup.h>
 #include <utils.h>
 #include <ui.h>
 #include <interfaces/nvmem.h>
@@ -464,18 +463,8 @@ void _ui_drawMenuBackup(ui_state_t* ui_state)
     gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
               color_white, "press PTT to start.");
 
-    // Shutdown all the other parts
-    state.shutdown = true;
-
-    if(platform_getPttStatus() == 1)
-    {
-        platform_ledOn(GREEN);
-        #if !defined(PLATFORM_LINUX) && !defined(PLATFORM_MOD17)
-        eflash_dump();
-        platform_terminate();
-        NVIC_SystemReset();
-        #endif
-    }
+    state.devStatus     = DATATRANSFER;
+    state.backup_eflash = true;
 }
 
 void _ui_drawMenuRestore(ui_state_t* ui_state)
@@ -497,18 +486,8 @@ void _ui_drawMenuRestore(ui_state_t* ui_state)
     gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
               color_white, "press PTT to start.");
 
-    // Shutdown all the other parts
-    state.shutdown = true;
-
-    if(platform_getPttStatus() == 1)
-    {
-        platform_ledOn(GREEN);
-        #if !defined(PLATFORM_LINUX) && !defined(PLATFORM_MOD17)
-        eflash_restore();
-        platform_terminate();
-        NVIC_SystemReset();
-        #endif
-    }
+    state.devStatus      = DATATRANSFER;
+    state.restore_eflash = true;
 }
 
 void _ui_drawMenuInfo(ui_state_t* ui_state)

@@ -46,6 +46,7 @@ m17_t;
  */
 typedef struct
 {
+    uint8_t    devStatus;
     datetime_t time;
     uint16_t   v_bat;
     uint8_t    charge;
@@ -61,12 +62,13 @@ typedef struct
     uint16_t   bank;
     uint8_t    rtxStatus;
 
-    bool       shutdown;
     bool       emergency;
     settings_t settings;
     gps_t      gps_data;
     bool       gps_set_time;
     bool       gpsDetected;
+    bool       backup_eflash;
+    bool       restore_eflash;
     m17_t      m17_data;
 }
 state_t;
@@ -84,6 +86,15 @@ enum RtxStatus
     RTX_OFF = 0,
     RTX_RX,
     RTX_TX
+};
+
+enum DeviceStatus
+{
+    PWROFF = 0,
+    STARTUP,
+    RUNNING,
+    DATATRANSFER,
+    SHUTDOWN
 };
 
 extern state_t state;

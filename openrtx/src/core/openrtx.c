@@ -30,6 +30,8 @@ extern void *dev_task(void *arg);
 
 void openrtx_init()
 {
+    state.devStatus = STARTUP;
+
     platform_init();    // Initialize low-level platform drivers
     state_init();       // Initialize radio state
 
@@ -47,20 +49,29 @@ void openrtx_init()
     sleepFor(0u, 30u);
     platform_setBacklightLevel(state.settings.brightness);
 
-    // Detect and initialise GPS
     #if defined(GPS_PRESENT)
+    // Detect and initialise GPS
     state.gpsDetected = gps_detect(1000);
     if(state.gpsDetected) gps_init(9600);
+    #else
+    // Keep the splash screen for 1 second
+    sleepFor(1u, 0u);
     #endif
 }
 
 void *openrtx_run()
 {
+    state.devStatus = RUNNING;
+
     // Start the OpenRTX threads
     create_threads();
 
     // Jump to the device management task
     dev_task(NULL);
+
+    // Device task terminated, complete shutdown sequence
+    state_terminate();
+    platform_terminate();
 
     return NULL;
 }

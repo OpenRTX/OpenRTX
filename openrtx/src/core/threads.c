@@ -33,6 +33,7 @@
 #include <string.h>
 #include <utils.h>
 #include <input.h>
+#include <backup.h>
 #ifdef GPS_PRESENT
 #include <interfaces/gps.h>
 #include <gps.h>
@@ -48,31 +49,25 @@ void *ui_task(void *arg)
 {
     (void) arg;
 
+    event_t     kbd_event = {{EVENT_KBD, 0}};
     kbd_msg_t   kbd_msg;
     rtxStatus_t rtx_cfg;
     bool        sync_rtx = true;
     long long   time     = 0;
-
-    // Keep the splash screen for 1 second
-    sleepFor(1u, 0u);
 
     // Load initial state and perform a GUI draw
     ui_saveState();
     ui_updateGUI();
     gfx_render();
 
-    while(1)
+    while(state.devStatus != SHUTDOWN)
     {
         time = getTick();
 
-        // Scan keyboard
-        bool kbd_event = input_scanKeyboard(&kbd_msg);
-        if(kbd_event)
+        if(input_scanKeyboard(&kbd_msg))
         {
-            event_t event;
-            event.type    = EVENT_KBD;
-            event.payload = kbd_msg.value;
-            ui_pushEvent(event);
+            kbd_event.payload = kbd_msg.value;
+            ui_pushEvent(kbd_event);
         }
 
         pthread_mutex_lock(&state_mutex);   // Lock r/w access to radio state
@@ -115,6 +110,11 @@ void *ui_task(void *arg)
         time += 25;
         sleepUntil(time);
     }
+
+    ui_terminate();
+    gfx_terminate();
+
+    return NULL;
 }
 
 /**
@@ -128,17 +128,47 @@ void *dev_task(void *arg)
     long long time     = 0;
     uint8_t   tick_5ms = 0;
 
-    while(state.shutdown == false)
+    while(state.devStatus != SHUTDOWN)
     {
         time = getTick();
         tick_5ms++;
 
+        // Check if power off is requested
+        pthread_mutex_lock(&state_mutex);
+        if(platform_pwrButtonStatus() == false)
+            state.devStatus = SHUTDOWN;
+        pthread_mutex_unlock(&state_mutex);
+
+        // Handle external flash backup/restore
+        #if !defined(PLATFORM_LINUX) && !defined(PLATFORM_MOD17)
+        if(state.backup_eflash)
+        {
+            eflash_dump();
+
+            pthread_mutex_lock(&state_mutex);
+            state.backup_eflash = false;
+            state.devStatus     = SHUTDOWN;
+            pthread_mutex_unlock(&state_mutex);
+        }
+
+        if(state.restore_eflash)
+        {
+            eflash_restore();
+
+            pthread_mutex_lock(&state_mutex);
+            state.restore_eflash = false;
+            state.devStatus      = SHUTDOWN;
+            pthread_mutex_unlock(&state_mutex);
+        }
+        #endif
+
+        // Run GPS task
         #if defined(GPS_PRESENT) && !defined(MD3x0_ENABLE_DBG)
         if(state.gpsDetected)
             gps_taskFunc();
         #endif
 
-        // Update radio state and push an event to the UI every 100ms
+        // Update radio state every 100ms
         if((tick_5ms % 20) == 0)
         {
             state_update();
@@ -170,7 +200,7 @@ void *rtx_task(void *arg)
 
     rtx_init(&rtx_mutex);
 
-    while(state.shutdown == false)
+    while(state.devStatus == RUNNING)
     {
         rtx_taskFunc();
     }

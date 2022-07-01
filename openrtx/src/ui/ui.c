@@ -936,15 +936,6 @@ void ui_saveState()
 
 void ui_updateFSM(bool *sync_rtx)
 {
-    // User wants to power off the radio, so shutdown.
-    if(!platform_pwrButtonStatus())
-    {
-        state.shutdown = true;
-        state_terminate();
-        platform_terminate();
-        return;
-    }
-
     // Check for events
     if(evQueue_wrPos == evQueue_rdPos) return;
 
