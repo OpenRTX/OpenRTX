@@ -254,7 +254,7 @@ linux_platform_src = ['platform/targets/linux/emulator/emulator.c',
                       'platform/drivers/audio/inputStream_linux.c',
                       'platform/drivers/audio/outputStream_linux.c',
                       'platform/targets/linux/platform.c',
-                      'openrtx/src/core/cps_io_libc.c']
+                      'platform/drivers/CPS/cps_io_libc.c']
 
 linux_src = src + linux_platform_src
 
