@@ -26,7 +26,6 @@
 #include <hwconfig.h>
 #include <interfaces/platform.h>
 #include <interfaces/nvmem.h>
-#include <interfaces/cps_io.h>
 
 state_t state;
 pthread_mutex_t state_mutex;
@@ -52,26 +51,6 @@ void state_init()
     if(nvm_readVFOChannelData(&state.channel) < 0)
     {
         state.channel = cps_getDefaultChannel();
-    }
-
-    /*
-     * Try loading default codeplug from nonvolatile memory, if fails create
-     * an empty one.
-     */
-    if(cps_open(NULL) < 0)
-    {
-        cps_create(NULL);
-
-        // If cannot open the newly created codeplug -> unrecoverable error
-        if(cps_open(NULL) < 0)
-        {
-            #ifdef PLATFORM_LINUX
-            exit(-1);
-            #else
-            // TODO: implement error handling for non-linux targets
-            while(1) ;
-            #endif
-        }
     }
 
     /*
