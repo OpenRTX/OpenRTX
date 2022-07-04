@@ -24,6 +24,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <interfaces/audio.h>
+#include <audio_codec.h>
+
 
 #include "interfaces/keyboard.h"
 #include "ui/UIStrings.h"
@@ -46,9 +49,9 @@ typedef struct
 } voicePromptsDataHeader_t;
 // offset into voice prompt vpc file where actual codec2 data starts.
 static uint32_t vpDataOffset = 0;
-// TODO figure out Codec2 frame equivalent.
-// 76 x 27 byte Codec2 frames
-#define Codec2DataBufferSize 2052
+// Each codec2 frame is 8 bytes.
+// 256 x 8 bytes 
+#define Codec2DataBufferSize 2048
 
 bool vpDataIsLoaded = false;
 
@@ -57,8 +60,6 @@ static bool voicePromptIsActive = false;
 static int promptDataPosition  = -1;
 static int currentPromptLength = -1;
 // Number of ms from end of playing prompt to disabling amp.
-#define PROMPT_TAIL 30
-static int promptTail = 0;
 
 static uint8_t Codec2Data[Codec2DataBufferSize];
 
@@ -155,73 +156,14 @@ static void GetCodec2Data(int offset, int length)
     fread((void*)&Codec2Data, length, 1, voice_prompt_file);
 }
 
-void vpTick(void)
-{
-    if (voicePromptIsActive)
-    {
-        if (promptDataPosition < currentPromptLength)
-        {  // ToDo figure out buffering.
-            // if (wavbuffer_count <= (WAV_BUFFER_COUNT / 2))
-            {
-                //                codecDecode((uint8_t
-                //                *)&Codec2Data[promptDataPosition], 3);
-                promptDataPosition += 27;
-            }
-
-            // soundTickRXBuffer();
-        }
-        else
-        {
-            if (vpCurrentSequence.Pos < (vpCurrentSequence.Length - 1))
-            {
-                vpCurrentSequence.Pos++;
-                promptDataPosition = 0;
-
-                int promptNumber =
-                    vpCurrentSequence.Buffer[vpCurrentSequence.Pos];
-                currentPromptLength = tableOfContents[promptNumber + 1] -
-                                      tableOfContents[promptNumber];
-                GetCodec2Data(tableOfContents[promptNumber],
-                              currentPromptLength);
-            }
-            else
-            {
-                // wait for wave buffer to empty when prompt has finished
-                // playing
-
-                //                if (wavbuffer_count == 0)
-                {
-                    vpTerminate();
-                }
-            }
-        }
-    }
-    else
-    {
-        if (promptTail > 0)
-        {
-            promptTail--;
-
-            /*if ((promptTail == 0) && trxCarrierDetected() && (trxGetMode() ==
-            RADIO_MODE_ANALOG))
-            {// ToDo enable amp.
-                //GPIO_PinWrite(GPIO_RX_audio_mux, Pin_RX_audio_mux, 1); // Set
-            the audio path to AT1846 -> audio amp.
-            }*/
-        }
-    }
-}
-
 void vpTerminate(void)
 {
     if (voicePromptIsActive)
     {
-        // disableAudioAmp(AUDIO_AMP_MODE_PROMPT);
+        audio_disableAmp();
+        codec_stop();
 
         vpCurrentSequence.Pos = 0;
-        // soundTerminateSound();
-        // soundInit();
-        promptTail = PROMPT_TAIL;
 
         voicePromptIsActive = false;
     }
@@ -393,33 +335,53 @@ void vpQueueStringTableEntry(const char* const* stringTableStringPtr)
                   (stringTableStringPtr - &currentLanguage->languageName));
 }
 
+static bool TerminateOnKeyPress()
+{
+    if (kbd_getKeys()==0) return false; 
+    
+    vpTerminate();
+    return true;
+}
+
 void vpPlay(void)
 {
     if (state.settings.vpLevel < vpLow) return;
 
-    if ((voicePromptIsActive == false) && (vpCurrentSequence.Length > 0))
-    {
-        voicePromptIsActive = true;  // Start the playback
-        int promptNumber    = vpCurrentSequence.Buffer[0];
+    if (voicePromptIsActive) return;
+	
+    if (vpCurrentSequence.Length <= 0) return;
+	
+    voicePromptIsActive = true;  // Start the playback
+	
+    audio_enableAmp();
 
-        vpCurrentSequence.Pos = 0;
+    while ((vpCurrentSequence.Pos < vpCurrentSequence.Length) && !TerminateOnKeyPress())
+	{
+        int promptNumber    = vpCurrentSequence.Buffer[vpCurrentSequence.Pos];
 
         currentPromptLength =
             tableOfContents[promptNumber + 1] - tableOfContents[promptNumber];
+			
         GetCodec2Data(tableOfContents[promptNumber], currentPromptLength);
+		
+        // queue this buffer in lots of 8 bytes.
+		int framePos=0;
+        while ((framePos < currentPromptLength) && !TerminateOnKeyPress())
+        {
+            codec_pushFrame(Codec2Data+framePos, true);
+            framePos+=8;
+			
+            if (vpCurrentSequence.Pos==0) // first buffer worth.
+                codec_startDecode(SINK_SPK);
+        }
 
-        //        GPIO_PinWrite(GPIO_RX_audio_mux, Pin_RX_audio_mux, 0);// set
-        //        the audio mux HR-C6000 -> audio amp
-        // enableAudioAmp(AUDIO_AMP_MODE_PROMPT);
-
-        // codecInit(true);
-        promptDataPosition = 0;
+        vpCurrentSequence.Pos++;
     }
 }
 
 inline bool vpIsPlaying(void)
 {
-    return (voicePromptIsActive || (promptTail > 0));
+    return voicePromptIsActive;
 }
 
 bool vpHasDataToPlay(void)

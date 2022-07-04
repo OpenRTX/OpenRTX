@@ -244,8 +244,6 @@ extern const uint32_t VOICE_PROMPTS_FLASH_HEADER_ADDRESS;
 extern VoicePromptVerbosity_T vpLevel;
 // Loads just the TOC from Flash and stores in RAM for fast access.
 void vpCacheInit(void);
-// event driven to play a voice prompt in progress.
-void vpTick(void);
 // Call before building the prompt sequence to clear prompt in progress.
 void vpInit(void);
 // This function appends an individual prompt item to the prompt queue.
