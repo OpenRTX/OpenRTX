@@ -114,13 +114,14 @@ void vpCacheInit(void)
         return;
 	
     fseek(voice_prompt_file, 0L, SEEK_SET);
-    vpDataOffset += fread((void*)&header, sizeof(header), 1, voice_prompt_file);
+    fread((void*)&header, sizeof(header), 1, voice_prompt_file);
 
     if (vpCheckHeader((uint32_t*)&header))
     {                            // read in the TOC.
-        vpDataOffset += fread((void*)&tableOfContents, sizeof(tableOfContents), 1, voice_prompt_file);
-
-        vpDataIsLoaded = true;
+        fread((void*)&tableOfContents, sizeof(tableOfContents), 1, voice_prompt_file);
+        vpDataOffset = ftell(voice_prompt_file);
+        if(vpDataOffset == (sizeof(voicePromptsDataHeader_t) + sizeof(tableOfContents)))
+            vpDataIsLoaded = true;
     }
     if (vpDataIsLoaded)
     {  // if the hash key is down, set vpLevel to high, if beep or less.
