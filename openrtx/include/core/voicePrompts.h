@@ -268,5 +268,7 @@ extern bool vpIsPlaying(void);
 bool vpHasDataToPlay(void);
 void vpTerminate(void);
 bool vpCheckHeader(uint32_t* bufferAddress);
+int vp_open(char *vp_name);
+void vp_close();
 
 #endif

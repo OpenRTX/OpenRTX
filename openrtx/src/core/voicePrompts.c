@@ -37,20 +37,15 @@ const uint32_t VOICE_PROMPTS_DATA_VERSION = 0x1000;  // v1000 OpenRTX
 // The length is the length in bytes of the data.
 static void GetCodec2Data(int offset, int length);
 
+static FILE *voice_prompt_file = NULL;
+
 typedef struct
 {
     uint32_t magic;
     uint32_t version;
 } voicePromptsDataHeader_t;
-// ToDo: may be a file on flashdisk.
-// ToDo figure this out for OpenRTX
-// Address of voice prompt header for checking version etc.
-const uint32_t VOICE_PROMPTS_FLASH_HEADER_ADDRESS = 0x8F400;
-// Start of actual voice prompt data.
-static uint32_t
-    vpFlashDataAddress;  // = VOICE_PROMPTS_FLASH_HEADER_ADDRESS +
-                         // sizeof(voicePromptsDataHeader_t) +
-                         // sizeof(uint32_t)*VOICE_PROMPTS_TOC_SIZE ;
+// offset into voice prompt vpc file where actual codec2 data starts.
+static uint32_t vpDataOffset = 0;
 // TODO figure out Codec2 frame equivalent.
 // 76 x 27 byte Codec2 frames
 #define Codec2DataBufferSize 2052
@@ -92,22 +87,40 @@ const userDictEntry userDictionary[] = {
     {"parrot", PROMPT_CUSTOM9},     // Parrot
     {"channel", PROMPT_CHANNEL},   {0, 0}};
 
+int vp_open(char *vp_name)
+{
+    if (!vp_name)
+        vp_name = "voiceprompts.vpc";
+    voice_prompt_file = fopen(vp_name, "r");
+    if (!voice_prompt_file)
+        return -1;
+    return 0;
+}
+
+void vp_close()
+{
+    fclose(voice_prompt_file);
+}
+
 void vpCacheInit(void)
 {
     voicePromptsDataHeader_t header;
-    // ToDo not sure where this is coming from yet.
-    // SPI_Flash_read(VOICE_PROMPTS_FLASH_HEADER_ADDRESS,(uint8_t
-    // *)&header,sizeof(voicePromptsDataHeader_t));
+    vpDataOffset=0;
+	
+    if (!voice_prompt_file)
+        vp_open(NULL);
+	
+    if (!voice_prompt_file)
+        return;
+	
+    fseek(voice_prompt_file, 0L, SEEK_SET);
+    vpDataOffset += fread((void*)&header, sizeof(header), 1, voice_prompt_file);
 
     if (vpCheckHeader((uint32_t*)&header))
-    {                            // ToDo see above
-        vpDataIsLoaded = false;  // SPI_Flash_read(VOICE_PROMPTS_FLASH_HEADER_ADDRESS
-                                 // + sizeof(voicePromptsDataHeader_t), (uint8_t
-                                 // *)&tableOfContents, sizeof(uint32_t) *
-                                 // VOICE_PROMPTS_TOC_SIZE);
-        vpFlashDataAddress = VOICE_PROMPTS_FLASH_HEADER_ADDRESS +
-                             sizeof(voicePromptsDataHeader_t) +
-                             sizeof(uint32_t) * VOICE_PROMPTS_TOC_SIZE;
+    {                            // read in the TOC.
+        vpDataOffset += fread((void*)&tableOfContents, sizeof(tableOfContents), 1, voice_prompt_file);
+
+        vpDataIsLoaded = true;
     }
     if (vpDataIsLoaded)
     {  // if the hash key is down, set vpLevel to high, if beep or less.
@@ -131,13 +144,14 @@ bool vpCheckHeader(uint32_t* bufferAddress)
 
 static void GetCodec2Data(int offset, int length)
 {
-    if ((offset >= 0) && (length <= Codec2DataBufferSize))
-    {  // ToDo where are we reading this from?
-        // Just so we can build,
-        ;
-        // SPI_Flash_read(vpFlashDataAddress + offset, (uint8_t *)&Codec2Data,
-        // length);
-    }
+    if (!voice_prompt_file || (vpDataOffset < (sizeof(voicePromptsDataHeader_t) + sizeof(tableOfContents))))
+        return;
+	
+    if ((offset < 0) || (length > Codec2DataBufferSize))
+        return;
+    
+    fseek(voice_prompt_file, vpDataOffset+offset, SEEK_SET);
+    fread((void*)&Codec2Data, length, 1, voice_prompt_file);
 }
 
 void vpTick(void)
