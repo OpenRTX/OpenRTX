@@ -55,7 +55,8 @@ datetime_t rtc_getTime()
     time_t rawtime;
     struct tm * timeinfo;
     time ( &rawtime );
-    timeinfo = localtime ( &rawtime );
+    timeinfo = gmtime ( &rawtime );
+    //radio expects time to be TZ-less, so use gmtime instead of localtime.
 
     t.hour = timeinfo->tm_hour;
     t.minute = timeinfo->tm_min;
