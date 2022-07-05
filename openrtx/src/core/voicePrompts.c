@@ -154,6 +154,13 @@ static void GetCodec2Data(int offset, int length)
     
     fseek(voice_prompt_file, vpDataOffset+offset, SEEK_SET);
     fread((void*)&Codec2Data, length, 1, voice_prompt_file);
+    // zero buffer from length to the next multiple of 8 to avoid garbage 
+    // being played back, since codec2 frames are pushed in lots of 8 bytes.
+    if ((length % 8) != 0)
+	{
+        int bytesToZero = length % 8;
+        memset(Codec2Data+length, 0, bytesToZero);
+    }
 }
 
 void vpTerminate(void)
