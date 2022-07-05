@@ -201,7 +201,7 @@ void gfx_drawLine(point_t start, point_t end, color_t color);
  * @param height: line height, in pixel coordinates.
  * @param color: line color, in color_t format.
  */
-void gfx_drawHLine(uint16_t y, uint16_t height, color_t color);
+void gfx_drawHLine(int16_t y, uint16_t height, color_t color);
 
 /**
  * Draw a vertical line with specified horizontal position and width.
@@ -209,7 +209,7 @@ void gfx_drawHLine(uint16_t y, uint16_t height, color_t color);
  * @param width: line width, in pixel coordinates.
  * @param color: line color, in color_t format.
  */
-void gfx_drawVLine(uint16_t x, uint16_t width, color_t color);
+void gfx_drawVLine(int16_t x, uint16_t width, color_t color);
 
 /**
  * Draw a rectangle of specified width, height and color.
@@ -275,8 +275,8 @@ point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment,
  * @param fmt: printf style format string
  * @return text width and height as point_t coordinates
  */
-point_t gfx_printLine(uint8_t cur, uint8_t tot, uint16_t startY, uint16_t endY,
-                      uint16_t startX, fontSize_t size, textAlign_t alignment,
+point_t gfx_printLine(uint8_t cur, uint8_t tot, int16_t startY, int16_t endY,
+                      int16_t startX, fontSize_t size, textAlign_t alignment,
                       color_t color, const char* fmt, ... );
 
 /**
