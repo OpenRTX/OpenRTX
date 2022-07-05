@@ -157,9 +157,9 @@ void gfx_clearScreen()
 void gfx_fillScreen(color_t color)
 {
     if(!initialized) return;
-    for(uint16_t y = 0; y < SCREEN_HEIGHT; y++)
+    for(int16_t y = 0; y < SCREEN_HEIGHT; y++)
     {
-        for(uint16_t x = 0; x < SCREEN_WIDTH; x++)
+        for(int16_t x = 0; x < SCREEN_WIDTH; x++)
         {
             point_t pos = {x, y};
             gfx_setPixel(pos, color);
@@ -272,9 +272,9 @@ void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color,
     bool perimeter = 0;
     if(x_max > (SCREEN_WIDTH - 1)) x_max = SCREEN_WIDTH - 1;
     if(y_max > (SCREEN_HEIGHT - 1)) y_max = SCREEN_HEIGHT - 1;
-    for(uint16_t y = start.y; y <= y_max; y++)
+    for(int16_t y = start.y; y <= y_max; y++)
     {
-        for(uint16_t x = start.x; x <= x_max; x++)
+        for(int16_t x = start.x; x <= x_max; x++)
         {
             if(y == start.y || y == y_max || x == start.x || x == x_max) perimeter = 1;
             else perimeter = 0;
@@ -347,13 +347,13 @@ void gfx_drawCircle(point_t start, uint16_t r, color_t color)
     }
 }
 
-void gfx_drawHLine(uint16_t y, uint16_t height, color_t color)
+void gfx_drawHLine(int16_t y, uint16_t height, color_t color)
 {
     point_t start = {0, y};
     gfx_drawRect(start, SCREEN_WIDTH, height, color, 1);
 }
 
-void gfx_drawVLine(uint16_t x, uint16_t width, color_t color)
+void gfx_drawVLine(int16_t x, uint16_t width, color_t color)
 {
     point_t start = {x, 0};
     gfx_drawRect(start, width, SCREEN_HEIGHT, color, 1);
@@ -517,8 +517,8 @@ point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment,
     return gfx_printBuffer(start, size, alignment, color, text);
 }
 
-point_t gfx_printLine(uint8_t cur, uint8_t tot, uint16_t startY, uint16_t endY,
-                      uint16_t startX, fontSize_t size, textAlign_t alignment,
+point_t gfx_printLine(uint8_t cur, uint8_t tot, int16_t startY, int16_t endY,
+                      int16_t startX, fontSize_t size, textAlign_t alignment,
                       color_t color, const char* fmt, ... )
 {
     // Get format string and arguments from var char
@@ -534,11 +534,11 @@ point_t gfx_printLine(uint8_t cur, uint8_t tot, uint16_t startY, uint16_t endY,
     if(endY == 0) endY = SCREEN_HEIGHT;
 
     // Calculate print coordinates
-    uint16_t height = endY - startY;
+    int16_t height = endY - startY;
     // to print 2 lines we need 3 padding spaces
-    uint16_t gap = (height - (fontH * tot)) / (tot + 1);
+    int16_t gap = (height - (fontH * tot)) / (tot + 1);
     // We need a gap and a line height for each line
-    uint16_t printY = startY + (cur * (gap + fontH));
+    int16_t printY = startY + (cur * (gap + fontH));
 
     point_t start = {startX, printY};
     return gfx_printBuffer(start, size, alignment, color, text);
