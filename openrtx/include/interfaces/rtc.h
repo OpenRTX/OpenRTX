@@ -43,7 +43,7 @@ void rtc_terminate();
 
 /**
  * Set RTC time and calendar registers to a given value.
- * @param t: struct of type curTime_t, whose content is used to initialise both
+ * @param t: struct of type datetime_t, whose content is used to initialise both
  * clock and calendar registers.
  */
 void rtc_setTime(datetime_t t);
@@ -66,7 +66,7 @@ void rtc_setDate(uint8_t date, uint8_t month, uint8_t year);
 
 /**
  * Get current date and time.
- * @return structure of type curTime_t with current clock and calendar values.
+ * @return structure of type datetime_t with current clock and calendar values.
  */
 datetime_t rtc_getTime();
 
