@@ -73,8 +73,8 @@ extern "C" {
  */
 typedef struct point_t
 {
-    uint16_t x;
-    uint16_t y;
+    int16_t x;
+    int16_t y;
 } point_t;
 
 /**
@@ -329,7 +329,7 @@ void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, float r
  * @param sats: pointer to the array of satellites data
  * @param active_sats: bitset representing which sats are part of the fix
  */
-void gfx_drawGPSgraph(point_t start, uint16_t width, uint16_t height, sat_t *sats, uint32_t active_sats);
+void gfx_drawGPSgraph(point_t start, uint16_t width, uint16_t height, gpssat_t *sats, uint32_t active_sats);
 
 /**
  * Function to draw a compass of arbitrary size.

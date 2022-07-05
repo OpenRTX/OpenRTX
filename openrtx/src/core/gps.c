@@ -138,7 +138,7 @@ void gps_taskFunc()
                 // When the first sentence arrives, clear all the old data
                 if (frame.msg_nr == 1)
                 {
-                    bzero(&gps_data.satellites[0], 12 * sizeof(sat_t));
+                    bzero(&gps_data.satellites[0], 12 * sizeof(gpssat_t));
                 }
 
                 gps_data.satellites_in_view = frame.total_sats;
