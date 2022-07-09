@@ -27,7 +27,7 @@
 #error This header is C++ only!
 #endif
 
-#include <dsp.h>
+#include <fir.hpp>
 #include <array>
 
 namespace M17

@@ -21,8 +21,13 @@
 #ifndef DSP_H
 #define DSP_H
 
-#include <inttypes.h>
-#include <stdlib.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef int16_t audio_sample_t;
 
@@ -30,14 +35,6 @@ typedef int16_t audio_sample_t;
  * This header contains various DSP utilities which can be used to condition
  * input or output signals when implementing digital modes on OpenRTX.
  */
-
-#ifdef __cplusplus
-
-#include <array>
-#include <cstddef>
-
-extern "C" {
-#endif
 
 /**
  * Data structure holding the internal state of a filter.
@@ -90,72 +87,6 @@ void dsp_invertPhase(audio_sample_t *buffer, uint16_t length);
 
 #ifdef __cplusplus
 }
-
-/**
- * Class for FIR filter with configurable coefficients.
- * Adapted from the original implementation by Rob Riggs, Mobilinkd LLC.
- */
-template < size_t N >
-class Fir
-{
-public:
-
-    /**
-     * Constructor.
-     *
-     * @param taps: reference to a std::array of floating poing values representing
-     * the FIR filter coefficients.
-     */
-    Fir(const std::array< float, N >& taps) : taps(taps), pos(0)
-    {
-        reset();
-    }
-
-    /**
-     * Destructor.
-     */
-    ~Fir() { }
-
-    /**
-     * Perform one step of the FIR filter, computing a new output value given
-     * the input value and the history of previous input values.
-     *
-     * @param input: FIR input value for the current time step.
-     * @return FIR output as a function of the current and past input values.
-     */
-    float operator()(const float& input)
-    {
-        hist[pos++] = input;
-        if(pos >= N) pos = 0;
-
-        float  result = 0.0;
-        size_t index  = pos;
-
-        for(size_t i = 0; i < N; i++)
-        {
-            index   = (index != 0 ? index - 1 : N - 1);
-            result += hist[index] * taps[i];
-        }
-
-        return result;
-    }
-
-    /**
-     * Reset FIR history, clearing the memory of past values.
-     */
-    void reset()
-    {
-        hist.fill(0);
-        pos = 0;
-    }
-
-private:
-
-    const std::array< float, N >& taps;    ///< FIR filter coefficients.
-    std::array< float, N >        hist;    ///< History of past inputs.
-    size_t                        pos;     ///< Current position in history.
-};
-
 #endif // __cplusplus
 
 #endif /* DSP_H */
