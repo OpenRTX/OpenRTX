@@ -18,11 +18,11 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <M17/M17CodePuncturing.h>
-#include <M17/M17Decorrelator.h>
-#include <M17/M17Interleaver.h>
-#include <M17/M17FrameEncoder.h>
-#include <M17/M17Constants.h>
+#include <M17/M17CodePuncturing.hpp>
+#include <M17/M17Decorrelator.hpp>
+#include <M17/M17Interleaver.hpp>
+#include <M17/M17FrameEncoder.hpp>
+#include <M17/M17Constants.hpp>
 
 using namespace M17;
 

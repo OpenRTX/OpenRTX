@@ -20,9 +20,9 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <M17/M17Demodulator.h>
-#include <M17/M17DSP.h>
-#include <M17/M17Utils.h>
+#include <M17/M17Demodulator.hpp>
+#include <M17/M17DSP.hpp>
+#include <M17/M17Utils.hpp>
 #include <interfaces/audio_stream.h>
 #include <math.h>
 #include <cstring>

@@ -31,7 +31,7 @@
 #include <cstddef>
 #include <array>
 #include <bitset>
-#include "M17Utils.h"
+#include "M17Utils.hpp"
 
 namespace M17
 {

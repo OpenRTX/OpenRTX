@@ -18,10 +18,10 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <M17/M17CodePuncturing.h>
-#include <M17/M17Decorrelator.h>
-#include <M17/M17Interleaver.h>
-#include <M17/M17Transmitter.h>
+#include <M17/M17CodePuncturing.hpp>
+#include <M17/M17Decorrelator.hpp>
+#include <M17/M17Interleaver.hpp>
+#include <M17/M17Transmitter.hpp>
 
 using namespace M17;
 

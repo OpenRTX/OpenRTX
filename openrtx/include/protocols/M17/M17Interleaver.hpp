@@ -27,7 +27,7 @@
 #error This header is C++ only!
 #endif
 
-#include "M17Utils.h"
+#include "M17Utils.hpp"
 
 namespace M17
 {

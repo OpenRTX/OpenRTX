@@ -28,9 +28,9 @@
 #include <cstdint>
 #include <string>
 #include <array>
-#include "M17LinkSetupFrame.h"
-#include "M17Viterbi.h"
-#include "M17StreamFrame.h"
+#include "M17LinkSetupFrame.hpp"
+#include "M17Viterbi.hpp"
+#include "M17StreamFrame.hpp"
 
 namespace M17
 {

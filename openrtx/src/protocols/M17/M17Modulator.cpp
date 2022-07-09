@@ -22,9 +22,9 @@
 #include <cstddef>
 #include <cstring>
 #include <experimental/array>
-#include <M17/M17Modulator.h>
-#include <M17/M17Utils.h>
-#include <M17/M17DSP.h>
+#include <M17/M17Modulator.hpp>
+#include <M17/M17Utils.hpp>
+#include <M17/M17DSP.hpp>
 
 #if defined(PLATFORM_LINUX)
 #include <stdio.h>

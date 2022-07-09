@@ -19,9 +19,9 @@
  ***************************************************************************/
 
 #include <cstring>
-#include <M17/M17Golay.h>
-#include <M17/M17Callsign.h>
-#include <M17/M17LinkSetupFrame.h>
+#include <M17/M17Golay.hpp>
+#include <M17/M17Callsign.hpp>
+#include <M17/M17LinkSetupFrame.hpp>
 
 using namespace M17;
 

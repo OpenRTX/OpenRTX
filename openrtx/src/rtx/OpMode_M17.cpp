@@ -22,7 +22,7 @@
 #include <interfaces/delays.h>
 #include <interfaces/audio.h>
 #include <interfaces/radio.h>
-#include <OpMode_M17.h>
+#include <OpMode_M17.hpp>
 #include <audio_codec.h>
 #include <rtx.h>
 

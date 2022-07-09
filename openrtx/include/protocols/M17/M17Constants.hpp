@@ -21,7 +21,7 @@
 #ifndef M17_CONSTANTS_H
 #define M17_CONSTANTS_H
 
-#include <M17/M17Datatypes.h>
+#include <M17/M17Datatypes.hpp>
 #include <cstdint>
 #include <array>
 

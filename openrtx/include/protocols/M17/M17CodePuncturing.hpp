@@ -28,7 +28,7 @@
 #endif
 
 #include <experimental/array>
-#include "M17Utils.h"
+#include "M17Utils.hpp"
 
 namespace M17
 {

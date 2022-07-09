@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2020 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -21,8 +21,8 @@
 #include <interfaces/radio.h>
 #include <string.h>
 #include <rtx.h>
-#include <OpMode_FM.h>
-#include <OpMode_M17.h>
+#include <OpMode_FM.hpp>
+#include <OpMode_M17.hpp>
 
 pthread_mutex_t *cfgMutex;      // Mutex for incoming config messages
 

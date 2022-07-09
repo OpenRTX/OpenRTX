@@ -27,9 +27,9 @@
 
 #include <string>
 #include <array>
-#include "M17ConvolutionalEncoder.h"
-#include "M17LinkSetupFrame.h"
-#include "M17StreamFrame.h"
+#include "M17ConvolutionalEncoder.hpp"
+#include "M17LinkSetupFrame.hpp"
+#include "M17StreamFrame.hpp"
 
 namespace M17
 {

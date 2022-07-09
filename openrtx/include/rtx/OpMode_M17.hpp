@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2021 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2021 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -18,29 +18,31 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef OPMODE_FM_H
-#define OPMODE_FM_H
+#ifndef OPMODE_M17_H
+#define OPMODE_M17_H
 
-#include "OpMode.h"
+#include <M17/M17FrameDecoder.hpp>
+#include <M17/M17Transmitter.hpp>
+#include <M17/M17Demodulator.hpp>
+#include <M17/M17Modulator.hpp>
+#include "OpMode.hpp"
 
 /**
- * Specialisation of the OpMode class for the management of analog FM operating
- * mode.
+ * Specialisation of the OpMode class for the management of M17 operating mode.
  */
-
-class OpMode_FM : public OpMode
+class OpMode_M17 : public OpMode
 {
 public:
 
     /**
      * Constructor.
      */
-    OpMode_FM();
+    OpMode_M17();
 
     /**
      * Destructor.
      */
-    ~OpMode_FM();
+    ~OpMode_M17();
 
     /**
      * Enable the operating mode.
@@ -51,8 +53,9 @@ public:
     virtual void enable() override;
 
     /**
-     * Disable the operating mode. This function ensures that, after being
-     * called, the radio, the audio amplifier and the microphone are in OFF state.
+     * Disable the operating mode. This function stops the DMA transfers
+     * between the baseband, microphone and speakers. It also ensures that
+     * the radio, the audio amplifier and the microphone are in OFF state.
      *
      * Application must ensure this function is being called when exiting the
      * current operating mode.
@@ -78,7 +81,7 @@ public:
      */
     virtual opmode getID() override
     {
-        return OPMODE_FM;
+        return OPMODE_M17;
     }
 
     /**
@@ -86,13 +89,45 @@ public:
      *
      * @return true if RX squelch is open.
      */
-    virtual bool rxSquelchOpen() override;
+    virtual bool rxSquelchOpen() override
+    {
+        return false;
+    }
 
 private:
 
-    bool rfSqlOpen; ///< Flag for RF squelch status (analog squelch).
-    bool sqlOpen;   ///< Flag for squelch status.
-    bool enterRx;   ///< Flag for RX management.
+    /**
+     * Function handling the OFF operating state.
+     *
+     * @param status: pointer to the rtxStatus_t structure containing the
+     * current RTX status.
+     */
+    void offState(rtxStatus_t *const status);
+
+    /**
+     * Function handling the RX operating state.
+     *
+     * @param status: pointer to the rtxStatus_t structure containing the
+     * current RTX status.
+     */
+    void rxState(rtxStatus_t *const status);
+
+    /**
+     * Function handling the TX operating state.
+     *
+     * @param status: pointer to the rtxStatus_t structure containing the
+     * current RTX status.
+     */
+    void txState(rtxStatus_t *const status);
+
+
+    bool startRx;                      ///< Flag for RX management.
+    bool startTx;                      ///< Flag for TX management.
+    bool locked;                       ///< Demodulator locked on data stream.
+    M17::M17Modulator    modulator;    ///< M17 modulator.
+    M17::M17Demodulator  demodulator;  ///< M17 demodulator.
+    M17::M17Transmitter  m17Tx;        ///< M17 transmission manager.
+    M17::M17FrameDecoder decoder;      ///< M17 frame decoder
 };
 
-#endif /* OPMODE_FM_H */
+#endif /* OPMODE_M17_H */

@@ -34,8 +34,8 @@
 #include <dsp.h>
 #include <cmath>
 #include <interfaces/audio_stream.h>
-#include <M17/M17Datatypes.h>
-#include <M17/M17Constants.h>
+#include <M17/M17Datatypes.hpp>
+#include <M17/M17Constants.hpp>
 
 namespace M17
 {

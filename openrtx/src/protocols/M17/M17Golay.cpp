@@ -20,7 +20,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <M17/M17Golay.h>
+#include <M17/M17Golay.hpp>
 
 using namespace M17;
 

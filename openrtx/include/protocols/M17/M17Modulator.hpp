@@ -26,7 +26,7 @@
 #endif
 
 #include <interfaces/audio_stream.h>
-#include <M17/M17Constants.h>
+#include <M17/M17Constants.hpp>
 #include <cstdint>
 #include <memory>
 #include <array>

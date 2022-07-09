@@ -27,7 +27,7 @@
 
 #include <cstring>
 #include <string>
-#include "M17Datatypes.h"
+#include "M17Datatypes.hpp"
 
 namespace M17
 {

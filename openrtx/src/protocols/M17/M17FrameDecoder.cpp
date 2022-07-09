@@ -18,13 +18,13 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <M17/M17Golay.h>
-#include <M17/M17FrameDecoder.h>
-#include <M17/M17Interleaver.h>
-#include <M17/M17Decorrelator.h>
-#include <M17/M17CodePuncturing.h>
-#include <M17/M17Constants.h>
-#include <M17/M17Utils.h>
+#include <M17/M17Golay.hpp>
+#include <M17/M17FrameDecoder.hpp>
+#include <M17/M17Interleaver.hpp>
+#include <M17/M17Decorrelator.hpp>
+#include <M17/M17CodePuncturing.hpp>
+#include <M17/M17Constants.hpp>
+#include <M17/M17Utils.hpp>
 #include <algorithm>
 
 using namespace M17;
