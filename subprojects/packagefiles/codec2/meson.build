@@ -1,4 +1,4 @@
-project('codec2', 'cpp')
+project('codec2', 'c')
 
 cmake = import('cmake')
 
