@@ -170,6 +170,7 @@ int nvm_readSettings(settings_t *settings)
 
 int nvm_writeSettings(const settings_t *settings)
 {
+    (void) settings;
     // Disable settings write until DFU is implemented for flash backups
     return -1;
 }

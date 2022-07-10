@@ -20,6 +20,11 @@
 
 #include <openrtx.h>
 
+#ifdef PLATFORM_MD9600
+#include <interfaces/platform.h>
+#include <interfaces/delays.h>
+#endif
+
 #ifdef PLATFORM_LINUX
 #include <emulator/sdl_engine.h>
 #endif

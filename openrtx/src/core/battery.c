@@ -36,8 +36,7 @@ static const uint16_t bat_v_max = 0x0819;   // 8.10V
 static const uint16_t bat_v_min = 0x0AD4;   // 10.83V
 static const uint16_t bat_v_max = 0x0C73;   // 12.45V
 #elif defined BAT_NONE
-static const uint16_t bat_v_min = 0;
-static const uint16_t bat_v_max = 0;
+// Nothing to do, just avoid arising the compiler error
 #else
 #error Please define a battery type into platform/targets/.../hwconfig.h
 #endif
