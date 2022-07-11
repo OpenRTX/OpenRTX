@@ -443,7 +443,7 @@ bool M17Demodulator::update()
         {
 
             // If we are not demodulating a syncword, search for one
-            if (!syncDetected)
+            if (syncDetected == false)
             {
                 syncword = nextFrameSync(phase);
 
@@ -498,7 +498,15 @@ bool M17Demodulator::update()
 
                 if (frame_index == M17_SYNCWORD_SYMBOLS)
                 {
-                    // If syncword is not valid, lock is lost, accept 2 bit errors
+                    /*
+                     * Check for valid syncword using hamming distance.
+                     * The demodulator switches to locked state only if there
+                     * is an exact syncword match, this avoids continuous false
+                     * detections in absence of an M17 signal.
+                     */
+                    uint8_t maxHamming = 2;
+                    if(locked == false) maxHamming = 0;
+
                     uint8_t hammingSync = hammingDistance((*demodFrame)[0],
                                                           STREAM_SYNC_WORD[0])
                                         + hammingDistance((*demodFrame)[1],
@@ -509,9 +517,9 @@ bool M17Demodulator::update()
                                        + hammingDistance((*demodFrame)[1],
                                                          LSF_SYNC_WORD[1]);
 
-                    // Too many errors in the syncword, lock is lost
-                    if ((hammingSync > 2) && (hammingLsf > 2))
+                    if ((hammingSync > maxHamming) && (hammingLsf > maxHamming))
                     {
+                        // Lock lost
                         syncDetected = false;
                         locked       = false;
                         phase        = 0;
@@ -520,11 +528,12 @@ bool M17Demodulator::update()
                         // Pre-arm the log trigger.
                         trigEnable = true;
                         #endif
-
                     }
-                    // Correct syncword found
                     else
                     {
+                        // Correct syncword found
+                        locked = true;
+
                         #ifdef ENABLE_DEMOD_LOG
                         // Trigger a data dump when lock is re-acquired.
                         if((dumpData == false) && (trigEnable == true))
@@ -533,8 +542,6 @@ bool M17Demodulator::update()
                             triggered  = true;
                         }
                         #endif
-
-                        locked = true;
                     }
                 }
 
