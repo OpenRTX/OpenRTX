@@ -26,6 +26,7 @@
 #include <interfaces/nvmem.h>
 #include <interfaces/cps_io.h>
 #include <interfaces/platform.h>
+#include <interfaces/delays.h>
 #include <memory_profiling.h>
 
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
@@ -639,11 +640,13 @@ void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state)
     (void) ui_state;
 
     static int drawcnt = 0;
+    static long long lastDraw = 0;
+
     gfx_clearScreen();
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "Reset to Defaults");
 
-    //text will flash yellow and white based on update rate of screen
+    // Make text flash yellow once every 1s
     color_t textcolor = drawcnt % 2 == 0 ? color_white : yellow_fab413;
     gfx_printLine(1, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
                   layout.horizontal_pad, layout.top_font,
@@ -651,7 +654,12 @@ void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state)
     gfx_printLine(2, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
                   layout.horizontal_pad, layout.top_font,
                   TEXT_ALIGN_CENTER, textcolor, "Press Enter twice");
-    drawcnt++;
+
+    if((getTick() - lastDraw) > 1000)
+    {
+        drawcnt++;
+        lastDraw = getTick();
+    }
 }
 
 bool _ui_drawMacroMenu()
