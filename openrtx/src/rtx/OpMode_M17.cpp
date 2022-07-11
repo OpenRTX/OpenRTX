@@ -71,7 +71,10 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
     // Force inversion of RX phase for MD-3x0 VHF and MD-UV3x0 radios
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
     const hwInfo_t* hwinfo = platform_getHwInfo();
-    status->invertRxPhase |= hwinfo->vhf_band;
+    if(hwinfo->vhf_band == 1)
+        status->invertRxPhase = true;
+    else
+        status->invertRxPhase = false;
     #endif
 
     // Main FSM logic
