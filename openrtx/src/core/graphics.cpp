@@ -181,9 +181,9 @@ inline void gfx_setPixel(point_t pos, color_t color)
         rgb565_t new_pixel = _true2highColor(color);
         rgb565_t old_pixel = buf[pos.x + pos.y*SCREEN_WIDTH];
         rgb565_t pixel;
-        pixel.r = ((255-alpha)*old_pixel.b+alpha*new_pixel.b)/255;
+        pixel.r = ((255-alpha)*old_pixel.r+alpha*new_pixel.r)/255;
         pixel.g = ((255-alpha)*old_pixel.g+alpha*new_pixel.g)/255;
-        pixel.b = ((255-alpha)*old_pixel.r+alpha*new_pixel.r)/255;
+        pixel.b = ((255-alpha)*old_pixel.b+alpha*new_pixel.b)/255;
         buf[pos.x + pos.y*SCREEN_WIDTH] = pixel;
     }
     else
