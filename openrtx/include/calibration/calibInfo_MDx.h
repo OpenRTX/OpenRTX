@@ -34,17 +34,17 @@
  */
 typedef struct
 {
-    uint8_t vox1;
-    uint8_t vox10;
-    uint8_t rxLowVoltage;
-    uint8_t rxFullVoltage;
-    uint8_t rssi1;
-    uint8_t rssi4;
-    uint8_t analogMic;
-    uint8_t digitalMic;
-    uint8_t freqAdjustHigh;
-    uint8_t freqAdjustMid;
-    uint8_t freqAdjustLow;
+    uint8_t vox1;  // 0x2001c380
+    uint8_t vox10; // 0x2001c381
+    uint8_t rxLowVoltage; // 82
+    uint8_t rxFullVoltage; // 83
+    uint8_t rssi1; // 84
+    uint8_t rssi4; // 85
+    uint8_t analogMic; // 86
+    uint8_t digitalMic; // 87
+    uint8_t freqAdjustHigh; // 88
+    uint8_t freqAdjustMid; // 89 <<-!
+    uint8_t freqAdjustLow; // 8A
     freq_t  rxFreq[9];
     freq_t  txFreq[9];
     uint8_t txHighPower[9];

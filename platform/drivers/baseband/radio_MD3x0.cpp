@@ -149,8 +149,8 @@ void radio_init(const rtxStatus_t *rtxState)
     /*
      * Modulation bias settings, as per TYT firmware.
      */
-    DAC->DHR12R2 = (calData->freqAdjustMid)*4 + 0x600;
-    C5000.setModOffset(calData->freqAdjustMid);
+    DAC->DHR12R2 = (calData->freqAdjustHigh)*4 + 0x600;
+    C5000.setModOffset(calData->freqAdjustHigh);
 }
 
 void radio_terminate()
@@ -187,7 +187,7 @@ void radio_tuneVcxo(const int16_t vhfOffset, const int16_t uhfOffset)
      * register, as we still have to deeply understand how TYT computes
      * the values written there.
      */
-    int16_t calValue  = static_cast< int16_t >(calData->freqAdjustMid);
+    int16_t calValue  = static_cast< int16_t >(calData->freqAdjustHigh);
     int16_t oscTune   = (calValue*4 + 0x600) + uhfOffset;
     oscTune           = std::max(std::min(oscTune, int16_t(4095)), int16_t(0));
     DAC->DHR12R2      = static_cast< uint16_t >(oscTune);
