@@ -262,6 +262,7 @@ void vpQueueInteger(int32_t value);
 void vpQueueStringTableEntry(const char* const*);
 
 void vpPlay(void);  // Starts prompt playback
+void vpTick(); // called to process vp data being decoded.
 extern bool vpIsPlaying(void);
 bool vpHasDataToPlay(void);
 void vpTerminate(void);

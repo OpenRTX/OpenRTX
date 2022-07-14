@@ -38,6 +38,8 @@
 #include <interfaces/gps.h>
 #include <gps.h>
 #endif
+#include <voicePrompts.h>
+
 
 /* Mutex for concurrent access to RTX state variable */
 pthread_mutex_t rtx_mutex;
@@ -72,6 +74,8 @@ void *ui_threadFunc(void *arg)
         ui_updateFSM(&sync_rtx);            // Update UI FSM
         ui_saveState();                     // Save local state copy
         pthread_mutex_unlock(&state_mutex); // Unlock r/w access to radio state
+
+        vpTick();                           // continue playing voice prompts in progress if any.
 
         // If synchronization needed take mutex and update RTX configuration
         if(sync_rtx)

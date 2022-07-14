@@ -66,13 +66,16 @@ static uint8_t Codec2Data[Codec2DataBufferSize];
 #define VOICE_PROMPTS_SEQUENCE_BUFFER_SIZE 128
 
 typedef struct
-{
-    uint16_t Buffer[VOICE_PROMPTS_SEQUENCE_BUFFER_SIZE];
-    int Pos;
-    int Length;
+{ // buffer of individual prompt indices.
+    uint16_t buffer[VOICE_PROMPTS_SEQUENCE_BUFFER_SIZE];
+    int pos; // index into above buffer.
+    int length; // number of entries in above buffer.
+    int codec2DataIndex; // index into current codec2 data 
+    //(buffer content sent in lots of 8 byte frames.)
+    int codec2DataLength; // length of codec2 data for current prompt.
 } vpSequence_t;
 
-static vpSequence_t vpCurrentSequence = {.Pos = 0, .Length = 0};
+static vpSequence_t vpCurrentSequence = {.pos = 0, .length = 0, .codec2DataIndex = 0, .codec2DataLength = 0};
 
 uint32_t tableOfContents[VOICE_PROMPTS_TOC_SIZE];
 
@@ -170,7 +173,7 @@ void vpTerminate(void)
         audio_disableAmp();
         codec_stop();
 
-        vpCurrentSequence.Pos = 0;
+        vpCurrentSequence.pos = 0;
 
         voicePromptIsActive = false;
     }
@@ -183,8 +186,10 @@ void vpInit(void)
         vpTerminate();
     }
 
-    vpCurrentSequence.Length = 0;
-    vpCurrentSequence.Pos    = 0;
+    vpCurrentSequence.length = 0;
+    vpCurrentSequence.pos    = 0;
+    vpCurrentSequence.codec2DataIndex = 0;
+    vpCurrentSequence.codec2DataLength = 0;
 }
 
 void vpQueuePrompt(uint16_t prompt)
@@ -195,10 +200,10 @@ void vpQueuePrompt(uint16_t prompt)
     {
         vpInit();
     }
-    if (vpCurrentSequence.Length < VOICE_PROMPTS_SEQUENCE_BUFFER_SIZE)
+    if (vpCurrentSequence.length < VOICE_PROMPTS_SEQUENCE_BUFFER_SIZE)
     {
-        vpCurrentSequence.Buffer[vpCurrentSequence.Length] = prompt;
-        vpCurrentSequence.Length++;
+        vpCurrentSequence.buffer[vpCurrentSequence.length] = prompt;
+        vpCurrentSequence.length++;
     }
 }
 
@@ -342,48 +347,54 @@ void vpQueueStringTableEntry(const char* const* stringTableStringPtr)
                   (stringTableStringPtr - &currentLanguage->languageName));
 }
 
-static bool TerminateOnKeyPress()
-{
-    if (kbd_getKeys()==0) return false; 
-    
-    vpTerminate();
-    return true;
-}
-
 void vpPlay(void)
 {
     if (state.settings.vpLevel < vpLow) return;
 
     if (voicePromptIsActive) return;
 	
-    if (vpCurrentSequence.Length <= 0) return;
+    if (vpCurrentSequence.length <= 0) return;
 	
     voicePromptIsActive = true;  // Start the playback
 	
+    codec_startDecode(SINK_SPK);
+	
     audio_enableAmp();
+}
 
-    while ((vpCurrentSequence.Pos < vpCurrentSequence.Length) && !TerminateOnKeyPress())
-	{
-        int promptNumber    = vpCurrentSequence.Buffer[vpCurrentSequence.Pos];
+// Call this from the main timer thread to continue voice prompt playback.
+void vpTick()
+{
+    if (!voicePromptIsActive) return;
+	
+    while (vpCurrentSequence.pos < vpCurrentSequence.length)
+    {// get the codec2 data for the current prompt if needed.
+        if (vpCurrentSequence.codec2DataLength == 0)
+        { // obtain the data for the prompt.
+            int promptNumber    = vpCurrentSequence.buffer[vpCurrentSequence.pos];
 
-        currentPromptLength =
+            vpCurrentSequence.codec2DataLength =
             tableOfContents[promptNumber + 1] - tableOfContents[promptNumber];
 			
-        GetCodec2Data(tableOfContents[promptNumber], currentPromptLength);
-		
-        // queue this buffer in lots of 8 bytes.
-		int framePos=0;
-        while ((framePos < currentPromptLength) && !TerminateOnKeyPress())
-        {
-            codec_pushFrame(Codec2Data+framePos, true);
-            framePos+=8;
+            GetCodec2Data(tableOfContents[promptNumber], vpCurrentSequence.codec2DataLength);
 			
-            if (vpCurrentSequence.Pos==0) // first buffer worth.
-                codec_startDecode(SINK_SPK);
+            vpCurrentSequence.codec2DataIndex = 0;
+        }
+        // push  the codec2 data in lots of 8 byte frames.
+        while (vpCurrentSequence.codec2DataIndex < vpCurrentSequence.codec2DataLength)
+        {
+            if (!codec_pushFrame(Codec2Data+vpCurrentSequence.codec2DataIndex, false))
+                return; // wait until there is room, perhaps next vpTick call.
+            vpCurrentSequence.codec2DataIndex += 8;
         }
 
-        vpCurrentSequence.Pos++;
+        vpCurrentSequence.pos++; // ready for next prompt in sequence.
+        vpCurrentSequence.codec2DataLength = 0; // flag that we need to get more data.
+        vpCurrentSequence.codec2DataIndex = 0;
     }
+    // see if we've finished.
+    if(vpCurrentSequence.pos == vpCurrentSequence.length)
+        voicePromptIsActive=false;
 }
 
 inline bool vpIsPlaying(void)
@@ -393,5 +404,5 @@ inline bool vpIsPlaying(void)
 
 bool vpHasDataToPlay(void)
 {
-    return (vpCurrentSequence.Length > 0);
+    return (vpCurrentSequence.length > 0);
 }
