@@ -163,6 +163,7 @@ void HR_Cx000< M >::fmMode()
     writeReg(M::CONFIG, 0x81, 0x00);    // Mask other interrupts
     writeReg(M::CONFIG, 0x60, 0x00);    // Disable both analog and DMR transmission
     writeReg(M::CONFIG, 0x00, 0x28);    // Reset register
+    writeReg(M::CONFIG, 0x0E, 0x40 | 0x04); // Set the mic input during early init, if we don't the "frequency wiggle" is present
 }
 
 template< class M >
