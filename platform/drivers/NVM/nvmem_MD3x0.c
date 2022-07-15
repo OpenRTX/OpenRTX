@@ -43,7 +43,17 @@ void nvm_readCalibData(void *buf)
 
     md3x0Calib_t *calib = ((md3x0Calib_t *) buf);
 
-    (void) W25Qx_readSecurityRegister(0x1000, &(calib->vox1), 11);
+    (void) W25Qx_readSecurityRegister(0x1000, &(calib->vox1), 1);
+    (void) W25Qx_readSecurityRegister(0x1001, &(calib->vox10), 1);
+    (void) W25Qx_readSecurityRegister(0x1002, &(calib->rxLowVoltage), 1);
+    (void) W25Qx_readSecurityRegister(0x1003, &(calib->rxFullVoltage), 1);
+    (void) W25Qx_readSecurityRegister(0x1004, &(calib->rssi1), 1);
+    (void) W25Qx_readSecurityRegister(0x1005, &(calib->rssi4), 1);
+    (void) W25Qx_readSecurityRegister(0x1006, &(calib->analogMic), 1);
+    (void) W25Qx_readSecurityRegister(0x1007, &(calib->digitalMic), 1);
+    (void) W25Qx_readSecurityRegister(0x1008, &(calib->freqAdjustHigh), 1);
+    (void) W25Qx_readSecurityRegister(0x1009, &(calib->freqAdjustMid), 1);
+    (void) W25Qx_readSecurityRegister(0x100A, &(calib->freqAdjustLow), 1);
     (void) W25Qx_readSecurityRegister(0x1010, calib->txHighPower, 9);
     (void) W25Qx_readSecurityRegister(0x1020, calib->txLowPower, 9);
     (void) W25Qx_readSecurityRegister(0x1030, calib->rxSensitivity, 9);
