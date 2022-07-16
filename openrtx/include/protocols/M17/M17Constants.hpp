@@ -41,6 +41,7 @@ static constexpr syncw_t LSF_SYNC_WORD    = {0x55, 0xF7};  // LSF sync word
 static constexpr syncw_t BERT_SYNC_WORD   = {0xDF, 0x55};  // BERT data sync word
 static constexpr syncw_t STREAM_SYNC_WORD = {0xFF, 0x5D};  // Stream data sync word
 static constexpr syncw_t PACKET_SYNC_WORD = {0x75, 0xFF};  // Packet data sync word
+static constexpr syncw_t EOT_SYNC_WORD    = {0x55, 0x5D};  // End of transmission sync word
 
 }      // namespace M17
 

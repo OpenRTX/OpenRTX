@@ -76,7 +76,6 @@ void M17::M17Modulator::start()
     if(txRunning) return;
 
     txRunning = true;
-    stopTx    = false;
 
     // Fill symbol buffer with preamble, made of alternated +3 and -3 symbols
     for(size_t i = 0; i < symbols.size(); i += 2)
@@ -112,11 +111,45 @@ void M17Modulator::send(const frame_t& frame, const bool isLast)
         it       = std::copy(sym.begin(), sym.end(), it);
     }
 
+    symbolsToBaseband();
+    sendBaseband();
+
     // If last frame, signal stop of transmission
-    if(isLast) stopTx = true;
+    if(isLast) stop();
+}
+
+void M17Modulator::stop()
+{
+    if(txRunning == false)
+        return;
+
+    frame_t eotFrame;
+    // Fill EOT frame with 0x55, 0x5D as per M17 spec.
+    for(size_t i = 0; i < eotFrame.size(); i += 2)
+    {
+        eotFrame[i]     = 0x55;
+        eotFrame[i + 1] = 0x5D;
+    }
+
+    // Convert to symbols
+    auto it = symbols.begin();
+    for(size_t i = 0; i < eotFrame.size(); i++)
+    {
+        auto sym = byteToSymbols(eotFrame[i]);
+        it       = std::copy(sym.begin(), sym.end(), it);
+    }
 
     symbolsToBaseband();
     sendBaseband();
+
+    outputStream_stop(outStream);
+    outputStream_sync(outStream, false);
+    txRunning  = false;
+    idleBuffer = baseband_buffer.get();
+
+    #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
+    dsp_resetFilterState(&pwmFilterState);
+    #endif
 }
 
 void M17Modulator::symbolsToBaseband()
@@ -148,24 +181,7 @@ void M17Modulator::sendBaseband()
 
     // Transmission is ongoing, syncronise with stream end before proceeding
     outputStream_sync(outStream, true);
-
-    // Check if transmission stop is requested, if so stop the output stream
-    // and wait until its effective termination.
-    if(stopTx == true)
-    {
-        outputStream_stop(outStream);
-        outputStream_sync(outStream, false);
-        stopTx     = false;
-        txRunning  = false;
-        idleBuffer = baseband_buffer.get();
-        #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
-        dsp_resetFilterState(&pwmFilterState);
-        #endif
-    }
-    else
-    {
-        idleBuffer = outputStream_getIdleBuffer(outStream);
-    }
+    idleBuffer = outputStream_getIdleBuffer(outStream);
 }
 #else
 void M17Modulator::sendBaseband()
