@@ -58,7 +58,7 @@ public:
     void init();
 
     /**
-     * Shutdown modulator and deallocate data buffers.
+     * Forcefully shutdown modulator and deallocate data buffers.
      */
     void terminate();
 
@@ -88,6 +88,9 @@ private:
      */
     void emitBaseband();
 
+    /** Gracefully end the transmission **/
+    void stop();
+
     static constexpr size_t M17_TX_SAMPLE_RATE     = 48000;
     static constexpr size_t M17_SAMPLES_PER_SYMBOL = M17_TX_SAMPLE_RATE / M17_SYMBOL_RATE;
     static constexpr size_t M17_FRAME_SAMPLES      = M17_FRAME_SYMBOLS * M17_SAMPLES_PER_SYMBOL;
@@ -105,7 +108,6 @@ private:
     stream_sample_t              *idleBuffer;      ///< Half baseband buffer, free for processing.
     streamId                     outStream;        ///< Baseband output stream ID.
     bool                         txRunning;        ///< Transmission running.
-    bool                         stopTx;           ///< Stop transmission request.
 
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
     filter_state_t   pwmFilterState;
