@@ -79,7 +79,11 @@ void codec_terminate()
     pthread_cond_destroy(&not_empty);
     pthread_cond_destroy(&not_full);
 
-    if(audioBuf != NULL) free(audioBuf);
+    if(audioBuf != NULL)
+    {
+        free(audioBuf);
+        audioBuf = NULL;
+    }
 }
 
 bool codec_startEncode(const enum AudioSource source)
