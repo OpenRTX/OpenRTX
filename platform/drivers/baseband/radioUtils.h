@@ -22,7 +22,8 @@
 #define RADIO_UTILS_H
 
 #include <stdint.h>
-#include <datatypes.h>
+
+#include "core/datatypes.h"
 
 #ifdef __cplusplus
 extern "C" {

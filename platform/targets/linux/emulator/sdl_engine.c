@@ -15,10 +15,12 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdlib.h>
-#include <pthread.h>
-#include <state.h>
 #include "sdl_engine.h"
+
+#include <pthread.h>
+#include <stdlib.h>
+
+#include "core/state.h"
 #include "emulator.h"
 
 chan_t fb_sync;                 // Shared channel to receive frame buffer updates

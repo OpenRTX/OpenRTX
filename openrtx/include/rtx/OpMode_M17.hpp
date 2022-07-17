@@ -21,11 +21,11 @@
 #ifndef OPMODE_M17_H
 #define OPMODE_M17_H
 
-#include <M17/M17FrameDecoder.hpp>
-#include <M17/M17Transmitter.hpp>
-#include <M17/M17Demodulator.hpp>
-#include <M17/M17Modulator.hpp>
 #include "OpMode.hpp"
+#include "protocols/M17/M17Demodulator.hpp"
+#include "protocols/M17/M17FrameDecoder.hpp"
+#include "protocols/M17/M17Modulator.hpp"
+#include "protocols/M17/M17Transmitter.hpp"
 
 /**
  * Specialisation of the OpMode class for the management of M17 operating mode.

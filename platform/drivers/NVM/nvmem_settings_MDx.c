@@ -19,9 +19,10 @@
  ***************************************************************************/
 
 #include <string.h>
-#include <interfaces/nvmem.h>
-#include <cps.h>
+
+#include "core/cps.h"
 #include "flash.h"
+#include "interfaces/nvmem.h"
 
 /*
  * Data structure defining the memory layout used for saving and restore

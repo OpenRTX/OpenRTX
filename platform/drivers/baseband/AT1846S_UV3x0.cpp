@@ -18,10 +18,11 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/gpio.h>
-#include <interfaces/delays.h>
 #include <hwconfig.h>
+
 #include "AT1846S.h"
+#include "interfaces/delays.h"
+#include "interfaces/gpio.h"
 
 void AT1846S::init()
 {

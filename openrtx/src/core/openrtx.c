@@ -18,15 +18,15 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <interfaces/display.h>
-#include <interfaces/delays.h>
-#include <interfaces/cps_io.h>
-#include <interfaces/gps.h>
-#include <graphics.h>
-#include <openrtx.h>
-#include <threads.h>
-#include <ui.h>
+#include "core/openrtx.h"
+
+#include "core/graphics.h"
+#include "core/threads.h"
+#include "core/ui.h"
+#include "interfaces/cps_io.h"
+#include "interfaces/delays.h"
+#include "interfaces/gps.h"
+#include "interfaces/platform.h"
 
 extern void *dev_task(void *arg);
 

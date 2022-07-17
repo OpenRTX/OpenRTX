@@ -21,8 +21,8 @@
 #define USB_H
 
 #include <stdint.h>
-#include <unistd.h>
 #include <tusb.h>
+#include <unistd.h>
 
 #ifdef __cplusplus
 extern "C" {

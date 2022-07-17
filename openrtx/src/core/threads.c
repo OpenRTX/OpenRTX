@@ -18,25 +18,28 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include "core/threads.h"
+
 #include <hwconfig.h>
 #include <pthread.h>
 #include <sched.h>
-#include <ui.h>
-#include <state.h>
-#include <threads.h>
-#include <graphics.h>
-#include <interfaces/platform.h>
-#include <interfaces/delays.h>
-#include <interfaces/radio.h>
-#include <event.h>
-#include <rtx.h>
 #include <string.h>
-#include <utils.h>
-#include <input.h>
-#include <backup.h>
+
+#include "core/backup.h"
+#include "core/event.h"
+#include "core/graphics.h"
+#include "core/input.h"
+#include "core/state.h"
+#include "core/ui.h"
+#include "core/utils.h"
+#include "interfaces/delays.h"
+#include "interfaces/platform.h"
+#include "interfaces/radio.h"
+#include "rtx/rtx.h"
+
 #ifdef GPS_PRESENT
-#include <interfaces/gps.h>
-#include <gps.h>
+#include "core/gps.h"
+#include "interfaces/gps.h"
 #endif
 
 /* Mutex for concurrent access to RTX state variable */

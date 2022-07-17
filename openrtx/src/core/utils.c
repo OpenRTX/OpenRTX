@@ -17,7 +17,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <utils.h>
+#include "core/utils.h"
+
 #include <math.h>
 
 uint8_t interpCalParameter(const freq_t freq, const freq_t *calPoints,

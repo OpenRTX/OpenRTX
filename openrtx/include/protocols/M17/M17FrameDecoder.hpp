@@ -25,12 +25,13 @@
 #error This header is C++ only!
 #endif
 
+#include <array>
 #include <cstdint>
 #include <string>
-#include <array>
+
 #include "M17LinkSetupFrame.hpp"
-#include "M17Viterbi.hpp"
 #include "M17StreamFrame.hpp"
+#include "M17Viterbi.hpp"
 
 namespace M17
 {

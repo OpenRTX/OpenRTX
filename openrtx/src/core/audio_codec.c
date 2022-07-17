@@ -18,13 +18,15 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/audio_stream.h>
-#include <audio_codec.h>
-#include <pthread.h>
+#include "core/audio_codec.h"
+
 #include <codec2.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dsp.h>
+
+#include "core/dsp.h"
+#include "interfaces/audio_stream.h"
 
 #define BUF_SIZE 4
 

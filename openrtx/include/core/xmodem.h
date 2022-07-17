@@ -21,9 +21,9 @@
 #ifndef XMODEM_H
 #define XMODEM_H
 
-#include <sys/types.h>
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
+#include <sys/types.h>
 
 #ifdef __cplusplus
 extern "C" {

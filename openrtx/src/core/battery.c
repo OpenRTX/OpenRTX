@@ -17,7 +17,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <battery.h>
+#include "core/battery.h"
+
 #include <hwconfig.h>
 #include <math.h>
 

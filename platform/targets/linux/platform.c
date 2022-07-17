@@ -15,12 +15,15 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <interfaces/gpio.h>
-#include <interfaces/nvmem.h>
-#include <stdio.h>
-#include "emulator.h"
+#include "interfaces/platform.h"
+
 #include <SDL2/SDL.h>
+#include <stdio.h>
+
+#include "core/graphics.h"
+#include "emulator.h"
+#include "interfaces/gpio.h"
+#include "interfaces/nvmem.h"
 
 /* Custom SDL Event to adjust backlight */
 extern Uint32 SDL_Backlight_Event;

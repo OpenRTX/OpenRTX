@@ -17,13 +17,15 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/gps.h>
-#include <gps.h>
+#include "interfaces/gps.h"
+
 #include <minmea.h>
-#include <stdio.h>
-#include <state.h>
-#include <string.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "core/gps.h"
+#include "core/state.h"
 
 #define KNOTS2KMH 1.852f
 

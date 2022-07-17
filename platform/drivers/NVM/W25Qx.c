@@ -19,12 +19,14 @@
  ***************************************************************************/
 
 #include "W25Qx.h"
+
+#include <hwconfig.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <hwconfig.h>
-#include <interfaces/gpio.h>
-#include <interfaces/delays.h>
+
+#include "interfaces/delays.h"
+#include "interfaces/gpio.h"
 
 #define CMD_WRITE 0x02   /* Read data              */
 #define CMD_READ  0x03   /* Read data              */

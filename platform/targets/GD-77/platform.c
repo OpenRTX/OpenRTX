@@ -18,17 +18,19 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <interfaces/nvmem.h>
-#include <interfaces/audio.h>
-#include <interfaces/gpio.h>
-#include <calibInfo_GDx.h>
-#include <ADC0_GDx.h>
-#include <string.h>
+#include "interfaces/platform.h"
+
 #include <I2C0.h>
 #include <pthread.h>
-#include <backlight.h>
+#include <string.h>
+
+#include "calibration/calibInfo_GDx.h"
+#include "drivers/ADC/ADC0_GDx.h"
+#include "drivers/backlight/backlight.h"
 #include "hwconfig.h"
+#include "interfaces/audio.h"
+#include "interfaces/gpio.h"
+#include "interfaces/nvmem.h"
 
 pthread_mutex_t adc_mutex;
 

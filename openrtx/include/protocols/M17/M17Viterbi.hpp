@@ -27,10 +27,11 @@
 #error This header is C++ only!
 #endif
 
-#include <cstdint>
-#include <cstddef>
 #include <array>
 #include <bitset>
+#include <cstddef>
+#include <cstdint>
+
 #include "M17Utils.hpp"
 
 namespace M17

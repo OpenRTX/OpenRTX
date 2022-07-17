@@ -19,10 +19,12 @@
  ***************************************************************************/
 
 #include "toneGenerator_MDx.h"
-#include <miosix.h>
+
 #include <hwconfig.h>
-#include <interfaces/gpio.h>
 #include <kernel/scheduler/scheduler.h>
+#include <miosix.h>
+
+#include "interfaces/gpio.h"
 
 using namespace miosix;
 

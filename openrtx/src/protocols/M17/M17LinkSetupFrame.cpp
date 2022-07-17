@@ -18,10 +18,12 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include "protocols/M17/M17LinkSetupFrame.hpp"
+
 #include <cstring>
-#include <M17/M17Golay.hpp>
-#include <M17/M17Callsign.hpp>
-#include <M17/M17LinkSetupFrame.hpp>
+
+#include "protocols/M17/M17Callsign.hpp"
+#include "protocols/M17/M17Golay.hpp"
 
 using namespace M17;
 

@@ -22,10 +22,10 @@
 #define QUEUE_H
 
 #include <pthread.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 // Ring buffer size (MAX = 255)
 #define MSG_QTY 10

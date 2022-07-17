@@ -21,10 +21,10 @@
 #ifndef RTX_H
 #define RTX_H
 
-#include <datatypes.h>
-#include <stdint.h>
-#include <cps.h>
 #include <pthread.h>
+#include <stdint.h>
+
+#include "core/datatypes.h"
 
 #ifdef __cplusplus
 extern "C" {

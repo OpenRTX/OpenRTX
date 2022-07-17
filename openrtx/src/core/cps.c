@@ -18,8 +18,10 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <cps.h>
+#include "core/cps.h"
+
+#include "interfaces/platform.h"
+#include "rtx/rtx.h"
 
 channel_t cps_getDefaultChannel()
 {

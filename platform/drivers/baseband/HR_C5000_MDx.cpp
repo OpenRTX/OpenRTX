@@ -18,10 +18,11 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/delays.h>
-#include <interfaces/gpio.h>
 #include <hwconfig.h>
+
 #include "HR_C5000.h"
+#include "interfaces/delays.h"
+#include "interfaces/gpio.h"
 
 static const uint8_t initSeq1[] = {0x00, 0x00, 0xFF, 0xB0, 0x00, 0x00, 0x00, 0x00};
 static const uint8_t initSeq2[] =

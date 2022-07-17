@@ -20,12 +20,13 @@
 
 #include <string.h>
 #include <wchar.h>
-#include <interfaces/delays.h>
-#include <interfaces/nvmem.h>
-#include <calibInfo_GDx.h>
-#include <utils.h>
+
 #include "AT24Cx.h"
 #include "W25Qx.h"
+#include "calibration/calibInfo_GDx.h"
+#include "core/utils.h"
+#include "interfaces/delays.h"
+#include "interfaces/nvmem.h"
 
 #if defined(PLATFORM_GD77)
 static const uint32_t UHF_CAL_BASE = 0x8F000;

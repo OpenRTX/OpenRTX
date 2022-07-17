@@ -21,9 +21,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <interfaces/nvmem.h>
-#include <sys/stat.h>
 #include <sys/errno.h>
+#include <sys/stat.h>
+
+#include "interfaces/nvmem.h"
 
 #define _NVM_MAX_PATHLEN 256
 

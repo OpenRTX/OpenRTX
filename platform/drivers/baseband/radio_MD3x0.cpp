@@ -18,17 +18,19 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <toneGenerator_MDx.h>
-#include <interfaces/radio.h>
-#include <interfaces/gpio.h>
-#include <calibInfo_MDx.h>
 #include <hwconfig.h>
-#include <ADC1_MDx.h>
+
 #include <algorithm>
-#include <utils.h>
+
 #include "HR_C5000.h"
 #include "SKY72310.h"
+#include "calibration/calibInfo_MDx.h"
+#include "core/utils.h"
+#include "drivers/ADC/ADC1_MDx.h"
+#include "drivers/tones/toneGenerator_MDx.h"
+#include "interfaces/gpio.h"
+#include "interfaces/platform.h"
+#include "interfaces/radio.h"
 
 static const freq_t IF_FREQ = 49950000;  // Intermediate frequency: 49.95MHz
 

@@ -22,9 +22,10 @@
 #ifndef MCP4551_H
 #define MCP4551_H
 
-#include <stdint.h>
 #include <stdbool.h>
-#include <datatypes.h>
+#include <stdint.h>
+
+#include "core/datatypes.h"
 
 #ifdef __cplusplus
 extern "C" {

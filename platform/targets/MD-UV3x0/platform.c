@@ -17,17 +17,19 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <interfaces/gpio.h>
+#include "interfaces/platform.h"
+
 #include <hwconfig.h>
 #include <string.h>
-#include <ADC1_MDx.h>
-#include <calibInfo_MDx.h>
-#include <interfaces/nvmem.h>
-#include <toneGenerator_MDx.h>
-#include <interfaces/rtc.h>
-#include <interfaces/audio.h>
-#include <chSelector.h>
+
+#include "calibration/calibInfo_MDx.h"
+#include "drivers/ADC/ADC1_MDx.h"
+#include "drivers/chSelector/chSelector.h"
+#include "drivers/tones/toneGenerator_MDx.h"
+#include "interfaces/audio.h"
+#include "interfaces/gpio.h"
+#include "interfaces/nvmem.h"
+#include "interfaces/rtc.h"
 
 #ifdef ENABLE_BKLIGHT_DIMMING
 #include <backlight.h>

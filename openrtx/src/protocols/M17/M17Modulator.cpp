@@ -18,13 +18,15 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <new>
+#include "protocols/M17/M17Modulator.hpp"
+
 #include <cstddef>
 #include <cstring>
 #include <experimental/array>
-#include <M17/M17Modulator.hpp>
-#include <M17/M17Utils.hpp>
-#include <M17/M17DSP.hpp>
+#include <new>
+
+#include "protocols/M17/M17DSP.hpp"
+#include "protocols/M17/M17Utils.hpp"
 
 #if defined(PLATFORM_LINUX)
 #include <stdio.h>

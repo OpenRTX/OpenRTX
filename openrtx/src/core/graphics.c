@@ -22,26 +22,28 @@
  * It is suitable for both color, grayscale and B/W display
  */
 
-#include <interfaces/display.h>
-#include <hwconfig.h>
-#include <graphics.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <limits.h>
-#include <stdio.h>
-#include <math.h>
+#include "core/graphics.h"
 
-#include <gfxfont.h>
-#include <TomThumb.h>
-#include <FreeSans6pt7b.h>
-#include <FreeSans8pt7b.h>
-#include <FreeSans9pt7b.h>
-#include <FreeSans10pt7b.h>
-#include <FreeSans12pt7b.h>
-#include <FreeSans16pt7b.h>
-#include <FreeSans18pt7b.h>
-#include <FreeSans24pt7b.h>
+#include <hwconfig.h>
+#include <limits.h>
+#include <math.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "interfaces/display.h"
+
+// Fonts includes
+#include "fonts/adafruit/FreeSans10pt7b.h"
+#include "fonts/adafruit/FreeSans12pt7b.h"
+#include "fonts/adafruit/FreeSans16pt7b.h"
+#include "fonts/adafruit/FreeSans18pt7b.h"
+#include "fonts/adafruit/FreeSans24pt7b.h"
+#include "fonts/adafruit/FreeSans6pt7b.h"
+#include "fonts/adafruit/FreeSans8pt7b.h"
+#include "fonts/adafruit/FreeSans9pt7b.h"
+#include "fonts/adafruit/TomThumb.h"
 
 // Variable swap macro
 #define DEG_RAD  0.017453292519943295769236907684886

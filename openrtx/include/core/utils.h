@@ -20,8 +20,9 @@
 #ifndef CALIB_UTILS_H
 #define CALIB_UTILS_H
 
-#include <datatypes.h>
 #include <stdint.h>
+
+#include "datatypes.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -20,9 +20,10 @@
 #ifndef INPUT_H
 #define INPUT_H
 
-#include <interfaces/keyboard.h>
 #include <inttypes.h>
 #include <stdbool.h>
+
+#include "interfaces/keyboard.h"
 
 /**
  * Time interval in milliseconds after which a keypress is considered a long-press

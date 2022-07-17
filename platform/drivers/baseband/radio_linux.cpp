@@ -19,9 +19,11 @@
  ***************************************************************************/
 
 #include <emulator/emulator.h>
-#include <interfaces/radio.h>
+
 #include <cstdio>
 #include <string>
+
+#include "interfaces/radio.h"
 
 void radio_init(const rtxStatus_t *rtxState)
 {

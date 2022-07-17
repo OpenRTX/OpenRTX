@@ -16,14 +16,15 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/gpio.h>
-#include <interfaces/display.h>
-#include <interfaces/delays.h>
-#include <interfaces/platform.h>
 #include <hwconfig.h>
-#include <string.h>
-#include <miosix.h>
 #include <kernel/scheduler/scheduler.h>
+#include <miosix.h>
+#include <string.h>
+
+#include "interfaces/delays.h"
+#include "interfaces/display.h"
+#include "interfaces/gpio.h"
+#include "interfaces/platform.h"
 
 /**
  * LCD command set, basic and extended

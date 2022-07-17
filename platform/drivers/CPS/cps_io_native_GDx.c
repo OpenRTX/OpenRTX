@@ -20,12 +20,13 @@
 
 #include <string.h>
 #include <wchar.h>
-#include <interfaces/delays.h>
-#include <interfaces/cps_io.h>
-#include <utils.h>
-#include "AT24Cx.h"
-#include "W25Qx.h"
+
+#include "core/utils.h"
 #include "cps_data_GDx.h"
+#include "drivers/NVM/AT24Cx.h"
+#include "drivers/NVM/W25Qx.h"
+#include "interfaces/cps_io.h"
+#include "interfaces/delays.h"
 
 //static const uint32_t zoneBaseAddr        = 0x149e0;  /**< Base address of zones                */
 //static const uint32_t vfoChannelBaseAddr  = 0x7590;   /**< Base address of VFO channel          */

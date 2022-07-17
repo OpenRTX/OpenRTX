@@ -20,8 +20,10 @@
 #ifndef GPS_H
 #define GPS_H
 
-#include <interfaces/rtc.h>
 #include <stdint.h>
+
+#include "interfaces/rtc.h"
+#include "datetime.h"
 
 /**
  * Data structure representing a single satellite as part of a GPS fix.

@@ -18,13 +18,14 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdio.h>
-#include <stdint.h>
-#include <interfaces/gpio.h>
-#include <interfaces/delays.h>
-#include <interfaces/keyboard.h>
-#include <interfaces/platform.h>
 #include <hwconfig.h>
+#include <stdint.h>
+#include <stdio.h>
+
+#include "interfaces/delays.h"
+#include "interfaces/gpio.h"
+#include "interfaces/keyboard.h"
+#include "interfaces/platform.h"
 
 void kbd_init()
 {

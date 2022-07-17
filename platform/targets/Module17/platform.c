@@ -19,17 +19,18 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/gpio.h>
-#include <interfaces/nvmem.h>
-#include <interfaces/platform.h>
+#include "interfaces/platform.h"
+
+#include <MCP4551.h>
 #include <hwconfig.h>
 #include <string.h>
-#include <backlight.h>
-#include <interfaces/rtc.h>
-#include <interfaces/audio.h>
-#include <ADC1_Mod17.h>
-#include <interfaces/nvmem.h>
-#include <MCP4551.h>
+
+#include "drivers/ADC/ADC1_Mod17.h"
+#include "drivers/backlight/backlight.h"
+#include "interfaces/audio.h"
+#include "interfaces/gpio.h"
+#include "interfaces/nvmem.h"
+#include "interfaces/rtc.h"
 
 void platform_init()
 {

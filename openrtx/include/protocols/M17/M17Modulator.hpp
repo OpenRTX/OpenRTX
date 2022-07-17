@@ -25,12 +25,13 @@
 #error This header is C++ only!
 #endif
 
-#include <interfaces/audio_stream.h>
-#include <M17/M17Constants.hpp>
+#include <array>
 #include <cstdint>
 #include <memory>
-#include <array>
-#include <dsp.h>
+
+#include "M17Constants.hpp"
+#include "core/dsp.h"
+#include "interfaces/audio_stream.h"
 
 namespace M17
 {

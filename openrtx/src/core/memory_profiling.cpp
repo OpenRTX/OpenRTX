@@ -18,7 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <memory_profiling.h>
+#include "core/memory_profiling.h"
 
 #ifdef _MIOSIX
 

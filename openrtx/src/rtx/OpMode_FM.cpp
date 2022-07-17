@@ -18,12 +18,13 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <interfaces/delays.h>
-#include <interfaces/radio.h>
-#include <interfaces/audio.h>
-#include <OpMode_FM.hpp>
-#include <rtx.h>
+#include "rtx/OpMode_FM.hpp"
+
+#include "interfaces/audio.h"
+#include "interfaces/delays.h"
+#include "interfaces/platform.h"
+#include "interfaces/radio.h"
+#include "rtx/rtx.h"
 
 #ifdef PLATFORM_MDUV3x0
 #include "../../../drivers/baseband/HR_C6000.h"

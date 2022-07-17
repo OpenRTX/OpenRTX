@@ -19,11 +19,12 @@
  ***************************************************************************/
 
 #include <kernel/scheduler/scheduler.h>
-#include <interfaces/audio_stream.h>
-#include <toneGenerator_MDx.h>
-#include <data_conversion.h>
-#include <timers.h>
 #include <miosix.h>
+#include <timers.h>
+
+#include "core/data_conversion.h"
+#include "drivers/tones/toneGenerator_MDx.h"
+#include "interfaces/audio_stream.h"
 
 static int    priority     = PRIO_BEEP;
 static bool   running      = false;   // Stream is running

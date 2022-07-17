@@ -27,8 +27,9 @@
 #error This header is C++ only!
 #endif
 
-#include <fir.hpp>
 #include <array>
+
+#include "core/fir.hpp"
 
 namespace M17
 {

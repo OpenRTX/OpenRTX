@@ -18,14 +18,15 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdio.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <interfaces/gpio.h>
-#include <interfaces/display.h>
-#include <interfaces/delays.h>
+
 #include "hwconfig.h"
+#include "interfaces/delays.h"
+#include "interfaces/display.h"
+#include "interfaces/gpio.h"
 
 /*
  * LCD framebuffer, allocated on the heap by display_init().

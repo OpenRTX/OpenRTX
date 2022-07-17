@@ -61,21 +61,24 @@
  *      └─────────────────────────┘
  */
 
-#include <stdio.h>
+#include "core/ui.h"
+
 #include <stdint.h>
-#include <ui.h>
-#include <rtx.h>
-#include <interfaces/platform.h>
-#include <interfaces/cps_io.h>
-#include <interfaces/nvmem.h>
+#include <stdio.h>
+
+#include "interfaces/cps_io.h"
+#include "interfaces/nvmem.h"
+#include "interfaces/platform.h"
+#include "rtx/rtx.h"
 #ifdef GPS_PRESENT
-#include <interfaces/gps.h>
+#include "interfaces/gps.h"
 #endif
-#include <interfaces/delays.h>
-#include <string.h>
-#include <battery.h>
-#include <input.h>
 #include <hwconfig.h>
+#include <string.h>
+
+#include "core/battery.h"
+#include "core/input.h"
+#include "interfaces/delays.h"
 
 /* UI main screen functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBackground();

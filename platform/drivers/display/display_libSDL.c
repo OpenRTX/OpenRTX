@@ -25,12 +25,13 @@
  * this driver.
  */
 
-#include <interfaces/display.h>
+#include <SDL2/SDL.h>
 #include <emulator/sdl_engine.h>
-#include <chan.h>
 #include <stdio.h>
 #include <string.h>
-#include <SDL2/SDL.h>
+
+#include "core/chan.h"
+#include "interfaces/display.h"
 
 void *frameBuffer = NULL;    /* Pointer to framebuffer */
 bool inProgress;             /* Flag to signal when rendering is in progress */

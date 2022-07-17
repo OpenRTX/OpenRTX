@@ -22,9 +22,10 @@
 #define NVMEM_H
 
 #include <stdint.h>
-#include <cps.h>
-#include <settings.h>
-#include "platform.h"
+
+#include "core/cps.h"
+#include "core/settings.h"
+#include "interfaces/platform.h"
 
 #ifdef __cplusplus
 extern "C" {

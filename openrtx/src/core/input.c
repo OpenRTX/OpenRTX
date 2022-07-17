@@ -17,10 +17,12 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/delays.h>
+#include "core/input.h"
+
 #include <inttypes.h>
 #include <stdbool.h>
-#include <input.h>
+
+#include "interfaces/delays.h"
 
 static long long  keyTs[KBD_NUM_KEYS];  // Timestamp of each keypress
 static uint32_t   longPressSent;        // Flags to manage long-press events

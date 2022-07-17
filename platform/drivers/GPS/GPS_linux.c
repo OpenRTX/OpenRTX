@@ -18,11 +18,12 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/gps.h>
-#include <interfaces/delays.h>
-#include <sys/time.h>
 #include <hwconfig.h>
 #include <string.h>
+#include <sys/time.h>
+
+#include "interfaces/delays.h"
+#include "interfaces/gps.h"
 
 #define MAX_NMEA_LEN 80
 #define NMEA_SAMPLES 8

@@ -15,7 +15,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include "chan.h"
+#include "core/chan.h"
+
 #include <pthread.h>
 
 void chan_init(chan_t *c)

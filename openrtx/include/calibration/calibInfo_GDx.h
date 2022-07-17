@@ -21,8 +21,9 @@
 #ifndef CALIBINFO_GDX_H
 #define CALIBINFO_GDX_H
 
-#include <datatypes.h>
 #include <stdint.h>
+
+#include "core/datatypes.h"
 
 /**
  * \brief Calibration data for GDx platforms.

@@ -19,10 +19,11 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/gpio.h>
-#include <interfaces/delays.h>
 #include <hwconfig.h>
+
 #include "MCP4551.h"
+#include "interfaces/delays.h"
+#include "interfaces/gpio.h"
 
 /*
  * Implementation of MCP4551 I2C interface.

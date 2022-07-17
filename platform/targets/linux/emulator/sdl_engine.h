@@ -17,10 +17,11 @@
 #ifndef SDL_ENGINE_H
 #define SDL_ENGINE_H
 
-#include <interfaces/keyboard.h>
 #include <SDL2/SDL.h>
 #include <stdbool.h>
-#include <chan.h>
+
+#include "core/chan.h"
+#include "interfaces/keyboard.h"
 
 /*
  * Screen dimensions, adjust basing on the size of the screen you need to

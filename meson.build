@@ -53,20 +53,7 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/protocols/M17/M17Transmitter.cpp',
                'openrtx/src/protocols/M17/M17LinkSetupFrame.cpp']
 
-openrtx_inc = ['openrtx/include',
-               'openrtx/include/rtx',
-               'openrtx/include/core',
-               'openrtx/include/calibration',
-               'openrtx/include/protocols',
-               'openrtx/include/fonts/adafruit',
-               'platform/drivers/ADC',
-               'platform/drivers/NVM',
-               'platform/drivers/GPS',
-               'platform/drivers/USB',
-               'platform/drivers/tones',
-               'platform/drivers/baseband',
-               'platform/drivers/backlight',
-               'platform/drivers/chSelector']
+openrtx_inc = ['openrtx/include', 'platform']
 
 main_src = []
 

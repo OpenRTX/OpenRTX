@@ -18,20 +18,22 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/gpio.h>
-#include <interfaces/nvmem.h>
-#include <interfaces/platform.h>
-#include <interfaces/delays.h>
+#include "interfaces/platform.h"
+
+#include <SPI2.h>
 #include <hwconfig.h>
 #include <string.h>
-#include <backlight.h>
-#include <ADC1_MDx.h>
-#include <calibInfo_MDx.h>
-#include <toneGenerator_MDx.h>
-#include <interfaces/rtc.h>
-#include <interfaces/audio.h>
-#include <SPI2.h>
-#include <chSelector.h>
+
+#include "calibration/calibInfo_MDx.h"
+#include "drivers/ADC/ADC1_MDx.h"
+#include "drivers/backlight/backlight.h"
+#include "drivers/chSelector/chSelector.h"
+#include "drivers/tones/toneGenerator_MDx.h"
+#include "interfaces/audio.h"
+#include "interfaces/delays.h"
+#include "interfaces/gpio.h"
+#include "interfaces/nvmem.h"
+#include "interfaces/rtc.h"
 
 hwInfo_t hwInfo;
 

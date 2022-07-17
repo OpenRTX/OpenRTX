@@ -18,16 +18,18 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <interfaces/radio.h>
-#include <interfaces/gpio.h>
-#include <calibInfo_GDx.h>
 #include <hwconfig.h>
+
 #include <algorithm>
-#include <utils.h>
-#include "radioUtils.h"
-#include "HR_C6000.h"
+
 #include "AT1846S.h"
+#include "HR_C6000.h"
+#include "calibration/calibInfo_GDx.h"
+#include "core/utils.h"
+#include "interfaces/gpio.h"
+#include "interfaces/platform.h"
+#include "interfaces/radio.h"
+#include "radioUtils.h"
 
 const gdxCalibration_t *calData;  // Pointer to calibration data
 const rtxStatus_t      *config;   // Pointer to data structure with radio configuration

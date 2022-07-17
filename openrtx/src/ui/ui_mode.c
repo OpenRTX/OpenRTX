@@ -18,11 +18,12 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdio.h>
 #include <stdint.h>
-#include <ui.h>
+#include <stdio.h>
 #include <string.h>
-#include <rtx.h>
+
+#include "core/ui.h"
+#include "rtx/rtx.h"
 
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainTop();

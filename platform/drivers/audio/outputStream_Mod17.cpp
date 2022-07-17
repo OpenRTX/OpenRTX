@@ -18,13 +18,14 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <kernel/scheduler/scheduler.h>
-#include <interfaces/audio_stream.h>
-#include <interfaces/gpio.h>
-#include <data_conversion.h>
 #include <hwconfig.h>
-#include <timers.h>
+#include <kernel/scheduler/scheduler.h>
 #include <miosix.h>
+#include <timers.h>
+
+#include "core/data_conversion.h"
+#include "interfaces/audio_stream.h"
+#include "interfaces/gpio.h"
 
 static int    priority     = PRIO_BEEP;
 static bool   running      = false;   // Stream is running

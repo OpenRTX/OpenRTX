@@ -21,9 +21,13 @@
 #define GRAPHICS_H
 
 #include <stdbool.h>
-#include <stddef.h>
 #include <stdint.h>
-#include <gps.h>
+
+#include "core/state.h"
+#include "interfaces/display.h"
+
+// This one before the fonts
+#include "fonts/adafruit/gfxfont.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -95,7 +99,6 @@ typedef enum
     TEXT_ALIGN_CENTER,
     TEXT_ALIGN_RIGHT
 } textAlign_t;
-
 
 /**
  * This function calls the correspondent method of the low level interface display.h

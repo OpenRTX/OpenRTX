@@ -20,13 +20,16 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <M17/M17Demodulator.hpp>
-#include <M17/M17DSP.hpp>
-#include <M17/M17Utils.hpp>
-#include <interfaces/audio_stream.h>
+#include "protocols/M17/M17Demodulator.hpp"
+
 #include <math.h>
-#include <cstring>
 #include <stdio.h>
+
+#include <cstring>
+
+#include "interfaces/audio_stream.h"
+#include "protocols/M17/M17DSP.hpp"
+#include "protocols/M17/M17Utils.hpp"
 
 using namespace M17;
 

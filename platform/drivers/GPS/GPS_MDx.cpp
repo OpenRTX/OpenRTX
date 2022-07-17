@@ -18,13 +18,14 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/delays.h>
-#include <interfaces/gpio.h>
-#include <interfaces/gps.h>
 #include <hwconfig.h>
-#include <string.h>
-#include <miosix.h>
 #include <kernel/scheduler/scheduler.h>
+#include <miosix.h>
+#include <string.h>
+
+#include "interfaces/delays.h"
+#include "interfaces/gpio.h"
+#include "interfaces/gps.h"
 
 static int8_t detectStatus = -1;
 static size_t bufPos = 0;

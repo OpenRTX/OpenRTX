@@ -21,8 +21,9 @@
 #ifndef CALIBINFO_MDX_H
 #define CALIBINFO_MDX_H
 
-#include <datatypes.h>
 #include <stdint.h>
+
+#include "core/datatypes.h"
 
 /**
  * Data types defining the structure of calibration data stored in external

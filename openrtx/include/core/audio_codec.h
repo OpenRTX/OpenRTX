@@ -21,9 +21,10 @@
 #ifndef AUDIO_CODEC_H
 #define AUDIO_CODEC_H
 
-#include <interfaces/audio_path.h>
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
+
+#include "interfaces/audio_path.h"
 
 #ifdef __cplusplus
 extern "C" {

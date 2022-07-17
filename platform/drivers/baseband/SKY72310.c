@@ -16,11 +16,13 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/gpio.h>
-#include <interfaces/delays.h>
+#include "SKY72310.h"
+
 #include <hwconfig.h>
 #include <math.h>
-#include "SKY72310.h"
+
+#include "interfaces/delays.h"
+#include "interfaces/gpio.h"
 
 #define REF_CLK 16800000.0F  /* Reference clock: 16.8MHz                 */
 #define PHD_GAIN 0x1F        /* Phase detector gain: hex value, max 0x1F */

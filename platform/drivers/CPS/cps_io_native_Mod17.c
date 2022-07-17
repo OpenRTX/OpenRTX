@@ -18,8 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/cps_io.h>
-
+#include "interfaces/cps_io.h"
 
 /**
  * This function does not apply to address-based codeplugs

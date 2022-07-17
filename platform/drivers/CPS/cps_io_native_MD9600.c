@@ -18,14 +18,15 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <wchar.h>
 #include <string.h>
-#include <interfaces/nvmem.h>
-#include <interfaces/delays.h>
-#include <calibInfo_MDx.h>
-#include <utils.h>
+#include <wchar.h>
+
+#include "calibration/calibInfo_MDx.h"
+#include "core/utils.h"
 #include "cps_data_MDUV3x0.h"
-#include "W25Qx.h"
+#include "drivers/NVM/W25Qx.h"
+#include "interfaces/delays.h"
+#include "interfaces/nvmem.h"
 
 //static const uint32_t vfoChannelBaseAddr = 0x2EF00; /**< Base address of VFO channel                           */
 static const uint32_t zoneBaseAddr       = 0x149E0;   /**< Base address of zones                                 */

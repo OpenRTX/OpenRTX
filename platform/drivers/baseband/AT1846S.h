@@ -21,9 +21,10 @@
 #ifndef AT1846S_H
 #define AT1846S_H
 
-#include <stdint.h>
 #include <stdbool.h>
-#include <datatypes.h>
+#include <stdint.h>
+
+#include "core/datatypes.h"
 
 /**
  * Enumeration type defining the bandwidth settings supported by the AT1846S chip.

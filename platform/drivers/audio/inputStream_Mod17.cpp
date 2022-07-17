@@ -18,14 +18,15 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <kernel/scheduler/scheduler.h>
-#include <interfaces/audio_stream.h>
-#include <toneGenerator_MDx.h>
-#include <interfaces/gpio.h>
 #include <hwconfig.h>
-#include <stdbool.h>
+#include <kernel/scheduler/scheduler.h>
 #include <miosix.h>
+#include <stdbool.h>
 #include <timers.h>
+
+#include "drivers/tones/toneGenerator_MDx.h"
+#include "interfaces/audio_stream.h"
+#include "interfaces/gpio.h"
 
 using namespace miosix;
 

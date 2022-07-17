@@ -22,7 +22,7 @@
 #define CPS_IO_H
 
 #include <stdint.h>
-#include <cps.h>
+#include "core/cps.h"
 
 #ifdef __cplusplus
 extern "C" {

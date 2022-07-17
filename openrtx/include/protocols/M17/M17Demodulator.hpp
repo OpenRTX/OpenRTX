@@ -27,15 +27,16 @@
 #error This header is C++ only!
 #endif
 
-#include <cstdint>
-#include <cstddef>
-#include <memory>
 #include <array>
-#include <dsp.h>
 #include <cmath>
-#include <interfaces/audio_stream.h>
-#include <M17/M17Datatypes.hpp>
-#include <M17/M17Constants.hpp>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+
+#include "M17Constants.hpp"
+#include "M17Datatypes.hpp"
+#include "core/dsp.h"
+#include "interfaces/audio_stream.h"
 
 namespace M17
 {

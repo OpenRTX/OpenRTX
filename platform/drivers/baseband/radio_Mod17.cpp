@@ -18,10 +18,11 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <interfaces/radio.h>
-#include <interfaces/gpio.h>
 #include <hwconfig.h>
+
+#include "interfaces/gpio.h"
+#include "interfaces/platform.h"
+#include "interfaces/radio.h"
 
 enum opstatus radioStatus;               // Current operating status
 

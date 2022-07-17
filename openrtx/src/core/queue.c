@@ -18,8 +18,9 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include "core/queue.h"
+
 #include <stdio.h>
-#include "queue.h"
 
 void queue_init(queue_t *q)
 {

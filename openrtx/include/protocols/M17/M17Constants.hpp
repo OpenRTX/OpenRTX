@@ -21,9 +21,11 @@
 #ifndef M17_CONSTANTS_H
 #define M17_CONSTANTS_H
 
-#include <M17/M17Datatypes.hpp>
-#include <cstdint>
 #include <array>
+#include <cstddef>
+#include <cstdint>
+
+#include "M17Datatypes.hpp"
 
 #ifndef __cplusplus
 #error This header is C++ only!

@@ -21,8 +21,8 @@
 #ifndef OPMODE_H
 #define OPMODE_H
 
-#include <interfaces/delays.h>
-#include "rtx.h"
+#include "rtx/rtx.h"
+#include "interfaces/delays.h"
 
 /**
  * This class provides a standard interface for all the operating modes.

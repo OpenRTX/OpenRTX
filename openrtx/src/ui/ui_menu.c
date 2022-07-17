@@ -18,16 +18,17 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
-#include <utils.h>
-#include <ui.h>
-#include <interfaces/nvmem.h>
-#include <interfaces/cps_io.h>
-#include <interfaces/platform.h>
-#include <interfaces/delays.h>
-#include <memory_profiling.h>
+
+#include "core/memory_profiling.h"
+#include "core/ui.h"
+#include "core/utils.h"
+#include "interfaces/cps_io.h"
+#include "interfaces/delays.h"
+#include "interfaces/nvmem.h"
+#include "interfaces/platform.h"
 
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBottom();

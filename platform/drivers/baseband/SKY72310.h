@@ -19,8 +19,8 @@
 #ifndef SKY73210_H
 #define SKY73210_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {

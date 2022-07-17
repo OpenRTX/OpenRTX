@@ -20,8 +20,9 @@
 #ifndef RTC_H
 #define RTC_H
 
-#include <datetime.h>
 #include <stdint.h>
+
+#include "core/datetime.h"
 
 /**
  * Standard interface for real time clock drivers, providing both calendar and

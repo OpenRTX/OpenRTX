@@ -18,13 +18,14 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/cps_io.h>
-#include <interfaces/delays.h>
 #include <string.h>
 #include <wchar.h>
-#include <utils.h>
+
+#include "core/utils.h"
 #include "cps_data_MD3x0.h"
-#include "W25Qx.h"
+#include "drivers/NVM/W25Qx.h"
+#include "interfaces/cps_io.h"
+#include "interfaces/delays.h"
 
 static const uint32_t zoneBaseAddr    = 0x149e0;  /**< Base address of zones                */
 static const uint32_t chDataBaseAddr  = 0x1ee00;  /**< Base address of channel data         */

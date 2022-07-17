@@ -18,10 +18,11 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/gpio.h>
+#include <SPI2.h>
 #include <hwconfig.h>
 #include <stdint.h>
-#include <SPI2.h>
+
+#include "interfaces/gpio.h"
 
 /*
  * Implementation of external flash SPI interface for MD9600 devices.

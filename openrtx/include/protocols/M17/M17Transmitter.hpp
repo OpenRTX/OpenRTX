@@ -25,12 +25,13 @@
 #error This header is C++ only!
 #endif
 
-#include <string>
 #include <array>
+#include <string>
+
 #include "M17ConvolutionalEncoder.hpp"
 #include "M17LinkSetupFrame.hpp"
-#include "M17StreamFrame.hpp"
 #include "M17Modulator.hpp"
+#include "M17StreamFrame.hpp"
 
 namespace M17
 {
