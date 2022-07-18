@@ -98,9 +98,14 @@ else
   codec2_dep  = dependency('codec2')
 endif
 
-# tinyusb, An open source cross-platform USB stack for embedded system
-tinyusb_proj = subproject('tinyusb')
-tinyusb_dep  = tinyusb_proj.get_variable('tinyusb_dep')
+# tinyusb, open source cross-platform USB stack for embedded system.
+# Subproject included only for embedded targets
+if meson.is_cross_build()
+  tinyusb_proj = subproject('tinyusb')
+  tinyusb_dep  = tinyusb_proj.get_variable('tinyusb_dep')
+else
+  tinyusb_dep = [ ]
+endif
 
 ##
 ## RTOS
@@ -111,10 +116,14 @@ rtos_inc = ['lib/miosix-kernel',
             'lib/miosix-kernel/arch/cortexM4_stm32f4/M4_openrtx',
             'lib/miosix-kernel/config/arch/cortexM4_stm32f4/M4_openrtx']
 
-
 src = openrtx_src + main_src + minmea_src
-inc = openrtx_inc + rtos_inc + minmea_inc + qdec_inc
-def = def + {'DONT_USE_CMSIS_INIT': ''}
+inc = openrtx_inc + minmea_inc + qdec_inc
+
+# Include RTOS only for embedded targets
+if meson.is_cross_build()
+  inc = inc + rtos_inc
+  def = def + {'DONT_USE_CMSIS_INIT': ''}
+endif
 
 ## Add git commit or tag to print in OpenRTX
 r = run_command('git', 'describe', '--tags', '--dirty')

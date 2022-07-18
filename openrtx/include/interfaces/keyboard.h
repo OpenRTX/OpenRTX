@@ -22,7 +22,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <board_settings.h>
 
 /**
  * The following enum provides a set of flags to be used to check which buttons
