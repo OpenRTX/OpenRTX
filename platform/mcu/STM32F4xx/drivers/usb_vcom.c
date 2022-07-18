@@ -24,6 +24,7 @@
 #include "usbd_cdc_core.h"
 #include "usbd_usr.h"
 #include "usbd_req.h"
+#include "stm32f4xx.h"
 
 #include <interfaces/delays.h>
 #include "usb_vcom.h"

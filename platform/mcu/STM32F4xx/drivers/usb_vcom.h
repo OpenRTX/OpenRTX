@@ -20,7 +20,6 @@
 
 #include <stdint.h>
 #include <unistd.h>
-#include "stm32f4xx.h"
 
 #ifdef __cplusplus
 extern "C" {
