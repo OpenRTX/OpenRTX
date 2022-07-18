@@ -22,22 +22,48 @@
  * It is suitable for both color, grayscale and B/W display
  */
 
-#include <math.h>
+#include <interfaces/display.h>
+#include <hwconfig.h>
+#include <graphics.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
-#include <hwconfig.h>
 #include <stdarg.h>
-#include <interfaces/display.h>
-#include <interfaces/graphics.h>
-#include <climits>
+#include <limits.h>
+#include <stdio.h>
+#include <math.h>
+
+#include <gfxfont.h>
+#include <TomThumb.h>
+#include <FreeSans6pt7b.h>
+#include <FreeSans8pt7b.h>
+#include <FreeSans9pt7b.h>
+#include <FreeSans10pt7b.h>
+#include <FreeSans12pt7b.h>
+#include <FreeSans16pt7b.h>
+#include <FreeSans18pt7b.h>
+#include <FreeSans24pt7b.h>
 
 // Variable swap macro
 #define DEG_RAD  0.017453292519943295769236907684886
 #define SIN(x) sinf((x) * DEG_RAD)
 #define COS(x) cosf((x) * DEG_RAD)
 
+/**
+ * Fonts, ordered by the fontSize_t enum.
+ */
+static const GFXfont fonts[] = { TomThumb,           // 5pt
+                                 FreeSans6pt7b,      // 6pt
+                                 FreeSans8pt7b,      // 8pt
+                                 FreeSans9pt7b,      // 9pt
+                                 FreeSans10pt7b,     // 10pt
+                                 FreeSans12pt7b,     // 12pt
+                                 FreeSans16pt7b,     // 16pt
+                                 FreeSans18pt7b,     // 16pt
+                                 FreeSans24pt7b      // 24pt
+                               };
+
 #ifdef PIX_FMT_RGB565
+
 /* This specialization is meant for an RGB565 little endian pixel format.
  * Thus, to accomodate for the endianness, the fields in struct rgb565_t have to
  * be written in reversed order.
@@ -46,14 +72,17 @@
  * page: http://mjfrazer.org/mjfrazer/bitfields/
  */
 
+#define PIXEL_T rgb565_t
+
 typedef struct
 {
     uint16_t b : 5;
     uint16_t g : 6;
     uint16_t r : 5;
-} rgb565_t;
+}
+rgb565_t;
 
-rgb565_t _true2highColor(color_t true_color)
+static rgb565_t _true2highColor(color_t true_color)
 {
     rgb565_t high_color;
     high_color.r = true_color.r >> 3;
@@ -63,21 +92,24 @@ rgb565_t _true2highColor(color_t true_color)
     return high_color;
 }
 
-#define PIXEL_T rgb565_t
 #elif defined PIX_FMT_BW
+
 /**
  * This specialization is meant for black and white pixel format.
  * It is suitable for monochromatic displays with 1 bit per pixel,
  * it will have RGB and grayscale counterparts
  */
 
+#define PIXEL_T uint8_t
+
 typedef enum
 {
     WHITE = 0,
     BLACK = 1,
-} bw_t;
+}
+bw_t;
 
-bw_t _color2bw(color_t true_color)
+static bw_t _color2bw(color_t true_color)
 {
     if(true_color.r == 0 &&
        true_color.g == 0 &&
@@ -87,15 +119,14 @@ bw_t _color2bw(color_t true_color)
         return BLACK;
 }
 
-#define PIXEL_T uint8_t
 #else
 #error Please define a pixel format type into hwconfig.h or meson.build
 #endif
 
-bool initialized = 0;
-PIXEL_T *buf;
-uint16_t fbSize;
-char text[32];
+static bool initialized = 0;
+static PIXEL_T *buf;
+static uint16_t fbSize;
+static char text[32];
 
 void gfx_init()
 {
@@ -894,23 +925,22 @@ void gfx_drawGPScompass(point_t start,
     gfx_print(n_pos, FONT_SIZE_6PT, TEXT_ALIGN_LEFT, white, "N");
 }
 
-void gfx_plotData(point_t start,
-                  uint16_t width,
-                  uint16_t height,
-                  std::deque<int16_t> data)
+void gfx_plotData(point_t start, uint16_t width, uint16_t height,
+                  const int16_t *data, size_t len)
 {
-    gfx_clearScreen();
     uint16_t horizontal_pos = start.x;
     color_t white = {255, 255, 255, 255};
-    point_t prev_pos {0, 0}, pos{0, 0};
+    point_t prev_pos = {0, 0};
+    point_t pos = {0, 0};
     bool first_iteration = true;
-    for (auto d : data)
+    for (size_t i = 0; i < len; i++)
     {
         horizontal_pos++;
-        if (horizontal_pos > start.x + width)
+        if (horizontal_pos > (start.x + width))
             break;
         pos.x = horizontal_pos;
-        pos.y = start.y + height / 2 + (float) d * 4 / (2 * SHRT_MAX) * height;
+        pos.y = start.y + (height / 2)
+              + ((data[i] * 4) / (2 * SHRT_MAX) * height);
         if (pos.y > SCREEN_HEIGHT)
             pos.y = SCREEN_HEIGHT;
         if (!first_iteration)
@@ -919,5 +949,4 @@ void gfx_plotData(point_t start,
         if (first_iteration)
             first_iteration = false;
     }
-    gfx_render();
 }

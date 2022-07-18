@@ -19,12 +19,13 @@
  ***************************************************************************/
 
 #include <interfaces/platform.h>
-#include <interfaces/graphics.h>
+#include <interfaces/display.h>
 #include <interfaces/delays.h>
 #include <interfaces/cps_io.h>
 #include <interfaces/gps.h>
-#include <threads.h>
+#include <graphics.h>
 #include <openrtx.h>
+#include <threads.h>
 #include <ui.h>
 
 extern void *dev_task(void *arg);

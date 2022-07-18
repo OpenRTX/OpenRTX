@@ -24,7 +24,7 @@
 #include <ui.h>
 #include <state.h>
 #include <threads.h>
-#include <interfaces/graphics.h>
+#include <graphics.h>
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
 #include <interfaces/radio.h>

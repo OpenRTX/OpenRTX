@@ -20,24 +20,12 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
-#include <stdint.h>
 #include <stdbool.h>
-#include <interfaces/display.h>
-#include <state.h>
-#include <gfxfont.h>
-#include <TomThumb.h>
-#include <FreeSans6pt7b.h>
-#include <FreeSans8pt7b.h>
-#include <FreeSans9pt7b.h>
-#include <FreeSans10pt7b.h>
-#include <FreeSans12pt7b.h>
-#include <FreeSans16pt7b.h>
-#include <FreeSans18pt7b.h>
-#include <FreeSans24pt7b.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <gps.h>
 
 #ifdef __cplusplus
-#include <deque>
-
 extern "C" {
 #endif
 
@@ -108,18 +96,6 @@ typedef enum
     TEXT_ALIGN_RIGHT
 } textAlign_t;
 
-/**
- * Selection of the fonts, ordered by the fontSize_t enum.
- */
-static GFXfont const fonts[] = { TomThumb,           // 5pt
-                                 FreeSans6pt7b,      // 6pt
-                                 FreeSans8pt7b,      // 8pt
-                                 FreeSans9pt7b,      // 9pt
-                                 FreeSans10pt7b,     // 10pt
-                                 FreeSans12pt7b,     // 12pt
-                                 FreeSans16pt7b,     // 16pt
-                                 FreeSans18pt7b,     // 16pt
-                                 FreeSans24pt7b };   // 24pt
 
 /**
  * This function calls the correspondent method of the low level interface display.h
@@ -219,7 +195,8 @@ void gfx_drawVLine(int16_t x, uint16_t width, color_t color);
  * @param color: border and fill color, in color_t format.
  * @param fill: if true the rectangle will be solid, otherwise it will be empty with a 1-pixel border
  */
-void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color, bool fill);
+void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color,
+                  bool fill);
 
 /**
  * Draw the outline of a circle of specified radius and color.
@@ -294,7 +271,8 @@ void gfx_printError(const char *text, fontSize_t size);
  * @param height: battery icon height
  * @param percentage: battery charge percentage
  */
-void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, uint8_t percentage);
+void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
+                     uint8_t percentage);
 
 /**
  * Function to draw Smeter of arbitrary size.
@@ -306,7 +284,8 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height, uint8_t per
  * @param squelch: squelch level in percentage
  * @param color: color of the squelch bar
  */
-void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi, float squelch, color_t color);
+void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
+                    float squelch, color_t color);
 
 /**
  * Function to draw Smeter + level meter of arbitrary size.
@@ -318,7 +297,8 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi, 
  * @param rssi: rssi level in dBm
  * @param level: level in range {0, 255}
  */
-void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, float rssi, uint8_t level);
+void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height,
+                         float rssi, uint8_t level);
 
 /**
  * Function to draw GPS SNR bar graph of arbitrary size.
@@ -329,7 +309,8 @@ void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, float r
  * @param sats: pointer to the array of satellites data
  * @param active_sats: bitset representing which sats are part of the fix
  */
-void gfx_drawGPSgraph(point_t start, uint16_t width, uint16_t height, gpssat_t *sats, uint32_t active_sats);
+void gfx_drawGPSgraph(point_t start, uint16_t width, uint16_t height,
+                      gpssat_t *sats, uint32_t active_sats);
 
 /**
  * Function to draw a compass of arbitrary size.
@@ -341,18 +322,20 @@ void gfx_drawGPSgraph(point_t start, uint16_t width, uint16_t height, gpssat_t *
  */
 void gfx_drawGPScompass(point_t start, uint16_t radius, float deg, bool active);
 
-#ifdef __cplusplus
-}
-
 /**
  * Function to plot a collection of data on the screen.
  * Starting coordinates are relative to the top left point.
  * @param start: Plot start point, in pixel coordinates.
  * @param width: Plot width
  * @param height: Plot height
- * @param data: pointer to the deque containing data
+ * @param data: pointer to data buffer
+ * @param len: data length, in elements
  */
-void gfx_plotData(point_t start, uint16_t width, uint16_t height, std::deque<int16_t> data);
+void gfx_plotData(point_t start, uint16_t width, uint16_t height,
+                  const int16_t *data, size_t len);
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* GRAPHICS_H */
