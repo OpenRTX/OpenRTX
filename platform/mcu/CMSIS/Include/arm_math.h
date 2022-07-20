@@ -347,6 +347,9 @@ extern "C"
    * @brief definition to read/write two 16 bit values.
    */
 #define __SIMD32(addr)  (*(int32_t **) & (addr))
+#define __SIMD32_CONST(addr)  ((int32_t *)(addr))
+#define _SIMD32_OFFSET(addr)  (*(int32_t *)  (addr))
+#define __SIMD64(addr)        (*(int64_t **) & (addr))
 
 #if defined (ARM_MATH_CM3) || defined (ARM_MATH_CM0)
   /**
@@ -1927,6 +1930,57 @@ extern "C"
     uint16_t     bitRevFactor;         /**< bit reversal modifier that supports different size FFTs with the same bit reversal table. */
 	float32_t    onebyfftLen;          /**< value of 1/fftLen. */
   } arm_cfft_radix4_instance_f32;
+
+  /**
+   * @brief Instance structure for the floating-point CFFT/CIFFT function.
+   */
+  typedef struct
+  {
+    uint16_t fftLen;                   /**< length of the FFT. */
+    const float32_t *pTwiddle;         /**< points to the Twiddle factor table. */
+    const uint16_t *pBitRevTable;      /**< points to the bit reversal table. */
+    uint16_t bitRevLength;             /**< bit reversal table length. */
+  } arm_cfft_instance_f32;
+
+  void arm_cfft_f32(
+    const arm_cfft_instance_f32 * S,
+    float32_t * p1,
+    uint8_t ifftFlag,
+    uint8_t bitReverseFlag);
+
+  /**
+   * @brief Instance structure for the fixed-point CFFT/CIFFT function.
+   */
+  typedef struct
+  {
+    uint16_t fftLen;                   /**< length of the FFT. */
+    const q15_t *pTwiddle;             /**< points to the Twiddle factor table. */
+    const uint16_t *pBitRevTable;      /**< points to the bit reversal table. */
+    uint16_t bitRevLength;             /**< bit reversal table length. */
+  } arm_cfft_instance_q15;
+
+  void arm_cfft_q15(
+    const arm_cfft_instance_q15 * S,
+    q15_t * p1,
+    uint8_t ifftFlag,
+    uint8_t bitReverseFlag);
+
+  /**
+   * @brief Instance structure for the fixed-point CFFT/CIFFT function.
+   */
+  typedef struct
+  {
+    uint16_t fftLen;                   /**< length of the FFT. */
+    const q31_t *pTwiddle;             /**< points to the Twiddle factor table. */
+    const uint16_t *pBitRevTable;      /**< points to the bit reversal table. */
+    uint16_t bitRevLength;             /**< bit reversal table length. */
+  } arm_cfft_instance_q31;
+
+  void arm_cfft_q31(
+    const arm_cfft_instance_q31 * S,
+    q31_t * p1,
+    uint8_t ifftFlag,
+    uint8_t bitReverseFlag);
 
   /**
    * @brief Processing function for the Q15 CFFT/CIFFT.

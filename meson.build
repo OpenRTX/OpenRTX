@@ -36,6 +36,7 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/audio_codec.c',
                'openrtx/src/core/data_conversion.c',
                'openrtx/src/core/memory_profiling.cpp',
+               'openrtx/src/core/noise_gate.c',
                'openrtx/src/ui/ui.c',
                'openrtx/src/ui/ui_main.c',
                'openrtx/src/ui/ui_mode.c',
@@ -206,7 +207,13 @@ stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.cpp',
                  'platform/mcu/STM32F4xx/drivers/SPI2.c',
                  'platform/mcu/STM32F4xx/drivers/USART3.cpp',
                  'platform/mcu/STM32F4xx/drivers/flash.c',
-                 'platform/mcu/CMSIS/Device/ST/STM32F4xx/Source/system_stm32f4xx.c']
+                 'platform/mcu/CMSIS/Device/ST/STM32F4xx/Source/system_stm32f4xx.c',
+                 'platform/mcu/CMSIS/DSP/arm_const_structs.c',
+                 'platform/mcu/CMSIS/DSP/arm_cfft_f32.c',
+                 'platform/mcu/CMSIS/DSP/arm_cfft_q15.c',
+                 'platform/mcu/CMSIS/DSP/arm_cfft_q31.c',
+                 'platform/mcu/CMSIS/DSP/arm_fir_init_f32.c',
+                 'platform/mcu/CMSIS/DSP/arm_fir_f32.c']
 
 stm32f405_inc = ['platform/mcu/CMSIS/Include',
                  'platform/mcu/CMSIS/Device/ST/STM32F4xx/Include',
@@ -298,7 +305,7 @@ md3x0_src = src + mdx_src + stm32f405_src + ['platform/drivers/NVM/nvmem_MD3x0.c
                                              'platform/targets/MD-3x0/platform.c']
 
 md3x0_inc = inc + stm32f405_inc + ['platform/targets/MD-3x0']
-md3x0_def = def + stm32f405_def + {'PLATFORM_MD3x0': '', 'timegm': 'mktime'}
+md3x0_def = def + stm32f405_def + {'PLATFORM_MD3x0': '', 'timegm': 'mktime', 'ARM_MATH_CM4': ''}
 
 ##
 ## TYT MD-UV380

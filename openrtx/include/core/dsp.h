@@ -85,6 +85,15 @@ void dsp_dcRemoval(filter_state_t *state, audio_sample_t *buffer, size_t length)
  */
 void dsp_invertPhase(audio_sample_t *buffer, uint16_t length);
 
+/*
+ * Remove high-frequency components from a collection of audio samples.
+ * The buffer will be processed in place to save memory.
+ *
+ * @param buffer: the buffer to be used as both source and destination.
+ * @param length: the length of the input buffer.
+ */
+void dsp_lowPassFilter(audio_sample_t *buffer, uint16_t length);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

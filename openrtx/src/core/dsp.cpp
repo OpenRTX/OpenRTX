@@ -19,6 +19,7 @@
  ***************************************************************************/
 
 #include <dsp.h>
+#include <arm_math.h>
 
 void dsp_resetFilterState(filter_state_t *state)
 {
@@ -109,5 +110,109 @@ void dsp_invertPhase(audio_sample_t *buffer, uint16_t length)
     for(uint16_t i = 0; i < length; i++)
     {
         buffer[i] = -buffer[i];
+    }
+}
+
+#define BLOCK_SIZE            1
+#define NUM_TAPS              58
+
+static float32_t firStateF32[BLOCK_SIZE + NUM_TAPS - 1];
+
+const float32_t firCoeffs32[NUM_TAPS] = {
+-0.000121, 
+-0.000005, 
+0.000093, 
+-0.000625, 
+-0.000263, 
+0.000584, 
+-0.001485, 
+-0.001354, 
+0.001748, 
+-0.002220, 
+-0.004130, 
+0.003482, 
+-0.001634, 
+-0.009381, 
+0.004850, 
+0.002169, 
+-0.017308, 
+0.003702, 
+0.011635, 
+-0.027075, 
+-0.003848, 
+0.030382, 
+-0.036782, 
+-0.026561, 
+0.069964, 
+-0.043995, 
+-0.115682, 
+0.287933, 
+0.620000, 
+0.287933, 
+-0.115682, 
+-0.043995, 
+0.069964, 
+-0.026561, 
+-0.036782, 
+0.030382, 
+-0.003848, 
+-0.027075, 
+0.011635, 
+0.003702, 
+-0.017308, 
+0.002169, 
+0.004850, 
+-0.009381, 
+-0.001634, 
+0.003482, 
+-0.004130, 
+-0.002220, 
+0.001748, 
+-0.001354, 
+-0.001485, 
+0.000584, 
+-0.000263, 
+-0.000625, 
+0.000093, 
+-0.000005, 
+-0.000121
+
+};
+
+// float32_t  snr;
+
+void dsp_lowPassFilter(audio_sample_t *buffer, uint16_t length)
+{
+    uint32_t i;
+    arm_fir_instance_f32 S;
+    arm_status status;
+    uint32_t numBlocks = length/BLOCK_SIZE;
+
+    float32_t filterbuf[256];
+
+    float32_t  *inputF32, *outputF32;
+    inputF32 = outputF32 = &filterbuf[0];
+
+    // Loop through all buffer
+    for(i = 0; i < length; i++)
+    {
+        filterbuf[i] = static_cast< float32_t >(buffer[i]);
+    }
+
+    /* Call FIR init function to initialize the instance structure. */
+    arm_fir_init_f32(&S, NUM_TAPS, (float32_t *)&firCoeffs32[0], &firStateF32[0], BLOCK_SIZE);
+
+    /* ----------------------------------------------------------------------
+    ** Call the FIR process function for every BLOCK_SIZE samples
+    ** ------------------------------------------------------------------- */
+
+    for(i=0; i < numBlocks; i++)
+    {
+        arm_fir_f32(&S, filterbuf + (i * BLOCK_SIZE), filterbuf + (i * BLOCK_SIZE), BLOCK_SIZE);
+    }
+
+    for(i = 0; i < length; i++)
+    {
+        buffer[i] = static_cast< int16_t >(filterbuf[i]);
     }
 }

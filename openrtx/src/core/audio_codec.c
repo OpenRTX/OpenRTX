@@ -20,6 +20,7 @@
 
 #include <interfaces/audio_stream.h>
 #include <audio_codec.h>
+#include <noise_gate.h>
 #include <pthread.h>
 #include <codec2.h>
 #include <stdlib.h>
@@ -46,6 +47,9 @@ static uint64_t         dataBuffer[BUF_SIZE];
 #ifdef PLATFORM_MOD17
 static const uint8_t micGainPre  = 4;
 static const uint8_t micGainPost = 3;
+#elif defined(PLATFORM_MD3x0)
+static const uint8_t micGainPre  = 10;
+static const uint8_t micGainPost = 14;
 #else
 static const uint8_t micGainPre  = 8;
 static const uint8_t micGainPost = 4;
@@ -215,6 +219,8 @@ static void *encodeFunc(void *arg)
     dsp_resetFilterState(&dcrState);
 
     codec2 = codec2_create(CODEC2_MODE_3200);
+    noise_gate_t noise_gate;
+    noise_gate_init(&noise_gate, 1.0f, 80.0f, 8.0f, 80.0f, 8000.0f);
 
     while(running)
     {
@@ -223,11 +229,21 @@ static void *encodeFunc(void *arg)
         if(audio.data != NULL)
         {
             #ifndef PLATFORM_LINUX
+
             // Pre-amplification stage
             for(size_t i = 0; i < audio.len; i++) audio.data[i] *= micGainPre;
 
+
             // DC removal
             dsp_dcRemoval(&dcrState, audio.data, audio.len);
+
+            // Noise gate
+            for(size_t i = 0; i < audio.len; i++) {
+                audio.data[i] = noise_gate_update(&noise_gate, audio.data[i]);
+            }
+
+            // bandpass filter over audio.data
+            dsp_lowPassFilter(audio.data, audio.len);
 
             // Post-amplification stage
             for(size_t i = 0; i < audio.len; i++) audio.data[i] *= micGainPost;

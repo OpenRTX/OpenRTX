@@ -46,6 +46,30 @@ void platform_init()
     gpio_setMode(PTT_SW,  INPUT_PULL_UP);
     gpio_setMode(PTT_EXT, INPUT_PULL_UP);
 
+    // Any unused analog input pins should be set to digital output to
+    // reduce ADC noise slightly.
+    //PF3
+    //PF4
+    //PF5
+    //PF6
+    //PF7
+    //PF8
+    //PF9
+    //PF10
+    //PC0
+    //PC1
+    //PC2
+    //PC3
+    //PA0
+    //PA1
+    //PA2
+    //PA3
+    //PA4
+    //PA5
+    //PA6
+    //PA7
+    //gpio_setMode(AIN, OUTPUT);
+
     #ifndef RUNNING_TESTSUITE
     gpio_setMode(PWR_SW, OUTPUT);
     gpio_setPin(PWR_SW);
