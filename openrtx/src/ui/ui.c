@@ -64,6 +64,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <ui.h>
+#include <ui_colorpicker.h>
 #include <rtx.h>
 #include <interfaces/platform.h>
 #include <interfaces/cps_io.h>
@@ -137,6 +138,7 @@ const char *settings_items[] =
     "GPS",
 #endif
     "M17",
+    "Background Color",
     "Default Settings"
 };
 
@@ -1405,6 +1407,9 @@ void ui_updateFSM(bool *sync_rtx)
                         case S_M17:
                             state.ui_screen = SETTINGS_M17;
                             break;
+                        case S_COLOR:
+                            state.ui_screen = SETTINGS_COLOR;
+                            break;
                         case S_RESET2DEFAULTS:
                             state.ui_screen = SETTINGS_RESET2DEFAULTS;
                             break;
@@ -1622,6 +1627,32 @@ void ui_updateFSM(bool *sync_rtx)
                     }
                     else if(msg.keys & KEY_ESC)
                         _ui_menuBack(MENU_SETTINGS);
+                }
+                break;
+            case SETTINGS_COLOR:
+                // TODO: submenu under here
+                // with
+                // Background
+                // Text
+                // status bar
+                // ...
+
+                // based on that change the argument to color_picker_init();
+                color_picker_init(&state.settings.color_bg);
+
+                // Do some input filtering
+                if (msg.keys & KEY_ESC) {
+                    uint8_t exit = color_picker_back();
+                    if(exit > 0) {
+                        _ui_menuBack(MENU_SETTINGS);
+                    }
+                } else if (msg.keys & KEY_ENTER) {
+                    uint8_t exit = color_picker_next();
+                    if(exit > 0) {
+                        _ui_menuBack(MENU_SETTINGS);
+                    }
+                } else {
+                    color_picker_key(&msg);
                 }
                 break;
             case SETTINGS_RESET2DEFAULTS:

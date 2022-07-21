@@ -60,6 +60,7 @@ enum uiScreen
     SETTINGS_DISPLAY,
     SETTINGS_GPS,
     SETTINGS_M17,
+    SETTINGS_COLOR,
     SETTINGS_RESET2DEFAULTS,
     LOW_BAT
 };
@@ -96,6 +97,7 @@ enum settingsItems
     ,S_GPS
 #endif
     ,S_M17
+    ,S_COLOR
     ,S_RESET2DEFAULTS
 };
 

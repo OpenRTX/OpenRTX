@@ -44,6 +44,13 @@ void state_init()
         strncpy(state.settings.callsign, "OPNRTX", 10);
     }
 
+    if (state.settings.color_bg.r == 0 &&
+        state.settings.color_bg.g == 0 &&
+        state.settings.color_bg.b == 0 &&
+        state.settings.color_bg.alpha == 0) {
+        state.settings.color_bg = (color_t) {0, 0, 0, 255};
+    }
+
     /*
      * Try loading VFO configuration from nonvolatile memory and default to sane
      * values in case of failure.

@@ -21,6 +21,7 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
+#include <graphics.h>
 #include <hwconfig.h>
 #include <stdbool.h>
 
@@ -56,6 +57,7 @@ typedef struct
     char    callsign[10];         // Plaintext callsign, for future use
     uint8_t display_timer : 4,    // Standby timer
             not_in_use    : 4;
+    color_t color_bg;
 }
 __attribute__((packed)) settings_t;
 
@@ -74,7 +76,8 @@ static const settings_t default_settings =
     false,            // GPS enabled
     "",               // Empty callsign
     TIMER_30S,        // 30 seconds
-    0                 // not in use
+    0,                 // not in use
+    {0, 0, 0, 255}
 };
 
 #endif /* SETTINGS_H */
