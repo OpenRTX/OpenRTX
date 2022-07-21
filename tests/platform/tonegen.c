@@ -18,10 +18,11 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include <interfaces/gpio.h>
-#include <interfaces/delays.h>
-#include "toneGenerator_MDx.h"
+
 #include "hwconfig.h"
+#include "interfaces/delays.h"
+#include "interfaces/gpio.h"
+#include "platform/drivers/tones/toneGenerator_MDx.h"
 
 int main()
 {

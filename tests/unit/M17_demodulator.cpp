@@ -26,12 +26,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <M17/M17DSP.h>
-#include <M17/M17Demodulator.h>
-#include <M17/M17Utils.h>
-#include <interfaces/audio_stream.h>
+
+#include "interfaces/audio_stream.h"
+#include "protocols/M17/M17DSP.hpp"
+#include "protocols/M17/M17Demodulator.hpp"
+#include "protocols/M17/M17Utils.hpp"
 
 using namespace std;
+using namespace M17;
 
 /**
  * Test the different demodulation steps

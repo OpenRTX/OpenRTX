@@ -15,11 +15,10 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <string.h>
-
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <thread>
 #include <vector>
 

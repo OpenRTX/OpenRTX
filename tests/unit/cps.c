@@ -1,6 +1,7 @@
-#include <interfaces/cps_io.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
+
+#include "interfaces/cps_io.h"
 
 int test_initCPS() {
     // Initialize a new cps

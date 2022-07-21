@@ -19,16 +19,18 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <cstdio>
-#include <cstdint>
-#include <random>
 #include <array>
-#include "M17/M17ConvolutionalEncoder.h"
-#include "M17/M17CodePuncturing.h"
-#include "M17/M17Viterbi.h"
-#include "M17/M17Utils.h"
+#include <cstdint>
+#include <cstdio>
+#include <random>
+
+#include "protocols/M17/M17CodePuncturing.hpp"
+#include "protocols/M17/M17ConvolutionalEncoder.hpp"
+#include "protocols/M17/M17Utils.hpp"
+#include "protocols/M17/M17Viterbi.hpp"
 
 using namespace std;
+using namespace M17;
 
 default_random_engine rng;
 

@@ -18,11 +18,11 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <sys/types.h>
-#include "W25Qx.h"
 
+#include "platform/drivers/NVM/W25Qx.h"
 
 //static const uint32_t sector_address = 0x80000;
 static const uint32_t block_address  = 0x3f000;

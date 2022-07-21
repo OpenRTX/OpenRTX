@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <state.h>
-#include <settings.h>
+
+#include "core/state.h"
+#include "core/settings.h"
 
 extern bool _ui_checkStandby(long long);
 extern state_t state;

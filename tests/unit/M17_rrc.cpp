@@ -19,10 +19,11 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <limits.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdio.h>
-#include <M17/M17DSP.h>
+
+#include "protocols/M17/M17DSP.hpp"
 
 #define IMPULSE_SIZE 4096
 

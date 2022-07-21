@@ -19,12 +19,14 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <cstdio>
 #include <cstdint>
+#include <cstdio>
 #include <random>
-#include "M17/M17Golay.h"
+
+#include "protocols/M17/M17Golay.hpp"
 
 using namespace std;
+using namespace M17;
 
 default_random_engine rng;
 
