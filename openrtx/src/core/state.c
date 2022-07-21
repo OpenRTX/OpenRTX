@@ -44,6 +44,12 @@ void state_migrate() {
         state.settings.standby_led = default_settings.standby_led;
         state.settings.migration_version = 2;
     }
+    if (state.settings.migration_version == 2)
+    {
+        // Migration from 2->3, add background color
+        state.settings.color_bg = default_settings.color_bg;
+        state.settings.migration_version = 3;
+    }
 }
 
 void state_init()
