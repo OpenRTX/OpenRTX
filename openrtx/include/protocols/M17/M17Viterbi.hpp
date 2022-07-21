@@ -63,10 +63,11 @@ public:
      *
      * @param in: input data.
      * @param out: destination array where decoded data are written.
+     * @return number of bit errors corrected.
      */
     template < size_t IN, size_t OUT >
-    void decode(const std::array< uint8_t, IN  >& in,
-                      std::array< uint8_t, OUT >& out)
+    uint16_t decode(const std::array< uint8_t, IN  >& in,
+                          std::array< uint8_t, OUT >& out)
     {
         static_assert(IN*4 < 244, "Input size exceeds max history");
 
@@ -83,7 +84,7 @@ public:
             pos++;
         }
 
-        chainback(out, pos);
+        return chainback(out, pos) / ((K - 1) >> 1);
     }
 
     /**
@@ -91,20 +92,22 @@ public:
      *
      * @param in: input data.
      * @param out: destination array where decoded data are written.
+     * @return number of bit errors corrected.
      */
     template < size_t IN, size_t OUT, size_t P >
-    void decodePunctured(const std::array< uint8_t, IN  >& in,
-                               std::array< uint8_t, OUT >& out,
-                         const std::array< uint8_t, P   >& punctureMatrix)
+    uint16_t decodePunctured(const std::array< uint8_t, IN  >& in,
+                                   std::array< uint8_t, OUT >& out,
+                             const std::array< uint8_t, P   >& punctureMatrix)
     {
         static_assert(IN*4 < 244, "Input size exceeds max history");
 
         currMetricsData.fill(0x00);
         prevMetricsData.fill(0x00);
 
-        size_t histPos    = 0;
-        size_t punctIndex = 0;
-        size_t bitPos     = 0;
+        size_t   histPos     = 0;
+        size_t   punctIndex  = 0;
+        size_t   bitPos      = 0;
+        uint16_t punctBitCnt = 0;
 
         while(bitPos < IN*8)
         {
@@ -117,6 +120,10 @@ public:
                     sym[i] = getBit(in, bitPos) ? 2 : 0;
                     bitPos++;
                 }
+                else
+                {
+                    punctBitCnt++;
+                }
 
                 if(punctIndex >= P) punctIndex = 0;
             }
@@ -125,7 +132,7 @@ public:
             histPos++;
         }
 
-        chainback(out, histPos);
+        return (chainback(out, histPos) - punctBitCnt) / ((K - 1) >> 1);
     }
 
 private:
@@ -188,9 +195,10 @@ private:
      *
      * @param out: destination byte array for decoded data.
      * @param pos: starting position for the chainback.
+     * @return minimum Viterbi cost at the end of the decode sequence.
      */
     template < size_t OUT >
-    void chainback(std::array< uint8_t, OUT >& out, size_t pos)
+    uint16_t chainback(std::array< uint8_t, OUT >& out, size_t pos)
     {
         uint8_t state = 0;
         size_t bitPos = OUT*8;
@@ -204,6 +212,16 @@ private:
             if(bit) state |= 0x80;
             setBit(out, bitPos, bit);
         }
+
+        uint16_t cost = (*prevMetrics)[0];
+
+        for(size_t i = 0; i < NumStates; i++)
+        {
+            uint16_t m = (*prevMetrics)[i];
+            if(m < cost) cost = m;
+        }
+
+        return cost;
     }
 
 
