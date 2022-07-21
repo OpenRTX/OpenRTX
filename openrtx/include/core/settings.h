@@ -21,6 +21,7 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
+#include <graphics.h>
 #include <hwconfig.h>
 #include <stdbool.h>
 
@@ -61,6 +62,7 @@ typedef struct
             _reserved       : 4;
     uint32_t structSize;
     uint16_t   crc;
+    color_t color_bg;
 }
 __attribute__((packed)) settings_t;
 
@@ -85,6 +87,7 @@ static const settings_t default_settings =
     0,                // not used
     0,                // struct size
     0,                // crc
+    {255, 0, 0, 128}, // default BG color
 };
 
 #endif /* SETTINGS_H */

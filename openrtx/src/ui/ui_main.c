@@ -28,6 +28,8 @@
 
 void _ui_drawMainBackground()
 {
+    point_t initial = {0,layout.top_h};
+    gfx_drawRect(initial, SCREEN_WIDTH, SCREEN_HEIGHT - (layout.bottom_h * 2), state.settings.color_bg, true);
     // Print top bar line of hline_h pixel height
     gfx_drawHLine(layout.top_h, layout.hline_h, color_grey);
     // Print bottom bar line of 1 pixel height
@@ -247,6 +249,7 @@ void _ui_drawMainBottom()
 void _ui_drawMainVFO(ui_state_t* ui_state)
 {
     gfx_clearScreen();
+    _ui_drawMainBackground();
     _ui_drawMainTop();
     _ui_drawModeInfo(ui_state);
     _ui_drawFrequency();
@@ -256,6 +259,7 @@ void _ui_drawMainVFO(ui_state_t* ui_state)
 void _ui_drawMainVFOInput(ui_state_t* ui_state)
 {
     gfx_clearScreen();
+    _ui_drawMainBackground();
     _ui_drawMainTop();
     _ui_drawVFOMiddleInput(ui_state);
     _ui_drawMainBottom();
@@ -264,6 +268,7 @@ void _ui_drawMainVFOInput(ui_state_t* ui_state)
 void _ui_drawMainMEM(ui_state_t* ui_state)
 {
     gfx_clearScreen();
+    _ui_drawMainBackground();
     _ui_drawMainTop();
     _ui_drawBankChannel();
     _ui_drawModeInfo(ui_state);
