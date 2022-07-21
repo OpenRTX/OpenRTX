@@ -163,8 +163,9 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
     {
         auto& frame = demodulator.getFrame();
         auto type   = decoder.decodeFrame(frame);
+        bool lsfOk  = decoder.getLsf().valid();
 
-        if(type == M17FrameType::STREAM)
+        if((type == M17FrameType::STREAM) && (lsfOk == true))
         {
             M17StreamFrame sf = decoder.getStreamFrame();
             codec_pushFrame(sf.payload().data(),     false);

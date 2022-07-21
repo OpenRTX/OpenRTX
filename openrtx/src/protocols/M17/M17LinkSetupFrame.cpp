@@ -88,7 +88,7 @@ void M17LinkSetupFrame::updateCrc()
     data.crc     = __builtin_bswap16(crc);
 }
 
-bool M17LinkSetupFrame::valid()
+bool M17LinkSetupFrame::valid() const
 {
     uint16_t crc = crc16(&data, 28);
     if(data.crc == __builtin_bswap16(crc)) return true;
@@ -138,7 +138,7 @@ lich_t M17LinkSetupFrame::generateLichSegment(const uint8_t segmentNum)
     return result;
 }
 
-uint16_t M17LinkSetupFrame::crc16(const void *data, const size_t len)
+uint16_t M17LinkSetupFrame::crc16(const void *data, const size_t len) const
 {
     const uint8_t *ptr = reinterpret_cast< const uint8_t *>(data);
     uint16_t crc = 0xFFFF;

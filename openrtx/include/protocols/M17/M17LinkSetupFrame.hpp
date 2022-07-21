@@ -122,7 +122,7 @@ public:
      * @return true if CRC of LSF data matches the one stored in the LSF itself,
      * false otherwise.
      */
-    bool valid();
+    bool valid() const;
 
     /**
      * Get underlying data.
@@ -150,7 +150,7 @@ private:
      * \param len: lenght of the data block, in bytes.
      * \return computed CRC16 over the data block.
      */
-    uint16_t crc16(const void *data, const size_t len);
+    uint16_t crc16(const void *data, const size_t len) const;
 
 
     struct __attribute__((packed))
