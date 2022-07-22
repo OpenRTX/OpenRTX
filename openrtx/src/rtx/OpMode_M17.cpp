@@ -144,7 +144,6 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
 {
     if(startRx)
     {
-        decoder.reset();
         demodulator.startBasebandSampling();
         demodulator.invertPhase(status->invertRxPhase);
 
@@ -157,7 +156,15 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
     }
 
     bool newData = demodulator.update();
-    locked       = demodulator.isLocked();
+    bool lock    = demodulator.isLocked();
+
+    // Reset frame decoder when transitioning from unlocked to locked state
+    if((lock == true) && (locked == false))
+    {
+        decoder.reset();
+    }
+
+    locked = lock;
 
     if(locked && newData)
     {
