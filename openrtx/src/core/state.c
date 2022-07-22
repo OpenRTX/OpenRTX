@@ -30,6 +30,21 @@
 state_t state;
 pthread_mutex_t state_mutex;
 
+void state_migrate() {
+    // Invalid initial state
+    if (state.settings.migration_version == 0 ||
+        state.settings.migration_version > MAX_MIGRATION_VERSION)
+    {
+        // Migration from 0->1 does nothing
+        state.settings.migration_version = 1;
+    }
+    if (state.settings.migration_version == 1)
+    {
+        //example migration from 1>2
+        //state.settings.migration_version = 2;
+    }
+}
+
 void state_init()
 {
     pthread_mutex_init(&state_mutex, NULL);
@@ -43,6 +58,8 @@ void state_init()
         state.settings = default_settings;
         strncpy(state.settings.callsign, "OPNRTX", 10);
     }
+
+    state_migrate();
 
     /*
      * Try loading VFO configuration from nonvolatile memory and default to sane
