@@ -77,6 +77,9 @@
 #include <battery.h>
 #include <input.h>
 #include <hwconfig.h>
+#ifdef LED_PRESENT
+#include <led.h>
+#endif
 
 /* UI main screen functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBackground();
@@ -409,6 +412,9 @@ void ui_init()
     redraw_needed = true;
     layout = _ui_calculateLayout();
     layout_ready = true;
+    #ifdef LED_PRESENT
+    led_link_standby_state(&standby);
+    #endif
     // Initialize struct ui_state to all zeroes
     // This syntax is called compound literal
     // https://stackoverflow.com/questions/6891720/initialize-reset-struct-to-zero-null

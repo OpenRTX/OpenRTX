@@ -28,6 +28,9 @@
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
 #include <interfaces/radio.h>
+#ifdef LED_PRESENT
+#include <led.h>
+#endif
 #include <event.h>
 #include <rtx.h>
 #include <string.h>
@@ -172,6 +175,10 @@ void *dev_task(void *arg)
             state_update();
             ui_pushEvent(EVENT_STATUS, 0);
         }
+
+        #ifdef LED_PRESENT
+        led_tick();
+        #endif
 
         // Run this loop once every 5ms
         time += 5;

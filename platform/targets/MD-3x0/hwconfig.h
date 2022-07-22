@@ -32,6 +32,9 @@ extern "C" {
 /* Device supports an optional GPS chip */
 #define GPS_PRESENT
 
+/* Device has onboard LEDs */
+#define LED_PRESENT
+
 /* Device has a channel selection knob */
 #define HAS_ABSOLUTE_KNOB
 
