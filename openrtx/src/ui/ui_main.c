@@ -32,7 +32,7 @@ void _ui_drawMainBackground()
     // Print top bar line of hline_h pixel height
     gfx_drawHLine(layout.top_h, layout.hline_h, color_grey);
     // Print bottom bar line of 1 pixel height
-    gfx_drawHLine(SCREEN_HEIGHT - layout.bottom_h - 1, layout.hline_h, color_grey);
+    gfx_drawHLine(SCREEN_HEIGHT - (layout.bottom_h * 1.32), layout.hline_h, color_grey);
 }
 
 void _ui_drawMainTop()
