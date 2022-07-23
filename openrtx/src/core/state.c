@@ -40,8 +40,9 @@ void state_migrate() {
     }
     if (state.settings.migration_version == 1)
     {
-        //example migration from 1>2
-        //state.settings.migration_version = 2;
+        // Migration from 1->2, add standby_led
+        state.settings.standby_led = default_settings.standby_led;
+        state.settings.migration_version = 2;
     }
 }
 
