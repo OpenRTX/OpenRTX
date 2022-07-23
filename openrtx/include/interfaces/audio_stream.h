@@ -106,6 +106,7 @@ void inputStream_stop(streamId id);
  * @param prio: priority of the requester.
  * @param buf: buffer containing the audio samples.
  * @param length: length of the buffer, in elements.
+ * @param mode: operation mode of the buffer
  * @param sampleRate: sample rate in Hz.
  * @return a unique identifier for the stream or -1 if the stream could not be
  * opened.
@@ -138,7 +139,7 @@ stream_sample_t *outputStream_getIdleBuffer(const streamId id);
  * synchronisation point, the function returns immediately.
  *
  * @param id: stream identifier.
- * @param bufChanged: if true, notifies the strem handler that new data has
+ * @param bufChanged: if true, notifies the stream handler that new data has
  * been written to the idle section of the data buffer. This field is valid
  * only in circular double buffered mode.
  * @return true if execution was effectively blocked, false if stream is not
