@@ -4,6 +4,7 @@
 #include "interfaces/gpio.h"
 #endif
 #include <stdint.h>
+#include <state.h>
 #include <stdbool.h>
 
 uint16_t standby_toggle_tick = 0;
@@ -14,7 +15,7 @@ bool red_on = false;
 
 // Runs every 5ms
 void led_tick() {
-    if (*standby_active) {
+    if (*standby_active && state.settings.standby_led) {
         standby_toggle_tick++;
         if (standby_toggle_tick % 40 == 0) {
             // 200ms passed, switch active LED

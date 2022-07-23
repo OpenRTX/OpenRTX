@@ -102,6 +102,7 @@ extern void _ui_drawMenuContacts(ui_state_t* ui_state);
 extern void _ui_drawMenuGPS();
 extern void _ui_drawSettingsGPS(ui_state_t* ui_state);
 #endif
+extern void _ui_drawSettingsLED(ui_state_t* ui_state);
 extern void _ui_drawMenuSettings(ui_state_t* ui_state);
 extern void _ui_drawMenuBackupRestore(ui_state_t* ui_state);
 extern void _ui_drawMenuBackup(ui_state_t* ui_state);
@@ -141,6 +142,7 @@ const char *settings_items[] =
     "GPS",
 #endif
     "M17",
+    "Standby LED",
     "Default Settings"
 };
 
@@ -161,6 +163,11 @@ const char *settings_gps_items[] =
     "UTC Timezone"
 };
 #endif
+
+const char *settings_led_items[] =
+{
+    "Standby LED",
+};
 
 const char *backup_restore_items[] =
 {
@@ -228,6 +235,7 @@ const uint8_t display_num = sizeof(display_items)/sizeof(display_items[0]);
 #ifdef GPS_PRESENT
 const uint8_t settings_gps_num = sizeof(settings_gps_items)/sizeof(settings_gps_items[0]);
 #endif
+const uint8_t settings_led_num = sizeof(settings_led_items)/sizeof(settings_led_items[0]);
 const uint8_t backup_restore_num = sizeof(backup_restore_items)/sizeof(backup_restore_items[0]);
 const uint8_t info_num = sizeof(info_items)/sizeof(info_items[0]);
 const uint8_t author_num = sizeof(authors)/sizeof(authors[0]);
@@ -1412,6 +1420,9 @@ void ui_updateFSM(bool *sync_rtx)
                         case S_M17:
                             state.ui_screen = SETTINGS_M17;
                             break;
+                        case S_LED:
+                            state.ui_screen = SETTINGS_LED;
+                            break;
                         case S_RESET2DEFAULTS:
                             state.ui_screen = SETTINGS_RESET2DEFAULTS;
                             break;
@@ -1631,6 +1642,33 @@ void ui_updateFSM(bool *sync_rtx)
                         _ui_menuBack(MENU_SETTINGS);
                 }
                 break;
+            case SETTINGS_LED:
+                if(msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT ||
+                   (ui_state.edit_mode &&
+                   (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT ||
+                    msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)))
+                {
+                    switch(ui_state.menu_selected)
+                    {
+                        case L_ENABLED:
+                            if(state.settings.standby_led)
+                                state.settings.standby_led = 0;
+                            else
+                                state.settings.standby_led = 1;
+                            break;
+                        default:
+                            state.ui_screen = SETTINGS_LED;
+                    }
+                }
+                else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                    _ui_menuUp(settings_led_num);
+                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                    _ui_menuDown(settings_led_num);
+                else if(msg.keys & KEY_ENTER)
+                    ui_state.edit_mode = !ui_state.edit_mode;
+                else if(msg.keys & KEY_ESC)
+                    _ui_menuBack(MENU_SETTINGS);
+                break;
             case SETTINGS_RESET2DEFAULTS:
                 if(! ui_state.edit_mode){
                     //require a confirmation ENTER, then another
@@ -1773,6 +1811,9 @@ void ui_updateGUI()
         // M17 settings screen
         case SETTINGS_M17:
             _ui_drawSettingsM17(&ui_state);
+            break;
+        case SETTINGS_LED:
+            _ui_drawSettingsLED(&ui_state);
             break;
         // Screen to support resetting Settings and VFO to defaults
         case SETTINGS_RESET2DEFAULTS:

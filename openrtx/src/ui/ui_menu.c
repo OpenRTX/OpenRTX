@@ -202,6 +202,25 @@ int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
 }
 #endif
 
+int _ui_getSettingsLEDEntryName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= settings_led_num) return -1;
+    snprintf(buf, max_len, "%s", settings_led_items[index]);
+    return 0;
+}
+
+int _ui_getSettingsLEDValueName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= settings_led_num) return -1;
+    switch(index)
+    {
+        case L_ENABLED:
+            snprintf(buf, max_len, "%s", (last_state.settings.standby_led) ? "ON" : "OFF");
+            break;
+    }
+    return 0;
+}
+
 int _ui_getBackupRestoreEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= backup_restore_num) return -1;
@@ -545,6 +564,18 @@ void _ui_drawSettingsGPS(ui_state_t* ui_state)
                           _ui_getSettingsGPSValueName);
 }
 #endif
+
+void _ui_drawSettingsLED(ui_state_t* ui_state)
+{
+    gfx_clearScreen();
+    // Print "LED Settings" on top bar
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
+              color_white, "LED Settings");
+    // Print display settings entries
+    _ui_drawMenuListValue(ui_state, ui_state->menu_selected,
+                          _ui_getSettingsLEDEntryName,
+                          _ui_getSettingsLEDValueName);
+}
 
 #ifdef RTC_PRESENT
 void _ui_drawSettingsTimeDate()
