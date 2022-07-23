@@ -137,6 +137,8 @@ void vpCacheInit(void)
        // loaded.
         if (state.settings.vpLevel > vpBeep) state.settings.vpLevel = vpBeep;
     }
+    // TODO: Move this somewhere else for compatibility with M17
+    codec_init();
 }
 
 bool vpCheckHeader(uint32_t* bufferAddress)
@@ -154,8 +156,9 @@ static void GetCodec2Data(int offset, int length)
 	
     if ((offset < 0) || (length > Codec2DataBufferSize))
         return;
-    
-    fseek(voice_prompt_file, vpDataOffset+offset, SEEK_SET);
+
+    // Skip codec2 header
+    fseek(voice_prompt_file, vpDataOffset+offset+CODEC2_HEADER_SIZE, SEEK_SET);
     fread((void*)&Codec2Data, length, 1, voice_prompt_file);
     // zero buffer from length to the next multiple of 8 to avoid garbage 
     // being played back, since codec2 frames are pushed in lots of 8 bytes.
@@ -181,11 +184,6 @@ void vpTerminate(void)
 
 void vpInit(void)
 {
-    if (voicePromptIsActive)
-    {
-        vpTerminate();
-    }
-
     vpCurrentSequence.length = 0;
     vpCurrentSequence.pos    = 0;
     vpCurrentSequence.codec2DataIndex = 0;
@@ -343,8 +341,9 @@ void vpQueueStringTableEntry(const char* const* stringTableStringPtr)
     {
         return;
     }
-    vpQueuePrompt(NUM_VOICE_PROMPTS +
-                  (stringTableStringPtr - &currentLanguage->languageName));
+    vpQueuePrompt(NUM_VOICE_PROMPTS + 1 +
+                  (stringTableStringPtr - &currentLanguage->languageName)
+                  / sizeof(const char *));
 }
 
 void vpPlay(void)

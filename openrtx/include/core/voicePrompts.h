@@ -22,6 +22,9 @@
 #include <datatypes.h>
 #include <stdbool.h>
 
+// Voice prompts are encoded using the codec2 file format used by ffmpeg
+#define CODEC2_HEADER_SIZE 7
+
 /*
 Please note, these prompts represent spoken words or phrases which are not in
 the UI string table, for example letters of the alphabet, digits, and

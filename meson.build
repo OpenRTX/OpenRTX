@@ -697,10 +697,15 @@ sine_test = executable('sine_test',
                       sources : unit_test_src + ['tests/unit/play_sine.c'],
                       kwargs  : unit_test_opts)
 
+vp_test = executable('vp_test',
+                      sources : unit_test_src + ['tests/unit/voice_prompts.c'],
+                      kwargs  : unit_test_opts)
+
 test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
 test('M17 Demodulator Test',  m17_demodulator_test)
 test('M17 RRC Test',          m17_rrc_test)
 test('Codeplug Test',         cps_test)
 test('Linux InputStream Test', linux_inputStream_test)
-test('Sine Test',              sine_test)
+test('Sine Test',             sine_test)
+test('Voice Prompts Test',    vp_test)
