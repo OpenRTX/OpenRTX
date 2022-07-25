@@ -31,6 +31,9 @@ int main()
 {
     platform_init();
 
+    filter_state_t dcrState;
+    dsp_resetFilterState(&dcrState);
+
     static const size_t numSamples = 45*1024;       // 90kB
     stream_sample_t *sampleBuf = ((stream_sample_t *) malloc(numSamples *
                                                       sizeof(stream_sample_t)));
@@ -52,7 +55,7 @@ int main()
     for(size_t i = 0; i < audio.len; i++) audio.data[i] <<= 3;
 
     // DC removal
-    dsp_dcRemoval(audio.data, audio.len);
+    dsp_dcRemoval(&dcrState, audio.data, audio.len);
 
     // Post-processing gain
     for(size_t i = 0; i < audio.len; i++) audio.data[i] *= 10;
