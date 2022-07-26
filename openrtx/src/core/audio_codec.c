@@ -317,16 +317,21 @@ static void *decodeFunc(void *arg)
 
 static void startThread(void *(*func) (void *))
 {
+    #ifdef _MIOSIX
+    // Set stack size of CODEC2 thread to 16kB.
     pthread_attr_t codecAttr;
     pthread_attr_init(&codecAttr);
     pthread_attr_setstacksize(&codecAttr, 16384);
 
-    #ifdef _MIOSIX
     // Set priority of CODEC2 thread to the maximum one, the same of RTX thread.
     struct sched_param param;
     param.sched_priority = sched_get_priority_max(0);
     pthread_attr_setschedparam(&codecAttr, &param);
+
+    // Start thread
+    pthread_create(&codecThread, &codecAttr, func, NULL);
+    #else
+    pthread_create(&codecThread, NULL, func, NULL);
     #endif
 
-    pthread_create(&codecThread, &codecAttr, func, NULL);
 }
