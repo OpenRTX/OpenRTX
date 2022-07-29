@@ -18,131 +18,189 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <assert.h>
 #include <interfaces/audio_stream.h>
-#include <pulse/error.h>
-#include <pulse/simple.h>
 #include <pulse/pulseaudio.h>
+#include <pulse/simple.h>
+#include <pulse/error.h>
+#include <pthread.h>
 #include <stddef.h>
+#include <unistd.h>
+#include <string.h>
 #include <stdio.h>
 
 // Expand opaque pa_simple struct
-struct pa_simple {
+struct pa_simple
+{
     pa_threaded_mainloop *mainloop;
-    pa_context *context;
-    pa_stream *stream;
+    pa_context           *context;
+    pa_stream            *stream;
     pa_stream_direction_t direction;
-
-    const void *read_data;
-    size_t read_index, read_length;
-
-    int operation_success;
+    const void           *read_data;
+    size_t                read_index;
+    size_t                read_length;
+    int                   operation_success;
 };
 
-static int           priority          = PRIO_BEEP; // Current priority
-static bool          running           = false;     // Stream is running
-static pa_simple     *p                = NULL;      // Pulseaudio instance
-static int           error             = 0;         // Error code
-static enum BufMode  buf_mode;                      // Buffer operation mode
-static stream_sample_t *buf            = NULL;      // Playback buffer
-static size_t        buf_len           = 0;         // Buffer length
-static bool          first_half_active = true; // Circular addressing mode flag
-static size_t        offset            = 0;         // Playback offset
+static enum BufMode       bufMode;                  // Buffer operation mode
+static enum AudioPriority priority   = PRIO_BEEP;   // Priority level
+static bool               running    = false;       // Stream is running
+static size_t             bufLen     = 0;           // Total buffer length
+static stream_sample_t   *playBuf    = NULL;        // Buffer being reproduced
+static stream_sample_t   *idleBuf    = NULL;        // Idle buffer available to be filled
+static pa_simple         *paInstance = NULL;        // Pulseaudio instance
+static size_t             remaining  = 0;
+static pthread_cond_t     barrier;
+static pthread_mutex_t    mutex;
 
-static void buf_circ_write_cb(pa_stream *s, size_t length, void *userdata)
+static void buf_circ_write_cb(pa_stream* s, size_t length, void* userdata)
 {
     (void) userdata;
-    size_t remaining = 0;
 
-    if (!s || length <= 0)
+    if((s == NULL) || (length <= 0))
         return;
 
-    if (offset >= buf_len / 2)
-        first_half_active = false;
-
-    remaining = buf_len - offset;
-
-    // We can play all the rest of the buffer
-    if (length > remaining)
+    if(length > remaining)
     {
-        pa_stream_write(s, buf + offset, remaining, NULL, 0, PA_SEEK_RELATIVE);
-
-        if(first_half_active == true)
-            first_half_active = false;
-        else
-            first_half_active = true;
-
-        offset = 0;
+        // We can play all the rest of the buffer
+        pa_stream_write(s, playBuf, remaining * sizeof(stream_sample_t),
+                        NULL, 0, PA_SEEK_RELATIVE);
+        remaining = 0;
     }
     else
     {
-        pa_stream_write(s, buf + offset, length, NULL, 0, PA_SEEK_RELATIVE);
-        offset += length;
+        pa_stream_write(s, playBuf, length, NULL, 0, PA_SEEK_RELATIVE);
+
+        if (remaining > length)
+            remaining -= length;
+        else
+            remaining = 0;
+    }
+
+    // All data in playBuffer has been sent
+    if(remaining == 0)
+    {
+        // Reload counter
+        remaining = bufLen/2;
+
+        pthread_mutex_lock(&mutex);
+
+        // Swap idle and play buffers
+        stream_sample_t *tmp = idleBuf;
+        playBuf = idleBuf;
+        idleBuf = tmp;
+
+        // Unlock waiting threads
+        pthread_cond_signal(&barrier);
+        pthread_mutex_unlock(&mutex);
     }
 }
 
 streamId outputStream_start(const enum AudioSink destination,
                             const enum AudioPriority prio,
-                            stream_sample_t * const buffer,
+                            stream_sample_t* const buffer,
                             const size_t length,
                             const enum BufMode mode,
                             const uint32_t sampleRate)
 {
-    assert(destination == SINK_SPK && "Only speaker sink was implemented!\n");
 
-    /* The Sample format to use */
-    static pa_sample_spec ss = {
-        .format = PA_SAMPLE_S16LE,
-        .rate = 0,
-        .channels = 1
-    };
+    if(destination != SINK_SPK)
+        return -1;
 
-    ss.rate = sampleRate;
-
-    // Check if an output stream is already opened and, in case, handle priority.
+    // Check if an output stream is already opened and, in case, handle
+    // priority.
     if(running)
     {
-        if((int) prio < priority) return -1;          // Lower priority, reject.
-        if((int) prio > priority) outputStream_stop(0);     // Higher priority, takes over.
-        outputStream_sync(0, false);            // Same priority, wait.
+        if(prio < priority) return -1;             // Lower priority, reject.
+        if(prio > priority) outputStream_stop(0);  // Higher priority, takes over.
+        while(running) ;                           // Same priority, wait.
     }
 
     // Assign priority and set stream as running
-    priority = prio;
-    running  = true;
-    buf_mode = mode;
-    buf = buffer;
-    buf_len = length;
-    first_half_active = true;
+    running   = true;
+    priority  = prio;
+    bufMode   = mode;
+    playBuf   = buffer;
+    idleBuf   = buffer + (length/2);
+    bufLen    = length;
+    remaining = length/2;
 
-    if (!p)
+    int  paError = 0;
+    bool success = true;
+
+    if(paInstance == NULL)
     {
-        // Create a new playback stream
-        if (!(p = pa_simple_new(NULL, "OpenRTX", PA_STREAM_PLAYBACK, NULL, "Audio out", &ss, NULL, NULL, &error))) {
-            fprintf(stderr, __FILE__": pa_simple_new() failed: %s\n", pa_strerror(error));
-            return -1;
+        // Stream data sample format
+        static pa_sample_spec spec;
+        spec.format   = PA_SAMPLE_S16LE;
+        spec.rate     = 0;
+        spec.channels = 1;
+        spec.rate     = sampleRate;
+
+        paInstance = pa_simple_new(NULL, "OpenRTX", PA_STREAM_PLAYBACK, NULL,
+                                   "Audio out", &spec, NULL, NULL, &paError);
+
+        if(paInstance == NULL)
+        {
+            fprintf(stderr, __FILE__ ": pa_simple_new() failed: %s\n",
+                    pa_strerror(paError));
+
+            success = false;
+        }
+        else
+        {
+            pthread_mutex_init(&mutex, NULL);
+            pthread_cond_init(&barrier, NULL);
         }
     }
 
-    if (mode == BUF_LINEAR)
+    switch(mode)
     {
-        if (pa_simple_write(p, buf, length, &error) < 0) {
-            fprintf(stderr, __FILE__": pa_simple_write() failed: %s\n", pa_strerror(error));
-            return -1;
+        case BUF_LINEAR:
+            if(pa_simple_write(paInstance, buffer, length, &paError) < 0)
+                success = false;
+            break;
+
+        case BUF_CIRC_DOUBLE:
+        {
+            if(paInstance->stream == NULL)
+            {
+                success = false;
+                break;
+            }
+
+            // Register write callback
+            pa_stream_set_write_callback(paInstance->stream, buf_circ_write_cb,
+                                         NULL);
+
+            // Set minimal prebuffering
+            const pa_buffer_attr attr =
+            {
+                .fragsize  = -1,
+                .maxlength = -1,
+                .minreq    = -1,
+                .prebuf    = 320,
+                .tlength   = -1,
+            };
+
+            pa_stream_set_buffer_attr(paInstance->stream, &attr, NULL, NULL);
+
+            // Get maximum pulse buffer size
+            size_t wsize = pa_stream_writable_size(paInstance->stream);
+            if(wsize > (length / 2))
+                wsize = length / 2;
+
+            // Start writing loop
+            pa_stream_write(paInstance->stream, playBuf, wsize, NULL, 0,
+                            PA_SEEK_RELATIVE);
         }
+            break;
     }
-    else if (mode == BUF_CIRC_DOUBLE)
+
+    if(success == false)
     {
-        assert(p->stream && "Invalid PulseAudio Stream!");
-
-        if (pa_simple_write(p, buf, length / 2, &error) < 0) {
-            fprintf(stderr, __FILE__": pa_simple_write() failed: %s\n", pa_strerror(error));
-            return -1;
-        }
-        offset = length / 2;
-
-        // Register write callback
-        pa_stream_set_write_callback(p->stream, buf_circ_write_cb, NULL);
+        running  = false;
+        priority = PRIO_BEEP;
+        return -1;
     }
 
     return 0;
@@ -152,13 +210,16 @@ stream_sample_t *outputStream_getIdleBuffer(const streamId id)
 {
     (void) id;
 
-    if (buf_mode == BUF_CIRC_DOUBLE)
+    stream_sample_t *ptr = NULL;
+
+    if(bufMode == BUF_CIRC_DOUBLE)
     {
-        // Return half of the buffer not currently being read
-        return (!first_half_active) ? buf : buf + buf_len / 2;
+        pthread_mutex_lock(&mutex);
+        ptr = idleBuf;
+        pthread_mutex_unlock(&mutex);
     }
-    else
-        return NULL;
+
+    return ptr;
 }
 
 bool outputStream_sync(const streamId id, const bool bufChanged)
@@ -166,16 +227,16 @@ bool outputStream_sync(const streamId id, const bool bufChanged)
     (void) id;
     (void) bufChanged;
 
-    /* Make sure that every single sample was played */
-    if (pa_simple_drain(p, &error) < 0) {
-        fprintf(stderr, __FILE__": pa_simple_drain() failed: %s\n", pa_strerror(error));
-        return false;
+    if(bufMode == BUF_CIRC_DOUBLE)
+    {
+        pthread_mutex_lock(&mutex);
+        pthread_cond_wait(&barrier, &mutex);
+        pthread_mutex_unlock(&mutex);
     }
 
-    if (buf_mode == BUF_LINEAR)
-    {
-        running = false;
-    }
+    //
+    // TODO syncronisation barrrier also for linear buffer mode
+    //
 
     return true;
 }
@@ -184,18 +245,28 @@ void outputStream_stop(const streamId id)
 {
     (void) id;
 
-    /* Make sure that every single sample was played */
-    if (pa_simple_flush(p, &error) < 0) {
-        fprintf(stderr, __FILE__": pa_simple_drain() failed: %s\n", pa_strerror(error));
+    int error = 0;
+    if (pa_simple_flush(paInstance, &error) < 0)
+    {
+        fprintf(stderr, __FILE__": pa_simple_drain() failed: %s\n",
+                pa_strerror(error));
     }
 
-    running = false;
+    running  = false;
+    priority = PRIO_BEEP;
 }
 
 void outputStream_terminate(const streamId id)
 {
     (void) id;
 
-    if (p)
-        pa_simple_free(p);
+    running  = false;
+    priority = PRIO_BEEP;
+
+    if(paInstance != NULL)
+    {
+        pa_simple_free(paInstance);
+        pthread_mutex_destroy(&mutex);
+        pthread_cond_destroy(&barrier);
+    }
 }
