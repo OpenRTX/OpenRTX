@@ -120,11 +120,13 @@ void radio_setOpmode(const enum opmode mode)
 
         case OPMODE_DMR:
             at1846s.setOpMode(AT1846S_OpMode::DMR);
+            at1846s.setBandwidth(AT1846S_BW::_12P5);
 //             C6000.dmrMode();
             break;
 
         case OPMODE_M17:
             at1846s.setOpMode(AT1846S_OpMode::DMR); // AT1846S in DMR mode, disables RX filter
+            at1846s.setBandwidth(AT1846S_BW::_25);  // Set bandwidth to 25kHz for proper deviation
             C6000.fmMode();                         // HR_C6000 in FM mode
             C6000.setInputGain(+6);                 // Input gain in dB, found experimentally
             break;
@@ -312,14 +314,23 @@ void radio_updateConfiguration()
                                                                      calPoints);
     C6000.setModAmplitude(0, Q);
 
-    // Set bandwidth, force 12.5kHz for DMR mode
-    if((config->bandwidth == BW_12_5) || (config->opMode == OPMODE_DMR))
+    // Set bandwidth, only for analog FM mode
+    if(config->opMode == OPMODE_FM)
     {
-        at1846s.setBandwidth(AT1846S_BW::_12P5);
-    }
-    else
-    {
-        at1846s.setBandwidth(AT1846S_BW::_25);
+        switch(config->bandwidth)
+        {
+            case BW_12_5:
+                at1846s.setBandwidth(AT1846S_BW::_12P5);
+                break;
+
+             case BW_20:
+             case BW_25:
+                at1846s.setBandwidth(AT1846S_BW::_25);
+                break;
+
+             default:
+                 break;
+        }
     }
 
     /*

@@ -118,6 +118,8 @@ void radio_setOpmode(const enum opmode mode)
             gpio_clearPin(RX_AUDIO_MUX);             // Audio out to HR_C6000
             gpio_setPin(TX_AUDIO_MUX);               // Audio in from HR_C6000
             at1846s.setOpMode(AT1846S_OpMode::DMR);
+            at1846s.setBandwidth(AT1846S_BW::_12P5);
+            at1846s.setTxDeviation(calData->data[currTxBand].mixGainNarrowband);
             break;
 
         default:
@@ -316,16 +318,25 @@ void radio_updateConfiguration()
     float apc   = pwrLo + (pwrHi - pwrLo)/4.0f*(power - 1.0f);
     apcVoltage  = static_cast< uint16_t >(apc) * 16;
 
-    // Set bandwidth and TX deviation, force 12.5kHz for DMR mode
-    if((config->bandwidth == BW_12_5) || (config->opMode == OPMODE_DMR))
+    // Set bandwidth, only for analog FM mode
+    if(config->opMode == OPMODE_FM)
     {
-        at1846s.setBandwidth(AT1846S_BW::_12P5);
-        at1846s.setTxDeviation(calData->data[currTxBand].mixGainNarrowband);
-    }
-    else
-    {
-        at1846s.setBandwidth(AT1846S_BW::_25);
-        at1846s.setTxDeviation(calData->data[currTxBand].mixGainWideband);
+        switch(config->bandwidth)
+        {
+            case BW_12_5:
+                at1846s.setBandwidth(AT1846S_BW::_12P5);
+                at1846s.setTxDeviation(calData->data[currTxBand].mixGainNarrowband);
+                break;
+
+             case BW_20:
+             case BW_25:
+                at1846s.setBandwidth(AT1846S_BW::_25);
+                at1846s.setTxDeviation(calData->data[currTxBand].mixGainWideband);
+                break;
+
+             default:
+                 break;
+        }
     }
 
     /*
