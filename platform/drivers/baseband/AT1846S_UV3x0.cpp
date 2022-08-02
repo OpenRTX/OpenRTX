@@ -51,15 +51,15 @@ void AT1846S::init()
     i2c_writeReg16(0x55, 0x0081);
     i2c_writeReg16(0x56, 0x0B02);
     i2c_writeReg16(0x57, 0x1C00);
-    i2c_writeReg16(0x58, 0x9CDD);   // Set ctcss_lpfil_bw to 250Hz bandwidth
-                                    // and bypass ctcss_highpass_filter
-                                    // and bypass ctcss_lowpass_filter
-                                    // and enable void_lowpass_filter
-                                    // and bypass voice_highpass_filter
-                                    // and bypass pre/de-emphasis
-                                    // and bypass vox_highpass_filter
-                                    // and bypass vox_lowpass_filter
-                                    // and enable rssi_lpfil_bw
+    i2c_writeReg16(0x58, 0x9CDD);   // Bit 0  = 1: CTCSS LPF bandwidth to 250Hz
+                                    // Bit 3  = 1: bypass CTCSS HPF
+                                    // Bit 4  = 1: bypass CTCSS LPF
+                                    // Bit 5  = 0: enable voice LPF
+                                    // Bit 6  = 1: bypass voice HPF
+                                    // Bit 7  = 1: bypass pre/de-emphasis
+                                    // Bit 11 = 1: bypass VOX HPF
+                                    // Bit 12 = 1: bypass VOX LPF
+                                    // Bit 13 = 0: normal RSSI LPF bandwidth
     i2c_writeReg16(0x5A, 0x06DB);
     i2c_writeReg16(0x63, 0x16AD);
     i2c_writeReg16(0x67, 0x0628);   // Set DTMF C0 697Hz to ???
@@ -168,14 +168,30 @@ void AT1846S::setOpMode(const AT1846S_OpMode mode)
         i2c_writeReg16(0x41, 0x4731);
         i2c_writeReg16(0x42, 0x1036);
         i2c_writeReg16(0x43, 0x00BB);
-        i2c_writeReg16(0x58, 0xBCFD);
+        i2c_writeReg16(0x58, 0xBCFD);   // Bit 0  = 1: CTCSS LPF bandwidth to 250Hz
+                                        // Bit 3  = 1: bypass CTCSS HPF
+                                        // Bit 4  = 1: bypass CTCSS LPF
+                                        // Bit 5  = 1: bypass voice LPF
+                                        // Bit 6  = 1: bypass voice HPF
+                                        // Bit 7  = 1: bypass pre/de-emphasis
+                                        // Bit 11 = 1: bypass VOX HPF
+                                        // Bit 12 = 1: bypass VOX LPF
+                                        // Bit 13 = 1: bypass RSSI LPF
         i2c_writeReg16(0x44, 0x06CC);
         i2c_writeReg16(0x40, 0x0031);
     }
     else
     {
         // FM mode
-        i2c_writeReg16(0x58, 0x9C1D);
+        i2c_writeReg16(0x58, 0x9C05);   // Bit 0  = 1: CTCSS LPF badwidth to 250Hz
+                                        // Bit 3  = 0: enable CTCSS HPF
+                                        // Bit 4  = 0: enable CTCSS LPF
+                                        // Bit 5  = 0: enable voice LPF
+                                        // Bit 6  = 0: enable voice HPF
+                                        // Bit 7  = 0: enable pre/de-emphasis
+                                        // Bit 11 = 1: bypass VOX HPF
+                                        // Bit 12 = 1: bypass VOX LPF
+                                        // Bit 13 = 0: normal RSSI LPF bandwidth
         i2c_writeReg16(0x40, 0x0030);
     }
 
