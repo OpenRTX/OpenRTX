@@ -100,9 +100,11 @@ void *ui_task(void *arg)
             sync_rtx = false;
         }
 
-        // Update UI and render on screen
-        ui_updateGUI();
-        gfx_render();
+        // Update UI and render on screen, if necessary
+        if(ui_updateGUI() == true)
+        {
+            gfx_render();
+        }
 
         // 40Hz update rate for keyboard and UI
         time += 25;

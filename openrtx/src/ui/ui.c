@@ -722,6 +722,7 @@ void _ui_enterStandby()
         return;
 
     standby = true;
+    redraw_needed = false;
     platform_setBacklightLevel(0);
 }
 
@@ -733,6 +734,7 @@ bool _ui_exitStandby(long long now)
         return false;
 
     standby = false;
+    redraw_needed = true;
     platform_setBacklightLevel(state.settings.brightness);
     return true;
 }
@@ -944,6 +946,11 @@ void ui_updateFSM(bool *sync_rtx)
     uint8_t newTail = (evQueue_rdPos + 1) % MAX_NUM_EVENTS;
     event_t event   = evQueue[evQueue_rdPos];
     evQueue_rdPos   = newTail;
+
+    // There is some event to process, we need an UI redraw.
+    // UI redraw request is cancelled if we're in standby mode.
+    redraw_needed = true;
+    if(standby) redraw_needed = false;
 
     // Check if battery has enough charge to operate.
     // Check is skipped if there is an ongoing transmission, since the voltage
@@ -1668,8 +1675,11 @@ void ui_updateFSM(bool *sync_rtx)
     }
 }
 
-void ui_updateGUI()
+bool ui_updateGUI()
 {
+    if(redraw_needed == false)
+        return false;
+
     if(!layout_ready)
     {
         layout = _ui_calculateLayout();
@@ -1777,11 +1787,16 @@ void ui_updateGUI()
             _ui_drawLowBatteryScreen();
             break;
     }
+
     // If MACRO menu is active draw it
-    if(macro_menu) {
+    if(macro_menu)
+    {
         _ui_drawDarkOverlay();
         _ui_drawMacroMenu(&last_state);
     }
+
+    redraw_needed = false;
+    return true;
 }
 
 bool ui_pushEvent(const uint8_t type, const uint32_t data)

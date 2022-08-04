@@ -243,8 +243,10 @@ void ui_updateFSM(bool *sync_rtx);
 
 /**
  * This function redraws the GUI based on the last radio state.
+ *
+ * @return true if GUI has been updated and a screen render is necessary.
  */
-void ui_updateGUI();
+bool ui_updateGUI();
 
 /**
  * Push an event to the UI event queue.
