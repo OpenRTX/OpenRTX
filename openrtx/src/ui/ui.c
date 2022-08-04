@@ -66,6 +66,7 @@
 #include <ui.h>
 #include <rtx.h>
 #include <interfaces/platform.h>
+#include <interfaces/display.h>
 #include <interfaces/cps_io.h>
 #include <interfaces/nvmem.h>
 #ifdef GPS_PRESENT

@@ -27,6 +27,9 @@
 #include <openrtx.h>
 #include <threads.h>
 #include <ui.h>
+#ifdef PLATFORM_LINUX
+#include <stdlib.h>
+#endif
 
 extern void *dev_task(void *arg);
 
