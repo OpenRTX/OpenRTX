@@ -186,7 +186,7 @@ const char *authors[] =
     "Fred IU2NRO",
 };
 
-const char *symbols_ITU_T_E161[] =
+static const char *symbols_ITU_T_E161[] =
 {
     " 0",
     ",.?1",
@@ -202,7 +202,7 @@ const char *symbols_ITU_T_E161[] =
     "#"
 };
 
-const char *symbols_ITU_T_E161_callsign[] =
+static const char *symbols_ITU_T_E161_callsign[] =
 {
     "0 ",
     "1",
@@ -236,18 +236,18 @@ const color_t yellow_fab413 = {250, 180, 19, 255};
 
 layout_t layout;
 state_t last_state;
-ui_state_t ui_state;
-bool macro_menu = false;
-bool layout_ready = false;
-bool redraw_needed = true;
+static ui_state_t ui_state;
+static bool macro_menu = false;
+static bool layout_ready = false;
+static bool redraw_needed = true;
 
-bool standby = false;
-long long last_event_tick = 0;
+static bool standby = false;
+static long long last_event_tick = 0;
 
 // UI event queue
-uint8_t evQueue_rdPos;
-uint8_t evQueue_wrPos;
-event_t evQueue[MAX_NUM_EVENTS];
+static uint8_t evQueue_rdPos;
+static uint8_t evQueue_wrPos;
+static event_t evQueue[MAX_NUM_EVENTS];
 
 layout_t _ui_calculateLayout()
 {
