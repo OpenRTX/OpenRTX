@@ -208,7 +208,7 @@ void radio_setOpmode(const enum opmode mode)
             gpio_clearPin(FM_SW);       // Disable analog RX stage after superhet
             gpio_setPin(DMR_SW);        // Enable analog paths for DMR
             _setBandwidth(BW_12_5);     // Set bandwidth to 12.5kHz
-            //C5000_dmrMode();
+            C5000.dmrMode();
             break;
 
         case OPMODE_M17:
@@ -296,6 +296,10 @@ void radio_enableTx()
             C5000.startAnalogTx(TxAudioSource::LINE_IN, FmConfig::BW_25kHz);
             break;
 
+        case OPMODE_DMR:
+            C5000.startDigitalTx(TxAudioSource::MIC, FmConfig::BW_12p5kHz);
+            break;
+
         default:
             break;
     }
@@ -317,6 +321,7 @@ void radio_disableRtx()
     {
         toneGen_toneOff();
         C5000.stopAnalogTx();
+        C5000.stopDigitalTx();
     }
 
     gpio_clearPin(TX_STG_EN);   // Disable TX PA

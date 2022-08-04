@@ -184,9 +184,22 @@ public:
     void startAnalogTx(const TxAudioSource source, const FmConfig cfg);
 
     /**
+     * Start digital FM transmission.
+     *
+     * @param source: audio source for TX.
+     * @param cfg: TX configuration parameters, e.g. bandwidth.
+     */
+    void startDigitalTx(const TxAudioSource source, const FmConfig cfg);
+
+    /**
      * Stop analog FM transmission.
      */
     void stopAnalogTx();
+
+    /**
+     * Stop digital FM transmission.
+     */
+    void stopDigitalTx();
 
     /**
      * Set the value of a configuration register.

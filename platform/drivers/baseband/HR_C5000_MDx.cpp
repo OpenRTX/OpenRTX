@@ -187,6 +187,27 @@ void HR_Cx000< M >::stopAnalogTx()
     writeReg(M::CONFIG, 0x60, 0x00);    // Disable both analog and DMR transmission
 }
 
+template< class M >
+void HR_Cx000< M >::startDigitalTx(const TxAudioSource source, const FmConfig cfg)
+{
+    // uint8_t audioCfg = 0x40;                                // Mute HPout
+    // if(source == TxAudioSource::MIC)     audioCfg |= 0x04;  // Mic1En
+    // if(source == TxAudioSource::LINE_IN) audioCfg |= 0x02;  // Mic2En
+
+    // writeReg(M::CONFIG, 0x0D, 0x8C);    // Codec control
+    // writeReg(M::CONFIG, 0x0E, audioCfg);
+    // writeReg(M::CONFIG, 0x34, static_cast< uint8_t >(cfg));
+    // writeReg(M::CONFIG, 0x3E, 0x08);    // "FM Modulation frequency deviation coefficient at the receiving end" (HR_C6000)
+    // writeReg(M::CONFIG, 0x37, 0xC2);    // Unknown register
+    // writeReg(M::CONFIG, 0x60, 0x80);    // Enable analog voice transmission
+}
+
+template< class M >
+void HR_Cx000< M >::stopDigitalTx()
+{
+    writeReg(M::CONFIG, 0x60, 0x00);    // Disable both analog and DMR transmission
+}
+
 /*
  * SPI interface driver
  */

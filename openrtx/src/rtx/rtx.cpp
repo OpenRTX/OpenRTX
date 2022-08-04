@@ -21,6 +21,7 @@
 #include <interfaces/radio.h>
 #include <string.h>
 #include <rtx.h>
+#include <OpMode_DMR.hpp>
 #include <OpMode_FM.hpp>
 #include <OpMode_M17.hpp>
 
@@ -34,6 +35,7 @@ bool  reinitFilter;             // Flag for RSSI filter re-initialisation
 
 OpMode  *currMode;              // Pointer to currently active opMode handler
 OpMode     noMode;              // Empty opMode handler for opmode::NONE
+OpMode_DMR dmrMode;             // DMR mode handler
 OpMode_FM  fmMode;              // FM mode handler
 OpMode_M17 m17Mode;             // M17 mode handler
 
@@ -147,6 +149,7 @@ void rtx_taskFunc()
             switch(rtxStatus.opMode)
             {
                 case OPMODE_NONE: currMode = &noMode;  break;
+                case OPMODE_DMR:  currMode = &dmrMode; break;
                 case OPMODE_FM:   currMode = &fmMode;  break;
                 case OPMODE_M17:  currMode = &m17Mode; break;
                 default:   currMode = &noMode;
