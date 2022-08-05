@@ -30,16 +30,6 @@
 #include <gps.h>
 
 /**
- * Data structure representing the settings of the M17 mode.
- */
-typedef struct
-{
-    char dst_addr[10];
-}
-m17_t;
-
-
-/**
  * Part of this structure has been commented because the corresponding
  * functionality is not yet implemented.
  * Uncomment once the related feature is ready
@@ -69,7 +59,6 @@ typedef struct
     bool       gpsDetected;
     bool       backup_eflash;
     bool       restore_eflash;
-    m17_t      m17_data;
 }
 state_t;
 

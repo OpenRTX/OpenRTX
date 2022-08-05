@@ -59,6 +59,7 @@ typedef struct
     uint32_t dmr_radio_id;        // DMR radio ID
     uint32_t dmr_talk_group;      // Destination DMR talkgroup
     bool dmr_talk_group_private;  // Whether or not current talk group is private
+    char m17_destination[10];     // Destination M17 location
 }
 __attribute__((packed)) settings_t;
 
@@ -81,6 +82,7 @@ static const settings_t default_settings =
     0,                // No DMR radio ID
     9900,             // Default to parrot talkgroup
     true,             // Parrot talkgroup is private call
+    "M17-RTX G",      // Default to RTX reflector
 };
 
 #endif /* SETTINGS_H */
