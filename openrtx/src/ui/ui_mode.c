@@ -88,14 +88,22 @@ void _ui_drawModeDetails(ui_state_t* ui_state)
                       encdec_str);
         break;
         case OPMODE_DMR:
-        // Print talkgroup on line 2 of 3
+        // Print User ID on line 2 of 3
         gfx_printLine(2, 3, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
-                      layout.horizontal_pad, layout.mode_font_small,
-                      TEXT_ALIGN_LEFT, color_white, "TG:");
-        // Print User ID on line 3 of 3
-        gfx_printLine(3, 3, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
                       layout.horizontal_pad, layout.mode_font_small, 
-                      TEXT_ALIGN_LEFT, color_white, "ID:");
+                      TEXT_ALIGN_LEFT, color_white, "ID: %d", cfg.dmrId);
+        if(ui_state->edit_mode)
+        {
+            // Print talkgroup on line 3 of 3
+            gfx_printLine(3, 3, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
+                      layout.horizontal_pad, layout.mode_font_small,
+                      TEXT_ALIGN_LEFT, color_white, "TG: %d_", ui_state->new_dmr_radio_id);
+        } else {
+            // Print talkgroup on line 3 of 3
+            gfx_printLine(3, 3, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
+                      layout.horizontal_pad, layout.mode_font_small,
+                      TEXT_ALIGN_LEFT, color_white, "TG: %d", cfg.dmrTalkgroup);
+        }
         break;
         case OPMODE_M17:
         // Print M17 Source ID on line 2 of 3

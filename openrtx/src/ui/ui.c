@@ -110,6 +110,7 @@ extern void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state);
 #endif
 extern void _ui_drawSettingsDisplay(ui_state_t* ui_state);
 extern void _ui_drawSettingsM17(ui_state_t* ui_state);
+extern void _ui_drawSettingsDMR(ui_state_t* ui_state);
 extern void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state);
 extern bool _ui_drawMacroMenu();
 
@@ -137,6 +138,7 @@ const char *settings_items[] =
     "GPS",
 #endif
     "M17",
+    "DMR",
     "Default Settings"
 };
 
@@ -1159,8 +1161,84 @@ void ui_updateFSM(bool *sync_rtx)
                             _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
                         }
                     }
-                }
-                else
+                } else if(state.channel.mode == OPMODE_DMR)
+                {
+                    // Dst TG input
+                    if(ui_state.edit_mode)
+                    {
+                        if(msg.keys & KEY_ENTER)
+                        {
+                            // Save selected dst TG and disable input mode
+                            state.settings.dmr_talk_group = ui_state.new_dmr_radio_id;
+                            ui_state.edit_mode = false;
+                            ui_state.input_position = 0;
+                            ui_state.last_keypress = 0;
+                            *sync_rtx = true;
+                        }
+                        else if(msg.keys & KEY_ESC)
+                            // Discard selected dst TG and disable input mode
+                            ui_state.edit_mode = false;
+                        else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
+                                msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
+                            if (ui_state.input_position == 0) {}
+                            else if (ui_state.input_position == 1) {
+                                ui_state.new_dmr_radio_id = 0;
+                                ui_state.input_position--;
+                            } else {
+                                ui_state.new_dmr_radio_id -= ui_state.last_keypress;
+                                if (ui_state.new_dmr_radio_id > 9) {
+                                    ui_state.new_dmr_radio_id /= 10;
+                                }
+                                ui_state.input_position--;
+                            }
+                        else if(input_isNumberPressed(msg)) {
+                            uint8_t num = input_getPressedNumber(msg);
+                            if (ui_state.input_position == 0) {
+                                ui_state.new_dmr_radio_id = num;
+                                ui_state.input_position++;
+                                ui_state.last_keypress = num;
+                            } else {
+                                if (ui_state.new_dmr_radio_id * 10 + num < 999999999) {
+                                    // Multiply by 10 to add a 0
+                                    ui_state.new_dmr_radio_id *= 10;
+                                    // Then add the new digit
+                                    ui_state.new_dmr_radio_id += num;
+                                    ui_state.input_position++;
+                                    ui_state.last_keypress = num;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if(msg.keys & KEY_ENTER)
+                        {
+                            // Save current main state
+                            ui_state.last_main_state = state.ui_screen;
+                            // Open Menu
+                            state.ui_screen = MENU_TOP;
+                        }
+                        else if(msg.keys & KEY_ESC)
+                        {
+                            // Switch to VFO screen
+                            state.ui_screen = MAIN_VFO;
+                        }
+                        else if(msg.keys & KEY_F1)
+                        {
+                            // Switch to Main VFO screen
+                            state.ui_screen = MAIN_VFO;
+                        }
+                        else if(input_isNumberPressed(msg))
+                        {
+                            // Enable dst ID input
+                            ui_state.edit_mode = true;
+                            ui_state.new_dmr_radio_id = input_getPressedNumber(msg);
+                            // Reset text input variables
+                            ui_state.input_position = 1;
+                            ui_state.last_keypress = 0;
+                        }
+                    }
+                } else
                 {
                     if(msg.keys & KEY_ENTER)
                     {
@@ -1405,6 +1483,9 @@ void ui_updateFSM(bool *sync_rtx)
                         case S_M17:
                             state.ui_screen = SETTINGS_M17;
                             break;
+                        case S_DMR:
+                            state.ui_screen = SETTINGS_DMR;
+                            break;
                         case S_RESET2DEFAULTS:
                             state.ui_screen = SETTINGS_RESET2DEFAULTS;
                             break;
@@ -1624,6 +1705,67 @@ void ui_updateFSM(bool *sync_rtx)
                         _ui_menuBack(MENU_SETTINGS);
                 }
                 break;
+            case SETTINGS_DMR:
+                if(ui_state.edit_mode)
+                {
+                    if(msg.keys & KEY_ENTER)
+                    {
+                        // Save selected callsign and disable input mode
+                        state.settings.dmr_radio_id = ui_state.new_dmr_radio_id;
+                        ui_state.edit_mode = false;
+                        ui_state.input_position = 0;
+                        ui_state.last_keypress = 0;
+                        *sync_rtx = true;
+                    }
+                    else if(msg.keys & KEY_ESC)
+                        // Discard selected callsign and disable input mode
+                        ui_state.edit_mode = false;
+                    else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
+                            msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT) {
+                        // delete digit
+                        if (ui_state.input_position == 0) {}
+                        else if (ui_state.input_position == 1) {
+                            ui_state.new_dmr_radio_id = 0;
+                            ui_state.input_position--;
+                        } else {
+                            ui_state.new_dmr_radio_id -= ui_state.last_keypress;
+                            if (ui_state.new_dmr_radio_id > 9) {
+                                ui_state.new_dmr_radio_id /= 10;
+                            }
+                            ui_state.input_position--;
+                        }
+                    } else if(input_isNumberPressed(msg)) {
+                        uint8_t num = input_getPressedNumber(msg);
+                        if (ui_state.input_position == 0) {
+                            ui_state.new_dmr_radio_id = num;
+                            ui_state.input_position++;
+                            ui_state.last_keypress = num;
+                        } else {
+                            if (ui_state.new_dmr_radio_id * 10 + num < 999999999) {
+                                // Multiply by 10 to add a 0
+                                ui_state.new_dmr_radio_id *= 10;
+                                // Then add the new digit
+                                ui_state.new_dmr_radio_id += num;
+                                ui_state.input_position++;
+                                ui_state.last_keypress = num;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    if(msg.keys & KEY_ENTER)
+                    {
+                        // Enable radio id input
+                        ui_state.edit_mode = true;
+                        ui_state.new_dmr_radio_id = state.settings.dmr_radio_id;
+                        ui_state.input_position = 0;
+                        ui_state.last_keypress = 0;
+                    }
+                    else if(msg.keys & KEY_ESC)
+                        _ui_menuBack(MENU_SETTINGS);
+                }
+                break;
             case SETTINGS_RESET2DEFAULTS:
                 if(! ui_state.edit_mode){
                     //require a confirmation ENTER, then another
@@ -1766,6 +1908,9 @@ void ui_updateGUI()
         // M17 settings screen
         case SETTINGS_M17:
             _ui_drawSettingsM17(&ui_state);
+            break;
+        case SETTINGS_DMR:
+            _ui_drawSettingsDMR(&ui_state);
             break;
         // Screen to support resetting Settings and VFO to defaults
         case SETTINGS_RESET2DEFAULTS:

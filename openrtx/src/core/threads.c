@@ -81,16 +81,19 @@ void *ui_task(void *arg)
             float power = dBmToWatt(state.channel.power);
 
             pthread_mutex_lock(&rtx_mutex);
-            rtx_cfg.opMode      = state.channel.mode;
-            rtx_cfg.bandwidth   = state.channel.bandwidth;
-            rtx_cfg.rxFrequency = state.channel.rx_frequency;
-            rtx_cfg.txFrequency = state.channel.tx_frequency;
-            rtx_cfg.txPower     = power;
-            rtx_cfg.sqlLevel    = state.settings.sqlLevel;
-            rtx_cfg.rxToneEn    = state.channel.fm.rxToneEn;
-            rtx_cfg.rxTone      = ctcss_tone[state.channel.fm.rxTone];
-            rtx_cfg.txToneEn    = state.channel.fm.txToneEn;
-            rtx_cfg.txTone      = ctcss_tone[state.channel.fm.txTone];
+            rtx_cfg.opMode              = state.channel.mode;
+            rtx_cfg.bandwidth           = state.channel.bandwidth;
+            rtx_cfg.rxFrequency         = state.channel.rx_frequency;
+            rtx_cfg.txFrequency         = state.channel.tx_frequency;
+            rtx_cfg.txPower             = power;
+            rtx_cfg.sqlLevel            = state.settings.sqlLevel;
+            rtx_cfg.rxToneEn            = state.channel.fm.rxToneEn;
+            rtx_cfg.rxTone              = ctcss_tone[state.channel.fm.rxTone];
+            rtx_cfg.txToneEn            = state.channel.fm.txToneEn;
+            rtx_cfg.txTone              = ctcss_tone[state.channel.fm.txTone];
+            rtx_cfg.dmrId               = state.settings.dmr_radio_id;
+            rtx_cfg.dmrTalkgroup        = state.settings.dmr_talk_group;
+            rtx_cfg.dmrTalkgroupPrivate = state.settings.dmr_talk_group_private;
 
             // Copy new M17 source and destination addresses
             strncpy(rtx_cfg.source_address,      state.settings.callsign, 10);

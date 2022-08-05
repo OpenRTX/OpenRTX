@@ -56,6 +56,9 @@ typedef struct
     char    callsign[10];         // Plaintext callsign, for future use
     uint8_t display_timer : 4,    // Standby timer
             not_in_use    : 4;
+    uint32_t dmr_radio_id;        // DMR radio ID
+    uint32_t dmr_talk_group;      // Destination DMR talkgroup
+    bool dmr_talk_group_private;  // Whether or not current talk group is private
 }
 __attribute__((packed)) settings_t;
 
@@ -74,7 +77,10 @@ static const settings_t default_settings =
     false,            // GPS enabled
     "",               // Empty callsign
     TIMER_30S,        // 30 seconds
-    0                 // not in use
+    0,                // not in use
+    0,                // No DMR radio ID
+    9900,             // Default to parrot talkgroup
+    true,             // Parrot talkgroup is private call
 };
 
 #endif /* SETTINGS_H */

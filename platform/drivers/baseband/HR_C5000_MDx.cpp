@@ -90,6 +90,17 @@ void HR_Cx000< M >::setModOffset(const uint16_t offset)
 }
 
 template< class M >
+void HR_Cx000< M >::setDMRId(uint32_t dmrId) {
+    uint8_t *vp = (uint8_t *)&dmrId;
+
+    // stored in memory in reverse order
+    // 14 = high bits | 15 = mid bits | 16 = low bits
+    writeReg(M::CONFIG, 0x14, vp[2]);
+    writeReg(M::CONFIG, 0x15, vp[1]);
+    writeReg(M::CONFIG, 0x16, vp[0]);
+}
+
+template< class M >
 void HR_Cx000< M >::dmrMode()
 {
     writeReg(M::CONFIG, 0xB9, 0x32);
@@ -108,9 +119,6 @@ void HR_Cx000< M >::dmrMode()
 
     delayMs(1);
 
-    writeReg(M::CONFIG, 0x14, 0x59);
-    writeReg(M::CONFIG, 0x15, 0xF5);
-    writeReg(M::CONFIG, 0x16, 0x21);
     sendSequence(initSeq3, sizeof(initSeq3));
     sendSequence(initSeq4, sizeof(initSeq4));
     sendSequence(initSeq5, sizeof(initSeq5));

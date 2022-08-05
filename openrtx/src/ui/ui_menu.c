@@ -635,6 +635,36 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
     }
 }
 
+void _ui_drawSettingsDMR(ui_state_t* ui_state)
+{
+    gfx_clearScreen();
+    // Print "DMR Settings" on top bar
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
+              color_white, "DMR Settings");
+    gfx_printLine(1, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
+                  layout.horizontal_pad, layout.menu_font,
+                  TEXT_ALIGN_LEFT, color_white, "Radio ID:");
+    if(ui_state->edit_mode)
+    {
+        uint16_t rect_width = SCREEN_WIDTH - (layout.horizontal_pad * 2);
+        uint16_t rect_height = (SCREEN_HEIGHT - (layout.top_h + layout.bottom_h))/2;
+        point_t rect_origin = {(SCREEN_WIDTH - rect_width) / 2,
+                               (SCREEN_HEIGHT - rect_height) / 2};
+        gfx_drawRect(rect_origin, rect_width, rect_height, color_white, false);
+        // Print DMR ID being typed
+        gfx_printLine(1, 1, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
+                      layout.horizontal_pad, layout.input_font,
+                      TEXT_ALIGN_CENTER, color_white, "%d", ui_state->new_dmr_radio_id);
+    }
+    else
+    {
+        // Print DMR current callsign
+        gfx_printLine(1, 1, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
+                      layout.horizontal_pad, layout.input_font,
+                      TEXT_ALIGN_CENTER, color_white, "%d", last_state.settings.dmr_radio_id);
+    }
+}
+
 void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state)
 {
     (void) ui_state;

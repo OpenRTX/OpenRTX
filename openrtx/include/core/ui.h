@@ -60,6 +60,7 @@ enum uiScreen
     SETTINGS_DISPLAY,
     SETTINGS_GPS,
     SETTINGS_M17,
+    SETTINGS_DMR,
     SETTINGS_RESET2DEFAULTS,
     LOW_BAT
 };
@@ -96,6 +97,7 @@ enum settingsItems
     ,S_GPS
 #endif
     ,S_M17
+    ,S_DMR
     ,S_RESET2DEFAULTS
 };
 
@@ -187,6 +189,7 @@ typedef struct ui_state_t
     char new_callsign[10];
     // Which state to return to when we exit menu
     uint8_t last_main_state;
+    uint32_t new_dmr_radio_id;
 }
 ui_state_t;
 

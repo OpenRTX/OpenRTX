@@ -166,6 +166,13 @@ public:
     void setInputGain(int8_t value);
 
     /**
+     * Set the DMR ID for use via the modem
+     *
+     * @param dmrId: the DMR radio ID
+     */
+    void setDMRId(uint32_t dmrId);
+
+    /**
      * Configure chipset for DMR operation.
      */
     void dmrMode();

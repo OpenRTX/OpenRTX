@@ -26,6 +26,7 @@
 #include <hwconfig.h>
 #include <ADC1_MDx.h>
 #include <algorithm>
+#include <state.h>
 #include <utils.h>
 #include "HR_C5000.h"
 #include "SKY72310.h"
@@ -231,6 +232,10 @@ bool radio_checkRxDigitalSquelch()
 
 void radio_enableRx()
 {
+    if(config->opMode == OPMODE_DMR) {
+        C5000.setDMRId(state.settings.dmr_radio_id);
+    }
+
     gpio_clearPin(TX_STG_EN);          // Disable TX PA
 
     gpio_clearPin(RF_APC_SW);          // APC/TV used for RX filter tuning
@@ -253,9 +258,9 @@ void radio_enableRx()
 
     gpio_setPin(RX_STG_EN);            // Enable RX LNA
 
-    if(config->opMode == OPMODE_FM)
+    if(config->opMode != OPMODE_M17)
     {
-        gpio_setPin(FM_MUTE);          // In FM mode, unmute audio path towards speaker
+        gpio_setPin(FM_MUTE);          // In FM and DMR mode, unmute audio path towards speaker
     }
 
     radioStatus = RX;
@@ -364,6 +369,13 @@ void radio_updateConfiguration()
     {
         enum bandwidth bw = static_cast< enum bandwidth >(config->bandwidth);
         _setBandwidth(bw);
+    }
+
+    if(config->opMode == OPMODE_DMR)
+    {
+        C5000.setDMRId(config->dmrId);
+        // Do something with config->dmrTalkgroup
+        // Do something with config->dmrTalkgroupPrivate
     }
 
     // Set CTCSS tone
