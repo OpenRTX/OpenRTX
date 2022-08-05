@@ -50,6 +50,12 @@ void state_migrate() {
         state.settings.color_bg = default_settings.color_bg;
         state.settings.migration_version = 3;
     }
+    if (state.settings.migration_version == 3)
+    {
+        // Migration from 3->4, add M17 destination persistence
+        state.settings.m17_destination = default_settings.m17_destination;
+        state.settings.migration_version = 4;
+    }
 }
 
 void state_init()

@@ -1134,7 +1134,7 @@ void ui_updateFSM(bool *sync_rtx)
                         {
                             _ui_textInputConfirm(ui_state.new_callsign);
                             // Save selected dst ID and disable input mode
-                            strncpy(state.m17_data.dst_addr, ui_state.new_callsign, 10);
+                            strncpy(state.settings.m17_destination, ui_state.new_callsign, 10);
                             ui_state.edit_mode = false;
                             *sync_rtx = true;
                         }
@@ -1209,7 +1209,7 @@ void ui_updateFSM(bool *sync_rtx)
                         {
                             _ui_textInputConfirm(ui_state.new_callsign);
                             // Save selected dst ID and disable input mode
-                            strncpy(state.m17_data.dst_addr, ui_state.new_callsign, 10);
+                            strncpy(state.settings.m17_destination, ui_state.new_callsign, 10);
                             ui_state.edit_mode = false;
                             *sync_rtx = true;
                         }
