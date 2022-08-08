@@ -27,7 +27,9 @@
 
 #include <stdio.h>
 
-OpMode_DMR::OpMode_DMR() : startRx(false), startTx(false), locked(false)
+using namespace DMR;
+
+OpMode_DMR::OpMode_DMR() : locked(false), startRx(false), startTx(false), dmrCodec()
 {
 }
 
@@ -78,27 +80,28 @@ void OpMode_DMR::update(rtxStatus_t *const status, const bool newCfg)
     }
 
     // Led control logic
-    switch(status->opStatus)
-    {
-        case RX:
-            if(locked)
-                platform_ledOn(GREEN);
-            else
-                platform_ledOff(GREEN);
+    // switch(status->opStatus)
+    // {
+    //     case RX:
+    //         if(locked)
+    //             platform_ledOn(GREEN);
+    //         else
+    //             platform_ledOff(GREEN);
+    //         break;
 
-            break;
+    //     case TX:
+    //         platform_ledOff(GREEN);
+    //         platform_ledOn(RED);
+    //         break;
 
-        case TX:
-            platform_ledOff(GREEN);
-            platform_ledOn(RED);
-            break;
+    //     default:
+    //         platform_ledOff(GREEN);
+    //         platform_ledOff(RED);
+    //         break;
+    // }
 
-        default:
-            platform_ledOff(GREEN);
-            platform_ledOff(RED);
-            break;
-    }
-    sleepFor(0u, 30u);
+    // Sleep thread for 30ms for 33Hz update rate
+    sleepFor(0u, 15u);
 }
 
 void OpMode_DMR::offState(rtxStatus_t *const status)
@@ -115,6 +118,7 @@ void OpMode_DMR::offState(rtxStatus_t *const status)
 
     if(platform_getPttStatus() && (status->txDisable == 0))
     {
+        dmrCodec.stop();
         startTx = true;
         status->opStatus = TX;
     }
@@ -124,45 +128,23 @@ void OpMode_DMR::rxState(rtxStatus_t *const status)
 {
     if(startRx)
     {
-        //demodulator.startBasebandSampling();
-
         audio_enableAmp();
-        //codec_startDecode(SINK_SPK);
-
         radio_enableRx();
-
+        dmrCodec.start(VOCODER_DIR_DECODE);
         startRx = false;
     }
 
-    // bool newData = demodulator.update();
-    // bool lock    = demodulator.isLocked();
+    locked = dmrCodec.isLocked();
 
-    // // Reset frame decoder when transitioning from unlocked to locked state
-    // if((lock == true) && (locked == false))
-    // {
-    //     decoder.reset();
-    // }
+    if (locked) {
+        // Grab srcId, tgId, TA, data from radio
 
-    // locked = lock;
-
-    if(locked) // && newData)
-    {
-        // auto& frame = demodulator.getFrame();
-        // auto type   = decoder.decodeFrame(frame);
-        // bool lsfOk  = decoder.getLsf().valid();
-
-        // if((type == M17FrameType::STREAM) && (lsfOk == true))
-        // {
-        //     M17StreamFrame sf = decoder.getStreamFrame();
-        //     codec_pushFrame(sf.payload().data(),     false);
-        //     codec_pushFrame(sf.payload().data() + 8, false);
-        // }
+        // Eventually tie to database for LastHeard
     }
 
     if(platform_getPttStatus())
     {
-        //demodulator.stopBasebandSampling();
-        locked = false;
+        dmrCodec.stop();
         status->opStatus = OFF;
     }
 }
@@ -171,29 +153,15 @@ void OpMode_DMR::txState(rtxStatus_t *const status)
 {
     if(startTx)
     {
-        audio_enableMic();
-        //codec_startEncode(SOURCE_MIC);
-
         radio_enableTx();
-
-        // std::string source_address(status->source_address);
-        // std::string destination_address(status->destination_address);
-        // m17Tx.start(source_address, destination_address);
-
+        dmrCodec.start(VOCODER_DIR_ENCODE);
         startTx = false;
     }
 
-    //payload_t dataFrame;
-
-    // Wait until there are 16 bytes of compressed speech, then send them
-    // codec_popFrame(dataFrame.data(),     true);
-    // codec_popFrame(dataFrame.data() + 8, true);
-
     if(platform_getPttStatus() == false)
     {
+        dmrCodec.stop();
         startRx   = true;
         status->opStatus = OFF;
     }
-
-    // m17Tx.send(dataFrame, lastFrame);
 }

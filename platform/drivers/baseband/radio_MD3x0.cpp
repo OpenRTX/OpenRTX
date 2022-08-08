@@ -210,6 +210,7 @@ void radio_setOpmode(const enum opmode mode)
             gpio_setPin(DMR_SW);        // Enable analog paths for DMR
             _setBandwidth(BW_12_5);     // Set bandwidth to 12.5kHz
             C5000.dmrMode();
+            C5000.setDMRId(state.settings.dmr_radio_id);
             break;
 
         case OPMODE_M17:
@@ -232,10 +233,6 @@ bool radio_checkRxDigitalSquelch()
 
 void radio_enableRx()
 {
-    if(config->opMode == OPMODE_DMR) {
-        C5000.setDMRId(state.settings.dmr_radio_id);
-    }
-
     gpio_clearPin(TX_STG_EN);          // Disable TX PA
 
     gpio_clearPin(RF_APC_SW);          // APC/TV used for RX filter tuning

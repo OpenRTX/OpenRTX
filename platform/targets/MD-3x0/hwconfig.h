@@ -120,6 +120,13 @@ extern "C" {
 #define DMR_MISO  GPIOE,3
 #define DMR_SLEEP GPIOE,6
 #define V_CS      GPIOB,12
+#define V_SCLK    GPIOB,13
+#define V_MISO    GPIOB,14
+#define V_MOSI    GPIOB,15
+#define TS_INTER  GPIOC,0
+#define SYS_INTER GPIOC,1
+#define TX_INTER  GPIOC,2
+#define RX_INTER  GPIOC,3
 
 /* RTX control */
 #define PLL_PWR   GPIOA,8

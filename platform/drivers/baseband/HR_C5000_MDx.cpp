@@ -103,19 +103,44 @@ void HR_Cx000< M >::setDMRId(uint32_t dmrId) {
 template< class M >
 void HR_Cx000< M >::dmrMode()
 {
-    writeReg(M::CONFIG, 0xB9, 0x32);
-//     writeReg(M::CONFIG, 0xBA, 0x22);
-//     writeReg(M::CONFIG, 0xBB, 0x11);
-    writeReg(M::CONFIG, 0x10, 0x4F);
-    writeReg(M::CONFIG, 0x40, 0x43);
-    writeReg(M::CONFIG, 0x41, 0x40);
-    writeReg(M::CONFIG, 0x07, 0x0B);
+    writeReg(M::CONFIG, 0xB9, 0x32); // sys_clk - Configure the system clock frequency
+    writeReg(M::CONFIG, 0xBA, 0x22); // codec_clk - Configure built-in codec Working clock frequency
+    writeReg(M::CONFIG, 0xBB, 0x11); // clkout - Configure the output clock operating frequency
+    
+    // 0 = DMR 1 = FM | TierMode = 0 = Tier1 1 = Tier2 | ContinueMode??
+    // LayerMode 00 = physical 01 = 2nd layer 10 = 3rd layer
+    // IsRepeater 1 = relay | ISAligned 1 = aligned | RepeaterSlot must be 1 in 3rd layer
+    writeReg(M::CONFIG, 0x10, 0x4F); // ModulatorMode = 01001111 or sometimes 01101011
+
+    // send sync | rx sync | 1=active 0=passive | Layer2Slot? | CRC 1=MCU 0=C5000 | notouch
+    // decode/error mode? 11 = non-test mode
+    writeReg(M::CONFIG, 0x40, 0x43); // TxEn = 01000011
+
+    // 0 = don't tx next slot, 1 = tx next slot | 0 = don't rx next slot, 1 = rx next slot
+    // 0 = synced 1= sync lost | 1 = reading audio 0 = not, but NEED to set before next slot
+    // 0 = only deframe match cc 1 = cc doesn't need to match | not documented | notouch
+    // 1 = testing enabled
+    writeReg(M::CONFIG, 0x41, 0x40); // 01000000
+
+    // IF frequency word height?? 
+    writeReg(M::CONFIG, 0x07, 0x0B); // 00001011
     writeReg(M::CONFIG, 0x08, 0xB8);
     writeReg(M::CONFIG, 0x09, 0x00);
-    writeReg(M::CONFIG, 0x06, 0x21);
+
+    // 00 = V_SPI vocoder 01 == AMBE3000 11 = AMBE1000 | DMRFrom 0 = AMBEx000 1 = V_SPI
+    // VocoderFrom 0 = normal 1 = self-loop test | SPIFrom 0 = V_SPI 1 = vocoder record?
+    // codec mode 0 = built-in 1 = external | openmusic 1 = open for OS sounds 0 = off
+    // LocalVocoderControl 0 = auto 1 = MCU controlled
+    writeReg(M::CONFIG, 0x06, 0x21); // 00100001
+
     sendSequence(initSeq1, sizeof(initSeq1));
     sendSequence(initSeq2, sizeof(initSeq2));
-    writeReg(M::CONFIG, 0x00, 0x28);
+
+    // DMRnRst 0 = reset DMR | PHYnRst 0 = reset PHY
+    // CodecnRst 0 = reset codec | FMnRst 0 = reset FM
+    // VocoderRst 0 = reset vocoder | MSKRst 0 = reset MSK module
+    // IISRst 0 = reset I2S | CodeCRst 0 = reset built-in codec
+    writeReg(M::CONFIG, 0x00, 0x28); // 00101000
 
     delayMs(1);
 
@@ -123,6 +148,7 @@ void HR_Cx000< M >::dmrMode()
     sendSequence(initSeq4, sizeof(initSeq4));
     sendSequence(initSeq5, sizeof(initSeq5));
     sendSequence(initSeq6, sizeof(initSeq6));
+
     writeReg(M::AUX,    0x52, 0x08);
     writeReg(M::AUX,    0x53, 0xEB);
     writeReg(M::AUX,    0x54, 0x78);
@@ -225,7 +251,7 @@ void HR_Cx000< M >::uSpi_init()
     gpio_setMode(DMR_CS,    OUTPUT);
     gpio_setMode(DMR_CLK,   OUTPUT);
     gpio_setMode(DMR_MOSI,  OUTPUT);
-    gpio_setMode(DMR_MISO,  OUTPUT);
+    gpio_setMode(DMR_MISO,  INPUT);
 
     // Deselect HR_C5000, idle state of the CS line.
     gpio_setPin(DMR_CS);
@@ -240,8 +266,6 @@ uint8_t HR_Cx000< M >::uSpi_sendRecv(const uint8_t value)
 
     for(uint8_t cnt = 0; cnt < 8; cnt++)
     {
-        gpio_setPin(DMR_CLK);
-
         if(value & (0x80 >> cnt))
         {
             gpio_setPin(DMR_MOSI);
@@ -251,11 +275,39 @@ uint8_t HR_Cx000< M >::uSpi_sendRecv(const uint8_t value)
             gpio_clearPin(DMR_MOSI);
         }
 
-        delayUs(1);
-        gpio_clearPin(DMR_CLK);
+        delayUs(2);
+
+        gpio_setPin(DMR_CLK);
+
+        delayUs(3);
+
         incoming = (incoming << 1) | gpio_readPin(DMR_MISO);
+
+        gpio_clearPin(DMR_CLK);
+
         delayUs(1);
     }
 
     return incoming;
+}
+
+template< class M >
+void HR_Cx000< M >::uSpi_recv(uint8_t* value)
+{
+    gpio_clearPin(DMR_CLK);
+    gpio_clearPin(DMR_MOSI);
+    delayUs(2);
+
+    uint8_t incoming = 0;
+
+    for(uint8_t cnt = 0; cnt < 8; cnt++)
+    {
+        gpio_setPin(DMR_CLK);
+        delayUs(3);
+        incoming = (incoming << 1) | gpio_readPin(DMR_MISO);
+        gpio_clearPin(DMR_CLK);
+        delayUs(1);
+    }
+
+    *value = incoming;
 }

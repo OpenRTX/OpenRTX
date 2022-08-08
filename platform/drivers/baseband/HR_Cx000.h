@@ -268,7 +268,7 @@ private:
         ScopedChipSelect cs;
         (void) uSpi_sendRecv(static_cast< uint8_t >(opMode) | 0x80);
         (void) uSpi_sendRecv(addr);
-        return uSpi_sendRecv(0x00);
+        return uSpi_sendRecv(0xFF);
     }
 
     /**
@@ -288,6 +288,22 @@ private:
     }
 
     /**
+     *
+     * @param buf: pointer to the destination buffer
+     * @param len: length to read
+     */
+    void readSequence(const M opMode, const uint8_t addr, uint8_t *buf, const size_t len)
+    {
+        ScopedChipSelect cs;
+        (void) uSpi_sendRecv(static_cast< uint8_t >(opMode) | 0x80);
+        (void) uSpi_sendRecv(addr);
+        for(size_t i = 0; i < len; i++)
+        {
+            uSpi_recv(&buf[i]);
+        }
+    }
+
+    /**
      * Initialise the low-level driver which manages "user" SPI interface, that
      * is the one used to configure the chipset functionalities.
      */
@@ -300,6 +316,7 @@ private:
      * @return incoming byte from the baseband chip.
      */
     uint8_t uSpi_sendRecv(const uint8_t value);
+    void uSpi_recv(uint8_t* value);
 };
 
 /**

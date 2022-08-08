@@ -55,6 +55,14 @@ void radio_init(const rtxStatus_t *rtxState);
  */
 void radio_terminate();
 
+void radio_initVocoder();
+void radio_stopVocoder();
+bool radio_isDMRLocked();
+void radio_DMRInterruptsInit();
+void radio_DMRInterruptsStop();
+void radio_sendVocoder(uint8_t* buf, size_t len);
+void radio_readVocoder(uint8_t* buf, size_t len);
+
 /**
  * This function allows to fine tune the VCXO frequency by acting on the
  * polarisation voltage.
@@ -122,6 +130,8 @@ float radio_getRssi();
  * @return current operating status.
  */
 enum opstatus radio_getStatus();
+
+enum RXSyncType { MS_SYNC =0 , BS_SYNC =1 , TDMA1_SYNC = 2 , TDMA2_SYNC =3};
 
 #ifdef __cplusplus
 }

@@ -22,6 +22,7 @@
 #define OPMODE_DMR_H
 
 #include "OpMode.hpp"
+#include <DMRCodec.hpp>
 
 /**
  * Specialisation of the OpMode class for the management of analog FM operating
@@ -108,9 +109,10 @@ private:
     void txState(rtxStatus_t *const status);
 
 
-    bool startRx;                      ///< Flag for RX management.
-    bool startTx;                      ///< Flag for TX management.
-    bool locked;                       ///< Demodulator locked on data stream.
+    bool startRx;             ///< Flag for RX management.
+    bool startTx;             ///< Flag for TX management.
+    bool locked;              ///< Flag for if signal is locked
+    DMR::Codec dmrCodec;      ///< Buffer for received vocoded voice frames.
 };
 
 #endif /* OPMODE_DMR_H */
