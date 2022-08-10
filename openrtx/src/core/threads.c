@@ -49,7 +49,6 @@ void *ui_task(void *arg)
 {
     (void) arg;
 
-    event_t     kbd_event = {{EVENT_KBD, 0}};
     kbd_msg_t   kbd_msg;
     rtxStatus_t rtx_cfg;
     bool        sync_rtx = true;
@@ -66,8 +65,7 @@ void *ui_task(void *arg)
 
         if(input_scanKeyboard(&kbd_msg))
         {
-            kbd_event.payload = kbd_msg.value;
-            ui_pushEvent(kbd_event);
+            ui_pushEvent(EVENT_KBD, kbd_msg.value);
         }
 
         pthread_mutex_lock(&state_mutex);   // Lock r/w access to radio state
@@ -172,11 +170,7 @@ void *dev_task(void *arg)
         if((tick_5ms % 20) == 0)
         {
             state_update();
-
-            event_t dev_msg;
-            dev_msg.type = EVENT_STATUS;
-            dev_msg.payload = 0;
-            ui_pushEvent(dev_msg);
+            ui_pushEvent(EVENT_STATUS, 0);
         }
 
         // Run this loop once every 5ms

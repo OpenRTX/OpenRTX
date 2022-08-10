@@ -1784,12 +1784,17 @@ void ui_updateGUI()
     }
 }
 
-bool ui_pushEvent(const event_t event)
+bool ui_pushEvent(const uint8_t type, const uint32_t data)
 {
     uint8_t newHead = (evQueue_wrPos + 1) % MAX_NUM_EVENTS;
 
     // Queue is full
     if(newHead == evQueue_rdPos) return false;
+
+    // Preserve atomicity when writing the new element into the queue.
+    event_t event;
+    event.type    = type;
+    event.payload = data;
 
     evQueue[evQueue_wrPos] = event;
     evQueue_wrPos = newHead;

@@ -249,10 +249,11 @@ void ui_updateGUI();
 /**
  * Push an event to the UI event queue.
  *
- * @param event: event to be pushed.
+ * @param type: event type.
+ * @param data: event data.
  * @return true on success false on failure.
  */
-bool ui_pushEvent(const event_t event);
+bool ui_pushEvent(const uint8_t type, const uint32_t data);
 
 /**
  * This function terminates the User Interface.
