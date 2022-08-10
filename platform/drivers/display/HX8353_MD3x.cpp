@@ -87,13 +87,14 @@
 #define LCD_FSMC_ADDR_DATA    0x60040000
 
 /*
- * LCD framebuffer, dynamically allocated.
- * Pixel format is RGB565, 16 bit per pixel
+ * LCD framebuffer, statically allocated and placed in the "large" RAM block
+ * starting at 0x20000000 and accessible by the DMA.
+ * Pixel format is RGB565, 16 bit per pixel.
  */
-static uint16_t *frameBuffer;
+static uint16_t __attribute__((section(".bss2"))) frameBuffer[SCREEN_WIDTH * SCREEN_HEIGHT];
 
 using namespace miosix;
-Thread *lcdWaiting = 0;
+static Thread *lcdWaiting = 0;
 
 void __attribute__((used)) DmaImpl()
 {
@@ -126,14 +127,8 @@ static inline __attribute__((__always_inline__)) void writeData(uint8_t val)
 
 void display_init()
 {
-
-    /* Allocate and clear framebuffer, setting all pixels to 0xFFFF makes the
-     * screen white.
-     *
-     * TODO: handle the case when memory allocation fails!
-     */
-    frameBuffer = ((uint16_t *) malloc(SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(uint16_t)));
-    memset(frameBuffer, 0xFF, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(uint16_t));
+    /* Clear framebuffer, setting all pixels to 0x00 makes the screen white */
+    memset(frameBuffer, 0x00, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(uint16_t));
 
     /*
      * Turn on DMA2 and configure its interrupt. DMA is used to transfer the
@@ -435,8 +430,6 @@ void display_init()
 
 void display_terminate()
 {
-    free(frameBuffer);
-
     /* Shut off FSMC and deallocate framebuffer */
     RCC->AHB3ENR &= ~RCC_AHB3ENR_FSMCEN;
     __DSB();

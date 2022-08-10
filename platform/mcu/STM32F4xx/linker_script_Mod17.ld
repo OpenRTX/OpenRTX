@@ -50,7 +50,6 @@ _main_stack_top  = 0x10000000 + _main_stack_size;
 ASSERT(_main_stack_size   % 8 == 0, "MAIN stack size error");
 
 /* Mapping the heap into the large 128KB RAM */
-_end =      0x20000000;
 _heap_end = 0x20020000;                            /* end of available ram  */
 
 /* identify the Entry Point  */
@@ -175,6 +174,12 @@ SECTIONS
     } > smallram
     _bss_end = .;
 
-    /*_end = .;*/
-    /*PROVIDE(end = .);*/
+    .bss2 :
+    {
+        *(.bss2)
+        . = ALIGN(8);
+    } > largeram
+
+    _end = .;
+    PROVIDE(end = .);
 }

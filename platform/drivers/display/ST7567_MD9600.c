@@ -29,28 +29,53 @@
 #include <SPI2.h>
 
 /*
- * LCD framebuffer, allocated on the heap by display_init().
- * Pixel format is black and white, one bit per pixel
+ * LCD framebuffer, statically allocated and placed in the "large" RAM block
+ * starting at 0x20000000.
+ * Pixel format is black and white, one bit per pixel.
  */
-static uint8_t *frameBuffer;
+#define FB_SIZE (((SCREEN_HEIGHT * SCREEN_WIDTH) / 8 ) + 1)
+static uint8_t __attribute__((section(".bss2"))) frameBuffer[FB_SIZE];
+
+/**
+ * \internal
+ * Send one row of pixels to the display.
+ * Pixels in framebuffer are stored "by rows", while display needs data to be
+ * sent "by columns": this function performs the needed conversion.
+ *
+ * @param row: pixel row to be be sent.
+ */
+static void display_renderRow(uint8_t row)
+{
+    /* magic stuff */
+    uint8_t *buf = (frameBuffer + 128 * row);
+    for (uint8_t i = 0; i<16; i++)
+    {
+        uint8_t tmp[8] = {0};
+        for (uint8_t j = 0; j < 8; j++)
+        {
+            uint8_t tmp_buf = buf[j*16 + i];
+            int count = __builtin_popcount(tmp_buf);
+            while (count > 0)
+            {
+                int pos = __builtin_ctz(tmp_buf);
+                tmp[pos] |= 1UL << j;
+                tmp_buf &= ~(1 << pos);
+                count--;
+            }
+        }
+
+        for (uint8_t s = 0; s < 8; s++)
+        {
+            (void) spi2_sendRecv(tmp[s]);
+        }
+    }
+}
+
 
 void display_init()
 {
-    /* Framebuffer size, in bytes */
-    unsigned int fbSize = (SCREEN_HEIGHT * SCREEN_WIDTH)/8;
-    if((fbSize * 8) < (SCREEN_HEIGHT * SCREEN_WIDTH)) fbSize += 1; /* Compensate for eventual truncation error in division */
-    fbSize *= sizeof(uint8_t);
-
-    /* Allocate framebuffer */
-    frameBuffer = (uint8_t *) malloc(fbSize);
-    if(frameBuffer == NULL)
-    {
-        puts("*** LCD ERROR: cannot allocate framebuffer! ***");
-        return;
-    }
-
     /* Clear framebuffer, setting all pixels to 0x00 makes the screen white */
-    memset(frameBuffer, 0x00, fbSize);
+    memset(frameBuffer, 0x00, FB_SIZE);
 
     gpio_setMode(LCD_CS,  OUTPUT);
     gpio_setMode(LCD_RST, OUTPUT);
@@ -83,37 +108,7 @@ void display_init()
 
 void display_terminate()
 {
-    if(frameBuffer != NULL)
-    {
-        free(frameBuffer);
-    }
-}
 
-void display_renderRow(uint8_t row)
-{
-    /* magic stuff */
-    uint8_t *buf = (frameBuffer + 128 * row);
-    for (uint8_t i = 0; i<16; i++)
-    {
-        uint8_t tmp[8] = {0};
-        for (uint8_t j = 0; j < 8; j++)
-        {
-            uint8_t tmp_buf = buf[j*16 + i];
-            int count = __builtin_popcount(tmp_buf);
-            while (count > 0)
-            {
-                int pos = __builtin_ctz(tmp_buf);
-                tmp[pos] |= 1UL << j;
-                tmp_buf &= ~(1 << pos);
-                count--;
-            }
-        }
-
-        for (uint8_t s = 0; s < 8; s++)
-        {
-            (void) spi2_sendRecv(tmp[s]);
-        }
-    }
 }
 
 void display_renderRows(uint8_t startRow, uint8_t endRow)

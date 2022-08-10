@@ -30,32 +30,18 @@
 #include <SPI2.h>
 
 /*
- * LCD framebuffer, allocated on the heap by display_init().
- * Pixel format is black and white, one bit per pixel
+ * LCD framebuffer, statically allocated and placed in the "large" RAM block
+ * starting at 0x20000000.
+ * Pixel format is black and white, one bit per pixel.
  */
-static uint8_t *frameBuffer;
+#define FB_SIZE (((SCREEN_HEIGHT * SCREEN_WIDTH) / 8 ) + 1)
+static uint8_t __attribute__((section(".bss2"))) frameBuffer[FB_SIZE];
+
 
 void display_init()
 {
-
-    /*
-     * Framebuffer size, in bytes, with compensating for eventual truncation
-     * error in division by rounding to the nearest greater integer.
-     */
-    unsigned int fbSize = (SCREEN_HEIGHT * SCREEN_WIDTH)/8;
-    if((fbSize * 8) < (SCREEN_HEIGHT * SCREEN_WIDTH)) fbSize += 1;
-    fbSize *= sizeof(uint8_t);
-
-    /* Allocate framebuffer */
-    frameBuffer = (uint8_t *) malloc(fbSize);
-    if(frameBuffer == NULL)
-    {
-        puts("*** LCD ERROR: cannot allocate framebuffer! ***");
-        return;
-    }
-
     /* Clear framebuffer, setting all pixels to 0x00 makes the screen white */
-    memset(frameBuffer, 0x00, fbSize);
+    memset(frameBuffer, 0x00, FB_SIZE);
 
     /*
      * Initialise SPI2 for external flash and LCD
@@ -114,11 +100,6 @@ void display_init()
 
 void display_terminate()
 {
-    if(frameBuffer != NULL)
-    {
-        free(frameBuffer);
-    }
-
     spi2_terminate();
 }
 

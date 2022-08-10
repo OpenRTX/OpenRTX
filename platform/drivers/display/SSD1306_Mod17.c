@@ -29,33 +29,44 @@
 #include <hwconfig.h>
 #include <SPI2.h>
 
+
 /*
- * LCD framebuffer, allocated on the heap by display_init().
- * Pixel format is black and white, one bit per pixel
+ * LCD framebuffer, statically allocated and placed in the "large" RAM block
+ * starting at 0x20000000.
+ * Pixel format is black and white, one bit per pixel.
  */
-static uint8_t *frameBuffer;
+#define FB_SIZE (((SCREEN_HEIGHT * SCREEN_WIDTH) / 8 ) + 1)
+static uint8_t __attribute__((section(".bss2"))) frameBuffer[FB_SIZE];
+
+/**
+ * \internal
+ * Send one row of pixels to the display.
+ * Pixels in framebuffer are stored "by rows", while display needs data to be
+ * sent "by columns": this function performs the needed conversion.
+ *
+ * @param row: pixel row to be be sent.
+ */
+void display_renderRow(uint8_t row)
+{
+    for(uint16_t i = 0; i < 64; i++)
+    {
+        uint8_t out = 0;
+        uint8_t tmp = frameBuffer[(i * 16) + (15 - row)];
+
+        for(uint8_t j = 0; j < 8; j++)
+        {
+            out |= ((tmp >> (7-j)) & 0x01) << j;
+        }
+
+        spi2_sendRecv(out);
+    }
+}
+
 
 void display_init()
 {
-
-    /*
-     * Framebuffer size, in bytes, with compensating for eventual truncation
-     * error in division by rounding to the nearest greater integer.
-     */
-    unsigned int fbSize = (SCREEN_HEIGHT * SCREEN_WIDTH)/8;
-    if((fbSize * 8) < (SCREEN_HEIGHT * SCREEN_WIDTH)) fbSize += 1;
-    fbSize *= sizeof(uint8_t);
-
-    /* Allocate framebuffer */
-    frameBuffer = (uint8_t *) malloc(fbSize);
-    if(frameBuffer == NULL)
-    {
-        puts("*** LCD ERROR: cannot allocate framebuffer! ***");
-        return;
-    }
-
     /* Clear framebuffer, setting all pixels to 0x00 makes the screen white */
-    memset(frameBuffer, 0x00, fbSize);
+    memset(frameBuffer, 0x00, FB_SIZE);
 
     /*
      * Initialise SPI2 for external flash and LCD
@@ -79,18 +90,17 @@ void display_init()
     gpio_setPin(LCD_CS);
     gpio_clearPin(LCD_RS);
 
-    gpio_clearPin(LCD_RST); /* Reset controller                          */
+    gpio_clearPin(LCD_RST); // Reset controller
     delayMs(50);
     gpio_setPin(LCD_RST);
     delayMs(50);
 
     gpio_clearPin(LCD_CS);
 
-    gpio_clearPin(LCD_RS);  /* RS low -> command mode                                   */
+    gpio_clearPin(LCD_RS);// RS low -> command mode
     spi2_sendRecv(0xAE);  // SH110X_DISPLAYOFF,
     spi2_sendRecv(0xd5);  // SH110X_SETDISPLAYCLOCKDIV, 0x51,
     spi2_sendRecv(0x51);
-    //spi2_sendRecv(0x20);  // SH110X_MEMORYMODE,
     spi2_sendRecv(0x81);  // SH110X_SETCONTRAST, 0x4F,
     spi2_sendRecv(0x4F);
     spi2_sendRecv(0xAD);  // SH110X_DCDC, 0x8A,
@@ -115,29 +125,7 @@ void display_init()
 
 void display_terminate()
 {
-    if(frameBuffer != NULL)
-    {
-        free(frameBuffer);
-    }
-
     spi2_terminate();
-}
-
-void display_renderRow(uint8_t row)
-{
-    uint8_t *buf = (frameBuffer);
-
-	for(uint16_t i=0; i<64; i++)
-	{
-		uint8_t out=0, tmp=buf[i*16 + 15-row];
-
-		for(uint8_t j=0; j<8; j++)
-		{
-			out|=((tmp>>(7-j))&1)<<j;
-		}
-
-		spi2_sendRecv(out);
-	}
 }
 
 void display_renderRows(uint8_t startRow, uint8_t endRow)
@@ -159,7 +147,7 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
 
 void display_render()
 {
-    display_renderRows(0, SCREEN_WIDTH / 8 - 1);
+    display_renderRows(0, (SCREEN_WIDTH / 8) - 1);
 }
 
 bool display_renderingInProgress()
