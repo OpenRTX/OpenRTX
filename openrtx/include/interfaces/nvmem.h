@@ -57,7 +57,7 @@ void nvm_readCalibData(void *buf);
  *
  * @param info: destination data structure for hardware information data.
  */
-void nvm_loadHwInfo(hwInfo_t *info);
+void nvm_readHwInfo(hwInfo_t *info);
 
 /**
  * Read from storage the channel data corresponding to the VFO channel A.
@@ -65,7 +65,7 @@ void nvm_loadHwInfo(hwInfo_t *info);
  * @param channel: pointer to the channel_t data structure to be populated.
  * @return 0 on success, -1 on failure
  */
-int nvm_readVFOChannelData(channel_t *channel);
+int nvm_readVfoChannelData(channel_t *channel);
 
 /**
  * Read OpenRTX settings from storage.

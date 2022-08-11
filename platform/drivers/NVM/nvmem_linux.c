@@ -223,13 +223,13 @@ void nvm_terminate()
     }
 }
 
-void nvm_loadHwInfo(hwInfo_t *info)
+void nvm_readHwInfo(hwInfo_t *info)
 {
     /* Linux devices does not have any hardware info in the external flash. */
     (void) info;
 }
 
-int nvm_readVFOChannelData(channel_t *channel)
+int nvm_readVfoChannelData(channel_t *channel)
 {
     return _cps_read(memory_paths[P_VFO], channel, sizeof(channel_t));
 }

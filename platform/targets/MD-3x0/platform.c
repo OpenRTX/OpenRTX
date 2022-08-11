@@ -62,7 +62,7 @@ void platform_init()
 
     nvm_init();                      /* Initialise non volatile memory manager */
     nvm_readCalibData(&calibration); /* Load calibration data                  */
-    nvm_loadHwInfo(&hwInfo);         /* Load hardware information data         */
+    nvm_readHwInfo(&hwInfo);         /* Load hardware information data         */
     toneGen_init();                  /* Initialise tone generator              */
     rtc_init();                      /* Initialise RTC                         */
     backlight_init();                /* Initialise backlight driver            */

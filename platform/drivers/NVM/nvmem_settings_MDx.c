@@ -18,29 +18,33 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <string.h>
 #include <interfaces/nvmem.h>
+#include <string.h>
 #include <cps.h>
+#include <crc.h>
 #include "flash.h"
 
 /*
- * Data structure defining the memory layout used for saving and restore
+ * Data structures defining the memory layout used for saving and restore
  * of user settings and VFO configuration.
  */
 typedef struct
 {
-    uint32_t magic;
-    uint32_t flags[64];
-    struct dataBlock
-    {
-        settings_t settings;
-        channel_t  vfoData;
-    }
-    data[2048];
+    uint16_t   crc;
+    settings_t settings;
+    channel_t  vfoData;
+}
+__attribute__((packed)) dataBlock_t;
+
+typedef struct
+{
+    uint32_t    magic;
+    uint32_t    flags[32];
+    dataBlock_t data[1024];
 }
 __attribute__((packed)) memory_t;
 
-static const uint32_t validMagic  = 0x584E504F;    // "OPNX"
+static const uint32_t MEM_MAGIC   = 0x584E504F;    // "OPNX"
 static const uint32_t baseAddress = 0x080E0000;
 memory_t *memory = ((memory_t *) baseAddress);
 
@@ -53,15 +57,17 @@ memory_t *memory = ((memory_t *) baseAddress);
  *
  * @return number currently active data block or -1 if memory data is invalid.
  */
-int findActiveBlock()
+static int findActiveBlock()
 {
-    if(memory->magic != validMagic)
-    {
-        return -1;     // Invalid memory data
-    }
+    // Check for invalid memory data
+    if(memory->magic != MEM_MAGIC)
+        return -1;
 
     uint16_t block = 0;
-    for(; block < 64; block++)
+    uint16_t bit   = 0;
+
+    // Find the first 32-bit block not full of zeroes
+    for(; block < 32; block++)
     {
         if(memory->flags[block] != 0x00000000)
         {
@@ -69,7 +75,7 @@ int findActiveBlock()
         }
     }
 
-    uint16_t bit = 0;
+    // Find the last zero within a block
     for(; bit < 32; bit++)
     {
         if((memory->flags[block] & (1 << bit)) != 0)
@@ -79,12 +85,19 @@ int findActiveBlock()
     }
 
     block = (block * 32) + bit;
-    return block - 1;
+    block -= 1;
+
+    // Check data validity
+    uint16_t crc = crc_ccitt(&(memory->data[block].settings),
+                             sizeof(settings_t) + sizeof(channel_t));
+    if(crc != memory->data[block].crc)
+        return -2;
+
+    return block;
 }
 
 
-
-int nvm_readVFOChannelData(channel_t *channel)
+int nvm_readVfoChannelData(channel_t *channel)
 {
     int block = findActiveBlock();
 
@@ -110,8 +123,9 @@ int nvm_readSettings(settings_t *settings)
 
 int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
 {
-    uint32_t addr = 0;
-    int block = findActiveBlock();
+    uint32_t addr    = 0;
+    int      block   = findActiveBlock();
+    uint16_t prevCrc = 0;
 
     /*
      * Memory never initialised or save space finished: erase all the sector.
@@ -122,21 +136,28 @@ int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
     {
         flash_eraseSector(11);
         addr = ((uint32_t) &(memory->magic));
-        flash_write(addr, &validMagic, sizeof(validMagic));
+        flash_write(addr, &MEM_MAGIC, sizeof(MEM_MAGIC));
         block = 0;
     }
     else
     {
+        prevCrc = memory->data[block].crc;
         block += 1;
     }
 
-    // Save settings
-    addr = ((uint32_t) &(memory->data[block].settings));
-    flash_write(addr, settings, sizeof(settings_t));
+    dataBlock_t tmpBlock;
+    memcpy((&tmpBlock.settings), settings, sizeof(settings_t));
+    memcpy((&tmpBlock.vfoData), vfo, sizeof(channel_t));
+    tmpBlock.crc = crc_ccitt(&(tmpBlock.settings),
+                             sizeof(settings_t) + sizeof(channel_t));
 
-    // Save VFO configuration
-    addr = ((uint32_t) &(memory->data[block].vfoData));
-    flash_write(addr, vfo, sizeof(channel_t));
+    // New data is equal to the old one, avoid saving
+    if((block != 0) && (tmpBlock.crc == prevCrc))
+        return 0;
+
+    // Save data
+    addr = ((uint32_t) &(memory->data[block]));
+    flash_write(addr, &tmpBlock, sizeof(dataBlock_t));
 
     // Update the flags marking used data blocks
     uint32_t flag = ~(1 << (block % 32));

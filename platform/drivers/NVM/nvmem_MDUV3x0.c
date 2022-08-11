@@ -104,7 +104,7 @@ void nvm_readCalibData(void *buf)
     }
 }
 
-void nvm_loadHwInfo(hwInfo_t *info)
+void nvm_readHwInfo(hwInfo_t *info)
 {
     uint16_t vhf_freqMin = 0;
     uint16_t vhf_freqMax = 0;
@@ -142,35 +142,11 @@ void nvm_loadHwInfo(hwInfo_t *info)
     info->lcd_type = lcdInfo & 0x03;
 }
 
-/*
-TODO: temporarily implemented in "nvmem_settings_MDx.c"
+/**
+ * TODO: functions temporarily implemented in "nvmem_settings_MDx.c"
 
 int nvm_readVFOChannelData(channel_t *channel)
-{
-    return _cps_readChannelAtAddress(channel, vfoChannelBaseAddr);
-}
-*/
-
-/*
-TODO: temporarily implemented in "nvmem_settings_MDx.c"
-
 int nvm_readSettings(settings_t *settings)
-{
-    settings_t newSettings;
-    W25Qx_wakeup();
-    delayUs(5);
-    W25Qx_readData(settingsAddr, ((uint8_t *) &newSettings), sizeof(settings_t));
-    W25Qx_sleep();
-    if(memcmp(newSettings.valid, default_settings.valid, 6) != 0)
-        return -1;
-    memcpy(settings, &newSettings, sizeof(settings_t));
-    return 0;
-}
-*/
-
 int nvm_writeSettings(const settings_t *settings)
-{
-    (void) settings;
-    // Disable settings write until DFU is implemented for flash backups
-    return -1;
-}
+
+*/

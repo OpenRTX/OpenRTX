@@ -48,7 +48,7 @@ void state_init()
      * Try loading VFO configuration from nonvolatile memory and default to sane
      * values in case of failure.
      */
-    if(nvm_readVFOChannelData(&state.channel) < 0)
+    if(nvm_readVfoChannelData(&state.channel) < 0)
     {
         state.channel = cps_getDefaultChannel();
     }

@@ -35,12 +35,12 @@ void nvm_readCalibData(void *buf)
     (void) buf;
 }
 
-void nvm_loadHwInfo(hwInfo_t *info)
+void nvm_readHwInfo(hwInfo_t *info)
 {
     (void) info;
 }
 
-int nvm_readVFOChannelData(channel_t *channel)
+int nvm_readVfoChannelData(channel_t *channel)
 {
     // Module 17 has no channels: just load default values for it
     channel->mode         = OPMODE_M17;

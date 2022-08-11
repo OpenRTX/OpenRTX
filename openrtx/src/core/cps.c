@@ -26,7 +26,7 @@ channel_t cps_getDefaultChannel()
     channel_t channel;
     channel.mode      = OPMODE_FM;
     channel.bandwidth = BW_25;
-    channel.power     = 1.0;
+    channel.power     = 100;    // 1W, P = 10dBm + n*0.2dBm, we store n
 
     // Set initial frequency based on supported bands
     const hwInfo_t* hwinfo  = platform_getHwInfo();

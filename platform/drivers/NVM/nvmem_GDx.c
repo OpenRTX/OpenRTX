@@ -40,8 +40,11 @@ static const uint32_t VHF_CAL_BASE = 0x6F070;
 /**
  * \internal Utility function for loading band-specific calibration data into
  * the corresponding data structure.
+ *
+ * @param baseAddr: start address of the data block;
+ * @param cal: pointer to calibration data structure to be filled.
  */
-void _loadBandCalData(uint32_t baseAddr, bandCalData_t *cal)
+static void _loadBandCalData(uint32_t baseAddr, bandCalData_t *cal)
 {
     W25Qx_readData(baseAddr + 0x08, &(cal->modBias),               2);
     W25Qx_readData(baseAddr + 0x0A, &(cal->mod2Offset),            1);
@@ -86,6 +89,7 @@ void _loadBandCalData(uint32_t baseAddr, bandCalData_t *cal)
         cal->txHighPower[i] = txPwr[2*i+1];
     }
 }
+
 
 void nvm_init()
 {
@@ -133,13 +137,13 @@ void nvm_readCalibData(void *buf)
     calib->vhfCalPoints[7] = 172000000;
 }
 
-void nvm_loadHwInfo(hwInfo_t *info)
+void nvm_readHwInfo(hwInfo_t *info)
 {
     /* GDx devices does not have any hardware info in the external flash. */
     (void) info;
 }
 
-int nvm_readVFOChannelData(channel_t *channel)
+int nvm_readVfoChannelData(channel_t *channel)
 {
     (void) channel;
     return -1;
