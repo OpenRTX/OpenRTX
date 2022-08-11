@@ -47,8 +47,7 @@ void M17Modulator::init()
 {
     /*
      * Allocate a chunk of memory to contain two complete buffers for baseband
-     * audio. Split this chunk in two separate blocks for double buffering using
-     * placement new.
+     * audio.
      */
 
     baseband_buffer = std::make_unique< int16_t[] >(2 * M17_FRAME_SAMPLES);
@@ -72,30 +71,55 @@ void M17Modulator::terminate()
     baseband_buffer.reset();
 }
 
-void M17Modulator::send(const std::array< uint8_t, 2 >& sync,
-                        const std::array< uint8_t, 46 >& data,
-                        const bool isLast)
+void M17::M17Modulator::start()
 {
-    auto sync1 = byteToSymbols(sync[0]);
-    auto sync2 = byteToSymbols(sync[1]);
+    if(txRunning) return;
 
-    auto it = std::copy(sync1.begin(), sync1.end(), symbols.begin());
-         it = std::copy(sync2.begin(), sync2.end(), it);
+    txRunning = true;
+    stopTx    = false;
 
-    for(size_t i = 0; i < data.size(); i++)
+    // Fill symbol buffer with preamble, made of alternated +3 and -3 symbols
+    for(size_t i = 0; i < symbols.size(); i += 2)
     {
-        auto sym = byteToSymbols(data[i]);
+        symbols[i]     = +3;
+        symbols[i + 1] = -3;
+    }
+
+    // Generate baseband signal and then start transmission
+    symbolsToBaseband();
+    #ifndef PLATFORM_LINUX
+    outStream = outputStream_start(SINK_RTX, PRIO_TX, baseband_buffer.get(),
+                                   2*M17_FRAME_SAMPLES, BUF_CIRC_DOUBLE,
+                                   M17_TX_SAMPLE_RATE);
+    idleBuffer = outputStream_getIdleBuffer(outStream);
+    #else
+    sendBaseband();
+    #endif
+
+    // Repeat baseband generation and transmission, this makes the preamble to
+    // be long 80ms (two frames)
+    symbolsToBaseband();
+    sendBaseband();
+}
+
+
+void M17Modulator::send(const frame_t& frame, const bool isLast)
+{
+    auto it = symbols.begin();
+    for(size_t i = 0; i < frame.size(); i++)
+    {
+        auto sym = byteToSymbols(frame[i]);
         it       = std::copy(sym.begin(), sym.end(), it);
     }
 
     // If last frame, signal stop of transmission
     if(isLast) stopTx = true;
 
-    generateBaseband();
-    emitBaseband();
+    symbolsToBaseband();
+    sendBaseband();
 }
 
-void M17Modulator::generateBaseband()
+void M17Modulator::symbolsToBaseband()
 {
     memset(idleBuffer, 0x00, M17_FRAME_SAMPLES * sizeof(stream_sample_t));
 
@@ -110,33 +134,20 @@ void M17Modulator::generateBaseband()
         elem          = M17::rrc_48k(elem * M17_RRC_GAIN) - M17_RRC_OFFSET;
         idleBuffer[i] = static_cast< int16_t >(elem);
     }
-}
 
-#ifndef PLATFORM_LINUX
-void M17Modulator::emitBaseband()
-{
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
     dsp_pwmCompensate(&pwmFilterState, idleBuffer, M17_FRAME_SAMPLES);
     dsp_invertPhase(idleBuffer, M17_FRAME_SAMPLES);
     #endif
+}
 
-    if(txRunning == false)
-    {
-        // First run, start transmission
-        outStream = outputStream_start(SINK_RTX,
-                                       PRIO_TX,
-                                       baseband_buffer.get(),
-                                       2*M17_FRAME_SAMPLES,
-                                       BUF_CIRC_DOUBLE,
-                                       M17_TX_SAMPLE_RATE);
-        txRunning = true;
-        stopTx    = false;
-    }
-    else
-    {
-        // Transmission is ongoing, syncronise with stream end before proceeding
-        outputStream_sync(outStream, true);
-    }
+#ifndef PLATFORM_LINUX
+void M17Modulator::sendBaseband()
+{
+    if(txRunning == false) return;
+
+    // Transmission is ongoing, syncronise with stream end before proceeding
+    outputStream_sync(outStream, true);
 
     // Check if transmission stop is requested, if so stop the output stream
     // and wait until its effective termination.
@@ -157,7 +168,7 @@ void M17Modulator::emitBaseband()
     }
 }
 #else
-void M17Modulator::emitBaseband()
+void M17Modulator::sendBaseband()
 {
     FILE *outfile = fopen("/tmp/m17_output.raw", "ab");
 

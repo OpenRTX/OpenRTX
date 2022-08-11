@@ -22,7 +22,7 @@
 #define OPMODE_M17_H
 
 #include <M17/M17FrameDecoder.hpp>
-#include <M17/M17Transmitter.hpp>
+#include <M17/M17FrameEncoder.hpp>
 #include <M17/M17Demodulator.hpp>
 #include <M17/M17Modulator.hpp>
 #include "OpMode.hpp"
@@ -126,8 +126,8 @@ private:
     bool locked;                       ///< Demodulator locked on data stream.
     M17::M17Modulator    modulator;    ///< M17 modulator.
     M17::M17Demodulator  demodulator;  ///< M17 demodulator.
-    M17::M17Transmitter  m17Tx;        ///< M17 transmission manager.
     M17::M17FrameDecoder decoder;      ///< M17 frame decoder
+    M17::M17FrameEncoder encoder;      ///< M17 frame encoder
 };
 
 #endif /* OPMODE_M17_H */

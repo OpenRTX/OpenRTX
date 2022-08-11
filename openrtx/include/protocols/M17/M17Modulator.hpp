@@ -63,30 +63,31 @@ public:
     void terminate();
 
     /**
+     * Start baseband transmission and send an 80ms preamble.
+     */
+    void start();
+
+    /**
      * Generate and transmit the baseband signal obtained by 4FSK modulation of
-     * a given block of data. When called for the first time, this function
-     * starts baseband transmission.
+     * a given block of data.
      *
-     * @param sync: synchronisation word to be prepended to data block.
-     * @param data: data block to be transmitted.
+     * @param frame: M17 frame to be sent.
      * @param isLast: flag signalling that current block is the last one being
      * transmitted.
      */
-    void send(const std::array< uint8_t, 2 >& sync,
-              const std::array< uint8_t, 46 >& data,
-              const bool isLast = false);
+    void send(const frame_t& frame, const bool isLast);
 
 private:
 
     /**
      * Generate baseband stream from symbol stream.
      */
-    void generateBaseband();
+    void symbolsToBaseband();
 
     /**
      * Emit the baseband stream towards the output stage, platform dependent.
      */
-    void emitBaseband();
+    void sendBaseband();
 
     static constexpr size_t M17_TX_SAMPLE_RATE     = 48000;
     static constexpr size_t M17_SAMPLES_PER_SYMBOL = M17_TX_SAMPLE_RATE / M17_SYMBOL_RATE;
@@ -100,7 +101,7 @@ private:
     static constexpr float  M17_RRC_OFFSET        = 0.0f;
     #endif
 
-    std::array< int16_t, M17_FRAME_SYMBOLS > symbols;
+    std::array< int8_t, M17_FRAME_SYMBOLS > symbols;
     std::unique_ptr< int16_t[] > baseband_buffer;  ///< Buffer for baseband audio handling.
     stream_sample_t              *idleBuffer;      ///< Half baseband buffer, free for processing.
     streamId                     outStream;        ///< Baseband output stream ID.

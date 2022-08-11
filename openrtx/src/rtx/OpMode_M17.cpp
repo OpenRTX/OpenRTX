@@ -29,8 +29,7 @@
 using namespace std;
 using namespace M17;
 
-OpMode_M17::OpMode_M17() : startRx(false), startTx(false), locked(false),
-                           m17Tx(modulator)
+OpMode_M17::OpMode_M17() : startRx(false), startTx(false), locked(false)
 {
 
 }
@@ -190,18 +189,37 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
 
 void OpMode_M17::txState(rtxStatus_t *const status)
 {
+    frame_t m17Frame;
+
     if(startTx)
     {
+        startTx = false;
+
+        std::string src(status->source_address);
+        std::string dst(status->destination_address);
+        M17LinkSetupFrame lsf;
+
+        lsf.clear();
+        lsf.setSource(src);
+        if(!dst.empty()) lsf.setDestination(dst);
+
+        streamType_t type;
+        type.fields.stream   = 1;   // Stream
+        type.fields.dataType = 2;   // Voice data
+        type.fields.CAN      = 0;   // Channel access number
+
+        lsf.setType(type);
+        lsf.updateCrc();
+
+        encoder.reset();
+        encoder.encodeLsf(lsf, m17Frame);
+
         audio_enableMic();
         codec_startEncode(SOURCE_MIC);
-
         radio_enableTx();
 
-        std::string source_address(status->source_address);
-        std::string destination_address(status->destination_address);
-        m17Tx.start(source_address, destination_address);
-
-        startTx = false;
+        modulator.start();
+        modulator.send(m17Frame, false);
     }
 
     payload_t dataFrame;
@@ -218,5 +236,6 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         status->opStatus = OFF;
     }
 
-    m17Tx.send(dataFrame, lastFrame);
+    encoder.encodeStreamFrame(dataFrame, m17Frame, lastFrame);
+    modulator.send(m17Frame, lastFrame);
 }
