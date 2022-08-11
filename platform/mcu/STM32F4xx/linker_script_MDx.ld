@@ -175,7 +175,9 @@ SECTIONS
     } > smallram
     _bss_end = .;
 
-    .bss2 :
+    /* Second BSS section located in the "large" RAM, explicitly request to not
+       initialize it */
+    .bss2 (NOLOAD) :
     {
         *(.bss2)
         . = ALIGN(8);
