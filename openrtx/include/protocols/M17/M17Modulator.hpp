@@ -75,7 +75,14 @@ public:
      * @param isLast: flag signalling that current block is the last one being
      * transmitted.
      */
-    void send(const frame_t& frame, const bool isLast);
+    void send(const frame_t& frame);
+
+    /**
+     * Terminate baseband transmission.
+     * If the macro M17_ENABLE_EOT is defined an EOT frame is sent before
+     * terminating the transmission.
+     */
+    void stop();
 
 private:
 
@@ -88,9 +95,6 @@ private:
      * Emit the baseband stream towards the output stage, platform dependent.
      */
     void sendBaseband();
-
-    /** Gracefully end the transmission **/
-    void stop();
 
     static constexpr size_t M17_TX_SAMPLE_RATE     = 48000;
     static constexpr size_t M17_SAMPLES_PER_SYMBOL = M17_TX_SAMPLE_RATE / M17_SYMBOL_RATE;

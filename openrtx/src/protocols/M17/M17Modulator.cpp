@@ -71,7 +71,7 @@ void M17Modulator::terminate()
     baseband_buffer.reset();
 }
 
-void M17::M17Modulator::start()
+void M17Modulator::start()
 {
     if(txRunning) return;
 
@@ -102,7 +102,7 @@ void M17::M17Modulator::start()
 }
 
 
-void M17Modulator::send(const frame_t& frame, const bool isLast)
+void M17Modulator::send(const frame_t& frame)
 {
     auto it = symbols.begin();
     for(size_t i = 0; i < frame.size(); i++)
@@ -113,9 +113,6 @@ void M17Modulator::send(const frame_t& frame, const bool isLast)
 
     symbolsToBaseband();
     sendBaseband();
-
-    // If last frame, signal stop of transmission
-    if(isLast) stop();
 }
 
 void M17Modulator::stop()
@@ -123,6 +120,7 @@ void M17Modulator::stop()
     if(txRunning == false)
         return;
 
+    #ifdef M17_ENABLE_EOT
     frame_t eotFrame;
     // Fill EOT frame with 0x55, 0x5D as per M17 spec.
     for(size_t i = 0; i < eotFrame.size(); i += 2)
@@ -141,6 +139,7 @@ void M17Modulator::stop()
 
     symbolsToBaseband();
     sendBaseband();
+    #endif
 
     outputStream_stop(outStream);
     outputStream_sync(outStream, false);

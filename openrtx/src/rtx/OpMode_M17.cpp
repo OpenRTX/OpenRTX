@@ -219,7 +219,7 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         radio_enableTx();
 
         modulator.start();
-        modulator.send(m17Frame, false);
+        modulator.send(m17Frame);
     }
 
     payload_t dataFrame;
@@ -237,5 +237,8 @@ void OpMode_M17::txState(rtxStatus_t *const status)
     }
 
     encoder.encodeStreamFrame(dataFrame, m17Frame, lastFrame);
-    modulator.send(m17Frame, lastFrame);
+    modulator.send(m17Frame);
+
+    if(lastFrame)
+        modulator.stop();
 }
