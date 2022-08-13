@@ -27,10 +27,10 @@
 
 #include <interfaces/audio_stream.h>
 #include <M17/M17Constants.hpp>
+#include <M17/PwmCompensator.hpp>
 #include <cstdint>
 #include <memory>
 #include <array>
-#include <dsp.h>
 
 namespace M17
 {
@@ -115,7 +115,7 @@ private:
     bool                         txRunning;        ///< Transmission running.
 
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
-    filter_state_t   pwmFilterState;
+    PwmCompensator pwmComp;
     #endif
 };
 

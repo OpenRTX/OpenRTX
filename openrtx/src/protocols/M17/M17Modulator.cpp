@@ -54,7 +54,7 @@ void M17Modulator::init()
     idleBuffer      = baseband_buffer.get();
     txRunning       = false;
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
-    dsp_resetFilterState(&pwmFilterState);
+    pwmComp.reset();
     #endif
 }
 
@@ -147,7 +147,7 @@ void M17Modulator::stop()
     idleBuffer = baseband_buffer.get();
 
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
-    dsp_resetFilterState(&pwmFilterState);
+    pwmComp.reset();
     #endif
 }
 
@@ -164,13 +164,12 @@ void M17Modulator::symbolsToBaseband()
     {
         float elem    = static_cast< float >(idleBuffer[i]);
         elem          = M17::rrc_48k(elem * M17_RRC_GAIN) - M17_RRC_OFFSET;
+        #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
+        elem          = pwmComp(elem);
+        elem         *= -1.0f;          // Invert signal phase
+        #endif
         idleBuffer[i] = static_cast< int16_t >(elem);
     }
-
-    #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
-    dsp_pwmCompensate(&pwmFilterState, idleBuffer, M17_FRAME_SAMPLES);
-    dsp_invertPhase(idleBuffer, M17_FRAME_SAMPLES);
-    #endif
 }
 
 #ifndef PLATFORM_LINUX

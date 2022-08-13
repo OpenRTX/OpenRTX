@@ -56,17 +56,6 @@ filter_state_t;
 void dsp_resetFilterState(filter_state_t *state);
 
 /**
- * Compensate for the filtering applied by the PWM output over the modulated
- * signal. The buffer is be processed in place to save memory.
- *
- * @param state: pointer to the data structure containing the filter state.
- * @param buffer: the buffer to be used as both source and destination.
- * @param length: the length of the input buffer.
- */
-void dsp_pwmCompensate(filter_state_t *state, audio_sample_t *buffer,
-                       size_t length);
-
-/**
  * Remove the DC offset from a collection of audio samples, processing data
  * in-place.
  *

@@ -33,43 +33,6 @@ void dsp_resetFilterState(filter_state_t *state)
     state->initialised = false;
 }
 
-void dsp_pwmCompensate(filter_state_t *state, audio_sample_t *buffer,
-                       size_t length)
-{
-    static constexpr float a =  4982680082321166792352.0f;
-    static constexpr float b = -6330013275146484168000.0f;
-    static constexpr float c =  1871109008789062500000.0f;
-    static constexpr float d =  548027992248535162477.0f;
-    static constexpr float e = -24496793746948241250.0f;
-    static constexpr float f =  244617462158203125.0f;
-
-    // Initialise filter with first two values, for smooth transient.
-    if(length <= 2) return;
-
-    if(state->initialised == false)
-    {
-        state->u[2] = static_cast< float >(buffer[0]);
-        state->u[1] = static_cast< float >(buffer[1]);
-        state->initialised = true;
-    }
-
-    for(size_t i = 2; i < length; i++)
-    {
-        state->u[0] = static_cast< float >(buffer[i]);
-        state->y[0] = (a/d)*(state->u[0])
-                    + (b/d)*(state->u[1])
-                    + (c/d)*(state->u[2])
-                    - (e/d)*(state->y[1])
-                    - (f/d)*(state->y[2]);
-
-        state->u[2] = state->u[1];
-        state->u[1] = state->u[0];
-        state->y[2] = state->y[1];
-        state->y[1] = state->y[0];
-        buffer[i] = static_cast< audio_sample_t >((state->y[0] * 0.5f) + 0.5f);
-    }
-}
-
 void dsp_dcRemoval(filter_state_t *state, audio_sample_t *buffer, size_t length)
 {
     /*
