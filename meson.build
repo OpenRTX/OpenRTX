@@ -12,6 +12,13 @@ project('OpenRTX', ['c', 'cpp'],
 def = {}
 
 ##
+## UI font configuration, only one uncommented at a time
+##
+
+def += {'FONT_UBUNTU_REGULAR': ''}
+# def += {'FONT_FREE_SANS': ''}
+
+##
 ## ----------------- Platform-independent source files -------------------------
 ##
 
