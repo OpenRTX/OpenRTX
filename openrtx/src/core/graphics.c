@@ -42,6 +42,14 @@
 #include <FreeSans16pt7b.h>
 #include <FreeSans18pt7b.h>
 #include <FreeSans24pt7b.h>
+#include <UbuntuRegular6pt7b.h>
+#include <UbuntuRegular8pt7b.h>
+#include <UbuntuRegular9pt7b.h>
+#include <UbuntuRegular10pt7b.h>
+#include <UbuntuRegular12pt7b.h>
+#include <UbuntuRegular16pt7b.h>
+#include <UbuntuRegular18pt7b.h>
+#include <UbuntuRegular24pt7b.h>
 
 // Variable swap macro
 #define DEG_RAD  0.017453292519943295769236907684886
@@ -51,15 +59,28 @@
 /**
  * Fonts, ordered by the fontSize_t enum.
  */
-static const GFXfont fonts[] = { TomThumb,           // 5pt
-                                 FreeSans6pt7b,      // 6pt
-                                 FreeSans8pt7b,      // 8pt
-                                 FreeSans9pt7b,      // 9pt
-                                 FreeSans10pt7b,     // 10pt
-                                 FreeSans12pt7b,     // 12pt
-                                 FreeSans16pt7b,     // 16pt
-                                 FreeSans18pt7b,     // 16pt
-                                 FreeSans24pt7b      // 24pt
+static const GFXfont fonts[] = { TomThumb,            // 5pt
+    #if defined FONT_FREE_SANS
+                                 FreeSans6pt7b,       // 6pt
+                                 FreeSans8pt7b,       // 8pt
+                                 FreeSans9pt7b,       // 9pt
+                                 FreeSans10pt7b,      // 10pt
+                                 FreeSans12pt7b,      // 12pt
+                                 FreeSans16pt7b,      // 16pt
+                                 FreeSans18pt7b,      // 16pt
+                                 FreeSans24pt7b       // 24pt
+    #elif defined FONT_UBUNTU_REGULAR
+                                 UbuntuRegular6pt7b,  // 6pt
+                                 UbuntuRegular8pt7b,  // 8pt
+                                 UbuntuRegular9pt7b,  // 9pt
+                                 UbuntuRegular10pt7b, // 10pt
+                                 UbuntuRegular12pt7b, // 12pt
+                                 UbuntuRegular16pt7b, // 16pt
+                                 UbuntuRegular18pt7b, // 16pt
+                                 UbuntuRegular24pt7b  // 24pt
+    #else
+    #error Unsupported font family!
+    #endif
                                };
 
 #ifdef PIX_FMT_RGB565

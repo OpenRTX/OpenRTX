@@ -9,7 +9,7 @@ project('OpenRTX', ['c', 'cpp'],
 ## Optional defines, common to all souces (e.g. to enable debugging)
 ##
 
-def = {}
+def = {'FONT_UBUNTU_REGULAR': ''}
 
 ##
 ## ----------------- Platform-independent source files -------------------------
