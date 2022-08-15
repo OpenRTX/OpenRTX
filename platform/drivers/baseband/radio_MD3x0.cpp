@@ -207,14 +207,12 @@ void radio_setOpmode(const enum opmode mode)
         case OPMODE_DMR:
             gpio_clearPin(FM_SW);       // Disable analog RX stage after superhet
             gpio_setPin(DMR_SW);        // Enable analog paths for DMR
-            _setBandwidth(BW_12_5);     // Set bandwidth to 12.5kHz
             //C5000_dmrMode();
             break;
 
         case OPMODE_M17:
             gpio_clearPin(DMR_SW);      // Disconnect analog paths for DMR
             gpio_setPin(FM_SW);         // Enable analog RX stage after superhet
-            _setBandwidth(BW_25);       // Set bandwidth to 25kHz for proper deviation
             C5000.fmMode();             // HR_C5000 in FM mode
             C5000.setInputGain(-3);     // Input gain in dB, found experimentally
             break;
@@ -354,12 +352,10 @@ void radio_updateConfiguration()
 
     C5000.setModAmplitude(I, Q);
 
-    // Set bandwidth, only for analog FM mode
-    if(config->opMode == OPMODE_FM)
-    {
-        enum bandwidth bw = static_cast< enum bandwidth >(config->bandwidth);
-        _setBandwidth(bw);
-    }
+    // Set bandwidth, force 12.5kHz for DMR mode
+    enum bandwidth bandwidth = static_cast< enum bandwidth >(config->bandwidth);
+    if(config->opMode == OPMODE_DMR) bandwidth = BW_12_5;
+    _setBandwidth(bandwidth);
 
     // Set CTCSS tone
     float tone = static_cast< float >(config->txTone) / 10.0f;
