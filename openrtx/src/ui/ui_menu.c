@@ -28,7 +28,7 @@
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
 #include <memory_profiling.h>
-#include <ui/UIStrings.h>
+#include <ui/ui_strings.h>
 #include <core/voicePromptUtils.h>
 
 /* UI main screen helper functions, their implementation is in "ui_main.c" */

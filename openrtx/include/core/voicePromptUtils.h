@@ -22,7 +22,7 @@
 #define VOICE_PROMPT_UTILS_H_INCLUDED
 
 #include "cps.h"
-#include "ui/UIStrings.h"
+#include "ui/ui_strings.h"
 #include "voicePrompts.h"
 
 /*

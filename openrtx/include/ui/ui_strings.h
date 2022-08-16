@@ -17,15 +17,16 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
-/*
-This string table's order must not be altered as voice prompts will be indexed
-in the same order as these strings. Also, menus may be printed using string
-table offsets.
-*/
-#ifndef UIStrings_h_included
-#define UIStrings_h_included
+#ifndef UI_STRINGS_H
+#define UI_STRINGS_H
+
 #define NUM_LANGUAGES 1
 
+/*
+ * NOTE: This string table's order must not be altered as voice prompts will be
+ * indexed in the same order as these strings.
+ * Also, menus may be printed using string table offsets.
+ */
 typedef struct
 {
     const char* languageName;
@@ -92,11 +93,20 @@ typedef struct
     const char* macroMenu;
     const char* forEmergencyUse;
     const char* pressAnyButton;
-} stringsTable_t;
+}
+stringsTable_t;
 
 extern const stringsTable_t languages[];
 extern const stringsTable_t* currentLanguage;
 
-int GetEnglishStringTableOffset(char* text);
+/**
+ * Search for a given string into the string table and, if found, return its
+ * offset with respect to the beginning.
+ *
+ * @param text: string to be searched.
+ * @return text position inside the string table or -1 if the string is not
+ * present.
+ */
+int GetEnglishStringTableOffset(const char* text);
 
 #endif

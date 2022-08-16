@@ -29,7 +29,7 @@
 
 
 #include "interfaces/keyboard.h"
-#include "ui/UIStrings.h"
+#include "ui/ui_strings.h"
 
 const uint32_t VOICE_PROMPTS_DATA_MAGIC   = 0x5056;  //'VP'
 const uint32_t VOICE_PROMPTS_DATA_VERSION = 0x1000;  // v1000 OpenRTX

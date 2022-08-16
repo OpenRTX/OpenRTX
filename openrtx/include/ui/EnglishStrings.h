@@ -17,11 +17,13 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
-#ifndef EnglishStrings_h_included
-#define EnglishStrings_h_included
-#include "ui/UIStrings.h"
+#ifndef ENGLISHSTRINGS_H
+#define ENGLISHSTRINGS_H
 
-const stringsTable_t englishStrings = {
+#include "ui/ui_strings.h"
+
+const stringsTable_t englishStrings =
+{
     .languageName      = "English",
     .off               = "OFF",
     .on                = "ON",
@@ -87,4 +89,4 @@ const stringsTable_t englishStrings = {
     .forEmergencyUse   = "For emergency use",
     .pressAnyButton    = "press any button.",
 };
-#endif  // EnglishStrings_h_included
+#endif  // ENGLISHSTRINGS_H

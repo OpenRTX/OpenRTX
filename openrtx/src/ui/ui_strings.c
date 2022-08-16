@@ -17,33 +17,21 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
-/*
-This string table's order must not be altered as voice prompts will be indexed
-in the same order as these strings.
-*/
-#include "ui/UIStrings.h"
 
 #include <stdint.h>
 #include <string.h>
+#include <ui/ui_strings.h>
+#include <ui/EnglishStrings.h>
 
-#include "ui/EnglishStrings.h"
-
-// add more languages here.
 const stringsTable_t languages[NUM_LANGUAGES] = {englishStrings};
-// default to English.
 const stringsTable_t* currentLanguage = &languages[0];
 
-/*
-Given an english string such as a menu item or value,
-search the english string table and return the offset if found.
-This can then be used to look up the localized string in the currentLanguages
-struct, or to announce an indexed voice prompt.
-*/
-int GetEnglishStringTableOffset(char* text)
+int GetEnglishStringTableOffset(const char* text)
 {
-    if (!text || !*text) return -1;  // error.
+    if ((text == NULL) || (*text == '\0'))
+        return -1;
 
-    uint8_t stringCount = sizeof(stringsTable_t) / sizeof(char*);
+    uint8_t stringCount = sizeof(stringsTable_t) / sizeof(char *);
 
     for (uint8_t i = 0; i < stringCount; ++i)
     {
