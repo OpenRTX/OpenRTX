@@ -248,17 +248,17 @@ void vp_queuePrompt(const uint16_t prompt);
 /**
  * Append the spelling of a complete string to the queue.
  *
- * @param promptString: string to be spelled.
+ * @param string: string to be spelled.
  * @param flags: control flags.
  */
-void vp_queueString(char* promptString, VoicePromptFlags_T flags);
+void vp_queueString(const char* string, VoicePromptFlags_T flags);
 
 /**
  * Append a signed integer to the queue.
  *
  * @param value: value to be appended.
  */
-void vp_queueInteger(const int32_t value);
+void vp_queueInteger(const int value);
 
 /**
  * Append a text string from the current language to the queue.

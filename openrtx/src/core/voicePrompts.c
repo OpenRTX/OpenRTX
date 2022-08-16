@@ -17,209 +17,139 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
-#include "core/voicePrompts.h"
 
+#include <interfaces/keyboard.h>
+#include <interfaces/audio.h>
+#include <ui/ui_strings.h>
+#include <voicePrompts.h>
+#include <audio_codec.h>
 #include <ctype.h>
 #include <state.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <interfaces/audio.h>
-#include <audio_codec.h>
 
+static const uint32_t VOICE_PROMPTS_DATA_MAGIC   = 0x5056;  //'VP'
+static const uint32_t VOICE_PROMPTS_DATA_VERSION = 0x1000;  // v1000 OpenRTX
 
-#include "interfaces/keyboard.h"
-#include "ui/ui_strings.h"
-
-const uint32_t VOICE_PROMPTS_DATA_MAGIC   = 0x5056;  //'VP'
-const uint32_t VOICE_PROMPTS_DATA_VERSION = 0x1000;  // v1000 OpenRTX
-// Must match the number of voice prompts allowed by the generator script.
 #define VOICE_PROMPTS_TOC_SIZE 350
-// This gets the data for a voice prompt to be demodulated using Codec2.
-// The offset is relative to the start of the voice prompt data.
-// The length is the length in bytes of the data.
-static void GetCodec2Data(int offset, int length);
+#define CODEC2_HEADER_SIZE     7
+#define VP_SEQUENCE_BUF_SIZE   128
+#define CODEC2_DATA_BUF_SIZE   2048
 
-#define CODEC2_HEADER_SIZE 7
-
-static FILE *voice_prompt_file = NULL;
-
-typedef struct
-{
-    const char* userWord;
-    const voicePrompt_t vp;
-} userDictEntry;
 
 typedef struct
 {
     uint32_t magic;
     uint32_t version;
-} voicePromptsDataHeader_t;
-// offset into voice prompt vpc file where actual codec2 data starts.
-static uint32_t vpDataOffset = 0;
-// Each codec2 frame is 8 bytes.
-// 256 x 8 bytes
-#define Codec2DataBufferSize 2048
-
-bool vpDataIsLoaded = false;
-
-static bool voicePromptIsActive = false;
-// Uninitialized is -1.
-static int promptDataPosition  = -1;
-static int currentPromptLength = -1;
-// Number of ms from end of playing prompt to disabling amp.
-
-static uint8_t Codec2Data[Codec2DataBufferSize];
-
-#define VOICE_PROMPTS_SEQUENCE_BUFFER_SIZE 128
+}
+vpHeader_t;
 
 typedef struct
-{ // buffer of individual prompt indices.
-    uint16_t buffer[VOICE_PROMPTS_SEQUENCE_BUFFER_SIZE];
-    int pos; // index into above buffer.
-    int length; // number of entries in above buffer.
-    int codec2DataIndex; // index into current codec2 data
-    //(buffer content sent in lots of 8 byte frames.)
-    int codec2DataLength; // length of codec2 data for current prompt.
-} vpSequence_t;
+{
+    const char* userWord;
+    const voicePrompt_t vp;
+}
+userDictEntry_t;
 
-static vpSequence_t vpCurrentSequence = {.pos = 0, .length = 0, .codec2DataIndex = 0, .codec2DataLength = 0};
+typedef struct
+{
+    uint16_t buffer[VP_SEQUENCE_BUF_SIZE];  // Buffer of individual prompt indices.
+    uint16_t pos;                           // Index into above buffer.
+    uint16_t length;                        // Number of entries in above buffer.
+    uint32_t c2DataIndex;                   // Index into current codec2 data
+    uint32_t c2DataLength;                  // Length of codec2 data for current prompt.
+}
+vpSequence_t;
 
-uint32_t tableOfContents[VOICE_PROMPTS_TOC_SIZE];
 
-const userDictEntry userDictionary[] = {
-    {"hotspot", PROMPT_CUSTOM1},    // Hotspot
+static const userDictEntry_t userDictionary[] =
+{
+    {"hotspot",   PROMPT_CUSTOM1},  // Hotspot
     {"clearnode", PROMPT_CUSTOM2},  // ClearNode
     {"sharinode", PROMPT_CUSTOM3},  // ShariNode
-    {"microhub", PROMPT_CUSTOM4},   // MicroHub
-    {"openspot", PROMPT_CUSTOM5},   // Openspot
-    {"repeater", PROMPT_CUSTOM6},   // repeater
+    {"microhub",  PROMPT_CUSTOM4},  // MicroHub
+    {"openspot",  PROMPT_CUSTOM5},  // Openspot
+    {"repeater",  PROMPT_CUSTOM6},  // repeater
     {"blindhams", PROMPT_CUSTOM7},  // BlindHams
-    {"allstar", PROMPT_CUSTOM8},    // Allstar
-    {"parrot", PROMPT_CUSTOM9},     // Parrot
-    {"channel", PROMPT_CHANNEL},   {0, 0}};
+    {"allstar",   PROMPT_CUSTOM8},  // Allstar
+    {"parrot",    PROMPT_CUSTOM9},  // Parrot
+    {"channel",   PROMPT_CHANNEL},  // Channel
+    {0, 0}
+};
 
-int vp_open(char *vp_name)
+static vpSequence_t vpCurrentSequence =
 {
-    if (!vp_name)
-        vp_name = "voiceprompts.vpc";
-    voice_prompt_file = fopen(vp_name, "r");
-    if (!voice_prompt_file)
-        return -1;
-    return 0;
+    .pos          = 0,
+    .length       = 0,
+    .c2DataIndex  = 0,
+    .c2DataLength = 0
+};
+
+static uint8_t  codec2Data[CODEC2_DATA_BUF_SIZE];
+static uint32_t tableOfContents[VOICE_PROMPTS_TOC_SIZE];
+static uint32_t vpDataOffset       = 0;
+static bool     vpDataLoaded       = false;
+static bool     voicePromptActive  = false;
+static FILE     *vpFile            = NULL;
+
+/**
+ * \internal
+ * Load Codec2 data for a voice prompt.
+ *
+ * @param offset: offset relative to the start of the voice prompt data.
+ * @param length: data length in bytes.
+ */
+static void loadCodec2Data(const int offset, const int length)
+{
+    const uint32_t minOffset = sizeof(vpHeader_t) + sizeof(tableOfContents);
+
+    if ((vpFile == NULL) || (vpDataOffset < minOffset))
+        return;
+
+    if ((offset < 0) || (length > CODEC2_DATA_BUF_SIZE))
+        return;
+
+    // Skip codec2 header
+    fseek(vpFile, vpDataOffset + offset + CODEC2_HEADER_SIZE, SEEK_SET);
+    fread((void*)&codec2Data, length, 1, vpFile);
+
+    // zero buffer from length to the next multiple of 8 to avoid garbage
+    // being played back, since codec2 frames are pushed in lots of 8 bytes.
+    if ((length % 8) != 0)
+    {
+        int bytesToZero = length % 8;
+        memset(codec2Data + length, 0, bytesToZero);
+    }
 }
 
-void vp_close()
+/**
+ * \internal
+ * Check validity of voice prompt header.
+ *
+ * @param header: voice prompt header to be checked.
+ * @return true if header is valid
+ */
+static inline bool checkVpHeader(const vpHeader_t* header)
 {
-    fclose(voice_prompt_file);
-}
-
-bool vpCheckHeader(uint32_t* bufferAddress)
-{
-    voicePromptsDataHeader_t* header = (voicePromptsDataHeader_t*)bufferAddress;
-
     return ((header->magic == VOICE_PROMPTS_DATA_MAGIC) &&
             (header->version == VOICE_PROMPTS_DATA_VERSION));
 }
 
-void vp_init(void)
+/**
+ * \internal
+ * Perform a string lookup inside user dictionary.
+ *
+ * @param ptr: string to be searched.
+ * @param advanceBy: final offset with respect of dictionary beginning.
+ * @return index of user dictionary's voice prompt.
+ */
+static uint16_t UserDictLookup(const char* ptr, int* advanceBy)
 {
-    voicePromptsDataHeader_t header;
-    vpDataOffset=0;
+    if ((ptr == NULL) || (*ptr == '\0'))
+        return 0;
 
-    if (!voice_prompt_file)
-        vp_open(NULL);
-
-    if (!voice_prompt_file)
-        return;
-
-    fseek(voice_prompt_file, 0L, SEEK_SET);
-    fread((void*)&header, sizeof(header), 1, voice_prompt_file);
-
-    if (vpCheckHeader((uint32_t*)&header))
-    {                            // read in the TOC.
-        fread((void*)&tableOfContents, sizeof(tableOfContents), 1, voice_prompt_file);
-        vpDataOffset = ftell(voice_prompt_file);
-        if(vpDataOffset == (sizeof(voicePromptsDataHeader_t) + sizeof(tableOfContents)))
-            vpDataIsLoaded = true;
-    }
-    if (vpDataIsLoaded)
-    {  // if the hash key is down, set vpLevel to high, if beep or less.
-        if ((kbd_getKeys() & KEY_HASH) && (state.settings.vpLevel <= vpBeep))
-            state.settings.vpLevel = vpHigh;
-    }
-    else
-    {  // ensure we at least have beeps in the event no voice prompts are
-       // loaded.
-        if (state.settings.vpLevel > vpBeep) state.settings.vpLevel = vpBeep;
-    }
-    // TODO: Move this somewhere else for compatibility with M17
-    codec_init();
-}
-
-
-
-static void GetCodec2Data(int offset, int length)
-{
-    if (!voice_prompt_file || (vpDataOffset < (sizeof(voicePromptsDataHeader_t) + sizeof(tableOfContents))))
-        return;
-
-    if ((offset < 0) || (length > Codec2DataBufferSize))
-        return;
-
-    // Skip codec2 header
-    fseek(voice_prompt_file, vpDataOffset+offset+CODEC2_HEADER_SIZE, SEEK_SET);
-    fread((void*)&Codec2Data, length, 1, voice_prompt_file);
-    // zero buffer from length to the next multiple of 8 to avoid garbage
-    // being played back, since codec2 frames are pushed in lots of 8 bytes.
-    if ((length % 8) != 0)
-	{
-        int bytesToZero = length % 8;
-        memset(Codec2Data+length, 0, bytesToZero);
-    }
-}
-
-void vp_terminate(void)
-{
-    if (voicePromptIsActive)
-    {
-        audio_disableAmp();
-        codec_stop();
-
-        vpCurrentSequence.pos = 0;
-
-        voicePromptIsActive = false;
-    }
-}
-
-void vp_clearCurrPrompt(void)
-{
-    vpCurrentSequence.length = 0;
-    vpCurrentSequence.pos    = 0;
-    vpCurrentSequence.codec2DataIndex = 0;
-    vpCurrentSequence.codec2DataLength = 0;
-}
-
-void vp_queuePrompt(const uint16_t prompt)
-{
-    if (state.settings.vpLevel < vpLow) return;
-
-    if (voicePromptIsActive)
-    {
-        vp_clearCurrPrompt();
-    }
-    if (vpCurrentSequence.length < VOICE_PROMPTS_SEQUENCE_BUFFER_SIZE)
-    {
-        vpCurrentSequence.buffer[vpCurrentSequence.length] = prompt;
-        vpCurrentSequence.length++;
-    }
-}
-
-static uint16_t UserDictLookup(char* ptr, int* advanceBy)
-{
-    if (!ptr || !*ptr) return 0;
-
-    for (int index = 0; userDictionary[index].userWord != 0; ++index)
+    for(uint32_t index = 0; userDictionary[index].userWord != 0; index++)
     {
         int len = strlen(userDictionary[index].userWord);
         if (strncasecmp(userDictionary[index].userWord, ptr, len) == 0)
@@ -263,59 +193,142 @@ static bool GetSymbolVPIfItShouldBeAnnounced(char symbol,
             (!commonSymbol && announceLessCommonSymbols));
 }
 
-// This function spells out a string letter by letter.
-void vp_queueString(char* promptString, VoicePromptFlags_T flags)
-{
-    if (state.settings.vpLevel < vpLow) return;
 
-    if (voicePromptIsActive)
+void vp_init()
+{
+    vpDataOffset = 0;
+
+    if(vpFile == NULL)
+        vpFile = fopen("voiceprompts.vpc", "r");
+
+    if(vpFile == NULL)
+        return;
+
+    // Read header
+    vpHeader_t header;
+    fseek(vpFile, 0L, SEEK_SET);
+    fread((void*)&header, sizeof(header), 1, vpFile);
+
+    if(checkVpHeader(&header) == true)
     {
-        vp_clearCurrPrompt();
+        // Read in the TOC.
+        fread((void*)&tableOfContents, sizeof(tableOfContents), 1, vpFile);
+        vpDataOffset = ftell(vpFile);
+
+        if(vpDataOffset == (sizeof(vpHeader_t) + sizeof(tableOfContents)))
+            vpDataLoaded = true;
     }
 
-    if (state.settings.vpPhoneticSpell) flags |= vpAnnouncePhoneticRendering;
-    while (*promptString != 0)
+    if (vpDataLoaded)
+    {
+        // If the hash key is down, set vpLevel to high, if beep or less.
+        if ((kbd_getKeys() & KEY_HASH) && (state.settings.vpLevel <= vpBeep))
+            state.settings.vpLevel = vpHigh;
+    }
+    else
+    {
+        // ensure we at least have beeps in the event no voice prompts are
+        // loaded.
+        if (state.settings.vpLevel > vpBeep)
+            state.settings.vpLevel = vpBeep;
+    }
+
+    // TODO: Move this somewhere else for compatibility with M17
+    codec_init();
+}
+
+void vp_terminate()
+{
+    if (voicePromptActive)
+    {
+        audio_disableAmp();
+        codec_stop();
+
+        vpCurrentSequence.pos = 0;
+        voicePromptActive     = false;
+    }
+
+    fclose(vpFile);
+}
+
+void vp_clearCurrPrompt()
+{
+    vpCurrentSequence.length       = 0;
+    vpCurrentSequence.pos          = 0;
+    vpCurrentSequence.c2DataIndex  = 0;
+    vpCurrentSequence.c2DataLength = 0;
+}
+
+void vp_queuePrompt(const uint16_t prompt)
+{
+    if (state.settings.vpLevel < vpLow)
+        return;
+
+    if (voicePromptActive)
+        vp_clearCurrPrompt();
+
+    if (vpCurrentSequence.length < VP_SEQUENCE_BUF_SIZE)
+    {
+        vpCurrentSequence.buffer[vpCurrentSequence.length] = prompt;
+        vpCurrentSequence.length++;
+    }
+}
+
+void vp_queueString(const char* string, VoicePromptFlags_T flags)
+{
+    if (state.settings.vpLevel < vpLow)
+        return;
+
+    if (voicePromptActive)
+        vp_clearCurrPrompt();
+
+    if (state.settings.vpPhoneticSpell)
+        flags |= vpAnnouncePhoneticRendering;
+
+    while (*string != '\0')
     {
         int advanceBy    = 0;
-        voicePrompt_t vp = UserDictLookup(promptString, &advanceBy);
-        if (vp)
+        voicePrompt_t vp = UserDictLookup(string, &advanceBy);
+
+        if (vp != 0)
         {
             vp_queuePrompt(vp);
-            promptString += advanceBy;
+            string += advanceBy;
             continue;
         }
-        else if ((*promptString >= '0') && (*promptString <= '9'))
+        else if ((*string >= '0') && (*string <= '9'))
         {
-            vp_queuePrompt(*promptString - '0' + PROMPT_0);
+            vp_queuePrompt(*string - '0' + PROMPT_0);
         }
-        else if ((*promptString >= 'A') && (*promptString <= 'Z'))
+        else if ((*string >= 'A') && (*string <= 'Z'))
         {
-            if (flags & vpAnnounceCaps) vp_queuePrompt(PROMPT_CAP);
+            if (flags & vpAnnounceCaps)
+                vp_queuePrompt(PROMPT_CAP);
             if (flags & vpAnnouncePhoneticRendering)
-                vp_queuePrompt((*promptString - 'A') + PROMPT_A_PHONETIC);
+                vp_queuePrompt((*string - 'A') + PROMPT_A_PHONETIC);
             else
-                vp_queuePrompt(*promptString - 'A' + PROMPT_A);
+                vp_queuePrompt(*string - 'A' + PROMPT_A);
         }
-        else if ((*promptString >= 'a') && (*promptString <= 'z'))
+        else if ((*string >= 'a') && (*string <= 'z'))
         {
             if (flags & vpAnnouncePhoneticRendering)
-                vp_queuePrompt((*promptString - 'a') + PROMPT_A_PHONETIC);
+                vp_queuePrompt((*string - 'a') + PROMPT_A_PHONETIC);
             else
-                vp_queuePrompt(*promptString - 'a' + PROMPT_A);
+                vp_queuePrompt(*string - 'a' + PROMPT_A);
         }
-        else if ((*promptString == ' ') && (flags & vpAnnounceSpace))
+        else if ((*string == ' ') && (flags & vpAnnounceSpace))
         {
             vp_queuePrompt(PROMPT_SPACE);
         }
-        else if (GetSymbolVPIfItShouldBeAnnounced(*promptString, flags, &vp))
+        else if (GetSymbolVPIfItShouldBeAnnounced(*string, flags, &vp))
         {
             if (vp != PROMPT_SILENCE)
                 vp_queuePrompt(vp);
-            else  // announce ASCII
+            else
             {
-                int32_t val = *promptString;
-                vp_queuePrompt(PROMPT_CHARACTER);  // just the word "code" as we
-                                                  // don't have character.
+                // announce ASCII
+                int32_t val = *string;
+                vp_queuePrompt(PROMPT_CHARACTER);
                 vp_queueInteger(val);
             }
         }
@@ -325,93 +338,110 @@ void vp_queueString(char* promptString, VoicePromptFlags_T flags)
             vp_queuePrompt(PROMPT_SILENCE);
         }
 
-        promptString++;
+        string++;
     }
-    if (flags & vpqAddSeparatingSilence) vp_queuePrompt(PROMPT_SILENCE);
+
+    if (flags & vpqAddSeparatingSilence)
+        vp_queuePrompt(PROMPT_SILENCE);
 }
 
-void vp_queueInteger(const int32_t value)
+void vp_queueInteger(const int value)
 {
-    if (state.settings.vpLevel < vpLow) return;
+    if (state.settings.vpLevel < vpLow)
+        return;
 
     char buf[12] = {0};  // min: -2147483648, max: 2147483647
     snprintf(buf, 12, "%d", value);
     vp_queueString(buf, 0);
 }
 
-// This function looks up a voice prompt corresponding to a string table entry.
-// These are stored in the voice data after the voice prompts with no
-// corresponding string table entry, hence the offset calculation:
-// NUM_VOICE_PROMPTS + (stringTableStringPtr - currentLanguage->languageName)
 void vp_queueStringTableEntry(const char* const* stringTableStringPtr)
 {
-    if (state.settings.vpLevel < vpLow) return;
+    /*
+     * This function looks up a voice prompt corresponding to a string table
+     * entry. These are stored in the voice data after the voice prompts with no
+     * corresponding string table entry, hence the offset calculation:
+     * NUM_VOICE_PROMPTS + (stringTableStringPtr - currentLanguage->languageName)
+     */
+
+    if (state.settings.vpLevel < vpLow)
+        return;
 
     if (stringTableStringPtr == NULL)
-    {
         return;
-    }
-    vp_queuePrompt(NUM_VOICE_PROMPTS + 1 +
-                  (stringTableStringPtr - &currentLanguage->languageName)
-                  / sizeof(const char *));
+
+    uint16_t pos = NUM_VOICE_PROMPTS
+                 + 1
+                 + (stringTableStringPtr - &currentLanguage->languageName) /
+                    sizeof(const char *);
+
+    vp_queuePrompt(pos);
 }
 
-void vp_play(void)
+void vp_play()
 {
-    if (state.settings.vpLevel < vpLow) return;
+    if (state.settings.vpLevel < vpLow)
+        return;
 
-    if (voicePromptIsActive) return;
+    if (voicePromptActive)
+        return;
 
-    if (vpCurrentSequence.length <= 0) return;
+    if (vpCurrentSequence.length <= 0)
+        return;
 
-    voicePromptIsActive = true;  // Start the playback
+    voicePromptActive = true;
 
     codec_startDecode(SINK_SPK);
-
     audio_enableAmp();
 }
 
-// Call this from the main timer thread to continue voice prompt playback.
 void vp_tick()
 {
-    if (!voicePromptIsActive) return;
+    if (!voicePromptActive)
+        return;
 
-    while (vpCurrentSequence.pos < vpCurrentSequence.length)
-    {// get the codec2 data for the current prompt if needed.
-        if (vpCurrentSequence.codec2DataLength == 0)
-        { // obtain the data for the prompt.
-            int promptNumber    = vpCurrentSequence.buffer[vpCurrentSequence.pos];
-
-            vpCurrentSequence.codec2DataLength =
-            tableOfContents[promptNumber + 1] - tableOfContents[promptNumber];
-
-            GetCodec2Data(tableOfContents[promptNumber], vpCurrentSequence.codec2DataLength);
-
-            vpCurrentSequence.codec2DataIndex = 0;
-        }
-        // push  the codec2 data in lots of 8 byte frames.
-        while (vpCurrentSequence.codec2DataIndex < vpCurrentSequence.codec2DataLength)
+    while(vpCurrentSequence.pos < vpCurrentSequence.length)
+    {
+        // get the codec2 data for the current prompt if needed.
+        if (vpCurrentSequence.c2DataLength == 0)
         {
-            if (!codec_pushFrame(Codec2Data+vpCurrentSequence.codec2DataIndex, false))
-                return; // wait until there is room, perhaps next vp_tick call.
-            vpCurrentSequence.codec2DataIndex += 8;
+            // obtain the data for the prompt.
+            int promptNumber = vpCurrentSequence.buffer[vpCurrentSequence.pos];
+
+            vpCurrentSequence.c2DataLength = tableOfContents[promptNumber + 1]
+                                           - tableOfContents[promptNumber];
+
+            loadCodec2Data(tableOfContents[promptNumber],
+                           vpCurrentSequence.c2DataLength);
+
+            vpCurrentSequence.c2DataIndex = 0;
         }
 
-        vpCurrentSequence.pos++; // ready for next prompt in sequence.
-        vpCurrentSequence.codec2DataLength = 0; // flag that we need to get more data.
-        vpCurrentSequence.codec2DataIndex = 0;
+        while (vpCurrentSequence.c2DataIndex < vpCurrentSequence.c2DataLength)
+        {
+            // push the codec2 data in lots of 8 byte frames.
+            if (!codec_pushFrame(codec2Data+vpCurrentSequence.c2DataIndex, false))
+                return;
+
+            vpCurrentSequence.c2DataIndex += 8;
+        }
+
+        vpCurrentSequence.pos++;            // ready for next prompt in sequence.
+        vpCurrentSequence.c2DataLength = 0; // flag that we need to get more data.
+        vpCurrentSequence.c2DataIndex  = 0;
     }
+
     // see if we've finished.
     if(vpCurrentSequence.pos == vpCurrentSequence.length)
-        voicePromptIsActive=false;
+        voicePromptActive = false;
 }
 
-bool vp_isPlaying(void)
+bool vp_isPlaying()
 {
-    return voicePromptIsActive;
+    return voicePromptActive;
 }
 
-bool vp_sequenceNotEmpty(void)
+bool vp_sequenceNotEmpty()
 {
     return (vpCurrentSequence.length > 0);
 }
