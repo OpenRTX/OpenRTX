@@ -16,25 +16,20 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
-#ifndef voice_prompts_h_included
-#define voice_prompts_h_included
+#ifndef VOICEPROMPTS_H
+#define VOICEPROMPTS_H
 
 #include <datatypes.h>
 #include <stdbool.h>
 
-// Voice prompts are encoded using the codec2 file format used by ffmpeg
-#define CODEC2_HEADER_SIZE 7
-
-/*
-Please note, these prompts represent spoken words or phrases which are not in
-the UI string table, for example letters of the alphabet, digits, and
-descriptive words not displayed in the UI.
-The voice prompt data file stores these first, then after the data for these
-prompts, the data for the indexed string table phrases.
-*/
-/* Please note! this enum must match the order of prompts defined in the
-wordlist.csv file in the voicePrompts generator project.
-*/
+/**
+ * List of voice prompts for spoken words or phrases which are not in the UI
+ * string table. The voice prompt data file stores these first, then after the
+ * data for these prompts, the data for the indexed string table phrases.
+ *
+ * WARNING: this enum must match the order of prompts defined in the
+ * wordlist.csv file in the voicePrompts generator project.
+ */
 typedef enum
 {
     PROMPT_SILENCE,     //
@@ -181,19 +176,12 @@ typedef enum
     PROMPT_CUSTOM9,         // parrot
     PROMPT_CUSTOM10,        // unused
     NUM_VOICE_PROMPTS,
-} voicePrompt_t;
+}
+voicePrompt_t;
 
-// PROMPT_VOICE_NAME is always the very last prompt after the indexed prompts
-// from the strings table.
-#define PROMPT_VOICE_NAME \
-    (NUM_VOICE_PROMPTS + (sizeof(stringsTable_t) / sizeof(char*)))
-/*
-These flags govern how vpQueueString operates.
-For example, when editing, it is desireable to hear spaces, capitals and
-extended symbols.
-When just arrowing through menus, spaces, extended symbols etc should not be
-announced.
-*/
+/**
+ * Flags controlling how vp_queueString operates.
+ */
 typedef enum
 {
     vpAnnounceCaps                      = 0x01,
@@ -203,30 +191,27 @@ typedef enum
     vpAnnounceLessCommonSymbols         = 0x10,
     vpAnnounceASCIIValueForUnknownChars = 0x20,
     vpAnnouncePhoneticRendering         = 0x40,
-} VoicePromptFlags_T;
-/*
-These queuing flags determine if speech is interrupted, played
-immediately, whether prompts are queued for values, etc.
-They are necessary because for example if you call the announceXX functions
-consecutively, it is only desireable to initially stop speech in
-progress and only play after the last prompt is queued.
-If however calling an announceXX function in isolation, normally any prompt in
-progress should be interrupted and play should be called immediately.
-At Voice level 1, changing channels in memory mode or frequencies in VFO mode
-is indicated by a beep however if F1 is pressed, we will still say the current
-channel name or frequency. This is accomplished by queueing but not playing a
-prompt.
-*/
+}
+VoicePromptFlags_T;
+
+/**
+ * Queuing flags determining if speech is interrupted, played immediately,
+ * whether prompts are queued for values, etc.
+ */
 typedef enum
 {
-    vpqDefault         = 0,
-    vpqInit            = 0x01,  // stop any voice prompts already in progress.
-    vpqPlayImmediately = 0x02,  // call play after queue at all levels.
+    vpqDefault                         = 0,
+    vpqInit                            = 0x01,  // stop any voice prompts already in progress.
+    vpqPlayImmediately                 = 0x02,  // call play after queue at all levels.
     vpqPlayImmediatelyAtMediumOrHigher = 0x04,
     vpqIncludeDescriptions             = 0x08,
     vpqAddSeparatingSilence            = 0x10
-} VoicePromptQueueFlags_T;
+}
+VoicePromptQueueFlags_T;
 
+/**
+ * Voice prompt verbosity levels.
+ */
 typedef enum
 {
     vpNone = 0,
@@ -234,43 +219,74 @@ typedef enum
     vpLow,
     vpMedium,
     vpHigh
-} VoicePromptVerbosity_T;
+}
+VoicePromptVerbosity_T;
 
-typedef struct
-{
-    const char* userWord;
-    const voicePrompt_t vp;
-} userDictEntry;
+/**
+ * Initialise the voice prompt system and load vp table of contents.
+ */
+void vp_init();
 
-extern bool vpDataIsLoaded;
-extern const uint32_t VOICE_PROMPTS_FLASH_HEADER_ADDRESS;
-extern VoicePromptVerbosity_T vpLevel;
-// Loads just the TOC from Flash and stores in RAM for fast access.
-void vpCacheInit(void);
-// Call before building the prompt sequence to clear prompt in progress.
-void vpInit(void);
-// This function appends an individual prompt item to the prompt queue.
-// This can be a single letter, number, or a phrase.
-void vpQueuePrompt(uint16_t prompt);
-// This function appends the spelling of a complete string to the queue.
-// It is used to pronounce strings for which we do not have a recorded voice
-// prompt.
-void vpQueueString(char* promptString, VoicePromptFlags_T flags);
-// This function appends a signed integer to the queue.
-void vpQueueInteger(int32_t value);
-// This function appends a text string from the current language to the queue.
-// e.g. currentLanguage->off
-// These are recorded prompts which correspond  to the strings in the strings
-// table.
-void vpQueueStringTableEntry(const char* const*);
+/**
+ * Terminate the currently ongoing prompt and shutdown the voice prompt system.
+ */
+void vp_terminate();
 
-void vpPlay(void);  // Starts prompt playback
-void vpTick(); // called to process vp data being decoded.
-extern bool vpIsPlaying(void);
-bool vpHasDataToPlay(void);
-void vpTerminate(void);
-bool vpCheckHeader(uint32_t* bufferAddress);
-int vp_open(char *vp_name);
-void vp_close();
+/**
+ * Clear the currently in-progress prompt, to be called before building a new
+ * voice prompt sequence.
+ */
+void vp_clearCurrPrompt();
+
+/**
+ * Append an individual prompt item to the prompt queue.
+ *
+ * @param prompt: voice prompt ID.
+ */
+void vp_queuePrompt(const uint16_t prompt);
+
+/**
+ * Append the spelling of a complete string to the queue.
+ *
+ * @param promptString: string to be spelled.
+ * @param flags: control flags.
+ */
+void vp_queueString(char* promptString, VoicePromptFlags_T flags);
+
+/**
+ * Append a signed integer to the queue.
+ *
+ * @param value: value to be appended.
+ */
+void vp_queueInteger(const int32_t value);
+
+/**
+ * Append a text string from the current language to the queue.
+ */
+void vp_queueStringTableEntry(const char* const* stringTableStringPtr);
+
+/**
+ * Start prompt playback.
+ */
+void vp_play();
+
+/**
+ * Function handling vp data decoding, to be called periodically.
+ */
+void vp_tick();
+
+/**
+ * Check if a voice prompt is being played.
+ *
+ * @return true if a voice prompt is being played.
+ */
+bool vp_isPlaying();
+
+/**
+ * Check if the voice prompt sequence is empty.
+ *
+ * @return true if the voice prompt sequence is empty.
+ */
+bool vp_sequenceNotEmpty();
 
 #endif

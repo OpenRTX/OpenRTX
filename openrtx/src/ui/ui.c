@@ -616,7 +616,7 @@ int _ui_fsm_loadChannel(int16_t channel_index, bool *sync_rtx) {
 
 void _ui_fsm_confirmVFOInput(bool *sync_rtx)
 {
-	vpInit();
+	vp_clearCurrPrompt();
     // Switch to TX input
     if(ui_state.input_set == SET_RX)
     {
@@ -653,7 +653,7 @@ void _ui_fsm_confirmVFOInput(bool *sync_rtx)
 			announceError(vpqInit);
         state.ui_screen = MAIN_VFO;
     }
-	vpPlay();
+	vp_play();
 }
 
 void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx)
@@ -661,14 +661,14 @@ void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx)
     // Advance input position
     ui_state.input_position += 1;
 	// clear any prompts in progress.
-	vpInit();
+	vp_clearCurrPrompt();
     // Save pressed number to calculate frequency and show in GUI
     ui_state.input_number = input_getPressedNumber(msg);
 	// queue the digit just pressed.
-	vpQueueInteger(ui_state.input_number);
+	vp_queueInteger(ui_state.input_number);
 	// queue  point if user has entered three digits.
 	if (ui_state.input_position==3)
-		vpQueuePrompt(PROMPT_POINT);
+		vp_queuePrompt(PROMPT_POINT);
 
     if(ui_state.input_set == SET_RX)
     {
@@ -681,7 +681,7 @@ void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx)
         {// queue the rx freq just completed.
 			vpQueueFrequency(ui_state.new_rx_frequency);
 			/// now queue tx as user has changed fields.
-			vpQueuePrompt(PROMPT_TRANSMIT);
+			vp_queuePrompt(PROMPT_TRANSMIT);
             // Switch to TX input
             ui_state.input_set = SET_TX;
             // Reset input position
@@ -712,7 +712,7 @@ void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx)
             state.ui_screen = MAIN_VFO;
         }
     }
-	vpPlay();
+	vp_play();
 }
 
 void _ui_changeBrightness(int variation)

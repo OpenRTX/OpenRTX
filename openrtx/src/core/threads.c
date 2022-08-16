@@ -75,7 +75,7 @@ void *ui_threadFunc(void *arg)
         ui_saveState();                     // Save local state copy
         pthread_mutex_unlock(&state_mutex); // Unlock r/w access to radio state
 
-        vpTick();                           // continue playing voice prompts in progress if any.
+        vp_tick();                           // continue playing voice prompts in progress if any.
 
         // If synchronization needed take mutex and update RTX configuration
         if(sync_rtx)

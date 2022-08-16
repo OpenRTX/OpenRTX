@@ -34,12 +34,12 @@ int main()
     state.settings.vpLevel = 3;
 	VoicePromptQueueFlags_T flags = GetQueueFlagsForVoiceLevel();
 
-    vpCacheInit();
-    vpInit();
-    vpQueueStringTableEntry(&currentLanguage->allChannels);
-    vpPlay();
+    vp_init();
+    vp_clearCurrPrompt();
+    vp_queueStringTableEntry(&currentLanguage->allChannels);
+    vp_play();
     while(true)
     {
-        vpTick();
+        vp_tick();
     }
 }

@@ -44,7 +44,7 @@ void openrtx_init()
     gfx_init();         // Initialize display and graphics driver
     kbd_init();         // Initialize keyboard driver
     ui_init();          // Initialize user interface
-    vpCacheInit();      // Checks to see if voice prompts are loaded and initializes them
+    vp_init();          // Initialize voice prompts
     #ifdef SCREEN_CONTRAST
     display_setContrast(state.settings.contrast);
     #endif
