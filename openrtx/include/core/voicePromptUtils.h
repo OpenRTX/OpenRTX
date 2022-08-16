@@ -16,10 +16,8 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
-// This file contains functions for announcing radio operations using the
-// building blocks in voicePrompts.h/c.
-#ifndef VOICE_PROMPT_UTILS_H_INCLUDED
-#define VOICE_PROMPT_UTILS_H_INCLUDED
+#ifndef VOICE_PROMPT_UTILS_H
+#define VOICE_PROMPT_UTILS_H
 
 #include "cps.h"
 #include "ui/ui_strings.h"
@@ -37,47 +35,162 @@ When an announceXX function is called in isolation, vpqInit|vpqPlayImmediately
 should be used to ensure that the message interupts the current prompt and
 plays immediately.
 */
-void announceVFO();
-void announceChannelName(channel_t* channel, uint16_t channelIndex,
-                         VoicePromptQueueFlags_T flags);
-void vpQueueFrequency(freq_t freq);
-void announceFrequencies(freq_t rx, freq_t tx, VoicePromptQueueFlags_T flags);
-void announceRadioMode(uint8_t mode, VoicePromptQueueFlags_T flags);
-void announceBandwidth(uint8_t bandwidth, VoicePromptQueueFlags_T flags);
-void announceChannelSummary(channel_t* channel, uint16_t channelIndex,
-                            uint16_t bank);
-void AnnounceInputChar(char ch);
-void announceInputReceiveOrTransmit(bool tx, VoicePromptQueueFlags_T flags);
-void ReplayLastPrompt();
-void announceError(VoicePromptQueueFlags_T flags);
+
+/**
+ *
+ */
+void vp_announceVFO();
+
+/**
+ *
+ */
+void vp_announceChannelName(const channel_t* channel,
+                            const uint16_t channelIndex,
+                            const vpQueueFlags_t flags);
+
+/**
+ *
+ */
+void vp_queueFrequency(const freq_t freq);
+
+/**
+ *
+ */
+void vp_announceFrequencies(const freq_t rx, const freq_t tx,
+                            const vpQueueFlags_t flags);
+
+/**
+ *
+ */
+void vp_announceRadioMode(const uint8_t mode, const vpQueueFlags_t flags);
+
+/**
+ *
+ */
+void vp_announceBandwidth(const uint8_t bandwidth, const vpQueueFlags_t flags);
+
+/**
+ *
+ */
+void vp_announceChannelSummary(const channel_t* channel,
+                               const uint16_t channelIndex, const uint16_t bank);
+
+/**
+ *
+ */
+void vp_announceInputChar(const char ch);
+
+/**
+ *
+ */
+void vp_announceInputReceiveOrTransmit(const bool tx, const vpQueueFlags_t flags);
+
+/**
+ *
+ */
+void vp_replayLastPrompt();
+
+/**
+ *
+ */
+void vp_announceError(const vpQueueFlags_t flags);
 
 /*
 This function first tries to see if we have a prompt for the text
 passed in and if so, queues it, but if not, just spells the text
 character by character.
 */
-void announceText(char* text, VoicePromptQueueFlags_T flags);
-void announceCTCSS(bool rxToneEnabled, uint8_t rxTone, bool txToneEnabled,
-                   uint8_t txTone, VoicePromptQueueFlags_T flags);
-void anouncePower(float power, VoicePromptQueueFlags_T flags);
-void announceBrightness(uint8_t brightness, VoicePromptQueueFlags_T flags);
-void announceSquelch(uint8_t squelch, VoicePromptQueueFlags_T flags);
-void announceContact(contact_t* contact, VoicePromptQueueFlags_T flags);
-void announceContactWithIndex(uint16_t index, VoicePromptQueueFlags_T flags);
-void announceTimeslot(uint8_t timeslot, VoicePromptQueueFlags_T flags);
-void announceColorCode(uint8_t rxColorCode, uint8_t txColorCode,
-                       VoicePromptQueueFlags_T flags);
-void announceBank(uint16_t bank, VoicePromptQueueFlags_T flags);
-void announceM17Info(channel_t* channel, VoicePromptQueueFlags_T flags);
-#ifdef GPS_PRESENT
-void announceGPSInfo();
-#endif // GPS_PRESENT
-void announceAboutScreen();
-void announceBackupScreen();
-void announceRestoreScreen();
-#ifdef RTC_PRESENT
-void announceSettingsTimeDate();
-#endif // RTC_PRESENT
-VoicePromptQueueFlags_T GetQueueFlagsForVoiceLevel();
 
-#endif  // VOICE_PROMPT_UTILS_H_INCLUDED
+/**
+ *
+ */
+void vp_announceText(const char* text, const vpQueueFlags_t flags);
+
+/**
+ *
+ */
+void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
+                      const bool txToneEnabled, const uint8_t txTone,
+                      const vpQueueFlags_t flags);
+
+/**
+ *
+ */
+void vp_anouncePower(const float power, const vpQueueFlags_t flags);
+
+/**
+ *
+ */
+void vp_announceBrightness(const uint8_t brightness, const vpQueueFlags_t flags);
+
+/**
+ *
+ */
+void vp_announceSquelch(const uint8_t squelch,const vpQueueFlags_t flags);
+
+/**
+ *
+ */
+void vp_announceContact(const contact_t* contact, const vpQueueFlags_t flags);
+
+/**
+ *
+ */
+void vp_announceContactWithIndex(const uint16_t index, const vpQueueFlags_t flags);
+
+/**
+ *
+ */
+void vp_announceTimeslot(const uint8_t timeslot, const vpQueueFlags_t flags);
+
+/**
+ *
+ */
+void vp_announceColorCode(const uint8_t rxColorCode, const uint8_t txColorCode,
+                          const vpQueueFlags_t flags);
+
+/**
+ *
+ */
+void vp_announceBank(const uint16_t bank, const vpQueueFlags_t flags);
+
+/**
+ *
+ */
+void vp_announceM17Info(const channel_t* channel, const vpQueueFlags_t flags);
+
+/**
+ *
+ */
+#ifdef GPS_PRESENT
+void vp_announceGPSInfo();
+#endif
+
+/**
+ *
+ */
+void vp_announceAboutScreen();
+
+/**
+ *
+ */
+void vp_announceBackupScreen();
+
+/**
+ *
+ */
+void vp_announceRestoreScreen();
+
+/**
+ *
+ */
+#ifdef RTC_PRESENT
+void vp_announceSettingsTimeDate();
+#endif
+
+/**
+ *
+ */
+vpQueueFlags_t vp_getVoiceLevelQueueFlags();
+
+#endif  // VOICE_PROMPT_UTILS_H

@@ -624,10 +624,10 @@ void _ui_fsm_confirmVFOInput(bool *sync_rtx)
         // Reset input position
         ui_state.input_position = 0;
 		// announce the rx frequency just confirmed with Enter.
-		vpQueueFrequency(ui_state.new_rx_frequency);
+		vp_queueFrequency(ui_state.new_rx_frequency);
 		// defer playing till the end.
 		// indicate that the user has moved to the tx freq field.
-		announceInputReceiveOrTransmit(true, vpqDefault);
+		vp_announceInputReceiveOrTransmit(true, vpqDefault);
     }
     else if(ui_state.input_set == SET_TX)
     {
@@ -647,10 +647,10 @@ void _ui_fsm_confirmVFOInput(bool *sync_rtx)
 			// force init to clear any prompts in progress.
 			// defer play because play is called at the end of the function 
 			//due to above freq queuing.
-			announceFrequencies(state.channel.rx_frequency, state.channel.tx_frequency, vpqInit);
+			vp_announceFrequencies(state.channel.rx_frequency, state.channel.tx_frequency, vpqInit);
         }
 		else
-			announceError(vpqInit);
+			vp_announceError(vpqInit);
         state.ui_screen = MAIN_VFO;
     }
 	vp_play();
@@ -679,7 +679,7 @@ void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx)
                                 ui_state.input_position, ui_state.input_number);
         if(ui_state.input_position >= FREQ_DIGITS)
         {// queue the rx freq just completed.
-			vpQueueFrequency(ui_state.new_rx_frequency);
+			vp_queueFrequency(ui_state.new_rx_frequency);
 			/// now queue tx as user has changed fields.
 			vp_queuePrompt(PROMPT_TRANSMIT);
             // Switch to TX input
@@ -707,7 +707,7 @@ void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx)
                 state.channel.tx_frequency = ui_state.new_tx_frequency;
                 *sync_rtx = true;
 				// play is called at end.
-				announceFrequencies(state.channel.rx_frequency, state.channel.tx_frequency, vpqInit);
+				vp_announceFrequencies(state.channel.rx_frequency, state.channel.tx_frequency, vpqInit);
             }
             state.ui_screen = MAIN_VFO;
         }
@@ -835,7 +835,7 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
     bool tone_tx_enable = state.channel.fm.txToneEn;
     bool tone_rx_enable = state.channel.fm.rxToneEn;
     uint8_t tone_flags = tone_tx_enable << 1 | tone_rx_enable;
-	VoicePromptQueueFlags_T queueFlags=GetQueueFlagsForVoiceLevel();
+	vpQueueFlags_t queueFlags=vp_getVoiceLevelQueueFlags();
 	
     switch(ui_state.input_number)
     {
@@ -846,7 +846,7 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
                 state.channel.fm.txTone %= MAX_TONE_INDEX;
                 state.channel.fm.rxTone = state.channel.fm.txTone;
                 *sync_rtx = true;
-				announceCTCSS(state.channel.fm.rxToneEn, state.channel.fm.rxTone, 
+				vp_announceCTCSS(state.channel.fm.rxToneEn, state.channel.fm.rxTone, 
 				state.channel.fm.txToneEn, state.channel.fm.txTone, 
 				queueFlags);
             }
@@ -870,7 +870,7 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
                 state.channel.fm.txToneEn = tone_tx_enable;
                 state.channel.fm.rxToneEn = tone_rx_enable;
                 *sync_rtx = true;
-				announceCTCSS(state.channel.fm.rxToneEn, state.channel.fm.rxTone, 
+				vp_announceCTCSS(state.channel.fm.rxToneEn, state.channel.fm.rxTone, 
 				state.channel.fm.txToneEn, state.channel.fm.txTone, 
 				queueFlags);
             }
@@ -881,7 +881,7 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
                 state.channel.bandwidth++;
                 state.channel.bandwidth %= 3;
                 *sync_rtx = true;
-				announceBandwidth(state.channel.bandwidth, queueFlags);
+				vp_announceBandwidth(state.channel.bandwidth, queueFlags);
             }
             break;
         case 5:
@@ -893,7 +893,7 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             else //catch any invalid states so they don't get locked out
                 state.channel.mode = OPMODE_FM;
             *sync_rtx = true;
-			announceRadioMode(state.channel.mode, queueFlags);
+			vp_announceRadioMode(state.channel.mode, queueFlags);
             break;
         case 6:
             if (state.channel.power == 100)
@@ -901,16 +901,16 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             else
                 state.channel.power = 100;
             *sync_rtx = true;
-			anouncePower(state.channel.power, queueFlags);
+			vp_anouncePower(state.channel.power, queueFlags);
             break;
         break;
         case 7:
             _ui_changeBrightness(-5);
-			announceBrightness(state.settings.brightness, queueFlags);
+			vp_announceBrightness(state.settings.brightness, queueFlags);
             break;
         case 8:
             _ui_changeBrightness(+5);
-			announceBrightness(state.settings.brightness, queueFlags);
+			vp_announceBrightness(state.settings.brightness, queueFlags);
             break;
     }
 
@@ -932,7 +932,7 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
         {
             state.settings.sqlLevel -= 1;
             *sync_rtx = true;
-			announceSquelch(state.settings.sqlLevel, queueFlags);
+			vp_announceSquelch(state.settings.sqlLevel, queueFlags);
 			RestartFunctionLatchTimer(); // reset the timer.
         }
     }
@@ -947,7 +947,7 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
         {
             state.settings.sqlLevel += 1;
             *sync_rtx = true;
-			announceSquelch(state.settings.sqlLevel, queueFlags);
+			vp_announceSquelch(state.settings.sqlLevel, queueFlags);
 			RestartFunctionLatchTimer(); // reset the timer.
         }
     }
@@ -1031,7 +1031,7 @@ void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg, bool callsig
         buf[ui_state.input_position] = symbols_ITU_T_E161[num_key][ui_state.input_set];
 	}
 	// Announce the character
-	AnnounceInputChar(buf[ui_state.input_position]);
+	vp_announceInputChar(buf[ui_state.input_position]);
     // Update reference values
     ui_state.input_number = num_key;
     ui_state.last_keypress = now;
@@ -1049,7 +1049,7 @@ void _ui_textInputDel(char *buf)
     if(ui_state.input_position > 0)
 	{
         ui_state.input_position--;
-		AnnounceInputChar(buf[ui_state.input_position]);
+		vp_announceInputChar(buf[ui_state.input_position]);
     // If we deleted the initial character, reset starting condition
 	}
     else
@@ -1100,7 +1100,7 @@ void ui_updateFSM(bool *sync_rtx)
         kbd_msg_t msg;
         msg.value = event.payload;
 		bool f1Handled = false;
-		VoicePromptQueueFlags_T queueFlags = GetQueueFlagsForVoiceLevel();
+		vpQueueFlags_t queueFlags = vp_getVoiceLevelQueueFlags();
         // If we get out of standby, we ignore the kdb event
         // unless is the MONI key for the MACRO functions
         if (_ui_exitStandby(now) && !(msg.keys & KEY_MONI))
@@ -1183,7 +1183,7 @@ void ui_updateFSM(bool *sync_rtx)
                             // Switch to MEM screen
                             state.ui_screen = MAIN_MEM;
 						    // anounce the active channel name.
-						    announceChannelName(&state.channel, state.channel_index, queueFlags);
+						    vp_announceChannelName(&state.channel, state.channel_index, queueFlags);
                         }
                     }
                     else if(msg.keys & KEY_HASH)
@@ -1202,7 +1202,7 @@ void ui_updateFSM(bool *sync_rtx)
                             state.channel.rx_frequency += 12500;
                             state.channel.tx_frequency += 12500;
                             *sync_rtx = true;
-						    announceFrequencies(state.channel.rx_frequency, state.channel.tx_frequency, queueFlags);
+						    vp_announceFrequencies(state.channel.rx_frequency, state.channel.tx_frequency, queueFlags);
                         }
                     }
                     else if(msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
@@ -1214,8 +1214,19 @@ void ui_updateFSM(bool *sync_rtx)
                             state.channel.rx_frequency -= 12500;
                             state.channel.tx_frequency -= 12500;
                             *sync_rtx = true;
-						    announceFrequencies(state.channel.rx_frequency, state.channel.tx_frequency, queueFlags);
+						    vp_announceFrequencies(state.channel.rx_frequency, state.channel.tx_frequency, queueFlags);
                         }
+                    }
+                    else if(msg.keys & KEY_F1)
+                    {
+				    	if (state.settings.vpLevel > vpBeep)
+				    	{// quick press repeat vp, long press summary.
+				    		if (msg.long_press)
+				    			vp_announceChannelSummary(&state.channel, 0, state.bank);
+				    		else
+				    			vp_replayLastPrompt();
+				    		f1Handled = true;
+				    	}
                     }
                     else if(msg.keys & KEY_F1)
                     {
@@ -1236,14 +1247,14 @@ void ui_updateFSM(bool *sync_rtx)
                         ui_state.input_position = 1;
                         ui_state.input_set = SET_RX;
 					    // do not play  because we will also announce the number just entered.
-					    announceInputReceiveOrTransmit(false, vpqInit);
+					    vp_announceInputReceiveOrTransmit(false, vpqInit);
                         ui_state.new_rx_frequency = 0;
                         ui_state.new_tx_frequency = 0;
                         // Save pressed number to calculare frequency and show in GUI
                         ui_state.input_number = input_getPressedNumber(msg);
                         // Calculate portion of the new frequency
                         ui_state.new_rx_frequency = _ui_freq_add_digit(ui_state.new_rx_frequency,
-                                                ui_state.input_position, ui_state.input_number);
+                                            ui_state.input_position, ui_state.input_number);
                     }
                 }
                 break;
@@ -1263,12 +1274,12 @@ void ui_updateFSM(bool *sync_rtx)
                     if(ui_state.input_set == SET_RX)
 					{
                         ui_state.input_set = SET_TX;
-						announceInputReceiveOrTransmit(true, queueFlags);
+						vp_announceInputReceiveOrTransmit(true, queueFlags);
 					}
                     else if(ui_state.input_set == SET_TX)
 					{
                         ui_state.input_set = SET_RX;
-						announceInputReceiveOrTransmit(false, queueFlags);
+						vp_announceInputReceiveOrTransmit(false, queueFlags);
 					}
                     // Reset input position
                     ui_state.input_position = 0;
@@ -1308,9 +1319,9 @@ void ui_updateFSM(bool *sync_rtx)
 					        if (state.settings.vpLevel > vpBeep)
 					        {// quick press repeat vp, long press summary.
 					        	if (msg.long_press)
-					        		announceChannelSummary(&state.channel, state.channel_index, state.bank);
+					        		vp_announceChannelSummary(&state.channel, state.channel_index, state.bank);
 					        	else
-					        		ReplayLastPrompt();
+					        		vp_replayLastPrompt();
 					        	f1Handled=true;
 					        }
                         }
@@ -1490,9 +1501,9 @@ void ui_updateFSM(bool *sync_rtx)
 				if ((msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
 				{// quick press repeat vp, long press summary.
 					if (msg.long_press)
-						announceGPSInfo();
+						vp_announceGPSInfo();
 					else
-						ReplayLastPrompt();
+						vp_replayLastPrompt();
 					f1Handled = true;
 				}
                 else if(msg.keys & KEY_ESC)
@@ -1581,9 +1592,9 @@ void ui_updateFSM(bool *sync_rtx)
 				if ((msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
 				{// quick press repeat vp, long press summary.
 					if (msg.long_press)
-						announceAboutScreen();
+						vp_announceAboutScreen();
 					else
-						ReplayLastPrompt();
+						vp_replayLastPrompt();
 					f1Handled = true;
 				}
                 else if(msg.keys & KEY_ESC)
@@ -1595,9 +1606,9 @@ void ui_updateFSM(bool *sync_rtx)
                 if ((msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
 				{// quick press repeat vp, long press summary.
 					if (msg.long_press)
-						announceSettingsTimeDate();
+						vp_announceSettingsTimeDate();
 					else
-						ReplayLastPrompt();
+						vp_replayLastPrompt();
 					f1Handled = true;
 				}
 				else if(msg.keys & KEY_ENTER)
@@ -1833,7 +1844,7 @@ void ui_updateFSM(bool *sync_rtx)
         }
 		if (!f1Handled && (msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
 		{
-			ReplayLastPrompt();
+			vp_replayLastPrompt();
 		}
 
     }

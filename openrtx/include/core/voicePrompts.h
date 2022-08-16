@@ -184,6 +184,7 @@ voicePrompt_t;
  */
 typedef enum
 {
+    vpDefault                           = 0x00,
     vpAnnounceCaps                      = 0x01,
     vpAnnounceCustomPrompts             = 0x02,
     vpAnnounceSpace                     = 0x04,
@@ -192,7 +193,7 @@ typedef enum
     vpAnnounceASCIIValueForUnknownChars = 0x20,
     vpAnnouncePhoneticRendering         = 0x40,
 }
-VoicePromptFlags_T;
+vpFlags_t;
 
 /**
  * Queuing flags determining if speech is interrupted, played immediately,
@@ -207,7 +208,7 @@ typedef enum
     vpqIncludeDescriptions             = 0x08,
     vpqAddSeparatingSilence            = 0x10
 }
-VoicePromptQueueFlags_T;
+vpQueueFlags_t;
 
 /**
  * Voice prompt verbosity levels.
@@ -251,7 +252,7 @@ void vp_queuePrompt(const uint16_t prompt);
  * @param string: string to be spelled.
  * @param flags: control flags.
  */
-void vp_queueString(const char* string, VoicePromptFlags_T flags);
+void vp_queueString(const char* string, vpFlags_t flags);
 
 /**
  * Append a signed integer to the queue.

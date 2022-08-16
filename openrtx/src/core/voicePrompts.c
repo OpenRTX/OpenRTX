@@ -163,7 +163,7 @@ static uint16_t UserDictLookup(const char* ptr, int* advanceBy)
 }
 
 static bool GetSymbolVPIfItShouldBeAnnounced(char symbol,
-                                             VoicePromptFlags_T flags,
+                                             vpFlags_t flags,
                                              voicePrompt_t* vp)
 {
     *vp = PROMPT_SILENCE;
@@ -274,7 +274,7 @@ void vp_queuePrompt(const uint16_t prompt)
     }
 }
 
-void vp_queueString(const char* string, VoicePromptFlags_T flags)
+void vp_queueString(const char* string, vpFlags_t flags)
 {
     if (state.settings.vpLevel < vpLow)
         return;

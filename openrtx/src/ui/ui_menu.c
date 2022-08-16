@@ -104,10 +104,10 @@ static void announceMenuItemIfNeeded(char* name, char* value)
 	vp_clearCurrPrompt();
 	// If no value is supplied, or, no prompt is in progress, announce the name.
 	if (!voicePromptWasPlaying || !value || !*value)
-		announceText(name, vpqDefault);
+		vp_announceText(name, vpqDefault);
 
 	if (value && *value)
-		announceText(value, vpqDefault);
+		vp_announceText(value, vpqDefault);
 
 	vp_play();
 }
@@ -568,7 +568,7 @@ void _ui_drawMenuBackup(ui_state_t* ui_state)
               color_white, currentLanguage->pressPTTToStart);
 
     // read this screen.
-	announceBackupScreen();
+	vp_announceBackupScreen();
 	if (!platform_getPttStatus())
 		return;
 
@@ -595,7 +595,7 @@ void _ui_drawMenuRestore(ui_state_t* ui_state)
     gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->pressPTTToStart);
 
-	announceRestoreScreen();
+	vp_announceRestoreScreen();
 	if (!platform_getPttStatus())
 		return;
 

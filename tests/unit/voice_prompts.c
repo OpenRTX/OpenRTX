@@ -32,7 +32,7 @@
 int main()
 {
     state.settings.vpLevel = 3;
-	VoicePromptQueueFlags_T flags = GetQueueFlagsForVoiceLevel();
+	vpQueueFlags_t flags = vp_getVoiceLevelQueueFlags();
 
     vp_init();
     vp_clearCurrPrompt();
