@@ -32,6 +32,7 @@ static struct CODEC2   *codec2;
 static stream_sample_t *audioBuf;
 static streamId         audioStream;
 
+static uint8_t          initCnt = 0;
 static bool             running;
 static pthread_t        codecThread;
 static pthread_mutex_t  mutex;
@@ -58,6 +59,15 @@ static void startThread(void *(*func) (void *));
 
 void codec_init()
 {
+    if(initCnt > 0)
+    {
+        pthread_mutex_lock(&mutex);
+        initCnt += 1;
+        pthread_mutex_unlock(&mutex);
+        return;
+    }
+
+    initCnt     = 1;
     running     = false;
     readPos     = 0;
     writePos    = 0;
@@ -73,6 +83,11 @@ void codec_init()
 
 void codec_terminate()
 {
+    pthread_mutex_lock(&mutex);
+    initCnt -= 1;
+    pthread_mutex_unlock(&mutex);
+
+    if(initCnt > 0) return;
     if(running) codec_stop();
 
     pthread_mutex_destroy(&mutex);

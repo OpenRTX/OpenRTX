@@ -31,6 +31,10 @@ extern "C" {
 
 /**
  * Initialise audio codec manager, allocating data buffers.
+ *
+ * This function allows recursive calls. However the number of times this
+ * function is called must be balanced by an equal number of calls to the
+ * terminate() function.
  */
 void codec_init();
 
