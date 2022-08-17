@@ -34,6 +34,8 @@ static streamId         audioStream;
 
 static uint8_t          initCnt = 0;
 static bool             running;
+
+static bool             stopThread;
 static pthread_t        codecThread;
 static pthread_mutex_t  mutex;
 static pthread_cond_t   not_empty;
@@ -66,8 +68,11 @@ void codec_init()
         pthread_mutex_unlock(&mutex);
         return;
     }
+    else
+    {
+        initCnt = 1;
+    }
 
-    initCnt     = 1;
     running     = false;
     readPos     = 0;
     writePos    = 0;
@@ -106,15 +111,21 @@ bool codec_startEncode(const enum AudioSource source)
     if(running) return false;
     if(audioBuf == NULL) return false;
 
+    running = true;
+
     audioStream = inputStream_start(source, PRIO_TX, audioBuf, 320,
                                     BUF_CIRC_DOUBLE, 8000);
 
-    if(audioStream == -1) return false;
+    if(audioStream == -1)
+    {
+        running = false;
+        return false;
+    }
 
     readPos     = 0;
     writePos    = 0;
     numElements = 0;
-    running     = true;
+    stopThread  = false;
     startThread(encodeFunc);
 
     return true;
@@ -125,16 +136,22 @@ bool codec_startDecode(const enum AudioSink destination)
     if(running) return false;
     if(audioBuf == NULL) return false;
 
+    running = true;
+
     memset(audioBuf, 0x00, 320 * sizeof(stream_sample_t));
     audioStream = outputStream_start(destination, PRIO_RX, audioBuf, 320,
                                      BUF_CIRC_DOUBLE, 8000);
 
-    if(audioStream == -1) return false;
+    if(audioStream == -1)
+    {
+        running = false;
+        return false;
+    }
 
     readPos     = 0;
     writePos    = 0;
     numElements = 0;
-    running     = true;
+    stopThread  = false;
     startThread(decodeFunc);
 
     return true;
@@ -144,8 +161,10 @@ void codec_stop()
 {
     if(running == false) return;
 
-    running = false;
+    stopThread = true;
     pthread_join(codecThread, NULL);
+
+    running = false;
 }
 
 bool codec_popFrame(uint8_t *frame, const bool blocking)
@@ -177,7 +196,7 @@ bool codec_popFrame(uint8_t *frame, const bool blocking)
     pthread_mutex_unlock(&mutex);
 
     // Do memcpy after mutex unlock to reduce execution time spent inside the
-    //  critical section
+    // critical section
     memcpy(frame, &element, 8);
 
     return true;
@@ -231,7 +250,7 @@ static void *encodeFunc(void *arg)
 
     codec2 = codec2_create(CODEC2_MODE_3200);
 
-    while(running)
+    while(stopThread == false)
     {
         dataBlock_t audio = inputStream_getData(audioStream);
 
@@ -285,7 +304,7 @@ static void *decodeFunc(void *arg)
 
     codec2 = codec2_create(CODEC2_MODE_3200);
 
-    while(running)
+    while(stopThread == false)
     {
         // Try popping data from the queue
         uint64_t frame   = 0;
@@ -324,7 +343,9 @@ static void *decodeFunc(void *arg)
         outputStream_sync(audioStream, true);
     }
 
+    // Stop stream and wait until its effective termination
     outputStream_stop(audioStream);
+    outputStream_sync(audioStream, false);
     codec2_destroy(codec2);
 
     return NULL;
