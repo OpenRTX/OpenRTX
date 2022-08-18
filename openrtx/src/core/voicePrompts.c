@@ -35,8 +35,6 @@ static const uint32_t VOICE_PROMPTS_DATA_VERSION = 0x1000;  // v1000 OpenRTX
 #define VOICE_PROMPTS_TOC_SIZE 350
 #define CODEC2_HEADER_SIZE     7
 #define VP_SEQUENCE_BUF_SIZE   128
-#define CODEC2_DATA_BUF_SIZE   2048
-
 
 typedef struct
 {
@@ -57,11 +55,11 @@ typedef struct
     uint16_t buffer[VP_SEQUENCE_BUF_SIZE];  // Buffer of individual prompt indices.
     uint16_t pos;                           // Index into above buffer.
     uint16_t length;                        // Number of entries in above buffer.
+    uint32_t c2DataStart;
     uint32_t c2DataIndex;                   // Index into current codec2 data
     uint32_t c2DataLength;                  // Length of codec2 data for current prompt.
 }
 vpSequence_t;
-
 
 static const userDictEntry_t userDictionary[] =
 {
@@ -82,16 +80,57 @@ static vpSequence_t vpCurrentSequence =
 {
     .pos          = 0,
     .length       = 0,
+    .c2DataStart  = 0,
     .c2DataIndex  = 0,
     .c2DataLength = 0
 };
 
-static uint8_t  codec2Data[CODEC2_DATA_BUF_SIZE];
 static uint32_t tableOfContents[VOICE_PROMPTS_TOC_SIZE];
-static uint32_t vpDataOffset       = 0;
-static bool     vpDataLoaded       = false;
-static bool     voicePromptActive  = false;
-static FILE     *vpFile            = NULL;
+static bool     vpDataLoaded      = false;
+static bool     voicePromptActive = false;
+
+#ifdef VP_USE_FILESYSTEM
+static FILE *vpFile = NULL;
+#else
+extern unsigned char _vpdata_start asm("_voiceprompts_start");
+extern unsigned char _vpdata_end asm("_voiceprompts_end");
+unsigned char        *vpData = &_vpdata_start;
+#endif
+
+/**
+ * \internal
+ * Load voice prompts header.
+ *
+ * @param header: pointer toa vpHeader_t data structure.
+ */
+static void loadVpHeader(vpHeader_t *header)
+{
+    #ifdef VP_USE_FILESYSTEM
+    fseek(vpFile, 0L, SEEK_SET);
+    fread(header, sizeof(vpHeader_t), 1, vpFile);
+    #else
+    memcpy(header, vpData, sizeof(vpHeader_t));
+    #endif
+}
+
+/**
+ * \internal
+ * Load voice prompts' table of contents.
+ */
+static void loadVpToC()
+{
+    #ifdef VP_USE_FILESYSTEM
+    fread(&tableOfContents, sizeof(tableOfContents), 1, vpFile);
+    size_t vpDataOffset = ftell(vpFile);
+
+    if(vpDataOffset == (sizeof(vpHeader_t) + sizeof(tableOfContents)))
+        vpDataLoaded = true;
+    #else
+    uint8_t *tocPtr = vpData + sizeof(vpHeader_t);
+    memcpy(&tableOfContents, tocPtr, sizeof(tableOfContents));
+    vpDataLoaded = true;
+    #endif
+}
 
 /**
  * \internal
@@ -100,27 +139,35 @@ static FILE     *vpFile            = NULL;
  * @param offset: offset relative to the start of the voice prompt data.
  * @param length: data length in bytes.
  */
-static void loadCodec2Data(const int offset, const int length)
+static void fetchCodec2Data(uint8_t *data, const size_t offset)
 {
-    const uint32_t minOffset = sizeof(vpHeader_t) + sizeof(tableOfContents);
-
-    if ((vpFile == NULL) || (vpDataOffset < minOffset))
+    if (vpDataLoaded == false)
         return;
 
-    if ((offset < 0) || (length > CODEC2_DATA_BUF_SIZE))
+    #ifdef VP_USE_FILESYSTEM
+    if (vpFile == NULL)
         return;
 
-    // Skip codec2 header
-    fseek(vpFile, vpDataOffset + offset + CODEC2_HEADER_SIZE, SEEK_SET);
-    fread((void*)&codec2Data, length, 1, vpFile);
+    size_t start = sizeof(vpHeader_t)
+                 + sizeof(tableOfContents)
+                 + CODEC2_HEADER_SIZE;
 
-    // zero buffer from length to the next multiple of 8 to avoid garbage
-    // being played back, since codec2 frames are pushed in lots of 8 bytes.
-    if ((length % 8) != 0)
+    fseek(vpFile, start + offset, SEEK_SET);
+    fread(data, 8, 1, vpFile);
+    #else
+    uint8_t *dataPtr = vpData
+                     + sizeof(vpHeader_t)
+                     + sizeof(tableOfContents)
+                     + CODEC2_HEADER_SIZE;
+
+    if((dataPtr + 8) >= &_vpdata_end)
     {
-        int bytesToZero = length % 8;
-        memset(codec2Data + length, 0, bytesToZero);
+        memset(data, 0x00, 8);
+        return;
     }
+
+    memcpy(data, dataPtr + offset, 8);
+    #endif
 }
 
 /**
@@ -144,7 +191,7 @@ static inline bool checkVpHeader(const vpHeader_t* header)
  * @param advanceBy: final offset with respect of dictionary beginning.
  * @return index of user dictionary's voice prompt.
  */
-static uint16_t UserDictLookup(const char* ptr, int* advanceBy)
+static uint16_t userDictLookup(const char* ptr, int* advanceBy)
 {
     if ((ptr == NULL) || (*ptr == '\0'))
         return 0;
@@ -196,27 +243,24 @@ static bool GetSymbolVPIfItShouldBeAnnounced(char symbol,
 
 void vp_init()
 {
-    vpDataOffset = 0;
-
+    #ifdef VP_USE_FILESYSTEM
     if(vpFile == NULL)
         vpFile = fopen("voiceprompts.vpc", "r");
 
     if(vpFile == NULL)
         return;
+    #else
+    if(&_vpdata_start == &_vpdata_end)
+        return;
+    #endif
 
     // Read header
     vpHeader_t header;
-    fseek(vpFile, 0L, SEEK_SET);
-    fread((void*)&header, sizeof(header), 1, vpFile);
+    loadVpHeader(&header);
 
     if(checkVpHeader(&header) == true)
     {
-        // Read in the TOC.
-        fread((void*)&tableOfContents, sizeof(tableOfContents), 1, vpFile);
-        vpDataOffset = ftell(vpFile);
-
-        if(vpDataOffset == (sizeof(vpHeader_t) + sizeof(tableOfContents)))
-            vpDataLoaded = true;
+        loadVpToC();
     }
 
     if (vpDataLoaded)
@@ -233,7 +277,7 @@ void vp_init()
             state.settings.vpLevel = vpBeep;
     }
 
-    // TODO: Move this somewhere else for compatibility with M17
+    // Initialize codec2 module
     codec_init();
 }
 
@@ -248,11 +292,16 @@ void vp_terminate()
         voicePromptActive     = false;
     }
 
+    codec_terminate();
+
+    #ifdef VP_USE_FILESYSTEM
     fclose(vpFile);
+    #endif
 }
 
 void vp_clearCurrPrompt()
 {
+    voicePromptActive              = false;
     vpCurrentSequence.length       = 0;
     vpCurrentSequence.pos          = 0;
     vpCurrentSequence.c2DataIndex  = 0;
@@ -288,7 +337,7 @@ void vp_queueString(const char* string, vpFlags_t flags)
     while (*string != '\0')
     {
         int advanceBy    = 0;
-        voicePrompt_t vp = UserDictLookup(string, &advanceBy);
+        voicePrompt_t vp = userDictLookup(string, &advanceBy);
 
         if (vp != 0)
         {
@@ -397,7 +446,7 @@ void vp_play()
 
 void vp_tick()
 {
-    if (!voicePromptActive)
+    if (voicePromptActive == false)
         return;
 
     while(vpCurrentSequence.pos < vpCurrentSequence.length)
@@ -408,19 +457,21 @@ void vp_tick()
             // obtain the data for the prompt.
             int promptNumber = vpCurrentSequence.buffer[vpCurrentSequence.pos];
 
+            vpCurrentSequence.c2DataIndex  = 0;
+            vpCurrentSequence.c2DataStart  = tableOfContents[promptNumber];
             vpCurrentSequence.c2DataLength = tableOfContents[promptNumber + 1]
                                            - tableOfContents[promptNumber];
-
-            loadCodec2Data(tableOfContents[promptNumber],
-                           vpCurrentSequence.c2DataLength);
-
-            vpCurrentSequence.c2DataIndex = 0;
         }
 
         while (vpCurrentSequence.c2DataIndex < vpCurrentSequence.c2DataLength)
         {
             // push the codec2 data in lots of 8 byte frames.
-            if (!codec_pushFrame(codec2Data+vpCurrentSequence.c2DataIndex, false))
+            uint8_t c2Frame[8] = {0};
+
+            fetchCodec2Data(c2Frame, vpCurrentSequence.c2DataStart +
+                                     vpCurrentSequence.c2DataIndex);
+
+            if (!codec_pushFrame(c2Frame, false))
                 return;
 
             vpCurrentSequence.c2DataIndex += 8;

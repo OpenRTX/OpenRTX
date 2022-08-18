@@ -53,6 +53,7 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/memory_profiling.cpp',
                'openrtx/src/core/voicePrompts.c',
                'openrtx/src/core/voicePromptUtils.c',
+               'openrtx/src/core/voicePromptData.S',
                'openrtx/src/ui/ui.c',
                'openrtx/src/ui/ui_strings.c',
                'openrtx/src/ui/ui_main.c',
@@ -275,8 +276,9 @@ linux_src = src + linux_platform_src
 # MDx family display emulation
 linux_def = def + {'SCREEN_WIDTH': '160', 'SCREEN_HEIGHT': '128', 'PIX_FMT_RGB565': ''}
 
-linux_inc = inc + ['platform/targets/linux',
-                   'platform/targets/linux/emulator']
+linux_def += {'VP_USE_FILESYSTEM':''}
+linux_inc  = inc + ['platform/targets/linux',
+                    'platform/targets/linux/emulator']
 
 if not meson.is_cross_build()
   sdl_dep = dependency('SDL2')

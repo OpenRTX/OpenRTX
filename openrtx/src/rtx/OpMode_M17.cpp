@@ -55,6 +55,7 @@ void OpMode_M17::disable()
     startTx = false;
     platform_ledOff(GREEN);
     platform_ledOff(RED);
+    codec_stop();
     codec_terminate();
     audio_disableAmp();
     audio_disableMic();
