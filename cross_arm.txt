@@ -55,7 +55,6 @@ c_link_args = [
                '-Wl,-Map,main.map',
                '-Wl,--warn-common',
                '-nostdlib',
-               '-lmiosix',
                '-lstdc++',
                '-lc',
                '-lm',
