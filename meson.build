@@ -121,22 +121,19 @@ else
   tinyusb_dep = [ ]
 endif
 
-##
-## RTOS
-##
-rtos_inc = ['lib/miosix-kernel',
-            'lib/miosix-kernel/arch',
-            'lib/miosix-kernel/arch/cortexM4_stm32f4/common',
-            'lib/miosix-kernel/arch/cortexM4_stm32f4/M4_openrtx',
-            'lib/miosix-kernel/config/arch/cortexM4_stm32f4/M4_openrtx']
-
 src = openrtx_src + main_src + minmea_src
 inc = openrtx_inc + minmea_inc + qdec_inc
 
+##
+## RTOS
+##
+subdir('lib/miosix-kernel')
+
 # Include RTOS only for embedded targets
 if meson.is_cross_build()
-  inc = inc + rtos_inc
-  def = def + {'DONT_USE_CMSIS_INIT': ''}
+  inc = inc + miosix_cm4f_inc
+  src = src + miosix_cm4f_src
+  def = def + miosix_cm4f_def
 endif
 
 ## Add git commit or tag to print in OpenRTX
@@ -228,8 +225,7 @@ stm32f405_inc = ['platform/mcu/CMSIS/Include',
                  'platform/mcu/STM32F4xx/drivers',
                  'platform/mcu/STM32F4xx/drivers/usb']
 
-stm32f405_def = {'STM32F405xx': '', 'HSE_VALUE':'8000000',
-                 '_POSIX_PRIORITY_SCHEDULING':''}
+stm32f405_def = {'STM32F405xx': '', 'HSE_VALUE':'8000000'}
 
 ##
 ## MK22FN512
@@ -252,9 +248,10 @@ mk22fn512_src = ['platform/mcu/MK22FN512xxx12/boot/startup.cpp',
 
 mk22fn512_inc = ['platform/mcu/CMSIS/Include',
                  'platform/mcu/CMSIS/Device/NXP/MK22FN512xxx12/Include',
+                 'platform/mcu/MK22FN512xxx12',
                  'platform/mcu/MK22FN512xxx12/drivers']
 
-mk22fn512_def = {'_POSIX_PRIORITY_SCHEDULING':''}
+mk22fn512_def = {}
 
 ##
 ## ----------------------- Platform specializations ----------------------------

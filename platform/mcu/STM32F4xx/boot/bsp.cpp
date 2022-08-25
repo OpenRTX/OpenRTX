@@ -40,9 +40,9 @@ namespace miosix
 
 void IRQbspInit()
 {
-   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN
-                |  RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIODEN
-                |  RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_GPIOHEN;
+    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN
+                 |  RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIODEN
+                 |  RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_GPIOHEN;
     RCC_SYNC();
 
     GPIOA->OSPEEDR=0xaaaaaaaa; //Default to 50MHz speed for all GPIOS
@@ -68,6 +68,9 @@ void IRQbspInit()
     usart3_init(115200);
     usart3_IRQwrite("starting...\r\n");
     #endif
+
+    // Configure SysTick
+    SysTick->LOAD = SystemCoreClock / miosix::TICK_FREQ;
 }
 
 void bspInit2()
