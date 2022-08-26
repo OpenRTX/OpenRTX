@@ -354,7 +354,7 @@ void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
         vp_queuePrompt(PROMPT_TONE);
 
         snprintf(buffer, 16, "%3.1f", ctcss_tone[rxTone] / 10.0f);
-        vp_queueString(buffer, vpDefault);
+        vp_queueString(buffer, vpAnnounceCommonSymbols);
         vp_queuePrompt(PROMPT_HERTZ);
         playIfNeeded(flags);
 
@@ -368,7 +368,7 @@ void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
         vp_queuePrompt(PROMPT_TONE);
 
         snprintf(buffer, 16, "%3.1f", ctcss_tone[rxTone] / 10.0f);
-        vp_queueString(buffer, vpDefault);
+        vp_queueString(buffer, vpAnnounceCommonSymbols);
         vp_queuePrompt(PROMPT_HERTZ);
     }
     if (txToneEnabled)
@@ -377,7 +377,7 @@ void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
         vp_queuePrompt(PROMPT_TONE);
 
         snprintf(buffer, 16, "%3.1f", ctcss_tone[txTone] / 10.0f);
-        vp_queueString(buffer, vpDefault);
+        vp_queueString(buffer, vpAnnounceCommonSymbols);
         vp_queuePrompt(PROMPT_HERTZ);
     }
 
