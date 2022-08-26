@@ -102,8 +102,11 @@ static void announceMenuItemIfNeeded(char* name, char* value)
     // e.g. when changing a value with left or right, we don't want to repeat the
     // prompt if arrowing rapidly.
     bool voicePromptWasPlaying = vp_isPlaying();
+
     // Stop any prompt in progress and clear the buffer.
-    vp_clearCurrPrompt();
+    if (voicePromptWasPlaying)
+        vp_clearCurrPrompt();
+
     // If no value is supplied, or, no prompt is in progress, announce the name.
     if ((voicePromptWasPlaying == false) || (value == NULL) || (*value == '\0'))
         vp_announceText(name, vpqDefault);

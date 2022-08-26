@@ -189,6 +189,11 @@ void vp_announceSettingsTimeDate();
 #endif
 
 /**
+ * This is called to speak voice prompt level changes.
+ */
+void vp_announceSettingsVoiceLevel(const vpQueueFlags_t flags);
+
+/**
  *
  */
 vpQueueFlags_t vp_getVoiceLevelQueueFlags();

@@ -742,6 +742,18 @@ static void _ui_changeVoiceLevel(int variation)
         }
 
     state.settings.vpLevel += variation;
+
+    // Force these flags to ensure the changes are spoken for levels 1 through 3.
+    vpQueueFlags_t flags = vpqInit
+                         | vpqAddSeparatingSilence
+                         | vpqPlayImmediately;
+
+    if (!vp_isPlaying())
+    {
+        flags |= vpqIncludeDescriptions;
+    }
+
+    vp_announceSettingsVoiceLevel(flags);
 }
 
 static void _ui_changePhoneticSpell(bool newVal)

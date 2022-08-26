@@ -180,6 +180,9 @@ typedef enum
 }
 voicePrompt_t;
 
+// The name of the voice prompt file is always encoded as the last prompt.
+#define PROMPT_VOICE_NAME (NUM_VOICE_PROMPTS + (sizeof(stringsTable_t)/sizeof(char*)))
+
 /**
  * Flags controlling how vp_queueString operates.
  */

@@ -692,6 +692,31 @@ void vp_announceSettingsTimeDate()
 }
 #endif // RTC_PRESENT
 
+void vp_announceSettingsVoiceLevel(const vpQueueFlags_t flags)
+{
+    clearCurrPromptIfNeeded(flags);
+    switch (state.settings.vpLevel)
+    {
+        case vpNone:
+            vp_queueStringTableEntry(&currentLanguage->off);
+            break;
+
+        case vpBeep:
+            vp_queueStringTableEntry(&currentLanguage->beep);
+            break;
+
+        default:
+            if (flags & vpqIncludeDescriptions)
+            {
+                vp_queuePrompt(PROMPT_VOICE_NAME);
+                vp_queueStringTableEntry(&currentLanguage->level);
+            }
+            vp_queueInteger(state.settings.vpLevel-vpBeep);
+            break;
+    }
+
+    playIfNeeded(flags);
+}
 
 vpQueueFlags_t vp_getVoiceLevelQueueFlags()
 {
