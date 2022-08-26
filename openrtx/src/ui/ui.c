@@ -759,6 +759,10 @@ static void _ui_changeVoiceLevel(int variation)
 static void _ui_changePhoneticSpell(bool newVal)
 {
     state.settings.vpPhoneticSpell = newVal ? 1 : 0;
+
+    vp_announceSettingsOnOffToggle(&currentLanguage->phonetic,
+                                   vp_getVoiceLevelQueueFlags(),
+                                   state.settings.vpPhoneticSpell);
 }
 
 static bool _ui_checkStandby(long long time_since_last_event)

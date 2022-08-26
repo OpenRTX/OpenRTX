@@ -718,6 +718,19 @@ void vp_announceSettingsVoiceLevel(const vpQueueFlags_t flags)
     playIfNeeded(flags);
 }
 
+void vp_announceSettingsOnOffToggle(const char* const* stringTableStringPtr,
+                                    const vpQueueFlags_t flags, bool val)
+{
+    clearCurrPromptIfNeeded(flags);
+
+    if (flags & vpqIncludeDescriptions)
+        vp_queueStringTableEntry(stringTableStringPtr);
+
+    vp_queueStringTableEntry(val ? &currentLanguage->on : &currentLanguage->off);
+
+     playIfNeeded(flags);
+}
+
 vpQueueFlags_t vp_getVoiceLevelQueueFlags()
 {
     uint8_t vpLevel = state.settings.vpLevel;
