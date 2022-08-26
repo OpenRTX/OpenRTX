@@ -420,9 +420,7 @@ void vp_queueStringTableEntry(const char* const* stringTableStringPtr)
         return;
 
     uint16_t pos = NUM_VOICE_PROMPTS
-                 + 1
-                 + (stringTableStringPtr - &currentLanguage->languageName) /
-                    sizeof(const char *);
+                 + (stringTableStringPtr - &currentLanguage->languageName);
 
     vp_queuePrompt(pos);
 }

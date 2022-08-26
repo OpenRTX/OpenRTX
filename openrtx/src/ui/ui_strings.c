@@ -39,7 +39,7 @@ int GetEnglishStringTableOffset(const char* text)
 
         if (strcmp(text, strPtr) == 0)
         {
-            return (i * sizeof(char *));
+            return i;
         }
     }
 
