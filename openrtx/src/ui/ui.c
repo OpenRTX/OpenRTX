@@ -86,6 +86,7 @@ extern void _ui_drawMEMMiddle();
 extern void _ui_drawVFOBottom();
 extern void _ui_drawMEMBottom();
 extern void _ui_drawMainVFO();
+extern void _ui_drawRXMenu();
 extern void _ui_drawMainVFOInput(ui_state_t* ui_state);
 extern void _ui_drawMainMEM();
 extern void _ui_drawModeVFO();
@@ -454,6 +455,21 @@ void _ui_drawLowBatteryScreen()
               TEXT_ALIGN_CENTER,
               color_white,
               "press any button.");
+}
+
+void _ui_drawRXScreen() {
+    rtxStatus_t status = rtx_getCurrentStatus();
+    gfx_clearScreen();
+    gfx_print(text_pos_1,
+              FONT_SIZE_6PT,
+              TEXT_ALIGN_CENTER,
+              color_white,
+              "RX Screen");
+    gfx_print(text_pos_2,
+              FONT_SIZE_6PT,
+              TEXT_ALIGN_CENTER,
+              color_white,
+              "%d", status.source_address);
 }
 
 freq_t _ui_freq_add_digit(freq_t freq, uint8_t pos, uint8_t number)
@@ -957,6 +973,16 @@ void ui_updateFSM(bool *sync_rtx)
         {
             state.ui_screen = MAIN_VFO;
             state.emergency = true;
+        }
+        return;
+    }
+
+    if (state.ui_screen != RX_SCREEN && radio_getStatus() == RX && rtx_rxSquelchOpen())
+    {
+        state.ui_screen = RX_SCREEN;
+        if(event.type == EVENT_LINK_LOST)
+        {
+            state.ui_screen = MAIN_VFO;
         }
         return;
     }
@@ -1775,6 +1801,9 @@ void ui_updateGUI()
         // Low battery screen
         case LOW_BAT:
             _ui_drawLowBatteryScreen();
+            break;
+        case RX_SCREEN:
+            _ui_drawRXScreen();
             break;
     }
     // If MACRO menu is active draw it

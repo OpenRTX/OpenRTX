@@ -27,8 +27,9 @@
  */
 enum eventType_t
 {
-    EVENT_KBD    = 0,
-    EVENT_STATUS = 1
+    EVENT_KBD    = 0,   // used to send a keypress
+    EVENT_STATUS = 1,   // used to send a status change notification
+    EVENT_LINK_LOST,    // sent when RX squelch closes after opening
 };
 
 /**

@@ -166,17 +166,24 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
 
     locked = lock;
 
+    if (!locked) {
+        ui_pushEvent(EVENT_LINK_LOST, 0);
+    }
+
     if(locked && newData)
     {
         auto& frame = demodulator.getFrame();
         auto type   = decoder.decodeFrame(frame);
         bool lsfOk  = decoder.getLsf().valid();
 
-        if((type == M17FrameType::STREAM) && (lsfOk == true))
-        {
-            M17StreamFrame sf = decoder.getStreamFrame();
-            codec_pushFrame(sf.payload().data(),     false);
-            codec_pushFrame(sf.payload().data() + 8, false);
+        if (lsfOk) {
+            status->source_address = decoder.getLsf().getDestination().c_str();
+            if(type == M17FrameType::STREAM)
+            {
+                M17StreamFrame sf = decoder.getStreamFrame();
+                codec_pushFrame(sf.payload().data(),     false);
+                codec_pushFrame(sf.payload().data() + 8, false);
+            }
         }
     }
 

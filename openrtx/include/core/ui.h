@@ -61,7 +61,8 @@ enum uiScreen
     SETTINGS_GPS,
     SETTINGS_M17,
     SETTINGS_RESET2DEFAULTS,
-    LOW_BAT
+    LOW_BAT,
+    RX_SCREEN,
 };
 
 enum SetRxTx
