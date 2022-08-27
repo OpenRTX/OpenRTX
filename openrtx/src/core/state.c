@@ -18,6 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <ui.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -26,9 +27,11 @@
 #include <hwconfig.h>
 #include <interfaces/platform.h>
 #include <interfaces/nvmem.h>
+#include <interfaces/delays.h>
 
 state_t state;
 pthread_mutex_t state_mutex;
+long long int lastUpdate = 0;
 
 void state_init()
 {
@@ -86,8 +89,14 @@ void state_terminate()
     pthread_mutex_destroy(&state_mutex);
 }
 
-void state_update()
+void state_task()
 {
+    // Update radio state once every 100ms
+    if((getTick() - lastUpdate) < 100)
+        return;
+
+    lastUpdate = getTick();
+
     pthread_mutex_lock(&state_mutex);
 
     /*
@@ -107,6 +116,8 @@ void state_update()
     #endif
 
     pthread_mutex_unlock(&state_mutex);
+
+    ui_pushEvent(EVENT_STATUS, 0);
 }
 
 void state_resetSettingsAndVfo()

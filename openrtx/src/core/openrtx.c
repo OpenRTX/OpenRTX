@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #endif
 
-extern void *dev_task(void *arg);
+extern void *main_thread(void *arg);
 
 void openrtx_init()
 {
@@ -87,10 +87,10 @@ void *openrtx_run()
     // Start the OpenRTX threads
     create_threads();
 
-    // Jump to the device management task
-    dev_task(NULL);
+    // Jump to the device management thread
+    main_thread(NULL);
 
-    // Device task terminated, complete shutdown sequence
+    // Device thread terminated, complete shutdown sequence
     state_terminate();
     platform_terminate();
 

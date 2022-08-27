@@ -43,9 +43,9 @@
 pthread_mutex_t rtx_mutex;
 
 /**
- * \internal Task function managing user input and UI
+ * \internal Thread managing user input and UI
  */
-void *ui_task(void *arg)
+void *ui_threadFunc(void *arg)
 {
     (void) arg;
 
@@ -118,20 +118,17 @@ void *ui_task(void *arg)
 }
 
 /**
- * \internal Task function in charge of managing the device and update the
- * global state variable.
+ * \internal Thread managing the device and update the global state variable.
  */
-void *dev_task(void *arg)
+void *main_thread(void *arg)
 {
     (void) arg;
 
     long long time     = 0;
-    uint8_t   tick_5ms = 0;
 
     while(state.devStatus != SHUTDOWN)
     {
         time = getTick();
-        tick_5ms++;
 
         // Check if power off is requested
         pthread_mutex_lock(&state_mutex);
@@ -164,16 +161,11 @@ void *dev_task(void *arg)
 
         // Run GPS task
         #if defined(GPS_PRESENT) && !defined(MD3x0_ENABLE_DBG)
-        if(state.gpsDetected)
-            gps_taskFunc();
+        gps_task();
         #endif
 
-        // Update radio state every 100ms
-        if((tick_5ms % 20) == 0)
-        {
-            state_update();
-            ui_pushEvent(EVENT_STATUS, 0);
-        }
+        // Run state update task
+        state_task();
 
         // Run this loop once every 5ms
         time += 5;
@@ -188,9 +180,9 @@ void *dev_task(void *arg)
 }
 
 /**
- * \internal Task function for RTX management.
+ * \internal Thread for RTX management.
  */
-void *rtx_task(void *arg)
+void *rtx_threadFunc(void *arg)
 {
     (void) arg;
 
@@ -198,7 +190,7 @@ void *rtx_task(void *arg)
 
     while(state.devStatus == RUNNING)
     {
-        rtx_taskFunc();
+        rtx_task();
     }
 
     rtx_terminate();
@@ -228,7 +220,7 @@ void create_threads()
     pthread_attr_setschedparam(&rtx_attr, &param);
     #endif
 
-    pthread_create(&rtx_thread, &rtx_attr, rtx_task, NULL);
+    pthread_create(&rtx_thread, &rtx_attr, rtx_threadFunc, NULL);
 
     // Create UI thread
     pthread_t      ui_thread;
@@ -236,5 +228,5 @@ void create_threads()
 
     pthread_attr_init(&ui_attr);
     pthread_attr_setstacksize(&ui_attr, UI_TASK_STKSIZE);
-    pthread_create(&ui_thread, &ui_attr, ui_task, NULL);
+    pthread_create(&ui_thread, &ui_attr, ui_threadFunc, NULL);
 }

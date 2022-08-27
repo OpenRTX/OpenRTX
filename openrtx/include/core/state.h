@@ -115,7 +115,7 @@ void state_terminate();
 /**
  * Update radio state fetching data from device drivers.
  */
-void state_update();
+void state_task();
 
 /**
  * Reset the fields of radio state containing user settings and VFO channel.

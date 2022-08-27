@@ -100,7 +100,7 @@ rtxStatus_t rtx_getCurrentStatus()
     return rtxStatus;
 }
 
-void rtx_taskFunc()
+void rtx_task()
 {
     // Check if there is a pending new configuration and, in case, read it.
     bool reconfigure = false;

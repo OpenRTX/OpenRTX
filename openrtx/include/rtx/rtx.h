@@ -124,7 +124,7 @@ rtxStatus_t rtx_getCurrentStatus();
  * High-level code is in charge of calling this function periodically, since it
  * contains all the RTX management functionalities.
  */
-void rtx_taskFunc();
+void rtx_task();
 
 /**
  * Get current RSSI in dBm.

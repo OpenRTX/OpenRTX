@@ -32,8 +32,12 @@ static bool isRtcSyncronised  = false;
 static bool gpsEnabled        = false;
 static bool readNewSentence   = true;
 
-void gps_taskFunc()
+void gps_task()
 {
+    // No GPS, return
+    if(state.gpsDetected == false)
+        return;
+
     // Handle GPS turn on/off
     if(state.settings.gps_enabled != gpsEnabled)
     {
