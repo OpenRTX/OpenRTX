@@ -214,9 +214,9 @@ void radio_setOpmode(const enum opmode mode)
         case OPMODE_M17:
             gpio_clearPin(DMR_SW);      // Disconnect analog paths for DMR
             gpio_setPin(FM_SW);         // Enable analog RX stage after superhet
-            _setBandwidth(BW_25);       // Set bandwidth to 25kHz for proper deviation
             C5000.fmMode();             // HR_C5000 in FM mode
             C5000.setInputGain(-3);     // Input gain in dB, found experimentally
+            _setBandwidth(BW_25);       // Set bandwidth to 25kHz for proper deviation
             break;
 
         default:
