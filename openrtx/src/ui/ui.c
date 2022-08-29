@@ -1169,6 +1169,8 @@ void ui_updateFSM(bool *sync_rtx)
         {
             macro_menu = false;
         }
+
+        int priorUIScreen = state.ui_screen;
         switch(state.ui_screen)
         {
             // VFO screen
@@ -1904,6 +1906,20 @@ void ui_updateFSM(bool *sync_rtx)
         if (!f1Handled && (msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
         {
             vp_replayLastPrompt();
+        }
+        else if ((priorUIScreen!=state.ui_screen) && state.settings.vpLevel > vpLow)
+        {
+            // When we switch to VFO or Channel screen, we need to announce it.
+            // All other cases are handled as needed.
+            if (state.ui_screen == MAIN_VFO)
+            {
+                vp_announceChannelSummary(&state.channel, 0, state.bank);
+            }
+            else if (state.ui_screen == MAIN_MEM)
+            {
+                vp_announceChannelSummary(&state.channel, state.channel_index,
+                                          state.bank);
+            }
         }
     }
     else if(event.type == EVENT_STATUS)

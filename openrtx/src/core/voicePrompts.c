@@ -279,6 +279,12 @@ void vp_init()
 
     // Initialize codec2 module
     codec_init();
+
+    if (state.settings.vpLevel > vpBeep)
+    {
+        vp_queueStringTableEntry(&currentLanguage->openRTX);
+        vp_play();
+    }
 }
 
 void vp_terminate()
