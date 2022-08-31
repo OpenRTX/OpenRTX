@@ -34,7 +34,7 @@
 static void clearCurrPromptIfNeeded(const vpQueueFlags_t flags)
 {
     if (flags & vpqInit)
-        vp_clearCurrPrompt();
+        vp_flush();
 }
 
 static void playIfNeeded(const vpQueueFlags_t flags)
@@ -73,7 +73,7 @@ static void removeUnnecessaryZerosFromVoicePrompts(char* str)
 
 void vp_announceVFO()
 {
-    vp_clearCurrPrompt();
+    vp_flush();
     vp_queuePrompt(PROMPT_VFO);
     vp_play();
 }
@@ -204,7 +204,7 @@ void vp_announceChannelSummary(const channel_t* channel,
     if (channel == NULL)
         return;
 
-    vp_clearCurrPrompt();
+    vp_flush();
 
     vpQueueFlags_t localFlags = vpqAddSeparatingSilence;
 
@@ -275,7 +275,7 @@ void vp_announceInputChar(const char ch)
     char buf[2] = "\0";
     buf[0]      = ch;
 
-    vp_clearCurrPrompt();
+    vp_flush();
 
     uint8_t flags = vpAnnounceCaps
                   | vpAnnounceSpace
@@ -301,7 +301,7 @@ void vp_announceInputReceiveOrTransmit(const bool tx, const vpQueueFlags_t flags
 void vp_replayLastPrompt()
 {
     if (vp_isPlaying())
-        vp_terminate();
+        vp_stop();
     else
         vp_play();
 }
@@ -533,7 +533,7 @@ void vp_announceGPSInfo()
     if (!state.settings.gps_enabled)
         return;
 
-    vp_clearCurrPrompt();
+    vp_flush();
     vpQueueFlags_t flags = vpqIncludeDescriptions
                          | vpqAddSeparatingSilence;
 
@@ -626,7 +626,7 @@ void vp_announceGPSInfo()
 
 void vp_announceAboutScreen()
 {
-    vp_clearCurrPrompt();
+    vp_flush();
 
     vp_queueStringTableEntry(&currentLanguage->openRTX);
 
@@ -641,7 +641,7 @@ void vp_announceAboutScreen()
 
 void vp_announceBackupScreen()
 {
-    vp_clearCurrPrompt();
+    vp_flush();
 
     vp_queueStringTableEntry(&currentLanguage->flashBackup);
 
@@ -655,7 +655,7 @@ void vp_announceBackupScreen()
 
 void vp_announceRestoreScreen()
 {
-    vp_clearCurrPrompt();
+    vp_flush();
 
     vp_queueStringTableEntry(&currentLanguage->flashRestore);
 
@@ -670,7 +670,7 @@ void vp_announceRestoreScreen()
 #ifdef RTC_PRESENT
 void vp_announceSettingsTimeDate()
 {
-    vp_clearCurrPrompt();
+    vp_flush();
 
     vp_queueStringTableEntry(&currentLanguage->timeAndDate);
 

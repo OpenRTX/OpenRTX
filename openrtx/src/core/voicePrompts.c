@@ -305,13 +305,19 @@ void vp_terminate()
     #endif
 }
 
-void vp_clearCurrPrompt()
+void vp_stop()
 {
     voicePromptActive              = false;
-    vpCurrentSequence.length       = 0;
     vpCurrentSequence.pos          = 0;
     vpCurrentSequence.c2DataIndex  = 0;
     vpCurrentSequence.c2DataLength = 0;
+}
+
+void vp_flush()
+{
+    // Stop the prompt and reset the codec data length
+    vp_stop();
+    vpCurrentSequence.length = 0;
 }
 
 void vp_queuePrompt(const uint16_t prompt)
@@ -320,7 +326,7 @@ void vp_queuePrompt(const uint16_t prompt)
         return;
 
     if (voicePromptActive)
-        vp_clearCurrPrompt();
+        vp_flush();
 
     if (vpCurrentSequence.length < VP_SEQUENCE_BUF_SIZE)
     {
@@ -335,7 +341,7 @@ void vp_queueString(const char* string, vpFlags_t flags)
         return;
 
     if (voicePromptActive)
-        vp_clearCurrPrompt();
+        vp_flush();
 
     if (state.settings.vpPhoneticSpell)
         flags |= vpAnnouncePhoneticRendering;

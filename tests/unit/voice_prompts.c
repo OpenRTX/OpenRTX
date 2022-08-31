@@ -35,7 +35,7 @@ int main()
 	vpQueueFlags_t flags = vp_getVoiceLevelQueueFlags();
 
     vp_init();
-    vp_clearCurrPrompt();
+    vp_flush();
     vp_queueStringTableEntry(&currentLanguage->allChannels);
     vp_play();
     while(true)

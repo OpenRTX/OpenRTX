@@ -238,10 +238,15 @@ void vp_init();
 void vp_terminate();
 
 /**
- * Clear the currently in-progress prompt, to be called before building a new
- * voice prompt sequence.
+ * Stop an in-progress prompt and rewind data pointers to the beginning keeping
+ * prompt data intact. This allows to replay the prompt.
  */
-void vp_clearCurrPrompt();
+void vp_stop();
+
+/**
+ * Stop an in-progress prompt, if present, and clear the prompt data buffer.
+ */
+void vp_flush();
 
 /**
  * Append an individual prompt item to the prompt queue.

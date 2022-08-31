@@ -587,7 +587,7 @@ static int _ui_fsm_loadChannel(int16_t channel_index, bool *sync_rtx)
 
 static void _ui_fsm_confirmVFOInput(bool *sync_rtx)
 {
-    vp_clearCurrPrompt();
+    vp_flush();
     // Switch to TX input
     if(ui_state.input_set == SET_RX)
     {
@@ -637,7 +637,7 @@ static void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx)
     // Advance input position
     ui_state.input_position += 1;
     // clear any prompts in progress.
-    vp_clearCurrPrompt();
+    vp_flush();
     // Save pressed number to calculate frequency and show in GUI
     ui_state.input_number = input_getPressedNumber(msg);
     // queue the digit just pressed.
