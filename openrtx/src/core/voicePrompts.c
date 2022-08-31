@@ -495,8 +495,10 @@ void vp_tick()
     // see if we've finished.
     if(vpCurrentSequence.pos == vpCurrentSequence.length)
     {
-        voicePromptActive     = false;
-        vpCurrentSequence.pos = 0;
+        voicePromptActive              = false;
+        vpCurrentSequence.pos          = 0;
+        vpCurrentSequence.c2DataIndex  = 0;
+        vpCurrentSequence.c2DataLength = 0;
     }
 }
 
