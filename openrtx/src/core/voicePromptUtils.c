@@ -531,14 +531,18 @@ void vp_announceM17Info(const channel_t* channel, const vpQueueFlags_t flags)
 #ifdef GPS_PRESENT
 void vp_announceGPSInfo()
 {
-    if (!state.settings.gps_enabled)
-        return;
-
     vp_flush();
     vpQueueFlags_t flags = vpqIncludeDescriptions
                          | vpqAddSeparatingSilence;
 
     vp_queueStringTableEntry(&currentLanguage->gps);
+    if (!state.settings.gps_enabled)
+    {
+        vp_queueStringTableEntry(&currentLanguage->off);
+        vp_play();
+        
+        return;
+    }
 
     switch (state.gps_data.fix_quality)
     {
