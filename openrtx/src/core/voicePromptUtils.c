@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ui.h>
 
 #include "interfaces/cps_io.h"
 
@@ -729,6 +730,30 @@ void vp_announceSettingsOnOffToggle(const char* const* stringTableStringPtr,
     vp_queueStringTableEntry(val ? &currentLanguage->on : &currentLanguage->off);
 
      playIfNeeded(flags);
+}
+
+void vp_announceScreen(uint8_t ui_screen)
+{
+    switch (ui_screen)
+    {
+    case MAIN_VFO:
+        vp_announceChannelSummary(&state.channel, 0, state.bank);
+        break;
+    case MAIN_MEM:
+        vp_announceChannelSummary(&state.channel, state.channel_index, state.bank);
+        break;
+#ifdef GPS_PRESENT
+    case MENU_GPS:
+        vp_announceGPSInfo();
+        break;
+#endif //            GPS_PRESENT
+    case MENU_ABOUT:
+        vp_announceAboutScreen();
+        break;
+    case SETTINGS_TIMEDATE:
+        vp_announceSettingsTimeDate();
+        break;
+    }    
 }
 
 vpQueueFlags_t vp_getVoiceLevelQueueFlags()

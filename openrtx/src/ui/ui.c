@@ -1776,9 +1776,15 @@ void ui_updateFSM(bool *sync_rtx)
                                 state.settings.gps_enabled = 0;
                             else
                                 state.settings.gps_enabled = 1;
+                            vp_announceSettingsOnOffToggle(&currentLanguage->gpsEnabled, 
+                                                           queueFlags,
+                                                           state.settings.gps_enabled);
                             break;
                         case G_SET_TIME:
                             state.gps_set_time = !state.gps_set_time;
+                            vp_announceSettingsOnOffToggle(&currentLanguage->gpsSetTime, 
+                                                           queueFlags,
+                                                           state.gps_set_time);
                             break;
                         case G_TIMEZONE:
                             if(msg.keys & KEY_LEFT || msg.keys & KEY_UP ||
@@ -1787,6 +1793,7 @@ void ui_updateFSM(bool *sync_rtx)
                             else if(msg.keys & KEY_RIGHT || msg.keys & KEY_DOWN ||
                                     msg.keys & KNOB_RIGHT)
                                 state.settings.utc_timezone += 1;
+                                // todo announce timezone change
                             break;
                         default:
                             state.ui_screen = SETTINGS_GPS;
@@ -1910,16 +1917,9 @@ void ui_updateFSM(bool *sync_rtx)
         else if ((priorUIScreen!=state.ui_screen) && state.settings.vpLevel > vpLow)
         {
             // When we switch to VFO or Channel screen, we need to announce it.
+            // Likewise for information screens.
             // All other cases are handled as needed.
-            if (state.ui_screen == MAIN_VFO)
-            {
-                vp_announceChannelSummary(&state.channel, 0, state.bank);
-            }
-            else if (state.ui_screen == MAIN_MEM)
-            {
-                vp_announceChannelSummary(&state.channel, state.channel_index,
-                                          state.bank);
-            }
+            vp_announceScreen(state.ui_screen);
         }
     }
     else if(event.type == EVENT_STATUS)

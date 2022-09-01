@@ -200,6 +200,11 @@ void vp_announceSettingsOnOffToggle(const char* const* stringTableStringPtr,
                                     const vpQueueFlags_t flags, bool val);
 
 /**
+ * This function is called from  ui_updateFSM to speak informational screens.
+ */
+void vp_announceScreen(uint8_t ui_screen);
+
+/**
  *
  */
 vpQueueFlags_t vp_getVoiceLevelQueueFlags();
