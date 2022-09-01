@@ -93,6 +93,7 @@ typedef struct
     const char* macroMenu;
     const char* forEmergencyUse;
     const char* pressAnyButton;
+    const char* accessibility;
 }
 stringsTable_t;
 

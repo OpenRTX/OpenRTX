@@ -88,5 +88,6 @@ const stringsTable_t englishStrings =
     .macroMenu         = "Macro Menu",
     .forEmergencyUse   = "For emergency use",
     .pressAnyButton    = "press any button.",
+    .accessibility = "Accessibility",
 };
 #endif  // ENGLISHSTRINGS_H
