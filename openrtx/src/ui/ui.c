@@ -912,11 +912,13 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
         break;
         case 7:
             _ui_changeBrightness(-5);
-			vp_announceBrightness(state.settings.brightness, queueFlags);
+            vp_announceSettingsInt(&currentLanguage->brightness, queueFlags,
+                                   state.settings.brightness);
             break;
         case 8:
             _ui_changeBrightness(+5);
-			vp_announceBrightness(state.settings.brightness, queueFlags);
+            vp_announceSettingsInt(&currentLanguage->brightness, queueFlags,
+                                   state.settings.brightness);
             break;
     }
 
@@ -1719,11 +1721,14 @@ void ui_updateFSM(bool *sync_rtx)
                     {
                         case D_BRIGHTNESS:
                             _ui_changeBrightness(-5);
-                            vp_announceBrightness(state.settings.brightness, queueFlags);
+                            vp_announceSettingsInt(&currentLanguage->brightness, queueFlags, 
+                                                   state.settings.brightness);
                             break;
 #ifdef SCREEN_CONTRAST
                         case D_CONTRAST:
                             _ui_changeContrast(-4);
+                            vp_announceSettingsInt(&currentLanguage->brightness, queueFlags, 
+                                                   state.settings.contrast);
                             break;
 #endif
                         case D_TIMER:
@@ -1740,11 +1745,14 @@ void ui_updateFSM(bool *sync_rtx)
                     {
                         case D_BRIGHTNESS:
                             _ui_changeBrightness(+5);
-                            vp_announceBrightness(state.settings.brightness, queueFlags);
+                            vp_announceSettingsInt(&currentLanguage->brightness, queueFlags,
+                                                   state.settings.brightness);
                             break;
 #ifdef SCREEN_CONTRAST
                         case D_CONTRAST:
                             _ui_changeContrast(+4);
+                            vp_announceSettingsInt(&currentLanguage->brightness, queueFlags, 
+                                                   state.settings.contrast);
                             break;
 #endif
                         case D_TIMER:

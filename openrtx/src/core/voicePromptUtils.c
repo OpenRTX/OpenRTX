@@ -72,13 +72,6 @@ static void removeUnnecessaryZerosFromVoicePrompts(char* str)
 
 
 
-void vp_announceVFO()
-{
-    vp_flush();
-    vp_queuePrompt(PROMPT_VFO);
-    vp_play();
-}
-
 void vp_announceChannelName(const channel_t* channel,
                             const uint16_t channelIndex,
                             const vpQueueFlags_t flags)
@@ -382,19 +375,6 @@ void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
         vp_queuePrompt(PROMPT_HERTZ);
     }
 
-    playIfNeeded(flags);
-}
-
-void vp_announceBrightness(const uint8_t brightness, const vpQueueFlags_t flags)
-{
-    clearCurrPromptIfNeeded(flags);
-
-    if (flags & vpqIncludeDescriptions)
-    {
-        vp_queueStringTableEntry(&currentLanguage->brightness);
-    }
-
-    vp_queueInteger(brightness);
     playIfNeeded(flags);
 }
 
@@ -734,6 +714,20 @@ void vp_announceSettingsOnOffToggle(const char* const* stringTableStringPtr,
     vp_queueStringTableEntry(val ? &currentLanguage->on : &currentLanguage->off);
 
      playIfNeeded(flags);
+}
+
+void vp_announceSettingsInt(const char* const* stringTableStringPtr,
+                                    const vpQueueFlags_t flags,
+                                    int val)
+{
+    clearCurrPromptIfNeeded(flags);
+
+    if (flags & vpqIncludeDescriptions)
+        vp_queueStringTableEntry(stringTableStringPtr);
+
+    vp_queueInteger(val);
+
+    playIfNeeded(flags);
 }
 
 void vp_announceScreen(uint8_t ui_screen)

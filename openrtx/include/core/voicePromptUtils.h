@@ -36,10 +36,6 @@ should be used to ensure that the message interupts the current prompt and
 plays immediately.
 */
 
-/**
- *
- */
-void vp_announceVFO();
 
 /**
  *
@@ -121,11 +117,6 @@ void vp_anouncePower(const float power, const vpQueueFlags_t flags);
 /**
  *
  */
-void vp_announceBrightness(const uint8_t brightness, const vpQueueFlags_t flags);
-
-/**
- *
- */
 void vp_announceSquelch(const uint8_t squelch,const vpQueueFlags_t flags);
 
 /**
@@ -198,6 +189,13 @@ void vp_announceSettingsVoiceLevel(const vpQueueFlags_t flags);
  */
 void vp_announceSettingsOnOffToggle(const char* const* stringTableStringPtr,
                                     const vpQueueFlags_t flags, bool val);
+
+/**
+ * This is called to speak generic settings int values.
+ */
+void vp_announceSettingsInt(const char* const* stringTableStringPtr,
+                                    const vpQueueFlags_t flags,
+                                    int val);
 
 /**
  * This function is called from  ui_updateFSM to speak informational screens.
