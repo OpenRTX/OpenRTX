@@ -572,6 +572,7 @@ void vp_announceGPSInfo()
     // lat/long
     char buffer[16] = "\0";
     snprintf(buffer, 16, "%8.6f", state.gps_data.latitude);
+    removeUnnecessaryZerosFromVoicePrompts(buffer);
     vp_queuePrompt(PROMPT_LATITUDE);
     vp_queueString(buffer, vpAnnounceCommonSymbols);
     vp_queuePrompt(PROMPT_NORTH);
@@ -580,6 +581,7 @@ void vp_announceGPSInfo()
     voicePrompt_t direction = (longitude < 0) ? PROMPT_WEST : PROMPT_EAST;
     longitude               = (longitude < 0) ? -longitude : longitude;
     snprintf(buffer, 16, "%8.6f", longitude);
+    removeUnnecessaryZerosFromVoicePrompts(buffer);
 
     vp_queuePrompt(PROMPT_LONGITUDE);
     vp_queueString(buffer, vpAnnounceCommonSymbols);
