@@ -166,7 +166,8 @@ typedef enum
     PROMPT_CARET,           // caret
     PROMPT_LEFT_BRACE,      // left brace
     PROMPT_RIGHT_BRACE,     // right brace
-    PROMPT_CUSTOM1,         // Hotspot
+PROMPT_EDIT, // edit
+PROMPT_CUSTOM1,         // Hotspot
     PROMPT_CUSTOM2,         // ClearNode
     PROMPT_CUSTOM3,         // ShariNode
     PROMPT_CUSTOM4,         // MicroHub

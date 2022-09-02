@@ -36,7 +36,7 @@ extern void _ui_drawMainBottom();
 
 static char priorSelectedMenuName[MAX_ENTRY_LEN] = "\0";
 static char priorSelectedMenuValue[MAX_ENTRY_LEN] = "\0";
-
+static bool priorEditMode = false;
 const char *display_timer_values[] =
 {
     "Off",
@@ -87,7 +87,7 @@ static bool DidSelectedMenuItemChange(char* menuName, char* menuValue)
     return false;
 }
 
-static void announceMenuItemIfNeeded(char* name, char* value)
+static void announceMenuItemIfNeeded(char* name, char* value, bool editMode)
 {
     if (state.settings.vpLevel <= vpLow)
         return;
@@ -111,9 +111,10 @@ static void announceMenuItemIfNeeded(char* name, char* value)
         vp_announceText(name, vpqDefault);
 
     // This is a top-level menu rather than a menu/value pair.
-    if (value == NULL)
+    if (!editMode && (value == NULL))
         vp_queueStringTableEntry(&currentLanguage->menu);
-
+    if (editMode)
+        vp_queuePrompt(PROMPT_EDIT);
     if ((value != NULL) && (*value != '\0'))
         vp_announceText(value, vpqDefault);
 
@@ -144,7 +145,7 @@ void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_
                 // Draw rectangle under selected item, compensating for text height
                 point_t rect_pos = {0, pos.y - layout.menu_h + 3};
                 gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.menu_h, color_white, true);
-                announceMenuItemIfNeeded(entry_buf, NULL);
+                announceMenuItemIfNeeded(entry_buf, NULL, false);
             }
             gfx_print(pos, layout.menu_font, TEXT_ALIGN_LEFT, text_color, entry_buf);
             pos.y += layout.menu_h;
@@ -188,10 +189,17 @@ void _ui_drawMenuListValue(ui_state_t* ui_state, uint8_t selected,
                 }
                 point_t rect_pos = {0, pos.y - layout.menu_h + 3};
                 gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.menu_h, color_white, full_rect);
-                if (!ui_state->edit_mode)
+                bool editModeChanged = priorEditMode != ui_state->edit_mode;
+                priorEditMode = ui_state->edit_mode;
+                // force the menu item to be spoken  when the edit mode changes. 
+                // E.g. when pressing Enter on Display Brightness etc.
+                if (editModeChanged)
+                    priorSelectedMenuName[0]='\0';
+                if (!ui_state->edit_mode || editModeChanged)
                 {// If in edit mode, only want to speak the char being entered,,
             //not repeat the entire display.
-                    announceMenuItemIfNeeded(entry_buf, value_buf);
+                    announceMenuItemIfNeeded(entry_buf, value_buf, 
+                                             ui_state->edit_mode);
                 }
             }
             gfx_print(pos, layout.menu_font, TEXT_ALIGN_LEFT, text_color, entry_buf);
