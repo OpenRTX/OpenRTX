@@ -528,8 +528,8 @@ void vp_announceGPSInfo()
     {
         case 0:
             vp_queueStringTableEntry(&currentLanguage->noFix);
-            break;
-
+            vp_play();
+            return;
         case 1:
             vp_queueString("SPS", vpAnnounceCommonSymbols);
             break;
