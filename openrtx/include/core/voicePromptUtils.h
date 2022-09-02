@@ -38,10 +38,10 @@ plays immediately.
 
 
 /**
- *
+ * Note: channelNumber is 1-based, index is 0-based.
  */
 void vp_announceChannelName(const channel_t* channel,
-                            const uint16_t channelIndex,
+                            const uint16_t channelNumber,
                             const vpQueueFlags_t flags);
 
 /**
@@ -66,10 +66,10 @@ void vp_announceRadioMode(const uint8_t mode, const vpQueueFlags_t flags);
 void vp_announceBandwidth(const uint8_t bandwidth, const vpQueueFlags_t flags);
 
 /**
- *
+ * channelNumber is 1-based, channelIndex is 0-based.
  */
 void vp_announceChannelSummary(const channel_t* channel,
-                               const uint16_t channelIndex, const uint16_t bank);
+                               const uint16_t channelNumber, const uint16_t bank);
 
 /**
  *

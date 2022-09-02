@@ -73,7 +73,7 @@ static void removeUnnecessaryZerosFromVoicePrompts(char* str)
 
 
 void vp_announceChannelName(const channel_t* channel,
-                            const uint16_t channelIndex,
+                            const uint16_t channelNumber,
                             const vpQueueFlags_t flags)
 {
     clearCurrPromptIfNeeded(flags);
@@ -83,12 +83,12 @@ void vp_announceChannelName(const channel_t* channel,
         vp_queuePrompt(PROMPT_CHANNEL);
     }
 
-    vp_queueInteger(channelIndex);
+    vp_queueInteger(channelNumber);
 
     // Only queue the name if it is not the same as the raw number.
-    // Otherwise the radio will say channel 1 1 for channel 1.
+    // Otherwise the radio will repeat  channel 1 channel 1 for channel 1.
     char numAsStr[16] = "\0";
-    snprintf(numAsStr, 16, "%d", channelIndex);
+    snprintf(numAsStr, 16, "Channel%d", channelNumber);
 
     if (strcmp(numAsStr, channel->name) != 0)
     {
@@ -193,7 +193,7 @@ void vp_anouncePower(const float power, const vpQueueFlags_t flags)
 }
 
 void vp_announceChannelSummary(const channel_t* channel,
-                               const uint16_t channelIndex, const uint16_t bank)
+                               const uint16_t channelNumber, const uint16_t bank)
 {
     if (channel == NULL)
         return;
@@ -209,19 +209,21 @@ void vp_announceChannelSummary(const channel_t* channel,
     }
 
     // If VFO mode, announce VFO.
-    // channelIndex will be 0 if called from VFO mode.
-    if (channelIndex == 0)
+    // channelNumber will be 0 if called from VFO mode.
+    if (channelNumber == 0)
     {
         vp_queuePrompt(PROMPT_VFO);
     }
     else
     {
-        vp_announceChannelName(channel, channelIndex, localFlags);
+        vp_announceChannelName(channel, channelNumber, localFlags);
     }
+    addSilenceIfNeeded(localFlags);
 
     vp_announceFrequencies(channel->rx_frequency, channel->tx_frequency,
                         localFlags);
     vp_announceRadioMode(channel->mode, localFlags);
+    addSilenceIfNeeded(localFlags);
 
     if (channel->mode == OPMODE_FM)
     {
@@ -236,12 +238,10 @@ void vp_announceChannelSummary(const channel_t* channel,
     }
     else if (channel->mode == OPMODE_M17)
     {
-        addSilenceIfNeeded(localFlags);
         vp_announceM17Info(channel, localFlags);
     }
     else if (channel->mode == OPMODE_DMR)
     {
-        addSilenceIfNeeded(localFlags);
         vp_announceContactWithIndex(channel->dmr.contact_index, localFlags);
 
         // Force announcement of the words timeslot and colorcode to avoid
@@ -256,7 +256,7 @@ void vp_announceChannelSummary(const channel_t* channel,
     vp_anouncePower(channel->power, localFlags);
     addSilenceIfNeeded(localFlags);
 
-    if (channelIndex > 0)  // i.e. not called from VFO.
+    if (channelNumber > 0)  // i.e. not called from VFO.
     {
         vp_announceBank(bank, localFlags);
     }
@@ -740,7 +740,8 @@ void vp_announceScreen(uint8_t ui_screen)
         vp_announceChannelSummary(&state.channel, 0, state.bank);
         break;
     case MAIN_MEM:
-        vp_announceChannelSummary(&state.channel, state.channel_index, state.bank);
+        vp_announceChannelSummary(&state.channel, state.channel_index+1, 
+                                  state.bank);
         break;
 #ifdef GPS_PRESENT
     case MENU_GPS:

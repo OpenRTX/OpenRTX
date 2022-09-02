@@ -1348,7 +1348,6 @@ void ui_updateFSM(bool *sync_rtx)
                 // M17 Destination callsign input
                 if(ui_state.edit_mode)
                 {
-                    if(state.channel.mode == OPMODE_M17)
                     {
                         if(msg.keys & KEY_ENTER)
                         {
@@ -1422,23 +1421,35 @@ void ui_updateFSM(bool *sync_rtx)
                     }
                     else if(msg.keys & KEY_F1)
                     {
-				    	if (state.settings.vpLevel > vpBeep)
-				    	{// quick press repeat vp, long press summary.
-				    		if (msg.long_press)
-				    			announceChannelSummary(&state.channel, state.channel_index, 
-				    		(vpqInit | vpqPlayImmediately));
-				    		else
-				    			ReplayLastPrompt();
-				    		f1Handled=true;
-				    	}
+                        if (state.settings.vpLevel > vpBeep)
+                        {// quick press repeat vp, long press summary.
+                            if (msg.long_press)
+                            {
+                                vp_announceChannelSummary(&state.channel,
+                                                          state.channel_index+1,
+                                                          state.bank);
+                            }
+                            else
+                            {
+                                vp_replayLastPrompt();
+                            }
+
+                            f1Handled = true;
+                        }
                     }
                     else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
                     {
                         _ui_fsm_loadChannel(state.channel_index + 1, sync_rtx);
+                        vp_announceChannelName(&state.channel,
+                                               state.channel_index+1,
+                                               queueFlags);
                     }
                     else if(msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
                     {
                         _ui_fsm_loadChannel(state.channel_index - 1, sync_rtx);
+                        vp_announceChannelName(&state.channel,
+                                               state.channel_index+1,
+                                               queueFlags);
                     }
                 }
                 break;
