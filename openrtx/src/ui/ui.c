@@ -458,7 +458,7 @@ void _ui_drawLowBatteryScreen()
 
 freq_t _ui_freq_add_digit(freq_t freq, uint8_t pos, uint8_t number)
 {
-    freq_t coefficient = 10;
+    freq_t coefficient = 100;
     for(uint8_t i=0; i < FREQ_DIGITS - pos; i++)
     {
         coefficient *= 10;

@@ -31,7 +31,7 @@
 // Maximum menu entry length
 #define MAX_ENTRY_LEN 21
 // Frequency digits
-#define FREQ_DIGITS 8
+#define FREQ_DIGITS 7
 // Time & Date digits
 #define TIMEDATE_DIGITS 10
 // Max number of UI events
