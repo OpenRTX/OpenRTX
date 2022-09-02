@@ -1719,6 +1719,7 @@ void ui_updateFSM(bool *sync_rtx)
                     {
                         case D_BRIGHTNESS:
                             _ui_changeBrightness(-5);
+                            vp_announceBrightness(state.settings.brightness, queueFlags);
                             break;
 #ifdef SCREEN_CONTRAST
                         case D_CONTRAST:
@@ -1739,6 +1740,7 @@ void ui_updateFSM(bool *sync_rtx)
                     {
                         case D_BRIGHTNESS:
                             _ui_changeBrightness(+5);
+                            vp_announceBrightness(state.settings.brightness, queueFlags);
                             break;
 #ifdef SCREEN_CONTRAST
                         case D_CONTRAST:
