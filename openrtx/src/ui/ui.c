@@ -1053,12 +1053,15 @@ static void _ui_textInputConfirm(char *buf)
 
 static void _ui_textInputDel(char *buf)
 {
+    // announce the char about to be backspaced.
+    if(buf[ui_state.input_position])
+        vp_announceInputChar(buf[ui_state.input_position]);
+
     buf[ui_state.input_position] = '\0';
     // Move back input cursor
     if(ui_state.input_position > 0)
     {
         ui_state.input_position--;
-        vp_announceInputChar(buf[ui_state.input_position]);
     // If we deleted the initial character, reset starting condition
     }
     else
