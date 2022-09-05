@@ -1844,8 +1844,12 @@ void ui_updateFSM(bool *sync_rtx)
                                           false, state.settings.callsign);
                     }
                     else if(msg.keys & KEY_ESC)
+                    {
                         // Discard selected callsign and disable input mode
                         ui_state.edit_mode = false;
+                        vp_announceBuffer(&currentLanguage->callsign, 
+                                          false, state.settings.callsign);
+                    }
                     else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
                             msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
                         _ui_textInputDel(ui_state.new_callsign);
