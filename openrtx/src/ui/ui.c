@@ -76,6 +76,7 @@
 #include <string.h>
 #include <battery.h>
 #include <input.h>
+#include <utils.h>
 #include <hwconfig.h>
 #include <voicePromptUtils.h>
 
@@ -918,7 +919,8 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             else
                 state.channel.power = 100;
             *sync_rtx = true;
-			vp_anouncePower(state.channel.power, queueFlags);
+            float power = dBmToWatt(state.channel.power);
+            vp_anouncePower(power, queueFlags);
             break;
         break;
         case 7:

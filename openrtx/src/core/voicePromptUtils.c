@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <utils.h>
 #include <ui.h>
 
 #include "interfaces/cps_io.h"
@@ -253,7 +254,8 @@ void vp_announceChannelSummary(const channel_t* channel,
     }
 
     addSilenceIfNeeded(localFlags);
-    vp_anouncePower(channel->power, localFlags);
+    float power = dBmToWatt(channel->power);
+    vp_anouncePower(power, localFlags);
     addSilenceIfNeeded(localFlags);
 
     if (channelNumber > 0)  // i.e. not called from VFO.
