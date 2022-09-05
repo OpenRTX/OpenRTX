@@ -271,8 +271,7 @@ void vp_announceInputChar(const char ch)
 
     vp_flush();
 
-    uint8_t flags = vpAnnounceCaps
-                  | vpAnnounceSpace
+    uint8_t flags = vpAnnounceSpace
                   | vpAnnounceCommonSymbols
                   | vpAnnounceLessCommonSymbols;
 
@@ -749,7 +748,36 @@ void vp_announceScreen(uint8_t ui_screen)
     case SETTINGS_TIMEDATE:
         vp_announceSettingsTimeDate();
         break;
+    case SETTINGS_M17:
+        vp_announceBuffer(&currentLanguage->callsign,
+                          false, state.settings.callsign);
+        break;
     }    
+}
+
+void vp_announceBuffer(const char* const* stringTableStringPtr, bool editMode,
+                       const char* buffer)
+{
+    bool isPlaying=vp_isPlaying();
+    
+    vp_flush();
+    
+    if (!isPlaying)
+    {
+        vp_queueStringTableEntry(stringTableStringPtr);
+    
+        if (editMode)
+            vp_queuePrompt(PROMPT_EDIT);
+    }
+    
+    vpFlags_t flags= vpAnnounceCommonSymbols;
+    // add edit mode flags to adjust what is spoken.
+    if (editMode)
+        flags |= vpAnnounceLessCommonSymbols | vpAnnounceSpace | vpAnnounceASCIIValueForUnknownChars;
+    
+    vp_queueString(buffer, flags);
+    
+    vp_play();    
 }
 
 vpQueueFlags_t vp_getVoiceLevelQueueFlags()

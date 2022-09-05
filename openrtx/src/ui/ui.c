@@ -1840,6 +1840,8 @@ void ui_updateFSM(bool *sync_rtx)
                         strncpy(state.settings.callsign, ui_state.new_callsign, 10);
                         ui_state.edit_mode = false;
                         *sync_rtx = true;
+                        vp_announceBuffer(&currentLanguage->callsign, 
+                                          false, state.settings.callsign);
                     }
                     else if(msg.keys & KEY_ESC)
                         // Discard selected callsign and disable input mode
@@ -1849,6 +1851,12 @@ void ui_updateFSM(bool *sync_rtx)
                         _ui_textInputDel(ui_state.new_callsign);
                     else if(input_isNumberPressed(msg))
                         _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
+                    else if (msg.long_press && (msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
+                    {
+                        vp_announceBuffer(&currentLanguage->callsign, 
+                                          true, ui_state.new_callsign);
+                        f1Handled=true;
+                    }
                 }
                 else
                 {
@@ -1858,6 +1866,8 @@ void ui_updateFSM(bool *sync_rtx)
                         ui_state.edit_mode = true;
                         // Reset text input variables
                         _ui_textInputReset(ui_state.new_callsign);
+                        vp_announceBuffer(&currentLanguage->callsign, 
+                                          true, ui_state.new_callsign);
                     }
                     else if(msg.keys & KEY_ESC)
                         _ui_menuBack(MENU_SETTINGS);

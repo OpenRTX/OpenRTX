@@ -203,6 +203,13 @@ void vp_announceSettingsInt(const char* const* stringTableStringPtr,
 void vp_announceScreen(uint8_t ui_screen);
 
 /**
+ * This function is called from  ui_updateFSM to speak string buffers.
+ */
+void vp_announceBuffer(const char* const* stringTableStringPtr, bool editMode,
+                       const char* buffer);
+
+
+/**
  *
  */
 vpQueueFlags_t vp_getVoiceLevelQueueFlags();
