@@ -750,12 +750,13 @@ void vp_announceScreen(uint8_t ui_screen)
         break;
     case SETTINGS_M17:
         vp_announceBuffer(&currentLanguage->callsign,
-                          false, state.settings.callsign);
+                          false, true, state.settings.callsign);
         break;
     }    
 }
 
-void vp_announceBuffer(const char* const* stringTableStringPtr, bool editMode,
+void vp_announceBuffer(const char* const* stringTableStringPtr, 
+                       bool editMode, bool callsign,
                        const char* buffer)
 {
     bool isPlaying=vp_isPlaying();
@@ -772,7 +773,8 @@ void vp_announceBuffer(const char* const* stringTableStringPtr, bool editMode,
     
     vpFlags_t flags= vpAnnounceCommonSymbols;
     // add edit mode flags to adjust what is spoken.
-    if (editMode)
+    // extra symbols not relevant when entering callsign.
+    if (editMode && !callsign)
         flags |= vpAnnounceLessCommonSymbols | vpAnnounceSpace | vpAnnounceASCIIValueForUnknownChars;
     
     vp_queueString(buffer, flags);

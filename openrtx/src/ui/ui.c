@@ -1054,7 +1054,12 @@ static void _ui_textInputConfirm(char *buf)
 static void _ui_textInputDel(char *buf)
 {
     // announce the char about to be backspaced.
-    if(buf[ui_state.input_position])
+    // Note this assumes editing callsign.
+    // If we edit a different buffer which allows the underline char, we may 
+    // not want to exclude it, but when editing callsign, we do not want to say 
+    // underline since it means the field is empty.
+    if(buf[ui_state.input_position]
+    && buf[ui_state.input_position]!='_')
         vp_announceInputChar(buf[ui_state.input_position]);
 
     buf[ui_state.input_position] = '\0';
@@ -1844,14 +1849,14 @@ void ui_updateFSM(bool *sync_rtx)
                         ui_state.edit_mode = false;
                         *sync_rtx = true;
                         vp_announceBuffer(&currentLanguage->callsign, 
-                                          false, state.settings.callsign);
+                                          false, true, state.settings.callsign);
                     }
                     else if(msg.keys & KEY_ESC)
                     {
                         // Discard selected callsign and disable input mode
                         ui_state.edit_mode = false;
                         vp_announceBuffer(&currentLanguage->callsign, 
-                                          false, state.settings.callsign);
+                                          false, true, state.settings.callsign);
                     }
                     else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
                             msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
@@ -1861,7 +1866,7 @@ void ui_updateFSM(bool *sync_rtx)
                     else if (msg.long_press && (msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
                     {
                         vp_announceBuffer(&currentLanguage->callsign, 
-                                          true, ui_state.new_callsign);
+                                          true, true, ui_state.new_callsign);
                         f1Handled=true;
                     }
                 }
@@ -1874,7 +1879,7 @@ void ui_updateFSM(bool *sync_rtx)
                         // Reset text input variables
                         _ui_textInputReset(ui_state.new_callsign);
                         vp_announceBuffer(&currentLanguage->callsign, 
-                                          true, ui_state.new_callsign);
+                                          true, true, ui_state.new_callsign);
                     }
                     else if(msg.keys & KEY_ESC)
                         _ui_menuBack(MENU_SETTINGS);
