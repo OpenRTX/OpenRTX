@@ -663,6 +663,9 @@ void vp_announceSettingsTimeDate()
                                            local_time.year);
     vp_queueString(buffer, vpAnnounceCommonSymbols |
                            vpAnnounceLessCommonSymbols);
+                           
+    vp_queuePrompt(PROMPT_SILENCE);
+    vp_queuePrompt(PROMPT_SILENCE);
 
     snprintf(buffer, 16, "%02d:%02d:%02d", local_time.hour, local_time.minute,
                                            local_time.second);

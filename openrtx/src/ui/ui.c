@@ -481,6 +481,17 @@ static freq_t _ui_freq_add_digit(freq_t freq, uint8_t pos, uint8_t number)
 static void _ui_timedate_add_digit(datetime_t *timedate, uint8_t pos,
                                    uint8_t number)
 {
+    vp_flush();
+    if (pos==3 || pos==5)
+        vp_queuePrompt(PROMPT_SLASH);
+    // just indicates separation of date and time.
+    if (pos==7) // start of time.
+        vp_queuePrompt(PROMPT_SPACE); 
+    if (pos==9 || pos==11)
+        vp_queuePrompt(PROMPT_COLON);
+    vp_queueInteger(number);
+    vp_play();
+    
     switch(pos)
     {
         // Set date
@@ -1684,21 +1695,15 @@ void ui_updateFSM(bool *sync_rtx)
 #ifdef RTC_PRESENT
             // Time&Date settings screen
             case SETTINGS_TIMEDATE:
-                if ((msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
-                {// quick press repeat vp, long press summary.
-                    if (msg.long_press)
-                        vp_announceSettingsTimeDate();
-                    else
-                        vp_replayLastPrompt();
-                    f1Handled = true;
-                }
-                else if(msg.keys & KEY_ENTER)
+                if(msg.keys & KEY_ENTER)
                 {
                     // Switch to set Time&Date mode
                     state.ui_screen = SETTINGS_TIMEDATE_SET;
                     // Reset input position and selection
                     ui_state.input_position = 0;
                     memset(&ui_state.new_timedate, 0, sizeof(datetime_t));
+                    vp_announceBuffer(&currentLanguage->timeAndDate, 
+                                      true, false, "");
                 }
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_SETTINGS);
@@ -1716,6 +1721,7 @@ void ui_updateFSM(bool *sync_rtx)
                                                          state.settings.utc_timezone);
                     rtc_setTime(utc_time);
                     state.time = utc_time;
+                    vp_announceSettingsTimeDate();
                     state.ui_screen = SETTINGS_TIMEDATE;
                 }
                 else if(msg.keys & KEY_ESC)
