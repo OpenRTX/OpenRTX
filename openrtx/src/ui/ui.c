@@ -483,14 +483,14 @@ static void _ui_timedate_add_digit(datetime_t *timedate, uint8_t pos,
                                    uint8_t number)
 {
     vp_flush();
-    if (pos==3 || pos==5)
+    vp_queueInteger(number);
+    if (pos == 2 || pos == 4)
         vp_queuePrompt(PROMPT_SLASH);
     // just indicates separation of date and time.
-    if (pos==7) // start of time.
-        vp_queuePrompt(PROMPT_SPACE); 
-    if (pos==9 || pos==11)
+    if (pos==6) // start of time.
+        vp_queueString("hh:mm", vpAnnounceCommonSymbols|vpAnnounceLessCommonSymbols); 
+    if (pos == 8)
         vp_queuePrompt(PROMPT_COLON);
-    vp_queueInteger(number);
     vp_play();
     
     switch(pos)
@@ -1705,7 +1705,7 @@ void ui_updateFSM(bool *sync_rtx)
                     ui_state.input_position = 0;
                     memset(&ui_state.new_timedate, 0, sizeof(datetime_t));
                     vp_announceBuffer(&currentLanguage->timeAndDate, 
-                                      true, false, "");
+                                      true, false, "dd/mm/yy");
                 }
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_SETTINGS);
