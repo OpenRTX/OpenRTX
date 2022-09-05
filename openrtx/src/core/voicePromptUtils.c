@@ -465,11 +465,6 @@ void vp_announceBank(const uint16_t bank, const vpQueueFlags_t flags)
 {
     clearCurrPromptIfNeeded(flags);
 
-    if (flags & vpqIncludeDescriptions)
-    {
-        vp_queueStringTableEntry(&currentLanguage->banks);
-    }
-
     if (state.bank_enabled)
     {
         bankHdr_t bank_hdr = {0};
