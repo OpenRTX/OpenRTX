@@ -412,6 +412,8 @@ void vp_queueInteger(const int value)
         return;
 
     char buf[12] = {0};  // min: -2147483648, max: 2147483647
+    if (value < 0)
+        vp_queuePrompt(PROMPT_MINUS);
     snprintf(buf, 12, "%d", value);
     vp_queueString(buf, 0);
 }
