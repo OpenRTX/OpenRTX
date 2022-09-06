@@ -209,6 +209,11 @@ void vp_announceBuffer(const char* const* stringTableStringPtr, bool editMode,
                        bool callsign, const char* buffer);
 
 /**
+ * This function is called from  ui_updateFSM to speak display timer changes.
+ */
+void vp_announceDisplayTimer();
+
+/**
  *
  */
 vpQueueFlags_t vp_getVoiceLevelQueueFlags();

@@ -787,6 +787,64 @@ void vp_announceBuffer(const char* const* stringTableStringPtr,
     vp_play();    
 }
 
+void vp_announceDisplayTimer()
+{
+    bool isPlaying=vp_isPlaying();
+    
+    vp_flush();
+    
+    if (!isPlaying)
+        vp_queueStringTableEntry(&currentLanguage->timer);
+    uint8_t seconds = 0;
+    uint8_t minutes = 0;
+    
+    switch (state.settings.display_timer)
+    {
+    case TIMER_OFF:
+        seconds=0;
+        break;
+    case TIMER_5S:
+    case TIMER_10S:
+    case TIMER_15S:
+    case TIMER_20S:
+    case TIMER_25S:
+    case TIMER_30S:
+        seconds=state.settings.display_timer*5;
+        break;
+    case TIMER_1M:
+    case TIMER_2M:
+    case TIMER_3M:
+    case TIMER_4M:
+    case TIMER_5M:
+        minutes = (state.settings.display_timer - (TIMER_1M - 1));
+        break;
+    case TIMER_15M:
+    case TIMER_30M:
+    case TIMER_45M:
+        minutes = 15 * (state.settings.display_timer - (TIMER_15M - 1));
+        break;
+    case TIMER_1H:
+        minutes = 60;
+        break;
+    }
+    if (seconds==0 && minutes==0)
+    {
+        vp_queueStringTableEntry(&currentLanguage->off);
+    }
+    else if (seconds > 0)
+    {
+        vp_queueInteger(seconds);
+        vp_queuePrompt(PROMPT_SECONDS);
+    }
+    else if (minutes > 0)
+    {
+        vp_queueInteger(minutes);
+        vp_queuePrompt(PROMPT_MINUTES);
+    }
+    
+    vp_play();
+}
+
 vpQueueFlags_t vp_getVoiceLevelQueueFlags()
 {
     uint8_t vpLevel = state.settings.vpLevel;
