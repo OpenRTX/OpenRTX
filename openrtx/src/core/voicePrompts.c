@@ -461,7 +461,7 @@ void vp_play()
     audio_enableAmp();
 }
 
-void BeepTick()
+static void beep_tick()
 {
     if (currentBeepDuration > 0)
     {
@@ -473,6 +473,8 @@ void BeepTick()
 
 void vp_tick()
 {
+    beep_tick();
+
     if (voicePromptActive == false)
         return;
 
@@ -517,7 +519,6 @@ void vp_tick()
         vpCurrentSequence.c2DataIndex  = 0;
         vpCurrentSequence.c2DataLength = 0;
     }
-    BeepTick();
 }
 
 bool vp_isPlaying()
