@@ -31,6 +31,7 @@
 
 static const uint32_t VOICE_PROMPTS_DATA_MAGIC   = 0x5056;  //'VP'
 static const uint32_t VOICE_PROMPTS_DATA_VERSION = 0x1000;  // v1000 OpenRTX
+static uint16_t currentBeepDuration=0;
 
 #define VOICE_PROMPTS_TOC_SIZE 350
 #define CODEC2_HEADER_SIZE     7
@@ -311,6 +312,9 @@ void vp_stop()
     vpCurrentSequence.pos          = 0;
     vpCurrentSequence.c2DataIndex  = 0;
     vpCurrentSequence.c2DataLength = 0;
+    // If any beep is playing, immediately stop it.
+    if (currentBeepDuration > 0)
+        platform_beepStop();            
 }
 
 void vp_flush()
@@ -456,6 +460,16 @@ void vp_play()
     audio_enableAmp();
 }
 
+void BeepTick()
+{
+    if (currentBeepDuration > 0)
+    {
+        currentBeepDuration--;
+        if (currentBeepDuration==0)
+            platform_beepStop();            
+    }
+}
+
 void vp_tick()
 {
     if (voicePromptActive == false)
@@ -502,6 +516,7 @@ void vp_tick()
         vpCurrentSequence.c2DataIndex  = 0;
         vpCurrentSequence.c2DataLength = 0;
     }
+    BeepTick();
 }
 
 bool vp_isPlaying()
@@ -513,3 +528,22 @@ bool vp_sequenceNotEmpty()
 {
     return (vpCurrentSequence.length > 0);
 }
+
+void vp_beep(uint16_t freq, uint16_t duration)
+{
+    if (state.settings.vpLevel < vpBeep)
+        return;
+    
+    // Do not play a new one if one is playing.
+    if (currentBeepDuration)
+        return ;
+    // avoid extra long beeps!
+    if (duration > 2000)
+        duration=2000; 
+    
+    currentBeepDuration=duration;
+    
+    platform_beepStart(freq);
+    // See BeepTick for termination.
+}
+

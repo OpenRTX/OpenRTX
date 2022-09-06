@@ -217,5 +217,6 @@ void vp_announceDisplayTimer();
  *
  */
 vpQueueFlags_t vp_getVoiceLevelQueueFlags();
+void vp_playMenuBeepIfNeeded(bool firstItem);
 
 #endif  // VOICE_PROMPT_UTILS_H

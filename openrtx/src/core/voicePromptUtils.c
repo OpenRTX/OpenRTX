@@ -878,3 +878,13 @@ vpQueueFlags_t vp_getVoiceLevelQueueFlags()
     return flags;
 }
 
+void vp_playMenuBeepIfNeeded(bool firstItem)
+{
+    if (state.settings.vpLevel < vpBeep)
+        return;
+    if (firstItem)
+        vp_beep(500, 250);
+    else
+        vp_beep(1000, 250);
+}
+

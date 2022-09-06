@@ -300,4 +300,8 @@ bool vp_isPlaying();
  */
 bool vp_sequenceNotEmpty();
 
+/**
+ * play a beep at a given frequency for a given duration.
+ */
+void vp_beep(uint16_t freq, uint16_t duration);
 #endif

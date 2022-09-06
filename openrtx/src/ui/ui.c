@@ -279,13 +279,13 @@ static void ReleaseFunctionLatchIfNeeded()
         return;
 
     functionLatchTimer = 0;
-    // Play beep for function latch release.
+    vp_beep(200, 500);
 }
 
 static void SetFunctionLatchTimer()
 {
     functionLatchTimer= getTick() + FUNCTION_LATCH_TIMEOUT;
-    // Play beep for set function latch.
+    vp_beep(800, 500);
 }
 
 static bool FunctionKeyIsLatched()
@@ -980,6 +980,7 @@ static void _ui_menuUp(uint8_t menu_entries)
         ui_state.menu_selected -= 1;
     else
         ui_state.menu_selected = menu_entries - 1;
+    vp_playMenuBeepIfNeeded(ui_state.menu_selected==0);
 }
 
 static void _ui_menuDown(uint8_t menu_entries)
@@ -988,6 +989,7 @@ static void _ui_menuDown(uint8_t menu_entries)
         ui_state.menu_selected += 1;
     else
         ui_state.menu_selected = 0;
+    vp_playMenuBeepIfNeeded(ui_state.menu_selected==0);
 }
 
 static void _ui_menuBack(uint8_t prev_state)
@@ -1002,6 +1004,7 @@ static void _ui_menuBack(uint8_t prev_state)
         state.ui_screen = prev_state;
         // Reset menu selection
         ui_state.menu_selected = 0;
+        vp_playMenuBeepIfNeeded(true);
     }
 }
 
