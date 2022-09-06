@@ -335,7 +335,8 @@ void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
 
     if ((rxToneEnabled == false) && (txToneEnabled == false))
     {
-        vp_queuePrompt(PROMPT_TONE);
+        if (flags & vpqIncludeDescriptions)
+            vp_queuePrompt(PROMPT_TONE);
         vp_queueStringTableEntry(&currentLanguage->off);
         playIfNeeded(flags);
         return;
@@ -346,7 +347,8 @@ void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
     // If the rx and tx tones are the same and both are enabled, just say Tone.
     if ((rxToneEnabled && txToneEnabled) && (rxTone == txTone))
     {
-        vp_queuePrompt(PROMPT_TONE);
+        if (flags & vpqIncludeDescriptions)
+            vp_queuePrompt(PROMPT_TONE);
 
         snprintf(buffer, 16, "%3.1f", ctcss_tone[rxTone] / 10.0f);
         vp_queueString(buffer, vpAnnounceCommonSymbols);
@@ -359,18 +361,23 @@ void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
     // Speak the individual rx and tx tones.
     if (rxToneEnabled)
     {
-        vp_queuePrompt(PROMPT_RECEIVE);
-        vp_queuePrompt(PROMPT_TONE);
-
+        if (flags & vpqIncludeDescriptions)
+        {
+            vp_queuePrompt(PROMPT_RECEIVE);
+            vp_queuePrompt(PROMPT_TONE);
+        }
         snprintf(buffer, 16, "%3.1f", ctcss_tone[rxTone] / 10.0f);
         vp_queueString(buffer, vpAnnounceCommonSymbols);
         vp_queuePrompt(PROMPT_HERTZ);
     }
     if (txToneEnabled)
     {
-        vp_queuePrompt(PROMPT_TRANSMIT);
-        vp_queuePrompt(PROMPT_TONE);
-
+        if (flags & vpqIncludeDescriptions)
+        {
+            vp_queuePrompt(PROMPT_TRANSMIT);
+            vp_queuePrompt(PROMPT_TONE);
+        }
+        
         snprintf(buffer, 16, "%3.1f", ctcss_tone[txTone] / 10.0f);
         vp_queueString(buffer, vpAnnounceCommonSymbols);
         vp_queuePrompt(PROMPT_HERTZ);
