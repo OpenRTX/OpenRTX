@@ -69,7 +69,8 @@ void vp_announceBandwidth(const uint8_t bandwidth, const vpQueueFlags_t flags);
  * channelNumber is 1-based, channelIndex is 0-based.
  */
 void vp_announceChannelSummary(const channel_t* channel,
-                               const uint16_t channelNumber, const uint16_t bank);
+                               const uint16_t channelNumber, const uint16_t bank, 
+                               const vpSummaryInfoFlags_t infoFlags);
 
 /**
  *

@@ -194,7 +194,8 @@ void vp_anouncePower(const float power, const vpQueueFlags_t flags)
 }
 
 void vp_announceChannelSummary(const channel_t* channel,
-                               const uint16_t channelNumber, const uint16_t bank)
+                               const uint16_t channelNumber, const uint16_t bank, 
+                               const vpSummaryInfoFlags_t infoFlags)
 {
     if (channel == NULL)
         return;
@@ -208,57 +209,71 @@ void vp_announceChannelSummary(const channel_t* channel,
     {
         localFlags |= vpqIncludeDescriptions;
     }
+    if (infoFlags&vpSplashInfo)
+        vp_queueStringTableEntry(&currentLanguage->openRTX);
 
     // If VFO mode, announce VFO.
     // channelNumber will be 0 if called from VFO mode.
-    if (channelNumber == 0)
+    if (infoFlags&vpChannelNameOrVFO)
     {
-        vp_queuePrompt(PROMPT_VFO);
-    }
-    else
-    {
-        vp_announceChannelName(channel, channelNumber, localFlags);
-    }
-    addSilenceIfNeeded(localFlags);
-
-    vp_announceFrequencies(channel->rx_frequency, channel->tx_frequency,
-                        localFlags);
-    vp_announceRadioMode(channel->mode, localFlags);
-    addSilenceIfNeeded(localFlags);
-
-    if (channel->mode == OPMODE_FM)
-    {
-        vp_announceBandwidth(channel->bandwidth, localFlags);
-        addSilenceIfNeeded(localFlags);
-
-        if (channel->fm.rxToneEn || channel->fm.txToneEn)
+        if (channelNumber == 0)
         {
-            vp_announceCTCSS(channel->fm.rxToneEn, channel->fm.rxTone,
-                             channel->fm.txToneEn, channel->fm.txTone, localFlags);
+            vp_queuePrompt(PROMPT_VFO);
         }
+        else
+        {
+            vp_announceChannelName(channel, channelNumber, localFlags);
+        }
+        addSilenceIfNeeded(localFlags);
     }
-    else if (channel->mode == OPMODE_M17)
+    if (infoFlags&vpFrequencies)
+        vp_announceFrequencies(channel->rx_frequency, channel->tx_frequency,
+                               localFlags);
+                               
+    if (infoFlags&vpRadioMode)
     {
-        vp_announceM17Info(channel, localFlags);
+        vp_announceRadioMode(channel->mode, localFlags);
+        addSilenceIfNeeded(localFlags);
     }
-    else if (channel->mode == OPMODE_DMR)
+    if (infoFlags&vpModeSpecificInfo)
     {
-        vp_announceContactWithIndex(channel->dmr.contact_index, localFlags);
+        if (channel->mode == OPMODE_FM)
+        {
+            vp_announceBandwidth(channel->bandwidth, localFlags);
+            addSilenceIfNeeded(localFlags);
 
-        // Force announcement of the words timeslot and colorcode to avoid
-        // ambiguity.
-        vp_announceTimeslot(channel->dmr.dmr_timeslot,
-                         (localFlags | vpqIncludeDescriptions));
-        vp_announceColorCode(channel->dmr.rxColorCode, channel->dmr.txColorCode,
-                          (localFlags | vpqIncludeDescriptions));
+            if (channel->fm.rxToneEn || channel->fm.txToneEn)
+            {
+                vp_announceCTCSS(channel->fm.rxToneEn, channel->fm.rxTone,
+                                channel->fm.txToneEn, channel->fm.txTone, localFlags);
+            }
+        }
+        else if (channel->mode == OPMODE_M17)
+        {
+            vp_announceM17Info(channel, localFlags);
+        }
+        else if (channel->mode == OPMODE_DMR)
+        {
+            vp_announceContactWithIndex(channel->dmr.contact_index, localFlags);
+
+            // Force announcement of the words timeslot and colorcode to avoid
+            // ambiguity.
+            vp_announceTimeslot(channel->dmr.dmr_timeslot,
+                               (localFlags | vpqIncludeDescriptions));
+            vp_announceColorCode(channel->dmr.rxColorCode, channel->dmr.txColorCode,
+                                (localFlags | vpqIncludeDescriptions));
+        }
+
+        addSilenceIfNeeded(localFlags);
     }
-
-    addSilenceIfNeeded(localFlags);
-    float power = dBmToWatt(channel->power);
-    vp_anouncePower(power, localFlags);
-    addSilenceIfNeeded(localFlags);
-
-    if (channelNumber > 0)  // i.e. not called from VFO.
+    
+    if (infoFlags&vpPower)
+    {
+        float power = dBmToWatt(channel->power);
+        vp_anouncePower(power, localFlags);
+        addSilenceIfNeeded(localFlags);
+    }
+    if ((infoFlags&vpBankNameOrAllChannels) &&(channelNumber > 0))  // i.e. not called from VFO.
     {
         vp_announceBank(bank, localFlags);
     }
@@ -740,14 +755,17 @@ void vp_announceSettingsInt(const char* const* stringTableStringPtr,
 
 void vp_announceScreen(uint8_t ui_screen)
 {
+    const vpSummaryInfoFlags_t infoFlags = vpChannelNameOrVFO|vpFrequencies |
+                                           vpRadioMode;
+
     switch (ui_screen)
     {
     case MAIN_VFO:
-        vp_announceChannelSummary(&state.channel, 0, state.bank);
+        vp_announceChannelSummary(&state.channel, 0, state.bank, infoFlags);
         break;
     case MAIN_MEM:
         vp_announceChannelSummary(&state.channel, state.channel_index+1, 
-                                  state.bank);
+                                  state.bank, infoFlags);
         break;
 #ifdef GPS_PRESENT
     case MENU_GPS:

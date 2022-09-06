@@ -228,6 +228,20 @@ typedef enum
 }
 VoicePromptVerbosity_T;
 
+typedef enum
+{
+    vpChannelNameOrVFO = 0x01,
+    vpFrequencies = 0x02,
+    vpRadioMode = 0x04,
+    vpModeSpecificInfo = 0x08,
+    vpPower = 0x10,
+    vpBankNameOrAllChannels = 0x20,
+    vpSplashInfo = 0x40,
+    vpAllInfoExceptSplash = 0x3f,
+    vpAllInfo = 0xff
+} 
+vpSummaryInfoFlags_t;
+
 /**
  * Initialise the voice prompt system and load vp table of contents.
  */

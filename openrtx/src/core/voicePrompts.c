@@ -282,9 +282,10 @@ void vp_init()
     codec_init();
 
     if (state.settings.vpLevel > vpBeep)
-    {
-        vp_queueStringTableEntry(&currentLanguage->openRTX);
-        vp_play();
+    {// announce the splash msg and VFO.
+        vpSummaryInfoFlags_t infoFlags = vpChannelNameOrVFO | vpFrequencies |
+                                         vpRadioMode | vpSplashInfo;
+        vp_announceChannelSummary(&state.channel, 0, 0, infoFlags);
     }
 }
 
