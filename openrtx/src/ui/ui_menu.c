@@ -37,6 +37,8 @@ extern void _ui_drawMainBottom();
 static char priorSelectedMenuName[MAX_ENTRY_LEN] = "\0";
 static char priorSelectedMenuValue[MAX_ENTRY_LEN] = "\0";
 static bool priorEditMode = false;
+static uint32_t lastValueUpdate=0;
+
 const char *display_timer_values[] =
 {
     "Off",
@@ -80,10 +82,35 @@ static bool DidSelectedMenuItemChange(char* menuName, char* menuValue)
 
     if ((menuValue != NULL) && (strcmp(menuValue, priorSelectedMenuValue) != 0))
     {
+        // avoid chatter when value changes rapidly!
+    uint32_t now=getTick();
+        
+        uint32_t interval=now - lastValueUpdate;
+        lastValueUpdate = now;
+        if (interval < 1000)
+            return false;
         strcpy(priorSelectedMenuValue, menuValue);
         return true;
     }
 
+    return false;
+}
+/*
+Normally we determine if we should say the word menu if a menu entry has no 
+associated value that can be changed.
+There are some menus however with no associated value which are not submenus, 
+e.g. the entries under Channels, contacts, Info, 
+which are navigable but not modifyable.
+*/
+static bool ScreenContainsReadOnlyEntries(int menuScreen)
+{
+    switch (menuScreen)
+    {
+    case MENU_CHANNEL:
+    case MENU_CONTACTS:
+    case MENU_INFO:
+        return true;
+    }
     return false;
 }
 
@@ -109,10 +136,14 @@ static void announceMenuItemIfNeeded(char* name, char* value, bool editMode)
     // If no value is supplied, or, no prompt is in progress, announce the name.
     if ((voicePromptWasPlaying == false) || (value == NULL) || (*value == '\0'))
         vp_announceText(name, vpqDefault);
-
-    // This is a top-level menu rather than a menu/value pair.
-    if (!editMode && (value == NULL))
+// We determine if we should say the word Menu as follows:
+// The name has no  associated value ,
+// i.e. does not represent a modifyable name/value pair.
+// We're not in edit mode.
+// The screen is navigable but entries  are readonly.
+    if (!value && !editMode && !ScreenContainsReadOnlyEntries(state.ui_screen))
         vp_queueStringTableEntry(&currentLanguage->menu);
+    
     if (editMode)
         vp_queuePrompt(PROMPT_EDIT);
     if ((value != NULL) && (*value != '\0'))
