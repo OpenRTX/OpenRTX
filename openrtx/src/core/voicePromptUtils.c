@@ -772,6 +772,12 @@ void vp_announceScreen(uint8_t ui_screen)
         vp_announceGPSInfo();
         break;
 #endif //            GPS_PRESENT
+    case MENU_BACKUP:
+        vp_announceBackupScreen();
+        break;
+    case MENU_RESTORE:
+        vp_announceRestoreScreen();
+        break;
     case MENU_ABOUT:
         vp_announceAboutScreen();
         break;

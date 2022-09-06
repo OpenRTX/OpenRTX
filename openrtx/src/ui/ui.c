@@ -1666,6 +1666,11 @@ void ui_updateFSM(bool *sync_rtx)
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_TOP);
                 break;
+            case MENU_BACKUP:
+            case MENU_RESTORE:
+                if(msg.keys & KEY_ESC)
+                    _ui_menuBack(MENU_TOP);
+                break;
             // Info menu screen
             case MENU_INFO:
                 if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)

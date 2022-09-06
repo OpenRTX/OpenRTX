@@ -614,9 +614,7 @@ void _ui_drawMenuBackup(ui_state_t* ui_state)
     gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->pressPTTToStart);
 
-    // read this screen.
-    vp_announceBackupScreen();
-    if (!platform_getPttStatus())
+   if (!platform_getPttStatus())
         return;
 
     state.devStatus     = DATATRANSFER;
@@ -642,7 +640,6 @@ void _ui_drawMenuRestore(ui_state_t* ui_state)
     gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->pressPTTToStart);
 
-    vp_announceRestoreScreen();
     if (!platform_getPttStatus())
         return;
 
