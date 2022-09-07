@@ -89,5 +89,6 @@ const stringsTable_t englishStrings =
     .forEmergencyUse   = "For emergency use",
     .pressAnyButton    = "press any button.",
     .accessibility = "Accessibility",
+    .usedHeap="Used heap"
 };
 #endif  // ENGLISHSTRINGS_H

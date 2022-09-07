@@ -94,6 +94,7 @@ typedef struct
     const char* forEmergencyUse;
     const char* pressAnyButton;
     const char* accessibility;
+    const char* usedHeap;
 }
 stringsTable_t;
 
