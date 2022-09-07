@@ -623,7 +623,7 @@ void vp_announceGPSInfo()
     addSilenceIfNeeded(flags);
 
     vp_queuePrompt(PROMPT_SATELLITES);
-    vp_queueInteger(__builtin_popcount(state.gps_data.active_sats));
+    vp_queueInteger(state.gps_data.satellites_in_view);
 
     vp_play();
 }
