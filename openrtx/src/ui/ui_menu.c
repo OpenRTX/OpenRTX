@@ -125,17 +125,10 @@ static void announceMenuItemIfNeeded(char* name, char* value, bool editMode)
     if (DidSelectedMenuItemChange(name, value) == false)
         return;
 
-    // See if we are already in the middle of speaking a menu item.
-    // e.g. when changing a value with left or right, we don't want to repeat the
-    // prompt if arrowing rapidly.
-    bool voicePromptWasPlaying = vp_isPlaying();
-
     // Stop any prompt in progress and/or clear the buffer.
     vp_flush();
 
-    // If no value is supplied, or, no prompt is in progress, announce the name.
-    if ((voicePromptWasPlaying == false) || (value == NULL) || (*value == '\0'))
-        vp_announceText(name, vpqDefault);
+    vp_announceText(name, vpqDefault);
 // We determine if we should say the word Menu as follows:
 // The name has no  associated value ,
 // i.e. does not represent a modifyable name/value pair.
