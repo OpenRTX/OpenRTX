@@ -488,8 +488,8 @@ void vp_tick()
 
             vpCurrentSequence.c2DataIndex  = 0;
             vpCurrentSequence.c2DataStart  = tableOfContents[promptNumber];
-            vpCurrentSequence.c2DataLength = tableOfContents[promptNumber + 1]
-                                           - tableOfContents[promptNumber];
+            vpCurrentSequence.c2DataLength = ((tableOfContents[promptNumber + 1]
+                                           - tableOfContents[promptNumber])/8 * 8);
         }
 
         while (vpCurrentSequence.c2DataIndex < vpCurrentSequence.c2DataLength)
