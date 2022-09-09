@@ -545,6 +545,7 @@ void vp_beep(uint16_t freq, uint16_t duration)
         duration=2000; 
     
     currentBeepDuration=duration;
+    audio_enableAmp();
     
     platform_beepStart(freq);
     // See BeepTick for termination.
