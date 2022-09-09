@@ -116,7 +116,7 @@ static bool ScreenContainsReadOnlyEntries(int menuScreen)
 
 static void announceMenuItemIfNeeded(char* name, char* value, bool editMode)
 {
-    if (state.settings.vpLevel <= vpLow)
+    if (state.settings.vpLevel < vpLow)
         return;
 
     if ((name == NULL) || (*name == '\0'))
