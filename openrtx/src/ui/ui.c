@@ -279,13 +279,13 @@ static void ReleaseFunctionLatchIfNeeded()
         return;
 
     functionLatchTimer = 0;
-    vp_beep(200, 500);
+    vp_beep(400, 10);
 }
 
 static void SetFunctionLatchTimer()
 {
     functionLatchTimer= getTick() + FUNCTION_LATCH_TIMEOUT;
-    vp_beep(800, 500);
+    vp_beep(800, 10);
 }
 
 static bool FunctionKeyIsLatched()

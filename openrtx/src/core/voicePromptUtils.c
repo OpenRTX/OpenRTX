@@ -914,8 +914,8 @@ void vp_playMenuBeepIfNeeded(bool firstItem)
     if (state.settings.vpLevel < vpBeep)
         return;
     if (firstItem)
-        vp_beep(500, 250);
+        vp_beep(500, 5);
     else
-        vp_beep(1000, 250);
+        vp_beep(1000, 5);
 }
 
