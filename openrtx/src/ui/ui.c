@@ -1966,6 +1966,9 @@ void ui_updateFSM(bool *sync_rtx)
             // All other cases are handled as needed.
             vp_announceScreen(state.ui_screen);
         }
+        // generic beep for any key
+        if ((msg.keys &0xffff) && (state.settings.vpLevel >= vpBeep))
+            vp_beep(750, 3);
     }
     else if(event.type == EVENT_STATUS)
     {

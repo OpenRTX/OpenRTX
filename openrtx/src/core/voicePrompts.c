@@ -532,6 +532,7 @@ bool vp_sequenceNotEmpty()
     return (vpCurrentSequence.length > 0);
 }
 
+// Duration seems to be in tenths of a second.
 void vp_beep(uint16_t freq, uint16_t duration)
 {
     if (state.settings.vpLevel < vpBeep)
@@ -541,8 +542,8 @@ void vp_beep(uint16_t freq, uint16_t duration)
     if (currentBeepDuration)
         return ;
     // avoid extra long beeps!
-    if (duration > 2000)
-        duration=2000; 
+    if (duration > 20)
+        duration=20; 
     
     currentBeepDuration=duration;
     audio_enableAmp();
