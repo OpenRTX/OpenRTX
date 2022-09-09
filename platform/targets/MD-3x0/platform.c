@@ -184,13 +184,12 @@ void platform_ledOff(led_t led)
 
 void platform_beepStart(uint16_t freq)
 {
-    /* TODO */
-    (void) freq;
+    toneGen_beepOn((float)freq, 64, 0);
 }
 
 void platform_beepStop()
 {
-    /* TODO */
+    toneGen_beepOff();
 }
 
 const void *platform_getCalibrationData()
