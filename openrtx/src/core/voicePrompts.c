@@ -295,10 +295,7 @@ void vp_terminate()
     if (voicePromptActive)
     {
         audio_disableAmp();
-        codec_stop();
-
-        vpCurrentSequence.pos = 0;
-        voicePromptActive     = false;
+        vp_flush();
     }
 
     codec_terminate();
@@ -314,6 +311,8 @@ void vp_stop()
     vpCurrentSequence.pos          = 0;
     vpCurrentSequence.c2DataIndex  = 0;
     vpCurrentSequence.c2DataLength = 0;
+    codec_stop();
+
     // If any beep is playing, immediately stop it.
     if (currentBeepDuration > 0)
         platform_beepStop();            
@@ -519,6 +518,7 @@ void vp_tick()
         vpCurrentSequence.pos          = 0;
         vpCurrentSequence.c2DataIndex  = 0;
         vpCurrentSequence.c2DataLength = 0;
+        codec_stop();
     }
 }
 
