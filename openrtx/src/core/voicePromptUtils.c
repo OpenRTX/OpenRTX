@@ -911,7 +911,9 @@ vpQueueFlags_t vp_getVoiceLevelQueueFlags()
 
 void vp_playMenuBeepIfNeeded(bool firstItem)
 {
-    if (state.settings.vpLevel < vpBeep)
+// Since menus talk at levels above beep, there's no need to run this or you'll 
+// get an unwanted click.
+    if (state.settings.vpLevel != vpBeep)
         return;
     if (firstItem)
         vp_beep(500, 3);

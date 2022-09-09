@@ -279,13 +279,13 @@ static void ReleaseFunctionLatchIfNeeded()
         return;
 
     functionLatchTimer = 0;
-    vp_beep(400, 10);
+    vp_beep(400, 7);
 }
 
 static void SetFunctionLatchTimer()
 {
     functionLatchTimer= getTick() + FUNCTION_LATCH_TIMEOUT;
-    vp_beep(800, 10);
+    vp_beep(800, 7);
 }
 
 static bool FunctionKeyIsLatched()
@@ -1966,8 +1966,10 @@ void ui_updateFSM(bool *sync_rtx)
             // All other cases are handled as needed.
             vp_announceScreen(state.ui_screen);
         }
-        // generic beep for any key
-        if ((msg.keys &0xffff) && (state.settings.vpLevel >= vpBeep))
+        // generic beep for any key if beep is enabled.
+        // At vp levels higher than beep, keys will generate voice so no need 
+        // to beep or you'll get an unwanted click.
+        if ((msg.keys &0xffff) && (state.settings.vpLevel == vpBeep))
             vp_beep(750, 3);
     }
     else if(event.type == EVENT_STATUS)
