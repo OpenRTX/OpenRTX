@@ -17,9 +17,10 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
-
+#include <interfaces/platform.h>
 #include <interfaces/keyboard.h>
 #include <interfaces/audio.h>
+#include "voicePromptUtils.h"
 #include <ui/ui_strings.h>
 #include <voicePrompts.h>
 #include <audio_codec.h>
