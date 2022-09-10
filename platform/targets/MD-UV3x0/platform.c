@@ -184,7 +184,15 @@ void platform_ledOff(led_t led)
 
 void platform_beepStart(uint16_t freq)
 {
-    toneGen_beepOn((float)freq, 64, 0);
+    // calculate appropriate volume.
+    uint8_t vol = platform_getVolumeLevel();
+    // Since beeps have been requested, we do not want to have 0 volume.
+    // We also do not want the volume to be excessive.
+    if (vol < 10)
+        vol = 5;
+    if (vol > 176)
+        vol = 176;
+    toneGen_beepOn((float)freq, vol, 0);
 }
 
 void platform_beepStop()
