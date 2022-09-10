@@ -58,6 +58,11 @@ const char *display_timer_values[] =
     "45 min",
     "1 hour"
 };
+void _ui_reset_menu_anouncement_tracking()
+ {
+     *priorSelectedMenuName='\0';
+     *priorSelectedMenuValue='\0';
+ }
 
 static bool DidSelectedMenuItemChange(char* menuName, char* menuValue)
 {
@@ -113,7 +118,7 @@ static bool ScreenContainsReadOnlyEntries(int menuScreen)
     }
     return false;
 }
-
+ 
 static void announceMenuItemIfNeeded(char* name, char* value, bool editMode)
 {
     if (state.settings.vpLevel < vpLow)

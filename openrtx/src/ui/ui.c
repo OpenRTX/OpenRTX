@@ -117,6 +117,7 @@ extern void _ui_drawSettingsM17(ui_state_t* ui_state);
 extern void _ui_drawSettingsVoicePrompts(ui_state_t* ui_state);
 extern void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state);
 extern bool _ui_drawMacroMenu();
+extern void _ui_reset_menu_anouncement_tracking();
 
 const char *menu_items[] =
 {
@@ -1971,6 +1972,9 @@ void ui_updateFSM(bool *sync_rtx)
         // to beep or you'll get an unwanted click.
         if ((msg.keys &0xffff) && (state.settings.vpLevel == vpBeep))
             vp_beep(750, 3);
+        // If we exit and re-enter the same menu, we want to ensure it speaks.
+        if (msg.keys & KEY_ESC)
+            _ui_reset_menu_anouncement_tracking();
     }
     else if(event.type == EVENT_STATUS)
     {
