@@ -79,6 +79,7 @@
 #include <utils.h>
 #include <hwconfig.h>
 #include <voicePromptUtils.h>
+#include <beeps.h>
 
 #define FUNCTION_LATCH_TIMEOUT 3000
 
@@ -280,13 +281,13 @@ static void ReleaseFunctionLatchIfNeeded()
         return;
 
     functionLatchTimer = 0;
-    vp_beep(400, 7);
+    vp_beep(BEEP_FUNCTION_LATCH_OFF, LONG_BEEP);
 }
 
 static void SetFunctionLatchTimer()
 {
     functionLatchTimer= getTick() + FUNCTION_LATCH_TIMEOUT;
-    vp_beep(800, 7);
+    vp_beep(BEEP_FUNCTION_LATCH_ON, LONG_BEEP);
 }
 
 static bool FunctionKeyIsLatched()
@@ -1967,11 +1968,11 @@ void ui_updateFSM(bool *sync_rtx)
             // All other cases are handled as needed.
             vp_announceScreen(state.ui_screen);
         }
-        // generic beep for any key if beep is enabled.
+        // generic beep for any keydown if beep is enabled.
         // At vp levels higher than beep, keys will generate voice so no need 
         // to beep or you'll get an unwanted click.
         if ((msg.keys &0xffff) && (state.settings.vpLevel == vpBeep))
-            vp_beep(750, 3);
+            vp_beep(BEEP_KEY_GENERIC, SHORT_BEEP);
         // If we exit and re-enter the same menu, we want to ensure it speaks.
         if (msg.keys & KEY_ESC)
             _ui_reset_menu_anouncement_tracking();

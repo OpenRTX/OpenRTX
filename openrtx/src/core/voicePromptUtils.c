@@ -30,7 +30,7 @@
 #include <string.h>
 #include <utils.h>
 #include <ui.h>
-
+#include <beeps.h>
 #include "interfaces/cps_io.h"
 
 static void clearCurrPromptIfNeeded(const vpQueueFlags_t flags)
@@ -916,8 +916,8 @@ void vp_playMenuBeepIfNeeded(bool firstItem)
     if (state.settings.vpLevel != vpBeep)
         return;
     if (firstItem)
-        vp_beep(500, 3);
+        vp_beep(BEEP_MENU_FIRST_ITEM, SHORT_BEEP);
     else
-        vp_beep(1000, 3);
+        vp_beep(BEEP_MENU_ITEM, SHORT_BEEP);
 }
 
