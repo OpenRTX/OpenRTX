@@ -45,6 +45,7 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/dsp.cpp',
                'openrtx/src/core/cps.c',
                'openrtx/src/core/crc.c',
+               'openrtx/src/core/slip.c',
                'openrtx/src/core/datetime.c',
                'openrtx/src/core/openrtx.c',
                'openrtx/src/core/audio_codec.c',
@@ -781,6 +782,10 @@ vp_test = executable('vp_test',
                       sources : unit_test_src + ['tests/unit/voice_prompts.c'],
                       kwargs  : unit_test_opts)
 
+slip_test = executable('slip_test',
+                      sources : unit_test_src + ['tests/unit/slip.c'],
+                      kwargs  : unit_test_opts)
+
 test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
 ## test('M17 Demodulator Test',  m17_demodulator_test) # Skipped for now as this test no longer works after an M17 refactor
@@ -789,3 +794,4 @@ test('Codeplug Test',         cps_test)
 test('Linux InputStream Test', linux_inputStream_test)
 test('Sine Test',             sine_test)
 ## test('Voice Prompts Test',    vp_test) # Skipped for now as this test no longer works
+test('Slip Test',             slip_test)
