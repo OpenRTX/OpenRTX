@@ -316,6 +316,16 @@ void vp_terminate()
     #endif
 }
 
+static void beep_flush()
+{
+    if (currentBeepDuration > 0)
+        platform_beepStop();
+    
+    currentBeepDuration = 0;
+    memset(beepSeriesBuffer, 0, sizeof(beepSeriesBuffer));
+    beepSeriesIndex=0;
+}
+
 void vp_stop()
 {
     voicePromptActive              = false;
@@ -325,11 +335,7 @@ void vp_stop()
     codec_stop();
 
     // If any beep is playing, immediately stop it.
-    if (currentBeepDuration > 0)
-        platform_beepStop();            
-    
-    memset(beepSeriesBuffer, 0, sizeof(beepSeriesBuffer));
-    beepSeriesIndex=0;
+    beep_flush();
 }
 
 void vp_flush()
@@ -497,8 +503,7 @@ static bool beep_tick()
             }
             else
             {
-                memset(beepSeriesBuffer, 0, sizeof(beepSeriesBuffer));
-                beepSeriesIndex=0;
+                beep_flush();
             }
         }
         return true;
