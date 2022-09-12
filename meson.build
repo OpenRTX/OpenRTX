@@ -45,6 +45,7 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/dsp.cpp',
                'openrtx/src/core/cps.c',
                'openrtx/src/core/crc.c',
+               'openrtx/src/core/slip.c',
                'openrtx/src/core/datetime.c',
                'openrtx/src/core/openrtx.c',
                'openrtx/src/core/audio_codec.c',
@@ -904,6 +905,9 @@ vp_test = executable('vp_test',
 minmea_conversion_test = executable('minmea_conversion_test',
                                      sources : unit_test_src + ['tests/unit/convert_minmea_coord.c'],
                                      kwargs  : unit_test_opts)
+slip_test = executable('slip_test',
+                      sources : unit_test_src + ['tests/unit/slip.c'],
+                      kwargs  : unit_test_opts)
 
 test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
@@ -914,3 +918,4 @@ test('Linux InputStream Test', linux_inputStream_test)
 test('Sine Test',             sine_test)
 ## test('Voice Prompts Test',    vp_test) # Skipped for now as this test no longer works
 test('minmea conversion Test', minmea_conversion_test)
+test('Slip Test',             slip_test)
