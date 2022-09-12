@@ -30,5 +30,6 @@
 #define BEEP_FUNCTION_LATCH_ON 800
 #define BEEP_FUNCTION_LATCH_OFF 400
 #define BEEP_KEY_GENERIC 750
+extern const uint16_t BOOT_MELODY[];
 
 #endif // BEEPS_H_INCLUDED

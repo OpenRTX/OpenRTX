@@ -29,11 +29,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <beeps.h>
 
 static const uint32_t VOICE_PROMPTS_DATA_MAGIC   = 0x5056;  //'VP'
 static const uint32_t VOICE_PROMPTS_DATA_VERSION = 0x1000;  // v1000 OpenRTX
 static uint16_t currentBeepDuration=0;
+// max buff size for beep series (melody).
+#define beepSeriesMax 256
 
+static beep_data_t beepSeriesBuffer[beepSeriesMax];
+static uint8_t beepSeriesIndex = 0;
+ static bool delayBeepUntilTick=false;
+ const uint16_t BOOT_MELODY[]={400, 3, 600, 3, 800, 3, 0, 0};
+ 
 #define VOICE_PROMPTS_TOC_SIZE 350
 #define CODEC2_HEADER_SIZE     7
 #define VP_SEQUENCE_BUF_SIZE   128
@@ -281,8 +289,11 @@ void vp_init()
 
     // Initialize codec2 module
     codec_init();
-
-    if (state.settings.vpLevel > vpBeep)
+    if (state.settings.vpLevel == vpBeep)
+    {
+        vp_beepSeries(BOOT_MELODY);
+    }
+    else if (state.settings.vpLevel > vpBeep)
     {// announce the splash msg and VFO.
         vpSummaryInfoFlags_t infoFlags = vpChannelNameOrVFO | vpFrequencies |
                                          vpRadioMode | vpSplashInfo;
@@ -316,6 +327,9 @@ void vp_stop()
     // If any beep is playing, immediately stop it.
     if (currentBeepDuration > 0)
         platform_beepStop();            
+    
+    memset(beepSeriesBuffer, 0, sizeof(beepSeriesBuffer));
+    beepSeriesIndex=0;
 }
 
 void vp_flush()
@@ -461,19 +475,41 @@ void vp_play()
     audio_enableAmp();
 }
 
-static void beep_tick()
+static bool beep_tick()
 {
     if (currentBeepDuration > 0)
     {
+        if (delayBeepUntilTick)
+        {
+            platform_beepStart(beepSeriesBuffer[beepSeriesIndex].freq);
+            delayBeepUntilTick=false;
+        }
         currentBeepDuration--;
         if (currentBeepDuration==0)
-            platform_beepStop();            
+        {
+            platform_beepStop();
+            // see if there are any more in the series to play.
+            if (beepSeriesBuffer[beepSeriesIndex+1].freq && beepSeriesBuffer[beepSeriesIndex+1].duration)
+            {
+                beepSeriesIndex++;
+                currentBeepDuration=beepSeriesBuffer[beepSeriesIndex].duration;
+                platform_beepStart(beepSeriesBuffer[beepSeriesIndex].freq);
+            }
+            else
+            {
+                memset(beepSeriesBuffer, 0, sizeof(beepSeriesBuffer));
+                beepSeriesIndex=0;
+            }
+        }
+        return true;
     }
+    return false;
 }
 
 void vp_tick()
 {
-    beep_tick();
+    if (beep_tick())
+        return;
 
     if (voicePromptActive == false)
         return;
@@ -547,8 +583,40 @@ void vp_beep(uint16_t freq, uint16_t duration)
     
     currentBeepDuration=duration;
     audio_enableAmp();
-    
+    beepSeriesBuffer[0].freq=freq;
+    beepSeriesBuffer[0].duration=duration;
+    beepSeriesBuffer[1].freq =0;
+    beepSeriesBuffer[1].duration =0;
+    beepSeriesIndex=0;
     platform_beepStart(freq);
     // See BeepTick for termination.
 }
+
+/*
+We delay the playing of the melody until the first time vp_tick is called 
+because there is a sleep on the splash screen which would make the first note 
+play extra long.
+*/
+void vp_beepSeries(const uint16_t* beepSeries)
+{
+    if (state.settings.vpLevel < vpBeep)
+        return;
+    
+    if (currentBeepDuration)
+        return ;
+    
+    audio_enableAmp();
+
+    if (!beepSeries) return;
+    
+    memcpy(beepSeriesBuffer, beepSeries, beepSeriesMax*sizeof(beep_data_t));
+    // Always ensure that the array is terminated!
+    beepSeriesBuffer[beepSeriesMax-1].freq = 0;
+    beepSeriesBuffer[beepSeriesMax-1].duration = 0;
+    
+    beepSeriesIndex=0;
+    currentBeepDuration=beepSeriesBuffer[0].duration;
+    delayBeepUntilTick = true;
+}
+
 

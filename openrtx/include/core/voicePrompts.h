@@ -242,6 +242,14 @@ typedef enum
 } 
 vpSummaryInfoFlags_t;
 
+typedef struct
+{
+    uint16_t freq;
+    uint16_t duration;
+}
+beep_data_t;
+
+
 /**
  * Initialise the voice prompt system and load vp table of contents.
  */
@@ -318,4 +326,9 @@ bool vp_sequenceNotEmpty();
  * play a beep at a given frequency for a given duration.
  */
 void vp_beep(uint16_t freq, uint16_t duration);
+/**
+ * play a series of beeps at a given frequency for a given duration.
+ * Array is freq, duration, ... 0, 0 to terminate series.
+ */
+void vp_beepSeries(const uint16_t* beepSeries);
 #endif
