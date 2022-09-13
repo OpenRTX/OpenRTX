@@ -527,104 +527,131 @@ void vp_announceM17Info(const channel_t* channel, const vpQueueFlags_t flags)
 }
 
 #ifdef GPS_PRESENT
-void vp_announceGPSInfo()
+void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
 {
     vp_flush();
     vpQueueFlags_t flags = vpqIncludeDescriptions
                          | vpqAddSeparatingSilence;
-
-    vp_queueStringTableEntry(&currentLanguage->gps);
-    if (!state.settings.gps_enabled)
+                         
+    if (gpsInfoFlags & vpGPSIntro)
     {
-        vp_queueStringTableEntry(&currentLanguage->off);
-        vp_play();
-        
-        return;
-    }
-
-    switch (state.gps_data.fix_quality)
-    {
-        case 0:
-            vp_queueStringTableEntry(&currentLanguage->noFix);
+        vp_queueStringTableEntry(&currentLanguage->gps);
+        if (!state.settings.gps_enabled)
+        {
+            vp_queueStringTableEntry(&currentLanguage->off);
             vp_play();
+    
             return;
-        case 1:
-            vp_queueString("SPS", vpAnnounceCommonSymbols);
-            break;
-
-        case 2:
-            vp_queueString("DGPS", vpAnnounceCommonSymbols);
-            break;
-
-        case 3:
-            vp_queueString("PPS", vpAnnounceCommonSymbols);
-            break;
-
-        case 6:
-            vp_queueStringTableEntry(&currentLanguage->fixLost);
-            break;
-
-        default:
-            vp_queueStringTableEntry(&currentLanguage->error);
-
-            vp_play();
-
-            return;
+        }
     }
-
-    addSilenceIfNeeded(flags);
-
-    switch (state.gps_data.fix_type)
+    
+    if (gpsInfoFlags & vpGPSFixQuality)
     {
-        case 2:
-            vp_queueString("2D", vpAnnounceCommonSymbols);
-            break;
+        switch (state.gps_data.fix_quality)
+        {
+            case 0:
+                vp_queueStringTableEntry(&currentLanguage->noFix);
+                vp_play();
+                return;
+            case 1:
+                vp_queueString("SPS", vpAnnounceCommonSymbols);
+                break;
 
-        case 3:
-            vp_queueString("3D", vpAnnounceCommonSymbols);
-            break;
+            case 2:
+                vp_queueString("DGPS", vpAnnounceCommonSymbols);
+                break;
+
+            case 3:
+                vp_queueString("PPS", vpAnnounceCommonSymbols);
+                break;
+
+            case 6:
+                vp_queueStringTableEntry(&currentLanguage->fixLost);
+                break;
+
+            default:
+                vp_queueStringTableEntry(&currentLanguage->error);
+
+                vp_play();
+
+                return;
+        }
+
+        addSilenceIfNeeded(flags);
+        }
+        if (gpsInfoFlags & vpGPSFixType)
+        {
+        switch (state.gps_data.fix_type)
+        {
+            case 2:
+                vp_queueString("2D", vpAnnounceCommonSymbols);
+                break;
+
+            case 3:
+                vp_queueString("3D", vpAnnounceCommonSymbols);
+                break;
+        }
+
+        addSilenceIfNeeded(flags);
     }
-
-    addSilenceIfNeeded(flags);
-
-    // lat/long
+    
     char buffer[16] = "\0";
-    snprintf(buffer, 16, "%8.6f", state.gps_data.latitude);
-    removeUnnecessaryZerosFromVoicePrompts(buffer);
-    vp_queuePrompt(PROMPT_LATITUDE);
-    vp_queueString(buffer, vpAnnounceCommonSymbols);
-    vp_queuePrompt(PROMPT_NORTH);
+    
+    if (gpsInfoFlags & vpGPSLatitude)
+    {
+        // lat/long
+        snprintf(buffer, 16, "%8.6f", state.gps_data.latitude);
+        removeUnnecessaryZerosFromVoicePrompts(buffer);
+        vp_queuePrompt(PROMPT_LATITUDE);
+        vp_queueString(buffer, vpAnnounceCommonSymbols);
+        vp_queuePrompt(PROMPT_NORTH);
+    }
+    
+    if (gpsInfoFlags & vpGPSLongitude)
+    {
+        float longitude         = state.gps_data.longitude;
+        voicePrompt_t direction = (longitude < 0) ? PROMPT_WEST : PROMPT_EAST;
+        longitude               = (longitude < 0) ? -longitude : longitude;
+        snprintf(buffer, 16, "%8.6f", longitude);
+        removeUnnecessaryZerosFromVoicePrompts(buffer);
 
-    float longitude         = state.gps_data.longitude;
-    voicePrompt_t direction = (longitude < 0) ? PROMPT_WEST : PROMPT_EAST;
-    longitude               = (longitude < 0) ? -longitude : longitude;
-    snprintf(buffer, 16, "%8.6f", longitude);
-    removeUnnecessaryZerosFromVoicePrompts(buffer);
+        vp_queuePrompt(PROMPT_LONGITUDE);
+        vp_queueString(buffer, vpAnnounceCommonSymbols);
+        vp_queuePrompt(direction);
+        addSilenceIfNeeded(flags);
+    }
+    
+    if (gpsInfoFlags & vpGPSSpeed)
+    {
+        // speed/altitude:
+        snprintf(buffer, 16, "%4.1fkm/h", state.gps_data.speed);
+        vp_queuePrompt(PROMPT_SPEED);
+        vp_queueString(buffer, vpAnnounceCommonSymbols);
+    }
+    
+    if (gpsInfoFlags & vpGPSAltitude)
+    {
+        vp_queuePrompt(PROMPT_ALTITUDE);
 
-    vp_queuePrompt(PROMPT_LONGITUDE);
-    vp_queueString(buffer, vpAnnounceCommonSymbols);
-    vp_queuePrompt(direction);
-    addSilenceIfNeeded(flags);
-
-    // speed/altitude:
-    snprintf(buffer, 16, "%4.1fkm/h", state.gps_data.speed);
-    vp_queuePrompt(PROMPT_SPEED);
-    vp_queueString(buffer, vpAnnounceCommonSymbols);
-    vp_queuePrompt(PROMPT_ALTITUDE);
-
-    snprintf(buffer, 16, "%4.1fm", state.gps_data.altitude);
-    vp_queueString(buffer, vpAnnounceCommonSymbols);
-    addSilenceIfNeeded(flags);
-
-    snprintf(buffer, 16, "%3.1f", state.gps_data.tmg_true);
-    vp_queuePrompt(PROMPT_COMPASS);
-    vp_queueString(buffer, vpAnnounceCommonSymbols);
-    vp_queuePrompt(PROMPT_DEGREES);
-    addSilenceIfNeeded(flags);
-
-    vp_queuePrompt(PROMPT_SATELLITES);
-    vp_queueInteger(state.gps_data.satellites_in_view);
-
+        snprintf(buffer, 16, "%4.1fm", state.gps_data.altitude);
+        vp_queueString(buffer, vpAnnounceCommonSymbols);
+        addSilenceIfNeeded(flags);
+    }
+    
+    if (gpsInfoFlags & vpGPSDirection)
+    {
+        snprintf(buffer, 16, "%3.1f", state.gps_data.tmg_true);
+        vp_queuePrompt(PROMPT_COMPASS);
+        vp_queueString(buffer, vpAnnounceCommonSymbols);
+        vp_queuePrompt(PROMPT_DEGREES);
+        addSilenceIfNeeded(flags);
+    }
+    
+    if (gpsInfoFlags & vpGPSSatCount)
+    {
+        vp_queuePrompt(PROMPT_SATELLITES);
+        vp_queueInteger(state.gps_data.satellites_in_view);
+    }
     vp_play();
 }
 #endif // GPS_PRESENT
@@ -769,7 +796,7 @@ void vp_announceScreen(uint8_t ui_screen)
         break;
 #ifdef GPS_PRESENT
     case MENU_GPS:
-        vp_announceGPSInfo();
+        vp_announceGPSInfo(vpGPSAll);
         break;
 #endif //            GPS_PRESENT
     case MENU_BACKUP:

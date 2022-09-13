@@ -155,7 +155,7 @@ void vp_announceM17Info(const channel_t* channel, const vpQueueFlags_t flags);
  *
  */
 #ifdef GPS_PRESENT
-void vp_announceGPSInfo();
+void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags);
 #endif
 
 /**

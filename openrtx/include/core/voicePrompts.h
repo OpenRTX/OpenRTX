@@ -242,6 +242,22 @@ typedef enum
 } 
 vpSummaryInfoFlags_t;
 
+typedef enum
+{
+    vpGPSNone=0,
+    vpGPSIntro=0x01,
+    vpGPSFixQuality = 0x02,
+    vpGPSFixType = 0x04,
+    vpGPSLatitude = 0x08,
+    vpGPSLongitude = 0x10, 
+    vpGPSSpeed = 0x20,
+    vpGPSAltitude = 0x40,
+    vpGPSDirection = 0x80,
+    vpGPSSatCount = 0x100,
+    vpGPSAll = 0xff,
+} 
+vpGPSInfoFlags_t;
+
 typedef struct
 {
     uint16_t freq;

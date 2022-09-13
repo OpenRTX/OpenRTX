@@ -1132,6 +1132,42 @@ void ui_saveState()
     last_state = state;
 }
 
+#ifdef GPS_PRESENT
+static float priorGPSSpeed = 0;
+static float priorGPSAltitude = 0;
+static float  priorGPSDirection = 0;
+static uint32_t vpGPSLastUpdate = 0;
+
+static vpGPSInfoFlags_t GetGPSDirectionOrSpeedChanged()
+{
+    uint32_t now = getTick();
+    if (now - vpGPSLastUpdate < 10000)
+        return vpGPSNone;
+    vpGPSLastUpdate=now;
+    
+    if (!state.settings.gps_enabled) 
+        return vpGPSNone;
+    if (state.gps_data.fix_quality == 0 || state.gps_data.fix_quality >= 6)
+        return vpGPSNone;
+    
+    vpGPSInfoFlags_t whatChanged=  vpGPSNone;
+    if (state.gps_data.speed != priorGPSSpeed)
+        whatChanged |= vpGPSSpeed;
+    
+        if (state.gps_data.altitude != priorGPSAltitude)
+            whatChanged |= vpGPSAltitude;
+        
+    if (state.gps_data.tmg_true != priorGPSDirection)
+        whatChanged |= vpGPSDirection;
+    
+    priorGPSSpeed = state.gps_data.speed;
+    priorGPSAltitude = state.gps_data.altitude;
+    priorGPSDirection = state.gps_data.tmg_true;
+    
+    return whatChanged;
+}
+#endif // GPS_PRESENT
+
 void ui_updateFSM(bool *sync_rtx)
 {
     // Check for events
@@ -1591,7 +1627,7 @@ void ui_updateFSM(bool *sync_rtx)
                 if ((msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
                 {// quick press repeat vp, long press summary.
                     if (msg.long_press)
-                        vp_announceGPSInfo();
+                        vp_announceGPSInfo(vpGPSAll);
                     else
                         vp_replayLastPrompt();
                     f1Handled = true;
@@ -1980,6 +2016,16 @@ void ui_updateFSM(bool *sync_rtx)
     else if(event.type == EVENT_STATUS)
     {
         ReleaseFunctionLatchIfNeeded();
+#ifdef GPS_PRESENT
+        if ((state.ui_screen == MENU_GPS) && 
+            (!txOngoing && !rtx_rxSquelchOpen()) &&
+            (state.settings.vpLevel > vpLow))
+        {// automatically read speed and direction changes only!
+            vpGPSInfoFlags_t whatChanged = GetGPSDirectionOrSpeedChanged();
+            if (whatChanged != vpGPSNone)
+                vp_announceGPSInfo(whatChanged);
+        }
+#endif //            GPS_PRESENT
 
         if (txOngoing || rtx_rxSquelchOpen())
         {
