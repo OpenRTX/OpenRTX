@@ -63,6 +63,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <math.h>
 #include <ui.h>
 #include <rtx.h>
 #include <interfaces/platform.h>
@@ -1140,29 +1141,51 @@ static uint32_t vpGPSLastUpdate = 0;
 
 static vpGPSInfoFlags_t GetGPSDirectionOrSpeedChanged()
 {
-    uint32_t now = getTick();
-    if (now - vpGPSLastUpdate < 10000)
-        return vpGPSNone;
-    vpGPSLastUpdate=now;
-    
     if (!state.settings.gps_enabled) 
         return vpGPSNone;
     if (state.gps_data.fix_quality == 0 || state.gps_data.fix_quality >= 6)
         return vpGPSNone;
+
+    uint32_t now = getTick();
+    if (now - vpGPSLastUpdate < 10000)
+        return vpGPSNone;
+    
+    vpGPSLastUpdate=now;
     
     vpGPSInfoFlags_t whatChanged=  vpGPSNone;
-    if (state.gps_data.speed != priorGPSSpeed)
+    
+    if (state.gps_data.fix_quality != priorGPSFixQuality)
+    {
+        whatChanged |= vpGPSFixQuality;
+        priorGPSFixQuality= state.gps_data.fix_quality;
+    }
+    
+    if (state.gps_data.fix_type != priorGPSFixType)
+    {
+        whatChanged |= vpGPSFixType;
+        priorGPSFixType = state.gps_data.fix_type;
+    }
+    
+    float speedDiff=fabs(state.gps_data.speed - priorGPSSpeed);
+    if (speedDiff >= 1)
+    {
         whatChanged |= vpGPSSpeed;
+        priorGPSSpeed = state.gps_data.speed;
+    }
     
-        if (state.gps_data.altitude != priorGPSAltitude)
-            whatChanged |= vpGPSAltitude;
-        
-    if (state.gps_data.tmg_true != priorGPSDirection)
+    float altitudeDiff = fabs(state.gps_data.altitude - priorGPSAltitude);
+    if (altitudeDiff >= 5)
+    {
+        whatChanged |= vpGPSAltitude;
+        priorGPSAltitude = state.gps_data.altitude;
+    }
+    
+    float degreeDiff = fabs(state.gps_data.tmg_true - priorGPSDirection);
+    if (degreeDiff  >= 1)
+    {
         whatChanged |= vpGPSDirection;
-    
-    priorGPSSpeed = state.gps_data.speed;
-    priorGPSAltitude = state.gps_data.altitude;
-    priorGPSDirection = state.gps_data.tmg_true;
+        priorGPSDirection = state.gps_data.tmg_true;
+    }
     
     return whatChanged;
 }
