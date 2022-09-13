@@ -614,6 +614,7 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
     }
     
     char buffer[17] = "\0";
+    
     if (gpsInfoFlags & vpGPSDirection)
     {
         vp_queuePrompt(PROMPT_COMPASS);
@@ -623,19 +624,19 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
             vp_queueString(buffer, vpAnnounceCommonSymbols);
             vp_queuePrompt(PROMPT_DEGREES);
         }
-        if (state.gps_data.tmg_true <= 45 || state.gps_data.tmg_true >= 315)
+        if (state.gps_data.tmg_true < (45+margin) || state.gps_data.tmg_true > (315-margin))
         {
             vp_queuePrompt(PROMPT_NORTH);
         }
-        if (state.gps_data.tmg_true >= 45 && state.gps_data.tmg_true <= 135)
+        if (state.gps_data.tmg_true > (45-margin) && state.gps_data.tmg_true < (135+margin))
         {
             vp_queuePrompt(PROMPT_EAST);
         }
-        if (state.gps_data.tmg_true >= 135 && state.gps_data.tmg_true <= 225)
+        if (state.gps_data.tmg_true > (135-margin) && state.gps_data.tmg_true < (225+margin))
         {
             vp_queuePrompt(PROMPT_SOUTH);
         }
-        if (state.gps_data.tmg_true >= 225 && state.gps_data.tmg_true <= 315)
+        if (state.gps_data.tmg_true > (225-margin) && state.gps_data.tmg_true < (315+margin))
         {
             vp_queuePrompt(PROMPT_WEST);
         }
