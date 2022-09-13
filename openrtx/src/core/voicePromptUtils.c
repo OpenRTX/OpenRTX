@@ -595,7 +595,7 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
         addSilenceIfNeeded(flags);
     }
     
-    char buffer[16] = "\0";
+    char buffer[17] = "\0";
     
     if (gpsInfoFlags & vpGPSSpeed)
     {

@@ -254,7 +254,7 @@ typedef enum
     vpGPSAltitude = 0x40,
     vpGPSDirection = 0x80,
     vpGPSSatCount = 0x100,
-    vpGPSAll = 0xff,
+    vpGPSAll = 0x1ff,
 } 
 vpGPSInfoFlags_t;
 
