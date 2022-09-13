@@ -652,6 +652,10 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
         }
         else if (state.gps_data.tmg_true > 177 || state.gps_data.tmg_true < 183)
         {
+            vp_queuePrompt(PROMPT_SOUTH);
+        }
+        else if (state.gps_data.tmg_true > 267 || state.gps_data.tmg_true < 273)
+        {
             vp_queuePrompt(PROMPT_WEST);
         }
         else
