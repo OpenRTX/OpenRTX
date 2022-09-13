@@ -597,30 +597,6 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
     
     char buffer[16] = "\0";
     
-    if (gpsInfoFlags & vpGPSLatitude)
-    {
-        // lat/long
-        snprintf(buffer, 16, "%8.6f", state.gps_data.latitude);
-        removeUnnecessaryZerosFromVoicePrompts(buffer);
-        vp_queuePrompt(PROMPT_LATITUDE);
-        vp_queueString(buffer, vpAnnounceCommonSymbols);
-        vp_queuePrompt(PROMPT_NORTH);
-    }
-    
-    if (gpsInfoFlags & vpGPSLongitude)
-    {
-        float longitude         = state.gps_data.longitude;
-        voicePrompt_t direction = (longitude < 0) ? PROMPT_WEST : PROMPT_EAST;
-        longitude               = (longitude < 0) ? -longitude : longitude;
-        snprintf(buffer, 16, "%8.6f", longitude);
-        removeUnnecessaryZerosFromVoicePrompts(buffer);
-
-        vp_queuePrompt(PROMPT_LONGITUDE);
-        vp_queueString(buffer, vpAnnounceCommonSymbols);
-        vp_queuePrompt(direction);
-        addSilenceIfNeeded(flags);
-    }
-    
     if (gpsInfoFlags & vpGPSSpeed)
     {
         // speed/altitude:
@@ -665,6 +641,30 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
             vp_queuePrompt(PROMPT_DEGREES); 
         }
         
+        addSilenceIfNeeded(flags);
+    }
+    
+    if (gpsInfoFlags & vpGPSLatitude)
+    {
+        // lat/long
+        snprintf(buffer, 16, "%8.6f", state.gps_data.latitude);
+        removeUnnecessaryZerosFromVoicePrompts(buffer);
+        vp_queuePrompt(PROMPT_LATITUDE);
+        vp_queueString(buffer, vpAnnounceCommonSymbols);
+        vp_queuePrompt(PROMPT_NORTH);
+    }
+    
+    if (gpsInfoFlags & vpGPSLongitude)
+    {
+        float longitude         = state.gps_data.longitude;
+        voicePrompt_t direction = (longitude < 0) ? PROMPT_WEST : PROMPT_EAST;
+        longitude               = (longitude < 0) ? -longitude : longitude;
+        snprintf(buffer, 16, "%8.6f", longitude);
+        removeUnnecessaryZerosFromVoicePrompts(buffer);
+
+        vp_queuePrompt(PROMPT_LONGITUDE);
+        vp_queueString(buffer, vpAnnounceCommonSymbols);
+        vp_queuePrompt(direction);
         addSilenceIfNeeded(flags);
     }
     
