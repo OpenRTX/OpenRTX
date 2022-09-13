@@ -640,10 +640,27 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
     
     if (gpsInfoFlags & vpGPSDirection)
     {
-        snprintf(buffer, 16, "%3.1f", state.gps_data.tmg_true);
         vp_queuePrompt(PROMPT_COMPASS);
-        vp_queueString(buffer, vpAnnounceCommonSymbols);
-        vp_queuePrompt(PROMPT_DEGREES);
+
+        if (state.gps_data.tmg_true < 3 || state.gps_data.tmg_true > 357)
+        {
+            vp_queuePrompt(PROMPT_NORTH);
+        }
+        else if (state.gps_data.tmg_true > 87 || state.gps_data.tmg_true < 93)
+        {
+            vp_queuePrompt(PROMPT_EAST);
+        }
+        else if (state.gps_data.tmg_true > 177 || state.gps_data.tmg_true < 183)
+        {
+            vp_queuePrompt(PROMPT_WEST);
+        }
+        else
+        {
+            snprintf(buffer, 16, "%3.1f", state.gps_data.tmg_true);
+            vp_queueString(buffer, vpAnnounceCommonSymbols);
+            vp_queuePrompt(PROMPT_DEGREES); 
+        }
+        
         addSilenceIfNeeded(flags);
     }
     
