@@ -2018,8 +2018,9 @@ void ui_updateFSM(bool *sync_rtx)
         ReleaseFunctionLatchIfNeeded();
 #ifdef GPS_PRESENT
         if ((state.ui_screen == MENU_GPS) && 
-            (!txOngoing && !rtx_rxSquelchOpen()) &&
-            (state.settings.vpLevel > vpLow))
+            (!vp_isPlaying()) &&
+            (state.settings.vpLevel > vpLow) &&
+            (!txOngoing && !rtx_rxSquelchOpen()))
         {// automatically read speed and direction changes only!
             vpGPSInfoFlags_t whatChanged = GetGPSDirectionOrSpeedChanged();
             if (whatChanged != vpGPSNone)

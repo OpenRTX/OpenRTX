@@ -646,15 +646,15 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
         {
             vp_queuePrompt(PROMPT_NORTH);
         }
-        else if (state.gps_data.tmg_true > 87 || state.gps_data.tmg_true < 93)
+        else if (state.gps_data.tmg_true > 87 && state.gps_data.tmg_true < 93)
         {
             vp_queuePrompt(PROMPT_EAST);
         }
-        else if (state.gps_data.tmg_true > 177 || state.gps_data.tmg_true < 183)
+        else if (state.gps_data.tmg_true > 177 && state.gps_data.tmg_true < 183)
         {
             vp_queuePrompt(PROMPT_SOUTH);
         }
-        else if (state.gps_data.tmg_true > 267 || state.gps_data.tmg_true < 273)
+        else if (state.gps_data.tmg_true > 267 && state.gps_data.tmg_true < 273)
         {
             vp_queuePrompt(PROMPT_WEST);
         }
