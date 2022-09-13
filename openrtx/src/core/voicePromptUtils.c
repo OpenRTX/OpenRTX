@@ -527,6 +527,23 @@ void vp_announceM17Info(const channel_t* channel, const vpQueueFlags_t flags)
 }
 
 #ifdef GPS_PRESENT
+// cardinal point plus or minus this value is still considered cardinal point.
+#define margin 3
+
+static bool IsCompassCloseEnoughToCardinalPoint()
+{
+    float tmg_true = state.gps_data.tmg_true;
+    
+    return (tmg_true < (0+margin) || tmg_true > (360-margin)) || // north 
+           (tmg_true > (90-margin) && tmg_true < (90+margin)) || // east
+           (tmg_true > (180-margin) && tmg_true < (180+margin)) || // south
+           (tmg_true > (270-margin) && tmg_true < (270+margin)) || // west
+           (tmg_true > (45-margin) && tmg_true < (45+margin)) || // n.w.
+           (tmg_true > (135-margin) && tmg_true < (135+margin)) || // s.e.
+           (tmg_true > (225-margin) && tmg_true < (225+margin)) || // s.w.
+           (tmg_true > (315-margin) && tmg_true < (315+margin)); // n.w.
+}
+
 void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
 {
     vp_flush();
@@ -578,9 +595,10 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
         }
 
         addSilenceIfNeeded(flags);
-        }
-        if (gpsInfoFlags & vpGPSFixType)
-        {
+    }
+    
+    if (gpsInfoFlags & vpGPSFixType)
+    {
         switch (state.gps_data.fix_type)
         {
             case 2:
@@ -596,6 +614,34 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
     }
     
     char buffer[17] = "\0";
+    if (gpsInfoFlags & vpGPSDirection)
+    {
+        vp_queuePrompt(PROMPT_COMPASS);
+        if (!IsCompassCloseEnoughToCardinalPoint())
+        {
+            snprintf(buffer, 16, "%3.1f", state.gps_data.tmg_true);
+            vp_queueString(buffer, vpAnnounceCommonSymbols);
+            vp_queuePrompt(PROMPT_DEGREES);
+        }
+        if (state.gps_data.tmg_true <= 45 || state.gps_data.tmg_true >= 315)
+        {
+            vp_queuePrompt(PROMPT_NORTH);
+        }
+        if (state.gps_data.tmg_true >= 45 && state.gps_data.tmg_true <= 135)
+        {
+            vp_queuePrompt(PROMPT_EAST);
+        }
+        if (state.gps_data.tmg_true >= 135 && state.gps_data.tmg_true <= 225)
+        {
+            vp_queuePrompt(PROMPT_SOUTH);
+        }
+        if (state.gps_data.tmg_true >= 225 && state.gps_data.tmg_true <= 315)
+        {
+            vp_queuePrompt(PROMPT_WEST);
+        }
+
+        addSilenceIfNeeded(flags);
+    }
     
     if (gpsInfoFlags & vpGPSSpeed)
     {
@@ -611,36 +657,6 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
 
         snprintf(buffer, 16, "%4.1fm", state.gps_data.altitude);
         vp_queueString(buffer, vpAnnounceCommonSymbols);
-        addSilenceIfNeeded(flags);
-    }
-    
-    if (gpsInfoFlags & vpGPSDirection)
-    {
-        vp_queuePrompt(PROMPT_COMPASS);
-
-        if (state.gps_data.tmg_true < 3 || state.gps_data.tmg_true > 357)
-        {
-            vp_queuePrompt(PROMPT_NORTH);
-        }
-        else if (state.gps_data.tmg_true > 87 && state.gps_data.tmg_true < 93)
-        {
-            vp_queuePrompt(PROMPT_EAST);
-        }
-        else if (state.gps_data.tmg_true > 177 && state.gps_data.tmg_true < 183)
-        {
-            vp_queuePrompt(PROMPT_SOUTH);
-        }
-        else if (state.gps_data.tmg_true > 267 && state.gps_data.tmg_true < 273)
-        {
-            vp_queuePrompt(PROMPT_WEST);
-        }
-        else
-        {
-            snprintf(buffer, 16, "%3.1f", state.gps_data.tmg_true);
-            vp_queueString(buffer, vpAnnounceCommonSymbols);
-            vp_queuePrompt(PROMPT_DEGREES); 
-        }
-        
         addSilenceIfNeeded(flags);
     }
     
