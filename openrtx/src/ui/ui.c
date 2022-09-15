@@ -85,11 +85,9 @@ extern void _ui_drawVFOMiddle();
 extern void _ui_drawMEMMiddle();
 extern void _ui_drawVFOBottom();
 extern void _ui_drawMEMBottom();
-extern void _ui_drawMainVFO();
+extern void _ui_drawMainVFO(ui_state_t* ui_state);
 extern void _ui_drawMainVFOInput(ui_state_t* ui_state);
-extern void _ui_drawMainMEM();
-extern void _ui_drawModeVFO();
-extern void _ui_drawModeMEM();
+extern void _ui_drawMainMEM(ui_state_t* ui_state);
 /* UI menu functions, their implementation is in "ui_menu.c" */
 extern void _ui_drawMenuTop(ui_state_t* ui_state);
 extern void _ui_drawMenuBank(ui_state_t* ui_state);
@@ -787,8 +785,6 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
         case 5:
             // Cycle through radio modes
             if(state.channel.mode == OPMODE_FM)
-                state.channel.mode = OPMODE_DMR;
-            else if(state.channel.mode == OPMODE_DMR)
                 state.channel.mode = OPMODE_M17;
             else if(state.channel.mode == OPMODE_M17)
                 state.channel.mode = OPMODE_FM;
@@ -995,66 +991,109 @@ void ui_updateFSM(bool *sync_rtx)
         {
             // VFO screen
             case MAIN_VFO:
-                if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
+                // M17 Destination callsign input
+                if(ui_state.edit_mode)
                 {
-                    // Increment TX and RX frequency of 12.5KHz
-                    if(_ui_freq_check_limits(state.channel.rx_frequency + 12500) &&
-                       _ui_freq_check_limits(state.channel.tx_frequency + 12500))
+                    if(state.channel.mode == OPMODE_M17)
                     {
-                        state.channel.rx_frequency += 12500;
-                        state.channel.tx_frequency += 12500;
-                        *sync_rtx = true;
+                        if(msg.keys & KEY_ENTER)
+                        {
+                            _ui_textInputConfirm(ui_state.new_callsign);
+                            // Save selected dst ID and disable input mode
+                            strncpy(state.m17_data.dst_addr, ui_state.new_callsign, 10);
+                            ui_state.edit_mode = false;
+                            *sync_rtx = true;
+                        }
+                        else if(msg.keys & KEY_HASH)
+                        {
+                            // Save selected dst ID and disable input mode
+                            strncpy(state.m17_data.dst_addr, "", 1);
+                            ui_state.edit_mode = false;
+                            *sync_rtx = true;
+                        }
+                        else if(msg.keys & KEY_ESC)
+                            // Discard selected dst ID and disable input mode
+                            ui_state.edit_mode = false;
+                        else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
+                                msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
+                            _ui_textInputDel(ui_state.new_callsign);
+                        else if(input_isNumberPressed(msg))
+                            _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
+                        break;
                     }
                 }
-                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
+                else
                 {
-                    // Decrement TX and RX frequency of 12.5KHz
-                    if(_ui_freq_check_limits(state.channel.rx_frequency - 12500) &&
-                       _ui_freq_check_limits(state.channel.tx_frequency - 12500))
+                    if(msg.keys & KEY_ENTER)
                     {
-                        state.channel.rx_frequency -= 12500;
-                        state.channel.tx_frequency -= 12500;
-                        *sync_rtx = true;
+                        // Save current main state
+                        ui_state.last_main_state = state.ui_screen;
+                        // Open Menu
+                        state.ui_screen = MENU_TOP;
                     }
-                }
-                else if(msg.keys & KEY_ENTER)
-                {
-                    // Save current main state
-                    ui_state.last_main_state = state.ui_screen;
-                    // Open Menu
-                    state.ui_screen = MENU_TOP;
-                }
-                else if(msg.keys & KEY_ESC)
-                {
-                    // Save VFO channel
-                    state.vfo_channel = state.channel;
-                    int result = _ui_fsm_loadChannel(state.channel_index, sync_rtx);
-                    // Read successful and channel is valid
-                    if(result != -1)
+                    else if(msg.keys & KEY_HASH)
                     {
-                        // Switch to MEM screen
-                        state.ui_screen = MAIN_MEM;
+                        // Enable dst ID input
+                        ui_state.edit_mode = true;
+                        // Reset text input variables
+                        _ui_textInputReset(ui_state.new_callsign);
                     }
-                }
-                else if(msg.keys & KEY_F1)
-                {
-                    // Switch to Digital Mode VFO screen
-                    state.ui_screen = MODE_VFO;
-                }
-                else if(input_isNumberPressed(msg))
-                {
-                    // Open Frequency input screen
-                    state.ui_screen = MAIN_VFO_INPUT;
-                    // Reset input position and selection
-                    ui_state.input_position = 1;
-                    ui_state.input_set = SET_RX;
-                    ui_state.new_rx_frequency = 0;
-                    ui_state.new_tx_frequency = 0;
-                    // Save pressed number to calculare frequency and show in GUI
-                    ui_state.input_number = input_getPressedNumber(msg);
-                    // Calculate portion of the new frequency
-                    ui_state.new_rx_frequency = _ui_freq_add_digit(ui_state.new_rx_frequency,
-                                            ui_state.input_position, ui_state.input_number);
+                    else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
+                    {
+                        // Increment TX and RX frequency of 12.5KHz
+                        if(_ui_freq_check_limits(state.channel.rx_frequency + 12500) &&
+                           _ui_freq_check_limits(state.channel.tx_frequency + 12500))
+                        {
+                            state.channel.rx_frequency += 12500;
+                            state.channel.tx_frequency += 12500;
+                            *sync_rtx = true;
+                        }
+                    }
+                    else if(msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
+                    {
+                        // Decrement TX and RX frequency of 12.5KHz
+                        if(_ui_freq_check_limits(state.channel.rx_frequency - 12500) &&
+                           _ui_freq_check_limits(state.channel.tx_frequency - 12500))
+                        {
+                            state.channel.rx_frequency -= 12500;
+                            state.channel.tx_frequency -= 12500;
+                            *sync_rtx = true;
+                        }
+                    }
+                    else if(msg.keys & KEY_ENTER)
+                    {
+                        // Save current main state
+                        ui_state.last_main_state = state.ui_screen;
+                        // Open Menu
+                        state.ui_screen = MENU_TOP;
+                    }
+                    else if(msg.keys & KEY_ESC)
+                    {
+                        // Save VFO channel
+                        state.vfo_channel = state.channel;
+                        int result = _ui_fsm_loadChannel(state.channel_index, sync_rtx);
+                        // Read successful and channel is valid
+                        if(result != -1)
+                        {
+                            // Switch to MEM screen
+                            state.ui_screen = MAIN_MEM;
+                        }
+                    }
+                    else if(input_isNumberPressed(msg))
+                    {
+                        // Open Frequency input screen
+                        state.ui_screen = MAIN_VFO_INPUT;
+                        // Reset input position and selection
+                        ui_state.input_position = 1;
+                        ui_state.input_set = SET_RX;
+                        ui_state.new_rx_frequency = 0;
+                        ui_state.new_tx_frequency = 0;
+                        // Save pressed number to calculare frequency and show in GUI
+                        ui_state.input_number = input_getPressedNumber(msg);
+                        // Calculate portion of the new frequency
+                        ui_state.new_rx_frequency = _ui_freq_add_digit(ui_state.new_rx_frequency,
+                                                ui_state.input_position, ui_state.input_number);
+                    }
                 }
                 break;
             // VFO frequency input screen
@@ -1084,48 +1123,23 @@ void ui_updateFSM(bool *sync_rtx)
                 break;
             // MEM screen
             case MAIN_MEM:
-                if(msg.keys & KEY_ENTER)
+                // M17 Destination callsign input
+                if(ui_state.edit_mode)
                 {
-                    // Save current main state
-                    ui_state.last_main_state = state.ui_screen;
-                    // Open Menu
-                    state.ui_screen = MENU_TOP;
-                }
-                else if(msg.keys & KEY_ESC)
-                {
-                    // Restore VFO channel
-                    state.channel = state.vfo_channel;
-                    // Update RTX configuration
-                    *sync_rtx = true;
-                    // Switch to VFO screen
-                    state.ui_screen = MAIN_VFO;
-                }
-                else if(msg.keys & KEY_F1)
-                {
-                    // Switch to Digital Mode MEM screen
-                    state.ui_screen = MODE_MEM;
-                }
-                else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
-                {
-                    _ui_fsm_loadChannel(state.channel_index + 1, sync_rtx);
-                }
-                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
-                {
-                    _ui_fsm_loadChannel(state.channel_index - 1, sync_rtx);
-                }
-                break;
-            // Digital Mode VFO screen
-            case MODE_VFO:
-                if(state.channel.mode == OPMODE_M17)
-                {
-                    // Dst ID input
-                    if(ui_state.edit_mode)
+                    if(state.channel.mode == OPMODE_M17)
                     {
                         if(msg.keys & KEY_ENTER)
                         {
                             _ui_textInputConfirm(ui_state.new_callsign);
                             // Save selected dst ID and disable input mode
                             strncpy(state.m17_data.dst_addr, ui_state.new_callsign, 10);
+                            ui_state.edit_mode = false;
+                            *sync_rtx = true;
+                        }
+                        else if(msg.keys & KEY_HASH)
+                        {
+                            // Save selected dst ID and disable input mode
+                            strncpy(state.m17_data.dst_addr, "", 1);
                             ui_state.edit_mode = false;
                             *sync_rtx = true;
                         }
@@ -1137,35 +1151,7 @@ void ui_updateFSM(bool *sync_rtx)
                             _ui_textInputDel(ui_state.new_callsign);
                         else if(input_isNumberPressed(msg))
                             _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
-                    }
-                    else
-                    {
-                        if(msg.keys & KEY_ENTER)
-                        {
-                            // Save current main state
-                            ui_state.last_main_state = state.ui_screen;
-                            // Open Menu
-                            state.ui_screen = MENU_TOP;
-                        }
-                        else if(msg.keys & KEY_ESC)
-                        {
-                            // Switch to VFO screen
-                            state.ui_screen = MAIN_VFO;
-                        }
-                        else if(msg.keys & KEY_F1)
-                        {
-                            // Switch to Main VFO screen
-                            state.ui_screen = MAIN_VFO;
-                        }
-                        else if(input_isNumberPressed(msg))
-                        {
-                            // Enable dst ID input
-                            ui_state.edit_mode = true;
-                            // Reset text input variables
-                            _ui_textInputReset(ui_state.new_callsign);
-                            // Type first character
-                            _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
-                        }
+                        break;
                     }
                 }
                 else
@@ -1179,88 +1165,27 @@ void ui_updateFSM(bool *sync_rtx)
                     }
                     else if(msg.keys & KEY_ESC)
                     {
+                        // Restore VFO channel
+                        state.channel = state.vfo_channel;
+                        // Update RTX configuration
+                        *sync_rtx = true;
                         // Switch to VFO screen
                         state.ui_screen = MAIN_VFO;
                     }
-                    else if(msg.keys & KEY_F1)
+                    else if(msg.keys & KEY_HASH)
                     {
-                        // Switch to Main VFO screen
-                        state.ui_screen = MAIN_VFO;
+                        // Enable dst ID input
+                        ui_state.edit_mode = true;
+                        // Reset text input variables
+                        _ui_textInputReset(ui_state.new_callsign);
                     }
-                }
-                break;
-            // Digital Mode MEM screen
-            case MODE_MEM:
-                if(state.channel.mode == OPMODE_M17)
-                {
-                    // Dst ID input
-                    if(ui_state.edit_mode)
+                    else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
                     {
-                        if(msg.keys & KEY_ENTER)
-                        {
-                            _ui_textInputConfirm(ui_state.new_callsign);
-                            // Save selected dst ID and disable input mode
-                            strncpy(state.m17_data.dst_addr, ui_state.new_callsign, 10);
-                            ui_state.edit_mode = false;
-                            *sync_rtx = true;
-                        }
-                        else if(msg.keys & KEY_ESC)
-                            // Discard selected dst ID and disable input mode
-                            ui_state.edit_mode = false;
-                        else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
-                                msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
-                            _ui_textInputDel(ui_state.new_callsign);
-                        else if(input_isNumberPressed(msg))
-                            _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
+                        _ui_fsm_loadChannel(state.channel_index + 1, sync_rtx);
                     }
-                    else
+                    else if(msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
                     {
-                        if(msg.keys & KEY_ENTER)
-                        {
-                            // Save current main state
-                            ui_state.last_main_state = state.ui_screen;
-                            // Open Menu
-                            state.ui_screen = MENU_TOP;
-                        }
-                        else if(msg.keys & KEY_ESC)
-                        {
-                            // Switch to MEM screen
-                            state.ui_screen = MAIN_MEM;
-                        }
-                        else if(msg.keys & KEY_F1)
-                        {
-                            // Switch to Main MEM screen
-                            state.ui_screen = MAIN_MEM;
-                        }
-                        else if(input_isNumberPressed(msg))
-                        {
-                            // Enable dst ID input
-                            ui_state.edit_mode = true;
-                            // Reset text input variables
-                            _ui_textInputReset(ui_state.new_callsign);
-                            // Type first character
-                            _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
-                        }
-                    }
-                }
-                else
-                {
-                    if(msg.keys & KEY_ENTER)
-                    {
-                        // Save current main state
-                        ui_state.last_main_state = state.ui_screen;
-                        // Open Menu
-                        state.ui_screen = MENU_TOP;
-                    }
-                    else if(msg.keys & KEY_ESC)
-                    {
-                        // Switch to MEM screen
-                        state.ui_screen = MAIN_MEM;
-                    }
-                    else if(msg.keys & KEY_F1)
-                    {
-                        // Switch to Main MEM screen
-                        state.ui_screen = MAIN_MEM;
+                        _ui_fsm_loadChannel(state.channel_index - 1, sync_rtx);
                     }
                 }
                 break;
@@ -1690,7 +1615,7 @@ bool ui_updateGUI()
     {
         // VFO main screen
         case MAIN_VFO:
-            _ui_drawMainVFO();
+            _ui_drawMainVFO(&ui_state);
             break;
         // VFO frequency input screen
         case MAIN_VFO_INPUT:
@@ -1698,15 +1623,7 @@ bool ui_updateGUI()
             break;
         // MEM main screen
         case MAIN_MEM:
-            _ui_drawMainMEM();
-            break;
-        // Digital Mode VFO screen
-        case MODE_VFO:
-            _ui_drawModeVFO(&ui_state);
-            break;
-        // Digital Mode MEM screen
-        case MODE_MEM:
-            _ui_drawModeMEM(&ui_state);
+            _ui_drawMainMEM(&ui_state);
             break;
         // Top menu screen
         case MENU_TOP:

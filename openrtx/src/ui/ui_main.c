@@ -75,20 +75,68 @@ void _ui_drawMainTop()
 
 void _ui_drawBankChannel()
 {
-    // Print Bank name
-    if(!last_state.bank_enabled)
-        gfx_print(layout.line1_pos, layout.line1_font, TEXT_ALIGN_LEFT,
-                  color_white, "bank: All channels");
-    else {
-        bankHdr_t bank = { 0 };
-        cps_readBankHeader(&bank, last_state.bank);
-        gfx_print(layout.line1_pos, layout.line1_font, TEXT_ALIGN_LEFT,
-                  color_white,  "bank: %.13s", bank.name);
+    // Print Bank number, channel number and Channel name
+    uint16_t b = (last_state.bank_enabled) ? last_state.bank : 0;
+    gfx_print(layout.line1_pos, layout.line1_font, TEXT_ALIGN_CENTER,
+              color_white, "%01d-%03d: %.12s",
+              b, last_state.channel_index + 1, last_state.channel.name);
+}
+
+void _ui_drawModeInfo(ui_state_t* ui_state)
+{
+    char bw_str[8] = { 0 };
+    char encdec_str[9] = { 0 };
+
+    rtxStatus_t cfg = rtx_getCurrentStatus();
+
+    switch(last_state.channel.mode)
+    {
+        case OPMODE_FM:
+        // Get Bandwidth string
+        if(last_state.channel.bandwidth == BW_12_5)
+            snprintf(bw_str, 8, "12.5");
+        else if(last_state.channel.bandwidth == BW_20)
+            snprintf(bw_str, 8, "20");
+        else if(last_state.channel.bandwidth == BW_25)
+            snprintf(bw_str, 8, "25");
+        // Get encdec string
+        bool tone_tx_enable = last_state.channel.fm.txToneEn;
+        bool tone_rx_enable = last_state.channel.fm.rxToneEn;
+        if (tone_tx_enable && tone_rx_enable)
+            snprintf(encdec_str, 9, "E+D");
+        else if (tone_tx_enable && !tone_rx_enable)
+            snprintf(encdec_str, 9, "E");
+        else if (!tone_tx_enable && tone_rx_enable)
+            snprintf(encdec_str, 9, "D");
+        else
+            snprintf(encdec_str, 9, " ");
+
+        // Print Bandwidth, Tone and encdec info
+        gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+              color_white, "B:%s T:%4.1f S:%s",
+              bw_str, ctcss_tone[last_state.channel.fm.txTone]/10.0f,
+              encdec_str);
+        break;
+        case OPMODE_DMR:
+        // Print talkgroup
+        gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+              color_white, "TG:%s",
+              "");
+        break;
+        case OPMODE_M17:
+        {
+            // Print M17 Destination ID on line 3 of 3
+            char *dst = NULL;
+            if(ui_state->edit_mode)
+                dst = ui_state->new_callsign;
+            else
+                dst = (!strnlen(cfg.destination_address, 10)) ?
+                    "Broadcast" : cfg.destination_address;
+            gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                  color_white, "#%s", dst);
+            break;
+        }
     }
-    // Print Channel name
-    gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_LEFT,
-              color_white, "  %03d: %.12s",
-              last_state.channel_index + 1, last_state.channel.name);
 }
 
 void _ui_drawFrequency()
@@ -195,10 +243,11 @@ void _ui_drawMainBottom()
     }
 }
 
-void _ui_drawMainVFO()
+void _ui_drawMainVFO(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     _ui_drawMainTop();
+    _ui_drawModeInfo(ui_state);
     _ui_drawFrequency();
     _ui_drawMainBottom();
 }
@@ -211,11 +260,12 @@ void _ui_drawMainVFOInput(ui_state_t* ui_state)
     _ui_drawMainBottom();
 }
 
-void _ui_drawMainMEM()
+void _ui_drawMainMEM(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     _ui_drawMainTop();
     _ui_drawBankChannel();
+    _ui_drawModeInfo(ui_state);
     _ui_drawFrequency();
     _ui_drawMainBottom();
 }
