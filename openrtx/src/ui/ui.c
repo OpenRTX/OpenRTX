@@ -1043,6 +1043,18 @@ void ui_updateFSM(bool *sync_rtx)
                         // Open Menu
                         state.ui_screen = MENU_TOP;
                     }
+                    else if(msg.keys & KEY_ESC)
+                    {
+                        // Save VFO channel
+                        state.vfo_channel = state.channel;
+                        int result = _ui_fsm_loadChannel(state.channel_index, sync_rtx);
+                        // Read successful and channel is valid
+                        if(result != -1)
+                        {
+                            // Switch to MEM screen
+                            state.ui_screen = MAIN_MEM;
+                        }
+                    }
                     else if(msg.keys & KEY_HASH)
                     {
                         // Enable dst ID input
@@ -1070,25 +1082,6 @@ void ui_updateFSM(bool *sync_rtx)
                             state.channel.rx_frequency -= 12500;
                             state.channel.tx_frequency -= 12500;
                             *sync_rtx = true;
-                        }
-                    }
-                    else if(msg.keys & KEY_ENTER)
-                    {
-                        // Save current main state
-                        ui_state.last_main_state = state.ui_screen;
-                        // Open Menu
-                        state.ui_screen = MENU_TOP;
-                    }
-                    else if(msg.keys & KEY_ESC)
-                    {
-                        // Save VFO channel
-                        state.vfo_channel = state.channel;
-                        int result = _ui_fsm_loadChannel(state.channel_index, sync_rtx);
-                        // Read successful and channel is valid
-                        if(result != -1)
-                        {
-                            // Switch to MEM screen
-                            state.ui_screen = MAIN_MEM;
                         }
                     }
                     else if(input_isNumberPressed(msg))
