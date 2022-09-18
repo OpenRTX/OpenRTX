@@ -21,6 +21,9 @@
 #ifndef AUDIO_H
 #define AUDIO_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -32,16 +35,16 @@ extern "C" {
 
 enum AudioSource
 {
-    SOURCE_MIC,        ///< Receive audio signal from the microphone
-    SOURCE_RTX,        ///< Receive audio signal from the transceiver
-    SOURCE_MCU         ///< Receive audio signal from a memory buffer
+    SOURCE_MIC = 0,    ///< Receive audio signal from the microphone
+    SOURCE_RTX = 1,    ///< Receive audio signal from the transceiver
+    SOURCE_MCU = 2     ///< Receive audio signal from a memory buffer
 };
 
 enum AudioSink
 {
-    SINK_SPK,          ///< Send audio signal to the speaker
-    SINK_RTX,          ///< Send audio signal to the transceiver
-    SINK_MCU           ///< Send audio signal to a memory buffer
+    SINK_SPK = 0,      ///< Send audio signal to the speaker
+    SINK_RTX = 1,      ///< Send audio signal to the transceiver
+    SINK_MCU = 2       ///< Send audio signal to a memory buffer
 };
 
 enum AudioPriority
@@ -61,6 +64,36 @@ void audio_init();
  * Shut down low-level audio management module.
  */
 void audio_terminate();
+
+/**
+ * Connect an audio source to an audio sink.
+ *
+ * @param source: identifier of the input audio peripheral.
+ * @param sink: identifier of the output audio peripheral.
+ */
+void audio_connect(const enum AudioSource source, const enum AudioSink sink);
+
+/**
+ * Disconnect an audio source from an audio sink.
+ *
+ * @param source: identifier of the input audio peripheral.
+ * @param sink: identifier of the output audio peripheral.
+ */
+void audio_disconnect(const enum AudioSource source, const enum AudioSink sink);
+
+/**
+ * Check if two audio paths are compatible that is, if they can be open at the
+ * same time.
+ *
+ * @param p1Source: identifier of the input audio peripheral of the first path.
+ * @param p1Sink: identifier of the output audio peripheral of the first path.
+ * @param p2Source: identifier of the input audio peripheral of the second path.
+ * @param p2Sink: identifier of the output audio peripheral of the second path.
+ */
+bool audio_checkPathCompatibility(const enum AudioSource p1Source,
+                                  const enum AudioSink   p1Sink,
+                                  const enum AudioSource p2Source,
+                                  const enum AudioSink   p2Sink);
 
 /**
  * Enable microphone.
