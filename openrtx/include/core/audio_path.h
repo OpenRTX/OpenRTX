@@ -21,6 +21,7 @@
 #define AUDIO_PATH_H
 
 #include <interfaces/audio.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,27 +42,27 @@ typedef int32_t pathId;
  * with an higher priority.
  *
  * @param source: identifier of the input audio peripheral.
- * @param destination: identifier of the output audio peripheral.
+ * @param sink: identifier of the output audio peripheral.
  * @param prio: priority of the requester.
  * @return a unique identifier of the opened path or -1 if path is already in use.
  */
-pathId audioPath_request(enum AudioSource source, enum AudioSink destination,
+pathId audioPath_request(enum AudioSource source, enum AudioSink sink,
                          enum AudioPriority prio);
 
 /**
  * Get the current status of an audio path.
  *
- * @param pathId: ID of the audio path.
+ * @param id: ID of the audio path.
  * @return status of the path queried.
  */
-enum PathStatus audioPath_getStatus(const pathId pathId);
+enum PathStatus audioPath_getStatus(const pathId id);
 
 /**
  * Release an audio path.
  *
- * @param pathId: identifier of the path.
+ * @param id: identifier of the path.
  */
-void audioPath_release(const pathId pathId);
+void audioPath_release(const pathId id);
 
 #ifdef __cplusplus
 }
