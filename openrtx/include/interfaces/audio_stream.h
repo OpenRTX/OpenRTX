@@ -22,8 +22,9 @@
 #define AUDIO_STREAM_H
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <sys/types.h>
-#include "audio_path.h"
+#include "audio.h"
 
 #ifdef __cplusplus
 extern "C" {

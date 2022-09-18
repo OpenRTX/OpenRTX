@@ -21,10 +21,6 @@
 #ifndef AUDIO_H
 #define AUDIO_H
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <rtx.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -33,6 +29,28 @@ extern "C" {
  * This file provides a common interface for the platform-dependent low-level
  * audio driver, in charge of managing microphone and audio amplifier.
  */
+
+enum AudioSource
+{
+    SOURCE_MIC,        ///< Receive audio signal from the microphone
+    SOURCE_RTX,        ///< Receive audio signal from the transceiver
+    SOURCE_MCU         ///< Receive audio signal from a memory buffer
+};
+
+enum AudioSink
+{
+    SINK_SPK,          ///< Send audio signal to the speaker
+    SINK_RTX,          ///< Send audio signal to the transceiver
+    SINK_MCU           ///< Send audio signal to a memory buffer
+};
+
+enum AudioPriority
+{
+    PRIO_BEEP = 1,     ///< Priority level of system beeps
+    PRIO_RX,           ///< Priority level of incoming audio from RX stage
+    PRIO_PROMPT,       ///< Priority level of voice prompts
+    PRIO_TX            ///< Priority level of outward audio directed to TX stage
+};
 
 /**
  * Initialise low-level audio management module.
