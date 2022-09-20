@@ -40,20 +40,48 @@ struct Path
                (priority    != -1);
     }
 
-    bool operator<(const Path& other) const
+    void open() const
     {
-        return (source      < other.source) &&
-               (destination < other.destination);
+        if(isValid() == false)
+            return;
+
+        enum AudioSource src  = (enum AudioSource) source;
+        enum AudioSink   sink = (enum AudioSink)   destination;
+
+        audio_connect(src, sink);
+    }
+
+    void close() const
+    {
+        if(isValid() == false)
+            return;
+
+        enum AudioSource src  = (enum AudioSource) source;
+        enum AudioSink   sink = (enum AudioSink)   destination;
+
+        audio_disconnect(src, sink);
     }
 
     bool isCompatible(const Path& other) const
     {
+        if((isValid() == false) || (other.isValid() == false))
+            return false;
+
         enum AudioSource p1Source = (enum AudioSource) source;
         enum AudioSource p2Source = (enum AudioSource) other.source;
         enum AudioSink   p1Sink   = (enum AudioSink)   destination;
         enum AudioSink   p2Sink   = (enum AudioSink)   other.destination;
 
         return audio_checkPathCompatibility(p1Source, p1Sink, p2Source, p2Sink);
+    }
+
+    bool operator<(const Path& other) const
+    {
+        if((isValid() == false) || (other.isValid() == false))
+            return false;
+
+        return (source      < other.source) &&
+               (destination < other.destination);
     }
 };
 
@@ -65,11 +93,11 @@ struct Route
 {
     Path path;                    ///< Path associated to this route.
     std::set< int > suspendList;  ///< Suspended paths with lower priority.
-    std::set< int > suspendBy;    ///< List of paths which suspended this route.
+    std::set< int > suspendedBy;  ///< List of paths which suspended this route.
 
     bool isActive() const
     {
-        return suspendBy.empty();
+        return suspendedBy.empty();
     }
 };
 
@@ -89,18 +117,18 @@ pathId audioPath_request(enum AudioSource source, enum AudioSink sink,
     std::set< int > pathsToSuspend;
 
     // Check if this new path can be activated, otherwise return -1
-    for (const auto& i : activePaths)
+    for (const auto& id : activePaths)
     {
-        const Path& activePath = routes.at(i).path;
+        const Path& activePath = routes.at(id).path;
         if(path.isCompatible(activePath))
             continue;
 
         // Not compatible where active one has higher priority
-        if (activePath.priority >= path.priority)
+        if(activePath.priority >= path.priority)
             return -1;
 
         // Active path has lower priority than this new one
-        pathsToSuspend.insert(i);
+        pathsToSuspend.insert(id);
     }
 
     // New path can be activated
@@ -108,18 +136,19 @@ pathId audioPath_request(enum AudioSource source, enum AudioSink sink,
     pathCounter += 1;
     const Route newRoute{path, pathsToSuspend, {}};
 
-    // Move active paths that should be suspended to the suspend-list
-    for (const auto& i : pathsToSuspend)
+    // Move active paths that should be suspended to the suspend-list and
+    // close them to free resources for the new path.
+    for(const auto& id : pathsToSuspend)
     {
-        // Move path to suspended-list
-        activePaths.erase(i);
-
-        routes.at(i).suspendBy.insert(newPathId);
+        activePaths.erase(id);
+        routes.at(id).suspendedBy.insert(newPathId);
+        routes.at(id).path.close();
     }
 
-    // Set this new path as active
+    // Set this new path as active and open it
     routes.insert(std::make_pair(newPathId, newRoute));
     activePaths.insert(newPathId);
+    path.open();
 
     return newPathId;
 }
@@ -140,45 +169,58 @@ enum PathStatus audioPath_getStatus(const pathId id)
 void audioPath_release(const pathId id)
 {
     auto it = routes.find(id);
-    if (it == routes.end())  // Does not exists
+    if(it == routes.end())  // Does not exists
         return;
 
-    Route dataToRemove = it->second;
+    Route routeToRemove = it->second;
     routes.erase(it);
     activePaths.erase(id);
 
-    // For each path that suspended me
-    for (const auto& i : dataToRemove.suspendBy)
+    // If path is active, close it
+    if(routeToRemove.isActive())
+        routeToRemove.path.close();
+
+    /*
+     * For each path that suspended the one to be removed:
+     * - remove the ID from its suspend list.
+     * - add to its suspend list the paths suspended by the one being removed.
+     */
+    for(const auto& i : routeToRemove.suspendedBy)
     {
         auto& suspendList = routes.at(i).suspendList;
-
-        // Remove myself from its suspend-list
         suspendList.erase(id);
 
-        // Add who I suspended
-        for (const auto& j : dataToRemove.suspendList)
+        for(const auto& j : routeToRemove.suspendList)
             suspendList.insert(j);
     }
 
-    // For each path suspended by me
-    for (const auto& i : dataToRemove.suspendList)
+    /*
+     * For each path suspended by the one to be removed:
+     * - remove the ID from their suspended-by list.
+     * - add to their suspended-by list the paths which suspended the one being
+     *   removed.
+     * - if the path to be removed was not suspended by any other path, resume
+     *   the path.
+     */
+    for(const auto& i : routeToRemove.suspendList)
     {
-        auto& suspendBy = routes.at(i).suspendBy;
+        auto& suspendedBy = routes.at(i).suspendedBy;
+        suspendedBy.erase(id);
 
-        // Remove myself
-        suspendBy.erase(id);
-
-        if (!dataToRemove.suspendBy.empty())
+        if(routeToRemove.suspendedBy.empty() == false)
         {
             // If I was suspended, propagate who suspended me
-            for (const auto& j : dataToRemove.suspendBy)
-                suspendBy.insert(j);
+            for(const auto& j : routeToRemove.suspendedBy)
+                suspendedBy.insert(j);
         }
         else
         {
             // This path can be started again
-            if (suspendBy.empty())
+            if(suspendedBy.empty())
+            {
                 activePaths.insert(i);
+                routes.at(i).path.open();
+            }
         }
     }
 }
