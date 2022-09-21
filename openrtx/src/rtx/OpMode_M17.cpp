@@ -55,10 +55,9 @@ void OpMode_M17::disable()
     startTx = false;
     platform_ledOff(GREEN);
     platform_ledOff(RED);
-    codec_stop();
+    audioPath_release(rxAudioPath);
+    audioPath_release(txAudioPath);
     codec_terminate();
-    audio_disableAmp();
-    audio_disableMic();
     radio_disableRtx();
     modulator.terminate();
     demodulator.terminate();
@@ -124,8 +123,8 @@ void OpMode_M17::offState(rtxStatus_t *const status)
 {
     radio_disableRtx();
 
-    audio_disableMic();
-    audio_disableAmp();
+    audioPath_release(rxAudioPath);
+    audioPath_release(txAudioPath);
     codec_stop();
 
     if(startRx)
@@ -147,7 +146,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         demodulator.startBasebandSampling();
         demodulator.invertPhase(status->invertRxPhase);
 
-        audio_enableAmp();
+        rxAudioPath = audioPath_request(SOURCE_MCU, SINK_SPK, PRIO_RX);
         codec_startDecode(SINK_SPK);
 
         radio_enableRx();
@@ -168,11 +167,13 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
 
     if(locked && newData)
     {
-        auto& frame = demodulator.getFrame();
-        auto type   = decoder.decodeFrame(frame);
-        bool lsfOk  = decoder.getLsf().valid();
+        auto&   frame  = demodulator.getFrame();
+        auto    type   = decoder.decodeFrame(frame);
+        bool    lsfOk  = decoder.getLsf().valid();
+        uint8_t pthSts = audioPath_getStatus(rxAudioPath);
 
-        if((type == M17FrameType::STREAM) && (lsfOk == true))
+        if((type == M17FrameType::STREAM) && (lsfOk == true) &&
+           (pthSts == PATH_OPEN))
         {
             M17StreamFrame sf = decoder.getStreamFrame();
             codec_pushFrame(sf.payload().data(),     false);
@@ -215,7 +216,7 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         encoder.reset();
         encoder.encodeLsf(lsf, m17Frame);
 
-        audio_enableMic();
+        txAudioPath = audioPath_request(SOURCE_MIC, SINK_MCU, PRIO_TX);
         codec_startEncode(SOURCE_MIC);
         radio_enableTx();
 

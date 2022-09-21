@@ -26,8 +26,9 @@
 #endif
 
 #include <interfaces/audio_stream.h>
-#include <M17/M17Constants.hpp>
 #include <M17/PwmCompensator.hpp>
+#include <M17/M17Constants.hpp>
+#include <audio_path.h>
 #include <cstdint>
 #include <memory>
 #include <array>
@@ -112,6 +113,7 @@ private:
     std::unique_ptr< int16_t[] > baseband_buffer;  ///< Buffer for baseband audio handling.
     stream_sample_t              *idleBuffer;      ///< Half baseband buffer, free for processing.
     streamId                     outStream;        ///< Baseband output stream ID.
+    pathId                       outPath;          ///< Baseband output path ID.
     bool                         txRunning;        ///< Transmission running.
 
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)

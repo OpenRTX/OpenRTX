@@ -25,6 +25,7 @@
 #include <M17/M17FrameEncoder.hpp>
 #include <M17/M17Demodulator.hpp>
 #include <M17/M17Modulator.hpp>
+#include <audio_path.h>
 #include "OpMode.hpp"
 
 /**
@@ -124,6 +125,8 @@ private:
     bool startRx;                      ///< Flag for RX management.
     bool startTx;                      ///< Flag for TX management.
     bool locked;                       ///< Demodulator locked on data stream.
+    pathId rxAudioPath;                ///< Audio path ID for RX
+    pathId txAudioPath;                ///< Audio path ID for TX
     M17::M17Modulator    modulator;    ///< M17 modulator.
     M17::M17Demodulator  demodulator;  ///< M17 demodulator.
     M17::M17FrameDecoder decoder;      ///< M17 frame decoder

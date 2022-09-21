@@ -203,6 +203,7 @@ void M17Demodulator::terminate()
 
 void M17Demodulator::startBasebandSampling()
 {
+    basebandPath = audioPath_request(SOURCE_RTX, SINK_MCU, PRIO_RX);
     basebandId = inputStream_start(SOURCE_RTX, PRIO_RX,
                                    baseband_buffer.get(),
                                    2 * M17_SAMPLE_BUF_SIZE,
@@ -218,6 +219,7 @@ void M17Demodulator::startBasebandSampling()
 void M17Demodulator::stopBasebandSampling()
 {
      inputStream_stop(basebandId);
+     audioPath_release(basebandPath);
      phase = 0;
      syncDetected = false;
      locked = false;
@@ -423,6 +425,7 @@ bool M17Demodulator::update()
     uint16_t decoded_syms = 0;
 
     // Read samples from the ADC
+    if(audioPath_getStatus(basebandPath) != PATH_OPEN) return false;
     baseband = inputStream_getData(basebandId);
 
     if(baseband.data != NULL)

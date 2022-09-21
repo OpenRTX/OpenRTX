@@ -87,6 +87,13 @@ void M17Modulator::start()
     // Generate baseband signal and then start transmission
     symbolsToBaseband();
     #ifndef PLATFORM_LINUX
+    outPath = audioPath_request(SOURCE_MCU, SINK_RTX, PRIO_TX);
+    if(outPath < 0)
+    {
+        txRunning = false;
+        return;
+    }
+
     outStream = outputStream_start(SINK_RTX, PRIO_TX, baseband_buffer.get(),
                                    2*M17_FRAME_SAMPLES, BUF_CIRC_DOUBLE,
                                    M17_TX_SAMPLE_RATE);
@@ -145,6 +152,7 @@ void M17Modulator::stop()
     outputStream_sync(outStream, false);
     txRunning  = false;
     idleBuffer = baseband_buffer.get();
+    audioPath_release(outPath);
 
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
     pwmComp.reset();
@@ -176,6 +184,7 @@ void M17Modulator::symbolsToBaseband()
 void M17Modulator::sendBaseband()
 {
     if(txRunning == false) return;
+    if(audioPath_getStatus(outPath) != PATH_OPEN) return;
 
     // Transmission is ongoing, syncronise with stream end before proceeding
     outputStream_sync(outStream, true);

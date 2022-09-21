@@ -33,6 +33,7 @@
 #include <array>
 #include <dsp.h>
 #include <cmath>
+#include <audio_path.h>
 #include <interfaces/audio_stream.h>
 #include <M17/M17Datatypes.hpp>
 #include <M17/M17Constants.hpp>
@@ -146,6 +147,7 @@ private:
      */
     std::unique_ptr< int16_t[] > baseband_buffer; ///< Buffer for baseband audio handling.
     streamId                     basebandId;      ///< Id of the baseband input stream.
+    pathId                       basebandPath;    ///< Id of the baseband input path.
     dataBlock_t                  baseband;        ///< Data block with samples to be processed.
     uint16_t                     frame_index;     ///< Index for filling the raw frame.
     std::unique_ptr<frame_t >    demodFrame;      ///< Frame being demodulated.

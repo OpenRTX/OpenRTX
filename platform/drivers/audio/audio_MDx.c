@@ -24,6 +24,8 @@
 #include <interfaces/gpio.h>
 #include <hwconfig.h>
 
+#define PATH(x,y) ((x << 4) | y)
+
 static const uint8_t pathCompatibilityMatrix[9][9] =
 {
     // MIC-SPK MIC-RTX MIC-MCU RTX-SPK RTX-RTX RTX-MCU MCU-SPK MCU-RTX MCU-MCU
@@ -71,27 +73,33 @@ void audio_terminate()
 
 void audio_connect(const enum AudioSource source, const enum AudioSink sink)
 {
-    // If source is MIC, turn it on regardless of the sink
-    #if !defined(PLATFORM_MD9600) && !defined(MDx_ENABLE_SWD)
-    if(source == SOURCE_MIC) gpio_setPin(MIC_PWR);
-    #endif
+    uint32_t path = PATH(source, sink);
+
+    switch(path)
+    {
+        case PATH(SOURCE_MIC, SINK_SPK):
+        case PATH(SOURCE_MIC, SINK_RTX):
+        case PATH(SOURCE_MIC, SINK_MCU):
+            #if !defined(PLATFORM_MD9600) && !defined(MDx_ENABLE_SWD)
+            gpio_setPin(MIC_PWR);
+            #endif
+            break;
+
+        case PATH(SOURCE_RTX, SINK_SPK):
+            radio_enableAfOutput();
+            break;
+
+        case PATH(SOURCE_MCU, SINK_SPK):
+        case PATH(SOURCE_MCU, SINK_RTX):
+            gpio_setMode(BEEP_OUT, ALTERNATE);
+            break;
+
+        default:
+            break;
+    }
 
     if(sink == SINK_SPK)
     {
-        switch(source)
-        {
-            case SOURCE_RTX:
-                radio_enableAfOutput();
-                break;
-
-            case SOURCE_MCU:
-                gpio_setMode(BEEP_OUT, ALTERNATE);
-                break;
-
-            default:
-                break;
-        }
-
         // Anti-pop: unmute speaker after 10ms from amp. power on
         #ifndef PLATFORM_MD9600
         gpio_setPin(AUDIO_AMP_EN);
@@ -103,10 +111,7 @@ void audio_connect(const enum AudioSource source, const enum AudioSink sink)
 
 void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
 {
-    // If source is MIC, turn it off regardless of the sink
-    #if !defined(PLATFORM_MD9600) && !defined(MDx_ENABLE_SWD)
-    if(source == SOURCE_MIC) gpio_clearPin(MIC_PWR);
-    #endif
+    uint32_t path = PATH(source, sink);
 
     if(sink == SINK_SPK)
     {
@@ -114,20 +119,29 @@ void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
         #ifndef PLATFORM_MD9600
         gpio_clearPin(AUDIO_AMP_EN);
         #endif
+    }
 
-        switch(source)
-        {
-            case SOURCE_RTX:
-                radio_disableAfOutput();
-                break;
+    switch(path)
+    {
+        case PATH(SOURCE_MIC, SINK_SPK):
+        case PATH(SOURCE_MIC, SINK_RTX):
+        case PATH(SOURCE_MIC, SINK_MCU):
+            #if !defined(PLATFORM_MD9600) && !defined(MDx_ENABLE_SWD)
+            gpio_clearPin(MIC_PWR);
+            #endif
+            break;
 
-            case SOURCE_MCU:
-                gpio_setMode(BEEP_OUT, INPUT);  // Set output to Hi-Z
-                break;
+        case PATH(SOURCE_RTX, SINK_SPK):
+            radio_disableAfOutput();
+            break;
 
-            default:
-                break;
-        }
+        case PATH(SOURCE_MCU, SINK_SPK):
+        case PATH(SOURCE_MCU, SINK_RTX):
+            gpio_setMode(BEEP_OUT, INPUT);  // Set output to Hi-Z
+            break;
+
+        default:
+            break;
     }
 }
 
