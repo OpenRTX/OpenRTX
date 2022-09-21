@@ -85,6 +85,16 @@ void radio_setOpmode(const enum opmode mode);
 bool radio_checkRxDigitalSquelch();
 
 /**
+ * Enable AF output towards the speakers.
+ */
+void radio_enableAfOutput();
+
+/**
+ * Disable AF output towards the speakers.
+ */
+void radio_disableAfOutput();
+
+/**
  * Enable the RX stage.
  */
 void radio_enableRx();

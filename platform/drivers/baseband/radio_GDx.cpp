@@ -79,10 +79,12 @@ void radio_init(const rtxStatus_t *rtxState)
                |  DAC_C0_DACEN_MASK;    // Enable DAC
 
     /*
-     * Enable and configure both AT1846S and HR_C6000
+     * Enable and configure both AT1846S and HR_C6000, keep AF output disabled
+     * at power on.
      */
     at1846s.init();
     C6000.init();
+    radio_disableAfOutput();
 }
 
 void radio_terminate()
@@ -130,6 +132,17 @@ void radio_setOpmode(const enum opmode mode)
 bool radio_checkRxDigitalSquelch()
 {
     return at1846s.rxCtcssDetected();
+}
+
+void radio_enableAfOutput()
+{
+    // TODO: AF output management for DMR mode
+    at1846s.unmuteRxOutput();
+}
+
+void radio_disableAfOutput()
+{
+    at1846s.muteRxOutput();
 }
 
 void radio_enableRx()

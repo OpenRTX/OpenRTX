@@ -171,7 +171,6 @@ void HR_Cx000< M >::fmMode()
     writeReg(M::CONFIG, 0x01, 0xB0);    // Swap TX IQ, two point mode for TX, IF mode for RX
     writeReg(M::CONFIG, 0x81, 0x04);    // Interrupt mask
     writeReg(M::CONFIG, 0xE5, 0x1A);    // Undocumented register
-    writeReg(M::CONFIG, 0x36, 0x02);    // Enable voice channel in FM mode
     writeReg(M::CONFIG, 0xE4, 0x27);    // Lineout gain, first and second stage mic gain
     writeReg(M::CONFIG, 0xE2, 0x06);    // Mic preamp disabled, anti-pop enabled
     writeReg(M::CONFIG, 0x34, 0x98);    // FM bpf enabled, 25kHz bandwidth

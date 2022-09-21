@@ -318,6 +318,24 @@ public:
         i2c_writeReg16(0x49, static_cast< uint16_t >(thresh));
     }
 
+    /**
+     * Mute the RX audio output while keeping the chip in RX mode.
+     */
+    inline void muteRxOutput()
+    {
+        // Setting bit 7 of register 0x30 mutes the RX audio output
+        maskSetRegister(0x30, 0x0080, 0x0080);
+    }
+
+    /**
+     * Unmute the RX audio output.
+     */
+    inline void unmuteRxOutput()
+    {
+        // Clearing bit 7 of register 0x30 unmutes the RX audio output
+        maskSetRegister(0x30, 0x0080, 0x0000);
+    }
+
 private:
 
     /**

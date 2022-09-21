@@ -110,15 +110,14 @@ void radio_init(const rtxStatus_t *rtxState)
     gpio_setMode(RF_APC_SW, OUTPUT);
     gpio_setMode(TX_STG_EN, OUTPUT);
     gpio_setMode(RX_STG_EN, OUTPUT);
-
-    gpio_setMode(FM_MUTE,  OUTPUT);
-    gpio_clearPin(FM_MUTE);
+    gpio_setMode(FM_MUTE,   OUTPUT);
 
     gpio_clearPin(PLL_PWR);    // PLL off
     gpio_setPin(VCOVCC_SW);    // VCOVCC high enables RX VCO, TX VCO if low
     #ifndef MDx_ENABLE_SWD
     gpio_setPin(WN_SW);        // 25kHz bandwidth
     #endif
+    gpio_clearPin(FM_MUTE);    // Mute FM AF output
     gpio_clearPin(DMR_SW);     // Disconnect HR_C5000 input IF signal and audio out
     gpio_clearPin(FM_SW);      // Disconnect analog FM audio path
     gpio_clearPin(RF_APC_SW);  // Disable TX power control
@@ -229,6 +228,17 @@ bool radio_checkRxDigitalSquelch()
     return false;
 }
 
+void radio_enableAfOutput()
+{
+    // TODO: AF output management for DMR mode
+    gpio_setPin(FM_MUTE);
+}
+
+void radio_disableAfOutput()
+{
+    gpio_clearPin(FM_MUTE);
+}
+
 void radio_enableRx()
 {
     gpio_clearPin(TX_STG_EN);          // Disable TX PA
@@ -252,12 +262,6 @@ void radio_enableRx()
     DAC->DHR12L1 = vtune_rx * 0xFF;
 
     gpio_setPin(RX_STG_EN);            // Enable RX LNA
-
-    if(config->opMode == OPMODE_FM)
-    {
-        gpio_setPin(FM_MUTE);          // In FM mode, unmute audio path towards speaker
-    }
-
     radioStatus = RX;
 }
 
