@@ -97,9 +97,11 @@ void toneGen_init()
      * Configure GPIOs:
      * - CTCSS output is on PC7 (on MD380), that is TIM3-CH2, AF2
      * - "beep" output is on PC8 (on MD380), that is TIM3-CH3, AF2
+     *
+     * NOTE: change of "beep" output gpio to alternate/input mode is handled by
+     * the audio driver.
      */
     gpio_setMode(CTCSS_OUT, ALTERNATE);
-    gpio_setMode(BEEP_OUT,  ALTERNATE);
     gpio_setAlternateFunction(CTCSS_OUT, 2);
     gpio_setAlternateFunction(BEEP_OUT,  2);
 

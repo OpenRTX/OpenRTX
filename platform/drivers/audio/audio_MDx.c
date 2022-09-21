@@ -18,10 +18,26 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/audio.h>
-#include <interfaces/gpio.h>
 #include <interfaces/delays.h>
+#include <interfaces/audio.h>
+#include <interfaces/radio.h>
+#include <interfaces/gpio.h>
 #include <hwconfig.h>
+
+static const uint8_t pathCompatibilityMatrix[9][9] =
+{
+    // MIC-SPK MIC-RTX MIC-MCU RTX-SPK RTX-RTX RTX-MCU MCU-SPK MCU-RTX MCU-MCU
+    {    0   ,   0   ,   0   ,   1   ,   0   ,   1   ,   1   ,   0   ,   1   },  // MIC-RTX
+    {    0   ,   0   ,   0   ,   0   ,   1   ,   1   ,   0   ,   0   ,   1   },  // MIC-SPK
+    {    0   ,   0   ,   0   ,   1   ,   1   ,   0   ,   1   ,   1   ,   0   },  // MIC-MCU
+    {    0   ,   1   ,   1   ,   0   ,   0   ,   0   ,   0   ,   1   ,   1   },  // RTX-SPK
+    {    1   ,   0   ,   1   ,   0   ,   0   ,   0   ,   1   ,   0   ,   1   },  // RTX-RTX
+    {    1   ,   1   ,   0   ,   0   ,   0   ,   0   ,   1   ,   1   ,   0   },  // RTX-MCU
+    {    0   ,   1   ,   1   ,   0   ,   1   ,   1   ,   0   ,   0   ,   0   },  // MCU-SPK
+    {    0   ,   0   ,   1   ,   1   ,   0   ,   1   ,   0   ,   0   ,   0   },  // MCU-RTX
+    {    1   ,   1   ,   0   ,   1   ,   1   ,   0   ,   0   ,   0   ,   0   }   // MCU-MCU
+};
+
 
 void audio_init()
 {
@@ -33,25 +49,102 @@ void audio_init()
     #endif
     #endif
 
-    gpio_setPin(SPK_MUTE);          /* Speaker muted   */
+    gpio_setPin(SPK_MUTE);          // Speaker muted
     #ifndef PLATFORM_MD9600
-    gpio_clearPin(AUDIO_AMP_EN);    /* Audio PA off    */
+    gpio_clearPin(AUDIO_AMP_EN);    // Audio PA off
     #ifndef MDx_ENABLE_SWD
-    gpio_clearPin(MIC_PWR);         /* Mic preamp. off */
+    gpio_clearPin(MIC_PWR);         // Mic preamp. off
     #endif
     #endif
 }
 
 void audio_terminate()
 {
-    gpio_setPin(SPK_MUTE);          /* Speaker muted   */
+    gpio_setPin(SPK_MUTE);          // Speaker muted
     #ifndef PLATFORM_MD9600
-    gpio_clearPin(AUDIO_AMP_EN);    /* Audio PA off    */
+    gpio_clearPin(AUDIO_AMP_EN);    // Audio PA off
     #ifndef MDx_ENABLE_SWD
-    gpio_clearPin(MIC_PWR);         /* Mic preamp. off */
+    gpio_clearPin(MIC_PWR);         // Mic preamp. off
     #endif
     #endif
 }
+
+void audio_connect(const enum AudioSource source, const enum AudioSink sink)
+{
+    // If source is MIC, turn it on regardless of the sink
+    #if !defined(PLATFORM_MD9600) && !defined(MDx_ENABLE_SWD)
+    if(source == SOURCE_MIC) gpio_setPin(MIC_PWR);
+    #endif
+
+    if(sink == SINK_SPK)
+    {
+        switch(source)
+        {
+            case SOURCE_RTX:
+                radio_enableAfOutput();
+                break;
+
+            case SOURCE_MCU:
+                gpio_setMode(BEEP_OUT, ALTERNATE);
+                break;
+
+            default:
+                break;
+        }
+
+        // Anti-pop: unmute speaker after 10ms from amp. power on
+        #ifndef PLATFORM_MD9600
+        gpio_setPin(AUDIO_AMP_EN);
+        #endif
+        sleepFor(0, 10);
+        gpio_clearPin(SPK_MUTE);
+    }
+}
+
+void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
+{
+    // If source is MIC, turn it off regardless of the sink
+    #if !defined(PLATFORM_MD9600) && !defined(MDx_ENABLE_SWD)
+    if(source == SOURCE_MIC) gpio_clearPin(MIC_PWR);
+    #endif
+
+    if(sink == SINK_SPK)
+    {
+        gpio_setPin(SPK_MUTE);
+        #ifndef PLATFORM_MD9600
+        gpio_clearPin(AUDIO_AMP_EN);
+        #endif
+
+        switch(source)
+        {
+            case SOURCE_RTX:
+                radio_disableAfOutput();
+                break;
+
+            case SOURCE_MCU:
+                gpio_setMode(BEEP_OUT, INPUT);  // Set output to Hi-Z
+                break;
+
+            default:
+                break;
+        }
+    }
+}
+
+bool audio_checkPathCompatibility(const enum AudioSource p1Source,
+                                  const enum AudioSink   p1Sink,
+                                  const enum AudioSource p2Source,
+                                  const enum AudioSink   p2Sink)
+
+{
+    uint8_t p1Index = (p1Source * 3) + p1Sink;
+    uint8_t p2Index = (p2Source * 3) + p2Sink;
+
+    return pathCompatibilityMatrix[p1Index][p2Index] == 1;
+}
+
+
+
 
 void audio_enableMic()
 {
