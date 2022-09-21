@@ -21,6 +21,7 @@
 #ifndef OPMODE_FM_H
 #define OPMODE_FM_H
 
+#include <audio_path.h>
 #include "OpMode.hpp"
 
 /**
@@ -90,9 +91,11 @@ public:
 
 private:
 
-    bool rfSqlOpen; ///< Flag for RF squelch status (analog squelch).
-    bool sqlOpen;   ///< Flag for squelch status.
-    bool enterRx;   ///< Flag for RX management.
+    bool   rfSqlOpen;   ///< Flag for RF squelch status (analog squelch).
+    bool   sqlOpen;     ///< Flag for squelch status.
+    bool   enterRx;     ///< Flag for RX management.
+    pathId rxAudioPath; ///< Audio path ID for RX
+    pathId txAudioPath; ///< Audio path ID for TX
 };
 
 #endif /* OPMODE_FM_H */

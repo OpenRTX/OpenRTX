@@ -21,7 +21,6 @@
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
 #include <interfaces/radio.h>
-#include <interfaces/audio.h>
 #include <OpMode_FM.hpp>
 #include <rtx.h>
 
@@ -45,14 +44,8 @@ void _setVolume()
     uint8_t volume = platform_getVolumeLevel();
     volume >>= 3;
 
-    // Mute volume when knob is set below 10%
-    if(volume < 1)
+    if(volume >= 1)
     {
-        audio_disableAmp();
-    }
-    else
-    {
-        audio_enableAmp();
         // Setting HR_C6000 volume to 0 = max volume
         HR_C6000::instance().setDacGain(volume);
     }
@@ -80,8 +73,8 @@ void OpMode_FM::disable()
     // Clean shutdown.
     platform_ledOff(GREEN);
     platform_ledOff(RED);
-    audio_disableAmp();
-    audio_disableMic();
+    audioPath_release(rxAudioPath);
+    audioPath_release(txAudioPath);
     radio_disableRtx();
     rfSqlOpen = false;
     sqlOpen   = false;
@@ -112,13 +105,13 @@ void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
         // Audio control
         if((sqlOpen == false) && (rfSql || toneSql))
         {
-            audio_enableAmp();
-            sqlOpen = true;
+            rxAudioPath = audioPath_request(SOURCE_RTX, SINK_SPK, PRIO_RX);
+            if(rxAudioPath > 0) sqlOpen = true;
         }
 
         if((sqlOpen == true) && (rfSql == false) && (toneSql == false))
         {
-            audio_disableAmp();
+            audioPath_release(rxAudioPath);
             sqlOpen = false;
         }
 
@@ -141,10 +134,10 @@ void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
     if(platform_getPttStatus() && (status->opStatus != TX) &&
                                   (status->txDisable == 0))
     {
-        audio_disableAmp();
+        audioPath_release(rxAudioPath);
         radio_disableRtx();
 
-        audio_enableMic();
+        txAudioPath = audioPath_request(SOURCE_MIC, SINK_RTX, PRIO_TX);
         radio_enableTx();
 
         status->opStatus = TX;
@@ -152,7 +145,7 @@ void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
 
     if(!platform_getPttStatus() && (status->opStatus == TX))
     {
-        audio_disableMic();
+        audioPath_release(txAudioPath);
         radio_disableRtx();
 
         status->opStatus = OFF;
