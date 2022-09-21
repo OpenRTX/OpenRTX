@@ -95,26 +95,6 @@ bool audio_checkPathCompatibility(const enum AudioSource p1Source,
                                   const enum AudioSource p2Source,
                                   const enum AudioSink   p2Sink);
 
-/**
- * Enable microphone.
- */
-void audio_enableMic();
-
-/**
- * Disable microphone.
- */
-void audio_disableMic();
-
-/**
- * Enable audio PA.
- */
-void audio_enableAmp();
-
-/**
- * Disable audio PA.
- */
-void audio_disableAmp();
-
 #ifdef __cplusplus
 }
 #endif

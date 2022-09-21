@@ -156,37 +156,3 @@ bool audio_checkPathCompatibility(const enum AudioSource p1Source,
 
     return pathCompatibilityMatrix[p1Index][p2Index] == 1;
 }
-
-
-
-
-void audio_enableMic()
-{
-    #if !defined(PLATFORM_MD9600) && !defined(MDx_ENABLE_SWD)
-    gpio_setPin(MIC_PWR);
-    #endif
-}
-
-void audio_disableMic()
-{
-    #if !defined(PLATFORM_MD9600) && !defined(MDx_ENABLE_SWD)
-    gpio_clearPin(MIC_PWR);
-    #endif
-}
-
-void audio_enableAmp()
-{
-    #ifndef PLATFORM_MD9600
-    gpio_setPin(AUDIO_AMP_EN);
-    #endif
-    sleepFor(0, 10);                /* 10ms anti-pop delay */
-    gpio_clearPin(SPK_MUTE);
-}
-
-void audio_disableAmp()
-{
-    gpio_setPin(SPK_MUTE);
-    #ifndef PLATFORM_MD9600
-    gpio_clearPin(AUDIO_AMP_EN);
-    #endif
-}

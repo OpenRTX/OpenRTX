@@ -22,33 +22,57 @@
 #include <interfaces/gpio.h>
 #include <hwconfig.h>
 
+
+static const uint8_t pathCompatibilityMatrix[9][9] =
+{
+    // MIC-SPK MIC-RTX MIC-MCU RTX-SPK RTX-RTX RTX-MCU MCU-SPK MCU-RTX MCU-MCU
+    {    0   ,   0   ,   0   ,   1   ,   0   ,   1   ,   1   ,   0   ,   1   },  // MIC-RTX
+    {    0   ,   0   ,   0   ,   0   ,   1   ,   1   ,   0   ,   1   ,   1   },  // MIC-SPK
+    {    0   ,   0   ,   0   ,   1   ,   1   ,   0   ,   1   ,   1   ,   0   },  // MIC-MCU
+    {    0   ,   1   ,   1   ,   0   ,   0   ,   0   ,   0   ,   1   ,   1   },  // RTX-SPK
+    {    1   ,   0   ,   1   ,   0   ,   0   ,   0   ,   1   ,   0   ,   1   },  // RTX-RTX
+    {    1   ,   1   ,   0   ,   0   ,   0   ,   0   ,   1   ,   1   ,   0   },  // RTX-MCU
+    {    0   ,   1   ,   1   ,   0   ,   1   ,   1   ,   0   ,   0   ,   0   },  // MCU-SPK
+    {    1   ,   0   ,   1   ,   1   ,   0   ,   1   ,   0   ,   0   ,   0   },  // MCU-RTX
+    {    1   ,   1   ,   0   ,   1   ,   1   ,   0   ,   0   ,   0   ,   0   }   // MCU-MCU
+};
+
+
 void audio_init()
 {
     gpio_setMode(AUDIO_AMP_EN, OUTPUT);
-    gpio_clearPin(AUDIO_AMP_EN);    /* Audio PA off    */
+    gpio_clearPin(AUDIO_AMP_EN);
 }
 
 void audio_terminate()
 {
-    gpio_clearPin(AUDIO_AMP_EN);    /* Audio PA off    */
-}
-
-void audio_enableMic()
-{
-    /* No mic control on this family */
-}
-
-void audio_disableMic()
-{
-    /* No mic control on this family */
-}
-
-void audio_enableAmp()
-{
-    gpio_setPin(AUDIO_AMP_EN);
-}
-
-void audio_disableAmp()
-{
     gpio_clearPin(AUDIO_AMP_EN);
+}
+
+void audio_connect(const enum AudioSource source, const enum AudioSink sink)
+{
+    if(sink == SINK_SPK)
+    {
+        gpio_setPin(AUDIO_AMP_EN);
+    }
+}
+
+void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
+{
+    if(sink == SINK_SPK)
+    {
+        gpio_clearPin(AUDIO_AMP_EN);
+    }
+}
+
+bool audio_checkPathCompatibility(const enum AudioSource p1Source,
+                                  const enum AudioSink   p1Sink,
+                                  const enum AudioSource p2Source,
+                                  const enum AudioSink   p2Sink)
+
+{
+    uint8_t p1Index = (p1Source * 3) + p1Sink;
+    uint8_t p2Index = (p2Source * 3) + p2Sink;
+
+    return pathCompatibilityMatrix[p1Index][p2Index] == 1;
 }

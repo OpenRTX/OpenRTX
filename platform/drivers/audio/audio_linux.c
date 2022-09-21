@@ -111,23 +111,3 @@ bool audio_checkPathCompatibility(const enum AudioSource p1Source,
 
     return pathCompatibilityMatrix[p1Index][p2Index] == 1;
 }
-
-void audio_enableMic()
-{
-    /* No mic control on this family */
-}
-
-void audio_disableMic()
-{
-    /* No mic control on this family */
-}
-
-void audio_enableAmp()
-{
-    /* No PA control on this family */
-}
-
-void audio_disableAmp()
-{
-    /* No PA control on this family */
-}
