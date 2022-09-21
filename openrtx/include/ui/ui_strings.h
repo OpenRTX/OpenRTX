@@ -85,8 +85,8 @@ typedef struct
     const char* toRestoreFlashAnd;
     const char* openRTX;
     const char* gpsSettings;
-    const char* callsign;
     const char* m17settings;
+    const char* callsign;
     const char* resetToDefaults;
     const char* toReset;
     const char* pressEnterTwice;
