@@ -434,16 +434,18 @@ void vp_announceContact(const contact_t* contact, const vpQueueFlags_t flags)
     playIfNeeded(flags);
 }
 
-void vp_announceContactWithIndex(const uint16_t index, const vpQueueFlags_t flags)
+bool vp_announceContactWithIndex(const uint16_t index, const vpQueueFlags_t flags)
 {
     if (index == 0)
-        return;
+        return false;
 
     contact_t contact;
     if (cps_readContact(&contact, index) == -1)
-        return;
+        return false;
 
     vp_announceContact(&contact, flags);
+    
+    return true;
 }
 
 void vp_announceTimeslot(const uint8_t timeslot, const vpQueueFlags_t flags)
@@ -521,7 +523,8 @@ void vp_announceM17Info(const channel_t* channel, bool isEditing, const vpQueueF
     }
     else if ((channel != NULL) && (channel->m17.contact_index != 0))
     {
-        vp_announceContactWithIndex(channel->m17.contact_index, flags);
+        if (!vp_announceContactWithIndex(channel->m17.contact_index, flags))
+                    vp_queueStringTableEntry(&currentLanguage->broadcast);
     }
     else
     {

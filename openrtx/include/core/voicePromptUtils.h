@@ -128,7 +128,7 @@ void vp_announceContact(const contact_t* contact, const vpQueueFlags_t flags);
 /**
  *
  */
-void vp_announceContactWithIndex(const uint16_t index, const vpQueueFlags_t flags);
+bool vp_announceContactWithIndex(const uint16_t index, const vpQueueFlags_t flags);
 
 /**
  *
