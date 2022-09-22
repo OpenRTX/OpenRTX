@@ -250,7 +250,7 @@ void vp_announceChannelSummary(const channel_t* channel,
         }
         else if (channel->mode == OPMODE_M17)
         {
-            vp_announceM17Info(channel, localFlags);
+            vp_announceM17Info(channel, false, localFlags);
         }
         else if (channel->mode == OPMODE_DMR)
         {
@@ -502,27 +502,32 @@ void vp_announceBank(const uint16_t bank, const vpQueueFlags_t flags)
     playIfNeeded(flags);
 }
 
-void vp_announceM17Info(const channel_t* channel, const vpQueueFlags_t flags)
+void vp_announceM17Info(const channel_t* channel, bool isEditing, const vpQueueFlags_t flags)
 {
-    if (channel == NULL)
-        return;
-
     clearCurrPromptIfNeeded(flags);
-
-    if (state.m17_data.dst_addr[0] != '\0')
+    
+    if (flags & vpqIncludeDescriptions)
     {
-        if (flags & vpqIncludeDescriptions)
-        {
-            vp_queuePrompt(PROMPT_DEST_ID);
-        }
-
+        vp_queuePrompt(PROMPT_DEST_ID);
+    }
+    
+    if (isEditing)
+    {
+        vp_queuePrompt(PROMPT_EDIT);
+    }
+    else if (state.m17_data.dst_addr[0] != '\0')
+    {
         vp_queueString(state.m17_data.dst_addr, vpAnnounceCommonSymbols);
     }
-    else if (channel->m17.contact_index != 0)
+    else if ((channel != NULL) && (channel->m17.contact_index != 0))
     {
         vp_announceContactWithIndex(channel->m17.contact_index, flags);
     }
-
+    else
+    {
+        vp_queueStringTableEntry(&currentLanguage->broadcast);
+    }
+    
     playIfNeeded(flags);
 }
 

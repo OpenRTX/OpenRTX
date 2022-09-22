@@ -127,12 +127,12 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
         case OPMODE_M17:
         {
             // Print M17 Destination ID on line 3 of 3
-            char *dst = NULL;
+            const char *dst = NULL;
             if(ui_state->edit_mode)
                 dst = ui_state->new_callsign;
             else
                 dst = (!strnlen(cfg.destination_address, 10)) ?
-                    "Broadcast" : cfg.destination_address;
+                    currentLanguage->broadcast : cfg.destination_address;
             gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                   color_white, "#%s", dst);
             break;

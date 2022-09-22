@@ -149,7 +149,7 @@ void vp_announceBank(const uint16_t bank, const vpQueueFlags_t flags);
 /**
  *
  */
-void vp_announceM17Info(const channel_t* channel, const vpQueueFlags_t flags);
+void vp_announceM17Info(const channel_t* channel, bool isEditing, const vpQueueFlags_t flags);
 
 /**
  *

@@ -1280,20 +1280,19 @@ void ui_updateFSM(bool *sync_rtx)
                             _ui_textInputConfirm(ui_state.new_callsign);
                             // Save selected dst ID and disable input mode
                             strncpy(state.m17_data.dst_addr, ui_state.new_callsign, 10);
-                            vp_announceBuffer(&currentLanguage->callsign,
-                                              false, true, 
-                                              state.m17_data.dst_addr);
                             ui_state.edit_mode = false;
                             *sync_rtx = true;
+                            vp_announceM17Info(NULL,  ui_state.edit_mode, 
+                                               queueFlags);
                         }
                         else if(msg.keys & KEY_HASH)
                         {
                             // Save selected dst ID and disable input mode
                             strncpy(state.m17_data.dst_addr, "", 1);
-                            vp_announceBuffer(&currentLanguage->callsign,
-                                              false, true, "-");
                             ui_state.edit_mode = false;
                             *sync_rtx = true;
+                            vp_announceM17Info(NULL,  ui_state.edit_mode, 
+                                               queueFlags);
                         }
                         else if(msg.keys & KEY_ESC)
                             // Discard selected dst ID and disable input mode
@@ -1338,9 +1337,8 @@ void ui_updateFSM(bool *sync_rtx)
                         ui_state.edit_mode = true;
                         // Reset text input variables
                         _ui_textInputReset(ui_state.new_callsign);
-                        vp_announceBuffer(&currentLanguage->callsign,
-                                          true, true, 
-                                          "");
+                        vp_announceM17Info(NULL,  ui_state.edit_mode, 
+                                           queueFlags);
                     }
                     else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
                     {
