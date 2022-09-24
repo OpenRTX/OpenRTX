@@ -74,10 +74,10 @@ void openrtx_init()
     // Detect and initialise GPS
     state.gpsDetected = gps_detect(1000);
     if(state.gpsDetected) gps_init(9600);
-    #else
+    #endif
+
     // Keep the splash screen for 1 second
     sleepFor(1u, 0u);
-    #endif
 }
 
 void *openrtx_run()
