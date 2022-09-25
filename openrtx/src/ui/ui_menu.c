@@ -668,21 +668,31 @@ bool _ui_drawMacroMenu()
         gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   color_white, "Macro Menu");
         // First row
-        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
-                  yellow_fab413, "1");
         if (last_state.channel.mode == OPMODE_FM)
         {
             gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
-                      color_white, "  %6.1f",
+                      yellow_fab413, "1");
+            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
+                      color_white, "   T+");
+            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
+                      color_white, "     %7.1f",
                       ctcss_tone[last_state.channel.fm.txTone]/10.0f);
+            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
+                      yellow_fab413, "2");
+            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
+                      color_white,   "       T-");
         }
         else if (last_state.channel.mode == OPMODE_M17)
         {
             gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
+                      yellow_fab413, "1");
+            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
                       color_white, "          ");
+            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
+                      yellow_fab413, "2       ");
         }
-        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
-                  yellow_fab413, "2       ");
+        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
+                  yellow_fab413, "3        ");
         if (last_state.channel.mode == OPMODE_FM)
         {
             char encdec_str[9] = { 0 };
@@ -696,7 +706,7 @@ bool _ui_drawMacroMenu()
                 snprintf(encdec_str, 9, "      D ");
             else
                 snprintf(encdec_str, 9, "        ");
-            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
+            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                       color_white, encdec_str);
         }
         else if (last_state.channel.mode == OPMODE_M17)
@@ -705,10 +715,6 @@ bool _ui_drawMacroMenu()
             gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
                       color_white, encdec_str);
         }
-        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
-                  yellow_fab413, "3        ");
-        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
-                  color_white, "%.1gW", dBmToWatt(last_state.channel.power));
         // Second row
         // Calculate symmetric second row position, line2_pos is asymmetric like main screen
         point_t pos_2 = {layout.line1_pos.x, layout.line1_pos.y +
@@ -717,17 +723,17 @@ bool _ui_drawMacroMenu()
                   yellow_fab413, "4");
         if (last_state.channel.mode == OPMODE_FM)
         {
-            char bw_str[8] = { 0 };
+            char bw_str[12] = { 0 };
             switch (last_state.channel.bandwidth)
             {
                 case BW_12_5:
-                    snprintf(bw_str, 8, "   12.5");
+                    snprintf(bw_str, 12, "   BW 12.5");
                     break;
                 case BW_20:
-                    snprintf(bw_str, 8, "     20");
+                    snprintf(bw_str, 12, "   BW  20 ");
                     break;
                 case BW_25:
-                    snprintf(bw_str, 8, "     25");
+                    snprintf(bw_str, 12, "   BW  25 ");
                     break;
             }
             gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
@@ -740,18 +746,18 @@ bool _ui_drawMacroMenu()
 
         }
         gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER,
-                  yellow_fab413, "5       ");
-        char mode_str[9] = "";
+                  yellow_fab413, "5");
+        char mode_str[12] = "";
         switch(last_state.channel.mode)
         {
             case OPMODE_FM:
-            snprintf(mode_str, 9,"      FM");
+            snprintf(mode_str, 12,"         FM");
             break;
             case OPMODE_DMR:
-            snprintf(mode_str, 9,"     DMR");
+            snprintf(mode_str, 12,"        DMR");
             break;
             case OPMODE_M17:
-            snprintf(mode_str, 9,"     M17");
+            snprintf(mode_str, 12,"        M17");
             break;
         }
         gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER,
@@ -759,20 +765,23 @@ bool _ui_drawMacroMenu()
         gfx_print(pos_2, layout.top_font, TEXT_ALIGN_RIGHT,
                   yellow_fab413, "6        ");
         gfx_print(pos_2, layout.top_font, TEXT_ALIGN_RIGHT,
-                  color_white, "Lck");
+                  color_white, "%.1gW", dBmToWatt(last_state.channel.power));
         // Third row
         gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   yellow_fab413, "7");
         gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_LEFT,
-                  color_white, "    B+");
+                  color_white, "   B+");
+        gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_LEFT,
+                  color_white, "       %5d",
+                  state.settings.brightness);
         gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_CENTER,
-                  yellow_fab413, "8       ");
+                  yellow_fab413, "8");
         gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_CENTER,
-                  color_white, "     B-");
+                  color_white,   "       B-");
         gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                   yellow_fab413, "9        ");
         gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_RIGHT,
-                  color_white, "Sav");
+                  color_white, "Lck");
 
         // Draw S-meter bar
         _ui_drawMainBottom();

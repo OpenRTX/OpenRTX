@@ -758,6 +758,15 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
         case 2:
             if(state.channel.mode == OPMODE_FM)
             {
+                state.channel.fm.txTone--;
+                state.channel.fm.txTone %= MAX_TONE_INDEX;
+                state.channel.fm.rxTone = state.channel.fm.txTone;
+                *sync_rtx = true;
+            }
+            break;
+        case 3:
+            if(state.channel.mode == OPMODE_FM)
+            {
                 tone_flags++;
                 tone_flags %= 4;
                 tone_tx_enable = tone_flags >> 1;
@@ -766,13 +775,6 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
                 state.channel.fm.rxToneEn = tone_rx_enable;
                 *sync_rtx = true;
             }
-            break;
-        case 3:
-            if (state.channel.power == 100)
-                state.channel.power = 135;
-            else
-                state.channel.power = 100;
-            *sync_rtx = true;
             break;
         case 4:
             if(state.channel.mode == OPMODE_FM)
@@ -789,7 +791,14 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             else if(state.channel.mode == OPMODE_M17)
                 state.channel.mode = OPMODE_FM;
             *sync_rtx = true;
+        case 6:
+            if (state.channel.power == 100)
+                state.channel.power = 135;
+            else
+                state.channel.power = 100;
+            *sync_rtx = true;
             break;
+        break;
         case 7:
             _ui_changeBrightness(+5);
             break;
