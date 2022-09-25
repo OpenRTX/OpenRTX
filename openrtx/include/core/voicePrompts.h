@@ -166,8 +166,8 @@ typedef enum
     PROMPT_CARET,           // caret
     PROMPT_LEFT_BRACE,      // left brace
     PROMPT_RIGHT_BRACE,     // right brace
-PROMPT_EDIT, // edit
-PROMPT_CUSTOM1,         // Hotspot
+    PROMPT_EDIT,            // edit
+    PROMPT_CUSTOM1,         // Hotspot
     PROMPT_CUSTOM2,         // ClearNode
     PROMPT_CUSTOM3,         // ShariNode
     PROMPT_CUSTOM4,         // MicroHub
@@ -226,44 +226,37 @@ typedef enum
     vpMedium,
     vpHigh
 }
-VoicePromptVerbosity_T;
+vpVerbosity_t;
 
 typedef enum
 {
-    vpChannelNameOrVFO = 0x01,
-    vpFrequencies = 0x02,
-    vpRadioMode = 0x04,
-    vpModeSpecificInfo = 0x08,
-    vpPower = 0x10,
+    vpChannelNameOrVFO      = 0x01,
+    vpFrequencies           = 0x02,
+    vpRadioMode             = 0x04,
+    vpModeSpecificInfo      = 0x08,
+    vpPower                 = 0x10,
     vpBankNameOrAllChannels = 0x20,
-    vpSplashInfo = 0x40,
-    vpAllInfoExceptSplash = 0x3f,
-    vpAllInfo = 0xff
-} 
+    vpSplashInfo            = 0x40,
+    vpAllInfoExceptSplash   = 0x3f,
+    vpAllInfo               = 0xff
+}
 vpSummaryInfoFlags_t;
 
 typedef enum
 {
-    vpGPSNone=0,
-    vpGPSIntro=0x01,
+    vpGPSNone       = 0,
+    vpGPSIntro      = 0x01,
     vpGPSFixQuality = 0x02,
-    vpGPSFixType = 0x04,
-    vpGPSLatitude = 0x08,
-    vpGPSLongitude = 0x10, 
-    vpGPSSpeed = 0x20,
-    vpGPSAltitude = 0x40,
-    vpGPSDirection = 0x80,
-    vpGPSSatCount = 0x100,
-    vpGPSAll = 0x1ff,
-} 
-vpGPSInfoFlags_t;
-
-typedef struct
-{
-    uint16_t freq;
-    uint16_t duration;
+    vpGPSFixType    = 0x04,
+    vpGPSLatitude   = 0x08,
+    vpGPSLongitude  = 0x10,
+    vpGPSSpeed      = 0x20,
+    vpGPSAltitude   = 0x40,
+    vpGPSDirection  = 0x80,
+    vpGPSSatCount   = 0x100,
+    vpGPSAll        = 0x1ff,
 }
-beep_data_t;
+vpGPSInfoFlags_t;
 
 
 /**
@@ -342,9 +335,11 @@ bool vp_sequenceNotEmpty();
  * play a beep at a given frequency for a given duration.
  */
 void vp_beep(uint16_t freq, uint16_t duration);
+
 /**
- * play a series of beeps at a given frequency for a given duration.
+ * Play a series of beeps at a given frequency for a given duration.
  * Array is freq, duration, ... 0, 0 to terminate series.
  */
 void vp_beepSeries(const uint16_t* beepSeries);
+
 #endif

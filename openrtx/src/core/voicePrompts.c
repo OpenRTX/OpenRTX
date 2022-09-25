@@ -33,18 +33,12 @@
 
 static const uint32_t VOICE_PROMPTS_DATA_MAGIC   = 0x5056;  //'VP'
 static const uint32_t VOICE_PROMPTS_DATA_VERSION = 0x1000;  // v1000 OpenRTX
-static uint16_t currentBeepDuration=0;
-// max buff size for beep series (melody).
-#define beepSeriesMax 256
+const uint16_t BOOT_MELODY[] = {400, 3, 600, 3, 800, 3, 0, 0};
 
-static beep_data_t beepSeriesBuffer[beepSeriesMax];
-static uint8_t beepSeriesIndex = 0;
- static bool delayBeepUntilTick=false;
- const uint16_t BOOT_MELODY[]={400, 3, 600, 3, 800, 3, 0, 0};
- 
 #define VOICE_PROMPTS_TOC_SIZE 350
 #define CODEC2_HEADER_SIZE     7
 #define VP_SEQUENCE_BUF_SIZE   128
+#define BEEP_SEQ_BUF_SIZE      256
 
 typedef struct
 {
@@ -70,6 +64,14 @@ typedef struct
     uint32_t c2DataLength;                  // Length of codec2 data for current prompt.
 }
 vpSequence_t;
+
+typedef struct
+{
+    uint16_t freq;
+    uint16_t duration;
+}
+beepData_t;
+
 
 static const userDictEntry_t userDictionary[] =
 {
@@ -98,6 +100,11 @@ static vpSequence_t vpCurrentSequence =
 static uint32_t tableOfContents[VOICE_PROMPTS_TOC_SIZE];
 static bool     vpDataLoaded      = false;
 static bool     voicePromptActive = false;
+
+static beepData_t beepSeriesBuffer[BEEP_SEQ_BUF_SIZE];
+static uint16_t   currentBeepDuration = 0;
+static uint8_t    beepSeriesIndex     = 0;
+static bool       delayBeepUntilTick  = false;
 
 #ifdef VP_USE_FILESYSTEM
 static FILE *vpFile = NULL;
@@ -250,6 +257,61 @@ static bool GetSymbolVPIfItShouldBeAnnounced(char symbol,
             (!commonSymbol && announceLessCommonSymbols));
 }
 
+/**
+ * \internal
+ * Stop an ongoing beep, if present, and clear all the beep management
+ * variables.
+ */
+static void beep_flush()
+{
+    if (currentBeepDuration > 0)
+        platform_beepStop();
+
+    memset(beepSeriesBuffer, 0, sizeof(beepSeriesBuffer));
+    currentBeepDuration = 0;
+    beepSeriesIndex     = 0;
+}
+
+/**
+ * \internal
+ * Function managing beep update.
+ */
+static bool beep_tick()
+{
+    if (currentBeepDuration > 0)
+    {
+        if (delayBeepUntilTick)
+        {
+            platform_beepStart(beepSeriesBuffer[beepSeriesIndex].freq);
+            delayBeepUntilTick=false;
+        }
+
+        currentBeepDuration--;
+        if (currentBeepDuration == 0)
+        {
+            platform_beepStop();
+
+            // see if there are any more in the series to play.
+            if ((beepSeriesBuffer[beepSeriesIndex+1].freq     != 0) &&
+                (beepSeriesBuffer[beepSeriesIndex+1].duration != 0))
+            {
+                beepSeriesIndex++;
+                currentBeepDuration = beepSeriesBuffer[beepSeriesIndex].duration;
+                platform_beepStart(beepSeriesBuffer[beepSeriesIndex].freq);
+            }
+            else
+            {
+                // Clear all variables for beep management
+                beep_flush();
+            }
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
 
 void vp_init()
 {
@@ -314,16 +376,6 @@ void vp_terminate()
     #ifdef VP_USE_FILESYSTEM
     fclose(vpFile);
     #endif
-}
-
-static void beep_flush()
-{
-    if (currentBeepDuration > 0)
-        platform_beepStop();
-    
-    currentBeepDuration = 0;
-    memset(beepSeriesBuffer, 0, sizeof(beepSeriesBuffer));
-    beepSeriesIndex=0;
 }
 
 void vp_stop()
@@ -439,6 +491,7 @@ void vp_queueInteger(const int value)
     char buf[12] = {0};  // min: -2147483648, max: 2147483647
     if (value < 0)
         vp_queuePrompt(PROMPT_MINUS);
+
     snprintf(buf, 12, "%d", value);
     vp_queueString(buf, 0);
 }
@@ -479,36 +532,6 @@ void vp_play()
 
     codec_startDecode(SINK_SPK);
     audio_enableAmp();
-}
-
-static bool beep_tick()
-{
-    if (currentBeepDuration > 0)
-    {
-        if (delayBeepUntilTick)
-        {
-            platform_beepStart(beepSeriesBuffer[beepSeriesIndex].freq);
-            delayBeepUntilTick=false;
-        }
-        currentBeepDuration--;
-        if (currentBeepDuration==0)
-        {
-            platform_beepStop();
-            // see if there are any more in the series to play.
-            if (beepSeriesBuffer[beepSeriesIndex+1].freq && beepSeriesBuffer[beepSeriesIndex+1].duration)
-            {
-                beepSeriesIndex++;
-                currentBeepDuration=beepSeriesBuffer[beepSeriesIndex].duration;
-                platform_beepStart(beepSeriesBuffer[beepSeriesIndex].freq);
-            }
-            else
-            {
-                beep_flush();
-            }
-        }
-        return true;
-    }
-    return false;
 }
 
 void vp_tick()
@@ -573,55 +596,48 @@ bool vp_sequenceNotEmpty()
     return (vpCurrentSequence.length > 0);
 }
 
-// Duration seems to be in tenths of a second.
 void vp_beep(uint16_t freq, uint16_t duration)
 {
     if (state.settings.vpLevel < vpBeep)
         return;
-    
+
     // Do not play a new one if one is playing.
-    if (currentBeepDuration)
-        return ;
+    if (currentBeepDuration != 0)
+        return;
+
     // avoid extra long beeps!
     if (duration > 20)
-        duration=20; 
-    
-    currentBeepDuration=duration;
+        duration = 20;
+
+    beepSeriesBuffer[0].freq     = freq;
+    beepSeriesBuffer[0].duration = duration;
+    beepSeriesBuffer[1].freq     = 0;
+    beepSeriesBuffer[1].duration = 0;
+    currentBeepDuration = duration;
+    beepSeriesIndex     = 0;
     audio_enableAmp();
-    beepSeriesBuffer[0].freq=freq;
-    beepSeriesBuffer[0].duration=duration;
-    beepSeriesBuffer[1].freq =0;
-    beepSeriesBuffer[1].duration =0;
-    beepSeriesIndex=0;
     platform_beepStart(freq);
-    // See BeepTick for termination.
 }
 
-/*
-We delay the playing of the melody until the first time vp_tick is called 
-because there is a sleep on the splash screen which would make the first note 
-play extra long.
-*/
 void vp_beepSeries(const uint16_t* beepSeries)
 {
     if (state.settings.vpLevel < vpBeep)
         return;
-    
-    if (currentBeepDuration)
-        return ;
-    
+
+    if (currentBeepDuration != 0)
+        return;
+
     audio_enableAmp();
 
-    if (!beepSeries) return;
-    
-    memcpy(beepSeriesBuffer, beepSeries, beepSeriesMax*sizeof(beep_data_t));
+    if (beepSeries == NULL)
+        return;
+
+    memcpy(beepSeriesBuffer, beepSeries, BEEP_SEQ_BUF_SIZE*sizeof(beepData_t));
     // Always ensure that the array is terminated!
-    beepSeriesBuffer[beepSeriesMax-1].freq = 0;
-    beepSeriesBuffer[beepSeriesMax-1].duration = 0;
-    
-    beepSeriesIndex=0;
-    currentBeepDuration=beepSeriesBuffer[0].duration;
-    delayBeepUntilTick = true;
+    beepSeriesBuffer[BEEP_SEQ_BUF_SIZE-1].freq     = 0;
+    beepSeriesBuffer[BEEP_SEQ_BUF_SIZE-1].duration = 0;
+
+    currentBeepDuration = beepSeriesBuffer[0].duration;
+    beepSeriesIndex     = 0;
+    delayBeepUntilTick  = true;
 }
-
-

@@ -69,7 +69,7 @@ void vp_announceBandwidth(const uint8_t bandwidth, const vpQueueFlags_t flags);
  * channelNumber is 1-based, channelIndex is 0-based.
  */
 void vp_announceChannelSummary(const channel_t* channel,
-                               const uint16_t channelNumber, const uint16_t bank, 
+                               const uint16_t channelNumber, const uint16_t bank,
                                const vpSummaryInfoFlags_t infoFlags);
 
 /**
@@ -149,7 +149,8 @@ void vp_announceBank(const uint16_t bank, const vpQueueFlags_t flags);
 /**
  *
  */
-void vp_announceM17Info(const channel_t* channel, bool isEditing, const vpQueueFlags_t flags);
+void vp_announceM17Info(const channel_t* channel, bool isEditing,
+                        const vpQueueFlags_t flags);
 
 /**
  *
@@ -195,8 +196,7 @@ void vp_announceSettingsOnOffToggle(const char* const* stringTableStringPtr,
  * This is called to speak generic settings int values.
  */
 void vp_announceSettingsInt(const char* const* stringTableStringPtr,
-                                    const vpQueueFlags_t flags,
-                                    int val);
+                            const vpQueueFlags_t flags, int val);
 
 /**
  * This function is called from  ui_updateFSM to speak informational screens.
@@ -218,6 +218,10 @@ void vp_announceDisplayTimer();
  *
  */
 vpQueueFlags_t vp_getVoiceLevelQueueFlags();
+
+/**
+ *
+ */
 void vp_playMenuBeepIfNeeded(bool firstItem);
 
 #endif  // VOICE_PROMPT_UTILS_H
