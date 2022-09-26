@@ -61,6 +61,7 @@ TARGETS=(
 	"openrtx_mduv3x0_wrap" 
 	"openrtx_gd77_wrap" 
 	"openrtx_dm1801_wrap"
+	"openrtx_mod17_bin"
 )
 
 #Preparation
