@@ -86,4 +86,5 @@ done
 cd build_arm
 #Using command line option to upload to a scp server
 scp *_wrap* "${@: -1}"
+scp *mod17_bin* "${@: -1}"
 
