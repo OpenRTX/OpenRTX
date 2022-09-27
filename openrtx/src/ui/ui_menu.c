@@ -673,14 +673,14 @@ bool _ui_drawMacroMenu()
             gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
                       yellow_fab413, "1");
             gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
-                      color_white, "   T+");
+                      color_white, "   T-");
             gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
                       color_white, "     %7.1f",
                       ctcss_tone[last_state.channel.fm.txTone]/10.0f);
             gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
                       yellow_fab413, "2");
             gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
-                      color_white,   "       T-");
+                      color_white,   "       T+");
         }
         else if (last_state.channel.mode == OPMODE_M17)
         {
@@ -770,14 +770,14 @@ bool _ui_drawMacroMenu()
         gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   yellow_fab413, "7");
         gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_LEFT,
-                  color_white, "   B+");
+                  color_white, "   B-");
         gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white, "       %5d",
                   state.settings.brightness);
         gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   yellow_fab413, "8");
         gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_CENTER,
-                  color_white,   "       B-");
+                  color_white,   "       B+");
         gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                   yellow_fab413, "9        ");
         gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_RIGHT,
