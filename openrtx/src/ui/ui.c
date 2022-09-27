@@ -877,6 +877,11 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
                 state.channel.fm.txTone %= MAX_TONE_INDEX;
                 state.channel.fm.rxTone = state.channel.fm.txTone;
                 *sync_rtx = true;
+                vp_announceCTCSS(state.channel.fm.rxToneEn,
+                                 state.channel.fm.rxTone,
+                                 state.channel.fm.txToneEn,
+                                 state.channel.fm.txTone,
+                                 queueFlags);
             }
             break;
         case 3:
