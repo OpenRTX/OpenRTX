@@ -19,11 +19,11 @@
  ***************************************************************************/
 #include <interfaces/platform.h>
 #include <interfaces/keyboard.h>
-#include <interfaces/audio.h>
-#include "voicePromptUtils.h"
+#include <voicePromptUtils.h>
 #include <ui/ui_strings.h>
 #include <voicePrompts.h>
 #include <audio_codec.h>
+#include <audio_path.h>
 #include <ctype.h>
 #include <state.h>
 #include <stdio.h>
@@ -105,6 +105,8 @@ static beepData_t beepSeriesBuffer[BEEP_SEQ_BUF_SIZE];
 static uint16_t   currentBeepDuration = 0;
 static uint8_t    beepSeriesIndex     = 0;
 static bool       delayBeepUntilTick  = false;
+
+static pathId     vpAudioPath;
 
 #ifdef VP_USE_FILESYSTEM
 static FILE *vpFile = NULL;
@@ -270,6 +272,7 @@ static void beep_flush()
     memset(beepSeriesBuffer, 0, sizeof(beepSeriesBuffer));
     currentBeepDuration = 0;
     beepSeriesIndex     = 0;
+    audioPath_release(vpAudioPath);
 }
 
 /**
@@ -283,7 +286,7 @@ static bool beep_tick()
         if (delayBeepUntilTick)
         {
             platform_beepStart(beepSeriesBuffer[beepSeriesIndex].freq);
-            delayBeepUntilTick=false;
+            delayBeepUntilTick = false;
         }
 
         currentBeepDuration--;
@@ -366,10 +369,7 @@ void vp_init()
 void vp_terminate()
 {
     if (voicePromptActive)
-    {
-        audio_disableAmp();
         vp_flush();
-    }
 
     codec_terminate();
 
@@ -388,6 +388,8 @@ void vp_stop()
 
     // If any beep is playing, immediately stop it.
     beep_flush();
+
+    audioPath_release(vpAudioPath);
 }
 
 void vp_flush()
@@ -530,8 +532,8 @@ void vp_play()
 
     voicePromptActive = true;
 
+    vpAudioPath = audioPath_request(SOURCE_MCU, SINK_SPK, PRIO_PROMPT);
     codec_startDecode(SINK_SPK);
-    audio_enableAmp();
 }
 
 void vp_tick()
@@ -564,7 +566,11 @@ void vp_tick()
             fetchCodec2Data(c2Frame, vpCurrentSequence.c2DataStart +
                                      vpCurrentSequence.c2DataIndex);
 
-            if (!codec_pushFrame(c2Frame, false))
+            // Do not push codec2 data if audio path is closed or suspended
+            if(audioPath_getStatus(vpAudioPath) != PATH_OPEN)
+                return;
+
+            if (codec_pushFrame(c2Frame, false) == false)
                 return;
 
             vpCurrentSequence.c2DataIndex += 8;
@@ -582,6 +588,7 @@ void vp_tick()
         vpCurrentSequence.pos          = 0;
         vpCurrentSequence.c2DataIndex  = 0;
         vpCurrentSequence.c2DataLength = 0;
+        audioPath_release(vpAudioPath);
         codec_stop();
     }
 }
@@ -615,7 +622,7 @@ void vp_beep(uint16_t freq, uint16_t duration)
     beepSeriesBuffer[1].duration = 0;
     currentBeepDuration = duration;
     beepSeriesIndex     = 0;
-    audio_enableAmp();
+    vpAudioPath = audioPath_request(SOURCE_MCU, SINK_SPK, PRIO_PROMPT);
     platform_beepStart(freq);
 }
 
@@ -627,7 +634,7 @@ void vp_beepSeries(const uint16_t* beepSeries)
     if (currentBeepDuration != 0)
         return;
 
-    audio_enableAmp();
+    vpAudioPath = audioPath_request(SOURCE_MCU, SINK_SPK, PRIO_PROMPT);
 
     if (beepSeries == NULL)
         return;
