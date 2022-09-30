@@ -331,7 +331,7 @@ static void *decodeFunc(void *arg)
 
             #ifdef PLATFORM_MD3x0
             // Bump up volume a little bit, as on MD3x0 is quite low
-            for(size_t i = 0; i < 160; i++) audioBuf[i] *= 4;
+            for(size_t i = 0; i < 160; i++) audioBuf[i] *= 2;
             #endif
 
         }
