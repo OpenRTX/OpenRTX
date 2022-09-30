@@ -228,6 +228,10 @@ static uint16_t userDictLookup(const char* ptr, int* advanceBy)
     return 0;
 }
 
+/**
+ * \internal
+ *
+ */
 static bool GetSymbolVPIfItShouldBeAnnounced(char symbol,
                                              vpFlags_t flags,
                                              voicePrompt_t* vp)
@@ -261,6 +265,33 @@ static bool GetSymbolVPIfItShouldBeAnnounced(char symbol,
 
 /**
  * \internal
+ * Function managing set up of audio path towards the speaker.
+ */
+static inline void enableSpkOutput()
+{
+    // Set up a new audio path only if there is no other one already open to
+    // avoid overwriting the path ID with a -1, locking everything.
+    if(audioPath_getStatus(vpAudioPath) == PATH_CLOSED)
+    {
+        vpAudioPath = audioPath_request(SOURCE_MCU, SINK_SPK, PRIO_PROMPT);
+    }
+}
+
+/**
+ * \internal
+ * Function managing release of audio path towards the speaker.
+ */
+static inline void disableSpkOutput()
+{
+    // Avoid chomping away a still in-progress beep or voice prompt.
+    if((currentBeepDuration != 0) || (voicePromptActive == true))
+        return;
+
+    audioPath_release(vpAudioPath);
+}
+
+/**
+ * \internal
  * Stop an ongoing beep, if present, and clear all the beep management
  * variables.
  */
@@ -272,7 +303,7 @@ static void beep_flush()
     memset(beepSeriesBuffer, 0, sizeof(beepSeriesBuffer));
     currentBeepDuration = 0;
     beepSeriesIndex     = 0;
-    audioPath_release(vpAudioPath);
+    disableSpkOutput();
 }
 
 /**
@@ -388,8 +419,7 @@ void vp_stop()
 
     // If any beep is playing, immediately stop it.
     beep_flush();
-
-    audioPath_release(vpAudioPath);
+    disableSpkOutput();
 }
 
 void vp_flush()
@@ -532,7 +562,7 @@ void vp_play()
 
     voicePromptActive = true;
 
-    vpAudioPath = audioPath_request(SOURCE_MCU, SINK_SPK, PRIO_PROMPT);
+    enableSpkOutput();
     codec_startDecode(SINK_SPK);
 }
 
@@ -588,7 +618,7 @@ void vp_tick()
         vpCurrentSequence.pos          = 0;
         vpCurrentSequence.c2DataIndex  = 0;
         vpCurrentSequence.c2DataLength = 0;
-        audioPath_release(vpAudioPath);
+        disableSpkOutput();
         codec_stop();
     }
 }
@@ -622,7 +652,7 @@ void vp_beep(uint16_t freq, uint16_t duration)
     beepSeriesBuffer[1].duration = 0;
     currentBeepDuration = duration;
     beepSeriesIndex     = 0;
-    vpAudioPath = audioPath_request(SOURCE_MCU, SINK_SPK, PRIO_PROMPT);
+    enableSpkOutput();
     platform_beepStart(freq);
 }
 
@@ -634,7 +664,7 @@ void vp_beepSeries(const uint16_t* beepSeries)
     if (currentBeepDuration != 0)
         return;
 
-    vpAudioPath = audioPath_request(SOURCE_MCU, SINK_SPK, PRIO_PROMPT);
+    enableSpkOutput();
 
     if (beepSeries == NULL)
         return;
