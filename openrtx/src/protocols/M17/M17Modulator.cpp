@@ -67,6 +67,9 @@ void M17Modulator::terminate()
         txRunning = false;
     }
 
+    // Always ensure that outgoing audio path is closed
+    audioPath_release(outPath);
+
     // Deallocate memory.
     baseband_buffer.reset();
 }

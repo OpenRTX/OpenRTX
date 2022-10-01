@@ -189,6 +189,7 @@ void M17Demodulator::init()
 void M17Demodulator::terminate()
 {
     // Ensure proper termination of baseband sampling
+    audioPath_release(basebandPath);
     inputStream_stop(basebandId);
 
     // Delete the buffers and deallocate memory.
