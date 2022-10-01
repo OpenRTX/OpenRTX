@@ -172,22 +172,16 @@ bool codec_popFrame(uint8_t *frame, const bool blocking)
     if(running == false) return false;
 
     uint64_t element;
-    pthread_mutex_lock(&mutex);
 
-    if(numElements == 0)
+    // No data available and non-blocking call: just return false.
+    if((numElements == 0) && (blocking == false))
+        return false;
+
+    // Blocking call: wait until some data is pushed
+    pthread_mutex_lock(&mutex);
+    while(numElements == 0)
     {
-        if(blocking)
-        {
-            while(numElements == 0)
-            {
-                pthread_cond_wait(&not_empty, &mutex);
-            }
-        }
-        else
-        {
-            pthread_mutex_unlock(&mutex);
-            return false;
-        }
+        pthread_cond_wait(&not_empty, &mutex);
     }
 
     element      = dataBuffer[readPos];
@@ -211,16 +205,13 @@ bool codec_pushFrame(const uint8_t *frame, const bool blocking)
     uint64_t element;
     memcpy(&element, frame, 8);
 
-    pthread_mutex_lock(&mutex);
 
+    // No space available and non-blocking call: return
     if((numElements >= BUF_SIZE) && (blocking == false))
-    {
-        // No space available and non-blocking call: unlock mutex and return
-        pthread_mutex_unlock(&mutex);
         return false;
-    }
 
-    // The call is blocking: wait until there is some free space
+    // Blocking call: wait until there is some free space
+    pthread_mutex_lock(&mutex);
     while(numElements >= BUF_SIZE)
     {
         pthread_cond_wait(&not_full, &mutex);
