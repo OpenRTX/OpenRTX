@@ -2072,6 +2072,7 @@ void ui_updateFSM(bool *sync_rtx)
 
         if (txOngoing || rtx_rxSquelchOpen())
         {
+            functionLatchTimer=0; // cancel the latch timer without beeping.
             _ui_exitStandby(now);
             return;
         }
