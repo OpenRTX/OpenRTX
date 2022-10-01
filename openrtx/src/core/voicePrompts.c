@@ -568,6 +568,11 @@ void vp_play()
 
 void vp_tick()
 {
+    if (platform_getPttStatus() && (voicePromptActive || (currentBeepDuration > 0)))
+    {
+        vp_stop();
+        return;
+    }
     if (beep_tick())
         return;
 
