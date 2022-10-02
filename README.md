@@ -44,7 +44,7 @@ Currently the radios supporting this digital mode are the following:
 - MD-UV380 and MD-UV390 support support both modulation and demodulation.
 - GD77 and DM-1801 currently **do not support** the new digital voice mode.
 
-To make the digital mode work, some modding is required: refer to the [dedicated page](https://openrtx.org/#/hw_mods) on our website for the details.
+To make the digital mode work, some modding is required: refer to the [dedicated page](https://openrtx.org/#/M17/m17?id=hardware-modifications) on our website for the details.
 
 ## Disclaimer
 
