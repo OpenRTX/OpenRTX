@@ -178,7 +178,7 @@ streamId outputStream_start(const enum AudioSink destination,
     NVIC_EnableIRQ(DMA1_Stream2_IRQn);
 
     // Enable compare channel
-    TIM3->CCR3 = 0;
+    TIM3->CCR3 = buf[0];
     TIM3->CCER |= TIM_CCER_CC3E;
     TIM3->CR1  |= TIM_CR1_CEN;
 

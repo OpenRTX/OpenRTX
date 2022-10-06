@@ -411,15 +411,17 @@ void vp_terminate()
 
 void vp_stop()
 {
-    voicePromptActive              = false;
+    voicePromptActive = false;
+    disableSpkOutput();
+    codec_stop();
+
+    // Clear voice prompt sequence data
     vpCurrentSequence.pos          = 0;
     vpCurrentSequence.c2DataIndex  = 0;
     vpCurrentSequence.c2DataLength = 0;
-    codec_stop();
 
     // If any beep is playing, immediately stop it.
     beep_flush();
-    disableSpkOutput();
 }
 
 void vp_flush()
@@ -562,8 +564,8 @@ void vp_play()
 
     voicePromptActive = true;
 
-    enableSpkOutput();
     codec_startDecode(SINK_SPK);
+    enableSpkOutput();
 }
 
 void vp_tick()
@@ -619,11 +621,11 @@ void vp_tick()
     // see if we've finished.
     if(vpCurrentSequence.pos == vpCurrentSequence.length)
     {
+        disableSpkOutput();
         voicePromptActive              = false;
         vpCurrentSequence.pos          = 0;
         vpCurrentSequence.c2DataIndex  = 0;
         vpCurrentSequence.c2DataLength = 0;
-        disableSpkOutput();
         codec_stop();
     }
 }
@@ -657,8 +659,8 @@ void vp_beep(uint16_t freq, uint16_t duration)
     beepSeriesBuffer[1].duration = 0;
     currentBeepDuration = duration;
     beepSeriesIndex     = 0;
-    enableSpkOutput();
     platform_beepStart(freq);
+    enableSpkOutput();
 }
 
 void vp_beepSeries(const uint16_t* beepSeries)

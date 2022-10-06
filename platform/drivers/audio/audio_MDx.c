@@ -51,6 +51,8 @@ void audio_init()
     #endif
     #endif
 
+    gpio_setMode(BEEP_OUT, INPUT);
+
     gpio_setPin(SPK_MUTE);          // Speaker muted
     #ifndef PLATFORM_MD9600
     gpio_clearPin(AUDIO_AMP_EN);    // Audio PA off
