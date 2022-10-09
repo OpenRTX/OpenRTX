@@ -1,0 +1,62 @@
+[binaries]
+c       = 'h8300-elf-gcc'
+cpp     = 'h8300-elf-g++'
+ld      = 'h8300-elf-ld'
+ar      = 'h8300-elf-ar'
+as      = 'h8300-elf-as'
+size    = 'h8300-elf-size'
+objdump = 'h8300-elf-objdump'
+objcopy = 'h8300-elf-objcopy'
+strip   = 'h8300-elf-strip'
+gdb     = 'h8300-elf-gdb'
+terminal= 'x-terminal-emulator'
+openocd = '/usr/local/bin/openocd'
+
+[properties]
+c_args      = [
+               '-D_DEFAULT_SOURCE=1',
+               '-ffunction-sections',
+               '-Wall',
+               '-Werror=return-type',
+               '-g',
+               '-msx',
+               '-Os'
+              ]
+
+cpp_args    = [
+               '-D_DEFAULT_SOURCE=1',
+               '-ffunction-sections',
+               '-Wall',
+               '-Werror=return-type',
+               '-g',
+               '-fno-exceptions',
+               '-fno-rtti',
+               '-D__NO_EXCEPTIONS',
+               '-std=c++14',
+               '-msx',
+               '-Os'
+              ]
+
+c_link_args = [
+               '-fno-exceptions',
+               '-fno-rtti',
+               '-Wl,--gc-sections',
+               '-Wl,-Map,main.map',
+               '-Wl,--warn-common',
+               '-nostartfiles',
+               '-nodefaultlibs',
+               '-Wl,-L/usr/h8300-elf/lib',
+               '-nostdlib',
+               '-lstdc++',
+               '-lc',
+               '-lm',
+               '-lgcc',
+              ]
+
+cpp_link_args = c_link_args
+
+[host_machine]
+system = 'none'
+cpu_family = 'h8300'
+cpu = 'h8sx'
+endian = 'big'

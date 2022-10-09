@@ -128,13 +128,6 @@ inc = openrtx_inc + minmea_inc + qdec_inc
 ##
 subdir('lib/miosix-kernel')
 
-# Include RTOS only for embedded targets
-if meson.is_cross_build()
-  inc = inc + miosix_cm4f_inc
-  src = src + miosix_cm4f_src
-  def = def + miosix_cm4f_def
-endif
-
 ## Add git commit or tag to print in OpenRTX
 r = run_command('git', 'describe', '--tags', '--dirty')
 if r.returncode() != 0
@@ -226,6 +219,11 @@ stm32f405_inc = ['platform/mcu/CMSIS/Include',
 
 stm32f405_def = {'STM32F405xx': '', 'HSE_VALUE':'8000000'}
 
+# Append RTOS sources to MCU ones
+stm32f405_inc = stm32f405_inc + miosix_cm4f_inc
+stm32f405_src = stm32f405_src + miosix_cm4f_src
+stm32f405_def = stm32f405_def + miosix_cm4f_def
+
 ##
 ## MK22FN512
 ##
@@ -251,6 +249,21 @@ mk22fn512_inc = ['platform/mcu/CMSIS/Include',
                  'platform/mcu/MK22FN512xxx12/drivers']
 
 mk22fn512_def = {}
+
+# Append RTOS sources to MCU ones
+mk22fn512_inc = mk22fn512_inc + miosix_cm4f_inc
+mk22fn512_src = mk22fn512_src + miosix_cm4f_src
+mk22fn512_def = mk22fn512_def + miosix_cm4f_def
+
+##
+## R5F61668
+##
+
+r5f61668_src = []
+
+r5f61668_src = []
+
+r5f61668_src = {}
 
 ##
 ## ----------------------- Platform specializations ----------------------------
@@ -377,6 +390,14 @@ mod17_inc = inc + stm32f405_inc + ['platform/targets/Module17']
 mod17_def = def + stm32f405_def + {'PLATFORM_MOD17': ''}
 
 ##
+## Yaesu FT-70D
+##
+ft70d_src = r5f61668_src
+
+ft70d_inc = inc + r5f61668_inc + ['platform/targets/FT-70']
+ft70d_def = def + r5f61668_def + {'PLATFORM_FT70': ''}
+
+##
 ## -------------------------- Compilation arguments ----------------------------
 ##
 
@@ -461,6 +482,15 @@ foreach k, v : mod17_def
   endif
 endforeach
 
+ft70d_args = []
+foreach k, v : ft70d_def
+  if v == ''
+    ft70d_args += '-D@0@'.format(k)
+  else
+    ft70d_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
+
 linux_opts = {'sources': linux_src,
               'c_args': linux_c_args,
               'cpp_args' : linux_cpp_args,
@@ -516,6 +546,14 @@ mod17_opts  = {'sources': mod17_src,
                'dependencies': [codec2_dep, tinyusb_dep],
                'include_directories': mod17_inc}
 
+ft70d_opts = {'sources' : ft70d_src,
+              'c_args'  : ft70d_args,
+              'cpp_args': ft70d_args,
+             'link_args' : ['-Wl,-T../platform/mcu/R5F61668xxxxxxx/linker_script_R5F6x.ld',
+                            '-Wl,--print-memory-usage'],
+              'dependencies': [],
+              'include_directories': ft70d_inc}
+
 ##
 ## ---------------------------- Compilation targets ----------------------------
 ##
@@ -558,6 +596,12 @@ targets = [
 
    {'name': 'mod17',
    'opts': mod17_opts,
+   'flashable': true,
+   'wrap': ' ',
+   'load_addr': ' '},
+
+  {'name': 'ft70d',
+   'opts': ft70d_opts,
    'flashable': true,
    'wrap': ' ',
    'load_addr': ' '},
