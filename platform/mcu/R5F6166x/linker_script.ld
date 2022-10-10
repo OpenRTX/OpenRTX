@@ -1,15 +1,12 @@
 /* Default linker script, for normal executables */
 OUTPUT_FORMAT("srec")
 OUTPUT_ARCH(h8300sx)
-ENTRY("_ResetHandler")
+ENTRY(Reset_Handler)
 
 MEMORY
 {
-    /* H8/1668R has 1024 Kbytes of ROM */
-    rom      (rx)  : ORIGIN = 0x0000, LENGTH = 1024K
-
-    /* H8/1668R has 56 Kbytes of RAM */
-    ram      (rwx) : ORIGIN = 0xFFE00, LENGTH = 56K
+    flash(rx) : ORIGIN = 0x0000,  LENGTH = 1024K    /* 1024 Kbytes of ROM */
+    ram(rwx)  : ORIGIN = 0xFFE00, LENGTH = 56K      /* 56 Kbytes of RAM   */
 }
 
 STACK_SIZE = 0x200;
@@ -17,28 +14,28 @@ STACK_SIZE = 0x200;
 SECTIONS
 {
     .text :
-	{
+    {
         KEEP(*(.vectors .vectors.*))
         *(.text*)
         *(.rodata)
         *(.strings)
         _etext = . ;
-	} > rom
+    } > flash
 
     .data :
-	{
+    {
         _data = . ;
         *(.data)
         _edata = . ;
-	} > ram AT >rom
+    } > ram AT > flash
 
     .bss (NOLOAD):
-	{
-        _bss = . ;
+    {
+        _bss_start = . ;
         *(.bss)
         *(COMMON)
-        _ebss = . ;
-	} >ram
+        _bss_end = . ;
+    } > ram
 
     .stack (NOLOAD):
     {

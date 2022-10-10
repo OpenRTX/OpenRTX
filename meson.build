@@ -259,11 +259,9 @@ mk22fn512_def = mk22fn512_def + miosix_cm4f_def
 ## R5F61668
 ##
 
-r5f61668_src = []
-
-r5f61668_src = []
-
-r5f61668_src = {}
+r5f61668_src = ['platform/mcu/R5F6166x/boot/startup.c']
+r5f61668_inc = ['platform/mcu/R5F6166x/device']
+r5f61668_def = {}
 
 ##
 ## ----------------------- Platform specializations ----------------------------
@@ -393,7 +391,6 @@ mod17_def = def + stm32f405_def + {'PLATFORM_MOD17': ''}
 ## Yaesu FT-70D
 ##
 ft70d_src = r5f61668_src
-
 ft70d_inc = inc + r5f61668_inc + ['platform/targets/FT-70']
 ft70d_def = def + r5f61668_def + {'PLATFORM_FT70': ''}
 
@@ -549,8 +546,8 @@ mod17_opts  = {'sources': mod17_src,
 ft70d_opts = {'sources' : ft70d_src,
               'c_args'  : ft70d_args,
               'cpp_args': ft70d_args,
-             'link_args' : ['-Wl,-T../platform/mcu/R5F61668xxxxxxx/linker_script_R5F6x.ld',
-                            '-Wl,--print-memory-usage'],
+              'link_args' : ['-Wl,-T../platform/mcu/R5F6166x/linker_script.ld',
+                             '-Wl,--print-memory-usage'],
               'dependencies': [],
               'include_directories': ft70d_inc}
 
