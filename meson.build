@@ -390,9 +390,9 @@ mod17_def = def + stm32f405_def + {'PLATFORM_MOD17': ''}
 ##
 ## Yaesu FT-70D
 ##
-ft70d_src = r5f61668_src
-ft70d_inc = inc + r5f61668_inc + ['platform/targets/FT-70']
-ft70d_def = def + r5f61668_def + {'PLATFORM_FT70': ''}
+ft70d_src = r5f61668_src       + ['platform/targets/FT-70D/platform.c']
+ft70d_inc = inc + r5f61668_inc + ['platform/targets/FT-70D']
+ft70d_def = def + r5f61668_def + {'PLATFORM_FT70D': ''}
 
 ##
 ## -------------------------- Compilation arguments ----------------------------
