@@ -1,4 +1,4 @@
-#ifndef PLATFORM_FT70
+#ifndef PLATFORM_FT70D
 #error "Blinky test is only available for FT-70D"
 #endif
 
@@ -11,7 +11,7 @@
 #define RED1_PIN (1 << 0)// M13
 #define RED1_PORT PI
 
-void main() {
+int main(void) {
   RED1_PORT.DR.BYTE = 0;
   PI.DDR = RED1_PIN;
   RED1_PORT.DR.BYTE |= RED1_PIN;
