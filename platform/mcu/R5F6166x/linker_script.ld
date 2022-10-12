@@ -1,7 +1,7 @@
 /* Default linker script, for normal executables */
 OUTPUT_FORMAT("srec")
 OUTPUT_ARCH(h8300sx)
-ENTRY(Reset_Handler)
+ENTRY(_Reset_Handler)
 
 MEMORY
 {
