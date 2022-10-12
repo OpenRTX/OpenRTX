@@ -1,14 +1,14 @@
 [binaries]
-c       = 'h8300-elf-gcc'
-cpp     = 'h8300-elf-g++'
-ld      = 'h8300-elf-ld'
-ar      = 'h8300-elf-ar'
-as      = 'h8300-elf-as'
-size    = 'h8300-elf-size'
-objdump = 'h8300-elf-objdump'
-objcopy = 'h8300-elf-objcopy'
-strip   = 'h8300-elf-strip'
-gdb     = 'h8300-elf-gdb'
+c       = 'h8300-unknown-elf-gcc'
+cpp     = 'h8300-unknown-elf-g++'
+ld      = 'h8300-unknown-elf-ld'
+ar      = 'h8300-unknown-elf-ar'
+as      = 'h8300-unknown-elf-as'
+size    = 'h8300-unknown-elf-size'
+objdump = 'h8300-unknown-elf-objdump'
+objcopy = 'h8300-unknown-elf-objcopy'
+strip   = 'h8300-unknown-elf-strip'
+gdb     = 'h8300-unknown-elf-gdb'
 terminal= 'x-terminal-emulator'
 openocd = '/usr/local/bin/openocd'
 
@@ -45,7 +45,6 @@ c_link_args = [
                '-Wl,--warn-common',
                '-nostartfiles',
                '-nodefaultlibs',
-               '-Wl,-L/usr/h8300-elf/lib',
                '-nostdlib',
                '-lstdc++',
                '-lc',
