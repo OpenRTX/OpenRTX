@@ -390,7 +390,7 @@ mod17_def = def + stm32f405_def + {'PLATFORM_MOD17': ''}
 ##
 ## Yaesu FT-70D
 ##
-ft70d_src = r5f61668_src       + ['platform/targets/FT-70D/platform.c']
+ft70d_src = main_src + r5f61668_src + ['platform/targets/FT-70D/platform.c']
 ft70d_inc = inc + r5f61668_inc + ['platform/targets/FT-70D']
 ft70d_def = def + r5f61668_def + {'PLATFORM_FT70D': ''}
 
@@ -604,7 +604,7 @@ targets = [
    'load_addr': ' '},
   ]
 
-radio_tool  = find_program('radio_tool')
+radio_tool  = find_program('radio_tool',                       required:false, disabler:true)
 objcopy     = find_program('objcopy',                          required:false, disabler:true)
 if build_machine.system() == 'linux'
   bin2sgl     = find_program('scripts/bin2sgl.Linux',          required:false, disabler:true)
