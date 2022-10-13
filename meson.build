@@ -685,6 +685,19 @@ foreach t : targets
                     command : [dfu_util, '-d', '0483:df11', '-a', '0',
                                '-D', '@INPUT@', '-s', '0x08000000'])
 
+    # ft70d target uses Motorola S-record output binary
+    elif name == 'openrtx_ft70d'
+
+      wrap = custom_target(name+'_wrap',
+                          output  : name+'_wrap',
+                          input   : exe,
+                          command : [objcopy, '-I', 'srec', '-O', 'binary', '@INPUT@', '@OUTPUT@'])
+
+      custom_target(name+'_flash',
+                    input   : wrap,
+                    output  : name+'_flash',
+                    command : [radio_tool, '-d', '0', '-f', '-i', '@INPUT@'])
+
     else
 
       wrap = custom_target(name+'_wrap',
