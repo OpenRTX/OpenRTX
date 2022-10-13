@@ -31,7 +31,7 @@ def += {'FONT_UBUNTU_REGULAR': ''}
 ##
 
 ##
-## OpenRTX sources
+## OpenRTX core sources
 ##
 
 openrtx_src = ['openrtx/src/core/state.c',
@@ -51,9 +51,6 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/audio_codec.c',
                'openrtx/src/core/data_conversion.c',
                'openrtx/src/core/memory_profiling.cpp',
-               'openrtx/src/ui/ui.c',
-               'openrtx/src/ui/ui_main.c',
-               'openrtx/src/ui/ui_menu.c',
                'openrtx/src/rtx/rtx.cpp',
                'openrtx/src/rtx/OpMode_FM.cpp',
                'openrtx/src/rtx/OpMode_M17.cpp',
@@ -80,6 +77,22 @@ openrtx_inc = ['openrtx/include',
                'platform/drivers/baseband',
                'platform/drivers/backlight',
                'platform/drivers/chSelector']
+
+##
+## OpenRTX UI sources
+##
+
+openrtx_ui_default = ['openrtx/src/ui/default/ui.c',
+                      'openrtx/src/ui/default/ui_main.c',
+                      'openrtx/src/ui/default/ui_menu.c']
+
+openrtx_ui_module17 = ['openrtx/src/ui/module17/ui.c',
+                       'openrtx/src/ui/module17/ui_main.c',
+                       'openrtx/src/ui/module17/ui_menu.c']
+
+##
+## Selection of main entrypoint
+##
 
 main_src = []
 
@@ -166,6 +179,8 @@ mdx_src = ['openrtx/src/core/xmodem.c',
            'platform/drivers/USB/usb_MDx.cpp',
            'platform/drivers/USB/usb_descriptors.c']
 
+mdx_src = mdx_src + openrtx_ui_default
+
 ##
 ## GDx family: Radioddity GD-77 and Baofeng DM-1801
 ##
@@ -188,6 +203,8 @@ gdx_src = ['openrtx/src/core/xmodem.c',
            'platform/drivers/audio/audio_GDx.c',
            'platform/drivers/audio/inputStream_GDx.c',
            'platform/drivers/audio/outputStream_GDx.c']
+
+gdx_src = gdx_src + openrtx_ui_default
 
 ##
 ## --------------------- MCU-dependent source files ----------------------------
@@ -277,11 +294,17 @@ linux_platform_src = ['platform/targets/linux/emulator/emulator.c',
 
 linux_src = src + linux_platform_src
 
+#
+# Select which UI to use
+#
+linux_src = linux_src + openrtx_ui_default
+# linux_src = linux_src + openrtx_ui_module17
 
-# GDx family display emulation
-#linux_def = def + {'SCREEN_WIDTH': '128', 'SCREEN_HEIGHT': '64', 'PIX_FMT_BW': ''}
-# MDx family display emulation
+#
+# Select which screen type to emulate
+#
 linux_def = def + {'SCREEN_WIDTH': '160', 'SCREEN_HEIGHT': '128', 'PIX_FMT_RGB565': ''}
+#linux_def = def + {'SCREEN_WIDTH': '128', 'SCREEN_HEIGHT': '64', 'PIX_FMT_BW': ''}
 
 linux_inc = inc + ['platform/targets/linux',
                    'platform/targets/linux/emulator']
@@ -361,18 +384,19 @@ dm1801_def = def + mk22fn512_def + {'PLATFORM_DM1801': ''}
 ##
 ## Module 17
 ##
-mod17_src = src + stm32f405_src + ['platform/targets/Module17/platform.c',
-                                   'platform/drivers/display/SH110x_Mod17.c',
-                                   'platform/drivers/ADC/ADC1_Mod17.c',
-                                   'platform/drivers/keyboard/keyboard_Mod17.c',
-                                   'platform/drivers/NVM/nvmem_Mod17.c',
-                                   'platform/drivers/CPS/cps_io_native_Mod17.c',
-                                   'platform/drivers/baseband/radio_Mod17.cpp',
-                                   'platform/drivers/audio/inputStream_Mod17.cpp',
-                                   'platform/drivers/audio/outputStream_Mod17.cpp',
-                                   'platform/drivers/audio/audio_Mod17.c',
-                                   'platform/drivers/baseband/MCP4551_Mod17.cpp']
+mod17_src = ['platform/targets/Module17/platform.c',
+             'platform/drivers/display/SH110x_Mod17.c',
+             'platform/drivers/ADC/ADC1_Mod17.c',
+             'platform/drivers/keyboard/keyboard_Mod17.c',
+             'platform/drivers/NVM/nvmem_Mod17.c',
+             'platform/drivers/CPS/cps_io_native_Mod17.c',
+             'platform/drivers/baseband/radio_Mod17.cpp',
+             'platform/drivers/audio/inputStream_Mod17.cpp',
+             'platform/drivers/audio/outputStream_Mod17.cpp',
+             'platform/drivers/audio/audio_Mod17.c',
+             'platform/drivers/baseband/MCP4551_Mod17.cpp']
 
+mod17_src = src + openrtx_ui_module17 + mod17_src + stm32f405_src
 mod17_inc = inc + stm32f405_inc + ['platform/targets/Module17']
 mod17_def = def + stm32f405_def + {'PLATFORM_MOD17': ''}
 
@@ -630,7 +654,7 @@ foreach t : targets
 
     # Module17 also uses dfu-tool for flashing
     elif name == 'openrtx_mod17'
-    
+
       # Wrap target for Module17 for consistency, same output as bin target
       custom_target(name+'_wrap',
                     output  : name+'_wrap',
