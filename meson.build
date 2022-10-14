@@ -604,7 +604,7 @@ targets = [
    'load_addr': ' '},
   ]
 
-radio_tool  = find_program('radio_tool',                       required:false, disabler:true)
+radio_tool  = find_program('radio_tool',                       required:true, disabler:true)
 objcopy     = find_program('objcopy',                          required:false, disabler:true)
 if build_machine.system() == 'linux'
   bin2sgl     = find_program('scripts/bin2sgl.Linux',          required:false, disabler:true)
