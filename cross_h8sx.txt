@@ -38,6 +38,8 @@ cpp_args    = [
               ]
 
 c_link_args = [
+               '-msx',
+               '-Os',
                '-fno-exceptions',
                '-fno-rtti',
                '-Wl,--gc-sections',

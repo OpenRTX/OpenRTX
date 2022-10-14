@@ -691,7 +691,7 @@ foreach t : targets
       wrap = custom_target(name+'_wrap',
                           output  : name+'_wrap',
                           input   : exe,
-                          command : [objcopy, '-I', 'srec', '-O', 'binary', '@INPUT@', '@OUTPUT@'])
+                          command : [objcopy, '-O', 'binary', '@INPUT@', '@OUTPUT@'])
 
       custom_target(name+'_flash',
                     input   : wrap,
