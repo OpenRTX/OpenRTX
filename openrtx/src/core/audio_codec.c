@@ -295,6 +295,12 @@ static void *decodeFunc(void *arg)
 
     codec2 = codec2_create(CODEC2_MODE_3200);
 
+    // Ensure that thread start is correctly synchronized with the output
+    // stream to avoid having the decode function writing in a memory area
+    // being read at the same time by the output stream system causing cracking
+    // noises at speaker output. Behaviour observed on both Module17 and MD-UV380
+    outputStream_sync(audioStream, false);
+
     while(stopThread == false)
     {
         // Try popping data from the queue
