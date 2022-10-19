@@ -19,6 +19,7 @@
  ***************************************************************************/
 #include <interfaces/platform.h>
 #include <interfaces/keyboard.h>
+#include <interfaces/delays.h>
 #include <voicePromptUtils.h>
 #include <ui/ui_strings.h>
 #include <voicePrompts.h>
@@ -107,6 +108,7 @@ static uint8_t    beepSeriesIndex     = 0;
 static bool       delayBeepUntilTick  = false;
 
 static pathId     vpAudioPath;
+static long long  vpStartTime;
 
 #ifdef VP_USE_FILESYSTEM
 static FILE *vpFile = NULL;
@@ -562,10 +564,9 @@ void vp_play()
     if (vpCurrentSequence.length <= 0)
         return;
 
-    voicePromptActive = true;
-
-    codec_startDecode(SINK_SPK);
-    enableSpkOutput();
+    // TODO: remove this once switching to hardware-based I2C driver for AT1846S
+    // management.
+    vpStartTime = getTick();
 }
 
 void vp_tick()
@@ -575,8 +576,24 @@ void vp_tick()
         vp_stop();
         return;
     }
+
     if (beep_tick())
         return;
+
+    // Temporary fix for the following bug: on MD-UV3x0 the configuration of
+    // the AT1846S chip may take more than 20ms, making the codec2 thread miss
+    // the syncronization point with the output stream. By delaying the start
+    // of the voice prompt by 50ms, a time span almost not noticeable, we avoid
+    // to incur in such a problem.
+    // TODO: remove this once switched to hardware-based I2C driver for AT1846S
+    // management.
+    if((vpStartTime > 0) && ((getTick() - vpStartTime) > 50))
+    {
+        vpStartTime       = 0;
+        voicePromptActive = true;
+        codec_startDecode(SINK_SPK);
+        enableSpkOutput();
+    }
 
     if (voicePromptActive == false)
         return;
