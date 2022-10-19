@@ -69,6 +69,9 @@ static void callConstructors(unsigned long *start, unsigned long *end)
     }
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+
 void *mainLoader(void *argv)
 {
     (void) argv;
@@ -112,6 +115,8 @@ void *mainLoader(void *argv)
     shutdown();
     return 0;
 }
+
+#pragma GCC diagnostic pop
 
 } //namespace miosix
 
