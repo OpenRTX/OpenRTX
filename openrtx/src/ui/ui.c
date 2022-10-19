@@ -1394,6 +1394,9 @@ void ui_updateFSM(bool *sync_rtx)
                         ui_state.input_set = SET_RX;
                         // do not play  because we will also announce the number just entered.
                         vp_announceInputReceiveOrTransmit(false, vpqInit);
+                        vp_queueInteger(input_getPressedNumber(msg));
+                        vp_play();
+                        
                         ui_state.new_rx_frequency = 0;
                         ui_state.new_tx_frequency = 0;
                         // Save pressed number to calculare frequency and show in GUI
