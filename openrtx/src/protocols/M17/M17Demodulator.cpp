@@ -523,10 +523,15 @@ bool M17Demodulator::update()
 
                     if ((hammingSync > maxHamming) && (hammingLsf > maxHamming))
                     {
-                        // Lock lost
+                        // Lock lost, reset demodulator alignment (phase) only
+                        // if we were locked on a valid signal.
+                        // This to avoid, in case of absence of carrier, to fall
+                        // in a loop where the demodulator continues to search
+                        // for the syncword in the same block of samples, causing
+                        // the update function to take more than 20ms to complete.
+                        if(locked) phase = 0;
                         syncDetected = false;
                         locked       = false;
-                        phase        = 0;
 
                         #ifdef ENABLE_DEMOD_LOG
                         // Pre-arm the log trigger.
