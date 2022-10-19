@@ -887,9 +887,11 @@ void vp_announceScreen(uint8_t ui_screen)
             vp_announceAboutScreen();
             break;
 
+        #ifdef RTC_PRESENT
         case SETTINGS_TIMEDATE:
             vp_announceSettingsTimeDate();
             break;
+        #endif
 
         case SETTINGS_M17:
             vp_announceBuffer(&currentLanguage->callsign,
