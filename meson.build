@@ -259,7 +259,8 @@ mk22fn512_def = mk22fn512_def + miosix_cm4f_def
 ## R5F61668
 ##
 
-r5f61668_src = ['platform/mcu/R5F6166x/boot/startup.c']
+r5f61668_src = ['platform/mcu/R5F6166x/boot/startup.c',
+                'platform/mcu/R5F6166x/drivers/gpio.c']
 r5f61668_inc = ['platform/mcu/R5F6166x/device']
 r5f61668_def = {}
 
