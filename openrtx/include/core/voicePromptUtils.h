@@ -223,5 +223,9 @@ vpQueueFlags_t vp_getVoiceLevelQueueFlags();
  *
  */
 void vp_playMenuBeepIfNeeded(bool firstItem);
+/**
+ *
+ */
+void vp_announceSplashScreen();
 
 #endif  // VOICE_PROMPT_UTILS_H

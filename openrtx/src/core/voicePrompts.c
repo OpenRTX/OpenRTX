@@ -34,7 +34,6 @@
 
 static const uint32_t VOICE_PROMPTS_DATA_MAGIC   = 0x5056;  //'VP'
 static const uint32_t VOICE_PROMPTS_DATA_VERSION = 0x1000;  // v1000 OpenRTX
-const uint16_t BOOT_MELODY[] = {400, 3, 600, 3, 800, 3, 0, 0};
 
 #define VOICE_PROMPTS_TOC_SIZE 350
 #define CODEC2_HEADER_SIZE     7
@@ -387,16 +386,6 @@ void vp_init()
 
     // Initialize codec2 module
     codec_init();
-    if (state.settings.vpLevel == vpBeep)
-    {
-        vp_beepSeries(BOOT_MELODY);
-    }
-    else if (state.settings.vpLevel > vpBeep)
-    {// announce the splash msg and VFO.
-        vpSummaryInfoFlags_t infoFlags = vpChannelNameOrVFO | vpFrequencies |
-                                         vpRadioMode | vpSplashInfo;
-        vp_announceChannelSummary(&state.channel, 0, 0, infoFlags);
-    }
 }
 
 void vp_terminate()

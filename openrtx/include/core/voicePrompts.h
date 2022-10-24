@@ -236,8 +236,6 @@ typedef enum
     vpModeSpecificInfo      = 0x08,
     vpPower                 = 0x10,
     vpBankNameOrAllChannels = 0x20,
-    vpSplashInfo            = 0x40,
-    vpAllInfoExceptSplash   = 0x3f,
     vpAllInfo               = 0xff
 }
 vpSummaryInfoFlags_t;

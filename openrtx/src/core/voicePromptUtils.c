@@ -33,6 +33,8 @@
 #include <beeps.h>
 #include "interfaces/cps_io.h"
 
+const uint16_t BOOT_MELODY[] = {400, 3, 600, 3, 800, 3, 0, 0};
+
 static void clearCurrPromptIfNeeded(const vpQueueFlags_t flags)
 {
     if (flags & vpqInit)
@@ -209,9 +211,6 @@ void vp_announceChannelSummary(const channel_t* channel,
     {
         localFlags |= vpqIncludeDescriptions;
     }
-
-    if ((infoFlags & vpSplashInfo) != 0)
-        vp_queueStringTableEntry(&currentLanguage->openRTX);
 
     // If VFO mode, announce VFO.
     // channelNumber will be 0 if called from VFO mode.
@@ -1036,4 +1035,34 @@ void vp_playMenuBeepIfNeeded(bool firstItem)
         vp_beep(BEEP_MENU_FIRST_ITEM, SHORT_BEEP);
     else
         vp_beep(BEEP_MENU_ITEM, SHORT_BEEP);
+}
+
+void vp_announceSplashScreen()
+{
+    if (state.settings.vpLevel < vpBeep)
+        return;
+    
+    vp_flush();
+
+    if (state.settings.vpLevel == vpBeep)
+    {
+        vp_beepSeries(BOOT_MELODY);
+        return;
+    }
+    
+    vpQueueFlags_t localFlags = vpqAddSeparatingSilence;
+
+    // Force on the descriptions for level 3.
+    if (state.settings.vpLevel == vpHigh)
+    {
+        localFlags |= vpqIncludeDescriptions;
+    }
+
+    vp_queueStringTableEntry(&currentLanguage->openRTX);
+    vp_queuePrompt(PROMPT_VFO);
+    vp_announceFrequencies(state.channel.rx_frequency, 
+                           state.channel.tx_frequency,
+                           localFlags);
+    vp_announceRadioMode(state.channel.mode, localFlags);
+    vp_play();
 }

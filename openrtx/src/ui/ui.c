@@ -1379,7 +1379,7 @@ void ui_updateFSM(bool *sync_rtx)
                         {// quick press repeat vp, long press summary.
                             if (msg.long_press)
                                 vp_announceChannelSummary(&state.channel, 0,
-                                                          state.bank, vpAllInfoExceptSplash);
+                                                          state.bank, vpAllInfo);
                             else
                                 vp_replayLastPrompt();
 				    		f1Handled = true;
@@ -1474,7 +1474,7 @@ void ui_updateFSM(bool *sync_rtx)
                                             &state.channel,
                                             state.channel_index,
                                             state.bank,
-                                            vpAllInfoExceptSplash);
+                                            vpAllInfo);
                                 }
                                 else
                                 {
@@ -1525,7 +1525,7 @@ void ui_updateFSM(bool *sync_rtx)
                             {
                                 vp_announceChannelSummary(&state.channel,
                                                           state.channel_index+1,
-                                                          state.bank, vpAllInfoExceptSplash);
+                                                          state.bank, vpAllInfo);
                             }
                             else
                             {
