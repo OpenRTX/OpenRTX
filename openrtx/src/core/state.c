@@ -42,10 +42,16 @@ void state_init()
      * in case of failure.
      */
     if(nvm_readSettings(&state.settings) < 0)
-    {
+	{
+		rtxStatus_t cfg = rtx_getCurrentStatus();
         state.settings = default_settings;
-        strncpy(state.settings.callsign, "OPNRTX", 10);
-    }
+        strncpy(state.settings.callsign, "AB1CDE", 10); //default callsign
+		strncpy(state.m17_data.src_addr, state.settings.callsign, 10);
+		strncpy(state.m17_data.dst_addr, "AB2CDE", 10); //TODO: this has to encode to 0xFFFFFFFFFFFF
+		state.m17_data.rxCan=cfg.rxCan=0;
+		state.m17_data.txCan=cfg.txCan=0;
+		state.m17_data.type=(1<<0)|(2<<1)|(state.m17_data.txCan<<7); //stream, voice only, CAN=0
+	}
 
     /*
      * Try loading VFO configuration from nonvolatile memory and default to sane
