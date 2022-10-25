@@ -231,7 +231,7 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
         }
             break;
         case 2: // Battery charge
-            snprintf(buf, max_len, "No battery");
+            snprintf(buf, max_len, "No batt");
             break;
         case 3: // RSSI
             snprintf(buf, max_len, "N/A");
