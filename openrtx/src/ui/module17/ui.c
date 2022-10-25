@@ -192,51 +192,16 @@ layout_t _ui_calculateLayout()
     // Compensate for fonts printing below the start position
     const uint16_t text_v_offset = 1;
 
-    // Calculate UI layout depending on vertical resolution
-    // Tytera MD380, MD-UV380
-    #if SCREEN_HEIGHT > 127
-
-    // Height and padding shown in diagram at beginning of file
-    const uint16_t top_h = 16;
-    const uint16_t top_pad = 4;
-    const uint16_t line1_h = 20;
-    const uint16_t line2_h = 20;
-    const uint16_t line3_h = 40;
-    const uint16_t menu_h = 16;
-    const uint16_t bottom_h = 23;
-    const uint16_t bottom_pad = top_pad;
-    const uint16_t status_v_pad = 2;
-    const uint16_t small_line_v_pad = 2;
-    const uint16_t big_line_v_pad = 6;
-    const uint16_t horizontal_pad = 4;
-
-    // Top bar font: 8 pt
-    const fontSize_t top_font = FONT_SIZE_8PT;
-    // Text line font: 8 pt
-    const fontSize_t line1_font = FONT_SIZE_8PT;
-    const fontSize_t line2_font = FONT_SIZE_8PT;
-    // Frequency line font: 16 pt
-    const fontSize_t line3_font = FONT_SIZE_16PT;
-    // Bottom bar font: 8 pt
-    const fontSize_t bottom_font = FONT_SIZE_8PT;
-    // TimeDate/Frequency input font
-    const fontSize_t input_font = FONT_SIZE_12PT;
-    // Menu font
-    const fontSize_t menu_font = FONT_SIZE_8PT;
-    // Mode screen frequency font: 12 pt
-    const fontSize_t mode_font_big = FONT_SIZE_12PT;
-    // Mode screen details font: 9 pt
-    const fontSize_t mode_font_small = FONT_SIZE_9PT;
-
-    // Radioddity GD-77
-    #elif SCREEN_HEIGHT > 63
+    // Calculate UI layout for the Module 17
 
     // Height and padding shown in diagram at beginning of file
     const uint16_t top_h = 11;
     const uint16_t top_pad = 1;
     const uint16_t line1_h = 10;
     const uint16_t line2_h = 10;
-    const uint16_t line3_h = 16;
+    const uint16_t line3_h = 10;
+    const uint16_t line4_h = 10;
+    const uint16_t line5_h = 10;
     const uint16_t menu_h = 10;
     const uint16_t bottom_h = 15;
     const uint16_t bottom_pad = 0;
@@ -250,7 +215,9 @@ layout_t _ui_calculateLayout()
     // Middle line fonts: 5, 8, 8 pt
     const fontSize_t line1_font = FONT_SIZE_6PT;
     const fontSize_t line2_font = FONT_SIZE_6PT;
-    const fontSize_t line3_font = FONT_SIZE_10PT;
+    const fontSize_t line3_font = FONT_SIZE_6PT;
+    const fontSize_t line4_font = FONT_SIZE_6PT;
+    const fontSize_t line5_font = FONT_SIZE_6PT;
     // Bottom bar font: 6 pt
     const fontSize_t bottom_font = FONT_SIZE_6PT;
     // TimeDate/Frequency input font
@@ -262,49 +229,13 @@ layout_t _ui_calculateLayout()
     // Mode screen details font: 6 pt
     const fontSize_t mode_font_small = FONT_SIZE_6PT;
 
-    // Radioddity RD-5R
-    #elif SCREEN_HEIGHT > 47
-
-    // Height and padding shown in diagram at beginning of file
-    const uint16_t top_h = 11;
-    const uint16_t top_pad = 1;
-    const uint16_t line1_h = 0;
-    const uint16_t line2_h = 10;
-    const uint16_t line3_h = 18;
-    const uint16_t menu_h = 10;
-    const uint16_t bottom_h = 0;
-    const uint16_t bottom_pad = 0;
-    const uint16_t status_v_pad = 1;
-    const uint16_t small_line_v_pad = 1;
-    const uint16_t big_line_v_pad = 0;
-    const uint16_t horizontal_pad = 4;
-
-    // Top bar font: 8 pt
-    const fontSize_t top_font = FONT_SIZE_6PT;
-    // Middle line fonts: 16, 16
-    const fontSize_t line2_font = FONT_SIZE_6PT;
-    const fontSize_t line3_font = FONT_SIZE_12PT;
-    // TimeDate/Frequency input font
-    const fontSize_t input_font = FONT_SIZE_8PT;
-    // Menu font
-    const fontSize_t menu_font = FONT_SIZE_6PT;
-    // Mode screen frequency font: 9 pt
-    const fontSize_t mode_font_big = FONT_SIZE_9PT;
-    // Mode screen details font: 6 pt
-    const fontSize_t mode_font_small = FONT_SIZE_6PT;
-    // Not present on this resolution
-    const fontSize_t line1_font = 0;
-    const fontSize_t bottom_font = 0;
-
-    #else
-    #error Unsupported vertical resolution!
-    #endif
-
     // Calculate printing positions
     point_t top_pos    = {horizontal_pad, top_h - status_v_pad - text_v_offset};
     point_t line1_pos  = {horizontal_pad, top_h + top_pad + line1_h - small_line_v_pad - text_v_offset};
     point_t line2_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h - small_line_v_pad - text_v_offset};
     point_t line3_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h + line3_h - big_line_v_pad - text_v_offset};
+    point_t line4_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h + line3_h + line4_h - big_line_v_pad - text_v_offset};
+    point_t line5_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h + line3_h + line4_h + line5_h - big_line_v_pad - text_v_offset};
     point_t bottom_pos = {horizontal_pad, SCREEN_HEIGHT - bottom_pad - status_v_pad - text_v_offset};
 
     layout_t new_layout =
@@ -314,6 +245,8 @@ layout_t _ui_calculateLayout()
         line1_h,
         line2_h,
         line3_h,
+        line4_h,
+        line5_h,
         menu_h,
         bottom_h,
         bottom_pad,
@@ -324,11 +257,15 @@ layout_t _ui_calculateLayout()
         line1_pos,
         line2_pos,
         line3_pos,
+        line4_pos,
+        line5_pos,
         bottom_pos,
         top_font,
         line1_font,
         line2_font,
         line3_font,
+        line4_font,
+        line5_font,
         bottom_font,
         input_font,
         menu_font,

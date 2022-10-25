@@ -133,6 +133,8 @@ typedef struct layout_t
     uint16_t line1_h;
     uint16_t line2_h;
     uint16_t line3_h;
+    uint16_t line4_h;
+    uint16_t line5_h;
     uint16_t menu_h;
     uint16_t bottom_h;
     uint16_t bottom_pad;
@@ -143,11 +145,15 @@ typedef struct layout_t
     point_t line1_pos;
     point_t line2_pos;
     point_t line3_pos;
+    point_t line4_pos;
+    point_t line5_pos;
     point_t bottom_pos;
     fontSize_t top_font;
     fontSize_t line1_font;
     fontSize_t line2_font;
     fontSize_t line3_font;
+    fontSize_t line4_font;
+    fontSize_t line5_font;
     fontSize_t bottom_font;
     fontSize_t input_font;
     fontSize_t menu_font;

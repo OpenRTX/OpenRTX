@@ -217,30 +217,26 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
             break;
         case 1: // Battery voltage
         {
-            // Compute integer part and mantissa of voltage value, adding 50mV
-            // to mantissa for rounding to nearest integer
-            uint16_t volt  = (last_state.v_bat + 50) / 1000;
-            uint16_t mvolt = ((last_state.v_bat - volt * 1000) + 50) / 100;
-            snprintf(buf, max_len, "%d.%dV", volt, mvolt);
+            snprintf(buf, max_len, "-.-V");
         }
             break;
         case 2: // Battery charge
-            snprintf(buf, max_len, "%d%%", last_state.charge);
+            snprintf(buf, max_len, "No batt");
             break;
         case 3: // RSSI
-            snprintf(buf, max_len, "%.1fdBm", last_state.rssi);
+            snprintf(buf, max_len, "N/A");
             break;
         case 4: // Heap usage
             snprintf(buf, max_len, "%dB", getHeapSize() - getCurrentFreeHeap());
             break;
         case 5: // Band
-            snprintf(buf, max_len, "%s %s", hwinfo->vhf_band ? "VHF" : "", hwinfo->uhf_band ? "UHF" : "");
+            snprintf(buf, max_len, "N/A");
             break;
         case 6: // VHF
-            snprintf(buf, max_len, "%d - %d", hwinfo->vhf_minFreq, hwinfo->vhf_maxFreq);
+            snprintf(buf, max_len, "N/A");
             break;
         case 7: // UHF
-            snprintf(buf, max_len, "%d - %d", hwinfo->uhf_minFreq, hwinfo->uhf_maxFreq);
+            snprintf(buf, max_len, "N/A");
             break;
         case 8: // LCD Type
             snprintf(buf, max_len, "%d", hwinfo->lcd_type);
