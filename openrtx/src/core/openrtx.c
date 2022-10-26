@@ -68,7 +68,6 @@ void openrtx_init()
     // Display splash screen, turn on backlight after a suitable time to
     // hide random pixels during render process
     ui_drawSplashScreen(true);
-    vp_announceSplashScreen();
     gfx_render();
     sleepFor(0u, 30u);
     platform_setBacklightLevel(state.settings.brightness);
@@ -78,9 +77,6 @@ void openrtx_init()
     state.gpsDetected = gps_detect(1000);
     if(state.gpsDetected) gps_init(9600);
     #endif
-
-    // Keep the splash screen for 1 second
-    sleepFor(1u, 0u);
 }
 
 void *openrtx_run()

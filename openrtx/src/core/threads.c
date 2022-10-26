@@ -56,9 +56,12 @@ void *ui_threadFunc(void *arg)
     bool        sync_rtx = true;
     long long   time     = 0;
 
-    // Load initial state and perform a GUI draw
+    // Load initial state and update the UI
     ui_saveState();
     ui_updateGUI();
+
+    // Keep the splash screen for one second  before rendering the new UI screen
+    sleepFor(1u, 0u);
     gfx_render();
 
     while(state.devStatus != SHUTDOWN)

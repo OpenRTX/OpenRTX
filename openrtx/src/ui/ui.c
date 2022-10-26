@@ -1116,21 +1116,15 @@ void ui_drawSplashScreen(bool centered)
 {
     gfx_clearScreen();
     point_t splash_origin = {0,0};
-    #ifdef OLD_SPLASH
-    if(centered)
-        splash_origin.y = SCREEN_HEIGHT / 2 + 6;
-    else
-        splash_origin.y = SCREEN_HEIGHT / 4;
-    gfx_print(splash_origin, FONT_SIZE_12PT, TEXT_ALIGN_CENTER, yellow_fab413,
-              currentLanguage->openRTX);
-    #else
+
     if(centered)
         splash_origin.y = SCREEN_HEIGHT / 2 - 6;
     else
         splash_origin.y = SCREEN_HEIGHT / 5;
     gfx_print(splash_origin, FONT_SIZE_12PT, TEXT_ALIGN_CENTER, yellow_fab413,
               "O P N\nR T X");
-    #endif
+
+    vp_announceSplashScreen();
 }
 
 void ui_saveState()
