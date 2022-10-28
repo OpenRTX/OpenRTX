@@ -36,8 +36,7 @@ typedef struct
 {
     char src_addr[10];	//source callsign, plaintext
     char dst_addr[10];	//destination callsign, plaintext
-	uint8_t rxCan;		//Channel Access Number, {0..15}
-	uint8_t txCan;		//Channel Access Number, {0..15}
+	uint8_t can;		//Channel Access Number, {0..15}
 	uint16_t type;		//frame type
 }
 m17_t;

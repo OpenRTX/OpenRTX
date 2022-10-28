@@ -52,8 +52,8 @@ typedef struct
     uint16_t txToneEn : 1,  /**< TX CTC/DCS tone enable        */
              txTone   : 15; /**< TX CTC/DCS tone               */
 
-    uint8_t  rxCan : 4,     /**< M17 Channel Access Number for RX squelch */
-             txCan : 4;     /**< M17 Channel Access Number for TX squelch */
+    uint8_t  can : 4,     /**< M17 Channel Access Number for RX squelch */
+             txCan : 4;     /**< M17 Channel Access Number for TX squelch */ //TODO: Remove this
 
     char     source_address[10];      /**< M17 call source address  */
     char     destination_address[10]; /**< M17 call routing address */
