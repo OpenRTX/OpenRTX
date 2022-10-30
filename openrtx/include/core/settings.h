@@ -56,6 +56,10 @@ typedef struct
     char    callsign[10];         // Plaintext callsign, for future use
     uint8_t display_timer : 4,    // Standby timer
             not_in_use    : 4;
+    uint16_t txwiper;
+    uint16_t rxwiper;
+    int8_t txinvert;
+    int8_t rxinvert;            
 }
 __attribute__((packed)) settings_t;
 
@@ -74,7 +78,11 @@ static const settings_t default_settings =
     false,            // GPS enabled
     "",               // Empty callsign
     TIMER_30S,        // 30 seconds
-    0                 // not in use
+    0,                // not in use
+    0x100,            // TX Wiper
+    0x080,            // RX Wiper
+    0,                // TX Invert
+    0                 // RX Invert
 };
 
 #endif /* SETTINGS_H */

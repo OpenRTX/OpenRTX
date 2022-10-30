@@ -109,6 +109,7 @@ extern void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state);
 #endif
 extern void _ui_drawSettingsDisplay(ui_state_t* ui_state);
 extern void _ui_drawSettingsM17(ui_state_t* ui_state);
+extern void _ui_drawSettingsModule17(ui_state_t* ui_state);
 extern void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state);
 extern bool _ui_drawMacroMenu();
 
@@ -136,6 +137,7 @@ const char *settings_items[] =
     "GPS",
 #endif
     "M17",
+    "Module 17",
     "Default Settings"
 };
 
@@ -146,6 +148,14 @@ const char *display_items[] =
     "Contrast",
 #endif
     "Timer"
+};
+
+const char *module17_items[] =
+{
+    "TX Wiper",
+    "RX Wiper",
+    "TX Phase Inversion",
+    "RX Phase Inversion"
 };
 
 #ifdef GPS_PRESENT
@@ -223,6 +233,7 @@ const uint8_t display_num = sizeof(display_items)/sizeof(display_items[0]);
 #ifdef GPS_PRESENT
 const uint8_t settings_gps_num = sizeof(settings_gps_items)/sizeof(settings_gps_items[0]);
 #endif
+const uint8_t module17_num = sizeof(module17_items)/sizeof(module17_items[0]);
 const uint8_t backup_restore_num = sizeof(backup_restore_items)/sizeof(backup_restore_items[0]);
 const uint8_t info_num = sizeof(info_items)/sizeof(info_items[0]);
 const uint8_t author_num = sizeof(authors)/sizeof(authors[0]);
@@ -672,6 +683,42 @@ bool _ui_exitStandby(long long now)
     redraw_needed = true;
     platform_setBacklightLevel(state.settings.brightness);
     return true;
+}
+
+void _ui_changeTxWiper(int variation)
+{
+    state.settings.txwiper += variation;
+
+    // Max value for softpot is 0x100, min value is set to 0x001
+    if(state.settings.txwiper > 0x100) state.settings.txwiper = 0x100;
+    if(state.settings.txwiper < 0x001) state.settings.txwiper = 0x001;
+}
+
+void _ui_changeRxWiper(int variation)
+{
+    state.settings.rxwiper += variation;
+
+    // Max value for softpot is 0x100, min value is set to 0x001
+    if(state.settings.rxwiper > 0x100) state.settings.rxwiper = 0x100;
+    if(state.settings.rxwiper < 0x001) state.settings.rxwiper = 0x001;
+}
+
+void _ui_changeTxInvert(int variation)
+{
+    state.settings.txinvert += variation;
+
+    // Inversion can be 1 or 0
+    if(state.settings.txinvert > 1) state.settings.txinvert = 1;
+    if(state.settings.txinvert < 0) state.settings.txinvert = 0;
+}
+
+void _ui_changeRxInvert(int variation)
+{
+    state.settings.rxinvert += variation;
+
+    // Inversion can be 1 or 0
+    if(state.settings.rxinvert > 1) state.settings.rxinvert = 1;
+    if(state.settings.rxinvert < 0) state.settings.rxinvert = 0;
 }
 
 void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
@@ -1285,6 +1332,9 @@ void ui_updateFSM(bool *sync_rtx)
                         case S_M17:
                             state.ui_screen = SETTINGS_M17;
                             break;
+                        case S_MOD17:
+                            state.ui_screen = SETTINGS_MODULE17;
+                            break;    
                         case S_RESET2DEFAULTS:
                             state.ui_screen = SETTINGS_RESET2DEFAULTS;
                             break;
@@ -1530,6 +1580,59 @@ void ui_updateFSM(bool *sync_rtx)
                     }
                 }
                 break;
+            // Module17 Settings
+            case SETTINGS_MODULE17:
+                if(msg.keys & KEY_LEFT || (ui_state.edit_mode &&
+                   (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)))
+                {
+                    switch(ui_state.menu_selected)
+                    {
+                        case D_TXWIPER:
+                            _ui_changeTxWiper(-1);
+                            break;
+                        case D_RXWIPER:
+                            _ui_changeRxWiper(-1);
+                            break;
+                        case D_TXINVERT:
+                            _ui_changeTxInvert(-1);
+                            break;
+                        case D_RXINVERT:
+                            _ui_changeRxInvert(-1);
+                            break;                            
+                        default:
+                            state.ui_screen = SETTINGS_MODULE17;
+                    }
+                }
+                else if(msg.keys & KEY_RIGHT || (ui_state.edit_mode &&
+                        (msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)))
+                {
+                    switch(ui_state.menu_selected)
+                    {
+                        case D_TXWIPER:
+                            _ui_changeTxWiper(+1);
+                            break;
+                        case D_RXWIPER:
+                            _ui_changeRxWiper(+1);
+                            break;
+                        case D_TXINVERT:
+                            _ui_changeTxInvert(+1);
+                            break;
+                        case D_RXINVERT:
+                            _ui_changeRxInvert(+1);
+                            break;                                        
+                        default:
+                            state.ui_screen = SETTINGS_MODULE17;
+                    }
+                }
+                else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                    _ui_menuUp(module17_num);
+                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                    _ui_menuDown(module17_num);
+                else if(msg.keys & KEY_ENTER)
+                    ui_state.edit_mode = !ui_state.edit_mode;
+                else if(msg.keys & KEY_ESC)
+                    _ui_menuBack(MENU_SETTINGS);
+                break;    
         }
     }
     else if(event.type == EVENT_STATUS)
@@ -1642,6 +1745,10 @@ bool ui_updateGUI()
         case SETTINGS_M17:
             _ui_drawSettingsM17(&ui_state);
             break;
+        // Module 17 settings screen
+        case SETTINGS_MODULE17:
+            _ui_drawSettingsModule17(&ui_state);
+            break;            
         // Screen to support resetting Settings and VFO to defaults
         case SETTINGS_RESET2DEFAULTS:
             _ui_drawSettingsReset2Defaults(&ui_state);
