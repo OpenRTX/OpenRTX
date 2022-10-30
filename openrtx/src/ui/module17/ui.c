@@ -1524,7 +1524,7 @@ void ui_updateFSM(bool *sync_rtx)
                     ui_state.edit_mode = !ui_state.edit_mode;
                 else if(msg.keys & KEY_ESC)
                 {
-                    // TODO save settings to non-volatile memory
+                    nvm_writeSettings(&state.settings);
                     _ui_menuBack(MENU_SETTINGS);
                 }
                 break;    
