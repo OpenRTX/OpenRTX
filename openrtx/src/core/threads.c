@@ -38,6 +38,9 @@
 #include <interfaces/gps.h>
 #include <gps.h>
 #endif
+#ifdef PLATFORM_MOD17
+#include <MCP4551.h>
+#endif
 
 /* Mutex for concurrent access to RTX state variable */
 pthread_mutex_t rtx_mutex;
@@ -125,6 +128,8 @@ void *main_thread(void *arg)
     (void) arg;
 
     long long time     = 0;
+    uint16_t last_txwiper = state.settings.txwiper;
+    uint16_t last_rxwiper = state.settings.rxwiper;
 
     while(state.devStatus != SHUTDOWN)
     {
@@ -166,6 +171,20 @@ void *main_thread(void *arg)
 
         // Run state update task
         state_task();
+
+        // Update Module17 settings
+        #if defined(PLATFORM_MOD17)
+        if(state.settings.txwiper != last_txwiper)
+        {
+            mcp4551_setWiper(SOFTPOT_TX, state.settings.txwiper);
+            last_txwiper = state.settings.txwiper;
+        }
+        if(state.settings.rxwiper != last_rxwiper)
+        {
+            mcp4551_setWiper(SOFTPOT_RX, state.settings.rxwiper);
+            last_rxwiper = state.settings.rxwiper;
+        }
+        #endif
 
         // Run this loop once every 5ms
         time += 5;

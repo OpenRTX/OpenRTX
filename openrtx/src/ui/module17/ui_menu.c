@@ -52,6 +52,19 @@ const char *display_timer_values[] =
     "1 hour"
 };
 
+const char *mic_gain_values[] =
+{
+    "40 dB",
+    "50 dB",
+    "60 dB"
+};
+
+const char *phase_values[] =
+{
+    "Normal",
+    "Inverted"
+};
+
 void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_t max_len, uint8_t index))
 {
     point_t pos = layout.line1_pos;
@@ -171,6 +184,42 @@ int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
     return 0;
 }
 
+int _ui_getModule17EntryName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= module17_num) return -1;
+    snprintf(buf, max_len, "%s", module17_items[index]);
+    return 0;
+}
+
+int _ui_getModule17ValueName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= module17_num) return -1;
+    uint16_t value = 0;
+    switch(index)
+    {
+        case D_TXWIPER:
+            value = last_state.settings.txwiper;
+            break;
+        case D_RXWIPER:
+            value = last_state.settings.rxwiper;
+            break;
+        case D_TXINVERT:
+            snprintf(buf, max_len, "%s",
+                    phase_values[last_state.settings.txinvert]);
+            return 0;             
+        case D_RXINVERT:
+            snprintf(buf, max_len, "%s",
+                    phase_values[last_state.settings.rxinvert]);
+            return 0;  
+        case D_MICGAIN:
+            snprintf(buf, max_len, "%s",
+                    mic_gain_values[last_state.settings.micgain]);
+            return 0;                        
+    }
+    snprintf(buf, max_len, "%d", value);
+    return 0;
+}
+
 #ifdef GPS_PRESENT
 int _ui_getSettingsGPSEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
@@ -201,13 +250,6 @@ int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
     return 0;
 }
 #endif
-
-int _ui_getBackupRestoreEntryName(char *buf, uint8_t max_len, uint8_t index)
-{
-    if(index >= backup_restore_num) return -1;
-    snprintf(buf, max_len, "%s", backup_restore_items[index]);
-    return 0;
-}
 
 int _ui_getInfoEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
@@ -431,62 +473,6 @@ void _ui_drawMenuSettings(ui_state_t* ui_state)
     _ui_drawMenuList(ui_state->menu_selected, _ui_getSettingsEntryName);
 }
 
-void _ui_drawMenuBackupRestore(ui_state_t* ui_state)
-{
-    gfx_clearScreen();
-    // Print "Backup & Restore" on top bar
-    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, "Backup & Restore");
-    // Print menu entries
-    _ui_drawMenuList(ui_state->menu_selected, _ui_getBackupRestoreEntryName);
-}
-
-void _ui_drawMenuBackup(ui_state_t* ui_state)
-{
-    (void) ui_state;
-
-    gfx_clearScreen();
-    // Print "Flash Backup" on top bar
-    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, "Flash Backup");
-    // Print backup message
-    point_t line = layout.line2_pos;
-    gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
-              color_white, "Connect to RTXTool");
-    line.y += 18;
-    gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
-              color_white, "to backup flash and");
-    line.y += 18;
-    gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
-              color_white, "press PTT to start.");
-
-    state.devStatus     = DATATRANSFER;
-    state.backup_eflash = true;
-}
-
-void _ui_drawMenuRestore(ui_state_t* ui_state)
-{
-    (void) ui_state;
-
-    gfx_clearScreen();
-    // Print "Flash Backup" on top bar
-    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, "Flash Restore");
-    // Print backup message
-    point_t line = layout.line2_pos;
-    gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
-              color_white, "Connect to RTXTool");
-    line.y += 18;
-    gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
-              color_white, "to restore flash and");
-    line.y += 18;
-    gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
-              color_white, "press PTT to start.");
-
-    state.devStatus      = DATATRANSFER;
-    state.restore_eflash = true;
-}
-
 void _ui_drawMenuInfo(ui_state_t* ui_state)
 {
     gfx_clearScreen();
@@ -629,6 +615,17 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
                       layout.horizontal_pad, layout.input_font,
                       TEXT_ALIGN_CENTER, color_white, last_state.settings.callsign);
     }
+}
+
+void _ui_drawSettingsModule17(ui_state_t* ui_state)
+{
+    gfx_clearScreen();
+    // Print "Module17 Settings" on top bar
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
+              color_white, "Module17 Settings");
+    // Print Module17 settings entries
+    _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getModule17EntryName,
+                           _ui_getModule17ValueName);
 }
 
 void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state)
