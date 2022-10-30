@@ -24,9 +24,6 @@
 
 #include <stm32f4xx.h>
 
-/* Device has a working real time clock */
-#define RTC_PRESENT
-
 /* Screen dimensions */
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
