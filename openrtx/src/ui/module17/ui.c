@@ -167,6 +167,8 @@ static const char *symbols_ITU_T_E161_callsign[] =
     ""
 };
 
+static const char symbols_callsign[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890/- ";
+
 // Calculate number of menu entries
 const uint8_t menu_num = sizeof(menu_items)/sizeof(menu_items[0]);
 const uint8_t settings_num = sizeof(settings_items)/sizeof(settings_items[0]);
@@ -695,6 +697,29 @@ void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg, bool callsig
     ui_state.last_keypress = now;
 }
 
+void _ui_textInputArrows(char *buf, uint8_t max_len, kbd_msg_t msg)
+{
+    if(ui_state.input_position >= max_len)
+        return;
+
+    uint8_t num_symbols = 0;
+    num_symbols = strlen(symbols_callsign);
+
+    if (msg.keys & KEY_RIGHT)
+    {
+        ui_state.input_position = (ui_state.input_position + 1) % max_len;
+        ui_state.input_set = 0;
+    }
+    else if (msg.keys & KEY_LEFT)
+        ui_state.input_position = (ui_state.input_position - 1) % max_len;
+    else if (msg.keys & KEY_UP)
+        ui_state.input_set = (ui_state.input_set + 1) % num_symbols;
+    else if (msg.keys & KEY_DOWN)
+        ui_state.input_set = ui_state.input_set==0 ? num_symbols-1 : ui_state.input_set-1;
+
+    buf[ui_state.input_position] = symbols_callsign[ui_state.input_set];
+}
+
 void _ui_textInputConfirm(char *buf)
 {
     buf[ui_state.input_position + 1] = '\0';
@@ -1184,9 +1209,7 @@ void ui_updateFSM(bool *sync_rtx)
                         ui_state.edit_mode = false;
                     else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
                             msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
-                        _ui_textInputDel(ui_state.new_callsign);
-                    else if(input_isNumberPressed(msg))
-                        _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
+                        _ui_textInputArrows(ui_state.new_callsign, 9, msg);
                 }
                 else
                 {
