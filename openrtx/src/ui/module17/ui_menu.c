@@ -168,6 +168,36 @@ int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
     return 0;
 }
 
+int _ui_getModule17EntryName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= module17_num) return -1;
+    snprintf(buf, max_len, "%s", module17_items[index]);
+    return 0;
+}
+
+int _ui_getModule17ValueName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= module17_num) return -1;
+    uint16_t value = 0;
+    switch(index)
+    {
+        case D_TXWIPER:
+            value = mod17CalData.tx_wiper;
+            break;
+        case D_RXWIPER:
+            value = mod17CalData.rx_wiper;
+            break;
+        case D_TXINVERT:
+            value = mod17CalData.tx_invert;
+            break;
+        case D_RXINVERT:
+            value = mod17CalData.rx_invert;
+            break;
+    }
+    snprintf(buf, max_len, "%d", value);
+    return 0;
+}
+
 #ifdef GPS_PRESENT
 int _ui_getSettingsGPSEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
@@ -497,6 +527,17 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
                       layout.horizontal_pad, layout.input_font,
                       TEXT_ALIGN_CENTER, color_white, last_state.settings.callsign);
     }
+}
+
+void _ui_drawSettingsModule17(ui_state_t* ui_state)
+{
+    gfx_clearScreen();
+    // Print "Module17 Settings" on top bar
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
+              color_white, "Module17 Settings");
+    // Print Module17 settings entries
+    _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getModule17EntryName,
+                           _ui_getModule17ValueName);
 }
 
 void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state)

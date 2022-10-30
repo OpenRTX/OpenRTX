@@ -24,6 +24,7 @@
 #include <state.h>
 #include <graphics.h>
 #include <interfaces/keyboard.h>
+#include <calibInfo_Mod17.h>
 #include <stdint.h>
 #include <event.h>
 #include <hwconfig.h>
@@ -61,6 +62,7 @@ enum uiScreen
     SETTINGS_DISPLAY,
     SETTINGS_GPS,
     SETTINGS_M17,
+    SETTINGS_MODULE17,
     SETTINGS_RESET2DEFAULTS,
     LOW_BAT
 };
@@ -93,6 +95,7 @@ enum settingsItems
     ,S_GPS
 #endif
     ,S_M17
+    ,S_MOD17
     ,S_RESET2DEFAULTS
 };
 
@@ -119,6 +122,15 @@ enum settingsGPSItems
     G_TIMEZONE
 };
 #endif
+
+enum module17Items
+{
+    D_TXWIPER,
+    D_RXWIPER,
+    D_TXINVERT,
+    D_RXINVERT,
+    D_SAVE
+};
 
 /**
  * Struct containing a set of positions and sizes that get
@@ -200,6 +212,7 @@ extern const char *menu_items[];
 extern const char *settings_items[];
 extern const char *display_items[];
 extern const char *settings_gps_items[];
+extern const char *module17_items[];
 extern const char *backup_restore_items[];
 extern const char *info_items[];
 extern const char *authors[];
@@ -208,11 +221,15 @@ extern const uint8_t settings_num;
 extern const uint8_t display_num;
 extern const uint8_t settings_gps_num;
 extern const uint8_t backup_restore_num;
+extern const uint8_t module17_num;
 extern const uint8_t info_num;
 extern const uint8_t author_num;
 extern const color_t color_black;
 extern const color_t color_grey;
 extern const color_t color_white;
 extern const color_t yellow_fab413;
+
+// Calibration data, for digital pot and phase inversion
+extern mod17Calib_t mod17CalData;
 
 #endif /* UI_MOD17_H */
