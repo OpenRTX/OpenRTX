@@ -107,11 +107,13 @@ enum backupRestoreItems
 
 enum displayItems
 {
-    D_BRIGHTNESS = 0
 #ifdef SCREEN_CONTRAST
-    ,D_CONTRAST
-#endif
+    D_CONTRAST = 0
     ,D_TIMER
+#endif
+#ifndef SCREEN_CONTRAST
+    D_TIMER = 0
+#endif
 };
 
 #ifdef GPS_PRESENT

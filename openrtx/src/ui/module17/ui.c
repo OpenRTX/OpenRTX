@@ -1221,7 +1221,10 @@ void ui_updateFSM(bool *sync_rtx)
                         _ui_textInputReset(ui_state.new_callsign);
                     }
                     else if(msg.keys & KEY_ESC)
+                    {
+                        nvm_writeSettings(&state.settings);
                         _ui_menuBack(MENU_SETTINGS);
+                    }
                 }
                 break;
             case SETTINGS_RESET2DEFAULTS:
@@ -1308,7 +1311,7 @@ void ui_updateFSM(bool *sync_rtx)
                     ui_state.edit_mode = !ui_state.edit_mode;
                 else if(msg.keys & KEY_ESC)
                 {
-                    // TODO save settings to non-volatile memory
+                    nvm_writeSettings(&state.settings);
                     _ui_menuBack(MENU_SETTINGS);
                 }
                 break;
