@@ -98,10 +98,11 @@ const char *display_items[] =
 
 const char *module17_items[] =
 {
-    "TX Wiper",
-    "RX Wiper",
-    "TX Phase Inversion",
-    "RX Phase Inversion"
+    "TX Softpot",
+    "RX Softpot",
+    "TX Phase",
+    "RX Phase",
+    "Mic Gain"
 };
 
 #ifdef GPS_PRESENT
@@ -603,6 +604,15 @@ void _ui_changeRxInvert(int variation)
 {
     // Inversion can be 1 or 0, bit field value ensures no overflow
     mod17CalData.rx_invert += variation;
+}
+
+void _ui_changeMicGain(int variation)
+{
+    mod17CalData.mic_gain += variation;
+
+    // Mic gain can be between 0 and 2
+    if(mod17CalData.mic_gain > 2) mod17CalData.mic_gain = 2;
+    if(mod17CalData.mic_gain < 0) mod17CalData.mic_gain = 0;
 }
 
 void _ui_menuUp(uint8_t menu_entries)
@@ -1236,6 +1246,9 @@ void ui_updateFSM(bool *sync_rtx)
                         case D_RXINVERT:
                             _ui_changeRxInvert(-1);
                             break;
+                        case D_MICGAIN:
+                            _ui_changeMicGain(-1);
+                            break;
                         default:
                             state.ui_screen = SETTINGS_MODULE17;
                     }
@@ -1257,6 +1270,9 @@ void ui_updateFSM(bool *sync_rtx)
                         case D_RXINVERT:
                             _ui_changeRxInvert(+1);
                             break;
+                        case D_MICGAIN:
+                            _ui_changeMicGain(+1);
+                            break;
                         default:
                             state.ui_screen = SETTINGS_MODULE17;
                     }
@@ -1268,7 +1284,10 @@ void ui_updateFSM(bool *sync_rtx)
                 else if(msg.keys & KEY_ENTER)
                     ui_state.edit_mode = !ui_state.edit_mode;
                 else if(msg.keys & KEY_ESC)
+                {
+                    // TODO save settings to non-volatile memory
                     _ui_menuBack(MENU_SETTINGS);
+                }
                 break;
         }
     }

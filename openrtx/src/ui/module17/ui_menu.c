@@ -52,6 +52,19 @@ const char *display_timer_values[] =
     "1 hour"
 };
 
+const char *mic_gain_values[] =
+{
+    "40 dB",
+    "50 dB",
+    "60 dB"
+};
+
+const char *phase_values[] =
+{
+    "Normal",
+    "Inverted"
+};
+
 void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_t max_len, uint8_t index))
 {
     point_t pos = layout.line1_pos;
@@ -178,23 +191,26 @@ int _ui_getModule17EntryName(char *buf, uint8_t max_len, uint8_t index)
 int _ui_getModule17ValueName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= module17_num) return -1;
-    uint16_t value = 0;
+
     switch(index)
     {
         case D_TXWIPER:
-            value = mod17CalData.tx_wiper;
+            snprintf(buf, max_len, "%d", mod17CalData.tx_wiper);
             break;
         case D_RXWIPER:
-            value = mod17CalData.rx_wiper;
+            snprintf(buf, max_len, "%d", mod17CalData.rx_wiper);
             break;
         case D_TXINVERT:
-            value = mod17CalData.tx_invert;
+            snprintf(buf, max_len, "%s", phase_values[mod17CalData.tx_invert]);
             break;
         case D_RXINVERT:
-            value = mod17CalData.rx_invert;
+            snprintf(buf, max_len, "%s", phase_values[mod17CalData.rx_invert]);
+            break;
+        case D_MICGAIN:
+            snprintf(buf, max_len, "%s", mic_gain_values[mod17CalData.mic_gain]);
             break;
     }
-    snprintf(buf, max_len, "%d", value);
+
     return 0;
 }
 
