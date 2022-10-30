@@ -75,14 +75,10 @@ enum SetRxTx
 // menu elements even if some elements may be missing (GPS)
 enum menuItems
 {
-    M_BANK = 0,
-    M_CHANNEL,
-    M_CONTACTS,
+    M_SETTINGS = 0,
 #ifdef GPS_PRESENT
     M_GPS,
 #endif
-    M_SETTINGS,
-    M_BACKUP_RESTORE,
     M_INFO,
     M_ABOUT
 };
@@ -131,7 +127,7 @@ enum module17Items
     ,D_RXWIPER
     ,D_TXINVERT
     ,D_RXINVERT
-    ,D_SAVE
+    ,D_MICGAIN
 };
 
 /**

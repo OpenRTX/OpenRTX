@@ -52,6 +52,19 @@ const char *display_timer_values[] =
     "1 hour"
 };
 
+const char *mic_gain_values[] =
+{
+    "40 dB",
+    "50 dB",
+    "60 dB"
+};
+
+const char *phase_values[] =
+{
+    "Normal",
+    "Inverted"
+};
+
 void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_t max_len, uint8_t index))
 {
     point_t pos = layout.line1_pos;
@@ -191,11 +204,17 @@ int _ui_getModule17ValueName(char *buf, uint8_t max_len, uint8_t index)
             value = last_state.settings.rxwiper;
             break;
         case D_TXINVERT:
-            value = last_state.settings.txinvert;
-            break;            
+            snprintf(buf, max_len, "%s",
+                    phase_values[last_state.settings.txinvert]);
+            return 0;             
         case D_RXINVERT:
-            value = last_state.settings.rxinvert;
-            break;                        
+            snprintf(buf, max_len, "%s",
+                    phase_values[last_state.settings.rxinvert]);
+            return 0;  
+        case D_MICGAIN:
+            snprintf(buf, max_len, "%s",
+                    mic_gain_values[last_state.settings.micgain]);
+            return 0;                        
     }
     snprintf(buf, max_len, "%d", value);
     return 0;
@@ -231,13 +250,6 @@ int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
     return 0;
 }
 #endif
-
-int _ui_getBackupRestoreEntryName(char *buf, uint8_t max_len, uint8_t index)
-{
-    if(index >= backup_restore_num) return -1;
-    snprintf(buf, max_len, "%s", backup_restore_items[index]);
-    return 0;
-}
 
 int _ui_getInfoEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
@@ -459,62 +471,6 @@ void _ui_drawMenuSettings(ui_state_t* ui_state)
               color_white, "Settings");
     // Print menu entries
     _ui_drawMenuList(ui_state->menu_selected, _ui_getSettingsEntryName);
-}
-
-void _ui_drawMenuBackupRestore(ui_state_t* ui_state)
-{
-    gfx_clearScreen();
-    // Print "Backup & Restore" on top bar
-    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, "Backup & Restore");
-    // Print menu entries
-    _ui_drawMenuList(ui_state->menu_selected, _ui_getBackupRestoreEntryName);
-}
-
-void _ui_drawMenuBackup(ui_state_t* ui_state)
-{
-    (void) ui_state;
-
-    gfx_clearScreen();
-    // Print "Flash Backup" on top bar
-    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, "Flash Backup");
-    // Print backup message
-    point_t line = layout.line2_pos;
-    gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
-              color_white, "Connect to RTXTool");
-    line.y += 18;
-    gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
-              color_white, "to backup flash and");
-    line.y += 18;
-    gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
-              color_white, "press PTT to start.");
-
-    state.devStatus     = DATATRANSFER;
-    state.backup_eflash = true;
-}
-
-void _ui_drawMenuRestore(ui_state_t* ui_state)
-{
-    (void) ui_state;
-
-    gfx_clearScreen();
-    // Print "Flash Backup" on top bar
-    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, "Flash Restore");
-    // Print backup message
-    point_t line = layout.line2_pos;
-    gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
-              color_white, "Connect to RTXTool");
-    line.y += 18;
-    gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
-              color_white, "to restore flash and");
-    line.y += 18;
-    gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
-              color_white, "press PTT to start.");
-
-    state.devStatus      = DATATRANSFER;
-    state.restore_eflash = true;
 }
 
 void _ui_drawMenuInfo(ui_state_t* ui_state)

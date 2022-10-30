@@ -98,9 +98,6 @@ extern void _ui_drawMenuGPS();
 extern void _ui_drawSettingsGPS(ui_state_t* ui_state);
 #endif
 extern void _ui_drawMenuSettings(ui_state_t* ui_state);
-extern void _ui_drawMenuBackupRestore(ui_state_t* ui_state);
-extern void _ui_drawMenuBackup(ui_state_t* ui_state);
-extern void _ui_drawMenuRestore(ui_state_t* ui_state);
 extern void _ui_drawMenuInfo(ui_state_t* ui_state);
 extern void _ui_drawMenuAbout();
 #ifdef RTC_PRESENT
@@ -115,14 +112,10 @@ extern bool _ui_drawMacroMenu();
 
 const char *menu_items[] =
 {
-    "Banks",
-    "Channels",
-    "Contacts",
+    "Settings",
 #ifdef GPS_PRESENT
     "GPS",
 #endif
-    "Settings",
-    "Backup & Restore",
     "Info",
     "About"
 };
@@ -152,10 +145,11 @@ const char *display_items[] =
 
 const char *module17_items[] =
 {
-    "TX Wiper",
-    "RX Wiper",
-    "TX Phase Inversion",
-    "RX Phase Inversion"
+    "TX Softpot",
+    "RX Softpot",
+    "TX Phase",
+    "RX Phase",
+    "Mic Gain"
 };
 
 #ifdef GPS_PRESENT
@@ -166,12 +160,6 @@ const char *settings_gps_items[] =
     "UTC Timezone"
 };
 #endif
-
-const char *backup_restore_items[] =
-{
-    "Backup",
-    "Restore"
-};
 
 const char *info_items[] =
 {
@@ -234,7 +222,6 @@ const uint8_t display_num = sizeof(display_items)/sizeof(display_items[0]);
 const uint8_t settings_gps_num = sizeof(settings_gps_items)/sizeof(settings_gps_items[0]);
 #endif
 const uint8_t module17_num = sizeof(module17_items)/sizeof(module17_items[0]);
-const uint8_t backup_restore_num = sizeof(backup_restore_items)/sizeof(backup_restore_items[0]);
 const uint8_t info_num = sizeof(info_items)/sizeof(info_items[0]);
 const uint8_t author_num = sizeof(authors)/sizeof(authors[0]);
 
@@ -721,6 +708,15 @@ void _ui_changeRxInvert(int variation)
     if(state.settings.rxinvert < 0) state.settings.rxinvert = 0;
 }
 
+void _ui_changeMicGain(int variation)
+{
+    state.settings.micgain += variation;
+
+    // Mic gain can be between 0 and 2
+    if(state.settings.micgain > 2) state.settings.micgain = 2;
+    if(state.settings.micgain < 0) state.settings.micgain = 0;
+}
+
 void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
 {
     ui_state.input_number = input_getPressedNumber(msg);
@@ -1193,15 +1189,6 @@ void ui_updateFSM(bool *sync_rtx)
                 {
                     switch(ui_state.menu_selected)
                     {
-                        case M_BANK:
-                            state.ui_screen = MENU_BANK;
-                            break;
-                        case M_CHANNEL:
-                            state.ui_screen = MENU_CHANNEL;
-                            break;
-                        case M_CONTACTS:
-                            state.ui_screen = MENU_CONTACTS;
-                            break;
 #ifdef GPS_PRESENT
                         case M_GPS:
                             state.ui_screen = MENU_GPS;
@@ -1209,9 +1196,6 @@ void ui_updateFSM(bool *sync_rtx)
 #endif
                         case M_SETTINGS:
                             state.ui_screen = MENU_SETTINGS;
-                            break;
-                        case M_BACKUP_RESTORE:
-                            state.ui_screen = MENU_BACKUP_RESTORE;
                             break;
                         case M_INFO:
                             state.ui_screen = MENU_INFO;
@@ -1225,78 +1209,6 @@ void ui_updateFSM(bool *sync_rtx)
                 }
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(ui_state.last_main_state);
-                break;
-            // Zone menu screen
-            case MENU_BANK:
-            // Channel menu screen
-            case MENU_CHANNEL:
-            // Contacts menu screen
-            case MENU_CONTACTS:
-                if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                    // Using 1 as parameter disables menu wrap around
-                    _ui_menuUp(1);
-                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                {
-                    if(state.ui_screen == MENU_BANK)
-                    {
-                        bankHdr_t bank;
-                        // manu_selected is 0-based
-                        // bank 0 means "All Channel" mode
-                        // banks (1, n) are mapped to banks (0, n-1)
-                        if(cps_readBankHeader(&bank, ui_state.menu_selected) != -1)
-                            ui_state.menu_selected += 1;
-                    }
-                    else if(state.ui_screen == MENU_CHANNEL)
-                    {
-                        channel_t channel;
-                        if(cps_readChannel(&channel, ui_state.menu_selected + 1) != -1)
-                            ui_state.menu_selected += 1;
-                    }
-                    else if(state.ui_screen == MENU_CONTACTS)
-                    {
-                        contact_t contact;
-                        if(cps_readContact(&contact, ui_state.menu_selected + 1) != -1)
-                            ui_state.menu_selected += 1;
-                    }
-                }
-                else if(msg.keys & KEY_ENTER)
-                {
-                    if(state.ui_screen == MENU_BANK)
-                    {
-                        bankHdr_t newbank;
-                        int result = 0;
-                        // If "All channels" is selected, load default bank
-                        if(ui_state.menu_selected == 0)
-                            state.bank_enabled = false;
-                        else
-                        {
-                            state.bank_enabled = true;
-                            result = cps_readBankHeader(&newbank, ui_state.menu_selected - 1);
-                        }
-                        if(result != -1)
-                        {
-                            state.bank = ui_state.menu_selected - 1;
-                            // If we were in VFO mode, save VFO channel
-                            if(ui_state.last_main_state == MAIN_VFO)
-                                state.vfo_channel = state.channel;
-                            // Load bank first channel
-                            _ui_fsm_loadChannel(0, sync_rtx);
-                            // Switch to MEM screen
-                            state.ui_screen = MAIN_MEM;
-                        }
-                    }
-                    if(state.ui_screen == MENU_CHANNEL)
-                    {
-                        // If we were in VFO mode, save VFO channel
-                        if(ui_state.last_main_state == MAIN_VFO)
-                            state.vfo_channel = state.channel;
-                        _ui_fsm_loadChannel(ui_state.menu_selected, sync_rtx);
-                        // Switch to MEM screen
-                        state.ui_screen = MAIN_MEM;
-                    }
-                }
-                else if(msg.keys & KEY_ESC)
-                    _ui_menuBack(MENU_TOP);
                 break;
 #ifdef GPS_PRESENT
             // GPS menu screen
@@ -1340,32 +1252,6 @@ void ui_updateFSM(bool *sync_rtx)
                             break;
                         default:
                             state.ui_screen = MENU_SETTINGS;
-                    }
-                    // Reset menu selection
-                    ui_state.menu_selected = 0;
-                }
-                else if(msg.keys & KEY_ESC)
-                    _ui_menuBack(MENU_TOP);
-                break;
-            // Flash backup and restore menu screen
-            case MENU_BACKUP_RESTORE:
-                if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                    _ui_menuUp(settings_num);
-                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                    _ui_menuDown(settings_num);
-                else if(msg.keys & KEY_ENTER)
-                {
-
-                    switch(ui_state.menu_selected)
-                    {
-                        case BR_BACKUP:
-                            state.ui_screen = MENU_BACKUP;
-                            break;
-                        case BR_RESTORE:
-                            state.ui_screen = MENU_RESTORE;
-                            break;
-                        default:
-                            state.ui_screen = MENU_BACKUP_RESTORE;
                     }
                     // Reset menu selection
                     ui_state.menu_selected = 0;
@@ -1598,7 +1484,10 @@ void ui_updateFSM(bool *sync_rtx)
                             break;
                         case D_RXINVERT:
                             _ui_changeRxInvert(-1);
-                            break;                            
+                            break;
+                        case D_MICGAIN:
+                            _ui_changeMicGain(-1);
+                            break;                                                   
                         default:
                             state.ui_screen = SETTINGS_MODULE17;
                     }
@@ -1619,7 +1508,10 @@ void ui_updateFSM(bool *sync_rtx)
                             break;
                         case D_RXINVERT:
                             _ui_changeRxInvert(+1);
-                            break;                                        
+                            break;  
+                        case D_MICGAIN:
+                            _ui_changeMicGain(+1);
+                            break;                                                                                                                             
                         default:
                             state.ui_screen = SETTINGS_MODULE17;
                     }
@@ -1631,7 +1523,10 @@ void ui_updateFSM(bool *sync_rtx)
                 else if(msg.keys & KEY_ENTER)
                     ui_state.edit_mode = !ui_state.edit_mode;
                 else if(msg.keys & KEY_ESC)
+                {
+                    // TODO save settings to non-volatile memory
                     _ui_menuBack(MENU_SETTINGS);
+                }
                 break;    
         }
     }
@@ -1679,18 +1574,6 @@ bool ui_updateGUI()
         case MENU_TOP:
             _ui_drawMenuTop(&ui_state);
             break;
-        // Zone menu screen
-        case MENU_BANK:
-            _ui_drawMenuBank(&ui_state);
-            break;
-        // Channel menu screen
-        case MENU_CHANNEL:
-            _ui_drawMenuChannel(&ui_state);
-            break;
-        // Contacts menu screen
-        case MENU_CONTACTS:
-            _ui_drawMenuContacts(&ui_state);
-            break;
 #ifdef GPS_PRESENT
         // GPS menu screen
         case MENU_GPS:
@@ -1700,18 +1583,6 @@ bool ui_updateGUI()
         // Settings menu screen
         case MENU_SETTINGS:
             _ui_drawMenuSettings(&ui_state);
-            break;
-        // Flash backup and restore screen
-        case MENU_BACKUP_RESTORE:
-            _ui_drawMenuBackupRestore(&ui_state);
-            break;
-        // Flash backup screen
-        case MENU_BACKUP:
-            _ui_drawMenuBackup(&ui_state);
-            break;
-        // Flash restore screen
-        case MENU_RESTORE:
-            _ui_drawMenuRestore(&ui_state);
             break;
         // Info menu screen
         case MENU_INFO:
