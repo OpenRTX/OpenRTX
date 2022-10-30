@@ -214,7 +214,7 @@ static const char *symbols_ITU_T_E161_callsign[] =
     ""
 };
 
-static const char symbols_callsign[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890 ";
+static const char symbols_callsign[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890/- ";
 
 // Calculate number of menu entries
 const uint8_t menu_num = sizeof(menu_items)/sizeof(menu_items[0]);
@@ -921,7 +921,7 @@ void _ui_textInputArrows(char *buf, uint8_t max_len, kbd_msg_t msg)
     else if (msg.keys & KEY_UP)
         ui_state.input_set = (ui_state.input_set + 1) % num_symbols;
     else if (msg.keys & KEY_DOWN)
-        ui_state.input_set = (ui_state.input_set - 1) % num_symbols;
+        ui_state.input_set = ui_state.input_set==0 ? num_symbols-1 : ui_state.input_set-1;
 
     buf[ui_state.input_position] = symbols_callsign[ui_state.input_set];
 }
