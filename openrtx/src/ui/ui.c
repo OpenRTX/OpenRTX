@@ -1899,9 +1899,7 @@ void ui_updateFSM(bool *sync_rtx)
                             else if(msg.keys & KEY_RIGHT || msg.keys & KEY_UP ||
                                     msg.keys & KNOB_RIGHT)
                                 state.settings.utc_timezone += 1;
-                            vp_announceSettingsInt(&currentLanguage->UTCTimeZone,
-                                                   queueFlags,
-                                                   state.settings.utc_timezone);
+                            vp_announceTimeZone(state.settings.utc_timezone, queueFlags);
                             break;
                         default:
                             state.ui_screen = SETTINGS_GPS;

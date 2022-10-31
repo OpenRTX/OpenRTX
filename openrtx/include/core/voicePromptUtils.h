@@ -223,9 +223,18 @@ vpQueueFlags_t vp_getVoiceLevelQueueFlags();
  *
  */
 void vp_playMenuBeepIfNeeded(bool firstItem);
+
 /**
  *
  */
 void vp_announceSplashScreen();
+
+/**
+ * Announce timezone value.
+ *
+ * @param timeZone: timezone value.
+ * @param flags: control flags.
+ */
+void vp_announceTimeZone(const int8_t timeZone, const vpQueueFlags_t flags);
 
 #endif  // VOICE_PROMPT_UTILS_H

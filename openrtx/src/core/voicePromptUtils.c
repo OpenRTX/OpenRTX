@@ -1066,3 +1066,38 @@ void vp_announceSplashScreen()
     vp_announceRadioMode(state.channel.mode, localFlags);
     vp_play();
 }
+
+void vp_announceTimeZone(const int8_t timeZone, const vpQueueFlags_t flags)
+{
+    clearCurrPromptIfNeeded(flags);
+
+    if (flags & vpqIncludeDescriptions)
+    {
+        vp_queueStringTableEntry(&currentLanguage->UTCTimeZone);
+    }
+
+    int wholeHours = timeZone / 2;
+    int halfHour   = timeZone % 2;
+
+    // While vp_queueInteeger handles negative numbers, we want to explicitly
+    // say the sign even when positive.
+    if (timeZone > 0)
+    {
+        vp_queuePrompt(PROMPT_PLUS);
+    }
+    else if (timeZone < 0)
+    {
+        vp_queuePrompt(PROMPT_MINUS);
+        wholeHours *= -1;
+    }
+
+    vp_queueInteger(wholeHours);
+
+    if (halfHour != 0)
+    {
+        vp_queuePrompt(PROMPT_POINT);
+        vp_queueInteger(5);
+    }
+
+    playIfNeeded(flags);
+}
