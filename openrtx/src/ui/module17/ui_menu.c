@@ -167,9 +167,6 @@ int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
     uint8_t value = 0;
     switch(index)
     {
-        case D_BRIGHTNESS:
-            value = last_state.settings.brightness;
-            break;
 #ifdef SCREEN_CONTRAST
         case D_CONTRAST:
             value = last_state.settings.contrast;
