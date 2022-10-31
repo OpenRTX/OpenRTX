@@ -1364,7 +1364,10 @@ void ui_updateFSM(bool *sync_rtx)
                 else if(msg.keys & KEY_ENTER)
                     ui_state.edit_mode = !ui_state.edit_mode;
                 else if(msg.keys & KEY_ESC)
-                    _ui_menuBack(MENU_SETTINGS);
+                    {
+                        nvm_writeSettings(&state.settings);
+                        _ui_menuBack(MENU_SETTINGS);
+                    }
                 break;
 #ifdef GPS_PRESENT
             case SETTINGS_GPS:
