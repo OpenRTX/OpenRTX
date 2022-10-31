@@ -40,6 +40,7 @@
 #endif
 #ifdef PLATFORM_MOD17
 #include <MCP4551.h>
+#include <MAX9814.h>
 #endif
 
 /* Mutex for concurrent access to RTX state variable */
@@ -128,8 +129,15 @@ void *main_thread(void *arg)
     (void) arg;
 
     long long time     = 0;
+    #if defined(PLATFORM_MOD17)
     uint16_t last_txwiper = state.settings.txwiper;
     uint16_t last_rxwiper = state.settings.rxwiper;
+    uint8_t last_micgain = state.settings.micgain;
+
+    mcp4551_setWiper(SOFTPOT_TX, state.settings.txwiper);
+    mcp4551_setWiper(SOFTPOT_RX, state.settings.rxwiper);
+    max9814_setGain(state.settings.micgain);
+    #endif
 
     while(state.devStatus != SHUTDOWN)
     {
@@ -183,6 +191,11 @@ void *main_thread(void *arg)
         {
             mcp4551_setWiper(SOFTPOT_RX, state.settings.rxwiper);
             last_rxwiper = state.settings.rxwiper;
+        }
+        if(state.settings.micgain != last_micgain)
+        {
+            max9814_setGain(state.settings.micgain);
+            last_micgain = state.settings.micgain;
         }
         #endif
 

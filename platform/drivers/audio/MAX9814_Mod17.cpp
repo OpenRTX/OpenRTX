@@ -1,8 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 - 2022 by Federico Amedeo Izzo IU2NUO,             *
- *                                Niccolò Izzo IU2KIN                      *
- *                                Frederik Saraci IU2NRO                   *
- *                                Silvano Seva IU2KWO                      *
+ *   Copyright (C) 2021 - 2022 by Mathis Schmieder DB9MAT                  *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -18,44 +15,28 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/audio.h>
 #include <interfaces/gpio.h>
-#include <interfaces/delays.h>
 #include <hwconfig.h>
-#include "MAX9814.h"
+#include <MAX9814.h>
 
-void audio_init()
+/*
+ * Implementation of MAX9814 gain setting
+ */
+
+void max9814_setGain(uint8_t gain)
 {
-    gpio_setMode(SPK_MUTE, OUTPUT);
-    gpio_setMode(MIC_MUTE, OUTPUT);
-
-    gpio_setPin(SPK_MUTE);      // Off  = logic high
-    gpio_clearPin(MIC_MUTE);    // Off  = logic low
-    max9814_setGain(0);         // 40 dB gain
-}
-
-void audio_terminate()
-{
-    gpio_setPin(SPK_MUTE);
-    gpio_clearPin(MIC_MUTE);
-}
-
-void audio_enableMic()
-{
-    gpio_setPin(MIC_MUTE);
-}
-
-void audio_disableMic()
-{
-    gpio_clearPin(MIC_MUTE);
-}
-
-void audio_enableAmp()
-{
-    gpio_clearPin(SPK_MUTE);
-}
-
-void audio_disableAmp()
-{
-    gpio_setPin(SPK_MUTE);
+    if (gain == 0)
+    {
+        gpio_setMode(MIC_GAIN, OUTPUT);
+        gpio_setPin(MIC_GAIN); // 40 dB gain
+    }
+    else if (gain == 1)
+    {
+        gpio_setMode(MIC_GAIN, OUTPUT);
+        gpio_clearPin(MIC_GAIN); // 50 dB gain
+    }
+    else
+    {
+        gpio_setMode(MIC_GAIN, INPUT); // High impedance, 60 dB gain
+    }
 }

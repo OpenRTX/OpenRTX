@@ -394,10 +394,11 @@ mod17_src = ['platform/targets/Module17/platform.c',
              'platform/drivers/audio/inputStream_Mod17.cpp',
              'platform/drivers/audio/outputStream_Mod17.cpp',
              'platform/drivers/audio/audio_Mod17.c',
+             'platform/drivers/audio/MAX9814_Mod17.cpp',
              'platform/drivers/baseband/MCP4551_Mod17.cpp']
 
 mod17_src = src + openrtx_ui_module17 + mod17_src + stm32f405_src
-mod17_inc = inc + stm32f405_inc + ['platform/targets/Module17']
+mod17_inc = inc + stm32f405_inc + ['platform/targets/Module17', 'platform/drivers/audio']
 mod17_def = def + stm32f405_def + {'PLATFORM_MOD17': ''}
 
 ##
@@ -587,7 +588,7 @@ targets = [
    'load_addr': ' '},
   ]
 
-radio_tool  = find_program('radio_tool')
+radio_tool  = find_program('radio_tool',		       required:false, disabler:true)
 objcopy     = find_program('objcopy',                          required:false, disabler:true)
 if build_machine.system() == 'linux'
   bin2sgl     = find_program('scripts/bin2sgl.Linux',          required:false, disabler:true)
