@@ -136,7 +136,6 @@ const char *settings_items[] =
 
 const char *display_items[] =
 {
-    "Brightness",
 #ifdef SCREEN_CONTRAST
     "Contrast",
 #endif
@@ -578,18 +577,6 @@ void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx)
     }
 }
 
-void _ui_changeBrightness(int variation)
-{
-    state.settings.brightness += variation;
-
-    // Max value for brightness is 100, min value is set to 5 to avoid complete
-    //  display shutdown.
-    if(state.settings.brightness > 100) state.settings.brightness = 100;
-    if(state.settings.brightness < 5)   state.settings.brightness = 5;
-
-    platform_setBacklightLevel(state.settings.brightness);
-}
-
 void _ui_changeContrast(int variation)
 {
     if(variation >= 0)
@@ -782,12 +769,6 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             *sync_rtx = true;
             break;
         break;
-        case 7:
-            _ui_changeBrightness(-5);
-            break;
-        case 8:
-            _ui_changeBrightness(+5);
-            break;
     }
 
 #ifdef HAS_ABSOLUTE_KNOB // If the radio has an absolute position knob
@@ -1347,9 +1328,6 @@ void ui_updateFSM(bool *sync_rtx)
                 {
                     switch(ui_state.menu_selected)
                     {
-                        case D_BRIGHTNESS:
-                            _ui_changeBrightness(-5);
-                            break;
 #ifdef SCREEN_CONTRAST
                         case D_CONTRAST:
                             _ui_changeContrast(-4);
@@ -1367,9 +1345,6 @@ void ui_updateFSM(bool *sync_rtx)
                 {
                     switch(ui_state.menu_selected)
                     {
-                        case D_BRIGHTNESS:
-                            _ui_changeBrightness(+5);
-                            break;
 #ifdef SCREEN_CONTRAST
                         case D_CONTRAST:
                             _ui_changeContrast(+4);
@@ -1460,7 +1435,10 @@ void ui_updateFSM(bool *sync_rtx)
                         _ui_textInputReset(ui_state.new_callsign);
                     }
                     else if(msg.keys & KEY_ESC)
+                    {
+                        nvm_writeSettings(&state.settings);
                         _ui_menuBack(MENU_SETTINGS);
+                    }
                 }
                 break;
             case SETTINGS_RESET2DEFAULTS:
