@@ -51,14 +51,14 @@ typedef struct
     uint8_t contrast;             // Display contrast
     uint8_t sqlLevel;             // Squelch level
     uint8_t voxLevel;             // Vox level
-    int8_t  utc_timezone;         // Timezone
+    int8_t  utc_timezone;         // Timezone, in units of half hours
     bool    gps_enabled;          // GPS active
     char    callsign[10];         // Plaintext callsign, for future use
-    uint8_t display_timer : 4,    // Standby timer
-            not_in_use    : 4;
-	uint8_t vpLevel 		: 3,
-			vpPhoneticSpell	: 1,
-			vpReserved    	: 4; // reserved for voice rate on the fly.
+    uint8_t display_timer   : 4,  // Standby timer
+            _ununsed        : 4;
+    uint8_t vpLevel         : 3,  // Voice prompt level
+            vpPhoneticSpell : 1,  // Phonetic spell enabled
+            _reserved       : 4;
 
 }
 __attribute__((packed)) settings_t;
@@ -78,10 +78,10 @@ static const settings_t default_settings =
     false,            // GPS enabled
     "",               // Empty callsign
     TIMER_30S,        // 30 seconds
-    0,                 // not in use
-	0, // vpOff,
-	0, // phonetic spell off,
-	0 // not in use.
+    0,                // not used
+    0,                // Voice prompts off
+    0,                // Phonetic spell off
+    0                 // not used
 };
 
 #endif /* SETTINGS_H */

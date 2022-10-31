@@ -1893,10 +1893,10 @@ void ui_updateFSM(bool *sync_rtx)
                                                            state.gps_set_time);
                             break;
                         case G_TIMEZONE:
-                            if(msg.keys & KEY_LEFT || msg.keys & KEY_UP ||
+                            if(msg.keys & KEY_LEFT || msg.keys & KEY_DOWN ||
                                msg.keys & KNOB_LEFT)
                                 state.settings.utc_timezone -= 1;
-                            else if(msg.keys & KEY_RIGHT || msg.keys & KEY_DOWN ||
+                            else if(msg.keys & KEY_RIGHT || msg.keys & KEY_UP ||
                                     msg.keys & KNOB_RIGHT)
                                 state.settings.utc_timezone += 1;
                             vp_announceSettingsInt(&currentLanguage->UTCTimeZone,

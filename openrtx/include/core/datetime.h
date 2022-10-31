@@ -35,14 +35,13 @@ extern "C" {
  */
 typedef struct
 {
-    uint8_t hour   : 5;    // Hours (0-23)
-    uint8_t minute : 6;    // Minutes (0-59)
-    uint8_t second : 6;    // Seconds (0-59)
-    uint8_t day    : 3;    // Day of the week (1-7)
-    uint8_t date   : 5;    // Day of the month (1-31)
-    uint8_t month  : 4;    // Month (1-12)
-    uint8_t year   : 7;    // Year (0-99)
-    uint8_t        : 4;    // Padding to 40 bits
+    int8_t hour;      // Hours (0-23)
+    int8_t minute;    // Minutes (0-59)
+    int8_t second;    // Seconds (0-59)
+    int8_t day;       // Day of the week (1-7)
+    int8_t date;      // Day of the month (1-31)
+    int8_t month;     // Month (1-12)
+    uint8_t year;     // Year (0-99)
 }
 datetime_t;
 
@@ -63,6 +62,14 @@ datetime_t utcToLocalTime(const datetime_t utc_time, const int8_t timezone);
  * @return converted UTC time.
  */
 datetime_t localTimeToUtc(const datetime_t local_time, const int8_t timezone);
+
+/**
+ * Adjust the values of the members of datetime_t if they are off-range or if
+ * they have values that do not match the date described by the other members.
+ *
+ * @param time: pointer to a datetime_t struct.
+ */
+void realignTimeInfo(datetime_t *time);
 
 #ifdef __cplusplus
 }

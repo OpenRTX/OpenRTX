@@ -296,17 +296,34 @@ int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
     switch(index)
     {
         case G_ENABLED:
-            snprintf(buf, max_len, "%s", (last_state.settings.gps_enabled) ? currentLanguage->on : currentLanguage->off);
+            snprintf(buf, max_len, "%s", (last_state.settings.gps_enabled) ?
+                                                      currentLanguage->on  :
+                                                      currentLanguage->off);
             break;
         case G_SET_TIME:
-            snprintf(buf, max_len, "%s", (last_state.gps_set_time) ? currentLanguage->on : currentLanguage->off);
+            snprintf(buf, max_len, "%s", (last_state.gps_set_time) ?
+                                               currentLanguage->on :
+                                               currentLanguage->off);
             break;
         case G_TIMEZONE:
-            // Add + prefix to positive numbers
+        {
+            int8_t tz_hr = (last_state.settings.utc_timezone / 2);
+            int8_t tz_mn = (last_state.settings.utc_timezone % 2) * 5;
+            char   sign  = ' ';
+
             if(last_state.settings.utc_timezone > 0)
-                snprintf(buf, max_len, "+%d", last_state.settings.utc_timezone);
-            else
-                snprintf(buf, max_len, "%d", last_state.settings.utc_timezone);
+            {
+                sign = '+';
+            }
+            else if(last_state.settings.utc_timezone < 0)
+            {
+                sign   = '-';
+                tz_hr *= (-1);
+                tz_mn *= (-1);
+            }
+
+            snprintf(buf, max_len, "%c%d.%d", sign, tz_hr, tz_mn);
+        }
             break;
     }
     return 0;
