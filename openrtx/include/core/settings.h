@@ -83,7 +83,7 @@ static const settings_t default_settings =
     TIMER_30S,        // 30 seconds
     0                // not in use
 #ifdef PLATFORM_MOD17            
-    ,0x100,            // TX Wiper
+    ,0x080,            // TX Wiper
     0x080,            // RX Wiper
     0,                // TX Invert
     0,                // RX Invert
