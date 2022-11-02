@@ -67,8 +67,10 @@ void radio_init(const rtxStatus_t *rtxState)
     gpio_clearPin(PA_SEL_SW);
 
     // TODO: keep audio connected to HR_C6000, for volume control
+#ifndef PLATFORM_DM1701
     gpio_setMode(RX_AUDIO_MUX, OUTPUT);
     gpio_setPin(RX_AUDIO_MUX);
+#endif
 
     /*
      * Configure and enable DAC
