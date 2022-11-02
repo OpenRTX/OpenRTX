@@ -156,8 +156,7 @@ openrtx_def += {'GIT_VERSION': git_version}
 ## TYT MDx family
 ##
 
-mdx_src = ['platform/drivers/GPS/GPS_MDx.cpp',
-           'platform/drivers/NVM/W25Qx.c',
+mdx_src = ['platform/drivers/NVM/W25Qx.c',
            'platform/drivers/NVM/nvmem_settings_MDx.c',
            'platform/drivers/NVM/nvmem_MDx.c',
            'platform/drivers/audio/audio_MDx.cpp',
@@ -359,6 +358,7 @@ md3x0_src = ['platform/drivers/CPS/cps_io_native_MD3x0.c',
              'platform/drivers/keyboard/keyboard_MD3x.c',
              'platform/drivers/display/HX8353_MD3x.cpp',
              'platform/drivers/backlight/backlight_MDx.c',
+             'platform/drivers/GPS/GPS_MDx.cpp',
              'platform/targets/MD-3x0/platform.c',
              'platform/targets/MD-3x0/hwconfig.c']
 
@@ -375,6 +375,7 @@ md3x0_def += openrtx_def + stm32f405_def
 mduv3x0_src = ['platform/drivers/CPS/cps_io_native_MDUV3x0.c',
                'platform/targets/MD-UV3x0/platform.c',
                'platform/targets/MD-UV3x0/hwconfig.c',
+               'platform/drivers/GPS/GPS_MDx.cpp',
                'platform/drivers/keyboard/keyboard_MD3x.c',
                'platform/drivers/display/HX8353_MD3x.cpp',
                'platform/drivers/backlight/backlight_MDx.c',
@@ -487,6 +488,28 @@ cs7000_inc += openrtx_inc + stm32f405_inc
 cs7000_def += openrtx_def + stm32f405_def
 
 ##
+## Baofeng DM-1701
+##
+dm1701_src = ['platform/targets/DM-1701/platform.c',
+              'platform/targets/DM-1701/hwconfig.c',
+              'platform/drivers/keyboard/keyboard_DM1701.c',
+              'platform/drivers/CPS/cps_io_native_MDUV3x0.c',
+              'platform/drivers/display/HX8353_MD3x.cpp',
+              'platform/drivers/backlight/backlight_MDx.c',
+              'platform/drivers/chSelector/chSelector_UV3x0.c',
+              'platform/drivers/audio/Cx000_dac.cpp',
+              'platform/drivers/baseband/radio_UV3x0.cpp',
+              'platform/drivers/baseband/AT1846S_UV3x0.cpp',
+              'platform/drivers/baseband/HR_C6000_UV3x0.cpp']
+
+dm1701_inc = ['platform/targets/DM-1701']
+dm1701_def = {'PLATFORM_DM1701': '', 'timegm': 'mktime'}
+
+dm1701_src += openrtx_src + stm32f405_src + ui_src_default + mdx_src
+dm1701_inc += openrtx_inc + stm32f405_inc
+dm1701_def += openrtx_def + stm32f405_def
+
+##
 ## -------------------------- Compilation arguments ----------------------------
 ##
 
@@ -590,6 +613,15 @@ foreach k, v : cs7000_def
   endif
 endforeach
 
+dm1701_args = []
+foreach k, v : dm1701_def
+  if v == ''
+    dm1701_args += '-D@0@'.format(k)
+  else
+    dm1701_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
+
 linux_opts = {
   'sources'            : linux_default_src,
   'include_directories': linux_inc,
@@ -689,6 +721,15 @@ cs7000_opts = {
   'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/stm32_1m+192k_rom.ld']
 }
 
+dm1701_opts = {
+  'sources'            : dm1701_src,
+  'include_directories': dm1701_inc,
+  'dependencies'       : [codec2_dep],
+  'c_args'             : dm1701_args,
+  'cpp_args'           : dm1701_args,
+  'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld']
+}
+
 ##
 ## ---------------------------- Compilation targets ----------------------------
 ##
@@ -764,6 +805,13 @@ targets = [
     'flashable': true,
     'wrap'     : ' ',
     'load_addr': '0x08000000'
+  },
+  {
+    'name'     : 'dm1701',
+    'opts'     : dm1701_opts,
+    'flashable': true,
+    'wrap'     : 'DM1701',
+    'load_addr': '0x0800C000'
   },
 ]
 
