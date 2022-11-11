@@ -140,7 +140,7 @@ private:
     M17LinkSetupFrame lsf;              ///< Latest LSF received.
     M17LinkSetupFrame lsfFromLich;      ///< LSF assembled from LICH segments.
     M17StreamFrame    streamFrame;      ///< Latest stream dat frame received.
-    M17Viterbi        viterbi;          ///< Viterbi decoder.
+    M17HardViterbi    viterbi;          ///< Viterbi decoder.
 
     ///< Maximum allowed hamming distance when determining the frame type.
     static constexpr uint8_t MAX_SYNC_HAMM_DISTANCE = 4;

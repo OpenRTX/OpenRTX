@@ -23,10 +23,10 @@
 #include <cstdint>
 #include <random>
 #include <array>
-#include "M17/M17ConvolutionalEncoder.h"
-#include "M17/M17CodePuncturing.h"
-#include "M17/M17Viterbi.h"
-#include "M17/M17Utils.h"
+#include "M17/M17ConvolutionalEncoder.hpp"
+#include "M17/M17CodePuncturing.hpp"
+#include "M17/M17Viterbi.hpp"
+#include "M17/M17Utils.hpp"
 
 using namespace std;
 
@@ -72,7 +72,7 @@ int main()
     generateErrors(punctured);
 
     array< uint8_t, 18 > result;
-    M17Viterbi decoder;
+    M17HardViterbi decoder;
     decoder.decodePunctured(punctured, result, DATA_PUNCTURE);
 
     for(size_t i = 0; i < result.size(); i++)
