@@ -181,6 +181,30 @@ int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
     return 0;
 }
 
+int _ui_getM17EntryName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= m17_num) return -1;
+    snprintf(buf, max_len, "%s", m17_items[index]);
+    return 0;
+}
+
+int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= m17_num) return -1;
+    uint16_t value = 0;
+    switch(index)
+    {
+        case M_CALLSIGN:
+            snprintf(buf, max_len, "%s", last_state.settings.callsign);
+            return 0;
+        case M_CAN:
+            value = last_state.m17_data.can;
+            break;
+    }
+    snprintf(buf, max_len, "%d", value);
+    return 0;
+}
+
 int _ui_getModule17EntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= module17_num) return -1;
@@ -521,9 +545,11 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
     // Print "M17 Settings" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "M17 Settings");
-    gfx_printLine(1, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
+    /* gfx_printLine(1, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
                   layout.horizontal_pad, layout.menu_font,
-                  TEXT_ALIGN_LEFT, color_white, "Callsign:");
+                  TEXT_ALIGN_LEFT, color_white, "Callsign:"); */
+    _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getM17EntryName,
+                           _ui_getM17ValueName);
     if(ui_state->edit_mode)
     {
         uint16_t rect_width = SCREEN_WIDTH - (layout.horizontal_pad * 2);
@@ -536,13 +562,13 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
                       layout.horizontal_pad, layout.input_font,
                       TEXT_ALIGN_CENTER, color_white, ui_state->new_callsign);
     }
-    else
+    /*else
     {
         // Print M17 current callsign
         gfx_printLine(1, 1, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
                       layout.horizontal_pad, layout.input_font,
                       TEXT_ALIGN_CENTER, color_white, last_state.settings.callsign);
-    }
+    }*/
 }
 
 void _ui_drawSettingsModule17(ui_state_t* ui_state)
