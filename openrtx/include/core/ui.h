@@ -123,9 +123,15 @@ enum settingsGPSItems
 };
 #endif
 
+enum m17Items
+{
+    M_CALLSIGN = 0
+    ,M_CAN
+};
+
 enum module17Items
 {
-    D_TXWIPER
+    D_TXWIPER = 0
     ,D_RXWIPER
     ,D_TXINVERT
     ,D_RXINVERT
@@ -212,6 +218,7 @@ extern const char *menu_items[];
 extern const char *settings_items[];
 extern const char *display_items[];
 extern const char *settings_gps_items[];
+extern const char *m17_items[];
 extern const char *module17_items[];
 extern const char *backup_restore_items[];
 extern const char *info_items[];
@@ -221,6 +228,7 @@ extern const uint8_t settings_num;
 extern const uint8_t display_num;
 extern const uint8_t settings_gps_num;
 extern const uint8_t backup_restore_num;
+extern const uint8_t m17_num;
 extern const uint8_t module17_num;
 extern const uint8_t info_num;
 extern const uint8_t author_num;
