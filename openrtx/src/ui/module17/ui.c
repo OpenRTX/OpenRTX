@@ -142,6 +142,12 @@ const char *display_items[] =
     "Timer"
 };
 
+const char *m17_items[] = 
+{
+    "Callsign",
+    "CAN"
+};
+
 const char *module17_items[] =
 {
     "TX Softpot",
@@ -222,6 +228,7 @@ const uint8_t display_num = sizeof(display_items)/sizeof(display_items[0]);
 #ifdef GPS_PRESENT
 const uint8_t settings_gps_num = sizeof(settings_gps_items)/sizeof(settings_gps_items[0]);
 #endif
+const uint8_t m17_num = sizeof(m17_items)/sizeof(m17_items[0]);
 const uint8_t module17_num = sizeof(module17_items)/sizeof(module17_items[0]);
 const uint8_t info_num = sizeof(info_items)/sizeof(info_items[0]);
 const uint8_t author_num = sizeof(authors)/sizeof(authors[0]);
@@ -659,6 +666,15 @@ bool _ui_exitStandby(long long now)
     redraw_needed = true;
     platform_setBacklightLevel(state.settings.brightness);
     return true;
+}
+
+void _ui_changeCAN(int variation)
+{
+    state.m17_data.can += variation;
+
+    // Inversion can be 1 or 0
+    if(state.m17_data.can > 15) state.m17_data.can = 15;
+    if(state.m17_data.can < 0) state.m17_data.can = 0;
 }
 
 void _ui_changeTxWiper(int variation)
@@ -1411,6 +1427,7 @@ void ui_updateFSM(bool *sync_rtx)
 #endif
             // M17 Settings
             case SETTINGS_M17:
+               
                 if(ui_state.edit_mode)
                 {
                     if(msg.keys & KEY_ENTER)
@@ -1430,13 +1447,46 @@ void ui_updateFSM(bool *sync_rtx)
                 }
                 else
                 {
-                    if(msg.keys & KEY_ENTER)
+                    if(msg.keys & KEY_LEFT)
                     {
-                        // Enable callsign input
-                        ui_state.edit_mode = true;
-                        // Reset text input variables
-                        _ui_textInputReset(ui_state.new_callsign);
+                        switch(ui_state.menu_selected)
+                        {
+                            case M_CAN:
+                                _ui_changeCAN(-1);
+                                break;
+                            default:
+                                state.ui_screen = SETTINGS_M17;                            
+                        }
+                    }            
+                    else if(msg.keys & KEY_RIGHT)
+                    {
+                        switch(ui_state.menu_selected)
+                        {
+                            case M_CAN:
+                                _ui_changeCAN(+1);
+                                break;
+                            default:
+                                state.ui_screen = SETTINGS_M17;                           
+                        }
+                    }                     
+                    else if(msg.keys & KEY_ENTER)
+                    {
+                        switch(ui_state.menu_selected)
+                        {
+                            case M_CALLSIGN:
+                                // Enable callsign input
+                                ui_state.edit_mode = true;
+                                // Reset text input variables
+                                _ui_textInputReset(ui_state.new_callsign);
+                                break;
+                            default:
+                                state.ui_screen = SETTINGS_M17;                           
+                        }                        
                     }
+                    else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                        _ui_menuUp(m17_num);
+                    else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                        _ui_menuDown(m17_num);
                     else if(msg.keys & KEY_ESC)
                     {
                         nvm_writeSettings(&state.settings);
