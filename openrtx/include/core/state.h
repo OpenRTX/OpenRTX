@@ -34,7 +34,8 @@
  */
 typedef struct
 {
-    char dst_addr[10];
+    char     dst_addr[10];  // Destination callsign
+    uint8_t  can;           // Channel Access Number
 }
 m17_t;
 

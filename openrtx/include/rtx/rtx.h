@@ -43,8 +43,8 @@ typedef struct
     freq_t rxFrequency;     /**< RX frequency, in Hz           */
     freq_t txFrequency;     /**< TX frequency, in Hz           */
 
-    float txPower;          /**< TX power, in W                */
-    uint8_t sqlLevel;       /**< Squelch opening level         */
+    float    txPower;       /**< TX power, in W                */
+    uint8_t  sqlLevel;      /**< Squelch opening level         */
 
     uint16_t rxToneEn : 1,  /**< RX CTC/DCS tone enable        */
              rxTone   : 15; /**< RX CTC/DCS tone               */
@@ -52,8 +52,8 @@ typedef struct
     uint16_t txToneEn : 1,  /**< TX CTC/DCS tone enable        */
              txTone   : 15; /**< TX CTC/DCS tone               */
 
-    uint8_t  rxCan : 4,     /**< M17 Channel Access Number for RX squelch */
-             txCan : 4;     /**< M17 Channel Access Number for TX squelch */
+    uint8_t  can      : 4,  /**< M17 Channel Access Number     */
+             _unused  : 4;
 
     char     source_address[10];      /**< M17 call source address  */
     char     destination_address[10]; /**< M17 call routing address */
