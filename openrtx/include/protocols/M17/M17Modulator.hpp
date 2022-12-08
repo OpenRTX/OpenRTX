@@ -83,6 +83,13 @@ public:
      */
     void stop();
 
+    /**
+     * Invert baseband signal phase before output.
+     *
+     * @param status: if set to true signal phase is inverted.
+     */
+    void invertPhase(const bool status);
+
 private:
 
     /**
@@ -113,6 +120,7 @@ private:
     streamId                     outStream;        ///< Baseband output stream ID.
     pathId                       outPath;          ///< Baseband output path ID.
     bool                         txRunning;        ///< Transmission running.
+    bool                         invPhase;        ///< Invert signal phase
 
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
     PwmCompensator pwmComp;

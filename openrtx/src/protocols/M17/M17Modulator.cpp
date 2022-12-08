@@ -141,6 +141,12 @@ void M17Modulator::stop()
     #endif
 }
 
+void M17Modulator::invertPhase(const bool status)
+{
+    invPhase = status;
+}
+
+
 void M17Modulator::symbolsToBaseband()
 {
     memset(idleBuffer, 0x00, M17_FRAME_SAMPLES * sizeof(stream_sample_t));
@@ -156,8 +162,8 @@ void M17Modulator::symbolsToBaseband()
         elem          = M17::rrc_48k(elem * M17_RRC_GAIN) - M17_RRC_OFFSET;
         #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
         elem          = pwmComp(elem);
-        elem         *= -1.0f;          // Invert signal phase
         #endif
+        if(invPhase) elem = 0.0f - elem;    // Invert signal phase
         idleBuffer[i] = static_cast< int16_t >(elem);
     }
 }
