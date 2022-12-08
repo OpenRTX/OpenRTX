@@ -24,6 +24,7 @@
 #include <calibInfo_Mod17.h>
 #include <hwconfig.h>
 #include <MCP4551.h>
+#include "../audio/MAX9814.h"
 
 enum  opstatus      radioStatus;   // Current operating status
 const mod17Calib_t *calData;       // Calibration data
@@ -87,6 +88,7 @@ void radio_enableTx()
 
     mcp4551_setWiper(SOFTPOT_TX, calData->tx_wiper);
     mcp4551_setWiper(SOFTPOT_RX, calData->rx_wiper);
+    max9814_setGain(calData->mic_gain);
 }
 
 void radio_disableRtx()

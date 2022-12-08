@@ -21,6 +21,7 @@
 #include <interfaces/audio.h>
 #include <interfaces/gpio.h>
 #include <hwconfig.h>
+#include "MAX9814.h"
 
 
 static const uint8_t pathCompatibilityMatrix[9][9] =
@@ -42,11 +43,10 @@ void audio_init()
 {
     gpio_setMode(SPK_MUTE, OUTPUT);
     gpio_setMode(MIC_MUTE, OUTPUT);
-    gpio_setMode(MIC_GAIN, OUTPUT);
 
     gpio_setPin(SPK_MUTE);      // Off  = logic high
     gpio_clearPin(MIC_MUTE);    // Off  = logic low
-    gpio_setPin(MIC_GAIN);      // gain = 40 dB
+    max9814_setGain(0);         // 40 dB gain
 }
 
 void audio_terminate()
