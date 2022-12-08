@@ -140,6 +140,7 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
         #ifdef PIX_FMT_RGB565
         memcpy(fb, frameBuffer, sizeof(PIXEL_SIZE) * SCREEN_HEIGHT * SCREEN_WIDTH);
         #else
+        uint32_t *pixels = (uint32_t *) fb;
         for (unsigned int x = 0; x < SCREEN_WIDTH; x++)
         {
             for (unsigned int y = startRow; y < endRow; y++)
