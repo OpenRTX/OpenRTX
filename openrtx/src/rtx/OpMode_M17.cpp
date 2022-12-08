@@ -223,9 +223,9 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         if(!dst.empty()) lsf.setDestination(dst);
 
         streamType_t type;
-        type.fields.stream   = 1;   // Stream
-        type.fields.dataType = 2;   // Voice data
-        type.fields.CAN      = 0;   // Channel access number
+        type.fields.stream   = 1;             // Stream
+        type.fields.dataType = 2;             // Voice data
+        type.fields.CAN      = status->can;   // Channel access number
 
         lsf.setType(type);
         lsf.updateCrc();
