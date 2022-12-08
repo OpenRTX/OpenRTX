@@ -19,6 +19,7 @@
  ***************************************************************************/
 
 #include <interfaces/platform.h>
+#include <interfaces/keyboard.h>
 #include <interfaces/display.h>
 #include <interfaces/delays.h>
 #include <interfaces/cps_io.h>
@@ -27,6 +28,7 @@
 #include <graphics.h>
 #include <openrtx.h>
 #include <threads.h>
+#include <state.h>
 #include <ui.h>
 #ifdef PLATFORM_LINUX
 #include <stdlib.h>

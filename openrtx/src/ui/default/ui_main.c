@@ -22,9 +22,9 @@
 #include <interfaces/cps_io.h>
 #include <stdio.h>
 #include <stdint.h>
-#include <ui.h>
+#include <ui/ui_default.h>
 #include <string.h>
-#include "ui/ui_strings.h"
+#include <ui/ui_strings.h>
 
 void _ui_drawMainBackground()
 {

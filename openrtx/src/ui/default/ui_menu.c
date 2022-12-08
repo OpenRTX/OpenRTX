@@ -22,7 +22,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <utils.h>
-#include <ui.h>
+#include <ui/ui_default.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/cps_io.h>
 #include <interfaces/platform.h>

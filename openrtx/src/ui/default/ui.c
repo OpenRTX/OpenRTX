@@ -64,7 +64,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <math.h>
-#include <ui.h>
+#include <ui/ui_default.h>
 #include <rtx.h>
 #include <interfaces/platform.h>
 #include <interfaces/display.h>
