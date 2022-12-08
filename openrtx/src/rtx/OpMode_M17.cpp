@@ -25,11 +25,16 @@
 #include <OpMode_M17.hpp>
 #include <audio_codec.h>
 #include <rtx.h>
+#ifdef PLATFORM_MOD17
+#include <calibInfo_Mod17.h>
+#include <interfaces/platform.h>
+#endif
 
 using namespace std;
 using namespace M17;
 
-OpMode_M17::OpMode_M17() : startRx(false), startTx(false), locked(false)
+OpMode_M17::OpMode_M17() : startRx(false), startTx(false), locked(false),
+                           invertTxPhase(false), invertRxPhase(false)
 {
 
 }
@@ -67,13 +72,25 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
 {
     (void) newCfg;
 
-    // Force inversion of RX phase for MD-3x0 VHF and MD-UV3x0 radios
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
+    //
+    // Invert TX phase for all MDx models.
+    // Invert RX phase for MD-3x0 VHF and MD-UV3x0 radios.
+    //
     const hwInfo_t* hwinfo = platform_getHwInfo();
+    invertTxPhase = true;
     if(hwinfo->vhf_band == 1)
-        status->invertRxPhase = true;
+        invertRxPhase = true;
     else
-        status->invertRxPhase = false;
+        invertRxPhase = false;
+    #elif defined(PLATFORM_MOD17)
+    //
+    // Get phase inversion settings from calibration.
+    //
+    const mod17Calib_t *calData =
+        reinterpret_cast< const mod17Calib_t * >(platform_getCalibrationData());
+    invertTxPhase = (calData->tx_invert == 1) ? true : false;
+    invertRxPhase = (calData->rx_invert == 1) ? true : false;
     #endif
 
     // Main FSM logic
@@ -144,7 +161,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
     if(startRx)
     {
         demodulator.startBasebandSampling();
-        demodulator.invertPhase(status->invertRxPhase);
+        demodulator.invertPhase(invertRxPhase);
 
         rxAudioPath = audioPath_request(SOURCE_MCU, SINK_SPK, PRIO_RX);
         codec_startDecode(SINK_SPK);
@@ -220,6 +237,7 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         codec_startEncode(SOURCE_MIC);
         radio_enableTx();
 
+        modulator.invertPhase(invertTxPhase);
         modulator.start();
         modulator.send(m17Frame);
     }
