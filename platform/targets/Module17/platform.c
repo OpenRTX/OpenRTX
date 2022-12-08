@@ -29,7 +29,10 @@
 #include <interfaces/audio.h>
 #include <ADC1_Mod17.h>
 #include <interfaces/nvmem.h>
+#include <calibInfo_Mod17.h>
 #include <MCP4551.h>
+
+mod17Calib_t mod17CalData;
 
 void platform_init()
 {
@@ -53,10 +56,14 @@ void platform_init()
     i2c_init();
     mcp4551_init(SOFTPOT_RX);
     mcp4551_init(SOFTPOT_TX);
-    mcp4551_setWiper(SOFTPOT_TX, 0x100);
-    //mcp4551_setWiper(SOFTPOT_RX, MCP4551_WIPER_A);
-
     audio_init();
+
+    /* Set defaults for calibration */
+    mod17CalData.tx_wiper  = 0x080;
+    mod17CalData.rx_wiper  = 0x080;
+    mod17CalData.tx_invert = 0;
+    mod17CalData.rx_invert = 0;
+    mod17CalData.mic_gain  = 0;
 }
 
 void platform_terminate()
@@ -157,7 +164,7 @@ void platform_beepStop()
 
 const void *platform_getCalibrationData()
 {
-    return NULL;
+    return ((const void *) &mod17CalData);
 }
 
 const hwInfo_t *platform_getHwInfo()
