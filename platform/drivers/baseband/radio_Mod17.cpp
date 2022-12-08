@@ -21,14 +21,23 @@
 #include <interfaces/platform.h>
 #include <interfaces/radio.h>
 #include <interfaces/gpio.h>
+#include <calibInfo_Mod17.h>
 #include <hwconfig.h>
+#include <MCP4551.h>
 
-enum opstatus radioStatus;               // Current operating status
+enum  opstatus      radioStatus;   // Current operating status
+const mod17Calib_t *calData;       // Calibration data
+
 
 void radio_init(const rtxStatus_t *rtxState)
 {
     (void) rtxState;
+
     radioStatus = OFF;
+    calData = reinterpret_cast< const mod17Calib_t * >(platform_getCalibrationData());
+
+    mcp4551_setWiper(SOFTPOT_TX, calData->tx_wiper);
+    mcp4551_setWiper(SOFTPOT_RX, calData->rx_wiper);
 }
 
 void radio_terminate()
@@ -66,12 +75,18 @@ void radio_enableRx()
 {
     radioStatus = RX;
     gpio_clearPin(PTT_OUT);
+
+    mcp4551_setWiper(SOFTPOT_TX, calData->tx_wiper);
+    mcp4551_setWiper(SOFTPOT_RX, calData->rx_wiper);
 }
 
 void radio_enableTx()
 {
     radioStatus = TX;
     gpio_setPin(PTT_OUT);
+
+    mcp4551_setWiper(SOFTPOT_TX, calData->tx_wiper);
+    mcp4551_setWiper(SOFTPOT_RX, calData->rx_wiper);
 }
 
 void radio_disableRtx()
