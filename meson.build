@@ -90,7 +90,9 @@ openrtx_ui_default = ['openrtx/src/ui/default/ui.c',
                       'openrtx/src/ui/default/ui_menu.c',
                       'openrtx/src/ui/default/ui_strings.c']
 
-openrtx_ui_module17 = []
+openrtx_ui_module17 = ['openrtx/src/ui/module17/ui.c',
+                       'openrtx/src/ui/module17/ui_main.c',
+                       'openrtx/src/ui/module17/ui_menu.c']
 
 ##
 ## Selection of main entrypoint
