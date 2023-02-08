@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 - 2022 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2021 - 2023 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Caleb Jamison                            *
  *                                Frederik Saraci IU2NRO                   *

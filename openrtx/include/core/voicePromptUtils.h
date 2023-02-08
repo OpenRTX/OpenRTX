@@ -1,8 +1,9 @@
 /***************************************************************************
- *   Copyright (C) 2022 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN,                            *
- *                         Silvano Seva IU2KWO                             *
- *                         Joseph Stephen VK7JS                            *
+ *   Copyright (C) 2022 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN,                     *
+ *                                Silvano Seva IU2KWO                      *
+ *                                Joseph Stephen VK7JS                     *
+ *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
  *   the Free Software Foundation; either version 3 of the License, or     *

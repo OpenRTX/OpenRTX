@@ -1,6 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Federico Izzo IU2NUO, Niccolò Izzo IU2KIN and   *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2020 - 2023 by Federico Izzo IU2NUO,                    *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
