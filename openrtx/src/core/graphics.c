@@ -86,7 +86,7 @@ static const GFXfont fonts[] = { TomThumb,            // 5pt
                                  Symbols8pt7b       // 8pt
                                };
 
-#ifdef CONFIG_PIX_FMT_RGB565
+#if defined(CONFIG_PIX_FMT_RGB565) || defined(CONFIG_PIX_FMT_BGR565)
 
 /* This specialization is meant for an RGB565 little endian pixel format.
  * Thus, to accomodate for the endianness, the fields in struct rgb565_t have to
@@ -211,7 +211,7 @@ inline void gfx_setPixel(point_t pos, color_t color)
         pos.x < 0 || pos.y < 0)
         return; // off the screen
 
-#ifdef CONFIG_PIX_FMT_RGB565
+#if defined(CONFIG_PIX_FMT_RGB565) || defined(CONFIG_PIX_FMT_BGR565)
     // Blend old pixel value and new one
     if (color.alpha < 255)
     {
@@ -648,7 +648,7 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
     // Cap percentage to 1
     percentage = (percentage > 100) ? 100 : percentage;
 
-#ifdef CONFIG_PIX_FMT_RGB565
+#if defined(CONFIG_PIX_FMT_RGB565) || defined(CONFIG_PIX_FMT_BGR565)
     color_t green =  {0,   255, 0  , 255};
     color_t yellow = {250, 180, 19 , 255};
     color_t red =    {255, 0,   0  , 255};
