@@ -375,19 +375,32 @@ void display_init()
      * - bit 1 and 0: don't care
      */
 
+    uint8_t reg;
+    switch(lcd_type)
+    {
+        case 1:
+            reg = (1 << 6)  // Invert x
+                | (1 << 5); // Exchange x and y
+            break;
+
+        case 2:
+            reg = (1 << 7)  // Invert y
+                | (1 << 6)  // Invert x
+                | (1 << 5); // Exchange x and y
+            break;
+
+        default:
+            reg = (1 << 7)  // Invert y
+                | (1 << 5); // Exchange x and y
+            break;
+    }
+
+    #ifdef PIX_FMT_BGR565
+    reg |= (1 << 3);        // BGR pixel format
+    #endif
+
     writeCmd(CMD_MADCTL);
-    if(lcd_type == 1)
-    {
-        writeData(0x60);    /* Reference case: MD-390(G)  */
-    }
-    else if(lcd_type == 2)
-    {
-        writeData(0xE0);    /* Reference case: MD-380V(G) */
-    }
-    else
-    {
-        writeData(0xA0);    /* Reference case: MD-380     */
-    }
+    writeData(reg);
 
     writeCmd(CMD_CASET);
     writeData(0x00);
