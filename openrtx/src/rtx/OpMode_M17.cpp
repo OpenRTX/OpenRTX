@@ -242,5 +242,9 @@ void OpMode_M17::txState(rtxStatus_t *const status)
     modulator.send(m17Frame);
 
     if(lastFrame)
+    {
+        encoder.encodeEotFrame(m17Frame);
+        modulator.send(m17Frame);
         modulator.stop();
+    }
 }

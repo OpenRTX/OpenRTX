@@ -130,27 +130,6 @@ void M17Modulator::stop()
     if(txRunning == false)
         return;
 
-    #ifdef M17_ENABLE_EOT
-    frame_t eotFrame;
-    // Fill EOT frame with 0x55, 0x5D as per M17 spec.
-    for(size_t i = 0; i < eotFrame.size(); i += 2)
-    {
-        eotFrame[i]     = 0x55;
-        eotFrame[i + 1] = 0x5D;
-    }
-
-    // Convert to symbols
-    auto it = symbols.begin();
-    for(size_t i = 0; i < eotFrame.size(); i++)
-    {
-        auto sym = byteToSymbols(eotFrame[i]);
-        it       = std::copy(sym.begin(), sym.end(), it);
-    }
-
-    symbolsToBaseband();
-    sendBaseband();
-    #endif
-
     outputStream_stop(outStream);
     outputStream_sync(outStream, false);
     txRunning  = false;

@@ -80,8 +80,6 @@ public:
 
     /**
      * Terminate baseband transmission.
-     * If the macro M17_ENABLE_EOT is defined an EOT frame is sent before
-     * terminating the transmission.
      */
     void stop();
 

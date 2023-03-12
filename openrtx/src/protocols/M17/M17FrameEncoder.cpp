@@ -116,3 +116,12 @@ uint16_t M17FrameEncoder::encodeStreamFrame(const payload_t& payload,
 
     return streamFrame.getFrameNumber();
 }
+
+void M17::M17FrameEncoder::encodeEotFrame(M17::frame_t& output)
+{
+    for(size_t i = 0; i < output.size(); i += 2)
+    {
+        output[i]     = 0x55;
+        output[i + 1] = 0x5D;
+    }
+}

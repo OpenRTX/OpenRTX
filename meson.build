@@ -22,8 +22,7 @@ def += {'FONT_UBUNTU_REGULAR': ''}
 ## Firmware configuration parameters
 ##
 
-# Send an M17 EOT frame at the end of transmission
-#def += {'M17_ENABLE_EOT' : ''}
+#def += {}
 
 
 ##

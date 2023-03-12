@@ -84,6 +84,14 @@ public:
      */
     uint16_t encodeStreamFrame(const payload_t& payload, frame_t& output,
                                const bool isLast = false);
+
+    /**
+     * Encode an End Of Transmission marker frame.
+     *
+     * @param output: destination buffer for the encoded data.
+     */
+    void encodeEotFrame(frame_t& output);
+
 private:
 
     M17ConvolutionalEncoder  encoder;           ///< Convolutional encoder.
