@@ -19,7 +19,7 @@
  ***************************************************************************/
 
 #include <kernel/scheduler/scheduler.h>
-#include <interfaces/audio_stream.h>
+#include <audio_stream.h>
 #include <peripherals/gpio.h>
 #include <data_conversion.h>
 #include <hwconfig.h>

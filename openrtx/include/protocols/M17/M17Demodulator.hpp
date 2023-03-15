@@ -34,7 +34,7 @@
 #include <dsp.h>
 #include <cmath>
 #include <audio_path.h>
-#include <interfaces/audio_stream.h>
+#include <audio_stream.h>
 #include <M17/M17Datatypes.hpp>
 #include <M17/M17Constants.hpp>
 

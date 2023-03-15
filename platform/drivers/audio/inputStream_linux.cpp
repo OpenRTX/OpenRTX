@@ -16,7 +16,7 @@
  ***************************************************************************/
 
 #include <hwconfig.h>
-#include <interfaces/audio_stream.h>
+#include <audio_stream.h>
 #include <stddef.h>
 
 #include <atomic>

@@ -23,7 +23,7 @@
 #include <interfaces/delays.h>
 #include <interfaces/audio.h>
 #include <interfaces/audio_path.h>
-#include <interfaces/audio_stream.h>
+#include <audio_stream.h>
 #include <interfaces/platform.h>
 #include <dsp.h>
 

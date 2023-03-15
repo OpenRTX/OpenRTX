@@ -29,7 +29,7 @@
 #include <M17/M17DSP.h>
 #include <M17/M17Demodulator.h>
 #include <M17/M17Utils.h>
-#include <interfaces/audio_stream.h>
+#include <audio_stream.h>
 
 using namespace std;
 

@@ -18,7 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/audio_stream.h>
+#include <audio_stream.h>
 #include <audio_codec.h>
 #include <pthread.h>
 #include <codec2.h>

@@ -24,21 +24,15 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <sys/types.h>
-#include "audio.h"
+#include <interfaces/audio.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef int16_t stream_sample_t;
-typedef int8_t  streamId;
 
-enum BufMode
-{
-    BUF_LINEAR,        ///< Linear buffer mode, conversion stops when full.
-    BUF_CIRC_DOUBLE    ///< Circular double buffer mode, conversion never stops,
-                       ///  thread woken up whenever half of the buffer is full.
-};
+typedef int8_t streamId;
+
 
 typedef struct
 {

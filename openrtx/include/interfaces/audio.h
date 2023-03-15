@@ -55,6 +55,15 @@ enum AudioPriority
     PRIO_TX            ///< Priority level of outward audio directed to TX stage
 };
 
+enum BufMode
+{
+    BUF_LINEAR,        ///< Linear buffer mode, conversion stops when full.
+    BUF_CIRC_DOUBLE    ///< Circular double buffer mode, conversion never stops,
+                       ///  thread woken up whenever half of the buffer is full.
+};
+
+typedef int16_t stream_sample_t;
+
 /**
  * Initialise low-level audio management module.
  */

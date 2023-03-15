@@ -23,7 +23,7 @@
 #include <M17/M17Demodulator.hpp>
 #include <M17/M17DSP.hpp>
 #include <M17/M17Utils.hpp>
-#include <interfaces/audio_stream.h>
+#include <audio_stream.h>
 #include <math.h>
 #include <cstring>
 #include <stdio.h>
