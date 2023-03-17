@@ -23,6 +23,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,7 +31,7 @@ extern "C" {
 
 /**
  * This file provides a common interface for the platform-dependent low-level
- * audio driver, in charge of managing microphone and audio amplifier.
+ * audio driver.
  */
 
 enum AudioSource
@@ -63,6 +64,93 @@ enum BufMode
 };
 
 typedef int16_t stream_sample_t;
+
+/**
+ * Data structure for audio stream context, to be used to configure audio
+ * devices.
+ */
+struct streamCtx
+{
+    void            *priv;       ///< Pointer to audio device private data.
+    stream_sample_t *buffer;     ///< Pointer to audio data buffer.
+    size_t           bufSize;    ///< Size of the audio data buffer, in elements.
+    uint8_t          bufMode;    ///< Buffer handling mode, linear or circular double.
+    uint32_t         sampleRate; ///< Sample rate, in Hz.
+    uint8_t          running;    ///< Audio device status, set to 1 when active.
+}
+__attribute__((packed));
+
+/**
+ * Driver interface for a generic audio device, either an input or output device,
+ * bound to a specific input.
+ */
+struct audioDriver
+{
+    /**
+     * Start an audio stream to or from the device.
+     *
+     * @param instance: driver instance number.
+     * @param config: driver configuration.
+     * @param ctx: pointer to audio stream context.
+     * @return zero on success, a negative error code on failure.
+     */
+    int (*start)(const uint8_t instance, const void *config, struct streamCtx *ctx);
+
+    /**
+     * Get a pointer to the "free" data section, when running in circular double
+     * buffered mode. For output streams the free data section is the one which
+     * can be filled with new samples, for input streams is the section containing
+     * the last acquired samples.
+     *
+     * @param ctx: pointer to audio stream context.
+     * @param buf: pointer to the free section pointer.
+     * @return size of the free data section.
+     */
+    int (*data)(struct streamCtx *ctx, stream_sample_t **buf);
+
+    /**
+     * Synchronize the execution flow with the driver. Execution is blocked
+     * until the driver reaches a syncpoint, either the end or the middle of the
+     * data stream.
+     *
+     * @param ctx: pointer to audio stream context.
+     * @param dirty: flag to signal to the driver that the "free" data section
+     * contains new data. Meaningful only for output streams.
+     * @return zero on success, -1 if the calling thread was not blocked.
+     */
+    int (*sync)(struct streamCtx *ctx, uint8_t dirty);
+
+    /**
+     * Stop an ongoing data stream.
+     * The stream is effectively stopped once it reaches the next syncpoint.
+     *
+     * @param ctx: pointer to audio stream context.
+     */
+    void (*stop)(struct streamCtx *ctx);
+
+    /**
+     * Immediately stop an ongoing data stream.
+     *
+     * @param ctx: pointer to audio stream context.
+     */
+    void (*terminate)(struct streamCtx *ctx);
+};
+
+/**
+ * Audio device descriptor, grouping an audio driver, its configuration and
+ * its input/output endpoint.
+ */
+struct audioDevice
+{
+    const struct audioDriver *driver;    ///< Audio driver functions
+    const void               *config;    ///< Driver configuration
+    const uint8_t             instance;  ///< Driver instance number
+    const uint8_t             endpoint;  ///< Driver sink or source endpoint
+}
+__attribute__((packed));
+
+extern const struct audioDevice inputDevices[];
+extern const struct audioDevice outputDevices[];
 
 /**
  * Initialise low-level audio management module.
