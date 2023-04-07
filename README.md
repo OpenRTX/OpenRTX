@@ -59,7 +59,8 @@ potential side effects.
 
 ## Contact
 
-To reach out,visit our [M17 Reflector](https://m17.openrtx.org) or join our Matrix space [#openrtx:matrix.org](https://matrix.to/#/#openrtx:matrix.org) or our [Discord Server](https://discord.gg/TbR2FVtMya).
+To reach out, visit our [M17 Reflector](https://m17.openrtx.org) or join our Matrix room for general discussion [#openrtx_general:matrix.org
+](https://matrix.to/#/#openrtx_general:matrix.org) or the Matrix space [#openrtx:matrix.org](https://matrix.to/#/#openrtx:matrix.org) which contains many additional rooms or our [Discord Server](https://discord.gg/TbR2FVtMya).
 
 ## Donate
 
