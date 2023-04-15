@@ -154,7 +154,7 @@ public:
      * The stream does not stop immediately but only when it reaches the half
      * or the end of the transfer.
      */
-    void stop()
+    inline void stop()
     {
         stopTransfer = true;
     }
@@ -163,10 +163,20 @@ public:
      * Forcefully stop an ongoing DMA stream.
      * Calling this function causes the immediate stop of an ongoing stream.
      */
-    void halt()
+    inline void halt()
     {
         stopTransfer = true;
         NVIC_SetPendingIRQ(IRQn);
+    }
+
+    /**
+     * Query che the current status of the stream.
+     *
+     * @return true if the stream is active, false otherwise.
+     */
+    inline bool running()
+    {
+        return (stream->CR & DMA_SxCR_EN) ? true : false;
     }
 
     /**
@@ -174,7 +184,7 @@ public:
      *
      * @param callback: std::function for the stream end callback.
      */
-    void setEndTransferCallback(std::function<void()>&& callback)
+    inline void setEndTransferCallback(std::function<void()>&& callback)
     {
         streamEndCallback = callback;
     }
@@ -267,7 +277,7 @@ public:
     /**
      * Low-level shutdown of a DMA stream.
      */
-    static void terminate()
+    static inline void terminate()
     {
         NVIC_DisableIRQ(IRQn());
         getStream()->CR = 0;
@@ -279,7 +289,7 @@ public:
      *
      * @param hdl: pointer to the StreamHandler class managing the stream.
      */
-    static void IRQhandleInterrupt(StreamHandler *hdl)
+    static inline void IRQhandleInterrupt(StreamHandler *hdl)
     {
         uint32_t flags = readIrqFlags();
         hdl->IRQhandler(flags);
