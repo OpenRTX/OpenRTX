@@ -59,7 +59,8 @@ typedef struct
     uint8_t vpLevel         : 3,  // Voice prompt level
             vpPhoneticSpell : 1,  // Phonetic spell enabled
             _reserved       : 4;
-
+    unsigned int structSize;
+    uint16_t   crc;
 }
 __attribute__((packed)) settings_t;
 
@@ -81,7 +82,9 @@ static const settings_t default_settings =
     0,                // not used
     0,                // Voice prompts off
     0,                // Phonetic spell off
-    0                 // not used
+    0,                // not used
+    0,                // struct size
+    0,                // crc
 };
 
 #endif /* SETTINGS_H */

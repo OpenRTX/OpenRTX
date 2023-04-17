@@ -38,12 +38,12 @@ void state_init()
     pthread_mutex_init(&state_mutex, NULL);
 
     /*
-     * Try loading settings from nonvolatile memory and default to sane values
-     * in case of failure.
+     * Default to sane values, then try overwriting default
+     * settings from nonvolatile memory.
      */
+    state.settings = default_settings;
     if(nvm_readSettings(&state.settings) < 0)
     {
-        state.settings = default_settings;
         strncpy(state.settings.callsign, "OPNRTX", 10);
     }
 
