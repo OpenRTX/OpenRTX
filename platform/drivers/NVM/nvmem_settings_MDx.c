@@ -30,7 +30,6 @@
  */
 typedef struct
 {
-    uint16_t   crc;
     settings_t settings;
     channel_t  vfoData;
 }
@@ -55,7 +54,7 @@ memory_t *memory = ((memory_t *) baseAddress);
  * is the one containing the last saved settings. Blocks containing legacy data
  * are marked with numbers starting from 4096.
  *
- * @return number currently active data block or -1 if memory data is invalid.
+ * @return number currently active data block or -1 if memory data is invalid, -2 if the CRC check fails.
  */
 static int findActiveBlock()
 {
@@ -88,10 +87,17 @@ static int findActiveBlock()
     block -= 1;
 
     // Check data validity
-    uint16_t crc = crc_ccitt(&(memory->data[block].settings),
-                             sizeof(settings_t) + sizeof(channel_t));
-    if(crc != memory->data[block].crc)
-        return -2;
+
+    // Create temporary settings so we can calculate CRC correctly
+    // The CRC is calculated with the settings_t.crc value set to 0
+    settings_t tmpSettings;
+    memcpy(&tmpSettings, &(memory->data[block].settings), memory->data[block].settings.structSize);
+    tmpSettings.crc = 0;
+
+    uint16_t crc = crc_ccitt(&tmpSettings, memory->data[block].settings.structSize);
+
+    if(crc != memory->data[block].settings.crc)
+            return -2;
 
     return block;
 }
@@ -116,7 +122,7 @@ int nvm_readSettings(settings_t *settings)
     // Invalid data found
     if(block < 0) return -1;
 
-    memcpy(settings, &(memory->data[block].settings), sizeof(settings_t));
+    memcpy(settings, &(memory->data[block].settings), memory->data[block].settings.structSize);
 
     return 0;
 }
@@ -141,18 +147,21 @@ int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
     }
     else
     {
-        prevCrc = memory->data[block].crc;
+        prevCrc = memory->data[block].settings.crc;
         block += 1;
     }
 
     dataBlock_t tmpBlock;
-    memcpy((&tmpBlock.settings), settings, sizeof(settings_t));
     memcpy((&tmpBlock.vfoData), vfo, sizeof(channel_t));
-    tmpBlock.crc = crc_ccitt(&(tmpBlock.settings),
-                             sizeof(settings_t) + sizeof(channel_t));
+
+    memcpy((&tmpBlock.settings), settings, sizeof(settings_t));
+    // Clear out any existing CRC
+    tmpBlock.settings.crc = 0;
+    tmpBlock.settings.structSize = sizeof(settings_t);
+    tmpBlock.settings.crc = crc_ccitt(&(tmpBlock.settings), sizeof(settings_t));
 
     // New data is equal to the old one, avoid saving
-    if((block != 0) && (tmpBlock.crc == prevCrc))
+    if((block != 0) && (tmpBlock.settings.crc == prevCrc))
         return 0;
 
     // Save data
