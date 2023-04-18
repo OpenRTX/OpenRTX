@@ -1112,6 +1112,38 @@ void ui_init()
     ui_state = (const struct ui_state_t){ 0 };
 }
 
+void menu_init()
+{
+    // Calculate Number of Channels
+    uint8_t channel_number = 0;
+    channel_t channel;
+    while (cps_readChannel(&channel, channel_number) != -1)
+    {
+        channel_number += 1;
+    }
+    state.channel_number = channel_number;
+    // Calculate Number of Banks
+    uint8_t bank_number = 0;
+    bankHdr_t bank;
+
+    while (cps_readBankHeader(&bank, bank_number) != -1)
+    {
+        bank_number += 1;
+    }
+    // manu_selected is 0-based
+    // bank 0 means "All Channel" mode
+    // banks (1, n) are mapped to banks (0, n-1)
+    state.bank_number = bank_number + 1;
+    // Calculate Number of Contacts
+    uint8_t contact_number = 0;
+    contact_t contact;
+    while (cps_readContact(&contact, contact_number) != -1)
+    {
+        contact_number += 1;
+    }
+    state.contact_number = contact_number;
+}
+
 void ui_drawSplashScreen(bool centered)
 {
     gfx_clearScreen();
@@ -1590,72 +1622,73 @@ void ui_updateFSM(bool *sync_rtx)
                 break;
             // Zone menu screen
             case MENU_BANK:
-            // Channel menu screen
-            case MENU_CHANNEL:
-            // Contacts menu screen
-            case MENU_CONTACTS:
                 if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                    // Using 1 as parameter disables menu wrap around
-                    _ui_menuUp(1);
+                {
+                    _ui_menuUp(state.bank_number);
+                }
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
                 {
-                    if(state.ui_screen == MENU_BANK)
-                    {
-                        bankHdr_t bank;
-                        // manu_selected is 0-based
-                        // bank 0 means "All Channel" mode
-                        // banks (1, n) are mapped to banks (0, n-1)
-                        if(cps_readBankHeader(&bank, ui_state.menu_selected) != -1)
-                            ui_state.menu_selected += 1;
-                    }
-                    else if(state.ui_screen == MENU_CHANNEL)
-                    {
-                        channel_t channel;
-                        if(cps_readChannel(&channel, ui_state.menu_selected + 1) != -1)
-                            ui_state.menu_selected += 1;
-                    }
-                    else if(state.ui_screen == MENU_CONTACTS)
-                    {
-                        contact_t contact;
-                        if(cps_readContact(&contact, ui_state.menu_selected + 1) != -1)
-                            ui_state.menu_selected += 1;
-                    }
+                    _ui_menuDown(state.bank_number);
                 }
                 else if(msg.keys & KEY_ENTER)
                 {
-                    if(state.ui_screen == MENU_BANK)
+                    bankHdr_t newbank;
+                    int result = 0;
+                    // If "All channels" is selected, load default bank
+                    if (ui_state.menu_selected == 0)
+                        state.bank_enabled = false;
+                    else
                     {
-                        bankHdr_t newbank;
-                        int result = 0;
-                        // If "All channels" is selected, load default bank
-                        if(ui_state.menu_selected == 0)
-                            state.bank_enabled = false;
-                        else
-                        {
-                            state.bank_enabled = true;
-                            result = cps_readBankHeader(&newbank, ui_state.menu_selected - 1);
-                        }
-                        if(result != -1)
-                        {
-                            state.bank = ui_state.menu_selected - 1;
-                            // If we were in VFO mode, save VFO channel
-                            if(ui_state.last_main_state == MAIN_VFO)
-                                state.vfo_channel = state.channel;
-                            // Load bank first channel
-                            _ui_fsm_loadChannel(0, sync_rtx);
-                            // Switch to MEM screen
-                            state.ui_screen = MAIN_MEM;
-                        }
+                        state.bank_enabled = true;
+                        result             = cps_readBankHeader(&newbank,
+                                                                ui_state.menu_selected - 1);
                     }
-                    if(state.ui_screen == MENU_CHANNEL)
+                    if (result != -1)
                     {
+                        state.bank = ui_state.menu_selected - 1;
                         // If we were in VFO mode, save VFO channel
-                        if(ui_state.last_main_state == MAIN_VFO)
+                        if (ui_state.last_main_state == MAIN_VFO)
                             state.vfo_channel = state.channel;
-                        _ui_fsm_loadChannel(ui_state.menu_selected, sync_rtx);
+                        // Load bank first channel
+                        _ui_fsm_loadChannel(0, sync_rtx);
                         // Switch to MEM screen
                         state.ui_screen = MAIN_MEM;
                     }
+                }
+                else if(msg.keys & KEY_ESC)
+                    _ui_menuBack(MENU_TOP);
+                break;
+            // Channel menu screen
+            case MENU_CHANNEL:
+                if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                {
+                    _ui_menuUp(state.channel_number);
+                }
+                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                {
+                    _ui_menuDown(state.channel_number);
+                }
+                else if(msg.keys & KEY_ENTER)
+                {
+                    // If we were in VFO mode, save VFO channel
+                    if(ui_state.last_main_state == MAIN_VFO)
+                        state.vfo_channel = state.channel;
+                    _ui_fsm_loadChannel(ui_state.menu_selected, sync_rtx);
+                    // Switch to MEM screen
+                    state.ui_screen = MAIN_MEM;
+                }
+                else if(msg.keys & KEY_ESC)
+                    _ui_menuBack(MENU_TOP);
+                break;
+            // Contacts menu screen
+            case MENU_CONTACTS:
+                if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                {
+                    _ui_menuUp(state.contact_number);
+                }
+                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                {
+                    _ui_menuDown(state.contact_number);
                 }
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_TOP);

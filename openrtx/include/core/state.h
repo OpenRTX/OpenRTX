@@ -70,6 +70,10 @@ typedef struct
     bool       backup_eflash;
     bool       restore_eflash;
     m17_t      m17_data;
+
+    uint8_t    bank_number;
+    uint8_t    channel_number;
+    uint8_t    contact_number;
 }
 state_t;
 

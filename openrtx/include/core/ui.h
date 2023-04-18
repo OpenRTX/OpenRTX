@@ -228,6 +228,13 @@ extern const color_t yellow_fab413;
  */
 void ui_init();
 
+
+/**
+ * This function initializes the number of channels, banks
+ * and contacts
+ */
+void menu_init();
+
 /**
  * This function writes the OpenRTX splash screen image into the framebuffer.
  *
