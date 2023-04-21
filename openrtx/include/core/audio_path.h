@@ -34,6 +34,15 @@ enum PathStatus
     PATH_SUSPENDED
 };
 
+typedef struct
+{
+    uint8_t source;
+    uint8_t sink;
+    uint8_t prio;
+    uint8_t status;
+}
+pathInfo_t;
+
 typedef int32_t pathId;
 
 
@@ -48,6 +57,14 @@ typedef int32_t pathId;
  */
 pathId audioPath_request(enum AudioSource source, enum AudioSink sink,
                          enum AudioPriority prio);
+
+/**
+ * Get all the informations of an audio path.
+ *
+ * @param id: ID of the audio path.
+ * @return audio path informations.
+ */
+pathInfo_t audioPath_getInfo(const pathId id);
 
 /**
  * Get the current status of an audio path.

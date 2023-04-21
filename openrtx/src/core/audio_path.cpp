@@ -153,6 +153,28 @@ pathId audioPath_request(enum AudioSource source, enum AudioSink sink,
     return newPathId;
 }
 
+pathInfo_t audioPath_getInfo(const pathId id)
+{
+    pathInfo_t info = {0, 0, 0, 0};
+
+    const auto it = routes.find(id);
+    if(it == routes.end())
+    {
+        info.status = PATH_CLOSED;
+        return info;
+    }
+
+    info.source = it->second.path.source;
+    info.sink   = it->second.path.destination;
+    info.prio   = it->second.path.priority;
+    if(it->second.isActive())
+        info.status = PATH_OPEN;
+    else
+        info.status = PATH_SUSPENDED;
+
+    return info;
+}
+
 enum PathStatus audioPath_getStatus(const pathId id)
 {
     const auto it = routes.find(id);
