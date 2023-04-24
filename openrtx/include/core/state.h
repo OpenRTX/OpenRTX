@@ -61,6 +61,12 @@ typedef struct
     bool       restore_eflash;
     bool       txDisable;
     uint8_t    step_index;
+
+    char       m17_dest[10];
+
+    uint8_t    bank_number;
+    uint8_t    channel_number;
+    uint8_t    contact_number;
 }
 state_t;
 

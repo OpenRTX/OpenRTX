@@ -66,7 +66,7 @@ void openrtx_init()
             #endif
         }
     }
-
+    cps_init();
     // Display splash screen, turn on backlight after a suitable time to
     // hide random pixels during render process
     ui_drawSplashScreen();
