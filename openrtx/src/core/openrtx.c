@@ -47,26 +47,12 @@ void openrtx_init()
     kbd_init();         // Initialize keyboard driver
     ui_init();          // Initialize user interface
     vp_init();          // Initialize voice prompts
+    cps_init();         // Initialize the code plug system
+
     #ifdef SCREEN_CONTRAST
     display_setContrast(state.settings.contrast);
     #endif
 
-    // Load codeplug from nonvolatile memory, create a new one in case of failure.
-    if(cps_open(NULL) < 0)
-    {
-        cps_create(NULL);
-        if(cps_open(NULL) < 0)
-        {
-            // Unrecoverable error
-            #ifdef PLATFORM_LINUX
-            exit(-1);
-            #else
-            // TODO: implement error handling for non-linux targets
-            while(1) ;
-            #endif
-        }
-    }
-    cps_init();
     // Display splash screen, turn on backlight after a suitable time to
     // hide random pixels during render process
     ui_drawSplashScreen();

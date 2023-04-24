@@ -26,6 +26,22 @@
 
 void cps_init()
 {
+    // Load codeplug from nonvolatile memory, create a new one in case of failure.
+    if(cps_open(NULL) < 0)
+    {
+        cps_create(NULL);
+        if(cps_open(NULL) < 0)
+        {
+            // Unrecoverable error
+            #ifdef PLATFORM_LINUX
+            exit(-1);
+            #else
+            // TODO: implement error handling for non-linux targets
+            while(1) ;
+            #endif
+        }
+    }
+
     // Calculate Number of Channels
     uint8_t channel_number = 0;
     channel_t channel;
