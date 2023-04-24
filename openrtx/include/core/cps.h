@@ -267,6 +267,13 @@ typedef struct
 }
 __attribute__((packed)) cps_header_t; // 88B
 
+
+/**
+ * Initialize the codeplug system and load the number of channels, banks
+ * and contacts in the radio state.
+ */
+void cps_init();
+
 /**
  * Create and return a viable channel for this radio.
  * Suitable for default VFO settings or the creation of a new channel.
