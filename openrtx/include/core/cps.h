@@ -275,4 +275,10 @@ __attribute__((packed)) cps_header_t; // 88B
  */
 channel_t cps_getDefaultChannel();
 
+/**
+ * This function initializes the number of channels, banks
+ * and contacts
+ */
+void cps_init();
+
 #endif // CPS_H

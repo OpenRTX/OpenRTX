@@ -20,6 +20,8 @@
 
 #include <interfaces/platform.h>
 #include <cps.h>
+#include "interfaces/cps_io.h"
+#include "state.h"
 
 channel_t cps_getDefaultChannel()
 {
@@ -46,4 +48,36 @@ channel_t cps_getDefaultChannel()
     channel.fm.txToneEn = 0;
     channel.fm.txTone   = 0;
     return channel;
+}
+
+void cps_init()
+{
+    // Calculate Number of Channels
+    uint8_t channel_number = 0;
+    channel_t channel;
+    while (cps_readChannel(&channel, channel_number) != -1)
+    {
+        channel_number += 1;
+    }
+    state.channel_number = channel_number;
+    // Calculate Number of Banks
+    uint8_t bank_number = 0;
+    bankHdr_t bank;
+
+    while (cps_readBankHeader(&bank, bank_number) != -1)
+    {
+        bank_number += 1;
+    }
+    // manu_selected is 0-based
+    // bank 0 means "All Channel" mode
+    // banks (1, n) are mapped to banks (0, n-1)
+    state.bank_number = bank_number + 1;
+    // Calculate Number of Contacts
+    uint8_t contact_number = 0;
+    contact_t contact;
+    while (cps_readContact(&contact, contact_number) != -1)
+    {
+        contact_number += 1;
+    }
+    state.contact_number = contact_number;
 }
