@@ -63,7 +63,7 @@ void M17Modulator::terminate()
     // Terminate an ongoing stream, if present
     if(txRunning)
     {
-        outputStream_terminate(outStream);
+        audioStream_terminate(outStream);
         txRunning = false;
     }
 
@@ -97,9 +97,9 @@ void M17Modulator::start()
         return;
     }
 
-    outStream = outputStream_start(SINK_RTX, PRIO_TX, baseband_buffer.get(),
-                                   2*M17_FRAME_SAMPLES, BUF_CIRC_DOUBLE,
-                                   M17_TX_SAMPLE_RATE);
+    outStream = audioStream_start(outPath, baseband_buffer.get(),
+                                  2*M17_FRAME_SAMPLES, M17_TX_SAMPLE_RATE,
+                                  STREAM_OUTPUT | BUF_CIRC_DOUBLE);
     idleBuffer = outputStream_getIdleBuffer(outStream);
     #else
     sendBaseband();
@@ -130,8 +130,7 @@ void M17Modulator::stop()
     if(txRunning == false)
         return;
 
-    outputStream_stop(outStream);
-    outputStream_sync(outStream, false);
+    audioStream_stop(outStream);
     txRunning  = false;
     idleBuffer = baseband_buffer.get();
     audioPath_release(outPath);

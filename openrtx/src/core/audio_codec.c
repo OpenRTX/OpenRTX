@@ -120,9 +120,8 @@ bool codec_startEncode(const pathId path)
 
     running = true;
 
-    pathInfo_t pathInfo = audioPath_getInfo(path);
-    audioStream = inputStream_start(pathInfo.source, pathInfo.prio, audioBuf,
-                                    320, BUF_CIRC_DOUBLE, 8000);
+    audioStream = audioStream_start(path, audioBuf, 320, 8000,
+                                    STREAM_INPUT | BUF_CIRC_DOUBLE);
 
     if(audioStream < 0)
     {
@@ -154,9 +153,8 @@ bool codec_startDecode(const pathId path)
     running = true;
 
     memset(audioBuf, 0x00, 320 * sizeof(stream_sample_t));
-    pathInfo_t pathInfo = audioPath_getInfo(path);
-    audioStream = outputStream_start(pathInfo.sink, pathInfo.prio, audioBuf,
-                                     320, BUF_CIRC_DOUBLE, 8000);
+    audioStream = audioStream_start(path, audioBuf, 320, 8000,
+                                    STREAM_OUTPUT | BUF_CIRC_DOUBLE);
 
     if(audioStream == -1)
     {
@@ -299,7 +297,7 @@ static void *encodeFunc(void *arg)
         }
     }
 
-    inputStream_stop(audioStream);
+    audioStream_terminate(audioStream);
     codec2_destroy(codec2);
 
     return NULL;
@@ -357,8 +355,7 @@ static void *decodeFunc(void *arg)
     }
 
     // Stop stream and wait until its effective termination
-    outputStream_stop(audioStream);
-    outputStream_sync(audioStream, false);
+    audioStream_stop(audioStream);
     codec2_destroy(codec2);
 
     return NULL;
