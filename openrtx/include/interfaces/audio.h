@@ -58,7 +58,7 @@ enum AudioPriority
 
 enum BufMode
 {
-    BUF_LINEAR,        ///< Linear buffer mode, conversion stops when full.
+    BUF_LINEAR = 1,    ///< Linear buffer mode, conversion stops when full.
     BUF_CIRC_DOUBLE    ///< Circular double buffer mode, conversion never stops,
                        ///  thread woken up whenever half of the buffer is full.
 };

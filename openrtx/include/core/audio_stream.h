@@ -24,12 +24,18 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <sys/types.h>
+#include <audio_path.h>
 #include <interfaces/audio.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+enum StreamMode
+{
+    STREAM_INPUT  = 0x10,    ///< Open an audio stream in input mode.
+    STREAM_OUTPUT = 0x20     ///< Open an audio stream in output mode.
+};
 
 typedef int8_t streamId;
 
@@ -42,28 +48,38 @@ typedef struct
 dataBlock_t;
 
 /**
- * Start the acquisition of an incoming audio stream, also opening the
- * corresponding audio path. If a stream is opened from the same source but
- * with an higher priority than the one currently open, the new stream takes
- * over the previous one.
- * The function returns an error when the audio path is not available or the
- * selected stream is already in use by another process with higher priority.
+ * Start an audio stream, either in input or output mode as specified by the
+ * corresponding parameter.
  *
- * @param source: input source specifier.
- * @param prio: priority of the requester.
- * @param buf: pointer to a buffer used for management of sampled data.
- * @param bufLength: length of the buffer, in elements.
- * @param mode: buffer management mode.
- * @param sampleRate: sample rate, in Hz.
- * @return a unique identifier for the stream or -1 if the stream could not be
- * opened.
+ * WARNING: for output streams the caller must ensure that buffer content is not
+ * modified while the stream is being reproduced.
+ *
+ * @param path: audio path for the stream.
+ * @param buf: buffer containing the audio samples.
+ * @param length: length of the buffer, in elements.
+ * @param sampleRate: sample rate in Hz.
+ * @param mode: operation mode of the buffer
+ * @return a unique identifier for the stream or a negative error code.
  */
-streamId inputStream_start(const enum AudioSource source,
-                           const enum AudioPriority prio,
-                           stream_sample_t * const buf,
-                           const size_t bufLength,
-                           const enum BufMode mode,
-                           const uint32_t sampleRate);
+streamId audioStream_start(const pathId path, stream_sample_t * const buf,
+                           const size_t length, const uint32_t sampleRate,
+                           const uint8_t mode);
+
+/**
+ * Request termination of a currently ongoing audio stream.
+ * Stream is effectively stopped only when all the remaining data have been
+ * processed, execution flow is blocked in the meantime.
+ *
+ * @param id: identifier of the stream to be stopped.
+ */
+void audioStream_stop(const streamId id);
+
+/**
+ * Interrupt a currently ongoing audio stream before its natural ending.
+ *
+ * @param id: identifier of the stream to be stopped.
+ */
+void audioStream_terminate(const streamId id);
 
 /**
  * Get a chunk of data from an already opened input stream, blocking function.
@@ -76,42 +92,6 @@ streamId inputStream_start(const enum AudioSource source,
  * dataBlock_t cointaining < NULL, 0 >.
  */
 dataBlock_t inputStream_getData(streamId id);
-
-/**
- * Release the current input stream, allowing for a new call of startInputStream.
- * If this function is called when sampler is running, acquisition is stopped
- * and any thread waiting on getData() is woken up and given a partial result.
- *
- * @param id: identifier of the stream to be stopped
- */
-void inputStream_stop(streamId id);
-
-/**
- * Send an audio stream to a given output. This function returns immediately if
- * there is not another stream already running with the same destination and
- * priority of the ones specified, otherwise it will block the caller until the
- * previous stream terminates.
- * If a stream is opened from the same source but with an higher priority than
- * the one currently open, the new stream takes over the previous one.
- *
- * WARNING: the caller must ensure that buffer content is not modified while the
- * stream is being reproduced.
- *
- * @param destination: destination of the output stream.
- * @param prio: priority of the requester.
- * @param buf: buffer containing the audio samples.
- * @param length: length of the buffer, in elements.
- * @param mode: operation mode of the buffer
- * @param sampleRate: sample rate in Hz.
- * @return a unique identifier for the stream or -1 if the stream could not be
- * opened.
- */
-streamId outputStream_start(const enum AudioSink destination,
-                            const enum AudioPriority prio,
-                            stream_sample_t * const buf,
-                            const size_t length,
-                            const enum BufMode mode,
-                            const uint32_t sampleRate);
 
 /**
  * Get a pointer to the section of the sample buffer not currently being read
@@ -141,21 +121,6 @@ stream_sample_t *outputStream_getIdleBuffer(const streamId id);
  * running or there is another thread waiting at the synchronisation point.
  */
 bool outputStream_sync(const streamId id, const bool bufChanged);
-
-/**
- * Request termination of a currently ongoing output stream.
- * Stream is effectively stopped only when all the remaining data are sent.
- *
- * @param id: identifier of the stream to be stopped.
- */
-void outputStream_stop(const streamId id);
-
-/**
- * Interrupt a currently ongoing output stream before its natural ending.
- *
- * @param id: identifier of the stream to be stopped.
- */
-void outputStream_terminate(const streamId id);
 
 #ifdef __cplusplus
 }

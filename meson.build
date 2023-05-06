@@ -48,6 +48,7 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/datetime.c',
                'openrtx/src/core/openrtx.c',
                'openrtx/src/core/audio_codec.c',
+               'openrtx/src/core/audio_stream.c',
                'openrtx/src/core/audio_path.cpp',
                'openrtx/src/core/data_conversion.c',
                'openrtx/src/core/memory_profiling.cpp',
@@ -167,8 +168,6 @@ mdx_src = ['openrtx/src/core/xmodem.c',
            'platform/drivers/NVM/W25Qx.c',
            'platform/drivers/NVM/nvmem_settings_MDx.c',
            'platform/drivers/audio/audio_MDx.c',
-           'platform/drivers/audio/inputStream_MDx.cpp',
-           'platform/drivers/audio/outputStream_MDx.cpp',
            'platform/drivers/baseband/HR_Cx000.cpp',
            'platform/drivers/tones/toneGenerator_MDx.cpp']
 
@@ -193,9 +192,7 @@ gdx_src = ['openrtx/src/core/xmodem.c',
            'platform/drivers/baseband/HR_C6000_GDx.cpp',
            'platform/drivers/display/UC1701_GDx.c',
            'platform/drivers/keyboard/keyboard_GDx.c',
-           'platform/drivers/audio/audio_GDx.c',
-           'platform/drivers/audio/inputStream_GDx.c',
-           'platform/drivers/audio/outputStream_GDx.c']
+           'platform/drivers/audio/audio_GDx.c']
 
 gdx_src = gdx_src + openrtx_ui_default
 
@@ -278,8 +275,6 @@ linux_platform_src = ['platform/targets/linux/emulator/emulator.c',
                       'platform/mcu/x86_64/drivers/delays.c',
                       'platform/drivers/baseband/radio_linux.cpp',
                       'platform/drivers/audio/audio_linux.c',
-                      'platform/drivers/audio/inputStream_linux.cpp',
-                      'platform/drivers/audio/outputStream_linux.c',
                       'platform/targets/linux/platform.c',
                       'platform/drivers/CPS/cps_io_libc.c']
 
@@ -386,8 +381,6 @@ mod17_src = ['platform/targets/Module17/platform.c',
              'platform/drivers/NVM/nvmem_Mod17.c',
              'platform/drivers/CPS/cps_io_native_Mod17.c',
              'platform/drivers/baseband/radio_Mod17.cpp',
-             'platform/drivers/audio/inputStream_Mod17.cpp',
-             'platform/drivers/audio/outputStream_Mod17.cpp',
              'platform/drivers/audio/audio_Mod17.c',
              'platform/drivers/audio/MAX9814_Mod17.cpp',
              'platform/drivers/baseband/MCP4551_Mod17.cpp']
