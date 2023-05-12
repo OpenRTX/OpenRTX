@@ -22,7 +22,8 @@
 #include <peripherals/gpio.h>
 #include <hwconfig.h>
 #include "MAX9814.h"
-
+#include "stm32_dac.h"
+#include "stm32_adc.h"
 
 static const uint8_t pathCompatibilityMatrix[9][9] =
 {
@@ -39,32 +40,60 @@ static const uint8_t pathCompatibilityMatrix[9][9] =
 };
 
 
+const struct audioDevice outputDevices[] =
+{
+    {NULL,                    0,                   0,             SINK_MCU},
+    {&stm32_dac_audio_driver, (const void *) 1365, STM32_DAC_CH1, SINK_RTX},
+    {&stm32_dac_audio_driver, 0,                   STM32_DAC_CH2, SINK_SPK},
+};
+
+const struct audioDevice inputDevices[] =
+{
+    {NULL,                    0,                0,              SOURCE_MCU},
+    {&stm32_adc_audio_driver, (const void *) 1, STM32_ADC_ADC2, SOURCE_RTX},
+    {&stm32_adc_audio_driver, (const void *) 2, STM32_ADC_ADC2, SOURCE_MIC},
+};
+
 void audio_init()
 {
-    gpio_setMode(SPK_MUTE, OUTPUT);
-    gpio_setMode(MIC_MUTE, OUTPUT);
+    gpio_setMode(SPK_MUTE,    OUTPUT);
+    gpio_setMode(MIC_MUTE,    OUTPUT);
+    gpio_setMode(AUDIO_MIC,   INPUT_ANALOG);
+    gpio_setMode(BASEBAND_RX, INPUT_ANALOG);
 
     gpio_setPin(SPK_MUTE);      // Off  = logic high
     gpio_clearPin(MIC_MUTE);    // Off  = logic low
     max9814_setGain(0);         // 40 dB gain
+
+    stm32dac_init();
+    stm32adc_init(STM32_ADC_ADC2);
 }
 
 void audio_terminate()
 {
     gpio_setPin(SPK_MUTE);
     gpio_clearPin(MIC_MUTE);
+
+    stm32dac_terminate();
+    stm32adc_terminate();
 }
 
 void audio_connect(const enum AudioSource source, const enum AudioSink sink)
 {
-    if(source == SOURCE_MIC) gpio_setPin(MIC_MUTE);
-    if(sink == SINK_SPK)     gpio_clearPin(SPK_MUTE);
+    if(source == SOURCE_MIC)
+        gpio_setPin(MIC_MUTE);
+
+    if(sink == SINK_SPK)
+        gpio_clearPin(SPK_MUTE);
 }
 
 void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
 {
-    if(source == SOURCE_MIC) gpio_clearPin(MIC_MUTE);
-    if(sink == SINK_SPK)     gpio_setPin(SPK_MUTE);
+    if(source == SOURCE_MIC)
+        gpio_clearPin(MIC_MUTE);
+
+    if(sink == SINK_SPK)
+        gpio_setPin(SPK_MUTE);
 }
 
 bool audio_checkPathCompatibility(const enum AudioSource p1Source,
