@@ -76,6 +76,7 @@ extern "C" {
 #define AIN_VBAT   GPIOA,1
 #define AIN_MIC    GPIOA,3
 #define AIN_RSSI   GPIOB,0
+#define AIN_RTX    GPIOC,3
 
 /* Channel selection rotary encoder */
 #define CH_SELECTOR_0 GPIOE,14
