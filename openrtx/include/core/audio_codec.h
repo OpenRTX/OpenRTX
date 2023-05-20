@@ -21,7 +21,7 @@
 #ifndef AUDIO_CODEC_H
 #define AUDIO_CODEC_H
 
-#include <interfaces/audio.h>
+#include <audio_path.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -48,10 +48,10 @@ void codec_terminate();
  * Only an encoding or decoding operation at a time is possible: in case there
  * is already an operation in progress, this function returns false.
  *
- * @param source: audio source for encoding.
+ * @param path: audio path for encoding source.
  * @return true on success, false on failure.
  */
-bool codec_startEncode(const enum AudioSource source);
+bool codec_startEncode(const pathId path);
 
 /**
  * Start dencoding of audio data sending the uncompressed samples to a given
@@ -59,10 +59,10 @@ bool codec_startEncode(const enum AudioSource source);
  * Only an encoding or decoding operation at a time is possible: in case there
  * is already an operation in progress, this function returns false.
  *
- * @param destination: destination for decoded audio.
+ * @param path: audio path for decoded audio.
  * @return true on success, false on failure.
  */
-bool codec_startDecode(const enum AudioSink destination);
+bool codec_startDecode(const pathId path);
 
 /**
  * Stop an ongoing encoding or decoding operation.

@@ -106,17 +106,25 @@ void codec_terminate()
     }
 }
 
-bool codec_startEncode(const enum AudioSource source)
+bool codec_startEncode(const pathId path)
 {
-    if(running) return false;
-    if(audioBuf == NULL) return false;
+    if(running)
+        return false;
+
+    if(audioBuf == NULL)
+        return false;
+
+    // Bad incoming path
+    if(audioPath_getStatus(path) != PATH_OPEN)
+        return false;
 
     running = true;
 
-    audioStream = inputStream_start(source, PRIO_TX, audioBuf, 320,
-                                    BUF_CIRC_DOUBLE, 8000);
+    pathInfo_t pathInfo = audioPath_getInfo(path);
+    audioStream = inputStream_start(pathInfo.source, pathInfo.prio, audioBuf,
+                                    320, BUF_CIRC_DOUBLE, 8000);
 
-    if(audioStream == -1)
+    if(audioStream < 0)
     {
         running = false;
         return false;
@@ -131,16 +139,24 @@ bool codec_startEncode(const enum AudioSource source)
     return true;
 }
 
-bool codec_startDecode(const enum AudioSink destination)
+bool codec_startDecode(const pathId path)
 {
-    if(running) return false;
-    if(audioBuf == NULL) return false;
+    if(running)
+        return false;
+
+    if(audioBuf == NULL)
+        return false;
+
+    // Bad incoming path
+    if(audioPath_getStatus(path) != PATH_OPEN)
+        return false;
 
     running = true;
 
     memset(audioBuf, 0x00, 320 * sizeof(stream_sample_t));
-    audioStream = outputStream_start(destination, PRIO_RX, audioBuf, 320,
-                                     BUF_CIRC_DOUBLE, 8000);
+    pathInfo_t pathInfo = audioPath_getInfo(path);
+    audioStream = outputStream_start(pathInfo.sink, pathInfo.prio, audioBuf,
+                                     320, BUF_CIRC_DOUBLE, 8000);
 
     if(audioStream == -1)
     {

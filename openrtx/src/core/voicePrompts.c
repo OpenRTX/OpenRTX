@@ -581,8 +581,8 @@ void vp_tick()
     {
         vpStartTime       = 0;
         voicePromptActive = true;
-        codec_startDecode(SINK_SPK);
         enableSpkOutput();
+        codec_startDecode(vpAudioPath);
     }
 
     if (voicePromptActive == false)
