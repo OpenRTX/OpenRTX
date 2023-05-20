@@ -24,6 +24,7 @@
 #include <interfaces/radio.h>
 #include <OpMode_M17.hpp>
 #include <audio_codec.h>
+#include <errno.h>
 #include <rtx.h>
 
 #ifdef PLATFORM_MOD17
@@ -141,9 +142,10 @@ void OpMode_M17::offState(rtxStatus_t *const status)
 {
     radio_disableRtx();
 
+    codec_stop(rxAudioPath);
+    codec_stop(txAudioPath);
     audioPath_release(rxAudioPath);
     audioPath_release(txAudioPath);
-    codec_stop();
 
     if(startRx)
     {
@@ -164,9 +166,6 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         demodulator.startBasebandSampling();
         demodulator.invertPhase(invertRxPhase);
 
-        rxAudioPath = audioPath_request(SOURCE_MCU, SINK_SPK, PRIO_RX);
-        codec_startDecode(rxAudioPath);
-
         radio_enableRx();
 
         startRx = false;
@@ -175,10 +174,13 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
     bool newData = demodulator.update();
     bool lock    = demodulator.isLocked();
 
-    // Reset frame decoder when transitioning from unlocked to locked state
+    // Reset frame decoder when transitioning from unlocked to locked state and
+    // setup audio path towards the speaker.
     if((lock == true) && (locked == false))
     {
         decoder.reset();
+        rxAudioPath = audioPath_request(SOURCE_MCU, SINK_SPK, PRIO_RX);
+        codec_startDecode(rxAudioPath);
     }
 
     locked = lock;
@@ -189,13 +191,18 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         auto    type   = decoder.decodeFrame(frame);
         bool    lsfOk  = decoder.getLsf().valid();
         uint8_t pthSts = audioPath_getStatus(rxAudioPath);
+        int     result = 0;
 
         if((type == M17FrameType::STREAM) && (lsfOk == true) &&
            (pthSts == PATH_OPEN))
         {
             M17StreamFrame sf = decoder.getStreamFrame();
-            codec_pushFrame(sf.payload().data(),     false);
-            codec_pushFrame(sf.payload().data() + 8, false);
+            result = codec_pushFrame(sf.payload().data(),     false);
+            result = codec_pushFrame(sf.payload().data() + 8, false);
+
+            // Try restarting audio codec if it went down
+            if(result == -EPERM)
+                codec_startDecode(rxAudioPath);
         }
     }
 

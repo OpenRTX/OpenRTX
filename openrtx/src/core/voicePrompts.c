@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <beeps.h>
+#include <errno.h>
 
 static const uint32_t VOICE_PROMPTS_DATA_MAGIC   = 0x5056;  //'VP'
 static const uint32_t VOICE_PROMPTS_DATA_VERSION = 0x1000;  // v1000 OpenRTX
@@ -404,8 +405,8 @@ void vp_terminate()
 void vp_stop()
 {
     voicePromptActive = false;
+    codec_stop(vpAudioPath);
     disableSpkOutput();
-    codec_stop();
 
     // Clear voice prompt sequence data
     vpCurrentSequence.pos          = 0;
@@ -614,7 +615,7 @@ void vp_tick()
             if(audioPath_getStatus(vpAudioPath) != PATH_OPEN)
                 return;
 
-            if (codec_pushFrame(c2Frame, false) == false)
+            if(codec_pushFrame(c2Frame, false) < 0)
                 return;
 
             vpCurrentSequence.c2DataIndex += 8;
@@ -632,8 +633,8 @@ void vp_tick()
         vpCurrentSequence.pos          = 0;
         vpCurrentSequence.c2DataIndex  = 0;
         vpCurrentSequence.c2DataLength = 0;
+        codec_stop(vpAudioPath);
         disableSpkOutput();
-        codec_stop();
     }
 }
 
