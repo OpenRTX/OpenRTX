@@ -24,18 +24,18 @@
 #include <codec2.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+#include <errno.h>
 #include <dsp.h>
 
 #define BUF_SIZE 4
 
-static struct CODEC2   *codec2;
-static stream_sample_t *audioBuf;
-static streamId         audioStream;
+static pathId           audioPath;
 
 static uint8_t          initCnt = 0;
 static bool             running;
 
-static bool             stopThread;
+static bool             reqStop;
 static pthread_t        codecThread;
 static pthread_mutex_t  mutex;
 static pthread_cond_t   not_empty;
@@ -57,6 +57,7 @@ static const uint8_t micGainPost = 4;
 static void *encodeFunc(void *arg);
 static void *decodeFunc(void *arg);
 static void startThread(void *(*func) (void *));
+static void stopThread();
 
 
 void codec_init()
@@ -79,8 +80,6 @@ void codec_init()
     numElements = 0;
     memset(dataBuffer, 0x00, BUF_SIZE * sizeof(uint64_t));
 
-    audioBuf  = ((stream_sample_t *) malloc(320 * sizeof(stream_sample_t)));
-
     pthread_mutex_init(&mutex, NULL);
     pthread_cond_init(&not_empty, NULL);
     pthread_cond_init(&not_full, NULL);
@@ -93,46 +92,29 @@ void codec_terminate()
     pthread_mutex_unlock(&mutex);
 
     if(initCnt > 0) return;
-    if(running) codec_stop();
+    if(running) stopThread();
 
     pthread_mutex_destroy(&mutex);
     pthread_cond_destroy(&not_empty);
     pthread_cond_destroy(&not_full);
-
-    if(audioBuf != NULL)
-    {
-        free(audioBuf);
-        audioBuf = NULL;
-    }
 }
 
 bool codec_startEncode(const pathId path)
 {
-    if(running)
-        return false;
-
-    if(audioBuf == NULL)
-        return false;
-
     // Bad incoming path
     if(audioPath_getStatus(path) != PATH_OPEN)
         return false;
 
-    running = true;
-
-    audioStream = audioStream_start(path, audioBuf, 320, 8000,
-                                    STREAM_INPUT | BUF_CIRC_DOUBLE);
-
-    if(audioStream < 0)
+    if(running)
     {
-        running = false;
-        return false;
+        if(audioPath_getStatus(audioPath) == PATH_OPEN)
+            return false;
+        else
+            stopThread();
     }
 
-    readPos     = 0;
-    writePos    = 0;
-    numElements = 0;
-    stopThread  = false;
+    running   = true;
+    audioPath = path;
     startThread(encodeFunc);
 
     return true;
@@ -140,56 +122,46 @@ bool codec_startEncode(const pathId path)
 
 bool codec_startDecode(const pathId path)
 {
-    if(running)
-        return false;
-
-    if(audioBuf == NULL)
-        return false;
-
     // Bad incoming path
     if(audioPath_getStatus(path) != PATH_OPEN)
         return false;
 
-    running = true;
-
-    memset(audioBuf, 0x00, 320 * sizeof(stream_sample_t));
-    audioStream = audioStream_start(path, audioBuf, 320, 8000,
-                                    STREAM_OUTPUT | BUF_CIRC_DOUBLE);
-
-    if(audioStream == -1)
+    if(running)
     {
-        running = false;
-        return false;
+        if(audioPath_getStatus(audioPath) == PATH_OPEN)
+            return false;
+        else
+            stopThread();
     }
 
-    readPos     = 0;
-    writePos    = 0;
-    numElements = 0;
-    stopThread  = false;
+    running   = true;
+    audioPath = path;
     startThread(decodeFunc);
 
     return true;
 }
 
-void codec_stop()
+void codec_stop(const pathId path)
 {
-    if(running == false) return;
+    if(running == false)
+        return;
 
-    stopThread = true;
-    pthread_join(codecThread, NULL);
+    if(audioPath != path)
+        return;
 
-    running = false;
+    stopThread();
 }
 
-bool codec_popFrame(uint8_t *frame, const bool blocking)
+int codec_popFrame(uint8_t *frame, const bool blocking)
 {
-    if(running == false) return false;
+    if(running == false)
+        return -EPERM;
 
     uint64_t element;
 
     // No data available and non-blocking call: just return false.
     if((numElements == 0) && (blocking == false))
-        return false;
+        return -EAGAIN;
 
     // Blocking call: wait until some data is pushed
     pthread_mutex_lock(&mutex);
@@ -207,12 +179,13 @@ bool codec_popFrame(uint8_t *frame, const bool blocking)
     // critical section
     memcpy(frame, &element, 8);
 
-    return true;
+    return 0;
 }
 
-bool codec_pushFrame(const uint8_t *frame, const bool blocking)
+int codec_pushFrame(const uint8_t *frame, const bool blocking)
 {
-    if(running == false) return false;
+    if(running == false)
+        return -EPERM;
 
     // Copy data to a temporary variable before mutex lock to reduce execution
     // time spent inside the critical section
@@ -222,7 +195,7 @@ bool codec_pushFrame(const uint8_t *frame, const bool blocking)
 
     // No space available and non-blocking call: return
     if((numElements >= BUF_SIZE) && (blocking == false))
-        return false;
+        return -EAGAIN;
 
     // Blocking call: wait until there is some free space
     pthread_mutex_lock(&mutex);
@@ -240,7 +213,7 @@ bool codec_pushFrame(const uint8_t *frame, const bool blocking)
     numElements += 1;
 
     pthread_mutex_unlock(&mutex);
-    return true;
+    return 0;
 }
 
 
@@ -248,16 +221,31 @@ bool codec_pushFrame(const uint8_t *frame, const bool blocking)
 
 static void *encodeFunc(void *arg)
 {
-    (void) arg;
 
-    filter_state_t dcrState;
+    streamId        iStream;
+    pathId          iPath = (pathId) arg;
+    stream_sample_t audioBuf[320];
+    struct CODEC2   *codec2;
+    filter_state_t  dcrState;
+
+    iStream = audioStream_start(iPath, audioBuf, 320, 8000,
+                                STREAM_INPUT | BUF_CIRC_DOUBLE);
+    if(iStream < 0)
+    {
+        running = false;
+        return NULL;
+    }
+
     dsp_resetFilterState(&dcrState);
-
     codec2 = codec2_create(CODEC2_MODE_3200);
 
-    while(stopThread == false)
+    while(reqStop == false)
     {
-        dataBlock_t audio = inputStream_getData(audioStream);
+        // Invalid path, quit
+        if(audioPath_getStatus(iPath) != PATH_OPEN)
+            break;
+
+        dataBlock_t audio = inputStream_getData(iStream);
 
         if(audio.data != NULL)
         {
@@ -297,7 +285,7 @@ static void *encodeFunc(void *arg)
         }
     }
 
-    audioStream_terminate(audioStream);
+    audioStream_terminate(iStream);
     codec2_destroy(codec2);
 
     return NULL;
@@ -305,7 +293,20 @@ static void *encodeFunc(void *arg)
 
 static void *decodeFunc(void *arg)
 {
-    (void) arg;
+    streamId        oStream;
+    pathId          oPath = (pathId) arg;
+    stream_sample_t audioBuf[320];
+    struct CODEC2   *codec2;
+
+    // Open output stream
+    memset(audioBuf, 0x00, 320 * sizeof(stream_sample_t));
+    oStream = audioStream_start(oPath, audioBuf, 320, 8000,
+                                STREAM_OUTPUT | BUF_CIRC_DOUBLE);
+    if(oStream < 0)
+    {
+        running = false;
+        return NULL;
+    }
 
     codec2 = codec2_create(CODEC2_MODE_3200);
 
@@ -313,10 +314,14 @@ static void *decodeFunc(void *arg)
     // stream to avoid having the decode function writing in a memory area
     // being read at the same time by the output stream system causing cracking
     // noises at speaker output. Behaviour observed on both Module17 and MD-UV380
-    outputStream_sync(audioStream, false);
+    outputStream_sync(oStream, false);
 
-    while(stopThread == false)
+    while(reqStop == false)
     {
+        // Invalid path, quit
+        if(audioPath_getStatus(oPath) != PATH_OPEN)
+            break;
+
         // Try popping data from the queue
         uint64_t frame   = 0;
         bool     newData = false;
@@ -334,7 +339,7 @@ static void *decodeFunc(void *arg)
 
         pthread_mutex_unlock(&mutex);
 
-        stream_sample_t *audioBuf = outputStream_getIdleBuffer(audioStream);
+        stream_sample_t *audioBuf = outputStream_getIdleBuffer(oStream);
 
         if(newData)
         {
@@ -351,11 +356,11 @@ static void *decodeFunc(void *arg)
             memset(audioBuf, 0x00, 160 * sizeof(stream_sample_t));
         }
 
-        outputStream_sync(audioStream, true);
+        outputStream_sync(oStream, true);
     }
 
     // Stop stream and wait until its effective termination
-    audioStream_stop(audioStream);
+    audioStream_stop(oStream);
     codec2_destroy(codec2);
 
     return NULL;
@@ -363,6 +368,11 @@ static void *decodeFunc(void *arg)
 
 static void startThread(void *(*func) (void *))
 {
+    readPos     = 0;
+    writePos    = 0;
+    numElements = 0;
+    reqStop     = false;
+
     #ifdef _MIOSIX
     // Set stack size of CODEC2 thread to 16kB.
     pthread_attr_t codecAttr;
@@ -375,9 +385,16 @@ static void startThread(void *(*func) (void *))
     pthread_attr_setschedparam(&codecAttr, &param);
 
     // Start thread
-    pthread_create(&codecThread, &codecAttr, func, NULL);
+    pthread_create(&codecThread, &codecAttr, func, ((void *) audioPath));
     #else
-    pthread_create(&codecThread, NULL, func, NULL);
+    pthread_create(&codecThread, NULL, func, ((void *) audioPath));
     #endif
 
+}
+
+static void stopThread()
+{
+    reqStop = true;
+    pthread_join(codecThread, NULL);
+    running = false;
 }

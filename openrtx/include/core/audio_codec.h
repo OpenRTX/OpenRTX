@@ -66,8 +66,11 @@ bool codec_startDecode(const pathId path);
 
 /**
  * Stop an ongoing encoding or decoding operation.
+ *
+ * @param path: audio path on which the encoding or decoding operation was
+ * started.
  */
-void codec_stop();
+void codec_stop(const pathId path);
 
 /**
  * Get a compressed audio frame from the internal queue. Each frame is composed
@@ -76,10 +79,10 @@ void codec_stop();
  * @param frame: pointer to a destination buffer where to put the encoded frame.
  * @param blocking: if true the execution flow will be blocked whenever the
  * internal buffer is empty and resumed as soon as an encoded frame is available.
- * @return true on success, false if there is no encoding operation ongoing or
- * the queue is empty and the function is nonblocking.
+ * @return zero on success, -EAGAIN if the queue is empty and the function is
+ * nonblocking or -EPERM if there is no encoding operation ongoing.
  */
-bool codec_popFrame(uint8_t *frame, const bool blocking);
+int codec_popFrame(uint8_t *frame, const bool blocking);
 
 /**
  * Push a a compressed audio frame to the internal queue for decoding.
@@ -89,10 +92,10 @@ bool codec_popFrame(uint8_t *frame, const bool blocking);
  * @param blocking: if true the execution flow will be blocked whenever the
  * internal buffer is full and resumed as soon as space for an encoded frame is
  * available.
- * @return true on success, false if there is no decoding operation ongoing or
- * the queue is full and the function is nonblocking.
+ * @return zero on success, -EAGAIN if the queue is full and the function is
+ * nonblocking or -EPERM if there is no decoding operation ongoing.
  */
-bool codec_pushFrame(const uint8_t *frame, const bool blocking);
+int codec_pushFrame(const uint8_t *frame, const bool blocking);
 
 #ifdef __cplusplus
 }
