@@ -66,7 +66,7 @@ void state_init()
     state.charge = battery_getCharge(state.v_bat);
     state.rssi   = -127.0f;
 
-    state.channel_index = 1;    // Set default channel index (it is 1-based)
+    state.channel_index = 0;    // Set default channel index (it is 0-based)
     state.bank_enabled  = false;
     state.rtxStatus     = RTX_OFF;
     state.emergency     = false;
