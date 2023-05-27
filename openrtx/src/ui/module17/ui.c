@@ -173,7 +173,7 @@ static const char *symbols_ITU_T_E161_callsign[] =
     ""
 };
 
-static const char symbols_callsign[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890/- ";
+static const char symbols_callsign[] = "_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890/- ";
 
 // Calculate number of menu entries
 const uint8_t menu_num = sizeof(menu_items)/sizeof(menu_items[0]);
@@ -671,7 +671,6 @@ void _ui_textInputReset(char *buf)
     ui_state.input_set = 0;
     ui_state.last_keypress = 0;
     memset(buf, 0, 9);
-    buf[0] = '_';
 }
 
 void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg, bool callsign)
@@ -727,7 +726,10 @@ void _ui_textInputArrows(char *buf, uint8_t max_len, kbd_msg_t msg)
         ui_state.input_set = 0;
     }
     else if (msg.keys & KEY_LEFT)
+    {
         ui_state.input_position = (ui_state.input_position - 1) % max_len;
+        ui_state.input_set = 0;
+    }
     else if (msg.keys & KEY_UP)
         ui_state.input_set = (ui_state.input_set + 1) % num_symbols;
     else if (msg.keys & KEY_DOWN)
@@ -929,14 +931,13 @@ void ui_updateFSM(bool *sync_rtx)
                         ui_state.edit_mode = false;
                     }
                     else if(msg.keys & KEY_ESC)
-                        // Discard selected callsign and disable input mode
                         ui_state.edit_mode = false;
-                    else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
-                            msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
+                    else
                         _ui_textInputArrows(ui_state.new_callsign, 9, msg);
                 }
                 else
                 {
+                    // Not in edit mode: handle CAN setting
                     if(msg.keys & KEY_LEFT)
                     {
                         switch(ui_state.menu_selected)
@@ -963,10 +964,9 @@ void ui_updateFSM(bool *sync_rtx)
                     {
                         switch(ui_state.menu_selected)
                         {
+                            // Enable callsign input
                             case M_CALLSIGN:
-                                // Enable callsign input
                                 ui_state.edit_mode = true;
-                                // Reset text input variables
                                 _ui_textInputReset(ui_state.new_callsign);
                                 break;
                             default:
