@@ -873,8 +873,7 @@ void ui_updateFSM(bool *sync_rtx)
                 break;
 
             case SETTINGS_DISPLAY:
-                if(msg.keys & KEY_LEFT || (ui_state.edit_mode &&
-                   (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)))
+                if(msg.keys & KEY_LEFT)
                 {
                     switch(ui_state.menu_selected)
                     {
@@ -890,8 +889,7 @@ void ui_updateFSM(bool *sync_rtx)
                             state.ui_screen = SETTINGS_DISPLAY;
                     }
                 }
-                else if(msg.keys & KEY_RIGHT || (ui_state.edit_mode &&
-                        (msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)))
+                else if(msg.keys & KEY_RIGHT)
                 {
                     switch(ui_state.menu_selected)
                     {
@@ -911,8 +909,6 @@ void ui_updateFSM(bool *sync_rtx)
                     _ui_menuUp(display_num);
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
                     _ui_menuDown(display_num);
-                else if(msg.keys & KEY_ENTER)
-                    ui_state.edit_mode = !ui_state.edit_mode;
                 else if(msg.keys & KEY_ESC)
                     {
                         nvm_writeSettings(&state.settings);
@@ -1017,8 +1013,7 @@ void ui_updateFSM(bool *sync_rtx)
                 break;
             // Module17 Settings
             case SETTINGS_MODULE17:
-                if(msg.keys & KEY_LEFT || (ui_state.edit_mode &&
-                   (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)))
+                if(msg.keys & KEY_LEFT)
                 {
                     switch(ui_state.menu_selected)
                     {
@@ -1041,8 +1036,7 @@ void ui_updateFSM(bool *sync_rtx)
                             state.ui_screen = SETTINGS_MODULE17;
                     }
                 }
-                else if(msg.keys & KEY_RIGHT || (ui_state.edit_mode &&
-                        (msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)))
+                else if(msg.keys & KEY_RIGHT)
                 {
                     switch(ui_state.menu_selected)
                     {
@@ -1069,8 +1063,6 @@ void ui_updateFSM(bool *sync_rtx)
                     _ui_menuUp(module17_num);
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
                     _ui_menuDown(module17_num);
-                else if(msg.keys & KEY_ENTER)
-                    ui_state.edit_mode = !ui_state.edit_mode;
                 else if(msg.keys & KEY_ESC)
                 {
                     nvm_writeSettings(&state.settings);
