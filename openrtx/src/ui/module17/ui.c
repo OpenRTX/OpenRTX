@@ -789,204 +789,15 @@ void ui_updateFSM(bool *sync_rtx)
         {
             // VFO screen
             case MAIN_VFO:
-                // M17 Destination callsign input
-                if(ui_state.edit_mode)
-                {
-                    if(state.channel.mode == OPMODE_M17)
-                    {
-                        if(msg.keys & KEY_ENTER)
-                        {
-                            _ui_textInputConfirm(ui_state.new_callsign);
-                            // Save selected dst ID and disable input mode
-                            strncpy(state.m17_data.dst_addr, ui_state.new_callsign, 10);
-                            ui_state.edit_mode = false;
-                            *sync_rtx = true;
-                        }
-                        else if(msg.keys & KEY_HASH)
-                        {
-                            // Save selected dst ID and disable input mode
-                            strncpy(state.m17_data.dst_addr, "", 1);
-                            ui_state.edit_mode = false;
-                            *sync_rtx = true;
-                        }
-                        else if(msg.keys & KEY_ESC)
-                            // Discard selected dst ID and disable input mode
-                            ui_state.edit_mode = false;
-                        else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
-                                msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
-                            _ui_textInputDel(ui_state.new_callsign);
-                        else if(input_isNumberPressed(msg))
-                            _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
-                        break;
-                    }
-                }
-                else
-                {
-                    if(msg.keys & KEY_ENTER)
-                    {
-                        // Save current main state
-                        ui_state.last_main_state = state.ui_screen;
-                        // Open Menu
-                        state.ui_screen = MENU_TOP;
-                    }
-                    else if(msg.keys & KEY_HASH)
-                    {
-                        // Enable dst ID input
-                        ui_state.edit_mode = true;
-                        // Reset text input variables
-                        _ui_textInputReset(ui_state.new_callsign);
-                    }
-                    else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
-                    {
-                        // Increment TX and RX frequency of 12.5KHz
-                        if(_ui_freq_check_limits(state.channel.rx_frequency + 12500) &&
-                           _ui_freq_check_limits(state.channel.tx_frequency + 12500))
-                        {
-                            state.channel.rx_frequency += 12500;
-                            state.channel.tx_frequency += 12500;
-                            *sync_rtx = true;
-                        }
-                    }
-                    else if(msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
-                    {
-                        // Decrement TX and RX frequency of 12.5KHz
-                        if(_ui_freq_check_limits(state.channel.rx_frequency - 12500) &&
-                           _ui_freq_check_limits(state.channel.tx_frequency - 12500))
-                        {
-                            state.channel.rx_frequency -= 12500;
-                            state.channel.tx_frequency -= 12500;
-                            *sync_rtx = true;
-                        }
-                    }
-                    else if(msg.keys & KEY_ENTER)
-                    {
-                        // Save current main state
-                        ui_state.last_main_state = state.ui_screen;
-                        // Open Menu
-                        state.ui_screen = MENU_TOP;
-                    }
-                    else if(msg.keys & KEY_ESC)
-                    {
-                        // Save VFO channel
-                        state.vfo_channel = state.channel;
-                        int result = _ui_fsm_loadChannel(state.channel_index, sync_rtx);
-                        // Read successful and channel is valid
-                        if(result != -1)
-                        {
-                            // Switch to MEM screen
-                            state.ui_screen = MAIN_MEM;
-                        }
-                    }
-                    else if(input_isNumberPressed(msg))
-                    {
-                        // Open Frequency input screen
-                        state.ui_screen = MAIN_VFO_INPUT;
-                        // Reset input position and selection
-                        ui_state.input_position = 1;
-                        ui_state.input_set = SET_RX;
-                        ui_state.new_rx_frequency = 0;
-                        ui_state.new_tx_frequency = 0;
-                        // Save pressed number to calculare frequency and show in GUI
-                        ui_state.input_number = input_getPressedNumber(msg);
-                        // Calculate portion of the new frequency
-                        ui_state.new_rx_frequency = _ui_freq_add_digit(ui_state.new_rx_frequency,
-                                                ui_state.input_position, ui_state.input_number);
-                    }
-                }
-                break;
-            // VFO frequency input screen
-            case MAIN_VFO_INPUT:
                 if(msg.keys & KEY_ENTER)
                 {
-                    _ui_fsm_confirmVFOInput(sync_rtx);
-                }
-                else if(msg.keys & KEY_ESC)
-                {
-                    // Cancel frequency input, return to VFO mode
-                    state.ui_screen = MAIN_VFO;
-                }
-                else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN)
-                {
-                    if(ui_state.input_set == SET_RX)
-                        ui_state.input_set = SET_TX;
-                    else if(ui_state.input_set == SET_TX)
-                        ui_state.input_set = SET_RX;
-                    // Reset input position
-                    ui_state.input_position = 0;
-                }
-                else if(input_isNumberPressed(msg))
-                {
-                    _ui_fsm_insertVFONumber(msg, sync_rtx);
+                    // Save current main state
+                    ui_state.last_main_state = state.ui_screen;
+                    // Open Menu
+                    state.ui_screen = MENU_TOP;
                 }
                 break;
-            // MEM screen
-            case MAIN_MEM:
-                // M17 Destination callsign input
-                if(ui_state.edit_mode)
-                {
-                    if(state.channel.mode == OPMODE_M17)
-                    {
-                        if(msg.keys & KEY_ENTER)
-                        {
-                            _ui_textInputConfirm(ui_state.new_callsign);
-                            // Save selected dst ID and disable input mode
-                            strncpy(state.m17_data.dst_addr, ui_state.new_callsign, 10);
-                            ui_state.edit_mode = false;
-                            *sync_rtx = true;
-                        }
-                        else if(msg.keys & KEY_HASH)
-                        {
-                            // Save selected dst ID and disable input mode
-                            strncpy(state.m17_data.dst_addr, "", 1);
-                            ui_state.edit_mode = false;
-                            *sync_rtx = true;
-                        }
-                        else if(msg.keys & KEY_ESC)
-                            // Discard selected dst ID and disable input mode
-                            ui_state.edit_mode = false;
-                        else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
-                                msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
-                            _ui_textInputDel(ui_state.new_callsign);
-                        else if(input_isNumberPressed(msg))
-                            _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
-                        break;
-                    }
-                }
-                else
-                {
-                    if(msg.keys & KEY_ENTER)
-                    {
-                        // Save current main state
-                        ui_state.last_main_state = state.ui_screen;
-                        // Open Menu
-                        state.ui_screen = MENU_TOP;
-                    }
-                    else if(msg.keys & KEY_ESC)
-                    {
-                        // Restore VFO channel
-                        state.channel = state.vfo_channel;
-                        // Update RTX configuration
-                        *sync_rtx = true;
-                        // Switch to VFO screen
-                        state.ui_screen = MAIN_VFO;
-                    }
-                    else if(msg.keys & KEY_HASH)
-                    {
-                        // Enable dst ID input
-                        ui_state.edit_mode = true;
-                        // Reset text input variables
-                        _ui_textInputReset(ui_state.new_callsign);
-                    }
-                    else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
-                    {
-                        _ui_fsm_loadChannel(state.channel_index + 1, sync_rtx);
-                    }
-                    else if(msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
-                    {
-                        _ui_fsm_loadChannel(state.channel_index - 1, sync_rtx);
-                    }
-                }
-                break;
+
             // Top menu screen
             case MENU_TOP:
                 if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
@@ -997,11 +808,6 @@ void ui_updateFSM(bool *sync_rtx)
                 {
                     switch(ui_state.menu_selected)
                     {
-#ifdef GPS_PRESENT
-                        case M_GPS:
-                            state.ui_screen = MENU_GPS;
-                            break;
-#endif
                         case M_SETTINGS:
                             state.ui_screen = MENU_SETTINGS;
                             break;
@@ -1018,13 +824,7 @@ void ui_updateFSM(bool *sync_rtx)
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(ui_state.last_main_state);
                 break;
-#ifdef GPS_PRESENT
-            // GPS menu screen
-            case MENU_GPS:
-                if(msg.keys & KEY_ESC)
-                    _ui_menuBack(MENU_TOP);
-                break;
-#endif
+
             // Settings menu screen
             case MENU_SETTINGS:
                 if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
@@ -1039,16 +839,6 @@ void ui_updateFSM(bool *sync_rtx)
                         case S_DISPLAY:
                             state.ui_screen = SETTINGS_DISPLAY;
                             break;
-#ifdef RTC_PRESENT
-                        case S_TIMEDATE:
-                            state.ui_screen = SETTINGS_TIMEDATE;
-                            break;
-#endif
-#ifdef GPS_PRESENT
-                        case S_GPS:
-                            state.ui_screen = SETTINGS_GPS;
-                            break;
-#endif
                         case S_M17:
                             state.ui_screen = SETTINGS_M17;
                             break;
@@ -1081,49 +871,7 @@ void ui_updateFSM(bool *sync_rtx)
                 if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_TOP);
                 break;
-#ifdef RTC_PRESENT
-            // Time&Date settings screen
-            case SETTINGS_TIMEDATE:
-                if(msg.keys & KEY_ENTER)
-                {
-                    // Switch to set Time&Date mode
-                    state.ui_screen = SETTINGS_TIMEDATE_SET;
-                    // Reset input position and selection
-                    ui_state.input_position = 0;
-                    memset(&ui_state.new_timedate, 0, sizeof(datetime_t));
-                }
-                else if(msg.keys & KEY_ESC)
-                    _ui_menuBack(MENU_SETTINGS);
-                break;
-            // Time&Date settings screen, edit mode
-            case SETTINGS_TIMEDATE_SET:
-                if(msg.keys & KEY_ENTER)
-                {
-                    // Save time only if all digits have been inserted
-                    if(ui_state.input_position < TIMEDATE_DIGITS)
-                        break;
-                    // Return to Time&Date menu, saving values
-                    // NOTE: The user inserted a local time, we must save an UTC time
-                    datetime_t utc_time = localTimeToUtc(ui_state.new_timedate,
-                                                         state.settings.utc_timezone);
-                    rtc_setTime(utc_time);
-                    state.time = utc_time;
-                    state.ui_screen = SETTINGS_TIMEDATE;
-                }
-                else if(msg.keys & KEY_ESC)
-                    _ui_menuBack(SETTINGS_TIMEDATE);
-                else if(input_isNumberPressed(msg))
-                {
-                    // Discard excess digits
-                    if(ui_state.input_position > TIMEDATE_DIGITS)
-                        break;
-                    ui_state.input_position += 1;
-                    ui_state.input_number = input_getPressedNumber(msg);
-                    _ui_timedate_add_digit(&ui_state.new_timedate, ui_state.input_position,
-                                            ui_state.input_number);
-                }
-                break;
-#endif
+
             case SETTINGS_DISPLAY:
                 if(msg.keys & KEY_LEFT || (ui_state.edit_mode &&
                    (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)))
@@ -1171,46 +919,7 @@ void ui_updateFSM(bool *sync_rtx)
                         _ui_menuBack(MENU_SETTINGS);
                     }
                 break;
-#ifdef GPS_PRESENT
-            case SETTINGS_GPS:
-                if(msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT ||
-                   (ui_state.edit_mode &&
-                   (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT ||
-                    msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)))
-                {
-                    switch(ui_state.menu_selected)
-                    {
-                        case G_ENABLED:
-                            if(state.settings.gps_enabled)
-                                state.settings.gps_enabled = 0;
-                            else
-                                state.settings.gps_enabled = 1;
-                            break;
-                        case G_SET_TIME:
-                            state.gps_set_time = !state.gps_set_time;
-                            break;
-                        case G_TIMEZONE:
-                            if(msg.keys & KEY_LEFT || msg.keys & KEY_UP ||
-                               msg.keys & KNOB_LEFT)
-                                state.settings.utc_timezone -= 1;
-                            else if(msg.keys & KEY_RIGHT || msg.keys & KEY_DOWN ||
-                                    msg.keys & KNOB_RIGHT)
-                                state.settings.utc_timezone += 1;
-                            break;
-                        default:
-                            state.ui_screen = SETTINGS_GPS;
-                    }
-                }
-                else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                    _ui_menuUp(settings_gps_num);
-                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                    _ui_menuDown(settings_gps_num);
-                else if(msg.keys & KEY_ENTER)
-                    ui_state.edit_mode = !ui_state.edit_mode;
-                else if(msg.keys & KEY_ESC)
-                    _ui_menuBack(MENU_SETTINGS);
-                break;
-#endif
+
             // M17 Settings
             case SETTINGS_M17:
 
@@ -1402,24 +1111,10 @@ bool ui_updateGUI()
         case MAIN_VFO:
             _ui_drawMainVFO(&ui_state);
             break;
-        // VFO frequency input screen
-        case MAIN_VFO_INPUT:
-            _ui_drawMainVFOInput(&ui_state);
-            break;
-        // MEM main screen
-        case MAIN_MEM:
-            _ui_drawMainMEM(&ui_state);
-            break;
         // Top menu screen
         case MENU_TOP:
             _ui_drawMenuTop(&ui_state);
             break;
-#ifdef GPS_PRESENT
-        // GPS menu screen
-        case MENU_GPS:
-            _ui_drawMenuGPS();
-            break;
-#endif
         // Settings menu screen
         case MENU_SETTINGS:
             _ui_drawMenuSettings(&ui_state);
@@ -1432,26 +1127,10 @@ bool ui_updateGUI()
         case MENU_ABOUT:
             _ui_drawMenuAbout();
             break;
-#ifdef RTC_PRESENT
-        // Time&Date settings screen
-        case SETTINGS_TIMEDATE:
-            _ui_drawSettingsTimeDate();
-            break;
-        // Time&Date settings screen, edit mode
-        case SETTINGS_TIMEDATE_SET:
-            _ui_drawSettingsTimeDateSet(&ui_state);
-            break;
-#endif
         // Display settings screen
         case SETTINGS_DISPLAY:
             _ui_drawSettingsDisplay(&ui_state);
             break;
-#ifdef GPS_PRESENT
-        // GPS settings screen
-        case SETTINGS_GPS:
-            _ui_drawSettingsGPS(&ui_state);
-            break;
-#endif
         // M17 settings screen
         case SETTINGS_M17:
             _ui_drawSettingsM17(&ui_state);
