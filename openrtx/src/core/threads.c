@@ -100,7 +100,7 @@ void *ui_threadFunc(void *arg)
             // Copy new M17 CAN, source and destination addresses
             rtx_cfg.can = state.settings.m17_can;
             strncpy(rtx_cfg.source_address,      state.settings.callsign, 10);
-            strncpy(rtx_cfg.destination_address, state.m17_data.dst_addr, 10);
+            strncpy(rtx_cfg.destination_address, state.m17_dest, 10);
 
             pthread_mutex_unlock(&rtx_mutex);
 
