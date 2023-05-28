@@ -90,16 +90,16 @@ enum menuItems
 
 enum settingsItems
 {
-    S_DISPLAY = 0
+    S_DISPLAY = 0,
 #ifdef RTC_PRESENT
-    ,S_TIMEDATE
+    S_TIMEDATE,
 #endif
 #ifdef GPS_PRESENT
-    ,S_GPS
+    S_GPS,
 #endif
-    ,S_M17
-    ,S_VOICE
-    ,S_RESET2DEFAULTS
+    S_M17,
+    S_VOICE,
+    S_RESET2DEFAULTS,
 };
 
 enum backupRestoreItems
@@ -110,11 +110,11 @@ enum backupRestoreItems
 
 enum displayItems
 {
-    D_BRIGHTNESS = 0
+    D_BRIGHTNESS = 0,
 #ifdef SCREEN_CONTRAST
-    ,D_CONTRAST
+    D_CONTRAST,
 #endif
-    ,D_TIMER
+    D_TIMER,
 };
 
 #ifdef GPS_PRESENT
@@ -125,10 +125,17 @@ enum settingsGPSItems
     G_TIMEZONE
 };
 #endif
+
 enum settingsVoicePromptItems
 {
     VP_LEVEL = 0,
     VP_PHONETIC,
+};
+
+enum settingsM17Items
+{
+    M17_CALLSIGN = 0,
+    M17_CAN
 };
 
 /**
@@ -205,6 +212,7 @@ extern const char *menu_items[];
 extern const char *settings_items[];
 extern const char *display_items[];
 extern const char *settings_gps_items[];
+extern const char *settings_m17_items[];
 extern const char * settings_voice_items[];
 
 extern const char *backup_restore_items[];
@@ -214,6 +222,7 @@ extern const uint8_t menu_num;
 extern const uint8_t settings_num;
 extern const uint8_t display_num;
 extern const uint8_t settings_gps_num;
+extern const uint8_t settings_m17_num;
 extern const uint8_t settings_voice_num;
 extern const uint8_t backup_restore_num;
 extern const uint8_t info_num;

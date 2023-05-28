@@ -166,6 +166,13 @@ const char *settings_gps_items[] =
     "UTC Timezone"
 };
 #endif
+
+const char * settings_m17_items[] =
+{
+    "Callsign",
+    "CAN"
+};
+
 const char * settings_voice_items[] =
 {
     "Voice",
@@ -238,6 +245,7 @@ const uint8_t display_num = sizeof(display_items)/sizeof(display_items[0]);
 #ifdef GPS_PRESENT
 const uint8_t settings_gps_num = sizeof(settings_gps_items)/sizeof(settings_gps_items[0]);
 #endif
+const uint8_t settings_m17_num = sizeof(settings_m17_items)/sizeof(settings_m17_items[0]);
 const uint8_t settings_voice_num = sizeof(settings_voice_items)/sizeof(settings_voice_items[0]);
 const uint8_t backup_restore_num = sizeof(backup_restore_items)/sizeof(backup_restore_items[0]);
 const uint8_t info_num = sizeof(info_items)/sizeof(info_items[0]);
@@ -746,6 +754,12 @@ static void _ui_changeTimer(int variation)
     }
 
     state.settings.display_timer += variation;
+}
+
+static inline void _ui_changeM17Can(int variation)
+{
+    uint8_t can = state.settings.m17_can;
+    state.settings.m17_can = (can + variation) % 16;
 }
 
 static void _ui_changeVoiceLevel(int variation)
@@ -1919,48 +1933,81 @@ void ui_updateFSM(bool *sync_rtx)
             case SETTINGS_M17:
                 if(ui_state.edit_mode)
                 {
-                    if(msg.keys & KEY_ENTER)
+                    if(ui_state.menu_selected == M17_CALLSIGN)
                     {
-                        _ui_textInputConfirm(ui_state.new_callsign);
-                        // Save selected callsign and disable input mode
-                        strncpy(state.settings.callsign, ui_state.new_callsign, 10);
-                        ui_state.edit_mode = false;
-                        *sync_rtx = true;
-                        vp_announceBuffer(&currentLanguage->callsign, 
-                                          false, true, state.settings.callsign);
+                        // Handle text input for M17 callsign
+                        if(msg.keys & KEY_ENTER)
+                        {
+                            _ui_textInputConfirm(ui_state.new_callsign);
+                            // Save selected callsign and disable input mode
+                            strncpy(state.settings.callsign, ui_state.new_callsign, 10);
+                            ui_state.edit_mode = false;
+                            vp_announceBuffer(&currentLanguage->callsign,
+                                             false, true, state.settings.callsign);
+                        }
+                        else if(msg.keys & KEY_ESC)
+                        {
+                            // Discard selected callsign and disable input mode
+                            ui_state.edit_mode = false;
+                            vp_announceBuffer(&currentLanguage->callsign,
+                                            false, true, state.settings.callsign);
+                        }
+                        else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
+                                msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
+                        {
+                            _ui_textInputDel(ui_state.new_callsign);
+                        }
+                        else if(input_isNumberPressed(msg))
+                        {
+                            _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
+                        }
+                        else if (msg.long_press && (msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
+                        {
+                            vp_announceBuffer(&currentLanguage->callsign,
+                                            true, true, ui_state.new_callsign);
+                            f1Handled=true;
+                        }
                     }
-                    else if(msg.keys & KEY_ESC)
+                    else
                     {
-                        // Discard selected callsign and disable input mode
-                        ui_state.edit_mode = false;
-                        vp_announceBuffer(&currentLanguage->callsign, 
-                                          false, true, state.settings.callsign);
-                    }
-                    else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
-                            msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
-                        _ui_textInputDel(ui_state.new_callsign);
-                    else if(input_isNumberPressed(msg))
-                        _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
-                    else if (msg.long_press && (msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
-                    {
-                        vp_announceBuffer(&currentLanguage->callsign, 
-                                          true, true, ui_state.new_callsign);
-                        f1Handled=true;
+                        if(msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
+                            _ui_changeM17Can(-1);
+                        else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
+                            _ui_changeM17Can(+1);
+                        else if(msg.keys & KEY_ENTER)
+                            ui_state.edit_mode = !ui_state.edit_mode;
+                        else if(msg.keys & KEY_ESC)
+                            ui_state.edit_mode = false;
                     }
                 }
                 else
                 {
                     if(msg.keys & KEY_ENTER)
                     {
-                        // Enable callsign input
+                        // Enable edit mode
                         ui_state.edit_mode = true;
-                        // Reset text input variables
-                        _ui_textInputReset(ui_state.new_callsign);
-                        vp_announceBuffer(&currentLanguage->callsign, 
-                                          true, true, ui_state.new_callsign);
+
+                        // If callsign input, reset text input variables
+                        if(ui_state.menu_selected == M17_CALLSIGN)
+                        {
+                            _ui_textInputReset(ui_state.new_callsign);
+                            vp_announceBuffer(&currentLanguage->callsign,
+                                            true, true, ui_state.new_callsign);
+                        }
                     }
+                    else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                        _ui_menuUp(settings_m17_num);
+                    else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                        _ui_menuDown(settings_m17_num);
+                    else if((msg.keys & KEY_RIGHT) && (ui_state.menu_selected == M17_CAN))
+                            _ui_changeM17Can(+1);
+                    else if((msg.keys & KEY_LEFT)  && (ui_state.menu_selected == M17_CAN))
+                            _ui_changeM17Can(-1);
                     else if(msg.keys & KEY_ESC)
+                    {
+                        *sync_rtx = true;
                         _ui_menuBack(MENU_SETTINGS);
+                    }
                 }
                 break;
             case SETTINGS_VOICE:

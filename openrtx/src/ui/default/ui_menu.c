@@ -330,6 +330,32 @@ int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
 }
 #endif
 
+int _ui_getM17EntryName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= settings_m17_num) return -1;
+    snprintf(buf, max_len, "%s", settings_m17_items[index]);
+    return 0;
+}
+
+int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= settings_m17_num)
+        return -1;
+
+    switch(index)
+    {
+        case M17_CALLSIGN:
+            snprintf(buf, max_len, "%s", last_state.settings.callsign);
+            break;
+
+        case M17_CAN:
+            snprintf(buf, max_len, "%d", last_state.settings.m17_can);
+            break;
+    }
+
+    return 0;
+}
+
 int _ui_getVoiceEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= settings_voice_num) return -1;
@@ -785,7 +811,7 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
     gfx_printLine(1, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
                   layout.horizontal_pad, layout.menu_font,
                   TEXT_ALIGN_LEFT, color_white, currentLanguage->callsign);
-    if(ui_state->edit_mode)
+    if((ui_state->edit_mode) && (ui_state->menu_selected == M17_CALLSIGN))
     {
         uint16_t rect_width = SCREEN_WIDTH - (layout.horizontal_pad * 2);
         uint16_t rect_height = (SCREEN_HEIGHT - (layout.top_h + layout.bottom_h))/2;
@@ -799,10 +825,8 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
     }
     else
     {
-        // Print M17 current callsign
-        gfx_printLine(1, 1, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
-                      layout.horizontal_pad, layout.input_font,
-                      TEXT_ALIGN_CENTER, color_white, last_state.settings.callsign);
+        _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getM17EntryName,
+                              _ui_getM17ValueName);
     }
 }
 
