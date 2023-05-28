@@ -587,11 +587,12 @@ bool _ui_exitStandby(long long now)
 
 void _ui_changeCAN(int variation)
 {
-    state.m17_data.can += variation;
+    // M17 CAN ranges from 0 to 15
+    int8_t can = state.m17_data.can + variation;
+    if(can > 15) can = 0;
+    if(can < 0)  can = 15;
 
-    // Inversion can be 1 or 0
-    if(state.m17_data.can > 15) state.m17_data.can = 15;
-    if(state.m17_data.can < 0) state.m17_data.can = 0;
+    state.m17_data.can = can;
 }
 
 void _ui_changeTxWiper(int variation)
@@ -626,11 +627,11 @@ void _ui_changeRxInvert(int variation)
 
 void _ui_changeMicGain(int variation)
 {
-    mod17CalData.mic_gain += variation;
+    int8_t gain = mod17CalData.mic_gain + variation;
+    if(gain > 2) gain = 0;
+    if(gain < 0) gain = 2;
 
-    // Mic gain can be between 0 and 2
-    if(mod17CalData.mic_gain > 2) mod17CalData.mic_gain = 2;
-    if(mod17CalData.mic_gain < 0) mod17CalData.mic_gain = 0;
+    mod17CalData.mic_gain = gain;
 }
 
 void _ui_menuUp(uint8_t menu_entries)
@@ -986,7 +987,8 @@ void ui_updateFSM(bool *sync_rtx)
                 }
                 break;
             case SETTINGS_RESET2DEFAULTS:
-                if(! ui_state.edit_mode){
+                if(! ui_state.edit_mode)
+                {
                     //require a confirmation ENTER, then another
                     //edit_mode is slightly misused to allow for this
                     if(msg.keys & KEY_ENTER)
@@ -997,11 +999,22 @@ void ui_updateFSM(bool *sync_rtx)
                     {
                         _ui_menuBack(MENU_SETTINGS);
                     }
-                } else {
+                }
+                else
+                {
                     if(msg.keys & KEY_ENTER)
                     {
                         ui_state.edit_mode = false;
+
+                        // Reset calibration values
+                        mod17CalData.tx_wiper  = 0x080;
+                        mod17CalData.rx_wiper  = 0x080;
+                        mod17CalData.tx_invert = 0;
+                        mod17CalData.rx_invert = 0;
+                        mod17CalData.mic_gain  = 0;
+
                         state_resetSettingsAndVfo();
+                        nvm_writeSettings(&state.settings);
                         _ui_menuBack(MENU_SETTINGS);
                     }
                     else if(msg.keys & KEY_ESC)
