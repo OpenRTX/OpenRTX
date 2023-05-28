@@ -53,13 +53,12 @@ typedef struct
     uint8_t voxLevel;             // Vox level
     int8_t  utc_timezone;         // Timezone, in units of half hours
     bool    gps_enabled;          // GPS active
-    char    callsign[10];         // Plaintext callsign, for future use
+    char    callsign[10];         // Plaintext callsign
     uint8_t display_timer   : 4,  // Standby timer
-            _ununsed        : 4;
+            m17_can         : 4;  // M17 CAN
     uint8_t vpLevel         : 3,  // Voice prompt level
             vpPhoneticSpell : 1,  // Phonetic spell enabled
             _reserved       : 4;
-
 }
 __attribute__((packed)) settings_t;
 
@@ -78,7 +77,7 @@ static const settings_t default_settings =
     false,            // GPS enabled
     "",               // Empty callsign
     TIMER_30S,        // 30 seconds
-    0,                // not used
+    0,                // M17 CAN
     0,                // Voice prompts off
     0,                // Phonetic spell off
     0                 // not used

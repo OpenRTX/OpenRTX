@@ -588,11 +588,11 @@ bool _ui_exitStandby(long long now)
 void _ui_changeCAN(int variation)
 {
     // M17 CAN ranges from 0 to 15
-    int8_t can = state.m17_data.can + variation;
+    int8_t can = state.settings.m17_can + variation;
     if(can > 15) can = 0;
     if(can < 0)  can = 15;
 
-    state.m17_data.can = can;
+    state.settings.m17_can = can;
 }
 
 void _ui_changeTxWiper(int variation)

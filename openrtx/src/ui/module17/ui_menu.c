@@ -191,17 +191,17 @@ int _ui_getM17EntryName(char *buf, uint8_t max_len, uint8_t index)
 int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= m17_num) return -1;
-    uint16_t value = 0;
+
     switch(index)
     {
         case M_CALLSIGN:
             snprintf(buf, max_len, "%s", last_state.settings.callsign);
             return 0;
         case M_CAN:
-            value = last_state.m17_data.can;
+            snprintf(buf, max_len, "%d", last_state.settings.m17_can);
             break;
     }
-    snprintf(buf, max_len, "%d", value);
+
     return 0;
 }
 
