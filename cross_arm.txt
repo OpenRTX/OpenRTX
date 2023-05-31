@@ -16,6 +16,7 @@ openocd = '/usr/local/bin/openocd'
 c_args      = [
                '-D_DEFAULT_SOURCE=1',
                '-ffunction-sections',
+               '-fdata-sections',
                '-Wall',
                '-Werror=return-type',
                '-g',
@@ -29,6 +30,7 @@ c_args      = [
 cpp_args    = [
                '-D_DEFAULT_SOURCE=1',
                '-ffunction-sections',
+               '-fdata-sections',
                '-Wall',
                '-Werror=return-type',
                '-g',
@@ -48,6 +50,8 @@ c_link_args = [
                '-mthumb',
                '-mfloat-abi=hard',
                '-mfpu=fpv4-sp-d16',
+               '-ffunction-sections',
+               '-fdata-sections',
                '-fno-exceptions',
                '-fno-rtti',
                '-Wl,-L../lib/miosix-kernel',
