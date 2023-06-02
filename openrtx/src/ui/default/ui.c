@@ -1346,12 +1346,16 @@ void ui_updateFSM(bool *sync_rtx)
                     }
                     else if(msg.keys & KEY_HASH)
                     {
-                        // Enable dst ID input
-                        ui_state.edit_mode = true;
-                        // Reset text input variables
-                        _ui_textInputReset(ui_state.new_callsign);
-                        vp_announceM17Info(NULL,  ui_state.edit_mode, 
-                                           queueFlags);
+                        // Only enter edit mode when using M17
+                        if(state.channel.mode == OPMODE_M17)
+                        {
+                            // Enable dst ID input
+                            ui_state.edit_mode = true;
+                            // Reset text input variables
+                            _ui_textInputReset(ui_state.new_callsign);
+                            vp_announceM17Info(NULL,  ui_state.edit_mode,
+                                               queueFlags);
+                        }
                     }
                     else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
                     {
