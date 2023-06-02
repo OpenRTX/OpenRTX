@@ -1524,10 +1524,14 @@ void ui_updateFSM(bool *sync_rtx)
                     }
                     else if(msg.keys & KEY_HASH)
                     {
-                        // Enable dst ID input
-                        ui_state.edit_mode = true;
-                        // Reset text input variables
-                        _ui_textInputReset(ui_state.new_callsign);
+                        // Only enter edit mode when using M17
+                        if(state.channel.mode == OPMODE_M17)
+                        {
+                            // Enable dst ID input
+                            ui_state.edit_mode = true;
+                            // Reset text input variables
+                            _ui_textInputReset(ui_state.new_callsign);
+                        }
                     }
                     else if(msg.keys & KEY_F1)
                     {
