@@ -65,6 +65,12 @@ const char *phase_values[] =
     "Inverted"
 };
 
+const char *hwVersions[] =
+{
+    "0.1d",
+    "0.1e"
+};
+
 void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_t max_len, uint8_t index))
 {
     point_t pos = layout.line1_pos;
@@ -285,31 +291,11 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
         case 0: // Git Version
             snprintf(buf, max_len, "%s", GIT_VERSION);
             break;
-        case 1: // Battery voltage
-        {
-            snprintf(buf, max_len, "-.-V");
-        }
-            break;
-        case 2: // Battery charge
-            snprintf(buf, max_len, "No batt");
-            break;
-        case 3: // RSSI
-            snprintf(buf, max_len, "N/A");
-            break;
-        case 4: // Heap usage
+        case 1: // Heap usage
             snprintf(buf, max_len, "%dB", getHeapSize() - getCurrentFreeHeap());
             break;
-        case 5: // Band
-            snprintf(buf, max_len, "N/A");
-            break;
-        case 6: // VHF
-            snprintf(buf, max_len, "N/A");
-            break;
-        case 7: // UHF
-            snprintf(buf, max_len, "N/A");
-            break;
-        case 8: // LCD Type
-            snprintf(buf, max_len, "%d", hwinfo->hw_version);
+        case 2: // LCD Type
+            snprintf(buf, max_len, "%s", hwVersions[hwinfo->hw_version]);
             break;
     }
     return 0;
