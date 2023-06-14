@@ -444,7 +444,7 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
             snprintf(buf, max_len, "%d - %d", hwinfo->uhf_minFreq, hwinfo->uhf_maxFreq);
             break;
         case 8: // LCD Type
-            snprintf(buf, max_len, "%d", hwinfo->lcd_type);
+            snprintf(buf, max_len, "%d", hwinfo->hw_version);
             break;
     }
     return 0;

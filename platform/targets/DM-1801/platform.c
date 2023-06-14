@@ -77,7 +77,7 @@ void platform_init()
     hwInfo.uhf_maxFreq = 470;
     hwInfo.uhf_minFreq = 400;
     hwInfo.uhf_band    = 1;
-    hwInfo.lcd_type    = 0;
+    hwInfo.hw_version  = 0;
     memcpy(hwInfo.name, "DM-1801", 7);
     hwInfo.name[7] = '\0';
 }

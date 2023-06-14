@@ -37,7 +37,7 @@ int main()
                                                    info->uhf_band ? "yes" : "no");
         printf("- VHF band range: %d - %d MHz\r\n", info->vhf_minFreq, info->vhf_maxFreq);
         printf("- UHF band range: %d - %d MHz\r\n", info->uhf_minFreq, info->uhf_maxFreq);
-        printf("- Display type: %d\r\n\r\n", info->lcd_type);
+        printf("- Display type: %d\r\n\r\n", info->hw_version);
     }
 
     return 0;

@@ -138,7 +138,7 @@ void nvm_readHwInfo(hwInfo_t *info)
         info->uhf_band    = 1;
     }
 
-    info->lcd_type = lcdInfo & 0x03;
+    info->hw_version = lcdInfo & 0x03;
 }
 
 /**

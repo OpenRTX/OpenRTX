@@ -70,7 +70,7 @@ void platform_init()
     hwInfo.uhf_maxFreq = 480;
     hwInfo.uhf_minFreq = 400;
     hwInfo.uhf_band    = 1;
-    hwInfo.lcd_type    = 0;
+    hwInfo.hw_version  = 0;
     memcpy(hwInfo.name, "MD-9600", 7);
     hwInfo.name[8] = '\0';
 

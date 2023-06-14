@@ -56,7 +56,13 @@ typedef enum
  */
 typedef struct
 {
-    char name[10];          /* Manufacturer-assigned hardware name.             */
+    char     name[10];      /* Manufacturer-assigned hardware name.             */
+
+    uint8_t  hw_version;    /* Hardware version number                          */
+
+    uint8_t  _unused  : 6,
+             uhf_band : 1,  /* Device allows UHF band operation.                */
+             vhf_band : 1;  /* Device allows VHF band operation.                */
 
     uint16_t uhf_maxFreq;   /* Upper bound for UHF band, in MHz.                */
     uint16_t uhf_minFreq;   /* Lower bound for UHF band, in MHz.                */
@@ -64,10 +70,6 @@ typedef struct
     uint16_t vhf_maxFreq;   /* Upper bound for VHF band, in MHz.                */
     uint16_t vhf_minFreq;   /* Lower bound for VHF band, in MHz.                */
 
-    uint8_t  _unused  : 4,
-             uhf_band : 1,  /* Device allows UHF band operation.                */
-             vhf_band : 1,  /* Device allows VHF band operation.                */
-             lcd_type : 2;  /* LCD display type, meaningful only on MDx targets.*/
 } hwInfo_t;
 
 

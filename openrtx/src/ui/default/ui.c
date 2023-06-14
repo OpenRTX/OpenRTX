@@ -195,7 +195,7 @@ const char *info_items[] =
     "Band",
     "VHF",
     "UHF",
-    "LCD Type"
+    "Hw Version"
 };
 
 const char *authors[] =
