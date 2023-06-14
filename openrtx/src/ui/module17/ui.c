@@ -71,7 +71,8 @@ const char *menu_items[] =
     "GPS",
 #endif
     "Info",
-    "About"
+    "About",
+    "Shutdown"
 };
 
 const char *settings_items[] =
@@ -630,15 +631,29 @@ void _ui_changeMicGain(int variation)
 
 void _ui_menuUp(uint8_t menu_entries)
 {
+    uint8_t maxEntries = menu_entries - 1;
+    uint8_t ver = platform_getHwInfo()->hw_version;
+
+    // Hide the "shutdown" main menu entry for versions lower than 0.1e
+    if((ver < 1) && (state.ui_screen == MENU_TOP))
+        maxEntries -= 1;
+
     if(ui_state.menu_selected > 0)
         ui_state.menu_selected -= 1;
     else
-        ui_state.menu_selected = menu_entries - 1;
+        ui_state.menu_selected = maxEntries;
 }
 
 void _ui_menuDown(uint8_t menu_entries)
 {
-    if(ui_state.menu_selected < menu_entries - 1)
+   uint8_t maxEntries = menu_entries - 1;
+   uint8_t ver = platform_getHwInfo()->hw_version;
+
+    // Hide the "shutdown" main menu entry for versions lower than 0.1e
+    if((ver < 1) && (state.ui_screen == MENU_TOP))
+        maxEntries -= 1;
+
+    if(ui_state.menu_selected < maxEntries)
         ui_state.menu_selected += 1;
     else
         ui_state.menu_selected = 0;
@@ -813,6 +828,9 @@ void ui_updateFSM(bool *sync_rtx)
                             break;
                         case M_ABOUT:
                             state.ui_screen = MENU_ABOUT;
+                            break;
+                        case M_SHUTDOWN:
+                            state.devStatus = SHUTDOWN;
                             break;
                     }
                     // Reset menu selection

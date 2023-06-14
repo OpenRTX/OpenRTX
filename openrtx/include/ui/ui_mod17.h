@@ -82,7 +82,8 @@ enum menuItems
     M_GPS,
 #endif
     M_INFO,
-    M_ABOUT
+    M_ABOUT,
+    M_SHUTDOWN
 };
 
 enum settingsItems

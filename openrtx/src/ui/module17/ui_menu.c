@@ -148,7 +148,11 @@ void _ui_drawMenuListValue(ui_state_t* ui_state, uint8_t selected,
 
 int _ui_getMenuTopEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
-    if(index >= menu_num) return -1;
+    uint8_t maxEntries = menu_num;
+    if(platform_getHwInfo()->hw_version < 1)
+        maxEntries -= 1;
+
+    if(index >= maxEntries) return -1;
     snprintf(buf, max_len, "%s", menu_items[index]);
     return 0;
 }
