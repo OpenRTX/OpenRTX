@@ -37,6 +37,9 @@ static hwInfo_t hwInfo;
 
 void platform_init()
 {
+    gpio_setMode(POWER_SW, OUTPUT);
+    gpio_setPin(POWER_SW);
+
     /* Configure GPIOs */
     gpio_setMode(PTT_LED,  OUTPUT);
     gpio_setMode(SYNC_LED, OUTPUT);
@@ -90,6 +93,8 @@ void platform_terminate()
     adc1_terminate();
     nvm_terminate();
     audio_terminate();
+
+    gpio_clearPin(POWER_SW);
 }
 
 uint16_t platform_getVbat()

@@ -73,6 +73,7 @@
 #define MIC_GAIN    GPIOC,5
 
 #define AIN_HWVER   GPIOA,3
+#define POWER_SW    GPIOA,15
 
 /* I2C for MCP4551 */
 #define I2C_SDA GPIOB,7
