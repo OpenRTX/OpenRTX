@@ -32,7 +32,8 @@
 #include <calibInfo_Mod17.h>
 #include <MCP4551.h>
 
-mod17Calib_t mod17CalData;
+mod17Calib_t    mod17CalData;
+static hwInfo_t hwInfo;
 
 void platform_init()
 {
@@ -64,6 +65,19 @@ void platform_init()
     mod17CalData.tx_invert = 0;
     mod17CalData.rx_invert = 0;
     mod17CalData.mic_gain  = 0;
+
+    /* Init hardware info data. */
+    memset(&hwInfo, 0x00, sizeof(hwInfo));
+    memcpy(hwInfo.name, "Module17", 8);
+
+    /*
+     * Hardware version is set using a voltage divider on PA3.
+     * - 0V:   rev. 0.1d or lower
+     * - 2.6V: rev 0.1e
+     */
+    uint16_t ver = adc1_getMeasurement(ADC_HWVER_CH);
+    if(ver >= 2500)
+        hwInfo.hw_version = 1;
 }
 
 void platform_terminate()
@@ -80,7 +94,7 @@ void platform_terminate()
 
 uint16_t platform_getVbat()
 {
-   return adc1_getMeasurement(ADC_VBAT_CH)*5;
+   return 0;
 }
 
 uint8_t platform_getMicLevel()
@@ -169,7 +183,7 @@ const void *platform_getCalibrationData()
 
 const hwInfo_t *platform_getHwInfo()
 {
-    return NULL;
+    return &hwInfo;
 }
 
 void platform_setBacklightLevel(uint8_t level)

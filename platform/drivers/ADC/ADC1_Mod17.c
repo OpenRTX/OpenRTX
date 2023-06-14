@@ -34,7 +34,7 @@ void adc1_init()
     /*
      * Configure GPIOs to analog input mode:
      */
-    gpio_setMode(AIN_VBAT,   INPUT_ANALOG);
+    gpio_setMode(AIN_HWVER, INPUT_ANALOG);
 
     /*
      * ADC clock is APB2 frequency divided by 8, giving 10.5MHz.
