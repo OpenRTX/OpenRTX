@@ -24,7 +24,12 @@
 channel_t cps_getDefaultChannel()
 {
     channel_t channel;
+
+    #ifdef PLATFORM_MOD17
+    channel.mode      = OPMODE_M17;
+    #else
     channel.mode      = OPMODE_FM;
+    #endif
     channel.bandwidth = BW_25;
     channel.power     = 100;    // 1W, P = 10dBm + n*0.2dBm, we store n
 
