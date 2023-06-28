@@ -872,7 +872,14 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
         case 1:
             if(state.channel.mode == OPMODE_FM)
             {
-                state.channel.fm.txTone--;
+                if (0 == state.channel.fm.txTone)
+                {
+                    state.channel.fm.txTone = MAX_TONE_INDEX-1;
+                }
+                else
+                {
+                    state.channel.fm.txTone--;
+                }
                 state.channel.fm.txTone %= MAX_TONE_INDEX;
                 state.channel.fm.rxTone = state.channel.fm.txTone;
                 *sync_rtx = true;
