@@ -52,6 +52,8 @@ typedef struct
     uint16_t txToneEn : 1,  /**< TX CTC/DCS tone enable        */
              txTone   : 15; /**< TX CTC/DCS tone               */
 
+    bool     toneEn;
+
     uint8_t  can      : 4,  /**< M17 Channel Access Number     */
              canRxEn  : 1,  /**< M17 Check CAN on RX           */
              _unused  : 3;

@@ -1319,6 +1319,12 @@ void ui_updateFSM(bool *sync_rtx)
         }
 #endif // PLA%FORM_TTWRPLUS
 
+        if(state.tone_enabled && !(msg.keys & KEY_HASH))
+        {
+            state.tone_enabled = false;
+            *sync_rtx = true;
+        }
+
         int priorUIScreen = state.ui_screen;
         switch(state.ui_screen)
         {
@@ -1402,6 +1408,14 @@ void ui_updateFSM(bool *sync_rtx)
                             _ui_textInputReset(ui_state.new_callsign);
                             vp_announceM17Info(NULL,  ui_state.edit_mode,
                                                queueFlags);
+                        }
+                        else
+                        {
+                            if(!state.tone_enabled)
+                            {
+                                state.tone_enabled = true;
+                                *sync_rtx = true;
+                            }
                         }
                     }
                     else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
@@ -1584,6 +1598,14 @@ void ui_updateFSM(bool *sync_rtx)
                             ui_state.edit_mode = true;
                             // Reset text input variables
                             _ui_textInputReset(ui_state.new_callsign);
+                        }
+                        else
+                        {
+                            if(!state.tone_enabled)
+                            {
+                                state.tone_enabled = true;
+                                *sync_rtx = true;
+                            }
                         }
                     }
                     else if(msg.keys & KEY_F1)

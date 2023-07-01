@@ -50,6 +50,7 @@ typedef struct
     bool       bank_enabled;
     uint16_t   bank;
     uint8_t    rtxStatus;
+    bool       tone_enabled;
 
     bool       emergency;
     settings_t settings;
