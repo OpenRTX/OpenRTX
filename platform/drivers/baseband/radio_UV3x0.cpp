@@ -262,6 +262,16 @@ void radio_enableTx()
         at1846s.enableTxCtcss(config->txTone);
     }
 
+    if (config->toneEn)
+    {
+        tone_t freq = 17500;
+        at1846s.enableTone(freq);
+    }
+    else
+    {
+        at1846s.disableTone();
+    }
+
     radioStatus = TX;
 }
 
