@@ -1372,8 +1372,11 @@ void ui_updateFSM(bool *sync_rtx)
                         }
                         else
                         {
-                            state.tone_enabled = true;
-                            *sync_rtx = true;
+                            if(!state.tone_enabled)
+                            {
+                                state.tone_enabled = true;
+                                *sync_rtx = true;
+                            }
                         }
                     }
                     else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
@@ -1553,8 +1556,11 @@ void ui_updateFSM(bool *sync_rtx)
                         }
                         else
                         {
-                            state.tone_enabled = true;
-                            *sync_rtx = true;
+                            if(!state.tone_enabled)
+                            {
+                                state.tone_enabled = true;
+                                *sync_rtx = true;
+                            }
                         }
                     }
                     else if(msg.keys & KEY_F1)
