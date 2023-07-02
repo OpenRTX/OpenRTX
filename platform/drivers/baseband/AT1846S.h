@@ -142,6 +142,10 @@ public:
         maskSetRegister(0x30, 0x0060, value);
     }
 
+    /**
+     * Setup and enable tone output
+     * @param freq frequency in 1/10 Hz
+     */
     void enableTone(const tone_t freq)
     {
         i2c_writeReg16(0x35, freq); // Set tone 1 freq
@@ -149,6 +153,9 @@ public:
         maskSetRegister(0x79, 0xF000, 0xC000); // Enable tone output
     }
 
+    /**
+     * Change output back to microphone
+     */
     void disableTone()
     {
         maskSetRegister(0x3A, 0x7000, 0x4000); // Use microphone
