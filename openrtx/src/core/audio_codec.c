@@ -38,8 +38,7 @@ static bool             running;
 static bool             reqStop;
 static pthread_t        codecThread;
 static pthread_mutex_t  mutex;
-static pthread_cond_t   not_empty;
-static pthread_cond_t   not_full;
+static pthread_cond_t   wakeup_cond;
 
 static uint8_t          readPos;
 static uint8_t          writePos;
@@ -81,8 +80,7 @@ void codec_init()
     memset(dataBuffer, 0x00, BUF_SIZE * sizeof(uint64_t));
 
     pthread_mutex_init(&mutex, NULL);
-    pthread_cond_init(&not_empty, NULL);
-    pthread_cond_init(&not_full, NULL);
+    pthread_cond_init(&wakeup_cond, NULL);
 }
 
 void codec_terminate()
@@ -95,8 +93,7 @@ void codec_terminate()
     if(running) stopThread();
 
     pthread_mutex_destroy(&mutex);
-    pthread_cond_destroy(&not_empty);
-    pthread_cond_destroy(&not_full);
+    pthread_cond_destroy(&wakeup_cond);
 }
 
 bool codec_startEncode(const pathId path)
@@ -167,7 +164,7 @@ int codec_popFrame(uint8_t *frame, const bool blocking)
     pthread_mutex_lock(&mutex);
     while(numElements == 0)
     {
-        pthread_cond_wait(&not_empty, &mutex);
+        pthread_cond_wait(&wakeup_cond, &mutex);
     }
 
     element      = dataBuffer[readPos];
@@ -201,7 +198,7 @@ int codec_pushFrame(const uint8_t *frame, const bool blocking)
     pthread_mutex_lock(&mutex);
     while(numElements >= BUF_SIZE)
     {
-        pthread_cond_wait(&not_full, &mutex);
+        pthread_cond_wait(&wakeup_cond, &mutex);
     }
 
     // There is free space, push data into the queue
@@ -278,8 +275,11 @@ static void *encodeFunc(void *arg)
             dataBuffer[writePos] = frame;
             writePos = (writePos + 1) % BUF_SIZE;
 
-            if(numElements == 0) pthread_cond_signal(&not_empty);
-            if(numElements < BUF_SIZE) numElements += 1;
+            if(numElements == 0)
+                pthread_cond_signal(&wakeup_cond);
+
+            if(numElements < BUF_SIZE)
+                numElements += 1;
 
             pthread_mutex_unlock(&mutex);
         }
@@ -332,7 +332,9 @@ static void *decodeFunc(void *arg)
         {
             frame        = dataBuffer[readPos];
             readPos      = (readPos + 1) % BUF_SIZE;
-            if(numElements >= BUF_SIZE) pthread_cond_signal(&not_full);
+            if(numElements >= BUF_SIZE)
+                pthread_cond_signal(&wakeup_cond);
+
             numElements -= 1;
             newData      = true;
         }
