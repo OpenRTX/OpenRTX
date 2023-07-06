@@ -52,7 +52,7 @@ void platform_init()
     #endif
 
     /*
-     * Initialise ADC1, for vbat, RSSI, ...
+     * Initialize ADC1, for vbat, RSSI, ...
      * Configuration of corresponding GPIOs in analog input mode is done inside
      * the driver.
      */
@@ -60,13 +60,13 @@ void platform_init()
 
     memset(&hwInfo, 0x00, sizeof(hwInfo));
 
-    nvm_init();                      /* Initialise non volatile memory manager */
+    nvm_init();                      /* Initialize non volatile memory manager */
     nvm_readCalibData(&calibration); /* Load calibration data                  */
     nvm_readHwInfo(&hwInfo);         /* Load hardware information data         */
-    toneGen_init();                  /* Initialise tone generator              */
-    rtc_init();                      /* Initialise RTC                         */
-    backlight_init();                /* Initialise backlight driver            */
-    audio_init();                    /* Initialise audio management module     */
+    toneGen_init();                  /* Initialize tone generator              */
+    rtc_initialize();                /* Initialize RTC                         */
+    backlight_init();                /* Initialize backlight driver            */
+    audio_init();                    /* Initialize audio management module     */
 }
 
 void platform_terminate()

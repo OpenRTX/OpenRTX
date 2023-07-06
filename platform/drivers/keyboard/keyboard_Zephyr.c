@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
- *                                Niccolò Izzo IU2KIN,                     *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -18,64 +19,17 @@
  ***************************************************************************/
 
 #include <stdio.h>
-#include <time.h>
-#include <interfaces/rtc.h>
+#include <stdint.h>
+#include <interfaces/keyboard.h>
 
-void rtc_initialize()
+void kbd_init()
 {
-    printf("rtc_initalize()\n");
 }
 
-void rtc_terminate()
+keyboard_t kbd_getKeys()
 {
-    printf("rtc_shutdown()\n");
+    // TODO;
+    keyboard_t keys = 0;
+    return keys;
 }
 
-void rtc_setTime(datetime_t t)
-{
-    (void) t;
-
-    printf("rtc_setTime(t)\n");
-}
-
-void rtc_setHour(uint8_t hours, uint8_t minutes, uint8_t seconds)
-{
-    printf("rtc_setHour(%d, %d, %d)\n", hours, minutes, seconds);
-}
-
-void rtc_setDate(uint8_t date, uint8_t month, uint8_t year)
-{
-    printf("rtc_setDate(%d, %d, %d)\n", date, month, year);
-}
-
-datetime_t rtc_getTime()
-{
-    datetime_t t;
-
-    time_t rawtime;
-    struct tm * timeinfo;
-    time ( &rawtime );
-    timeinfo = gmtime ( &rawtime );
-    //radio expects time to be TZ-less, so use gmtime instead of localtime.
-
-    t.hour = timeinfo->tm_hour;
-    t.minute = timeinfo->tm_min;
-    t.second = timeinfo->tm_sec;
-    t.day = timeinfo->tm_wday;
-    t.date = timeinfo->tm_mday;
-    t.month = timeinfo->tm_mon + 1;
-    // Only last two digits of the year are supported in OpenRTX
-    t.year = (timeinfo->tm_year + 1900) % 100;
-
-    return t;
-}
-
-void rtc_dstSet()
-{
-    printf("rtc_dstSet()\n");
-}
-
-void rtc_dstClear()
-{
-    printf("rtc_dstClear()\n");
-}

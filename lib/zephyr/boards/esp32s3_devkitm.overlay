@@ -1,0 +1,14 @@
+/ {
+    chosen {
+        zephyr,console = &usb_serial;
+        zephyr,shell-uart = &usb_serial;
+    };
+
+    aliases {
+        uart-0 = &usb_serial;
+    };
+};
+
+&usb_serial {
+    status = "okay";
+};

@@ -44,14 +44,14 @@ void platform_init()
     gpio_setMode(PTT_SW, INPUT);
 
     /*
-     * Initialise ADC1, for vbat, RSSI, ...
+     * Initialize ADC1, for vbat, RSSI, ...
      * Configuration of corresponding GPIOs in analog input mode is done inside
      * the driver.
      */
     adc1_init();
 
     /*
-     * Initialise SPI2 for external flash and LCD
+     * Initialize SPI2 for external flash and LCD
      */
     gpio_setMode(SPI2_CLK, ALTERNATE);
     gpio_setMode(SPI2_SDO, ALTERNATE);
@@ -74,12 +74,12 @@ void platform_init()
     memcpy(hwInfo.name, "MD-9600", 7);
     hwInfo.name[8] = '\0';
 
-    nvm_init();                      /* Initialise non volatile memory manager */
-    toneGen_init();                  /* Initialise tone generator              */
-    rtc_init();                      /* Initialise RTC                         */
-    backlight_init();                /* Initialise backlight driver            */
-    chSelector_init();               /* Initialise channel selector handler    */
-    audio_init();                    /* Initialise audio management module     */
+    nvm_init();                      /* Initialize non volatile memory manager */
+    toneGen_init();                  /* Initialize tone generator              */
+    rtc_initialize();                /* Initialize RTC                         */
+    backlight_init();                /* Initialize backlight driver            */
+    chSelector_init();               /* Initialize channel selector handler    */
+    audio_init();                    /* Initialize audio management module     */
 }
 
 void platform_terminate()

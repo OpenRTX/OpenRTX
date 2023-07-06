@@ -34,7 +34,7 @@
 /**
  * Initialise and start RTC.
  */
-void rtc_init();
+void rtc_initialize();
 
 /**
  * Shutdown RTC.

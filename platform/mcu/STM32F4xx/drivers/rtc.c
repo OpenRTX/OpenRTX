@@ -20,7 +20,7 @@
 #include <interfaces/rtc.h>
 #include <stm32f4xx.h>
 
-void rtc_init()
+void rtc_initialize()
 {
     /* Enable write protection for RTC registers */
     RCC->APB1ENR |= RCC_APB1ENR_PWREN;

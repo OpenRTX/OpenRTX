@@ -145,7 +145,7 @@ void *main_thread(void *arg)
         pthread_mutex_unlock(&state_mutex);
 
         // Handle external flash backup/restore
-        #if !defined(PLATFORM_LINUX) && !defined(PLATFORM_MOD17)
+        #if !defined(PLATFORM_LINUX) && !defined(PLATFORM_MOD17) && !defined(PLATFORM_ZEPHYR)
         if(state.backup_eflash)
         {
             eflash_dump();
