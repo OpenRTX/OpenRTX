@@ -27,6 +27,15 @@ void delayUs(unsigned int useconds)
 {
     // This delay has been calibrated to take x microseconds
     // It is written in assembler to be independent on compiler optimization
+    #if defined(SYSCLK_FREQ_180MHz)
+    asm volatile("           mov   r1, #45    \n"
+                 "           mul   r2, %0, r1 \n"
+                 "           mov   r1, #0     \n"
+                 "___loop_u: cmp   r1, r2     \n"
+                 "           itt   lo         \n"
+                 "           addlo r1, r1, #1 \n"
+                 "           blo   ___loop_u  \n"::"r"(useconds):"r1","r2");
+    #elif defined(SYSCLK_FREQ_168MHz)
     asm volatile("           mov   r1, #42    \n"
                  "           mul   r2, %0, r1 \n"
                  "           mov   r1, #0     \n"
@@ -34,11 +43,20 @@ void delayUs(unsigned int useconds)
                  "           itt   lo         \n"
                  "           addlo r1, r1, #1 \n"
                  "           blo   ___loop_u  \n"::"r"(useconds):"r1","r2");
+    #else
+    #error delayUs() is not calibrated for this frequency
+    #endif
 }
 
 void delayMs(unsigned int mseconds)
 {
+    #if defined(SYSCLK_FREQ_180MHz)
+    register const unsigned int count=45000;
+    #elif defined(SYSCLK_FREQ_168MHz)
     register const unsigned int count=42000;
+    #else
+    #error delayMs() is not calibrated for this frequency
+    #endif
 
     for(unsigned int i=0;i<mseconds;i++)
     {

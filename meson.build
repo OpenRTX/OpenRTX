@@ -201,12 +201,10 @@ gdx_src = gdx_src + openrtx_ui_default
 ##
 
 ##
-## STM32F405
+## STM32F4xx common files
 ##
 
-stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.cpp',
-                 'platform/mcu/STM32F4xx/boot/bsp.cpp',
-                 'platform/mcu/STM32F4xx/boot/libc_integration.cpp',
+stm32f4xx_src = ['platform/mcu/STM32F4xx/boot/libc_integration.cpp',
                  'platform/mcu/STM32F4xx/drivers/usb/usb_bsp.c',
                  'platform/mcu/STM32F4xx/drivers/usb/usb_core.c',
                  'platform/mcu/STM32F4xx/drivers/usb/usb_dcd.c',
@@ -228,13 +226,29 @@ stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.cpp',
                  'platform/drivers/audio/stm32_pwm.cpp',
                  'platform/mcu/CMSIS/Device/ST/STM32F4xx/Source/system_stm32f4xx.c']
 
-stm32f405_inc = ['platform/mcu/CMSIS/Include',
+stm32f4xx_inc = ['platform/mcu/CMSIS/Include',
                  'platform/mcu/CMSIS/Device/ST/STM32F4xx/Include',
                  'platform/mcu/STM32F4xx',
                  'platform/mcu/STM32F4xx/drivers',
                  'platform/mcu/STM32F4xx/drivers/usb']
 
-stm32f405_def = {'STM32F405xx': '', 'HSE_VALUE':'8000000'}
+##
+## STM32F405
+##
+
+stm32f405_src = stm32f4xx_src + ['platform/mcu/STM32F4xx/boot/startup_f405.cpp',
+                                 'platform/mcu/STM32F4xx/boot/bsp_f405.cpp']
+stm32f405_inc = stm32f4xx_inc
+stm32f405_def = {'STM32F405xx': '', 'HSE_VALUE':'8000000', 'SYSCLK_FREQ_168MHz':''}
+
+##
+## STM32F469
+##
+
+stm32f469_src = stm32f4xx_src + ['platform/mcu/STM32F4xx/boot/startup_f469.cpp',
+                                 'platform/mcu/STM32F4xx/boot/bsp_f469.cpp']
+stm32f469_inc = stm32f4xx_inc
+stm32f469_def = {'STM32F469xx': '', 'HSE_VALUE':'8000000', 'SYSCLK_FREQ_180MHz':''}
 
 ##
 ## MK22FN512
@@ -487,7 +501,7 @@ linux_opts = {'sources': linux_src,
 md3x0_opts = {'sources' : md3x0_src,
               'c_args'  : md3x0_args,
               'cpp_args': md3x0_args,
-              'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld',
+              'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_stm32f405_MDx.ld',
                              '-Wl,--print-memory-usage'],
               'dependencies': [codec2_dep],
               'include_directories': md3x0_inc}
@@ -495,7 +509,7 @@ md3x0_opts = {'sources' : md3x0_src,
 mduv3x0_opts = {'sources': mduv3x0_src,
                 'c_args': mduv3x0_args,
                 'cpp_args': mduv3x0_args,
-                'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld',
+                'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_stm32f405_MDx.ld',
                                '-Wl,--print-memory-usage'],
                 'dependencies': [codec2_dep],
                 'include_directories': mduv3x0_inc}
@@ -519,7 +533,7 @@ dm1801_opts = {'sources': dm1801_src,
 md9600_opts = {'sources': md9600_src,
                'c_args': md9600_args,
                'cpp_args': md9600_args,
-               'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld',
+               'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_stm32f405_MDx.ld',
                               '-Wl,--print-memory-usage'],
                'dependencies': [codec2_dep],
                'include_directories': md9600_inc}
@@ -527,7 +541,7 @@ md9600_opts = {'sources': md9600_src,
 mod17_opts  = {'sources': mod17_src,
                'c_args': mod17_args,
                'cpp_args': mod17_args,
-               'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_Mod17.ld',
+               'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_stm32f405_Mod17.ld',
                               '-Wl,--print-memory-usage'],
                'dependencies': [codec2_dep],
                'include_directories': mod17_inc}

@@ -7,6 +7,6 @@
 #include "core_cm4.h"
 #include "system_stm32f4xx.h"
 
-#define RCC_SYNC() //Workaround for a bug in stm32f42x
+#define RCC_SYNC() __DSB() //Workaround for a bug in stm32f42x
 
 #endif	//ARCH_REGISTERS_IMPL_H

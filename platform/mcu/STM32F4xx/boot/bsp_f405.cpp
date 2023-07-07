@@ -24,12 +24,14 @@
 * Board support package, this file initializes hardware.
 ************************************************************************/
 
+#include <interfaces/delays.h>
 #include <interfaces/bsp.h>
 #include <kernel/kernel.h>
 #include <kernel/sync.h>
-#include <hwconfig.h>
+#include <stm32f4xx.h>
 #include "../drivers/usb_vcom.h"
 #include "../drivers/USART3.h"
+
 
 namespace miosix
 {
