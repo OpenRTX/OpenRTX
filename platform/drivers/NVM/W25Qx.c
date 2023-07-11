@@ -19,6 +19,7 @@
  ***************************************************************************/
 
 #include "W25Qx.h"
+#include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,12 +45,49 @@ extern uint8_t spiFlash_SendRecv(uint8_t val);
 extern void spiFlash_init();
 extern void spiFlash_terminate();
 
+static const size_t PAGE_SIZE = 256;
+static const size_t SECT_SIZE = 4096;
+
+
+/**
+ * \internal
+ * Wait until an erase or write operation finishes.
+ *
+ * @param timeout: wait timeout, in ms.
+ * @return zero on success, -EIO if timeout expires.
+ */
+static int waitUntilReady(uint32_t timeout)
+{
+    // Each wait tick is 500us
+    timeout *= 2;
+
+    while(timeout > 0)
+    {
+        delayUs(500);
+        timeout--;
+
+        gpio_clearPin(FLASH_CS);
+        spiFlash_SendRecv(CMD_RDSTA);
+        uint8_t status = spiFlash_SendRecv(0x00);
+        gpio_setPin(FLASH_CS);
+
+        /* If busy flag is low, we're done */
+        if((status & 0x01) == 0)
+            return 0;
+    }
+
+    return -EIO;
+}
+
+
 void W25Qx_init()
 {
     gpio_setMode(FLASH_CS, OUTPUT);
     gpio_setPin(FLASH_CS);
 
     spiFlash_init();
+    W25Qx_wakeup();
+    // TODO: Implement sleep to increase power saving
 }
 
 void W25Qx_terminate()
@@ -64,14 +102,14 @@ void W25Qx_terminate()
 void W25Qx_wakeup()
 {
     gpio_clearPin(FLASH_CS);
-    (void) spiFlash_SendRecv(CMD_WKUP);
+    spiFlash_SendRecv(CMD_WKUP);
     gpio_setPin(FLASH_CS);
 }
 
 void W25Qx_sleep()
 {
     gpio_clearPin(FLASH_CS);
-    (void) spiFlash_SendRecv(CMD_PDWN);
+    spiFlash_SendRecv(CMD_PDWN);
     gpio_setPin(FLASH_CS);
 }
 
@@ -90,11 +128,11 @@ ssize_t W25Qx_readSecurityRegister(uint32_t addr, void* buf, size_t len)
     }
 
     gpio_clearPin(FLASH_CS);
-    (void) spiFlash_SendRecv(CMD_RSECR);             /* Command        */
-    (void) spiFlash_SendRecv((addr >> 16) & 0xFF);  /* Address high   */
-    (void) spiFlash_SendRecv((addr >> 8) & 0xFF);   /* Address middle */
-    (void) spiFlash_SendRecv(addr & 0xFF);          /* Address low    */
-    (void) spiFlash_SendRecv(0x00);                 /* Dummy byte     */
+    spiFlash_SendRecv(CMD_RSECR);            /* Command        */
+    spiFlash_SendRecv((addr >> 16) & 0xFF);  /* Address high   */
+    spiFlash_SendRecv((addr >> 8) & 0xFF);   /* Address middle */
+    spiFlash_SendRecv(addr & 0xFF);          /* Address low    */
+    spiFlash_SendRecv(0x00);                 /* Dummy byte     */
 
     for(size_t i = 0; i < readLen; i++)
     {
@@ -106,13 +144,13 @@ ssize_t W25Qx_readSecurityRegister(uint32_t addr, void* buf, size_t len)
     return ((ssize_t) readLen);
 }
 
-void W25Qx_readData(uint32_t addr, void* buf, size_t len)
+int W25Qx_readData(uint32_t addr, void* buf, size_t len)
 {
     gpio_clearPin(FLASH_CS);
-    (void) spiFlash_SendRecv(CMD_READ);             /* Command        */
-    (void) spiFlash_SendRecv((addr >> 16) & 0xFF);  /* Address high   */
-    (void) spiFlash_SendRecv((addr >> 8) & 0xFF);   /* Address middle */
-    (void) spiFlash_SendRecv(addr & 0xFF);          /* Address low    */
+    spiFlash_SendRecv(CMD_READ);             /* Command        */
+    spiFlash_SendRecv((addr >> 16) & 0xFF);  /* Address high   */
+    spiFlash_SendRecv((addr >> 8) & 0xFF);   /* Address middle */
+    spiFlash_SendRecv(addr & 0xFF);          /* Address low    */
 
     for(size_t i = 0; i < len; i++)
     {
@@ -120,102 +158,86 @@ void W25Qx_readData(uint32_t addr, void* buf, size_t len)
     }
 
     gpio_setPin(FLASH_CS);
+
+    return 0;
 }
 
-bool W25Qx_eraseSector(uint32_t addr)
+int W25Qx_erase(uint32_t addr, size_t size)
 {
+    // Addr or size not aligned to sector size
+    if(((addr % SECT_SIZE) != 0) || ((size % SECT_SIZE) != 0))
+        return -EINVAL;
+
     gpio_clearPin(FLASH_CS);
-    (void) spiFlash_SendRecv(CMD_WREN);             /* Write enable   */
+    spiFlash_SendRecv(CMD_WREN);             /* Write enable   */
     gpio_setPin(FLASH_CS);
 
     delayUs(5);
 
-    gpio_clearPin(FLASH_CS);
-    (void) spiFlash_SendRecv(CMD_ESECT);            /* Command        */
-    (void) spiFlash_SendRecv((addr >> 16) & 0xFF);  /* Address high   */
-    (void) spiFlash_SendRecv((addr >> 8) & 0xFF);   /* Address middle */
-    (void) spiFlash_SendRecv(addr & 0xFF);          /* Address low    */
-    gpio_setPin(FLASH_CS);
-
-    /*
-     * Wait till erase terminates.
-     * Timeout after 500ms, at 250us per tick
-     */
-    uint16_t timeout = 2000;
-    while(timeout > 0)
+    int ret = 0;
+    while(size > 0)
     {
-        delayUs(250);
-        timeout--;
-
         gpio_clearPin(FLASH_CS);
-        (void) spiFlash_SendRecv(CMD_RDSTA);        /* Read status    */
-        uint8_t status = spiFlash_SendRecv(0x00);
+        spiFlash_SendRecv(CMD_ESECT);            /* Command        */
+        spiFlash_SendRecv((addr >> 16) & 0xFF);  /* Address high   */
+        spiFlash_SendRecv((addr >> 8) & 0xFF);   /* Address middle */
+        spiFlash_SendRecv(addr & 0xFF);          /* Address low    */
         gpio_setPin(FLASH_CS);
 
-        /* If busy flag is low, we're done */
-        if((status & 0x01) == 0) return true;
+        ret = waitUntilReady(500);
+        if(ret < 0)
+            break;
+
+        size -= SECT_SIZE;
+        addr += SECT_SIZE;
     }
 
-    /* If we get here, we had a timeout */
-    return false;
+    return ret;
 }
 
 bool W25Qx_eraseChip()
 {
     gpio_clearPin(FLASH_CS);
-    (void) spiFlash_SendRecv(CMD_WREN);     /* Write enable */
+    spiFlash_SendRecv(CMD_WREN);
     gpio_setPin(FLASH_CS);
 
     delayUs(5);
 
     gpio_clearPin(FLASH_CS);
-    (void) spiFlash_SendRecv(CMD_ECHIP);    /* Command */
+    spiFlash_SendRecv(CMD_ECHIP);
     gpio_setPin(FLASH_CS);
 
     /*
-     * Wait till erase terminates.
-     * Timeout after 200s, at 20ms per tick
+     * Wait until erase terminates, timeout after 200s.
      */
-    uint16_t timeout = 10000;
-    while(timeout > 0)
-    {
-        delayMs(20);
-        timeout--;
+    int ret = waitUntilReady(200000);
+    if(ret == 0)
+        return true;
 
-        gpio_clearPin(FLASH_CS);
-        (void) spiFlash_SendRecv(CMD_RDSTA);        /* Read status    */
-        uint8_t status = spiFlash_SendRecv(0x00);
-        gpio_setPin(FLASH_CS);
-
-        /* If busy flag is low, we're done */
-        if((status & 0x01) == 0) return true;
-    }
-
-    /* If we get here, we had a timeout */
     return false;
 }
 
-ssize_t W25Qx_writePage(uint32_t addr, void* buf, size_t len)
+ssize_t W25Qx_writePage(uint32_t addr, const void* buf, size_t len)
 {
-    /* Keep 256-byte boundary to avoid wrap-around when writing */
-    size_t addrRange = addr & 0x0000FF;
+    /* Keep page boundary to avoid wrap-around when writing */
+    size_t addrRange = addr & (PAGE_SIZE - 1);
     size_t writeLen  = len;
-    if((addrRange + len) > 0x100)
+    if((addrRange + len) > PAGE_SIZE)
     {
-        writeLen = 0x100 - addrRange;
+        writeLen = PAGE_SIZE - addrRange;
     }
 
     gpio_clearPin(FLASH_CS);
-    (void) spiFlash_SendRecv(CMD_WREN);             /* Write enable   */
+    spiFlash_SendRecv(CMD_WREN);             /* Write enable   */
     gpio_setPin(FLASH_CS);
 
     delayUs(5);
 
     gpio_clearPin(FLASH_CS);
-    (void) spiFlash_SendRecv(CMD_WRITE);            /* Command        */
-    (void) spiFlash_SendRecv((addr >> 16) & 0xFF);  /* Address high   */
-    (void) spiFlash_SendRecv((addr >> 8) & 0xFF);   /* Address middle */
-    (void) spiFlash_SendRecv(addr & 0xFF);          /* Address low    */
+    spiFlash_SendRecv(CMD_WRITE);            /* Command        */
+    spiFlash_SendRecv((addr >> 16) & 0xFF);  /* Address high   */
+    spiFlash_SendRecv((addr >> 8) & 0xFF);   /* Address middle */
+    spiFlash_SendRecv(addr & 0xFF);          /* Address low    */
 
     for(size_t i = 0; i < writeLen; i++)
     {
@@ -226,75 +248,33 @@ ssize_t W25Qx_writePage(uint32_t addr, void* buf, size_t len)
     gpio_setPin(FLASH_CS);
 
     /*
-     * Wait till write terminates.
-     * Timeout after 500ms, at 250us per tick
+     * Wait until erase terminates, timeout after 500ms.
      */
-    uint16_t timeout = 2000;
-    while(timeout > 0)
-    {
-        delayUs(250);
-        timeout--;
+    int ret = waitUntilReady(500);
+    if(ret < 0)
+        return (ssize_t) ret;
 
-        gpio_clearPin(FLASH_CS);
-        (void) spiFlash_SendRecv(CMD_RDSTA);        /* Read status    */
-        uint8_t status = spiFlash_SendRecv(0x00);
-        gpio_setPin(FLASH_CS);
-
-        /* If busy flag is low, we're done */
-        if((status & 0x01) == 0) return ((ssize_t) writeLen);
-    }
-
-    /* If we get here, we had a timeout */
-    return -1;
+    return writeLen;
 }
 
-bool W25Qx_writeData(uint32_t addr, void* buf, size_t len)
+int W25Qx_writeData(uint32_t addr, const void *buf, size_t len)
 {
-    /* Fail if we are trying to write more than 4K bytes */
-    if(len > 4096) return false;
-
-    /* Fail if we are trying to write across 4K blocks: this would erase two 4K
-     * blocks for one write, which is not good for flash life.
-     * We calculate block address using integer division of start and end address
-     */
-    uint32_t startBlockAddr = addr / 4096 * 4096;
-    uint32_t endBlockAddr = (addr + len - 1) / 4096 * 4096;
-    if(endBlockAddr != startBlockAddr)
-        return false;
-
-    /* Before writing, check if we're not trying to write the same content */
-    uint8_t *flashData = ((uint8_t *) malloc(len));
-    W25Qx_readData(addr, flashData, len);
-    if(memcmp(buf, flashData, len) == 0)
+    while(len > 0)
     {
-        free(flashData);
-        return true;
+        size_t toWrite = len;
+
+        // Maximum single-shot write lenght is one page
+        if(toWrite >= PAGE_SIZE)
+            toWrite = PAGE_SIZE;
+
+        ssize_t written = W25Qx_writePage(addr, buf, toWrite);
+        if(written < 0)
+            return (int) written;
+
+        len  -= (size_t) written;
+        buf   = ((const uint8_t *) buf) + (size_t) written;
+        addr += (size_t) written;
     }
 
-    free(flashData);
-
-    /* Perform the actual read-erase-write of flash data. */
-    uint8_t *flashBlock = ((uint8_t *) malloc(4096));
-    W25Qx_readData(startBlockAddr, flashBlock, 4096);
-
-    /* Overwrite changed portion */
-    uint32_t blockOffset = addr % 4096;
-    memcpy(&flashBlock[blockOffset], buf, len);
-
-    /* Erase the 4K block */
-    if(!W25Qx_eraseSector(startBlockAddr))
-    {
-        /* Erase operation failed, return failure */
-        free(flashBlock);
-        return false;
-    }
-
-    /* Write back the modified 4K block in chunks of 256 bytes */
-    for(uint32_t offset = 0; offset < 4096; offset += 256)
-    {
-        W25Qx_writePage(startBlockAddr + offset, &flashBlock[offset], 256);
-    }
-
-    free(flashBlock);
-    return true;
+    return 0;
 }

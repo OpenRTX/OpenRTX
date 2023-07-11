@@ -44,7 +44,7 @@ static void writeDataCallback(uint8_t *ptr, size_t size)
     // Trigger sector erase on each 4kB address boundary
     if((memAddr % 0x1000) == 0)
     {
-        W25Qx_eraseSector(memAddr);
+        W25Qx_erase(memAddr, 0x1000);
     }
 
     for(size_t written = 0; written < size; )

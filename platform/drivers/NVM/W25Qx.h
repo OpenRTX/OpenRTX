@@ -74,17 +74,20 @@ ssize_t W25Qx_readSecurityRegister(uint32_t addr, void *buf, size_t len);
  * @param addr: start address for read operation.
  * @param buf: pointer to a buffer where data is written to.
  * @param len: number of bytes to read.
+ * @return zero on success, negative errno code on fail.
  */
-void W25Qx_readData(uint32_t addr, void *buf, size_t len);
+int W25Qx_readData(uint32_t addr, void *buf, size_t len);
 
 /**
- * Erase a 4kB sector.
- * Function returns when erase process terminated.
+ * Erase a flash memory area.
+ * The start address and erase size must be aligned to page size. The function
+ * blocks until the erase process terminates.
  *
- * @param addr: sector address.
- * @return true on success, false on failure.
+ * @param addr: start address.
+ * @param size: size of the area to be erased.
+ * @return zero on success, negative errno code on fail.
  */
-bool W25Qx_eraseSector(uint32_t addr);
+int W25Qx_erase(uint32_t addr, size_t size);
 
 /**
  * Full chip erase.
@@ -104,21 +107,16 @@ bool W25Qx_eraseChip();
  * @param len: number of bytes to written.
  * @return: -1 on error, the number of bytes effectively written otherwise.
  */
-ssize_t W25Qx_writePage(uint32_t addr, void *buf, size_t len);
+ssize_t W25Qx_writePage(uint32_t addr, const void *buf, size_t len);
 
 /**
  * Write data to flash memory.
- * Copies the 4K block to a memory buffer
- * Overwrites the specified part
- * Writes back the 4K block at chunks of 256Bytes.
- * The write is not performed if the destination content matches the source
- * Maximum write size = 4096 bytes.
- * This function fails if you are trying to write across 4K blocks
  *
  * @param addr: start address for read operation.
  * @param buf: pointer to a buffer where data is written to.
  * @param len: number of bytes to read.
+ * @return zero on success, negative errno code on fail.
  */
-bool W25Qx_writeData(uint32_t addr, void *buf, size_t len);
+int W25Qx_writeData(uint32_t addr, const void *buf, size_t len);
 
 #endif /* W25Qx_H */
