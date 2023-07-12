@@ -33,6 +33,9 @@
 #ifdef PLATFORM_LINUX
 #include <stdlib.h>
 #endif
+#ifdef PLATFORM_ZEPHYR
+#include <zephyr/kernel.h>
+#endif
 
 extern void *main_thread(void *arg);
 
@@ -51,21 +54,22 @@ void openrtx_init()
     display_setContrast(state.settings.contrast);
     #endif
 
+    // TODO: Temporarily disabling this until we get littlefs on T-TWR
     // Load codeplug from nonvolatile memory, create a new one in case of failure.
-    if(cps_open(NULL) < 0)
-    {
-        cps_create(NULL);
-        if(cps_open(NULL) < 0)
-        {
-            // Unrecoverable error
-            #ifdef PLATFORM_LINUX
-            exit(-1);
-            #else
-            // TODO: implement error handling for non-linux targets
-            while(1) ;
-            #endif
-        }
-    }
+    //if(cps_open(NULL) < 0)
+    //{
+    //    cps_create(NULL);
+    //    if(cps_open(NULL) < 0)
+    //    {
+    //        // Unrecoverable error
+    //        #ifdef PLATFORM_LINUX
+    //        exit(-1);
+    //        #else
+    //        // TODO: implement error handling for non-linux targets
+    //        while(1) ;
+    //        #endif
+    //    }
+    //}
 
     // Display splash screen, turn on backlight after a suitable time to
     // hide random pixels during render process

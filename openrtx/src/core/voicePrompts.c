@@ -353,7 +353,9 @@ void vp_init()
 {
     #ifdef VP_USE_FILESYSTEM
     if(vpFile == NULL)
-        vpFile = fopen("voiceprompts.vpc", "r");
+        //TODO
+        //vpFile = fopen("voiceprompts.vpc", "r");
+        ;
 
     if(vpFile == NULL)
         return;

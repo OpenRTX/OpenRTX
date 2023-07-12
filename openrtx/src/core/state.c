@@ -30,6 +30,8 @@
 #include <interfaces/nvmem.h>
 #include <interfaces/delays.h>
 
+#include <zephyr/kernel.h>
+
 state_t state;
 pthread_mutex_t state_mutex;
 long long int lastUpdate = 0;

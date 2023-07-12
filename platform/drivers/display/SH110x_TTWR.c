@@ -33,12 +33,13 @@
  * starting at 0x20000000.
  * Pixel format is black and white, one bit per pixel.
  */
-//#define FB_SIZE (((SCREEN_HEIGHT * SCREEN_WIDTH) / 8 ) + 1)
-//static uint8_t __attribute__((section(".bss2"))) frameBuffer[FB_SIZE];
+#define FB_SIZE (((SCREEN_HEIGHT * SCREEN_WIDTH) / 8 ) + 1)
+static uint8_t __attribute__((section(".dram_0_0_seg"))) frameBuffer[FB_SIZE];
 
 
 void display_init()
 {
+    // TODO: Translate this code to Zephyr APIs
     ///* Clear framebuffer, setting all pixels to 0x00 makes the screen white */
     //memset(frameBuffer, 0x00, FB_SIZE);
 

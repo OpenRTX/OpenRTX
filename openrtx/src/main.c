@@ -29,6 +29,10 @@
 #include <emulator/sdl_engine.h>
 #endif
 
+#ifdef PLATFORM_ZEPHYR
+#include <zephyr/kernel.h>
+#endif
+
 int main(void)
 {
     // MD-9600 does not have a proper power on/off mechanism and the MCU is
@@ -46,7 +50,7 @@ int main(void)
 
     openrtx_init();
 
-#ifndef PLATFORM_LINUX
+#if !defined(PLATFORM_LINUX)
     openrtx_run();
 #else
     // macOS requires SDL main loop to run on the main thread.
