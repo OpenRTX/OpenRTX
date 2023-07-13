@@ -82,10 +82,10 @@ void platform_init()
     /*
      * Hardware version is set using a voltage divider on PA3.
      * - 0V:   rev. 0.1d or lower
-     * - 2.6V: rev 0.1e
+     * - 3.3V: rev 0.1e
      */
     uint16_t ver = adc1_getMeasurement(ADC_HWVER_CH);
-    if(ver >= 2500)
+    if(ver >= 3000)
         hwInfo.hw_version = 1;
 }
 
