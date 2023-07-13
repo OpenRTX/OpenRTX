@@ -9,9 +9,10 @@ target_compile_definitions(app
     PLATFORM_ZEPHYR
     GIT_VERSION="zephyr"
     FONT_UBUNTU_REGULAR
-    SCREEN_WIDTH=160
-    SCREEN_HEIGHT=128
-    PIX_FMT_RGB565=
+    # TODO: in the future this should be specified in the device tree
+    SCREEN_WIDTH=128
+    SCREEN_HEIGHT=64
+    PIX_FMT_BW=
     VP_USE_FILESYSTEM
     CODEC2_MODE_EN_DEFAULT=0
     CODEC2_MODE_3200_EN=1
@@ -65,7 +66,7 @@ target_sources(app
     ../../platform/drivers/audio/inputStream_Zephyr.cpp
     ../../platform/drivers/audio/outputStream_Zephyr.c
     ../../platform/drivers/baseband/radio_TTWR.cpp
-    ../../platform/drivers/display/SH110x_TTWR.c
+    ../../platform/drivers/display/display_Zephyr.c
     ../../platform/drivers/keyboard/keyboard_Zephyr.c
     ../../platform/mcu/ESP32/drivers/delays.c
     ../../platform/mcu/ESP32/drivers/gpio.c

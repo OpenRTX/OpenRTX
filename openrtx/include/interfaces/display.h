@@ -80,6 +80,18 @@ void *display_getFrameBuffer();
 void display_terminate();
 
 /**
+ * Freeze the content on the display to allow framebuffer editing.
+ */
+void display_unlock();
+
+/**
+ * Free the content on a fraction the display to allow framebuffer editing.
+ * @param startRow: first row of the framebuffer section to be copied
+ * @param endRow: last row of the framebuffer section to be copied
+ */
+void display_unlockRows(uint8_t startRow, uint8_t endRow);
+
+/**
  * Copy a given section, between two given rows, of framebuffer content to the
  * display.
  * @param startRow: first row of the framebuffer section to be copied

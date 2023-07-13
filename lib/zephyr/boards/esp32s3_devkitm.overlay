@@ -6,9 +6,45 @@
 
     aliases {
         uart-0 = &usb_serial;
+        display = &ssd1306;
     };
 };
 
 &usb_serial {
     status = "okay";
+};
+
+&i2c0_default {
+    group1 {
+        pinmux = <I2C0_SDA_GPIO8>,
+                 <I2C0_SCL_GPIO9>;
+        bias-pull-up;
+        drive-open-drain;
+        output-high;
+    };
+};
+
+&i2c0 {
+    status = "okay";
+
+    clock-frequency = <I2C_BITRATE_FAST>;
+
+    ssd1306: ssd1306@3c {
+        compatible = "solomon,ssd1306fb";
+        reg = <0x3c>;
+
+        label = "SSD1306";
+
+        width  = <128>;
+        height = <64>;
+
+        segment-offset  = <2>;
+        page-offset     = <0>;
+        display-offset  = <0>;
+        multiplex-ratio = <63>;
+        prechargep      = <0x22>;
+
+        segment-remap;
+        com-invdir;
+    };
 };
