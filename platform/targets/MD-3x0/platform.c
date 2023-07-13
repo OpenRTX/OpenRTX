@@ -30,7 +30,7 @@
 #include <interfaces/audio.h>
 
 md3x0Calib_t calibration;
-hwInfo_t hwInfo;
+static hwInfo_t hwInfo;
 
 void platform_init()
 {

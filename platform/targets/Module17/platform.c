@@ -33,7 +33,17 @@
 #include <MCP4551.h>
 
 mod17Calib_t    mod17CalData;
-static hwInfo_t hwInfo;
+static hwInfo_t hwInfo =
+{
+    .vhf_maxFreq = 0,
+    .vhf_minFreq = 0,
+    .vhf_band    = 0,
+    .uhf_maxFreq = 0,
+    .uhf_minFreq = 0,
+    .uhf_band    = 0,
+    .hw_version  = 0,
+    .name        = "Module17"
+};
 
 void platform_init()
 {
@@ -68,10 +78,6 @@ void platform_init()
     mod17CalData.tx_invert = 0;
     mod17CalData.rx_invert = 0;
     mod17CalData.mic_gain  = 0;
-
-    /* Init hardware info data. */
-    memset(&hwInfo, 0x00, sizeof(hwInfo));
-    memcpy(hwInfo.name, "Module17", 8);
 
     /*
      * Hardware version is set using a voltage divider on PA3.

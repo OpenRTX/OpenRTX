@@ -33,7 +33,18 @@
 #include <SPI2.h>
 #include <chSelector.h>
 
-hwInfo_t hwInfo;
+/* TODO: Hardcoded hwInfo until we implement reading from flash */
+static const hwInfo_t hwInfo
+{
+    .vhf_maxFreq = 174,
+    .vhf_minFreq = 136,
+    .vhf_band    = 1,
+    .uhf_maxFreq = 480,
+    .uhf_minFreq = 400,
+    .uhf_band    = 1,
+    .hw_version  = 0,
+    .name        = "MD-9600"
+}
 
 void platform_init()
 {
@@ -61,18 +72,6 @@ void platform_init()
     gpio_setAlternateFunction(SPI2_SDI, 5);
 
     spi2_init();
-
-    /* TODO: Hardcode hwInfo until we implement reading from flash */
-    memset(&hwInfo, 0x00, sizeof(hwInfo));
-    hwInfo.vhf_maxFreq = 174;
-    hwInfo.vhf_minFreq = 136;
-    hwInfo.vhf_band    = 1;
-    hwInfo.uhf_maxFreq = 480;
-    hwInfo.uhf_minFreq = 400;
-    hwInfo.uhf_band    = 1;
-    hwInfo.hw_version  = 0;
-    memcpy(hwInfo.name, "MD-9600", 7);
-    hwInfo.name[8] = '\0';
 
     nvm_init();                      /* Initialise non volatile memory manager */
     toneGen_init();                  /* Initialise tone generator              */

@@ -25,24 +25,21 @@
 /* Custom SDL Event to adjust backlight */
 extern Uint32 SDL_Backlight_Event;
 
-hwInfo_t hwInfo;
+static const hwInfo_t hwInfo =
+{
+    .vhf_maxFreq = 174,
+    .vhf_minFreq = 136,
+    .vhf_band    = 1,
+    .uhf_maxFreq = 480,
+    .uhf_minFreq = 400,
+    .uhf_band    = 1,
+    .name        = "Linux"
+};
+
 
 void platform_init()
 {
     nvm_init();
-
-    // Fill hwinfo struct
-    memset(&hwInfo, 0x00, sizeof(hwInfo));
-    snprintf(hwInfo.name, 10, "Linux");
-
-    // Frequencies are in MHz
-    hwInfo.vhf_maxFreq = 174;
-    hwInfo.vhf_minFreq = 136;
-    hwInfo.vhf_band    = 1;
-    hwInfo.uhf_maxFreq = 480;
-    hwInfo.uhf_minFreq = 400;
-    hwInfo.uhf_band    = 1;
-
     emulator_start();
 }
 

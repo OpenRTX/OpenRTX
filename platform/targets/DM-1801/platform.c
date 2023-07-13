@@ -32,9 +32,19 @@
 
 /* Mutex for concurrent access to ADC0 */
 pthread_mutex_t adc_mutex;
-
 gdxCalibration_t calibration;
-hwInfo_t hwInfo;
+
+static const hwInfo_t hwInfo =
+{
+    .vhf_maxFreq = 174,
+    .vhf_minFreq = 136,
+    .vhf_band    = 1,
+    .uhf_maxFreq = 470,
+    .uhf_minFreq = 400,
+    .uhf_band    = 1,
+    .hw_version  = 0,
+    .name        = "DM-1801"
+};
 
 void platform_init()
 {
@@ -69,17 +79,6 @@ void platform_init()
      */
     nvm_init();
     memset(&calibration, 0x00, sizeof(gdxCalibration_t));
-
-    /* Initialise hardware information structure */
-    hwInfo.vhf_maxFreq = 174;
-    hwInfo.vhf_minFreq = 136;
-    hwInfo.vhf_band    = 1;
-    hwInfo.uhf_maxFreq = 470;
-    hwInfo.uhf_minFreq = 400;
-    hwInfo.uhf_band    = 1;
-    hwInfo.hw_version  = 0;
-    memcpy(hwInfo.name, "DM-1801", 7);
-    hwInfo.name[7] = '\0';
 }
 
 void platform_terminate()
