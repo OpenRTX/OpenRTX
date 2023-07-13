@@ -32,7 +32,8 @@
 #include <calibInfo_Mod17.h>
 #include <MCP4551.h>
 
-mod17Calib_t    mod17CalData;
+extern mod17Calib_t mod17CalData;
+
 static hwInfo_t hwInfo =
 {
     .vhf_maxFreq = 0,
@@ -185,11 +186,6 @@ void platform_beepStart(uint16_t freq)
 void platform_beepStop()
 {
     /* TODO */
-}
-
-const void *platform_getCalibrationData()
-{
-    return ((const void *) &mod17CalData);
 }
 
 const hwInfo_t *platform_getHwInfo()

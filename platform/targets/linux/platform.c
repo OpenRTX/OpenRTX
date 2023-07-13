@@ -134,11 +134,6 @@ void platform_beepStop()
     printf("platform_beepStop()\n");
 }
 
-const void *platform_getCalibrationData()
-{
-    return NULL;
-}
-
 const hwInfo_t *platform_getHwInfo()
 {
     return &hwInfo;

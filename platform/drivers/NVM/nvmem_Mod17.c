@@ -48,7 +48,7 @@ static const uint32_t MEM_MAGIC   = 0x584E504F;    // "OPNX"
 static const uint32_t baseAddress = 0x080E0000;
 memory_t *memory = ((memory_t *) baseAddress);
 
-extern mod17Calib_t mod17CalData;   // Calibration data, to be saved and loaded
+mod17Calib_t mod17CalData;   // Calibration data, to be saved and loaded
 
 /**
  * \internal

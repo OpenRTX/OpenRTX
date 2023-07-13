@@ -200,11 +200,6 @@ void platform_beepStop()
     toneGen_beepOff();
 }
 
-const void *platform_getCalibrationData()
-{
-    return ((const void *) &calibration);
-}
-
 const hwInfo_t *platform_getHwInfo()
 {
     return &hwInfo;

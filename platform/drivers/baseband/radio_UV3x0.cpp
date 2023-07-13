@@ -18,7 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
+#include <interfaces/nvmem.h>
 #include <interfaces/radio.h>
 #include <interfaces/gpio.h>
 #include <calibInfo_MDx.h>
@@ -30,9 +30,9 @@
 #include "AT1846S.h"
 
 
-const mduv3x0Calib_t *calData;  // Pointer to calibration data
 const rtxStatus_t    *config;   // Pointer to data structure with radio configuration
 
+static mduv3x0Calib_t calData;  // Calibration data
 Band    currRxBand = BND_NONE;  // Current band for RX
 Band    currTxBand = BND_NONE;  // Current band for TX
 uint8_t txpwr_lo   = 0;         // APC voltage for TX output power control, low power
@@ -47,11 +47,6 @@ AT1846S& at1846s = AT1846S::instance();   // AT1846S driver
 
 void radio_init(const rtxStatus_t *rtxState)
 {
-    /*
-     * Load calibration data
-     */
-    calData = reinterpret_cast< const mduv3x0Calib_t * >(platform_getCalibrationData());
-
     config      = rtxState;
     radioStatus = OFF;
 
@@ -82,6 +77,11 @@ void radio_init(const rtxStatus_t *rtxState)
     RCC->APB1ENR |= RCC_APB1ENR_DACEN;
     DAC->CR = DAC_CR_EN1;
     DAC->DHR12R1 = 0;
+
+    /*
+     * Load calibration data
+     */
+    nvm_readCalibData(&calData);
 
     /*
      * Configure AT1846S and HR_C6000, keep AF output disabled at power on.
@@ -287,33 +287,28 @@ void radio_updateConfiguration()
      * VCXO bias voltage, separated values for TX and RX to allow for cross-band
      * operation.
      */
-    txModBias = calData->vhfCal.freqAdjustMid;
-    rxModBias = calData->vhfCal.freqAdjustMid;
-    if(currRxBand == BND_UHF) rxModBias = calData->uhfCal.freqAdjustMid;
-    if(currTxBand == BND_UHF) txModBias = calData->uhfCal.freqAdjustMid;
+    txModBias = calData.vhfCal.freqAdjustMid;
+    rxModBias = calData.vhfCal.freqAdjustMid;
+    if(currRxBand == BND_UHF) rxModBias = calData.uhfCal.freqAdjustMid;
+    if(currTxBand == BND_UHF) txModBias = calData.uhfCal.freqAdjustMid;
 
-    /*
-     * Discarding "const" qualifier to suppress compiler warnings.
-     * This operation is safe anyway because calibration data is only read.
-     */
-    mduv3x0Calib_t *cal  = const_cast< mduv3x0Calib_t * >(calData);
     uint8_t calPoints    = 5;
-    freq_t  *txCalPoints = cal->vhfCal.txFreq;
-    uint8_t *loPwrCal    = cal->vhfCal.txLowPower;
-    uint8_t *hiPwrCal    = cal->vhfCal.txHighPower;
+    freq_t  *txCalPoints = calData.vhfCal.txFreq;
+    uint8_t *loPwrCal    = calData.vhfCal.txLowPower;
+    uint8_t *hiPwrCal    = calData.vhfCal.txHighPower;
     uint8_t *qRangeCal   = (config->opMode == OPMODE_FM)
-                         ? cal->vhfCal.analogSendQrange
-                         : cal->vhfCal.sendQrange;
+                         ? calData.vhfCal.analogSendQrange
+                         : calData.vhfCal.sendQrange;
 
     if(currTxBand == BND_UHF)
     {
         calPoints   = 9;
-        txCalPoints = cal->uhfCal.txFreq;
-        loPwrCal    = cal->uhfCal.txLowPower;
-        hiPwrCal    = cal->uhfCal.txHighPower;
+        txCalPoints = calData.uhfCal.txFreq;
+        loPwrCal    = calData.uhfCal.txLowPower;
+        hiPwrCal    = calData.uhfCal.txHighPower;
         qRangeCal   = (config->opMode == OPMODE_FM)
-                    ? cal->uhfCal.analogSendQrange
-                    : cal->uhfCal.sendQrange;
+                    ? calData.uhfCal.analogSendQrange
+                    : calData.uhfCal.sendQrange;
     }
 
     // APC voltage for TX output power control

@@ -25,9 +25,12 @@
 #include <OpMode_M17.hpp>
 #include <audio_codec.h>
 #include <rtx.h>
+
 #ifdef PLATFORM_MOD17
 #include <calibInfo_Mod17.h>
 #include <interfaces/platform.h>
+
+extern mod17Calib_t mod17CalData;
 #endif
 
 using namespace std;
@@ -87,10 +90,8 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
     //
     // Get phase inversion settings from calibration.
     //
-    const mod17Calib_t *calData =
-        reinterpret_cast< const mod17Calib_t * >(platform_getCalibrationData());
-    invertTxPhase = (calData->tx_invert == 1) ? true : false;
-    invertRxPhase = (calData->rx_invert == 1) ? true : false;
+    invertTxPhase = (mod17CalData.tx_invert == 1) ? true : false;
+    invertRxPhase = (mod17CalData.rx_invert == 1) ? true : false;
     #endif
 
     // Main FSM logic

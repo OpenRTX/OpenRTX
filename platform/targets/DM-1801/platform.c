@@ -61,6 +61,7 @@ void platform_init()
     backlight_init();                /* Initialise backlight driver        */
     audio_init();                    /* Initialise audio management module */
     adc0_init();                     /* Initialise ADC                     */
+    nvm_init();                      /* Initialise NVM manager             */
     pthread_mutex_init(&adc_mutex, NULL);
 
     /*
@@ -71,14 +72,6 @@ void platform_init()
     gpio_setAlternateFunction(I2C_SDA, 3);
     gpio_setAlternateFunction(I2C_SCL, 3);
     i2c0_init();
-
-    /*
-     * Initialise non volatile memory manager and zero calibration data.
-     * Actual loading of calibration data is deferred to the first call of
-     * platform_getCalibrationData().
-     */
-    nvm_init();
-    memset(&calibration, 0x00, sizeof(gdxCalibration_t));
 }
 
 void platform_terminate()
@@ -196,17 +189,6 @@ void platform_beepStart(uint16_t freq)
 void platform_beepStop()
 {
     /* TODO */
-}
-
-const void *platform_getCalibrationData()
-{
-    /* The first time this function is called, load calibration data from flash */
-    if(calibration.vhfCalPoints[0] == 0)
-    {
-        nvm_readCalibData(&calibration);
-    }
-
-    return ((const void *) &calibration);
 }
 
 const hwInfo_t *platform_getHwInfo()

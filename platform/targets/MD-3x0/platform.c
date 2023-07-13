@@ -29,7 +29,6 @@
 #include <interfaces/rtc.h>
 #include <interfaces/audio.h>
 
-md3x0Calib_t calibration;
 static hwInfo_t hwInfo;
 
 void platform_init()
@@ -61,7 +60,6 @@ void platform_init()
     memset(&hwInfo, 0x00, sizeof(hwInfo));
 
     nvm_init();                      /* Initialise non volatile memory manager */
-    nvm_readCalibData(&calibration); /* Load calibration data                  */
     nvm_readHwInfo(&hwInfo);         /* Load hardware information data         */
     toneGen_init();                  /* Initialise tone generator              */
     rtc_init();                      /* Initialise RTC                         */
@@ -198,11 +196,6 @@ void platform_beepStart(uint16_t freq)
 void platform_beepStop()
 {
     toneGen_beepOff();
-}
-
-const void *platform_getCalibrationData()
-{
-    return ((const void *) &calibration);
 }
 
 const hwInfo_t *platform_getHwInfo()

@@ -220,11 +220,6 @@ void platform_beepStop()
     /* TODO */
 }
 
-const void *platform_getCalibrationData()
-{
-    return NULL;
-}
-
 const hwInfo_t *platform_getHwInfo()
 {
     return &hwInfo;

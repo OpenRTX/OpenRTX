@@ -18,7 +18,6 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
 #include <interfaces/radio.h>
 #include <interfaces/gpio.h>
 #include <calibInfo_Mod17.h>
@@ -27,7 +26,7 @@
 #include "../audio/MAX9814.h"
 
 enum  opstatus      radioStatus;   // Current operating status
-const mod17Calib_t *calData;       // Calibration data
+extern mod17Calib_t mod17CalData;       // Calibration data
 
 
 void radio_init(const rtxStatus_t *rtxState)
@@ -35,10 +34,9 @@ void radio_init(const rtxStatus_t *rtxState)
     (void) rtxState;
 
     radioStatus = OFF;
-    calData = reinterpret_cast< const mod17Calib_t * >(platform_getCalibrationData());
 
-    mcp4551_setWiper(SOFTPOT_TX, calData->tx_wiper);
-    mcp4551_setWiper(SOFTPOT_RX, calData->rx_wiper);
+    mcp4551_setWiper(SOFTPOT_TX, mod17CalData.tx_wiper);
+    mcp4551_setWiper(SOFTPOT_RX, mod17CalData.rx_wiper);
 }
 
 void radio_terminate()
@@ -77,8 +75,8 @@ void radio_enableRx()
     radioStatus = RX;
     gpio_clearPin(PTT_OUT);
 
-    mcp4551_setWiper(SOFTPOT_TX, calData->tx_wiper);
-    mcp4551_setWiper(SOFTPOT_RX, calData->rx_wiper);
+    mcp4551_setWiper(SOFTPOT_TX, mod17CalData.tx_wiper);
+    mcp4551_setWiper(SOFTPOT_RX, mod17CalData.rx_wiper);
 }
 
 void radio_enableTx()
@@ -86,9 +84,9 @@ void radio_enableTx()
     radioStatus = TX;
     gpio_setPin(PTT_OUT);
 
-    mcp4551_setWiper(SOFTPOT_TX, calData->tx_wiper);
-    mcp4551_setWiper(SOFTPOT_RX, calData->rx_wiper);
-    max9814_setGain(calData->mic_gain);
+    mcp4551_setWiper(SOFTPOT_TX, mod17CalData.tx_wiper);
+    mcp4551_setWiper(SOFTPOT_RX, mod17CalData.rx_wiper);
+    max9814_setGain(mod17CalData.mic_gain);
 }
 
 void radio_disableRtx()

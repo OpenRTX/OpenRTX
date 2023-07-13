@@ -18,8 +18,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
 #include <toneGenerator_MDx.h>
+#include <interfaces/nvmem.h>
 #include <interfaces/radio.h>
 #include <interfaces/gpio.h>
 #include <calibInfo_MDx.h>
@@ -32,9 +32,9 @@
 
 static const freq_t IF_FREQ = 49950000;  // Intermediate frequency: 49.95MHz
 
-const md3x0Calib_t *calData;             // Pointer to calibration data
 const rtxStatus_t  *config;              // Pointer to data structure with radio configuration
 
+static md3x0Calib_t calData;             // Calibration data
 bool    isVhfBand = false;               // True if rtx stage is for VHF band
 uint8_t vtune_rx  = 0;                   // Tuning voltage for RX input filter
 uint8_t txpwr_lo  = 0;                   // APC voltage for TX output power control, low power
@@ -88,11 +88,6 @@ void _setBandwidth(const enum bandwidth bw)
 
 void radio_init(const rtxStatus_t *rtxState)
 {
-    /*
-     * Load calibration data
-     */
-    calData = reinterpret_cast< const md3x0Calib_t * >(platform_getCalibrationData());
-
     config      = rtxState;
     radioStatus = OFF;
     isVhfBand   = (platform_getHwInfo()->vhf_band == 1) ? true : false;
@@ -135,6 +130,11 @@ void radio_init(const rtxStatus_t *rtxState)
     DAC->DHR12R1 = 0;
 
     /*
+     * Load calibration data
+     */
+    nvm_readCalibData(&calData);
+
+    /*
      * Enable and configure PLL
      */
     gpio_setPin(PLL_PWR);
@@ -148,8 +148,8 @@ void radio_init(const rtxStatus_t *rtxState)
     /*
      * Modulation bias settings, as per TYT firmware.
      */
-    DAC->DHR12R2 = (calData->freqAdjustMid)*4 + 0x600;
-    C5000.setModOffset(calData->freqAdjustMid);
+    DAC->DHR12R2 = (calData.freqAdjustMid)*4 + 0x600;
+    C5000.setModOffset(calData.freqAdjustMid);
 }
 
 void radio_terminate()
@@ -186,7 +186,7 @@ void radio_tuneVcxo(const int16_t vhfOffset, const int16_t uhfOffset)
      * register, as we still have to deeply understand how TYT computes
      * the values written there.
      */
-    int16_t calValue  = static_cast< int16_t >(calData->freqAdjustMid);
+    int16_t calValue  = static_cast< int16_t >(calData.freqAdjustMid);
     int16_t oscTune   = (calValue*4 + 0x600) + uhfOffset;
     oscTune           = std::max(std::min(oscTune, int16_t(4095)), int16_t(0));
     DAC->DHR12R2      = static_cast< uint16_t >(oscTune);
@@ -333,28 +333,28 @@ void radio_disableRtx()
 void radio_updateConfiguration()
 {
     // Tuning voltage for RX input filter
-    vtune_rx = interpCalParameter(config->rxFrequency, calData->rxFreq,
-                                  calData->rxSensitivity, 9);
+    vtune_rx = interpCalParameter(config->rxFrequency, calData.rxFreq,
+                                  calData.rxSensitivity, 9);
 
     // APC voltage for TX output power control
-    txpwr_lo = interpCalParameter(config->txFrequency, calData->txFreq,
-                                  calData->txLowPower, 9);
+    txpwr_lo = interpCalParameter(config->txFrequency, calData.txFreq,
+                                  calData.txLowPower, 9);
 
-    txpwr_hi = interpCalParameter(config->txFrequency, calData->txFreq,
-                                  calData->txHighPower, 9);
+    txpwr_hi = interpCalParameter(config->txFrequency, calData.txFreq,
+                                  calData.txHighPower, 9);
 
     // HR_C5000 modulation amplitude
-    const uint8_t *Ical = calData->sendIrange;
-    const uint8_t *Qcal = calData->sendQrange;
+    const uint8_t *Ical = calData.sendIrange;
+    const uint8_t *Qcal = calData.sendQrange;
 
     if(config->opMode == OPMODE_FM)
     {
-        Ical = calData->analogSendIrange;
-        Qcal = calData->analogSendQrange;
+        Ical = calData.analogSendIrange;
+        Qcal = calData.analogSendQrange;
     }
 
-    uint8_t I = interpCalParameter(config->txFrequency, calData->txFreq, Ical, 9);
-    uint8_t Q = interpCalParameter(config->txFrequency, calData->txFreq, Qcal, 9);
+    uint8_t I = interpCalParameter(config->txFrequency, calData.txFreq, Ical, 9);
+    uint8_t Q = interpCalParameter(config->txFrequency, calData.txFreq, Qcal, 9);
 
     C5000.setModAmplitude(I, Q);
 

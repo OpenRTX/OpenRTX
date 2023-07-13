@@ -150,15 +150,6 @@ void platform_beepStop();
 void platform_setBacklightLevel(uint8_t level);
 
 /**
- * This function returns a pointer to the device-specific calbration data,
- * application code has to cast it to the correct data structure.
- * WARNING: calling code must ensure that free() is never called on the returned
- * pointer!
- * @return pointer to device's calibration data.
- */
-const void *platform_getCalibrationData();
-
-/**
  * This function returns a pointer to a data structure containing all the
  * hardware information.
  * WARNING: calling code must ensure that free() is never called on the returned
