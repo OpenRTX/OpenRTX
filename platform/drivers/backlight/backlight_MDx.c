@@ -23,10 +23,37 @@
 #include <hwconfig.h>
 #include "backlight.h"
 
-#ifndef PLATFORM_MDUV3x0    /* MD-3x0 and MD-9600 */
+#if defined(PLATFORM_MDUV3x0) && defined(ENABLE_BKLIGHT_DIMMING)
+
+/*
+ * Interrupt-based software PWM for backlight dimming on MD-UV3x0.
+ * On this family of devices the GPIO for backlight control is not connected to
+ * any of the available timer compare output channels, thus making impossible to
+ * implement an hardware-based PWM.
+ * However, we provide a software-base backlight dimming for experimental purposes.
+ */
+
+/* Name of interrupt handler is mangled for C++ compatibility */
+void _Z29TIM1_TRG_COM_TIM11_IRQHandlerv()
+{
+    if(TIM11->SR & TIM_SR_CC1IF)
+    {
+        gpio_clearPin(LCD_BKLIGHT); /* Clear pin on compare match */
+    }
+
+    if(TIM11->SR & TIM_SR_UIF)
+    {
+        gpio_setPin(LCD_BKLIGHT);   /* Set pin on counter reload */
+    }
+
+    TIM11->SR = 0;
+}
+#endif
+
 
 void backlight_init()
 {
+    #ifndef PLATFORM_MDUV3x0    /* MD-3x0 and MD-9600 */
     gpio_setMode(LCD_BKLIGHT, ALTERNATE);
     gpio_setAlternateFunction(LCD_BKLIGHT, 3);
 
@@ -52,61 +79,11 @@ void backlight_init()
     TIM8->CCR1 = 0;
     TIM8->EGR  = TIM_EGR_UG;        /* Update registers */
     TIM8->CR1 |= TIM_CR1_CEN;       /* Start timer */
-}
-
-void backlight_terminate()
-{
-    /* Shut down backlight */
+    #else
     gpio_setMode(LCD_BKLIGHT, OUTPUT);
     gpio_clearPin(LCD_BKLIGHT);
 
-    /* Shut down timer */
-    RCC->APB2ENR &= ~RCC_APB2ENR_TIM8EN;
-    __DSB();
-}
-
-/*
- * This function is defined in platform.h
- */
-void platform_setBacklightLevel(uint8_t level)
-{
-    if(level > 100) level = 100;
-
-    // Convert value to 0 - 255
-    TIM8->CCR1 = (2 * level) + (level * 55)/100;
-}
-
-#elif defined(ENABLE_BKLIGHT_DIMMING)   /* MD-UV3x0 AND dimming enabled */
-
-/*
- * Interrupt-based software PWM for backlight dimming on MD-UV3x0.
- * On this family of devices the GPIO for backlight control is not connected to
- * any of the available timer compare output channels, thus making impossible to
- * implement an hardware-based PWM.
- * However, we provide a software-base backlight dimming for experimental purposes.
- */
-
-/* Name of interrupt handler is mangled for C++ compatibility */
-void _Z29TIM1_TRG_COM_TIM11_IRQHandlerv()
-{
-    if(TIM11->SR & TIM_SR_CC1IF)
-    {
-        gpio_clearPin(LCD_BKLIGHT); /* Clear pin on compare match */
-    }
-
-    if(TIM11->SR & TIM_SR_UIF)
-    {
-        gpio_setPin(LCD_BKLIGHT);   /* Set pin on counter reload */
-    }
-
-    TIM11->SR = 0;
-}
-
-void backlight_init()
-{
-    gpio_setMode(LCD_BKLIGHT, OUTPUT);
-    gpio_clearPin(LCD_BKLIGHT);
-
+    #ifdef ENABLE_BKLIGHT_DIMMING
     /*
      * Configure TIM11 for backlight PWM: Fpwm = 256Hz, 8 bit of resolution.
      * APB2 freq. is 84MHz but timer runs at twice this frequency, then:
@@ -134,14 +111,18 @@ void backlight_init()
     NVIC_ClearPendingIRQ(TIM1_TRG_COM_TIM11_IRQn);
     NVIC_SetPriority(TIM1_TRG_COM_TIM11_IRQn,15);
     NVIC_EnableIRQ(TIM1_TRG_COM_TIM11_IRQn);
+    #endif
+    #endif
 }
 
 void backlight_terminate()
 {
     /* Shut down backlight */
+    gpio_setMode(LCD_BKLIGHT, OUTPUT);
     gpio_clearPin(LCD_BKLIGHT);
 
     /* Shut down timer */
+    RCC->APB2ENR &= ~RCC_APB2ENR_TIM8EN;
     RCC->APB2ENR &= ~RCC_APB2ENR_TIM11EN;
     __DSB();
 }
@@ -151,23 +132,31 @@ void backlight_terminate()
  */
 void platform_setBacklightLevel(uint8_t level)
 {
+    if(level > 100)
+        level = 100;
+
+    uint8_t pwmLevel = (2 * level) + (level * 55)/100;    // Convert value to 0 - 255
+
+    #ifndef PLATFORM_MDUV3x0
+    TIM8->CCR1 = pwmLevel;
+    #else
     /*
-     * Little workaround for the following nasty behaviour: if CCR1 value is
-     * zero, a waveform with 99% duty cycle is generated. This is because we are
-     * emulating pwm with interrupts.
+     * If CCR1 value is zero, a waveform with 99% duty cycle is generated: to
+     * avoid this the PWM is cut off when backlight level is 1.
      */
     if(level > 1)
     {
-        if(level > 100) level = 100;
-
-        TIM11->CCR1 = (2 * level) + (level * 55)/100;
+        #ifdef ENABLE_BKLIGHT_DIMMING
+        TIM11->CCR1 = pwmLevel;
         TIM11->CR1 |= TIM_CR1_CEN;
+        #else
+        gpio_setPin(LCD_BKLIGHT);
+        #endif
     }
     else
     {
         TIM11->CR1 &= ~TIM_CR1_CEN;
         gpio_clearPin(LCD_BKLIGHT);
     }
+    #endif
 }
-
-#endif

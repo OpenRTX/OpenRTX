@@ -66,23 +66,13 @@ void platform_init()
     rtc_init();                      /* Initialise RTC                         */
     chSelector_init();               /* Initialise channel selector handler    */
     audio_init();                    /* Initialise audio management module     */
-
-    #ifdef ENABLE_BKLIGHT_DIMMING
     backlight_init();                /* Initialise backlight driver            */
-    #else
-    gpio_setMode(LCD_BKLIGHT, OUTPUT);
-    gpio_clearPin(LCD_BKLIGHT);
-    #endif
 }
 
 void platform_terminate()
 {
     /* Shut down backlight */
-    #ifdef ENABLE_BKLIGHT_DIMMING
     backlight_terminate();
-    #else
-    gpio_clearPin(LCD_BKLIGHT);
-    #endif
 
     /* Shut down LEDs */
     gpio_clearPin(GREEN_LED);
@@ -212,20 +202,7 @@ const hwInfo_t *platform_getHwInfo()
 // int8_t platform_getChSelector()
 
 /*
- * NOTE: when backligth dimming is enabled, the implementation of this API
- * function is provided in platform/drivers/backlight/backlight_MDx.c to avoid
- * an useless function call.
+ * NOTE: implementation of this API function is provided in
+ * platform/drivers/backlight/backlight_MDx.c
  */
-#ifndef ENABLE_BKLIGHT_DIMMING
-void platform_setBacklightLevel(uint8_t level)
-{
-    if(level > 1)
-    {
-        gpio_setPin(LCD_BKLIGHT);
-    }
-    else
-    {
-        gpio_clearPin(LCD_BKLIGHT);
-    }
-}
-#endif
+// void platform_setBacklightLevel(uint8_t level)
