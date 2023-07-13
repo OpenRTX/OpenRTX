@@ -195,10 +195,3 @@ const hwInfo_t *platform_getHwInfo()
 {
     return &hwInfo;
 }
-
-
-/*
- * NOTE: implementation of this API function is provided in
- * platform/drivers/backlight/backlight_GDx.c
- */
-// void platform_setBacklightLevel(uint8_t level)

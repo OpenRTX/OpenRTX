@@ -728,7 +728,7 @@ static void _ui_changeBrightness(int variation)
     if(state.settings.brightness > 100) state.settings.brightness = 100;
     if(state.settings.brightness < 5)   state.settings.brightness = 5;
 
-    platform_setBacklightLevel(state.settings.brightness);
+    display_setBacklightLevel(state.settings.brightness);
 }
 
 #ifdef SCREEN_CONTRAST
@@ -839,7 +839,7 @@ static void _ui_enterStandby()
 
     standby = true;
     redraw_needed = false;
-    platform_setBacklightLevel(0);
+    display_setBacklightLevel(0);
 }
 
 static bool _ui_exitStandby(long long now)
@@ -851,7 +851,7 @@ static bool _ui_exitStandby(long long now)
 
     standby = false;
     redraw_needed = true;
-    platform_setBacklightLevel(state.settings.brightness);
+    display_setBacklightLevel(state.settings.brightness);
     return true;
 }
 

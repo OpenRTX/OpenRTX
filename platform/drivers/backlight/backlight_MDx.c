@@ -128,9 +128,9 @@ void backlight_terminate()
 }
 
 /*
- * This function is defined in platform.h
+ * This function is defined in display.h
  */
-void platform_setBacklightLevel(uint8_t level)
+void display_setBacklightLevel(uint8_t level)
 {
     if(level > 100)
         level = 100;
@@ -144,7 +144,7 @@ void platform_setBacklightLevel(uint8_t level)
      * If CCR1 value is zero, a waveform with 99% duty cycle is generated: to
      * avoid this the PWM is cut off when backlight level is 1.
      */
-    if(level > 1)
+    if(pwmLevel > 1)
     {
         #ifdef ENABLE_BKLIGHT_DIMMING
         TIM11->CCR1 = pwmLevel;

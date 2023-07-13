@@ -22,10 +22,11 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <backlight.h>
 #include <interfaces/gpio.h>
 #include <interfaces/display.h>
 #include <interfaces/delays.h>
-#include "hwconfig.h"
+#include <hwconfig.h>
 
 /*
  * LCD framebuffer, statically allocated.
@@ -98,6 +99,8 @@ static void display_renderRow(uint8_t row)
 
 void display_init()
 {
+    backlight_init();           /* Initialise backlight driver */
+
     gpio_setMode(LCD_CS,  OUTPUT);
     gpio_setMode(LCD_RST, OUTPUT);
     gpio_setMode(LCD_RS,  OUTPUT);
@@ -129,6 +132,8 @@ void display_init()
 
 void display_terminate()
 {
+    backlight_terminate();
+
     gpio_setMode(LCD_CS,  INPUT);
     gpio_setMode(LCD_RST, INPUT);
     gpio_setMode(LCD_RS,  INPUT);
@@ -171,3 +176,9 @@ void display_setContrast(uint8_t contrast)
     sendByteToController(0x81);          /* Set Electronic Volume               */
     sendByteToController(contrast >> 2); /* Controller contrast range is 0 - 63 */
 }
+
+/*
+ * Function implemented in backlight_GDx driver
+ *
+ * void display_setBacklightLevel(uint8_t level)
+ */

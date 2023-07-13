@@ -41,12 +41,15 @@ bool inProgress;             /* Flag to signal when rendering is in progress */
 bool sdl_ready = false;      /* Flag to signal the sdl main loop is running */
 extern chan_t fb_sync;       /* Shared channel to send a frame buffer update */
 
+/* Custom SDL Event to adjust backlight */
+extern Uint32 SDL_Backlight_Event;
+
 /**
  * @internal
  * Internal helper function which fetches pixel at position (x, y) from framebuffer
  * and returns it in SDL-compatible format, which is ARGB8888.
  */
-uint32_t fetchPixelFromFb(unsigned int x, unsigned int y)
+static uint32_t fetchPixelFromFb(unsigned int x, unsigned int y)
 {
     (void) x;
     (void) y;
@@ -175,4 +178,20 @@ void *display_getFrameBuffer()
 void display_setContrast(uint8_t contrast)
 {
     printf("Setting display contrast to %d\n", contrast);
+}
+
+void display_setBacklightLevel(uint8_t level)
+{
+    // Saturate level to 100 and convert value to 0 - 255
+    if(level > 100) level = 100;
+    uint16_t value = (2 * level) + (level * 55)/100;
+
+    SDL_Event e;
+    SDL_zero(e);
+    e.type = SDL_Backlight_Event;
+    e.user.data1 = malloc(sizeof(uint8_t));
+    uint8_t *data = (uint8_t *)e.user.data1;
+    *data = ((uint8_t) value);
+
+    SDL_PushEvent(&e);
 }

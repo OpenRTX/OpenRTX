@@ -157,3 +157,8 @@ void display_setContrast(uint8_t contrast)
     gpio_setPin(LCD_CS);
     spi2_releaseDevice();
 }
+
+void display_setBacklightLevel(uint8_t level)
+{
+    (void) level;
+}

@@ -143,13 +143,6 @@ void platform_beepStart(uint16_t freq);
 void platform_beepStop();
 
 /**
- * This function sets the screen backlight to the specified level.
- * @param level: backlight level, from 0 (backlight off) to 100 (backlight at
- * full brightness).
- */
-void platform_setBacklightLevel(uint8_t level);
-
-/**
  * This function returns a pointer to a data structure containing all the
  * hardware information.
  * WARNING: calling code must ensure that free() is never called on the returned

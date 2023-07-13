@@ -109,6 +109,14 @@ bool display_renderingInProgress();
  */
 void display_setContrast(uint8_t contrast);
 
+/**
+ * Set level of display backlight.
+ * NOTE: not all the display controllers support backlight control, thus on some
+ * targets this function has no effect.
+ * @param level: display backlight level, normalised value with range 0 - 100.
+ */
+void display_setBacklightLevel(uint8_t level);
+
 #ifdef __cplusplus
 }
 #endif

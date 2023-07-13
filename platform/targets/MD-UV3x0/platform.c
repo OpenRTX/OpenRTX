@@ -66,14 +66,10 @@ void platform_init()
     rtc_init();                      /* Initialise RTC                         */
     chSelector_init();               /* Initialise channel selector handler    */
     audio_init();                    /* Initialise audio management module     */
-    backlight_init();                /* Initialise backlight driver            */
 }
 
 void platform_terminate()
 {
-    /* Shut down backlight */
-    backlight_terminate();
-
     /* Shut down LEDs */
     gpio_clearPin(GREEN_LED);
     gpio_clearPin(RED_LED);
@@ -200,9 +196,3 @@ const hwInfo_t *platform_getHwInfo()
  * platform/drivers/chSelector/chSelector_MDUV3x0.c
  */
 // int8_t platform_getChSelector()
-
-/*
- * NOTE: implementation of this API function is provided in
- * platform/drivers/backlight/backlight_MDx.c
- */
-// void platform_setBacklightLevel(uint8_t level)

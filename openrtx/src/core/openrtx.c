@@ -72,7 +72,7 @@ void openrtx_init()
     ui_drawSplashScreen(true);
     gfx_render();
     sleepFor(0u, 30u);
-    platform_setBacklightLevel(state.settings.brightness);
+    display_setBacklightLevel(state.settings.brightness);
 
     #if defined(GPS_PRESENT)
     // Detect and initialise GPS

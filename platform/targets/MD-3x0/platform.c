@@ -23,7 +23,6 @@
 #include <hwconfig.h>
 #include <string.h>
 #include <ADC1_MDx.h>
-#include <backlight.h>
 #include <calibInfo_MDx.h>
 #include <toneGenerator_MDx.h>
 #include <interfaces/rtc.h>
@@ -63,15 +62,11 @@ void platform_init()
     nvm_readHwInfo(&hwInfo);         /* Load hardware information data         */
     toneGen_init();                  /* Initialise tone generator              */
     rtc_init();                      /* Initialise RTC                         */
-    backlight_init();                /* Initialise backlight driver            */
     audio_init();                    /* Initialise audio management module     */
 }
 
 void platform_terminate()
 {
-    /* Shut down backlight */
-    backlight_terminate();
-
     /* Shut down LEDs */
     gpio_clearPin(GREEN_LED);
     gpio_clearPin(RED_LED);
@@ -202,9 +197,3 @@ const hwInfo_t *platform_getHwInfo()
 {
     return &hwInfo;
 }
-
-/*
- * NOTE: implementation of this API function is provided in
- * platform/drivers/backlight/backlight_MDx.c
- */
-// void platform_setBacklightLevel(uint8_t level)

@@ -170,3 +170,8 @@ void display_setContrast(uint8_t contrast)
 
     gpio_setPin(LCD_CS);
 }
+
+void display_setBacklightLevel(uint8_t level)
+{
+    (void) level;
+}

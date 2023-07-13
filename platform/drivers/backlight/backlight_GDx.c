@@ -49,9 +49,9 @@ void backlight_terminate()
 }
 
 /*
- * This function is defined in platform.h
+ * This function is defined in display.h
  */
-void platform_setBacklightLevel(uint8_t level)
+void display_setBacklightLevel(uint8_t level)
 {
     if(level > 100) level = 100;
 

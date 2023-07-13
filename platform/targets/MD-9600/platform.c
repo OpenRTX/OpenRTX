@@ -230,10 +230,3 @@ const hwInfo_t *platform_getHwInfo()
  * platform/drivers/chSelector/chSelector_MD9600.c
  */
 // int8_t platform_getChSelector()
-
-/*
- * NOTE: implementation of this API function is provided in
- * platform/drivers/backlight/backlight_MDx.c
- */
-// void platform_setBacklightLevel(uint8_t level)
-

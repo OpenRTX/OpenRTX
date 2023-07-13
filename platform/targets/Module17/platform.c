@@ -19,17 +19,14 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/gpio.h>
-#include <interfaces/nvmem.h>
 #include <interfaces/platform.h>
-#include <hwconfig.h>
-#include <string.h>
-#include <backlight.h>
-#include <interfaces/rtc.h>
-#include <interfaces/audio.h>
-#include <ADC1_Mod17.h>
 #include <interfaces/nvmem.h>
+#include <interfaces/audio.h>
+#include <interfaces/gpio.h>
 #include <calibInfo_Mod17.h>
+#include <ADC1_Mod17.h>
+#include <backlight.h>
+#include <hwconfig.h>
 #include <MCP4551.h>
 
 extern mod17Calib_t mod17CalData;
@@ -191,9 +188,4 @@ void platform_beepStop()
 const hwInfo_t *platform_getHwInfo()
 {
     return &hwInfo;
-}
-
-void platform_setBacklightLevel(uint8_t level)
-{
-    (void) level;
 }

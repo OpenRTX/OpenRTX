@@ -20,6 +20,7 @@
 #include <interfaces/display.h>
 #include <interfaces/delays.h>
 #include <interfaces/platform.h>
+#include <backlight.h>
 #include <hwconfig.h>
 #include <string.h>
 #include <miosix.h>
@@ -127,6 +128,9 @@ static inline __attribute__((__always_inline__)) void writeData(uint8_t val)
 
 void display_init()
 {
+    /* Initialise backlight driver */
+    backlight_init();
+
     /* Clear framebuffer, setting all pixels to 0x00 makes the screen white */
     memset(frameBuffer, 0x00, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(uint16_t));
 
@@ -430,6 +434,9 @@ void display_init()
 
 void display_terminate()
 {
+    /* Shut down backlight */
+    backlight_terminate();
+
     /* Shut off FSMC and deallocate framebuffer */
     RCC->AHB3ENR &= ~RCC_AHB3ENR_FSMCEN;
     __DSB();
@@ -537,3 +544,9 @@ void display_setContrast(uint8_t contrast)
     /* This controller does not support contrast regulation */
     (void) contrast;
 }
+
+/*
+ * Function implemented in backlight_MDx driver
+ *
+ * void display_setBacklightLevel(uint8_t level)
+ */

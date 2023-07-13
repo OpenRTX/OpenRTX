@@ -20,10 +20,7 @@
 #include <interfaces/nvmem.h>
 #include <stdio.h>
 #include "emulator.h"
-#include <SDL2/SDL.h>
 
-/* Custom SDL Event to adjust backlight */
-extern Uint32 SDL_Backlight_Event;
 
 static const hwInfo_t hwInfo =
 {
@@ -47,22 +44,6 @@ void platform_terminate()
 {
     printf("Platform terminate\n");
     exit(0);
-}
-
-void platform_setBacklightLevel(uint8_t level)
-{
-    // Saturate level to 100 and convert value to 0 - 255
-    if(level > 100) level = 100;
-    uint16_t value = (2 * level) + (level * 55)/100;
-
-    SDL_Event e;
-    SDL_zero(e);
-    e.type = SDL_Backlight_Event;
-    e.user.data1 = malloc(sizeof(uint8_t));
-    uint8_t *data = (uint8_t *)e.user.data1;
-    *data = ((uint8_t) value);
-
-    SDL_PushEvent(&e);
 }
 
 // Simulate a fully charged lithium battery
