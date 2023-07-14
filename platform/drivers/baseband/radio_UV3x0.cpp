@@ -18,6 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <interfaces/delays.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/radio.h>
 #include <interfaces/gpio.h>
@@ -234,9 +235,15 @@ void radio_enableTx()
             break;
     }
 
+    //
+    // FIXME: workaround to fix a small carrier-only gap which appears at the
+    // beginning of each transmission. This problem is particularly evident in
+    // M17 mode because it causes the truncation of the preamble sequence.
+    //
+    sleepFor(0, 50);
+
     at1846s.setFuncMode(AT1846S_FuncMode::TX);
 
-    gpio_setPin(PA_EN_1);
 
     if(currTxBand == BND_VHF)
     {
@@ -247,6 +254,7 @@ void radio_enableTx()
         gpio_setPin(PA_SEL_SW);
     }
 
+    gpio_setPin(PA_EN_1);
     gpio_setPin(PA_EN_2);
 
     if(config->txToneEn)
