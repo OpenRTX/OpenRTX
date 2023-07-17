@@ -2,11 +2,11 @@
     chosen {
         zephyr,console = &usb_serial;
         zephyr,shell-uart = &usb_serial;
+        zephyr,display = &ssd1306;
     };
 
     aliases {
         uart-0 = &usb_serial;
-        display = &ssd1306;
     };
 };
 
@@ -41,7 +41,7 @@
         segment-offset  = <2>;
         page-offset     = <0>;
         display-offset  = <0>;
-        multiplex-ratio = <63>;
+        multiplex-ratio = <0x3F>;
         prechargep      = <0x22>;
 
         segment-remap;

@@ -1,6 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
- *                                Niccolò Izzo IU2KIN,                     *
+ *                                Niccolò Izzo IU2KIN                      *
  *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -17,65 +17,32 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdio.h>
-#include <time.h>
-#include <interfaces/rtc.h>
+#ifndef HWCONFIG_H
+#define HWCONFIG_H
 
-void rtc_initialize()
-{
-    printf("rtc_initalize()\n");
-}
+/*
+ * This header file is generic for all the Zephyr-based platforms,
+ * further specialization is performed in the devicetree.
+ */
 
-void rtc_terminate()
-{
-    printf("rtc_shutdown()\n");
-}
+/*
+ * In Zephyr platforms display properties are encoded in the devicetree
+ */
+#if defined(PLATFORM_ZEPHYR)
+#include <zephyr/device.h>
+#define DISPLAY DT_CHOSEN(zephyr_display)
+#define SCREEN_WIDTH DT_PROP(DISPLAY, width)
+#define SCREEN_HEIGHT DT_PROP(DISPLAY, height)
+#endif
 
-void rtc_setTime(datetime_t t)
-{
-    (void) t;
+/*
+ * Pixel format is computed at compile-time
+ */
+#if defined(CONFIG_SSD1306)
+#define PIX_FMT_BW
+#endif
 
-    printf("rtc_setTime(t)\n");
-}
+// TODO: add battery type in devicetree
+#define BAT_NONE
 
-void rtc_setHour(uint8_t hours, uint8_t minutes, uint8_t seconds)
-{
-    printf("rtc_setHour(%d, %d, %d)\n", hours, minutes, seconds);
-}
-
-void rtc_setDate(uint8_t date, uint8_t month, uint8_t year)
-{
-    printf("rtc_setDate(%d, %d, %d)\n", date, month, year);
-}
-
-datetime_t rtc_getTime()
-{
-    datetime_t t;
-
-    //time_t rawtime;
-    //struct tm * timeinfo;
-    //time ( &rawtime );
-    //timeinfo = gmtime ( &rawtime );
-    ////radio expects time to be TZ-less, so use gmtime instead of localtime.
-
-    //t.hour = timeinfo->tm_hour;
-    //t.minute = timeinfo->tm_min;
-    //t.second = timeinfo->tm_sec;
-    //t.day = timeinfo->tm_wday;
-    //t.date = timeinfo->tm_mday;
-    //t.month = timeinfo->tm_mon + 1;
-    //// Only last two digits of the year are supported in OpenRTX
-    //t.year = (timeinfo->tm_year + 1900) % 100;
-
-    return t;
-}
-
-void rtc_dstSet()
-{
-    printf("rtc_dstSet()\n");
-}
-
-void rtc_dstClear()
-{
-    printf("rtc_dstClear()\n");
-}
+#endif /* HWCONFIG_H */

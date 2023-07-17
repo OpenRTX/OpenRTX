@@ -31,6 +31,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <math.h>
+#include <zephyr/kernel.h>
 
 #include <gfxfont.h>
 #include <TomThumb.h>
@@ -155,8 +156,6 @@ void gfx_init()
     buf = (PIXEL_T *)(display_getFrameBuffer());
     initialized = 1;
 
-    display_unlock();
-
 // Calculate framebuffer size
 #ifdef PIX_FMT_RGB565
     fbSize = SCREEN_HEIGHT * SCREEN_WIDTH * sizeof(PIXEL_T);
@@ -193,7 +192,6 @@ bool gfx_renderingInProgress()
 
 void gfx_clearRows(uint8_t startRow, uint8_t endRow)
 {
-    display_unlock();
     if(!initialized) return;
     if(endRow < startRow) return;
     uint16_t start = startRow * SCREEN_WIDTH * sizeof(PIXEL_T);
@@ -205,7 +203,6 @@ void gfx_clearRows(uint8_t startRow, uint8_t endRow)
 void gfx_clearScreen()
 {
     if(!initialized) return;
-    display_unlock();
     // Set the whole framebuffer to 0x00 = make the screen black
     memset(buf, 0x00, fbSize);
 }
@@ -213,7 +210,6 @@ void gfx_clearScreen()
 void gfx_fillScreen(color_t color)
 {
     if(!initialized) return;
-    display_unlock();
     for(int16_t y = 0; y < SCREEN_HEIGHT; y++)
     {
         for(int16_t x = 0; x < SCREEN_WIDTH; x++)
@@ -227,7 +223,6 @@ void gfx_fillScreen(color_t color)
 inline void gfx_setPixel(point_t pos, color_t color)
 {
     if(!initialized) return;
-    display_unlock();
     if (pos.x >= SCREEN_WIDTH || pos.y >= SCREEN_HEIGHT 
             || pos.x < 0 || pos.y < 0)
         return; // off the screen
@@ -264,7 +259,6 @@ inline void gfx_setPixel(point_t pos, color_t color)
 void gfx_drawLine(point_t start, point_t end, color_t color)
 {
     if(!initialized) return;
-    display_unlock();
     int16_t steep = abs(end.y - start.y) > abs(end.x - start.x);
 
     if (steep)
@@ -325,7 +319,6 @@ void gfx_drawLine(point_t start, point_t end, color_t color)
 void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color, bool fill)
 {
     if(!initialized) return;
-    display_unlock();
     if(width == 0) return;
     if(height == 0) return;
     uint16_t x_max = start.x + width - 1;
@@ -351,7 +344,6 @@ void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color,
 
 void gfx_drawCircle(point_t start, uint16_t r, color_t color)
 {
-    display_unlock();
     int16_t f     = 1 - r;
     int16_t ddF_x = 1;
     int16_t ddF_y = -2 * r;
@@ -411,14 +403,12 @@ void gfx_drawCircle(point_t start, uint16_t r, color_t color)
 
 void gfx_drawHLine(int16_t y, uint16_t height, color_t color)
 {
-    display_unlock();
     point_t start = {0, y};
     gfx_drawRect(start, SCREEN_WIDTH, height, color, 1);
 }
 
 void gfx_drawVLine(int16_t x, uint16_t width, color_t color)
 {
-    display_unlock();
     point_t start = {x, 0};
     gfx_drawRect(start, width, SCREEN_HEIGHT, color, 1);
 }
@@ -475,7 +465,6 @@ uint8_t gfx_getFontHeight(fontSize_t size)
 point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
                         color_t color, const char *buf)
 {
-    display_unlock();
     GFXfont f = fonts[size];
 
     size_t len = strlen(buf);
@@ -573,7 +562,6 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
 point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment,
                   color_t color, const char *fmt, ... )
 {
-    display_unlock();
     // Get format string and arguments from var char
     va_list ap;
     va_start(ap, fmt);
@@ -587,7 +575,6 @@ point_t gfx_printLine(uint8_t cur, uint8_t tot, int16_t startY, int16_t endY,
                       int16_t startX, fontSize_t size, textAlign_t alignment,
                       color_t color, const char* fmt, ... )
 {
-    display_unlock();
     // Get format string and arguments from var char
     va_list ap;
     va_start(ap, fmt);
@@ -614,7 +601,6 @@ point_t gfx_printLine(uint8_t cur, uint8_t tot, int16_t startY, int16_t endY,
 // Print an error message to the center of the screen, surronded by a red (when possible) box
 void gfx_printError(const char *text, fontSize_t size)
 {
-    display_unlock();
     // 3 px box padding
     uint16_t box_padding = 16;
     color_t white = {255, 255, 255, 255};
@@ -656,7 +642,6 @@ void gfx_printError(const char *text, fontSize_t size)
 void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
                                                     uint8_t percentage)
 {
-    display_unlock();
     color_t white =  {255, 255, 255, 255};
     color_t black =  {0,   0,   0  , 255};
 
@@ -738,7 +723,6 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
 void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
                                                    float squelch, color_t color)
 {
-    display_unlock();
     color_t white =  {255, 255, 255, 255};
     color_t yellow = {250, 180, 19 , 255};
     color_t red =    {255, 0,   0  , 255};
@@ -813,7 +797,6 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
 void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, float rssi,
                          uint8_t level)
 {
-    display_unlock();
     color_t red =    {255, 0,   0  , 255};
     color_t green =  {0,   255,   0, 255};
     color_t white =  {255, 255, 255, 255};
@@ -896,7 +879,6 @@ void gfx_drawGPSgraph(point_t start,
     color_t white =  {255, 255, 255, 255};
     color_t yellow = {250, 180, 19 , 255};
 
-    display_unlock();
     // SNR Bars and satellite identifiers
     uint8_t bar_width = (width - 26) / 12;
     uint8_t bar_height = 1;
@@ -935,7 +917,6 @@ void gfx_drawGPScompass(point_t start,
     color_t black =  {  0,   0,   0, 255};
     color_t yellow = {250, 180, 19 , 255};
 
-    display_unlock();
     // Compass circle
     point_t circle_pos = start;
     circle_pos.x += radius + 1;
@@ -970,7 +951,6 @@ void gfx_drawGPScompass(point_t start,
 void gfx_plotData(point_t start, uint16_t width, uint16_t height,
                   const int16_t *data, size_t len)
 {
-    display_unlock();
     uint16_t horizontal_pos = start.x;
     color_t white = {255, 255, 255, 255};
     point_t prev_pos = {0, 0};

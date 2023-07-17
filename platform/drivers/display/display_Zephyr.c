@@ -30,55 +30,67 @@
 #include <zephyr/device.h>
 #include <zephyr/drivers/display.h>
 
-const struct device *display_dev;
-size_t fb_size = 0;
-static uint8_t *frameBuffer;
+/*
+ * LCD framebuffer, statically allocated and placed in the "large" RAM block
+ * starting at 0x20000000.
+ * Pixel format is black and white, one bit per pixel.
+ */
+#define FB_SIZE ((SCREEN_HEIGHT * SCREEN_WIDTH) / 8 + 1)
+static uint8_t frameBuffer[FB_SIZE];
+
+const struct device *displayDev;
+const struct display_buffer_descriptor displayBufDesc = {
+    FB_SIZE,
+    SCREEN_WIDTH,
+    SCREEN_HEIGHT,
+    SCREEN_WIDTH,
+};
 
 void display_init()
 {
     // Get display handle and framebuffer pointer
-    display_dev = DEVICE_DT_GET(DT_ALIAS(display));
-    frameBuffer = display_get_framebuffer(display_dev);
-    struct display_capabilities display_cap;
-    display_get_capabilities(display_dev, &display_cap);
-    fb_size = DISPLAY_BITS_PER_PIXEL(display_cap.current_pixel_format) *
-              display_cap.x_resolution * display_cap.y_resolution / 8;
-    // Blank display to make framebuffer accessible
-    display_blanking_on(display_dev);
-    // Clear framebuffer, setting all pixels to 0x00 makes the screen white
-    memset(frameBuffer, 0x00, fb_size);
-    // Display framebuffer
-    display_blanking_off(display_dev);
+    displayDev = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
+    // Clear framebuffer, setting all pixels to 0x00 makes the screen black
+    memset(&frameBuffer, 0x00, FB_SIZE);
+    display_write(displayDev, 0, 0, &displayBufDesc, frameBuffer);
 }
 
 void display_terminate()
 {
-    // Clear display content
-    display_blanking_on(display_dev);
-    // Clear framebuffer, setting all pixels to 0x00 makes the screen white
-    memset(frameBuffer, 0x00, fb_size);
-    // Display framebuffer
-    display_blanking_off(display_dev);
-}
-
-void display_unlockRows(uint8_t startRow, uint8_t endRow)
-{
-    display_blanking_on(display_dev);
-}
-
-void display_unlock()
-{
-    display_unlockRows(0, SCREEN_HEIGHT);
+    // Nothing to do here
+    ;
 }
 
 void display_renderRows(uint8_t startRow, uint8_t endRow)
 {
-    display_blanking_off(display_dev);
+    // Only complete rendering is supported
+    display_render();
 }
 
 void display_render()
 {
-    display_renderRows(0, SCREEN_HEIGHT);
+#if defined(CONFIG_SSD1306)
+
+#define ROW_HEIGHT 8
+    /*
+     * \internal
+     * Send one row of pixels to the display.
+     * Pixels in framebuffer are stored "by rows", while display needs data to be
+     * sent "by columns": this function performs the needed conversion.
+     */
+    static uint8_t shadowBuffer[FB_SIZE] = { 0 };
+    for(uint8_t y = 0; y < SCREEN_HEIGHT; y++)
+    {
+        for(uint8_t x = 0; x < SCREEN_WIDTH; x++)
+        {
+            size_t cell = x / 8 + y * (SCREEN_WIDTH / ROW_HEIGHT);
+            bool pixel = frameBuffer[cell] & (1 << (x % 8));
+            if (pixel)
+                shadowBuffer[x + y / 8 * SCREEN_WIDTH] |= 1 << (y % 8);
+        }
+    }
+#endif
+    display_write(displayDev, 0, 0, &displayBufDesc, shadowBuffer);
 }
 
 bool display_renderingInProgress()
@@ -93,5 +105,5 @@ void *display_getFrameBuffer()
 
 void display_setContrast(uint8_t contrast)
 {
-    display_set_contrast(display_dev, contrast);
+    display_set_contrast(displayDev, contrast);
 }

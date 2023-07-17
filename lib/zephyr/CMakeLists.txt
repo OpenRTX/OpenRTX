@@ -9,10 +9,6 @@ target_compile_definitions(app
     PLATFORM_ZEPHYR
     GIT_VERSION="zephyr"
     FONT_UBUNTU_REGULAR
-    # TODO: in the future this should be specified in the device tree
-    SCREEN_WIDTH=128
-    SCREEN_HEIGHT=64
-    PIX_FMT_BW=
     VP_USE_FILESYSTEM
     CODEC2_MODE_EN_DEFAULT=0
     CODEC2_MODE_3200_EN=1
@@ -30,8 +26,7 @@ target_include_directories(app
     ../../subprojects/codec2
     ../../subprojects/codec2/src
 
-    ../../platform/targets/linux
-    ../../platform/targets/linux/emulator
+    ../../platform/targets/Zephyr
 
     ../../openrtx/include
     ../../openrtx/include/rtx
