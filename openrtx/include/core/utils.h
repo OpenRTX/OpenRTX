@@ -61,7 +61,7 @@ float dBmToWatt(const uint8_t n);
  * \internal Utility function to convert 4 byte BCD values into a 32-bit
  * unsigned integer ones.
  */
-uint32_t bcd2bin(uint32_t bcd);
+uint32_t bcdToBin(uint32_t bcd);
 
 #ifdef __cplusplus
 }

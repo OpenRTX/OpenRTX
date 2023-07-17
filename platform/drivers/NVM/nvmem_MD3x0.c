@@ -86,13 +86,13 @@ void nvm_readCalibData(void *buf)
 
     /*
      * Ugly quirk: frequency stored in calibration data is divided by ten, so,
-     * after bcd2bin conversion we have something like 40'135'000. To ajdust
+     * after bcdToBin conversion we have something like 40'135'000. To ajdust
      * things, frequency has to be multiplied by ten.
      */
     for(uint8_t i = 0; i < 9; i++)
     {
-        calib->rxFreq[i] = ((freq_t) bcd2bin(freqs[2*i])) * 10;
-        calib->txFreq[i] = ((freq_t) bcd2bin(freqs[2*i+1])) * 10;
+        calib->rxFreq[i] = ((freq_t) bcdToBin(freqs[2*i])) * 10;
+        calib->txFreq[i] = ((freq_t) bcdToBin(freqs[2*i+1])) * 10;
     }
 }
 
@@ -122,8 +122,8 @@ void nvm_readHwInfo(hwInfo_t *info)
     }
 
     /* These devices are single-band only, either VHF or UHF. */
-    freqMin = ((uint16_t) bcd2bin(freqMin))/10;
-    freqMax = ((uint16_t) bcd2bin(freqMax))/10;
+    freqMin = ((uint16_t) bcdToBin(freqMin))/10;
+    freqMax = ((uint16_t) bcdToBin(freqMax))/10;
 
     if(freqMin < 200)
     {

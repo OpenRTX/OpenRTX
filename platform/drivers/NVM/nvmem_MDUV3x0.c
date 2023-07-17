@@ -71,8 +71,8 @@ void nvm_readCalibData(void *buf)
 
     for(uint8_t i = 0; i < 9; i++)
     {
-        calib->uhfCal.rxFreq[i] = ((freq_t) bcd2bin(freqs[2*i]));
-        calib->uhfCal.txFreq[i] = ((freq_t) bcd2bin(freqs[2*i+1]));
+        calib->uhfCal.rxFreq[i] = ((freq_t) bcdToBin(freqs[2*i]));
+        calib->uhfCal.txFreq[i] = ((freq_t) bcdToBin(freqs[2*i+1]));
     }
 
     /* VHF-band calibration data */
@@ -99,8 +99,8 @@ void nvm_readCalibData(void *buf)
 
     for(uint8_t i = 0; i < 5; i++)
     {
-        calib->vhfCal.rxFreq[i] = ((freq_t) bcd2bin(freqs[2*i]));
-        calib->vhfCal.txFreq[i] = ((freq_t) bcd2bin(freqs[2*i+1]));
+        calib->vhfCal.rxFreq[i] = ((freq_t) bcdToBin(freqs[2*i]));
+        calib->vhfCal.txFreq[i] = ((freq_t) bcdToBin(freqs[2*i+1]));
     }
 }
 
@@ -133,10 +133,10 @@ void nvm_readHwInfo(hwInfo_t *info)
         if(info->name[i] == 0xFF) info->name[i] = '\0';
     }
 
-    info->vhf_minFreq = ((uint16_t) bcd2bin(vhf_freqMin))/10;
-    info->vhf_maxFreq = ((uint16_t) bcd2bin(vhf_freqMax))/10;
-    info->uhf_minFreq = ((uint16_t) bcd2bin(uhf_freqMin))/10;
-    info->uhf_maxFreq = ((uint16_t) bcd2bin(uhf_freqMax))/10;
+    info->vhf_minFreq = ((uint16_t) bcdToBin(vhf_freqMin))/10;
+    info->vhf_maxFreq = ((uint16_t) bcdToBin(vhf_freqMax))/10;
+    info->uhf_minFreq = ((uint16_t) bcdToBin(uhf_freqMin))/10;
+    info->uhf_maxFreq = ((uint16_t) bcdToBin(uhf_freqMax))/10;
     info->vhf_band = 1;
     info->uhf_band = 1;
     info->hw_version = lcdInfo & 0x03;
