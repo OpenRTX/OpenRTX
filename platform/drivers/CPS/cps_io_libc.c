@@ -296,7 +296,7 @@ int cps_readBankHeader(bankHdr_t *b_header, uint16_t pos)
     return 0;
 }
 
-int32_t cps_readBankData(uint16_t bank_pos, uint16_t pos)
+int cps_readBankData(uint16_t bank_pos, uint16_t pos)
 {
     cps_header_t header = { 0 };
     if (_readHeader(&header))

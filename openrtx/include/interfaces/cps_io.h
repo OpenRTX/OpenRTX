@@ -87,7 +87,7 @@ int cps_readBankHeader(bankHdr_t *b_header, uint16_t pos);
  * @param pos: position of the channel index inside the bank.
  * @return the retrieved channel index on success, -1 on failure
  */
-int32_t cps_readBankData(uint16_t bank_pos, uint16_t pos);
+int cps_readBankData(uint16_t bank_pos, uint16_t pos);
 
 /**
  * Overwrite one contact to the codeplug stored in nonvolatile memory.
