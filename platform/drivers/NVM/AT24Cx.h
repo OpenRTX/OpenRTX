@@ -45,7 +45,18 @@ void AT24Cx_terminate();
  * @param addr: start address for read operation.
  * @param buf: pointer to a buffer where data is written to.
  * @param len: number of bytes to read.
+ * @return zero on success, negative errno code on fail.
  */
-void AT24Cx_readData(uint32_t addr, void *buf, size_t len);
+int AT24Cx_readData(uint32_t addr, void *buf, size_t len);
+
+/**
+ * Write data to EEPROM memory.
+ *
+ * @param addr: start address for write operation.
+ * @param buf: pointer to the data to be written.
+ * @param len: number of bytes to write.
+ * @return zero on success, negative errno code on fail.
+ */
+int AT24Cx_writeData(uint32_t addr, const void *buf, size_t len);
 
 #endif /* AT24Cx_H */

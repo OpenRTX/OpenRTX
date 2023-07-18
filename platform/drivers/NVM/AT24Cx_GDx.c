@@ -18,14 +18,15 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include "AT24Cx.h"
 #include <peripherals/gpio.h>
 #include <interfaces/delays.h>
-#include <hwconfig.h>
 #include <stdint.h>
+#include <string.h>
 #include <I2C0.h>
+#include "AT24Cx.h"
 
-static const uint8_t devAddr = 0xA0;    /* EEPROM I2C address */
+static const uint8_t DEV_ADDR  = 0xA0;    /* EEPROM I2C address */
+static const size_t  PAGE_SIZE = 128;
 
 void AT24Cx_init()
 {
@@ -40,7 +41,7 @@ void AT24Cx_terminate()
 
 }
 
-void AT24Cx_readData(uint32_t addr, void* buf, size_t len)
+int AT24Cx_readData(uint32_t addr, void* buf, size_t len)
 {
     uint16_t a = __builtin_bswap16((uint16_t) addr);
 
@@ -50,9 +51,48 @@ void AT24Cx_readData(uint32_t addr, void* buf, size_t len)
      */
     i2c0_lockDeviceBlocking();
 
-    i2c0_write(devAddr, &a, 2, false);
+    i2c0_write(DEV_ADDR, &a, 2, false);
     delayUs(10);
-    i2c0_read(devAddr, buf, len);
+    i2c0_read(DEV_ADDR, buf, len);
 
     i2c0_releaseDevice();
+
+    return 0;
 }
+
+int AT24Cx_writeData(uint32_t addr, const void *buf, size_t len)
+{
+    size_t  toWrite;
+    uint8_t writeBuf[PAGE_SIZE + 2];
+
+    /*
+     * On GDx devices the I2C bus is shared between the EEPROM and the AT1846S,
+     * so we have to acquire exclusive ownership before exchanging data
+     */
+    i2c0_lockDeviceBlocking();
+
+    while(len > 0)
+    {
+        toWrite = len;
+        if(toWrite >= PAGE_SIZE)
+            toWrite = PAGE_SIZE;
+
+        writeBuf[0] = (addr >> 8) & 0xFF;   /* High address byte */
+        writeBuf[1] = (addr & 0xFF);        /* Low address byte  */
+        memcpy(&writeBuf[2], buf, toWrite); /* Data              */
+
+        i2c0_write(DEV_ADDR, writeBuf, toWrite + 2, true);
+
+        len  -= toWrite;
+        buf   = ((const uint8_t *) buf) + toWrite;
+        addr += toWrite;
+
+        /* Wait for the write cycle to end (max 5ms as per datasheet) */
+        sleepFor(0, 5);
+    }
+
+    i2c0_releaseDevice();
+
+    return 0;
+}
+
