@@ -897,7 +897,7 @@ bool _ui_drawMacroMenu()
             gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
                       color_white, "          ");
             gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
-                      yellow_fab413, "2       ");
+                      yellow_fab413, "2");
         }
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                   yellow_fab413, "3        ");
