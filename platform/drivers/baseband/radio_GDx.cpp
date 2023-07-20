@@ -220,6 +220,11 @@ void radio_enableTx()
         at1846s.enableTxCtcss(config->txTone);
     }
 
+    if (config->toneEn)
+    {
+        at1846s.enableTone(17500);
+    }
+
     radioStatus = TX;
 }
 
@@ -237,6 +242,7 @@ void radio_disableRtx()
         DAC0->DAT[0].DATL = 0;
     }
 
+    at1846s.disableTone();
     at1846s.disableCtcss();
     at1846s.setFuncMode(AT1846S_FuncMode::OFF);
     radioStatus = OFF;
