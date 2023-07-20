@@ -144,29 +144,6 @@ void *main_thread(void *arg)
             state.devStatus = SHUTDOWN;
         pthread_mutex_unlock(&state_mutex);
 
-        // Handle external flash backup/restore
-        #if !defined(PLATFORM_LINUX) && !defined(PLATFORM_MOD17)
-        if(state.backup_eflash)
-        {
-            eflash_dump();
-
-            pthread_mutex_lock(&state_mutex);
-            state.backup_eflash = false;
-            state.devStatus     = SHUTDOWN;
-            pthread_mutex_unlock(&state_mutex);
-        }
-
-        if(state.restore_eflash)
-        {
-            eflash_restore();
-
-            pthread_mutex_lock(&state_mutex);
-            state.restore_eflash = false;
-            state.devStatus      = SHUTDOWN;
-            pthread_mutex_unlock(&state_mutex);
-        }
-        #endif
-
         // Run GPS task
         #if defined(GPS_PRESENT) && !defined(MD3x0_ENABLE_DBG)
         gps_task();

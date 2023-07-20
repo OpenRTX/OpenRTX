@@ -130,7 +130,6 @@ const char *menu_items[] =
     "GPS",
 #endif
     "Settings",
-    "Backup & Restore",
     "Info",
     "About"
 };
@@ -1601,9 +1600,6 @@ void ui_updateFSM(bool *sync_rtx)
 #endif
                         case M_SETTINGS:
                             state.ui_screen = MENU_SETTINGS;
-                            break;
-                        case M_BACKUP_RESTORE:
-                            state.ui_screen = MENU_BACKUP_RESTORE;
                             break;
                         case M_INFO:
                             state.ui_screen = MENU_INFO;
