@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <backlight.h>
-#include <interfaces/gpio.h>
+#include <peripherals/gpio.h>
 #include <interfaces/display.h>
 #include <interfaces/delays.h>
 #include <hwconfig.h>

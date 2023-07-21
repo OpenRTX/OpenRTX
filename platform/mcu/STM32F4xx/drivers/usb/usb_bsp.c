@@ -30,7 +30,7 @@
 #include "usb_bsp.h"
 #include "usbd_conf.h"
 #include "stm32f4xx.h"
-#include <interfaces/gpio.h>
+#include <peripherals/gpio.h>
 #include <interfaces/delays.h>
 
 extern USB_OTG_CORE_HANDLE           USB_OTG_dev;

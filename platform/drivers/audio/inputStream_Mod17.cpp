@@ -21,7 +21,7 @@
 #include <kernel/scheduler/scheduler.h>
 #include <interfaces/audio_stream.h>
 #include <toneGenerator_MDx.h>
-#include <interfaces/gpio.h>
+#include <peripherals/gpio.h>
 #include <hwconfig.h>
 #include <stdbool.h>
 #include <miosix.h>

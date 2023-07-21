@@ -16,7 +16,7 @@
  ***************************************************************************/
 
 #include "stm32f4xx.h"
-#include <interfaces/gpio.h>
+#include <peripherals/gpio.h>
 
 void gpio_setMode(void *port, uint8_t pin, enum Mode mode)
 {

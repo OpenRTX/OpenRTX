@@ -16,7 +16,6 @@
  ***************************************************************************/
 
 #include <interfaces/platform.h>
-#include <interfaces/gpio.h>
 #include <interfaces/nvmem.h>
 #include <stdio.h>
 #include "emulator.h"

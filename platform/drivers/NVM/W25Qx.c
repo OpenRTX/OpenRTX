@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <hwconfig.h>
-#include <interfaces/gpio.h>
+#include <peripherals/gpio.h>
 #include <interfaces/delays.h>
 
 #define CMD_WRITE 0x02   /* Read data              */

@@ -22,7 +22,7 @@
  ***************************************************************************/
 
 #include <kernel/scheduler/scheduler.h>
-#include <interfaces/gpio.h>
+#include <peripherals/gpio.h>
 #include <kernel/queue.h>
 #include <miosix.h>
 #include "USART3.h"

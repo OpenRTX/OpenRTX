@@ -21,7 +21,7 @@
 #include <interfaces/platform.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/audio.h>
-#include <interfaces/gpio.h>
+#include <peripherals/gpio.h>
 #include <calibInfo_GDx.h>
 #include <ADC0_GDx.h>
 #include <string.h>

@@ -29,7 +29,7 @@
 #include <kernel/sync.h>
 #include <hwconfig.h>
 
-#include <interfaces/gpio.h>
+#include <peripherals/gpio.h>
 
 namespace miosix
 {

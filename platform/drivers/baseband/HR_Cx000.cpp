@@ -19,7 +19,7 @@
  ***************************************************************************/
 
 #include <interfaces/delays.h>
-#include <interfaces/gpio.h>
+#include <peripherals/gpio.h>
 #include <type_traits>
 #include <hwconfig.h>
 #include "HR_Cx000.h"

@@ -19,7 +19,7 @@
  ***************************************************************************/
 
 #include <interfaces/delays.h>
-#include <interfaces/gpio.h>
+#include <peripherals/gpio.h>
 #include <hwconfig.h>
 #include "HR_C5000.h"
 

@@ -18,7 +18,7 @@
  ***************************************************************************/
 
 #include <interfaces/platform.h>
-#include <interfaces/gpio.h>
+#include <peripherals/gpio.h>
 #include <hwconfig.h>
 #include <string.h>
 #include <ADC1_MDx.h>

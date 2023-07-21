@@ -20,7 +20,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include <interfaces/gpio.h>
+#include <peripherals/gpio.h>
 #include <interfaces/delays.h>
 #include <interfaces/keyboard.h>
 #include <interfaces/platform.h>

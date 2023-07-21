@@ -18,7 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/gpio.h>
+#include <peripherals/gpio.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>

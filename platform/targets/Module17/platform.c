@@ -22,7 +22,7 @@
 #include <interfaces/platform.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/audio.h>
-#include <interfaces/gpio.h>
+#include <peripherals/gpio.h>
 #include <calibInfo_Mod17.h>
 #include <ADC1_Mod17.h>
 #include <backlight.h>

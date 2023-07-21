@@ -19,7 +19,7 @@
  ***************************************************************************/
 
 #include <interfaces/delays.h>
-#include <interfaces/gpio.h>
+#include <peripherals/gpio.h>
 #include <peripherals/gps.h>
 #include <hwconfig.h>
 #include <string.h>

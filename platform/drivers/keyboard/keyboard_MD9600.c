@@ -22,7 +22,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <interfaces/gpio.h>
+#include <peripherals/gpio.h>
 #include <interfaces/delays.h>
 #include <interfaces/keyboard.h>
 #include <interfaces/platform.h>

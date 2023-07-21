@@ -19,7 +19,7 @@
  ***************************************************************************/
 
 #include <interfaces/radio.h>
-#include <interfaces/gpio.h>
+#include <peripherals/gpio.h>
 #include <calibInfo_Mod17.h>
 #include <hwconfig.h>
 #include <MCP4551.h>

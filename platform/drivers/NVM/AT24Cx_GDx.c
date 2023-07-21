@@ -19,7 +19,7 @@
  ***************************************************************************/
 
 #include "AT24Cx.h"
-#include <interfaces/gpio.h>
+#include <peripherals/gpio.h>
 #include <interfaces/delays.h>
 #include <hwconfig.h>
 #include <stdint.h>

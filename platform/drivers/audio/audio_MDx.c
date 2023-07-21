@@ -21,7 +21,7 @@
 #include <interfaces/delays.h>
 #include <interfaces/audio.h>
 #include <interfaces/radio.h>
-#include <interfaces/gpio.h>
+#include <peripherals/gpio.h>
 #include <hwconfig.h>
 
 #define PATH(x,y) ((x << 4) | y)

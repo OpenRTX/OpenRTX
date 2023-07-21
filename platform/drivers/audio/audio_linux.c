@@ -19,7 +19,7 @@
  ***************************************************************************/
 
 #include <interfaces/audio.h>
-#include <interfaces/gpio.h>
+#include <peripherals/gpio.h>
 #include <hwconfig.h>
 
 
