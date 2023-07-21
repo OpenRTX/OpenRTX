@@ -18,7 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/gps.h>
+#include <peripherals/gps.h>
 #include <interfaces/delays.h>
 #include <sys/time.h>
 #include <hwconfig.h>

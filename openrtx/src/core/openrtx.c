@@ -23,7 +23,7 @@
 #include <interfaces/display.h>
 #include <interfaces/delays.h>
 #include <interfaces/cps_io.h>
-#include <interfaces/gps.h>
+#include <peripherals/gps.h>
 #include <voicePrompts.h>
 #include <graphics.h>
 #include <openrtx.h>

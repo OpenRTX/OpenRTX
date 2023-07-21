@@ -35,7 +35,7 @@
 #include <input.h>
 #include <backup.h>
 #ifdef GPS_PRESENT
-#include <interfaces/gps.h>
+#include <peripherals/gps.h>
 #include <gps.h>
 #endif
 #include <voicePrompts.h>

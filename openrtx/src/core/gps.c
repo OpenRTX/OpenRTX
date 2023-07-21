@@ -18,7 +18,7 @@
  ***************************************************************************/
 
 #include <interfaces/platform.h>
-#include <interfaces/gps.h>
+#include <peripherals/gps.h>
 #include <gps.h>
 #include <minmea.h>
 #include <stdio.h>

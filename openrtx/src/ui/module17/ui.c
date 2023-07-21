@@ -26,9 +26,6 @@
 #include <interfaces/display.h>
 #include <interfaces/cps_io.h>
 #include <interfaces/nvmem.h>
-#ifdef GPS_PRESENT
-#include <interfaces/gps.h>
-#endif
 #include <interfaces/delays.h>
 #include <string.h>
 #include <battery.h>
