@@ -17,6 +17,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <interfaces/platform.h>
 #include <interfaces/gps.h>
 #include <gps.h>
 #include <minmea.h>
@@ -28,9 +29,11 @@
 #define KNOTS2KMH 1.852f
 
 static char sentence[2*MINMEA_MAX_LENGTH];
-static bool isRtcSyncronised  = false;
 static bool gpsEnabled        = false;
 static bool readNewSentence   = true;
+#ifdef RTC_PRESENT
+static bool isRtcSyncronised  = false;
+#endif
 
 void gps_task()
 {
@@ -188,13 +191,14 @@ void gps_task()
     pthread_mutex_unlock(&state_mutex);
 
     // Synchronize RTC with GPS UTC clock, only when fix is done
+    #ifdef RTC_PRESENT
     if(state.gps_set_time)
     {
         if((sId == MINMEA_SENTENCE_RMC) &&
            (gps_data.fix_quality > 0)   &&
            (isRtcSyncronised == false))
         {
-            rtc_setTime(gps_data.timestamp);
+            platform_setTime(gps_data.timestamp);
             isRtcSyncronised = true;
         }
     }
@@ -202,6 +206,7 @@ void gps_task()
     {
         isRtcSyncronised = false;
     }
+    #endif
 
     // Finally, trigger the acquisition of a new NMEA sentence
     readNewSentence = true;

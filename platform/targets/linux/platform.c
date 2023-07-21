@@ -115,6 +115,35 @@ void platform_beepStop()
     printf("platform_beepStop()\n");
 }
 
+datetime_t platform_getCurrentTime()
+{
+    datetime_t t;
+
+    time_t rawtime;
+    struct tm * timeinfo;
+    time ( &rawtime );
+    // radio expects time to be TZ-less, so use gmtime instead of localtime.
+    timeinfo = gmtime ( &rawtime );
+
+    t.hour = timeinfo->tm_hour;
+    t.minute = timeinfo->tm_min;
+    t.second = timeinfo->tm_sec;
+    t.day = timeinfo->tm_wday;
+    t.date = timeinfo->tm_mday;
+    t.month = timeinfo->tm_mon + 1;
+    // Only last two digits of the year are supported in OpenRTX
+    t.year = (timeinfo->tm_year + 1900) % 100;
+
+    return t;
+}
+
+void platform_setTime(datetime_t t)
+{
+    (void) t;
+
+    printf("rtc_setTime(t)\n");
+}
+
 const hwInfo_t *platform_getHwInfo()
 {
     return &hwInfo;

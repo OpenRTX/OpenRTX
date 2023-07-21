@@ -186,6 +186,16 @@ void platform_beepStop()
     toneGen_beepOff();
 }
 
+datetime_t platform_getCurrentTime()
+{
+    return rtc_getTime();
+}
+
+void platform_setTime(datetime_t t)
+{
+    rtc_setTime(t);
+}
+
 const hwInfo_t *platform_getHwInfo()
 {
     return &hwInfo;

@@ -1815,7 +1815,7 @@ void ui_updateFSM(bool *sync_rtx)
                     // NOTE: The user inserted a local time, we must save an UTC time
                     datetime_t utc_time = localTimeToUtc(ui_state.new_timedate,
                                                          state.settings.utc_timezone);
-                    rtc_setTime(utc_time);
+                    platform_setTime(utc_time);
                     state.time = utc_time;
                     vp_announceSettingsTimeDate();
                     state.ui_screen = SETTINGS_TIMEDATE;

@@ -22,6 +22,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <datetime.h>
+#include <hwconfig.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -141,6 +143,20 @@ void platform_beepStart(uint16_t freq);
  * This function stops emitting a tone.
  */
 void platform_beepStop();
+
+#ifdef RTC_PRESENT
+/**
+ * Get current UTC date and time.
+ * @return structure of type datetime_t with current clock and calendar values.
+ */
+datetime_t platform_getCurrentTime();
+
+/**
+ * Set date and time to a given value.
+ * @param t: struct of type datetime_t, holding the new time to be set.
+ */
+void platform_setTime(datetime_t t);
+#endif
 
 /**
  * This function returns a pointer to a data structure containing all the
