@@ -25,7 +25,7 @@
 #include <calibInfo_MDx.h>
 #include <interfaces/nvmem.h>
 #include <toneGenerator_MDx.h>
-#include <interfaces/rtc.h>
+#include <peripherals/rtc.h>
 #include <interfaces/audio.h>
 #include <chSelector.h>
 

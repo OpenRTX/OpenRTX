@@ -21,7 +21,6 @@
 #ifndef STATE_H
 #define STATE_H
 
-#include <interfaces/rtc.h>
 #include <datatypes.h>
 #include <settings.h>
 #include <pthread.h>

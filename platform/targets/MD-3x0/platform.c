@@ -25,7 +25,7 @@
 #include <ADC1_MDx.h>
 #include <calibInfo_MDx.h>
 #include <toneGenerator_MDx.h>
-#include <interfaces/rtc.h>
+#include <peripherals/rtc.h>
 #include <interfaces/audio.h>
 
 static hwInfo_t hwInfo;
