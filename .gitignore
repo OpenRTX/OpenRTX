@@ -1,5 +1,5 @@
-# Meson build dirs
-build_*
+#Build dirs
+build*
 
 # Prerequisites
 *.d
