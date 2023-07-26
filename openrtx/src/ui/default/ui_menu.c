@@ -463,7 +463,7 @@ int _ui_getBankName(char *buf, uint8_t max_len, uint8_t index)
     // First bank "All channels" is not read from flash
     if(index == 0)
     {
-        snprintf(buf, max_len, currentLanguage->allChannels);
+        strncpy(buf, currentLanguage->allChannels, max_len);
     }
     else
     {

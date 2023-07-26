@@ -26,6 +26,7 @@
 #include <voicePrompts.h>
 #include <audio_codec.h>
 #include <audio_path.h>
+#include <strings.h>    // For strncasecmp
 #include <ctype.h>
 #include <state.h>
 #include <stdio.h>

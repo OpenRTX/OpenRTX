@@ -50,6 +50,7 @@ execute_process(COMMAND git describe --tags --dirty
 
 target_compile_definitions(app
   PRIVATE
+    _GNU_SOURCE
     FONT_UBUNTU_REGULAR
     CODEC2_MODE_EN_DEFAULT=0
     FREEDV_MODE_EN_DEFAULT=0
