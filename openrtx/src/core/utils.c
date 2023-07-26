@@ -59,7 +59,7 @@ float dBmToWatt(const uint8_t n)
     return power;
 }
 
-uint32_t bcd2bin(uint32_t bcd)
+uint32_t bcdToBin(uint32_t bcd)
 {
     return ((bcd >> 28) & 0x0F) * 10000000 +
            ((bcd >> 24) & 0x0F) * 1000000 +

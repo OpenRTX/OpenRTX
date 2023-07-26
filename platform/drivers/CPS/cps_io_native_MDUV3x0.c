@@ -53,8 +53,8 @@ static int _readChannelAtAddress(channel_t *channel, uint32_t addr)
     channel->mode            = chData.channel_mode;
     channel->bandwidth       = chData.bandwidth;
     channel->rx_only         = chData.rx_only;
-    channel->rx_frequency    = bcd2bin(chData.rx_frequency) * 10;
-    channel->tx_frequency    = bcd2bin(chData.tx_frequency) * 10;
+    channel->rx_frequency    = bcdToBin(chData.rx_frequency) * 10;
+    channel->tx_frequency    = bcdToBin(chData.tx_frequency) * 10;
     channel->scanList_index  = chData.scan_list_index;
     channel->groupList_index = chData.group_list_index;
 
@@ -93,7 +93,7 @@ static int _readChannelAtAddress(channel_t *channel, uint32_t addr)
         {
             for(int i = 0; i < MAX_TONE_INDEX; i++)
             {
-                if(ctcss_tone[i] == ((uint16_t) bcd2bin(rx_css)))
+                if(ctcss_tone[i] == ((uint16_t) bcdToBin(rx_css)))
                 {
                     channel->fm.rxTone = i;
                     channel->fm.rxToneEn = 1;
@@ -106,7 +106,7 @@ static int _readChannelAtAddress(channel_t *channel, uint32_t addr)
         {
             for(int i = 0; i < MAX_TONE_INDEX; i++)
             {
-                if(ctcss_tone[i] == ((uint16_t) bcd2bin(tx_css)))
+                if(ctcss_tone[i] == ((uint16_t) bcdToBin(tx_css)))
                 {
                     channel->fm.txTone = i;
                     channel->fm.txToneEn = 1;
