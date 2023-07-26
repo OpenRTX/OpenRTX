@@ -2,6 +2,44 @@
 
 cmake_minimum_required(VERSION 3.20.0)
 
+#
+# Zephyr build system imposes to have a fixed folder structure for the target-specific
+# files, that is [...]/boards/ARCH/BOARDNAME because it infers the target
+# architecture by looking at the name of the parent folder of the board folder.
+#
+# This does not make sense, because:
+# 1) The folder with the target-specific files should be put anywhere, given that
+#    the project using Zephyr may have its own conventions.
+# 2) Inferring the target architecture only from the folder tree is an idiocy.
+#
+# So: to make Zephyr play happily in his sandpit without complaints, we create a
+# board_root subfolder inside the build one and we copy the board-specific config
+# files there from our platform/targets tree creating the necessary folder tree.
+#
+# NOTE: the board-specific CMakeLists.txt files have to use the ${OPENRTX_ROOT}
+# variable as the base path. E.g. ${OPENRTX_ROOT}/platform/drivers/somedriver.c
+#
+if (${BOARD} STREQUAL "ttwrplus")
+    set(ARCH xtensa)
+    set(CONF_FILE ${CMAKE_CURRENT_LIST_DIR}/platform/mcu/ESP32S3/zephyr.conf)
+endif()
+
+#
+# Create the board_root folder and the proper folder tree for the targets
+#
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory
+                ${CMAKE_CURRENT_LIST_DIR}/platform/targets/${BOARD}
+                ${CMAKE_CURRENT_LIST_DIR}/build/board_root/boards/${ARCH}/${BOARD})
+
+#
+# Set the BOARD_ROOT and OPENRTX_ROOT variables
+#
+set(BOARD_ROOT ${CMAKE_CURRENT_LIST_DIR}/build/board_root)
+set(OPENRTX_ROOT ${CMAKE_CURRENT_LIST_DIR})
+
+#
+# Finally, set up the project
+#
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(openrtx)
 
