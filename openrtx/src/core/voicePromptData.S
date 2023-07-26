@@ -1,9 +1,10 @@
 .section .note.GNU-stack,""
 .section .rodata
 
-.global _voiceprompts_start
-.global _voiceprompts_end
+.global _vpdata_start
+.global _vpdata_end
 
-_voiceprompts_start:
+_vpdata_start:
     .incbin "../voiceprompts.vpc"
-_voiceprompts_end:
+
+.set _vpdata_end, .

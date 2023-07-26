@@ -114,8 +114,8 @@ static long long  vpStartTime;
 #ifdef VP_USE_FILESYSTEM
 static FILE *vpFile = NULL;
 #else
-extern unsigned char _vpdata_start asm("_voiceprompts_start");
-extern unsigned char _vpdata_end asm("_voiceprompts_end");
+extern unsigned char _vpdata_start;
+extern unsigned char _vpdata_end;
 unsigned char        *vpData = &_vpdata_start;
 #endif
 
