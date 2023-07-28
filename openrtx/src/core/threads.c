@@ -189,13 +189,15 @@ void *rtx_threadFunc(void *arg)
  */
 void create_threads()
 {
+    pthread_t rtx_thread;
+    pthread_t ui_thread;
+
     // Create RTX state mutex
     pthread_mutex_init(&rtx_mutex, NULL);
 
+#ifndef __ZEPHYR__
     // Create rtx radio thread
-    pthread_t      rtx_thread;
     pthread_attr_t rtx_attr;
-
     pthread_attr_init(&rtx_attr);
     pthread_attr_setstacksize(&rtx_attr, RTX_TASK_STKSIZE);
 
@@ -209,10 +211,13 @@ void create_threads()
     pthread_create(&rtx_thread, &rtx_attr, rtx_threadFunc, NULL);
 
     // Create UI thread
-    pthread_t      ui_thread;
     pthread_attr_t ui_attr;
-
     pthread_attr_init(&ui_attr);
     pthread_attr_setstacksize(&ui_attr, UI_TASK_STKSIZE);
     pthread_create(&ui_thread, &ui_attr, ui_threadFunc, NULL);
+#else
+    // On zephyr just spawn the threads without setting the attributes
+    pthread_create(&rtx_thread, NULL, rtx_threadFunc, NULL);
+    pthread_create(&ui_thread, NULL, ui_threadFunc, NULL);
+#endif
 }
