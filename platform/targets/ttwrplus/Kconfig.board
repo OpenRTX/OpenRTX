@@ -4,4 +4,8 @@
 
 config BOARD_TTWRPLUS
 	bool "LilyGo T-TWR Plus Board"
-	depends on SOC_ESP32S3
+	depends on SOC_SERIES_ESP32S3
+
+choice SOC_PART_NUMBER
+	default SOC_ESP32S3_WROOM_N16R8
+endchoice
