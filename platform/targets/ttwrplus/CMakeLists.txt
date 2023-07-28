@@ -11,9 +11,10 @@ target_sources(app
 
     ${OPENRTX_ROOT}/platform/targets/ttwrplus/platform.c
 
+    ${OPENRTX_ROOT}/platform/drivers/display/SH1106_ttwrplus.c
+
     ${OPENRTX_ROOT}/platform/drivers/stubs/audio_stub.c
     ${OPENRTX_ROOT}/platform/drivers/stubs/cps_io_stub.c
-    ${OPENRTX_ROOT}/platform/drivers/stubs/display_stub.c
     ${OPENRTX_ROOT}/platform/drivers/stubs/keyboard_stub.c
     ${OPENRTX_ROOT}/platform/drivers/stubs/nvmem_stub.c
     ${OPENRTX_ROOT}/platform/drivers/stubs/radio_stub.c
