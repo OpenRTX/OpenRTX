@@ -30,7 +30,6 @@
 #define SCREEN_HEIGHT DT_PROP(DISPLAY, height)
 #define PIX_FMT_BW
 
-/* TODO: battery type */
-#define BAT_NONE
+#define BAT_LIPO_1S
 
 #endif /* HWCONFIG_H */
