@@ -58,13 +58,15 @@ bool flash_eraseSector(const uint8_t secNum)
     // Flash busy, wait until previous operation finishes
     while((FLASH->SR & FLASH_SR_BSY) != 0) ;
 
-    FLASH->CR |= FLASH_CR_PSIZE_1   // 32-bit program parallelism
-              |  (secNum << 3)      // Sector number
-              |  FLASH_CR_SER       // Sector erase
-              |  FLASH_CR_STRT;     // Start erase
+    FLASH->CR |= FLASH_CR_SER;      // Sector erase
+    FLASH->CR &= ~FLASH_CR_SNB;
+    FLASH->CR |= (secNum << 3);     // Sector number
+    FLASH->CR |= FLASH_CR_STRT;     // Start erase
 
     // Wait until erase ends
     while((FLASH->SR & FLASH_SR_BSY) != 0) ;
+
+    FLASH->CR &= ~FLASH_CR_SER;
 
     return true;
 }
@@ -74,21 +76,18 @@ void flash_write(const uint32_t address, const void *data, const size_t len)
     if(unlock() == false) return;
     if((data == NULL) || (len == 0)) return;
 
-    // Flash busy, wait until previous operation finishes
-    while((FLASH->SR & FLASH_SR_BSY) != 0) ;
-
-    // Request programming with 8-bit parallelism
-    FLASH->CR = FLASH_CR_PG;
-
-    // Write data to memory
+    // Write data to memory, 8 bit at a time
     const uint8_t *buf = ((uint8_t *) data);
     uint8_t *mem       = ((uint8_t *) address);
     for(size_t i = 0; i < len; i++)
     {
+        while((FLASH->SR & FLASH_SR_BSY) != 0) ;
+        FLASH->CR = FLASH_CR_PG;
+
         *mem = buf[i];
         mem++;
-    }
 
-    // Wait until the end of the write operation
-    while((FLASH->SR & FLASH_SR_BSY) != 0) ;
+        while((FLASH->SR & FLASH_SR_BSY) != 0) ;
+        FLASH->CR &= ~FLASH_CR_PG;
+    }
 }
