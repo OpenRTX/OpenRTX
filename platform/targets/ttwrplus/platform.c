@@ -20,6 +20,14 @@
 #include <interfaces/platform.h>
 #include <hwconfig.h>
 
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/sensor.h>
+
+#define BUTTON_PTT_NODE DT_NODELABEL(button_ptt)
+
+static const struct gpio_dt_spec button_ptt = GPIO_DT_SPEC_GET_OR(BUTTON_PTT_NODE, gpios, {0});
+static const struct device *const qdec_dev = DEVICE_DT_GET(DT_ALIAS(qdec0));
+
 static const hwInfo_t hwInfo =
 {
     .uhf_maxFreq = 430,
@@ -31,6 +39,20 @@ static const hwInfo_t hwInfo =
 
 void platform_init()
 {
+    // Setup GPIO for PTT and rotary encoder
+    if(gpio_is_ready_dt(&button_ptt) == false)
+        printk("Error: button device %s is not ready\n", button_ptt.port->name);
+
+    int ret = gpio_pin_configure_dt(&button_ptt, GPIO_INPUT);
+    if (ret != 0)
+    {
+        printk("Error %d: failed to configure %s pin %d\n", ret,
+               button_ptt.port->name, button_ptt.pin);
+    }
+
+    // Rotary encoder is read using hardware pulse counter
+    if(device_is_ready(qdec_dev) == false)
+        printk("Qdec device is not ready\n");
 }
 
 void platform_terminate()
@@ -54,12 +76,29 @@ uint8_t platform_getVolumeLevel()
 
 int8_t platform_getChSelector()
 {
-    return 0;
+    int rc = sensor_sample_fetch(qdec_dev);
+    if (rc != 0)
+    {
+        printk("Failed to fetch sample (%d)\n", rc);
+        return 0;
+    }
+
+    struct sensor_value val;
+    rc = sensor_channel_get(qdec_dev, SENSOR_CHAN_ROTATION, &val);
+    if (rc != 0)
+    {
+        printk("Failed to get data (%d)\n", rc);
+        return 0;
+    }
+
+    // The esp32-pcnt sensor returns a signed 16-bit value: we remap it into a
+    // signed 8-bit one.
+    return (int8_t) val.val1;
 }
 
 bool platform_getPttStatus()
 {
-    return false;
+    return gpio_pin_get_dt(&button_ptt);
 }
 
 bool platform_pwrButtonStatus()
@@ -84,6 +123,7 @@ void platform_beepStart(uint16_t freq)
 
 void platform_beepStop()
 {
+    ;
 }
 
 const hwInfo_t *platform_getHwInfo()

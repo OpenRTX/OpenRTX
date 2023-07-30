@@ -6,6 +6,7 @@
 #include <espressif/esp32s3/esp32s3_wroom_n16r8.dtsi>
 #include <zephyr/dt-bindings/pinctrl/esp-pinctrl-common.h>
 #include <dt-bindings/pinctrl/esp32s3-pinctrl.h>
+#include <dt-bindings/input/input-event-codes.h>
 #include <zephyr/dt-bindings/pinctrl/esp32s3-gpio-sigmap.h>
 #include <zephyr/dt-bindings/led/led.h>
 
@@ -16,6 +17,8 @@
 	aliases {
 		i2c-0 = &i2c0;
 		watchdog0 = &wdt0;
+		radio = &uart0;
+		qdec0 = &pcnt;
 	};
 
 	chosen {
@@ -26,23 +29,27 @@
 		zephyr,display = &ssd1306;
 	};
 
-	aliases {
-		radio = &uart0;
-	};
+	buttons: buttons {
+		compatible = "zephyr,gpio-keys";
 
-	buttons {
-		compatible = "gpio-keys";
-
-		sw_boot: button_0 {
+		button_boot: button_0 {
 			gpios = <&gpio0 0 GPIO_ACTIVE_LOW>;
+			zephyr,code = <INPUT_KEY_VOLUMEDOWN>;
 			label = "BOOT Button";
 		};
 
-		sw_user: button_1 {
-			gpios = <&gpio0 3 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
-			label = "USER Button";
+		button_user: button_1 {
+			gpios = <&gpio0 21 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			zephyr,code = <INPUT_BTN_START>;
+			label = "Encoder Button";
 		};
-	};
+
+		button_ptt: button_2 {
+			gpios = <&gpio0 3 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			zephyr,code = <INPUT_BTN_SELECT>;
+			label = "PTT Button";
+		};
+  };
 };
 
 &cpu0 {
@@ -86,6 +93,27 @@
                 segment-remap;
                 com-invdir;
         };
+};
+
+&pcnt {
+  pinctrl-0 = <&pcnt_default>;
+  pinctrl-names = "default";
+  status = "okay";
+  #address-cells = <1>;
+  #size-cells = <0>;
+  unit0@0 {
+    reg = <0>;
+    #address-cells = <1>;
+    #size-cells = <0>;
+    filter = <100>;
+    channelA@0 {
+        reg = <0>;
+        sig-pos-mode = <2>;
+        sig-neg-mode = <1>;
+        ctrl-h-mode = <0>;
+        ctrl-l-mode = <1>;
+    };
+  };
 };
 
 &timer0 {
@@ -133,6 +161,14 @@
 			output-high;
 		};
 	};
+
+    pcnt_default: pcnt_default {
+        group1 {
+            pinmux = <PCNT0_CH0SIG_GPIO46>,
+                     <PCNT0_CH0CTRL_GPIO47>;
+            bias-pull-up;
+        };
+    };
 };
 
 &flash0 {
