@@ -12,7 +12,7 @@ gdb     = 'arm-miosix-eabi-gdb'
 terminal= 'x-terminal-emulator'
 openocd = '/usr/local/bin/openocd'
 
-[properties]
+[built-in options]
 c_args      = [
                '-D_DEFAULT_SOURCE=1',
                '-ffunction-sections',
