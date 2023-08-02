@@ -81,6 +81,9 @@ target_include_directories(app
     subprojects/codec2
     subprojects/codec2/src
 
+    subprojects/XPowersLib/src
+    subprojects/XPowersLib/src/REG
+
     lib/minmea/include
     lib/qdec/include
 )
@@ -147,6 +150,8 @@ target_sources(app
     subprojects/codec2/src/pack.c
     subprojects/codec2/src/codebooknewamp1.c
     subprojects/codec2/src/codebooknewamp1_energy.c
+
+    subprojects/XPowersLib/src/XPowersLibInterface.cpp
 
     lib/minmea/minmea.c
 )

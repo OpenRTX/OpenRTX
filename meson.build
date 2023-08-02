@@ -130,6 +130,9 @@ else
   codec2_dep  = dependency('codec2')
 endif
 
+# XPowersLib, Arduino,CircuitPython,Micropython, esp-idf library for x-powers power management series
+xpowerslib_proj = subproject('XPowersLib')
+
 src = openrtx_src + main_src + minmea_src
 inc = openrtx_inc + minmea_inc + qdec_inc
 

@@ -1,0 +1,4 @@
+[wrap-git]
+url = https://github.com/lewisxhe/XPowersLib.git
+revision = b0ed896c17d49a1b823ba0a6323cafd89b3a7d91
+patch_directory = XPowersLib

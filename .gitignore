@@ -55,6 +55,7 @@ tags
 subprojects/radio_tool
 subprojects/codec2
 subprojects/tinyusb
+subprojects/XPowersLib
 
 # ignore log files
 *.log
