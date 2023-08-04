@@ -18,15 +18,18 @@
  ***************************************************************************/
 
 #include <interfaces/platform.h>
+#include <interfaces/delays.h>
 #include <hwconfig.h>
 
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/sensor.h>
+#include "pmu.h"
 
 #define BUTTON_PTT_NODE DT_NODELABEL(button_ptt)
 
 static const struct gpio_dt_spec button_ptt = GPIO_DT_SPEC_GET_OR(BUTTON_PTT_NODE, gpios, {0});
 static const struct device *const qdec_dev = DEVICE_DT_GET(DT_ALIAS(qdec0));
+
 
 static const hwInfo_t hwInfo =
 {
@@ -35,7 +38,6 @@ static const hwInfo_t hwInfo =
     .uhf_band    = 1,
     .name        = "ttwrplus"
 };
-
 
 void platform_init()
 {
@@ -53,6 +55,9 @@ void platform_init()
     // Rotary encoder is read using hardware pulse counter
     if(device_is_ready(qdec_dev) == false)
         printk("Qdec device is not ready\n");
+
+    // Initialize PMU
+    pmu_init();
 }
 
 void platform_terminate()

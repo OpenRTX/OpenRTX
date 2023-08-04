@@ -10,6 +10,7 @@ target_sources(app
     ${OPENRTX_ROOT}/platform/mcu/ESP32S3/drivers/delays.c
 
     ${OPENRTX_ROOT}/platform/targets/ttwrplus/platform.c
+    ${OPENRTX_ROOT}/platform/targets/ttwrplus/pmu.cpp
 
     ${OPENRTX_ROOT}/platform/drivers/display/SH1106_ttwrplus.c
     ${OPENRTX_ROOT}/platform/drivers/keyboard/keyboard_ttwrplus.c
@@ -18,11 +19,16 @@ target_sources(app
     ${OPENRTX_ROOT}/platform/drivers/stubs/cps_io_stub.c
     ${OPENRTX_ROOT}/platform/drivers/stubs/nvmem_stub.c
     ${OPENRTX_ROOT}/platform/drivers/stubs/radio_stub.c
+
+    ${OPENRTX_ROOT}/subprojects/XPowersLib/src/XPowersLibInterface.cpp
 )
 
 target_include_directories(app
   PRIVATE
     ${OPENRTX_ROOT}/platform/targets/ttwrplus
+
+    ${OPENRTX_ROOT}/subprojects/XPowersLib/src
+    ${OPENRTX_ROOT}/subprojects/XPowersLib/src/REG
 )
 
 target_compile_definitions(app PRIVATE PLATFORM_TTWRPLUS)
