@@ -259,13 +259,15 @@ void pmu_init()
     // Set constant current charge current limit
     //! Using inferior USB cables and adapters will not reach the maximum charging current.
     //! Please pay attention to add a suitable heat sink above the PMU when setting the charging current to 1A
-    PMU.setChargerConstantCurr(XPOWERS_AXP2101_CHG_CUR_1000MA);
+    // NOTE: Charging current set to 500mAh to remove the need for a heat sink
+    PMU.setChargerConstantCurr(XPOWERS_AXP2101_CHG_CUR_500MA);
 
     // Set stop charging termination current
     PMU.setChargerTerminationCurr(XPOWERS_AXP2101_CHG_ITERM_150MA);
 
     // Set charge cut-off voltage
-    PMU.setChargeTargetVoltage(XPOWERS_AXP2101_CHG_VOL_4V2);
+    // NOTE: Target voltage set to 4.00V (80% charge) to extend battery lifespan of 2.5x-3x
+    PMU.setChargeTargetVoltage(XPOWERS_AXP2101_CHG_VOL_4V);
 
     // Disable the PMU long press shutdown function
     PMU.disableLongPressShutdown();
