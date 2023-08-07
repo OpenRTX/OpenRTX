@@ -73,14 +73,15 @@ void state_init()
     state.emergency     = false;
 
     // Force brightness field to be in range 0 - 100
-    if(state.settings.brightness > 100) state.settings.brightness = 100;
+    if(state.settings.brightness > 100)
+    {
+        state.settings.brightness = 100;
+    }
 }
 
 void state_terminate()
 {
-    /*
-     * Never store a brightness of 0 to avoid booting with a black screen
-     */
+    // Never store a brightness of 0 to avoid booting with a black screen
     if(state.settings.brightness == 0)
     {
         state.settings.brightness = 5;

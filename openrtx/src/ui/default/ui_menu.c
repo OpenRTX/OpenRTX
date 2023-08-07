@@ -265,9 +265,11 @@ int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
     uint8_t value = 0;
     switch(index)
     {
+#ifdef SCREEN_BRIGHTNESS    
         case D_BRIGHTNESS:
             value = last_state.settings.brightness;
             break;
+#endif
 #ifdef SCREEN_CONTRAST
         case D_CONTRAST:
             value = last_state.settings.contrast;
@@ -977,15 +979,19 @@ bool _ui_drawMacroMenu()
         // Third row
         gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   yellow_fab413, "7");
+#ifdef SCREEN_BRIGHTNESS                  
         gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white, "   B-");
         gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white, "       %5d",
                   state.settings.brightness);
+#endif
         gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   yellow_fab413, "8");
+#ifdef SCREEN_BRIGHTNESS                  
         gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   color_white,   "       B+");
+#endif
         gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                   yellow_fab413, "9        ");
         gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_RIGHT,

@@ -151,7 +151,7 @@ extern "C" {
  * pin and its frequency has to be low (~250Hz) to not put too much overehad on
  * the processor due to timer ISR triggering at an high rate.
  *
- * #define ENABLE_BKLIGHT_DIMMING
+ * #define SCREEN_BRIGHTNESS
  */
 
 #ifdef __cplusplus

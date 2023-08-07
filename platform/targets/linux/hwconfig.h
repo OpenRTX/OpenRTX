@@ -28,6 +28,9 @@ extern "C" {
 /* Device supports an optional GPS chip */
 #define GPS_PRESENT
 
+/* Screen has adjustable brightness */
+#define SCREEN_BRIGHTNESS
+
 /* Battery type */
 #define BAT_LIPO_2S
 

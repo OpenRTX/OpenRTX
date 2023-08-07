@@ -109,7 +109,9 @@ enum backupRestoreItems
 
 enum displayItems
 {
+#ifdef SCREEN_BRIGHTNESS
     D_BRIGHTNESS = 0,
+#endif
 #ifdef SCREEN_CONTRAST
     D_CONTRAST,
 #endif

@@ -38,6 +38,9 @@ extern "C" {
 #define SCREEN_CONTRAST
 #define DEFAULT_CONTRAST 71
 
+/* Screen has adjustable brightness */
+#define SCREEN_BRIGHTNESS
+
 /* Battery type */
 #define BAT_LIPO_2S
 

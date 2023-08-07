@@ -169,7 +169,6 @@ mdx_src = ['openrtx/src/core/xmodem.c',
            'platform/drivers/audio/inputStream_MDx.cpp',
            'platform/drivers/audio/outputStream_MDx.cpp',
            'platform/drivers/baseband/HR_Cx000.cpp',
-           'platform/drivers/backlight/backlight_MDx.c',
            'platform/drivers/tones/toneGenerator_MDx.cpp']
 
 mdx_src = mdx_src + openrtx_ui_default
@@ -321,6 +320,7 @@ md3x0_src = src + mdx_src + stm32f405_src + ['platform/drivers/NVM/nvmem_MD3x0.c
                                              'platform/drivers/baseband/HR_C5000_MDx.cpp',
                                              'platform/drivers/keyboard/keyboard_MD3x.c',
                                              'platform/drivers/display/HX8353_MD3x.cpp',
+                                             'platform/drivers/backlight/backlight_MDx.c',                                             
                                              'platform/targets/MD-3x0/platform.c']
 
 md3x0_inc = inc + stm32f405_inc + ['platform/targets/MD-3x0']
@@ -335,6 +335,7 @@ mduv3x0_src = src + mdx_src + stm32f405_src + ['platform/drivers/NVM/nvmem_MDUV3
                                                'platform/targets/MD-UV3x0/platform.c',
                                                'platform/drivers/keyboard/keyboard_MD3x.c',
                                                'platform/drivers/display/HX8353_MD3x.cpp',
+                                               'platform/drivers/backlight/backlight_MDx.c',                                             
                                                'platform/drivers/chSelector/chSelector_UV3x0.c',
                                                'platform/drivers/baseband/radio_UV3x0.cpp',
                                                'platform/drivers/baseband/AT1846S_UV3x0.cpp',

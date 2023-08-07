@@ -42,6 +42,9 @@ extern "C" {
 /* Screen pixel format */
 #define PIX_FMT_RGB565
 
+/* Screen has adjustable brightness */
+#define SCREEN_BRIGHTNESS
+
 /* Battery type */
 #define BAT_LIPO_2S
 

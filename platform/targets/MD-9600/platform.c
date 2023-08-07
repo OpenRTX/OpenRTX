@@ -24,7 +24,6 @@
 #include <interfaces/delays.h>
 #include <hwconfig.h>
 #include <string.h>
-#include <backlight.h>
 #include <ADC1_MDx.h>
 #include <calibInfo_MDx.h>
 #include <toneGenerator_MDx.h>
@@ -34,7 +33,7 @@
 #include <chSelector.h>
 
 /* TODO: Hardcoded hwInfo until we implement reading from flash */
-static const hwInfo_t hwInfo
+static const hwInfo_t hwInfo =
 {
     .vhf_maxFreq = 174,
     .vhf_minFreq = 136,
@@ -44,7 +43,7 @@ static const hwInfo_t hwInfo
     .uhf_band    = 1,
     .hw_version  = 0,
     .name        = "MD-9600"
-}
+};
 
 void platform_init()
 {
@@ -76,16 +75,12 @@ void platform_init()
     nvm_init();                      /* Initialise non volatile memory manager */
     toneGen_init();                  /* Initialise tone generator              */
     rtc_init();                      /* Initialise RTC                         */
-    backlight_init();                /* Initialise backlight driver            */
     chSelector_init();               /* Initialise channel selector handler    */
     audio_init();                    /* Initialise audio management module     */
 }
 
 void platform_terminate()
 {
-    /* Shut down backlight */
-    backlight_terminate();
-
     /* Shut down all the modules */
     adc1_terminate();
     toneGen_terminate();
