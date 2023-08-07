@@ -81,4 +81,7 @@
 #define SOFTPOT_RX 0x2E
 #define SOFTPOT_TX 0x2F
 
+/* Enable the backlighting brightness */
+#define ENABLE_BKLIGHT_DIMMING
+
 #endif

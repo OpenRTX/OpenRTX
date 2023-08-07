@@ -72,12 +72,15 @@ void state_init()
     state.rtxStatus     = RTX_OFF;
     state.emergency     = false;
 
+#ifdef ENABLE_BKLIGHT_DIMMING
     // Force brightness field to be in range 0 - 100
     if(state.settings.brightness > 100) state.settings.brightness = 100;
+#endif
 }
 
 void state_terminate()
 {
+#ifdef ENABLE_BKLIGHT_DIMMING
     /*
      * Never store a brightness of 0 to avoid booting with a black screen
      */
@@ -85,7 +88,7 @@ void state_terminate()
     {
         state.settings.brightness = 5;
     }
-
+#endif
     nvm_writeSettingsAndVfo(&state.settings, &state.channel);
     pthread_mutex_destroy(&state_mutex);
 }

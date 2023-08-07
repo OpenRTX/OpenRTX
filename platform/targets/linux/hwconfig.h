@@ -62,6 +62,9 @@ extern "C" {
 /* Push-to-talk switch */
 #define PTT_SW "PTT_SW",11
 
+/* Enable the backlighting brightness */
+#define ENABLE_BKLIGHT_DIMMING
+
 #ifdef __cplusplus
 }
 #endif

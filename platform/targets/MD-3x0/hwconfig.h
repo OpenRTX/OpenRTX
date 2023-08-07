@@ -143,6 +143,9 @@ extern "C" {
 #define GPS_EN   GPIOD,8
 #define GPS_DATA GPIOD,9
 
+/* Enable the backlighting brightness */
+#define ENABLE_BKLIGHT_DIMMING
+
 #ifdef __cplusplus
 }
 #endif

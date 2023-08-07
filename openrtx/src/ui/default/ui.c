@@ -147,7 +147,9 @@ const char *settings_items[] =
 
 const char *display_items[] =
 {
+#ifdef ENABLE_BKLIGHT_DIMMING
     "Brightness",
+#endif
 #ifdef SCREEN_CONTRAST
     "Contrast",
 #endif
@@ -715,6 +717,7 @@ static void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx)
     vp_play();
 }
 
+#ifdef ENABLE_BKLIGHT_DIMMING
 static void _ui_changeBrightness(int variation)
 {
     state.settings.brightness += variation;
@@ -726,6 +729,7 @@ static void _ui_changeBrightness(int variation)
 
     display_setBacklightLevel(state.settings.brightness);
 }
+#endif
 
 #ifdef SCREEN_CONTRAST
 static void _ui_changeContrast(int variation)
@@ -847,7 +851,9 @@ static bool _ui_exitStandby(long long now)
 
     standby = false;
     redraw_needed = true;
+#ifdef ENABLE_BKLIGHT_DIMMING    
     display_setBacklightLevel(state.settings.brightness);
+#endif
     return true;
 }
 
@@ -948,7 +954,7 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             float power = dBmToWatt(state.channel.power);
             vp_anouncePower(power, queueFlags);
             break;
-        break;
+#ifdef ENABLE_BKLIGHT_DIMMING
         case 7:
             _ui_changeBrightness(-5);
             vp_announceSettingsInt(&currentLanguage->brightness, queueFlags,
@@ -959,6 +965,7 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             vp_announceSettingsInt(&currentLanguage->brightness, queueFlags,
                                    state.settings.brightness);
             break;
+#endif
     }
 
 #ifdef HAS_ABSOLUTE_KNOB // If the radio has an absolute position knob
@@ -1837,11 +1844,13 @@ void ui_updateFSM(bool *sync_rtx)
                 {
                     switch(ui_state.menu_selected)
                     {
+#ifdef ENABLE_BKLIGHT_DIMMING                    
                         case D_BRIGHTNESS:
                             _ui_changeBrightness(-5);
                             vp_announceSettingsInt(&currentLanguage->brightness, queueFlags, 
                                                    state.settings.brightness);
                             break;
+#endif
 #ifdef SCREEN_CONTRAST
                         case D_CONTRAST:
                             _ui_changeContrast(-4);
@@ -1862,11 +1871,13 @@ void ui_updateFSM(bool *sync_rtx)
                 {
                     switch(ui_state.menu_selected)
                     {
+#ifdef ENABLE_BKLIGHT_DIMMING                    
                         case D_BRIGHTNESS:
                             _ui_changeBrightness(+5);
                             vp_announceSettingsInt(&currentLanguage->brightness, queueFlags,
                                                    state.settings.brightness);
                             break;
+#endif
 #ifdef SCREEN_CONTRAST
                         case D_CONTRAST:
                             _ui_changeContrast(+4);

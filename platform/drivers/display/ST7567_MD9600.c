@@ -158,6 +158,14 @@ void display_setContrast(uint8_t contrast)
     spi2_releaseDevice();
 }
 
+void backlight_init()
+{
+}
+
+void backlight_terminate()
+{
+}
+
 void display_setBacklightLevel(uint8_t level)
 {
     (void) level;

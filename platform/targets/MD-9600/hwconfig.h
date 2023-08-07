@@ -105,6 +105,9 @@ extern "C" {
 #define DMR_MOSI  GPIOE,4
 #define DMR_MISO  GPIOE,5
 
+/* Enable the backlighting brightness */
+//#define ENABLE_BKLIGHT_DIMMING
+
 #ifdef __cplusplus
 }
 #endif

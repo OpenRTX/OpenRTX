@@ -34,7 +34,7 @@
 #include <chSelector.h>
 
 /* TODO: Hardcoded hwInfo until we implement reading from flash */
-static const hwInfo_t hwInfo
+static const hwInfo_t hwInfo =
 {
     .vhf_maxFreq = 174,
     .vhf_minFreq = 136,
@@ -44,7 +44,7 @@ static const hwInfo_t hwInfo
     .uhf_band    = 1,
     .hw_version  = 0,
     .name        = "MD-9600"
-}
+};
 
 void platform_init()
 {
