@@ -18,6 +18,9 @@
 		i2c-0 = &i2c0;
 		watchdog0 = &wdt0;
 		radio = &uart0;
+        radio-pwr = &radio_pwr;
+        radio-pdn = &radio_pdn;
+        radio-ptt = &radio_ptt;
 		qdec0 = &pcnt;
 	};
 
@@ -28,6 +31,25 @@
 		zephyr,flash = &flash0;
 		zephyr,display = &ssd1306;
 	};
+
+    leds: leds {
+            compatible = "gpio-leds";
+
+            radio_pwr: radio_pwr {
+                    gpios = <&gpio1 6 GPIO_ACTIVE_HIGH>;
+                    label = "SA868S H/L on IO38";
+            };
+
+            radio_pdn: radio_pdn {
+                    gpios = <&gpio1 8 GPIO_ACTIVE_LOW>;
+                    label = "SA868S PDN on IO40";
+            };
+
+            radio_ptt: radio_ptt {
+                    gpios = <&gpio1 9 GPIO_ACTIVE_HIGH>;
+                    label = "SA868S PTT on IO41";
+            };
+    };
 
 	buttons: buttons {
 		compatible = "zephyr,gpio-keys";

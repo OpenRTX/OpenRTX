@@ -23,6 +23,7 @@
 
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/sensor.h>
+#include <zephyr/drivers/uart.h>
 #include "pmu.h"
 
 #define BUTTON_PTT_NODE DT_NODELABEL(button_ptt)
@@ -33,10 +34,12 @@ static const struct device *const qdec_dev = DEVICE_DT_GET(DT_ALIAS(qdec0));
 
 static const hwInfo_t hwInfo =
 {
+    .name        = "ttwrplus",
+    .hw_version  = 0,
+    .uhf_band    = 1,
+    .vhf_band    = 0,
     .uhf_maxFreq = 430,
     .uhf_minFreq = 440,
-    .uhf_band    = 1,
-    .name        = "ttwrplus"
 };
 
 void platform_init()
