@@ -91,6 +91,6 @@ const stringsTable_t englishStrings =
     .pressAnyButton    = "press any button.",
     .accessibility = "Accessibility",
     .usedHeap = "Used heap",
-    .broadcast = "Broadcast"
+    .broadcast = "ALL"
 };
 #endif  // ENGLISHSTRINGS_H
