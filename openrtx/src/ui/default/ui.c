@@ -851,9 +851,8 @@ static bool _ui_exitStandby(long long now)
 
     standby = false;
     redraw_needed = true;
-#ifdef ENABLE_BKLIGHT_DIMMING    
     display_setBacklightLevel(state.settings.brightness);
-#endif
+
     return true;
 }
 
