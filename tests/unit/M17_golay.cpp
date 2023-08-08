@@ -22,7 +22,7 @@
 #include <cstdio>
 #include <cstdint>
 #include <random>
-#include "M17/M17Golay.h"
+#include "M17/M17Golay.hpp"
 
 using namespace std;
 
@@ -52,14 +52,14 @@ int main()
     for(uint32_t i = 0; i < 10000; i++)
     {
         uint16_t value = rndValue(rng);
-        uint32_t cword = golay24_encode(value);
+        uint32_t cword = M17::golay24_encode(value);
         uint32_t emask = generateErrorMask();
 
         // Check for correct encoding/decoding in absence of errors
-        bool decoding_ok = (golay24_decode(cword) == value);
+        bool decoding_ok = (M17::golay24_decode(cword) == value);
 
         // Check for correct encoding/decoding in presence of errors
-        uint16_t decoded = golay24_decode(cword ^ emask);
+        uint16_t decoded = M17::golay24_decode(cword ^ emask);
         bool correcting_ok = false;
 
         // For four or more bit errors, decode should return 0xFFFF (uncorrectable error)
