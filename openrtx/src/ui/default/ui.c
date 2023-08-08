@@ -256,6 +256,7 @@ const color_t yellow_fab413 = {250, 180, 19, 255};
 
 layout_t layout;
 state_t last_state;
+bool macro_latched;
 static ui_state_t ui_state;
 static bool macro_menu = false;
 static bool layout_ready = false;
@@ -1268,17 +1269,19 @@ void ui_updateFSM(bool *sync_rtx)
 
         // If MONI is pressed, activate MACRO functions
         bool moniPressed = (msg.keys & KEY_MONI) ? true : false;
-        if(moniPressed || FunctionKeyIsLatched())
+        if(moniPressed || macro_latched)
         {
             macro_menu = true;
             // long press moni on its own latches function.
-            if (moniPressed && msg.long_press && !input_getPressedNumber(msg))
+            if (moniPressed && msg.long_press && !macro_latched)
             {
-                SetFunctionLatchTimer(); // 3000 ms.
+                macro_latched = true;
+                vp_beep(BEEP_FUNCTION_LATCH_ON, LONG_BEEP);
             }
-            else
+            else if (moniPressed && macro_latched)
             {
-                ReleaseFunctionLatchIfNeeded();
+                macro_latched = false;
+                vp_beep(BEEP_FUNCTION_LATCH_OFF, LONG_BEEP);
             }
             _ui_fsm_menuMacro(msg, sync_rtx);
             return;

@@ -207,8 +207,8 @@ typedef struct ui_state_t
 ui_state_t;
 
 extern layout_t layout;
-// Copy of the radio state
 extern state_t last_state;
+extern bool    macro_latched;
 extern const char *menu_items[];
 extern const char *settings_items[];
 extern const char *display_items[];
