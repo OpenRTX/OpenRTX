@@ -1269,10 +1269,12 @@ void ui_updateFSM(bool *sync_rtx)
             if (moniPressed && msg.long_press && !state.macro_latched)
             {
                 state.macro_latched = true;
+                vp_beep(BEEP_FUNCTION_LATCH_ON, LONG_BEEP);
             }
             else if (moniPressed && state.macro_latched)
             {
                 state.macro_latched = false;
+                vp_beep(BEEP_FUNCTION_LATCH_OFF, LONG_BEEP);
             }
             _ui_fsm_menuMacro(msg, sync_rtx);
             return;
