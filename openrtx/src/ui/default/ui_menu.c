@@ -875,6 +875,11 @@ bool _ui_drawMacroMenu()
         // Header
         gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   color_white, currentLanguage->macroMenu);
+        if (state.macro_latched)
+        {
+            gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT,
+                  color_white, "L");
+        }
         // First row
         if (last_state.channel.mode == OPMODE_FM)
         {
