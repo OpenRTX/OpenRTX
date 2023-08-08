@@ -1262,17 +1262,17 @@ void ui_updateFSM(bool *sync_rtx)
 
         // If MONI is pressed, activate MACRO functions
         bool moniPressed = (msg.keys & KEY_MONI) ? true : false;
-        if(moniPressed || FunctionKeyIsLatched())
+        if(moniPressed || state.macro_latched)
         {
             macro_menu = true;
             // long press moni on its own latches function.
-            if (moniPressed && msg.long_press && !input_getPressedNumber(msg))
+            if (moniPressed && msg.long_press && !state.macro_latched)
             {
-                SetFunctionLatchTimer(); // 3000 ms.
+                state.macro_latched = true;
             }
-            else
+            else if (moniPressed && state.macro_latched)
             {
-                ReleaseFunctionLatchIfNeeded();
+                state.macro_latched = false;
             }
             _ui_fsm_menuMacro(msg, sync_rtx);
             return;

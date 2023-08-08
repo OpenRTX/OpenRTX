@@ -43,6 +43,7 @@ typedef struct
 
     uint8_t    ui_screen;
     uint8_t    tuner_mode;
+    bool       macro_latched;
 
     uint16_t   channel_index;
     channel_t  channel;
