@@ -79,8 +79,6 @@
 #include <voicePromptUtils.h>
 #include <beeps.h>
 
-#define FUNCTION_LATCH_TIMEOUT 3000
-
 /* UI main screen functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBackground();
 extern void _ui_drawMainTop();
@@ -261,44 +259,12 @@ static bool redraw_needed = true;
 
 static bool standby = false;
 static long long last_event_tick = 0;
-static uint16_t functionLatchTimer = 0;
 
 // UI event queue
 static uint8_t evQueue_rdPos;
 static uint8_t evQueue_wrPos;
 static event_t evQueue[MAX_NUM_EVENTS];
 
-
-static void RestartFunctionLatchTimer()
-{
-    if (functionLatchTimer == 0)
-        return;
-
-    functionLatchTimer = getTick() + FUNCTION_LATCH_TIMEOUT;
-}
-
-static void ReleaseFunctionLatchIfNeeded()
-{
-    if (functionLatchTimer == 0)
-        return;
-
-    if (getTick() < functionLatchTimer)
-        return;
-
-    functionLatchTimer = 0;
-    vp_beep(BEEP_FUNCTION_LATCH_OFF, LONG_BEEP);
-}
-
-static void SetFunctionLatchTimer()
-{
-    functionLatchTimer= getTick() + FUNCTION_LATCH_TIMEOUT;
-    vp_beep(BEEP_FUNCTION_LATCH_ON, LONG_BEEP);
-}
-
-static bool FunctionKeyIsLatched()
-{
-    return (functionLatchTimer > 0) && (getTick() < functionLatchTimer);
-}
 
 static layout_t _ui_calculateLayout()
 {
@@ -854,8 +820,6 @@ static bool _ui_exitStandby(long long now)
 static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
 {
     ui_state.input_number = input_getPressedNumber(msg);
-    if (ui_state.input_number != 0)
-        RestartFunctionLatchTimer(); // reset the timer.
 
     // CTCSS Encode/Decode Selection
     bool tone_tx_enable = state.channel.fm.txToneEn;
@@ -966,7 +930,6 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
         state.settings.sqlLevel = platform_getChSelector() - 1;
         *sync_rtx = true;
         vp_announceSquelch(state.settings.sqlLevel, queueFlags);
-        RestartFunctionLatchTimer(); // reset the timer.
     }
 
     if(msg.keys & KEY_LEFT || msg.keys & KEY_DOWN)
@@ -980,7 +943,6 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             state.settings.sqlLevel -= 1;
             *sync_rtx = true;
             vp_announceSquelch(state.settings.sqlLevel, queueFlags);
-            RestartFunctionLatchTimer(); // reset the timer.
         }
     }
 
@@ -995,7 +957,6 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             state.settings.sqlLevel += 1;
             *sync_rtx = true;
             vp_announceSquelch(state.settings.sqlLevel, queueFlags);
-            RestartFunctionLatchTimer(); // reset the timer.
         }
     }
 }
@@ -2110,7 +2071,6 @@ void ui_updateFSM(bool *sync_rtx)
     }
     else if(event.type == EVENT_STATUS)
     {
-        ReleaseFunctionLatchIfNeeded();
 #ifdef GPS_PRESENT
         if ((state.ui_screen == MENU_GPS) && 
             (!vp_isPlaying()) &&
@@ -2126,7 +2086,7 @@ void ui_updateFSM(bool *sync_rtx)
         if (txOngoing || rtx_rxSquelchOpen())
         {
             if (txOngoing)
-                functionLatchTimer=0; // cancel the latch timer without beeping.
+                state.macro_latched = 0;
             _ui_exitStandby(now);
             return;
         }
