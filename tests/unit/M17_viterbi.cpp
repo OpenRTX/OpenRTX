@@ -44,8 +44,8 @@ void generateErrors(array< uint8_t, N >& data)
     for(uint8_t i = 0; i < numErrs(rng); i++)
     {
         uint8_t pos = errPos(rng);
-        bool    bit = getBit(data, pos);
-        setBit(data, pos, !bit);
+        bool    bit = M17::getBit(data, pos);
+        M17::setBit(data, pos, !bit);
     }
 }
 
@@ -61,19 +61,19 @@ int main()
     }
 
     array<uint8_t, 37> encoded;
-    M17ConvolutionalEncoder encoder;
+    M17::M17ConvolutionalEncoder encoder;
     encoder.reset();
     encoder.encode(source.data(), encoded.data(), source.size());
     encoded[36] = encoder.flush();
 
     array<uint8_t, 34> punctured;
-    puncture(encoded, punctured, DATA_PUNCTURE);
+    M17::puncture(encoded, punctured, M17::DATA_PUNCTURE);
 
     generateErrors(punctured);
 
     array< uint8_t, 18 > result;
-    M17HardViterbi decoder;
-    decoder.decodePunctured(punctured, result, DATA_PUNCTURE);
+    M17::M17HardViterbi decoder;
+    decoder.decodePunctured(punctured, result, M17::DATA_PUNCTURE);
 
     for(size_t i = 0; i < result.size(); i++)
     {

@@ -22,7 +22,7 @@
 #include <limits.h>
 #include <inttypes.h>
 #include <stdio.h>
-#include <M17/M17DSP.h>
+#include "M17/M17DSP.hpp"
 
 #define IMPULSE_SIZE 4096
 
@@ -51,7 +51,7 @@ int main()
     for(size_t i = 0; i < IMPULSE_SIZE; i++)
     {
         float elem = static_cast< float >(impulse[i]);
-        filtered_impulse[i] = static_cast< int16_t >(M17::rrc(0.10 * elem));
+        filtered_impulse[i] = static_cast< int16_t >(M17::rrc_48k(0.10 * elem));
     }
     fwrite(filtered_impulse, IMPULSE_SIZE, 1, baseband_out);
     fclose(baseband_out);
