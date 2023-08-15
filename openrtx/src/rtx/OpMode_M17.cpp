@@ -22,6 +22,7 @@
 #include <interfaces/delays.h>
 #include <interfaces/audio.h>
 #include <interfaces/radio.h>
+#include <M17/M17Callsign.hpp>
 #include <OpMode_M17.hpp>
 #include <audio_codec.h>
 #include <errno.h>
@@ -123,7 +124,6 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
                 platform_ledOn(GREEN);
             else
                 platform_ledOff(GREEN);
-
             break;
 
         case TX:
@@ -198,15 +198,45 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         // Process new data
         if(newData)
         {
-            auto& frame  = demodulator.getFrame();
-            auto  type   = decoder.decodeFrame(frame);
-            bool  lsfOk  = decoder.getLsf().valid();
+            auto& frame   = demodulator.getFrame();
+            auto  type    = decoder.decodeFrame(frame);
+            auto  lsf     = decoder.getLsf();
+            status->lsfOk = lsf.valid();
 
-            if((type == M17FrameType::STREAM) && (lsfOk == true) && (pthSts == PATH_OPEN))
+            if(status->lsfOk)
             {
-                M17StreamFrame sf = decoder.getStreamFrame();
-                codec_pushFrame(sf.payload().data(),     false);
-                codec_pushFrame(sf.payload().data() + 8, false);
+                // Retrieve stream source and destination data
+                std::string dst = lsf.getDestination();
+                std::string src = lsf.getSource();
+                strncpy(status->M17_src, src.c_str(), 10);
+                strncpy(status->M17_dst, dst.c_str(), 10);
+
+                // Retrieve extended callsign data
+                streamType_t streamType = lsf.getType();
+
+                if((streamType.fields.encType    == M17_ENCRYPTION_NONE) &&
+                   (streamType.fields.encSubType == M17_META_EXTD_CALLSIGN))
+                {
+                    meta_t& meta = lsf.metadata();
+                    std::string exCall1 = decode_callsign(meta.extended_call_sign.call1);
+                    std::string exCall2 = decode_callsign(meta.extended_call_sign.call2);
+
+                    strncpy(status->M17_orig, exCall1.c_str(), 10);
+                    strncpy(status->M17_refl, exCall2.c_str(), 10);
+                }
+                else
+                {
+                    status->M17_orig[0] = '\0';
+                    status->M17_refl[0] = '\0';
+                }
+
+                // Extract audio data
+                if((type == M17FrameType::STREAM) && (pthSts == PATH_OPEN))
+                {
+                    M17StreamFrame sf = decoder.getStreamFrame();
+                    codec_pushFrame(sf.payload().data(),     false);
+                    codec_pushFrame(sf.payload().data() + 8, false);
+                }
             }
         }
     }
@@ -219,6 +249,10 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         locked = false;
         status->opStatus = OFF;
     }
+
+    // Force invalidation of LSF data as soon as lock is lost (for whatever cause)
+    if(locked == false)
+        status->lsfOk = false;
 }
 
 void OpMode_M17::txState(rtxStatus_t *const status)
