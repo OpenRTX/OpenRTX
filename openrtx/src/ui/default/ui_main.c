@@ -127,14 +127,24 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
         case OPMODE_M17:
         {
             // Print M17 Destination ID on line 3 of 3
-            const char *dst = NULL;
-            if(ui_state->edit_mode)
-                dst = ui_state->new_callsign;
-            else
-                dst = (!strnlen(cfg.destination_address, 10)) ?
-                    currentLanguage->broadcast : cfg.destination_address;
+            rtxStatus_t rtxStatus = rtx_getCurrentStatus();
+            if (rtxStatus.M17_rx && rtxStatus.lsfOk) {
             gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                  color_white, "#%s", dst);
+                      color_white, "dst:%s", rtxStatus.lsf_dst);
+            gfx_print(layout.line1_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                      color_white, "src:%s", rtxStatus.lsf_src);
+            }
+            else {
+                const char *dst = NULL;
+                if(ui_state->edit_mode)
+                    dst = ui_state->new_callsign;
+                else
+                    dst = (!strnlen(cfg.destination_address, 10)) ?
+                                                                  currentLanguage->broadcast : cfg.destination_address;
+                gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                          color_white, "#%s", dst);
+            }
+
             break;
         }
     }
