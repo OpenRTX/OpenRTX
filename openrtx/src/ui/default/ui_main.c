@@ -88,8 +88,6 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
     char bw_str[8] = { 0 };
     char encdec_str[9] = { 0 };
 
-    rtxStatus_t cfg = rtx_getCurrentStatus();
-
     switch(last_state.channel.mode)
     {
         case OPMODE_FM:
@@ -127,14 +125,61 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
         case OPMODE_M17:
         {
             // Print M17 Destination ID on line 3 of 3
-            const char *dst = NULL;
-            if(ui_state->edit_mode)
-                dst = ui_state->new_callsign;
+            rtxStatus_t rtxStatus = rtx_getCurrentStatus();
+
+            if(rtxStatus.lsfOk)
+            {
+                // Destination address
+                gfx_drawSymbol(layout.line2_pos, layout.line2_symbol_size, TEXT_ALIGN_LEFT,
+                               color_white, SYMBOL_CALL_RECEIVED);
+
+                gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                          color_white, "%s", rtxStatus.M17_dst);
+
+                // Source address
+                gfx_drawSymbol(layout.line1_pos, layout.line1_symbol_size, TEXT_ALIGN_LEFT,
+                               color_white, SYMBOL_CALL_MADE);
+
+                gfx_print(layout.line1_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                          color_white, "%s", rtxStatus.M17_src);
+
+                // Stream originator (if present)
+                if(rtxStatus.M17_orig[0] != '\0')
+                {
+                    gfx_drawSymbol(layout.line4_pos, layout.line3_symbol_size, TEXT_ALIGN_LEFT,
+                                   color_white, SYMBOL_ACCESS_POINT);
+
+                    gfx_print(layout.line4_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                              color_white, "%s", rtxStatus.M17_orig);
+                }
+
+                // Reflector (if present)
+                if(rtxStatus.M17_orig[0] != '\0')
+                {
+                    gfx_drawSymbol(layout.line3_pos, layout.line4_symbol_size, TEXT_ALIGN_LEFT,
+                                   color_white, SYMBOL_NETWORK);
+
+                    gfx_print(layout.line3_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                              color_white, "%s", rtxStatus.M17_refl);
+                }
+            }
             else
-                dst = (!strnlen(cfg.destination_address, 10)) ?
-                    currentLanguage->broadcast : cfg.destination_address;
-            gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                  color_white, "#%s", dst);
+            {
+                const char *dst = NULL;
+                if(ui_state->edit_mode)
+                    dst = ui_state->new_callsign;
+                else
+                {
+                    if(strnlen(rtxStatus.destination_address, 10) == 0)
+                        dst = currentLanguage->broadcast;
+                    else
+                        dst = rtxStatus.destination_address;
+
+                    gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                              color_white, "#%s", dst);
+                }
+            }
+
             break;
         }
     }
@@ -249,7 +294,12 @@ void _ui_drawMainVFO(ui_state_t* ui_state)
     gfx_clearScreen();
     _ui_drawMainTop();
     _ui_drawModeInfo(ui_state);
-    _ui_drawFrequency();
+
+    // Show VFO frequency if the OpMode is not M17 or there is no valid LSF data
+    rtxStatus_t status = rtx_getCurrentStatus();
+    if((status.opMode != OPMODE_M17) || (status.lsfOk == false))
+        _ui_drawFrequency();
+
     _ui_drawMainBottom();
 }
 
@@ -265,8 +315,12 @@ void _ui_drawMainMEM(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     _ui_drawMainTop();
-    _ui_drawBankChannel();
     _ui_drawModeInfo(ui_state);
-    _ui_drawFrequency();
+
+    // Show channel data if the OpMode is not M17 or there is no valid LSF data
+    rtxStatus_t status = rtx_getCurrentStatus();
+    if((status.opMode != OPMODE_M17) || (status.lsfOk == false))
+        _ui_drawBankChannel();
+
     _ui_drawMainBottom();
 }
