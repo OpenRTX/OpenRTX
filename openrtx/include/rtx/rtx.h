@@ -55,9 +55,14 @@ typedef struct
     uint8_t  can      : 4,  /**< M17 Channel Access Number     */
              _unused  : 4;
 
-    char     source_address[10];      /**< M17 call source address  */
-    char     destination_address[10]; /**< M17 call routing address */
-    bool     invertRxPhase;           /**< M17 RX phase inversion   */
+    char     source_address[10];       /**< M17 call source address    */
+    char     destination_address[10];  /**< M17 call routing address   */
+    bool     invertRxPhase;            /**< M17 RX phase inversion     */
+    bool     lsfOk;                    /**  M17 LSF is valid           */
+    char     M17_dst[10];              /**  M17 LSF destination        */
+    char     M17_src[10];              /**  M17 LSF source             */
+    char     M17_orig[10];             /**  M17 LSF traffic originator */
+    char     M17_refl[10];             /**  M17 LSF reflector module   */
 }
 rtxStatus_t;
 
