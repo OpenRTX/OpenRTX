@@ -119,10 +119,15 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
     {
         case RX:
 
-            if(locked)
+            if(locked) {
+                status->M17_rx = true;
                 platform_ledOn(GREEN);
-            else
+            }
+            else {
+
+                status->M17_rx = false;
                 platform_ledOff(GREEN);
+            }
 
             break;
 
@@ -200,7 +205,26 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         {
             auto& frame  = demodulator.getFrame();
             auto  type   = decoder.decodeFrame(frame);
-            bool  lsfOk  = decoder.getLsf().valid();
+            M17LinkSetupFrame lsf = decoder.getLsf();
+            bool    lsfOk = lsf.valid();
+            status->lsfOk = lsfOk;
+
+            if (lsfOk) {
+                string dst = lsf.getDestination();
+                string src = lsf.getSource();
+
+                const size_t maxBufferLength = 10; // Buffer size including null-terminator
+
+                if (dst.length() < maxBufferLength) {
+                    strncpy(status->lsf_dst, dst.c_str(), maxBufferLength);
+                    status->lsf_dst[maxBufferLength - 1] = '\0'; // Ensure null-terminator
+                }
+
+                if (src.length() < maxBufferLength) {
+                    strncpy(status->lsf_src, src.c_str(), maxBufferLength);
+                    status->lsf_src[maxBufferLength - 1] = '\0'; // Ensure null-terminator
+                }
+            }
 
             if((type == M17FrameType::STREAM) && (lsfOk == true) && (pthSts == PATH_OPEN))
             {
