@@ -98,7 +98,8 @@ std::string M17::decode_callsign(const call_t& encodedCall)
 
     while(encoded)
     {
-        result[index++] = charMap[encoded % 40];
+        result.push_back(charMap[encoded % 40]);
+        index++;
         encoded /= 40;
     }
 
