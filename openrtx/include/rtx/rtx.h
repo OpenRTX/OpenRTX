@@ -58,6 +58,10 @@ typedef struct
     char     source_address[10];      /**< M17 call source address  */
     char     destination_address[10]; /**< M17 call routing address */
     bool     invertRxPhase;           /**< M17 RX phase inversion   */
+    bool     M17_rx;                  /**  receiving M17            */
+    bool     lsfOk;                   /**  M17 LSF OK               */
+    char     lsf_dst[10];             /**  M17 LSF destination      */
+    char     lsf_src[10];             /**  M17 LSF source           */
 }
 rtxStatus_t;
 

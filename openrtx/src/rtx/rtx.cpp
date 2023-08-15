@@ -59,6 +59,8 @@ void rtx_init(pthread_mutex_t *m)
     rtxStatus.txToneEn      = 0;
     rtxStatus.txTone        = 0;
     rtxStatus.invertRxPhase = false;
+    strcpy(rtxStatus.lsf_src, "");
+    strcpy(rtxStatus.lsf_dst, "");
     currMode = &noMode;
 
     /*
