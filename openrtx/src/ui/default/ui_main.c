@@ -275,7 +275,11 @@ void _ui_drawMainMEM(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     _ui_drawMainTop();
-    _ui_drawBankChannel();
+    rtxStatus_t rtxStatus = rtx_getCurrentStatus();
+    if (!((last_state.channel.mode == OPMODE_M17) && rtxStatus.lsfOk && rtxStatus.M17_rx))
+    {
+        _ui_drawBankChannel();
+    }
     _ui_drawModeInfo(ui_state);
     _ui_drawFrequency();
     _ui_drawMainBottom();
