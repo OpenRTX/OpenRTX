@@ -107,7 +107,7 @@ public:
      * @return a reference to frame's metadata field, allowing for both read and
      * write access.
      */
-    meta_t& metadata();
+    meta_t metadata();
 
     /**
      * Compute a new CRC over the frame content and update the corresponding

@@ -32,11 +32,86 @@ namespace M17
 {
 
 using call_t    = std::array< uint8_t, 6 >;    // Data type for encoded callsign
-using meta_t    = std::array< uint8_t, 14 >;   // Data type for LSF metadata field
 using payload_t = std::array< uint8_t, 16 >;   // Data type for frame payload field
 using lich_t    = std::array< uint8_t, 12 >;   // Data type for Golay(24,12) encoded LICH data
 using frame_t   = std::array< uint8_t, 48 >;   // Data type for a full M17 data frame, including sync word
 using syncw_t   = std::array< uint8_t, 2  >;   // Data type for a sync word
+
+enum m17_lsf_packet_stream_indicator
+{
+    M17_LSF_PACKET_MODE = 0,
+    M17_LSF_STREAM_MODE = 1
+};
+
+enum m17_lsf_data_type
+{
+    M17_LSF_DATATYPE_RESERVED       = 0,
+    M17_LSF_DATATYPE_DATA           = 1,
+    M17_LSF_DATATYPE_VOICE          = 2,
+    M17_LSF_DATATYPE_VOICE_AND_DATA = 3
+};
+
+enum m17_lsf_encryption_type
+{
+    M17_LSF_ENCRYPTION_NONE      = 0,
+    M17_LSF_ENCRYPTION_AES       = 1,
+    M17_LSF_ENCRYPTION_SCRAMBLER = 2,
+    M17_LSF_ENCRYPTION_OTHER     = 3,
+};
+
+enum m17_lsf_null_encryption_subtype
+{
+    M17_LSF_NULL_ENCRYPTION_TEXT              = 0,
+    M17_LSF_NULL_ENCRYPTION_GNSS              = 1,
+    M17_LSF_NULL_ENCRYPTION_EXTENDED_CALLSIGN = 2,
+    M17_LSF_NULL_ENCRYPTION_RESERVED          = 3,
+};
+
+enum m17_lsf_scrambling_subtype
+{
+    M17_LSF_SCRAMBLING_8BIT     = 0,
+    M17_LSF_SCRAMBLING_16BIT    = 1,
+    M17_LSF_SCRAMBLING_24BIT    = 2,
+    M17_LSF_SCRAMBLING_RESERVED = 3,
+};
+
+union __attribute__((__packed__))
+{
+    m17_lsf_null_encryption_subtype null_subtype : 2;
+    m17_lsf_scrambling_subtype scramble_subtype  : 2;
+} encryption_subtype;
+
+typedef struct
+{
+    call_t call1;
+    call_t call2;
+    uint16_t unused;
+} extended_call_sign_t;
+
+typedef struct __attribute__((packed))
+{
+    uint8_t data_source;
+    uint8_t station_type;
+    uint8_t whole_degree_latitude;
+    uint16_t decimal_degree_latitude;
+    uint8_t whole_degree_longitude;
+    uint16_t decimal_degree_longitude;
+    uint8_t latitude_sign       : 1;
+    uint8_t longitude_sign      : 1;
+    uint8_t altitude_valid      : 1;
+    uint8_t speed_bearing_valid : 1;
+    uint8_t unused              : 4;
+    uint16_t altitude;
+    uint16_t bearing;
+    uint8_t speed;
+} gnss_data_t;
+
+typedef union
+{
+    extended_call_sign_t extended_call_sign;
+    gnss_data_t gnss_data;
+    std::array<uint8_t, 14> data;
+} meta_t;
 
 /**
  * This structure provides bit field definitions for the "TYPE" field
@@ -46,19 +121,17 @@ typedef union
 {
     struct __attribute__((packed))
     {
-        uint16_t stream     : 1;    //< Packet/stream indicator: 0 = packet, 1 = stream
-        uint16_t dataType   : 2;    //< Data type indicator
-        uint16_t encType    : 2;    //< Encryption type
-        uint16_t encSubType : 2;    //< Encryption subtype
-        uint16_t CAN        : 4;    //< Channel Access Number
-        uint16_t            : 4;    //< Reserved, padding to 16 bit
-    }
-    fields;
+        m17_lsf_packet_stream_indicator stream : 1;  //< Packet/stream indicator: 0 = packet, 1 = stream
+        m17_lsf_data_type dataType      : 2;  //< Data type indicator
+        m17_lsf_encryption_type encType : 2;  //< Encryption type
+        uint8_t encryption_subtype      : 2;  //< Encryption subtype
+        uint16_t CAN : 4;  //< Channel Access Number
+        uint16_t     : 4;  //< Reserved, padding to 16 bit
+    } fields;
 
     uint16_t value;
-}
-streamType_t;
+} streamType_t;
 
-}      // namespace M17
+}  // namespace M17
 
-#endif // M17_DATATYPES_H
+#endif  // M17_DATATYPES_H

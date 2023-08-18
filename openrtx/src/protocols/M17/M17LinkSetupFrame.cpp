@@ -76,7 +76,7 @@ void M17LinkSetupFrame::setType(streamType_t type)
     data.type  = type;
 }
 
-meta_t& M17LinkSetupFrame::metadata()
+meta_t M17LinkSetupFrame::metadata()
 {
     return data.meta;
 }
