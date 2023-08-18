@@ -126,7 +126,7 @@ typedef union
         m17_lsf_encryption_type encType : 2;  //< Encryption type
         uint8_t encryption_subtype      : 2;  //< Encryption subtype
         uint16_t CAN : 4;  //< Channel Access Number
-        uint16_t     : 4;  //< Reserved, padding to 16 bit
+        uint16_t     : 5;  //< Reserved, padding to 16 bit
     } fields;
 
     uint16_t value;
