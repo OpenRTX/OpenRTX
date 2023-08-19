@@ -18,14 +18,17 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <interfaces/delays.h>
-#include <interfaces/audio.h>
-#include <interfaces/radio.h>
-#include <OpMode_M17.hpp>
 #include <audio_codec.h>
 #include <errno.h>
+#include <interfaces/audio.h>
+#include <interfaces/delays.h>
+#include <interfaces/platform.h>
+#include <interfaces/radio.h>
 #include <rtx.h>
+
+#include <OpMode_M17.hpp>
+
+#include "M17/M17Callsign.hpp"
 
 #ifdef PLATFORM_MOD17
 #include <calibInfo_Mod17.h>
@@ -212,6 +215,23 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
             if (lsfOk) {
                 string dst = lsf.getDestination();
                 string src = lsf.getSource();
+                string extended1;
+                string extended2;
+                streamType_t streamType = lsf.getType();
+                if (streamType.fields.encType == M17_LSF_ENCRYPTION_NONE &&
+                    streamType.fields.encryption_subtype == M17_LSF_NULL_ENCRYPTION_EXTENDED_CALLSIGN)
+                {
+                    status->M17_extended_call = true;
+                    meta_t meta = lsf.metadata();
+                    extended1 = decode_callsign(meta.extended_call_sign.call1);
+                    extended2 = decode_callsign(meta.extended_call_sign.call2);
+                }
+                else
+                {
+                    status->M17_extended_call = false;
+                    extended1 = "";
+                    extended2 = "";
+                }
 
                 const size_t maxBufferLength = 10; // Buffer size including null-terminator
 
@@ -223,6 +243,16 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                 if (src.length() < maxBufferLength) {
                     strncpy(status->lsf_src, src.c_str(), maxBufferLength);
                     status->lsf_src[maxBufferLength - 1] = '\0'; // Ensure null-terminator
+                }
+
+                if (extended1.length() < maxBufferLength) {
+                    strncpy(status->lsf_extended_call1, extended1.c_str(), maxBufferLength);
+                    status->lsf_extended_call1[maxBufferLength - 1] = '\0'; // Ensure null-terminator
+                }
+
+                if (extended2.length() < maxBufferLength) {
+                    strncpy(status->lsf_extended_call2, extended2.c_str(), maxBufferLength);
+                    status->lsf_extended_call2[maxBufferLength - 1] = '\0'; // Ensure null-terminator
                 }
             }
 

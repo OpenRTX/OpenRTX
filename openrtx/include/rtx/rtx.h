@@ -62,6 +62,9 @@ typedef struct
     bool     lsfOk;                   /**  M17 LSF OK               */
     char     lsf_dst[10];             /**  M17 LSF destination      */
     char     lsf_src[10];             /**  M17 LSF source           */
+    bool     M17_extended_call;       /**  M17 LSF with extended    */
+    char     lsf_extended_call1[10];  /**  M17 LSF extended callsign*/
+    char     lsf_extended_call2[10];  /**  M17 LSF extended callsign*/
 }
 rtxStatus_t;
 
