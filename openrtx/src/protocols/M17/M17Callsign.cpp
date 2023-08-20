@@ -80,7 +80,7 @@ std::string M17::decode_callsign(const call_t& encodedCall)
         }
     }
 
-    if(isBroadcast) return "BROADCAST";
+    if(isBroadcast) return "ALL";
 
     /*
      * Address is not broadcast, decode it.
