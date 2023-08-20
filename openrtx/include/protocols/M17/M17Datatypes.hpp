@@ -122,11 +122,11 @@ typedef union
     struct __attribute__((packed))
     {
         m17_lsf_packet_stream_indicator stream : 1;  //< Packet/stream indicator: 0 = packet, 1 = stream
-        m17_lsf_data_type dataType      : 2;  //< Data type indicator
-        m17_lsf_encryption_type encType : 2;  //< Encryption type
-        uint8_t encryption_subtype      : 2;  //< Encryption subtype
-        uint16_t CAN : 4;  //< Channel Access Number
-        uint16_t     : 5;  //< Reserved, padding to 16 bit
+        m17_lsf_data_type dataType             : 2;  //< Data type indicator
+        m17_lsf_encryption_type encType        : 2;  //< Encryption type
+        uint8_t encryption_subtype             : 2;  //< Encryption subtype
+        uint16_t CAN                           : 4;  //< Channel Access Number
+        uint16_t                               : 5;  //< Reserved, padding to 16 bit
     } fields;
 
     uint16_t value;
