@@ -154,6 +154,7 @@ private:
     std::unique_ptr<frame_t >    readyFrame;      ///< Fully demodulated frame to be returned.
     bool                         syncDetected;    ///< A syncword was detected.
     bool                         locked;          ///< A syncword was correctly demodulated.
+    int16_t                      syncMatchs;      ///< syncword match counter.
     bool                         newFrame;        ///< A new frame has been fully decoded.
     int16_t                      basebandBridge[M17_BRIDGE_SIZE] = { 0 }; ///< Bridge buffer
     int16_t                      phase;           ///< Phase of the signal w.r.t. sampling

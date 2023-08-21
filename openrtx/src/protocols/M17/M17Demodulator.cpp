@@ -174,6 +174,7 @@ void M17Demodulator::init()
     phase           = 0;
     syncDetected    = false;
     locked          = false;
+    syncMatchs = 0;
     newFrame        = false;
 
     #ifdef ENABLE_DEMOD_LOG
@@ -531,7 +532,13 @@ bool M17Demodulator::update()
                         // the update function to take more than 20ms to complete.
                         if(locked) phase = 0;
                         syncDetected = false;
-                        locked       = false;
+
+                        if(syncMatchs > 0)
+                            syncMatchs--;
+
+                        if(syncMatchs == 0){
+                            locked  = false;
+                        }
 
                         #ifdef ENABLE_DEMOD_LOG
                         // Pre-arm the log trigger.
@@ -541,7 +548,12 @@ bool M17Demodulator::update()
                     else
                     {
                         // Correct syncword found
-                        locked = true;
+                        if(syncMatchs<3)
+                            syncMatchs++;
+
+                        if(syncMatchs == 3){
+                            locked = true;
+                        }
 
                         #ifdef ENABLE_DEMOD_LOG
                         // Trigger a data dump when lock is re-acquired.
