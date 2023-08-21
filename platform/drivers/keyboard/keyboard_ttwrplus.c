@@ -37,7 +37,7 @@ static void gpio_keys_cb_handler(struct input_event *evt)
     switch(evt->code)
     {
         case INPUT_KEY_VOLUMEDOWN:
-            keyCode = KEY_DOWN;
+            keyCode = KEY_MONI;
             break;
 
         case INPUT_BTN_START:
