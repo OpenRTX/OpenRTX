@@ -292,3 +292,8 @@ void pmu_init()
     val = PMU.getChargeTargetVoltage();
     printk("Setting Charge Target Voltage : %d\n", tableVoltage[val]);
 }
+
+uint16_t pmu_getVbat()
+{
+    return PMU.isBatteryConnect() ? PMU.getBattVoltage() : 0;
+}

@@ -82,7 +82,7 @@ void platform_terminate()
 
 uint16_t platform_getVbat()
 {
-    return 0;
+    return pmu_getVbat();
 }
 
 uint8_t platform_getMicLevel()

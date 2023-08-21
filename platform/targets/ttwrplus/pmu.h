@@ -25,7 +25,7 @@ extern "C" {
 #endif
 
 void pmu_init();
-
+uint16_t pmu_getVbat();
 
 #ifdef __cplusplus
 }
