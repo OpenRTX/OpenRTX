@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "AT1846S.h"
 #include "radioUtils.h"
 
@@ -120,6 +121,14 @@ char *radio_getFwVersion()
     return tx_buf;
 }
 
+char *radio_getModel()
+{
+    char *tx_buf = (char *) malloc(sizeof(char) * SA8X8_MSG_SIZE);
+    radio_uartPrint("AT+MODEL\r\n");
+    k_msgq_get(&uart_msgq, tx_buf, K_FOREVER);
+    return tx_buf;
+}
+
 void radio_init(const rtxStatus_t *rtxState)
 {
     config      = rtxState;
@@ -164,8 +173,19 @@ void radio_init(const rtxStatus_t *rtxState)
         return;
     }
 
-    // Add SA8x8 FW version to Info menu
-    ui_registerInfoExtraEntry("Radio", radio_getFwVersion);
+    // A small delay is needed to have SA8x8 ready to serve commands
+    delayMs(100);
+
+    // Check for minimum supported firmware version.
+    char *fwVersionStr = radio_getFwVersion();
+    uint8_t major = 0, minor = 0, patch = 0, release = 0;
+    sscanf(fwVersionStr, "sa8x8-fw/v%hhu.%hhu.%hhu.r%hhu", &major, &minor, &patch, &release);
+    if (major < 1 || (major == 1 && minor < 1) || (major == 1 && minor == 1 && patch == 0 && release < 14))
+    {
+        printk("Error: unsupported baseband firmware, please update!\n");
+        return;
+    }
+    free(fwVersionStr);
 
     // TODO: Implement audio paths configuration
 
@@ -251,8 +271,6 @@ void radio_enableRx()
 
 void radio_enableTx()
 {
-    // TODO; Do not enable Tx until proven to be safe
-    return;
     if(config->txDisable == 1) return;
 
     at1846s.setFrequency(config->txFrequency);
