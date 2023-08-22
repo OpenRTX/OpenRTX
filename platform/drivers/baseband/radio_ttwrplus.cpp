@@ -33,6 +33,14 @@
 #include "radioUtils.h"
 
 /*
+ * Minimum required version of sa868-fw
+ */
+#define SA868FW_MAJOR    1
+#define SA868FW_MINOR    1
+#define SA868FW_PATCH    0
+#define SA868FW_RELEASE 20
+
+/*
  * Define radio node to control the SA868
  */
 #if DT_NODE_HAS_STATUS(DT_ALIAS(radio), okay)
@@ -129,6 +137,35 @@ char *radio_getModel()
     return tx_buf;
 }
 
+void radio_enableTurbo()
+{
+    int ret = 0;
+    struct uart_config uart_config;
+
+    ret = uart_config_get(radio_dev, &uart_config);
+    if (ret) {
+        printk("Error: in retrieving UART configuration!\n");
+        return;
+    }
+
+    radio_uartPrint("AT+TURBO\r\n");
+
+    char *tx_buf = (char *) malloc(sizeof(char) * SA8X8_MSG_SIZE);
+    ret = k_msgq_get(&uart_msgq, tx_buf, K_FOREVER);
+    if (ret) {
+        printk("Error: in retrieving turbo response!\n");
+        return;
+    }
+
+    uart_config.baudrate = 115200;
+
+    ret = uart_configure(radio_dev, &uart_config);
+    if (ret) {
+        printk("Error: in setting UART configuration!\n");
+        return;
+    }
+}
+
 void radio_init(const rtxStatus_t *rtxState)
 {
     config      = rtxState;
@@ -169,7 +206,13 @@ void radio_init(const rtxStatus_t *rtxState)
 
     ret = gpio_pin_toggle_dt(&radio_pdn);
     if (ret != 0) {
-        printk("Failed to toggle radio power down");
+        printk("Failed to reset baseband");
+        return;
+    }
+    delayMs(200);
+    ret = gpio_pin_set_dt(&radio_pdn, 0);
+    if (ret != 0) {
+        printk("Failed to reset baseband");
         return;
     }
 
@@ -180,12 +223,17 @@ void radio_init(const rtxStatus_t *rtxState)
     char *fwVersionStr = radio_getFwVersion();
     uint8_t major = 0, minor = 0, patch = 0, release = 0;
     sscanf(fwVersionStr, "sa8x8-fw/v%hhu.%hhu.%hhu.r%hhu", &major, &minor, &patch, &release);
-    if (major < 1 || (major == 1 && minor < 1) || (major == 1 && minor == 1 && patch == 0 && release < 14))
+    if (major < SA868FW_MAJOR ||
+        (major == SA868FW_MAJOR && minor < SA868FW_MINOR) ||
+        (major == SA868FW_MAJOR && minor == SA868FW_MINOR && patch == SA868FW_PATCH && release < SA868FW_RELEASE))
     {
         printk("Error: unsupported baseband firmware, please update!\n");
         return;
     }
     free(fwVersionStr);
+
+    // Enable TURBO mode (115200 baud rate serial)
+    radio_enableTurbo();
 
     // TODO: Implement audio paths configuration
 
