@@ -1,44 +1,102 @@
-name: CI
+name: "Build and test"
 on:
+  workflow_dispatch:
   push:
-    branches: [ master ]
+  pull_request:
+
+env:
+  RADIO_TOOL_VERSION: 0.2.2
+
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v2
-      with:
-        submodules: recursive
-    - name: install-deps
-      run: |
-        sudo apt update
-        sudo apt install python3-pip gcc pkg-config libsdl2-dev wget ninja-build libcodec2-dev codec2
-        wget -O /tmp/MiosixToolchainInstaller.run https://miosix.org/toolchain/MiosixToolchainInstaller.run
-        sudo sh /tmp/MiosixToolchainInstaller.run
-        sudo pip3 install meson
-        wget -O /tmp/radio_tool.deb https://github.com/v0l/radio_tool/releases/download/v0.1.0/radio_tool-0.1.0-Linux.deb
-        sudo dpkg -i /tmp/radio_tool.deb
-#       sudo wget -O /usr/bin/bin2sgl https://raw.githubusercontent.com/rogerclarkmelbourne/OpenGD77/master/firmware/tools/bin2sgl
-#       sudo wget -O /usr/bin/bin2sgl.Linux https://raw.githubusercontent.com/rogerclarkmelbourne/OpenGD77/master/firmware/tools/bin2sgl.Linux
-#       sudo wget -O /usr/bin/gd-77_firmware_loader.py https://raw.githubusercontent.com/rogerclarkmelbourne/OpenGD77/master/tools/Python/FirmwareLoader/gd-77_firmware_loader.py
-#       sudo chmod +x /usr/bin/bin2sgl /usr/bin/bin2sgl.Linux /usr/bin/gd-77_firmware_loader.py
-    - name: meson-setup
-      run: |
-        cd ${{github.workspace}}
-        meson setup build_linux
-        meson setup --cross-file cross_arm.txt build_arm
-    - name: ninja
-      run: |
-        cd ${{github.workspace}}
-        ninja -C build_linux openrtx_linux -j4
-        ninja -C build_arm openrtx_md3x0_wrap -j4
-        ninja -C build_arm openrtx_mduv3x0_wrap -j4
-        ninja -C build_arm openrtx_gd77_bin -j4
-        ninja -C build_arm openrtx_dm1801_bin -j4
-    - uses: actions/upload-artifact@v2
-      with:
-        name: release-bins
-        path: |
-          ${{github.workspace}}/build_arm/openrtx_*_wrap*
-          ${{github.workspace}}/build_linux/openrtx_linux
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: install-deps
+        run: |
+          sudo apt update
+          sudo apt install git pkg-config build-essential meson libsdl2-dev libreadline-dev dfu-util cmake libusb-1.0-0 libusb-1.0-0-dev
+      - name: build install codec2
+        run: |
+          cd ${{github.workspace}}
+          meson subprojects download
+          cd subprojects/codec2
+          mkdir build_linux
+          cd build_linux
+          cmake ..
+          make
+          sudo make install
+      - name: install miosix
+        run: |
+          wget https://miosix.org/toolchain/MiosixToolchainInstaller.run
+          chmod +x MiosixToolchainInstaller.run
+          sudo sh MiosixToolchainInstaller.run
+          wget https://github.com/v0l/radio_tool/releases/download/v$RADIO_TOOL_VERSION/radio_tool-$RADIO_TOOL_VERSION-Linux.deb
+          sudo dpkg -i radio_tool-$RADIO_TOOL_VERSION-Linux.deb
+      - name: Get opengd77 for wrapping
+        run: |
+          git clone https://github.com/open-ham/OpenGD77.git /tmp/OpenGD77
+      - name: setup meson
+        run: |
+          cd ${{github.workspace}}
+          meson setup build_linux
+          meson setup --cross-file cross_arm.txt build_arm
+      - name: Compile linux
+        run: meson compile -C build_linux openrtx_linux
+      - name: Compile arm targets
+        run: |
+          export PATH=$PATH:/tmp/OpenGD77/tools/Python/FirmwareLoader:/tmp/OpenGD77/firmware/tools
+          echo $PATH
+          meson compile -C build_arm openrtx_md3x0_wrap
+          meson compile -C build_arm openrtx_mduv3x0_wrap
+          meson compile -C build_arm openrtx_md9600_wrap
+          meson compile -C build_arm openrtx_gd77_wrap
+          meson compile -C build_arm openrtx_dm1801_wrap
+          meson compile -C build_arm openrtx_mod17_wrap
+      - uses: actions/upload-artifact@v3
+        with:
+          name: release-bins
+          path: |
+            ${{github.workspace}}/build_arm/openrtx_*_wrap
+            ${{github.workspace}}/build_linux/openrtx_linux
+  unit-test:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: install-deps
+        run: |
+          sudo apt update
+          sudo apt install git pkg-config build-essential meson libsdl2-dev libreadline-dev dfu-util cmake libusb-1.0-0 libusb-1.0-0-dev
+      - name: build install codec2
+        run: |
+          cd ${{github.workspace}}
+          meson subprojects download
+          cd subprojects/codec2
+          mkdir build_linux
+          cd build_linux
+          cmake ..
+          make
+          sudo make install
+      - name: setup meson
+        run: |
+          cd ${{github.workspace}}
+          meson setup build
+      - name: M17 Viterbi Unit Test
+        run: meson test -C build "M17 Viterbi Unit Test"
+      - name: M17 Golay Unit Test
+        run: meson test -C build "M17 Golay Unit Test"
+      - name: M17 RRC Test
+        run: meson test -C build "M17 RRC Test"
+      - name: Codeplug Test
+        run: meson test -C build "Codeplug Test"
+      # The following tests are disabled because they appear to be flakey when run in CI
+      # - name: Sine Test
+      #   run: meson test -C build "Sine Test"
+      # - name: Linux InputStream Test
+      #   run: meson test -C build "Linux InputStream Test"
