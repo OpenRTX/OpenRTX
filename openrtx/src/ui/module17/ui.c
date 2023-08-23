@@ -225,6 +225,7 @@ layout_t _ui_calculateLayout()
 
     // Top bar font: 6 pt
     const fontSize_t top_font = FONT_SIZE_6PT;
+    const fontSize_t top_symbol_font = SYMBOLS_SIZE_6PT;
     // Middle line fonts: 5, 8, 8 pt
     const fontSize_t line1_font = FONT_SIZE_6PT;
     const fontSize_t line2_font = FONT_SIZE_6PT;
@@ -274,6 +275,7 @@ layout_t _ui_calculateLayout()
         line5_pos,
         bottom_pos,
         top_font,
+        top_symbol_font,
         line1_font,
         line2_font,
         line3_font,

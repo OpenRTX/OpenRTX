@@ -24,6 +24,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <gps.h>
+#include "../../include/fonts/symbols/enums.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -86,7 +87,10 @@ typedef enum
     FONT_SIZE_12PT,
     FONT_SIZE_16PT,
     FONT_SIZE_18PT,
-    FONT_SIZE_24PT
+    FONT_SIZE_24PT,
+    SYMBOLS_SIZE_5PT,
+    SYMBOLS_SIZE_6PT,
+    SYMBOLS_SIZE_8PT
 } fontSize_t;
 
 typedef enum
@@ -237,6 +241,18 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
  */
 point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment,
                   color_t color, const char* fmt, ... );
+
+/**
+ * Prints text on the screen at the specified coordinates.
+ * @param start: text line start point, in pixel coordinates.
+ * @param size: text font size, defined as enum.
+ * @param alignment: text alignment type, defined as enum. Deprecated; in the future this will be always LEFT.
+ * @param color: text color, in color_t format.
+ * @param symbol: symbol to be printed, defined as enum.
+ * @return text width and height as point_t coordinates
+ */
+point_t gfx_printSymbol(point_t start, fontSize_t size, textAlign_t alignment,
+                  color_t color, symbol_name_t symbol);
 
 /**
  * Prints text on the screen, calculating the print position.

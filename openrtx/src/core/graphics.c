@@ -51,6 +51,10 @@
 #include <UbuntuRegular18pt7b.h>
 #include <UbuntuRegular24pt7b.h>
 
+#include <Symbols5pt7b.h>
+#include <Symbols6pt7b.h>
+#include <Symbols8pt7b.h>
+
 // Variable swap macro
 #define DEG_RAD  0.017453292519943295769236907684886
 #define SIN(x) sinf((x) * DEG_RAD)
@@ -68,7 +72,7 @@ static const GFXfont fonts[] = { TomThumb,            // 5pt
                                  FreeSans12pt7b,      // 12pt
                                  FreeSans16pt7b,      // 16pt
                                  FreeSans18pt7b,      // 16pt
-                                 FreeSans24pt7b       // 24pt
+                                 FreeSans24pt7b,       // 24pt
     #elif defined FONT_UBUNTU_REGULAR
                                  UbuntuRegular6pt7b,  // 6pt
                                  UbuntuRegular8pt7b,  // 8pt
@@ -77,10 +81,13 @@ static const GFXfont fonts[] = { TomThumb,            // 5pt
                                  UbuntuRegular12pt7b, // 12pt
                                  UbuntuRegular16pt7b, // 16pt
                                  UbuntuRegular18pt7b, // 16pt
-                                 UbuntuRegular24pt7b  // 24pt
+                                 UbuntuRegular24pt7b,  // 24pt
     #else
     #error Unsupported font family!
     #endif
+                                 Symbols5pt7b,      // 5pt
+                                 Symbols6pt7b,      // 6pt
+                                 Symbols8pt7b       // 8pt
                                };
 
 #ifdef PIX_FMT_RGB565
@@ -565,6 +572,16 @@ point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment,
     va_start(ap, fmt);
     vsnprintf(text, sizeof(text)-1, fmt, ap);
     va_end(ap);
+
+    return gfx_printBuffer(start, size, alignment, color, text);
+}
+
+point_t gfx_printSymbol(point_t start, fontSize_t size, textAlign_t alignment,
+                  color_t color, symbol_name_t symbol)
+{
+    char buffer[2];
+    snprintf(buffer, sizeof(buffer), "%c", symbol);
+    const char *text = buffer;
 
     return gfx_printBuffer(start, size, alignment, color, text);
 }
