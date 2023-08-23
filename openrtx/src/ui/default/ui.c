@@ -989,6 +989,12 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
                                    state.settings.brightness);
             break;
 #endif
+        case 9:
+            if (!ui_state.input_locked)
+                ui_state.input_locked = true;
+            else 
+                ui_state.input_locked = false;
+            break;
     }
 
 #if defined(PLATFORM_TTWRPLUS)
@@ -1337,6 +1343,8 @@ void ui_updateFSM(bool *sync_rtx)
                     *sync_rtx = true;
                 }
                 // M17 Destination callsign input
+                if (ui_state.input_locked)
+                    break;
                 if(ui_state.edit_mode)
                 {
                     if(state.channel.mode == OPMODE_M17)
@@ -1520,6 +1528,8 @@ void ui_updateFSM(bool *sync_rtx)
                     state.txDisable = false;
                     *sync_rtx = true;
                 }
+                if (ui_state.input_locked)
+                    break;
                 // M17 Destination callsign input
                 if(ui_state.edit_mode)
                 {

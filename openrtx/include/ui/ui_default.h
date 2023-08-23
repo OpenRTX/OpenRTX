@@ -197,6 +197,7 @@ typedef struct ui_state_t
     uint8_t menu_selected;
     // If true we can change a menu entry value with UP/DOWN
     bool edit_mode;
+    bool input_locked;
     // Variables used for VFO input
     uint8_t input_number;
     uint8_t input_position;
