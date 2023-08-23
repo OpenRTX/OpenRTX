@@ -966,6 +966,12 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
                                    state.settings.brightness);
             break;
 #endif
+        case 9:
+            if( ui_state.input_lockedout == false )
+                ui_state.input_lockedout = true;
+            else 
+                ui_state.input_lockedout = false;
+            break;
     }
 
 #ifdef HAS_ABSOLUTE_KNOB // If the radio has an absolute position knob
@@ -1294,6 +1300,9 @@ void ui_updateFSM(bool *sync_rtx)
             // VFO screen
             case MAIN_VFO:
                 // M17 Destination callsign input
+                if( ui_state.input_lockedout == true ){
+                    break;
+                }
                 if(ui_state.edit_mode)
                 {
                     if(state.channel.mode == OPMODE_M17)
@@ -1463,6 +1472,9 @@ void ui_updateFSM(bool *sync_rtx)
                 break;
             // MEM screen
             case MAIN_MEM:
+                if( ui_state.input_lockedout == true ){
+                    break;
+                }
                 // M17 Destination callsign input
                 if(ui_state.edit_mode)
                 {
