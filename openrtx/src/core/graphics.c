@@ -51,6 +51,10 @@
 #include <UbuntuRegular18pt7b.h>
 #include <UbuntuRegular24pt7b.h>
 
+#include <Symbols5pt7b.h>
+#include <Symbols6pt7b.h>
+#include <Symbols8pt7b.h>
+
 // Variable swap macro
 #define DEG_RAD  0.017453292519943295769236907684886
 #define SIN(x) sinf((x) * DEG_RAD)
@@ -68,7 +72,7 @@ static const GFXfont fonts[] = { TomThumb,            // 5pt
                                  FreeSans12pt7b,      // 12pt
                                  FreeSans16pt7b,      // 16pt
                                  FreeSans18pt7b,      // 16pt
-                                 FreeSans24pt7b       // 24pt
+                                 FreeSans24pt7b,      // 24pt
     #elif defined FONT_UBUNTU_REGULAR
                                  UbuntuRegular6pt7b,  // 6pt
                                  UbuntuRegular8pt7b,  // 8pt
@@ -77,10 +81,13 @@ static const GFXfont fonts[] = { TomThumb,            // 5pt
                                  UbuntuRegular12pt7b, // 12pt
                                  UbuntuRegular16pt7b, // 16pt
                                  UbuntuRegular18pt7b, // 16pt
-                                 UbuntuRegular24pt7b  // 24pt
+                                 UbuntuRegular24pt7b, // 24pt
     #else
     #error Unsupported font family!
     #endif
+                                 Symbols5pt7b,      // 5pt
+                                 Symbols6pt7b,      // 6pt
+                                 Symbols8pt7b       // 8pt
                                };
 
 #ifdef PIX_FMT_RGB565
@@ -614,6 +621,24 @@ void gfx_printError(const char *text, fontSize_t size)
     box_start.y = (SCREEN_HEIGHT / 2) - (text_size.y / 2);
     // Draw the error box
     gfx_drawRect(box_start, text_size.x, text_size.y, red, false);
+}
+
+point_t gfx_drawSymbol(point_t start, symbolSize_t size, textAlign_t alignment,
+                       color_t color, symbol_t symbol)
+{
+    /*
+     * Symbol tables come immediately after fonts in the general font table.
+     * But, to prevent errors where symbol size is used instead of font size and
+     * vice-versa, their enums are separate. The trickery below is used to put
+     * together again the two enums in a single consecutive index.
+     *
+     * TODO: improve this.
+     */
+    int symSize = size + FONT_SIZE_24PT + 1;
+    char buffer[2] = {0};
+
+    buffer[0] = (char) symbol;
+    return gfx_printBuffer(start, symSize, alignment, color, buffer);
 }
 
 /*

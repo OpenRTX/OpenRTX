@@ -872,16 +872,34 @@ void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state)
     drawcnt++;
 }
 
+void _ui_drawMacroTop()
+{
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
+                color_white, currentLanguage->macroMenu);
+    if (macro_latched)
+    {
+        gfx_drawSymbol(layout.top_pos, layout.top_symbol_size, TEXT_ALIGN_LEFT,
+                       color_white, SYMBOL_ALPHA_M_BOX_OUTLINE);
+    }
+    if(last_state.settings.gps_enabled)
+    {
+        if(last_state.gps_data.fix_quality > 0)
+        {
+            gfx_drawSymbol(layout.top_pos, layout.top_symbol_size, TEXT_ALIGN_RIGHT,
+                           color_white, SYMBOL_CROSSHAIRS_GPS);
+        } 
+        else
+        {
+            gfx_drawSymbol(layout.top_pos, layout.top_symbol_size, TEXT_ALIGN_RIGHT,
+                           color_white, SYMBOL_CROSSHAIRS);
+        }
+    }
+}
+
 bool _ui_drawMacroMenu()
 {
         // Header
-        gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-                  color_white, currentLanguage->macroMenu);
-        if (macro_latched)
-        {
-            gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT,
-                  color_white, "L");
-        }
+        _ui_drawMacroTop();
         // First row
         if (last_state.channel.mode == OPMODE_FM)
         {

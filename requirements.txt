@@ -1,3 +1,5 @@
 pyusb
 meson
 ffmpeg
+cairosvg==2.7.1
+numpy==1.25.2

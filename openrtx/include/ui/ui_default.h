@@ -164,6 +164,7 @@ typedef struct layout_t
     point_t line3_pos;
     point_t bottom_pos;
     fontSize_t top_font;
+    symbolSize_t top_symbol_size;
     fontSize_t line1_font;
     fontSize_t line2_font;
     fontSize_t line3_font;
