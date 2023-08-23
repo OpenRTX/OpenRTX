@@ -26,6 +26,7 @@ extern "C" {
 
 void pmu_init();
 uint16_t pmu_getVbat();
+void pmu_setBasebandPower(bool enable);
 
 #ifdef __cplusplus
 }

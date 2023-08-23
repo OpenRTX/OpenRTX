@@ -152,7 +152,7 @@ void pmu_init()
     PMU.enableBLDO1();
 
     //! DC3 Radio & Pixels VDD
-    PMU.enableDC3();
+    PMU.disableDC3();
 
     // power off when not in use
     PMU.disableDC2();
@@ -235,7 +235,7 @@ void pmu_init()
     - XPOWERS_CHG_LED_ON,
     - XPOWERS_CHG_LED_CTRL_CHG,
     * */
-    PMU.setChargingLedMode(XPOWERS_CHG_LED_BLINK_1HZ);
+    PMU.setChargingLedMode(XPOWERS_CHG_LED_CTRL_CHG);
 
     // TODO: Implement IRQ
     // pinMode(PMU_IRQ, INPUT_PULLUP);
@@ -296,4 +296,12 @@ void pmu_init()
 uint16_t pmu_getVbat()
 {
     return PMU.isBatteryConnect() ? PMU.getBattVoltage() : 0;
+}
+
+void pmu_setBasebandPower(bool enable)
+{
+    if (enable)
+        PMU.enableDC3();
+    else
+        PMU.disableDC3();
 }
