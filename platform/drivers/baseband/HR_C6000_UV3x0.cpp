@@ -230,6 +230,7 @@ void HR_Cx000< M >::stopAnalogTx()
     writeReg(M::CONFIG, 0xE2, 0x06);    // Mic preamp disabled, anti-pop enabled
     writeReg(M::CONFIG, 0x34, 0x98);    // FM bpf enabled, 25kHz bandwidth
     writeReg(M::CONFIG, 0x37, 0x81);    // DAC gain
+    writeReg(M::CONFIG, 0x26, 0xFD);    // Undocumented register, enable FM receive
 }
 
 /*
