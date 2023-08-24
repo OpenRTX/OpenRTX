@@ -188,6 +188,10 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         decoder.reset();
         locked = lock;
     }
+    if (!locked)
+    {
+
+    }
 
     if(locked)
     {
@@ -211,6 +215,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
             M17LinkSetupFrame lsf = decoder.getLsf();
             bool    lsfOk = lsf.valid();
             status->lsfOk = lsfOk;
+            const size_t maxBufferLength = 10; // Buffer size including null-terminator
 
             if (lsfOk) {
                 string dst = lsf.getDestination();
@@ -218,41 +223,43 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                 string extended1;
                 string extended2;
                 streamType_t streamType = lsf.getType();
-                if (streamType.fields.encType == M17_LSF_ENCRYPTION_NONE &&
-                    streamType.fields.encryption_subtype == M17_LSF_NULL_ENCRYPTION_EXTENDED_CALLSIGN)
+                if (streamType.fields.encType == M17_ENCRYPTION_NONE &&
+                    streamType.fields.encSubType == M17_META_EXTD_CALLSIGN)
                 {
                     status->M17_extended_call = true;
                     meta_t meta = lsf.metadata();
                     extended1 = decode_callsign(meta.extended_call_sign.call1);
                     extended2 = decode_callsign(meta.extended_call_sign.call2);
-                }
-                else
-                {
-                    status->M17_extended_call = false;
-                    extended1 = "";
-                    extended2 = "";
-                }
 
-                const size_t maxBufferLength = 10; // Buffer size including null-terminator
+
+                    if (extended1.length() < maxBufferLength) {
+                        strncpy(status->M17_src, extended1.c_str(), maxBufferLength);
+                        status->M17_src[maxBufferLength - 1] = '\0'; // Ensure null-terminator
+                    }
+
+                    if (extended2.length() < maxBufferLength) {
+                        strncpy(status->M17_reflector_module, extended2.c_str(), maxBufferLength);
+                        status->M17_reflector_module[maxBufferLength - 1] = '\0'; // Ensure null-terminator
+                    }
+                }
 
                 if (dst.length() < maxBufferLength) {
-                    strncpy(status->lsf_dst, dst.c_str(), maxBufferLength);
-                    status->lsf_dst[maxBufferLength - 1] = '\0'; // Ensure null-terminator
+                    strncpy(status->M17_dst, dst.c_str(), maxBufferLength);
+                    status->M17_dst[maxBufferLength - 1] = '\0'; // Ensure null-terminator
                 }
 
                 if (src.length() < maxBufferLength) {
-                    strncpy(status->lsf_src, src.c_str(), maxBufferLength);
-                    status->lsf_src[maxBufferLength - 1] = '\0'; // Ensure null-terminator
-                }
+                    if (status->M17_extended_call)
+                    {
+                        strncpy(status->M17_repeater, src.c_str(), maxBufferLength);
+                        status->M17_repeater[maxBufferLength - 1] = '\0'; // Ensure null-terminator
+                    }
+                    else
+                    {
+                        strncpy(status->M17_src, src.c_str(), maxBufferLength);
+                        status->M17_src[maxBufferLength - 1] = '\0'; // Ensure null-terminator
+                    }
 
-                if (extended1.length() < maxBufferLength) {
-                    strncpy(status->lsf_extended_call1, extended1.c_str(), maxBufferLength);
-                    status->lsf_extended_call1[maxBufferLength - 1] = '\0'; // Ensure null-terminator
-                }
-
-                if (extended2.length() < maxBufferLength) {
-                    strncpy(status->lsf_extended_call2, extended2.c_str(), maxBufferLength);
-                    status->lsf_extended_call2[maxBufferLength - 1] = '\0'; // Ensure null-terminator
                 }
             }
 
@@ -263,6 +270,11 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                 codec_pushFrame(sf.payload().data() + 8, false);
             }
         }
+    }
+    else
+    {
+        status->lsfOk = false;
+        status->M17_extended_call = false;
     }
 
     locked = lock;

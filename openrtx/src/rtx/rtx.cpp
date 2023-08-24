@@ -60,15 +60,15 @@ void rtx_init(pthread_mutex_t *m)
     rtxStatus.txTone        = 0;
     rtxStatus.invertRxPhase = false;
     rtxStatus.M17_rx = false;
-    strcpy(rtxStatus.lsf_src, "");
-    rtxStatus.lsf_src[0] = '\0';
-    strcpy(rtxStatus.lsf_dst, "");
-    rtxStatus.lsf_dst[0] = '\0';
+    strcpy(rtxStatus.M17_src, "");
+    rtxStatus.M17_src[0] = '\0';
+    strcpy(rtxStatus.M17_dst, "");
+    rtxStatus.M17_dst[0] = '\0';
     rtxStatus.M17_extended_call = false;
-    strcpy(rtxStatus.lsf_extended_call1, "");
-    rtxStatus.lsf_extended_call1[0] = '\0';
-    strcpy(rtxStatus.lsf_extended_call2, "");
-    rtxStatus.lsf_extended_call2[0] = '\0';
+    strcpy(rtxStatus.M17_repeater, "");
+    rtxStatus.M17_repeater[0] = '\0';
+    strcpy(rtxStatus.M17_reflector_module, "");
+    rtxStatus.M17_reflector_module[0] = '\0';
     currMode = &noMode;
 
     /*
