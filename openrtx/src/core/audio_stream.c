@@ -98,6 +98,17 @@ streamId audioStream_start(const pathId path, stream_sample_t * const buf,
     streamId id = -1;
     for(size_t i = 0; i < MAX_NUM_STREAMS; i++)
     {
+        // While searching, cleanup dead streams
+        if(streams[i].path > 0)
+        {
+            if(audioPath_getStatus(streams[i].path) != PATH_OPEN)
+            {
+                streams[i].dev->driver->terminate(&(streams[i].ctx));
+                streams[i].path = 0;
+            }
+        }
+
+        // Empty stream found
         if((streams[i].path <= 0) && (streams[i].ctx.running == 0))
             id = i;
     }
