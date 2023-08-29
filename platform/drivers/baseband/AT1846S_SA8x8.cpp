@@ -18,17 +18,9 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  **************************************************************************/
 
-#include <zephyr/kernel.h>
-
-#include <cstring>
-#include <stdio.h>
-
 #include <interfaces/delays.h>
 #include "AT1846S.h"
-
-#define SA8X8_MSG_SIZE 32
-
-char rx_buf[SA8X8_MSG_SIZE] = { 0 };
+#include "SA8x8.h"
 
 void AT1846S::init()
 {
@@ -198,41 +190,16 @@ void AT1846S::setOpMode(const AT1846S_OpMode mode)
 /*
  * Implementation of AT1846S I2C interface through SA8x8
  */
-
-static constexpr uint8_t devAddr = 0xE2;
-
 void AT1846S::i2c_init()
 {
-    // I2C already init'd by platform support package
 }
-
-/*
- * These callbacks needs to be implemented by the platform, providing functions
- * to read and write from the serial port
- */
-extern void radio_uartPrint(const char *fmt, ...);
-extern void radio_uartScan(char *buf);
 
 void AT1846S::i2c_writeReg16(uint8_t reg, uint16_t value)
 {
-    /*
-     * SA8x8 with sa8x8_fw uses PEEK and POKE AT commands to write to AT1846S
-     */
-    radio_uartPrint("AT+POKE=%d,%d\r\n", reg, value);
-    radio_uartScan(rx_buf);
-    // Check that response is "OK\r"
-    if (strncmp(rx_buf, "OK\r", 3))
-        printk("SA8x8 Error: %d <- %d\n", reg, value);
+    sa8x8_writeAT1846Sreg(reg, value);
 }
 
 uint16_t AT1846S::i2c_readReg16(uint8_t reg)
 {
-    /*
-     * SA8x8 with sa8x8_fw uses PEEK and POKE AT commands to write to AT1846S
-     */
-    int32_t value = 0;
-    radio_uartPrint("AT+PEEK=%d\r\n", reg);
-    radio_uartScan(rx_buf);
-    sscanf(rx_buf, "%d\r", &value);
-    return value;
+    return sa8x8_readAT1846Sreg(reg);
 }

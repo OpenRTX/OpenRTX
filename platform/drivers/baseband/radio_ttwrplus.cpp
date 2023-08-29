@@ -18,254 +18,32 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/drivers/uart.h>
-#include <zephyr/kernel.h>
-#include <interfaces/delays.h>
 #include <interfaces/radio.h>
-#include <rtx.h>
-#include <ui.h>
-#include <algorithm>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <pmu.h>
-#include "AT1846S.h"
 #include "radioUtils.h"
+#include "AT1846S.h"
+#include "SA8x8.h"
 
-/*
- * Minimum required version of sa868-fw
- */
-#define SA868FW_MAJOR    1
-#define SA868FW_MINOR    1
-#define SA868FW_PATCH    0
-#define SA868FW_RELEASE 20
+const rtxStatus_t *config;   // Pointer to data structure with radio configuration
 
-/*
- * Define radio node to control the SA868
- */
-#if DT_NODE_HAS_STATUS(DT_ALIAS(radio), okay)
-#define UART_RADIO_DEV_NODE DT_ALIAS(radio)
-#else
-#error "Please select the correct radio UART device"
-#endif
-
-#define SA8X8_MSG_SIZE 32
-
-K_MSGQ_DEFINE(uart_msgq, SA8X8_MSG_SIZE, 10, 4);
-
-/* receive buffer used in UART ISR callback */
-static char rx_buf[SA8X8_MSG_SIZE];
-static uint16_t rx_buf_pos;
-
-static const struct device *const radio_dev = DEVICE_DT_GET(UART_RADIO_DEV_NODE);
-
-#define RADIO_PDN_NODE DT_ALIAS(radio_pdn)
-
-static const struct gpio_dt_spec radio_pdn = GPIO_DT_SPEC_GET(RADIO_PDN_NODE, gpios);
-
-
-const rtxStatus_t    *config;   // Pointer to data structure with radio configuration
-
-Band    currRxBand = BND_NONE;  // Current band for RX
-Band    currTxBand = BND_NONE;  // Current band for TX
-
-enum opstatus radioStatus;      // Current operating status
+Band currRxBand = BND_NONE;  // Current band for RX
+Band currTxBand = BND_NONE;  // Current band for TX
+enum opstatus radioStatus;   // Current operating status
 
 AT1846S& at1846s = AT1846S::instance();   // AT1846S driver
 
-void radio_serialCb(const struct device *dev, void *user_data)
-{
-    uint8_t c;
-
-    if (!uart_irq_update(radio_dev)) {
-        return;
-    }
-
-    if (!uart_irq_rx_ready(radio_dev)) {
-        return;
-    }
-
-    /* read until FIFO empty */
-    while (uart_fifo_read(radio_dev, &c, 1) == 1) {
-        if (c == '\n' && rx_buf_pos > 0) {
-            /* terminate string */
-            rx_buf[rx_buf_pos] = '\0';
-
-            /* if queue is full, message is silently dropped */
-            k_msgq_put(&uart_msgq, &rx_buf, K_NO_WAIT);
-
-            /* reset the buffer (it was copied to the msgq) */
-            rx_buf_pos = 0;
-        } else if (rx_buf_pos < (sizeof(rx_buf) - 1)) {
-            rx_buf[rx_buf_pos++] = c;
-        }
-        /* else: characters beyond buffer size are dropped */
-    }
-}
-
-void radio_uartPrint(const char *fmt, ...)
-{
-    char buf[SA8X8_MSG_SIZE] = { 0 };
-    va_list args;
-    va_start(args, fmt);
-    vsnprintk(buf, SA8X8_MSG_SIZE, fmt, args);
-    int msg_len = strnlen(buf, SA8X8_MSG_SIZE);
-    for (uint16_t i = 0; i < msg_len; i++) {
-        uart_poll_out(radio_dev, buf[i]);
-    }
-    va_end(args);
-}
-
-void radio_uartScan(char *buf)
-{
-    k_msgq_get(&uart_msgq, buf, K_MSEC(100));
-}
-
-char *radio_getFwVersion()
-{
-    char *tx_buf = (char *) malloc(sizeof(char) * SA8X8_MSG_SIZE);
-    radio_uartPrint("AT+VERSION\r\n");
-    k_msgq_get(&uart_msgq, tx_buf, K_MSEC(100));
-    return tx_buf;
-}
-
-char *radio_getModel()
-{
-    char *tx_buf = (char *) malloc(sizeof(char) * SA8X8_MSG_SIZE);
-    radio_uartPrint("AT+MODEL\r\n");
-    k_msgq_get(&uart_msgq, tx_buf, K_MSEC(100));
-    return tx_buf;
-}
-
-enum Band radio_getBand()
-{
-    enum Band band = BND_NONE;
-    char *tx_buf = radio_getModel();
-    if (!strncmp(tx_buf, "SA868S-VHF\r", SA8X8_MSG_SIZE))
-        band = BND_VHF;
-    else if (!strncmp(tx_buf, "SA868S-UHF\r", SA8X8_MSG_SIZE))
-        band = BND_UHF;
-    free(tx_buf);
-    return band;
-}
-
-enum Band radio_waitUntilReady()
-{
-    bool ready = false;
-    enum Band band = BND_NONE;
-    do
-    {
-        band = radio_getBand();
-        if (band != BND_NONE)
-            ready = true;
-    } while(!ready);
-    return band;
-}
-
-void radio_enableTurbo()
-{
-    int ret = 0;
-    struct uart_config uart_config;
-
-    ret = uart_config_get(radio_dev, &uart_config);
-    if (ret) {
-        printk("Error: in retrieving UART configuration!\n");
-        return;
-    }
-
-    radio_uartPrint("AT+TURBO\r\n");
-
-    char *tx_buf = (char *) malloc(sizeof(char) * SA8X8_MSG_SIZE);
-    ret = k_msgq_get(&uart_msgq, tx_buf, K_MSEC(100));
-    if (ret) {
-        printk("Error: in retrieving turbo response!\n");
-        return;
-    }
-
-    uart_config.baudrate = 115200;
-
-    ret = uart_configure(radio_dev, &uart_config);
-    if (ret) {
-        printk("Error: in setting UART configuration!\n");
-        return;
-    }
-}
 
 void radio_init(const rtxStatus_t *rtxState)
 {
     config      = rtxState;
     radioStatus = OFF;
-    int ret;
 
     // Turn on baseband
     pmu_setBasebandPower(true);
 
-    // Initialize GPIO for SA868S power down
-    if (!gpio_is_ready_dt(&radio_pdn)) {
-        printk("Error: radio device %s is not ready\n",
-               radio_pdn.port->name);
-    }
-
-    ret = gpio_pin_configure_dt(&radio_pdn, GPIO_OUTPUT);
-    if (ret != 0) {
-        printk("Error %d: failed to configure %s pin %d\n", ret, radio_pdn.port->name, radio_pdn.pin);
-    }
-
-    if (!device_is_ready(radio_dev)) {
-        printk("UART device not found!\n");
-        return;
-    }
-
-    ret = uart_irq_callback_user_data_set(radio_dev, radio_serialCb, NULL);
-
-    if (ret < 0) {
-        if (ret == -ENOTSUP) {
-            printk("Interrupt-driven UART support not enabled\n");
-        } else if (ret == -ENOSYS) {
-            printk("UART device does not support interrupt-driven API\n");
-        } else {
-            printk("Error setting UART callback: %d\n", ret);
-        }
-
-        return;
-    }
-
-    uart_irq_rx_enable(radio_dev);
-
-    // Reset the SA868S baseband
-    ret = gpio_pin_set_dt(&radio_pdn, 1);
-    if (ret != 0) {
-        printk("Failed to reset baseband");
-        return;
-    }
-    delayMs(10);
-    ret = gpio_pin_set_dt(&radio_pdn, 0);
-    if (ret != 0) {
-        printk("Failed to reset baseband");
-        return;
-    }
-
-    // Wait until SA868 is responsive
-    radio_waitUntilReady();
-
-    // Check for minimum supported firmware version.
-    char *fwVersionStr = radio_getFwVersion();
-    uint8_t major = 0, minor = 0, patch = 0, release = 0;
-    sscanf(fwVersionStr, "sa8x8-fw/v%hhu.%hhu.%hhu.r%hhu", &major, &minor, &patch, &release);
-    if (major < SA868FW_MAJOR ||
-        (major == SA868FW_MAJOR && minor < SA868FW_MINOR) ||
-        (major == SA868FW_MAJOR && minor == SA868FW_MINOR && patch == SA868FW_PATCH && release < SA868FW_RELEASE))
-    {
-        printk("Error: unsupported baseband firmware, please update!\n");
-        return;
-    }
-    free(fwVersionStr);
-
-    // Enable TURBO mode (115200 baud rate serial)
-    radio_enableTurbo();
-
-    // TODO: Implement audio paths configuration
+    // Init the SA8x8 mode, set serial to 115200 baud
+    sa8x8_init();
+    sa8x8_enableHSMode();
 
     /*
      * Configure AT1846S, keep AF output disabled at power on.
