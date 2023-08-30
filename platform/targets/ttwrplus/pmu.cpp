@@ -17,8 +17,10 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/i2c.h>
 #include <interfaces/delays.h>
+#include <interfaces/keyboard.h>
 #include <hwconfig.h>
 #include "pmu.h"
 
@@ -33,9 +35,12 @@
 #error "Please set the correct I2C device"
 #endif
 
+#define PMU_IRQ_NODE DT_ALIAS(pmu_irq)
 
 static const struct device *const i2c_dev = DEVICE_DT_GET(I2C_DEV_NODE);
+static const struct gpio_dt_spec pmu_irq  = GPIO_DT_SPEC_GET(PMU_IRQ_NODE, gpios);
 static XPowersPMU PMU;
+static bool pwrOnPressed = false;
 
 
 static int pmu_registerReadByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data,
@@ -71,6 +76,18 @@ void pmu_init()
     if (i2c_configure(i2c_dev, i2c_cfg) != 0)
     {
         printk("I2C config failed\n");
+    }
+
+    // Configure IRQ gpio
+    if(gpio_is_ready_dt(&pmu_irq) == false)
+    {
+        printk("PMU IRQ gpio is not ready\n");
+    }
+
+    int ret = gpio_pin_configure_dt(&pmu_irq, GPIO_INPUT);
+    if (ret != 0)
+    {
+        printk("Failed to configure PMU IRQ gpio\n");
     }
 
     bool result = PMU.begin(AXP2101_SLAVE_ADDRESS, pmu_registerReadByte,
@@ -249,10 +266,11 @@ void pmu_init()
     PMU.clearIrqStatus();
     // Enable the required interrupt function
     PMU.enableIRQ(
-        XPOWERS_AXP2101_BAT_INSERT_IRQ    | XPOWERS_AXP2101_BAT_REMOVE_IRQ      |   //BATTERY
-        XPOWERS_AXP2101_VBUS_INSERT_IRQ   | XPOWERS_AXP2101_VBUS_REMOVE_IRQ     |   //VBUS
-        XPOWERS_AXP2101_PKEY_SHORT_IRQ    | XPOWERS_AXP2101_PKEY_LONG_IRQ       |   //POWER KEY
-        XPOWERS_AXP2101_BAT_CHG_DONE_IRQ  | XPOWERS_AXP2101_BAT_CHG_START_IRQ       //CHARGE
+        XPOWERS_AXP2101_BAT_INSERT_IRQ    | XPOWERS_AXP2101_BAT_REMOVE_IRQ    |   // BATTERY
+        XPOWERS_AXP2101_VBUS_INSERT_IRQ   | XPOWERS_AXP2101_VBUS_REMOVE_IRQ   |   // VBUS
+        XPOWERS_AXP2101_PKEY_POSITIVE_IRQ | XPOWERS_AXP2101_PKEY_NEGATIVE_IRQ |   // POWER KEY ON/OFF
+        XPOWERS_AXP2101_PKEY_LONG_IRQ     |                                       // POWER KEY LONG PRESS
+        XPOWERS_AXP2101_BAT_CHG_DONE_IRQ  | XPOWERS_AXP2101_BAT_CHG_START_IRQ     // CHARGE
     );
 
     // Set the precharge charging current
@@ -314,4 +332,45 @@ void pmu_setGPSPower(bool enable)
         PMU.enableALDO4();
     else
         PMU.disableALDO4();
+}
+
+void pmu_handleIRQ()
+{
+    // Check if we got some interrupts
+    if(gpio_pin_get_dt(&pmu_irq) == 0)
+        return;
+
+    uint32_t irqStatus = PMU.getIrqStatus();
+    PMU.clearIrqStatus();
+
+    // Power on key rising edge
+    if((irqStatus & XPOWERS_AXP2101_PKEY_POSITIVE_IRQ) != 0)
+        pwrOnPressed = true;
+
+    // Power on key falling edge
+    if((irqStatus & XPOWERS_AXP2101_PKEY_NEGATIVE_IRQ) != 0)
+        pwrOnPressed = false;
+
+    // Power key long press
+    if ((irqStatus & XPOWERS_AXP2101_PKEY_LONG_IRQ) != 0)
+    {
+        // TODO Shutdown radio, set platform_pwrButtonStatus to false
+        PMU.shutdown();
+    }
+
+    // Charger start IRQ
+    if((irqStatus & XPOWERS_AXP2101_BAT_CHG_START_IRQ) != 0)
+    {
+        if(PMU.isBatteryConnect())
+            PMU.setChargingLedMode(XPOWERS_CHG_LED_CTRL_CHG);
+    }
+
+    // Battery remove IRQ
+    if((irqStatus & XPOWERS_AXP2101_BAT_REMOVE_IRQ) != 0)
+        PMU.setChargingLedMode(XPOWERS_CHG_LED_BLINK_1HZ);
+}
+
+bool pmu_pwrOnBtnStatus()
+{
+    return pwrOnPressed;
 }

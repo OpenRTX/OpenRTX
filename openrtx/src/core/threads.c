@@ -40,6 +40,9 @@
 #endif
 #include <voicePrompts.h>
 
+#if defined(PLATFORM_TTWRPLUS)
+#include <pmu.h>
+#endif
 
 /* Mutex for concurrent access to RTX state variable */
 pthread_mutex_t rtx_mutex;
@@ -138,6 +141,10 @@ void *main_thread(void *arg)
     while(state.devStatus != SHUTDOWN)
     {
         time = getTick();
+
+        #if defined(PLATFORM_TTWRPLUS)
+        pmu_handleIRQ();
+        #endif
 
         // Check if power off is requested
         pthread_mutex_lock(&state_mutex);

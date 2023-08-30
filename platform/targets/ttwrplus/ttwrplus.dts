@@ -22,6 +22,7 @@
         radio-pwr = &radio_pwr;
         radio-pdn = &radio_pdn;
         radio-ptt = &radio_ptt;
+        pmu-irq   = &pmu_irq;
         qdec0 = &pcnt;
         led0 = &ws2812c;
     };
@@ -50,6 +51,11 @@
             radio_ptt: radio_ptt {
                     gpios = <&gpio1 9 GPIO_ACTIVE_HIGH>;
                     label = "SA868S PTT on IO41";
+            };
+
+            pmu_irq: pmu_irq {
+                gpios = <&gpio0 4 GPIO_ACTIVE_LOW>;
+                label = "PMU IRQ Pin";
             };
     };
 

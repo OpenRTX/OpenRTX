@@ -28,6 +28,8 @@ void pmu_init();
 uint16_t pmu_getVbat();
 void pmu_setBasebandPower(bool enable);
 void pmu_setGPSPower(bool enable);
+void pmu_handleIRQ();
+bool pmu_pwrOnBtnStatus();
 
 #ifdef __cplusplus
 }
