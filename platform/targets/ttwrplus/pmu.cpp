@@ -99,6 +99,8 @@ void pmu_init()
     // Set VSY off voltage as 2600mV , Adjustment range 2600mV ~ 3300mV
     PMU.setSysPowerDownVoltage(2600);
 
+    // High transmit power may cause voltage dropoff, disable PMU protection
+    PMU.disableDC3LowVoltageTurnOff();
 
     //! DC1 ESP32S3 Core VDD , Don't change
     // PMU.setDC1Voltage(3300);

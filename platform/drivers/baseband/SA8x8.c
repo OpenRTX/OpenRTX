@@ -40,11 +40,13 @@
 #endif
 
 #define RADIO_PDN_NODE DT_ALIAS(radio_pdn)
+#define RADIO_PWR_NODE DT_NODELABEL(radio_pwr)
 
 #define SA8X8_MSG_SIZE 32U
 
 static const struct device *const uart_dev = DEVICE_DT_GET(UART_RADIO_DEV_NODE);
 static const struct gpio_dt_spec radio_pdn = GPIO_DT_SPEC_GET(RADIO_PDN_NODE, gpios);
+static const struct gpio_dt_spec radio_pwr = GPIO_DT_SPEC_GET_OR(RADIO_PWR_NODE, gpios, {0});
 
 K_MSGQ_DEFINE(uart_msgq, SA8X8_MSG_SIZE, 10, 4);
 
@@ -146,6 +148,21 @@ int sa8x8_init()
     {
         printk("SA8x8: error %d, failed to configure %s pin %d\n", ret,
                radio_pdn.port->name, radio_pdn.pin);
+        return ret;
+    }
+
+    // Initialize GPIO for SA868S high power mode
+    if(gpio_is_ready_dt(&radio_pwr) == false)
+    {
+        printk("SA8x8: error, high power GPIO %s is not ready\n", radio_pdn.port->name);
+        return ret;
+    }
+
+    ret = gpio_pin_configure_dt(&radio_pwr, GPIO_OUTPUT);
+    if (ret != 0)
+    {
+        printk("SA8x8: error %d, failed to configure %s pin %d\n", ret,
+               radio_pwr.port->name, radio_pwr.pin);
         return ret;
     }
 
@@ -252,6 +269,17 @@ int sa8x8_enableHSMode()
     }
 
     return 0;
+}
+
+void sa8x8_setTxPower(const float power)
+{
+    char buf[SA8X8_MSG_SIZE] = { 0 };
+
+    // TODO: Implement fine-grained power control through PA_BIAS SA8x8 register
+    uint8_t amp_enable = (power > 1.0f) ? 1 : 0;
+    int ret = gpio_pin_set_dt(&radio_pwr, amp_enable);
+    if(ret != 0)
+        printk("SA8x8: failed to enable high power mode");
 }
 
 void sa8x8_writeAT1846Sreg(uint8_t reg, uint16_t value)

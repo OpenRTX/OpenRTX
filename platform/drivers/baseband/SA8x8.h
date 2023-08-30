@@ -56,6 +56,13 @@ const char *sa8x8_getFwVersion();
 int sa8x8_enableHSMode();
 
 /**
+ * Set the transmission power.
+ *
+ * @param power: transmission power in Watt.
+ */
+void sa8x8_setTxPower(const float power);
+
+/**
  * Write a register of the AT1846S radio IC contained in the SA8x8 module.
  *
  * @param reg: register number.

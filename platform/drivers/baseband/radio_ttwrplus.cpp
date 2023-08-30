@@ -19,6 +19,7 @@
  ***************************************************************************/
 
 #include <interfaces/radio.h>
+#include <algorithm>
 #include <pmu.h>
 #include "radioUtils.h"
 #include "AT1846S.h"
@@ -128,6 +129,10 @@ void radio_enableRx()
 void radio_enableTx()
 {
     if(config->txDisable == 1) return;
+
+    // Constrain output power between 1W and 5W.
+    float power  = std::max(std::min(config->txPower, 5.0f), 1.0f);
+    sa8x8_setTxPower(power);
 
     at1846s.setFrequency(config->txFrequency);
     at1846s.setFuncMode(AT1846S_FuncMode::TX);
