@@ -52,7 +52,7 @@ void *ui_threadFunc(void *arg)
     (void) arg;
 
     kbd_msg_t   kbd_msg;
-    rtxStatus_t rtx_cfg;
+    rtxStatus_t rtx_cfg = { 0 };
     bool        sync_rtx = true;
     long long   time     = 0;
 
