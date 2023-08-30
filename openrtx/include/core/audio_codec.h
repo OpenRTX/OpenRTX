@@ -73,6 +73,13 @@ bool codec_startDecode(const pathId path);
 void codec_stop(const pathId path);
 
 /**
+ * Get current oprational status of the codec thread.
+ *
+ * @return true if the codec thread is active.
+ */
+bool codec_running();
+
+/**
  * Get a compressed audio frame from the internal queue. Each frame is composed
  * of 8 bytes.
  *

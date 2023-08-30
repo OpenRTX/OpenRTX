@@ -109,6 +109,11 @@ void codec_stop(const pathId path)
     stopThread();
 }
 
+bool codec_running()
+{
+    return running;
+}
+
 int codec_popFrame(uint8_t *frame, const bool blocking)
 {
     if(running == false)
@@ -351,6 +356,13 @@ static bool startThread(const pathId path, void *(*func) (void *))
     pthread_mutex_lock(&init_mutex);
     if(running)
     {
+        // Same path as before, path open, codec already running: all good.
+        if(path == audioPath)
+        {
+            pthread_mutex_unlock(&init_mutex);
+            return true;
+        }
+
         // New path takes over the current one only if it has an higher priority
         // or the current one is closed/suspended.
         pathInfo_t newPath = audioPath_getInfo(path);
