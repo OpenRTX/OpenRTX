@@ -174,37 +174,44 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
     bool newData = demodulator.update();
     bool lock    = demodulator.isLocked();
 
-    // Reset frame decoder when transitioning from unlocked to locked state and
-    // setup audio path towards the speaker.
+    // Reset frame decoder when transitioning from unlocked to locked state.
     if((lock == true) && (locked == false))
     {
         decoder.reset();
-        rxAudioPath = audioPath_request(SOURCE_MCU, SINK_SPK, PRIO_RX);
-        codec_startDecode(rxAudioPath);
+        locked = lock;
+    }
+
+    if(locked)
+    {
+        // Check RX audio path status, open it if necessary
+        uint8_t pthSts = audioPath_getStatus(rxAudioPath);
+        if(pthSts == PATH_CLOSED)
+        {
+            rxAudioPath = audioPath_request(SOURCE_MCU, SINK_SPK, PRIO_RX);
+            pthSts = audioPath_getStatus(rxAudioPath);
+        }
+
+        // Start codec2 module if not already up
+        if(codec_running() == false)
+            codec_startDecode(rxAudioPath);
+
+        // Process new data
+        if(newData)
+        {
+            auto& frame  = demodulator.getFrame();
+            auto  type   = decoder.decodeFrame(frame);
+            bool  lsfOk  = decoder.getLsf().valid();
+
+            if((type == M17FrameType::STREAM) && (lsfOk == true) && (pthSts == PATH_OPEN))
+            {
+                M17StreamFrame sf = decoder.getStreamFrame();
+                codec_pushFrame(sf.payload().data(),     false);
+                codec_pushFrame(sf.payload().data() + 8, false);
+            }
+        }
     }
 
     locked = lock;
-
-    if(locked && newData)
-    {
-        auto&   frame  = demodulator.getFrame();
-        auto    type   = decoder.decodeFrame(frame);
-        bool    lsfOk  = decoder.getLsf().valid();
-        uint8_t pthSts = audioPath_getStatus(rxAudioPath);
-        int     result = 0;
-
-        if((type == M17FrameType::STREAM) && (lsfOk == true) &&
-           (pthSts == PATH_OPEN))
-        {
-            M17StreamFrame sf = decoder.getStreamFrame();
-            result = codec_pushFrame(sf.payload().data(),     false);
-            result = codec_pushFrame(sf.payload().data() + 8, false);
-
-            // Try restarting audio codec if it went down
-            if(result == -EPERM)
-                codec_startDecode(rxAudioPath);
-        }
-    }
 
     if(platform_getPttStatus())
     {
