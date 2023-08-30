@@ -188,10 +188,6 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         decoder.reset();
         locked = lock;
     }
-    if (!locked)
-    {
-
-    }
 
     if(locked)
     {
