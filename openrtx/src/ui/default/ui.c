@@ -285,7 +285,9 @@ static layout_t _ui_calculateLayout()
     const uint16_t top_pad = 4;
     const uint16_t line1_h = 20;
     const uint16_t line2_h = 20;
-    const uint16_t line3_h = 40;
+    const uint16_t line3_h = 20;
+    const uint16_t line3_large_h = 40;
+    const uint16_t line4_h = 20;
     const uint16_t menu_h = 16;
     const uint16_t bottom_h = 23;
     const uint16_t bottom_pad = top_pad;
@@ -299,9 +301,15 @@ static layout_t _ui_calculateLayout()
     const symbolSize_t top_symbol_size = SYMBOLS_SIZE_8PT;
     // Text line font: 8 pt
     const fontSize_t line1_font = FONT_SIZE_8PT;
+    const symbolSize_t line1_symbol_size = SYMBOLS_SIZE_8PT;
     const fontSize_t line2_font = FONT_SIZE_8PT;
+    const symbolSize_t line2_symbol_size = SYMBOLS_SIZE_8PT;
+    const fontSize_t line3_font = FONT_SIZE_8PT;
+    const symbolSize_t line3_symbol_size = SYMBOLS_SIZE_8PT;
+    const fontSize_t line4_font = FONT_SIZE_8PT;
+    const symbolSize_t line4_symbol_size = SYMBOLS_SIZE_8PT;
     // Frequency line font: 16 pt
-    const fontSize_t line3_font = FONT_SIZE_16PT;
+    const fontSize_t line3_large_font = FONT_SIZE_16PT;
     // Bottom bar font: 8 pt
     const fontSize_t bottom_font = FONT_SIZE_8PT;
     // TimeDate/Frequency input font
@@ -321,7 +329,9 @@ static layout_t _ui_calculateLayout()
     const uint16_t top_pad = 1;
     const uint16_t line1_h = 10;
     const uint16_t line2_h = 10;
-    const uint16_t line3_h = 16;
+    const uint16_t line3_h = 10;
+    const uint16_t line3_large_h = 16;
+    const uint16_t line4_h = 10;
     const uint16_t menu_h = 10;
     const uint16_t bottom_h = 15;
     const uint16_t bottom_pad = 0;
@@ -335,8 +345,14 @@ static layout_t _ui_calculateLayout()
     const symbolSize_t top_symbol_size = SYMBOLS_SIZE_6PT;
     // Middle line fonts: 5, 8, 8 pt
     const fontSize_t line1_font = FONT_SIZE_6PT;
+    const symbolSize_t line1_symbol_size = SYMBOLS_SIZE_6PT;
     const fontSize_t line2_font = FONT_SIZE_6PT;
-    const fontSize_t line3_font = FONT_SIZE_10PT;
+    const symbolSize_t line2_symbol_size = SYMBOLS_SIZE_6PT;
+    const fontSize_t line3_font = FONT_SIZE_6PT;
+    const symbolSize_t line3_symbol_size = SYMBOLS_SIZE_6PT;
+    const fontSize_t line3_large_font = FONT_SIZE_10PT;
+    const fontSize_t line4_font = FONT_SIZE_6PT;
+    const symbolSize_t line4_symbol_size = SYMBOLS_SIZE_6PT;
     // Bottom bar font: 6 pt
     const fontSize_t bottom_font = FONT_SIZE_6PT;
     // TimeDate/Frequency input font
@@ -356,7 +372,9 @@ static layout_t _ui_calculateLayout()
     const uint16_t top_pad = 1;
     const uint16_t line1_h = 0;
     const uint16_t line2_h = 10;
-    const uint16_t line3_h = 18;
+    const uint16_t line3_h = 10;
+    const uint16_t line3_large_h = 18;
+    const uint16_t line4_h = 10;
     const uint16_t menu_h = 10;
     const uint16_t bottom_h = 0;
     const uint16_t bottom_pad = 0;
@@ -370,7 +388,9 @@ static layout_t _ui_calculateLayout()
     const symbolSize_t top_symbol_size = SYMBOLS_SIZE_6PT;
     // Middle line fonts: 16, 16
     const fontSize_t line2_font = FONT_SIZE_6PT;
-    const fontSize_t line3_font = FONT_SIZE_12PT;
+    const fontSize_t line3_font = FONT_SIZE_6PT;
+    const fontSize_t line4_font = FONT_SIZE_6PT;
+    const fontSize_t line3_large_font = FONT_SIZE_12PT;
     // TimeDate/Frequency input font
     const fontSize_t input_font = FONT_SIZE_8PT;
     // Menu font
@@ -391,7 +411,9 @@ static layout_t _ui_calculateLayout()
     point_t top_pos    = {horizontal_pad, top_h - status_v_pad - text_v_offset};
     point_t line1_pos  = {horizontal_pad, top_h + top_pad + line1_h - small_line_v_pad - text_v_offset};
     point_t line2_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h - small_line_v_pad - text_v_offset};
-    point_t line3_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h + line3_h - big_line_v_pad - text_v_offset};
+    point_t line3_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h + line3_h - small_line_v_pad - text_v_offset};
+    point_t line4_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h + line3_h + line4_h - small_line_v_pad - text_v_offset};
+    point_t line3_large_pos = {horizontal_pad, top_h + top_pad + line1_h + line2_h + line3_large_h - big_line_v_pad - text_v_offset};
     point_t bottom_pos = {horizontal_pad, SCREEN_HEIGHT - bottom_pad - status_v_pad - text_v_offset};
 
     layout_t new_layout =
@@ -401,6 +423,8 @@ static layout_t _ui_calculateLayout()
         line1_h,
         line2_h,
         line3_h,
+        line3_large_h,
+        line4_h,
         menu_h,
         bottom_h,
         bottom_pad,
@@ -411,12 +435,20 @@ static layout_t _ui_calculateLayout()
         line1_pos,
         line2_pos,
         line3_pos,
+        line3_large_pos,
+        line4_pos,
         bottom_pos,
         top_font,
         top_symbol_size,
         line1_font,
+        line1_symbol_size,
         line2_font,
+        line2_symbol_size,
         line3_font,
+        line3_symbol_size,
+        line3_large_font,
+        line4_font,
+        line4_symbol_size,
         bottom_font,
         input_font,
         menu_font,

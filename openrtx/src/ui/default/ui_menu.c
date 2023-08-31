@@ -539,13 +539,13 @@ void _ui_drawMenuGPS()
     point_t fix_pos = {layout.line2_pos.x, SCREEN_HEIGHT * 2 / 5};
     // Print GPS status, if no fix, hide details
     if(!last_state.settings.gps_enabled)
-        gfx_print(fix_pos, layout.line3_font, TEXT_ALIGN_CENTER,
+        gfx_print(fix_pos, layout.line3_large_font, TEXT_ALIGN_CENTER,
                   color_white, currentLanguage->gpsOff);
     else if (last_state.gps_data.fix_quality == 0)
-        gfx_print(fix_pos, layout.line3_font, TEXT_ALIGN_CENTER,
+        gfx_print(fix_pos, layout.line3_large_font, TEXT_ALIGN_CENTER,
                   color_white, currentLanguage->noFix);
     else if (last_state.gps_data.fix_quality == 6)
-        gfx_print(fix_pos, layout.line3_font, TEXT_ALIGN_CENTER,
+        gfx_print(fix_pos, layout.line3_large_font, TEXT_ALIGN_CENTER,
                   color_white, currentLanguage->fixLost);
     else
     {
@@ -609,7 +609,7 @@ void _ui_drawMenuGPS()
                        last_state.gps_data.fix_quality != 0 &&
                        last_state.gps_data.fix_quality != 6);
     // Draw satellites bar graph
-    point_t bar_pos = {layout.line3_pos.x + SCREEN_WIDTH * 1 / 3, SCREEN_HEIGHT / 2};
+    point_t bar_pos = {layout.line3_large_pos.x + SCREEN_WIDTH * 1 / 3, SCREEN_HEIGHT / 2};
     gfx_drawGPSgraph(bar_pos,
                      (SCREEN_WIDTH * 2 / 3) - layout.horizontal_pad,
                      SCREEN_HEIGHT / 3,
@@ -704,11 +704,11 @@ void _ui_drawMenuInfo(ui_state_t* ui_state)
 void _ui_drawMenuAbout()
 {
     gfx_clearScreen();
-    point_t openrtx_pos = {layout.horizontal_pad, layout.line3_h};
+    point_t openrtx_pos = {layout.horizontal_pad, layout.line3_large_h};
     if(SCREEN_HEIGHT >= 100)
         ui_drawSplashScreen(false);
     else
-        gfx_print(openrtx_pos, layout.line3_font, TEXT_ALIGN_CENTER,
+        gfx_print(openrtx_pos, layout.line3_large_font, TEXT_ALIGN_CENTER,
                   color_white, currentLanguage->openRTX);
     uint8_t line_h = layout.menu_h;
     point_t pos = {SCREEN_WIDTH / 7, SCREEN_HEIGHT - (line_h * (author_num - 1)) - 5};
@@ -758,7 +758,7 @@ void _ui_drawSettingsTimeDate()
     gfx_print(layout.line2_pos, layout.input_font, TEXT_ALIGN_CENTER,
               color_white, "%02d/%02d/%02d",
               local_time.date, local_time.month, local_time.year);
-    gfx_print(layout.line3_pos, layout.input_font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.line3_large_pos, layout.input_font, TEXT_ALIGN_CENTER,
               color_white, "%02d:%02d:%02d",
               local_time.hour, local_time.minute, local_time.second);
 }
@@ -799,7 +799,7 @@ void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state)
     }
     gfx_print(layout.line2_pos, layout.input_font, TEXT_ALIGN_CENTER,
               color_white, ui_state->new_date_buf);
-    gfx_print(layout.line3_pos, layout.input_font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.line3_large_pos, layout.input_font, TEXT_ALIGN_CENTER,
               color_white, ui_state->new_time_buf);
 }
 #endif
@@ -951,7 +951,7 @@ bool _ui_drawMacroMenu()
         // Second row
         // Calculate symmetric second row position, line2_pos is asymmetric like main screen
         point_t pos_2 = {layout.line1_pos.x, layout.line1_pos.y +
-                        (layout.line3_pos.y - layout.line1_pos.y)/2};
+                        (layout.line3_large_pos.y - layout.line1_pos.y)/2};
         gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
                   yellow_fab413, "4");
         if (last_state.channel.mode == OPMODE_FM)
@@ -1000,24 +1000,24 @@ bool _ui_drawMacroMenu()
         gfx_print(pos_2, layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white, "%.1gW", dBmToWatt(last_state.channel.power));
         // Third row
-        gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_LEFT,
+        gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   yellow_fab413, "7");
 #ifdef SCREEN_BRIGHTNESS                  
-        gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_LEFT,
+        gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white, "   B-");
-        gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_LEFT,
+        gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white, "       %5d",
                   state.settings.brightness);
 #endif
-        gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_CENTER,
+        gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   yellow_fab413, "8");
 #ifdef SCREEN_BRIGHTNESS                  
-        gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_CENTER,
+        gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   color_white,   "       B+");
 #endif
-        gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_RIGHT,
+        gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                   yellow_fab413, "9        ");
-        gfx_print(layout.line3_pos, layout.top_font, TEXT_ALIGN_RIGHT,
+        gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white, "Lck");
 
         // Draw S-meter bar

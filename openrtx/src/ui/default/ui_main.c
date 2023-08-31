@@ -146,7 +146,7 @@ void _ui_drawFrequency()
        frequency = last_state.channel.tx_frequency : last_state.channel.rx_frequency;
 
     // Print big numbers frequency
-    gfx_print(layout.line3_pos, layout.line3_font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.line3_large_pos, layout.line3_large_font, TEXT_ALIGN_CENTER,
               color_white, "%03lu.%05lu",
               (unsigned long)frequency/1000000,
               (unsigned long)frequency%1000000/10);
@@ -177,7 +177,7 @@ void _ui_drawVFOMiddleInput(ui_state_t* ui_state)
             gfx_print(layout.line2_pos, layout.input_font, TEXT_ALIGN_CENTER,
                       color_white, ui_state->new_rx_freq_buf);
         }
-        gfx_print(layout.line3_pos, layout.input_font, TEXT_ALIGN_CENTER,
+        gfx_print(layout.line3_large_pos, layout.input_font, TEXT_ALIGN_CENTER,
                   color_white, " Tx:%03lu.%04lu",
                   (unsigned long)last_state.channel.tx_frequency/1000000,
                   (unsigned long)(last_state.channel.tx_frequency%1000000)/100);
@@ -191,7 +191,7 @@ void _ui_drawVFOMiddleInput(ui_state_t* ui_state)
         // Replace Rx frequency with underscorses
         if(ui_state->input_position == 0)
         {
-            gfx_print(layout.line3_pos, layout.input_font, TEXT_ALIGN_CENTER,
+            gfx_print(layout.line3_large_pos, layout.input_font, TEXT_ALIGN_CENTER,
                       color_white, ">Tx:%03lu.%04lu",
                       (unsigned long)ui_state->new_rx_frequency/1000000,
                       (unsigned long)(ui_state->new_rx_frequency%1000000)/100);
@@ -201,7 +201,7 @@ void _ui_drawVFOMiddleInput(ui_state_t* ui_state)
             if(ui_state->input_position == 1)
                 strcpy(ui_state->new_tx_freq_buf, ">Tx:___.____");
             ui_state->new_tx_freq_buf[insert_pos] = input_char;
-            gfx_print(layout.line3_pos, layout.input_font, TEXT_ALIGN_CENTER,
+            gfx_print(layout.line3_large_pos, layout.input_font, TEXT_ALIGN_CENTER,
                       color_white, ui_state->new_tx_freq_buf);
         }
     }
