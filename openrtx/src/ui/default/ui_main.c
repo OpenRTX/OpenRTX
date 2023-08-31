@@ -127,14 +127,48 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
         case OPMODE_M17:
         {
             // Print M17 Destination ID on line 3 of 3
-            const char *dst = NULL;
-            if(ui_state->edit_mode)
-                dst = ui_state->new_callsign;
-            else
-                dst = (!strnlen(cfg.destination_address, 10)) ?
-                    currentLanguage->broadcast : cfg.destination_address;
-            gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                  color_white, "#%s", dst);
+            rtxStatus_t rtxStatus = rtx_getCurrentStatus();
+            if (rtxStatus.M17_rx && rtxStatus.lsfOk) {
+                gfx_drawSymbol(layout.line2_pos, layout.line2_font, TEXT_ALIGN_LEFT,
+                           color_white, SYMBOL_CALL_RECEIVED);
+                gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                      color_white, "%s", rtxStatus.M17_dst);
+                gfx_drawSymbol(layout.line1_pos, layout.line1_font, TEXT_ALIGN_LEFT,
+                               color_white, SYMBOL_CALL_MADE);
+                gfx_print(layout.line1_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                      color_white, "%s", rtxStatus.M17_src);
+                if (rtxStatus.M17_extended_call)
+                {
+                    if (strcmp(rtxStatus.M17_repeater, "") != 0)
+                    {
+                        point_t line4_pos = {layout.line3_pos.x, layout.line3_pos.y-20};
+
+                        gfx_drawSymbol(line4_pos, layout.line2_font, TEXT_ALIGN_LEFT,
+                                       color_white, SYMBOL_ACCESS_POINT);
+                        gfx_print(line4_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                                  color_white, "%s", rtxStatus.M17_repeater);
+                    }
+                    if (strcmp(rtxStatus.M17_reflector_module, "") != 0)
+                    {
+                        gfx_drawSymbol(layout.line3_pos, layout.line2_font, TEXT_ALIGN_LEFT,
+                                       color_white, SYMBOL_NETWORK);
+                        gfx_print(layout.line3_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                                  color_white, "%s", rtxStatus.M17_reflector_module);
+                    }
+                }
+
+            }
+            else {
+                const char *dst = NULL;
+                if(ui_state->edit_mode)
+                    dst = ui_state->new_callsign;
+                else
+                    dst = (!strnlen(cfg.destination_address, 10)) ?
+                                                                  currentLanguage->broadcast : cfg.destination_address;
+                gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                          color_white, "#%s", dst);
+            }
+
             break;
         }
     }
@@ -246,10 +280,15 @@ void _ui_drawMainBottom()
 
 void _ui_drawMainVFO(ui_state_t* ui_state)
 {
+    rtxStatus_t rtxStatus = rtx_getCurrentStatus();
+
     gfx_clearScreen();
     _ui_drawMainTop();
     _ui_drawModeInfo(ui_state);
-    _ui_drawFrequency();
+    if (!((last_state.channel.mode == OPMODE_M17) && rtxStatus.lsfOk && rtxStatus.M17_extended_call && rtxStatus.M17_rx))
+    {
+        _ui_drawFrequency();
+    }
     _ui_drawMainBottom();
 }
 
@@ -263,10 +302,18 @@ void _ui_drawMainVFOInput(ui_state_t* ui_state)
 
 void _ui_drawMainMEM(ui_state_t* ui_state)
 {
+    rtxStatus_t rtxStatus = rtx_getCurrentStatus();
+
     gfx_clearScreen();
     _ui_drawMainTop();
-    _ui_drawBankChannel();
+    if (!((last_state.channel.mode == OPMODE_M17) && rtxStatus.lsfOk && rtxStatus.M17_rx))
+    {
+        _ui_drawBankChannel();
+    }
     _ui_drawModeInfo(ui_state);
-    _ui_drawFrequency();
+    if (!((last_state.channel.mode == OPMODE_M17) && rtxStatus.lsfOk && rtxStatus.M17_extended_call && rtxStatus.M17_rx))
+    {
+        _ui_drawFrequency();
+    }
     _ui_drawMainBottom();
 }

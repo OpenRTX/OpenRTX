@@ -18,14 +18,17 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <interfaces/delays.h>
-#include <interfaces/audio.h>
-#include <interfaces/radio.h>
-#include <OpMode_M17.hpp>
 #include <audio_codec.h>
 #include <errno.h>
+#include <interfaces/audio.h>
+#include <interfaces/delays.h>
+#include <interfaces/platform.h>
+#include <interfaces/radio.h>
 #include <rtx.h>
+
+#include <OpMode_M17.hpp>
+
+#include "M17/M17Callsign.hpp"
 
 #ifdef PLATFORM_MOD17
 #include <calibInfo_Mod17.h>
@@ -119,10 +122,15 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
     {
         case RX:
 
-            if(locked)
+            if(locked) {
+                status->M17_rx = true;
                 platform_ledOn(GREEN);
-            else
+            }
+            else {
+
+                status->M17_rx = false;
                 platform_ledOff(GREEN);
+            }
 
             break;
 
@@ -200,7 +208,56 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         {
             auto& frame  = demodulator.getFrame();
             auto  type   = decoder.decodeFrame(frame);
-            bool  lsfOk  = decoder.getLsf().valid();
+            M17LinkSetupFrame lsf = decoder.getLsf();
+            bool    lsfOk = lsf.valid();
+            status->lsfOk = lsfOk;
+            const size_t maxBufferLength = 10; // Buffer size including null-terminator
+
+            if (lsfOk) {
+                string dst = lsf.getDestination();
+                string src = lsf.getSource();
+                string extended1;
+                string extended2;
+                streamType_t streamType = lsf.getType();
+                if (streamType.fields.encType == M17_ENCRYPTION_NONE &&
+                    streamType.fields.encSubType == M17_META_EXTD_CALLSIGN)
+                {
+                    status->M17_extended_call = true;
+                    meta_t meta = lsf.metadata();
+                    extended1 = decode_callsign(meta.extended_call_sign.call1);
+                    extended2 = decode_callsign(meta.extended_call_sign.call2);
+
+
+                    if (extended1.length() < maxBufferLength) {
+                        strncpy(status->M17_src, extended1.c_str(), maxBufferLength);
+                        status->M17_src[maxBufferLength - 1] = '\0'; // Ensure null-terminator
+                    }
+
+                    if (extended2.length() < maxBufferLength) {
+                        strncpy(status->M17_reflector_module, extended2.c_str(), maxBufferLength);
+                        status->M17_reflector_module[maxBufferLength - 1] = '\0'; // Ensure null-terminator
+                    }
+                }
+
+                if (dst.length() < maxBufferLength) {
+                    strncpy(status->M17_dst, dst.c_str(), maxBufferLength);
+                    status->M17_dst[maxBufferLength - 1] = '\0'; // Ensure null-terminator
+                }
+
+                if (src.length() < maxBufferLength) {
+                    if (status->M17_extended_call)
+                    {
+                        strncpy(status->M17_repeater, src.c_str(), maxBufferLength);
+                        status->M17_repeater[maxBufferLength - 1] = '\0'; // Ensure null-terminator
+                    }
+                    else
+                    {
+                        strncpy(status->M17_src, src.c_str(), maxBufferLength);
+                        status->M17_src[maxBufferLength - 1] = '\0'; // Ensure null-terminator
+                    }
+
+                }
+            }
 
             if((type == M17FrameType::STREAM) && (lsfOk == true) && (pthSts == PATH_OPEN))
             {
@@ -209,6 +266,11 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                 codec_pushFrame(sf.payload().data() + 8, false);
             }
         }
+    }
+    else
+    {
+        status->lsfOk = false;
+        status->M17_extended_call = false;
     }
 
     locked = lock;
