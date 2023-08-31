@@ -170,6 +170,7 @@ typedef struct layout_t
     point_t line5_pos;
     point_t bottom_pos;
     fontSize_t top_font;
+    fontSize_t top_symbol_font;
     fontSize_t line1_font;
     fontSize_t line2_font;
     fontSize_t line3_font;

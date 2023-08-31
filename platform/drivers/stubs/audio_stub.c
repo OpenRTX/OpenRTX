@@ -18,9 +18,21 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/audio_stream.h>
 #include <interfaces/audio.h>
 
+const struct audioDevice outputDevices[] =
+{
+    {NULL, 0, 0, SINK_MCU},
+    {NULL, 0, 0, SINK_RTX},
+    {NULL, 0, 0, SINK_SPK},
+};
+
+const struct audioDevice inputDevices[] =
+{
+    {NULL, 0, 0, SINK_MCU},
+    {NULL, 0, 0, SINK_RTX},
+    {NULL, 0, 0, SINK_SPK},
+};
 
 void audio_init()
 {

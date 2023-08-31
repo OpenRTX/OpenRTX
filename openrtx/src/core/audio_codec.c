@@ -18,28 +18,28 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/audio_stream.h>
+#include <audio_stream.h>
 #include <audio_codec.h>
 #include <pthread.h>
 #include <codec2.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+#include <errno.h>
 #include <dsp.h>
 
 #define BUF_SIZE 4
 
-static struct CODEC2   *codec2;
-static stream_sample_t *audioBuf;
-static streamId         audioStream;
+static pathId           audioPath;
 
 static uint8_t          initCnt = 0;
 static bool             running;
 
-static bool             stopThread;
+static bool             reqStop;
 static pthread_t        codecThread;
-static pthread_mutex_t  mutex;
-static pthread_cond_t   not_empty;
-static pthread_cond_t   not_full;
+static pthread_mutex_t  data_mutex  = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t  init_mutex  = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t   wakeup_cond = PTHREAD_COND_INITIALIZER;
 
 static uint8_t          readPos;
 static uint8_t          writePos;
@@ -56,149 +56,98 @@ static const uint8_t micGainPost = 4;
 
 static void *encodeFunc(void *arg);
 static void *decodeFunc(void *arg);
-static void startThread(void *(*func) (void *));
+static bool startThread(const pathId path, void *(*func) (void *));
+static void stopThread();
 
 
 void codec_init()
 {
+    pthread_mutex_lock(&init_mutex);
+    initCnt += 1;
+    pthread_mutex_unlock(&init_mutex);
+
     if(initCnt > 0)
-    {
-        pthread_mutex_lock(&mutex);
-        initCnt += 1;
-        pthread_mutex_unlock(&mutex);
         return;
-    }
-    else
-    {
-        initCnt = 1;
-    }
 
     running     = false;
     readPos     = 0;
     writePos    = 0;
     numElements = 0;
-    memset(dataBuffer, 0x00, BUF_SIZE * sizeof(uint64_t));
-
-    audioBuf  = ((stream_sample_t *) malloc(320 * sizeof(stream_sample_t)));
-
-    pthread_mutex_init(&mutex, NULL);
-    pthread_cond_init(&not_empty, NULL);
-    pthread_cond_init(&not_full, NULL);
 }
 
 void codec_terminate()
 {
-    pthread_mutex_lock(&mutex);
+    pthread_mutex_lock(&init_mutex);
     initCnt -= 1;
-    pthread_mutex_unlock(&mutex);
+    pthread_mutex_unlock(&init_mutex);
 
-    if(initCnt > 0) return;
-    if(running) codec_stop();
+    if(initCnt > 0)
+        return;
 
-    pthread_mutex_destroy(&mutex);
-    pthread_cond_destroy(&not_empty);
-    pthread_cond_destroy(&not_full);
-
-    if(audioBuf != NULL)
-    {
-        free(audioBuf);
-        audioBuf = NULL;
-    }
+    if(running)
+        stopThread();
 }
 
-bool codec_startEncode(const enum AudioSource source)
+bool codec_startEncode(const pathId path)
 {
-    if(running) return false;
-    if(audioBuf == NULL) return false;
-
-    running = true;
-
-    audioStream = inputStream_start(source, PRIO_TX, audioBuf, 320,
-                                    BUF_CIRC_DOUBLE, 8000);
-
-    if(audioStream == -1)
-    {
-        running = false;
-        return false;
-    }
-
-    readPos     = 0;
-    writePos    = 0;
-    numElements = 0;
-    stopThread  = false;
-    startThread(encodeFunc);
-
-    return true;
+    return startThread(path, encodeFunc);
 }
 
-bool codec_startDecode(const enum AudioSink destination)
+bool codec_startDecode(const pathId path)
 {
-    if(running) return false;
-    if(audioBuf == NULL) return false;
-
-    running = true;
-
-    memset(audioBuf, 0x00, 320 * sizeof(stream_sample_t));
-    audioStream = outputStream_start(destination, PRIO_RX, audioBuf, 320,
-                                     BUF_CIRC_DOUBLE, 8000);
-
-    if(audioStream == -1)
-    {
-        running = false;
-        return false;
-    }
-
-    readPos     = 0;
-    writePos    = 0;
-    numElements = 0;
-    stopThread  = false;
-    startThread(decodeFunc);
-
-    return true;
+    return startThread(path, decodeFunc);
 }
 
-void codec_stop()
+void codec_stop(const pathId path)
 {
-    if(running == false) return;
+    if(running == false)
+        return;
 
-    stopThread = true;
-    pthread_join(codecThread, NULL);
+    if(audioPath != path)
+        return;
 
-    running = false;
+    stopThread();
 }
 
-bool codec_popFrame(uint8_t *frame, const bool blocking)
+bool codec_running()
 {
-    if(running == false) return false;
+    return running;
+}
+
+int codec_popFrame(uint8_t *frame, const bool blocking)
+{
+    if(running == false)
+        return -EPERM;
 
     uint64_t element;
 
     // No data available and non-blocking call: just return false.
     if((numElements == 0) && (blocking == false))
-        return false;
+        return -EAGAIN;
 
     // Blocking call: wait until some data is pushed
-    pthread_mutex_lock(&mutex);
+    pthread_mutex_lock(&data_mutex);
     while(numElements == 0)
     {
-        pthread_cond_wait(&not_empty, &mutex);
+        pthread_cond_wait(&wakeup_cond, &data_mutex);
     }
 
     element      = dataBuffer[readPos];
     readPos      = (readPos + 1) % BUF_SIZE;
     numElements -= 1;
-    pthread_mutex_unlock(&mutex);
+    pthread_mutex_unlock(&data_mutex);
 
     // Do memcpy after mutex unlock to reduce execution time spent inside the
     // critical section
     memcpy(frame, &element, 8);
 
-    return true;
+    return 0;
 }
 
-bool codec_pushFrame(const uint8_t *frame, const bool blocking)
+int codec_pushFrame(const uint8_t *frame, const bool blocking)
 {
-    if(running == false) return false;
+    if(running == false)
+        return -EPERM;
 
     // Copy data to a temporary variable before mutex lock to reduce execution
     // time spent inside the critical section
@@ -208,25 +157,22 @@ bool codec_pushFrame(const uint8_t *frame, const bool blocking)
 
     // No space available and non-blocking call: return
     if((numElements >= BUF_SIZE) && (blocking == false))
-        return false;
+        return -EAGAIN;
 
     // Blocking call: wait until there is some free space
-    pthread_mutex_lock(&mutex);
+    pthread_mutex_lock(&data_mutex);
     while(numElements >= BUF_SIZE)
     {
-        pthread_cond_wait(&not_full, &mutex);
+        pthread_cond_wait(&wakeup_cond, &data_mutex);
     }
 
     // There is free space, push data into the queue
     dataBuffer[writePos] = element;
     writePos = (writePos + 1) % BUF_SIZE;
-
-    // Signal that the queue is not empty
-    if(numElements == 0) pthread_cond_signal(&not_empty);
     numElements += 1;
 
-    pthread_mutex_unlock(&mutex);
-    return true;
+    pthread_mutex_unlock(&data_mutex);
+    return 0;
 }
 
 
@@ -234,64 +180,102 @@ bool codec_pushFrame(const uint8_t *frame, const bool blocking)
 
 static void *encodeFunc(void *arg)
 {
-    (void) arg;
 
-    filter_state_t dcrState;
-    dsp_resetFilterState(&dcrState);
+    streamId        iStream;
+    pathId          iPath = (pathId) arg;
+    stream_sample_t audioBuf[320];
+    struct CODEC2   *codec2;
+    filter_state_t  dcrState;
 
-    codec2 = codec2_create(CODEC2_MODE_3200);
-
-    while(stopThread == false)
+    iStream = audioStream_start(iPath, audioBuf, 320, 8000,
+                                STREAM_INPUT | BUF_CIRC_DOUBLE);
+    if(iStream < 0)
     {
-        dataBlock_t audio = inputStream_getData(audioStream);
-
-        if(audio.data != NULL)
-        {
-            #ifndef PLATFORM_LINUX
-            // Pre-amplification stage
-            for(size_t i = 0; i < audio.len; i++) audio.data[i] *= micGainPre;
-
-            // DC removal
-            dsp_dcRemoval(&dcrState, audio.data, audio.len);
-
-            // Post-amplification stage
-            for(size_t i = 0; i < audio.len; i++) audio.data[i] *= micGainPost;
-            #endif
-
-            // CODEC2 encodes 160ms of speech into 8 bytes: here we write the
-            // new encoded data into a buffer of 16 bytes writing the first
-            // half and then the second one, sequentially.
-            // Data ready flag is rised once all the 16 bytes contain new data.
-            uint64_t frame = 0;
-            codec2_encode(codec2, ((uint8_t*) &frame), audio.data);
-
-            pthread_mutex_lock(&mutex);
-
-            // If buffer is full erase the oldest frame
-            if(numElements >= BUF_SIZE)
-            {
-                readPos = (readPos + 1) % BUF_SIZE;
-            }
-
-            dataBuffer[writePos] = frame;
-            writePos = (writePos + 1) % BUF_SIZE;
-
-            if(numElements == 0) pthread_cond_signal(&not_empty);
-            if(numElements < BUF_SIZE) numElements += 1;
-
-            pthread_mutex_unlock(&mutex);
-        }
+        pthread_detach(pthread_self());
+        running = false;
+        return NULL;
     }
 
-    inputStream_stop(audioStream);
+    dsp_resetFilterState(&dcrState);
+    codec2 = codec2_create(CODEC2_MODE_3200);
+
+    while(reqStop == false)
+    {
+        // Invalid path, quit
+        if(audioPath_getStatus(iPath) != PATH_OPEN)
+            break;
+
+        dataBlock_t audio = inputStream_getData(iStream);
+        if(audio.data == NULL)
+            break;
+
+        #ifndef PLATFORM_LINUX
+        // Pre-amplification stage
+        for(size_t i = 0; i < audio.len; i++) audio.data[i] *= micGainPre;
+
+        // DC removal
+        dsp_dcRemoval(&dcrState, audio.data, audio.len);
+
+        // Post-amplification stage
+        for(size_t i = 0; i < audio.len; i++) audio.data[i] *= micGainPost;
+        #endif
+
+        // CODEC2 encodes 160ms of speech into 8 bytes: here we write the
+        // new encoded data into a buffer of 16 bytes writing the first
+        // half and then the second one, sequentially.
+        // Data ready flag is rised once all the 16 bytes contain new data.
+        uint64_t frame = 0;
+        codec2_encode(codec2, ((uint8_t*) &frame), audio.data);
+
+        pthread_mutex_lock(&data_mutex);
+
+        // If buffer is full erase the oldest frame
+        if(numElements >= BUF_SIZE)
+        {
+            readPos = (readPos + 1) % BUF_SIZE;
+        }
+
+        dataBuffer[writePos] = frame;
+        writePos = (writePos + 1) % BUF_SIZE;
+
+        if(numElements == 0)
+            pthread_cond_signal(&wakeup_cond);
+
+        if(numElements < BUF_SIZE)
+            numElements += 1;
+
+        pthread_mutex_unlock(&data_mutex);
+    }
+
+    audioStream_terminate(iStream);
     codec2_destroy(codec2);
 
+    // In case thread terminates due to invalid path or stream error, detach it
+    // to ensure that its memory gets freed by the OS.
+    if(reqStop == false)
+        pthread_detach(pthread_self());
+
+    running = false;
     return NULL;
 }
 
 static void *decodeFunc(void *arg)
 {
-    (void) arg;
+    streamId        oStream;
+    pathId          oPath = (pathId) arg;
+    stream_sample_t audioBuf[320];
+    struct CODEC2   *codec2;
+
+    // Open output stream
+    memset(audioBuf, 0x00, 320 * sizeof(stream_sample_t));
+    oStream = audioStream_start(oPath, audioBuf, 320, 8000,
+                                STREAM_OUTPUT | BUF_CIRC_DOUBLE);
+    if(oStream < 0)
+    {
+        pthread_detach(pthread_self());
+        running = false;
+        return NULL;
+    }
 
     codec2 = codec2_create(CODEC2_MODE_3200);
 
@@ -299,28 +283,36 @@ static void *decodeFunc(void *arg)
     // stream to avoid having the decode function writing in a memory area
     // being read at the same time by the output stream system causing cracking
     // noises at speaker output. Behaviour observed on both Module17 and MD-UV380
-    outputStream_sync(audioStream, false);
+    outputStream_sync(oStream, false);
 
-    while(stopThread == false)
+    while(reqStop == false)
     {
+        // Invalid path, quit
+        if(audioPath_getStatus(oPath) != PATH_OPEN)
+            break;
+
         // Try popping data from the queue
         uint64_t frame   = 0;
         bool     newData = false;
 
-        pthread_mutex_lock(&mutex);
+        pthread_mutex_lock(&data_mutex);
 
         if(numElements != 0)
         {
             frame        = dataBuffer[readPos];
             readPos      = (readPos + 1) % BUF_SIZE;
-            if(numElements >= BUF_SIZE) pthread_cond_signal(&not_full);
+            if(numElements >= BUF_SIZE)
+                pthread_cond_signal(&wakeup_cond);
+
             numElements -= 1;
             newData      = true;
         }
 
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_unlock(&data_mutex);
 
-        stream_sample_t *audioBuf = outputStream_getIdleBuffer(audioStream);
+        stream_sample_t *audioBuf = outputStream_getIdleBuffer(oStream);
+        if(audioBuf == NULL)
+            break;
 
         if(newData)
         {
@@ -337,19 +329,66 @@ static void *decodeFunc(void *arg)
             memset(audioBuf, 0x00, 160 * sizeof(stream_sample_t));
         }
 
-        outputStream_sync(audioStream, true);
+        outputStream_sync(oStream, true);
     }
 
     // Stop stream and wait until its effective termination
-    outputStream_stop(audioStream);
-    outputStream_sync(audioStream, false);
+    audioStream_stop(oStream);
     codec2_destroy(codec2);
 
+    // In case thread terminates due to invalid path or stream error, detach it
+    // to ensure that its memory gets freed by the OS.
+    if(reqStop == false)
+        pthread_detach(pthread_self());
+
+    running = false;
     return NULL;
 }
 
-static void startThread(void *(*func) (void *))
+static bool startThread(const pathId path, void *(*func) (void *))
 {
+    // Bad incoming path
+    if(audioPath_getStatus(path) != PATH_OPEN)
+        return false;
+
+    // Handle access contention when starting the codec thread to ensure that
+    // only one call at a time can effectively start the thread.
+    pthread_mutex_lock(&init_mutex);
+    if(running)
+    {
+        // Same path as before, path open, codec already running: all good.
+        if(path == audioPath)
+        {
+            pthread_mutex_unlock(&init_mutex);
+            return true;
+        }
+
+        // New path takes over the current one only if it has an higher priority
+        // or the current one is closed/suspended.
+        pathInfo_t newPath = audioPath_getInfo(path);
+        pathInfo_t curPath = audioPath_getInfo(audioPath);
+        if((curPath.status == PATH_OPEN) && (curPath.prio >= newPath.prio))
+        {
+            pthread_mutex_unlock(&init_mutex);
+            return false;
+        }
+        else
+        {
+            stopThread();
+        }
+    }
+
+    running   = true;
+    audioPath = path;
+    pthread_mutex_unlock(&init_mutex);
+
+    readPos     = 0;
+    writePos    = 0;
+    numElements = 0;
+    reqStop     = false;
+
+    int ret     = 0;
+
     #ifdef _MIOSIX
     // Set stack size of CODEC2 thread to 16kB.
     pthread_attr_t codecAttr;
@@ -362,9 +401,20 @@ static void startThread(void *(*func) (void *))
     pthread_attr_setschedparam(&codecAttr, &param);
 
     // Start thread
-    pthread_create(&codecThread, &codecAttr, func, NULL);
+    ret = pthread_create(&codecThread, &codecAttr, func, ((void *) audioPath));
     #else
-    pthread_create(&codecThread, NULL, func, NULL);
+    ret = pthread_create(&codecThread, NULL, func, ((void *) audioPath));
     #endif
 
+    if(ret < 0)
+        running = false;
+
+    return running;
+}
+
+static void stopThread()
+{
+    reqStop = true;
+    pthread_join(codecThread, NULL);
+    running = false;
 }

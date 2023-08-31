@@ -80,13 +80,13 @@ std::string M17::decode_callsign(const call_t& encodedCall)
         }
     }
 
-    if(isBroadcast) return "BROADCAST";
+    if(isBroadcast) return "ALL";
 
     /*
      * Address is not broadcast, decode it.
      * TODO: current implementation works only on little endian architectures.
      */
-    static const char charMap[] = "xABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-/.";
+    static const char charMap[] = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-/.";
 
     uint64_t encoded = 0;
     auto p = reinterpret_cast<uint8_t*>(&encoded);

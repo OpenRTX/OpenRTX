@@ -295,7 +295,8 @@ static layout_t _ui_calculateLayout()
     const uint16_t horizontal_pad = 4;
 
     // Top bar font: 8 pt
-    const fontSize_t top_font = FONT_SIZE_8PT;
+    const fontSize_t   top_font = FONT_SIZE_8PT;
+    const symbolSize_t top_symbol_size = SYMBOLS_SIZE_8PT;
     // Text line font: 8 pt
     const fontSize_t line1_font = FONT_SIZE_8PT;
     const fontSize_t line2_font = FONT_SIZE_8PT;
@@ -330,7 +331,8 @@ static layout_t _ui_calculateLayout()
     const uint16_t horizontal_pad = 4;
 
     // Top bar font: 6 pt
-    const fontSize_t top_font = FONT_SIZE_6PT;
+    const fontSize_t   top_font = FONT_SIZE_6PT;
+    const symbolSize_t top_symbol_size = SYMBOLS_SIZE_6PT;
     // Middle line fonts: 5, 8, 8 pt
     const fontSize_t line1_font = FONT_SIZE_6PT;
     const fontSize_t line2_font = FONT_SIZE_6PT;
@@ -363,8 +365,9 @@ static layout_t _ui_calculateLayout()
     const uint16_t big_line_v_pad = 0;
     const uint16_t horizontal_pad = 4;
 
-    // Top bar font: 8 pt
-    const fontSize_t top_font = FONT_SIZE_6PT;
+    // Top bar font: 6 pt
+    const fontSize_t   top_font = FONT_SIZE_6PT;
+    const symbolSize_t top_symbol_size = SYMBOLS_SIZE_6PT;
     // Middle line fonts: 16, 16
     const fontSize_t line2_font = FONT_SIZE_6PT;
     const fontSize_t line3_font = FONT_SIZE_12PT;
@@ -410,6 +413,7 @@ static layout_t _ui_calculateLayout()
         line3_pos,
         bottom_pos,
         top_font,
+        top_symbol_size,
         line1_font,
         line2_font,
         line3_font,

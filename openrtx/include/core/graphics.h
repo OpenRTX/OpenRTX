@@ -20,6 +20,7 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
+#include <symbols.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -88,6 +89,13 @@ typedef enum
     FONT_SIZE_18PT,
     FONT_SIZE_24PT
 } fontSize_t;
+
+typedef enum
+{
+    SYMBOLS_SIZE_5PT,
+    SYMBOLS_SIZE_6PT,
+    SYMBOLS_SIZE_8PT
+} symbolSize_t;
 
 typedef enum
 {
@@ -262,6 +270,19 @@ point_t gfx_printLine(uint8_t cur, uint8_t tot, int16_t startY, int16_t endY,
  * @param size: text font size, defined as enum.
  */
 void gfx_printError(const char *text, fontSize_t size);
+
+/**
+ * Prints text on the screen at the specified coordinates.
+ * @param start: text line start point, in pixel coordinates.
+ * @param size: icon font size, defined as enum.
+ * @param alignment: text alignment type, defined as enum. DEPRECATED: in the
+ *                   future this will be always LEFT.
+ * @param color: text color, in color_t format.
+ * @param symbol: symbol to be printed.
+ * @return text width and height as point_t coordinates
+ */
+point_t gfx_drawSymbol(point_t start, symbolSize_t size, textAlign_t alignment,
+                       color_t color, symbol_t symbol);
 
 /**
  * Function to draw battery of arbitrary size.

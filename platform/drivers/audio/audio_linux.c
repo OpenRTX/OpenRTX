@@ -37,6 +37,19 @@ static const uint8_t pathCompatibilityMatrix[9][9] =
     {    1   ,   1   ,   0   ,   1   ,   1   ,   0   ,   0   ,   0   ,   0   }   // MCU-MCU
 };
 
+const struct audioDevice outputDevices[] =
+{
+    {NULL, 0, 0, SINK_MCU},
+    {NULL, 0, 0, SINK_RTX},
+    {NULL, 0, 0, SINK_SPK},
+};
+
+const struct audioDevice inputDevices[] =
+{
+    {NULL, 0, 0, SINK_MCU},
+    {NULL, 0, 0, SINK_RTX},
+    {NULL, 0, 0, SINK_SPK},
+};
 
 void audio_init()
 {

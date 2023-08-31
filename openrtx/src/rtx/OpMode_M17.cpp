@@ -24,6 +24,7 @@
 #include <interfaces/radio.h>
 #include <OpMode_M17.hpp>
 #include <audio_codec.h>
+#include <errno.h>
 #include <rtx.h>
 
 #ifdef PLATFORM_MOD17
@@ -141,9 +142,10 @@ void OpMode_M17::offState(rtxStatus_t *const status)
 {
     radio_disableRtx();
 
+    codec_stop(rxAudioPath);
+    codec_stop(txAudioPath);
     audioPath_release(rxAudioPath);
     audioPath_release(txAudioPath);
-    codec_stop();
 
     if(startRx)
     {
@@ -164,9 +166,6 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         demodulator.startBasebandSampling();
         demodulator.invertPhase(invertRxPhase);
 
-        rxAudioPath = audioPath_request(SOURCE_MCU, SINK_SPK, PRIO_RX);
-        codec_startDecode(SINK_SPK);
-
         radio_enableRx();
 
         startRx = false;
@@ -175,29 +174,44 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
     bool newData = demodulator.update();
     bool lock    = demodulator.isLocked();
 
-    // Reset frame decoder when transitioning from unlocked to locked state
+    // Reset frame decoder when transitioning from unlocked to locked state.
     if((lock == true) && (locked == false))
     {
         decoder.reset();
+        locked = lock;
+    }
+
+    if(locked)
+    {
+        // Check RX audio path status, open it if necessary
+        uint8_t pthSts = audioPath_getStatus(rxAudioPath);
+        if(pthSts == PATH_CLOSED)
+        {
+            rxAudioPath = audioPath_request(SOURCE_MCU, SINK_SPK, PRIO_RX);
+            pthSts = audioPath_getStatus(rxAudioPath);
+        }
+
+        // Start codec2 module if not already up
+        if(codec_running() == false)
+            codec_startDecode(rxAudioPath);
+
+        // Process new data
+        if(newData)
+        {
+            auto& frame  = demodulator.getFrame();
+            auto  type   = decoder.decodeFrame(frame);
+            bool  lsfOk  = decoder.getLsf().valid();
+
+            if((type == M17FrameType::STREAM) && (lsfOk == true) && (pthSts == PATH_OPEN))
+            {
+                M17StreamFrame sf = decoder.getStreamFrame();
+                codec_pushFrame(sf.payload().data(),     false);
+                codec_pushFrame(sf.payload().data() + 8, false);
+            }
+        }
     }
 
     locked = lock;
-
-    if(locked && newData)
-    {
-        auto&   frame  = demodulator.getFrame();
-        auto    type   = decoder.decodeFrame(frame);
-        bool    lsfOk  = decoder.getLsf().valid();
-        uint8_t pthSts = audioPath_getStatus(rxAudioPath);
-
-        if((type == M17FrameType::STREAM) && (lsfOk == true) &&
-           (pthSts == PATH_OPEN))
-        {
-            M17StreamFrame sf = decoder.getStreamFrame();
-            codec_pushFrame(sf.payload().data(),     false);
-            codec_pushFrame(sf.payload().data() + 8, false);
-        }
-    }
 
     if(platform_getPttStatus())
     {
@@ -224,9 +238,9 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         if(!dst.empty()) lsf.setDestination(dst);
 
         streamType_t type;
-        type.fields.stream   = 1;             // Stream
-        type.fields.dataType = 2;             // Voice data
-        type.fields.CAN      = status->can;   // Channel access number
+        type.fields.dataMode = M17_DATAMODE_STREAM;     // Stream
+        type.fields.dataType = M17_DATATYPE_VOICE;      // Voice data
+        type.fields.CAN      = status->can;             // Channel access number
 
         lsf.setType(type);
         lsf.updateCrc();
@@ -235,7 +249,7 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         encoder.encodeLsf(lsf, m17Frame);
 
         txAudioPath = audioPath_request(SOURCE_MIC, SINK_MCU, PRIO_TX);
-        codec_startEncode(SOURCE_MIC);
+        codec_startEncode(txAudioPath);
         radio_enableTx();
 
         modulator.invertPhase(invertTxPhase);

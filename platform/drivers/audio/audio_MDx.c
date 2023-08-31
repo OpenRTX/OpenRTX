@@ -23,6 +23,9 @@
 #include <interfaces/radio.h>
 #include <peripherals/gpio.h>
 #include <hwconfig.h>
+#include "toneGenerator_MDx.h"
+#include "stm32_pwm.h"
+#include "stm32_adc.h"
 
 #define PATH(x,y) ((x << 4) | y)
 
@@ -41,10 +44,46 @@ static const uint8_t pathCompatibilityMatrix[9][9] =
 };
 
 
+static void stm32pwm_startCbk()
+{
+    toneGen_lockBeep();
+    TIM3->CCER |= TIM_CCER_CC3E;
+    TIM3->CR1  |= TIM_CR1_CEN;
+}
+
+static void stm32pwm_stopCbk()
+{
+    TIM3->CCER &= ~TIM_CCER_CC3E;
+    toneGen_unlockBeep();
+}
+
+static const struct PwmChannelCfg stm32pwm_cfg =
+{
+    &(TIM3->CCR3),
+    stm32pwm_startCbk,
+    stm32pwm_stopCbk
+};
+
+const struct audioDevice outputDevices[] =
+{
+    {NULL,                    NULL,          0, SINK_MCU},
+    {&stm32_pwm_audio_driver, &stm32pwm_cfg, 0, SINK_SPK},
+    {&stm32_pwm_audio_driver, &stm32pwm_cfg, 0, SINK_RTX},
+};
+
+const struct audioDevice inputDevices[] =
+{
+    {NULL,                    0,                 0,              SOURCE_MCU},
+    {&stm32_adc_audio_driver, (const void *) 13, STM32_ADC_ADC2, SOURCE_RTX},
+    {&stm32_adc_audio_driver, (const void *) 3,  STM32_ADC_ADC2, SOURCE_MIC},
+};
+
 void audio_init()
 {
-    gpio_setMode(SPK_MUTE,     OUTPUT);
+    gpio_setMode(AIN_MIC,  INPUT_ANALOG);
+    gpio_setMode(SPK_MUTE, OUTPUT);
     #ifndef PLATFORM_MD9600
+    gpio_setMode(AIN_RTX,      INPUT_ANALOG);
     gpio_setMode(AUDIO_AMP_EN, OUTPUT);
     #ifndef MDx_ENABLE_SWD
     gpio_setMode(MIC_PWR,      OUTPUT);
@@ -60,6 +99,9 @@ void audio_init()
     gpio_clearPin(MIC_PWR);         // Mic preamp. off
     #endif
     #endif
+
+    stm32pwm_init();
+    stm32adc_init(STM32_ADC_ADC2);
 }
 
 void audio_terminate()
@@ -71,6 +113,9 @@ void audio_terminate()
     gpio_clearPin(MIC_PWR);         // Mic preamp. off
     #endif
     #endif
+
+    stm32pwm_terminate();
+    stm32adc_terminate();
 }
 
 void audio_connect(const enum AudioSource source, const enum AudioSink sink)

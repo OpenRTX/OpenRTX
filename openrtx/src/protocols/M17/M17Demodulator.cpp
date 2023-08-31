@@ -23,7 +23,7 @@
 #include <M17/M17Demodulator.hpp>
 #include <M17/M17DSP.hpp>
 #include <M17/M17Utils.hpp>
-#include <interfaces/audio_stream.h>
+#include <audio_stream.h>
 #include <math.h>
 #include <cstring>
 #include <stdio.h>
@@ -191,7 +191,7 @@ void M17Demodulator::terminate()
 {
     // Ensure proper termination of baseband sampling
     audioPath_release(basebandPath);
-    inputStream_stop(basebandId);
+    audioStream_terminate(basebandId);
 
     // Delete the buffers and deallocate memory.
     baseband_buffer.reset();
@@ -206,11 +206,10 @@ void M17Demodulator::terminate()
 void M17Demodulator::startBasebandSampling()
 {
     basebandPath = audioPath_request(SOURCE_RTX, SINK_MCU, PRIO_RX);
-    basebandId = inputStream_start(SOURCE_RTX, PRIO_RX,
-                                   baseband_buffer.get(),
-                                   2 * M17_SAMPLE_BUF_SIZE,
-                                   BUF_CIRC_DOUBLE,
-                                   M17_RX_SAMPLE_RATE);
+    basebandId = audioStream_start(basebandPath, baseband_buffer.get(),
+                                   2 * M17_SAMPLE_BUF_SIZE, M17_RX_SAMPLE_RATE,
+                                   STREAM_INPUT | BUF_CIRC_DOUBLE);
+
     // Clean start of the demodulation statistics
     resetCorrelationStats();
     resetQuantizationStats();
@@ -220,11 +219,11 @@ void M17Demodulator::startBasebandSampling()
 
 void M17Demodulator::stopBasebandSampling()
 {
-     inputStream_stop(basebandId);
-     audioPath_release(basebandPath);
-     phase = 0;
-     syncDetected = false;
-     locked = false;
+    audioStream_terminate(basebandId);
+    audioPath_release(basebandPath);
+    phase = 0;
+    syncDetected = false;
+    locked = false;
 }
 
 void M17Demodulator::resetCorrelationStats()

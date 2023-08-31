@@ -18,7 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/audio_stream.h>
+#include <audio_stream.h>
 #include <interfaces/audio_path.h>
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
