@@ -101,21 +101,15 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
         break;
         case OPMODE_M17:
         {
-            char *dst = NULL;
-
-            if(ui_state->edit_mode)
-                dst = ui_state->new_callsign;
-            else
-                dst = (!strnlen(cfg.destination_address, 10)) ?
-                    "--" : cfg.destination_address;
+            rtxStatus_t rtxStatus = rtx_getCurrentStatus();
             // Print CAN
             gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white, "CAN %02d", state.settings.m17_can);
             gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                  color_white, "LAST");
+                  color_white, rtxStatus.M17_src);
             // Print M17 Destination ID on line 2
             gfx_print(layout.line3_pos, layout.line3_font, TEXT_ALIGN_CENTER,
-                  color_white, "%s", dst);
+                  color_white, "%s", rtxStatus.M17_dst);
             // Menu
             gfx_print(layout.line5_pos, layout.line5_font, TEXT_ALIGN_RIGHT,
                   color_white, "Menu");
