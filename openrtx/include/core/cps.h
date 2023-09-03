@@ -129,8 +129,8 @@ enum m17mode_t
 enum m17crypto_t
 {
     PLAIN     = 0,              //< No encryption, plaintext data is sent
-    AES256    = 1,              //< AES-256 Encryption
-    SCRAMBLER = 2               //< Scrambler
+    SCRAMBLER = 1,              //< Scrambler
+    AES       = 2               //< AES
 };
 
 /**
