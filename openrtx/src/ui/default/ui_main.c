@@ -129,11 +129,11 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
             // Print M17 Destination ID on line 3 of 3
             rtxStatus_t rtxStatus = rtx_getCurrentStatus();
             if (rtxStatus.M17_rx && rtxStatus.lsfOk) {
-                gfx_drawSymbol(layout.line2_pos, layout.line2_font, TEXT_ALIGN_LEFT,
+                gfx_drawSymbol(layout.line2_pos, layout.line2_symbol_size, TEXT_ALIGN_LEFT,
                            color_white, SYMBOL_CALL_RECEIVED);
                 gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                       color_white, "%s", rtxStatus.M17_dst);
-                gfx_drawSymbol(layout.line1_pos, layout.line1_font, TEXT_ALIGN_LEFT,
+                gfx_drawSymbol(layout.line1_pos, layout.line1_symbol_size, TEXT_ALIGN_LEFT,
                                color_white, SYMBOL_CALL_MADE);
                 gfx_print(layout.line1_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                       color_white, "%s", rtxStatus.M17_src);
@@ -141,16 +141,14 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                 {
                     if (strcmp(rtxStatus.M17_repeater, "") != 0)
                     {
-                        point_t line4_pos = {layout.line3_pos.x, layout.line3_pos.y-20};
-
-                        gfx_drawSymbol(line4_pos, layout.line2_font, TEXT_ALIGN_LEFT,
+                        gfx_drawSymbol(layout.line4_pos, layout.line3_symbol_size, TEXT_ALIGN_LEFT,
                                        color_white, SYMBOL_ACCESS_POINT);
-                        gfx_print(line4_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                        gfx_print(layout.line4_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                                   color_white, "%s", rtxStatus.M17_repeater);
                     }
                     if (strcmp(rtxStatus.M17_reflector_module, "") != 0)
                     {
-                        gfx_drawSymbol(layout.line3_pos, layout.line2_font, TEXT_ALIGN_LEFT,
+                        gfx_drawSymbol(layout.line3_pos, layout.line4_symbol_size, TEXT_ALIGN_LEFT,
                                        color_white, SYMBOL_NETWORK);
                         gfx_print(layout.line3_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                                   color_white, "%s", rtxStatus.M17_reflector_module);
