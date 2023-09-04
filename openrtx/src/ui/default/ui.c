@@ -1259,6 +1259,7 @@ void ui_updateFSM(bool *sync_rtx)
     // drop caused by the RF PA power absorption causes spurious triggers of
     // the low battery alert.
     bool txOngoing = platform_getPttStatus();
+#if !defined(PLATFORM_TTWRPLUS)
     if ((!state.emergency) && (!txOngoing) && (state.charge <= 0))
     {
         state.ui_screen = LOW_BAT;
@@ -1269,6 +1270,7 @@ void ui_updateFSM(bool *sync_rtx)
         }
         return;
     }
+#endif // PLATFORM_TTWRPLUS
 
     long long now = getTick();
     // Process pressed keys
