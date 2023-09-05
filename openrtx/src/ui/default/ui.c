@@ -166,7 +166,8 @@ const char *settings_gps_items[] =
 const char * settings_m17_items[] =
 {
     "Callsign",
-    "CAN"
+    "CAN",
+    "CAN RX Check"
 };
 
 const char * settings_voice_items[] =
@@ -1970,51 +1971,65 @@ void ui_updateFSM(bool *sync_rtx)
             case SETTINGS_M17:
                 if(ui_state.edit_mode)
                 {
-                    if(ui_state.menu_selected == M17_CALLSIGN)
+                    switch (ui_state.menu_selected)
                     {
-                        // Handle text input for M17 callsign
-                        if(msg.keys & KEY_ENTER)
-                        {
-                            _ui_textInputConfirm(ui_state.new_callsign);
-                            // Save selected callsign and disable input mode
-                            strncpy(state.settings.callsign, ui_state.new_callsign, 10);
-                            ui_state.edit_mode = false;
-                            vp_announceBuffer(&currentLanguage->callsign,
-                                             false, true, state.settings.callsign);
-                        }
-                        else if(msg.keys & KEY_ESC)
-                        {
-                            // Discard selected callsign and disable input mode
-                            ui_state.edit_mode = false;
-                            vp_announceBuffer(&currentLanguage->callsign,
-                                            false, true, state.settings.callsign);
-                        }
-                        else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
-                                msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
-                        {
-                            _ui_textInputDel(ui_state.new_callsign);
-                        }
-                        else if(input_isNumberPressed(msg))
-                        {
-                            _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
-                        }
-                        else if (msg.long_press && (msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
-                        {
-                            vp_announceBuffer(&currentLanguage->callsign,
-                                            true, true, ui_state.new_callsign);
-                            f1Handled=true;
-                        }
-                    }
-                    else
-                    {
-                        if(msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
-                            _ui_changeM17Can(-1);
-                        else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
-                            _ui_changeM17Can(+1);
-                        else if(msg.keys & KEY_ENTER)
-                            ui_state.edit_mode = !ui_state.edit_mode;
-                        else if(msg.keys & KEY_ESC)
-                            ui_state.edit_mode = false;
+                        case M17_CALLSIGN:
+                            // Handle text input for M17 callsign
+                            if(msg.keys & KEY_ENTER)
+                            {
+                                _ui_textInputConfirm(ui_state.new_callsign);
+                                // Save selected callsign and disable input mode
+                                strncpy(state.settings.callsign, ui_state.new_callsign, 10);
+                                ui_state.edit_mode = false;
+                                vp_announceBuffer(&currentLanguage->callsign,
+                                                  false, true, state.settings.callsign);
+                            }
+                            else if(msg.keys & KEY_ESC)
+                            {
+                                // Discard selected callsign and disable input mode
+                                ui_state.edit_mode = false;
+                                vp_announceBuffer(&currentLanguage->callsign,
+                                                  false, true, state.settings.callsign);
+                            }
+                            else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
+                                     msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
+                            {
+                                _ui_textInputDel(ui_state.new_callsign);
+                            }
+                            else if(input_isNumberPressed(msg))
+                            {
+                                _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
+                            }
+                            else if (msg.long_press && (msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
+                            {
+                                vp_announceBuffer(&currentLanguage->callsign,
+                                                  true, true, ui_state.new_callsign);
+                                f1Handled=true;
+                            }
+                            break;
+                        case M17_CAN:
+                            if(msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
+                                _ui_changeM17Can(-1);
+                            else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
+                                _ui_changeM17Can(+1);
+                            else if(msg.keys & KEY_ENTER)
+                                ui_state.edit_mode = !ui_state.edit_mode;
+                            else if(msg.keys & KEY_ESC)
+                                ui_state.edit_mode = false;
+                            break;
+                        case M17_CAN_RX:
+                            if(msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT ||
+                                (ui_state.edit_mode &&
+                                 (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT ||
+                                  msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)))
+                            {
+                                state.settings.m17_can_rx =
+                                    !state.settings.m17_can_rx;
+                            }
+                            else if(msg.keys & KEY_ENTER)
+                                ui_state.edit_mode = !ui_state.edit_mode;
+                            else if(msg.keys & KEY_ESC)
+                                ui_state.edit_mode = false;
                     }
                 }
                 else

@@ -210,6 +210,9 @@ int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
         case M_CAN:
             snprintf(buf, max_len, "%d", last_state.settings.m17_can);
             break;
+        case M_CAN_RX:
+            snprintf(buf, max_len, "%s", (last_state.settings.m17_can_rx) ? "on" : "off");
+            break;
     }
 
     return 0;

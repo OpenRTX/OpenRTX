@@ -128,8 +128,9 @@ enum settingsGPSItems
 
 enum m17Items
 {
-    M_CALLSIGN = 0
-    ,M_CAN
+    M_CALLSIGN = 0,
+    M_CAN,
+    M_CAN_RX
 };
 
 enum module17Items

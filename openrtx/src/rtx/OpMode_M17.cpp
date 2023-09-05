@@ -238,8 +238,13 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                     strncpy(status->M17_refl, exCall2.c_str(), 10);
                 }
 
+                // Check CAN on RX, if enabled.
+                // If check is disabled, force match to true.
+                bool canMatch =  (streamType.fields.CAN == status->can)
+                              || (status->canRxEn == false);
+
                 // Extract audio data
-                if((type == M17FrameType::STREAM) && (pthSts == PATH_OPEN))
+                if((type == M17FrameType::STREAM) && (pthSts == PATH_OPEN) && (canMatch == true))
                 {
                     M17StreamFrame sf = decoder.getStreamFrame();
                     codec_pushFrame(sf.payload().data(),     false);

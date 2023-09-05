@@ -59,6 +59,7 @@ typedef struct
     uint8_t vpLevel         : 3,  // Voice prompt level
             vpPhoneticSpell : 1,  // Phonetic spell enabled
             _reserved       : 4;
+    bool    m17_can_rx;           // Check M17 CAN on RX
 }
 __attribute__((packed)) settings_t;
 
@@ -80,7 +81,8 @@ static const settings_t default_settings =
     0,                // M17 CAN
     0,                // Voice prompts off
     0,                // Phonetic spell off
-    0                 // not used
+    0,                // not used
+    false             // Check M17 CAN on RX
 };
 
 #endif /* SETTINGS_H */
