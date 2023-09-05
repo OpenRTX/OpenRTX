@@ -200,9 +200,11 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         {
             auto& frame  = demodulator.getFrame();
             auto  type   = decoder.decodeFrame(frame);
-            bool  lsfOk  = decoder.getLsf().valid();
+            M17LinkSetupFrame lsf = decoder.getLsf();
+            bool  lsfOk  = lsf.valid();
 
-            if((type == M17FrameType::STREAM) && (lsfOk == true) && (pthSts == PATH_OPEN))
+            if((type == M17FrameType::STREAM) && (lsfOk == true) && (pthSts == PATH_OPEN)
+                && (!status->canRxEn || (lsf.getType().fields.CAN == status->can)))
             {
                 M17StreamFrame sf = decoder.getStreamFrame();
                 codec_pushFrame(sf.payload().data(),     false);

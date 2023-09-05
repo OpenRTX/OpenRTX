@@ -56,6 +56,7 @@ typedef struct
     char    callsign[10];         // Plaintext callsign
     uint8_t display_timer   : 4,  // Standby timer
             m17_can         : 4;  // M17 CAN
+    bool    m17_can_rx;           // Check M17 CAN on RX
     uint8_t vpLevel         : 3,  // Voice prompt level
             vpPhoneticSpell : 1,  // Phonetic spell enabled
             _reserved       : 4;

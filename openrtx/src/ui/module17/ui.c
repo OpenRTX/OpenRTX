@@ -97,7 +97,8 @@ const char *display_items[] =
 const char *m17_items[] =
 {
     "Callsign",
-    "CAN"
+    "CAN",
+    "CAN RX Check"
 };
 
 const char *module17_items[] =
@@ -957,6 +958,9 @@ void ui_updateFSM(bool *sync_rtx)
                             case M_CAN:
                                 _ui_changeCAN(-1);
                                 break;
+                            case M_CAN_RX:
+                                state.settings.m17_can_rx = !state.settings.m17_can_rx;
+                                break;
                             default:
                                 state.ui_screen = SETTINGS_M17;
                         }
@@ -967,6 +971,9 @@ void ui_updateFSM(bool *sync_rtx)
                         {
                             case M_CAN:
                                 _ui_changeCAN(+1);
+                                break;
+                            case M_CAN_RX:
+                                state.settings.m17_can_rx = !state.settings.m17_can_rx;
                                 break;
                             default:
                                 state.ui_screen = SETTINGS_M17;
