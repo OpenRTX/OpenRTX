@@ -31,6 +31,10 @@
 #include <ui/ui_strings.h>
 #include <core/voicePromptUtils.h>
 
+#ifdef PLATFORM_TTWRPLUS
+#include <SA8x8.h>
+#endif
+
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBottom();
 
@@ -453,6 +457,21 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
         case 8: // LCD Type
             snprintf(buf, max_len, "%d", hwinfo->hw_version);
             break;
+        #ifdef PLATFORM_TTWRPLUS
+        case 9: // Radio model
+            strncpy(buf, sa8x8_getModel(), max_len);
+            break;
+        case 10: // Radio firmware version
+        {
+            // Get FW version string, skip the first nine chars ("sa8x8-fw/")
+            uint8_t major, minor, patch, release;
+            const char *fwVer = sa8x8_getFwVersion();
+
+            sscanf(fwVer, "sa8x8-fw/v%hhu.%hhu.%hhu.r%hhu", &major, &minor, &patch, &release);
+            snprintf(buf, max_len,"v%hhu.%hhu.%hhu.r%hhu", major, minor, patch, release);
+        }
+            break;
+        #endif
     }
     return 0;
 }

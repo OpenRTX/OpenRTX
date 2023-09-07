@@ -192,7 +192,11 @@ const char *info_items[] =
     "Band",
     "VHF",
     "UHF",
-    "Hw Version"
+    "Hw Version",
+#ifdef PLATFORM_TTWRPLUS
+    "Radio",
+    "Radio FW",
+#endif
 };
 
 const char *authors[] =
