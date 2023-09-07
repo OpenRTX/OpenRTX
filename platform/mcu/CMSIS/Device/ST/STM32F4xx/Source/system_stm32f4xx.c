@@ -150,6 +150,14 @@ uint32_t SystemCoreClock = 180000000;
 
 uint32_t SystemCoreClock = 168000000;
 
+#elif defined(SYSCLK_FREQ_84MHz)
+
+#define PLL_N      336
+#define PLL_P      4
+#define PLL_Q      7
+
+uint32_t SystemCoreClock = 84000000;
+
 #else
 #error System clock frequency not supported
 #endif
@@ -333,11 +341,13 @@ static void SetSysClock(void)
     /* HCLK = SYSCLK / 1 */
     RCC->CFGR |= RCC_CFGR_HPRE_DIV1;
 
-    /* PCLK2 = HCLK / 2 */
-    RCC->CFGR |= RCC_CFGR_PPRE2_DIV2;
-
-    /* PCLK1 = HCLK / 4 */
-    RCC->CFGR |= RCC_CFGR_PPRE1_DIV4;
+    #if defined(SYSCLK_FREQ_84MHz)
+    RCC->CFGR |= RCC_CFGR_PPRE1_DIV2;           /* APB1 = SYSCLK/2 */
+    RCC->CFGR |= RCC_CFGR_PPRE2_DIV1;           /* APB2 = SYSCLK   */
+    #else
+    RCC->CFGR |= RCC_CFGR_PPRE1_DIV4;           /* APB1 = SYSCLK/4 */
+    RCC->CFGR |= RCC_CFGR_PPRE2_DIV2;           /* APB2 = SYSCLK/2 */
+    #endif
 
     /* Configure the main PLL */
     RCC->PLLCFGR = (PLL_Q << 24)                /* PLL divider for USB clock  */

@@ -233,6 +233,15 @@ stm32f4xx_inc = ['platform/mcu/CMSIS/Include',
                  'platform/mcu/STM32F4xx/drivers/usb']
 
 ##
+## STM32F401
+##
+
+stm32f401_src = stm32f4xx_src + ['platform/mcu/STM32F4xx/boot/startup_f401.cpp',
+                                 'platform/mcu/STM32F4xx/boot/bsp_f401.cpp']
+stm32f401_inc = stm32f4xx_inc
+stm32f401_def = {'STM32F401xx': '', 'HSE_VALUE':'8000000', 'SYSCLK_FREQ_84MHz':''}
+
+##
 ## STM32F405
 ##
 
