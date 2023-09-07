@@ -118,7 +118,7 @@ static inline bool checkFwVersion()
     uint8_t patch;
     uint8_t release;
 
-    char *fwVersionStr = sa8x8_getFwVersion();
+    const char *fwVersionStr = sa8x8_getFwVersion();
     sscanf(fwVersionStr, "sa8x8-fw/v%hhu.%hhu.%hhu.r%hhu", &major, &minor,
            &patch, &release);
 

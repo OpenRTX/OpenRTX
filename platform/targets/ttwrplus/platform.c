@@ -25,7 +25,8 @@
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/drivers/uart.h>
 #include <zephyr/drivers/led_strip.h>
-#include "pmu.h"
+#include <SA8x8.h>
+#include <pmu.h>
 
 #define BUTTON_PTT_NODE DT_NODELABEL(button_ptt)
 
@@ -33,14 +34,16 @@ static const struct gpio_dt_spec button_ptt = GPIO_DT_SPEC_GET_OR(BUTTON_PTT_NOD
 static const struct device *const qdec_dev = DEVICE_DT_GET(DT_ALIAS(qdec0));
 static const struct device *const led_dev  = DEVICE_DT_GET(DT_ALIAS(led0));
 
-static const hwInfo_t hwInfo =
+static hwInfo_t hwInfo =
 {
     .name        = "ttwrplus",
     .hw_version  = 0,
-    .uhf_band    = 1,
+    .uhf_band    = 0,
     .vhf_band    = 0,
-    .uhf_maxFreq = 430,
-    .uhf_minFreq = 440,
+    .uhf_maxFreq = 0,
+    .uhf_minFreq = 0,
+    .vhf_maxFreq = 0,
+    .vhf_minFreq = 0,
 };
 
 // RGB led color data
@@ -74,6 +77,29 @@ void platform_init()
     ret = led_strip_update_rgb(led_dev, &led_color, 1);
     if (ret)
         printk("couldn't update strip: %d", ret);
+
+    // Turn on baseband and initialize the SA868 module
+    pmu_setBasebandPower(true);
+    sa8x8_init();
+
+    // Detect radio model and set hwInfo accordingly
+    const char *model = sa8x8_getModel();
+    if(strncmp(model, "SA868S-VHF", 10) == 0)
+    {
+        hwInfo.vhf_band = 1;
+        hwInfo.vhf_minFreq = 134;
+        hwInfo.vhf_maxFreq = 174;
+    }
+    else if(strncmp(model, "SA868S-UHF\r", 10) == 0)
+    {
+        hwInfo.uhf_band = 1;
+        hwInfo.uhf_minFreq = 400;
+        hwInfo.uhf_maxFreq = 480;
+    }
+    else
+    {
+        printk("Error detecting SA868 model");
+    }
 }
 
 void platform_terminate()

@@ -39,11 +39,8 @@ void radio_init(const rtxStatus_t *rtxState)
     config      = rtxState;
     radioStatus = OFF;
 
-    // Turn on baseband
-    pmu_setBasebandPower(true);
-
-    // Init the SA8x8 mode, set serial to 115200 baud
-    sa8x8_init();
+    // Set SA8x8 serial to 115200 baud, module has alredy been initialized in
+    // platform_init()
     sa8x8_enableHSMode();
 
     /*
