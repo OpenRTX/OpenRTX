@@ -102,7 +102,7 @@ void HR_Cx000< M >::init()
     writeReg(M::CONFIG, 0x65, 0x0A);    // Undocumented register
     writeReg(M::CONFIG, 0x1D, 0xFF);    // Local unaddress, mask unaddress (?)
     writeReg(M::CONFIG, 0x1E, 0xF1);    // Broadcast RX address, broadcast address mask
-    writeReg(M::CONFIG, 0xE2, 0x06);    // Mic preamp disabled, anti-pop enabled
+    writeReg(M::CONFIG, 0xE2, 0x00);    // DAC off, mic preamp disabled
     writeReg(M::CONFIG, 0xE4, 0x27);    // Lineout gain, first and second stage mic gain
     writeReg(M::CONFIG, 0xE3, 0x52);    // Internal ADC and DAC passthrough enable
     writeReg(M::CONFIG, 0xE5, 0x1A);    // Undocumented register
@@ -172,7 +172,6 @@ void HR_Cx000< M >::fmMode()
     writeReg(M::CONFIG, 0x81, 0x04);    // Interrupt mask
     writeReg(M::CONFIG, 0xE5, 0x1A);    // Undocumented register
     writeReg(M::CONFIG, 0xE4, 0x27);    // Lineout gain, first and second stage mic gain
-    writeReg(M::CONFIG, 0xE2, 0x06);    // Mic preamp disabled, anti-pop enabled
     writeReg(M::CONFIG, 0x34, 0x98);    // FM bpf enabled, 25kHz bandwidth
     writeReg(M::CONFIG, 0x60, 0x00);    // Disable both analog and DMR transmission
     writeReg(M::CONFIG, 0x1F, 0x00);    // Color code, encryption disabled
@@ -187,8 +186,6 @@ void HR_Cx000< M >::fmMode()
     sendSequence(initSeq7, sizeof(initSeq7));
     writeReg(M::CONFIG, 0x11, 0x80);    // Local channel mode
     writeReg(M::CONFIG, 0xE0, 0xC9);    // Codec enabled, LineIn1, LineOut2, I2S slave mode
-
-    writeReg(M::CONFIG, 0x37, 0x81);    // DAC gain
 }
 
 template< class M >
@@ -218,7 +215,6 @@ void HR_Cx000< M >::startAnalogTx(const TxAudioSource source, const FmConfig cfg
     writeReg(M::AUX,    0x50, 0x00);
     writeReg(M::AUX,    0x51, 0x00);
     writeReg(M::CONFIG, 0x3E, 0x08);    // FM Modulation frequency deviation coefficient at the receiving end
-    writeReg(M::CONFIG, 0x37, 0x8C);    // DAC gain
     writeReg(M::CONFIG, 0x60, 0x80);    // Start analog transmission
 }
 
@@ -227,9 +223,7 @@ void HR_Cx000< M >::stopAnalogTx()
 {
     writeReg(M::CONFIG, 0x60, 0x00);    // Stop analog transmission
     writeReg(M::CONFIG, 0xE0, 0xC9);    // Codec enabled, LineIn1, LineOut2, I2S slave mode
-    writeReg(M::CONFIG, 0xE2, 0x06);    // Mic preamp disabled, anti-pop enabled
     writeReg(M::CONFIG, 0x34, 0x98);    // FM bpf enabled, 25kHz bandwidth
-    writeReg(M::CONFIG, 0x37, 0x81);    // DAC gain
     writeReg(M::CONFIG, 0x26, 0xFD);    // Undocumented register, enable FM receive
 }
 

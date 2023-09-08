@@ -39,16 +39,17 @@
 #ifdef PLATFORM_MDUV3x0
 void _setVolume()
 {
-    // Volume level range is 0 - 255, by right shifting by 3 we get a value in
-    // range 0 - 31.
+    static uint8_t oldVolume = 0xFF;
     uint8_t volume = platform_getVolumeLevel();
-    volume >>= 3;
 
-    if(volume >= 1)
-    {
-        // Setting HR_C6000 volume to 0 = max volume
-        HR_C6000::instance().setDacGain(volume);
-    }
+    if(volume == oldVolume)
+        return;
+
+    // Apply new volume level, map 0 - 255 range into -31 to 31
+    int8_t gain = ((int8_t) (volume / 4)) - 31;
+    HR_C6000::instance().setDacGain(gain);
+
+    oldVolume = volume;
 }
 #endif
 
@@ -85,6 +86,11 @@ void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
 {
     (void) newCfg;
 
+    #ifdef PLATFORM_MDUV3x0
+    // Set output volume by changing the HR_C6000 DAC gain
+    _setVolume();
+    #endif
+
     // RX logic
     if(status->opStatus == RX)
     {
@@ -114,12 +120,6 @@ void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
             audioPath_release(rxAudioPath);
             sqlOpen = false;
         }
-
-        #ifdef PLATFORM_MDUV3x0
-        // Set output volume by changing the HR_C6000 DAC gain
-        if(sqlOpen == true) _setVolume();
-        #endif
-
     }
     else if((status->opStatus == OFF) && enterRx)
     {

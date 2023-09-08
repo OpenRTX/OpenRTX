@@ -32,18 +32,28 @@ bool Cx000_uSpiBusy()
 }
 
 template <>
-void HR_Cx000< C5000_SpiOpModes >::setDacGain(uint8_t value)
+void HR_Cx000< C5000_SpiOpModes >::setDacGain(int8_t gain)
 {
     // TODO: "DALin" register for HR_C5000 is not documented.
-    (void) value;
+    (void) gain;
 }
 
 template <>
-void HR_Cx000< C6000_SpiOpModes >::setDacGain(uint8_t value)
+void HR_Cx000< C6000_SpiOpModes >::setDacGain(int8_t gain)
 {
-    if(value < 1)  value = 1;
-    if(value > 31) value = 31;
-    writeReg(C6000_SpiOpModes::CONFIG, 0x37, (0x80 | value));
+    // If gain is at minimum, just turn off DAC output and return
+    if(gain <= -31)
+    {
+        writeReg(C6000_SpiOpModes::CONFIG, 0xE2, 0x00);
+        return;
+    }
+
+    uint8_t value = 0x80 | (((uint8_t) gain) & 0x1F);
+    if(gain > 0)
+        value |= 0x40;
+
+    writeReg(C6000_SpiOpModes::CONFIG, 0x37, value);    // DAC gain
+    writeReg(C6000_SpiOpModes::CONFIG, 0xE2, 0x02);     // Enable DAC
 }
 
 template <>

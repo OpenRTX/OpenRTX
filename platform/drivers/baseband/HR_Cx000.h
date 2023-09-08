@@ -146,12 +146,12 @@ public:
     }
 
     /**
-     * Set the gain of the audio DAC stage. This value affects the sound volume
-     * in RX mode.
+     * Set the gain of the audio DAC stage, each step corresponds to an 1.5dB
+     * variation.
      *
-     * @param value: gain value. Allowed range is 1-31.
+     * @param gain: gain value. Allowed range is from -31 to +31.
      */
-    void setDacGain(uint8_t value);
+    void setDacGain(int8_t gain);
 
     /**
      * Set the gain for the incoming audio from both the microphone and line-in
