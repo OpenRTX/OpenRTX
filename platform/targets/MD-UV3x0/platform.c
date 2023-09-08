@@ -104,15 +104,35 @@ uint8_t platform_getMicLevel()
 uint8_t platform_getVolumeLevel()
 {
     /*
-     * Knob position corresponds to an analog signal in the range 0 - 1600mV,
-     * converted to a value in range 0 - 255 using fixed point math: divide by
-     * 1600 and then multiply by 256.
+     * Volume level corresponds to an analog signal in the range 20 - 1650mV.
+     * Potentiometer has pseudo-logarithmic law, well described with two straight
+     * lines with a breakpoint around 270mV.
+     * Output value has range 0 - 255 with breakpoint at 150.
      */
     uint16_t value = adc1_getMeasurement(ADC_VOL_CH);
-    if(value > 1599) value = 1599;
-    uint32_t level = value << 16;
-    level /= 1600;
-    return ((uint8_t) (level >> 8));
+    uint32_t output;
+
+    if(value < 20)
+        return 0;
+
+    if(value <= 270)
+    {
+        // First line: offset zero, slope 0.556
+        output = value;
+        output = (output * 556) / 1000;
+    }
+    else
+    {
+        // Second line: offset 270, slope 0.076
+        output  = value - 270;
+        output  = (output * 76) / 1000;
+        output += 150;
+    }
+
+    if(output > 255)
+        output = 255;
+
+    return output;
 }
 
 bool platform_getPttStatus()
