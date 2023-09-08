@@ -113,7 +113,7 @@ extern void _ui_drawSettingsDisplay(ui_state_t* ui_state);
 extern void _ui_drawSettingsM17(ui_state_t* ui_state);
 extern void _ui_drawSettingsVoicePrompts(ui_state_t* ui_state);
 extern void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state);
-extern bool _ui_drawMacroMenu();
+extern bool _ui_drawMacroMenu(ui_state_t* ui_state);
 extern void _ui_reset_menu_anouncement_tracking();
 
 const char *menu_items[] =
@@ -861,8 +861,26 @@ static bool _ui_exitStandby(long long now)
 
 static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
 {
+    // If there is no keyboard left and right select the menu entry to edit
+#if defined(UI_NO_KEYBOARD)
+    if (msg.keys & KNOB_LEFT)
+    {
+        ui_state.macro_menu_selected--;
+        ui_state.macro_menu_selected += 9;
+        ui_state.macro_menu_selected %= 9;
+    }
+    if (msg.keys & KNOB_RIGHT)
+    {
+        ui_state.macro_menu_selected++;
+        ui_state.macro_menu_selected %= 9;
+    }
+    if ((msg.keys & KEY_ENTER) && !msg.long_press)
+        ui_state.input_number = ui_state.macro_menu_selected + 1;
+    else
+        ui_state.input_number = 0;
+#else // UI_NO_KEYBOARD
     ui_state.input_number = input_getPressedNumber(msg);
-
+#endif // UI_NO_KEYBOARD
     // CTCSS Encode/Decode Selection
     bool tone_tx_enable = state.channel.fm.txToneEn;
     bool tone_rx_enable = state.channel.fm.rxToneEn;
@@ -2257,7 +2275,7 @@ bool ui_updateGUI()
     if(macro_menu)
     {
         _ui_drawDarkOverlay();
-        _ui_drawMacroMenu(&last_state);
+        _ui_drawMacroMenu(&ui_state);
     }
 
     redraw_needed = false;

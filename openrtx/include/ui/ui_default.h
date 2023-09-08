@@ -214,6 +214,9 @@ typedef struct ui_state_t
     char new_callsign[10];
     // Which state to return to when we exit menu
     uint8_t last_main_state;
+#if defined(UI_NO_KEYBOARD)
+    uint8_t macro_menu_selected;
+#endif // UI_NO_KEYBOARD
 }
 ui_state_t;
 

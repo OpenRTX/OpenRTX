@@ -896,13 +896,20 @@ void _ui_drawMacroTop()
     }
 }
 
-bool _ui_drawMacroMenu()
+bool _ui_drawMacroMenu(ui_state_t* ui_state)
 {
         // Header
         _ui_drawMacroTop();
         // First row
         if (last_state.channel.mode == OPMODE_FM)
         {
+/*
+ * If we have a keyboard installed draw all numbers, otherwise draw only the
+ * currently selected number.
+ */
+#if defined(UI_NO_KEYBOARD)
+            if (ui_state->macro_menu_selected == 0)
+#endif // UI_NO_KEYBOARD
             gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
                       yellow_fab413, "1");
             gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
@@ -910,6 +917,9 @@ bool _ui_drawMacroMenu()
             gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
                       color_white, "     %7.1f",
                       ctcss_tone[last_state.channel.fm.txTone]/10.0f);
+#if defined(UI_NO_KEYBOARD)
+            if (ui_state->macro_menu_selected == 1)
+#endif // UI_NO_KEYBOARD
             gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
                       yellow_fab413, "2");
             gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
@@ -924,6 +934,9 @@ bool _ui_drawMacroMenu()
             gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
                       yellow_fab413, "2");
         }
+#if defined(UI_NO_KEYBOARD)
+            if (ui_state->macro_menu_selected == 2)
+#endif // UI_NO_KEYBOARD
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                   yellow_fab413, "3        ");
         if (last_state.channel.mode == OPMODE_FM)
@@ -952,6 +965,9 @@ bool _ui_drawMacroMenu()
         // Calculate symmetric second row position, line2_pos is asymmetric like main screen
         point_t pos_2 = {layout.line1_pos.x, layout.line1_pos.y +
                         (layout.line3_large_pos.y - layout.line1_pos.y)/2};
+#if defined(UI_NO_KEYBOARD)
+            if (ui_state->macro_menu_selected == 3)
+#endif // UI_NO_KEYBOARD
         gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
                   yellow_fab413, "4");
         if (last_state.channel.mode == OPMODE_FM)
@@ -978,6 +994,9 @@ bool _ui_drawMacroMenu()
                       color_white, "       ");
 
         }
+#if defined(UI_NO_KEYBOARD)
+            if (ui_state->macro_menu_selected == 4)
+#endif // UI_NO_KEYBOARD
         gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER,
                   yellow_fab413, "5");
         char mode_str[12] = "";
@@ -995,11 +1014,17 @@ bool _ui_drawMacroMenu()
         }
         gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER,
                   color_white, mode_str);
+#if defined(UI_NO_KEYBOARD)
+            if (ui_state->macro_menu_selected == 5)
+#endif // UI_NO_KEYBOARD
         gfx_print(pos_2, layout.top_font, TEXT_ALIGN_RIGHT,
                   yellow_fab413, "6        ");
         gfx_print(pos_2, layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white, "%.1gW", dBmToWatt(last_state.channel.power));
         // Third row
+#if defined(UI_NO_KEYBOARD)
+            if (ui_state->macro_menu_selected == 6)
+#endif // UI_NO_KEYBOARD
         gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   yellow_fab413, "7");
 #ifdef SCREEN_BRIGHTNESS                  
@@ -1009,12 +1034,18 @@ bool _ui_drawMacroMenu()
                   color_white, "       %5d",
                   state.settings.brightness);
 #endif
+#if defined(UI_NO_KEYBOARD)
+            if (ui_state->macro_menu_selected == 7)
+#endif // UI_NO_KEYBOARD
         gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   yellow_fab413, "8");
 #ifdef SCREEN_BRIGHTNESS                  
         gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   color_white,   "       B+");
 #endif
+#if defined(UI_NO_KEYBOARD)
+            if (ui_state->macro_menu_selected == 8)
+#endif // UI_NO_KEYBOARD
         gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                   yellow_fab413, "9        ");
         gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_RIGHT,
