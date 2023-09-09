@@ -102,24 +102,56 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
         case OPMODE_M17:
         {
             char *dst = NULL;
+            rtxStatus_t rtxStatus = rtx_getCurrentStatus();
 
-            if(ui_state->edit_mode)
-                dst = ui_state->new_callsign;
+            if (rtxStatus.M17_rx && rtxStatus.lsfOk)
+            {
+                gfx_drawSymbol(layout.line2_pos, layout.line2_symbol_font, TEXT_ALIGN_LEFT,
+                               color_white, SYMBOL_CALL_RECEIVED);
+                gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                          color_white, "%s", rtxStatus.M17_dst);
+                gfx_drawSymbol(layout.line1_pos, layout.line1_symbol_font, TEXT_ALIGN_LEFT,
+                               color_white, SYMBOL_CALL_MADE);
+                gfx_print(layout.line1_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                          color_white, "%s", rtxStatus.M17_src);
+                if (rtxStatus.M17_extended_call)
+                {
+                    if (strcmp(rtxStatus.M17_repeater, "") != 0)
+                    {
+                        gfx_drawSymbol(layout.line4_pos, layout.line3_symbol_font, TEXT_ALIGN_LEFT,
+                                       color_white, SYMBOL_ACCESS_POINT);
+                        gfx_print(layout.line4_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                                  color_white, "%s", rtxStatus.M17_repeater);
+                    }
+                    if (strcmp(rtxStatus.M17_reflector_module, "") != 0)
+                    {
+                        gfx_drawSymbol(layout.line3_pos, layout.line4_symbol_font, TEXT_ALIGN_LEFT,
+                                       color_white, SYMBOL_NETWORK);
+                        gfx_print(layout.line3_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                                  color_white, "%s", rtxStatus.M17_reflector_module);
+                    }
+                }
+            }
             else
-                dst = (!strnlen(cfg.destination_address, 10)) ?
-                    "--" : cfg.destination_address;
-            // Print CAN
-            gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_RIGHT,
-                  color_white, "CAN %02d", state.settings.m17_can);
-            gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                  color_white, "LAST");
-            // Print M17 Destination ID on line 2
-            gfx_print(layout.line3_pos, layout.line3_font, TEXT_ALIGN_CENTER,
-                  color_white, "%s", dst);
-            // Menu
-            gfx_print(layout.line5_pos, layout.line5_font, TEXT_ALIGN_RIGHT,
-                  color_white, "Menu");
-            break;
+            {
+                if(ui_state->edit_mode)
+                    dst = ui_state->new_callsign;
+                else
+                    dst = (!strnlen(cfg.destination_address, 10)) ?
+                                                                  "--" : cfg.destination_address;
+                // Print CAN
+                gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_RIGHT,
+                          color_white, "CAN %02d", state.settings.m17_can);
+                gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                          color_white, "LAST");
+                // Print M17 Destination ID on line 2
+                gfx_print(layout.line3_pos, layout.line3_font, TEXT_ALIGN_CENTER,
+                          color_white, "%s", dst);
+                // Menu
+                gfx_print(layout.line5_pos, layout.line5_font, TEXT_ALIGN_RIGHT,
+                          color_white, "Menu");
+                break;
+            }
         }
     }
 }
