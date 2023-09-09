@@ -228,10 +228,15 @@ layout_t _ui_calculateLayout()
     const symbolSize_t top_symbol_size = SYMBOLS_SIZE_6PT;
     // Middle line fonts: 5, 8, 8 pt
     const fontSize_t line1_font = FONT_SIZE_6PT;
+    const symbolSize_t line1_symbol_size = SYMBOLS_SIZE_6PT;
     const fontSize_t line2_font = FONT_SIZE_6PT;
+    const symbolSize_t line2_symbol_size = SYMBOLS_SIZE_6PT;
     const fontSize_t line3_font = FONT_SIZE_6PT;
+    const symbolSize_t line3_symbol_size = SYMBOLS_SIZE_6PT;
     const fontSize_t line4_font = FONT_SIZE_6PT;
+    const symbolSize_t line4_symbol_size = SYMBOLS_SIZE_6PT;
     const fontSize_t line5_font = FONT_SIZE_6PT;
+    const symbolSize_t line5_symbol_size = SYMBOLS_SIZE_6PT;
     // Bottom bar font: 6 pt
     const fontSize_t bottom_font = FONT_SIZE_6PT;
     // TimeDate/Frequency input font
@@ -277,10 +282,15 @@ layout_t _ui_calculateLayout()
         top_font,
         top_symbol_size,
         line1_font,
+        line1_symbol_size,
         line2_font,
+        line2_symbol_size,
         line3_font,
+        line3_symbol_size,
         line4_font,
+        line4_symbol_size,
         line5_font,
+        line5_symbol_size,
         bottom_font,
         input_font,
         menu_font,
