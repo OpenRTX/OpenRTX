@@ -81,7 +81,7 @@
 
 /* UI main screen functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBackground();
-extern void _ui_drawMainTop();
+extern void _ui_drawMainTop(ui_state_t* ui_state);
 extern void _ui_drawVFOMiddle();
 extern void _ui_drawMEMMiddle();
 extern void _ui_drawVFOBottom();
@@ -113,7 +113,7 @@ extern void _ui_drawSettingsDisplay(ui_state_t* ui_state);
 extern void _ui_drawSettingsM17(ui_state_t* ui_state);
 extern void _ui_drawSettingsVoicePrompts(ui_state_t* ui_state);
 extern void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state);
-extern bool _ui_drawMacroMenu();
+extern bool _ui_drawMacroMenu(ui_state_t* ui_state);
 extern void _ui_reset_menu_anouncement_tracking();
 
 const char *menu_items[] =
@@ -2267,7 +2267,7 @@ bool ui_updateGUI()
     if(macro_menu)
     {
         _ui_drawDarkOverlay();
-        _ui_drawMacroMenu(&last_state);
+        _ui_drawMacroMenu(&ui_state);
     }
 
     redraw_needed = false;

@@ -896,7 +896,7 @@ void _ui_drawMacroTop()
     }
 }
 
-bool _ui_drawMacroMenu()
+bool _ui_drawMacroMenu(ui_state_t* ui_state)
 {
         // Header
         _ui_drawMacroTop();
@@ -1017,8 +1017,12 @@ bool _ui_drawMacroMenu()
 #endif
         gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                   yellow_fab413, "9        ");
-        gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_RIGHT,
-                  color_white, "Lck");
+        if( ui_state->input_lockedout == true )
+           gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_RIGHT,
+                 color_white, "Unlk");
+        else
+           gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_RIGHT,
+                 color_white, "Lck");
 
         // Draw S-meter bar
         _ui_drawMainBottom();
