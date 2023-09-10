@@ -1324,6 +1324,12 @@ void ui_updateFSM(bool *sync_rtx)
         {
             // VFO screen
             case MAIN_VFO:
+                // Enable Tx in MAIN_VFO mode
+                if (state.txDisable)
+                {
+                    state.txDisable = false;
+                    *sync_rtx = true;
+                }
                 // M17 Destination callsign input
                 if(ui_state.edit_mode)
                 {
@@ -1494,6 +1500,12 @@ void ui_updateFSM(bool *sync_rtx)
                 break;
             // MEM screen
             case MAIN_MEM:
+                // Enable Tx in MAIN_MEM mode
+                if (state.txDisable)
+                {
+                    state.txDisable = false;
+                    *sync_rtx = true;
+                }
                 // M17 Destination callsign input
                 if(ui_state.edit_mode)
                 {
@@ -2140,6 +2152,14 @@ void ui_updateFSM(bool *sync_rtx)
                     }
                 }
                 break;
+        }
+
+        // Enable Tx only if in MAIN_VFO or MAIN_MEM states
+        bool inMemOrVfo = (state.ui_screen == MAIN_VFO) || (state.ui_screen == MAIN_MEM);
+        if ((macro_menu == true) || ((inMemOrVfo == false) && (state.txDisable == false)))
+        {
+            state.txDisable = true;
+            *sync_rtx = true;
         }
         if (!f1Handled && (msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
         {

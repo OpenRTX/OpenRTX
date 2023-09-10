@@ -71,6 +71,7 @@ void state_init()
     state.bank_enabled  = false;
     state.rtxStatus     = RTX_OFF;
     state.emergency     = false;
+    state.txDisable     = false;
 
     // Force brightness field to be in range 0 - 100
     if(state.settings.brightness > 100)

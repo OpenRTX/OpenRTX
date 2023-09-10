@@ -32,6 +32,7 @@ channel_t cps_getDefaultChannel()
     #endif
     channel.bandwidth = BW_25;
     channel.power     = 100;    // 1W, P = 10dBm + n*0.2dBm, we store n
+    channel.rx_only   = false;  // Enable tx by default
 
     // Set initial frequency based on supported bands
     const hwInfo_t* hwinfo  = platform_getHwInfo();

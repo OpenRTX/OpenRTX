@@ -59,6 +59,7 @@ typedef struct
     bool       backup_eflash;
     bool       restore_eflash;
     char       m17_dest[10];
+    bool       txDisable;
 }
 state_t;
 

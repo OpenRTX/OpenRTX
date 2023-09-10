@@ -100,7 +100,10 @@ void *ui_threadFunc(void *arg)
             rtx_cfg.txToneEn    = state.channel.fm.txToneEn;
             rtx_cfg.txTone      = ctcss_tone[state.channel.fm.txTone];
 
-            // Copy new M17 CAN, M17 CAN RX check,source and destination addresses
+            // Enable Tx if channel allows it and we are in UI main screen
+            rtx_cfg.txDisable = state.channel.rx_only || state.txDisable;
+
+            // Copy new M17 CAN, source and destination addresses
             rtx_cfg.can = state.settings.m17_can;
             rtx_cfg.canRxEn = state.settings.m17_can_rx;
             strncpy(rtx_cfg.source_address,      state.settings.callsign, 10);
