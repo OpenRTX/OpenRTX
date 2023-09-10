@@ -257,11 +257,13 @@ static int screenshot(void *_self, int _argc, char **_argv)
     {
         filename = _argv[0];
     }
+    int len = strlen(filename);
 
     SDL_Event e;
     SDL_zero(e);
     e.type = SDL_Screenshot_Event;
-    e.user.data1 = malloc(sizeof(filename));
+    e.user.data1 = malloc(len+1);
+    memset(e.user.data1, 0, len+1);
     strcpy(e.user.data1, filename);
 
     return SDL_PushEvent(&e) == 1 ? SH_CONTINUE : SH_ERR;
