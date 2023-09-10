@@ -34,6 +34,9 @@ static const struct gpio_dt_spec button_ptt = GPIO_DT_SPEC_GET_OR(BUTTON_PTT_NOD
 static const struct device *const qdec_dev = DEVICE_DT_GET(DT_ALIAS(qdec0));
 static const struct device *const led_dev  = DEVICE_DT_GET(DT_ALIAS(led0));
 
+// This is cross-references in keyboard_ttwrplus.c to implement volume control
+uint8_t volume_level = 125;
+
 static hwInfo_t hwInfo =
 {
     .name        = "ttwrplus",
@@ -118,7 +121,7 @@ uint8_t platform_getMicLevel()
 
 uint8_t platform_getVolumeLevel()
 {
-    return 0;
+    return volume_level;
 }
 
 int8_t platform_getChSelector()

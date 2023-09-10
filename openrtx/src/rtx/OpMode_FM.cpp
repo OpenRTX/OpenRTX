@@ -24,8 +24,10 @@
 #include <OpMode_FM.hpp>
 #include <rtx.h>
 
-#ifdef PLATFORM_MDUV3x0
+#if defined(PLATFORM_MDUV3x0)
 #include "../../../drivers/baseband/HR_C6000.h"
+#elif defined(PLATFORM_TTWRPLUS)
+#include "AT1846S.h"
 #endif
 
 /**
@@ -36,7 +38,7 @@
  * provide the helper function below to keep the real volume level consistent
  * with the knob position.
  */
-#ifdef PLATFORM_MDUV3x0
+#if defined(PLATFORM_MDUV3x0) || defined(PLATFORM_TTWRPLUS)
 void _setVolume()
 {
     static uint8_t oldVolume = 0xFF;
@@ -45,9 +47,14 @@ void _setVolume()
     if(volume == oldVolume)
         return;
 
+#if defined(PLATFORM_MDUV3x0)
     // Apply new volume level, map 0 - 255 range into -31 to 31
     int8_t gain = ((int8_t) (volume / 4)) - 31;
     HR_C6000::instance().setDacGain(gain);
+#elif defined(PLATFORM_TTWRPLUS)
+    // AT1846S volume control is 4 bit
+    AT1846S::instance().setRxAudioGain(volume / 16, volume / 16);
+#endif
 
     oldVolume = volume;
 }
@@ -86,7 +93,7 @@ void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
 {
     (void) newCfg;
 
-    #ifdef PLATFORM_MDUV3x0
+    #if defined(PLATFORM_MDUV3x0) || defined(PLATFORM_TTWRPLUS)
     // Set output volume by changing the HR_C6000 DAC gain
     _setVolume();
     #endif

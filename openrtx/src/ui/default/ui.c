@@ -991,19 +991,15 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
 #endif
     }
 
-#ifdef HAS_ABSOLUTE_KNOB // If the radio has an absolute position knob
-    if(msg.keys & KNOB_LEFT || msg.keys & KNOB_RIGHT) {
-        state.settings.sqlLevel = platform_getChSelector() - 1;
-        *sync_rtx = true;
-        vp_announceSquelch(state.settings.sqlLevel, queueFlags);
-    }
-
-    if(msg.keys & KEY_LEFT || msg.keys & KEY_DOWN)
-#else // Use left and right buttons or relative position knob
-    // NOTE: Use up and down for UV380 which has not yet a functional knob
+#if defined(PLATFORM_TTWRPLUS)
+    if(msg.keys & KEY_VOLDOWN)
+#else
     if(msg.keys & KEY_LEFT || msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
-#endif
+#endif // PLATFORM_TTWRPLUS
     {
+#ifdef HAS_ABSOLUTE_KNOB // If the radio has an absolute position knob
+        state.settings.sqlLevel = platform_getChSelector() - 1;
+#endif // HAS_ABSOLUTE_KNOB
         if(state.settings.sqlLevel > 0)
         {
             state.settings.sqlLevel -= 1;
@@ -1012,12 +1008,15 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
         }
     }
 
-#ifdef HAS_ABSOLUTE_KNOB
-    else if(msg.keys & KEY_RIGHT || msg.keys & KEY_UP)
+#if defined(PLATFORM_TTWRPLUS)
+    else if(msg.keys & KEY_VOLUP)
 #else
     else if(msg.keys & KEY_RIGHT || msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
-#endif
+#endif // PLATFORM_TTWRPLUS
     {
+#ifdef HAS_ABSOLUTE_KNOB
+        state.settings.sqlLevel = platform_getChSelector() - 1;
+#endif
         if(state.settings.sqlLevel < 15)
         {
             state.settings.sqlLevel += 1;
@@ -1288,9 +1287,8 @@ void ui_updateFSM(bool *sync_rtx)
         // unless is the MONI key for the MACRO functions
         if (_ui_exitStandby(now) && !(msg.keys & KEY_MONI))
             return;
-
         // If MONI is pressed, activate MACRO functions
-        bool moniPressed = (msg.keys & KEY_MONI) ? true : false;
+        bool moniPressed = msg.keys & KEY_MONI;
         if(moniPressed || macro_latched)
         {
             macro_menu = true;
@@ -1312,6 +1310,14 @@ void ui_updateFSM(bool *sync_rtx)
         {
             macro_menu = false;
         }
+#if defined(PLATFORM_TTWRPLUS)
+        // T-TWR Plus has no KEY_MONI, using KEY_VOLDOWN long press instead
+        if ((msg.keys & KEY_VOLDOWN) && msg.long_press)
+        {
+            macro_menu = true;
+            macro_latched = true;
+        }
+#endif // PLA%FORM_TTWRPLUS
 
         int priorUIScreen = state.ui_screen;
         switch(state.ui_screen)

@@ -29,35 +29,35 @@
  */
 enum key
 {
-    KEY_0      = (1 << 0),   /* Keypad digit "0"                  */
-    KEY_1      = (1 << 1),   /* Keypad digit "1"                  */
-    KEY_2      = (1 << 2),   /* Keypad digit "2"                  */
-    KEY_3      = (1 << 3),   /* Keypad digit "3"                  */
-    KEY_4      = (1 << 4),   /* Keypad digit "4"                  */
-    KEY_5      = (1 << 5),   /* Keypad digit "5"                  */
-    KEY_6      = (1 << 6),   /* Keypad digit "6"                  */
-    KEY_7      = (1 << 7),   /* Keypad digit "7"                  */
-    KEY_8      = (1 << 8),   /* Keypad digit "8"                  */
-    KEY_9      = (1 << 9),   /* Keypad digit "9"                  */
-    KEY_STAR   = (1 << 10),  /* Keypad digit "*"                  */
-    KEY_HASH   = (1 << 11),  /* Keypad digit "#"                  */
-    KEY_ENTER  = (1 << 12),  /* Keypad green button/enter         */
-    KEY_ESC    = (1 << 13),  /* Keypad red button/esc             */
-    KEY_UP     = (1 << 14),  /* Keypad upward arrow               */
-    KEY_DOWN   = (1 << 15),  /* Keypad downward arrow             */
-    KEY_LEFT   = (1 << 16),  /* Keypad leftward arrow             */
-    KEY_RIGHT  = (1 << 17),  /* Keypad rightward arrow            */
-    KEY_MONI   = (1 << 18),  /* Monitor button                    */
-    KEY_F1     = (1 << 19),  /* Function button                   */
-    KEY_F2     = (1 << 20),  /* Function button (device specific) */
-    KEY_F3     = (1 << 21),  /* Function button (device specific) */
-    KEY_F4     = (1 << 22),  /* Function button (device specific) */
-    KEY_F5     = (1 << 23),  /* Function button (device specific) */
-    KEY_F6     = (1 << 24),  /* Function button (device specific) */
-    KEY_F7     = (1 << 25),  /* Function button (device specific) */
-    KEY_F8     = (1 << 26),  /* Function button (device specific) */
-    KNOB_LEFT  = (1 << 27),  /* Knob rotated counter clockwise    */
-    KNOB_RIGHT = (1 << 28),  /* Knob rotated clockwise            */
+    KEY_0       = (1 << 0),   /* Keypad digit "0"                  */
+    KEY_1       = (1 << 1),   /* Keypad digit "1"                  */
+    KEY_2       = (1 << 2),   /* Keypad digit "2"                  */
+    KEY_3       = (1 << 3),   /* Keypad digit "3"                  */
+    KEY_4       = (1 << 4),   /* Keypad digit "4"                  */
+    KEY_5       = (1 << 5),   /* Keypad digit "5"                  */
+    KEY_6       = (1 << 6),   /* Keypad digit "6"                  */
+    KEY_7       = (1 << 7),   /* Keypad digit "7"                  */
+    KEY_8       = (1 << 8),   /* Keypad digit "8"                  */
+    KEY_9       = (1 << 9),   /* Keypad digit "9"                  */
+    KEY_STAR    = (1 << 10),  /* Keypad digit "*"                  */
+    KEY_HASH    = (1 << 11),  /* Keypad digit "#"                  */
+    KEY_ENTER   = (1 << 12),  /* Keypad green button/enter         */
+    KEY_ESC     = (1 << 13),  /* Keypad red button/esc             */
+    KEY_UP      = (1 << 14),  /* Keypad upward arrow               */
+    KEY_DOWN    = (1 << 15),  /* Keypad downward arrow             */
+    KEY_LEFT    = (1 << 16),  /* Keypad leftward arrow             */
+    KEY_RIGHT   = (1 << 17),  /* Keypad rightward arrow            */
+    KEY_MONI    = (1 << 18),  /* Monitor button                    */
+    KEY_F1      = (1 << 19),  /* Function button                   */
+    KEY_F2      = (1 << 20),  /* Function button (device specific) */
+    KEY_F3      = (1 << 21),  /* Function button (device specific) */
+    KEY_F4      = (1 << 22),  /* Function button (device specific) */
+    KEY_F5      = (1 << 23),  /* Function button (device specific) */
+    KEY_F6      = (1 << 24),  /* Function button (device specific) */
+    KEY_VOLUP   = (1 << 25),  /* Volume increase button            */
+    KEY_VOLDOWN = (1 << 26),  /* Volume decrease button            */
+    KNOB_LEFT   = (1 << 27),  /* Knob rotated counter clockwise    */
+    KNOB_RIGHT  = (1 << 28),  /* Knob rotated clockwise            */
 };
 
 /**

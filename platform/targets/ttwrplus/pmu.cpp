@@ -345,11 +345,11 @@ void pmu_handleIRQ()
 
     // Power on key rising edge
     if((irqStatus & XPOWERS_AXP2101_PKEY_POSITIVE_IRQ) != 0)
-        pwrOnPressed = true;
+        pwrOnPressed = false;
 
     // Power on key falling edge
     if((irqStatus & XPOWERS_AXP2101_PKEY_NEGATIVE_IRQ) != 0)
-        pwrOnPressed = false;
+        pwrOnPressed = true;
 
     // Power key long press
     if ((irqStatus & XPOWERS_AXP2101_PKEY_LONG_IRQ) != 0)

@@ -29,6 +29,8 @@ static const struct device *const buttons_dev = DEVICE_DT_GET(DT_NODELABEL(butto
 static int8_t  old_pos = 0;
 static keyboard_t keys = 0;
 
+// Defined in ttwrplus/platform.c to implement volume control
+extern uint8_t volume_level;
 
 static void gpio_keys_cb_handler(struct input_event *evt)
 {
@@ -38,7 +40,9 @@ static void gpio_keys_cb_handler(struct input_event *evt)
     switch(evt->code)
     {
         case INPUT_KEY_VOLUMEDOWN:
-            keyCode = KEY_MONI;
+            keyCode = KEY_VOLDOWN;
+            if(evt->value != 0 && volume_level > 9)
+                volume_level -= 10;
             break;
 
         case INPUT_BTN_START:
@@ -104,6 +108,20 @@ keyboard_t kbd_getKeys()
 
         old_pos = new_pos;
     }
+
+    /*
+     * The power key is only connected to the PMU and its state is detected through
+     * the PMU interrupts.
+     */
+    if (pmu_pwrOnBtnStatus())
+    {
+        // Update the volume only once when key is pressed
+        if (!(keys & KEY_VOLUP) && volume_level < 246)
+            volume_level += 10;
+        keys |= KEY_VOLUP;
+    }
+    else
+        keys &= ~KEY_VOLUP;
 
     return keys;
 }
