@@ -34,4 +34,4 @@ target_include_directories(app
     ${OPENRTX_ROOT}/subprojects/XPowersLib/src/REG
 )
 
-target_compile_definitions(app PRIVATE PLATFORM_TTWRPLUS)
+target_compile_definitions(app PRIVATE PLATFORM_TTWRPLUS SCREEN_BRIGHTNESS UI_NO_KEYBOARD)
