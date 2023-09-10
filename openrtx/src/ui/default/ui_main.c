@@ -215,8 +215,10 @@ void convertToCompressedFrequency( unsigned long tx, unsigned long rx, char * st
   if( offset != 0 ){
     if( offset > 0 )
       offset_s[0] = '+';
-    else
+    else{
+      offset *= -1;
       offset_s[0] = '-';
+    }
     if( offset != stdoffset ){
       snprintFrequency(offset, offset_s+1, 18);
     }
@@ -230,17 +232,12 @@ void _ui_drawFrequency()
   band_t txband = freq2band(tx);
   band_t rxband = freq2band(rx);
 
-    // Print big numbers frequency
-    gfx_print(layout.line3_large_pos, layout.line3_large_font, TEXT_ALIGN_CENTER,
-              color_white, "%03lu.%05lu",
-              (unsigned long)frequency/1000000,
-              (unsigned long)frequency%1000000/10);
   if( !platform_getPttStatus() && txband != BAND_UNK && rxband != BAND_UNK && txband == rxband ){
     char freq[20] = {0};
     convertToCompressedFrequency( tx, rx, freq, 19 );
     if( strnlen(freq,19) <= 10 ){ 
       //make sure it will fit sanely on screen -- hardcoded to 10 chars TODO
-      gfx_print(layout.line3_pos, layout.line3_font, TEXT_ALIGN_CENTER,
+      gfx_print(layout.line3_large_pos, layout.line3_large_font, TEXT_ALIGN_CENTER,
           color_white, freq);
       return;
     }
