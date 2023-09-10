@@ -85,9 +85,9 @@ keyboard_t kbd_getKeys()
         int8_t delta = new_pos - old_pos;
 
         // Normal case: handle up/down by looking at the pulse difference
-        if(delta > 0)
+        if(delta > 0 && new_pos % 2 == 0)
             keys |= KNOB_LEFT;
-        else if (delta < 0)
+        else if (delta < 0 && new_pos % 2 != 0)
             keys |= KNOB_RIGHT;
 
         // Corner case 1: rollover from negative (old) to positive (new) value.
