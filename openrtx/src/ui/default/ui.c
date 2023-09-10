@@ -81,7 +81,7 @@
 
 /* UI main screen functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBackground();
-extern void _ui_drawMainTop();
+extern void _ui_drawMainTop(ui_state_t* ui_state);
 extern void _ui_drawVFOMiddle();
 extern void _ui_drawMEMMiddle();
 extern void _ui_drawVFOBottom();

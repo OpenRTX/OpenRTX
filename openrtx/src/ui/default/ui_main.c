@@ -34,7 +34,7 @@ void _ui_drawMainBackground()
     gfx_drawHLine(SCREEN_HEIGHT - layout.bottom_h - 1, layout.hline_h, color_grey);
 }
 
-void _ui_drawMainTop()
+void _ui_drawMainTop(ui_state_t * ui_state)
 {
 #ifdef RTC_PRESENT
     // Print clock on top bar
@@ -56,22 +56,9 @@ void _ui_drawMainTop()
                        layout.status_v_pad};
     gfx_drawBattery(bat_pos, bat_width, bat_height, last_state.charge);
 #endif
-    // Print radio mode on top bar
-    switch(last_state.channel.mode)
-    {
-        case OPMODE_FM:
-        gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT,
-                  color_white, currentLanguage->fm);
-        break;
-        case OPMODE_DMR:
-        gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT,
-                  color_white, currentLanguage->dmr);
-        break;
-        case OPMODE_M17:
-        gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT,
-                  color_white, currentLanguage->m17);
-        break;
-    }
+    if (ui_state->input_locked == true)
+      gfx_drawSymbol(layout.top_pos, layout.top_symbol_size, TEXT_ALIGN_LEFT,
+                     color_white, SYMBOL_LOCK);
 }
 
 void _ui_drawBankChannel()
@@ -91,37 +78,44 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
     switch(last_state.channel.mode)
     {
         case OPMODE_FM:
-        // Get Bandwidth string
-        if(last_state.channel.bandwidth == BW_12_5)
-            snprintf(bw_str, 8, "12.5");
-        else if(last_state.channel.bandwidth == BW_20)
-            snprintf(bw_str, 8, "20");
-        else if(last_state.channel.bandwidth == BW_25)
-            snprintf(bw_str, 8, "25");
-        // Get encdec string
-        bool tone_tx_enable = last_state.channel.fm.txToneEn;
-        bool tone_rx_enable = last_state.channel.fm.rxToneEn;
-        if (tone_tx_enable && tone_rx_enable)
-            snprintf(encdec_str, 9, "E+D");
-        else if (tone_tx_enable && !tone_rx_enable)
-            snprintf(encdec_str, 9, "E");
-        else if (!tone_tx_enable && tone_rx_enable)
-            snprintf(encdec_str, 9, "D");
-        else
-            snprintf(encdec_str, 9, " ");
 
-        // Print Bandwidth, Tone and encdec info
-        gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-              color_white, "B:%s T:%4.1f S:%s",
-              bw_str, ctcss_tone[last_state.channel.fm.txTone]/10.0f,
-              encdec_str);
-        break;
+            // Get Bandwidth string
+            if(last_state.channel.bandwidth == BW_12_5)
+                snprintf(bw_str, 8, "NFM");
+            else if(last_state.channel.bandwidth == BW_20)
+                snprintf(bw_str, 8, "FM20");
+            else if(last_state.channel.bandwidth == BW_25)
+                snprintf(bw_str, 8, "FM");
+
+            // Get encdec string
+            bool tone_tx_enable = last_state.channel.fm.txToneEn;
+            bool tone_rx_enable = last_state.channel.fm.rxToneEn;
+
+            if (tone_tx_enable && tone_rx_enable)
+                snprintf(encdec_str, 9, "ED");
+            else if (tone_tx_enable && !tone_rx_enable)
+                snprintf(encdec_str, 9, " E");
+            else if (!tone_tx_enable && tone_rx_enable)
+                snprintf(encdec_str, 9, " D");
+            else
+                snprintf(encdec_str, 9, "  ");
+
+            // Print Bandwidth, Tone and encdec info
+            if (tone_tx_enable || tone_rx_enable)
+            gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                      color_white, "%s %4.1f %s", bw_str, 
+                      ctcss_tone[last_state.channel.fm.txTone]/10.0f, encdec_str);
+            else
+            gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                      color_white, "%s", bw_str );
+            break;
+
         case OPMODE_DMR:
-        // Print talkgroup
-        gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-              color_white, "TG:%s",
-              "");
-        break;
+            // Print talkgroup
+            gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                    color_white, "DMR TG%s", "");
+            break;
+
         case OPMODE_M17:
         {
             // Print M17 Destination ID on line 3 of 3
@@ -179,9 +173,8 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                 }
 
                 gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                          color_white, "#%s", dst);
+                          color_white, "M17 #%s", dst);
             }
-
             break;
         }
     }
@@ -189,14 +182,11 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
 
 void _ui_drawFrequency()
 {
-  unsigned long frequency = platform_getPttStatus() ?
-       frequency = last_state.channel.tx_frequency : last_state.channel.rx_frequency;
-
+    unsigned long frequency = platform_getPttStatus() ? last_state.channel.tx_frequency
+                                                      : last_state.channel.rx_frequency;
     // Print big numbers frequency
     gfx_print(layout.line3_large_pos, layout.line3_large_font, TEXT_ALIGN_CENTER,
-              color_white, "%03lu.%05lu",
-              (unsigned long)frequency/1000000,
-              (unsigned long)frequency%1000000/10);
+              color_white, "%.7g", (float) frequency / 1000000.0f);
 }
 
 void _ui_drawVFOMiddleInput(ui_state_t* ui_state)
@@ -294,7 +284,7 @@ void _ui_drawMainBottom()
 void _ui_drawMainVFO(ui_state_t* ui_state)
 {
     gfx_clearScreen();
-    _ui_drawMainTop();
+    _ui_drawMainTop(ui_state);
     _ui_drawModeInfo(ui_state);
 
     // Show VFO frequency if the OpMode is not M17 or there is no valid LSF data
@@ -308,7 +298,7 @@ void _ui_drawMainVFO(ui_state_t* ui_state)
 void _ui_drawMainVFOInput(ui_state_t* ui_state)
 {
     gfx_clearScreen();
-    _ui_drawMainTop();
+    _ui_drawMainTop(ui_state);
     _ui_drawVFOMiddleInput(ui_state);
     _ui_drawMainBottom();
 }
@@ -316,7 +306,7 @@ void _ui_drawMainVFOInput(ui_state_t* ui_state)
 void _ui_drawMainMEM(ui_state_t* ui_state)
 {
     gfx_clearScreen();
-    _ui_drawMainTop();
+    _ui_drawMainTop(ui_state);
     _ui_drawModeInfo(ui_state);
 
     // Show channel data if the OpMode is not M17 or there is no valid LSF data
