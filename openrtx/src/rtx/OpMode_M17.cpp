@@ -75,7 +75,16 @@ void OpMode_M17::disable()
 
 void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
 {
-    (void) newCfg;
+    //
+    // FIXME: workaround to avoid UI glitches when a new dst callsign is set.
+    //
+    // When a new dst callsign is set, the rtx configuration data structure is
+    // updated and this may trigger false setting of the lsfOk variable to true,
+    // causing the M17 info screen to appear for a very small, but noticeable,
+    // amount of time.
+    //
+    if(newCfg)
+        status->lsfOk = false;
 
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
     //
