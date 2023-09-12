@@ -39,7 +39,8 @@ using namespace std;
 using namespace M17;
 
 OpMode_M17::OpMode_M17() : startRx(false), startTx(false), locked(false),
-                           invertTxPhase(false), invertRxPhase(false)
+                           dataValid(false), invertTxPhase(false),
+                           invertRxPhase(false)
 {
 
 }
@@ -54,9 +55,10 @@ void OpMode_M17::enable()
     codec_init();
     modulator.init();
     demodulator.init();
-    locked  = false;
-    startRx = true;
-    startTx = false;
+    locked    = false;
+    dataValid = false;
+    startRx   = true;
+    startTx   = false;
 }
 
 void OpMode_M17::disable()
@@ -129,7 +131,7 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
     {
         case RX:
 
-            if(locked)
+            if(dataValid)
                 platform_ledOn(GREEN);
             else
                 platform_ledOff(GREEN);
@@ -214,6 +216,8 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
 
             if(status->lsfOk)
             {
+                dataValid = true;
+
                 // Retrieve stream source and destination data
                 std::string dst = lsf.getDestination();
                 std::string src = lsf.getSource();
@@ -261,7 +265,10 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
 
     // Force invalidation of LSF data as soon as lock is lost (for whatever cause)
     if(locked == false)
+    {
         status->lsfOk = false;
+        dataValid     = false;
+    }
 }
 
 void OpMode_M17::txState(rtxStatus_t *const status)

@@ -92,7 +92,7 @@ public:
      */
     virtual bool rxSquelchOpen() override
     {
-        return false;
+        return dataValid;
     }
 
 private:
@@ -125,6 +125,7 @@ private:
     bool startRx;                      ///< Flag for RX management.
     bool startTx;                      ///< Flag for TX management.
     bool locked;                       ///< Demodulator locked on data stream.
+    bool dataValid;                    ///< Demodulated data is valid
     bool invertTxPhase;                ///< TX signal phase inversion setting.
     bool invertRxPhase;                ///< RX signal phase inversion setting.
     pathId rxAudioPath;                ///< Audio path ID for RX
