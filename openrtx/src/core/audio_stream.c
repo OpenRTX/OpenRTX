@@ -91,7 +91,7 @@ streamId audioStream_start(const pathId path, stream_sample_t * const buf,
     }
 
     // No audio device found
-    if(dev == NULL)
+    if((dev == NULL) || (dev->driver == NULL))
         return -ENODEV;
 
     // Search for an empty audio stream slot
