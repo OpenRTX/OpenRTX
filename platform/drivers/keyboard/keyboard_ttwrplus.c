@@ -113,7 +113,7 @@ keyboard_t kbd_getKeys()
      * The power key is only connected to the PMU and its state is detected through
      * the PMU interrupts.
      */
-    if (pmu_pwrOnBtnStatus())
+    if (pmu_pwrBtnStatus() == 1)
     {
         // Update the volume only once when key is pressed
         if (!(keys & KEY_VOLUP) && volume_level < 246)

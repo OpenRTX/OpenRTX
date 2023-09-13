@@ -107,6 +107,7 @@ void platform_init()
 
 void platform_terminate()
 {
+    pmu_terminate();
 }
 
 uint16_t platform_getVbat()
@@ -153,6 +154,11 @@ bool platform_getPttStatus()
 
 bool platform_pwrButtonStatus()
 {
+    // Long press of the power on button triggers a shutdown
+    uint8_t btnStatus = pmu_pwrBtnStatus();
+    if(btnStatus == 2)
+        return false;
+
     return true;
 }
 

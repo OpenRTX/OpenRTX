@@ -40,7 +40,7 @@
 static const struct device *const i2c_dev = DEVICE_DT_GET(I2C_DEV_NODE);
 static const struct gpio_dt_spec pmu_irq  = GPIO_DT_SPEC_GET(PMU_IRQ_NODE, gpios);
 static XPowersPMU PMU;
-static bool pwrOnPressed = false;
+static uint8_t pwrOnPressed = 0;
 
 
 static int pmu_registerReadByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data,
@@ -313,6 +313,13 @@ void pmu_init()
     printk("Setting Charge Target Voltage : %d\n", tableVoltage[val]);
 }
 
+void pmu_terminate()
+{
+    PMU.disableDC3();   // Turn off baseband power
+    PMU.disableALDO4(); // Turn off GPS power
+    PMU.shutdown();     // General shutdown
+}
+
 uint16_t pmu_getVbat()
 {
     return PMU.isBatteryConnect() ? PMU.getBattVoltage() : 0;
@@ -345,18 +352,15 @@ void pmu_handleIRQ()
 
     // Power on key rising edge
     if((irqStatus & XPOWERS_AXP2101_PKEY_POSITIVE_IRQ) != 0)
-        pwrOnPressed = false;
+        pwrOnPressed = 0;
 
     // Power on key falling edge
     if((irqStatus & XPOWERS_AXP2101_PKEY_NEGATIVE_IRQ) != 0)
-        pwrOnPressed = true;
+        pwrOnPressed = 1;
 
     // Power key long press
     if ((irqStatus & XPOWERS_AXP2101_PKEY_LONG_IRQ) != 0)
-    {
-        // TODO Shutdown radio, set platform_pwrButtonStatus to false
-        PMU.shutdown();
-    }
+        pwrOnPressed = 2;
 
     // Charger start IRQ
     if((irqStatus & XPOWERS_AXP2101_BAT_CHG_START_IRQ) != 0)
@@ -370,7 +374,7 @@ void pmu_handleIRQ()
         PMU.setChargingLedMode(XPOWERS_CHG_LED_BLINK_1HZ);
 }
 
-bool pmu_pwrOnBtnStatus()
+uint8_t pmu_pwrBtnStatus()
 {
     return pwrOnPressed;
 }
