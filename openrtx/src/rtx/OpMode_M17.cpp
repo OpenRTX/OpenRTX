@@ -237,11 +237,6 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                     strncpy(status->M17_orig, exCall1.c_str(), 10);
                     strncpy(status->M17_refl, exCall2.c_str(), 10);
                 }
-                else
-                {
-                    status->M17_orig[0] = '\0';
-                    status->M17_refl[0] = '\0';
-                }
 
                 // Extract audio data
                 if((type == M17FrameType::STREAM) && (pthSts == PATH_OPEN))
@@ -268,6 +263,8 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
     {
         status->lsfOk = false;
         dataValid     = false;
+        status->M17_orig[0] = '\0';
+        status->M17_refl[0] = '\0';
     }
 }
 
