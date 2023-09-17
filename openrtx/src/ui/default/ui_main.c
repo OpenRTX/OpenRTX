@@ -322,7 +322,10 @@ void _ui_drawMainMEM(ui_state_t* ui_state)
     // Show channel data if the OpMode is not M17 or there is no valid LSF data
     rtxStatus_t status = rtx_getCurrentStatus();
     if((status.opMode != OPMODE_M17) || (status.lsfOk == false))
+    {
         _ui_drawBankChannel();
+        _ui_drawFrequency();
+    }
 
     _ui_drawMainBottom();
 }
