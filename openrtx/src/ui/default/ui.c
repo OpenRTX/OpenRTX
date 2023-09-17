@@ -262,6 +262,8 @@ const uint8_t backup_restore_num = sizeof(backup_restore_items)/sizeof(backup_re
 const uint8_t info_num = sizeof(info_items)/sizeof(info_items[0]);
 const uint8_t author_num = sizeof(authors)/sizeof(authors[0]);
 
+uint8_t menu_length[NUM_MENU_ITEMS] = {0};
+
 const color_t color_black = {0, 0, 0, 255};
 const color_t color_grey = {60, 60, 60, 255};
 const color_t color_white = {255, 255, 255, 255};
@@ -1044,6 +1046,10 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
 
 static void _ui_menuUp(uint8_t menu_entries)
 {
+    if (0 == menu_entries)
+    {
+        return;
+    }
     if(ui_state.menu_selected > 0)
         ui_state.menu_selected -= 1;
     else
@@ -1053,6 +1059,10 @@ static void _ui_menuUp(uint8_t menu_entries)
 
 static void _ui_menuDown(uint8_t menu_entries)
 {
+    if (0 == menu_entries)
+    {
+        return;
+    }
     if(ui_state.menu_selected < menu_entries - 1)
         ui_state.menu_selected += 1;
     else
@@ -1216,14 +1226,41 @@ static void _ui_numberInputDel(uint32_t *num)
 {
     // announce the digit about to be backspaced.
     vp_announceInputChar('0' + *num % 10);
-    
+
     // Move back input cursor
-    if(ui_state.input_position > 0)
+    if (ui_state.input_position > 0)
         ui_state.input_position--;
     else
         ui_state.last_keypress = 0;
 
     ui_state.input_set = 0;
+}
+
+void menu_length_init()
+{
+    menu_length[MAIN_VFO] = 0;
+    menu_length[MAIN_VFO_INPUT] = 0;
+    menu_length[MAIN_MEM] = 0;
+    menu_length[MODE_VFO] = 0;
+    menu_length[MODE_MEM] = 0;
+    menu_length[MENU_TOP] = menu_num;
+    menu_length[MENU_BANK] = 0;
+    menu_length[MENU_CHANNEL] = 0;
+    menu_length[MENU_CONTACTS] = 0;
+    menu_length[MENU_SETTINGS] = settings_num;
+    menu_length[MENU_BACKUP_RESTORE] = backup_restore_num;
+    menu_length[MENU_BACKUP] = 0;
+    menu_length[MENU_RESTORE] = 0;
+    menu_length[MENU_INFO] = info_num;
+    menu_length[MENU_ABOUT] = author_num;
+    menu_length[SETTINGS_TIMEDATE] = 0;
+    menu_length[SETTINGS_TIMEDATE_SET] = 0;
+    menu_length[SETTINGS_DISPLAY] = display_num;
+    menu_length[SETTINGS_GPS] = settings_gps_num;
+    menu_length[SETTINGS_M17] = settings_m17_num;
+    menu_length[SETTINGS_VOICE] = settings_voice_num;
+    menu_length[SETTINGS_RESET2DEFAULTS] = 0;
+    menu_length[LOW_BAT] = 0;
 }
 
 void ui_init()
@@ -1236,6 +1273,7 @@ void ui_init()
     // This syntax is called compound literal
     // https://stackoverflow.com/questions/6891720/initialize-reset-struct-to-zero-null
     ui_state = (const struct ui_state_t){ 0 };
+    menu_length_init();
 }
 
 void ui_drawSplashScreen()
@@ -1411,7 +1449,15 @@ void ui_updateFSM(bool *sync_rtx)
         if(state.tone_enabled && !(msg.keys & KEY_HASH))
         {
             state.tone_enabled = false;
-            *sync_rtx = true;
+            *sync_rtx          = true;
+        }
+
+        if (!ui_state.edit_mode)
+        {
+            if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                _ui_menuUp(menu_length[state.ui_screen]);
+            else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                _ui_menuDown(menu_length[state.ui_screen]);
         }
 
         int priorUIScreen = state.ui_screen;
@@ -1737,11 +1783,7 @@ void ui_updateFSM(bool *sync_rtx)
                 break;
             // Top menu screen
             case MENU_TOP:
-                if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                    _ui_menuUp(menu_num);
-                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                    _ui_menuDown(menu_num);
-                else if(msg.keys & KEY_ENTER)
+                if(msg.keys & KEY_ENTER)
                 {
                     switch(ui_state.menu_selected)
                     {
@@ -1865,11 +1907,7 @@ void ui_updateFSM(bool *sync_rtx)
 #endif
             // Settings menu screen
             case MENU_SETTINGS:
-                if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                    _ui_menuUp(settings_num);
-                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                    _ui_menuDown(settings_num);
-                else if(msg.keys & KEY_ENTER)
+                if(msg.keys & KEY_ENTER)
                 {
 
                     switch(ui_state.menu_selected)
@@ -1910,11 +1948,7 @@ void ui_updateFSM(bool *sync_rtx)
                 break;
             // Flash backup and restore menu screen
             case MENU_BACKUP_RESTORE:
-                if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                    _ui_menuUp(settings_num);
-                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                    _ui_menuDown(settings_num);
-                else if(msg.keys & KEY_ENTER)
+                if(msg.keys & KEY_ENTER)
                 {
 
                     switch(ui_state.menu_selected)
@@ -1941,11 +1975,7 @@ void ui_updateFSM(bool *sync_rtx)
                 break;
             // Info menu screen
             case MENU_INFO:
-                if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                    _ui_menuUp(info_num);
-                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                    _ui_menuDown(info_num);
-                else if(msg.keys & KEY_ESC)
+                if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_TOP);
                 break;
             // About screen
@@ -2054,10 +2084,6 @@ void ui_updateFSM(bool *sync_rtx)
                             state.ui_screen = SETTINGS_DISPLAY;
                     }
                 }
-                else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                    _ui_menuUp(display_num);
-                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                    _ui_menuDown(display_num);
                 else if(msg.keys & KEY_ENTER)
                     ui_state.edit_mode = !ui_state.edit_mode;
                 else if(msg.keys & KEY_ESC)
@@ -2100,10 +2126,6 @@ void ui_updateFSM(bool *sync_rtx)
                             state.ui_screen = SETTINGS_GPS;
                     }
                 }
-                else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                    _ui_menuUp(settings_gps_num);
-                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                    _ui_menuDown(settings_gps_num);
                 else if(msg.keys & KEY_ENTER)
                     ui_state.edit_mode = !ui_state.edit_mode;
                 else if(msg.keys & KEY_ESC)
@@ -2289,10 +2311,6 @@ void ui_updateFSM(bool *sync_rtx)
                                             true, true, ui_state.new_callsign);
                         }
                     }
-                    else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                        _ui_menuUp(settings_m17_num);
-                    else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                        _ui_menuDown(settings_m17_num);
                     else if((msg.keys & KEY_RIGHT) && (ui_state.menu_selected == M17_CAN))
                             _ui_changeM17Can(+1);
                     else if((msg.keys & KEY_LEFT)  && (ui_state.menu_selected == M17_CAN))
@@ -2335,10 +2353,6 @@ void ui_updateFSM(bool *sync_rtx)
                             state.ui_screen = SETTINGS_VOICE;
                     }
                 }
-                else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                    _ui_menuUp(settings_voice_num);
-                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                    _ui_menuDown(settings_voice_num);
                 else if(msg.keys & KEY_ENTER)
                     ui_state.edit_mode = !ui_state.edit_mode;
                 else if(msg.keys & KEY_ESC)

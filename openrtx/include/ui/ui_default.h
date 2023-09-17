@@ -64,7 +64,8 @@ enum uiScreen
     SETTINGS_M17,
     SETTINGS_VOICE,
     SETTINGS_RESET2DEFAULTS,
-    LOW_BAT
+    LOW_BAT,
+    NUM_MENU_ITEMS
 };
 
 enum SetRxTx
@@ -232,6 +233,8 @@ typedef struct ui_state_t
 }
 ui_state_t;
 
+// Array containing the length of all menus
+extern uint8_t menu_length[];
 extern layout_t layout;
 extern state_t last_state;
 extern bool    macro_latched;
