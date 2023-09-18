@@ -20,7 +20,6 @@
 
 #include <hwconfig.h>
 #include <pthread.h>
-#include <sched.h>
 #include <ui.h>
 #include <state.h>
 #include <threads.h>

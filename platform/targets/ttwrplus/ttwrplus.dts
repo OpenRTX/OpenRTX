@@ -32,7 +32,7 @@
         zephyr,console = &usb_serial;
         zephyr,shell-uart = &usb_serial;
         zephyr,flash = &flash0;
-        zephyr,display = &ssd1306;
+        zephyr,display = &sh1106;
     };
 
     leds: leds {
@@ -114,8 +114,8 @@
     pinctrl-0 = <&i2c0_default>;
     pinctrl-names = "default";
 
-    ssd1306: ssd1306@3c {
-                compatible = "solomon,ssd1306fb";
+    sh1106: sh1106@3c {
+                compatible = "sinowealth,sh1106";
                 reg = <0x3c>;
 
                 width  = <128>;
