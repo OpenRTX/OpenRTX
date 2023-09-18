@@ -43,4 +43,9 @@ void create_threads();
  */
 #define RTX_TASK_STKSIZE 512
 
+/**
+ * Stack size for codec2 task, in bytes.
+ */
+#define CODEC2_TASK_STKSIZE 16384
+
 #endif /* THREADS_H */

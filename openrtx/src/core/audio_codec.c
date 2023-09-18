@@ -21,6 +21,7 @@
 #include <audio_stream.h>
 #include <audio_codec.h>
 #include <pthread.h>
+#include <threads.h>
 #include <codec2.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,6 +38,7 @@ static bool             running;
 
 static bool             reqStop;
 static pthread_t        codecThread;
+static pthread_attr_t   codecAttr;
 static pthread_mutex_t  data_mutex  = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t  init_mutex  = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t   wakeup_cond = PTHREAD_COND_INITIALIZER;
@@ -387,25 +389,24 @@ static bool startThread(const pathId path, void *(*func) (void *))
     numElements = 0;
     reqStop     = false;
 
-    int ret     = 0;
-
-    #ifdef _MIOSIX
-    // Set stack size of CODEC2 thread to 16kB.
-    pthread_attr_t codecAttr;
     pthread_attr_init(&codecAttr);
-    pthread_attr_setstacksize(&codecAttr, 16384);
+
+    #if defined(_MIOSIX)
+    // Set stack size of CODEC2 thread to 16kB.
+    pthread_attr_setstacksize(&codecAttr, CODEC2_TASK_STKSIZE);
 
     // Set priority of CODEC2 thread to the maximum one, the same of RTX thread.
     struct sched_param param;
     param.sched_priority = sched_get_priority_max(0);
     pthread_attr_setschedparam(&codecAttr, &param);
-
-    // Start thread
-    ret = pthread_create(&codecThread, &codecAttr, func, ((void *) audioPath));
-    #else
-    ret = pthread_create(&codecThread, NULL, func, ((void *) audioPath));
+    #elif defined(__ZEPHYR__)
+    // Allocate and set the stack for CODEC2 thread
+    void *codec_thread_stack = malloc(CODEC2_TASK_STKSIZE * sizeof(uint8_t));
+    pthread_attr_setstack(&codecAttr, codec_thread_stack, CODEC2_TASK_STKSIZE);
     #endif
 
+    // Start thread
+    int ret = pthread_create(&codecThread, &codecAttr, func, ((void *) audioPath));
     if(ret < 0)
         running = false;
 
@@ -417,4 +418,12 @@ static void stopThread()
     reqStop = true;
     pthread_join(codecThread, NULL);
     running = false;
+
+    #ifdef __ZEPHYR__
+    void  *addr;
+    size_t size;
+
+    pthread_attr_getstack(&codecAttr, &addr, &size);
+    free(addr);
+    #endif
 }

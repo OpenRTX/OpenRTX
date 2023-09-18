@@ -198,17 +198,19 @@ void *rtx_threadFunc(void *arg)
  */
 void create_threads()
 {
-    pthread_t rtx_thread;
-    pthread_t ui_thread;
-
     // Create RTX state mutex
     pthread_mutex_init(&rtx_mutex, NULL);
 
-#ifndef __ZEPHYR__
     // Create rtx radio thread
     pthread_attr_t rtx_attr;
     pthread_attr_init(&rtx_attr);
+
+    #ifndef __ZEPHYR__
     pthread_attr_setstacksize(&rtx_attr, RTX_TASK_STKSIZE);
+    #else
+    void *rtx_thread_stack = malloc(RTX_TASK_STKSIZE * sizeof(uint8_t));
+    pthread_attr_setstack(&rtx_attr, rtx_thread_stack, RTX_TASK_STKSIZE);
+    #endif
 
     #ifdef _MIOSIX
     // Max priority for RTX thread when running with miosix rtos
@@ -217,16 +219,20 @@ void create_threads()
     pthread_attr_setschedparam(&rtx_attr, &param);
     #endif
 
+    pthread_t rtx_thread;
     pthread_create(&rtx_thread, &rtx_attr, rtx_threadFunc, NULL);
 
     // Create UI thread
     pthread_attr_t ui_attr;
     pthread_attr_init(&ui_attr);
+
+    #ifndef __ZEPHYR__
     pthread_attr_setstacksize(&ui_attr, UI_TASK_STKSIZE);
+    #else
+    void *ui_thread_stack = malloc(UI_TASK_STKSIZE * sizeof(uint8_t));
+    pthread_attr_setstack(&ui_attr, ui_thread_stack, UI_TASK_STKSIZE);
+    #endif
+
+    pthread_t ui_thread;
     pthread_create(&ui_thread, &ui_attr, ui_threadFunc, NULL);
-#else
-    // On zephyr just spawn the threads without setting the attributes
-    pthread_create(&rtx_thread, NULL, rtx_threadFunc, NULL);
-    pthread_create(&ui_thread, NULL, ui_threadFunc, NULL);
-#endif
 }
