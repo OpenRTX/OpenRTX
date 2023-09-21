@@ -155,6 +155,33 @@ static void announceMenuItemIfNeeded(char* name, char* value, bool editMode)
     vp_play();
 }
 
+void _ui_drawScrollBar(uint8_t total_menu_items, uint8_t entries_in_screen, uint8_t selected)
+{
+    if (total_menu_items > entries_in_screen)
+    {
+        uint8_t scrollbar_offset = 0;
+        uint8_t scrollbar_top = layout.line1_pos.y - layout.menu_h + 3;
+        uint8_t scrollbar_width = 2;
+        uint8_t total_height = (SCREEN_HEIGHT - (layout.line1_pos.y - layout.menu_h + 3));
+        // TODO: Check how to do this better to prevent potential overflow
+        uint8_t scrollbar_height = total_height*entries_in_screen/total_menu_items;
+        // Calculate offset on screen due to how scrolling is implemented
+        if (selected < entries_in_screen)
+        {
+            scrollbar_offset = 0;
+        }
+        else
+        {
+            scrollbar_offset = ((selected + 1) - entries_in_screen) *
+                               total_height / total_menu_items;
+        }
+        point_t scrollbar_position = {SCREEN_WIDTH - scrollbar_width,
+                                      scrollbar_top + scrollbar_offset};
+        gfx_drawRect(scrollbar_position, scrollbar_width, scrollbar_height, color_white, true);
+
+    }
+}
+
 void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_t max_len, uint8_t index))
 {
     point_t pos = layout.line1_pos;
@@ -185,6 +212,11 @@ void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_
             pos.y += layout.menu_h;
         }
     }
+
+    // Draw Scrollbar
+    uint8_t total_menu_items = menu_length[state.ui_screen];
+
+    _ui_drawScrollBar(total_menu_items, entries_in_screen, selected);
 }
 
 void _ui_drawMenuListValue(ui_state_t* ui_state, uint8_t selected,
@@ -241,6 +273,11 @@ void _ui_drawMenuListValue(ui_state_t* ui_state, uint8_t selected,
             pos.y += layout.menu_h;
         }
     }
+
+    // Draw Scrollbar
+    uint8_t total_menu_items = menu_length[state.ui_screen];
+
+    _ui_drawScrollBar(total_menu_items, entries_in_screen, selected);
 }
 
 int _ui_getMenuTopEntryName(char *buf, uint8_t max_len, uint8_t index)
