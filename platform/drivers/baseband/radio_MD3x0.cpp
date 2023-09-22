@@ -290,9 +290,20 @@ void radio_enableTx()
     {
         case OPMODE_FM:
         {
+            TxAudioSource source = TxAudioSource::MIC;
             FmConfig cfg = (config->bandwidth == BW_12_5) ? FmConfig::BW_12p5kHz
                                                           : FmConfig::BW_25kHz;
-            C5000.startAnalogTx(TxAudioSource::MIC, cfg | FmConfig::PREEMPH_EN);
+
+            // Setup 1750Hz tone, if enabled
+            if(config->toneEn)
+            {
+                source = TxAudioSource::LINE_IN;    // HR_C5000 audio input is tone generator
+                C5000.setModFactor(0x1E);           // Set correct modulation factor
+                gpio_setMode(BEEP_OUT, ALTERNATE);  // Override audio path configuration
+                toneGen_beepOn(1750.0f, 255, 0);    // Enable 1750Hz tone, always on
+            }
+
+            C5000.startAnalogTx(source, cfg | FmConfig::PREEMPH_EN);
         }
             break;
 
@@ -316,11 +327,17 @@ void radio_enableTx()
 
 void radio_disableRtx()
 {
-    // If we are currently transmitting, stop tone and C5000 TX
     if(radioStatus == TX)
     {
-        toneGen_toneOff();
-        C5000.stopAnalogTx();
+        C5000.stopAnalogTx();   // Stop HR_C5000 tx
+        toneGen_toneOff();      // Stop CTCSS tone
+
+        // Stop 1750Hz tone
+        if(config->toneEn)
+        {
+            toneGen_beepOff();
+            gpio_setMode(BEEP_OUT, INPUT);
+        }
     }
 
     gpio_clearPin(TX_STG_EN);   // Disable TX PA
