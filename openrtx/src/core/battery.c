@@ -68,6 +68,12 @@ uint8_t battery_getCharge(uint16_t vbat)
     vb          = vb / 1000;
     vb          = (vb + 256) >> 8;
 
+    /*
+     * If the voltage is below minimum we return 0 to prevent an underflow in
+     * the following calculation
+     */
+    if (vb < bat_v_min) return 0;
+
     uint32_t diff   = vb - bat_v_min;
     uint32_t range  = bat_v_max - bat_v_min;
     uint32_t result = ((diff << 8) / range) * 100;
