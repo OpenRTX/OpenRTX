@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include "W25Qx.h"
+#include <interfaces/delays.h>
 
 void printChunk(void *chunk)
 {
@@ -36,20 +37,16 @@ void printChunk(void *chunk)
 
 int main()
 {
+    delayMs(5000);
     W25Qx_init();
     W25Qx_wakeup();
 
-    while(1)
+    for(uint32_t addr = 0; addr < 0xFFFFFF; addr += 16)
     {
-        getchar();
-
-        for(uint32_t addr = 0; addr < 0xFFFFFF; addr += 16)
-        {
-            uint8_t buf[16];
-            (void) W25Qx_readData(addr, buf, 16);
-            printf("\r\n%lx: ", addr);
-            printChunk(buf);
-        }
+        uint8_t buf[16];
+        (void) W25Qx_readData(addr, buf, 16);
+        printf("\r\n%08lx: ", addr);
+        printChunk(buf);
     }
 
     return 0;
