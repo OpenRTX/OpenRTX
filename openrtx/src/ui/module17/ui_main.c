@@ -131,6 +131,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
             else
             {
                 char *dst = NULL;
+                char *last = NULL;
                 if(ui_state->edit_mode)
                 {
                     dst = ui_state->new_callsign;
@@ -143,11 +144,20 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                         dst = rtxStatus.destination_address;
                 }
 
+                if(strnlen(rtxStatus.M17_src, 10) == 0)
+                {
+                    last = "LAST";
+                }
+                else
+                {
+                    last = rtxStatus.M17_src;
+                }
+
                 // Print CAN
                 gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                           color_white, "CAN %02d", state.settings.m17_can);
                 gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                          color_white, "LAST");
+                          color_white, last);
                 // Print M17 Destination ID on line 2
                 gfx_print(layout.line3_pos, layout.line3_font, TEXT_ALIGN_CENTER,
                           color_white, "%s", dst);
