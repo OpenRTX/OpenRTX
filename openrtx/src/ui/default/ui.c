@@ -113,6 +113,7 @@ extern void _ui_drawSettingsDisplay(ui_state_t* ui_state);
 extern void _ui_drawSettingsM17(ui_state_t* ui_state);
 extern void _ui_drawSettingsVoicePrompts(ui_state_t* ui_state);
 extern void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state);
+extern void _ui_drawSettingsRadio(ui_state_t* ui_state);
 extern bool _ui_drawMacroMenu(ui_state_t* ui_state);
 extern void _ui_reset_menu_anouncement_tracking();
 
@@ -138,6 +139,7 @@ const char *settings_items[] =
 #ifdef GPS_PRESENT
     "GPS",
 #endif
+    "Radio",
     "M17",
     "Accessibility",
     "Default Settings"
@@ -162,6 +164,13 @@ const char *settings_gps_items[] =
     "UTC Timezone"
 };
 #endif
+
+const char *settings_radio_items[] =
+{
+    "Offset",
+    "Direction",
+    "Step",
+};
 
 const char * settings_m17_items[] =
 {
@@ -246,6 +255,7 @@ const uint8_t display_num = sizeof(display_items)/sizeof(display_items[0]);
 #ifdef GPS_PRESENT
 const uint8_t settings_gps_num = sizeof(settings_gps_items)/sizeof(settings_gps_items[0]);
 #endif
+const uint8_t settings_radio_num = sizeof(settings_radio_items)/sizeof(settings_radio_items[0]);
 const uint8_t settings_m17_num = sizeof(settings_m17_items)/sizeof(settings_m17_items[0]);
 const uint8_t settings_voice_num = sizeof(settings_voice_items)/sizeof(settings_voice_items[0]);
 const uint8_t backup_restore_num = sizeof(backup_restore_items)/sizeof(backup_restore_items[0]);
@@ -1429,11 +1439,11 @@ void ui_updateFSM(bool *sync_rtx)
                     else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
                     {
                         // Increment TX and RX frequency of 12.5KHz
-                        if(_ui_freq_check_limits(state.channel.rx_frequency + 12500) &&
-                           _ui_freq_check_limits(state.channel.tx_frequency + 12500))
+                        if(_ui_freq_check_limits(state.channel.rx_frequency + freq_steps[state.step_index]) &&
+                           _ui_freq_check_limits(state.channel.tx_frequency + freq_steps[state.step_index]))
                         {
-                            state.channel.rx_frequency += 12500;
-                            state.channel.tx_frequency += 12500;
+                            state.channel.rx_frequency += freq_steps[state.step_index];
+                            state.channel.tx_frequency += freq_steps[state.step_index];
                             *sync_rtx = true;
                             vp_announceFrequencies(state.channel.rx_frequency,
                                                    state.channel.tx_frequency,
@@ -1443,11 +1453,11 @@ void ui_updateFSM(bool *sync_rtx)
                     else if(msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
                     {
                         // Decrement TX and RX frequency of 12.5KHz
-                        if(_ui_freq_check_limits(state.channel.rx_frequency - 12500) &&
-                           _ui_freq_check_limits(state.channel.tx_frequency - 12500))
+                        if(_ui_freq_check_limits(state.channel.rx_frequency - freq_steps[state.step_index]) &&
+                           _ui_freq_check_limits(state.channel.tx_frequency - freq_steps[state.step_index]))
                         {
-                            state.channel.rx_frequency -= 12500;
-                            state.channel.tx_frequency -= 12500;
+                            state.channel.rx_frequency -= freq_steps[state.step_index];
+                            state.channel.tx_frequency -= freq_steps[state.step_index];
                             *sync_rtx = true;
                             vp_announceFrequencies(state.channel.rx_frequency,
                                                    state.channel.tx_frequency,
@@ -1803,6 +1813,9 @@ void ui_updateFSM(bool *sync_rtx)
                             state.ui_screen = SETTINGS_GPS;
                             break;
 #endif
+                        case S_RADIO:
+                            state.ui_screen = SETTINGS_RADIO;
+                            break;
                         case S_M17:
                             state.ui_screen = SETTINGS_M17;
                             break;
@@ -2023,6 +2036,42 @@ void ui_updateFSM(bool *sync_rtx)
                     _ui_menuBack(MENU_SETTINGS);
                 break;
 #endif
+            // Radio Settings
+            case SETTINGS_RADIO:
+                if(msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT ||
+                   (ui_state.edit_mode &&
+                   (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT ||
+                    msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)))
+                {
+                    switch(ui_state.menu_selected)
+                    {
+                        case R_OFFSET:
+                            break;
+                        case R_DIRECTION:
+                            // Invert frequency offset direction
+                            if (state.channel.tx_frequency >= state.channel.rx_frequency)
+                                state.channel.tx_frequency -= 2 * ((int32_t)state.channel.tx_frequency - (int32_t)state.channel.rx_frequency);
+                            else // Switch to positive offset
+                                state.channel.tx_frequency -= 2 * ((int32_t)state.channel.tx_frequency - (int32_t)state.channel.rx_frequency);
+                            break;
+                        case R_STEP:
+                            // Cycle over the available frequency steps
+                            state.step_index++;
+                            state.step_index %= n_freq_steps;
+                            break;
+                        default:
+                            state.ui_screen = SETTINGS_GPS;
+                    }
+                }
+                else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                    _ui_menuUp(settings_radio_num);
+                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                    _ui_menuDown(settings_radio_num);
+                else if(msg.keys & KEY_ENTER)
+                    ui_state.edit_mode = !ui_state.edit_mode;
+                else if(msg.keys & KEY_ESC)
+                    _ui_menuBack(MENU_SETTINGS);
+                break;
             // M17 Settings
             case SETTINGS_M17:
                 if(ui_state.edit_mode)
@@ -2343,6 +2392,10 @@ bool ui_updateGUI()
         // Screen to support resetting Settings and VFO to defaults
         case SETTINGS_RESET2DEFAULTS:
             _ui_drawSettingsReset2Defaults(&ui_state);
+            break;
+        // Screen to set frequency offset and step
+        case SETTINGS_RADIO:
+            _ui_drawSettingsRadio(&ui_state);
             break;
         // Low battery screen
         case LOW_BAT:

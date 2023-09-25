@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 #include <utils.h>
 #include <ui/ui_default.h>
 #include <interfaces/nvmem.h>
@@ -335,6 +336,44 @@ int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
     return 0;
 }
 #endif
+
+int _ui_getRadioEntryName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= settings_radio_num) return -1;
+    snprintf(buf, max_len, "%s", settings_radio_items[index]);
+    return 0;
+}
+
+int _ui_getRadioValueName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= settings_radio_num)
+        return -1;
+
+    int32_t offset = 0;
+    switch(index)
+    {
+        case R_OFFSET:
+            offset = abs((int32_t)last_state.channel.tx_frequency -
+                         (int32_t)last_state.channel.rx_frequency);
+            snprintf(buf, max_len, "%gMHz", (float) offset / 1000000.0f);
+            break;
+
+        case R_DIRECTION:
+            buf[0] = (last_state.channel.tx_frequency >= last_state.channel.rx_frequency) ? '+' : '-';
+            buf[1] = '\0';
+            break;
+
+        case R_STEP:
+            // Print in kHz if it is smaller than 1MHz
+            if (freq_steps[last_state.step_index] < 1000000)
+                snprintf(buf, max_len, "%gkHz", (float) freq_steps[last_state.step_index] / 1000.0f);
+            else
+                snprintf(buf, max_len, "%gMHz", (float) freq_steps[last_state.step_index] / 1000000.0f);
+            break;
+    }
+
+    return 0;
+}
 
 int _ui_getM17EntryName(char *buf, uint8_t max_len, uint8_t index)
 {
@@ -894,6 +933,17 @@ void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state)
     }
 
     drawcnt++;
+}
+
+void _ui_drawSettingsRadio(ui_state_t* ui_state)
+{
+    gfx_clearScreen();
+    // Print "Radio Settings" on top bar
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
+              color_white, currentLanguage->radioSettings);
+    // Print radio settings entries
+    _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getRadioEntryName,
+                           _ui_getRadioValueName);
 }
 
 void _ui_drawMacroTop()

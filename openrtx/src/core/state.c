@@ -34,6 +34,10 @@ state_t state;
 pthread_mutex_t state_mutex;
 long long int lastUpdate = 0;
 
+// Commonly used frequency steps, expressed in Hz
+uint32_t freq_steps[] = { 1000, 5000, 6250, 10000, 12500, 15000, 20000, 25000, 50000, 100000 };
+size_t n_freq_steps = sizeof(freq_steps) / sizeof(freq_steps[0]);
+
 void state_init()
 {
     pthread_mutex_init(&state_mutex, NULL);
@@ -72,6 +76,7 @@ void state_init()
     state.rtxStatus     = RTX_OFF;
     state.emergency     = false;
     state.txDisable     = false;
+    state.step_index    = 4; // Default frequency step 12.5kHz
 
     // Force brightness field to be in range 0 - 100
     if(state.settings.brightness > 100)

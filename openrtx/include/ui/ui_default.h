@@ -60,6 +60,7 @@ enum uiScreen
     SETTINGS_TIMEDATE_SET,
     SETTINGS_DISPLAY,
     SETTINGS_GPS,
+    SETTINGS_RADIO,
     SETTINGS_M17,
     SETTINGS_VOICE,
     SETTINGS_RESET2DEFAULTS,
@@ -96,6 +97,7 @@ enum settingsItems
 #ifdef GPS_PRESENT
     S_GPS,
 #endif
+    S_RADIO,
     S_M17,
     S_VOICE,
     S_RESET2DEFAULTS,
@@ -131,6 +133,13 @@ enum settingsVoicePromptItems
 {
     VP_LEVEL = 0,
     VP_PHONETIC,
+};
+
+enum settingsRadioItems
+{
+    R_OFFSET,
+    R_DIRECTION,
+    R_STEP,
 };
 
 enum settingsM17Items
@@ -229,6 +238,7 @@ extern const char *menu_items[];
 extern const char *settings_items[];
 extern const char *display_items[];
 extern const char *settings_gps_items[];
+extern const char *settings_radio_items[];
 extern const char *settings_m17_items[];
 extern const char * settings_voice_items[];
 
@@ -239,6 +249,7 @@ extern const uint8_t menu_num;
 extern const uint8_t settings_num;
 extern const uint8_t display_num;
 extern const uint8_t settings_gps_num;
+extern const uint8_t settings_radio_num;
 extern const uint8_t settings_m17_num;
 extern const uint8_t settings_voice_num;
 extern const uint8_t backup_restore_num;
