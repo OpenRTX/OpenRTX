@@ -811,12 +811,34 @@ void ui_updateFSM(bool *sync_rtx)
         {
             // VFO screen
             case MAIN_VFO:
-                if(msg.keys & KEY_ENTER)
+                if(ui_state.edit_mode)
                 {
-                    // Save current main state
-                    ui_state.last_main_state = state.ui_screen;
-                    // Open Menu
-                    state.ui_screen = MENU_TOP;
+                    if(msg.keys & KEY_ENTER)
+                    {
+                        _ui_textInputConfirm(ui_state.new_callsign);
+                        // Save selected callsign and disable input mode
+                        strncpy(state.m17_dest, ui_state.new_callsign, 10);
+                        *sync_rtx = true;
+                        ui_state.edit_mode = false;
+                    }
+                    else if(msg.keys & KEY_ESC)
+                        ui_state.edit_mode = false;
+                    else
+                        _ui_textInputArrows(ui_state.new_callsign, 9, msg);
+                }
+                else
+                {
+                    if(msg.keys & KEY_ENTER)
+                    {
+                        // Save current main state
+                        ui_state.last_main_state = state.ui_screen;
+                        // Open Menu
+                        state.ui_screen = MENU_TOP;
+                    }
+                    else if (msg.keys & KEY_RIGHT)
+                    {
+                        ui_state.edit_mode = true;
+                    }
                 }
                 break;
 
