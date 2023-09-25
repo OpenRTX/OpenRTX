@@ -535,6 +535,13 @@ mod17_opts  = {'sources': mod17_src,
                'dependencies': [codec2_dep],
                'include_directories': mod17_inc}
 
+ttwrplus_opts  = {'sources': ['CMakeLists.txt'],
+                  'c_args': [],
+                  'cpp_args': [],
+                  'link_args' : [],
+                  'dependencies': [codec2_dep],
+                  'include_directories': []}
+
 ##
 ## ---------------------------- Compilation targets ----------------------------
 ##
@@ -580,6 +587,12 @@ targets = [
    'flashable': true,
    'wrap': ' ',
    'load_addr': ' '},
+
+   {'name': 'ttwrplus',
+   'opts': ttwrplus_opts,
+   'flashable': true,
+   'wrap': ' ',
+   'load_addr': ' '},
   ]
 
 radio_tool  = find_program('radio_tool')
@@ -591,93 +604,119 @@ elif build_machine.system() == 'windows'
 endif
 gd77_loader = find_program('scripts/gd-77_firmware_loader.py', required:false, disabler:true)
 dfu_util    = find_program('dfu-util',                         required:false, disabler:true)
+west        = find_program('west',                              required:false, disabler:true)
 
 foreach t : targets
 
   name = 'openrtx_'+t['name']
-  exe  = executable(name, kwargs:t['opts'])
 
-  if t['flashable']
+  # ttwrplus is a Zephyr target, thus we only wrap west
+  if name == 'openrtx_ttwrplus'
 
-    bin = custom_target(name+'_bin',
-                        output  : name+'_bin',
-                        input   : exe,
-                        command : [objcopy, '-O', 'binary', '@INPUT@', '@OUTPUT@'])
+      txt = custom_target('Copy CMakeLists.txt',
+                    input : 'CMakeLists.txt',
+                    output :  'CMakeLists.txt',
+                    command : ['cp', '@INPUT@', '@OUTPUT@'],
+                    install : false,
+                    build_by_default : true)
 
-    # Handle GD77 custom wrapping and flashing tools
-    if name == 'openrtx_gd77'
-
-      if build_machine.system() == 'linux'
-            wrap = custom_target(name+'_wrap',
-                                 output  : name+'_wrap.sgl',
-                                 input   : bin,
-                                 command : [bin2sgl, '-f', '@INPUT@', '&&',
-                                            'mv', '@INPUT@.sgl', '@OUTPUT@'])
-      elif build_machine.system() == 'windows'
-            wrap = custom_target(name+'_wrap',
-                                 output  : name+'_bin.sgl',
-                                 input   : bin,
-                                 command : [bin2sgl, '@INPUT@'])
-      endif
-
-      custom_target(name+'_flash',
-                    input   : wrap,
-                    output  : name+'_flash',
-                    command : [gd77_loader, '-f', '@INPUT@'])
-
-     # Handle DM1801 custom wrapping and flashing tools
-    elif name == 'openrtx_dm1801'
-
-      if build_machine.system() == 'linux'
-            wrap = custom_target(name+'_wrap',
-                                 output  : name+'_wrap.sgl',
-                                 input   : bin,
-                                 command : [bin2sgl, '-f', '@INPUT@',
-                                            '-m', 'DM-1801', '&&', 'mv',
-                                            '@INPUT@.sgl', '@OUTPUT@'])
-      elif build_machine.system() == 'windows'
-            wrap = custom_target(name+'_wrap',
-                                 output  : name+'_bin.sgl',
-                                 input   : bin,
-                                 command : [bin2sgl, '@INPUT@', '-m DM-1801'])
-      endif
-
-      custom_target(name+'_flash',
-                    input   : wrap,
-                    output  : name+'_flash',
-                    command : [gd77_loader, '-f', '@INPUT@', '-m', 'DM-1801',])
-
-    # Module17 also uses dfu-tool for flashing
-    elif name == 'openrtx_mod17'
-
-      # Wrap target for Module17 for consistency, same output as bin target
-      custom_target(name+'_wrap',
-                    output  : name+'_wrap',
-                    input   : exe,
-                    command : [objcopy, '-O', 'binary', '@INPUT@', '@OUTPUT@'])
-
+      bin = custom_target(name,
+                          input   : txt,
+                          output  : name+'_bin',
+                          command : [west, 'build', '-b', 'ttwrplus', '-d', '.', '..'])
 
       custom_target(name+'_flash',
                     input   : bin,
                     output  : name+'_flash',
-                    command : [dfu_util, '-d', '0483:df11', '-a', '0',
-                               '-D', '@INPUT@', '-s', '0x08000000'])
+                    command : [west, 'flash'])
 
-    else
+  else
 
-      wrap = custom_target(name+'_wrap',
-                           output  : name+'_wrap',
-                           input   : bin,
-                           command : [radio_tool,
-                                      '--wrap',
-                                      '-o', '@OUTPUT@',
-                                      '-r', t['wrap'],
-                                      '-s', t['load_addr']+':@INPUT@'])
+    exe  = executable(name, kwargs:t['opts'])
 
-      custom_target(name+'_flash',
-                    input   : wrap,
-                    output  : name+'_flash',
-                    command : [radio_tool, '-d', '0', '-f', '-i', '@INPUT@'])
+    if t['flashable']
+
+      bin = custom_target(name+'_bin',
+                          output  : name+'_bin',
+                          input   : exe,
+                          command : [objcopy, '-O', 'binary', '@INPUT@', '@OUTPUT@'])
+
+      # Handle GD77 custom wrapping and flashing tools
+      if name == 'openrtx_gd77'
+
+        if build_machine.system() == 'linux'
+              wrap = custom_target(name+'_wrap',
+                                   output  : name+'_wrap.sgl',
+                                   input   : bin,
+                                   command : [bin2sgl, '-f', '@INPUT@', '&&',
+                                              'mv', '@INPUT@.sgl', '@OUTPUT@'])
+        elif build_machine.system() == 'windows'
+              wrap = custom_target(name+'_wrap',
+                                   output  : name+'_bin.sgl',
+                                   input   : bin,
+                                   command : [bin2sgl, '@INPUT@'])
+        endif
+
+        custom_target(name+'_flash',
+                      input   : wrap,
+                      output  : name+'_flash',
+                      command : [gd77_loader, '-f', '@INPUT@'])
+
+       # Handle DM1801 custom wrapping and flashing tools
+      elif name == 'openrtx_dm1801'
+
+        if build_machine.system() == 'linux'
+              wrap = custom_target(name+'_wrap',
+                                   output  : name+'_wrap.sgl',
+                                   input   : bin,
+                                   command : [bin2sgl, '-f', '@INPUT@',
+                                              '-m', 'DM-1801', '&&', 'mv',
+                                              '@INPUT@.sgl', '@OUTPUT@'])
+        elif build_machine.system() == 'windows'
+              wrap = custom_target(name+'_wrap',
+                                   output  : name+'_bin.sgl',
+                                   input   : bin,
+                                   command : [bin2sgl, '@INPUT@', '-m DM-1801'])
+        endif
+
+        custom_target(name+'_flash',
+                      input   : wrap,
+                      output  : name+'_flash',
+                      command : [gd77_loader, '-f', '@INPUT@', '-m', 'DM-1801',])
+
+      # Module17 also uses dfu-tool for flashing
+      elif name == 'openrtx_mod17'
+
+        # Wrap target for Module17 for consistency, same output as bin target
+        custom_target(name+'_wrap',
+                      output  : name+'_wrap',
+                      input   : exe,
+                      command : [objcopy, '-O', 'binary', '@INPUT@', '@OUTPUT@'])
+
+
+        custom_target(name+'_flash',
+                      input   : bin,
+                      output  : name+'_flash',
+                      command : [dfu_util, '-d', '0483:df11', '-a', '0',
+                                 '-D', '@INPUT@', '-s', '0x08000000'])
+
+      else
+
+        wrap = custom_target(name+'_wrap',
+                             output  : name+'_wrap',
+                             input   : bin,
+                             command : [radio_tool,
+                                        '--wrap',
+                                        '-o', '@OUTPUT@',
+                                        '-r', t['wrap'],
+                                        '-s', t['load_addr']+':@INPUT@'])
+
+        custom_target(name+'_flash',
+                      input   : wrap,
+                      output  : name+'_flash',
+                      command : [radio_tool, '-d', '0', '-f', '-i', '@INPUT@'])
+
+      endif
 
     endif
 
