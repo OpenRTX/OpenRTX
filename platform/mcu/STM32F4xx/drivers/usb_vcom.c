@@ -18,6 +18,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <errno.h>
 #include "usbd_core.h"
 #include "usb_defines.h"
 #include "usbd_desc.h"
@@ -246,7 +247,7 @@ ssize_t vcom_readBlock(void* buf, size_t len)
         /* Terminate if all data available has been popped out */
         if(rxRingBuf.readPtr == rxRingBuf.writePtr) break;
         b[i] = rxRingBuf.data[rxRingBuf.readPtr];
-        rxRingBuf.readPtr = (rxRingBuf.readPtr + 1)%RX_RING_BUF_SIZE;
+        rxRingBuf.readPtr = (rxRingBuf.readPtr + 1) % RX_RING_BUF_SIZE;
     }
 
     return i;
@@ -478,3 +479,72 @@ static uint16_t VCP_Ctrl (uint32_t Cmd, uint8_t* Buf, uint32_t Len)
 
     return USBD_OK;
 }
+
+/******************************************************************************
+ *                                                                            *
+ *              Implementation of character device functions                  *
+ *                                                                            *
+ ******************************************************************************/
+static int usb_vcom_init(const struct chardev *dev)
+{
+    (void) dev;
+
+    // If the USB peripheral is not clocked, we assume is not initialized
+    if((RCC->AHB2ENR & RCC_AHB2ENR_OTGFSEN) == 0)
+        vcom_init();
+
+    return 0;
+}
+
+static int usb_vcom_terminate(const struct chardev *dev)
+{
+    (void) dev;
+
+    return -EPERM;
+}
+
+static ssize_t usb_vcom_read(const struct chardev *dev, void *data,
+                             const size_t len)
+{
+    (void) dev;
+    return vcom_readBlock(data, len);
+}
+
+static ssize_t usb_vcom_write(const struct chardev *dev, const void *data,
+                              const size_t len)
+{
+    (void) dev;
+    return vcom_writeBlock(data, len);
+}
+
+static int usb_vcom_ioctl(const struct chardev *dev, const int cmd, const void *arg)
+{
+    (void) dev;
+
+    switch(cmd)
+    {
+        case IOCTL_FLUSH:
+            (void) arg;
+            rxRingBuf.readPtr = rxRingBuf.writePtr;
+            break;
+
+        case IOCTL_SETSPEED:
+            linecoding.bitrate = *(uint32_t *) arg;
+            break;
+
+        default:
+            return -EPERM;
+            break;
+    }
+
+    return 0;
+}
+
+const struct chardev_api usb_vcom_chardev_api =
+{
+    .init      = &usb_vcom_init,
+    .terminate = &usb_vcom_terminate,
+    .read      = &usb_vcom_read,
+    .write     = &usb_vcom_write,
+    .ioctl     = &usb_vcom_ioctl
+};
