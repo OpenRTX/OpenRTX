@@ -283,6 +283,7 @@ linux_platform_src = ['platform/targets/linux/emulator/emulator.c',
                       'platform/drivers/NVM/nvmem_linux.c',
                       'platform/drivers/GPS/GPS_linux.c',
                       'platform/mcu/x86_64/drivers/delays.c',
+                      'platform/mcu/x86_64/drivers/pty.c',
                       'platform/mcu/x86_64/drivers/rng.cpp',
                       'platform/drivers/baseband/radio_linux.cpp',
                       'platform/drivers/audio/audio_linux.c',
@@ -307,6 +308,7 @@ linux_def = def + {'SCREEN_WIDTH': '160', 'SCREEN_HEIGHT': '128', 'PIX_FMT_RGB56
 
 linux_def += {'VP_USE_FILESYSTEM':''}
 linux_inc  = inc + ['platform/targets/linux',
+                    'platform/mcu/x86_64',
                     'platform/targets/linux/emulator']
 
 if not meson.is_cross_build()
@@ -408,7 +410,7 @@ mod17_def = def + stm32f405_def + {'PLATFORM_MOD17': ''}
 
 linux_c_args   = ['-ffunction-sections', '-fdata-sections', '-DPLATFORM_LINUX']
 linux_cpp_args = ['-ffunction-sections', '-fdata-sections', '-std=c++14', '-DPLATFORM_LINUX']
-linux_l_args   = ['-lm', '-lreadline', '-lpulse-simple', '-Wl,--gc-sections']
+linux_l_args   = ['-lm', '-lreadline', '-lpulse-simple', '-Wl,--gc-sections', '-Wl,-Map,main.map']
 
 # Add AddressSanitizer if required
 if get_option('asan')
