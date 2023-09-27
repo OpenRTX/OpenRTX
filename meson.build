@@ -286,6 +286,7 @@ linux_src = ['platform/targets/linux/emulator/emulator.c',
              'platform/drivers/NVM/nvmem_linux.c',
              'platform/drivers/GPS/GPS_linux.c',
              'platform/mcu/x86_64/drivers/delays.c',
+             'platform/mcu/x86_64/drivers/pty.c',
              'platform/mcu/x86_64/drivers/rng.cpp',
              'platform/drivers/baseband/radio_linux.cpp',
              'platform/drivers/audio/audio_linux.c',
@@ -295,6 +296,7 @@ linux_src = ['platform/targets/linux/emulator/emulator.c',
              'platform/drivers/NVM/posix_file.c']
 
 linux_inc = ['platform/targets/linux',
+             'platform/mcu/x86_64',
              'platform/targets/linux/emulator']
 
 linux_def = {'PLATFORM_LINUX': '', 'VP_USE_FILESYSTEM':''}
@@ -311,7 +313,7 @@ linux_def  += {'sniprintf':'snprintf', 'vsniprintf':'vsnprintf'}
 #
 linux_default_src = linux_src + ui_src_default
 linux_default_def = linux_def + {'CONFIG_SCREEN_WIDTH': '160', 'CONFIG_SCREEN_HEIGHT': '128', 'CONFIG_PIX_FMT_RGB565': '',
-                                 'CONFIG_GPS': '', 'CONFIG_RTC': ''}
+                                 'CONFIG_GPS': '', 'CONFIG_RTC': '', 'VP_USE_FILESYSTEM':''}
 linux_small_def   = linux_def + {'CONFIG_SCREEN_WIDTH': '128', 'CONFIG_SCREEN_HEIGHT': '64', 'CONFIG_PIX_FMT_BW': '',
                                  'CONFIG_GPS': '', 'CONFIG_RTC': ''}
 
@@ -321,9 +323,9 @@ linux_small_def   = linux_def + {'CONFIG_SCREEN_WIDTH': '128', 'CONFIG_SCREEN_HE
 linux_mod17_src = linux_src + ui_src_module17
 linux_mod17_def = linux_def + {'CONFIG_SCREEN_WIDTH': '128', 'CONFIG_SCREEN_HEIGHT': '64', 'CONFIG_PIX_FMT_BW': ''}
 
-linux_c_args   = ['-ffunction-sections', '-fdata-sections']
-linux_cpp_args = ['-ffunction-sections', '-fdata-sections', '-std=c++14']
-linux_l_args   = ['-lm', '-lreadline', '-Wl,--gc-sections']
+linux_c_args   = ['-ffunction-sections', '-fdata-sections', '-DPLATFORM_LINUX']
+linux_cpp_args = ['-ffunction-sections', '-fdata-sections', '-std=c++14', '-DPLATFORM_LINUX']
+linux_l_args   = ['-lm', '-lreadline', '-lpulse-simple', '-Wl,--gc-sections', '-Wl,-Map,main.map']
 
 # Add AddressSanitizer if required
 if get_option('asan')
