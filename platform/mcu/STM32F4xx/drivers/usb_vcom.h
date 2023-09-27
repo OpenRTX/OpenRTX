@@ -18,6 +18,7 @@
 #ifndef USB_VCOM_H
 #define USB_VCOM_H
 
+#include <interfaces/chardev.h>
 #include <stdint.h>
 #include <unistd.h>
 
@@ -31,6 +32,26 @@ extern "C" {
  * this parameter.
  */
 #define RX_RING_BUF_SIZE 1024
+
+/**
+ * Set up a USB virtual com port character device.
+ * This macro instantiates and initializes the data structures for an USB virtual
+ * com character device.
+ *
+ * @param name: device name.
+ */
+#define CHARDEV_USB_VCOM_DEFINE(name)   \
+struct chardev name =                   \
+{                                       \
+    .config = NULL,                     \
+    .data   = NULL,                     \
+    .api    = &usb_vcom_chardev_api     \
+};
+
+/**
+ * Character device API definition for USB virtual com.
+ */
+extern const struct chardev_api usb_vcom_chardev_api;
 
 /**
  * Initialise USB virtual com port. Parameters: 115200 baud, 8N1.
