@@ -1160,11 +1160,42 @@ static void _ui_textInputDel(char *buf)
 
 static void _ui_numberInputKeypad(uint32_t *num, kbd_msg_t msg)
 {
+    long long now = getTick();
+
+#ifdef UI_NO_KEYBOARD
+    // If knob is turned, increment or Decrement
+    if (msg.keys & KNOB_LEFT)
+    {
+        *num = *num + 1;
+        if (*num % 10 == 0)
+            *num = *num - 10;
+    }
+
+    if (msg.keys & KNOB_RIGHT)
+    {
+        if (*num == 0)
+            *num = 9;
+        else
+        {
+            *num = *num - 1;
+            if (*num % 10 == 9)
+                *num = *num + 10;
+        }
+    }
+
+    // If enter is pressed, advance to the next digit
+    if (msg.keys & KEY_ENTER)
+        *num *= 10;
+
+    // Announce the character
+    vp_announceInputChar('0' + *num % 10);
+
+    // Update reference values
+    ui_state.input_number = *num % 10;
+#else
     // Maximum frequency len is uint32_t max value number of decimal digits
     if(ui_state.input_position >= 10)
         return;
-
-    long long now = getTick();
 
     // Get currently pressed number key
     uint8_t num_key = input_getPressedNumber(msg);
@@ -1176,15 +1207,16 @@ static void _ui_numberInputKeypad(uint32_t *num, kbd_msg_t msg)
 
     // Update reference values
     ui_state.input_number = num_key;
+#endif
+
     ui_state.last_keypress = now;
 }
 
 static void _ui_numberInputDel(uint32_t *num)
 {
     // announce the digit about to be backspaced.
-    uint8_t digit = ((*num % (10 * ui_state.input_position)) / (10 * (ui_state.input_position - 1)));
-    vp_announceInputChar('0' + digit);
-
+    vp_announceInputChar('0' + *num % 10);
+    
     // Move back input cursor
     if(ui_state.input_position > 0)
         ui_state.input_position--;
@@ -2079,14 +2111,23 @@ void ui_updateFSM(bool *sync_rtx)
                     {
                         case R_OFFSET:
                             // Handle offset frequency input
+#if defined(UI_NO_KEYBOARD)
+                            if(msg.long_press && msg.keys & KEY_ENTER)
+                            {
+                                // Long press on UI_NO_KEYBOARD causes digits to advance by one
+                                ui_state.new_offset /= 10;
+#else
                             if(msg.keys & KEY_ENTER)
                             {
+#endif
                                 // Apply new offset
                                 state.channel.tx_frequency = state.channel.rx_frequency + ui_state.new_offset;
                                 vp_queueStringTableEntry(&currentLanguage->frequencyOffset);
                                 vp_queueFrequency(ui_state.new_offset);
+                                ui_state.edit_mode = false;
                             }
-                            else if(msg.keys & KEY_ESC)
+                            else
+                            if(msg.keys & KEY_ESC)
                             {
                                 // Announce old frequency offset
                                 vp_queueStringTableEntry(&currentLanguage->frequencyOffset);
@@ -2097,7 +2138,11 @@ void ui_updateFSM(bool *sync_rtx)
                             {
                                 _ui_numberInputDel(&ui_state.new_offset);
                             }
+#if defined(UI_NO_KEYBOARD)
+                            else if(msg.keys & KNOB_LEFT || msg.keys & KNOB_RIGHT || msg.keys & KEY_ENTER)
+#else
                             else if(input_isNumberPressed(msg))
+#endif
                             {
                                 _ui_numberInputKeypad(&ui_state.new_offset, msg);
                                 ui_state.input_position += 1;
@@ -2110,7 +2155,8 @@ void ui_updateFSM(bool *sync_rtx)
                             break;
                         case R_DIRECTION:
                             if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
-                               msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
+                               msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT ||
+                               msg.keys & KNOB_LEFT || msg.keys & KNOB_RIGHT)
                             {
                                 // Invert frequency offset direction
                                 if (state.channel.tx_frequency >= state.channel.rx_frequency)
@@ -2120,13 +2166,13 @@ void ui_updateFSM(bool *sync_rtx)
                             }
                             break;
                         case R_STEP:
-                            if (msg.keys & KEY_UP || msg.keys & KEY_RIGHT)
+                            if (msg.keys & KEY_UP || msg.keys & KEY_RIGHT || msg.keys & KNOB_RIGHT)
                             {
                                 // Cycle over the available frequency steps
                                 state.step_index++;
                                 state.step_index %= n_freq_steps;
                             }
-                            else if(msg.keys & KEY_DOWN || msg.keys & KEY_LEFT)
+                            else if(msg.keys & KEY_DOWN || msg.keys & KEY_LEFT || msg.keys & KNOB_LEFT)
                             {
                                 state.step_index += n_freq_steps;
                                 state.step_index--;
@@ -2136,8 +2182,8 @@ void ui_updateFSM(bool *sync_rtx)
                         default:
                             state.ui_screen = SETTINGS_RADIO;
                     }
-                    // If ENTER or ESC are pressed, exit edit mode
-                    if(msg.keys & KEY_ENTER || msg.keys & KEY_ESC)
+                    // If ENTER or ESC are pressed, exit edit mode, R_OFFSET is managed separately
+                    if((ui_state.menu_selected != R_OFFSET && msg.keys & KEY_ENTER) || msg.keys & KEY_ESC)
                         ui_state.edit_mode = false;
                 }
                 else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
