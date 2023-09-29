@@ -1158,7 +1158,41 @@ static void _ui_textInputDel(char *buf)
     ui_state.input_set = 0;
 }
 
+static void _ui_numberInputKeypad(uint32_t *num, kbd_msg_t msg)
+{
+    // Maximum frequency len is uint32_t max value number of decimal digits
+    if(ui_state.input_position >= 10)
+        return;
 
+    long long now = getTick();
+
+    // Get currently pressed number key
+    uint8_t num_key = input_getPressedNumber(msg);
+    *num *= 10;
+    *num += num_key;
+
+    // Announce the character
+    vp_announceInputChar('0' + num_key);
+
+    // Update reference values
+    ui_state.input_number = num_key;
+    ui_state.last_keypress = now;
+}
+
+static void _ui_numberInputDel(uint32_t *num)
+{
+    // announce the digit about to be backspaced.
+    uint8_t digit = ((*num % (10 * ui_state.input_position)) / (10 * (ui_state.input_position - 1)));
+    vp_announceInputChar('0' + digit);
+
+    // Move back input cursor
+    if(ui_state.input_position > 0)
+        ui_state.input_position--;
+    else
+        ui_state.last_keypress = 0;
+
+    ui_state.input_set = 0;
+}
 
 void ui_init()
 {
@@ -2038,37 +2072,86 @@ void ui_updateFSM(bool *sync_rtx)
 #endif
             // Radio Settings
             case SETTINGS_RADIO:
-                if(msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT ||
-                   (ui_state.edit_mode &&
-                   (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT ||
-                    msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)))
+                // If the entry is selected with enter we are in edit_mode
+                if (ui_state.edit_mode)
                 {
                     switch(ui_state.menu_selected)
                     {
                         case R_OFFSET:
+                            // Handle offset frequency input
+                            if(msg.keys & KEY_ENTER)
+                            {
+                                // Apply new offset
+                                state.channel.tx_frequency = state.channel.rx_frequency + ui_state.new_offset;
+                                vp_queueStringTableEntry(&currentLanguage->frequencyOffset);
+                                vp_queueFrequency(ui_state.new_offset);
+                            }
+                            else if(msg.keys & KEY_ESC)
+                            {
+                                // Announce old frequency offset
+                                vp_queueStringTableEntry(&currentLanguage->frequencyOffset);
+                                vp_queueFrequency((int32_t)state.channel.tx_frequency - (int32_t)state.channel.rx_frequency);
+                            }
+                            else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
+                                    msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
+                            {
+                                _ui_numberInputDel(&ui_state.new_offset);
+                            }
+                            else if(input_isNumberPressed(msg))
+                            {
+                                _ui_numberInputKeypad(&ui_state.new_offset, msg);
+                                ui_state.input_position += 1;
+                            }
+                            else if (msg.long_press && (msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
+                            {
+                                vp_queueFrequency(ui_state.new_offset);
+                                f1Handled=true;
+                            }
                             break;
                         case R_DIRECTION:
-                            // Invert frequency offset direction
-                            if (state.channel.tx_frequency >= state.channel.rx_frequency)
-                                state.channel.tx_frequency -= 2 * ((int32_t)state.channel.tx_frequency - (int32_t)state.channel.rx_frequency);
-                            else // Switch to positive offset
-                                state.channel.tx_frequency -= 2 * ((int32_t)state.channel.tx_frequency - (int32_t)state.channel.rx_frequency);
+                            if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
+                               msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
+                            {
+                                // Invert frequency offset direction
+                                if (state.channel.tx_frequency >= state.channel.rx_frequency)
+                                    state.channel.tx_frequency -= 2 * ((int32_t)state.channel.tx_frequency - (int32_t)state.channel.rx_frequency);
+                                else // Switch to positive offset
+                                    state.channel.tx_frequency -= 2 * ((int32_t)state.channel.tx_frequency - (int32_t)state.channel.rx_frequency);
+                            }
                             break;
                         case R_STEP:
-                            // Cycle over the available frequency steps
-                            state.step_index++;
-                            state.step_index %= n_freq_steps;
+                            if (msg.keys & KEY_UP || msg.keys & KEY_RIGHT)
+                            {
+                                // Cycle over the available frequency steps
+                                state.step_index++;
+                                state.step_index %= n_freq_steps;
+                            }
+                            else if(msg.keys & KEY_DOWN || msg.keys & KEY_LEFT)
+                            {
+                                state.step_index += n_freq_steps;
+                                state.step_index--;
+                                state.step_index %= n_freq_steps;
+                            }
                             break;
                         default:
-                            state.ui_screen = SETTINGS_GPS;
+                            state.ui_screen = SETTINGS_RADIO;
                     }
+                    // If ENTER or ESC are pressed, exit edit mode
+                    if(msg.keys & KEY_ENTER || msg.keys & KEY_ESC)
+                        ui_state.edit_mode = false;
                 }
                 else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
                     _ui_menuUp(settings_radio_num);
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
                     _ui_menuDown(settings_radio_num);
-                else if(msg.keys & KEY_ENTER)
-                    ui_state.edit_mode = !ui_state.edit_mode;
+                else if(msg.keys & KEY_ENTER) {
+                    ui_state.edit_mode = true;
+                    // If we are entering R_OFFSET clear temp offset
+                    if (ui_state.menu_selected == R_OFFSET)
+                        ui_state.new_offset = 0;
+                    // Reset input position
+                    ui_state.input_position = 0;
+                }
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_SETTINGS);
                 break;

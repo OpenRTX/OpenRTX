@@ -89,9 +89,10 @@ const stringsTable_t englishStrings =
     .macroMenu         = "Macro Menu",
     .forEmergencyUse   = "For emergency use",
     .pressAnyButton    = "press any button.",
-    .accessibility = "Accessibility",
-    .usedHeap = "Used heap",
-    .broadcast = "ALL",
-    .radioSettings = "Radio Settings"
+    .accessibility     = "Accessibility",
+    .usedHeap          = "Used heap",
+    .broadcast         = "ALL",
+    .radioSettings     = "Radio Settings",
+    .frequencyOffset   = "Frequency Offset"
 };
 #endif  // ENGLISHSTRINGS_H

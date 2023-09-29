@@ -938,12 +938,40 @@ void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state)
 void _ui_drawSettingsRadio(ui_state_t* ui_state)
 {
     gfx_clearScreen();
+
     // Print "Radio Settings" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->radioSettings);
-    // Print radio settings entries
-    _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getRadioEntryName,
-                           _ui_getRadioValueName);
+
+    // Handle the special case where a frequency is being input
+    if ((ui_state->menu_selected == R_OFFSET) && (ui_state->edit_mode))
+    {
+        char buf[17] = { 0 };
+        uint16_t rect_width = SCREEN_WIDTH - (layout.horizontal_pad * 2);
+        uint16_t rect_height = (SCREEN_HEIGHT - (layout.top_h + layout.bottom_h))/2;
+        point_t rect_origin = {(SCREEN_WIDTH - rect_width) / 2,
+                               (SCREEN_HEIGHT - rect_height) / 2};
+
+        gfx_drawRect(rect_origin, rect_width, rect_height, color_white, false);
+
+        // Print frequency with the most sensible unit
+        if (ui_state->new_offset < 1000)
+            snprintf(buf, 17, "%dHz", ui_state->new_offset);
+        else if (ui_state->new_offset < 1000000)
+            snprintf(buf, 17, "%gkHz", (float) ui_state->new_offset / 1000.0f);
+        else
+            snprintf(buf, 17, "%gMHz", (float) ui_state->new_offset / 1000000.0f);
+
+        gfx_printLine(1, 1, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
+                      layout.horizontal_pad, layout.input_font,
+                      TEXT_ALIGN_CENTER, color_white, buf);
+    }
+    else
+    {
+        // Print radio settings entries
+        _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getRadioEntryName,
+                               _ui_getRadioValueName);
+    }
 }
 
 void _ui_drawMacroTop()
