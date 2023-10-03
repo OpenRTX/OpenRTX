@@ -64,7 +64,7 @@ typedef struct
     bool     lsfOk;                    /**  M17 LSF is valid           */
     char     M17_dst[10];              /**  M17 LSF destination        */
     char     M17_src[10];              /**  M17 LSF source             */
-    char     M17_orig[10];             /**  M17 LSF traffic originator */
+    char     M17_link[10];             /**  M17 LSF traffic originator */
     char     M17_refl[10];             /**  M17 LSF reflector module   */
 }
 rtxStatus_t;

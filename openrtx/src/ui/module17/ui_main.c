@@ -112,12 +112,12 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                 gfx_print(layout.line1_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                           color_white, "%s", rtxStatus.M17_src);
 
-                if(rtxStatus.M17_orig[0] != '\0')
+                if(rtxStatus.M17_link[0] != '\0')
                 {
                     gfx_drawSymbol(layout.line4_pos, layout.line3_symbol_font, TEXT_ALIGN_LEFT,
                                 color_white, SYMBOL_ACCESS_POINT);
                     gfx_print(layout.line4_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                            color_white, "%s", rtxStatus.M17_orig);
+                            color_white, "%s", rtxStatus.M17_link);
                 }
 
                 if(rtxStatus.M17_refl[0] != '\0')

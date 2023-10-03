@@ -39,8 +39,8 @@ using namespace std;
 using namespace M17;
 
 OpMode_M17::OpMode_M17() : startRx(false), startTx(false), locked(false),
-                           dataValid(false), invertTxPhase(false),
-                           invertRxPhase(false)
+                           dataValid(false), extendedCall(false),
+                           invertTxPhase(false), invertRxPhase(false)
 {
 
 }
@@ -55,10 +55,11 @@ void OpMode_M17::enable()
     codec_init();
     modulator.init();
     demodulator.init();
-    locked    = false;
-    dataValid = false;
-    startRx   = true;
-    startTx   = false;
+    locked       = false;
+    dataValid    = false;
+    extendedCall = false;
+    startRx      = true;
+    startTx      = false;
 }
 
 void OpMode_M17::disable()
@@ -221,8 +222,6 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                 // Retrieve stream source and destination data
                 std::string dst = lsf.getDestination();
                 std::string src = lsf.getSource();
-                strncpy(status->M17_src, src.c_str(), 10);
-                strncpy(status->M17_dst, dst.c_str(), 10);
 
                 // Retrieve extended callsign data
                 streamType_t streamType = lsf.getType();
@@ -230,13 +229,33 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                 if((streamType.fields.encType    == M17_ENCRYPTION_NONE) &&
                    (streamType.fields.encSubType == M17_META_EXTD_CALLSIGN))
                 {
+                    extendedCall = true;
+
                     meta_t& meta = lsf.metadata();
                     std::string exCall1 = decode_callsign(meta.extended_call_sign.call1);
                     std::string exCall2 = decode_callsign(meta.extended_call_sign.call2);
 
-                    strncpy(status->M17_orig, exCall1.c_str(), 10);
+                    //
+                    // The source callsign only contains the last link when
+                    // receiving extended callsign data: in order to always store
+                    // the true source of a transmission, we need to store the first
+                    // extended callsign in M17_src.
+                    //
+                    strncpy(status->M17_src,  exCall1.c_str(), 10);
                     strncpy(status->M17_refl, exCall2.c_str(), 10);
+
+                    extendedCall = true;
                 }
+
+                // Set source and destination fields.
+                // If we have received an extended callsign the src will be the RF link address
+                // The M17_src will already be stored from the extended callsign
+                strncpy(status->M17_dst, dst.c_str(), 10);
+
+                if(extendedCall)
+                    strncpy(status->M17_link, src.c_str(), 10);
+                else
+                    strncpy(status->M17_src, src.c_str(), 10);
 
                 // Check CAN on RX, if enabled.
                 // If check is disabled, force match to true.
@@ -268,7 +287,8 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
     {
         status->lsfOk = false;
         dataValid     = false;
-        status->M17_orig[0] = '\0';
+        extendedCall  = false;
+        status->M17_link[0] = '\0';
         status->M17_refl[0] = '\0';
     }
 }

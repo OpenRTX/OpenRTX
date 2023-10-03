@@ -126,6 +126,7 @@ private:
     bool startTx;                      ///< Flag for TX management.
     bool locked;                       ///< Demodulator locked on data stream.
     bool dataValid;                    ///< Demodulated data is valid
+    bool extendedCall;                 ///< Extended callsign data received
     bool invertTxPhase;                ///< TX signal phase inversion setting.
     bool invertRxPhase;                ///< RX signal phase inversion setting.
     pathId rxAudioPath;                ///< Audio path ID for RX
