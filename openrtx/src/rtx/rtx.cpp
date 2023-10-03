@@ -62,7 +62,7 @@ void rtx_init(pthread_mutex_t *m)
     rtxStatus.lsfOk         = false;
     rtxStatus.M17_src[0]    = '\0';
     rtxStatus.M17_dst[0]    = '\0';
-    rtxStatus.M17_orig[0]   = '\0';
+    rtxStatus.M17_link[0]   = '\0';
     rtxStatus.M17_refl[0]   = '\0';
     currMode = &noMode;
 

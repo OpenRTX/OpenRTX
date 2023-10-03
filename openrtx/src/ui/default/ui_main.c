@@ -143,14 +143,14 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                 gfx_print(layout.line1_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                           color_white, "%s", rtxStatus.M17_src);
 
-                // Stream originator (if present)
-                if(rtxStatus.M17_orig[0] != '\0')
+                // RF link (if present)
+                if(rtxStatus.M17_link[0] != '\0')
                 {
                     gfx_drawSymbol(layout.line4_pos, layout.line3_symbol_size, TEXT_ALIGN_LEFT,
                                    color_white, SYMBOL_ACCESS_POINT);
 
                     gfx_print(layout.line4_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                              color_white, "%s", rtxStatus.M17_orig);
+                              color_white, "%s", rtxStatus.M17_link);
                 }
 
                 // Reflector (if present)

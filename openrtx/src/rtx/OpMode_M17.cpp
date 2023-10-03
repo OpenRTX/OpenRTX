@@ -221,8 +221,6 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                 // Retrieve stream source and destination data
                 std::string dst = lsf.getDestination();
                 std::string src = lsf.getSource();
-                strncpy(status->M17_src, src.c_str(), 10);
-                strncpy(status->M17_dst, dst.c_str(), 10);
 
                 // Retrieve extended callsign data
                 streamType_t streamType = lsf.getType();
@@ -234,9 +232,30 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                     std::string exCall1 = decode_callsign(meta.extended_call_sign.call1);
                     std::string exCall2 = decode_callsign(meta.extended_call_sign.call2);
 
-                    strncpy(status->M17_orig, exCall1.c_str(), 10);
+                    /*
+                     * The source callsign only contains the last link when receiving extended callsign data.
+                     * In order to always store the true source of a transmission, we need to store the first
+                     * extended callsign in M17_src.
+                     */
+                    strncpy(status->M17_src, exCall1.c_str(), 10);
                     strncpy(status->M17_refl, exCall2.c_str(), 10);
+
+                    // Storing that we received an extended callsign, as it is not transmitted continuously
+                    status->M17_extCall = true;
                 }
+                strncpy(status->M17_dst, dst.c_str(), 10);
+
+
+                // If we have received an extended callsign the src will be the RF link address
+                // The M17_src will already be stored from the extended callsign
+                if (status->M17_extCall)
+                {
+                    strncpy(status->M17_link, src.c_str(), 10);
+                } else
+                {
+                    strncpy(status->M17_src, src.c_str(), 10);
+                }
+
 
                 // Check CAN on RX, if enabled.
                 // If check is disabled, force match to true.
@@ -268,8 +287,9 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
     {
         status->lsfOk = false;
         dataValid     = false;
-        status->M17_orig[0] = '\0';
+        status->M17_link[0] = '\0';
         status->M17_refl[0] = '\0';
+        status->M17_extCall = false;
     }
 }
 
