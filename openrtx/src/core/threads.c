@@ -33,6 +33,7 @@
 #include <utils.h>
 #include <input.h>
 #include <backup.h>
+#include <rtxlink.h>
 #ifdef CONFIG_GPS
 #include <peripherals/gps.h>
 #include <gps.h>
@@ -160,6 +161,9 @@ void *main_thread(void *arg)
 
         // Run state update task
         state_task();
+
+        // Run rtxlink protocol task
+        rtxlink_task();
 
         // Run this loop once every 5ms
         time += 5;

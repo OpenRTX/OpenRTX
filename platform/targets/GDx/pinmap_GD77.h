@@ -23,6 +23,9 @@
 
 #include <MK22F51212.h>
 
+/* No rtxlink interface */
+#define RTXLINK_DEV NULL
+
 /* Power keep switch */
 #define PWR_SW GPIOE,26
 

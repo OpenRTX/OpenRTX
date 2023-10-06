@@ -27,6 +27,9 @@
 #include <toneGenerator_MDx.h>
 #include <peripherals/rtc.h>
 #include <interfaces/audio.h>
+#include <usb_vcom.h>
+
+CHARDEV_USB_VCOM_DEFINE(rtxlink_dev)
 
 static hwInfo_t hwInfo;
 

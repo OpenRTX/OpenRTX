@@ -66,6 +66,10 @@ extern const struct Adc adc1;
 /* Battery type */
 #define CONFIG_BAT_NONE
 
+/* Character device for rtxlink communication */
+extern struct chardev rtxlink_dev;
+#define RTXLINK_DEV &rtxlink_dev
+
 #ifdef __cplusplus
 }
 #endif

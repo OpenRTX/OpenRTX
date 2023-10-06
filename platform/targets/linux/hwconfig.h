@@ -38,6 +38,10 @@ enum Mod17Flags
 /* Device supports M17 mode */
 #define CONFIG_M17
 
+/* Character device for rtxlink communication */
+extern struct chardev rtxlink_dev;
+#define RTXLINK_DEV &rtxlink_dev
+
 #ifdef __cplusplus
 }
 #endif

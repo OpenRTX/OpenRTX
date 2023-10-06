@@ -30,6 +30,7 @@
 #include <threads.h>
 #include <state.h>
 #include <ui.h>
+#include <rtxlink.h>
 #ifdef PLATFORM_LINUX
 #include <stdlib.h>
 #endif
@@ -40,13 +41,13 @@ void openrtx_init()
 {
     state.devStatus = STARTUP;
 
-    platform_init();    // Initialize low-level platform drivers
-    state_init();       // Initialize radio state
-
-    gfx_init();         // Initialize display and graphics driver
-    kbd_init();         // Initialize keyboard driver
-    ui_init();          // Initialize user interface
-    vp_init();          // Initialize voice prompts
+    platform_init();            // Initialize low-level platform drivers
+    state_init();               // Initialize radio state
+    gfx_init();                 // Initialize display and graphics driver
+    kbd_init();                 // Initialize keyboard driver
+    ui_init();                  // Initialize user interface
+    vp_init();                  // Initialize voice prompts
+    rtxlink_init(RTXLINK_DEV);  // Initialize rtxlink interface
     #ifdef CONFIG_SCREEN_CONTRAST
     display_setContrast(state.settings.contrast);
     #endif
