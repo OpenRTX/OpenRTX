@@ -33,4 +33,7 @@
 
 #define BAT_LIPO_1S
 
+/* No rtxlink interface */
+#define RTXLINK_DEV NULL
+
 #endif /* HWCONFIG_H */

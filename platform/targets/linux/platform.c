@@ -18,8 +18,11 @@
 #include <calibration/calibInfo_Mod17.h>
 #include <interfaces/platform.h>
 #include <interfaces/nvmem.h>
+#include <drivers/pty.h>
 #include <stdio.h>
 #include "emulator.h"
+
+CHARDEV_PTY_DEFINE(rtxlink_dev)
 
 /*
  * Create the data structure holding Module17 calibration data to make the

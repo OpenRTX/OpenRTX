@@ -38,6 +38,9 @@
 /* Device has no battery */
 #define BAT_NONE
 
+/* No rtxlink interface */
+#define RTXLINK_DEV NULL
+
 /* Signalling LEDs */
 #define PTT_LED     GPIOC,8
 #define SYNC_LED    GPIOC,9

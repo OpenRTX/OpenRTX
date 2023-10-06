@@ -44,6 +44,9 @@ extern "C" {
 /* Battery type */
 #define BAT_LIPO_2S
 
+/* No rtxlink interface */
+#define RTXLINK_DEV NULL
+
 /* Power keep switch */
 #define PWR_SW GPIOE,26
 

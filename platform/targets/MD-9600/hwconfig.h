@@ -47,6 +47,10 @@ extern "C" {
 /* Battery type */
 #define BAT_NONE
 
+/* Character device for rtxlink communication */
+extern struct chardev rtxlink_dev;
+#define RTXLINK_DEV &rtxlink_dev
+
 /* Power keep switch */
 #define PWR_SW GPIOD,15
 
