@@ -32,6 +32,9 @@
 #include <interfaces/audio.h>
 #include <spi_stm32.h>
 #include <chSelector.h>
+#include <usb_vcom.h>
+
+CHARDEV_USB_VCOM_DEFINE(rtxlink_dev)
 
 /* TODO: Hardcoded hwInfo until we implement reading from flash */
 static const hwInfo_t hwInfo =

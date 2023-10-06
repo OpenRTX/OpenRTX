@@ -78,4 +78,7 @@ enum Mod17Flags
 /* Device supports M17 mode */
 #define CONFIG_M17
 
+/* No rtxlink interface */
+#define RTXLINK_DEV NULL
+
 #endif

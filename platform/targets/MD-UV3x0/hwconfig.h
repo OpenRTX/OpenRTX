@@ -60,6 +60,10 @@ extern const struct Adc adc1;
 /* Battery type */
 #define CONFIG_BAT_LIPO_2S
 
+/* Character device for rtxlink communication */
+extern struct chardev rtxlink_dev;
+#define RTXLINK_DEV &rtxlink_dev
+
 /* Device supports M17 mode */
 #define CONFIG_M17
 

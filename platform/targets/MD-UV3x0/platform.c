@@ -29,10 +29,13 @@
 #include <interfaces/audio.h>
 #include <chSelector.h>
 #include <Cx000_dac.h>
+#include <usb_vcom.h>
 
 #ifdef CONFIG_SCREEN_BRIGHTNESS
 #include <backlight.h>
 #endif
+
+CHARDEV_USB_VCOM_DEFINE(rtxlink_dev)
 
 mduv3x0Calib_t calibration;
 static hwInfo_t hwInfo;

@@ -35,4 +35,7 @@
 
 #define CONFIG_M17
 
+/* No rtxlink interface */
+#define RTXLINK_DEV NULL
+
 #endif /* HWCONFIG_H */
