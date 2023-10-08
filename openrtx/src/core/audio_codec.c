@@ -22,7 +22,12 @@
 #include <audio_codec.h>
 #include <pthread.h>
 #include <threads.h>
+// codec2 system library has a weird include prefix
+#if defined(PLATFORM_LINUX)
+#include <codec2/codec2.h>
+#else
 #include <codec2.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

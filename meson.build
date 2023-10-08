@@ -121,13 +121,14 @@ minmea_inc = ['lib/minmea/include']
 # QDEC, a very simple, header only, quadrature decoding library
 qdec_inc = ['lib/qdec/include']
 
-# CODEC2, open source speech codec
-# Compile from sources only when targeting a platform different from x86/x64
-if meson.is_cross_build()
-  codec2_proj = subproject('codec2')
-  codec2_dep  = codec2_proj.get_variable('codec2_dep')
-else
-  codec2_dep  = dependency('codec2')
+# CODEC2, open source speech codec, compile from source
+codec2_proj = subproject('codec2')
+codec2_dep  = codec2_proj.get_variable('codec2_dep')
+
+# For linux we link against system library
+if not meson.is_cross_build()
+  cpp = meson.get_compiler('cpp')
+  codec2_shared_dep = cpp.find_library('codec2')
 endif
 
 # XPowersLib, Arduino,CircuitPython,Micropython, esp-idf library for x-powers power management series
@@ -303,10 +304,10 @@ linux_inc  = inc + ['platform/targets/linux',
                     'platform/targets/linux/emulator']
 
 if not meson.is_cross_build()
-  sdl_dep = dependency('SDL2')
-  threads_dep = dependency('threads')
-  pulse_dep = dependency('libpulse')
-  linux_dep = [sdl_dep, threads_dep, pulse_dep, codec2_dep]
+  sdl_dep = dependency('SDL2', required: false)
+  threads_dep = dependency('threads', required: false)
+  pulse_dep = dependency('libpulse', required: false)
+  linux_dep = [sdl_dep, threads_dep, pulse_dep, codec2_shared_dep]
 else
   linux_dep = [ ]
 endif
