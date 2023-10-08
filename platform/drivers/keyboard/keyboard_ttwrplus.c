@@ -79,7 +79,7 @@ keyboard_t kbd_getKeys()
     keys &= ~KNOB_RIGHT;
 
     // Read rotary encoder to send KNOB_LEFT and KNOB_RIGHT events
-    int8_t new_pos = platform_getChSelector();
+    int8_t new_pos = platform_getChSelector() / 2;
     if (old_pos != new_pos)
     {
         int8_t delta = new_pos - old_pos;
