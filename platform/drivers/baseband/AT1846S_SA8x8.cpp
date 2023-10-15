@@ -87,7 +87,7 @@ void AT1846S::setBandwidth(const AT1846S_BW band)
         // 25kHz bandwidth
         i2c_writeReg16(0x15, 0x1F00);   // Tuning bit
         i2c_writeReg16(0x32, 0x7564);   // AGC target power
-        i2c_writeReg16(0x3A, 0x44C3);   // Modulation detect sel
+        i2c_writeReg16(0x3A, 0x4003);   // Modulation detect sel
         i2c_writeReg16(0x3F, 0x29D2);   // RSSI 3 threshold
         i2c_writeReg16(0x3C, 0x0E1C);   // Peak detect threshold
         i2c_writeReg16(0x48, 0x1E38);   // Noise 1 threshold
@@ -113,7 +113,7 @@ void AT1846S::setBandwidth(const AT1846S_BW band)
         // 12.5kHz bandwidth
         i2c_writeReg16(0x15, 0x1100);   // Tuning bit
         i2c_writeReg16(0x32, 0x4495);   // AGC target power
-        i2c_writeReg16(0x3A, 0x40C3);   // Modulation detect sel
+        i2c_writeReg16(0x3A, 0x4003);   // Modulation detect sel
         i2c_writeReg16(0x3F, 0x28D0);   // RSSI 3 threshold
         i2c_writeReg16(0x3C, 0x0F1E);   // Peak detect threshold
         i2c_writeReg16(0x48, 0x1DB6);   // Noise 1 threshold

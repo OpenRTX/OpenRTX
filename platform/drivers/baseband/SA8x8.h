@@ -63,6 +63,13 @@ int sa8x8_enableHSMode();
 void sa8x8_setTxPower(const float power);
 
 /**
+ * Enable or disable the speaker power amplifier.
+ *
+ * @param value: boolean state of the speaker power amplifier.
+ */
+void sa8x8_setAudio(bool value);
+
+/**
  * Write a register of the AT1846S radio IC contained in the SA8x8 module.
  *
  * @param reg: register number.

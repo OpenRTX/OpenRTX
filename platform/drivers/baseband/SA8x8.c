@@ -28,9 +28,9 @@
  * Minimum required version of sa868-fw
  */
 #define SA868FW_MAJOR    1
-#define SA868FW_MINOR    1
+#define SA868FW_MINOR    3
 #define SA868FW_PATCH    0
-#define SA868FW_RELEASE  20
+#define SA868FW_RELEASE  1
 
 
 #if DT_NODE_HAS_STATUS(DT_ALIAS(radio), okay)
@@ -122,8 +122,10 @@ static inline bool checkFwVersion()
     sscanf(fwVersionStr, "sa8x8-fw/v%hhu.%hhu.%hhu.r%hhu", &major, &minor,
            &patch, &release);
 
-    if((major >= SA868FW_MAJOR) && (minor >= SA868FW_MINOR) &&
-       (patch >= SA868FW_PATCH) && (release >= SA868FW_RELEASE))
+    if((major > SA868FW_MAJOR) ||
+       (major == SA868FW_MAJOR) && (minor > SA868FW_MINOR) ||
+       (major == SA868FW_MAJOR) && (minor == SA868FW_MINOR) && (patch > SA868FW_PATCH) ||
+       (major == SA868FW_MAJOR) && (minor == SA868FW_MINOR) && (patch == SA868FW_PATCH) && (release >= SA868FW_RELEASE))
     {
         return true;
     }
@@ -279,7 +281,19 @@ void sa8x8_setTxPower(const float power)
     uint8_t amp_enable = (power > 1.0f) ? 1 : 0;
     int ret = gpio_pin_set_dt(&radio_pwr, amp_enable);
     if(ret != 0)
-        printk("SA8x8: failed to enable high power mode");
+        printk("SA8x8: failed to change power mode");
+}
+
+void sa8x8_setAudio(bool value)
+{
+    char buf[SA8X8_MSG_SIZE];
+
+    uartPrint("AT+AUDIO=%d\r\n", value);
+    k_msgq_get(&uart_msgq, buf, K_MSEC(100));
+
+    // Check that response is "OK\r"
+    if(strncmp(buf, "OK\r", 3U) != 0)
+        printk("SA8x8: failed to enable control speaker power amplifier");
 }
 
 void sa8x8_writeAT1846Sreg(uint8_t reg, uint16_t value)

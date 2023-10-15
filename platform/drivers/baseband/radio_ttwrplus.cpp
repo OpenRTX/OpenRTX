@@ -43,6 +43,9 @@ void radio_init(const rtxStatus_t *rtxState)
     // platform_init()
     sa8x8_enableHSMode();
 
+    // Mute speaker power amplifier by default
+    sa8x8_setAudio(false);
+
     /*
      * Configure AT1846S, keep AF output disabled at power on.
      */
