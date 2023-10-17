@@ -198,7 +198,7 @@ void pmu_init()
     printk("===========================================================================\n");
 
     // Set the time of pressing the button to turn off
-    PMU.setPowerKeyPressOffTime(XPOWERS_POWEROFF_4S);
+    PMU.setPowerKeyPressOffTime(XPOWERS_POWEROFF_10S);
     uint8_t opt = PMU.getPowerKeyPressOffTime();
     printk("PowerKeyPressOffTime:");
     switch (opt)
@@ -289,8 +289,8 @@ void pmu_init()
     // NOTE: Target voltage set to 4.00V (80% charge) to extend battery lifespan of 2.5x-3x
     PMU.setChargeTargetVoltage(XPOWERS_AXP2101_CHG_VOL_4V);
 
-    // Disable the PMU long press shutdown function
-    PMU.disableLongPressShutdown();
+    // Enable the PMU long press shutdown function (emergency shutdown)
+    PMU.enableLongPressShutdown();
 
 
     // Get charging target current
