@@ -605,13 +605,14 @@ elif build_machine.system() == 'windows'
 endif
 gd77_loader = find_program('scripts/gd-77_firmware_loader.py', required:false, disabler:true)
 dfu_util    = find_program('dfu-util',                         required:false, disabler:true)
-west        = find_program('west',                              required:false, disabler:true)
+west        = find_program('west',                             required:false, disabler:true)
+uf2conv     = find_program('scripts/uf2conv.py',               required:false, disabler:true)
 
 foreach t : targets
 
   name = 'openrtx_'+t['name']
 
-  # ttwrplus is a Zephyr target, thus we only wrap west
+  # ttwrplus is a Zephyr target, we compile it using west and package it in uf2 format
   if name == 'openrtx_ttwrplus'
 
       txt = custom_target('Copy CMakeLists.txt',
@@ -626,10 +627,15 @@ foreach t : targets
                           output  : name+'_bin',
                           command : [west, 'build', '-b', 'ttwrplus', '-d', '.', '..'])
 
+      uf2 = custom_target(name+'_uf2',
+                          input   : bin,
+                          output  : name+'.uf2',
+                          command : [uf2conv, 'zephyr/zephyr.bin', '-c', '-f', 'ESP32S3', '-b', '0x0', '-o', '@OUTPUT@'])
+
       custom_target(name+'_flash',
-                    input   : bin,
+                    input   : uf2,
                     output  : name+'_flash',
-                    command : [west, 'flash'])
+                    command : [uf2conv, '-D', '@INPUT@'])
 
   else
 

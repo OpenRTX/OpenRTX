@@ -75,6 +75,8 @@ minmea is released under the DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE v2.
 
 Code for STM32F405 USB driver is released under the MCD-ST Liberty SW License Agreement V2.
 
+uf2conf.py and related files are released by Microsoft Corporation under MIT license.
+
 ## Credits
 
 OpenRTX is being made by:
