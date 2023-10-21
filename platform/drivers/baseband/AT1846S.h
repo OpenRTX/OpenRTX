@@ -101,8 +101,12 @@ public:
      */
     void setFrequency(const freq_t freq)
     {
-        // The value to be written in registers is given by: 0.0016*freqency
-        uint32_t val = (freq/1000)*16;
+        // AT1846S datasheet specifies a frequency step of 1/16th of kHz per bit.
+        // Computation of register value is done using 64 bit to avoid overflows,
+        // result is then truncated to 32 bits to fit it into the registers.
+        uint64_t val = ((uint64_t) freq * 16) / 1000;
+        val &= 0xFFFFFFFF;
+
         uint16_t fHi = (val >> 16) & 0xFFFF;
         uint16_t fLo = val & 0xFFFF;
 
