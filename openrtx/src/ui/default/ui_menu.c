@@ -372,7 +372,7 @@ int _ui_getRadioValueName(char *buf, uint8_t max_len, uint8_t index)
     uint32_t value  = 0;
     switch(index)
     {
-        case R_OFFSET:
+        case R_SHIFT:
         {
             uint32_t txFreq = last_state.channel.tx_frequency;
             uint32_t rxFreq = last_state.channel.rx_frequency;
@@ -1069,7 +1069,7 @@ void _ui_drawSettingsRadio(ui_state_t* ui_state)
               color_white, currentLanguage->radioSettings);
 
     // Handle the special case where a frequency is being input
-    if ((ui_state->menu_selected == R_OFFSET) && (ui_state->edit_mode))
+    if ((ui_state->menu_selected == R_SHIFT) && (ui_state->edit_mode))
     {
         char buf[17] = { 0 };
         uint16_t rect_width = CONFIG_SCREEN_WIDTH - (layout.horizontal_pad * 2);
@@ -1082,12 +1082,12 @@ void _ui_drawSettingsRadio(ui_state_t* ui_state)
         // Print frequency with the most sensible unit
         char     prefix = ' ';
         uint32_t div    = 1;
-        if(ui_state->new_offset >= 1000000)
+        if(ui_state->new_shift >= 1000000)
         {
             prefix = 'M';
             div    = 1000000;
         }
-        else if(ui_state->new_offset >= 1000)
+        else if(ui_state->new_shift >= 1000)
         {
             prefix = 'k';
             div    = 1000;
@@ -1095,8 +1095,8 @@ void _ui_drawSettingsRadio(ui_state_t* ui_state)
 
         // NOTE: casts are there only to squelch -Wformat warnings on the
         // sniprintf.
-        sniprintf(buf, sizeof(buf), "%u.%u", (unsigned int)(ui_state->new_offset / div),
-                                            (unsigned int)(ui_state->new_offset % div));
+        sniprintf(buf, sizeof(buf), "%u.%u", (unsigned int)(ui_state->new_shift / div),
+                                            (unsigned int)(ui_state->new_shift % div));
         stripTrailingZeroes(buf);
 
         gfx_printLine(1, 1, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
