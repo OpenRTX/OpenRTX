@@ -47,6 +47,7 @@ display_timer_t;
 
 typedef struct
 {
+    int16_t ppm_offset;           // frequency offset for tuning (in tenth of ppm)
     uint8_t brightness;           // Display brightness
     uint8_t contrast;             // Display contrast
     uint8_t sqlLevel;             // Squelch level
@@ -67,6 +68,7 @@ __attribute__((packed)) settings_t;
 
 static const settings_t default_settings =
 {
+    0,                // No frequency offset
     100,              // Brightness
 #ifdef SCREEN_CONTRAST
     DEFAULT_CONTRAST, // Contrast

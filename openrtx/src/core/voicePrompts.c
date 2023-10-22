@@ -524,6 +524,19 @@ void vp_queueInteger(const int value)
     vp_queueString(buf, 0);
 }
 
+void vp_queuePPM(const int16_t value)
+{
+    if (state.settings.vpLevel < vpLow)
+        return;
+
+    char buf[11] = {0};  // min: -3276.8, max: 3276.7
+    if (value < 0)
+        vp_queuePrompt(PROMPT_MINUS);
+
+    snprintf(buf, 11, "%d.%dppm", abs(value / 10), abs(value) % 10);
+    vp_queueString(buf, vpAnnounceCommonSymbols);
+}
+
 void vp_queueStringTableEntry(const char* const* stringTableStringPtr)
 {
     /*

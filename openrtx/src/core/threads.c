@@ -90,8 +90,11 @@ void *ui_threadFunc(void *arg)
             pthread_mutex_lock(&rtx_mutex);
             rtx_cfg.opMode      = state.channel.mode;
             rtx_cfg.bandwidth   = state.channel.bandwidth;
-            rtx_cfg.rxFrequency = state.channel.rx_frequency;
-            rtx_cfg.txFrequency = state.channel.tx_frequency;
+
+            /* Applies frequency offset */
+            rtx_cfg.rxFrequency = state.channel.rx_frequency * (1.0f + (float)state.settings.ppm_offset/1e7);
+            rtx_cfg.txFrequency = state.channel.tx_frequency * (1.0f + (float)state.settings.ppm_offset/1e7);
+
             rtx_cfg.txPower     = power;
             rtx_cfg.sqlLevel    = state.settings.sqlLevel;
             rtx_cfg.rxToneEn    = state.channel.fm.rxToneEn;
