@@ -175,6 +175,7 @@ const char *settings_radio_items[] =
     "Rpt. shift",
     "Direction",
     "Step",
+    "Correction",
 };
 
 const char * settings_m17_items[] =
@@ -1230,7 +1231,52 @@ static void _ui_numberInputKeypad(uint32_t *num, kbd_msg_t msg)
     ui_state.last_keypress = now;
 }
 
+static void _ui_signedNumberInputKeypad(int32_t *num, kbd_msg_t msg)
+{
+    long long now = getTick();
+
+#ifdef UI_NO_KEYBOARD
+    // TODO
+#else
+    // Maximum frequency len is uint32_t max value number of decimal digits
+    if(ui_state.input_position >= 6)
+        return;
+
+    if(msg.keys & KEY_HASH)
+    {
+        *num *= -1;
+        vp_announceInputChar('-');
+    }
+    else{
+        // Get currently pressed number key
+        uint8_t num_key = input_getPressedNumber(msg);
+        *num *= 10;
+        *num += num_key;
+        // Announce the character
+        vp_announceInputChar('0' + num_key);
+        // Update reference values
+        ui_state.input_number = num_key;
+    }
+#endif
+
+    ui_state.last_keypress = now;
+}
+
 static void _ui_numberInputDel(uint32_t *num)
+{
+    // announce the digit about to be backspaced.
+    vp_announceInputChar('0' + *num % 10);
+
+    // Move back input cursor
+    if(ui_state.input_position > 0)
+        ui_state.input_position--;
+    else
+        ui_state.last_keypress = 0;
+
+    ui_state.input_set = 0;
+}
+
+static void _ui_signedNumberInputDel(int32_t *num)
 {
     // announce the digit about to be backspaced.
     vp_announceInputChar('0' + *num % 10);
@@ -2237,6 +2283,70 @@ void ui_updateFSM(bool *sync_rtx)
                                 state.step_index %= n_freq_steps;
                             }
                             break;
+                        case R_PPM:
+                            // Handle PPM offset input
+#if defined(UI_NO_KEYBOARD)
+                            if(msg.long_press && msg.keys & KEY_ENTER)
+                            {
+                                // Long press on UI_NO_KEYBOARD causes digits to advance by one
+                                ui_state.new_ppm /= 10;
+#else
+                            if(msg.keys & KEY_ENTER)
+                            {
+#endif
+                                // Apply new offset
+                                state.settings.ppm_offset = ui_state.new_ppm;
+                                vp_queueStringTableEntry(&currentLanguage->ppmFreqOffset);
+                                vp_queuePPM(ui_state.new_ppm);
+                                ui_state.edit_mode = false;
+                            }
+                            else if(msg.keys & KEY_ESC)
+                            {
+                                // Announce old frequency offset
+                                vp_queueStringTableEntry(&currentLanguage->ppmFreqOffset);
+                                vp_queuePPM(ui_state.new_ppm);
+                            }
+                            else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
+                                    msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
+                            {
+                                int32_t tmp = (int32_t)ui_state.new_ppm;
+                                _ui_signedNumberInputDel(&tmp);
+                                ui_state.new_ppm = (int16_t)tmp;
+                            }
+#if defined(UI_NO_KEYBOARD)
+                            else if(msg.keys & KNOB_LEFT || msg.keys & KNOB_RIGHT || msg.keys & KEY_ENTER)
+#else
+                            else if(input_isNumberPressed(msg))
+#endif
+                            {
+                                int32_t tmp = (int32_t)ui_state.new_ppm;
+                                _ui_signedNumberInputKeypad(&tmp, msg);
+                                ui_state.new_ppm = (int16_t)tmp;
+                                ui_state.input_position += 1;
+                            }
+#if !defined(UI_NO_KEYBOARD)
+                            else if(msg.keys & KEY_HASH)
+                            {
+                                ui_state.new_ppm *= -1;
+                                if(ui_state.new_ppm > 0)
+                                {
+                                    ui_state.input_position -= 1;
+                                }
+                                else if(ui_state.new_ppm < 0)
+                                {
+                                    ui_state.input_position += 1;
+                                }
+                                vp_flush();
+                                vp_queuePPM(ui_state.new_ppm);
+                                vp_play();
+                            }
+#endif
+                            else if (msg.long_press && (msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
+                            {
+                                vp_queuePPM(ui_state.new_ppm);
+                                f1Handled=true;
+                            }
+                            break;
                         default:
                             state.ui_screen = SETTINGS_RADIO;
                     }
@@ -2253,6 +2363,8 @@ void ui_updateFSM(bool *sync_rtx)
                     // If we are entering R_SHIFT clear temp offset
                     if (ui_state.menu_selected == R_SHIFT)
                         ui_state.new_shift = 0;
+                    else if(ui_state.menu_selected == R_PPM)
+                        ui_state.new_ppm = 0;
                     // Reset input position
                     ui_state.input_position = 0;
                 }
