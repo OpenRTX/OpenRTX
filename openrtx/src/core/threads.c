@@ -107,7 +107,7 @@ void *ui_threadFunc(void *arg)
             rtx_cfg.can = state.settings.m17_can;
             rtx_cfg.canRxEn = state.settings.m17_can_rx;
             strncpy(rtx_cfg.source_address,      state.settings.callsign, 10);
-            strncpy(rtx_cfg.destination_address, state.m17_dest, 10);
+            strncpy(rtx_cfg.destination_address, state.settings.m17_dest, 10);
 
             pthread_mutex_unlock(&rtx_mutex);
 
