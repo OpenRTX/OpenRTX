@@ -162,13 +162,19 @@ void OpMode_M17::offState(rtxStatus_t *const status)
     if(startRx)
     {
         status->opStatus = RX;
+        return;
     }
 
     if(platform_getPttStatus() && (status->txDisable == 0))
     {
         startTx = true;
         status->opStatus = TX;
+        return;
     }
+
+    // Sleep for 30ms if there is nothing else to do in order to prevent the
+    // rtx thread looping endlessly and locking up all the other tasks
+    sleepFor(0, 30);
 }
 
 void OpMode_M17::rxState(rtxStatus_t *const status)
