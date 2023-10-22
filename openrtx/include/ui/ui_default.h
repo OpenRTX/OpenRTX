@@ -137,7 +137,7 @@ enum settingsVoicePromptItems
 
 enum settingsRadioItems
 {
-    R_OFFSET,
+    R_SPLIT,
     R_DIRECTION,
     R_STEP,
 };
@@ -223,7 +223,7 @@ typedef struct ui_state_t
     char new_time_buf[9];
 #endif
     char new_callsign[10];
-    freq_t new_offset;
+    freq_t new_split;
     // Which state to return to when we exit menu
     uint8_t last_main_state;
 #if defined(UI_NO_KEYBOARD)

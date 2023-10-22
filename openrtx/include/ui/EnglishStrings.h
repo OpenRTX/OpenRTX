@@ -93,6 +93,6 @@ const stringsTable_t englishStrings =
     .usedHeap          = "Used heap",
     .broadcast         = "ALL",
     .radioSettings     = "Radio Settings",
-    .frequencyOffset   = "Frequency Offset"
+    .repeaterSplit     = "Repeater Split",
 };
 #endif  // ENGLISHSTRINGS_H

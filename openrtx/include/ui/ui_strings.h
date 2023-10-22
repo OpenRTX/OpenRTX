@@ -97,7 +97,7 @@ typedef struct
     const char* usedHeap;
     const char* broadcast;
     const char* radioSettings;
-    const char* frequencyOffset;
+    const char* repeaterSplit;
 }
 stringsTable_t;
 
