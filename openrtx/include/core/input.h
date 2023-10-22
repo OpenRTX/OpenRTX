@@ -69,6 +69,15 @@ bool input_scanKeyboard(kbd_msg_t *msg);
 bool input_isNumberPressed(kbd_msg_t msg);
 
 /**
+ * This function returns true if at least one character is pressed on the
+ * keyboard.
+ *
+ * @param msg: the keyboard queue message
+ * @return true if at least a char is pressed on the keyboard
+ */
+bool input_isCharPressed(kbd_msg_t msg);
+
+/**
  * This function returns the smallest number that is pressed on the keyboard,
  * 0 if none is pressed.
  *
@@ -76,5 +85,14 @@ bool input_isNumberPressed(kbd_msg_t msg);
  * @return the smalled pressed number on the keyboard
  */
 uint8_t input_getPressedNumber(kbd_msg_t msg);
+
+/**
+ * This function returns the smallest number pressed on the keyboard and
+ * associated to character. If no button is pressed, zero is returned.
+ *
+ * @param msg: the keyboard queue message
+ * @return the smallest number associated to a char.
+ */
+uint8_t input_getPressedChar(kbd_msg_t msg);
 
 #endif /* INPUT_H */

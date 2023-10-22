@@ -1093,7 +1093,7 @@ static void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg,
         return;
     long long now = getTick();
     // Get currently pressed number key
-    uint8_t num_key = input_getPressedNumber(msg);
+    uint8_t num_key = input_getPressedChar(msg);
     // Get number of symbols related to currently pressed key
     uint8_t num_symbols = 0;
     if(callsign)
@@ -1457,7 +1457,7 @@ void ui_updateFSM(bool *sync_rtx)
                         else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
                                 msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
                             _ui_textInputDel(ui_state.new_callsign);
-                        else if(input_isNumberPressed(msg))
+                        else if(input_isCharPressed(msg))
                             _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
                         break;
                     }
@@ -1659,7 +1659,7 @@ void ui_updateFSM(bool *sync_rtx)
                         else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
                                 msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
                             _ui_textInputDel(ui_state.new_callsign);
-                        else if(input_isNumberPressed(msg))
+                        else if(input_isCharPressed(msg))
                             _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
                         break;
                     }
@@ -2237,7 +2237,7 @@ void ui_updateFSM(bool *sync_rtx)
                             {
                                 _ui_textInputDel(ui_state.new_callsign);
                             }
-                            else if(input_isNumberPressed(msg))
+                            else if(input_isCharPressed(msg))
                             {
                                 _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
                             }

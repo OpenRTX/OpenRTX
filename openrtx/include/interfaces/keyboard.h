@@ -67,10 +67,15 @@ enum key
 
 /**
  * Mask for the numeric keys in a key map
- * Numeric keys: bit0->bit11 = 0xFFF
+ * Numeric keys: bit0->bit9 = 0x3FF
  */
-#define KBD_NUM_MASK 0x0FFF
+#define KBD_NUM_MASK 0x03FF
 
+/**
+ * Mask for the chars keys in a key map
+ * Char keys: bit0->bit11 = 0xFFF
+ */
+#define KBD_CHAR_MASK 0x0FFF
 /**
  * We encode the status of all the keys with a uint32_t value
  * To check which buttons are pressed one can bit-mask the
