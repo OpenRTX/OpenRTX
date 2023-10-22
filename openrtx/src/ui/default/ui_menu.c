@@ -349,13 +349,14 @@ int _ui_getRadioValueName(char *buf, uint8_t max_len, uint8_t index)
     if(index >= settings_radio_num)
         return -1;
 
-    int32_t offset = 0;
+    int32_t split = 0;
+
     switch(index)
     {
-        case R_OFFSET:
-            offset = abs((int32_t)last_state.channel.tx_frequency -
+        case R_SHIFT:
+            split = abs((int32_t)last_state.channel.tx_frequency -
                          (int32_t)last_state.channel.rx_frequency);
-            snprintf(buf, max_len, "%gMHz", (float) offset / 1000000.0f);
+            snprintf(buf, max_len, "%gMHz", (float) split / 1000000.0f);
             break;
 
         case R_DIRECTION:
@@ -955,7 +956,7 @@ void _ui_drawSettingsRadio(ui_state_t* ui_state)
               color_white, currentLanguage->radioSettings);
 
     // Handle the special case where a frequency is being input
-    if ((ui_state->menu_selected == R_OFFSET) && (ui_state->edit_mode))
+    if ((ui_state->menu_selected == R_SHIFT) && (ui_state->edit_mode))
     {
         char buf[17] = { 0 };
         uint16_t rect_width = SCREEN_WIDTH - (layout.horizontal_pad * 2);
@@ -966,12 +967,12 @@ void _ui_drawSettingsRadio(ui_state_t* ui_state)
         gfx_drawRect(rect_origin, rect_width, rect_height, color_white, false);
 
         // Print frequency with the most sensible unit
-        if (ui_state->new_offset < 1000)
-            snprintf(buf, 17, "%dHz", ui_state->new_offset);
-        else if (ui_state->new_offset < 1000000)
-            snprintf(buf, 17, "%gkHz", (float) ui_state->new_offset / 1000.0f);
+        if (ui_state->new_shift < 1000)
+            snprintf(buf, 17, "%ldHz", ui_state->new_shift);
+        else if (ui_state->new_shift < 1000000)
+            snprintf(buf, 17, "%gkHz", (float) ui_state->new_shift / 1000.0f);
         else
-            snprintf(buf, 17, "%gMHz", (float) ui_state->new_offset / 1000000.0f);
+            snprintf(buf, 17, "%gMHz", (float) ui_state->new_shift / 1000000.0f);
 
         gfx_printLine(1, 1, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
                       layout.horizontal_pad, layout.input_font,
