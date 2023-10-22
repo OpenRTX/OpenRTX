@@ -98,6 +98,7 @@ typedef struct
     const char* broadcast;
     const char* radioSettings;
     const char* repeaterShift;
+    const char* ppmFreqOffset;
 }
 stringsTable_t;
 

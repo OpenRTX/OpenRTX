@@ -94,5 +94,6 @@ const stringsTable_t englishStrings =
     .broadcast         = "ALL",
     .radioSettings     = "Radio Settings",
     .repeaterShift     = "Repeater Shift",
+    .ppmFreqOffset     = "PPM Freq. Offset"
 };
 #endif  // ENGLISHSTRINGS_H
