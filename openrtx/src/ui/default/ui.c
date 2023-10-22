@@ -172,7 +172,7 @@ const char *settings_gps_items[] =
 
 const char *settings_radio_items[] =
 {
-    "Offset",
+    "Rpt. shift",
     "Direction",
     "Step",
 };
@@ -2167,34 +2167,34 @@ void ui_updateFSM(bool *sync_rtx)
                 {
                     switch(ui_state.menu_selected)
                     {
-                        case R_OFFSET:
+                        case R_SHIFT:
                             // Handle offset frequency input
 #if defined(CONFIG_UI_NO_KEYBOARD)
                             if(msg.long_press && msg.keys & KEY_ENTER)
                             {
                                 // Long press on CONFIG_UI_NO_KEYBOARD causes digits to advance by one
-                                ui_state.new_offset /= 10;
+                                ui_state.new_shift /= 10;
 #else
                             if(msg.keys & KEY_ENTER)
                             {
 #endif
                                 // Apply new offset
-                                state.channel.tx_frequency = state.channel.rx_frequency + ui_state.new_offset;
-                                vp_queueStringTableEntry(&currentLanguage->frequencyOffset);
-                                vp_queueFrequency(ui_state.new_offset);
+                                state.channel.tx_frequency = state.channel.rx_frequency + ui_state.new_shift;
+                                vp_queueStringTableEntry(&currentLanguage->repeaterShift);
+                                vp_queueFrequency(ui_state.new_shift);
                                 ui_state.edit_mode = false;
                             }
                             else
                             if(msg.keys & KEY_ESC)
                             {
                                 // Announce old frequency offset
-                                vp_queueStringTableEntry(&currentLanguage->frequencyOffset);
+                                vp_queueStringTableEntry(&currentLanguage->repeaterShift);
                                 vp_queueFrequency((int32_t)state.channel.tx_frequency - (int32_t)state.channel.rx_frequency);
                             }
                             else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
                                     msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
                             {
-                                _ui_numberInputDel(&ui_state.new_offset);
+                                _ui_numberInputDel(&ui_state.new_shift);
                             }
 #if defined(CONFIG_UI_NO_KEYBOARD)
                             else if(msg.keys & KNOB_LEFT || msg.keys & KNOB_RIGHT || msg.keys & KEY_ENTER)
@@ -2202,12 +2202,12 @@ void ui_updateFSM(bool *sync_rtx)
                             else if(input_isNumberPressed(msg))
 #endif
                             {
-                                _ui_numberInputKeypad(&ui_state.new_offset, msg);
+                                _ui_numberInputKeypad(&ui_state.new_shift, msg);
                                 ui_state.input_position += 1;
                             }
                             else if (msg.long_press && (msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
                             {
-                                vp_queueFrequency(ui_state.new_offset);
+                                vp_queueFrequency(ui_state.new_shift);
                                 f1Handled=true;
                             }
                             break;
@@ -2240,8 +2240,8 @@ void ui_updateFSM(bool *sync_rtx)
                         default:
                             state.ui_screen = SETTINGS_RADIO;
                     }
-                    // If ENTER or ESC are pressed, exit edit mode, R_OFFSET is managed separately
-                    if((ui_state.menu_selected != R_OFFSET && msg.keys & KEY_ENTER) || msg.keys & KEY_ESC)
+                    // If ENTER or ESC are pressed, exit edit mode, R_SHIFT is managed separately
+                    if((ui_state.menu_selected != R_SHIFT && msg.keys & KEY_ENTER) || msg.keys & KEY_ESC)
                         ui_state.edit_mode = false;
                 }
                 else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
@@ -2250,9 +2250,9 @@ void ui_updateFSM(bool *sync_rtx)
                     _ui_menuDown(settings_radio_num);
                 else if(msg.keys & KEY_ENTER) {
                     ui_state.edit_mode = true;
-                    // If we are entering R_OFFSET clear temp offset
-                    if (ui_state.menu_selected == R_OFFSET)
-                        ui_state.new_offset = 0;
+                    // If we are entering R_SHIFT clear temp offset
+                    if (ui_state.menu_selected == R_SHIFT)
+                        ui_state.new_shift = 0;
                     // Reset input position
                     ui_state.input_position = 0;
                 }
