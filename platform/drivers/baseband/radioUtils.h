@@ -51,7 +51,7 @@ enum Band
  * @return a value from @enum Band identifying the band to which the frequency
  * belong.
  */
-inline Band getBandFromFrequency(const freq_t freq)
+static inline enum Band getBandFromFrequency(const freq_t freq)
 {
     if((freq >= BAND_VHF_LO) && (freq <= BAND_VHF_HI)) return BND_VHF;
     if((freq >= BAND_UHF_LO) && (freq <= BAND_UHF_HI)) return BND_UHF;
