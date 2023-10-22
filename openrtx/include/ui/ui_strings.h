@@ -110,6 +110,7 @@ typedef struct
     const char* direction;
     const char* step;
     const char* radio;
+    const char* ppmFreqOffset;
 }
 stringsTable_t;
 

@@ -179,6 +179,7 @@ const char *settings_radio_items[] =
     "Rpt. shift",
     "Direction",
     "Step",
+    "Correction",
 };
 
 const char * settings_m17_items[] =
@@ -2265,6 +2266,71 @@ void ui_updateFSM(bool *sync_rtx)
                                 state.step_index %= n_freq_steps;
                             }
                             break;
+                        case R_PPM:
+                            // Handle PPM offset input
+#if defined(UI_NO_KEYBOARD)
+                            if(msg.long_press && msg.keys & KEY_ENTER)
+                            {
+                                // Long press on UI_NO_KEYBOARD causes digits to advance by one
+                                ui_state.new_ppm /= 10;
+#else
+                            if(msg.keys & KEY_ENTER)
+                            {
+#endif
+                                // Apply new offset
+                                state.settings.ppm_offset = ui_state.new_ppm*ui_state.new_ppm_sign;
+                                vp_queueStringTableEntry(&currentLanguage->ppmFreqOffset);
+                                vp_queuePPM(ui_state.new_ppm);
+                                ui_state.edit_mode = false;
+                            }
+                            else if(msg.keys & KEY_ESC)
+                            {
+                                // Announce old frequency offset
+                                vp_queueStringTableEntry(&currentLanguage->ppmFreqOffset);
+                                vp_queuePPM(ui_state.new_ppm);
+                            }
+                            else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
+                                    msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
+                            {
+                                uint32_t tmp = (uint32_t)ui_state.new_ppm;
+                                _ui_numberInputDel(&tmp);
+                                ui_state.new_ppm = (uint16_t)tmp;
+                            }
+#if defined(UI_NO_KEYBOARD)
+                            else if(msg.keys & KNOB_LEFT || msg.keys & KNOB_RIGHT || msg.keys & KEY_ENTER)
+#else
+                            else if(input_isNumberPressed(msg))
+#endif
+                            {
+                                uint32_t tmp = (uint32_t)ui_state.new_ppm;
+                                _ui_numberInputKeypad(&tmp, msg);
+                                //The PPM correction holds in an INT16 even though here we use a UINT16.
+                                if(tmp <= INT16_MAX) {
+                                    ui_state.new_ppm = (uint16_t)tmp;
+                                    ui_state.input_position += 1;
+                                }
+                            }
+#if !defined(UI_NO_KEYBOARD)
+                            else if(msg.keys & KEY_HASH)
+                            {
+                                ui_state.new_ppm_sign *= -1;
+                                vp_flush();
+                                if(ui_state.new_ppm_sign < 0){
+                                    vp_queuePrompt(PROMPT_MINUS);
+                                }
+                                vp_queuePPM(ui_state.new_ppm);
+                                vp_play();
+                            }
+#endif
+                            else if (msg.long_press && (msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
+                            {
+                                if(ui_state.new_ppm_sign < 0){
+                                    vp_queuePrompt(PROMPT_MINUS);
+                                }
+                                vp_queuePPM(ui_state.new_ppm);
+                                f1Handled=true;
+                            }
+                            break;
                         default:
                             state.ui_screen = SETTINGS_RADIO;
                     }
@@ -2281,6 +2347,10 @@ void ui_updateFSM(bool *sync_rtx)
                     // If we are entering R_SHIFT clear temp offset
                     if (ui_state.menu_selected == R_SHIFT)
                         ui_state.new_shift = 0;
+                    else if(ui_state.menu_selected == R_PPM) {
+                        ui_state.new_ppm = 0;
+                        ui_state.new_ppm_sign = 1;
+                    }
                     // Reset input position
                     ui_state.input_position = 0;
                 }

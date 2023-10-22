@@ -106,5 +106,6 @@ const stringsTable_t englishStrings =
     .direction         = "Direction",
     .step              = "Step",
     .radio             = "Radio",
+    .ppmFreqOffset     = "PPM Corr.",
 };
 #endif  // ENGLISHSTRINGS_H

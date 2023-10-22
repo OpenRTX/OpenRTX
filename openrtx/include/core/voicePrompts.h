@@ -302,6 +302,13 @@ void vp_queueString(const char* string, vpFlags_t flags);
 void vp_queueInteger(const int value);
 
 /**
+ * Append a signed ppm to the queue.
+ *
+ * @param value: value to be appended (in tenth of PPM).
+ */
+void vp_queuePPM(const int16_t value);
+
+/**
  * Append a text string from the current language to the queue.
  */
 void vp_queueStringTableEntry(const char* const* stringTableStringPtr);

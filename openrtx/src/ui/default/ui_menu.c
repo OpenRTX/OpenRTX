@@ -366,6 +366,10 @@ int _ui_getRadioValueName(char *buf, uint8_t max_len, uint8_t index)
         buf[1] = '\0';
 
         return 0;
+    } else if(index == R_PPM) {
+        // Only return the PPM
+        snprintf(buf, max_len, "%gppm", (float)last_state.settings.ppm_offset / 10.0f);
+        return 0;
     }
 
     // Return an x.y string
@@ -1102,6 +1106,26 @@ void _ui_drawSettingsRadio(ui_state_t* ui_state)
         gfx_printLine(1, 1, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
                       layout.horizontal_pad, layout.input_font,
                       TEXT_ALIGN_CENTER, color_white, "%s%cHz", buf, prefix);
+    }
+    else if((ui_state->menu_selected == R_PPM) && (ui_state->edit_mode))
+    {
+        char buf[11] = { 0 };
+        uint16_t rect_width = CONFIG_SCREEN_WIDTH - (layout.horizontal_pad * 2);
+        uint16_t rect_height = (CONFIG_SCREEN_HEIGHT - (layout.top_h + layout.bottom_h))/2;
+        point_t rect_origin = {(CONFIG_SCREEN_WIDTH - rect_width) / 2,
+                               (CONFIG_SCREEN_HEIGHT - rect_height) / 2};
+
+        gfx_drawRect(rect_origin, rect_width, rect_height, color_white, false);
+
+        // Print offset
+        if(ui_state->new_ppm_sign < 0)
+            snprintf(buf, 11, "-%d.%d", ui_state->new_ppm / 10, ui_state->new_ppm % 10);
+        else
+            snprintf(buf, 11, "%d.%d", ui_state->new_ppm / 10, ui_state->new_ppm % 10);
+
+        gfx_printLine(1, 1, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
+                      layout.horizontal_pad, layout.input_font,
+                      TEXT_ALIGN_CENTER, color_white, buf);
     }
     else
     {
