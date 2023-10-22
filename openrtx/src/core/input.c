@@ -86,6 +86,10 @@ bool input_isNumberPressed(kbd_msg_t msg)
     return msg.keys & KBD_NUM_MASK;
 }
 
+bool input_isCharPressed(kbd_msg_t msg){
+    return msg.keys & KBD_CHAR_MASK;
+}
+
 uint8_t input_getPressedNumber(kbd_msg_t msg)
 {
     uint32_t masked_input = msg.keys & KBD_NUM_MASK;

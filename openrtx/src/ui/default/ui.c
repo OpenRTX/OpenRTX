@@ -1450,7 +1450,7 @@ void ui_updateFSM(bool *sync_rtx)
                         else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
                                 msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
                             _ui_textInputDel(ui_state.new_callsign);
-                        else if(input_isNumberPressed(msg))
+                        else if(input_isCharPressed(msg))
                             _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
                         break;
                     }
@@ -1652,7 +1652,7 @@ void ui_updateFSM(bool *sync_rtx)
                         else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
                                 msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
                             _ui_textInputDel(ui_state.new_callsign);
-                        else if(input_isNumberPressed(msg))
+                        else if(input_isCharPressed(msg))
                             _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
                         break;
                     }
@@ -2230,7 +2230,7 @@ void ui_updateFSM(bool *sync_rtx)
                             {
                                 _ui_textInputDel(ui_state.new_callsign);
                             }
-                            else if(input_isNumberPressed(msg))
+                            else if(input_isCharPressed(msg))
                             {
                                 _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
                             }
