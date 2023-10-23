@@ -98,3 +98,12 @@ uint8_t input_getPressedNumber(kbd_msg_t msg)
 
     return __builtin_ctz(msg.keys & KBD_NUM_MASK);
 }
+
+uint8_t input_getPressedChar(kbd_msg_t msg)
+{
+    uint32_t masked_input = msg.keys & KBD_CHAR_MASK;
+    if (masked_input == 0)
+        return 0;
+
+    return __builtin_ctz(msg.keys & KBD_CHAR_MASK);
+}

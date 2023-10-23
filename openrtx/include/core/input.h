@@ -86,4 +86,13 @@ bool input_isCharPressed(kbd_msg_t msg);
  */
 uint8_t input_getPressedNumber(kbd_msg_t msg);
 
+/**
+ * This function returns the char corresponding to the smallest number that is pressed on the keyboard,
+ * 0 if none is pressed.
+ *
+ * @param msg: the keyboard queue message
+ * @return the char corresponding to the smallest number on the keyboard
+ */
+uint8_t input_getPressedChar(kbd_msg_t msg);
+
 #endif /* INPUT_H */
