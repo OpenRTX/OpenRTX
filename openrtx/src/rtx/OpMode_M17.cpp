@@ -268,8 +268,13 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                 bool canMatch =  (streamType.fields.CAN == status->can)
                               || (status->canRxEn == false);
 
+                // Check if the destination callsign of the incoming transmission
+                // matches with ours
+                bool callMatch = compareCallsigns(std::string(status->source_address), dst);
+
                 // Extract audio data
-                if((type == M17FrameType::STREAM) && (pthSts == PATH_OPEN) && (canMatch == true))
+                if((type == M17FrameType::STREAM) && (pthSts == PATH_OPEN) &&
+                   (canMatch == true)             && (callMatch == true))
                 {
                     M17StreamFrame sf = decoder.getStreamFrame();
                     codec_pushFrame(sf.payload().data(),     false);
@@ -358,4 +363,27 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         modulator.send(m17Frame);
         modulator.stop();
     }
+}
+
+bool OpMode_M17::compareCallsigns(const std::string& localCs,
+                                  const std::string& incomingCs)
+{
+    if(incomingCs == "ALL")
+        return true;
+
+    std::string truncatedLocal(localCs);
+    std::string truncatedIncoming(incomingCs);
+
+    int slashPos = localCs.find_first_of('/');
+    if(slashPos <= 2)
+        truncatedLocal = localCs.substr(slashPos + 1);
+
+    slashPos = incomingCs.find_first_of('/');
+    if(slashPos <= 2)
+        truncatedIncoming = incomingCs.substr(slashPos + 1);
+
+    if(truncatedLocal == truncatedIncoming)
+        return true;
+
+    return false;
 }
