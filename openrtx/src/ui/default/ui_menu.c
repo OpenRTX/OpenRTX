@@ -769,7 +769,7 @@ void _ui_drawMenuAbout()
     gfx_clearScreen();
     point_t openrtx_pos = {layout.horizontal_pad, layout.line3_large_h};
     if(SCREEN_HEIGHT >= 100)
-        ui_drawSplashScreen(false);
+        ui_drawSplashScreen(false, false);
     else
         gfx_print(openrtx_pos, layout.line3_large_font, TEXT_ALIGN_CENTER,
                   color_white, currentLanguage->openRTX);

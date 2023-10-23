@@ -35,7 +35,7 @@ void ui_init();
  * @param centered: if true the logo will be printed at the center of
  * the screen, otherwise it will be printed at the top of the screen.
  */
-void ui_drawSplashScreen(bool centered);
+void ui_drawSplashScreen(bool centered, bool show_callsign);
 
 /**
  * This function updates the local copy of the radio state
