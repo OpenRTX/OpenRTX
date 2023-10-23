@@ -30,12 +30,10 @@
 void ui_init();
 
 /**
- * This function writes the OpenRTX splash screen image into the framebuffer.
- *
- * @param centered: if true the logo will be printed at the center of
- * the screen, otherwise it will be printed at the top of the screen.
+ * This function writes the OpenRTX splash screen image into the framebuffer
+ * centered in the screen space.
  */
-void ui_drawSplashScreen(bool centered);
+void ui_drawSplashScreen();
 
 /**
  * This function updates the local copy of the radio state

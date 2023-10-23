@@ -767,12 +767,23 @@ void _ui_drawMenuInfo(ui_state_t* ui_state)
 void _ui_drawMenuAbout()
 {
     gfx_clearScreen();
-    point_t openrtx_pos = {layout.horizontal_pad, layout.line3_large_h};
+
+    point_t logo_pos;
     if(SCREEN_HEIGHT >= 100)
-        ui_drawSplashScreen(false);
+    {
+        logo_pos.x = 0;
+        logo_pos.y = SCREEN_HEIGHT / 5;
+        gfx_print(logo_pos, FONT_SIZE_12PT, TEXT_ALIGN_CENTER, yellow_fab413,
+                  "O P N\nR T X");
+    }
     else
-        gfx_print(openrtx_pos, layout.line3_large_font, TEXT_ALIGN_CENTER,
-                  color_white, currentLanguage->openRTX);
+    {
+        logo_pos.x = layout.horizontal_pad;
+        logo_pos.y = layout.line3_large_h;
+        gfx_print(logo_pos, layout.line3_large_font, TEXT_ALIGN_CENTER,
+                  yellow_fab413, currentLanguage->openRTX);
+    }
+
     uint8_t line_h = layout.menu_h;
     point_t pos = {SCREEN_WIDTH / 7, SCREEN_HEIGHT - (line_h * (author_num - 1)) - 5};
     for(int author = 0; author < author_num; author++)
