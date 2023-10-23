@@ -1242,6 +1242,7 @@ void ui_drawSplashScreen(bool centered)
 {
     gfx_clearScreen();
     point_t splash_origin = {0,0};
+    point_t callsign_origin = {0,0};
 
     if(centered)
         splash_origin.y = SCREEN_HEIGHT / 2 - 6;
@@ -1249,6 +1250,10 @@ void ui_drawSplashScreen(bool centered)
         splash_origin.y = SCREEN_HEIGHT / 5;
     gfx_print(splash_origin, FONT_SIZE_12PT, TEXT_ALIGN_CENTER, yellow_fab413,
               "O P N\nR T X");
+
+    callsign_origin.y = SCREEN_HEIGHT - 10;
+    gfx_print(callsign_origin, FONT_SIZE_8PT, TEXT_ALIGN_CENTER, color_white,
+              state.settings.callsign);
 
     vp_announceSplashScreen();
 }
