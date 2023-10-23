@@ -121,6 +121,19 @@ private:
      */
     void txState(rtxStatus_t *const status);
 
+    /**
+     * Computes if the destination callsign matches with the user's callsign.
+     * The comparison does not take into account the country prefixes (strips the '/'
+     * and whatever is in front from all callsigns). It does take into account the
+     * dash and whatever is after it. It will also return true if the destCallsign
+     * is "ALL".
+     *
+     * \param myCallsign plain text callsign from the user
+     * \param destCallsign plain text destination callsign
+     * \return a bool that is true in case of match, false in case of mismatch.
+     */
+    bool callsignCompare(const std::string& myCallsign, const std::string& destCallsign);
+
 
     bool startRx;                      ///< Flag for RX management.
     bool startTx;                      ///< Flag for TX management.
