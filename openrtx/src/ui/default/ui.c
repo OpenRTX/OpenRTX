@@ -1098,7 +1098,11 @@ static void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg,
     // Get number of symbols related to currently pressed key
     uint8_t num_symbols = 0;
     if(callsign)
+    {
         num_symbols = strlen(symbols_ITU_T_E161_callsign[num_key]);
+        if(num_symbols == 0)
+            return;
+    }
     else
         num_symbols = strlen(symbols_ITU_T_E161[num_key]);
 
