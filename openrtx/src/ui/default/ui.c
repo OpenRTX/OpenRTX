@@ -1238,17 +1238,17 @@ void ui_init()
     ui_state = (const struct ui_state_t){ 0 };
 }
 
-void ui_drawSplashScreen(bool centered)
+void ui_drawSplashScreen()
 {
     gfx_clearScreen();
-    point_t splash_origin = {0,0};
 
-    if(centered)
-        splash_origin.y = SCREEN_HEIGHT / 2 - 6;
-    else
-        splash_origin.y = SCREEN_HEIGHT / 5;
-    gfx_print(splash_origin, FONT_SIZE_12PT, TEXT_ALIGN_CENTER, yellow_fab413,
+    point_t origin = {0, (SCREEN_HEIGHT / 2) - 6};
+    gfx_print(origin, FONT_SIZE_12PT, TEXT_ALIGN_CENTER, yellow_fab413,
               "O P N\nR T X");
+
+    origin.y = SCREEN_HEIGHT - 10;
+    gfx_print(origin, FONT_SIZE_8PT, TEXT_ALIGN_CENTER, color_white,
+              state.settings.callsign);
 
     vp_announceSplashScreen();
 }
