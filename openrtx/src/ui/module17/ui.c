@@ -320,10 +320,6 @@ void ui_drawSplashScreen()
 
     point_t origin = {0, (SCREEN_HEIGHT / 2) - 6};
     gfx_print(origin, FONT_SIZE_12PT, TEXT_ALIGN_CENTER, yellow_fab413, "O P N\nR T X");
-
-    origin.y = SCREEN_HEIGHT - 10;
-    gfx_print(callsign_origin, FONT_SIZE_8PT, TEXT_ALIGN_CENTER, color_white,
-              state.settings.callsign);
 }
 
 freq_t _ui_freq_add_digit(freq_t freq, uint8_t pos, uint8_t number)
