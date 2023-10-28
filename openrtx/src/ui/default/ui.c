@@ -1244,9 +1244,9 @@ void menu_length_init()
     menu_length[MODE_VFO] = 0;
     menu_length[MODE_MEM] = 0;
     menu_length[MENU_TOP] = menu_num;
-    menu_length[MENU_BANK] = 0;
-    menu_length[MENU_CHANNEL] = 0;
-    menu_length[MENU_CONTACTS] = 0;
+    menu_length[MENU_BANK] = state.bank_number;
+    menu_length[MENU_CHANNEL] = state.channel_number;
+    menu_length[MENU_CONTACTS] = state.contact_number;
     menu_length[MENU_SETTINGS] = settings_num;
     menu_length[MENU_BACKUP_RESTORE] = backup_restore_num;
     menu_length[MENU_BACKUP] = 0;
@@ -1257,6 +1257,7 @@ void menu_length_init()
     menu_length[SETTINGS_TIMEDATE_SET] = 0;
     menu_length[SETTINGS_DISPLAY] = display_num;
     menu_length[SETTINGS_GPS] = settings_gps_num;
+    menu_length[SETTINGS_RADIO] = settings_radio_num;
     menu_length[SETTINGS_M17] = settings_m17_num;
     menu_length[SETTINGS_VOICE] = settings_voice_num;
     menu_length[SETTINGS_RESET2DEFAULTS] = 0;
@@ -1819,15 +1820,7 @@ void ui_updateFSM(bool *sync_rtx)
                 break;
             // Zone menu screen
             case MENU_BANK:
-                if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                {
-                    _ui_menuUp(state.bank_number);
-                }
-                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                {
-                    _ui_menuDown(state.bank_number);
-                }
-                else if(msg.keys & KEY_ENTER)
+                if(msg.keys & KEY_ENTER)
                 {
                     bankHdr_t newbank;
                     int result = 0;
@@ -1857,15 +1850,7 @@ void ui_updateFSM(bool *sync_rtx)
                 break;
             // Channel menu screen
             case MENU_CHANNEL:
-                if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                {
-                    _ui_menuUp(state.channel_number);
-                }
-                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                {
-                    _ui_menuDown(state.channel_number);
-                }
-                else if(msg.keys & KEY_ENTER)
+                if(msg.keys & KEY_ENTER)
                 {
                     // If we were in VFO mode, save VFO channel
                     if(ui_state.last_main_state == MAIN_VFO)
@@ -1879,15 +1864,7 @@ void ui_updateFSM(bool *sync_rtx)
                 break;
             // Contacts menu screen
             case MENU_CONTACTS:
-                if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                {
-                    _ui_menuUp(state.contact_number);
-                }
-                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                {
-                    _ui_menuDown(state.contact_number);
-                }
-                else if(msg.keys & KEY_ESC)
+                if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_TOP);
                 break;
 #ifdef GPS_PRESENT
@@ -2216,10 +2193,6 @@ void ui_updateFSM(bool *sync_rtx)
                     if((ui_state.menu_selected != R_OFFSET && msg.keys & KEY_ENTER) || msg.keys & KEY_ESC)
                         ui_state.edit_mode = false;
                 }
-                else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                    _ui_menuUp(settings_radio_num);
-                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                    _ui_menuDown(settings_radio_num);
                 else if(msg.keys & KEY_ENTER) {
                     ui_state.edit_mode = true;
                     // If we are entering R_OFFSET clear temp offset

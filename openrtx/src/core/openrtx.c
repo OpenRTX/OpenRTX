@@ -45,9 +45,9 @@ void openrtx_init()
 
     gfx_init();         // Initialize display and graphics driver
     kbd_init();         // Initialize keyboard driver
+    cps_init();         // Initialize the code plug system
     ui_init();          // Initialize user interface
     vp_init();          // Initialize voice prompts
-    cps_init();         // Initialize the code plug system
 
     #ifdef SCREEN_CONTRAST
     display_setContrast(state.settings.contrast);
