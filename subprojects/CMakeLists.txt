@@ -1,7 +1,6 @@
-#set(UNITTEST OFF CACHE BOOL "Disable unit tests for codec2" FORCE)
-#set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build a static library for codec2" FORCE)
-#add_subdirectory(codec2)
+# Don't build codec2 for linux, link against an external one
 
+if(NOT OPENRTX_TARGET STREQUAL "linux")
 add_library(codec2 STATIC
     codec2/src/dump.c
     codec2/src/lpc.c
@@ -33,4 +32,5 @@ target_compile_definitions(codec2 PUBLIC
 
 target_compile_options(codec2 PRIVATE -w)
 
-target_include_directories(codec2 PRIVATE codec2 codec2/src)
+target_include_directories(codec2 PUBLIC codec2 codec2/src)
+endif()

@@ -32,17 +32,17 @@ set(miosix_inc
 #endif()
 
 # Create the static library
-add_library(miosix STATIC ${miosix_src})
+add_library(Miosix STATIC ${miosix_src})
 
 # Set include directories for the library
-target_include_directories(miosix PUBLIC ${miosix_inc})
+target_include_directories(Miosix PUBLIC ${miosix_inc})
 
 # Define compile definitions
-target_compile_definitions(miosix PUBLIC
+target_compile_definitions(Miosix PUBLIC
     -DDONT_USE_CMSIS_INIT=1
     -DCOMPILING_MIOSIX=1
     -D_POSIX_PRIORITY_SCHEDULING=1
     -D_ARCH_CORTEXM4=1
 )
 
-target_link_libraries(miosix PUBLIC platform  -lm -latomic -lstdc++ -lgcc -lc)
+target_link_libraries(Miosix PUBLIC Platform -lm -latomic -lstdc++ -lgcc -lc)
