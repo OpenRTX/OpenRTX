@@ -1,5 +1,4 @@
-
-if(OPENRTX_TARGET MATCHES "radio")
+if(OPENRTX_TARGET STREQUAL "md3x0")
 set(mdx_srcs
     # MDx source
     drivers/ADC/ADC1_MDx.c
@@ -50,12 +49,12 @@ set(stm32_srcs
     mcu/CMSIS/Device/ST/STM32F4xx/Source/system_stm32f4xx.c
 )
 
-add_library(platform STATIC
+add_library(Platform STATIC
     ${mdx_srcs}
     ${stm32_srcs}
 )
 
-target_include_directories(platform PUBLIC
+target_include_directories(Platform PUBLIC
     mcu/CMSIS/Include
     mcu/CMSIS/Device/ST/STM32F4xx/Include
     mcu/STM32F4xx
@@ -73,6 +72,27 @@ target_include_directories(platform PUBLIC
     drivers/chSelector
 )
 
-target_link_libraries(platform PUBLIC miosix Core)
+target_link_libraries(Platform PUBLIC Miosix Core)
 
+elseif(OPENRTX_TARGET STREQUAL "linux")
+add_library(Platform STATIC
+    drivers/CPS/cps_io_libc.c
+    drivers/GPS/GPS_linux.c
+    drivers/NVM/nvmem_linux.c
+    drivers/audio/audio_linux.c
+    drivers/baseband/radio_linux.cpp
+    drivers/display/display_libSDL.c
+    drivers/keyboard/keyboard_linux.c
+    mcu/x86_64/drivers/delays.c
+    targets/linux/emulator/emulator.c
+    targets/linux/emulator/sdl_engine.c
+    targets/linux/platform.c
+)
+
+target_include_directories(Platform PUBLIC
+    targets/linux
+    targets/linux/emulator
+)
+
+target_link_libraries(Platform PUBLIC Core)
 endif()
