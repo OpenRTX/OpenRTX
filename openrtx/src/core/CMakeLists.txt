@@ -33,5 +33,5 @@ add_library(Core STATIC ${SOURCE_FILES})
 target_link_libraries(Core PUBLIC minmea)
 
 if(OPENRTX_TARGET MATCHES "radio")
-target_link_libraries(Core PUBLIC miosix)
+target_link_libraries(Core PUBLIC miosix platform)
 endif()
