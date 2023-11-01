@@ -20,15 +20,14 @@ set(SOURCE_FILES
   state.c
   threads.c
   utils.c
-  voicePromptData.S
   voicePromptUtils.c
   voicePrompts.c
 )
 else()
-file(GLOB_RECURSE SOURCE_FILES *.c *.cpp)
+file(GLOB_RECURSE SOURCE_FILES *.c *.cpp *.S)
 endif()
 
-set_property(SOURCE voicePromptData.S PROPERTY LANGUAGE C)
+set_property(SOURCE voicePromptData.S APPEND PROPERTY LANGUAGE CXX)
 
 add_library(Core STATIC ${SOURCE_FILES})
 target_link_libraries(Core PUBLIC minmea codec2 Platform)
