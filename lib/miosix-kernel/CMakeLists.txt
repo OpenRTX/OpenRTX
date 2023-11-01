@@ -44,3 +44,5 @@ target_compile_definitions(miosix PUBLIC
     -D_POSIX_PRIORITY_SCHEDULING=1
     -D_ARCH_CORTEXM4=1
 )
+
+target_link_libraries(miosix PUBLIC platform  -lm -latomic -lstdc++ -lgcc -lc)
