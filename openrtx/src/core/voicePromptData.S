@@ -5,6 +5,6 @@
 .global _vpdata_end
 
 _vpdata_start:
-    .incbin "../voiceprompts.vpc"
+    .incbin "../../../../voiceprompts.vpc"
 
 .set _vpdata_end, .

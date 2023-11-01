@@ -1,153 +1,126 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
+cmake_minimum_required(VERSION 3.10)
+include(cmake/ConfigureTarget.cmake)
+project(OpenRTX)
 
-cmake_minimum_required(VERSION 3.20.0)
+find_program(RADIO_TOOL radio_tool)
+find_program(BIN2SGL "bin2sgl.${CMAKE_HOST_SYSTEM_NAME}"
+    PATHS scripts 
+)
 
-#
-# Zephyr build system imposes to have a fixed folder structure for the target-specific
-# files, that is [...]/boards/ARCH/BOARDNAME because it infers the target
-# architecture by looking at the name of the parent folder of the board folder.
-#
-# This does not make sense, because:
-# 1) The folder with the target-specific files should be put anywhere, given that
-#    the project using Zephyr may have its own conventions.
-# 2) Inferring the target architecture only from the folder tree is an idiocy.
-#
-# So: to make Zephyr play happily in his sandpit without complaints, we create a
-# board_root subfolder inside the build one and we copy the board-specific config
-# files there from our platform/targets tree creating the necessary folder tree.
-#
-# NOTE: the board-specific CMakeLists.txt files have to use the ${OPENRTX_ROOT}
-# variable as the base path. E.g. ${OPENRTX_ROOT}/platform/drivers/somedriver.c
-#
-if (${BOARD} STREQUAL "ttwrplus")
-    set(ARCH xtensa)
-    set(CONF_FILE ${CMAKE_CURRENT_LIST_DIR}/platform/mcu/ESP32S3/zephyr.conf)
+include(cmake/TargetOptions.cmake)
+
+# These should not be global
+include_directories(
+  openrtx/include
+  openrtx/include/core
+  openrtx/include/rtx
+  openrtx/include/calibration
+  openrtx/include/protocols
+  openrtx/include/fonts/adafruit
+  openrtx/include/fonts/symbols
+)
+
+# Get GIT version and define a variable with that
+execute_process(
+    COMMAND git describe --tags --always
+    OUTPUT_VARIABLE GIT_REPO_VERSION
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+add_compile_definitions(
+  -DGIT_VERSION="${GIT_REPO_VERSION}"
+  -DFONT_UBUNTU_REGULAR
+)
+
+if(OPENRTX_TARGET STREQUAL "linux")
+add_compile_definitions(-DVP_USE_FILESYSTEM)
 endif()
 
-#
-# Create the board_root folder and the proper folder tree for the targets
-#
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory
-                ${CMAKE_CURRENT_LIST_DIR}/platform/targets/${BOARD}
-                ${CMAKE_CURRENT_LIST_DIR}/build/board_root/boards/${ARCH}/${BOARD})
+add_subdirectory(platform)
+add_subdirectory(openrtx)
+add_subdirectory(lib)
+add_subdirectory(subprojects)
 
-#
-# Set the BOARD_ROOT and OPENRTX_ROOT variables
-#
-set(BOARD_ROOT ${CMAKE_CURRENT_LIST_DIR}/build/board_root)
-set(OPENRTX_ROOT ${CMAKE_CURRENT_LIST_DIR})
-
-#
-# Finally, set up the project
-#
-find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
-project(openrtx)
-
-execute_process(COMMAND git describe --tags --dirty --always
-                OUTPUT_VARIABLE GIT_VER_ID
-                ERROR_QUIET
-                OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-target_compile_definitions(app
-  PRIVATE
-    _GNU_SOURCE
-    FONT_UBUNTU_REGULAR
-    CODEC2_MODE_EN_DEFAULT=0
-    FREEDV_MODE_EN_DEFAULT=0
-    CODEC2_MODE_3200_EN=1
-    M_PI=3.14159265358979323846f
-    GIT_VERSION="${GIT_VER_ID}"
-)
-
-target_include_directories(app
-  PRIVATE
-
-    openrtx/include
-    openrtx/include/rtx
-    openrtx/include/core
-    openrtx/include/calibration
-    openrtx/include/protocols
-    openrtx/include/fonts/adafruit
-    openrtx/include/fonts/symbols
-    platform/drivers/ADC
-    platform/drivers/NVM
-    platform/drivers/GPS
-    platform/drivers/USB
-    platform/drivers/tones
-    platform/drivers/baseband
-    platform/drivers/backlight
-    platform/drivers/chSelector
-
-    subprojects/codec2
-    subprojects/codec2/src
-
-    lib/minmea/include
-    lib/qdec/include
-)
-
-target_sources(app
-  PRIVATE
-
+add_executable(OpenRTX
     openrtx/src/main.c
-    openrtx/src/core/state.c
-    openrtx/src/core/threads.c
-    openrtx/src/core/battery.c
-    openrtx/src/core/graphics.c
-    openrtx/src/core/input.c
-    openrtx/src/core/utils.c
-    openrtx/src/core/queue.c
-    openrtx/src/core/chan.c
-    openrtx/src/core/gps.c
-    openrtx/src/core/dsp.cpp
-    openrtx/src/core/cps.c
-    openrtx/src/core/crc.c
-    openrtx/src/core/datetime.c
-    openrtx/src/core/openrtx.c
-    openrtx/src/core/audio_codec.c
-    openrtx/src/core/audio_stream.c
-    openrtx/src/core/audio_path.cpp
-    openrtx/src/core/data_conversion.c
-    openrtx/src/core/memory_profiling.cpp
-    openrtx/src/core/voicePrompts.c
-    openrtx/src/core/voicePromptUtils.c
-    openrtx/src/core/voicePromptData.S
-    openrtx/src/core/nvmem_access.c
-    openrtx/src/rtx/rtx.cpp
-    openrtx/src/rtx/OpMode_FM.cpp
-    openrtx/src/rtx/OpMode_M17.cpp
-    openrtx/src/protocols/M17/M17DSP.cpp
-    openrtx/src/protocols/M17/M17Golay.cpp
-    openrtx/src/protocols/M17/M17Callsign.cpp
-    openrtx/src/protocols/M17/M17Modulator.cpp
-    openrtx/src/protocols/M17/M17Demodulator.cpp
-    openrtx/src/protocols/M17/M17FrameEncoder.cpp
-    openrtx/src/protocols/M17/M17FrameDecoder.cpp
-    openrtx/src/protocols/M17/M17LinkSetupFrame.cpp
-
-    openrtx/src/ui/default/ui.c
-    openrtx/src/ui/default/ui_main.c
-    openrtx/src/ui/default/ui_menu.c
-    openrtx/src/ui/default/ui_strings.c
-
-    subprojects/codec2/src/dump.c
-    subprojects/codec2/src/lpc.c
-    subprojects/codec2/src/nlp.c
-    subprojects/codec2/src/phase.c
-    subprojects/codec2/src/quantise.c
-    subprojects/codec2/src/postfilter.c
-    subprojects/codec2/src/codec2.c
-    subprojects/codec2/src/codec2_fft.c
-    subprojects/codec2/src/lsp.c
-    subprojects/codec2/src/sine.c
-    subprojects/codec2/src/interp.c
-    subprojects/codec2/src/kiss_fft.c
-    subprojects/codec2/src/kiss_fftr.c
-    subprojects/codec2/src/newamp1.c
-    subprojects/codec2/src/codebook.c
-    subprojects/codec2/src/codebookd.c
-    subprojects/codec2/src/pack.c
-    subprojects/codec2/src/codebooknewamp1.c
-    subprojects/codec2/src/codebooknewamp1_energy.c
-
-    lib/minmea/minmea.c
 )
+
+target_link_libraries(OpenRTX PUBLIC Core Protocols RTX UI codec2 minmea)
+
+if(OPENRTX_TARGET STREQUAL "linux")
+    target_link_libraries(OpenRTX PUBLIC readline SDL2::SDL2)
+elseif( OPENRTX_TARGET STREQUAL "md3x0"
+     OR OPENRTX_TARGET STREQUAL "mduv3x0"
+     OR OPENRTX_TARGET STREQUAL "md9600"
+)
+    target_link_libraries(OpenRTX PUBLIC Miosix)
+
+    target_link_options(OpenRTX PUBLIC 
+        -Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld
+        -Wl,--print-memory-usage
+    )
+
+    add_custom_target(OpenRTX_bin ALL
+        COMMAND ${CMAKE_OBJCOPY} -O binary OpenRTX OpenRTX.bin
+        DEPENDS OpenRTX
+        BYPRODUCTS OpenRTX.bin
+        COMMENT "Objcopy OpenRTX -> OpenRTX.bin"
+    )
+elseif( OPENRTX_TARGET STREQUAL "gd77"
+     OR OPENRTX_TARGET STREQUAL "dm1801")
+    target_link_libraries(OpenRTX PUBLIC Miosix)
+
+    target_link_options(OpenRTX PUBLIC 
+        -Wl,-T../platform/mcu/MK22FN512xxx12/linker_script.ld
+        -Wl,--print-memory-usage
+    )
+
+    add_custom_target(OpenRTX_bin ALL
+        COMMAND ${CMAKE_OBJCOPY} -O binary OpenRTX OpenRTX.bin
+        DEPENDS OpenRTX
+        BYPRODUCTS OpenRTX.bin
+        COMMENT "Objcopy OpenRTX -> OpenRTX.bin"
+    )
+endif()
+
+# Sanity checks (TODO: de-hardcode target names)
+if(TARGET_WRAP STREQUAL "GD-77" OR OPENRTX_TARGET STREQUAL "DM-1801")
+    if(NOT BIN2SGL)
+        message(WARNING "Disabling wrap because bin2sgl has not been found")
+        unset(TARGET_WRAP)
+    endif()
+else()
+    if(NOT RADIO_TOOL)
+        message(WARNING "Disabling wrap because radio_tool has not been found")
+        unset(TARGET_WRAP)
+    endif()
+endif()
+
+if(TARGET_WRAP)
+    message("Enabled target wrap: ${TARGET_WRAP}")
+    set(BIN2SGL ${CMAKE_SOURCE_DIR}/scripts/bin2sgl.Linux)
+
+    if (TARGET_WRAP STREQUAL "GD-77" OR OPENRTX_TARGET STREQUAL "DM-1801")
+        add_custom_target(OpenRTX_wrap ALL
+            DEPENDS OpenRTX_bin
+            COMMAND ${BIN2SGL} -f OpenRTX.bin -m ${TARGET_WRAP} 
+            COMMAND mv OpenRTX.sgl OpenRTX_wrap.sgl
+            BYPRODUCTS OpenRTX_wrap.sgl
+            COMMENT "WRAP using ${BIN2SGL}"
+        )
+    else()
+        if(NOT TARGET_LOAD_ADDR)
+            message(FATAL_ERROR "TARGET_WRAP defined but not TARGET_LOAD_ADDR")
+        endif()
+
+        add_custom_target(OpenRTX_wrap ALL
+            DEPENDS OpenRTX_bin
+            COMMAND ${RADIO_TOOL} --wrap
+                -o OpenRTX_wrap.sgl
+                -r ${TARGET_WRAP}
+                -s ${TARGET_LOAD_ADDR}:OpenRTX.bin
+            BYPRODUCTS OpenRTX_wrap.sgl
+            COMMENT "WRAP using ${RADIO_TOOL}"
+        )
+    endif()
+endif()
