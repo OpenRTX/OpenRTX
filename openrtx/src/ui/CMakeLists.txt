@@ -5,5 +5,5 @@ add_library(UI STATIC ${SOURCE_FILES})
 target_link_libraries(UI PRIVATE Core)
 
 if(OPENRTX_TARGET MATCHES "radio")
-target_link_libraries(UI PUBLIC miosix)
+target_link_libraries(UI PUBLIC miosix platform)
 endif()
