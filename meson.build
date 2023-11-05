@@ -403,9 +403,9 @@ mod17_def = def + stm32f405_def + {'PLATFORM_MOD17': ''}
 ## -------------------------- Compilation arguments ----------------------------
 ##
 
-linux_c_args   = ['-DPLATFORM_LINUX']
-linux_cpp_args = ['-std=c++14', '-DPLATFORM_LINUX']
-linux_l_args   = ['-lm', '-lreadline', '-lpulse-simple']
+linux_c_args   = ['-ffunction-sections', '-fdata-sections', '-DPLATFORM_LINUX']
+linux_cpp_args = ['-ffunction-sections', '-fdata-sections', '-std=c++14', '-DPLATFORM_LINUX']
+linux_l_args   = ['-lm', '-lreadline', '-lpulse-simple', '-Wl,--gc-sections']
 
 # Add AddressSanitizer if required
 if get_option('asan')
