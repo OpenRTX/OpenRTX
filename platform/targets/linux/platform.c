@@ -15,10 +15,19 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <calibration/calibInfo_Mod17.h>
 #include <interfaces/platform.h>
 #include <interfaces/nvmem.h>
 #include <stdio.h>
 #include "emulator.h"
+
+/*
+ * Create the data structure holding Module17 calibration data to make the
+ * corresponding symbol available to the ui.c object file and, consequently, allow
+ * the linker doing its job. This allows to compile and execute OpenRTX on linux
+ * with the Module17 UI to make development faster.
+ */
+mod17Calib_t mod17CalData;
 
 
 static const hwInfo_t hwInfo =
