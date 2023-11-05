@@ -19,6 +19,7 @@ target_sources(app
     ${OPENRTX_ROOT}/platform/drivers/baseband/SA8x8.c
     ${OPENRTX_ROOT}/platform/drivers/GPS/GPS_ttwrplus.c
     ${OPENRTX_ROOT}/platform/drivers/audio/audio_ttwrplus.c
+    ${OPENRTX_ROOT}/platform/drivers/NVM/flash_zephyr.c
 
     ${OPENRTX_ROOT}/platform/drivers/stubs/cps_io_stub.c
     ${OPENRTX_ROOT}/platform/drivers/stubs/nvmem_stub.c
