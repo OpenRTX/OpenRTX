@@ -728,6 +728,7 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
  * starting coordinates are relative to the top left point.
  *
  * *     *     *     *     *     *     *     *      *      *      *|
+ * ***********                 <-- Volume (optional)               |
  * ***************             <-- Squelch                         |
  * ***************                                                 |
  * ******************************************                      |
@@ -744,7 +745,7 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
  *
  */
 void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
-                                                   float squelch, color_t color)
+                    float squelch, float volume, bool drawVolume, color_t color)
 {
     color_t white =  {255, 255, 255, 255};
     color_t yellow = {250, 180, 19 , 255};
@@ -753,6 +754,8 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
     fontSize_t font = FONT_SIZE_5PT;
     uint8_t font_height =  gfx_getFontHeight(font);
     uint16_t bar_height = (height - 3 - font_height);
+
+    uint16_t bar_height_divider = drawVolume ? 7 : 6;
 
     // S-level marks and numbers
     for(int i = 0; i < 12; i++)
@@ -778,18 +781,27 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
         }
     }
 
+    uint16_t volume_height = drawVolume ? bar_height / bar_height_divider : 0;
+    if (drawVolume)
+    {
+        // Speaker Volume Bar
+        uint16_t volume_width = width * volume;
+        point_t volume_pos = {start.x, (uint8_t) (start.y + 2)};
+        gfx_drawRect(volume_pos, volume_width, volume_height, white, true);
+    }
+
     // Squelch bar
-    uint16_t squelch_height = bar_height / 3 ;
+    uint16_t squelch_height = bar_height * 2 / bar_height_divider ;
     uint16_t squelch_width = width * squelch;
-    point_t squelch_pos = {start.x, (uint8_t) (start.y + 2)};
+    point_t squelch_pos = {start.x, (uint8_t) (start.y + 2 + volume_height)};
     gfx_drawRect(squelch_pos, squelch_width, squelch_height, color, true);
 
     // RSSI bar
-    uint16_t rssi_height = bar_height * 2 / 3;
+    uint16_t rssi_height = bar_height * 4 / bar_height_divider;
     float s_level =  (127.0f + rssi) / 6.0f;
     uint16_t rssi_width = (s_level < 0.0f) ? 0 : (s_level * (width - 1) / 11);
     rssi_width = (s_level > 10.0f) ? width : rssi_width;
-    point_t rssi_pos = { start.x, (uint8_t) (start.y + 2 + squelch_height)};
+    point_t rssi_pos = { start.x, (uint8_t) (start.y + 2 + squelch_height + volume_height)};
     gfx_drawRect(rssi_pos, rssi_width, rssi_height, white, true);
 }
 
@@ -798,6 +810,7 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
  * Version without squelch bar for digital protocols
  * starting coordinates are relative to the top left point.
  *
+ * ******************************************    <- volume         |
  * *             *                *               *               *|
  * ******************************************                      |
  * ******************************************    <- level          |
@@ -818,7 +831,7 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
  *
  */
 void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, float rssi,
-                         uint8_t level)
+                         uint8_t level, float volume, bool drawVolume)
 {
     color_t red =    {255, 0,   0  , 255};
     color_t green =  {0,   255,   0, 255};
@@ -827,27 +840,39 @@ void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, float r
 
     fontSize_t font = FONT_SIZE_5PT;
     uint8_t font_height =  gfx_getFontHeight(font);
-    uint16_t bar_height = (height - 6 - font_height) / 2;
+    uint16_t bar_height = (height - 6 - font_height);
+    uint16_t bar_height_divider = drawVolume ? 7 : 6;
+
+    uint16_t volume_height = drawVolume ? bar_height / bar_height_divider : 0;
+    if (drawVolume)
+    {
+        // Speaker Volume Bar
+        uint16_t volume_width = width * volume;
+        point_t volume_pos = start;
+        gfx_drawRect(volume_pos, volume_width, volume_height, white, true);
+    }
 
     // Level meter marks
     for(int i = 0; i <= 4; i++)
     {
-        point_t pixel_pos = start;
+        point_t pixel_pos =  {start.x, (uint8_t) (start.y + volume_height)};
         pixel_pos.x += i * (width - 1) / 4;
         gfx_setPixel(pixel_pos, white);
-        pixel_pos.y += (bar_height + 3);
+        pixel_pos.y += ((bar_height / bar_height_divider * 3) + 3);
         gfx_setPixel(pixel_pos, white);
     }
     // Level bar
+    uint16_t level_height = bar_height * 3 / bar_height_divider;
     uint16_t level_width = (level / 255.0 * width);
-    point_t level_pos = { start.x, (uint8_t) (start.y + 2)};
-    gfx_drawRect(level_pos, level_width, bar_height, green, true);
+    point_t level_pos = { start.x, (uint8_t) (start.y + 2 + volume_height)};
+    gfx_drawRect(level_pos, level_width, level_height, green, true);
     // RSSI bar
     float s_level =  (127.0f + rssi) / 6.0f;
+    uint16_t rssi_height = bar_height * 3 / bar_height_divider;
     uint16_t rssi_width = (s_level < 0.0f) ? 0 : (s_level * (width - 1) / 11);
     rssi_width = (s_level > 10.0f) ? width : rssi_width;
-    point_t rssi_pos = {start.x, (uint8_t) (start.y + 5 + bar_height)};
-    gfx_drawRect(rssi_pos, rssi_width, bar_height, white, true);
+    point_t rssi_pos = {start.x, (uint8_t) (start.y + 5 + level_height + volume_height)};
+    gfx_drawRect(rssi_pos, rssi_width, rssi_height, white, true);
     // S-level marks and numbers
     for(int i = 0; i < 12; i++)
     {

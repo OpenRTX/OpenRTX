@@ -239,6 +239,8 @@ void _ui_drawMainBottom()
     // Squelch bar
     float rssi = last_state.rssi;
     float squelch = last_state.settings.sqlLevel / 16.0f;
+    // Module17 0.1e does not know the volume level, so we will never draw it
+    float volume = platform_getVolumeLevel() / 255.0f;
     uint16_t meter_width = SCREEN_WIDTH - 2 * layout.horizontal_pad;
     uint16_t meter_height = layout.bottom_h;
     point_t meter_pos = { layout.horizontal_pad,
@@ -252,6 +254,8 @@ void _ui_drawMainBottom()
                            meter_height,
                            rssi,
                            squelch,
+                           volume,
+                           false,
                            yellow_fab413);
             break;
         case OPMODE_DMR:
@@ -259,14 +263,18 @@ void _ui_drawMainBottom()
                                 meter_width,
                                 meter_height,
                                 rssi,
-                                mic_level);
+                                mic_level,
+                                volume,
+                                false);
             break;
         case OPMODE_M17:
             /*gfx_drawSmeterLevel(meter_pos,
                                 meter_width,
                                 meter_height,
                                 rssi,
-                                mic_level);*/
+                                mic_level,
+                                volume,
+                                false);*/
             break;
     }
 }
