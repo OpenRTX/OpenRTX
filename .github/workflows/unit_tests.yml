@@ -15,17 +15,7 @@ jobs:
       - name: install-deps
         run: |
           sudo apt update
-          sudo apt install git pkg-config build-essential meson libsdl2-dev libreadline-dev dfu-util cmake libusb-1.0-0 libusb-1.0-0-dev
-      - name: build install codec2
-        run: |
-          cd ${{github.workspace}}
-          meson subprojects download
-          cd subprojects/codec2
-          mkdir build_linux
-          cd build_linux
-          cmake ..
-          make
-          sudo make install
+          sudo apt install -y git pkg-config build-essential meson libsdl2-dev libreadline-dev dfu-util cmake libusb-1.0-0 libusb-1.0-0-dev libcodec2-dev codec2
       - name: setup meson
         run: |
           cd ${{github.workspace}}
