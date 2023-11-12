@@ -285,6 +285,7 @@ linux_platform_src = ['platform/targets/linux/emulator/emulator.c',
                       'platform/mcu/x86_64/drivers/rng.cpp',
                       'platform/drivers/baseband/radio_linux.cpp',
                       'platform/drivers/audio/audio_linux.c',
+                      'platform/drivers/audio/file_source.c',
                       'platform/targets/linux/platform.c',
                       'platform/drivers/CPS/cps_io_libc.c']
 
