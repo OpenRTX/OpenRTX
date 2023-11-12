@@ -21,6 +21,7 @@
 #include <interfaces/audio.h>
 #include <peripherals/gpio.h>
 #include <hwconfig.h>
+#include "file_source.h"
 
 
 static const uint8_t pathCompatibilityMatrix[9][9] =
@@ -46,9 +47,9 @@ const struct audioDevice outputDevices[] =
 
 const struct audioDevice inputDevices[] =
 {
-    {NULL, 0, 0, SINK_MCU},
-    {NULL, 0, 0, SINK_RTX},
-    {NULL, 0, 0, SINK_SPK},
+    {NULL,                      0,                   0, SOURCE_MCU},
+    {&file_source_audio_driver, "/tmp/baseband.raw", 0, SOURCE_RTX},
+    {NULL,                      0,                   0, SOURCE_MIC},
 };
 
 void audio_init()
