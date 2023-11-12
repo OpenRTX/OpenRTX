@@ -32,7 +32,7 @@ using namespace M17;
 
 #ifdef ENABLE_DEMOD_LOG
 
-#include <ringbuf.h>
+#include <ringbuf.hpp>
 #include <atomic>
 #ifndef PLATFORM_LINUX
 #include <usb_vcom.h>
@@ -98,7 +98,7 @@ static void *logFunc(void *arg)
             }
 
             #ifdef PLATFORM_LINUX
-            fprintf(csv_log, "%" PRId16 ",%d,%f,%d,%f,%f,%d,%d,%d\n",
+            fprintf(csv_log, "%d,%d,%f,%d,%f,%f,%d,%d,%d\n",
                     entry.sample,
                     entry.conv,
                     entry.conv_th,
