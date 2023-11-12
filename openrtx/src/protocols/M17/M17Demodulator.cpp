@@ -456,6 +456,7 @@ bool M17Demodulator::update()
                     syncDetected = true;
                     frame_index  = 0;
                     decoded_syms = 0;
+                    currentMaxHamming = 2;
                 }
             }
             // While we detected a syncword, demodulate available samples
@@ -507,8 +508,7 @@ bool M17Demodulator::update()
                      * is an exact syncword match, this avoids continuous false
                      * detections in absence of an M17 signal.
                      */
-                    uint8_t maxHamming = 2;
-                    if(locked == false) maxHamming = 0;
+                    if(locked == false) currentMaxHamming = 0;
 
                     uint8_t hammingSync = hammingDistance((*demodFrame)[0],
                                                           STREAM_SYNC_WORD[0])
@@ -520,7 +520,7 @@ bool M17Demodulator::update()
                                        + hammingDistance((*demodFrame)[1],
                                                          LSF_SYNC_WORD[1]);
 
-                    if ((hammingSync > maxHamming) && (hammingLsf > maxHamming))
+                    if ((hammingSync > currentMaxHamming) && (hammingLsf > currentMaxHamming))
                     {
                         // Lock lost, reset demodulator alignment (phase) only
                         // if we were locked on a valid signal.
@@ -531,6 +531,7 @@ bool M17Demodulator::update()
                         if(locked) phase = 0;
                         syncDetected = false;
                         locked       = false;
+                        currentMaxHamming = 2;
 
                         #ifdef ENABLE_DEMOD_LOG
                         // Pre-arm the log trigger.
@@ -541,6 +542,7 @@ bool M17Demodulator::update()
                     {
                         // Correct syncword found
                         locked = true;
+                        currentMaxHamming = 4;
 
                         #ifdef ENABLE_DEMOD_LOG
                         // Trigger a data dump when lock is re-acquired.

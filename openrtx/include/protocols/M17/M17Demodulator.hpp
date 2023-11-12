@@ -163,6 +163,7 @@ private:
      * State variables
      */
     bool         m17RxEnabled;     ///< M17 Reception Enabled
+    uint8_t currentMaxHamming = 0; ///< max hamming distance for sync
 
     /*
      * Convolution statistics computation
