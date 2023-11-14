@@ -94,7 +94,7 @@ static bool DidSelectedMenuItemChange(char* menuName, char* menuValue)
     {
         // avoid chatter when value changes rapidly!
     uint32_t now=getTick();
-        
+
         uint32_t interval=now - lastValueUpdate;
         lastValueUpdate = now;
         if (interval < 1000)
@@ -106,24 +106,24 @@ static bool DidSelectedMenuItemChange(char* menuName, char* menuValue)
     return false;
 }
 /*
-Normally we determine if we should say the word menu if a menu entry has no 
+Normally we determine if we should say the word menu if a menu entry has no
 associated value that can be changed.
-There are some menus however with no associated value which are not submenus, 
-e.g. the entries under Channels, contacts, Info, 
+There are some menus however with no associated value which are not submenus,
+e.g. the entries under Channels, contacts, Info,
 which are navigable but not modifyable.
 */
 static bool ScreenContainsReadOnlyEntries(int menuScreen)
 {
     switch (menuScreen)
     {
-    case MENU_CHANNEL:
-    case MENU_CONTACTS:
-    case MENU_INFO:
+    case PAGE_MENU_CHANNEL:
+    case PAGE_MENU_CONTACTS:
+    case PAGE_MENU_INFO:
         return true;
     }
     return false;
 }
- 
+
 static void announceMenuItemIfNeeded(char* name, char* value, bool editMode)
 {
     if (state.settings.vpLevel < vpLow)
@@ -146,7 +146,7 @@ static void announceMenuItemIfNeeded(char* name, char* value, bool editMode)
 // The screen is navigable but entries  are readonly.
     if (!value && !editMode && !ScreenContainsReadOnlyEntries(state.ui_screen))
         vp_queueStringTableEntry(&currentLanguage->menu);
-    
+
     if (editMode)
         vp_queuePrompt(PROMPT_EDIT);
     if ((value != NULL) && (*value != '\0'))
@@ -225,14 +225,14 @@ void _ui_drawMenuListValue(ui_state_t* ui_state, uint8_t selected,
                 gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.menu_h, color_white, full_rect);
                 bool editModeChanged = priorEditMode != ui_state->edit_mode;
                 priorEditMode = ui_state->edit_mode;
-                // force the menu item to be spoken  when the edit mode changes. 
+                // force the menu item to be spoken  when the edit mode changes.
                 // E.g. when pressing Enter on Display Brightness etc.
                 if (editModeChanged)
                     priorSelectedMenuName[0]='\0';
                 if (!ui_state->edit_mode || editModeChanged)
                 {// If in edit mode, only want to speak the char being entered,,
             //not repeat the entire display.
-                    announceMenuItemIfNeeded(entry_buf, value_buf, 
+                    announceMenuItemIfNeeded(entry_buf, value_buf,
                                              ui_state->edit_mode);
                 }
             }
@@ -245,32 +245,32 @@ void _ui_drawMenuListValue(ui_state_t* ui_state, uint8_t selected,
 
 int _ui_getMenuTopEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
-    if(index >= menu_num) return -1;
+    if(index >=  uiGetPageNumOf( PAGE_MENU_TOP ) ) return -1;
     snprintf(buf, max_len, "%s", menu_items[index]);
     return 0;
 }
 
 int _ui_getSettingsEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
-    if(index >= settings_num) return -1;
+    if(index >= uiGetPageNumOf( PAGE_MENU_SETTINGS ) ) return -1;
     snprintf(buf, max_len, "%s", settings_items[index]);
     return 0;
 }
 
 int _ui_getDisplayEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
-    if(index >= display_num) return -1;
+    if(index >= uiGetPageNumOf( PAGE_SETTINGS_DISPLAY ) ) return -1;
     snprintf(buf, max_len, "%s", display_items[index]);
     return 0;
 }
 
 int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
 {
-    if(index >= display_num) return -1;
+    if(index >= uiGetPageNumOf( PAGE_SETTINGS_DISPLAY ) ) return -1;
     uint8_t value = 0;
     switch(index)
     {
-#ifdef SCREEN_BRIGHTNESS    
+#ifdef SCREEN_BRIGHTNESS
         case D_BRIGHTNESS:
             value = last_state.settings.brightness;
             break;
@@ -292,14 +292,14 @@ int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
 #ifdef GPS_PRESENT
 int _ui_getSettingsGPSEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
-    if(index >= settings_gps_num) return -1;
+    if(index >= uiGetPageNumOf( PAGE_SETTINGS_GPS ) ) return -1;
     snprintf(buf, max_len, "%s", settings_gps_items[index]);
     return 0;
 }
 
 int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
 {
-    if(index >= settings_gps_num) return -1;
+    if(index >= uiGetPageNumOf( PAGE_SETTINGS_GPS ) ) return -1;
     switch(index)
     {
         case G_ENABLED:
@@ -339,14 +339,14 @@ int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
 
 int _ui_getRadioEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
-    if(index >= settings_radio_num) return -1;
+    if(index >= uiGetPageNumOf( PAGE_SETTINGS_RADIO ) ) return -1;
     snprintf(buf, max_len, "%s", settings_radio_items[index]);
     return 0;
 }
 
 int _ui_getRadioValueName(char *buf, uint8_t max_len, uint8_t index)
 {
-    if(index >= settings_radio_num)
+    if(index >= uiGetPageNumOf( PAGE_SETTINGS_RADIO ) )
         return -1;
 
     int32_t offset = 0;
@@ -377,14 +377,14 @@ int _ui_getRadioValueName(char *buf, uint8_t max_len, uint8_t index)
 
 int _ui_getM17EntryName(char *buf, uint8_t max_len, uint8_t index)
 {
-    if(index >= settings_m17_num) return -1;
+    if(index >= uiGetPageNumOf( PAGE_SETTINGS_M17 ) ) return -1;
     snprintf(buf, max_len, "%s", settings_m17_items[index]);
     return 0;
 }
 
 int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
 {
-    if(index >= settings_m17_num)
+    if(index >= uiGetPageNumOf( PAGE_SETTINGS_M17 ) )
         return -1;
 
     switch(index)
@@ -408,14 +408,14 @@ int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
 
 int _ui_getVoiceEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
-    if(index >= settings_voice_num) return -1;
+    if(index >= uiGetPageNumOf( PAGE_SETTINGS_VOICE ) ) return -1;
     snprintf(buf, max_len, "%s", settings_voice_items[index]);
     return 0;
 }
 
 int _ui_getVoiceValueName(char *buf, uint8_t max_len, uint8_t index)
 {
-    if(index >= settings_voice_num) return -1;
+    if(index >= uiGetPageNumOf( PAGE_SETTINGS_VOICE ) ) return -1;
     uint8_t value = 0;
     switch(index)
     {
@@ -445,14 +445,14 @@ int _ui_getVoiceValueName(char *buf, uint8_t max_len, uint8_t index)
 
 int _ui_getBackupRestoreEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
-    if(index >= backup_restore_num) return -1;
+    if(index >= uiGetPageNumOf( PAGE_MENU_BACKUP_RESTORE ) ) return -1;
     snprintf(buf, max_len, "%s", backup_restore_items[index]);
     return 0;
 }
 
 int _ui_getInfoEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
-    if(index >= info_num) return -1;
+    if(index >= uiGetPageNumOf( PAGE_MENU_INFO ) ) return -1;
     snprintf(buf, max_len, "%s", info_items[index]);
     return 0;
 }
@@ -460,7 +460,7 @@ int _ui_getInfoEntryName(char *buf, uint8_t max_len, uint8_t index)
 int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
 {
     const hwInfo_t* hwinfo = platform_getHwInfo();
-    if(index >= info_num) return -1;
+    if(index >= uiGetPageNumOf( PAGE_MENU_INFO ) ) return -1;
     switch(index)
     {
         case 0: // Git Version
@@ -785,8 +785,8 @@ void _ui_drawMenuAbout()
     }
 
     uint8_t line_h = layout.menu_h;
-    point_t pos = {SCREEN_WIDTH / 7, SCREEN_HEIGHT - (line_h * (author_num - 1)) - 5};
-    for(int author = 0; author < author_num; author++)
+    point_t pos = {SCREEN_WIDTH / 7, SCREEN_HEIGHT - (line_h * ( uiGetPageNumOf( PAGE_AUTHORS ) - 1)) - 5};
+    for(int author = 0; author < uiGetPageNumOf( PAGE_AUTHORS ) ; author++)
     {
         gfx_print(pos, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white, "%s", *(&currentLanguage->Niccolo + author));
@@ -967,7 +967,7 @@ void _ui_drawSettingsRadio(ui_state_t* ui_state)
 
         // Print frequency with the most sensible unit
         if (ui_state->new_offset < 1000)
-            snprintf(buf, 17, "%dHz", ui_state->new_offset);
+            snprintf(buf, 17, "%dHz", (int)ui_state->new_offset);
         else if (ui_state->new_offset < 1000000)
             snprintf(buf, 17, "%gkHz", (float) ui_state->new_offset / 1000.0f);
         else
@@ -1000,7 +1000,7 @@ void _ui_drawMacroTop()
         {
             gfx_drawSymbol(layout.top_pos, layout.top_symbol_size, TEXT_ALIGN_RIGHT,
                            color_white, SYMBOL_CROSSHAIRS_GPS);
-        } 
+        }
         else
         {
             gfx_drawSymbol(layout.top_pos, layout.top_symbol_size, TEXT_ALIGN_RIGHT,
@@ -1140,7 +1140,7 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
 #endif // UI_NO_KEYBOARD
         gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   yellow_fab413, "7");
-#ifdef SCREEN_BRIGHTNESS                  
+#ifdef SCREEN_BRIGHTNESS
         gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white, "   B-");
         gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_LEFT,
@@ -1152,7 +1152,7 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
 #endif // UI_NO_KEYBOARD
         gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   yellow_fab413, "8");
-#ifdef SCREEN_BRIGHTNESS                  
+#ifdef SCREEN_BRIGHTNESS
         gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   color_white,   "       B+");
 #endif

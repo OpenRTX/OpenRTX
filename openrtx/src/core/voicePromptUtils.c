@@ -860,40 +860,40 @@ void vp_announceScreen(uint8_t ui_screen)
 
     switch (ui_screen)
     {
-        case MAIN_VFO:
+        case PAGE_MAIN_VFO:
             vp_announceChannelSummary(&state.channel, 0, state.bank, infoFlags);
             break;
 
-        case MAIN_MEM:
+        case PAGE_MAIN_MEM:
             vp_announceChannelSummary(&state.channel, state.channel_index+1,
                                       state.bank, infoFlags);
             break;
 
         #ifdef GPS_PRESENT
-        case MENU_GPS:
+        case PAGE_MENU_GPS:
             vp_announceGPSInfo(vpGPSAll);
             break;
         #endif
 
-        case MENU_BACKUP:
+        case PAGE_MENU_BACKUP:
             vp_announceBackupScreen();
             break;
 
-        case MENU_RESTORE:
+        case PAGE_MENU_RESTORE:
             vp_announceRestoreScreen();
             break;
 
-        case MENU_ABOUT:
+        case PAGE_MENU_ABOUT:
             vp_announceAboutScreen();
             break;
 
         #ifdef RTC_PRESENT
-        case SETTINGS_TIMEDATE:
+        case PAGE_SETTINGS_TIMEDATE:
             vp_announceSettingsTimeDate();
             break;
         #endif
 
-        case SETTINGS_M17:
+        case PAGE_SETTINGS_M17:
             vp_announceBuffer(&currentLanguage->callsign,
                               false, true, state.settings.callsign);
             break;
@@ -1042,7 +1042,7 @@ void vp_announceSplashScreen()
 {
     if (state.settings.vpLevel < vpBeep)
         return;
-    
+
     vp_flush();
 
     if (state.settings.vpLevel == vpBeep)
@@ -1050,7 +1050,7 @@ void vp_announceSplashScreen()
         vp_beepSeries(BOOT_MELODY);
         return;
     }
-    
+
     vpQueueFlags_t localFlags = vpqAddSeparatingSilence;
 
     // Force on the descriptions for level 3.
@@ -1061,7 +1061,7 @@ void vp_announceSplashScreen()
 
     vp_queueStringTableEntry(&currentLanguage->openRTX);
     vp_queuePrompt(PROMPT_VFO);
-    vp_announceFrequencies(state.channel.rx_frequency, 
+    vp_announceFrequencies(state.channel.rx_frequency,
                            state.channel.tx_frequency,
                            localFlags);
     vp_announceRadioMode(state.channel.mode, localFlags);

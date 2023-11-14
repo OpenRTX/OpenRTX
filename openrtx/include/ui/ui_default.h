@@ -38,34 +38,43 @@
 // Max number of UI events
 #define MAX_NUM_EVENTS 16
 
-enum uiScreen
+typedef enum
 {
-    MAIN_VFO = 0,
-    MAIN_VFO_INPUT,
-    MAIN_MEM,
-    MODE_VFO,
-    MODE_MEM,
-    MENU_TOP,
-    MENU_BANK,
-    MENU_CHANNEL,
-    MENU_CONTACTS,
-    MENU_GPS,
-    MENU_SETTINGS,
-    MENU_BACKUP_RESTORE,
-    MENU_BACKUP,
-    MENU_RESTORE,
-    MENU_INFO,
-    MENU_ABOUT,
-    SETTINGS_TIMEDATE,
-    SETTINGS_TIMEDATE_SET,
-    SETTINGS_DISPLAY,
-    SETTINGS_GPS,
-    SETTINGS_RADIO,
-    SETTINGS_M17,
-    SETTINGS_VOICE,
-    SETTINGS_RESET2DEFAULTS,
-    LOW_BAT
-};
+    PAGE_MAIN_VFO                   ,
+    PAGE_MAIN_VFO_INPUT             ,
+    PAGE_MAIN_MEM                   ,
+    PAGE_MODE_VFO                   ,
+    PAGE_MODE_MEM                   ,
+    PAGE_MENU_TOP                   ,
+    PAGE_MENU_BANK                  ,
+    PAGE_MENU_CHANNEL               ,
+    PAGE_MENU_CONTACTS              ,
+    PAGE_MENU_GPS                   ,
+    PAGE_MENU_SETTINGS              ,
+    PAGE_MENU_BACKUP_RESTORE        ,
+    PAGE_MENU_BACKUP                ,
+    PAGE_MENU_RESTORE               ,
+    PAGE_MENU_INFO                  ,
+    PAGE_MENU_ABOUT                 ,
+    PAGE_SETTINGS_TIMEDATE          ,
+    PAGE_SETTINGS_TIMEDATE_SET      ,
+    PAGE_SETTINGS_DISPLAY           ,
+    PAGE_SETTINGS_GPS               ,
+    PAGE_SETTINGS_RADIO             ,
+    PAGE_SETTINGS_M17               ,
+    PAGE_SETTINGS_VOICE             ,
+    PAGE_SETTINGS_RESET_TO_DEFAULTS ,
+    PAGE_LOW_BAT                    ,
+    PAGE_AUTHORS                    ,
+    PAGE_BLANK                      ,
+    PAGE_NUM_OF
+}uiPageNum_en;
+
+typedef struct
+{
+    const char** loc ;
+    uint8_t      numOf ;
+}uiPageDesc_st;
 
 enum SetRxTx
 {
@@ -246,19 +255,19 @@ extern const char * settings_voice_items[];
 extern const char *backup_restore_items[];
 extern const char *info_items[];
 extern const char *authors[];
-extern const uint8_t menu_num;
-extern const uint8_t settings_num;
-extern const uint8_t display_num;
-extern const uint8_t settings_gps_num;
-extern const uint8_t settings_radio_num;
-extern const uint8_t settings_m17_num;
-extern const uint8_t settings_voice_num;
-extern const uint8_t backup_restore_num;
-extern const uint8_t info_num;
-extern const uint8_t author_num;
+
 extern const color_t color_black;
 extern const color_t color_grey;
 extern const color_t color_white;
+//@@@KL
+extern const color_t color_red;
+extern const color_t color_green;
+extern const color_t color_blue;
+
 extern const color_t yellow_fab413;
+
+extern const uiPageDesc_st* uiGetPageDesc( uiPageNum_en pageNum );
+extern const char**         uiGetPageLoc( uiPageNum_en pageNum );
+extern uint8_t              uiGetPageNumOf( uiPageNum_en pageNum );
 
 #endif /* UI_DEFAULT_H */

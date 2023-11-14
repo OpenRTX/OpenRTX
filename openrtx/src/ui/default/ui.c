@@ -79,6 +79,8 @@
 #include <voicePromptUtils.h>
 #include <beeps.h>
 
+//@@@KL #include "ui_m17.h"
+
 /* UI main screen functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBackground();
 extern void _ui_drawMainTop(ui_state_t* ui_state);
@@ -108,7 +110,7 @@ extern void _ui_drawMenuAbout();
 #ifdef RTC_PRESENT
 extern void _ui_drawSettingsTimeDate();
 extern void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state);
-#endif
+#endif // RTC_PRESENT
 extern void _ui_drawSettingsDisplay(ui_state_t* ui_state);
 extern void _ui_drawSettingsM17(ui_state_t* ui_state);
 extern void _ui_drawSettingsVoicePrompts(ui_state_t* ui_state);
@@ -124,7 +126,7 @@ const char *menu_items[] =
     "Contacts",
 #ifdef GPS_PRESENT
     "GPS",
-#endif
+#endif // RTC_PRESENT
     "Settings",
     "Info",
     "About"
@@ -135,10 +137,10 @@ const char *settings_items[] =
     "Display",
 #ifdef RTC_PRESENT
     "Time & Date",
-#endif
+#endif // RTC_PRESENT
 #ifdef GPS_PRESENT
     "GPS",
-#endif
+#endif // GPS_PRESENT
     "Radio",
     "M17",
     "Accessibility",
@@ -149,10 +151,10 @@ const char *display_items[] =
 {
 #ifdef SCREEN_BRIGHTNESS
     "Brightness",
-#endif
+#endif // SCREEN_BRIGHTNESS
 #ifdef SCREEN_CONTRAST
     "Contrast",
-#endif
+#endif // SCREEN_CONTRAST
     "Timer"
 };
 
@@ -163,7 +165,7 @@ const char *settings_gps_items[] =
     "GPS Set Time",
     "UTC Timezone"
 };
-#endif
+#endif // GPS_PRESENT
 
 const char *settings_radio_items[] =
 {
@@ -205,7 +207,7 @@ const char *info_items[] =
 #ifdef PLATFORM_TTWRPLUS
     "Radio",
     "Radio FW",
-#endif
+#endif // PLATFORM_TTWRPLUS
 };
 
 const char *authors[] =
@@ -214,6 +216,7 @@ const char *authors[] =
     "Silvano IU2KWO",
     "Federico IU2NUO",
     "Fred IU2NRO",
+    "Kim VK6KL"         //@@@KL
 };
 
 static const char *symbols_ITU_T_E161[] =
@@ -248,229 +251,271 @@ static const char *symbols_ITU_T_E161_callsign[] =
     ""
 };
 
-// Calculate number of menu entries
-const uint8_t menu_num = sizeof(menu_items)/sizeof(menu_items[0]);
-const uint8_t settings_num = sizeof(settings_items)/sizeof(settings_items[0]);
-const uint8_t display_num = sizeof(display_items)/sizeof(display_items[0]);
+const char* page_stubbed[] =
+{
+    "Page Stubbed" ,
+};
+
+#define PAGE_DESC_DEF( loc )    { loc , sizeof( loc ) / sizeof( loc[ 0 ] ) }
+
+const uiPageDesc_st uiPageDescTable[] =
+{
+    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_MAIN_VFO
+    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_MAIN_VFO_INPUT
+    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_MAIN_MEM
+    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_MODE_VFO
+    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_MODE_MEM
+    PAGE_DESC_DEF( menu_items           ) , // PAGE_MENU_TOP
+    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_MENU_BANK
+    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_MENU_CHANNEL
+    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_MENU_CONTACTS
+    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_MENU_GPS
+    PAGE_DESC_DEF( settings_items       ) , // PAGE_MENU_SETTINGS
+    PAGE_DESC_DEF( backup_restore_items ) , // PAGE_MENU_BACKUP_RESTORE
+    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_MENU_BACKUP
+    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_MENU_RESTORE
+    PAGE_DESC_DEF( info_items           ) , // PAGE_MENU_INFO
+    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_MENU_ABOUT
+    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_SETTINGS_TIMEDATE
+    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_SETTINGS_TIMEDATE_SET
+    PAGE_DESC_DEF( display_items        ) , // PAGE_SETTINGS_DISPLAY
 #ifdef GPS_PRESENT
-const uint8_t settings_gps_num = sizeof(settings_gps_items)/sizeof(settings_gps_items[0]);
-#endif
-const uint8_t settings_radio_num = sizeof(settings_radio_items)/sizeof(settings_radio_items[0]);
-const uint8_t settings_m17_num = sizeof(settings_m17_items)/sizeof(settings_m17_items[0]);
-const uint8_t settings_voice_num = sizeof(settings_voice_items)/sizeof(settings_voice_items[0]);
-const uint8_t backup_restore_num = sizeof(backup_restore_items)/sizeof(backup_restore_items[0]);
-const uint8_t info_num = sizeof(info_items)/sizeof(info_items[0]);
-const uint8_t author_num = sizeof(authors)/sizeof(authors[0]);
+    PAGE_DESC_DEF( settings_gps_items   ) , // PAGE_SETTINGS_GPS
+#endif // GPS_PRESENT
+    PAGE_DESC_DEF( settings_radio_items ) , // PAGE_SETTINGS_RADIO
+    PAGE_DESC_DEF( settings_m17_items   ) , // PAGE_SETTINGS_M17
+    PAGE_DESC_DEF( settings_voice_items ) , // PAGE_SETTINGS_VOICE
+    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_SETTINGS_RESET_TO_DEFAULTS
+    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_LOW_BAT
+    PAGE_DESC_DEF( authors              )   // PAGE_AUTHORS
+};
 
-const color_t color_black = {0, 0, 0, 255};
-const color_t color_grey = {60, 60, 60, 255};
-const color_t color_white = {255, 255, 255, 255};
-const color_t yellow_fab413 = {250, 180, 19, 255};
+const color_t color_black   = {   0 ,   0 ,  0  , 255 };
+const color_t color_grey    = {  60 ,  60 ,  60 , 255 };
+const color_t color_white   = { 255 , 255 , 255 , 255 };
+const color_t yellow_fab413 = { 250 , 180 ,  19 , 255 };
+//@@@KL
+const color_t color_red     = { 255 ,   0 ,   0 , 255 };
+const color_t color_green   = {   0 , 255 ,   0 , 255 };
+const color_t color_blue    = {   0 ,   0 , 255 , 255 };
 
-layout_t layout;
-state_t last_state;
-bool macro_latched;
-static ui_state_t ui_state;
-static bool macro_menu = false;
-static bool layout_ready = false;
-static bool redraw_needed = true;
+       state_t    last_state ;
+       bool       macro_latched ;
+static ui_state_t ui_state ;
+static bool       macro_menu      = false ;
+static bool       redraw_needed   = true ;
 
-static bool standby = false;
-static long long last_event_tick = 0;
+static bool       standby         = false ;
+static long long  last_event_tick = 0 ;
 
 // UI event queue
-static uint8_t evQueue_rdPos;
-static uint8_t evQueue_wrPos;
-static event_t evQueue[MAX_NUM_EVENTS];
+static uint8_t    evQueue_rdPos ;
+static uint8_t    evQueue_wrPos ;
+static event_t    evQueue[ MAX_NUM_EVENTS ] ;
 
-
-static layout_t _ui_calculateLayout()
+enum
 {
     // Horizontal line height
-    const uint16_t hline_h = 1;
+    SCREEN_HLINE_H       = 1 ,
     // Compensate for fonts printing below the start position
-    const uint16_t text_v_offset = 1;
+    SCREEN_TEXT_V_OFFSET = 1
+};
 
-    // Calculate UI layout depending on vertical resolution
-    // Tytera MD380, MD-UV380
-    #if SCREEN_HEIGHT > 127
-
+// Calculate UI layout depending on vertical resolution
+// Tytera MD380, MD-UV380
+#if SCREEN_HEIGHT > 127
+enum
+{
     // Height and padding shown in diagram at beginning of file
-    const uint16_t top_h = 16;
-    const uint16_t top_pad = 4;
-    const uint16_t line1_h = 20;
-    const uint16_t line2_h = 20;
-    const uint16_t line3_h = 20;
-    const uint16_t line3_large_h = 40;
-    const uint16_t line4_h = 20;
-    const uint16_t menu_h = 16;
-    const uint16_t bottom_h = 23;
-    const uint16_t bottom_pad = top_pad;
-    const uint16_t status_v_pad = 2;
-    const uint16_t small_line_v_pad = 2;
-    const uint16_t big_line_v_pad = 6;
-    const uint16_t horizontal_pad = 4;
-
+    SCREEN_TOP_H               = 16 ,
+    SCREEN_TOP_PAD             = 4 ,
+    SCREEN_LINE1_H             = 20 ,
+    SCREEN_LINE2_H             = 20 ,
+    SCREEN_LINE3_H             = 20 ,
+    SCREEN_LINE3_LARGE_H       = 40 ,
+    SCREEN_LINE4_H             = 20 ,
+    SCREEN_MENU_H              = 16 ,
+    SCREEN_BOTTOM_H            = 23 ,
+    SCREEN_BOTTOM_PAD          = SCREEN_TOP_PAD ,
+    SCREEN_STATUS_V_PAD        = 2 ,
+    SCREEN_SMALL_LINE_V_PAD    = 2 ,
+    SCREEN_BIG_LINE_V_PAD      = 6 ,
+    SCREEN_HORIZONTAL_PAD      = 4 ,
     // Top bar font: 8 pt
-    const fontSize_t   top_font = FONT_SIZE_8PT;
-    const symbolSize_t top_symbol_size = SYMBOLS_SIZE_8PT;
+    SCREEN_TOP_FONT            = FONT_SIZE_8PT     , // fontSize_t
+    SCREEN_TOP_SYMBOL_SIZE     = SYMBOLS_SIZE_8PT  , // symbolSize_t
     // Text line font: 8 pt
-    const fontSize_t line1_font = FONT_SIZE_8PT;
-    const symbolSize_t line1_symbol_size = SYMBOLS_SIZE_8PT;
-    const fontSize_t line2_font = FONT_SIZE_8PT;
-    const symbolSize_t line2_symbol_size = SYMBOLS_SIZE_8PT;
-    const fontSize_t line3_font = FONT_SIZE_8PT;
-    const symbolSize_t line3_symbol_size = SYMBOLS_SIZE_8PT;
-    const fontSize_t line4_font = FONT_SIZE_8PT;
-    const symbolSize_t line4_symbol_size = SYMBOLS_SIZE_8PT;
+    SCREEN_LINE1_FONT          = FONT_SIZE_8PT     , // fontSize_t
+    SCREEN_LINE1_SYMBOL_SIZE   = SYMBOLS_SIZE_8PT  , // symbolSize_t
+    SCREEN_LINE2_FONT          = FONT_SIZE_8PT     , // fontSize_t
+    SCREEN_LINE2_SYMBOL_SIZE   = SYMBOLS_SIZE_8PT  , // symbolSize_t
+    SCREEN_LINE3_FONT          = FONT_SIZE_8PT     , // fontSize_t
+    SCREEN_LINE3_SYMBOL_SIZE   = SYMBOLS_SIZE_8PT  , // symbolSize_t
+    SCREEN_LINE4_FONT          = FONT_SIZE_8PT     , // fontSize_t
+    SCREEN_LINE4_SYMBOL_SIZE   = SYMBOLS_SIZE_8PT  , // symbolSize_t
     // Frequency line font: 16 pt
-    const fontSize_t line3_large_font = FONT_SIZE_16PT;
+    SCREEN_LINE3_LARGE_FONT    = FONT_SIZE_16PT    , // fontSize_t
     // Bottom bar font: 8 pt
-    const fontSize_t bottom_font = FONT_SIZE_8PT;
+    SCREEN_BOTTOM_FONT         = FONT_SIZE_8PT     , // fontSize_t
     // TimeDate/Frequency input font
-    const fontSize_t input_font = FONT_SIZE_12PT;
+    SCREEN_INPUT_FONT          = FONT_SIZE_12PT    , // fontSize_t
     // Menu font
-    const fontSize_t menu_font = FONT_SIZE_8PT;
+    SCREEN_MENU_FONT           = FONT_SIZE_8PT     , // fontSize_t
     // Mode screen frequency font: 12 pt
-    const fontSize_t mode_font_big = FONT_SIZE_12PT;
+    SCREEN_MODE_FONT_BIG       = FONT_SIZE_12PT    , // fontSize_t
     // Mode screen details font: 9 pt
-    const fontSize_t mode_font_small = FONT_SIZE_9PT;
+    SCREEN_MODE_FONT_SMALL     = FONT_SIZE_9PT       // fontSize_t
+};
 
-    // Radioddity GD-77
-    #elif SCREEN_HEIGHT > 63
-
+// Radioddity GD-77
+#elif SCREEN_HEIGHT > 63
+enum
+{
     // Height and padding shown in diagram at beginning of file
-    const uint16_t top_h = 11;
-    const uint16_t top_pad = 1;
-    const uint16_t line1_h = 10;
-    const uint16_t line2_h = 10;
-    const uint16_t line3_h = 10;
-    const uint16_t line3_large_h = 16;
-    const uint16_t line4_h = 10;
-    const uint16_t menu_h = 10;
-    const uint16_t bottom_h = 15;
-    const uint16_t bottom_pad = 0;
-    const uint16_t status_v_pad = 1;
-    const uint16_t small_line_v_pad = 1;
-    const uint16_t big_line_v_pad = 0;
-    const uint16_t horizontal_pad = 4;
-
+    SCREEN_TOP_H               = 11 ,
+    SCREEN_TOP_PAD             =  1 ,
+    SCREEN_LINE1_H             = 10 ,
+    SCREEN_LINE2_H             = 10 ,
+    SCREEN_LINE3_H             = 10 ,
+    SCREEN_LINE3_LARGE_H       = 16 ,
+    SCREEN_LINE4_H             = 10 ,
+    SCREEN_MENU_H              = 10 ,
+    SCREEN_BOTTOM_H            = 15 ,
+    SCREEN_BOTTOM_PAD          =  0 ,
+    SCREEN_STATUS_V_PAD        =  1 ,
+    SCREEN_SMALL_LINE_V_PAD    =  1 ,
+    SCREEN_BIG_LINE_V_PAD      =  0 ,
+    SCREEN_HORIZONTAL_PAD      =  4 ,
     // Top bar font: 6 pt
-    const fontSize_t   top_font = FONT_SIZE_6PT;
-    const symbolSize_t top_symbol_size = SYMBOLS_SIZE_6PT;
+    SCREEN_TOP_FONT            = FONT_SIZE_6PT     , // fontSize_t
+    SCREEN_TOP_SYMBOL_SIZE     = SYMBOLS_SIZE_6PT  , // symbolSize_t
     // Middle line fonts: 5, 8, 8 pt
-    const fontSize_t line1_font = FONT_SIZE_6PT;
-    const symbolSize_t line1_symbol_size = SYMBOLS_SIZE_6PT;
-    const fontSize_t line2_font = FONT_SIZE_6PT;
-    const symbolSize_t line2_symbol_size = SYMBOLS_SIZE_6PT;
-    const fontSize_t line3_font = FONT_SIZE_6PT;
-    const symbolSize_t line3_symbol_size = SYMBOLS_SIZE_6PT;
-    const fontSize_t line3_large_font = FONT_SIZE_10PT;
-    const fontSize_t line4_font = FONT_SIZE_6PT;
-    const symbolSize_t line4_symbol_size = SYMBOLS_SIZE_6PT;
+    SCREEN_LINE1_FONT          = FONT_SIZE_6PT     , // fontSize_t
+    SCREEN_LINE1_SYMBOL_SIZE   = SYMBOLS_SIZE_6PT  , // symbolSize_t
+    SCREEN_LINE2_FONT          = FONT_SIZE_6PT     , // fontSize_t
+    SCREEN_LINE2_SYMBOL_SIZE   = SYMBOLS_SIZE_6PT  , // symbolSize_t
+    SCREEN_LINE3_FONT          = FONT_SIZE_6PT     , // fontSize_t
+    SCREEN_LINE3_SYMBOL_SIZE   = SYMBOLS_SIZE_6PT  , // symbolSize_t
+    SCREEN_LINE3_LARGE_FONT    = FONT_SIZE_10PT    , // fontSize_t
+    SCREEN_LINE4_FONT          = FONT_SIZE_6PT     , // fontSize_t
+    SCREEN_LINE4_SYMBOL_SIZE   = SYMBOLS_SIZE_6PT  , // symbolSize_t
     // Bottom bar font: 6 pt
-    const fontSize_t bottom_font = FONT_SIZE_6PT;
+    SCREEN_BOTTOM_FONT         = FONT_SIZE_6PT     , // fontSize_t
     // TimeDate/Frequency input font
-    const fontSize_t input_font = FONT_SIZE_8PT;
+    SCREEN_INPUT_FONT          = FONT_SIZE_8PT     , // fontSize_t
     // Menu font
-    const fontSize_t menu_font = FONT_SIZE_6PT;
+    SCREEN_MENU_FONT           = FONT_SIZE_6PT     , // fontSize_t
     // Mode screen frequency font: 9 pt
-    const fontSize_t mode_font_big = FONT_SIZE_9PT;
+    SCREEN_MODE_FONT_BIG       = FONT_SIZE_9PT     , // fontSize_t
     // Mode screen details font: 6 pt
-    const fontSize_t mode_font_small = FONT_SIZE_6PT;
+    SCREEN_MODE_FONT_SMALL     = FONT_SIZE_6PT       // fontSize_t
+};
 
-    // Radioddity RD-5R
-    #elif SCREEN_HEIGHT > 47
-
+// Radioddity RD-5R
+#elif SCREEN_HEIGHT > 47
+enum
+{
     // Height and padding shown in diagram at beginning of file
-    const uint16_t top_h = 11;
-    const uint16_t top_pad = 1;
-    const uint16_t line1_h = 0;
-    const uint16_t line2_h = 10;
-    const uint16_t line3_h = 10;
-    const uint16_t line3_large_h = 18;
-    const uint16_t line4_h = 10;
-    const uint16_t menu_h = 10;
-    const uint16_t bottom_h = 0;
-    const uint16_t bottom_pad = 0;
-    const uint16_t status_v_pad = 1;
-    const uint16_t small_line_v_pad = 1;
-    const uint16_t big_line_v_pad = 0;
-    const uint16_t horizontal_pad = 4;
-
+    SCREEN_TOP_H               = 11 ,
+    SCREEN_TOP_PAD             =  1 ,
+    SCREEN_LINE1_H             =  0 ,
+    SCREEN_LINE2_H             = 10 ,
+    SCREEN_LINE3_H             = 10 ,
+    SCREEN_LINE3_LARGE_H       = 18 ,
+    SCREEN_LINE4_H             = 10 ,
+    SCREEN_MENU_H              = 10 ,
+    SCREEN_BOTTOM_H            =  0 ,
+    SCREEN_BOTTOM_PAD          =  0 ,
+    SCREEN_STATUS_V_PAD        =  1 ,
+    SCREEN_SMALL_LINE_V_PAD    =  1 ,
+    SCREEN_BIG_LINE_V_PAD      =  0 ,
+    SCREEN_HORIZONTAL_PAD      =  4 ,
     // Top bar font: 6 pt
-    const fontSize_t   top_font = FONT_SIZE_6PT;
-    const symbolSize_t top_symbol_size = SYMBOLS_SIZE_6PT;
+    SCREEN_TOP_FONT            = FONT_SIZE_6PT     , // fontSize_t
+    SCREEN_TOP_SYMBOL_SIZE     = SYMBOLS_SIZE_6PT  , // symbolSize_t
     // Middle line fonts: 16, 16
-    const fontSize_t line2_font = FONT_SIZE_6PT;
-    const fontSize_t line3_font = FONT_SIZE_6PT;
-    const fontSize_t line4_font = FONT_SIZE_6PT;
-    const fontSize_t line3_large_font = FONT_SIZE_12PT;
+    SCREEN_LINE2_FONT          = FONT_SIZE_6PT     , // fontSize_t
+    SCREEN_LINE3_FONT          = FONT_SIZE_6PT     , // fontSize_t
+    SCREEN_LINE4_FONT          = FONT_SIZE_6PT     , // fontSize_t
+    SCREEN_LINE3_LARGE_FONT    = FONT_SIZE_12PT    , // fontSize_t
     // TimeDate/Frequency input font
-    const fontSize_t input_font = FONT_SIZE_8PT;
+    SCREEN_INPUT_FONT          = FONT_SIZE_8PT     , // fontSize_t
     // Menu font
-    const fontSize_t menu_font = FONT_SIZE_6PT;
+    SCREEN_MENU_FONT           = FONT_SIZE_6PT     , // fontSize_t
     // Mode screen frequency font: 9 pt
-    const fontSize_t mode_font_big = FONT_SIZE_9PT;
+    SCREEN_MODE_FONT_BIG       = FONT_SIZE_9PT     , // fontSize_t
     // Mode screen details font: 6 pt
-    const fontSize_t mode_font_small = FONT_SIZE_6PT;
+    SCREEN_MODE_FONT_SMALL     = FONT_SIZE_6PT     , // fontSize_t
     // Not present on this resolution
-    const fontSize_t line1_font = 0;
-    const fontSize_t bottom_font = 0;
-
-    #else
+    SCREEN_LINE1_FONT          = 0                 , // fontSize_t
+    SCREEN_BOTTOM_FONT         = 0                   // fontSize_t
+};
+#else
     #error Unsupported vertical resolution!
-    #endif
+#endif
 
-    // Calculate printing positions
-    point_t top_pos    = {horizontal_pad, top_h - status_v_pad - text_v_offset};
-    point_t line1_pos  = {horizontal_pad, top_h + top_pad + line1_h - small_line_v_pad - text_v_offset};
-    point_t line2_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h - small_line_v_pad - text_v_offset};
-    point_t line3_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h + line3_h - small_line_v_pad - text_v_offset};
-    point_t line4_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h + line3_h + line4_h - small_line_v_pad - text_v_offset};
-    point_t line3_large_pos = {horizontal_pad, top_h + top_pad + line1_h + line2_h + line3_large_h - big_line_v_pad - text_v_offset};
-    point_t bottom_pos = {horizontal_pad, SCREEN_HEIGHT - bottom_pad - status_v_pad - text_v_offset};
+// Calculate printing positions
+#define SCREEN_DEF_TOP_POS          { SCREEN_HORIZONTAL_PAD , SCREEN_TOP_H - SCREEN_STATUS_V_PAD - SCREEN_TEXT_V_OFFSET }
+#define SCREEN_DEF_LINE1_POS        { SCREEN_HORIZONTAL_PAD , SCREEN_TOP_H + SCREEN_TOP_PAD + SCREEN_LINE1_H - SCREEN_SMALL_LINE_V_PAD - SCREEN_TEXT_V_OFFSET }
+#define SCREEN_DEF_LINE2_POS        { SCREEN_HORIZONTAL_PAD , SCREEN_TOP_H + SCREEN_TOP_PAD + SCREEN_LINE1_H + SCREEN_LINE2_H - SCREEN_SMALL_LINE_V_PAD - SCREEN_TEXT_V_OFFSET }
+#define SCREEN_DEF_LINE3_POS        { SCREEN_HORIZONTAL_PAD , SCREEN_TOP_H + SCREEN_TOP_PAD + SCREEN_LINE1_H + SCREEN_LINE2_H + SCREEN_LINE3_H - SCREEN_SMALL_LINE_V_PAD - SCREEN_TEXT_V_OFFSET }
+#define SCREEN_DEF_LINE4_POS        { SCREEN_HORIZONTAL_PAD , SCREEN_TOP_H + SCREEN_TOP_PAD + SCREEN_LINE1_H + SCREEN_LINE2_H + SCREEN_LINE3_H + SCREEN_LINE4_H - SCREEN_SMALL_LINE_V_PAD - SCREEN_TEXT_V_OFFSET }
+#define SCREEN_DEF_LINE3_LARGE_POS  { SCREEN_HORIZONTAL_PAD , SCREEN_TOP_H + SCREEN_TOP_PAD + SCREEN_LINE1_H + SCREEN_LINE2_H + SCREEN_LINE3_LARGE_H - SCREEN_BIG_LINE_V_PAD - SCREEN_TEXT_V_OFFSET }
+#define SCREEN_DEF_BOTTOM_POS       { SCREEN_HORIZONTAL_PAD , SCREEN_HEIGHT - SCREEN_BOTTOM_PAD - SCREEN_STATUS_V_PAD - SCREEN_TEXT_V_OFFSET }
 
-    layout_t new_layout =
-    {
-        hline_h,
-        top_h,
-        line1_h,
-        line2_h,
-        line3_h,
-        line3_large_h,
-        line4_h,
-        menu_h,
-        bottom_h,
-        bottom_pad,
-        status_v_pad,
-        horizontal_pad,
-        text_v_offset,
-        top_pos,
-        line1_pos,
-        line2_pos,
-        line3_pos,
-        line3_large_pos,
-        line4_pos,
-        bottom_pos,
-        top_font,
-        top_symbol_size,
-        line1_font,
-        line1_symbol_size,
-        line2_font,
-        line2_symbol_size,
-        line3_font,
-        line3_symbol_size,
-        line3_large_font,
-        line4_font,
-        line4_symbol_size,
-        bottom_font,
-        input_font,
-        menu_font,
-        mode_font_big,
-        mode_font_small
-    };
-    return new_layout;
+layout_t layout =
+{
+    SCREEN_HLINE_H             ,
+    SCREEN_TOP_H               ,
+    SCREEN_LINE1_H             ,
+    SCREEN_LINE2_H             ,
+    SCREEN_LINE3_H             ,
+    SCREEN_LINE3_LARGE_H       ,
+    SCREEN_LINE4_H             ,
+    SCREEN_MENU_H              ,
+    SCREEN_BOTTOM_H            ,
+    SCREEN_BOTTOM_PAD          ,
+    SCREEN_STATUS_V_PAD        ,
+    SCREEN_HORIZONTAL_PAD      ,
+    SCREEN_TEXT_V_OFFSET       ,
+    SCREEN_DEF_TOP_POS         ,
+    SCREEN_DEF_LINE1_POS       ,
+    SCREEN_DEF_LINE2_POS       ,
+    SCREEN_DEF_LINE3_POS       ,
+    SCREEN_DEF_LINE3_LARGE_POS ,
+    SCREEN_DEF_LINE4_POS       ,
+    SCREEN_DEF_BOTTOM_POS      ,
+    SCREEN_TOP_FONT            ,
+    SCREEN_TOP_SYMBOL_SIZE     ,
+    SCREEN_LINE1_FONT          ,
+    SCREEN_LINE1_SYMBOL_SIZE   ,
+    SCREEN_LINE2_FONT          ,
+    SCREEN_LINE2_SYMBOL_SIZE   ,
+    SCREEN_LINE3_FONT          ,
+    SCREEN_LINE3_SYMBOL_SIZE   ,
+    SCREEN_LINE3_LARGE_FONT    ,
+    SCREEN_LINE4_FONT          ,
+    SCREEN_LINE4_SYMBOL_SIZE   ,
+    SCREEN_BOTTOM_FONT         ,
+    SCREEN_INPUT_FONT          ,
+    SCREEN_MENU_FONT           ,
+    SCREEN_MODE_FONT_BIG       ,
+    SCREEN_MODE_FONT_SMALL
+};
+
+const uiPageDesc_st* uiGetPageDesc( uiPageNum_en pageNum )
+{
+    return &uiPageDescTable[ pageNum ];
+}
+
+const char** uiGetPageLoc( uiPageNum_en pageNum )
+{
+    return uiPageDescTable[ pageNum ].loc ;
+}
+
+uint8_t uiGetPageNumOf( uiPageNum_en pageNum )
+{
+    return uiPageDescTable[ pageNum ].numOf ;
 }
 
 static void _ui_drawLowBatteryScreen()
@@ -515,11 +560,11 @@ static void _ui_timedate_add_digit(datetime_t *timedate, uint8_t pos,
         vp_queuePrompt(PROMPT_SLASH);
     // just indicates separation of date and time.
     if (pos==6) // start of time.
-        vp_queueString("hh:mm", vpAnnounceCommonSymbols|vpAnnounceLessCommonSymbols); 
+        vp_queueString("hh:mm", vpAnnounceCommonSymbols|vpAnnounceLessCommonSymbols);
     if (pos == 8)
         vp_queuePrompt(PROMPT_COLON);
     vp_play();
-    
+
     switch(pos)
     {
         // Set date
@@ -665,7 +710,7 @@ static void _ui_fsm_confirmVFOInput(bool *sync_rtx)
             vp_announceError(vpqInit);
         }
 
-        state.ui_screen = MAIN_VFO;
+        state.ui_screen = PAGE_MAIN_VFO;
     }
 
     vp_play();
@@ -728,7 +773,7 @@ static void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx)
                                        state.channel.tx_frequency, vpqInit);
             }
 
-            state.ui_screen = MAIN_VFO;
+            state.ui_screen = PAGE_MAIN_VFO;
         }
     }
 
@@ -1002,7 +1047,7 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
         case 9:
             if (!ui_state.input_locked)
                 ui_state.input_locked = true;
-            else 
+            else
                 ui_state.input_locked = false;
             break;
     }
@@ -1139,8 +1184,8 @@ static void _ui_textInputDel(char *buf)
 {
     // announce the char about to be backspaced.
     // Note this assumes editing callsign.
-    // If we edit a different buffer which allows the underline char, we may 
-    // not want to exclude it, but when editing callsign, we do not want to say 
+    // If we edit a different buffer which allows the underline char, we may
+    // not want to exclude it, but when editing callsign, we do not want to say
     // underline since it means the field is empty.
     if(buf[ui_state.input_position]
     && buf[ui_state.input_position]!='_')
@@ -1216,7 +1261,7 @@ static void _ui_numberInputDel(uint32_t *num)
 {
     // announce the digit about to be backspaced.
     vp_announceInputChar('0' + *num % 10);
-    
+
     // Move back input cursor
     if(ui_state.input_position > 0)
         ui_state.input_position--;
@@ -1230,8 +1275,6 @@ void ui_init()
 {
     last_event_tick = getTick();
     redraw_needed = true;
-    layout = _ui_calculateLayout();
-    layout_ready = true;
     // Initialize struct ui_state to all zeroes
     // This syntax is called compound literal
     // https://stackoverflow.com/questions/6891720/initialize-reset-struct-to-zero-null
@@ -1276,57 +1319,57 @@ static uint32_t vpGPSLastUpdate = 0;
 
 static vpGPSInfoFlags_t GetGPSDirectionOrSpeedChanged()
 {
-    if (!state.settings.gps_enabled) 
+    if (!state.settings.gps_enabled)
         return vpGPSNone;
-    
+
     uint32_t now = getTick();
     if (now - vpGPSLastUpdate < 8000)
         return vpGPSNone;
-    
+
     vpGPSInfoFlags_t whatChanged=  vpGPSNone;
-    
+
     if (state.gps_data.fix_quality != priorGPSFixQuality)
     {
         whatChanged |= vpGPSFixQuality;
         priorGPSFixQuality= state.gps_data.fix_quality;
     }
-    
+
     if (state.gps_data.fix_type != priorGPSFixType)
     {
         whatChanged |= vpGPSFixType;
         priorGPSFixType = state.gps_data.fix_type;
     }
-    
+
     float speedDiff=fabs(state.gps_data.speed - priorGPSSpeed);
     if (speedDiff >= 1)
     {
         whatChanged |= vpGPSSpeed;
         priorGPSSpeed = state.gps_data.speed;
     }
-    
+
     float altitudeDiff = fabs(state.gps_data.altitude - priorGPSAltitude);
     if (altitudeDiff >= 5)
     {
         whatChanged |= vpGPSAltitude;
         priorGPSAltitude = state.gps_data.altitude;
     }
-    
+
     float degreeDiff = fabs(state.gps_data.tmg_true - priorGPSDirection);
     if (degreeDiff  >= 1)
     {
         whatChanged |= vpGPSDirection;
         priorGPSDirection = state.gps_data.tmg_true;
     }
-    
+
     if (state.gps_data.satellites_in_view != priorSatellitesInView)
     {
         whatChanged |= vpGPSSatCount;
         priorSatellitesInView = state.gps_data.satellites_in_view;
     }
-    
+
     if (whatChanged)
         vpGPSLastUpdate=now;
-    
+
     return whatChanged;
 }
 #endif // GPS_PRESENT
@@ -1354,10 +1397,10 @@ void ui_updateFSM(bool *sync_rtx)
 #if !defined(PLATFORM_TTWRPLUS)
     if ((!state.emergency) && (!txOngoing) && (state.charge <= 0))
     {
-        state.ui_screen = LOW_BAT;
+        state.ui_screen = PAGE_LOW_BAT;
         if(event.type == EVENT_KBD && event.payload)
         {
-            state.ui_screen = MAIN_VFO;
+            state.ui_screen = PAGE_MAIN_VFO;
             state.emergency = true;
         }
         return;
@@ -1418,8 +1461,8 @@ void ui_updateFSM(bool *sync_rtx)
         switch(state.ui_screen)
         {
             // VFO screen
-            case MAIN_VFO:
-                // Enable Tx in MAIN_VFO mode
+            case PAGE_MAIN_VFO:
+                // Enable Tx in PAGE_MAIN_VFO mode
                 if (state.txDisable)
                 {
                     state.txDisable = false;
@@ -1439,7 +1482,7 @@ void ui_updateFSM(bool *sync_rtx)
                             strncpy(state.settings.m17_dest, ui_state.new_callsign, 10);
                             ui_state.edit_mode = false;
                             *sync_rtx = true;
-                            vp_announceM17Info(NULL,  ui_state.edit_mode, 
+                            vp_announceM17Info(NULL,  ui_state.edit_mode,
                                                queueFlags);
                         }
                         else if(msg.keys & KEY_HASH)
@@ -1448,7 +1491,7 @@ void ui_updateFSM(bool *sync_rtx)
                             strncpy(state.settings.m17_dest, "", 1);
                             ui_state.edit_mode = false;
                             *sync_rtx = true;
-                            vp_announceM17Info(NULL,  ui_state.edit_mode, 
+                            vp_announceM17Info(NULL,  ui_state.edit_mode,
                                                queueFlags);
                         }
                         else if(msg.keys & KEY_ESC)
@@ -1469,7 +1512,7 @@ void ui_updateFSM(bool *sync_rtx)
                         // Save current main state
                         ui_state.last_main_state = state.ui_screen;
                         // Open Menu
-                        state.ui_screen = MENU_TOP;
+                        state.ui_screen = PAGE_MENU_TOP;
                         // The selected item will be announced when the item is first selected.
                     }
                     else if(msg.keys & KEY_ESC)
@@ -1481,7 +1524,7 @@ void ui_updateFSM(bool *sync_rtx)
                         if(result != -1)
                         {
                             // Switch to MEM screen
-                            state.ui_screen = MAIN_MEM;
+                            state.ui_screen = PAGE_MAIN_MEM;
                             // anounce the active channel name.
                             vp_announceChannelName(&state.channel,
                                                    state.channel_index,
@@ -1552,7 +1595,7 @@ void ui_updateFSM(bool *sync_rtx)
                     else if(input_isNumberPressed(msg))
                     {
                         // Open Frequency input screen
-                        state.ui_screen = MAIN_VFO_INPUT;
+                        state.ui_screen = PAGE_MAIN_VFO_INPUT;
                         // Reset input position and selection
                         ui_state.input_position = 1;
                         ui_state.input_set = SET_RX;
@@ -1560,7 +1603,7 @@ void ui_updateFSM(bool *sync_rtx)
                         vp_announceInputReceiveOrTransmit(false, vpqInit);
                         vp_queueInteger(input_getPressedNumber(msg));
                         vp_play();
-                        
+
                         ui_state.new_rx_frequency = 0;
                         ui_state.new_tx_frequency = 0;
                         // Save pressed number to calculare frequency and show in GUI
@@ -1573,7 +1616,7 @@ void ui_updateFSM(bool *sync_rtx)
                 }
                 break;
             // VFO frequency input screen
-            case MAIN_VFO_INPUT:
+            case PAGE_MAIN_VFO_INPUT:
                 if(msg.keys & KEY_ENTER)
                 {
                     _ui_fsm_confirmVFOInput(sync_rtx);
@@ -1581,7 +1624,7 @@ void ui_updateFSM(bool *sync_rtx)
                 else if(msg.keys & KEY_ESC)
                 {
                     // Cancel frequency input, return to VFO mode
-                    state.ui_screen = MAIN_VFO;
+                    state.ui_screen = PAGE_MAIN_VFO;
                 }
                 else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN)
                 {
@@ -1604,8 +1647,8 @@ void ui_updateFSM(bool *sync_rtx)
                 }
                 break;
             // MEM screen
-            case MAIN_MEM:
-                // Enable Tx in MAIN_MEM mode
+            case PAGE_MAIN_MEM:
+                // Enable Tx in PAGE_MAIN_MEM mode
                 if (state.txDisable)
                 {
                     state.txDisable = false;
@@ -1671,7 +1714,7 @@ void ui_updateFSM(bool *sync_rtx)
                         // Save current main state
                         ui_state.last_main_state = state.ui_screen;
                         // Open Menu
-                        state.ui_screen = MENU_TOP;
+                        state.ui_screen = PAGE_MENU_TOP;
                     }
                     else if(msg.keys & KEY_ESC)
                     {
@@ -1680,7 +1723,7 @@ void ui_updateFSM(bool *sync_rtx)
                         // Update RTX configuration
                         *sync_rtx = true;
                         // Switch to VFO screen
-                        state.ui_screen = MAIN_VFO;
+                        state.ui_screen = PAGE_MAIN_VFO;
                     }
                     else if(msg.keys & KEY_HASH)
                     {
@@ -1736,37 +1779,37 @@ void ui_updateFSM(bool *sync_rtx)
                 }
                 break;
             // Top menu screen
-            case MENU_TOP:
+            case PAGE_MENU_TOP:
                 if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                    _ui_menuUp(menu_num);
+                    _ui_menuUp( uiGetPageNumOf( PAGE_MENU_TOP ) );
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                    _ui_menuDown(menu_num);
+                    _ui_menuDown( uiGetPageNumOf( PAGE_MENU_TOP ) );
                 else if(msg.keys & KEY_ENTER)
                 {
                     switch(ui_state.menu_selected)
                     {
                         case M_BANK:
-                            state.ui_screen = MENU_BANK;
+                            state.ui_screen = PAGE_MENU_BANK;
                             break;
                         case M_CHANNEL:
-                            state.ui_screen = MENU_CHANNEL;
+                            state.ui_screen = PAGE_MENU_CHANNEL;
                             break;
                         case M_CONTACTS:
-                            state.ui_screen = MENU_CONTACTS;
+                            state.ui_screen = PAGE_MENU_CONTACTS;
                             break;
 #ifdef GPS_PRESENT
                         case M_GPS:
-                            state.ui_screen = MENU_GPS;
+                            state.ui_screen = PAGE_MENU_GPS;
                             break;
 #endif
                         case M_SETTINGS:
-                            state.ui_screen = MENU_SETTINGS;
+                            state.ui_screen = PAGE_MENU_SETTINGS;
                             break;
                         case M_INFO:
-                            state.ui_screen = MENU_INFO;
+                            state.ui_screen = PAGE_MENU_INFO;
                             break;
                         case M_ABOUT:
-                            state.ui_screen = MENU_ABOUT;
+                            state.ui_screen = PAGE_MENU_ABOUT;
                             break;
                     }
                     // Reset menu selection
@@ -1776,17 +1819,17 @@ void ui_updateFSM(bool *sync_rtx)
                     _ui_menuBack(ui_state.last_main_state);
                 break;
             // Zone menu screen
-            case MENU_BANK:
+            case PAGE_MENU_BANK:
             // Channel menu screen
-            case MENU_CHANNEL:
+            case PAGE_MENU_CHANNEL:
             // Contacts menu screen
-            case MENU_CONTACTS:
+            case PAGE_MENU_CONTACTS:
                 if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
                     // Using 1 as parameter disables menu wrap around
                     _ui_menuUp(1);
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
                 {
-                    if(state.ui_screen == MENU_BANK)
+                    if(state.ui_screen == PAGE_MENU_BANK)
                     {
                         bankHdr_t bank;
                         // manu_selected is 0-based
@@ -1795,13 +1838,13 @@ void ui_updateFSM(bool *sync_rtx)
                         if(cps_readBankHeader(&bank, ui_state.menu_selected) != -1)
                             ui_state.menu_selected += 1;
                     }
-                    else if(state.ui_screen == MENU_CHANNEL)
+                    else if(state.ui_screen == PAGE_MENU_CHANNEL)
                     {
                         channel_t channel;
                         if(cps_readChannel(&channel, ui_state.menu_selected + 1) != -1)
                             ui_state.menu_selected += 1;
                     }
-                    else if(state.ui_screen == MENU_CONTACTS)
+                    else if(state.ui_screen == PAGE_MENU_CONTACTS)
                     {
                         contact_t contact;
                         if(cps_readContact(&contact, ui_state.menu_selected + 1) != -1)
@@ -1810,7 +1853,7 @@ void ui_updateFSM(bool *sync_rtx)
                 }
                 else if(msg.keys & KEY_ENTER)
                 {
-                    if(state.ui_screen == MENU_BANK)
+                    if(state.ui_screen == PAGE_MENU_BANK)
                     {
                         bankHdr_t newbank;
                         int result = 0;
@@ -1826,30 +1869,30 @@ void ui_updateFSM(bool *sync_rtx)
                         {
                             state.bank = ui_state.menu_selected - 1;
                             // If we were in VFO mode, save VFO channel
-                            if(ui_state.last_main_state == MAIN_VFO)
+                            if(ui_state.last_main_state == PAGE_MAIN_VFO)
                                 state.vfo_channel = state.channel;
                             // Load bank first channel
                             _ui_fsm_loadChannel(0, sync_rtx);
                             // Switch to MEM screen
-                            state.ui_screen = MAIN_MEM;
+                            state.ui_screen = PAGE_MAIN_MEM;
                         }
                     }
-                    if(state.ui_screen == MENU_CHANNEL)
+                    if(state.ui_screen == PAGE_MENU_CHANNEL)
                     {
                         // If we were in VFO mode, save VFO channel
-                        if(ui_state.last_main_state == MAIN_VFO)
+                        if(ui_state.last_main_state == PAGE_MAIN_VFO)
                             state.vfo_channel = state.channel;
                         _ui_fsm_loadChannel(ui_state.menu_selected, sync_rtx);
                         // Switch to MEM screen
-                        state.ui_screen = MAIN_MEM;
+                        state.ui_screen = PAGE_MAIN_MEM;
                     }
                 }
                 else if(msg.keys & KEY_ESC)
-                    _ui_menuBack(MENU_TOP);
+                    _ui_menuBack(PAGE_MENU_TOP);
                 break;
 #ifdef GPS_PRESENT
             // GPS menu screen
-            case MENU_GPS:
+            case PAGE_MENU_GPS:
                 if ((msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
                 {// quick press repeat vp, long press summary.
                     if (msg.long_press)
@@ -1859,117 +1902,117 @@ void ui_updateFSM(bool *sync_rtx)
                     f1Handled = true;
                 }
                 else if(msg.keys & KEY_ESC)
-                    _ui_menuBack(MENU_TOP);
+                    _ui_menuBack(PAGE_MENU_TOP);
                 break;
 #endif
             // Settings menu screen
-            case MENU_SETTINGS:
+            case PAGE_MENU_SETTINGS:
                 if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                    _ui_menuUp(settings_num);
+                    _ui_menuUp( uiGetPageNumOf( PAGE_MENU_SETTINGS ) );
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                    _ui_menuDown(settings_num);
+                    _ui_menuDown( uiGetPageNumOf( PAGE_MENU_SETTINGS ) );
                 else if(msg.keys & KEY_ENTER)
                 {
 
                     switch(ui_state.menu_selected)
                     {
                         case S_DISPLAY:
-                            state.ui_screen = SETTINGS_DISPLAY;
+                            state.ui_screen = PAGE_SETTINGS_DISPLAY;
                             break;
 #ifdef RTC_PRESENT
                         case S_TIMEDATE:
-                            state.ui_screen = SETTINGS_TIMEDATE;
+                            state.ui_screen = PAGE_SETTINGS_TIMEDATE;
                             break;
 #endif
 #ifdef GPS_PRESENT
                         case S_GPS:
-                            state.ui_screen = SETTINGS_GPS;
+                            state.ui_screen = PAGE_SETTINGS_GPS;
                             break;
 #endif
                         case S_RADIO:
-                            state.ui_screen = SETTINGS_RADIO;
+                            state.ui_screen = PAGE_SETTINGS_RADIO;
                             break;
                         case S_M17:
-                            state.ui_screen = SETTINGS_M17;
+                            state.ui_screen = PAGE_SETTINGS_M17;
                             break;
                         case S_VOICE:
-                            state.ui_screen = SETTINGS_VOICE;
+                            state.ui_screen = PAGE_SETTINGS_VOICE;
                             break;
                         case S_RESET2DEFAULTS:
-                            state.ui_screen = SETTINGS_RESET2DEFAULTS;
+                            state.ui_screen = PAGE_SETTINGS_RESET_TO_DEFAULTS;
                             break;
                         default:
-                            state.ui_screen = MENU_SETTINGS;
+                            state.ui_screen = PAGE_MENU_SETTINGS;
                     }
                     // Reset menu selection
                     ui_state.menu_selected = 0;
                 }
                 else if(msg.keys & KEY_ESC)
-                    _ui_menuBack(MENU_TOP);
+                    _ui_menuBack(PAGE_MENU_TOP);
                 break;
             // Flash backup and restore menu screen
-            case MENU_BACKUP_RESTORE:
+            case PAGE_MENU_BACKUP_RESTORE:
                 if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                    _ui_menuUp(settings_num);
+                    _ui_menuUp( uiGetPageNumOf( PAGE_MENU_SETTINGS ) );
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                    _ui_menuDown(settings_num);
+                    _ui_menuDown( uiGetPageNumOf( PAGE_MENU_SETTINGS ) );
                 else if(msg.keys & KEY_ENTER)
                 {
 
                     switch(ui_state.menu_selected)
                     {
                         case BR_BACKUP:
-                            state.ui_screen = MENU_BACKUP;
+                            state.ui_screen = PAGE_MENU_BACKUP;
                             break;
                         case BR_RESTORE:
-                            state.ui_screen = MENU_RESTORE;
+                            state.ui_screen = PAGE_MENU_RESTORE;
                             break;
                         default:
-                            state.ui_screen = MENU_BACKUP_RESTORE;
+                            state.ui_screen = PAGE_MENU_BACKUP_RESTORE;
                     }
                     // Reset menu selection
                     ui_state.menu_selected = 0;
                 }
                 else if(msg.keys & KEY_ESC)
-                    _ui_menuBack(MENU_TOP);
+                    _ui_menuBack(PAGE_MENU_TOP);
                 break;
-            case MENU_BACKUP:
-            case MENU_RESTORE:
+            case PAGE_MENU_BACKUP:
+            case PAGE_MENU_RESTORE:
                 if(msg.keys & KEY_ESC)
-                    _ui_menuBack(MENU_TOP);
+                    _ui_menuBack(PAGE_MENU_TOP);
                 break;
             // Info menu screen
-            case MENU_INFO:
+            case PAGE_MENU_INFO:
                 if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                    _ui_menuUp(info_num);
+                    _ui_menuUp( uiGetPageNumOf( PAGE_MENU_INFO ) );
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                    _ui_menuDown(info_num);
+                    _ui_menuDown( uiGetPageNumOf( PAGE_MENU_INFO ) );
                 else if(msg.keys & KEY_ESC)
-                    _ui_menuBack(MENU_TOP);
+                    _ui_menuBack(PAGE_MENU_TOP);
                 break;
             // About screen
-            case MENU_ABOUT:
+            case PAGE_MENU_ABOUT:
                 if(msg.keys & KEY_ESC)
-                    _ui_menuBack(MENU_TOP);
+                    _ui_menuBack(PAGE_MENU_TOP);
                 break;
 #ifdef RTC_PRESENT
             // Time&Date settings screen
-            case SETTINGS_TIMEDATE:
+            case PAGE_SETTINGS_TIMEDATE:
                 if(msg.keys & KEY_ENTER)
                 {
                     // Switch to set Time&Date mode
-                    state.ui_screen = SETTINGS_TIMEDATE_SET;
+                    state.ui_screen = PAGE_SETTINGS_TIMEDATE_SET;
                     // Reset input position and selection
                     ui_state.input_position = 0;
                     memset(&ui_state.new_timedate, 0, sizeof(datetime_t));
-                    vp_announceBuffer(&currentLanguage->timeAndDate, 
+                    vp_announceBuffer(&currentLanguage->timeAndDate,
                                       true, false, "dd/mm/yy");
                 }
                 else if(msg.keys & KEY_ESC)
-                    _ui_menuBack(MENU_SETTINGS);
+                    _ui_menuBack(PAGE_MENU_SETTINGS);
                 break;
             // Time&Date settings screen, edit mode
-            case SETTINGS_TIMEDATE_SET:
+            case PAGE_SETTINGS_TIMEDATE_SET:
                 if(msg.keys & KEY_ENTER)
                 {
                     // Save time only if all digits have been inserted
@@ -1982,10 +2025,10 @@ void ui_updateFSM(bool *sync_rtx)
                     platform_setTime(utc_time);
                     state.time = utc_time;
                     vp_announceSettingsTimeDate();
-                    state.ui_screen = SETTINGS_TIMEDATE;
+                    state.ui_screen = PAGE_SETTINGS_TIMEDATE;
                 }
                 else if(msg.keys & KEY_ESC)
-                    _ui_menuBack(SETTINGS_TIMEDATE);
+                    _ui_menuBack(PAGE_SETTINGS_TIMEDATE);
                 else if(input_isNumberPressed(msg))
                 {
                     // Discard excess digits
@@ -1998,23 +2041,23 @@ void ui_updateFSM(bool *sync_rtx)
                 }
                 break;
 #endif
-            case SETTINGS_DISPLAY:
+            case PAGE_SETTINGS_DISPLAY:
                 if(msg.keys & KEY_LEFT || (ui_state.edit_mode &&
                    (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)))
                 {
                     switch(ui_state.menu_selected)
                     {
-#ifdef SCREEN_BRIGHTNESS                    
+#ifdef SCREEN_BRIGHTNESS
                         case D_BRIGHTNESS:
                             _ui_changeBrightness(-5);
-                            vp_announceSettingsInt(&currentLanguage->brightness, queueFlags, 
+                            vp_announceSettingsInt(&currentLanguage->brightness, queueFlags,
                                                    state.settings.brightness);
                             break;
 #endif
 #ifdef SCREEN_CONTRAST
                         case D_CONTRAST:
                             _ui_changeContrast(-4);
-                            vp_announceSettingsInt(&currentLanguage->brightness, queueFlags, 
+                            vp_announceSettingsInt(&currentLanguage->brightness, queueFlags,
                                                    state.settings.contrast);
                             break;
 #endif
@@ -2023,7 +2066,7 @@ void ui_updateFSM(bool *sync_rtx)
                             vp_announceDisplayTimer();
                             break;
                         default:
-                            state.ui_screen = SETTINGS_DISPLAY;
+                            state.ui_screen = PAGE_SETTINGS_DISPLAY;
                     }
                 }
                 else if(msg.keys & KEY_RIGHT || (ui_state.edit_mode &&
@@ -2031,7 +2074,7 @@ void ui_updateFSM(bool *sync_rtx)
                 {
                     switch(ui_state.menu_selected)
                     {
-#ifdef SCREEN_BRIGHTNESS                    
+#ifdef SCREEN_BRIGHTNESS
                         case D_BRIGHTNESS:
                             _ui_changeBrightness(+5);
                             vp_announceSettingsInt(&currentLanguage->brightness, queueFlags,
@@ -2041,7 +2084,7 @@ void ui_updateFSM(bool *sync_rtx)
 #ifdef SCREEN_CONTRAST
                         case D_CONTRAST:
                             _ui_changeContrast(+4);
-                            vp_announceSettingsInt(&currentLanguage->brightness, queueFlags, 
+                            vp_announceSettingsInt(&currentLanguage->brightness, queueFlags,
                                                    state.settings.contrast);
                             break;
 #endif
@@ -2050,20 +2093,20 @@ void ui_updateFSM(bool *sync_rtx)
                             vp_announceDisplayTimer();
                             break;
                         default:
-                            state.ui_screen = SETTINGS_DISPLAY;
+                            state.ui_screen = PAGE_SETTINGS_DISPLAY;
                     }
                 }
                 else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                    _ui_menuUp(display_num);
+                    _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_DISPLAY ) );
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                    _ui_menuDown(display_num);
+                    _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_DISPLAY ) );
                 else if(msg.keys & KEY_ENTER)
                     ui_state.edit_mode = !ui_state.edit_mode;
                 else if(msg.keys & KEY_ESC)
-                    _ui_menuBack(MENU_SETTINGS);
+                    _ui_menuBack(PAGE_MENU_SETTINGS);
                 break;
 #ifdef GPS_PRESENT
-            case SETTINGS_GPS:
+            case PAGE_SETTINGS_GPS:
                 if(msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT ||
                    (ui_state.edit_mode &&
                    (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT ||
@@ -2076,13 +2119,13 @@ void ui_updateFSM(bool *sync_rtx)
                                 state.settings.gps_enabled = 0;
                             else
                                 state.settings.gps_enabled = 1;
-                            vp_announceSettingsOnOffToggle(&currentLanguage->gpsEnabled, 
+                            vp_announceSettingsOnOffToggle(&currentLanguage->gpsEnabled,
                                                            queueFlags,
                                                            state.settings.gps_enabled);
                             break;
                         case G_SET_TIME:
                             state.gps_set_time = !state.gps_set_time;
-                            vp_announceSettingsOnOffToggle(&currentLanguage->gpsSetTime, 
+                            vp_announceSettingsOnOffToggle(&currentLanguage->gpsSetTime,
                                                            queueFlags,
                                                            state.gps_set_time);
                             break;
@@ -2096,21 +2139,21 @@ void ui_updateFSM(bool *sync_rtx)
                             vp_announceTimeZone(state.settings.utc_timezone, queueFlags);
                             break;
                         default:
-                            state.ui_screen = SETTINGS_GPS;
+                            state.ui_screen = PAGE_SETTINGS_GPS;
                     }
                 }
                 else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                    _ui_menuUp(settings_gps_num);
+                    _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_GPS ) );
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                    _ui_menuDown(settings_gps_num);
+                    _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_GPS ) );
                 else if(msg.keys & KEY_ENTER)
                     ui_state.edit_mode = !ui_state.edit_mode;
                 else if(msg.keys & KEY_ESC)
-                    _ui_menuBack(MENU_SETTINGS);
+                    _ui_menuBack(PAGE_MENU_SETTINGS);
                 break;
 #endif
             // Radio Settings
-            case SETTINGS_RADIO:
+            case PAGE_SETTINGS_RADIO:
                 // If the entry is selected with enter we are in edit_mode
                 if (ui_state.edit_mode)
                 {
@@ -2187,16 +2230,16 @@ void ui_updateFSM(bool *sync_rtx)
                             }
                             break;
                         default:
-                            state.ui_screen = SETTINGS_RADIO;
+                            state.ui_screen = PAGE_SETTINGS_RADIO;
                     }
                     // If ENTER or ESC are pressed, exit edit mode, R_OFFSET is managed separately
                     if((ui_state.menu_selected != R_OFFSET && msg.keys & KEY_ENTER) || msg.keys & KEY_ESC)
                         ui_state.edit_mode = false;
                 }
                 else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                    _ui_menuUp(settings_radio_num);
+                    _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_RADIO ) );
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                    _ui_menuDown(settings_radio_num);
+                    _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_RADIO ) );
                 else if(msg.keys & KEY_ENTER) {
                     ui_state.edit_mode = true;
                     // If we are entering R_OFFSET clear temp offset
@@ -2206,10 +2249,10 @@ void ui_updateFSM(bool *sync_rtx)
                     ui_state.input_position = 0;
                 }
                 else if(msg.keys & KEY_ESC)
-                    _ui_menuBack(MENU_SETTINGS);
+                    _ui_menuBack(PAGE_MENU_SETTINGS);
                 break;
             // M17 Settings
-            case SETTINGS_M17:
+            case PAGE_SETTINGS_M17:
                 if(ui_state.edit_mode)
                 {
                     switch (ui_state.menu_selected)
@@ -2289,9 +2332,9 @@ void ui_updateFSM(bool *sync_rtx)
                         }
                     }
                     else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                        _ui_menuUp(settings_m17_num);
+                        _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_M17 ) );
                     else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                        _ui_menuDown(settings_m17_num);
+                        _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_M17 ) );
                     else if((msg.keys & KEY_RIGHT) && (ui_state.menu_selected == M17_CAN))
                             _ui_changeM17Can(+1);
                     else if((msg.keys & KEY_LEFT)  && (ui_state.menu_selected == M17_CAN))
@@ -2299,11 +2342,11 @@ void ui_updateFSM(bool *sync_rtx)
                     else if(msg.keys & KEY_ESC)
                     {
                         *sync_rtx = true;
-                        _ui_menuBack(MENU_SETTINGS);
+                        _ui_menuBack(PAGE_MENU_SETTINGS);
                     }
                 }
                 break;
-            case SETTINGS_VOICE:
+            case PAGE_SETTINGS_VOICE:
                 if(msg.keys & KEY_LEFT || (ui_state.edit_mode &&
                    (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)))
                 {
@@ -2316,7 +2359,7 @@ void ui_updateFSM(bool *sync_rtx)
                             _ui_changePhoneticSpell(false);
                             break;
                         default:
-                            state.ui_screen = SETTINGS_VOICE;
+                            state.ui_screen = PAGE_SETTINGS_VOICE;
                     }
                 }
                 else if(msg.keys & KEY_RIGHT || (ui_state.edit_mode &&
@@ -2331,19 +2374,19 @@ void ui_updateFSM(bool *sync_rtx)
                             _ui_changePhoneticSpell(true);
                             break;
                         default:
-                            state.ui_screen = SETTINGS_VOICE;
+                            state.ui_screen = PAGE_SETTINGS_VOICE;
                     }
                 }
                 else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                    _ui_menuUp(settings_voice_num);
+                    _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_VOICE ) );
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                    _ui_menuDown(settings_voice_num);
+                    _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_VOICE ) );
                 else if(msg.keys & KEY_ENTER)
                     ui_state.edit_mode = !ui_state.edit_mode;
                 else if(msg.keys & KEY_ESC)
-                    _ui_menuBack(MENU_SETTINGS);
+                    _ui_menuBack(PAGE_MENU_SETTINGS);
                 break;
-            case SETTINGS_RESET2DEFAULTS:
+            case PAGE_SETTINGS_RESET_TO_DEFAULTS:
                 if(! ui_state.edit_mode){
                     //require a confirmation ENTER, then another
                     //edit_mode is slightly misused to allow for this
@@ -2353,26 +2396,26 @@ void ui_updateFSM(bool *sync_rtx)
                     }
                     else if(msg.keys & KEY_ESC)
                     {
-                        _ui_menuBack(MENU_SETTINGS);
+                        _ui_menuBack(PAGE_MENU_SETTINGS);
                     }
                 } else {
                     if(msg.keys & KEY_ENTER)
                     {
                         ui_state.edit_mode = false;
                         state_resetSettingsAndVfo();
-                        _ui_menuBack(MENU_SETTINGS);
+                        _ui_menuBack(PAGE_MENU_SETTINGS);
                     }
                     else if(msg.keys & KEY_ESC)
                     {
                         ui_state.edit_mode = false;
-                        _ui_menuBack(MENU_SETTINGS);
+                        _ui_menuBack(PAGE_MENU_SETTINGS);
                     }
                 }
                 break;
         }
 
-        // Enable Tx only if in MAIN_VFO or MAIN_MEM states
-        bool inMemOrVfo = (state.ui_screen == MAIN_VFO) || (state.ui_screen == MAIN_MEM);
+        // Enable Tx only if in PAGE_MAIN_VFO or PAGE_MAIN_MEM states
+        bool inMemOrVfo = (state.ui_screen == PAGE_MAIN_VFO) || (state.ui_screen == PAGE_MAIN_MEM);
         if ((macro_menu == true) || ((inMemOrVfo == false) && (state.txDisable == false)))
         {
             state.txDisable = true;
@@ -2390,7 +2433,7 @@ void ui_updateFSM(bool *sync_rtx)
             vp_announceScreen(state.ui_screen);
         }
         // generic beep for any keydown if beep is enabled.
-        // At vp levels higher than beep, keys will generate voice so no need 
+        // At vp levels higher than beep, keys will generate voice so no need
         // to beep or you'll get an unwanted click.
         if ((msg.keys &0xffff) && (state.settings.vpLevel == vpBeep))
             vp_beep(BEEP_KEY_GENERIC, SHORT_BEEP);
@@ -2401,7 +2444,7 @@ void ui_updateFSM(bool *sync_rtx)
     else if(event.type == EVENT_STATUS)
     {
 #ifdef GPS_PRESENT
-        if ((state.ui_screen == MENU_GPS) && 
+        if ((state.ui_screen == PAGE_MENU_GPS) &&
             (!vp_isPlaying()) &&
             (state.settings.vpLevel > vpLow) &&
             (!txOngoing && !rtx_rxSquelchOpen()))
@@ -2429,112 +2472,109 @@ void ui_updateFSM(bool *sync_rtx)
 
 bool ui_updateGUI()
 {
-    if(redraw_needed == false)
-        return false;
-
-    if(!layout_ready)
+    if( redraw_needed == false )
     {
-        layout = _ui_calculateLayout();
-        layout_ready = true;
+        return false ;
     }
+
     // Draw current GUI page
     switch(last_state.ui_screen)
     {
         // VFO main screen
-        case MAIN_VFO:
+        case PAGE_MAIN_VFO:
             _ui_drawMainVFO(&ui_state);
             break;
         // VFO frequency input screen
-        case MAIN_VFO_INPUT:
+        case PAGE_MAIN_VFO_INPUT:
             _ui_drawMainVFOInput(&ui_state);
             break;
         // MEM main screen
-        case MAIN_MEM:
+        case PAGE_MAIN_MEM:
             _ui_drawMainMEM(&ui_state);
             break;
         // Top menu screen
-        case MENU_TOP:
+        case PAGE_MENU_TOP:
             _ui_drawMenuTop(&ui_state);
             break;
         // Zone menu screen
-        case MENU_BANK:
+        case PAGE_MENU_BANK:
             _ui_drawMenuBank(&ui_state);
             break;
         // Channel menu screen
-        case MENU_CHANNEL:
+        case PAGE_MENU_CHANNEL:
             _ui_drawMenuChannel(&ui_state);
             break;
         // Contacts menu screen
-        case MENU_CONTACTS:
+        case PAGE_MENU_CONTACTS:
             _ui_drawMenuContacts(&ui_state);
             break;
 #ifdef GPS_PRESENT
         // GPS menu screen
-        case MENU_GPS:
+        case PAGE_MENU_GPS:
             _ui_drawMenuGPS();
             break;
 #endif
         // Settings menu screen
-        case MENU_SETTINGS:
+        case PAGE_MENU_SETTINGS:
             _ui_drawMenuSettings(&ui_state);
             break;
         // Flash backup and restore screen
-        case MENU_BACKUP_RESTORE:
+        case PAGE_MENU_BACKUP_RESTORE:
             _ui_drawMenuBackupRestore(&ui_state);
             break;
         // Flash backup screen
-        case MENU_BACKUP:
+        case PAGE_MENU_BACKUP:
             _ui_drawMenuBackup(&ui_state);
             break;
         // Flash restore screen
-        case MENU_RESTORE:
+        case PAGE_MENU_RESTORE:
             _ui_drawMenuRestore(&ui_state);
             break;
         // Info menu screen
-        case MENU_INFO:
+        case PAGE_MENU_INFO:
             _ui_drawMenuInfo(&ui_state);
             break;
         // About menu screen
-        case MENU_ABOUT:
+        case PAGE_MENU_ABOUT:
             _ui_drawMenuAbout();
             break;
 #ifdef RTC_PRESENT
         // Time&Date settings screen
-        case SETTINGS_TIMEDATE:
+        case PAGE_SETTINGS_TIMEDATE:
             _ui_drawSettingsTimeDate();
             break;
         // Time&Date settings screen, edit mode
-        case SETTINGS_TIMEDATE_SET:
+        case PAGE_SETTINGS_TIMEDATE_SET:
             _ui_drawSettingsTimeDateSet(&ui_state);
             break;
 #endif
         // Display settings screen
-        case SETTINGS_DISPLAY:
+        case PAGE_SETTINGS_DISPLAY:
             _ui_drawSettingsDisplay(&ui_state);
             break;
 #ifdef GPS_PRESENT
         // GPS settings screen
-        case SETTINGS_GPS:
+        case PAGE_SETTINGS_GPS:
             _ui_drawSettingsGPS(&ui_state);
             break;
 #endif
         // M17 settings screen
-        case SETTINGS_M17:
+        case PAGE_SETTINGS_M17:
             _ui_drawSettingsM17(&ui_state);
             break;
-        case SETTINGS_VOICE:
+        case PAGE_SETTINGS_VOICE:
             _ui_drawSettingsVoicePrompts(&ui_state);
             break;
         // Screen to support resetting Settings and VFO to defaults
-        case SETTINGS_RESET2DEFAULTS:
+        case PAGE_SETTINGS_RESET_TO_DEFAULTS:
             _ui_drawSettingsReset2Defaults(&ui_state);
             break;
         // Screen to set frequency offset and step
-        case SETTINGS_RADIO:
+        case PAGE_SETTINGS_RADIO:
             _ui_drawSettingsRadio(&ui_state);
             break;
         // Low battery screen
-        case LOW_BAT:
+        case PAGE_LOW_BAT:
             _ui_drawLowBatteryScreen();
             break;
     }

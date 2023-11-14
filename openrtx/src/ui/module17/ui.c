@@ -31,7 +31,7 @@
 #include <battery.h>
 #include <input.h>
 #include <hwconfig.h>
-
+aaa
 /* UI main screen functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBackground();
 extern void _ui_drawMainTop();
@@ -453,7 +453,7 @@ void _ui_fsm_confirmVFOInput(bool *sync_rtx)
             state.channel.tx_frequency = ui_state.new_tx_frequency;
             *sync_rtx = true;
         }
-        state.ui_screen = MAIN_VFO;
+        state.ui_screen = PAGE_MAIN_VFO;
     }
 }
 
@@ -497,7 +497,7 @@ void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx)
                 state.channel.tx_frequency = ui_state.new_tx_frequency;
                 *sync_rtx = true;
             }
-            state.ui_screen = MAIN_VFO;
+            state.ui_screen = PAGE_MAIN_VFO;
         }
     }
 }
@@ -641,7 +641,7 @@ void _ui_menuUp(uint8_t menu_entries)
     uint8_t ver = platform_getHwInfo()->hw_version;
 
     // Hide the "shutdown" main menu entry for versions lower than 0.1e
-    if((ver < 1) && (state.ui_screen == MENU_TOP))
+    if((ver < 1) && (state.ui_screen == PAGE_MENU_TOP))
         maxEntries -= 1;
 
     if(ui_state.menu_selected > 0)
@@ -656,7 +656,7 @@ void _ui_menuDown(uint8_t menu_entries)
    uint8_t ver = platform_getHwInfo()->hw_version;
 
     // Hide the "shutdown" main menu entry for versions lower than 0.1e
-    if((ver < 1) && (state.ui_screen == MENU_TOP))
+    if((ver < 1) && (state.ui_screen == PAGE_MENU_TOP))
         maxEntries -= 1;
 
     if(ui_state.menu_selected < maxEntries)
@@ -806,7 +806,7 @@ void ui_updateFSM(bool *sync_rtx)
         switch(state.ui_screen)
         {
             // VFO screen
-            case MAIN_VFO:
+            case PAGE_MAIN_VFO:
                 if(ui_state.edit_mode)
                 {
                     if(msg.keys & KEY_ENTER)
@@ -829,7 +829,7 @@ void ui_updateFSM(bool *sync_rtx)
                         // Save current main state
                         ui_state.last_main_state = state.ui_screen;
                         // Open Menu
-                        state.ui_screen = MENU_TOP;
+                        state.ui_screen = PAGE_MENU_TOP;
                     }
                     else if (msg.keys & KEY_RIGHT)
                     {
@@ -839,7 +839,7 @@ void ui_updateFSM(bool *sync_rtx)
                 break;
 
             // Top menu screen
-            case MENU_TOP:
+            case PAGE_MENU_TOP:
                 if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
                     _ui_menuUp(menu_num);
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
@@ -849,13 +849,13 @@ void ui_updateFSM(bool *sync_rtx)
                     switch(ui_state.menu_selected)
                     {
                         case M_SETTINGS:
-                            state.ui_screen = MENU_SETTINGS;
+                            state.ui_screen = PAGE_MENU_SETTINGS;
                             break;
                         case M_INFO:
-                            state.ui_screen = MENU_INFO;
+                            state.ui_screen = PAGE_MENU_INFO;
                             break;
                         case M_ABOUT:
-                            state.ui_screen = MENU_ABOUT;
+                            state.ui_screen = PAGE_MENU_ABOUT;
                             break;
                         case M_SHUTDOWN:
                             state.devStatus = SHUTDOWN;
@@ -869,7 +869,7 @@ void ui_updateFSM(bool *sync_rtx)
                 break;
 
             // Settings menu screen
-            case MENU_SETTINGS:
+            case PAGE_MENU_SETTINGS:
                 if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
                     _ui_menuUp(settings_num);
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
@@ -880,42 +880,42 @@ void ui_updateFSM(bool *sync_rtx)
                     switch(ui_state.menu_selected)
                     {
                         case S_DISPLAY:
-                            state.ui_screen = SETTINGS_DISPLAY;
+                            state.ui_screen = PAGE_SETTINGS_DISPLAY;
                             break;
                         case S_M17:
-                            state.ui_screen = SETTINGS_M17;
+                            state.ui_screen = PAGE_SETTINGS_M17;
                             break;
                         case S_MOD17:
-                            state.ui_screen = SETTINGS_MODULE17;
+                            state.ui_screen = PAGE_SETTINGS_MODULE17;
                             break;
                         case S_RESET2DEFAULTS:
-                            state.ui_screen = SETTINGS_RESET2DEFAULTS;
+                            state.ui_screen = PAGE_SETTINGS_RESET_TO_DEFAULTS;
                             break;
                         default:
-                            state.ui_screen = MENU_SETTINGS;
+                            state.ui_screen = PAGE_MENU_SETTINGS;
                     }
                     // Reset menu selection
                     ui_state.menu_selected = 0;
                 }
                 else if(msg.keys & KEY_ESC)
-                    _ui_menuBack(MENU_TOP);
+                    _ui_menuBack(PAGE_MENU_TOP);
                 break;
             // Info menu screen
-            case MENU_INFO:
+            case PAGE_MENU_INFO:
                 if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
                     _ui_menuUp(info_num);
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
                     _ui_menuDown(info_num);
                 else if(msg.keys & KEY_ESC)
-                    _ui_menuBack(MENU_TOP);
+                    _ui_menuBack(PAGE_MENU_TOP);
                 break;
             // About screen
-            case MENU_ABOUT:
+            case PAGE_MENU_ABOUT:
                 if(msg.keys & KEY_ESC)
-                    _ui_menuBack(MENU_TOP);
+                    _ui_menuBack(PAGE_MENU_TOP);
                 break;
 
-            case SETTINGS_DISPLAY:
+            case PAGE_SETTINGS_DISPLAY:
                 if(msg.keys & KEY_LEFT)
                 {
                     switch(ui_state.menu_selected)
@@ -929,7 +929,7 @@ void ui_updateFSM(bool *sync_rtx)
                             _ui_changeTimer(-1);
                             break;
                         default:
-                            state.ui_screen = SETTINGS_DISPLAY;
+                            state.ui_screen = PAGE_SETTINGS_DISPLAY;
                     }
                 }
                 else if(msg.keys & KEY_RIGHT)
@@ -945,7 +945,7 @@ void ui_updateFSM(bool *sync_rtx)
                             _ui_changeTimer(+1);
                             break;
                         default:
-                            state.ui_screen = SETTINGS_DISPLAY;
+                            state.ui_screen = PAGE_SETTINGS_DISPLAY;
                     }
                 }
                 else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
@@ -955,12 +955,12 @@ void ui_updateFSM(bool *sync_rtx)
                 else if(msg.keys & KEY_ESC)
                     {
                         nvm_writeSettings(&state.settings);
-                        _ui_menuBack(MENU_SETTINGS);
+                        _ui_menuBack(PAGE_MENU_SETTINGS);
                     }
                 break;
 
             // M17 Settings
-            case SETTINGS_M17:
+            case PAGE_SETTINGS_M17:
 
                 if(ui_state.edit_mode)
                 {
@@ -990,7 +990,7 @@ void ui_updateFSM(bool *sync_rtx)
                                 state.settings.m17_can_rx = !state.settings.m17_can_rx;
                                 break;
                             default:
-                                state.ui_screen = SETTINGS_M17;
+                                state.ui_screen = PAGE_SETTINGS_M17;
                         }
                     }
                     else if(msg.keys & KEY_RIGHT)
@@ -1004,7 +1004,7 @@ void ui_updateFSM(bool *sync_rtx)
                                 state.settings.m17_can_rx = !state.settings.m17_can_rx;
                                 break;
                             default:
-                                state.ui_screen = SETTINGS_M17;
+                                state.ui_screen = PAGE_SETTINGS_M17;
                         }
                     }
                     else if(msg.keys & KEY_ENTER)
@@ -1017,7 +1017,7 @@ void ui_updateFSM(bool *sync_rtx)
                                 _ui_textInputReset(ui_state.new_callsign);
                                 break;
                             default:
-                                state.ui_screen = SETTINGS_M17;
+                                state.ui_screen = PAGE_SETTINGS_M17;
                         }
                     }
                     else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
@@ -1028,11 +1028,11 @@ void ui_updateFSM(bool *sync_rtx)
                     {
                         *sync_rtx = true;
                         nvm_writeSettings(&state.settings);
-                        _ui_menuBack(MENU_SETTINGS);
+                        _ui_menuBack(PAGE_MENU_SETTINGS);
                     }
                 }
                 break;
-            case SETTINGS_RESET2DEFAULTS:
+            case PAGE_SETTINGS_RESET_TO_DEFAULTS:
                 if(! ui_state.edit_mode)
                 {
                     //require a confirmation ENTER, then another
@@ -1043,7 +1043,7 @@ void ui_updateFSM(bool *sync_rtx)
                     }
                     else if(msg.keys & KEY_ESC)
                     {
-                        _ui_menuBack(MENU_SETTINGS);
+                        _ui_menuBack(PAGE_MENU_SETTINGS);
                     }
                 }
                 else
@@ -1061,17 +1061,17 @@ void ui_updateFSM(bool *sync_rtx)
 
                         state_resetSettingsAndVfo();
                         nvm_writeSettings(&state.settings);
-                        _ui_menuBack(MENU_SETTINGS);
+                        _ui_menuBack(PAGE_MENU_SETTINGS);
                     }
                     else if(msg.keys & KEY_ESC)
                     {
                         ui_state.edit_mode = false;
-                        _ui_menuBack(MENU_SETTINGS);
+                        _ui_menuBack(PAGE_MENU_SETTINGS);
                     }
                 }
                 break;
             // Module17 Settings
-            case SETTINGS_MODULE17:
+            case PAGE_SETTINGS_MODULE17:
                 if(msg.keys & KEY_LEFT)
                 {
                     switch(ui_state.menu_selected)
@@ -1092,7 +1092,7 @@ void ui_updateFSM(bool *sync_rtx)
                             _ui_changeMicGain(-1);
                             break;
                         default:
-                            state.ui_screen = SETTINGS_MODULE17;
+                            state.ui_screen = PAGE_SETTINGS_MODULE17;
                     }
                 }
                 else if(msg.keys & KEY_RIGHT)
@@ -1115,7 +1115,7 @@ void ui_updateFSM(bool *sync_rtx)
                             _ui_changeMicGain(+1);
                             break;
                         default:
-                            state.ui_screen = SETTINGS_MODULE17;
+                            state.ui_screen = PAGE_SETTINGS_MODULE17;
                     }
                 }
                 else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
@@ -1125,7 +1125,7 @@ void ui_updateFSM(bool *sync_rtx)
                 else if(msg.keys & KEY_ESC)
                 {
                     nvm_writeSettings(&state.settings);
-                    _ui_menuBack(MENU_SETTINGS);
+                    _ui_menuBack(PAGE_MENU_SETTINGS);
                 }
                 break;
         }
@@ -1159,39 +1159,39 @@ bool ui_updateGUI()
     switch(last_state.ui_screen)
     {
         // VFO main screen
-        case MAIN_VFO:
+        case PAGE_MAIN_VFO:
             _ui_drawMainVFO(&ui_state);
             break;
         // Top menu screen
-        case MENU_TOP:
+        case PAGE_MENU_TOP:
             _ui_drawMenuTop(&ui_state);
             break;
         // Settings menu screen
-        case MENU_SETTINGS:
+        case PAGE_MENU_SETTINGS:
             _ui_drawMenuSettings(&ui_state);
             break;
         // Info menu screen
-        case MENU_INFO:
+        case PAGE_MENU_INFO:
             _ui_drawMenuInfo(&ui_state);
             break;
         // About menu screen
-        case MENU_ABOUT:
+        case PAGE_MENU_ABOUT:
             _ui_drawMenuAbout();
             break;
         // Display settings screen
-        case SETTINGS_DISPLAY:
+        case PAGE_SETTINGS_DISPLAY:
             _ui_drawSettingsDisplay(&ui_state);
             break;
         // M17 settings screen
-        case SETTINGS_M17:
+        case PAGE_SETTINGS_M17:
             _ui_drawSettingsM17(&ui_state);
             break;
         // Module 17 settings screen
-        case SETTINGS_MODULE17:
+        case PAGE_SETTINGS_MODULE17:
             _ui_drawSettingsModule17(&ui_state);
             break;
         // Screen to support resetting Settings and VFO to defaults
-        case SETTINGS_RESET2DEFAULTS:
+        case PAGE_SETTINGS_RESET_TO_DEFAULTS:
             _ui_drawSettingsReset2Defaults(&ui_state);
             break;
     }
