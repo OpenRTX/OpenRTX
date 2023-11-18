@@ -993,6 +993,24 @@ void vp_announceDisplayTimer()
     vp_play();
 }
 
+void vp_announceMacroLatch()
+{
+    bool isPlaying = vp_isPlaying();
+
+    vp_flush();
+
+    if (isPlaying == false)
+        vp_queueStringTableEntry(&currentLanguage->macroLatching);
+
+    if(state.settings.macro_latching)
+        vp_queuePrompt(PROMPT_1);
+    else
+        vp_queuePrompt(PROMPT_0);
+
+    vp_play();
+}
+
+
 vpQueueFlags_t vp_getVoiceLevelQueueFlags()
 {
     uint8_t vpLevel = state.settings.vpLevel;

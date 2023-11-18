@@ -61,6 +61,7 @@ typedef struct
             _reserved       : 4;
     bool    m17_can_rx;           // Check M17 CAN on RX
     char    m17_dest[10];         // M17 destination
+    bool    macro_latching;       // Can macro menu latch
 }
 __attribute__((packed)) settings_t;
 
@@ -84,7 +85,8 @@ static const settings_t default_settings =
     0,                // Phonetic spell off
     0,                // not used
     false,            // Check M17 CAN on RX
-    ""                // Empty M17 destination
+    "",               // Empty M17 destination
+    true,             // Macro menu latches
 };
 
 #endif /* SETTINGS_H */

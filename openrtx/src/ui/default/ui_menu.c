@@ -284,6 +284,12 @@ int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
             snprintf(buf, max_len, "%s",
                      display_timer_values[last_state.settings.display_timer]);
             return 0;
+        case D_MACRO_LATCH:
+            if(state.settings.macro_latching)
+                strncpy(buf, "1", max_len);
+            else
+                strncpy(buf, "0", max_len);
+            return 0;
     }
     snprintf(buf, max_len, "%d", value);
     return 0;

@@ -118,6 +118,7 @@ enum displayItems
     D_CONTRAST,
 #endif
     D_TIMER,
+    D_MACRO_LATCH,
 };
 
 #ifdef GPS_PRESENT

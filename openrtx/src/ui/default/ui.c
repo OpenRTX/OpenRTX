@@ -153,7 +153,8 @@ const char *display_items[] =
 #ifdef SCREEN_CONTRAST
     "Contrast",
 #endif
-    "Timer"
+    "Timer",
+    "Macro Latch."
 };
 
 #ifdef GPS_PRESENT
@@ -774,6 +775,11 @@ static void _ui_changeTimer(int variation)
     state.settings.display_timer += variation;
 }
 
+static void _ui_toggleMacroLatch()
+{
+        state.settings.macro_latching ^= true;
+}
+
 static inline void _ui_changeM17Can(int variation)
 {
     uint8_t can = state.settings.m17_can;
@@ -1382,7 +1388,7 @@ void ui_updateFSM(bool *sync_rtx)
         {
             macro_menu = true;
             // long press moni on its own latches function.
-            if (moniPressed && msg.long_press && !macro_latched)
+            if (moniPressed && msg.long_press && !macro_latched && state.settings.macro_latching)
             {
                 macro_latched = true;
                 vp_beep(BEEP_FUNCTION_LATCH_ON, LONG_BEEP);
@@ -2022,6 +2028,10 @@ void ui_updateFSM(bool *sync_rtx)
                             _ui_changeTimer(-1);
                             vp_announceDisplayTimer();
                             break;
+                        case D_MACRO_LATCH:
+                            _ui_toggleMacroLatch();
+                            vp_announceMacroLatch();
+                            break;
                         default:
                             state.ui_screen = SETTINGS_DISPLAY;
                     }
@@ -2048,6 +2058,10 @@ void ui_updateFSM(bool *sync_rtx)
                         case D_TIMER:
                             _ui_changeTimer(+1);
                             vp_announceDisplayTimer();
+                            break;
+                        case D_MACRO_LATCH:
+                            _ui_toggleMacroLatch();
+                            vp_announceMacroLatch();
                             break;
                         default:
                             state.ui_screen = SETTINGS_DISPLAY;

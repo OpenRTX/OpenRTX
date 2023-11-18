@@ -216,6 +216,11 @@ void vp_announceBuffer(const char* const* stringTableStringPtr, bool editMode,
 void vp_announceDisplayTimer();
 
 /**
+ * This function is called from ui_updateFSM to speak macro latching changes
+ */
+void vp_announceMacroLatch();
+
+/**
  *
  */
 vpQueueFlags_t vp_getVoiceLevelQueueFlags();
