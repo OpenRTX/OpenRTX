@@ -2321,8 +2321,11 @@ void ui_updateFSM(bool *sync_rtx)
                             {
                                 uint32_t tmp = (uint32_t)ui_state.new_ppm;
                                 _ui_numberInputKeypad(&tmp, msg);
-                                ui_state.new_ppm = (uint16_t)tmp;
-                                ui_state.input_position += 1;
+                                //The PPM correction holds in an INT16 even though here we use a UINT16.
+                                if(tmp <= INT16_MAX) {
+                                    ui_state.new_ppm = (uint16_t)tmp;
+                                    ui_state.input_position += 1;
+                                }
                             }
 #if !defined(UI_NO_KEYBOARD)
                             else if(msg.keys & KEY_HASH)
