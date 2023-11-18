@@ -23,11 +23,31 @@
 
 #include <stdint.h>
 #include <sys/types.h>
+#include <interfaces/nvmem.h>
 
 /**
  * Driver for ATMEL AT24Cx family of I2C EEPROM devices, used as external non
  * volatile memory on various radios to store global settings and contact data.
  */
+
+/**
+ * Device driver API for AT24Cx EEPROM memory.
+ */
+extern const struct nvmApi AT24Cx_api;
+
+
+/**
+ * Instantiate an AT24Cx nonvolatile memory device.
+ *
+ * @param name: instance name.
+ */
+#define AT24Cx_DEVICE_DEFINE(name) \
+struct nvmDevice name =            \
+{                                  \
+    .config = NULL,                \
+    .priv   = NULL,                \
+    .api    = &AT24Cx_api          \
+};
 
 /**
  * Initialise driver for external EEPROM.
