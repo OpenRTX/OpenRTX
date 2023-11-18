@@ -131,6 +131,7 @@ enum settingsGPSItems
 
 enum settingsAccessibilityItems
 {
+    A_MACRO_LATCH = 0,
     A_LEVEL,
     A_PHONETIC,
 };

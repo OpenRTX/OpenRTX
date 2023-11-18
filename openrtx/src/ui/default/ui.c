@@ -181,6 +181,7 @@ const char * settings_m17_items[] =
 
 const char * settings_accessibility_items[] =
 {
+    "Macro Latch",
     "Voice",
     "Phonetic"
 };
@@ -772,6 +773,14 @@ static void _ui_changeTimer(int variation)
     }
 
     state.settings.display_timer += variation;
+}
+
+static void _ui_changeMacroLatch(bool newVal)
+{
+    state.settings.macroMenuLatch = newVal ? 1 : 0;
+    vp_announceSettingsOnOffToggle(&currentLanguage->macroLatching,
+                                   vp_getVoiceLevelQueueFlags(),
+                                   state.settings.macroMenuLatch);
 }
 
 static inline void _ui_changeM17Can(int variation)
@@ -1381,17 +1390,22 @@ void ui_updateFSM(bool *sync_rtx)
         if(moniPressed || macro_latched)
         {
             macro_menu = true;
-            // long press moni on its own latches function.
-            if (moniPressed && msg.long_press && !macro_latched)
+
+            if(state.settings.macroMenuLatch == 1)
             {
-                macro_latched = true;
-                vp_beep(BEEP_FUNCTION_LATCH_ON, LONG_BEEP);
+                // long press moni on its own latches function.
+                if (moniPressed && msg.long_press && !macro_latched)
+                {
+                    macro_latched = true;
+                    vp_beep(BEEP_FUNCTION_LATCH_ON, LONG_BEEP);
+                }
+                else if (moniPressed && macro_latched)
+                {
+                    macro_latched = false;
+                    vp_beep(BEEP_FUNCTION_LATCH_OFF, LONG_BEEP);
+                }
             }
-            else if (moniPressed && macro_latched)
-            {
-                macro_latched = false;
-                vp_beep(BEEP_FUNCTION_LATCH_OFF, LONG_BEEP);
-            }
+
             _ui_fsm_menuMacro(msg, sync_rtx);
             return;
         }
@@ -2317,6 +2331,9 @@ void ui_updateFSM(bool *sync_rtx)
                 {
                     switch(ui_state.menu_selected)
                     {
+                        case A_MACRO_LATCH:
+                            _ui_changeMacroLatch(false);
+                            break;
                         case A_LEVEL:
                             _ui_changeVoiceLevel(-1);
                             break;
@@ -2332,6 +2349,9 @@ void ui_updateFSM(bool *sync_rtx)
                 {
                     switch(ui_state.menu_selected)
                     {
+                        case A_MACRO_LATCH:
+                            _ui_changeMacroLatch(true);
+                            break;
                         case A_LEVEL:
                             _ui_changeVoiceLevel(1);
                             break;
