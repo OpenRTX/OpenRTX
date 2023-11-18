@@ -2340,13 +2340,19 @@ void ui_updateFSM(bool *sync_rtx)
                                     ui_state.input_position += 1;
                                 }
                                 vp_flush();
-                                vp_queuePPM((int16_t)ui_state.new_ppm_sign*ui_state.new_ppm);
+                                if(ui_state.new_ppm_sign < 0){
+                                    vp_queuePrompt(PROMPT_MINUS);
+                                }
+                                vp_queuePPM(ui_state.new_ppm);
                                 vp_play();
                             }
 #endif
                             else if (msg.long_press && (msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
                             {
-                                vp_queuePPM((int16_t)ui_state.new_ppm_sign*ui_state.new_ppm);
+                                if(ui_state.new_ppm_sign < 0){
+                                    vp_queuePrompt(PROMPT_MINUS);
+                                }
+                                vp_queuePPM(ui_state.new_ppm);
                                 f1Handled=true;
                             }
                             break;
