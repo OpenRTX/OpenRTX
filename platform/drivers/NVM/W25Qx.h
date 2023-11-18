@@ -24,11 +24,37 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <sys/types.h>
+#include <interfaces/nvmem.h>
 
 /**
  * Driver for Winbond W25Qx family of SPI flash devices, used as external non
  * volatile memory on various radios to store both calibration and contact data.
  */
+
+/**
+ * Device driver API for W25Qx main memory.
+ */
+extern const struct nvmApi W25Qx_api;
+
+/**
+ * Device driver API for W25Qx security registers.
+ */
+extern const struct nvmApi W25Qx_secReg_api;
+
+
+/**
+ *  Instantiate an W25Qx nonvolatile memory device.
+ *
+ * @param name: device name.
+ * @param driver: device driver API.
+ */
+#define W25Qx_DEVICE_DEFINE(name, driver) \
+struct nvmDevice name =                   \
+{                                         \
+    .config = NULL,                       \
+    .priv   = NULL,                       \
+    .api    = &driver                     \
+};
 
 /**
  * Initialise driver for external flash.

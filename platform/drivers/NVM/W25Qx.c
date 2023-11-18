@@ -278,3 +278,64 @@ int W25Qx_writeData(uint32_t addr, const void *buf, size_t len)
 
     return 0;
 }
+
+static const struct nvmParams W25Qx_params =
+{
+    .write_size   = 1,
+    .erase_size   = SECT_SIZE,
+    .erase_cycles = 100000,
+    .type         = NVM_FLASH
+};
+
+static int nvm_api_readSecReg(const struct nvmDevice *dev, uint32_t offset, void *data, size_t len)
+{
+    (void) dev;
+
+    return W25Qx_readSecurityRegister(offset, data, len);
+}
+
+static int nvm_api_read(const struct nvmDevice *dev, uint32_t offset, void *data, size_t len)
+{
+    (void) dev;
+
+    return W25Qx_readData(offset, data, len);
+}
+
+static int nvm_api_write(const struct nvmDevice *dev, uint32_t offset, const void *data, size_t len)
+{
+    (void) dev;
+
+    return W25Qx_writeData(offset, data, len);
+}
+
+static int nvm_api_erase(const struct nvmDevice *dev, uint32_t offset, size_t size)
+{
+    (void) dev;
+
+    return W25Qx_erase(offset, size);
+}
+
+static const struct nvmParams *nvm_api_params(const struct nvmDevice *dev)
+{
+    (void) dev;
+
+    return &W25Qx_params;
+}
+
+const struct nvmApi W25Qx_api =
+{
+    .read   = nvm_api_read,
+    .write  = nvm_api_write,
+    .erase  = nvm_api_erase,
+    .sync   = NULL,
+    .params = nvm_api_params
+};
+
+const struct nvmApi W25Qx_secReg_api =
+{
+    .read   = nvm_api_readSecReg,
+    .write  = NULL,
+    .erase  = NULL,
+    .sync   = NULL,
+    .params = nvm_api_params
+};
