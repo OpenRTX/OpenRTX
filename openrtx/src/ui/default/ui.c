@@ -1217,52 +1217,7 @@ static void _ui_numberInputKeypad(uint32_t *num, kbd_msg_t msg)
     ui_state.last_keypress = now;
 }
 
-static void _ui_signedNumberInputKeypad(int32_t *num, kbd_msg_t msg)
-{
-    long long now = getTick();
-
-#ifdef UI_NO_KEYBOARD
-    // TODO
-#else
-    // Maximum frequency len is uint32_t max value number of decimal digits
-    if(ui_state.input_position >= 6)
-        return;
-
-    if(msg.keys & KEY_HASH)
-    {
-        *num *= -1;
-        vp_announceInputChar('-');
-    }
-    else{
-        // Get currently pressed number key
-        uint8_t num_key = input_getPressedNumber(msg);
-        *num *= 10;
-        *num += num_key;
-        // Announce the character
-        vp_announceInputChar('0' + num_key);
-        // Update reference values
-        ui_state.input_number = num_key;
-    }
-#endif
-
-    ui_state.last_keypress = now;
-}
-
 static void _ui_numberInputDel(uint32_t *num)
-{
-    // announce the digit about to be backspaced.
-    vp_announceInputChar('0' + *num % 10);
-
-    // Move back input cursor
-    if(ui_state.input_position > 0)
-        ui_state.input_position--;
-    else
-        ui_state.last_keypress = 0;
-
-    ui_state.input_set = 0;
-}
-
-static void _ui_signedNumberInputDel(int32_t *num)
 {
     // announce the digit about to be backspaced.
     vp_announceInputChar('0' + *num % 10);
