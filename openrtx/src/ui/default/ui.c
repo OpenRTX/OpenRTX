@@ -2331,14 +2331,6 @@ void ui_updateFSM(bool *sync_rtx)
                             else if(msg.keys & KEY_HASH)
                             {
                                 ui_state.new_ppm_sign *= -1;
-                                if(ui_state.new_ppm_sign > 0)
-                                {
-                                    ui_state.input_position -= 1;
-                                }
-                                else if(ui_state.new_ppm < 0)
-                                {
-                                    ui_state.input_position += 1;
-                                }
                                 vp_flush();
                                 if(ui_state.new_ppm_sign < 0){
                                     vp_queuePrompt(PROMPT_MINUS);
