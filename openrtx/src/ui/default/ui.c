@@ -2295,7 +2295,7 @@ void ui_updateFSM(bool *sync_rtx)
                             {
 #endif
                                 // Apply new offset
-                                state.settings.ppm_offset = ui_state.new_ppm;
+                                state.settings.ppm_offset = ui_state.new_ppm*ui_state.new_ppm_sign;
                                 vp_queueStringTableEntry(&currentLanguage->ppmFreqOffset);
                                 vp_queuePPM(ui_state.new_ppm);
                                 ui_state.edit_mode = false;
@@ -2309,9 +2309,9 @@ void ui_updateFSM(bool *sync_rtx)
                             else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
                                     msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
                             {
-                                int32_t tmp = (int32_t)ui_state.new_ppm;
-                                _ui_signedNumberInputDel(&tmp);
-                                ui_state.new_ppm = (int16_t)tmp;
+                                uint32_t tmp = (uint32_t)ui_state.new_ppm;
+                                _ui_numberInputDel(&tmp);
+                                ui_state.new_ppm = (uint16_t)tmp;
                             }
 #if defined(UI_NO_KEYBOARD)
                             else if(msg.keys & KNOB_LEFT || msg.keys & KNOB_RIGHT || msg.keys & KEY_ENTER)
@@ -2319,16 +2319,16 @@ void ui_updateFSM(bool *sync_rtx)
                             else if(input_isNumberPressed(msg))
 #endif
                             {
-                                int32_t tmp = (int32_t)ui_state.new_ppm;
-                                _ui_signedNumberInputKeypad(&tmp, msg);
-                                ui_state.new_ppm = (int16_t)tmp;
+                                uint32_t tmp = (uint32_t)ui_state.new_ppm;
+                                _ui_numberInputKeypad(&tmp, msg);
+                                ui_state.new_ppm = (uint16_t)tmp;
                                 ui_state.input_position += 1;
                             }
 #if !defined(UI_NO_KEYBOARD)
                             else if(msg.keys & KEY_HASH)
                             {
-                                ui_state.new_ppm *= -1;
-                                if(ui_state.new_ppm > 0)
+                                ui_state.new_ppm_sign *= -1;
+                                if(ui_state.new_ppm_sign > 0)
                                 {
                                     ui_state.input_position -= 1;
                                 }
@@ -2337,13 +2337,13 @@ void ui_updateFSM(bool *sync_rtx)
                                     ui_state.input_position += 1;
                                 }
                                 vp_flush();
-                                vp_queuePPM(ui_state.new_ppm);
+                                vp_queuePPM((int16_t)ui_state.new_ppm_sign*ui_state.new_ppm);
                                 vp_play();
                             }
 #endif
                             else if (msg.long_press && (msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
                             {
-                                vp_queuePPM(ui_state.new_ppm);
+                                vp_queuePPM((int16_t)ui_state.new_ppm_sign*ui_state.new_ppm);
                                 f1Handled=true;
                             }
                             break;
@@ -2363,8 +2363,10 @@ void ui_updateFSM(bool *sync_rtx)
                     // If we are entering R_SHIFT clear temp offset
                     if (ui_state.menu_selected == R_SHIFT)
                         ui_state.new_shift = 0;
-                    else if(ui_state.menu_selected == R_PPM)
+                    else if(ui_state.menu_selected == R_PPM) {
                         ui_state.new_ppm = 0;
+                        ui_state.new_ppm_sign = 1;
+                    }
                     // Reset input position
                     ui_state.input_position = 0;
                 }
