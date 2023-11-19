@@ -370,13 +370,22 @@ bool OpMode_M17::callsignCompare(const std::string& myCallsign, const std::strin
     if(destCallsign == "ALL")
         return true;
 
-    myCallsign.find('/');
-    std::string truncatedMyCall = myCallsign.substr(
-        myCallsign.find_first_of('/')+1
-    );
-    std::string truncatedDstCall = destCallsign.substr(
-        destCallsign.find_first_of('/')+1
-    );
+    int myCSFirstSlash = myCallsign.find_first_of('/');
+    int destCSFirstSlash = destCallsign.find_first_of('/');
+    std::string truncatedMyCall;
+    std::string truncatedDstCall;
+
+    if(myCSFirstSlash > 2){
+        truncatedMyCall = myCallsign;
+    }else{
+        truncatedMyCall = myCallsign.substr(myCSFirstSlash+1);
+    }
+
+    if(destCSFirstSlash > 2){
+        truncatedDstCall = destCallsign;
+    }else{
+        truncatedDstCall = destCallsign.substr(destCSFirstSlash+1);
+    }
 
     if(truncatedDstCall == truncatedMyCall)
         return true;
