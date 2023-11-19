@@ -98,7 +98,7 @@ extern void _ui_drawMenuContacts(ui_state_t* ui_state);
 extern void _ui_drawMenuGPS();
 extern void _ui_drawSettingsGPS(ui_state_t* ui_state);
 #endif
-extern void _ui_drawSettingsVoicePrompts(ui_state_t* ui_state);
+extern void _ui_drawSettingsAccessibilityPrompts(ui_state_t* ui_state);
 extern void _ui_drawMenuSettings(ui_state_t* ui_state);
 extern void _ui_drawMenuBackupRestore(ui_state_t* ui_state);
 extern void _ui_drawMenuBackup(ui_state_t* ui_state);
@@ -153,8 +153,7 @@ const char *display_items[] =
 #ifdef SCREEN_CONTRAST
     "Contrast",
 #endif
-    "Timer",
-    "Macro Latch."
+    "Timer"
 };
 
 #ifdef GPS_PRESENT
@@ -180,8 +179,9 @@ const char * settings_m17_items[] =
     "CAN RX Check"
 };
 
-const char * settings_voice_items[] =
+const char * settings_accessibility_items[] =
 {
+    "Macro Latch.",
     "Voice",
     "Phonetic"
 };
@@ -258,7 +258,7 @@ const uint8_t settings_gps_num = sizeof(settings_gps_items)/sizeof(settings_gps_
 #endif
 const uint8_t settings_radio_num = sizeof(settings_radio_items)/sizeof(settings_radio_items[0]);
 const uint8_t settings_m17_num = sizeof(settings_m17_items)/sizeof(settings_m17_items[0]);
-const uint8_t settings_voice_num = sizeof(settings_voice_items)/sizeof(settings_voice_items[0]);
+const uint8_t settings_accessibility_num = sizeof(settings_accessibility_items)/sizeof(settings_accessibility_items[0]);
 const uint8_t backup_restore_num = sizeof(backup_restore_items)/sizeof(backup_restore_items[0]);
 const uint8_t info_num = sizeof(info_items)/sizeof(info_items[0]);
 const uint8_t author_num = sizeof(authors)/sizeof(authors[0]);
@@ -775,9 +775,12 @@ static void _ui_changeTimer(int variation)
     state.settings.display_timer += variation;
 }
 
-static void _ui_toggleMacroLatch()
+static void _ui_changeMacroLatch(bool newVal)
 {
-        state.settings.macro_latching ^= true;
+    state.settings.macro_latching = newVal ? 1 : 0;
+    vp_announceSettingsOnOffToggle(&currentLanguage->macroLatching,
+                            vp_getVoiceLevelQueueFlags(),
+                            state.settings.macro_latching);
 }
 
 static inline void _ui_changeM17Can(int variation)
@@ -814,8 +817,8 @@ static void _ui_changePhoneticSpell(bool newVal)
     state.settings.vpPhoneticSpell = newVal ? 1 : 0;
 
     vp_announceSettingsOnOffToggle(&currentLanguage->phonetic,
-                                   vp_getVoiceLevelQueueFlags(),
-                                   state.settings.vpPhoneticSpell);
+                            vp_getVoiceLevelQueueFlags(),
+                            state.settings.vpPhoneticSpell);
 }
 
 static bool _ui_checkStandby(long long time_since_last_event)
@@ -1898,8 +1901,8 @@ void ui_updateFSM(bool *sync_rtx)
                         case S_M17:
                             state.ui_screen = SETTINGS_M17;
                             break;
-                        case S_VOICE:
-                            state.ui_screen = SETTINGS_VOICE;
+                        case S_ACCESSIBILITY:
+                            state.ui_screen = SETTINGS_ACCESSIBILITY;
                             break;
                         case S_RESET2DEFAULTS:
                             state.ui_screen = SETTINGS_RESET2DEFAULTS;
@@ -2028,10 +2031,6 @@ void ui_updateFSM(bool *sync_rtx)
                             _ui_changeTimer(-1);
                             vp_announceDisplayTimer();
                             break;
-                        case D_MACRO_LATCH:
-                            _ui_toggleMacroLatch();
-                            vp_announceMacroLatch();
-                            break;
                         default:
                             state.ui_screen = SETTINGS_DISPLAY;
                     }
@@ -2058,10 +2057,6 @@ void ui_updateFSM(bool *sync_rtx)
                         case D_TIMER:
                             _ui_changeTimer(+1);
                             vp_announceDisplayTimer();
-                            break;
-                        case D_MACRO_LATCH:
-                            _ui_toggleMacroLatch();
-                            vp_announceMacroLatch();
                             break;
                         default:
                             state.ui_screen = SETTINGS_DISPLAY;
@@ -2317,20 +2312,23 @@ void ui_updateFSM(bool *sync_rtx)
                     }
                 }
                 break;
-            case SETTINGS_VOICE:
+            case SETTINGS_ACCESSIBILITY:
                 if(msg.keys & KEY_LEFT || (ui_state.edit_mode &&
                    (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)))
                 {
                     switch(ui_state.menu_selected)
                     {
-                        case VP_LEVEL:
+                        case A_MACRO_LATCH:
+                            _ui_changeMacroLatch(false);
+                            break;
+                        case A_LEVEL:
                             _ui_changeVoiceLevel(-1);
                             break;
-                        case VP_PHONETIC:
+                        case A_PHONETIC:
                             _ui_changePhoneticSpell(false);
                             break;
                         default:
-                            state.ui_screen = SETTINGS_VOICE;
+                            state.ui_screen = SETTINGS_ACCESSIBILITY;
                     }
                 }
                 else if(msg.keys & KEY_RIGHT || (ui_state.edit_mode &&
@@ -2338,20 +2336,23 @@ void ui_updateFSM(bool *sync_rtx)
                 {
                     switch(ui_state.menu_selected)
                     {
-                        case VP_LEVEL:
+                        case A_MACRO_LATCH:
+                            _ui_changeMacroLatch(true);
+                            break;
+                        case A_LEVEL:
                             _ui_changeVoiceLevel(1);
                             break;
-                        case VP_PHONETIC:
+                        case A_PHONETIC:
                             _ui_changePhoneticSpell(true);
                             break;
                         default:
-                            state.ui_screen = SETTINGS_VOICE;
+                            state.ui_screen = SETTINGS_ACCESSIBILITY;
                     }
                 }
                 else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                    _ui_menuUp(settings_voice_num);
+                    _ui_menuUp(settings_accessibility_num);
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                    _ui_menuDown(settings_voice_num);
+                    _ui_menuDown(settings_accessibility_num);
                 else if(msg.keys & KEY_ENTER)
                     ui_state.edit_mode = !ui_state.edit_mode;
                 else if(msg.keys & KEY_ESC)
@@ -2536,8 +2537,8 @@ bool ui_updateGUI()
         case SETTINGS_M17:
             _ui_drawSettingsM17(&ui_state);
             break;
-        case SETTINGS_VOICE:
-            _ui_drawSettingsVoicePrompts(&ui_state);
+        case SETTINGS_ACCESSIBILITY:
+            _ui_drawSettingsAccessibilityPrompts(&ui_state);
             break;
         // Screen to support resetting Settings and VFO to defaults
         case SETTINGS_RESET2DEFAULTS:

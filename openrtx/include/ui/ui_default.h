@@ -62,7 +62,7 @@ enum uiScreen
     SETTINGS_GPS,
     SETTINGS_RADIO,
     SETTINGS_M17,
-    SETTINGS_VOICE,
+    SETTINGS_ACCESSIBILITY,
     SETTINGS_RESET2DEFAULTS,
     LOW_BAT
 };
@@ -99,7 +99,7 @@ enum settingsItems
 #endif
     S_RADIO,
     S_M17,
-    S_VOICE,
+    S_ACCESSIBILITY,
     S_RESET2DEFAULTS,
 };
 
@@ -118,7 +118,6 @@ enum displayItems
     D_CONTRAST,
 #endif
     D_TIMER,
-    D_MACRO_LATCH,
 };
 
 #ifdef GPS_PRESENT
@@ -130,10 +129,11 @@ enum settingsGPSItems
 };
 #endif
 
-enum settingsVoicePromptItems
+enum settingsAccessibilityItems
 {
-    VP_LEVEL = 0,
-    VP_PHONETIC,
+    A_MACRO_LATCH = 0,
+    A_LEVEL,
+    A_PHONETIC,
 };
 
 enum settingsRadioItems
@@ -242,7 +242,7 @@ extern const char *display_items[];
 extern const char *settings_gps_items[];
 extern const char *settings_radio_items[];
 extern const char *settings_m17_items[];
-extern const char * settings_voice_items[];
+extern const char * settings_accessibility_items[];
 
 extern const char *backup_restore_items[];
 extern const char *info_items[];
@@ -253,7 +253,7 @@ extern const uint8_t display_num;
 extern const uint8_t settings_gps_num;
 extern const uint8_t settings_radio_num;
 extern const uint8_t settings_m17_num;
-extern const uint8_t settings_voice_num;
+extern const uint8_t settings_accessibility_num;
 extern const uint8_t backup_restore_num;
 extern const uint8_t info_num;
 extern const uint8_t author_num;
