@@ -225,7 +225,8 @@ typedef struct ui_state_t
 #endif
     char new_callsign[10];
     freq_t new_shift;
-    int16_t new_ppm;
+    uint16_t new_ppm;
+    int8_t new_ppm_sign;
     // Which state to return to when we exit menu
     uint8_t last_main_state;
 #if defined(UI_NO_KEYBOARD)
