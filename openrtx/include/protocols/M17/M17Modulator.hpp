@@ -106,13 +106,8 @@ private:
     static constexpr size_t M17_SAMPLES_PER_SYMBOL = M17_TX_SAMPLE_RATE / M17_SYMBOL_RATE;
     static constexpr size_t M17_FRAME_SAMPLES      = M17_FRAME_SYMBOLS * M17_SAMPLES_PER_SYMBOL;
 
-    #ifdef PLATFORM_MOD17
-    static constexpr float  M17_RRC_GAIN          = 15000.0f;
-    static constexpr float  M17_RRC_OFFSET        = 11500.0f;
-    #else
     static constexpr float  M17_RRC_GAIN          = 23000.0f;
     static constexpr float  M17_RRC_OFFSET        = 0.0f;
-    #endif
 
     std::array< int8_t, M17_FRAME_SYMBOLS > symbols;
     std::unique_ptr< int16_t[] > baseband_buffer;  ///< Buffer for baseband audio handling.

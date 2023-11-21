@@ -43,7 +43,7 @@ static const uint8_t pathCompatibilityMatrix[9][9] =
 const struct audioDevice outputDevices[] =
 {
     {NULL,                    0,                   0,             SINK_MCU},
-    {&stm32_dac_audio_driver, (const void *) 1365, STM32_DAC_CH1, SINK_RTX},
+    {&stm32_dac_audio_driver, (const void *) 2048, STM32_DAC_CH1, SINK_RTX},
     {&stm32_dac_audio_driver, 0,                   STM32_DAC_CH2, SINK_SPK},
 };
 
