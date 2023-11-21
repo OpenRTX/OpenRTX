@@ -26,6 +26,34 @@
 #include <utils.h>
 #include "W25Qx.h"
 
+W25Qx_DEVICE_DEFINE(W25Q128_main, W25Qx_api)
+W25Qx_DEVICE_DEFINE(W25Q128_secr, W25Qx_secReg_api)
+
+static const struct nvmArea areas[] =
+{
+    {
+        .name       = "External flash",
+        .dev        = &W25Q128_main,
+        .startAddr  = 0x0000,
+        .size       = 0x1000000,  // 16 MB, 128 Mbit
+        .partitions = NULL
+    },
+    {
+        .name       = "Cal. data 1",
+        .dev        = &W25Q128_secr,
+        .startAddr  = 0x1000,
+        .size       = 0x100,      // 256 byte
+        .partitions = NULL
+    },
+    {
+        .name       = "Cal. data 2",
+        .dev        = &W25Q128_secr,
+        .startAddr  = 0x2000,
+        .size       = 0x100,      // 256 byte
+        .partitions = NULL
+    }
+};
+
 
 void nvm_init()
 {
@@ -35,6 +63,13 @@ void nvm_init()
 void nvm_terminate()
 {
     W25Qx_terminate();
+}
+
+size_t nvm_getMemoryAreas(const struct nvmArea **list)
+{
+    *list = &areas[0];
+
+    return (sizeof(areas) / sizeof(struct nvmArea));
 }
 
 void nvm_readCalibData(void *buf)
