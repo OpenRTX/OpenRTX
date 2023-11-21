@@ -25,6 +25,7 @@
         pmu-irq   = &pmu_irq;
         qdec0 = &pcnt;
         led0 = &ws2812c;
+        flash = &flash0;
     };
 
     chosen {
