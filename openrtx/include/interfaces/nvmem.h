@@ -159,6 +159,14 @@ void nvm_init();
 void nvm_terminate();
 
 /**
+ * Get a list of the available nonvolatile memory areas of the device.
+ *
+ * @param list: pointer where to store the pointer to the list head.
+ * @return number of elements in the list.
+ */
+size_t nvm_getMemoryAreas(const struct nvmArea **list);
+
+/**
  * Load calibration data from nonvolatile memory.
  *
  * @param buf: destination buffer for calibration data.
