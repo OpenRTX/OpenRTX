@@ -27,6 +27,27 @@
 #include "AT24Cx.h"
 #include "W25Qx.h"
 
+W25Qx_DEVICE_DEFINE(W25Q80, W25Qx_api)
+AT24Cx_DEVICE_DEFINE(AT24C512)
+
+static const struct nvmArea areas[] =
+{
+    {
+        .name       = "External flash",
+        .dev        = &W25Q80,
+        .startAddr  = 0x0000,
+        .size       = 0x100000,  // 1 MB, 8 Mbit
+        .partitions = NULL
+    },
+    {
+        .name       = "EEPROM",
+        .dev        = &AT24C512,
+        .startAddr  = 0x0000,
+        .size       = 0x10000,   // 64 kB, 512 kbit
+        .partitions = NULL
+    }
+};
+
 #if defined(PLATFORM_GD77)
 static const uint32_t UHF_CAL_BASE = 0x8F000;
 static const uint32_t VHF_CAL_BASE = 0x8F070;
@@ -101,6 +122,13 @@ void nvm_terminate()
 {
     W25Qx_terminate();
     AT24Cx_terminate();
+}
+
+size_t nvm_getMemoryAreas(const struct nvmArea **list)
+{
+    *list = &areas[0];
+
+    return (sizeof(areas) / sizeof(struct nvmArea));
 }
 
 void nvm_readCalibData(void *buf)
