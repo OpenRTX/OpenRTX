@@ -209,62 +209,61 @@ typedef struct layout_t
  * UI that need to be kept between executions of the UI
  * This state does not need to be saved on device poweroff
  */
-typedef struct ui_state_t
+typedef struct
 {
     // Index of the currently selected menu entry
-    uint8_t menu_selected;
+    uint8_t     menu_selected ;
     // If true we can change a menu entry value with UP/DOWN
-    bool edit_mode;
-    bool input_locked;
+    bool        edit_mode ;
+    bool        input_locked ;
     // Variables used for VFO input
-    uint8_t input_number;
-    uint8_t input_position;
-    uint8_t input_set;
-    long long last_keypress;
-    freq_t new_rx_frequency;
-    freq_t new_tx_frequency;
-    char new_rx_freq_buf[14];
-    char new_tx_freq_buf[14];
+    KeyNum_en   input_number ;
+    uint8_t     input_position ;
+    uint8_t     input_set ;
+    long long   last_keypress ;
+    freq_t      new_rx_frequency ;
+    freq_t      new_tx_frequency ;
+    char        new_rx_freq_buf[ 14 ] ;
+    char        new_tx_freq_buf[ 14 ] ;
 #ifdef RTC_PRESENT
     // Variables used for Time & Date input
-    datetime_t new_timedate;
-    char new_date_buf[9];
-    char new_time_buf[9];
+    datetime_t  new_timedate ;
+    char        new_date_buf[ 9 ] ;
+    char        new_time_buf[ 9 ] ;
 #endif
-    char new_callsign[10];
-    freq_t new_offset;
+    char        new_callsign[ 10 ] ;
+    freq_t      new_offset ;
     // Which state to return to when we exit menu
-    uint8_t last_main_state;
+    uint8_t     last_main_state ;
 #if defined(UI_NO_KEYBOARD)
-    uint8_t macro_menu_selected;
+    uint8_t     macro_menu_selected ;
 #endif // UI_NO_KEYBOARD
-}
-ui_state_t;
+}ui_state_st;
 
-extern layout_t layout;
-extern state_t last_state;
-extern bool    macro_latched;
-extern const char *menu_items[];
-extern const char *settings_items[];
-extern const char *display_items[];
-extern const char *settings_gps_items[];
-extern const char *settings_radio_items[];
-extern const char *settings_m17_items[];
-extern const char * settings_voice_items[];
+extern layout_t         layout ;
+extern state_t          last_state ;
+extern bool             macro_latched ;
+extern const char*      menu_items[] ;
+extern const char*      settings_items[] ;
+extern const char*      display_items[] ;
+extern const char*      settings_gps_items[] ;
+extern const char*      settings_radio_items[] ;
+extern const char*      settings_m17_items[] ;
+extern const char*      settings_voice_items[] ;
 
-extern const char *backup_restore_items[];
-extern const char *info_items[];
-extern const char *authors[];
+extern const char*      backup_restore_items[] ;
+extern const char*      info_items[] ;
+extern const char*      authors[] ;
 
-extern const color_t color_black;
-extern const color_t color_grey;
-extern const color_t color_white;
+extern const color_t    color_black ;
+extern const color_t    color_grey ;
+extern const color_t    color_white ;
 //@@@KL
-extern const color_t color_red;
-extern const color_t color_green;
-extern const color_t color_blue;
+extern const color_t    color_red ;
+extern const color_t    color_green ;
+extern const color_t    color_blue ;
 
-extern const color_t yellow_fab413;
+extern const color_t    yellow_fab413 ;
 
 extern const uiPageDesc_st* uiGetPageDesc( uiPageNum_en pageNum );
 extern const char**         uiGetPageLoc( uiPageNum_en pageNum );

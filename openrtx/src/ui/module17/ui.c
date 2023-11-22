@@ -39,27 +39,27 @@ extern void _ui_drawVFOMiddle();
 extern void _ui_drawMEMMiddle();
 extern void _ui_drawVFOBottom();
 extern void _ui_drawMEMBottom();
-extern void _ui_drawMainVFO(ui_state_t* ui_state);
-extern void _ui_drawMainVFOInput(ui_state_t* ui_state);
-extern void _ui_drawMainMEM(ui_state_t* ui_state);
+extern void _ui_drawMainVFO(ui_state_st* ui_state);
+extern void _ui_drawMainVFOInput(ui_state_st* ui_state);
+extern void _ui_drawMainMEM(ui_state_st* ui_state);
 /* UI menu functions, their implementation is in "ui_menu.c" */
-extern void _ui_drawMenuTop(ui_state_t* ui_state);
+extern void _ui_drawMenuTop(ui_state_st* ui_state);
 #ifdef GPS_PRESENT
 extern void _ui_drawMenuGPS();
-extern void _ui_drawSettingsGPS(ui_state_t* ui_state);
+extern void _ui_drawSettingsGPS(ui_state_st* ui_state);
 #endif
-extern void _ui_drawMenuSettings(ui_state_t* ui_state);
-extern void _ui_drawMenuInfo(ui_state_t* ui_state);
+extern void _ui_drawMenuSettings(ui_state_st* ui_state);
+extern void _ui_drawMenuInfo(ui_state_st* ui_state);
 extern void _ui_drawMenuAbout();
 #ifdef RTC_PRESENT
 extern void _ui_drawSettingsTimeDate();
-extern void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state);
+extern void _ui_drawSettingsTimeDateSet(ui_state_st* ui_state);
 #endif
-extern void _ui_drawSettingsDisplay(ui_state_t* ui_state);
-extern void _ui_drawSettingsM17(ui_state_t* ui_state);
-extern void _ui_drawSettingsModule17(ui_state_t* ui_state);
-extern void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state);
-extern bool _ui_drawMacroMenu(ui_state_t* ui_state);
+extern void _ui_drawSettingsDisplay(ui_state_st* ui_state);
+extern void _ui_drawSettingsM17(ui_state_st* ui_state);
+extern void _ui_drawSettingsModule17(ui_state_st* ui_state);
+extern void _ui_drawSettingsReset2Defaults(ui_state_st* ui_state);
+extern bool _ui_drawMacroMenu(ui_state_st* ui_state);
 
 const char *menu_items[] =
 {
@@ -187,7 +187,7 @@ const color_t yellow_fab413 = {250, 180, 19, 255};
 
 layout_t layout;
 state_t last_state;
-static ui_state_t ui_state;
+static ui_state_st ui_state;
 static bool layout_ready = false;
 static bool redraw_needed = true;
 
@@ -311,7 +311,7 @@ void ui_init()
     // Initialize struct ui_state to all zeroes
     // This syntax is called compound literal
     // https://stackoverflow.com/questions/6891720/initialize-reset-struct-to-zero-null
-    ui_state = (const struct ui_state_t){ 0 };
+    ui_state = (const struct ui_state_st){ 0 };
 }
 
 void ui_drawSplashScreen()

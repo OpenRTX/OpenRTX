@@ -58,7 +58,7 @@ void _ui_drawBankChannel()
               b, last_state.channel_index + 1, last_state.channel.name);
 }
 
-void _ui_drawModeInfo(ui_state_t* ui_state)
+void _ui_drawModeInfo(ui_state_st* ui_state)
 {
     char bw_str[8] = { 0 };
     char encdec_str[9] = { 0 };
@@ -179,7 +179,7 @@ void _ui_drawFrequency()
               (unsigned long)frequency%1000000/10);
 }
 
-void _ui_drawVFOMiddleInput(ui_state_t* ui_state)
+void _ui_drawVFOMiddleInput(ui_state_st* ui_state)
 {
     // Add inserted number to string, skipping "Rx: "/"Tx: " and "."
     uint8_t insert_pos = ui_state->input_position + 3;
@@ -271,7 +271,7 @@ void _ui_drawMainBottom()
     }
 }
 
-void _ui_drawMainVFO(ui_state_t* ui_state)
+void _ui_drawMainVFO(ui_state_st* ui_state)
 {
     gfx_clearScreen();
     _ui_drawMainTop();
@@ -280,7 +280,7 @@ void _ui_drawMainVFO(ui_state_t* ui_state)
     _ui_drawMainBottom();
 }
 
-void _ui_drawMainVFOInput(ui_state_t* ui_state)
+void _ui_drawMainVFOInput(ui_state_st* ui_state)
 {
     gfx_clearScreen();
     _ui_drawMainTop();
@@ -288,7 +288,7 @@ void _ui_drawMainVFOInput(ui_state_t* ui_state)
     _ui_drawMainBottom();
 }
 
-void _ui_drawMainMEM(ui_state_t* ui_state)
+void _ui_drawMainMEM(ui_state_st* ui_state)
 {
     gfx_clearScreen();
     _ui_drawMainTop();

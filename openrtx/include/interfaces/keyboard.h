@@ -23,9 +23,24 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+typedef enum
+{
+    KEY_NUM_0 ,
+    KEY_NUM_1 ,
+    KEY_NUM_2 ,
+    KEY_NUM_3 ,
+    KEY_NUM_4 ,
+    KEY_NUM_5 ,
+    KEY_NUM_6 ,
+    KEY_NUM_7 ,
+    KEY_NUM_8 ,
+    KEY_NUM_9
+}KeyNum_en;
+
 /**
  * The following enum provides a set of flags to be used to check which buttons
  * are pressed by bit-masking the uint32_t value returned by kbd_getKeys().
+ * They are handled as a uint32_t. See: kbd_msg_t in core/input.h .
  */
 enum key
 {

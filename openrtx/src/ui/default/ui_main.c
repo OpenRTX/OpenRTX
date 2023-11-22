@@ -26,15 +26,183 @@
 #include <string.h>
 #include <ui/ui_strings.h>
 
-void _ui_drawMainBackground()
+static void ui_drawMainVFO( ui_state_st* uiState );
+static void ui_drawMainVFOInput( ui_state_st* uiState );
+static void ui_drawMainMEM( ui_state_st* uiState );
+static void ui_drawModeVFO( ui_state_st* uiState );
+static void ui_drawModeMEM( ui_state_st* uiState );
+extern void _ui_drawMenuTop( ui_state_st* uiState );
+extern void _ui_drawMenuBank( ui_state_st* uiState );
+extern void _ui_drawMenuChannel( ui_state_st* uiState );
+extern void _ui_drawMenuContacts( ui_state_st* uiState );
+extern void _ui_drawMenuGPS( ui_state_st* uiState );
+extern void _ui_drawMenuSettings( ui_state_st* uiState );
+extern void _ui_drawMenuBackupRestore( ui_state_st* uiState );
+extern void _ui_drawMenuBackup( ui_state_st* uiState );
+extern void _ui_drawMenuRestore( ui_state_st* uiState );
+extern void _ui_drawMenuInfo( ui_state_st* uiState );
+extern void _ui_drawMenuAbout( ui_state_st* uiState );
+extern void _ui_drawSettingsTimeDate( ui_state_st* uiState );
+extern void _ui_drawSettingsTimeDateSet( ui_state_st* uiState );
+extern void _ui_drawSettingsDisplay( ui_state_st* uiState );
+extern void _ui_drawSettingsGPS( ui_state_st* uiState );
+extern void _ui_drawSettingsRadio( ui_state_st* uiState );
+extern void _ui_drawSettingsM17( ui_state_st* uiState );
+extern void _ui_drawSettingsVoicePrompts( ui_state_st* uiState );
+extern void _ui_drawSettingsReset2Defaults( ui_state_st* uiState );
+static void ui_drawLowBatteryScreen( ui_state_st* uiState );
+static void ui_drawAuthors( ui_state_st* uiState );
+static void ui_drawBlank( ui_state_st* uiState );
+
+//@@@KL static void ui_drawMainBackground( void );
+static void ui_drawMainTop( ui_state_st * ui_state );
+static void ui_drawBankChannel( void );
+static void ui_drawModeInfo( ui_state_st* ui_state );
+static void ui_drawFrequency( void );
+static void ui_drawVFOMiddleInput( ui_state_st* ui_state );
+
+void _ui_drawMainBottom( void );
+
+typedef void (*ui_draw_fn)( ui_state_st* uiState );
+
+static const ui_draw_fn ui_draw_fn_T[ PAGE_NUM_OF ] =
+{
+    ui_drawMainVFO                 , // PAGE_MAIN_VFO
+    ui_drawMainVFOInput            , // PAGE_MAIN_VFO_INPUT
+    ui_drawMainMEM                 , // PAGE_MAIN_MEM
+    ui_drawModeVFO                 , // PAGE_MODE_VFO
+    ui_drawModeMEM                 , // PAGE_MODE_MEM
+    _ui_drawMenuTop                , // PAGE_MENU_TOP
+    _ui_drawMenuBank               , // PAGE_MENU_BANK
+    _ui_drawMenuChannel            , // PAGE_MENU_CHANNEL
+    _ui_drawMenuContacts           , // PAGE_MENU_CONTACTS
+    _ui_drawMenuGPS                , // PAGE_MENU_GPS
+    _ui_drawMenuSettings           , // PAGE_MENU_SETTINGS
+    _ui_drawMenuBackupRestore      , // PAGE_MENU_BACKUP_RESTORE
+    _ui_drawMenuBackup             , // PAGE_MENU_BACKUP
+    _ui_drawMenuRestore            , // PAGE_MENU_RESTORE
+    _ui_drawMenuInfo               , // PAGE_MENU_INFO
+    _ui_drawMenuAbout              , // PAGE_MENU_ABOUT
+    _ui_drawSettingsTimeDate       , // PAGE_SETTINGS_TIMEDATE
+    _ui_drawSettingsTimeDateSet    , // PAGE_SETTINGS_TIMEDATE_SET
+    _ui_drawSettingsDisplay        , // PAGE_SETTINGS_DISPLAY
+    _ui_drawSettingsGPS            , // PAGE_SETTINGS_GPS
+    _ui_drawSettingsRadio          , // PAGE_SETTINGS_RADIO
+    _ui_drawSettingsM17            , // PAGE_SETTINGS_M17
+    _ui_drawSettingsVoicePrompts   , // PAGE_SETTINGS_VOICE
+    _ui_drawSettingsReset2Defaults , // PAGE_SETTINGS_RESET_TO_DEFAULTS
+    ui_drawLowBatteryScreen        , // PAGE_LOW_BAT
+    ui_drawAuthors                 , // PAGE_AUTHORS
+    ui_drawBlank                     // PAGE_BLANK
+};
+
+void ui_draw( state_t* state , ui_state_st* ui_state )
+{
+    uint8_t ui_screen = state->ui_screen ;
+
+    if( ui_screen >= PAGE_NUM_OF )
+    {
+        ui_screen = PAGE_NUM_OF - 1 ;
+    }
+
+    ui_draw_fn_T[ ui_screen ]( ui_state ) ;
+
+}
+
+static void ui_drawMainVFO( ui_state_st* ui_state )
+{
+    gfx_clearScreen();
+    ui_drawMainTop(ui_state);
+    ui_drawModeInfo(ui_state);
+
+    // Show VFO frequency if the OpMode is not M17 or there is no valid LSF data
+    rtxStatus_t status = rtx_getCurrentStatus();
+    if((status.opMode != OPMODE_M17) || (status.lsfOk == false))
+        ui_drawFrequency();
+
+    _ui_drawMainBottom();
+}
+
+static void ui_drawMainVFOInput( ui_state_st* ui_state )
+{
+    gfx_clearScreen();
+    ui_drawMainTop(ui_state);
+    ui_drawVFOMiddleInput(ui_state);
+    _ui_drawMainBottom();
+}
+
+void ui_drawMainMEM( ui_state_st* ui_state )
+{
+    gfx_clearScreen();
+    ui_drawMainTop(ui_state);
+    ui_drawModeInfo(ui_state);
+
+    // Show channel data if the OpMode is not M17 or there is no valid LSF data
+    rtxStatus_t status = rtx_getCurrentStatus();
+    if((status.opMode != OPMODE_M17) || (status.lsfOk == false))
+    {
+        ui_drawBankChannel();
+        ui_drawFrequency();
+    }
+
+    _ui_drawMainBottom();
+}
+
+static void ui_drawModeVFO( ui_state_st* ui_state )
+{
+    (void)ui_state;
+}
+
+static void ui_drawModeMEM( ui_state_st* ui_state )
+{
+    (void)ui_state;
+}
+
+static void ui_drawLowBatteryScreen( ui_state_st* ui_state )
+{
+    (void)ui_state;
+
+    gfx_clearScreen();
+    uint16_t bat_width = SCREEN_WIDTH / 2 ;
+    uint16_t bat_height = SCREEN_HEIGHT / 3 ;
+    point_t bat_pos = { SCREEN_WIDTH / 4 , SCREEN_HEIGHT / 8 };
+    gfx_drawBattery( bat_pos , bat_width , bat_height , 10 );
+    point_t text_pos_1 = { 0 , SCREEN_HEIGHT * 2 / 3 };
+    point_t text_pos_2 = { 0 , SCREEN_HEIGHT * 2 / 3 + 16 };
+
+    gfx_print( text_pos_1                       ,
+               FONT_SIZE_6PT                    ,
+               TEXT_ALIGN_CENTER                ,
+               color_white                      ,
+               currentLanguage->forEmergencyUse   );
+
+    gfx_print( text_pos_2                      ,
+               FONT_SIZE_6PT                   ,
+               TEXT_ALIGN_CENTER               ,
+               color_white                     ,
+               currentLanguage->pressAnyButton   );
+}
+
+static void ui_drawAuthors( ui_state_st* ui_state )
+{
+    (void)ui_state;
+}
+
+static void ui_drawBlank( ui_state_st* ui_state )
+{
+    (void)ui_state;
+}
+//@@@KL - not being called - remove?
+/*
+static void ui_drawMainBackground( void )
 {
     // Print top bar line of hline_h pixel height
     gfx_drawHLine(layout.top_h, layout.hline_h, color_grey);
     // Print bottom bar line of 1 pixel height
     gfx_drawHLine(SCREEN_HEIGHT - layout.bottom_h - 1, layout.hline_h, color_grey);
 }
-
-void _ui_drawMainTop(ui_state_t * ui_state)
+*/
+static void ui_drawMainTop( ui_state_st * ui_state )
 {
 #ifdef RTC_PRESENT
     // Print clock on top bar
@@ -61,7 +229,7 @@ void _ui_drawMainTop(ui_state_t * ui_state)
                      color_white, SYMBOL_LOCK);
 }
 
-void _ui_drawBankChannel()
+static void ui_drawBankChannel( void )
 {
     // Print Bank number, channel number and Channel name
     uint16_t b = (last_state.bank_enabled) ? last_state.bank : 0;
@@ -70,7 +238,7 @@ void _ui_drawBankChannel()
               b, last_state.channel_index + 1, last_state.channel.name);
 }
 
-void _ui_drawModeInfo(ui_state_t* ui_state)
+static void ui_drawModeInfo( ui_state_st* ui_state )
 {
     char bw_str[8] = { 0 };
     char encdec_str[9] = { 0 };
@@ -103,7 +271,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
             // Print Bandwidth, Tone and encdec info
             if (tone_tx_enable || tone_rx_enable)
             gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                      color_white, "%s %4.1f %s", bw_str, 
+                      color_white, "%s %4.1f %s", bw_str,
                       ctcss_tone[last_state.channel.fm.txTone]/10.0f, encdec_str);
             else
             gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
@@ -180,7 +348,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
     }
 }
 
-void _ui_drawFrequency()
+static void ui_drawFrequency( void )
 {
     unsigned long frequency = platform_getPttStatus() ? last_state.channel.tx_frequency
                                                       : last_state.channel.rx_frequency;
@@ -189,7 +357,7 @@ void _ui_drawFrequency()
               color_white, "%.7g", (float) frequency / 1000000.0f);
 }
 
-void _ui_drawVFOMiddleInput(ui_state_t* ui_state)
+static void ui_drawVFOMiddleInput( ui_state_st* ui_state )
 {
     // Add inserted number to string, skipping "Rx: "/"Tx: " and "."
     uint8_t insert_pos = ui_state->input_position + 3;
@@ -244,7 +412,7 @@ void _ui_drawVFOMiddleInput(ui_state_t* ui_state)
     }
 }
 
-void _ui_drawMainBottom()
+void _ui_drawMainBottom( void )
 {
     // Squelch bar
     float rssi = last_state.rssi;
@@ -281,41 +449,3 @@ void _ui_drawMainBottom()
     }
 }
 
-void _ui_drawMainVFO(ui_state_t* ui_state)
-{
-    gfx_clearScreen();
-    _ui_drawMainTop(ui_state);
-    _ui_drawModeInfo(ui_state);
-
-    // Show VFO frequency if the OpMode is not M17 or there is no valid LSF data
-    rtxStatus_t status = rtx_getCurrentStatus();
-    if((status.opMode != OPMODE_M17) || (status.lsfOk == false))
-        _ui_drawFrequency();
-
-    _ui_drawMainBottom();
-}
-
-void _ui_drawMainVFOInput(ui_state_t* ui_state)
-{
-    gfx_clearScreen();
-    _ui_drawMainTop(ui_state);
-    _ui_drawVFOMiddleInput(ui_state);
-    _ui_drawMainBottom();
-}
-
-void _ui_drawMainMEM(ui_state_t* ui_state)
-{
-    gfx_clearScreen();
-    _ui_drawMainTop(ui_state);
-    _ui_drawModeInfo(ui_state);
-
-    // Show channel data if the OpMode is not M17 or there is no valid LSF data
-    rtxStatus_t status = rtx_getCurrentStatus();
-    if((status.opMode != OPMODE_M17) || (status.lsfOk == false))
-    {
-        _ui_drawBankChannel();
-        _ui_drawFrequency();
-    }
-
-    _ui_drawMainBottom();
-}

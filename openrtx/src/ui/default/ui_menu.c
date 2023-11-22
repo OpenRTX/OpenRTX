@@ -187,7 +187,7 @@ void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_
     }
 }
 
-void _ui_drawMenuListValue(ui_state_t* ui_state, uint8_t selected,
+void _ui_drawMenuListValue(ui_state_st* ui_state, uint8_t selected,
                            int (*getCurrentEntry)(char *buf, uint8_t max_len, uint8_t index),
                            int (*getCurrentValue)(char *buf, uint8_t max_len, uint8_t index))
 {
@@ -551,7 +551,7 @@ int _ui_getContactName(char *buf, uint8_t max_len, uint8_t index)
     return result;
 }
 
-void _ui_drawMenuTop(ui_state_t* ui_state)
+void _ui_drawMenuTop( ui_state_st* ui_state )
 {
     gfx_clearScreen();
     // Print "Menu" on top bar
@@ -561,7 +561,7 @@ void _ui_drawMenuTop(ui_state_t* ui_state)
     _ui_drawMenuList(ui_state->menu_selected, _ui_getMenuTopEntryName);
 }
 
-void _ui_drawMenuBank(ui_state_t* ui_state)
+void _ui_drawMenuBank( ui_state_st* ui_state )
 {
     gfx_clearScreen();
     // Print "Bank" on top bar
@@ -571,7 +571,7 @@ void _ui_drawMenuBank(ui_state_t* ui_state)
     _ui_drawMenuList(ui_state->menu_selected, _ui_getBankName);
 }
 
-void _ui_drawMenuChannel(ui_state_t* ui_state)
+void _ui_drawMenuChannel( ui_state_st* ui_state )
 {
     gfx_clearScreen();
     // Print "Channel" on top bar
@@ -581,7 +581,7 @@ void _ui_drawMenuChannel(ui_state_t* ui_state)
     _ui_drawMenuList(ui_state->menu_selected, _ui_getChannelName);
 }
 
-void _ui_drawMenuContacts(ui_state_t* ui_state)
+void _ui_drawMenuContacts( ui_state_st* ui_state )
 {
     gfx_clearScreen();
     // Print "Contacts" on top bar
@@ -592,8 +592,10 @@ void _ui_drawMenuContacts(ui_state_t* ui_state)
 }
 
 #ifdef GPS_PRESENT
-void _ui_drawMenuGPS()
+void _ui_drawMenuGPS(ui_state_st* uiState)
 {
+    (void)uiState;
+
     char *fix_buf, *type_buf;
     gfx_clearScreen();
     // Print "GPS" on top bar
@@ -681,7 +683,7 @@ void _ui_drawMenuGPS()
 }
 #endif
 
-void _ui_drawMenuSettings(ui_state_t* ui_state)
+void _ui_drawMenuSettings(ui_state_st* ui_state)
 {
     gfx_clearScreen();
     // Print "Settings" on top bar
@@ -691,7 +693,7 @@ void _ui_drawMenuSettings(ui_state_t* ui_state)
     _ui_drawMenuList(ui_state->menu_selected, _ui_getSettingsEntryName);
 }
 
-void _ui_drawMenuBackupRestore(ui_state_t* ui_state)
+void _ui_drawMenuBackupRestore(ui_state_st* ui_state)
 {
     gfx_clearScreen();
     // Print "Backup & Restore" on top bar
@@ -701,9 +703,9 @@ void _ui_drawMenuBackupRestore(ui_state_t* ui_state)
     _ui_drawMenuList(ui_state->menu_selected, _ui_getBackupRestoreEntryName);
 }
 
-void _ui_drawMenuBackup(ui_state_t* ui_state)
+void _ui_drawMenuBackup(ui_state_st* ui_state)
 {
-    (void) ui_state;
+    (void)ui_state;
 
     gfx_clearScreen();
     // Print "Flash Backup" on top bar
@@ -727,9 +729,9 @@ void _ui_drawMenuBackup(ui_state_t* ui_state)
     state.backup_eflash = true;
 }
 
-void _ui_drawMenuRestore(ui_state_t* ui_state)
+void _ui_drawMenuRestore(ui_state_st* ui_state)
 {
-    (void) ui_state;
+    (void)ui_state;
 
     gfx_clearScreen();
     // Print "Flash Restore" on top bar
@@ -753,7 +755,7 @@ void _ui_drawMenuRestore(ui_state_t* ui_state)
     state.restore_eflash = true;
 }
 
-void _ui_drawMenuInfo(ui_state_t* ui_state)
+void _ui_drawMenuInfo(ui_state_st* ui_state)
 {
     gfx_clearScreen();
     // Print "Info" on top bar
@@ -764,8 +766,10 @@ void _ui_drawMenuInfo(ui_state_t* ui_state)
                            _ui_getInfoValueName);
 }
 
-void _ui_drawMenuAbout()
+void _ui_drawMenuAbout(ui_state_st* uiState)
 {
+    (void)uiState;
+
     gfx_clearScreen();
 
     point_t logo_pos;
@@ -794,7 +798,7 @@ void _ui_drawMenuAbout()
     }
 }
 
-void _ui_drawSettingsDisplay(ui_state_t* ui_state)
+void _ui_drawSettingsDisplay(ui_state_st* ui_state)
 {
     gfx_clearScreen();
     // Print "Display" on top bar
@@ -806,7 +810,7 @@ void _ui_drawSettingsDisplay(ui_state_t* ui_state)
 }
 
 #ifdef GPS_PRESENT
-void _ui_drawSettingsGPS(ui_state_t* ui_state)
+void _ui_drawSettingsGPS(ui_state_st* ui_state)
 {
     gfx_clearScreen();
     // Print "GPS Settings" on top bar
@@ -837,7 +841,7 @@ void _ui_drawSettingsTimeDate()
               local_time.hour, local_time.minute, local_time.second);
 }
 
-void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state)
+void _ui_drawSettingsTimeDateSet(ui_state_st* ui_state)
 {
     (void) last_state;
 
@@ -878,7 +882,7 @@ void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state)
 }
 #endif
 
-void _ui_drawSettingsM17(ui_state_t* ui_state)
+void _ui_drawSettingsM17(ui_state_st* ui_state)
 {
     gfx_clearScreen();
     // Print "M17 Settings" on top bar
@@ -906,7 +910,7 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
     }
 }
 
-void _ui_drawSettingsVoicePrompts(ui_state_t* ui_state)
+void _ui_drawSettingsVoicePrompts(ui_state_st* ui_state)
 {
     gfx_clearScreen();
     // Print "Voice" on top bar
@@ -917,7 +921,7 @@ void _ui_drawSettingsVoicePrompts(ui_state_t* ui_state)
                            _ui_getVoiceValueName);
 }
 
-void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state)
+void _ui_drawSettingsReset2Defaults(ui_state_st* ui_state)
 {
     (void) ui_state;
 
@@ -946,7 +950,7 @@ void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state)
     drawcnt++;
 }
 
-void _ui_drawSettingsRadio(ui_state_t* ui_state)
+void _ui_drawSettingsRadio(ui_state_st* ui_state)
 {
     gfx_clearScreen();
 
@@ -985,7 +989,7 @@ void _ui_drawSettingsRadio(ui_state_t* ui_state)
     }
 }
 
-void _ui_drawMacroTop()
+void _ui_drawMacroTop( void )
 {
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
                 color_white, currentLanguage->macroMenu);
@@ -1009,7 +1013,7 @@ void _ui_drawMacroTop()
     }
 }
 
-bool _ui_drawMacroMenu(ui_state_t* ui_state)
+bool _ui_drawMacroMenu(ui_state_st* ui_state)
 {
         // Header
         _ui_drawMacroTop();

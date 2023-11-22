@@ -194,7 +194,7 @@ typedef struct layout_t
  * UI that need to be kept between executions of the UI
  * This state does not need to be saved on device poweroff
  */
-typedef struct ui_state_t
+typedef struct ui_state_st
 {
     // Index of the currently selected menu entry
     uint8_t menu_selected;
@@ -219,7 +219,7 @@ typedef struct ui_state_t
     // Which state to return to when we exit menu
     uint8_t last_main_state;
 }
-ui_state_t;
+ui_state_st;
 
 extern layout_t layout;
 // Copy of the radio state

@@ -35,34 +35,33 @@
  */
 typedef struct
 {
-    uint8_t    devStatus;
-    datetime_t time;
-    uint16_t   v_bat;
-    uint8_t    charge;
-    float      rssi;
+    uint8_t    devStatus ;
+    datetime_t time ;
+    uint16_t   v_bat ;
+    uint8_t    charge ;
+    float      rssi ;
 
-    uint8_t    ui_screen;
-    uint8_t    tuner_mode;
+    uint8_t    ui_screen ;
+    uint8_t    tuner_mode ;
 
-    uint16_t   channel_index;
-    channel_t  channel;
-    channel_t  vfo_channel;
-    bool       bank_enabled;
-    uint16_t   bank;
-    uint8_t    rtxStatus;
-    bool       tone_enabled;
+    uint16_t   channel_index ;
+    channel_t  channel ;
+    channel_t  vfo_channel ;
+    bool       bank_enabled ;
+    uint16_t   bank ;
+    uint8_t    rtxStatus ;
+    bool       tone_enabled ;
 
-    bool       emergency;
-    settings_t settings;
-    gps_t      gps_data;
-    bool       gps_set_time;
-    bool       gpsDetected;
-    bool       backup_eflash;
-    bool       restore_eflash;
-    bool       txDisable;
-    uint8_t    step_index;
-}
-state_t;
+    bool       emergency ;
+    settings_t settings ;
+    gps_t      gps_data ;
+    bool       gps_set_time ;
+    bool       gpsDetected ;
+    bool       backup_eflash ;
+    bool       restore_eflash ;
+    bool       txDisable ;
+    uint8_t    step_index ;
+}state_t;
 
 extern uint32_t freq_steps[];
 extern size_t n_freq_steps;

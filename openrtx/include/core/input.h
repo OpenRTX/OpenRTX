@@ -39,14 +39,13 @@ typedef union
 {
     struct
     {
-        uint32_t long_press : 1,
-                 keys       : 29,
-                 _padding   : 2;
+        uint32_t long_press :  1 ,
+                 keys       : 29 ,
+                 _padding   :  2   ;
     };
 
     uint32_t value;
-}
-kbd_msg_t;
+}kbd_msg_t;
 
 
 /**
