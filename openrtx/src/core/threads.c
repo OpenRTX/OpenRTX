@@ -54,7 +54,7 @@ void *ui_threadFunc(void *arg)
     (void) arg;
 
     kbd_msg_t   kbd_msg;
-    rtxStatus_t rtx_cfg = { 0 };
+    rtxStatus_t rtx_cfg  = { 0 };
     bool        sync_rtx = true;
     long long   time     = 0;
 
@@ -66,19 +66,20 @@ void *ui_threadFunc(void *arg)
     sleepFor(1u, 0u);
     gfx_render();
 
-    while(state.devStatus != SHUTDOWN)
+    while( state.devStatus != SHUTDOWN )
     {
+
         time = getTick();
 
-        if(input_scanKeyboard(&kbd_msg))
+        if( input_scanKeyboard( &kbd_msg ) )
         {
-            ui_pushEvent(EVENT_KBD, kbd_msg.value);
+            ui_pushEvent( EVENT_KBD , kbd_msg.value );
         }
 
-        pthread_mutex_lock(&state_mutex);   // Lock r/w access to radio state
-        ui_updateFSM(&sync_rtx);            // Update UI FSM
-        ui_saveState();                     // Save local state copy
-        pthread_mutex_unlock(&state_mutex); // Unlock r/w access to radio state
+        pthread_mutex_lock( &state_mutex );     // Lock r/w access to radio state
+        ui_updateFSM( &sync_rtx );              // Update UI FSM
+        ui_saveState();                         // Save local state copy
+        pthread_mutex_unlock( &state_mutex );   // Unlock r/w access to radio state
 
         vp_tick();                           // continue playing voice prompts in progress if any.
 

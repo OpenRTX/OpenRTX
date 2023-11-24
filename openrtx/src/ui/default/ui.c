@@ -85,10 +85,18 @@
 
 #ifdef DISPLAY_DEBUG_MSG
 
-static char    counter = 0 ; //@@@KL
-static uint8_t trace   = 0 ; //@@@KL
+static char     counter = 0 ; //@@@KL
+static uint32_t trace   = 0 ; //@@@KL
 
-static void DisplayDebugMsg( void )
+extern void Debug_SetTrace( uint32_t traceVal );
+#define DEBUG_SET_TRACE( traceVal )     Debug_SetTrace( (uint32_t)traceVal );
+
+void Debug_SetTrace( uint32_t traceVal )
+{
+    trace = traceVal ;
+}
+
+static void Debug_DisplayMsg( void )
 {
     //@@@KL
     if( counter < 10 )
@@ -100,15 +108,13 @@ static void DisplayDebugMsg( void )
         counter = 0 ;
     }
     gfx_print( layout.top_pos , layout.top_font , TEXT_ALIGN_LEFT , color_white ,
-               "%c%d" , (char)( '0' + counter ) , trace );//@@@KL
+               "%c%X" , (char)( '0' + counter ) , (uint8_t)trace );//@@@KL
 }
 
 #endif // DISPLAY_DEBUG_MSG
 
-
-
 /* UI main screen functions, their implementation is in "ui_main.c" */
-extern void ui_draw( state_t* state , ui_state_st* ui_state );
+extern void ui_draw( state_t* state , ui_state_st* ui_state , event_t* event );
 extern bool _ui_drawMacroMenu( ui_state_st* ui_state );
 extern void _ui_reset_menu_anouncement_tracking( void );
 
@@ -296,6 +302,7 @@ const color_t color_blue    = {   0 ,   0 , 255 , 255 };
        state_t     last_state ;
        bool        macro_latched ;
 static ui_state_st ui_state ;
+static event_t     event ;
 static bool        macro_menu      = false ;
 static bool        redraw_needed   = true ;
 
@@ -500,7 +507,7 @@ layout_t layout =
 typedef struct
 {
     kbd_msg_t      msg ;
-    vpQueueFlags_t queueFlags ;
+    VPQueueFlags_en queueFlags ;
     bool           f1Handled ;
 }GuiState_st;
 
@@ -534,7 +541,7 @@ static bool ui_updateFSM_PAGE_BLANK( GuiState_st* guiState , ui_state_st* uiStat
 
 typedef bool (*ui_updateFSM_PAGE_fn)( GuiState_st* guiState , ui_state_st* uiState );
 
-static const ui_updateFSM_PAGE_fn ui_updateFSM_PAGE_T[ PAGE_NUM_OF ] =
+static const ui_updateFSM_PAGE_fn ui_updateFSM_PageTable[ PAGE_NUM_OF ] =
 {
     ui_updateFSM_PAGE_MAIN_VFO                   ,
     ui_updateFSM_PAGE_MAIN_VFO_INPUT             ,
@@ -567,11 +574,6 @@ static const ui_updateFSM_PAGE_fn ui_updateFSM_PAGE_T[ PAGE_NUM_OF ] =
 
 const uiPageDesc_st* uiGetPageDesc( uiPageNum_en pageNum )
 {
-    return &uiPageDescTable[ pageNum ];
-}
-
-const char** uiGetPageLoc( uiPageNum_en pageNum )
-{
     uiPageNum_en pgNum = pageNum ;
 
     if( pgNum >= PAGE_NUM_OF )
@@ -579,11 +581,25 @@ const char** uiGetPageLoc( uiPageNum_en pageNum )
         pgNum = PAGE_BLANK ;
     }
 
-    return uiPageDescTable[ pgNum ].loc ;
+    return &uiPageDescTable[ pgNum ];
 }
 
 uint8_t uiGetPageNumOf( uiPageNum_en pageNum )
 {
+    const uiPageDesc_st* uiPageDesc = uiGetPageDesc( pageNum );
+
+    return uiPageDesc->numOf ;
+}
+
+const char** uiGetPageLoc( uiPageNum_en pageNum )
+{
+    const uiPageDesc_st* uiPageDesc = uiGetPageDesc( pageNum );
+
+    return uiPageDesc->loc ;
+}
+
+static bool uiDisplayPage( uiPageNum_en pageNum , GuiState_st* guiState , ui_state_st* uiState )
+{
     uiPageNum_en pgNum = pageNum ;
 
     if( pgNum >= PAGE_NUM_OF )
@@ -591,7 +607,7 @@ uint8_t uiGetPageNumOf( uiPageNum_en pageNum )
         pgNum = PAGE_BLANK ;
     }
 
-    return uiPageDescTable[ pgNum ].numOf ;
+    return ui_updateFSM_PageTable[ pgNum ]( guiState , uiState );
 }
 
 static freq_t _ui_freq_add_digit( freq_t freq , uint8_t pos , uint8_t number )
@@ -621,7 +637,7 @@ static void _ui_timedate_add_digit( datetime_t* timedate ,
     // just indicates separation of date and time.
     if( pos == 6 ) // start of time.
     {
-        vp_queueString( "hh:mm" , vpAnnounceCommonSymbols | vpAnnounceLessCommonSymbols );
+        vp_queueString( "hh:mm" , VP_ANNOUNCE_COMMON_SYMBOLS | VP_ANNOUNCE_LESS_COMMON_SYMBOLS );
     }
     if( pos == 8 )
     {
@@ -790,7 +806,7 @@ static void _ui_fsm_confirmVFOInput( bool*sync_rtx )
             vp_queueFrequency( ui_state.new_rx_frequency );
             // defer playing till the end.
             // indicate that the user has moved to the tx freq field.
-            vp_announceInputReceiveOrTransmit( true , vpqDefault );
+            vp_announceInputReceiveOrTransmit( true , VPQ_DEFAULT );
             break ;
         }
         case SET_TX :
@@ -812,11 +828,11 @@ static void _ui_fsm_confirmVFOInput( bool*sync_rtx )
                 // defer play because play is called at the end of the function
                 //due to above freq queuing.
                 vp_announceFrequencies( state.channel.rx_frequency ,
-                                        state.channel.tx_frequency , vpqInit );
+                                        state.channel.tx_frequency , VPQ_INIT );
             }
             else
             {
-                vp_announceError( vpqInit );
+                vp_announceError( VPQ_INIT );
             }
 
             state.ui_screen = PAGE_MAIN_VFO ;
@@ -891,7 +907,7 @@ static void _ui_fsm_insertVFONumber( kbd_msg_t msg , bool* sync_rtx )
                     *sync_rtx                  = true;
                     // play is called at end.
                     vp_announceFrequencies( state.channel.rx_frequency ,
-                                            state.channel.tx_frequency , vpqInit );
+                                            state.channel.tx_frequency , VPQ_INIT );
                 }
 
                 state.ui_screen = PAGE_MAIN_VFO ;
@@ -962,8 +978,8 @@ static inline void _ui_changeM17Can( int variation )
 
 static void _ui_changeVoiceLevel( int variation )
 {
-    if( ( ( state.settings.vpLevel == vpNone ) && ( variation < 0 ) ) ||
-        ( ( state.settings.vpLevel == vpHigh ) && ( variation > 0 ) )    )
+    if( ( ( state.settings.vpLevel == VPP_NONE ) && ( variation < 0 ) ) ||
+        ( ( state.settings.vpLevel == VPP_HIGH ) && ( variation > 0 ) )    )
     {
         return ;
     }
@@ -971,13 +987,13 @@ static void _ui_changeVoiceLevel( int variation )
     state.settings.vpLevel += variation ;
 
     // Force these flags to ensure the changes are spoken for levels 1 through 3.
-    vpQueueFlags_t flags = vpqInit                 |
-                           vpqAddSeparatingSilence |
-                           vpqPlayImmediately        ;
+    VPQueueFlags_en flags = VPQ_INIT                   |
+                            VPQ_ADD_SEPARATING_SILENCE |
+                            VPQ_PLAY_IMMEDIATELY         ;
 
     if( !vp_isPlaying() )
     {
-        flags |= vpqIncludeDescriptions ;
+        flags |= VPQ_INCLUDE_DESCRIPTIONS ;
     }
 
     vp_announceSettingsVoiceLevel( flags );
@@ -1116,7 +1132,7 @@ static void _ui_fsm_menuMacro( kbd_msg_t msg , bool* sync_rtx )
     bool tone_tx_enable       = state.channel.fm.txToneEn ;
     bool tone_rx_enable       = state.channel.fm.rxToneEn ;
     uint8_t tone_flags        = ( tone_tx_enable << 1 ) | tone_rx_enable ;
-    vpQueueFlags_t queueFlags = vp_getVoiceLevelQueueFlags();
+    VPQueueFlags_en queueFlags = vp_getVoiceLevelQueueFlags();
 
     switch( ui_state.input_number )
     {
@@ -1175,7 +1191,7 @@ static void _ui_fsm_menuMacro( kbd_msg_t msg , bool* sync_rtx )
                                   state.channel.fm.rxTone   ,
                                   state.channel.fm.txToneEn ,
                                   state.channel.fm.txTone   ,
-                                  queueFlags |vpqIncludeDescriptions );
+                                  queueFlags |VPQ_INCLUDE_DESCRIPTIONS );
             }
             break ;
         }
@@ -1556,44 +1572,44 @@ static uint8_t  priorGPSFixType       =   0 ;
 static uint8_t  priorSatellitesInView =   0 ;
 static uint32_t vpGPSLastUpdate       =   0 ;
 
-static vpGPSInfoFlags_t GetGPSDirectionOrSpeedChanged( void )
+static VPGPSInfoFlags_t GetGPSDirectionOrSpeedChanged( void )
 {
     uint32_t         now ;
-    vpGPSInfoFlags_t whatChanged ;
+    VPGPSInfoFlags_t whatChanged ;
     float            speedDiff ;
     float            altitudeDiff ;
     float            degreeDiff ;
 
     if( !state.settings.gps_enabled )
     {
-        return vpGPSNone;
+        return VPGPS_NONE;
     }
 
     now = getTick();
 
     if( ( now - vpGPSLastUpdate ) < 8000 )
     {
-        return vpGPSNone;
+        return VPGPS_NONE;
     }
 
-    whatChanged = vpGPSNone ;
+    whatChanged = VPGPS_NONE ;
 
     if( state.gps_data.fix_quality != priorGPSFixQuality )
     {
-        whatChanged        |= vpGPSFixQuality ;
+        whatChanged        |= VPGPS_FIX_QUALITY ;
         priorGPSFixQuality  = state.gps_data.fix_quality ;
     }
 
     if( state.gps_data.fix_type != priorGPSFixType )
     {
-        whatChanged     |= vpGPSFixType ;
+        whatChanged     |= VPGPS_FIX_TYPE ;
         priorGPSFixType  = state.gps_data.fix_type ;
     }
 
     speedDiff=fabs( state.gps_data.speed - priorGPSSpeed );
     if( speedDiff >= 1 )
     {
-        whatChanged   |= vpGPSSpeed ;
+        whatChanged   |= VPGPS_SPEED ;
         priorGPSSpeed  = state.gps_data.speed ;
     }
 
@@ -1601,7 +1617,7 @@ static vpGPSInfoFlags_t GetGPSDirectionOrSpeedChanged( void )
 
     if( altitudeDiff >= 5 )
     {
-        whatChanged      |= vpGPSAltitude ;
+        whatChanged      |= VPGPS_ALTITUDE ;
         priorGPSAltitude  = state.gps_data.altitude ;
     }
 
@@ -1609,13 +1625,13 @@ static vpGPSInfoFlags_t GetGPSDirectionOrSpeedChanged( void )
 
     if( degreeDiff  >= 1 )
     {
-        whatChanged       |= vpGPSDirection ;
+        whatChanged       |= VPGPS_DIRECTION ;
         priorGPSDirection  = state.gps_data.tmg_true ;
     }
 
     if( state.gps_data.satellites_in_view != priorSatellitesInView )
     {
-        whatChanged           |= vpGPSSatCount ;
+        whatChanged           |= VPGPS_SAT_COUNT ;
         priorSatellitesInView  = state.gps_data.satellites_in_view ;
     }
 
@@ -1627,31 +1643,22 @@ static vpGPSInfoFlags_t GetGPSDirectionOrSpeedChanged( void )
     return whatChanged ;
 }
 #endif // GPS_PRESENT
-//@@@KL this fn is far too long - I will need to sort it out - task for next stage
-//@@@Kl !!! check coding of switch fns against original coding
+
 void ui_updateFSM( bool* sync_rtx )
 {
     GuiState_st guiState ;
     uint8_t     newTail ;
     bool        processEvent = false ;
 
+static uint8_t cntr = 0 ; //@@@KL
     // Check for events
     if( evQueue_wrPos != evQueue_rdPos )
     {
         // Pop an event from the queue
-        event_t event ;
         newTail       = ( evQueue_rdPos + 1 ) % MAX_NUM_EVENTS ;
         event         = evQueue[ evQueue_rdPos ] ;
         evQueue_rdPos = newTail ;
         processEvent  = true ;
-
-        // There is some event to process, we need an UI redraw.
-        // UI redraw request is cancelled if we're in standby mode.
-        redraw_needed = true ;
-        if( standby )
-        {
-            redraw_needed = false ;
-        }
 
         // Check if battery has enough charge to operate.
         // Check is skipped if there is an ongoing transmission, since the voltage
@@ -1673,6 +1680,7 @@ void ui_updateFSM( bool* sync_rtx )
 
         if( processEvent )
         {
+DEBUG_SET_TRACE( cntr++ ) //@@@KL
             long long timeTick = timeTick = getTick();
             switch( event.type )
             {
@@ -1738,7 +1746,7 @@ void ui_updateFSM( bool* sync_rtx )
 
                         if( state.ui_screen < PAGE_NUM_OF )
                         {
-                            *sync_rtx = ui_updateFSM_PAGE_T[ state.ui_screen ]( &guiState , &ui_state );
+                            *sync_rtx = uiDisplayPage( state.ui_screen , &guiState , &ui_state );
                         }
 
                         // Enable Tx only if in PAGE_MAIN_VFO or PAGE_MAIN_MEM states
@@ -1752,12 +1760,12 @@ void ui_updateFSM( bool* sync_rtx )
                         }
                         if( !guiState.f1Handled                  &&
                              ( guiState.msg.keys & KEY_F1      ) &&
-                             ( state.settings.vpLevel > vpBeep )    )
+                             ( state.settings.vpLevel > VPP_BEEP )    )
                         {
                             vp_replayLastPrompt();
                         }
                         else if( ( priorUIScreen != state.ui_screen ) &&
-                                 ( state.settings.vpLevel > vpLow   )    )
+                                 ( state.settings.vpLevel > VPP_LOW   )    )
                         {
                             // When we switch to VFO or Channel screen, we need to announce it.
                             // Likewise for information screens.
@@ -1767,7 +1775,7 @@ void ui_updateFSM( bool* sync_rtx )
                         // generic beep for any keydown if beep is enabled.
                         // At vp levels higher than beep, keys will generate voice so no need
                         // to beep or you'll get an unwanted click.
-                        if( ( guiState.msg.keys & 0xFFFF ) && ( state.settings.vpLevel == vpBeep ) )
+                        if( ( guiState.msg.keys & 0xFFFF ) && ( state.settings.vpLevel == VPP_BEEP ) )
                         {
                             vp_beep( BEEP_KEY_GENERIC , SHORT_BEEP );
                         }
@@ -1777,20 +1785,25 @@ void ui_updateFSM( bool* sync_rtx )
                             _ui_reset_menu_anouncement_tracking();
                         }
                     }
+                    redraw_needed = true ;
                     break ;
                 }// case EVENT_KBD :
                 case EVENT_STATUS :
                 {
+                    if( event.payload )
+                    {
+                        redraw_needed = true ;
+                    }
 #ifdef GPS_PRESENT
                     if( ( state.ui_screen == PAGE_MENU_GPS ) &&
                         !vp_isPlaying()                      &&
-                        ( state.settings.vpLevel > vpLow   ) &&
+                        ( state.settings.vpLevel > VPP_LOW   ) &&
                         !txOngoing                           &&
                         !rtx_rxSquelchOpen()                    )
                     {
                         // automatically read speed and direction changes only!
-                        vpGPSInfoFlags_t whatChanged = GetGPSDirectionOrSpeedChanged();
-                        if( whatChanged != vpGPSNone )
+                        VPGPSInfoFlags_t whatChanged = GetGPSDirectionOrSpeedChanged();
+                        if( whatChanged != VPGPS_NONE )
                         {
                             vp_announceGPSInfo( whatChanged );
                         }
@@ -1818,6 +1831,14 @@ void ui_updateFSM( bool* sync_rtx )
                 }// case EVENT_STATUS :
             }// switch( event.type )
         }
+
+        // There is some event to process, we need an UI redraw.
+        // UI redraw request is cancelled if we're in standby mode.
+        if( standby )
+        {
+            redraw_needed = false ;
+        }
+
     }
 }
 
@@ -1940,11 +1961,11 @@ static bool ui_updateFSM_PAGE_MAIN_VFO( GuiState_st* guiState , ui_state_st* uiS
             }
             else if( guiState->msg.keys & KEY_F1 )
             {
-                if( state.settings.vpLevel > vpBeep )
+                if( state.settings.vpLevel > VPP_BEEP )
                 {// quick press repeat vp, long press summary.
                     if( guiState->msg.long_press )
                     {
-                        vp_announceChannelSummary( &state.channel , 0 , state.bank , vpAllInfo );
+                        vp_announceChannelSummary( &state.channel , 0 , state.bank , VPSI_ALL_INFO );
                     }
                     else
                     {
@@ -1961,7 +1982,7 @@ static bool ui_updateFSM_PAGE_MAIN_VFO( GuiState_st* guiState , ui_state_st* uiS
                 uiState->input_position   = 1 ;
                 uiState->input_set        = SET_RX ;
                 // do not play  because we will also announce the number just entered.
-                vp_announceInputReceiveOrTransmit( false , vpqInit );
+                vp_announceInputReceiveOrTransmit( false , VPQ_INIT );
                 vp_queueInteger(input_getPressedNumber( guiState->msg ) );
                 vp_play();
 
@@ -2059,12 +2080,12 @@ static bool ui_updateFSM_PAGE_MAIN_MEM( GuiState_st* guiState , ui_state_st* uiS
             }
             else if( guiState->msg.keys & KEY_F1 )
             {
-                if( state.settings.vpLevel > vpBeep )
+                if( state.settings.vpLevel > VPP_BEEP )
                 {
                     // Quick press repeat vp, long press summary.
                     if( guiState->msg.long_press )
                     {
-                        vp_announceChannelSummary( &state.channel , state.channel_index , state.bank , vpAllInfo );
+                        vp_announceChannelSummary( &state.channel , state.channel_index , state.bank , VPSI_ALL_INFO );
                     }
                     else
                     {
@@ -2122,12 +2143,12 @@ static bool ui_updateFSM_PAGE_MAIN_MEM( GuiState_st* guiState , ui_state_st* uiS
             }
             else if( guiState->msg.keys & KEY_F1 )
             {
-                if( state.settings.vpLevel > vpBeep )
+                if( state.settings.vpLevel > VPP_BEEP )
                 {
                     // quick press repeat vp, long press summary.
                     if( guiState->msg.long_press )
                     {
-                        vp_announceChannelSummary( &state.channel , state.channel_index+1 , state.bank , vpAllInfo );
+                        vp_announceChannelSummary( &state.channel , state.channel_index+1 , state.bank , VPSI_ALL_INFO );
                     }
                     else
                     {
@@ -2337,16 +2358,16 @@ static bool ui_updateFSM_PAGE_MENU_CONTACTS( GuiState_st* guiState , ui_state_st
 static bool ui_updateFSM_PAGE_MENU_GPS( GuiState_st* guiState , ui_state_st* uiState )
 {
     (void)guiState ;
-    (void)uiState;
+    (void)uiState ;
 
     bool sync_rtx = false ;
 
-    if( ( guiState->msg.keys & KEY_F1 ) && ( state.settings.vpLevel > vpBeep ) )
+    if( ( guiState->msg.keys & KEY_F1 ) && ( state.settings.vpLevel > VPP_BEEP ) )
     {
         // quick press repeat vp, long press summary.
         if( guiState->msg.long_press )
         {
-            vp_announceGPSInfo( vpGPSAll );
+            vp_announceGPSInfo( VPGPS_ALL );
         }
         else
         {
@@ -2486,6 +2507,7 @@ static bool ui_updateFSM_PAGE_MENU_BACKUP( GuiState_st* guiState , ui_state_st* 
 {
     return - ui_updateFSM_PAGE_MENU_RESTORE( guiState , uiState );
 }
+
 static bool ui_updateFSM_PAGE_MENU_RESTORE( GuiState_st* guiState , ui_state_st* uiState )
 {
     (void)uiState ;
@@ -2809,7 +2831,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState , ui_state_s
                     _ui_numberInputKeypad( &uiState->new_offset , guiState->msg );
                     uiState->input_position += 1 ;
                 }
-                else if( guiState->msg.long_press && ( guiState->msg.keys & KEY_F1 ) && ( state.settings.vpLevel > vpBeep ) )
+                else if( guiState->msg.long_press && ( guiState->msg.keys & KEY_F1 ) && ( state.settings.vpLevel > VPP_BEEP ) )
                 {
                     vp_queueFrequency( uiState->new_offset );
                     guiState->f1Handled = true ;
@@ -2924,7 +2946,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_M17( GuiState_st* guiState , ui_state_st*
                 {
                     _ui_textInputKeypad( uiState->new_callsign , 9 , guiState->msg , true );
                 }
-                else if( guiState->msg.long_press && ( guiState->msg.keys & KEY_F1 ) && ( state.settings.vpLevel > vpBeep ) )
+                else if( guiState->msg.long_press && ( guiState->msg.keys & KEY_F1 ) && ( state.settings.vpLevel > VPP_BEEP ) )
                 {
                     vp_announceBuffer( &currentLanguage->callsign , true , true , uiState->new_callsign );
                     guiState->f1Handled = true ;
@@ -3148,7 +3170,7 @@ bool ui_updateGUI( void )
 {
     if( redraw_needed == true )
     {
-        ui_draw( &last_state , &ui_state );
+        ui_draw( &last_state , &ui_state , &event );
         // If MACRO menu is active draw it
         if( macro_menu )
         {
@@ -3157,7 +3179,7 @@ bool ui_updateGUI( void )
         }
 
 #ifdef DISPLAY_DEBUG_MSG
-        DisplayDebugMsg();
+        Debug_DisplayMsg();
 #endif // DISPLAY_DEBUG_MSG
 
         redraw_needed = false ;

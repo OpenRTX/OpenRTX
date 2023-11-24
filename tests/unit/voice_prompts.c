@@ -32,7 +32,7 @@
 int main()
 {
     state.settings.vpLevel = 3;
-	vpQueueFlags_t flags = vp_getVoiceLevelQueueFlags();
+	VPQueueFlags_en flags = vp_getVoiceLevelQueueFlags();
 
     vp_init();
     vp_flush();

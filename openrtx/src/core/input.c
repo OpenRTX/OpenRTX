@@ -22,63 +22,63 @@
 #include <stdbool.h>
 #include <input.h>
 
-static long long  keyTs[KBD_NUM_KEYS];  // Timestamp of each keypress
-static uint32_t   longPressSent;        // Flags to manage long-press events
-static keyboard_t prevKeys = 0;         // Previous keyboard status
+static long long  keyTs[ KBD_NUM_KEYS ] ;   // Timestamp of each keypress
+static uint32_t   longPressSent ;           // Flags to manage long-press events
+static keyboard_t prevKeys = 0 ;            // Previous keyboard status
 
-bool input_scanKeyboard(kbd_msg_t *msg)
+bool input_scanKeyboard( kbd_msg_t* msg )
 {
-    msg->value     = 0;
-    bool kbd_event = false;
-
+    msg->value      = 0 ;
+    bool kbd_event  = false ;
     keyboard_t keys = kbd_getKeys();
     long long now   = getTick();
 
     // The key status has changed
-    if(keys != prevKeys)
+    if( keys != prevKeys )
     {
         // Find newly pressed keys
-        keyboard_t newKeys = (keys ^ prevKeys) & keys;
+        keyboard_t newKeys = ( keys ^ prevKeys ) & keys ;
 
         // Save timestamp
-        for(uint8_t k = 0; k < KBD_NUM_KEYS; k++)
+        for( uint8_t index = 0 ; index < KBD_NUM_KEYS ; index++ )
         {
-            keyboard_t mask = 1 << k;
-            if((newKeys & mask) != 0)
+            keyboard_t mask = 1 << index ;
+            if( ( newKeys & mask ) != 0 )
             {
-                keyTs[k]       = now;
-                longPressSent &= ~mask;
+                keyTs[ index ]  = now ;
+                longPressSent  &= ~mask ;
             }
         }
 
         // New keyboard event
-        msg->keys = keys;
-        kbd_event = true;
+        msg->keys = keys ;
+        prevKeys  = keys ;
+        kbd_event = true ;
     }
+
     // Some key is kept pressed
-    else if(keys != 0)
+    else if( keys != 0 )
     {
         // Check for saved timestamp to trigger long-presses
-        for(uint8_t k = 0; k < KBD_NUM_KEYS; k++)
+        for( uint8_t index = 0 ; index < KBD_NUM_KEYS ; index++ )
         {
-            keyboard_t mask = 1 << k;
+            keyboard_t mask = 1 << index ;
 
             // The key is pressed and its long-press timer is over
-            if(((keys & mask) != 0)          &&
-               ((longPressSent & mask) == 0) &&
-               ((now - keyTs[k]) >= input_longPressTimeout))
+            if( ( ( keys & mask          ) != 0                      ) &&
+                ( ( longPressSent & mask ) == 0                      ) &&
+                ( ( now - keyTs[ index ] ) >= input_longPressTimeout )    )
             {
-                msg->long_press = 1;
-                msg->keys       = keys;
-                kbd_event       = true;
-                longPressSent  |= mask;
+                msg->long_press = 1 ;
+                msg->keys       = keys ;
+                kbd_event       = true ;
+                longPressSent  |= mask ;
+                break ;
             }
         }
     }
 
-    prevKeys = keys;
-
-    return kbd_event;
+    return kbd_event ;
 }
 
 bool input_isNumberPressed(kbd_msg_t msg)

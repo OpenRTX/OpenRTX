@@ -31,6 +31,12 @@ enum eventType_t
     EVENT_STATUS = 1
 };
 
+typedef enum
+{
+    EVENT_STATUS_TIME_TICK = ( 1 << 0 ) ,
+    EVENT_STATUS_BATTERY   = ( 1 << 1 )
+}EventStatus_en;
+
 /**
  * The event message is constrained to 32 bits size
  * This is necessary to send event messages in uC OS/III Queues

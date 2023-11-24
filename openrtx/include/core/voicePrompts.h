@@ -179,8 +179,7 @@ typedef enum
     PROMPT_CUSTOM9,         // parrot
     PROMPT_CUSTOM10,        // unused
     NUM_VOICE_PROMPTS,
-}
-voicePrompt_t;
+}VoicePrompt_en;
 
 // The name of the voice prompt file is always encoded as the last prompt.
 #define PROMPT_VOICE_NAME (NUM_VOICE_PROMPTS + (sizeof(stringsTable_t)/sizeof(char*)))
@@ -190,16 +189,15 @@ voicePrompt_t;
  */
 typedef enum
 {
-    vpDefault                           = 0x00,
-    vpAnnounceCaps                      = 0x01,
-    vpAnnounceCustomPrompts             = 0x02,
-    vpAnnounceSpace                     = 0x04,
-    vpAnnounceCommonSymbols             = 0x08,
-    vpAnnounceLessCommonSymbols         = 0x10,
-    vpAnnounceASCIIValueForUnknownChars = 0x20,
-    vpAnnouncePhoneticRendering         = 0x40,
-}
-vpFlags_t;
+    VP_DEFAULT                                = 0x00      ,
+    VP_ANNOUNCE_CAPS                          = 0x01 << 0 ,
+    VP_ANNOUNCE_CUSTOM_PROMPTS                = 0x01 << 1 ,
+    VP_ANNOUNCE_SPACE                         = 0x01 << 2 ,
+    VP_ANNOUNCE_COMMON_SYMBOLS                = 0x01 << 3 ,
+    VP_ANNOUNCE_LESS_COMMON_SYMBOLS           = 0x01 << 4 ,
+    VP_ANNOUNCE_ASCII_VALUE_FOR_UNKNOWN_CHARS = 0x01 << 5 ,
+    VP_ANNOUNCE_PHONETIC_RENDERING            = 0x01 << 6
+}VPFlags_en;
 
 /**
  * Queuing flags determining if speech is interrupted, played immediately,
@@ -207,84 +205,79 @@ vpFlags_t;
  */
 typedef enum
 {
-    vpqDefault                         = 0,
-    vpqInit                            = 0x01,  // stop any voice prompts already in progress.
-    vpqPlayImmediately                 = 0x02,  // call play after queue at all levels.
-    vpqPlayImmediatelyAtMediumOrHigher = 0x04,
-    vpqIncludeDescriptions             = 0x08,
-    vpqAddSeparatingSilence            = 0x10
-}
-vpQueueFlags_t;
+    VPQ_DEFAULT                              = 0x00 ,
+    VPQ_INIT                                 = 0x01 << 0 ,  // stop any voice prompts already in progress.
+    VPQ_PLAY_IMMEDIATELY                     = 0x01 << 1 ,  // call play after queue at all levels.
+    VPQ_PLAY_IMMEDIATELY_AT_MEDIUM_OR_HIGHER = 0x01 << 2 ,
+    VPQ_INCLUDE_DESCRIPTIONS                 = 0x01 << 3 ,
+    VPQ_ADD_SEPARATING_SILENCE               = 0x01 << 4
+}VPQueueFlags_en;
 
 /**
  * Voice prompt verbosity levels.
  */
 typedef enum
 {
-    vpNone = 0,
-    vpBeep,
-    vpLow,
-    vpMedium,
-    vpHigh
-}
-vpVerbosity_t;
+    VPP_NONE   ,
+    VPP_BEEP   ,
+    VPP_LOW    ,
+    VPP_MEDIUM ,
+    VPP_HIGH
+}VPVerbosity_en;
 
 typedef enum
 {
-    vpChannelNameOrVFO      = 0x01,
-    vpFrequencies           = 0x02,
-    vpRadioMode             = 0x04,
-    vpModeSpecificInfo      = 0x08,
-    vpPower                 = 0x10,
-    vpBankNameOrAllChannels = 0x20,
-    vpAllInfo               = 0xff
-}
-vpSummaryInfoFlags_t;
+    VPSI_CHANNEL_NAME_OR_VFO       = 0x01 << 0 ,
+    VPSI_FREQUENCIES               = 0x01 << 1 ,
+    VPSI_RADIO_MODE                = 0x01 << 2 ,
+    VPSI_MODE_SPECIFIC_INFO        = 0x01 << 3 ,
+    VPSI_POWER                     = 0x01 << 4 ,
+    VPSI_BANK_NAME_OR_ALL_CHANNELS = 0x01 << 5 ,
+    VPSI_ALL_INFO                  = 0xFF
+}VPSummaryInfoFlags_en;
 
 typedef enum
 {
-    vpGPSNone       = 0,
-    vpGPSIntro      = 0x01,
-    vpGPSFixQuality = 0x02,
-    vpGPSFixType    = 0x04,
-    vpGPSLatitude   = 0x08,
-    vpGPSLongitude  = 0x10,
-    vpGPSSpeed      = 0x20,
-    vpGPSAltitude   = 0x40,
-    vpGPSDirection  = 0x80,
-    vpGPSSatCount   = 0x100,
-    vpGPSAll        = 0x1ff,
-}
-vpGPSInfoFlags_t;
-
+    VPGPS_NONE        = 0x00,
+    VPGPS_INTRO       = 0x01 << 0 ,
+    VPGPS_FIX_QUALITY = 0x01 << 1 ,
+    VPGPS_FIX_TYPE    = 0x01 << 2 ,
+    VPGPS_LATITUDE    = 0x01 << 3 ,
+    VPGPS_LONGTITUDE  = 0x01 << 4 ,
+    VPGPS_SPEED       = 0x01 << 5 ,
+    VPGPS_ALTITUDE    = 0x01 << 6 ,
+    VPGPS_DIRECTION   = 0x01 << 7 ,
+    VPGPS_SAT_COUNT   = 0x01 << 8 ,
+    VPGPS_ALL         = 0x1FF,
+}VPGPSInfoFlags_t;
 
 /**
  * Initialise the voice prompt system and load vp table of contents.
  */
-void vp_init();
+void vp_init( void );
 
 /**
  * Terminate the currently ongoing prompt and shutdown the voice prompt system.
  */
-void vp_terminate();
+void vp_terminate( void );
 
 /**
  * Stop an in-progress prompt and rewind data pointers to the beginning keeping
  * prompt data intact. This allows to replay the prompt.
  */
-void vp_stop();
+void vp_stop( void );
 
 /**
  * Stop an in-progress prompt, if present, and clear the prompt data buffer.
  */
-void vp_flush();
+void vp_flush( void );
 
 /**
  * Append an individual prompt item to the prompt queue.
  *
  * @param prompt: voice prompt ID.
  */
-void vp_queuePrompt(const uint16_t prompt);
+void vp_queuePrompt( const uint16_t prompt );
 
 /**
  * Append the spelling of a complete string to the queue.
@@ -292,53 +285,53 @@ void vp_queuePrompt(const uint16_t prompt);
  * @param string: string to be spelled.
  * @param flags: control flags.
  */
-void vp_queueString(const char* string, vpFlags_t flags);
+void vp_queueString( const char* string , VPFlags_en flags );
 
 /**
  * Append a signed integer to the queue.
  *
  * @param value: value to be appended.
  */
-void vp_queueInteger(const int value);
+void vp_queueInteger( const int value );
 
 /**
  * Append a text string from the current language to the queue.
  */
-void vp_queueStringTableEntry(const char* const* stringTableStringPtr);
+void vp_queueStringTableEntry( const char* const* stringTableStringPtr );
 
 /**
  * Start prompt playback.
  */
-void vp_play();
+void vp_play( void );
 
 /**
  * Function handling vp data decoding, to be called periodically.
  */
-void vp_tick();
+void vp_tick( void );
 
 /**
  * Check if a voice prompt is being played.
  *
  * @return true if a voice prompt is being played.
  */
-bool vp_isPlaying();
+bool vp_isPlaying( void );
 
 /**
  * Check if the voice prompt sequence is empty.
  *
  * @return true if the voice prompt sequence is empty.
  */
-bool vp_sequenceNotEmpty();
+bool vp_sequenceNotEmpty( void );
 
 /**
  * play a beep at a given frequency for a given duration.
  */
-void vp_beep(uint16_t freq, uint16_t duration);
+void vp_beep( uint16_t freq , uint16_t duration );
 
 /**
  * Play a series of beeps at a given frequency for a given duration.
  * Array is freq, duration, ... 0, 0 to terminate series.
  */
-void vp_beepSeries(const uint16_t* beepSeries);
+void vp_beepSeries( const uint16_t* beepSeries );
 
 #endif

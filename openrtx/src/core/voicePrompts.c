@@ -53,7 +53,7 @@ vpHeader_t;
 typedef struct
 {
     const char* userWord;
-    const voicePrompt_t vp;
+    const VoicePrompt_en vp;
 }
 userDictEntry_t;
 
@@ -237,26 +237,26 @@ static uint16_t userDictLookup(const char* ptr, int* advanceBy)
  *
  */
 static bool GetSymbolVPIfItShouldBeAnnounced(char symbol,
-                                             vpFlags_t flags,
-                                             voicePrompt_t* vp)
+                                             VPFlags_en flags,
+                                             VoicePrompt_en* vp)
 {
     *vp = PROMPT_SILENCE;
 
     const char indexedSymbols[] =
         "%.+-*#!,@:?()~/[]<>=$'`&|_^{}";  // Must match order of symbols in
-                                          // voicePrompt_t enum.
+                                          // VoicePrompt_en enum.
     const char commonSymbols[] = "%.+-*#";
 
     bool announceCommonSymbols =
-        (flags & vpAnnounceCommonSymbols) ? true : false;
+        (flags & VP_ANNOUNCE_COMMON_SYMBOLS) ? true : false;
     bool announceLessCommonSymbols =
-        (flags & vpAnnounceLessCommonSymbols) ? true : false;
+        (flags & VP_ANNOUNCE_LESS_COMMON_SYMBOLS) ? true : false;
 
     char* symbolPtr = strchr(indexedSymbols, symbol);
 
     if (symbolPtr == NULL)
     {  // we don't have a prompt for this character.
-        return (flags & vpAnnounceASCIIValueForUnknownChars) ? true : false;
+        return (flags & VP_ANNOUNCE_ASCII_VALUE_FOR_UNKNOWN_CHARS) ? true : false;
     }
 
     bool commonSymbol = strchr(commonSymbols, symbol) != NULL;
@@ -376,15 +376,15 @@ void vp_init()
     if (vpDataLoaded)
     {
         // If the hash key is down, set vpLevel to high, if beep or less.
-        if ((kbd_getKeys() & KEY_HASH) && (state.settings.vpLevel <= vpBeep))
-            state.settings.vpLevel = vpHigh;
+        if ((kbd_getKeys() & KEY_HASH) && (state.settings.vpLevel <= VPP_BEEP))
+            state.settings.vpLevel = VPP_HIGH;
     }
     else
     {
         // ensure we at least have beeps in the event no voice prompts are
         // loaded.
-        if (state.settings.vpLevel > vpBeep)
-            state.settings.vpLevel = vpBeep;
+        if (state.settings.vpLevel > VPP_BEEP)
+            state.settings.vpLevel = VPP_BEEP;
     }
 
     // Initialize codec2 module
@@ -427,7 +427,7 @@ void vp_flush()
 
 void vp_queuePrompt(const uint16_t prompt)
 {
-    if (state.settings.vpLevel < vpLow)
+    if (state.settings.vpLevel < VPP_LOW)
         return;
 
     if (voicePromptActive)
@@ -440,21 +440,21 @@ void vp_queuePrompt(const uint16_t prompt)
     }
 }
 
-void vp_queueString(const char* string, vpFlags_t flags)
+void vp_queueString(const char* string, VPFlags_en flags)
 {
-    if (state.settings.vpLevel < vpLow)
+    if (state.settings.vpLevel < VPP_LOW)
         return;
 
     if (voicePromptActive)
         vp_flush();
 
     if (state.settings.vpPhoneticSpell)
-        flags |= vpAnnouncePhoneticRendering;
+        flags |= VP_ANNOUNCE_PHONETIC_RENDERING;
 
     while (*string != '\0')
     {
         int advanceBy    = 0;
-        voicePrompt_t vp = userDictLookup(string, &advanceBy);
+        VoicePrompt_en vp = userDictLookup(string, &advanceBy);
 
         if (vp != 0)
         {
@@ -468,21 +468,21 @@ void vp_queueString(const char* string, vpFlags_t flags)
         }
         else if ((*string >= 'A') && (*string <= 'Z'))
         {
-            if (flags & vpAnnounceCaps)
+            if (flags & VP_ANNOUNCE_CAPS)
                 vp_queuePrompt(PROMPT_CAP);
-            if (flags & vpAnnouncePhoneticRendering)
+            if (flags & VP_ANNOUNCE_PHONETIC_RENDERING)
                 vp_queuePrompt((*string - 'A') + PROMPT_A_PHONETIC);
             else
                 vp_queuePrompt(*string - 'A' + PROMPT_A);
         }
         else if ((*string >= 'a') && (*string <= 'z'))
         {
-            if (flags & vpAnnouncePhoneticRendering)
+            if (flags & VP_ANNOUNCE_PHONETIC_RENDERING)
                 vp_queuePrompt((*string - 'a') + PROMPT_A_PHONETIC);
             else
                 vp_queuePrompt(*string - 'a' + PROMPT_A);
         }
-        else if ((*string == ' ') && (flags & vpAnnounceSpace))
+        else if ((*string == ' ') && (flags & VP_ANNOUNCE_SPACE))
         {
             vp_queuePrompt(PROMPT_SPACE);
         }
@@ -507,13 +507,13 @@ void vp_queueString(const char* string, vpFlags_t flags)
         string++;
     }
 
-    if (flags & vpqAddSeparatingSilence)
+    if (flags & VPQ_ADD_SEPARATING_SILENCE)
         vp_queuePrompt(PROMPT_SILENCE);
 }
 
 void vp_queueInteger(const int value)
 {
-    if (state.settings.vpLevel < vpLow)
+    if (state.settings.vpLevel < VPP_LOW)
         return;
 
     char buf[12] = {0};  // min: -2147483648, max: 2147483647
@@ -533,7 +533,7 @@ void vp_queueStringTableEntry(const char* const* stringTableStringPtr)
      * NUM_VOICE_PROMPTS + (stringTableStringPtr - currentLanguage->languageName)
      */
 
-    if (state.settings.vpLevel < vpLow)
+    if (state.settings.vpLevel < VPP_LOW)
         return;
 
     if (stringTableStringPtr == NULL)
@@ -547,7 +547,7 @@ void vp_queueStringTableEntry(const char* const* stringTableStringPtr)
 
 void vp_play()
 {
-    if (state.settings.vpLevel < vpLow)
+    if (state.settings.vpLevel < VPP_LOW)
         return;
 
     if (voicePromptActive)
@@ -651,7 +651,7 @@ bool vp_sequenceNotEmpty()
 
 void vp_beep(uint16_t freq, uint16_t duration)
 {
-    if (state.settings.vpLevel < vpBeep)
+    if (state.settings.vpLevel < VPP_BEEP)
         return;
 
     // Do not play a new one if one is playing.
@@ -674,7 +674,7 @@ void vp_beep(uint16_t freq, uint16_t duration)
 
 void vp_beepSeries(const uint16_t* beepSeries)
 {
-    if (state.settings.vpLevel < vpBeep)
+    if (state.settings.vpLevel < VPP_BEEP)
         return;
 
     if (currentBeepDuration != 0)

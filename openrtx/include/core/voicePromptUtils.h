@@ -32,7 +32,7 @@ played in sequence (i.e. the announceXX functions may be called one after the
 other) and thus the init must only be sent prior to the first message queued
 and the play must only be invoked after the last message queued.
 
-When an announceXX function is called in isolation, vpqInit|vpqPlayImmediately
+When an announceXX function is called in isolation, VPQ_INIT|VPQ_PLAY_IMMEDIATELY
 should be used to ensure that the message interupts the current prompt and
 plays immediately.
 */
@@ -43,7 +43,7 @@ plays immediately.
  */
 void vp_announceChannelName(const channel_t* channel,
                             const uint16_t channelNumber,
-                            const vpQueueFlags_t flags);
+                            const VPQueueFlags_en flags);
 
 /**
  *
@@ -54,24 +54,24 @@ void vp_queueFrequency(const freq_t freq);
  *
  */
 void vp_announceFrequencies(const freq_t rx, const freq_t tx,
-                            const vpQueueFlags_t flags);
+                            const VPQueueFlags_en flags);
 
 /**
  *
  */
-void vp_announceRadioMode(const uint8_t mode, const vpQueueFlags_t flags);
+void vp_announceRadioMode(const uint8_t mode, const VPQueueFlags_en flags);
 
 /**
  *
  */
-void vp_announceBandwidth(const uint8_t bandwidth, const vpQueueFlags_t flags);
+void vp_announceBandwidth(const uint8_t bandwidth, const VPQueueFlags_en flags);
 
 /**
  * channelNumber is 1-based, channelIndex is 0-based.
  */
 void vp_announceChannelSummary(const channel_t* channel,
                                const uint16_t channelNumber, const uint16_t bank,
-                               const vpSummaryInfoFlags_t infoFlags);
+                               const VPSummaryInfoFlags_en infoFlags);
 
 /**
  *
@@ -81,7 +81,7 @@ void vp_announceInputChar(const char ch);
 /**
  *
  */
-void vp_announceInputReceiveOrTransmit(const bool tx, const vpQueueFlags_t flags);
+void vp_announceInputReceiveOrTransmit(const bool tx, const VPQueueFlags_en flags);
 
 /**
  *
@@ -91,7 +91,7 @@ void vp_replayLastPrompt();
 /**
  *
  */
-void vp_announceError(const vpQueueFlags_t flags);
+void vp_announceError(const VPQueueFlags_en flags);
 
 /*
 This function first tries to see if we have a prompt for the text
@@ -102,62 +102,62 @@ character by character.
 /**
  *
  */
-void vp_announceText(const char* text, const vpQueueFlags_t flags);
+void vp_announceText(const char* text, const VPQueueFlags_en flags);
 
 /**
  *
  */
 void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
                       const bool txToneEnabled, const uint8_t txTone,
-                      const vpQueueFlags_t flags);
+                      const VPQueueFlags_en flags);
 
 /**
  *
  */
-void vp_anouncePower(const float power, const vpQueueFlags_t flags);
+void vp_anouncePower(const float power, const VPQueueFlags_en flags);
 
 /**
  *
  */
-void vp_announceSquelch(const uint8_t squelch,const vpQueueFlags_t flags);
+void vp_announceSquelch(const uint8_t squelch,const VPQueueFlags_en flags);
 
 /**
  *
  */
-void vp_announceContact(const contact_t* contact, const vpQueueFlags_t flags);
+void vp_announceContact(const contact_t* contact, const VPQueueFlags_en flags);
 
 /**
  *
  */
-bool vp_announceContactWithIndex(const uint16_t index, const vpQueueFlags_t flags);
+bool vp_announceContactWithIndex(const uint16_t index, const VPQueueFlags_en flags);
 
 /**
  *
  */
-void vp_announceTimeslot(const uint8_t timeslot, const vpQueueFlags_t flags);
+void vp_announceTimeslot(const uint8_t timeslot, const VPQueueFlags_en flags);
 
 /**
  *
  */
 void vp_announceColorCode(const uint8_t rxColorCode, const uint8_t txColorCode,
-                          const vpQueueFlags_t flags);
+                          const VPQueueFlags_en flags);
 
 /**
  *
  */
-void vp_announceBank(const uint16_t bank, const vpQueueFlags_t flags);
+void vp_announceBank(const uint16_t bank, const VPQueueFlags_en flags);
 
 /**
  *
  */
 void vp_announceM17Info(const channel_t* channel, bool isEditing,
-                        const vpQueueFlags_t flags);
+                        const VPQueueFlags_en flags);
 
 /**
  *
  */
 #ifdef GPS_PRESENT
-void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags);
+void vp_announceGPSInfo(VPGPSInfoFlags_t gpsInfoFlags);
 #endif
 
 /**
@@ -185,19 +185,19 @@ void vp_announceSettingsTimeDate();
 /**
  * This is called to speak voice prompt level changes.
  */
-void vp_announceSettingsVoiceLevel(const vpQueueFlags_t flags);
+void vp_announceSettingsVoiceLevel(const VPQueueFlags_en flags);
 
 /**
  * This is called to speak generic settings on/off toggles.
  */
 void vp_announceSettingsOnOffToggle(const char* const* stringTableStringPtr,
-                                    const vpQueueFlags_t flags, bool val);
+                                    const VPQueueFlags_en flags, bool val);
 
 /**
  * This is called to speak generic settings int values.
  */
 void vp_announceSettingsInt(const char* const* stringTableStringPtr,
-                            const vpQueueFlags_t flags, int val);
+                            const VPQueueFlags_en flags, int val);
 
 /**
  * This function is called from  ui_updateFSM to speak informational screens.
@@ -218,7 +218,7 @@ void vp_announceDisplayTimer();
 /**
  *
  */
-vpQueueFlags_t vp_getVoiceLevelQueueFlags();
+VPQueueFlags_en vp_getVoiceLevelQueueFlags();
 
 /**
  *
@@ -236,6 +236,6 @@ void vp_announceSplashScreen();
  * @param timeZone: timezone value.
  * @param flags: control flags.
  */
-void vp_announceTimeZone(const int8_t timeZone, const vpQueueFlags_t flags);
+void vp_announceTimeZone(const int8_t timeZone, const VPQueueFlags_en flags);
 
 #endif  // VOICE_PROMPT_UTILS_H
