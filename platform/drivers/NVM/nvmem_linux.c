@@ -21,28 +21,37 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <interfaces/nvmem.h>
 #include <sys/stat.h>
 #include <sys/errno.h>
+#include <posix_file.h>
+#include <nvmem_access.h>
+#include <interfaces/nvmem.h>
 
-#define _NVM_MAX_PATHLEN 256
+#define NVM_MAX_PATHLEN 256
 
-// path indexes for memory_paths
-enum path_idxs
+POSIX_FILE_DEVICE_DEFINE(stateDevice, NULL, 1024)
+
+const struct nvmPartition statePartitions[] =
 {
-    P_SETTINGS = 0,
-    P_VFO,
-    P_LEN
+    {
+        .offset = 0x0000,   // First partition, radio state
+        .size   = 512
+    },
+    {
+        .offset = 0x0200,   // Second partition, settings
+        .size   = 512
+    }
 };
 
-// absolute paths to files storing chunk of memory
-char *memory_paths[P_LEN];
+const struct nvmArea stateArea =
+{
+    .name       = "Device state NVM area",
+    .dev        = &stateDevice,
+    .startAddr  = 0x0000,
+    .size       = 1024,
+    .partitions = statePartitions
+};
 
-// Simulate CPS with 16 channels, 16 zones, 16 contacts
-const uint32_t maxNumZones    = 16;
-const uint32_t maxNumChannels = 16;
-const uint32_t maxNumContacts = 16;
-const freq_t dummy_base_freq = 145500000;
 
 /**
  * Creates a directory if it does not exist.
@@ -50,98 +59,47 @@ const freq_t dummy_base_freq = 145500000;
  * \param path: the directory path
  * \return 0 on success, -1 on failure
  */
-int _nvm_mkdir(const char *path)
+static int create_dir(const char *path)
 {
     struct stat sb;
 
     if(stat(path, &sb) == 0)
     {
         if(S_ISDIR(sb.st_mode))
-        {
             return 0;
-        }
 
         printf("%s is not a directory\n", path);
-        return -1;
     }
     else if(errno == ENOENT)
     {
         if(mkdir(path, 0700) == 0)
-        {
             return 0;
-        }
 
         printf("Cannot create %s. %s\n", path, strerror(errno));
-        return -1;
     }
     else
     {
         printf("Cannot stat %s. %s", path, strerror(errno));
-        return -1;
-    }
-}
-
-/**
- * Write binary information into a file
- *
- * \param path: the file to write
- * \param data: the struct to write
- * \param size: the size of the data to write
- * \return 0 on success, -1 on failure
- */
-int _nvm_write(const char *path, const void *data, size_t size)
-{
-    printf("Writing %s\n", path);
-
-    FILE * file= fopen(path, "wb");
-    if(file != NULL)
-    {
-        fwrite(data, size, 1, file);
-        return fclose(file);
     }
 
     return -1;
 }
 
-/**
- * Read binary information into a file
- *
- * \param path: the file to read
- * \param data: the struct to populate with the file content
- * \param size: the size of the data to read
- * \return 0 on success, -1 on failure
- */
-int _cps_read(const char *path, void *data, size_t size)
-{
-    printf("Reading %s\n", path);
-
-    FILE * file= fopen(path, "rb");
-    if(file != NULL)
-    {
-        fread(data, size, 1, file);
-        return fclose(file);
-    }
-
-    return -1;
-}
 
 void nvm_init()
 {
-    const char *name           = "XDG_STATE_HOME";
-    const char *env_state_path = getenv(name);
-    const char *openrtx        = "/OpenRTX";
+    const char *env_state_path = getenv("XDG_STATE_HOME");
+    const char *openrtx        = "/OpenRTX/";
 
-    char memory_path[_NVM_MAX_PATHLEN];
+    char memory_path[NVM_MAX_PATHLEN];
 
     if(env_state_path)
     {
-         if(_nvm_mkdir(env_state_path) != 0)
-         {
+         if(create_dir(env_state_path) != 0)
              exit(1);
-         }
 
          // we append /OpenRTX to env_state_path
-         if(strlen(env_state_path) + strlen(openrtx) >= _NVM_MAX_PATHLEN)
+         if(strlen(env_state_path) + strlen(openrtx) >= NVM_MAX_PATHLEN)
              goto toolong;
 
          strcpy(memory_path, env_state_path);
@@ -157,56 +115,29 @@ void nvm_init()
         const char *state = "/state";
 
         if(strlen(home) + strlen(local) + strlen(state) + strlen(openrtx)
-           >= _NVM_MAX_PATHLEN)
+           >= NVM_MAX_PATHLEN)
             goto toolong;
 
         strcpy(memory_path, home);
         strcat(memory_path, local);
-        if(_nvm_mkdir(memory_path) != 0)
-        {
+        if(create_dir(memory_path) != 0)
             exit(1);
-        }
 
         strcat(memory_path, state);
-        if(_nvm_mkdir(memory_path) != 0)
-        {
+        if(create_dir(memory_path) != 0)
             exit(1);
-        }
 
         strcat(memory_path, openrtx);
     }
 
-    if(_nvm_mkdir(memory_path) != 0)
-    {
+    if(create_dir(memory_path) != 0)
         exit(1);
-    }
 
-    // init memory_paths
-    const char *file_settings  = "/settings.dat";
-    const char *file_vfo       = "/vfo.dat";
-    unsigned long base_len     = strlen(memory_path);
+    strcat(memory_path, "state.bin");
 
-    for(enum path_idxs i = 0; i < P_LEN; i++)
-    {
-        const char *path;
-        switch(i)
-        {
-            case P_SETTINGS:
-                path = file_settings;
-                break;
-            case P_VFO:
-                path = file_vfo;
-                break;
-            case P_LEN:
-                continue;
-        }
-
-        size_t path_size = strlen(path) + base_len + 1;
-        memory_paths[i] = malloc(path_size);
-
-        strcpy(memory_paths[i], memory_path);
-        strcat(memory_paths[i], path);
-    }
+    int ret = posixFile_init(&stateDevice, memory_path);
+    if(ret < 0)
+        printf("Opening of state file failed with status %d\n", ret);
 
     return;
 
@@ -217,10 +148,7 @@ toolong:
 
 void nvm_terminate()
 {
-    for(enum path_idxs i = 0; i < P_LEN; i++)
-    {
-        free(memory_paths[i]);
-    }
+    posixFile_terminate(&stateDevice);
 }
 
 void nvm_readHwInfo(hwInfo_t *info)
@@ -231,25 +159,48 @@ void nvm_readHwInfo(hwInfo_t *info)
 
 int nvm_readVfoChannelData(channel_t *channel)
 {
-    return _cps_read(memory_paths[P_VFO], channel, sizeof(channel_t));
+    int ret = nvmArea_readPartition(&stateArea, 0, 0, channel, sizeof(channel_t));
+    if(ret < 0)
+        return ret;
+
+    // TODO: implement a more serious integrity check
+    for(size_t i = 0; i < sizeof(channel_t); i++)
+    {
+        const uint8_t *p = (const uint8_t *) channel;
+        if(p[i] != 0x00)
+            return 0;
+    }
+
+    return -1;
 }
 
 int nvm_readSettings(settings_t *settings)
 {
-    return _cps_read(memory_paths[P_SETTINGS], settings, sizeof(settings_t));
+    int ret = nvmArea_readPartition(&stateArea, 1, 0, settings, sizeof(settings_t));
+    if(ret < 0)
+        return ret;
+
+    // TODO: implement a more serious integrity check
+    for(size_t i = 0; i < sizeof(settings_t); i++)
+    {
+        const uint8_t *p = (const uint8_t *) settings;
+        if(p[i] != 0x00)
+            return 0;
+    }
+
+    return -1;
 }
 
 int nvm_writeSettings(const settings_t *settings)
 {
-    return _nvm_write(memory_paths[P_SETTINGS], settings, sizeof(settings_t));
+    return nvmArea_writePartition(&stateArea, 1, 0, settings, sizeof(settings_t));
 }
 
 int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
 {
-    if(nvm_writeSettings(settings) == 0)
-    {
-        return _nvm_write(memory_paths[P_VFO], vfo, sizeof(channel_t));
-    }
+    int ret = nvmArea_writePartition(&stateArea, 1, 0, settings, sizeof(settings_t));
+    if(ret < 0)
+        return ret;
 
-    return -1;
+    return nvmArea_writePartition(&stateArea, 0, 0, vfo, sizeof(channel_t));
 }
