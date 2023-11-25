@@ -111,6 +111,7 @@ target_sources(app
     openrtx/src/core/voicePrompts.c
     openrtx/src/core/voicePromptUtils.c
     openrtx/src/core/voicePromptData.S
+    openrtx/src/core/nvmem_access.c
     openrtx/src/rtx/rtx.cpp
     openrtx/src/rtx/OpMode_FM.cpp
     openrtx/src/rtx/OpMode_M17.cpp
