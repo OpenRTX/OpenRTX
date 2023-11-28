@@ -41,6 +41,7 @@ typedef struct
     uint8_t    charge ;
     float      rssi ;
 
+    uint8_t    ui_prevScreen ;
     uint8_t    ui_screen ;
     uint8_t    tuner_mode ;
 

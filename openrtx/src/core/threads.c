@@ -49,26 +49,27 @@ pthread_mutex_t rtx_mutex;
 /**
  * \internal Thread managing user input and UI
  */
-void *ui_threadFunc(void *arg)
-{
-    (void) arg;
 
-    kbd_msg_t   kbd_msg;
-    rtxStatus_t rtx_cfg  = { 0 };
-    bool        sync_rtx = true;
-    long long   time     = 0;
+void* ui_threadFunc(void *arg)
+{
+    (void)arg ;
+
+    kbd_msg_t   kbd_msg ;
+    rtxStatus_t rtx_cfg      = { 0 } ;
+    bool        handleEvent  = false ;
+    bool        sync_rtx     = true ;
+    long long   time         = 0 ;
 
     // Load initial state and update the UI
     ui_saveState();
     ui_updateGUI();
 
     // Keep the splash screen for one second  before rendering the new UI screen
-    sleepFor(1u, 0u);
+    sleepFor( 1u , 0u );
     gfx_render();
 
     while( state.devStatus != SHUTDOWN )
     {
-
         time = getTick();
 
         if( input_scanKeyboard( &kbd_msg ) )
@@ -76,55 +77,70 @@ void *ui_threadFunc(void *arg)
             ui_pushEvent( EVENT_KBD , kbd_msg.value );
         }
 
-        pthread_mutex_lock( &state_mutex );     // Lock r/w access to radio state
-        ui_updateFSM( &sync_rtx );              // Update UI FSM
-        ui_saveState();                         // Save local state copy
-        pthread_mutex_unlock( &state_mutex );   // Unlock r/w access to radio state
+        if( ui_eventPresent() )
+        {
+            handleEvent = true ;
+        }
 
-        vp_tick();                           // continue playing voice prompts in progress if any.
+        if( handleEvent )
+        {
+            pthread_mutex_lock( &state_mutex );     // Lock r/w access to radio state
+            ui_updateFSM( &sync_rtx );              // Update UI FSM
+            ui_saveState();                         // Save local state copy
+            pthread_mutex_unlock( &state_mutex );   // Unlock r/w access to radio state
+        }
+
+        vp_tick();                                  // continue playing voice prompts in progress if any.
 
         // If synchronization needed take mutex and update RTX configuration
-        if(sync_rtx)
+        if( sync_rtx )
         {
-            float power = dBmToWatt(state.channel.power);
+            float power = dBmToWatt( state.channel.power );
 
-            pthread_mutex_lock(&rtx_mutex);
-            rtx_cfg.opMode      = state.channel.mode;
-            rtx_cfg.bandwidth   = state.channel.bandwidth;
-            rtx_cfg.rxFrequency = state.channel.rx_frequency;
-            rtx_cfg.txFrequency = state.channel.tx_frequency;
-            rtx_cfg.txPower     = power;
-            rtx_cfg.sqlLevel    = state.settings.sqlLevel;
-            rtx_cfg.rxToneEn    = state.channel.fm.rxToneEn;
-            rtx_cfg.rxTone      = ctcss_tone[state.channel.fm.rxTone];
-            rtx_cfg.txToneEn    = state.channel.fm.txToneEn;
-            rtx_cfg.txTone      = ctcss_tone[state.channel.fm.txTone];
-            rtx_cfg.toneEn      = state.tone_enabled;
+            pthread_mutex_lock( &rtx_mutex );
+            rtx_cfg.opMode      = state.channel.mode ;
+            rtx_cfg.bandwidth   = state.channel.bandwidth ;
+            rtx_cfg.rxFrequency = state.channel.rx_frequency ;
+            rtx_cfg.txFrequency = state.channel.tx_frequency ;
+            rtx_cfg.txPower     = power ;
+            rtx_cfg.sqlLevel    = state.settings.sqlLevel ;
+            rtx_cfg.rxToneEn    = state.channel.fm.rxToneEn ;
+            rtx_cfg.rxTone      = ctcss_tone[ state.channel.fm.rxTone ] ;
+            rtx_cfg.txToneEn    = state.channel.fm.txToneEn ;
+            rtx_cfg.txTone      = ctcss_tone[ state.channel.fm.txTone ] ;
+            rtx_cfg.toneEn      = state.tone_enabled ;
 
             // Enable Tx if channel allows it and we are in UI main screen
-            rtx_cfg.txDisable = state.channel.rx_only || state.txDisable;
+            rtx_cfg.txDisable   = state.channel.rx_only || state.txDisable;
 
             // Copy new M17 CAN, source and destination addresses
-            rtx_cfg.can = state.settings.m17_can;
-            rtx_cfg.canRxEn = state.settings.m17_can_rx;
-            strncpy(rtx_cfg.source_address,      state.settings.callsign, 10);
-            strncpy(rtx_cfg.destination_address, state.settings.m17_dest, 10);
+            rtx_cfg.can         = state.settings.m17_can ;
+            rtx_cfg.canRxEn     = state.settings.m17_can_rx ;
+            strncpy( rtx_cfg.source_address      , state.settings.callsign , 10 );
+            strncpy( rtx_cfg.destination_address , state.settings.m17_dest , 10 );
 
-            pthread_mutex_unlock(&rtx_mutex);
+            pthread_mutex_unlock( &rtx_mutex );
 
-            rtx_configure(&rtx_cfg);
-            sync_rtx = false;
+            rtx_configure (&rtx_cfg );
+            handleEvent         = true ;
+            sync_rtx            = false ;
         }
 
-        // Update UI and render on screen, if necessary
-        if(ui_updateGUI() == true)
+        if( handleEvent )
         {
-            gfx_render();
+            // Update UI and render on screen, if necessary
+            if( ui_updateGUI() == true )
+            {
+                gfx_render();
+            }
         }
+
+        handleEvent = false ;
 
         // 40Hz update rate for keyboard and UI
-        time += 25;
-        sleepUntil(time);
+        time += 25 ;
+        sleepUntil( time );
+
     }
 
     ui_terminate();
@@ -136,105 +152,110 @@ void *ui_threadFunc(void *arg)
 /**
  * \internal Thread managing the device and update the global state variable.
  */
-void *main_thread(void *arg)
+void* main_thread( void* arg )
 {
-    (void) arg;
+    (void)arg ;
 
-    long long time     = 0;
+    long long time = 0 ;
 
-    while(state.devStatus != SHUTDOWN)
+    while( state.devStatus != SHUTDOWN )
     {
         time = getTick();
 
-        #if defined(PLATFORM_TTWRPLUS)
+#ifdef PLATFORM_TTWRPLUS
         pmu_handleIRQ();
-        #endif
+#endif // PLATFORM_TTWRPLUS
 
         // Check if power off is requested
-        pthread_mutex_lock(&state_mutex);
-        if(platform_pwrButtonStatus() == false)
-            state.devStatus = SHUTDOWN;
-        pthread_mutex_unlock(&state_mutex);
+        pthread_mutex_lock( &state_mutex );
+
+        if( platform_pwrButtonStatus() == false )
+        {
+            state.devStatus = SHUTDOWN ;
+        }
+
+        pthread_mutex_unlock( &state_mutex );
 
         // Run GPS task
-        #if defined(GPS_PRESENT) && !defined(MD3x0_ENABLE_DBG)
+#if defined(GPS_PRESENT) && !defined(MD3x0_ENABLE_DBG)
         gps_task();
-        #endif
+#endif
 
         // Run state update task
         state_task();
 
         // Run this loop once every 5ms
-        time += 5;
-        sleepUntil(time);
+        time += 5 ;
+        sleepUntil( time );
     }
 
-    #if defined(GPS_PRESENT)
+#ifdef GPS_PRESENT
     gps_terminate();
-    #endif
+#endif // GPS_PRESENT
 
-    return NULL;
+    return NULL ;
 }
 
 /**
  * \internal Thread for RTX management.
  */
-void *rtx_threadFunc(void *arg)
+void* rtx_threadFunc( void* arg )
 {
-    (void) arg;
+    (void)arg ;
 
-    rtx_init(&rtx_mutex);
+    rtx_init( &rtx_mutex );
 
-    while(state.devStatus == RUNNING)
+    while( state.devStatus == RUNNING )
     {
         rtx_task();
     }
 
     rtx_terminate();
 
-    return NULL;
+    return NULL ;
 }
 
 /**
  * \internal This function creates all the system tasks and mutexes.
  */
-void create_threads()
+void create_threads( void )
 {
     // Create RTX state mutex
-    pthread_mutex_init(&rtx_mutex, NULL);
+    pthread_mutex_init( &rtx_mutex , NULL );
 
     // Create rtx radio thread
-    pthread_attr_t rtx_attr;
-    pthread_attr_init(&rtx_attr);
+    pthread_attr_t rtx_attr ;
 
-    #ifndef __ZEPHYR__
-    pthread_attr_setstacksize(&rtx_attr, RTX_TASK_STKSIZE);
-    #else
-    void *rtx_thread_stack = malloc(RTX_TASK_STKSIZE * sizeof(uint8_t));
-    pthread_attr_setstack(&rtx_attr, rtx_thread_stack, RTX_TASK_STKSIZE);
-    #endif
+    pthread_attr_init( &rtx_attr );
 
-    #ifdef _MIOSIX
+#ifndef __ZEPHYR__
+    pthread_attr_setstacksize( &rtx_attr , RTX_TASK_STKSIZE );
+#else //  __ZEPHYR__
+    void* rtx_thread_stack = malloc( RTX_TASK_STKSIZE * sizeof( uint8_t ) );
+    pthread_attr_setstack( &rtx_attr , rtx_thread_stack , RTX_TASK_STKSIZE );
+#endif //  __ZEPHYR__
+
+#ifdef _MIOSIX
     // Max priority for RTX thread when running with miosix rtos
-    struct sched_param param;
-    param.sched_priority = sched_get_priority_max(0);
-    pthread_attr_setschedparam(&rtx_attr, &param);
-    #endif
+    struct sched_param param ;
+    param.sched_priority = sched_get_priority_max( 0 );
+    pthread_attr_setschedparam( &rtx_attr , &param );
+#endif //  _MIOSIX
 
     pthread_t rtx_thread;
-    pthread_create(&rtx_thread, &rtx_attr, rtx_threadFunc, NULL);
+    pthread_create( &rtx_thread , &rtx_attr , rtx_threadFunc , NULL );
 
     // Create UI thread
-    pthread_attr_t ui_attr;
-    pthread_attr_init(&ui_attr);
+    pthread_attr_t ui_attr ;
+    pthread_attr_init( &ui_attr );
 
-    #ifndef __ZEPHYR__
-    pthread_attr_setstacksize(&ui_attr, UI_TASK_STKSIZE);
-    #else
-    void *ui_thread_stack = malloc(UI_TASK_STKSIZE * sizeof(uint8_t));
-    pthread_attr_setstack(&ui_attr, ui_thread_stack, UI_TASK_STKSIZE);
-    #endif
+#ifndef __ZEPHYR__
+    pthread_attr_setstacksize( &ui_attr , UI_TASK_STKSIZE );
+#else // __ZEPHYR__
+    void* ui_thread_stack = malloc( UI_TASK_STKSIZE * sizeof( uint8_t ) );
+    pthread_attr_setstack( &ui_attr , ui_thread_stack , UI_TASK_STKSIZE );
+#endif // __ZEPHYR__
 
-    pthread_t ui_thread;
-    pthread_create(&ui_thread, &ui_attr, ui_threadFunc, NULL);
+    pthread_t ui_thread ;
+    pthread_create( &ui_thread , &ui_attr , ui_threadFunc , NULL );
 }

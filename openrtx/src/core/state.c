@@ -32,7 +32,8 @@
 
 state_t         state ;
 pthread_mutex_t state_mutex ;
-long long int   lastUpdate = 0 ;
+long long int   LastUpdateTimeTick        = 0 ;
+long long int   LastTimeDisplayUpdateTick = 0 ;
 
 // Commonly used frequency steps, expressed in Hz
 uint32_t   freq_steps[] = { 1000, 5000, 6250, 10000, 12500, 15000, 20000, 25000, 50000, 100000 };
@@ -60,6 +61,9 @@ void state_init( void )
     {
         state.channel = cps_getDefaultChannel();
     }
+
+    state.ui_prevScreen = ~0;
+    state.ui_screen     = 0 ;
 
     /*
      * Initialise remaining fields
@@ -97,17 +101,32 @@ void state_terminate( void )
     pthread_mutex_destroy( &state_mutex );
 }
 
+enum
+{
+    STATE_TASK_UPDATE_PERIOD              =  100 ,
+    STATE_TASK_TIME_DISPLAY_UPDATE_PERIOD = 1000
+};
+
 void state_task( void )
 {
     static uint16_t       v_bat_prev = 0 ;
+           float          lastRssi ;
+           bool           pushEvent  = false ;
            EventStatus_en data       = 0 ;
 
     // Update radio state once every 100ms
-    if( ( getTick() - lastUpdate ) >= 100 )
+    if( ( getTick() - LastUpdateTimeTick ) >= STATE_TASK_UPDATE_PERIOD )
     {
-        lastUpdate     = getTick();
+        LastUpdateTimeTick  = getTick();
 
-        data          |= EVENT_STATUS_TIME_TICK ;
+        if( ( getTick() - LastTimeDisplayUpdateTick ) >= STATE_TASK_TIME_DISPLAY_UPDATE_PERIOD )
+        {
+            LastTimeDisplayUpdateTick  = LastUpdateTimeTick ;
+            data                      |= EVENT_STATUS_TIME_DISPLAY_TICK ;
+            pushEvent                  = true ;
+        }
+
+        data               |= EVENT_STATUS_TIME_TICK ;
 
         pthread_mutex_lock( &state_mutex );
 
@@ -122,13 +141,22 @@ void state_task( void )
 
         if( state.v_bat != v_bat_prev )
         {
-            data |= EVENT_STATUS_BATTERY ;
+            data      |= EVENT_STATUS_BATTERY ;
+            pushEvent  = true ;
         }
 
         v_bat_prev     = state.v_bat ;
 
         state.charge   = battery_getCharge( state.v_bat );
+
+        lastRssi       = state.rssi ;
         state.rssi     = rtx_getRssi();
+
+        if( state.rssi != lastRssi )
+        {
+            data      |= EVENT_STATUS_RSSI ;
+            pushEvent  = true ;
+        }
 
 #ifdef RTC_PRESENT
         state.time     = platform_getCurrentTime();
@@ -136,8 +164,14 @@ void state_task( void )
 
         pthread_mutex_unlock( &state_mutex );
 
-        ui_pushEvent( EVENT_STATUS , (uint32_t)data );
+        if( pushEvent )
+        {
+            ui_pushEvent( EVENT_STATUS , (uint32_t)data );
+            pushEvent = false ;
+        }
+
     }
+
 }
 
 void state_resetSettingsAndVfo( void )

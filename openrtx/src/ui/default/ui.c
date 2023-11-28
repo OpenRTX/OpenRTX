@@ -81,19 +81,51 @@
 
 //@@@KL #include "ui_m17.h"
 
-#define DISPLAY_DEBUG_MSG
+//#define DISPLAY_DEBUG_MSG
 
-#ifdef DISPLAY_DEBUG_MSG
+#ifndef DISPLAY_DEBUG_MSG
 
-static char     counter = 0 ; //@@@KL
-static uint32_t trace   = 0 ; //@@@KL
+#define DEBUG_SET_TRACE0( traceVal )
+#define DEBUG_SET_TRACE1( traceVal )
+#define DEBUG_SET_TRACE2( traceVal )
+#define DEBUG_SET_TRACE3( traceVal )
 
-extern void Debug_SetTrace( uint32_t traceVal );
-#define DEBUG_SET_TRACE( traceVal )     Debug_SetTrace( (uint32_t)traceVal );
+#else // DISPLAY_DEBUG_MSG
 
-void Debug_SetTrace( uint32_t traceVal )
+static char    counter = 0 ; //@@@KL
+static uint8_t trace0  = 0 ; //@@@KL
+static uint8_t trace1  = 0 ; //@@@KL
+static uint8_t trace2  = 0 ; //@@@KL
+static uint8_t trace3  = 0 ; //@@@KL
+
+extern void Debug_SetTrace0( uint8_t traceVal );
+extern void Debug_SetTrace1( uint8_t traceVal );
+extern void Debug_SetTrace2( uint8_t traceVal );
+extern void Debug_SetTrace3( uint8_t traceVal );
+
+#define DEBUG_SET_TRACE0( traceVal )     Debug_SetTrace0( (uint8_t)traceVal );
+#define DEBUG_SET_TRACE1( traceVal )     Debug_SetTrace1( (uint8_t)traceVal );
+#define DEBUG_SET_TRACE2( traceVal )     Debug_SetTrace2( (uint8_t)traceVal );
+#define DEBUG_SET_TRACE3( traceVal )     Debug_SetTrace3( (uint8_t)traceVal );
+
+void Debug_SetTrace0( uint8_t traceVal )
 {
-    trace = traceVal ;
+    trace0 = traceVal ;
+}
+
+void Debug_SetTrace1( uint8_t traceVal )
+{
+    trace1 = traceVal ;
+}
+
+void Debug_SetTrace2( uint8_t traceVal )
+{
+    trace2 = traceVal ;
+}
+
+void Debug_SetTrace3( uint8_t traceVal )
+{
+    trace3 = traceVal ;
 }
 
 static void Debug_DisplayMsg( void )
@@ -108,7 +140,8 @@ static void Debug_DisplayMsg( void )
         counter = 0 ;
     }
     gfx_print( layout.top_pos , layout.top_font , TEXT_ALIGN_LEFT , color_white ,
-               "%c%X" , (char)( '0' + counter ) , (uint8_t)trace );//@@@KL
+               "%c%X%X%X%X" , (char)( '0' + counter ) ,
+               trace0 & 0x0F , trace1 & 0x0F , trace2 & 0x0F , trace3 & 0x0F );//@@@KL
 }
 
 #endif // DISPLAY_DEBUG_MSG
@@ -1650,7 +1683,6 @@ void ui_updateFSM( bool* sync_rtx )
     uint8_t     newTail ;
     bool        processEvent = false ;
 
-static uint8_t cntr = 0 ; //@@@KL
     // Check for events
     if( evQueue_wrPos != evQueue_rdPos )
     {
@@ -1680,7 +1712,6 @@ static uint8_t cntr = 0 ; //@@@KL
 
         if( processEvent )
         {
-DEBUG_SET_TRACE( cntr++ ) //@@@KL
             long long timeTick = timeTick = getTick();
             switch( event.type )
             {
@@ -1744,10 +1775,7 @@ DEBUG_SET_TRACE( cntr++ ) //@@@KL
                         int priorUIScreen ;
                         priorUIScreen = state.ui_screen ;
 
-                        if( state.ui_screen < PAGE_NUM_OF )
-                        {
-                            *sync_rtx = uiDisplayPage( state.ui_screen , &guiState , &ui_state );
-                        }
+                        *sync_rtx = uiDisplayPage( state.ui_screen , &guiState , &ui_state );
 
                         // Enable Tx only if in PAGE_MAIN_VFO or PAGE_MAIN_MEM states
                         bool inMemOrVfo ;
@@ -1758,14 +1786,14 @@ DEBUG_SET_TRACE( cntr++ ) //@@@KL
                             state.txDisable = true;
                             *sync_rtx       = true;
                         }
-                        if( !guiState.f1Handled                  &&
-                             ( guiState.msg.keys & KEY_F1      ) &&
+                        if( !guiState.f1Handled                    &&
+                             ( guiState.msg.keys & KEY_F1        ) &&
                              ( state.settings.vpLevel > VPP_BEEP )    )
                         {
                             vp_replayLastPrompt();
                         }
                         else if( ( priorUIScreen != state.ui_screen ) &&
-                                 ( state.settings.vpLevel > VPP_LOW   )    )
+                                 ( state.settings.vpLevel > VPP_LOW )    )
                         {
                             // When we switch to VFO or Channel screen, we need to announce it.
                             // Likewise for information screens.
@@ -1797,7 +1825,7 @@ DEBUG_SET_TRACE( cntr++ ) //@@@KL
 #ifdef GPS_PRESENT
                     if( ( state.ui_screen == PAGE_MENU_GPS ) &&
                         !vp_isPlaying()                      &&
-                        ( state.settings.vpLevel > VPP_LOW   ) &&
+                        ( state.settings.vpLevel > VPP_LOW ) &&
                         !txOngoing                           &&
                         !rtx_rxSquelchOpen()                    )
                     {
@@ -3164,8 +3192,6 @@ static bool ui_updateFSM_PAGE_BLANK( GuiState_st* guiState , ui_state_st* uiStat
     return false ;
 }
 
-//@@@KL this is constantly being called
-// implies that something is setting the redraw_needed flag to true
 bool ui_updateGUI( void )
 {
     if( redraw_needed == true )
@@ -3192,21 +3218,37 @@ bool ui_updateGUI( void )
 bool ui_pushEvent( const uint8_t type , const uint32_t data )
 {
     uint8_t newHead = ( evQueue_wrPos + 1 ) % MAX_NUM_EVENTS ;
+    bool    result  = false ;
 
-    // Queue is full
-    if( newHead == evQueue_rdPos )
+    // Queue is not full
+    if( newHead != evQueue_rdPos )
     {
-        return false ;
+        // Preserve atomicity when writing the new element into the queue.
+        event_t event ;
+
+        event.type               = type ;
+        event.payload            = data ;
+
+        evQueue[ evQueue_wrPos ] = event ;
+        evQueue_wrPos            = newHead ;
+
+        result                   = true ;
     }
-    // Preserve atomicity when writing the new element into the queue.
-    event_t event;
-    event.type    = type ;
-    event.payload = data ;
 
-    evQueue[ evQueue_wrPos ] = event ;
-    evQueue_wrPos            = newHead ;
+    return result ;
+}
 
-    return true ;
+bool ui_eventPresent( void )
+{
+    bool eventPresent = false ;
+
+    if( evQueue_wrPos != evQueue_rdPos )
+    {
+        eventPresent = true ;
+    }
+
+    return eventPresent ;
+
 }
 
 void ui_terminate( void )

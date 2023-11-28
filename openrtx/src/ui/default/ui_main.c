@@ -55,13 +55,13 @@ static void ui_drawAuthors( ui_state_st* uiState , event_t* event );
 static void ui_drawBlank( ui_state_st* uiState , event_t* event );
 
 //@@@KL static void ui_drawMainBackground( void );
-static void ui_drawMainTop( ui_state_st * ui_state );
+static void ui_drawMainTop( ui_state_st * ui_state , event_t* event );
 static void ui_drawBankChannel( void );
 static void ui_drawModeInfo( ui_state_st* ui_state );
 static void ui_drawFrequency( void );
 static void ui_drawVFOMiddleInput( ui_state_st* ui_state );
 
-void _ui_drawMainBottom( void );
+void _ui_drawMainBottom( event_t* event );
 
 typedef void (*ui_draw_fn)( ui_state_st* uiState , event_t* event );
 
@@ -107,6 +107,12 @@ void ui_draw( state_t* state , ui_state_st* ui_state , event_t* event )
         pgNum = PAGE_BLANK ;
     }
 
+    if( state->ui_prevScreen != pgNum )
+    {
+        event->payload       = EVENT_STATUS_ALL ;
+        state->ui_prevScreen = pgNum ;
+    }
+
     uiPageDescTable[ pgNum ]( ui_state , event ) ;
 
 }
@@ -116,15 +122,18 @@ static void ui_drawMainVFO( ui_state_st* uiState , event_t* event )
     (void)event ;
 
     gfx_clearScreen();
-    ui_drawMainTop( uiState );
+    ui_drawMainTop( uiState , event );
     ui_drawModeInfo( uiState );
 
     // Show VFO frequency if the OpMode is not M17 or there is no valid LSF data
     rtxStatus_t status = rtx_getCurrentStatus();
-    if((status.opMode != OPMODE_M17) || (status.lsfOk == false))
+    if( ( status.opMode != OPMODE_M17 ) || ( status.lsfOk == false ) )
+    {
         ui_drawFrequency();
+    }
 
-    _ui_drawMainBottom();
+    _ui_drawMainBottom( event );
+
 }
 
 static void ui_drawMainVFOInput( ui_state_st* uiState , event_t* event )
@@ -132,9 +141,10 @@ static void ui_drawMainVFOInput( ui_state_st* uiState , event_t* event )
     (void)event ;
 
     gfx_clearScreen();
-    ui_drawMainTop( uiState );
+    ui_drawMainTop( uiState , event );
     ui_drawVFOMiddleInput( uiState );
-    _ui_drawMainBottom();
+    _ui_drawMainBottom( event );
+
 }
 
 void ui_drawMainMEM( ui_state_st* uiState , event_t* event )
@@ -142,7 +152,7 @@ void ui_drawMainMEM( ui_state_st* uiState , event_t* event )
     (void)event ;
 
     gfx_clearScreen();
-    ui_drawMainTop( uiState );
+    ui_drawMainTop( uiState , event );
     ui_drawModeInfo( uiState );
 
     // Show channel data if the OpMode is not M17 or there is no valid LSF data
@@ -153,7 +163,8 @@ void ui_drawMainMEM( ui_state_st* uiState , event_t* event )
         ui_drawFrequency();
     }
 
-    _ui_drawMainBottom();
+    _ui_drawMainBottom( event );
+
 }
 
 static void ui_drawModeVFO( ui_state_st* uiState , event_t* event )
@@ -215,28 +226,34 @@ static void ui_drawMainBackground( void )
     gfx_drawHLine(SCREEN_HEIGHT - layout.bottom_h - 1, layout.hline_h, color_grey);
 }
 */
-static void ui_drawMainTop( ui_state_st * ui_state )
+static void ui_drawMainTop( ui_state_st * ui_state , event_t* event )
 {
 #ifdef RTC_PRESENT
-    // Print clock on top bar
-    datetime_t local_time = utcToLocalTime(last_state.time,
-                                           last_state.settings.utc_timezone);
-    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, "%02d:%02d:%02d", local_time.hour,
-              local_time.minute, local_time.second);
-#endif
-    // If the radio has no built-in battery, print input voltage
+    if( event->payload & EVENT_STATUS_TIME_DISPLAY_TICK )
+    {
+        // Print clock on top bar
+        datetime_t local_time = utcToLocalTime( last_state.time ,
+                                                last_state.settings.utc_timezone);
+        gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
+                  color_white, "%02d:%02d:%02d", local_time.hour,
+                  local_time.minute, local_time.second);
+    }
+#endif // RTC_PRESENT
+    if( event->payload & EVENT_STATUS_BATTERY )
+    {
+        // If the radio has no built-in battery, print input voltage
 #ifdef BAT_NONE
-    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_RIGHT,
-              color_white,"%.1fV", last_state.v_bat);
-#else
-    // Otherwise print battery icon on top bar, use 4 px padding
-    uint16_t bat_width = SCREEN_WIDTH / 9;
-    uint16_t bat_height = layout.top_h - (layout.status_v_pad * 2);
-    point_t bat_pos = {SCREEN_WIDTH - bat_width - layout.horizontal_pad,
-                       layout.status_v_pad};
-    gfx_drawBattery(bat_pos, bat_width, bat_height, last_state.charge);
-#endif
+        gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_RIGHT,
+                  color_white,"%.1fV", last_state.v_bat);
+#else // BAT_NONE
+        // Otherwise print battery icon on top bar, use 4 px padding
+        uint16_t bat_width = SCREEN_WIDTH / 9;
+        uint16_t bat_height = layout.top_h - (layout.status_v_pad * 2);
+        point_t bat_pos = {SCREEN_WIDTH - bat_width - layout.horizontal_pad,
+                           layout.status_v_pad};
+        gfx_drawBattery(bat_pos, bat_width, bat_height, last_state.charge);
+#endif // BAT_NONE
+    }
     if (ui_state->input_locked == true)
       gfx_drawSymbol(layout.top_pos, layout.top_symbol_size, TEXT_ALIGN_LEFT,
                      color_white, SYMBOL_LOCK);
@@ -468,44 +485,48 @@ static void ui_drawVFOMiddleInput( ui_state_st* uiState )
     }
 }
 
-void _ui_drawMainBottom( void )
+void _ui_drawMainBottom( event_t* event )
 {
     // Squelch bar
-    float rssi = last_state.rssi;
-    float squelch = last_state.settings.sqlLevel / 16.0f;
-    uint16_t meter_width = SCREEN_WIDTH - 2 * layout.horizontal_pad;
-    uint16_t meter_height = layout.bottom_h;
-    point_t meter_pos = { layout.horizontal_pad, SCREEN_HEIGHT - meter_height - layout.bottom_pad};
-    uint8_t mic_level = platform_getMicLevel();
-    switch(last_state.channel.mode)
+    float rssi            = last_state.rssi ;
+    float squelch         = last_state.settings.sqlLevel / 16.0f ;
+    uint16_t meter_width  = SCREEN_WIDTH - 2 * layout.horizontal_pad ;
+    uint16_t meter_height = layout.bottom_h ;
+    point_t meter_pos     = { layout.horizontal_pad , SCREEN_HEIGHT - meter_height - layout.bottom_pad };
+    uint8_t mic_level     = platform_getMicLevel();
+
+    if( event->payload & EVENT_STATUS_RSSI )
     {
-        case OPMODE_FM:
+        switch( last_state.channel.mode )
         {
-            gfx_drawSmeter(meter_pos,
-                           meter_width,
-                           meter_height,
-                           rssi,
-                           squelch,
-                           yellow_fab413);
-            break;
-        }
-        case OPMODE_DMR:
-        {
-            gfx_drawSmeterLevel(meter_pos,
-                                meter_width,
-                                meter_height,
-                                rssi,
-                                mic_level);
-            break;
-        }
-        case OPMODE_M17:
-        {
-            gfx_drawSmeterLevel(meter_pos,
-                                meter_width,
-                                meter_height,
-                                rssi,
-                                mic_level);
-            break;
+            case OPMODE_FM:
+            {
+                gfx_drawSmeter(meter_pos,
+                               meter_width,
+                               meter_height,
+                               rssi,
+                               squelch,
+                               yellow_fab413);
+                break;
+            }
+            case OPMODE_DMR:
+            {
+                gfx_drawSmeterLevel(meter_pos,
+                                    meter_width,
+                                    meter_height,
+                                    rssi,
+                                    mic_level);
+                break;
+            }
+            case OPMODE_M17:
+            {
+                gfx_drawSmeterLevel(meter_pos,
+                                    meter_width,
+                                    meter_height,
+                                    rssi,
+                                    mic_level);
+                break;
+            }
         }
     }
 }

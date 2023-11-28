@@ -37,7 +37,7 @@
 #endif
 
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
-extern void _ui_drawMainBottom( void );
+extern void _ui_drawMainBottom( event_t* event );
 
 static char     priorSelectedMenuName[ MAX_ENTRY_LEN ]  = "\0" ;
 static char     priorSelectedMenuValue[ MAX_ENTRY_LEN ] = "\0" ;
@@ -1371,6 +1371,6 @@ bool _ui_drawMacroMenu( ui_state_st* uiState , event_t* event )
        gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_RIGHT, color_white, "Lck");
     }
     // Draw S-meter bar
-    _ui_drawMainBottom();
+    _ui_drawMainBottom( event );
     return true;
 }

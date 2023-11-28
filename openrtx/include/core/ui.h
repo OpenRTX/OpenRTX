@@ -51,6 +51,14 @@ void ui_saveState();
 void ui_updateFSM(bool *sync_rtx);
 
 /**
+ * This function returns a flag that indicates whether
+ * there is an event in the event queue to be processed.
+ *
+ * @return true if there is an event in the event queue to be processed.
+ */
+bool ui_eventPresent( void );
+
+/**
  * This function redraws the GUI based on the last radio state.
  *
  * @return true if GUI has been updated and a screen render is necessary.
