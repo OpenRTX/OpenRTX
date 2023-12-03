@@ -53,7 +53,7 @@ void _Z29TIM1_TRG_COM_TIM11_IRQHandlerv()
 
 void backlight_init()
 {
-    #ifndef PLATFORM_MDUV3x0    /* MD-3x0 and MD-9600 */
+    #if !defined(PLATFORM_MDUV3x0) && !defined(PLATFORM_MD2017)    /* MD-3x0 and MD-9600 */
     gpio_setMode(LCD_BKLIGHT, ALTERNATE);
     gpio_setAlternateFunction(LCD_BKLIGHT, 3);
 
@@ -137,7 +137,7 @@ void display_setBacklightLevel(uint8_t level)
 
     uint8_t pwmLevel = (2 * level) + (level * 55)/100;    // Convert value to 0 - 255
 
-    #ifndef PLATFORM_MDUV3x0
+    #if !defined(PLATFORM_MDUV3x0) && !defined(PLATFORM_MD2017)
     TIM8->CCR1 = pwmLevel;
     #else
     /*
