@@ -94,8 +94,8 @@ extern "C" {
 #define FUNC_SW LCD_D7
 
 /* Tone generator  */
-// #define CTCSS_OUT GPIOC,7   /* System "beep" */
-// #define BEEP_OUT  GPIOC,8   /* CTCSS tone    */
+#define CTCSS_OUT GPIOC,7   /* System "beep" */
+#define BEEP_OUT  GPIOC,8   /* CTCSS tone    */
 
 /* External flash */
 // #define FLASH_CS  GPIOD,7
@@ -104,10 +104,10 @@ extern "C" {
 // #define FLASH_SDI GPIOB,5
 
 /* Audio control */
-// #define AUDIO_AMP_EN GPIOB,9
-// #define SPK_MUTE     GPIOB,8
-// #define MIC_PWR      GPIOA,13
-// #define RX_AUDIO_MUX GPIOD,9
+#define AUDIO_AMP_EN GPIOB,9
+#define SPK_MUTE     GPIOB,8
+#define MIC_PWR      GPIOA,13
+#define RX_AUDIO_MUX GPIOD,9
 
 /* GPS, for the devices who have it */
 // #define GPS_EN   GPIOA,9

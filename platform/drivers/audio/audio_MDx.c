@@ -133,7 +133,9 @@ void audio_connect(const enum AudioSource source, const enum AudioSink sink)
             break;
 
         case PATH(SOURCE_RTX, SINK_SPK):
+            #ifndef PLATFORM_MD2017
             radio_enableAfOutput();
+            #endif
             break;
 
         case PATH(SOURCE_MCU, SINK_SPK):
@@ -179,7 +181,9 @@ void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
             break;
 
         case PATH(SOURCE_RTX, SINK_SPK):
+            #ifndef PLATFORM_MD2017
             radio_disableAfOutput();
+            #endif
             break;
 
         case PATH(SOURCE_MCU, SINK_SPK):

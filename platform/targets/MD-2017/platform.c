@@ -66,6 +66,7 @@ void platform_init()
      */
     adc1_init();
 
+    toneGen_init();                  /* Initialise tone generator              */
     rtc_init();                      /* Initialise RTC                         */
     chSelector_init();               /* Initialise channel selector handler    */
     audio_init();                    /* Initialise audio management module     */
@@ -79,6 +80,7 @@ void platform_terminate()
 
     /* Shut down all the modules */
     adc1_terminate();
+    toneGen_terminate();
     chSelector_terminate();
     audio_terminate();
 
@@ -191,12 +193,20 @@ void platform_ledOff(led_t led)
 
 void platform_beepStart(uint16_t freq)
 {
-
+    // calculate appropriate volume.
+    uint8_t vol = platform_getVolumeLevel();
+    // Since beeps have been requested, we do not want to have 0 volume.
+    // We also do not want the volume to be excessive.
+    if (vol < 10)
+        vol = 5;
+    if (vol > 176)
+        vol = 176;
+    toneGen_beepOn((float)freq, vol, 0);
 }
 
 void platform_beepStop()
 {
-
+    toneGen_beepOff();
 }
 
 datetime_t platform_getCurrentTime()

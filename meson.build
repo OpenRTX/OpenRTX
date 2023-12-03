@@ -375,9 +375,10 @@ md2017_src = src + stm32f405_src + ['platform/targets/MD-2017/platform.c',
                                     'platform/drivers/chSelector/chSelector_UV3x0.c',
                                     'platform/drivers/ADC/ADC1_MDx.c',
                                     'platform/drivers/backlight/backlight_MDx.c',
+                                    'platform/drivers/audio/audio_MDx.c',
+                                    'platform/drivers/tones/toneGenerator_MDx.cpp',
                                     'platform/drivers/stubs/radio_stub.c',
                                     'platform/drivers/stubs/nvmem_stub.c',
-                                    'platform/drivers/stubs/audio_stub.c',
                                     'platform/drivers/stubs/cps_io_stub.c']
 
 md2017_src = md2017_src + openrtx_ui_default
