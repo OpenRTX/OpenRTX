@@ -367,6 +367,24 @@ md9600_inc = inc + stm32f405_inc + ['platform/targets/MD-9600']
 md9600_def = def + stm32f405_def + {'PLATFORM_MD9600': ''}
 
 ##
+## TYT MD-2017
+##
+md2017_src = src + stm32f405_src + ['platform/targets/MD-2017/platform.c',
+                                    'platform/drivers/display/HX8353_MD3x.cpp',
+                                    'platform/drivers/keyboard/keyboard_MD3x.c',
+                                    'platform/drivers/chSelector/chSelector_UV3x0.c',
+                                    'platform/drivers/ADC/ADC1_MDx.c',
+                                    'platform/drivers/backlight/backlight_MDx.c',
+                                    'platform/drivers/stubs/radio_stub.c',
+                                    'platform/drivers/stubs/nvmem_stub.c',
+                                    'platform/drivers/stubs/audio_stub.c',
+                                    'platform/drivers/stubs/cps_io_stub.c']
+
+md2017_src = md2017_src + openrtx_ui_default
+md2017_inc = inc + stm32f405_inc + ['platform/targets/MD-2017']
+md2017_def = def + stm32f405_def + {'PLATFORM_MD2017': ''}
+
+##
 ## Radioddity GD-77
 ##
 gd77_src = src + gdx_src + mk22fn512_src + ['platform/targets/GD-77/platform.c']
@@ -485,6 +503,15 @@ foreach k, v : mod17_def
   endif
 endforeach
 
+md2017_args = []
+foreach k, v : md2017_def
+  if v == ''
+    md2017_args += '-D@0@'.format(k)
+  else
+    md2017_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
+
 linux_opts = {'sources': linux_src,
               'c_args': linux_c_args,
               'cpp_args' : linux_cpp_args,
@@ -547,6 +574,14 @@ ttwrplus_opts  = {'sources': ['CMakeLists.txt'],
                   'dependencies': [codec2_dep],
                   'include_directories': []}
 
+md2017_opts = {'sources': md2017_src,
+               'c_args': md2017_args,
+               'cpp_args': md2017_args,
+               'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld',
+                              '-Wl,--print-memory-usage'],
+               'dependencies': [codec2_dep],
+               'include_directories': md2017_inc}
+
 ##
 ## ---------------------------- Compilation targets ----------------------------
 ##
@@ -598,6 +633,12 @@ targets = [
    'flashable': true,
    'wrap': ' ',
    'load_addr': ' '},
+
+   {'name': 'md2017',
+   'opts': md2017_opts,
+   'flashable': true,
+   'wrap': 'UV3X0',
+   'load_addr': '0x0800C000'},
   ]
 
 radio_tool  = find_program('radio_tool')
