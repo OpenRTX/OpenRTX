@@ -60,6 +60,7 @@ void OpMode_M17::enable()
     extendedCall = false;
     startRx      = true;
     startTx      = false;
+    audio_mute_sink(SINK_SPK);
 }
 
 void OpMode_M17::disable()
@@ -185,6 +186,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         demodulator.invertPhase(invertRxPhase);
 
         radio_enableRx();
+        audio_mute_sink(SINK_SPK);
 
         startRx = false;
     }
@@ -209,6 +211,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
             pthSts = audioPath_getStatus(rxAudioPath);
         }
 
+        audio_unmute_sink(SINK_SPK);
         // Start codec2 module if not already up
         if(codec_running() == false)
             codec_startDecode(rxAudioPath);
@@ -296,6 +299,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         extendedCall  = false;
         status->M17_link[0] = '\0';
         status->M17_refl[0] = '\0';
+        audio_mute_sink(SINK_SPK);
     }
 }
 

@@ -179,6 +179,20 @@ void audio_connect(const enum AudioSource source, const enum AudioSink sink);
 void audio_disconnect(const enum AudioSource source, const enum AudioSink sink);
 
 /**
+ * Mute an audio sink.
+ *
+ * @param sink: identifier of the output audio peripheral.
+ */
+void audio_mute_sink(const enum AudioSink sink);
+
+/**
+ * Unmute an audio sink.
+ *
+ * @param sink: identifier of the output audio peripheral.
+ */
+void audio_unmute_sink(const enum AudioSink sink);
+
+/**
  * Check if two audio paths are compatible that is, if they can be open at the
  * same time.
  *

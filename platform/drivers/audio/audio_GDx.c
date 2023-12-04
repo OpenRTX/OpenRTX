@@ -89,3 +89,13 @@ bool audio_checkPathCompatibility(const enum AudioSource p1Source,
 
     return pathCompatibilityMatrix[p1Index][p2Index] == 1;
 }
+
+void audio_mute_sink(const enum AudioSink sink)
+{
+    (void) sink;
+}
+
+void audio_unmute_sink(const enum AudioSink sink)
+{
+    (void) sink;
+}

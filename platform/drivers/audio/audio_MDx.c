@@ -92,7 +92,7 @@ void audio_init()
 
     gpio_setMode(BEEP_OUT, INPUT);
 
-    gpio_setPin(SPK_MUTE);          // Speaker muted
+    audio_mute_sink(SINK_SPK);
     #ifndef PLATFORM_MD9600
     gpio_clearPin(AUDIO_AMP_EN);    // Audio PA off
     #ifndef MDx_ENABLE_SWD
@@ -106,7 +106,7 @@ void audio_init()
 
 void audio_terminate()
 {
-    gpio_setPin(SPK_MUTE);          // Speaker muted
+    audio_mute_sink(SINK_SPK);
     #ifndef PLATFORM_MD9600
     gpio_clearPin(AUDIO_AMP_EN);    // Audio PA off
     #ifndef MDx_ENABLE_SWD
@@ -152,7 +152,7 @@ void audio_connect(const enum AudioSource source, const enum AudioSink sink)
         gpio_setPin(AUDIO_AMP_EN);
         #endif
         sleepFor(0, 10);
-        gpio_clearPin(SPK_MUTE);
+        audio_mute_sink(SINK_SPK);
     }
 }
 
@@ -162,7 +162,7 @@ void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
 
     if(sink == SINK_SPK)
     {
-        gpio_setPin(SPK_MUTE);
+        audio_mute_sink(SINK_SPK);
         #ifndef PLATFORM_MD9600
         gpio_clearPin(AUDIO_AMP_EN);
         #endif
@@ -202,4 +202,31 @@ bool audio_checkPathCompatibility(const enum AudioSource p1Source,
     uint8_t p2Index = (p2Source * 3) + p2Sink;
 
     return pathCompatibilityMatrix[p1Index][p2Index] == 1;
+}
+
+
+void audio_mute_sink(const enum AudioSink sink)
+{
+    switch (sink)
+    {
+        case SINK_SPK:
+            gpio_setPin(SPK_MUTE);
+            break;
+        case SINK_RTX:
+        case SINK_MCU:
+            break;
+    }
+}
+
+void audio_unmute_sink(const enum AudioSink sink)
+{
+    switch (sink)
+    {
+        case SINK_SPK:
+            gpio_clearPin(SPK_MUTE);
+            break;
+        case SINK_RTX:
+        case SINK_MCU:
+            break;
+    }
 }
