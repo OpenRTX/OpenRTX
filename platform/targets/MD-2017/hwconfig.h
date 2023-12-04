@@ -98,10 +98,10 @@ extern "C" {
 #define BEEP_OUT  GPIOC,8   /* CTCSS tone    */
 
 /* External flash */
-// #define FLASH_CS  GPIOD,7
-// #define FLASH_CLK GPIOB,3
-// #define FLASH_SDO GPIOB,4
-// #define FLASH_SDI GPIOB,5
+#define FLASH_CS  GPIOD,7
+#define FLASH_CLK GPIOB,3
+#define FLASH_SDO GPIOB,4
+#define FLASH_SDI GPIOB,5
 
 /* Audio control */
 #define AUDIO_AMP_EN GPIOB,9
