@@ -34,6 +34,7 @@
 #include <input.h>
 #include <backup.h>
 #include <rtxlink.h>
+#include <rtxlink_cat.h>
 #ifdef GPS_PRESENT
 #include <peripherals/gps.h>
 #include <gps.h>
@@ -140,7 +141,10 @@ void *main_thread(void *arg)
 {
     (void) arg;
 
-    long long time     = 0;
+    long long time = 0;
+
+    // Bring up the rtxlink CAT interface
+    cat_init();
 
     while(state.devStatus != SHUTDOWN)
     {
