@@ -32,8 +32,6 @@
 
 state_t         state ;
 pthread_mutex_t state_mutex ;
-long long int   LastUpdateTimeTick        = 0 ;
-long long int   LastTimeDisplayUpdateTick = 0 ;
 
 // Commonly used frequency steps, expressed in Hz
 uint32_t   freq_steps[] = { 1000, 5000, 6250, 10000, 12500, 15000, 20000, 25000, 50000, 100000 };
@@ -87,6 +85,9 @@ void state_init( void )
     {
         state.settings.brightness = 100 ;
     }
+
+    state.contact_index = 0 ;
+    state.contact       = cps_getDefaultContact();
 }
 
 void state_terminate( void )
@@ -109,19 +110,21 @@ enum
 
 void state_task( void )
 {
-    static uint16_t       v_bat_prev = 0 ;
+    static long long int  lastUpdateTimeTick        = 0 ;
+    static long long int  lastTimeDisplayUpdateTick = 0 ;
+    static uint16_t       v_bat_prev                = 0 ;
            float          lastRssi ;
-           bool           pushEvent  = false ;
-           EventStatus_en data       = 0 ;
+           bool           pushEvent                 = false ;
+           EventStatus_en data                      = 0 ;
 
     // Update radio state once every 100ms
-    if( ( getTick() - LastUpdateTimeTick ) >= STATE_TASK_UPDATE_PERIOD )
+    if( ( getTick() - lastUpdateTimeTick ) >= STATE_TASK_UPDATE_PERIOD )
     {
-        LastUpdateTimeTick  = getTick();
+        lastUpdateTimeTick  = getTick();
 
-        if( ( getTick() - LastTimeDisplayUpdateTick ) >= STATE_TASK_TIME_DISPLAY_UPDATE_PERIOD )
+        if( ( getTick() - lastTimeDisplayUpdateTick ) >= STATE_TASK_TIME_DISPLAY_UPDATE_PERIOD )
         {
-            LastTimeDisplayUpdateTick  = LastUpdateTimeTick ;
+            lastTimeDisplayUpdateTick  = lastUpdateTimeTick ;
             data                      |= EVENT_STATUS_TIME_DISPLAY_TICK ;
             pushEvent                  = true ;
         }

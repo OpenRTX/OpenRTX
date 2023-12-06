@@ -703,7 +703,7 @@ void _ui_drawMenuContacts( ui_state_st* uiState )
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->contacts);
     // Print contact entries
-    _ui_drawMenuList(uiState->menu_selected, _ui_getContactName);
+    _ui_drawMenuList( uiState->menu_selected , _ui_getContactName );
 }
 
 #ifdef GPS_PRESENT

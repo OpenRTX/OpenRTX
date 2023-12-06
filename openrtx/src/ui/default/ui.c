@@ -791,7 +791,7 @@ static bool _ui_drawDarkOverlay( void )
 
 static int _ui_fsm_loadChannel( int16_t channel_index , bool* sync_rtx )
 {
-    channel_t channel;
+    channel_t channel ;
     int32_t   selected_channel = channel_index ;
     int       result ;
 
@@ -819,8 +819,27 @@ static int _ui_fsm_loadChannel( int16_t channel_index , bool* sync_rtx )
         *sync_rtx           = true;
     }
 
-    return result
-    ;
+    return result ;
+}
+
+static int _ui_fsm_loadContact( int16_t contact_index , bool* sync_rtx )
+{
+    contact_t contact ;
+    int       result = 0 ;
+
+    result = cps_readContact( &contact , contact_index );
+
+    // Read successful and contact is valid
+    if( result != -1 )
+    {
+        // Set new contact index
+        state.contact_index = contact_index ;
+        // Copy contact read to state
+        state.contact       = contact ;
+        *sync_rtx           = true;
+    }
+
+    return result ;
 }
 
 static void _ui_fsm_confirmVFOInput( bool*sync_rtx )
@@ -2334,44 +2353,56 @@ static bool ui_updateFSM_PAGE_MENU_CONTACTS( GuiState_st* guiState , ui_state_st
     }
     else if( guiState->msg.keys & KEY_ENTER )
     {
-        if( state.ui_screen == PAGE_MENU_BANK )
+        switch( state.ui_screen )
         {
-            bankHdr_t newbank ;
-            int       result  = 0 ;
-            // If "All channels" is selected, load default bank
-            if( uiState->menu_selected == 0 )
+            case PAGE_MENU_BANK :
             {
-                state.bank_enabled = false ;
+                bankHdr_t newbank ;
+                int       result  = 0 ;
+                // If "All channels" is selected, load default bank
+                if( uiState->menu_selected == 0 )
+                {
+                    state.bank_enabled = false ;
+                }
+                else
+                {
+                    state.bank_enabled = true;
+                    result = cps_readBankHeader( &newbank , uiState->menu_selected - 1 );
+                }
+                if( result != -1 )
+                {
+                    state.bank = uiState->menu_selected - 1 ;
+                    // If we were in VFO mode, save VFO channel
+                    if( uiState->last_main_state == PAGE_MAIN_VFO )
+                    {
+                        state.vfo_channel = state.channel ;
+                    }
+                    // Load bank first channel
+                    _ui_fsm_loadChannel( 0 , &sync_rtx );
+                    // Switch to MEM screen
+                    state.ui_screen = PAGE_MAIN_MEM ;
+                }
+                break ;
             }
-            else
+            case PAGE_MENU_CHANNEL :
             {
-                state.bank_enabled = true;
-                result = cps_readBankHeader( &newbank , uiState->menu_selected - 1 );
-            }
-            if( result != -1 )
-            {
-                state.bank = uiState->menu_selected - 1 ;
                 // If we were in VFO mode, save VFO channel
                 if( uiState->last_main_state == PAGE_MAIN_VFO )
                 {
-                    state.vfo_channel = state.channel ;
+                    state.vfo_channel = state.channel;
                 }
-                // Load bank first channel
-                _ui_fsm_loadChannel( 0 , &sync_rtx );
+                _ui_fsm_loadChannel( uiState->menu_selected , &sync_rtx );
                 // Switch to MEM screen
                 state.ui_screen = PAGE_MAIN_MEM ;
+                break ;
             }
-        }
-        if( state.ui_screen == PAGE_MENU_CHANNEL )
-        {
-            // If we were in VFO mode, save VFO channel
-            if( uiState->last_main_state == PAGE_MAIN_VFO )
+            case PAGE_MENU_CONTACTS :
             {
-                state.vfo_channel = state.channel;
+                _ui_fsm_loadContact( uiState->menu_selected , &sync_rtx );
+                // Switch to MEM screen
+                state.ui_screen = PAGE_MAIN_MEM ;
+                break ;
             }
-            _ui_fsm_loadChannel( uiState->menu_selected , &sync_rtx );
-            // Switch to MEM screen
-            state.ui_screen = PAGE_MAIN_MEM ;
         }
     }
     else if( guiState->msg.keys & KEY_ESC )

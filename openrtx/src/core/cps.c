@@ -21,7 +21,7 @@
 #include <interfaces/platform.h>
 #include <cps.h>
 
-channel_t cps_getDefaultChannel()
+channel_t cps_getDefaultChannel( void )
 {
     channel_t channel;
 
@@ -53,3 +53,13 @@ channel_t cps_getDefaultChannel()
     channel.fm.txTone   = 0;
     return channel;
 }
+
+contact_t cps_getDefaultContact( void )
+{
+    contact_t contact ;
+
+    contact.name[ 0 ] = 0 ;
+
+    return contact ;
+}
+

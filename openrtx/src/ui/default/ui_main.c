@@ -340,9 +340,9 @@ static void ui_drawModeInfo( ui_state_st* uiState )
         }
         case OPMODE_DMR:
         {
-            // Print talkgroup
+            // Print Contact
             gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                    color_white, "DMR TG%s", "");
+                    color_white, "%s", last_state.contact.name );
             break;
         }
         case OPMODE_M17:

@@ -53,6 +53,9 @@ typedef struct
     uint8_t    rtxStatus ;
     bool       tone_enabled ;
 
+    uint16_t   contact_index ;
+    contact_t  contact ;
+
     bool       emergency ;
     settings_t settings ;
     gps_t      gps_data ;
