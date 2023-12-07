@@ -43,13 +43,15 @@ const struct nvmPartition statePartitions[] =
     }
 };
 
-const struct nvmArea stateArea =
+const struct nvmArea areas[] =
 {
-    .name       = "Device state NVM area",
-    .dev        = &stateDevice,
-    .startAddr  = 0x0000,
-    .size       = 1024,
-    .partitions = statePartitions
+    {
+        .name       = "Device state NVM area",
+        .dev        = &stateDevice,
+        .startAddr  = 0x0000,
+        .size       = 1024,
+        .partitions = statePartitions
+    }
 };
 
 
@@ -151,6 +153,13 @@ void nvm_terminate()
     posixFile_terminate(&stateDevice);
 }
 
+size_t nvm_getMemoryAreas(const struct nvmArea **list)
+{
+    *list = &areas[0];
+
+    return (sizeof(areas) / sizeof(struct nvmArea));
+}
+
 void nvm_readHwInfo(hwInfo_t *info)
 {
     /* Linux devices does not have any hardware info in the external flash. */
@@ -159,7 +168,7 @@ void nvm_readHwInfo(hwInfo_t *info)
 
 int nvm_readVfoChannelData(channel_t *channel)
 {
-    int ret = nvmArea_readPartition(&stateArea, 0, 0, channel, sizeof(channel_t));
+    int ret = nvmArea_readPartition(&areas[0], 0, 0, channel, sizeof(channel_t));
     if(ret < 0)
         return ret;
 
@@ -176,7 +185,7 @@ int nvm_readVfoChannelData(channel_t *channel)
 
 int nvm_readSettings(settings_t *settings)
 {
-    int ret = nvmArea_readPartition(&stateArea, 1, 0, settings, sizeof(settings_t));
+    int ret = nvmArea_readPartition(&areas[0], 1, 0, settings, sizeof(settings_t));
     if(ret < 0)
         return ret;
 
@@ -193,14 +202,14 @@ int nvm_readSettings(settings_t *settings)
 
 int nvm_writeSettings(const settings_t *settings)
 {
-    return nvmArea_writePartition(&stateArea, 1, 0, settings, sizeof(settings_t));
+    return nvmArea_writePartition(&areas[0], 1, 0, settings, sizeof(settings_t));
 }
 
 int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
 {
-    int ret = nvmArea_writePartition(&stateArea, 1, 0, settings, sizeof(settings_t));
+    int ret = nvmArea_writePartition(&areas[0], 1, 0, settings, sizeof(settings_t));
     if(ret < 0)
         return ret;
 
-    return nvmArea_writePartition(&stateArea, 0, 0, vfo, sizeof(channel_t));
+    return nvmArea_writePartition(&areas[0], 0, 0, vfo, sizeof(channel_t));
 }
