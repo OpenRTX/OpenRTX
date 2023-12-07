@@ -35,6 +35,7 @@
 #include <backup.h>
 #include <rtxlink.h>
 #include <rtxlink_cat.h>
+#include <rtxlink_fmp.h>
 #ifdef CONFIG_GPS
 #include <peripherals/gps.h>
 #include <gps.h>
@@ -141,8 +142,9 @@ void *main_thread(void *arg)
 
     long long time = 0;
 
-    // Bring up the rtxlink CAT interface
+    // Bring up the rtxlink CAT and FMP interfaces
     cat_init();
+    fmp_init();
 
     while(state.devStatus != SHUTDOWN)
     {
