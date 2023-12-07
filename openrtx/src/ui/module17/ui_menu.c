@@ -102,7 +102,7 @@ void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_
     }
 }
 
-void _ui_drawMenuListValue(ui_state_st* ui_state, uint8_t selected,
+void _ui_drawMenuListValue(UI_State_st* ui_state, uint8_t selected,
                            int (*getCurrentEntry)(char *buf, uint8_t max_len, uint8_t index),
                            int (*getCurrentValue)(char *buf, uint8_t max_len, uint8_t index))
 {
@@ -308,7 +308,7 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
     return 0;
 }
 
-void _ui_drawMenuTop(ui_state_st* ui_state)
+void _ui_drawMenuTop(UI_State_st* ui_state)
 {
     gfx_clearScreen();
     // Print "Menu" on top bar
@@ -408,7 +408,7 @@ void _ui_drawMenuGPS()
 }
 #endif
 
-void _ui_drawMenuSettings(ui_state_st* ui_state)
+void _ui_drawMenuSettings(UI_State_st* ui_state)
 {
     gfx_clearScreen();
     // Print "Settings" on top bar
@@ -418,7 +418,7 @@ void _ui_drawMenuSettings(ui_state_st* ui_state)
     _ui_drawMenuList(ui_state->menu_selected, _ui_getSettingsEntryName);
 }
 
-void _ui_drawMenuInfo(ui_state_st* ui_state)
+void _ui_drawMenuInfo(UI_State_st* ui_state)
 {
     gfx_clearScreen();
     // Print "Info" on top bar
@@ -447,7 +447,7 @@ void _ui_drawMenuAbout()
     }
 }
 
-void _ui_drawSettingsDisplay(ui_state_st* ui_state)
+void _ui_drawSettingsDisplay(UI_State_st* ui_state)
 {
     gfx_clearScreen();
     // Print "Display" on top bar
@@ -459,7 +459,7 @@ void _ui_drawSettingsDisplay(ui_state_st* ui_state)
 }
 
 #ifdef GPS_PRESENT
-void _ui_drawSettingsGPS(ui_state_st* ui_state)
+void _ui_drawSettingsGPS(UI_State_st* ui_state)
 {
     gfx_clearScreen();
     // Print "GPS Settings" on top bar
@@ -490,7 +490,7 @@ void _ui_drawSettingsTimeDate()
               local_time.hour, local_time.minute, local_time.second);
 }
 
-void _ui_drawSettingsTimeDateSet(ui_state_st* ui_state)
+void _ui_drawSettingsTimeDateSet(UI_State_st* ui_state)
 {
     (void) last_state;
 
@@ -531,7 +531,7 @@ void _ui_drawSettingsTimeDateSet(ui_state_st* ui_state)
 }
 #endif
 
-void _ui_drawSettingsM17(ui_state_st* ui_state)
+void _ui_drawSettingsM17(UI_State_st* ui_state)
 {
     gfx_clearScreen();
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
@@ -560,7 +560,7 @@ void _ui_drawSettingsM17(ui_state_st* ui_state)
     }
 }
 
-void _ui_drawSettingsModule17(ui_state_st* ui_state)
+void _ui_drawSettingsModule17(UI_State_st* ui_state)
 {
     gfx_clearScreen();
     // Print "Module17 Settings" on top bar
@@ -571,7 +571,7 @@ void _ui_drawSettingsModule17(ui_state_st* ui_state)
                            _ui_getModule17ValueName);
 }
 
-void _ui_drawSettingsReset2Defaults(ui_state_st* ui_state)
+void _ui_drawSettingsReset2Defaults(UI_State_st* ui_state)
 {
     (void) ui_state;
 

@@ -738,6 +738,7 @@ void vp_announceAboutScreen()
     vp_queueStringTableEntry(&currentLanguage->Federico);
     vp_queueStringTableEntry(&currentLanguage->Fred);
     vp_queueStringTableEntry(&currentLanguage->Joseph);
+    vp_queueStringTableEntry(&currentLanguage->Kim);
 
     vp_play();
 }

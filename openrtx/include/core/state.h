@@ -65,58 +65,58 @@ typedef struct
     bool       restore_eflash ;
     bool       txDisable ;
     uint8_t    step_index ;
-}state_t;
+}State_st;
 
 extern uint32_t freq_steps[];
 extern size_t n_freq_steps;
 
-enum TunerMode
+typedef enum
 {
     VFO = 0,
     CH,
     SCAN,
     CHSCAN
-};
+}TunerMode_en;
 
-enum RtxStatus
+typedef enum
 {
     RTX_OFF = 0,
     RTX_RX,
     RTX_TX
-};
+}RTxStatus_en;
 
-enum DeviceStatus
+typedef enum
 {
     PWROFF = 0,
     STARTUP,
     RUNNING,
     DATATRANSFER,
     SHUTDOWN
-};
+}DeviceStatus_en;
 
-extern state_t state;
+extern State_st state;
 extern pthread_mutex_t state_mutex;
 
 /**
  * Initialise radio state mutex and radio state variable, reading the
  * informations from device drivers.
  */
-void state_init();
+void state_init( void );
 
 /**
  * Terminate the radio state saving persistent settings to flash and destroy
  * the state mutex.
  */
-void state_terminate();
+void state_terminate( void );
 
 /**
  * Update radio state fetching data from device drivers.
  */
-void state_task();
+void state_task( void );
 
 /**
  * Reset the fields of radio state containing user settings and VFO channel.
  */
-void state_resetSettingsAndVfo();
+void state_resetSettingsAndVfo( void );
 
 #endif /* STATE_H */

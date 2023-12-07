@@ -36,7 +36,7 @@ int main(void)
 
     // Initialize the radio state
     state_init();
-    
+
     // Init the graphic stack
     gfx_init();
     platform_setBacklightLevel(255);
@@ -50,7 +50,7 @@ int main(void)
     gfx_render();
     while(gfx_renderingInProgress());
     OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
-    
+
     // Clear screen
     gfx_clearScreen();
     gfx_render();
@@ -59,7 +59,7 @@ int main(void)
     // UI update infinite loop
     while(1)
     {
-	state_t state = state_update();
+	State_st state = state_update();
 	keyboard_t keys = kbd_getKeys();
 	bool renderNeeded = ui_update(state, keys);
 	if(renderNeeded)

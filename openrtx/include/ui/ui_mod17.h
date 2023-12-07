@@ -86,7 +86,7 @@ enum menuItems
     M_SHUTDOWN
 };
 
-enum settingsItems
+enum SettingsItems_en
 {
     S_DISPLAY = 0
 #ifdef RTC_PRESENT
@@ -100,13 +100,13 @@ enum settingsItems
     ,S_RESET2DEFAULTS
 };
 
-enum backupRestoreItems
+enum BackupRestoreItems_en
 {
     BR_BACKUP = 0,
     BR_RESTORE
 };
 
-enum displayItems
+enum DisplayItems_en
 {
 #ifdef SCREEN_CONTRAST
     D_CONTRAST = 0
@@ -118,7 +118,7 @@ enum displayItems
 };
 
 #ifdef GPS_PRESENT
-enum settingsGPSItems
+enum SettingsGPSItems_en
 {
     G_ENABLED = 0,
     G_SET_TIME,
@@ -148,7 +148,7 @@ enum module17Items
  * Using these parameters make the UI automatically adapt
  * To displays of different sizes
  */
-typedef struct layout_t
+typedef struct Layout_st
 {
     uint16_t hline_h;
     uint16_t top_h;
@@ -187,14 +187,14 @@ typedef struct layout_t
     fontSize_t menu_font;
     fontSize_t mode_font_big;
     fontSize_t mode_font_small;
-} layout_t;
+} Layout_st;
 
 /**
  * This structs contains state variables internal to the
  * UI that need to be kept between executions of the UI
  * This state does not need to be saved on device poweroff
  */
-typedef struct ui_state_st
+typedef struct UI_State_st
 {
     // Index of the currently selected menu entry
     uint8_t menu_selected;
@@ -219,11 +219,11 @@ typedef struct ui_state_st
     // Which state to return to when we exit menu
     uint8_t last_main_state;
 }
-ui_state_st;
+UI_State_st;
 
-extern layout_t layout;
+extern Layout_st layout;
 // Copy of the radio state
-extern state_t last_state;
+extern State_st last_state;
 extern const char *menu_items[];
 extern const char *settings_items[];
 extern const char *display_items[];

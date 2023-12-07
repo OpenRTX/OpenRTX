@@ -25,11 +25,11 @@
  * - EVENT_KBD is used to send a keypress
  * - EVENT_STATUS is used to send a status change notification
  */
-enum eventType_t
+typedef enum
 {
     EVENT_KBD    = 0 ,
     EVENT_STATUS = 1
-};
+}EventType_en;
 
 typedef enum
 {
@@ -58,6 +58,6 @@ typedef union
     };
 
     uint32_t value;
-}event_t;
+}Event_st;
 
 #endif /* EVENT_H */

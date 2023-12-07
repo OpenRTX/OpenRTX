@@ -26,44 +26,44 @@
 #include <string.h>
 #include <ui/ui_strings.h>
 
-static void ui_drawMainVFO( ui_state_st* uiState , event_t* event );
-static void ui_drawMainVFOInput( ui_state_st* uiState , event_t* event );
-static void ui_drawMainMEM( ui_state_st* uiState , event_t* event );
-static void ui_drawModeVFO( ui_state_st* uiState , event_t* event );
-static void ui_drawModeMEM( ui_state_st* uiState , event_t* event );
-extern void _ui_drawMenuTop( ui_state_st* uiState , event_t* event );
-extern void _ui_drawMenuBank( ui_state_st* uiState , event_t* event );
-extern void _ui_drawMenuChannel( ui_state_st* uiState , event_t* event );
-extern void _ui_drawMenuContacts( ui_state_st* uiState , event_t* event );
-extern void _ui_drawMenuGPS( ui_state_st* uiState , event_t* event );
-extern void _ui_drawMenuSettings( ui_state_st* uiState , event_t* event );
-extern void _ui_drawMenuBackupRestore( ui_state_st* uiState , event_t* event );
-extern void _ui_drawMenuBackup( ui_state_st* uiState , event_t* event );
-extern void _ui_drawMenuRestore( ui_state_st* uiState , event_t* event );
-extern void _ui_drawMenuInfo( ui_state_st* uiState , event_t* event );
-extern void _ui_drawMenuAbout( ui_state_st* uiState , event_t* event );
-extern void _ui_drawSettingsTimeDate( ui_state_st* uiState , event_t* event );
-extern void _ui_drawSettingsTimeDateSet( ui_state_st* uiState , event_t* event );
-extern void _ui_drawSettingsDisplay( ui_state_st* uiState , event_t* event );
-extern void _ui_drawSettingsGPS( ui_state_st* uiState , event_t* event );
-extern void _ui_drawSettingsRadio( ui_state_st* uiState , event_t* event );
-extern void _ui_drawSettingsM17( ui_state_st* uiState , event_t* event );
-extern void _ui_drawSettingsVoicePrompts( ui_state_st* uiState , event_t* event );
-extern void _ui_drawSettingsReset2Defaults( ui_state_st* uiState , event_t* event );
-static void ui_drawLowBatteryScreen( ui_state_st* uiState , event_t* event );
-static void ui_drawAuthors( ui_state_st* uiState , event_t* event );
-static void ui_drawBlank( ui_state_st* uiState , event_t* event );
+static void ui_drawMainVFO( UI_State_st* uiState , Event_st* event );
+static void ui_drawMainVFOInput( UI_State_st* uiState , Event_st* event );
+static void ui_drawMainMEM( UI_State_st* uiState , Event_st* event );
+static void ui_drawModeVFO( UI_State_st* uiState , Event_st* event );
+static void ui_drawModeMEM( UI_State_st* uiState , Event_st* event );
+extern void _ui_drawMenuTop( UI_State_st* uiState , Event_st* event );
+extern void _ui_drawMenuBank( UI_State_st* uiState , Event_st* event );
+extern void _ui_drawMenuChannel( UI_State_st* uiState , Event_st* event );
+extern void _ui_drawMenuContacts( UI_State_st* uiState , Event_st* event );
+extern void _ui_drawMenuGPS( UI_State_st* uiState , Event_st* event );
+extern void _ui_drawMenuSettings( UI_State_st* uiState , Event_st* event );
+extern void _ui_drawMenuBackupRestore( UI_State_st* uiState , Event_st* event );
+extern void _ui_drawMenuBackup( UI_State_st* uiState , Event_st* event );
+extern void _ui_drawMenuRestore( UI_State_st* uiState , Event_st* event );
+extern void _ui_drawMenuInfo( UI_State_st* uiState , Event_st* event );
+extern void _ui_drawMenuAbout( UI_State_st* uiState , Event_st* event );
+extern void _ui_drawSettingsTimeDate( UI_State_st* uiState , Event_st* event );
+extern void _ui_drawSettingsTimeDateSet( UI_State_st* uiState , Event_st* event );
+extern void _ui_drawSettingsDisplay( UI_State_st* uiState , Event_st* event );
+extern void _ui_drawSettingsGPS( UI_State_st* uiState , Event_st* event );
+extern void _ui_drawSettingsRadio( UI_State_st* uiState , Event_st* event );
+extern void _ui_drawSettingsM17( UI_State_st* uiState , Event_st* event );
+extern void _ui_drawSettingsVoicePrompts( UI_State_st* uiState , Event_st* event );
+extern void _ui_drawSettingsReset2Defaults( UI_State_st* uiState , Event_st* event );
+static void ui_drawLowBatteryScreen( UI_State_st* uiState , Event_st* event );
+static void ui_drawAuthors( UI_State_st* uiState , Event_st* event );
+static void ui_drawBlank( UI_State_st* uiState , Event_st* event );
 
 //@@@KL static void ui_drawMainBackground( void );
-static void ui_drawMainTop( ui_state_st * ui_state , event_t* event );
+static void ui_drawMainTop( UI_State_st * ui_state , Event_st* event );
 static void ui_drawBankChannel( void );
-static void ui_drawModeInfo( ui_state_st* ui_state );
+static void ui_drawModeInfo( UI_State_st* ui_state );
 static void ui_drawFrequency( void );
-static void ui_drawVFOMiddleInput( ui_state_st* ui_state );
+static void ui_drawVFOMiddleInput( UI_State_st* ui_state );
 
-void _ui_drawMainBottom( event_t* event );
+void _ui_drawMainBottom( Event_st* event );
 
-typedef void (*ui_draw_fn)( ui_state_st* uiState , event_t* event );
+typedef void (*ui_draw_fn)( UI_State_st* uiState , Event_st* event );
 
 static const ui_draw_fn uiPageDescTable[ PAGE_NUM_OF ] =
 {
@@ -96,7 +96,7 @@ static const ui_draw_fn uiPageDescTable[ PAGE_NUM_OF ] =
     ui_drawBlank                     // PAGE_BLANK
 };
 
-void ui_draw( state_t* state , ui_state_st* ui_state , event_t* event )
+void ui_draw( State_st* state , UI_State_st* ui_state , Event_st* event )
 {
     (void)event ;
 
@@ -117,7 +117,7 @@ void ui_draw( state_t* state , ui_state_st* ui_state , event_t* event )
 
 }
 
-static void ui_drawMainVFO( ui_state_st* uiState , event_t* event )
+static void ui_drawMainVFO( UI_State_st* uiState , Event_st* event )
 {
     (void)event ;
 
@@ -136,7 +136,7 @@ static void ui_drawMainVFO( ui_state_st* uiState , event_t* event )
 
 }
 
-static void ui_drawMainVFOInput( ui_state_st* uiState , event_t* event )
+static void ui_drawMainVFOInput( UI_State_st* uiState , Event_st* event )
 {
     (void)event ;
 
@@ -147,7 +147,7 @@ static void ui_drawMainVFOInput( ui_state_st* uiState , event_t* event )
 
 }
 
-void ui_drawMainMEM( ui_state_st* uiState , event_t* event )
+void ui_drawMainMEM( UI_State_st* uiState , Event_st* event )
 {
     (void)event ;
 
@@ -157,7 +157,7 @@ void ui_drawMainMEM( ui_state_st* uiState , event_t* event )
 
     // Show channel data if the OpMode is not M17 or there is no valid LSF data
     rtxStatus_t status = rtx_getCurrentStatus();
-    if((status.opMode != OPMODE_M17) || (status.lsfOk == false))
+    if( ( status.opMode != OPMODE_M17 ) || ( status.lsfOk == false ) )
     {
         ui_drawBankChannel();
         ui_drawFrequency();
@@ -167,51 +167,53 @@ void ui_drawMainMEM( ui_state_st* uiState , event_t* event )
 
 }
 
-static void ui_drawModeVFO( ui_state_st* uiState , event_t* event )
+static void ui_drawModeVFO( UI_State_st* uiState , Event_st* event )
 {
     (void)event ;
     (void)uiState ;
 }
 
-static void ui_drawModeMEM( ui_state_st* uiState , event_t* event )
+static void ui_drawModeMEM( UI_State_st* uiState , Event_st* event )
 {
     (void)event ;
     (void)uiState ;
 }
 
-static void ui_drawLowBatteryScreen( ui_state_st* uiState , event_t* event )
+static void ui_drawLowBatteryScreen( UI_State_st* uiState , Event_st* event )
 {
     (void)event ;
     (void)uiState ;
 
     gfx_clearScreen();
-    uint16_t bat_width = SCREEN_WIDTH / 2 ;
-    uint16_t bat_height = SCREEN_HEIGHT / 3 ;
-    point_t bat_pos = { SCREEN_WIDTH / 4 , SCREEN_HEIGHT / 8 };
-    gfx_drawBattery( bat_pos , bat_width , bat_height , 10 );
-    point_t text_pos_1 = { 0 , SCREEN_HEIGHT * 2 / 3 };
-    point_t text_pos_2 = { 0 , SCREEN_HEIGHT * 2 / 3 + 16 };
+    uint16_t bat_width       = SCREEN_WIDTH / 2 ;
+    uint16_t bat_height      = SCREEN_HEIGHT / 3 ;
+             point_t bat_pos = { SCREEN_WIDTH / 4 , SCREEN_HEIGHT / 8 };
+
+             gfx_drawBattery( bat_pos , bat_width , bat_height , 10 );
+
+    point_t  text_pos_1      = { 0 , SCREEN_HEIGHT * 2 / 3 };
+    point_t  text_pos_2      = { 0 , SCREEN_HEIGHT * 2 / 3 + 16 };
 
     gfx_print( text_pos_1                       ,
                FONT_SIZE_6PT                    ,
                TEXT_ALIGN_CENTER                ,
-               color_white                      ,
+               Color_White                      ,
                currentLanguage->forEmergencyUse   );
 
     gfx_print( text_pos_2                      ,
                FONT_SIZE_6PT                   ,
                TEXT_ALIGN_CENTER               ,
-               color_white                     ,
+               Color_White                     ,
                currentLanguage->pressAnyButton   );
 }
 
-static void ui_drawAuthors( ui_state_st* uiState , event_t* event )
+static void ui_drawAuthors( UI_State_st* uiState , Event_st* event )
 {
     (void)event ;
     (void)uiState ;
 }
 
-static void ui_drawBlank( ui_state_st* uiState , event_t* event )
+static void ui_drawBlank( UI_State_st* uiState , Event_st* event )
 {
     (void)event ;
     (void)uiState ;
@@ -226,56 +228,58 @@ static void ui_drawMainBackground( void )
     gfx_drawHLine(SCREEN_HEIGHT - layout.bottom_h - 1, layout.hline_h, color_grey);
 }
 */
-static void ui_drawMainTop( ui_state_st * ui_state , event_t* event )
+static void ui_drawMainTop( UI_State_st * ui_state , Event_st* event )
 {
 #ifdef RTC_PRESENT
     if( event->payload & EVENT_STATUS_TIME_DISPLAY_TICK )
     {
         // Print clock on top bar
         datetime_t local_time = utcToLocalTime( last_state.time ,
-                                                last_state.settings.utc_timezone);
-        gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-                  color_white, "%02d:%02d:%02d", local_time.hour,
-                  local_time.minute, local_time.second);
+                                                last_state.settings.utc_timezone );
+        gfx_print( layout.top_pos , layout.top_font , TEXT_ALIGN_CENTER ,
+                   Color_White , "%02d:%02d:%02d" , local_time.hour ,
+                   local_time.minute , local_time.second );
     }
 #endif // RTC_PRESENT
     if( event->payload & EVENT_STATUS_BATTERY )
     {
         // If the radio has no built-in battery, print input voltage
 #ifdef BAT_NONE
-        gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_RIGHT,
-                  color_white,"%.1fV", last_state.v_bat);
+        gfx_print( layout.top_pos , layout.top_font , TEXT_ALIGN_RIGHT ,
+                   Color_White , "%.1fV" , last_state.v_bat );
 #else // BAT_NONE
         // Otherwise print battery icon on top bar, use 4 px padding
-        uint16_t bat_width = SCREEN_WIDTH / 9;
-        uint16_t bat_height = layout.top_h - (layout.status_v_pad * 2);
-        point_t bat_pos = {SCREEN_WIDTH - bat_width - layout.horizontal_pad,
-                           layout.status_v_pad};
-        gfx_drawBattery(bat_pos, bat_width, bat_height, last_state.charge);
+        uint16_t bat_width  = SCREEN_WIDTH / 9 ;
+        uint16_t bat_height = layout.top_h - ( layout.status_v_pad * 2 );
+        point_t  bat_pos    = { SCREEN_WIDTH - bat_width - layout.horizontal_pad ,
+                                layout.status_v_pad };
+        gfx_drawBattery( bat_pos , bat_width , bat_height , last_state.charge );
 #endif // BAT_NONE
     }
-    if (ui_state->input_locked == true)
-      gfx_drawSymbol(layout.top_pos, layout.top_symbol_size, TEXT_ALIGN_LEFT,
-                     color_white, SYMBOL_LOCK);
+    if( ui_state->input_locked == true )
+    {
+      gfx_drawSymbol( layout.top_pos , layout.top_symbol_size , TEXT_ALIGN_LEFT ,
+                      Color_White , SYMBOL_LOCK );
+    }
 }
 
 static void ui_drawBankChannel( void )
 {
     // Print Bank number, channel number and Channel name
-    uint16_t b = (last_state.bank_enabled) ? last_state.bank : 0;
-    gfx_print(layout.line1_pos, layout.line1_font, TEXT_ALIGN_CENTER,
-              color_white, "%01d-%03d: %.12s",
-              b, last_state.channel_index + 1, last_state.channel.name);
+    uint16_t bank_enabled = ( last_state.bank_enabled ) ? last_state.bank : 0 ;
+    gfx_print( layout.line1_pos , layout.line1_font , TEXT_ALIGN_CENTER ,
+               Color_White , "%01d-%03d: %.12s" ,
+               bank_enabled , last_state.channel_index + 1 , last_state.channel.name );
 }
 
-static void ui_drawModeInfo( ui_state_st* uiState )
+static void ui_drawModeInfo( UI_State_st* uiState )
 {
     char bw_str[ 8 ]     = { 0 };
     char encdec_str[ 9 ] = { 0 };
 
     switch( last_state.channel.mode )
     {
-        case OPMODE_FM:
+        case OPMODE_FM :
         {
             // Get Bandwidth string
             if( last_state.channel.bandwidth == BW_12_5 )
@@ -284,7 +288,7 @@ static void ui_drawModeInfo( ui_state_st* uiState )
             }
             else
             {
-                if(last_state.channel.bandwidth == BW_20)
+                if( last_state.channel.bandwidth == BW_20 )
                 {
                     snprintf( bw_str , 8 , "FM20" );
                 }
@@ -327,63 +331,63 @@ static void ui_drawModeInfo( ui_state_st* uiState )
             // Print Bandwidth, Tone and encdec info
             if( tone_tx_enable || tone_rx_enable )
             {
-                gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                          color_white, "%s %4.1f %s", bw_str,
-                          ctcss_tone[last_state.channel.fm.txTone]/10.0f, encdec_str);
+                gfx_print( layout.line2_pos , layout.line2_font , TEXT_ALIGN_CENTER ,
+                           Color_White , "%s %4.1f %s" , bw_str ,
+                           ctcss_tone[ last_state.channel.fm.txTone ] / 10.0f , encdec_str );
             }
             else
             {
-                gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                          color_white, "%s", bw_str );
+                gfx_print( layout.line2_pos , layout.line2_font , TEXT_ALIGN_CENTER ,
+                           Color_White , "%s" , bw_str );
             }
-            break;
+            break ;
         }
-        case OPMODE_DMR:
+        case OPMODE_DMR :
         {
             // Print Contact
-            gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                    color_white, "%s", last_state.contact.name );
-            break;
+            gfx_print( layout.line2_pos , layout.line2_font , TEXT_ALIGN_CENTER ,
+                       Color_White , "%s" , last_state.contact.name );
+            break ;
         }
-        case OPMODE_M17:
+        case OPMODE_M17 :
         {
             // Print M17 Destination ID on line 3 of 3
             rtxStatus_t rtxStatus = rtx_getCurrentStatus();
 
-            if(rtxStatus.lsfOk)
+            if( rtxStatus.lsfOk )
             {
                 // Destination address
-                gfx_drawSymbol(layout.line2_pos, layout.line2_symbol_size, TEXT_ALIGN_LEFT,
-                               color_white, SYMBOL_CALL_RECEIVED);
+                gfx_drawSymbol( layout.line2_pos , layout.line2_symbol_size , TEXT_ALIGN_LEFT ,
+                                Color_White , SYMBOL_CALL_RECEIVED );
 
-                gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                          color_white, "%s", rtxStatus.M17_dst);
+                gfx_print( layout.line2_pos , layout.line2_font , TEXT_ALIGN_CENTER ,
+                           Color_White , "%s" , rtxStatus.M17_dst );
 
                 // Source address
-                gfx_drawSymbol(layout.line1_pos, layout.line1_symbol_size, TEXT_ALIGN_LEFT,
-                               color_white, SYMBOL_CALL_MADE);
+                gfx_drawSymbol( layout.line1_pos , layout.line1_symbol_size , TEXT_ALIGN_LEFT ,
+                                Color_White , SYMBOL_CALL_MADE );
 
-                gfx_print(layout.line1_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                          color_white, "%s", rtxStatus.M17_src);
+                gfx_print( layout.line1_pos , layout.line2_font , TEXT_ALIGN_CENTER ,
+                           Color_White , "%s" , rtxStatus.M17_src );
 
                 // RF link (if present)
                 if( rtxStatus.M17_link[0] != '\0' )
                 {
-                    gfx_drawSymbol(layout.line4_pos, layout.line3_symbol_size, TEXT_ALIGN_LEFT,
-                                   color_white, SYMBOL_ACCESS_POINT);
+                    gfx_drawSymbol( layout.line4_pos , layout.line3_symbol_size , TEXT_ALIGN_LEFT ,
+                                    Color_White , SYMBOL_ACCESS_POINT );
 
-                    gfx_print(layout.line4_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                              color_white, "%s", rtxStatus.M17_link);
+                    gfx_print( layout.line4_pos , layout.line2_font , TEXT_ALIGN_CENTER ,
+                               Color_White , "%s" , rtxStatus.M17_link );
                 }
 
                 // Reflector (if present)
                 if( rtxStatus.M17_refl[0] != '\0' )
                 {
-                    gfx_drawSymbol(layout.line3_pos, layout.line4_symbol_size, TEXT_ALIGN_LEFT,
-                                   color_white, SYMBOL_NETWORK);
+                    gfx_drawSymbol( layout.line3_pos , layout.line4_symbol_size , TEXT_ALIGN_LEFT ,
+                                    Color_White , SYMBOL_NETWORK );
 
-                    gfx_print(layout.line3_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                              color_white, "%s", rtxStatus.M17_refl);
+                    gfx_print( layout.line3_pos , layout.line2_font , TEXT_ALIGN_CENTER ,
+                               Color_White , "%s" , rtxStatus.M17_refl );
                 }
             }
             else
@@ -405,10 +409,10 @@ static void ui_drawModeInfo( ui_state_st* uiState )
                     }
                 }
 
-                gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                          color_white, "M17 #%s", dst);
+                gfx_print( layout.line2_pos , layout.line2_font , TEXT_ALIGN_CENTER ,
+                           Color_White , "M17 #%s" , dst );
             }
-            break;
+            break ;
         }
     }
 }
@@ -418,116 +422,107 @@ static void ui_drawFrequency( void )
     unsigned long frequency = platform_getPttStatus() ? last_state.channel.tx_frequency
                                                       : last_state.channel.rx_frequency;
     // Print big numbers frequency
-    gfx_print(layout.line3_large_pos, layout.line3_large_font, TEXT_ALIGN_CENTER,
-              color_white, "%.7g", (float) frequency / 1000000.0f);
+    gfx_print( layout.line3_large_pos , layout.line3_large_font , TEXT_ALIGN_CENTER ,
+               Color_White , "%.7g" , (float)frequency / 1000000.0f );
 }
 
-static void ui_drawVFOMiddleInput( ui_state_st* uiState )
+static void ui_drawVFOMiddleInput( UI_State_st* uiState )
 {
     // Add inserted number to string, skipping "Rx: "/"Tx: " and "."
     uint8_t insert_pos = uiState->input_position + 3;
-    if(uiState->input_position > 3)
+    if( uiState->input_position > 3 )
     {
-        insert_pos += 1;
+        insert_pos += 1 ;
     }
-    char input_char = uiState->input_number + '0';
+    char input_char = uiState->input_number + '0' ;
 
     if( uiState->input_set == SET_RX )
     {
-        if(uiState->input_position == 0)
+        if( uiState->input_position == 0 )
         {
-            gfx_print(layout.line2_pos, layout.input_font, TEXT_ALIGN_CENTER,
-                      color_white, ">Rx:%03lu.%04lu",
-                      (unsigned long)uiState->new_rx_frequency/1000000,
-                      (unsigned long)(uiState->new_rx_frequency%1000000)/100);
+            gfx_print( layout.line2_pos , layout.input_font , TEXT_ALIGN_CENTER ,
+                       Color_White , ">Rx:%03lu.%04lu" ,
+                       (unsigned long)uiState->new_rx_frequency / 1000000 ,
+                       (unsigned long)( uiState->new_rx_frequency % 1000000 ) / 100 );
         }
         else
         {
             // Replace Rx frequency with underscorses
-            if(uiState->input_position == 1)
+            if( uiState->input_position == 1 )
             {
-                strcpy(uiState->new_rx_freq_buf, ">Rx:___.____");
+                strcpy( uiState->new_rx_freq_buf , ">Rx:___.____" );
             }
-            uiState->new_rx_freq_buf[insert_pos] = input_char;
-            gfx_print(layout.line2_pos, layout.input_font, TEXT_ALIGN_CENTER, color_white, uiState->new_rx_freq_buf);
+            uiState->new_rx_freq_buf[ insert_pos ] = input_char ;
+            gfx_print( layout.line2_pos , layout.input_font , TEXT_ALIGN_CENTER ,
+                       Color_White , uiState->new_rx_freq_buf );
         }
-        gfx_print(layout.line3_large_pos, layout.input_font, TEXT_ALIGN_CENTER,
-                  color_white, " Tx:%03lu.%04lu",
-                  (unsigned long)last_state.channel.tx_frequency/1000000,
-                  (unsigned long)(last_state.channel.tx_frequency%1000000)/100);
+        gfx_print( layout.line3_large_pos , layout.input_font , TEXT_ALIGN_CENTER ,
+                   Color_White , " Tx:%03lu.%04lu" ,
+                   (unsigned long)last_state.channel.tx_frequency / 1000000 ,
+                   (unsigned long)( last_state.channel.tx_frequency % 1000000 ) / 100 );
     }
     else
     {
-        if(uiState->input_set == SET_TX)
+        if( uiState->input_set == SET_TX )
         {
-            gfx_print(layout.line2_pos, layout.input_font, TEXT_ALIGN_CENTER,
-                      color_white, " Rx:%03lu.%04lu",
-                      (unsigned long)uiState->new_rx_frequency/1000000,
-                      (unsigned long)(uiState->new_rx_frequency%1000000)/100);
+            gfx_print( layout.line2_pos , layout.input_font , TEXT_ALIGN_CENTER ,
+                       Color_White , " Rx:%03lu.%04lu" ,
+                       (unsigned long)uiState->new_rx_frequency / 1000000 ,
+                       (unsigned long)( uiState->new_rx_frequency % 1000000 ) / 100 );
             // Replace Rx frequency with underscorses
-            if(uiState->input_position == 0)
+            if( uiState->input_position == 0 )
             {
-                gfx_print(layout.line3_large_pos, layout.input_font, TEXT_ALIGN_CENTER,
-                          color_white, ">Tx:%03lu.%04lu",
-                          (unsigned long)uiState->new_rx_frequency/1000000,
-                          (unsigned long)(uiState->new_rx_frequency%1000000)/100);
+                gfx_print( layout.line3_large_pos , layout.input_font , TEXT_ALIGN_CENTER ,
+                           Color_White , ">Tx:%03lu.%04lu" ,
+                           (unsigned long)uiState->new_rx_frequency / 1000000 ,
+                           (unsigned long)( uiState->new_rx_frequency % 1000000 ) / 100 );
             }
             else
             {
-                if(uiState->input_position == 1)
+                if( uiState->input_position == 1 )
                 {
-                    strcpy(uiState->new_tx_freq_buf, ">Tx:___.____");
+                    strcpy( uiState->new_tx_freq_buf , ">Tx:___.____" );
                 }
-                uiState->new_tx_freq_buf[insert_pos] = input_char;
-                gfx_print(layout.line3_large_pos, layout.input_font, TEXT_ALIGN_CENTER, color_white, uiState->new_tx_freq_buf);
+                uiState->new_tx_freq_buf[ insert_pos ] = input_char ;
+                gfx_print( layout.line3_large_pos , layout.input_font , TEXT_ALIGN_CENTER ,
+                           Color_White , uiState->new_tx_freq_buf );
             }
         }
     }
 }
 
-void _ui_drawMainBottom( event_t* event )
+void _ui_drawMainBottom( Event_st* event )
 {
     // Squelch bar
     float rssi            = last_state.rssi ;
     float squelch         = last_state.settings.sqlLevel / 16.0f ;
-    uint16_t meter_width  = SCREEN_WIDTH - 2 * layout.horizontal_pad ;
+    uint16_t meter_width  = SCREEN_WIDTH - ( 2 * layout.horizontal_pad ) ;
     uint16_t meter_height = layout.bottom_h ;
-    point_t meter_pos     = { layout.horizontal_pad , SCREEN_HEIGHT - meter_height - layout.bottom_pad };
+    point_t meter_pos     = { layout.horizontal_pad , ( SCREEN_HEIGHT - meter_height ) - layout.bottom_pad };
     uint8_t mic_level     = platform_getMicLevel();
 
     if( event->payload & EVENT_STATUS_RSSI )
     {
         switch( last_state.channel.mode )
         {
-            case OPMODE_FM:
+            case OPMODE_FM :
             {
-                gfx_drawSmeter(meter_pos,
-                               meter_width,
-                               meter_height,
-                               rssi,
-                               squelch,
-                               yellow_fab413);
-                break;
+                gfx_drawSmeter( meter_pos , meter_width , meter_height ,
+                                rssi , squelch , Color_Yellow_Fab413 );
+                break ;
             }
-            case OPMODE_DMR:
+            case OPMODE_DMR :
             {
-                gfx_drawSmeterLevel(meter_pos,
-                                    meter_width,
-                                    meter_height,
-                                    rssi,
-                                    mic_level);
-                break;
+                gfx_drawSmeter( meter_pos , meter_width , meter_height ,
+                                rssi , squelch , Color_Yellow_Fab413 );
+                break ;
             }
-            case OPMODE_M17:
+            case OPMODE_M17 :
             {
-                gfx_drawSmeterLevel(meter_pos,
-                                    meter_width,
-                                    meter_height,
-                                    rssi,
-                                    mic_level);
-                break;
+                gfx_drawSmeterLevel( meter_pos , meter_width , meter_height ,
+                                     rssi , mic_level );
+                break ;
             }
         }
     }
 }
-

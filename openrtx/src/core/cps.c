@@ -58,7 +58,7 @@ contact_t cps_getDefaultContact( void )
 {
     contact_t contact ;
 
-    contact.name[ 0 ] = 0 ;
+    contact.name[ 0 ] = '\0' ;
 
     return contact ;
 }

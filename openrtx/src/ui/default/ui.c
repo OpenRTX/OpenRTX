@@ -139,7 +139,7 @@ static void Debug_DisplayMsg( void )
     {
         counter = 0 ;
     }
-    gfx_print( layout.top_pos , layout.top_font , TEXT_ALIGN_LEFT , color_white ,
+    gfx_print( layout.top_pos , layout.top_font , TEXT_ALIGN_LEFT , Color_White ,
                "%c%X%X%X%X" , (char)( '0' + counter ) ,
                trace0 & 0x0F , trace1 & 0x0F , trace2 & 0x0F , trace3 & 0x0F );//@@@KL
 }
@@ -147,11 +147,11 @@ static void Debug_DisplayMsg( void )
 #endif // DISPLAY_DEBUG_MSG
 
 /* UI main screen functions, their implementation is in "ui_main.c" */
-extern void ui_draw( state_t* state , ui_state_st* ui_state , event_t* event );
-extern bool _ui_drawMacroMenu( ui_state_st* ui_state );
+extern void ui_draw( State_st* state , UI_State_st* ui_state , Event_st* event );
+extern bool _ui_drawMacroMenu( UI_State_st* ui_state );
 extern void _ui_reset_menu_anouncement_tracking( void );
 
-const char *menu_items[] =
+const char* menu_items[] =
 {
     "Banks"    ,
     "Channels" ,
@@ -164,7 +164,7 @@ const char *menu_items[] =
     "About"
 };
 
-const char *settings_items[] =
+const char* settings_items[] =
 {
     "Display"          ,
 #ifdef RTC_PRESENT
@@ -179,7 +179,7 @@ const char *settings_items[] =
     "Default Settings"
 };
 
-const char *display_items[] =
+const char* display_items[] =
 {
 #ifdef SCREEN_BRIGHTNESS
     "Brightness" ,
@@ -191,7 +191,7 @@ const char *display_items[] =
 };
 
 #ifdef GPS_PRESENT
-const char *settings_gps_items[] =
+const char* settings_gps_items[] =
 {
     "GPS Enabled"  ,
     "GPS Set Time" ,
@@ -199,33 +199,33 @@ const char *settings_gps_items[] =
 };
 #endif // GPS_PRESENT
 
-const char *settings_radio_items[] =
+const char* settings_radio_items[] =
 {
     "Offset"    ,
     "Direction" ,
     "Step"
 };
 
-const char * settings_m17_items[] =
+const char* settings_m17_items[] =
 {
     "Callsign"     ,
     "CAN"          ,
     "CAN RX Check"
 };
 
-const char * settings_voice_items[] =
+const char* settings_voice_items[] =
 {
     "Voice"    ,
     "Phonetic"
 };
 
-const char *backup_restore_items[] =
+const char* backup_restore_items[] =
 {
     "Backup"  ,
     "Restore"
 };
 
-const char *info_items[] =
+const char* info_items[] =
 {
     ""             ,
     "Bat. Voltage" ,
@@ -242,16 +242,16 @@ const char *info_items[] =
 #endif // PLATFORM_TTWRPLUS
 };
 
-const char *authors[] =
+const char* authors[] =
 {
     "Niccolo' IU2KIN" ,
     "Silvano IU2KWO"  ,
     "Federico IU2NUO" ,
     "Fred IU2NRO"     ,
-    "Kim VK6KL"         //@@@KL
+    "Kim VK6KL"
 };
 
-static const char *symbols_ITU_T_E161[] =
+static const char* symbols_ITU_T_E161[] =
 {
     " 0"        ,
     ",.?1"      ,
@@ -323,19 +323,19 @@ const uiPageDesc_st uiPageDescTable[] =
     PAGE_DESC_DEF( page_stubbed         )   // PAGE_BLANK
 };
 
-const color_t color_black   = {   0 ,   0 ,  0  , 255 };
-const color_t color_grey    = {  60 ,  60 ,  60 , 255 };
-const color_t color_white   = { 255 , 255 , 255 , 255 };
-const color_t yellow_fab413 = { 250 , 180 ,  19 , 255 };
+const color_t Color_Black         = {   0 ,   0 ,  0  , 255 };
+const color_t Color_Grey          = {  60 ,  60 ,  60 , 255 };
+const color_t Color_White         = { 255 , 255 , 255 , 255 };
+const color_t Color_Yellow_Fab413 = { 250 , 180 ,  19 , 255 };
 //@@@KL
-const color_t color_red     = { 255 ,   0 ,   0 , 255 };
-const color_t color_green   = {   0 , 255 ,   0 , 255 };
-const color_t color_blue    = {   0 ,   0 , 255 , 255 };
+const color_t Color_Red           = { 255 ,   0 ,   0 , 255 };
+const color_t Color_Green         = {   0 , 255 ,   0 , 255 };
+const color_t Color_Blue          = {   0 ,   0 , 255 , 255 };
 
-       state_t     last_state ;
+       State_st    last_state ;
        bool        macro_latched ;
-static ui_state_st ui_state ;
-static event_t     event ;
+static UI_State_st ui_state ;
+static Event_st     event ;
 static bool        macro_menu      = false ;
 static bool        redraw_needed   = true ;
 
@@ -345,7 +345,7 @@ static long long   last_event_tick = 0 ;
 // UI event queue
 static uint8_t     evQueue_rdPos ;
 static uint8_t     evQueue_wrPos ;
-static event_t     evQueue[ MAX_NUM_EVENTS ] ;
+static Event_st     evQueue[ MAX_NUM_EVENTS ] ;
 
 enum
 {
@@ -497,7 +497,7 @@ enum
 #define SCREEN_DEF_LINE3_LARGE_POS  { SCREEN_HORIZONTAL_PAD , SCREEN_TOP_H + SCREEN_TOP_PAD + SCREEN_LINE1_H + SCREEN_LINE2_H + SCREEN_LINE3_LARGE_H - SCREEN_BIG_LINE_V_PAD - SCREEN_TEXT_V_OFFSET }
 #define SCREEN_DEF_BOTTOM_POS       { SCREEN_HORIZONTAL_PAD , SCREEN_HEIGHT - SCREEN_BOTTOM_PAD - SCREEN_STATUS_V_PAD - SCREEN_TEXT_V_OFFSET }
 
-layout_t layout =
+Layout_st layout =
 {
     SCREEN_HLINE_H             ,
     SCREEN_TOP_H               ,
@@ -544,35 +544,35 @@ typedef struct
     bool           f1Handled ;
 }GuiState_st;
 
-static bool ui_updateFSM_PAGE_MAIN_VFO( GuiState_st* guiState , ui_state_st* uiState );
-static bool ui_updateFSM_PAGE_MAIN_VFO_INPUT( GuiState_st* guiState , ui_state_st* uiState );
-static bool ui_updateFSM_PAGE_MAIN_MEM( GuiState_st* guiState , ui_state_st* uiState );
-static bool ui_updateFSM_PAGE_MODE_VFO( GuiState_st* guiState , ui_state_st* uiState );
-static bool ui_updateFSM_PAGE_MODE_MEM( GuiState_st* guiState , ui_state_st* uiState );
-static bool ui_updateFSM_PAGE_MENU_TOP( GuiState_st* guiState , ui_state_st* uiState );
-static bool ui_updateFSM_PAGE_MENU_BANK( GuiState_st* guiState , ui_state_st* uiState );
-static bool ui_updateFSM_PAGE_MENU_CHANNEL( GuiState_st* guiState , ui_state_st* uiState );
-static bool ui_updateFSM_PAGE_MENU_CONTACTS( GuiState_st* guiState , ui_state_st* uiState );
-static bool ui_updateFSM_PAGE_MENU_GPS( GuiState_st* guiState , ui_state_st* uiState );
-static bool ui_updateFSM_PAGE_MENU_SETTINGS( GuiState_st* guiState , ui_state_st* uiState );
-static bool ui_updateFSM_PAGE_MENU_BACKUP_RESTORE( GuiState_st* guiState , ui_state_st* uiState );
-static bool ui_updateFSM_PAGE_MENU_BACKUP( GuiState_st* guiState , ui_state_st* uiState );
-static bool ui_updateFSM_PAGE_MENU_RESTORE( GuiState_st* guiState , ui_state_st* uiState );
-static bool ui_updateFSM_PAGE_MENU_INFO( GuiState_st* guiState , ui_state_st* uiState );
-static bool ui_updateFSM_PAGE_MENU_ABOUT( GuiState_st* guiState , ui_state_st* uiState );
-static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE( GuiState_st* guiState , ui_state_st* uiState );
-static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE_SET( GuiState_st* guiState , ui_state_st* uiState );
-static bool ui_updateFSM_PAGE_SETTINGS_DISPLAY( GuiState_st* guiState , ui_state_st* uiState );
-static bool ui_updateFSM_PAGE_SETTINGS_GPS( GuiState_st* guiState , ui_state_st* uiState );
-static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState , ui_state_st* uiState );
-static bool ui_updateFSM_PAGE_SETTINGS_M17( GuiState_st* guiState , ui_state_st* uiState );
-static bool ui_updateFSM_PAGE_SETTINGS_VOICE( GuiState_st* guiState , ui_state_st* uiState );
-static bool ui_updateFSM_PAGE_SETTINGS_RESET_TO_DEFAULTS( GuiState_st* guiState , ui_state_st* uiState );
-static bool ui_updateFSM_PAGE_LOW_BAT( GuiState_st* guiState , ui_state_st* uiState );
-static bool ui_updateFSM_PAGE_AUTHORS( GuiState_st* guiState , ui_state_st* uiState );
-static bool ui_updateFSM_PAGE_BLANK( GuiState_st* guiState , ui_state_st* uiState );
+static bool ui_updateFSM_PAGE_MAIN_VFO( GuiState_st* guiState , UI_State_st* uiState );
+static bool ui_updateFSM_PAGE_MAIN_VFO_INPUT( GuiState_st* guiState , UI_State_st* uiState );
+static bool ui_updateFSM_PAGE_MAIN_MEM( GuiState_st* guiState , UI_State_st* uiState );
+static bool ui_updateFSM_PAGE_MODE_VFO( GuiState_st* guiState , UI_State_st* uiState );
+static bool ui_updateFSM_PAGE_MODE_MEM( GuiState_st* guiState , UI_State_st* uiState );
+static bool ui_updateFSM_PAGE_MENU_TOP( GuiState_st* guiState , UI_State_st* uiState );
+static bool ui_updateFSM_PAGE_MENU_BANK( GuiState_st* guiState , UI_State_st* uiState );
+static bool ui_updateFSM_PAGE_MENU_CHANNEL( GuiState_st* guiState , UI_State_st* uiState );
+static bool ui_updateFSM_PAGE_MENU_CONTACTS( GuiState_st* guiState , UI_State_st* uiState );
+static bool ui_updateFSM_PAGE_MENU_GPS( GuiState_st* guiState , UI_State_st* uiState );
+static bool ui_updateFSM_PAGE_MENU_SETTINGS( GuiState_st* guiState , UI_State_st* uiState );
+static bool ui_updateFSM_PAGE_MENU_BACKUP_RESTORE( GuiState_st* guiState , UI_State_st* uiState );
+static bool ui_updateFSM_PAGE_MENU_BACKUP( GuiState_st* guiState , UI_State_st* uiState );
+static bool ui_updateFSM_PAGE_MENU_RESTORE( GuiState_st* guiState , UI_State_st* uiState );
+static bool ui_updateFSM_PAGE_MENU_INFO( GuiState_st* guiState , UI_State_st* uiState );
+static bool ui_updateFSM_PAGE_MENU_ABOUT( GuiState_st* guiState , UI_State_st* uiState );
+static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE( GuiState_st* guiState , UI_State_st* uiState );
+static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE_SET( GuiState_st* guiState , UI_State_st* uiState );
+static bool ui_updateFSM_PAGE_SETTINGS_DISPLAY( GuiState_st* guiState , UI_State_st* uiState );
+static bool ui_updateFSM_PAGE_SETTINGS_GPS( GuiState_st* guiState , UI_State_st* uiState );
+static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState , UI_State_st* uiState );
+static bool ui_updateFSM_PAGE_SETTINGS_M17( GuiState_st* guiState , UI_State_st* uiState );
+static bool ui_updateFSM_PAGE_SETTINGS_VOICE( GuiState_st* guiState , UI_State_st* uiState );
+static bool ui_updateFSM_PAGE_SETTINGS_RESET_TO_DEFAULTS( GuiState_st* guiState , UI_State_st* uiState );
+static bool ui_updateFSM_PAGE_LOW_BAT( GuiState_st* guiState , UI_State_st* uiState );
+static bool ui_updateFSM_PAGE_AUTHORS( GuiState_st* guiState , UI_State_st* uiState );
+static bool ui_updateFSM_PAGE_BLANK( GuiState_st* guiState , UI_State_st* uiState );
 
-typedef bool (*ui_updateFSM_PAGE_fn)( GuiState_st* guiState , ui_state_st* uiState );
+typedef bool (*ui_updateFSM_PAGE_fn)( GuiState_st* guiState , UI_State_st* uiState );
 
 static const ui_updateFSM_PAGE_fn ui_updateFSM_PageTable[ PAGE_NUM_OF ] =
 {
@@ -631,7 +631,7 @@ const char** uiGetPageLoc( uiPageNum_en pageNum )
     return uiPageDesc->loc ;
 }
 
-static bool uiDisplayPage( uiPageNum_en pageNum , GuiState_st* guiState , ui_state_st* uiState )
+static bool uiDisplayPage( uiPageNum_en pageNum , GuiState_st* guiState , UI_State_st* uiState )
 {
     uiPageNum_en pgNum = pageNum ;
 
@@ -1386,7 +1386,7 @@ static void _ui_menuDown( uint8_t menu_entries )
     {
         ui_state.menu_selected = 0 ;
     }
-    vp_playMenuBeepIfNeeded( ui_state.menu_selected == 0);
+    vp_playMenuBeepIfNeeded( ui_state.menu_selected == 0 );
 }
 
 static void _ui_menuBack( uint8_t prev_state )
@@ -1585,7 +1585,7 @@ void ui_init( void )
     // Initialize struct ui_state to all zeroes
     // This syntax is called compound literal
     // https://stackoverflow.com/questions/6891720/initialize-reset-struct-to-zero-null
-    ui_state = (const ui_state_st){ 0 };
+    ui_state = (const UI_State_st){ 0 };
 }
 
 void ui_drawSplashScreen( void )
@@ -1604,8 +1604,8 @@ void ui_drawSplashScreen( void )
     static const fontSize_t call_font = FONT_SIZE_6PT ;
     #endif
 
-    gfx_print( logo_orig , logo_font , TEXT_ALIGN_CENTER,  yellow_fab413 , "O P N\nR T X" );
-    gfx_print( call_orig , call_font , TEXT_ALIGN_CENTER , color_white   , state.settings.callsign );
+    gfx_print( logo_orig , logo_font , TEXT_ALIGN_CENTER,  Color_Yellow_Fab413 , "O P N\nR T X" );
+    gfx_print( call_orig , call_font , TEXT_ALIGN_CENTER , Color_White   , state.settings.callsign );
 
     vp_announceSplashScreen();
 }
@@ -1889,7 +1889,7 @@ void ui_updateFSM( bool* sync_rtx )
     }
 }
 
-static bool ui_updateFSM_PAGE_MAIN_VFO( GuiState_st* guiState , ui_state_st* uiState )
+static bool ui_updateFSM_PAGE_MAIN_VFO( GuiState_st* guiState , UI_State_st* uiState )
 {
     bool sync_rtx = false ;
 
@@ -2047,7 +2047,7 @@ static bool ui_updateFSM_PAGE_MAIN_VFO( GuiState_st* guiState , ui_state_st* uiS
 
 }
 
-static bool ui_updateFSM_PAGE_MAIN_VFO_INPUT( GuiState_st* guiState , ui_state_st* uiState )
+static bool ui_updateFSM_PAGE_MAIN_VFO_INPUT( GuiState_st* guiState , UI_State_st* uiState )
 {
     bool sync_rtx = false ;
 
@@ -2090,7 +2090,7 @@ static bool ui_updateFSM_PAGE_MAIN_VFO_INPUT( GuiState_st* guiState , ui_state_s
 
 }
 
-static bool ui_updateFSM_PAGE_MAIN_MEM( GuiState_st* guiState , ui_state_st* uiState )
+static bool ui_updateFSM_PAGE_MAIN_MEM( GuiState_st* guiState , UI_State_st* uiState )
 {
     bool sync_rtx = false ;
 
@@ -2222,17 +2222,17 @@ static bool ui_updateFSM_PAGE_MAIN_MEM( GuiState_st* guiState , ui_state_st* uiS
 
 }
 
-static bool ui_updateFSM_PAGE_MODE_VFO( GuiState_st* guiState , ui_state_st* uiState )
+static bool ui_updateFSM_PAGE_MODE_VFO( GuiState_st* guiState , UI_State_st* uiState )
 {
     return ui_updateFSM_PAGE_MENU_TOP( guiState , uiState );
 }
 
-static bool ui_updateFSM_PAGE_MODE_MEM( GuiState_st* guiState , ui_state_st* uiState )
+static bool ui_updateFSM_PAGE_MODE_MEM( GuiState_st* guiState , UI_State_st* uiState )
 {
     return ui_updateFSM_PAGE_MENU_TOP( guiState , uiState );
 }
 
-static bool ui_updateFSM_PAGE_MENU_TOP( GuiState_st* guiState , ui_state_st* uiState )
+static bool ui_updateFSM_PAGE_MENU_TOP( GuiState_st* guiState , UI_State_st* uiState )
 {
     (void)guiState ;
 
@@ -2300,17 +2300,17 @@ static bool ui_updateFSM_PAGE_MENU_TOP( GuiState_st* guiState , ui_state_st* uiS
 
 }
 
-static bool ui_updateFSM_PAGE_MENU_BANK( GuiState_st* guiState , ui_state_st* uiState )
+static bool ui_updateFSM_PAGE_MENU_BANK( GuiState_st* guiState , UI_State_st* uiState )
 {
     return ui_updateFSM_PAGE_MENU_CONTACTS( guiState , uiState );
 }
 
-static bool ui_updateFSM_PAGE_MENU_CHANNEL( GuiState_st* guiState , ui_state_st* uiState )
+static bool ui_updateFSM_PAGE_MENU_CHANNEL( GuiState_st* guiState , UI_State_st* uiState )
 {
     return ui_updateFSM_PAGE_MENU_CONTACTS( guiState , uiState );
 }
 
-static bool ui_updateFSM_PAGE_MENU_CONTACTS( GuiState_st* guiState , ui_state_st* uiState )
+static bool ui_updateFSM_PAGE_MENU_CONTACTS( GuiState_st* guiState , UI_State_st* uiState )
 {
     (void)guiState ;
 
@@ -2414,7 +2414,7 @@ static bool ui_updateFSM_PAGE_MENU_CONTACTS( GuiState_st* guiState , ui_state_st
 
 }
 
-static bool ui_updateFSM_PAGE_MENU_GPS( GuiState_st* guiState , ui_state_st* uiState )
+static bool ui_updateFSM_PAGE_MENU_GPS( GuiState_st* guiState , UI_State_st* uiState )
 {
     (void)guiState ;
     (void)uiState ;
@@ -2443,7 +2443,7 @@ static bool ui_updateFSM_PAGE_MENU_GPS( GuiState_st* guiState , ui_state_st* uiS
 
 }
 
-static bool ui_updateFSM_PAGE_MENU_SETTINGS( GuiState_st* guiState , ui_state_st* uiState )
+static bool ui_updateFSM_PAGE_MENU_SETTINGS( GuiState_st* guiState , UI_State_st* uiState )
 {
     (void)guiState ;
 
@@ -2517,7 +2517,7 @@ static bool ui_updateFSM_PAGE_MENU_SETTINGS( GuiState_st* guiState , ui_state_st
 
 }
 
-static bool ui_updateFSM_PAGE_MENU_BACKUP_RESTORE( GuiState_st* guiState , ui_state_st* uiState )
+static bool ui_updateFSM_PAGE_MENU_BACKUP_RESTORE( GuiState_st* guiState , UI_State_st* uiState )
 {
     (void)uiState ;
 
@@ -2562,12 +2562,12 @@ static bool ui_updateFSM_PAGE_MENU_BACKUP_RESTORE( GuiState_st* guiState , ui_st
 
 }
 
-static bool ui_updateFSM_PAGE_MENU_BACKUP( GuiState_st* guiState , ui_state_st* uiState )
+static bool ui_updateFSM_PAGE_MENU_BACKUP( GuiState_st* guiState , UI_State_st* uiState )
 {
     return - ui_updateFSM_PAGE_MENU_RESTORE( guiState , uiState );
 }
 
-static bool ui_updateFSM_PAGE_MENU_RESTORE( GuiState_st* guiState , ui_state_st* uiState )
+static bool ui_updateFSM_PAGE_MENU_RESTORE( GuiState_st* guiState , UI_State_st* uiState )
 {
     (void)uiState ;
 
@@ -2582,7 +2582,7 @@ static bool ui_updateFSM_PAGE_MENU_RESTORE( GuiState_st* guiState , ui_state_st*
 
 }
 
-static bool ui_updateFSM_PAGE_MENU_INFO( GuiState_st* guiState , ui_state_st* uiState )
+static bool ui_updateFSM_PAGE_MENU_INFO( GuiState_st* guiState , UI_State_st* uiState )
 {
     (void)guiState ;
     (void)uiState ;
@@ -2606,7 +2606,7 @@ static bool ui_updateFSM_PAGE_MENU_INFO( GuiState_st* guiState , ui_state_st* ui
 
 }
 
-static bool ui_updateFSM_PAGE_MENU_ABOUT( GuiState_st* guiState , ui_state_st* uiState )
+static bool ui_updateFSM_PAGE_MENU_ABOUT( GuiState_st* guiState , UI_State_st* uiState )
 {
     (void)guiState ;
     (void)uiState ;
@@ -2622,7 +2622,7 @@ static bool ui_updateFSM_PAGE_MENU_ABOUT( GuiState_st* guiState , ui_state_st* u
 
 }
 
-static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE( GuiState_st* guiState , ui_state_st* uiState )
+static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE( GuiState_st* guiState , UI_State_st* uiState )
 {
     (void)guiState ;
 
@@ -2646,7 +2646,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE( GuiState_st* guiState , ui_stat
 
 }
 
-static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE_SET( GuiState_st* guiState , ui_state_st* uiState )
+static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE_SET( GuiState_st* guiState , UI_State_st* uiState )
 {
     bool sync_rtx = false ;
 
@@ -2683,7 +2683,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE_SET( GuiState_st* guiState , ui_
 
 }
 
-static bool ui_updateFSM_PAGE_SETTINGS_DISPLAY( GuiState_st* guiState , ui_state_st* uiState )
+static bool ui_updateFSM_PAGE_SETTINGS_DISPLAY( GuiState_st* guiState , UI_State_st* uiState )
 {
     bool sync_rtx = false ;
 
@@ -2774,7 +2774,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_DISPLAY( GuiState_st* guiState , ui_state
 
 }
 
-static bool ui_updateFSM_PAGE_SETTINGS_GPS( GuiState_st* guiState , ui_state_st* uiState )
+static bool ui_updateFSM_PAGE_SETTINGS_GPS( GuiState_st* guiState , UI_State_st* uiState )
 {
     bool sync_rtx = false ;
 
@@ -2793,13 +2793,15 @@ static bool ui_updateFSM_PAGE_SETTINGS_GPS( GuiState_st* guiState , ui_state_st*
                 {
                     state.settings.gps_enabled = 1 ;
                 }
-                vp_announceSettingsOnOffToggle( &currentLanguage->gpsEnabled , guiState->queueFlags , state.settings.gps_enabled );
+                vp_announceSettingsOnOffToggle( &currentLanguage->gpsEnabled ,
+                                                guiState->queueFlags , state.settings.gps_enabled );
                 break ;
             }
             case G_SET_TIME :
             {
                 state.gps_set_time = !state.gps_set_time ;
-                vp_announceSettingsOnOffToggle( &currentLanguage->gpsSetTime , guiState->queueFlags , state.gps_set_time );
+                vp_announceSettingsOnOffToggle( &currentLanguage->gpsSetTime ,
+                                                guiState->queueFlags , state.gps_set_time );
                 break ;
             }
             case G_TIMEZONE :
@@ -2842,7 +2844,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_GPS( GuiState_st* guiState , ui_state_st*
 
 }
 
-static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState , ui_state_st* uiState )
+static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState , UI_State_st* uiState )
 {
     (void)guiState ;
 
@@ -2875,7 +2877,8 @@ static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState , ui_state_s
                 {
                     // Announce old frequency offset
                     vp_queueStringTableEntry( &currentLanguage->frequencyOffset );
-                    vp_queueFrequency( (int32_t)state.channel.tx_frequency - (int32_t)state.channel.rx_frequency );
+                    vp_queueFrequency( (int32_t)state.channel.tx_frequency -
+                                       (int32_t)state.channel.rx_frequency );
                 }
                 else if( guiState->msg.keys & ( KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT ) )
                 {
@@ -2890,7 +2893,9 @@ static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState , ui_state_s
                     _ui_numberInputKeypad( &uiState->new_offset , guiState->msg );
                     uiState->input_position += 1 ;
                 }
-                else if( guiState->msg.long_press && ( guiState->msg.keys & KEY_F1 ) && ( state.settings.vpLevel > VPP_BEEP ) )
+                else if( guiState->msg.long_press              &&
+                         ( guiState->msg.keys     & KEY_F1   ) &&
+                         ( state.settings.vpLevel > VPP_BEEP )    )
                 {
                     vp_queueFrequency( uiState->new_offset );
                     guiState->f1Handled = true ;
@@ -2904,11 +2909,13 @@ static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState , ui_state_s
                     // Invert frequency offset direction
                     if( state.channel.tx_frequency >= state.channel.rx_frequency )
                     {
-                        state.channel.tx_frequency -= 2 * ((int32_t)state.channel.tx_frequency - (int32_t)state.channel.rx_frequency );
+                        state.channel.tx_frequency -= 2 * ( (int32_t)state.channel.tx_frequency -
+                                                            (int32_t)state.channel.rx_frequency );
                     }
                     else // Switch to positive offset
                     {
-                        state.channel.tx_frequency -= 2 * ((int32_t)state.channel.tx_frequency - (int32_t)state.channel.rx_frequency );
+                        state.channel.tx_frequency -= 2 * ( (int32_t)state.channel.tx_frequency -
+                                                            (int32_t)state.channel.rx_frequency );
                     }
                 }
                 break ;
@@ -2970,7 +2977,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState , ui_state_s
 
 }
 
-static bool ui_updateFSM_PAGE_SETTINGS_M17( GuiState_st* guiState , ui_state_st* uiState )
+static bool ui_updateFSM_PAGE_SETTINGS_M17( GuiState_st* guiState , UI_State_st* uiState )
 {
     (void)guiState ;
 
@@ -3005,7 +3012,9 @@ static bool ui_updateFSM_PAGE_SETTINGS_M17( GuiState_st* guiState , ui_state_st*
                 {
                     _ui_textInputKeypad( uiState->new_callsign , 9 , guiState->msg , true );
                 }
-                else if( guiState->msg.long_press && ( guiState->msg.keys & KEY_F1 ) && ( state.settings.vpLevel > VPP_BEEP ) )
+                else if( guiState->msg.long_press              &&
+                         ( guiState->msg.keys     & KEY_F1   ) &&
+                         ( state.settings.vpLevel > VPP_BEEP )    )
                 {
                     vp_announceBuffer( &currentLanguage->callsign , true , true , uiState->new_callsign );
                     guiState->f1Handled = true ;
@@ -3092,7 +3101,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_M17( GuiState_st* guiState , ui_state_st*
 
 }
 
-static bool ui_updateFSM_PAGE_SETTINGS_VOICE( GuiState_st* guiState , ui_state_st* uiState )
+static bool ui_updateFSM_PAGE_SETTINGS_VOICE( GuiState_st* guiState , UI_State_st* uiState )
 {
     (void)guiState ;
 
@@ -3161,7 +3170,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_VOICE( GuiState_st* guiState , ui_state_s
 
 }
 
-static bool ui_updateFSM_PAGE_SETTINGS_RESET_TO_DEFAULTS( GuiState_st* guiState , ui_state_st* uiState )
+static bool ui_updateFSM_PAGE_SETTINGS_RESET_TO_DEFAULTS( GuiState_st* guiState , UI_State_st* uiState )
 {
     (void)guiState ;
 
@@ -3199,7 +3208,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_RESET_TO_DEFAULTS( GuiState_st* guiState 
 
 }
 
-static bool ui_updateFSM_PAGE_LOW_BAT( GuiState_st* guiState , ui_state_st* uiState )
+static bool ui_updateFSM_PAGE_LOW_BAT( GuiState_st* guiState , UI_State_st* uiState )
 {
     (void)guiState ;
     (void)uiState ;
@@ -3207,7 +3216,7 @@ static bool ui_updateFSM_PAGE_LOW_BAT( GuiState_st* guiState , ui_state_st* uiSt
     return false ;
 }
 
-static bool ui_updateFSM_PAGE_AUTHORS( GuiState_st* guiState , ui_state_st* uiState )
+static bool ui_updateFSM_PAGE_AUTHORS( GuiState_st* guiState , UI_State_st* uiState )
 {
     (void)guiState ;
     (void)uiState ;
@@ -3215,7 +3224,7 @@ static bool ui_updateFSM_PAGE_AUTHORS( GuiState_st* guiState , ui_state_st* uiSt
     return false ;
 }
 
-static bool ui_updateFSM_PAGE_BLANK( GuiState_st* guiState , ui_state_st* uiState )
+static bool ui_updateFSM_PAGE_BLANK( GuiState_st* guiState , UI_State_st* uiState )
 {
     (void)guiState ;
     (void)uiState ;
@@ -3255,7 +3264,7 @@ bool ui_pushEvent( const uint8_t type , const uint32_t data )
     if( newHead != evQueue_rdPos )
     {
         // Preserve atomicity when writing the new element into the queue.
-        event_t event ;
+        Event_st event ;
 
         event.type               = type ;
         event.payload            = data ;

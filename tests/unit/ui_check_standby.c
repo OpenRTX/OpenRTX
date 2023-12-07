@@ -5,7 +5,7 @@
 #include <settings.h>
 
 extern bool _ui_checkStandby(long long);
-extern state_t state;
+extern State_st state;
 
 void assert_display_timer(display_timer_t conf,
                           long long time_sec,

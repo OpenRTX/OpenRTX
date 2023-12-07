@@ -30,7 +30,7 @@
 #include <interfaces/nvmem.h>
 #include <interfaces/delays.h>
 
-state_t         state ;
+State_st         state ;
 pthread_mutex_t state_mutex ;
 
 // Commonly used frequency steps, expressed in Hz

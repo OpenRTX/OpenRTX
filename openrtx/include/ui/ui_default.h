@@ -78,26 +78,26 @@ typedef struct
 
 enum SetRxTx
 {
-    SET_RX = 0,
+    SET_RX ,
     SET_TX
 };
 
 // This enum is needed to have item numbers that match
 // menu elements even if some elements may be missing (GPS)
-enum menuItems
+typedef enum
 {
-    M_BANK = 0,
-    M_CHANNEL,
-    M_CONTACTS,
+    M_BANK     ,
+    M_CHANNEL  ,
+    M_CONTACTS ,
 #ifdef GPS_PRESENT
-    M_GPS,
+    M_GPS      ,
 #endif
-    M_SETTINGS,
-    M_INFO,
+    M_SETTINGS ,
+    M_INFO     ,
     M_ABOUT
-};
+}MenuItems_en;
 
-enum settingsItems
+typedef enum
 {
     S_DISPLAY = 0,
 #ifdef RTC_PRESENT
@@ -110,53 +110,53 @@ enum settingsItems
     S_M17,
     S_VOICE,
     S_RESET2DEFAULTS,
-};
+}SettingsItems_en;
 
-enum backupRestoreItems
+typedef enum
 {
-    BR_BACKUP = 0,
+    BR_BACKUP  ,
     BR_RESTORE
-};
+}BackupRestoreItems_en;
 
-enum displayItems
+typedef enum
 {
 #ifdef SCREEN_BRIGHTNESS
-    D_BRIGHTNESS = 0,
+    D_BRIGHTNESS ,
 #endif
 #ifdef SCREEN_CONTRAST
-    D_CONTRAST,
+    D_CONTRAST   ,
 #endif
-    D_TIMER,
-};
+    D_TIMER
+}DisplayItems_en;
 
 #ifdef GPS_PRESENT
-enum settingsGPSItems
+typedef enum
 {
-    G_ENABLED = 0,
-    G_SET_TIME,
+    G_ENABLED  ,
+    G_SET_TIME ,
     G_TIMEZONE
-};
+}SettingsGPSItems_en;
 #endif
 
-enum settingsVoicePromptItems
+typedef enum
 {
-    VP_LEVEL = 0,
-    VP_PHONETIC,
-};
+    VP_LEVEL    ,
+    VP_PHONETIC
+}SettingsVoicePromptItems_en;
 
-enum settingsRadioItems
+typedef enum
 {
-    R_OFFSET,
-    R_DIRECTION,
-    R_STEP,
-};
+    R_OFFSET    ,
+    R_DIRECTION ,
+    R_STEP
+}SettingsRadioItems_en;
 
-enum settingsM17Items
+typedef enum
 {
-    M17_CALLSIGN = 0,
-    M17_CAN,
+    M17_CALLSIGN ,
+    M17_CAN      ,
     M17_CAN_RX
-};
+}SettingsM17Items_en;
 
 /**
  * Struct containing a set of positions and sizes that get
@@ -164,45 +164,45 @@ enum settingsM17Items
  * Using these parameters make the UI automatically adapt
  * To displays of different sizes
  */
-typedef struct layout_t
+typedef struct
 {
-    uint16_t hline_h;
-    uint16_t top_h;
-    uint16_t line1_h;
-    uint16_t line2_h;
-    uint16_t line3_h;
-    uint16_t line3_large_h;
-    uint16_t line4_h;
-    uint16_t menu_h;
-    uint16_t bottom_h;
-    uint16_t bottom_pad;
-    uint16_t status_v_pad;
-    uint16_t horizontal_pad;
-    uint16_t text_v_offset;
-    point_t top_pos;
-    point_t line1_pos;
-    point_t line2_pos;
-    point_t line3_pos;
-    point_t line3_large_pos;
-    point_t line4_pos;
-    point_t bottom_pos;
-    fontSize_t top_font;
-    symbolSize_t top_symbol_size;
-    fontSize_t line1_font;
-    symbolSize_t line1_symbol_size;
-    fontSize_t line2_font;
-    symbolSize_t line2_symbol_size;
-    fontSize_t line3_font;
-    symbolSize_t line3_symbol_size;
-    fontSize_t line3_large_font;
-    fontSize_t line4_font;
-    symbolSize_t line4_symbol_size;
-    fontSize_t bottom_font;
-    fontSize_t input_font;
-    fontSize_t menu_font;
-    fontSize_t mode_font_big;
-    fontSize_t mode_font_small;
-} layout_t;
+    uint16_t     hline_h ;
+    uint16_t     top_h ;
+    uint16_t     line1_h ;
+    uint16_t     line2_h ;
+    uint16_t     line3_h ;
+    uint16_t     line3_large_h ;
+    uint16_t     line4_h ;
+    uint16_t     menu_h ;
+    uint16_t     bottom_h ;
+    uint16_t     bottom_pad ;
+    uint16_t     status_v_pad ;
+    uint16_t     horizontal_pad ;
+    uint16_t     text_v_offset ;
+    point_t      top_pos ;
+    point_t      line1_pos ;
+    point_t      line2_pos ;
+    point_t      line3_pos ;
+    point_t      line3_large_pos ;
+    point_t      line4_pos ;
+    point_t      bottom_pos ;
+    fontSize_t   top_font ;
+    symbolSize_t top_symbol_size ;
+    fontSize_t   line1_font ;
+    symbolSize_t line1_symbol_size ;
+    fontSize_t   line2_font ;
+    symbolSize_t line2_symbol_size ;
+    fontSize_t   line3_font ;
+    symbolSize_t line3_symbol_size ;
+    fontSize_t   line3_large_font ;
+    fontSize_t   line4_font ;
+    symbolSize_t line4_symbol_size ;
+    fontSize_t   bottom_font ;
+    fontSize_t   input_font ;
+    fontSize_t   menu_font ;
+    fontSize_t   mode_font_big ;
+    fontSize_t   mode_font_small ;
+}Layout_st;
 
 /**
  * This structs contains state variables internal to the
@@ -238,10 +238,10 @@ typedef struct
 #if defined(UI_NO_KEYBOARD)
     uint8_t     macro_menu_selected ;
 #endif // UI_NO_KEYBOARD
-}ui_state_st;
+}UI_State_st;
 
-extern layout_t         layout ;
-extern state_t          last_state ;
+extern Layout_st        layout ;
+extern State_st         last_state ;
 extern bool             macro_latched ;
 extern const char*      menu_items[] ;
 extern const char*      settings_items[] ;
@@ -255,15 +255,15 @@ extern const char*      backup_restore_items[] ;
 extern const char*      info_items[] ;
 extern const char*      authors[] ;
 
-extern const color_t    color_black ;
-extern const color_t    color_grey ;
-extern const color_t    color_white ;
+extern const color_t    Color_Black ;
+extern const color_t    Color_Grey ;
+extern const color_t    Color_White ;
 //@@@KL
-extern const color_t    color_red ;
-extern const color_t    color_green ;
-extern const color_t    color_blue ;
+extern const color_t    Color_Red ;
+extern const color_t    Color_Green ;
+extern const color_t    Color_Blue ;
 
-extern const color_t    yellow_fab413 ;
+extern const color_t    Color_Yellow_Fab413 ;
 
 extern const uiPageDesc_st* uiGetPageDesc( uiPageNum_en pageNum );
 extern const char**         uiGetPageLoc( uiPageNum_en pageNum );

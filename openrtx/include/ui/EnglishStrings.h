@@ -67,6 +67,7 @@ const stringsTable_t englishStrings =
     .Federico          = "Federico IU2NUO",
     .Fred              = "Fred IU2NRO",
     .Joseph            = "Joseph VK7JS",
+    .Kim               = "Kim VK6KL",
     .allChannels       = "All channels",
     .menu              = "Menu",
     .gpsOff            = "GPS OFF",
