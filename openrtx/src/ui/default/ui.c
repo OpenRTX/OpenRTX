@@ -1419,15 +1419,22 @@ void ui_updateFSM(bool *sync_rtx)
         {
             // VFO screen
             case MAIN_VFO:
+            {
                 // Enable Tx in MAIN_VFO mode
                 if (state.txDisable)
                 {
                     state.txDisable = false;
                     *sync_rtx = true;
                 }
-                // M17 Destination callsign input
-                if (ui_state.input_locked)
+
+                // Break out of the FSM if the keypad is locked but allow the
+                // use of the hash key in FM mode for the 1750Hz tone.
+                bool skipLock =  (state.channel.mode == OPMODE_FM)
+                              && ((msg.keys & KEY_HASH) != 0);
+
+                if ((ui_state.input_locked == true) && (skipLock == false))
                     break;
+
                 if(ui_state.edit_mode)
                 {
                     if(state.channel.mode == OPMODE_M17)
@@ -1571,6 +1578,7 @@ void ui_updateFSM(bool *sync_rtx)
                                                                        ui_state.input_number);
                     }
                 }
+            }
                 break;
             // VFO frequency input screen
             case MAIN_VFO_INPUT:
