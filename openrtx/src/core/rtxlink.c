@@ -28,8 +28,8 @@
 #include <crc.h>
 
 static protocolHandler handlers[RTXLINK_NUM_PROTOCOLS] = {NULL};
-static uint8_t         rxBuf[128];
-static uint8_t         txBuf[132];
+static uint8_t         rxBuf[1032];
+static uint8_t         txBuf[1032];
 static size_t          toSend = 0;
 
 static const struct chardev *cDev = NULL;
