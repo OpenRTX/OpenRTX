@@ -25,8 +25,10 @@
 #include <graphics.h>
 #include <interfaces/keyboard.h>
 #include <stdint.h>
-#include <event.h>
+#include <input.h>
+#include <voicePromptUtils.h>
 #include <hwconfig.h>
+#include <event.h>
 #include <ui.h>
 
 // Maximum menu entry length
@@ -69,6 +71,25 @@ typedef enum
     PAGE_BLANK                      ,
     PAGE_NUM_OF
 }uiPageNum_en;
+
+// GUI Commands
+enum
+{
+    GUI_CMD_NULL            ,
+    GUI_CMD_TEXT            ,
+    GUI_CMD_LINK            ,
+    GUI_CMD_VALUE           ,
+    GUI_CMD_LINE_END = 0x0A ,
+    GUI_CMD_END      = 0x1F ,
+    GUI_CMD_NUM_OF
+};
+
+// GUI Values
+enum
+{
+    GUI_VAL_STUBBED ,
+    GUI_VAL_NUM_OF
+};
 
 typedef struct
 {
@@ -158,6 +179,11 @@ typedef enum
     M17_CAN_RX
 }SettingsM17Items_en;
 
+enum
+{
+    MAX_SCRIPT_DEPTH = 5
+};
+
 /**
  * Struct containing a set of positions and sizes that get
  * calculated for the selected display size.
@@ -204,6 +230,18 @@ typedef struct
     fontSize_t   mode_font_small ;
 }Layout_st;
 
+typedef struct
+{
+    Layout_st       layout ;
+    uint8_t         pageNum[ MAX_SCRIPT_DEPTH ] ;
+    uint8_t         pageLevel ;
+    uint8_t*        pagePtr ;
+    uint16_t        pageIndex ;
+    kbd_msg_t       msg ;
+    VPQueueFlags_en queueFlags ;
+    bool            f1Handled ;
+}GuiState_st;
+
 /**
  * This structs contains state variables internal to the
  * UI that need to be kept between executions of the UI
@@ -240,19 +278,19 @@ typedef struct
 #endif // UI_NO_KEYBOARD
 }UI_State_st;
 
-extern Layout_st        layout ;
+extern GuiState_st      GuiState ;
 extern State_st         last_state ;
 extern bool             macro_latched ;
-extern const char*      menu_items[] ;
-extern const char*      settings_items[] ;
-extern const char*      display_items[] ;
-extern const char*      settings_gps_items[] ;
-extern const char*      settings_radio_items[] ;
-extern const char*      settings_m17_items[] ;
-extern const char*      settings_voice_items[] ;
+extern const char*      Page_MenuItems[] ;
+extern const char*      Page_MenuSettings[] ;
+extern const char*      Page_SettingsDisplay[] ;
+extern const char*      Page_SettingsGPS[] ;
+extern const char*      Page_SettingsRadio[] ;
+extern const char*      Page_SettingsM17[] ;
+extern const char*      Page_SettingsVoice[] ;
 
-extern const char*      backup_restore_items[] ;
-extern const char*      info_items[] ;
+extern const char*      Page_MenuBackupRestore[] ;
+extern const char*      Page_MenuInfo[] ;
 extern const char*      authors[] ;
 
 extern const color_t    Color_Black ;

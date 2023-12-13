@@ -64,6 +64,9 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <math.h>
+#include <input.h>
+#include <hwconfig.h>
+#include <voicePromptUtils.h>
 #include <ui/ui_default.h>
 #include <rtx.h>
 #include <interfaces/platform.h>
@@ -73,13 +76,13 @@
 #include <interfaces/delays.h>
 #include <string.h>
 #include <battery.h>
-#include <input.h>
 #include <utils.h>
-#include <hwconfig.h>
-#include <voicePromptUtils.h>
 #include <beeps.h>
 
 //@@@KL #include "ui_m17.h"
+
+#define ST_VAL( val )   ( val + GUI_CMD_END + 1 )
+#define LD_VAL( val )   ( val - ( GUI_CMD_END + 1 ) )
 
 //#define DISPLAY_DEBUG_MSG
 
@@ -139,19 +142,50 @@ static void Debug_DisplayMsg( void )
     {
         counter = 0 ;
     }
-    gfx_print( layout.top_pos , layout.top_font , TEXT_ALIGN_LEFT , Color_White ,
+    gfx_print( guiState->layout.top_pos , guiState->layout.top_font , TEXT_ALIGN_LEFT , Color_White ,
                "%c%X%X%X%X" , (char)( '0' + counter ) ,
                trace0 & 0x0F , trace1 & 0x0F , trace2 & 0x0F , trace3 & 0x0F );//@@@KL
 }
 
 #endif // DISPLAY_DEBUG_MSG
 
+static void ui_InitGuiState( GuiState_st* guiState );
+static void ui_InitGuiStateLayout( Layout_st* layout );
 /* UI main screen functions, their implementation is in "ui_main.c" */
 extern void ui_draw( State_st* state , UI_State_st* ui_state , Event_st* event );
 extern bool _ui_drawMacroMenu( UI_State_st* ui_state );
 extern void _ui_reset_menu_anouncement_tracking( void );
 
-const char* menu_items[] =
+const uint8_t Page_MenuItems_N[] =
+{
+    GUI_CMD_END , //@@@KL indicates use the legacy script
+
+    GUI_CMD_LINK , ST_VAL( PAGE_MENU_BANK ) ,
+     'B','a','n','k','s' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_LINK , ST_VAL( PAGE_MENU_CHANNEL ) ,
+     'C','h','a','n','n','e','l','s' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_LINK , ST_VAL( PAGE_MENU_CONTACTS ) ,
+     'C','o','n','t','a','c','t','s' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+#ifdef GPS_PRESENT
+    GUI_CMD_LINK , ST_VAL( PAGE_MENU_GPS ) ,
+     'G','P','S' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+#endif // RTC_PRESENT
+    GUI_CMD_LINK , ST_VAL( PAGE_MENU_SETTINGS ) ,
+     'S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_LINK , ST_VAL( PAGE_MENU_INFO ) ,
+     'I','n','f','o' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_LINK , ST_VAL( PAGE_MENU_ABOUT ) ,
+     'A','b','o','u','t' , GUI_CMD_NULL ,
+    GUI_CMD_END
+};
+
+const char* Page_MenuItems[] =
 {
     "Banks"    ,
     "Channels" ,
@@ -164,7 +198,39 @@ const char* menu_items[] =
     "About"
 };
 
-const char* settings_items[] =
+const uint8_t Page_MenuSettings_N[] =
+{
+    GUI_CMD_END , //@@@KL indicates use the legacy script
+
+    GUI_CMD_LINK , ST_VAL( PAGE_SETTINGS_DISPLAY ) ,
+     'D','i','s','p','l','a','y' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+#ifdef RTC_PRESENT
+    GUI_CMD_LINK , ST_VAL( PAGE_SETTINGS_TIMEDATE ) ,
+     'T','i','m','e',' ','&',' ','D','a','t','e' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+#endif // RTC_PRESENT
+#ifdef GPS_PRESENT
+    GUI_CMD_LINK , ST_VAL( PAGE_SETTINGS_GPS ) ,
+     'G','P','S' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+#endif // GPS_PRESENT
+    GUI_CMD_LINK , ST_VAL( PAGE_SETTINGS_RADIO ) ,
+     'R','a','d','i','o' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_LINK , ST_VAL( PAGE_SETTINGS_M17 ) ,
+     'M','1','7' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_LINK , ST_VAL( PAGE_SETTINGS_VOICE ) ,
+     'A','c','c','e','s','s','i','b','i','l','i','t','y' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_LINK , ST_VAL( PAGE_SETTINGS_RESET_TO_DEFAULTS ) ,
+     'D','e','f','a','u','l','t',' ',
+     'S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
+    GUI_CMD_END
+};
+
+const char* Page_MenuSettings[] =
 {
     "Display"          ,
 #ifdef RTC_PRESENT
@@ -179,7 +245,26 @@ const char* settings_items[] =
     "Default Settings"
 };
 
-const char* display_items[] =
+const uint8_t Page_SettingsDisplay_N[] =
+{
+    GUI_CMD_END , //@@@KL indicates use the legacy script
+
+#ifdef SCREEN_BRIGHTNESS
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+     'B','r','i','g','h','t','n','e','s','s' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+#endif // SCREEN_BRIGHTNESS
+#ifdef SCREEN_CONTRAST
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+     'C','o','n','t','r','a','s','t' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+#endif // SCREEN_CONTRAST
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+     'T','i','m','e','r' , GUI_CMD_NULL ,
+    GUI_CMD_END
+};
+
+const char* Page_SettingsDisplay[] =
 {
 #ifdef SCREEN_BRIGHTNESS
     "Brightness" ,
@@ -191,7 +276,22 @@ const char* display_items[] =
 };
 
 #ifdef GPS_PRESENT
-const char* settings_gps_items[] =
+const uint8_t Page_SettingsGPS_N[] =
+{
+    GUI_CMD_END , //@@@KL indicates use the legacy script
+
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+     'G','P','S',' ','E','n','a','b','l','e','d' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+     'G','P','S',' ','S','e','t',' ','T','i','m','e' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+     'U','T','C',' ','T','i','m','e','z','o','n','e', GUI_CMD_NULL ,
+    GUI_CMD_END
+};
+
+const char* Page_SettingsGPS[] =
 {
     "GPS Enabled"  ,
     "GPS Set Time" ,
@@ -199,33 +299,129 @@ const char* settings_gps_items[] =
 };
 #endif // GPS_PRESENT
 
-const char* settings_radio_items[] =
+const uint8_t Page_SettingsRadio_N[] =
+{
+    GUI_CMD_END , //@@@KL indicates use the legacy script
+
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+     'O','f','f','s','e','t', GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+     'D','i','r','e','c','t','i','o','n', GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+     'S','t','e','p' , GUI_CMD_NULL ,
+    GUI_CMD_END
+};
+
+const char* Page_SettingsRadio[] =
 {
     "Offset"    ,
     "Direction" ,
     "Step"
 };
 
-const char* settings_m17_items[] =
+const uint8_t Page_SettingsM17_N[] =
+{
+    GUI_CMD_END , //@@@KL indicates use the legacy script
+
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+     'C','a','l','l','s','i','g','n' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+     'C','A','N' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+     'C','A','N',' ','R','X',' ',
+     'C','h','e','c','k' , GUI_CMD_NULL ,
+    GUI_CMD_END
+};
+
+const char* Page_SettingsM17[] =
 {
     "Callsign"     ,
     "CAN"          ,
     "CAN RX Check"
 };
 
-const char* settings_voice_items[] =
+const uint8_t Page_SettingsVoice_N[] =
+{
+    GUI_CMD_END , //@@@KL indicates use the legacy script
+
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+     'V','o','i','c','e' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+     'P','h','o','n','e','t','i','c' , GUI_CMD_NULL ,
+    GUI_CMD_END
+};
+
+const char* Page_SettingsVoice[] =
 {
     "Voice"    ,
     "Phonetic"
 };
 
-const char* backup_restore_items[] =
+const uint8_t Page_MenuBackupRestore_N[] =
+{
+    GUI_CMD_END , //@@@KL indicates use the legacy script
+
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+     'B','a','c','k','u','p' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+     'R','e','s','t','o','r','e' , GUI_CMD_NULL ,
+    GUI_CMD_END
+};
+
+const char* Page_MenuBackupRestore[] =
 {
     "Backup"  ,
     "Restore"
 };
 
-const char* info_items[] =
+const uint8_t Page_MenuInfo_N[] =
+{
+    GUI_CMD_END , //@@@KL indicates use the legacy script
+
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+     ' ' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+     'B','a','t','.',' ','V','o','l','t','a','g','e' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+     'B','a','t','.',' ','C','h','a','r','g','e' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+     'R','S','S','I' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+     'U','s','e','d',' ','h','e','a','p' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+     'B','a','n','d' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+     'V','H','F' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+     'U','H','F' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+     'H','W',' ','V','e','r','s','i','o','n' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+#ifdef PLATFORM_TTWRPLUS
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+     'R','a','d','i','o' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+     'R','a','d','i','o',' ','F','W' , GUI_CMD_NULL ,
+#endif // PLATFORM_TTWRPLUS
+    GUI_CMD_END
+};
+
+const char* Page_MenuInfo[] =
 {
     ""             ,
     "Bat. Voltage" ,
@@ -242,14 +438,92 @@ const char* info_items[] =
 #endif // PLATFORM_TTWRPLUS
 };
 
-const char* authors[] =
+const uint8_t Page_Authors_N[] =
+{
+    GUI_CMD_END , //@@@KL indicates use the legacy script
+
+    GUI_CMD_TEXT ,
+     'N','i','c','c','o','l','o',' ',
+     'I','U','2','K','I','N' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_TEXT ,
+     'S','i','l','v','a','n','o',' ',
+     'I','U','2','K','W','O' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_TEXT ,
+     'F','e','d','e','r','i','c','o',' ',
+     'I','U','2','N','U','O' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_TEXT ,
+     'F','r','e','d',' ',
+     'I','U','2','N','R','O' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_TEXT ,
+     'K','i','m',' ',
+     'V','K','6','K','L', GUI_CMD_NULL ,
+    GUI_CMD_END
+};
+
+const char* Page_Authors[] =
 {
     "Niccolo' IU2KIN" ,
     "Silvano IU2KWO"  ,
     "Federico IU2NUO" ,
     "Fred IU2NRO"     ,
-    "Kim VK6KL"
+    "Kim VK6KL"         //@@@KL
 };
+
+const uint8_t Page_Stubbed_N[] =
+{
+    GUI_CMD_END , //@@@KL indicates use the legacy script
+
+    GUI_CMD_TEXT ,
+     'P','a','g','e',' ',
+     'S','t','u','b','b','e','d', GUI_CMD_NULL ,
+    GUI_CMD_END
+};
+
+const char* Page_Stubbed[] =
+{
+    "Page Stubbed"
+};
+
+#define PAGE_REF( loc )    loc
+
+const uint8_t* uiPageTable[] =
+{
+    PAGE_REF( Page_Stubbed_N           ) , // PAGE_MAIN_VFO
+    PAGE_REF( Page_Stubbed_N           ) , // PAGE_MAIN_VFO_INPUT
+    PAGE_REF( Page_Stubbed_N           ) , // PAGE_MAIN_MEM
+    PAGE_REF( Page_Stubbed_N           ) , // PAGE_MODE_VFO
+    PAGE_REF( Page_Stubbed_N           ) , // PAGE_MODE_MEM
+    PAGE_REF( Page_MenuItems_N         ) , // PAGE_MENU_TOP
+    PAGE_REF( Page_Stubbed_N           ) , // PAGE_MENU_BANK
+    PAGE_REF( Page_Stubbed_N           ) , // PAGE_MENU_CHANNEL
+    PAGE_REF( Page_Stubbed_N           ) , // PAGE_MENU_CONTACTS
+    PAGE_REF( Page_Stubbed_N           ) , // PAGE_MENU_GPS
+    PAGE_REF( Page_MenuSettings_N      ) , // PAGE_MENU_SETTINGS
+    PAGE_REF( Page_MenuBackupRestore_N ) , // PAGE_MENU_BACKUP_RESTORE
+    PAGE_REF( Page_Stubbed_N           ) , // PAGE_MENU_BACKUP
+    PAGE_REF( Page_Stubbed_N           ) , // PAGE_MENU_RESTORE
+    PAGE_REF( Page_MenuInfo_N          ) , // PAGE_MENU_INFO
+    PAGE_REF( Page_Stubbed_N           ) , // PAGE_MENU_ABOUT
+    PAGE_REF( Page_Stubbed_N           ) , // PAGE_SETTINGS_TIMEDATE
+    PAGE_REF( Page_Stubbed_N           ) , // PAGE_SETTINGS_TIMEDATE_SET
+    PAGE_REF( Page_SettingsDisplay_N   ) , // PAGE_SETTINGS_DISPLAY
+#ifdef GPS_PRESENT
+    PAGE_REF( Page_SettingsGPS_N       ) , // PAGE_SETTINGS_GPS
+#endif // GPS_PRESENT
+    PAGE_REF( Page_SettingsRadio_N     ) , // PAGE_SETTINGS_RADIO
+    PAGE_REF( Page_SettingsM17_N       ) , // PAGE_SETTINGS_M17
+    PAGE_REF( Page_SettingsVoice_N     ) , // PAGE_SETTINGS_VOICE
+    PAGE_REF( Page_Stubbed_N           ) , // PAGE_SETTINGS_RESET_TO_DEFAULTS
+    PAGE_REF( Page_Stubbed_N           ) , // PAGE_LOW_BAT
+    PAGE_REF( Page_Authors_N           ) , // PAGE_AUTHORS
+    PAGE_REF( Page_Stubbed_N           )   // PAGE_BLANK
+};
+
+GuiState_st GuiState ;
 
 static const char* symbols_ITU_T_E161[] =
 {
@@ -267,7 +541,7 @@ static const char* symbols_ITU_T_E161[] =
     "#"
 };
 
-static const char *symbols_ITU_T_E161_callsign[] =
+static const char* symbols_ITU_T_E161_callsign[] =
 {
     "0 "    ,
     "1"     ,
@@ -283,44 +557,233 @@ static const char *symbols_ITU_T_E161_callsign[] =
     ""
 };
 
-const char* page_stubbed[] =
+static bool GuiCmd_Null( GuiState_st* guiState , UI_State_st* uiState );
+static bool GuiCmd_Text( GuiState_st* guiState , UI_State_st* uiState );
+static bool GuiCmd_Link( GuiState_st* guiState , UI_State_st* uiState );
+static bool GuiCmd_Value( GuiState_st* guiState , UI_State_st* uiState );
+static bool GuiCmd_LineEnd( GuiState_st* guiState , UI_State_st* uiState );
+static bool GuiCmd_End( GuiState_st* guiState , UI_State_st* uiState );
+static bool GuiCmd_Stubbed( GuiState_st* guiState , UI_State_st* uiState );
+
+typedef bool (*ui_GuiCmd_fn)( GuiState_st* guiState , UI_State_st* uiState );
+
+static const ui_GuiCmd_fn ui_GuiCmd_Table[ GUI_CMD_NUM_OF ] =
 {
-    "Page Stubbed"
+    GuiCmd_Null     , // 0x00
+    GuiCmd_Text     , // 0x01
+    GuiCmd_Link     , // 0x02
+    GuiCmd_Value    , // 0x03
+    GuiCmd_Stubbed  , // 0x04
+    GuiCmd_Stubbed  , // 0x05
+    GuiCmd_Stubbed  , // 0x06
+    GuiCmd_Stubbed  , // 0x07
+    GuiCmd_Stubbed  , // 0x08
+    GuiCmd_Stubbed  , // 0x09
+    GuiCmd_LineEnd  , // 0x0A
+    GuiCmd_Stubbed  , // 0x0B
+    GuiCmd_Stubbed  , // 0x0C
+    GuiCmd_Stubbed  , // 0x0D
+    GuiCmd_Stubbed  , // 0x0E
+    GuiCmd_Stubbed  , // 0x0F
+    GuiCmd_Stubbed  , // 0x10
+    GuiCmd_Stubbed  , // 0x11
+    GuiCmd_Stubbed  , // 0x12
+    GuiCmd_Stubbed  , // 0x13
+    GuiCmd_Stubbed  , // 0x14
+    GuiCmd_Stubbed  , // 0x15
+    GuiCmd_Stubbed  , // 0x16
+    GuiCmd_Stubbed  , // 0x17
+    GuiCmd_Stubbed  , // 0x18
+    GuiCmd_Stubbed  , // 0x19
+    GuiCmd_Stubbed  , // 0x1A
+    GuiCmd_Stubbed  , // 0x1B
+    GuiCmd_Stubbed  , // 0x1C
+    GuiCmd_Stubbed  , // 0x1D
+    GuiCmd_Stubbed  , // 0x1E
+    GuiCmd_End        // 0x1F
 };
+
+bool ui_DisplayPage( GuiState_st* guiState , uiPageNum_en pageNum , UI_State_st* uiState )
+{
+    (void)uiState ;
+    uint8_t* pagePtr ;
+    uint8_t  cmd ;
+    bool     exit          = false ;
+    bool     pageDisplayed = false ; // display via legacy fn
+
+    guiState->pageNum[ guiState->pageLevel ] = pageNum ;
+    pagePtr                                  = (uint8_t*)uiPageTable[ pageNum ] ;
+    guiState->pagePtr                        = pagePtr ;
+
+    if( pagePtr[ 0 ] != GUI_CMD_END )
+    {
+        gfx_clearScreen();
+
+        while( !exit )
+        {
+            cmd = pagePtr[ guiState->pageIndex ] ;
+
+            if( cmd >= GUI_CMD_NUM_OF )
+            {
+                cmd = GUI_CMD_TEXT ;
+            }
+
+            if( ui_GuiCmd_Table[ cmd ]( guiState , uiState ) )
+            {
+                exit = true ;
+            }
+        }
+
+        pageDisplayed = true ;
+
+    }
+
+    return pageDisplayed ;
+
+}
+
+static bool GuiCmd_Null( GuiState_st* guiState , UI_State_st* uiState )
+{
+    (void)guiState ;
+    (void)uiState ;
+    bool pageEnd = false ;
+
+    printf( "Cmd NULL" );
+
+    guiState->pageIndex++ ;
+
+    return pageEnd ;
+
+}
+
+static bool GuiCmd_End( GuiState_st* guiState , UI_State_st* uiState )
+{
+    (void)guiState ;
+    (void)uiState ;
+    bool pageEnd = true ;
+
+    printf( "Cmd End" );
+
+    guiState->pageIndex++ ;
+
+    return pageEnd ;
+
+}
+
+static bool GuiCmd_Text( GuiState_st* guiState , UI_State_st* uiState )
+{
+    (void)uiState ;
+    uint8_t* scriptPtr ;
+    bool     pageEnd   = false ;
+
+    while( guiState->pagePtr[ guiState->pageIndex ] < GUI_CMD_NUM_OF )
+    {
+        guiState->pageIndex++ ;
+    }
+
+    scriptPtr = &guiState->pagePtr[ guiState->pageIndex ] ;
+
+    gfx_print( guiState->layout.top_pos , guiState->layout.top_font , TEXT_ALIGN_LEFT , Color_White ,
+               "%s" , scriptPtr );
+
+    while( guiState->pagePtr[ guiState->pageIndex ] != GUI_CMD_NULL )
+    {
+        guiState->pageIndex++ ;
+    }
+
+    guiState->pageIndex++ ;
+
+    return pageEnd ;
+
+}
+
+static bool GuiCmd_Link( GuiState_st* guiState , UI_State_st* uiState )
+{
+//    uint8_t val ;
+
+    guiState->pageIndex++ ;
+
+//    val = LD_VAL( guiState->pagePtr[ guiState->pageIndex ] );
+
+    guiState->pageIndex++ ;
+
+    return GuiCmd_Text( guiState , uiState );
+}
+
+static bool GuiCmd_Value( GuiState_st* guiState , UI_State_st* uiState )
+{
+    (void)guiState ;
+    (void)uiState ;
+    bool pageEnd = false ;
+
+    guiState->pageIndex++ ;
+
+    return pageEnd ;
+
+}
+
+static bool GuiCmd_LineEnd( GuiState_st* guiState , UI_State_st* uiState )
+{
+    (void)uiState ;
+    bool pageEnd = false ;
+//@@@KL    _ui_drawMenuList       ->  _ui_drawMenuListItem
+//@@@KL    _ui_drawMenuListValue  ->  _ui_drawMenuListItemValue
+//@@@KL    guiState->col = 0 ;
+//@@@KL    guiState->line++ ;
+
+    guiState->pageIndex++ ;
+
+    return pageEnd ;
+
+}
+
+static bool GuiCmd_Stubbed( GuiState_st* guiState , UI_State_st* uiState )
+{
+    (void)guiState ;
+    (void)uiState ;
+    bool pageEnd = false ;
+
+    printf( "Cmd Stubbed" );
+
+    guiState->pageIndex++ ;
+
+    return pageEnd ;
+
+}
 
 #define PAGE_DESC_DEF( loc )    { loc , sizeof( loc ) / sizeof( loc[ 0 ] ) }
 
-const uiPageDesc_st uiPageDescTable[] =
+static const uiPageDesc_st uiPageDescTable[] =
 {
-    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_MAIN_VFO
-    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_MAIN_VFO_INPUT
-    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_MAIN_MEM
-    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_MODE_VFO
-    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_MODE_MEM
-    PAGE_DESC_DEF( menu_items           ) , // PAGE_MENU_TOP
-    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_MENU_BANK
-    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_MENU_CHANNEL
-    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_MENU_CONTACTS
-    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_MENU_GPS
-    PAGE_DESC_DEF( settings_items       ) , // PAGE_MENU_SETTINGS
-    PAGE_DESC_DEF( backup_restore_items ) , // PAGE_MENU_BACKUP_RESTORE
-    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_MENU_BACKUP
-    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_MENU_RESTORE
-    PAGE_DESC_DEF( info_items           ) , // PAGE_MENU_INFO
-    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_MENU_ABOUT
-    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_SETTINGS_TIMEDATE
-    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_SETTINGS_TIMEDATE_SET
-    PAGE_DESC_DEF( display_items        ) , // PAGE_SETTINGS_DISPLAY
+    PAGE_DESC_DEF( Page_Stubbed           ) , // PAGE_MAIN_VFO
+    PAGE_DESC_DEF( Page_Stubbed           ) , // PAGE_MAIN_VFO_INPUT
+    PAGE_DESC_DEF( Page_Stubbed           ) , // PAGE_MAIN_MEM
+    PAGE_DESC_DEF( Page_Stubbed           ) , // PAGE_MODE_VFO
+    PAGE_DESC_DEF( Page_Stubbed           ) , // PAGE_MODE_MEM
+    PAGE_DESC_DEF( Page_MenuItems         ) , // PAGE_MENU_TOP
+    PAGE_DESC_DEF( Page_Stubbed           ) , // PAGE_MENU_BANK
+    PAGE_DESC_DEF( Page_Stubbed           ) , // PAGE_MENU_CHANNEL
+    PAGE_DESC_DEF( Page_Stubbed           ) , // PAGE_MENU_CONTACTS
+    PAGE_DESC_DEF( Page_Stubbed           ) , // PAGE_MENU_GPS
+    PAGE_DESC_DEF( Page_MenuSettings      ) , // PAGE_MENU_SETTINGS
+    PAGE_DESC_DEF( Page_MenuBackupRestore ) , // PAGE_MENU_BACKUP_RESTORE
+    PAGE_DESC_DEF( Page_Stubbed           ) , // PAGE_MENU_BACKUP
+    PAGE_DESC_DEF( Page_Stubbed           ) , // PAGE_MENU_RESTORE
+    PAGE_DESC_DEF( Page_MenuInfo          ) , // PAGE_MENU_INFO
+    PAGE_DESC_DEF( Page_Stubbed           ) , // PAGE_MENU_ABOUT
+    PAGE_DESC_DEF( Page_Stubbed           ) , // PAGE_SETTINGS_TIMEDATE
+    PAGE_DESC_DEF( Page_Stubbed           ) , // PAGE_SETTINGS_TIMEDATE_SET
+    PAGE_DESC_DEF( Page_SettingsDisplay   ) , // PAGE_SETTINGS_DISPLAY
 #ifdef GPS_PRESENT
-    PAGE_DESC_DEF( settings_gps_items   ) , // PAGE_SETTINGS_GPS
+    PAGE_DESC_DEF( Page_SettingsGPS       ) , // PAGE_SETTINGS_GPS
 #endif // GPS_PRESENT
-    PAGE_DESC_DEF( settings_radio_items ) , // PAGE_SETTINGS_RADIO
-    PAGE_DESC_DEF( settings_m17_items   ) , // PAGE_SETTINGS_M17
-    PAGE_DESC_DEF( settings_voice_items ) , // PAGE_SETTINGS_VOICE
-    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_SETTINGS_RESET_TO_DEFAULTS
-    PAGE_DESC_DEF( page_stubbed         ) , // PAGE_LOW_BAT
-    PAGE_DESC_DEF( authors              ) , // PAGE_AUTHORS
-    PAGE_DESC_DEF( page_stubbed         )   // PAGE_BLANK
+    PAGE_DESC_DEF( Page_SettingsRadio     ) , // PAGE_SETTINGS_RADIO
+    PAGE_DESC_DEF( Page_SettingsM17       ) , // PAGE_SETTINGS_M17
+    PAGE_DESC_DEF( Page_SettingsVoice     ) , // PAGE_SETTINGS_VOICE
+    PAGE_DESC_DEF( Page_Stubbed           ) , // PAGE_SETTINGS_RESET_TO_DEFAULTS
+    PAGE_DESC_DEF( Page_Stubbed           ) , // PAGE_LOW_BAT
+    PAGE_DESC_DEF( Page_Authors           ) , // PAGE_AUTHORS
+    PAGE_DESC_DEF( Page_Stubbed           )   // PAGE_BLANK
 };
 
 const color_t Color_Black         = {   0 ,   0 ,  0  , 255 };
@@ -335,7 +798,7 @@ const color_t Color_Blue          = {   0 ,   0 , 255 , 255 };
        State_st    last_state ;
        bool        macro_latched ;
 static UI_State_st ui_state ;
-static Event_st     event ;
+static Event_st    event ;
 static bool        macro_menu      = false ;
 static bool        redraw_needed   = true ;
 
@@ -345,7 +808,7 @@ static long long   last_event_tick = 0 ;
 // UI event queue
 static uint8_t     evQueue_rdPos ;
 static uint8_t     evQueue_wrPos ;
-static Event_st     evQueue[ MAX_NUM_EVENTS ] ;
+static Event_st    evQueue[ MAX_NUM_EVENTS ] ;
 
 enum
 {
@@ -488,62 +951,6 @@ enum
     #error Unsupported vertical resolution!
 #endif
 
-// Calculate printing positions
-#define SCREEN_DEF_TOP_POS          { SCREEN_HORIZONTAL_PAD , SCREEN_TOP_H - SCREEN_STATUS_V_PAD - SCREEN_TEXT_V_OFFSET }
-#define SCREEN_DEF_LINE1_POS        { SCREEN_HORIZONTAL_PAD , SCREEN_TOP_H + SCREEN_TOP_PAD + SCREEN_LINE1_H - SCREEN_SMALL_LINE_V_PAD - SCREEN_TEXT_V_OFFSET }
-#define SCREEN_DEF_LINE2_POS        { SCREEN_HORIZONTAL_PAD , SCREEN_TOP_H + SCREEN_TOP_PAD + SCREEN_LINE1_H + SCREEN_LINE2_H - SCREEN_SMALL_LINE_V_PAD - SCREEN_TEXT_V_OFFSET }
-#define SCREEN_DEF_LINE3_POS        { SCREEN_HORIZONTAL_PAD , SCREEN_TOP_H + SCREEN_TOP_PAD + SCREEN_LINE1_H + SCREEN_LINE2_H + SCREEN_LINE3_H - SCREEN_SMALL_LINE_V_PAD - SCREEN_TEXT_V_OFFSET }
-#define SCREEN_DEF_LINE4_POS        { SCREEN_HORIZONTAL_PAD , SCREEN_TOP_H + SCREEN_TOP_PAD + SCREEN_LINE1_H + SCREEN_LINE2_H + SCREEN_LINE3_H + SCREEN_LINE4_H - SCREEN_SMALL_LINE_V_PAD - SCREEN_TEXT_V_OFFSET }
-#define SCREEN_DEF_LINE3_LARGE_POS  { SCREEN_HORIZONTAL_PAD , SCREEN_TOP_H + SCREEN_TOP_PAD + SCREEN_LINE1_H + SCREEN_LINE2_H + SCREEN_LINE3_LARGE_H - SCREEN_BIG_LINE_V_PAD - SCREEN_TEXT_V_OFFSET }
-#define SCREEN_DEF_BOTTOM_POS       { SCREEN_HORIZONTAL_PAD , SCREEN_HEIGHT - SCREEN_BOTTOM_PAD - SCREEN_STATUS_V_PAD - SCREEN_TEXT_V_OFFSET }
-
-Layout_st layout =
-{
-    SCREEN_HLINE_H             ,
-    SCREEN_TOP_H               ,
-    SCREEN_LINE1_H             ,
-    SCREEN_LINE2_H             ,
-    SCREEN_LINE3_H             ,
-    SCREEN_LINE3_LARGE_H       ,
-    SCREEN_LINE4_H             ,
-    SCREEN_MENU_H              ,
-    SCREEN_BOTTOM_H            ,
-    SCREEN_BOTTOM_PAD          ,
-    SCREEN_STATUS_V_PAD        ,
-    SCREEN_HORIZONTAL_PAD      ,
-    SCREEN_TEXT_V_OFFSET       ,
-    SCREEN_DEF_TOP_POS         ,
-    SCREEN_DEF_LINE1_POS       ,
-    SCREEN_DEF_LINE2_POS       ,
-    SCREEN_DEF_LINE3_POS       ,
-    SCREEN_DEF_LINE3_LARGE_POS ,
-    SCREEN_DEF_LINE4_POS       ,
-    SCREEN_DEF_BOTTOM_POS      ,
-    SCREEN_TOP_FONT            ,
-    SCREEN_TOP_SYMBOL_SIZE     ,
-    SCREEN_LINE1_FONT          ,
-    SCREEN_LINE1_SYMBOL_SIZE   ,
-    SCREEN_LINE2_FONT          ,
-    SCREEN_LINE2_SYMBOL_SIZE   ,
-    SCREEN_LINE3_FONT          ,
-    SCREEN_LINE3_SYMBOL_SIZE   ,
-    SCREEN_LINE3_LARGE_FONT    ,
-    SCREEN_LINE4_FONT          ,
-    SCREEN_LINE4_SYMBOL_SIZE   ,
-    SCREEN_BOTTOM_FONT         ,
-    SCREEN_INPUT_FONT          ,
-    SCREEN_MENU_FONT           ,
-    SCREEN_MODE_FONT_BIG       ,
-    SCREEN_MODE_FONT_SMALL
-};
-
-typedef struct
-{
-    kbd_msg_t      msg ;
-    VPQueueFlags_en queueFlags ;
-    bool           f1Handled ;
-}GuiState_st;
-
 static bool ui_updateFSM_PAGE_MAIN_VFO( GuiState_st* guiState , UI_State_st* uiState );
 static bool ui_updateFSM_PAGE_MAIN_VFO_INPUT( GuiState_st* guiState , UI_State_st* uiState );
 static bool ui_updateFSM_PAGE_MAIN_MEM( GuiState_st* guiState , UI_State_st* uiState );
@@ -631,16 +1038,19 @@ const char** uiGetPageLoc( uiPageNum_en pageNum )
     return uiPageDesc->loc ;
 }
 
-static bool uiDisplayPage( uiPageNum_en pageNum , GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_UpdatePage( uiPageNum_en pageNum , GuiState_st* guiState , UI_State_st* uiState )
 {
-    uiPageNum_en pgNum = pageNum ;
+    uiPageNum_en pgNum    = pageNum ;
+    bool         sync_rtx ;
 
     if( pgNum >= PAGE_NUM_OF )
     {
         pgNum = PAGE_BLANK ;
     }
 
-    return ui_updateFSM_PageTable[ pgNum ]( guiState , uiState );
+    sync_rtx = ui_updateFSM_PageTable[ pgNum ]( guiState , uiState );
+
+    return sync_rtx ;
 }
 
 static freq_t _ui_freq_add_digit( freq_t freq , uint8_t pos , uint8_t number )
@@ -1580,12 +1990,72 @@ static void _ui_numberInputDel( uint32_t* num )
 
 void ui_init( void )
 {
-    last_event_tick = getTick();
-    redraw_needed   = true ;
+    ui_InitGuiState( &GuiState );
+
+    last_event_tick    = getTick();
+    redraw_needed      = true ;
     // Initialize struct ui_state to all zeroes
     // This syntax is called compound literal
     // https://stackoverflow.com/questions/6891720/initialize-reset-struct-to-zero-null
-    ui_state = (const UI_State_st){ 0 };
+    ui_state           = (const UI_State_st){ 0 };
+}
+
+static void ui_InitGuiState( GuiState_st* guiState )
+{
+    guiState->pageLevel = 0 ;
+    guiState->pageNum[ guiState->pageLevel ] = 0 ;
+    guiState->pagePtr   = (uint8_t*)uiPageTable[ 0 ] ;
+    guiState->pageIndex = 0 ;
+
+    ui_InitGuiStateLayout( &guiState->layout );
+
+}
+
+static void ui_InitGuiStateLayout( Layout_st* layout )
+{
+    layout->hline_h             = SCREEN_HLINE_H ;
+    layout->top_h               = SCREEN_TOP_H ;
+    layout->line1_h             = SCREEN_LINE1_H ;
+    layout->line2_h             = SCREEN_LINE2_H ;
+    layout->line3_h             = SCREEN_LINE3_H ;
+    layout->line3_large_h       = SCREEN_LINE3_LARGE_H ;
+    layout->line4_h             = SCREEN_LINE4_H ;
+    layout->menu_h              = SCREEN_MENU_H ;
+    layout->bottom_h            = SCREEN_BOTTOM_H ;
+    layout->bottom_pad          = SCREEN_BOTTOM_PAD ;
+    layout->status_v_pad        = SCREEN_STATUS_V_PAD ;
+    layout->horizontal_pad      = SCREEN_HORIZONTAL_PAD ;
+    layout->text_v_offset       = SCREEN_TEXT_V_OFFSET ;
+    layout->top_pos.x           = SCREEN_HORIZONTAL_PAD ;
+    layout->top_pos.y           = SCREEN_TOP_H - SCREEN_STATUS_V_PAD - SCREEN_TEXT_V_OFFSET ;
+    layout->line1_pos.x         = SCREEN_HORIZONTAL_PAD ;
+    layout->line1_pos.y         = SCREEN_TOP_H + SCREEN_TOP_PAD + SCREEN_LINE1_H - SCREEN_SMALL_LINE_V_PAD - SCREEN_TEXT_V_OFFSET ;
+    layout->line2_pos.x         = SCREEN_HORIZONTAL_PAD ;
+    layout->line2_pos.y         = SCREEN_TOP_H + SCREEN_TOP_PAD + SCREEN_LINE1_H + SCREEN_LINE2_H - SCREEN_SMALL_LINE_V_PAD - SCREEN_TEXT_V_OFFSET ;
+    layout->line3_pos.x         = SCREEN_HORIZONTAL_PAD ;
+    layout->line3_pos.y         = SCREEN_TOP_H + SCREEN_TOP_PAD + SCREEN_LINE1_H + SCREEN_LINE2_H + SCREEN_LINE3_H - SCREEN_SMALL_LINE_V_PAD - SCREEN_TEXT_V_OFFSET ;
+    layout->line3_large_pos.x   = SCREEN_HORIZONTAL_PAD ;
+    layout->line3_large_pos.y   = SCREEN_TOP_H + SCREEN_TOP_PAD + SCREEN_LINE1_H + SCREEN_LINE2_H + SCREEN_LINE3_LARGE_H - SCREEN_BIG_LINE_V_PAD - SCREEN_TEXT_V_OFFSET ;
+    layout->line4_pos.x         = SCREEN_HORIZONTAL_PAD ;
+    layout->line4_pos.y         = SCREEN_TOP_H + SCREEN_TOP_PAD + SCREEN_LINE1_H + SCREEN_LINE2_H + SCREEN_LINE3_H + SCREEN_LINE4_H - SCREEN_SMALL_LINE_V_PAD - SCREEN_TEXT_V_OFFSET ;
+    layout->bottom_pos.x        = SCREEN_HORIZONTAL_PAD ;
+    layout->bottom_pos.y        = SCREEN_HEIGHT - SCREEN_BOTTOM_PAD - SCREEN_STATUS_V_PAD - SCREEN_TEXT_V_OFFSET ;
+    layout->top_font            = SCREEN_TOP_FONT ;
+    layout->top_symbol_size     = SCREEN_TOP_SYMBOL_SIZE ;
+    layout->line1_font          = SCREEN_LINE1_FONT ;
+    layout->line1_symbol_size   = SCREEN_LINE1_SYMBOL_SIZE ;
+    layout->line2_font          = SCREEN_LINE2_FONT ;
+    layout->line2_symbol_size   = SCREEN_LINE2_SYMBOL_SIZE ;
+    layout->line3_font          = SCREEN_LINE3_FONT ;
+    layout->line3_symbol_size   = SCREEN_LINE3_SYMBOL_SIZE ;
+    layout->line3_large_font    = SCREEN_LINE3_LARGE_FONT ;
+    layout->line4_font          = SCREEN_LINE4_FONT ;
+    layout->line4_symbol_size   = SCREEN_LINE4_SYMBOL_SIZE ;
+    layout->bottom_font         = SCREEN_BOTTOM_FONT ;
+    layout->input_font          = SCREEN_INPUT_FONT ;
+    layout->menu_font           = SCREEN_MENU_FONT ;
+    layout->mode_font_big       = SCREEN_MODE_FONT_BIG ;
+    layout->mode_font_small     = SCREEN_MODE_FONT_SMALL ;
 }
 
 void ui_drawSplashScreen( void )
@@ -1698,9 +2168,8 @@ static VPGPSInfoFlags_t GetGPSDirectionOrSpeedChanged( void )
 
 void ui_updateFSM( bool* sync_rtx )
 {
-    GuiState_st guiState ;
-    uint8_t     newTail ;
-    bool        processEvent = false ;
+    uint8_t newTail ;
+    bool    processEvent = false ;
 
     // Check for events
     if( evQueue_wrPos != evQueue_rdPos )
@@ -1737,12 +2206,12 @@ void ui_updateFSM( bool* sync_rtx )
                 // Process pressed keys
                 case EVENT_KBD :
                 {
-                    guiState.msg.value  = event.payload ;
-                    guiState.f1Handled  = false ;
-                    guiState.queueFlags = vp_getVoiceLevelQueueFlags();
+                    GuiState.msg.value  = event.payload ;
+                    GuiState.f1Handled  = false ;
+                    GuiState.queueFlags = vp_getVoiceLevelQueueFlags();
                     // If we get out of standby, we ignore the kdb event
                     // unless is the MONI key for the MACRO functions
-                    if( _ui_exitStandby( timeTick ) && !( guiState.msg.keys & KEY_MONI ) )
+                    if( _ui_exitStandby( timeTick ) && !( GuiState.msg.keys & KEY_MONI ) )
                     {
                         processEvent = false ;
                     }
@@ -1751,12 +2220,12 @@ void ui_updateFSM( bool* sync_rtx )
                     {
                         // If MONI is pressed, activate MACRO functions
                         bool moniPressed ;
-                        moniPressed = guiState.msg.keys & KEY_MONI ;
+                        moniPressed = GuiState.msg.keys & KEY_MONI ;
                         if( moniPressed || macro_latched )
                         {
                             macro_menu = true ;
                             // long press moni on its own latches function.
-                            if( moniPressed && guiState.msg.long_press && !macro_latched )
+                            if( moniPressed && GuiState.msg.long_press && !macro_latched )
                             {
                                 macro_latched = true ;
                                 vp_beep( BEEP_FUNCTION_LATCH_ON , LONG_BEEP );
@@ -1766,7 +2235,7 @@ void ui_updateFSM( bool* sync_rtx )
                                 macro_latched = false ;
                                 vp_beep( BEEP_FUNCTION_LATCH_OFF , LONG_BEEP );
                             }
-                            _ui_fsm_menuMacro( guiState.msg , sync_rtx );
+                            _ui_fsm_menuMacro( GuiState.msg , sync_rtx );
                             processEvent = false ;
                         }
                         else
@@ -1779,13 +2248,13 @@ void ui_updateFSM( bool* sync_rtx )
                     {
 #if defined(PLATFORM_TTWRPLUS)
                         // T-TWR Plus has no KEY_MONI, using KEY_VOLDOWN long press instead
-                        if( ( guiState.msg.keys & KEY_VOLDOWN ) && guiState.msg.long_press )
+                        if( ( GuiState.msg.keys & KEY_VOLDOWN ) && GuiState.msg.long_press )
                         {
                             macro_menu    = true ;
                             macro_latched = true ;
                         }
 #endif // PLA%FORM_TTWRPLUS
-                        if( state.tone_enabled && !( guiState.msg.keys & KEY_HASH ) )
+                        if( state.tone_enabled && !( GuiState.msg.keys & KEY_HASH ) )
                         {
                             state.tone_enabled = false ;
                             *sync_rtx          = true ;
@@ -1794,7 +2263,7 @@ void ui_updateFSM( bool* sync_rtx )
                         int priorUIScreen ;
                         priorUIScreen = state.ui_screen ;
 
-                        *sync_rtx = uiDisplayPage( state.ui_screen , &guiState , &ui_state );
+                        *sync_rtx = ui_UpdatePage( state.ui_screen , &GuiState , &ui_state );
 
                         // Enable Tx only if in PAGE_MAIN_VFO or PAGE_MAIN_MEM states
                         bool inMemOrVfo ;
@@ -1805,8 +2274,8 @@ void ui_updateFSM( bool* sync_rtx )
                             state.txDisable = true;
                             *sync_rtx       = true;
                         }
-                        if( !guiState.f1Handled                    &&
-                             ( guiState.msg.keys & KEY_F1        ) &&
+                        if( !GuiState.f1Handled                    &&
+                             ( GuiState.msg.keys & KEY_F1        ) &&
                              ( state.settings.vpLevel > VPP_BEEP )    )
                         {
                             vp_replayLastPrompt();
@@ -1822,12 +2291,12 @@ void ui_updateFSM( bool* sync_rtx )
                         // generic beep for any keydown if beep is enabled.
                         // At vp levels higher than beep, keys will generate voice so no need
                         // to beep or you'll get an unwanted click.
-                        if( ( guiState.msg.keys & 0xFFFF ) && ( state.settings.vpLevel == VPP_BEEP ) )
+                        if( ( GuiState.msg.keys & 0xFFFF ) && ( state.settings.vpLevel == VPP_BEEP ) )
                         {
                             vp_beep( BEEP_KEY_GENERIC , SHORT_BEEP );
                         }
                         // If we exit and re-enter the same menu, we want to ensure it speaks.
-                        if( guiState.msg.keys & KEY_ESC )
+                        if( GuiState.msg.keys & KEY_ESC )
                         {
                             _ui_reset_menu_anouncement_tracking();
                         }

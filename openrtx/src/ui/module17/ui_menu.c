@@ -153,21 +153,21 @@ int _ui_getMenuTopEntryName(char *buf, uint8_t max_len, uint8_t index)
         maxEntries -= 1;
 
     if(index >= maxEntries) return -1;
-    snprintf(buf, max_len, "%s", menu_items[index]);
+    snprintf(buf, max_len, "%s", Page_MenuItems[index]);
     return 0;
 }
 
 int _ui_getSettingsEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= settings_num) return -1;
-    snprintf(buf, max_len, "%s", settings_items[index]);
+    snprintf(buf, max_len, "%s", Page_MenuSettings[index]);
     return 0;
 }
 
 int _ui_getDisplayEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= display_num) return -1;
-    snprintf(buf, max_len, "%s", display_items[index]);
+    snprintf(buf, max_len, "%s", Page_SettingsDisplay[index]);
     return 0;
 }
 
@@ -255,7 +255,7 @@ int _ui_getModule17ValueName(char *buf, uint8_t max_len, uint8_t index)
 int _ui_getSettingsGPSEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= settings_gps_num) return -1;
-    snprintf(buf, max_len, "%s", settings_gps_items[index]);
+    snprintf(buf, max_len, "%s", Page_SettingsGPS[index]);
     return 0;
 }
 
@@ -285,7 +285,7 @@ int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
 int _ui_getInfoEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= info_num) return -1;
-    snprintf(buf, max_len, "%s", info_items[index]);
+    snprintf(buf, max_len, "%s", Page_MenuInfo[index]);
     return 0;
 }
 

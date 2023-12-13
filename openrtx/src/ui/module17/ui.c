@@ -61,7 +61,7 @@ extern void _ui_drawSettingsModule17(UI_State_st* ui_state);
 extern void _ui_drawSettingsReset2Defaults(UI_State_st* ui_state);
 extern bool _ui_drawMacroMenu(UI_State_st* ui_state);
 
-const char *menu_items[] =
+const char *Page_MenuItems[] =
 {
     "Settings",
 #ifdef GPS_PRESENT
@@ -72,7 +72,7 @@ const char *menu_items[] =
     "Shutdown"
 };
 
-const char *settings_items[] =
+const char *Page_MenuSettings[] =
 {
     "Display",
 #ifdef RTC_PRESENT
@@ -86,7 +86,7 @@ const char *settings_items[] =
     "Default Settings"
 };
 
-const char *display_items[] =
+const char *Page_SettingsDisplay[] =
 {
 #ifdef SCREEN_CONTRAST
     "Contrast",
@@ -111,7 +111,7 @@ const char *module17_items[] =
 };
 
 #ifdef GPS_PRESENT
-const char *settings_gps_items[] =
+const char *Page_SettingsGPS[] =
 {
     "GPS Enabled",
     "GPS Set Time",
@@ -119,7 +119,7 @@ const char *settings_gps_items[] =
 };
 #endif
 
-const char *info_items[] =
+const char *Page_MenuInfo[] =
 {
     "",
     "Used heap",
@@ -169,15 +169,15 @@ static const char *symbols_ITU_T_E161_callsign[] =
 static const char symbols_callsign[] = "_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890/- ";
 
 // Calculate number of menu entries
-const uint8_t menu_num = sizeof(menu_items)/sizeof(menu_items[0]);
-const uint8_t settings_num = sizeof(settings_items)/sizeof(settings_items[0]);
-const uint8_t display_num = sizeof(display_items)/sizeof(display_items[0]);
+const uint8_t menu_num = sizeof(Page_MenuItems)/sizeof(Page_MenuItems[0]);
+const uint8_t settings_num = sizeof(Page_MenuSettings)/sizeof(Page_MenuSettings[0]);
+const uint8_t display_num = sizeof(Page_SettingsDisplay)/sizeof(Page_SettingsDisplay[0]);
 #ifdef GPS_PRESENT
-const uint8_t settings_gps_num = sizeof(settings_gps_items)/sizeof(settings_gps_items[0]);
+const uint8_t settings_gps_num = sizeof(Page_SettingsGPS)/sizeof(Page_SettingsGPS[0]);
 #endif
 const uint8_t m17_num = sizeof(m17_items)/sizeof(m17_items[0]);
 const uint8_t module17_num = sizeof(module17_items)/sizeof(module17_items[0]);
-const uint8_t info_num = sizeof(info_items)/sizeof(info_items[0]);
+const uint8_t info_num = sizeof(Page_MenuInfo)/sizeof(Page_MenuInfo[0]);
 const uint8_t author_num = sizeof(authors)/sizeof(authors[0]);
 
 const color_t color_black = {0, 0, 0, 255};
