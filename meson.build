@@ -253,6 +253,21 @@ mk22fn512_inc = ['platform/mcu/CMSIS/Include',
 mk22fn512_def = {}
 
 ##
+## AT32F421
+##
+
+at32f421_src = ['platform/mcu/AT32F421/boot/startup.cpp',
+                'platform/mcu/AT32F421/boot/bsp.cpp',
+                'platform/mcu/AT32F421/boot/libc_integration.cpp',
+                'platform/mcu/CMSIS/Device/Artery/AT32F421/Source/system_at32f421.c']
+
+at32f421_inc = ['platform/mcu/AT32F421',
+                'platform/mcu/CMSIS/Include',
+                'platform/mcu/CMSIS/Device/Artery/AT32F421/Include']
+
+at32f421_def = {'AT32F421C8T7':''}
+
+##
 ## ----------------------- Platform specializations ----------------------------
 ##
 
@@ -424,6 +439,18 @@ mod17_inc += openrtx_inc + stm32f405_inc + miosix_cm4f_inc
 mod17_def += openrtx_def + stm32f405_def + miosix_cm4f_def
 
 ##
+## Radtel RT-890
+##
+
+rt890_src = ['tests/platform/boot_test.c']
+rt890_inc = []
+rt890_def = {'PLATFORM_RT890': ''}
+
+rt890_src += at32f421_src + miosix_cm4_src
+rt890_inc += openrtx_inc + at32f421_inc + miosix_cm4_inc
+rt890_def += openrtx_def + at32f421_def + miosix_cm4_def
+
+##
 ## -------------------------- Compilation arguments ----------------------------
 ##
 
@@ -488,6 +515,15 @@ foreach k, v : mod17_def
     mod17_args += '-D@0@'.format(k)
   else
     mod17_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
+
+rt890_args = []
+foreach k, v : rt890_def
+  if v == ''
+    rt890_args += '-D@0@'.format(k)
+  else
+    rt890_args += '-D@0@=@1@'.format(k, v)
   endif
 endforeach
 
@@ -560,6 +596,16 @@ mod17_opts = {
                           '-Wl,--print-memory-usage'],
 }
 
+rt890_opts = {
+  'sources'            : rt890_src,
+  'include_directories': rt890_inc,
+  'dependencies'       : [],
+  'c_args'             : rt890_args,
+  'cpp_args'           : rt890_args,
+  'link_args'          : ['-Wl,-T../platform/mcu/AT32F421/linker_script.ld',
+                          '-Wl,--print-memory-usage'],
+}
+
 ttwrplus_opts = {
   'sources'            : ['CMakeLists.txt'],
   'include_directories': [],
@@ -617,6 +663,13 @@ targets = [
   {
     'name'     : 'mod17',
     'opts'     : mod17_opts,
+    'flashable': true,
+    'wrap'     : ' ',
+    'load_addr': ' '
+  },
+  {
+    'name'     : 'rt890',
+    'opts'     : rt890_opts,
     'flashable': true,
     'wrap'     : ' ',
     'load_addr': ' '
