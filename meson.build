@@ -473,11 +473,18 @@ mod17_def += openrtx_def + stm32f405_def
 ## Radtel RT-890
 ##
 
-rt890_src = ['tests/platform/boot_test.c']
-rt890_inc = []
+rt890_src = ['platform/targets/RT-890/platform.c',
+             'platform/drivers/stubs/audio_stub.c',
+             'platform/drivers/stubs/cps_io_stub.c',
+             'platform/drivers/stubs/display_stub.c',
+             'platform/drivers/stubs/keyboard_stub.c',
+             'platform/drivers/stubs/nvmem_stub.c',
+             'platform/drivers/stubs/radio_stub.c']
+
+rt890_inc = ['platform/targets/RT-890']
 rt890_def = {'PLATFORM_RT890': ''}
 
-rt890_src += at32f421_src + miosix_cm4_src
+rt890_src += openrtx_src + at32f421_src + miosix_cm4_src + ui_src_default
 rt890_inc += openrtx_inc + at32f421_inc + miosix_cm4_inc
 rt890_def += openrtx_def + at32f421_def + miosix_cm4_def
 
