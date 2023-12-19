@@ -9,20 +9,20 @@ project('OpenRTX', ['c', 'cpp'],
 ## Optional defines, common to all souces (e.g. to enable debugging)
 ##
 
-def = {}
+openrtx_def = {}
 
 ##
 ## UI font configuration, only one uncommented at a time
 ##
 
-def += {'FONT_UBUNTU_REGULAR': ''}
-# def += {'FONT_FREE_SANS': ''}
+openrtx_def += {'FONT_UBUNTU_REGULAR': ''}
+# openrtx_def += {'FONT_FREE_SANS': ''}
 
 ##
 ## Firmware configuration parameters
 ##
 
-#def += {}
+#openrtx_def += {}
 
 
 ##
@@ -88,27 +88,23 @@ openrtx_inc = ['openrtx/include',
 ## OpenRTX UI sources
 ##
 
-openrtx_ui_default = ['openrtx/src/ui/default/ui.c',
-                      'openrtx/src/ui/default/ui_main.c',
-                      'openrtx/src/ui/default/ui_menu.c',
-                      'openrtx/src/ui/default/ui_strings.c']
+ui_src_default = ['openrtx/src/ui/default/ui.c',
+                  'openrtx/src/ui/default/ui_main.c',
+                  'openrtx/src/ui/default/ui_menu.c',
+                  'openrtx/src/ui/default/ui_strings.c']
 
-openrtx_ui_module17 = ['openrtx/src/ui/module17/ui.c',
-                       'openrtx/src/ui/module17/ui_main.c',
-                       'openrtx/src/ui/module17/ui_menu.c']
+ui_src_module17 = ['openrtx/src/ui/module17/ui.c',
+                   'openrtx/src/ui/module17/ui_main.c',
+                   'openrtx/src/ui/module17/ui_menu.c']
 
 ##
 ## Selection of main entrypoint
 ##
-
-main_src = []
-
-# Add to sources either the main executable or a platform test
 if get_option('test') != ''
-  main_src += 'tests/platform/'+get_option('test')+'.c'
-  def      += {'RUNNING_TESTSUITE' : ''}
+  openrtx_src += 'tests/platform/'+get_option('test')+'.c'
+  openrtx_def += {'RUNNING_TESTSUITE' : ''}
 else
-  main_src += 'openrtx/src/main.c'
+  openrtx_src += 'openrtx/src/main.c'
 endif
 
 ##
@@ -116,47 +112,38 @@ endif
 ##
 
 # minmea, a lightweight GPS NMEA 0183 parser library
-minmea_src = ['lib/minmea/minmea.c']
-minmea_inc = ['lib/minmea/include']
+openrtx_src += ['lib/minmea/minmea.c']
+openrtx_inc += ['lib/minmea/include']
 
 # QDEC, a very simple, header only, quadrature decoding library
-qdec_inc = ['lib/qdec/include']
+openrtx_inc += ['lib/qdec/include']
 
-# CODEC2, open source speech codec, compile from source
-codec2_proj = subproject('codec2')
-codec2_dep  = codec2_proj.get_variable('codec2_dep')
-
-# For linux we link against system library
-if not meson.is_cross_build()
-  cpp = meson.get_compiler('cpp')
-  codec2_shared_dep = cpp.find_library('codec2')
+# CODEC2, open source speech codec, compile from source on embedded
+if meson.is_cross_build()
+  codec2_proj = subproject('codec2')
+  codec2_dep  = codec2_proj.get_variable('codec2_dep')
+else
+  cpp        = meson.get_compiler('cpp')
+  codec2_dep = cpp.find_library('codec2')
 endif
 
-# XPowersLib, Arduino,CircuitPython,Micropython, esp-idf library for x-powers power management series
+# XPowersLib, library for x-powers power management series
 xpowerslib_proj = subproject('XPowersLib')
-
-src = openrtx_src + main_src + minmea_src
-inc = openrtx_inc + minmea_inc + qdec_inc
 
 ##
 ## RTOS
 ##
 subdir('lib/miosix-kernel')
 
-# Include RTOS only for embedded targets
-if meson.is_cross_build()
-  inc = inc + miosix_cm4f_inc
-  src = src + miosix_cm4f_src
-  def = def + miosix_cm4f_def
-endif
-
-## Add git commit or tag to print in OpenRTX
+##
+## Current git commit or tag
+##
 r = run_command('git', 'describe', '--tags', '--dirty')
 if r.returncode() != 0
   # it failed
 endif
-git_version = '"'+r.stdout().strip()+'"'
-def = def + {'GIT_VERSION': git_version}
+git_version  = '"'+r.stdout().strip()+'"'
+openrtx_def += {'GIT_VERSION': git_version}
 
 ##
 ## --------------------- Family-dependent source files -------------------------
@@ -175,8 +162,6 @@ mdx_src = ['openrtx/src/core/xmodem.c',
            'platform/drivers/audio/audio_MDx.c',
            'platform/drivers/baseband/HR_Cx000.cpp',
            'platform/drivers/tones/toneGenerator_MDx.cpp']
-
-mdx_src = mdx_src + openrtx_ui_default
 
 ##
 ## GDx family: Radioddity GD-77 and Baofeng DM-1801
@@ -198,8 +183,6 @@ gdx_src = ['openrtx/src/core/xmodem.c',
            'platform/drivers/display/UC1701_GDx.c',
            'platform/drivers/keyboard/keyboard_GDx.c',
            'platform/drivers/audio/audio_GDx.c']
-
-gdx_src = gdx_src + openrtx_ui_default
 
 ##
 ## --------------------- MCU-dependent source files ----------------------------
@@ -276,113 +259,148 @@ mk22fn512_def = {}
 ##
 ## Linux
 ##
-linux_platform_src = ['platform/targets/linux/emulator/emulator.c',
-                      'platform/targets/linux/emulator/sdl_engine.c',
-                      'platform/drivers/display/display_libSDL.c',
-                      'platform/drivers/keyboard/keyboard_linux.c',
-                      'platform/drivers/NVM/nvmem_linux.c',
-                      'platform/drivers/GPS/GPS_linux.c',
-                      'platform/mcu/x86_64/drivers/delays.c',
-                      'platform/mcu/x86_64/drivers/rng.cpp',
-                      'platform/drivers/baseband/radio_linux.cpp',
-                      'platform/drivers/audio/audio_linux.c',
-                      'platform/drivers/audio/file_source.c',
-                      'platform/targets/linux/platform.c',
-                      'platform/drivers/CPS/cps_io_libc.c',
-                      'platform/drivers/NVM/posix_file.c']
+linux_src = ['platform/targets/linux/emulator/emulator.c',
+             'platform/targets/linux/emulator/sdl_engine.c',
+             'platform/drivers/display/display_libSDL.c',
+             'platform/drivers/keyboard/keyboard_linux.c',
+             'platform/drivers/NVM/nvmem_linux.c',
+             'platform/drivers/GPS/GPS_linux.c',
+             'platform/mcu/x86_64/drivers/delays.c',
+             'platform/mcu/x86_64/drivers/rng.cpp',
+             'platform/drivers/baseband/radio_linux.cpp',
+             'platform/drivers/audio/audio_linux.c',
+             'platform/drivers/audio/file_source.c',
+             'platform/targets/linux/platform.c',
+             'platform/drivers/CPS/cps_io_libc.c',
+             'platform/drivers/NVM/posix_file.c']
 
-linux_src = src + linux_platform_src
+linux_inc = ['platform/targets/linux',
+             'platform/targets/linux/emulator']
 
-#
-# Select which UI to use
-#
-linux_src = linux_src + openrtx_ui_default
-# linux_src = linux_src + openrtx_ui_module17
+linux_def = {'PLATFORM_LINUX': '', 'VP_USE_FILESYSTEM':''}
 
 #
-# Select which screen type to emulate
+# Standard UI
 #
-linux_def = def + {'SCREEN_WIDTH': '160', 'SCREEN_HEIGHT': '128', 'PIX_FMT_RGB565': ''}
-#linux_def = def + {'SCREEN_WIDTH': '128', 'SCREEN_HEIGHT': '64', 'PIX_FMT_BW': ''}
+linux_src += ui_src_default
+linux_def += {'SCREEN_WIDTH': '160', 'SCREEN_HEIGHT': '128', 'PIX_FMT_RGB565': ''}
 
-linux_def += {'VP_USE_FILESYSTEM':''}
-linux_inc  = inc + ['platform/targets/linux',
-                    'platform/targets/linux/emulator']
+#
+# Module17 UI
+#
+# linux_src += ui_src_module17
+# linux_def += {'SCREEN_WIDTH': '128', 'SCREEN_HEIGHT': '64', 'PIX_FMT_BW': ''}
 
-if not meson.is_cross_build()
-  sdl_dep = dependency('SDL2', required: false)
-  threads_dep = dependency('threads', required: false)
-  pulse_dep = dependency('libpulse', required: false)
-  linux_dep = [sdl_dep, threads_dep, pulse_dep, codec2_shared_dep]
-else
-  linux_dep = [ ]
+
+sdl_dep     = dependency('SDL2',     required: false)
+threads_dep = dependency('threads',  required: false)
+pulse_dep   = dependency('libpulse', required: false)
+linux_src  += openrtx_src
+linux_inc  += openrtx_inc
+linux_def  += openrtx_def
+
+linux_c_args   = ['-ffunction-sections', '-fdata-sections']
+linux_cpp_args = ['-ffunction-sections', '-fdata-sections', '-std=c++14']
+linux_l_args   = ['-lm', '-lreadline', '-lpulse-simple', '-Wl,--gc-sections']
+
+# Add AddressSanitizer if required
+if get_option('asan')
+  linux_c_args   += '-fsanitize=address'
+  linux_cpp_args += '-fsanitize=address'
+  linux_l_args   += '-fsanitize=address'
 endif
+
+# Add Undefined Behaviour Sanitizer if required
+if get_option('ubsan')
+  linux_c_args   += '-fsanitize=undefined'
+  linux_cpp_args += '-fsanitize=undefined'
+  linux_l_args   += '-fsanitize=undefined'
+endif
+
 
 ##
 ## TYT MD-3x0 family
 ##
-md3x0_src = src + mdx_src + stm32f405_src + ['platform/drivers/NVM/nvmem_MD3x0.c',
-                                             'platform/drivers/CPS/cps_io_native_MD3x0.c',
-                                             'platform/drivers/NVM/spiFlash_MD3x.c',
-                                             'platform/drivers/baseband/SKY72310.c',
-                                             'platform/drivers/baseband/radio_MD3x0.cpp',
-                                             'platform/drivers/baseband/HR_C5000_MDx.cpp',
-                                             'platform/drivers/keyboard/keyboard_MD3x.c',
-                                             'platform/drivers/display/HX8353_MD3x.cpp',
-                                             'platform/drivers/backlight/backlight_MDx.c',                                             
-                                             'platform/targets/MD-3x0/platform.c']
+md3x0_src = ['platform/drivers/NVM/nvmem_MD3x0.c',
+             'platform/drivers/CPS/cps_io_native_MD3x0.c',
+             'platform/drivers/NVM/spiFlash_MD3x.c',
+             'platform/drivers/baseband/SKY72310.c',
+             'platform/drivers/baseband/radio_MD3x0.cpp',
+             'platform/drivers/baseband/HR_C5000_MDx.cpp',
+             'platform/drivers/keyboard/keyboard_MD3x.c',
+             'platform/drivers/display/HX8353_MD3x.cpp',
+             'platform/drivers/backlight/backlight_MDx.c',
+             'platform/targets/MD-3x0/platform.c']
 
-md3x0_inc = inc + stm32f405_inc + ['platform/targets/MD-3x0']
-md3x0_def = def + stm32f405_def + {'PLATFORM_MD3x0': '', 'timegm': 'mktime'}
+md3x0_inc = ['platform/targets/MD-3x0']
+md3x0_def = {'PLATFORM_MD3x0': '', 'timegm': 'mktime'}
+
+md3x0_src += openrtx_src + stm32f405_src + miosix_cm4f_src + ui_src_default + mdx_src
+md3x0_inc += openrtx_inc + stm32f405_inc + miosix_cm4f_inc
+md3x0_def += openrtx_def + stm32f405_def + miosix_cm4f_def
 
 ##
 ## TYT MD-UV380
 ##
-mduv3x0_src = src + mdx_src + stm32f405_src + ['platform/drivers/NVM/nvmem_MDUV3x0.c',
-                                               'platform/drivers/NVM/spiFlash_MD3x.c',
-                                               'platform/drivers/CPS/cps_io_native_MDUV3x0.c',
-                                               'platform/targets/MD-UV3x0/platform.c',
-                                               'platform/drivers/keyboard/keyboard_MD3x.c',
-                                               'platform/drivers/display/HX8353_MD3x.cpp',
-                                               'platform/drivers/backlight/backlight_MDx.c',                                             
-                                               'platform/drivers/chSelector/chSelector_UV3x0.c',
-                                               'platform/drivers/baseband/radio_UV3x0.cpp',
-                                               'platform/drivers/baseband/AT1846S_UV3x0.cpp',
-                                               'platform/drivers/baseband/HR_C6000_UV3x0.cpp']
+mduv3x0_src = ['platform/drivers/NVM/nvmem_MDUV3x0.c',
+               'platform/drivers/NVM/spiFlash_MD3x.c',
+               'platform/drivers/CPS/cps_io_native_MDUV3x0.c',
+               'platform/targets/MD-UV3x0/platform.c',
+               'platform/drivers/keyboard/keyboard_MD3x.c',
+               'platform/drivers/display/HX8353_MD3x.cpp',
+               'platform/drivers/backlight/backlight_MDx.c',
+               'platform/drivers/chSelector/chSelector_UV3x0.c',
+               'platform/drivers/baseband/radio_UV3x0.cpp',
+               'platform/drivers/baseband/AT1846S_UV3x0.cpp',
+               'platform/drivers/baseband/HR_C6000_UV3x0.cpp']
 
-mduv3x0_inc = inc + stm32f405_inc + ['platform/targets/MD-UV3x0']
-mduv3x0_def = def + stm32f405_def + {'PLATFORM_MDUV3x0': '', 'timegm': 'mktime'}
+mduv3x0_inc = ['platform/targets/MD-UV3x0']
+mduv3x0_def =  {'PLATFORM_MDUV3x0': '', 'timegm': 'mktime'}
+
+mduv3x0_src += openrtx_src + stm32f405_src + miosix_cm4f_src + ui_src_default + mdx_src
+mduv3x0_inc += openrtx_inc + stm32f405_inc + miosix_cm4f_inc
+mduv3x0_def += openrtx_def + stm32f405_def + miosix_cm4f_def
 
 ##
 ## TYT MD-9600
 ##
-md9600_src = src + mdx_src + stm32f405_src + ['platform/targets/MD-9600/platform.c',
-                                              'platform/drivers/display/ST7567_MD9600.c',
-                                              'platform/drivers/keyboard/keyboard_MD9600.c',
-                                              'platform/drivers/chSelector/chSelector_MD9600.c',
-                                              'platform/drivers/baseband/radio_MD9600.cpp',
-                                              'platform/drivers/NVM/nvmem_MD9600.c',
-                                              'platform/drivers/NVM/spiFlash_MD9600.c',
-                                              'platform/drivers/CPS/cps_io_native_MD9600.c']
+md9600_src = ['platform/targets/MD-9600/platform.c',
+              'platform/drivers/display/ST7567_MD9600.c',
+              'platform/drivers/keyboard/keyboard_MD9600.c',
+              'platform/drivers/chSelector/chSelector_MD9600.c',
+              'platform/drivers/baseband/radio_MD9600.cpp',
+              'platform/drivers/NVM/nvmem_MD9600.c',
+              'platform/drivers/NVM/spiFlash_MD9600.c',
+              'platform/drivers/CPS/cps_io_native_MD9600.c']
 
-md9600_inc = inc + stm32f405_inc + ['platform/targets/MD-9600']
-md9600_def = def + stm32f405_def + {'PLATFORM_MD9600': ''}
+md9600_inc = ['platform/targets/MD-9600']
+md9600_def = {'PLATFORM_MD9600': ''}
+
+md9600_src += openrtx_src + stm32f405_src + miosix_cm4f_src + ui_src_default + mdx_src
+md9600_inc += openrtx_inc + stm32f405_inc + miosix_cm4f_inc
+md9600_def += openrtx_def + stm32f405_def + miosix_cm4f_def
 
 ##
 ## Radioddity GD-77
 ##
-gd77_src = src + gdx_src + mk22fn512_src + ['platform/targets/GD-77/platform.c']
+gd77_src = ['platform/targets/GD-77/platform.c']
+gd77_inc = ['platform/targets/GD-77']
+gd77_def = {'PLATFORM_GD77': ''}
 
-gd77_inc = inc + mk22fn512_inc + ['platform/targets/GD-77']
-gd77_def = def + mk22fn512_def + {'PLATFORM_GD77': ''}
+gd77_src += openrtx_src + mk22fn512_src + miosix_cm4f_src + ui_src_default + gdx_src
+gd77_inc += openrtx_inc + mk22fn512_inc + miosix_cm4f_inc
+gd77_def += openrtx_def + mk22fn512_def + miosix_cm4f_def
 
 ##
 ## Baofeng DM-1801
 ##
-dm1801_src = src + gdx_src + mk22fn512_src + ['platform/targets/DM-1801/platform.c']
+dm1801_src = ['platform/targets/DM-1801/platform.c']
+dm1801_inc = ['platform/targets/DM-1801']
+dm1801_def = {'PLATFORM_DM1801': ''}
 
-dm1801_inc = inc + mk22fn512_inc + ['platform/targets/DM-1801']
-dm1801_def = def + mk22fn512_def + {'PLATFORM_DM1801': ''}
+dm1801_src += openrtx_src + mk22fn512_src + miosix_cm4f_src + ui_src_default + gdx_src
+dm1801_inc += openrtx_inc + mk22fn512_inc + miosix_cm4f_inc
+dm1801_def += openrtx_def + mk22fn512_def + miosix_cm4f_def
 
 ##
 ## Module 17
@@ -398,37 +416,23 @@ mod17_src = ['platform/targets/Module17/platform.c',
              'platform/drivers/audio/MAX9814_Mod17.cpp',
              'platform/drivers/baseband/MCP4551_Mod17.cpp']
 
-mod17_src = src + openrtx_ui_module17 + mod17_src + stm32f405_src
-mod17_inc = inc + stm32f405_inc + ['platform/targets/Module17']
-mod17_def = def + stm32f405_def + {'PLATFORM_MOD17': ''}
+mod17_inc = ['platform/targets/Module17']
+mod17_def = {'PLATFORM_MOD17': ''}
+
+mod17_src += openrtx_src + stm32f405_src + miosix_cm4f_src + ui_src_module17
+mod17_inc += openrtx_inc + stm32f405_inc + miosix_cm4f_inc
+mod17_def += openrtx_def + stm32f405_def + miosix_cm4f_def
 
 ##
 ## -------------------------- Compilation arguments ----------------------------
 ##
 
-linux_c_args   = ['-ffunction-sections', '-fdata-sections', '-DPLATFORM_LINUX']
-linux_cpp_args = ['-ffunction-sections', '-fdata-sections', '-std=c++14', '-DPLATFORM_LINUX']
-linux_l_args   = ['-lm', '-lreadline', '-lpulse-simple', '-Wl,--gc-sections']
-
-# Add AddressSanitizer if required
-if get_option('asan')
-  linux_c_args += '-fsanitize=address'
-  linux_cpp_args += '-fsanitize=address'
-  linux_l_args += '-fsanitize=address'
-endif
-# Add Undefined Behaviour Sanitizer if required
-if get_option('ubsan')
-  linux_c_args += '-fsanitize=undefined'
-  linux_cpp_args += '-fsanitize=undefined'
-  linux_l_args += '-fsanitize=undefined'
-endif
-
 foreach k, v : linux_def
   if v == ''
-    linux_c_args += '-D@0@'.format(k)
+    linux_c_args   += '-D@0@'.format(k)
     linux_cpp_args += '-D@0@'.format(k)
   else
-    linux_c_args += '-D@0@=@1@'.format(k, v)
+    linux_c_args   += '-D@0@=@1@'.format(k, v)
     linux_cpp_args += '-D@0@=@1@'.format(k, v)
   endif
 endforeach
@@ -487,128 +491,153 @@ foreach k, v : mod17_def
   endif
 endforeach
 
-linux_opts = {'sources': linux_src,
-              'c_args': linux_c_args,
-              'cpp_args' : linux_cpp_args,
-              'include_directories': linux_inc,
-              'dependencies': linux_dep,
-              'link_args' : linux_l_args}
+linux_opts = {
+  'sources'            : linux_src,
+  'include_directories': linux_inc,
+  'dependencies'       : [sdl_dep, threads_dep, pulse_dep, codec2_dep],
+  'c_args'             : linux_c_args,
+  'cpp_args'           : linux_cpp_args,
+  'link_args'          : linux_l_args
+}
 
-md3x0_opts = {'sources' : md3x0_src,
-              'c_args'  : md3x0_args,
-              'cpp_args': md3x0_args,
-              'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld',
-                             '-Wl,--print-memory-usage'],
-              'dependencies': [codec2_dep],
-              'include_directories': md3x0_inc}
+md3x0_opts = {
+  'sources'            : md3x0_src,
+  'include_directories': md3x0_inc,
+  'dependencies'       : [codec2_dep],
+  'c_args'             : md3x0_args,
+  'cpp_args'           : md3x0_args,
+  'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld',
+                          '-Wl,--print-memory-usage']
+}
 
-mduv3x0_opts = {'sources': mduv3x0_src,
-                'c_args': mduv3x0_args,
-                'cpp_args': mduv3x0_args,
-                'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld',
-                               '-Wl,--print-memory-usage'],
-                'dependencies': [codec2_dep],
-                'include_directories': mduv3x0_inc}
+mduv3x0_opts = {
+  'sources'            : mduv3x0_src,
+  'include_directories': mduv3x0_inc,
+  'dependencies'       : [codec2_dep],
+  'c_args'             : mduv3x0_args,
+  'cpp_args'           : mduv3x0_args,
+  'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld',
+                          '-Wl,--print-memory-usage']
+}
 
-gd77_opts = {'sources': gd77_src,
-             'c_args': gd77_args,
-             'cpp_args': gd77_args,
-             'link_args' : ['-Wl,-T../platform/mcu/MK22FN512xxx12/linker_script.ld',
-                            '-Wl,--print-memory-usage'],
-             'dependencies': [codec2_dep],
-             'include_directories':gd77_inc}
+gd77_opts = {
+  'sources'            : gd77_src,
+  'include_directories': gd77_inc,
+  'dependencies'       : [codec2_dep],
+  'c_args'             : gd77_args,
+  'cpp_args'           : gd77_args,
+  'link_args'          : ['-Wl,-T../platform/mcu/MK22FN512xxx12/linker_script.ld',
+                          '-Wl,--print-memory-usage'],
+}
 
-dm1801_opts = {'sources': dm1801_src,
-               'c_args': dm1801_args,
-               'cpp_args': dm1801_args,
-               'link_args' : ['-Wl,-T../platform/mcu/MK22FN512xxx12/linker_script.ld',
-                              '-Wl,--print-memory-usage'],
-               'dependencies': [codec2_dep],
-               'include_directories':dm1801_inc}
+dm1801_opts = {
+  'sources'            : dm1801_src,
+  'include_directories': dm1801_inc,
+  'dependencies'       : [codec2_dep],
+  'c_args'             : dm1801_args,
+  'cpp_args'           : dm1801_args,
+  'link_args'          : ['-Wl,-T../platform/mcu/MK22FN512xxx12/linker_script.ld',
+                          '-Wl,--print-memory-usage'],
+}
 
-md9600_opts = {'sources': md9600_src,
-               'c_args': md9600_args,
-               'cpp_args': md9600_args,
-               'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld',
-                              '-Wl,--print-memory-usage'],
-               'dependencies': [codec2_dep],
-               'include_directories': md9600_inc}
+md9600_opts = {
+  'sources'            : md9600_src,
+  'include_directories': md9600_inc,
+  'dependencies'       : [codec2_dep],
+  'c_args'             : md9600_args,
+  'cpp_args'           : md9600_args,
+  'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld',
+                          '-Wl,--print-memory-usage'],
+}
 
-mod17_opts  = {'sources': mod17_src,
-               'c_args': mod17_args,
-               'cpp_args': mod17_args,
-               'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_Mod17.ld',
-                              '-Wl,--print-memory-usage'],
-               'dependencies': [codec2_dep],
-               'include_directories': mod17_inc}
+mod17_opts = {
+  'sources'            : mod17_src,
+  'include_directories': mod17_inc,
+  'dependencies'       : [codec2_dep],
+  'c_args'             : mod17_args,
+  'cpp_args'           : mod17_args,
+  'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_Mod17.ld',
+                          '-Wl,--print-memory-usage'],
+}
 
-ttwrplus_opts  = {'sources': ['CMakeLists.txt'],
-                  'c_args': [],
-                  'cpp_args': [],
-                  'link_args' : [],
-                  'dependencies': [codec2_dep],
-                  'include_directories': []}
+ttwrplus_opts = {
+  'sources'            : ['CMakeLists.txt'],
+  'include_directories': [],
+  'dependencies'       : [codec2_dep],
+  'c_args'             : [],
+  'cpp_args'           : [],
+  'link_args'          : [],
+}
 
 ##
 ## ---------------------------- Compilation targets ----------------------------
 ##
 
 targets = [
+  {
+    'name'     : 'linux',
+    'opts'     : linux_opts,
+    'flashable': false
+  },
+  {
+    'name'     : 'md3x0',
+    'opts'     : md3x0_opts,
+    'flashable': true,
+    'wrap'     : 'MD380',
+    'load_addr': '0x0800C000'
+  },
+  {
+    'name'     : 'mduv3x0',
+    'opts'     : mduv3x0_opts,
+    'flashable': true,
+    'wrap'     : 'UV3X0',
+    'load_addr': '0x0800C000'
+  },
+  {
+    'name'     : 'gd77',
+    'opts'     : gd77_opts,
+    'flashable': true,
+    'wrap'     : 'GD-77',
+    'load_addr': '0x0800C000'
+  },
+  {
+    'name'     : 'dm1801',
+    'opts'     : dm1801_opts,
+    'flashable': true,
+    'wrap'     : 'DM-1801',
+    'load_addr': '0x0800C000'
+  },
+  {
+    'name'     : 'md9600',
+    'opts'     : md9600_opts,
+    'flashable': true,
+    'wrap'     : 'MD9600',
+    'load_addr': '0x0800C000'
+  },
+  {
+    'name'     : 'mod17',
+    'opts'     : mod17_opts,
+    'flashable': true,
+    'wrap'     : ' ',
+    'load_addr': ' '
+  },
+  {
+    'name'     : 'ttwrplus',
+    'opts'     : ttwrplus_opts,
+    'flashable': true,
+    'wrap'     : ' ',
+    'load_addr': ' '
+  },
+]
 
-  {'name': 'linux',
-   'opts': linux_opts,
-   'flashable': false},
-
-  {'name': 'md3x0',
-   'opts': md3x0_opts,
-   'flashable': true,
-   'wrap': 'MD380',
-   'load_addr': '0x0800C000'},
-
-  {'name': 'mduv3x0',
-   'opts': mduv3x0_opts,
-   'flashable': true,
-   'wrap': 'UV3X0',
-   'load_addr': '0x0800C000'},
-
-  {'name': 'gd77',
-   'opts': gd77_opts,
-   'flashable': true,
-   'wrap': 'UV3X0',
-   'load_addr': '0x0800C000'},
-
-  {'name': 'dm1801',
-   'opts': dm1801_opts,
-   'flashable': true,
-   'wrap': 'UV3X0',
-   'load_addr': '0x0800C000'},
-
-  {'name': 'md9600',
-   'opts': md9600_opts,
-   'flashable': true,
-   'wrap': 'MD9600',
-   'load_addr': '0x0800C000'},
-
-   {'name': 'mod17',
-   'opts': mod17_opts,
-   'flashable': true,
-   'wrap': ' ',
-   'load_addr': ' '},
-
-   {'name': 'ttwrplus',
-   'opts': ttwrplus_opts,
-   'flashable': true,
-   'wrap': ' ',
-   'load_addr': ' '},
-  ]
-
-radio_tool  = find_program('radio_tool')
-objcopy     = find_program('objcopy',                          required:false, disabler:true)
 if build_machine.system() == 'linux'
   bin2sgl     = find_program('scripts/bin2sgl.Linux',          required:false, disabler:true)
 elif build_machine.system() == 'windows'
   bin2sgl     = find_program('scripts/bin2sgl.exe',            required:false, disabler:true)
 endif
+
+radio_tool  = find_program('radio_tool')
+objcopy     = find_program('objcopy',                          required:false, disabler:true)
 gd77_loader = find_program('scripts/gd-77_firmware_loader.py', required:false, disabler:true)
 dfu_util    = find_program('dfu-util',                         required:false, disabler:true)
 west        = find_program('west',                             required:false, disabler:true)
@@ -622,21 +651,29 @@ foreach t : targets
   if name == 'openrtx_ttwrplus'
 
       txt = custom_target('Copy CMakeLists.txt',
-                    input : 'CMakeLists.txt',
-                    output :  'CMakeLists.txt',
-                    command : ['cp', '@INPUT@', '@OUTPUT@'],
-                    install : false,
-                    build_by_default : true)
+                          input            : 'CMakeLists.txt',
+                          output           : 'CMakeLists.txt',
+                          command          : ['cp', '@INPUT@', '@OUTPUT@'],
+                          install          : false,
+                          build_by_default : true)
 
       bin = custom_target(name,
                           input   : txt,
                           output  : name+'_bin',
-                          command : [west, 'build', '-b', 'ttwrplus', '-d', '.', '..'])
+                          command : [west,
+                                    'build',
+                                    '-b', 'ttwrplus',
+                                    '-d', '.', '..'])
 
       uf2 = custom_target(name+'_uf2',
                           input   : bin,
                           output  : name+'.uf2',
-                          command : [uf2conv, 'zephyr/zephyr.bin', '-c', '-f', 'ESP32S3', '-b', '0x0', '-o', '@OUTPUT@'])
+                          command : [uf2conv,
+                                    'zephyr/zephyr.bin',
+                                    '-c',
+                                    '-f', 'ESP32S3',
+                                    '-b', '0x0',
+                                    '-o', '@OUTPUT@'])
 
       custom_target(name+'_flash',
                     input   : uf2,
@@ -655,47 +692,29 @@ foreach t : targets
                           command : [objcopy, '-O', 'binary', '@INPUT@', '@OUTPUT@'])
 
       # Handle GD77 custom wrapping and flashing tools
-      if name == 'openrtx_gd77'
+      if name == 'openrtx_gd77' or name == 'openrtx_dm1801'
 
         if build_machine.system() == 'linux'
               wrap = custom_target(name+'_wrap',
                                    output  : name+'_wrap.sgl',
                                    input   : bin,
-                                   command : [bin2sgl, '-f', '@INPUT@', '&&',
-                                              'mv', '@INPUT@.sgl', '@OUTPUT@'])
+                                   command : [bin2sgl,
+                                             '-f', '@INPUT@',
+                                             '-m', t['wrap'],
+                                             '&&',
+                                             'mv', '@INPUT@.sgl', '@OUTPUT@'])
+
         elif build_machine.system() == 'windows'
               wrap = custom_target(name+'_wrap',
                                    output  : name+'_bin.sgl',
                                    input   : bin,
-                                   command : [bin2sgl, '@INPUT@'])
+                                   command : [bin2sgl, '@INPUT@', '-m', t['wrap']])
         endif
 
         custom_target(name+'_flash',
                       input   : wrap,
                       output  : name+'_flash',
-                      command : [gd77_loader, '-f', '@INPUT@'])
-
-       # Handle DM1801 custom wrapping and flashing tools
-      elif name == 'openrtx_dm1801'
-
-        if build_machine.system() == 'linux'
-              wrap = custom_target(name+'_wrap',
-                                   output  : name+'_wrap.sgl',
-                                   input   : bin,
-                                   command : [bin2sgl, '-f', '@INPUT@',
-                                              '-m', 'DM-1801', '&&', 'mv',
-                                              '@INPUT@.sgl', '@OUTPUT@'])
-        elif build_machine.system() == 'windows'
-              wrap = custom_target(name+'_wrap',
-                                   output  : name+'_bin.sgl',
-                                   input   : bin,
-                                   command : [bin2sgl, '@INPUT@', '-m DM-1801'])
-        endif
-
-        custom_target(name+'_flash',
-                      input   : wrap,
-                      output  : name+'_flash',
-                      command : [gd77_loader, '-f', '@INPUT@', '-m', 'DM-1801',])
+                      command : [gd77_loader, '-f', '@INPUT@', '-m', t['wrap']])
 
       # Module17 also uses dfu-tool for flashing
       elif name == 'openrtx_mod17'
@@ -710,8 +729,11 @@ foreach t : targets
         custom_target(name+'_flash',
                       input   : bin,
                       output  : name+'_flash',
-                      command : [dfu_util, '-d', '0483:df11', '-a', '0',
-                                 '-D', '@INPUT@', '-s', '0x08000000'])
+                      command : [dfu_util,
+                                 '-d', '0483:df11',
+                                 '-a', '0',
+                                 '-D', '@INPUT@',
+                                 '-s', '0x08000000'])
 
       else
 
@@ -743,9 +765,9 @@ endforeach
 unit_test_opts = {'c_args'             : linux_c_args,
                   'cpp_args'           : linux_cpp_args,
                   'include_directories': linux_inc,
-                  'dependencies'       : linux_dep,
+                  'dependencies'       : [sdl_dep, threads_dep, pulse_dep, codec2_dep],
                   'link_args'          : linux_l_args}
-unit_test_src = openrtx_src + minmea_src + linux_platform_src + openrtx_ui_default
+unit_test_src = openrtx_src + linux_src + ui_src_default
 
 m17_golay_test = executable('m17_golay_test',
                             sources : unit_test_src + ['tests/unit/M17_golay.cpp'],
