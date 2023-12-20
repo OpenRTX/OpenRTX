@@ -280,6 +280,7 @@ at32f421_src = ['platform/mcu/AT32F421/boot/startup.cpp',
                 'platform/mcu/AT32F421/boot/bsp.cpp',
                 'platform/mcu/AT32F421/boot/libc_integration.cpp',
                 'platform/mcu/AT32F421/drivers/gpio.c',
+                'platform/mcu/AT32F421/drivers/delays.cpp',
                 'platform/mcu/CMSIS/Device/Artery/AT32F421/Source/system_at32f421.c']
 
 at32f421_inc = ['platform/mcu/AT32F421',
