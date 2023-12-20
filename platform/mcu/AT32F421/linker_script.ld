@@ -162,4 +162,12 @@ SECTIONS
 
     _end = .;
     PROVIDE(end = .);
+
+    /* Pad binary image to a size being an integer multiple of 128 bytes in
+       order to make the bootloader happy */
+    .fill :
+    {
+        BYTE(0x00)
+        . = ALIGN(0x80);
+    } > flash
 }
