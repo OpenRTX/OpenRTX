@@ -27,6 +27,23 @@
 
 /**
  * \internal
+ * Check if a read/write/erase operation is within the bounds of a given NVM
+ * area.
+ *
+ * @param area: pointer to the NVM area descriptor
+ * @param addr: start address of the read/write/erase operation
+ * @param len: size of the read/write/erase operation
+ * @return true if the operation is within the NVM area bounds
+ */
+static inline bool checkBounds(const struct nvmArea *area, uint32_t addr, size_t len)
+{
+    return (addr >= area->startAddr)
+        && ((addr + len) <= (area->startAddr + area->size));
+}
+
+
+/**
+ * \internal
  * Compute the absolute offset from the beginning of an NVM device, given the
  * device descriptor and the partition number. If the partition number is set
  * to -1, the offset is considered from the beginning of the device.
