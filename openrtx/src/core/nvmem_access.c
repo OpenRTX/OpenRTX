@@ -37,7 +37,7 @@
 static inline bool checkBounds(const struct nvmArea *area, uint32_t addr, size_t len)
 {
     return (addr >= area->startAddr)
-        && ((addr + len) < (area->startAddr + area->size));
+        && ((addr + len) <= (area->startAddr + area->size));
 }
 
 

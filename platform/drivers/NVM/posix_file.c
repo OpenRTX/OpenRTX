@@ -87,7 +87,7 @@ static int nvm_api_read(const struct nvmDevice *dev, uint32_t offset,
     if(fd < 0)
         return -EBADF;
 
-    if((offset + len) >= cfg->fileSize)
+    if((offset + len) > cfg->fileSize)
         return -EINVAL;
 
     lseek(fd, offset, SEEK_SET);
