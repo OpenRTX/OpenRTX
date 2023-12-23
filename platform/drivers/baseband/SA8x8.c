@@ -30,7 +30,6 @@
 #define SA868FW_MAJOR    1
 #define SA868FW_MINOR    3
 #define SA868FW_PATCH    0
-#define SA868FW_RELEASE  1
 
 
 #if DT_NODE_HAS_STATUS(DT_ALIAS(radio), okay)
@@ -116,21 +115,21 @@ static inline bool checkFwVersion()
     uint8_t major;
     uint8_t minor;
     uint8_t patch;
-    uint8_t release;
+    uint8_t revision;
 
     const char *fwVersionStr = sa8x8_getFwVersion();
     sscanf(fwVersionStr, "sa8x8-fw/v%hhu.%hhu.%hhu.r%hhu", &major, &minor,
-           &patch, &release);
+           &patch, &revision);
 
     if((major > SA868FW_MAJOR) ||
-       (major == SA868FW_MAJOR) && (minor > SA868FW_MINOR) ||
-       (major == SA868FW_MAJOR) && (minor == SA868FW_MINOR) && (patch > SA868FW_PATCH) ||
-       (major == SA868FW_MAJOR) && (minor == SA868FW_MINOR) && (patch == SA868FW_PATCH) && (release >= SA868FW_RELEASE))
+       ((major == SA868FW_MAJOR) && (minor > SA868FW_MINOR)) ||
+       ((major == SA868FW_MAJOR) && (minor == SA868FW_MINOR) && (patch > SA868FW_PATCH)) ||
+       ((major == SA868FW_MAJOR) && (minor == SA868FW_MINOR) && (patch == SA868FW_PATCH)))
     {
         return true;
     }
 
-    // Major, minor, patch or release not matching.
+    // Major, minor, or patch not matching.
     printk("SA8x8: error, unsupported baseband firmware, please update!\n");
     return false;
 }
