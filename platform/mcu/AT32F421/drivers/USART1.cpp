@@ -23,6 +23,7 @@
 #include <miosix.h>
 #include <at32f421.h>
 #include "USART1.h"
+#include "crm.h"
 
 using namespace miosix;
 
@@ -96,27 +97,48 @@ void __attribute__((naked)) USART1_IRQHandler()
     restoreContext();
 }
 
+static void usart_reset_ex(usart_type *uart, uint32_t baudrate)
+{
+	crm_clocks_freq_type info;
+	uint32_t high, low;
+
+	uart->ctrl2_bit.stopbn = USART_STOP_1_BIT;
+	uart->ctrl1_bit.ren = TRUE;
+	uart->ctrl1_bit.ten = TRUE;
+	uart->ctrl1_bit.dbn = USART_DATA_8BITS;
+	uart->ctrl1_bit.psel = FALSE;
+	uart->ctrl1_bit.pen = FALSE;
+	uart->ctrl3_bit.rtsen = FALSE;
+	uart->ctrl3_bit.ctsen = FALSE;
+
+	crm_clocks_freq_get(&info);
+
+	if (uart == USART1) {
+		info.apb2_freq = info.apb1_freq;
+	}
+
+	baudrate = (uint32_t)((((uint64_t)info.apb2_freq * 1000U) / 16U) / baudrate);
+	high = baudrate / 1000U;
+	low = (baudrate - (1000U * high)) * 16;
+	if ((low % 1000U) < 500U) {
+		low /= 1000U;
+	} else {
+		low = (low / 1000U) + 1;
+		if (low >= 16) {
+			low = 0;
+			high++;
+		}
+	}
+	uart->baudr_bit.div = (high << 4) | low;
+}
 
 void usart1_init(unsigned int baudrate)
 {
-    CRM->apb2en |= (1 << 14);
-    __DSB();
-
-    // Get current frequency of APB2 clock
-    unsigned int freq = SystemCoreClock;
-    if(CRM->cfg_bit.apb2div != 0)
-        freq /= ((CRM->cfg_bit.apb2div & 0x03) + 1);
-
-    const unsigned int quot = 2*freq/baudrate; // 2*freq for round to nearest
-    USART1->baudr = quot/2 + (quot & 1);       // Round to nearest
-    USART1->ctrl1 = (1 << 13)                  // Enable port
-                  | (1 <<  5)                  // Interrupt on data received
-                  | (1 <<  4)                  // Interrupt on idle line
-                  | (1 <<  3)                  // Transmission enbled
-                  | (1 <<  2);                 // Reception enabled
-
+    usart_reset_ex(USART1, baudrate);
     NVIC_SetPriority(USART1_IRQn, 15);         // Lowest priority for serial
     NVIC_EnableIRQ(USART1_IRQn);
+    PERIPH_REG((uint32_t)USART1, USART_RDBF_INT) |= PERIPH_REG_BIT(USART_RDBF_INT);
+    USART1->ctrl1_bit.uen = TRUE;
 }
 
 void usart1_terminate()

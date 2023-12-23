@@ -21,13 +21,16 @@
 #include <stdio.h>
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
+#include <drivers/USART1.h>
 
 int main()
 {
     platform_init();
-
+    usart1_init(115200);
     while(1)
     {
+        GPIOB->cfgr_bit.iomc6 = 0x02; // PB6 Alternate function
+        usart1_IRQwrite("Hello World!\r\n");
         platform_ledOn(GREEN);
         delayMs(1000);
         platform_ledOff(GREEN);
