@@ -20,6 +20,7 @@
  ***************************************************************************/
 
 #include <interfaces/platform.h>
+#include <interfaces/delays.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/audio.h>
 #include <peripherals/gpio.h>
@@ -85,6 +86,11 @@ void platform_init()
     uint16_t ver = adc1_getMeasurement(ADC_HWVER_CH);
     if(ver >= 3000)
         hwInfo.hw_version = 1;
+
+    /* 100ms blink of sync led to signal device startup */
+    gpio_setPin(SYNC_LED);
+    sleepFor(0, 1);
+    gpio_clearPin(SYNC_LED);
 }
 
 void platform_terminate()
