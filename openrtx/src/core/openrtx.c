@@ -46,7 +46,9 @@ void openrtx_init()
     gfx_init();         // Initialize display and graphics driver
     kbd_init();         // Initialize keyboard driver
     ui_init();          // Initialize user interface
+    #ifndef NO_VOICE_PROMPTS
     vp_init();          // Initialize voice prompts
+    #endif
     #ifdef SCREEN_CONTRAST
     display_setContrast(state.settings.contrast);
     #endif
@@ -71,7 +73,7 @@ void openrtx_init()
     // hide random pixels during render process
     ui_drawSplashScreen();
     gfx_render();
-    sleepFor(0u, 30u);
+    sleepFor(1u, 0u);
     display_setBacklightLevel(state.settings.brightness);
 
     #if defined(GPS_PRESENT)
