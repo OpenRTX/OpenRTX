@@ -23,6 +23,7 @@
 #include <string.h>
 #include <rtx.h>
 #include <OpMode_FM.hpp>
+#include <hwconfig.h>
 #include <OpMode_M17.hpp>
 
 static pthread_mutex_t   *cfgMutex;     // Mutex for incoming config messages

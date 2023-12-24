@@ -27,6 +27,24 @@
 // Screen dimensions and pixel format
 #define CONFIG_SCREEN_WIDTH  160
 #define CONFIG_SCREEN_HEIGHT 96
+#define PIX_FMT_RGB565
+#define NO_FRAMEBUF
+#define NO_RADIO
+#define NO_BATTERY
+#define NO_DMR
+#define NO_M17
+#define NO_VOICE_PROMPTS
+
+/* Keyboard */
+#define KB_ROW0 GPIOA,10
+#define KB_ROW1 GPIOB,1
+#define KB_ROW2 GPIOB,2
+#define KB_ROW3 GPIOA,9
+#define KB_COL0 GPIOB,15
+#define KB_COL1 GPIOB,14
+#define KB_COL2 GPIOB,13
+#define KB_COL3 GPIOA,8
+
 
 // Battery type
 #define BAT_LIPO_2S
