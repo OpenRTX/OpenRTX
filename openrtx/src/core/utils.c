@@ -53,10 +53,7 @@ uint8_t interpCalParameter(const freq_t freq, const freq_t *calPoints,
 
 float dBmToWatt(const uint8_t n)
 {
-    float dBm   = 10.0f + ((float) n) * 0.2f;
-    float power = pow(10.0f, (dBm - 30.0f)/10.0f);
-
-    return power;
+    return 0.0f;
 }
 
 uint32_t bcdToBin(uint32_t bcd)
