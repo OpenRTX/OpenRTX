@@ -1,0 +1,15 @@
+{
+    "cmake.configureOnOpen": true,
+    "files.associations": {
+        "gpio.c": "cpp",
+        "platform.h": "c",
+        "st7735s.h": "c",
+        "usart1.h": "c",
+        "gpio.h": "c",
+        "ui_default.h": "c",
+        "display.h": "c",
+        "nvmem.h": "c",
+        "gfxfont.h": "c",
+        "tomthumb.h": "c"
+    }
+}
