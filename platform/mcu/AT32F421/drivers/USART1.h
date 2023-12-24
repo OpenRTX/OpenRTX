@@ -22,7 +22,7 @@
 #define USART1_H
 
 #include <stdint.h>
-#include <stddef.h>
+#include <unistd.h>
 
 #ifdef __cplusplus
 extern "C" {
