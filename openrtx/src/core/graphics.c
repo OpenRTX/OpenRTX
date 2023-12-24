@@ -853,7 +853,6 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, rssi_t rssi,
 void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, rssi_t rssi,
                          uint8_t level, uint8_t volume, bool drawVolume)
 {
-    #ifndef NO_RADIO
     color_t red =    {255, 0,   0  , 255};
     color_t green =  {0,   255,   0, 255};
     color_t white =  {255, 255, 255, 255};
@@ -917,7 +916,6 @@ void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, rssi_t 
             pixel_pos.x += 8;
         }
     }
-    #endif
 }
 
 /*
@@ -946,7 +944,7 @@ void gfx_drawGPSgraph(point_t start,
                       gpssat_t *sats,
                       uint32_t active_sats)
 {
-    #ifndef NO_RADIO
+    #ifndef GPS_PRESENT
     color_t white =  {255, 255, 255, 255};
     color_t yellow = {250, 180, 19 , 255};
 
@@ -985,7 +983,7 @@ void gfx_drawGPScompass(point_t start,
                         float deg,
                         bool active)
 {
-    #ifndef NO_RADIO
+    #ifndef GPS_PRESENT
     color_t white =  {255, 255, 255, 255};
     color_t black =  {  0,   0,   0, 255};
     color_t yellow = {250, 180, 19 , 255};

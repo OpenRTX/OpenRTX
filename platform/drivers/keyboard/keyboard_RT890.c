@@ -18,12 +18,9 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdio.h>
-#include <stdint.h>
 #include <peripherals/gpio.h>
 #include <interfaces/delays.h>
 #include <interfaces/keyboard.h>
-#include <interfaces/platform.h>
 #include "hwconfig.h"
 
 static int8_t old_pos = 0;
@@ -31,80 +28,75 @@ static int8_t old_pos = 0;
 void kbd_init()
 {
     /* Set the two column lines as outputs */
-    gpio_setMode(KB_COL0, OUTPUT);
-    gpio_setMode(KB_COL1, OUTPUT);
-    gpio_setMode(KB_COL2, OUTPUT);
-    gpio_setMode(KB_COL3, OUTPUT);
-    gpio_setMode(KB_ROW0, INPUT_PULL_UP);
-    gpio_setMode(KB_ROW1, INPUT_PULL_UP);
-    gpio_setMode(KB_ROW2, INPUT_PULL_UP);
-    gpio_setMode(KB_ROW3, INPUT_PULL_UP);
-    // gpio_setPin(KB_COL0);
-    // gpio_setPin(KB_COL1);
-    // gpio_setPin(KB_COL2);
-    // gpio_setPin(KB_COL3);
+    gpio_setMode(KBD_COL0, OUTPUT);
+    gpio_setMode(KBD_COL1, OUTPUT);
+    gpio_setMode(KBD_COL2, OUTPUT);
+    gpio_setMode(KBD_COL3, OUTPUT);
+    gpio_setMode(KBD_ROW0, INPUT_PULL_UP);
+    gpio_setMode(KBD_ROW1, INPUT_PULL_UP);
+    gpio_setMode(KBD_ROW2, INPUT_PULL_UP);
+    gpio_setMode(KBD_ROW3, INPUT_PULL_UP);
+    gpio_setMode(SKB_1, INPUT_PULL_UP);
+    gpio_setPin(KBD_COL0);
+    gpio_setPin(KBD_COL1);
+    gpio_setPin(KBD_COL2);
+    gpio_setPin(KBD_COL3);
 }
 
 void kbd_terminate()
 {
     /* Back to default state */
-    gpio_clearPin(KB_COL0);
-    gpio_clearPin(KB_COL1);
-    gpio_clearPin(KB_COL2);
-    gpio_clearPin(KB_COL3);
-    gpio_setMode(KB_COL0, INPUT);
-    gpio_setMode(KB_COL1, INPUT);
-    gpio_setMode(KB_COL2, INPUT);
-    gpio_setMode(KB_COL3, INPUT);
+    gpio_clearPin(KBD_COL0);
+    gpio_clearPin(KBD_COL1);
+    gpio_clearPin(KBD_COL2);
+    gpio_clearPin(KBD_COL3);
+    gpio_setMode(KBD_COL0, INPUT);
+    gpio_setMode(KBD_COL1, INPUT);
+    gpio_setMode(KBD_COL2, INPUT);
+    gpio_setMode(KBD_COL3, INPUT);
 }
 
 keyboard_t kbd_getKeys()
 {
     keyboard_t keys = 0;
 
-    if(gpio_readPin(SKB_1)) keys |= KEY_MONI;
-    if(gpio_readPin(SKB_2)) keys |= KEY_F1;
+    if(!gpio_readPin(SKB_1)) keys |= KEY_MONI;
 
-    /*
-     * Scan keyboard by rows. Each row is set to high, and then
-     * the columns are read. If a key is pressed, the corresponding column
-     * will be pulled low.
-     */
-
-    gpio_setPin(KB_COL0);
+    gpio_setPin(KBD_COL3);
+    gpio_clearPin(KBD_COL0);
 
     delayUs(10);
-    if(gpio_readPin(KB_ROW0)) keys |= KEY_ENTER;
-    if(gpio_readPin(KB_ROW1)) keys |= KEY_UP;
-    if(gpio_readPin(KB_ROW2)) keys |= KEY_DOWN;
-    if(gpio_readPin(KB_ROW3)) keys |= KEY_ESC;
+    if(!gpio_readPin(KBD_ROW0)) keys |= KEY_ENTER;
+    if(!gpio_readPin(KBD_ROW1)) keys |= KEY_UP;
+    if(!gpio_readPin(KBD_ROW2)) keys |= KEY_DOWN;
+    if(!gpio_readPin(KBD_ROW3)) keys |= KEY_ESC;
 
-    gpio_clearPin(KB_COL0);
-    gpio_setPin(KB_COL1);
-
-    delayUs(10);
-    if(gpio_readPin(KB_ROW0)) keys |= KEY_1;
-    if(gpio_readPin(KB_ROW1)) keys |= KEY_2;
-    if(gpio_readPin(KB_ROW2)) keys |= KEY_3;
-    if(gpio_readPin(KB_ROW3)) keys |= KEY_STAR;
-
-    gpio_clearPin(KB_COL1);
-    gpio_setPin(KB_COL2);
+    gpio_clearPin(KBD_COL1);
+    gpio_setPin(KBD_COL0);
 
     delayUs(10);
-    if(gpio_readPin(KB_ROW0)) keys |= KEY_4;
-    if(gpio_readPin(KB_ROW1)) keys |= KEY_5;
-    if(gpio_readPin(KB_ROW2)) keys |= KEY_6;
-    if(gpio_readPin(KB_ROW3)) keys |= KEY_0;
+    if(!gpio_readPin(KBD_ROW0)) keys |= KEY_1;
+    if(!gpio_readPin(KBD_ROW1)) keys |= KEY_2;
+    if(!gpio_readPin(KBD_ROW2)) keys |= KEY_3;
+    if(!gpio_readPin(KBD_ROW3)) keys |= KEY_STAR;
 
-    gpio_clearPin(KB_COL2);
-    gpio_setPin(KB_COL3);
+    gpio_clearPin(KBD_COL2);
+    gpio_setPin(KBD_COL1);
 
     delayUs(10);
-    if(gpio_readPin(KB_ROW0)) keys |= KEY_7;
-    if(gpio_readPin(KB_ROW1)) keys |= KEY_8;
-    if(gpio_readPin(KB_ROW2)) keys |= KEY_9;
-    if(gpio_readPin(KB_ROW3)) keys |= KEY_HASH;
+    if(!gpio_readPin(KBD_ROW0)) keys |= KEY_4;
+    if(!gpio_readPin(KBD_ROW1)) keys |= KEY_5;
+    if(!gpio_readPin(KBD_ROW2)) keys |= KEY_6;
+    if(!gpio_readPin(KBD_ROW3)) keys |= KEY_0;
+
+    gpio_clearPin(KBD_COL3);
+    gpio_setPin(KBD_COL2);
+
+    delayUs(10);
+    if(!gpio_readPin(KBD_ROW0)) keys |= KEY_7;
+    if(!gpio_readPin(KBD_ROW1)) keys |= KEY_8;
+    if(!gpio_readPin(KBD_ROW2)) keys |= KEY_9;
+    if(!gpio_readPin(KBD_ROW3)) keys |= KEY_HASH;
 
     return keys;
 }

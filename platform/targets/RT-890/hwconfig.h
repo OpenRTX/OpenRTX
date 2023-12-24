@@ -30,7 +30,6 @@
 #define PIX_FMT_RGB565
 #define NO_FRAMEBUF
 #define NO_RADIO
-#define NO_BATTERY
 #define NO_DMR
 #define NO_M17
 #define NO_VOICE_PROMPTS
@@ -47,6 +46,6 @@
 
 
 // Battery type
-#define BAT_LIPO_2S
+#define BAT_NONE
 
 #endif
