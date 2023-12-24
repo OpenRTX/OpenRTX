@@ -1256,8 +1256,9 @@ void ui_drawSplashScreen()
 
     gfx_print(logo_orig, logo_font, TEXT_ALIGN_CENTER, yellow_fab413, "O P N\nR T X");
     gfx_print(call_orig, call_font, TEXT_ALIGN_CENTER, color_white, state.settings.callsign);
-
+    #ifndef NO_VOICE_PROMPTS
     vp_announceSplashScreen();
+    #endif
 }
 
 void ui_saveState()
@@ -1497,6 +1498,7 @@ void ui_updateFSM(bool *sync_rtx)
                     }
                     else if(msg.keys & KEY_HASH)
                     {
+                        #ifndef NO_M17
                         // Only enter edit mode when using M17
                         if(state.channel.mode == OPMODE_M17)
                         {
@@ -1515,6 +1517,7 @@ void ui_updateFSM(bool *sync_rtx)
                                 *sync_rtx = true;
                             }
                         }
+                        #endif
                     }
                     else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
                     {
@@ -2526,13 +2529,17 @@ bool ui_updateGUI()
             _ui_drawSettingsGPS(&ui_state);
             break;
 #endif
+#ifndef NO_M17
         // M17 settings screen
         case SETTINGS_M17:
             _ui_drawSettingsM17(&ui_state);
             break;
+#endif
+#ifndef NO_VOICE_PROMPTS
         case SETTINGS_VOICE:
             _ui_drawSettingsVoicePrompts(&ui_state);
             break;
+#endif
         // Screen to support resetting Settings and VFO to defaults
         case SETTINGS_RESET2DEFAULTS:
             _ui_drawSettingsReset2Defaults(&ui_state);

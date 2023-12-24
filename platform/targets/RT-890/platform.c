@@ -18,9 +18,12 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <at32f421.h>
 #include <peripherals/gpio.h>
 #include <interfaces/platform.h>
+#include <platform/drivers/display/ST7735S.h>
 #include <hwconfig.h>
+#include <drivers/USART1.h>
 
 static const hwInfo_t hwInfo =
 {
@@ -37,6 +40,16 @@ static const hwInfo_t hwInfo =
 void platform_init()
 {
     // Configure GPIOs
+    //InitGPIO();
+    // Configure LCD RESX pin
+    gpio_setMode(LCD_RST, OUTPUT);
+    gpio_setPin(LCD_RST);
+    // Configure rest of LCD pins
+    gpio_setMode(LCD_DC,  OUTPUT);
+    gpio_setMode(LCD_CS,  OUTPUT);
+    gpio_setMode(LCD_CLK, OUTPUT);
+    gpio_setMode(LCD_DAT, OUTPUT);
+
     gpio_setMode(GREEN_LED, OUTPUT);
     gpio_setMode(RED_LED,   OUTPUT);
     gpio_setMode(PTT_SW,    INPUT_PULL_UP);
@@ -51,7 +64,14 @@ void platform_terminate()
 
 uint16_t platform_getVbat()
 {
-    return 0;
+    /*
+     * Battery voltage is measured through an 1:5.7 voltage divider and
+     * adc1_getMeasurement returns a value in mV. To have effective battery
+     * voltage we have to multiply by the ratio: with a simple trick we can do
+     * it also without using floats and with a maximum error of -1mV.
+     */
+
+    return 3000;
 }
 
 uint8_t platform_getMicLevel()

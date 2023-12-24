@@ -109,13 +109,14 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
             gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                       color_white, "%s", bw_str );
             break;
-
+        #ifndef NO_DMR
         case OPMODE_DMR:
             // Print talkgroup
             gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                     color_white, "DMR TG%s", "");
             break;
-
+        #endif
+        #ifndef NO_M17
         case OPMODE_M17:
         {
             // Print M17 Destination ID on line 3 of 3
@@ -177,6 +178,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
             }
             break;
         }
+        #endif
     }
 }
 

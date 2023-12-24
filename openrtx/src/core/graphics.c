@@ -54,6 +54,11 @@
 #include <Symbols5pt7b.h>
 #include <Symbols6pt7b.h>
 #include <Symbols8pt7b.h>
+#ifdef NO_FRAMEBUF
+// Use ST7735S driver
+#include <platform/drivers/display/ST7735S.h>
+#endif
+
 
 // Variable swap macro
 #define DEG_RAD  0.017453292519943295769236907684886
@@ -63,7 +68,7 @@
 /**
  * Fonts, ordered by the fontSize_t enum.
  */
-static const GFXfont fonts[] = { TomThumb,            // 5pt
+static const GFXfont fonts[] = { UbuntuRegular6pt7b,            // 5pt
     #if defined FONT_FREE_SANS
                                  FreeSans6pt7b,       // 6pt
                                  FreeSans8pt7b,       // 8pt
@@ -75,19 +80,19 @@ static const GFXfont fonts[] = { TomThumb,            // 5pt
                                  FreeSans24pt7b,      // 24pt
     #elif defined FONT_UBUNTU_REGULAR
                                  UbuntuRegular6pt7b,  // 6pt
-                                 UbuntuRegular8pt7b,  // 8pt
-                                 UbuntuRegular9pt7b,  // 9pt
+                                 UbuntuRegular6pt7b,  // 8pt
+                                 UbuntuRegular10pt7b,  // 9pt
                                  UbuntuRegular10pt7b, // 10pt
-                                 UbuntuRegular12pt7b, // 12pt
-                                 UbuntuRegular16pt7b, // 16pt
-                                 UbuntuRegular18pt7b, // 16pt
-                                 UbuntuRegular24pt7b, // 24pt
+                                 UbuntuRegular10pt7b, // 12pt
+                                 UbuntuRegular10pt7b, // 16pt
+                                 UbuntuRegular10pt7b, // 16pt
+                                 //UbuntuRegular24pt7b, // 24pt
     #else
     #error Unsupported font family!
     #endif
-                                 Symbols5pt7b,      // 5pt
-                                 Symbols6pt7b,      // 6pt
-                                 Symbols8pt7b       // 8pt
+                                 UbuntuRegular6pt7b,      // 5pt
+                                 UbuntuRegular6pt7b,      // 6pt
+                                 UbuntuRegular6pt7b       // 8pt
                                };
 
 #ifdef PIX_FMT_RGB565
@@ -159,10 +164,13 @@ static char text[32];
 void gfx_init()
 {
     display_init();
+    #ifndef NO_FRAMEBUF
     buf = (PIXEL_T *)(display_getFrameBuffer());
+    #endif
     initialized = 1;
 
 // Calculate framebuffer size
+#ifndef NO_FRAMEBUF
 #ifdef PIX_FMT_RGB565
     fbSize = SCREEN_HEIGHT * SCREEN_WIDTH * sizeof(PIXEL_T);
 #elif defined PIX_FMT_BW
@@ -173,6 +181,7 @@ void gfx_init()
 #endif
     // Clear text buffer
     memset(text, 0x00, 32);
+#endif // NO_FRAMEBUF
 }
 
 void gfx_terminate()
@@ -210,7 +219,12 @@ void gfx_clearScreen()
 {
     if(!initialized) return;
     // Set the whole framebuffer to 0x00 = make the screen black
+    #ifdef NO_FRAMEBUF
+    // Use ST7735S driver
+    DISPLAY_FillColor(0x00);
+    #else
     memset(buf, 0x00, fbSize);
+    #endif
 }
 
 void gfx_fillScreen(color_t color)
@@ -233,6 +247,13 @@ inline void gfx_setPixel(point_t pos, color_t color)
         return; // off the screen
 
 #ifdef PIX_FMT_RGB565
+    #ifdef NO_FRAMEBUF
+     // Use ST7735S driver
+        // Also convert pixel to 16bit integer
+        rgb565_t temp = _true2highColor(color);
+        uint16_t pixel16 = (temp.b << 11) | (temp.g << 5) | (temp.r);
+        ST7735S_SetPixel(pos.x, SCREEN_HEIGHT-pos.y, pixel16);
+    #else
     // Blend old pixel value and new one
     if (color.alpha < 255)
     {
@@ -249,6 +270,7 @@ inline void gfx_setPixel(point_t pos, color_t color)
     {
         buf[pos.x + pos.y*SCREEN_WIDTH] = _true2highColor(color);
     }
+    #endif
 #elif defined PIX_FMT_BW
     // Ignore more than half transparent pixels
     if (color.alpha >= 128)
@@ -747,6 +769,7 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
 void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
                     float squelch, float volume, bool drawVolume, color_t color)
 {
+    #ifndef NO_RADIO
     color_t white =  {255, 255, 255, 255};
     color_t yellow = {250, 180, 19 , 255};
     color_t red =    {255, 0,   0  , 255};
@@ -803,6 +826,7 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
     rssi_width = (s_level > 10.0f) ? width : rssi_width;
     point_t rssi_pos = { start.x, (uint8_t) (start.y + 2 + squelch_height + volume_height)};
     gfx_drawRect(rssi_pos, rssi_width, rssi_height, white, true);
+    #endif
 }
 
 /*
@@ -833,6 +857,7 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
 void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, float rssi,
                          uint8_t level, float volume, bool drawVolume)
 {
+    #ifndef NO_RADIO
     color_t red =    {255, 0,   0  , 255};
     color_t green =  {0,   255,   0, 255};
     color_t white =  {255, 255, 255, 255};
@@ -896,6 +921,7 @@ void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, float r
             pixel_pos.x += 8;
         }
     }
+    #endif
 }
 
 /*
@@ -924,6 +950,7 @@ void gfx_drawGPSgraph(point_t start,
                       gpssat_t *sats,
                       uint32_t active_sats)
 {
+    #ifndef NO_RADIO
     color_t white =  {255, 255, 255, 255};
     color_t yellow = {250, 180, 19 , 255};
 
@@ -954,6 +981,7 @@ void gfx_drawGPSgraph(point_t start,
 
     gfx_drawLine(start, left_line_end, white);
     gfx_drawLine(right_line_start, right_line_end, white);
+    #endif
 }
 
 void gfx_drawGPScompass(point_t start,
@@ -961,6 +989,7 @@ void gfx_drawGPScompass(point_t start,
                         float deg,
                         bool active)
 {
+    #ifndef NO_RADIO
     color_t white =  {255, 255, 255, 255};
     color_t black =  {  0,   0,   0, 255};
     color_t yellow = {250, 180, 19 , 255};
@@ -994,6 +1023,7 @@ void gfx_drawGPScompass(point_t start,
     point_t n_pos = {(uint8_t)(start.x + radius - 3),
                      (uint8_t)(start.y + 7)};
     gfx_print(n_pos, FONT_SIZE_6PT, TEXT_ALIGN_LEFT, white, "N");
+    #endif
 }
 
 void gfx_plotData(point_t start, uint16_t width, uint16_t height,

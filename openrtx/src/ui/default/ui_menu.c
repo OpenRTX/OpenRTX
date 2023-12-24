@@ -482,7 +482,7 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
             snprintf(buf, max_len, "%.1fdBm", last_state.rssi);
             break;
         case 4: // Heap usage
-            snprintf(buf, max_len, "%dB", getHeapSize() - getCurrentFreeHeap());
+            //snprintf(buf, max_len, "%dB", getHeapSize() - getCurrentFreeHeap());
             break;
         case 5: // Band
             snprintf(buf, max_len, "%s %s", hwinfo->vhf_band ? currentLanguage->VHF : "", hwinfo->uhf_band ? currentLanguage->UHF : "");
