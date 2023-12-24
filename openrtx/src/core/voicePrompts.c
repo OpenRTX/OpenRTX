@@ -78,16 +78,6 @@ beepData_t;
 
 static const userDictEntry_t userDictionary[] =
 {
-    {"hotspot",   PROMPT_CUSTOM1},  // Hotspot
-    {"clearnode", PROMPT_CUSTOM2},  // ClearNode
-    {"sharinode", PROMPT_CUSTOM3},  // ShariNode
-    {"microhub",  PROMPT_CUSTOM4},  // MicroHub
-    {"openspot",  PROMPT_CUSTOM5},  // Openspot
-    {"repeater",  PROMPT_CUSTOM6},  // repeater
-    {"blindhams", PROMPT_CUSTOM7},  // BlindHams
-    {"allstar",   PROMPT_CUSTOM8},  // Allstar
-    {"parrot",    PROMPT_CUSTOM9},  // Parrot
-    {"channel",   PROMPT_CHANNEL},  // Channel
     {0, 0}
 };
 
@@ -100,11 +90,11 @@ static vpSequence_t vpCurrentSequence =
     .c2DataLength = 0
 };
 
-static uint32_t tableOfContents[VOICE_PROMPTS_TOC_SIZE];
+// static uint32_t tableOfContents[VOICE_PROMPTS_TOC_SIZE];
 static bool     vpDataLoaded      = false;
 static bool     voicePromptActive = false;
 
-static beepData_t beepSeriesBuffer[BEEP_SEQ_BUF_SIZE];
+// static beepData_t beepSeriesBuffer[BEEP_SEQ_BUF_SIZE];
 static uint16_t   currentBeepDuration = 0;
 static uint8_t    beepSeriesIndex     = 0;
 static bool       delayBeepUntilTick  = false;
@@ -128,11 +118,13 @@ unsigned char        *vpData = &_vpdata_start;
  */
 static void loadVpHeader(vpHeader_t *header)
 {
+    #ifndef NO_VOICE_PROMPTS
     #ifdef VP_USE_FILESYSTEM
     fseek(vpFile, 0L, SEEK_SET);
     fread(header, sizeof(vpHeader_t), 1, vpFile);
     #else
     memcpy(header, vpData, sizeof(vpHeader_t));
+    #endif
     #endif
 }
 
@@ -142,6 +134,7 @@ static void loadVpHeader(vpHeader_t *header)
  */
 static void loadVpToC()
 {
+    #ifndef NO_VOICE_PROMPTS
     #ifdef VP_USE_FILESYSTEM
     fread(&tableOfContents, sizeof(tableOfContents), 1, vpFile);
     size_t vpDataOffset = ftell(vpFile);
@@ -152,6 +145,7 @@ static void loadVpToC()
     uint8_t *tocPtr = vpData + sizeof(vpHeader_t);
     memcpy(&tableOfContents, tocPtr, sizeof(tableOfContents));
     vpDataLoaded = true;
+    #endif
     #endif
 }
 
@@ -164,6 +158,7 @@ static void loadVpToC()
  */
 static void fetchCodec2Data(uint8_t *data, const size_t offset)
 {
+    #ifndef NO_VOICE_PROMPTS
     if (vpDataLoaded == false)
         return;
 
@@ -190,6 +185,7 @@ static void fetchCodec2Data(uint8_t *data, const size_t offset)
     }
 
     memcpy(data, dataPtr + offset, 8);
+    #endif
     #endif
 }
 
@@ -301,6 +297,7 @@ static inline void disableSpkOutput()
  */
 static void beep_flush()
 {
+    #ifndef NO_VOICE_PROMPTS
     if (currentBeepDuration > 0)
         platform_beepStop();
 
@@ -308,6 +305,7 @@ static void beep_flush()
     currentBeepDuration = 0;
     beepSeriesIndex     = 0;
     disableSpkOutput();
+    #endif
 }
 
 /**
@@ -316,6 +314,7 @@ static void beep_flush()
  */
 static bool beep_tick()
 {
+    #ifndef NO_VOICE_PROMPTS
     if (currentBeepDuration > 0)
     {
         if (delayBeepUntilTick)
@@ -346,13 +345,14 @@ static bool beep_tick()
 
         return true;
     }
-
+    #endif
     return false;
 }
 
 
 void vp_init()
 {
+    #ifndef NO_VOICE_PROMPTS
     #ifdef VP_USE_FILESYSTEM
     if(vpFile == NULL)
         vpFile = fopen("voiceprompts.vpc", "r");
@@ -389,10 +389,12 @@ void vp_init()
 
     // Initialize codec2 module
     codec_init();
+    #endif // NO_VOICE_PROMPTS
 }
 
 void vp_terminate()
 {
+    #ifndef NO_VOICE_PROMPTS
     if (voicePromptActive)
         vp_flush();
 
@@ -401,10 +403,12 @@ void vp_terminate()
     #ifdef VP_USE_FILESYSTEM
     fclose(vpFile);
     #endif
+    #endif // NO_VOICE_PROMPTS
 }
 
 void vp_stop()
 {
+    #ifndef NO_VOICE_PROMPTS
     voicePromptActive = false;
     codec_stop(vpAudioPath);
     disableSpkOutput();
@@ -416,17 +420,21 @@ void vp_stop()
 
     // If any beep is playing, immediately stop it.
     beep_flush();
+    #endif
 }
 
 void vp_flush()
 {
+    #ifndef NO_VOICE_PROMPTS
     // Stop the prompt and reset the codec data length
     vp_stop();
     vpCurrentSequence.length = 0;
+    #endif
 }
 
 void vp_queuePrompt(const uint16_t prompt)
 {
+    #ifndef NO_VOICE_PROMPTS
     if (state.settings.vpLevel < vpLow)
         return;
 
@@ -438,10 +446,12 @@ void vp_queuePrompt(const uint16_t prompt)
         vpCurrentSequence.buffer[vpCurrentSequence.length] = prompt;
         vpCurrentSequence.length++;
     }
+    #endif
 }
 
 void vp_queueString(const char* string, vpFlags_t flags)
 {
+    #ifndef NO_VOICE_PROMPTS
     if (state.settings.vpLevel < vpLow)
         return;
 
@@ -509,10 +519,12 @@ void vp_queueString(const char* string, vpFlags_t flags)
 
     if (flags & vpqAddSeparatingSilence)
         vp_queuePrompt(PROMPT_SILENCE);
+    #endif
 }
 
 void vp_queueInteger(const int value)
 {
+    #ifndef NO_VOICE_PROMPTS
     if (state.settings.vpLevel < vpLow)
         return;
 
@@ -522,10 +534,12 @@ void vp_queueInteger(const int value)
 
     snprintf(buf, 12, "%d", value);
     vp_queueString(buf, 0);
+    #endif
 }
 
 void vp_queueStringTableEntry(const char* const* stringTableStringPtr)
 {
+    #ifndef NO_VOICE_PROMPTS
     /*
      * This function looks up a voice prompt corresponding to a string table
      * entry. These are stored in the voice data after the voice prompts with no
@@ -543,10 +557,12 @@ void vp_queueStringTableEntry(const char* const* stringTableStringPtr)
                  + (stringTableStringPtr - &currentLanguage->languageName);
 
     vp_queuePrompt(pos);
+    #endif
 }
 
 void vp_play()
 {
+    #ifndef NO_VOICE_PROMPTS
     if (state.settings.vpLevel < vpLow)
         return;
 
@@ -559,10 +575,12 @@ void vp_play()
     // TODO: remove this once switching to hardware-based I2C driver for AT1846S
     // management.
     vpStartTime = getTick();
+    #endif
 }
 
 void vp_tick()
 {
+    #ifndef NO_VOICE_PROMPTS
     if (platform_getPttStatus() && (voicePromptActive || (currentBeepDuration > 0)))
     {
         vp_stop();
@@ -637,6 +655,7 @@ void vp_tick()
         codec_stop(vpAudioPath);
         disableSpkOutput();
     }
+    #endif
 }
 
 bool vp_isPlaying()
@@ -651,6 +670,7 @@ bool vp_sequenceNotEmpty()
 
 void vp_beep(uint16_t freq, uint16_t duration)
 {
+    #ifndef NO_VOICE_PROMPTS
     if (state.settings.vpLevel < vpBeep)
         return;
 
@@ -670,10 +690,12 @@ void vp_beep(uint16_t freq, uint16_t duration)
     beepSeriesIndex     = 0;
     platform_beepStart(freq);
     enableSpkOutput();
+    #endif
 }
 
 void vp_beepSeries(const uint16_t* beepSeries)
 {
+    #ifndef NO_VOICE_PROMPTS
     if (state.settings.vpLevel < vpBeep)
         return;
 
@@ -693,4 +715,5 @@ void vp_beepSeries(const uint16_t* beepSeries)
     currentBeepDuration = beepSeriesBuffer[0].duration;
     beepSeriesIndex     = 0;
     delayBeepUntilTick  = true;
+    #endif
 }

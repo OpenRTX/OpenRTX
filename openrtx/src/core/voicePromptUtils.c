@@ -80,6 +80,7 @@ void vp_announceChannelName(const channel_t* channel,
                             const uint16_t channelNumber,
                             const vpQueueFlags_t flags)
 {
+    #ifndef NO_VOICE_PROMPTS
     clearCurrPromptIfNeeded(flags);
 
     if (flags & vpqIncludeDescriptions)
@@ -100,6 +101,7 @@ void vp_announceChannelName(const channel_t* channel,
     }
 
     playIfNeeded(flags);
+    #endif
 }
 
 void vp_queueFrequency(const freq_t freq)
@@ -200,6 +202,7 @@ void vp_announceChannelSummary(const channel_t* channel,
                                const uint16_t channelNumber, const uint16_t bank,
                                const vpSummaryInfoFlags_t infoFlags)
 {
+    #ifndef NO_VOICE_PROMPTS
     if (channel == NULL)
         return;
 
@@ -292,10 +295,12 @@ void vp_announceChannelSummary(const channel_t* channel,
     }
 
     vp_play();
+    #endif
 }
 
 void vp_announceInputChar(const char ch)
 {
+    #ifndef NO_VOICE_PROMPTS
     char buf[2] = "\0";
     buf[0]      = ch;
 
@@ -307,6 +312,7 @@ void vp_announceInputChar(const char ch)
 
     vp_queueString(buf, flags);
     vp_play();
+    #endif
 }
 
 void vp_announceInputReceiveOrTransmit(const bool tx, const vpQueueFlags_t flags)
@@ -359,6 +365,7 @@ void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
                       const bool txToneEnabled, const uint8_t txTone,
                       const vpQueueFlags_t flags)
 {
+    #ifndef NO_VOICE_PROMPTS
     clearCurrPromptIfNeeded(flags);
 
     if ((rxToneEnabled == false) && (txToneEnabled == false))
@@ -413,6 +420,7 @@ void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
     }
 
     playIfNeeded(flags);
+    #endif
 }
 
 void vp_announceSquelch(const uint8_t squelch, const vpQueueFlags_t flags)
