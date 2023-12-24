@@ -101,10 +101,10 @@ ui_src_module17 = ['openrtx/src/ui/module17/ui.c',
 ## Selection of main entrypoint
 ##
 if get_option('test') != ''
-  openrtx_src += 'tests/platform/'+get_option('test')+'.c'
+  main_src     = 'tests/platform/'+get_option('test')+'.c'
   openrtx_def += {'RUNNING_TESTSUITE' : ''}
 else
-  openrtx_src += 'openrtx/src/main.c'
+  main_src     = 'openrtx/src/main.c'
 endif
 
 ##
@@ -682,7 +682,14 @@ foreach t : targets
 
   else
 
-    exe  = executable(name, kwargs:t['opts'])
+    target_opts = t['opts']
+    exe = executable(name,
+                     sources             : target_opts['sources'] + main_src,
+                     include_directories : target_opts['include_directories'],
+                     dependencies        : target_opts['dependencies'],
+                     c_args              : target_opts['c_args'],
+                     cpp_args            : target_opts['cpp_args'],
+                     link_args           : target_opts['link_args'])
 
     if t['flashable']
 
@@ -767,7 +774,8 @@ unit_test_opts = {'c_args'             : linux_c_args,
                   'include_directories': linux_inc,
                   'dependencies'       : [sdl_dep, threads_dep, pulse_dep, codec2_dep],
                   'link_args'          : linux_l_args}
-unit_test_src = openrtx_src + linux_src + ui_src_default
+
+unit_test_src = linux_src + ui_src_default
 
 m17_golay_test = executable('m17_golay_test',
                             sources : unit_test_src + ['tests/unit/M17_golay.cpp'],
