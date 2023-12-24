@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <reent.h>
 #include <filesystem/file_access.h>
+#include <drivers/USART1.h>
 
 using namespace std;
 
@@ -31,10 +32,11 @@ extern "C" {
  */
 int _write_r(struct _reent *ptr, int fd, const void *buf, size_t cnt)
 {
-    (void) ptr;
-    (void) fd;
-    (void) buf;
-    (void) cnt;
+    if(fd == STDOUT_FILENO || fd == STDERR_FILENO)
+    {
+        usart1_writeBlock((void *) buf, cnt, 0);
+        return cnt;
+    }
 
     /* If fd is not stdout or stderr */
     ptr->_errno = EBADF;
