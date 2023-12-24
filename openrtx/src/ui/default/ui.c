@@ -1250,8 +1250,9 @@ void ui_drawSplashScreen()
 
     gfx_print(logo_orig, logo_font, TEXT_ALIGN_CENTER, yellow_fab413, "O P N\nR T X");
     gfx_print(call_orig, call_font, TEXT_ALIGN_CENTER, color_white, state.settings.callsign);
-
+    #ifndef NO_VOICE_PROMPTS
     vp_announceSplashScreen();
+    #endif
 }
 
 void ui_saveState()
@@ -1513,6 +1514,7 @@ void ui_updateFSM(bool *sync_rtx)
                                 *sync_rtx = true;
                             }
                         }
+                        #endif
                     }
                     else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
                     {

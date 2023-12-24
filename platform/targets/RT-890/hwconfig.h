@@ -25,8 +25,8 @@
 #include "pinmap.h"
 
 // Screen dimensions and pixel format
-#define SCREEN_WIDTH  160
-#define SCREEN_HEIGHT 128
+#define CONFIG_SCREEN_WIDTH  160
+#define CONFIG_SCREEN_HEIGHT 96
 
 // Battery type
 #define BAT_LIPO_2S

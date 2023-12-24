@@ -113,7 +113,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                           color_white, "%s", bw_str );
             }
             break;
-
+        #ifndef NO_DMR
         case OPMODE_DMR:
             // Print talkgroup
             gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
