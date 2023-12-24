@@ -22,7 +22,10 @@
 #include <string.h>
 #include <rtx.h>
 #include <OpMode_FM.hpp>
+#include <hwconfig.h>
+#ifdef NO_M17
 #include <OpMode_M17.hpp>
+#endif
 
 pthread_mutex_t *cfgMutex;      // Mutex for incoming config messages
 
@@ -35,7 +38,9 @@ bool  reinitFilter;             // Flag for RSSI filter re-initialisation
 OpMode  *currMode;              // Pointer to currently active opMode handler
 OpMode     noMode;              // Empty opMode handler for opmode::NONE
 OpMode_FM  fmMode;              // FM mode handler
+#if 0
 OpMode_M17 m17Mode;             // M17 mode handler
+#endif
 
 void rtx_init(pthread_mutex_t *m)
 {
@@ -153,7 +158,9 @@ void rtx_task()
             {
                 case OPMODE_NONE: currMode = &noMode;  break;
                 case OPMODE_FM:   currMode = &fmMode;  break;
+                #if 0
                 case OPMODE_M17:  currMode = &m17Mode; break;
+                #endif
                 default:   currMode = &noMode;
             }
 

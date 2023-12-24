@@ -448,15 +448,33 @@ mod17_def += openrtx_def + stm32f405_def + miosix_cm4f_def
 rt890_src = ['platform/targets/RT-890/platform.c',
              'platform/drivers/stubs/audio_stub.c',
              'platform/drivers/stubs/cps_io_stub.c',
-             'platform/drivers/stubs/display_stub.c',
-             'platform/drivers/stubs/keyboard_stub.c',
+             'platform/drivers/display/ST7735S.c',
+             'platform/drivers/keyboard/keyboard_RT890.c',
              'platform/drivers/stubs/nvmem_stub.c',
-             'platform/drivers/stubs/radio_stub.c']
+             'platform/drivers/stubs/radio_stub.c',
+             'openrtx/src/core/graphics.c',
+             'openrtx/src/core/openrtx.c',
+             'openrtx/src/core/state.c',
+             'openrtx/src/core/threads.c',
+               'openrtx/src/core/battery.c',
+               'openrtx/src/core/input.c',
+               'openrtx/src/core/utils.c',
+               'openrtx/src/core/chan.c',
+               'openrtx/src/core/cps.c',
+               'openrtx/src/core/crc.c',
+               'openrtx/src/core/openrtx.c',
+               'openrtx/src/core/audio_path.cpp',
+               'openrtx/src/core/voicePrompts.c',
+               'openrtx/src/core/voicePromptUtils.c',
+               'openrtx/src/rtx/rtx.cpp',
+               'openrtx/src/rtx/OpMode_FM.cpp',
+               'openrtx/src/main.c'
+             ]
 
 rt890_inc = ['platform/targets/RT-890']
-rt890_def = {'PLATFORM_RT890': ''}
+rt890_def = {'PLATFORM_RT890': '-fno-use-cxa-atexit'}
 
-rt890_src += at32f421_src + miosix_cm4_src + ['tests/platform/boot_test.c']
+rt890_src += at32f421_src + miosix_cm4_src + ui_src_default
 rt890_inc += openrtx_inc + at32f421_inc + miosix_cm4_inc
 rt890_def += openrtx_def + at32f421_def + miosix_cm4_def
 
