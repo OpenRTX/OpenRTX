@@ -43,7 +43,7 @@
 /** @addtogroup AT32F421_system_private_variables
   * @{
   */
-unsigned int system_core_clock           = HICK_VALUE; /*!< system clock frequency (core clock) */
+unsigned int system_core_clock           = 120000000; /*!< system clock frequency (core clock) */
 extern uint32_t __Vectors[];
 
 /**
@@ -64,8 +64,6 @@ static void SetSysClock()
 
   CRM->cfg_bit.sclksel = CRM_SCLK_PLL;            /* Switch to PLL clock                 */
   while (CRM->cfg_bit.sclksts != CRM_SCLK_PLL) ;
-
-  SystemCoreClock = 120000000;
 }
 
 /**
