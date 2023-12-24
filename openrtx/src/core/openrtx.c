@@ -71,7 +71,7 @@ void openrtx_init()
     // hide random pixels during render process
     ui_drawSplashScreen();
     gfx_render();
-    sleepFor(0u, 30u);
+    sleepFor(1u, 0u);
     display_setBacklightLevel(state.settings.brightness);
 
     #if defined(CONFIG_GPS)
