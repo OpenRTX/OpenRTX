@@ -39,4 +39,7 @@
 /* Device has no battery */
 #define CONFIG_BAT_NONE
 
+/* Device supports M17 mode */
+#define CONFIG_M17
+
 #endif

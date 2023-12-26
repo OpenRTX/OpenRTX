@@ -140,7 +140,9 @@ const char *settings_items[] =
     "GPS",
 #endif
     "Radio",
+#ifdef CONFIG_M17
     "M17",
+#endif
     "Accessibility",
     "Default Settings"
 };
@@ -257,7 +259,9 @@ const uint8_t display_num = sizeof(display_items)/sizeof(display_items[0]);
 const uint8_t settings_gps_num = sizeof(settings_gps_items)/sizeof(settings_gps_items[0]);
 #endif
 const uint8_t settings_radio_num = sizeof(settings_radio_items)/sizeof(settings_radio_items[0]);
+#ifdef CONFIG_M17
 const uint8_t settings_m17_num = sizeof(settings_m17_items)/sizeof(settings_m17_items[0]);
+#endif
 const uint8_t settings_accessibility_num = sizeof(settings_accessibility_items)/sizeof(settings_accessibility_items[0]);
 const uint8_t backup_restore_num = sizeof(backup_restore_items)/sizeof(backup_restore_items[0]);
 const uint8_t info_num = sizeof(info_items)/sizeof(info_items[0]);
@@ -783,11 +787,13 @@ static void _ui_changeMacroLatch(bool newVal)
                                    state.settings.macroMenuLatch);
 }
 
+#ifdef CONFIG_M17
 static inline void _ui_changeM17Can(int variation)
 {
     uint8_t can = state.settings.m17_can;
     state.settings.m17_can = (can + variation) % 16;
 }
+#endif
 
 static void _ui_changeVoiceLevel(int variation)
 {
@@ -978,11 +984,13 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             break;
         case 5:
             // Cycle through radio modes
+            #ifdef CONFIG_M17
             if(state.channel.mode == OPMODE_FM)
                 state.channel.mode = OPMODE_M17;
             else if(state.channel.mode == OPMODE_M17)
                 state.channel.mode = OPMODE_FM;
             else //catch any invalid states so they don't get locked out
+            #endif
                 state.channel.mode = OPMODE_FM;
             *sync_rtx = true;
             vp_announceRadioMode(state.channel.mode, queueFlags);
@@ -1451,6 +1459,7 @@ void ui_updateFSM(bool *sync_rtx)
 
                 if(ui_state.edit_mode)
                 {
+                    #ifdef CONFIG_M17
                     if(state.channel.mode == OPMODE_M17)
                     {
                         if(msg.keys & KEY_ENTER)
@@ -1482,6 +1491,7 @@ void ui_updateFSM(bool *sync_rtx)
                             _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
                         break;
                     }
+                    #endif
                 }
                 else
                 {
@@ -1511,6 +1521,7 @@ void ui_updateFSM(bool *sync_rtx)
                     }
                     else if(msg.keys & KEY_HASH)
                     {
+                        #ifdef CONFIG_M17
                         // Only enter edit mode when using M17
                         if(state.channel.mode == OPMODE_M17)
                         {
@@ -1522,6 +1533,7 @@ void ui_updateFSM(bool *sync_rtx)
                                                queueFlags);
                         }
                         else
+                        #endif
                         {
                             if(!state.tone_enabled)
                             {
@@ -1567,8 +1579,8 @@ void ui_updateFSM(bool *sync_rtx)
                                                           state.bank, vpAllInfo);
                             else
                                 vp_replayLastPrompt();
-				    		f1Handled = true;
-				    	}
+                            f1Handled = true;
+                        }
                     }
                     else if(input_isNumberPressed(msg))
                     {
@@ -1911,9 +1923,11 @@ void ui_updateFSM(bool *sync_rtx)
                         case S_RADIO:
                             state.ui_screen = SETTINGS_RADIO;
                             break;
+#ifdef CONFIG_M17
                         case S_M17:
                             state.ui_screen = SETTINGS_M17;
                             break;
+#endif
                         case S_ACCESSIBILITY:
                             state.ui_screen = SETTINGS_ACCESSIBILITY;
                             break;
@@ -2230,6 +2244,7 @@ void ui_updateFSM(bool *sync_rtx)
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_SETTINGS);
                 break;
+#ifdef CONFIG_M17
             // M17 Settings
             case SETTINGS_M17:
                 if(ui_state.edit_mode)
@@ -2325,6 +2340,7 @@ void ui_updateFSM(bool *sync_rtx)
                     }
                 }
                 break;
+#endif
             case SETTINGS_ACCESSIBILITY:
                 if(msg.keys & KEY_LEFT || (ui_state.edit_mode &&
                    (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)))
@@ -2546,10 +2562,12 @@ bool ui_updateGUI()
             _ui_drawSettingsGPS(&ui_state);
             break;
 #endif
+#ifdef CONFIG_M17
         // M17 settings screen
         case SETTINGS_M17:
             _ui_drawSettingsM17(&ui_state);
             break;
+#endif
         case SETTINGS_ACCESSIBILITY:
             _ui_drawSettingsAccessibility(&ui_state);
             break;
