@@ -35,7 +35,7 @@ void _ui_drawMainBackground()
 
 void _ui_drawMainTop()
 {
-#ifdef RTC_PRESENT
+#ifdef CONFIG_RTC
     // Print clock on top bar
     datetime_t local_time = utcToLocalTime(last_state.time,
                                            last_state.settings.utc_timezone);

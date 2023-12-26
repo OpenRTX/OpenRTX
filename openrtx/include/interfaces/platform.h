@@ -144,7 +144,7 @@ void platform_beepStart(uint16_t freq);
  */
 void platform_beepStop();
 
-#ifdef RTC_PRESENT
+#ifdef CONFIG_RTC
 /**
  * Get current UTC date and time.
  * @return structure of type datetime_t with current clock and calendar values.
