@@ -31,6 +31,6 @@
 #define CONFIG_PIX_FMT_BW
 #define GPS_PRESENT
 
-#define BAT_LIPO_1S
+#define CONFIG_BAT_LIPO_1S
 
 #endif /* HWCONFIG_H */

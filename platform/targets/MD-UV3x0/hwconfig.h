@@ -41,7 +41,7 @@ extern "C" {
 #define CONFIG_PIX_FMT_RGB565
 
 /* Battery type */
-#define BAT_LIPO_2S
+#define CONFIG_BAT_LIPO_2S
 
 /*
  * To enable pwm for display backlight dimming uncomment this directive.
