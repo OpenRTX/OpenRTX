@@ -71,8 +71,6 @@ static const GFXfont fonts[] = { TomThumb,            // 5pt
                                  FreeSans10pt7b,      // 10pt
                                  FreeSans12pt7b,      // 12pt
                                  FreeSans16pt7b,      // 16pt
-                                 FreeSans18pt7b,      // 16pt
-                                 FreeSans24pt7b,      // 24pt
     #elif defined FONT_UBUNTU_REGULAR
                                  UbuntuRegular6pt7b,  // 6pt
                                  UbuntuRegular8pt7b,  // 8pt
@@ -80,8 +78,6 @@ static const GFXfont fonts[] = { TomThumb,            // 5pt
                                  UbuntuRegular10pt7b, // 10pt
                                  UbuntuRegular12pt7b, // 12pt
                                  UbuntuRegular16pt7b, // 16pt
-                                 UbuntuRegular18pt7b, // 16pt
-                                 UbuntuRegular24pt7b, // 24pt
     #else
     #error Unsupported font family!
     #endif
@@ -634,7 +630,7 @@ point_t gfx_drawSymbol(point_t start, symbolSize_t size, textAlign_t alignment,
      *
      * TODO: improve this.
      */
-    int symSize = size + FONT_SIZE_24PT + 1;
+    int symSize = size + FONT_SIZE_NUM;
     char buffer[2] = {0};
 
     buffer[0] = (char) symbol;

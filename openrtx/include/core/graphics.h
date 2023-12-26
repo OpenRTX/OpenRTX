@@ -86,8 +86,8 @@ typedef enum
     FONT_SIZE_10PT,
     FONT_SIZE_12PT,
     FONT_SIZE_16PT,
-    FONT_SIZE_18PT,
-    FONT_SIZE_24PT
+
+    FONT_SIZE_NUM
 } fontSize_t;
 
 typedef enum
