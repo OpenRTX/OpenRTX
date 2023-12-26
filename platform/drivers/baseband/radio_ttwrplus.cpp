@@ -25,13 +25,13 @@
 #include "AT1846S.h"
 #include "SA8x8.h"
 
-const rtxStatus_t *config;   // Pointer to data structure with radio configuration
+static const rtxStatus_t *config;                // Pointer to data structure with radio configuration
 
-Band currRxBand = BND_NONE;  // Current band for RX
-Band currTxBand = BND_NONE;  // Current band for TX
-enum opstatus radioStatus;   // Current operating status
+static Band currRxBand = BND_NONE;               // Current band for RX
+static Band currTxBand = BND_NONE;               // Current band for TX
+static enum opstatus radioStatus;                // Current operating status
 
-AT1846S& at1846s = AT1846S::instance();   // AT1846S driver
+static AT1846S& at1846s = AT1846S::instance();   // AT1846S driver
 
 
 void radio_init(const rtxStatus_t *rtxState)

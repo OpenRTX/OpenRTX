@@ -30,19 +30,19 @@
 #include "HR_C5000.h"
 #include "SKY72310.h"
 
-static const freq_t IF_FREQ = 49950000;  // Intermediate frequency: 49.95MHz
+static const freq_t IF_FREQ = 49950000;         // Intermediate frequency: 49.95MHz
 
-const rtxStatus_t  *config;              // Pointer to data structure with radio configuration
+static const rtxStatus_t  *config;              // Pointer to data structure with radio configuration
 
-static md3x0Calib_t calData;             // Calibration data
-bool    isVhfBand = false;               // True if rtx stage is for VHF band
-uint8_t vtune_rx  = 0;                   // Tuning voltage for RX input filter
-uint8_t txpwr_lo  = 0;                   // APC voltage for TX output power control, low power
-uint8_t txpwr_hi  = 0;                   // APC voltage for TX output power control, high power
+static md3x0Calib_t calData;                    // Calibration data
+static bool    isVhfBand = false;               // True if rtx stage is for VHF band
+static uint8_t vtune_rx  = 0;                   // Tuning voltage for RX input filter
+static uint8_t txpwr_lo  = 0;                   // APC voltage for TX output power control, low power
+static uint8_t txpwr_hi  = 0;                   // APC voltage for TX output power control, high power
 
-enum opstatus radioStatus;               // Current operating status
+static enum opstatus radioStatus;               // Current operating status
 
-HR_C5000& C5000 = HR_C5000::instance();  // HR_C5000 driver
+static HR_C5000& C5000 = HR_C5000::instance();  // HR_C5000 driver
 
 /*
  * Parameters for RSSI voltage (mV) to input power (dBm) conversion.

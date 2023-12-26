@@ -64,8 +64,8 @@ typedef struct
 }
 state_t;
 
-extern uint32_t freq_steps[];
-extern size_t n_freq_steps;
+extern const uint32_t freq_steps[];
+extern const size_t n_freq_steps;
 
 enum TunerMode
 {

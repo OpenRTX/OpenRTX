@@ -32,8 +32,8 @@
 #include <string.h>
 #include <SDL2/SDL.h>
 
-void *frameBuffer = NULL;    /* Pointer to framebuffer */
-bool inProgress;             /* Flag to signal when rendering is in progress */
+static void *frameBuffer = NULL;    /* Pointer to framebuffer */
+static bool inProgress;             /* Flag to signal when rendering is in progress */
 
 /*
  * SDL main loop syncronization
