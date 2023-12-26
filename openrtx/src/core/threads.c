@@ -33,7 +33,7 @@
 #include <utils.h>
 #include <input.h>
 #include <backup.h>
-#ifdef GPS_PRESENT
+#ifdef CONFIG_GPS
 #include <peripherals/gps.h>
 #include <gps.h>
 #endif
@@ -156,7 +156,7 @@ void *main_thread(void *arg)
         pthread_mutex_unlock(&state_mutex);
 
         // Run GPS task
-        #if defined(GPS_PRESENT) && !defined(MD3x0_ENABLE_DBG)
+        #if defined(CONFIG_GPS) && !defined(MD3x0_ENABLE_DBG)
         gps_task();
         #endif
 
@@ -168,7 +168,7 @@ void *main_thread(void *arg)
         sleepUntil(time);
     }
 
-    #if defined(GPS_PRESENT)
+    #if defined(CONFIG_GPS)
     gps_terminate();
     #endif
 

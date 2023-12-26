@@ -74,7 +74,7 @@ void openrtx_init()
     sleepFor(0u, 30u);
     display_setBacklightLevel(state.settings.brightness);
 
-    #if defined(GPS_PRESENT)
+    #if defined(CONFIG_GPS)
     // Detect and initialise GPS
     state.gpsDetected = gps_detect(1000);
     if(state.gpsDetected) gps_init(9600);

@@ -29,10 +29,10 @@ extern "C" {
 #endif
 
 /* Device has a working real time clock */
-#define RTC_PRESENT
+#define CONFIG_RTC
 
 /* Device supports an optional GPS chip */
-#define GPS_PRESENT
+#define CONFIG_GPS
 
 /* Screen dimensions */
 #define CONFIG_SCREEN_WIDTH 128

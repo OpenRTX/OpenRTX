@@ -251,7 +251,7 @@ int _ui_getModule17ValueName(char *buf, uint8_t max_len, uint8_t index)
     return 0;
 }
 
-#ifdef GPS_PRESENT
+#ifdef CONFIG_GPS
 int _ui_getSettingsGPSEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= settings_gps_num) return -1;
@@ -318,7 +318,7 @@ void _ui_drawMenuTop(ui_state_t* ui_state)
     _ui_drawMenuList(ui_state->menu_selected, _ui_getMenuTopEntryName);
 }
 
-#ifdef GPS_PRESENT
+#ifdef CONFIG_GPS
 void _ui_drawMenuGPS()
 {
     char *fix_buf, *type_buf;
@@ -458,7 +458,7 @@ void _ui_drawSettingsDisplay(ui_state_t* ui_state)
                            _ui_getDisplayValueName);
 }
 
-#ifdef GPS_PRESENT
+#ifdef CONFIG_GPS
 void _ui_drawSettingsGPS(ui_state_t* ui_state)
 {
     gfx_clearScreen();
@@ -472,7 +472,7 @@ void _ui_drawSettingsGPS(ui_state_t* ui_state)
 }
 #endif
 
-#ifdef RTC_PRESENT
+#ifdef CONFIG_RTC
 void _ui_drawSettingsTimeDate()
 {
     gfx_clearScreen();

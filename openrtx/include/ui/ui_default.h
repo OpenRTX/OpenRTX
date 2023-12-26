@@ -80,7 +80,7 @@ enum menuItems
     M_BANK = 0,
     M_CHANNEL,
     M_CONTACTS,
-#ifdef GPS_PRESENT
+#ifdef CONFIG_GPS
     M_GPS,
 #endif
     M_SETTINGS,
@@ -91,10 +91,10 @@ enum menuItems
 enum settingsItems
 {
     S_DISPLAY = 0,
-#ifdef RTC_PRESENT
+#ifdef CONFIG_RTC
     S_TIMEDATE,
 #endif
-#ifdef GPS_PRESENT
+#ifdef CONFIG_GPS
     S_GPS,
 #endif
     S_RADIO,
@@ -120,7 +120,7 @@ enum displayItems
     D_TIMER,
 };
 
-#ifdef GPS_PRESENT
+#ifdef CONFIG_GPS
 enum settingsGPSItems
 {
     G_ENABLED = 0,
@@ -217,7 +217,7 @@ typedef struct ui_state_t
     freq_t new_tx_frequency;
     char new_rx_freq_buf[14];
     char new_tx_freq_buf[14];
-#ifdef RTC_PRESENT
+#ifdef CONFIG_RTC
     // Variables used for Time & Date input
     datetime_t new_timedate;
     char new_date_buf[9];
