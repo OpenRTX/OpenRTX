@@ -375,6 +375,7 @@ int _ui_getRadioValueName(char *buf, uint8_t max_len, uint8_t index)
     return 0;
 }
 
+#ifdef CONFIG_M17
 int _ui_getM17EntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= settings_m17_num) return -1;
@@ -405,6 +406,7 @@ int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
 
     return 0;
 }
+#endif
 
 int _ui_getAccessibilityEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
@@ -881,6 +883,7 @@ void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state)
 }
 #endif
 
+#ifdef CONFIG_M17
 void _ui_drawSettingsM17(ui_state_t* ui_state)
 {
     gfx_clearScreen();
@@ -908,6 +911,7 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
                               _ui_getM17ValueName);
     }
 }
+#endif
 
 void _ui_drawSettingsAccessibility(ui_state_t* ui_state)
 {
@@ -1041,6 +1045,7 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   color_white,   "       T+");
     }
+#ifdef CONFIG_M17
     else if (last_state.channel.mode == OPMODE_M17)
     {
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
@@ -1050,6 +1055,7 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   yellow_fab413, "2");
     }
+#endif
 #if defined(CONFIG_UI_NO_KEYBOARD)
     if (ui_state->macro_menu_selected == 2)
 #endif // CONFIG_UI_NO_KEYBOARD
@@ -1072,12 +1078,14 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white, encdec_str);
     }
+#ifdef CONFIG_M17
     else if (last_state.channel.mode == OPMODE_M17)
     {
         char encdec_str[9] = "        ";
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   color_white, encdec_str);
     }
+#endif
 
     // Second row
     // Calculate symmetric second row position, line2_pos is asymmetric like main screen
@@ -1109,12 +1117,14 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
         gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white, bw_str);
     }
+#ifdef CONFIG_M17
     else if (last_state.channel.mode == OPMODE_M17)
     {
         gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white, "       ");
 
     }
+#endif
 
 #if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 4)
@@ -1131,9 +1141,11 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
         case OPMODE_DMR:
         snprintf(mode_str, 12,"        DMR");
         break;
+#ifdef CONFIG_M17
         case OPMODE_M17:
         snprintf(mode_str, 12,"        M17");
         break;
+#endif
     }
 
     gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER,

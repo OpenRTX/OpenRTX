@@ -116,6 +116,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                     color_white, "DMR TG%s", "");
             break;
 
+        #ifdef CONFIG_M17
         case OPMODE_M17:
         {
             // Print M17 Destination ID on line 3 of 3
@@ -177,6 +178,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
             }
             break;
         }
+        #endif
     }
 }
 
@@ -276,6 +278,7 @@ void _ui_drawMainBottom()
                                 volume,
                                 true);
             break;
+        #ifdef CONFIG_M17
         case OPMODE_M17:
             gfx_drawSmeterLevel(meter_pos,
                                 meter_width,
@@ -285,6 +288,7 @@ void _ui_drawMainBottom()
                                 volume,
                                 true);
             break;
+        #endif
     }
 }
 
@@ -294,9 +298,11 @@ void _ui_drawMainVFO(ui_state_t* ui_state)
     _ui_drawMainTop(ui_state);
     _ui_drawModeInfo(ui_state);
 
+    #ifdef CONFIG_M17
     // Show VFO frequency if the OpMode is not M17 or there is no valid LSF data
     rtxStatus_t status = rtx_getCurrentStatus();
     if((status.opMode != OPMODE_M17) || (status.lsfOk == false))
+    #endif
         _ui_drawFrequency();
 
     _ui_drawMainBottom();
@@ -316,9 +322,11 @@ void _ui_drawMainMEM(ui_state_t* ui_state)
     _ui_drawMainTop(ui_state);
     _ui_drawModeInfo(ui_state);
 
+    #ifdef CONFIG_M17
     // Show channel data if the OpMode is not M17 or there is no valid LSF data
     rtxStatus_t status = rtx_getCurrentStatus();
     if((status.opMode != OPMODE_M17) || (status.lsfOk == false))
+    #endif
     {
         _ui_drawBankChannel();
         _ui_drawFrequency();
