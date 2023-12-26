@@ -31,7 +31,7 @@ void _ui_drawMainBackground()
     // Print top bar line of hline_h pixel height
     gfx_drawHLine(layout.top_h, layout.hline_h, color_grey);
     // Print bottom bar line of 1 pixel height
-    gfx_drawHLine(SCREEN_HEIGHT - layout.bottom_h - 1, layout.hline_h, color_grey);
+    gfx_drawHLine(CONFIG_SCREEN_HEIGHT - layout.bottom_h - 1, layout.hline_h, color_grey);
 }
 
 void _ui_drawMainTop(ui_state_t * ui_state)
@@ -50,9 +50,9 @@ void _ui_drawMainTop(ui_state_t * ui_state)
               color_white,"%.1fV", last_state.v_bat);
 #else
     // Otherwise print battery icon on top bar, use 4 px padding
-    uint16_t bat_width = SCREEN_WIDTH / 9;
+    uint16_t bat_width = CONFIG_SCREEN_WIDTH / 9;
     uint16_t bat_height = layout.top_h - (layout.status_v_pad * 2);
-    point_t bat_pos = {SCREEN_WIDTH - bat_width - layout.horizontal_pad,
+    point_t bat_pos = {CONFIG_SCREEN_WIDTH - bat_width - layout.horizontal_pad,
                        layout.status_v_pad};
     gfx_drawBattery(bat_pos, bat_width, bat_height, last_state.charge);
 #endif
@@ -250,10 +250,10 @@ void _ui_drawMainBottom()
     float rssi = last_state.rssi;
     float squelch = last_state.settings.sqlLevel / 16.0f;
     float volume = platform_getVolumeLevel() / 255.0f;
-    uint16_t meter_width = SCREEN_WIDTH - 2 * layout.horizontal_pad;
+    uint16_t meter_width = CONFIG_SCREEN_WIDTH - 2 * layout.horizontal_pad;
     uint16_t meter_height = layout.bottom_h;
     point_t meter_pos = { layout.horizontal_pad,
-                          SCREEN_HEIGHT - meter_height - layout.bottom_pad};
+                          CONFIG_SCREEN_HEIGHT - meter_height - layout.bottom_pad};
     uint8_t mic_level = platform_getMicLevel();
     switch(last_state.channel.mode)
     {

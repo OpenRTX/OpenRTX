@@ -37,14 +37,14 @@ extern "C" {
 #define HAS_ABSOLUTE_KNOB
 
 /* Screen dimensions */
-#define SCREEN_WIDTH 160
-#define SCREEN_HEIGHT 128
+#define CONFIG_SCREEN_WIDTH 160
+#define CONFIG_SCREEN_HEIGHT 128
 
 /* Screen pixel format */
-#define PIX_FMT_RGB565
+#define CONFIG_PIX_FMT_RGB565
 
 /* Screen has adjustable brightness */
-#define SCREEN_BRIGHTNESS
+#define CONFIG_SCREEN_BRIGHTNESS
 
 /* Battery type */
 #define BAT_LIPO_2S
