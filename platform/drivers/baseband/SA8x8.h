@@ -58,9 +58,9 @@ int sa8x8_enableHSMode();
 /**
  * Set the transmission power.
  *
- * @param power: transmission power in Watt.
+ * @param power: transmission power in mW.
  */
-void sa8x8_setTxPower(const float power);
+void sa8x8_setTxPower(const uint32_t power);
 
 /**
  * Enable or disable the speaker power amplifier.

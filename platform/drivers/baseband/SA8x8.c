@@ -272,12 +272,12 @@ int sa8x8_enableHSMode()
     return 0;
 }
 
-void sa8x8_setTxPower(const float power)
+void sa8x8_setTxPower(const uint32_t power)
 {
     char buf[SA8X8_MSG_SIZE] = { 0 };
 
     // TODO: Implement fine-grained power control through PA_BIAS SA8x8 register
-    uint8_t amp_enable = (power > 1.0f) ? 1 : 0;
+    uint8_t amp_enable = (power > 1000) ? 1 : 0;
     int ret = gpio_pin_set_dt(&radio_pwr, amp_enable);
     if(ret != 0)
         printk("SA8x8: failed to change power mode");
