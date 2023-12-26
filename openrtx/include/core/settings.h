@@ -68,25 +68,25 @@ __attribute__((packed)) settings_t;
 
 static const settings_t default_settings =
 {
-    100,              // Brightness
-#ifdef SCREEN_CONTRAST
-    DEFAULT_CONTRAST, // Contrast
+    100,                          // Brightness
+#ifdef CONFIG_SCREEN_CONTRAST
+    CONFIG_DEFAULT_CONTRAST,      // Contrast
 #else
-    255,              // Contrast
+    255,                          // Contrast
 #endif
-    4,                // Squelch level, 4 = S3
-    0,                // Vox level
-    0,                // UTC Timezone
-    false,            // GPS enabled
-    "",               // Empty callsign
-    TIMER_30S,        // 30 seconds
-    0,                // M17 CAN
-    0,                // Voice prompts off
-    0,                // Phonetic spell off
-    1,                // Automatic latch of macro menu enabled
-    0,                // not used
-    false,            // Check M17 CAN on RX
-    ""                // Empty M17 destination
+    4,                            // Squelch level, 4 = S3
+    0,                            // Vox level
+    0,                            // UTC Timezone
+    false,                        // GPS enabled
+    "",                           // Empty callsign
+    TIMER_30S,                    // 30 seconds
+    0,                            // M17 CAN
+    0,                            // Voice prompts off
+    0,                            // Phonetic spell off
+    1,                            // Automatic latch of macro menu enabled
+    0,                            // not used
+    false,                        // Check M17 CAN on RX
+    ""                            // Empty M17 destination
 };
 
 #endif /* SETTINGS_H */

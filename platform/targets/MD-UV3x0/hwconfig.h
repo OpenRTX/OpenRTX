@@ -34,11 +34,11 @@ extern "C" {
 #define GPS_PRESENT
 
 /* Screen dimensions */
-#define SCREEN_WIDTH 160
-#define SCREEN_HEIGHT 128
+#define CONFIG_SCREEN_WIDTH 160
+#define CONFIG_SCREEN_HEIGHT 128
 
 /* Screen pixel format */
-#define PIX_FMT_RGB565
+#define CONFIG_PIX_FMT_RGB565
 
 /* Battery type */
 #define BAT_LIPO_2S
@@ -62,7 +62,7 @@ extern "C" {
  * pin and its frequency has to be low (~250Hz) to not put too much overehad on
  * the processor due to timer ISR triggering at an high rate.
  *
- * #define SCREEN_BRIGHTNESS
+ * #define CONFIG_SCREEN_BRIGHTNESS
  */
 
 #ifdef __cplusplus

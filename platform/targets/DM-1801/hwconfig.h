@@ -29,18 +29,18 @@ extern "C" {
 #endif
 
 /* Screen dimensions */
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
+#define CONFIG_SCREEN_WIDTH 128
+#define CONFIG_SCREEN_HEIGHT 64
 
 /* Screen pixel format */
-#define PIX_FMT_BW
+#define CONFIG_PIX_FMT_BW
 
 /* Screen has adjustable contrast */
-#define SCREEN_CONTRAST
-#define DEFAULT_CONTRAST 71
+#define CONFIG_SCREEN_CONTRAST
+#define CONFIG_DEFAULT_CONTRAST 71
 
 /* Screen has adjustable brightness */
-#define SCREEN_BRIGHTNESS
+#define CONFIG_SCREEN_BRIGHTNESS
 
 /* Battery type */
 #define BAT_LIPO_2S

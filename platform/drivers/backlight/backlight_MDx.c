@@ -23,7 +23,7 @@
 #include <hwconfig.h>
 #include "backlight.h"
 
-#if defined(PLATFORM_MDUV3x0) && defined(SCREEN_BRIGHTNESS)
+#if defined(PLATFORM_MDUV3x0) && defined(CONFIG_SCREEN_BRIGHTNESS)
 
 /*
  * Interrupt-based software PWM for backlight dimming on MD-UV3x0.
@@ -83,7 +83,7 @@ void backlight_init()
     gpio_setMode(LCD_BKLIGHT, OUTPUT);
     gpio_clearPin(LCD_BKLIGHT);
 
-    #ifdef SCREEN_BRIGHTNESS
+    #ifdef CONFIG_SCREEN_BRIGHTNESS
     /*
      * Configure TIM11 for backlight PWM: Fpwm = 256Hz, 8 bit of resolution.
      * APB2 freq. is 84MHz but timer runs at twice this frequency, then:
@@ -146,7 +146,7 @@ void display_setBacklightLevel(uint8_t level)
      */
     if(pwmLevel > 1)
     {
-        #ifdef SCREEN_BRIGHTNESS
+        #ifdef CONFIG_SCREEN_BRIGHTNESS
         TIM11->CCR1 = pwmLevel;
         TIM11->CR1 |= TIM_CR1_CEN;
         #else

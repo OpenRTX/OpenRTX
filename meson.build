@@ -290,16 +290,16 @@ linux_def  += openrtx_def
 # Standard UI
 #
 linux_default_src = linux_src + ui_src_default
-linux_default_def = linux_def + {'SCREEN_WIDTH': '160', 'SCREEN_HEIGHT': '128', 'PIX_FMT_RGB565': '',
+linux_default_def = linux_def + {'CONFIG_SCREEN_WIDTH': '160', 'CONFIG_SCREEN_HEIGHT': '128', 'CONFIG_PIX_FMT_RGB565': '',
                                  'GPS_PRESENT': '', 'RTC_PRESENT': ''}
-linux_small_def   = linux_def + {'SCREEN_WIDTH': '128', 'SCREEN_HEIGHT': '64', 'PIX_FMT_BW': '',
+linux_small_def   = linux_def + {'CONFIG_SCREEN_WIDTH': '128', 'CONFIG_SCREEN_HEIGHT': '64', 'CONFIG_PIX_FMT_BW': '',
                                  'GPS_PRESENT': '', 'RTC_PRESENT': ''}
 
 #
 # Module17 UI
 #
 linux_mod17_src = linux_src + ui_src_module17
-linux_mod17_def = linux_def + {'SCREEN_WIDTH': '128', 'SCREEN_HEIGHT': '64', 'PIX_FMT_BW': ''}
+linux_mod17_def = linux_def + {'CONFIG_SCREEN_WIDTH': '128', 'CONFIG_SCREEN_HEIGHT': '64', 'CONFIG_PIX_FMT_BW': ''}
 
 linux_c_args   = ['-ffunction-sections', '-fdata-sections']
 linux_cpp_args = ['-ffunction-sections', '-fdata-sections', '-std=c++14']

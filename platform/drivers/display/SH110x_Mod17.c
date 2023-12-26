@@ -34,7 +34,7 @@
  * starting at 0x20000000.
  * Pixel format is black and white, one bit per pixel.
  */
-#define FB_SIZE (((SCREEN_HEIGHT * SCREEN_WIDTH) / 8 ) + 1)
+#define FB_SIZE (((CONFIG_SCREEN_HEIGHT * CONFIG_SCREEN_WIDTH) / 8 ) + 1)
 static uint8_t __attribute__((section(".bss2"))) frameBuffer[FB_SIZE];
 
 
@@ -109,7 +109,7 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
 
     for(uint8_t y = startRow; y < endRow; y++)
     {
-        for(uint8_t x = 0; x < SCREEN_WIDTH/8; x++)
+        for(uint8_t x = 0; x < CONFIG_SCREEN_WIDTH/8; x++)
         {
             gpio_clearPin(LCD_RS);              /* RS low -> command mode */
             (void) spi2_sendRecv(y & 0x0F);     /* Set Y position         */
@@ -117,7 +117,7 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
             (void) spi2_sendRecv(0xB0 | x);     /* Set X position         */
             gpio_setPin(LCD_RS);                /* RS high -> data mode   */
 
-            size_t pos = x + y * (SCREEN_WIDTH/8);
+            size_t pos = x + y * (CONFIG_SCREEN_WIDTH/8);
             spi2_sendRecv(frameBuffer[pos]);
         }
     }
@@ -127,7 +127,7 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
 
 void display_render()
 {
-    display_renderRows(0, SCREEN_HEIGHT);
+    display_renderRows(0, CONFIG_SCREEN_HEIGHT);
 }
 
 bool display_renderingInProgress()

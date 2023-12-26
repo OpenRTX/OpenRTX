@@ -88,7 +88,7 @@ const char *settings_items[] =
 
 const char *display_items[] =
 {
-#ifdef SCREEN_CONTRAST
+#ifdef CONFIG_SCREEN_CONTRAST
     "Contrast",
 #endif
     "Timer"
@@ -256,7 +256,7 @@ layout_t _ui_calculateLayout()
     point_t line3_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h + line3_h - big_line_v_pad - text_v_offset};
     point_t line4_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h + line3_h + line4_h - big_line_v_pad - text_v_offset};
     point_t line5_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h + line3_h + line4_h + line5_h - big_line_v_pad - text_v_offset};
-    point_t bottom_pos = {horizontal_pad, SCREEN_HEIGHT - bottom_pad - status_v_pad - text_v_offset};
+    point_t bottom_pos = {horizontal_pad, CONFIG_SCREEN_HEIGHT - bottom_pad - status_v_pad - text_v_offset};
 
     layout_t new_layout =
     {
@@ -318,7 +318,7 @@ void ui_drawSplashScreen()
 {
     gfx_clearScreen();
 
-    point_t origin = {0, (SCREEN_HEIGHT / 2) - 6};
+    point_t origin = {0, (CONFIG_SCREEN_HEIGHT / 2) - 6};
     gfx_print(origin, FONT_SIZE_12PT, TEXT_ALIGN_CENTER, yellow_fab413, "O P N\nR T X");
 }
 
@@ -929,7 +929,7 @@ void ui_updateFSM(bool *sync_rtx)
                 {
                     switch(ui_state.menu_selected)
                     {
-#ifdef SCREEN_CONTRAST
+#ifdef CONFIG_SCREEN_CONTRAST
                         case D_CONTRAST:
                             _ui_changeContrast(-4);
                             break;
@@ -945,7 +945,7 @@ void ui_updateFSM(bool *sync_rtx)
                 {
                     switch(ui_state.menu_selected)
                     {
-#ifdef SCREEN_CONTRAST
+#ifdef CONFIG_SCREEN_CONTRAST
                         case D_CONTRAST:
                             _ui_changeContrast(+4);
                             break;

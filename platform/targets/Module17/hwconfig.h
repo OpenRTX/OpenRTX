@@ -26,15 +26,15 @@
 #include "pinmap.h"
 
 /* Screen dimensions */
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
+#define CONFIG_SCREEN_WIDTH 128
+#define CONFIG_SCREEN_HEIGHT 64
 
 /* Screen has adjustable contrast */
-#define SCREEN_CONTRAST
-#define DEFAULT_CONTRAST 91
+#define CONFIG_SCREEN_CONTRAST
+#define CONFIG_DEFAULT_CONTRAST 91
 
 /* Screen pixel format */
-#define PIX_FMT_BW
+#define CONFIG_PIX_FMT_BW
 
 /* Device has no battery */
 #define BAT_NONE

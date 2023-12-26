@@ -289,16 +289,16 @@ void sdlEngine_init()
     window = SDL_CreateWindow("OpenRTX",
                               SDL_WINDOWPOS_UNDEFINED,
                               SDL_WINDOWPOS_UNDEFINED,
-                              SCREEN_WIDTH * 3, SCREEN_HEIGHT * 3,
+                              CONFIG_SCREEN_WIDTH * 3, CONFIG_SCREEN_HEIGHT * 3,
                               SDL_WINDOW_SHOWN );
 
     renderer = SDL_CreateRenderer(window, -1, 0);
-    SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
+    SDL_RenderSetLogicalSize(renderer, CONFIG_SCREEN_WIDTH, CONFIG_SCREEN_HEIGHT);
     displayTexture = SDL_CreateTexture(renderer,
                                        PIXEL_FORMAT,
                                        SDL_TEXTUREACCESS_STREAMING,
-                                       SCREEN_WIDTH,
-                                       SCREEN_HEIGHT);
+                                       CONFIG_SCREEN_WIDTH,
+                                       CONFIG_SCREEN_HEIGHT);
     SDL_RenderClear(renderer);
 
     // Setting brightness also triggers a render

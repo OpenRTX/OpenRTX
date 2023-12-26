@@ -21,10 +21,10 @@
 #include <hwconfig.h>
 #include <stddef.h>
 
-#ifdef PIX_FMT_BW
-static uint8_t frameBuffer[(((SCREEN_WIDTH * SCREEN_HEIGHT) / 8 ) + 1)];
+#ifdef CONFIG_PIX_FMT_BW
+static uint8_t frameBuffer[(((CONFIG_SCREEN_WIDTH * CONFIG_SCREEN_HEIGHT) / 8 ) + 1)];
 #else
-static uint16_t frameBuffer[SCREEN_WIDTH * SCREEN_HEIGHT];
+static uint16_t frameBuffer[CONFIG_SCREEN_WIDTH * CONFIG_SCREEN_HEIGHT];
 #endif
 
 
