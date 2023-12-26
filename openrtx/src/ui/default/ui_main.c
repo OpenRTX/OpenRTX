@@ -190,11 +190,16 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
 
 void _ui_drawFrequency()
 {
-    unsigned long frequency = platform_getPttStatus() ? last_state.channel.tx_frequency
-                                                      : last_state.channel.rx_frequency;
+    freq_t freq = platform_getPttStatus() ? last_state.channel.tx_frequency
+                                          : last_state.channel.rx_frequency;
+
     // Print big numbers frequency
+    char freq_str[16] = {0};
+    snprintf(freq_str, sizeof(freq_str), "%lu.%lu", (freq / 1000000), (freq % 1000000));
+    stripTrailingZeroes(freq_str);
+
     gfx_print(layout.line3_large_pos, layout.line3_large_font, TEXT_ALIGN_CENTER,
-              color_white, "%.7g", (float) frequency / 1000000.0f);
+              color_white, "%s", freq_str);
 }
 
 void _ui_drawVFOMiddleInput(ui_state_t* ui_state)

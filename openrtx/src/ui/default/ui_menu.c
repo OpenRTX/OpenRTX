@@ -349,28 +349,60 @@ int _ui_getRadioValueName(char *buf, uint8_t max_len, uint8_t index)
     if(index >= settings_radio_num)
         return -1;
 
-    int32_t offset = 0;
+    // Only returning the sign
+    if(index == R_DIRECTION)
+    {
+        buf[0] = (last_state.channel.tx_frequency >= last_state.channel.rx_frequency) ? '+' : '-';
+        buf[1] = '\0';
+
+        return 0;
+    }
+
+    // Return an x.y string
+    uint32_t value  = 0;
     switch(index)
     {
         case R_OFFSET:
-            offset = abs((int32_t)last_state.channel.tx_frequency -
-                         (int32_t)last_state.channel.rx_frequency);
-            snprintf(buf, max_len, "%gMHz", (float) offset / 1000000.0f);
-            break;
+        {
+            uint32_t txFreq = last_state.channel.tx_frequency;
+            uint32_t rxFreq = last_state.channel.rx_frequency;
 
-        case R_DIRECTION:
-            buf[0] = (last_state.channel.tx_frequency >= last_state.channel.rx_frequency) ? '+' : '-';
-            buf[1] = '\0';
+            // Yes, we're basically reinventing the abs() here. The problem is
+            // that abs() works on signed integers and using it would mean
+            // casting values back and forth between signed and unsigned.
+            if(txFreq > rxFreq)
+                value = txFreq - rxFreq;
+            else
+                value = rxFreq - txFreq;
+        }
             break;
 
         case R_STEP:
-            // Print in kHz if it is smaller than 1MHz
-            if (freq_steps[last_state.step_index] < 1000000)
-                snprintf(buf, max_len, "%gkHz", (float) freq_steps[last_state.step_index] / 1000.0f);
-            else
-                snprintf(buf, max_len, "%gMHz", (float) freq_steps[last_state.step_index] / 1000000.0f);
+            value = freq_steps[last_state.step_index];
             break;
     }
+
+    uint32_t div    = 1;
+    char     prefix = ' ';
+
+    if(value >= 1000000)
+    {
+        prefix = 'M';
+        div    = 1000000;
+    }
+    else if(value >= 1000)
+    {
+        prefix = 'k';
+        div    = 1000;
+    }
+
+    // NOTE: casts are there only to squelch -Wformat warnings on the
+    // snprintf.
+    char str[16];
+    snprintf(str, sizeof(str), "%u.%u", (unsigned int)(value / div),
+                                        (unsigned int)(value % div));
+    stripTrailingZeroes(str);
+    snprintf(buf, max_len, "%s%cHz", str, prefix);
 
     return 0;
 }
@@ -970,16 +1002,28 @@ void _ui_drawSettingsRadio(ui_state_t* ui_state)
         gfx_drawRect(rect_origin, rect_width, rect_height, color_white, false);
 
         // Print frequency with the most sensible unit
-        if (ui_state->new_offset < 1000)
-            snprintf(buf, 17, "%dHz", ui_state->new_offset);
-        else if (ui_state->new_offset < 1000000)
-            snprintf(buf, 17, "%gkHz", (float) ui_state->new_offset / 1000.0f);
-        else
-            snprintf(buf, 17, "%gMHz", (float) ui_state->new_offset / 1000000.0f);
+        char     prefix = ' ';
+        uint32_t div    = 1;
+        if(ui_state->new_offset >= 1000000)
+        {
+            prefix = 'M';
+            div    = 1000000;
+        }
+        else if(ui_state->new_offset >= 1000)
+        {
+            prefix = 'k';
+            div    = 1000;
+        }
+
+        // NOTE: casts are there only to squelch -Wformat warnings on the
+        // snprintf.
+        snprintf(buf, sizeof(buf), "%u.%u", (unsigned int)(ui_state->new_offset / div),
+                                            (unsigned int)(ui_state->new_offset % div));
+        stripTrailingZeroes(buf);
 
         gfx_printLine(1, 1, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
                       layout.horizontal_pad, layout.input_font,
-                      TEXT_ALIGN_CENTER, color_white, buf);
+                      TEXT_ALIGN_CENTER, color_white, "%s%cHz", buf, prefix);
     }
     else
     {
