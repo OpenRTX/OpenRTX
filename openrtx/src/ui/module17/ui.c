@@ -44,14 +44,14 @@ extern void _ui_drawMainVFOInput(ui_state_t* ui_state);
 extern void _ui_drawMainMEM(ui_state_t* ui_state);
 /* UI menu functions, their implementation is in "ui_menu.c" */
 extern void _ui_drawMenuTop(ui_state_t* ui_state);
-#ifdef GPS_PRESENT
+#ifdef CONFIG_GPS
 extern void _ui_drawMenuGPS();
 extern void _ui_drawSettingsGPS(ui_state_t* ui_state);
 #endif
 extern void _ui_drawMenuSettings(ui_state_t* ui_state);
 extern void _ui_drawMenuInfo(ui_state_t* ui_state);
 extern void _ui_drawMenuAbout();
-#ifdef RTC_PRESENT
+#ifdef CONFIG_RTC
 extern void _ui_drawSettingsTimeDate();
 extern void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state);
 #endif
@@ -64,7 +64,7 @@ extern bool _ui_drawMacroMenu(ui_state_t* ui_state);
 const char *menu_items[] =
 {
     "Settings",
-#ifdef GPS_PRESENT
+#ifdef CONFIG_GPS
     "GPS",
 #endif
     "Info",
@@ -75,10 +75,10 @@ const char *menu_items[] =
 const char *settings_items[] =
 {
     "Display",
-#ifdef RTC_PRESENT
+#ifdef CONFIG_RTC
     "Time & Date",
 #endif
-#ifdef GPS_PRESENT
+#ifdef CONFIG_GPS
     "GPS",
 #endif
     "M17",
@@ -110,7 +110,7 @@ const char *module17_items[] =
     "Mic Gain"
 };
 
-#ifdef GPS_PRESENT
+#ifdef CONFIG_GPS
 const char *settings_gps_items[] =
 {
     "GPS Enabled",
@@ -172,7 +172,7 @@ static const char symbols_callsign[] = "_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890/-.
 const uint8_t menu_num = sizeof(menu_items)/sizeof(menu_items[0]);
 const uint8_t settings_num = sizeof(settings_items)/sizeof(settings_items[0]);
 const uint8_t display_num = sizeof(display_items)/sizeof(display_items[0]);
-#ifdef GPS_PRESENT
+#ifdef CONFIG_GPS
 const uint8_t settings_gps_num = sizeof(settings_gps_items)/sizeof(settings_gps_items[0]);
 #endif
 const uint8_t m17_num = sizeof(m17_items)/sizeof(m17_items[0]);
@@ -332,7 +332,7 @@ freq_t _ui_freq_add_digit(freq_t freq, uint8_t pos, uint8_t number)
     return freq += number * coefficient;
 }
 
-#ifdef RTC_PRESENT
+#ifdef CONFIG_RTC
 void _ui_timedate_add_digit(datetime_t *timedate, uint8_t pos, uint8_t number)
 {
     switch(pos)

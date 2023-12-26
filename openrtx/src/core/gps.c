@@ -31,7 +31,7 @@
 static char sentence[2*MINMEA_MAX_LENGTH];
 static bool gpsEnabled        = false;
 static bool readNewSentence   = true;
-#ifdef RTC_PRESENT
+#ifdef CONFIG_RTC
 static bool isRtcSyncronised  = false;
 #endif
 
@@ -191,7 +191,7 @@ void gps_task()
     pthread_mutex_unlock(&state_mutex);
 
     // Synchronize RTC with GPS UTC clock, only when fix is done
-    #ifdef RTC_PRESENT
+    #ifdef CONFIG_RTC
     if(state.gps_set_time)
     {
         if((sId == MINMEA_SENTENCE_RMC) &&

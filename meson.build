@@ -291,9 +291,9 @@ linux_def  += openrtx_def
 #
 linux_default_src = linux_src + ui_src_default
 linux_default_def = linux_def + {'CONFIG_SCREEN_WIDTH': '160', 'CONFIG_SCREEN_HEIGHT': '128', 'CONFIG_PIX_FMT_RGB565': '',
-                                 'GPS_PRESENT': '', 'RTC_PRESENT': ''}
+                                 'CONFIG_GPS': '', 'CONFIG_RTC': ''}
 linux_small_def   = linux_def + {'CONFIG_SCREEN_WIDTH': '128', 'CONFIG_SCREEN_HEIGHT': '64', 'CONFIG_PIX_FMT_BW': '',
-                                 'GPS_PRESENT': '', 'RTC_PRESENT': ''}
+                                 'CONFIG_GPS': '', 'CONFIG_RTC': ''}
 
 #
 # Module17 UI

@@ -549,7 +549,7 @@ void vp_announceM17Info(const channel_t* channel, bool isEditing,
     playIfNeeded(flags);
 }
 
-#ifdef GPS_PRESENT
+#ifdef CONFIG_GPS
 // cardinal point plus or minus this value is still considered cardinal point.
 #define margin 3
 
@@ -725,7 +725,7 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
 
     vp_play();
 }
-#endif // GPS_PRESENT
+#endif // CONFIG_GPS
 
 void vp_announceAboutScreen()
 {
@@ -770,7 +770,7 @@ void vp_announceRestoreScreen()
     vp_play();
 }
 
-#ifdef RTC_PRESENT
+#ifdef CONFIG_RTC
 void vp_announceSettingsTimeDate()
 {
     vp_flush();
@@ -796,7 +796,7 @@ void vp_announceSettingsTimeDate()
 
     vp_play();
 }
-#endif // RTC_PRESENT
+#endif // CONFIG_RTC
 
 void vp_announceSettingsVoiceLevel(const vpQueueFlags_t flags)
 {
@@ -869,7 +869,7 @@ void vp_announceScreen(uint8_t ui_screen)
                                       state.bank, infoFlags);
             break;
 
-        #ifdef GPS_PRESENT
+        #ifdef CONFIG_GPS
         case MENU_GPS:
             vp_announceGPSInfo(vpGPSAll);
             break;
@@ -887,7 +887,7 @@ void vp_announceScreen(uint8_t ui_screen)
             vp_announceAboutScreen();
             break;
 
-        #ifdef RTC_PRESENT
+        #ifdef CONFIG_RTC
         case SETTINGS_TIMEDATE:
             vp_announceSettingsTimeDate();
             break;
