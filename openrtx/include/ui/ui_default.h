@@ -98,7 +98,9 @@ enum settingsItems
     S_GPS,
 #endif
     S_RADIO,
+#ifdef CONFIG_M17
     S_M17,
+#endif
     S_VOICE,
     S_RESET2DEFAULTS,
 };
