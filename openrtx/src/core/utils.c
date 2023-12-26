@@ -17,6 +17,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <string.h>
 #include <utils.h>
 #include <stdio.h>
 #include <math.h>
@@ -62,4 +63,16 @@ uint32_t bcdToBin(uint32_t bcd)
            ((bcd >> 8) & 0x0F)  * 100 +
            ((bcd >> 4) & 0x0F)  * 10 +
            (bcd & 0x0F);
+}
+
+void stripTrailingZeroes(char *str)
+{
+    for(size_t i = strlen(str); i > 2; i--)
+    {
+        if((str[i - 1] != '0') || (str[i - 2] == '.'))
+        {
+            str[i] = '\0';
+            return;
+        }
+    }
 }

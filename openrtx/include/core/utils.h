@@ -54,6 +54,16 @@ uint8_t interpCalParameter(const freq_t freq, const freq_t *calPoints,
  */
 uint32_t bcdToBin(uint32_t bcd);
 
+/**
+ * Given a string containing a number expressed in decimal notation, remove all
+ * the unnecessary trailing zeroes. I.e. the string "123.4560000" will be trimmed
+ * down to "123.456". This function requires that the input string has at least
+ * one decimal point and proceeds stripping the zeroes from the end to the beginning.
+ *
+ * @param str: string to be processed.
+ */
+void stripTrailingZeroes(char *str);
+
 #ifdef __cplusplus
 }
 #endif

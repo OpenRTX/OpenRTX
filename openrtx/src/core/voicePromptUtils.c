@@ -60,20 +60,6 @@ static void addSilenceIfNeeded(const vpQueueFlags_t flags)
     vp_queuePrompt(PROMPT_SILENCE);
 }
 
-static void removeUnnecessaryZerosFromVoicePrompts(char* str)
-{
-    const int NUM_DECIMAL_PLACES = 1;
-    int len                      = strlen(str);
-    for (int i = len; i > 2; i--)
-    {
-        if ((str[i - 1] != '0') || (str[i - (NUM_DECIMAL_PLACES + 1)] == '.'))
-        {
-            str[i] = '\0';
-            return;
-        }
-    }
-}
-
 
 
 void vp_announceChannelName(const channel_t* channel,
@@ -106,11 +92,11 @@ void vp_queueFrequency(const freq_t freq)
 {
     char buffer[16];
     int MHz = (freq / 1000000);
-    int kHz = ((freq % 1000000) / 10);
+    int kHz = ((freq % 1000000) / 100);
 
     snprintf(buffer, 16, "%d.%05d", MHz, kHz);
 
-    removeUnnecessaryZerosFromVoicePrompts(buffer);
+    stripTrailingZeroes(buffer);
 
     vp_queueString(buffer, vpAnnounceCommonSymbols);
     vp_queuePrompt(PROMPT_MEGAHERTZ);
@@ -191,7 +177,7 @@ void vp_announcePower(const uint32_t power, const vpQueueFlags_t flags)
     // Compute x.y format avoiding to pull in floating point math.
     // Remember that power is expressed in mW!
     char buffer[16] = "\0";
-    snprintf(buffer, 16, "%d.%d", (power / 1000), (power % 1000) / 100);
+    snprintf(buffer, 16, "%lu.%lu", (power / 1000), (power % 1000) / 100);
 
     vp_queueString(buffer, vpAnnounceCommonSymbols);
     vp_queuePrompt(PROMPT_WATTS);
@@ -705,7 +691,7 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
     {
         // lat/long
         snprintf(buffer, 16, "%8.6f", state.gps_data.latitude);
-        removeUnnecessaryZerosFromVoicePrompts(buffer);
+        stripTrailingZeroes(buffer);
         vp_queuePrompt(PROMPT_LATITUDE);
         vp_queueString(buffer, vpAnnounceCommonSymbols);
         vp_queuePrompt(PROMPT_NORTH);
@@ -717,7 +703,7 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
         voicePrompt_t direction = (longitude < 0) ? PROMPT_WEST : PROMPT_EAST;
         longitude               = (longitude < 0) ? -longitude : longitude;
         snprintf(buffer, 16, "%8.6f", longitude);
-        removeUnnecessaryZerosFromVoicePrompts(buffer);
+        stripTrailingZeroes(buffer);
 
         vp_queuePrompt(PROMPT_LONGITUDE);
         vp_queueString(buffer, vpAnnounceCommonSymbols);
