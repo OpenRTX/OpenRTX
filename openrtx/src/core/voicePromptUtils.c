@@ -179,7 +179,7 @@ void vp_announceBandwidth(const uint8_t bandwidth, const vpQueueFlags_t flags)
     playIfNeeded(flags);
 }
 
-void vp_anouncePower(const float power, const vpQueueFlags_t flags)
+void vp_announcePower(const uint32_t power, const vpQueueFlags_t flags)
 {
     clearCurrPromptIfNeeded(flags);
 
@@ -188,8 +188,10 @@ void vp_anouncePower(const float power, const vpQueueFlags_t flags)
         vp_queuePrompt(PROMPT_POWER);
     }
 
+    // Compute x.y format avoiding to pull in floating point math.
+    // Remember that power is expressed in mW!
     char buffer[16] = "\0";
-    snprintf(buffer, 16, "%1.1f", power);
+    snprintf(buffer, 16, "%d.%d", (power / 1000), (power % 1000) / 100);
 
     vp_queueString(buffer, vpAnnounceCommonSymbols);
     vp_queuePrompt(PROMPT_WATTS);
@@ -281,8 +283,7 @@ void vp_announceChannelSummary(const channel_t* channel,
 
     if ((infoFlags & vpPower) != 0)
     {
-        float power = dBmToWatt(channel->power);
-        vp_anouncePower(power, localFlags);
+        vp_announcePower(channel->power, localFlags);
         addSilenceIfNeeded(localFlags);
     }
 
@@ -1042,7 +1043,7 @@ void vp_announceSplashScreen()
 {
     if (state.settings.vpLevel < vpBeep)
         return;
-    
+
     vp_flush();
 
     if (state.settings.vpLevel == vpBeep)
@@ -1050,7 +1051,7 @@ void vp_announceSplashScreen()
         vp_beepSeries(BOOT_MELODY);
         return;
     }
-    
+
     vpQueueFlags_t localFlags = vpqAddSeparatingSilence;
 
     // Force on the descriptions for level 3.
@@ -1061,7 +1062,7 @@ void vp_announceSplashScreen()
 
     vp_queueStringTableEntry(&currentLanguage->openRTX);
     vp_queuePrompt(PROMPT_VFO);
-    vp_announceFrequencies(state.channel.rx_frequency, 
+    vp_announceFrequencies(state.channel.rx_frequency,
                            state.channel.tx_frequency,
                            localFlags);
     vp_announceRadioMode(state.channel.mode, localFlags);

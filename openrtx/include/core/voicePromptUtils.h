@@ -114,7 +114,7 @@ void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
 /**
  *
  */
-void vp_anouncePower(const float power, const vpQueueFlags_t flags);
+void vp_announcePower(const uint32_t power, const vpQueueFlags_t flags);
 
 /**
  *

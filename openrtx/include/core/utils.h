@@ -48,16 +48,6 @@ uint8_t interpCalParameter(const freq_t freq, const freq_t *calPoints,
                            const uint8_t *param, const uint8_t elems);
 
 /**
- * Convert from "OpenRTX dBm" to watt.
- * In OpenRTX cps power is stored as the coefficient n of the equation
- * P(dBm) = 10 + 2*0.2.
- *
- * @param n: coefficient of the dBm equation.
- * @return power in watt.
- */
-float dBmToWatt(const uint8_t n);
-
-/**
  * \internal Utility function to convert 4 byte BCD values into a 32-bit
  * unsigned integer ones.
  */

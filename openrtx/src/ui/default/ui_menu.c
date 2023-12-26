@@ -1153,8 +1153,13 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
 #endif // CONFIG_UI_NO_KEYBOARD
     gfx_print(pos_2, layout.top_font, TEXT_ALIGN_RIGHT,
               yellow_fab413, "6        ");
+
+    // Compute x.y format for TX power avoiding to pull in floating point math.
+    // Remember that power is expressed in mW!
+    unsigned int power_int = (last_state.channel.power / 1000);
+    unsigned int power_dec = (last_state.channel.power % 1000) / 100;
     gfx_print(pos_2, layout.top_font, TEXT_ALIGN_RIGHT,
-              color_white, "%.1gW", dBmToWatt(last_state.channel.power));
+              color_white, "%d.%dW", power_int, power_dec);
 
     // Third row
 #if defined(CONFIG_UI_NO_KEYBOARD)

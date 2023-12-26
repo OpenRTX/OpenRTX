@@ -195,7 +195,7 @@ typedef struct
             rx_only        : 1,    //< 1 means RX-only channel
             _unused        : 5;    //< Padding to 8 bits
 
-    uint8_t power;                 //< P = 10dBm + n*0.2dBm, we store n
+    uint32_t power;                //< Tx power, in mW
 
     freq_t  rx_frequency;          //< RX Frequency, in Hz
     freq_t  tx_frequency;          //< TX Frequency, in Hz
