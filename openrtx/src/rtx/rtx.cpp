@@ -24,18 +24,16 @@
 #include <OpMode_FM.hpp>
 #include <OpMode_M17.hpp>
 
-pthread_mutex_t *cfgMutex;      // Mutex for incoming config messages
+static pthread_mutex_t   *cfgMutex;     // Mutex for incoming config messages
+static const rtxStatus_t *newCnf;       // Pointer for incoming config messages
+static rtxStatus_t        rtxStatus;    // RTX driver status
+static float              rssi;         // Current RSSI in dBm
+static bool               reinitFilter; // Flag for RSSI filter re-initialisation
 
-const rtxStatus_t *newCnf;      // Pointer for incoming config messages
-rtxStatus_t rtxStatus;          // RTX driver status
-
-float rssi;                     // Current RSSI in dBm
-bool  reinitFilter;             // Flag for RSSI filter re-initialisation
-
-OpMode  *currMode;              // Pointer to currently active opMode handler
-OpMode     noMode;              // Empty opMode handler for opmode::NONE
-OpMode_FM  fmMode;              // FM mode handler
-OpMode_M17 m17Mode;             // M17 mode handler
+static OpMode  *currMode;               // Pointer to currently active opMode handler
+static OpMode     noMode;               // Empty opMode handler for opmode::NONE
+static OpMode_FM  fmMode;               // FM mode handler
+static OpMode_M17 m17Mode;              // M17 mode handler
 
 void rtx_init(pthread_mutex_t *m)
 {

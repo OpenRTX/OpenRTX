@@ -40,7 +40,7 @@ StreamHandler Dma2_Stream0_hdl = Dma2_Stream0::init(10, DataSize::_16BIT, false)
 StreamHandler Dma2_Stream1_hdl = Dma2_Stream1::init(10, DataSize::_16BIT, false);
 StreamHandler Dma2_Stream2_hdl = Dma2_Stream2::init(10, DataSize::_16BIT, false);
 
-struct streamCtx *AdcContext[3];
+static struct streamCtx *AdcContext[3];
 
 static constexpr AdcPeriph periph[] =
 {

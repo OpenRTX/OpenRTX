@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include "ADC1_Mod17.h"
 
-pthread_mutex_t adcMutex;
+static pthread_mutex_t adcMutex;
 
 void adc1_init()
 {
