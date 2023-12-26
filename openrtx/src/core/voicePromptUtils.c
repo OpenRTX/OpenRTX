@@ -380,7 +380,9 @@ void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
         if (flags & vpqIncludeDescriptions)
             vp_queuePrompt(PROMPT_TONE);
 
-        snprintf(buffer, 16, "%3.1f", ctcss_tone[rxTone] / 10.0f);
+        uint16_t tone = ctcss_tone[rxTone];
+        snprintf(buffer, sizeof(buffer), "%d.%d", (tone / 10), (tone % 10));
+
         vp_queueString(buffer, vpAnnounceCommonSymbols);
         vp_queuePrompt(PROMPT_HERTZ);
         playIfNeeded(flags);
@@ -396,7 +398,10 @@ void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
             vp_queuePrompt(PROMPT_RECEIVE);
             vp_queuePrompt(PROMPT_TONE);
         }
-        snprintf(buffer, 16, "%3.1f", ctcss_tone[rxTone] / 10.0f);
+
+        uint16_t tone = ctcss_tone[rxTone];
+        snprintf(buffer, sizeof(buffer), "%d.%d", (tone / 10), (tone % 10));
+
         vp_queueString(buffer, vpAnnounceCommonSymbols);
         vp_queuePrompt(PROMPT_HERTZ);
     }
@@ -408,7 +413,9 @@ void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
             vp_queuePrompt(PROMPT_TONE);
         }
 
-        snprintf(buffer, 16, "%3.1f", ctcss_tone[txTone] / 10.0f);
+        uint16_t tone = ctcss_tone[txTone];
+        snprintf(buffer, sizeof(buffer), "%d.%d", (tone / 10), (tone % 10));
+
         vp_queueString(buffer, vpAnnounceCommonSymbols);
         vp_queuePrompt(PROMPT_HERTZ);
     }

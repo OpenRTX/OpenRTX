@@ -18,6 +18,7 @@
  ***************************************************************************/
 
 #include <utils.h>
+#include <stdio.h>
 #include <math.h>
 
 uint8_t interpCalParameter(const freq_t freq, const freq_t *calPoints,
