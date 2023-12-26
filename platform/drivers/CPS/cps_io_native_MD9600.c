@@ -62,15 +62,15 @@ static int _readChannelAtAddress(channel_t *channel, uint32_t addr)
 
     if(chData.power == 3)
     {
-        channel->power = 135;  /* High power -> 5W = 37dBm */
+        channel->power = 5000;  /* High power, 5W */
     }
     else if(chData.power == 2)
     {
-        channel->power = 120;  /* Mid power -> 2.5W = 34dBm */
+        channel->power = 2500;  /* Mid power, 2.5W */
     }
     else
     {
-        channel->power = 100;  /* Low power -> 1W = 30dBm */
+        channel->power = 1000;  /* Low power, 1W */
     }
 
     /*

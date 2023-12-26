@@ -280,7 +280,8 @@ void radio_enableTx()
     SKY73210_setFrequency(pllFreq, 5);
 
     // Set TX output power, constrain between 1W and 5W.
-    float power  = std::max(std::min(config->txPower, 5.0f), 1.0f);
+    float power  = static_cast < float >(config->txPower) / 1000.0f;
+          power  = std::max(std::min(power, 5.0f), 1.0f);
     float pwrHi  = static_cast< float >(txpwr_hi);
     float pwrLo  = static_cast< float >(txpwr_lo);
     float apc    = pwrLo + (pwrHi - pwrLo)/4.0f*(power - 1.0f);

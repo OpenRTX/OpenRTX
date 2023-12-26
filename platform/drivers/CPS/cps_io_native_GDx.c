@@ -137,7 +137,7 @@ int cps_readChannel(channel_t *channel, uint16_t pos)
     channel->mode            = chData.channel_mode + 1;
     channel->bandwidth       = chData.bandwidth;
     channel->rx_only         = chData.rx_only;
-    channel->power           = ((chData.power == 1) ? 135 : 100);
+    channel->power           = ((chData.power == 1) ? 5000 : 1000); // 5W or 1W
     channel->rx_frequency    = bcdToBin(chData.rx_frequency) * 10;
     channel->tx_frequency    = bcdToBin(chData.tx_frequency) * 10;
     channel->scanList_index  = chData.scan_list_index;

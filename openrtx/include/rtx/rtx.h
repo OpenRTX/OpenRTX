@@ -43,7 +43,7 @@ typedef struct
     freq_t rxFrequency;     /**< RX frequency, in Hz           */
     freq_t txFrequency;     /**< TX frequency, in Hz           */
 
-    float    txPower;       /**< TX power, in W                */
+    uint32_t txPower;       /**< TX power, in mW               */
     uint8_t  sqlLevel;      /**< Squelch opening level         */
 
     uint16_t rxToneEn : 1,  /**< RX CTC/DCS tone enable        */
