@@ -32,11 +32,13 @@
 
 state_t state;
 pthread_mutex_t state_mutex;
-long long int lastUpdate = 0;
+static long long int lastUpdate = 0;
 
 // Commonly used frequency steps, expressed in Hz
-uint32_t freq_steps[] = { 1000, 5000, 6250, 10000, 12500, 15000, 20000, 25000, 50000, 100000 };
-size_t n_freq_steps = sizeof(freq_steps) / sizeof(freq_steps[0]);
+const uint32_t freq_steps[] = { 1000, 5000, 6250, 10000, 12500, 15000,
+                                20000, 25000, 50000, 100000 };
+const size_t n_freq_steps   = sizeof(freq_steps) / sizeof(freq_steps[0]);
+
 
 void state_init()
 {

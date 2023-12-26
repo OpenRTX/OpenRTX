@@ -25,8 +25,8 @@
 #include <MCP4551.h>
 #include "../audio/MAX9814.h"
 
-enum  opstatus      radioStatus;   // Current operating status
-extern mod17Calib_t mod17CalData;       // Calibration data
+static enum  opstatus      radioStatus;   // Current operating status
+extern mod17Calib_t mod17CalData;         // Calibration data
 
 
 void radio_init(const rtxStatus_t *rtxState)

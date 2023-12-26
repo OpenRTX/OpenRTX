@@ -29,17 +29,17 @@
 #include "HR_C6000.h"
 #include "AT1846S.h"
 
-const rtxStatus_t      *config;   // Pointer to data structure with radio configuration
+static const rtxStatus_t *config;                // Pointer to data structure with radio configuration
 
-static gdxCalibration_t calData;  // Calibration data
-Band    currRxBand  = BND_NONE;   // Current band for RX
-Band    currTxBand  = BND_NONE;   // Current band for TX
-uint16_t apcVoltage = 0;          // APC voltage for TX output power control
+static gdxCalibration_t calData;                 // Calibration data
+static Band    currRxBand  = BND_NONE;           // Current band for RX
+static Band    currTxBand  = BND_NONE;           // Current band for TX
+static uint16_t apcVoltage = 0;                  // APC voltage for TX output power control
 
-enum opstatus radioStatus;        // Current operating status
+static enum opstatus radioStatus;                // Current operating status
 
-HR_C6000& C6000  = HR_C6000::instance();  // HR_C5000 driver
-AT1846S& at1846s = AT1846S::instance();   // AT1846S driver
+static HR_C6000& C6000  = HR_C6000::instance();  // HR_C5000 driver
+static AT1846S& at1846s = AT1846S::instance();   // AT1846S driver
 
 void radio_init(const rtxStatus_t *rtxState)
 {
