@@ -32,7 +32,7 @@
  * LCD framebuffer, statically allocated.
  * Pixel format is black and white, one bit per pixel
  */
-#define FB_SIZE (((SCREEN_HEIGHT * SCREEN_WIDTH) / 8 ) + 1)
+#define FB_SIZE (((CONFIG_SCREEN_HEIGHT * CONFIG_SCREEN_WIDTH) / 8 ) + 1)
 static uint8_t frameBuffer[FB_SIZE];
 
 /**
@@ -157,7 +157,7 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
 
 void display_render()
 {
-    display_renderRows(0, SCREEN_HEIGHT / 8);
+    display_renderRows(0, CONFIG_SCREEN_HEIGHT / 8);
 }
 
 bool display_renderingInProgress()

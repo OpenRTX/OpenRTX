@@ -92,7 +92,7 @@
  * starting at 0x20000000 and accessible by the DMA.
  * Pixel format is RGB565, 16 bit per pixel.
  */
-static uint16_t __attribute__((section(".bss2"))) frameBuffer[SCREEN_WIDTH * SCREEN_HEIGHT];
+static uint16_t __attribute__((section(".bss2"))) frameBuffer[CONFIG_SCREEN_WIDTH * CONFIG_SCREEN_HEIGHT];
 
 using namespace miosix;
 static Thread *lcdWaiting = 0;
@@ -132,7 +132,7 @@ void display_init()
     backlight_init();
 
     /* Clear framebuffer, setting all pixels to 0x00 makes the screen white */
-    memset(frameBuffer, 0x00, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(uint16_t));
+    memset(frameBuffer, 0x00, CONFIG_SCREEN_WIDTH * CONFIG_SCREEN_HEIGHT * sizeof(uint16_t));
 
     /*
      * Turn on DMA2 and configure its interrupt. DMA is used to transfer the
@@ -467,9 +467,9 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
      */
     for(uint8_t y = startRow; y < endRow; y++)
     {
-        for(uint8_t x = 0; x < SCREEN_WIDTH; x++)
+        for(uint8_t x = 0; x < CONFIG_SCREEN_WIDTH; x++)
         {
-            size_t pos = x + y * SCREEN_WIDTH;
+            size_t pos = x + y * CONFIG_SCREEN_WIDTH;
             uint16_t pixel = frameBuffer[pos];
             frameBuffer[pos] = __builtin_bswap16(pixel);
         }
@@ -491,8 +491,8 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
      * we have to set the transfer size to twice the framebuffer size, since
      * this one is made of 16 bit variables.
      */
-    DMA2_Stream7->NDTR = (endRow - startRow) * SCREEN_WIDTH * sizeof(uint16_t);
-    DMA2_Stream7->PAR  = ((uint32_t ) frameBuffer + (startRow * SCREEN_WIDTH
+    DMA2_Stream7->NDTR = (endRow - startRow) * CONFIG_SCREEN_WIDTH * sizeof(uint16_t);
+    DMA2_Stream7->PAR  = ((uint32_t ) frameBuffer + (startRow * CONFIG_SCREEN_WIDTH
                                                      * sizeof(uint16_t)));
     DMA2_Stream7->M0AR = LCD_FSMC_ADDR_DATA;
     DMA2_Stream7->CR = DMA_SxCR_CHSEL         /* Channel 7                   */
@@ -521,7 +521,7 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
 
 void display_render()
 {
-    display_renderRows(0, SCREEN_HEIGHT);
+    display_renderRows(0, CONFIG_SCREEN_HEIGHT);
 }
 
 bool display_renderingInProgress()

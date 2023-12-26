@@ -35,7 +35,7 @@
  * starting at 0x20000000.
  * Pixel format is black and white, one bit per pixel.
  */
-#define FB_SIZE (((SCREEN_HEIGHT * SCREEN_WIDTH) / 8 ) + 1)
+#define FB_SIZE (((CONFIG_SCREEN_HEIGHT * CONFIG_SCREEN_WIDTH) / 8 ) + 1)
 static uint8_t __attribute__((section(".bss2"))) frameBuffer[FB_SIZE];
 
 /**
@@ -147,7 +147,7 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
 
 void display_render()
 {
-    display_renderRows(0, (SCREEN_WIDTH / 8) - 1);
+    display_renderRows(0, (CONFIG_SCREEN_WIDTH / 8) - 1);
 }
 
 bool display_renderingInProgress()

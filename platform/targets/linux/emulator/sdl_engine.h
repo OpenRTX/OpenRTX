@@ -26,15 +26,15 @@
  * Screen dimensions, adjust basing on the size of the screen you need to
  * emulate
  */
-#ifndef SCREEN_WIDTH
-#define SCREEN_WIDTH 160
+#ifndef CONFIG_SCREEN_WIDTH
+#define CONFIG_SCREEN_WIDTH 160
 #endif
 
-#ifndef SCREEN_HEIGHT
-#define SCREEN_HEIGHT 128
+#ifndef CONFIG_SCREEN_HEIGHT
+#define CONFIG_SCREEN_HEIGHT 128
 #endif
 
-#ifdef PIX_FMT_RGB565
+#ifdef CONFIG_PIX_FMT_RGB565
 #define PIXEL_FORMAT SDL_PIXELFORMAT_RGB565
 #define PIXEL_SIZE uint16_t
 #else

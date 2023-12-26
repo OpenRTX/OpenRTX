@@ -26,9 +26,9 @@
  * Display properties are encoded in the devicetree
  */
 #define DISPLAY       DT_CHOSEN(zephyr_display)
-#define SCREEN_WIDTH  DT_PROP(DISPLAY, width)
-#define SCREEN_HEIGHT DT_PROP(DISPLAY, height)
-#define PIX_FMT_BW
+#define CONFIG_SCREEN_WIDTH  DT_PROP(DISPLAY, width)
+#define CONFIG_SCREEN_HEIGHT DT_PROP(DISPLAY, height)
+#define CONFIG_PIX_FMT_BW
 #define GPS_PRESENT
 
 #define BAT_LIPO_1S

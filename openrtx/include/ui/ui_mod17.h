@@ -108,11 +108,11 @@ enum backupRestoreItems
 
 enum displayItems
 {
-#ifdef SCREEN_CONTRAST
+#ifdef CONFIG_SCREEN_CONTRAST
     D_CONTRAST = 0
     ,D_TIMER
 #endif
-#ifndef SCREEN_CONTRAST
+#ifndef CONFIG_SCREEN_CONTRAST
     D_TIMER = 0
 #endif
 };

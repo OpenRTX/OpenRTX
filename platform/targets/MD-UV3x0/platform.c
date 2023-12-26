@@ -29,7 +29,7 @@
 #include <interfaces/audio.h>
 #include <chSelector.h>
 
-#ifdef SCREEN_BRIGHTNESS
+#ifdef CONFIG_SCREEN_BRIGHTNESS
 #include <backlight.h>
 #endif
 

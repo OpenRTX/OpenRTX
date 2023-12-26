@@ -41,7 +41,7 @@ extern "C" {
  *********************** HOW TO MANAGE FRAMEBUFFER *****************************
  *
  * This driver allocates the framebuffer as a block of linearly addressed memory
- * equivalent to an array of SCREEN_HEIGHT*SCREEN_WIDTH elements.
+ * equivalent to an array of CONFIG_SCREEN_HEIGHT*CONFIG_SCREEN_WIDTH elements.
  * With respect to it, screen is indexed in this way:
  *
  *   (0,0)
@@ -53,7 +53,7 @@ extern "C" {
  *     y
  *
  * then to set the value of the pixel having coordinates (X,Y), framebuffer has
- * to be indexed in this way: buf[X + Y*SCREEN_WIDTH].
+ * to be indexed in this way: buf[X + Y*CONFIG_SCREEN_WIDTH].
  *
  */
 
