@@ -47,7 +47,7 @@ extern "C" {
 #define CONFIG_SCREEN_BRIGHTNESS
 
 /* Battery type */
-#define BAT_LIPO_2S
+#define CONFIG_BAT_LIPO_2S
 
 #ifdef __cplusplus
 }

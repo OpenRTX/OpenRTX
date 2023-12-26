@@ -37,6 +37,6 @@
 #define CONFIG_PIX_FMT_BW
 
 /* Device has no battery */
-#define BAT_NONE
+#define CONFIG_BAT_NONE
 
 #endif

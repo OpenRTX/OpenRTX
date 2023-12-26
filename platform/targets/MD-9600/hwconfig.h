@@ -46,7 +46,7 @@ extern "C" {
 #define CONFIG_PIX_FMT_BW
 
 /* Battery type */
-#define BAT_NONE
+#define CONFIG_BAT_NONE
 
 #ifdef __cplusplus
 }

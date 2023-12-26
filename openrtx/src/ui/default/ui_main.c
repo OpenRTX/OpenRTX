@@ -45,7 +45,7 @@ void _ui_drawMainTop(ui_state_t * ui_state)
               local_time.minute, local_time.second);
 #endif
     // If the radio has no built-in battery, print input voltage
-#ifdef BAT_NONE
+#ifdef CONFIG_BAT_NONE
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_RIGHT,
               color_white,"%.1fV", last_state.v_bat);
 #else
