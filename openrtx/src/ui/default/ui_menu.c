@@ -1034,9 +1034,10 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
                   yellow_fab413, "1");
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white, "   T-");
+
+        uint16_t tone = ctcss_tone[last_state.channel.fm.txTone];
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
-                  color_white, "     %7.1f",
-                  ctcss_tone[last_state.channel.fm.txTone]/10.0f);
+                  color_white, "     %d.%d", (tone / 10), (tone % 10));
 #if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 1)
 #endif // CONFIG_UI_NO_KEYBOARD
