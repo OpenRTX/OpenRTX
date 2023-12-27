@@ -103,7 +103,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
             // Print Bandwidth, Tone and encdec info
             if (tone_tx_enable || tone_rx_enable)
             gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                      color_white, "%s %4.1f %s", bw_str, 
+                      color_white, "%s %4.1f %s", bw_str,
                       ctcss_tone[last_state.channel.fm.txTone]/10.0f, encdec_str);
             else
             gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
