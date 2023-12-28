@@ -28,7 +28,7 @@
 static pthread_mutex_t   *cfgMutex;     // Mutex for incoming config messages
 static const rtxStatus_t *newCnf;       // Pointer for incoming config messages
 static rtxStatus_t        rtxStatus;    // RTX driver status
-static float              rssi;         // Current RSSI in dBm
+static rssi_t             rssi;         // Current RSSI in dBm
 static bool               reinitFilter; // Flag for RSSI filter re-initialisation
 
 static OpMode  *currMode;               // Pointer to currently active opMode handler
@@ -190,7 +190,13 @@ void rtx_task()
         {
             if(!reinitFilter)
             {
-                rssi = 0.74*radio_getRssi() + 0.26*rssi;
+                /*
+                 * Filter RSSI value using 15.16 fixed point math. Equivalent
+                 * floating point code is: rssi = 0.74*radio_getRssi() + 0.26*rssi
+                 */
+                int32_t filt_rssi = radio_getRssi() * 0xBD70    // 0.74 * radio_getRssi
+                                  + rssi            * 0x428F;   // 0.26 * rssi
+                rssi = (filt_rssi + 32768) >> 16;               // Round to nearest
             }
             else
             {
@@ -213,7 +219,7 @@ void rtx_task()
     currMode->update(&rtxStatus, reconfigure);
 }
 
-float rtx_getRssi()
+rssi_t rtx_getRssi()
 {
     return rssi;
 }

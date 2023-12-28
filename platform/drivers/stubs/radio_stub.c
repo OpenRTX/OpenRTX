@@ -67,7 +67,7 @@ void radio_updateConfiguration()
 
 }
 
-float radio_getRssi()
+rssi_t radio_getRssi()
 {
     return -121.0f;  // S1 level: -121dBm
 }

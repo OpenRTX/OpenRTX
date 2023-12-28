@@ -39,7 +39,7 @@ typedef struct
     datetime_t time;
     uint16_t   v_bat;
     uint8_t    charge;
-    float      rssi;
+    rssi_t     rssi;
 
     uint8_t    ui_screen;
     uint8_t    tuner_mode;
