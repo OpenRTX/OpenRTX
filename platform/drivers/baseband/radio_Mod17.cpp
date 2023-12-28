@@ -99,7 +99,7 @@ void radio_updateConfiguration()
 
 }
 
-float radio_getRssi()
+rssi_t radio_getRssi()
 {
     return -123.0f;
 }

@@ -138,7 +138,7 @@ void rtx_task();
  * Get current RSSI in dBm.
  * @return RSSI value in dBm.
  */
-float rtx_getRssi();
+rssi_t rtx_getRssi();
 
 /**
  * Get current status of the RX squelch. This function is thread-safe and can

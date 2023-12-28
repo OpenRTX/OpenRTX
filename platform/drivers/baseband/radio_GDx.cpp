@@ -369,9 +369,9 @@ void radio_updateConfiguration()
     if(radioStatus == TX) radio_enableTx();
 }
 
-float radio_getRssi()
+rssi_t radio_getRssi()
 {
-    return static_cast< float >(at1846s.readRSSI());
+    return static_cast< rssi_t > (at1846s.readRSSI());
 }
 
 enum opstatus radio_getStatus()

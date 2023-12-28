@@ -397,7 +397,7 @@ void radio_updateConfiguration()
     if(radioStatus == TX) radio_enableTx();
 }
 
-float radio_getRssi()
+rssi_t radio_getRssi()
 {
     /*
      * On MD3x0 devices, RSSI value is get by reading the analog RSSI output
@@ -415,7 +415,7 @@ float radio_getRssi()
 
     float rssi_mv  = ((float) adc1_getMeasurement(ADC_RSSI_CH));
     float rssi_dbm = (rssi_mv - rssi_offset[offset_index]) / rssi_gain;
-    return rssi_dbm;
+    return static_cast< rssi_t >(rssi_dbm);
 }
 
 enum opstatus radio_getStatus()

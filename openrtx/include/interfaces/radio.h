@@ -124,7 +124,7 @@ void radio_updateConfiguration();
  *
  * @return RSSI level in dBm.
  */
-float radio_getRssi();
+rssi_t radio_getRssi();
 
 /**
  * Get the current operating status of the radio module.

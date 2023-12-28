@@ -20,6 +20,7 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
+#include <datatypes.h>
 #include <symbols.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -307,7 +308,7 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
  * @param drawVolume: whether the volume bar should be drawn
  * @param color: color of the squelch bar
  */
-void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
+void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, rssi_t rssi,
                     uint8_t squelch, uint8_t volume, bool drawVolume, color_t color);
 
 /**
@@ -323,7 +324,7 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
  * @param drawVolume: whether the volume bar should be drawn
  */
 void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height,
-                         float rssi, uint8_t level, uint8_t volume, bool drawVolume);
+                         rssi_t rssi, uint8_t level, uint8_t volume, bool drawVolume);
 
 /**
  * Function to draw GPS SNR bar graph of arbitrary size.
