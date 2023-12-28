@@ -741,7 +741,7 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
  *
  */
 void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
-                    float squelch, float volume, bool drawVolume, color_t color)
+                    uint8_t squelch, uint8_t volume, bool drawVolume, color_t color)
 {
     color_t white =  {255, 255, 255, 255};
     color_t yellow = {250, 180, 19 , 255};
@@ -781,14 +781,14 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
     if (drawVolume)
     {
         // Speaker Volume Bar
-        uint16_t volume_width = width * volume;
+        uint16_t volume_width = (width * volume) / 255;
         point_t volume_pos = {start.x, (uint8_t) (start.y + 2)};
         gfx_drawRect(volume_pos, volume_width, volume_height, white, true);
     }
 
     // Squelch bar
     uint16_t squelch_height = bar_height * 2 / bar_height_divider ;
-    uint16_t squelch_width = width * squelch;
+    uint16_t squelch_width = (width * squelch) / 15;
     point_t squelch_pos = {start.x, (uint8_t) (start.y + 2 + volume_height)};
     gfx_drawRect(squelch_pos, squelch_width, squelch_height, color, true);
 
@@ -827,7 +827,7 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
  *
  */
 void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, float rssi,
-                         uint8_t level, float volume, bool drawVolume)
+                         uint8_t level, uint8_t volume, bool drawVolume)
 {
     color_t red =    {255, 0,   0  , 255};
     color_t green =  {0,   255,   0, 255};
@@ -843,7 +843,7 @@ void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, float r
     if (drawVolume)
     {
         // Speaker Volume Bar
-        uint16_t volume_width = width * volume;
+        uint16_t volume_width = (width * volume) / 255;
         point_t volume_pos = start;
         gfx_drawRect(volume_pos, volume_width, volume_height, white, true);
     }
@@ -859,7 +859,7 @@ void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, float r
     }
     // Level bar
     uint16_t level_height = bar_height * 3 / bar_height_divider;
-    uint16_t level_width = (level / 255.0 * width);
+    uint16_t level_width = (width * level) / 255;
     point_t level_pos = { start.x, (uint8_t) (start.y + 2 + volume_height)};
     gfx_drawRect(level_pos, level_width, level_height, green, true);
     // RSSI bar

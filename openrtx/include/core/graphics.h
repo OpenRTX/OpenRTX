@@ -302,13 +302,13 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
  * @param width: Smeter width
  * @param height: Smeter height
  * @param rssi: rssi level in dBm
- * @param squelch: squelch level in percentage
- * @param volume: speaker volume level in percentage
+ * @param squelch: squelch level in range {0, 15}
+ * @param volume: speaker volume level in range {0, 255}
  * @param drawVolume: whether the volume bar should be drawn
  * @param color: color of the squelch bar
  */
 void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
-                    float squelch, float volume, bool drawVolume, color_t color);
+                    uint8_t squelch, uint8_t volume, bool drawVolume, color_t color);
 
 /**
  * Function to draw Smeter + level meter of arbitrary size.
@@ -319,11 +319,11 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
  * @param height: Smeter height
  * @param rssi: rssi level in dBm
  * @param level: level in range {0, 255}
-* @param volume: speaker volume level in percentage
-* @param drawVolume: whether the volume bar should be drawn
+ * @param volume: speaker volume level in range {0, 255}
+ * @param drawVolume: whether the volume bar should be drawn
  */
 void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height,
-                         float rssi, uint8_t level, float volume, bool drawVolume);
+                         float rssi, uint8_t level, uint8_t volume, bool drawVolume);
 
 /**
  * Function to draw GPS SNR bar graph of arbitrary size.
