@@ -513,7 +513,7 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
             snprintf(buf, max_len, "%d%%", last_state.charge);
             break;
         case 3: // RSSI
-            snprintf(buf, max_len, "%.1fdBm", last_state.rssi);
+            snprintf(buf, max_len, "%ddBm", last_state.rssi);
             break;
         case 4: // Heap usage
             snprintf(buf, max_len, "%dB", getHeapSize() - getCurrentFreeHeap());

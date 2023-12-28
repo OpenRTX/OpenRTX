@@ -260,7 +260,7 @@ void _ui_drawVFOMiddleInput(ui_state_t* ui_state)
 void _ui_drawMainBottom()
 {
     // Squelch bar
-    float rssi = last_state.rssi;
+    rssi_t   rssi = last_state.rssi;
     uint8_t  squelch = last_state.settings.sqlLevel;
     uint8_t  volume = platform_getVolumeLevel();
     uint16_t meter_width = CONFIG_SCREEN_WIDTH - 2 * layout.horizontal_pad;
