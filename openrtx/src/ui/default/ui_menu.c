@@ -1023,9 +1023,9 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
  * If we have a keyboard installed draw all numbers, otherwise draw only the
  * currently selected number.
  */
-#if defined(UI_NO_KEYBOARD)
+#if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 0)
-#endif // UI_NO_KEYBOARD
+#endif // CONFIG_UI_NO_KEYBOARD
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   yellow_fab413, "1");
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
@@ -1033,9 +1033,9 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white, "     %7.1f",
                   ctcss_tone[last_state.channel.fm.txTone]/10.0f);
-#if defined(UI_NO_KEYBOARD)
+#if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 1)
-#endif // UI_NO_KEYBOARD
+#endif // CONFIG_UI_NO_KEYBOARD
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   yellow_fab413, "2");
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
@@ -1050,9 +1050,9 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   yellow_fab413, "2");
     }
-#if defined(UI_NO_KEYBOARD)
+#if defined(CONFIG_UI_NO_KEYBOARD)
     if (ui_state->macro_menu_selected == 2)
-#endif // UI_NO_KEYBOARD
+#endif // CONFIG_UI_NO_KEYBOARD
     gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
               yellow_fab413, "3        ");
 
@@ -1084,9 +1084,9 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
     point_t pos_2 = {layout.line1_pos.x, layout.line1_pos.y +
                     (layout.line3_large_pos.y - layout.line1_pos.y)/2};
 
-#if defined(UI_NO_KEYBOARD)
+#if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 3)
-#endif // UI_NO_KEYBOARD
+#endif // CONFIG_UI_NO_KEYBOARD
     gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
               yellow_fab413, "4");
 
@@ -1116,9 +1116,9 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
 
     }
 
-#if defined(UI_NO_KEYBOARD)
+#if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 4)
-#endif // UI_NO_KEYBOARD
+#endif // CONFIG_UI_NO_KEYBOARD
     gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER,
               yellow_fab413, "5");
 
@@ -1139,18 +1139,18 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
     gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, mode_str);
 
-#if defined(UI_NO_KEYBOARD)
+#if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 5)
-#endif // UI_NO_KEYBOARD
+#endif // CONFIG_UI_NO_KEYBOARD
     gfx_print(pos_2, layout.top_font, TEXT_ALIGN_RIGHT,
               yellow_fab413, "6        ");
     gfx_print(pos_2, layout.top_font, TEXT_ALIGN_RIGHT,
               color_white, "%.1gW", dBmToWatt(last_state.channel.power));
 
     // Third row
-#if defined(UI_NO_KEYBOARD)
+#if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 6)
-#endif // UI_NO_KEYBOARD
+#endif // CONFIG_UI_NO_KEYBOARD
     gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_LEFT,
               yellow_fab413, "7");
 #ifdef CONFIG_SCREEN_BRIGHTNESS
@@ -1161,9 +1161,9 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
               state.settings.brightness);
 #endif
 
-#if defined(UI_NO_KEYBOARD)
+#if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 7)
-#endif // UI_NO_KEYBOARD
+#endif // CONFIG_UI_NO_KEYBOARD
     gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_CENTER,
               yellow_fab413, "8");
 #ifdef CONFIG_SCREEN_BRIGHTNESS
@@ -1171,9 +1171,9 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
               color_white,   "       B+");
 #endif
 
-#if defined(UI_NO_KEYBOARD)
+#if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 8)
-#endif // UI_NO_KEYBOARD
+#endif // CONFIG_UI_NO_KEYBOARD
     gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_RIGHT,
               yellow_fab413, "9        ");
     if( ui_state->input_locked == true )

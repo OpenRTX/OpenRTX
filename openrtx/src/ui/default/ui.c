@@ -886,7 +886,7 @@ static bool _ui_exitStandby(long long now)
 static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
 {
     // If there is no keyboard left and right select the menu entry to edit
-#if defined(UI_NO_KEYBOARD)
+#if defined(CONFIG_UI_NO_KEYBOARD)
     if (msg.keys & KNOB_LEFT)
     {
         ui_state.macro_menu_selected--;
@@ -902,9 +902,9 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
         ui_state.input_number = ui_state.macro_menu_selected + 1;
     else
         ui_state.input_number = 0;
-#else // UI_NO_KEYBOARD
+#else // CONFIG_UI_NO_KEYBOARD
     ui_state.input_number = input_getPressedNumber(msg);
-#endif // UI_NO_KEYBOARD
+#endif // CONFIG_UI_NO_KEYBOARD
     // CTCSS Encode/Decode Selection
     bool tone_tx_enable = state.channel.fm.txToneEn;
     bool tone_rx_enable = state.channel.fm.rxToneEn;
@@ -1171,7 +1171,7 @@ static void _ui_numberInputKeypad(uint32_t *num, kbd_msg_t msg)
 {
     long long now = getTick();
 
-#ifdef UI_NO_KEYBOARD
+#ifdef CONFIG_UI_NO_KEYBOARD
     // If knob is turned, increment or Decrement
     if (msg.keys & KNOB_LEFT)
     {
@@ -2140,10 +2140,10 @@ void ui_updateFSM(bool *sync_rtx)
                     {
                         case R_OFFSET:
                             // Handle offset frequency input
-#if defined(UI_NO_KEYBOARD)
+#if defined(CONFIG_UI_NO_KEYBOARD)
                             if(msg.long_press && msg.keys & KEY_ENTER)
                             {
-                                // Long press on UI_NO_KEYBOARD causes digits to advance by one
+                                // Long press on CONFIG_UI_NO_KEYBOARD causes digits to advance by one
                                 ui_state.new_offset /= 10;
 #else
                             if(msg.keys & KEY_ENTER)
@@ -2167,7 +2167,7 @@ void ui_updateFSM(bool *sync_rtx)
                             {
                                 _ui_numberInputDel(&ui_state.new_offset);
                             }
-#if defined(UI_NO_KEYBOARD)
+#if defined(CONFIG_UI_NO_KEYBOARD)
                             else if(msg.keys & KNOB_LEFT || msg.keys & KNOB_RIGHT || msg.keys & KEY_ENTER)
 #else
                             else if(input_isNumberPressed(msg))
