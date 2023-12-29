@@ -288,152 +288,140 @@ static uint8_t evQueue_wrPos;
 static event_t evQueue[MAX_NUM_EVENTS];
 
 
-static layout_t _ui_calculateLayout()
+static void _ui_calculateLayout(layout_t *layout)
 {
     // Horizontal line height
-    const uint16_t hline_h = 1;
+    static const uint16_t hline_h = 1;
     // Compensate for fonts printing below the start position
-    const uint16_t text_v_offset = 1;
+    static const uint16_t text_v_offset = 1;
 
     // Calculate UI layout depending on vertical resolution
     // Tytera MD380, MD-UV380
     #if CONFIG_SCREEN_HEIGHT > 127
 
     // Height and padding shown in diagram at beginning of file
-    const uint16_t top_h = 16;
-    const uint16_t top_pad = 4;
-    const uint16_t line1_h = 20;
-    const uint16_t line2_h = 20;
-    const uint16_t line3_h = 20;
-    const uint16_t line3_large_h = 40;
-    const uint16_t line4_h = 20;
-    const uint16_t menu_h = 16;
-    const uint16_t bottom_h = 23;
-    const uint16_t bottom_pad = top_pad;
-    const uint16_t status_v_pad = 2;
-    const uint16_t small_line_v_pad = 2;
-    const uint16_t big_line_v_pad = 6;
-    const uint16_t horizontal_pad = 4;
+    static const uint16_t top_h = 16;
+    static const uint16_t top_pad = 4;
+    static const uint16_t line1_h = 20;
+    static const uint16_t line2_h = 20;
+    static const uint16_t line3_h = 20;
+    static const uint16_t line3_large_h = 40;
+    static const uint16_t line4_h = 20;
+    static const uint16_t menu_h = 16;
+    static const uint16_t bottom_h = 23;
+    static const uint16_t bottom_pad = top_pad;
+    static const uint16_t status_v_pad = 2;
+    static const uint16_t small_line_v_pad = 2;
+    static const uint16_t big_line_v_pad = 6;
+    static const uint16_t horizontal_pad = 4;
 
     // Top bar font: 8 pt
-    const fontSize_t   top_font = FONT_SIZE_8PT;
-    const symbolSize_t top_symbol_size = SYMBOLS_SIZE_8PT;
+    static const fontSize_t   top_font = FONT_SIZE_8PT;
+    static const symbolSize_t top_symbol_size = SYMBOLS_SIZE_8PT;
     // Text line font: 8 pt
-    const fontSize_t line1_font = FONT_SIZE_8PT;
-    const symbolSize_t line1_symbol_size = SYMBOLS_SIZE_8PT;
-    const fontSize_t line2_font = FONT_SIZE_8PT;
-    const symbolSize_t line2_symbol_size = SYMBOLS_SIZE_8PT;
-    const fontSize_t line3_font = FONT_SIZE_8PT;
-    const symbolSize_t line3_symbol_size = SYMBOLS_SIZE_8PT;
-    const fontSize_t line4_font = FONT_SIZE_8PT;
-    const symbolSize_t line4_symbol_size = SYMBOLS_SIZE_8PT;
+    static const fontSize_t line1_font = FONT_SIZE_8PT;
+    static const symbolSize_t line1_symbol_size = SYMBOLS_SIZE_8PT;
+    static const fontSize_t line2_font = FONT_SIZE_8PT;
+    static const symbolSize_t line2_symbol_size = SYMBOLS_SIZE_8PT;
+    static const fontSize_t line3_font = FONT_SIZE_8PT;
+    static const symbolSize_t line3_symbol_size = SYMBOLS_SIZE_8PT;
+    static const fontSize_t line4_font = FONT_SIZE_8PT;
+    static const symbolSize_t line4_symbol_size = SYMBOLS_SIZE_8PT;
     // Frequency line font: 16 pt
-    const fontSize_t line3_large_font = FONT_SIZE_16PT;
+    static const fontSize_t line3_large_font = FONT_SIZE_16PT;
     // Bottom bar font: 8 pt
-    const fontSize_t bottom_font = FONT_SIZE_8PT;
+    static const fontSize_t bottom_font = FONT_SIZE_8PT;
     // TimeDate/Frequency input font
-    const fontSize_t input_font = FONT_SIZE_12PT;
+    static const fontSize_t input_font = FONT_SIZE_12PT;
     // Menu font
-    const fontSize_t menu_font = FONT_SIZE_8PT;
-    // Mode screen frequency font: 12 pt
-    const fontSize_t mode_font_big = FONT_SIZE_12PT;
-    // Mode screen details font: 9 pt
-    const fontSize_t mode_font_small = FONT_SIZE_9PT;
+    static const fontSize_t menu_font = FONT_SIZE_8PT;
 
     // Radioddity GD-77
     #elif CONFIG_SCREEN_HEIGHT > 63
 
     // Height and padding shown in diagram at beginning of file
-    const uint16_t top_h = 11;
-    const uint16_t top_pad = 1;
-    const uint16_t line1_h = 10;
-    const uint16_t line2_h = 10;
-    const uint16_t line3_h = 10;
-    const uint16_t line3_large_h = 16;
-    const uint16_t line4_h = 10;
-    const uint16_t menu_h = 10;
-    const uint16_t bottom_h = 15;
-    const uint16_t bottom_pad = 0;
-    const uint16_t status_v_pad = 1;
-    const uint16_t small_line_v_pad = 1;
-    const uint16_t big_line_v_pad = 0;
-    const uint16_t horizontal_pad = 4;
+    static const uint16_t top_h = 11;
+    static const uint16_t top_pad = 1;
+    static const uint16_t line1_h = 10;
+    static const uint16_t line2_h = 10;
+    static const uint16_t line3_h = 10;
+    static const uint16_t line3_large_h = 16;
+    static const uint16_t line4_h = 10;
+    static const uint16_t menu_h = 10;
+    static const uint16_t bottom_h = 15;
+    static const uint16_t bottom_pad = 0;
+    static const uint16_t status_v_pad = 1;
+    static const uint16_t small_line_v_pad = 1;
+    static const uint16_t big_line_v_pad = 0;
+    static const uint16_t horizontal_pad = 4;
 
     // Top bar font: 6 pt
-    const fontSize_t   top_font = FONT_SIZE_6PT;
-    const symbolSize_t top_symbol_size = SYMBOLS_SIZE_6PT;
+    static const fontSize_t   top_font = FONT_SIZE_6PT;
+    static const symbolSize_t top_symbol_size = SYMBOLS_SIZE_6PT;
     // Middle line fonts: 5, 8, 8 pt
-    const fontSize_t line1_font = FONT_SIZE_6PT;
-    const symbolSize_t line1_symbol_size = SYMBOLS_SIZE_6PT;
-    const fontSize_t line2_font = FONT_SIZE_6PT;
-    const symbolSize_t line2_symbol_size = SYMBOLS_SIZE_6PT;
-    const fontSize_t line3_font = FONT_SIZE_6PT;
-    const symbolSize_t line3_symbol_size = SYMBOLS_SIZE_6PT;
-    const fontSize_t line3_large_font = FONT_SIZE_10PT;
-    const fontSize_t line4_font = FONT_SIZE_6PT;
-    const symbolSize_t line4_symbol_size = SYMBOLS_SIZE_6PT;
+    static const fontSize_t line1_font = FONT_SIZE_6PT;
+    static const symbolSize_t line1_symbol_size = SYMBOLS_SIZE_6PT;
+    static const fontSize_t line2_font = FONT_SIZE_6PT;
+    static const symbolSize_t line2_symbol_size = SYMBOLS_SIZE_6PT;
+    static const fontSize_t line3_font = FONT_SIZE_6PT;
+    static const symbolSize_t line3_symbol_size = SYMBOLS_SIZE_6PT;
+    static const fontSize_t line3_large_font = FONT_SIZE_10PT;
+    static const fontSize_t line4_font = FONT_SIZE_6PT;
+    static const symbolSize_t line4_symbol_size = SYMBOLS_SIZE_6PT;
     // Bottom bar font: 6 pt
-    const fontSize_t bottom_font = FONT_SIZE_6PT;
+    static const fontSize_t bottom_font = FONT_SIZE_6PT;
     // TimeDate/Frequency input font
-    const fontSize_t input_font = FONT_SIZE_8PT;
+    static const fontSize_t input_font = FONT_SIZE_8PT;
     // Menu font
-    const fontSize_t menu_font = FONT_SIZE_6PT;
-    // Mode screen frequency font: 9 pt
-    const fontSize_t mode_font_big = FONT_SIZE_9PT;
-    // Mode screen details font: 6 pt
-    const fontSize_t mode_font_small = FONT_SIZE_6PT;
+    static const fontSize_t menu_font = FONT_SIZE_6PT;
 
     // Radioddity RD-5R
     #elif CONFIG_SCREEN_HEIGHT > 47
 
     // Height and padding shown in diagram at beginning of file
-    const uint16_t top_h = 11;
-    const uint16_t top_pad = 1;
-    const uint16_t line1_h = 0;
-    const uint16_t line2_h = 10;
-    const uint16_t line3_h = 10;
-    const uint16_t line3_large_h = 18;
-    const uint16_t line4_h = 10;
-    const uint16_t menu_h = 10;
-    const uint16_t bottom_h = 0;
-    const uint16_t bottom_pad = 0;
-    const uint16_t status_v_pad = 1;
-    const uint16_t small_line_v_pad = 1;
-    const uint16_t big_line_v_pad = 0;
-    const uint16_t horizontal_pad = 4;
+    static const uint16_t top_h = 11;
+    static const uint16_t top_pad = 1;
+    static const uint16_t line1_h = 0;
+    static const uint16_t line2_h = 10;
+    static const uint16_t line3_h = 10;
+    static const uint16_t line3_large_h = 18;
+    static const uint16_t line4_h = 10;
+    static const uint16_t menu_h = 10;
+    static const uint16_t bottom_h = 0;
+    static const uint16_t bottom_pad = 0;
+    static const uint16_t status_v_pad = 1;
+    static const uint16_t small_line_v_pad = 1;
+    static const uint16_t big_line_v_pad = 0;
+    static const uint16_t horizontal_pad = 4;
 
     // Top bar font: 6 pt
-    const fontSize_t   top_font = FONT_SIZE_6PT;
-    const symbolSize_t top_symbol_size = SYMBOLS_SIZE_6PT;
+    static const fontSize_t   top_font = FONT_SIZE_6PT;
+    static const symbolSize_t top_symbol_size = SYMBOLS_SIZE_6PT;
     // Middle line fonts: 16, 16
-    const fontSize_t line2_font = FONT_SIZE_6PT;
-    const fontSize_t line3_font = FONT_SIZE_6PT;
-    const fontSize_t line4_font = FONT_SIZE_6PT;
-    const fontSize_t line3_large_font = FONT_SIZE_12PT;
+    static const fontSize_t line2_font = FONT_SIZE_6PT;
+    static const fontSize_t line3_font = FONT_SIZE_6PT;
+    static const fontSize_t line4_font = FONT_SIZE_6PT;
+    static const fontSize_t line3_large_font = FONT_SIZE_12PT;
     // TimeDate/Frequency input font
-    const fontSize_t input_font = FONT_SIZE_8PT;
+    static const fontSize_t input_font = FONT_SIZE_8PT;
     // Menu font
-    const fontSize_t menu_font = FONT_SIZE_6PT;
-    // Mode screen frequency font: 9 pt
-    const fontSize_t mode_font_big = FONT_SIZE_9PT;
-    // Mode screen details font: 6 pt
-    const fontSize_t mode_font_small = FONT_SIZE_6PT;
+    static const fontSize_t menu_font = FONT_SIZE_6PT;
     // Not present on this resolution
-    const fontSize_t line1_font = 0;
-    const fontSize_t bottom_font = 0;
+    static const fontSize_t line1_font = 0;
+    static const fontSize_t bottom_font = 0;
 
     #else
     #error Unsupported vertical resolution!
     #endif
 
     // Calculate printing positions
-    point_t top_pos    = {horizontal_pad, top_h - status_v_pad - text_v_offset};
-    point_t line1_pos  = {horizontal_pad, top_h + top_pad + line1_h - small_line_v_pad - text_v_offset};
-    point_t line2_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h - small_line_v_pad - text_v_offset};
-    point_t line3_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h + line3_h - small_line_v_pad - text_v_offset};
-    point_t line4_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h + line3_h + line4_h - small_line_v_pad - text_v_offset};
-    point_t line3_large_pos = {horizontal_pad, top_h + top_pad + line1_h + line2_h + line3_large_h - big_line_v_pad - text_v_offset};
-    point_t bottom_pos = {horizontal_pad, CONFIG_SCREEN_HEIGHT - bottom_pad - status_v_pad - text_v_offset};
+    static const uint16_t top_pos   = top_h - status_v_pad - text_v_offset;
+    static const uint16_t line1_pos = top_h + top_pad + line1_h - small_line_v_pad - text_v_offset;
+    static const uint16_t line2_pos = top_h + top_pad + line1_h + line2_h - small_line_v_pad - text_v_offset;
+    static const uint16_t line3_pos = top_h + top_pad + line1_h + line2_h + line3_h - small_line_v_pad - text_v_offset;
+    static const uint16_t line4_pos = top_h + top_pad + line1_h + line2_h + line3_h + line4_h - small_line_v_pad - text_v_offset;
+    static const uint16_t line3_large_pos = top_h + top_pad + line1_h + line2_h + line3_large_h - big_line_v_pad - text_v_offset;
+    static const uint16_t bottom_pos = CONFIG_SCREEN_HEIGHT - bottom_pad - status_v_pad - text_v_offset;
 
     layout_t new_layout =
     {
@@ -450,13 +438,13 @@ static layout_t _ui_calculateLayout()
         status_v_pad,
         horizontal_pad,
         text_v_offset,
-        top_pos,
-        line1_pos,
-        line2_pos,
-        line3_pos,
-        line3_large_pos,
-        line4_pos,
-        bottom_pos,
+        {horizontal_pad, top_pos},
+        {horizontal_pad, line1_pos},
+        {horizontal_pad, line2_pos},
+        {horizontal_pad, line3_pos},
+        {horizontal_pad, line3_large_pos},
+        {horizontal_pad, line4_pos},
+        {horizontal_pad, bottom_pos},
         top_font,
         top_symbol_size,
         line1_font,
@@ -470,11 +458,10 @@ static layout_t _ui_calculateLayout()
         line4_symbol_size,
         bottom_font,
         input_font,
-        menu_font,
-        mode_font_big,
-        mode_font_small
+        menu_font
     };
-    return new_layout;
+
+    memcpy(layout, &new_layout, sizeof(layout_t));
 }
 
 static void _ui_drawLowBatteryScreen()
@@ -1237,7 +1224,7 @@ void ui_init()
 {
     last_event_tick = getTick();
     redraw_needed = true;
-    layout = _ui_calculateLayout();
+    _ui_calculateLayout(&layout);
     layout_ready = true;
     // Initialize struct ui_state to all zeroes
     // This syntax is called compound literal
@@ -2457,7 +2444,7 @@ bool ui_updateGUI()
 
     if(!layout_ready)
     {
-        layout = _ui_calculateLayout();
+        _ui_calculateLayout(&layout);
         layout_ready = true;
     }
     // Draw current GUI page
