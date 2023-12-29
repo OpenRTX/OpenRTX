@@ -75,7 +75,7 @@ int cps_readChannel(channel_t *channel, uint16_t pos)
     W25Qx_sleep();
 
     channel->mode            = chData.channel_mode;
-    channel->bandwidth       = chData.bandwidth;
+    channel->bandwidth       = (chData.bandwidth == 0) ? 0 : 1;     // Consider 20kHz as 25kHz
     channel->rx_only         = chData.rx_only;
     channel->power           = ((chData.power == 1) ? 5000 : 1000); // 5W or 1W
     channel->rx_frequency    = bcdToBin(chData.rx_frequency) * 10;

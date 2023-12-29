@@ -161,7 +161,6 @@ void radio_updateConfiguration()
                 at1846s.setBandwidth(AT1846S_BW::_12P5);
                 break;
 
-             case BW_20:
              case BW_25:
                 at1846s.setBandwidth(AT1846S_BW::_25);
                 break;
