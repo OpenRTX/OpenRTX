@@ -67,13 +67,6 @@ void _setBandwidth(const enum bandwidth bw)
             C5000.setModFactor(0x1E);
             break;
 
-        case BW_20:
-            #ifndef MDx_ENABLE_SWD
-            gpio_setPin(WN_SW);
-            #endif
-            C5000.setModFactor(0x30);
-            break;
-
         case BW_25:
             #ifndef MDx_ENABLE_SWD
             gpio_setPin(WN_SW);

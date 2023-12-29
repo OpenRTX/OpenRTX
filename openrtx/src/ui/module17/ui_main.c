@@ -69,8 +69,6 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
         // Get Bandwidth string
         if(last_state.channel.bandwidth == BW_12_5)
             snprintf(bw_str, 8, "12.5");
-        else if(last_state.channel.bandwidth == BW_20)
-            snprintf(bw_str, 8, "20");
         else if(last_state.channel.bandwidth == BW_25)
             snprintf(bw_str, 8, "25");
         // Get encdec string

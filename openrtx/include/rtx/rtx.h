@@ -75,8 +75,7 @@ rtxStatus_t;
 enum bandwidth
 {
     BW_12_5 = 0,    /**< 12.5kHz bandwidth */
-    BW_20   = 1,    /**< 20kHz bandwidth   */
-    BW_25   = 2     /**< 25kHz bandwidth   */
+    BW_25   = 1     /**< 25kHz bandwidth   */
 };
 
 /**

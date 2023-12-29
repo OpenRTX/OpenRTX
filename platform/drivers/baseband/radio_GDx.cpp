@@ -348,7 +348,6 @@ void radio_updateConfiguration()
                 at1846s.setTxDeviation(calData.data[currTxBand].mixGainNarrowband);
                 break;
 
-             case BW_20:
              case BW_25:
                 at1846s.setBandwidth(AT1846S_BW::_25);
                 at1846s.setTxDeviation(calData.data[currTxBand].mixGainWideband);

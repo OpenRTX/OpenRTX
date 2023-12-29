@@ -968,7 +968,7 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             if(state.channel.mode == OPMODE_FM)
             {
                 state.channel.bandwidth++;
-                state.channel.bandwidth %= 3;
+                state.channel.bandwidth %= 2;
                 *sync_rtx = true;
                 vp_announceBandwidth(state.channel.bandwidth, queueFlags);
             }
