@@ -159,7 +159,7 @@ void vp_announceBandwidth(const uint8_t bandwidth, const vpQueueFlags_t flags)
         vp_queuePrompt(PROMPT_BANDWIDTH);
     }
 
-    char* bandwidths[] = {"12.5", "20", "25"};
+    char* bandwidths[] = {"12.5", "25"};
     vp_queueString(bandwidths[bandwidth], vpAnnounceCommonSymbols);
     vp_queuePrompt(PROMPT_KILOHERTZ);
     playIfNeeded(flags);

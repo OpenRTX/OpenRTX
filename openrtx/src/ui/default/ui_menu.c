@@ -1151,9 +1151,6 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
             case BW_12_5:
                 sniprintf(bw_str, 12, "   BW 12.5");
                 break;
-            case BW_20:
-                sniprintf(bw_str, 12, "   BW  20 ");
-                break;
             case BW_25:
                 sniprintf(bw_str, 12, "   BW  25 ");
                 break;

@@ -51,7 +51,7 @@ static int _readChannelAtAddress(channel_t *channel, uint32_t addr)
     if(wcslen((wchar_t *) chData.name) == 0) return -1;
 
     channel->mode            = chData.channel_mode;
-    channel->bandwidth       = chData.bandwidth;
+    channel->bandwidth       = (chData.bandwidth == 0) ? 0 : 1;     // Consider 20kHz as 25kHz
     channel->rx_only         = chData.rx_only;
     channel->rx_frequency    = bcdToBin(chData.rx_frequency) * 10;
     channel->tx_frequency    = bcdToBin(chData.tx_frequency) * 10;

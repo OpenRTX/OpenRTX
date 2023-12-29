@@ -83,8 +83,6 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
             // Get Bandwidth string
             if(last_state.channel.bandwidth == BW_12_5)
                 sniprintf(bw_str, 8, "NFM");
-            else if(last_state.channel.bandwidth == BW_20)
-                sniprintf(bw_str, 8, "FM20");
             else if(last_state.channel.bandwidth == BW_25)
                 sniprintf(bw_str, 8, "FM");
 
