@@ -246,21 +246,21 @@ void _ui_drawMenuListValue(ui_state_t* ui_state, uint8_t selected,
 int _ui_getMenuTopEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= menu_num) return -1;
-    snprintf(buf, max_len, "%s", menu_items[index]);
+    sniprintf(buf, max_len, "%s", menu_items[index]);
     return 0;
 }
 
 int _ui_getSettingsEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= settings_num) return -1;
-    snprintf(buf, max_len, "%s", settings_items[index]);
+    sniprintf(buf, max_len, "%s", settings_items[index]);
     return 0;
 }
 
 int _ui_getDisplayEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= display_num) return -1;
-    snprintf(buf, max_len, "%s", display_items[index]);
+    sniprintf(buf, max_len, "%s", display_items[index]);
     return 0;
 }
 
@@ -281,11 +281,11 @@ int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
             break;
 #endif
         case D_TIMER:
-            snprintf(buf, max_len, "%s",
+            sniprintf(buf, max_len, "%s",
                      display_timer_values[last_state.settings.display_timer]);
             return 0;
     }
-    snprintf(buf, max_len, "%d", value);
+    sniprintf(buf, max_len, "%d", value);
     return 0;
 }
 
@@ -293,7 +293,7 @@ int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
 int _ui_getSettingsGPSEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= settings_gps_num) return -1;
-    snprintf(buf, max_len, "%s", settings_gps_items[index]);
+    sniprintf(buf, max_len, "%s", settings_gps_items[index]);
     return 0;
 }
 
@@ -303,12 +303,12 @@ int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
     switch(index)
     {
         case G_ENABLED:
-            snprintf(buf, max_len, "%s", (last_state.settings.gps_enabled) ?
+            sniprintf(buf, max_len, "%s", (last_state.settings.gps_enabled) ?
                                                       currentLanguage->on  :
                                                       currentLanguage->off);
             break;
         case G_SET_TIME:
-            snprintf(buf, max_len, "%s", (last_state.gps_set_time) ?
+            sniprintf(buf, max_len, "%s", (last_state.gps_set_time) ?
                                                currentLanguage->on :
                                                currentLanguage->off);
             break;
@@ -329,7 +329,7 @@ int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
                 tz_mn *= (-1);
             }
 
-            snprintf(buf, max_len, "%c%d.%d", sign, tz_hr, tz_mn);
+            sniprintf(buf, max_len, "%c%d.%d", sign, tz_hr, tz_mn);
         }
             break;
     }
@@ -340,7 +340,7 @@ int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
 int _ui_getRadioEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= settings_radio_num) return -1;
-    snprintf(buf, max_len, "%s", settings_radio_items[index]);
+    sniprintf(buf, max_len, "%s", settings_radio_items[index]);
     return 0;
 }
 
@@ -397,12 +397,12 @@ int _ui_getRadioValueName(char *buf, uint8_t max_len, uint8_t index)
     }
 
     // NOTE: casts are there only to squelch -Wformat warnings on the
-    // snprintf.
+    // sniprintf.
     char str[16];
-    snprintf(str, sizeof(str), "%u.%u", (unsigned int)(value / div),
+    sniprintf(str, sizeof(str), "%u.%u", (unsigned int)(value / div),
                                         (unsigned int)(value % div));
     stripTrailingZeroes(str);
-    snprintf(buf, max_len, "%s%cHz", str, prefix);
+    sniprintf(buf, max_len, "%s%cHz", str, prefix);
 
     return 0;
 }
@@ -411,7 +411,7 @@ int _ui_getRadioValueName(char *buf, uint8_t max_len, uint8_t index)
 int _ui_getM17EntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= settings_m17_num) return -1;
-    snprintf(buf, max_len, "%s", settings_m17_items[index]);
+    sniprintf(buf, max_len, "%s", settings_m17_items[index]);
     return 0;
 }
 
@@ -423,14 +423,14 @@ int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
     switch(index)
     {
         case M17_CALLSIGN:
-            snprintf(buf, max_len, "%s", last_state.settings.callsign);
+            sniprintf(buf, max_len, "%s", last_state.settings.callsign);
             break;
 
         case M17_CAN:
-            snprintf(buf, max_len, "%d", last_state.settings.m17_can);
+            sniprintf(buf, max_len, "%d", last_state.settings.m17_can);
             break;
         case M17_CAN_RX:
-            snprintf(buf, max_len, "%s", (last_state.settings.m17_can_rx) ?
+            sniprintf(buf, max_len, "%s", (last_state.settings.m17_can_rx) ?
                                                            currentLanguage->on :
                                                            currentLanguage->off);
             break;
@@ -443,7 +443,7 @@ int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
 int _ui_getAccessibilityEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= settings_accessibility_num) return -1;
-    snprintf(buf, max_len, "%s", settings_accessibility_items[index]);
+    sniprintf(buf, max_len, "%s", settings_accessibility_items[index]);
     return 0;
 }
 
@@ -459,22 +459,22 @@ int _ui_getAccessibilityValueName(char *buf, uint8_t max_len, uint8_t index)
             switch (value)
             {
                 case vpNone:
-                    snprintf(buf, max_len, "%s", currentLanguage->off);
+                    sniprintf(buf, max_len, "%s", currentLanguage->off);
                     break;
                 case vpBeep:
-                    snprintf(buf, max_len, "%s", currentLanguage->beep);
+                    sniprintf(buf, max_len, "%s", currentLanguage->beep);
                     break;
                 default:
-                                    snprintf(buf, max_len, "%d", (value-vpBeep));
+                                    sniprintf(buf, max_len, "%d", (value-vpBeep));
                     break;
             }
             break;
         }
         case A_PHONETIC:
-            snprintf(buf, max_len, "%s", last_state.settings.vpPhoneticSpell ? currentLanguage->on : currentLanguage->off);
+            sniprintf(buf, max_len, "%s", last_state.settings.vpPhoneticSpell ? currentLanguage->on : currentLanguage->off);
             break;
         case A_MACRO_LATCH:
-            snprintf(buf, max_len, "%s", last_state.settings.macroMenuLatch ? currentLanguage->on : currentLanguage->off);
+            sniprintf(buf, max_len, "%s", last_state.settings.macroMenuLatch ? currentLanguage->on : currentLanguage->off);
             break;
     }
     return 0;
@@ -483,14 +483,14 @@ int _ui_getAccessibilityValueName(char *buf, uint8_t max_len, uint8_t index)
 int _ui_getBackupRestoreEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= backup_restore_num) return -1;
-    snprintf(buf, max_len, "%s", backup_restore_items[index]);
+    sniprintf(buf, max_len, "%s", backup_restore_items[index]);
     return 0;
 }
 
 int _ui_getInfoEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= info_num) return -1;
-    snprintf(buf, max_len, "%s", info_items[index]);
+    sniprintf(buf, max_len, "%s", info_items[index]);
     return 0;
 }
 
@@ -501,7 +501,7 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
     switch(index)
     {
         case 0: // Git Version
-            snprintf(buf, max_len, "%s", GIT_VERSION);
+            sniprintf(buf, max_len, "%s", GIT_VERSION);
             break;
         case 1: // Battery voltage
         {
@@ -509,29 +509,29 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
             // to mantissa for rounding to nearest integer
             uint16_t volt  = (last_state.v_bat + 50) / 1000;
             uint16_t mvolt = ((last_state.v_bat - volt * 1000) + 50) / 100;
-            snprintf(buf, max_len, "%d.%dV", volt, mvolt);
+            sniprintf(buf, max_len, "%d.%dV", volt, mvolt);
         }
             break;
         case 2: // Battery charge
-            snprintf(buf, max_len, "%d%%", last_state.charge);
+            sniprintf(buf, max_len, "%d%%", last_state.charge);
             break;
         case 3: // RSSI
-            snprintf(buf, max_len, "%ddBm", last_state.rssi);
+            sniprintf(buf, max_len, "%ddBm", last_state.rssi);
             break;
         case 4: // Heap usage
-            snprintf(buf, max_len, "%dB", getHeapSize() - getCurrentFreeHeap());
+            sniprintf(buf, max_len, "%dB", getHeapSize() - getCurrentFreeHeap());
             break;
         case 5: // Band
-            snprintf(buf, max_len, "%s %s", hwinfo->vhf_band ? currentLanguage->VHF : "", hwinfo->uhf_band ? currentLanguage->UHF : "");
+            sniprintf(buf, max_len, "%s %s", hwinfo->vhf_band ? currentLanguage->VHF : "", hwinfo->uhf_band ? currentLanguage->UHF : "");
             break;
         case 6: // VHF
-            snprintf(buf, max_len, "%d - %d", hwinfo->vhf_minFreq, hwinfo->vhf_maxFreq);
+            sniprintf(buf, max_len, "%d - %d", hwinfo->vhf_minFreq, hwinfo->vhf_maxFreq);
             break;
         case 7: // UHF
-            snprintf(buf, max_len, "%d - %d", hwinfo->uhf_minFreq, hwinfo->uhf_maxFreq);
+            sniprintf(buf, max_len, "%d - %d", hwinfo->uhf_minFreq, hwinfo->uhf_maxFreq);
             break;
         case 8: // LCD Type
-            snprintf(buf, max_len, "%d", hwinfo->hw_version);
+            sniprintf(buf, max_len, "%d", hwinfo->hw_version);
             break;
         #ifdef PLATFORM_TTWRPLUS
         case 9: // Radio model
@@ -544,7 +544,7 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
             const char *fwVer = sa8x8_getFwVersion();
 
             sscanf(fwVer, "sa8x8-fw/v%hhu.%hhu.%hhu.r%hhu", &major, &minor, &patch, &release);
-            snprintf(buf, max_len,"v%hhu.%hhu.%hhu.r%hhu", major, minor, patch, release);
+            sniprintf(buf, max_len,"v%hhu.%hhu.%hhu.r%hhu", major, minor, patch, release);
         }
             break;
         #endif
@@ -565,7 +565,7 @@ int _ui_getBankName(char *buf, uint8_t max_len, uint8_t index)
         bankHdr_t bank;
         result = cps_readBankHeader(&bank, index - 1);
         if(result != -1)
-            snprintf(buf, max_len, "%s", bank.name);
+            sniprintf(buf, max_len, "%s", bank.name);
     }
     return result;
 }
@@ -575,7 +575,7 @@ int _ui_getChannelName(char *buf, uint8_t max_len, uint8_t index)
     channel_t channel;
     int result = cps_readChannel(&channel, index);
     if(result != -1)
-        snprintf(buf, max_len, "%s", channel.name);
+        sniprintf(buf, max_len, "%s", channel.name);
     return result;
 }
 
@@ -584,7 +584,7 @@ int _ui_getContactName(char *buf, uint8_t max_len, uint8_t index)
     contact_t contact;
     int result = cps_readContact(&contact, index);
     if(result != -1)
-        snprintf(buf, max_len, "%s", contact.name);
+        sniprintf(buf, max_len, "%s", contact.name);
     return result;
 }
 
@@ -1019,8 +1019,8 @@ void _ui_drawSettingsRadio(ui_state_t* ui_state)
         }
 
         // NOTE: casts are there only to squelch -Wformat warnings on the
-        // snprintf.
-        snprintf(buf, sizeof(buf), "%u.%u", (unsigned int)(ui_state->new_offset / div),
+        // sniprintf.
+        sniprintf(buf, sizeof(buf), "%u.%u", (unsigned int)(ui_state->new_offset / div),
                                             (unsigned int)(ui_state->new_offset % div));
         stripTrailingZeroes(buf);
 
@@ -1113,13 +1113,13 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
         bool tone_tx_enable = last_state.channel.fm.txToneEn;
         bool tone_rx_enable = last_state.channel.fm.rxToneEn;
         if (tone_tx_enable && tone_rx_enable)
-            snprintf(encdec_str, 9, "     E+D");
+            sniprintf(encdec_str, 9, "     E+D");
         else if (tone_tx_enable && !tone_rx_enable)
-            snprintf(encdec_str, 9, "      E ");
+            sniprintf(encdec_str, 9, "      E ");
         else if (!tone_tx_enable && tone_rx_enable)
-            snprintf(encdec_str, 9, "      D ");
+            sniprintf(encdec_str, 9, "      D ");
         else
-            snprintf(encdec_str, 9, "        ");
+            sniprintf(encdec_str, 9, "        ");
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white, encdec_str);
     }
@@ -1149,13 +1149,13 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
         switch (last_state.channel.bandwidth)
         {
             case BW_12_5:
-                snprintf(bw_str, 12, "   BW 12.5");
+                sniprintf(bw_str, 12, "   BW 12.5");
                 break;
             case BW_20:
-                snprintf(bw_str, 12, "   BW  20 ");
+                sniprintf(bw_str, 12, "   BW  20 ");
                 break;
             case BW_25:
-                snprintf(bw_str, 12, "   BW  25 ");
+                sniprintf(bw_str, 12, "   BW  25 ");
                 break;
         }
 
@@ -1181,14 +1181,14 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
     switch(last_state.channel.mode)
     {
         case OPMODE_FM:
-        snprintf(mode_str, 12,"         FM");
+        sniprintf(mode_str, 12,"         FM");
         break;
         case OPMODE_DMR:
-        snprintf(mode_str, 12,"        DMR");
+        sniprintf(mode_str, 12,"        DMR");
         break;
 #ifdef CONFIG_M17
         case OPMODE_M17:
-        snprintf(mode_str, 12,"        M17");
+        sniprintf(mode_str, 12,"        M17");
         break;
 #endif
     }

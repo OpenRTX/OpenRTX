@@ -520,7 +520,7 @@ void vp_queueInteger(const int value)
     if (value < 0)
         vp_queuePrompt(PROMPT_MINUS);
 
-    snprintf(buf, 12, "%d", value);
+    sniprintf(buf, 12, "%d", value);
     vp_queueString(buf, 0);
 }
 
