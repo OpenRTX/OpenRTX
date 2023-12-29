@@ -285,6 +285,7 @@ pulse_dep   = dependency('libpulse', required: false)
 linux_src  += openrtx_src
 linux_inc  += openrtx_inc
 linux_def  += openrtx_def
+linux_def  += {'sniprintf':'snprintf', 'vsniprintf':'vsnprintf'}
 
 #
 # Standard UI

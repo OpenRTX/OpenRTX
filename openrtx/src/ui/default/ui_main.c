@@ -82,24 +82,24 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
 
             // Get Bandwidth string
             if(last_state.channel.bandwidth == BW_12_5)
-                snprintf(bw_str, 8, "NFM");
+                sniprintf(bw_str, 8, "NFM");
             else if(last_state.channel.bandwidth == BW_20)
-                snprintf(bw_str, 8, "FM20");
+                sniprintf(bw_str, 8, "FM20");
             else if(last_state.channel.bandwidth == BW_25)
-                snprintf(bw_str, 8, "FM");
+                sniprintf(bw_str, 8, "FM");
 
             // Get encdec string
             bool tone_tx_enable = last_state.channel.fm.txToneEn;
             bool tone_rx_enable = last_state.channel.fm.rxToneEn;
 
             if (tone_tx_enable && tone_rx_enable)
-                snprintf(encdec_str, 9, "ED");
+                sniprintf(encdec_str, 9, "ED");
             else if (tone_tx_enable && !tone_rx_enable)
-                snprintf(encdec_str, 9, " E");
+                sniprintf(encdec_str, 9, " E");
             else if (!tone_tx_enable && tone_rx_enable)
-                snprintf(encdec_str, 9, " D");
+                sniprintf(encdec_str, 9, " D");
             else
-                snprintf(encdec_str, 9, "  ");
+                sniprintf(encdec_str, 9, "  ");
 
             // Print Bandwidth, Tone and encdec info
             if (tone_tx_enable || tone_rx_enable)
@@ -195,7 +195,7 @@ void _ui_drawFrequency()
 
     // Print big numbers frequency
     char freq_str[16] = {0};
-    snprintf(freq_str, sizeof(freq_str), "%lu.%lu", (freq / 1000000), (freq % 1000000));
+    sniprintf(freq_str, sizeof(freq_str), "%lu.%lu", (freq / 1000000), (freq % 1000000));
     stripTrailingZeroes(freq_str);
 
     gfx_print(layout.line3_large_pos, layout.line3_large_font, TEXT_ALIGN_CENTER,

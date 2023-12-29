@@ -78,7 +78,7 @@ void vp_announceChannelName(const channel_t* channel,
     // Only queue the name if it is not the same as the raw number.
     // Otherwise the radio will repeat  channel 1 channel 1 for channel 1.
     char numAsStr[16] = "\0";
-    snprintf(numAsStr, 16, "Channel%d", channelNumber);
+    sniprintf(numAsStr, 16, "Channel%d", channelNumber);
 
     if (strcmp(numAsStr, channel->name) != 0)
     {
@@ -94,7 +94,7 @@ void vp_queueFrequency(const freq_t freq)
     int MHz = (freq / 1000000);
     int kHz = ((freq % 1000000) / 100);
 
-    snprintf(buffer, 16, "%d.%05d", MHz, kHz);
+    sniprintf(buffer, 16, "%d.%05d", MHz, kHz);
 
     stripTrailingZeroes(buffer);
 
@@ -177,7 +177,7 @@ void vp_announcePower(const uint32_t power, const vpQueueFlags_t flags)
     // Compute x.y format avoiding to pull in floating point math.
     // Remember that power is expressed in mW!
     char buffer[16] = "\0";
-    snprintf(buffer, 16, "%lu.%lu", (power / 1000), (power % 1000) / 100);
+    sniprintf(buffer, 16, "%lu.%lu", (power / 1000), (power % 1000) / 100);
 
     vp_queueString(buffer, vpAnnounceCommonSymbols);
     vp_queuePrompt(PROMPT_WATTS);
@@ -367,7 +367,7 @@ void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
             vp_queuePrompt(PROMPT_TONE);
 
         uint16_t tone = ctcss_tone[rxTone];
-        snprintf(buffer, sizeof(buffer), "%d.%d", (tone / 10), (tone % 10));
+        sniprintf(buffer, sizeof(buffer), "%d.%d", (tone / 10), (tone % 10));
 
         vp_queueString(buffer, vpAnnounceCommonSymbols);
         vp_queuePrompt(PROMPT_HERTZ);
@@ -386,7 +386,7 @@ void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
         }
 
         uint16_t tone = ctcss_tone[rxTone];
-        snprintf(buffer, sizeof(buffer), "%d.%d", (tone / 10), (tone % 10));
+        sniprintf(buffer, sizeof(buffer), "%d.%d", (tone / 10), (tone % 10));
 
         vp_queueString(buffer, vpAnnounceCommonSymbols);
         vp_queuePrompt(PROMPT_HERTZ);
@@ -400,7 +400,7 @@ void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
         }
 
         uint16_t tone = ctcss_tone[txTone];
-        snprintf(buffer, sizeof(buffer), "%d.%d", (tone / 10), (tone % 10));
+        sniprintf(buffer, sizeof(buffer), "%d.%d", (tone / 10), (tone % 10));
 
         vp_queueString(buffer, vpAnnounceCommonSymbols);
         vp_queuePrompt(PROMPT_HERTZ);
@@ -637,7 +637,7 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
         vp_queuePrompt(PROMPT_COMPASS);
         if (!IsCompassCloseEnoughToCardinalPoint())
         {
-            snprintf(buffer, 16, "%3.1f", state.gps_data.tmg_true);
+            sniprintf(buffer, 16, "%3.1f", state.gps_data.tmg_true);
             vp_queueString(buffer, vpAnnounceCommonSymbols);
             vp_queuePrompt(PROMPT_DEGREES);
         }
@@ -672,7 +672,7 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
     if ((gpsInfoFlags & vpGPSSpeed) != 0)
     {
         // speed/altitude:
-        snprintf(buffer, 16, "%4.1fkm/h", state.gps_data.speed);
+        sniprintf(buffer, 16, "%4.1fkm/h", state.gps_data.speed);
         vp_queuePrompt(PROMPT_SPEED);
         vp_queueString(buffer, vpAnnounceCommonSymbols |
                                vpAnnounceLessCommonSymbols);
@@ -682,7 +682,7 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
     {
         vp_queuePrompt(PROMPT_ALTITUDE);
 
-        snprintf(buffer, 16, "%4.1fm", state.gps_data.altitude);
+        sniprintf(buffer, 16, "%4.1fm", state.gps_data.altitude);
         vp_queueString(buffer, vpAnnounceCommonSymbols);
         addSilenceIfNeeded(flags);
     }
@@ -690,7 +690,7 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
     if ((gpsInfoFlags & vpGPSLatitude) != 0)
     {
         // lat/long
-        snprintf(buffer, 16, "%8.6f", state.gps_data.latitude);
+        sniprintf(buffer, 16, "%8.6f", state.gps_data.latitude);
         stripTrailingZeroes(buffer);
         vp_queuePrompt(PROMPT_LATITUDE);
         vp_queueString(buffer, vpAnnounceCommonSymbols);
@@ -702,7 +702,7 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
         float longitude         = state.gps_data.longitude;
         voicePrompt_t direction = (longitude < 0) ? PROMPT_WEST : PROMPT_EAST;
         longitude               = (longitude < 0) ? -longitude : longitude;
-        snprintf(buffer, 16, "%8.6f", longitude);
+        sniprintf(buffer, 16, "%8.6f", longitude);
         stripTrailingZeroes(buffer);
 
         vp_queuePrompt(PROMPT_LONGITUDE);
@@ -775,7 +775,7 @@ void vp_announceSettingsTimeDate()
                                            state.settings.utc_timezone);
 
     char buffer[16] = "\0";
-    snprintf(buffer, 16, "%02d/%02d/%02d", local_time.date, local_time.month,
+    sniprintf(buffer, 16, "%02d/%02d/%02d", local_time.date, local_time.month,
                                            local_time.year);
     vp_queueString(buffer, vpAnnounceCommonSymbols |
                            vpAnnounceLessCommonSymbols);
@@ -783,7 +783,7 @@ void vp_announceSettingsTimeDate()
     vp_queuePrompt(PROMPT_SILENCE);
     vp_queuePrompt(PROMPT_SILENCE);
 
-    snprintf(buffer, 16, "%02d:%02d:%02d", local_time.hour, local_time.minute,
+    sniprintf(buffer, 16, "%02d:%02d:%02d", local_time.hour, local_time.minute,
                                            local_time.second);
     vp_queueString(buffer, vpAnnounceCommonSymbols |
                            vpAnnounceLessCommonSymbols);
