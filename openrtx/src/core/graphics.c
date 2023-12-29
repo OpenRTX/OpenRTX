@@ -566,7 +566,7 @@ point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment,
     // Get format string and arguments from var char
     va_list ap;
     va_start(ap, fmt);
-    vsnprintf(text, sizeof(text)-1, fmt, ap);
+    vsniprintf(text, sizeof(text)-1, fmt, ap);
     va_end(ap);
 
     return gfx_printBuffer(start, size, alignment, color, text);
@@ -579,7 +579,7 @@ point_t gfx_printLine(uint8_t cur, uint8_t tot, int16_t startY, int16_t endY,
     // Get format string and arguments from var char
     va_list ap;
     va_start(ap, fmt);
-    vsnprintf(text, sizeof(text)-1, fmt, ap);
+    vsniprintf(text, sizeof(text)-1, fmt, ap);
     va_end(ap);
 
     // Estimate font height by reading the gliph | height
