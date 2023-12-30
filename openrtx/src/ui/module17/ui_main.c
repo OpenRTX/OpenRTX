@@ -158,9 +158,20 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                 // Print M17 Destination ID on line 2
                 gfx_print(layout.line3_pos, layout.line3_font, TEXT_ALIGN_CENTER,
                           color_white, "%s", dst);
-                // Menu
-                gfx_print(layout.line5_pos, layout.line5_font, TEXT_ALIGN_RIGHT,
-                          color_white, "Menu");
+                if (ui_state->edit_mode)
+                {
+                    // Print Button Info
+                    gfx_print(layout.line5_pos, layout.line5_font, TEXT_ALIGN_LEFT,
+                              color_white, "Cancel");
+                    gfx_print(layout.line5_pos, layout.line5_font, TEXT_ALIGN_RIGHT,
+                              color_white, "Accept");
+                }
+                else
+                {
+                    // Menu
+                    gfx_print(layout.line5_pos, layout.line5_font, TEXT_ALIGN_RIGHT,
+                              color_white, "Menu");
+                }
                 break;
             }
         }
