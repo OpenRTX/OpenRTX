@@ -826,8 +826,8 @@ endforeach
 ## ----------------------------------- Unit Tests ------------------------------
 ##
 
-unit_test_opts = {'c_args'             : linux_c_args,
-                  'cpp_args'           : linux_cpp_args,
+unit_test_opts = {'c_args'             : linux_default_large_c_args,
+                  'cpp_args'           : linux_default_large_cpp_args,
                   'include_directories': linux_inc,
                   'dependencies'       : [sdl_dep, threads_dep, pulse_dep, codec2_dep],
                   'link_args'          : linux_l_args}
