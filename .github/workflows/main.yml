@@ -35,7 +35,10 @@ jobs:
           meson setup build_linux
           meson setup --cross-file cross_arm.txt build_arm
       - name: Compile linux
-        run: meson compile -C build_linux openrtx_linux
+        run: |
+          meson compile -C build_linux openrtx_linux
+          meson compile -C build_linux openrtx_linux_smallscreen
+          meson compile -C build_linux openrtx_linux_mod17
       - name: Compile arm targets
         run: |
           export PATH=$PATH:/tmp/OpenGD77/tools/Python/FirmwareLoader:/tmp/OpenGD77/firmware/tools
