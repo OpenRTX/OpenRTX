@@ -1430,7 +1430,7 @@ void ui_updateFSM(bool *sync_rtx)
                 // Break out of the FSM if the keypad is locked but allow the
                 // use of the hash key in FM mode for the 1750Hz tone.
                 bool skipLock =  (state.channel.mode == OPMODE_FM)
-                              && ((msg.keys & KEY_HASH) != 0);
+                              && (msg.keys == KEY_HASH);
 
                 if ((ui_state.input_locked == true) && (skipLock == false))
                     break;
