@@ -552,6 +552,11 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
         gfx_printLine(1, 1, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
                       layout.horizontal_pad, layout.input_font,
                       TEXT_ALIGN_CENTER, color_white, ui_state->new_callsign);
+        // Print Button Info
+        gfx_print(layout.line5_pos, layout.line5_font, TEXT_ALIGN_LEFT,
+                  color_white, "Cancel");
+        gfx_print(layout.line5_pos, layout.line5_font, TEXT_ALIGN_RIGHT,
+                  color_white, "Accept");
     }
     else
     {
