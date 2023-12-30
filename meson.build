@@ -279,25 +279,25 @@ linux_inc = ['platform/targets/linux',
 
 linux_def = {'PLATFORM_LINUX': '', 'VP_USE_FILESYSTEM':''}
 
-#
-# Standard UI
-#
-linux_src += ui_src_default
-linux_def += {'SCREEN_WIDTH': '160', 'SCREEN_HEIGHT': '128', 'PIX_FMT_RGB565': ''}
-
-#
-# Module17 UI
-#
-# linux_src += ui_src_module17
-# linux_def += {'SCREEN_WIDTH': '128', 'SCREEN_HEIGHT': '64', 'PIX_FMT_BW': ''}
-
-
 sdl_dep     = dependency('SDL2',     required: false)
 threads_dep = dependency('threads',  required: false)
 pulse_dep   = dependency('libpulse', required: false)
 linux_src  += openrtx_src
 linux_inc  += openrtx_inc
 linux_def  += openrtx_def
+
+#
+# Standard UI
+#
+linux_default_src = linux_src + ui_src_default
+linux_default_large_def = linux_def + {'SCREEN_WIDTH': '160', 'SCREEN_HEIGHT': '128', 'PIX_FMT_RGB565': ''}
+linux_default_small_def = linux_def + {'SCREEN_WIDTH': '128', 'SCREEN_HEIGHT': '64', 'PIX_FMT_BW': ''}
+
+#
+# Module17 UI
+#
+linux_mod17_src = linux_src + ui_src_module17
+linux_mod17_def = linux_def + {'SCREEN_WIDTH': '128', 'SCREEN_HEIGHT': '64', 'PIX_FMT_BW': ''}
 
 linux_c_args   = ['-ffunction-sections', '-fdata-sections']
 linux_cpp_args = ['-ffunction-sections', '-fdata-sections', '-std=c++14']
@@ -427,13 +427,40 @@ mod17_def += openrtx_def + stm32f405_def + miosix_cm4f_def
 ## -------------------------- Compilation arguments ----------------------------
 ##
 
-foreach k, v : linux_def
+linux_default_large_c_args = linux_c_args
+linux_default_large_cpp_args = linux_cpp_args
+linux_default_small_c_args = linux_c_args
+linux_default_small_cpp_args = linux_cpp_args
+linux_mod17_c_args = linux_c_args
+linux_mod17_cpp_args = linux_cpp_args
+
+foreach k, v : linux_default_large_def
   if v == ''
-    linux_c_args   += '-D@0@'.format(k)
-    linux_cpp_args += '-D@0@'.format(k)
+    linux_default_large_c_args   += '-D@0@'.format(k)
+    linux_default_large_cpp_args += '-D@0@'.format(k)
   else
-    linux_c_args   += '-D@0@=@1@'.format(k, v)
-    linux_cpp_args += '-D@0@=@1@'.format(k, v)
+    linux_default_large_c_args   += '-D@0@=@1@'.format(k, v)
+    linux_default_large_cpp_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
+
+foreach k, v : linux_default_small_def
+  if v == ''
+    linux_default_small_c_args   += '-D@0@'.format(k)
+    linux_default_small_cpp_args += '-D@0@'.format(k)
+  else
+    linux_default_small_c_args   += '-D@0@=@1@'.format(k, v)
+    linux_default_small_cpp_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
+
+foreach k, v : linux_mod17_def
+  if v == ''
+    linux_mod17_c_args   += '-D@0@'.format(k)
+    linux_mod17_cpp_args += '-D@0@'.format(k)
+  else
+    linux_mod17_c_args   += '-D@0@=@1@'.format(k, v)
+    linux_mod17_cpp_args += '-D@0@=@1@'.format(k, v)
   endif
 endforeach
 
@@ -491,13 +518,31 @@ foreach k, v : mod17_def
   endif
 endforeach
 
-linux_opts = {
-  'sources'            : linux_src,
+linux_default_large_opts = {
+  'sources'            : linux_default_src,
   'include_directories': linux_inc,
   'dependencies'       : [sdl_dep, threads_dep, pulse_dep, codec2_dep],
-  'c_args'             : linux_c_args,
-  'cpp_args'           : linux_cpp_args,
+  'c_args'             : linux_default_large_c_args,
+  'cpp_args'           : linux_default_large_cpp_args,
   'link_args'          : linux_l_args
+}
+
+linux_default_small_opts = {
+    'sources'            : linux_default_src,
+    'include_directories': linux_inc,
+    'dependencies'       : [sdl_dep, threads_dep, pulse_dep, codec2_dep],
+    'c_args'             : linux_default_small_c_args,
+    'cpp_args'           : linux_default_small_cpp_args,
+    'link_args'          : linux_l_args
+}
+
+linux_mod17_opts = {
+    'sources'            : linux_mod17_src,
+    'include_directories': linux_inc,
+    'dependencies'       : [sdl_dep, threads_dep, pulse_dep, codec2_dep],
+    'c_args'             : linux_mod17_c_args,
+    'cpp_args'           : linux_mod17_cpp_args,
+    'link_args'          : linux_l_args
 }
 
 md3x0_opts = {
@@ -575,8 +620,18 @@ ttwrplus_opts = {
 
 targets = [
   {
-    'name'     : 'linux',
-    'opts'     : linux_opts,
+    'name'     : 'linux_default_large',
+    'opts'     : linux_default_large_opts,
+    'flashable': false
+  },
+  {
+    'name'     : 'linux_default_small',
+    'opts'     : linux_default_small_opts,
+    'flashable': false
+  },
+  {
+    'name'     : 'linux_mod17',
+    'opts'     : linux_mod17_opts,
     'flashable': false
   },
   {
