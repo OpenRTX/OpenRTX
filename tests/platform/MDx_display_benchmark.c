@@ -76,8 +76,11 @@ uint64_t benchmark(uint32_t n)
     {
         gfx_clearScreen();
         point_t origin = {0, i % 128};
-        color_t color_red = {255, 0, 0, 255};
+        color_t color_red   = {255, 0, 0, 255};
+        COLOR_LD( color_red , COLOR_RED );
         color_t color_white = {255, 255, 255, 255};
+        COLOR_LD( color_white , COLOR_WHITE );
+
         gfx_drawRect(origin, 160, 20, color_red, 1);
         gfx_print(origin, buffer, FONT_SIZE_24PT, TEXT_ALIGN_LEFT,
                   color_white, "KEK");

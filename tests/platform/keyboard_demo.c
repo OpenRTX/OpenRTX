@@ -30,23 +30,27 @@
 #include <interfaces/keyboard.h>
 #include "ui.h"
 
-color_t color_yellow_fab413 = {250, 180, 19};
-color_t color_red = {255, 0, 0};
-color_t color_green = {0, 255, 0};
-
 char *keys_list[] = {
         " ", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "#", "ENTER", "ESC", "UP", "DOWN", "LEFT", "RIGHT",
         "MONI", "F1"
 };
 
-void *print_keys(keyboard_t keys) {
+void *print_keys(keyboard_t keys)
+{
+    color_t color_yellow_fab413 ;
+    COLOR_LD( color_yellow_fab413 , COLOR_YELLOW_FAB413 );
+    color_t color_red ;
+    COLOR_LD( color_red , COLOR_RED );
+    color_t color_green ;
+    COLOR_LD( color_green , COLOR_GREEN );
+
     point_t origin = {0, SCREEN_HEIGHT / 4};
     //count set bits to check how many keys are being pressed
     int i = __builtin_popcount(keys);
     while (i > 0) {
         //position of the first set bit
         int pos = __builtin_ctz(keys);
-        gfx_print(origin, FONT_SIZE_8PT, TEXT_ALIGN_LEFT, 
+        gfx_print(origin, FONT_SIZE_8PT, TEXT_ALIGN_LEFT,
                   color_green, "Pressed: %s", keys_list[pos + 1]);
         origin.y += 9;
         //unset the bit we already handled
@@ -80,7 +84,7 @@ int main(void) {
     // UI update infinite loop
     while (1) {
         gfx_clearScreen();
-        gfx_print(title_origin, FONT_SIZE_8PT, TEXT_ALIGN_CENTER, 
+        gfx_print(title_origin, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
                   color_red, "Keyboard demo");
         keyboard_t keys = kbd_getKeys();
         if (keys != 0)

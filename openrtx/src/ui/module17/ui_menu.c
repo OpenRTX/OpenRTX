@@ -29,6 +29,27 @@
 #include <interfaces/delays.h>
 #include <memory_profiling.h>
 
+int _ui_getMenuTopEntryName( char* buf , uint8_t max_len , uint8_t index );
+int _ui_getBankName( char* buf , uint8_t max_len , uint8_t index );
+int _ui_getChannelName( char* buf , uint8_t max_len , uint8_t index );
+int _ui_getContactName( char* buf , uint8_t max_len , uint8_t index );
+int _ui_getSettingsEntryName( char* buf , uint8_t max_len , uint8_t index );
+int _ui_getBackupRestoreEntryName( char* buf , uint8_t max_len , uint8_t index );
+
+int _ui_getInfoEntryName( char* buf , uint8_t max_len , uint8_t index );
+int _ui_getDisplayEntryName( char* buf , uint8_t max_len , uint8_t index );
+int _ui_getSettingsGPSEntryName( char* buf , uint8_t max_len , uint8_t index );
+int _ui_getM17EntryName( char* buf , uint8_t max_len , uint8_t index );
+int _ui_getVoiceEntryName( char* buf , uint8_t max_len , uint8_t index );
+int _ui_getRadioEntryName( char* buf , uint8_t max_len , uint8_t index );
+
+int _ui_getInfoValueName( char* buf , uint8_t max_len , uint8_t index );
+int _ui_getDisplayValueName( char* buf , uint8_t max_len , uint8_t index );
+int _ui_getSettingsGPSValueName( char* buf , uint8_t max_len , uint8_t index );
+int _ui_getM17ValueName( char* buf , uint8_t max_len , uint8_t index );
+int _ui_getVoiceValueName( char* buf , uint8_t max_len , uint8_t index );
+int _ui_getRadioValueName( char* buf , uint8_t max_len , uint8_t index );
+
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBottom();
 
@@ -71,14 +92,37 @@ const char *hwVersions[] =
     "0.1e"
 };
 
-void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_t max_len, uint8_t index))
+static const GetMenuList_fn GetEntryName_table[ ENTRY_NAME_NUM_OF ] =
 {
+    _ui_getMenuTopEntryName       ,
+    _ui_getBankName               ,
+    _ui_getChannelName            ,
+    _ui_getContactName            ,
+    _ui_getSettingsEntryName      ,
+    _ui_getBackupRestoreEntryName ,
+    _ui_getInfoEntryName          ,
+    _ui_getDisplayEntryName       ,
+    _ui_getSettingsGPSEntryName   ,
+    _ui_getM17EntryName           ,
+    _ui_getVoiceEntryName         ,
+    _ui_getRadioEntryName
+};
+
+void _ui_drawMenuList(uint8_t selected, EntryName_en currentEntry )
+{
+    GetMenuList_fn getCurrentEntry = GetEntryName_table[ currentEntry ];
+
     point_t pos = layout.line1_pos;
     // Number of menu entries that fit in the screen height
     uint8_t entries_in_screen = (SCREEN_HEIGHT - 1 - pos.y) / layout.menu_h + 1;
     uint8_t scroll = 0;
     char entry_buf[MAX_ENTRY_LEN] = "";
-    color_t text_color = color_white;
+    color_t color_white ;
+    COLOR_LD( color_white , COLOR_WHITE );
+    color_t color_black ;
+    COLOR_LD( color_black , COLOR_BLACK );
+    color_t text_color = color_white ;
+
     for(int item=0, result=0; (result == 0) && (pos.y < SCREEN_HEIGHT); item++)
     {
         // If selection is off the screen, scroll screen
@@ -102,17 +146,34 @@ void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_
     }
 }
 
-void _ui_drawMenuListValue(UI_State_st* ui_state, uint8_t selected,
-                           int (*getCurrentEntry)(char *buf, uint8_t max_len, uint8_t index),
-                           int (*getCurrentValue)(char *buf, uint8_t max_len, uint8_t index))
+static const GetMenuList_fn GetEntryValue_table[ ENTRY_VALUE_NUM_OF ] =
 {
+    _ui_getInfoValueName        ,
+    _ui_getDisplayValueName     ,
+    _ui_getSettingsGPSValueName ,
+    _ui_getM17ValueName         ,
+    _ui_getVoiceValueName       ,
+    _ui_getRadioValueName
+};
+
+void _ui_drawMenuListValue( UI_State_st* ui_state , uint8_t selected ,
+                            EntryName_en currentEntry , EntryValue_en currentEntryValue )
+{
+    GetMenuList_fn getCurrentEntry = GetEntryName_table[ currentEntry ];
+    GetMenuList_fn getCurrentValue = GetEntryValue_table[ currentEntryValue ];
+
     point_t pos = layout.line1_pos;
     // Number of menu entries that fit in the screen height
     uint8_t entries_in_screen = (SCREEN_HEIGHT - 1 - pos.y) / layout.menu_h + 1;
     uint8_t scroll = 0;
     char entry_buf[MAX_ENTRY_LEN] = "";
     char value_buf[MAX_ENTRY_LEN] = "";
-    color_t text_color = color_white;
+    color_t color_white ;
+    COLOR_LD( color_white , COLOR_WHITE );
+    color_t color_black ;
+    COLOR_LD( color_black , COLOR_BLACK );
+    color_t text_color = color_white ;
+
     for(int item=0, result=0; (result == 0) && (pos.y < SCREEN_HEIGHT); item++)
     {
         // If selection is off the screen, scroll screen
@@ -310,18 +371,24 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
 
 void _ui_drawMenuTop(UI_State_st* ui_state)
 {
+    color_t color_white ;
+    COLOR_LD( color_white , COLOR_WHITE );
+
     gfx_clearScreen();
     // Print "Menu" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "Menu");
     // Print menu entries
-    _ui_drawMenuList(ui_state->menu_selected, _ui_getMenuTopEntryName);
+    _ui_drawMenuList(ui_state->menu_selected, ENTRY_NAME_MENU_TOP );
 }
 
 #ifdef GPS_PRESENT
 void _ui_drawMenuGPS()
 {
     char *fix_buf, *type_buf;
+    color_t color_white ;
+    COLOR_LD( color_white , COLOR_WHITE );
+
     gfx_clearScreen();
     // Print "GPS" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
@@ -410,27 +477,36 @@ void _ui_drawMenuGPS()
 
 void _ui_drawMenuSettings(UI_State_st* ui_state)
 {
+    color_t color_white ;
+    COLOR_LD( color_white , COLOR_WHITE );
+
     gfx_clearScreen();
     // Print "Settings" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "Settings");
     // Print menu entries
-    _ui_drawMenuList(ui_state->menu_selected, _ui_getSettingsEntryName);
+    _ui_drawMenuList(ui_state->menu_selected, ENTRY_NAME_SETTINGS );
 }
 
 void _ui_drawMenuInfo(UI_State_st* ui_state)
 {
+    color_t color_white ;
+    COLOR_LD( color_white , COLOR_WHITE );
+
     gfx_clearScreen();
     // Print "Info" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "Info");
     // Print menu entries
-    _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getInfoEntryName,
-                           _ui_getInfoValueName);
+    _ui_drawMenuListValue(ui_state, ui_state->menu_selected,
+                          ENTRY_NAME_INFO , ENTRY_VALUE_INFO);
 }
 
 void _ui_drawMenuAbout()
 {
+    color_t color_white ;
+    COLOR_LD( color_white , COLOR_WHITE );
+
     gfx_clearScreen();
 
     point_t openrtx_pos = {layout.horizontal_pad, layout.line3_h};
@@ -449,32 +525,40 @@ void _ui_drawMenuAbout()
 
 void _ui_drawSettingsDisplay(UI_State_st* ui_state)
 {
+    color_t color_white ;
+    COLOR_LD( color_white , COLOR_WHITE );
+
     gfx_clearScreen();
     // Print "Display" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "Display");
     // Print display settings entries
-    _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getDisplayEntryName,
-                           _ui_getDisplayValueName);
+    _ui_drawMenuListValue(ui_state, ui_state->menu_selected,
+                           ENTRY_NAME_DISPLAY , ENTRY_VALUE_DISPLAY);
 }
 
 #ifdef GPS_PRESENT
 void _ui_drawSettingsGPS(UI_State_st* ui_state)
 {
+    color_t color_white ;
+    COLOR_LD( color_white , COLOR_WHITE );
+
     gfx_clearScreen();
     // Print "GPS Settings" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "GPS Settings");
     // Print display settings entries
     _ui_drawMenuListValue(ui_state, ui_state->menu_selected,
-                          _ui_getSettingsGPSEntryName,
-                          _ui_getSettingsGPSValueName);
+                          ENTRY_NAME_SETTINGS_GPS, ENTRY_VALUE_SETTINGS_GPS);
 }
 #endif
 
 #ifdef RTC_PRESENT
 void _ui_drawSettingsTimeDate()
 {
+    color_t color_white ;
+    COLOR_LD( color_white , COLOR_WHITE );
+
     gfx_clearScreen();
     datetime_t local_time = utcToLocalTime(last_state.time,
                                            last_state.settings.utc_timezone);
@@ -493,6 +577,8 @@ void _ui_drawSettingsTimeDate()
 void _ui_drawSettingsTimeDateSet(UI_State_st* ui_state)
 {
     (void) last_state;
+    color_t color_white ;
+    COLOR_LD( color_white , COLOR_WHITE );
 
     gfx_clearScreen();
     // Print "Time&Date" on top bar
@@ -533,6 +619,9 @@ void _ui_drawSettingsTimeDateSet(UI_State_st* ui_state)
 
 void _ui_drawSettingsM17(UI_State_st* ui_state)
 {
+    color_t color_white ;
+    COLOR_LD( color_white , COLOR_WHITE );
+
     gfx_clearScreen();
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "M17 Settings");
@@ -555,8 +644,8 @@ void _ui_drawSettingsM17(UI_State_st* ui_state)
     }
     else
     {
-        _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getM17EntryName,
-                             _ui_getM17ValueName);
+        _ui_drawMenuListValue(ui_state, ui_state->menu_selected,
+                              ENTRY_NAME_M17, ENTRY_VALUE_M17);
     }
 }
 
@@ -567,8 +656,10 @@ void _ui_drawSettingsModule17(UI_State_st* ui_state)
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "Module17 Settings");
     // Print Module17 settings entries
-    _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getModule17EntryName,
-                           _ui_getModule17ValueName);
+    _ui_drawMenuListValue(ui_state, ui_state->menu_selected,
+//                           _ui_getModule17EntryName , _ui_getModule17ValueName);
+// not provided for as it's not provided for in the compiled version
+                           ENTRY_NAME_M17 , ENTRY_VALUE_M17);
 }
 
 void _ui_drawSettingsReset2Defaults(UI_State_st* ui_state)
@@ -577,6 +668,8 @@ void _ui_drawSettingsReset2Defaults(UI_State_st* ui_state)
 
     static int drawcnt = 0;
     static long long lastDraw = 0;
+    color_t color_white ;
+    COLOR_LD( color_white , COLOR_WHITE );
 
     gfx_clearScreen();
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,

@@ -293,18 +293,74 @@ extern const char*      Page_MenuBackupRestore[] ;
 extern const char*      Page_MenuInfo[] ;
 extern const char*      authors[] ;
 
-extern const color_t    Color_Black ;
-extern const color_t    Color_Grey ;
-extern const color_t    Color_White ;
-//@@@KL
-extern const color_t    Color_Red ;
-extern const color_t    Color_Green ;
-extern const color_t    Color_Blue ;
 
-extern const color_t    Color_Yellow_Fab413 ;
+enum
+{
+    COLOR_ENC_RED_SHIFT   =   24 ,
+    COLOR_ENC_RED_MASK    = 0xFF ,
+    COLOR_ENC_GREEN_SHIFT =   16 ,
+    COLOR_ENC_GREEN_MASK  = 0xFF ,
+    COLOR_ENC_BLUE_SHIFT  =    8 ,
+    COLOR_ENC_BLUE_MASK   = 0xFF ,
+    COLOR_ENC_ALPHA_SHIFT =    0 ,
+    COLOR_ENC_ALPHA_MASK  = 0xFF
+};
+
+#define COLOR_ENC( r , g , b , a ) (uint32_t)(                  \
+    ( ( r & COLOR_ENC_RED_MASK   ) << COLOR_ENC_RED_SHIFT   ) | \
+    ( ( g & COLOR_ENC_GREEN_MASK ) << COLOR_ENC_GREEN_SHIFT ) | \
+    ( ( b & COLOR_ENC_BLUE_MASK  ) << COLOR_ENC_BLUE_SHIFT  ) | \
+    ( ( a & COLOR_ENC_ALPHA_MASK ) << COLOR_ENC_ALPHA_SHIFT )   )
+
+#define COLOR_WHITE         COLOR_ENC( 255 , 255 , 255 , 255 )
+#define COLOR_BLACK         COLOR_ENC(   0 ,   0 ,  0  , 255 )
+#define COLOR_GREY          COLOR_ENC(  60 ,  60 ,  60 , 255 )
+#define COLOR_ALPHA_GREY    COLOR_ENC(   0 ,   0 ,   0 , 255 )
+#define COLOR_YELLOW_FAB413 COLOR_ENC( 250 , 180 ,  19 , 255 )
+#define COLOR_RED           COLOR_ENC( 255 ,   0 ,   0 , 255 )
+#define COLOR_GREEN         COLOR_ENC(   0 , 255 ,   0 , 255 )
+#define COLOR_BLUE          COLOR_ENC(   0 ,   0 , 255 , 255 )
+
+typedef uint32_t Color_en ;
+
+#define COLOR_LD( cs , ce )                                                      \
+cs.r     = (uint8_t)( ( ce >> COLOR_ENC_RED_SHIFT   ) & COLOR_ENC_RED_MASK   ) ; \
+cs.g     = (uint8_t)( ( ce >> COLOR_ENC_GREEN_SHIFT ) & COLOR_ENC_GREEN_MASK ) ; \
+cs.b     = (uint8_t)( ( ce >> COLOR_ENC_BLUE_SHIFT  ) & COLOR_ENC_BLUE_MASK  ) ; \
+cs.alpha = (uint8_t)( ( ce >> COLOR_ENC_ALPHA_SHIFT ) & COLOR_ENC_ALPHA_MASK ) ;
 
 extern const uiPageDesc_st* uiGetPageDesc( uiPageNum_en pageNum );
 extern const char**         uiGetPageLoc( uiPageNum_en pageNum );
 extern uint8_t              uiGetPageNumOf( uiPageNum_en pageNum );
+
+typedef int (*GetMenuList_fn)( char* buf , uint8_t max_len , uint8_t index );
+
+typedef enum
+{
+    ENTRY_NAME_MENU_TOP       ,
+    ENTRY_NAME_BANK_NAME      ,
+    ENTRY_NAME_CHANNEL_NAME   ,
+    ENTRY_NAME_CONTACT_NAME   ,
+    ENTRY_NAME_SETTINGS       ,
+    ENTRY_NAME_BACKUP_RESTORE ,
+    ENTRY_NAME_INFO           ,
+    ENTRY_NAME_DISPLAY        ,
+    ENTRY_NAME_SETTINGS_GPS   ,
+    ENTRY_NAME_M17            ,
+    ENTRY_NAME_VOICE          ,
+    ENTRY_NAME_RADIO          ,
+    ENTRY_NAME_NUM_OF
+}EntryName_en;
+
+typedef enum
+{
+    ENTRY_VALUE_INFO         ,
+    ENTRY_VALUE_DISPLAY      ,
+    ENTRY_VALUE_SETTINGS_GPS ,
+    ENTRY_VALUE_M17          ,
+    ENTRY_VALUE_VOICE        ,
+    ENTRY_VALUE_RADIO        ,
+    ENTRY_VALUE_NUM_OF
+}EntryValue_en;
 
 #endif /* UI_DEFAULT_H */

@@ -37,7 +37,8 @@ void printBits(uint16_t value, point_t pos)
         if(value & (1 << i)) buf[i] += 1;
     }
 
-    color_t color_white = {255, 255, 255};
+    color_t color_white ;
+    COLOR_LD( color_white , COLOR_WHITE );
     gfx_print(pos, FONT_SIZE_1, TEXT_ALIGN_LEFT, color_white, buf);
 }
 
@@ -48,7 +49,7 @@ int main(void)
     GPIOC->MODER = 0;
     GPIOD->MODER = 0;
     GPIOE->MODER = 0;
-    
+
     gpio_setMode(GREEN_LED, OUTPUT);
     gpio_setMode(LCD_BKLIGHT, OUTPUT);
 

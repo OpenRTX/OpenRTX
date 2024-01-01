@@ -34,6 +34,7 @@ void platform_test()
     point_t pos_line2 = {0, 9};
     point_t pos_line3 = {0, 17};
     color_t color_white = {255, 255, 255};
+    COLOR_LD( color_white , COLOR_WHITE );
     gfx_print(pos_line1, FONT_SIZE_1, TEXT_ALIGN_LEFT,
               color_white, "Platform Test");
     float vBat = platform_getVbat();
@@ -41,10 +42,10 @@ void platform_test()
     float volumeLevel = platform_getVolumeLevel();
     uint8_t currentCh = platform_getChSelector();
     bool ptt = platform_getPttStatus();
-    gfx_print(pos_line2, FONT_SIZE_1, TEXT_ALIGN_LEFT, 
+    gfx_print(pos_line2, FONT_SIZE_1, TEXT_ALIGN_LEFT,
               color_white, "bat:%.2f mic:%.2f", vBat, micLevel);
-    gfx_print(pos_line3, FONT_SIZE_1, TEXT_ALIGN_LEFT, 
-              color_white, "vol:%.2f ch:%d ptt:%s", volumeLevel, 
+    gfx_print(pos_line3, FONT_SIZE_1, TEXT_ALIGN_LEFT,
+              color_white, "vol:%.2f ch:%d ptt:%s", volumeLevel,
               currentCh, ptt?"on":"off");
     gfx_render();
     while(gfx_renderingInProgress());
@@ -60,7 +61,8 @@ int main(void)
     platform_setBacklightLevel(255);
 
     point_t origin = {0, SCREEN_HEIGHT / 2};
-    color_t color_yellow = {250, 180, 19};
+    color_t color_yellow ;
+    COLOR_LD( color_yellow , COLOR_YELLOW_FAB413 );
 
     OS_ERR os_err;
 
@@ -68,7 +70,7 @@ int main(void)
     while(1)
     {
         gfx_clearScreen();
-        gfx_print(origin, FONT_SIZE_4, TEXT_ALIGN_CENTER, 
+        gfx_print(origin, FONT_SIZE_4, TEXT_ALIGN_CENTER,
                   color_yellow, "OpenRTX");
         //gfx_render();
         //while(gfx_renderingInProgress());

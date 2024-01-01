@@ -95,10 +95,12 @@ static void gfxThread(void *arg)
 
         gfx_clearScreen();
         point_t origin = {0, pos};
-        color_t color_red = {255, 0, 0};
-        color_t color_white = {255, 255, 255};
+        color_t color_red ;
+        COLOR_LD( color_red , COLOR_RED );
+        color_t color_white ;
+        COLOR_LD( color_white , COLOR_WHITE );
         gfx_drawRect(origin, SCREEN_WIDTH, 20, color_red, 1);
-        gfx_print(origin, FONT_SIZE_4, TEXT_ALIGN_LEFT, 
+        gfx_print(origin, FONT_SIZE_4, TEXT_ALIGN_LEFT,
                   color_white, "KEK");
         gfx_render();
         while(gfx_renderingInProgress()) ;

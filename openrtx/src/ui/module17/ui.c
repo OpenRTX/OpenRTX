@@ -180,11 +180,6 @@ const uint8_t module17_num = sizeof(module17_items)/sizeof(module17_items[0]);
 const uint8_t info_num = sizeof(Page_MenuInfo)/sizeof(Page_MenuInfo[0]);
 const uint8_t author_num = sizeof(authors)/sizeof(authors[0]);
 
-const color_t color_black = {0, 0, 0, 255};
-const color_t color_grey = {60, 60, 60, 255};
-const color_t color_white = {255, 255, 255, 255};
-const color_t yellow_fab413 = {250, 180, 19, 255};
-
 Layout_st layout;
 State_st last_state;
 static UI_State_st ui_state;
