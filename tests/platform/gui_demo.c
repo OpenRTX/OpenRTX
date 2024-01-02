@@ -43,11 +43,11 @@ int main(void)
 
     // Print splash screen
     point_t splash_origin = {0, SCREEN_HEIGHT / 2};
-    color_t color_yellow_fab413 ;
-    uiColorLoad( &color_yellow_fab413 , COLOR_OP3 );
+    color_t color_op3 ;
+    uiColorLoad( &color_op3 , COLOR_OP3 );
     gfx_clearScreen();
     gfx_print(splash_origin, FONT_SIZE_4, TEXT_ALIGN_CENTER,
-              color_yellow_fab413, "OpenRTX");
+              color_op3, "OpenRTX");
     gfx_render();
     while(gfx_renderingInProgress());
     OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);

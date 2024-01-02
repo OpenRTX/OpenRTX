@@ -95,13 +95,13 @@ static void gfxThread(void *arg)
 
         gfx_clearScreen();
         point_t origin = {0, pos};
-        color_t color_red ;
-        uiColorLoad( &color_red , COLOR_OP0 );
-        color_t color_white ;
-        uiColorLoad( &color_white , COLOR_FG );
-        gfx_drawRect(origin, SCREEN_WIDTH, 20, color_red, 1);
+        color_t color_op0 ;
+        uiColorLoad( &color_op0 , COLOR_OP0 );
+        color_t color_fg ;
+        uiColorLoad( &color_fg , COLOR_FG );
+        gfx_drawRect(origin, SCREEN_WIDTH, 20, color_op0, 1);
         gfx_print(origin, FONT_SIZE_4, TEXT_ALIGN_LEFT,
-                  color_white, "KEK");
+                  color_fg, "KEK");
         gfx_render();
         while(gfx_renderingInProgress()) ;
         pos += 20;

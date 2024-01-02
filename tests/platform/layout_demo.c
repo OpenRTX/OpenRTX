@@ -33,7 +33,7 @@ int main(void)
     gfx_clearScreen();
     gfx_render();
     platform_setBacklightLevel(255);
-    
+
     while(1)
     {
         for(int tot=1; tot<=10; tot++)
@@ -42,7 +42,7 @@ int main(void)
             for(int cur=1; cur<=tot; cur++)
             {
                 gfx_printLine(cur, tot, 0, 0, 0, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
-                              color_white, "Line %2d of %2d", cur, tot);
+                              color_fg, "Line %2d of %2d", cur, tot);
             }
             gfx_render();
             // Sleep for 1 second

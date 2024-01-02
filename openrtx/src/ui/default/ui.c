@@ -133,8 +133,8 @@ void Debug_SetTrace3( uint8_t traceVal )
 
 static void Debug_DisplayMsg( void )
 {
-    color_t color_white ;
-    uiColorLoad( &color_white , COLOR_FG );
+    color_t color_fg ;
+    uiColorLoad( &color_fg , COLOR_FG );
 
     //@@@KL
     if( counter < 10 )
@@ -145,7 +145,7 @@ static void Debug_DisplayMsg( void )
     {
         counter = 0 ;
     }
-    gfx_print( GuiState.layout.top_pos , GuiState.layout.top_font , TEXT_ALIGN_LEFT , color_white ,
+    gfx_print( GuiState.layout.top_pos , GuiState.layout.top_font , TEXT_ALIGN_LEFT , color_fg ,
                "%c%X%X%X%X" , (char)( '0' + counter ) ,
                trace0 & 0x0F , trace1 & 0x0F , trace2 & 0x0F , trace3 & 0x0F );//@@@KL
 }
@@ -678,8 +678,8 @@ static bool GuiCmd_Text( GuiState_st* guiState , UI_State_st* uiState )
     (void)uiState ;
     uint8_t* scriptPtr ;
     bool     pageEnd   = false ;
-    color_t color_white ;
-    uiColorLoad( &color_white , COLOR_FG );
+    color_t color_fg ;
+    uiColorLoad( &color_fg , COLOR_FG );
 
     while( guiState->pagePtr[ guiState->pageIndex ] < GUI_CMD_NUM_OF )
     {
@@ -688,7 +688,7 @@ static bool GuiCmd_Text( GuiState_st* guiState , UI_State_st* uiState )
 
     scriptPtr = &guiState->pagePtr[ guiState->pageIndex ] ;
 
-    gfx_print( guiState->layout.top_pos , guiState->layout.top_font , TEXT_ALIGN_LEFT , color_white ,
+    gfx_print( guiState->layout.top_pos , guiState->layout.top_font , TEXT_ALIGN_LEFT , color_fg ,
                "%s" , scriptPtr );
 
     while( guiState->pagePtr[ guiState->pageIndex ] != GUI_CMD_NULL )
@@ -1186,11 +1186,11 @@ static bool _ui_channel_valid( channel_t* channel )
 
 static bool _ui_drawDarkOverlay( void )
 {
-    color_t alpha_grey ;
-    uiColorLoad( &alpha_grey , COLOR_AGG );
+    color_t color_agg ;
+    uiColorLoad( &color_agg , COLOR_AGG );
     point_t origin     = { 0 , 0 };
 
-    gfx_drawRect( origin , SCREEN_WIDTH , SCREEN_HEIGHT , alpha_grey , true );
+    gfx_drawRect( origin , SCREEN_WIDTH , SCREEN_HEIGHT , color_agg , true );
 
     return true;
 
@@ -2057,10 +2057,10 @@ static void ui_InitGuiStateLayout( Layout_st* layout )
 
 void ui_drawSplashScreen( void )
 {
-    color_t color_white ;
-    uiColorLoad( &color_white , COLOR_FG );
-    color_t color_yellow_fab413 ;
-    uiColorLoad( &color_yellow_fab413 , COLOR_OP3 );
+    color_t color_fg ;
+    uiColorLoad( &color_fg , COLOR_FG );
+    color_t color_op3 ;
+    uiColorLoad( &color_op3 , COLOR_OP3 );
 
     gfx_clearScreen();
 
@@ -2076,8 +2076,8 @@ void ui_drawSplashScreen( void )
     static const fontSize_t call_font = FONT_SIZE_6PT ;
     #endif
 
-    gfx_print( logo_orig , logo_font , TEXT_ALIGN_CENTER,  color_yellow_fab413 , "O P N\nR T X" );
-    gfx_print( call_orig , call_font , TEXT_ALIGN_CENTER , color_white   , state.settings.callsign );
+    gfx_print( logo_orig , logo_font , TEXT_ALIGN_CENTER,  color_op3 , "O P N\nR T X" );
+    gfx_print( call_orig , call_font , TEXT_ALIGN_CENTER , color_fg   , state.settings.callsign );
 
     vp_announceSplashScreen();
 }

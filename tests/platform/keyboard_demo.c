@@ -37,12 +37,12 @@ char *keys_list[] = {
 
 void *print_keys(keyboard_t keys)
 {
-    color_t color_yellow_fab413 ;
-    uiColorLoad( &( color_yellow_fab413 , COLOR_OP3 );
-    color_t color_red ;
-    uiColorLoad( &( color_red , COLOR_OP0 );
-    color_t color_green ;
-    uiColorLoad( &( color_green , COLOR_OP1 );
+    color_t color_op3 ;
+    uiColorLoad( &color_op3 , COLOR_OP3 );
+    color_t color_op0 ;
+    uiColorLoad( &color_op0 , COLOR_OP0 );
+    color_t color_op1 ;
+    uiColorLoad( &color_op1 , COLOR_OP1 );
 
     point_t origin = {0, SCREEN_HEIGHT / 4};
     //count set bits to check how many keys are being pressed
@@ -51,7 +51,7 @@ void *print_keys(keyboard_t keys)
         //position of the first set bit
         int pos = __builtin_ctz(keys);
         gfx_print(origin, FONT_SIZE_8PT, TEXT_ALIGN_LEFT,
-                  color_green, "Pressed: %s", keys_list[pos + 1]);
+                  color_op1, "Pressed: %s", keys_list[pos + 1]);
         origin.y += 9;
         //unset the bit we already handled
         keys &= ~(1 << pos);
@@ -85,7 +85,7 @@ int main(void) {
     while (1) {
         gfx_clearScreen();
         gfx_print(title_origin, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
-                  color_red, "Keyboard demo");
+                  color_op0, "Keyboard demo");
         keyboard_t keys = kbd_getKeys();
         if (keys != 0)
             print_keys(keys);

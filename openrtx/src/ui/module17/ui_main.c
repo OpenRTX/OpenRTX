@@ -28,9 +28,9 @@
 void _ui_drawMainBackground()
 {
     // Print top bar line of hline_h pixel height
-    gfx_drawHLine(layout.top_h, layout.hline_h, color_grey);
+    gfx_drawHLine(layout.top_h, layout.hline_h, color_gg);
     // Print bottom bar line of 1 pixel height
-    gfx_drawHLine(SCREEN_HEIGHT - layout.bottom_h - 1, layout.hline_h, color_grey);
+    gfx_drawHLine(SCREEN_HEIGHT - layout.bottom_h - 1, layout.hline_h, color_gg);
 }
 
 void _ui_drawMainTop()
@@ -40,13 +40,13 @@ void _ui_drawMainTop()
     datetime_t local_time = utcToLocalTime(last_state.time,
                                            last_state.settings.utc_timezone);
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, "%02d:%02d:%02d", local_time.hour,
+              color_fg, "%02d:%02d:%02d", local_time.hour,
               local_time.minute, local_time.second);
 #endif
 
     // Print the source callsign on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT,
-                  color_white, state.settings.callsign);
+                  color_fg, state.settings.callsign);
 }
 
 void _ui_drawBankChannel()
@@ -54,7 +54,7 @@ void _ui_drawBankChannel()
     // Print Bank number, channel number and Channel name
     uint16_t b = (last_state.bank_enabled) ? last_state.bank : 0;
     gfx_print(layout.line1_pos, layout.line1_font, TEXT_ALIGN_CENTER,
-              color_white, "%01d-%03d: %.12s",
+              color_fg, "%01d-%03d: %.12s",
               b, last_state.channel_index + 1, last_state.channel.name);
 }
 
@@ -87,14 +87,14 @@ void _ui_drawModeInfo(UI_State_st* ui_state)
 
         // Print Bandwidth, Tone and encdec info
         gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-              color_white, "B:%s T:%4.1f S:%s",
+              color_fg, "B:%s T:%4.1f S:%s",
               bw_str, ctcss_tone[last_state.channel.fm.txTone]/10.0f,
               encdec_str);
         break;
         case OPMODE_DMR:
         // Print talkgroup
         gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-              color_white, "TG:%s",
+              color_fg, "TG:%s",
               "");
         break;
         case OPMODE_M17:
@@ -104,28 +104,28 @@ void _ui_drawModeInfo(UI_State_st* ui_state)
             if(rtxStatus.lsfOk)
             {
                 gfx_drawSymbol(layout.line2_pos, layout.line2_symbol_font, TEXT_ALIGN_LEFT,
-                               color_white, SYMBOL_CALL_RECEIVED);
+                               color_fg, SYMBOL_CALL_RECEIVED);
                 gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                          color_white, "%s", rtxStatus.M17_dst);
+                          color_fg, "%s", rtxStatus.M17_dst);
                 gfx_drawSymbol(layout.line1_pos, layout.line1_symbol_font, TEXT_ALIGN_LEFT,
-                               color_white, SYMBOL_CALL_MADE);
+                               color_fg, SYMBOL_CALL_MADE);
                 gfx_print(layout.line1_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                          color_white, "%s", rtxStatus.M17_src);
+                          color_fg, "%s", rtxStatus.M17_src);
 
                 if(rtxStatus.M17_link[0] != '\0')
                 {
                     gfx_drawSymbol(layout.line4_pos, layout.line3_symbol_font, TEXT_ALIGN_LEFT,
-                                color_white, SYMBOL_ACCESS_POINT);
+                                color_fg, SYMBOL_ACCESS_POINT);
                     gfx_print(layout.line4_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                            color_white, "%s", rtxStatus.M17_link);
+                            color_fg, "%s", rtxStatus.M17_link);
                 }
 
                 if(rtxStatus.M17_refl[0] != '\0')
                 {
                     gfx_drawSymbol(layout.line3_pos, layout.line4_symbol_font, TEXT_ALIGN_LEFT,
-                                   color_white, SYMBOL_NETWORK);
+                                   color_fg, SYMBOL_NETWORK);
                     gfx_print(layout.line3_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                              color_white, "%s", rtxStatus.M17_refl);
+                              color_fg, "%s", rtxStatus.M17_refl);
                 }
             }
             else
@@ -152,15 +152,15 @@ void _ui_drawModeInfo(UI_State_st* ui_state)
 
                 // Print CAN
                 gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_RIGHT,
-                          color_white, "CAN %02d", state.settings.m17_can);
+                          color_fg, "CAN %02d", state.settings.m17_can);
                 gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                          color_white, last);
+                          color_fg, last);
                 // Print M17 Destination ID on line 2
                 gfx_print(layout.line3_pos, layout.line3_font, TEXT_ALIGN_CENTER,
-                          color_white, "%s", dst);
+                          color_fg, "%s", dst);
                 // Menu
                 gfx_print(layout.line5_pos, layout.line5_font, TEXT_ALIGN_RIGHT,
-                          color_white, "Menu");
+                          color_fg, "Menu");
                 break;
             }
         }
@@ -174,7 +174,7 @@ void _ui_drawFrequency()
 
     // Print big numbers frequency
     gfx_print(layout.line3_pos, layout.line3_font, TEXT_ALIGN_CENTER,
-              color_white, "%03lu.%05lu",
+              color_fg, "%03lu.%05lu",
               (unsigned long)frequency/1000000,
               (unsigned long)frequency%1000000/10);
 }
@@ -191,7 +191,7 @@ void _ui_drawVFOMiddleInput(UI_State_st* ui_state)
         if(ui_state->input_position == 0)
         {
             gfx_print(layout.line2_pos, layout.input_font, TEXT_ALIGN_CENTER,
-                      color_white, ">Rx:%03lu.%04lu",
+                      color_fg, ">Rx:%03lu.%04lu",
                       (unsigned long)ui_state->new_rx_frequency/1000000,
                       (unsigned long)(ui_state->new_rx_frequency%1000000)/100);
         }
@@ -202,24 +202,24 @@ void _ui_drawVFOMiddleInput(UI_State_st* ui_state)
                 strcpy(ui_state->new_rx_freq_buf, ">Rx:___.____");
             ui_state->new_rx_freq_buf[insert_pos] = input_char;
             gfx_print(layout.line2_pos, layout.input_font, TEXT_ALIGN_CENTER,
-                      color_white, ui_state->new_rx_freq_buf);
+                      color_fg, ui_state->new_rx_freq_buf);
         }
         gfx_print(layout.line3_pos, layout.input_font, TEXT_ALIGN_CENTER,
-                  color_white, " Tx:%03lu.%04lu",
+                  color_fg, " Tx:%03lu.%04lu",
                   (unsigned long)last_state.channel.tx_frequency/1000000,
                   (unsigned long)(last_state.channel.tx_frequency%1000000)/100);
     }
     else if(ui_state->input_set == SET_TX)
     {
         gfx_print(layout.line2_pos, layout.input_font, TEXT_ALIGN_CENTER,
-                  color_white, " Rx:%03lu.%04lu",
+                  color_fg, " Rx:%03lu.%04lu",
                   (unsigned long)ui_state->new_rx_frequency/1000000,
                   (unsigned long)(ui_state->new_rx_frequency%1000000)/100);
         // Replace Rx frequency with underscorses
         if(ui_state->input_position == 0)
         {
             gfx_print(layout.line3_pos, layout.input_font, TEXT_ALIGN_CENTER,
-                      color_white, ">Tx:%03lu.%04lu",
+                      color_fg, ">Tx:%03lu.%04lu",
                       (unsigned long)ui_state->new_rx_frequency/1000000,
                       (unsigned long)(ui_state->new_rx_frequency%1000000)/100);
         }
@@ -229,7 +229,7 @@ void _ui_drawVFOMiddleInput(UI_State_st* ui_state)
                 strcpy(ui_state->new_tx_freq_buf, ">Tx:___.____");
             ui_state->new_tx_freq_buf[insert_pos] = input_char;
             gfx_print(layout.line3_pos, layout.input_font, TEXT_ALIGN_CENTER,
-                      color_white, ui_state->new_tx_freq_buf);
+                      color_fg, ui_state->new_tx_freq_buf);
         }
     }
 }

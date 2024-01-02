@@ -37,9 +37,9 @@ void printBits(uint16_t value, point_t pos)
         if(value & (1 << i)) buf[i] += 1;
     }
 
-    color_t color_white ;
-    uiColorLoad( &color_white , COLOR_FG );
-    gfx_print(pos, FONT_SIZE_1, TEXT_ALIGN_LEFT, color_white, buf);
+    color_t color_fg ;
+    uiColorLoad( &color_fg , COLOR_FG );
+    gfx_print(pos, FONT_SIZE_1, TEXT_ALIGN_LEFT, color_fg, buf);
 }
 
 int main(void)
