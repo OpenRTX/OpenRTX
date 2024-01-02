@@ -134,7 +134,7 @@ void Debug_SetTrace3( uint8_t traceVal )
 static void Debug_DisplayMsg( void )
 {
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
 
     //@@@KL
     if( counter < 10 )
@@ -679,7 +679,7 @@ static bool GuiCmd_Text( GuiState_st* guiState , UI_State_st* uiState )
     uint8_t* scriptPtr ;
     bool     pageEnd   = false ;
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
 
     while( guiState->pagePtr[ guiState->pageIndex ] < GUI_CMD_NUM_OF )
     {
@@ -1187,7 +1187,7 @@ static bool _ui_channel_valid( channel_t* channel )
 static bool _ui_drawDarkOverlay( void )
 {
     color_t alpha_grey ;
-    COLOR_LD( alpha_grey , COLOR_ALPHA_GREY );
+    uiColorLoad( &alpha_grey , COLOR_AGG );
     point_t origin     = { 0 , 0 };
 
     gfx_drawRect( origin , SCREEN_WIDTH , SCREEN_HEIGHT , alpha_grey , true );
@@ -2058,9 +2058,9 @@ static void ui_InitGuiStateLayout( Layout_st* layout )
 void ui_drawSplashScreen( void )
 {
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
     color_t color_yellow_fab413 ;
-    COLOR_LD( color_yellow_fab413 , COLOR_YELLOW_FAB413 );
+    uiColorLoad( &color_yellow_fab413 , COLOR_OP3 );
 
     gfx_clearScreen();
 
@@ -3760,6 +3760,23 @@ bool ui_eventPresent( void )
 
     return eventPresent ;
 
+}
+
+static const uint32_t ColorTable[ COLOR_NUM_OF ] =
+{
+    COLOR_TABLE
+};
+
+void uiColorLoad( color_t* color , ColorSelector_en colorSelector )
+{
+    ColorSelector_en colorSel = colorSelector ;
+
+    if( colorSel > COLOR_NUM_OF )
+    {
+        colorSel = COLOR_AL ;
+    }
+
+    COLOR_LD( color , ColorTable[ colorSel ] )
 }
 
 void ui_terminate( void )

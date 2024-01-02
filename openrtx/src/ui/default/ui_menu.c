@@ -219,9 +219,9 @@ void _ui_drawMenuList( GuiState_st* guiState , uint8_t selected , EntryName_en c
     uint8_t scroll = 0 ;
     char entry_buf[ MAX_ENTRY_LEN ] = "" ;
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
     color_t color_black ;
-    COLOR_LD( color_black , COLOR_BLACK );
+    uiColorLoad( &color_black , COLOR_BG );
     color_t text_color = color_white ;
 
     for( int item = 0 , result = 0 ; ( result == 0 ) && ( pos.y < SCREEN_HEIGHT ); item++ )
@@ -275,9 +275,9 @@ void _ui_drawMenuListValue( GuiState_st* guiState , UI_State_st* uiState , uint8
     char entry_buf[ MAX_ENTRY_LEN ] = "" ;
     char value_buf[ MAX_ENTRY_LEN ] = "" ;
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
     color_t color_black ;
-    COLOR_LD( color_black , COLOR_BLACK );
+    uiColorLoad( &color_black , COLOR_BG );
     color_t text_color = color_white ;
 
     for( int item = 0 , result = 0 ; ( result == 0 ) && ( pos.y < SCREEN_HEIGHT ) ; item++ )
@@ -737,7 +737,7 @@ int _ui_getContactName( char* buf , uint8_t max_len , uint8_t index )
 void _ui_drawMenuTop( GuiState_st* guiState , UI_State_st* uiState )
 {
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Menu" on top bar
@@ -750,7 +750,7 @@ void _ui_drawMenuTop( GuiState_st* guiState , UI_State_st* uiState )
 void _ui_drawMenuBank( GuiState_st* guiState , UI_State_st* uiState )
 {
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Bank" on top bar
@@ -763,7 +763,7 @@ void _ui_drawMenuBank( GuiState_st* guiState , UI_State_st* uiState )
 void _ui_drawMenuChannel( GuiState_st* guiState , UI_State_st* uiState )
 {
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Channel" on top bar
@@ -776,7 +776,7 @@ void _ui_drawMenuChannel( GuiState_st* guiState , UI_State_st* uiState )
 void _ui_drawMenuContacts( GuiState_st* guiState , UI_State_st* uiState )
 {
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Contacts" on top bar
@@ -793,7 +793,7 @@ void _ui_drawMenuGPS( GuiState_st* guiState , UI_State_st* uiState )
     char* fix_buf ;
     char* type_buf ;
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
 
     gfx_clearScreen();
     // Print "GPS" on top bar
@@ -905,7 +905,7 @@ void _ui_drawMenuSettings( GuiState_st* guiState , UI_State_st* uiState , Event_
 {
     (void)event ;
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Settings" on top bar
@@ -919,7 +919,7 @@ void _ui_drawMenuBackupRestore( GuiState_st* guiState , UI_State_st* uiState , E
 {
     (void)event ;
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Backup & Restore" on top bar
@@ -934,7 +934,7 @@ void _ui_drawMenuBackup( GuiState_st* guiState , UI_State_st* uiState , Event_st
     (void)uiState ;
     (void)event ;
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Flash Backup" on top bar
@@ -965,7 +965,7 @@ void _ui_drawMenuRestore( GuiState_st* guiState , UI_State_st* uiState , Event_s
     (void)uiState ;
     (void)event ;
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Flash Restore" on top bar
@@ -995,7 +995,7 @@ void _ui_drawMenuInfo( GuiState_st* guiState , UI_State_st* uiState , Event_st* 
 {
     (void)event ;
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Info" on top bar
@@ -1011,9 +1011,9 @@ void _ui_drawMenuAbout( GuiState_st* guiState , UI_State_st* uiState )
     (void)uiState ;
     point_t logo_pos;
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
     color_t color_yellow_fab413 ;
-    COLOR_LD( color_yellow_fab413 , COLOR_YELLOW_FAB413 );
+    uiColorLoad( &color_yellow_fab413 , COLOR_OP3 );
 
     gfx_clearScreen();
 
@@ -1050,7 +1050,7 @@ void _ui_drawSettingsDisplay( GuiState_st* guiState , UI_State_st* uiState , Eve
 {
     (void)event ;
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Display" on top bar
@@ -1066,7 +1066,7 @@ void _ui_drawSettingsGPS( GuiState_st* guiState , UI_State_st* uiState , Event_s
 {
     (void)event ;
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
 
     gfx_clearScreen();
     // Print "GPS Settings" on top bar
@@ -1082,7 +1082,7 @@ void _ui_drawSettingsGPS( GuiState_st* guiState , UI_State_st* uiState , Event_s
 void _ui_drawSettingsTimeDate( GuiState_st* guiState )
 {
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
 
     gfx_clearScreen();
     datetime_t local_time = utcToLocalTime( last_state.time ,
@@ -1103,7 +1103,7 @@ void _ui_drawSettingsTimeDateSet( GuiState_st* guiState , UI_State_st* uiState ,
 {
     (void)event ;
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Time&Date" on top bar
@@ -1147,7 +1147,7 @@ void _ui_drawSettingsM17( GuiState_st* guiState , UI_State_st* uiState , Event_s
 {
     (void)event ;
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
 
     gfx_clearScreen();
     // Print "M17 Settings" on top bar
@@ -1179,7 +1179,7 @@ void _ui_drawSettingsVoicePrompts( GuiState_st* guiState , UI_State_st* uiState 
 {
     (void)event ;
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Voice" on top bar
@@ -1198,7 +1198,7 @@ void _ui_drawSettingsReset2Defaults( GuiState_st* guiState , UI_State_st* uiStat
     static long long lastDraw = 0 ;
     color_t          text_color ;
     color_t          color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
 
     gfx_clearScreen();
     gfx_print( guiState->layout.top_pos , guiState->layout.top_font , TEXT_ALIGN_CENTER ,
@@ -1207,11 +1207,11 @@ void _ui_drawSettingsReset2Defaults( GuiState_st* guiState , UI_State_st* uiStat
     // Make text flash yellow once every 1s
     if( drawcnt % 2 == 0 )
     {
-        COLOR_LD( text_color , COLOR_WHITE );
+        uiColorLoad( &text_color , COLOR_FG );
     }
     else
     {
-        COLOR_LD( text_color , COLOR_YELLOW_FAB413 );
+        uiColorLoad( &text_color , COLOR_OP3 );
     }
     gfx_printLine( 1 , 4 , guiState->layout.top_h , SCREEN_HEIGHT - guiState->layout.bottom_h ,
                    guiState->layout.horizontal_pad , guiState->layout.top_font ,
@@ -1233,7 +1233,7 @@ void _ui_drawSettingsRadio( GuiState_st* guiState , UI_State_st* uiState , Event
 {
     (void)event ;
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
 
     gfx_clearScreen();
 
@@ -1280,7 +1280,7 @@ void _ui_drawSettingsRadio( GuiState_st* guiState , UI_State_st* uiState , Event
 void _ui_drawMacroTop( GuiState_st* guiState )
 {
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
 
     gfx_print( guiState->layout.top_pos , guiState->layout.top_font , TEXT_ALIGN_CENTER ,
                color_white , currentLanguage->macroMenu );
@@ -1309,9 +1309,9 @@ bool _ui_drawMacroMenu( GuiState_st* guiState , UI_State_st* uiState , Event_st*
 {
     (void)event ;
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
     color_t color_yellow_fab413 ;
-    COLOR_LD( color_yellow_fab413 , COLOR_YELLOW_FAB413 );
+    uiColorLoad( &color_yellow_fab413 , COLOR_OP3 );
 
     // Header
     _ui_drawMacroTop( guiState );

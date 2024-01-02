@@ -198,7 +198,7 @@ static void ui_drawLowBatteryScreen( GuiState_st* guiState , UI_State_st* uiStat
     (void)event ;
     (void)uiState ;
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
 
     gfx_clearScreen();
     uint16_t bat_width       = SCREEN_WIDTH / 2 ;
@@ -249,7 +249,7 @@ static void ui_drawMainBackground( void )
 static void ui_drawMainTop( GuiState_st* guiState , UI_State_st * ui_state , Event_st* event )
 {
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
 
 #ifdef RTC_PRESENT
     if( event->payload & EVENT_STATUS_TIME_DISPLAY_TICK )
@@ -287,7 +287,7 @@ static void ui_drawMainTop( GuiState_st* guiState , UI_State_st * ui_state , Eve
 static void ui_drawBankChannel( GuiState_st* guiState )
 {
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
 
     // Print Bank number, channel number and Channel name
     uint16_t bank_enabled = ( last_state.bank_enabled ) ? last_state.bank : 0 ;
@@ -301,7 +301,7 @@ static void ui_drawModeInfo( GuiState_st* guiState , UI_State_st* uiState )
     char bw_str[ 8 ]     = { 0 };
     char encdec_str[ 9 ] = { 0 };
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
 
     switch( last_state.channel.mode )
     {
@@ -448,7 +448,7 @@ static void ui_drawFrequency( GuiState_st* guiState )
     unsigned long frequency = platform_getPttStatus() ? last_state.channel.tx_frequency
                                                       : last_state.channel.rx_frequency;
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
 
     // Print big numbers frequency
     gfx_print( guiState->layout.line3_large_pos , guiState->layout.line3_large_font , TEXT_ALIGN_CENTER ,
@@ -460,7 +460,7 @@ static void ui_drawVFOMiddleInput( GuiState_st* guiState , UI_State_st* uiState 
     // Add inserted number to string, skipping "Rx: "/"Tx: " and "."
     uint8_t insert_pos = uiState->input_position + 3;
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
 
     if( uiState->input_position > 3 )
     {
@@ -533,7 +533,7 @@ void _ui_drawMainBottom( GuiState_st* guiState , Event_st* event )
     point_t meter_pos     = { guiState->layout.horizontal_pad , ( SCREEN_HEIGHT - meter_height ) - guiState->layout.bottom_pad };
     uint8_t mic_level     = platform_getMicLevel();
     color_t color_yellow_fab413 ;
-    COLOR_LD( color_yellow_fab413 , COLOR_YELLOW_FAB413 );
+    uiColorLoad( &color_yellow_fab413 , COLOR_OP3 );
 
     if( event->payload & EVENT_STATUS_RSSI )
     {

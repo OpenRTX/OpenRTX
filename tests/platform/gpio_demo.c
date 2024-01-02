@@ -38,7 +38,7 @@ void printBits(uint16_t value, point_t pos)
     }
 
     color_t color_white ;
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &color_white , COLOR_FG );
     gfx_print(pos, FONT_SIZE_1, TEXT_ALIGN_LEFT, color_white, buf);
 }
 

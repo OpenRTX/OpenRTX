@@ -44,7 +44,7 @@ int main(void)
     // Print splash screen
     point_t splash_origin = {0, SCREEN_HEIGHT / 2};
     color_t color_yellow_fab413 ;
-    COLOR_LD( color_yellow_fab413 , COLOR_YELLOW_FAB413 );
+    uiColorLoad( &color_yellow_fab413 , COLOR_OP3 );
     gfx_clearScreen();
     gfx_print(splash_origin, FONT_SIZE_4, TEXT_ALIGN_CENTER,
               color_yellow_fab413, "OpenRTX");

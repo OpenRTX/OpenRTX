@@ -34,7 +34,7 @@ void platform_test()
     point_t pos_line2 = {0, 9};
     point_t pos_line3 = {0, 17};
     color_t color_white = {255, 255, 255};
-    COLOR_LD( color_white , COLOR_WHITE );
+    uiColorLoad( &( color_white , COLOR_FG );
     gfx_print(pos_line1, FONT_SIZE_1, TEXT_ALIGN_LEFT,
               color_white, "Platform Test");
     float vBat = platform_getVbat();
@@ -62,7 +62,7 @@ int main(void)
 
     point_t origin = {0, SCREEN_HEIGHT / 2};
     color_t color_yellow ;
-    COLOR_LD( color_yellow , COLOR_YELLOW_FAB413 );
+    uiColorLoad( &( color_yellow , COLOR_OP3 );
 
     OS_ERR os_err;
 

@@ -38,11 +38,11 @@ char *keys_list[] = {
 void *print_keys(keyboard_t keys)
 {
     color_t color_yellow_fab413 ;
-    COLOR_LD( color_yellow_fab413 , COLOR_YELLOW_FAB413 );
+    uiColorLoad( &( color_yellow_fab413 , COLOR_OP3 );
     color_t color_red ;
-    COLOR_LD( color_red , COLOR_RED );
+    uiColorLoad( &( color_red , COLOR_OP0 );
     color_t color_green ;
-    COLOR_LD( color_green , COLOR_GREEN );
+    uiColorLoad( &( color_green , COLOR_OP1 );
 
     point_t origin = {0, SCREEN_HEIGHT / 4};
     //count set bits to check how many keys are being pressed

@@ -293,7 +293,7 @@ extern const char*      Page_MenuBackupRestore[] ;
 extern const char*      Page_MenuInfo[] ;
 extern const char*      authors[] ;
 
-
+// Color Variable Field Unshifted Masks and Shifts
 enum
 {
     COLOR_ENC_RED_SHIFT   =   24 ,
@@ -306,28 +306,69 @@ enum
     COLOR_ENC_ALPHA_MASK  = 0xFF
 };
 
-#define COLOR_ENC( r , g , b , a ) (uint32_t)(                  \
-    ( ( r & COLOR_ENC_RED_MASK   ) << COLOR_ENC_RED_SHIFT   ) | \
-    ( ( g & COLOR_ENC_GREEN_MASK ) << COLOR_ENC_GREEN_SHIFT ) | \
-    ( ( b & COLOR_ENC_BLUE_MASK  ) << COLOR_ENC_BLUE_SHIFT  ) | \
-    ( ( a & COLOR_ENC_ALPHA_MASK ) << COLOR_ENC_ALPHA_SHIFT )   )
+// Color Variable Field Encoder
+#define COLOR_DEF_ENC( r , g , b , a ) (const uint32_t)(                        \
+    ( ( (const uint32_t)r & COLOR_ENC_RED_MASK   ) << COLOR_ENC_RED_SHIFT   ) | \
+    ( ( (const uint32_t)g & COLOR_ENC_GREEN_MASK ) << COLOR_ENC_GREEN_SHIFT ) | \
+    ( ( (const uint32_t)b & COLOR_ENC_BLUE_MASK  ) << COLOR_ENC_BLUE_SHIFT  ) | \
+    ( ( (const uint32_t)a & COLOR_ENC_ALPHA_MASK ) << COLOR_ENC_ALPHA_SHIFT )   )
 
-#define COLOR_WHITE         COLOR_ENC( 255 , 255 , 255 , 255 )
-#define COLOR_BLACK         COLOR_ENC(   0 ,   0 ,  0  , 255 )
-#define COLOR_GREY          COLOR_ENC(  60 ,  60 ,  60 , 255 )
-#define COLOR_ALPHA_GREY    COLOR_ENC(   0 ,   0 ,   0 , 255 )
-#define COLOR_YELLOW_FAB413 COLOR_ENC( 250 , 180 ,  19 , 255 )
-#define COLOR_RED           COLOR_ENC( 255 ,   0 ,   0 , 255 )
-#define COLOR_GREEN         COLOR_ENC(   0 , 255 ,   0 , 255 )
-#define COLOR_BLUE          COLOR_ENC(   0 ,   0 , 255 , 255 )
+// Color Definitions
+#define COLOR_DEF_WHITE         COLOR_DEF_ENC( 255 , 255 , 255 , 255 )
+#define COLOR_DEF_BLACK         COLOR_DEF_ENC(   0 ,   0 ,  0  , 255 )
+#define COLOR_DEF_GREY          COLOR_DEF_ENC(  60 ,  60 ,  60 , 255 )
+#define COLOR_DEF_ALPHA_GREY    COLOR_DEF_ENC(   0 ,   0 ,   0 , 255 )
+#define COLOR_DEF_YELLOW_FAB413 COLOR_DEF_ENC( 250 , 180 ,  19 , 255 )
+#define COLOR_DEF_RED           COLOR_DEF_ENC( 255 ,   0 ,   0 , 255 )
+#define COLOR_DEF_GREEN         COLOR_DEF_ENC(   0 , 255 ,   0 , 255 )
+#define COLOR_DEF_BLUE          COLOR_DEF_ENC(   0 ,   0 , 255 , 255 )
 
-typedef uint32_t Color_en ;
+// Color Table Definition
+#define COLOR_TABLE             \
+    COLOR_DEF_BLACK         ,   \
+    COLOR_DEF_WHITE         ,   \
+    COLOR_DEF_GREY          ,   \
+    COLOR_DEF_ALPHA_GREY    ,   \
+    COLOR_DEF_YELLOW_FAB413 ,   \
+    COLOR_DEF_RED           ,   \
+    COLOR_DEF_GREEN         ,   \
+    COLOR_DEF_BLUE
 
-#define COLOR_LD( cs , ce )                                                      \
-cs.r     = (uint8_t)( ( ce >> COLOR_ENC_RED_SHIFT   ) & COLOR_ENC_RED_MASK   ) ; \
-cs.g     = (uint8_t)( ( ce >> COLOR_ENC_GREEN_SHIFT ) & COLOR_ENC_GREEN_MASK ) ; \
-cs.b     = (uint8_t)( ( ce >> COLOR_ENC_BLUE_SHIFT  ) & COLOR_ENC_BLUE_MASK  ) ; \
-cs.alpha = (uint8_t)( ( ce >> COLOR_ENC_ALPHA_SHIFT ) & COLOR_ENC_ALPHA_MASK ) ;
+// Color Selectors
+typedef enum
+{
+    COLOR_BLACK         ,
+    COLOR_WHITE         ,
+    COLOR_GREY          ,
+    COLOR_ALPHA_GREY    ,
+    COLOR_YELLOW_FAB413 ,
+    COLOR_RED           ,
+    COLOR_GREEN         ,
+    COLOR_BLUE          ,
+    COLOR_NUM_OF        ,
+
+    COLOR_BG  = COLOR_BLACK         , // background
+    COLOR_FG  = COLOR_WHITE         , // foreground
+    COLOR_GG  = COLOR_GREY          , // grey ground
+    COLOR_AGG = COLOR_ALPHA_GREY    , // alpha grey ground
+    COLOR_HL  = COLOR_YELLOW_FAB413 , // highlight
+    COLOR_OP0 = COLOR_RED           , // option 0
+    COLOR_OP1 = COLOR_GREEN         , // option 1
+    COLOR_OP2 = COLOR_BLUE          , // option 2
+    COLOR_OP3 = COLOR_YELLOW_FAB413 , // option 3
+    COLOR_AL  = COLOR_RED             // alarm
+
+}ColorSelector_en;
+
+// Load the color_t structure with the color variable fields
+#define COLOR_LD( c , cv )                                                       \
+c->r     = (uint8_t)( ( cv >> COLOR_ENC_RED_SHIFT   ) & COLOR_ENC_RED_MASK   ) ; \
+c->g     = (uint8_t)( ( cv >> COLOR_ENC_GREEN_SHIFT ) & COLOR_ENC_GREEN_MASK ) ; \
+c->b     = (uint8_t)( ( cv >> COLOR_ENC_BLUE_SHIFT  ) & COLOR_ENC_BLUE_MASK  ) ; \
+c->alpha = (uint8_t)( ( cv >> COLOR_ENC_ALPHA_SHIFT ) & COLOR_ENC_ALPHA_MASK ) ;
+
+// Color load fn.
+extern void uiColorLoad( color_t* color , ColorSelector_en colorSelector );
 
 extern const uiPageDesc_st* uiGetPageDesc( uiPageNum_en pageNum );
 extern const char**         uiGetPageLoc( uiPageNum_en pageNum );
