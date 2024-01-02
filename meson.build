@@ -622,12 +622,12 @@ ttwrplus_opts = {
 
 targets = [
   {
-    'name'     : 'linux_default_large',
+    'name'     : 'linux',
     'opts'     : linux_default_large_opts,
     'flashable': false
   },
   {
-    'name'     : 'linux_default_small',
+    'name'     : 'linux_smallscreen',
     'opts'     : linux_default_small_opts,
     'flashable': false
   },
