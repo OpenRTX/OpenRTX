@@ -155,8 +155,8 @@ static void Debug_DisplayMsg( void )
 static void ui_InitGuiState( GuiState_st* guiState );
 static void ui_InitGuiStateLayout( Layout_st* layout );
 /* UI main screen functions, their implementation is in "ui_main.c" */
-extern void ui_draw( State_st* state , UI_State_st* ui_state , Event_st* event );
-extern bool _ui_drawMacroMenu( UI_State_st* ui_state );
+extern void ui_draw( GuiState_st* guiState , State_st* state , Event_st* event );
+extern bool _ui_drawMacroMenu( GuiState_st* guiState );
 extern void _ui_reset_menu_anouncement_tracking( void );
 
 const uint8_t Page_MenuItems_N[] =
@@ -560,15 +560,15 @@ static const char* symbols_ITU_T_E161_callsign[] =
     ""
 };
 
-static bool GuiCmd_Null( GuiState_st* guiState , UI_State_st* uiState );
-static bool GuiCmd_Text( GuiState_st* guiState , UI_State_st* uiState );
-static bool GuiCmd_Link( GuiState_st* guiState , UI_State_st* uiState );
-static bool GuiCmd_Value( GuiState_st* guiState , UI_State_st* uiState );
-static bool GuiCmd_LineEnd( GuiState_st* guiState , UI_State_st* uiState );
-static bool GuiCmd_End( GuiState_st* guiState , UI_State_st* uiState );
-static bool GuiCmd_Stubbed( GuiState_st* guiState , UI_State_st* uiState );
+static bool GuiCmd_Null( GuiState_st* guiState );
+static bool GuiCmd_Text( GuiState_st* guiState );
+static bool GuiCmd_Link( GuiState_st* guiState );
+static bool GuiCmd_Value( GuiState_st* guiState );
+static bool GuiCmd_LineEnd( GuiState_st* guiState );
+static bool GuiCmd_End( GuiState_st* guiState );
+static bool GuiCmd_Stubbed( GuiState_st* guiState );
 
-typedef bool (*ui_GuiCmd_fn)( GuiState_st* guiState , UI_State_st* uiState );
+typedef bool (*ui_GuiCmd_fn)( GuiState_st* guiState );
 
 static const ui_GuiCmd_fn ui_GuiCmd_Table[ GUI_CMD_NUM_OF ] =
 {
@@ -606,9 +606,8 @@ static const ui_GuiCmd_fn ui_GuiCmd_Table[ GUI_CMD_NUM_OF ] =
     GuiCmd_End        // 0x1F
 };
 
-bool ui_DisplayPage( GuiState_st* guiState , uiPageNum_en pageNum , UI_State_st* uiState )
+bool ui_DisplayPage( GuiState_st* guiState , uiPageNum_en pageNum )
 {
-    (void)uiState ;
     uint8_t* pagePtr ;
     uint8_t  cmd ;
     bool     exit          = false ;
@@ -631,7 +630,7 @@ bool ui_DisplayPage( GuiState_st* guiState , uiPageNum_en pageNum , UI_State_st*
                 cmd = GUI_CMD_TEXT ;
             }
 
-            if( ui_GuiCmd_Table[ cmd ]( guiState , uiState ) )
+            if( ui_GuiCmd_Table[ cmd ]( guiState ) )
             {
                 exit = true ;
             }
@@ -645,10 +644,8 @@ bool ui_DisplayPage( GuiState_st* guiState , uiPageNum_en pageNum , UI_State_st*
 
 }
 
-static bool GuiCmd_Null( GuiState_st* guiState , UI_State_st* uiState )
+static bool GuiCmd_Null( GuiState_st* guiState )
 {
-    (void)guiState ;
-    (void)uiState ;
     bool pageEnd = false ;
 
     printf( "Cmd NULL" );
@@ -659,10 +656,8 @@ static bool GuiCmd_Null( GuiState_st* guiState , UI_State_st* uiState )
 
 }
 
-static bool GuiCmd_End( GuiState_st* guiState , UI_State_st* uiState )
+static bool GuiCmd_End( GuiState_st* guiState )
 {
-    (void)guiState ;
-    (void)uiState ;
     bool pageEnd = true ;
 
     printf( "Cmd End" );
@@ -673,9 +668,8 @@ static bool GuiCmd_End( GuiState_st* guiState , UI_State_st* uiState )
 
 }
 
-static bool GuiCmd_Text( GuiState_st* guiState , UI_State_st* uiState )
+static bool GuiCmd_Text( GuiState_st* guiState )
 {
-    (void)uiState ;
     uint8_t* scriptPtr ;
     bool     pageEnd   = false ;
     color_t color_fg ;
@@ -702,7 +696,7 @@ static bool GuiCmd_Text( GuiState_st* guiState , UI_State_st* uiState )
 
 }
 
-static bool GuiCmd_Link( GuiState_st* guiState , UI_State_st* uiState )
+static bool GuiCmd_Link( GuiState_st* guiState )
 {
 //    uint8_t val ;
 
@@ -712,13 +706,11 @@ static bool GuiCmd_Link( GuiState_st* guiState , UI_State_st* uiState )
 
     guiState->pageIndex++ ;
 
-    return GuiCmd_Text( guiState , uiState );
+    return GuiCmd_Text( guiState );
 }
 
-static bool GuiCmd_Value( GuiState_st* guiState , UI_State_st* uiState )
+static bool GuiCmd_Value( GuiState_st* guiState )
 {
-    (void)guiState ;
-    (void)uiState ;
     bool pageEnd = false ;
 
     guiState->pageIndex++ ;
@@ -727,14 +719,13 @@ static bool GuiCmd_Value( GuiState_st* guiState , UI_State_st* uiState )
 
 }
 
-static bool GuiCmd_LineEnd( GuiState_st* guiState , UI_State_st* uiState )
+static bool GuiCmd_LineEnd( GuiState_st* guiState )
 {
-    (void)uiState ;
     bool pageEnd = false ;
 //@@@KL    _ui_drawMenuList       ->  _ui_drawMenuListItem
 //@@@KL    _ui_drawMenuListValue  ->  _ui_drawMenuListItemValue
-//@@@KL    guiState->col = 0 ;
-//@@@KL    guiState->line++ ;
+//@@@KL    guiState->uiState.col = 0 ;
+//@@@KL    guiState->uiState.line++ ;
 
     guiState->pageIndex++ ;
 
@@ -742,10 +733,8 @@ static bool GuiCmd_LineEnd( GuiState_st* guiState , UI_State_st* uiState )
 
 }
 
-static bool GuiCmd_Stubbed( GuiState_st* guiState , UI_State_st* uiState )
+static bool GuiCmd_Stubbed( GuiState_st* guiState )
 {
-    (void)guiState ;
-    (void)uiState ;
     bool pageEnd = false ;
 
     printf( "Cmd Stubbed" );
@@ -793,7 +782,6 @@ static const uiPageDesc_st uiPageDescTable[] =
 
        State_st    last_state ;
        bool        macro_latched ;
-static UI_State_st ui_state ;
 static Event_st    event ;
 static bool        macro_menu      = false ;
 static bool        redraw_needed   = true ;
@@ -820,6 +808,8 @@ enum
 enum
 {
     // Height and padding shown in diagram at beginning of file
+    SCREEN_INITIAL_X           =  0 ,
+    SCREEN_INITIAL_Y           =  0 ,
     SCREEN_TOP_H               = 16 ,
     SCREEN_TOP_PAD             =  4 ,
     SCREEN_LINE1_H             = 20 ,
@@ -865,6 +855,8 @@ enum
 enum
 {
     // Height and padding shown in diagram at beginning of file
+    SCREEN_INITIAL_X           =  0 ,
+    SCREEN_INITIAL_Y           =  0 ,
     SCREEN_TOP_H               = 11 ,
     SCREEN_TOP_PAD             =  1 ,
     SCREEN_LINE1_H             = 10 ,
@@ -947,35 +939,35 @@ enum
     #error Unsupported vertical resolution!
 #endif
 
-static bool ui_updateFSM_PAGE_MAIN_VFO( GuiState_st* guiState , UI_State_st* uiState );
-static bool ui_updateFSM_PAGE_MAIN_VFO_INPUT( GuiState_st* guiState , UI_State_st* uiState );
-static bool ui_updateFSM_PAGE_MAIN_MEM( GuiState_st* guiState , UI_State_st* uiState );
-static bool ui_updateFSM_PAGE_MODE_VFO( GuiState_st* guiState , UI_State_st* uiState );
-static bool ui_updateFSM_PAGE_MODE_MEM( GuiState_st* guiState , UI_State_st* uiState );
-static bool ui_updateFSM_PAGE_MENU_TOP( GuiState_st* guiState , UI_State_st* uiState );
-static bool ui_updateFSM_PAGE_MENU_BANK( GuiState_st* guiState , UI_State_st* uiState );
-static bool ui_updateFSM_PAGE_MENU_CHANNEL( GuiState_st* guiState , UI_State_st* uiState );
-static bool ui_updateFSM_PAGE_MENU_CONTACTS( GuiState_st* guiState , UI_State_st* uiState );
-static bool ui_updateFSM_PAGE_MENU_GPS( GuiState_st* guiState , UI_State_st* uiState );
-static bool ui_updateFSM_PAGE_MENU_SETTINGS( GuiState_st* guiState , UI_State_st* uiState );
-static bool ui_updateFSM_PAGE_MENU_BACKUP_RESTORE( GuiState_st* guiState , UI_State_st* uiState );
-static bool ui_updateFSM_PAGE_MENU_BACKUP( GuiState_st* guiState , UI_State_st* uiState );
-static bool ui_updateFSM_PAGE_MENU_RESTORE( GuiState_st* guiState , UI_State_st* uiState );
-static bool ui_updateFSM_PAGE_MENU_INFO( GuiState_st* guiState , UI_State_st* uiState );
-static bool ui_updateFSM_PAGE_MENU_ABOUT( GuiState_st* guiState , UI_State_st* uiState );
-static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE( GuiState_st* guiState , UI_State_st* uiState );
-static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE_SET( GuiState_st* guiState , UI_State_st* uiState );
-static bool ui_updateFSM_PAGE_SETTINGS_DISPLAY( GuiState_st* guiState , UI_State_st* uiState );
-static bool ui_updateFSM_PAGE_SETTINGS_GPS( GuiState_st* guiState , UI_State_st* uiState );
-static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState , UI_State_st* uiState );
-static bool ui_updateFSM_PAGE_SETTINGS_M17( GuiState_st* guiState , UI_State_st* uiState );
-static bool ui_updateFSM_PAGE_SETTINGS_VOICE( GuiState_st* guiState , UI_State_st* uiState );
-static bool ui_updateFSM_PAGE_SETTINGS_RESET_TO_DEFAULTS( GuiState_st* guiState , UI_State_st* uiState );
-static bool ui_updateFSM_PAGE_LOW_BAT( GuiState_st* guiState , UI_State_st* uiState );
-static bool ui_updateFSM_PAGE_AUTHORS( GuiState_st* guiState , UI_State_st* uiState );
-static bool ui_updateFSM_PAGE_BLANK( GuiState_st* guiState , UI_State_st* uiState );
+static bool ui_updateFSM_PAGE_MAIN_VFO( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_MAIN_VFO_INPUT( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_MAIN_MEM( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_MODE_VFO( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_MODE_MEM( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_MENU_TOP( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_MENU_BANK( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_MENU_CHANNEL( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_MENU_CONTACTS( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_MENU_GPS( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_MENU_SETTINGS( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_MENU_BACKUP_RESTORE( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_MENU_BACKUP( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_MENU_RESTORE( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_MENU_INFO( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_MENU_ABOUT( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE_SET( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_SETTINGS_DISPLAY( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_SETTINGS_GPS( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_SETTINGS_M17( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_SETTINGS_VOICE( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_SETTINGS_RESET_TO_DEFAULTS( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_LOW_BAT( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_AUTHORS( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_BLANK( GuiState_st* guiState );
 
-typedef bool (*ui_updateFSM_PAGE_fn)( GuiState_st* guiState , UI_State_st* uiState );
+typedef bool (*ui_updateFSM_PAGE_fn)( GuiState_st* guiState );
 
 static const ui_updateFSM_PAGE_fn ui_updateFSM_PageTable[ PAGE_NUM_OF ] =
 {
@@ -1034,7 +1026,7 @@ const char** uiGetPageLoc( uiPageNum_en pageNum )
     return uiPageDesc->loc ;
 }
 
-static bool ui_UpdatePage( uiPageNum_en pageNum , GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_UpdatePage( uiPageNum_en pageNum , GuiState_st* guiState )
 {
     uiPageNum_en pgNum    = pageNum ;
     bool         sync_rtx ;
@@ -1044,7 +1036,7 @@ static bool ui_UpdatePage( uiPageNum_en pageNum , GuiState_st* guiState , UI_Sta
         pgNum = PAGE_BLANK ;
     }
 
-    sync_rtx = ui_updateFSM_PageTable[ pgNum ]( guiState , uiState );
+    sync_rtx = ui_updateFSM_PageTable[ pgNum ]( guiState );
 
     return sync_rtx ;
 }
@@ -1249,20 +1241,20 @@ static int _ui_fsm_loadContact( int16_t contact_index , bool* sync_rtx )
     return result ;
 }
 
-static void _ui_fsm_confirmVFOInput( bool*sync_rtx )
+static void _ui_fsm_confirmVFOInput( bool* sync_rtx )
 {
     vp_flush();
 
-    switch( ui_state.input_set )
+    switch( GuiState.uiState.input_set )
     {
         case SET_RX :
         {
             // Switch to TX input
-            ui_state.input_set      = SET_TX;
+            GuiState.uiState.input_set      = SET_TX;
             // Reset input position
-            ui_state.input_position = 0;
+            GuiState.uiState.input_position = 0;
             // announce the rx frequency just confirmed with Enter.
-            vp_queueFrequency( ui_state.new_rx_frequency );
+            vp_queueFrequency( GuiState.uiState.new_rx_frequency );
             // defer playing till the end.
             // indicate that the user has moved to the tx freq field.
             vp_announceInputReceiveOrTransmit( true , VPQ_DEFAULT );
@@ -1272,16 +1264,16 @@ static void _ui_fsm_confirmVFOInput( bool*sync_rtx )
         {
             // Save new frequency setting
             // If TX frequency was not set, TX = RX
-            if( ui_state.new_tx_frequency == 0 )
+            if( GuiState.uiState.new_tx_frequency == 0 )
             {
-                ui_state.new_tx_frequency = ui_state.new_rx_frequency ;
+                GuiState.uiState.new_tx_frequency = GuiState.uiState.new_rx_frequency ;
             }
             // Apply new frequencies if they are valid
-            if( _ui_freq_check_limits( ui_state.new_rx_frequency ) &&
-                _ui_freq_check_limits(ui_state.new_tx_frequency  )    )
+            if( _ui_freq_check_limits( GuiState.uiState.new_rx_frequency ) &&
+                _ui_freq_check_limits(GuiState.uiState.new_tx_frequency  )    )
             {
-                state.channel.rx_frequency = ui_state.new_rx_frequency ;
-                state.channel.tx_frequency = ui_state.new_tx_frequency ;
+                state.channel.rx_frequency = GuiState.uiState.new_rx_frequency ;
+                state.channel.tx_frequency = GuiState.uiState.new_tx_frequency ;
                 *sync_rtx                  = true ;
                 // force init to clear any prompts in progress.
                 // defer play because play is called at the end of the function
@@ -1305,64 +1297,64 @@ static void _ui_fsm_confirmVFOInput( bool*sync_rtx )
 static void _ui_fsm_insertVFONumber( kbd_msg_t msg , bool* sync_rtx )
 {
     // Advance input position
-    ui_state.input_position += 1 ;
+    GuiState.uiState.input_position += 1 ;
     // clear any prompts in progress.
     vp_flush() ;
     // Save pressed number to calculate frequency and show in GUI
-    ui_state.input_number = input_getPressedNumber( msg );
+    GuiState.uiState.input_number = input_getPressedNumber( msg );
     // queue the digit just pressed.
-    vp_queueInteger( ui_state.input_number );
+    vp_queueInteger( GuiState.uiState.input_number );
     // queue  point if user has entered three digits.
-    if( ui_state.input_position == 3 )
+    if( GuiState.uiState.input_position == 3 )
     {
         vp_queuePrompt( PROMPT_POINT );
     }
 
-    switch( ui_state.input_set )
+    switch( GuiState.uiState.input_set )
     {
         case SET_RX :
         {
-            if( ui_state.input_position == 1 )
+            if( GuiState.uiState.input_position == 1 )
             {
-                ui_state.new_rx_frequency = 0 ;
+                GuiState.uiState.new_rx_frequency = 0 ;
             }
             // Calculate portion of the new RX frequency
-            ui_state.new_rx_frequency = _ui_freq_add_digit( ui_state.new_rx_frequency ,
-                                                            ui_state.input_position   ,
-                                                            ui_state.input_number       );
-            if( ui_state.input_position >= FREQ_DIGITS )
+            GuiState.uiState.new_rx_frequency = _ui_freq_add_digit( GuiState.uiState.new_rx_frequency ,
+                                                            GuiState.uiState.input_position   ,
+                                                            GuiState.uiState.input_number       );
+            if( GuiState.uiState.input_position >= FREQ_DIGITS )
             {
                 // queue the rx freq just completed.
-                vp_queueFrequency( ui_state.new_rx_frequency );
+                vp_queueFrequency( GuiState.uiState.new_rx_frequency );
                 /// now queue tx as user has changed fields.
                 vp_queuePrompt( PROMPT_TRANSMIT );
                 // Switch to TX input
-                ui_state.input_set        = SET_TX ;
+                GuiState.uiState.input_set        = SET_TX ;
                 // Reset input position
-                ui_state.input_position   = 0 ;
+                GuiState.uiState.input_position   = 0 ;
                 // Reset TX frequency
-                ui_state.new_tx_frequency = 0 ;
+                GuiState.uiState.new_tx_frequency = 0 ;
             }
             break ;
         }
         case SET_TX :
         {
-            if( ui_state.input_position == 1 )
+            if( GuiState.uiState.input_position == 1 )
             {
-                ui_state.new_tx_frequency = 0 ;
+                GuiState.uiState.new_tx_frequency = 0 ;
             }
             // Calculate portion of the new TX frequency
-            ui_state.new_tx_frequency = _ui_freq_add_digit( ui_state.new_tx_frequency ,
-                                                            ui_state.input_position   ,
-                                                            ui_state.input_number       );
-            if( ui_state.input_position >= FREQ_DIGITS )
+            GuiState.uiState.new_tx_frequency = _ui_freq_add_digit( GuiState.uiState.new_tx_frequency ,
+                                                            GuiState.uiState.input_position   ,
+                                                            GuiState.uiState.input_number       );
+            if( GuiState.uiState.input_position >= FREQ_DIGITS )
             {
                 // Save both inserted frequencies
-                if( _ui_freq_check_limits( ui_state.new_rx_frequency ) &&
-                    _ui_freq_check_limits( ui_state.new_tx_frequency )    )
+                if( _ui_freq_check_limits( GuiState.uiState.new_rx_frequency ) &&
+                    _ui_freq_check_limits( GuiState.uiState.new_tx_frequency )    )
                 {
-                    state.channel.rx_frequency = ui_state.new_rx_frequency ;
-                    state.channel.tx_frequency = ui_state.new_tx_frequency ;
+                    state.channel.rx_frequency = GuiState.uiState.new_rx_frequency ;
+                    state.channel.tx_frequency = GuiState.uiState.new_tx_frequency ;
                     *sync_rtx                  = true;
                     // play is called at end.
                     vp_announceFrequencies( state.channel.rx_frequency ,
@@ -1555,45 +1547,45 @@ static void _ui_fsm_menuMacro( kbd_msg_t msg , bool* sync_rtx )
     {
         case KNOB_LEFT :
         {
-            ui_state.macro_menu_selected-- ;
-            ui_state.macro_menu_selected += 9 ;
-            ui_state.macro_menu_selected %= 9 ;
+            GuiState.uiState.macro_menu_selected-- ;
+            GuiState.uiState.macro_menu_selected += 9 ;
+            GuiState.uiState.macro_menu_selected %= 9 ;
             break ;
         }
         case KNOB_RIGHT :
         {
-            ui_state.macro_menu_selected++ ;
-            ui_state.macro_menu_selected %= 9 ;
+            GuiState.uiState.macro_menu_selected++ ;
+            GuiState.uiState.macro_menu_selected %= 9 ;
             break ;
         }
         case KEY_ENTER :
         {
             if( !msg.long_press )
             {
-                ui_state.input_number = ui_state.macro_menu_selected + 1 ;
+                GuiState.uiState.input_number = GuiState.uiState.macro_menu_selected + 1 ;
             }
             else
             {
-                ui_state.input_number = 0 ;
+                GuiState.uiState.input_number = 0 ;
             }
             break ;
         }
         default :
         {
-            ui_state.input_number = 0 ;
+            GuiState.uiState.input_number = 0 ;
             break ;
         }
     }
 #else // UI_NO_KEYBOARD
-    ui_state.input_number     = input_getPressedNumber( msg );
+    GuiState.uiState.input_number      = input_getPressedNumber( msg );
 #endif // UI_NO_KEYBOARD
     // CTCSS Encode/Decode Selection
-    bool tone_tx_enable       = state.channel.fm.txToneEn ;
-    bool tone_rx_enable       = state.channel.fm.rxToneEn ;
-    uint8_t tone_flags        = ( tone_tx_enable << 1 ) | tone_rx_enable ;
+    bool tone_tx_enable        = state.channel.fm.txToneEn ;
+    bool tone_rx_enable        = state.channel.fm.rxToneEn ;
+    uint8_t tone_flags         = ( tone_tx_enable << 1 ) | tone_rx_enable ;
     VPQueueFlags_en queueFlags = vp_getVoiceLevelQueueFlags();
 
-    switch( ui_state.input_number )
+    switch( GuiState.uiState.input_number )
     {
         case KEY_NUM_1 :
         {
@@ -1719,13 +1711,13 @@ static void _ui_fsm_menuMacro( kbd_msg_t msg , bool* sync_rtx )
 #endif // SCREEN_BRIGHTNESS
         case KEY_NUM_9 :
         {
-            if( !ui_state.input_locked )
+            if( !GuiState.uiState.input_locked )
             {
-                ui_state.input_locked = true ;
+                GuiState.uiState.input_locked = true ;
             }
             else
             {
-                ui_state.input_locked = false ;
+                GuiState.uiState.input_locked = false ;
             }
             break ;
         }
@@ -1772,59 +1764,59 @@ static void _ui_fsm_menuMacro( kbd_msg_t msg , bool* sync_rtx )
 
 static void _ui_menuUp( uint8_t menu_entries )
 {
-    if( ui_state.menu_selected > 0 )
+    if( GuiState.uiState.menu_selected > 0 )
     {
-        ui_state.menu_selected -= 1 ;
+        GuiState.uiState.menu_selected -= 1 ;
     }
     else
     {
-        ui_state.menu_selected = menu_entries - 1 ;
+        GuiState.uiState.menu_selected = menu_entries - 1 ;
     }
-    vp_playMenuBeepIfNeeded( ui_state.menu_selected == 0 );
+    vp_playMenuBeepIfNeeded( GuiState.uiState.menu_selected == 0 );
 }
 
 static void _ui_menuDown( uint8_t menu_entries )
 {
-    if( ui_state.menu_selected < ( menu_entries - 1 ) )
+    if( GuiState.uiState.menu_selected < ( menu_entries - 1 ) )
     {
-        ui_state.menu_selected += 1 ;
+        GuiState.uiState.menu_selected += 1 ;
     }
     else
     {
-        ui_state.menu_selected = 0 ;
+        GuiState.uiState.menu_selected = 0 ;
     }
-    vp_playMenuBeepIfNeeded( ui_state.menu_selected == 0 );
+    vp_playMenuBeepIfNeeded( GuiState.uiState.menu_selected == 0 );
 }
 
 static void _ui_menuBack( uint8_t prev_state )
 {
-    if( ui_state.edit_mode )
+    if( GuiState.uiState.edit_mode )
     {
-        ui_state.edit_mode = false ;
+        GuiState.uiState.edit_mode = false ;
     }
     else
     {
         // Return to previous menu
         state.ui_screen        = prev_state ;
         // Reset menu selection
-        ui_state.menu_selected = 0 ;
+        GuiState.uiState.menu_selected = 0 ;
         vp_playMenuBeepIfNeeded( true );
     }
 }
 
 static void _ui_textInputReset( char* buf )
 {
-    ui_state.input_number   = 0 ;
-    ui_state.input_position = 0 ;
-    ui_state.input_set      = 0 ;
-    ui_state.last_keypress  = 0 ;
+    GuiState.uiState.input_number   = 0 ;
+    GuiState.uiState.input_position = 0 ;
+    GuiState.uiState.input_set      = 0 ;
+    GuiState.uiState.last_keypress  = 0 ;
     memset( buf , 0 , 9 );
     buf[ 0 ]                = '_';
 }
 
 static void _ui_textInputKeypad( char* buf , uint8_t max_len , kbd_msg_t msg , bool callsign )
 {
-    if( ui_state.input_position < max_len )
+    if( GuiState.uiState.input_position < max_len )
     {
         long long now         = getTick();
         // Get currently pressed number key
@@ -1842,41 +1834,41 @@ static void _ui_textInputKeypad( char* buf , uint8_t max_len , kbd_msg_t msg , b
         }
 
         // Skip keypad logic for first keypress
-        if( ui_state.last_keypress != 0 )
+        if( GuiState.uiState.last_keypress != 0 )
         {
             // Same key pressed and timeout not expired: cycle over chars of current key
-            if( ( ui_state.input_number == num_key                          ) &&
-                ( ( now - ui_state.last_keypress ) < input_longPressTimeout )    )
+            if( ( GuiState.uiState.input_number == num_key                          ) &&
+                ( ( now - GuiState.uiState.last_keypress ) < input_longPressTimeout )    )
             {
-                ui_state.input_set = ( ui_state.input_set + 1 ) % num_symbols ;
+                GuiState.uiState.input_set = ( GuiState.uiState.input_set + 1 ) % num_symbols ;
             }
             // Different key pressed: save current char and change key
             else
             {
-                ui_state.input_position += 1 ;
-                ui_state.input_set       = 0 ;
+                GuiState.uiState.input_position += 1 ;
+                GuiState.uiState.input_set       = 0 ;
             }
         }
         // Show current character on buffer
         if( callsign )
         {
-            buf[ ui_state.input_position ] = symbols_ITU_T_E161_callsign[ num_key ][ ui_state.input_set ];
+            buf[ GuiState.uiState.input_position ] = symbols_ITU_T_E161_callsign[ num_key ][ GuiState.uiState.input_set ];
         }
         else
         {
-            buf[ ui_state.input_position ] = symbols_ITU_T_E161[ num_key ][ ui_state.input_set ];
+            buf[ GuiState.uiState.input_position ] = symbols_ITU_T_E161[ num_key ][ GuiState.uiState.input_set ];
         }
         // Announce the character
-        vp_announceInputChar( buf[ ui_state.input_position ] );
+        vp_announceInputChar( buf[ GuiState.uiState.input_position ] );
         // Update reference values
-        ui_state.input_number  = num_key ;
-        ui_state.last_keypress = now ;
+        GuiState.uiState.input_number  = num_key ;
+        GuiState.uiState.last_keypress = now ;
     }
 }
 
 static void _ui_textInputConfirm( char* buf )
 {
-    buf[ ui_state.input_position + 1 ] = '\0' ;
+    buf[ GuiState.uiState.input_position + 1 ] = '\0' ;
 }
 
 static void _ui_textInputDel( char* buf )
@@ -1886,24 +1878,24 @@ static void _ui_textInputDel( char* buf )
     // If we edit a different buffer which allows the underline char, we may
     // not want to exclude it, but when editing callsign, we do not want to say
     // underline since it means the field is empty.
-    if( buf[ ui_state.input_position ] &&
-        buf[ ui_state.input_position ] != '_' )
+    if( buf[ GuiState.uiState.input_position ] &&
+        buf[ GuiState.uiState.input_position ] != '_' )
     {
-        vp_announceInputChar( buf[ ui_state.input_position ] );
+        vp_announceInputChar( buf[ GuiState.uiState.input_position ] );
     }
 
-    buf[ ui_state.input_position ] = '\0' ;
+    buf[ GuiState.uiState.input_position ] = '\0' ;
     // Move back input cursor
-    if( ui_state.input_position > 0 )
+    if( GuiState.uiState.input_position > 0 )
     {
-        ui_state.input_position--;
+        GuiState.uiState.input_position--;
     // If we deleted the initial character, reset starting condition
     }
     else
     {
-        ui_state.last_keypress = 0 ;
+        GuiState.uiState.last_keypress = 0 ;
     }
-    ui_state.input_set = 0 ;
+    GuiState.uiState.input_set = 0 ;
 }
 
 static void _ui_numberInputKeypad( uint32_t* num , kbd_msg_t msg )
@@ -1946,10 +1938,10 @@ static void _ui_numberInputKeypad( uint32_t* num , kbd_msg_t msg )
     vp_announceInputChar( '0' + ( *num % 10 ) );
 
     // Update reference values
-    ui_state.input_number = *num % 10 ;
+    GuiState.uiState.input_number = *num % 10 ;
 #else // UI_NO_KEYBOARD
     // Maximum frequency len is uint32_t max value number of decimal digits
-    if( ui_state.input_position >= 10 )
+    if( GuiState.uiState.input_position >= 10 )
     {
         return;
     }
@@ -1962,10 +1954,10 @@ static void _ui_numberInputKeypad( uint32_t* num , kbd_msg_t msg )
     vp_announceInputChar( '0' + num_key );
 
     // Update reference values
-    ui_state.input_number  = num_key;
+    GuiState.uiState.input_number  = num_key;
 #endif // UI_NO_KEYBOARD
 
-    ui_state.last_keypress = now;
+    GuiState.uiState.last_keypress = now;
 }
 
 static void _ui_numberInputDel( uint32_t* num )
@@ -1974,27 +1966,27 @@ static void _ui_numberInputDel( uint32_t* num )
     vp_announceInputChar( '0' + ( *num % 10 ) );
 
     // Move back input cursor
-    if( ui_state.input_position > 0 )
+    if( GuiState.uiState.input_position > 0 )
     {
-        ui_state.input_position-- ;
+        GuiState.uiState.input_position-- ;
     }
     else
     {
-        ui_state.last_keypress = 0 ;
+        GuiState.uiState.last_keypress = 0 ;
     }
-    ui_state.input_set = 0 ;
+    GuiState.uiState.input_set = 0 ;
 }
 
 void ui_init( void )
 {
     ui_InitGuiState( &GuiState );
 
-    last_event_tick    = getTick();
-    redraw_needed      = true ;
+    last_event_tick  = getTick();
+    redraw_needed    = true ;
     // Initialize struct ui_state to all zeroes
     // This syntax is called compound literal
     // https://stackoverflow.com/questions/6891720/initialize-reset-struct-to-zero-null
-    ui_state           = (const UI_State_st){ 0 };
+    GuiState.uiState = (const UI_State_st){ 0 };
 }
 
 static void ui_InitGuiState( GuiState_st* guiState )
@@ -2023,6 +2015,8 @@ static void ui_InitGuiStateLayout( Layout_st* layout )
     layout->status_v_pad        = SCREEN_STATUS_V_PAD ;
     layout->horizontal_pad      = SCREEN_HORIZONTAL_PAD ;
     layout->text_v_offset       = SCREEN_TEXT_V_OFFSET ;
+    layout->pos.x               = SCREEN_INITIAL_X ;
+    layout->pos.y               = SCREEN_INITIAL_Y ;
     layout->top_pos.x           = SCREEN_HORIZONTAL_PAD ;
     layout->top_pos.y           = SCREEN_TOP_H - SCREEN_STATUS_V_PAD - SCREEN_TEXT_V_OFFSET ;
     layout->line1_pos.x         = SCREEN_HORIZONTAL_PAD ;
@@ -2265,7 +2259,7 @@ void ui_updateFSM( bool* sync_rtx )
                         int priorUIScreen ;
                         priorUIScreen = state.ui_screen ;
 
-                        *sync_rtx = ui_UpdatePage( state.ui_screen , &GuiState , &ui_state );
+                        *sync_rtx = ui_UpdatePage( state.ui_screen , &GuiState );
 
                         // Enable Tx only if in PAGE_MAIN_VFO or PAGE_MAIN_MEM states
                         bool inMemOrVfo ;
@@ -2360,7 +2354,7 @@ void ui_updateFSM( bool* sync_rtx )
     }
 }
 
-static bool ui_updateFSM_PAGE_MAIN_VFO( GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_updateFSM_PAGE_MAIN_VFO( GuiState_st* guiState )
 {
     bool sync_rtx = false ;
 
@@ -2371,41 +2365,41 @@ static bool ui_updateFSM_PAGE_MAIN_VFO( GuiState_st* guiState , UI_State_st* uiS
         sync_rtx        = true ;
     }
     // M17 Destination callsign input
-    if( !uiState->input_locked )
+    if( !guiState->uiState.input_locked )
     {
-        if( uiState->edit_mode )
+        if( guiState->uiState.edit_mode )
         {
             if( state.channel.mode == OPMODE_M17 )
             {
                 if( guiState->msg.keys & KEY_ENTER )
                 {
-                    _ui_textInputConfirm( uiState->new_callsign );
+                    _ui_textInputConfirm( guiState->uiState.new_callsign );
                     // Save selected dst ID and disable input mode
-                    strncpy( state.settings.m17_dest , uiState->new_callsign , 10 );
-                    uiState->edit_mode = false ;
+                    strncpy( state.settings.m17_dest , guiState->uiState.new_callsign , 10 );
+                    guiState->uiState.edit_mode = false ;
                     sync_rtx           = true ;
-                    vp_announceM17Info( NULL ,  uiState->edit_mode , guiState->queueFlags );
+                    vp_announceM17Info( NULL , guiState->uiState.edit_mode , guiState->queueFlags );
                 }
                 else if( guiState->msg.keys & KEY_HASH )
                 {
                     // Save selected dst ID and disable input mode
                     strncpy( state.settings.m17_dest , "" , 1 );
-                    uiState->edit_mode = false ;
+                    guiState->uiState.edit_mode = false ;
                     sync_rtx           = true ;
-                    vp_announceM17Info( NULL , uiState->edit_mode , guiState->queueFlags );
+                    vp_announceM17Info( NULL , guiState->uiState.edit_mode , guiState->queueFlags );
                 }
                 else if( guiState->msg.keys & KEY_ESC )
                 {
                     // Discard selected dst ID and disable input mode
-                    uiState->edit_mode = false ;
+                    guiState->uiState.edit_mode = false ;
                 }
                 else if( guiState->msg.keys & ( KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT ) )
                 {
-                    _ui_textInputDel( uiState->new_callsign );
+                    _ui_textInputDel( guiState->uiState.new_callsign );
                 }
                 else if( input_isNumberPressed( guiState->msg ) )
                 {
-                    _ui_textInputKeypad( uiState->new_callsign , 9 , guiState->msg , true );
+                    _ui_textInputKeypad( guiState->uiState.new_callsign , 9 , guiState->msg , true );
                 }
             }
         }
@@ -2414,7 +2408,7 @@ static bool ui_updateFSM_PAGE_MAIN_VFO( GuiState_st* guiState , UI_State_st* uiS
             if( guiState->msg.keys & KEY_ENTER )
             {
                 // Save current main state
-                uiState->last_main_state = state.ui_screen ;
+                guiState->uiState.last_main_state = state.ui_screen ;
                 // Open Menu
                 state.ui_screen          = PAGE_MENU_TOP ;
                 // The selected item will be announced when the item is first selected.
@@ -2439,10 +2433,10 @@ static bool ui_updateFSM_PAGE_MAIN_VFO( GuiState_st* guiState , UI_State_st* uiS
                 if( state.channel.mode == OPMODE_M17 )
                 {
                     // Enable dst ID input
-                    uiState->edit_mode = true ;
+                    guiState->uiState.edit_mode = true ;
                     // Reset text input variables
-                    _ui_textInputReset( uiState->new_callsign );
-                    vp_announceM17Info( NULL , uiState->edit_mode , guiState->queueFlags );
+                    _ui_textInputReset( guiState->uiState.new_callsign );
+                    vp_announceM17Info( NULL , guiState->uiState.edit_mode , guiState->queueFlags );
                 }
                 else
                 {
@@ -2495,21 +2489,21 @@ static bool ui_updateFSM_PAGE_MAIN_VFO( GuiState_st* guiState , UI_State_st* uiS
             else if( input_isNumberPressed( guiState->msg ) )
             {
                 // Open Frequency input screen
-                state.ui_screen           = PAGE_MAIN_VFO_INPUT ;
+                state.ui_screen                  = PAGE_MAIN_VFO_INPUT ;
                 // Reset input position and selection
-                uiState->input_position   = 1 ;
-                uiState->input_set        = SET_RX ;
+                guiState->uiState.input_position = 1 ;
+                guiState->uiState.input_set      = SET_RX ;
                 // do not play  because we will also announce the number just entered.
                 vp_announceInputReceiveOrTransmit( false , VPQ_INIT );
                 vp_queueInteger(input_getPressedNumber( guiState->msg ) );
                 vp_play();
 
-                uiState->new_rx_frequency = 0 ;
-                uiState->new_tx_frequency = 0 ;
+                guiState->uiState.new_rx_frequency = 0 ;
+                guiState->uiState.new_tx_frequency = 0 ;
                 // Save pressed number to calculare frequency and show in GUI
-                uiState->input_number     = input_getPressedNumber( guiState->msg );
+                guiState->uiState.input_number     = input_getPressedNumber( guiState->msg );
                 // Calculate portion of the new frequency
-                uiState->new_rx_frequency = _ui_freq_add_digit( uiState->new_rx_frequency , uiState->input_position , uiState->input_number );
+                guiState->uiState.new_rx_frequency = _ui_freq_add_digit( guiState->uiState.new_rx_frequency , guiState->uiState.input_position , guiState->uiState.input_number );
             }
         }
     }
@@ -2518,7 +2512,7 @@ static bool ui_updateFSM_PAGE_MAIN_VFO( GuiState_st* guiState , UI_State_st* uiS
 
 }
 
-static bool ui_updateFSM_PAGE_MAIN_VFO_INPUT( GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_updateFSM_PAGE_MAIN_VFO_INPUT( GuiState_st* guiState )
 {
     bool sync_rtx = false ;
 
@@ -2534,23 +2528,23 @@ static bool ui_updateFSM_PAGE_MAIN_VFO_INPUT( GuiState_st* guiState , UI_State_s
     else if( guiState->msg.keys & ( KEY_UP | KEY_DOWN ) )
     {
         //@@@KL why is RX \ TX being toggled?
-        switch( uiState->input_set )
+        switch( guiState->uiState.input_set )
         {
             case SET_RX :
             {
-                uiState->input_set = SET_TX ;
+                guiState->uiState.input_set = SET_TX ;
                 vp_announceInputReceiveOrTransmit( true , guiState->queueFlags );
                 break ;
             }
             case SET_TX :
             {
-                uiState->input_set = SET_RX ;
+                guiState->uiState.input_set = SET_RX ;
                 vp_announceInputReceiveOrTransmit( false , guiState->queueFlags );
                 break ;
             }
         }
         // Reset input position
-        uiState->input_position = 0 ;
+        guiState->uiState.input_position = 0 ;
     }
     else if( input_isNumberPressed( guiState->msg ) )
     {
@@ -2561,7 +2555,7 @@ static bool ui_updateFSM_PAGE_MAIN_VFO_INPUT( GuiState_st* guiState , UI_State_s
 
 }
 
-static bool ui_updateFSM_PAGE_MAIN_MEM( GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_updateFSM_PAGE_MAIN_MEM( GuiState_st* guiState )
 {
     bool sync_rtx = false ;
 
@@ -2571,30 +2565,30 @@ static bool ui_updateFSM_PAGE_MAIN_MEM( GuiState_st* guiState , UI_State_st* uiS
         state.txDisable = false ;
         sync_rtx        = true ;
     }
-    if( !uiState->input_locked )
+    if( !guiState->uiState.input_locked )
     {
         // M17 Destination callsign input
-        if( uiState->edit_mode )
+        if( guiState->uiState.edit_mode )
         {
             if( guiState->msg.keys & KEY_ENTER )
             {
-                _ui_textInputConfirm( uiState->new_callsign );
+                _ui_textInputConfirm( guiState->uiState.new_callsign );
                 // Save selected dst ID and disable input mode
-                strncpy( state.settings.m17_dest , uiState->new_callsign , 10 );
-                uiState->edit_mode = false ;
+                strncpy( state.settings.m17_dest , guiState->uiState.new_callsign , 10 );
+                guiState->uiState.edit_mode = false ;
                 sync_rtx           = true ;
             }
             else if( guiState->msg.keys & KEY_HASH )
             {
                 // Save selected dst ID and disable input mode
                 strncpy( state.settings.m17_dest , "" , 1 );
-                uiState->edit_mode = false;
+                guiState->uiState.edit_mode = false;
                 sync_rtx           = true;
             }
             else if( guiState->msg.keys & KEY_ESC )
             {
                 // Discard selected dst ID and disable input mode
-                uiState->edit_mode = false ;
+                guiState->uiState.edit_mode = false ;
             }
             else if( guiState->msg.keys & KEY_F1 )
             {
@@ -2615,11 +2609,11 @@ static bool ui_updateFSM_PAGE_MAIN_MEM( GuiState_st* guiState , UI_State_st* uiS
             }
             else if( guiState->msg.keys & ( KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT ) )
             {
-                _ui_textInputDel( uiState->new_callsign );
+                _ui_textInputDel( guiState->uiState.new_callsign );
             }
             else if( input_isNumberPressed( guiState->msg ) )
             {
-                _ui_textInputKeypad( uiState->new_callsign , 9 , guiState->msg , true );
+                _ui_textInputKeypad( guiState->uiState.new_callsign , 9 , guiState->msg , true );
             }
         }
         else
@@ -2627,7 +2621,7 @@ static bool ui_updateFSM_PAGE_MAIN_MEM( GuiState_st* guiState , UI_State_st* uiS
             if( guiState->msg.keys & KEY_ENTER )
             {
                 // Save current main state
-                uiState->last_main_state = state.ui_screen ;
+                guiState->uiState.last_main_state = state.ui_screen ;
                 // Open Menu
                 state.ui_screen          = PAGE_MENU_TOP ;
             }
@@ -2646,9 +2640,9 @@ static bool ui_updateFSM_PAGE_MAIN_MEM( GuiState_st* guiState , UI_State_st* uiS
                 if( state.channel.mode == OPMODE_M17 )
                 {
                     // Enable dst ID input
-                    uiState->edit_mode = true ;
+                    guiState->uiState.edit_mode = true ;
                     // Reset text input variables
-                    _ui_textInputReset( uiState->new_callsign );
+                    _ui_textInputReset( guiState->uiState.new_callsign );
                 }
                 else
                 {
@@ -2693,17 +2687,17 @@ static bool ui_updateFSM_PAGE_MAIN_MEM( GuiState_st* guiState , UI_State_st* uiS
 
 }
 
-static bool ui_updateFSM_PAGE_MODE_VFO( GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_updateFSM_PAGE_MODE_VFO( GuiState_st* guiState )
 {
-    return ui_updateFSM_PAGE_MENU_TOP( guiState , uiState );
+    return ui_updateFSM_PAGE_MENU_TOP( guiState );
 }
 
-static bool ui_updateFSM_PAGE_MODE_MEM( GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_updateFSM_PAGE_MODE_MEM( GuiState_st* guiState )
 {
-    return ui_updateFSM_PAGE_MENU_TOP( guiState , uiState );
+    return ui_updateFSM_PAGE_MENU_TOP( guiState );
 }
 
-static bool ui_updateFSM_PAGE_MENU_TOP( GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_updateFSM_PAGE_MENU_TOP( GuiState_st* guiState )
 {
     (void)guiState ;
 
@@ -2719,7 +2713,7 @@ static bool ui_updateFSM_PAGE_MENU_TOP( GuiState_st* guiState , UI_State_st* uiS
     }
     else if( guiState->msg.keys & KEY_ENTER )
     {
-        switch( uiState->menu_selected )
+        switch( guiState->uiState.menu_selected )
         {
             case M_BANK :
             {
@@ -2760,31 +2754,29 @@ static bool ui_updateFSM_PAGE_MENU_TOP( GuiState_st* guiState , UI_State_st* uiS
             }
         }
         // Reset menu selection
-        uiState->menu_selected = 0 ;
+        guiState->uiState.menu_selected = 0 ;
     }
     else if( guiState->msg.keys & KEY_ESC )
     {
-        _ui_menuBack( uiState->last_main_state );
+        _ui_menuBack( guiState->uiState.last_main_state );
     }
 
     return sync_rtx ;
 
 }
 
-static bool ui_updateFSM_PAGE_MENU_BANK( GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_updateFSM_PAGE_MENU_BANK( GuiState_st* guiState )
 {
-    return ui_updateFSM_PAGE_MENU_CONTACTS( guiState , uiState );
+    return ui_updateFSM_PAGE_MENU_CONTACTS( guiState );
 }
 
-static bool ui_updateFSM_PAGE_MENU_CHANNEL( GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_updateFSM_PAGE_MENU_CHANNEL( GuiState_st* guiState )
 {
-    return ui_updateFSM_PAGE_MENU_CONTACTS( guiState , uiState );
+    return ui_updateFSM_PAGE_MENU_CONTACTS( guiState );
 }
 
-static bool ui_updateFSM_PAGE_MENU_CONTACTS( GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_updateFSM_PAGE_MENU_CONTACTS( GuiState_st* guiState )
 {
-    (void)guiState ;
-
     bool sync_rtx = false ;
 
     if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
@@ -2800,25 +2792,25 @@ static bool ui_updateFSM_PAGE_MENU_CONTACTS( GuiState_st* guiState , UI_State_st
             // manu_selected is 0-based
             // bank 0 means "All Channel" mode
             // banks (1, n) are mapped to banks (0, n-1)
-            if( cps_readBankHeader( &bank , uiState->menu_selected ) != -1 )
+            if( cps_readBankHeader( &bank , guiState->uiState.menu_selected ) != -1 )
             {
-                uiState->menu_selected += 1 ;
+                guiState->uiState.menu_selected += 1 ;
             }
         }
         else if( state.ui_screen == PAGE_MENU_CHANNEL )
         {
             channel_t channel ;
-            if( cps_readChannel( &channel , uiState->menu_selected + 1 ) != -1 )
+            if( cps_readChannel( &channel , guiState->uiState.menu_selected + 1 ) != -1 )
             {
-                uiState->menu_selected += 1 ;
+                guiState->uiState.menu_selected += 1 ;
             }
         }
         else if( state.ui_screen == PAGE_MENU_CONTACTS )
         {
             contact_t contact ;
-            if( cps_readContact( &contact , uiState->menu_selected + 1 ) != -1 )
+            if( cps_readContact( &contact , guiState->uiState.menu_selected + 1 ) != -1 )
             {
-                uiState->menu_selected += 1 ;
+                guiState->uiState.menu_selected += 1 ;
             }
         }
     }
@@ -2831,20 +2823,20 @@ static bool ui_updateFSM_PAGE_MENU_CONTACTS( GuiState_st* guiState , UI_State_st
                 bankHdr_t newbank ;
                 int       result  = 0 ;
                 // If "All channels" is selected, load default bank
-                if( uiState->menu_selected == 0 )
+                if( guiState->uiState.menu_selected == 0 )
                 {
                     state.bank_enabled = false ;
                 }
                 else
                 {
                     state.bank_enabled = true;
-                    result = cps_readBankHeader( &newbank , uiState->menu_selected - 1 );
+                    result = cps_readBankHeader( &newbank , guiState->uiState.menu_selected - 1 );
                 }
                 if( result != -1 )
                 {
-                    state.bank = uiState->menu_selected - 1 ;
+                    state.bank = guiState->uiState.menu_selected - 1 ;
                     // If we were in VFO mode, save VFO channel
-                    if( uiState->last_main_state == PAGE_MAIN_VFO )
+                    if( guiState->uiState.last_main_state == PAGE_MAIN_VFO )
                     {
                         state.vfo_channel = state.channel ;
                     }
@@ -2858,18 +2850,18 @@ static bool ui_updateFSM_PAGE_MENU_CONTACTS( GuiState_st* guiState , UI_State_st
             case PAGE_MENU_CHANNEL :
             {
                 // If we were in VFO mode, save VFO channel
-                if( uiState->last_main_state == PAGE_MAIN_VFO )
+                if( guiState->uiState.last_main_state == PAGE_MAIN_VFO )
                 {
                     state.vfo_channel = state.channel;
                 }
-                _ui_fsm_loadChannel( uiState->menu_selected , &sync_rtx );
+                _ui_fsm_loadChannel( guiState->uiState.menu_selected , &sync_rtx );
                 // Switch to MEM screen
                 state.ui_screen = PAGE_MAIN_MEM ;
                 break ;
             }
             case PAGE_MENU_CONTACTS :
             {
-                _ui_fsm_loadContact( uiState->menu_selected , &sync_rtx );
+                _ui_fsm_loadContact( guiState->uiState.menu_selected , &sync_rtx );
                 // Switch to MEM screen
                 state.ui_screen = PAGE_MAIN_MEM ;
                 break ;
@@ -2885,11 +2877,8 @@ static bool ui_updateFSM_PAGE_MENU_CONTACTS( GuiState_st* guiState , UI_State_st
 
 }
 
-static bool ui_updateFSM_PAGE_MENU_GPS( GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_updateFSM_PAGE_MENU_GPS( GuiState_st* guiState )
 {
-    (void)guiState ;
-    (void)uiState ;
-
     bool sync_rtx = false ;
 
     if( ( guiState->msg.keys & KEY_F1 ) && ( state.settings.vpLevel > VPP_BEEP ) )
@@ -2914,7 +2903,7 @@ static bool ui_updateFSM_PAGE_MENU_GPS( GuiState_st* guiState , UI_State_st* uiS
 
 }
 
-static bool ui_updateFSM_PAGE_MENU_SETTINGS( GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_updateFSM_PAGE_MENU_SETTINGS( GuiState_st* guiState )
 {
     (void)guiState ;
 
@@ -2930,7 +2919,7 @@ static bool ui_updateFSM_PAGE_MENU_SETTINGS( GuiState_st* guiState , UI_State_st
     }
     else if( guiState->msg.keys & KEY_ENTER )
     {
-        switch( uiState->menu_selected )
+        switch( guiState->uiState.menu_selected )
         {
             case S_DISPLAY :
             {
@@ -2977,7 +2966,7 @@ static bool ui_updateFSM_PAGE_MENU_SETTINGS( GuiState_st* guiState , UI_State_st
             }
         }
         // Reset menu selection
-        uiState->menu_selected = 0 ;
+        guiState->uiState.menu_selected = 0 ;
     }
     else if( guiState->msg.keys & KEY_ESC )
     {
@@ -2988,10 +2977,8 @@ static bool ui_updateFSM_PAGE_MENU_SETTINGS( GuiState_st* guiState , UI_State_st
 
 }
 
-static bool ui_updateFSM_PAGE_MENU_BACKUP_RESTORE( GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_updateFSM_PAGE_MENU_BACKUP_RESTORE( GuiState_st* guiState )
 {
-    (void)uiState ;
-
     bool sync_rtx = false ;
 
     if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
@@ -3004,7 +2991,7 @@ static bool ui_updateFSM_PAGE_MENU_BACKUP_RESTORE( GuiState_st* guiState , UI_St
     }
     else if( guiState->msg.keys & KEY_ENTER )
     {
-        switch( ui_state.menu_selected )
+        switch( GuiState.uiState.menu_selected )
         {
             case BR_BACKUP :
             {
@@ -3022,7 +3009,7 @@ static bool ui_updateFSM_PAGE_MENU_BACKUP_RESTORE( GuiState_st* guiState , UI_St
             }
         }
         // Reset menu selection
-        ui_state.menu_selected = 0 ;
+        GuiState.uiState.menu_selected = 0 ;
     }
     else if( guiState->msg.keys & KEY_ESC )
     {
@@ -3033,15 +3020,13 @@ static bool ui_updateFSM_PAGE_MENU_BACKUP_RESTORE( GuiState_st* guiState , UI_St
 
 }
 
-static bool ui_updateFSM_PAGE_MENU_BACKUP( GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_updateFSM_PAGE_MENU_BACKUP( GuiState_st* guiState )
 {
-    return - ui_updateFSM_PAGE_MENU_RESTORE( guiState , uiState );
+    return - ui_updateFSM_PAGE_MENU_RESTORE( guiState );
 }
 
-static bool ui_updateFSM_PAGE_MENU_RESTORE( GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_updateFSM_PAGE_MENU_RESTORE( GuiState_st* guiState )
 {
-    (void)uiState ;
-
     bool sync_rtx = false ;
 
     if( guiState->msg.keys & KEY_ESC )
@@ -3053,11 +3038,8 @@ static bool ui_updateFSM_PAGE_MENU_RESTORE( GuiState_st* guiState , UI_State_st*
 
 }
 
-static bool ui_updateFSM_PAGE_MENU_INFO( GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_updateFSM_PAGE_MENU_INFO( GuiState_st* guiState )
 {
-    (void)guiState ;
-    (void)uiState ;
-
     bool sync_rtx = false ;
 
     if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
@@ -3077,11 +3059,8 @@ static bool ui_updateFSM_PAGE_MENU_INFO( GuiState_st* guiState , UI_State_st* ui
 
 }
 
-static bool ui_updateFSM_PAGE_MENU_ABOUT( GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_updateFSM_PAGE_MENU_ABOUT( GuiState_st* guiState )
 {
-    (void)guiState ;
-    (void)uiState ;
-
     bool sync_rtx = false ;
 
     if( guiState->msg.keys & KEY_ESC )
@@ -3093,7 +3072,7 @@ static bool ui_updateFSM_PAGE_MENU_ABOUT( GuiState_st* guiState , UI_State_st* u
 
 }
 
-static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE( GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE( GuiState_st* guiState )
 {
     (void)guiState ;
 
@@ -3104,8 +3083,8 @@ static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE( GuiState_st* guiState , UI_Stat
         // Switch to set Time&Date mode
         state.ui_screen = PAGE_SETTINGS_TIMEDATE_SET ;
         // Reset input position and selection
-        uiState->input_position = 0 ;
-        memset( &uiState->new_timedate , 0 , sizeof( datetime_t ) );
+        guiState->uiState.input_position = 0 ;
+        memset( &guiState->uiState.new_timedate , 0 , sizeof( datetime_t ) );
         vp_announceBuffer( &currentLanguage->timeAndDate , true , false , "dd/mm/yy" );
     }
     else if( guiState->msg.keys & KEY_ESC )
@@ -3117,18 +3096,18 @@ static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE( GuiState_st* guiState , UI_Stat
 
 }
 
-static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE_SET( GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE_SET( GuiState_st* guiState )
 {
     bool sync_rtx = false ;
 
     if( guiState->msg.keys & KEY_ENTER )
     {
         // Save time only if all digits have been inserted
-        if( uiState->input_position >= TIMEDATE_DIGITS )
+        if( guiState->uiState.input_position >= TIMEDATE_DIGITS )
         {
             // Return to Time&Date menu, saving values
             // NOTE: The user inserted a local time, we must save an UTC time
-            datetime_t utc_time = localTimeToUtc( uiState->new_timedate , state.settings.utc_timezone );
+            datetime_t utc_time = localTimeToUtc( guiState->uiState.new_timedate , state.settings.utc_timezone );
             platform_setTime( utc_time );
             state.time          = utc_time ;
             vp_announceSettingsTimeDate();
@@ -3142,11 +3121,11 @@ static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE_SET( GuiState_st* guiState , UI_
     else if( input_isNumberPressed( guiState->msg ) )
     {
         // if present - discard excess digits
-        if( uiState->input_position <= TIMEDATE_DIGITS )
+        if( guiState->uiState.input_position <= TIMEDATE_DIGITS )
         {
-            uiState->input_position += 1;
-            uiState->input_number    = input_getPressedNumber( guiState->msg );
-            _ui_timedate_add_digit( &uiState->new_timedate , uiState->input_position , uiState->input_number );
+            guiState->uiState.input_position += 1;
+            guiState->uiState.input_number    = input_getPressedNumber( guiState->msg );
+            _ui_timedate_add_digit( &guiState->uiState.new_timedate , guiState->uiState.input_position , guiState->uiState.input_number );
         }
     }
 
@@ -3154,14 +3133,14 @@ static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE_SET( GuiState_st* guiState , UI_
 
 }
 
-static bool ui_updateFSM_PAGE_SETTINGS_DISPLAY( GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_updateFSM_PAGE_SETTINGS_DISPLAY( GuiState_st* guiState )
 {
     bool sync_rtx = false ;
 
     if( (   guiState->msg.keys & KEY_LEFT                                         ) ||
-        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) ) && uiState->edit_mode )    )
+        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) ) && guiState->uiState.edit_mode )    )
     {
-        switch(uiState->menu_selected)
+        switch(guiState->uiState.menu_selected)
         {
 #ifdef SCREEN_BRIGHTNESS
             case D_BRIGHTNESS :
@@ -3192,9 +3171,9 @@ static bool ui_updateFSM_PAGE_SETTINGS_DISPLAY( GuiState_st* guiState , UI_State
         }
     }
     else if( (   guiState->msg.keys & KEY_RIGHT                                       ) ||
-             ( ( guiState->msg.keys & ( KEY_UP | KNOB_RIGHT ) ) && uiState->edit_mode )    )
+             ( ( guiState->msg.keys & ( KEY_UP | KNOB_RIGHT ) ) && guiState->uiState.edit_mode )    )
     {
-        switch(uiState->menu_selected)
+        switch(guiState->uiState.menu_selected)
         {
 #ifdef SCREEN_BRIGHTNESS
             case D_BRIGHTNESS :
@@ -3234,7 +3213,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_DISPLAY( GuiState_st* guiState , UI_State
     }
     else if( guiState->msg.keys & KEY_ENTER )
     {
-        uiState->edit_mode = !uiState->edit_mode ;
+        guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
     }
     else if( guiState->msg.keys & KEY_ESC )
     {
@@ -3245,14 +3224,14 @@ static bool ui_updateFSM_PAGE_SETTINGS_DISPLAY( GuiState_st* guiState , UI_State
 
 }
 
-static bool ui_updateFSM_PAGE_SETTINGS_GPS( GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_updateFSM_PAGE_SETTINGS_GPS( GuiState_st* guiState )
 {
     bool sync_rtx = false ;
 
     if( (   guiState->msg.keys & ( KEY_LEFT | KEY_RIGHT )                                               ) ||
-        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT | KEY_UP | KNOB_RIGHT ) ) && uiState->edit_mode )    )
+        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT | KEY_UP | KNOB_RIGHT ) ) && guiState->uiState.edit_mode )    )
     {
-        switch( uiState->menu_selected )
+        switch( guiState->uiState.menu_selected )
         {
             case G_ENABLED :
             {
@@ -3304,7 +3283,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_GPS( GuiState_st* guiState , UI_State_st*
     }
     else if( guiState->msg.keys & KEY_ENTER )
     {
-        uiState->edit_mode = !uiState->edit_mode ;
+        guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
     }
     else if( guiState->msg.keys & KEY_ESC )
     {
@@ -3315,16 +3294,16 @@ static bool ui_updateFSM_PAGE_SETTINGS_GPS( GuiState_st* guiState , UI_State_st*
 
 }
 
-static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState )
 {
     (void)guiState ;
 
     bool sync_rtx = false ;
 
     // If the entry is selected with enter we are in edit_mode
-    if( uiState->edit_mode )
+    if( guiState->uiState.edit_mode )
     {
-        switch( uiState->menu_selected )
+        switch( guiState->uiState.menu_selected )
         {
             case R_OFFSET :
             {
@@ -3333,16 +3312,16 @@ static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState , UI_State_s
                 if( guiState->msg.long_press && ( guiState->msg.keys & KEY_ENTER ) )
                 {
                     // Long press on UI_NO_KEYBOARD causes digits to advance by one
-                    uiState->new_offset /= 10 ;
+                    guiState->uiState.new_offset /= 10 ;
 #else // UI_NO_KEYBOARD
                 if( guiState->msg.keys & KEY_ENTER)
                 {
 #endif // UI_NO_KEYBOARD
                     // Apply new offset
-                    state.channel.tx_frequency = state.channel.rx_frequency + uiState->new_offset ;
+                    state.channel.tx_frequency = state.channel.rx_frequency + guiState->uiState.new_offset ;
                     vp_queueStringTableEntry( &currentLanguage->frequencyOffset );
-                    vp_queueFrequency( uiState->new_offset );
-                    uiState->edit_mode         = false ;
+                    vp_queueFrequency( guiState->uiState.new_offset );
+                    guiState->uiState.edit_mode         = false ;
                 }
                 else if( guiState->msg.keys & KEY_ESC )
                 {
@@ -3353,7 +3332,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState , UI_State_s
                 }
                 else if( guiState->msg.keys & ( KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT ) )
                 {
-                    _ui_numberInputDel( &uiState->new_offset );
+                    _ui_numberInputDel( &guiState->uiState.new_offset );
                 }
 #ifdef UI_NO_KEYBOARD
                 else if( guiState->msg.keys & ( KNOB_LEFT | KNOB_RIGHT | KEY_ENTER ) )
@@ -3361,14 +3340,14 @@ static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState , UI_State_s
                 else if( input_isNumberPressed( guiState->msg ) )
 #endif // UI_NO_KEYBOARD
                 {
-                    _ui_numberInputKeypad( &uiState->new_offset , guiState->msg );
-                    uiState->input_position += 1 ;
+                    _ui_numberInputKeypad( &guiState->uiState.new_offset , guiState->msg );
+                    guiState->uiState.input_position += 1 ;
                 }
                 else if( guiState->msg.long_press              &&
                          ( guiState->msg.keys     & KEY_F1   ) &&
                          ( state.settings.vpLevel > VPP_BEEP )    )
                 {
-                    vp_queueFrequency( uiState->new_offset );
+                    vp_queueFrequency( guiState->uiState.new_offset );
                     guiState->f1Handled = true ;
                 }
                 break ;
@@ -3414,10 +3393,10 @@ static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState , UI_State_s
             }
         }
         // If ENTER or ESC are pressed, exit edit mode, R_OFFSET is managed separately
-        if( ( ( guiState->msg.keys & KEY_ENTER ) && ( uiState->menu_selected != R_OFFSET ) ) ||
+        if( ( ( guiState->msg.keys & KEY_ENTER ) && ( guiState->uiState.menu_selected != R_OFFSET ) ) ||
               ( guiState->msg.keys & KEY_ESC   )                                                )
         {
-            uiState->edit_mode = false ;
+            guiState->uiState.edit_mode = false ;
         }
     }
     else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
@@ -3430,14 +3409,14 @@ static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState , UI_State_s
     }
     else if( guiState->msg.keys & KEY_ENTER )
     {
-        uiState->edit_mode = true;
+        guiState->uiState.edit_mode = true;
         // If we are entering R_OFFSET clear temp offset
-        if( uiState->menu_selected == R_OFFSET )
+        if( guiState->uiState.menu_selected == R_OFFSET )
         {
-            uiState->new_offset = 0 ;
+            guiState->uiState.new_offset = 0 ;
         }
         // Reset input position
-        uiState->input_position = 0 ;
+        guiState->uiState.input_position = 0 ;
     }
     else if( guiState->msg.keys & KEY_ESC )
     {
@@ -3448,46 +3427,46 @@ static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState , UI_State_s
 
 }
 
-static bool ui_updateFSM_PAGE_SETTINGS_M17( GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_updateFSM_PAGE_SETTINGS_M17( GuiState_st* guiState )
 {
     (void)guiState ;
 
     bool sync_rtx = false ;
 
-    if( uiState->edit_mode )
+    if( guiState->uiState.edit_mode )
     {
-        switch( uiState->menu_selected )
+        switch( guiState->uiState.menu_selected )
         {
             case M17_CALLSIGN :
             {
                 // Handle text input for M17 callsign
                 if( guiState->msg.keys & KEY_ENTER )
                 {
-                    _ui_textInputConfirm( uiState->new_callsign );
+                    _ui_textInputConfirm( guiState->uiState.new_callsign );
                     // Save selected callsign and disable input mode
-                    strncpy( state.settings.callsign , uiState->new_callsign , 10 );
-                    uiState->edit_mode = false;
+                    strncpy( state.settings.callsign , guiState->uiState.new_callsign , 10 );
+                    guiState->uiState.edit_mode = false;
                     vp_announceBuffer( &currentLanguage->callsign , false , true , state.settings.callsign );
                 }
                 else if( guiState->msg.keys & KEY_ESC )
                 {
                     // Discard selected callsign and disable input mode
-                    uiState->edit_mode = false ;
+                    guiState->uiState.edit_mode = false ;
                     vp_announceBuffer( &currentLanguage->callsign , false , true , state.settings.callsign );
                 }
                 else if( guiState->msg.keys & ( KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT ) )
                 {
-                    _ui_textInputDel( uiState->new_callsign );
+                    _ui_textInputDel( guiState->uiState.new_callsign );
                 }
                 else if( input_isNumberPressed( guiState->msg ) )
                 {
-                    _ui_textInputKeypad( uiState->new_callsign , 9 , guiState->msg , true );
+                    _ui_textInputKeypad( guiState->uiState.new_callsign , 9 , guiState->msg , true );
                 }
                 else if( guiState->msg.long_press              &&
                          ( guiState->msg.keys     & KEY_F1   ) &&
                          ( state.settings.vpLevel > VPP_BEEP )    )
                 {
-                    vp_announceBuffer( &currentLanguage->callsign , true , true , uiState->new_callsign );
+                    vp_announceBuffer( &currentLanguage->callsign , true , true , guiState->uiState.new_callsign );
                     guiState->f1Handled = true ;
                 }
                 break ;
@@ -3504,28 +3483,28 @@ static bool ui_updateFSM_PAGE_SETTINGS_M17( GuiState_st* guiState , UI_State_st*
                 }
                 else if( guiState->msg.keys & KEY_ENTER )
                 {
-                    uiState->edit_mode = !uiState->edit_mode ;
+                    guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
                 }
                 else if( guiState->msg.keys & KEY_ESC )
                 {
-                    uiState->edit_mode = false ;
+                    guiState->uiState.edit_mode = false ;
                 }
                 break;
             }
             case M17_CAN_RX :
             {
                 if( (   guiState->msg.keys & ( KEY_LEFT | KEY_RIGHT                       )                         ) ||
-                    ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT | KEY_UP | KNOB_RIGHT ) ) && uiState->edit_mode )    )
+                    ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT | KEY_UP | KNOB_RIGHT ) ) && guiState->uiState.edit_mode )    )
                 {
                     state.settings.m17_can_rx = !state.settings.m17_can_rx ;
                 }
                 else if( guiState->msg.keys & KEY_ENTER )
                 {
-                    uiState->edit_mode = !uiState->edit_mode ;
+                    guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
                 }
                 else if( guiState->msg.keys & KEY_ESC )
                 {
-                    uiState->edit_mode = false ;
+                    guiState->uiState.edit_mode = false ;
                 }
                 break ;
             }
@@ -3536,13 +3515,13 @@ static bool ui_updateFSM_PAGE_SETTINGS_M17( GuiState_st* guiState , UI_State_st*
         if( guiState->msg.keys & KEY_ENTER )
         {
             // Enable edit mode
-            uiState->edit_mode = true;
+            guiState->uiState.edit_mode = true;
 
             // If callsign input, reset text input variables
-            if(uiState->menu_selected == M17_CALLSIGN)
+            if(guiState->uiState.menu_selected == M17_CALLSIGN)
             {
-                _ui_textInputReset( uiState->new_callsign );
-                vp_announceBuffer( &currentLanguage->callsign , true , true , uiState->new_callsign );
+                _ui_textInputReset( guiState->uiState.new_callsign );
+                vp_announceBuffer( &currentLanguage->callsign , true , true , guiState->uiState.new_callsign );
             }
         }
         else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
@@ -3553,11 +3532,11 @@ static bool ui_updateFSM_PAGE_SETTINGS_M17( GuiState_st* guiState , UI_State_st*
         {
             _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_M17 ) );
         }
-        else if( ( guiState->msg.keys & KEY_RIGHT ) && ( uiState->menu_selected == M17_CAN ) )
+        else if( ( guiState->msg.keys & KEY_RIGHT ) && ( guiState->uiState.menu_selected == M17_CAN ) )
         {
             _ui_changeM17Can( +1 );
         }
-        else if( ( guiState->msg.keys & KEY_LEFT ) && ( uiState->menu_selected == M17_CAN ) )
+        else if( ( guiState->msg.keys & KEY_LEFT ) && ( guiState->uiState.menu_selected == M17_CAN ) )
         {
             _ui_changeM17Can( -1 );
         }
@@ -3572,16 +3551,16 @@ static bool ui_updateFSM_PAGE_SETTINGS_M17( GuiState_st* guiState , UI_State_st*
 
 }
 
-static bool ui_updateFSM_PAGE_SETTINGS_VOICE( GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_updateFSM_PAGE_SETTINGS_VOICE( GuiState_st* guiState )
 {
     (void)guiState ;
 
     bool sync_rtx = false ;
 
     if( (   guiState->msg.keys & KEY_LEFT                                         ) ||
-        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) ) && uiState->edit_mode )    )
+        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) ) && guiState->uiState.edit_mode )    )
     {
-        switch( uiState->menu_selected )
+        switch( guiState->uiState.menu_selected )
         {
             case VP_LEVEL :
             {
@@ -3600,9 +3579,9 @@ static bool ui_updateFSM_PAGE_SETTINGS_VOICE( GuiState_st* guiState , UI_State_s
         }
     }
     else if( (   guiState->msg.keys & KEY_RIGHT                                       ) ||
-             ( ( guiState->msg.keys & ( KEY_UP | KNOB_RIGHT ) ) && uiState->edit_mode )    )
+             ( ( guiState->msg.keys & ( KEY_UP | KNOB_RIGHT ) ) && guiState->uiState.edit_mode )    )
     {
-        switch( uiState->menu_selected )
+        switch( guiState->uiState.menu_selected )
         {
             case VP_LEVEL :
             {
@@ -3630,7 +3609,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_VOICE( GuiState_st* guiState , UI_State_s
     }
     else if( guiState->msg.keys & KEY_ENTER )
     {
-        uiState->edit_mode = !uiState->edit_mode ;
+        guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
     }
     else if( guiState->msg.keys & KEY_ESC )
     {
@@ -3641,19 +3620,19 @@ static bool ui_updateFSM_PAGE_SETTINGS_VOICE( GuiState_st* guiState , UI_State_s
 
 }
 
-static bool ui_updateFSM_PAGE_SETTINGS_RESET_TO_DEFAULTS( GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_updateFSM_PAGE_SETTINGS_RESET_TO_DEFAULTS( GuiState_st* guiState )
 {
     (void)guiState ;
 
     bool sync_rtx = false ;
 
-    if( !uiState->edit_mode )
+    if( !guiState->uiState.edit_mode )
     {
         //require a confirmation ENTER, then another
         //edit_mode is slightly misused to allow for this
         if( guiState->msg.keys & KEY_ENTER )
         {
-            uiState->edit_mode = true ;
+            guiState->uiState.edit_mode = true ;
         }
         else if( guiState->msg.keys & KEY_ESC )
         {
@@ -3664,13 +3643,13 @@ static bool ui_updateFSM_PAGE_SETTINGS_RESET_TO_DEFAULTS( GuiState_st* guiState 
     {
         if( guiState->msg.keys & KEY_ENTER )
         {
-            uiState->edit_mode = false ;
+            guiState->uiState.edit_mode = false ;
             state_resetSettingsAndVfo();
             _ui_menuBack( PAGE_MENU_SETTINGS );
         }
         else if( guiState->msg.keys & KEY_ESC )
         {
-            uiState->edit_mode = false ;
+            guiState->uiState.edit_mode = false ;
             _ui_menuBack( PAGE_MENU_SETTINGS );
         }
     }
@@ -3679,27 +3658,21 @@ static bool ui_updateFSM_PAGE_SETTINGS_RESET_TO_DEFAULTS( GuiState_st* guiState 
 
 }
 
-static bool ui_updateFSM_PAGE_LOW_BAT( GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_updateFSM_PAGE_LOW_BAT( GuiState_st* guiState )
 {
     (void)guiState ;
-    (void)uiState ;
-
     return false ;
 }
 
-static bool ui_updateFSM_PAGE_AUTHORS( GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_updateFSM_PAGE_AUTHORS( GuiState_st* guiState )
 {
     (void)guiState ;
-    (void)uiState ;
-
     return false ;
 }
 
-static bool ui_updateFSM_PAGE_BLANK( GuiState_st* guiState , UI_State_st* uiState )
+static bool ui_updateFSM_PAGE_BLANK( GuiState_st* guiState )
 {
     (void)guiState ;
-    (void)uiState ;
-
     return false ;
 }
 
@@ -3707,12 +3680,12 @@ bool ui_updateGUI( void )
 {
     if( redraw_needed == true )
     {
-        ui_draw( &last_state , &ui_state , &event );
+        ui_draw( &GuiState , &last_state , &event );
         // If MACRO menu is active draw it
         if( macro_menu )
         {
             _ui_drawDarkOverlay();
-            _ui_drawMacroMenu( &ui_state );
+            _ui_drawMacroMenu( &GuiState );
         }
 
 #ifdef DISPLAY_DEBUG_MSG

@@ -185,64 +185,6 @@ enum
 };
 
 /**
- * Struct containing a set of positions and sizes that get
- * calculated for the selected display size.
- * Using these parameters make the UI automatically adapt
- * To displays of different sizes
- */
-typedef struct
-{
-    uint16_t     hline_h ;
-    uint16_t     top_h ;
-    uint16_t     line1_h ;
-    uint16_t     line2_h ;
-    uint16_t     line3_h ;
-    uint16_t     line3_large_h ;
-    uint16_t     line4_h ;
-    uint16_t     menu_h ;
-    uint16_t     bottom_h ;
-    uint16_t     bottom_pad ;
-    uint16_t     status_v_pad ;
-    uint16_t     horizontal_pad ;
-    uint16_t     text_v_offset ;
-    point_t      top_pos ;
-    point_t      line1_pos ;
-    point_t      line2_pos ;
-    point_t      line3_pos ;
-    point_t      line3_large_pos ;
-    point_t      line4_pos ;
-    point_t      bottom_pos ;
-    fontSize_t   top_font ;
-    symbolSize_t top_symbol_size ;
-    fontSize_t   line1_font ;
-    symbolSize_t line1_symbol_size ;
-    fontSize_t   line2_font ;
-    symbolSize_t line2_symbol_size ;
-    fontSize_t   line3_font ;
-    symbolSize_t line3_symbol_size ;
-    fontSize_t   line3_large_font ;
-    fontSize_t   line4_font ;
-    symbolSize_t line4_symbol_size ;
-    fontSize_t   bottom_font ;
-    fontSize_t   input_font ;
-    fontSize_t   menu_font ;
-    fontSize_t   mode_font_big ;
-    fontSize_t   mode_font_small ;
-}Layout_st;
-
-typedef struct
-{
-    Layout_st       layout ;
-    uint8_t         pageNum[ MAX_SCRIPT_DEPTH ] ;
-    uint8_t         pageLevel ;
-    uint8_t*        pagePtr ;
-    uint16_t        pageIndex ;
-    kbd_msg_t       msg ;
-    VPQueueFlags_en queueFlags ;
-    bool            f1Handled ;
-}GuiState_st;
-
-/**
  * This structs contains state variables internal to the
  * UI that need to be kept between executions of the UI
  * This state does not need to be saved on device poweroff
@@ -277,6 +219,67 @@ typedef struct
     uint8_t     macro_menu_selected ;
 #endif // UI_NO_KEYBOARD
 }UI_State_st;
+
+/**
+ * Struct containing a set of positions and sizes that get
+ * calculated for the selected display size.
+ * Using these parameters make the UI automatically adapt
+ * To displays of different sizes
+ */
+typedef struct
+{
+    uint16_t     hline_h ;
+    uint16_t     top_h ;
+    uint16_t     line1_h ;
+    uint16_t     line2_h ;
+    uint16_t     line3_h ;
+    uint16_t     line3_large_h ;
+    uint16_t     line4_h ;
+    uint16_t     menu_h ;
+    uint16_t     bottom_h ;
+    uint16_t     bottom_pad ;
+    uint16_t     status_v_pad ;
+    uint16_t     horizontal_pad ;
+    uint16_t     text_v_offset ;
+    point_t      pos ;
+    point_t      top_pos ;
+    point_t      line1_pos ;
+    point_t      line2_pos ;
+    point_t      line3_pos ;
+    point_t      line3_large_pos ;
+    point_t      line4_pos ;
+    point_t      bottom_pos ;
+    fontSize_t   top_font ;
+    symbolSize_t top_symbol_size ;
+    fontSize_t   line1_font ;
+    symbolSize_t line1_symbol_size ;
+    fontSize_t   line2_font ;
+    symbolSize_t line2_symbol_size ;
+    fontSize_t   line3_font ;
+    symbolSize_t line3_symbol_size ;
+    fontSize_t   line3_large_font ;
+    fontSize_t   line4_font ;
+    symbolSize_t line4_symbol_size ;
+    fontSize_t   bottom_font ;
+    fontSize_t   input_font ;
+    fontSize_t   menu_font ;
+    fontSize_t   mode_font_big ;
+    fontSize_t   mode_font_small ;
+}Layout_st;
+
+typedef struct
+{
+    UI_State_st     uiState ;
+    Layout_st       layout ;
+    uint8_t         pageNum[ MAX_SCRIPT_DEPTH ] ;
+    uint8_t         pageLevel ;
+    uint8_t*        pagePtr ;
+    uint16_t        pageIndex ;
+    uint8_t         itemSelected ;
+    kbd_msg_t       msg ;
+    VPQueueFlags_en queueFlags ;
+    bool            f1Handled ;
+}GuiState_st;
 
 extern GuiState_st      GuiState ;
 extern State_st         last_state ;

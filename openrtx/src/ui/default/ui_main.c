@@ -26,45 +26,45 @@
 #include <string.h>
 #include <ui/ui_strings.h>
 
-extern bool ui_DisplayPage( GuiState_st* guiState , uiPageNum_en pageNum , UI_State_st* uiState );
-static void ui_drawMainVFO( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
-static void ui_drawMainVFOInput( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
-static void ui_drawMainMEM( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
-static void ui_drawModeVFO( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
-static void ui_drawModeMEM( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
-extern void _ui_drawMenuTop( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
-extern void _ui_drawMenuBank( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
-extern void _ui_drawMenuChannel( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
-extern void _ui_drawMenuContacts( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
-extern void _ui_drawMenuGPS( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
-extern void _ui_drawMenuSettings( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
-extern void _ui_drawMenuBackupRestore( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
-extern void _ui_drawMenuBackup( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
-extern void _ui_drawMenuRestore( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
-extern void _ui_drawMenuInfo( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
-extern void _ui_drawMenuAbout( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
-extern void _ui_drawSettingsTimeDate( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
-extern void _ui_drawSettingsTimeDateSet( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
-extern void _ui_drawSettingsDisplay( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
-extern void _ui_drawSettingsGPS( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
-extern void _ui_drawSettingsRadio( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
-extern void _ui_drawSettingsM17( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
-extern void _ui_drawSettingsVoicePrompts( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
-extern void _ui_drawSettingsReset2Defaults( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
-static void ui_drawLowBatteryScreen( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
-static void ui_drawAuthors( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
-static void ui_drawBlank( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
+extern bool ui_DisplayPage( GuiState_st* guiState , uiPageNum_en pageNum );
+static void ui_drawMainVFO( GuiState_st* guiState , Event_st* event );
+static void ui_drawMainVFOInput( GuiState_st* guiState , Event_st* event );
+static void ui_drawMainMEM( GuiState_st* guiState , Event_st* event );
+static void ui_drawModeVFO( GuiState_st* guiState , Event_st* event );
+static void ui_drawModeMEM( GuiState_st* guiState , Event_st* event );
+extern void _ui_drawMenuTop( GuiState_st* guiState , Event_st* event );
+extern void _ui_drawMenuBank( GuiState_st* guiState , Event_st* event );
+extern void _ui_drawMenuChannel( GuiState_st* guiState , Event_st* event );
+extern void _ui_drawMenuContacts( GuiState_st* guiState , Event_st* event );
+extern void _ui_drawMenuGPS( GuiState_st* guiState , Event_st* event );
+extern void _ui_drawMenuSettings( GuiState_st* guiState , Event_st* event );
+extern void _ui_drawMenuBackupRestore( GuiState_st* guiState , Event_st* event );
+extern void _ui_drawMenuBackup( GuiState_st* guiState , Event_st* event );
+extern void _ui_drawMenuRestore( GuiState_st* guiState , Event_st* event );
+extern void _ui_drawMenuInfo( GuiState_st* guiState , Event_st* event );
+extern void _ui_drawMenuAbout( GuiState_st* guiState , Event_st* event );
+extern void _ui_drawSettingsTimeDate( GuiState_st* guiState , Event_st* event );
+extern void _ui_drawSettingsTimeDateSet( GuiState_st* guiState , Event_st* event );
+extern void _ui_drawSettingsDisplay( GuiState_st* guiState , Event_st* event );
+extern void _ui_drawSettingsGPS( GuiState_st* guiState , Event_st* event );
+extern void _ui_drawSettingsRadio( GuiState_st* guiState , Event_st* event );
+extern void _ui_drawSettingsM17( GuiState_st* guiState , Event_st* event );
+extern void _ui_drawSettingsVoicePrompts( GuiState_st* guiState , Event_st* event );
+extern void _ui_drawSettingsReset2Defaults( GuiState_st* guiState , Event_st* event );
+static void ui_drawLowBatteryScreen( GuiState_st* guiState , Event_st* event );
+static void ui_drawAuthors( GuiState_st* guiState , Event_st* event );
+static void ui_drawBlank( GuiState_st* guiState , Event_st* event );
 
 //@@@KL static void ui_drawMainBackground( void );
-static void ui_drawMainTop( GuiState_st* guiState , UI_State_st * ui_state , Event_st* event );
+static void ui_drawMainTop( GuiState_st* guiState , Event_st* event );
 static void ui_drawBankChannel( GuiState_st* guiState );
-static void ui_drawModeInfo( GuiState_st* guiState , UI_State_st* ui_state );
+static void ui_drawModeInfo( GuiState_st* guiState );
 static void ui_drawFrequency( GuiState_st* guiState );
-static void ui_drawVFOMiddleInput( GuiState_st* guiState , UI_State_st* ui_state );
+static void ui_drawVFOMiddleInput( GuiState_st* guiState );
 
 void _ui_drawMainBottom( GuiState_st* guiState , Event_st* event );
 
-typedef void (*ui_draw_fn)( GuiState_st* guiState , UI_State_st* uiState , Event_st* event );
+typedef void (*ui_draw_fn)( GuiState_st* guiState , Event_st* event );
 
 static const ui_draw_fn uiPageDescTable[ PAGE_NUM_OF ] =
 {
@@ -97,7 +97,7 @@ static const ui_draw_fn uiPageDescTable[ PAGE_NUM_OF ] =
     ui_drawBlank                     // PAGE_BLANK
 };
 
-void ui_draw( State_st* state , UI_State_st* ui_state , Event_st* event )
+void ui_draw( GuiState_st* guiState , State_st* state , Event_st* event )
 {
     (void)event ;
 
@@ -120,21 +120,21 @@ void ui_draw( State_st* state , UI_State_st* ui_state , Event_st* event )
     }
 
     // attempt to display the page as a scripted page
-    if( !ui_DisplayPage( &GuiState , pgNum , ui_state ) )
+    if( !ui_DisplayPage( guiState , pgNum ) )
     {
         // if not successful - display using the legacy fn.
-        uiPageDescTable[ pgNum ]( &GuiState , ui_state , event ) ;
+        uiPageDescTable[ pgNum ]( guiState , event ) ;
     }
 
 }
 
-static void ui_drawMainVFO( GuiState_st* guiState , UI_State_st* uiState , Event_st* event )
+static void ui_drawMainVFO( GuiState_st* guiState , Event_st* event )
 {
     (void)event ;
 
     gfx_clearScreen();
-    ui_drawMainTop( guiState , uiState , event );
-    ui_drawModeInfo( guiState , uiState );
+    ui_drawMainTop( guiState , event );
+    ui_drawModeInfo( guiState );
 
     // Show VFO frequency if the OpMode is not M17 or there is no valid LSF data
     rtxStatus_t status = rtx_getCurrentStatus();
@@ -147,24 +147,24 @@ static void ui_drawMainVFO( GuiState_st* guiState , UI_State_st* uiState , Event
 
 }
 
-static void ui_drawMainVFOInput( GuiState_st* guiState , UI_State_st* uiState , Event_st* event )
+static void ui_drawMainVFOInput( GuiState_st* guiState , Event_st* event )
 {
     (void)event ;
 
     gfx_clearScreen();
-    ui_drawMainTop( guiState , uiState , event );
-    ui_drawVFOMiddleInput(  guiState , uiState );
+    ui_drawMainTop( guiState , event );
+    ui_drawVFOMiddleInput( guiState );
     _ui_drawMainBottom( guiState , event );
 
 }
 
-void ui_drawMainMEM( GuiState_st* guiState , UI_State_st* uiState , Event_st* event )
+void ui_drawMainMEM( GuiState_st* guiState , Event_st* event )
 {
     (void)event ;
 
     gfx_clearScreen();
-    ui_drawMainTop( guiState , uiState , event );
-    ui_drawModeInfo( guiState , uiState );
+    ui_drawMainTop( guiState , event );
+    ui_drawModeInfo( guiState );
 
     // Show channel data if the OpMode is not M17 or there is no valid LSF data
     rtxStatus_t status = rtx_getCurrentStatus();
@@ -178,25 +178,22 @@ void ui_drawMainMEM( GuiState_st* guiState , UI_State_st* uiState , Event_st* ev
 
 }
 
-static void ui_drawModeVFO( GuiState_st* guiState , UI_State_st* uiState , Event_st* event )
+static void ui_drawModeVFO( GuiState_st* guiState , Event_st* event )
 {
     (void)guiState ;
     (void)event ;
-    (void)uiState ;
 }
 
-static void ui_drawModeMEM( GuiState_st* guiState , UI_State_st* uiState , Event_st* event )
+static void ui_drawModeMEM( GuiState_st* guiState , Event_st* event )
 {
     (void)guiState ;
     (void)event ;
-    (void)uiState ;
 }
 
-static void ui_drawLowBatteryScreen( GuiState_st* guiState , UI_State_st* uiState , Event_st* event )
+static void ui_drawLowBatteryScreen( GuiState_st* guiState , Event_st* event )
 {
     (void)guiState ;
     (void)event ;
-    (void)uiState ;
     color_t color_fg ;
     uiColorLoad( &color_fg , COLOR_FG );
 
@@ -223,18 +220,16 @@ static void ui_drawLowBatteryScreen( GuiState_st* guiState , UI_State_st* uiStat
                currentLanguage->pressAnyButton   );
 }
 
-static void ui_drawAuthors( GuiState_st* guiState , UI_State_st* uiState , Event_st* event )
+static void ui_drawAuthors( GuiState_st* guiState , Event_st* event )
 {
     (void)guiState ;
     (void)event ;
-    (void)uiState ;
 }
 
-static void ui_drawBlank( GuiState_st* guiState , UI_State_st* uiState , Event_st* event )
+static void ui_drawBlank( GuiState_st* guiState , Event_st* event )
 {
     (void)guiState ;
     (void)event ;
-    (void)uiState ;
 }
 //@@@KL - not being called - remove?
 /*
@@ -246,7 +241,7 @@ static void ui_drawMainBackground( void )
     gfx_drawHLine(SCREEN_HEIGHT - guiState->layout.bottom_h - 1, guiState->layout.hline_h, color_gg);
 }
 */
-static void ui_drawMainTop( GuiState_st* guiState , UI_State_st * ui_state , Event_st* event )
+static void ui_drawMainTop( GuiState_st* guiState , Event_st* event )
 {
     color_t color_fg ;
     uiColorLoad( &color_fg , COLOR_FG );
@@ -277,7 +272,7 @@ static void ui_drawMainTop( GuiState_st* guiState , UI_State_st * ui_state , Eve
         gfx_drawBattery( bat_pos , bat_width , bat_height , last_state.charge );
 #endif // BAT_NONE
     }
-    if( ui_state->input_locked == true )
+    if( guiState->uiState.input_locked == true )
     {
       gfx_drawSymbol( guiState->layout.top_pos , guiState->layout.top_symbol_size , TEXT_ALIGN_LEFT ,
                       color_fg , SYMBOL_LOCK );
@@ -296,7 +291,7 @@ static void ui_drawBankChannel( GuiState_st* guiState )
                bank_enabled , last_state.channel_index + 1 , last_state.channel.name );
 }
 
-static void ui_drawModeInfo( GuiState_st* guiState , UI_State_st* uiState )
+static void ui_drawModeInfo( GuiState_st* guiState )
 {
     char bw_str[ 8 ]     = { 0 };
     char encdec_str[ 9 ] = { 0 };
@@ -419,9 +414,9 @@ static void ui_drawModeInfo( GuiState_st* guiState , UI_State_st* uiState )
             else
             {
                 const char* dst = NULL ;
-                if( uiState->edit_mode )
+                if( guiState->uiState.edit_mode )
                 {
-                    dst = uiState->new_callsign ;
+                    dst = guiState->uiState.new_callsign ;
                 }
                 else
                 {
@@ -455,38 +450,38 @@ static void ui_drawFrequency( GuiState_st* guiState )
                color_fg , "%.7g" , (float)frequency / 1000000.0f );
 }
 
-static void ui_drawVFOMiddleInput( GuiState_st* guiState , UI_State_st* uiState )
+static void ui_drawVFOMiddleInput( GuiState_st* guiState )
 {
     // Add inserted number to string, skipping "Rx: "/"Tx: " and "."
-    uint8_t insert_pos = uiState->input_position + 3;
+    uint8_t insert_pos = guiState->uiState.input_position + 3;
     color_t color_fg ;
     uiColorLoad( &color_fg , COLOR_FG );
 
-    if( uiState->input_position > 3 )
+    if( guiState->uiState.input_position > 3 )
     {
         insert_pos += 1 ;
     }
-    char input_char = uiState->input_number + '0' ;
+    char input_char = guiState->uiState.input_number + '0' ;
 
-    if( uiState->input_set == SET_RX )
+    if( guiState->uiState.input_set == SET_RX )
     {
-        if( uiState->input_position == 0 )
+        if( guiState->uiState.input_position == 0 )
         {
             gfx_print( guiState->layout.line2_pos , guiState->layout.input_font , TEXT_ALIGN_CENTER ,
                        color_fg , ">Rx:%03lu.%04lu" ,
-                       (unsigned long)uiState->new_rx_frequency / 1000000 ,
-                       (unsigned long)( uiState->new_rx_frequency % 1000000 ) / 100 );
+                       (unsigned long)guiState->uiState.new_rx_frequency / 1000000 ,
+                       (unsigned long)( guiState->uiState.new_rx_frequency % 1000000 ) / 100 );
         }
         else
         {
             // Replace Rx frequency with underscorses
-            if( uiState->input_position == 1 )
+            if( guiState->uiState.input_position == 1 )
             {
-                strcpy( uiState->new_rx_freq_buf , ">Rx:___.____" );
+                strcpy( guiState->uiState.new_rx_freq_buf , ">Rx:___.____" );
             }
-            uiState->new_rx_freq_buf[ insert_pos ] = input_char ;
+            guiState->uiState.new_rx_freq_buf[ insert_pos ] = input_char ;
             gfx_print( guiState->layout.line2_pos , guiState->layout.input_font , TEXT_ALIGN_CENTER ,
-                       color_fg , uiState->new_rx_freq_buf );
+                       color_fg , guiState->uiState.new_rx_freq_buf );
         }
         gfx_print( guiState->layout.line3_large_pos , guiState->layout.input_font , TEXT_ALIGN_CENTER ,
                    color_fg , " Tx:%03lu.%04lu" ,
@@ -495,29 +490,29 @@ static void ui_drawVFOMiddleInput( GuiState_st* guiState , UI_State_st* uiState 
     }
     else
     {
-        if( uiState->input_set == SET_TX )
+        if( guiState->uiState.input_set == SET_TX )
         {
             gfx_print( guiState->layout.line2_pos , guiState->layout.input_font , TEXT_ALIGN_CENTER ,
                        color_fg , " Rx:%03lu.%04lu" ,
-                       (unsigned long)uiState->new_rx_frequency / 1000000 ,
-                       (unsigned long)( uiState->new_rx_frequency % 1000000 ) / 100 );
+                       (unsigned long)guiState->uiState.new_rx_frequency / 1000000 ,
+                       (unsigned long)( guiState->uiState.new_rx_frequency % 1000000 ) / 100 );
             // Replace Rx frequency with underscorses
-            if( uiState->input_position == 0 )
+            if( guiState->uiState.input_position == 0 )
             {
                 gfx_print( guiState->layout.line3_large_pos , guiState->layout.input_font , TEXT_ALIGN_CENTER ,
                            color_fg , ">Tx:%03lu.%04lu" ,
-                           (unsigned long)uiState->new_rx_frequency / 1000000 ,
-                           (unsigned long)( uiState->new_rx_frequency % 1000000 ) / 100 );
+                           (unsigned long)guiState->uiState.new_rx_frequency / 1000000 ,
+                           (unsigned long)( guiState->uiState.new_rx_frequency % 1000000 ) / 100 );
             }
             else
             {
-                if( uiState->input_position == 1 )
+                if( guiState->uiState.input_position == 1 )
                 {
-                    strcpy( uiState->new_tx_freq_buf , ">Tx:___.____" );
+                    strcpy( guiState->uiState.new_tx_freq_buf , ">Tx:___.____" );
                 }
-                uiState->new_tx_freq_buf[ insert_pos ] = input_char ;
+                guiState->uiState.new_tx_freq_buf[ insert_pos ] = input_char ;
                 gfx_print( guiState->layout.line3_large_pos , guiState->layout.input_font , TEXT_ALIGN_CENTER ,
-                           color_fg , uiState->new_tx_freq_buf );
+                           color_fg , guiState->uiState.new_tx_freq_buf );
             }
         }
     }
