@@ -159,10 +159,14 @@ extern void ui_draw( GuiState_st* guiState , State_st* state , Event_st* event )
 extern bool _ui_drawMacroMenu( GuiState_st* guiState );
 extern void _ui_reset_menu_anouncement_tracking( void );
 
+extern void ui_drawMenuItem( GuiState_st* guiState , char* entryBuf );
+
 const uint8_t Page_MenuItems_N[] =
 {
-    GUI_CMD_END , //@@@KL indicates use the legacy script
-
+//    GUI_CMD_END , //@@@KL indicates use the legacy script
+    GUI_CMD_TITLE ,
+    'M','e','n','u' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
     GUI_CMD_LINK , ST_VAL( PAGE_MENU_BANK ) ,
      'B','a','n','k','s' , GUI_CMD_NULL ,
     GUI_CMD_LINE_END ,
@@ -562,11 +566,14 @@ static const char* symbols_ITU_T_E161_callsign[] =
 
 static bool GuiCmd_Null( GuiState_st* guiState );
 static bool GuiCmd_Text( GuiState_st* guiState );
+static bool GuiCmd_Title( GuiState_st* guiState );
 static bool GuiCmd_Link( GuiState_st* guiState );
 static bool GuiCmd_Value( GuiState_st* guiState );
 static bool GuiCmd_LineEnd( GuiState_st* guiState );
 static bool GuiCmd_End( GuiState_st* guiState );
 static bool GuiCmd_Stubbed( GuiState_st* guiState );
+
+static void GuiCmd_AdvToNextCmd( GuiState_st* guiState );
 
 typedef bool (*ui_GuiCmd_fn)( GuiState_st* guiState );
 
@@ -574,9 +581,9 @@ static const ui_GuiCmd_fn ui_GuiCmd_Table[ GUI_CMD_NUM_OF ] =
 {
     GuiCmd_Null     , // 0x00
     GuiCmd_Text     , // 0x01
-    GuiCmd_Link     , // 0x02
-    GuiCmd_Value    , // 0x03
-    GuiCmd_Stubbed  , // 0x04
+    GuiCmd_Title    , // 0x02
+    GuiCmd_Link     , // 0x03
+    GuiCmd_Value    , // 0x04
     GuiCmd_Stubbed  , // 0x05
     GuiCmd_Stubbed  , // 0x06
     GuiCmd_Stubbed  , // 0x07
@@ -608,37 +615,43 @@ static const ui_GuiCmd_fn ui_GuiCmd_Table[ GUI_CMD_NUM_OF ] =
 
 bool ui_DisplayPage( GuiState_st* guiState , uiPageNum_en pageNum )
 {
-    uint8_t* pagePtr ;
+    uint16_t count ;
     uint8_t  cmd ;
     bool     exit          = false ;
     bool     pageDisplayed = false ; // display via legacy fn
 
-    guiState->pageNum[ guiState->pageLevel ] = pageNum ;
-    pagePtr                                  = (uint8_t*)uiPageTable[ pageNum ] ;
-    guiState->pagePtr                        = pagePtr ;
+    guiState->page.num[ guiState->page.level ] = pageNum ;
+    guiState->page.ptr                         = (uint8_t*)uiPageTable[ pageNum ] ;
 
-    if( pagePtr[ 0 ] != GUI_CMD_END )
+    if( guiState->page.ptr[ 0 ] != GUI_CMD_END )
     {
-        gfx_clearScreen();
+	    gfx_clearScreen();
 
-        while( !exit )
-        {
-            cmd = pagePtr[ guiState->pageIndex ] ;
+        guiState->layout.pos          = guiState->layout.line1_pos ;
+        // Number of menu entries that fit in the screen height
+        guiState->layout.numOfEntries = ( SCREEN_HEIGHT - 1 - guiState->layout.pos.y ) /
+                                        guiState->layout.menu_h + 1 ;
+        guiState->layout.scrollOffset = 0 ;
+        guiState->layout.itemIndex    = 0 ;
 
-            if( cmd >= GUI_CMD_NUM_OF )
-            {
-                cmd = GUI_CMD_TEXT ;
-            }
+	    guiState->page.index          = 0 ;
 
-            if( ui_GuiCmd_Table[ cmd ]( guiState ) )
-            {
-                exit = true ;
-            }
-        }
+	    for( count = 256 ; !exit && count ; count-- )
+	    {
+	        cmd = guiState->page.ptr[ guiState->page.index ] ;
 
-        pageDisplayed = true ;
+	        if( cmd >= GUI_CMD_NUM_OF )
+	        {
+	            cmd = GUI_CMD_TEXT ;
+	        }
 
-    }
+	        exit = ui_GuiCmd_Table[ cmd ]( guiState );
+
+	    }
+
+	    pageDisplayed = true ;
+
+	}
 
     return pageDisplayed ;
 
@@ -650,7 +663,109 @@ static bool GuiCmd_Null( GuiState_st* guiState )
 
     printf( "Cmd NULL" );
 
-    guiState->pageIndex++ ;
+    guiState->page.index++ ;
+
+    return pageEnd ;
+
+}
+
+static bool GuiCmd_Text( GuiState_st* guiState )
+{
+    uint8_t* scriptPtr ;
+    color_t  color_fg ;
+    bool     pageEnd   = false ;
+
+    while( guiState->page.ptr[ guiState->page.index ] < GUI_CMD_NUM_OF )
+    {
+        guiState->page.index++ ;
+    }
+
+    scriptPtr = &guiState->page.ptr[ guiState->page.index ] ;
+
+    uiColorLoad( &color_fg , COLOR_FG );
+
+    gfx_print( guiState->layout.top_pos , guiState->layout.top_font , TEXT_ALIGN_LEFT ,
+               color_fg , (char*)scriptPtr );
+
+    GuiCmd_AdvToNextCmd( guiState );
+
+    return pageEnd ;
+
+}
+
+static bool GuiCmd_Title( GuiState_st* guiState )
+{
+    uint8_t* scriptPtr ;
+    color_t  color_fg ;
+    bool     pageEnd   = false ;
+
+    guiState->page.index++ ;
+
+    scriptPtr = &guiState->page.ptr[ guiState->page.index ] ;
+
+    uiColorLoad( &color_fg , COLOR_FG );
+
+    // print the title on the top bar
+    gfx_print( guiState->layout.top_pos , guiState->layout.top_font , TEXT_ALIGN_CENTER ,
+               color_fg , (char*)scriptPtr );
+
+    GuiCmd_AdvToNextCmd( guiState );
+
+    return pageEnd ;
+
+}
+
+static bool GuiCmd_Link( GuiState_st* guiState )
+{
+//    uint8_t val ;
+    char* entryBuf ;
+    bool pageEnd = false ;
+
+    guiState->page.index++ ;
+
+//    val = LD_VAL( &guiState->page.ptr[ guiState->page.index ] );
+
+    guiState->page.index++ ;
+
+    entryBuf = (char*)&guiState->page.ptr[ guiState->page.index ] ;
+
+    // If selection is off the screen, scroll screen
+    if( guiState->uiState.menu_selected >= guiState->layout.numOfEntries )
+    {
+        guiState->layout.scrollOffset = guiState->uiState.menu_selected -
+                                        guiState->layout.numOfEntries + 1 ;
+    }
+
+    if( ( guiState->layout.itemIndex >= guiState->layout.scrollOffset ) &&
+        ( guiState->layout.itemIndex  < guiState->layout.numOfEntries )    )
+    {
+        ui_drawMenuItem( guiState , entryBuf );
+    }
+
+    guiState->layout.itemIndex++ ;
+
+    GuiCmd_AdvToNextCmd( guiState );
+
+    return pageEnd ;
+}
+
+static bool GuiCmd_Value( GuiState_st* guiState )
+{
+    bool pageEnd = false ;
+
+    guiState->page.index++ ;
+
+    GuiCmd_AdvToNextCmd( guiState );
+
+    return pageEnd ;
+
+}
+
+static bool GuiCmd_LineEnd( GuiState_st* guiState )
+{
+    bool pageEnd = false ;
+
+    guiState->page.index++ ;
 
     return pageEnd ;
 
@@ -660,74 +775,7 @@ static bool GuiCmd_End( GuiState_st* guiState )
 {
     bool pageEnd = true ;
 
-    printf( "Cmd End" );
-
-    guiState->pageIndex++ ;
-
-    return pageEnd ;
-
-}
-
-static bool GuiCmd_Text( GuiState_st* guiState )
-{
-    uint8_t* scriptPtr ;
-    bool     pageEnd   = false ;
-    color_t color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
-
-    while( guiState->pagePtr[ guiState->pageIndex ] < GUI_CMD_NUM_OF )
-    {
-        guiState->pageIndex++ ;
-    }
-
-    scriptPtr = &guiState->pagePtr[ guiState->pageIndex ] ;
-
-    gfx_print( guiState->layout.top_pos , guiState->layout.top_font , TEXT_ALIGN_LEFT , color_fg ,
-               "%s" , scriptPtr );
-
-    while( guiState->pagePtr[ guiState->pageIndex ] != GUI_CMD_NULL )
-    {
-        guiState->pageIndex++ ;
-    }
-
-    guiState->pageIndex++ ;
-
-    return pageEnd ;
-
-}
-
-static bool GuiCmd_Link( GuiState_st* guiState )
-{
-//    uint8_t val ;
-
-    guiState->pageIndex++ ;
-
-//    val = LD_VAL( guiState->pagePtr[ guiState->pageIndex ] );
-
-    guiState->pageIndex++ ;
-
-    return GuiCmd_Text( guiState );
-}
-
-static bool GuiCmd_Value( GuiState_st* guiState )
-{
-    bool pageEnd = false ;
-
-    guiState->pageIndex++ ;
-
-    return pageEnd ;
-
-}
-
-static bool GuiCmd_LineEnd( GuiState_st* guiState )
-{
-    bool pageEnd = false ;
-//@@@KL    _ui_drawMenuList       ->  _ui_drawMenuListItem
-//@@@KL    _ui_drawMenuListValue  ->  _ui_drawMenuListItemValue
-//@@@KL    guiState->uiState.col = 0 ;
-//@@@KL    guiState->uiState.line++ ;
-
-    guiState->pageIndex++ ;
+    guiState->page.index++ ;
 
     return pageEnd ;
 
@@ -739,9 +787,26 @@ static bool GuiCmd_Stubbed( GuiState_st* guiState )
 
     printf( "Cmd Stubbed" );
 
-    guiState->pageIndex++ ;
+    guiState->page.index++ ;
 
     return pageEnd ;
+
+}
+
+static void GuiCmd_AdvToNextCmd( GuiState_st* guiState )
+{
+    uint16_t count = 256 ;
+
+    while( ( guiState->page.ptr[ guiState->page.index ] != GUI_CMD_NULL ) &&
+           ( guiState->page.ptr[ guiState->page.index ]  > GUI_CMD_END  )    )
+    {
+        count-- ;
+        if( count == 0 )
+        {
+            break ;
+        }
+        guiState->page.index++ ;
+    }
 
 }
 
@@ -1026,7 +1091,7 @@ const char** uiGetPageLoc( uiPageNum_en pageNum )
     return uiPageDesc->loc ;
 }
 
-static bool ui_UpdatePage( uiPageNum_en pageNum , GuiState_st* guiState )
+static bool ui_UpdatePage( GuiState_st* guiState , uiPageNum_en pageNum )
 {
     uiPageNum_en pgNum    = pageNum ;
     bool         sync_rtx ;
@@ -1991,10 +2056,10 @@ void ui_init( void )
 
 static void ui_InitGuiState( GuiState_st* guiState )
 {
-    guiState->pageLevel = 0 ;
-    guiState->pageNum[ guiState->pageLevel ] = 0 ;
-    guiState->pagePtr   = (uint8_t*)uiPageTable[ 0 ] ;
-    guiState->pageIndex = 0 ;
+    guiState->page.level = 0 ;
+    guiState->page.num[ guiState->page.level ] = 0 ;
+    guiState->page.ptr   = (uint8_t*)uiPageTable[ 0 ] ;
+    guiState->page.index = 0 ;
 
     ui_InitGuiStateLayout( &guiState->layout );
 
@@ -2259,7 +2324,7 @@ void ui_updateFSM( bool* sync_rtx )
                         int priorUIScreen ;
                         priorUIScreen = state.ui_screen ;
 
-                        *sync_rtx = ui_UpdatePage( state.ui_screen , &GuiState );
+                        *sync_rtx = ui_UpdatePage( &GuiState , state.ui_screen );
 
                         // Enable Tx only if in PAGE_MAIN_VFO or PAGE_MAIN_MEM states
                         bool inMemOrVfo ;

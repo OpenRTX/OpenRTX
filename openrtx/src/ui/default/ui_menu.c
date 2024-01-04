@@ -39,6 +39,8 @@
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBottom( GuiState_st* guiState , Event_st* event );
 
+void ui_drawMenuItem( GuiState_st* guiState , char* entryBuf );
+
 int _ui_getMenuTopEntryName( char* buf , uint8_t max_len , uint8_t index );
 int _ui_getBankName( char* buf , uint8_t max_len , uint8_t index );
 int _ui_getChannelName( char* buf , uint8_t max_len , uint8_t index );
@@ -209,68 +211,65 @@ static const GetMenuList_fn GetEntryName_table[ ENTRY_NAME_NUM_OF ] =
     _ui_getRadioEntryName
 };
 
-void _ui_drawMenuList( GuiState_st* guiState , uint8_t selected , EntryName_en currentEntry )
+void _ui_drawMenuList( GuiState_st* guiState , EntryName_en currentEntry )
 {
-    GetMenuList_fn getCurrentEntry = GetEntryName_table[ currentEntry ];
+    char entryBuf[ MAX_ENTRY_LEN ] = "" ;
+    int  result ;
 
-    guiState->layout.pos = guiState->layout.line1_pos ;
+    guiState->layout.pos          = guiState->layout.line1_pos ;
     // Number of menu entries that fit in the screen height
-    uint8_t entries_in_screen = ( SCREEN_HEIGHT - 1 - guiState->layout.pos.y ) / guiState->layout.menu_h + 1 ;
-    uint8_t scroll = 0 ;
-    char entry_buf[ MAX_ENTRY_LEN ] = "" ;
+    guiState->layout.numOfEntries = ( SCREEN_HEIGHT - 1 - guiState->layout.pos.y ) /
+                                    guiState->layout.menu_h + 1 ;
+    guiState->layout.scrollOffset = 0 ;
+
+    for( guiState->layout.itemIndex = 0 , result = 0 ;
+         ( result == 0 ) && ( guiState->layout.pos.y < SCREEN_HEIGHT );
+         guiState->layout.itemIndex++ )
+    {
+        // If selection is off the screen, scroll screen
+        if( guiState->uiState.menu_selected >= guiState->layout.numOfEntries )
+        {
+            guiState->layout.scrollOffset = guiState->uiState.menu_selected -
+                                            guiState->layout.numOfEntries + 1 ;
+        }
+
+        GetMenuList_fn getCurrentEntry = GetEntryName_table[ currentEntry ];
+
+        // Call function pointer to get current menu entry string
+        result = (*getCurrentEntry)( entryBuf , sizeof( entryBuf ) ,
+                                     guiState->layout.itemIndex + guiState->layout.scrollOffset );
+
+        if( result != -1 )
+        {
+            ui_drawMenuItem( guiState , entryBuf );
+        }
+
+    }
+}
+
+void ui_drawMenuItem( GuiState_st* guiState , char* entryBuf )
+{
     color_t color_fg ;
     uiColorLoad( &color_fg , COLOR_FG );
     color_t color_bg ;
     uiColorLoad( &color_bg , COLOR_BG );
-    color_t text_color = color_fg ;
+    color_t color_text = color_fg ;
 
-    for( int item = 0 , result = 0 ;
-         ( result == 0 ) && ( guiState->layout.pos.y < SCREEN_HEIGHT );
-         item++ )
+    if( ( guiState->layout.itemIndex + guiState->layout.scrollOffset ) ==
+        guiState->uiState.menu_selected )
     {
-        // If selection is off the screen, scroll screen
-        if( selected >= entries_in_screen )
-        {
-            scroll = selected - entries_in_screen + 1 ;
-        }
-
-        // Call function pointer to get current menu entry string
-        result = (*getCurrentEntry)( entry_buf , sizeof( entry_buf ) , item + scroll );
-
-        if( result != -1 )
-        {
-            text_color = color_fg ;
-            if( ( item + scroll ) == selected )
-            {
-                text_color = color_bg ;
-                // Draw rectangle under selected item, compensating for text height
-                point_t rect_pos = { 0 , guiState->layout.pos.y - guiState->layout.menu_h + 3 };
-                gfx_drawRect( rect_pos , SCREEN_WIDTH , guiState->layout.menu_h , color_fg , true );
-                announceMenuItemIfNeeded( entry_buf , NULL , false );
-            }
-            gfx_print( guiState->layout.pos , guiState->layout.menu_font ,
-                       TEXT_ALIGN_LEFT , text_color , entry_buf );
-            guiState->layout.pos.y += guiState->layout.menu_h ;
-        }
-    }
-}
-/* @@@KL
-static void _ui_drawMenuItem( GuiState_st* guiState , char* item )
-{
-    text_color = color_fg ;
-    if( ( item + scroll ) == selected )
-    {
-        text_color = color_bg ;
+        color_text = color_bg ;
         // Draw rectangle under selected item, compensating for text height
         point_t rect_pos = { 0 , guiState->layout.pos.y - guiState->layout.menu_h + 3 };
         gfx_drawRect( rect_pos , SCREEN_WIDTH , guiState->layout.menu_h , color_fg , true );
-        announceMenuItemIfNeeded( entry_buf , NULL , false );
+        announceMenuItemIfNeeded( entryBuf , NULL , false );
     }
     gfx_print( guiState->layout.pos , guiState->layout.menu_font ,
-               TEXT_ALIGN_LEFT , text_color , entry_buf );
+               TEXT_ALIGN_LEFT , color_text , entryBuf );
     guiState->layout.pos.y += guiState->layout.menu_h ;
+
 }
-*/
+
 static const GetMenuList_fn GetEntryValue_table[ ENTRY_VALUE_NUM_OF ] =
 {
     _ui_getInfoValueName        ,
@@ -281,7 +280,7 @@ static const GetMenuList_fn GetEntryValue_table[ ENTRY_VALUE_NUM_OF ] =
     _ui_getRadioValueName
 };
 
-void _ui_drawMenuListValue( GuiState_st* guiState , uint8_t selected ,
+void _ui_drawMenuListValue( GuiState_st* guiState ,
                             EntryName_en currentEntry , EntryValue_en currentEntryValue )
 {
     GetMenuList_fn getCurrentEntry = GetEntryName_table[ currentEntry ];
@@ -289,7 +288,7 @@ void _ui_drawMenuListValue( GuiState_st* guiState , uint8_t selected ,
 
     guiState->layout.pos = guiState->layout.line1_pos;
     // Number of menu entries that fit in the screen height
-    uint8_t entries_in_screen = ( SCREEN_HEIGHT - 1 - guiState->layout.pos.y ) /
+    uint8_t numOfEntries = ( SCREEN_HEIGHT - 1 - guiState->layout.pos.y ) /
                                 guiState->layout.menu_h + 1 ;
     uint8_t scroll = 0 ;
     char entry_buf[ MAX_ENTRY_LEN ] = "" ;
@@ -305,9 +304,9 @@ void _ui_drawMenuListValue( GuiState_st* guiState , uint8_t selected ,
          item++ )
     {
         // If selection is off the screen, scroll screen
-        if( selected >= entries_in_screen )
+        if( guiState->uiState.menu_selected >= numOfEntries )
         {
-            scroll = ( selected - entries_in_screen ) + 1 ; //@@@KL check this
+            scroll = ( guiState->uiState.menu_selected - numOfEntries ) + 1 ; //@@@KL check this
         }
         // Call function pointer to get current menu entry string
         result = (*getCurrentEntry)( entry_buf , sizeof( entry_buf ) , item+scroll );
@@ -316,7 +315,7 @@ void _ui_drawMenuListValue( GuiState_st* guiState , uint8_t selected ,
         if( result != -1 )
         {
             text_color = color_fg;
-            if( ( item + scroll ) == selected )
+            if( ( item + scroll ) == guiState->uiState.menu_selected )
             {
                 // Draw rectangle under selected item, compensating for text height
                 // If we are in edit mode, draw a hollow rectangle
@@ -766,7 +765,7 @@ void _ui_drawMenuTop( GuiState_st* guiState )
     gfx_print( guiState->layout.top_pos , guiState->layout.top_font , TEXT_ALIGN_CENTER ,
                color_fg , currentLanguage->menu );
     // Print menu entries
-    _ui_drawMenuList( guiState , guiState->uiState.menu_selected , ENTRY_NAME_MENU_TOP );
+    _ui_drawMenuList( guiState , ENTRY_NAME_MENU_TOP );
 }
 
 void _ui_drawMenuBank( GuiState_st* guiState )
@@ -779,7 +778,7 @@ void _ui_drawMenuBank( GuiState_st* guiState )
     gfx_print( guiState->layout.top_pos , guiState->layout.top_font , TEXT_ALIGN_CENTER ,
                color_fg , currentLanguage->banks );
     // Print bank entries
-    _ui_drawMenuList( guiState , guiState->uiState.menu_selected , ENTRY_NAME_BANK_NAME );
+    _ui_drawMenuList( guiState , ENTRY_NAME_BANK_NAME );
 }
 
 void _ui_drawMenuChannel( GuiState_st* guiState )
@@ -792,7 +791,7 @@ void _ui_drawMenuChannel( GuiState_st* guiState )
     gfx_print( guiState->layout.top_pos , guiState->layout.top_font , TEXT_ALIGN_CENTER ,
                color_fg , currentLanguage->channels );
     // Print channel entries
-    _ui_drawMenuList( guiState , guiState->uiState.menu_selected , ENTRY_NAME_CHANNEL_NAME );
+    _ui_drawMenuList( guiState , ENTRY_NAME_CHANNEL_NAME );
 }
 
 void _ui_drawMenuContacts( GuiState_st* guiState )
@@ -805,7 +804,7 @@ void _ui_drawMenuContacts( GuiState_st* guiState )
     gfx_print( guiState->layout.top_pos , guiState->layout.top_font , TEXT_ALIGN_CENTER ,
                color_fg , currentLanguage->contacts );
     // Print contact entries
-    _ui_drawMenuList( guiState , guiState->uiState.menu_selected , ENTRY_NAME_CONTACT_NAME );
+    _ui_drawMenuList( guiState , ENTRY_NAME_CONTACT_NAME );
 }
 
 #ifdef GPS_PRESENT
@@ -933,7 +932,7 @@ void _ui_drawMenuSettings( GuiState_st* guiState , Event_st* event )
     gfx_print( guiState->layout.top_pos , guiState->layout.top_font , TEXT_ALIGN_CENTER ,
                color_fg , currentLanguage->settings );
     // Print menu entries
-    _ui_drawMenuList( guiState , guiState->uiState.menu_selected , ENTRY_NAME_SETTINGS );
+    _ui_drawMenuList( guiState , ENTRY_NAME_SETTINGS );
 }
 
 void _ui_drawMenuBackupRestore( GuiState_st* guiState , Event_st* event )
@@ -947,7 +946,7 @@ void _ui_drawMenuBackupRestore( GuiState_st* guiState , Event_st* event )
     gfx_print( guiState->layout.top_pos , guiState->layout.top_font , TEXT_ALIGN_CENTER ,
                color_fg , currentLanguage->backupAndRestore );
     // Print menu entries
-    _ui_drawMenuList( guiState , guiState->uiState.menu_selected , ENTRY_NAME_BACKUP_RESTORE );
+    _ui_drawMenuList( guiState , ENTRY_NAME_BACKUP_RESTORE );
 }
 
 void _ui_drawMenuBackup( GuiState_st* guiState , Event_st* event )
@@ -1021,7 +1020,7 @@ void _ui_drawMenuInfo( GuiState_st* guiState , Event_st* event )
     gfx_print( guiState->layout.top_pos , guiState->layout.top_font , TEXT_ALIGN_CENTER ,
                color_fg , currentLanguage->info );
     // Print menu entries
-    _ui_drawMenuListValue( guiState , guiState->uiState.menu_selected ,
+    _ui_drawMenuListValue( guiState ,
                            ENTRY_NAME_INFO , ENTRY_VALUE_INFO );
 }
 
@@ -1075,7 +1074,7 @@ void _ui_drawSettingsDisplay( GuiState_st* guiState , Event_st* event )
     gfx_print( guiState->layout.top_pos , guiState->layout.top_font , TEXT_ALIGN_CENTER ,
                color_fg , currentLanguage->display );
     // Print display settings entries
-    _ui_drawMenuListValue( guiState , guiState->uiState.menu_selected ,
+    _ui_drawMenuListValue( guiState ,
                            ENTRY_NAME_DISPLAY , ENTRY_VALUE_DISPLAY );
 }
 
@@ -1091,7 +1090,7 @@ void _ui_drawSettingsGPS( GuiState_st* guiState , Event_st* event )
     gfx_print( guiState->layout.top_pos , guiState->layout.top_font , TEXT_ALIGN_CENTER ,
                color_fg , currentLanguage->gpsSettings );
     // Print display settings entries
-    _ui_drawMenuListValue( guiState , guiState->uiState.menu_selected ,
+    _ui_drawMenuListValue( guiState ,
                            ENTRY_NAME_SETTINGS_GPS , ENTRY_VALUE_SETTINGS_GPS );
 }
 #endif
@@ -1188,7 +1187,7 @@ void _ui_drawSettingsM17( GuiState_st* guiState , Event_st* event )
     }
     else
     {
-        _ui_drawMenuListValue( guiState , guiState->uiState.menu_selected ,
+        _ui_drawMenuListValue( guiState ,
                                ENTRY_NAME_M17 , ENTRY_VALUE_M17 );
     }
 }
@@ -1204,7 +1203,7 @@ void _ui_drawSettingsVoicePrompts( GuiState_st* guiState , Event_st* event )
     gfx_print( guiState->layout.top_pos , guiState->layout.top_font , TEXT_ALIGN_CENTER ,
                color_fg , currentLanguage->voice );
     // Print voice settings entries
-    _ui_drawMenuListValue( guiState , guiState->uiState.menu_selected ,
+    _ui_drawMenuListValue( guiState ,
                            ENTRY_NAME_VOICE , ENTRY_VALUE_VOICE );
 }
 
@@ -1289,7 +1288,7 @@ void _ui_drawSettingsRadio( GuiState_st* guiState , Event_st* event )
     else
     {
         // Print radio settings entries
-        _ui_drawMenuListValue( guiState , guiState->uiState.menu_selected ,
+        _ui_drawMenuListValue( guiState ,
                                ENTRY_NAME_RADIO , ENTRY_VALUE_RADIO );
     }
 }

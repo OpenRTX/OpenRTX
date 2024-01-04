@@ -77,6 +77,7 @@ enum
 {
     GUI_CMD_NULL            ,
     GUI_CMD_TEXT            ,
+    GUI_CMD_TITLE           ,
     GUI_CMD_LINK            ,
     GUI_CMD_VALUE           ,
     GUI_CMD_LINE_END = 0x0A ,
@@ -241,6 +242,9 @@ typedef struct
     uint16_t     status_v_pad ;
     uint16_t     horizontal_pad ;
     uint16_t     text_v_offset ;
+    uint8_t      numOfEntries ;
+    uint8_t      itemIndex ;
+    uint8_t      scrollOffset ;
     point_t      pos ;
     point_t      top_pos ;
     point_t      line1_pos ;
@@ -269,13 +273,17 @@ typedef struct
 
 typedef struct
 {
+    uint8_t         num[ MAX_SCRIPT_DEPTH ] ;
+    uint8_t         level ;
+    uint8_t*        ptr ;
+    uint16_t        index ;
+}Page_st;
+
+typedef struct
+{
     UI_State_st     uiState ;
     Layout_st       layout ;
-    uint8_t         pageNum[ MAX_SCRIPT_DEPTH ] ;
-    uint8_t         pageLevel ;
-    uint8_t*        pagePtr ;
-    uint16_t        pageIndex ;
-    uint8_t         itemSelected ;
+    Page_st         page ;
     kbd_msg_t       msg ;
     VPQueueFlags_en queueFlags ;
     bool            f1Handled ;
