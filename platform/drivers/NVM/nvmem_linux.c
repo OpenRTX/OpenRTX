@@ -46,7 +46,14 @@ const struct nvmPartition statePartitions[] =
 const struct nvmArea areas[] =
 {
     {
-        .name       = "Device state NVM area",
+        .name       = "Device state NVM area 1",
+        .dev        = &stateDevice,
+        .startAddr  = 0x0000,
+        .size       = 1024,
+        .partitions = statePartitions
+    },
+    {
+        .name       = "Device state NVM area 2",
         .dev        = &stateDevice,
         .startAddr  = 0x0000,
         .size       = 1024,
