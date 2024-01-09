@@ -111,10 +111,18 @@ void state_task()
      * Low-pass filtering with a time constant of 10s when updated at 1Hz
      * Original computation: state.v_bat = 0.02*vbat + 0.98*state.v_bat
      * Peak error is 18mV when input voltage is 49mV.
+     *
+     * NOTE: GD77 and DM-1801 already have an hardware low-pass filter on the
+     * vbat pin. Adding also the digital one seems to cause more troubles than
+     * benefits.
      */
     uint16_t vbat = platform_getVbat();
+    #if defined(PLATFORM_GD77) || defined(PLATFORM_DM1801)
+    state.v_bat   = vbat;
+    #else
     state.v_bat  -= (state.v_bat * 2) / 100;
     state.v_bat  += (vbat * 2) / 100;
+    #endif
 
     state.charge = battery_getCharge(state.v_bat);
     state.rssi = rtx_getRssi();
