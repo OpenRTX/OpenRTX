@@ -469,6 +469,7 @@ rt890_src = ['platform/targets/RT-890/platform.c',
                'openrtx/src/core/audio_path.cpp',
                'openrtx/src/core/voicePrompts.c',
                'openrtx/src/core/voicePromptUtils.c',
+               'openrtx/src/core/memory_profiling.cpp',
                'openrtx/src/rtx/rtx.cpp',
                'openrtx/src/rtx/OpMode_FM.cpp',
                'openrtx/src/main.c'
