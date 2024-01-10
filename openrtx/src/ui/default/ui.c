@@ -1514,7 +1514,6 @@ void ui_updateFSM(bool *sync_rtx)
                                 *sync_rtx = true;
                             }
                         }
-                        #endif
                     }
                     else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
                     {
