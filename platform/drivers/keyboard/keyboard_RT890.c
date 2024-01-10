@@ -66,37 +66,37 @@ keyboard_t kbd_getKeys()
     gpio_clearPin(KBD_COL0);
 
     delayUs(10);
-    if(!gpio_readPin(KBD_ROW0)) keys |= KEY_ENTER;
-    if(!gpio_readPin(KBD_ROW1)) keys |= KEY_UP;
-    if(!gpio_readPin(KBD_ROW2)) keys |= KEY_DOWN;
-    if(!gpio_readPin(KBD_ROW3)) keys |= KEY_ESC;
+    if(!gpio_readPin(KBD_ROW0)) keys |= KEY_UP;
+    if(!gpio_readPin(KBD_ROW1)) keys |= KEY_2;
+    if(!gpio_readPin(KBD_ROW2)) keys |= KEY_5;
+    if(!gpio_readPin(KBD_ROW3)) keys |= KEY_8;
 
     gpio_clearPin(KBD_COL1);
     gpio_setPin(KBD_COL0);
 
     delayUs(10);
-    if(!gpio_readPin(KBD_ROW0)) keys |= KEY_1;
-    if(!gpio_readPin(KBD_ROW1)) keys |= KEY_2;
-    if(!gpio_readPin(KBD_ROW2)) keys |= KEY_3;
-    if(!gpio_readPin(KBD_ROW3)) keys |= KEY_STAR;
+    if(!gpio_readPin(KBD_ROW0)) keys |= KEY_DOWN;
+    if(!gpio_readPin(KBD_ROW1)) keys |= KEY_3;
+    if(!gpio_readPin(KBD_ROW2)) keys |= KEY_6;
+    if(!gpio_readPin(KBD_ROW3)) keys |= KEY_9;
 
     gpio_clearPin(KBD_COL2);
     gpio_setPin(KBD_COL1);
 
     delayUs(10);
-    if(!gpio_readPin(KBD_ROW0)) keys |= KEY_4;
-    if(!gpio_readPin(KBD_ROW1)) keys |= KEY_5;
-    if(!gpio_readPin(KBD_ROW2)) keys |= KEY_6;
-    if(!gpio_readPin(KBD_ROW3)) keys |= KEY_0;
+    if(!gpio_readPin(KBD_ROW0)) keys |= KEY_ESC;
+    if(!gpio_readPin(KBD_ROW1)) keys |= KEY_STAR;
+    if(!gpio_readPin(KBD_ROW2)) keys |= KEY_0;
+    if(!gpio_readPin(KBD_ROW3)) keys |= KEY_HASH;
 
     gpio_clearPin(KBD_COL3);
     gpio_setPin(KBD_COL2);
 
     delayUs(10);
-    if(!gpio_readPin(KBD_ROW0)) keys |= KEY_7;
-    if(!gpio_readPin(KBD_ROW1)) keys |= KEY_8;
-    if(!gpio_readPin(KBD_ROW2)) keys |= KEY_9;
-    if(!gpio_readPin(KBD_ROW3)) keys |= KEY_HASH;
+    if(!gpio_readPin(KBD_ROW0)) keys |= KEY_ENTER;
+    if(!gpio_readPin(KBD_ROW1)) keys |= KEY_1;
+    if(!gpio_readPin(KBD_ROW2)) keys |= KEY_4;
+    if(!gpio_readPin(KBD_ROW3)) keys |= KEY_7;
 
     return keys;
 }
