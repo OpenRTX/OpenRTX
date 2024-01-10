@@ -248,7 +248,7 @@ inline void gfx_setPixel(point_t pos, color_t color)
         // Also convert pixel to 16bit integer
         rgb565_t temp = _true2highColor(color);
         uint16_t pixel16 = (temp.b << 11) | (temp.g << 5) | (temp.r);
-        ST7735S_SetPixel(pos.x, SCREEN_HEIGHT-pos.y, pixel16);
+        ST7735S_SetPixel(pos.x, CONFIG_SCREEN_HEIGHT-pos.y, pixel16);
     #else
     // Blend old pixel value and new one
     if (color.alpha < 255)
