@@ -406,20 +406,20 @@ int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
     return 0;
 }
 
-int _ui_getVoiceEntryName(char *buf, uint8_t max_len, uint8_t index)
+int _ui_getAccessibilityEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
-    if(index >= settings_voice_num) return -1;
-    snprintf(buf, max_len, "%s", settings_voice_items[index]);
+    if(index >= settings_accessibility_num) return -1;
+    snprintf(buf, max_len, "%s", settings_accessibility_items[index]);
     return 0;
 }
 
-int _ui_getVoiceValueName(char *buf, uint8_t max_len, uint8_t index)
+int _ui_getAccessibilityValueName(char *buf, uint8_t max_len, uint8_t index)
 {
-    if(index >= settings_voice_num) return -1;
+    if(index >= settings_accessibility_num) return -1;
     uint8_t value = 0;
     switch(index)
     {
-        case VP_LEVEL:
+        case A_LEVEL:
         {
             value = last_state.settings.vpLevel;
             switch (value)
@@ -436,7 +436,7 @@ int _ui_getVoiceValueName(char *buf, uint8_t max_len, uint8_t index)
             }
             break;
         }
-        case VP_PHONETIC:
+        case A_PHONETIC:
             snprintf(buf, max_len, "%s", last_state.settings.vpPhoneticSpell ? currentLanguage->on : currentLanguage->off);
             break;
     }
@@ -906,15 +906,15 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
     }
 }
 
-void _ui_drawSettingsVoicePrompts(ui_state_t* ui_state)
+void _ui_drawSettingsAccessibility(ui_state_t* ui_state)
 {
     gfx_clearScreen();
-    // Print "Voice" on top bar
+    // Print "Accessibility" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, currentLanguage->voice);
-    // Print voice settings entries
-    _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getVoiceEntryName,
-                           _ui_getVoiceValueName);
+              color_white, currentLanguage->accessibility);
+    // Print accessibility settings entries
+    _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getAccessibilityEntryName,
+                           _ui_getAccessibilityValueName);
 }
 
 void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state)
