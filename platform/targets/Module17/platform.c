@@ -31,11 +31,13 @@
 #include <hwconfig.h>
 #include <MCP4551.h>
 #include <errno.h>
-
+#include <usb_vcom.h>
 
 ADC_STM32_DEVICE_DEFINE(adc1, ADC1, NULL, 3300000)
 I2C_STM32_DEVICE_DEFINE(i2c1, I2C1, NULL)
 I2C_STM32_DEVICE_DEFINE(i2c2, I2C2, NULL)
+
+CHARDEV_USB_VCOM_DEFINE(rtxlink_dev)
 
 extern mod17Calib_t mod17CalData;
 
