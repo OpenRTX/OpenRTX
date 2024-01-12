@@ -28,6 +28,9 @@
 #include <backlight.h>
 #include <hwconfig.h>
 #include <MCP4551.h>
+#include <usb_vcom.h>
+
+CHARDEV_USB_VCOM_DEFINE(rtxlink_dev)
 
 extern mod17Calib_t mod17CalData;
 

@@ -38,8 +38,9 @@
 /* Device has no battery */
 #define BAT_NONE
 
-/* No rtxlink interface */
-#define RTXLINK_DEV NULL
+/* Character device for rtxlink communication */
+extern struct chardev rtxlink_dev;
+#define RTXLINK_DEV &rtxlink_dev
 
 /* Signalling LEDs */
 #define PTT_LED     GPIOC,8
