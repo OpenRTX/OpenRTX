@@ -76,6 +76,7 @@ typedef enum
 enum
 {
     GUI_CMD_NULL            ,
+    GUI_CMD_GO_TO_LINE      ,
     GUI_CMD_TEXT            ,
     GUI_CMD_TITLE           ,
     GUI_CMD_LINK            ,
@@ -269,6 +270,7 @@ typedef struct
     fontSize_t   menu_font ;
     fontSize_t   mode_font_big ;
     fontSize_t   mode_font_small ;
+    bool         print_display_on ;
 }Layout_st;
 
 typedef struct

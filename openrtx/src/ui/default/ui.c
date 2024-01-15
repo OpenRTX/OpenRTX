@@ -81,8 +81,8 @@
 
 //@@@KL #include "ui_m17.h"
 
-#define ST_VAL( val )   ( val + GUI_CMD_END + 1 )
-#define LD_VAL( val )   ( val - ( GUI_CMD_END + 1 ) )
+#define ST_VAL( val )   ( val + GUI_CMD_NUM_OF )
+#define LD_VAL( val )   ( val - GUI_CMD_NUM_OF )
 
 //#define DISPLAY_DEBUG_MSG
 
@@ -161,12 +161,23 @@ extern void _ui_reset_menu_anouncement_tracking( void );
 
 extern void ui_drawMenuItem( GuiState_st* guiState , char* entryBuf );
 
+enum
+{
+    GUI_POS_TOP             ,
+    GUI_POS_LINE1           ,
+    GUI_POS_LINE2           ,
+    GUI_POS_LINE3           ,
+    GUI_POS_LINE3_LARGE_POS ,
+    GUI_POS_LINE4           ,
+    GUI_POS_BOTTOM
+};
+
 const uint8_t Page_MenuItems_N[] =
 {
-//    GUI_CMD_END , //@@@KL indicates use the legacy script
+    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_POS_TOP ) ,
     GUI_CMD_TITLE ,
     'M','e','n','u' , GUI_CMD_NULL ,
-    GUI_CMD_LINE_END ,
+    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_POS_LINE1 ) ,
     GUI_CMD_LINK , ST_VAL( PAGE_MENU_BANK ) ,
      'B','a','n','k','s' , GUI_CMD_NULL ,
     GUI_CMD_LINE_END ,
@@ -207,8 +218,10 @@ const char* Page_MenuItems[] =
 
 const uint8_t Page_MenuSettings_N[] =
 {
-    GUI_CMD_END , //@@@KL indicates use the legacy script
-
+    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_POS_TOP ) ,
+    GUI_CMD_TITLE ,
+    'S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
+    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_POS_LINE1 ) ,
     GUI_CMD_LINK , ST_VAL( PAGE_SETTINGS_DISPLAY ) ,
      'D','i','s','p','l','a','y' , GUI_CMD_NULL ,
     GUI_CMD_LINE_END ,
@@ -256,6 +269,10 @@ const uint8_t Page_SettingsDisplay_N[] =
 {
     GUI_CMD_END , //@@@KL indicates use the legacy script
 
+    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_POS_TOP ) ,
+    GUI_CMD_TITLE ,
+    'D','i','s','p','l','a','y' , GUI_CMD_NULL ,
+    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_POS_LINE1 ) ,
 #ifdef SCREEN_BRIGHTNESS
     GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
      'B','r','i','g','h','t','n','e','s','s' , GUI_CMD_NULL ,
@@ -287,6 +304,10 @@ const uint8_t Page_SettingsGPS_N[] =
 {
     GUI_CMD_END , //@@@KL indicates use the legacy script
 
+    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_POS_TOP ) ,
+    GUI_CMD_TITLE ,
+     'G','P','S',' ','S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
+    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_POS_LINE1 ) ,
     GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
      'G','P','S',' ','E','n','a','b','l','e','d' , GUI_CMD_NULL ,
     GUI_CMD_LINE_END ,
@@ -310,6 +331,10 @@ const uint8_t Page_SettingsRadio_N[] =
 {
     GUI_CMD_END , //@@@KL indicates use the legacy script
 
+    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_POS_TOP ) ,
+    GUI_CMD_TITLE ,
+     'R','a','d','i','o',' ','S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
+    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_POS_LINE1 ) ,
     GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
      'O','f','f','s','e','t', GUI_CMD_NULL ,
     GUI_CMD_LINE_END ,
@@ -447,7 +472,7 @@ const char* Page_MenuInfo[] =
 
 const uint8_t Page_Authors_N[] =
 {
-    GUI_CMD_END , //@@@KL indicates use the legacy script
+//    GUI_CMD_END , //@@@KL indicates use the legacy script
 
     GUI_CMD_TEXT ,
      'N','i','c','c','o','l','o',' ',
@@ -565,6 +590,7 @@ static const char* symbols_ITU_T_E161_callsign[] =
 };
 
 static bool GuiCmd_Null( GuiState_st* guiState );
+static bool GuiCmd_GoToLine( GuiState_st* guiState );
 static bool GuiCmd_Text( GuiState_st* guiState );
 static bool GuiCmd_Title( GuiState_st* guiState );
 static bool GuiCmd_Link( GuiState_st* guiState );
@@ -580,11 +606,11 @@ typedef bool (*ui_GuiCmd_fn)( GuiState_st* guiState );
 static const ui_GuiCmd_fn ui_GuiCmd_Table[ GUI_CMD_NUM_OF ] =
 {
     GuiCmd_Null     , // 0x00
-    GuiCmd_Text     , // 0x01
-    GuiCmd_Title    , // 0x02
-    GuiCmd_Link     , // 0x03
-    GuiCmd_Value    , // 0x04
-    GuiCmd_Stubbed  , // 0x05
+    GuiCmd_GoToLine , // 0x01
+    GuiCmd_Text     , // 0x02
+    GuiCmd_Title    , // 0x03
+    GuiCmd_Link     , // 0x04
+    GuiCmd_Value    , // 0x05
     GuiCmd_Stubbed  , // 0x06
     GuiCmd_Stubbed  , // 0x07
     GuiCmd_Stubbed  , // 0x08
@@ -617,26 +643,30 @@ bool ui_DisplayPage( GuiState_st* guiState , uiPageNum_en pageNum )
 {
     uint16_t count ;
     uint8_t  cmd ;
-    bool     exit          = false ;
+    bool     exit ;
     bool     pageDisplayed = false ; // display via legacy fn
+
+    guiState->layout.print_display_on         = true ;
 
     guiState->page.num[ guiState->page.level ] = pageNum ;
     guiState->page.ptr                         = (uint8_t*)uiPageTable[ pageNum ] ;
+
+    guiState->layout.numOfEntries = 0 ;
+
+    guiState->layout.itemIndex    = 0 ;
 
     if( guiState->page.ptr[ 0 ] != GUI_CMD_END )
     {
 	    gfx_clearScreen();
 
-        guiState->layout.pos          = guiState->layout.line1_pos ;
-        // Number of menu entries that fit in the screen height
-        guiState->layout.numOfEntries = ( SCREEN_HEIGHT - 1 - guiState->layout.pos.y ) /
-                                        guiState->layout.menu_h + 1 ;
+        guiState->layout.pos.y        = 0 ;
+        guiState->layout.pos.x        = 0 ;
+
         guiState->layout.scrollOffset = 0 ;
-        guiState->layout.itemIndex    = 0 ;
 
 	    guiState->page.index          = 0 ;
 
-	    for( count = 256 ; !exit && count ; count-- )
+        for( exit = false , count = 256 ; !exit && count ; count-- )
 	    {
 	        cmd = guiState->page.ptr[ guiState->page.index ] ;
 
@@ -664,6 +694,66 @@ static bool GuiCmd_Null( GuiState_st* guiState )
     printf( "Cmd NULL" );
 
     guiState->page.index++ ;
+
+    return pageEnd ;
+
+}
+
+static bool GuiCmd_GoToLine( GuiState_st* guiState )
+{
+    uint8_t val ;
+    bool    pageEnd = false ;
+
+    guiState->page.index++ ;
+
+    val = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+
+    guiState->page.index++ ;
+
+    switch( val )
+    {
+        case GUI_POS_TOP :
+        {
+            guiState->layout.pos = guiState->layout.top_pos ;
+            break ;
+        }
+        case GUI_POS_LINE1 :
+        {
+            guiState->layout.pos = guiState->layout.line1_pos ;
+            break ;
+        }
+        case GUI_POS_LINE2 :
+        {
+            guiState->layout.pos = guiState->layout.line2_pos ;
+            break ;
+        }
+        case GUI_POS_LINE3 :
+        {
+            guiState->layout.pos = guiState->layout.line3_pos ;
+            break ;
+        }
+        case GUI_POS_LINE3_LARGE_POS :
+        {
+            guiState->layout.pos = guiState->layout.line3_large_pos ;
+            break ;
+        }
+        case GUI_POS_LINE4 :
+        {
+            guiState->layout.pos = guiState->layout.line4_pos ;
+            break ;
+        }
+        case GUI_POS_BOTTOM :
+        {
+            guiState->layout.pos = guiState->layout.bottom_pos ;
+            break ;
+        }
+        default :
+        {
+            guiState->layout.pos.y = 0 ;
+            guiState->layout.pos.x = 0 ;
+            break ;
+        }
+    }
 
     return pageEnd ;
 
@@ -717,17 +807,33 @@ static bool GuiCmd_Title( GuiState_st* guiState )
 
 static bool GuiCmd_Link( GuiState_st* guiState )
 {
-//    uint8_t val ;
-    char* entryBuf ;
-    bool pageEnd = false ;
+    uint8_t val ;
+    char*   entryBuf ;
+    color_t color_fg ;
+    uiColorLoad( &color_fg , COLOR_FG );
+    color_t color_bg ;
+    uiColorLoad( &color_bg , COLOR_BG );
+    color_t color_text = color_fg ;
+    bool    pageEnd    = false ;
+
+    guiState->layout.print_display_on = false ;
 
     guiState->page.index++ ;
 
-//    val = LD_VAL( &guiState->page.ptr[ guiState->page.index ] );
+    val = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+
+(void)val ;//@@@KL
 
     guiState->page.index++ ;
 
     entryBuf = (char*)&guiState->page.ptr[ guiState->page.index ] ;
+
+    if( guiState->layout.itemIndex == 0 )
+    {
+        // Number of menu entries that fit in the screen height
+        guiState->layout.numOfEntries = ( SCREEN_HEIGHT - 1 - guiState->layout.pos.y ) /
+                                        guiState->layout.menu_h + 1 ;
+    }
 
     // If selection is off the screen, scroll screen
     if( guiState->uiState.menu_selected >= guiState->layout.numOfEntries )
@@ -736,10 +842,20 @@ static bool GuiCmd_Link( GuiState_st* guiState )
                                         guiState->layout.numOfEntries + 1 ;
     }
 
-    if( ( guiState->layout.itemIndex >= guiState->layout.scrollOffset ) &&
-        ( guiState->layout.itemIndex  < guiState->layout.numOfEntries )    )
+    if( (   guiState->layout.itemIndex >= guiState->layout.scrollOffset ) &&
+        ( ( guiState->layout.itemIndex  - guiState->layout.scrollOffset )  < guiState->layout.numOfEntries ) )
     {
-        ui_drawMenuItem( guiState , entryBuf );
+        if( guiState->layout.itemIndex == guiState->uiState.menu_selected )
+        {
+            color_text = color_bg ;
+            // Draw rectangle under selected item, compensating for text height
+            point_t rect_pos = { 0 , guiState->layout.pos.y - guiState->layout.menu_h + 3 };
+            gfx_drawRect( rect_pos , SCREEN_WIDTH , guiState->layout.menu_h , color_fg , true );
+//@@@KL            announceMenuItemIfNeeded( entryBuf , NULL , false );
+        }
+        gfx_print( guiState->layout.pos , guiState->layout.menu_font ,
+                   TEXT_ALIGN_LEFT , color_text , entryBuf );
+        guiState->layout.print_display_on = true ;
     }
 
     guiState->layout.itemIndex++ ;
@@ -751,9 +867,21 @@ static bool GuiCmd_Link( GuiState_st* guiState )
 
 static bool GuiCmd_Value( GuiState_st* guiState )
 {
-    bool pageEnd = false ;
+    uint8_t* scriptPtr ;
+    uint8_t  val ;
+    color_t  color_fg ;
+    bool     pageEnd   = false ;
 
-    guiState->page.index++ ;
+    val = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+
+(void)val ;//@@@KL
+
+    scriptPtr = &guiState->page.ptr[ guiState->page.index ] ;
+
+    uiColorLoad( &color_fg , COLOR_FG );
+
+    gfx_print( guiState->layout.top_pos , guiState->layout.top_font , TEXT_ALIGN_LEFT ,
+               color_fg , (char*)scriptPtr );
 
     GuiCmd_AdvToNextCmd( guiState );
 
@@ -766,6 +894,11 @@ static bool GuiCmd_LineEnd( GuiState_st* guiState )
     bool pageEnd = false ;
 
     guiState->page.index++ ;
+
+    if( guiState->layout.print_display_on )
+    {
+        guiState->layout.pos.y += guiState->layout.menu_h ;
+    }
 
     return pageEnd ;
 
@@ -2112,6 +2245,7 @@ static void ui_InitGuiStateLayout( Layout_st* layout )
     layout->menu_font           = SCREEN_MENU_FONT ;
     layout->mode_font_big       = SCREEN_MODE_FONT_BIG ;
     layout->mode_font_small     = SCREEN_MODE_FONT_SMALL ;
+    layout->print_display_on    = true ;
 }
 
 void ui_drawSplashScreen( void )
