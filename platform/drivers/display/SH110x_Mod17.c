@@ -130,11 +130,6 @@ void display_render()
     display_renderRows(0, CONFIG_SCREEN_HEIGHT);
 }
 
-bool display_renderingInProgress()
-{
-    return (gpio_readPin(LCD_CS) == 0);
-}
-
 void *display_getFrameBuffer()
 {
     return (void *)(frameBuffer);

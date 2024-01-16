@@ -95,13 +95,6 @@ void display_renderRows(uint8_t startRow, uint8_t endRow);
 void display_render();
 
 /**
- * Check if framebuffer is being copied to the screen or not, in which case it
- * can be modified without problems.
- * @return false if rendering is not in progress.
- */
-bool display_renderingInProgress();
-
-/**
  * Set display contrast.
  * NOTE: not all the display controllers support contrast control, thus on some
  * targets this function has no effect.

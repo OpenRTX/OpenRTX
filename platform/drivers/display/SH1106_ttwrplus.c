@@ -36,7 +36,6 @@ static const struct display_buffer_descriptor displayBufDesc =
 };
 
 static uint8_t frameBuffer[FB_SIZE];
-static bool    rendering = false;
 
 void display_init()
 {
@@ -63,7 +62,6 @@ void display_render()
     static uint8_t shadowBuffer[FB_SIZE] = { 0 };
     memset(shadowBuffer, 0x00, FB_SIZE);
 
-    rendering = true;
     for(uint8_t y = 0; y < CONFIG_SCREEN_HEIGHT; y++)
     {
         for(uint8_t x = 0; x < CONFIG_SCREEN_WIDTH; x++)
@@ -76,12 +74,6 @@ void display_render()
     }
 
     display_write(displayDev, 0, 0, &displayBufDesc, shadowBuffer);
-    rendering = false;
-}
-
-bool display_renderingInProgress()
-{
-    return rendering;
 }
 
 void *display_getFrameBuffer()
