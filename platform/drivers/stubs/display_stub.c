@@ -49,11 +49,6 @@ void display_render()
 
 }
 
-bool display_renderingInProgress()
-{
-    return false;
-}
-
 void *display_getFrameBuffer()
 {
     return (void *) (frameBuffer);

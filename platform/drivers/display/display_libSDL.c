@@ -165,11 +165,6 @@ void display_render()
     display_renderRows(0, CONFIG_SCREEN_HEIGHT);
 }
 
-bool display_renderingInProgress()
-{
-    return inProgress;
-}
-
 void *display_getFrameBuffer()
 {
     return (void *) (frameBuffer);

@@ -147,7 +147,7 @@ static bw_t _color2bw(color_t true_color)
 #error Please define a pixel format type into hwconfig.h or meson.build
 #endif
 
-static bool initialized = 0;
+
 static PIXEL_T *buf;
 static uint16_t fbSize;
 static char text[32];
@@ -156,7 +156,6 @@ void gfx_init()
 {
     display_init();
     buf = (PIXEL_T *)(display_getFrameBuffer());
-    initialized = 1;
 
 // Calculate framebuffer size
 #ifdef CONFIG_PIX_FMT_RGB565
@@ -174,7 +173,6 @@ void gfx_init()
 void gfx_terminate()
 {
     display_terminate();
-    initialized = 0;
 }
 
 void gfx_renderRows(uint8_t startRow, uint8_t endRow)
@@ -187,15 +185,11 @@ void gfx_render()
     display_render();
 }
 
-bool gfx_renderingInProgress()
-{
-    return display_renderingInProgress();
-}
-
 void gfx_clearRows(uint8_t startRow, uint8_t endRow)
 {
-    if(!initialized) return;
-    if(endRow < startRow) return;
+    if(endRow < startRow)
+        return;
+
     uint16_t start = startRow * CONFIG_SCREEN_WIDTH * sizeof(PIXEL_T);
     uint16_t height = endRow - startRow * CONFIG_SCREEN_WIDTH * sizeof(PIXEL_T);
     // Set the specified rows to 0x00 = make the screen black
@@ -204,14 +198,12 @@ void gfx_clearRows(uint8_t startRow, uint8_t endRow)
 
 void gfx_clearScreen()
 {
-    if(!initialized) return;
     // Set the whole framebuffer to 0x00 = make the screen black
     memset(buf, 0x00, fbSize);
 }
 
 void gfx_fillScreen(color_t color)
 {
-    if(!initialized) return;
     for(int16_t y = 0; y < CONFIG_SCREEN_HEIGHT; y++)
     {
         for(int16_t x = 0; x < CONFIG_SCREEN_WIDTH; x++)
@@ -259,7 +251,6 @@ inline void gfx_setPixel(point_t pos, color_t color)
 
 void gfx_drawLine(point_t start, point_t end, color_t color)
 {
-    if(!initialized) return;
     int16_t steep = abs(end.y - start.y) > abs(end.x - start.x);
 
     if (steep)
@@ -319,7 +310,6 @@ void gfx_drawLine(point_t start, point_t end, color_t color)
 
 void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color, bool fill)
 {
-    if(!initialized) return;
     if(width == 0) return;
     if(height == 0) return;
     uint16_t x_max = start.x + width - 1;

@@ -135,14 +135,6 @@ void gfx_renderRows(uint8_t startRow, uint8_t endRow);
 void gfx_render();
 
 /**
- * This function calls the correspondent method of the low level interface display.h
- * Check if framebuffer is being copied to the screen or not, in which case it
- * can be modified without problems.
- * @return false if rendering is not in progress.
- */
-bool gfx_renderingInProgress();
-
-/**
  * Clears a portion of the screen content
  * This results in a black screen on color displays
  * And a white screen on B/W displays
