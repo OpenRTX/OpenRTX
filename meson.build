@@ -707,12 +707,25 @@ foreach t : targets
   # ttwrplus is a Zephyr target, we compile it using west and package it in uf2 format
   if name == 'openrtx_ttwrplus'
 
-      txt = custom_target('Copy CMakeLists.txt',
-                          input            : 'CMakeLists.txt',
-                          output           : 'CMakeLists.txt',
-                          command          : ['cp', '@INPUT@', '@OUTPUT@'],
-                          install          : false,
-                          build_by_default : true)
+      if build_machine.system() == 'linux'
+
+          txt = custom_target('Copy CMakeLists.txt',
+                              input            : 'CMakeLists.txt',
+                              output           :  'CMakeLists.txt',
+                              command          : ['cp', '@INPUT@', '@OUTPUT@'],
+                              install          : false,
+                              build_by_default : true)
+
+      elif build_machine.system() == 'windows'
+
+          txt = custom_target('Copy CMakeLists.txt',
+                              input            : 'CMakeLists.txt',
+                              output           :  'CMakeLists.txt',
+                              command          : ['xcopy', '@INPUT@', '@OUTPUT@'],
+                              install          : false,
+                              build_by_default : true)
+      endif
+
 
       bin = custom_target(name,
                           input   : txt,
