@@ -67,7 +67,7 @@ typedef enum
     PAGE_SETTINGS_VOICE             ,
     PAGE_SETTINGS_RESET_TO_DEFAULTS ,
     PAGE_LOW_BAT                    ,
-    PAGE_AUTHORS                    ,
+    PAGE_ABOUT                      ,
     PAGE_BLANK                      ,
     PAGE_NUM_OF
 }uiPageNum_en;
@@ -89,6 +89,25 @@ enum
 // GUI Values
 enum
 {
+    GUI_VAL_BANKS ,
+    GUI_VAL_CHANNELS ,
+    GUI_VAL_CONTACTS ,
+    GUI_VAL_GPS ,
+    GUI_VAL_SETTINGS_DISPLAY ,
+    GUI_VAL_SETTINGS_TIME_AND_DATE ,
+    GUI_VAL_SETTINGS_GPS ,
+    GUI_VAL_SETTINGS_RADIO ,
+    GUI_VAL_SETTINGS_M17 ,
+    GUI_VAL_SETTINGS_ACCESSIBILITY ,
+    GUI_VAL_SETTINGS_DEFAULT ,
+
+    GUI_VAL_INFO_BATTERY_VOLTAGE ,
+    GUI_VAL_INFO_BATTERY_CHARGE ,
+    GUI_VAL_INFO_RSSI ,
+    GUI_VAL_INFO_USED_HEAP ,
+    GUI_VAL_INFO_BAND ,
+    GUI_VAL_INFO_HW_VERSION ,
+
     GUI_VAL_STUBBED ,
     GUI_VAL_NUM_OF
 };
@@ -222,6 +241,14 @@ typedef struct
 #endif // UI_NO_KEYBOARD
 }UI_State_st;
 
+typedef struct
+{
+    point_t      pos ;
+    uint16_t     height ;
+    fontSize_t   font ;
+    symbolSize_t symbolSize ;
+}line_st;
+
 /**
  * Struct containing a set of positions and sizes that get
  * calculated for the selected display size.
@@ -231,14 +258,7 @@ typedef struct
 typedef struct
 {
     uint16_t     hline_h ;
-    uint16_t     top_h ;
-    uint16_t     line1_h ;
-    uint16_t     line2_h ;
-    uint16_t     line3_h ;
-    uint16_t     line3_large_h ;
-    uint16_t     line4_h ;
     uint16_t     menu_h ;
-    uint16_t     bottom_h ;
     uint16_t     bottom_pad ;
     uint16_t     status_v_pad ;
     uint16_t     horizontal_pad ;
@@ -246,26 +266,14 @@ typedef struct
     uint8_t      numOfEntries ;
     uint8_t      itemIndex ;
     uint8_t      scrollOffset ;
-    point_t      pos ;
-    point_t      top_pos ;
-    point_t      line1_pos ;
-    point_t      line2_pos ;
-    point_t      line3_pos ;
-    point_t      line3_large_pos ;
-    point_t      line4_pos ;
-    point_t      bottom_pos ;
-    fontSize_t   top_font ;
-    symbolSize_t top_symbol_size ;
-    fontSize_t   line1_font ;
-    symbolSize_t line1_symbol_size ;
-    fontSize_t   line2_font ;
-    symbolSize_t line2_symbol_size ;
-    fontSize_t   line3_font ;
-    symbolSize_t line3_symbol_size ;
-    fontSize_t   line3_large_font ;
-    fontSize_t   line4_font ;
-    symbolSize_t line4_symbol_size ;
-    fontSize_t   bottom_font ;
+    line_st      line ;
+    line_st      line_top ;
+    line_st      line_1 ;
+    line_st      line_2 ;
+    line_st      line_3 ;
+    line_st      line_3_large ;
+    line_st      line_4 ;
+    line_st      line_bottom ;
     fontSize_t   input_font ;
     fontSize_t   menu_font ;
     fontSize_t   mode_font_big ;

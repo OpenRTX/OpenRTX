@@ -204,15 +204,15 @@ Layout_st _ui_calculateLayout()
     // Calculate UI layout for the Module 17
 
     // Height and padding shown in diagram at beginning of file
-    const uint16_t top_h = 11;
+    const uint16_t line_top.height = 11;
     const uint16_t top_pad = 1;
-    const uint16_t line1_h = 10;
-    const uint16_t line2_h = 10;
-    const uint16_t line3_h = 10;
-    const uint16_t line4_h = 10;
+    const uint16_t line_1.height = 10;
+    const uint16_t line_2.height = 10;
+    const uint16_t line_3.height = 10;
+    const uint16_t line_4. = 10;
     const uint16_t line5_h = 10;
     const uint16_t menu_h = 10;
-    const uint16_t bottom_h = 15;
+    const uint16_t.line_bottom.height = 15;
     const uint16_t bottom_pad = 0;
     const uint16_t status_v_pad = 1;
     const uint16_t small_line_v_pad = 1;
@@ -221,18 +221,18 @@ Layout_st _ui_calculateLayout()
 
     // Top bar font: 6 pt
     const fontSize_t   top_font = FONT_SIZE_6PT;
-    const symbolSize_t top_symbol_size = SYMBOLS_SIZE_6PT;
+    const symbolSize_t top.symbolSize = SYMBOLS_SIZE_6PT;
     // Middle line fonts: 5, 8, 8 pt
     const fontSize_t line1_font = FONT_SIZE_6PT;
-    const symbolSize_t line1_symbol_size = SYMBOLS_SIZE_6PT;
+    const symbolSize_t line1.symbolSize = SYMBOLS_SIZE_6PT;
     const fontSize_t line2_font = FONT_SIZE_6PT;
-    const symbolSize_t line2_symbol_size = SYMBOLS_SIZE_6PT;
+    const symbolSize_t line2.symbolSize = SYMBOLS_SIZE_6PT;
     const fontSize_t line3_font = FONT_SIZE_6PT;
-    const symbolSize_t line3_symbol_size = SYMBOLS_SIZE_6PT;
+    const symbolSize_t line_3.symbolSize = SYMBOLS_SIZE_6PT;
     const fontSize_t line4_font = FONT_SIZE_6PT;
-    const symbolSize_t line4_symbol_size = SYMBOLS_SIZE_6PT;
+    const symbolSize_t line_4.symbolSize = SYMBOLS_SIZE_6PT;
     const fontSize_t line5_font = FONT_SIZE_6PT;
-    const symbolSize_t line5_symbol_size = SYMBOLS_SIZE_6PT;
+    const symbolSize_t line5.symbolSize = SYMBOLS_SIZE_6PT;
     // Bottom bar font: 6 pt
     const fontSize_t bottom_font = FONT_SIZE_6PT;
     // TimeDate/Frequency input font
@@ -245,25 +245,25 @@ Layout_st _ui_calculateLayout()
     const fontSize_t mode_font_small = FONT_SIZE_6PT;
 
     // Calculate printing positions
-    point_t top_pos    = {horizontal_pad, top_h - status_v_pad - text_v_offset};
-    point_t line1_pos  = {horizontal_pad, top_h + top_pad + line1_h - small_line_v_pad - text_v_offset};
-    point_t line2_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h - small_line_v_pad - text_v_offset};
-    point_t line3_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h + line3_h - big_line_v_pad - text_v_offset};
-    point_t line4_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h + line3_h + line4_h - big_line_v_pad - text_v_offset};
-    point_t line5_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h + line3_h + line4_h + line5_h - big_line_v_pad - text_v_offset};
+    point_t top_pos    = {horizontal_pad, line_top.height - status_v_pad - text_v_offset};
+    point_t line1_pos  = {horizontal_pad, line_top.height + top_pad + line_1.height - small_line_v_pad - text_v_offset};
+    point_t line2_pos  = {horizontal_pad, line_top.height + top_pad + line_1.height + line_2.height - small_line_v_pad - text_v_offset};
+    point_t line3_pos  = {horizontal_pad, line_top.height + top_pad + line_1.height + line_2.height + line_3.height - big_line_v_pad - text_v_offset};
+    point_t line4_pos  = {horizontal_pad, line_top.height + top_pad + line_1.height + line_2.height + line_3.height + line_4. - big_line_v_pad - text_v_offset};
+    point_t line5_pos  = {horizontal_pad, line_top.height + top_pad + line_1.height + line_2.height + line_3.height + line_4. + line5_h - big_line_v_pad - text_v_offset};
     point_t bottom_pos = {horizontal_pad, SCREEN_HEIGHT - bottom_pad - status_v_pad - text_v_offset};
 
     Layout_st new_layout =
     {
         hline_h,
-        top_h,
-        line1_h,
-        line2_h,
-        line3_h,
-        line4_h,
+        line_top.height,
+        line_1.height,
+        line_2.height,
+        line_3.height,
+        line_4.,
         line5_h,
         menu_h,
-        bottom_h,
+       .line_bottom.height,
         bottom_pad,
         status_v_pad,
         horizontal_pad,
@@ -276,17 +276,17 @@ Layout_st _ui_calculateLayout()
         line5_pos,
         bottom_pos,
         top_font,
-        top_symbol_size,
+        top.symbolSize,
         line1_font,
-        line1_symbol_size,
+        line1.symbolSize,
         line2_font,
-        line2_symbol_size,
+        line2.symbolSize,
         line3_font,
-        line3_symbol_size,
+        line_3.symbolSize,
         line4_font,
-        line4_symbol_size,
+        line_4.symbolSize,
         line5_font,
-        line5_symbol_size,
+        line5.symbolSize,
         bottom_font,
         input_font,
         menu_font,

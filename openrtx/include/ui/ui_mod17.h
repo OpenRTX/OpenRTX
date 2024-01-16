@@ -151,14 +151,14 @@ enum module17Items
 typedef struct Layout_st
 {
     uint16_t hline_h;
-    uint16_t top_h;
-    uint16_t line1_h;
-    uint16_t line2_h;
-    uint16_t line3_h;
-    uint16_t line4_h;
+    uint16_t line_top.height;
+    uint16_t line_1.height;
+    uint16_t line_2.height;
+    uint16_t line_3.height;
+    uint16_t line_4.;
     uint16_t line5_h;
     uint16_t menu_h;
-    uint16_t bottom_h;
+    uint16_t.line_bottom.height;
     uint16_t bottom_pad;
     uint16_t status_v_pad;
     uint16_t horizontal_pad;

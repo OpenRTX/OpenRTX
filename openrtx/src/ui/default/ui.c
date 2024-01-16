@@ -145,7 +145,7 @@ static void Debug_DisplayMsg( void )
     {
         counter = 0 ;
     }
-    gfx_print( GuiState.layout.top_pos , GuiState.layout.top_font , TEXT_ALIGN_LEFT , color_fg ,
+    gfx_print( GuiState.layout.line_top.pos , GuiState.layout.line_top.font , TEXT_ALIGN_LEFT , color_fg ,
                "%c%X%X%X%X" , (char)( '0' + counter ) ,
                trace0 & 0x0F , trace1 & 0x0F , trace2 & 0x0F , trace3 & 0x0F );//@@@KL
 }
@@ -163,21 +163,48 @@ extern void ui_drawMenuItem( GuiState_st* guiState , char* entryBuf );
 
 enum
 {
-    GUI_POS_TOP             ,
-    GUI_POS_LINE1           ,
-    GUI_POS_LINE2           ,
-    GUI_POS_LINE3           ,
-    GUI_POS_LINE3_LARGE_POS ,
-    GUI_POS_LINE4           ,
-    GUI_POS_BOTTOM
+    GUI_LINE_TOP         ,
+    GUI_LINE_1           ,
+    GUI_LINE_2           ,
+    GUI_LINE_3           ,
+    GUI_LINE_3_LARGE_POS ,
+    GUI_line_4           ,
+    GUI_LINE_BOTTOM
 };
 
-const uint8_t Page_MenuItems_N[] =
+//@@@KL change all strings over to use englishStrings in EnglishStrings.h
+
+static const uint8_t Page_MainVFO_N[] =
 {
-    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_POS_TOP ) ,
+    GUI_CMD_END   //@@@KL indicates use the legacy script
+};
+
+static const uint8_t Page_MainInput_N[] =
+{
+    GUI_CMD_END   //@@@KL indicates use the legacy script
+};
+
+static const uint8_t Page_MainMem_N[] =
+{
+    GUI_CMD_END   //@@@KL indicates use the legacy script
+};
+
+static const uint8_t Page_ModeVFO_N[] =
+{
+    GUI_CMD_END   //@@@KL indicates use the legacy script
+};
+
+static const uint8_t Page_ModeMem_N[] =
+{
+    GUI_CMD_END   //@@@KL indicates use the legacy script
+};
+
+static const uint8_t Page_MenuItems_N[] =
+{
+    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_TOP ) ,
     GUI_CMD_TITLE ,
     'M','e','n','u' , GUI_CMD_NULL ,
-    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_POS_LINE1 ) ,
+    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_1 ) ,
     GUI_CMD_LINK , ST_VAL( PAGE_MENU_BANK ) ,
      'B','a','n','k','s' , GUI_CMD_NULL ,
     GUI_CMD_LINE_END ,
@@ -216,12 +243,32 @@ const char* Page_MenuItems[] =
     "About"
 };
 
-const uint8_t Page_MenuSettings_N[] =
+static const uint8_t Page_MenuBank_N[] =
 {
-    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_POS_TOP ) ,
+    GUI_CMD_END   //@@@KL indicates use the legacy script
+};
+
+static const uint8_t Page_MenuChannel_N[] =
+{
+    GUI_CMD_END   //@@@KL indicates use the legacy script
+};
+
+static const uint8_t Page_MenuContact_N[] =
+{
+    GUI_CMD_END   //@@@KL indicates use the legacy script
+};
+
+static const uint8_t Page_MenuGPS_N[] =
+{
+    GUI_CMD_END   //@@@KL indicates use the legacy script
+};
+
+static const uint8_t Page_MenuSettings_N[] =
+{
+    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_TOP ) ,
     GUI_CMD_TITLE ,
     'S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
-    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_POS_LINE1 ) ,
+    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_1 ) ,
     GUI_CMD_LINK , ST_VAL( PAGE_SETTINGS_DISPLAY ) ,
      'D','i','s','p','l','a','y' , GUI_CMD_NULL ,
     GUI_CMD_LINE_END ,
@@ -265,14 +312,29 @@ const char* Page_MenuSettings[] =
     "Default Settings"
 };
 
-const uint8_t Page_SettingsDisplay_N[] =
+static const uint8_t Page_MenuAbout_N[] =
+{
+    GUI_CMD_END   //@@@KL indicates use the legacy script
+};
+
+static const uint8_t Page_SettingsTimeDate_N[] =
+{
+    GUI_CMD_END   //@@@KL indicates use the legacy script
+};
+
+static const uint8_t Page_SettingsTimeDateSet_N[] =
+{
+    GUI_CMD_END   //@@@KL indicates use the legacy script
+};
+
+static const uint8_t Page_SettingsDisplay_N[] =
 {
     GUI_CMD_END , //@@@KL indicates use the legacy script
 
-    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_POS_TOP ) ,
+    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_TOP ) ,
     GUI_CMD_TITLE ,
     'D','i','s','p','l','a','y' , GUI_CMD_NULL ,
-    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_POS_LINE1 ) ,
+    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_1 ) ,
 #ifdef SCREEN_BRIGHTNESS
     GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
      'B','r','i','g','h','t','n','e','s','s' , GUI_CMD_NULL ,
@@ -300,14 +362,14 @@ const char* Page_SettingsDisplay[] =
 };
 
 #ifdef GPS_PRESENT
-const uint8_t Page_SettingsGPS_N[] =
+static const uint8_t Page_SettingsGPS_N[] =
 {
     GUI_CMD_END , //@@@KL indicates use the legacy script
 
-    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_POS_TOP ) ,
+    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_TOP ) ,
     GUI_CMD_TITLE ,
      'G','P','S',' ','S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
-    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_POS_LINE1 ) ,
+    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_1 ) ,
     GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
      'G','P','S',' ','E','n','a','b','l','e','d' , GUI_CMD_NULL ,
     GUI_CMD_LINE_END ,
@@ -327,14 +389,14 @@ const char* Page_SettingsGPS[] =
 };
 #endif // GPS_PRESENT
 
-const uint8_t Page_SettingsRadio_N[] =
+static const uint8_t Page_SettingsRadio_N[] =
 {
     GUI_CMD_END , //@@@KL indicates use the legacy script
 
-    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_POS_TOP ) ,
+    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_TOP ) ,
     GUI_CMD_TITLE ,
      'R','a','d','i','o',' ','S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
-    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_POS_LINE1 ) ,
+    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_1 ) ,
     GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
      'O','f','f','s','e','t', GUI_CMD_NULL ,
     GUI_CMD_LINE_END ,
@@ -353,7 +415,7 @@ const char* Page_SettingsRadio[] =
     "Step"
 };
 
-const uint8_t Page_SettingsM17_N[] =
+static const uint8_t Page_SettingsM17_N[] =
 {
     GUI_CMD_END , //@@@KL indicates use the legacy script
 
@@ -376,7 +438,7 @@ const char* Page_SettingsM17[] =
     "CAN RX Check"
 };
 
-const uint8_t Page_SettingsVoice_N[] =
+static const uint8_t Page_SettingsVoice_N[] =
 {
     GUI_CMD_END , //@@@KL indicates use the legacy script
 
@@ -394,7 +456,7 @@ const char* Page_SettingsVoice[] =
     "Phonetic"
 };
 
-const uint8_t Page_MenuBackupRestore_N[] =
+static const uint8_t Page_MenuBackupRestore_N[] =
 {
     GUI_CMD_END , //@@@KL indicates use the legacy script
 
@@ -412,7 +474,17 @@ const char* Page_MenuBackupRestore[] =
     "Restore"
 };
 
-const uint8_t Page_MenuInfo_N[] =
+static const uint8_t Page_MenuBackup_N[] =
+{
+    GUI_CMD_END   //@@@KL indicates use the legacy script
+};
+
+static const uint8_t Page_MenuRestore_N[] =
+{
+    GUI_CMD_END   //@@@KL indicates use the legacy script
+};
+
+static const uint8_t Page_MenuInfo_N[] =
 {
     GUI_CMD_END , //@@@KL indicates use the legacy script
 
@@ -470,10 +542,26 @@ const char* Page_MenuInfo[] =
 #endif // PLATFORM_TTWRPLUS
 };
 
-const uint8_t Page_Authors_N[] =
+static const uint8_t Page_SettingsResetToDefaults_N[] =
+{
+    GUI_CMD_END   //@@@KL indicates use the legacy script
+};
+
+static const uint8_t Page_LowBat_N[] =
+{
+    GUI_CMD_END   //@@@KL indicates use the legacy script
+};
+
+static const uint8_t Page_About_N[] =
 {
 //    GUI_CMD_END , //@@@KL indicates use the legacy script
-
+    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_TOP ) ,
+    GUI_CMD_TITLE ,
+     'A','b','o','u','t' , GUI_CMD_NULL ,
+    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_1 ) ,
+    GUI_CMD_TEXT ,
+     'A','u','t','h','o','r','s' , GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
     GUI_CMD_TEXT ,
      'N','i','c','c','o','l','o',' ',
      'I','U','2','K','I','N' , GUI_CMD_NULL ,
@@ -496,16 +584,12 @@ const uint8_t Page_Authors_N[] =
     GUI_CMD_END
 };
 
-const char* Page_Authors[] =
+const char* Page_About[] =
 {
-    "Niccolo' IU2KIN" ,
-    "Silvano IU2KWO"  ,
-    "Federico IU2NUO" ,
-    "Fred IU2NRO"     ,
-    "Kim VK6KL"         //@@@KL
+    "About"
 };
 
-const uint8_t Page_Stubbed_N[] =
+static const uint8_t Page_Stubbed_N[] =
 {
     GUI_CMD_END , //@@@KL indicates use the legacy script
 
@@ -522,37 +606,37 @@ const char* Page_Stubbed[] =
 
 #define PAGE_REF( loc )    loc
 
-const uint8_t* uiPageTable[] =
+static const uint8_t* uiPageTable[] =
 {
-    PAGE_REF( Page_Stubbed_N           ) , // PAGE_MAIN_VFO
-    PAGE_REF( Page_Stubbed_N           ) , // PAGE_MAIN_VFO_INPUT
-    PAGE_REF( Page_Stubbed_N           ) , // PAGE_MAIN_MEM
-    PAGE_REF( Page_Stubbed_N           ) , // PAGE_MODE_VFO
-    PAGE_REF( Page_Stubbed_N           ) , // PAGE_MODE_MEM
-    PAGE_REF( Page_MenuItems_N         ) , // PAGE_MENU_TOP
-    PAGE_REF( Page_Stubbed_N           ) , // PAGE_MENU_BANK
-    PAGE_REF( Page_Stubbed_N           ) , // PAGE_MENU_CHANNEL
-    PAGE_REF( Page_Stubbed_N           ) , // PAGE_MENU_CONTACTS
-    PAGE_REF( Page_Stubbed_N           ) , // PAGE_MENU_GPS
-    PAGE_REF( Page_MenuSettings_N      ) , // PAGE_MENU_SETTINGS
-    PAGE_REF( Page_MenuBackupRestore_N ) , // PAGE_MENU_BACKUP_RESTORE
-    PAGE_REF( Page_Stubbed_N           ) , // PAGE_MENU_BACKUP
-    PAGE_REF( Page_Stubbed_N           ) , // PAGE_MENU_RESTORE
-    PAGE_REF( Page_MenuInfo_N          ) , // PAGE_MENU_INFO
-    PAGE_REF( Page_Stubbed_N           ) , // PAGE_MENU_ABOUT
-    PAGE_REF( Page_Stubbed_N           ) , // PAGE_SETTINGS_TIMEDATE
-    PAGE_REF( Page_Stubbed_N           ) , // PAGE_SETTINGS_TIMEDATE_SET
-    PAGE_REF( Page_SettingsDisplay_N   ) , // PAGE_SETTINGS_DISPLAY
+    PAGE_REF( Page_MainVFO_N                 ) , // PAGE_MAIN_VFO
+    PAGE_REF( Page_MainInput_N               ) , // PAGE_MAIN_VFO_INPUT
+    PAGE_REF( Page_MainMem_N                 ) , // PAGE_MAIN_MEM
+    PAGE_REF( Page_ModeVFO_N                 ) , // PAGE_MODE_VFO
+    PAGE_REF( Page_ModeMem_N                 ) , // PAGE_MODE_MEM
+    PAGE_REF( Page_MenuItems_N               ) , // PAGE_MENU_TOP
+    PAGE_REF( Page_MenuBank_N                ) , // PAGE_MENU_BANK
+    PAGE_REF( Page_MenuChannel_N             ) , // PAGE_MENU_CHANNEL
+    PAGE_REF( Page_MenuContact_N             ) , // PAGE_MENU_CONTACTS
+    PAGE_REF( Page_MenuGPS_N                 ) , // PAGE_MENU_GPS
+    PAGE_REF( Page_MenuSettings_N            ) , // PAGE_MENU_SETTINGS
+    PAGE_REF( Page_MenuBackupRestore_N       ) , // PAGE_MENU_BACKUP_RESTORE
+    PAGE_REF( Page_MenuBackup_N              ) , // PAGE_MENU_BACKUP
+    PAGE_REF( Page_MenuRestore_N             ) , // PAGE_MENU_RESTORE
+    PAGE_REF( Page_MenuInfo_N                ) , // PAGE_MENU_INFO
+    PAGE_REF( Page_MenuAbout_N               ) , // PAGE_MENU_ABOUT
+    PAGE_REF( Page_SettingsTimeDate_N        ) , // PAGE_SETTINGS_TIMEDATE
+    PAGE_REF( Page_SettingsTimeDateSet_N     ) , // PAGE_SETTINGS_TIMEDATE_SET
+    PAGE_REF( Page_SettingsDisplay_N         ) , // PAGE_SETTINGS_DISPLAY
 #ifdef GPS_PRESENT
-    PAGE_REF( Page_SettingsGPS_N       ) , // PAGE_SETTINGS_GPS
+    PAGE_REF( Page_SettingsGPS_N             ) , // PAGE_SETTINGS_GPS
 #endif // GPS_PRESENT
-    PAGE_REF( Page_SettingsRadio_N     ) , // PAGE_SETTINGS_RADIO
-    PAGE_REF( Page_SettingsM17_N       ) , // PAGE_SETTINGS_M17
-    PAGE_REF( Page_SettingsVoice_N     ) , // PAGE_SETTINGS_VOICE
-    PAGE_REF( Page_Stubbed_N           ) , // PAGE_SETTINGS_RESET_TO_DEFAULTS
-    PAGE_REF( Page_Stubbed_N           ) , // PAGE_LOW_BAT
-    PAGE_REF( Page_Authors_N           ) , // PAGE_AUTHORS
-    PAGE_REF( Page_Stubbed_N           )   // PAGE_BLANK
+    PAGE_REF( Page_SettingsRadio_N           ) , // PAGE_SETTINGS_RADIO
+    PAGE_REF( Page_SettingsM17_N             ) , // PAGE_SETTINGS_M17
+    PAGE_REF( Page_SettingsVoice_N           ) , // PAGE_SETTINGS_VOICE
+    PAGE_REF( Page_SettingsResetToDefaults_N ) , // PAGE_SETTINGS_RESET_TO_DEFAULTS
+    PAGE_REF( Page_LowBat_N                  ) , // PAGE_LOW_BAT
+    PAGE_REF( Page_About_N                   ) , // PAGE_ABOUT
+    PAGE_REF( Page_Stubbed_N                 )   // PAGE_BLANK
 };
 
 GuiState_st GuiState ;
@@ -646,7 +730,7 @@ bool ui_DisplayPage( GuiState_st* guiState , uiPageNum_en pageNum )
     bool     exit ;
     bool     pageDisplayed = false ; // display via legacy fn
 
-    guiState->layout.print_display_on         = true ;
+    guiState->layout.print_display_on          = true ;
 
     guiState->page.num[ guiState->page.level ] = pageNum ;
     guiState->page.ptr                         = (uint8_t*)uiPageTable[ pageNum ] ;
@@ -659,8 +743,8 @@ bool ui_DisplayPage( GuiState_st* guiState , uiPageNum_en pageNum )
     {
 	    gfx_clearScreen();
 
-        guiState->layout.pos.y        = 0 ;
-        guiState->layout.pos.x        = 0 ;
+        guiState->layout.line.pos.y        = 0 ;
+        guiState->layout.line.pos.x        = 0 ;
 
         guiState->layout.scrollOffset = 0 ;
 
@@ -712,45 +796,45 @@ static bool GuiCmd_GoToLine( GuiState_st* guiState )
 
     switch( val )
     {
-        case GUI_POS_TOP :
+        case GUI_LINE_TOP :
         {
-            guiState->layout.pos = guiState->layout.top_pos ;
+            guiState->layout.line = guiState->layout.line_top ;
             break ;
         }
-        case GUI_POS_LINE1 :
+        case GUI_LINE_1 :
         {
-            guiState->layout.pos = guiState->layout.line1_pos ;
+            guiState->layout.line = guiState->layout.line_1 ;
             break ;
         }
-        case GUI_POS_LINE2 :
+        case GUI_LINE_2 :
         {
-            guiState->layout.pos = guiState->layout.line2_pos ;
+            guiState->layout.line = guiState->layout.line_2 ;
             break ;
         }
-        case GUI_POS_LINE3 :
+        case GUI_LINE_3 :
         {
-            guiState->layout.pos = guiState->layout.line3_pos ;
+            guiState->layout.line = guiState->layout.line_3 ;
             break ;
         }
-        case GUI_POS_LINE3_LARGE_POS :
+        case GUI_LINE_3_LARGE_POS :
         {
-            guiState->layout.pos = guiState->layout.line3_large_pos ;
+            guiState->layout.line = guiState->layout.line_3_large ;
             break ;
         }
-        case GUI_POS_LINE4 :
+        case GUI_line_4 :
         {
-            guiState->layout.pos = guiState->layout.line4_pos ;
+            guiState->layout.line = guiState->layout.line_4 ;
             break ;
         }
-        case GUI_POS_BOTTOM :
+        case GUI_LINE_BOTTOM :
         {
-            guiState->layout.pos = guiState->layout.bottom_pos ;
+            guiState->layout.line = guiState->layout.line_bottom ;
             break ;
         }
         default :
         {
-            guiState->layout.pos.y = 0 ;
-            guiState->layout.pos.x = 0 ;
+            guiState->layout.line.pos.y = 0 ;
+            guiState->layout.line.pos.x = 0 ;
             break ;
         }
     }
@@ -774,8 +858,8 @@ static bool GuiCmd_Text( GuiState_st* guiState )
 
     uiColorLoad( &color_fg , COLOR_FG );
 
-    gfx_print( guiState->layout.top_pos , guiState->layout.top_font , TEXT_ALIGN_LEFT ,
-               color_fg , (char*)scriptPtr );
+    gfx_print( guiState->layout.line.pos , guiState->layout.menu_font ,
+               TEXT_ALIGN_LEFT , color_fg , (char*)scriptPtr );
 
     GuiCmd_AdvToNextCmd( guiState );
 
@@ -796,7 +880,7 @@ static bool GuiCmd_Title( GuiState_st* guiState )
     uiColorLoad( &color_fg , COLOR_FG );
 
     // print the title on the top bar
-    gfx_print( guiState->layout.top_pos , guiState->layout.top_font , TEXT_ALIGN_CENTER ,
+    gfx_print( guiState->layout.line_top.pos , guiState->layout.line_top.font , TEXT_ALIGN_CENTER ,
                color_fg , (char*)scriptPtr );
 
     GuiCmd_AdvToNextCmd( guiState );
@@ -831,7 +915,7 @@ static bool GuiCmd_Link( GuiState_st* guiState )
     if( guiState->layout.itemIndex == 0 )
     {
         // Number of menu entries that fit in the screen height
-        guiState->layout.numOfEntries = ( SCREEN_HEIGHT - 1 - guiState->layout.pos.y ) /
+        guiState->layout.numOfEntries = ( SCREEN_HEIGHT - 1 - guiState->layout.line.pos.y ) /
                                         guiState->layout.menu_h + 1 ;
     }
 
@@ -849,11 +933,11 @@ static bool GuiCmd_Link( GuiState_st* guiState )
         {
             color_text = color_bg ;
             // Draw rectangle under selected item, compensating for text height
-            point_t rect_pos = { 0 , guiState->layout.pos.y - guiState->layout.menu_h + 3 };
+            point_t rect_pos = { 0 , guiState->layout.line.pos.y - guiState->layout.menu_h + 3 };
             gfx_drawRect( rect_pos , SCREEN_WIDTH , guiState->layout.menu_h , color_fg , true );
 //@@@KL            announceMenuItemIfNeeded( entryBuf , NULL , false );
         }
-        gfx_print( guiState->layout.pos , guiState->layout.menu_font ,
+        gfx_print( guiState->layout.line.pos , guiState->layout.menu_font ,
                    TEXT_ALIGN_LEFT , color_text , entryBuf );
         guiState->layout.print_display_on = true ;
     }
@@ -880,7 +964,7 @@ static bool GuiCmd_Value( GuiState_st* guiState )
 
     uiColorLoad( &color_fg , COLOR_FG );
 
-    gfx_print( guiState->layout.top_pos , guiState->layout.top_font , TEXT_ALIGN_LEFT ,
+    gfx_print( guiState->layout.line_top.pos , guiState->layout.line_top.font , TEXT_ALIGN_LEFT ,
                color_fg , (char*)scriptPtr );
 
     GuiCmd_AdvToNextCmd( guiState );
@@ -897,7 +981,7 @@ static bool GuiCmd_LineEnd( GuiState_st* guiState )
 
     if( guiState->layout.print_display_on )
     {
-        guiState->layout.pos.y += guiState->layout.menu_h ;
+        guiState->layout.line.pos.y += guiState->layout.menu_h ;
     }
 
     return pageEnd ;
@@ -974,7 +1058,7 @@ static const uiPageDesc_st uiPageDescTable[] =
     PAGE_DESC_DEF( Page_SettingsVoice     ) , // PAGE_SETTINGS_VOICE
     PAGE_DESC_DEF( Page_Stubbed           ) , // PAGE_SETTINGS_RESET_TO_DEFAULTS
     PAGE_DESC_DEF( Page_Stubbed           ) , // PAGE_LOW_BAT
-    PAGE_DESC_DEF( Page_Authors           ) , // PAGE_AUTHORS
+    PAGE_DESC_DEF( Page_About             ) , // PAGE_ABOUT
     PAGE_DESC_DEF( Page_Stubbed           )   // PAGE_BLANK
 };
 
@@ -1008,34 +1092,37 @@ enum
     // Height and padding shown in diagram at beginning of file
     SCREEN_INITIAL_X           =  0 ,
     SCREEN_INITIAL_Y           =  0 ,
-    SCREEN_TOP_H               = 16 ,
+    SCREEN_INITIAL_HEIGHT      = 20 ,
+    SCREEN_TOP_HEIGHT          = 16 ,
     SCREEN_TOP_PAD             =  4 ,
-    SCREEN_LINE1_H             = 20 ,
-    SCREEN_LINE2_H             = 20 ,
-    SCREEN_LINE3_H             = 20 ,
-    SCREEN_LINE3_LARGE_H       = 40 ,
-    SCREEN_LINE4_H             = 20 ,
-    SCREEN_MENU_H              = 16 ,
-    SCREEN_BOTTOM_H            = 23 ,
+    SCREEN_LINE_1_HEIGHT       = 20 ,
+    SCREEN_LINE_2_HEIGHT       = 20 ,
+    SCREEN_LINE_3_HEIGHT       = 20 ,
+    SCREEN_LINE_3_LARGE_HEIGHT = 40 ,
+    SCREEN_LINE_4_HEIGHT       = 20 ,
+    SCREEN_MENU_HEIGHT         = 16 ,
+    SCREEN_BOTTOM_HEIGHT       = 23 ,
     SCREEN_BOTTOM_PAD          = SCREEN_TOP_PAD ,
     SCREEN_STATUS_V_PAD        =  2 ,
     SCREEN_SMALL_LINE_V_PAD    =  2 ,
     SCREEN_BIG_LINE_V_PAD      =  6 ,
     SCREEN_HORIZONTAL_PAD      =  4 ,
+    SCREEN_INITIAL_FONT        = FONT_SIZE_8PT     ,
+    SCREEN_INITIAL_SYMBOL_SIZE = SYMBOLS_SIZE_8PT  ,
     // Top bar font: 8 pt
     SCREEN_TOP_FONT            = FONT_SIZE_8PT     , // fontSize_t
     SCREEN_TOP_SYMBOL_SIZE     = SYMBOLS_SIZE_8PT  , // symbolSize_t
     // Text line font: 8 pt
-    SCREEN_LINE1_FONT          = FONT_SIZE_8PT     , // fontSize_t
-    SCREEN_LINE1_SYMBOL_SIZE   = SYMBOLS_SIZE_8PT  , // symbolSize_t
-    SCREEN_LINE2_FONT          = FONT_SIZE_8PT     , // fontSize_t
-    SCREEN_LINE2_SYMBOL_SIZE   = SYMBOLS_SIZE_8PT  , // symbolSize_t
-    SCREEN_LINE3_FONT          = FONT_SIZE_8PT     , // fontSize_t
-    SCREEN_LINE3_SYMBOL_SIZE   = SYMBOLS_SIZE_8PT  , // symbolSize_t
-    SCREEN_LINE4_FONT          = FONT_SIZE_8PT     , // fontSize_t
-    SCREEN_LINE4_SYMBOL_SIZE   = SYMBOLS_SIZE_8PT  , // symbolSize_t
+    SCREEN_LINE_1_FONT         = FONT_SIZE_8PT     , // fontSize_t
+    SCREEN_LINE_1_SYMBOL_SIZE  = SYMBOLS_SIZE_8PT  , // symbolSize_t
+    SCREEN_LINE_2_FONT         = FONT_SIZE_8PT     , // fontSize_t
+    SCREEN_LINE_2_SYMBOL_SIZE  = SYMBOLS_SIZE_8PT  , // symbolSize_t
+    SCREEN_LINE_3_FONT         = FONT_SIZE_8PT     , // fontSize_t
+    SCREEN_LINE_3_SYMBOL_SIZE  = SYMBOLS_SIZE_8PT  , // symbolSize_t
+    SCREEN_LINE_4_FONT         = FONT_SIZE_8PT     , // fontSize_t
+    SCREEN_LINE_4_SYMBOL_SIZE  = SYMBOLS_SIZE_8PT  , // symbolSize_t
     // Frequency line font: 16 pt
-    SCREEN_LINE3_LARGE_FONT    = FONT_SIZE_16PT    , // fontSize_t
+    SCREEN_LINE_3_LARGE_FONT   = FONT_SIZE_16PT    , // fontSize_t
     // Bottom bar font: 8 pt
     SCREEN_BOTTOM_FONT         = FONT_SIZE_8PT     , // fontSize_t
     // TimeDate/Frequency input font
@@ -1055,33 +1142,36 @@ enum
     // Height and padding shown in diagram at beginning of file
     SCREEN_INITIAL_X           =  0 ,
     SCREEN_INITIAL_Y           =  0 ,
-    SCREEN_TOP_H               = 11 ,
+    SCREEN_INITIAL_HEIGHT      = 10 ,
+    SCREEN_TOP_HEIGHT          = 11 ,
     SCREEN_TOP_PAD             =  1 ,
-    SCREEN_LINE1_H             = 10 ,
-    SCREEN_LINE2_H             = 10 ,
-    SCREEN_LINE3_H             = 10 ,
-    SCREEN_LINE3_LARGE_H       = 16 ,
-    SCREEN_LINE4_H             = 10 ,
-    SCREEN_MENU_H              = 10 ,
-    SCREEN_BOTTOM_H            = 15 ,
+    SCREEN_LINE_1_HEIGHT       = 10 ,
+    SCREEN_LINE_2_HEIGHT       = 10 ,
+    SCREEN_LINE_3_HEIGHT       = 10 ,
+    SCREEN_LINE_3_LARGE_HEIGHT = 16 ,
+    SCREEN_LINE_4_HEIGHT       = 10 ,
+    SCREEN_MENU_HEIGHT         = 10 ,
+    SCREEN_BOTTOM_HEIGHT       = 15 ,
     SCREEN_BOTTOM_PAD          =  0 ,
     SCREEN_STATUS_V_PAD        =  1 ,
     SCREEN_SMALL_LINE_V_PAD    =  1 ,
     SCREEN_BIG_LINE_V_PAD      =  0 ,
     SCREEN_HORIZONTAL_PAD      =  4 ,
+    SCREEN_INITIAL_FONT        = FONT_SIZE_6PT     ,
+    SCREEN_INITIAL_SYMBOL_SIZE = SYMBOLS_SIZE_6PT  ,
     // Top bar font: 6 pt
     SCREEN_TOP_FONT            = FONT_SIZE_6PT     , // fontSize_t
     SCREEN_TOP_SYMBOL_SIZE     = SYMBOLS_SIZE_6PT  , // symbolSize_t
     // Middle line fonts: 5, 8, 8 pt
-    SCREEN_LINE1_FONT          = FONT_SIZE_6PT     , // fontSize_t
-    SCREEN_LINE1_SYMBOL_SIZE   = SYMBOLS_SIZE_6PT  , // symbolSize_t
-    SCREEN_LINE2_FONT          = FONT_SIZE_6PT     , // fontSize_t
-    SCREEN_LINE2_SYMBOL_SIZE   = SYMBOLS_SIZE_6PT  , // symbolSize_t
-    SCREEN_LINE3_FONT          = FONT_SIZE_6PT     , // fontSize_t
-    SCREEN_LINE3_SYMBOL_SIZE   = SYMBOLS_SIZE_6PT  , // symbolSize_t
-    SCREEN_LINE3_LARGE_FONT    = FONT_SIZE_10PT    , // fontSize_t
-    SCREEN_LINE4_FONT          = FONT_SIZE_6PT     , // fontSize_t
-    SCREEN_LINE4_SYMBOL_SIZE   = SYMBOLS_SIZE_6PT  , // symbolSize_t
+    SCREEN_LINE_1_FONT         = FONT_SIZE_6PT     , // fontSize_t
+    SCREEN_LINE_1_SYMBOL_SIZE  = SYMBOLS_SIZE_6PT  , // symbolSize_t
+    SCREEN_LINE_2_FONT         = FONT_SIZE_6PT     , // fontSize_t
+    SCREEN_LINE_2_SYMBOL_SIZE  = SYMBOLS_SIZE_6PT  , // symbolSize_t
+    SCREEN_LINE_3_FONT         = FONT_SIZE_6PT     , // fontSize_t
+    SCREEN_LINE_3_SYMBOL_SIZE  = SYMBOLS_SIZE_6PT  , // symbolSize_t
+    SCREEN_LINE_3_LARGE_FONT   = FONT_SIZE_10PT    , // fontSize_t
+    SCREEN_LINE_4_FONT         = FONT_SIZE_6PT     , // fontSize_t
+    SCREEN_LINE_4_SYMBOL_SIZE  = SYMBOLS_SIZE_6PT  , // symbolSize_t
     // Bottom bar font: 6 pt
     SCREEN_BOTTOM_FONT         = FONT_SIZE_6PT     , // fontSize_t
     // TimeDate/Frequency input font
@@ -1099,28 +1189,31 @@ enum
 enum
 {
     // Height and padding shown in diagram at beginning of file
-    SCREEN_TOP_H               = 11 ,
+    SCREEN_INITIAL_HEIGHT      = 10 ,
+    SCREEN_TOP_HEIGHT          = 11 ,
     SCREEN_TOP_PAD             =  1 ,
-    SCREEN_LINE1_H             =  0 ,
-    SCREEN_LINE2_H             = 10 ,
-    SCREEN_LINE3_H             = 10 ,
-    SCREEN_LINE3_LARGE_H       = 18 ,
-    SCREEN_LINE4_H             = 10 ,
-    SCREEN_MENU_H              = 10 ,
-    SCREEN_BOTTOM_H            =  0 ,
+    SCREEN_LINE_1_HEIGHT       =  0 ,
+    SCREEN_LINE_2_HEIGHT       = 10 ,
+    SCREEN_LINE_3_HEIGHT       = 10 ,
+    SCREEN_LINE_3_LARGE_HEIGHT = 18 ,
+    SCREEN_LINE_4_HEIGHT       = 10 ,
+    SCREEN_MENU_HEIGHT         = 10 ,
+    SCREEN_BOTTOM_HEIGHT       =  0 ,
     SCREEN_BOTTOM_PAD          =  0 ,
     SCREEN_STATUS_V_PAD        =  1 ,
     SCREEN_SMALL_LINE_V_PAD    =  1 ,
     SCREEN_BIG_LINE_V_PAD      =  0 ,
     SCREEN_HORIZONTAL_PAD      =  4 ,
+    SCREEN_INITIAL_FONT        = FONT_SIZE_6PT     ,
+    SCREEN_INITIAL_SYMBOL_SIZE = SYMBOLS_SIZE_6PT  ,
     // Top bar font: 6 pt
     SCREEN_TOP_FONT            = FONT_SIZE_6PT     , // fontSize_t
     SCREEN_TOP_SYMBOL_SIZE     = SYMBOLS_SIZE_6PT  , // symbolSize_t
     // Middle line fonts: 16, 16
-    SCREEN_LINE2_FONT          = FONT_SIZE_6PT     , // fontSize_t
-    SCREEN_LINE3_FONT          = FONT_SIZE_6PT     , // fontSize_t
-    SCREEN_LINE4_FONT          = FONT_SIZE_6PT     , // fontSize_t
-    SCREEN_LINE3_LARGE_FONT    = FONT_SIZE_12PT    , // fontSize_t
+    SCREEN_LINE_2_FONT         = FONT_SIZE_6PT     , // fontSize_t
+    SCREEN_LINE_3_FONT         = FONT_SIZE_6PT     , // fontSize_t
+    SCREEN_LINE_4_FONT         = FONT_SIZE_6PT     , // fontSize_t
+    SCREEN_LINE_3_LARGE_FONT   = FONT_SIZE_12PT    , // fontSize_t
     // TimeDate/Frequency input font
     SCREEN_INPUT_FONT          = FONT_SIZE_8PT     , // fontSize_t
     // Menu font
@@ -1130,7 +1223,7 @@ enum
     // Mode screen details font: 6 pt
     SCREEN_MODE_FONT_SMALL     = FONT_SIZE_6PT     , // fontSize_t
     // Not present on this resolution
-    SCREEN_LINE1_FONT          =  0                , // fontSize_t
+    SCREEN_LINE_1_FONT         =  0                , // fontSize_t
     SCREEN_BOTTOM_FONT         =  0                  // fontSize_t
 };
 #else
@@ -1162,7 +1255,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_M17( GuiState_st* guiState );
 static bool ui_updateFSM_PAGE_SETTINGS_VOICE( GuiState_st* guiState );
 static bool ui_updateFSM_PAGE_SETTINGS_RESET_TO_DEFAULTS( GuiState_st* guiState );
 static bool ui_updateFSM_PAGE_LOW_BAT( GuiState_st* guiState );
-static bool ui_updateFSM_PAGE_AUTHORS( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_ABOUT( GuiState_st* guiState );
 static bool ui_updateFSM_PAGE_BLANK( GuiState_st* guiState );
 
 typedef bool (*ui_updateFSM_PAGE_fn)( GuiState_st* guiState );
@@ -1194,7 +1287,7 @@ static const ui_updateFSM_PAGE_fn ui_updateFSM_PageTable[ PAGE_NUM_OF ] =
     ui_updateFSM_PAGE_SETTINGS_VOICE             ,
     ui_updateFSM_PAGE_SETTINGS_RESET_TO_DEFAULTS ,
     ui_updateFSM_PAGE_LOW_BAT                    ,
-    ui_updateFSM_PAGE_AUTHORS                    ,
+    ui_updateFSM_PAGE_ABOUT                    ,
     ui_updateFSM_PAGE_BLANK
 };
 
@@ -2200,52 +2293,67 @@ static void ui_InitGuiState( GuiState_st* guiState )
 
 static void ui_InitGuiStateLayout( Layout_st* layout )
 {
-    layout->hline_h             = SCREEN_HLINE_H ;
-    layout->top_h               = SCREEN_TOP_H ;
-    layout->line1_h             = SCREEN_LINE1_H ;
-    layout->line2_h             = SCREEN_LINE2_H ;
-    layout->line3_h             = SCREEN_LINE3_H ;
-    layout->line3_large_h       = SCREEN_LINE3_LARGE_H ;
-    layout->line4_h             = SCREEN_LINE4_H ;
-    layout->menu_h              = SCREEN_MENU_H ;
-    layout->bottom_h            = SCREEN_BOTTOM_H ;
-    layout->bottom_pad          = SCREEN_BOTTOM_PAD ;
-    layout->status_v_pad        = SCREEN_STATUS_V_PAD ;
-    layout->horizontal_pad      = SCREEN_HORIZONTAL_PAD ;
-    layout->text_v_offset       = SCREEN_TEXT_V_OFFSET ;
-    layout->pos.x               = SCREEN_INITIAL_X ;
-    layout->pos.y               = SCREEN_INITIAL_Y ;
-    layout->top_pos.x           = SCREEN_HORIZONTAL_PAD ;
-    layout->top_pos.y           = SCREEN_TOP_H - SCREEN_STATUS_V_PAD - SCREEN_TEXT_V_OFFSET ;
-    layout->line1_pos.x         = SCREEN_HORIZONTAL_PAD ;
-    layout->line1_pos.y         = SCREEN_TOP_H + SCREEN_TOP_PAD + SCREEN_LINE1_H - SCREEN_SMALL_LINE_V_PAD - SCREEN_TEXT_V_OFFSET ;
-    layout->line2_pos.x         = SCREEN_HORIZONTAL_PAD ;
-    layout->line2_pos.y         = SCREEN_TOP_H + SCREEN_TOP_PAD + SCREEN_LINE1_H + SCREEN_LINE2_H - SCREEN_SMALL_LINE_V_PAD - SCREEN_TEXT_V_OFFSET ;
-    layout->line3_pos.x         = SCREEN_HORIZONTAL_PAD ;
-    layout->line3_pos.y         = SCREEN_TOP_H + SCREEN_TOP_PAD + SCREEN_LINE1_H + SCREEN_LINE2_H + SCREEN_LINE3_H - SCREEN_SMALL_LINE_V_PAD - SCREEN_TEXT_V_OFFSET ;
-    layout->line3_large_pos.x   = SCREEN_HORIZONTAL_PAD ;
-    layout->line3_large_pos.y   = SCREEN_TOP_H + SCREEN_TOP_PAD + SCREEN_LINE1_H + SCREEN_LINE2_H + SCREEN_LINE3_LARGE_H - SCREEN_BIG_LINE_V_PAD - SCREEN_TEXT_V_OFFSET ;
-    layout->line4_pos.x         = SCREEN_HORIZONTAL_PAD ;
-    layout->line4_pos.y         = SCREEN_TOP_H + SCREEN_TOP_PAD + SCREEN_LINE1_H + SCREEN_LINE2_H + SCREEN_LINE3_H + SCREEN_LINE4_H - SCREEN_SMALL_LINE_V_PAD - SCREEN_TEXT_V_OFFSET ;
-    layout->bottom_pos.x        = SCREEN_HORIZONTAL_PAD ;
-    layout->bottom_pos.y        = SCREEN_HEIGHT - SCREEN_BOTTOM_PAD - SCREEN_STATUS_V_PAD - SCREEN_TEXT_V_OFFSET ;
-    layout->top_font            = SCREEN_TOP_FONT ;
-    layout->top_symbol_size     = SCREEN_TOP_SYMBOL_SIZE ;
-    layout->line1_font          = SCREEN_LINE1_FONT ;
-    layout->line1_symbol_size   = SCREEN_LINE1_SYMBOL_SIZE ;
-    layout->line2_font          = SCREEN_LINE2_FONT ;
-    layout->line2_symbol_size   = SCREEN_LINE2_SYMBOL_SIZE ;
-    layout->line3_font          = SCREEN_LINE3_FONT ;
-    layout->line3_symbol_size   = SCREEN_LINE3_SYMBOL_SIZE ;
-    layout->line3_large_font    = SCREEN_LINE3_LARGE_FONT ;
-    layout->line4_font          = SCREEN_LINE4_FONT ;
-    layout->line4_symbol_size   = SCREEN_LINE4_SYMBOL_SIZE ;
-    layout->bottom_font         = SCREEN_BOTTOM_FONT ;
-    layout->input_font          = SCREEN_INPUT_FONT ;
-    layout->menu_font           = SCREEN_MENU_FONT ;
-    layout->mode_font_big       = SCREEN_MODE_FONT_BIG ;
-    layout->mode_font_small     = SCREEN_MODE_FONT_SMALL ;
-    layout->print_display_on    = true ;
+    layout->hline_h                 = SCREEN_HLINE_H ;
+    layout->menu_h                  = SCREEN_MENU_HEIGHT ;
+    layout->bottom_pad              = SCREEN_BOTTOM_PAD ;
+    layout->status_v_pad            = SCREEN_STATUS_V_PAD ;
+    layout->horizontal_pad          = SCREEN_HORIZONTAL_PAD ;
+    layout->text_v_offset           = SCREEN_TEXT_V_OFFSET ;
+
+    layout->line.pos.x              = SCREEN_INITIAL_X ;
+    layout->line.pos.y              = SCREEN_INITIAL_Y ;
+    layout->line.height             = SCREEN_INITIAL_HEIGHT ;
+    layout->line.font               = SCREEN_INITIAL_FONT ;
+    layout->line.symbolSize         = SCREEN_INITIAL_SYMBOL_SIZE ;
+
+    layout->line_top.pos.x          = SCREEN_HORIZONTAL_PAD ;
+    layout->line_top.pos.y          = SCREEN_TOP_HEIGHT - SCREEN_STATUS_V_PAD - SCREEN_TEXT_V_OFFSET ;
+    layout->line_top.height         = SCREEN_TOP_HEIGHT ;
+    layout->line_top.font           = SCREEN_TOP_FONT ;
+    layout->line_top.symbolSize     = SCREEN_TOP_SYMBOL_SIZE ;
+
+    layout->line_1.pos.x            = SCREEN_HORIZONTAL_PAD ;
+    layout->line_1.pos.y            = SCREEN_TOP_HEIGHT + SCREEN_TOP_PAD + SCREEN_LINE_1_HEIGHT - SCREEN_SMALL_LINE_V_PAD - SCREEN_TEXT_V_OFFSET ;
+    layout->line_1.height           = SCREEN_LINE_1_HEIGHT ;
+    layout->line_1.font             = SCREEN_LINE_1_FONT ;
+    layout->line_1.symbolSize       = SCREEN_LINE_1_SYMBOL_SIZE ;
+
+    layout->line_2.pos.x            = SCREEN_HORIZONTAL_PAD ;
+    layout->line_2.pos.y            = SCREEN_TOP_HEIGHT + SCREEN_TOP_PAD + SCREEN_LINE_1_HEIGHT + SCREEN_LINE_2_HEIGHT - SCREEN_SMALL_LINE_V_PAD - SCREEN_TEXT_V_OFFSET ;
+    layout->line_2.height           = SCREEN_LINE_2_HEIGHT ;
+    layout->line_2.font             = SCREEN_LINE_2_FONT ;
+    layout->line_2.symbolSize       = SCREEN_LINE_2_SYMBOL_SIZE ;
+
+    layout->line_3.pos.x            = SCREEN_HORIZONTAL_PAD ;
+    layout->line_3.pos.y            = SCREEN_TOP_HEIGHT + SCREEN_TOP_PAD + SCREEN_LINE_1_HEIGHT + SCREEN_LINE_2_HEIGHT + SCREEN_LINE_3_HEIGHT - SCREEN_SMALL_LINE_V_PAD - SCREEN_TEXT_V_OFFSET ;
+    layout->line_3.height           = SCREEN_LINE_3_HEIGHT ;
+    layout->line_3.font             = SCREEN_LINE_3_FONT ;
+    layout->line_3.symbolSize       = SCREEN_LINE_3_SYMBOL_SIZE ;
+
+    layout->line_3_large.pos.x      = SCREEN_HORIZONTAL_PAD ;
+    layout->line_3_large.pos.y      = SCREEN_TOP_HEIGHT + SCREEN_TOP_PAD + SCREEN_LINE_1_HEIGHT + SCREEN_LINE_2_HEIGHT + SCREEN_LINE_3_LARGE_HEIGHT - SCREEN_BIG_LINE_V_PAD - SCREEN_TEXT_V_OFFSET ;
+    layout->line_3_large.height     = SCREEN_LINE_3_LARGE_HEIGHT ;
+    layout->line_3_large.font       = SCREEN_LINE_3_LARGE_FONT ;
+    layout->line_3_large.symbolSize = SCREEN_LINE_3_SYMBOL_SIZE ;
+
+    layout->line_4.pos.x            = SCREEN_HORIZONTAL_PAD ;
+    layout->line_4.pos.y            = SCREEN_TOP_HEIGHT + SCREEN_TOP_PAD + SCREEN_LINE_1_HEIGHT + SCREEN_LINE_2_HEIGHT + SCREEN_LINE_3_HEIGHT + SCREEN_LINE_4_HEIGHT - SCREEN_SMALL_LINE_V_PAD - SCREEN_TEXT_V_OFFSET ;
+    layout->line_4.height           = SCREEN_LINE_4_HEIGHT ;
+    layout->line_4.font             = SCREEN_LINE_4_FONT ;
+    layout->line_4.symbolSize       = SCREEN_LINE_4_SYMBOL_SIZE ;
+
+    layout->line_bottom.pos.x       = SCREEN_HORIZONTAL_PAD ;
+    layout->line_bottom.pos.y       = SCREEN_HEIGHT - SCREEN_BOTTOM_PAD - SCREEN_STATUS_V_PAD - SCREEN_TEXT_V_OFFSET ;
+    layout->line_bottom.height      = SCREEN_BOTTOM_HEIGHT ;
+    layout->line_bottom.font        = SCREEN_BOTTOM_FONT ;
+    layout->line_bottom.symbolSize  = SCREEN_INITIAL_SYMBOL_SIZE ;
+
+    layout->input_font              = SCREEN_INPUT_FONT ;
+    layout->menu_font               = SCREEN_MENU_FONT ;
+    layout->mode_font_big           = SCREEN_MODE_FONT_BIG ;
+    layout->mode_font_small         = SCREEN_MODE_FONT_SMALL ;
+
+    layout->print_display_on        = true ;
 }
 
 void ui_drawSplashScreen( void )
@@ -3863,7 +3971,7 @@ static bool ui_updateFSM_PAGE_LOW_BAT( GuiState_st* guiState )
     return false ;
 }
 
-static bool ui_updateFSM_PAGE_AUTHORS( GuiState_st* guiState )
+static bool ui_updateFSM_PAGE_ABOUT( GuiState_st* guiState )
 {
     (void)guiState ;
     return false ;
