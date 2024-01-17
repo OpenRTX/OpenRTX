@@ -35,31 +35,30 @@ static const struct display_buffer_descriptor displayBufDesc =
     CONFIG_SCREEN_WIDTH,
 };
 
-static uint8_t frameBuffer[FB_SIZE];
+static uint8_t shadowBuffer[FB_SIZE];
 
 void display_init()
 {
     // Get display handle
     displayDev = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
-
-    // Clear framebuffer, setting all pixels to 0x00 makes the screen black
-    memset(&frameBuffer, 0x00, FB_SIZE);
-    display_write(displayDev, 0, 0, &displayBufDesc, frameBuffer);
 }
 
 void display_terminate()
 {
 }
 
-void display_renderRows(uint8_t startRow, uint8_t endRow)
+void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
 {
+    (void) startRow;
+    (void) endRow;
+
     // Only complete rendering is supported
-    display_render();
+    display_render(fb);
 }
 
-void display_render()
+void display_render(void *fb)
 {
-    static uint8_t shadowBuffer[FB_SIZE] = { 0 };
+    uint8_t *frameBuffer = (uint8_t *) fb;
     memset(shadowBuffer, 0x00, FB_SIZE);
 
     for(uint8_t y = 0; y < CONFIG_SCREEN_HEIGHT; y++)
@@ -74,11 +73,6 @@ void display_render()
     }
 
     display_write(displayDev, 0, 0, &displayBufDesc, shadowBuffer);
-}
-
-void *display_getFrameBuffer()
-{
-    return (void *)(frameBuffer);
 }
 
 void display_setContrast(uint8_t contrast)
