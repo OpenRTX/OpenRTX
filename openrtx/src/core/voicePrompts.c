@@ -406,7 +406,7 @@ void vp_terminate()
 void vp_stop()
 {
     voicePromptActive = false;
-    codec_stop(vpAudioPath);
+    // codec_stop(vpAudioPath);
     disableSpkOutput();
 
     // Clear voice prompt sequence data
