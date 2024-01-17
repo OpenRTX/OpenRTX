@@ -29,20 +29,9 @@
 #include <hwconfig.h>
 #include <SPI2.h>
 
-/*
- * LCD framebuffer, statically allocated and placed in the "large" RAM block
- * starting at 0x20000000.
- * Pixel format is black and white, one bit per pixel.
- */
-#define FB_SIZE (((CONFIG_SCREEN_HEIGHT * CONFIG_SCREEN_WIDTH) / 8 ) + 1)
-static uint8_t __attribute__((section(".bss2"))) frameBuffer[FB_SIZE];
-
 
 void display_init()
 {
-    /* Clear framebuffer, setting all pixels to 0x00 makes the screen white */
-    memset(frameBuffer, 0x00, FB_SIZE);
-
     /*
      * Initialise SPI2 for external flash and LCD
      */
@@ -103,10 +92,11 @@ void display_terminate()
     spi2_terminate();
 }
 
-void display_renderRows(uint8_t startRow, uint8_t endRow)
+void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
 {
     gpio_clearPin(LCD_CS);
 
+    uint8_t *frameBuffer = (uint8_t *) fb;
     for(uint8_t y = startRow; y < endRow; y++)
     {
         for(uint8_t x = 0; x < CONFIG_SCREEN_WIDTH/8; x++)
@@ -125,14 +115,9 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
     gpio_setPin(LCD_CS);
 }
 
-void display_render()
+void display_render(void *fb)
 {
-    display_renderRows(0, CONFIG_SCREEN_HEIGHT);
-}
-
-void *display_getFrameBuffer()
-{
-    return (void *)(frameBuffer);
+    display_renderRows(0, CONFIG_SCREEN_HEIGHT, fb);
 }
 
 void display_setContrast(uint8_t contrast)
