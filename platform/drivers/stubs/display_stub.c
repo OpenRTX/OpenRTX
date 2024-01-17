@@ -21,12 +21,6 @@
 #include <hwconfig.h>
 #include <stddef.h>
 
-#ifdef CONFIG_PIX_FMT_BW
-static uint8_t frameBuffer[(((CONFIG_SCREEN_WIDTH * CONFIG_SCREEN_HEIGHT) / 8 ) + 1)];
-#else
-static uint16_t frameBuffer[CONFIG_SCREEN_WIDTH * CONFIG_SCREEN_HEIGHT];
-#endif
-
 
 void display_init()
 {
@@ -38,15 +32,16 @@ void display_terminate()
 
 }
 
-void display_renderRows(uint8_t startRow, uint8_t endRow)
+void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
 {
     (void) startRow;
     (void) endRow;
+    (void) fb;
 }
 
-void display_render()
+void display_render(void *fb)
 {
-
+    (void) fb;
 }
 
 void *display_getFrameBuffer()
