@@ -43,7 +43,8 @@ static const hwInfo_t hwInfo =
     .uhf_minFreq = 400,
     .uhf_band    = 1,
     .hw_version  = 0,
-    .name        = "GD-77"
+    .name        = "GD-77",
+    .other       = NULL,
 };
 
 void platform_init()

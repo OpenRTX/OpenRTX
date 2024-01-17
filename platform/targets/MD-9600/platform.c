@@ -42,7 +42,8 @@ static const hwInfo_t hwInfo =
     .uhf_minFreq = 400,
     .uhf_band    = 1,
     .hw_version  = 0,
-    .name        = "MD-9600"
+    .name        = "MD-9600",
+    .other       = NULL,
 };
 
 void platform_init()

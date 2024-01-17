@@ -41,7 +41,8 @@ static hwInfo_t hwInfo =
     .uhf_minFreq = 0,
     .uhf_band    = 0,
     .hw_version  = 0,
-    .name        = "Module17"
+    .name        = "Module17",
+    .other       = NULL,
 };
 
 void platform_init()
