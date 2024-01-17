@@ -87,12 +87,6 @@
 #define LCD_FSMC_ADDR_COMMAND 0x60000000
 #define LCD_FSMC_ADDR_DATA    0x60040000
 
-/*
- * LCD framebuffer, statically allocated and placed in the "large" RAM block
- * starting at 0x20000000 and accessible by the DMA.
- * Pixel format is RGB565, 16 bit per pixel.
- */
-static uint16_t __attribute__((section(".bss2"))) frameBuffer[CONFIG_SCREEN_WIDTH * CONFIG_SCREEN_HEIGHT];
 
 using namespace miosix;
 static Thread *lcdWaiting = 0;
@@ -130,9 +124,6 @@ void display_init()
 {
     /* Initialise backlight driver */
     backlight_init();
-
-    /* Clear framebuffer, setting all pixels to 0x00 makes the screen white */
-    memset(frameBuffer, 0x00, CONFIG_SCREEN_WIDTH * CONFIG_SCREEN_HEIGHT * sizeof(uint16_t));
 
     /*
      * Turn on DMA2 and configure its interrupt. DMA is used to transfer the
@@ -442,7 +433,7 @@ void display_terminate()
     __DSB();
 }
 
-void display_renderRows(uint8_t startRow, uint8_t endRow)
+void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
 {
     /*
      * Put screen data lines back to alternate function mode, since they are in
@@ -465,6 +456,7 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
      * the CS pin low, in this way user code calling the renderingInProgress
      * function gets true as return value and does not stomp our work.
      */
+    uint16_t *frameBuffer = (uint16_t *) fb;
     for(uint8_t y = startRow; y < endRow; y++)
     {
         for(uint8_t x = 0; x < CONFIG_SCREEN_WIDTH; x++)
@@ -519,14 +511,9 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
     }
 }
 
-void display_render()
+void display_render(void *fb)
 {
-    display_renderRows(0, CONFIG_SCREEN_HEIGHT);
-}
-
-void *display_getFrameBuffer()
-{
-    return (void *)(frameBuffer);
+    display_renderRows(0, CONFIG_SCREEN_HEIGHT, fb);
 }
 
 void display_setContrast(uint8_t contrast)
