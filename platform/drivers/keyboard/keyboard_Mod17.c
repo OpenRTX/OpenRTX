@@ -28,12 +28,7 @@
 
 void kbd_init()
 {
-    gpio_setMode(ESC_SW,   INPUT);
-    gpio_setMode(ENTER_SW, INPUT);
-    gpio_setMode(LEFT_SW,  INPUT);
-    gpio_setMode(RIGHT_SW, INPUT);
-    gpio_setMode(UP_SW,    INPUT);
-    gpio_setMode(DOWN_SW,  INPUT);
+    
 }
 
 void kbd_terminate()

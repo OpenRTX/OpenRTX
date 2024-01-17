@@ -47,10 +47,11 @@ static hwInfo_t hwInfo =
 
 void platform_init()
 {
+    /* Configure GPIOs */
+
     gpio_setMode(POWER_SW, OUTPUT);
     gpio_setPin(POWER_SW);
 
-    /* Configure GPIOs */
     gpio_setMode(PTT_LED,  OUTPUT);
     gpio_setMode(SYNC_LED, OUTPUT);
     gpio_setMode(ERR_LED,  OUTPUT);
@@ -58,6 +59,15 @@ void platform_init()
     gpio_setMode(PTT_SW,  INPUT);
     gpio_setMode(PTT_OUT, OUTPUT);
     gpio_clearPin(PTT_OUT);
+
+    gpio_setMode(AIN_HWVER, INPUT_ANALOG);
+
+    gpio_setMode(ESC_SW,   INPUT);
+    gpio_setMode(ENTER_SW, INPUT);
+    gpio_setMode(LEFT_SW,  INPUT);
+    gpio_setMode(RIGHT_SW, INPUT);
+    gpio_setMode(UP_SW,    INPUT);
+    gpio_setMode(DOWN_SW,  INPUT);
 
     /* Set analog output for baseband signal to an idle level of 1.1V */
     gpio_setMode(BASEBAND_TX, INPUT_ANALOG);
