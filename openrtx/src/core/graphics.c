@@ -152,7 +152,7 @@ static bw_t _color2bw(color_t true_color)
 
 #if defined(PLATFORM_LINUX)
 static PIXEL_T framebuffer[FB_SIZE];
-#else
+#else ifndef CONFIG_GFX_NOFRAMEBUF
 static PIXEL_T __attribute__((section(".bss.fb"))) framebuffer[FB_SIZE];
 #endif
 static char text[32];
@@ -173,12 +173,19 @@ void gfx_terminate()
 
 void gfx_renderRows(uint8_t startRow, uint8_t endRow)
 {
+#ifdef CONFIG_GFX_NOFRAMEBUF
+    (void) startRow;
+    (void) endRow;
+#else
     display_renderRows(startRow, endRow, framebuffer);
+#endif
 }
 
 void gfx_render()
 {
+#ifndef CONFIG_GFX_NOFRAMEBUF
     display_render(framebuffer);
+#endif
 }
 
 void gfx_clearRows(uint8_t startRow, uint8_t endRow)
@@ -186,16 +193,22 @@ void gfx_clearRows(uint8_t startRow, uint8_t endRow)
     if(endRow < startRow)
         return;
 
+#ifndef CONFIG_GFX_NOFRAMEBUF
     uint16_t start = startRow * CONFIG_SCREEN_WIDTH * sizeof(PIXEL_T);
     uint16_t height = endRow - startRow * CONFIG_SCREEN_WIDTH * sizeof(PIXEL_T);
     // Set the specified rows to 0x00 = make the screen black
     memset(framebuffer + start, 0x00, height);
+#endif
 }
 
 void gfx_clearScreen()
 {
     // Set the whole framebuffer to 0x00 = make the screen black
+    #ifdef CONFIG_GFX_NOFRAMEBUF
+    display_fill(0x00);
+    #else
     memset(framebuffer, 0x00, FB_SIZE * sizeof(PIXEL_T));
+    #endif
 }
 
 void gfx_fillScreen(color_t color)
@@ -217,6 +230,11 @@ inline void gfx_setPixel(point_t pos, color_t color)
         return; // off the screen
 
 #ifdef CONFIG_PIX_FMT_RGB565
+
+    #ifdef CONFIG_GFX_NOFRAMEBUF
+    rgb565_t pixel = _true2highColor(color);
+    display_setPixel(pos.x, pos.y, (pixel.b << 11) | (pixel.g << 5) | (pixel.r));
+    #else
     // Blend old pixel value and new one
     if (color.alpha < 255)
     {
@@ -233,7 +251,13 @@ inline void gfx_setPixel(point_t pos, color_t color)
     {
         framebuffer[pos.x + pos.y*CONFIG_SCREEN_WIDTH] = _true2highColor(color);
     }
+    #endif
+
 #elif defined CONFIG_PIX_FMT_BW
+
+    #ifdef CONFIG_GFX_NOFRAMEBUF
+    display_setPixel(pos.x, pos.y, _color2bw(color));
+    #else
     // Ignore more than half transparent pixels
     if (color.alpha >= 128)
     {
@@ -242,6 +266,8 @@ inline void gfx_setPixel(point_t pos, color_t color)
         framebuffer[cell] &= ~(1 << elem);
         framebuffer[cell] |= (_color2bw(color) << elem);
     }
+    #endif
+
 #endif
 }
 
