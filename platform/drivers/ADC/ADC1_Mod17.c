@@ -32,11 +32,6 @@ void adc1_init()
     __DSB();
 
     /*
-     * Configure GPIOs to analog input mode:
-     */
-    gpio_setMode(AIN_HWVER, INPUT_ANALOG);
-
-    /*
      * ADC clock is APB2 frequency divided by 8, giving 10.5MHz.
      * We set the sample time of each channel to 84 ADC cycles and we have that
      * a conversion takes 12 cycles: total conversion time is then of ~9us.
