@@ -72,6 +72,8 @@ typedef struct
     uint16_t vhf_maxFreq;   /* Upper bound for VHF band, in MHz.                */
     uint16_t vhf_minFreq;   /* Lower bound for VHF band, in MHz.                */
 
+    void     *other;        /* Void pointer to device-specific data structure   */
+
 } hwInfo_t;
 
 

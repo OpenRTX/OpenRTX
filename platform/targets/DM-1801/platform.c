@@ -43,7 +43,8 @@ static const hwInfo_t hwInfo =
     .uhf_minFreq = 400,
     .uhf_band    = 1,
     .hw_version  = 0,
-    .name        = "DM-1801"
+    .name        = "DM-1801",
+    .other       = NULL,
 };
 
 void platform_init()

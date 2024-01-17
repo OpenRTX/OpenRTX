@@ -47,6 +47,7 @@ static hwInfo_t hwInfo =
     .uhf_minFreq = 0,
     .vhf_maxFreq = 0,
     .vhf_minFreq = 0,
+    .other       = NULL,
 };
 
 // RGB led color data
