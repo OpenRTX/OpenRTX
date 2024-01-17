@@ -164,24 +164,24 @@ SECTIONS
     } > smallram AT > flash
     _etext = LOADADDR(.data);
 
+    /* Put the display framebuffer in the "large" RAM, explicitly request to not
+       initialize it */
+    .bss2 (NOLOAD) :
+    {
+        *(.bss.fb)
+        . = ALIGN(8);
+    } > largeram
+
     /* .bss section: uninitialized global variables go to ram */
-    _bss_start = .;
     .bss :
     {
+        _bss_start = .;
         *(.bss)
         *(.bss.*)
         *(.gnu.linkonce.b.*)
         . = ALIGN(8);
     } > smallram
     _bss_end = .;
-
-    /* Second BSS section located in the "large" RAM, explicitly request to not
-       initialize it */
-    .bss2 (NOLOAD) :
-    {
-        *(.bss2)
-        . = ALIGN(8);
-    } > largeram
 
     _end = .;
     PROVIDE(end = .);
