@@ -475,9 +475,9 @@ mod17_def += openrtx_def + stm32f405_def
 ##
 
 rt890_src = ['platform/targets/RT-890/platform.c',
+             'platform/drivers/display/ST7735S_RT890.c',
              'platform/drivers/stubs/audio_stub.c',
              'platform/drivers/stubs/cps_io_stub.c',
-             'platform/drivers/stubs/display_stub.c',
              'platform/drivers/stubs/keyboard_stub.c',
              'platform/drivers/stubs/nvmem_stub.c',
              'platform/drivers/stubs/radio_stub.c']
