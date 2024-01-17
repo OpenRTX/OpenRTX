@@ -60,7 +60,8 @@ typedef struct
 {
     char     name[10];      /* Manufacturer-assigned hardware name.             */
 
-    uint8_t  hw_version;    /* Hardware version number                          */
+    uint16_t hw_version;    /* Hardware version number                          */
+    uint16_t flags;         /* Device-specific flags                            */
 
     uint8_t  _unused  : 6,
              uhf_band : 1,  /* Device allows UHF band operation.                */
