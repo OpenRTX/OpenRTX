@@ -97,6 +97,7 @@ static const GFXfont fonts[] = { TomThumb,            // 5pt
  */
 
 #define PIXEL_T rgb565_t
+#define FB_SIZE (CONFIG_SCREEN_HEIGHT * CONFIG_SCREEN_WIDTH)
 
 typedef struct
 {
@@ -125,6 +126,7 @@ static rgb565_t _true2highColor(color_t true_color)
  */
 
 #define PIXEL_T uint8_t
+#define FB_SIZE (((CONFIG_SCREEN_HEIGHT * CONFIG_SCREEN_WIDTH) / 8 ) + 1)
 
 typedef enum
 {
@@ -147,25 +149,14 @@ static bw_t _color2bw(color_t true_color)
 #error Please define a pixel format type into hwconfig.h or meson.build
 #endif
 
-
-static PIXEL_T *buf;
-static uint16_t fbSize;
+static PIXEL_T __attribute__((section(".bss.fb"))) framebuffer[FB_SIZE];
 static char text[32];
+
 
 void gfx_init()
 {
     display_init();
-    buf = (PIXEL_T *)(display_getFrameBuffer());
 
-// Calculate framebuffer size
-#ifdef CONFIG_PIX_FMT_RGB565
-    fbSize = CONFIG_SCREEN_HEIGHT * CONFIG_SCREEN_WIDTH * sizeof(PIXEL_T);
-#elif defined CONFIG_PIX_FMT_BW
-    fbSize = (CONFIG_SCREEN_HEIGHT * CONFIG_SCREEN_WIDTH) / 8;
-    /* Compensate for eventual truncation error in division */
-    if((fbSize * 8) < (CONFIG_SCREEN_HEIGHT * CONFIG_SCREEN_WIDTH)) fbSize += 1;
-    fbSize *= sizeof(uint8_t);
-#endif
     // Clear text buffer
     memset(text, 0x00, 32);
 }
@@ -177,12 +168,12 @@ void gfx_terminate()
 
 void gfx_renderRows(uint8_t startRow, uint8_t endRow)
 {
-    display_renderRows(startRow, endRow);
+    display_renderRows(startRow, endRow, framebuffer);
 }
 
 void gfx_render()
 {
-    display_render();
+    display_render(framebuffer);
 }
 
 void gfx_clearRows(uint8_t startRow, uint8_t endRow)
@@ -193,13 +184,13 @@ void gfx_clearRows(uint8_t startRow, uint8_t endRow)
     uint16_t start = startRow * CONFIG_SCREEN_WIDTH * sizeof(PIXEL_T);
     uint16_t height = endRow - startRow * CONFIG_SCREEN_WIDTH * sizeof(PIXEL_T);
     // Set the specified rows to 0x00 = make the screen black
-    memset(buf + start, 0x00, height);
+    memset(framebuffer + start, 0x00, height);
 }
 
 void gfx_clearScreen()
 {
     // Set the whole framebuffer to 0x00 = make the screen black
-    memset(buf, 0x00, fbSize);
+    memset(framebuffer, 0x00, FB_SIZE * sizeof(PIXEL_T));
 }
 
 void gfx_fillScreen(color_t color)
@@ -226,16 +217,16 @@ inline void gfx_setPixel(point_t pos, color_t color)
     {
         uint8_t alpha = color.alpha;
         rgb565_t new_pixel = _true2highColor(color);
-        rgb565_t old_pixel = buf[pos.x + pos.y*CONFIG_SCREEN_WIDTH];
+        rgb565_t old_pixel = framebuffer[pos.x + pos.y*CONFIG_SCREEN_WIDTH];
         rgb565_t pixel;
         pixel.r = ((255-alpha)*old_pixel.r+alpha*new_pixel.r)/255;
         pixel.g = ((255-alpha)*old_pixel.g+alpha*new_pixel.g)/255;
         pixel.b = ((255-alpha)*old_pixel.b+alpha*new_pixel.b)/255;
-        buf[pos.x + pos.y*CONFIG_SCREEN_WIDTH] = pixel;
+        framebuffer[pos.x + pos.y*CONFIG_SCREEN_WIDTH] = pixel;
     }
     else
     {
-        buf[pos.x + pos.y*CONFIG_SCREEN_WIDTH] = _true2highColor(color);
+        framebuffer[pos.x + pos.y*CONFIG_SCREEN_WIDTH] = _true2highColor(color);
     }
 #elif defined CONFIG_PIX_FMT_BW
     // Ignore more than half transparent pixels
@@ -243,8 +234,8 @@ inline void gfx_setPixel(point_t pos, color_t color)
     {
         uint16_t cell = (pos.x + pos.y*CONFIG_SCREEN_WIDTH) / 8;
         uint16_t elem = (pos.x + pos.y*CONFIG_SCREEN_WIDTH) % 8;
-        buf[cell] &= ~(1 << elem);
-        buf[cell] |= (_color2bw(color) << elem);
+        framebuffer[cell] &= ~(1 << elem);
+        framebuffer[cell] |= (_color2bw(color) << elem);
     }
 #endif
 }
