@@ -75,40 +75,70 @@ typedef enum
 // GUI Commands
 enum
 {
-    GUI_CMD_NULL            ,
-    GUI_CMD_GO_TO_LINE      ,
-    GUI_CMD_TEXT            ,
-    GUI_CMD_TITLE           ,
-    GUI_CMD_LINK            ,
-    GUI_CMD_VALUE           ,
-    GUI_CMD_LINE_END = 0x0A ,
-    GUI_CMD_END      = 0x1F ,
+    GUI_CMD_NULL            , // 0x00
+    GUI_CMD_GO_TO_LINE      , // 0x01
+    GUI_CMD_ALIGN_LEFT      , // 0x02
+    GUI_CMD_ALIGN_CENTER    , // 0x03
+    GUI_CMD_ALIGN_RIGHT     , // 0x04
+    GUI_CMD_TEXT            , // 0x05
+    GUI_CMD_TITLE           , // 0x06
+    GUI_CMD_LINK            , // 0x07
+    GUI_CMD_LINK_END        , // 0x08
+    GUI_CMD_VALUE           , // 0x09
+    GUI_CMD_LINE_END = 0x0A , // 0x0A
+    GUI_CMD_PAGE_END = 0x1F , // 0x1F
     GUI_CMD_NUM_OF
 };
 
 // GUI Values
 enum
 {
-    GUI_VAL_BANKS ,
-    GUI_VAL_CHANNELS ,
-    GUI_VAL_CONTACTS ,
-    GUI_VAL_GPS ,
-    GUI_VAL_SETTINGS_DISPLAY ,
-    GUI_VAL_SETTINGS_TIME_AND_DATE ,
-    GUI_VAL_SETTINGS_GPS ,
-    GUI_VAL_SETTINGS_RADIO ,
-    GUI_VAL_SETTINGS_M17 ,
-    GUI_VAL_SETTINGS_ACCESSIBILITY ,
-    GUI_VAL_SETTINGS_DEFAULT ,
+    GUI_VAL_BANKS             ,
+    GUI_VAL_CHANNELS          ,
+    GUI_VAL_CONTACTS          ,
+    GUI_VAL_GPS               ,
+    // Settings
+    // Display
+#ifdef SCREEN_BRIGHTNESS
+    GUI_VAL_SCREEN_BRIGHTNESS ,
+#endif
+#ifdef SCREEN_CONTRAST
+    GUI_VAL_SCREEN_CONTRAST   ,
+#endif
+    GUI_VAL_TIMER             ,
+    // Time and Date
+    GUI_VAL_DATE              ,
+    GUI_VAL_TIME              ,
+    // GPS
+    GUI_VAL_GPS_ENABLED       ,
+    GUI_VAL_GPS_SET_TIME      ,
+    GUI_VAL_GPS_TIME_ZONE     ,
+    // Radio
+    GUI_VAL_RADIO_OFFSET      ,
+    GUI_VAL_RADIO_DIRECTION   ,
+    GUI_VAL_RADIO_STEP        ,
+    // M17
+    GUI_VAL_M17_CALLSIGN      ,
+    GUI_VAL_M17_CAN           ,
+    GUI_VAL_M17_CAN_RX_CHECK  ,
+    // Accessibility - Voice
+    GUI_VAL_VOICE             ,
+    GUI_VAL_PHONETIC          ,
+    // Info
+    GUI_VAL_BATTERY_VOLTAGE   ,
+    GUI_VAL_BATTERY_CHARGE    ,
+    GUI_VAL_RSSI              ,
+    GUI_VAL_USED_HEAP         ,
+    GUI_VAL_BAND              ,
+    GUI_VAL_VHF               ,
+    GUI_VAL_UHF               ,
+    GUI_VAL_HW_VERSION        ,
+#ifdef PLATFORM_TTWRPLUS
+    GUI_VAL_RADIO             ,
+    GUI_VAL_RADIO_FW          ,
+#endif // PLATFORM_TTWRPLUS
 
-    GUI_VAL_INFO_BATTERY_VOLTAGE ,
-    GUI_VAL_INFO_BATTERY_CHARGE ,
-    GUI_VAL_INFO_RSSI ,
-    GUI_VAL_INFO_USED_HEAP ,
-    GUI_VAL_INFO_BAND ,
-    GUI_VAL_INFO_HW_VERSION ,
-
-    GUI_VAL_STUBBED ,
+    GUI_VAL_STUBBED           ,
     GUI_VAL_NUM_OF
 };
 
@@ -265,7 +295,9 @@ typedef struct
     uint16_t     text_v_offset ;
     uint8_t      numOfEntries ;
     uint8_t      itemIndex ;
+    uint8_t      linkIndex ;
     uint8_t      scrollOffset ;
+    uint8_t      align ;
     line_st      line ;
     line_st      line_top ;
     line_st      line_1 ;
@@ -278,7 +310,8 @@ typedef struct
     fontSize_t   menu_font ;
     fontSize_t   mode_font_big ;
     fontSize_t   mode_font_small ;
-    bool         print_display_on ;
+    bool         printDisplayOn ;
+    bool         inLink ;
 }Layout_st;
 
 typedef struct

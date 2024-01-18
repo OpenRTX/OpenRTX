@@ -36,6 +36,8 @@
 #include <SA8x8.h>
 #endif
 
+extern bool ui_DisplayPage( GuiState_st* guiState , uiPageNum_en pageNum );
+
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBottom( GuiState_st* guiState , Event_st* event );
 

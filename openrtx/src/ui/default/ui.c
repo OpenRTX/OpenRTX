@@ -62,6 +62,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <math.h>
 #include <input.h>
@@ -78,11 +79,16 @@
 #include <battery.h>
 #include <utils.h>
 #include <beeps.h>
+#include <memory_profiling.h>
+
+#ifdef PLATFORM_TTWRPLUS
+#include <SA8x8.h>
+#endif
 
 //@@@KL #include "ui_m17.h"
 
 #define ST_VAL( val )   ( val + GUI_CMD_NUM_OF )
-#define LD_VAL( val )   ( val - GUI_CMD_NUM_OF )
+#define LD_VAL( val )   (uint8_t)( val - GUI_CMD_NUM_OF )
 
 //#define DISPLAY_DEBUG_MSG
 
@@ -161,6 +167,8 @@ extern void _ui_reset_menu_anouncement_tracking( void );
 
 extern void ui_drawMenuItem( GuiState_st* guiState , char* entryBuf );
 
+extern const char* display_timer_values[];
+
 enum
 {
     GUI_LINE_TOP         ,
@@ -176,58 +184,69 @@ enum
 
 static const uint8_t Page_MainVFO_N[] =
 {
-    GUI_CMD_END   //@@@KL indicates use the legacy script
+    GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
 };
 
 static const uint8_t Page_MainInput_N[] =
 {
-    GUI_CMD_END   //@@@KL indicates use the legacy script
+    GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
 };
 
 static const uint8_t Page_MainMem_N[] =
 {
-    GUI_CMD_END   //@@@KL indicates use the legacy script
+    GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
 };
 
 static const uint8_t Page_ModeVFO_N[] =
 {
-    GUI_CMD_END   //@@@KL indicates use the legacy script
+    GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
 };
 
 static const uint8_t Page_ModeMem_N[] =
 {
-    GUI_CMD_END   //@@@KL indicates use the legacy script
+    GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
 };
 
 static const uint8_t Page_MenuItems_N[] =
 {
+//    GUI_CMD_PAGE_END ,  //@@@KL indicates use the legacy script
+
     GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_TOP ) ,
+    GUI_CMD_ALIGN_CENTER ,
     GUI_CMD_TITLE ,
     'M','e','n','u' , GUI_CMD_NULL ,
     GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_1 ) ,
+    GUI_CMD_ALIGN_LEFT ,
     GUI_CMD_LINK , ST_VAL( PAGE_MENU_BANK ) ,
-     'B','a','n','k','s' , GUI_CMD_NULL ,
+    GUI_CMD_TEXT , 'B','a','n','k','s' , GUI_CMD_NULL ,
+    GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
     GUI_CMD_LINK , ST_VAL( PAGE_MENU_CHANNEL ) ,
-     'C','h','a','n','n','e','l','s' , GUI_CMD_NULL ,
+    GUI_CMD_TEXT , 'C','h','a','n','n','e','l','s' , GUI_CMD_NULL ,
+    GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
     GUI_CMD_LINK , ST_VAL( PAGE_MENU_CONTACTS ) ,
-     'C','o','n','t','a','c','t','s' , GUI_CMD_NULL ,
+    GUI_CMD_TEXT , 'C','o','n','t','a','c','t','s' , GUI_CMD_NULL ,
+    GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
 #ifdef GPS_PRESENT
     GUI_CMD_LINK , ST_VAL( PAGE_MENU_GPS ) ,
-     'G','P','S' , GUI_CMD_NULL ,
+    GUI_CMD_TEXT , 'G','P','S' , GUI_CMD_NULL ,
+    GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
 #endif // RTC_PRESENT
     GUI_CMD_LINK , ST_VAL( PAGE_MENU_SETTINGS ) ,
-     'S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
+    GUI_CMD_TEXT , 'S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
+    GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
     GUI_CMD_LINK , ST_VAL( PAGE_MENU_INFO ) ,
-     'I','n','f','o' , GUI_CMD_NULL ,
+    GUI_CMD_TEXT , 'I','n','f','o' , GUI_CMD_NULL ,
+    GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
     GUI_CMD_LINK , ST_VAL( PAGE_MENU_ABOUT ) ,
-     'A','b','o','u','t' , GUI_CMD_NULL ,
-    GUI_CMD_END
+    GUI_CMD_TEXT , 'A','b','o','u','t' , GUI_CMD_NULL ,
+    GUI_CMD_LINK_END ,
+    GUI_CMD_PAGE_END
 };
 
 const char* Page_MenuItems[] =
@@ -245,56 +264,64 @@ const char* Page_MenuItems[] =
 
 static const uint8_t Page_MenuBank_N[] =
 {
-    GUI_CMD_END   //@@@KL indicates use the legacy script
+    GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
 };
 
 static const uint8_t Page_MenuChannel_N[] =
 {
-    GUI_CMD_END   //@@@KL indicates use the legacy script
+    GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
 };
 
 static const uint8_t Page_MenuContact_N[] =
 {
-    GUI_CMD_END   //@@@KL indicates use the legacy script
+    GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
 };
 
 static const uint8_t Page_MenuGPS_N[] =
 {
-    GUI_CMD_END   //@@@KL indicates use the legacy script
+    GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
 };
 
 static const uint8_t Page_MenuSettings_N[] =
 {
     GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_TOP ) ,
+    GUI_CMD_ALIGN_CENTER ,
     GUI_CMD_TITLE ,
     'S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
     GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_1 ) ,
+    GUI_CMD_ALIGN_LEFT ,
     GUI_CMD_LINK , ST_VAL( PAGE_SETTINGS_DISPLAY ) ,
-     'D','i','s','p','l','a','y' , GUI_CMD_NULL ,
+    GUI_CMD_TEXT , 'D','i','s','p','l','a','y' , GUI_CMD_NULL ,
+    GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
 #ifdef RTC_PRESENT
     GUI_CMD_LINK , ST_VAL( PAGE_SETTINGS_TIMEDATE ) ,
-     'T','i','m','e',' ','&',' ','D','a','t','e' , GUI_CMD_NULL ,
+    GUI_CMD_TEXT , 'T','i','m','e',' ','&',' ','D','a','t','e' , GUI_CMD_NULL ,
+    GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
 #endif // RTC_PRESENT
 #ifdef GPS_PRESENT
     GUI_CMD_LINK , ST_VAL( PAGE_SETTINGS_GPS ) ,
-     'G','P','S' , GUI_CMD_NULL ,
+    GUI_CMD_TEXT , 'G','P','S' , GUI_CMD_NULL ,
+    GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
 #endif // GPS_PRESENT
     GUI_CMD_LINK , ST_VAL( PAGE_SETTINGS_RADIO ) ,
-     'R','a','d','i','o' , GUI_CMD_NULL ,
+    GUI_CMD_TEXT , 'R','a','d','i','o' , GUI_CMD_NULL ,
+    GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
     GUI_CMD_LINK , ST_VAL( PAGE_SETTINGS_M17 ) ,
-     'M','1','7' , GUI_CMD_NULL ,
+    GUI_CMD_TEXT , 'M','1','7' , GUI_CMD_NULL ,
+    GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
     GUI_CMD_LINK , ST_VAL( PAGE_SETTINGS_VOICE ) ,
-     'A','c','c','e','s','s','i','b','i','l','i','t','y' , GUI_CMD_NULL ,
+    GUI_CMD_TEXT , 'A','c','c','e','s','s','i','b','i','l','i','t','y' , GUI_CMD_NULL ,
+    GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
     GUI_CMD_LINK , ST_VAL( PAGE_SETTINGS_RESET_TO_DEFAULTS ) ,
-     'D','e','f','a','u','l','t',' ',
-     'S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
-    GUI_CMD_END
+    GUI_CMD_TEXT , 'D','e','f','a','u','l','t',' ','S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
+    GUI_CMD_LINK_END ,
+    GUI_CMD_PAGE_END
 };
 
 const char* Page_MenuSettings[] =
@@ -314,40 +341,44 @@ const char* Page_MenuSettings[] =
 
 static const uint8_t Page_MenuAbout_N[] =
 {
-    GUI_CMD_END   //@@@KL indicates use the legacy script
+    GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
 };
 
 static const uint8_t Page_SettingsTimeDate_N[] =
 {
-    GUI_CMD_END   //@@@KL indicates use the legacy script
+    GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
 };
 
 static const uint8_t Page_SettingsTimeDateSet_N[] =
 {
-    GUI_CMD_END   //@@@KL indicates use the legacy script
+    GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
 };
 
 static const uint8_t Page_SettingsDisplay_N[] =
 {
-    GUI_CMD_END , //@@@KL indicates use the legacy script
+//    GUI_CMD_PAGE_END , //@@@KL indicates use the legacy script
 
     GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_TOP ) ,
+    GUI_CMD_ALIGN_CENTER ,
     GUI_CMD_TITLE ,
     'D','i','s','p','l','a','y' , GUI_CMD_NULL ,
     GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_1 ) ,
 #ifdef SCREEN_BRIGHTNESS
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+    GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'B','r','i','g','h','t','n','e','s','s' , GUI_CMD_NULL ,
+    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_SCREEN_BRIGHTNESS ) ,
     GUI_CMD_LINE_END ,
 #endif // SCREEN_BRIGHTNESS
 #ifdef SCREEN_CONTRAST
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+    GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'C','o','n','t','r','a','s','t' , GUI_CMD_NULL ,
+    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_SCREEN_CONTRAST ) ,
     GUI_CMD_LINE_END ,
 #endif // SCREEN_CONTRAST
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+    GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'T','i','m','e','r' , GUI_CMD_NULL ,
-    GUI_CMD_END
+    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_TIMER ) ,
+    GUI_CMD_PAGE_END
 };
 
 const char* Page_SettingsDisplay[] =
@@ -364,21 +395,26 @@ const char* Page_SettingsDisplay[] =
 #ifdef GPS_PRESENT
 static const uint8_t Page_SettingsGPS_N[] =
 {
-    GUI_CMD_END , //@@@KL indicates use the legacy script
+//    GUI_CMD_PAGE_END , //@@@KL indicates use the legacy script
 
     GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_TOP ) ,
+    GUI_CMD_ALIGN_CENTER ,
     GUI_CMD_TITLE ,
      'G','P','S',' ','S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
     GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_1 ) ,
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+    GUI_CMD_ALIGN_LEFT ,
+    GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'G','P','S',' ','E','n','a','b','l','e','d' , GUI_CMD_NULL ,
+    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_GPS_ENABLED ) ,
     GUI_CMD_LINE_END ,
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+    GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'G','P','S',' ','S','e','t',' ','T','i','m','e' , GUI_CMD_NULL ,
+    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_GPS_SET_TIME ) ,
     GUI_CMD_LINE_END ,
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+    GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'U','T','C',' ','T','i','m','e','z','o','n','e', GUI_CMD_NULL ,
-    GUI_CMD_END
+    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_GPS_TIME_ZONE ) ,
+    GUI_CMD_PAGE_END
 };
 
 const char* Page_SettingsGPS[] =
@@ -391,21 +427,25 @@ const char* Page_SettingsGPS[] =
 
 static const uint8_t Page_SettingsRadio_N[] =
 {
-    GUI_CMD_END , //@@@KL indicates use the legacy script
+//    GUI_CMD_PAGE_END , //@@@KL indicates use the legacy script
 
     GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_TOP ) ,
+    GUI_CMD_ALIGN_CENTER ,
     GUI_CMD_TITLE ,
      'R','a','d','i','o',' ','S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
     GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_1 ) ,
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+    GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'O','f','f','s','e','t', GUI_CMD_NULL ,
+    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_RADIO_OFFSET ) ,
     GUI_CMD_LINE_END ,
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+    GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'D','i','r','e','c','t','i','o','n', GUI_CMD_NULL ,
+    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_RADIO_DIRECTION ) ,
     GUI_CMD_LINE_END ,
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+    GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'S','t','e','p' , GUI_CMD_NULL ,
-    GUI_CMD_END
+    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_RADIO_STEP ) ,
+    GUI_CMD_PAGE_END
 };
 
 const char* Page_SettingsRadio[] =
@@ -417,18 +457,25 @@ const char* Page_SettingsRadio[] =
 
 static const uint8_t Page_SettingsM17_N[] =
 {
-    GUI_CMD_END , //@@@KL indicates use the legacy script
+//    GUI_CMD_PAGE_END , //@@@KL indicates use the legacy script
 
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_TOP ) ,
+    GUI_CMD_ALIGN_CENTER ,
+    GUI_CMD_TITLE ,
+     'M','1','7',' ','S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
+    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_1 ) ,
+    GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'C','a','l','l','s','i','g','n' , GUI_CMD_NULL ,
+    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_M17_CALLSIGN ) ,
     GUI_CMD_LINE_END ,
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+    GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'C','A','N' , GUI_CMD_NULL ,
+    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_M17_CAN ) ,
     GUI_CMD_LINE_END ,
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
-     'C','A','N',' ','R','X',' ',
-     'C','h','e','c','k' , GUI_CMD_NULL ,
-    GUI_CMD_END
+    GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
+     'C','A','N',' ','R','X',' ','C','h','e','c','k' , GUI_CMD_NULL ,
+    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_M17_CAN_RX_CHECK ) ,
+    GUI_CMD_PAGE_END
 };
 
 const char* Page_SettingsM17[] =
@@ -440,14 +487,21 @@ const char* Page_SettingsM17[] =
 
 static const uint8_t Page_SettingsVoice_N[] =
 {
-    GUI_CMD_END , //@@@KL indicates use the legacy script
+//    GUI_CMD_PAGE_END , //@@@KL indicates use the legacy script
 
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_TOP ) ,
+    GUI_CMD_ALIGN_CENTER ,
+    GUI_CMD_TITLE ,
      'V','o','i','c','e' , GUI_CMD_NULL ,
+    GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_1 ) ,
+    GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
+     'V','o','i','c','e' , GUI_CMD_NULL ,
+    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_VOICE ) ,
     GUI_CMD_LINE_END ,
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+    GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'P','h','o','n','e','t','i','c' , GUI_CMD_NULL ,
-    GUI_CMD_END
+    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_PHONETIC ) ,
+    GUI_CMD_PAGE_END
 };
 
 const char* Page_SettingsVoice[] =
@@ -458,14 +512,16 @@ const char* Page_SettingsVoice[] =
 
 static const uint8_t Page_MenuBackupRestore_N[] =
 {
-    GUI_CMD_END , //@@@KL indicates use the legacy script
+//    GUI_CMD_PAGE_END , //@@@KL indicates use the legacy script
 
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+    GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'B','a','c','k','u','p' , GUI_CMD_NULL ,
+    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
     GUI_CMD_LINE_END ,
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+    GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'R','e','s','t','o','r','e' , GUI_CMD_NULL ,
-    GUI_CMD_END
+    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+    GUI_CMD_PAGE_END
 };
 
 const char* Page_MenuBackupRestore[] =
@@ -476,53 +532,59 @@ const char* Page_MenuBackupRestore[] =
 
 static const uint8_t Page_MenuBackup_N[] =
 {
-    GUI_CMD_END   //@@@KL indicates use the legacy script
+    GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
 };
 
 static const uint8_t Page_MenuRestore_N[] =
 {
-    GUI_CMD_END   //@@@KL indicates use the legacy script
+    GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
 };
 
 static const uint8_t Page_MenuInfo_N[] =
 {
-    GUI_CMD_END , //@@@KL indicates use the legacy script
+//    GUI_CMD_PAGE_END , //@@@KL indicates use the legacy script
 
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
-     ' ' , GUI_CMD_NULL ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+    GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'B','a','t','.',' ','V','o','l','t','a','g','e' , GUI_CMD_NULL ,
+    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_BATTERY_VOLTAGE ) ,
     GUI_CMD_LINE_END ,
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+    GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'B','a','t','.',' ','C','h','a','r','g','e' , GUI_CMD_NULL ,
+    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_BATTERY_CHARGE ) ,
     GUI_CMD_LINE_END ,
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+    GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'R','S','S','I' , GUI_CMD_NULL ,
+    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_RSSI ) ,
     GUI_CMD_LINE_END ,
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+    GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'U','s','e','d',' ','h','e','a','p' , GUI_CMD_NULL ,
+    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_USED_HEAP ) ,
     GUI_CMD_LINE_END ,
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+    GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'B','a','n','d' , GUI_CMD_NULL ,
+    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_BAND ) ,
     GUI_CMD_LINE_END ,
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+    GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'V','H','F' , GUI_CMD_NULL ,
+    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_VHF ) ,
     GUI_CMD_LINE_END ,
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+    GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'U','H','F' , GUI_CMD_NULL ,
+    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_UHF ) ,
     GUI_CMD_LINE_END ,
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+    GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'H','W',' ','V','e','r','s','i','o','n' , GUI_CMD_NULL ,
+    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_HW_VERSION ) ,
     GUI_CMD_LINE_END ,
 #ifdef PLATFORM_TTWRPLUS
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
+    GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'R','a','d','i','o' , GUI_CMD_NULL ,
+    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_RADIO ) ,
     GUI_CMD_LINE_END ,
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_STUBBED ) ,
      'R','a','d','i','o',' ','F','W' , GUI_CMD_NULL ,
+    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_RADIO_FW ) ,
 #endif // PLATFORM_TTWRPLUS
-    GUI_CMD_END
+    GUI_CMD_PAGE_END
 };
 
 const char* Page_MenuInfo[] =
@@ -544,21 +606,23 @@ const char* Page_MenuInfo[] =
 
 static const uint8_t Page_SettingsResetToDefaults_N[] =
 {
-    GUI_CMD_END   //@@@KL indicates use the legacy script
+    GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
 };
 
 static const uint8_t Page_LowBat_N[] =
 {
-    GUI_CMD_END   //@@@KL indicates use the legacy script
+    GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
 };
 
 static const uint8_t Page_About_N[] =
 {
-//    GUI_CMD_END , //@@@KL indicates use the legacy script
+//    GUI_CMD_PAGE_END , //@@@KL indicates use the legacy script
     GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_TOP ) ,
+    GUI_CMD_ALIGN_CENTER ,
     GUI_CMD_TITLE ,
      'A','b','o','u','t' , GUI_CMD_NULL ,
     GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_1 ) ,
+    GUI_CMD_ALIGN_LEFT ,
     GUI_CMD_TEXT ,
      'A','u','t','h','o','r','s' , GUI_CMD_NULL ,
     GUI_CMD_LINE_END ,
@@ -581,7 +645,7 @@ static const uint8_t Page_About_N[] =
     GUI_CMD_TEXT ,
      'K','i','m',' ',
      'V','K','6','K','L', GUI_CMD_NULL ,
-    GUI_CMD_END
+    GUI_CMD_PAGE_END
 };
 
 const char* Page_About[] =
@@ -591,12 +655,13 @@ const char* Page_About[] =
 
 static const uint8_t Page_Stubbed_N[] =
 {
-    GUI_CMD_END , //@@@KL indicates use the legacy script
+//    GUI_CMD_PAGE_END , //@@@KL indicates use the legacy script
 
+    GUI_CMD_ALIGN_LEFT ,
     GUI_CMD_TEXT ,
      'P','a','g','e',' ',
      'S','t','u','b','b','e','d', GUI_CMD_NULL ,
-    GUI_CMD_END
+    GUI_CMD_PAGE_END
 };
 
 const char* Page_Stubbed[] =
@@ -675,52 +740,58 @@ static const char* symbols_ITU_T_E161_callsign[] =
 
 static bool GuiCmd_Null( GuiState_st* guiState );
 static bool GuiCmd_GoToLine( GuiState_st* guiState );
+static bool GuiCmd_AlignLeft( GuiState_st* guiState );
+static bool GuiCmd_AlignCenter( GuiState_st* guiState );
+static bool GuiCmd_AlignRight( GuiState_st* guiState );
 static bool GuiCmd_Text( GuiState_st* guiState );
 static bool GuiCmd_Title( GuiState_st* guiState );
 static bool GuiCmd_Link( GuiState_st* guiState );
+static bool GuiCmd_LinkEnd( GuiState_st* guiState );
 static bool GuiCmd_Value( GuiState_st* guiState );
 static bool GuiCmd_LineEnd( GuiState_st* guiState );
-static bool GuiCmd_End( GuiState_st* guiState );
+static bool GuiCmd_Page_End( GuiState_st* guiState );
 static bool GuiCmd_Stubbed( GuiState_st* guiState );
 
 static void GuiCmd_AdvToNextCmd( GuiState_st* guiState );
+static void GuiCmd_GetValue( GuiState_st* guiState ,
+                             uint8_t      valueBufferSize , char* valueBuffer );
 
 typedef bool (*ui_GuiCmd_fn)( GuiState_st* guiState );
 
 static const ui_GuiCmd_fn ui_GuiCmd_Table[ GUI_CMD_NUM_OF ] =
 {
-    GuiCmd_Null     , // 0x00
-    GuiCmd_GoToLine , // 0x01
-    GuiCmd_Text     , // 0x02
-    GuiCmd_Title    , // 0x03
-    GuiCmd_Link     , // 0x04
-    GuiCmd_Value    , // 0x05
-    GuiCmd_Stubbed  , // 0x06
-    GuiCmd_Stubbed  , // 0x07
-    GuiCmd_Stubbed  , // 0x08
-    GuiCmd_Stubbed  , // 0x09
-    GuiCmd_LineEnd  , // 0x0A
-    GuiCmd_Stubbed  , // 0x0B
-    GuiCmd_Stubbed  , // 0x0C
-    GuiCmd_Stubbed  , // 0x0D
-    GuiCmd_Stubbed  , // 0x0E
-    GuiCmd_Stubbed  , // 0x0F
-    GuiCmd_Stubbed  , // 0x10
-    GuiCmd_Stubbed  , // 0x11
-    GuiCmd_Stubbed  , // 0x12
-    GuiCmd_Stubbed  , // 0x13
-    GuiCmd_Stubbed  , // 0x14
-    GuiCmd_Stubbed  , // 0x15
-    GuiCmd_Stubbed  , // 0x16
-    GuiCmd_Stubbed  , // 0x17
-    GuiCmd_Stubbed  , // 0x18
-    GuiCmd_Stubbed  , // 0x19
-    GuiCmd_Stubbed  , // 0x1A
-    GuiCmd_Stubbed  , // 0x1B
-    GuiCmd_Stubbed  , // 0x1C
-    GuiCmd_Stubbed  , // 0x1D
-    GuiCmd_Stubbed  , // 0x1E
-    GuiCmd_End        // 0x1F
+    GuiCmd_Null        , // 0x00
+    GuiCmd_GoToLine    , // 0x01
+    GuiCmd_AlignLeft   , // 0x02
+    GuiCmd_AlignCenter , // 0x03
+    GuiCmd_AlignRight  , // 0x04
+    GuiCmd_Text        , // 0x05
+    GuiCmd_Title       , // 0x06
+    GuiCmd_Link        , // 0x07
+    GuiCmd_LinkEnd     , // 0x08
+    GuiCmd_Value       , // 0x09
+    GuiCmd_LineEnd     , // 0x0A
+    GuiCmd_Stubbed     , // 0x0B
+    GuiCmd_Stubbed     , // 0x0C
+    GuiCmd_Stubbed     , // 0x0D
+    GuiCmd_Stubbed     , // 0x0E
+    GuiCmd_Stubbed     , // 0x0F
+    GuiCmd_Stubbed     , // 0x10
+    GuiCmd_Stubbed     , // 0x11
+    GuiCmd_Stubbed     , // 0x12
+    GuiCmd_Stubbed     , // 0x13
+    GuiCmd_Stubbed     , // 0x14
+    GuiCmd_Stubbed     , // 0x15
+    GuiCmd_Stubbed     , // 0x16
+    GuiCmd_Stubbed     , // 0x17
+    GuiCmd_Stubbed     , // 0x18
+    GuiCmd_Stubbed     , // 0x19
+    GuiCmd_Stubbed     , // 0x1A
+    GuiCmd_Stubbed     , // 0x1B
+    GuiCmd_Stubbed     , // 0x1C
+    GuiCmd_Stubbed     , // 0x1D
+    GuiCmd_Stubbed     , // 0x1E
+    GuiCmd_Page_End      // 0x1F
 };
 
 bool ui_DisplayPage( GuiState_st* guiState , uiPageNum_en pageNum )
@@ -730,7 +801,8 @@ bool ui_DisplayPage( GuiState_st* guiState , uiPageNum_en pageNum )
     bool     exit ;
     bool     pageDisplayed = false ; // display via legacy fn
 
-    guiState->layout.print_display_on          = true ;
+    guiState->layout.printDisplayOn            = true ;
+    guiState->layout.inLink                    = false ;
 
     guiState->page.num[ guiState->page.level ] = pageNum ;
     guiState->page.ptr                         = (uint8_t*)uiPageTable[ pageNum ] ;
@@ -739,7 +811,7 @@ bool ui_DisplayPage( GuiState_st* guiState , uiPageNum_en pageNum )
 
     guiState->layout.itemIndex    = 0 ;
 
-    if( guiState->page.ptr[ 0 ] != GUI_CMD_END )
+    if( guiState->page.ptr[ 0 ] != GUI_CMD_PAGE_END )
     {
 	    gfx_clearScreen();
 
@@ -843,25 +915,37 @@ static bool GuiCmd_GoToLine( GuiState_st* guiState )
 
 }
 
-static bool GuiCmd_Text( GuiState_st* guiState )
+static bool GuiCmd_AlignLeft( GuiState_st* guiState )
 {
-    uint8_t* scriptPtr ;
-    color_t  color_fg ;
-    bool     pageEnd   = false ;
+    bool pageEnd = false ;
 
-    while( guiState->page.ptr[ guiState->page.index ] < GUI_CMD_NUM_OF )
-    {
-        guiState->page.index++ ;
-    }
+    guiState->page.index++ ;
 
-    scriptPtr = &guiState->page.ptr[ guiState->page.index ] ;
+    guiState->layout.align = TEXT_ALIGN_LEFT ;
 
-    uiColorLoad( &color_fg , COLOR_FG );
+    return pageEnd ;
 
-    gfx_print( guiState->layout.line.pos , guiState->layout.menu_font ,
-               TEXT_ALIGN_LEFT , color_fg , (char*)scriptPtr );
+}
 
-    GuiCmd_AdvToNextCmd( guiState );
+static bool GuiCmd_AlignCenter( GuiState_st* guiState )
+{
+    bool pageEnd = false ;
+
+    guiState->page.index++ ;
+
+    guiState->layout.align = TEXT_ALIGN_CENTER ;
+
+    return pageEnd ;
+
+}
+
+static bool GuiCmd_AlignRight( GuiState_st* guiState )
+{
+    bool pageEnd = false ;
+
+    guiState->page.index++ ;
+
+    guiState->layout.align = TEXT_ALIGN_RIGHT ;
 
     return pageEnd ;
 
@@ -880,8 +964,47 @@ static bool GuiCmd_Title( GuiState_st* guiState )
     uiColorLoad( &color_fg , COLOR_FG );
 
     // print the title on the top bar
-    gfx_print( guiState->layout.line_top.pos , guiState->layout.line_top.font , TEXT_ALIGN_CENTER ,
-               color_fg , (char*)scriptPtr );
+    gfx_print( guiState->layout.line_top.pos , guiState->layout.line_top.font ,
+               guiState->layout.align , color_fg , (char*)scriptPtr );
+
+    GuiCmd_AdvToNextCmd( guiState );
+
+    return pageEnd ;
+
+}
+
+static bool GuiCmd_Text( GuiState_st* guiState )
+{
+    uint8_t* scriptPtr ;
+    color_t  color_fg ;
+    color_t  color_bg ;
+    color_t  color_text ;
+    bool     pageEnd    = false ;
+
+    uiColorLoad( &color_fg , COLOR_FG );
+    uiColorLoad( &color_bg , COLOR_BG );
+    color_text = color_fg ;
+
+    while( guiState->page.ptr[ guiState->page.index ] < GUI_CMD_NUM_OF )
+    {
+        guiState->page.index++ ;
+    }
+
+    scriptPtr = &guiState->page.ptr[ guiState->page.index ] ;
+
+    if( guiState->layout.printDisplayOn )
+    {
+        if( guiState->layout.inLink )
+        {
+            color_text = color_bg ;
+            // Draw rectangle under selected item, compensating for text height
+            point_t rect_pos = { 0 , guiState->layout.line.pos.y - guiState->layout.menu_h + 3 };
+            gfx_drawRect( rect_pos , SCREEN_WIDTH , guiState->layout.menu_h , color_fg , true );
+        }
+//@@@KL            announceMenuItemIfNeeded( entryBuf , NULL , false );
+        gfx_print( guiState->layout.line.pos , guiState->layout.menu_font ,
+                   guiState->layout.align , color_text , (char*)scriptPtr );
+    }
 
     GuiCmd_AdvToNextCmd( guiState );
 
@@ -892,15 +1015,7 @@ static bool GuiCmd_Title( GuiState_st* guiState )
 static bool GuiCmd_Link( GuiState_st* guiState )
 {
     uint8_t val ;
-    char*   entryBuf ;
-    color_t color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
-    color_t color_bg ;
-    uiColorLoad( &color_bg , COLOR_BG );
-    color_t color_text = color_fg ;
-    bool    pageEnd    = false ;
-
-    guiState->layout.print_display_on = false ;
+    bool    pageEnd = false ;
 
     guiState->page.index++ ;
 
@@ -909,8 +1024,6 @@ static bool GuiCmd_Link( GuiState_st* guiState )
 (void)val ;//@@@KL
 
     guiState->page.index++ ;
-
-    entryBuf = (char*)&guiState->page.ptr[ guiState->page.index ] ;
 
     if( guiState->layout.itemIndex == 0 )
     {
@@ -926,46 +1039,50 @@ static bool GuiCmd_Link( GuiState_st* guiState )
                                         guiState->layout.numOfEntries + 1 ;
     }
 
+    guiState->layout.printDisplayOn = false ;
+    guiState->layout.inLink         = false ;
+
     if( (   guiState->layout.itemIndex >= guiState->layout.scrollOffset ) &&
         ( ( guiState->layout.itemIndex  - guiState->layout.scrollOffset )  < guiState->layout.numOfEntries ) )
     {
         if( guiState->layout.itemIndex == guiState->uiState.menu_selected )
         {
-            color_text = color_bg ;
-            // Draw rectangle under selected item, compensating for text height
-            point_t rect_pos = { 0 , guiState->layout.line.pos.y - guiState->layout.menu_h + 3 };
-            gfx_drawRect( rect_pos , SCREEN_WIDTH , guiState->layout.menu_h , color_fg , true );
-//@@@KL            announceMenuItemIfNeeded( entryBuf , NULL , false );
+            guiState->layout.inLink = true ;
         }
-        gfx_print( guiState->layout.line.pos , guiState->layout.menu_font ,
-                   TEXT_ALIGN_LEFT , color_text , entryBuf );
-        guiState->layout.print_display_on = true ;
+        guiState->layout.printDisplayOn = true ;
     }
-
-    guiState->layout.itemIndex++ ;
-
-    GuiCmd_AdvToNextCmd( guiState );
 
     return pageEnd ;
 }
 
+static bool GuiCmd_LinkEnd( GuiState_st* guiState )
+{
+    bool pageEnd  = false ;
+
+    guiState->page.index++ ;
+
+    guiState->layout.inLink = false ;
+
+    guiState->layout.itemIndex++ ;
+
+    return pageEnd ;
+
+}
+
 static bool GuiCmd_Value( GuiState_st* guiState )
 {
-    uint8_t* scriptPtr ;
-    uint8_t  val ;
+    char     valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
     color_t  color_fg ;
     bool     pageEnd   = false ;
 
-    val = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+    guiState->page.index++ ;
 
-(void)val ;//@@@KL
-
-    scriptPtr = &guiState->page.ptr[ guiState->page.index ] ;
+    GuiCmd_GetValue( guiState , MAX_ENTRY_LEN , valueBuffer );
 
     uiColorLoad( &color_fg , COLOR_FG );
 
-    gfx_print( guiState->layout.line_top.pos , guiState->layout.line_top.font , TEXT_ALIGN_LEFT ,
-               color_fg , (char*)scriptPtr );
+    gfx_print( guiState->layout.line.pos , guiState->layout.menu_font ,
+               guiState->layout.align , color_fg , valueBuffer );
 
     GuiCmd_AdvToNextCmd( guiState );
 
@@ -979,7 +1096,7 @@ static bool GuiCmd_LineEnd( GuiState_st* guiState )
 
     guiState->page.index++ ;
 
-    if( guiState->layout.print_display_on )
+    if( guiState->layout.printDisplayOn )
     {
         guiState->layout.line.pos.y += guiState->layout.menu_h ;
     }
@@ -988,7 +1105,7 @@ static bool GuiCmd_LineEnd( GuiState_st* guiState )
 
 }
 
-static bool GuiCmd_End( GuiState_st* guiState )
+static bool GuiCmd_Page_End( GuiState_st* guiState )
 {
     bool pageEnd = true ;
 
@@ -1015,7 +1132,7 @@ static void GuiCmd_AdvToNextCmd( GuiState_st* guiState )
     uint16_t count = 256 ;
 
     while( ( guiState->page.ptr[ guiState->page.index ] != GUI_CMD_NULL ) &&
-           ( guiState->page.ptr[ guiState->page.index ]  > GUI_CMD_END  )    )
+           ( guiState->page.ptr[ guiState->page.index ]  > GUI_CMD_PAGE_END  )    )
     {
         count-- ;
         if( count == 0 )
@@ -1023,6 +1140,276 @@ static void GuiCmd_AdvToNextCmd( GuiState_st* guiState )
             break ;
         }
         guiState->page.index++ ;
+    }
+
+}
+
+static void GuiCmd_GetValue( GuiState_st* guiState ,
+                             uint8_t      valueBufferSize , char* valueBuffer )
+{
+    uint8_t valueSelector ;
+
+    valueSelector = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+
+    guiState->page.index++ ;
+
+    switch( valueSelector )
+    {
+        case GUI_VAL_BANKS :
+        {
+//            snprintf( valueBuffer , valueBufferSize , "%s" ,
+//                      ... );
+            break ;
+        }
+        case GUI_VAL_CHANNELS :
+        {
+//            snprintf( valueBuffer , valueBufferSize , "%s" ,
+//                      ... );
+            break ;
+        }
+        case GUI_VAL_CONTACTS :
+        {
+//            snprintf( valueBuffer , valueBufferSize , "%s" ,
+//                      ... );
+            break ;
+        }
+        case GUI_VAL_GPS :
+        {
+//            snprintf( valueBuffer , valueBufferSize , "%s" ,
+//                      ... );
+            break ;
+        }
+        // Settings
+        // Display
+#ifdef SCREEN_BRIGHTNESS
+        case GUI_VAL_SCREEN_BRIGHTNESS :
+        {
+            snprintf( valueBuffer , valueBufferSize , "%d" ,
+            last_state.settings.brightness );
+            break ;
+        }
+#endif
+#ifdef SCREEN_CONTRAST
+        case GUI_VAL_SCREEN_CONTRAST :
+        {
+            snprintf( valueBuffer , valueBufferSize , "%d" ,
+            last_state.settings.contrast );
+            break ;
+        }
+#endif
+        case GUI_VAL_TIMER :
+        {
+            snprintf( valueBuffer , valueBufferSize , "%s" ,
+                      display_timer_values[ last_state.settings.display_timer ] );
+            break ;
+        }
+        // Time and Date
+        case GUI_VAL_DATE :
+        {
+            datetime_t local_time = utcToLocalTime( last_state.time ,
+                                                    last_state.settings.utc_timezone );
+            snprintf( valueBuffer , valueBufferSize , "%02d/%02d/%02d" ,
+                      local_time.date , local_time.month , local_time.year );
+            break ;
+        }
+        case GUI_VAL_TIME :
+        {
+            datetime_t local_time = utcToLocalTime( last_state.time ,
+                                                    last_state.settings.utc_timezone );
+            snprintf( valueBuffer , valueBufferSize , "%02d:%02d:%02d" ,
+                      local_time.hour , local_time.minute , local_time.second );
+            break ;
+        }
+        // GPS
+        case GUI_VAL_GPS_ENABLED :
+        {
+            snprintf( valueBuffer , valueBufferSize , "%s" ,
+                      (last_state.settings.gps_enabled) ? currentLanguage->on : currentLanguage->off );
+            break ;
+        }
+        case GUI_VAL_GPS_SET_TIME :
+        {
+            snprintf( valueBuffer , valueBufferSize , "%s" ,
+                      (last_state.gps_set_time) ? currentLanguage->on : currentLanguage->off );
+            break ;
+        }
+        case GUI_VAL_GPS_TIME_ZONE :
+        {
+            int8_t tz_hr = ( last_state.settings.utc_timezone / 2 ) ;
+            int8_t tz_mn = ( last_state.settings.utc_timezone % 2 ) * 5 ;
+            char   sign  = ' ';
+
+            if(last_state.settings.utc_timezone > 0)
+            {
+                sign = '+' ;
+            }
+            else if(last_state.settings.utc_timezone < 0)
+            {
+                sign   = '-' ;
+                tz_hr *= (-1) ;
+                tz_mn *= (-1) ;
+            }
+
+            snprintf( valueBuffer , valueBufferSize , "%c%d.%d" , sign , tz_hr , tz_mn );
+            break ;
+        }
+        // Radio
+        case GUI_VAL_RADIO_OFFSET :
+        {
+            int32_t offset = 0 ;
+            offset = abs( (int32_t)last_state.channel.tx_frequency -
+                          (int32_t)last_state.channel.rx_frequency );
+            snprintf( valueBuffer , valueBufferSize , "%gMHz" ,
+                      (float)offset / 1000000.0f );
+            break ;
+        }
+        case GUI_VAL_RADIO_DIRECTION :
+        {
+            valueBuffer[ 0 ] = ( last_state.channel.tx_frequency >= last_state.channel.rx_frequency ) ? '+' : '-';
+            valueBuffer[ 1 ] = '\0';
+            break ;
+        }
+        case GUI_VAL_RADIO_STEP :
+        {
+            // Print in kHz if it is smaller than 1MHz
+            if( freq_steps[ last_state.step_index ] < 1000000 )
+            {
+                snprintf( valueBuffer , valueBufferSize , "%gkHz" , (float)freq_steps[last_state.step_index] / 1000.0f );
+            }
+            else
+            {
+                snprintf( valueBuffer , valueBufferSize , "%gMHz" , (float)freq_steps[last_state.step_index] / 1000000.0f );
+            }
+            break ;
+        }
+        // M17
+        case GUI_VAL_M17_CALLSIGN :
+        {
+            snprintf( valueBuffer , valueBufferSize , "%s" ,
+                      last_state.settings.callsign );
+            break ;
+        }
+        case GUI_VAL_M17_CAN :
+        {
+            snprintf( valueBuffer , valueBufferSize , "%d" ,
+                      last_state.settings.m17_can );
+            break ;
+        }
+        case GUI_VAL_M17_CAN_RX_CHECK :
+        {
+            snprintf( valueBuffer , valueBufferSize , "%s" ,
+                      (last_state.settings.m17_can_rx) ? currentLanguage->on : currentLanguage->off );
+            break ;
+        }
+        // Accessibility - Voice
+        case GUI_VAL_VOICE :
+        {
+            uint8_t value = last_state.settings.vpLevel ;
+
+            switch( value )
+            {
+                case VPP_NONE :
+                {
+                    snprintf( valueBuffer , valueBufferSize , "%s" ,
+                              currentLanguage->off );
+                    break ;
+                }
+                case VPP_BEEP :
+                {
+                    snprintf( valueBuffer , valueBufferSize , "%s" ,
+                              currentLanguage->beep );
+                    break ;
+                }
+                default :
+                {
+                    snprintf( valueBuffer , valueBufferSize , "%d" ,
+                              ( value - VPP_BEEP ) );
+                    break ;
+                }
+            }
+            break ;
+        }
+        case GUI_VAL_PHONETIC :
+        {
+            snprintf( valueBuffer , valueBufferSize , "%s" ,
+                      last_state.settings.vpPhoneticSpell ? currentLanguage->on : currentLanguage->off );
+            break ;
+        }
+        // Info
+        case GUI_VAL_BATTERY_VOLTAGE :
+        {
+            // Compute integer part and mantissa of voltage value, adding 50mV
+            // to mantissa for rounding to nearest integer
+            uint16_t volt  = ( last_state.v_bat + 50 ) / 1000 ;
+            uint16_t mvolt = ( ( last_state.v_bat - volt * 1000 ) + 50 ) / 100 ;
+            snprintf( valueBuffer , valueBufferSize , "%d.%dV" , volt, mvolt );
+            break ;
+        }
+        case GUI_VAL_BATTERY_CHARGE :
+        {
+            snprintf( valueBuffer , valueBufferSize , "%d%%" ,
+                      last_state.charge );
+            break ;
+        }
+        case GUI_VAL_RSSI :
+        {
+            snprintf( valueBuffer , valueBufferSize , "%.1fdBm" ,
+                      last_state.rssi );
+            break ;
+        }
+        case GUI_VAL_USED_HEAP :
+        {
+            snprintf( valueBuffer , valueBufferSize , "%dB" ,
+                      getHeapSize() - getCurrentFreeHeap() );
+            break ;
+        }
+        case GUI_VAL_BAND :
+        {
+            hwInfo_t* hwinfo = (hwInfo_t*)platform_getHwInfo();
+            snprintf( valueBuffer , valueBufferSize , "%s %s" ,
+                      hwinfo->vhf_band ? currentLanguage->VHF : "" , hwinfo->uhf_band ? currentLanguage->UHF : "" );
+            break ;
+        }
+        case GUI_VAL_VHF :
+        {
+            hwInfo_t* hwinfo = (hwInfo_t*)platform_getHwInfo();
+            snprintf( valueBuffer , valueBufferSize , "%d - %d" ,
+                      hwinfo->vhf_minFreq, hwinfo->vhf_maxFreq );
+            break ;
+        }
+        case GUI_VAL_UHF :
+        {
+            hwInfo_t* hwinfo = (hwInfo_t*)platform_getHwInfo();
+            snprintf( valueBuffer , valueBufferSize , "%d - %d" ,
+                      hwinfo->uhf_minFreq, hwinfo->uhf_maxFreq );
+            break ;
+        }
+        case GUI_VAL_HW_VERSION :
+        {
+            hwInfo_t* hwinfo = (hwInfo_t*)platform_getHwInfo();
+            snprintf( valueBuffer , valueBufferSize , "%d" ,
+                      hwinfo->hw_version );
+            break ;
+        }
+#ifdef PLATFORM_TTWRPLUS
+        case GUI_VAL_RADIO :
+        {
+            //@@@KL Populate
+            break ;
+        }
+        case GUI_VAL_RADIO_FW :
+        {
+            //@@@KL Populate
+            break ;
+        }
+#endif // PLATFORM_TTWRPLUS
+        // Default
+        default :
+        {
+            valueBuffer[ 0 ] = '?' ;
+            valueBuffer[ 1 ] = '\0' ;
+            break ;
+        }
     }
 
 }
@@ -1090,6 +1477,7 @@ enum
 enum
 {
     // Height and padding shown in diagram at beginning of file
+    SCREEN_INITIAL_ALIGN       =  TEXT_ALIGN_LEFT ,
     SCREEN_INITIAL_X           =  0 ,
     SCREEN_INITIAL_Y           =  0 ,
     SCREEN_INITIAL_HEIGHT      = 20 ,
@@ -1139,6 +1527,7 @@ enum
 #elif SCREEN_HEIGHT > 63
 enum
 {
+    SCREEN_INITIAL_ALIGN       =  TEXT_ALIGN_LEFT ,
     // Height and padding shown in diagram at beginning of file
     SCREEN_INITIAL_X           =  0 ,
     SCREEN_INITIAL_Y           =  0 ,
@@ -1188,6 +1577,7 @@ enum
 #elif SCREEN_HEIGHT > 47
 enum
 {
+    SCREEN_INITIAL_ALIGN       =  TEXT_ALIGN_LEFT ,
     // Height and padding shown in diagram at beginning of file
     SCREEN_INITIAL_HEIGHT      = 10 ,
     SCREEN_TOP_HEIGHT          = 11 ,
@@ -2299,6 +2689,7 @@ static void ui_InitGuiStateLayout( Layout_st* layout )
     layout->status_v_pad            = SCREEN_STATUS_V_PAD ;
     layout->horizontal_pad          = SCREEN_HORIZONTAL_PAD ;
     layout->text_v_offset           = SCREEN_TEXT_V_OFFSET ;
+    layout->align                   = SCREEN_INITIAL_ALIGN ;
 
     layout->line.pos.x              = SCREEN_INITIAL_X ;
     layout->line.pos.y              = SCREEN_INITIAL_Y ;
@@ -2353,7 +2744,8 @@ static void ui_InitGuiStateLayout( Layout_st* layout )
     layout->mode_font_big           = SCREEN_MODE_FONT_BIG ;
     layout->mode_font_small         = SCREEN_MODE_FONT_SMALL ;
 
-    layout->print_display_on        = true ;
+    layout->printDisplayOn          = true ;
+    layout->inLink                  = false ;
 }
 
 void ui_drawSplashScreen( void )
