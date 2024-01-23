@@ -21,6 +21,7 @@
 #include <zephyr/storage/flash_map.h>
 #include <zephyr/drivers/flash.h>
 #include <interfaces/nvmem.h>
+
 #include "flash_zephyr.h"
 
 ZEPHYR_FLASH_DEVICE_DEFINE(extFlash, flash);
@@ -68,27 +69,87 @@ int nvm_readVfoChannelData(channel_t *channel)
 {
     (void) channel;
 
-    return -1;
+	int res;
+	const struct flash_area *my_area;
+	int err;	
+	err = flash_area_open(FIXED_PARTITION_ID(storage_partition)+0x1000, &my_area);
+	if (err != 0) 
+    {
+        return -1;
+    } else 
+    {
+        res=flash_area_read(my_area,FIXED_PARTITION_OFFSET(storage_partition)+0x1000,channel,sizeof(channel_t));
+		flash_area_close(my_area);
+        return 0;
+    }
 }
 
 int nvm_readSettings(settings_t *settings)
 {
     (void) settings;
 
-    return -1;
+	int res,err;
+	const struct flash_area *my_area;
+
+	err = flash_area_open(FIXED_PARTITION_ID(storage_partition), &my_area);
+	if (err != 0) 
+    {
+        return -1;
+    } else 
+    {
+        res=flash_area_read(my_area,FIXED_PARTITION_OFFSET(storage_partition),settings,sizeof(settings_t));
+		flash_area_close(my_area);
+        return 0;
+    }
 }
 
 int nvm_writeSettings(const settings_t *settings)
 {
     (void) settings;
+	int res,err;
+	const struct flash_area *my_area;
 
-    return -1;
+	err = flash_area_open(FIXED_PARTITION_ID(storage_partition), &my_area);
+	if (err != 0)
+     {
+        res=flash_area_erase(my_area,FIXED_PARTITION_OFFSET(storage_partition),0x1000); // flash minimum erase size=4+96
+        if (res == 0){
+		    flash_area_write(my_area,FIXED_PARTITION_OFFSET(storage_partition),settings,sizeof(settings_t));
+            return 0;
+        }else
+        {
+            flash_area_close(my_area);    
+            return -1;
+        }
+	} else 
+    {	
+        flash_area_close(my_area);    
+        return -1;
+    }
 }
 
 int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
 {
     (void) settings;
     (void) vfo;
-
-    return -1;
+	int res,err;
+	const struct flash_area *my_area;
+	err = flash_area_open(FIXED_PARTITION_ID(storage_partition), &my_area);
+	if (err == 0)
+     {
+        res=flash_area_erase(my_area,FIXED_PARTITION_OFFSET(storage_partition),0x2000); // flash minimum erase size=4+96
+        if (res == 0){
+		    res=flash_area_write(my_area,FIXED_PARTITION_OFFSET(storage_partition),settings,sizeof(settings_t));
+            err=flash_area_write(my_area,FIXED_PARTITION_OFFSET(storage_partition)+0x1000,vfo,sizeof(channel_t));
+            return 0;
+        }else
+        {
+            flash_area_close(my_area);    
+            return -1;
+        }
+	} else 
+    {	
+        flash_area_close(my_area);    
+        return -1;
+    }
 }
