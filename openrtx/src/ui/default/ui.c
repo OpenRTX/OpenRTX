@@ -796,6 +796,7 @@ static const ui_GuiCmd_fn ui_GuiCmd_Table[ GUI_CMD_NUM_OF ] =
 
 bool ui_DisplayPage( GuiState_st* guiState , uiPageNum_en pageNum )
 {
+    uint8_t  pgNum ;
     uint16_t count ;
     uint8_t  cmd ;
     bool     exit ;
@@ -804,8 +805,15 @@ bool ui_DisplayPage( GuiState_st* guiState , uiPageNum_en pageNum )
     guiState->layout.printDisplayOn            = true ;
     guiState->layout.inLink                    = false ;
 
-    guiState->page.num[ guiState->page.level ] = pageNum ;
-    guiState->page.ptr                         = (uint8_t*)uiPageTable[ pageNum ] ;
+    pgNum = pageNum ;
+
+    if( pgNum >= GUI_CMD_NUM_OF )
+    {
+        pgNum = GUI_CMD_STUBBED ;
+    }
+
+    guiState->page.num[ guiState->page.level ] = pgNum ;
+    guiState->page.ptr                         = (uint8_t*)uiPageTable[ pgNum ] ;
 
     guiState->layout.numOfEntries = 0 ;
 
@@ -1144,6 +1152,105 @@ static void GuiCmd_AdvToNextCmd( GuiState_st* guiState )
 
 }
 
+static void GuiVal_Banks( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+static void GuiVal_Channels( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+static void GuiVal_Contacts( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+static void GuiVal_Gps( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+    // Settings
+    // Display
+#ifdef SCREEN_BRIGHTNESS
+static void GuiVal_ScreenBrightness( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+#endif
+#ifdef SCREEN_CONTRAST
+static void GuiVal_ScreenContrast( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+#endif
+static void GuiVal_Timer( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+    // Time and Date
+static void GuiVal_Date( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+static void GuiVal_Time( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+    // GPS
+static void GuiVal_GpsEnables( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+static void GuiVal_GpsSetTime( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+static void GuiVal_GpsTimeZone( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+    // Radio
+static void GuiVal_RadioOffset( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+static void GuiVal_RadioDirection( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+static void GuiVal_RadioStep( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+    // M17
+static void GuiVal_M17Callsign( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+static void GuiVal_M17Can( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+static void GuiVal_M17CanRxCheck( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+    // Accessibility - Voice
+static void GuiVal_Voice( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+static void GuiVal_Phonetic( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+    // Info
+static void GuiVal_BatteryVoltage( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+static void GuiVal_BatteryCharge( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+static void GuiVal_Rssi( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+static void GuiVal_UsedHeap( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+static void GuiVal_Band( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+static void GuiVal_Vhf( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+static void GuiVal_Uhf( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+static void GuiVal_HwVersion( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+#ifdef PLATFORM_TTWRPLUS
+static void GuiVal_Radio( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+static void GuiVal_RadioFw( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+#endif // PLATFORM_TTWRPLUS
+static void GuiVal_Stubbed( GuiState_st* guiState , uint8_t valueBufferSize , char* valueBuffer );
+
+typedef void (*ui_GuiVal_fn)( GuiState_st* guiState ,
+                              uint8_t      valueBufferSize , char* valueBuffer );
+
+static const ui_GuiVal_fn ui_GuiVal_Table[ GUI_VAL_NUM_OF ] =
+{
+    GuiVal_Banks            ,
+    GuiVal_Channels         ,
+    GuiVal_Contacts         ,
+    GuiVal_Gps              ,
+    // Settings
+    // Display
+#ifdef SCREEN_BRIGHTNESS
+    GuiVal_ScreenBrightness ,
+#endif
+#ifdef SCREEN_CONTRAST
+    GuiVal_ScreenContrast   ,
+#endif
+    GuiVal_Timer            ,
+    // Time and Date
+    GuiVal_Date             ,
+    GuiVal_Time             ,
+    // GPS
+    GuiVal_GpsEnables       ,
+    GuiVal_GpsSetTime       ,
+    GuiVal_GpsTimeZone      ,
+    // Radio
+    GuiVal_RadioOffset      ,
+    GuiVal_RadioDirection   ,
+    GuiVal_RadioStep        ,
+    // M17
+    GuiVal_M17Callsign      ,
+    GuiVal_M17Can           ,
+    GuiVal_M17CanRxCheck    ,
+    // Accessibility - Voice
+    GuiVal_Voice            ,
+    GuiVal_Phonetic         ,
+    // Info
+    GuiVal_BatteryVoltage   ,
+    GuiVal_BatteryCharge    ,
+    GuiVal_Rssi             ,
+    GuiVal_UsedHeap         ,
+    GuiVal_Band             ,
+    GuiVal_Vhf              ,
+    GuiVal_Uhf              ,
+    GuiVal_HwVersion        ,
+#ifdef PLATFORM_TTWRPLUS
+    GuiVal_Radio            ,
+    GuiVal_RadioFw          ,
+#endif // PLATFORM_TTWRPLUS
+
+    GuiVal_Stubbed
+};
+
 static void GuiCmd_GetValue( GuiState_st* guiState ,
                              uint8_t      valueBufferSize , char* valueBuffer )
 {
@@ -1151,267 +1258,360 @@ static void GuiCmd_GetValue( GuiState_st* guiState ,
 
     valueSelector = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
 
+    if( valueSelector >= GUI_VAL_NUM_OF )
+    {
+        valueSelector = GUI_VAL_STUBBED ;
+    }
+
     guiState->page.index++ ;
 
-    switch( valueSelector )
-    {
-        case GUI_VAL_BANKS :
-        {
+    ui_GuiVal_Table[ valueSelector ]( guiState , valueBufferSize , valueBuffer );
+}
+
+static void GuiVal_Banks( GuiState_st* guiState ,
+                          uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+    (void)valueBufferSize ;
+    (void)valueBuffer ;
 //            snprintf( valueBuffer , valueBufferSize , "%s" ,
 //                      ... );
-            break ;
-        }
-        case GUI_VAL_CHANNELS :
-        {
+}
+
+static void GuiVal_Channels( GuiState_st* guiState ,
+                             uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+    (void)valueBufferSize ;
+    (void)valueBuffer ;
 //            snprintf( valueBuffer , valueBufferSize , "%s" ,
 //                      ... );
-            break ;
-        }
-        case GUI_VAL_CONTACTS :
-        {
+}
+
+static void GuiVal_Contacts( GuiState_st* guiState ,
+                             uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+    (void)valueBufferSize ;
+    (void)valueBuffer ;
 //            snprintf( valueBuffer , valueBufferSize , "%s" ,
 //                      ... );
-            break ;
-        }
-        case GUI_VAL_GPS :
-        {
+}
+
+static void GuiVal_Gps( GuiState_st* guiState ,
+                        uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+    (void)valueBufferSize ;
+    (void)valueBuffer ;
 //            snprintf( valueBuffer , valueBufferSize , "%s" ,
 //                      ... );
-            break ;
-        }
-        // Settings
-        // Display
+}
+// Settings
+// Display
+
 #ifdef SCREEN_BRIGHTNESS
-        case GUI_VAL_SCREEN_BRIGHTNESS :
-        {
-            snprintf( valueBuffer , valueBufferSize , "%d" ,
-            last_state.settings.brightness );
-            break ;
-        }
+static void GuiVal_ScreenBrightness( GuiState_st* guiState ,
+                                     uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+
+    snprintf( valueBuffer , valueBufferSize , "%d" ,
+    last_state.settings.brightness );
+}
 #endif
 #ifdef SCREEN_CONTRAST
-        case GUI_VAL_SCREEN_CONTRAST :
-        {
-            snprintf( valueBuffer , valueBufferSize , "%d" ,
-            last_state.settings.contrast );
-            break ;
-        }
+static void GuiVal_ScreenContrast( GuiState_st* guiState ,
+                                   uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+
+    snprintf( valueBuffer , valueBufferSize , "%d" ,
+    last_state.settings.contrast );
+}
 #endif
-        case GUI_VAL_TIMER :
-        {
-            snprintf( valueBuffer , valueBufferSize , "%s" ,
-                      display_timer_values[ last_state.settings.display_timer ] );
-            break ;
-        }
-        // Time and Date
-        case GUI_VAL_DATE :
-        {
-            datetime_t local_time = utcToLocalTime( last_state.time ,
-                                                    last_state.settings.utc_timezone );
-            snprintf( valueBuffer , valueBufferSize , "%02d/%02d/%02d" ,
-                      local_time.date , local_time.month , local_time.year );
-            break ;
-        }
-        case GUI_VAL_TIME :
-        {
-            datetime_t local_time = utcToLocalTime( last_state.time ,
-                                                    last_state.settings.utc_timezone );
-            snprintf( valueBuffer , valueBufferSize , "%02d:%02d:%02d" ,
-                      local_time.hour , local_time.minute , local_time.second );
-            break ;
-        }
-        // GPS
-        case GUI_VAL_GPS_ENABLED :
-        {
-            snprintf( valueBuffer , valueBufferSize , "%s" ,
-                      (last_state.settings.gps_enabled) ? currentLanguage->on : currentLanguage->off );
-            break ;
-        }
-        case GUI_VAL_GPS_SET_TIME :
-        {
-            snprintf( valueBuffer , valueBufferSize , "%s" ,
-                      (last_state.gps_set_time) ? currentLanguage->on : currentLanguage->off );
-            break ;
-        }
-        case GUI_VAL_GPS_TIME_ZONE :
-        {
-            int8_t tz_hr = ( last_state.settings.utc_timezone / 2 ) ;
-            int8_t tz_mn = ( last_state.settings.utc_timezone % 2 ) * 5 ;
-            char   sign  = ' ';
+static void GuiVal_Timer( GuiState_st* guiState ,
+                          uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
 
-            if(last_state.settings.utc_timezone > 0)
-            {
-                sign = '+' ;
-            }
-            else if(last_state.settings.utc_timezone < 0)
-            {
-                sign   = '-' ;
-                tz_hr *= (-1) ;
-                tz_mn *= (-1) ;
-            }
+    snprintf( valueBuffer , valueBufferSize , "%s" ,
+              display_timer_values[ last_state.settings.display_timer ] );
+}
 
-            snprintf( valueBuffer , valueBufferSize , "%c%d.%d" , sign , tz_hr , tz_mn );
-            break ;
-        }
-        // Radio
-        case GUI_VAL_RADIO_OFFSET :
-        {
-            int32_t offset = 0 ;
-            offset = abs( (int32_t)last_state.channel.tx_frequency -
-                          (int32_t)last_state.channel.rx_frequency );
-            snprintf( valueBuffer , valueBufferSize , "%gMHz" ,
-                      (float)offset / 1000000.0f );
-            break ;
-        }
-        case GUI_VAL_RADIO_DIRECTION :
-        {
-            valueBuffer[ 0 ] = ( last_state.channel.tx_frequency >= last_state.channel.rx_frequency ) ? '+' : '-';
-            valueBuffer[ 1 ] = '\0';
-            break ;
-        }
-        case GUI_VAL_RADIO_STEP :
-        {
-            // Print in kHz if it is smaller than 1MHz
-            if( freq_steps[ last_state.step_index ] < 1000000 )
-            {
-                snprintf( valueBuffer , valueBufferSize , "%gkHz" , (float)freq_steps[last_state.step_index] / 1000.0f );
-            }
-            else
-            {
-                snprintf( valueBuffer , valueBufferSize , "%gMHz" , (float)freq_steps[last_state.step_index] / 1000000.0f );
-            }
-            break ;
-        }
-        // M17
-        case GUI_VAL_M17_CALLSIGN :
-        {
-            snprintf( valueBuffer , valueBufferSize , "%s" ,
-                      last_state.settings.callsign );
-            break ;
-        }
-        case GUI_VAL_M17_CAN :
-        {
-            snprintf( valueBuffer , valueBufferSize , "%d" ,
-                      last_state.settings.m17_can );
-            break ;
-        }
-        case GUI_VAL_M17_CAN_RX_CHECK :
-        {
-            snprintf( valueBuffer , valueBufferSize , "%s" ,
-                      (last_state.settings.m17_can_rx) ? currentLanguage->on : currentLanguage->off );
-            break ;
-        }
-        // Accessibility - Voice
-        case GUI_VAL_VOICE :
-        {
-            uint8_t value = last_state.settings.vpLevel ;
+static void GuiVal_Date( GuiState_st* guiState ,
+                         uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
 
-            switch( value )
-            {
-                case VPP_NONE :
-                {
-                    snprintf( valueBuffer , valueBufferSize , "%s" ,
-                              currentLanguage->off );
-                    break ;
-                }
-                case VPP_BEEP :
-                {
-                    snprintf( valueBuffer , valueBufferSize , "%s" ,
-                              currentLanguage->beep );
-                    break ;
-                }
-                default :
-                {
-                    snprintf( valueBuffer , valueBufferSize , "%d" ,
-                              ( value - VPP_BEEP ) );
-                    break ;
-                }
-            }
-            break ;
-        }
-        case GUI_VAL_PHONETIC :
+    datetime_t local_time = utcToLocalTime( last_state.time ,
+                                            last_state.settings.utc_timezone );
+    snprintf( valueBuffer , valueBufferSize , "%02d/%02d/%02d" ,
+              local_time.date , local_time.month , local_time.year );
+}
+
+static void GuiVal_Time( GuiState_st* guiState ,
+                         uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+
+    datetime_t local_time = utcToLocalTime( last_state.time ,
+                                            last_state.settings.utc_timezone );
+    snprintf( valueBuffer , valueBufferSize , "%02d:%02d:%02d" ,
+              local_time.hour , local_time.minute , local_time.second );
+}
+
+static void GuiVal_GpsEnables( GuiState_st* guiState ,
+                               uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+
+    snprintf( valueBuffer , valueBufferSize , "%s" ,
+              (last_state.settings.gps_enabled) ? currentLanguage->on : currentLanguage->off );
+}
+
+static void GuiVal_GpsSetTime( GuiState_st* guiState ,
+                               uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+
+    snprintf( valueBuffer , valueBufferSize , "%s" ,
+              (last_state.gps_set_time) ? currentLanguage->on : currentLanguage->off );
+}
+
+static void GuiVal_GpsTimeZone( GuiState_st* guiState ,
+                                uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+
+    int8_t tz_hr = ( last_state.settings.utc_timezone / 2 ) ;
+    int8_t tz_mn = ( last_state.settings.utc_timezone % 2 ) * 5 ;
+    char   sign  = ' ';
+
+    if(last_state.settings.utc_timezone > 0)
+    {
+        sign = '+' ;
+    }
+    else if(last_state.settings.utc_timezone < 0)
+    {
+        sign   = '-' ;
+        tz_hr *= (-1) ;
+        tz_mn *= (-1) ;
+    }
+
+    snprintf( valueBuffer , valueBufferSize , "%c%d.%d" , sign , tz_hr , tz_mn );
+}
+
+    // Radio
+static void GuiVal_RadioOffset( GuiState_st* guiState ,
+                   uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+
+    int32_t offset = 0 ;
+    offset = abs( (int32_t)last_state.channel.tx_frequency -
+                  (int32_t)last_state.channel.rx_frequency );
+    snprintf( valueBuffer , valueBufferSize , "%gMHz" ,
+              (float)offset / 1000000.0f );
+}
+
+static void GuiVal_RadioDirection( GuiState_st* guiState ,
+                                   uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+    (void)valueBufferSize ;
+
+    valueBuffer[ 0 ] = ( last_state.channel.tx_frequency >= last_state.channel.rx_frequency ) ? '+' : '-';
+    valueBuffer[ 1 ] = '\0';
+}
+
+static void GuiVal_RadioStep( GuiState_st* guiState ,
+                              uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+
+    // Print in kHz if it is smaller than 1MHz
+    if( freq_steps[ last_state.step_index ] < 1000000 )
+    {
+        snprintf( valueBuffer , valueBufferSize , "%gkHz" , (float)freq_steps[last_state.step_index] / 1000.0f );
+    }
+    else
+    {
+        snprintf( valueBuffer , valueBufferSize , "%gMHz" , (float)freq_steps[last_state.step_index] / 1000000.0f );
+    }
+}
+
+static void GuiVal_M17Callsign( GuiState_st* guiState ,
+                                uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+
+    snprintf( valueBuffer , valueBufferSize , "%s" ,
+              last_state.settings.callsign );
+}
+
+static void GuiVal_M17Can( GuiState_st* guiState ,
+                           uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+
+    snprintf( valueBuffer , valueBufferSize , "%d" ,
+              last_state.settings.m17_can );
+}
+
+static void GuiVal_M17CanRxCheck( GuiState_st* guiState ,
+                                  uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+
+    snprintf( valueBuffer , valueBufferSize , "%s" ,
+              (last_state.settings.m17_can_rx) ? currentLanguage->on : currentLanguage->off );
+}
+
+// Accessibility - Voice
+static void GuiVal_Voice( GuiState_st* guiState ,
+                          uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+    uint8_t value = last_state.settings.vpLevel ;
+
+    switch( value )
+    {
+        case VPP_NONE :
         {
             snprintf( valueBuffer , valueBufferSize , "%s" ,
-                      last_state.settings.vpPhoneticSpell ? currentLanguage->on : currentLanguage->off );
+                      currentLanguage->off );
             break ;
         }
-        // Info
-        case GUI_VAL_BATTERY_VOLTAGE :
+        case VPP_BEEP :
         {
-            // Compute integer part and mantissa of voltage value, adding 50mV
-            // to mantissa for rounding to nearest integer
-            uint16_t volt  = ( last_state.v_bat + 50 ) / 1000 ;
-            uint16_t mvolt = ( ( last_state.v_bat - volt * 1000 ) + 50 ) / 100 ;
-            snprintf( valueBuffer , valueBufferSize , "%d.%dV" , volt, mvolt );
+            snprintf( valueBuffer , valueBufferSize , "%s" ,
+                      currentLanguage->beep );
             break ;
         }
-        case GUI_VAL_BATTERY_CHARGE :
-        {
-            snprintf( valueBuffer , valueBufferSize , "%d%%" ,
-                      last_state.charge );
-            break ;
-        }
-        case GUI_VAL_RSSI :
-        {
-            snprintf( valueBuffer , valueBufferSize , "%.1fdBm" ,
-                      last_state.rssi );
-            break ;
-        }
-        case GUI_VAL_USED_HEAP :
-        {
-            snprintf( valueBuffer , valueBufferSize , "%dB" ,
-                      getHeapSize() - getCurrentFreeHeap() );
-            break ;
-        }
-        case GUI_VAL_BAND :
-        {
-            hwInfo_t* hwinfo = (hwInfo_t*)platform_getHwInfo();
-            snprintf( valueBuffer , valueBufferSize , "%s %s" ,
-                      hwinfo->vhf_band ? currentLanguage->VHF : "" , hwinfo->uhf_band ? currentLanguage->UHF : "" );
-            break ;
-        }
-        case GUI_VAL_VHF :
-        {
-            hwInfo_t* hwinfo = (hwInfo_t*)platform_getHwInfo();
-            snprintf( valueBuffer , valueBufferSize , "%d - %d" ,
-                      hwinfo->vhf_minFreq, hwinfo->vhf_maxFreq );
-            break ;
-        }
-        case GUI_VAL_UHF :
-        {
-            hwInfo_t* hwinfo = (hwInfo_t*)platform_getHwInfo();
-            snprintf( valueBuffer , valueBufferSize , "%d - %d" ,
-                      hwinfo->uhf_minFreq, hwinfo->uhf_maxFreq );
-            break ;
-        }
-        case GUI_VAL_HW_VERSION :
-        {
-            hwInfo_t* hwinfo = (hwInfo_t*)platform_getHwInfo();
-            snprintf( valueBuffer , valueBufferSize , "%d" ,
-                      hwinfo->hw_version );
-            break ;
-        }
-#ifdef PLATFORM_TTWRPLUS
-        case GUI_VAL_RADIO :
-        {
-            //@@@KL Populate
-            break ;
-        }
-        case GUI_VAL_RADIO_FW :
-        {
-            //@@@KL Populate
-            break ;
-        }
-#endif // PLATFORM_TTWRPLUS
-        // Default
         default :
         {
-            valueBuffer[ 0 ] = '?' ;
-            valueBuffer[ 1 ] = '\0' ;
+            snprintf( valueBuffer , valueBufferSize , "%d" ,
+                      ( value - VPP_BEEP ) );
             break ;
         }
     }
+}
 
+static void GuiVal_Phonetic( GuiState_st* guiState ,
+                             uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+
+    snprintf( valueBuffer , valueBufferSize , "%s" ,
+              last_state.settings.vpPhoneticSpell ? currentLanguage->on : currentLanguage->off );
+}
+
+// Info
+static void GuiVal_BatteryVoltage( GuiState_st* guiState ,
+                                   uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+
+    // Compute integer part and mantissa of voltage value, adding 50mV
+    // to mantissa for rounding to nearest integer
+    uint16_t volt  = ( last_state.v_bat + 50 ) / 1000 ;
+    uint16_t mvolt = ( ( last_state.v_bat - volt * 1000 ) + 50 ) / 100 ;
+    snprintf( valueBuffer , valueBufferSize , "%d.%dV" , volt, mvolt );
+}
+
+static void GuiVal_BatteryCharge( GuiState_st* guiState ,
+                                  uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+
+    snprintf( valueBuffer , valueBufferSize , "%d%%" , last_state.charge );
+}
+
+static void GuiVal_Rssi( GuiState_st* guiState ,
+                         uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+
+    snprintf( valueBuffer , valueBufferSize , "%.1fdBm" , last_state.rssi );
+}
+
+static void GuiVal_UsedHeap( GuiState_st* guiState ,
+                             uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+
+    snprintf( valueBuffer , valueBufferSize , "%dB" , getHeapSize() - getCurrentFreeHeap() );
+}
+
+static void GuiVal_Band( GuiState_st* guiState ,
+                         uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+
+    hwInfo_t* hwinfo = (hwInfo_t*)platform_getHwInfo();
+    snprintf( valueBuffer , valueBufferSize , "%s %s" ,
+              hwinfo->vhf_band ? currentLanguage->VHF : "" , hwinfo->uhf_band ? currentLanguage->UHF : "" );
+}
+
+static void GuiVal_Vhf( GuiState_st* guiState ,
+                        uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+
+    hwInfo_t* hwinfo = (hwInfo_t*)platform_getHwInfo();
+    snprintf( valueBuffer , valueBufferSize , "%d - %d" ,
+              hwinfo->vhf_minFreq, hwinfo->vhf_maxFreq );
+}
+
+static void GuiVal_Uhf( GuiState_st* guiState ,
+                        uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+
+    hwInfo_t* hwinfo = (hwInfo_t*)platform_getHwInfo();
+    snprintf( valueBuffer , valueBufferSize , "%d - %d" ,
+              hwinfo->uhf_minFreq, hwinfo->uhf_maxFreq );
+}
+
+static void GuiVal_HwVersion( GuiState_st* guiState ,
+                              uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+
+    hwInfo_t* hwinfo = (hwInfo_t*)platform_getHwInfo();
+    snprintf( valueBuffer , valueBufferSize , "%d" , hwinfo->hw_version );
+}
+
+#ifdef PLATFORM_TTWRPLUS
+static void GuiVal_Radio( GuiState_st* guiState ,
+                          uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+    (void)valueBufferSize ;
+    (void)valueBuffer ;
+    //@@@KL Populate
+}
+
+static void GuiVal_RadioFw( GuiState_st* guiState ,
+                            uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+    (void)valueBufferSize ;
+    (void)valueBuffer ;
+    //@@@KL Populate
+}
+#endif // PLATFORM_TTWRPLUS
+
+// Default
+static void GuiVal_Stubbed( GuiState_st* guiState ,
+                            uint8_t      valueBufferSize , char* valueBuffer )
+{
+    (void)guiState ;
+    (void)valueBufferSize ;
+
+    valueBuffer[ 0 ] = '?' ;
+    valueBuffer[ 1 ] = '\0' ;
 }
 
 #define PAGE_DESC_DEF( loc )    { loc , sizeof( loc ) / sizeof( loc[ 0 ] ) }

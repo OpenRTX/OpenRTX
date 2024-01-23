@@ -86,6 +86,7 @@ enum
     GUI_CMD_LINK_END        , // 0x08
     GUI_CMD_VALUE           , // 0x09
     GUI_CMD_LINE_END = 0x0A , // 0x0A
+    GUI_CMD_STUBBED  = 0x1E , // 0x1E
     GUI_CMD_PAGE_END = 0x1F , // 0x1F
     GUI_CMD_NUM_OF
 };
