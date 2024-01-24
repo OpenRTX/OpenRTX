@@ -364,20 +364,26 @@ static const uint8_t Page_SettingsDisplay_N[] =
     'D','i','s','p','l','a','y' , GUI_CMD_NULL ,
     GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_1 ) ,
 #ifdef SCREEN_BRIGHTNESS
+    GUI_CMD_SELECT ,
     GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'B','r','i','g','h','t','n','e','s','s' , GUI_CMD_NULL ,
     GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_SCREEN_BRIGHTNESS ) ,
+    GUI_CMD_SELECT_END ,
     GUI_CMD_LINE_END ,
 #endif // SCREEN_BRIGHTNESS
 #ifdef SCREEN_CONTRAST
+    GUI_CMD_SELECT ,
     GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'C','o','n','t','r','a','s','t' , GUI_CMD_NULL ,
     GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_SCREEN_CONTRAST ) ,
+    GUI_CMD_SELECT_END ,
     GUI_CMD_LINE_END ,
 #endif // SCREEN_CONTRAST
+    GUI_CMD_SELECT ,
     GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'T','i','m','e','r' , GUI_CMD_NULL ,
     GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_TIMER ) ,
+    GUI_CMD_SELECT_END ,
     GUI_CMD_PAGE_END
 };
 
@@ -745,8 +751,9 @@ static bool GuiCmd_AlignCenter( GuiState_st* guiState );
 static bool GuiCmd_AlignRight( GuiState_st* guiState );
 static bool GuiCmd_Text( GuiState_st* guiState );
 static bool GuiCmd_Title( GuiState_st* guiState );
+static bool GuiCmd_Select( GuiState_st* guiState );
 static bool GuiCmd_Link( GuiState_st* guiState );
-static bool GuiCmd_LinkEnd( GuiState_st* guiState );
+static bool GuiCmd_SelectEnd( GuiState_st* guiState );
 static bool GuiCmd_Value( GuiState_st* guiState );
 static bool GuiCmd_LineEnd( GuiState_st* guiState );
 static bool GuiCmd_Page_End( GuiState_st* guiState );
@@ -767,11 +774,11 @@ static const ui_GuiCmd_fn ui_GuiCmd_Table[ GUI_CMD_NUM_OF ] =
     GuiCmd_AlignRight  , // 0x04
     GuiCmd_Text        , // 0x05
     GuiCmd_Title       , // 0x06
-    GuiCmd_Link        , // 0x07
-    GuiCmd_LinkEnd     , // 0x08
-    GuiCmd_Value       , // 0x09
+    GuiCmd_Select      , // 0x07
+    GuiCmd_Link        , // 0x08
+    GuiCmd_SelectEnd   , // 0x09
     GuiCmd_LineEnd     , // 0x0A
-    GuiCmd_Stubbed     , // 0x0B
+    GuiCmd_Value       , // 0x0B
     GuiCmd_Stubbed     , // 0x0C
     GuiCmd_Stubbed     , // 0x0D
     GuiCmd_Stubbed     , // 0x0E
@@ -800,10 +807,10 @@ bool ui_DisplayPage( GuiState_st* guiState , uiPageNum_en pageNum )
     uint16_t count ;
     uint8_t  cmd ;
     bool     exit ;
-    bool     pageDisplayed = false ; // display via legacy fn
+    bool     pageDisplayed = false ;
 
     guiState->layout.printDisplayOn            = true ;
-    guiState->layout.inLink                    = false ;
+    guiState->layout.inSelect                  = false ;
 
     pgNum = pageNum ;
 
@@ -1002,7 +1009,7 @@ static bool GuiCmd_Text( GuiState_st* guiState )
 
     if( guiState->layout.printDisplayOn )
     {
-        if( guiState->layout.inLink )
+        if( guiState->layout.inSelect )
         {
             color_text = color_bg ;
             // Draw rectangle under selected item, compensating for text height
@@ -1020,16 +1027,9 @@ static bool GuiCmd_Text( GuiState_st* guiState )
 
 }
 
-static bool GuiCmd_Link( GuiState_st* guiState )
+static bool GuiCmd_Select( GuiState_st* guiState )
 {
-    uint8_t val ;
     bool    pageEnd = false ;
-
-    guiState->page.index++ ;
-
-    val = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
-
-(void)val ;//@@@KL
 
     guiState->page.index++ ;
 
@@ -1048,28 +1048,45 @@ static bool GuiCmd_Link( GuiState_st* guiState )
     }
 
     guiState->layout.printDisplayOn = false ;
-    guiState->layout.inLink         = false ;
+    guiState->layout.inSelect       = false ;
 
     if( (   guiState->layout.itemIndex >= guiState->layout.scrollOffset ) &&
         ( ( guiState->layout.itemIndex  - guiState->layout.scrollOffset )  < guiState->layout.numOfEntries ) )
     {
         if( guiState->layout.itemIndex == guiState->uiState.menu_selected )
         {
-            guiState->layout.inLink = true ;
+            guiState->layout.inSelect = true ;
         }
         guiState->layout.printDisplayOn = true ;
     }
 
     return pageEnd ;
+
 }
 
-static bool GuiCmd_LinkEnd( GuiState_st* guiState )
+static bool GuiCmd_Link( GuiState_st* guiState )
+{
+    uint8_t val ;
+    bool    pageEnd ;
+
+    guiState->page.index++ ;
+
+    val = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+
+(void)val ;//@@@KL
+
+    pageEnd = GuiCmd_Select( guiState );
+
+    return pageEnd ;
+}
+
+static bool GuiCmd_SelectEnd( GuiState_st* guiState )
 {
     bool pageEnd  = false ;
 
     guiState->page.index++ ;
 
-    guiState->layout.inLink = false ;
+    guiState->layout.inSelect = false ;
 
     guiState->layout.itemIndex++ ;
 
@@ -1079,18 +1096,29 @@ static bool GuiCmd_LinkEnd( GuiState_st* guiState )
 
 static bool GuiCmd_Value( GuiState_st* guiState )
 {
-    char     valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
-    color_t  color_fg ;
-    bool     pageEnd   = false ;
+    char    valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
+    color_t color_fg ;
+    color_t color_bg ;
+    color_t color_text ;
+    bool    pageEnd   = false ;
 
     guiState->page.index++ ;
 
     GuiCmd_GetValue( guiState , MAX_ENTRY_LEN , valueBuffer );
 
     uiColorLoad( &color_fg , COLOR_FG );
+    uiColorLoad( &color_bg , COLOR_BG );
+    color_text = color_fg ;
 
-    gfx_print( guiState->layout.line.pos , guiState->layout.menu_font ,
-               guiState->layout.align , color_fg , valueBuffer );
+    if( guiState->layout.printDisplayOn )
+    {
+        if( guiState->layout.inSelect )
+        {
+            color_text = color_bg ;
+        }
+        gfx_print( guiState->layout.line.pos , guiState->layout.menu_font ,
+                   guiState->layout.align , color_text , valueBuffer );
+    }
 
     GuiCmd_AdvToNextCmd( guiState );
 
@@ -2945,7 +2973,7 @@ static void ui_InitGuiStateLayout( Layout_st* layout )
     layout->mode_font_small         = SCREEN_MODE_FONT_SMALL ;
 
     layout->printDisplayOn          = true ;
-    layout->inLink                  = false ;
+    layout->inSelect                = false ;
 }
 
 void ui_drawSplashScreen( void )
