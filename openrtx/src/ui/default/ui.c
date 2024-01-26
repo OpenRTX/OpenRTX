@@ -217,33 +217,33 @@ static const uint8_t Page_MenuItems_N[] =
     'M','e','n','u' , GUI_CMD_NULL ,
     GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_1 ) ,
     GUI_CMD_ALIGN_LEFT ,
-    GUI_CMD_LINK , ST_VAL( PAGE_MENU_BANK ) ,
+    GUI_CMD_LINK_PAGE , ST_VAL( PAGE_MENU_BANK ) ,
     GUI_CMD_TEXT , 'B','a','n','k','s' , GUI_CMD_NULL ,
     GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
-    GUI_CMD_LINK , ST_VAL( PAGE_MENU_CHANNEL ) ,
+    GUI_CMD_LINK_PAGE , ST_VAL( PAGE_MENU_CHANNEL ) ,
     GUI_CMD_TEXT , 'C','h','a','n','n','e','l','s' , GUI_CMD_NULL ,
     GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
-    GUI_CMD_LINK , ST_VAL( PAGE_MENU_CONTACTS ) ,
+    GUI_CMD_LINK_PAGE , ST_VAL( PAGE_MENU_CONTACTS ) ,
     GUI_CMD_TEXT , 'C','o','n','t','a','c','t','s' , GUI_CMD_NULL ,
     GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
 #ifdef GPS_PRESENT
-    GUI_CMD_LINK , ST_VAL( PAGE_MENU_GPS ) ,
+    GUI_CMD_LINK_PAGE , ST_VAL( PAGE_MENU_GPS ) ,
     GUI_CMD_TEXT , 'G','P','S' , GUI_CMD_NULL ,
     GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
 #endif // RTC_PRESENT
-    GUI_CMD_LINK , ST_VAL( PAGE_MENU_SETTINGS ) ,
+    GUI_CMD_LINK_PAGE , ST_VAL( PAGE_MENU_SETTINGS ) ,
     GUI_CMD_TEXT , 'S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
     GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
-    GUI_CMD_LINK , ST_VAL( PAGE_MENU_INFO ) ,
+    GUI_CMD_LINK_PAGE , ST_VAL( PAGE_MENU_INFO ) ,
     GUI_CMD_TEXT , 'I','n','f','o' , GUI_CMD_NULL ,
     GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
-    GUI_CMD_LINK , ST_VAL( PAGE_MENU_ABOUT ) ,
+    GUI_CMD_LINK_PAGE , ST_VAL( PAGE_MENU_ABOUT ) ,
     GUI_CMD_TEXT , 'A','b','o','u','t' , GUI_CMD_NULL ,
     GUI_CMD_LINK_END ,
     GUI_CMD_PAGE_END
@@ -290,35 +290,35 @@ static const uint8_t Page_MenuSettings_N[] =
     'S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
     GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_1 ) ,
     GUI_CMD_ALIGN_LEFT ,
-    GUI_CMD_LINK , ST_VAL( PAGE_SETTINGS_DISPLAY ) ,
+    GUI_CMD_LINK_PAGE , ST_VAL( PAGE_SETTINGS_DISPLAY ) ,
     GUI_CMD_TEXT , 'D','i','s','p','l','a','y' , GUI_CMD_NULL ,
     GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
 #ifdef RTC_PRESENT
-    GUI_CMD_LINK , ST_VAL( PAGE_SETTINGS_TIMEDATE ) ,
+    GUI_CMD_LINK_PAGE , ST_VAL( PAGE_SETTINGS_TIMEDATE ) ,
     GUI_CMD_TEXT , 'T','i','m','e',' ','&',' ','D','a','t','e' , GUI_CMD_NULL ,
     GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
 #endif // RTC_PRESENT
 #ifdef GPS_PRESENT
-    GUI_CMD_LINK , ST_VAL( PAGE_SETTINGS_GPS ) ,
+    GUI_CMD_LINK_PAGE , ST_VAL( PAGE_SETTINGS_GPS ) ,
     GUI_CMD_TEXT , 'G','P','S' , GUI_CMD_NULL ,
     GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
 #endif // GPS_PRESENT
-    GUI_CMD_LINK , ST_VAL( PAGE_SETTINGS_RADIO ) ,
+    GUI_CMD_LINK_PAGE , ST_VAL( PAGE_SETTINGS_RADIO ) ,
     GUI_CMD_TEXT , 'R','a','d','i','o' , GUI_CMD_NULL ,
     GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
-    GUI_CMD_LINK , ST_VAL( PAGE_SETTINGS_M17 ) ,
+    GUI_CMD_LINK_PAGE , ST_VAL( PAGE_SETTINGS_M17 ) ,
     GUI_CMD_TEXT , 'M','1','7' , GUI_CMD_NULL ,
     GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
-    GUI_CMD_LINK , ST_VAL( PAGE_SETTINGS_VOICE ) ,
+    GUI_CMD_LINK_PAGE , ST_VAL( PAGE_SETTINGS_VOICE ) ,
     GUI_CMD_TEXT , 'A','c','c','e','s','s','i','b','i','l','i','t','y' , GUI_CMD_NULL ,
     GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
-    GUI_CMD_LINK , ST_VAL( PAGE_SETTINGS_RESET_TO_DEFAULTS ) ,
+    GUI_CMD_LINK_PAGE , ST_VAL( PAGE_SETTINGS_RESET_TO_DEFAULTS ) ,
     GUI_CMD_TEXT , 'D','e','f','a','u','l','t',' ','S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
     GUI_CMD_LINK_END ,
     GUI_CMD_PAGE_END
@@ -364,26 +364,26 @@ static const uint8_t Page_SettingsDisplay_N[] =
     'D','i','s','p','l','a','y' , GUI_CMD_NULL ,
     GUI_CMD_GO_TO_LINE , ST_VAL( GUI_LINE_1 ) ,
 #ifdef SCREEN_BRIGHTNESS
-    GUI_CMD_SELECT ,
+    GUI_CMD_LINK_VALUE ,
     GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'B','r','i','g','h','t','n','e','s','s' , GUI_CMD_NULL ,
     GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_SCREEN_BRIGHTNESS ) ,
-    GUI_CMD_SELECT_END ,
+    GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
 #endif // SCREEN_BRIGHTNESS
 #ifdef SCREEN_CONTRAST
-    GUI_CMD_SELECT ,
+    GUI_CMD_LINK_VALUE ,
     GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'C','o','n','t','r','a','s','t' , GUI_CMD_NULL ,
     GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_SCREEN_CONTRAST ) ,
-    GUI_CMD_SELECT_END ,
+    GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
 #endif // SCREEN_CONTRAST
-    GUI_CMD_SELECT ,
+    GUI_CMD_LINK_VALUE ,
     GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'T','i','m','e','r' , GUI_CMD_NULL ,
     GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_TIMER ) ,
-    GUI_CMD_SELECT_END ,
+    GUI_CMD_LINK_END ,
     GUI_CMD_PAGE_END
 };
 
@@ -751,14 +751,15 @@ static bool GuiCmd_AlignCenter( GuiState_st* guiState );
 static bool GuiCmd_AlignRight( GuiState_st* guiState );
 static bool GuiCmd_Text( GuiState_st* guiState );
 static bool GuiCmd_Title( GuiState_st* guiState );
-static bool GuiCmd_Select( GuiState_st* guiState );
-static bool GuiCmd_Link( GuiState_st* guiState );
-static bool GuiCmd_SelectEnd( GuiState_st* guiState );
-static bool GuiCmd_Value( GuiState_st* guiState );
+static bool GuiCmd_LinkPage( GuiState_st* guiState );
+static bool GuiCmd_LinkValue( GuiState_st* guiState );
+static bool GuiCmd_LinkEnd( GuiState_st* guiState );
 static bool GuiCmd_LineEnd( GuiState_st* guiState );
+static bool GuiCmd_Value( GuiState_st* guiState );
 static bool GuiCmd_Page_End( GuiState_st* guiState );
 static bool GuiCmd_Stubbed( GuiState_st* guiState );
 
+static bool GuiCmd_Select( GuiState_st* guiState );
 static void GuiCmd_AdvToNextCmd( GuiState_st* guiState );
 static void GuiCmd_GetValue( GuiState_st* guiState ,
                              uint8_t      valueBufferSize , char* valueBuffer );
@@ -774,9 +775,9 @@ static const ui_GuiCmd_fn ui_GuiCmd_Table[ GUI_CMD_NUM_OF ] =
     GuiCmd_AlignRight  , // 0x04
     GuiCmd_Text        , // 0x05
     GuiCmd_Title       , // 0x06
-    GuiCmd_Select      , // 0x07
-    GuiCmd_Link        , // 0x08
-    GuiCmd_SelectEnd   , // 0x09
+    GuiCmd_LinkPage    , // 0x07
+    GuiCmd_LinkValue   , // 0x08
+    GuiCmd_LinkEnd     , // 0x09
     GuiCmd_LineEnd     , // 0x0A
     GuiCmd_Value       , // 0x0B
     GuiCmd_Stubbed     , // 0x0C
@@ -1027,44 +1028,7 @@ static bool GuiCmd_Text( GuiState_st* guiState )
 
 }
 
-static bool GuiCmd_Select( GuiState_st* guiState )
-{
-    bool    pageEnd = false ;
-
-    guiState->page.index++ ;
-
-    if( guiState->layout.itemIndex == 0 )
-    {
-        // Number of menu entries that fit in the screen height
-        guiState->layout.numOfEntries = ( SCREEN_HEIGHT - 1 - guiState->layout.line.pos.y ) /
-                                        guiState->layout.menu_h + 1 ;
-    }
-
-    // If selection is off the screen, scroll screen
-    if( guiState->uiState.menu_selected >= guiState->layout.numOfEntries )
-    {
-        guiState->layout.scrollOffset = guiState->uiState.menu_selected -
-                                        guiState->layout.numOfEntries + 1 ;
-    }
-
-    guiState->layout.printDisplayOn = false ;
-    guiState->layout.inSelect       = false ;
-
-    if( (   guiState->layout.itemIndex >= guiState->layout.scrollOffset ) &&
-        ( ( guiState->layout.itemIndex  - guiState->layout.scrollOffset )  < guiState->layout.numOfEntries ) )
-    {
-        if( guiState->layout.itemIndex == guiState->uiState.menu_selected )
-        {
-            guiState->layout.inSelect = true ;
-        }
-        guiState->layout.printDisplayOn = true ;
-    }
-
-    return pageEnd ;
-
-}
-
-static bool GuiCmd_Link( GuiState_st* guiState )
+static bool GuiCmd_LinkPage( GuiState_st* guiState )
 {
     uint8_t val ;
     bool    pageEnd ;
@@ -1075,12 +1039,25 @@ static bool GuiCmd_Link( GuiState_st* guiState )
 
 (void)val ;//@@@KL
 
+    guiState->page.index++ ;
+
     pageEnd = GuiCmd_Select( guiState );
 
     return pageEnd ;
 }
 
-static bool GuiCmd_SelectEnd( GuiState_st* guiState )
+static bool GuiCmd_LinkValue( GuiState_st* guiState )
+{
+    bool pageEnd ;
+
+    guiState->page.index++ ;
+
+    pageEnd = GuiCmd_Select( guiState );
+
+    return pageEnd ;
+}
+
+static bool GuiCmd_LinkEnd( GuiState_st* guiState )
 {
     bool pageEnd  = false ;
 
@@ -1158,6 +1135,41 @@ static bool GuiCmd_Stubbed( GuiState_st* guiState )
     printf( "Cmd Stubbed" );
 
     guiState->page.index++ ;
+
+    return pageEnd ;
+
+}
+
+static bool GuiCmd_Select( GuiState_st* guiState )
+{
+    bool    pageEnd = false ;
+
+    if( guiState->layout.itemIndex == 0 )
+    {
+        // Number of menu entries that fit in the screen height
+        guiState->layout.numOfEntries = ( SCREEN_HEIGHT - 1 - guiState->layout.line.pos.y ) /
+                                        guiState->layout.menu_h + 1 ;
+    }
+
+    // If selection is off the screen, scroll screen
+    if( guiState->uiState.menu_selected >= guiState->layout.numOfEntries )
+    {
+        guiState->layout.scrollOffset = guiState->uiState.menu_selected -
+                                        guiState->layout.numOfEntries + 1 ;
+    }
+
+    guiState->layout.printDisplayOn = false ;
+    guiState->layout.inSelect       = false ;
+
+    if( (   guiState->layout.itemIndex >= guiState->layout.scrollOffset ) &&
+        ( ( guiState->layout.itemIndex  - guiState->layout.scrollOffset )  < guiState->layout.numOfEntries ) )
+    {
+        if( guiState->layout.itemIndex == guiState->uiState.menu_selected )
+        {
+            guiState->layout.inSelect = true ;
+        }
+        guiState->layout.printDisplayOn = true ;
+    }
 
     return pageEnd ;
 
