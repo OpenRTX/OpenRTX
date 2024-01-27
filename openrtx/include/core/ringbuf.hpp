@@ -175,6 +175,20 @@ public:
         pthread_mutex_unlock(&mutex);
     }
 
+    /**
+     * Reset the buffer to its empty state discarding all the elements stored.
+     *
+     * Note: reset is "lazy", as it just sets read pointer, write pointer and
+     * number of elements to zero. No actual erasure of the stored elements is
+     * done until they are effectively overwritten by new push()es.
+     */
+    void reset()
+    {
+        readPos     = 0;
+        writePos    = 0;
+        numElements = 0;
+    }
+
 private:
 
     size_t readPos;      ///< Read pointer.
