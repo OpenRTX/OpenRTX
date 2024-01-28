@@ -59,7 +59,7 @@ void adc1_terminate()
 
 uint16_t adc1_getRawSample(uint8_t ch)
 {
-    if(ch > 15) return 0;
+    if(ch > 18) return 0;
 
     pthread_mutex_lock(&adcMutex);
 
@@ -85,4 +85,32 @@ uint16_t adc1_getMeasurement(uint8_t ch)
      */
     uint32_t sample = (adc1_getRawSample(ch) << 4) * 3300;
     return ((uint16_t) (sample >> 16));
+}
+
+uint16_t adc1_getVBatMeasurement()
+{
+    pthread_mutex_lock(&adcMutex);
+    ADC123_COMMON->CCR |= ADC_CCR_VBATE; /* Connect VBAT to ADC */
+
+#if defined(STM32F405xx) | defined(STM32F407xx) \
+    | defined(STM32F413xx) | defined(STM32F415xx) | defined(STM32F417xx)
+    uint8_t div = 2;
+
+#else /* All other MCU from the F4 family */
+    /* Back-up the state of the temeprature sensor and VREF bit*/
+    bool tsvrefe = ADC123_COMMON & ADC_CCR_TSVREFE_Msk;
+    ADC123_COMMON->CCR ~= ~ADC_CCR_TSVREFE;
+    uint8_t div = 4;
+#endif
+
+    uint16_t value = adc1_getMeasurement(18) * div;
+
+    ADC123_COMMON->CCR &= ~ADC_CCR_VBATE;
+#if !defined(STM32F405xx) && !defined(STM32F407xx) \
+    && !defined(STM32F413xx) && !defined(STM32F415xx) && !defined(STM32F417xx)
+    if(tsvrefe)
+        ADC123_COMMON->CCR |= ADC_CCR_TSVREFE;
+#endif
+
+    return value;
 }

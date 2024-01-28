@@ -69,6 +69,8 @@ uint16_t adc1_getRawSample(uint8_t ch);
  */
 uint16_t adc1_getMeasurement(uint8_t ch);
 
+uint16_t adc1_getVBatMeasurement();
+
 #ifdef __cplusplus
 }
 #endif
