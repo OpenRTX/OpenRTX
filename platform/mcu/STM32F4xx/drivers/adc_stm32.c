@@ -107,10 +107,23 @@ uint16_t adcStm32_sample(const struct Adc *adc, const uint32_t channel)
 
     ADC_TypeDef *pAdc = ((ADC_TypeDef *) adc->priv);
 
+    /* Channel 18 is Vbat, enable it if requested */
+    if(channel == 18)
+        ADC123_COMMON->CCR |= ADC_CCR_VBATE;
+
     pAdc->SQR3 = channel;
     pAdc->CR2 |= ADC_CR2_SWSTART;
 
     while((pAdc->SR & ADC_SR_EOC) == 0) ;
 
-    return pAdc->DR;
+    uint16_t value = pAdc->DR;
+
+    /* Disconnect Vbat channel. Vbat has an internal x2 voltage divider */
+    if(channel == 18)
+    {
+        value *= 2;
+        ADC123_COMMON->CCR &= ~ADC_CCR_VBATE;
+    }
+
+    return value;
 }
