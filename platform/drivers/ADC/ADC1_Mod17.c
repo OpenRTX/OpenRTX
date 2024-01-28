@@ -64,14 +64,27 @@ void adc1_terminate()
 
 uint16_t adc1_getRawSample(uint8_t ch)
 {
-    if(ch > 15) return 0;
+    if(ch > 18)
+        return 0;
 
     pthread_mutex_lock(&adcMutex);
+
+    /* Channel 18 is Vbat, enable it if requested */
+    if(ch == 18)
+        ADC123_COMMON->CCR |= ADC_CCR_VBATE;
+
 
     ADC1->SQR3 = ch;
     ADC1->CR2 |= ADC_CR2_SWSTART;
     while((ADC1->SR & ADC_SR_EOC) == 0) ;
     uint16_t value = ADC1->DR;
+
+    /* Disconnect Vbat channel. Vbat has an internal x2 voltage divider */
+    if(ch == 18)
+    {
+        value *= 2;
+        ADC123_COMMON->CCR &= ~ADC_CCR_VBATE;
+    }
 
     pthread_mutex_unlock(&adcMutex);
 
