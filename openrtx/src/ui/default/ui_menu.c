@@ -36,7 +36,8 @@
 #include <SA8x8.h>
 #endif
 
-extern bool ui_DisplayPage( GuiState_st* guiState , uiPageNum_en pageNum );
+extern bool  ui_DisplayPage( GuiState_st* guiState , uiPageNum_en pageNum );
+extern char* uiGetPageTextString( uiPageNum_en pageNum , uint8_t textStringIndex );
 
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBottom( GuiState_st* guiState , Event_st* event );
@@ -239,7 +240,8 @@ void _ui_drawMenuList( GuiState_st* guiState , EntryName_en currentEntry )
 
         // Call function pointer to get current menu entry string
         result = (*getCurrentEntry)( entryBuf , sizeof( entryBuf ) ,
-                                     guiState->layout.itemIndex + guiState->layout.scrollOffset );
+                                     guiState->layout.itemIndex +
+                                     guiState->layout.scrollOffset );
 
         if( result != -1 )
         {
@@ -358,7 +360,8 @@ int _ui_getMenuTopEntryName( char* buf , uint8_t max_len , uint8_t index )
     {
         return -1;
     }
-    snprintf( buf , max_len , "%s" , Page_MenuItems[ index ] );
+    snprintf( buf , max_len , "%s" , uiGetPageTextString( PAGE_MENU_TOP , index ) );
+
     return 0;
 }
 
@@ -368,7 +371,8 @@ int _ui_getSettingsEntryName( char* buf , uint8_t max_len , uint8_t index )
     {
         return -1;
     }
-    snprintf( buf , max_len , "%s" , Page_MenuSettings[ index ] );
+    snprintf( buf , max_len , "%s" , uiGetPageTextString( PAGE_MENU_SETTINGS , index ) );
+
     return 0;
 }
 
@@ -378,7 +382,8 @@ int _ui_getDisplayEntryName( char* buf , uint8_t max_len , uint8_t index )
     {
         return -1;
     }
-    snprintf( buf , max_len , "%s" , Page_SettingsDisplay[index]);
+    snprintf( buf , max_len , "%s" , uiGetPageTextString( PAGE_SETTINGS_DISPLAY , index ) );
+
     return 0;
 }
 
@@ -422,7 +427,8 @@ int _ui_getSettingsGPSEntryName( char* buf , uint8_t max_len , uint8_t index )
     {
         return -1 ;
     }
-    snprintf( buf , max_len , "%s" , Page_SettingsGPS[ index ] );
+    snprintf( buf , max_len , "%s" , uiGetPageTextString( PAGE_SETTINGS_GPS , index ) );
+
     return 0 ;
 }
 
@@ -477,7 +483,8 @@ int _ui_getRadioEntryName( char* buf , uint8_t max_len , uint8_t index )
     {
         return -1 ;
     }
-    snprintf( buf , max_len , "%s" , Page_SettingsRadio[ index ] );
+    snprintf( buf , max_len , "%s" , uiGetPageTextString( PAGE_SETTINGS_RADIO , index ) );
+
     return 0 ;
 }
 
@@ -527,7 +534,8 @@ int _ui_getM17EntryName( char* buf , uint8_t max_len , uint8_t index )
     {
        return -1 ;
     }
-    snprintf( buf , max_len , "%s" , Page_SettingsM17[ index ] );
+    snprintf( buf , max_len , "%s" , uiGetPageTextString( PAGE_SETTINGS_M17 , index ) );
+
     return 0;
 }
 
@@ -566,7 +574,8 @@ int _ui_getVoiceEntryName( char* buf , uint8_t max_len , uint8_t index )
     {
         return -1 ;
     }
-    snprintf( buf , max_len , "%s" , Page_SettingsVoice[ index ] );
+    snprintf( buf , max_len , "%s" , uiGetPageTextString( PAGE_SETTINGS_VOICE , index ) );
+
     return 0 ;
 }
 
@@ -617,7 +626,8 @@ int _ui_getBackupRestoreEntryName( char* buf , uint8_t max_len , uint8_t index )
     {
         return -1;
     }
-    snprintf( buf , max_len , "%s" , Page_MenuBackupRestore[index]);
+    snprintf( buf , max_len , "%s" , uiGetPageTextString( PAGE_MENU_BACKUP_RESTORE , index ) );
+
     return 0;
 }
 
@@ -627,7 +637,8 @@ int _ui_getInfoEntryName( char* buf , uint8_t max_len , uint8_t index )
     {
         return -1;
     }
-    snprintf( buf , max_len , "%s" , Page_MenuInfo[index]);
+    snprintf( buf , max_len , "%s" , uiGetPageTextString( PAGE_MENU_INFO , index ) );
+
     return 0;
 }
 

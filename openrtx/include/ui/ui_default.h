@@ -232,6 +232,13 @@ typedef enum
     M17_CAN_RX
 }SettingsM17Items_en;
 
+typedef enum
+{
+    LINK_TYPE_NONE  ,
+    LINK_TYPE_PAGE  ,
+    LINK_TYPE_VALUE
+}LinkType_en;
+
 enum
 {
     MAX_SCRIPT_DEPTH = 5
@@ -320,6 +327,8 @@ typedef struct
 {
     uint8_t         num[ MAX_SCRIPT_DEPTH ] ;
     uint8_t         level ;
+    uint8_t         linkType ;
+    uint8_t         linkNum ;
     uint8_t*        ptr ;
     uint16_t        index ;
 }Page_st;
@@ -337,17 +346,6 @@ typedef struct
 extern GuiState_st      GuiState ;
 extern State_st         last_state ;
 extern bool             macro_latched ;
-extern const char*      Page_MenuItems[] ;
-extern const char*      Page_MenuSettings[] ;
-extern const char*      Page_SettingsDisplay[] ;
-extern const char*      Page_SettingsGPS[] ;
-extern const char*      Page_SettingsRadio[] ;
-extern const char*      Page_SettingsM17[] ;
-extern const char*      Page_SettingsVoice[] ;
-
-extern const char*      Page_MenuBackupRestore[] ;
-extern const char*      Page_MenuInfo[] ;
-extern const char*      authors[] ;
 
 // Color Variable Field Unshifted Masks and Shifts
 enum
