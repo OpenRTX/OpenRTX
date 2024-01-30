@@ -122,16 +122,24 @@ void display_render(void *fb)
 
 void display_setContrast(uint8_t contrast)
 {
-    gpio_clearPin(LCD_CS);
-
-    gpio_clearPin(LCD_RS);             /* RS low -> command mode              */
-    (void) spi2_sendRecv(0x81);        /* Set Electronic Volume               */
-    (void) spi2_sendRecv(contrast);    /* Controller contrast range is 0 - 63 */
-
-    gpio_setPin(LCD_CS);
+    /* OLED display do not have contrast regulation */
+    (void) contrast;
 }
 
 void display_setBacklightLevel(uint8_t level)
 {
-    (void) level;
+    /*
+     * Module17 uses an OLED display, so contrast channel is actually controlling
+     * the brightness. The usable range is 0 - 128, above which there is no
+     * noticeable change in the brightness level (already at maximum).
+     */
+    uint16_t bl = (level * 128) / 100;
+
+    gpio_clearPin(LCD_CS);
+
+    gpio_clearPin(LCD_RS);             /* RS low -> command mode    */
+    (void) spi2_sendRecv(0x81);        /* Contrast control register */
+    (void) spi2_sendRecv(bl);
+
+    gpio_setPin(LCD_CS);
 }

@@ -88,9 +88,7 @@ const char *settings_items[] =
 
 const char *display_items[] =
 {
-#ifdef CONFIG_SCREEN_CONTRAST
-    "Contrast",
-#endif
+    "Brightness",
     "Timer"
 };
 
@@ -502,15 +500,18 @@ void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx)
     }
 }
 
-void _ui_changeContrast(int variation)
+static void _ui_changeBrightness(int variation)
 {
-    if(variation >= 0)
-        state.settings.contrast =
-        (255 - state.settings.contrast < variation) ? 255 : state.settings.contrast + variation;
-    else
-        state.settings.contrast =
-        (state.settings.contrast < -variation) ? 0 : state.settings.contrast + variation;
-    display_setContrast(state.settings.contrast);
+    // Avoid rollover if current value is zero.
+    if((state.settings.brightness == 0) && (variation < 0))
+        return;
+
+    // Cap max brightness to 100
+    if((state.settings.brightness == 100) && (variation > 0))
+        return;
+
+    state.settings.brightness += variation;
+    display_setBacklightLevel(state.settings.brightness);
 }
 
 void _ui_changeTimer(int variation)
@@ -929,11 +930,9 @@ void ui_updateFSM(bool *sync_rtx)
                 {
                     switch(ui_state.menu_selected)
                     {
-#ifdef CONFIG_SCREEN_CONTRAST
-                        case D_CONTRAST:
-                            _ui_changeContrast(-4);
+                        case D_BRIGHTNESS:
+                            _ui_changeBrightness(-5);
                             break;
-#endif
                         case D_TIMER:
                             _ui_changeTimer(-1);
                             break;
@@ -945,11 +944,9 @@ void ui_updateFSM(bool *sync_rtx)
                 {
                     switch(ui_state.menu_selected)
                     {
-#ifdef CONFIG_SCREEN_CONTRAST
-                        case D_CONTRAST:
-                            _ui_changeContrast(+4);
+                        case D_BRIGHTNESS:
+                            _ui_changeBrightness(+5);
                             break;
-#endif
                         case D_TIMER:
                             _ui_changeTimer(+1);
                             break;
