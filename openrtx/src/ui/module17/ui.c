@@ -89,7 +89,6 @@ const char *settings_items[] =
 const char *display_items[] =
 {
     "Brightness",
-    "Timer"
 };
 
 const char *m17_items[] =
@@ -187,10 +186,6 @@ layout_t layout;
 state_t last_state;
 static ui_state_t ui_state;
 static bool layout_ready = false;
-static bool redraw_needed = true;
-
-static bool standby = false;
-static long long last_event_tick = 0;
 
 // UI event queue
 static uint8_t evQueue_rdPos;
@@ -302,8 +297,6 @@ layout_t _ui_calculateLayout()
 
 void ui_init()
 {
-    last_event_tick = getTick();
-    redraw_needed = true;
     layout = _ui_calculateLayout();
     layout_ready = true;
     // Initialize struct ui_state to all zeroes
@@ -512,79 +505,6 @@ static void _ui_changeBrightness(int variation)
 
     state.settings.brightness += variation;
     display_setBacklightLevel(state.settings.brightness);
-}
-
-void _ui_changeTimer(int variation)
-{
-    if ((state.settings.display_timer == TIMER_OFF && variation < 0) ||
-        (state.settings.display_timer == TIMER_1H && variation > 0))
-    {
-        return;
-    }
-
-    state.settings.display_timer += variation;
-}
-
-bool _ui_checkStandby(long long time_since_last_event)
-{
-    if (standby)
-    {
-        return false;
-    }
-
-    switch (state.settings.display_timer)
-    {
-    case TIMER_OFF:
-        return false;
-    case TIMER_5S:
-    case TIMER_10S:
-    case TIMER_15S:
-    case TIMER_20S:
-    case TIMER_25S:
-    case TIMER_30S:
-        return time_since_last_event >=
-            (5000 * state.settings.display_timer);
-    case TIMER_1M:
-    case TIMER_2M:
-    case TIMER_3M:
-    case TIMER_4M:
-    case TIMER_5M:
-        return time_since_last_event >=
-            (60000 * (state.settings.display_timer - (TIMER_1M - 1)));
-    case TIMER_15M:
-    case TIMER_30M:
-    case TIMER_45M:
-        return time_since_last_event >=
-            (60000 * 15 * (state.settings.display_timer - (TIMER_15M - 1)));
-    case TIMER_1H:
-        return time_since_last_event >= 60 * 60 * 1000;
-    }
-
-    // unreachable code
-    return false;
-}
-
-void _ui_enterStandby()
-{
-    if(standby)
-        return;
-
-    standby = true;
-    redraw_needed = false;
-    display_setBacklightLevel(0);
-}
-
-bool _ui_exitStandby(long long now)
-{
-    last_event_tick = now;
-
-    if(!standby)
-        return false;
-
-    standby = false;
-    redraw_needed = true;
-    display_setBacklightLevel(state.settings.brightness);
-    return true;
 }
 
 void _ui_changeCAN(int variation)
@@ -796,22 +716,11 @@ void ui_updateFSM(bool *sync_rtx)
     event_t event   = evQueue[evQueue_rdPos];
     evQueue_rdPos   = newTail;
 
-    // There is some event to process, we need an UI redraw.
-    // UI redraw request is cancelled if we're in standby mode.
-    redraw_needed = true;
-    if(standby) redraw_needed = false;
-
-    long long now = getTick();
     // Process pressed keys
     if(event.type == EVENT_KBD)
     {
         kbd_msg_t msg;
         msg.value = event.payload;
-
-        // If we get out of standby, we ignore the kdb event
-        // unless is the MONI key for the MACRO functions
-        if (_ui_exitStandby(now) && !(msg.keys & KEY_MONI))
-            return;
 
         switch(state.ui_screen)
         {
@@ -933,9 +842,6 @@ void ui_updateFSM(bool *sync_rtx)
                         case D_BRIGHTNESS:
                             _ui_changeBrightness(-5);
                             break;
-                        case D_TIMER:
-                            _ui_changeTimer(-1);
-                            break;
                         default:
                             state.ui_screen = SETTINGS_DISPLAY;
                     }
@@ -946,9 +852,6 @@ void ui_updateFSM(bool *sync_rtx)
                     {
                         case D_BRIGHTNESS:
                             _ui_changeBrightness(+5);
-                            break;
-                        case D_TIMER:
-                            _ui_changeTimer(+1);
                             break;
                         default:
                             state.ui_screen = SETTINGS_DISPLAY;
@@ -1136,26 +1039,10 @@ void ui_updateFSM(bool *sync_rtx)
                 break;
         }
     }
-    else if(event.type == EVENT_STATUS)
-    {
-        if (platform_getPttStatus() || rtx_rxSquelchOpen())
-        {
-            _ui_exitStandby(now);
-            return;
-        }
-
-        if (_ui_checkStandby(now - last_event_tick))
-        {
-            _ui_enterStandby();
-        }
-    }
 }
 
 bool ui_updateGUI()
 {
-    if(redraw_needed == false)
-        return false;
-
     if(!layout_ready)
     {
         layout = _ui_calculateLayout();
@@ -1202,7 +1089,6 @@ bool ui_updateGUI()
             break;
     }
 
-    redraw_needed = false;
     return true;
 }
 

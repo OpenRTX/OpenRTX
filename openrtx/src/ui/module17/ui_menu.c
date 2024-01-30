@@ -180,10 +180,6 @@ int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
         case D_BRIGHTNESS:
             value = last_state.settings.brightness;
             break;
-        case D_TIMER:
-            snprintf(buf, max_len, "%s",
-                     display_timer_values[last_state.settings.display_timer]);
-            return 0;
     }
     snprintf(buf, max_len, "%d", value);
     return 0;

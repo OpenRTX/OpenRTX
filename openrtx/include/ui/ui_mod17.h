@@ -108,8 +108,7 @@ enum backupRestoreItems
 
 enum displayItems
 {
-    D_BRIGHTNESS = 0,
-    D_TIMER
+    D_BRIGHTNESS = 0
 };
 
 #ifdef CONFIG_GPS
