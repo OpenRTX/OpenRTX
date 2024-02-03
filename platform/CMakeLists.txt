@@ -23,6 +23,7 @@ set(mdx_sources
 set(md3x0_includes targets/MD-3x0)
 set(md3x0_defines -DPLATFORM_MD3x0 -Dtimegm=mktime)
 set(md3x0_sources
+    ${mdx_sources}
     # MD-3x0 sources
     drivers/CPS/cps_io_native_MD3x0.c
     drivers/NVM/nvmem_MD3x0.c
@@ -39,6 +40,7 @@ set(md3x0_sources
 set(mduv3x0_includes targets/MD-UV3x0)
 set(mduv3x0_defines -DPLATFORM_MDUV3x0 -Dtimegm=mktime)
 set(mduv3x0_sources
+    ${mdx_sources}
     # MD-UV3x0
     drivers/CPS/cps_io_native_MDUV3x0.c
     drivers/NVM/nvmem_MDUV3x0.c
@@ -52,6 +54,22 @@ set(mduv3x0_sources
     drivers/keyboard/keyboard_MD3x.c
     targets/MD-UV3x0/platform.c
 )
+
+set(md9600_includes targets/MD-9600)
+set(md9600_defines -DPLATFORM_MD9600)
+set(md9600_sources
+    ${mdx_sources}
+    # MD-9600
+    drivers/CPS/cps_io_native_MD9600.c
+    drivers/NVM/nvmem_MD9600.c
+    drivers/NVM/spiFlash_MD9600.c
+    drivers/baseband/radio_MD9600.cpp
+    drivers/chSelector/chSelector_MD9600.c
+    drivers/display/ST7567_MD9600.c
+    drivers/keyboard/keyboard_MD9600.c
+    targets/MD-9600/platform.c
+)
+
 
 set(stm32f405_includes
     mcu/CMSIS/Device/ST/STM32F4xx/Include
@@ -116,16 +134,23 @@ target_link_libraries(Platform PUBLIC Core)
 
 if(OPENRTX_TARGET STREQUAL "md3x0")
 
-    target_sources(Platform PRIVATE ${mdx_sources} ${md3x0_sources} ${stm32f405_sources})
+    target_sources(Platform PRIVATE ${md3x0_sources} ${stm32f405_sources})
     target_include_directories(Platform PUBLIC ${md3x0_includes} ${stm32f405_includes})
     target_compile_definitions(Platform PUBLIC ${md3x0_defines} ${stm32f405_defines})
     target_link_libraries(Platform PUBLIC Miosix)
 
 elseif(OPENRTX_TARGET STREQUAL "mduv3x0")
 
-    target_sources(Platform PRIVATE ${mdx_sources} ${mduv3x0_sources} ${stm32f405_sources})
+    target_sources(Platform PRIVATE ${mduv3x0_sources} ${stm32f405_sources})
     target_include_directories(Platform PUBLIC ${mduv3x0_includes} ${stm32f405_includes})
     target_compile_definitions(Platform PUBLIC ${mduv3x0_defines} ${stm32f405_defines})
+    target_link_libraries(Platform PUBLIC Miosix qdec)
+
+elseif(OPENRTX_TARGET STREQUAL "md9600")
+
+    target_sources(Platform PRIVATE ${md9600_sources} ${stm32f405_sources})
+    target_include_directories(Platform PUBLIC ${md9600_includes} ${stm32f405_includes})
+    target_compile_definitions(Platform PUBLIC ${md9600_defines} ${stm32f405_defines})
     target_link_libraries(Platform PUBLIC Miosix qdec)
 
 elseif(OPENRTX_TARGET STREQUAL "linux")
