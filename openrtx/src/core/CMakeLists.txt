@@ -15,6 +15,7 @@ set(SOURCE_FILES
   graphics.c
   input.c
   memory_profiling.cpp
+  nvmem_access.c
   openrtx.c
   queue.c
   state.c
