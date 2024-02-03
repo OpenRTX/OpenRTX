@@ -9,6 +9,10 @@ set(general_includes
     drivers/chSelector
 )
 
+##
+## TYT MDx family
+##
+
 set(mdx_sources
     # MDx source
     drivers/ADC/ADC1_MDx.c
@@ -19,6 +23,102 @@ set(mdx_sources
     drivers/baseband/HR_Cx000.cpp
     drivers/tones/toneGenerator_MDx.cpp
 )
+
+##
+## GDx family: Radioddity GD-77 and Baofeng DM-1801
+##
+
+set(gdx_sources
+    drivers/NVM/W25Qx.c
+    drivers/NVM/AT24Cx_GDx.c
+    drivers/NVM/spiFlash_GDx.c
+    drivers/NVM/nvmem_GDx.c
+    drivers/CPS/cps_io_native_GDx.c
+    drivers/ADC/ADC0_GDx.c
+    drivers/backlight/backlight_GDx.c
+    drivers/baseband/radio_GDx.cpp
+    drivers/baseband/HR_Cx000.cpp
+    drivers/baseband/AT1846S_GDx.cpp
+    drivers/baseband/HR_C6000_GDx.cpp
+    drivers/display/UC1701_GDx.c
+    drivers/keyboard/keyboard_GDx.c
+    drivers/audio/audio_GDx.c
+)
+
+##
+## STM32F405
+##
+
+set(stm32f405_includes
+    mcu/CMSIS/Device/ST/STM32F4xx/Include
+    mcu/CMSIS/Include
+    mcu/STM32F4xx
+    mcu/STM32F4xx/drivers
+    mcu/STM32F4xx/drivers/usb
+)
+
+set(stm32f405_defines -DSTM32F405xx -DHSE_VALUE=8000000)
+set(stm32f405_sources
+    # STM32
+    mcu/STM32F4xx/boot/startup.cpp
+    mcu/STM32F4xx/boot/bsp.cpp
+    mcu/STM32F4xx/boot/libc_integration.cpp
+    mcu/STM32F4xx/drivers/usb/usb_bsp.c
+    mcu/STM32F4xx/drivers/usb/usb_core.c
+    mcu/STM32F4xx/drivers/usb/usb_dcd.c
+    mcu/STM32F4xx/drivers/usb/usb_dcd_int.c
+    mcu/STM32F4xx/drivers/usb/usbd_desc.c
+    mcu/STM32F4xx/drivers/usb/usbd_core.c
+    mcu/STM32F4xx/drivers/usb/usbd_ioreq.c
+    mcu/STM32F4xx/drivers/usb/usbd_req.c
+    mcu/STM32F4xx/drivers/usb/usbd_usr.c
+    mcu/STM32F4xx/drivers/gpio.c
+    mcu/STM32F4xx/drivers/usb_vcom.c
+    mcu/STM32F4xx/drivers/delays.cpp
+    mcu/STM32F4xx/drivers/rtc.c
+    mcu/STM32F4xx/drivers/SPI2.c
+    mcu/STM32F4xx/drivers/USART3.cpp
+    mcu/STM32F4xx/drivers/flash.c
+    drivers/audio/stm32_dac.cpp
+    drivers/audio/stm32_adc.cpp
+    drivers/audio/stm32_pwm.cpp
+    mcu/CMSIS/Device/ST/STM32F4xx/Source/system_stm32f4xx.c
+)
+
+##
+## MK22FN512
+##
+
+set(mk22fn512_sources 
+    mcu/MK22FN512xxx12/boot/startup.cpp
+    mcu/MK22FN512xxx12/boot/bsp.cpp
+    mcu/MK22FN512xxx12/boot/libc_integration.cpp
+    mcu/MK22FN512xxx12/drivers/gpio.c
+    mcu/MK22FN512xxx12/drivers/delays.cpp
+    mcu/MK22FN512xxx12/drivers/I2C0.c
+    mcu/MK22FN512xxx12/drivers/rng.c
+    mcu/MK22FN512xxx12/drivers/usb/usb_device_cdc_acm.c
+    mcu/MK22FN512xxx12/drivers/usb/usb_device_ch9.c
+    mcu/MK22FN512xxx12/drivers/usb/usb_device_dci.c
+    mcu/MK22FN512xxx12/drivers/usb/usb_device_descriptor.c
+    mcu/MK22FN512xxx12/drivers/usb/usb_device_khci.c
+    mcu/MK22FN512xxx12/drivers/usb/usb_osa_bm.c
+    mcu/MK22FN512xxx12/drivers/usb_vcom.c
+    mcu/CMSIS/Device/NXP/MK22FN512xxx12/Source/system_MK22F51212.c
+)
+
+set(mk22fn512_includes
+    mcu/CMSIS/Include
+    mcu/CMSIS/Device/NXP/MK22FN512xxx12/Include
+    mcu/MK22FN512xxx12
+    mcu/MK22FN512xxx12/drivers
+)
+
+set(mk22fn512_defines )
+
+##
+## Board specific
+##
 
 set(md3x0_includes targets/MD-3x0)
 set(md3x0_defines -DPLATFORM_MD3x0 -Dtimegm=mktime)
@@ -70,41 +170,15 @@ set(md9600_sources
     targets/MD-9600/platform.c
 )
 
-
-set(stm32f405_includes
-    mcu/CMSIS/Device/ST/STM32F4xx/Include
-    mcu/CMSIS/Include
-    mcu/STM32F4xx
-    mcu/STM32F4xx/drivers
-    mcu/STM32F4xx/drivers/usb
-)
-
-set(stm32f405_defines -DSTM32F405xx -DHSE_VALUE=8000000)
-set(stm32f405_sources
-    # STM32
-    mcu/STM32F4xx/boot/startup.cpp
-    mcu/STM32F4xx/boot/bsp.cpp
-    mcu/STM32F4xx/boot/libc_integration.cpp
-    mcu/STM32F4xx/drivers/usb/usb_bsp.c
-    mcu/STM32F4xx/drivers/usb/usb_core.c
-    mcu/STM32F4xx/drivers/usb/usb_dcd.c
-    mcu/STM32F4xx/drivers/usb/usb_dcd_int.c
-    mcu/STM32F4xx/drivers/usb/usbd_desc.c
-    mcu/STM32F4xx/drivers/usb/usbd_core.c
-    mcu/STM32F4xx/drivers/usb/usbd_ioreq.c
-    mcu/STM32F4xx/drivers/usb/usbd_req.c
-    mcu/STM32F4xx/drivers/usb/usbd_usr.c
-    mcu/STM32F4xx/drivers/gpio.c
-    mcu/STM32F4xx/drivers/usb_vcom.c
-    mcu/STM32F4xx/drivers/delays.cpp
-    mcu/STM32F4xx/drivers/rtc.c
-    mcu/STM32F4xx/drivers/SPI2.c
-    mcu/STM32F4xx/drivers/USART3.cpp
-    mcu/STM32F4xx/drivers/flash.c
-    drivers/audio/stm32_dac.cpp
-    drivers/audio/stm32_adc.cpp
-    drivers/audio/stm32_pwm.cpp
-    mcu/CMSIS/Device/ST/STM32F4xx/Source/system_stm32f4xx.c
+##
+## Radioddity GD-77
+##
+set(gd77_includes targets/GD-77)
+set(gd77_defines -DPLATFORM_GD77)
+set(gd77_sources
+    ${gdx_sources}
+    # GD-77
+    targets/GD-77/platform.c
 )
 
 set(linux_sources
@@ -151,6 +225,13 @@ elseif(OPENRTX_TARGET STREQUAL "md9600")
     target_sources(Platform PRIVATE ${md9600_sources} ${stm32f405_sources})
     target_include_directories(Platform PUBLIC ${md9600_includes} ${stm32f405_includes})
     target_compile_definitions(Platform PUBLIC ${md9600_defines} ${stm32f405_defines})
+    target_link_libraries(Platform PUBLIC Miosix qdec)
+
+elseif(OPENRTX_TARGET STREQUAL "gd77")
+
+    target_sources(Platform PRIVATE ${gd77_sources} ${mk22fn512_sources})
+    target_include_directories(Platform PUBLIC ${gd77_includes} ${mk22fn512_includes})
+    target_compile_definitions(Platform PUBLIC ${gd77_defines} ${mk22fn512_defines})
     target_link_libraries(Platform PUBLIC Miosix qdec)
 
 elseif(OPENRTX_TARGET STREQUAL "linux")
