@@ -93,7 +93,9 @@ set(linux_sources
     drivers/CPS/cps_io_libc.c
     drivers/GPS/GPS_linux.c
     drivers/NVM/nvmem_linux.c
+    drivers/NVM/posix_file.c
     drivers/audio/audio_linux.c
+    drivers/audio/file_source.c
     drivers/baseband/radio_linux.cpp
     drivers/display/display_libSDL.c
     drivers/keyboard/keyboard_linux.c
