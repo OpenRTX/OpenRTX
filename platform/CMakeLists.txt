@@ -181,6 +181,17 @@ set(gd77_sources
     targets/GD-77/platform.c
 )
 
+##
+## Baofeng DM-1801
+##
+set(dm1801_includes targets/DM-1801)
+set(dm1801_defines -DPLATFORM_DM1801)
+set(dm1801_sources
+    ${gdx_sources}
+    # GD-77
+    targets/DM-1801/platform.c
+)
+
 set(linux_sources
     drivers/CPS/cps_io_libc.c
     drivers/GPS/GPS_linux.c
@@ -232,6 +243,13 @@ elseif(OPENRTX_TARGET STREQUAL "gd77")
     target_sources(Platform PRIVATE ${gd77_sources} ${mk22fn512_sources})
     target_include_directories(Platform PUBLIC ${gd77_includes} ${mk22fn512_includes})
     target_compile_definitions(Platform PUBLIC ${gd77_defines} ${mk22fn512_defines})
+    target_link_libraries(Platform PUBLIC Miosix qdec)
+
+elseif(OPENRTX_TARGET STREQUAL "dm1801")
+
+    target_sources(Platform PRIVATE ${dm1801_sources} ${mk22fn512_sources})
+    target_include_directories(Platform PUBLIC ${dm1801_includes} ${mk22fn512_includes})
+    target_compile_definitions(Platform PUBLIC ${dm1801_defines} ${mk22fn512_defines})
     target_link_libraries(Platform PUBLIC Miosix qdec)
 
 elseif(OPENRTX_TARGET STREQUAL "linux")
