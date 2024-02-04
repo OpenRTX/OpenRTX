@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: install-deps
@@ -49,7 +49,7 @@ jobs:
           meson compile -C build_arm openrtx_gd77_wrap
           meson compile -C build_arm openrtx_dm1801_wrap
           meson compile -C build_arm openrtx_mod17_wrap
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: release-bins
           path: |
@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: install-deps
