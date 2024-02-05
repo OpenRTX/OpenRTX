@@ -138,7 +138,7 @@ subdir('lib/miosix-kernel')
 ##
 ## Current git commit or tag
 ##
-r = run_command('git', 'describe', '--tags', '--dirty')
+r = run_command('git', 'describe', '--tags', '--dirty', '--always')
 if r.returncode() != 0
   # it failed
 endif
