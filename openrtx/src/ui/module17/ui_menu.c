@@ -112,16 +112,16 @@ void _ui_drawMenuList(uint8_t selected, EntryName_en currentEntry )
 {
     GetMenuList_fn getCurrentEntry = GetEntryName_table[ currentEntry ];
 
-    point_t pos = layout.line_1.pos;
+    Pos_st pos = layout.lines[ GUI_LINE_1 ].pos;
     // Number of menu entries that fit in the screen height
     uint8_t entries_in_screen = (SCREEN_HEIGHT - 1 - pos.y) / layout.menu_h + 1;
     uint8_t scroll = 0;
     char entry_buf[MAX_ENTRY_LEN] = "";
-    color_t color_fg ;
+    Color_st color_fg ;
     uiColorLoad( &color_fg , COLOR_FG );
-    color_t color_bg ;
+    Color_st color_bg ;
     uiColorLoad( &color_bg , COLOR_BG );
-    color_t text_color = color_fg ;
+    Color_st text_color = color_fg ;
 
     for(int item=0, result=0; (result == 0) && (pos.y < SCREEN_HEIGHT); item++)
     {
@@ -137,10 +137,10 @@ void _ui_drawMenuList(uint8_t selected, EntryName_en currentEntry )
             {
                 text_color = color_bg;
                 // Draw rectangle under selected item, compensating for text height
-                point_t rect_pos = {0, pos.y - layout.menu_h + 3};
+                Pos_st rect_pos = {0, pos.y - layout.menu_h + 3};
                 gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.menu_h, color_fg, true);
             }
-            gfx_print(pos, layout.menu_font, TEXT_ALIGN_LEFT, text_color, entry_buf);
+            gfx_print(pos, layout.menu_font.size, ALIGN_LEFT, text_color, entry_buf);
             pos.y += layout.menu_h;
         }
     }
@@ -162,17 +162,17 @@ void _ui_drawMenuListValue( UI_State_st* ui_state , uint8_t selected ,
     GetMenuList_fn getCurrentEntry = GetEntryName_table[ currentEntry ];
     GetMenuList_fn getCurrentValue = GetEntryValue_table[ currentEntryValue ];
 
-    point_t pos = layout.line_1.pos;
+    Pos_st pos = layout.lines[ GUI_LINE_1 ].pos;
     // Number of menu entries that fit in the screen height
     uint8_t entries_in_screen = (SCREEN_HEIGHT - 1 - pos.y) / layout.menu_h + 1;
     uint8_t scroll = 0;
     char entry_buf[MAX_ENTRY_LEN] = "";
     char value_buf[MAX_ENTRY_LEN] = "";
-    color_t color_fg ;
+    Color_st color_fg ;
     uiColorLoad( &color_fg , COLOR_FG );
-    color_t color_bg ;
+    Color_st color_bg ;
     uiColorLoad( &color_bg , COLOR_BG );
-    color_t text_color = color_fg ;
+    Color_st text_color = color_fg ;
 
     for(int item=0, result=0; (result == 0) && (pos.y < SCREEN_HEIGHT); item++)
     {
@@ -197,11 +197,11 @@ void _ui_drawMenuListValue( UI_State_st* ui_state , uint8_t selected ,
                     text_color = color_fg;
                     full_rect = false;
                 }
-                point_t rect_pos = {0, pos.y - layout.menu_h + 3};
+                Pos_st rect_pos = {0, pos.y - layout.menu_h + 3};
                 gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.menu_h, color_fg, full_rect);
             }
-            gfx_print(pos, layout.menu_font, TEXT_ALIGN_LEFT, text_color, entry_buf);
-            gfx_print(pos, layout.menu_font, TEXT_ALIGN_RIGHT, text_color, value_buf);
+            gfx_print(pos, layout.menu_font.size, ALIGN_LEFT, text_color, entry_buf);
+            gfx_print(pos, layout.menu_font.size, ALIGN_RIGHT, text_color, value_buf);
             pos.y += layout.menu_h;
         }
     }
@@ -371,12 +371,12 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
 
 void _ui_drawMenuTop(UI_State_st* ui_state)
 {
-    color_t color_fg ;
+    Color_st color_fg ;
     uiColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Menu" on top bar
-    gfx_print(layout.line_top.pos, layout.line_top.font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
               color_fg, "Menu");
     // Print menu entries
     _ui_drawMenuList(ui_state->menu_selected, ENTRY_NAME_MENU_TOP );
@@ -386,23 +386,23 @@ void _ui_drawMenuTop(UI_State_st* ui_state)
 void _ui_drawMenuGPS()
 {
     char *fix_buf, *type_buf;
-    color_t color_fg ;
+    Color_st color_fg ;
     uiColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "GPS" on top bar
-    gfx_print(layout.line_top.pos, layout.line_top.font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
               color_fg, "GPS");
-    point_t fix_pos = {layout.line_2.pos.x, SCREEN_HEIGHT * 2 / 5};
+    Pos_st fix_pos = {layout.lines[ GUI_LINE_2 ].pos.x, SCREEN_HEIGHT * 2 / 5};
     // Print GPS status, if no fix, hide details
     if(!last_state.settings.gps_enabled)
-        gfx_print(fix_pos, layout.line_3_font, TEXT_ALIGN_CENTER,
+        gfx_print(fix_pos, layout.lines[ GUI_LINE_3 ]_font, ALIGN_CENTER,
                   color_fg, "GPS OFF");
     else if (last_state.gps_data.fix_quality == 0)
-        gfx_print(fix_pos, layout.line_3_font, TEXT_ALIGN_CENTER,
+        gfx_print(fix_pos, layout.lines[ GUI_LINE_3 ]_font, ALIGN_CENTER,
                   color_fg, "No Fix");
     else if (last_state.gps_data.fix_quality == 6)
-        gfx_print(fix_pos, layout.line_3_font, TEXT_ALIGN_CENTER,
+        gfx_print(fix_pos, layout.lines[ GUI_LINE_3 ]_font, ALIGN_CENTER,
                   color_fg, "Fix Lost");
     else
     {
@@ -437,36 +437,36 @@ void _ui_drawMenuGPS()
                 type_buf = "ERROR";
                 break;
         }
-        gfx_print(layout.line_1.pos, layout.line_top.font, TEXT_ALIGN_LEFT,
+        gfx_print(layout.lines[ GUI_LINE_1 ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_LEFT,
                   color_fg, fix_buf);
-        gfx_print(layout.line_1.pos, layout.line_top.font, TEXT_ALIGN_CENTER,
+        gfx_print(layout.lines[ GUI_LINE_1 ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
                   color_fg, "N     ");
-        gfx_print(layout.line_1.pos, layout.line_top.font, TEXT_ALIGN_RIGHT,
+        gfx_print(layout.lines[ GUI_LINE_1 ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_RIGHT,
                   color_fg, "%8.6f", last_state.gps_data.latitude);
-        gfx_print(layout.line_2.pos, layout.line_top.font, TEXT_ALIGN_LEFT,
+        gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_LEFT,
                   color_fg, type_buf);
         // Convert from signed longitude, to unsigned + direction
         float longitude = last_state.gps_data.longitude;
         char *direction = (longitude < 0) ? "W     " : "E     ";
         longitude = (longitude < 0) ? -longitude : longitude;
-        gfx_print(layout.line_2.pos, layout.line_top.font, TEXT_ALIGN_CENTER,
+        gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
                   color_fg, direction);
-        gfx_print(layout.line_2.pos, layout.line_top.font, TEXT_ALIGN_RIGHT,
+        gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_RIGHT,
                   color_fg, "%8.6f", longitude);
-        gfx_print(layout.line_bottom.pos, layout.line_bottom.font, TEXT_ALIGN_CENTER,
+        gfx_print(layout.lines[ GUI_LINE_BOTTOM ].pos, layout.lines[ GUI_LINE_BOTTOM ].font, ALIGN_CENTER,
                   color_fg, "S %4.1fkm/h  A %4.1fm",
                   last_state.gps_data.speed,
                   last_state.gps_data.altitude);
     }
     // Draw compass
-    point_t compass_pos = {layout.horizontal_pad * 2, SCREEN_HEIGHT / 2};
+    Pos_st compass_pos = {layout.horizontal_pad * 2, SCREEN_HEIGHT / 2};
     gfx_drawGPScompass(compass_pos,
                        SCREEN_WIDTH / 9 + 2,
                        last_state.gps_data.tmg_true,
                        last_state.gps_data.fix_quality != 0 &&
                        last_state.gps_data.fix_quality != 6);
     // Draw satellites bar graph
-    point_t bar_pos = {layout.line_3.pos.x + SCREEN_WIDTH * 1 / 3, SCREEN_HEIGHT / 2};
+    Pos_st bar_pos = {layout.lines[ GUI_LINE_3 ].pos.x + SCREEN_WIDTH * 1 / 3, SCREEN_HEIGHT / 2};
     gfx_drawGPSgraph(bar_pos,
                      (SCREEN_WIDTH * 2 / 3) - layout.horizontal_pad,
                      SCREEN_HEIGHT / 3,
@@ -477,12 +477,12 @@ void _ui_drawMenuGPS()
 
 void _ui_drawMenuSettings(UI_State_st* ui_state)
 {
-    color_t color_fg ;
+    Color_st color_fg ;
     uiColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Settings" on top bar
-    gfx_print(layout.line_top.pos, layout.line_top.font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
               color_fg, "Settings");
     // Print menu entries
     _ui_drawMenuList(ui_state->menu_selected, ENTRY_NAME_SETTINGS );
@@ -490,12 +490,12 @@ void _ui_drawMenuSettings(UI_State_st* ui_state)
 
 void _ui_drawMenuInfo(UI_State_st* ui_state)
 {
-    color_t color_fg ;
+    Color_st color_fg ;
     uiColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Info" on top bar
-    gfx_print(layout.line_top.pos, layout.line_top.font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
               color_fg, "Info");
     // Print menu entries
     _ui_drawMenuListValue(ui_state, ui_state->menu_selected,
@@ -504,20 +504,20 @@ void _ui_drawMenuInfo(UI_State_st* ui_state)
 
 void _ui_drawMenuAbout()
 {
-    color_t color_fg ;
+    Color_st color_fg ;
     uiColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
 
-    point_t openrtx_pos = {layout.horizontal_pad, layout.line_3.height};
-    gfx_print(openrtx_pos, layout.line_3_font, TEXT_ALIGN_CENTER, color_fg,
+    Pos_st openrtx_pos = {layout.horizontal_pad, layout.lines[ GUI_LINE_3 ].height};
+    gfx_print(openrtx_pos, layout.lines[ GUI_LINE_3 ]_font, ALIGN_CENTER, color_fg,
               "OpenRTX");
 
     uint8_t line_h = layout.menu_h;
-    point_t pos = {SCREEN_WIDTH / 7, SCREEN_HEIGHT - (line_h * (author_num - 1)) - 5};
+    Pos_st pos = {SCREEN_WIDTH / 7, SCREEN_HEIGHT - (line_h * (author_num - 1)) - 5};
     for(int author = 0; author < author_num; author++)
     {
-        gfx_print(pos, layout.line_top.font, TEXT_ALIGN_LEFT,
+        gfx_print(pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_LEFT,
                   color_fg, "%s", authors[author]);
         pos.y += line_h;
     }
@@ -525,12 +525,12 @@ void _ui_drawMenuAbout()
 
 void _ui_drawSettingsDisplay(UI_State_st* ui_state)
 {
-    color_t color_fg ;
+    Color_st color_fg ;
     uiColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Display" on top bar
-    gfx_print(layout.line_top.pos, layout.line_top.font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
               color_fg, "Display");
     // Print display settings entries
     _ui_drawMenuListValue(ui_state, ui_state->menu_selected,
@@ -540,12 +540,12 @@ void _ui_drawSettingsDisplay(UI_State_st* ui_state)
 #ifdef GPS_PRESENT
 void _ui_drawSettingsGPS(UI_State_st* ui_state)
 {
-    color_t color_fg ;
+    Color_st color_fg ;
     uiColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "GPS Settings" on top bar
-    gfx_print(layout.line_top.pos, layout.line_top.font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
               color_fg, "GPS Settings");
     // Print display settings entries
     _ui_drawMenuListValue(ui_state, ui_state->menu_selected,
@@ -556,20 +556,20 @@ void _ui_drawSettingsGPS(UI_State_st* ui_state)
 #ifdef RTC_PRESENT
 void _ui_drawSettingsTimeDate()
 {
-    color_t color_fg ;
+    Color_st color_fg ;
     uiColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     datetime_t local_time = utcToLocalTime(last_state.time,
                                            last_state.settings.utc_timezone);
     // Print "Time&Date" on top bar
-    gfx_print(layout.line_top.pos, layout.line_top.font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
               color_fg, "Time&Date");
     // Print current time and date
-    gfx_print(layout.line_2.pos, layout.input_font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.input_font.size, ALIGN_CENTER,
               color_fg, "%02d/%02d/%02d",
               local_time.date, local_time.month, local_time.year);
-    gfx_print(layout.line_3.pos, layout.input_font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_3 ].pos, layout.input_font.size, ALIGN_CENTER,
               color_fg, "%02d:%02d:%02d",
               local_time.hour, local_time.minute, local_time.second);
 }
@@ -577,12 +577,12 @@ void _ui_drawSettingsTimeDate()
 void _ui_drawSettingsTimeDateSet(UI_State_st* ui_state)
 {
     (void) last_state;
-    color_t color_fg ;
+    Color_st color_fg ;
     uiColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Time&Date" on top bar
-    gfx_print(layout.line_top.pos, layout.line_top.font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
               color_fg, "Time&Date");
     if(ui_state->input_position <= 0)
     {
@@ -610,37 +610,37 @@ void _ui_drawSettingsTimeDateSet(UI_State_st* ui_state)
             ui_state->new_time_buf[pos] = input_char;
         }
     }
-    gfx_print(layout.line_2.pos, layout.input_font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.input_font.size, ALIGN_CENTER,
               color_fg, ui_state->new_date_buf);
-    gfx_print(layout.line_3.pos, layout.input_font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_3 ].pos, layout.input_font.size, ALIGN_CENTER,
               color_fg, ui_state->new_time_buf);
 }
 #endif
 
 void _ui_drawSettingsM17(UI_State_st* ui_state)
 {
-    color_t color_fg ;
+    Color_st color_fg ;
     uiColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
-    gfx_print(layout.line_top.pos, layout.line_top.font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
               color_fg, "M17 Settings");
 
     if(ui_state->edit_mode)
     {
-        gfx_printLine(1, 4, layout.line_top.height, SCREEN_HEIGHT - layout.line_bottom.height,
-                    layout.horizontal_pad, layout.menu_font,
-                    TEXT_ALIGN_LEFT, color_fg, "Callsign:");
+        gfx_printLine(1, 4, layout.lines[ GUI_LINE_TOP ].height, SCREEN_HEIGHT - layout.lines[ GUI_LINE_BOTTOM ].height,
+                    layout.horizontal_pad, layout.menu_font.size,
+                    ALIGN_LEFT, color_fg, "Callsign:");
 
         // uint16_t rect_width = SCREEN_WIDTH - (layout.horizontal_pad * 2);
-        // uint16_t rect_height = (SCREEN_HEIGHT - (layout.line_top.height + layout.line_bottom.height))/2;
-        // point_t rect_origin = {(SCREEN_WIDTH - rect_width) / 2,
+        // uint16_t rect_height = (SCREEN_HEIGHT - (layout.lines[ GUI_LINE_TOP ].height + layout.lines[ GUI_LINE_BOTTOM ].height))/2;
+        // Pos_st rect_origin = {(SCREEN_WIDTH - rect_width) / 2,
         //                        (SCREEN_HEIGHT - rect_height) / 2};
         // gfx_drawRect(rect_origin, rect_width, rect_height, color_fg, false);
         // Print M17 callsign being typed
-        gfx_printLine(1, 1, layout.line_top.height, SCREEN_HEIGHT - layout.line_bottom.height,
-                      layout.horizontal_pad, layout.input_font,
-                      TEXT_ALIGN_CENTER, color_fg, ui_state->new_callsign);
+        gfx_printLine(1, 1, layout.lines[ GUI_LINE_TOP ].height, SCREEN_HEIGHT - layout.lines[ GUI_LINE_BOTTOM ].height,
+                      layout.horizontal_pad, layout.input_font.size,
+                      ALIGN_CENTER, color_fg, ui_state->new_callsign);
     }
     else
     {
@@ -653,7 +653,7 @@ void _ui_drawSettingsModule17(UI_State_st* ui_state)
 {
     gfx_clearScreen();
     // Print "Module17 Settings" on top bar
-    gfx_print(layout.line_top.pos, layout.line_top.font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
               color_fg, "Module17 Settings");
     // Print Module17 settings entries
     _ui_drawMenuListValue(ui_state, ui_state->menu_selected,
@@ -668,21 +668,21 @@ void _ui_drawSettingsReset2Defaults(UI_State_st* ui_state)
 
     static int drawcnt = 0;
     static long long lastDraw = 0;
-    color_t color_fg ;
+    Color_st color_fg ;
     uiColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
-    gfx_print(layout.line_top.pos, layout.line_top.font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
               color_fg, "Reset to Defaults");
 
     // Make text flash yellow once every 1s
-    color_t textcolor = drawcnt % 2 == 0 ? color_fg : yellow_fab413;
-    gfx_printLine(1, 4, layout.line_top.height, SCREEN_HEIGHT - layout.line_bottom.height,
-                  layout.horizontal_pad, layout.line_top.font,
-                  TEXT_ALIGN_CENTER, textcolor, "To reset:");
-    gfx_printLine(2, 4, layout.line_top.height, SCREEN_HEIGHT - layout.line_bottom.height,
-                  layout.horizontal_pad, layout.line_top.font,
-                  TEXT_ALIGN_CENTER, textcolor, "Press Enter twice");
+    Color_st textcolor = drawcnt % 2 == 0 ? color_fg : yellow_fab413;
+    gfx_printLine(1, 4, layout.lines[ GUI_LINE_TOP ].height, SCREEN_HEIGHT - layout.lines[ GUI_LINE_BOTTOM ].height,
+                  layout.horizontal_pad, layout.lines[ GUI_LINE_TOP ].font,
+                  ALIGN_CENTER, textcolor, "To reset:");
+    gfx_printLine(2, 4, layout.lines[ GUI_LINE_TOP ].height, SCREEN_HEIGHT - layout.lines[ GUI_LINE_BOTTOM ].height,
+                  layout.horizontal_pad, layout.lines[ GUI_LINE_TOP ].font,
+                  ALIGN_CENTER, textcolor, "Press Enter twice");
 
     if((getTick() - lastDraw) > 1000)
     {

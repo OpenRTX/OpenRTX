@@ -266,7 +266,7 @@ typedef struct _usb_descriptor_endpoint
     uint8_t bmAttributes;
     uint8_t wMaxPacketSize[2];
     uint8_t bInterval;
-} usb_descriptor_endpoint_t;
+} usb_descriptor_endPos_st;
 
 typedef struct _usb_descriptor_binary_device_object_store
 {
@@ -290,7 +290,7 @@ typedef union _usb_descriptor_union
     usb_descriptor_device_t device;               /* Device descriptor */
     usb_descriptor_configuration_t configuration; /* Configuration descriptor */
     usb_descriptor_interface_t interface;         /* Interface descriptor */
-    usb_descriptor_endpoint_t endpoint;           /* Endpoint descriptor */
+    usb_descriptor_endPos_st endpoint;           /* Endpoint descriptor */
 } usb_descriptor_union_t;
 
 #endif /* __USB_SPEC_H__ */

@@ -26,7 +26,7 @@
 #include "hwconfig.h"
 #include <interfaces/platform.h>
 
-void printBits(uint16_t value, point_t pos)
+void printBits(uint16_t value, Pos_st pos)
 {
     char buf[16] = {0};
 
@@ -37,9 +37,9 @@ void printBits(uint16_t value, point_t pos)
         if(value & (1 << i)) buf[i] += 1;
     }
 
-    color_t color_fg ;
+    Color_st color_fg ;
     uiColorLoad( &color_fg , COLOR_FG );
-    gfx_print(pos, FONT_SIZE_1, TEXT_ALIGN_LEFT, color_fg, buf);
+    gfx_print(pos, FONT_SIZE_1, ALIGN_LEFT, color_fg, buf);
 }
 
 int main(void)
@@ -65,11 +65,11 @@ int main(void)
         gpio_togglePin(GREEN_LED);
         gfx_clearScreen();
 
-        point_t pos_line1 = {0, 0};
-        point_t pos_line2 = {0, 17};
-        point_t pos_line3 = {0, 35};
-        point_t pos_line4 = {0, 53};
-        point_t pos_line5 = {0, 71};
+        Pos_st pos_line1 = {0, 0};
+        Pos_st pos_line2 = {0, 17};
+        Pos_st pos_line3 = {0, 35};
+        Pos_st pos_line4 = {0, 53};
+        Pos_st pos_line5 = {0, 71};
 
         printBits((GPIOA->IDR & 0x0000FFFF), pos_line1);
         printBits((GPIOB->IDR & 0x0000FFFF), pos_line2);

@@ -94,13 +94,13 @@ static void gfxThread(void *arg)
         if(eventListener.type == SDL_QUIT) break;
 
         gfx_clearScreen();
-        point_t origin = {0, pos};
-        color_t color_op0 ;
+        Pos_st origin = {0, pos};
+        Color_st color_op0 ;
         uiColorLoad( &color_op0 , COLOR_OP0 );
-        color_t color_fg ;
+        Color_st color_fg ;
         uiColorLoad( &color_fg , COLOR_FG );
         gfx_drawRect(origin, SCREEN_WIDTH, 20, color_op0, 1);
-        gfx_print(origin, FONT_SIZE_4, TEXT_ALIGN_LEFT,
+        gfx_print(origin, FONT_SIZE_4, ALIGN_LEFT,
                   color_fg, "KEK");
         gfx_render();
         while(gfx_renderingInProgress()) ;

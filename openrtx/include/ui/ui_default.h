@@ -72,24 +72,42 @@ typedef enum
     PAGE_NUM_OF
 }uiPageNum_en;
 
+enum
+{
+    GUI_LINE_TOP     ,
+    GUI_LINE_1       ,
+    GUI_LINE_2       ,
+    GUI_LINE_3       ,
+    GUI_LINE_4       ,
+    GUI_LINE_BOTTOM  ,
+    GUI_LINE_3_LARGE ,
+    GUI_LINE_NUM_OF
+};
+
 // GUI Commands
 enum
 {
-    GUI_CMD_NULL                          , // 0x00
-    GUI_CMD_GO_TO_LINE                    , // 0x01
-    GUI_CMD_ALIGN_LEFT                    , // 0x02
-    GUI_CMD_ALIGN_CENTER                  , // 0x03
-    GUI_CMD_ALIGN_RIGHT                   , // 0x04
-    GUI_CMD_TEXT                          , // 0x05
-    GUI_CMD_TITLE                         , // 0x06
-    GUI_CMD_LINK_PAGE                     , // 0x07
-    GUI_CMD_LINK_VALUE                    , // 0x08
-    GUI_CMD_LINK_END                      , // 0x09
-    GUI_CMD_LINE_END = 0x0A               , // 0x0A
-    GUI_CMD_VALUE                         , // 0x0B
-    GUI_CMD_STUBBED  = 0x1E               , // 0x1E
-    GUI_CMD_PAGE_END = 0x1F               , // 0x1F
+    GUI_CMD_NULL         = 0x00 ,
+    GUI_CMD_LINE_STYLE   = 0x01 ,
+    GUI_CMD_ALIGN_LEFT   = 0x02 ,
+    GUI_CMD_ALIGN_CENTER = 0x03 ,
+    GUI_CMD_ALIGN_RIGHT  = 0x04 ,
+    GUI_CMD_FONT_SIZE    = 0x05 ,
+    GUI_CMD_LINE_END     = 0x0A ,
+    GUI_CMD_LINK         = 0x0B ,
+    GUI_CMD_LINK_END     = 0x0C ,
+    GUI_CMD_PAGE         = 0x0E ,
+    GUI_CMD_VALUE        = 0x0F ,
+    GUI_CMD_TITLE        = 0x10 ,
+    GUI_CMD_TEXT         = 0x11 ,
+    GUI_CMD_STUBBED      = 0x1E ,
+    GUI_CMD_PAGE_END     = 0x1F ,
     GUI_CMD_NUM_OF
+};
+
+enum
+{
+    LINK_MAX_NUM_OF = 12
 };
 
 // GUI Values
@@ -141,7 +159,9 @@ enum
 #endif // PLATFORM_TTWRPLUS
 
     GUI_VAL_STUBBED           ,
-    GUI_VAL_NUM_OF
+    GUI_VAL_NUM_OF            ,
+
+    GUI_VALUE_MAX_NUM_OF = 12
 };
 
 typedef struct
@@ -155,42 +175,6 @@ enum SetRxTx
     SET_RX ,
     SET_TX
 };
-
-// This enum is needed to have item numbers that match
-// menu elements even if some elements may be missing (GPS)
-typedef enum
-{
-    M_BANK     ,
-    M_CHANNEL  ,
-    M_CONTACTS ,
-#ifdef GPS_PRESENT
-    M_GPS      ,
-#endif
-    M_SETTINGS ,
-    M_INFO     ,
-    M_ABOUT
-}MenuItems_en;
-
-typedef enum
-{
-    S_DISPLAY = 0,
-#ifdef RTC_PRESENT
-    S_TIMEDATE,
-#endif
-#ifdef GPS_PRESENT
-    S_GPS,
-#endif
-    S_RADIO,
-    S_M17,
-    S_VOICE,
-    S_RESET2DEFAULTS,
-}SettingsItems_en;
-
-typedef enum
-{
-    BR_BACKUP  ,
-    BR_RESTORE
-}BackupRestoreItems_en;
 
 typedef enum
 {
@@ -282,11 +266,23 @@ typedef struct
 
 typedef struct
 {
-    point_t      pos ;
-    uint16_t     height ;
-    fontSize_t   font ;
-    symbolSize_t symbolSize ;
-}line_st;
+    FontSize_t size ;
+}Font_st;
+
+typedef struct
+{
+    Pos_st       pos ;
+    Pos_t        height ;
+    Align_t      align ;
+    Font_st      font ;
+    SymbolSize_t symbolSize ;
+}Line_st;
+
+typedef struct
+{
+    uint8_t type ;
+    uint8_t num ;
+}Link_st;
 
 /**
  * Struct containing a set of positions and sizes that get
@@ -296,39 +292,32 @@ typedef struct
  */
 typedef struct
 {
-    uint16_t     hline_h ;
-    uint16_t     menu_h ;
-    uint16_t     bottom_pad ;
-    uint16_t     status_v_pad ;
-    uint16_t     horizontal_pad ;
-    uint16_t     text_v_offset ;
-    uint8_t      numOfEntries ;
-    uint8_t      itemIndex ;
-    uint8_t      linkIndex ;
-    uint8_t      scrollOffset ;
-    uint8_t      align ;
-    line_st      line ;
-    line_st      line_top ;
-    line_st      line_1 ;
-    line_st      line_2 ;
-    line_st      line_3 ;
-    line_st      line_3_large ;
-    line_st      line_4 ;
-    line_st      line_bottom ;
-    fontSize_t   input_font ;
-    fontSize_t   menu_font ;
-    fontSize_t   mode_font_big ;
-    fontSize_t   mode_font_small ;
-    bool         printDisplayOn ;
-    bool         inSelect ;
+    uint16_t hline_h ;
+    uint16_t menu_h ;
+    uint16_t bottom_pad ;
+    uint16_t status_v_pad ;
+    uint16_t horizontal_pad ;
+    uint16_t text_v_offset ;
+    uint8_t  numOfEntries ;
+    uint8_t  scrollOffset ;
+    Line_st  line ;
+    Line_st  lineStyle[ GUI_LINE_NUM_OF ] ;
+    uint8_t  lineIndex ;
+    Link_st  links[ LINK_MAX_NUM_OF ] ;
+    uint8_t  linkNumOf ;
+    uint8_t  linkIndex ;
+    Font_st  input_font ;
+    Font_st  menu_font ;
+    Font_st  mode_font_big ;
+    Font_st  mode_font_small ;
+    bool     printDisplayOn ;
+    bool     inSelect ;
 }Layout_st;
 
 typedef struct
 {
     uint8_t         num[ MAX_SCRIPT_DEPTH ] ;
     uint8_t         level ;
-    uint8_t         linkType ;
-    uint8_t         linkNum ;
     uint8_t*        ptr ;
     uint16_t        index ;
 }Page_st;
@@ -343,9 +332,9 @@ typedef struct
     bool            f1Handled ;
 }GuiState_st;
 
-extern GuiState_st      GuiState ;
-extern State_st         last_state ;
-extern bool             macro_latched ;
+extern GuiState_st  GuiState ;
+extern State_st     last_state ;
+extern bool         macro_latched ;
 
 // Color Variable Field Unshifted Masks and Shifts
 enum
@@ -414,15 +403,15 @@ typedef enum
 
 }ColorSelector_en;
 
-// Load the color_t structure with the color variable fields
+// Load the Color_st structure with the color variable fields
 #define COLOR_LD( c , cv )                                                       \
-c->r     = (uint8_t)( ( cv >> COLOR_ENC_RED_SHIFT   ) & COLOR_ENC_RED_MASK   ) ; \
-c->g     = (uint8_t)( ( cv >> COLOR_ENC_GREEN_SHIFT ) & COLOR_ENC_GREEN_MASK ) ; \
-c->b     = (uint8_t)( ( cv >> COLOR_ENC_BLUE_SHIFT  ) & COLOR_ENC_BLUE_MASK  ) ; \
+c->red   = (uint8_t)( ( cv >> COLOR_ENC_RED_SHIFT   ) & COLOR_ENC_RED_MASK   ) ; \
+c->green = (uint8_t)( ( cv >> COLOR_ENC_GREEN_SHIFT ) & COLOR_ENC_GREEN_MASK ) ; \
+c->blue  = (uint8_t)( ( cv >> COLOR_ENC_BLUE_SHIFT  ) & COLOR_ENC_BLUE_MASK  ) ; \
 c->alpha = (uint8_t)( ( cv >> COLOR_ENC_ALPHA_SHIFT ) & COLOR_ENC_ALPHA_MASK ) ;
 
 // Color load fn.
-extern void uiColorLoad( color_t* color , ColorSelector_en colorSelector );
+extern void uiColorLoad( Color_st* color , ColorSelector_en colorSelector );
 
 extern const uiPageDesc_st* uiGetPageDesc( uiPageNum_en pageNum );
 extern const char**         uiGetPageLoc( uiPageNum_en pageNum );

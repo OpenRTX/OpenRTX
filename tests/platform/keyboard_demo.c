@@ -37,20 +37,20 @@ char *keys_list[] = {
 
 void *print_keys(keyboard_t keys)
 {
-    color_t color_op3 ;
+    Color_st color_op3 ;
     uiColorLoad( &color_op3 , COLOR_OP3 );
-    color_t color_op0 ;
+    Color_st color_op0 ;
     uiColorLoad( &color_op0 , COLOR_OP0 );
-    color_t color_op1 ;
+    Color_st color_op1 ;
     uiColorLoad( &color_op1 , COLOR_OP1 );
 
-    point_t origin = {0, SCREEN_HEIGHT / 4};
+    Pos_st origin = {0, SCREEN_HEIGHT / 4};
     //count set bits to check how many keys are being pressed
     int i = __builtin_popcount(keys);
     while (i > 0) {
         //position of the first set bit
         int pos = __builtin_ctz(keys);
-        gfx_print(origin, FONT_SIZE_8PT, TEXT_ALIGN_LEFT,
+        gfx_print(origin, FONT_SIZE_8PT, ALIGN_LEFT,
                   color_op1, "Pressed: %s", keys_list[pos + 1]);
         origin.y += 9;
         //unset the bit we already handled
@@ -79,12 +79,12 @@ int main(void) {
     // Initialize keyboard driver
     kbd_init();
 
-    point_t title_origin = {0, SCREEN_HEIGHT / 9};
+    Pos_st title_origin = {0, SCREEN_HEIGHT / 9};
 
     // UI update infinite loop
     while (1) {
         gfx_clearScreen();
-        gfx_print(title_origin, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
+        gfx_print(title_origin, FONT_SIZE_8PT, ALIGN_CENTER,
                   color_op0, "Keyboard demo");
         keyboard_t keys = kbd_getKeys();
         if (keys != 0)

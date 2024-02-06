@@ -41,7 +41,7 @@ int main(void)
             gfx_clearScreen();
             for(int cur=1; cur<=tot; cur++)
             {
-                gfx_printLine(cur, tot, 0, 0, 0, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
+                gfx_printLine(cur, tot, 0, 0, 0, FONT_SIZE_8PT, ALIGN_CENTER,
                               color_fg, "Line %2d of %2d", cur, tot);
             }
             gfx_render();

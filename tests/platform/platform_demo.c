@@ -30,21 +30,21 @@ void platform_test()
 {
     gpio_togglePin(GREEN_LED);
     OS_ERR os_err;
-    point_t pos_line1 = {0, 0};
-    point_t pos_line2 = {0, 9};
-    point_t pos_line3 = {0, 17};
-    color_t color_fg = {255, 255, 255};
+    Pos_st pos_line1 = {0, 0};
+    Pos_st pos_line2 = {0, 9};
+    Pos_st pos_line3 = {0, 17};
+    Color_st color_fg = {255, 255, 255};
     uiColorLoad( &color_fg , COLOR_FG );
-    gfx_print(pos_line1, FONT_SIZE_1, TEXT_ALIGN_LEFT,
+    gfx_print(pos_line1, FONT_SIZE_1, ALIGN_LEFT,
               color_fg, "Platform Test");
     float vBat = platform_getVbat();
     float micLevel = platform_getMicLevel();
     float volumeLevel = platform_getVolumeLevel();
     uint8_t currentCh = platform_getChSelector();
     bool ptt = platform_getPttStatus();
-    gfx_print(pos_line2, FONT_SIZE_1, TEXT_ALIGN_LEFT,
+    gfx_print(pos_line2, FONT_SIZE_1, ALIGN_LEFT,
               color_fg, "bat:%.2f mic:%.2f", vBat, micLevel);
-    gfx_print(pos_line3, FONT_SIZE_1, TEXT_ALIGN_LEFT,
+    gfx_print(pos_line3, FONT_SIZE_1, ALIGN_LEFT,
               color_fg, "vol:%.2f ch:%d ptt:%s", volumeLevel,
               currentCh, ptt?"on":"off");
     gfx_render();
@@ -60,8 +60,8 @@ int main(void)
     gfx_init();
     platform_setBacklightLevel(255);
 
-    point_t origin = {0, SCREEN_HEIGHT / 2};
-    color_t color_op3 ;
+    Pos_st origin = {0, SCREEN_HEIGHT / 2};
+    Color_st color_op3 ;
     uiColorLoad( &color_op3 , COLOR_OP3 );
 
     OS_ERR os_err;
@@ -70,7 +70,7 @@ int main(void)
     while(1)
     {
         gfx_clearScreen();
-        gfx_print(origin, FONT_SIZE_4, TEXT_ALIGN_CENTER,
+        gfx_print(origin, FONT_SIZE_4, ALIGN_CENTER,
                   color_op3, "OpenRTX");
         //gfx_render();
         //while(gfx_renderingInProgress());
