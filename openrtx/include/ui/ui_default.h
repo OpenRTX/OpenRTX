@@ -110,7 +110,14 @@ enum
     LINK_MAX_NUM_OF = 12
 };
 
-// GUI Values
+typedef enum
+{
+    LINK_TYPE_NONE  ,
+    LINK_TYPE_PAGE  ,
+    LINK_TYPE_VALUE
+}LinkType_en;
+
+// GUI Values - Display
 enum
 {
     GUI_VAL_BANKS             ,
@@ -164,6 +171,73 @@ enum
     GUI_VALUE_MAX_NUM_OF = 12
 };
 
+// GUI Values - Input
+typedef enum
+{
+#ifdef SCREEN_BRIGHTNESS
+    GUI_VAL_INP_BRIGHTNESS  , // D_BRIGHTNESS
+#endif
+#ifdef SCREEN_CONTRAST
+    GUI_VAL_INP_CONTRAST    , // D_CONTRAST
+#endif
+    GUI_VAL_INP_TIMER       , // D_TIMER
+#ifdef GPS_PRESENT
+    GUI_VAL_INP_ENABLED     , // G_ENABLED
+    GUI_VAL_INP_SET_TIME    , // G_SET_TIME
+    GUI_VAL_INP_TIMEZONE    , // G_TIMEZONE
+#endif
+    GUI_VAL_INP_LEVEL       , // VP_LEVEL
+    GUI_VAL_INP_PHONETIC    , // VP_PHONETIC
+    GUI_VAL_INP_OFFSET      , // R_OFFSET
+    GUI_VAL_INP_DIRECTION   , // R_DIRECTION
+    GUI_VAL_INP_STEP        , // R_STEP
+    GUI_VAL_INP_CALLSIGN    , // M17_CALLSIGN
+    GUI_VAL_INP_CAN         , // M17_CAN
+    GUI_VAL_INP_CAN_RX      , // M17_CAN_RX
+    GUI_VAL_INP_STUBBED     ,
+    GUI_VAL_INP_NUM_OF
+}uiValNum_en;
+
+typedef enum
+{
+#ifdef SCREEN_BRIGHTNESS
+    D_BRIGHTNESS ,          // GUI_VAL_INP_BRIGHTNESS
+#endif
+#ifdef SCREEN_CONTRAST
+    D_CONTRAST   ,          // GUI_VAL_INP_CONTRAST
+#endif
+    D_TIMER                 // GUI_VAL_INP_TIMER
+}DisplayItems_en;
+
+#ifdef GPS_PRESENT
+typedef enum
+{
+    G_ENABLED  ,            // GUI_VAL_INP_ENABLED
+    G_SET_TIME ,            // GUI_VAL_INP_SET_TIME
+    G_TIMEZONE              // GUI_VAL_INP_TIMEZONE
+}SettingsGPSItems_en;
+#endif
+
+typedef enum
+{
+    VP_LEVEL    ,           // GUI_VAL_INP_LEVEL
+    VP_PHONETIC             // GUI_VAL_INP_PHONETIC
+}SettingsVoicePromptItems_en;
+
+typedef enum
+{
+    R_OFFSET    ,           // GUI_VAL_INP_OFFSET
+    R_DIRECTION ,           // GUI_VAL_INP_DIRECTION
+    R_STEP                  // GUI_VAL_INP_STEP
+}SettingsRadioItems_en;
+
+typedef enum
+{
+    M17_CALLSIGN ,          // GUI_VAL_INP_CALLSIGN
+    M17_CAN      ,          // GUI_VAL_INP_CAN
+    M17_CAN_RX              // GUI_VAL_INP_CAN_RX
+}SettingsM17Items_en;
+
 typedef struct
 {
     const char** loc ;
@@ -175,53 +249,6 @@ enum SetRxTx
     SET_RX ,
     SET_TX
 };
-
-typedef enum
-{
-#ifdef SCREEN_BRIGHTNESS
-    D_BRIGHTNESS ,
-#endif
-#ifdef SCREEN_CONTRAST
-    D_CONTRAST   ,
-#endif
-    D_TIMER
-}DisplayItems_en;
-
-#ifdef GPS_PRESENT
-typedef enum
-{
-    G_ENABLED  ,
-    G_SET_TIME ,
-    G_TIMEZONE
-}SettingsGPSItems_en;
-#endif
-
-typedef enum
-{
-    VP_LEVEL    ,
-    VP_PHONETIC
-}SettingsVoicePromptItems_en;
-
-typedef enum
-{
-    R_OFFSET    ,
-    R_DIRECTION ,
-    R_STEP
-}SettingsRadioItems_en;
-
-typedef enum
-{
-    M17_CALLSIGN ,
-    M17_CAN      ,
-    M17_CAN_RX
-}SettingsM17Items_en;
-
-typedef enum
-{
-    LINK_TYPE_NONE  ,
-    LINK_TYPE_PAGE  ,
-    LINK_TYPE_VALUE
-}LinkType_en;
 
 enum
 {

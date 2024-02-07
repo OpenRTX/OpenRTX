@@ -170,6 +170,8 @@ extern void ui_drawMenuItem( GuiState_st* guiState , char* entryBuf );
 
 extern const char* display_timer_values[];
 
+static void ui_InputValue( GuiState_st* guiState , uiValNum_en valueNum , int32_t value );
+
 //@@@KL change all strings over to use englishStrings in EnglishStrings.h
 
 static const uint8_t Page_MainVFO[] =
@@ -3426,14 +3428,14 @@ static bool ui_updateFSM_PAGE_MAIN_MEM( GuiState_st* guiState )
                 // Save selected dst ID and disable input mode
                 strncpy( state.settings.m17_dest , guiState->uiState.new_callsign , 10 );
                 guiState->uiState.edit_mode = false ;
-                sync_rtx           = true ;
+                sync_rtx                    = true ;
             }
             else if( guiState->msg.keys & KEY_HASH )
             {
                 // Save selected dst ID and disable input mode
                 strncpy( state.settings.m17_dest , "" , 1 );
                 guiState->uiState.edit_mode = false;
-                sync_rtx           = true;
+                sync_rtx                    = true;
             }
             else if( guiState->msg.keys & KEY_ESC )
             {
@@ -3895,23 +3897,20 @@ static bool ui_updateFSM_PAGE_SETTINGS_DISPLAY( GuiState_st* guiState )
 #ifdef SCREEN_BRIGHTNESS
             case D_BRIGHTNESS :
             {
-                _ui_changeBrightness( -5 );
-                vp_announceSettingsInt( &currentLanguage->brightness , guiState->queueFlags , state.settings.brightness );
+                ui_InputValue( guiState , GUI_VAL_INP_BRIGHTNESS , -5 );
                 break ;
             }
 #endif // SCREEN_BRIGHTNESS
 #ifdef SCREEN_CONTRAST
             case D_CONTRAST :
             {
-                _ui_changeContrast( -4 );
-                vp_announceSettingsInt( &currentLanguage->brightness , guiState->queueFlags , state.settings.contrast );
+                ui_InputValue( guiState , GUI_VAL_INP_CONTRAST , -4 );
                 break ;
             }
 #endif // SCREEN_CONTRAST
             case D_TIMER :
             {
-                _ui_changeTimer( -1 );
-                vp_announceDisplayTimer();
+                ui_InputValue( guiState , GUI_VAL_INP_TIMER , -1 );
                 break ;
             }
             default :
@@ -3928,23 +3927,20 @@ static bool ui_updateFSM_PAGE_SETTINGS_DISPLAY( GuiState_st* guiState )
 #ifdef SCREEN_BRIGHTNESS
             case D_BRIGHTNESS :
             {
-                _ui_changeBrightness( +5 );
-                vp_announceSettingsInt( &currentLanguage->brightness , guiState->queueFlags , state.settings.brightness );
+                ui_InputValue( guiState , GUI_VAL_INP_BRIGHTNESS , +5 );
                 break ;
             }
 #endif // SCREEN_BRIGHTNESS
 #ifdef SCREEN_CONTRAST
             case D_CONTRAST :
             {
-                _ui_changeContrast( +4 );
-                vp_announceSettingsInt( &currentLanguage->brightness , guiState->queueFlags , state.settings.contrast );
+                ui_InputValue( guiState , GUI_VAL_INP_CONTRAST , +4 );
                 break ;
             }
 #endif
             case D_TIMER :
             {
-                _ui_changeTimer( +1 );
-                vp_announceDisplayTimer();
+                ui_InputValue( guiState , GUI_VAL_INP_TIMER , +1 );
                 break ;
             }
             default :
@@ -3987,11 +3983,11 @@ static bool ui_updateFSM_PAGE_SETTINGS_GPS( GuiState_st* guiState )
             {
                 if( state.settings.gps_enabled )
                 {
-                    state.settings.gps_enabled = 0 ;
+                    ui_InputValue( guiState , GUI_VAL_INP_ENABLED , 0 );
                 }
                 else
                 {
-                    state.settings.gps_enabled = 1 ;
+                    ui_InputValue( guiState , GUI_VAL_INP_ENABLED , 1 );
                 }
                 vp_announceSettingsOnOffToggle( &currentLanguage->gpsEnabled ,
                                                 guiState->queueFlags , state.settings.gps_enabled );
@@ -3999,20 +3995,18 @@ static bool ui_updateFSM_PAGE_SETTINGS_GPS( GuiState_st* guiState )
             }
             case G_SET_TIME :
             {
-                state.gps_set_time = !state.gps_set_time ;
-                vp_announceSettingsOnOffToggle( &currentLanguage->gpsSetTime ,
-                                                guiState->queueFlags , state.gps_set_time );
+                ui_InputValue( guiState , GUI_VAL_INP_SET_TIME , 0 );
                 break ;
             }
             case G_TIMEZONE :
             {
                 if( guiState->msg.keys & ( KEY_LEFT | KEY_DOWN | KNOB_LEFT ) )
                 {
-                    state.settings.utc_timezone -= 1 ;
+                    ui_InputValue( guiState , GUI_VAL_INP_TIMEZONE , -1 );
                 }
                 else if( guiState->msg.keys & ( KEY_RIGHT | KEY_UP | KNOB_RIGHT ) )
                 {
-                    state.settings.utc_timezone += 1 ;
+                    ui_InputValue( guiState , GUI_VAL_INP_TIMEZONE , +1 );
                 }
                 vp_announceTimeZone( state.settings.utc_timezone , guiState->queueFlags );
                 break ;
@@ -4057,6 +4051,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState )
         {
             case R_OFFSET :
             {
+                //@@@KL ui_InputValue( guiState , GUI_VAL_INP_OFFSET , 0 );
                 // Handle offset frequency input
 #ifdef UI_NO_KEYBOARD
                 if( guiState->msg.long_press && ( guiState->msg.keys & KEY_ENTER ) )
@@ -4104,6 +4099,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState )
             }
             case R_DIRECTION :
             {
+                //@@@KL ui_InputValue( guiState , GUI_VAL_INP_DIRECTION , value );
                 if( guiState->msg.keys & ( KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT | KNOB_LEFT | KNOB_RIGHT ) )
                 {
                     // Invert frequency offset direction
@@ -4122,6 +4118,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState )
             }
             case R_STEP :
             {
+                //@@@KL ui_InputValue( guiState , GUI_VAL_INP_STEP , value );
                 if( guiState->msg.keys & ( KEY_UP | KEY_RIGHT | KNOB_RIGHT ) )
                 {
                     // Cycle over the available frequency steps
@@ -4189,6 +4186,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_M17( GuiState_st* guiState )
         {
             case M17_CALLSIGN :
             {
+                //@@@KL ui_InputValue( guiState , GUI_VAL_INP_CALLSIGN , value );
                 // Handle text input for M17 callsign
                 if( guiState->msg.keys & KEY_ENTER )
                 {
@@ -4223,6 +4221,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_M17( GuiState_st* guiState )
             }
             case M17_CAN :
             {
+                //@@@KL ui_InputValue( guiState , GUI_VAL_INP_CAN , value );
                 if( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) )
                 {
                     _ui_changeM17Can( -1 );
@@ -4243,6 +4242,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_M17( GuiState_st* guiState )
             }
             case M17_CAN_RX :
             {
+                //@@@KL ui_InputValue( guiState , GUI_VAL_INP_CAN_RX , value );
                 if( (   guiState->msg.keys & ( KEY_LEFT | KEY_RIGHT                       )                         ) ||
                     ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT | KEY_UP | KNOB_RIGHT ) ) && guiState->uiState.edit_mode )    )
                 {
@@ -4314,12 +4314,12 @@ static bool ui_updateFSM_PAGE_SETTINGS_VOICE( GuiState_st* guiState )
         {
             case VP_LEVEL :
             {
-                _ui_changeVoiceLevel( -1 );
+                ui_InputValue( guiState , GUI_VAL_INP_LEVEL , -1 );
                 break ;
             }
             case VP_PHONETIC :
             {
-                _ui_changePhoneticSpell( false );
+                ui_InputValue( guiState , GUI_VAL_INP_PHONETIC , false );
                 break ;
             }
             default :
@@ -4335,12 +4335,12 @@ static bool ui_updateFSM_PAGE_SETTINGS_VOICE( GuiState_st* guiState )
         {
             case VP_LEVEL :
             {
-                _ui_changeVoiceLevel( 1 );
+                ui_InputValue( guiState , GUI_VAL_INP_LEVEL , +1 );
                 break ;
             }
             case VP_PHONETIC :
             {
-                _ui_changePhoneticSpell( true );
+                ui_InputValue( guiState , GUI_VAL_INP_PHONETIC , true );
                 break ;
             }
             default :
@@ -4424,6 +4424,197 @@ static bool ui_updateFSM_PAGE_BLANK( GuiState_st* guiState )
 {
     (void)guiState ;
     return false ;
+}
+
+#ifdef SCREEN_BRIGHTNESS
+static void ui_updateFSM_ValInp_BRIGHTNESS( GuiState_st* guiState );
+#endif
+#ifdef SCREEN_CONTRAST
+static void ui_updateFSM_ValInp_CONTRAST( GuiState_st* guiState , int32_t value );
+#endif
+static void ui_updateFSM_ValInp_TIMER( GuiState_st* guiState , int32_t value );
+#ifdef GPS_PRESENT
+static void ui_updateFSM_ValInp_ENABLED( GuiState_st* guiState , int32_t value );
+static void ui_updateFSM_ValInp_SET_TIME( GuiState_st* guiState , int32_t value );
+static void ui_updateFSM_ValInp_TIMEZONE( GuiState_st* guiState , int32_t value );
+#endif
+static void ui_updateFSM_ValInp_LEVEL( GuiState_st* guiState , int32_t value );
+static void ui_updateFSM_ValInp_PHONETIC( GuiState_st* guiState , int32_t value );
+static void ui_updateFSM_ValInp_OFFSET( GuiState_st* guiState , int32_t value );
+static void ui_updateFSM_ValInp_DIRECTION( GuiState_st* guiState , int32_t value );
+static void ui_updateFSM_ValInp_STEP( GuiState_st* guiState , int32_t value );
+static void ui_updateFSM_ValInp_CALLSIGN( GuiState_st* guiState , int32_t value );
+static void ui_updateFSM_ValInp_CAN( GuiState_st* guiState , int32_t value );
+static void ui_updateFSM_ValInp_CAN_RX( GuiState_st* guiState , int32_t value );
+static void ui_updateFSM_ValInp_STUBBED( GuiState_st* guiState , int32_t value );
+
+typedef void (*ui_updateFSM_ValInput_fn)( GuiState_st* guiState , int32_t value );
+
+// GUI Values - Input
+static const ui_updateFSM_ValInput_fn ui_updateFSM_ValInputTable[ GUI_VAL_INP_NUM_OF ] =
+{
+#ifdef SCREEN_BRIGHTNESS
+    ui_updateFSM_ValInp_BRIGHTNESS  , // GUI_VAL_INP_BRIGHTNESS  , D_BRIGHTNESS
+#endif
+#ifdef SCREEN_CONTRAST
+    ui_updateFSM_ValInp_CONTRAST    , // GUI_VAL_INP_CONTRAST    , D_CONTRAST
+#endif
+    ui_updateFSM_ValInp_TIMER       , // GUI_VAL_INP_TIMER       , D_TIMER
+#ifdef GPS_PRESENT
+    ui_updateFSM_ValInp_ENABLED     , // GUI_VAL_INP_ENABLED     , G_ENABLED
+    ui_updateFSM_ValInp_SET_TIME    , // GUI_VAL_INP_SET_TIME    , G_SET_TIME
+    ui_updateFSM_ValInp_TIMEZONE    , // GUI_VAL_INP_TIMEZONE    , G_TIMEZONE
+#endif
+    ui_updateFSM_ValInp_LEVEL       , // GUI_VAL_INP_LEVEL       , VP_LEVEL
+    ui_updateFSM_ValInp_PHONETIC    , // GUI_VAL_INP_PHONETIC    , VP_PHONETIC
+    ui_updateFSM_ValInp_OFFSET      , // GUI_VAL_INP_OFFSET      , R_OFFSET
+    ui_updateFSM_ValInp_DIRECTION   , // GUI_VAL_INP_DIRECTION   , R_DIRECTION
+    ui_updateFSM_ValInp_STEP        , // GUI_VAL_INP_STEP        , R_STEP
+    ui_updateFSM_ValInp_CALLSIGN    , // GUI_VAL_INP_CALLSIGN    , M17_CALLSIGN
+    ui_updateFSM_ValInp_CAN         , // GUI_VAL_INP_CAN         , M17_CAN
+    ui_updateFSM_ValInp_CAN_RX      , // GUI_VAL_INP_CAN_RX        M17_CAN_RX
+    ui_updateFSM_ValInp_STUBBED
+};
+
+//ui_InputValue( guiState , GUI_VAL_INP_CAN_RX , value );
+
+static void ui_InputValue( GuiState_st* guiState , uiValNum_en valueNum , int32_t value )
+{
+    uint8_t valNum = valueNum ;
+
+    if( valNum >= GUI_CMD_NUM_OF )
+    {
+        valNum = GUI_CMD_STUBBED ;
+    }
+
+	ui_updateFSM_ValInputTable[ valNum ]( guiState , value );
+
+}
+
+#ifdef SCREEN_BRIGHTNESS
+static void ui_updateFSM_ValInp_BRIGHTNESS( GuiState_st* guiState , int32_t value )
+{
+    (void)guiState;
+
+    _ui_changeBrightness( value );
+    vp_announceSettingsInt( &currentLanguage->brightness ,
+                            guiState->queueFlags ,
+                            state.settings.brightness );
+
+}
+
+#endif
+#ifdef SCREEN_CONTRAST
+static void ui_updateFSM_ValInp_CONTRAST( GuiState_st* guiState , int32_t value )
+{
+    (void)guiState;
+
+    _ui_changeContrast( value );
+    vp_announceSettingsInt( &currentLanguage->brightness ,
+                            guiState->queueFlags ,
+                            state.settings.contrast );
+
+}
+
+#endif
+static void ui_updateFSM_ValInp_TIMER( GuiState_st* guiState , int32_t value )
+{
+    (void)guiState;
+
+    _ui_changeTimer( value );
+    vp_announceDisplayTimer();
+
+}
+
+#ifdef GPS_PRESENT
+static void ui_updateFSM_ValInp_ENABLED( GuiState_st* guiState , int32_t value )
+{
+    (void)guiState;
+    (void)value;
+
+    state.settings.gps_enabled = value ;
+
+}
+
+static void ui_updateFSM_ValInp_SET_TIME( GuiState_st* guiState , int32_t value )
+{
+    (void)guiState;
+    (void)value;
+
+    state.gps_set_time = !state.gps_set_time ;
+    vp_announceSettingsOnOffToggle( &currentLanguage->gpsSetTime ,
+                                    guiState->queueFlags , state.gps_set_time );
+
+}
+
+static void ui_updateFSM_ValInp_TIMEZONE( GuiState_st* guiState , int32_t value )
+{
+    (void)guiState;
+    (void)value;
+
+    state.settings.utc_timezone += value ;
+
+}
+
+#endif
+static void ui_updateFSM_ValInp_LEVEL( GuiState_st* guiState , int32_t value )
+{
+    (void)guiState;
+    (void)value;
+
+    _ui_changeVoiceLevel( value );
+
+}
+
+static void ui_updateFSM_ValInp_PHONETIC( GuiState_st* guiState , int32_t value )
+{
+    (void)guiState;
+    (void)value;
+
+    _ui_changePhoneticSpell( value );
+
+}
+
+static void ui_updateFSM_ValInp_OFFSET( GuiState_st* guiState , int32_t value )
+{
+    (void)guiState;
+    (void)value;
+}
+
+static void ui_updateFSM_ValInp_DIRECTION( GuiState_st* guiState , int32_t value )
+{
+    (void)guiState;
+    (void)value;
+}
+
+static void ui_updateFSM_ValInp_STEP( GuiState_st* guiState , int32_t value )
+{
+    (void)guiState;
+    (void)value;
+}
+
+static void ui_updateFSM_ValInp_CALLSIGN( GuiState_st* guiState , int32_t value )
+{
+    (void)guiState;
+    (void)value;
+}
+
+static void ui_updateFSM_ValInp_CAN( GuiState_st* guiState , int32_t value )
+{
+    (void)guiState;
+    (void)value;
+}
+
+static void ui_updateFSM_ValInp_CAN_RX( GuiState_st* guiState , int32_t value )
+{
+    (void)guiState;
+    (void)value;
+}
+
+static void ui_updateFSM_ValInp_STUBBED( GuiState_st* guiState , int32_t value )
+{
+    (void)guiState;
+    (void)value;
 }
 
 bool ui_updateGUI( void )
