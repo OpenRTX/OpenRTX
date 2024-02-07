@@ -163,15 +163,17 @@ SECTIONS
     } > smallram AT > flash
     _etext = LOADADDR(.data);
 
-    /* Put the display framebuffer in the "large" RAM, explicitly request to not
-       initialize it */
+    /* Secondary bss section, placed in the 128kB RAM and not initialized: here
+       go the display framebuffer and, immediately after it, the heap area. */
     .bss2 (NOLOAD) :
     {
         *(.bss.fb)
         . = ALIGN(8);
+        _end = .;
+        PROVIDE(end = .);
     } > largeram
 
-    /* .bss section: uninitialized global variables go to ram */
+    /* Primary bss section, placed in the 64kB CCM RAM: uninitialized global variables */
     .bss :
     {
         _bss_start = .;
@@ -181,7 +183,4 @@ SECTIONS
         . = ALIGN(8);
     } > smallram
     _bss_end = .;
-
-    _end = .;
-    PROVIDE(end = .);
 }
