@@ -42,6 +42,10 @@ static int pty_init(const struct chardev *dev)
     if (rc != 0)
         return errno;
 
+    rc = fcntl(ptyFd, F_SETFL, O_NONBLOCK) ;
+    if (rc != 0)
+        return errno;
+
     printf("Successfully open pseudoTTY on %s\n", ptsname(ptyFd));
 
     *((int *)dev->data) = ptyFd;
