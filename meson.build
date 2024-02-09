@@ -119,8 +119,8 @@ openrtx_inc += ['lib/minmea/include']
 openrtx_inc += ['lib/qdec/include']
 
 # CODEC2, open source speech codec, compile from source on embedded
+codec2_proj = subproject('codec2')
 if meson.is_cross_build()
-  codec2_proj = subproject('codec2')
   codec2_dep  = codec2_proj.get_variable('codec2_dep')
 else
   cpp        = meson.get_compiler('cpp')
