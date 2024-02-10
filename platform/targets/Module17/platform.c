@@ -33,6 +33,7 @@
 
 
 I2C_STM32_DEVICE_DEFINE(i2c1, I2C1, NULL)
+I2C_STM32_DEVICE_DEFINE(i2c2, I2C2, NULL)
 
 extern mod17Calib_t mod17CalData;
 
@@ -45,6 +46,7 @@ static hwInfo_t hwInfo =
     .uhf_minFreq = 0,
     .uhf_band    = 0,
     .hw_version  = 0,
+    .flags       = 0,
     .name        = "Module17"
 };
 
@@ -65,9 +67,12 @@ void platform_init()
     /*
      * Check if external I2C1 pull-ups are present. If they are not,
      * enable internal pull-ups and slow-down I2C1.
+     * The sequence of operation have to be respected otherwise the
+     * I2C peripheral might report as continuously busy.
      */ 
     gpio_setMode(I2C1_SCL, INPUT_PULL_DOWN);
     gpio_setMode(I2C1_SDA, INPUT_PULL_DOWN);
+    delayUs(100);
 
     uint8_t i2cSpeed   = I2C_SPEED_100kHz;
     bool    i2cPullups = gpio_readPin(I2C1_SCL)
@@ -111,10 +116,45 @@ void platform_init()
      * Hardware version is set using a voltage divider on PA3.
      * - 0V:   rev. 0.1d or lower
      * - 3.3V: rev 0.1e
+     * - 1.65V: rev 1.0
      */
     uint16_t ver = adc1_getMeasurement(ADC_HWVER_CH);
-    if(ver >= 3000)
-        hwInfo.hw_version = 1;
+
+    if(ver <= (MOD17_HW01D_VOLTAGE + MOD17_HWDET_THRESH))
+    {
+        hwInfo.hw_version = MOD17_HW_V01_D;
+    }
+    else if(ver >= (MOD17_HW01E_VOLTAGE - MOD17_HWDET_THRESH))
+    {
+        hwInfo.hw_version = MOD17_HW_V01_E;
+    }
+    else if((ver >= (MOD17_HW10_VOLTAGE - MOD17_HWDET_THRESH)) &&
+            (ver <= (MOD17_HW10_VOLTAGE + MOD17_HWDET_THRESH)))
+    {
+        hwInfo.hw_version = MOD17_HW_V10;
+
+        /*
+         * Determine if HMI is connected by checking if the I2C pull-up
+         * resistors are present
+         */
+        i2cPullups = gpio_readPin(HMI_SMCLK)
+                   & gpio_readPin(HMI_SMDATA);
+
+        if(i2cPullups)
+        {
+            hwInfo.flags = MOD17_FLAGS_HMI_PRESENT;
+
+            /* Determine HMI hardware version */
+            gpio_setMode(HMI_AIN_HWVER, INPUT_ANALOG);
+            ver = adc1_getMeasurement(ADC_HMI_HWVER_CH);
+
+            if((ver >= (MOD17_HMI10_VOLTAGE - MOD17_HWDET_THRESH)) &&
+               (ver <= (MOD17_HMI10_VOLTAGE + MOD17_HWDET_THRESH)))
+            {
+                hwInfo.hw_version |= (MOD17_HMI_V10 << 8);
+            }
+        }
+    }
 
     /* 100ms blink of sync led to signal device startup */
     gpio_setPin(SYNC_LED);

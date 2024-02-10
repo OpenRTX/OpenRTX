@@ -24,9 +24,38 @@
 
 #include <peripherals/i2c.h>
 #include <stm32f4xx.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include "pinmap.h"
 
 extern const struct i2cDevice i2c1;
+extern const struct i2cDevice i2c2;
+
+enum Mod17HwVersion
+{
+    MOD17_HW_V01_D = 0,    /* Hardware version 0.1d */
+    MOD17_HW_V01_E = 1,    /* Hardware version 0.1e */
+    MOD17_HW_V10   = 2     /* Hardware version 1.0  */
+};
+
+enum Mod17HmiVersion
+{
+    MOD17_HMI_V10 = 1     /* HMI hardware ver. 1.0  */
+};
+
+enum Mod17Flags
+{
+    MOD17_FLAGS_HMI_PRESENT = 1
+};
+
+#define MOD17_HWDET_THRESH   300    /* Threshold for hardware detection, in mV    */
+
+#define MOD17_HW01D_VOLTAGE  0      /* Hardware version 0.1d: gpio pulled to 0V   */
+#define MOD17_HW01E_VOLTAGE  3300   /* Hardware version 0.1e: gpio pulled to 3.3V */
+#define MOD17_HW10_VOLTAGE   1650   /* Hardware version 1.0: gpio pulled to 1.65V */
+
+#define MOD17_HMI10_VOLTAGE  1688   /* HMI version 1.0: gpio pulled to 1.68V      */
+
 
 /* Screen dimensions */
 #define CONFIG_SCREEN_WIDTH 128

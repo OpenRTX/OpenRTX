@@ -33,7 +33,8 @@ extern "C" {
 
 enum adcCh
 {
-    ADC_HWVER_CH = 3,
+    ADC_HWVER_CH     = 3,
+    ADC_HMI_HWVER_CH = 13,
 };
 
 /**
