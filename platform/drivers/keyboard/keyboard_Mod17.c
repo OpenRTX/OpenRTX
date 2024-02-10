@@ -25,10 +25,23 @@
 #include <interfaces/keyboard.h>
 #include <interfaces/platform.h>
 #include <hwconfig.h>
+#include <I2C2.h>
+#include "cap1206.h"
 
+static const hwInfo_t *hwinfo = NULL;
+static Mod17_HwInfo_t *mod17_hw_info = NULL;
 void kbd_init()
 {
-    
+    hwinfo = platform_getHwInfo();
+    mod17_hw_info = (Mod17_HwInfo_t*)hwinfo->other;
+
+    if((mod17_hw_info->HMI_present) 
+        && (mod17_hw_info->HMI_hw_version == CONFIG_HMI_HWVER_1_0))
+    {
+        // Init CAP1206 tactile switch controller
+        cap1206_init();
+    }
+
 }
 
 void kbd_terminate()
@@ -40,12 +53,28 @@ keyboard_t kbd_getKeys()
 {
     keyboard_t keys = 0;
 
-    if(gpio_readPin(ENTER_SW) == 1) keys |= KEY_ENTER;
-    if(gpio_readPin(ESC_SW)   == 1) keys |= KEY_ESC;
-    if(gpio_readPin(LEFT_SW)  == 1) keys |= KEY_LEFT;
-    if(gpio_readPin(RIGHT_SW) == 1) keys |= KEY_RIGHT;
-    if(gpio_readPin(UP_SW)    == 1) keys |= KEY_UP;
-    if(gpio_readPin(DOWN_SW)  == 1) keys |= KEY_DOWN;
+    if( ((Mod17_HwInfo_t*)hwinfo->other)->HMI_present 
+        && ((Mod17_HwInfo_t*)hwinfo->other)->HMI_hw_version == CONFIG_HMI_HWVER_1_0)
+    {
+        uint8_t resp = cap1206_readkeys();
+        if(resp & 1) keys |= KEY_LEFT;  // CS1
+        if(resp & 2) keys |= KEY_DOWN;  // CS2
+        if(resp & 4) keys |= KEY_RIGHT; // CS3
+        if(resp & 8) keys |= KEY_ENTER; // CS4
+        if(resp & 16) keys |= KEY_UP;   // CS5
+        if(resp & 32) keys |= KEY_ESC;  // CS6
+    }
+    else if( ((Mod17_HwInfo_t*)hwinfo->other)->HMI_hw_version == false )
+    {
+        if(gpio_readPin(ENTER_SW) == 1) keys |= KEY_ENTER;
+        if(gpio_readPin(ESC_SW)   == 1) keys |= KEY_ESC;
+        if(gpio_readPin(LEFT_SW)  == 1) keys |= KEY_LEFT;
+        if(gpio_readPin(RIGHT_SW) == 1) keys |= KEY_RIGHT;
+        if(gpio_readPin(UP_SW)    == 1) keys |= KEY_UP;
+        if(gpio_readPin(DOWN_SW)  == 1) keys |= KEY_DOWN;
+    }
+
+    
 
     return keys;
 }

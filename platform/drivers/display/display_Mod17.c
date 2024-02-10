@@ -70,7 +70,7 @@ void display_init()
     gpio_setMode(LCD_DC,  OUTPUT);
 
 
-    if(hwInfo->hw_version >= HWVER_1_0 && mod17HwInfo->HMI_present)
+    if(hwInfo->hw_version >= CONFIG_HWVER_1_0 && mod17HwInfo->HMI_present)
     {
         disp_fcts.init                  = SSD1309_init;
         disp_fcts.renderRows            = SSD1309_renderRows;
