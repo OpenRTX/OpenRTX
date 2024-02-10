@@ -30,8 +30,15 @@
 #include <hwconfig.h>
 #include <MCP4551.h>
 #include <I2C1.h>
+#include <I2C2.h>
 
 extern mod17Calib_t mod17CalData;
+
+static Mod17_HwInfo_t mod17HwInfo =
+{
+    .HMI_present = false,
+    .HMI_hw_version = 0
+};
 
 static hwInfo_t hwInfo =
 {
@@ -43,7 +50,7 @@ static hwInfo_t hwInfo =
     .uhf_band    = 0,
     .hw_version  = 0,
     .name        = "Module17",
-    .other       = NULL,
+    .other       = (void *)(&mod17HwInfo),
 };
 
 void platform_init()
@@ -73,24 +80,33 @@ void platform_init()
     /*
      * Check if external I2C1 pull-ups are present. If they are not,
      * enable internal pull-ups and slow-down I2C1.
+     * The sequence of operation have to be respected otherwise the
+     * I2C peripheral might report as continuously busy.
      */ 
     gpio_setMode(I2C1_SCL, INPUT_PULL_DOWN);
     gpio_setMode(I2C1_SDA, INPUT_PULL_DOWN);
+    delayUs(100);
 
     bool i2c1_pullups = gpio_readPin(I2C1_SCL);
     i2c1_pullups &= gpio_readPin(I2C1_SDA);
 
-    gpio_setMode(I2C1_SCL, ALTERNATE_OD);
-    gpio_setMode(I2C1_SDA, ALTERNATE_OD);
+    gpio_setOutputSpeed(I2C1_SCL, HIGH);
+    gpio_setOutputSpeed(I2C1_SDA, HIGH);
     gpio_setAlternateFunction(I2C1_SCL, 4);
     gpio_setAlternateFunction(I2C1_SDA, 4);
 
-    if(!i2c1_pullups){
-        GPIOB->PUPDR &= ~(GPIO_PUPDR_PUPD6_Msk | GPIO_PUPDR_PUPD7_Msk);
-        GPIOB->PUPDR |= (GPIO_PUPDR_PUPD6_0 | GPIO_PUPDR_PUPD7_0);
+    if(!i2c1_pullups)
+    {
+        gpio_setMode(I2C1_SDA, ALTERNATE_OD);
+        GPIOB->PUPDR |= GPIO_PUPDR_PUPD7_0;
+        gpio_setMode(I2C1_SCL, ALTERNATE_OD);
+        GPIOB->PUPDR |= GPIO_PUPDR_PUPD6_0;
+    }else{
+        gpio_setMode(I2C1_SDA, ALTERNATE_OD);
+        gpio_setMode(I2C1_SCL, ALTERNATE_OD);
     }
 
-    i2c1_init(!i2c1_pullups);
+    i2c1_init(!i2c1_pullups, 10);
 
     /* Set analog output for baseband signal to an idle level of 1.1V */
     gpio_setMode(BASEBAND_TX, INPUT_ANALOG);
@@ -115,10 +131,52 @@ void platform_init()
      * Hardware version is set using a voltage divider on PA3.
      * - 0V:   rev. 0.1d or lower
      * - 3.3V: rev 0.1e
+     * - 1.65V: rev 1.0
      */
     uint16_t ver = adc1_getMeasurement(ADC_HWVER_CH);
-    if(ver >= 3000)
-        hwInfo.hw_version = 1;
+
+    if(ver <= CONFIG_HWVER_0_1_D_CNT + CONFIG_HWVER_CNT_MARG)
+        hwInfo.hw_version = CONFIG_HWVER_0_1_D;
+    else if(ver >= CONFIG_HWVER_0_1_E_CNT - CONFIG_HWVER_CNT_MARG)
+        hwInfo.hw_version = CONFIG_HWVER_0_1_E;
+    else if((ver <= CONFIG_HWVER_1_0_CNT + CONFIG_HWVER_CNT_MARG) 
+            && (ver >= CONFIG_HWVER_1_0_CNT - CONFIG_HWVER_CNT_MARG))
+    {
+        hwInfo.hw_version = CONFIG_HWVER_1_0;
+    }
+        
+    // Check HMI presence and eventual HW revision
+    if(hwInfo.hw_version >= CONFIG_HWVER_1_0){
+        bool smb_pullups = gpio_readPin(HMI_SMCLK);
+        smb_pullups &= gpio_readPin(HMI_SMDATA);
+
+        /* if all pullups are present then it means an HMI is connected */
+        if(smb_pullups)
+        {
+            ((Mod17_HwInfo_t *)hwInfo.other)->HMI_present = true;
+
+            // Determine HW revision
+            gpio_setMode(HMI_AIN_HWVER, INPUT_ANALOG);
+            ver = adc1_getMeasurement(ADC_HMI_HWVER_CH);
+
+            if( (ver <= CONFIG_HMI_HWVER_1_0_CNT + CONFIG_HWVER_CNT_MARG)
+                && (ver >= CONFIG_HMI_HWVER_1_0_CNT - CONFIG_HWVER_CNT_MARG) )
+            {
+                ((Mod17_HwInfo_t *)hwInfo.other)->HMI_hw_version = CONFIG_HMI_HWVER_1_0;
+            }
+
+            gpio_setMode(HMI_SMBA, ALTERNATE_OD);
+            gpio_setMode(HMI_SMCLK, ALTERNATE_OD);
+            gpio_setMode(HMI_SMDATA, ALTERNATE_OD);
+            gpio_setAlternateFunction(HMI_SMBA, 4);
+            gpio_setAlternateFunction(HMI_SMCLK, 4);
+            gpio_setAlternateFunction(HMI_SMDATA, 4);
+            gpio_setOutputSpeed(HMI_SMBA, HIGH);
+            gpio_setOutputSpeed(HMI_SMCLK, HIGH);
+            gpio_setOutputSpeed(HMI_SMDATA, HIGH);
+            smb2_init();
+        }
+    }
 
     /* 100ms blink of sync led to signal device startup */
     gpio_setPin(SYNC_LED);

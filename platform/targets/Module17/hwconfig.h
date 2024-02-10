@@ -23,6 +23,8 @@
 #define HWCONFIG_H
 
 #include <stm32f4xx.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include "pinmap.h"
 
 /* Screen dimensions */
@@ -37,5 +39,25 @@
 
 /* Device supports M17 mode */
 #define CONFIG_M17
+
+/* Hardware revision */
+#define CONFIG_HWVER_CNT_MARG   300
+
+#define CONFIG_HWVER_0_1_D      0
+#define CONFIG_HWVER_0_1_D_CNT  0     /* pulled to ground */
+
+#define CONFIG_HWVER_0_1_E      1
+#define CONFIG_HWVER_0_1_E_CNT  3300  /* pulled to VCC */
+
+#define CONFIG_HWVER_1_0        2
+#define CONFIG_HWVER_1_0_CNT    1650  /* VCC/2 */
+
+#define CONFIG_HMI_HWVER_1_0        1
+#define CONFIG_HMI_HWVER_1_0_CNT    1688  /* VCC/1.95 */
+
+typedef struct {
+    bool    HMI_present;
+    uint8_t HMI_hw_version;
+} Mod17_HwInfo_t;
 
 #endif

@@ -120,7 +120,8 @@ const char *info_items[] =
 {
     "",
     "Used heap",
-    "Hw Version"
+    "Hw Version",
+    "HMI",
 };
 
 const char *authors[] =
