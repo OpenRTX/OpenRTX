@@ -29,13 +29,12 @@
 #define ERR_LED     GPIOA,8
 
 /* Display */
-#define LCD_RST     GPIOC,7
-#define LCD_RS      GPIOC,6
-#define LCD_CS      GPIOB,14
-#define SPI2_CLK    GPIOB,13
-#define SPI2_SDO    GPIOB,9     // UNUSED
-#define SPI2_SDI    GPIOB,15
-//#define LCD_BKLIGHT GPIOE,15
+#define LCD_RST         GPIOC,7
+#define LCD_DC          GPIOC,6
+#define LCD_CS          GPIOB,14
+#define SPI2_SCK        GPIOB,13
+#define SPI2_MISO       GPIOB,9     // UNUSED
+#define SPI2_MOSI       GPIOB,15
 
 /* Keyboard */
 #define ESC_SW      GPIOB,8

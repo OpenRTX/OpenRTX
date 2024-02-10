@@ -38,7 +38,7 @@
  *
  * @param row: pixel row to be be sent.
  */
-void display_renderRow(uint8_t row, uint8_t *frameBuffer)
+void SSD1306_renderRow(uint8_t row, uint8_t *frameBuffer)
 {
     for(uint16_t i = 0; i < 64; i++)
     {
@@ -55,27 +55,8 @@ void display_renderRow(uint8_t row, uint8_t *frameBuffer)
 }
 
 
-void display_init()
+void SSD1306_init()
 {
-    /*
-     * Initialise SPI2 for external flash and LCD
-     */
-    gpio_setMode(SPI2_CLK, ALTERNATE);
-    gpio_setMode(SPI2_SDO, ALTERNATE);
-    gpio_setMode(SPI2_SDI, ALTERNATE);
-    gpio_setAlternateFunction(SPI2_CLK, 5); /* SPI2 is on AF5 */
-    gpio_setAlternateFunction(SPI2_SDO, 5);
-    gpio_setAlternateFunction(SPI2_SDI, 5);
-
-    spi2_init();
-
-    /*
-     * Initialise GPIOs for LCD control
-     */
-    gpio_setMode(LCD_CS,  OUTPUT);
-    gpio_setMode(LCD_RST, OUTPUT);
-    gpio_setMode(LCD_RS,  OUTPUT);
-
     gpio_setPin(LCD_CS);
     gpio_clearPin(LCD_RS);
 
@@ -112,12 +93,12 @@ void display_init()
     gpio_setPin(LCD_CS);
 }
 
-void display_terminate()
+void SSD1306_terminate()
 {
     spi2_terminate();
 }
 
-void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
+void SSD1306_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
 {
     gpio_clearPin(LCD_CS);
 
@@ -128,18 +109,18 @@ void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
         (void) spi2_sendRecv(0x00);       /* Set X position         */
         (void) spi2_sendRecv(0x10);
         gpio_setPin(LCD_RS);              /* RS high -> data mode   */
-        display_renderRow(row, (uint8_t *) fb);
+        SSD1306_renderRow(row, (uint8_t *) fb);
     }
 
     gpio_setPin(LCD_CS);
 }
 
-void display_render(void *fb)
+void SSD1306_render(void *fb)
 {
-    display_renderRows(0, (CONFIG_SCREEN_WIDTH / 8) - 1, fb);
+    SSD1306_renderRows(0, (CONFIG_SCREEN_WIDTH / 8) - 1, fb);
 }
 
-void display_setContrast(uint8_t contrast)
+void SSD1306_setContrast(uint8_t contrast)
 {
     gpio_clearPin(LCD_CS);
 
@@ -150,7 +131,7 @@ void display_setContrast(uint8_t contrast)
     gpio_setPin(LCD_CS);
 }
 
-void display_setBacklightLevel(uint8_t level)
+void SSD1306_setBacklightLevel(uint8_t level)
 {
     (void) level;
 }
