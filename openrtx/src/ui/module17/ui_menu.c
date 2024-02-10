@@ -60,6 +60,12 @@ const char *hmiVersions[] =
     "1.0"
 };
 
+const char *bbTuningPot[] =
+{
+    "Soft",
+    "Hard"
+};
+
 void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_t max_len, uint8_t index))
 {
     point_t pos = layout.line1_pos;
@@ -301,6 +307,16 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
                 snprintf(buf, max_len, "%s", hmiVersions[0]);
             else
                 snprintf(buf, max_len, "%s", hmiVersions[(hwinfo->flags >> 8) & 0xFF]);
+        #endif
+            break;
+        case 4: // Baseband tuning potentiometers
+        #ifdef PLATFORM_LINUX
+            snprintf(buf, max_len, "%s", "Linux");
+        #else
+            if((hwinfo->flags & MOD17_FLAGS_SOFTPOT) != 0)
+                snprintf(buf, max_len, "%s", bbTuningPot[0]);
+            else
+                snprintf(buf, max_len, "%s", bbTuningPot[1]);
         #endif
             break;
     }

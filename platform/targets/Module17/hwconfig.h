@@ -45,7 +45,8 @@ enum Mod17HmiVersion
 
 enum Mod17Flags
 {
-    MOD17_FLAGS_HMI_PRESENT = 1
+    MOD17_FLAGS_HMI_PRESENT = 1,
+    MOD17_FLAGS_SOFTPOT     = 2
 };
 
 #define MOD17_HWDET_THRESH   300    /* Threshold for hardware detection, in mV    */

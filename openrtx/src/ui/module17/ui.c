@@ -124,6 +124,7 @@ const char *info_items[] =
     "Used heap",
     "Hw Version",
     "HMI",
+    "BB Tuning Pot",
 };
 
 const char *authors[] =
