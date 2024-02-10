@@ -35,8 +35,8 @@ void radio_init(const rtxStatus_t *rtxState)
 
     radioStatus = OFF;
 
-    mcp4551_setWiper(SOFTPOT_TX, mod17CalData.tx_wiper);
-    mcp4551_setWiper(SOFTPOT_RX, mod17CalData.rx_wiper);
+    mcp4551_setWiper(&i2c1, SOFTPOT_TX, mod17CalData.tx_wiper);
+    mcp4551_setWiper(&i2c1, SOFTPOT_RX, mod17CalData.rx_wiper);
 }
 
 void radio_terminate()
@@ -74,8 +74,8 @@ void radio_enableRx()
 {
     radioStatus = RX;
 
-    mcp4551_setWiper(SOFTPOT_TX, mod17CalData.tx_wiper);
-    mcp4551_setWiper(SOFTPOT_RX, mod17CalData.rx_wiper);
+    mcp4551_setWiper(&i2c1, SOFTPOT_TX, mod17CalData.tx_wiper);
+    mcp4551_setWiper(&i2c1, SOFTPOT_RX, mod17CalData.rx_wiper);
 
     // Module17 PTT output is open drain. This means that, on MCU side, we have
     // to assert the gpio to bring it to low state.
@@ -89,8 +89,8 @@ void radio_enableTx()
 {
     radioStatus = TX;
 
-    mcp4551_setWiper(SOFTPOT_TX, mod17CalData.tx_wiper);
-    mcp4551_setWiper(SOFTPOT_RX, mod17CalData.rx_wiper);
+    mcp4551_setWiper(&i2c1, SOFTPOT_TX, mod17CalData.tx_wiper);
+    mcp4551_setWiper(&i2c1, SOFTPOT_RX, mod17CalData.rx_wiper);
     max9814_setGain(mod17CalData.mic_gain);
 
     if(mod17CalData.ptt_out_level)

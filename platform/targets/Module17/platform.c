@@ -24,11 +24,15 @@
 #include <interfaces/nvmem.h>
 #include <interfaces/audio.h>
 #include <peripherals/gpio.h>
+#include <drivers/i2c_stm32.h>
 #include <calibInfo_Mod17.h>
 #include <ADC1_Mod17.h>
 #include <backlight.h>
 #include <hwconfig.h>
 #include <MCP4551.h>
+
+
+I2C_STM32_DEVICE_DEFINE(i2c1, I2C1, NULL)
 
 extern mod17Calib_t mod17CalData;
 
@@ -58,6 +62,32 @@ void platform_init()
     gpio_setMode(PTT_OUT, OUTPUT);
     gpio_clearPin(PTT_OUT);
 
+    /*
+     * Check if external I2C1 pull-ups are present. If they are not,
+     * enable internal pull-ups and slow-down I2C1.
+     */ 
+    gpio_setMode(I2C1_SCL, INPUT_PULL_DOWN);
+    gpio_setMode(I2C1_SDA, INPUT_PULL_DOWN);
+
+    uint8_t i2cSpeed   = I2C_SPEED_100kHz;
+    bool    i2cPullups = gpio_readPin(I2C1_SCL)
+                       & gpio_readPin(I2C1_SDA);
+
+    /* Set gpios to alternate function, connected to I2C peripheral  */
+    gpio_setMode(I2C1_SCL, ALTERNATE_OD);
+    gpio_setMode(I2C1_SDA, ALTERNATE_OD);
+    gpio_setAlternateFunction(I2C1_SCL, 4);
+    gpio_setAlternateFunction(I2C1_SDA, 4);
+
+    if(i2cPullups == false)
+    {
+        GPIOB->PUPDR &= ~(GPIO_PUPDR_PUPD6_Msk | GPIO_PUPDR_PUPD7_Msk);
+        GPIOB->PUPDR |=  (GPIO_PUPDR_PUPD6_0   | GPIO_PUPDR_PUPD7_0);
+        i2cSpeed     = I2C_SPEED_LOW;
+    }
+
+    i2c_init(&i2c1, i2cSpeed);
+
     /* Set analog output for baseband signal to an idle level of 1.1V */
     gpio_setMode(BASEBAND_TX, INPUT_ANALOG);
     RCC->APB1ENR |= RCC_APB1ENR_DACEN;
@@ -66,10 +96,9 @@ void platform_init()
 
     nvm_init();
     adc1_init();
-    i2c_init();
-    mcp4551_init(SOFTPOT_RX);
-    mcp4551_init(SOFTPOT_TX);
     audio_init();
+    mcp4551_init(&i2c1, SOFTPOT_RX);
+    mcp4551_init(&i2c1, SOFTPOT_TX);
 
     /* Set defaults for calibration */
     mod17CalData.tx_wiper     = 0x080;

@@ -1,7 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2021 - 2023 by Federico Amedeo Izzo IU2NUO,             *
- *                                Niccolò Izzo IU2KIN,                     *
- *                                Frederik Saraci IU2NRO,                  *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
  *                                Mathis Schmieder DB9MAT                  *
  *                                                                         *
@@ -19,26 +19,37 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef HWCONFIG_H
-#define HWCONFIG_H
+#include "MCP4551.h"
 
-#include <peripherals/i2c.h>
-#include <stm32f4xx.h>
-#include "pinmap.h"
+// Common WIPER values
+#define MCP4551_WIPER_MID   0x080
+#define MCP4551_WIPER_A     0x100
+#define MCP4551_WIPER_B     0x000
 
-extern const struct i2cDevice i2c1;
+// Command definitions (sent to WIPER register)
+#define MCP4551_CMD_WRITE   0x00
+#define MCP4551_CMD_INC     0x04
+#define MCP4551_CMD_DEC     0x08
+#define MCP4551_CMD_READ    0x0C
 
-/* Screen dimensions */
-#define CONFIG_SCREEN_WIDTH 128
-#define CONFIG_SCREEN_HEIGHT 64
 
-/* Screen pixel format */
-#define CONFIG_PIX_FMT_BW
+int mcp4551_init(const struct i2cDevice *i2c, const uint8_t devAddr)
+{
+    return mcp4551_setWiper(i2c, devAddr, MCP4551_WIPER_MID);
+}
 
-/* Device has no battery */
-#define CONFIG_BAT_NONE
+int mcp4551_setWiper(const struct i2cDevice *i2c, const uint8_t devAddr,
+                     const uint16_t value)
+{
+    uint8_t data[2] =
+    {
+        (uint8_t)(value >> 8 & 0x01) | MCP4551_CMD_WRITE,
+        (uint8_t) value
+    };
 
-/* Device supports M17 mode */
-#define CONFIG_M17
+    i2c_acquire(i2c);
+    int ret = i2c_write(i2c, devAddr, data, 2, true);
+    i2c_release(i2c);
 
-#endif
+    return ret;
+}

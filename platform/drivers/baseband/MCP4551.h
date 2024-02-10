@@ -25,29 +25,31 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <datatypes.h>
+#include <peripherals/i2c.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// Common WIPER values
-#define MCP4551_WIPER_MID	0x080
-#define MCP4551_WIPER_A		0x100
-#define MCP4551_WIPER_B		0x000
-
-// Command definitions (sent to WIPER register)
-#define MCP4551_CMD_WRITE	0x00
-#define MCP4551_CMD_INC		0x04
-#define MCP4551_CMD_DEC		0x08
-#define MCP4551_CMD_READ	0x0C
+/**
+ * Initialize the MCP4551 device.
+ *
+ * @param i2c: driver managing the I2C bus the chip is connected to.
+ * @param devAddr: I2C device address of the chip.
+ * @return zero on success, a negative error code otherwise.
+ */
+int mcp4551_init(const struct i2cDevice *i2c, const uint8_t devAddr);
 
 /**
- * Initialise I2C.
+ * Set the MCP4551 wiper to a given position.
+ *
+ * @param i2c: driver managing the I2C bus the chip is connected to.
+ * @param devAddr: I2C device address of the chip.
+ * @param value: new wiper position.
+ * @return zero on success, a negative error code otherwise.
  */
-void i2c_init();
-
-void mcp4551_init(uint8_t addr);
-void mcp4551_setWiper(uint8_t devAddr, uint16_t value);
+int mcp4551_setWiper(const struct i2cDevice *i2c, const uint8_t devAddr,
+                     const uint16_t value);
 
 #ifdef __cplusplus
 }
