@@ -41,11 +41,6 @@ extern "C" {
 #define MCP4551_CMD_DEC		0x08
 #define MCP4551_CMD_READ	0x0C
 
-/**
- * Initialise I2C.
- */
-void i2c_init();
-
 void mcp4551_init(uint8_t addr);
 void mcp4551_setWiper(uint8_t devAddr, uint16_t value);
 

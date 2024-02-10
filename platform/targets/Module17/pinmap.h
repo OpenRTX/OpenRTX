@@ -61,9 +61,9 @@
 #define POWER_SW    GPIOA,15
 
 /* I2C for MCP4551 */
-#define I2C_SDA GPIOB,7
-#define I2C_SCL GPIOB,6
-#define SOFTPOT_RX 0x2E
-#define SOFTPOT_TX 0x2F
+#define I2C1_SDA    GPIOB,7
+#define I2C1_SCL    GPIOB,6
+#define SOFTPOT_RX  0x2E
+#define SOFTPOT_TX  0x2F
 
 #endif /* PINMAP_H */

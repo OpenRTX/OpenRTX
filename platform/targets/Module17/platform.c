@@ -29,6 +29,7 @@
 #include <backlight.h>
 #include <hwconfig.h>
 #include <MCP4551.h>
+#include <I2C1.h>
 
 extern mod17Calib_t mod17CalData;
 
@@ -69,6 +70,28 @@ void platform_init()
     gpio_setMode(UP_SW,    INPUT);
     gpio_setMode(DOWN_SW,  INPUT);
 
+    /*
+     * Check if external I2C1 pull-ups are present. If they are not,
+     * enable internal pull-ups and slow-down I2C1.
+     */ 
+    gpio_setMode(I2C1_SCL, INPUT_PULL_DOWN);
+    gpio_setMode(I2C1_SDA, INPUT_PULL_DOWN);
+
+    bool i2c1_pullups = gpio_readPin(I2C1_SCL);
+    i2c1_pullups &= gpio_readPin(I2C1_SDA);
+
+    gpio_setMode(I2C1_SCL, ALTERNATE_OD);
+    gpio_setMode(I2C1_SDA, ALTERNATE_OD);
+    gpio_setAlternateFunction(I2C1_SCL, 4);
+    gpio_setAlternateFunction(I2C1_SDA, 4);
+
+    if(!i2c1_pullups){
+        GPIOB->PUPDR &= ~(GPIO_PUPDR_PUPD6_Msk | GPIO_PUPDR_PUPD7_Msk);
+        GPIOB->PUPDR |= (GPIO_PUPDR_PUPD6_0 | GPIO_PUPDR_PUPD7_0);
+    }
+
+    i2c1_init(!i2c1_pullups);
+
     /* Set analog output for baseband signal to an idle level of 1.1V */
     gpio_setMode(BASEBAND_TX, INPUT_ANALOG);
     RCC->APB1ENR |= RCC_APB1ENR_DACEN;
@@ -77,7 +100,6 @@ void platform_init()
 
     nvm_init();
     adc1_init();
-    i2c_init();
     mcp4551_init(SOFTPOT_RX);
     mcp4551_init(SOFTPOT_TX);
     audio_init();
