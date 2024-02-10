@@ -24,19 +24,21 @@
 #include <peripherals/gpio.h>
 #include <interfaces/delays.h>
 #include <hwconfig.h>
+#include <errno.h>
 
 
-void mcp4551_init(uint8_t addr)
+error_t mcp4551_init(uint8_t addr)
 {
-    mcp4551_setWiper(addr, MCP4551_WIPER_MID);
+    return mcp4551_setWiper(addr, MCP4551_WIPER_MID);
 }
 
-void mcp4551_setWiper(uint8_t devAddr, uint16_t value)
+error_t mcp4551_setWiper(uint8_t devAddr, uint16_t value)
 {
     uint8_t data[2] = {(uint8_t)(value >> 8 & 0x01)|MCP4551_CMD_WRITE,
                         (uint8_t)value};
 
     i2c1_lockDeviceBlocking();
-    i2c1_write_bytes(devAddr, data, 2, true);
+    error_t err = i2c1_write_bytes(devAddr, data, 2, true);
     i2c1_releaseDevice();
+    return err;
 }

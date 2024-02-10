@@ -25,6 +25,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <datatypes.h>
+#include <errno.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,8 +42,8 @@ extern "C" {
 #define MCP4551_CMD_DEC		0x08
 #define MCP4551_CMD_READ	0x0C
 
-void mcp4551_init(uint8_t addr);
-void mcp4551_setWiper(uint8_t devAddr, uint16_t value);
+error_t mcp4551_init(uint8_t addr);
+error_t mcp4551_setWiper(uint8_t devAddr, uint16_t value);
 
 #ifdef __cplusplus
 }
