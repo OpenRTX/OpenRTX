@@ -30,6 +30,7 @@
 #include <backlight.h>
 #include <hwconfig.h>
 #include <MCP4551.h>
+#include <errno.h>
 
 
 ADC_STM32_DEVICE_DEFINE(adc1, ADC1, NULL, 3300000)
@@ -105,8 +106,14 @@ void platform_init()
     nvm_init();
     audio_init();
     adcStm32_init(&adc1);
-    mcp4551_init(&i2c1, SOFTPOT_RX);
-    mcp4551_init(&i2c1, SOFTPOT_TX);
+
+    /* Baseband tuning soft potentiometers */
+    int ret = mcp4551_init(&i2c1, SOFTPOT_RX);
+    if(ret == 0)
+    {
+        hwInfo.flags |= MOD17_FLAGS_SOFTPOT;
+        mcp4551_init(&i2c1, SOFTPOT_TX);
+    }
 
     /* Set defaults for calibration */
     mod17CalData.tx_wiper     = 0x080;
