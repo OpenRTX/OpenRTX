@@ -31,6 +31,7 @@
 #include <MCP4551.h>
 #include <I2C1.h>
 #include <I2C2.h>
+#include <errno.h>
 
 extern mod17Calib_t mod17CalData;
 
@@ -116,9 +117,16 @@ void platform_init()
 
     nvm_init();
     adc1_init();
-    mcp4551_init(SOFTPOT_RX);
-    mcp4551_init(SOFTPOT_TX);
     audio_init();
+
+    /* Baseband tuning soft potentiometers */
+    error_t err = mcp4551_init(SOFTPOT_RX);
+    if(err == 0){
+        ((Mod17_HwInfo_t *)hwInfo.other)->flags |= CONFIG_BASEBAND_SOFTPOT;
+        mcp4551_init(SOFTPOT_TX);
+    }else{
+        ((Mod17_HwInfo_t *)hwInfo.other)->flags &= ~CONFIG_BASEBAND_SOFTPOT;
+    }
 
     /* Set defaults for calibration */
     mod17CalData.tx_wiper  = 0x080;

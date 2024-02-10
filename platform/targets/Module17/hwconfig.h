@@ -55,9 +55,15 @@
 #define CONFIG_HMI_HWVER_1_0        1
 #define CONFIG_HMI_HWVER_1_0_CNT    1688  /* VCC/1.95 */
 
+/* Flags */
+#define CONFIG_BASEBAND_SOFTPOT_Pos 0
+#define CONFIG_BASEBAND_SOFTPOT_Msk (0x1UL << CONFIG_BASEBAND_SOFTPOT_Pos)
+#define CONFIG_BASEBAND_SOFTPOT     CONFIG_BASEBAND_SOFTPOT_Msk
+
 typedef struct {
-    bool    HMI_present;
-    uint8_t HMI_hw_version;
+    uint32_t    flags;
+    bool        HMI_present;
+    uint8_t     HMI_hw_version;
 } Mod17_HwInfo_t;
 
 #endif
