@@ -28,6 +28,7 @@
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
 #include <memory_profiling.h>
+#include <hwconfig.h>
 
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBottom();
@@ -49,7 +50,14 @@ const char *phase_values[] =
 const char *hwVersions[] =
 {
     "0.1d",
-    "0.1e"
+    "0.1e",
+    "1.0"
+};
+
+const char *hmiVersions[] =
+{
+    "None",
+    "1.0"
 };
 
 void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_t max_len, uint8_t index))
@@ -282,8 +290,18 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
         case 1: // Heap usage
             snprintf(buf, max_len, "%dB", getHeapSize() - getCurrentFreeHeap());
             break;
-        case 2: // LCD Type
-            snprintf(buf, max_len, "%s", hwVersions[hwinfo->hw_version]);
+        case 2: // HW Revision
+            snprintf(buf, max_len, "%s", hwVersions[hwinfo->hw_version & 0xFF]);
+            break;
+        case 3: // HMI Version
+        #ifdef PLATFORM_LINUX
+            snprintf(buf, max_len, "%s", "Linux");
+        #else
+            if(hwinfo->flags & MOD17_FLAGS_HMI_PRESENT)
+                snprintf(buf, max_len, "%s", hmiVersions[(hwinfo->hw_version >> 8) & 0xFF]);
+            else
+                snprintf(buf, max_len, "%s", hmiVersions[0]);
+        #endif
             break;
     }
     return 0;
