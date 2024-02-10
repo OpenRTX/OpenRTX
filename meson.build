@@ -422,7 +422,7 @@ mod17_src = ['platform/targets/Module17/platform.c',
              'platform/drivers/baseband/radio_Mod17.cpp',
              'platform/drivers/audio/audio_Mod17.c',
              'platform/drivers/audio/MAX9814_Mod17.cpp',
-             'platform/drivers/baseband/MCP4551_Mod17.cpp']
+             'platform/drivers/baseband/MCP4551.c']
 
 mod17_inc = ['platform/targets/Module17']
 mod17_def = {'PLATFORM_MOD17': ''}
