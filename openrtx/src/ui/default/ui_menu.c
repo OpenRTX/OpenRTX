@@ -19,9 +19,9 @@
  ***************************************************************************/
 
 #include <stdio.h>
-#include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
+#include <inttypes.h>
 #include <utils.h>
 #include <ui/ui_default.h>
 #include <interfaces/nvmem.h>
@@ -516,7 +516,7 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
             sniprintf(buf, max_len, "%d%%", last_state.charge);
             break;
         case 3: // RSSI
-            sniprintf(buf, max_len, "%ddBm", last_state.rssi);
+            sniprintf(buf, max_len, "%"PRIu32"dBm", last_state.rssi);
             break;
         case 4: // Heap usage
             sniprintf(buf, max_len, "%dB", getHeapSize() - getCurrentFreeHeap());
