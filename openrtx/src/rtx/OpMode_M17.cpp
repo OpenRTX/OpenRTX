@@ -78,17 +78,7 @@ void OpMode_M17::disable()
 
 void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
 {
-    //
-    // FIXME: workaround to avoid UI glitches when a new dst callsign is set.
-    //
-    // When a new dst callsign is set, the rtx configuration data structure is
-    // updated and this may trigger false setting of the lsfOk variable to true,
-    // causing the M17 info screen to appear for a very small, but noticeable,
-    // amount of time.
-    //
-    if(newCfg)
-        status->lsfOk = false;
-
+    (void) newCfg;
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
     //
     // Invert TX phase for all MDx models.
@@ -154,9 +144,7 @@ void OpMode_M17::offState(rtxStatus_t *const status)
 {
     radio_disableRtx();
 
-    codec_stop(rxAudioPath);
     codec_stop(txAudioPath);
-    audioPath_release(rxAudioPath);
     audioPath_release(txAudioPath);
 
     if(startRx)
@@ -182,14 +170,13 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
     if(startRx)
     {
         demodulator.startBasebandSampling();
-        demodulator.invertPhase(invertRxPhase);
 
         radio_enableRx();
 
         startRx = false;
     }
 
-    bool newData = demodulator.update();
+    bool newData = demodulator.update(invertRxPhase);
     bool lock    = demodulator.isLocked();
 
     // Reset frame decoder when transitioning from unlocked to locked state.
@@ -201,18 +188,6 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
 
     if(locked)
     {
-        // Check RX audio path status, open it if necessary
-        uint8_t pthSts = audioPath_getStatus(rxAudioPath);
-        if(pthSts == PATH_CLOSED)
-        {
-            rxAudioPath = audioPath_request(SOURCE_MCU, SINK_SPK, PRIO_RX);
-            pthSts = audioPath_getStatus(rxAudioPath);
-        }
-
-        // Start codec2 module if not already up
-        if(codec_running() == false)
-            codec_startDecode(rxAudioPath);
-
         // Process new data
         if(newData)
         {
@@ -268,9 +243,25 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                 bool canMatch =  (streamType.fields.CAN == status->can)
                               || (status->canRxEn == false);
 
-                // Extract audio data
-                if((type == M17FrameType::STREAM) && (pthSts == PATH_OPEN) && (canMatch == true))
+                // Check if the destination callsign of the incoming transmission
+                // matches with ours
+                bool callMatch = compareCallsigns(std::string(status->source_address), dst);
+
+                // Open audio path only if CAN and callsign match
+                uint8_t pthSts = audioPath_getStatus(rxAudioPath);
+                if((pthSts == PATH_CLOSED) && (canMatch == true) && (callMatch == true))
                 {
+                    rxAudioPath = audioPath_request(SOURCE_MCU, SINK_SPK, PRIO_RX);
+                    pthSts = audioPath_getStatus(rxAudioPath);
+                }
+
+                // Extract audio data and sent it to codec
+                if((type == M17FrameType::STREAM) && (pthSts == PATH_OPEN))
+                {
+                    // (re)start codec2 module if not already up
+                    if(codec_running() == false)
+                        codec_startDecode(rxAudioPath);
+
                     M17StreamFrame sf = decoder.getStreamFrame();
                     codec_pushFrame(sf.payload().data(),     false);
                     codec_pushFrame(sf.payload().data() + 8, false);
@@ -296,6 +287,9 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         extendedCall  = false;
         status->M17_link[0] = '\0';
         status->M17_refl[0] = '\0';
+
+        codec_stop(rxAudioPath);
+        audioPath_release(rxAudioPath);
     }
 }
 
@@ -358,4 +352,27 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         modulator.send(m17Frame);
         modulator.stop();
     }
+}
+
+bool OpMode_M17::compareCallsigns(const std::string& localCs,
+                                  const std::string& incomingCs)
+{
+    if((incomingCs == "ALL") || (incomingCs == "INFO") || (incomingCs == "ECHO"))
+        return true;
+
+    std::string truncatedLocal(localCs);
+    std::string truncatedIncoming(incomingCs);
+
+    int slashPos = localCs.find_first_of('/');
+    if(slashPos <= 2)
+        truncatedLocal = localCs.substr(slashPos + 1);
+
+    slashPos = incomingCs.find_first_of('/');
+    if(slashPos <= 2)
+        truncatedIncoming = incomingCs.substr(slashPos + 1);
+
+    if(truncatedLocal == truncatedIncoming)
+        return true;
+
+    return false;
 }

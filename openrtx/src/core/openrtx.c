@@ -47,7 +47,7 @@ void openrtx_init()
     kbd_init();         // Initialize keyboard driver
     ui_init();          // Initialize user interface
     vp_init();          // Initialize voice prompts
-    #ifdef SCREEN_CONTRAST
+    #ifdef CONFIG_SCREEN_CONTRAST
     display_setContrast(state.settings.contrast);
     #endif
 
@@ -74,7 +74,7 @@ void openrtx_init()
     sleepFor(0u, 30u);
     display_setBacklightLevel(state.settings.brightness);
 
-    #if defined(GPS_PRESENT)
+    #if defined(CONFIG_GPS)
     // Detect and initialise GPS
     state.gpsDetected = gps_detect(1000);
     if(state.gpsDetected) gps_init(9600);

@@ -25,12 +25,12 @@
 #include <stdint.h>
 #include <SDL2/SDL.h>
 
-#ifndef SCREEN_WIDTH
-#define SCREEN_WIDTH 160
+#ifndef CONFIG_SCREEN_WIDTH
+#define CONFIG_SCREEN_WIDTH 160
 #endif
 
-#ifndef SCREEN_HEIGHT
-#define SCREEN_HEIGHT 128
+#ifndef CONFIG_SCREEN_HEIGHT
+#define CONFIG_SCREEN_HEIGHT 128
 #endif
 
 enum choices

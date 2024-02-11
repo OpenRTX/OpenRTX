@@ -29,17 +29,17 @@
 #include "HR_C6000.h"
 #include "AT1846S.h"
 
-const rtxStatus_t      *config;   // Pointer to data structure with radio configuration
+static const rtxStatus_t *config;                // Pointer to data structure with radio configuration
 
-static gdxCalibration_t calData;  // Calibration data
-Band    currRxBand  = BND_NONE;   // Current band for RX
-Band    currTxBand  = BND_NONE;   // Current band for TX
-uint16_t apcVoltage = 0;          // APC voltage for TX output power control
+static gdxCalibration_t calData;                 // Calibration data
+static Band    currRxBand  = BND_NONE;           // Current band for RX
+static Band    currTxBand  = BND_NONE;           // Current band for TX
+static uint16_t apcVoltage = 0;                  // APC voltage for TX output power control
 
-enum opstatus radioStatus;        // Current operating status
+static enum opstatus radioStatus;                // Current operating status
 
-HR_C6000& C6000  = HR_C6000::instance();  // HR_C5000 driver
-AT1846S& at1846s = AT1846S::instance();   // AT1846S driver
+static HR_C6000& C6000  = HR_C6000::instance();  // HR_C5000 driver
+static AT1846S& at1846s = AT1846S::instance();   // AT1846S driver
 
 void radio_init(const rtxStatus_t *rtxState)
 {
@@ -331,7 +331,8 @@ void radio_updateConfiguration()
     C6000.setModAmplitude(0, mod1Amp);
 
     // Calculate APC voltage, constraining output power between 1W and 5W.
-    float power = std::max(std::min(config->txPower, 5.0f), 1.0f);
+    float power  = static_cast < float >(config->txPower) / 1000.0f;
+          power  = std::max(std::min(power, 5.0f), 1.0f);
     float pwrHi = static_cast< float >(txpwr_hi);
     float pwrLo = static_cast< float >(txpwr_lo);
     float apc   = pwrLo + (pwrHi - pwrLo)/4.0f*(power - 1.0f);
@@ -347,7 +348,6 @@ void radio_updateConfiguration()
                 at1846s.setTxDeviation(calData.data[currTxBand].mixGainNarrowband);
                 break;
 
-             case BW_20:
              case BW_25:
                 at1846s.setBandwidth(AT1846S_BW::_25);
                 at1846s.setTxDeviation(calData.data[currTxBand].mixGainWideband);
@@ -368,9 +368,9 @@ void radio_updateConfiguration()
     if(radioStatus == TX) radio_enableTx();
 }
 
-float radio_getRssi()
+rssi_t radio_getRssi()
 {
-    return static_cast< float >(at1846s.readRSSI());
+    return static_cast< rssi_t > (at1846s.readRSSI());
 }
 
 enum opstatus radio_getStatus()

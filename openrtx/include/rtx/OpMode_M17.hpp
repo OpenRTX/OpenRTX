@@ -121,6 +121,19 @@ private:
      */
     void txState(rtxStatus_t *const status);
 
+    /**
+     * Compare two callsigns in plain text form.
+     * The comparison does not take into account the country prefixes (strips
+     * the '/' and whatever is in front from all callsigns). It does take into
+     * account the dash and whatever is after it. In case the incoming callsign
+     * is "ALL" the function returns true.
+     *
+     * \param localCs plain text callsign from the user
+     * \param incomingCs plain text destination callsign
+     * \return true if local an incoming callsigns match.
+     */
+    bool compareCallsigns(const std::string& localCs, const std::string& incomingCs);
+
 
     bool startRx;                      ///< Flag for RX management.
     bool startTx;                      ///< Flag for TX management.

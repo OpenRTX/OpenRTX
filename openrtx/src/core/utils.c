@@ -17,7 +17,9 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <string.h>
 #include <utils.h>
+#include <stdio.h>
 #include <math.h>
 
 uint8_t interpCalParameter(const freq_t freq, const freq_t *calPoints,
@@ -51,14 +53,6 @@ uint8_t interpCalParameter(const freq_t freq, const freq_t *calPoints,
     return interpValue;
 }
 
-float dBmToWatt(const uint8_t n)
-{
-    float dBm   = 10.0f + ((float) n) * 0.2f;
-    float power = pow(10.0f, (dBm - 30.0f)/10.0f);
-
-    return power;
-}
-
 uint32_t bcdToBin(uint32_t bcd)
 {
     return ((bcd >> 28) & 0x0F) * 10000000 +
@@ -69,4 +63,16 @@ uint32_t bcdToBin(uint32_t bcd)
            ((bcd >> 8) & 0x0F)  * 100 +
            ((bcd >> 4) & 0x0F)  * 10 +
            (bcd & 0x0F);
+}
+
+void stripTrailingZeroes(char *str)
+{
+    for(size_t i = strlen(str); i > 2; i--)
+    {
+        if((str[i - 1] != '0') || (str[i - 2] == '.'))
+        {
+            str[i] = '\0';
+            return;
+        }
+    }
 }

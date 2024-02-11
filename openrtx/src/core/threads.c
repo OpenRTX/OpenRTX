@@ -33,7 +33,7 @@
 #include <utils.h>
 #include <input.h>
 #include <backup.h>
-#ifdef GPS_PRESENT
+#ifdef CONFIG_GPS
 #include <peripherals/gps.h>
 #include <gps.h>
 #endif
@@ -85,14 +85,12 @@ void *ui_threadFunc(void *arg)
         // If synchronization needed take mutex and update RTX configuration
         if(sync_rtx)
         {
-            float power = dBmToWatt(state.channel.power);
-
             pthread_mutex_lock(&rtx_mutex);
             rtx_cfg.opMode      = state.channel.mode;
             rtx_cfg.bandwidth   = state.channel.bandwidth;
             rtx_cfg.rxFrequency = state.channel.rx_frequency;
             rtx_cfg.txFrequency = state.channel.tx_frequency;
-            rtx_cfg.txPower     = power;
+            rtx_cfg.txPower     = state.channel.power;
             rtx_cfg.sqlLevel    = state.settings.sqlLevel;
             rtx_cfg.rxToneEn    = state.channel.fm.rxToneEn;
             rtx_cfg.rxTone      = ctcss_tone[state.channel.fm.rxTone];
@@ -156,7 +154,7 @@ void *main_thread(void *arg)
         pthread_mutex_unlock(&state_mutex);
 
         // Run GPS task
-        #if defined(GPS_PRESENT) && !defined(MD3x0_ENABLE_DBG)
+        #if defined(CONFIG_GPS) && !defined(MD3x0_ENABLE_DBG)
         gps_task();
         #endif
 
@@ -168,7 +166,7 @@ void *main_thread(void *arg)
         sleepUntil(time);
     }
 
-    #if defined(GPS_PRESENT)
+    #if defined(CONFIG_GPS)
     gps_terminate();
     #endif
 

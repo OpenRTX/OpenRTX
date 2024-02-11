@@ -20,6 +20,7 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
+#include <datatypes.h>
 #include <symbols.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -41,7 +42,7 @@ extern "C" {
  *********************** HOW TO MANAGE FRAMEBUFFER *****************************
  *
  * This driver allocates the framebuffer as a block of linearly addressed memory
- * equivalent to an array of SCREEN_HEIGHT*SCREEN_WIDTH elements.
+ * equivalent to an array of CONFIG_SCREEN_HEIGHT*CONFIG_SCREEN_WIDTH elements.
  * With respect to it, screen is indexed in this way:
  *
  *   (0,0)
@@ -53,7 +54,7 @@ extern "C" {
  *     y
  *
  * then to set the value of the pixel having coordinates (X,Y), framebuffer has
- * to be indexed in this way: buf[X + Y*SCREEN_WIDTH].
+ * to be indexed in this way: buf[X + Y*CONFIG_SCREEN_WIDTH].
  *
  */
 
@@ -86,8 +87,8 @@ typedef enum
     FONT_SIZE_10PT,
     FONT_SIZE_12PT,
     FONT_SIZE_16PT,
-    FONT_SIZE_18PT,
-    FONT_SIZE_24PT
+
+    FONT_SIZE_NUM
 } fontSize_t;
 
 typedef enum
@@ -132,14 +133,6 @@ void gfx_renderRows(uint8_t startRow, uint8_t endRow);
  * whenever there is need to update the display.
  */
 void gfx_render();
-
-/**
- * This function calls the correspondent method of the low level interface display.h
- * Check if framebuffer is being copied to the screen or not, in which case it
- * can be modified without problems.
- * @return false if rendering is not in progress.
- */
-bool gfx_renderingInProgress();
 
 /**
  * Clears a portion of the screen content
@@ -302,13 +295,13 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
  * @param width: Smeter width
  * @param height: Smeter height
  * @param rssi: rssi level in dBm
- * @param squelch: squelch level in percentage
- * @param volume: speaker volume level in percentage
+ * @param squelch: squelch level in range {0, 15}
+ * @param volume: speaker volume level in range {0, 255}
  * @param drawVolume: whether the volume bar should be drawn
  * @param color: color of the squelch bar
  */
-void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
-                    float squelch, float volume, bool drawVolume, color_t color);
+void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, rssi_t rssi,
+                    uint8_t squelch, uint8_t volume, bool drawVolume, color_t color);
 
 /**
  * Function to draw Smeter + level meter of arbitrary size.
@@ -319,11 +312,11 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
  * @param height: Smeter height
  * @param rssi: rssi level in dBm
  * @param level: level in range {0, 255}
-* @param volume: speaker volume level in percentage
-* @param drawVolume: whether the volume bar should be drawn
+ * @param volume: speaker volume level in range {0, 255}
+ * @param drawVolume: whether the volume bar should be drawn
  */
 void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height,
-                         float rssi, uint8_t level, float volume, bool drawVolume);
+                         rssi_t rssi, uint8_t level, uint8_t volume, bool drawVolume);
 
 /**
  * Function to draw GPS SNR bar graph of arbitrary size.

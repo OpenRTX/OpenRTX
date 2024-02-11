@@ -87,12 +87,6 @@
 #define LCD_FSMC_ADDR_COMMAND 0x60000000
 #define LCD_FSMC_ADDR_DATA    0x60040000
 
-/*
- * LCD framebuffer, statically allocated and placed in the "large" RAM block
- * starting at 0x20000000 and accessible by the DMA.
- * Pixel format is RGB565, 16 bit per pixel.
- */
-static uint16_t __attribute__((section(".bss2"))) frameBuffer[SCREEN_WIDTH * SCREEN_HEIGHT];
 
 using namespace miosix;
 static Thread *lcdWaiting = 0;
@@ -130,9 +124,6 @@ void display_init()
 {
     /* Initialise backlight driver */
     backlight_init();
-
-    /* Clear framebuffer, setting all pixels to 0x00 makes the screen white */
-    memset(frameBuffer, 0x00, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(uint16_t));
 
     /*
      * Turn on DMA2 and configure its interrupt. DMA is used to transfer the
@@ -442,7 +433,7 @@ void display_terminate()
     __DSB();
 }
 
-void display_renderRows(uint8_t startRow, uint8_t endRow)
+void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
 {
     /*
      * Put screen data lines back to alternate function mode, since they are in
@@ -465,11 +456,12 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
      * the CS pin low, in this way user code calling the renderingInProgress
      * function gets true as return value and does not stomp our work.
      */
+    uint16_t *frameBuffer = (uint16_t *) fb;
     for(uint8_t y = startRow; y < endRow; y++)
     {
-        for(uint8_t x = 0; x < SCREEN_WIDTH; x++)
+        for(uint8_t x = 0; x < CONFIG_SCREEN_WIDTH; x++)
         {
-            size_t pos = x + y * SCREEN_WIDTH;
+            size_t pos = x + y * CONFIG_SCREEN_WIDTH;
             uint16_t pixel = frameBuffer[pos];
             frameBuffer[pos] = __builtin_bswap16(pixel);
         }
@@ -491,8 +483,8 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
      * we have to set the transfer size to twice the framebuffer size, since
      * this one is made of 16 bit variables.
      */
-    DMA2_Stream7->NDTR = (endRow - startRow) * SCREEN_WIDTH * sizeof(uint16_t);
-    DMA2_Stream7->PAR  = ((uint32_t ) frameBuffer + (startRow * SCREEN_WIDTH
+    DMA2_Stream7->NDTR = (endRow - startRow) * CONFIG_SCREEN_WIDTH * sizeof(uint16_t);
+    DMA2_Stream7->PAR  = ((uint32_t ) frameBuffer + (startRow * CONFIG_SCREEN_WIDTH
                                                      * sizeof(uint16_t)));
     DMA2_Stream7->M0AR = LCD_FSMC_ADDR_DATA;
     DMA2_Stream7->CR = DMA_SxCR_CHSEL         /* Channel 7                   */
@@ -519,24 +511,9 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
     }
 }
 
-void display_render()
+void display_render(void *fb)
 {
-    display_renderRows(0, SCREEN_HEIGHT);
-}
-
-bool display_renderingInProgress()
-{
-    /*
-     * Rendering is in progress if display's chip select is low or a DMA
-     * transfer is in progress.
-     */
-    bool dmaBusy = (DMA2_Stream7->CR & DMA_SxCR_EN) ? true : false;
-    return (gpio_readPin(LCD_CS) == 0) || dmaBusy;
-}
-
-void *display_getFrameBuffer()
-{
-    return (void *)(frameBuffer);
+    display_renderRows(0, CONFIG_SCREEN_HEIGHT, fb);
 }
 
 void display_setContrast(uint8_t contrast)

@@ -23,62 +23,19 @@
 #define HWCONFIG_H
 
 #include <stm32f4xx.h>
+#include "pinmap.h"
 
 /* Screen dimensions */
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
-
-/* Screen has adjustable contrast */
-#define SCREEN_CONTRAST
-#define DEFAULT_CONTRAST 91
+#define CONFIG_SCREEN_WIDTH 128
+#define CONFIG_SCREEN_HEIGHT 64
 
 /* Screen pixel format */
-#define PIX_FMT_BW
+#define CONFIG_PIX_FMT_BW
 
 /* Device has no battery */
-#define BAT_NONE
+#define CONFIG_BAT_NONE
 
-/* Signalling LEDs */
-#define PTT_LED     GPIOC,8
-#define SYNC_LED    GPIOC,9
-#define ERR_LED     GPIOA,8
-
-/* Display */
-#define LCD_RST     GPIOC,7
-#define LCD_RS      GPIOC,6
-#define LCD_CS      GPIOB,14
-#define SPI2_CLK    GPIOB,13
-#define SPI2_SDO    GPIOB,9     // UNUSED
-#define SPI2_SDI    GPIOB,15
-//#define LCD_BKLIGHT GPIOE,15
-
-/* Keyboard */
-#define ESC_SW      GPIOB,8
-#define RIGHT_SW    GPIOB,11
-#define UP_SW       GPIOB,10
-#define DOWN_SW     GPIOC,2
-#define LEFT_SW     GPIOC,3
-#define ENTER_SW    GPIOB,12
-
-#define PTT_SW      GPIOC,13
-#define PTT_OUT     GPIOD,2
-
-/* Audio */
-#define AUDIO_MIC   GPIOA,2
-#define AUDIO_SPK   GPIOA,5
-#define BASEBAND_RX GPIOA,1
-#define BASEBAND_TX GPIOA,4
-#define SPK_MUTE    GPIOB,1
-#define MIC_MUTE    GPIOC,4
-#define MIC_GAIN    GPIOC,5
-
-#define AIN_HWVER   GPIOA,3
-#define POWER_SW    GPIOA,15
-
-/* I2C for MCP4551 */
-#define I2C_SDA GPIOB,7
-#define I2C_SCL GPIOB,6
-#define SOFTPOT_RX 0x2E
-#define SOFTPOT_TX 0x2F
+/* Device supports M17 mode */
+#define CONFIG_M17
 
 #endif

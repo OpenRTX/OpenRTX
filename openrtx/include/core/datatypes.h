@@ -45,6 +45,13 @@ typedef unsigned int tone_t;
  */
 typedef uint32_t freq_t;
 
+/**
+ * \brief RSSI type.
+ *
+ * Data type for RSSI, in dBm.
+ */
+typedef int32_t rssi_t;
+
 #ifdef __cplusplus
 }
 #endif

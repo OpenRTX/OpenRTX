@@ -32,11 +32,13 @@
 
 state_t state;
 pthread_mutex_t state_mutex;
-long long int lastUpdate = 0;
+static long long int lastUpdate = 0;
 
 // Commonly used frequency steps, expressed in Hz
-uint32_t freq_steps[] = { 1000, 5000, 6250, 10000, 12500, 15000, 20000, 25000, 50000, 100000 };
-size_t n_freq_steps = sizeof(freq_steps) / sizeof(freq_steps[0]);
+const uint32_t freq_steps[] = { 1000, 5000, 6250, 10000, 12500, 15000,
+                                20000, 25000, 50000, 100000 };
+const size_t n_freq_steps   = sizeof(freq_steps) / sizeof(freq_steps[0]);
+
 
 void state_init()
 {
@@ -64,7 +66,7 @@ void state_init()
     /*
      * Initialise remaining fields
      */
-    #ifdef RTC_PRESENT
+    #ifdef CONFIG_RTC
     state.time = platform_getCurrentTime();
     #endif
     state.v_bat  = platform_getVbat();
@@ -111,15 +113,23 @@ void state_task()
      * Low-pass filtering with a time constant of 10s when updated at 1Hz
      * Original computation: state.v_bat = 0.02*vbat + 0.98*state.v_bat
      * Peak error is 18mV when input voltage is 49mV.
+     *
+     * NOTE: GD77 and DM-1801 already have an hardware low-pass filter on the
+     * vbat pin. Adding also the digital one seems to cause more troubles than
+     * benefits.
      */
     uint16_t vbat = platform_getVbat();
+    #if defined(PLATFORM_GD77) || defined(PLATFORM_DM1801)
+    state.v_bat   = vbat;
+    #else
     state.v_bat  -= (state.v_bat * 2) / 100;
     state.v_bat  += (vbat * 2) / 100;
+    #endif
 
     state.charge = battery_getCharge(state.v_bat);
     state.rssi = rtx_getRssi();
 
-    #ifdef RTC_PRESENT
+    #ifdef CONFIG_RTC
     state.time = platform_getCurrentTime();
     #endif
 

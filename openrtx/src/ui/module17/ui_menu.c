@@ -75,11 +75,11 @@ void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_
 {
     point_t pos = layout.line1_pos;
     // Number of menu entries that fit in the screen height
-    uint8_t entries_in_screen = (SCREEN_HEIGHT - 1 - pos.y) / layout.menu_h + 1;
+    uint8_t entries_in_screen = (CONFIG_SCREEN_HEIGHT - 1 - pos.y) / layout.menu_h + 1;
     uint8_t scroll = 0;
     char entry_buf[MAX_ENTRY_LEN] = "";
     color_t text_color = color_white;
-    for(int item=0, result=0; (result == 0) && (pos.y < SCREEN_HEIGHT); item++)
+    for(int item=0, result=0; (result == 0) && (pos.y < CONFIG_SCREEN_HEIGHT); item++)
     {
         // If selection is off the screen, scroll screen
         if(selected >= entries_in_screen)
@@ -94,7 +94,7 @@ void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_
                 text_color = color_black;
                 // Draw rectangle under selected item, compensating for text height
                 point_t rect_pos = {0, pos.y - layout.menu_h + 3};
-                gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.menu_h, color_white, true);
+                gfx_drawRect(rect_pos, CONFIG_SCREEN_WIDTH, layout.menu_h, color_white, true);
             }
             gfx_print(pos, layout.menu_font, TEXT_ALIGN_LEFT, text_color, entry_buf);
             pos.y += layout.menu_h;
@@ -108,12 +108,12 @@ void _ui_drawMenuListValue(ui_state_t* ui_state, uint8_t selected,
 {
     point_t pos = layout.line1_pos;
     // Number of menu entries that fit in the screen height
-    uint8_t entries_in_screen = (SCREEN_HEIGHT - 1 - pos.y) / layout.menu_h + 1;
+    uint8_t entries_in_screen = (CONFIG_SCREEN_HEIGHT - 1 - pos.y) / layout.menu_h + 1;
     uint8_t scroll = 0;
     char entry_buf[MAX_ENTRY_LEN] = "";
     char value_buf[MAX_ENTRY_LEN] = "";
     color_t text_color = color_white;
-    for(int item=0, result=0; (result == 0) && (pos.y < SCREEN_HEIGHT); item++)
+    for(int item=0, result=0; (result == 0) && (pos.y < CONFIG_SCREEN_HEIGHT); item++)
     {
         // If selection is off the screen, scroll screen
         if(selected >= entries_in_screen)
@@ -137,7 +137,7 @@ void _ui_drawMenuListValue(ui_state_t* ui_state, uint8_t selected,
                     full_rect = false;
                 }
                 point_t rect_pos = {0, pos.y - layout.menu_h + 3};
-                gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.menu_h, color_white, full_rect);
+                gfx_drawRect(rect_pos, CONFIG_SCREEN_WIDTH, layout.menu_h, color_white, full_rect);
             }
             gfx_print(pos, layout.menu_font, TEXT_ALIGN_LEFT, text_color, entry_buf);
             gfx_print(pos, layout.menu_font, TEXT_ALIGN_RIGHT, text_color, value_buf);
@@ -177,15 +177,9 @@ int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
     uint8_t value = 0;
     switch(index)
     {
-#ifdef SCREEN_CONTRAST
-        case D_CONTRAST:
-            value = last_state.settings.contrast;
+        case D_BRIGHTNESS:
+            value = last_state.settings.brightness;
             break;
-#endif
-        case D_TIMER:
-            snprintf(buf, max_len, "%s",
-                     display_timer_values[last_state.settings.display_timer]);
-            return 0;
     }
     snprintf(buf, max_len, "%d", value);
     return 0;
@@ -251,7 +245,7 @@ int _ui_getModule17ValueName(char *buf, uint8_t max_len, uint8_t index)
     return 0;
 }
 
-#ifdef GPS_PRESENT
+#ifdef CONFIG_GPS
 int _ui_getSettingsGPSEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= settings_gps_num) return -1;
@@ -318,7 +312,7 @@ void _ui_drawMenuTop(ui_state_t* ui_state)
     _ui_drawMenuList(ui_state->menu_selected, _ui_getMenuTopEntryName);
 }
 
-#ifdef GPS_PRESENT
+#ifdef CONFIG_GPS
 void _ui_drawMenuGPS()
 {
     char *fix_buf, *type_buf;
@@ -326,7 +320,7 @@ void _ui_drawMenuGPS()
     // Print "GPS" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "GPS");
-    point_t fix_pos = {layout.line2_pos.x, SCREEN_HEIGHT * 2 / 5};
+    point_t fix_pos = {layout.line2_pos.x, CONFIG_SCREEN_HEIGHT * 2 / 5};
     // Print GPS status, if no fix, hide details
     if(!last_state.settings.gps_enabled)
         gfx_print(fix_pos, layout.line3_font, TEXT_ALIGN_CENTER,
@@ -392,17 +386,17 @@ void _ui_drawMenuGPS()
                   last_state.gps_data.altitude);
     }
     // Draw compass
-    point_t compass_pos = {layout.horizontal_pad * 2, SCREEN_HEIGHT / 2};
+    point_t compass_pos = {layout.horizontal_pad * 2, CONFIG_SCREEN_HEIGHT / 2};
     gfx_drawGPScompass(compass_pos,
-                       SCREEN_WIDTH / 9 + 2,
+                       CONFIG_SCREEN_WIDTH / 9 + 2,
                        last_state.gps_data.tmg_true,
                        last_state.gps_data.fix_quality != 0 &&
                        last_state.gps_data.fix_quality != 6);
     // Draw satellites bar graph
-    point_t bar_pos = {layout.line3_pos.x + SCREEN_WIDTH * 1 / 3, SCREEN_HEIGHT / 2};
+    point_t bar_pos = {layout.line3_pos.x + CONFIG_SCREEN_WIDTH * 1 / 3, CONFIG_SCREEN_HEIGHT / 2};
     gfx_drawGPSgraph(bar_pos,
-                     (SCREEN_WIDTH * 2 / 3) - layout.horizontal_pad,
-                     SCREEN_HEIGHT / 3,
+                     (CONFIG_SCREEN_WIDTH * 2 / 3) - layout.horizontal_pad,
+                     CONFIG_SCREEN_HEIGHT / 3,
                      last_state.gps_data.satellites,
                      last_state.gps_data.active_sats);
 }
@@ -438,7 +432,7 @@ void _ui_drawMenuAbout()
               "OpenRTX");
 
     uint8_t line_h = layout.menu_h;
-    point_t pos = {SCREEN_WIDTH / 7, SCREEN_HEIGHT - (line_h * (author_num - 1)) - 5};
+    point_t pos = {CONFIG_SCREEN_WIDTH / 7, CONFIG_SCREEN_HEIGHT - (line_h * (author_num - 1)) - 5};
     for(int author = 0; author < author_num; author++)
     {
         gfx_print(pos, layout.top_font, TEXT_ALIGN_LEFT,
@@ -458,7 +452,7 @@ void _ui_drawSettingsDisplay(ui_state_t* ui_state)
                            _ui_getDisplayValueName);
 }
 
-#ifdef GPS_PRESENT
+#ifdef CONFIG_GPS
 void _ui_drawSettingsGPS(ui_state_t* ui_state)
 {
     gfx_clearScreen();
@@ -472,7 +466,7 @@ void _ui_drawSettingsGPS(ui_state_t* ui_state)
 }
 #endif
 
-#ifdef RTC_PRESENT
+#ifdef CONFIG_RTC
 void _ui_drawSettingsTimeDate()
 {
     gfx_clearScreen();
@@ -539,17 +533,17 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
 
     if(ui_state->edit_mode)
     {
-        gfx_printLine(1, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
+        gfx_printLine(1, 4, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
                     layout.horizontal_pad, layout.menu_font,
                     TEXT_ALIGN_LEFT, color_white, "Callsign:");
 
-        // uint16_t rect_width = SCREEN_WIDTH - (layout.horizontal_pad * 2);
-        // uint16_t rect_height = (SCREEN_HEIGHT - (layout.top_h + layout.bottom_h))/2;
-        // point_t rect_origin = {(SCREEN_WIDTH - rect_width) / 2,
-        //                        (SCREEN_HEIGHT - rect_height) / 2};
+        // uint16_t rect_width = CONFIG_SCREEN_WIDTH - (layout.horizontal_pad * 2);
+        // uint16_t rect_height = (CONFIG_SCREEN_HEIGHT - (layout.top_h + layout.bottom_h))/2;
+        // point_t rect_origin = {(CONFIG_SCREEN_WIDTH - rect_width) / 2,
+        //                        (CONFIG_SCREEN_HEIGHT - rect_height) / 2};
         // gfx_drawRect(rect_origin, rect_width, rect_height, color_white, false);
         // Print M17 callsign being typed
-        gfx_printLine(1, 1, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
+        gfx_printLine(1, 1, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
                       layout.horizontal_pad, layout.input_font,
                       TEXT_ALIGN_CENTER, color_white, ui_state->new_callsign);
         // Print Button Info
@@ -589,10 +583,10 @@ void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state)
 
     // Make text flash yellow once every 1s
     color_t textcolor = drawcnt % 2 == 0 ? color_white : yellow_fab413;
-    gfx_printLine(1, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
+    gfx_printLine(1, 4, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
                   layout.horizontal_pad, layout.top_font,
                   TEXT_ALIGN_CENTER, textcolor, "To reset:");
-    gfx_printLine(2, 4, layout.top_h, SCREEN_HEIGHT - layout.bottom_h,
+    gfx_printLine(2, 4, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
                   layout.horizontal_pad, layout.top_font,
                   TEXT_ALIGN_CENTER, textcolor, "Press Enter twice");
 

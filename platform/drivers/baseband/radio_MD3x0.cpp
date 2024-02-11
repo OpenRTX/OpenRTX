@@ -30,19 +30,19 @@
 #include "HR_C5000.h"
 #include "SKY72310.h"
 
-static const freq_t IF_FREQ = 49950000;  // Intermediate frequency: 49.95MHz
+static const freq_t IF_FREQ = 49950000;         // Intermediate frequency: 49.95MHz
 
-const rtxStatus_t  *config;              // Pointer to data structure with radio configuration
+static const rtxStatus_t  *config;              // Pointer to data structure with radio configuration
 
-static md3x0Calib_t calData;             // Calibration data
-bool    isVhfBand = false;               // True if rtx stage is for VHF band
-uint8_t vtune_rx  = 0;                   // Tuning voltage for RX input filter
-uint8_t txpwr_lo  = 0;                   // APC voltage for TX output power control, low power
-uint8_t txpwr_hi  = 0;                   // APC voltage for TX output power control, high power
+static md3x0Calib_t calData;                    // Calibration data
+static bool    isVhfBand = false;               // True if rtx stage is for VHF band
+static uint8_t vtune_rx  = 0;                   // Tuning voltage for RX input filter
+static uint8_t txpwr_lo  = 0;                   // APC voltage for TX output power control, low power
+static uint8_t txpwr_hi  = 0;                   // APC voltage for TX output power control, high power
 
-enum opstatus radioStatus;               // Current operating status
+static enum opstatus radioStatus;               // Current operating status
 
-HR_C5000& C5000 = HR_C5000::instance();  // HR_C5000 driver
+static HR_C5000& C5000 = HR_C5000::instance();  // HR_C5000 driver
 
 /*
  * Parameters for RSSI voltage (mV) to input power (dBm) conversion.
@@ -65,13 +65,6 @@ void _setBandwidth(const enum bandwidth bw)
             gpio_clearPin(WN_SW);
             #endif
             C5000.setModFactor(0x1E);
-            break;
-
-        case BW_20:
-            #ifndef MDx_ENABLE_SWD
-            gpio_setPin(WN_SW);
-            #endif
-            C5000.setModFactor(0x30);
             break;
 
         case BW_25:
@@ -281,7 +274,8 @@ void radio_enableTx()
     SKY73210_setFrequency(pllFreq, 5);
 
     // Set TX output power, constrain between 1W and 5W.
-    float power  = std::max(std::min(config->txPower, 5.0f), 1.0f);
+    float power  = static_cast < float >(config->txPower) / 1000.0f;
+          power  = std::max(std::min(power, 5.0f), 1.0f);
     float pwrHi  = static_cast< float >(txpwr_hi);
     float pwrLo  = static_cast< float >(txpwr_lo);
     float apc    = pwrLo + (pwrHi - pwrLo)/4.0f*(power - 1.0f);
@@ -397,7 +391,7 @@ void radio_updateConfiguration()
     if(radioStatus == TX) radio_enableTx();
 }
 
-float radio_getRssi()
+rssi_t radio_getRssi()
 {
     /*
      * On MD3x0 devices, RSSI value is get by reading the analog RSSI output
@@ -415,7 +409,7 @@ float radio_getRssi()
 
     float rssi_mv  = ((float) adc1_getMeasurement(ADC_RSSI_CH));
     float rssi_dbm = (rssi_mv - rssi_offset[offset_index]) / rssi_gain;
-    return rssi_dbm;
+    return static_cast< rssi_t >(rssi_dbm);
 }
 
 enum opstatus radio_getStatus()

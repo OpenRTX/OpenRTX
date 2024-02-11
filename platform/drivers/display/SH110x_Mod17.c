@@ -29,20 +29,9 @@
 #include <hwconfig.h>
 #include <SPI2.h>
 
-/*
- * LCD framebuffer, statically allocated and placed in the "large" RAM block
- * starting at 0x20000000.
- * Pixel format is black and white, one bit per pixel.
- */
-#define FB_SIZE (((SCREEN_HEIGHT * SCREEN_WIDTH) / 8 ) + 1)
-static uint8_t __attribute__((section(".bss2"))) frameBuffer[FB_SIZE];
-
 
 void display_init()
 {
-    /* Clear framebuffer, setting all pixels to 0x00 makes the screen white */
-    memset(frameBuffer, 0x00, FB_SIZE);
-
     /*
      * Initialise SPI2 for external flash and LCD
      */
@@ -103,13 +92,14 @@ void display_terminate()
     spi2_terminate();
 }
 
-void display_renderRows(uint8_t startRow, uint8_t endRow)
+void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
 {
     gpio_clearPin(LCD_CS);
 
+    uint8_t *frameBuffer = (uint8_t *) fb;
     for(uint8_t y = startRow; y < endRow; y++)
     {
-        for(uint8_t x = 0; x < SCREEN_WIDTH/8; x++)
+        for(uint8_t x = 0; x < CONFIG_SCREEN_WIDTH/8; x++)
         {
             gpio_clearPin(LCD_RS);              /* RS low -> command mode */
             (void) spi2_sendRecv(y & 0x0F);     /* Set Y position         */
@@ -117,7 +107,7 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
             (void) spi2_sendRecv(0xB0 | x);     /* Set X position         */
             gpio_setPin(LCD_RS);                /* RS high -> data mode   */
 
-            size_t pos = x + y * (SCREEN_WIDTH/8);
+            size_t pos = x + y * (CONFIG_SCREEN_WIDTH/8);
             spi2_sendRecv(frameBuffer[pos]);
         }
     }
@@ -125,33 +115,31 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
     gpio_setPin(LCD_CS);
 }
 
-void display_render()
+void display_render(void *fb)
 {
-    display_renderRows(0, SCREEN_HEIGHT);
-}
-
-bool display_renderingInProgress()
-{
-    return (gpio_readPin(LCD_CS) == 0);
-}
-
-void *display_getFrameBuffer()
-{
-    return (void *)(frameBuffer);
+    display_renderRows(0, CONFIG_SCREEN_HEIGHT, fb);
 }
 
 void display_setContrast(uint8_t contrast)
 {
-    gpio_clearPin(LCD_CS);
-
-    gpio_clearPin(LCD_RS);             /* RS low -> command mode              */
-    (void) spi2_sendRecv(0x81);        /* Set Electronic Volume               */
-    (void) spi2_sendRecv(contrast);    /* Controller contrast range is 0 - 63 */
-
-    gpio_setPin(LCD_CS);
+    /* OLED display do not have contrast regulation */
+    (void) contrast;
 }
 
 void display_setBacklightLevel(uint8_t level)
 {
-    (void) level;
+    /*
+     * Module17 uses an OLED display, so contrast channel is actually controlling
+     * the brightness. The usable range is 0 - 128, above which there is no
+     * noticeable change in the brightness level (already at maximum).
+     */
+    uint16_t bl = (level * 128) / 100;
+
+    gpio_clearPin(LCD_CS);
+
+    gpio_clearPin(LCD_RS);             /* RS low -> command mode    */
+    (void) spi2_sendRecv(0x81);        /* Contrast control register */
+    (void) spi2_sendRecv(bl);
+
+    gpio_setPin(LCD_CS);
 }

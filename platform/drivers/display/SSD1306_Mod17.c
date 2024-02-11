@@ -30,14 +30,6 @@
 #include <SPI2.h>
 
 
-/*
- * LCD framebuffer, statically allocated and placed in the "large" RAM block
- * starting at 0x20000000.
- * Pixel format is black and white, one bit per pixel.
- */
-#define FB_SIZE (((SCREEN_HEIGHT * SCREEN_WIDTH) / 8 ) + 1)
-static uint8_t __attribute__((section(".bss2"))) frameBuffer[FB_SIZE];
-
 /**
  * \internal
  * Send one row of pixels to the display.
@@ -46,7 +38,7 @@ static uint8_t __attribute__((section(".bss2"))) frameBuffer[FB_SIZE];
  *
  * @param row: pixel row to be be sent.
  */
-void display_renderRow(uint8_t row)
+void display_renderRow(uint8_t row, uint8_t *frameBuffer)
 {
     for(uint16_t i = 0; i < 64; i++)
     {
@@ -65,9 +57,6 @@ void display_renderRow(uint8_t row)
 
 void display_init()
 {
-    /* Clear framebuffer, setting all pixels to 0x00 makes the screen white */
-    memset(frameBuffer, 0x00, FB_SIZE);
-
     /*
      * Initialise SPI2 for external flash and LCD
      */
@@ -128,7 +117,7 @@ void display_terminate()
     spi2_terminate();
 }
 
-void display_renderRows(uint8_t startRow, uint8_t endRow)
+void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
 {
     gpio_clearPin(LCD_CS);
 
@@ -139,25 +128,15 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
         (void) spi2_sendRecv(0x00);       /* Set X position         */
         (void) spi2_sendRecv(0x10);
         gpio_setPin(LCD_RS);              /* RS high -> data mode   */
-        display_renderRow(row);
+        display_renderRow(row, (uint8_t *) fb);
     }
 
     gpio_setPin(LCD_CS);
 }
 
-void display_render()
+void display_render(void *fb)
 {
-    display_renderRows(0, (SCREEN_WIDTH / 8) - 1);
-}
-
-bool display_renderingInProgress()
-{
-    return (gpio_readPin(LCD_CS) == 0);
-}
-
-void *display_getFrameBuffer()
-{
-    return (void *)(frameBuffer);
+    display_renderRows(0, (CONFIG_SCREEN_WIDTH / 8) - 1, fb);
 }
 
 void display_setContrast(uint8_t contrast)

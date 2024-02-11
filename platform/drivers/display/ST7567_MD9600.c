@@ -28,13 +28,6 @@
 #include "hwconfig.h"
 #include <SPI2.h>
 
-/*
- * LCD framebuffer, statically allocated and placed in the "large" RAM block
- * starting at 0x20000000.
- * Pixel format is black and white, one bit per pixel.
- */
-#define FB_SIZE (((SCREEN_HEIGHT * SCREEN_WIDTH) / 8 ) + 1)
-static uint8_t __attribute__((section(".bss2"))) frameBuffer[FB_SIZE];
 
 /**
  * \internal
@@ -44,7 +37,7 @@ static uint8_t __attribute__((section(".bss2"))) frameBuffer[FB_SIZE];
  *
  * @param row: pixel row to be be sent.
  */
-static void display_renderRow(uint8_t row)
+static void display_renderRow(uint8_t row, uint8_t *frameBuffer)
 {
     /* magic stuff */
     uint8_t *buf = (frameBuffer + 128 * row);
@@ -74,9 +67,6 @@ static void display_renderRow(uint8_t row)
 
 void display_init()
 {
-    /* Clear framebuffer, setting all pixels to 0x00 makes the screen white */
-    memset(frameBuffer, 0x00, FB_SIZE);
-
     gpio_setMode(LCD_CS,  OUTPUT);
     gpio_setMode(LCD_RST, OUTPUT);
     gpio_setMode(LCD_RS,  OUTPUT);
@@ -111,7 +101,7 @@ void display_terminate()
 
 }
 
-void display_renderRows(uint8_t startRow, uint8_t endRow)
+void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
 {
     spi2_lockDeviceBlocking();
     gpio_clearPin(LCD_CS);
@@ -123,26 +113,16 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
         (void) spi2_sendRecv(0x10);       /* Set X position         */
         (void) spi2_sendRecv(0x04);
         gpio_setPin(LCD_RS);              /* RS high -> data mode   */
-        display_renderRow(row);
+        display_renderRow(row, (uint8_t *) fb);
     }
 
     gpio_setPin(LCD_CS);
     spi2_releaseDevice();
 }
 
-void display_render()
+void display_render(void *fb)
 {
-    display_renderRows(0, SCREEN_HEIGHT / 8);
-}
-
-bool display_renderingInProgress()
-{
-    return (gpio_readPin(LCD_CS) == 0);
-}
-
-void *display_getFrameBuffer()
-{
-    return (void *)(frameBuffer);
+    display_renderRows(0, CONFIG_SCREEN_HEIGHT / 8, fb);
 }
 
 void display_setContrast(uint8_t contrast)

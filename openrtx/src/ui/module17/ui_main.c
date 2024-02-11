@@ -30,12 +30,12 @@ void _ui_drawMainBackground()
     // Print top bar line of hline_h pixel height
     gfx_drawHLine(layout.top_h, layout.hline_h, color_grey);
     // Print bottom bar line of 1 pixel height
-    gfx_drawHLine(SCREEN_HEIGHT - layout.bottom_h - 1, layout.hline_h, color_grey);
+    gfx_drawHLine(CONFIG_SCREEN_HEIGHT - layout.bottom_h - 1, layout.hline_h, color_grey);
 }
 
 void _ui_drawMainTop()
 {
-#ifdef RTC_PRESENT
+#ifdef CONFIG_RTC
     // Print clock on top bar
     datetime_t local_time = utcToLocalTime(last_state.time,
                                            last_state.settings.utc_timezone);
@@ -69,8 +69,6 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
         // Get Bandwidth string
         if(last_state.channel.bandwidth == BW_12_5)
             snprintf(bw_str, 8, "12.5");
-        else if(last_state.channel.bandwidth == BW_20)
-            snprintf(bw_str, 8, "20");
         else if(last_state.channel.bandwidth == BW_25)
             snprintf(bw_str, 8, "25");
         // Get encdec string
@@ -252,10 +250,10 @@ void _ui_drawMainBottom()
     float squelch = last_state.settings.sqlLevel / 16.0f;
     // Module17 0.1e does not know the volume level, so we will never draw it
     float volume = platform_getVolumeLevel() / 255.0f;
-    uint16_t meter_width = SCREEN_WIDTH - 2 * layout.horizontal_pad;
+    uint16_t meter_width = CONFIG_SCREEN_WIDTH - 2 * layout.horizontal_pad;
     uint16_t meter_height = layout.bottom_h;
     point_t meter_pos = { layout.horizontal_pad,
-                          SCREEN_HEIGHT - meter_height - layout.bottom_pad};
+                          CONFIG_SCREEN_HEIGHT - meter_height - layout.bottom_pad};
     uint8_t mic_level = platform_getMicLevel();
     switch(last_state.channel.mode)
     {

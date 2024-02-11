@@ -43,7 +43,7 @@ set(OPENRTX_ROOT ${CMAKE_CURRENT_LIST_DIR})
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(openrtx)
 
-execute_process(COMMAND git describe --tags --dirty
+execute_process(COMMAND git describe --tags --dirty --always
                 OUTPUT_VARIABLE GIT_VER_ID
                 ERROR_QUIET
                 OUTPUT_STRIP_TRAILING_WHITESPACE)

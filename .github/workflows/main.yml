@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: install-deps
@@ -35,7 +35,10 @@ jobs:
           meson setup build_linux
           meson setup --cross-file cross_arm.txt build_arm
       - name: Compile linux
-        run: meson compile -C build_linux openrtx_linux
+        run: |
+          meson compile -C build_linux openrtx_linux
+          meson compile -C build_linux openrtx_linux_smallscreen
+          meson compile -C build_linux openrtx_linux_mod17
       - name: Compile arm targets
         run: |
           export PATH=$PATH:/tmp/OpenGD77/tools/Python/FirmwareLoader:/tmp/OpenGD77/firmware/tools
@@ -46,7 +49,7 @@ jobs:
           meson compile -C build_arm openrtx_gd77_wrap
           meson compile -C build_arm openrtx_dm1801_wrap
           meson compile -C build_arm openrtx_mod17_wrap
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: release-bins
           path: |
@@ -56,7 +59,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: install-deps

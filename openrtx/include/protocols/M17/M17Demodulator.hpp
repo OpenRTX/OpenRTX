@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2021 - 2024 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Wojciech Kaczmarski SP5WWP               *
  *                                Frederik Saraci IU2NRO                   *
@@ -27,6 +27,7 @@
 #error This header is C++ only!
 #endif
 
+#include <iir.hpp>
 #include <cstdint>
 #include <cstddef>
 #include <memory>
@@ -37,16 +38,11 @@
 #include <audio_stream.h>
 #include <M17/M17Datatypes.hpp>
 #include <M17/M17Constants.hpp>
+#include <M17/Correlator.hpp>
+#include <M17/Synchronizer.hpp>
 
 namespace M17
 {
-
-typedef struct
-{
-    int32_t index;
-    bool lsf;
-}
-sync_t;
 
 class M17Demodulator
 {
@@ -91,168 +87,86 @@ public:
     const frame_t& getFrame();
 
     /**
-     * @return true if the last decoded frame is an LSF.
-     */
-    bool isFrameLSF();
-
-    /**
      * Demodulates data from the ADC and fills the idle frame.
      * Everytime this function is called a whole ADC buffer is consumed.
      *
+     * @param invertPhase: invert the phase of the baseband signal before decoding.
      * @return true if a new frame has been fully decoded.
      */
-    bool update();
+    bool update(const bool invertPhase = false);
 
     /**
      * @return true if a demodulator is locked on an M17 stream.
      */
     bool isLocked();
 
-    /**
-     * Invert baseband signal phase before decoding.
-     *
-     * @param status: if set to true signal phase is inverted.
-     */
-    void invertPhase(const bool status);
-
 private:
+
+    /**
+     * Quantize a given sample to its corresponding symbol and append it to the
+     * ongoing frame. When a frame is complete, it swaps the pointers and updates
+     * newFrame variable.
+     *
+     * @param sample: baseband sample.
+     * @return quantized symbol.
+     */
+    int8_t updateFrame(const int16_t sample);
+
+    /**
+     * Reset the demodulator state.
+     */
+    void reset();
 
     /**
      * M17 baseband signal sampled at 24kHz, half of an M17 frame is processed
      * at each update of the demodulator.
      */
-    static constexpr size_t M17_RX_SAMPLE_RATE     = 24000;
-
-
-    static constexpr size_t  M17_SAMPLES_PER_SYMBOL = M17_RX_SAMPLE_RATE / M17_SYMBOL_RATE;
-    static constexpr size_t  M17_FRAME_SAMPLES      = M17_FRAME_SYMBOLS * M17_SAMPLES_PER_SYMBOL;
-    static constexpr size_t  M17_SAMPLE_BUF_SIZE    = M17_FRAME_SAMPLES / 2;
-    static constexpr size_t  M17_SYNCWORD_SAMPLES   = M17_SAMPLES_PER_SYMBOL * M17_SYNCWORD_SYMBOLS;
-    static constexpr int8_t  SYNC_SWEEP_WIDTH       = 10;
-    static constexpr int8_t  SYNC_SWEEP_OFFSET      = ceil(SYNC_SWEEP_WIDTH / M17_SAMPLES_PER_SYMBOL);
-    static constexpr int16_t M17_BRIDGE_SIZE        = M17_SYNCWORD_SAMPLES + 2 * SYNC_SWEEP_WIDTH;
-
-    static constexpr float  CONV_STATS_ALPHA       = 0.005f;
-    static constexpr float  CONV_THRESHOLD_FACTOR  = 3.40;
-    static constexpr int16_t QNT_SMA_WINDOW        = 8;
+    static constexpr size_t  RX_SAMPLE_RATE     = 24000;
+    static constexpr size_t  SAMPLES_PER_SYMBOL = RX_SAMPLE_RATE / M17_SYMBOL_RATE;
+    static constexpr size_t  FRAME_SAMPLES      = M17_FRAME_SYMBOLS * SAMPLES_PER_SYMBOL;
+    static constexpr size_t  SAMPLE_BUF_SIZE    = FRAME_SAMPLES / 2;
+    static constexpr size_t  SYNCWORD_SAMPLES   = SAMPLES_PER_SYMBOL * M17_SYNCWORD_SYMBOLS;
 
     /**
-     * M17 syncwords;
+     * Internal state of the demodulator.
      */
-    int8_t  lsf_syncword[M17_SYNCWORD_SYMBOLS]    = { +3, +3, +3, +3, -3, -3, +3, -3 };
-    int8_t  stream_syncword[M17_SYNCWORD_SYMBOLS] = { -3, -3, -3, -3, +3, +3, -3, +3 };
-
-    /*
-     * Buffers
-     */
-    std::unique_ptr< int16_t[] > baseband_buffer; ///< Buffer for baseband audio handling.
-    streamId                     basebandId;      ///< Id of the baseband input stream.
-    pathId                       basebandPath;    ///< Id of the baseband input path.
-    dataBlock_t                  baseband;        ///< Data block with samples to be processed.
-    uint16_t                     frame_index;     ///< Index for filling the raw frame.
-    std::unique_ptr<frame_t >    demodFrame;      ///< Frame being demodulated.
-    std::unique_ptr<frame_t >    readyFrame;      ///< Fully demodulated frame to be returned.
-    bool                         syncDetected;    ///< A syncword was detected.
-    bool                         locked;          ///< A syncword was correctly demodulated.
-    bool                         newFrame;        ///< A new frame has been fully decoded.
-    int16_t                      basebandBridge[M17_BRIDGE_SIZE] = { 0 }; ///< Bridge buffer
-    int16_t                      phase;           ///< Phase of the signal w.r.t. sampling
-    bool                         invPhase;        ///< Invert signal phase
-
-    /*
-     * State variables
-     */
-    bool         m17RxEnabled;     ///< M17 Reception Enabled
-
-    /*
-     * Convolution statistics computation
-     */
-    float conv_emvar = 0.0f;
-
-    /*
-     * Quantization statistics computation
-     */
-    int8_t       qnt_pos_cnt;      ///< Number of received positive samples
-    int8_t       qnt_neg_cnt;      ///< Number of received negative samples
-    int32_t      qnt_pos_acc;      ///< Accumulator for quantization average
-    int32_t      qnt_neg_acc;      ///< Accumulator for quantization average
-    float qnt_pos_avg = 0.0f;      ///< Rolling average of positive samples
-    float qnt_neg_avg = 0.0f;      ///< Rolling average of negative samples
-
-    /*
-     * DSP filter state
-     */
-    filter_state_t dsp_state;
+    enum class DemodState
+    {
+        INIT,       ///< Initializing
+        UNLOCKED,   ///< Not locked
+        SYNCED,     ///< Synchronized, validate syncword
+        LOCKED,     ///< Locked
+        SYNC_UPDATE ///< Updating the sampling point
+    };
 
     /**
-     * Resets the exponential mean and variance/stddev computation.
+     * Cofficients of the sample filter
      */
-    void resetCorrelationStats();
+    static constexpr std::array < float, 3 > sfNum = {4.24433681e-05f, 8.48867363e-05f, 4.24433681e-05f};
+    static constexpr std::array < float, 3 > sfDen = {1.0f,           -1.98148851f,     0.98165828f};
 
-    /**
-     * Updates the mean and variance with the given correlation value.
-     *
-     * @param value: value to be added to the exponential moving
-     * average/variance computation
-     */
-    void updateCorrelationStats(int32_t value);
+    DemodState                     demodState;      ///< Demodulator state
+    std::unique_ptr< int16_t[] >   baseband_buffer; ///< Buffer for baseband audio handling.
+    streamId                       basebandId;      ///< Id of the baseband input stream.
+    pathId                         basebandPath;    ///< Id of the baseband input path.
+    std::unique_ptr<frame_t >      demodFrame;      ///< Frame being demodulated.
+    std::unique_ptr<frame_t >      readyFrame;      ///< Fully demodulated frame to be returned.
+    bool                           locked;          ///< A syncword was correctly demodulated.
+    bool                           newFrame;        ///< A new frame has been fully decoded.
+    uint16_t                       frameIndex;      ///< Index for filling the raw frame.
+    uint32_t                       sampleIndex;     ///< Sample index, from 0 to (SAMPLES_PER_SYMBOL - 1)
+    uint32_t                       samplingPoint;   ///< Symbol sampling point
+    uint32_t                       sampleCount;     ///< Free-running sample counter
+    uint8_t                        missedSyncs;     ///< Counter of missed synchronizations
+    uint32_t                       initCount;       ///< Downcounter for initialization
+    uint32_t                       syncCount;       ///< Downcounter for resynchronization
+    std::pair < int32_t, int32_t > outerDeviation;  ///< Deviation of outer symbols
+    float                          corrThreshold;   ///< Correlation threshold
+    filter_state_t                 dcrState;        ///< State of the DC removal filter
 
-    /**
-     * Returns the standard deviation from all the correlation values.
-     *
-     * @returns float numerical value of the standard deviation
-     */
-    float getCorrelationStddev();
-
-    /**
-     * Resets the quantization max, min and ema computation.
-     */
-    void resetQuantizationStats();
-
-    /**
-     * Updates the max, min and ema for the received samples.
-     *
-     * @param offset: index value to be added to the exponential moving
-     * average/variance computation
-     */
-    void updateQuantizationStats(int32_t frame_index, int32_t symbol_index);
-
-    /**
-     * Computes the convolution between a stride of samples starting from
-     * a given offset and a target waveform.
-     *
-     * @param offset: the offset in the active buffer where to start the stride
-     * @param target: a buffer containing the target waveform to be convoluted
-     * @param target_size: the number of symbols of the target waveform
-     * @return uint16_t numerical value of the convolution
-     */
-    int32_t convolution(int32_t offset, int8_t *target, size_t target_size);
-
-    /**
-     * Finds the index of the next frame syncword in the baseband stream.
-     *
-     * @param baseband: buffer containing the sampled baseband signal
-     * @param offset: offset of the buffer after which syncword are searched
-     * @return uint16_t index of the first syncword in the buffer after the offset
-     */
-    sync_t nextFrameSync(int32_t offset);
-
-    /**
-     * Takes the value from the input baseband at a given offsets and quantizes
-     * it leveraging the quantization max and min hold statistics.
-     *
-     * @param offset: the offset in the input baseband
-     * @return int8_t quantized symbol
-     */
-    int8_t quantize(int32_t offset);
-
-    /**
-     * Perform a limited search for a syncword using correlation
-     *
-     * @param offset: sample index right after a syncword
-     * @return int32_t sample of the beginning of a syncword
-     */
-    int32_t syncwordSweep(int32_t offset);
+    Correlator   < M17_SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > correlator;
+    Synchronizer < M17_SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > streamSync{{ -3, -3, -3, -3, +3, +3, -3, +3 }};
+    Iir          < 3 >                                        sampleFilter{sfNum, sfDen};
 };
 
 } /* M17 */

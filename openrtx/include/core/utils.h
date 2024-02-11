@@ -22,6 +22,7 @@
 
 #include <datatypes.h>
 #include <stdint.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -48,20 +49,20 @@ uint8_t interpCalParameter(const freq_t freq, const freq_t *calPoints,
                            const uint8_t *param, const uint8_t elems);
 
 /**
- * Convert from "OpenRTX dBm" to watt.
- * In OpenRTX cps power is stored as the coefficient n of the equation
- * P(dBm) = 10 + 2*0.2.
- *
- * @param n: coefficient of the dBm equation.
- * @return power in watt.
- */
-float dBmToWatt(const uint8_t n);
-
-/**
  * \internal Utility function to convert 4 byte BCD values into a 32-bit
  * unsigned integer ones.
  */
 uint32_t bcdToBin(uint32_t bcd);
+
+/**
+ * Given a string containing a number expressed in decimal notation, remove all
+ * the unnecessary trailing zeroes. I.e. the string "123.4560000" will be trimmed
+ * down to "123.456". This function requires that the input string has at least
+ * one decimal point and proceeds stripping the zeroes from the end to the beginning.
+ *
+ * @param str: string to be processed.
+ */
+void stripTrailingZeroes(char *str);
 
 #ifdef __cplusplus
 }

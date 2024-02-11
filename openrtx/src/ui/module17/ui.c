@@ -44,14 +44,14 @@ extern void _ui_drawMainVFOInput(ui_state_t* ui_state);
 extern void _ui_drawMainMEM(ui_state_t* ui_state);
 /* UI menu functions, their implementation is in "ui_menu.c" */
 extern void _ui_drawMenuTop(ui_state_t* ui_state);
-#ifdef GPS_PRESENT
+#ifdef CONFIG_GPS
 extern void _ui_drawMenuGPS();
 extern void _ui_drawSettingsGPS(ui_state_t* ui_state);
 #endif
 extern void _ui_drawMenuSettings(ui_state_t* ui_state);
 extern void _ui_drawMenuInfo(ui_state_t* ui_state);
 extern void _ui_drawMenuAbout();
-#ifdef RTC_PRESENT
+#ifdef CONFIG_RTC
 extern void _ui_drawSettingsTimeDate();
 extern void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state);
 #endif
@@ -64,7 +64,7 @@ extern bool _ui_drawMacroMenu(ui_state_t* ui_state);
 const char *menu_items[] =
 {
     "Settings",
-#ifdef GPS_PRESENT
+#ifdef CONFIG_GPS
     "GPS",
 #endif
     "Info",
@@ -75,10 +75,10 @@ const char *menu_items[] =
 const char *settings_items[] =
 {
     "Display",
-#ifdef RTC_PRESENT
+#ifdef CONFIG_RTC
     "Time & Date",
 #endif
-#ifdef GPS_PRESENT
+#ifdef CONFIG_GPS
     "GPS",
 #endif
     "M17",
@@ -88,10 +88,7 @@ const char *settings_items[] =
 
 const char *display_items[] =
 {
-#ifdef SCREEN_CONTRAST
-    "Contrast",
-#endif
-    "Timer"
+    "Brightness",
 };
 
 const char *m17_items[] =
@@ -110,7 +107,7 @@ const char *module17_items[] =
     "Mic Gain"
 };
 
-#ifdef GPS_PRESENT
+#ifdef CONFIG_GPS
 const char *settings_gps_items[] =
 {
     "GPS Enabled",
@@ -166,13 +163,13 @@ static const char *symbols_ITU_T_E161_callsign[] =
     ""
 };
 
-static const char symbols_callsign[] = "_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890/- ";
+static const char symbols_callsign[] = "_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890/-.";
 
 // Calculate number of menu entries
 const uint8_t menu_num = sizeof(menu_items)/sizeof(menu_items[0]);
 const uint8_t settings_num = sizeof(settings_items)/sizeof(settings_items[0]);
 const uint8_t display_num = sizeof(display_items)/sizeof(display_items[0]);
-#ifdef GPS_PRESENT
+#ifdef CONFIG_GPS
 const uint8_t settings_gps_num = sizeof(settings_gps_items)/sizeof(settings_gps_items[0]);
 #endif
 const uint8_t m17_num = sizeof(m17_items)/sizeof(m17_items[0]);
@@ -189,10 +186,6 @@ layout_t layout;
 state_t last_state;
 static ui_state_t ui_state;
 static bool layout_ready = false;
-static bool redraw_needed = true;
-
-static bool standby = false;
-static long long last_event_tick = 0;
 
 // UI event queue
 static uint8_t evQueue_rdPos;
@@ -256,7 +249,7 @@ layout_t _ui_calculateLayout()
     point_t line3_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h + line3_h - big_line_v_pad - text_v_offset};
     point_t line4_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h + line3_h + line4_h - big_line_v_pad - text_v_offset};
     point_t line5_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h + line3_h + line4_h + line5_h - big_line_v_pad - text_v_offset};
-    point_t bottom_pos = {horizontal_pad, SCREEN_HEIGHT - bottom_pad - status_v_pad - text_v_offset};
+    point_t bottom_pos = {horizontal_pad, CONFIG_SCREEN_HEIGHT - bottom_pad - status_v_pad - text_v_offset};
 
     layout_t new_layout =
     {
@@ -304,8 +297,6 @@ layout_t _ui_calculateLayout()
 
 void ui_init()
 {
-    last_event_tick = getTick();
-    redraw_needed = true;
     layout = _ui_calculateLayout();
     layout_ready = true;
     // Initialize struct ui_state to all zeroes
@@ -318,7 +309,7 @@ void ui_drawSplashScreen()
 {
     gfx_clearScreen();
 
-    point_t origin = {0, (SCREEN_HEIGHT / 2) - 6};
+    point_t origin = {0, (CONFIG_SCREEN_HEIGHT / 2) - 6};
     gfx_print(origin, FONT_SIZE_12PT, TEXT_ALIGN_CENTER, yellow_fab413, "O P N\nR T X");
 }
 
@@ -332,7 +323,7 @@ freq_t _ui_freq_add_digit(freq_t freq, uint8_t pos, uint8_t number)
     return freq += number * coefficient;
 }
 
-#ifdef RTC_PRESENT
+#ifdef CONFIG_RTC
 void _ui_timedate_add_digit(datetime_t *timedate, uint8_t pos, uint8_t number)
 {
     switch(pos)
@@ -502,88 +493,18 @@ void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx)
     }
 }
 
-void _ui_changeContrast(int variation)
+static void _ui_changeBrightness(int variation)
 {
-    if(variation >= 0)
-        state.settings.contrast =
-        (255 - state.settings.contrast < variation) ? 255 : state.settings.contrast + variation;
-    else
-        state.settings.contrast =
-        (state.settings.contrast < -variation) ? 0 : state.settings.contrast + variation;
-    display_setContrast(state.settings.contrast);
-}
-
-void _ui_changeTimer(int variation)
-{
-    if ((state.settings.display_timer == TIMER_OFF && variation < 0) ||
-        (state.settings.display_timer == TIMER_1H && variation > 0))
-    {
-        return;
-    }
-
-    state.settings.display_timer += variation;
-}
-
-bool _ui_checkStandby(long long time_since_last_event)
-{
-    if (standby)
-    {
-        return false;
-    }
-
-    switch (state.settings.display_timer)
-    {
-    case TIMER_OFF:
-        return false;
-    case TIMER_5S:
-    case TIMER_10S:
-    case TIMER_15S:
-    case TIMER_20S:
-    case TIMER_25S:
-    case TIMER_30S:
-        return time_since_last_event >=
-            (5000 * state.settings.display_timer);
-    case TIMER_1M:
-    case TIMER_2M:
-    case TIMER_3M:
-    case TIMER_4M:
-    case TIMER_5M:
-        return time_since_last_event >=
-            (60000 * (state.settings.display_timer - (TIMER_1M - 1)));
-    case TIMER_15M:
-    case TIMER_30M:
-    case TIMER_45M:
-        return time_since_last_event >=
-            (60000 * 15 * (state.settings.display_timer - (TIMER_15M - 1)));
-    case TIMER_1H:
-        return time_since_last_event >= 60 * 60 * 1000;
-    }
-
-    // unreachable code
-    return false;
-}
-
-void _ui_enterStandby()
-{
-    if(standby)
+    // Avoid rollover if current value is zero.
+    if((state.settings.brightness == 0) && (variation < 0))
         return;
 
-    standby = true;
-    redraw_needed = false;
-    display_setBacklightLevel(0);
-}
+    // Cap max brightness to 100
+    if((state.settings.brightness == 100) && (variation > 0))
+        return;
 
-bool _ui_exitStandby(long long now)
-{
-    last_event_tick = now;
-
-    if(!standby)
-        return false;
-
-    standby = false;
-    redraw_needed = true;
+    state.settings.brightness += variation;
     display_setBacklightLevel(state.settings.brightness);
-    return true;
 }
 
 void _ui_changeCAN(int variation)
@@ -738,13 +659,22 @@ void _ui_textInputArrows(char *buf, uint8_t max_len, kbd_msg_t msg)
 
     if (msg.keys & KEY_RIGHT)
     {
-        ui_state.input_position = (ui_state.input_position + 1) % max_len;
-        ui_state.input_set = 0;
+        if (ui_state.input_position < (max_len - 1))
+        {
+            ui_state.input_position = ui_state.input_position + 1;
+            ui_state.input_set = 0;
+        }
     }
     else if (msg.keys & KEY_LEFT)
     {
-        ui_state.input_position = (ui_state.input_position - 1) % max_len;
-        ui_state.input_set = 0;
+        if (ui_state.input_position > 0)
+        {
+            buf[ui_state.input_position] = '\0';
+            ui_state.input_position = ui_state.input_position - 1;
+        }
+
+        // get index of current selected character in symbol table
+        ui_state.input_set = strcspn(symbols_callsign, &buf[ui_state.input_position]);
     }
     else if (msg.keys & KEY_UP)
         ui_state.input_set = (ui_state.input_set + 1) % num_symbols;
@@ -786,22 +716,11 @@ void ui_updateFSM(bool *sync_rtx)
     event_t event   = evQueue[evQueue_rdPos];
     evQueue_rdPos   = newTail;
 
-    // There is some event to process, we need an UI redraw.
-    // UI redraw request is cancelled if we're in standby mode.
-    redraw_needed = true;
-    if(standby) redraw_needed = false;
-
-    long long now = getTick();
     // Process pressed keys
     if(event.type == EVENT_KBD)
     {
         kbd_msg_t msg;
         msg.value = event.payload;
-
-        // If we get out of standby, we ignore the kdb event
-        // unless is the MONI key for the MACRO functions
-        if (_ui_exitStandby(now) && !(msg.keys & KEY_MONI))
-            return;
 
         switch(state.ui_screen)
         {
@@ -920,13 +839,8 @@ void ui_updateFSM(bool *sync_rtx)
                 {
                     switch(ui_state.menu_selected)
                     {
-#ifdef SCREEN_CONTRAST
-                        case D_CONTRAST:
-                            _ui_changeContrast(-4);
-                            break;
-#endif
-                        case D_TIMER:
-                            _ui_changeTimer(-1);
+                        case D_BRIGHTNESS:
+                            _ui_changeBrightness(-5);
                             break;
                         default:
                             state.ui_screen = SETTINGS_DISPLAY;
@@ -936,13 +850,8 @@ void ui_updateFSM(bool *sync_rtx)
                 {
                     switch(ui_state.menu_selected)
                     {
-#ifdef SCREEN_CONTRAST
-                        case D_CONTRAST:
-                            _ui_changeContrast(+4);
-                            break;
-#endif
-                        case D_TIMER:
-                            _ui_changeTimer(+1);
+                        case D_BRIGHTNESS:
+                            _ui_changeBrightness(+5);
                             break;
                         default:
                             state.ui_screen = SETTINGS_DISPLAY;
@@ -1130,26 +1039,10 @@ void ui_updateFSM(bool *sync_rtx)
                 break;
         }
     }
-    else if(event.type == EVENT_STATUS)
-    {
-        if (platform_getPttStatus() || rtx_rxSquelchOpen())
-        {
-            _ui_exitStandby(now);
-            return;
-        }
-
-        if (_ui_checkStandby(now - last_event_tick))
-        {
-            _ui_enterStandby();
-        }
-    }
 }
 
 bool ui_updateGUI()
 {
-    if(redraw_needed == false)
-        return false;
-
     if(!layout_ready)
     {
         layout = _ui_calculateLayout();
@@ -1196,7 +1089,6 @@ bool ui_updateGUI()
             break;
     }
 
-    redraw_needed = false;
     return true;
 }
 

@@ -25,13 +25,13 @@
 #include "AT1846S.h"
 #include "SA8x8.h"
 
-const rtxStatus_t *config;   // Pointer to data structure with radio configuration
+static const rtxStatus_t *config;                // Pointer to data structure with radio configuration
 
-Band currRxBand = BND_NONE;  // Current band for RX
-Band currTxBand = BND_NONE;  // Current band for TX
-enum opstatus radioStatus;   // Current operating status
+static Band currRxBand = BND_NONE;               // Current band for RX
+static Band currTxBand = BND_NONE;               // Current band for TX
+static enum opstatus radioStatus;                // Current operating status
 
-AT1846S& at1846s = AT1846S::instance();   // AT1846S driver
+static AT1846S& at1846s = AT1846S::instance();   // AT1846S driver
 
 
 void radio_init(const rtxStatus_t *rtxState)
@@ -131,7 +131,7 @@ void radio_enableTx()
     if(config->txDisable == 1) return;
 
     // Constrain output power between 1W and 5W.
-    float power  = std::max(std::min(config->txPower, 5.0f), 1.0f);
+    uint32_t power = std::max(std::min(config->txPower, 5000U), 1000U);
     sa8x8_setTxPower(power);
 
     at1846s.setFrequency(config->txFrequency);
@@ -161,7 +161,6 @@ void radio_updateConfiguration()
                 at1846s.setBandwidth(AT1846S_BW::_12P5);
                 break;
 
-             case BW_20:
              case BW_25:
                 at1846s.setBandwidth(AT1846S_BW::_25);
                 break;
@@ -181,9 +180,9 @@ void radio_updateConfiguration()
     if(radioStatus == TX) radio_enableTx();
 }
 
-float radio_getRssi()
+rssi_t radio_getRssi()
 {
-    return static_cast< float > (at1846s.readRSSI());
+    return static_cast< rssi_t > (at1846s.readRSSI());
 }
 
 enum opstatus radio_getStatus()

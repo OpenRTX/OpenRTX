@@ -43,7 +43,7 @@ typedef struct
     freq_t rxFrequency;     /**< RX frequency, in Hz           */
     freq_t txFrequency;     /**< TX frequency, in Hz           */
 
-    float    txPower;       /**< TX power, in W                */
+    uint32_t txPower;       /**< TX power, in mW               */
     uint8_t  sqlLevel;      /**< Squelch opening level         */
 
     uint16_t rxToneEn : 1,  /**< RX CTC/DCS tone enable        */
@@ -75,8 +75,7 @@ rtxStatus_t;
 enum bandwidth
 {
     BW_12_5 = 0,    /**< 12.5kHz bandwidth */
-    BW_20   = 1,    /**< 20kHz bandwidth   */
-    BW_25   = 2     /**< 25kHz bandwidth   */
+    BW_25   = 1     /**< 25kHz bandwidth   */
 };
 
 /**
@@ -138,7 +137,7 @@ void rtx_task();
  * Get current RSSI in dBm.
  * @return RSSI value in dBm.
  */
-float rtx_getRssi();
+rssi_t rtx_getRssi();
 
 /**
  * Get current status of the RX squelch. This function is thread-safe and can

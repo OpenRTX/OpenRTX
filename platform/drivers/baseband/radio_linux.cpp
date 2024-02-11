@@ -78,11 +78,11 @@ void radio_updateConfiguration()
     puts("radio_linux: updateConfiguration() called");
 }
 
-float radio_getRssi()
+rssi_t radio_getRssi()
 {
     // Commented to reduce verbosity on Linux
     // printf("radio_linux: requested RSSI at freq %d, returning -100dBm\n", rxFreq);
-    return emulator_state.RSSI;
+    return static_cast< rssi_t >(emulator_state.RSSI);
 }
 
 enum opstatus radio_getStatus()

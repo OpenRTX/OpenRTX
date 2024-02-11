@@ -28,13 +28,6 @@
 #include <interfaces/delays.h>
 #include <hwconfig.h>
 
-/*
- * LCD framebuffer, statically allocated.
- * Pixel format is black and white, one bit per pixel
- */
-#define FB_SIZE (((SCREEN_HEIGHT * SCREEN_WIDTH) / 8 ) + 1)
-static uint8_t frameBuffer[FB_SIZE];
-
 /**
  * \internal
  * Send one byte to display controller, via bit banging.
@@ -69,7 +62,7 @@ static void sendByteToController(uint8_t value)
  *
  * @param row: pixel row to be be sent.
  */
-static void display_renderRow(uint8_t row)
+static void display_renderRow(uint8_t row, uint8_t *frameBuffer)
 {
     /* magic stuff */
     uint8_t *buf = (frameBuffer + 128 * row);
@@ -141,7 +134,7 @@ void display_terminate()
     gpio_setMode(LCD_DAT, INPUT);
 }
 
-void display_renderRows(uint8_t startRow, uint8_t endRow)
+void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
 {
     for(uint8_t row = startRow; row < endRow; row++)
     {
@@ -150,24 +143,14 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
         sendByteToController(0x10);       /* Set X position         */
         sendByteToController(0x04);
         gpio_setPin(LCD_RS);              /* RS high -> data mode   */
-        display_renderRow(row);
+        display_renderRow(row, (uint8_t *) fb);
     }
 
 }
 
-void display_render()
+void display_render(void *fb)
 {
-    display_renderRows(0, SCREEN_HEIGHT / 8);
-}
-
-bool display_renderingInProgress()
-{
-    return (gpio_readPin(LCD_CS) == 0);
-}
-
-void *display_getFrameBuffer()
-{
-    return (void *)(frameBuffer);
+    display_renderRows(0, CONFIG_SCREEN_HEIGHT / 8, fb);
 }
 
 void display_setContrast(uint8_t contrast)

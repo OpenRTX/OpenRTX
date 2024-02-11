@@ -38,7 +38,8 @@ static const hwInfo_t hwInfo =
     .uhf_maxFreq = 480,
     .uhf_minFreq = 400,
     .uhf_band    = 1,
-    .name        = "Linux"
+    .name        = "Linux",
+    .hw_version  = 1
 };
 
 

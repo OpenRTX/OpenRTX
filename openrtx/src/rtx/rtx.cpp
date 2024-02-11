@@ -19,23 +19,25 @@
  ***************************************************************************/
 
 #include <interfaces/radio.h>
+#include <hwconfig.h>
 #include <string.h>
 #include <rtx.h>
 #include <OpMode_FM.hpp>
 #include <OpMode_M17.hpp>
 
-pthread_mutex_t *cfgMutex;      // Mutex for incoming config messages
+static pthread_mutex_t   *cfgMutex;     // Mutex for incoming config messages
+static const rtxStatus_t *newCnf;       // Pointer for incoming config messages
+static rtxStatus_t        rtxStatus;    // RTX driver status
+static rssi_t             rssi;         // Current RSSI in dBm
+static bool               reinitFilter; // Flag for RSSI filter re-initialisation
 
-const rtxStatus_t *newCnf;      // Pointer for incoming config messages
-rtxStatus_t rtxStatus;          // RTX driver status
+static OpMode  *currMode;               // Pointer to currently active opMode handler
+static OpMode     noMode;               // Empty opMode handler for opmode::NONE
+static OpMode_FM  fmMode;               // FM mode handler
+#ifdef CONFIG_M17
+static OpMode_M17 m17Mode;              // M17 mode handler
+#endif
 
-float rssi;                     // Current RSSI in dBm
-bool  reinitFilter;             // Flag for RSSI filter re-initialisation
-
-OpMode  *currMode;              // Pointer to currently active opMode handler
-OpMode     noMode;              // Empty opMode handler for opmode::NONE
-OpMode_FM  fmMode;              // FM mode handler
-OpMode_M17 m17Mode;             // M17 mode handler
 
 void rtx_init(pthread_mutex_t *m)
 {
@@ -153,7 +155,9 @@ void rtx_task()
             {
                 case OPMODE_NONE: currMode = &noMode;  break;
                 case OPMODE_FM:   currMode = &fmMode;  break;
+                #ifdef CONFIG_M17
                 case OPMODE_M17:  currMode = &m17Mode; break;
+                #endif
                 default:   currMode = &noMode;
             }
 
@@ -186,7 +190,13 @@ void rtx_task()
         {
             if(!reinitFilter)
             {
-                rssi = 0.74*radio_getRssi() + 0.26*rssi;
+                /*
+                 * Filter RSSI value using 15.16 fixed point math. Equivalent
+                 * floating point code is: rssi = 0.74*radio_getRssi() + 0.26*rssi
+                 */
+                int32_t filt_rssi = radio_getRssi() * 0xBD70    // 0.74 * radio_getRssi
+                                  + rssi            * 0x428F;   // 0.26 * rssi
+                rssi = (filt_rssi + 32768) >> 16;               // Round to nearest
             }
             else
             {
@@ -209,7 +219,7 @@ void rtx_task()
     currMode->update(&rtxStatus, reconfigure);
 }
 
-float rtx_getRssi()
+rssi_t rtx_getRssi()
 {
     return rssi;
 }

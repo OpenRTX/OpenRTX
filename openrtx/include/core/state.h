@@ -39,7 +39,7 @@ typedef struct
     datetime_t time;
     uint16_t   v_bat;
     uint8_t    charge;
-    float      rssi;
+    rssi_t     rssi;
 
     uint8_t    ui_screen;
     uint8_t    tuner_mode;
@@ -64,8 +64,8 @@ typedef struct
 }
 state_t;
 
-extern uint32_t freq_steps[];
-extern size_t n_freq_steps;
+extern const uint32_t freq_steps[];
+extern const size_t n_freq_steps;
 
 enum TunerMode
 {

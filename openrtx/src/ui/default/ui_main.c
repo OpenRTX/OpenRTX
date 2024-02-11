@@ -25,18 +25,19 @@
 #include <ui/ui_default.h>
 #include <string.h>
 #include <ui/ui_strings.h>
+#include <utils.h>
 
 void _ui_drawMainBackground()
 {
     // Print top bar line of hline_h pixel height
     gfx_drawHLine(layout.top_h, layout.hline_h, color_grey);
     // Print bottom bar line of 1 pixel height
-    gfx_drawHLine(SCREEN_HEIGHT - layout.bottom_h - 1, layout.hline_h, color_grey);
+    gfx_drawHLine(CONFIG_SCREEN_HEIGHT - layout.bottom_h - 1, layout.hline_h, color_grey);
 }
 
 void _ui_drawMainTop(ui_state_t * ui_state)
 {
-#ifdef RTC_PRESENT
+#ifdef CONFIG_RTC
     // Print clock on top bar
     datetime_t local_time = utcToLocalTime(last_state.time,
                                            last_state.settings.utc_timezone);
@@ -45,14 +46,14 @@ void _ui_drawMainTop(ui_state_t * ui_state)
               local_time.minute, local_time.second);
 #endif
     // If the radio has no built-in battery, print input voltage
-#ifdef BAT_NONE
+#ifdef CONFIG_BAT_NONE
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_RIGHT,
               color_white,"%.1fV", last_state.v_bat);
 #else
     // Otherwise print battery icon on top bar, use 4 px padding
-    uint16_t bat_width = SCREEN_WIDTH / 9;
+    uint16_t bat_width = CONFIG_SCREEN_WIDTH / 9;
     uint16_t bat_height = layout.top_h - (layout.status_v_pad * 2);
-    point_t bat_pos = {SCREEN_WIDTH - bat_width - layout.horizontal_pad,
+    point_t bat_pos = {CONFIG_SCREEN_WIDTH - bat_width - layout.horizontal_pad,
                        layout.status_v_pad};
     gfx_drawBattery(bat_pos, bat_width, bat_height, last_state.charge);
 #endif
@@ -81,33 +82,36 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
 
             // Get Bandwidth string
             if(last_state.channel.bandwidth == BW_12_5)
-                snprintf(bw_str, 8, "NFM");
-            else if(last_state.channel.bandwidth == BW_20)
-                snprintf(bw_str, 8, "FM20");
+                sniprintf(bw_str, 8, "NFM");
             else if(last_state.channel.bandwidth == BW_25)
-                snprintf(bw_str, 8, "FM");
+                sniprintf(bw_str, 8, "FM");
 
             // Get encdec string
             bool tone_tx_enable = last_state.channel.fm.txToneEn;
             bool tone_rx_enable = last_state.channel.fm.rxToneEn;
 
             if (tone_tx_enable && tone_rx_enable)
-                snprintf(encdec_str, 9, "ED");
+                sniprintf(encdec_str, 9, "ED");
             else if (tone_tx_enable && !tone_rx_enable)
-                snprintf(encdec_str, 9, " E");
+                sniprintf(encdec_str, 9, " E");
             else if (!tone_tx_enable && tone_rx_enable)
-                snprintf(encdec_str, 9, " D");
+                sniprintf(encdec_str, 9, " D");
             else
-                snprintf(encdec_str, 9, "  ");
+                sniprintf(encdec_str, 9, "  ");
 
             // Print Bandwidth, Tone and encdec info
             if (tone_tx_enable || tone_rx_enable)
-            gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                      color_white, "%s %4.1f %s", bw_str, 
-                      ctcss_tone[last_state.channel.fm.txTone]/10.0f, encdec_str);
+            {
+                uint16_t tone = ctcss_tone[last_state.channel.fm.txTone];
+                gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                          color_white, "%s %d.%d %s", bw_str, (tone / 10),
+                          (tone % 10), encdec_str);
+            }
             else
-            gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                      color_white, "%s", bw_str );
+            {
+                gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                          color_white, "%s", bw_str );
+            }
             break;
 
         case OPMODE_DMR:
@@ -116,6 +120,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                     color_white, "DMR TG%s", "");
             break;
 
+        #ifdef CONFIG_M17
         case OPMODE_M17:
         {
             // Print M17 Destination ID on line 3 of 3
@@ -177,16 +182,22 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
             }
             break;
         }
+        #endif
     }
 }
 
 void _ui_drawFrequency()
 {
-    unsigned long frequency = platform_getPttStatus() ? last_state.channel.tx_frequency
-                                                      : last_state.channel.rx_frequency;
+    freq_t freq = platform_getPttStatus() ? last_state.channel.tx_frequency
+                                          : last_state.channel.rx_frequency;
+
     // Print big numbers frequency
+    char freq_str[16] = {0};
+    sniprintf(freq_str, sizeof(freq_str), "%lu.%lu", (freq / 1000000lu), (freq % 1000000lu));
+    stripTrailingZeroes(freq_str);
+
     gfx_print(layout.line3_large_pos, layout.line3_large_font, TEXT_ALIGN_CENTER,
-              color_white, "%.7g", (float) frequency / 1000000.0f);
+              color_white, "%s", freq_str);
 }
 
 void _ui_drawVFOMiddleInput(ui_state_t* ui_state)
@@ -247,13 +258,13 @@ void _ui_drawVFOMiddleInput(ui_state_t* ui_state)
 void _ui_drawMainBottom()
 {
     // Squelch bar
-    float rssi = last_state.rssi;
-    float squelch = last_state.settings.sqlLevel / 16.0f;
-    float volume = platform_getVolumeLevel() / 255.0f;
-    uint16_t meter_width = SCREEN_WIDTH - 2 * layout.horizontal_pad;
+    rssi_t   rssi = last_state.rssi;
+    uint8_t  squelch = last_state.settings.sqlLevel;
+    uint8_t  volume = platform_getVolumeLevel();
+    uint16_t meter_width = CONFIG_SCREEN_WIDTH - 2 * layout.horizontal_pad;
     uint16_t meter_height = layout.bottom_h;
     point_t meter_pos = { layout.horizontal_pad,
-                          SCREEN_HEIGHT - meter_height - layout.bottom_pad};
+                          CONFIG_SCREEN_HEIGHT - meter_height - layout.bottom_pad};
     uint8_t mic_level = platform_getMicLevel();
     switch(last_state.channel.mode)
     {
@@ -276,6 +287,7 @@ void _ui_drawMainBottom()
                                 volume,
                                 true);
             break;
+        #ifdef CONFIG_M17
         case OPMODE_M17:
             gfx_drawSmeterLevel(meter_pos,
                                 meter_width,
@@ -285,6 +297,7 @@ void _ui_drawMainBottom()
                                 volume,
                                 true);
             break;
+        #endif
     }
 }
 
@@ -294,9 +307,11 @@ void _ui_drawMainVFO(ui_state_t* ui_state)
     _ui_drawMainTop(ui_state);
     _ui_drawModeInfo(ui_state);
 
+    #ifdef CONFIG_M17
     // Show VFO frequency if the OpMode is not M17 or there is no valid LSF data
     rtxStatus_t status = rtx_getCurrentStatus();
     if((status.opMode != OPMODE_M17) || (status.lsfOk == false))
+    #endif
         _ui_drawFrequency();
 
     _ui_drawMainBottom();
@@ -316,9 +331,11 @@ void _ui_drawMainMEM(ui_state_t* ui_state)
     _ui_drawMainTop(ui_state);
     _ui_drawModeInfo(ui_state);
 
+    #ifdef CONFIG_M17
     // Show channel data if the OpMode is not M17 or there is no valid LSF data
     rtxStatus_t status = rtx_getCurrentStatus();
     if((status.opMode != OPMODE_M17) || (status.lsfOk == false))
+    #endif
     {
         _ui_drawBankChannel();
         _ui_drawFrequency();

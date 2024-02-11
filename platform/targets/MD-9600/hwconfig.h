@@ -22,88 +22,31 @@
 #define HWCONFIG_H
 
 #include <stm32f4xx.h>
+#include "pinmap.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* Device has a working real time clock */
-#define RTC_PRESENT
+#define CONFIG_RTC
 
 /* Device supports an optional GPS chip */
-#define GPS_PRESENT
+#define CONFIG_GPS
 
 /* Screen dimensions */
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
+#define CONFIG_SCREEN_WIDTH 128
+#define CONFIG_SCREEN_HEIGHT 64
 
 /* Screen has adjustable contrast */
-#define SCREEN_CONTRAST
-#define DEFAULT_CONTRAST 91
+#define CONFIG_SCREEN_CONTRAST
+#define CONFIG_DEFAULT_CONTRAST 91
 
 /* Screen pixel format */
-#define PIX_FMT_BW
+#define CONFIG_PIX_FMT_BW
 
 /* Battery type */
-#define BAT_NONE
-
-/* Power keep switch */
-#define PWR_SW GPIOD,15
-
-/* Display */
-#define LCD_BKLIGHT GPIOC,6
-#define LCD_RST     GPIOD,12
-#define LCD_RS      GPIOD,13
-#define LCD_CS      GPIOD,14
-
-/* Analog inputs */
-#define AIN_VOLUME GPIOA,0
-#define AIN_VBAT   GPIOA,1
-#define AIN_MIC    GPIOA,3
-#define AIN_SW2    GPIOA,6
-#define AIN_SW1    GPIOA,7
-#define AIN_RSSI   GPIOB,0
-#define AIN_RSSI2  GPIOB,1
-#define AIN_HTEMP  GPIOC,5
-
-/* Channel selection rotary encoder */
-#define CH_SELECTOR_0 GPIOB,10
-#define CH_SELECTOR_1 GPIOB,11
-
-/* Push-to-talk switch */
-#define PTT_SW GPIOE,10
-
-/* Keyboard */
-#define KB_ROW1 GPIOD,2
-#define KB_ROW2 GPIOD,3
-#define KB_ROW3 GPIOD,4
-#define KB_COL1 GPIOD,0
-#define KB_COL2 GPIOD,1
-#define KB_COL3 GPIOE,0
-#define KB_COL4 GPIOE,1
-
-/* Tone generator  */
-#define CTCSS_OUT GPIOC,7   /* System "beep" */
-#define BEEP_OUT  GPIOC,8   /* CTCSS tone    */
-
-/* SPI2, connected to external flash and LCD */
-#define FLASH_CS GPIOB,12
-#define SPI2_CLK GPIOB,13
-#define SPI2_SDO GPIOB,14
-#define SPI2_SDI GPIOB,15
-
-/* Audio control */
-#define SPK_MUTE GPIOB,6
-
-/* GPS, for the devices who have it */
-#define GPS_EN   GPIOA,9
-#define GPS_DATA GPIOA,10
-
-/* HR_C6000 control interface */
-#define DMR_CS    GPIOE,2
-#define DMR_CLK   GPIOE,3
-#define DMR_MOSI  GPIOE,4
-#define DMR_MISO  GPIOE,5
+#define CONFIG_BAT_NONE
 
 #ifdef __cplusplus
 }

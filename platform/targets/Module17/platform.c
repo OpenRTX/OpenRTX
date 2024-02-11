@@ -104,7 +104,13 @@ void platform_terminate()
     nvm_terminate();
     audio_terminate();
 
+    /*
+     * Cut off the power switch then wait 100ms to allow the 3.3V rail to
+     * effectively go down to 0V. Without this delay, the board fails to power
+     * off because the main() function returns, triggering an OS reboot.
+     */
     gpio_clearPin(POWER_SW);
+    sleepFor(0, 100);
 }
 
 uint16_t platform_getVbat()

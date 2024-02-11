@@ -26,16 +26,16 @@
  * Obtained by multiplying the values in volt by 256.
  */
 
-#if defined BAT_LIPO_1S
+#if defined CONFIG_BAT_LIPO_1S
 static const uint16_t bat_v_min = 0x039C;   // 3.61V
 static const uint16_t bat_v_max = 0x0426;   // 4.15V
-#elif defined BAT_LIPO_2S
+#elif defined CONFIG_BAT_LIPO_2S
 static const uint16_t bat_v_min = 0x071A;   // 7.10V
 static const uint16_t bat_v_max = 0x0819;   // 8.10V
-#elif defined BAT_LIPO_3S
+#elif defined CONFIG_BAT_LIPO_3S
 static const uint16_t bat_v_min = 0x0AD4;   // 10.83V
 static const uint16_t bat_v_max = 0x0C73;   // 12.45V
-#elif defined BAT_NONE
+#elif defined CONFIG_BAT_NONE
 // Nothing to do, just avoid arising the compiler error
 #else
 #error Please define a battery type into platform/targets/.../hwconfig.h
@@ -43,7 +43,7 @@ static const uint16_t bat_v_max = 0x0C73;   // 12.45V
 
 uint8_t battery_getCharge(uint16_t vbat)
 {
-    #ifdef BAT_NONE
+    #ifdef CONFIG_BAT_NONE
     /* Return full charge if no battery is present. */
     (void) vbat;
     return 100;

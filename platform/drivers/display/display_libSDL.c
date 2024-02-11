@@ -32,8 +32,7 @@
 #include <string.h>
 #include <SDL2/SDL.h>
 
-void *frameBuffer = NULL;    /* Pointer to framebuffer */
-bool inProgress;             /* Flag to signal when rendering is in progress */
+static bool inProgress;             /* Flag to signal when rendering is in progress */
 
 /*
  * SDL main loop syncronization
@@ -44,26 +43,28 @@ extern chan_t fb_sync;       /* Shared channel to send a frame buffer update */
 /* Custom SDL Event to adjust backlight */
 extern Uint32 SDL_Backlight_Event;
 
+#ifndef CONFIG_PIX_FMT_RGB565
 /**
  * @internal
  * Internal helper function which fetches pixel at position (x, y) from framebuffer
  * and returns it in SDL-compatible format, which is ARGB8888.
  */
-static uint32_t fetchPixelFromFb(unsigned int x, unsigned int y)
+static uint32_t fetchPixelFromFb(unsigned int x, unsigned int y, void *fb)
 {
     (void) x;
     (void) y;
+    (void) fb;
     uint32_t pixel = 0;
 
-    #ifdef PIX_FMT_BW
+    #ifdef CONFIG_PIX_FMT_BW
     /*
      * Black and white 1bpp format: framebuffer is an array of uint8_t, where
      * each cell contains the values of eight pixels, one per bit.
      */
-    uint8_t *fb = (uint8_t *)(frameBuffer);
-    unsigned int cell = (x + y*SCREEN_WIDTH) / 8;
-    unsigned int elem = (x + y*SCREEN_WIDTH) % 8;
-    if(fb[cell] & (1 << elem)) pixel = 0xFFFFFFFF;
+    uint8_t *buf = (uint8_t *)(fb);
+    unsigned int cell = (x + y*CONFIG_SCREEN_WIDTH) / 8;
+    unsigned int elem = (x + y*CONFIG_SCREEN_WIDTH) % 8;
+    if(buf[cell] & (1 << elem)) pixel = 0xFFFFFFFF;
     #endif
 
     #ifdef PIX_FMT_GRAYSC
@@ -71,48 +72,18 @@ static uint32_t fetchPixelFromFb(unsigned int x, unsigned int y)
      * Convert from 8bpp grayscale to ARGB8888, we have to do nothing more that
      * replicating the pixel value for the three components
      */
-    uint8_t *fb = (uint8_t *)(frameBuffer);
-    uint8_t px = fb[x + y*SCREEN_WIDTH];
+    uint8_t *buf = (uint8_t *)(fb);
+    uint8_t px = buf[x + y*CONFIG_SCREEN_WIDTH];
 
     pixel = 0xFF000000 | (px << 16) | (px << 8) | px;
     #endif
 
     return pixel;
 }
-
+#endif
 
 void display_init()
 {
-    /*
-     * Black and white pixel format: framebuffer type is uint8_t where each
-     * bit represents a pixel. We have to allocate
-     * (SCREEN_HEIGHT * SCREEN_WIDTH)/8 elements
-     */
-    #ifdef PIX_FMT_BW
-    unsigned int fbSize = (SCREEN_HEIGHT * SCREEN_WIDTH)/8;
-    /* Compensate for eventual truncation error in division */
-    if((fbSize * 8) < (SCREEN_HEIGHT * SCREEN_WIDTH)) fbSize += 1;
-    fbSize *= sizeof(uint8_t);
-    #endif
-
-    /*
-     * Grayscale pixel format: framebuffer type is uint8_t where each element
-     * controls one pixel
-     */
-    #ifdef PIX_FMT_GRAYSC
-    unsigned int fbSize = SCREEN_HEIGHT * SCREEN_WIDTH * sizeof(uint8_t);
-    #endif
-
-    /*
-     * RGB565 pixel format: framebuffer type is uint16_t where each element
-     * controls one pixel
-     */
-    #ifdef PIX_FMT_RGB565
-    unsigned int fbSize = SCREEN_HEIGHT * SCREEN_WIDTH * sizeof(uint16_t);
-    #endif
-
-    frameBuffer = malloc(fbSize);
-    memset(frameBuffer, 0xFFFF, fbSize);
     inProgress = false;
 }
 
@@ -121,11 +92,9 @@ void display_terminate()
     while (inProgress){ }         /* Wait until current render finishes */
     chan_close(&fb_sync);
     chan_terminate(&fb_sync);
-    if(frameBuffer != NULL) free(frameBuffer);
-    frameBuffer = NULL;
 }
 
-void display_renderRows(uint8_t startRow, uint8_t endRow)
+void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
 {
     (void) startRow;
     (void) endRow;
@@ -138,17 +107,17 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
     if(sdl_ready)
     {
         // receive a texture pixel map
-        void *fb;
-        chan_recv(&fb_sync, &fb);
-        #ifdef PIX_FMT_RGB565
-        memcpy(fb, frameBuffer, sizeof(PIXEL_SIZE) * SCREEN_HEIGHT * SCREEN_WIDTH);
+        void *pixelMap;
+        chan_recv(&fb_sync, &pixelMap);
+        #ifdef CONFIG_PIX_FMT_RGB565
+        memcpy(pixelMap, fb, sizeof(PIXEL_SIZE) * CONFIG_SCREEN_HEIGHT * CONFIG_SCREEN_WIDTH);
         #else
-        uint32_t *pixels = (uint32_t *) fb;
-        for (unsigned int x = 0; x < SCREEN_WIDTH; x++)
+        uint32_t *pixels = (uint32_t *) pixelMap;
+        for (unsigned int x = 0; x < CONFIG_SCREEN_WIDTH; x++)
         {
             for (unsigned int y = startRow; y < endRow; y++)
             {
-                pixels[x + y * SCREEN_WIDTH] = fetchPixelFromFb(x, y);
+                pixels[x + y * CONFIG_SCREEN_WIDTH] = fetchPixelFromFb(x, y, fb);
             }
         }
         #endif
@@ -160,19 +129,9 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
     inProgress = false;
 }
 
-void display_render()
+void display_render(void *fb)
 {
-    display_renderRows(0, SCREEN_HEIGHT);
-}
-
-bool display_renderingInProgress()
-{
-    return inProgress;
-}
-
-void *display_getFrameBuffer()
-{
-    return (void *) (frameBuffer);
+    display_renderRows(0, CONFIG_SCREEN_HEIGHT, fb);
 }
 
 void display_setContrast(uint8_t contrast)

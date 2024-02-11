@@ -71,8 +71,6 @@ static const GFXfont fonts[] = { TomThumb,            // 5pt
                                  FreeSans10pt7b,      // 10pt
                                  FreeSans12pt7b,      // 12pt
                                  FreeSans16pt7b,      // 16pt
-                                 FreeSans18pt7b,      // 16pt
-                                 FreeSans24pt7b,      // 24pt
     #elif defined FONT_UBUNTU_REGULAR
                                  UbuntuRegular6pt7b,  // 6pt
                                  UbuntuRegular8pt7b,  // 8pt
@@ -80,8 +78,6 @@ static const GFXfont fonts[] = { TomThumb,            // 5pt
                                  UbuntuRegular10pt7b, // 10pt
                                  UbuntuRegular12pt7b, // 12pt
                                  UbuntuRegular16pt7b, // 16pt
-                                 UbuntuRegular18pt7b, // 16pt
-                                 UbuntuRegular24pt7b, // 24pt
     #else
     #error Unsupported font family!
     #endif
@@ -90,7 +86,7 @@ static const GFXfont fonts[] = { TomThumb,            // 5pt
                                  Symbols8pt7b       // 8pt
                                };
 
-#ifdef PIX_FMT_RGB565
+#ifdef CONFIG_PIX_FMT_RGB565
 
 /* This specialization is meant for an RGB565 little endian pixel format.
  * Thus, to accomodate for the endianness, the fields in struct rgb565_t have to
@@ -101,6 +97,7 @@ static const GFXfont fonts[] = { TomThumb,            // 5pt
  */
 
 #define PIXEL_T rgb565_t
+#define FB_SIZE (CONFIG_SCREEN_HEIGHT * CONFIG_SCREEN_WIDTH)
 
 typedef struct
 {
@@ -120,7 +117,7 @@ static rgb565_t _true2highColor(color_t true_color)
     return high_color;
 }
 
-#elif defined PIX_FMT_BW
+#elif defined CONFIG_PIX_FMT_BW
 
 /**
  * This specialization is meant for black and white pixel format.
@@ -129,6 +126,7 @@ static rgb565_t _true2highColor(color_t true_color)
  */
 
 #define PIXEL_T uint8_t
+#define FB_SIZE (((CONFIG_SCREEN_HEIGHT * CONFIG_SCREEN_WIDTH) / 8 ) + 1)
 
 typedef enum
 {
@@ -151,26 +149,14 @@ static bw_t _color2bw(color_t true_color)
 #error Please define a pixel format type into hwconfig.h or meson.build
 #endif
 
-static bool initialized = 0;
-static PIXEL_T *buf;
-static uint16_t fbSize;
+static PIXEL_T __attribute__((section(".bss.fb"))) framebuffer[FB_SIZE];
 static char text[32];
+
 
 void gfx_init()
 {
     display_init();
-    buf = (PIXEL_T *)(display_getFrameBuffer());
-    initialized = 1;
 
-// Calculate framebuffer size
-#ifdef PIX_FMT_RGB565
-    fbSize = SCREEN_HEIGHT * SCREEN_WIDTH * sizeof(PIXEL_T);
-#elif defined PIX_FMT_BW
-    fbSize = (SCREEN_HEIGHT * SCREEN_WIDTH) / 8;
-    /* Compensate for eventual truncation error in division */
-    if((fbSize * 8) < (SCREEN_HEIGHT * SCREEN_WIDTH)) fbSize += 1;
-    fbSize *= sizeof(uint8_t);
-#endif
     // Clear text buffer
     memset(text, 0x00, 32);
 }
@@ -178,47 +164,40 @@ void gfx_init()
 void gfx_terminate()
 {
     display_terminate();
-    initialized = 0;
 }
 
 void gfx_renderRows(uint8_t startRow, uint8_t endRow)
 {
-    display_renderRows(startRow, endRow);
+    display_renderRows(startRow, endRow, framebuffer);
 }
 
 void gfx_render()
 {
-    display_render();
-}
-
-bool gfx_renderingInProgress()
-{
-    return display_renderingInProgress();
+    display_render(framebuffer);
 }
 
 void gfx_clearRows(uint8_t startRow, uint8_t endRow)
 {
-    if(!initialized) return;
-    if(endRow < startRow) return;
-    uint16_t start = startRow * SCREEN_WIDTH * sizeof(PIXEL_T);
-    uint16_t height = endRow - startRow * SCREEN_WIDTH * sizeof(PIXEL_T);
+    if(endRow < startRow)
+        return;
+
+    uint16_t start = startRow * CONFIG_SCREEN_WIDTH * sizeof(PIXEL_T);
+    uint16_t height = endRow - startRow * CONFIG_SCREEN_WIDTH * sizeof(PIXEL_T);
     // Set the specified rows to 0x00 = make the screen black
-    memset(buf + start, 0x00, height);
+    memset(framebuffer + start, 0x00, height);
 }
 
 void gfx_clearScreen()
 {
-    if(!initialized) return;
     // Set the whole framebuffer to 0x00 = make the screen black
-    memset(buf, 0x00, fbSize);
+    memset(framebuffer, 0x00, FB_SIZE * sizeof(PIXEL_T));
 }
 
 void gfx_fillScreen(color_t color)
 {
-    if(!initialized) return;
-    for(int16_t y = 0; y < SCREEN_HEIGHT; y++)
+    for(int16_t y = 0; y < CONFIG_SCREEN_HEIGHT; y++)
     {
-        for(int16_t x = 0; x < SCREEN_WIDTH; x++)
+        for(int16_t x = 0; x < CONFIG_SCREEN_WIDTH; x++)
         {
             point_t pos = {x, y};
             gfx_setPixel(pos, color);
@@ -228,42 +207,41 @@ void gfx_fillScreen(color_t color)
 
 inline void gfx_setPixel(point_t pos, color_t color)
 {
-    if (pos.x >= SCREEN_WIDTH || pos.y >= SCREEN_HEIGHT 
-            || pos.x < 0 || pos.y < 0)
+    if (pos.x >= CONFIG_SCREEN_WIDTH || pos.y >= CONFIG_SCREEN_HEIGHT ||
+        pos.x < 0 || pos.y < 0)
         return; // off the screen
 
-#ifdef PIX_FMT_RGB565
+#ifdef CONFIG_PIX_FMT_RGB565
     // Blend old pixel value and new one
     if (color.alpha < 255)
     {
         uint8_t alpha = color.alpha;
         rgb565_t new_pixel = _true2highColor(color);
-        rgb565_t old_pixel = buf[pos.x + pos.y*SCREEN_WIDTH];
+        rgb565_t old_pixel = framebuffer[pos.x + pos.y*CONFIG_SCREEN_WIDTH];
         rgb565_t pixel;
         pixel.r = ((255-alpha)*old_pixel.r+alpha*new_pixel.r)/255;
         pixel.g = ((255-alpha)*old_pixel.g+alpha*new_pixel.g)/255;
         pixel.b = ((255-alpha)*old_pixel.b+alpha*new_pixel.b)/255;
-        buf[pos.x + pos.y*SCREEN_WIDTH] = pixel;
+        framebuffer[pos.x + pos.y*CONFIG_SCREEN_WIDTH] = pixel;
     }
     else
     {
-        buf[pos.x + pos.y*SCREEN_WIDTH] = _true2highColor(color);
+        framebuffer[pos.x + pos.y*CONFIG_SCREEN_WIDTH] = _true2highColor(color);
     }
-#elif defined PIX_FMT_BW
+#elif defined CONFIG_PIX_FMT_BW
     // Ignore more than half transparent pixels
     if (color.alpha >= 128)
     {
-        uint16_t cell = (pos.x + pos.y*SCREEN_WIDTH) / 8;
-        uint16_t elem = (pos.x + pos.y*SCREEN_WIDTH) % 8;
-        buf[cell] &= ~(1 << elem);
-        buf[cell] |= (_color2bw(color) << elem);
+        uint16_t cell = (pos.x + pos.y*CONFIG_SCREEN_WIDTH) / 8;
+        uint16_t elem = (pos.x + pos.y*CONFIG_SCREEN_WIDTH) % 8;
+        framebuffer[cell] &= ~(1 << elem);
+        framebuffer[cell] |= (_color2bw(color) << elem);
     }
 #endif
 }
 
 void gfx_drawLine(point_t start, point_t end, color_t color)
 {
-    if(!initialized) return;
     int16_t steep = abs(end.y - start.y) > abs(end.x - start.x);
 
     if (steep)
@@ -323,14 +301,13 @@ void gfx_drawLine(point_t start, point_t end, color_t color)
 
 void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color, bool fill)
 {
-    if(!initialized) return;
     if(width == 0) return;
     if(height == 0) return;
     uint16_t x_max = start.x + width - 1;
     uint16_t y_max = start.y + height - 1;
     bool perimeter = 0;
-    if(x_max > (SCREEN_WIDTH - 1)) x_max = SCREEN_WIDTH - 1;
-    if(y_max > (SCREEN_HEIGHT - 1)) y_max = SCREEN_HEIGHT - 1;
+    if(x_max > (CONFIG_SCREEN_WIDTH - 1)) x_max = CONFIG_SCREEN_WIDTH - 1;
+    if(y_max > (CONFIG_SCREEN_HEIGHT - 1)) y_max = CONFIG_SCREEN_HEIGHT - 1;
     for(int16_t y = start.y; y <= y_max; y++)
     {
         for(int16_t x = start.x; x <= x_max; x++)
@@ -409,13 +386,13 @@ void gfx_drawCircle(point_t start, uint16_t r, color_t color)
 void gfx_drawHLine(int16_t y, uint16_t height, color_t color)
 {
     point_t start = {0, y};
-    gfx_drawRect(start, SCREEN_WIDTH, height, color, 1);
+    gfx_drawRect(start, CONFIG_SCREEN_WIDTH, height, color, 1);
 }
 
 void gfx_drawVLine(int16_t x, uint16_t width, color_t color)
 {
     point_t start = {x, 0};
-    gfx_drawRect(start, width, SCREEN_HEIGHT, color, 1);
+    gfx_drawRect(start, width, CONFIG_SCREEN_HEIGHT, color, 1);
 }
 
 /**
@@ -430,7 +407,7 @@ static inline uint16_t get_line_size(GFXfont f, const char *text, uint16_t lengt
     for(unsigned i = 0; i < length && text[i] != '\n' && text[i] != '\r'; i++)
     {
         GFXglyph glyph = f.glyph[text[i] - f.first];
-        if (line_size + glyph.xAdvance < SCREEN_WIDTH)
+        if (line_size + glyph.xAdvance < CONFIG_SCREEN_WIDTH)
             line_size += glyph.xAdvance;
         else
             break;
@@ -452,9 +429,9 @@ static inline uint16_t get_reset_x(textAlign_t alignment, uint16_t line_size,
         case TEXT_ALIGN_LEFT:
             return startx;
         case TEXT_ALIGN_CENTER:
-            return (SCREEN_WIDTH - line_size)/2;
+            return (CONFIG_SCREEN_WIDTH - line_size)/2;
         case TEXT_ALIGN_RIGHT:
-            return SCREEN_WIDTH - line_size - startx;
+            return CONFIG_SCREEN_WIDTH - line_size - startx;
     }
 
     return 0;
@@ -518,7 +495,7 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
         }
 
         // Handle wrap around
-        if (start.x + glyph.xAdvance > SCREEN_WIDTH)
+        if (start.x + glyph.xAdvance > CONFIG_SCREEN_WIDTH)
         {
             // Compute size of the first row in pixels
             line_size = get_line_size(f, buf, len);
@@ -538,8 +515,8 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
 
                 if (bits & 0x80)
                 {
-                    if (start.y + yo + yy < SCREEN_HEIGHT &&
-                        start.x + xo + xx < SCREEN_WIDTH &&
+                    if (start.y + yo + yy < CONFIG_SCREEN_HEIGHT &&
+                        start.x + xo + xx < CONFIG_SCREEN_WIDTH &&
                         start.y + yo + yy > 0 &&
                         start.x + xo + xx > 0)
                     {
@@ -570,7 +547,7 @@ point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment,
     // Get format string and arguments from var char
     va_list ap;
     va_start(ap, fmt);
-    vsnprintf(text, sizeof(text)-1, fmt, ap);
+    vsniprintf(text, sizeof(text)-1, fmt, ap);
     va_end(ap);
 
     return gfx_printBuffer(start, size, alignment, color, text);
@@ -583,14 +560,14 @@ point_t gfx_printLine(uint8_t cur, uint8_t tot, int16_t startY, int16_t endY,
     // Get format string and arguments from var char
     va_list ap;
     va_start(ap, fmt);
-    vsnprintf(text, sizeof(text)-1, fmt, ap);
+    vsniprintf(text, sizeof(text)-1, fmt, ap);
     va_end(ap);
 
     // Estimate font height by reading the gliph | height
     uint8_t fontH = gfx_getFontHeight(size);
 
-    // If endY is 0 set it to default value = SCREEN_HEIGHT
-    if(endY == 0) endY = SCREEN_HEIGHT;
+    // If endY is 0 set it to default value = CONFIG_SCREEN_HEIGHT
+    if(endY == 0) endY = CONFIG_SCREEN_HEIGHT;
 
     // Calculate print coordinates
     int16_t height = endY - startY;
@@ -610,15 +587,15 @@ void gfx_printError(const char *text, fontSize_t size)
     uint16_t box_padding = 16;
     color_t white = {255, 255, 255, 255};
     color_t red =   {255,   0,   0, 255};
-    point_t start = {0, SCREEN_HEIGHT/2 + 5};
+    point_t start = {0, CONFIG_SCREEN_HEIGHT/2 + 5};
 
     // Print the error message
     point_t text_size = gfx_print(start, size, TEXT_ALIGN_CENTER, white, text);
     text_size.x += box_padding;
     text_size.y += box_padding;
     point_t box_start = {0, 0};
-    box_start.x = (SCREEN_WIDTH / 2) - (text_size.x / 2);
-    box_start.y = (SCREEN_HEIGHT / 2) - (text_size.y / 2);
+    box_start.x = (CONFIG_SCREEN_WIDTH / 2) - (text_size.x / 2);
+    box_start.y = (CONFIG_SCREEN_HEIGHT / 2) - (text_size.y / 2);
     // Draw the error box
     gfx_drawRect(box_start, text_size.x, text_size.y, red, false);
 }
@@ -634,7 +611,7 @@ point_t gfx_drawSymbol(point_t start, symbolSize_t size, textAlign_t alignment,
      *
      * TODO: improve this.
      */
-    int symSize = size + FONT_SIZE_24PT + 1;
+    int symSize = size + FONT_SIZE_NUM;
     char buffer[2] = {0};
 
     buffer[0] = (char) symbol;
@@ -671,7 +648,7 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
     // Cap percentage to 1
     percentage = (percentage > 100) ? 100 : percentage;
 
-#ifdef PIX_FMT_RGB565
+#ifdef CONFIG_PIX_FMT_RGB565
     color_t green =  {0,   255, 0  , 255};
     color_t yellow = {250, 180, 19 , 255};
     color_t red =    {255, 0,   0  , 255};
@@ -682,7 +659,7 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
         bat_color = red;
     else if (percentage > 60)
         bat_color = green;
-#elif defined PIX_FMT_BW
+#elif defined CONFIG_PIX_FMT_BW
     color_t bat_color = white;
 #endif
 
@@ -744,8 +721,8 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
  * Width (px)
  *
  */
-void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
-                    float squelch, float volume, bool drawVolume, color_t color)
+void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, rssi_t rssi,
+                    uint8_t squelch, uint8_t volume, bool drawVolume, color_t color)
 {
     color_t white =  {255, 255, 255, 255};
     color_t yellow = {250, 180, 19 , 255};
@@ -785,22 +762,22 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
     if (drawVolume)
     {
         // Speaker Volume Bar
-        uint16_t volume_width = width * volume;
+        uint16_t volume_width = (width * volume) / 255;
         point_t volume_pos = {start.x, (uint8_t) (start.y + 2)};
         gfx_drawRect(volume_pos, volume_width, volume_height, white, true);
     }
 
     // Squelch bar
     uint16_t squelch_height = bar_height * 2 / bar_height_divider ;
-    uint16_t squelch_width = width * squelch;
+    uint16_t squelch_width = (width * squelch) / 15;
     point_t squelch_pos = {start.x, (uint8_t) (start.y + 2 + volume_height)};
     gfx_drawRect(squelch_pos, squelch_width, squelch_height, color, true);
 
     // RSSI bar
     uint16_t rssi_height = bar_height * 4 / bar_height_divider;
-    float s_level =  (127.0f + rssi) / 6.0f;
-    uint16_t rssi_width = (s_level < 0.0f) ? 0 : (s_level * (width - 1) / 11);
-    rssi_width = (s_level > 10.0f) ? width : rssi_width;
+    int16_t  s_level =  (127 + rssi) / 6;
+    uint16_t rssi_width = (s_level < 0) ? 0 : (s_level * (width - 1) / 11);
+    rssi_width = (s_level > 10) ? width : rssi_width;
     point_t rssi_pos = { start.x, (uint8_t) (start.y + 2 + squelch_height + volume_height)};
     gfx_drawRect(rssi_pos, rssi_width, rssi_height, white, true);
 }
@@ -830,8 +807,8 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, float rssi,
  * Width (px)
  *
  */
-void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, float rssi,
-                         uint8_t level, float volume, bool drawVolume)
+void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, rssi_t rssi,
+                         uint8_t level, uint8_t volume, bool drawVolume)
 {
     color_t red =    {255, 0,   0  , 255};
     color_t green =  {0,   255,   0, 255};
@@ -847,7 +824,7 @@ void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, float r
     if (drawVolume)
     {
         // Speaker Volume Bar
-        uint16_t volume_width = width * volume;
+        uint16_t volume_width = (width * volume) / 255;
         point_t volume_pos = start;
         gfx_drawRect(volume_pos, volume_width, volume_height, white, true);
     }
@@ -863,14 +840,14 @@ void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, float r
     }
     // Level bar
     uint16_t level_height = bar_height * 3 / bar_height_divider;
-    uint16_t level_width = (level / 255.0 * width);
+    uint16_t level_width = (width * level) / 255;
     point_t level_pos = { start.x, (uint8_t) (start.y + 2 + volume_height)};
     gfx_drawRect(level_pos, level_width, level_height, green, true);
     // RSSI bar
-    float s_level =  (127.0f + rssi) / 6.0f;
+    int16_t  s_level =  (127 + rssi) / 6;
     uint16_t rssi_height = bar_height * 3 / bar_height_divider;
-    uint16_t rssi_width = (s_level < 0.0f) ? 0 : (s_level * (width - 1) / 11);
-    rssi_width = (s_level > 10.0f) ? width : rssi_width;
+    uint16_t rssi_width = (s_level < 0) ? 0 : (s_level * (width - 1) / 11);
+    rssi_width = (s_level > 10) ? width : rssi_width;
     point_t rssi_pos = {start.x, (uint8_t) (start.y + 5 + level_height + volume_height)};
     gfx_drawRect(rssi_pos, rssi_width, rssi_height, white, true);
     // S-level marks and numbers
@@ -1012,8 +989,8 @@ void gfx_plotData(point_t start, uint16_t width, uint16_t height,
         pos.x = horizontal_pos;
         pos.y = start.y + (height / 2)
               + ((data[i] * 4) / (2 * SHRT_MAX) * height);
-        if (pos.y > SCREEN_HEIGHT)
-            pos.y = SCREEN_HEIGHT;
+        if (pos.y > CONFIG_SCREEN_HEIGHT)
+            pos.y = CONFIG_SCREEN_HEIGHT;
         if (!first_iteration)
             gfx_drawLine(prev_pos, pos, white);
         prev_pos = pos;

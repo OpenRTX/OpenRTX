@@ -32,7 +32,7 @@ extern "C" {
  *********************** HOW TO MANAGE FRAMEBUFFER *****************************
  *
  * This driver allocates the framebuffer as a block of linearly addressed memory
- * equivalent to an array of SCREEN_HEIGHT*SCREEN_WIDTH elements.
+ * equivalent to an array of CONFIG_SCREEN_HEIGHT*CONFIG_SCREEN_WIDTH elements.
  * With respect to it, screen is indexed in this way:
  *
  *   (0,0)
@@ -44,7 +44,7 @@ extern "C" {
  *     y
  *
  * then to set the value of the pixel having coordinates (X,Y), framebuffer has
- * to be indexed in this way: buf[X + Y*SCREEN_WIDTH].
+ * to be indexed in this way: buf[X + Y*CONFIG_SCREEN_WIDTH].
  *
  */
 
@@ -59,21 +59,6 @@ extern "C" {
 void display_init();
 
 /**
- * Get pointer to framebuffer. Being this a standard interface for all the
- * low-level display drivers, this function returns a pointer to void: it's up
- * to the caller performing the correct cast to one of the standard types used
- * for color coding.
- * Changes to the framebuffer will not be reflected on the display until
- * display_render() or display_renderRows() are called.
- *
- *
- * WARNING: no bound check is performed! Do not call free() on the pointer
- * returned, doing so will destroy the framebuffer!
- * @return pointer to framebuffer.
- */
-void *display_getFrameBuffer();
-
-/**
  * When called, this function terminates the display driver
  * and deallocates the framebuffer.
  */
@@ -81,25 +66,22 @@ void display_terminate();
 
 /**
  * Copy a given section, between two given rows, of framebuffer content to the
- * display.
+ * display. This function blocks the caller until render is completed.
+ *
  * @param startRow: first row of the framebuffer section to be copied
  * @param endRow: last row of the framebuffer section to be copied
+ * @param fb: pointer to frameBuffer.
  */
-void display_renderRows(uint8_t startRow, uint8_t endRow);
+void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb);
 
 /**
  * Copy framebuffer content to the display internal buffer, to be called
  * whenever there is need to update the display.
  * This function blocks the caller until render is completed.
+ *
+ * @param fb: pointer to framebuffer.
  */
-void display_render();
-
-/**
- * Check if framebuffer is being copied to the screen or not, in which case it
- * can be modified without problems.
- * @return false if rendering is not in progress.
- */
-bool display_renderingInProgress();
+void display_render(void *fb);
 
 /**
  * Set display contrast.
