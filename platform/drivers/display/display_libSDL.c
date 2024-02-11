@@ -43,6 +43,7 @@ extern chan_t fb_sync;       /* Shared channel to send a frame buffer update */
 /* Custom SDL Event to adjust backlight */
 extern Uint32 SDL_Backlight_Event;
 
+#ifndef CONFIG_PIX_FMT_RGB565
 /**
  * @internal
  * Internal helper function which fetches pixel at position (x, y) from framebuffer
@@ -52,6 +53,7 @@ static uint32_t fetchPixelFromFb(unsigned int x, unsigned int y, void *fb)
 {
     (void) x;
     (void) y;
+    (void) fb;
     uint32_t pixel = 0;
 
     #ifdef CONFIG_PIX_FMT_BW
@@ -78,7 +80,7 @@ static uint32_t fetchPixelFromFb(unsigned int x, unsigned int y, void *fb)
 
     return pixel;
 }
-
+#endif
 
 void display_init()
 {

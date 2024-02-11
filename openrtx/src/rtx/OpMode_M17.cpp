@@ -78,6 +78,7 @@ void OpMode_M17::disable()
 
 void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
 {
+    (void) newCfg;
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
     //
     // Invert TX phase for all MDx models.

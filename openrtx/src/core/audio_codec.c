@@ -57,8 +57,10 @@ static uint64_t         dataBuffer[BUF_SIZE];
 static const uint8_t micGainPre  = 4;
 static const uint8_t micGainPost = 3;
 #else
+#ifndef PLATFORM_LINUX
 static const uint8_t micGainPre  = 8;
 static const uint8_t micGainPost = 4;
+#endif
 #endif
 
 static void *encodeFunc(void *arg);
@@ -189,7 +191,7 @@ static void *encodeFunc(void *arg)
 {
 
     streamId        iStream;
-    pathId          iPath = (pathId) arg;
+    pathId          iPath = *((pathId*) arg);
     stream_sample_t audioBuf[320];
     struct CODEC2   *codec2;
     filter_state_t  dcrState;
@@ -269,7 +271,7 @@ static void *encodeFunc(void *arg)
 static void *decodeFunc(void *arg)
 {
     streamId        oStream;
-    pathId          oPath = (pathId) arg;
+    pathId          oPath = *((pathId*) arg);
     stream_sample_t audioBuf[320];
     struct CODEC2   *codec2;
 
@@ -411,7 +413,7 @@ static bool startThread(const pathId path, void *(*func) (void *))
     #endif
 
     // Start thread
-    int ret = pthread_create(&codecThread, &codecAttr, func, ((void *) audioPath));
+    int ret = pthread_create(&codecThread, &codecAttr, func, &audioPath);
     if(ret < 0)
         running = false;
 
