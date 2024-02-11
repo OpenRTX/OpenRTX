@@ -177,7 +177,7 @@ void vp_announcePower(const uint32_t power, const vpQueueFlags_t flags)
     // Compute x.y format avoiding to pull in floating point math.
     // Remember that power is expressed in mW!
     char buffer[16] = "\0";
-    sniprintf(buffer, 16, "%lu.%lu", (power / 1000), (power % 1000) / 100);
+    sniprintf(buffer, 16, "%lu.%lu", (power / 1000lu), (power % 1000lu) / 100lu);
 
     vp_queueString(buffer, vpAnnounceCommonSymbols);
     vp_queuePrompt(PROMPT_WATTS);
