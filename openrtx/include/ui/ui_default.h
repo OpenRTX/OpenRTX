@@ -120,53 +120,53 @@ typedef enum
 // GUI Values - Display
 enum
 {
-    GUI_VAL_BANKS             ,
-    GUI_VAL_CHANNELS          ,
-    GUI_VAL_CONTACTS          ,
-    GUI_VAL_GPS               ,
+    GUI_VAL_BANKS            ,
+    GUI_VAL_CHANNELS         ,
+    GUI_VAL_CONTACTS         ,
+    GUI_VAL_GPS              ,
     // Settings
     // Display
 #ifdef SCREEN_BRIGHTNESS
-    GUI_VAL_SCREEN_BRIGHTNESS ,
+    GUI_VAL_BRIGHTNESS       ,
 #endif // SCREEN_BRIGHTNESS
 #ifdef SCREEN_CONTRAST
-    GUI_VAL_SCREEN_CONTRAST   ,
+    GUI_VAL_CONTRAST         ,
 #endif // SCREEN_CONTRAST
-    GUI_VAL_TIMER             ,
+    GUI_VAL_TIMER            ,
     // Time and Date
-    GUI_VAL_DATE              ,
-    GUI_VAL_TIME              ,
+    GUI_VAL_DATE             ,
+    GUI_VAL_TIME             ,
     // GPS
-    GUI_VAL_GPS_ENABLED       ,
-    GUI_VAL_GPS_SET_TIME      ,
-    GUI_VAL_GPS_TIME_ZONE     ,
+    GUI_VAL_GPS_ENABLED      ,
+    GUI_VAL_GPS_SET_TIME     ,
+    GUI_VAL_GPS_TIME_ZONE    ,
     // Radio
-    GUI_VAL_RADIO_OFFSET      ,
-    GUI_VAL_RADIO_DIRECTION   ,
-    GUI_VAL_RADIO_STEP        ,
+    GUI_VAL_RADIO_OFFSET     ,
+    GUI_VAL_RADIO_DIRECTION  ,
+    GUI_VAL_RADIO_STEP       ,
     // M17
-    GUI_VAL_M17_CALLSIGN      ,
-    GUI_VAL_M17_CAN           ,
-    GUI_VAL_M17_CAN_RX_CHECK  ,
+    GUI_VAL_M17_CALLSIGN     ,
+    GUI_VAL_M17_CAN          ,
+    GUI_VAL_M17_CAN_RX_CHECK ,
     // Accessibility - Voice
-    GUI_VAL_VOICE             ,
-    GUI_VAL_PHONETIC          ,
+    GUI_VAL_LEVEL            ,
+    GUI_VAL_PHONETIC         ,
     // Info
-    GUI_VAL_BATTERY_VOLTAGE   ,
-    GUI_VAL_BATTERY_CHARGE    ,
-    GUI_VAL_RSSI              ,
-    GUI_VAL_USED_HEAP         ,
-    GUI_VAL_BAND              ,
-    GUI_VAL_VHF               ,
-    GUI_VAL_UHF               ,
-    GUI_VAL_HW_VERSION        ,
+    GUI_VAL_BATTERY_VOLTAGE  ,
+    GUI_VAL_BATTERY_CHARGE   ,
+    GUI_VAL_RSSI             ,
+    GUI_VAL_USED_HEAP        ,
+    GUI_VAL_BAND             ,
+    GUI_VAL_VHF              ,
+    GUI_VAL_UHF              ,
+    GUI_VAL_HW_VERSION       ,
 #ifdef PLATFORM_TTWRPLUS
-    GUI_VAL_RADIO             ,
-    GUI_VAL_RADIO_FW          ,
+    GUI_VAL_RADIO            ,
+    GUI_VAL_RADIO_FW         ,
 #endif // PLATFORM_TTWRPLUS
 
-    GUI_VAL_STUBBED           ,
-    GUI_VAL_NUM_OF            ,
+    GUI_VAL_STUBBED          ,
+    GUI_VAL_NUM_OF           ,
 
     GUI_VALUE_MAX_NUM_OF = 12
 };

@@ -328,7 +328,7 @@ static const uint8_t Page_SettingsDisplay[] =
     GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'B','r','i','g','h','t','n','e','s','s' , GUI_CMD_NULL ,
     GUI_CMD_ALIGN_RIGHT ,
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_SCREEN_BRIGHTNESS ) ,
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_BRIGHTNESS ) ,
     GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
 #endif // SCREEN_BRIGHTNESS
@@ -337,7 +337,7 @@ static const uint8_t Page_SettingsDisplay[] =
     GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'C','o','n','t','r','a','s','t' , GUI_CMD_NULL ,
     GUI_CMD_ALIGN_RIGHT ,
-    GUI_CMD_VALUE , ST_VAL( GUI_VAL_SCREEN_CONTRAST ) ,
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_CONTRAST ) ,
     GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
 #endif // SCREEN_CONTRAST
@@ -426,7 +426,7 @@ static const uint8_t Page_SettingsVoice[] =
     GUI_CMD_LINE_STYLE , ST_VAL( GUI_LINE_1 ) ,
     GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'V','o','i','c','e' , GUI_CMD_NULL ,
-    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_VOICE ) ,
+    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_LEVEL ) ,
     GUI_CMD_LINE_END ,
     GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'P','h','o','n','e','t','i','c' , GUI_CMD_NULL ,
@@ -3970,74 +3970,6 @@ static bool ui_updateFSM_PAGE_BLANK( GuiState_st* guiState )
     return false ;
 }
 
-// GUI Values - Input
-typedef enum
-{
-#ifdef SCREEN_BRIGHTNESS
-    GUI_VAL_INP_BRIGHTNESS  , // D_BRIGHTNESS
-#endif // SCREEN_BRIGHTNESS
-#ifdef SCREEN_CONTRAST
-    GUI_VAL_INP_CONTRAST    , // D_CONTRAST
-#endif // SCREEN_CONTRAST
-    GUI_VAL_INP_TIMER       , // D_TIMER
-#ifdef GPS_PRESENT
-    GUI_VAL_INP_ENABLED     , // G_ENABLED
-    GUI_VAL_INP_SET_TIME    , // G_SET_TIME
-    GUI_VAL_INP_TIMEZONE    , // G_TIMEZONE
-#endif // GPS_PRESENT
-    GUI_VAL_INP_LEVEL       , // VP_LEVEL
-    GUI_VAL_INP_PHONETIC    , // VP_PHONETIC
-    GUI_VAL_INP_OFFSET      , // R_OFFSET
-    GUI_VAL_INP_DIRECTION   , // R_DIRECTION
-    GUI_VAL_INP_STEP        , // R_STEP
-    GUI_VAL_INP_CALLSIGN    , // M17_CALLSIGN
-    GUI_VAL_INP_CAN         , // M17_CAN
-    GUI_VAL_INP_CAN_RX      , // M17_CAN_RX
-    GUI_VAL_INP_STUBBED     ,
-    GUI_VAL_INP_NUM_OF
-}uiValNum_en;
-
-static const uint8_t ValueToValueInputFn_Table[ GUI_VAL_NUM_OF ] =
-{
-    GUI_VAL_INP_STUBBED     , // GUI_VAL_BANKS
-    GUI_VAL_INP_STUBBED     , // GUI_VAL_CHANNELS
-    GUI_VAL_INP_STUBBED     , // GUI_VAL_CONTACTS
-    GUI_VAL_INP_STUBBED     , // GUI_VAL_GPS
-#ifdef SCREEN_BRIGHTNESS
-    GUI_VAL_INP_BRIGHTNESS  , // GUI_VAL_SCREEN_BRIGHTNESS
-#endif // SCREEN_BRIGHTNESS
-#ifdef SCREEN_CONTRAST
-    GUI_VAL_INP_CONTRAST    , // GUI_VAL_SCREEN_CONTRAST
-#endif // SCREEN_CONTRAST
-    GUI_VAL_INP_TIMER       , // GUI_VAL_TIMER
-    GUI_VAL_INP_STUBBED     , // GUI_VAL_DATE
-    GUI_VAL_INP_STUBBED     , // GUI_VAL_TIME
-    GUI_VAL_INP_ENABLED     , // GUI_VAL_GPS_ENABLED
-    GUI_VAL_INP_SET_TIME    , // GUI_VAL_GPS_SET_TIME
-    GUI_VAL_INP_TIMEZONE    , // GUI_VAL_GPS_TIME_ZONE
-    GUI_VAL_INP_OFFSET      , // GUI_VAL_RADIO_OFFSET
-    GUI_VAL_INP_DIRECTION   , // GUI_VAL_RADIO_DIRECTION
-    GUI_VAL_INP_STEP        , // GUI_VAL_RADIO_STEP
-    GUI_VAL_INP_CALLSIGN    , // GUI_VAL_M17_CALLSIGN
-    GUI_VAL_INP_CAN         , // GUI_VAL_M17_CAN
-    GUI_VAL_INP_CAN_RX      , // GUI_VAL_M17_CAN_RX_CHECK
-    GUI_VAL_INP_LEVEL       , // GUI_VAL_VOICE
-    GUI_VAL_INP_PHONETIC    , // GUI_VAL_PHONETIC
-    GUI_VAL_INP_STUBBED     , // GUI_VAL_BATTERY_VOLTAGE
-    GUI_VAL_INP_STUBBED     , // GUI_VAL_BATTERY_CHARGE
-    GUI_VAL_INP_STUBBED     , // GUI_VAL_RSSI
-    GUI_VAL_INP_STUBBED     , // GUI_VAL_USED_HEAP
-    GUI_VAL_INP_STUBBED     , // GUI_VAL_BAND
-    GUI_VAL_INP_STUBBED     , // GUI_VAL_VHF
-    GUI_VAL_INP_STUBBED     , // GUI_VAL_UHF
-    GUI_VAL_INP_STUBBED     , // GUI_VAL_HW_VERSION
-#ifdef PLATFORM_TTWRPLUS
-    GUI_VAL_INP_STUBBED     , // GUI_VAL_RADIO
-    GUI_VAL_INP_STUBBED     , // GUI_VAL_RADIO_FW
-#endif // PLATFORM_TTWRPLUS
-    GUI_VAL_INP_STUBBED     , // GUI_VAL_STUBBED
-};
-
 #ifdef SCREEN_BRIGHTNESS
 static bool ui_InputValue_BRIGHTNESS( GuiState_st* guiState );
 #endif // SCREEN_BRIGHTNESS
@@ -4063,50 +3995,58 @@ static bool ui_InputValue_STUBBED( GuiState_st* guiState );
 typedef bool (*ui_InputValue_fn)( GuiState_st* guiState );
 
 // GUI Values - Set
-static const ui_InputValue_fn ui_InputValue_Table[ GUI_VAL_INP_NUM_OF ] =
+static const ui_InputValue_fn ui_InputValue_Table[ GUI_VAL_NUM_OF ] =
 {
+    ui_InputValue_STUBBED     , // GUI_VAL_BANKS
+    ui_InputValue_STUBBED     , // GUI_VAL_CHANNELS
+    ui_InputValue_STUBBED     , // GUI_VAL_CONTACTS
+    ui_InputValue_STUBBED     , // GUI_VAL_GPS
 #ifdef SCREEN_BRIGHTNESS
-    ui_InputValue_BRIGHTNESS  , // GUI_VAL_INP_BRIGHTNESS  , D_BRIGHTNESS
+    ui_InputValue_BRIGHTNESS  , // GUI_VAL_BRIGHTNESS       , D_BRIGHTNESS
 #endif // SCREEN_BRIGHTNESS
 #ifdef SCREEN_CONTRAST
-    ui_InputValue_CONTRAST    , // GUI_VAL_INP_CONTRAST    , D_CONTRAST
+    ui_InputValue_CONTRAST    , // GUI_VAL_CONTRAST         , D_CONTRAST
 #endif // SCREEN_CONTRAST
-    ui_InputValue_TIMER       , // GUI_VAL_INP_TIMER       , D_TIMER
-#ifdef GPS_PRESENT
-    ui_InputValue_ENABLED     , // GUI_VAL_INP_ENABLED     , G_ENABLED
-    ui_InputValue_SET_TIME    , // GUI_VAL_INP_SET_TIME    , G_SET_TIME
-    ui_InputValue_TIMEZONE    , // GUI_VAL_INP_TIMEZONE    , G_TIMEZONE
-#endif // GPS_PRESENT
-    ui_InputValue_LEVEL       , // GUI_VAL_INP_LEVEL       , VP_LEVEL
-    ui_InputValue_PHONETIC    , // GUI_VAL_INP_PHONETIC    , VP_PHONETIC
-    ui_InputValue_OFFSET      , // GUI_VAL_INP_OFFSET      , R_OFFSET
-    ui_InputValue_DIRECTION   , // GUI_VAL_INP_DIRECTION   , R_DIRECTION
-    ui_InputValue_STEP        , // GUI_VAL_INP_STEP        , R_STEP
-    ui_InputValue_CALLSIGN    , // GUI_VAL_INP_CALLSIGN    , M17_CALLSIGN
-    ui_InputValue_CAN         , // GUI_VAL_INP_CAN         , M17_CAN
-    ui_InputValue_CAN_RX      , // GUI_VAL_INP_CAN_RX      , M17_CAN_RX
-    ui_InputValue_STUBBED       // GUI_VAL_INP_STUBBED
+    ui_InputValue_TIMER       , // GUI_VAL_TIMER            , D_TIMER
+    ui_InputValue_STUBBED     , // GUI_VAL_DATE
+    ui_InputValue_STUBBED     , // GUI_VAL_TIME
+    ui_InputValue_ENABLED     , // GUI_VAL_GPS_ENABLED      , G_ENABLED
+    ui_InputValue_SET_TIME    , // GUI_VAL_GPS_SET_TIME     , G_SET_TIME
+    ui_InputValue_TIMEZONE    , // GUI_VAL_GPS_TIME_ZONE    , G_TIMEZONE
+    ui_InputValue_OFFSET      , // GUI_VAL_RADIO_OFFSET     , R_OFFSET
+    ui_InputValue_DIRECTION   , // GUI_VAL_RADIO_DIRECTION  , R_DIRECTION
+    ui_InputValue_STEP        , // GUI_VAL_RADIO_STEP       , R_STEP
+    ui_InputValue_CALLSIGN    , // GUI_VAL_M17_CALLSIGN     , M17_CALLSIGN
+    ui_InputValue_CAN         , // GUI_VAL_M17_CAN          , M17_CAN
+    ui_InputValue_CAN_RX      , // GUI_VAL_M17_CAN_RX_CHECK , M17_CAN_RX
+    ui_InputValue_LEVEL       , // GUI_VAL_LEVEL            , VP_LEVEL
+    ui_InputValue_PHONETIC    , // GUI_VAL_PHONETIC         , VP_PHONETIC
+    ui_InputValue_STUBBED     , // GUI_VAL_BATTERY_VOLTAGE
+    ui_InputValue_STUBBED     , // GUI_VAL_BATTERY_CHARGE
+    ui_InputValue_STUBBED     , // GUI_VAL_RSSI
+    ui_InputValue_STUBBED     , // GUI_VAL_USED_HEAP
+    ui_InputValue_STUBBED     , // GUI_VAL_BAND
+    ui_InputValue_STUBBED     , // GUI_VAL_VHF
+    ui_InputValue_STUBBED     , // GUI_VAL_UHF
+    ui_InputValue_STUBBED     , // GUI_VAL_HW_VERSION
+#ifdef PLATFORM_TTWRPLUS
+    ui_InputValue_STUBBED     , // GUI_VAL_RADIO
+    ui_InputValue_STUBBED     , // GUI_VAL_RADIO_FW
+#endif // PLATFORM_TTWRPLUS
+    ui_InputValue_STUBBED     , // GUI_VAL_STUBBED
 };
 
 static bool ui_InputValue( GuiState_st* guiState )
 {
     uint8_t linkSelected = guiState->uiState.menu_selected ;
     uint8_t valueNum     = guiState->layout.links[ linkSelected ].num ;
-    uint8_t valInpNum ;
 
     if( valueNum >= GUI_VAL_NUM_OF )
     {
         valueNum = GUI_VAL_STUBBED ;
     }
 
-    valInpNum = ValueToValueInputFn_Table[ valueNum ] ;
-
-    if( valInpNum >= GUI_VAL_INP_NUM_OF )
-    {
-        valInpNum = GUI_VAL_INP_STUBBED ;
-    }
-
-    return ui_InputValue_Table[ valInpNum ]( guiState );
+    return ui_InputValue_Table[ valueNum ]( guiState );
 
 }
 
@@ -4332,75 +4272,6 @@ static bool ui_InputValue_TIMEZONE( GuiState_st* guiState )
 
 }
 #endif // GPS_PRESENT
-static bool ui_InputValue_LEVEL( GuiState_st* guiState )
-{
-    bool sync_rtx = false ;
-
-    if( (   guiState->msg.keys & KEY_LEFT                                         ) ||
-        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) ) && guiState->uiState.edit_mode )    )
-    {
-        _ui_changeVoiceLevel( -1 );
-    }
-    else if( (   guiState->msg.keys & KEY_RIGHT                                       ) ||
-             ( ( guiState->msg.keys & ( KEY_UP | KNOB_RIGHT ) ) && guiState->uiState.edit_mode )    )
-    {
-        _ui_changeVoiceLevel( 1 );
-    }
-    else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
-    {
-        _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_VOICE ) );
-    }
-    else if( guiState->msg.keys & ( KEY_DOWN | KNOB_RIGHT ) )
-    {
-        _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_VOICE ) );
-    }
-    else if( guiState->msg.keys & KEY_ENTER )
-    {
-        guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
-    }
-    else if( guiState->msg.keys & KEY_ESC )
-    {
-        _ui_menuBack( PAGE_MENU_SETTINGS );
-    }
-
-    return sync_rtx ;
-
-}
-
-static bool ui_InputValue_PHONETIC( GuiState_st* guiState )
-{
-    bool sync_rtx = false ;
-
-    if( (   guiState->msg.keys & KEY_LEFT                                         ) ||
-        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) ) && guiState->uiState.edit_mode )    )
-    {
-        _ui_changePhoneticSpell( false );
-    }
-    else if( (   guiState->msg.keys & KEY_RIGHT                                       ) ||
-             ( ( guiState->msg.keys & ( KEY_UP | KNOB_RIGHT ) ) && guiState->uiState.edit_mode )    )
-    {
-        _ui_changePhoneticSpell( true );
-    }
-    else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
-    {
-        _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_VOICE ) );
-    }
-    else if( guiState->msg.keys & ( KEY_DOWN | KNOB_RIGHT ) )
-    {
-        _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_VOICE ) );
-    }
-    else if( guiState->msg.keys & KEY_ENTER )
-    {
-        guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
-    }
-    else if( guiState->msg.keys & KEY_ESC )
-    {
-        _ui_menuBack( PAGE_MENU_SETTINGS );
-    }
-
-    return sync_rtx ;
-
-}
 
 static bool ui_InputValue_OFFSET( GuiState_st* guiState )
 {
@@ -4774,6 +4645,76 @@ static bool ui_InputValue_CAN_RX( GuiState_st* guiState )
             sync_rtx = true ;
             _ui_menuBack( PAGE_MENU_SETTINGS );
         }
+    }
+
+    return sync_rtx ;
+
+}
+
+static bool ui_InputValue_LEVEL( GuiState_st* guiState )
+{
+    bool sync_rtx = false ;
+
+    if( (   guiState->msg.keys & KEY_LEFT                                         ) ||
+        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) ) && guiState->uiState.edit_mode )    )
+    {
+        _ui_changeVoiceLevel( -1 );
+    }
+    else if( (   guiState->msg.keys & KEY_RIGHT                                       ) ||
+             ( ( guiState->msg.keys & ( KEY_UP | KNOB_RIGHT ) ) && guiState->uiState.edit_mode )    )
+    {
+        _ui_changeVoiceLevel( 1 );
+    }
+    else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
+    {
+        _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_VOICE ) );
+    }
+    else if( guiState->msg.keys & ( KEY_DOWN | KNOB_RIGHT ) )
+    {
+        _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_VOICE ) );
+    }
+    else if( guiState->msg.keys & KEY_ENTER )
+    {
+        guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
+    }
+    else if( guiState->msg.keys & KEY_ESC )
+    {
+        _ui_menuBack( PAGE_MENU_SETTINGS );
+    }
+
+    return sync_rtx ;
+
+}
+
+static bool ui_InputValue_PHONETIC( GuiState_st* guiState )
+{
+    bool sync_rtx = false ;
+
+    if( (   guiState->msg.keys & KEY_LEFT                                         ) ||
+        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) ) && guiState->uiState.edit_mode )    )
+    {
+        _ui_changePhoneticSpell( false );
+    }
+    else if( (   guiState->msg.keys & KEY_RIGHT                                       ) ||
+             ( ( guiState->msg.keys & ( KEY_UP | KNOB_RIGHT ) ) && guiState->uiState.edit_mode )    )
+    {
+        _ui_changePhoneticSpell( true );
+    }
+    else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
+    {
+        _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_VOICE ) );
+    }
+    else if( guiState->msg.keys & ( KEY_DOWN | KNOB_RIGHT ) )
+    {
+        _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_VOICE ) );
+    }
+    else if( guiState->msg.keys & KEY_ENTER )
+    {
+        guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
+    }
+    else if( guiState->msg.keys & KEY_ESC )
+    {
+        _ui_menuBack( PAGE_MENU_SETTINGS );
     }
 
     return sync_rtx ;
