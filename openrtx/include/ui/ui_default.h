@@ -128,10 +128,10 @@ enum
     // Display
 #ifdef SCREEN_BRIGHTNESS
     GUI_VAL_SCREEN_BRIGHTNESS ,
-#endif
+#endif // SCREEN_BRIGHTNESS
 #ifdef SCREEN_CONTRAST
     GUI_VAL_SCREEN_CONTRAST   ,
-#endif
+#endif // SCREEN_CONTRAST
     GUI_VAL_TIMER             ,
     // Time and Date
     GUI_VAL_DATE              ,
@@ -170,33 +170,6 @@ enum
 
     GUI_VALUE_MAX_NUM_OF = 12
 };
-
-// GUI Values - Input
-typedef enum
-{
-#ifdef SCREEN_BRIGHTNESS
-    GUI_VAL_INP_BRIGHTNESS  , // D_BRIGHTNESS
-#endif
-#ifdef SCREEN_CONTRAST
-    GUI_VAL_INP_CONTRAST    , // D_CONTRAST
-#endif
-    GUI_VAL_INP_TIMER       , // D_TIMER
-#ifdef GPS_PRESENT
-    GUI_VAL_INP_ENABLED     , // G_ENABLED
-    GUI_VAL_INP_SET_TIME    , // G_SET_TIME
-    GUI_VAL_INP_TIMEZONE    , // G_TIMEZONE
-#endif
-    GUI_VAL_INP_LEVEL       , // VP_LEVEL
-    GUI_VAL_INP_PHONETIC    , // VP_PHONETIC
-    GUI_VAL_INP_OFFSET      , // R_OFFSET
-    GUI_VAL_INP_DIRECTION   , // R_DIRECTION
-    GUI_VAL_INP_STEP        , // R_STEP
-    GUI_VAL_INP_CALLSIGN    , // M17_CALLSIGN
-    GUI_VAL_INP_CAN         , // M17_CAN
-    GUI_VAL_INP_CAN_RX      , // M17_CAN_RX
-    GUI_VAL_INP_STUBBED     ,
-    GUI_VAL_INP_NUM_OF
-}uiValNum_en;
 
 typedef enum
 {
@@ -309,6 +282,7 @@ typedef struct
 {
     uint8_t type ;
     uint8_t num ;
+    uint8_t amt ;
 }Link_st;
 
 /**

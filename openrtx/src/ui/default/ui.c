@@ -170,7 +170,7 @@ extern void ui_drawMenuItem( GuiState_st* guiState , char* entryBuf );
 
 extern const char* display_timer_values[];
 
-static void ui_InputValue( GuiState_st* guiState , uiValNum_en valueNum , int32_t value );
+static bool ui_InputValue( GuiState_st* guiState );
 
 //@@@KL change all strings over to use englishStrings in EnglishStrings.h
 
@@ -327,7 +327,8 @@ static const uint8_t Page_SettingsDisplay[] =
     GUI_CMD_LINK ,
     GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'B','r','i','g','h','t','n','e','s','s' , GUI_CMD_NULL ,
-    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_SCREEN_BRIGHTNESS ) ,
+    GUI_CMD_ALIGN_RIGHT ,
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_SCREEN_BRIGHTNESS ) ,
     GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
 #endif // SCREEN_BRIGHTNESS
@@ -335,14 +336,16 @@ static const uint8_t Page_SettingsDisplay[] =
     GUI_CMD_LINK ,
     GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'C','o','n','t','r','a','s','t' , GUI_CMD_NULL ,
-    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_SCREEN_CONTRAST ) ,
+    GUI_CMD_ALIGN_RIGHT ,
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_SCREEN_CONTRAST ) ,
     GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
 #endif // SCREEN_CONTRAST
     GUI_CMD_LINK ,
     GUI_CMD_ALIGN_LEFT , GUI_CMD_TEXT ,
      'T','i','m','e','r' , GUI_CMD_NULL ,
-    GUI_CMD_ALIGN_RIGHT , GUI_CMD_VALUE , ST_VAL( GUI_VAL_TIMER ) ,
+    GUI_CMD_ALIGN_RIGHT ,
+    GUI_CMD_VALUE , ST_VAL( GUI_VAL_TIMER ) ,
     GUI_CMD_LINK_END ,
     GUI_CMD_PAGE_END
 };
@@ -655,8 +658,8 @@ static const ui_GuiCmd_fn ui_GuiCmd_Table[ GUI_CMD_NUM_OF ] =
     GuiCmd_Stubbed       , // 0x08
     GuiCmd_Stubbed       , // 0x09
     GuiCmd_LineEnd       , // 0x0A
-    GuiCmd_Link        , // 0x0B
-    GuiCmd_LinkEnd     , // 0x0C
+    GuiCmd_Link          , // 0x0B
+    GuiCmd_LinkEnd       , // 0x0C
     GuiCmd_Stubbed       , // 0x0D
     GuiCmd_Page          , // 0x0E
     GuiCmd_Value         , // 0x0F
@@ -881,6 +884,7 @@ static bool GuiCmd_Page( GuiState_st* guiState )
     linkNum = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
     guiState->layout.links[ guiState->layout.linkIndex ].type = LINK_TYPE_PAGE ;
     guiState->layout.links[ guiState->layout.linkIndex ].num  = linkNum ;
+    guiState->layout.links[ guiState->layout.linkIndex ].amt  = 0 ;
 
     guiState->page.index++ ;
 
@@ -901,6 +905,7 @@ static bool GuiCmd_Value( GuiState_st* guiState )
     valueNum = GuiCmd_GetValue( guiState , MAX_ENTRY_LEN , valueBuffer );
     guiState->layout.links[ guiState->layout.linkIndex ].type = LINK_TYPE_VALUE ;
     guiState->layout.links[ guiState->layout.linkIndex ].num  = valueNum ;
+    guiState->layout.links[ guiState->layout.linkIndex ].amt  = 0 ;
 
     uiColorLoad( &color_fg , COLOR_FG );
     uiColorLoad( &color_bg , COLOR_BG );
@@ -2214,13 +2219,11 @@ static void _ui_changeContrast( int variation )
 
 static void _ui_changeTimer( int variation )
 {
-    if( ( state.settings.display_timer == TIMER_OFF && variation < 0 ) ||
-        ( state.settings.display_timer == TIMER_1H  && variation > 0 )    )
+    if( !( ( ( state.settings.display_timer == TIMER_OFF ) && ( variation < 0 ) ) ||
+           ( ( state.settings.display_timer == TIMER_1H  ) && ( variation > 0 ) )    ) )
     {
-        return ;
+        state.settings.display_timer += variation ;
     }
-
-    state.settings.display_timer += variation ;
 }
 
 static inline void _ui_changeM17Can( int variation )
@@ -2886,6 +2889,7 @@ static void ui_InitGuiStateLayout( Layout_st* layout )
     {
         layout->links[ index ].type = LINK_TYPE_NONE ;
         layout->links[ index ].num  = 0 ;
+        layout->links[ index ].amt  = 0 ;
     }
     layout->linkNumOf = 0 ;
     layout->linkIndex = 0 ;
@@ -3887,487 +3891,27 @@ static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE_SET( GuiState_st* guiState )
 
 static bool ui_updateFSM_PAGE_SETTINGS_DISPLAY( GuiState_st* guiState )
 {
-    bool sync_rtx = false ;
-
-    if( (   guiState->msg.keys & KEY_LEFT                                         ) ||
-        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) ) && guiState->uiState.edit_mode )    )
-    {
-        switch(guiState->uiState.menu_selected)
-        {
-#ifdef SCREEN_BRIGHTNESS
-            case D_BRIGHTNESS :
-            {
-                ui_InputValue( guiState , GUI_VAL_INP_BRIGHTNESS , -5 );
-                break ;
-            }
-#endif // SCREEN_BRIGHTNESS
-#ifdef SCREEN_CONTRAST
-            case D_CONTRAST :
-            {
-                ui_InputValue( guiState , GUI_VAL_INP_CONTRAST , -4 );
-                break ;
-            }
-#endif // SCREEN_CONTRAST
-            case D_TIMER :
-            {
-                ui_InputValue( guiState , GUI_VAL_INP_TIMER , -1 );
-                break ;
-            }
-            default :
-            {
-                state.ui_screen = PAGE_SETTINGS_DISPLAY ;
-            }
-        }
-    }
-    else if( (   guiState->msg.keys & KEY_RIGHT                                       ) ||
-             ( ( guiState->msg.keys & ( KEY_UP | KNOB_RIGHT ) ) && guiState->uiState.edit_mode )    )
-    {
-        switch(guiState->uiState.menu_selected)
-        {
-#ifdef SCREEN_BRIGHTNESS
-            case D_BRIGHTNESS :
-            {
-                ui_InputValue( guiState , GUI_VAL_INP_BRIGHTNESS , +5 );
-                break ;
-            }
-#endif // SCREEN_BRIGHTNESS
-#ifdef SCREEN_CONTRAST
-            case D_CONTRAST :
-            {
-                ui_InputValue( guiState , GUI_VAL_INP_CONTRAST , +4 );
-                break ;
-            }
-#endif
-            case D_TIMER :
-            {
-                ui_InputValue( guiState , GUI_VAL_INP_TIMER , +1 );
-                break ;
-            }
-            default :
-            {
-                state.ui_screen = PAGE_SETTINGS_DISPLAY ;
-            }
-        }
-    }
-    else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
-    {
-        _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_DISPLAY ) );
-    }
-    else if( guiState->msg.keys & ( KEY_DOWN | KNOB_RIGHT ) )
-    {
-        _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_DISPLAY ) );
-    }
-    else if( guiState->msg.keys & KEY_ENTER )
-    {
-        guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
-    }
-    else if( guiState->msg.keys & KEY_ESC )
-    {
-        _ui_menuBack( PAGE_MENU_SETTINGS );
-    }
-
-    return sync_rtx ;
-
+    return ui_InputValue( guiState );
 }
 
 static bool ui_updateFSM_PAGE_SETTINGS_GPS( GuiState_st* guiState )
 {
-    bool sync_rtx = false ;
-
-    if( (   guiState->msg.keys & ( KEY_LEFT | KEY_RIGHT )                                               ) ||
-        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT | KEY_UP | KNOB_RIGHT ) ) && guiState->uiState.edit_mode )    )
-    {
-        switch( guiState->uiState.menu_selected )
-        {
-            case G_ENABLED :
-            {
-                if( state.settings.gps_enabled )
-                {
-                    ui_InputValue( guiState , GUI_VAL_INP_ENABLED , 0 );
-                }
-                else
-                {
-                    ui_InputValue( guiState , GUI_VAL_INP_ENABLED , 1 );
-                }
-                vp_announceSettingsOnOffToggle( &currentLanguage->gpsEnabled ,
-                                                guiState->queueFlags , state.settings.gps_enabled );
-                break ;
-            }
-            case G_SET_TIME :
-            {
-                ui_InputValue( guiState , GUI_VAL_INP_SET_TIME , 0 );
-                break ;
-            }
-            case G_TIMEZONE :
-            {
-                if( guiState->msg.keys & ( KEY_LEFT | KEY_DOWN | KNOB_LEFT ) )
-                {
-                    ui_InputValue( guiState , GUI_VAL_INP_TIMEZONE , -1 );
-                }
-                else if( guiState->msg.keys & ( KEY_RIGHT | KEY_UP | KNOB_RIGHT ) )
-                {
-                    ui_InputValue( guiState , GUI_VAL_INP_TIMEZONE , +1 );
-                }
-                vp_announceTimeZone( state.settings.utc_timezone , guiState->queueFlags );
-                break ;
-            }
-            default :
-            {
-                state.ui_screen = PAGE_SETTINGS_GPS ;
-            }
-        }
-    }
-    else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
-    {
-        _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_GPS ) );
-    }
-    else if( guiState->msg.keys & ( KEY_DOWN | KNOB_RIGHT ) )
-    {
-        _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_GPS ) );
-    }
-    else if( guiState->msg.keys & KEY_ENTER )
-    {
-        guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
-    }
-    else if( guiState->msg.keys & KEY_ESC )
-    {
-        _ui_menuBack( PAGE_MENU_SETTINGS );
-    }
-
-    return sync_rtx ;
-
+    return ui_InputValue( guiState );
 }
 
 static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState )
 {
-    (void)guiState ;
-
-    bool sync_rtx = false ;
-
-    // If the entry is selected with enter we are in edit_mode
-    if( guiState->uiState.edit_mode )
-    {
-        switch( guiState->uiState.menu_selected )
-        {
-            case R_OFFSET :
-            {
-                //@@@KL ui_InputValue( guiState , GUI_VAL_INP_OFFSET , 0 );
-                // Handle offset frequency input
-#ifdef UI_NO_KEYBOARD
-                if( guiState->msg.long_press && ( guiState->msg.keys & KEY_ENTER ) )
-                {
-                    // Long press on UI_NO_KEYBOARD causes digits to advance by one
-                    guiState->uiState.new_offset /= 10 ;
-#else // UI_NO_KEYBOARD
-                if( guiState->msg.keys & KEY_ENTER)
-                {
-#endif // UI_NO_KEYBOARD
-                    // Apply new offset
-                    state.channel.tx_frequency = state.channel.rx_frequency + guiState->uiState.new_offset ;
-                    vp_queueStringTableEntry( &currentLanguage->frequencyOffset );
-                    vp_queueFrequency( guiState->uiState.new_offset );
-                    guiState->uiState.edit_mode         = false ;
-                }
-                else if( guiState->msg.keys & KEY_ESC )
-                {
-                    // Announce old frequency offset
-                    vp_queueStringTableEntry( &currentLanguage->frequencyOffset );
-                    vp_queueFrequency( (int32_t)state.channel.tx_frequency -
-                                       (int32_t)state.channel.rx_frequency );
-                }
-                else if( guiState->msg.keys & ( KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT ) )
-                {
-                    _ui_numberInputDel( &guiState->uiState.new_offset );
-                }
-#ifdef UI_NO_KEYBOARD
-                else if( guiState->msg.keys & ( KNOB_LEFT | KNOB_RIGHT | KEY_ENTER ) )
-#else // UI_NO_KEYBOARD
-                else if( input_isNumberPressed( guiState->msg ) )
-#endif // UI_NO_KEYBOARD
-                {
-                    _ui_numberInputKeypad( &guiState->uiState.new_offset , guiState->msg );
-                    guiState->uiState.input_position += 1 ;
-                }
-                else if( guiState->msg.long_press              &&
-                         ( guiState->msg.keys     & KEY_F1   ) &&
-                         ( state.settings.vpLevel > VPP_BEEP )    )
-                {
-                    vp_queueFrequency( guiState->uiState.new_offset );
-                    guiState->f1Handled = true ;
-                }
-                break ;
-            }
-            case R_DIRECTION :
-            {
-                //@@@KL ui_InputValue( guiState , GUI_VAL_INP_DIRECTION , value );
-                if( guiState->msg.keys & ( KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT | KNOB_LEFT | KNOB_RIGHT ) )
-                {
-                    // Invert frequency offset direction
-                    if( state.channel.tx_frequency >= state.channel.rx_frequency )
-                    {
-                        state.channel.tx_frequency -= 2 * ( (int32_t)state.channel.tx_frequency -
-                                                            (int32_t)state.channel.rx_frequency );
-                    }
-                    else // Switch to positive offset
-                    {
-                        state.channel.tx_frequency -= 2 * ( (int32_t)state.channel.tx_frequency -
-                                                            (int32_t)state.channel.rx_frequency );
-                    }
-                }
-                break ;
-            }
-            case R_STEP :
-            {
-                //@@@KL ui_InputValue( guiState , GUI_VAL_INP_STEP , value );
-                if( guiState->msg.keys & ( KEY_UP | KEY_RIGHT | KNOB_RIGHT ) )
-                {
-                    // Cycle over the available frequency steps
-                    state.step_index++ ;
-                    state.step_index %= n_freq_steps ;
-                }
-                else if( guiState->msg.keys & ( KEY_DOWN | KEY_LEFT | KNOB_LEFT ) )
-                {
-                    state.step_index += n_freq_steps ;
-                    state.step_index-- ;
-                    state.step_index %= n_freq_steps ;
-                }
-                break ;
-            }
-            default :
-            {
-                state.ui_screen = PAGE_SETTINGS_RADIO ;
-                break ;
-            }
-        }
-        // If ENTER or ESC are pressed, exit edit mode, R_OFFSET is managed separately
-        if( ( ( guiState->msg.keys & KEY_ENTER ) && ( guiState->uiState.menu_selected != R_OFFSET ) ) ||
-              ( guiState->msg.keys & KEY_ESC   )                                                )
-        {
-            guiState->uiState.edit_mode = false ;
-        }
-    }
-    else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
-    {
-        _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_RADIO ) );
-    }
-    else if( ( guiState->msg.keys & KEY_DOWN ) || ( guiState->msg.keys & KNOB_RIGHT ) )
-    {
-        _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_RADIO ) );
-    }
-    else if( guiState->msg.keys & KEY_ENTER )
-    {
-        guiState->uiState.edit_mode = true;
-        // If we are entering R_OFFSET clear temp offset
-        if( guiState->uiState.menu_selected == R_OFFSET )
-        {
-            guiState->uiState.new_offset = 0 ;
-        }
-        // Reset input position
-        guiState->uiState.input_position = 0 ;
-    }
-    else if( guiState->msg.keys & KEY_ESC )
-    {
-        _ui_menuBack( PAGE_MENU_SETTINGS );
-    }
-
-    return sync_rtx ;
-
+    return ui_InputValue( guiState );
 }
 
 static bool ui_updateFSM_PAGE_SETTINGS_M17( GuiState_st* guiState )
 {
-    (void)guiState ;
-
-    bool sync_rtx = false ;
-
-    if( guiState->uiState.edit_mode )
-    {
-        switch( guiState->uiState.menu_selected )
-        {
-            case M17_CALLSIGN :
-            {
-                //@@@KL ui_InputValue( guiState , GUI_VAL_INP_CALLSIGN , value );
-                // Handle text input for M17 callsign
-                if( guiState->msg.keys & KEY_ENTER )
-                {
-                    _ui_textInputConfirm( guiState->uiState.new_callsign );
-                    // Save selected callsign and disable input mode
-                    strncpy( state.settings.callsign , guiState->uiState.new_callsign , 10 );
-                    guiState->uiState.edit_mode = false;
-                    vp_announceBuffer( &currentLanguage->callsign , false , true , state.settings.callsign );
-                }
-                else if( guiState->msg.keys & KEY_ESC )
-                {
-                    // Discard selected callsign and disable input mode
-                    guiState->uiState.edit_mode = false ;
-                    vp_announceBuffer( &currentLanguage->callsign , false , true , state.settings.callsign );
-                }
-                else if( guiState->msg.keys & ( KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT ) )
-                {
-                    _ui_textInputDel( guiState->uiState.new_callsign );
-                }
-                else if( input_isNumberPressed( guiState->msg ) )
-                {
-                    _ui_textInputKeypad( guiState->uiState.new_callsign , 9 , guiState->msg , true );
-                }
-                else if( guiState->msg.long_press              &&
-                         ( guiState->msg.keys     & KEY_F1   ) &&
-                         ( state.settings.vpLevel > VPP_BEEP )    )
-                {
-                    vp_announceBuffer( &currentLanguage->callsign , true , true , guiState->uiState.new_callsign );
-                    guiState->f1Handled = true ;
-                }
-                break ;
-            }
-            case M17_CAN :
-            {
-                //@@@KL ui_InputValue( guiState , GUI_VAL_INP_CAN , value );
-                if( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) )
-                {
-                    _ui_changeM17Can( -1 );
-                }
-                else if( guiState->msg.keys & ( KEY_UP | KNOB_RIGHT ) )
-                {
-                    _ui_changeM17Can( +1 );
-                }
-                else if( guiState->msg.keys & KEY_ENTER )
-                {
-                    guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
-                }
-                else if( guiState->msg.keys & KEY_ESC )
-                {
-                    guiState->uiState.edit_mode = false ;
-                }
-                break;
-            }
-            case M17_CAN_RX :
-            {
-                //@@@KL ui_InputValue( guiState , GUI_VAL_INP_CAN_RX , value );
-                if( (   guiState->msg.keys & ( KEY_LEFT | KEY_RIGHT                       )                         ) ||
-                    ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT | KEY_UP | KNOB_RIGHT ) ) && guiState->uiState.edit_mode )    )
-                {
-                    state.settings.m17_can_rx = !state.settings.m17_can_rx ;
-                }
-                else if( guiState->msg.keys & KEY_ENTER )
-                {
-                    guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
-                }
-                else if( guiState->msg.keys & KEY_ESC )
-                {
-                    guiState->uiState.edit_mode = false ;
-                }
-                break ;
-            }
-        }
-    }
-    else
-    {
-        if( guiState->msg.keys & KEY_ENTER )
-        {
-            // Enable edit mode
-            guiState->uiState.edit_mode = true;
-
-            // If callsign input, reset text input variables
-            if(guiState->uiState.menu_selected == M17_CALLSIGN)
-            {
-                _ui_textInputReset( guiState->uiState.new_callsign );
-                vp_announceBuffer( &currentLanguage->callsign , true , true , guiState->uiState.new_callsign );
-            }
-        }
-        else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
-        {
-            _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_M17 ) );
-        }
-        else if( guiState->msg.keys & ( KEY_DOWN | KNOB_RIGHT ) )
-        {
-            _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_M17 ) );
-        }
-        else if( ( guiState->msg.keys & KEY_RIGHT ) && ( guiState->uiState.menu_selected == M17_CAN ) )
-        {
-            _ui_changeM17Can( +1 );
-        }
-        else if( ( guiState->msg.keys & KEY_LEFT ) && ( guiState->uiState.menu_selected == M17_CAN ) )
-        {
-            _ui_changeM17Can( -1 );
-        }
-        else if( guiState->msg.keys & KEY_ESC )
-        {
-            sync_rtx = true ;
-            _ui_menuBack( PAGE_MENU_SETTINGS );
-        }
-    }
-
-    return sync_rtx ;
-
+    return ui_InputValue( guiState );
 }
 
 static bool ui_updateFSM_PAGE_SETTINGS_VOICE( GuiState_st* guiState )
 {
-    (void)guiState ;
-
-    bool sync_rtx = false ;
-
-    if( (   guiState->msg.keys & KEY_LEFT                                         ) ||
-        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) ) && guiState->uiState.edit_mode )    )
-    {
-        switch( guiState->uiState.menu_selected )
-        {
-            case VP_LEVEL :
-            {
-                ui_InputValue( guiState , GUI_VAL_INP_LEVEL , -1 );
-                break ;
-            }
-            case VP_PHONETIC :
-            {
-                ui_InputValue( guiState , GUI_VAL_INP_PHONETIC , false );
-                break ;
-            }
-            default :
-            {
-                state.ui_screen = PAGE_SETTINGS_VOICE ;
-            }
-        }
-    }
-    else if( (   guiState->msg.keys & KEY_RIGHT                                       ) ||
-             ( ( guiState->msg.keys & ( KEY_UP | KNOB_RIGHT ) ) && guiState->uiState.edit_mode )    )
-    {
-        switch( guiState->uiState.menu_selected )
-        {
-            case VP_LEVEL :
-            {
-                ui_InputValue( guiState , GUI_VAL_INP_LEVEL , +1 );
-                break ;
-            }
-            case VP_PHONETIC :
-            {
-                ui_InputValue( guiState , GUI_VAL_INP_PHONETIC , true );
-                break ;
-            }
-            default :
-            {
-                state.ui_screen = PAGE_SETTINGS_VOICE ;
-            }
-        }
-    }
-    else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
-    {
-        _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_VOICE ) );
-    }
-    else if( guiState->msg.keys & ( KEY_DOWN | KNOB_RIGHT ) )
-    {
-        _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_VOICE ) );
-    }
-    else if( guiState->msg.keys & KEY_ENTER )
-    {
-        guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
-    }
-    else if( guiState->msg.keys & KEY_ESC )
-    {
-        _ui_menuBack( PAGE_MENU_SETTINGS );
-    }
-
-    return sync_rtx ;
-
+    return ui_InputValue( guiState );
 }
 
 static bool ui_updateFSM_PAGE_SETTINGS_RESET_TO_DEFAULTS( GuiState_st* guiState )
@@ -4426,195 +3970,821 @@ static bool ui_updateFSM_PAGE_BLANK( GuiState_st* guiState )
     return false ;
 }
 
-#ifdef SCREEN_BRIGHTNESS
-static void ui_updateFSM_ValInp_BRIGHTNESS( GuiState_st* guiState );
-#endif
-#ifdef SCREEN_CONTRAST
-static void ui_updateFSM_ValInp_CONTRAST( GuiState_st* guiState , int32_t value );
-#endif
-static void ui_updateFSM_ValInp_TIMER( GuiState_st* guiState , int32_t value );
-#ifdef GPS_PRESENT
-static void ui_updateFSM_ValInp_ENABLED( GuiState_st* guiState , int32_t value );
-static void ui_updateFSM_ValInp_SET_TIME( GuiState_st* guiState , int32_t value );
-static void ui_updateFSM_ValInp_TIMEZONE( GuiState_st* guiState , int32_t value );
-#endif
-static void ui_updateFSM_ValInp_LEVEL( GuiState_st* guiState , int32_t value );
-static void ui_updateFSM_ValInp_PHONETIC( GuiState_st* guiState , int32_t value );
-static void ui_updateFSM_ValInp_OFFSET( GuiState_st* guiState , int32_t value );
-static void ui_updateFSM_ValInp_DIRECTION( GuiState_st* guiState , int32_t value );
-static void ui_updateFSM_ValInp_STEP( GuiState_st* guiState , int32_t value );
-static void ui_updateFSM_ValInp_CALLSIGN( GuiState_st* guiState , int32_t value );
-static void ui_updateFSM_ValInp_CAN( GuiState_st* guiState , int32_t value );
-static void ui_updateFSM_ValInp_CAN_RX( GuiState_st* guiState , int32_t value );
-static void ui_updateFSM_ValInp_STUBBED( GuiState_st* guiState , int32_t value );
-
-typedef void (*ui_updateFSM_ValInput_fn)( GuiState_st* guiState , int32_t value );
-
 // GUI Values - Input
-static const ui_updateFSM_ValInput_fn ui_updateFSM_ValInputTable[ GUI_VAL_INP_NUM_OF ] =
+typedef enum
 {
 #ifdef SCREEN_BRIGHTNESS
-    ui_updateFSM_ValInp_BRIGHTNESS  , // GUI_VAL_INP_BRIGHTNESS  , D_BRIGHTNESS
-#endif
+    GUI_VAL_INP_BRIGHTNESS  , // D_BRIGHTNESS
+#endif // SCREEN_BRIGHTNESS
 #ifdef SCREEN_CONTRAST
-    ui_updateFSM_ValInp_CONTRAST    , // GUI_VAL_INP_CONTRAST    , D_CONTRAST
-#endif
-    ui_updateFSM_ValInp_TIMER       , // GUI_VAL_INP_TIMER       , D_TIMER
+    GUI_VAL_INP_CONTRAST    , // D_CONTRAST
+#endif // SCREEN_CONTRAST
+    GUI_VAL_INP_TIMER       , // D_TIMER
 #ifdef GPS_PRESENT
-    ui_updateFSM_ValInp_ENABLED     , // GUI_VAL_INP_ENABLED     , G_ENABLED
-    ui_updateFSM_ValInp_SET_TIME    , // GUI_VAL_INP_SET_TIME    , G_SET_TIME
-    ui_updateFSM_ValInp_TIMEZONE    , // GUI_VAL_INP_TIMEZONE    , G_TIMEZONE
-#endif
-    ui_updateFSM_ValInp_LEVEL       , // GUI_VAL_INP_LEVEL       , VP_LEVEL
-    ui_updateFSM_ValInp_PHONETIC    , // GUI_VAL_INP_PHONETIC    , VP_PHONETIC
-    ui_updateFSM_ValInp_OFFSET      , // GUI_VAL_INP_OFFSET      , R_OFFSET
-    ui_updateFSM_ValInp_DIRECTION   , // GUI_VAL_INP_DIRECTION   , R_DIRECTION
-    ui_updateFSM_ValInp_STEP        , // GUI_VAL_INP_STEP        , R_STEP
-    ui_updateFSM_ValInp_CALLSIGN    , // GUI_VAL_INP_CALLSIGN    , M17_CALLSIGN
-    ui_updateFSM_ValInp_CAN         , // GUI_VAL_INP_CAN         , M17_CAN
-    ui_updateFSM_ValInp_CAN_RX      , // GUI_VAL_INP_CAN_RX        M17_CAN_RX
-    ui_updateFSM_ValInp_STUBBED
+    GUI_VAL_INP_ENABLED     , // G_ENABLED
+    GUI_VAL_INP_SET_TIME    , // G_SET_TIME
+    GUI_VAL_INP_TIMEZONE    , // G_TIMEZONE
+#endif // GPS_PRESENT
+    GUI_VAL_INP_LEVEL       , // VP_LEVEL
+    GUI_VAL_INP_PHONETIC    , // VP_PHONETIC
+    GUI_VAL_INP_OFFSET      , // R_OFFSET
+    GUI_VAL_INP_DIRECTION   , // R_DIRECTION
+    GUI_VAL_INP_STEP        , // R_STEP
+    GUI_VAL_INP_CALLSIGN    , // M17_CALLSIGN
+    GUI_VAL_INP_CAN         , // M17_CAN
+    GUI_VAL_INP_CAN_RX      , // M17_CAN_RX
+    GUI_VAL_INP_STUBBED     ,
+    GUI_VAL_INP_NUM_OF
+}uiValNum_en;
+
+static const uint8_t ValueToValueInputFn_Table[ GUI_VAL_NUM_OF ] =
+{
+    GUI_VAL_INP_STUBBED     , // GUI_VAL_BANKS
+    GUI_VAL_INP_STUBBED     , // GUI_VAL_CHANNELS
+    GUI_VAL_INP_STUBBED     , // GUI_VAL_CONTACTS
+    GUI_VAL_INP_STUBBED     , // GUI_VAL_GPS
+#ifdef SCREEN_BRIGHTNESS
+    GUI_VAL_INP_BRIGHTNESS  , // GUI_VAL_SCREEN_BRIGHTNESS
+#endif // SCREEN_BRIGHTNESS
+#ifdef SCREEN_CONTRAST
+    GUI_VAL_INP_CONTRAST    , // GUI_VAL_SCREEN_CONTRAST
+#endif // SCREEN_CONTRAST
+    GUI_VAL_INP_TIMER       , // GUI_VAL_TIMER
+    GUI_VAL_INP_STUBBED     , // GUI_VAL_DATE
+    GUI_VAL_INP_STUBBED     , // GUI_VAL_TIME
+    GUI_VAL_INP_ENABLED     , // GUI_VAL_GPS_ENABLED
+    GUI_VAL_INP_SET_TIME    , // GUI_VAL_GPS_SET_TIME
+    GUI_VAL_INP_TIMEZONE    , // GUI_VAL_GPS_TIME_ZONE
+    GUI_VAL_INP_OFFSET      , // GUI_VAL_RADIO_OFFSET
+    GUI_VAL_INP_DIRECTION   , // GUI_VAL_RADIO_DIRECTION
+    GUI_VAL_INP_STEP        , // GUI_VAL_RADIO_STEP
+    GUI_VAL_INP_CALLSIGN    , // GUI_VAL_M17_CALLSIGN
+    GUI_VAL_INP_CAN         , // GUI_VAL_M17_CAN
+    GUI_VAL_INP_CAN_RX      , // GUI_VAL_M17_CAN_RX_CHECK
+    GUI_VAL_INP_LEVEL       , // GUI_VAL_VOICE
+    GUI_VAL_INP_PHONETIC    , // GUI_VAL_PHONETIC
+    GUI_VAL_INP_STUBBED     , // GUI_VAL_BATTERY_VOLTAGE
+    GUI_VAL_INP_STUBBED     , // GUI_VAL_BATTERY_CHARGE
+    GUI_VAL_INP_STUBBED     , // GUI_VAL_RSSI
+    GUI_VAL_INP_STUBBED     , // GUI_VAL_USED_HEAP
+    GUI_VAL_INP_STUBBED     , // GUI_VAL_BAND
+    GUI_VAL_INP_STUBBED     , // GUI_VAL_VHF
+    GUI_VAL_INP_STUBBED     , // GUI_VAL_UHF
+    GUI_VAL_INP_STUBBED     , // GUI_VAL_HW_VERSION
+#ifdef PLATFORM_TTWRPLUS
+    GUI_VAL_INP_STUBBED     , // GUI_VAL_RADIO
+    GUI_VAL_INP_STUBBED     , // GUI_VAL_RADIO_FW
+#endif // PLATFORM_TTWRPLUS
+    GUI_VAL_INP_STUBBED     , // GUI_VAL_STUBBED
 };
 
-//ui_InputValue( guiState , GUI_VAL_INP_CAN_RX , value );
+#ifdef SCREEN_BRIGHTNESS
+static bool ui_InputValue_BRIGHTNESS( GuiState_st* guiState );
+#endif // SCREEN_BRIGHTNESS
+#ifdef SCREEN_CONTRAST
+static bool ui_InputValue_CONTRAST( GuiState_st* guiState );
+#endif // SCREEN_CONTRAST
+static bool ui_InputValue_TIMER( GuiState_st* guiState );
+#ifdef GPS_PRESENT
+static bool ui_InputValue_ENABLED( GuiState_st* guiState );
+static bool ui_InputValue_SET_TIME( GuiState_st* guiState );
+static bool ui_InputValue_TIMEZONE( GuiState_st* guiState );
+#endif // GPS_PRESENT
+static bool ui_InputValue_LEVEL( GuiState_st* guiState );
+static bool ui_InputValue_PHONETIC( GuiState_st* guiState );
+static bool ui_InputValue_OFFSET( GuiState_st* guiState );
+static bool ui_InputValue_DIRECTION( GuiState_st* guiState );
+static bool ui_InputValue_STEP( GuiState_st* guiState );
+static bool ui_InputValue_CALLSIGN( GuiState_st* guiState );
+static bool ui_InputValue_CAN( GuiState_st* guiState );
+static bool ui_InputValue_CAN_RX( GuiState_st* guiState );
+static bool ui_InputValue_STUBBED( GuiState_st* guiState );
 
-static void ui_InputValue( GuiState_st* guiState , uiValNum_en valueNum , int32_t value )
+typedef bool (*ui_InputValue_fn)( GuiState_st* guiState );
+
+// GUI Values - Set
+static const ui_InputValue_fn ui_InputValue_Table[ GUI_VAL_INP_NUM_OF ] =
 {
-    uint8_t valNum = valueNum ;
+#ifdef SCREEN_BRIGHTNESS
+    ui_InputValue_BRIGHTNESS  , // GUI_VAL_INP_BRIGHTNESS  , D_BRIGHTNESS
+#endif // SCREEN_BRIGHTNESS
+#ifdef SCREEN_CONTRAST
+    ui_InputValue_CONTRAST    , // GUI_VAL_INP_CONTRAST    , D_CONTRAST
+#endif // SCREEN_CONTRAST
+    ui_InputValue_TIMER       , // GUI_VAL_INP_TIMER       , D_TIMER
+#ifdef GPS_PRESENT
+    ui_InputValue_ENABLED     , // GUI_VAL_INP_ENABLED     , G_ENABLED
+    ui_InputValue_SET_TIME    , // GUI_VAL_INP_SET_TIME    , G_SET_TIME
+    ui_InputValue_TIMEZONE    , // GUI_VAL_INP_TIMEZONE    , G_TIMEZONE
+#endif // GPS_PRESENT
+    ui_InputValue_LEVEL       , // GUI_VAL_INP_LEVEL       , VP_LEVEL
+    ui_InputValue_PHONETIC    , // GUI_VAL_INP_PHONETIC    , VP_PHONETIC
+    ui_InputValue_OFFSET      , // GUI_VAL_INP_OFFSET      , R_OFFSET
+    ui_InputValue_DIRECTION   , // GUI_VAL_INP_DIRECTION   , R_DIRECTION
+    ui_InputValue_STEP        , // GUI_VAL_INP_STEP        , R_STEP
+    ui_InputValue_CALLSIGN    , // GUI_VAL_INP_CALLSIGN    , M17_CALLSIGN
+    ui_InputValue_CAN         , // GUI_VAL_INP_CAN         , M17_CAN
+    ui_InputValue_CAN_RX      , // GUI_VAL_INP_CAN_RX      , M17_CAN_RX
+    ui_InputValue_STUBBED       // GUI_VAL_INP_STUBBED
+};
 
-    if( valNum >= GUI_CMD_NUM_OF )
+static bool ui_InputValue( GuiState_st* guiState )
+{
+    uint8_t linkSelected = guiState->uiState.menu_selected ;
+    uint8_t valueNum     = guiState->layout.links[ linkSelected ].num ;
+    uint8_t valInpNum ;
+
+    if( valueNum >= GUI_VAL_NUM_OF )
     {
-        valNum = GUI_CMD_STUBBED ;
+        valueNum = GUI_VAL_STUBBED ;
     }
 
-	ui_updateFSM_ValInputTable[ valNum ]( guiState , value );
+    valInpNum = ValueToValueInputFn_Table[ valueNum ] ;
+
+    if( valInpNum >= GUI_VAL_INP_NUM_OF )
+    {
+        valInpNum = GUI_VAL_INP_STUBBED ;
+    }
+
+    return ui_InputValue_Table[ valInpNum ]( guiState );
 
 }
 
 #ifdef SCREEN_BRIGHTNESS
-static void ui_updateFSM_ValInp_BRIGHTNESS( GuiState_st* guiState , int32_t value )
+static bool ui_InputValue_BRIGHTNESS( GuiState_st* guiState )
 {
-    (void)guiState;
+    bool sync_rtx = false ;
 
-    _ui_changeBrightness( value );
-    vp_announceSettingsInt( &currentLanguage->brightness ,
-                            guiState->queueFlags ,
-                            state.settings.brightness );
+    if( (   guiState->msg.keys & KEY_LEFT                                         ) ||
+        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) ) && guiState->uiState.edit_mode )    )
+    {
+        _ui_changeBrightness( -5 );
+        vp_announceSettingsInt( &currentLanguage->brightness , guiState->queueFlags , state.settings.brightness );
+    }
+    else if( (   guiState->msg.keys & KEY_RIGHT                                       ) ||
+             ( ( guiState->msg.keys & ( KEY_UP | KNOB_RIGHT ) ) && guiState->uiState.edit_mode )    )
+    {
+        _ui_changeBrightness( +5 );
+        vp_announceSettingsInt( &currentLanguage->brightness , guiState->queueFlags , state.settings.brightness );
+    }
+    else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
+    {
+        _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_DISPLAY ) );
+    }
+    else if( guiState->msg.keys & ( KEY_DOWN | KNOB_RIGHT ) )
+    {
+        _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_DISPLAY ) );
+    }
+    else if( guiState->msg.keys & KEY_ENTER )
+    {
+        guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
+    }
+    else if( guiState->msg.keys & KEY_ESC )
+    {
+        _ui_menuBack( PAGE_MENU_SETTINGS );
+    }
+
+    return sync_rtx ;
 
 }
-
-#endif
+#endif // SCREEN_BRIGHTNESS
 #ifdef SCREEN_CONTRAST
-static void ui_updateFSM_ValInp_CONTRAST( GuiState_st* guiState , int32_t value )
+static bool ui_InputValue_CONTRAST( GuiState_st* guiState )
 {
-    (void)guiState;
+    bool sync_rtx = false ;
 
-    _ui_changeContrast( value );
-    vp_announceSettingsInt( &currentLanguage->brightness ,
-                            guiState->queueFlags ,
-                            state.settings.contrast );
+    if( (   guiState->msg.keys & KEY_LEFT                                         ) ||
+        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) ) && guiState->uiState.edit_mode )    )
+    {
+        _ui_changeContrast( -4 );
+        vp_announceSettingsInt( &currentLanguage->brightness , guiState->queueFlags , state.settings.contrast );
+    }
+    else if( (   guiState->msg.keys & KEY_RIGHT                                       ) ||
+             ( ( guiState->msg.keys & ( KEY_UP | KNOB_RIGHT ) ) && guiState->uiState.edit_mode )    )
+    {
+        _ui_changeContrast( +4 );
+        vp_announceSettingsInt( &currentLanguage->brightness , guiState->queueFlags , state.settings.contrast );
+    }
+    else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
+    {
+        _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_DISPLAY ) );
+    }
+    else if( guiState->msg.keys & ( KEY_DOWN | KNOB_RIGHT ) )
+    {
+        _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_DISPLAY ) );
+    }
+    else if( guiState->msg.keys & KEY_ENTER )
+    {
+        guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
+    }
+    else if( guiState->msg.keys & KEY_ESC )
+    {
+        _ui_menuBack( PAGE_MENU_SETTINGS );
+    }
+
+    return sync_rtx ;
 
 }
-
-#endif
-static void ui_updateFSM_ValInp_TIMER( GuiState_st* guiState , int32_t value )
+#endif // SCREEN_CONTRAST
+static bool ui_InputValue_TIMER( GuiState_st* guiState )
 {
-    (void)guiState;
+    bool sync_rtx = false ;
 
-    _ui_changeTimer( value );
-    vp_announceDisplayTimer();
+    if( (   guiState->msg.keys & KEY_LEFT                                         ) ||
+        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) ) && guiState->uiState.edit_mode )    )
+    {
+        _ui_changeTimer( -1 );
+        vp_announceDisplayTimer();
+    }
+    else if( (   guiState->msg.keys & KEY_RIGHT                                       ) ||
+             ( ( guiState->msg.keys & ( KEY_UP | KNOB_RIGHT ) ) && guiState->uiState.edit_mode )    )
+    {
+        _ui_changeTimer( +1 );
+        vp_announceDisplayTimer();
+    }
+    else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
+    {
+        _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_DISPLAY ) );
+    }
+    else if( guiState->msg.keys & ( KEY_DOWN | KNOB_RIGHT ) )
+    {
+        _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_DISPLAY ) );
+    }
+    else if( guiState->msg.keys & KEY_ENTER )
+    {
+        guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
+    }
+    else if( guiState->msg.keys & KEY_ESC )
+    {
+        _ui_menuBack( PAGE_MENU_SETTINGS );
+    }
+
+    return sync_rtx ;
 
 }
-
 #ifdef GPS_PRESENT
-static void ui_updateFSM_ValInp_ENABLED( GuiState_st* guiState , int32_t value )
+static bool ui_InputValue_ENABLED( GuiState_st* guiState )
 {
-    (void)guiState;
-    (void)value;
+    bool sync_rtx = false ;
 
-    state.settings.gps_enabled = value ;
+    if( (   guiState->msg.keys & ( KEY_LEFT | KEY_RIGHT )                                               ) ||
+        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT | KEY_UP | KNOB_RIGHT ) ) && guiState->uiState.edit_mode )    )
+    {
+        if( state.settings.gps_enabled )
+        {
+            state.settings.gps_enabled = 0 ;
+        }
+        else
+        {
+            state.settings.gps_enabled = 1 ;
+        }
+        vp_announceSettingsOnOffToggle( &currentLanguage->gpsEnabled ,
+                                        guiState->queueFlags , state.settings.gps_enabled );
+    }
+    else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
+    {
+        _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_GPS ) );
+    }
+    else if( guiState->msg.keys & ( KEY_DOWN | KNOB_RIGHT ) )
+    {
+        _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_GPS ) );
+    }
+    else if( guiState->msg.keys & KEY_ENTER )
+    {
+        guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
+    }
+    else if( guiState->msg.keys & KEY_ESC )
+    {
+        _ui_menuBack( PAGE_MENU_SETTINGS );
+    }
+
+    return sync_rtx ;
 
 }
 
-static void ui_updateFSM_ValInp_SET_TIME( GuiState_st* guiState , int32_t value )
+static bool ui_InputValue_SET_TIME( GuiState_st* guiState )
 {
-    (void)guiState;
-    (void)value;
+    bool sync_rtx = false ;
 
-    state.gps_set_time = !state.gps_set_time ;
-    vp_announceSettingsOnOffToggle( &currentLanguage->gpsSetTime ,
-                                    guiState->queueFlags , state.gps_set_time );
+    if( (   guiState->msg.keys & ( KEY_LEFT | KEY_RIGHT )                                               ) ||
+        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT | KEY_UP | KNOB_RIGHT ) ) && guiState->uiState.edit_mode )    )
+    {
+        state.gps_set_time = !state.gps_set_time ;
+        vp_announceSettingsOnOffToggle( &currentLanguage->gpsSetTime ,
+                                                guiState->queueFlags , state.gps_set_time );
+    }
+    else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
+    {
+        _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_GPS ) );
+    }
+    else if( guiState->msg.keys & ( KEY_DOWN | KNOB_RIGHT ) )
+    {
+        _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_GPS ) );
+    }
+    else if( guiState->msg.keys & KEY_ENTER )
+    {
+        guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
+    }
+    else if( guiState->msg.keys & KEY_ESC )
+    {
+        _ui_menuBack( PAGE_MENU_SETTINGS );
+    }
+
+    return sync_rtx ;
 
 }
 
-static void ui_updateFSM_ValInp_TIMEZONE( GuiState_st* guiState , int32_t value )
+static bool ui_InputValue_TIMEZONE( GuiState_st* guiState )
 {
-    (void)guiState;
-    (void)value;
+    bool sync_rtx = false ;
 
-    state.settings.utc_timezone += value ;
+    if( (   guiState->msg.keys & ( KEY_LEFT | KEY_RIGHT )                                               ) ||
+        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT | KEY_UP | KNOB_RIGHT ) ) && guiState->uiState.edit_mode )    )
+    {
+        if( guiState->msg.keys & ( KEY_LEFT | KEY_DOWN | KNOB_LEFT ) )
+        {
+            state.settings.utc_timezone -= 1 ;
+        }
+        else if( guiState->msg.keys & ( KEY_RIGHT | KEY_UP | KNOB_RIGHT ) )
+        {
+            state.settings.utc_timezone += 1 ;
+        }
+        vp_announceTimeZone( state.settings.utc_timezone , guiState->queueFlags );
+    }
+    else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
+    {
+        _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_GPS ) );
+    }
+    else if( guiState->msg.keys & ( KEY_DOWN | KNOB_RIGHT ) )
+    {
+        _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_GPS ) );
+    }
+    else if( guiState->msg.keys & KEY_ENTER )
+    {
+        guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
+    }
+    else if( guiState->msg.keys & KEY_ESC )
+    {
+        _ui_menuBack( PAGE_MENU_SETTINGS );
+    }
+
+    return sync_rtx ;
+
+}
+#endif // GPS_PRESENT
+static bool ui_InputValue_LEVEL( GuiState_st* guiState )
+{
+    bool sync_rtx = false ;
+
+    if( (   guiState->msg.keys & KEY_LEFT                                         ) ||
+        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) ) && guiState->uiState.edit_mode )    )
+    {
+        _ui_changeVoiceLevel( -1 );
+    }
+    else if( (   guiState->msg.keys & KEY_RIGHT                                       ) ||
+             ( ( guiState->msg.keys & ( KEY_UP | KNOB_RIGHT ) ) && guiState->uiState.edit_mode )    )
+    {
+        _ui_changeVoiceLevel( 1 );
+    }
+    else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
+    {
+        _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_VOICE ) );
+    }
+    else if( guiState->msg.keys & ( KEY_DOWN | KNOB_RIGHT ) )
+    {
+        _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_VOICE ) );
+    }
+    else if( guiState->msg.keys & KEY_ENTER )
+    {
+        guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
+    }
+    else if( guiState->msg.keys & KEY_ESC )
+    {
+        _ui_menuBack( PAGE_MENU_SETTINGS );
+    }
+
+    return sync_rtx ;
 
 }
 
-#endif
-static void ui_updateFSM_ValInp_LEVEL( GuiState_st* guiState , int32_t value )
+static bool ui_InputValue_PHONETIC( GuiState_st* guiState )
 {
-    (void)guiState;
-    (void)value;
+    bool sync_rtx = false ;
 
-    _ui_changeVoiceLevel( value );
+    if( (   guiState->msg.keys & KEY_LEFT                                         ) ||
+        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) ) && guiState->uiState.edit_mode )    )
+    {
+        _ui_changePhoneticSpell( false );
+    }
+    else if( (   guiState->msg.keys & KEY_RIGHT                                       ) ||
+             ( ( guiState->msg.keys & ( KEY_UP | KNOB_RIGHT ) ) && guiState->uiState.edit_mode )    )
+    {
+        _ui_changePhoneticSpell( true );
+    }
+    else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
+    {
+        _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_VOICE ) );
+    }
+    else if( guiState->msg.keys & ( KEY_DOWN | KNOB_RIGHT ) )
+    {
+        _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_VOICE ) );
+    }
+    else if( guiState->msg.keys & KEY_ENTER )
+    {
+        guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
+    }
+    else if( guiState->msg.keys & KEY_ESC )
+    {
+        _ui_menuBack( PAGE_MENU_SETTINGS );
+    }
+
+    return sync_rtx ;
 
 }
 
-static void ui_updateFSM_ValInp_PHONETIC( GuiState_st* guiState , int32_t value )
+static bool ui_InputValue_OFFSET( GuiState_st* guiState )
 {
-    (void)guiState;
-    (void)value;
+    bool sync_rtx = false ;
 
-    _ui_changePhoneticSpell( value );
+    // If the entry is selected with enter we are in edit_mode
+    if( guiState->uiState.edit_mode )
+    {
+#ifdef UI_NO_KEYBOARD
+        if( guiState->msg.long_press && ( guiState->msg.keys & KEY_ENTER ) )
+        {
+            // Long press on UI_NO_KEYBOARD causes digits to advance by one
+            guiState->uiState.new_offset /= 10 ;
+#else // UI_NO_KEYBOARD
+        if( guiState->msg.keys & KEY_ENTER)
+        {
+#endif // UI_NO_KEYBOARD
+            // Apply new offset
+            state.channel.tx_frequency = state.channel.rx_frequency + guiState->uiState.new_offset ;
+            vp_queueStringTableEntry( &currentLanguage->frequencyOffset );
+            vp_queueFrequency( guiState->uiState.new_offset );
+            guiState->uiState.edit_mode         = false ;
+        }
+        else if( guiState->msg.keys & KEY_ESC )
+        {
+            // Announce old frequency offset
+            vp_queueStringTableEntry( &currentLanguage->frequencyOffset );
+            vp_queueFrequency( (int32_t)state.channel.tx_frequency -
+                               (int32_t)state.channel.rx_frequency );
+        }
+        else if( guiState->msg.keys & ( KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT ) )
+        {
+            _ui_numberInputDel( &guiState->uiState.new_offset );
+        }
+#ifdef UI_NO_KEYBOARD
+        else if( guiState->msg.keys & ( KNOB_LEFT | KNOB_RIGHT | KEY_ENTER ) )
+#else // UI_NO_KEYBOARD
+        else if( input_isNumberPressed( guiState->msg ) )
+#endif // UI_NO_KEYBOARD
+        {
+            _ui_numberInputKeypad( &guiState->uiState.new_offset , guiState->msg );
+            guiState->uiState.input_position += 1 ;
+        }
+        else if( guiState->msg.long_press              &&
+                 ( guiState->msg.keys     & KEY_F1   ) &&
+                 ( state.settings.vpLevel > VPP_BEEP )    )
+        {
+            vp_queueFrequency( guiState->uiState.new_offset );
+            guiState->f1Handled = true ;
+        }
+        // If ENTER or ESC are pressed, exit edit mode, R_OFFSET is managed separately
+        if( ( ( guiState->msg.keys & KEY_ENTER ) && ( guiState->uiState.menu_selected != R_OFFSET ) ) ||
+              ( guiState->msg.keys & KEY_ESC   )                                                )
+        {
+            guiState->uiState.edit_mode = false ;
+        }
+    }
+    else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
+    {
+        _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_RADIO ) );
+    }
+    else if( ( guiState->msg.keys & KEY_DOWN ) || ( guiState->msg.keys & KNOB_RIGHT ) )
+    {
+        _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_RADIO ) );
+    }
+    else if( guiState->msg.keys & KEY_ENTER )
+    {
+        guiState->uiState.edit_mode = true;
+        // If we are entering R_OFFSET clear temp offset
+        if( guiState->uiState.menu_selected == R_OFFSET )
+        {
+            guiState->uiState.new_offset = 0 ;
+        }
+        // Reset input position
+        guiState->uiState.input_position = 0 ;
+    }
+    else if( guiState->msg.keys & KEY_ESC )
+    {
+        _ui_menuBack( PAGE_MENU_SETTINGS );
+    }
+
+    return sync_rtx ;
 
 }
 
-static void ui_updateFSM_ValInp_OFFSET( GuiState_st* guiState , int32_t value )
+static bool ui_InputValue_DIRECTION( GuiState_st* guiState )
 {
-    (void)guiState;
-    (void)value;
+    bool sync_rtx = false ;
+
+    // If the entry is selected with enter we are in edit_mode
+    if( guiState->uiState.edit_mode )
+    {
+        if( guiState->msg.keys & ( KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT | KNOB_LEFT | KNOB_RIGHT ) )
+        {
+            // Invert frequency offset direction
+            if( state.channel.tx_frequency >= state.channel.rx_frequency )
+            {
+                state.channel.tx_frequency -= 2 * ( (int32_t)state.channel.tx_frequency -
+                                                    (int32_t)state.channel.rx_frequency );
+            }
+            else // Switch to positive offset
+            {
+                state.channel.tx_frequency -= 2 * ( (int32_t)state.channel.tx_frequency -
+                                                    (int32_t)state.channel.rx_frequency );
+            }
+        }
+        // If ENTER or ESC are pressed, exit edit mode, R_OFFSET is managed separately
+        if( ( ( guiState->msg.keys & KEY_ENTER ) && ( guiState->uiState.menu_selected != R_OFFSET ) ) ||
+              ( guiState->msg.keys & KEY_ESC   )                                                )
+        {
+            guiState->uiState.edit_mode = false ;
+        }
+    }
+    else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
+    {
+        _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_RADIO ) );
+    }
+    else if( ( guiState->msg.keys & KEY_DOWN ) || ( guiState->msg.keys & KNOB_RIGHT ) )
+    {
+        _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_RADIO ) );
+    }
+    else if( guiState->msg.keys & KEY_ENTER )
+    {
+        guiState->uiState.edit_mode = true;
+        // If we are entering R_OFFSET clear temp offset
+        if( guiState->uiState.menu_selected == R_OFFSET )
+        {
+            guiState->uiState.new_offset = 0 ;
+        }
+        // Reset input position
+        guiState->uiState.input_position = 0 ;
+    }
+    else if( guiState->msg.keys & KEY_ESC )
+    {
+        _ui_menuBack( PAGE_MENU_SETTINGS );
+    }
+
+    return sync_rtx ;
+
 }
 
-static void ui_updateFSM_ValInp_DIRECTION( GuiState_st* guiState , int32_t value )
+static bool ui_InputValue_STEP( GuiState_st* guiState )
 {
-    (void)guiState;
-    (void)value;
+    bool sync_rtx = false ;
+
+    // If the entry is selected with enter we are in edit_mode
+    if( guiState->uiState.edit_mode )
+    {
+        if( guiState->msg.keys & ( KEY_UP | KEY_RIGHT | KNOB_RIGHT ) )
+        {
+            // Cycle over the available frequency steps
+            state.step_index++ ;
+            state.step_index %= n_freq_steps ;
+        }
+        else if( guiState->msg.keys & ( KEY_DOWN | KEY_LEFT | KNOB_LEFT ) )
+        {
+            state.step_index += n_freq_steps ;
+            state.step_index-- ;
+            state.step_index %= n_freq_steps ;
+        }
+        // If ENTER or ESC are pressed, exit edit mode, R_OFFSET is managed separately
+        if( ( ( guiState->msg.keys & KEY_ENTER ) && ( guiState->uiState.menu_selected != R_OFFSET ) ) ||
+              ( guiState->msg.keys & KEY_ESC   )                                                )
+        {
+            guiState->uiState.edit_mode = false ;
+        }
+    }
+    else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
+    {
+        _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_RADIO ) );
+    }
+    else if( ( guiState->msg.keys & KEY_DOWN ) || ( guiState->msg.keys & KNOB_RIGHT ) )
+    {
+        _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_RADIO ) );
+    }
+    else if( guiState->msg.keys & KEY_ENTER )
+    {
+        guiState->uiState.edit_mode = true;
+        // If we are entering R_OFFSET clear temp offset
+        if( guiState->uiState.menu_selected == R_OFFSET )
+        {
+            guiState->uiState.new_offset = 0 ;
+        }
+        // Reset input position
+        guiState->uiState.input_position = 0 ;
+    }
+    else if( guiState->msg.keys & KEY_ESC )
+    {
+        _ui_menuBack( PAGE_MENU_SETTINGS );
+    }
+
+    return sync_rtx ;
+
 }
 
-static void ui_updateFSM_ValInp_STEP( GuiState_st* guiState , int32_t value )
+static bool ui_InputValue_CALLSIGN( GuiState_st* guiState )
 {
-    (void)guiState;
-    (void)value;
+    bool sync_rtx = false ;
+
+    if( guiState->uiState.edit_mode )
+    {
+        // Handle text input for M17 callsign
+        if( guiState->msg.keys & KEY_ENTER )
+        {
+            _ui_textInputConfirm( guiState->uiState.new_callsign );
+            // Save selected callsign and disable input mode
+            strncpy( state.settings.callsign , guiState->uiState.new_callsign , 10 );
+            guiState->uiState.edit_mode = false;
+            vp_announceBuffer( &currentLanguage->callsign , false , true , state.settings.callsign );
+        }
+        else if( guiState->msg.keys & KEY_ESC )
+        {
+            // Discard selected callsign and disable input mode
+            guiState->uiState.edit_mode = false ;
+            vp_announceBuffer( &currentLanguage->callsign , false , true , state.settings.callsign );
+        }
+        else if( guiState->msg.keys & ( KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT ) )
+        {
+            _ui_textInputDel( guiState->uiState.new_callsign );
+        }
+        else if( input_isNumberPressed( guiState->msg ) )
+        {
+            _ui_textInputKeypad( guiState->uiState.new_callsign , 9 , guiState->msg , true );
+        }
+        else if( guiState->msg.long_press              &&
+                 ( guiState->msg.keys     & KEY_F1   ) &&
+                 ( state.settings.vpLevel > VPP_BEEP )    )
+        {
+            vp_announceBuffer( &currentLanguage->callsign , true , true , guiState->uiState.new_callsign );
+            guiState->f1Handled = true ;
+        }
+    }
+    else
+    {
+        if( guiState->msg.keys & KEY_ENTER )
+        {
+            // Enable edit mode
+            guiState->uiState.edit_mode = true;
+            _ui_textInputReset( guiState->uiState.new_callsign );
+            vp_announceBuffer( &currentLanguage->callsign , true , true , guiState->uiState.new_callsign );
+        }
+        else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
+        {
+            _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_M17 ) );
+        }
+        else if( guiState->msg.keys & ( KEY_DOWN | KNOB_RIGHT ) )
+        {
+            _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_M17 ) );
+        }
+        else if( ( guiState->msg.keys & KEY_RIGHT ) && ( guiState->uiState.menu_selected == M17_CAN ) )
+        {
+            _ui_changeM17Can( +1 );
+        }
+        else if( ( guiState->msg.keys & KEY_LEFT ) && ( guiState->uiState.menu_selected == M17_CAN ) )
+        {
+            _ui_changeM17Can( -1 );
+        }
+        else if( guiState->msg.keys & KEY_ESC )
+        {
+            sync_rtx = true ;
+            _ui_menuBack( PAGE_MENU_SETTINGS );
+        }
+    }
+
+    return sync_rtx ;
+
 }
 
-static void ui_updateFSM_ValInp_CALLSIGN( GuiState_st* guiState , int32_t value )
+static bool ui_InputValue_CAN( GuiState_st* guiState )
 {
-    (void)guiState;
-    (void)value;
+    bool sync_rtx = false ;
+
+    if( guiState->uiState.edit_mode )
+    {
+        if( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) )
+        {
+            _ui_changeM17Can( -1 );
+        }
+        else if( guiState->msg.keys & ( KEY_UP | KNOB_RIGHT ) )
+        {
+            _ui_changeM17Can( +1 );
+        }
+        else if( guiState->msg.keys & KEY_ENTER )
+        {
+            guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
+        }
+        else if( guiState->msg.keys & KEY_ESC )
+        {
+            guiState->uiState.edit_mode = false ;
+        }
+    }
+    else
+    {
+        if( guiState->msg.keys & KEY_ENTER )
+        {
+            // Enable edit mode
+            guiState->uiState.edit_mode = true;
+        }
+        else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
+        {
+            _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_M17 ) );
+        }
+        else if( guiState->msg.keys & ( KEY_DOWN | KNOB_RIGHT ) )
+        {
+            _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_M17 ) );
+        }
+        else if( ( guiState->msg.keys & KEY_RIGHT ) && ( guiState->uiState.menu_selected == M17_CAN ) )
+        {
+            _ui_changeM17Can( +1 );
+        }
+        else if( ( guiState->msg.keys & KEY_LEFT ) && ( guiState->uiState.menu_selected == M17_CAN ) )
+        {
+            _ui_changeM17Can( -1 );
+        }
+        else if( guiState->msg.keys & KEY_ESC )
+        {
+            sync_rtx = true ;
+            _ui_menuBack( PAGE_MENU_SETTINGS );
+        }
+    }
+
+    return sync_rtx ;
+
 }
 
-static void ui_updateFSM_ValInp_CAN( GuiState_st* guiState , int32_t value )
+static bool ui_InputValue_CAN_RX( GuiState_st* guiState )
 {
-    (void)guiState;
-    (void)value;
+    bool sync_rtx = false ;
+
+    if( guiState->uiState.edit_mode )
+    {
+        if( (   guiState->msg.keys & ( KEY_LEFT | KEY_RIGHT                       )                         ) ||
+            ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT | KEY_UP | KNOB_RIGHT ) ) && guiState->uiState.edit_mode )    )
+        {
+            state.settings.m17_can_rx = !state.settings.m17_can_rx ;
+        }
+        else if( guiState->msg.keys & KEY_ENTER )
+        {
+            guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
+        }
+        else if( guiState->msg.keys & KEY_ESC )
+        {
+            guiState->uiState.edit_mode = false ;
+        }
+    }
+    else
+    {
+        if( guiState->msg.keys & KEY_ENTER )
+        {
+            // Enable edit mode
+            guiState->uiState.edit_mode = true;
+        }
+        else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
+        {
+            _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_M17 ) );
+        }
+        else if( guiState->msg.keys & ( KEY_DOWN | KNOB_RIGHT ) )
+        {
+            _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_M17 ) );
+        }
+        else if( ( guiState->msg.keys & KEY_RIGHT ) && ( guiState->uiState.menu_selected == M17_CAN ) )
+        {
+            _ui_changeM17Can( +1 );
+        }
+        else if( ( guiState->msg.keys & KEY_LEFT ) && ( guiState->uiState.menu_selected == M17_CAN ) )
+        {
+            _ui_changeM17Can( -1 );
+        }
+        else if( guiState->msg.keys & KEY_ESC )
+        {
+            sync_rtx = true ;
+            _ui_menuBack( PAGE_MENU_SETTINGS );
+        }
+    }
+
+    return sync_rtx ;
+
 }
 
-static void ui_updateFSM_ValInp_CAN_RX( GuiState_st* guiState , int32_t value )
+static bool ui_InputValue_STUBBED( GuiState_st* guiState )
 {
     (void)guiState;
-    (void)value;
-}
 
-static void ui_updateFSM_ValInp_STUBBED( GuiState_st* guiState , int32_t value )
-{
-    (void)guiState;
-    (void)value;
+    return false ;
 }
 
 bool ui_updateGUI( void )
