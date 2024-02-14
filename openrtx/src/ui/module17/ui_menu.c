@@ -616,9 +616,9 @@ void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state)
                   layout.horizontal_pad, layout.top_font,
                   TEXT_ALIGN_CENTER, textcolor, "Press Enter twice");
 
-    if((getTick() - lastDraw) > 1000)
+    if((getTimeMs() - lastDraw) > 1000)
     {
         drawcnt++;
-        lastDraw = getTick();
+        lastDraw = getTimeMs();
     }
 }

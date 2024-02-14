@@ -44,7 +44,7 @@ void sleepUntil(long long timestamp)
     k_sleep(K_TIMEOUT_ABS_MS(timestamp));
 }
 
-long long getTick()
+long long getTimeMs()
 {
     // k_uptime_get() returns the elapsed time since the system booted,
     // in milliseconds.
