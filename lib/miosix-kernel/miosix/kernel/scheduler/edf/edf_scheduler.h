@@ -25,8 +25,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef EDF_SCHEDULER_H
-#define	EDF_SCHEDULER_H
+#pragma once
 
 #include "config/miosix_settings.h"
 #include "edf_scheduler_types.h"
@@ -86,22 +85,13 @@ public:
 
     /**
      * \internal
-     * Get the priority of a thread.
+     * Get the priority of a thread. Must be callable also with kernel paused
+     * or IRQ disabled.
      * Note that the meaning of priority is scheduler specific.
      * \param thread thread whose priority needs to be queried.
      * \return the priority of thread.
      */
     static EDFSchedulerPriority getPriority(Thread *thread)
-    {
-        return thread->schedData.deadline;
-    }
-
-    /**
-     * Same as getPriority, but meant to be called with interrupts disabled.
-     * \param thread thread whose priority needs to be queried.
-     * \return the priority of thread.
-     */
-    static EDFSchedulerPriority IRQgetPriority(Thread *thread)
     {
         return thread->schedData.deadline;
     }
@@ -120,7 +110,7 @@ public:
      * its running status. For example when a thread become sleeping, waiting,
      * deleted or if it exits the sleeping or waiting status
      */
-    static void IRQwaitStatusHook() {}
+    static void IRQwaitStatusHook(Thread *t) {}
 
     /**
      * This function is used to develop interrupt driven peripheral drivers.<br>
@@ -136,8 +126,14 @@ public:
      */
     static void IRQfindNextThread();
 
+    /**
+     * \internal
+     * \return the next scheduled preemption set by the scheduler
+     * In case no preemption is set returns numeric_limits<long long>::max()
+     */
+    static long long IRQgetNextPreemption();
+    
 private:
-
     /**
      * Add a thread to the list of threads, keeping the list ordered by deadline
      * \param thread thread to add
@@ -156,5 +152,3 @@ private:
 } //namespace miosix
 
 #endif //SCHED_TYPE_EDF
-
-#endif //EDF_SCHEDULER_H

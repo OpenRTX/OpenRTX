@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2010 by Terraneo Federico                               *
+ *   Copyright (C) 2010-2021 by Terraneo Federico                          *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,8 +25,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef DELAYS_H
-#define	DELAYS_H
+#pragma once
 
 namespace miosix {
 
@@ -71,5 +70,3 @@ void delayUs(unsigned int useconds);
  */
 
 }
-
-#endif	//DELAYS_H

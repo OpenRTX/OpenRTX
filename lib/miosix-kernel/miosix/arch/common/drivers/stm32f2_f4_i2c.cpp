@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2013 by Terraneo Federico and Silvano Seva              *
+ *   Copyright (C) 2013-2022 by Terraneo Federico and Silvano Seva         *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -31,23 +31,9 @@
 
 using namespace miosix;
 
-static volatile bool error; ///< Set to true by IRQ on error
-static Thread *waiting=0;   ///< Thread waiting for an operation to complete
+static volatile bool error;     ///< Set to true by IRQ on error
+static Thread *waiting=nullptr; ///< Thread waiting for an operation to complete
 
-/* In non-DMA mode the variables below are used to
- * handle the reception of 2 or more bytes through 
- * an interrupt, avoiding the thread that calls recv
- * to be locked in polling
- */
-
-#ifndef I2C_WITH_DMA
-static uint8_t *rxBuf = 0;
-static unsigned int rxBufCnt = 0;
-static unsigned int rxBufSize = 0;
-#endif
-
-
-#ifdef I2C_WITH_DMA
 /**
  * DMA I2C rx end of transfer
  */
@@ -67,12 +53,11 @@ void __attribute__((used)) I2C1rxDmaHandlerImpl()
               | DMA_LIFCR_CTEIF0
               | DMA_LIFCR_CDMEIF0
               | DMA_LIFCR_CFEIF0;
-    I2C1->CR1 |= I2C_CR1_STOP;
-    if(waiting==0) return;
+    if(waiting==nullptr) return;
     waiting->IRQwakeup();
     if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
         Scheduler::IRQfindNextThread();
-    waiting=0;
+    waiting=nullptr;
 }
 
 /**
@@ -84,7 +69,6 @@ void DMA1_Stream7_IRQHandler()
               | DMA_HIFCR_CTEIF7
               | DMA_HIFCR_CDMEIF7
               | DMA_HIFCR_CFEIF7;
-    
     //We can't just wake the thread because the I2C is double buffered, and this
     //interrupt is fired at the same time as the second last byte is starting
     //to be sent out of the bus. If we return now, the main code would send a
@@ -96,8 +80,6 @@ void DMA1_Stream7_IRQHandler()
     I2C1->CR2 &= ~I2C_CR2_DMAEN;
     I2C1->CR2 |= I2C_CR2_ITBUFEN | I2C_CR2_ITEVTEN;
 }
-
-#endif
 
 /**
  * I2C address sent interrupt
@@ -114,7 +96,6 @@ void __attribute__((naked)) I2C1_EV_IRQHandler()
  */
 void __attribute__((used)) I2C1HandlerImpl()
 {
-    #ifdef I2C_WITH_DMA
     //When called to resolve the last byte not sent issue, clearing
     //I2C_CR2_ITBUFEN prevents this interrupt being re-entered forever, as
     //it does not send another byte to the I2C, so the interrupt would remain
@@ -122,37 +103,12 @@ void __attribute__((used)) I2C1HandlerImpl()
     //I2C_CR2_ITEVTEN prevents the same infinite re-enter as this interrupt
     //does not start an address transmission, which is necessary to stop
     //this interrupt from being pending
-    I2C1->CR2 &= ~(I2C_CR2_ITEVTEN | I2C_CR2_ITBUFEN);
-    if(waiting==0) return;
-    #else
-    
-    bool rxFinished = false;
-    
-    /* If rxBuf is equal to zero means that we are sending the slave 
-       address and this ISR is used to manage the address sent interrupt */
-    
-    if(rxBuf == 0)
-    {
-        I2C1->CR2 &= ~I2C_CR2_ITEVTEN;
-        rxFinished = true;
-    }
-    
-    if(I2C1->SR1 & I2C_SR1_RXNE)
-    {
-        rxBuf[rxBufCnt++] = I2C1->DR;
-        if(rxBufCnt >= rxBufSize)
-        {
-            I2C1->CR2 &= ~(I2C_CR2_ITEVTEN | I2C_CR2_ITBUFEN);
-            rxFinished = true; 
-        }  
-    }
-    
-    if(waiting==0 || !rxFinished) return;
-    #endif
+    I2C1->CR2 &= ~(I2C_CR2_ITBUFEN | I2C_CR2_ITEVTEN);
+    if(waiting==nullptr) return;
     waiting->IRQwakeup();
     if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
         Scheduler::IRQfindNextThread();
-    waiting=0;
+    waiting=nullptr;
 }
 
 /**
@@ -172,11 +128,11 @@ void __attribute__((used)) I2C1errHandlerImpl()
 {
     I2C1->SR1=0; //Clear error flags
     error=true;
-    if(waiting==0) return;
+    if(waiting==nullptr) return;
     waiting->IRQwakeup();
     if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
         Scheduler::IRQfindNextThread();
-    waiting=0;
+    waiting=nullptr;
 }
 
 namespace miosix {
@@ -185,14 +141,11 @@ namespace miosix {
 // class I2C
 //
 
-I2C1Driver& I2C1Driver::instance()
+I2C1Master::I2C1Master(GpioPin sda, GpioPin scl, int frequency)
 {
-    static I2C1Driver singleton;
-    return singleton;
-}
+    if(checkMultipleInstances) errorHandler(UNEXPECTED);
+    checkMultipleInstances=true;
 
-void I2C1Driver::init()
-{
     //I2C devices are connected to APB1, whose frequency is the system clock
     //divided by a value set in the PPRE1 bits of RCC->CFGR
     const int ppre1=(RCC->CFGR & RCC_CFGR_PPRE1)>>10;
@@ -202,16 +155,18 @@ void I2C1Driver::init()
     
     {
         FastInterruptDisableLock dLock;
-        
-        #ifdef I2C_WITH_DMA
+        // NOTE: GPIOs need to be configured before enabling the peripheral or
+        // the first read/write call blocks forever. Smells like a hw bug
+        // NOTE: ALTERNATE_OD as the I2C peripheral doesn't enforce open drain
+        sda.alternateFunction(4);
+        sda.mode(Mode::ALTERNATE_OD);
+        scl.alternateFunction(4);
+        scl.mode(Mode::ALTERNATE_OD);
         RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
-        RCC_SYNC();
-        #endif
         RCC->APB1ENR |= RCC_APB1ENR_I2C1EN; //Enable clock gating
         RCC_SYNC();
     }
     
-    #ifdef I2C_WITH_DMA
     NVIC_SetPriority(DMA1_Stream7_IRQn,10);//Low priority for DMA
     NVIC_ClearPendingIRQ(DMA1_Stream7_IRQn);//DMA1 stream 7 channel 1 = I2C1 TX 
     NVIC_EnableIRQ(DMA1_Stream7_IRQn);
@@ -219,7 +174,6 @@ void I2C1Driver::init()
     NVIC_SetPriority(DMA1_Stream0_IRQn,10);//Low priority for DMA
     NVIC_ClearPendingIRQ(DMA1_Stream0_IRQn);//DMA1 stream 0 channel 1 = I2C1 RX 
     NVIC_EnableIRQ(DMA1_Stream0_IRQn);
-    #endif
     
     NVIC_SetPriority(I2C1_EV_IRQn,10);//Low priority for I2C
     NVIC_ClearPendingIRQ(I2C1_EV_IRQn);
@@ -228,32 +182,103 @@ void I2C1Driver::init()
     NVIC_SetPriority(I2C1_ER_IRQn,10);
     NVIC_ClearPendingIRQ(I2C1_ER_IRQn);
     NVIC_EnableIRQ(I2C1_ER_IRQn);
-    
+
     I2C1->CR1=I2C_CR1_SWRST;
     I2C1->CR1=0;
     I2C1->CR2=fpclk1/1000000; //Set pclk frequency in MHz
-    //This sets the duration of both Thigh and Tlow (master mode))
-    const int i2cSpeed=100000; //100KHz
-    I2C1->CCR=std::max(4,fpclk1/(2*i2cSpeed)); //Duty=2, standard mode (100KHz)
-    //Datasheet says with I2C @ 100KHz, maximum SCL rise time is 1000ns
-    //Need to change formula if I2C needs to run @ 400kHz
-    I2C1->TRISE=fpclk1/1000000+1;
+
+    //Clamp to a reasonable range, but only 100 and 400 are officially supported
+    frequency=std::max(10,std::min(1000,frequency));
+    if(frequency>100)
+    {
+        I2C1->CCR=std::max(4,fpclk1/(3000*frequency)) | I2C_CCR_FS;
+        /* 
+         * TRISE sets the maximum SCL rise time. Reading the I2C specs:
+         * 400KHz (2.5us) I2C has maximum rise time 300ns, ratio 8.333
+         *   1MHz (1us)   I2C has maximum rise time 120ns, ratio 8.333
+         * Although higher frequencies than 400kHz are not officially supported,
+         * to allow some overclocking, we'll set TRISE with the "8.333 rule".
+         * I2Period[s] = 1 / I2CFrequency[Hz]
+         * RISETIME[s] = I2CPeriod[s] / 8.333
+         * K = 1 / RISETIME
+         * TRISE = (fpclk1/K)+1
+         * Putting it all together,
+         * K = I2CFrequency[Hz] * 8.333 = I2CFrequency[kHz] * 8333
+         */
+        I2C1->TRISE=fpclk1/(frequency*8333)+1;
+    } else {
+        // With full speed mode disabled, we need to divide by 2, not 3
+        I2C1->CCR=std::max(4,fpclk1/(2000*frequency));
+        // 100kHz I2C has 1000ns rise time, that does not follow the 8.333 rule
+        I2C1->TRISE=fpclk1/1000000+1;
+    }
+
     I2C1->CR1=I2C_CR1_PE; //Enable peripheral
 }
 
-bool I2C1Driver::send(unsigned char address, 
-        const void *data, int len, bool sendStop)
-{    
-    address &= 0xfe; //Mask bit 0, as we are writing
-    if(start(address)==false || (I2C1->SR2 & I2C_SR2_TRA)==0)
+bool I2C1Master::recv(unsigned char address, void *data, int len)
+{
+    if(len<=0 || len>0xffff) return false;
+    address |= 0x01;
+    if(startWorkaround(address,len)==false || I2C1->SR2 & I2C_SR2_TRA)
     {
-        I2C1->CR1 |= I2C_CR1_STOP;
+        fastEnableInterrupts(); //HACK Workaround critical section end
+        stop();
         return false;
     }
 
     error=false;
+    waiting=Thread::IRQgetCurrentThread();
     
-    #ifdef I2C_WITH_DMA
+    I2C1->CR2 |= I2C_CR2_DMAEN | I2C_CR2_LAST | I2C_CR2_ITERREN;
+        
+    DMA1_Stream0->CR=0;
+    DMA1_Stream0->PAR=reinterpret_cast<unsigned int>(&I2C1->DR);
+    DMA1_Stream0->M0AR=reinterpret_cast<unsigned int>(data);
+    DMA1_Stream0->NDTR=len;
+    DMA1_Stream0->FCR=DMA_SxFCR_FEIE
+                    | DMA_SxFCR_DMDIS;
+    DMA1_Stream0->CR=DMA_SxCR_CHSEL_0 //Channel 1
+                   | DMA_SxCR_MINC    //Increment memory pointer
+                   | DMA_SxCR_TCIE    //Interrupt on transfer complete
+                   | DMA_SxCR_TEIE    //Interrupt on transfer error
+                   | DMA_SxCR_DMEIE   //Interrupt on direct mode error
+                   | DMA_SxCR_EN;     //Start DMA
+
+    fastEnableInterrupts(); //HACK Workaround critical section end
+
+    {
+        FastInterruptDisableLock dLock;
+        while(waiting)
+        {
+            waiting->IRQwait();
+            {
+                FastInterruptEnableLock eLock(dLock);
+                Thread::yield();
+            }
+        }
+    }
+
+    DMA1_Stream7->CR=0;
+    
+    I2C1->CR2 &= ~(I2C_CR2_DMAEN | I2C_CR2_LAST | I2C_CR2_ITERREN);
+    
+    stop();
+    return !error;
+}
+
+bool I2C1Master::send(unsigned char address, const void *data, int len, bool sendStop)
+{
+    if(len<=0 || len>0xffff) return false;
+    address &= 0xfe; //Mask bit 0, as we are writing
+    if(start(address)==false || (I2C1->SR2 & I2C_SR2_TRA)==0)
+    {
+        stop();
+        return false;
+    }
+
+    error=false;
+
     waiting=Thread::getCurrentThread();
     DMA1_Stream7->CR=0;
     DMA1_Stream7->PAR=reinterpret_cast<unsigned int>(&I2C1->DR);
@@ -289,20 +314,110 @@ bool I2C1Driver::send(unsigned char address,
     
     //The DMA interrupt routine changes the interrupt flags!
     I2C1->CR2 &= ~(I2C_CR2_ITEVTEN | I2C_CR2_ITERREN);
-    #else
-    
-    I2C1->CR2 |= I2C_CR2_ITERREN;
-    
-    const uint8_t *txData = reinterpret_cast<const uint8_t*>(data);
-    for(int i=0; i<len && !error; i++)
+
+    if(sendStop) stop();
+    return !error;
+}
+
+I2C1Master::~I2C1Master()
+{
+    I2C1->CR1=I2C_CR1_SWRST;
+    I2C1->CR1=0;
+
+    NVIC_DisableIRQ(DMA1_Stream7_IRQn);
+    NVIC_DisableIRQ(DMA1_Stream0_IRQn);
+    NVIC_DisableIRQ(I2C1_EV_IRQn);
+    NVIC_DisableIRQ(I2C1_ER_IRQn);
+
     {
-        I2C1->DR = txData[i];        
-        while(!(I2C1->SR1 & I2C_SR1_TXE)) ;
+        FastInterruptDisableLock dLock;
+        RCC->APB1ENR &= ~RCC_APB1ENR_I2C1EN;
+        RCC_SYNC();
     }
-    
-    I2C1->CR2 &= ~I2C_CR2_ITERREN;
-    #endif
-        
+    checkMultipleInstances=false;
+}
+
+bool I2C1Master::start(unsigned char address)
+{
+    I2C1->CR1 |= I2C_CR1_START | I2C_CR1_ACK;
+    if(!waitStatus1()) return false;
+    //EV5: Must read SR1 to clear SB
+    if((I2C1->SR1 & I2C_SR1_SB)==0) return false;
+    I2C1->DR=address;
+    if(!waitStatus1()) return false;
+    //EV6: Must read SR1 and SR2 to clear ADDR
+    bool result=true;
+    if(I2C1->SR1 & I2C_SR1_AF) result=false;
+    if((I2C1->SR2 & I2C_SR2_MSL)==0) result=false;
+    return result;
+}
+
+bool I2C1Master::startWorkaround(unsigned char address, int len)
+{
+    /*
+     * This function should't exist if this peripheral had been designed in a
+     * sane way. Unfortunately, reading from the I2C hides a quirk that made
+     * code using this driver deadlock, sometimes. How? When doing an I2C read,
+     * as soon as the condition called EV6 in the manual is cleared (a cryptic
+     * name for "clear the interrupt flag signaling that the address has been
+     * sent"), the peripheral starts reading from the bus. On its own! And the
+     * software has to keep up servicing events and setting when to send a NACK
+     * because the last byte has been sent, otherwise three bad things happen:
+     * 1) The peripheral may read more data from the bus than requested
+     * 2) It may be too late to send a NACK at the last byte, and an ACK is sent
+     * 3) The peripheral may not send the required interrupts anymore
+     * deadlocking the software.
+     * But there's the DMA, you may say, shouldn't it automate all this?
+     * Now, problem was if after clearing EV6 and before configuring the DMA the
+     * OS decided to do a context switch, then the three bad things happened.
+     * A clean software solution to cope with this bad hardware design would be
+     * to create some sort of interrupt driven FSM that would react to events
+     * and prepare for the next one, relying on the atomicity of interrupts.
+     * Maybe this solution could even work with the notoriously buggy STM32F1
+     * I2C peripheral. But for now, we'll just create a critical section by
+     * disabling interrupts.
+     * Oh, and another necessary quirk this function implements, when receiving
+     * a single byte unless you do clear I2C_CR1_ACK before EV6, everything
+     * locks up. Fragile hardware it is...
+     */
+    I2C1->CR1 |= I2C_CR1_START | I2C_CR1_ACK;
+    if(!waitStatus1()) return false;
+    //EV5: Must read SR1 to clear SB
+    if((I2C1->SR1 & I2C_SR1_SB)==0) return false;
+    I2C1->DR=address;
+    if(!waitStatus1()) return false;
+    //If the transfer is single byte, then ACK must be reset before EV6 cleared
+    if(len==1) I2C1->CR1 &= ~I2C_CR1_ACK;
+    fastDisableInterrupts(); //HACK Workaround critical section start
+    bool result=true;
+    //EV6: Must read SR1 and SR2 to clear ADDR
+    if(I2C1->SR1 & I2C_SR1_AF) result=false;
+    if((I2C1->SR2 & I2C_SR2_MSL)==0) result=false;
+    return result;
+}
+
+bool I2C1Master::waitStatus1()
+{
+    error=false;
+    waiting=Thread::getCurrentThread();
+    I2C1->CR2 |= I2C_CR2_ITEVTEN | I2C_CR2_ITERREN;
+    {
+        FastInterruptDisableLock dLock;
+        while(waiting)
+        {
+            waiting->IRQwait();
+            {
+                FastInterruptEnableLock eLock(dLock);
+                Thread::yield();
+            }
+        }
+    }
+    I2C1->CR2 &= ~(I2C_CR2_ITEVTEN | I2C_CR2_ITERREN);
+    return !error;
+}
+
+void I2C1Master::stop()
+{
     /*
      * The main idea of this driver is to avoid having the processor spinning
      * waiting on some status flag. Why? Because I2C is slow compared to a
@@ -327,150 +442,10 @@ bool I2C1Driver::send(unsigned char address,
      * so this code below spins for 8 data bits of the last byte plus the ack
      * bit, plus the stop bit. That's 12000 wasted CPU cycles. Thanks, ST...
      */
-    
-    if(sendStop)
-    {
-        I2C1->CR1 |= I2C_CR1_STOP;
-        while(I2C1->SR2 & I2C_SR2_MSL) ; //Wait for stop bit sent
-    } else {
-        // Dummy write, is the only way to clear 
-        // the TxE flag if stop bit is not sent...
-        I2C1->DR = 0x00;    
-    }
-    return !error;
-}
-
-bool I2C1Driver::recv(unsigned char address, void *data, int len)
-{
-    address |= 0x01;
-    if(start(address,len==1)==false || I2C1->SR2 & I2C_SR2_TRA)
-    {
-        I2C1->CR1 |= I2C_CR1_STOP;
-        return false;
-    }
-
-    error=false;
-    waiting=Thread::getCurrentThread();
-    
-    #ifdef I2C_WITH_DMA
-    I2C1->CR2 |= I2C_CR2_DMAEN | I2C_CR2_LAST | I2C_CR2_ITERREN;
-        
-    DMA1_Stream0->CR=0;
-    DMA1_Stream0->PAR=reinterpret_cast<unsigned int>(&I2C1->DR);
-    DMA1_Stream0->M0AR=reinterpret_cast<unsigned int>(data);
-    DMA1_Stream0->NDTR=len;
-    DMA1_Stream0->FCR=DMA_SxFCR_FEIE
-                    | DMA_SxFCR_DMDIS;
-    DMA1_Stream0->CR=DMA_SxCR_CHSEL_0 //Channel 1
-                   | DMA_SxCR_MINC    //Increment memory pointer
-                   | DMA_SxCR_TCIE    //Interrupt on transfer complete
-                   | DMA_SxCR_TEIE    //Interrupt on transfer error
-                   | DMA_SxCR_DMEIE   //Interrupt on direct mode error
-                   | DMA_SxCR_EN;     //Start DMA
-
-    {
-        FastInterruptDisableLock dLock;
-        while(waiting)
-        {
-            waiting->IRQwait();
-            {
-                FastInterruptEnableLock eLock(dLock);
-                Thread::yield();
-            }
-        }
-    }
-
-    DMA1_Stream7->CR=0;
-    
-    I2C1->CR2 &= ~(I2C_CR2_DMAEN | I2C_CR2_LAST | I2C_CR2_ITERREN);
-    
-    #else
-    
-    /* Since i2c data reception is a bit tricky (see ST's reference manual for
-     * further details), the thread that calls recv is yelded and reception is
-     * handled using interrupts only if the number of bytes to be received is
-     * greater than one.
-     */
-    
-    rxBuf = reinterpret_cast<uint8_t*>(data);
-    
-    if(len > 1)
-    {
-        I2C1->CR2 |= I2C_CR2_ITERREN | I2C_CR2_ITEVTEN | I2C_CR2_ITBUFEN;
-
-        rxBufCnt = 0;
-        rxBufSize = len-2;       
-        
-        {
-            FastInterruptDisableLock dLock;
-            while(waiting)
-            {
-                waiting->IRQwait();
-                {
-                    FastInterruptEnableLock eLock(dLock);
-                    Thread::yield();
-                }
-            }
-        }
-        I2C1->CR2 &= ~(I2C_CR2_ITEVTEN | I2C_CR2_ITBUFEN);
-    }
-    
-    I2C1->CR1 &= ~I2C_CR1_ACK;
     I2C1->CR1 |= I2C_CR1_STOP;
-    
-    while(!(I2C1->SR1 & I2C_SR1_RXNE)) ;
-    rxBuf[len-1] = I2C1->DR;
-    
-    //set pointer to rx buffer to zero after having used it, see i2c event ISR 
-    rxBuf = 0;
-    
-    I2C1->CR2 &= ~I2C_CR2_ITERREN; 
-    #endif
-    
     while(I2C1->SR2 & I2C_SR2_MSL) ; //Wait for stop bit sent
-    return !error;
 }
 
-bool I2C1Driver::start(unsigned char address, bool immediateNak)
-{
-    /* Because the only way to send a restart is having the send function not 
-     * sending a stop condition after the data transfer, here we have to manage
-     * a couple of things in SR1: 
-     * - the BTF flag is set, cleared by a dummy read of DR
-     * - The Berr flag is set, this because the I2C harware detects the start 
-     *   condition sent without a stop before it as a misplaced start and 
-     *   rises an error
-     */
-
-    I2C1->CR1 |= I2C_CR1_START | I2C_CR1_ACK;
-    if(!waitStatus1()) return false;
-    if((I2C1->SR1 & I2C_SR1_SB)==0) return false; //Must read SR1 to clear flag
-    I2C1->DR=address;
-    if(immediateNak) I2C1->CR1 &= ~I2C_CR1_ACK;
-    if(!waitStatus1()) return false;
-    if(I2C1->SR1 & I2C_SR1_AF) return false; //Must read SR1 and SR2
-    if((I2C1->SR2 & I2C_SR2_MSL)==0) return false;
-    return true;
-}
-
-bool I2C1Driver::waitStatus1()
-{
-    error=false;
-    waiting=Thread::getCurrentThread();
-    I2C1->CR2 |= I2C_CR2_ITEVTEN | I2C_CR2_ITERREN;
-    {
-        FastInterruptDisableLock dLock;
-        while(waiting)
-        {
-            waiting->IRQwait();
-            {
-                FastInterruptEnableLock eLock(dLock);
-                Thread::yield();
-            }
-        }
-    }
-    I2C1->CR2 &= ~(I2C_CR2_ITEVTEN | I2C_CR2_ITERREN);
-    return !error;
-}
+bool I2C1Master::checkMultipleInstances=false;
 
 } //namespace miosix

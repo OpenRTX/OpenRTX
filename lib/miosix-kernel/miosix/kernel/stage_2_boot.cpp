@@ -36,6 +36,8 @@ start the kernel and filesystem.
 #include <stdexcept>
 // Low level hardware functionalities
 #include "interfaces/bsp.h"
+#include "interfaces/os_timer.h"
+#include "interfaces/deep_sleep.h"
 // Miosix kernel
 #include "kernel.h"
 #include "filesystem/file_access.h"
@@ -69,13 +71,8 @@ static void callConstructors(unsigned long *start, unsigned long *end)
     }
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpedantic"
-
 void *mainLoader(void *argv)
 {
-    (void) argv;
-
     //If reaches here kernel is started, print Ok
     bootlog("Ok\n%s\n",getMiosixVersion());
 
@@ -93,6 +90,7 @@ void *mainLoader(void *argv)
     callConstructors(&__init_array_start, &__init_array_end);
     callConstructors(&_ctor_start, &_ctor_end);
     
+    bootlog("OS Timer freq = %d Hz\n", internal::osTimerGetFrequency());
     bootlog("Available heap %d out of %d Bytes\n",
             MemoryProfiling::getCurrentFreeHeap(),
             MemoryProfiling::getHeapSize());
@@ -116,8 +114,6 @@ void *mainLoader(void *argv)
     return 0;
 }
 
-#pragma GCC diagnostic pop
-
 } //namespace miosix
 
 extern "C" void _init()
@@ -131,6 +127,10 @@ extern "C" void _init()
 
     if(areInterruptsEnabled()) errorHandler(INTERRUPTS_ENABLED_AT_BOOT);
     IRQbspInit();
+    internal::IRQosTimerInit();
+    #ifdef WITH_DEEP_SLEEP
+    IRQdeepSleepInit();
+    #endif // WITH_DEEP_SLEEP
     //After IRQbspInit() serial port is initialized, so we can use IRQbootlog
     IRQbootlog("Starting Kernel... ");
     startKernel();

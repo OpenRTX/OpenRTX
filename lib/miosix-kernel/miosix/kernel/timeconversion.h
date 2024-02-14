@@ -29,6 +29,18 @@
 #define TIMECONVERSION_H
 
 namespace miosix {
+    
+/**
+ * \param a 32 bit unsigned number
+ * \param b 32 bit unsigned number
+ * \return a * b as a 64 unsigned number 
+ */
+inline unsigned long long mul32x32to64(unsigned int a, unsigned int b)
+{
+    //Casts are to produce a 64 bit result. Compiles to a single asm instruction
+    //in processors having 32x32 multiplication with 64 bit result
+    return static_cast<unsigned long long>(a)*static_cast<unsigned long long>(b);
+}
 
 /**
  * Multiplication between a 64 bit integer and a 32.32 fixed point number,
@@ -42,7 +54,7 @@ namespace miosix {
  * \return the result of the multiplication. The fractional part is discarded.
  */
 unsigned long long mul64x32d32(unsigned long long a,
-                               unsigned int bi, unsigned int bf);
+                               unsigned int bi, unsigned int bf) noexcept;
 
 /**
  * This class holds a 32.32 fixed point number used for time conversion
@@ -94,6 +106,8 @@ private:
 class TimeConversion
 {
 public:
+    TimeConversion() noexcept;
+
     /**
      * Constructor
      * Set the conversion factors based on the tick frequency.
@@ -101,7 +115,7 @@ public:
      * supported is 10KHz to 1GHz. The algorithms in this class may not work
      * outside this range
      */
-    TimeConversion(unsigned int hz);
+    TimeConversion(unsigned int hz) noexcept;
     
     /**
      * \param tick time point in timer ticks
@@ -122,7 +136,7 @@ public:
      * internal online adjustment process, it is not reentrant. The caller
      * is responsible to prevent concurrent calls
      */
-    long long ns2tick(long long ns);
+    long long ns2tick(long long ns) noexcept;
     
     /**
      * \return the conversion factor from ticks to ns
@@ -165,7 +179,7 @@ private:
      * \return the round trip error in ticks
      */
     long long __attribute__((noinline))
-    computeRoundTripError(unsigned long long tick, int delta) const;
+    computeRoundTripError(unsigned long long tick, int delta) const noexcept;
 
     /**
      * \param x time point to convert
@@ -181,7 +195,8 @@ private:
      * \param float a floar number
      * \return the number in 32.32 fixed point format
      */
-    static TimeConversionFactor __attribute__((noinline)) floatToFactor(float x);
+    static TimeConversionFactor __attribute__((noinline))
+    floatToFactor(float x) noexcept;
 
     TimeConversionFactor toNs, toTick;
     unsigned long long adjustIntervalNs, lastAdjustTimeNs;

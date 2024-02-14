@@ -1,6 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015          *
- *   by Terraneo Federico                                                  *
+ *   Copyright (C) 2008-2023 by Terraneo Federico                          *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -34,10 +33,9 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <reent.h>
-#include <sys/time.h>
-#include <sys/times.h>
 #include <sys/stat.h>
 #include <sys/fcntl.h>
+#include <sys/times.h>
 //// Settings
 #include "config/miosix_settings.h"
 //// Filesystem
@@ -47,8 +45,7 @@
 //// kernel interface
 #include "kernel/kernel.h"
 #include "interfaces/bsp.h"
-#include "interfaces/delays.h"
-#include "board_settings.h"
+#include "interfaces/os_timer.h"
 
 using namespace std;
 
@@ -120,11 +117,6 @@ extern "C" {
  */
 int __register_exitproc(int type, void (*fn)(void), void *arg, void *d)
 {
-    (void) type;
-    (void) fn;
-    (void) arg;
-    (void) d;
-
     return 0;
 }
 
@@ -133,11 +125,7 @@ int __register_exitproc(int type, void (*fn)(void), void *arg, void *d)
  * \param code the exit code, for example with exit(1), code==1
  * \param d __dso_handle, see __register_exitproc
  */
-void __call_exitprocs(int code, void *d)
-{
-    (void) code;
-    (void) d;
-}
+void __call_exitprocs(int code, void *d) {}
 
 /**
  * \internal
@@ -159,8 +147,6 @@ void *__dso_handle=(void*) &__dso_handle;
  */
 void _exit(int n)
 {
-    (void) n;
-
     miosix::reboot();
     //Never reach here
     for(;;) ; //Required to avoid a warning about noreturn functions
@@ -172,8 +158,6 @@ void _exit(int n)
  */
 void *_sbrk_r(struct _reent *ptr, ptrdiff_t incr)
 {
-    (void) ptr;
-
     //This is the absolute start of the heap
     extern char _end asm("_end"); //defined in the linker script
     //This is the absolute end of the heap
@@ -275,10 +259,6 @@ int _open_r(struct _reent *ptr, const char *name, int flags, int mode)
     #endif //__NO_EXCEPTIONS
 
     #else //WITH_FILESYSTEM
-    (void) name;
-    (void) flags;
-    (void) mode;
-
     ptr->_errno=ENFILE;
     return -1;
     #endif //WITH_FILESYSTEM
@@ -320,7 +300,6 @@ int _close_r(struct _reent *ptr, int fd)
     #endif //__NO_EXCEPTIONS
 
     #else //WITH_FILESYSTEM
-    (void) fd;
     ptr->_errno=EBADF;
     return -1;
     #endif //WITH_FILESYSTEM
@@ -331,11 +310,82 @@ int close(int fd)
     return _close_r(miosix::getReent(),fd);
 }
 
+/**
+ * \internal
+ * _write_r, write to a file
+ */
+int _write_r(struct _reent *ptr, int fd, const void *buf, size_t cnt)
+{    
+    #ifdef WITH_FILESYSTEM
+
+    #ifndef __NO_EXCEPTIONS
+    try {
+    #endif //__NO_EXCEPTIONS
+        int result=miosix::getFileDescriptorTable().write(fd,buf,cnt);
+        if(result>=0) return result;
+        ptr->_errno=-result;
+        return -1;
+    #ifndef __NO_EXCEPTIONS
+    } catch(exception& e) {
+        ptr->_errno=ENOMEM;
+        return -1;
+    }
+    #endif //__NO_EXCEPTIONS
+    
+    #else //WITH_FILESYSTEM
+    if(fd==STDOUT_FILENO || fd==STDERR_FILENO)
+    {
+        int result=miosix::DefaultConsole::instance().getTerminal()->write(buf,cnt);
+        if(result>=0) return result;
+        ptr->_errno=-result;
+        return -1;
+    } else {
+        ptr->_errno=EBADF;
+        return -1;
+    }
+    #endif //WITH_FILESYSTEM
+}
+
 int write(int fd, const void *buf, size_t cnt)
 {
     return _write_r(miosix::getReent(),fd,buf,cnt);
 }
 
+/**
+ * \internal
+ * _read_r, read from a file
+ */
+int _read_r(struct _reent *ptr, int fd, void *buf, size_t cnt)
+{
+    #ifdef WITH_FILESYSTEM
+
+    #ifndef __NO_EXCEPTIONS
+    try {
+    #endif //__NO_EXCEPTIONS
+        int result=miosix::getFileDescriptorTable().read(fd,buf,cnt);
+        if(result>=0) return result;
+        ptr->_errno=-result;
+        return -1;
+    #ifndef __NO_EXCEPTIONS
+    } catch(exception& e) {
+        ptr->_errno=ENOMEM;
+        return -1;
+    }
+    #endif //__NO_EXCEPTIONS
+    
+    #else //WITH_FILESYSTEM
+    if(fd==STDIN_FILENO)
+    {
+        int result=miosix::DefaultConsole::instance().getTerminal()->read(buf,cnt);
+        if(result>=0) return result;
+        ptr->_errno=-result;
+        return -1;
+    } else {
+        ptr->_errno=EBADF;
+        return -1;
+    }
+    #endif //WITH_FILESYSTEM
+}
 
 int read(int fd, void *buf, size_t cnt)
 {
@@ -365,9 +415,6 @@ off_t _lseek_r(struct _reent *ptr, int fd, off_t pos, int whence)
     #endif //__NO_EXCEPTIONS
     
     #else //WITH_FILESYSTEM
-    (void) fd;
-    (void) pos;
-    (void) whence;
     ptr->_errno=EBADF;
     return -1;
     #endif //WITH_FILESYSTEM
@@ -445,8 +492,6 @@ int _stat_r(struct _reent *ptr, const char *file, struct stat *pstat)
     #endif //__NO_EXCEPTIONS
     
     #else //WITH_FILESYSTEM
-    (void) file;
-    (void) pstat;
     ptr->_errno=ENOENT;
     return -1;
     #endif //WITH_FILESYSTEM
@@ -480,7 +525,6 @@ int _isatty_r(struct _reent *ptr, int fd)
     #endif //__NO_EXCEPTIONS
     
     #else //WITH_FILESYSTEM
-    (void) ptr;
     switch(fd)
     {
         case STDIN_FILENO:
@@ -521,9 +565,6 @@ int _fcntl_r(struct _reent *ptr, int fd, int cmd, int opt)
     #endif //__NO_EXCEPTIONS
     
     #else //WITH_FILESYSTEM
-    (void) fd;
-    (void) cmd;
-    (void) opt;
     ptr->_errno=ENOENT;
     return -1;
     #endif //WITH_FILESYSTEM
@@ -612,8 +653,6 @@ char *_getcwd_r(struct _reent *ptr, char *buf, size_t size)
     #endif //__NO_EXCEPTIONS
     
     #else //WITH_FILESYSTEM
-    (void) buf;
-    (void) size;
     ptr->_errno=ENOENT;
     return NULL;
     #endif //WITH_FILESYSTEM
@@ -647,7 +686,6 @@ int _chdir_r(struct _reent *ptr, const char *path)
     #endif //__NO_EXCEPTIONS
     
     #else //WITH_FILESYSTEM
-    (void) path;
     ptr->_errno=ENOENT;
     return -1;
     #endif //WITH_FILESYSTEM
@@ -681,8 +719,6 @@ int _mkdir_r(struct _reent *ptr, const char *path, int mode)
     #endif //__NO_EXCEPTIONS
     
     #else //WITH_FILESYSTEM
-    (void) path;
-    (void) mode;
     ptr->_errno=ENOENT;
     return -1;
     #endif //WITH_FILESYSTEM
@@ -716,7 +752,6 @@ int _rmdir_r(struct _reent *ptr, const char *path)
     #endif //__NO_EXCEPTIONS
     
     #else //WITH_FILESYSTEM
-    (void) path;
     ptr->_errno=ENOENT;
     return -1;
     #endif //WITH_FILESYSTEM
@@ -733,8 +768,6 @@ int rmdir(const char *path)
  */
 int _link_r(struct _reent *ptr, const char *f_old, const char *f_new)
 {
-    (void) f_old;
-    (void) f_new;
     ptr->_errno=ENOENT; //Unimplemented at the moment
     return -1;
 }
@@ -767,7 +800,6 @@ int _unlink_r(struct _reent *ptr, const char *file)
     #endif //__NO_EXCEPTIONS
     
     #else //WITH_FILESYSTEM
-    (void) file;
     ptr->_errno=ENOENT;
     return -1;
     #endif //WITH_FILESYSTEM
@@ -801,8 +833,6 @@ int _rename_r(struct _reent *ptr, const char *f_old, const char *f_new)
     #endif //__NO_EXCEPTIONS
     
     #else //WITH_FILESYSTEM
-    (void) f_old;
-    (void) f_new;
     ptr->_errno=ENOENT;
     return -1;
     #endif //WITH_FILESYSTEM
@@ -836,9 +866,6 @@ int getdents(unsigned int fd, struct dirent *dirp, unsigned int count)
     #endif //__NO_EXCEPTIONS
     
     #else //WITH_FILESYSTEM
-    (void) fd;
-    (void) dirp;
-    (void) count;
     miosix::getReent()->_errno=ENOENT;
     return -1;
     #endif //WITH_FILESYSTEM
@@ -870,95 +897,42 @@ int getdents(unsigned int fd, struct dirent *dirp, unsigned int count)
  * - timer_create -> ? 
  */
 
-#ifndef _MIOSIX_GCC_PATCH_MAJOR //Before GCC 9.2.0
-#define CLOCK_MONOTONIC 4
-#endif
-
-/// Conversion factor from ticks to nanoseconds
-/// TICK_FREQ in Miosix is either 1000 or (on older chips) 200, so a simple
-/// multiplication/division factor does not cause rounding errors
-static constexpr long tickNsFactor=1000000000/miosix::TICK_FREQ;
-
-/**
- * Convert from timespec to the Miosix representation of time
- * \param tp input timespec, must not be nullptr and be a valid pointer
- * \return Miosix ticks
- */
-inline long long timespec2ll(const struct timespec *tp)
-{
-    //NOTE: the cast is required to prevent overflow with older versions
-    //of the Miosix compiler where tv_sec is int and not long long
-    return static_cast<long long>(tp->tv_sec)*miosix::TICK_FREQ
-           + tp->tv_nsec/tickNsFactor;
-}
-
-/**
- * Convert from he Miosix representation of time to a timespec
- * \param tick input Miosix ticks
- * \param tp output timespec, must not be nullptr and be a valid pointer
- */
-inline void ll2timespec(long long tick, struct timespec *tp)
-{
-    #ifdef __ARM_EABI__
-    // Despite there being a single intrinsic, __aeabi_ldivmod, that computes
-    // both the result of the / and % operator, GCC 9.2.0 isn't smart enough and
-    // calls the intrinsic twice. This asm implementation saves ~115 cycles
-    // by calling it once. Sadly, I had to use asm as the calling conventions
-    // of the intrinsic appear to be nonstandard.
-    // NOTE: actually a and b, by being 64 bit numbers, occupy register pairs
-    register long long a asm("r0") = tick;
-    register long long b asm("r2") = miosix::TICK_FREQ;
-    // NOTE: clobbering lr to mark function not leaf due to the bl
-    asm volatile("bl	__aeabi_ldivmod" : "+r"(a), "+r"(b) :: "lr");
-    tp->tv_sec = a;
-    tp->tv_nsec = static_cast<long>(b) * tickNsFactor;
-    #else //__ARM_EABI__
-    tp->tv_sec = tick / miosix::TICK_FREQ;
-    tp->tv_nsec = static_cast<long>(tick % miosix::TICK_FREQ) * tickNsFactor;
-    #endif //__ARM_EABI__
-}
-
 int clock_gettime(clockid_t clock_id, struct timespec *tp)
 {
-    (void) clock_id;
-    (void) tp;
-
     if(tp==nullptr) return -1;
     //TODO: support CLOCK_REALTIME
-    ll2timespec(miosix::getTick(),tp);
+    miosix::ll2timespec(miosix::getTime(),tp);
     return 0;
 }
 
 int clock_settime(clockid_t clock_id, const struct timespec *tp)
 {
-    (void) clock_id;
-    (void) tp;
-
     //TODO: support CLOCK_REALTIME
     return -1;
 }
 
 int clock_getres(clockid_t clock_id, struct timespec *res)
 {
-    (void) clock_id;
-
     if(res==nullptr) return -1;
+    //TODO: support CLOCK_REALTIME
+
+    //Integer division with round-to-nearest for better accuracy
+    int resolution=2*miosix::nsPerSec/miosix::internal::osTimerGetFrequency();
+    resolution=(resolution & 1) ? resolution/2+1 : resolution/2;
+
     res->tv_sec=0;
-    res->tv_nsec=tickNsFactor;
+    res->tv_nsec=resolution;
     return 0;
 }
 
 int clock_nanosleep(clockid_t clock_id, int flags,
                     const struct timespec *req, struct timespec *rem)
 {
-    (void) clock_id;
-    (void) rem;
-
     if(req==nullptr) return -1;
     //TODO: support CLOCK_REALTIME
-    long long timeTick=timespec2ll(req);
-    if(flags!=TIMER_ABSTIME) timeTick+=miosix::getTick();
-    miosix::Thread::sleepUntil(timeTick);
+    long long timeNs=miosix::timespec2ll(req);
+    if(flags!=TIMER_ABSTIME) timeNs+=miosix::getTime();
+    miosix::Thread::nanoSleepUntil(timeNs);
     return 0;
 }
 
@@ -968,8 +942,6 @@ int clock_nanosleep(clockid_t clock_id, int flags,
  */
 clock_t _times_r(struct _reent *ptr, struct tms *tim)
 {
-    (void) ptr;
-
     struct timespec tp;
     //No CLOCK_PROCESS_CPUTIME_ID support, use CLOCK_MONOTONIC
     if(clock_gettime(CLOCK_MONOTONIC,&tp)) return static_cast<clock_t>(-1);
@@ -997,8 +969,6 @@ clock_t times(struct tms *tim)
 
 int _gettimeofday_r(struct _reent *ptr, struct timeval *tv, void *tz)
 {
-    (void) ptr;
-
     if(tv==nullptr || tz!=nullptr) return -1;
     struct timespec tp;
     if(clock_gettime(CLOCK_REALTIME,&tp)) return -1;
@@ -1028,9 +998,6 @@ int nanosleep(const struct timespec *req, struct timespec *rem)
  */
 int _kill_r(struct _reent* ptr, int pid, int sig)
 {
-    (void) ptr;
-    (void) sig;
-
     if(pid==0) _exit(1); //pid=1 means the only running process
     else return -1;
 }
@@ -1046,8 +1013,6 @@ int kill(int pid, int sig)
  */
 int _getpid_r(struct _reent* ptr)
 {
-    (void) ptr;
-
     return 0;
 }
 
@@ -1066,9 +1031,6 @@ int getpid()
  */
 int _wait_r(struct _reent *ptr, int *status)
 {
-    (void) ptr;
-    (void) status;
-
     return -1;
 }
 
@@ -1084,11 +1046,6 @@ int wait(int *status)
 int _execve_r(struct _reent *ptr, const char *path, char *const argv[],
         char *const env[])
 {
-    (void) ptr;
-    (void) path;
-    (void) argv;
-    (void) env;
-
     return -1;
 }
 
@@ -1104,11 +1061,6 @@ int execve(const char *path, char *const argv[], char *const env[])
 pid_t _forkexecve_r(struct _reent *ptr, const char *path, char *const argv[],
         char *const env[])
 {
-    (void) ptr;
-    (void) path;
-    (void) argv;
-    (void) env;
-
     return -1;
 }
 

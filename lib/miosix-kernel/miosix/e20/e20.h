@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2012, 2013, 2014, 2015, 2016 by Terraneo Federico       *
+ *   Copyright (C) 2012 - 2023 by Terraneo Federico                        *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -27,8 +27,7 @@
 
 //Miosix event based API
 
-#ifndef E20_H
-#define E20_H
+#pragma once
 
 #include <list>
 #include <functional>
@@ -100,16 +99,17 @@ public:
         return events.empty();
     }
 
-private:
-    EventQueue(const EventQueue&);
-    EventQueue& operator= (const EventQueue&);
+    EventQueue(const EventQueue&) = delete;
+    EventQueue& operator= (const EventQueue&) = delete;
 
-    std::list<std::function<void ()> > events; ///< Event queue
+private:
+    std::list<std::function<void ()>> events; ///< Event queue
     mutable FastMutex m; ///< Mutex for synchronisation
     ConditionVariable cv; ///< Condition variable for synchronisation
 };
 
 /**
+ * \internal
  * This class is to extract from FixedEventQueue code that
  * does not depend on the NumSlots template parameters.
  */
@@ -120,8 +120,7 @@ protected:
     /**
      * Constructor.
      */
-    FixedEventQueueBase() : put(0), get(0), n(0), waitingGet(0), waitingPut(0)
-    {}
+    FixedEventQueueBase() {}
 
     /**
      * Post an event. Blocks if event queue is full.
@@ -137,11 +136,12 @@ protected:
      * \param event event to post
      * \param events pointer to event queue
      * \param size event queue size
-     * \param hppw set to true if a higher priority thread is awakened,
-     * otherwise the variable is not modified
+     * \param hppw if not null set to true if a higher priority thread is
+     * awakened, otherwise the variable is not modified
+     * \return false if there was no space in the queue
      */
     bool IRQpostImpl(Callback<SlotSize>& event, Callback<SlotSize> *events,
-            unsigned int size, bool *hppw=0);
+            unsigned int size, bool *hppw=nullptr);
 
     /**
      * This function blocks waiting for events being posted, and when available
@@ -174,20 +174,19 @@ protected:
 
 private:
     /**
-     * To allow multiple threads waiting on put and get
+     * \internal Element of a thread waiting list
      */
-    struct WaitingList
+    class WaitToken : public IntrusiveListItem
     {
-        WaitingList *next; ///< Pointer to next element of the list
-        Thread *t;         ///< Thread waiting
-        bool token;        ///< To tolerate spurious wakeups
+    public:
+        WaitToken(Thread *thread) : thread(thread) {}
+        Thread *thread; ///<\internal Waiting thread and spurious wakeup token
     };
 
-    unsigned int put; ///< Put position into events
-    unsigned int get; ///< Get position into events
-    unsigned int n;   ///< Number of occupied event slots
-    WaitingList *waitingGet; ///< List of threads waiting to get an event
-    WaitingList *waitingPut; ///< List of threads waiting to put an event
+    unsigned int put=0; ///< Put position into events
+    unsigned int get=0; ///< Get position into events
+    unsigned int n=0;   ///< Number of occupied event slots
+    IntrusiveList<WaitToken> waitingGet, waitingPut; ///< Waiting on get/put
 };
 
 template<unsigned SlotSize>
@@ -197,23 +196,13 @@ void FixedEventQueueBase<SlotSize>::postImpl(Callback<SlotSize>& event,
     //Not FastInterruptDisableLock as the operator= of the bound
     //parameters of the Callback may allocate
     InterruptDisableLock dLock;
-    while(n>=size)
+    while(IRQpostImpl(event,events,size)==false)
     {
-        WaitingList w;
-        w.token=false;
-        w.t=Thread::IRQgetCurrentThread();
-        w.next=waitingPut;
-        waitingPut=&w;
-        while(w.token==false)
-        {
-            Thread::IRQwait();
-            {
-                InterruptEnableLock eLock(dLock);
-                Thread::yield();
-            }
-        }
+        WaitToken w(Thread::IRQgetCurrentThread());
+        waitingPut.push_back(&w);
+        //w.thread must be set to nullptr to protect against spurious wakeups
+        while(w.thread) Thread::IRQenableIrqAndWait(dLock);
     }
-    IRQpostImpl(event,events,size);
 }
 
 template<unsigned SlotSize>
@@ -224,14 +213,14 @@ bool FixedEventQueueBase<SlotSize>::IRQpostImpl(Callback<SlotSize>& event,
     events[put]=event; //This may allocate memory
     if(++put>=size) put=0;
     n++;
-    if(waitingGet)
+    if(waitingGet.empty()==false)
     {
-        Thread *t=Thread::IRQgetCurrentThread();
-        if(hppw && waitingGet->t->IRQgetPriority()>t->IRQgetPriority())
+        Thread *t=waitingGet.front()->thread;
+        waitingGet.front()->thread=nullptr;
+        waitingGet.pop_front();
+        t->IRQwakeup();
+        if(hppw && t->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
             *hppw=true;
-        waitingGet->token=true;
-        waitingGet->t->IRQwakeup();
-        waitingGet=waitingGet->next;
     }
     return true;
 }
@@ -247,28 +236,19 @@ void FixedEventQueueBase<SlotSize>::runImpl(Callback<SlotSize> *events,
     {
         while(n<=0)
         {
-            WaitingList w;
-            w.token=false;
-            w.t=Thread::IRQgetCurrentThread();
-            w.next=waitingGet;
-            waitingGet=&w;
-            while(w.token==false)
-            {
-                Thread::IRQwait();
-                {
-                    InterruptEnableLock eLock(dLock);
-                    Thread::yield();
-                }
-            }
+            WaitToken w(Thread::IRQgetCurrentThread());
+            waitingGet.push_back(&w);
+            //w.thread must be set to nullptr to protect against spurious wakeups
+            while(w.thread) Thread::IRQenableIrqAndWait(dLock);
         }
         Callback<SlotSize> f=events[get]; //This may allocate memory
         if(++get>=size) get=0;
         n--;
-        if(waitingPut)
+        if(waitingPut.empty()==false)
         {
-            waitingPut->token=true;
-            waitingPut->t->IRQwakeup();
-            waitingPut=waitingPut->next;
+            waitingPut.front()->thread->IRQwakeup();
+            waitingPut.front()->thread=nullptr;
+            waitingPut.pop_front();
         }
         {
             InterruptEnableLock eLock(dLock);
@@ -290,11 +270,11 @@ void FixedEventQueueBase<SlotSize>::runOneImpl(Callback<SlotSize> *events,
         f=events[get]; //This may allocate memory
         if(++get>=size) get=0;
         n--;
-        if(waitingPut)
+        if(waitingPut.empty()==false)
         {
-            waitingPut->token=true;
-            waitingPut->t->IRQwakeup();
-            waitingPut=waitingPut->next;
+            waitingPut.front()->thread->IRQwakeup();
+            waitingPut.front()->thread=nullptr;
+            waitingPut.pop_front();
         }
     }
     f();
@@ -373,7 +353,7 @@ public:
      * the restriction that they need to be callable with interrupts disabled
      * so they must not open files, print, ...
      * 
-     * If the call is made from within an InterruptDisableLock the copy
+     * \warning If the call is made from within an InterruptDisableLock the copy
      * constructors can allocate memory, while if the call is made from an
      * interrupt handler or a FastInterruptFisableLock memory allocation is
      * forbidden.
@@ -395,7 +375,7 @@ public:
      * the restriction that they need to be callable with interrupts disabled
      * so they must not open files, print, ...
      * 
-     * If the call is made from within an InterruptDisableLock the copy
+     * \warning If the call is made from within an InterruptDisableLock the copy
      * constructors can allocate memory, while if the call is made from an
      * interrupt handler or a FastInterruptFisableLock memory allocation is
      * forbidden.
@@ -448,13 +428,11 @@ public:
         return this->sizeImpl()==0;
     }
 
-private:
-    FixedEventQueue(const FixedEventQueue&);
-    FixedEventQueue& operator= (const FixedEventQueue&);
+    FixedEventQueue(const FixedEventQueue&) = delete;
+    FixedEventQueue& operator= (const FixedEventQueue&) = delete;
 
+private:
     Callback<SlotSize> events[NumSlots]; ///< Fixed size queue of events
 };
 
 } //namespace miosix
-
-#endif //E20_H

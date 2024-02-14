@@ -25,8 +25,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef PARAMETERS_H
-#define	PARAMETERS_H
+#pragma once
 
 namespace miosix {
 
@@ -45,6 +44,10 @@ namespace miosix {
 ///Essentially, every time the regulator set point changes, the state of the
 ///integral regulators is reset to its default value.
 #define ENABLE_REGULATOR_REINIT
+
+///Enables support for Real-time priorities in the control scheduler, that
+///are otherwise ignored.
+//#define SCHED_CONTROL_MULTIBURST
 
 ///Run the scheduler using fixed point math only. Faster but less precise.
 ///Note that the inner integral regulators are always fixed point, this affects
@@ -76,20 +79,13 @@ const int multFactor=static_cast<int>(1.0f/kpi);
 
 ///Instead of fixing a round time the current policy is to have
 ///roundTime=bNominal * numThreads, where bNominal is the nominal thread burst
-static const int bNominal=static_cast<int>(AUX_TIMER_CLOCK*0.004);// 4ms
+static const int bNominal=static_cast<int>(4000000);// 4ms
 
 ///minimum burst time (to avoid inefficiency caused by context switch
 ///time longer than burst time)
-static const int bMin=static_cast<int>(AUX_TIMER_CLOCK*0.0002);// 200us
+static const int bMin=static_cast<int>(200000);// 200us
 
 ///maximum burst time (to avoid losing responsiveness/timer overflow)
-static const int bMax=static_cast<int>(AUX_TIMER_CLOCK*0.02);// 20ms
-
-///idle thread has a fixed burst length that can be modified here
-///it is recomended to leave it to a high value, but that does not cause
-///overflow of the auxiliary timer
-static const int bIdle=static_cast<int>(AUX_TIMER_CLOCK*0.5);// 500ms
+static const int bMax=static_cast<int>(20000000);// 20ms
 
 }
-
-#endif //PARAMETERS_H

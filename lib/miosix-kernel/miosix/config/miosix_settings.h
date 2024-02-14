@@ -1,6 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015          *
- *   by Terraneo Federico                                                  *
+ *   Copyright (C) 2008-2021 by Terraneo Federico                          *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -24,17 +23,16 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
- ***************************************************************************/
+ ***************************************************************************/ 
 
-#ifndef MIOSIX_SETTINGS_H
-#define MIOSIX_SETTINGS_H
+#pragma once
 
 // Before you can compile the kernel you have to configure it by editing this
 // file. After that, comment out this line to disable the reminder error.
 // The PARSING_FROM_IDE is because Netbeans gets confused by this, it is never
 // defined when compiling the code.
 #ifndef PARSING_FROM_IDE
-// #error This error is a reminder that you have not edited miosix_settings.h yet.
+#error This error is a reminder that you have not edited miosix_settings.h yet.
 #endif //PARSING_FROM_IDE
 
 /**
@@ -43,7 +41,7 @@
  * on architecture specific details. The other options are in the following
  * files which are included here:
  * miosix/arch/architecture name/common/arch_settings.h
- * miosix/arch/architecture name/board name/board_settings.h
+ * miosix/config/arch/architecture name/board name/board_settings.h
  */
 #include "arch_settings.h"
 #include "board_settings.h"
@@ -53,7 +51,7 @@
  * \internal
  * Versioning for miosix_settings.h for out of git tree projects
  */
-#define MIOSIX_SETTINGS_VERSION 100
+#define MIOSIX_SETTINGS_VERSION 300
 
 namespace miosix {
 
@@ -78,6 +76,12 @@ namespace miosix {
 //#define SCHED_TYPE_CONTROL_BASED
 //#define SCHED_TYPE_EDF
 
+/// \def WITH_CPU_TIME_COUNTER
+/// Allows to enable/disable CPUTimeCounter to save code size and remove its
+/// overhead from the scheduling process. By default it is not defined
+/// (CPUTimeCounter is disabled).
+//#define WITH_CPU_TIME_COUNTER
+
 //
 // Filesystem options
 //
@@ -85,20 +89,20 @@ namespace miosix {
 /// \def WITH_FILESYSTEM
 /// Allows to enable/disable filesystem support to save code size
 /// By default it is defined (filesystem support is enabled)
-// #define WITH_FILESYSTEM
+#define WITH_FILESYSTEM
 
 /// \def WITH_DEVFS
 /// Allows to enable/disable DevFs support to save code size
 /// By default it is defined (DevFs is enabled)
-// #define WITH_DEVFS
-
+#define WITH_DEVFS
+    
 /// \def SYNC_AFTER_WRITE
 /// Increases filesystem write robustness. After each write operation the
 /// filesystem is synced so that a power failure happens data is not lost
 /// (unless power failure happens exactly between the write and the sync)
 /// Unfortunately write latency and throughput becomes twice as worse
 /// By default it is defined (slow but safe)
-// #define SYNC_AFTER_WRITE
+#define SYNC_AFTER_WRITE
 
 /// Maximum number of open files. Trying to open more will fail.
 /// Cannot be lower than 3, as the first three are stdin, stdout, stderr
@@ -130,18 +134,23 @@ const unsigned char MAX_OPEN_FILES=8;
 /// \def WITH_BOOTLOG
 /// Uncomment to print bootlogs on stdout.
 /// By default it is defined (bootlogs are printed)
-// #define WITH_BOOTLOG
+#define WITH_BOOTLOG
 
 /// \def WITH_ERRLOG
 /// Uncomment for debug information on stdout.
 /// By default it is defined (error information is printed)
-// #define WITH_ERRLOG
+#define WITH_ERRLOG
 
 
 
 //
 // Kernel related options (stack sizes, priorities)
 //
+
+/// \def WITH_DEEP_SLEEP 
+/// Adds interfaces and required variables to support deep sleep state switch
+/// automatically when peripherals are not required
+//#define WITH_DEEP_SLEEP
 
 /**
  * \def JTAG_DISABLE_SLEEP
@@ -150,6 +159,10 @@ const unsigned char MAX_OPEN_FILES=8;
  * By default it is not defined (idle thread calls sleep).
  */
 //#define JTAG_DISABLE_SLEEP
+
+#if defined(WITH_DEEP_SLEEP) && defined(JTAG_DISABLE_SLEEP)
+#error Deep sleep cannot work together with jtag
+#endif //defined(WITH_PROCESSES) && !defined(WITH_DEVFS)
 
 /// Minimum stack size (MUST be divisible by 4)
 const unsigned int STACK_MIN=256;
@@ -196,6 +209,10 @@ const short int PRIORITY_MAX=64;
 /// The meaning of a thread's priority depends on the chosen scheduler.
 const unsigned char MAIN_PRIORITY=1;
 
+#ifdef SCHED_TYPE_PRIORITY
+/// Maximum thread time slice in nanoseconds, after which preemption occurs
+const unsigned int MAX_TIME_SLICE=1000000;
+#endif //SCHED_TYPE_PRIORITY
 
 
 //
@@ -214,16 +231,11 @@ const unsigned int WATERMARK_FILL=0xaaaaaaaa;
 const unsigned int STACK_FILL=0xbbbbbbbb;
 
 // Compiler version checks
+#if !defined(_MIOSIX_GCC_PATCH_MAJOR) || _MIOSIX_GCC_PATCH_MAJOR < 3
+#error "You are using a too old or unsupported compiler. Get the latest one from https://miosix.org/wiki/index.php?title=Miosix_Toolchain"
+#endif
 #if _MIOSIX_GCC_PATCH_MAJOR > 3
 #warning "You are using a too new compiler, which may not be supported"
-#elif _MIOSIX_GCC_PATCH_MAJOR == 2
-#error "The compiler you are using has known incomplete patches and is not supported. Get the latest one from https://miosix.org/wiki/index.php?title=Miosix_Toolchain"
-#elif _MIOSIX_GCC_PATCH_VERSION == 1
-#warning "You are using an unsupported compiler. Get the latest one from https://miosix.org/wiki/index.php?title=Miosix_Toolchain"
-#endif
-#if  !defined(_MIOSIX_GCC_PATCH_MAJOR) && \
-    (!defined(_MIOSIX_GCC_PATCH_VERSION) || _MIOSIX_GCC_PATCH_VERSION < 1)
-#error "You are using an unsupported compiler. Get the latest one from https://miosix.org/wiki/index.php?title=Miosix_Toolchain"
 #endif
 
 /**
@@ -231,5 +243,3 @@ const unsigned int STACK_FILL=0xbbbbbbbb;
  */
 
 } //namespace miosix
-
-#endif //MIOSIX_SETTINGS_H

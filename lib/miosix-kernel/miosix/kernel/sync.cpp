@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2008, 2009, 2010, 2011 by Terraneo Federico             *
+ *   Copyright (C) 2008-2023 by Terraneo Federico                          *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -24,7 +24,6 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/ 
- //Miosix kernel
 
 #include "sync.h"
 #include "kernel.h"
@@ -37,24 +36,35 @@ using namespace std;
 
 namespace miosix {
 
+/**
+ * Helper lambda to sort threads in a min heap to implement priority inheritance
+ * \param lhs first thread to compare
+ * \param rhs second thread to compare
+ * \return true if lhs->getPriority() < rhs->getPriority()
+ */
+static auto PKlowerPriority=[](Thread *lhs, Thread *rhs)
+{
+    return lhs->PKgetPriority().mutexLessOp(rhs->PKgetPriority());
+};
+
 //
 // class Mutex
 //
 
-Mutex::Mutex(Options opt): owner(0), next(0), waiting()
+Mutex::Mutex(Options opt): owner(nullptr), next(nullptr), waiting()
 {
     recursiveDepth= opt==RECURSIVE ? 0 : -1;
 }
 
 void Mutex::PKlock(PauseKernelLock& dLock)
 {
-    Thread *p=Thread::getCurrentThread();
-    if(owner==0)
+    Thread *p=Thread::PKgetCurrentThread();
+    if(owner==nullptr)
     {
         owner=p;
         //Save original thread priority, if the thread has not yet locked
         //another mutex
-        if(owner->mutexLocked==0) owner->savedPriority=owner->getPriority();
+        if(owner->mutexLocked==nullptr) owner->savedPriority=owner->PKgetPriority();
         //Add this mutex to the list of mutexes locked by owner
         this->next=owner->mutexLocked;
         owner->mutexLocked=this;
@@ -62,8 +72,8 @@ void Mutex::PKlock(PauseKernelLock& dLock)
     }
 
     //This check is very important. Without this attempting to lock the same
-    //mutex twice won't cause a deadlock because the Thread::IRQwait() is
-    //enclosed in a while(owner!=p) which is immeditely false.
+    //mutex twice won't cause a deadlock because the wait is enclosed in a
+    //while(owner!=p) which is immeditely false.
     if(owner==p)
     {
         if(recursiveDepth>=0)
@@ -75,55 +85,38 @@ void Mutex::PKlock(PauseKernelLock& dLock)
 
     //Add thread to mutex' waiting queue
     waiting.push_back(p);
-    LowerPriority l;
-    push_heap(waiting.begin(),waiting.end(),l);
+    push_heap(waiting.begin(),waiting.end(),PKlowerPriority);
 
     //Handle priority inheritance
-    if(p->mutexWaiting!=0) errorHandler(UNEXPECTED);
+    if(p->mutexWaiting!=nullptr) errorHandler(UNEXPECTED);
     p->mutexWaiting=this;
-    if(p->getPriority()>owner->getPriority())
+    if(owner->PKgetPriority().mutexLessOp(p->PKgetPriority()))
     {
         Thread *walk=owner;
         for(;;)
         {
-            Scheduler::PKsetPriority(walk,p->getPriority());
-            if(walk->mutexWaiting==0) break;
+            Scheduler::PKsetPriority(walk,p->PKgetPriority());
+            if(walk->mutexWaiting==nullptr) break;
             make_heap(walk->mutexWaiting->waiting.begin(),
-                      walk->mutexWaiting->waiting.end(),l);
+                      walk->mutexWaiting->waiting.end(),PKlowerPriority);
             walk=walk->mutexWaiting->owner;
         }
     }
 
-    //The while is necessary because some other thread might call wakeup()
-    //on this thread. So the thread can wakeup also for other reasons not
-    //related to the mutex becoming free
-    while(owner!=p)
-    {
-        //Wait can only be called with kernel started, while IRQwait can
-        //only be called with interupts disabled, so that's why interrupts
-        //are disabled
-        {
-            FastInterruptDisableLock l;
-            Thread::IRQwait();//Return immediately
-        }
-        {
-            RestartKernelLock eLock(dLock);
-            //Now the IRQwait becomes effective
-            Thread::yield();
-        }
-    }
+    //The while is necessary to protect against spurious wakeups
+    while(owner!=p) Thread::PKrestartKernelAndWait(dLock);
 }
 
 void Mutex::PKlockToDepth(PauseKernelLock& dLock, unsigned int depth)
 {
-    Thread *p=Thread::getCurrentThread();
-    if(owner==0)
+    Thread *p=Thread::PKgetCurrentThread();
+    if(owner==nullptr)
     {
         owner=p;
         if(recursiveDepth>=0) recursiveDepth=depth;
         //Save original thread priority, if the thread has not yet locked
         //another mutex
-        if(owner->mutexLocked==0) owner->savedPriority=owner->getPriority();
+        if(owner->mutexLocked==nullptr) owner->savedPriority=owner->PKgetPriority();
         //Add this mutex to the list of mutexes locked by owner
         this->next=owner->mutexLocked;
         owner->mutexLocked=this;
@@ -131,8 +124,8 @@ void Mutex::PKlockToDepth(PauseKernelLock& dLock, unsigned int depth)
     }
 
     //This check is very important. Without this attempting to lock the same
-    //mutex twice won't cause a deadlock because the Thread::IRQwait() is
-    //enclosed in a while(owner!=p) which is immeditely false.
+    //mutex twice won't cause a deadlock because the wait is enclosed in a
+    //while(owner!=p) which is immeditely false.
     if(owner==p)
     {
         if(recursiveDepth>=0)
@@ -144,57 +137,38 @@ void Mutex::PKlockToDepth(PauseKernelLock& dLock, unsigned int depth)
 
     //Add thread to mutex' waiting queue
     waiting.push_back(p);
-    LowerPriority l;
-    push_heap(waiting.begin(),waiting.end(),l);
+    push_heap(waiting.begin(),waiting.end(),PKlowerPriority);
 
     //Handle priority inheritance
-    if(p->mutexWaiting!=0) errorHandler(UNEXPECTED);
+    if(p->mutexWaiting!=nullptr) errorHandler(UNEXPECTED);
     p->mutexWaiting=this;
-    if(p->getPriority()>owner->getPriority())
+    if(owner->PKgetPriority().mutexLessOp(p->PKgetPriority()))
     {
         Thread *walk=owner;
         for(;;)
         {
-            Scheduler::PKsetPriority(walk,p->getPriority());
-            if(walk->mutexWaiting==0) break;
+            Scheduler::PKsetPriority(walk,p->PKgetPriority());
+            if(walk->mutexWaiting==nullptr) break;
             make_heap(walk->mutexWaiting->waiting.begin(),
-                      walk->mutexWaiting->waiting.end(),l);
+                      walk->mutexWaiting->waiting.end(),PKlowerPriority);
             walk=walk->mutexWaiting->owner;
         }
     }
 
-    //The while is necessary because some other thread might call wakeup()
-    //on this thread. So the thread can wakeup also for other reasons not
-    //related to the mutex becoming free
-    while(owner!=p)
-    {
-        //Wait can only be called with kernel started, while IRQwait can
-        //only be called with interupts disabled, so that's why interrupts
-        //are disabled
-        {
-            FastInterruptDisableLock l;
-            Thread::IRQwait();//Return immediately
-        }
-        {
-            RestartKernelLock eLock(dLock);
-            //Now the IRQwait becomes effective
-            Thread::yield();
-        }
-    }
+    //The while is necessary to protect against spurious wakeups
+    while(owner!=p) Thread::PKrestartKernelAndWait(dLock);
     if(recursiveDepth>=0) recursiveDepth=depth;
 }
 
 bool Mutex::PKtryLock(PauseKernelLock& dLock)
 {
-    (void) dLock;
-
-    Thread *p=Thread::getCurrentThread();
-    if(owner==0)
+    Thread *p=Thread::PKgetCurrentThread();
+    if(owner==nullptr)
     {
         owner=p;
         //Save original thread priority, if the thread has not yet locked
         //another mutex
-        if(owner->mutexLocked==0) owner->savedPriority=owner->getPriority();
+        if(owner->mutexLocked==nullptr) owner->savedPriority=owner->PKgetPriority();
         //Add this mutex to the list of mutexes locked by owner
         this->next=owner->mutexLocked;
         owner->mutexLocked=this;
@@ -210,9 +184,7 @@ bool Mutex::PKtryLock(PauseKernelLock& dLock)
 
 bool Mutex::PKunlock(PauseKernelLock& dLock)
 {
-    (void) dLock;
-
-    Thread *p=Thread::getCurrentThread();
+    Thread *p=Thread::PKgetCurrentThread();
     if(owner!=p) return false;
 
     if(recursiveDepth>0)
@@ -230,7 +202,7 @@ bool Mutex::PKunlock(PauseKernelLock& dLock)
         for(;;)
         {
             //this Mutex not in owner's list? impossible
-            if(walk->next==0) errorHandler(UNEXPECTED);
+            if(walk->next==nullptr) errorHandler(UNEXPECTED);
             if(walk->next==this)
             {
                 walk->next=walk->next->next;
@@ -241,23 +213,24 @@ bool Mutex::PKunlock(PauseKernelLock& dLock)
     }
 
     //Handle priority inheritance
-    if(owner->mutexLocked==0)
+    if(owner->mutexLocked==nullptr)
     {
         //Not locking any other mutex
-        if(owner->savedPriority!=owner->getPriority())
+        if(owner->savedPriority!=owner->PKgetPriority())
             Scheduler::PKsetPriority(owner,owner->savedPriority);
     } else {
         Priority pr=owner->savedPriority;
         //Calculate new priority of thread, which is
         //max(savedPriority, inheritedPriority)
         Mutex *walk=owner->mutexLocked;
-        while(walk!=0)
+        while(walk!=nullptr)
         {
             if(walk->waiting.empty()==false)
-                pr=max(pr,walk->waiting.front()->getPriority());
+                if(pr.mutexLessOp(walk->waiting.front()->PKgetPriority()))
+                    pr=walk->waiting.front()->PKgetPriority();
             walk=walk->next;
         }
-        if(pr!=owner->getPriority()) Scheduler::PKsetPriority(owner,pr);
+        if(pr!=owner->PKgetPriority()) Scheduler::PKsetPriority(owner,pr);
     }
 
     //Choose next thread to lock the mutex
@@ -265,23 +238,22 @@ bool Mutex::PKunlock(PauseKernelLock& dLock)
     {
         //There is at least another thread waiting
         owner=waiting.front();
-        LowerPriority l;
-        pop_heap(waiting.begin(),waiting.end(),l);
+        pop_heap(waiting.begin(),waiting.end(),PKlowerPriority);
         waiting.pop_back();
         if(owner->mutexWaiting!=this) errorHandler(UNEXPECTED);
-        owner->mutexWaiting=0;
+        owner->mutexWaiting=nullptr;
         owner->PKwakeup();
-        if(owner->mutexLocked==0) owner->savedPriority=owner->getPriority();
+        if(owner->mutexLocked==nullptr) owner->savedPriority=owner->PKgetPriority();
         //Add this mutex to the list of mutexes locked by owner
         this->next=owner->mutexLocked;
         owner->mutexLocked=this;
         //Handle priority inheritance of new owner
         if(waiting.empty()==false &&
-           waiting.front()->getPriority()>owner->getPriority())
-                Scheduler::PKsetPriority(owner,waiting.front()->getPriority());
-        return owner->getPriority() > p->getPriority();
+                owner->PKgetPriority().mutexLessOp(waiting.front()->PKgetPriority()))
+                Scheduler::PKsetPriority(owner,waiting.front()->PKgetPriority());
+        return p->PKgetPriority().mutexLessOp(owner->PKgetPriority());
     } else {
-        owner=0; //No threads waiting
+        owner=nullptr; //No threads waiting
         std::vector<Thread *>().swap(waiting); //Save some RAM
         return false;
     }
@@ -289,9 +261,7 @@ bool Mutex::PKunlock(PauseKernelLock& dLock)
 
 unsigned int Mutex::PKunlockAllDepthLevels(PauseKernelLock& dLock)
 {
-    (void) dLock;
-
-    Thread *p=Thread::getCurrentThread();
+    Thread *p=Thread::PKgetCurrentThread();
     if(owner!=p) return 0;
 
     //Remove this mutex from the list of mutexes locked by the owner
@@ -303,7 +273,7 @@ unsigned int Mutex::PKunlockAllDepthLevels(PauseKernelLock& dLock)
         for(;;)
         {
             //this Mutex not in owner's list? impossible
-            if(walk->next==0) errorHandler(UNEXPECTED);
+            if(walk->next==nullptr) errorHandler(UNEXPECTED);
             if(walk->next==this)
             {
                 walk->next=walk->next->next;
@@ -314,23 +284,24 @@ unsigned int Mutex::PKunlockAllDepthLevels(PauseKernelLock& dLock)
     }
 
     //Handle priority inheritance
-    if(owner->mutexLocked==0)
+    if(owner->mutexLocked==nullptr)
     {
         //Not locking any other mutex
-        if(owner->savedPriority!=owner->getPriority())
+        if(owner->savedPriority!=owner->PKgetPriority())
             Scheduler::PKsetPriority(owner,owner->savedPriority);
     } else {
         Priority pr=owner->savedPriority;
         //Calculate new priority of thread, which is
         //max(savedPriority, inheritedPriority)
         Mutex *walk=owner->mutexLocked;
-        while(walk!=0)
+        while(walk!=nullptr)
         {
             if(walk->waiting.empty()==false)
-                pr=max(pr,walk->waiting.front()->getPriority());
+                if(pr.mutexLessOp(walk->waiting.front()->PKgetPriority()))
+                    pr=walk->waiting.front()->PKgetPriority();
             walk=walk->next;
         }
-        if(pr!=owner->getPriority()) Scheduler::PKsetPriority(owner,pr);
+        if(pr!=owner->PKgetPriority()) Scheduler::PKsetPriority(owner,pr);
     }
 
     //Choose next thread to lock the mutex
@@ -338,22 +309,21 @@ unsigned int Mutex::PKunlockAllDepthLevels(PauseKernelLock& dLock)
     {
         //There is at least another thread waiting
         owner=waiting.front();
-        LowerPriority l;
-        pop_heap(waiting.begin(),waiting.end(),l);
+        pop_heap(waiting.begin(),waiting.end(),PKlowerPriority);
         waiting.pop_back();
         if(owner->mutexWaiting!=this) errorHandler(UNEXPECTED);
-        owner->mutexWaiting=0;
+        owner->mutexWaiting=nullptr;
         owner->PKwakeup();
-        if(owner->mutexLocked==0) owner->savedPriority=owner->getPriority();
+        if(owner->mutexLocked==nullptr) owner->savedPriority=owner->PKgetPriority();
         //Add this mutex to the list of mutexes locked by owner
         this->next=owner->mutexLocked;
         owner->mutexLocked=this;
         //Handle priority inheritance of new owner
         if(waiting.empty()==false &&
-           waiting.front()->getPriority()>owner->getPriority())
-                Scheduler::PKsetPriority(owner,waiting.front()->getPriority());
+                owner->PKgetPriority().mutexLessOp(waiting.front()->PKgetPriority()))
+                Scheduler::PKsetPriority(owner,waiting.front()->PKgetPriority());
     } else {
-        owner=0; //No threads waiting
+        owner=nullptr; //No threads waiting
         std::vector<Thread *>().swap(waiting); //Save some RAM
     }
     
@@ -367,150 +337,174 @@ unsigned int Mutex::PKunlockAllDepthLevels(PauseKernelLock& dLock)
 // class ConditionVariable
 //
 
-ConditionVariable::ConditionVariable(): first(0), last(0) {}
+//Memory layout must be kept in sync with pthread_cond, see pthread.cpp
+static_assert(sizeof(ConditionVariable)==sizeof(pthread_cond_t),"");
 
 void ConditionVariable::wait(Mutex& m)
 {
+    WaitToken listItem(Thread::getCurrentThread());
     PauseKernelLock dLock;
-    
-    WaitingData w;
-    w.p=Thread::getCurrentThread();
-    w.next=0; 
-    //Add entry to tail of list
-    if(first==0)
-    {
-        first=last=&w;
-    } else {
-       last->next=&w;
-       last=&w;
-    }
-    //Unlock mutex and wait
-    {
-        FastInterruptDisableLock l;
-        w.p->flags.IRQsetCondWait(true);
-    }
-
     unsigned int depth=m.PKunlockAllDepthLevels(dLock);
-    {
-        RestartKernelLock eLock(dLock);
-        Thread::yield(); //Here the wait becomes effective
-    }
+    condList.push_back(&listItem); //Putting this thread last on the list (lifo policy)
+    Thread::PKrestartKernelAndWait(dLock);
+    condList.removeFast(&listItem); //In case of timeout or spurious wakeup
     m.PKlockToDepth(dLock,depth);
 }
 
-void ConditionVariable::wait(FastMutex& m)
+void ConditionVariable::wait(pthread_mutex_t *m)
 {
+    WaitToken listItem(Thread::getCurrentThread());
     FastInterruptDisableLock dLock;
-    
-    WaitingData w;
-    w.p=Thread::getCurrentThread();
-    w.next=0;
-    //Add entry to tail of list
-    if(first==0)
-    {
-        first=last=&w;
-    } else {
-       last->next=&w;
-       last=&w;
-    }
-    //Unlock mutex and wait
-    w.p->flags.IRQsetCondWait(true);
-
-    unsigned int depth=IRQdoMutexUnlockAllDepthLevels(m.get());
-    {
-        FastInterruptEnableLock eLock(dLock);
-        Thread::yield(); //Here the wait becomes effective
-    }
-    IRQdoMutexLockToDepth(m.get(),dLock,depth);
+    unsigned int depth=IRQdoMutexUnlockAllDepthLevels(m);
+    condList.push_back(&listItem); //Putting this thread last on the list (lifo policy)
+    Thread::IRQenableIrqAndWait(dLock);
+    condList.removeFast(&listItem); //In case of spurious wakeup
+    IRQdoMutexLockToDepth(m,dLock,depth);
 }
 
-void ConditionVariable::signal()
+TimedWaitResult ConditionVariable::timedWait(Mutex& m, long long absTime)
+{
+    WaitToken listItem(Thread::getCurrentThread());
+    PauseKernelLock dLock;
+    unsigned int depth=m.PKunlockAllDepthLevels(dLock);
+    condList.push_back(&listItem); //Putting this thread last on the list (lifo policy)
+    auto result=Thread::PKrestartKernelAndTimedWait(dLock,absTime);
+    condList.removeFast(&listItem); //In case of timeout or spurious wakeup
+    m.PKlockToDepth(dLock,depth);
+    return result;
+}
+
+TimedWaitResult ConditionVariable::timedWait(pthread_mutex_t *m, long long absTime)
+{
+    WaitToken listItem(Thread::getCurrentThread());
+    FastInterruptDisableLock dLock;
+    unsigned int depth=IRQdoMutexUnlockAllDepthLevels(m);
+    condList.push_back(&listItem); //Putting this thread last on the list (lifo policy)
+    auto result=Thread::IRQenableIrqAndTimedWait(dLock,absTime);
+    condList.removeFast(&listItem); //In case of timeout or spurious wakeup
+    IRQdoMutexLockToDepth(m,dLock,depth);
+    return result;
+}
+
+bool ConditionVariable::doSignal()
+{
+    bool hppw=false;
+    // We could just pause the kernel but it's faster to disable interrupts
+    FastInterruptDisableLock dLock;
+    if(condList.empty()) return false;
+    Thread *t=condList.front()->thread;
+    condList.pop_front();
+    t->IRQwakeup();
+    if(t->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
+        hppw=true;
+    return hppw;
+}
+
+bool ConditionVariable::doBroadcast()
+{
+    bool hppw=false;
+    // Disabling interrupts would be faster but pausing kernel is an opportunity
+    // to reduce interrupt latency
+    PauseKernelLock dLock;
+    while(!condList.empty())
+    {
+        Thread *t=condList.front()->thread;
+        condList.pop_front();
+        t->PKwakeup();
+        if(t->PKgetPriority()>Thread::PKgetCurrentThread()->PKgetPriority())
+            hppw=true;
+    }
+    return hppw;
+}
+
+//
+// class Semaphore
+//
+
+Thread *Semaphore::IRQsignalNoPreempt()
+{
+    //Check if somebody is waiting
+    if(fifo.empty())
+    {
+        //Nobody there, just increment the counter
+        count++;
+        return nullptr;
+    }
+    WaitToken *cd=fifo.front();
+    Thread *t=cd->thread;
+    cd->thread=nullptr; //Thread pointer doubles as flag against spurious wakeup
+    fifo.pop_front();
+    t->IRQwakeup();
+    return t;
+}
+
+void Semaphore::IRQsignal()
+{
+    //Update the state of the FIFO and the counter
+    Thread *t=IRQsignalNoPreempt();
+    if(t==nullptr) return;
+    //If the woken thread has higher priority trigger a reschedule
+    if(Thread::IRQgetCurrentThread()->IRQgetPriority()<t->IRQgetPriority())
+        Scheduler::IRQfindNextThread();
+}
+
+void Semaphore::signal()
 {
     bool hppw=false;
     {
-        //Using interruptDisableLock because we need to call IRQsetCondWait
-        //that can only be called with irq disabled, othrwise we would use
-        //PauseKernelLock
-        FastInterruptDisableLock lock;
-        if(first==0) return;
-        //Wakeup
-        first->p->flags.IRQsetCondWait(false);
-        //Check for priority issues
-        if(first->p->IRQgetPriority() >
-                Thread::IRQgetCurrentThread()->IRQgetPriority()) hppw=true;
-        //Remove from list
-        first=first->next;
-    }
-    //If the woken thread has higher priority than our priority, yield
-    if(hppw) Thread::yield();
-}
-
-void ConditionVariable::broadcast()
-{
-    bool hppw=false;
-    {
-        //Using interruptDisableLock because we need to call IRQsetCondWait
-        //that can only be called with irq disabled, othrwise we would use
-        //PauseKernelLock
-        FastInterruptDisableLock lock;
-        while(first!=0)
+        //Global interrupt lock because Semaphore is IRQ-safe
+        FastInterruptDisableLock dLock;
+        //Update the state of the FIFO and the counter
+        Thread *t=IRQsignalNoPreempt();
+        if(t)
         {
-            //Wakeup
-            first->p->flags.IRQsetCondWait(false);
-            //Check for priority issues
-            if(first->p->IRQgetPriority() >
-                Thread::IRQgetCurrentThread()->IRQgetPriority()) hppw=true;
-            //Remove from list
-            first=first->next;
+            //If the woken thread has higher priority trigger a yield
+            if(Thread::IRQgetCurrentThread()->IRQgetPriority()<t->IRQgetPriority())
+                hppw=true;
         }
     }
-    //If at least one of the woken thread has higher priority than our priority,
-    //yield
     if(hppw) Thread::yield();
 }
 
-//
-// class Timer
-//
-
-Timer::Timer()
+void Semaphore::wait()
 {
-    first=true;
-    running=false;
-    start_tick=tick_count=0;
+    //Global interrupt lock because Semaphore is IRQ-safe
+    FastInterruptDisableLock dLock;
+    //If the counter is positive, decrement it and we're done
+    if(count>0)
+    {
+        count--;
+        return;
+    }
+    //Otherwise put ourselves in queue and wait
+    WaitToken listItem(Thread::IRQgetCurrentThread());
+    fifo.push_back(&listItem); //Add entry to tail of list
+    while(listItem.thread) Thread::IRQenableIrqAndWait(dLock);
+    //Spurious wakeup handled by while loop, listItem already removed from fifo
 }
 
-void Timer::start()
+TimedWaitResult Semaphore::timedWait(long long absTime)
 {
-    first=false;
-    running=true;
-    start_tick=getTick();
-}
-
-void Timer::stop()
-{
-    if(running==false) return;
-    running=false;
-    tick_count+=getTick()-start_tick;
-    start_tick=0;
-}
-
-bool Timer::isRunning() const
-{
-    return running;
-}
-
-int Timer::interval() const
-{
-    if((first==true)||(running==true)||(tick_count>2147483647)) return -1;
-    return (int)tick_count;
-}
-
-void Timer::clear()
-{
-    first=true;
-    running=false;
-    start_tick=tick_count=0;
+    //Global interrupt lock because Semaphore is IRQ-safe
+    FastInterruptDisableLock dLock;
+    //If the counter is positive, decrement it and we're done
+    if(count>0)
+    {
+        count--;
+        return TimedWaitResult::NoTimeout;
+    }
+    //Otherwise put ourselves in queue and wait
+    WaitToken listItem(Thread::IRQgetCurrentThread());
+    fifo.push_back(&listItem); //Add entry to tail of list
+    while(listItem.thread)
+    {
+        if(Thread::IRQenableIrqAndTimedWait(dLock,absTime)==TimedWaitResult::Timeout)
+        {
+            fifo.removeFast(&listItem); //Remove fifo entry in case of timeout
+            return TimedWaitResult::Timeout;
+        }
+    }
+    return TimedWaitResult::NoTimeout;
 }
 
 } //namespace miosix

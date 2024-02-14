@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2010 by Terraneo Federico                               *
+ *   Copyright (C) 2010-2021 by Terraneo Federico                          *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,8 +25,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef BSP_H
-#define	BSP_H
+#pragma once
 
 namespace miosix {
 
@@ -105,4 +104,8 @@ void reboot();
 
 } //namespace miosix
 
-#endif //BSP_H
+/*
+ * Since the architecture specific board support package can declare other
+ * functions and macros, include this header.
+ */
+#include "interfaces-impl/bsp_impl.h"

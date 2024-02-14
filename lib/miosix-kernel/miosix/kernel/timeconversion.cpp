@@ -26,6 +26,7 @@
  ***************************************************************************/ 
 
 #include "timeconversion.h"
+#include <limits>
 
 #ifdef TEST_ALGORITHM
 
@@ -33,7 +34,6 @@
 #include <cassert>
 #include <vector>
 #include <cmath>
-#include <limits>
 
 static bool print=true;
 #define P(x) if(print) std::cout<<#x<<'='<<x<<' ';
@@ -56,20 +56,8 @@ static inline unsigned int lo(unsigned long long x) { return x & 0xffffffff; }
  */
 static inline unsigned int hi(unsigned long long x) { return x>>32; }
 
-/**
- * \param a 32 bit unsigned number
- * \param b 32 bit unsigned number
- * \return a * b as a 64 unsigned number 
- */
-static inline unsigned long long mul32x32to64(unsigned int a, unsigned int b)
-{
-    //Casts are to produce a 64 bit result. Compiles to a single asm instruction
-    //in processors having 32x32 multiplication with 64 bit result
-    return static_cast<unsigned long long>(a)*static_cast<unsigned long long>(b);
-}
-
 unsigned long long mul64x32d32(unsigned long long a,
-                               unsigned int bi, unsigned int bf)
+                               unsigned int bi, unsigned int bf) noexcept
 {
     /*
      * The implemntation is a standard multiplication algorithm:
@@ -213,7 +201,7 @@ static inline unsigned long long uabs(long long x)
 // class TimeConversion
 //
 
-long long TimeConversion::ns2tick(long long ns)
+long long TimeConversion::ns2tick(long long ns) noexcept
 {
     /*
      * This algorithm does the online adjustment to compensate for round trip
@@ -329,7 +317,13 @@ long long TimeConversion::ns2tick(long long ns)
     return static_cast<long long>(convert(uns+adjustOffsetNs,toTick));
 }
 
-TimeConversion::TimeConversion(unsigned int hz)
+TimeConversion::TimeConversion() noexcept
+    : toNs(1,0), toTick(1,0),
+      adjustIntervalNs(std::numeric_limits<unsigned long long>::max()),
+      lastAdjustTimeNs(0), adjustOffsetNs(0)
+{}
+
+TimeConversion::TimeConversion(unsigned int hz) noexcept
     : lastAdjustTimeNs(0), adjustOffsetNs(0)
 {
     //
@@ -436,7 +430,7 @@ TimeConversion::TimeConversion(unsigned int hz)
 }
 
 long long TimeConversion::computeRoundTripError(unsigned long long tick,
-                                                int delta) const
+                                                int delta) const noexcept
 {
     auto adjustedToTick=toTick+delta;
     unsigned long long ns=convert(tick,toNs);
@@ -444,7 +438,7 @@ long long TimeConversion::computeRoundTripError(unsigned long long tick,
     return static_cast<long long>(tick-roundTrip);
 }
 
-TimeConversionFactor TimeConversion::floatToFactor(float x)
+TimeConversionFactor TimeConversion::floatToFactor(float x) noexcept
 {
     const float twoPower32=4294967296.f; //2^32 as a float
     unsigned int i=x;
@@ -455,7 +449,7 @@ TimeConversionFactor TimeConversion::floatToFactor(float x)
 } //namespace miosix
 
 //Testsuite for multiplication algorithm and factor computation. Compile with:
-// g++ -std=c++11 -O2 -DTEST_ALGORITHM -o test timeconversion.cpp; ./test
+// g++ -std=c++14 -O2 -DTEST_ALGORITHM -o test timeconversion.cpp; ./test
 #ifdef TEST_ALGORITHM
 
 using namespace std;

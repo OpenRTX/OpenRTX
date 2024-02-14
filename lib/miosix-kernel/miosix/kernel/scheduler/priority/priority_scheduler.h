@@ -25,8 +25,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef PRIORITY_SCHEDULER_H
-#define	PRIORITY_SCHEDULER_H
+#pragma once
 
 #include "config/miosix_settings.h"
 #include "priority_scheduler_types.h"
@@ -87,23 +86,13 @@ public:
 
     /**
      * \internal
-     * Get the priority of a thread.
+     * Get the priority of a thread. Must be callable also with kernel paused
+     * or IRQ disabled.
      * Note that the meaning of priority is scheduler specific.
      * \param thread thread whose priority needs to be queried.
      * \return the priority of thread.
      */
     static PrioritySchedulerPriority getPriority(Thread *thread)
-    {
-        return thread->schedData.priority;
-    }
-
-    /**
-     * \internal
-     * Same as getPriority, but meant to be called with interrupts disabled.
-     * \param thread thread whose priority needs to be queried.
-     * \return the priority of thread.
-     */
-    static PrioritySchedulerPriority IRQgetPriority(Thread *thread)
     {
         return thread->schedData.priority;
     }
@@ -122,7 +111,7 @@ public:
      * its running status. For example when a thread become sleeping, waiting,
      * deleted or if it exits the sleeping or waiting status
      */
-    static void IRQwaitStatusHook() {}
+    static void IRQwaitStatusHook(Thread* t) {}
 
     /**
      * \internal
@@ -138,13 +127,19 @@ public:
      * points to the currently running thread.
      */
     static void IRQfindNextThread();
+    
+    /**
+     * \internal
+     * \return the next scheduled preemption set by the scheduler
+     * In case no preemption is set returns numeric_limits<long long>::max()
+     */
+    static long long IRQgetNextPreemption();
 
 private:
 
     ///\internal Vector of lists of threads, there's one list for each priority
     ///Each list s a circular list.
-    ///(since 0=NULL, using aggregate initialization)
-    static Thread *thread_list[PRIORITY_MAX];
+    static Thread *threadList[PRIORITY_MAX];
 
     ///\internal idle thread
     static Thread *idle;
@@ -153,5 +148,3 @@ private:
 } //namespace miosix
 
 #endif //SCHED_TYPE_PRIORITY
-
-#endif //PRIORITY_SCHEDULER_H

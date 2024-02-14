@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2011 by Terraneo Federico                               *
+ *   Copyright (C) 2011-2021 by Terraneo Federico                          *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,17 +25,20 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#pragma once
+
 #ifdef _ARCH_ARM7_LPC2000
 #include "core/endianness_impl_arm7.h"
-#elif defined(_ARCH_CORTEXM0) || defined(_ARCH_CORTEXM3) \
-   || defined(_ARCH_CORTEXM4) || defined(_ARCH_CORTEXM7)
+#elif defined(_ARCH_CORTEXM0_STM32F0) || defined(_ARCH_CORTEXM3_STM32F1) \
+   || defined(_ARCH_CORTEXM4_STM32F4) || defined(_ARCH_CORTEXM3_STM32F2) \
+   || defined(_ARCH_CORTEXM3_STM32L1) || defined(_ARCH_CORTEXM7_STM32F7) \
+   || defined(_ARCH_CORTEXM7_STM32H7) || defined(_ARCH_CORTEXM3_EFM32GG) \
+   || defined(_ARCH_CORTEXM4_STM32F3) || defined(_ARCH_CORTEXM4_STM32L4) \
+   || defined(_ARCH_CORTEXM4_ATSAM4L)
 #include "core/endianness_impl_cortexMx.h"
 #else
 #error "No endianness code for this architecture"
 #endif
-
-#ifndef ENDIANNESS_H
-#define	ENDIANNESS_H
 
 /**
  * \addtogroup Interfaces
@@ -150,5 +153,3 @@ __MIOSIX_INLINE unsigned long long swapBytes64(unsigned long long x);
 /**
  * \}
  */
-
-#endif //ENDIANNESS_H
