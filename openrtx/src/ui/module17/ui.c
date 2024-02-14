@@ -453,6 +453,15 @@ static void _ui_textInputArrows(char *buf, uint8_t max_len, kbd_msg_t msg)
 {
     if(ui_state.input_position >= max_len)
         return;
+    long long now = getTimeMs();
+    // Get currently pressed number key
+    uint8_t num_key = input_getPressedNumber(msg);
+    // Get number of symbols related to currently pressed key
+    uint8_t num_symbols = 0;
+    if(callsign)
+        num_symbols = strlen(symbols_ITU_T_E161_callsign[num_key]);
+    else
+        num_symbols = strlen(symbols_ITU_T_E161[num_key]);
 
     uint8_t num_symbols = 0;
     num_symbols = strlen(symbols_callsign);

@@ -1169,7 +1169,7 @@ static void _ui_textInputDel(char *buf)
 
 static void _ui_numberInputKeypad(uint32_t *num, kbd_msg_t msg)
 {
-    long long now = getTick();
+    long long now = getTimeMs();
 
 #ifdef CONFIG_UI_NO_KEYBOARD
     // If knob is turned, increment or Decrement
@@ -1237,7 +1237,7 @@ static void _ui_numberInputDel(uint32_t *num)
 
 void ui_init()
 {
-    last_event_tick = getTick();
+    last_event_tick = getTimeMs();
     redraw_needed = true;
     _ui_calculateLayout(&layout);
     layout_ready = true;
@@ -1288,7 +1288,7 @@ static vpGPSInfoFlags_t GetGPSDirectionOrSpeedChanged()
     if (!state.settings.gps_enabled)
         return vpGPSNone;
 
-    uint32_t now = getTick();
+    uint32_t now = getTimeMs();
     if (now - vpGPSLastUpdate < 8000)
         return vpGPSNone;
 
@@ -1370,7 +1370,7 @@ void ui_updateFSM(bool *sync_rtx)
     }
 #endif // PLATFORM_TTWRPLUS
 
-    long long now = getTick();
+    long long now = getTimeMs();
     // Process pressed keys
     if(event.type == EVENT_KBD)
     {
