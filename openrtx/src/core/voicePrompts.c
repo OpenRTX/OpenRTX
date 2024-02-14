@@ -558,7 +558,7 @@ void vp_play()
 
     // TODO: remove this once switching to hardware-based I2C driver for AT1846S
     // management.
-    vpStartTime = getTick();
+    vpStartTime = getTimeMs();
 }
 
 void vp_tick()
@@ -579,7 +579,7 @@ void vp_tick()
     // to incur in such a problem.
     // TODO: remove this once switched to hardware-based I2C driver for AT1846S
     // management.
-    if((vpStartTime > 0) && ((getTick() - vpStartTime) > 50))
+    if((vpStartTime > 0) && ((getTimeMs() - vpStartTime) > 50))
     {
         vpStartTime       = 0;
         voicePromptActive = true;

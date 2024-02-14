@@ -63,7 +63,7 @@ void sleepUntil(long long timestamp)
     miosix::Thread::sleepUntil(timestamp);
 }
 
-long long getTick()
+long long getTimeMs()
 {
-    return miosix::getTick();
+    return miosix::getTime()/1000000;
 }
