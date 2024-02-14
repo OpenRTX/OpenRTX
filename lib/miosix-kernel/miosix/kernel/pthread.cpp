@@ -119,6 +119,8 @@ int pthread_attr_init(pthread_attr_t *attr)
 
 int pthread_attr_destroy(pthread_attr_t *attr)
 {
+    (void) attr;
+    
     return 0; //That was easy
 }
 
@@ -200,6 +202,8 @@ int	pthread_mutexattr_init(pthread_mutexattr_t *attr)
 
 int	pthread_mutexattr_destroy(pthread_mutexattr_t *attr)
 {
+    (void)attr;
+
     return 0; //Do nothing
 }
 
@@ -294,6 +298,8 @@ static_assert(sizeof(ConditionVariable)==sizeof(pthread_cond_t),"Invalid pthread
 
 int pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *attr)
 {
+    (void)attr;
+
     //attr is currently not considered
     //NOTE: pthread_condattr_setclock is not supported, the only clock supported
     //for pthread_cond_timedwait is CLOCK_MONOTONIC
@@ -415,7 +421,14 @@ int pthread_once(pthread_once_t *once, void (*func)())
     return 0;
 }
 
-int pthread_setcancelstate(int state, int *oldstate) { return 0; } //Stub
+int pthread_setcancelstate(int state, int *oldstate) 
+{
+    //Stub
+    (void)state;
+    (void)oldstate;
+
+     return 0; 
+} 
 
 } //extern "C"
 
