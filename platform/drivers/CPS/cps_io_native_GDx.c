@@ -100,11 +100,8 @@ int cps_readChannel(channel_t *channel, uint16_t pos)
     // Remaining 7 channel banks (896 channels) are saved in SPI Flash
     else
     {
-        W25Qx_wakeup();
-        delayUs(5);
         uint32_t readAddr = channelBaseAddrFlash + (bank_num - 1) * sizeof(gdxChannelBank_t);
         W25Qx_readData(readAddr, ((uint8_t *) &bitmap), sizeof(bitmap));
-        W25Qx_sleep();
     }
     uint8_t bitmap_byte = bank_channel / 8;
     uint8_t bitmap_bit = bank_channel % 8;
@@ -126,11 +123,8 @@ int cps_readChannel(channel_t *channel, uint16_t pos)
         // Remaining 7 channel banks (896 channels) are saved in SPI Flash
         else
         {
-            W25Qx_wakeup();
-            delayUs(5);
             uint32_t bankAddr = channelBaseAddrFlash + bank_num * sizeof(gdxChannelBank_t);
             W25Qx_readData(bankAddr + channelOffset, ((uint8_t *) &chData), sizeof(gdxChannel_t));
-            W25Qx_sleep();
         }
     }
     // Copy data to OpenRTX channel_t
@@ -245,13 +239,9 @@ int cps_readContact(contact_t *contact, uint16_t pos)
 {
     if(pos >= maxNumContacts) return -1;
 
-    W25Qx_wakeup();
-    delayUs(5);
-
     gdxContact_t contactData;
     uint32_t contactAddr = contactBaseAddr + pos * sizeof(gdxContact_t);
     W25Qx_readData(contactAddr, ((uint8_t *) &contactData), sizeof(gdxContact_t));
-    W25Qx_sleep();
 
     // Check if contact is empty
     if(wcslen((wchar_t *) contactData.name) == 0) return -1;

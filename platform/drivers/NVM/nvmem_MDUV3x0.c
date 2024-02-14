@@ -74,9 +74,6 @@ size_t nvm_getMemoryAreas(const struct nvmArea **list)
 
 void nvm_readCalibData(void *buf)
 {
-    W25Qx_wakeup();
-    delayUs(5);
-
     mduv3x0Calib_t *calib = ((mduv3x0Calib_t *) buf);
 
     /* Common calibration data */
@@ -130,7 +127,6 @@ void nvm_readCalibData(void *buf)
     (void) W25Qx_readSecurityRegister(0x2089, calib->vhfCal.analogSendQrange, 5);
 
     (void) W25Qx_readSecurityRegister(0x2000, ((uint8_t *) &freqs), 40);
-    W25Qx_sleep();
 
     for(uint8_t i = 0; i < 5; i++)
     {
@@ -151,16 +147,12 @@ void nvm_readHwInfo(hwInfo_t *info)
      * Hardware information data in MDUV3x0 devices is stored in security register
      * 0x3000.
      */
-    W25Qx_wakeup();
-    delayUs(5);
-
     (void) W25Qx_readSecurityRegister(0x3000, info->name, 8);
     (void) W25Qx_readSecurityRegister(0x3014, &uhf_freqMin, 2);
     (void) W25Qx_readSecurityRegister(0x3016, &uhf_freqMax, 2);
     (void) W25Qx_readSecurityRegister(0x3018, &vhf_freqMin, 2);
     (void) W25Qx_readSecurityRegister(0x301a, &vhf_freqMax, 2);
     (void) W25Qx_readSecurityRegister(0x301D, &lcdInfo, 1);
-    W25Qx_sleep();
 
     /* Ensure correct null-termination of device name by removing the 0xff. */
     for(uint8_t i = 0; i < sizeof(info->name); i++)

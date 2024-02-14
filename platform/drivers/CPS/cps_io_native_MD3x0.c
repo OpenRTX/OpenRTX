@@ -66,13 +66,9 @@ int cps_readChannel(channel_t *channel, uint16_t pos)
 
     memset(channel, 0x00, sizeof(channel_t));
 
-    W25Qx_wakeup();
-    delayUs(5);
-
     md3x0Channel_t chData;
     uint32_t readAddr = chDataBaseAddr + pos * sizeof(md3x0Channel_t);
     W25Qx_readData(readAddr, ((uint8_t *) &chData), sizeof(md3x0Channel_t));
-    W25Qx_sleep();
 
     channel->mode            = chData.channel_mode;
     channel->bandwidth       = chData.bandwidth;
@@ -145,13 +141,9 @@ int cps_readBankHeader(bankHdr_t *b_header, uint16_t pos)
 {
     if(pos >= maxNumZones) return -1;
 
-    W25Qx_wakeup();
-    delayUs(5);
-
     md3x0Zone_t zoneData;
     uint32_t zoneAddr = zoneBaseAddr + pos * sizeof(md3x0Zone_t);
     W25Qx_readData(zoneAddr, ((uint8_t *) &zoneData), sizeof(md3x0Zone_t));
-    W25Qx_sleep();
 
     // Check if zone is empty
     #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
@@ -172,13 +164,9 @@ int cps_readBankData(uint16_t bank_pos, uint16_t ch_pos)
 {
     if(bank_pos >= maxNumZones) return -1;
 
-    W25Qx_wakeup();
-    delayUs(5);
-
     md3x0Zone_t zoneData;
     uint32_t zoneAddr = zoneBaseAddr + bank_pos * sizeof(md3x0Zone_t);
     W25Qx_readData(zoneAddr, ((uint8_t *) &zoneData), sizeof(md3x0Zone_t));
-    W25Qx_sleep();
 
     // Check if zone is empty
     #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
@@ -193,14 +181,10 @@ int cps_readContact(contact_t *contact, uint16_t pos)
 {
     if(pos >= maxNumContacts) return -1;
 
-    W25Qx_wakeup();
-    delayUs(5);
-
     md3x0Contact_t contactData;
     // Note: pos is 1-based to be consistent with channels
     uint32_t contactAddr = contactBaseAddr + pos * sizeof(md3x0Contact_t);
     W25Qx_readData(contactAddr, ((uint8_t *) &contactData), sizeof(md3x0Contact_t));
-    W25Qx_sleep();
 
     // Check if contact is empty
     #pragma GCC diagnostic ignored "-Waddress-of-packed-member"

@@ -133,15 +133,10 @@ size_t nvm_getMemoryAreas(const struct nvmArea **list)
 
 void nvm_readCalibData(void *buf)
 {
-    W25Qx_wakeup();
-    delayUs(5);
-
     gdxCalibration_t *calib = ((gdxCalibration_t *) buf);
 
     _loadBandCalData(VHF_CAL_BASE, &(calib->data[0]));  /* Load VHF band calibration data */
     _loadBandCalData(UHF_CAL_BASE, &(calib->data[1]));  /* Load UHF band calibration data */
-
-    W25Qx_sleep();
 
     /*
      * Finally, load calibration points. These are common among all the GDx

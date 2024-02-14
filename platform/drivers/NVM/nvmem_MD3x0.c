@@ -74,9 +74,6 @@ size_t nvm_getMemoryAreas(const struct nvmArea **list)
 
 void nvm_readCalibData(void *buf)
 {
-    W25Qx_wakeup();
-    delayUs(5);
-
     md3x0Calib_t *calib = ((md3x0Calib_t *) buf);
 
     (void) W25Qx_readSecurityRegister(0x1000, &(calib->vox1), 1);
@@ -118,7 +115,6 @@ void nvm_readCalibData(void *buf)
 
     uint32_t freqs[18];
     (void) W25Qx_readSecurityRegister(0x20b0, ((uint8_t *) &freqs), 72);
-    W25Qx_sleep();
 
     /*
      * Ugly quirk: frequency stored in calibration data is divided by ten, so,
@@ -142,14 +138,10 @@ void nvm_readHwInfo(hwInfo_t *info)
      * Hardware information data in MD3x0 devices is stored in security register
      * 0x3000.
      */
-    W25Qx_wakeup();
-    delayUs(5);
-
     (void) W25Qx_readSecurityRegister(0x3000, info->name, 8);
     (void) W25Qx_readSecurityRegister(0x3014, &freqMin, 2);
     (void) W25Qx_readSecurityRegister(0x3016, &freqMax, 2);
     (void) W25Qx_readSecurityRegister(0x301D, &lcdInfo, 1);
-    W25Qx_sleep();
 
     /* Ensure correct null-termination of device name by removing the 0xff. */
     for(uint8_t i = 0; i < sizeof(info->name); i++)
