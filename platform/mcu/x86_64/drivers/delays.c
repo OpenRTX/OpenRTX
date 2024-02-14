@@ -42,12 +42,12 @@ void sleepFor(unsigned int seconds, unsigned int mseconds)
 
 void sleepUntil(long long timestamp)
 {
-    long long delta = timestamp - getTick();
+    long long delta = timestamp - getTimeMs();
     if(delta <= 0) return;
     delayMs(delta);
 }
 
-long long getTick()
+long long getTimeMs()
 {
     /*
      * Return current time in milliseconds, consistently with the miosix kernel

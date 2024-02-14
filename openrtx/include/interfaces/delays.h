@@ -59,7 +59,7 @@ void sleepUntil(long long timestamp);
  * Get the current value of the system tick.
  * @return current system tick value.
  */
-long long getTick();
+long long getTimeMs();
 
 #ifdef __cplusplus
 }
