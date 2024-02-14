@@ -73,6 +73,8 @@ static void callConstructors(unsigned long *start, unsigned long *end)
 
 void *mainLoader(void *argv)
 {
+    (void)argv;
+    
     //If reaches here kernel is started, print Ok
     bootlog("Ok\n%s\n",getMiosixVersion());
 
