@@ -24,6 +24,7 @@
 #include <kernel/scheduler/scheduler.h>
 #include <stm32f4xx.h>
 #include <miosix.h>
+#include <functional>
 
 /**
  * Enumerating type describing the memory and peripheral data sizes allowed
