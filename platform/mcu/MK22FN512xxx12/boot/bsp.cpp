@@ -41,9 +41,6 @@ namespace miosix
 void IRQbspInit()
 {
     SIM->SCGC5 |= 0x3E00;   // Enable GPIO clock
-
-    // Configure SysTick
-    SysTick->LOAD = SystemCoreClock / miosix::TICK_FREQ;
 }
 
 void bspInit2()
