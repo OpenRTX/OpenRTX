@@ -80,7 +80,7 @@ inline void errorLog(const char *fmt, ...)
     va_end(arg);
 }
 #else //WITH_ERRLOG
-#define errorLog(x,...) ;
+#define errorLog(...) ;
 #endif //WITH_ERRLOG
 
 /**

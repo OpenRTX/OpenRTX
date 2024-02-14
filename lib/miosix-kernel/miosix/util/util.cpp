@@ -169,7 +169,7 @@ static void printSingleThreadInfo(Thread *self, Thread *thread,
 {
     long long threadDt = newTime - oldTime;
     int perc = static_cast<int>(threadDt >> 16) * 100 / approxDt;
-    iprintf("%p %10lld ns (%2d.%1d%%)", thread, threadDt, perc / 10, perc % 10);
+    iprintf("%p %10lld ns (%2d.%1d%%)", static_cast<void*>(thread), threadDt, perc / 10, perc % 10);
     if(isIdleThread)
     {
         iprintf(" (idle)");
@@ -214,7 +214,7 @@ void CPUProfiler::print()
         // Skip old threads that were killed
         while(newIt->thread != oldIt->thread)
         {
-            iprintf("%p killed\n", oldIt->thread);
+            iprintf("%p killed\n", static_cast<void*>(oldIt->thread));
             oldIt++;
         }
         // Found a thread that exists in both lists
@@ -227,7 +227,7 @@ void CPUProfiler::print()
     // Skip last killed threads
     while(oldIt != oldInfo.end())
     {
-        iprintf("%p killed\n", oldIt->thread);
+        iprintf("%p killed\n", static_cast<void*>(oldIt->thread));
         isIdleThread = false;
         oldIt++;
     }
