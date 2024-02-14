@@ -314,7 +314,7 @@ int close(int fd)
  * \internal
  * _write_r, write to a file
  */
-int _write_r(struct _reent *ptr, int fd, const void *buf, size_t cnt)
+int __attribute__((weak)) _write_r(struct _reent *ptr, int fd, const void *buf, size_t cnt)
 {    
     #ifdef WITH_FILESYSTEM
 
@@ -355,7 +355,7 @@ int write(int fd, const void *buf, size_t cnt)
  * \internal
  * _read_r, read from a file
  */
-int _read_r(struct _reent *ptr, int fd, void *buf, size_t cnt)
+int __attribute__((weak)) _read_r(struct _reent *ptr, int fd, void *buf, size_t cnt)
 {
     #ifdef WITH_FILESYSTEM
 
