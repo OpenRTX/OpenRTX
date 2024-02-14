@@ -69,8 +69,6 @@ void IRQbspInit()
     usart3_IRQwrite("starting...\r\n");
     #endif
 
-    // Configure SysTick
-    SysTick->LOAD = SystemCoreClock / miosix::TICK_FREQ;
 }
 
 void bspInit2()
