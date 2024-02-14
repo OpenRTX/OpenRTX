@@ -34,8 +34,7 @@
 #include "util.h"
 #include "kernel/kernel.h"
 #include "stdlib_integration/libc_integration.h"
-#include "config/miosix_settings.h"
-#include "arch_settings.h" //For WATERMARK_FILL and STACK_FILL
+#include "config/miosix_settings.h" //For WATERMARK_FILL and STACK_FILL
 
 using namespace std;
 
@@ -161,5 +160,139 @@ void memDump(const void *start, int len)
     }
     if(len>0) memPrint(data,len);
 }
+
+#ifdef WITH_CPU_TIME_COUNTER
+
+static void printSingleThreadInfo(Thread *self, Thread *thread,
+    int approxDt, long long newTime, long long oldTime, bool isIdleThread,
+    bool isNewThread)
+{
+    long long threadDt = newTime - oldTime;
+    int perc = static_cast<int>(threadDt >> 16) * 100 / approxDt;
+    iprintf("%p %10lld ns (%2d.%1d%%)", thread, threadDt, perc / 10, perc % 10);
+    if(isIdleThread)
+    {
+        iprintf(" (idle)");
+        isIdleThread = false;
+    } else if(thread == self) {
+        iprintf(" (cur)");
+    }
+    if(isNewThread) iprintf(" new");
+    iprintf("\n");
+}
+
+//
+// CPUProfiler class
+//
+
+long long CPUProfiler::update()
+{
+    lastSnapshotIndex ^= 1;
+    snapshots[lastSnapshotIndex].collect();
+    return snapshots[lastSnapshotIndex].time;
+}
+
+void CPUProfiler::print()
+{
+    Snapshot& oldSnap = snapshots[lastSnapshotIndex ^ 1];
+    Snapshot& newSnap = snapshots[lastSnapshotIndex];
+    std::vector<CPUTimeCounter::Data>& oldInfo = oldSnap.threadData;
+    std::vector<CPUTimeCounter::Data>& newInfo = newSnap.threadData;
+    long long dt = newSnap.time - oldSnap.time;
+    int approxDt = static_cast<int>(dt >> 16) / 10;
+    Thread *self = Thread::getCurrentThread();
+
+    iprintf("%d threads, last interval %lld ns\n", newInfo.size(), dt);
+
+    // Compute the difference between oldInfo and newInfo
+    auto oldIt = oldInfo.begin();
+    auto newIt = newInfo.begin();
+    // CPUTimeCounter always returns the idle thread as the first thread
+    bool isIdleThread = true;
+    while(newIt != newInfo.end() && oldIt != oldInfo.end())
+    {
+        // Skip old threads that were killed
+        while(newIt->thread != oldIt->thread)
+        {
+            iprintf("%p killed\n", oldIt->thread);
+            oldIt++;
+        }
+        // Found a thread that exists in both lists
+        printSingleThreadInfo(self, newIt->thread, approxDt, newIt->usedCpuTime,
+            oldIt->usedCpuTime, isIdleThread, false);
+        isIdleThread = false;
+        newIt++;
+        oldIt++;
+    }
+    // Skip last killed threads
+    while(oldIt != oldInfo.end())
+    {
+        iprintf("%p killed\n", oldIt->thread);
+        isIdleThread = false;
+        oldIt++;
+    }
+    // Print info about newly created threads
+    while(newIt != newInfo.end())
+    {
+        printSingleThreadInfo(self, newIt->thread, approxDt, newIt->usedCpuTime,
+            0, isIdleThread, true);
+        isIdleThread = false;
+        newIt++;
+    }
+}
+
+void CPUProfiler::Snapshot::collect()
+{
+    // We cannot expand the threadData vector while the kernel is paused.
+    //   Therefore we need to expand the vector earlier, pause the kernel, and
+    // then check if the number of threads stayed the same. If it didn't,
+    // we must unpause the kernel and try again. Otherwise we can fill the
+    // vector.
+    bool success = false;
+    do {
+        // Resize the vector with the current number of threads
+        unsigned int nThreads = CPUTimeCounter::getThreadCount();
+        threadData.resize(nThreads);
+        {
+            // Pause the kernel!
+            PauseKernelLock pLock;
+
+            // If the number of threads changed, try again
+            unsigned int nThreads2 = CPUTimeCounter::getThreadCount();
+            if(nThreads2 != nThreads)
+                continue;
+            // Otherwise, stop trying
+            success = true;
+
+            // Get the current time now. This makes the time accurate with
+            // respect to the data collected, at the cost of making the
+            // update interval imprecise (if this timestamp is then used
+            // to mantain the update interval)
+            time = getTime();
+            // Fetch the CPU time data for all threads
+            auto i1 = threadData.begin();
+            auto i2 = CPUTimeCounter::PKbegin();
+            do
+                *i1++ = *i2++;
+            while(i2 != CPUTimeCounter::PKend());
+        }
+    } while(!success);
+}
+
+void CPUProfiler::thread(long long nsInterval)
+{
+    CPUProfiler profiler;
+    long long t = profiler.update();
+    while(!Thread::testTerminate())
+    {
+        t += nsInterval;
+        Thread::nanoSleepUntil(t);
+        profiler.update();
+        profiler.print();
+        iprintf("\n");
+    }
+}
+
+#endif // WITH_CPU_TIME_COUNTER
 
 } //namespace miosix

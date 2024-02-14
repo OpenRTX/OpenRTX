@@ -25,10 +25,9 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include "config/miosix_settings.h"
+#pragma once
 
-#ifndef PRIORITY_SCHEDULER_TYPES_H
-#define	PRIORITY_SCHEDULER_TYPES_H
+#include "config/miosix_settings.h"
 
 #ifdef SCHED_TYPE_PRIORITY
 
@@ -49,12 +48,12 @@ public:
      * Constructor. Not explicit for backward compatibility.
      * \param priority the desired priority value.
      */
-    PrioritySchedulerPriority(short int priority): priority(priority) {}
+    PrioritySchedulerPriority(short int priority) : priority(priority) {}
 
     /**
      * Default constructor.
      */
-    PrioritySchedulerPriority(): priority(MAIN_PRIORITY) {}
+    PrioritySchedulerPriority() : priority(MAIN_PRIORITY) {}
 
     /**
      * \return the priority value
@@ -70,37 +69,49 @@ public:
     {
         return this->priority>=0 && this->priority<PRIORITY_MAX;
     }
+    
+    /**
+     * This function acts like a less-than operator but should be only used in
+     * synchronization module for priority inheritance. The concept of priority
+     * for preemption is not exactly the same for priority inheritance, hence,
+     * this operation is a branch out of preemption priority for inheritance
+     * purpose.
+     */
+    inline bool mutexLessOp(PrioritySchedulerPriority b)
+    {
+        return priority < b.priority;
+    }
 
 private:
     short int priority;///< The priority value
 };
 
-inline bool operator <(PrioritySchedulerPriority a, PrioritySchedulerPriority b)
+inline bool operator<(PrioritySchedulerPriority a, PrioritySchedulerPriority b)
 {
     return a.get() < b.get();
 }
 
-inline bool operator <=(PrioritySchedulerPriority a, PrioritySchedulerPriority b)
+inline bool operator<=(PrioritySchedulerPriority a, PrioritySchedulerPriority b)
 {
     return a.get() <= b.get();
 }
 
-inline bool operator >(PrioritySchedulerPriority a, PrioritySchedulerPriority b)
+inline bool operator>(PrioritySchedulerPriority a, PrioritySchedulerPriority b)
 {
     return a.get() > b.get();
 }
 
-inline bool operator >=(PrioritySchedulerPriority a, PrioritySchedulerPriority b)
+inline bool operator>=(PrioritySchedulerPriority a, PrioritySchedulerPriority b)
 {
     return a.get() >= b.get();
 }
 
-inline bool operator ==(PrioritySchedulerPriority a, PrioritySchedulerPriority b)
+inline bool operator==(PrioritySchedulerPriority a, PrioritySchedulerPriority b)
 {
     return a.get() == b.get();
 }
 
-inline bool operator !=(PrioritySchedulerPriority a, PrioritySchedulerPriority b)
+inline bool operator!=(PrioritySchedulerPriority a, PrioritySchedulerPriority b)
 {
     return a.get() != b.get();
 }
@@ -124,5 +135,3 @@ public:
 } //namespace miosix
 
 #endif //SCHED_TYPE_PRIORITY
-
-#endif //PRIORITY_SCHEDULER_TYPES_H

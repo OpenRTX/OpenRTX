@@ -83,14 +83,14 @@ ATSAMSerial::ATSAMSerial(int id, int baudrate)
         port=USART2;
         
         //TODO: USART2 hardcoded
-        PM->PM_UNLOCK=0xaa<<24 | PM_PBAMASK_OFFSET;
+        PM->PM_UNLOCK = PM_UNLOCK_KEY(0xaa) | PM_UNLOCK_ADDR(PM_PBAMASK_OFFSET);
         PM->PM_PBAMASK |= PM_PBAMASK_USART2;
         NVIC_SetPriority(USART2_IRQn,15);//Lowest priority for serial
         NVIC_EnableIRQ(USART2_IRQn);
     }
 
     port->US_BRGR = ((SystemCoreClock/baudrate/4)+1)/2; //TODO: fractional part
-    port->US_MR = US_MR_FILTER    // Filter input with majority of 3 samples
+    port->US_MR = US_MR_FILTER      // Filter input with majority of 3 samples
                 | US_MR_OVER        // 8 cycles oversample
                 | US_MR_PAR_NONE    // No parity
                 | US_MR_CHRL_8      // 8 bit char
@@ -233,7 +233,7 @@ ATSAMSerial::~ATSAMSerial()
     //TODO: USART2 hardcoded
     NVIC_DisableIRQ(USART2_IRQn);
     NVIC_ClearPendingIRQ(USART2_IRQn);
-    PM->PM_UNLOCK=0xaa<<24 | PM_PBAMASK_OFFSET;
+    PM->PM_UNLOCK = PM_UNLOCK_KEY(0xaa) | PM_UNLOCK_ADDR(PM_PBAMASK_OFFSET);
     PM->PM_PBAMASK &= ~PM_PBAMASK_USART2;
 }
 

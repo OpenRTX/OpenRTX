@@ -25,7 +25,6 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/ 
 
-#include "board_settings.h"
 #include "stm32_sgm.h"
 #include <string.h>
 #include "miosix.h"

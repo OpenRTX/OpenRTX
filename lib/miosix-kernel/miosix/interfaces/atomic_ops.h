@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2013, 2014, 2015 by Terraneo Federico                   *
+ *   Copyright (C) 2013-2021 by Terraneo Federico                          *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,8 +25,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef ATOMIC_OPS_H
-#define	ATOMIC_OPS_H
+#pragma once
 
 /**
  * \addtogroup Interfaces
@@ -157,13 +156,14 @@ inline void *atomicFetchAndIncrement(void * const volatile * p, int offset,
 
 #ifdef _ARCH_ARM7_LPC2000
 #include "core/atomic_ops_impl_arm7.h"
-#elif defined(_ARCH_CORTEXM3) || defined(_ARCH_CORTEXM4) \
-   || defined(_ARCH_CORTEXM7)
+#elif defined(_ARCH_CORTEXM3_STM32F1) || defined(_ARCH_CORTEXM3_STM32F2) \
+   || defined(_ARCH_CORTEXM4_STM32F4) || defined(_ARCH_CORTEXM3_STM32L1) \
+   || defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7) \
+   || defined(_ARCH_CORTEXM3_EFM32GG) || defined(_ARCH_CORTEXM4_STM32F3) \
+   || defined(_ARCH_CORTEXM4_STM32L4) || defined(_ARCH_CORTEXM4_ATSAM4L)
 #include "core/atomic_ops_impl_cortexMx.h"
-#elif defined(_ARCH_CORTEXM0)
+#elif defined(_ARCH_CORTEXM0_STM32F0)
 #include "core/atomic_ops_impl_cortexM0.h"
 #else
 #error "No atomic ops for this architecture"
 #endif
-
-#endif //ATOMIC_OPS_H

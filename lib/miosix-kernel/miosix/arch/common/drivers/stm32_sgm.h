@@ -24,8 +24,6 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/ 
- 
-#include "board_settings.h"
 
 #define PRESERVE __attribute__((section(".preserve"))) 
 
@@ -84,8 +82,6 @@ private:
     SGM();
     void readResetRegister();
     void clearResetFlag();
-
 };
-
 
 }

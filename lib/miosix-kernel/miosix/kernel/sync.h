@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2008, 2009, 2010, 2011, 2012, 2013, 2014                *
- *   by Terraneo Federico                                                  *
+ *   Copyright (C) 2008-2023 by Terraneo Federico                          *
+ *   Copyright (C) 2023 by Daniele Cattaneo                                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,12 +25,11 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/ 
- //Miosix kernel
 
-#ifndef SYNC_H
-#define SYNC_H
+#pragma once
 
 #include "kernel.h"
+#include "intrusive.h"
 #include <vector>
 
 namespace miosix {
@@ -68,7 +67,7 @@ public:
             pthread_mutexattr_settype(&temp,PTHREAD_MUTEX_RECURSIVE);
             pthread_mutex_init(&impl,&temp);
             pthread_mutexattr_destroy(&temp);
-        } else pthread_mutex_init(&impl,NULL);
+        } else pthread_mutex_init(&impl,nullptr);
     }
 
     /**
@@ -116,10 +115,10 @@ public:
         pthread_mutex_destroy(&impl);
     }
 
-private:
-    FastMutex(const FastMutex&);
-    FastMutex& operator= (const FastMutex&);
+    FastMutex(const FastMutex&) = delete;
+    FastMutex& operator= (const FastMutex&) = delete;
 
+private:
     pthread_mutex_t impl;
 };
 
@@ -196,13 +195,12 @@ public:
         }
         #endif //SCHED_TYPE_EDF
     }
-	
-private:
-    //Unwanted methods
-    Mutex(const Mutex& s);///< No public copy constructor
-    Mutex& operator = (const Mutex& s);///< No publc operator =
-    //Uses default destructor
 
+    //Unwanted methods
+    Mutex(const Mutex& s) = delete;
+    Mutex& operator= (const Mutex& s) = delete;
+
+private:
     /**
      * Lock mutex, can be called only with kernel paused one level deep
      * (pauseKernel calls can be nested). If another thread holds the mutex,
@@ -246,7 +244,7 @@ private:
     bool PKunlock(PauseKernelLock& dLock);
     
     /**
-     * Unlock mutex all levels of a recursive mutex, can be called only with
+     * Unlock all levels of a recursive mutex, can be called only with
      * kernel paused one level deep (pauseKernel calls can be nested).<br>
      * \param dLock the PauseKernelLock instance that paused the kernel.
      * \return the mutex recursive depth (how many times it was locked by the
@@ -307,16 +305,16 @@ public:
         return mutex;
     }
 
-private:
     //Unwanted methods
-    Lock(const Lock& l);///< No public copy constructor
-    Lock& operator = (const Lock& l);///< No publc operator =
+    Lock(const Lock& l) = delete;
+    Lock& operator= (const Lock& l) = delete;
 
+private:
     T& mutex;///< Reference to locked mutex
 };
 
 /**
- * This class allows to temporarily re unlock a mutex in a scope where
+ * This class allows to temporarily re-unlock a mutex in a scope where
  * it is locked <br>
  * Example:
  * \code
@@ -378,10 +376,11 @@ public:
         return mutex;
     }
 
-private:
     //Unwanted methods
-    Unlock(const Unlock& l);
-    Unlock& operator= (const Unlock& l);
+    Unlock(const Unlock& l) = delete;
+    Unlock& operator= (const Unlock& l) = delete;
+
+private:
 
     T& mutex;///< Reference to locked mutex
 };
@@ -390,7 +389,7 @@ private:
  * A condition variable class for thread synchronization, available from
  * Miosix 1.53.<br>
  * One or more threads can wait on the condition variable, and the signal()
- * and broadcast() allow to wake ne or all the waiting threads.<br>
+ * and broadcast() methods allow to wake one or all the waiting threads.<br>
  * This class is meant to be a static or global class. Dynamically creating a
  * ConditionVariable with new or on the stack must be done with care, to avoid
  * deleting a ConditionVariable while some threads are waiting, and to avoid
@@ -402,7 +401,7 @@ public:
     /**
      * Constructor, initializes the ConditionVariable.
      */
-    ConditionVariable();
+    ConditionVariable() {}
 
     /**
      * Unlock the mutex and wait.
@@ -417,6 +416,20 @@ public:
     }
 
     /**
+     * Unlock the mutex and wait until woken up or timeout occurs.
+     * If more threads call wait() they must do so specifying the same mutex,
+     * otherwise the behaviour is undefined.
+     * \param l A Lock instance that locked a Mutex
+     * \param absTime absolute timeout time in nanoseconds
+     * \return whether the return was due to a timout or wakeup
+     */
+    template<typename T>
+    TimedWaitResult timedWait(Lock<T>& l, long long absTime)
+    {
+        return timedWait(l.get(),absTime);
+    }
+
+    /**
      * Unlock the Mutex and wait.
      * If more threads call wait() they must do so specifying the same mutex,
      * otherwise the behaviour is undefined.
@@ -428,93 +441,222 @@ public:
      * Unlock the FastMutex and wait.
      * If more threads call wait() they must do so specifying the same mutex,
      * otherwise the behaviour is undefined.
-     * \param m a locked Mutex
+     * \param m a locked FastMutex
      */
-    void wait(FastMutex& m);
+    void wait(FastMutex& m)
+    {
+        wait(m.get());
+    }
+
+    /**
+     * Unlock the pthread_mutex_t and wait.
+     * If more threads call wait() they must do so specifying the same mutex,
+     * otherwise the behaviour is undefined.
+     * \param m a locked pthread_mutex_t
+     */
+    void wait(pthread_mutex_t *m);
+
+    /**
+     * Unlock the Mutex and wait until woken up or timeout occurs.
+     * If more threads call wait() they must do so specifying the same mutex,
+     * otherwise the behaviour is undefined.
+     * \param m a locked Mutex
+     * \param absTime absolute timeout time in nanoseconds
+     * \return whether the return was due to a timout or wakeup
+     */
+    TimedWaitResult timedWait(Mutex& m, long long absTime);
+
+    /**
+     * Unlock the FastMutex and wait until woken up or timeout occurs.
+     * If more threads call wait() they must do so specifying the same mutex,
+     * otherwise the behaviour is undefined.
+     * \param m a locked FastMutex
+     * \param absTime absolute timeout time in nanoseconds
+     * \return whether the return was due to a timout or wakeup
+     */
+    TimedWaitResult timedWait(FastMutex& m, long long absTime)
+    {
+        return timedWait(m.get(), absTime);
+    }
+
+    /**
+     * Unlock the pthread_mutex_t and wait until woken up or timeout occurs.
+     * If more threads call wait() they must do so specifying the same mutex,
+     * otherwise the behaviour is undefined.
+     * \param m a locked pthread_mutex_t
+     * \param absTime absolute timeout time in nanoseconds
+     * \return whether the return was due to a timout or wakeup
+     */
+    TimedWaitResult timedWait(pthread_mutex_t *m, long long absTime);
 
     /**
      * Wakeup one waiting thread.
      * Currently implemented policy is fifo.
      */
-    void signal();
+    void signal()
+    {
+        //If the woken thread has higher priority than our priority, yield
+        if(doSignal()) Thread::yield();
+    }
 
     /**
      * Wakeup all waiting threads.
      */
-    void broadcast();
+    void broadcast()
+    {
+        //If at least one woken thread has higher priority than our priority, yield
+        if(doBroadcast()) Thread::yield();
+    }
+
+    //Unwanted methods
+    ConditionVariable(const ConditionVariable&) = delete;
+    ConditionVariable& operator= (const ConditionVariable&) = delete;
 
 private:
-    //Unwanted methods
-    ConditionVariable(const ConditionVariable& );
-    ConditionVariable& operator= (const ConditionVariable& );
-
     /**
-     * \internal
-     * \struct WaitingData
-     * This struct is used to make a list of waiting threads.
+     * \internal Element of a thread waiting list
      */
-    struct WaitingData
+    class WaitToken : public IntrusiveListItem
     {
-        Thread *p;///<\internal Thread that is waiting
-        WaitingData *next;///<\internal Next thread in the list
+    public:
+        WaitToken(Thread *thread) : thread(thread) {}
+        Thread *thread; ///<\internal Waiting thread
     };
 
-    WaitingData *first;///<Pointer to first element of waiting fifo
-    WaitingData *last;///<Pointer to last element of waiting fifo
+    /**
+     * Wakeup one waiting thread.
+     * Currently implemented policy is fifo.
+     * \return true if the woken thread has higher priority than the current one
+     */
+    bool doSignal();
+
+    /**
+     * Wakeup all waiting threads.
+     * \return true if at least one of the woken threads has higher priority
+     * than the current one
+     */
+    bool doBroadcast();
+
+    friend int ::pthread_cond_destroy(pthread_cond_t *);   //Needs condList
+    friend int ::pthread_cond_signal(pthread_cond_t *);    //Needs doSignal()
+    friend int ::pthread_cond_broadcast(pthread_cond_t *); //Needs doBroadcast()
+
+    //Memory layout must be kept in sync with pthread_cond, see pthread.cpp
+    IntrusiveList<WaitToken> condList;
 };
 
 /**
- * A timer that can be used to measure time intervals.<br>Its resolution equals
- * the kernel tick.<br>Maximum interval is 2^31-1 ticks.
+ * Semaphore primitive for syncronization between multiple threads and
+ * optionally an interrupt handler.
+ * 
+ * A semaphore is an integer counter that represents the availability of one
+ * or more items of a resource. A producer thread can signal the semaphore to
+ * increment the counter, making more items available. A consumer thread can
+ * wait for the availability of at least one item (i.e. for the counter to be
+ * positive) by performing a `wait' on the semaphore. If the counter is already
+ * positive, wait decrements the counter and terminates immediately. Otherwise
+ * it waits for a `signal' to increment the counter first.
+ * 
+ * It is possible to use Semaphores to orchestrate communication between IRQ
+ * handlers and the main driver code by using the APIs prefixed by `IRQ'. 
+ * 
+ * \note As with all other synchronization primitives, Semaphores are inherently
+ * shared between multiple threads, therefore special care must be taken in
+ * managing their lifetime and ownership.
+ * \since Miosix 2.5
  */
-class Timer
+class Semaphore
 {
 public:
     /**
-     * Constructor. Timer is initialized in stopped status.
+     * Initialize a new semaphore.
+     * \param initialCount The initial value of the counter.
      */
-    Timer();
+    Semaphore(unsigned int initialCount=0) : count(initialCount) {}
 
     /**
-     * Start the timer
+     * Increment the semaphore counter, waking up at most one waiting thread.
+     * Only for use in IRQ handlers.
+     * \warning Use in a thread context with interrupts disabled or with the
+     * kernel paused is forbidden.
      */
-    void start();
+    void IRQsignal();
 
     /**
-     * Stop the timer. After stop, Timer can be started and stopped again to
-     * count non-contiguous timer intervals.
+     * Increment the semaphore counter, waking up at most one waiting thread.
      */
-    void stop();
+    void signal();
 
     /**
-     * \return true if timer is running
+     * Wait for the semaphore counter to be positive, and then decrement it.
      */
-    bool isRunning() const;
+    void wait();
 
     /**
-     * get the interval, in kernel ticks.
-     * \return the number of tick between start and stop. Returns -1 if the
-     * timer was never started, if interval is called after start but before
-     * stop, or if it overflowed.
-     *
-     * To read the vaue of a timer without stopping it, you can use its copy
-     * constructor to create another timer, and stop it while the first timer
-     * keeps running.
+     * Wait up to a given timeout for the semaphore counter to be positive,
+     * and then decrement it.
+     * \param absTime absolute timeout time in nanoseconds
+     * \return whether the return was due to a timeout or wakeup
      */
-    int interval() const;
+    TimedWaitResult timedWait(long long absTime);
 
     /**
-     * Clear the timer and set it to not running state.
+     * Decrement the counter only if it is positive. Only for use in IRQ
+     * handlers or with interrupts disabled.
+     * \return true if the counter was positive.
      */
-    void clear();
+    inline bool IRQtryWait()
+    {
+        // Check if the counter is positive
+        if(count>0)
+        {
+            // The wait "succeeded"
+            count--;
+            return true;
+        }
+        return false;
+    }
 
-    //Using default copy constructor, operator = and destructor
+    /**
+     * Decrement the counter only if it is positive.
+     * \return true if the counter was positive.
+     */
+    bool tryWait()
+    {
+        // Global interrupt lock because Semaphore is IRQ-safe
+        FastInterruptDisableLock dLock;
+        return IRQtryWait();
+    }
+
+    /**
+     * \return the current semaphore counter.
+     */
+    unsigned int getCount() { return count; }
+
+    // Disallow copies
+    Semaphore(const Semaphore&) = delete;
+    Semaphore& operator= (const Semaphore&) = delete;
+
 private:
-    //Timer data
-    bool first;///< True if start has never been called
-    bool running;///< True if timer is running
-    long long start_tick;///< The kernel tick when start was called.
-    long long tick_count;///< The tick count
+    /**
+     * \internal Element of a thread waiting list
+     */
+    class WaitToken : public IntrusiveListItem
+    {
+    public:
+        WaitToken(Thread *thread) : thread(thread) {}
+        Thread *thread; ///<\internal Waiting thread and spurious wakeup token
+    };
+
+    /**
+     * \internal
+     * Internal method that signals the semaphore without triggering a
+     * rescheduling for prioritizing newly-woken threads.
+     */
+    inline Thread *IRQsignalNoPreempt();
+
+    volatile unsigned int count; ///< Counter of the semaphore
+    IntrusiveList<WaitToken> fifo; ///< List of waiting threads
 };
 
 /**
@@ -522,5 +664,3 @@ private:
  */
 
 } //namespace miosix
-
-#endif //SYNC_H

@@ -87,7 +87,8 @@ void __attribute__ ((interrupt("IRQ"),naked)) usart1irq()
 // 20ms of full data rate. In the 8N1 format one char is made of 10 bits.
 // So (baudrate/10)*0.02=baudrate/500
 LPC2000Serial::LPC2000Serial(int id, int baudrate) : Device(Device::TTY),
-        rxQueue(hwRxQueueLen+baudrate/500), rxWaiting(0), idle(true)
+        txQueue(swTxQueue), rxQueue(hwRxQueueLen+baudrate/500),
+        txWaiting(nullptr), rxWaiting(nullptr), idle(true)
 {
     InterruptDisableLock dLock;
     if(id<0 || id>1 || ports[id]!=0) errorHandler(UNEXPECTED);
@@ -177,13 +178,13 @@ ssize_t LPC2000Serial::writeBlock(const void *buffer, size_t size, off_t where)
                 if(len==0) break;
             }
         } else {
-            if(txQueue.IRQput(*buf)==true)
+            if(txQueue.tryPut(*buf))
             {
                 buf++;
                 len--;
             } else {
-                FastInterruptEnableLock eLock(dLock);
-                txQueue.waitUntilNotFull();
+                txWaiting=Thread::IRQgetCurrentThread();
+                while(txWaiting) Thread::IRQenableIrqAndWait(dLock);
             }
         }
     }
@@ -256,8 +257,14 @@ void LPC2000Serial::IRQhandleInterrupt()
         case 0x2: //THRE
             for(int i=0;i<hwTxQueueLen;i++)
             {
-                //If software queue empty, stop
-                if(txQueue.IRQget(c,hppw)==false) break;
+                if(txWaiting)
+                {
+                    txWaiting->IRQwakeup();
+                    if(txWaiting->IRQgetPriority()>
+                        Thread::IRQgetCurrentThread()->IRQgetPriority()) hppw=true;
+                    txWaiting=nullptr;
+                }
+                if(txQueue.tryGet(c)==false) break; //If software queue empty, stop
                 serial->THR=c;
             }
             break;
@@ -267,7 +274,7 @@ void LPC2000Serial::IRQhandleInterrupt()
         rxWaiting->IRQwakeup();
         if(rxWaiting->IRQgetPriority()>
                 Thread::IRQgetCurrentThread()->IRQgetPriority()) hppw=true;
-        rxWaiting=0;
+        rxWaiting=nullptr;
     }
     if(hppw) Scheduler::IRQfindNextThread();
 }

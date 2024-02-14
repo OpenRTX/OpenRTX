@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2010, 2011 by Terraneo Federico                         *
+ *   Copyright (C) 2010-2023 by Terraneo Federico                          *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -30,22 +30,20 @@
  * posix thread API to the Miosix thread API.
  */
 
-#include <pthread.h>
 #include <sched.h>
 #include <errno.h>
 #include <stdexcept>
 #include <algorithm>
-#include "kernel.h"
 #include "error.h"
 #include "pthread_private.h"
+#include "stdlib_integration/libc_integration.h"
 
 using namespace miosix;
 
 //
 // Newlib's pthread.h has been patched since Miosix 1.68 to contain a definition
 // for pthread_mutex_t and pthread_cond_t that allows a fast implementation
-// of mutexes and condition variables. This *requires* to use gcc 4.5.2 with
-// Miosix specific patches.
+// of mutexes and condition variables. This *requires* to use an up-to-date gcc.
 //
 
 //These functions needs to be callable from C
@@ -60,17 +58,19 @@ int pthread_create(pthread_t *pthread, const pthread_attr_t *attr,
 {
     Thread::Options opt=Thread::JOINABLE;
     unsigned int stacksize=STACK_DEFAULT_FOR_PTHREAD;
-    unsigned int priority=1;
+    Priority priority=MAIN_PRIORITY;
     if(attr!=NULL)
     {
         if(attr->detachstate==PTHREAD_CREATE_DETACHED)
             opt=Thread::DEFAULT;
         stacksize=attr->stacksize;
+        #ifndef SCHED_TYPE_EDF
         // Cap priority value in the range between 0 and PRIORITY_MAX-1
-        int prio=std::min(std::max(0, attr->schedparam.sched_priority),
+        int prio=std::min(std::max(0,attr->schedparam.sched_priority),
                           PRIORITY_MAX-1);
         // Swap unix-based priority back to the miosix one.
         priority=(PRIORITY_MAX-1)-prio;
+        #endif //SCHED_TYPE_EDF
     }
     Thread *result=Thread::create(start,stacksize,priority,arg,opt);
     if(result==0) return EAGAIN;
@@ -111,13 +111,14 @@ int pthread_attr_init(pthread_attr_t *attr)
     attr->detachstate=PTHREAD_CREATE_JOINABLE;
     attr->stacksize=STACK_DEFAULT_FOR_PTHREAD;
     //Default priority level is one above minimum.
+    #ifndef SCHED_TYPE_EDF
     attr->schedparam.sched_priority=PRIORITY_MAX-1-MAIN_PRIORITY;
+    #endif //SCHED_TYPE_EDF
     return 0;
 }
 
 int pthread_attr_destroy(pthread_attr_t *attr)
 {
-    (void) attr;
     return 0; //That was easy
 }
 
@@ -148,23 +149,24 @@ int pthread_attr_setstacksize(pthread_attr_t *attr, size_t stacksize)
     return 0;
 }
 
-int pthread_attr_getschedparam (const pthread_attr_t *attr,
-                                struct sched_param *param)
+int pthread_attr_getschedparam(const pthread_attr_t *attr,
+                               struct sched_param *param)
 {
     *param = attr->schedparam;
     return 0;
 }
 
-int pthread_attr_setschedparam (pthread_attr_t *attr,
-                                const struct sched_param *param)
+int pthread_attr_setschedparam(pthread_attr_t *attr,
+                               const struct sched_param *param)
 {
     attr->schedparam = *param;
     return 0;
 }
 
+#ifndef SCHED_TYPE_EDF
 int sched_get_priority_max(int policy)
 {
-    (void) policy;
+    (void)policy;
 
     // Unix-like thread priorities: max priority is zero.
     return 0;
@@ -172,12 +174,13 @@ int sched_get_priority_max(int policy)
 
 int sched_get_priority_min(int policy)
 {
-    (void) policy;
+    (void)policy;
 
     // Unix-like thread priorities: min priority is a value above zero.
     // The value for PRIORITY_MAX is configured in miosix_settings.h
     return PRIORITY_MAX - 1;
 }
+#endif //SCHED_TYPE_EDF
 
 int sched_yield()
 {
@@ -197,7 +200,6 @@ int	pthread_mutexattr_init(pthread_mutexattr_t *attr)
 
 int	pthread_mutexattr_destroy(pthread_mutexattr_t *attr)
 {
-    (void) attr;
     return 0; //Do nothing
 }
 
@@ -284,67 +286,72 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex)
 // Condition variable API
 //
 
+//The pthread_cond_t API is implemented simply as a wrapper around the native
+//Miosix C++ ConditionVariable. Therefore the memory layout of pthread_cond_t
+//and of ConditionVariable must be exactly the same.
+
+static_assert(sizeof(ConditionVariable)==sizeof(pthread_cond_t),"Invalid pthread_cond_t size");
+
 int pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *attr)
 {
     //attr is currently not considered
-    (void) attr;
-    cond->first=0;
-    //No need to initialize cond->last
+    //NOTE: pthread_condattr_setclock is not supported, the only clock supported
+    //for pthread_cond_timedwait is CLOCK_MONOTONIC
+    new (cond) ConditionVariable; //Placement new as cond is a C type
     return 0;
 }
 
 int pthread_cond_destroy(pthread_cond_t *cond)
 {
-    if(cond->first!=0) return EBUSY;
+    auto *impl=reinterpret_cast<ConditionVariable*>(cond);
+    if(!impl->condList.empty()) return EBUSY;
+    impl->~ConditionVariable(); //Call destructor manually
     return 0;
 }
 
 int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 {
-    FastInterruptDisableLock dLock;
-    Thread *p=Thread::IRQgetCurrentThread();
-    WaitingList waiting; //Element of a linked list on stack
-    waiting.thread=reinterpret_cast<void*>(p);
-    waiting.next=0; //Putting this thread last on the list (lifo policy)
-    if(cond->first==0)
-    {
-        cond->first=&waiting;
-        cond->last=&waiting;
-    } else {
-        cond->last->next=&waiting;
-        cond->last=&waiting;
-    }
-    p->flags.IRQsetCondWait(true);
-
-    unsigned int depth=IRQdoMutexUnlockAllDepthLevels(mutex);
-    {
-        FastInterruptEnableLock eLock(dLock);
-        Thread::yield(); //Here the wait becomes effective
-    }
-    IRQdoMutexLockToDepth(mutex,dLock,depth);
+    auto *impl=reinterpret_cast<ConditionVariable*>(cond);
+    impl->wait(mutex);
     return 0;
+}
+
+int pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex, const struct timespec *abstime)
+{
+    auto *impl=reinterpret_cast<ConditionVariable*>(cond);
+    TimedWaitResult res = impl->timedWait(mutex,timespec2ll(abstime));
+    return res == TimedWaitResult::Timeout ? ETIMEDOUT : 0;
 }
 
 int pthread_cond_signal(pthread_cond_t *cond)
 {
+    auto *impl=reinterpret_cast<ConditionVariable*>(cond);
+    bool hppw=impl->doSignal();
+    (void)hppw;
+    /*
+     * A note on the conditional yield. Doing a pthread_cond_signal/broadcast is
+     * permitted either with the mutex locked or not. If we're calling signal
+     * with the mutex locked, yielding isn't a good idea even if we woke up a
+     * higher priority thread as we "bounce back" since the woken thread will
+     * block trying to lock the mutex we're holding. Also, the mutex unlock
+     * will yield anyway and immediately switch to the higher priority thread.
+     * The issue is, within signal/broadcast, we don't know if we're being
+     * called with the mutex locked or not.
+     * So, we implement the following design choice:
+     * - in the ConditionVariable class we unconditionally yield. Since
+     *   ConditionVariable can also be used with priority inheritance mutexes,
+     *   we assume that we really care about minimizing latency in waking up
+     *   higher priority threads, and we take the bounce back overhead if the
+     *   signal was called with the mutex locked.
+     * - in pthread_cond_singal/broadcast we don't yield since they can only be
+     *   used with non-priority-inheritance-mutexes, and if the signal is
+     *   called with no mutex locked, the actual context switch to the higher
+     *   priority thread will be delayed to the next preemption. Except with
+     *   EDF though, as it does not preempt after a time quantum so the delay
+     *   could be indefinitely long. In that case, we always yield.
+     */
     #ifdef SCHED_TYPE_EDF
-    bool hppw=false;
-    #endif //SCHED_TYPE_EDF
-    {
-        FastInterruptDisableLock dLock;
-        if(cond->first==0) return 0;
-
-        Thread *t=reinterpret_cast<Thread*>(cond->first->thread);
-        t->flags.IRQsetCondWait(false);
-        cond->first=cond->first->next;
-
-        #ifdef SCHED_TYPE_EDF
-        if(t->IRQgetPriority() >Thread::IRQgetCurrentThread()->IRQgetPriority())
-            hppw=true;
-        #endif //SCHED_TYPE_EDF
-    }
-    #ifdef SCHED_TYPE_EDF
-    //If the woken thread has higher priority, yield
+    //If the woken thread has higher priority than our priority, yield
     if(hppw) Thread::yield();
     #endif //SCHED_TYPE_EDF
     return 0;
@@ -352,25 +359,11 @@ int pthread_cond_signal(pthread_cond_t *cond)
 
 int pthread_cond_broadcast(pthread_cond_t *cond)
 {
+    auto *impl=reinterpret_cast<ConditionVariable*>(cond);
+    bool hppw=impl->doBroadcast();
+    (void)hppw;
     #ifdef SCHED_TYPE_EDF
-    bool hppw=false;
-    #endif //SCHED_TYPE_EDF
-    {
-        FastInterruptDisableLock lock;
-        while(cond->first!=0)
-        {
-            Thread *t=reinterpret_cast<Thread*>(cond->first->thread);
-            t->flags.IRQsetCondWait(false);
-            cond->first=cond->first->next;
-
-            #ifdef SCHED_TYPE_EDF
-            if(t->IRQgetPriority() >
-                    Thread::IRQgetCurrentThread()->IRQgetPriority()) hppw=true;
-            #endif //SCHED_TYPE_EDF
-        }
-    }
-    #ifdef SCHED_TYPE_EDF
-    //If at least one of the woken thread has higher, yield
+    //If at least one woken thread has higher priority than our priority, yield
     if(hppw) Thread::yield();
     #endif //SCHED_TYPE_EDF
     return 0;
@@ -401,7 +394,11 @@ int pthread_once(pthread_once_t *once, void (*func)())
                     return 0;
             }
         }
+        #ifndef SCHED_TYPE_EDF
         if(again) Thread::yield(); //Yield and let other thread complete
+        #else //SCHED_TYPE_EDF
+        if(again) Thread::sleep(1); //Can't yield with EDF, this may be slow
+        #endif //SCHED_TYPE_EDF
     } while(again);
 
     #ifdef __NO_EXCEPTIONS
@@ -418,12 +415,7 @@ int pthread_once(pthread_once_t *once, void (*func)())
     return 0;
 }
 
-int pthread_setcancelstate(int state, int *oldstate)
-{
-    //Stub
-    (void) state;
-    (void) oldstate;
-    return 0;
-}
+int pthread_setcancelstate(int state, int *oldstate) { return 0; } //Stub
 
 } //extern "C"
+

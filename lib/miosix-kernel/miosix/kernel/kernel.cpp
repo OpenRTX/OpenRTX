@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2008, 2009, 2010, 2011, 2012, 2013 by Terraneo Federico *
+ *   Copyright (C) 2008-2023 by Terraneo Federico                          *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -24,28 +24,30 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/ 
- //Miosix kernel
 
 #include "kernel.h"
 #include "interfaces/portability.h"
 #include "interfaces/atomic_ops.h"
 #include "error.h"
 #include "logging.h"
-#include "arch_settings.h"
 #include "sync.h"
 #include "stage_2_boot.h"
 #include "process.h"
 #include "kernel/scheduler/scheduler.h"
 #include "stdlib_integration/libc_integration.h"
+#include "interfaces/os_timer.h"
+#include "timeconversion.h"
 #include <stdexcept>
 #include <algorithm>
+#include <limits>
 #include <string.h>
 #include <reent.h>
+#include "interfaces/deep_sleep.h"
 
 /*
-Used by assembler context switch macros
-This variable is set by miosix::IRQfindNextThread in file kernel.cpp
-*/
+ * Used by assembler context switch macros
+ * This variable is set by miosix::IRQfindNextThread in file kernel.cpp
+ */
 extern "C" {
 volatile unsigned int *ctxsave;
 }
@@ -57,26 +59,32 @@ namespace miosix {
 //in portability.cpp and by the schedulers.
 //These variables MUST NOT be used outside kernel.cpp and portability.cpp
 
-volatile Thread *cur=NULL;///<\internal Thread currently running
+volatile Thread *runningThread=nullptr;///<\internal Thread currently running
 
 ///\internal True if there are threads in the DELETED status. Used by idle thread
-static volatile bool exist_deleted=false;
+static volatile bool existDeleted=false;
 
-static SleepData *sleeping_list=NULL;///<\internal list of sleeping threads
-
-static volatile long long tick=0;///<\internal Kernel tick
+IntrusiveList<SleepData> sleepingList;///list of sleeping threads
 
 ///\internal !=0 after pauseKernel(), ==0 after restartKernel()
-volatile int kernel_running=0;
+volatile int kernelRunning=0;
 
-///\internal true if a tick occurs while the kernel is paused
-volatile bool tick_skew=false;
+///\internal true if a thread wakeup occurs while the kernel is paused
+volatile bool pendingWakeup=false;
 
-static bool kernel_started=false;///<\internal becomes true after startKernel.
+static bool kernelStarted=false;///<\internal becomes true after startKernel.
 
 /// This is used by disableInterrupts() and enableInterrupts() to allow nested
 /// calls to these functions.
 static unsigned char interruptDisableNesting=0;
+
+#ifdef WITH_DEEP_SLEEP
+
+///  This variable is used to keep count of how many peripherals are actually used.
+/// If it 0 then the system can enter the deep sleep state
+static int deepSleepCounter=0;
+
+#endif // WITH_DEEP_SLEEP
 
 #ifdef WITH_PROCESSES
 
@@ -92,21 +100,41 @@ static ProcessBase *kernel=nullptr;
  */
 void *idleThread(void *argv)
 {
-    (void) argv;
-
     for(;;)
     {
-        if(exist_deleted)
+        if(existDeleted)
         {
             PauseKernelLock lock;
-            exist_deleted=false;
+            existDeleted=false;
             Scheduler::PKremoveDeadThreads();
         }
         #ifndef JTAG_DISABLE_SLEEP
         //JTAG debuggers lose communication with the device if it enters sleep
         //mode, so to use debugging it is necessary to remove this instruction
+        
+        #ifdef WITH_DEEP_SLEEP
+        {
+            FastInterruptDisableLock lock;
+            bool sleep;
+            if(deepSleepCounter==0)
+            {
+                if(sleepingList.empty()==false)
+                {
+                    long long wakeup=sleepingList.front()->wakeupTime;
+                    sleep=!IRQdeepSleep(wakeup);
+                } else sleep=!IRQdeepSleep();
+            } else sleep=true;
+            //NOTE: going to sleep with interrupts disabled makes sure no
+            //preemption occurs from when we take the decision to sleep till
+            //we actually do sleep. Wakeup interrupt will be run when we enable
+            //back interrupts
+            if(sleep) miosix_private::sleepCpu();
+        }
+        #else //WITH_DEEP_SLEEP
         miosix_private::sleepCpu();
-        #endif
+        #endif //WITH_DEEP_SLEEP
+        
+        #endif //JTAG_DISABLE_SLEEP
     }
     return 0; //Just to avoid a compiler warning
 }
@@ -128,7 +156,7 @@ void enableInterrupts()
         errorHandler(DISABLE_INTERRUPTS_NESTING);
     }
     interruptDisableNesting--;
-    if(interruptDisableNesting==0 && kernel_started==true)
+    if(interruptDisableNesting==0 && kernelStarted==true)
     {
         miosix_private::doEnableInterrupts();
     }
@@ -136,23 +164,23 @@ void enableInterrupts()
 
 void pauseKernel()
 {
-    int old=atomicAddExchange(&kernel_running,1);
+    int old=atomicAddExchange(&kernelRunning,1);
     if(old>=0xff) errorHandler(NESTING_OVERFLOW);
 }
 
 void restartKernel()
 {
-    int old=atomicAddExchange(&kernel_running,-1);
+    int old=atomicAddExchange(&kernelRunning,-1);
     if(old<=0) errorHandler(PAUSE_KERNEL_NESTING);
     
     //Check interruptDisableNesting to allow pauseKernel() while interrupts
     //are disabled with an InterruptDisableLock
     if(interruptDisableNesting==0)
     {
-        //If we missed some tick yield immediately
-        if(old==1 && tick_skew)
+        //If we missed preemptions yield immediately
+        if(old==1 && pendingWakeup)
         { 
-            tick_skew=false;
+            pendingWakeup=false;
             Thread::yield();
         }
     }
@@ -161,6 +189,20 @@ void restartKernel()
 bool areInterruptsEnabled()
 {
     return miosix_private::checkAreInterruptsEnabled();
+}
+
+void deepSleepLock()
+{
+    #ifdef WITH_DEEP_SLEEP
+    atomicAdd(&deepSleepCounter,1);
+    #endif // WITH_DEEP_SLEEP
+}
+
+void deepSleepUnlock()
+{
+    #ifdef WITH_DEEP_SLEEP
+    atomicAdd(&deepSleepCounter,-1);
+    #endif // WITH_DEEP_SLEEP
 }
 
 void startKernel()
@@ -173,9 +215,9 @@ void startKernel()
     }
     #endif //WITH_PROCESSES
     
-    // As a side effect this function allocates the idle thread and makes cur
-    // point to it. It's probably been called many times during boot by the time
-    // we get here, but we can't be sure
+    // As a side effect this function allocates the idle thread and makes
+    // runningThread point to it. It's probably been called many times during
+    // boot by the time we get here, but we can't be sure
     auto *idle=Thread::IRQgetCurrentThread();
     
     #ifdef WITH_PROCESSES
@@ -199,112 +241,86 @@ void startKernel()
     // Make the C standard library use per-thread reeentrancy structure
     setCReentrancyCallback(Thread::getCReent);
     
-    // Now kernel is started
-    kernel_started=true;
-    
     // Dispatch the task to the architecture-specific function
+    kernelStarted=true;
     miosix_private::IRQportableStartKernel();
 }
 
 bool isKernelRunning()
 {
-    return (kernel_running==0) && kernel_started;
+    return (kernelRunning==0) && kernelStarted;
 }
 
-long long getTick()
-{
-    /*
-     * Reading a volatile 64bit integer on a 32bit platform with interrupts
-     * enabled is tricky because the operation is not atomic, so we need to
-     * read it twice to see if we were interrupted in the middle of the read
-     * operation.
-     */
-    long long a,b;
-    for(;;)
-    {
-        a=static_cast<long long>(tick);
-        b=static_cast<long long>(tick);
-        if(a==b) return a;
-    }
-}
+//These are not implemented here, but in the platform/board-specific os_timer.
+//long long getTime() noexcept
+//long long IRQgetTime() noexcept
 
 /**
  * \internal
- * Used by Thread::sleep() to add a thread to sleeping list. The list is sorted
- * by the wakeup_time field to reduce time required to wake threads during
- * context switch.
- * Also sets thread SLEEP_FLAG. It is labeled IRQ not because it is meant to be
- * used inside an IRQ, but because interrupts must be disabled prior to calling
- * this function.
+ * Used by Thread::sleep() and pthread_cond_timedwait() to add a thread to
+ * sleeping list. The list is sorted by the wakeupTime field to reduce time
+ * required to wake threads during context switch.
+ * Interrupts must be disabled prior to calling this function.
  */
-void IRQaddToSleepingList(SleepData *x)
+static void IRQaddToSleepingList(SleepData *x)
 {
-    x->p->flags.IRQsetSleep(true);
-    if((sleeping_list==NULL)||(x->wakeup_time <= sleeping_list->wakeup_time))
+    if(sleepingList.empty() || sleepingList.front()->wakeupTime>=x->wakeupTime)
     {
-        x->next=sleeping_list;
-        sleeping_list=x;   
+        sleepingList.push_front(x);
     } else {
-       SleepData *cur=sleeping_list;
-       for(;;)
-       {
-           if((cur->next==NULL)||(x->wakeup_time <= cur->next->wakeup_time))
-           {
-               x->next=cur->next;
-               cur->next=x;
-               break;
-           }
-           cur=cur->next;
-       }
+        auto it=sleepingList.begin();
+        while(it!=sleepingList.end() && (*it)->wakeupTime<x->wakeupTime) ++it;
+        sleepingList.insert(it,x);
     }
 }
 
 /**
  * \internal
- * Called @ every tick to check if it's time to wake some thread.
- * Also increases the system tick.
+ * Called to check if it's time to wake some thread.
  * Takes care of clearing SLEEP_FLAG.
  * It is used by the kernel, and should not be used by end users.
- * \return true if some thread was woken.
+ * \return true if some thread with higher priority of current thread is woken.
  */
-bool IRQwakeThreads()
+bool IRQwakeThreads(long long currentTime)
 {
-    tick++;//Increment tick
+    if(sleepingList.empty()) return false; //If no item in list, return
+    
     bool result=false;
-    for(;;)
+    //Since list is sorted, if we don't need to wake the first element
+    //we don't need to wake the other too
+    for(auto it=sleepingList.begin();it!=sleepingList.end();)
     {
-        if(sleeping_list==NULL) break;//If no item in list, return
-        //Since list is sorted, if we don't need to wake the first element
-        //we don't need to wake the other too
-        if(tick != sleeping_list->wakeup_time) break;
-        sleeping_list->p->flags.IRQsetSleep(false);//Wake thread
-        sleeping_list=sleeping_list->next;//Remove from list
-        result=true;
+        if(currentTime<(*it)->wakeupTime) break;
+        //Wake both threads doing absoluteSleep() and timedWait()
+        (*it)->thread->flags.IRQclearSleepAndWait();
+        if(const_cast<Thread*>(runningThread)->IRQgetPriority()<(*it)->thread->IRQgetPriority())
+            result=true;
+        it=sleepingList.erase(it);
     }
     return result;
 }
 
 /*
 Memory layout for a thread
-	|------------------------|
-	|     class Thread       |
-	|------------------------|<-- this
-	|         stack          |
-	|           |            |
-	|           V            |
-	|------------------------|
-	|       watermark        |
-	|------------------------|<-- base, watermark
+    |------------------------|
+    |     class Thread       |
+    |------------------------|<-- this
+    |         stack          |
+    |           |            |
+    |           V            |
+    |------------------------|
+    |       watermark        |
+    |------------------------|<-- base, watermark
 */
 
 Thread *Thread::create(void *(*startfunc)(void *), unsigned int stacksize,
-					Priority priority, void *argv, unsigned short options)
+                       Priority priority, void *argv, unsigned short options)
 {
     //Check to see if input parameters are valid
-    if(priority.validate()==false || stacksize<STACK_MIN) return NULL;
+    if(priority.validate()==false || stacksize<STACK_MIN) return nullptr;
     
     Thread *thread=doCreate(startfunc,stacksize,argv,options,false);
-    if(thread==NULL) return NULL;
+    if(thread==nullptr) return nullptr;
     
     //Add thread to thread list
     {
@@ -316,7 +332,7 @@ Thread *Thread::create(void *(*startfunc)(void *), unsigned int stacksize,
             unsigned int *base=thread->watermark;
             thread->~Thread();
             free(base); //Delete ALL thread memory
-            return NULL;
+            return nullptr;
         }
     }
     #ifdef SCHED_TYPE_EDF
@@ -325,126 +341,50 @@ Thread *Thread::create(void *(*startfunc)(void *), unsigned int stacksize,
     return thread;
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wcast-function-type"
 Thread *Thread::create(void (*startfunc)(void *), unsigned int stacksize,
-					Priority priority, void *argv, unsigned short options)
+                       Priority priority, void *argv, unsigned short options)
 {
     //Just call the other version with a cast.
     return Thread::create(reinterpret_cast<void *(*)(void*)>(startfunc),
             stacksize,priority,argv,options);
 }
-#pragma GCC diagnostic pop
 
 void Thread::yield()
 {
     miosix_private::doYield();
 }
 
-bool Thread::testTerminate()
-{
-    //Just reading, no need for critical section
-    return const_cast<Thread*>(cur)->flags.isDeleting();
-}
-	
 void Thread::sleep(unsigned int ms)
 {
-    if(ms==0) return;
-    //The SleepData variable has to be in scope till Thread::yield() returns
-    //as IRQaddToSleepingList() makes it part of a linked list till the
-    //thread wakes up (i.e: after Thread::yield() returns)
-    SleepData d;
+    nanoSleepUntil(getTime()+mul32x32to64(ms,1000000));
+}
+
+void Thread::nanoSleep(long long ns)
+{
+    nanoSleepUntil(getTime()+ns);
+}
+
+void Thread::nanoSleepUntil(long long absoluteTimeNs)
+{
+    //Disallow absolute sleeps with negative or too low values, as the ns2tick()
+    //algorithm in TimeConversion can't handle negative values and may undeflow
+    //even with very low values due to a negative adjustOffsetNs. As an unlikely
+    //side effect, very short sleeps done very early at boot will be extended.
+    absoluteTimeNs=std::max(absoluteTimeNs,100000LL);
     //pauseKernel() here is not enough since even if the kernel is stopped
-    //the tick isr will wake threads, modifying the sleeping_list
+    //the timer isr will wake threads, modifying the sleepingList
     {
-        FastInterruptDisableLock lock;
-        d.p=const_cast<Thread*>(cur);
-        if(((ms*TICK_FREQ)/1000)>0) d.wakeup_time=getTick()+(ms*TICK_FREQ)/1000;
-        //If tick resolution is too low, wait one tick
-        else d.wakeup_time=getTick()+1;
-        IRQaddToSleepingList(&d);//Also sets SLEEP_FLAG
-    }
-    Thread::yield();
-}
-
-void Thread::sleepUntil(long long absoluteTime)
-{
-    //The SleepData variable has to be in scope till Thread::yield() returns
-    //as IRQaddToSleepingList() makes it part of a linked list till the
-    //thread wakes up (i.e: after Thread::yield() returns)
-    SleepData d;
-    //pauseKernel() here is not enough since even if the kernel is stopped
-    //the tick isr will wake threads, modifying the sleeping_list
-    {
-        FastInterruptDisableLock lock;
-        if(absoluteTime<=getTick()) return; //Wakeup time in the past, return
-        d.p=const_cast<Thread*>(cur);
-        d.wakeup_time=absoluteTime;
-        IRQaddToSleepingList(&d);//Also sets SLEEP_FLAG
-    }
-    Thread::yield();
-}
-
-Thread *Thread::getCurrentThread()
-{
-    Thread *result=const_cast<Thread*>(cur);
-    if(result) return result;
-    //This function must always return a pointer to a valid thread. The first
-    //time this is called before the kernel is started, however, cur is nullptr.
-    //thus we allocate the idle thread and return a pointer to that.
-    return allocateIdleThread();
-}
-
-bool Thread::exists(Thread *p)
-{
-    if(p==NULL) return false;
-    PauseKernelLock lock;
-    return Scheduler::PKexists(p);
-}
-
-Priority Thread::getPriority()
-{
-    return Scheduler::getPriority(this);
-}
-
-void Thread::setPriority(Priority pr)
-{
-    if(pr.validate()==false) return;
-    PauseKernelLock lock;
-
-    Thread *current=getCurrentThread();
-    //If thread is locking at least one mutex
-    if(current->mutexLocked!=0)
-    {   
-        //savedPriority always changes, since when all mutexes are unlocked
-        //setPriority() must become effective
-        if(current->savedPriority==pr) return;
-        current->savedPriority=pr;
-        //Calculate new priority of thread, which is
-        //max(savedPriority, inheritedPriority)
-        Mutex *walk=current->mutexLocked;
-        while(walk!=0)
+        FastInterruptDisableLock dLock;
+        SleepData d(const_cast<Thread*>(runningThread),absoluteTimeNs);
+        d.thread->flags.IRQsetSleep(); //Sleeping thread: set sleep flag
+        IRQaddToSleepingList(&d);
         {
-            if(walk->waiting.empty()==false)
-                pr=std::max(pr,walk->waiting.front()->getPriority());
-            walk=walk->next;
+            FastInterruptEnableLock eLock(dLock);
+            Thread::yield();
         }
+        //Only required for interruptibility when terminate is called
+        sleepingList.removeFast(&d);
     }
-    
-    //If old priority == desired priority, nothing to do.
-    if(pr==current->getPriority()) return;
-    Scheduler::PKsetPriority(current,pr);
-    #ifdef SCHED_TYPE_EDF
-    if(isKernelRunning()) yield(); //Another thread might have a closer deadline
-    #endif //SCHED_TYPE_EDF
-}
-
-void Thread::terminate()
-{
-    //doing a read-modify-write operation on this->status, so pauseKernel is
-    //not enough, we need to disable interrupts
-    FastInterruptDisableLock lock;
-    this->flags.IRQsetDeleting();
 }
 
 void Thread::wait()
@@ -452,12 +392,43 @@ void Thread::wait()
     //pausing the kernel is not enough because of IRQwait and IRQwakeup
     {
         FastInterruptDisableLock lock;
-        const_cast<Thread*>(cur)->flags.IRQsetWait(true);
+        const_cast<Thread*>(runningThread)->flags.IRQsetWait(true);
     }
     Thread::yield();
     //Return here after wakeup
 }
-	
+
+void Thread::IRQwait()
+{
+    const_cast<Thread*>(runningThread)->flags.IRQsetWait(true);
+}
+
+void Thread::PKrestartKernelAndWait(PauseKernelLock& dLock)
+{
+    (void)dLock;
+    //Implemented by upgrading the lock to an interrupt disable one
+    FastInterruptDisableLock dLockIrq;
+    auto savedNesting=kernelRunning;
+    kernelRunning=0;
+    IRQenableIrqAndWaitImpl();
+    if(kernelRunning!=0) errorHandler(UNEXPECTED);
+    kernelRunning=savedNesting;
+}
+
+TimedWaitResult Thread::PKrestartKernelAndTimedWait(PauseKernelLock& dLock,
+        long long absoluteTimeNs)
+{
+    (void)dLock;
+    //Implemented by upgrading the lock to an interrupt disable one
+    FastInterruptDisableLock dLockIrq;
+    auto savedNesting=kernelRunning;
+    kernelRunning=0;
+    auto result=IRQenableIrqAndTimedWaitImpl(absoluteTimeNs);
+    if(kernelRunning!=0) errorHandler(UNEXPECTED);
+    kernelRunning=savedNesting;
+    return result;
+}
+
 void Thread::wakeup()
 {
     //pausing the kernel is not enough because of IRQwait and IRQwakeup
@@ -477,17 +448,104 @@ void Thread::PKwakeup()
     this->flags.IRQsetWait(false);
 }
 
+void Thread::IRQwakeup()
+{
+    this->flags.IRQsetWait(false);
+}
+
+Thread *Thread::IRQgetCurrentThread()
+{
+    //NOTE: this code is currently safe to be called either with interrupt
+    //enabed or not, and with the kernel paused or not, as well as before the
+    //kernel is started, so getCurrentThread() and PKgetCurrentThread() all
+    //directly call here. If introducing changes that break this property, these
+    //three functions may need to be split
+
+    //Implementation is the same as getCurrentThread, but to keep a consistent
+    //interface this method is duplicated
+    Thread *result=const_cast<Thread*>(runningThread);
+    if(result) return result;
+    //This function must always return a pointer to a valid thread. The first
+    //time this is called before the kernel is started, however, runningThread
+    //is nullptr, thus we allocate the idle thread and return a pointer to that.
+    return allocateIdleThread();
+}
+
+bool Thread::exists(Thread *p)
+{
+    if(p==nullptr) return false;
+    PauseKernelLock lock;
+    return Scheduler::PKexists(p);
+}
+
+Priority Thread::getPriority()
+{
+    //NOTE: the code in all schedulers is currently safe to be called either
+    //with interrupt enabed or not, and with the kernel paused or not, so
+    //PKgetPriority() and IRQgetPriority() directly call here. If introducing
+    //changes that break this property, these functions may need to be split
+    return Scheduler::getPriority(this);
+}
+
+void Thread::setPriority(Priority pr)
+{
+    if(pr.validate()==false) return;
+    PauseKernelLock lock;
+
+    Thread *running=PKgetCurrentThread();
+    //If thread is locking at least one mutex
+    if(running->mutexLocked!=nullptr)
+    {   
+        //savedPriority always changes, since when all mutexes are unlocked
+        //setPriority() must become effective
+        if(running->savedPriority==pr) return;
+        running->savedPriority=pr;
+        //Calculate new priority of thread, which is
+        //max(savedPriority, inheritedPriority)
+        Mutex *walk=running->mutexLocked;
+        while(walk!=nullptr)
+        {
+            if(walk->waiting.empty()==false)
+                pr=std::max(pr,walk->waiting.front()->PKgetPriority());
+            walk=walk->next;
+        }
+    }
+    
+    //If old priority == desired priority, nothing to do.
+    if(pr==running->PKgetPriority()) return;
+    Scheduler::PKsetPriority(running,pr);
+    #ifdef SCHED_TYPE_EDF
+    if(isKernelRunning()) yield(); //Another thread might have a closer deadline
+    #endif //SCHED_TYPE_EDF
+}
+
+void Thread::terminate()
+{
+    //doing a read-modify-write operation on this->status, so pauseKernel is
+    //not enough, we need to disable interrupts
+    FastInterruptDisableLock lock;
+    if(this->flags.isDeleting()) return; //Prevent sleep interruption abuse
+    this->flags.IRQsetDeleting();
+    this->flags.IRQclearSleepAndWait(); //Interruptibility
+}
+
+bool Thread::testTerminate()
+{
+    //Just reading, no need for critical section
+    return const_cast<Thread*>(runningThread)->flags.isDeleting();
+}
+
 void Thread::detach()
 {
     FastInterruptDisableLock lock;
     this->flags.IRQsetDetached();
     
     //we detached a terminated thread, so its memory needs to be deallocated
-    if(this->flags.isDeletedJoin()) exist_deleted=true;
+    if(this->flags.isDeletedJoin()) existDeleted=true;
 
     //Corner case: detaching a thread, but somebody else already called join
     //on it. This makes join return false instead of deadlocking
-    if(this->joinData.waitingForJoin!=NULL)
+    if(this->joinData.waitingForJoin!=nullptr)
     {
         //joinData is an union, so its content can be an invalid thread
         //this happens if detaching a thread that has already terminated
@@ -514,7 +572,7 @@ bool Thread::join(void** result)
         if(this->flags.isDeletedJoin()==false)
         {
             //Another thread already called join on toJoin
-            if(this->joinData.waitingForJoin!=NULL) return false;
+            if(this->joinData.waitingForJoin!=nullptr) return false;
 
             this->joinData.waitingForJoin=Thread::IRQgetCurrentThread();
             for(;;)
@@ -534,7 +592,7 @@ bool Thread::join(void** result)
         //Setting detached flag will make isDeleted() return true,
         //so its memory can be deallocated
         this->flags.IRQsetDetached();
-        if(result!=NULL) *result=this->joinData.result;
+        if(result!=nullptr) *result=this->joinData.result;
     }
     {
         PauseKernelLock lock;
@@ -543,41 +601,6 @@ bool Thread::join(void** result)
         Scheduler::PKremoveDeadThreads();
     }
     return true;
-}
-
-Thread *Thread::IRQgetCurrentThread()
-{
-    //Implementation is the same as getCurrentThread, but to keep a consistent
-    //interface this method is duplicated
-    Thread *result=const_cast<Thread*>(cur);
-    if(result) return result;
-    //This function must always return a pointer to a valid thread. The first
-    //time this is called before the kernel is started, however, cur is nullptr.
-    //thus we allocate the idle thread and return a pointer to that.
-    return allocateIdleThread();
-}
-
-Priority Thread::IRQgetPriority()
-{
-    //Implementation is the same as getPriority, but to keep a consistent
-    //interface this method is duplicated
-    return Scheduler::IRQgetPriority(this);
-}
-
-void Thread::IRQwait()
-{
-    const_cast<Thread*>(cur)->flags.IRQsetWait(true);
-}
-
-void Thread::IRQwakeup()
-{
-    this->flags.IRQsetWait(false);
-}
-
-bool Thread::IRQexists(Thread* p)
-{
-    if(p==NULL) return false;
-    return Scheduler::PKexists(p);
 }
 
 const unsigned int *Thread::getStackBottom()
@@ -590,146 +613,52 @@ int Thread::getStackSize()
     return getCurrentThread()->stacksize;
 }
 
-Thread *Thread::doCreate(void*(*startfunc)(void*) , unsigned int stacksize,
-                      void* argv, unsigned short options, bool defaultReent)
+void Thread::IRQstackOverflowCheck()
 {
-    unsigned int fullStackSize=WATERMARK_LEN+CTXSAVE_ON_STACK+stacksize;
-    
-    //Align fullStackSize to the platform required stack alignment
-    fullStackSize+=CTXSAVE_STACK_ALIGNMENT-1;
-    fullStackSize/=CTXSAVE_STACK_ALIGNMENT;
-    fullStackSize*=CTXSAVE_STACK_ALIGNMENT;
-    
-    //Allocate memory for the thread, return if fail
-    unsigned int *base=static_cast<unsigned int*>(malloc(sizeof(Thread)+
-            fullStackSize));
-    if(base==NULL) return NULL;
-    
-    //At the top of thread memory allocate the Thread class with placement new
-    void *threadClass=base+(fullStackSize/sizeof(unsigned int));
-    Thread *thread=new (threadClass) Thread(base,stacksize,defaultReent);
-    
-    if(thread->cReentrancyData==nullptr)
+    const unsigned int watermarkSize=WATERMARK_LEN/sizeof(unsigned int);
+    for(unsigned int i=0;i<watermarkSize;i++)
     {
-         thread->~Thread();
-         free(base); //Delete ALL thread memory
-         return NULL;
+        if(runningThread->watermark[i]!=WATERMARK_FILL) errorHandler(STACK_OVERFLOW);
     }
-
-    //Fill watermark and stack
-    memset(base, WATERMARK_FILL, WATERMARK_LEN);
-    base+=WATERMARK_LEN/sizeof(unsigned int);
-    memset(base, STACK_FILL, fullStackSize-WATERMARK_LEN);
-    
-    //On some architectures some registers are saved on the stack, therefore
-    //initCtxsave *must* be called after filling the stack.
-    miosix_private::initCtxsave(thread->ctxsave,startfunc,
-            reinterpret_cast<unsigned int*>(thread),argv);
-
-    if((options & JOINABLE)==0) thread->flags.IRQsetDetached();
-    return thread;
+    if(runningThread->ctxsave[stackPtrOffsetInCtxsave] <
+        reinterpret_cast<unsigned int>(runningThread->watermark+watermarkSize))
+        errorHandler(STACK_OVERFLOW);
 }
 
 #ifdef WITH_PROCESSES
 
 void Thread::IRQhandleSvc(unsigned int svcNumber)
 {
-    if(cur->proc==kernel) errorHandler(UNEXPECTED);
+    if(runningThread->proc==kernel) errorHandler(UNEXPECTED);
     if(svcNumber==SYS_USERSPACE)
     {
-        const_cast<Thread*>(cur)->flags.IRQsetUserspace(true);
-        ::ctxsave=cur->userCtxsave;
+        const_cast<Thread*>(runningThread)->flags.IRQsetUserspace(true);
+        ::ctxsave=runningThread->userCtxsave;
         //We know it's not the kernel, so the cast is safe
-        static_cast<Process*>(cur->proc)->mpu.IRQenable();
+        static_cast<Process*>(runningThread->proc)->mpu.IRQenable();
     } else {
-        const_cast<Thread*>(cur)->flags.IRQsetUserspace(false);
-        ::ctxsave=cur->ctxsave;
+        const_cast<Thread*>(runningThread)->flags.IRQsetUserspace(false);
+        ::ctxsave=runningThread->ctxsave;
         MPUConfiguration::IRQdisable();
     }
 }
 
 bool Thread::IRQreportFault(const miosix_private::FaultData& fault)
 {
-    if(const_cast<Thread*>(cur)->flags.isInUserspace()==false
-        || cur->proc==kernel) return false;
+    if(const_cast<Thread*>(runningThread)->flags.isInUserspace()==false
+        || runningThread->proc==kernel) return false;
     //We know it's not the kernel, so the cast is safe
-    static_cast<Process*>(cur->proc)->fault=fault;
-    const_cast<Thread*>(cur)->flags.IRQsetUserspace(false);
-    ::ctxsave=cur->ctxsave;
+    static_cast<Process*>(runningThread->proc)->fault=fault;
+    const_cast<Thread*>(runningThread)->flags.IRQsetUserspace(false);
+    ::ctxsave=runningThread->ctxsave;
     MPUConfiguration::IRQdisable();
     return true;
 }
 
-#endif //WITH_PROCESSES
-
-void Thread::threadLauncher(void *(*threadfunc)(void*), void *argv)
-{
-    void *result=0;
-    #ifdef __NO_EXCEPTIONS
-    result=threadfunc(argv);
-    #else //__NO_EXCEPTIONS
-    try {
-        result=threadfunc(argv);
-    } catch(std::exception& e) {
-        errorLog("***An exception propagated through a thread\n");
-        errorLog("what():%s\n",e.what());
-    } catch(...) {
-        errorLog("***An exception propagated through a thread\n");
-    }
-    #endif //__NO_EXCEPTIONS
-    //Thread returned from its entry point, so delete it
-
-    //Since the thread is running, it cannot be in the sleeping_list, so no need
-    //to remove it from the list
-    {
-        FastInterruptDisableLock lock;
-        const_cast<Thread*>(cur)->flags.IRQsetDeleted();
-
-        if(const_cast<Thread*>(cur)->flags.isDetached()==false)
-        {
-            //If thread is joinable, handle join
-            if(cur->joinData.waitingForJoin!=NULL)
-            {
-                //Wake thread
-                cur->joinData.waitingForJoin->flags.IRQsetJoinWait(false);
-            }
-            //Set result
-            cur->joinData.result=result;
-        } else {
-            //If thread is detached, memory can be deallocated immediately
-            exist_deleted=true;
-        }
-    }
-    Thread::yield();//Since the thread is now deleted, yield immediately.
-    //Will never reach here
-    errorHandler(UNEXPECTED);
-}
-
-Thread *Thread::allocateIdleThread()
-{
-    //NOTE: this function is only called once before the kernel is started, so
-    //there are no concurrency issues, not even with interrupts
-    
-    // Create the idle and main thread
-    auto *idle=Thread::doCreate(idleThread,STACK_IDLE,NULL,Thread::DEFAULT,true);
-    if(idle==nullptr) errorHandler(OUT_OF_MEMORY);
-    
-    // cur must point to a valid thread, so we make it point to the the idle one
-    cur=idle;
-    return idle;
-}
-
-struct _reent *Thread::getCReent()
-{
-    return getCurrentThread()->cReentrancyData;
-}
-
-#ifdef WITH_PROCESSES
-
 miosix_private::SyscallParameters Thread::switchToUserspace()
 {
     miosix_private::portableSwitchToUserspace();
-    miosix_private::SyscallParameters result(cur->userCtxsave);
+    miosix_private::SyscallParameters result(runningThread->userCtxsave);
     return result;
 }
 
@@ -738,7 +667,7 @@ Thread *Thread::createUserspace(void *(*startfunc)(void *), void *argv,
 {
     Thread *thread=doCreate(startfunc,SYSTEM_MODE_PROCESS_STACK_SIZE,argv,
             options,false);
-    if(thread==NULL) return NULL;
+    if(thread==nullptr) return nullptr;
 
     unsigned int *base=thread->watermark;
     try {
@@ -746,7 +675,7 @@ Thread *Thread::createUserspace(void *(*startfunc)(void *), void *argv,
     } catch(std::bad_alloc&) {
         thread->~Thread();
         free(base); //Delete ALL thread memory
-        return NULL;//Error
+        return nullptr;//Error
     }
     
     thread->proc=proc;
@@ -762,7 +691,7 @@ Thread *Thread::createUserspace(void *(*startfunc)(void *), void *argv,
             base=thread->watermark;
             thread->~Thread();
             free(base); //Delete ALL thread memory
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -774,17 +703,17 @@ void Thread::setupUserspaceContext(unsigned int entry, unsigned int *gotBase,
 {
     void *(*startfunc)(void*)=reinterpret_cast<void *(*)(void*)>(entry);
     unsigned int *ep=gotBase+ramImageSize/sizeof(int);
-    miosix_private::initCtxsave(cur->userCtxsave,startfunc,ep,0,gotBase);
+    miosix_private::initCtxsave(runningThread->userCtxsave,startfunc,ep,nullptr,gotBase);
 }
 
 #endif //WITH_PROCESSES
 
 Thread::Thread(unsigned int *watermark, unsigned int stacksize,
-               bool defaultReent) : schedData(), flags(), savedPriority(0),
-               mutexLocked(0), mutexWaiting(0), watermark(watermark),
+               bool defaultReent) : schedData(), flags(this), savedPriority(0),
+               mutexLocked(nullptr), mutexWaiting(nullptr), watermark(watermark),
                ctxsave(), stacksize(stacksize)
 {
-    joinData.waitingForJoin=NULL;
+    joinData.waitingForJoin=nullptr;
     if(defaultReent) cReentrancyData=_GLOBAL_REENT;
     else {
         cReentrancyData=new _reent;
@@ -808,6 +737,147 @@ Thread::~Thread()
     #endif //WITH_PROCESSES
 }
 
+Thread *Thread::doCreate(void*(*startfunc)(void*) , unsigned int stacksize,
+                      void* argv, unsigned short options, bool defaultReent)
+{
+    unsigned int fullStackSize=WATERMARK_LEN+CTXSAVE_ON_STACK+stacksize;
+
+    //Align fullStackSize to the platform required stack alignment
+    fullStackSize+=CTXSAVE_STACK_ALIGNMENT-1;
+    fullStackSize/=CTXSAVE_STACK_ALIGNMENT;
+    fullStackSize*=CTXSAVE_STACK_ALIGNMENT;
+
+    //Allocate memory for the thread, return if fail
+    unsigned int *base=static_cast<unsigned int*>(malloc(sizeof(Thread)+
+            fullStackSize));
+    if(base==nullptr) return nullptr;
+
+    //At the top of thread memory allocate the Thread class with placement new
+    void *threadClass=base+(fullStackSize/sizeof(unsigned int));
+    Thread *thread=new (threadClass) Thread(base,stacksize,defaultReent);
+
+    if(thread->cReentrancyData==nullptr)
+    {
+         thread->~Thread();
+         free(base); //Delete ALL thread memory
+         return nullptr;
+    }
+
+    //Fill watermark and stack
+    memset(base, WATERMARK_FILL, WATERMARK_LEN);
+    base+=WATERMARK_LEN/sizeof(unsigned int);
+    memset(base, STACK_FILL, fullStackSize-WATERMARK_LEN);
+
+    //On some architectures some registers are saved on the stack, therefore
+    //initCtxsave *must* be called after filling the stack.
+    miosix_private::initCtxsave(thread->ctxsave,startfunc,
+            reinterpret_cast<unsigned int*>(thread),argv);
+
+    if((options & JOINABLE)==0) thread->flags.IRQsetDetached();
+    return thread;
+}
+
+void Thread::threadLauncher(void *(*threadfunc)(void*), void *argv)
+{
+    void *result=nullptr;
+    #ifdef __NO_EXCEPTIONS
+    result=threadfunc(argv);
+    #else //__NO_EXCEPTIONS
+    try {
+        result=threadfunc(argv);
+    } catch(std::exception& e) {
+        errorLog("***An exception propagated through a thread\n");
+        errorLog("what():%s\n",e.what());
+    } catch(...) {
+        errorLog("***An exception propagated through a thread\n");
+    }
+    #endif //__NO_EXCEPTIONS
+    //Thread returned from its entry point, so delete it
+
+    //Since the thread is running, it cannot be in the sleepingList, so no need
+    //to remove it from the list
+    {
+        FastInterruptDisableLock lock;
+        const_cast<Thread*>(runningThread)->flags.IRQsetDeleted();
+
+        if(const_cast<Thread*>(runningThread)->flags.isDetached()==false)
+        {
+            //If thread is joinable, handle join
+            if(runningThread->joinData.waitingForJoin!=nullptr)
+            {
+                //Wake thread
+                runningThread->joinData.waitingForJoin->flags.IRQsetJoinWait(false);
+            }
+            //Set result
+            runningThread->joinData.result=result;
+        } else {
+            //If thread is detached, memory can be deallocated immediately
+            existDeleted=true;
+        }
+    }
+    Thread::yield();//Since the thread is now deleted, yield immediately.
+    //Will never reach here
+    errorHandler(UNEXPECTED);
+}
+
+void Thread::IRQenableIrqAndWaitImpl()
+{
+    const_cast<Thread*>(runningThread)->flags.IRQsetWait(true);
+    auto savedNesting=interruptDisableNesting; //For InterruptDisableLock
+    interruptDisableNesting=0;
+    miosix_private::doEnableInterrupts();
+    Thread::yield(); //Here the wait becomes effective
+    miosix_private::doDisableInterrupts();
+    if(interruptDisableNesting!=0) errorHandler(UNEXPECTED);
+    interruptDisableNesting=savedNesting;
+}
+
+TimedWaitResult Thread::IRQenableIrqAndTimedWaitImpl(long long absoluteTimeNs)
+{
+    absoluteTimeNs=std::max(absoluteTimeNs,100000LL);
+    Thread *t=const_cast<Thread*>(runningThread);
+    SleepData sleepData(t,absoluteTimeNs);
+    t->flags.IRQsetWait(true); //timedWait thread: set wait flag
+    IRQaddToSleepingList(&sleepData);
+    auto savedNesting=interruptDisableNesting; //For InterruptDisableLock
+    interruptDisableNesting=0;
+    miosix_private::doEnableInterrupts();
+    Thread::yield(); //Here the wait becomes effective
+    miosix_private::doDisableInterrupts();
+    if(interruptDisableNesting!=0) errorHandler(UNEXPECTED);
+    interruptDisableNesting=savedNesting;
+    bool removed=sleepingList.removeFast(&sleepData);
+    //If the thread was still in the sleeping list, it was woken up by a wakeup()
+    return removed ? TimedWaitResult::NoTimeout : TimedWaitResult::Timeout;
+}
+
+bool Thread::IRQexists(Thread* p)
+{
+    if(p==nullptr) return false;
+    //NOTE: the code in all schedulers is currently safe to be called also with
+    //interrupts disabled
+    return Scheduler::PKexists(p);
+}
+
+Thread *Thread::allocateIdleThread()
+{
+    //NOTE: this function is only called once before the kernel is started, so
+    //there are no concurrency issues, not even with interrupts
+
+    // Create the idle and main thread
+    auto *idle=Thread::doCreate(idleThread,STACK_IDLE,nullptr,Thread::DEFAULT,true);
+    if(idle==nullptr) errorHandler(OUT_OF_MEMORY);
+
+    // runningThread must point to a valid thread, so we make it point to the the idle one
+    runningThread=idle;
+    return idle;
+}
+
+struct _reent *Thread::getCReent()
+{
+    return getCurrentThread()->cReentrancyData;
+}
+
 //
 // class ThreadFlags
 //
@@ -815,31 +885,31 @@ Thread::~Thread()
 void Thread::ThreadFlags::IRQsetWait(bool waiting)
 {
     if(waiting) flags |= WAIT; else flags &= ~WAIT;
-    Scheduler::IRQwaitStatusHook();
+    Scheduler::IRQwaitStatusHook(this->t);
+}
+
+void Thread::ThreadFlags::IRQsetSleep()
+{
+    flags |= SLEEP;
+    Scheduler::IRQwaitStatusHook(this->t);
+}
+
+void Thread::ThreadFlags::IRQclearSleepAndWait()
+{
+    flags &= ~(WAIT | SLEEP);
+    Scheduler::IRQwaitStatusHook(this->t);
 }
 
 void Thread::ThreadFlags::IRQsetJoinWait(bool waiting)
 {
     if(waiting) flags |= WAIT_JOIN; else flags &= ~WAIT_JOIN;
-    Scheduler::IRQwaitStatusHook();
-}
-
-void Thread::ThreadFlags::IRQsetCondWait(bool waiting)
-{
-    if(waiting) flags |= WAIT_COND; else flags &= ~WAIT_COND;
-    Scheduler::IRQwaitStatusHook();
-}
-
-void Thread::ThreadFlags::IRQsetSleep(bool sleeping)
-{
-    if(sleeping) flags |= SLEEP; else flags &= ~SLEEP;
-    Scheduler::IRQwaitStatusHook();
+    Scheduler::IRQwaitStatusHook(this->t);
 }
 
 void Thread::ThreadFlags::IRQsetDeleted()
 {
     flags |= DELETED;
-    Scheduler::IRQwaitStatusHook();
+    Scheduler::IRQwaitStatusHook(this->t);
 }
 
 } //namespace miosix
