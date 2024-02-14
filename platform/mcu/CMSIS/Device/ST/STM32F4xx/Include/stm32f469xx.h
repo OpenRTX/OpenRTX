@@ -9,7 +9,7 @@
   *          This file contains:
   *           - Data structures and the address mapping for all peripherals
   *           - peripherals registers declarations and bits definition
-  *           - Macros to access peripheral’s registers hardware
+  *           - Macros to access peripheralï¿½s registers hardware
   *
   ******************************************************************************
   * @attention
@@ -191,7 +191,7 @@ typedef enum
   * @}
   */
 
-#include <CMSIS/Include/core_cm4.h> //By TFT: fix path
+#include <core_cm4.h> //By TFT: fix path
 #include "system_stm32f4xx.h"
 #include <stdint.h>
 
