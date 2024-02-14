@@ -108,4 +108,4 @@ void reboot();
  * Since the architecture specific board support package can declare other
  * functions and macros, include this header.
  */
-#include "interfaces-impl/bsp_impl.h"
+// #include "interfaces-impl/bsp_impl.h"

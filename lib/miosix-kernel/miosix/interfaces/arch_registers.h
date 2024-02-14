@@ -52,4 +52,4 @@
  * \}
  */
 
-#include "interfaces-impl/arch_registers_impl.h"
+#include "boot/arch_registers_impl.h"
