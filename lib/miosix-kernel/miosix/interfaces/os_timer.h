@@ -175,7 +175,7 @@ public:
     
     long long upperTimeTick = 0; //Extended timer counter (upper bits)
     long long upperIrqTick = 0;  //Extended interrupt time point (upper bits)
-    miosix::TimeConversion tc;
+    miosix::TimeConversion tc = TimeConversion(D::IRQTimerFrequency());
     bool lateIrq=false;
     
     /**
@@ -333,7 +333,6 @@ public:
     void IRQinit()
     {
         D::IRQinitTimer();
-        tc=TimeConversion(D::IRQTimerFrequency());
         D::IRQstartTimer();
     }
 };
