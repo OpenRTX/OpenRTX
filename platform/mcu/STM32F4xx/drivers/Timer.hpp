@@ -90,7 +90,7 @@ public:
          */
         uint32_t busFreq = SystemCoreClock;
         uint32_t APB     = (tim & 0x40010000) >> 16;
-        uint32_t shift   = RCC_CFGR_PPRE1_Pos << (3 * APB);
+        uint32_t shift   = 10U << (3 * APB);
 
         if(RCC->CFGR & RCC_CFGR_PPRE1_2)
             busFreq /= 1 << ((RCC->CFGR >> shift) & 0x3);
