@@ -215,7 +215,7 @@ stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.cpp',
                  'platform/drivers/audio/stm32_dac.cpp',
                  'platform/drivers/audio/stm32_adc.cpp',
                  'platform/drivers/audio/stm32_pwm.cpp',
-                 'platform/mcu/CMSIS/Device/ST/STM32F4xx/Source/system_stm32f4xx.c']
+                 'platform/mcu/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c']
 
 stm32f405_inc = ['platform/mcu/CMSIS/Include',
                  'platform/mcu/CMSIS/Device/ST/STM32F4xx/Include',
@@ -223,7 +223,7 @@ stm32f405_inc = ['platform/mcu/CMSIS/Include',
                  'platform/mcu/STM32F4xx/drivers',
                  'platform/mcu/STM32F4xx/drivers/usb']
 
-stm32f405_def = {'STM32F405xx': '', 'HSE_VALUE':'8000000'}
+stm32f405_def = {'STM32F405xx': '', 'HSE_VALUE':'8000000', 'SYSCLK_FREQ_168MHz' : '168000000'}
 
 ##
 ## MK22FN512
