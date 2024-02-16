@@ -6,6 +6,7 @@ miosix_inc = ['lib/miosix-kernel/miosix',
 
 miosix_src = ['lib/miosix-kernel/miosix/kernel/scheduler/priority/priority_scheduler.cpp',
               'lib/miosix-kernel/miosix/kernel/error.cpp',
+              'lib/miosix-kernel/miosix/kernel/intrusive.cpp',
               'lib/miosix-kernel/miosix/kernel/kernel.cpp',
               'lib/miosix-kernel/miosix/kernel/pthread.cpp',
               'lib/miosix-kernel/miosix/kernel/stage_2_boot.cpp',
@@ -22,7 +23,9 @@ miosix_def = {'DONT_USE_CMSIS_INIT'       : '',
 ##
 ## ARM Cortex M4
 ##
-miosix_cm4f_inc = miosix_inc + ['lib/miosix-kernel/miosix/arch/cortexM4F']
-miosix_cm4f_src = miosix_src + ['lib/miosix-kernel/miosix/arch/cortexM4F/portability.cpp',
-                               'lib/miosix-kernel/miosix/arch/common/core/interrupts_cortexMx.cpp']
-miosix_cm4f_def = miosix_def + {'_ARCH_CORTEXM4' : ''}
+miosix_cm4f_inc = miosix_inc + ['lib/miosix-kernel/miosix/arch/cortexM4_stm32f4/common',
+                                          'lib/miosix-kernel/miosix/arch/cortexM4_stm32f4/common/interfaces-impl']
+miosix_cm4f_src = miosix_src + ['lib/miosix-kernel/miosix/arch/cortexM4_stm32f4/common/interfaces-impl/portability.cpp',
+                               'lib/miosix-kernel/miosix/arch/common/core/interrupts_cortexMx.cpp',
+                                'lib/miosix-kernel/miosix/arch/common/core/stm32f2_f4_l4_f7_h7_os_timer.cpp']
+miosix_cm4f_def = miosix_def + {'_ARCH_CORTEXM4_STM32F4' : ''}
