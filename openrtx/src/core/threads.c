@@ -38,6 +38,7 @@
 #include <gps.h>
 #endif
 #include <voicePrompts.h>
+#include <user_functions.h>
 
 #if defined(PLATFORM_TTWRPLUS)
 #include <pmu.h>
@@ -192,6 +193,27 @@ void *rtx_threadFunc(void *arg)
     return NULL;
 }
 
+#ifdef CONFIG_USER_FUNCTIONS
+/**
+ * \internal Thread for the user functions management.
+ */
+void *user_functions_threadFunc(void *arg)
+{
+    (void) arg;
+
+    user_functions_init();
+
+    while(state.devStatus == RUNNING)
+    {
+        user_functions_task();
+    }
+
+    user_functions_terminate();
+
+    return NULL;
+}
+#endif
+
 /**
  * \internal This function creates all the system tasks and mutexes.
  */
@@ -234,4 +256,21 @@ void create_threads()
 
     pthread_t ui_thread;
     pthread_create(&ui_thread, &ui_attr, ui_threadFunc, NULL);
+
+    // Create user functions thread
+    #ifdef CONFIG_USER_FUNCTIONS
+    pthread_attr_t user_functions_attr;
+    pthread_attr_init(&user_functions_attr);
+
+    #ifndef __ZEPHYR__
+    pthread_attr_setstacksize(&user_functions_attr, USER_FUNCTIONS_STKSIZE);
+    #else
+    void *user_functions_thread_stack = malloc(USER_FUNCTIONS_STKSIZE * sizeof(uint8_t));
+    pthread_attr_setstack(&user_functions_attr, user_functions_thread_stack, USER_FUNCTIONS_STKSIZE);
+    #endif /* __ZEPHYR__ */
+
+    pthread_t user_functions_thread;
+    pthread_create(&user_functions_thread, &user_functions_attr, user_functions_threadFunc, NULL);
+
+    #endif /* CONFIG_USER_FUNCTIONS */
 }
