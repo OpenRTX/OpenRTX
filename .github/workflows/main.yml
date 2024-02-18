@@ -55,6 +55,8 @@ jobs:
           path: |
             ${{github.workspace}}/build_arm/openrtx_*_wrap
             ${{github.workspace}}/build_linux/openrtx_linux
+            ${{github.workspace}}/build_linux/openrtx_linux_smallscreen
+            ${{github.workspace}}/build_linux/openrtx_linux_mod17
   unit-test:
     runs-on: ubuntu-22.04
     steps:
