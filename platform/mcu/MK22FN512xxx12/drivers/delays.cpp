@@ -18,6 +18,7 @@
 
 #include <interfaces/delays.h>
 #include <miosix.h>
+#include <kernel/timeconversion.h>
 
 /**
  * Implementation of the delay functions for MK22FN512 MCU.
@@ -60,7 +61,7 @@ void sleepFor(unsigned int seconds, unsigned int mseconds)
 
 void sleepUntil(long long timestamp)
 {
-    miosix::Thread::sleepUntil(timestamp);
+    miosix::Thread::nanoSleepUntil(miosix::mul32x32to64(timestamp, 1000000));
 }
 
 long long getTimeMs()
