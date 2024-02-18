@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2010-2021 by Terraneo Federico                          *
+ *   Copyright (C) 2012 by Terraneo Federico                               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,20 +25,40 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-//Common #include are grouped here for ease of use 
+#ifndef ARCH_SETTINGS_H
+#define	ARCH_SETTINGS_H
 
-#pragma once
+namespace miosix {
 
-/* Hardware */
-#include <interfaces/arch_registers.h>
-#include <interfaces/delays.h>
-#include <interfaces/bsp.h>
-/* Miosix kernel */
-#include <kernel/kernel.h>
-#include <kernel/sync.h>
-#include <kernel/queue.h>
-#include <kernel/cpu_time_counter.h>
-/* Utilities */
-#include <util/util.h>
-/* Settings */
-#include <config/miosix_settings.h>
+/**
+ * \addtogroup Settings
+ * \{
+ */
+
+/// \internal size of vector to store registers during ctx switch
+/// ((10+16)*4=104Bytes). Only sp, r4-r11, EXC_RETURN and s16-s31 are saved
+/// here, since r0-r3,r12,lr,pc,xPSR, old sp and s0-s15,fpscr are saved by
+/// hardware on the process stack on Cortex M4F CPUs. EXC_RETURN, or the lr, 
+/// value to use to return from the exception is necessary to know if the
+/// thread has used fp regs, as an extension specific to Cortex-M4F CPUs.
+const unsigned char CTXSAVE_SIZE=10+16;
+
+/// \internal some architectures save part of the context on their stack.
+/// ((8+17)*4=100Bytes). This constant is used to increase the stack size by
+/// the size of context save frame. If zero, this architecture does not save
+/// anything on stack during context save. Size is in bytes, not words.
+///  8 registers=r0-r3,r12,lr,pc,xPSR
+/// 17 registers=s0-s15,fpscr
+/// MUST be divisible by 4.
+const unsigned int CTXSAVE_ON_STACK=(8+17)*4;
+
+/// \internal stack alignment for this specific architecture
+const unsigned int CTXSAVE_STACK_ALIGNMENT=8;
+
+/**
+ * \}
+ */
+
+} //namespace miosix
+
+#endif	/* ARCH_SETTINGS_H */

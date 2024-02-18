@@ -23,9 +23,23 @@ miosix_def = {'DONT_USE_CMSIS_INIT'       : '',
 ##
 ## ARM Cortex M4
 ##
-miosix_cm4f_inc = miosix_inc + ['lib/miosix-kernel/miosix/arch/cortexM4_stm32f4/common',
+
+##
+## STM32F4
+##
+miosix_stm32f4_inc = miosix_inc + ['lib/miosix-kernel/miosix/arch/cortexM4_stm32f4/common',
                                           'lib/miosix-kernel/miosix/arch/cortexM4_stm32f4/common/interfaces-impl']
-miosix_cm4f_src = miosix_src + ['lib/miosix-kernel/miosix/arch/cortexM4_stm32f4/common/interfaces-impl/portability.cpp',
+miosix_stm32f4_src = miosix_src + ['lib/miosix-kernel/miosix/arch/cortexM4_stm32f4/common/interfaces-impl/portability.cpp',
                                'lib/miosix-kernel/miosix/arch/common/core/interrupts_cortexMx.cpp',
                                 'lib/miosix-kernel/miosix/arch/common/core/stm32f2_f4_l4_f7_h7_os_timer.cpp']
-miosix_cm4f_def = miosix_def + {'_ARCH_CORTEXM4_STM32F4' : ''}
+miosix_stm32f4_def = miosix_def + {'_ARCH_CORTEXM4_STM32F4' : ''}
+
+##
+## NXP MK22
+##
+miosix_nxpmk22_inc = miosix_inc + ['lib/miosix-kernel/miosix/arch/cortexM4_nxpmk22/common',
+                                          'lib/miosix-kernel/miosix/arch/cortexM4_nxpmk22/common/interfaces-impl']
+miosix_nxpmk22_src = miosix_src + ['lib/miosix-kernel/miosix/arch/cortexM4_nxpmk22/common/interfaces-impl/portability.cpp',
+                               'lib/miosix-kernel/miosix/arch/common/core/interrupts_cortexMx.cpp',
+                                'lib/miosix-kernel/miosix/arch/common/core/nxpmk22_os_timer.cpp']
+miosix_nxpmk22_def = miosix_def + {'_ARCH_CORTEXM4_NXPMK22' : ''}

@@ -148,7 +148,7 @@ void /*__attribute__((weak))*/ UsageFault_Handler();
 void /*__attribute__((weak))*/ SVC_Handler();
 void /*__attribute__((weak))*/ DebugMon_Handler();
 void /*__attribute__((weak))*/ PendSV_Handler();
-void /*__attribute__((weak))*/ SysTick_Handler();
+void __attribute__((weak)) SysTick_Handler();
 
 //Interrupt handlers
 void __attribute__((weak)) DMA0_IRQHandler();
@@ -327,6 +327,7 @@ void (* const __Vectors[])() __attribute__ ((section(".isr_vector"))) =
     ADC1_IRQHandler             /* ADC1 interrupt*/
 };
 
+#pragma weak SysTick_IRQHandler = Default_Handler
 #pragma weak DMA0_IRQHandler = Default_Handler
 #pragma weak DMA1_IRQHandler = Default_Handler
 #pragma weak DMA2_IRQHandler = Default_Handler

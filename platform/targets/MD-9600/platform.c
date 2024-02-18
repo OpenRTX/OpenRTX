@@ -151,7 +151,7 @@ bool platform_pwrButtonStatus()
      */
     __disable_irq();
     uint32_t prevRowState = GPIOD->ODR & (1 << 4);  /* Row 3 is PD4 */
-    GPIOD->BSRR = 1 << (4 + 16);                    /* PD4 low      */
+    GPIOD->BSRRH = 1 << 4;                          /* PD4 low      */
     delayUs(10);
     uint32_t btnStatus = GPIOE->IDR & 0x01;         /* Col 3 is PE0 */
     GPIOD->ODR |= prevRowState;                     /* Restore PD4  */
