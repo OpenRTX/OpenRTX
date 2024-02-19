@@ -151,7 +151,8 @@ static void Debug_DisplayMsg( void )
     {
         counter = 0 ;
     }
-    gfx_print( GuiState.layout.lineStyle[ GUI_LINE_TOP ].pos , GuiState.layout.lineStyle[ GUI_LINE_TOP ].font , ALIGN_LEFT , color_fg ,
+    gfx_print( GuiState.layout.lineStyle[ GUI_LINE_TOP ].pos       ,
+               GuiState.layout.lineStyle[ GUI_LINE_TOP ].font.size , ALIGN_LEFT , color_fg ,
                "%c%X%X%X%X" , (char)( '0' + counter ) ,
                trace0 & 0x0F , trace1 & 0x0F , trace2 & 0x0F , trace3 & 0x0F );//@@@KL
 }
@@ -306,17 +307,17 @@ static const uint8_t Page_MenuAbout[] =
     GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
 };
 
-static const uint8_t Page_SettingsTimeDate[] =
+static const uint8_t PAGE_MENU_SETTINGSTimeDate[] =
 {
     GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
 };
 
-static const uint8_t Page_SettingsTimeDateSet[] =
+static const uint8_t PAGE_MENU_SETTINGSTimeDateSet[] =
 {
     GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
 };
 
-static const uint8_t Page_SettingsDisplay[] =
+static const uint8_t PAGE_MENU_SETTINGSDisplay[] =
 {
     GUI_CMD_LINE_STYLE , ST_VAL( GUI_LINE_TOP ) ,
     GUI_CMD_ALIGN_CENTER ,
@@ -351,7 +352,7 @@ static const uint8_t Page_SettingsDisplay[] =
 };
 
 #ifdef GPS_PRESENT
-static const uint8_t Page_SettingsGPS[] =
+static const uint8_t PAGE_MENU_SETTINGSGPS[] =
 {
     GUI_CMD_LINE_STYLE , ST_VAL( GUI_LINE_TOP ) ,
     GUI_CMD_ALIGN_CENTER ,
@@ -375,7 +376,7 @@ static const uint8_t Page_SettingsGPS[] =
 
 #endif // GPS_PRESENT
 
-static const uint8_t Page_SettingsRadio[] =
+static const uint8_t PAGE_MENU_SETTINGSRadio[] =
 {
     GUI_CMD_LINE_STYLE , ST_VAL( GUI_LINE_TOP ) ,
     GUI_CMD_ALIGN_CENTER ,
@@ -396,7 +397,7 @@ static const uint8_t Page_SettingsRadio[] =
     GUI_CMD_PAGE_END
 };
 
-static const uint8_t Page_SettingsM17[] =
+static const uint8_t PAGE_MENU_SETTINGSM17[] =
 {
     GUI_CMD_LINE_STYLE , ST_VAL( GUI_LINE_TOP ) ,
     GUI_CMD_ALIGN_CENTER ,
@@ -417,7 +418,7 @@ static const uint8_t Page_SettingsM17[] =
     GUI_CMD_PAGE_END
 };
 
-static const uint8_t Page_SettingsVoice[] =
+static const uint8_t PAGE_MENU_SETTINGSVoice[] =
 {
     GUI_CMD_LINE_STYLE , ST_VAL( GUI_LINE_TOP ) ,
     GUI_CMD_ALIGN_CENTER ,
@@ -501,7 +502,7 @@ static const uint8_t Page_MenuInfo[] =
     GUI_CMD_PAGE_END
 };
 
-static const uint8_t Page_SettingsResetToDefaults[] =
+static const uint8_t PAGE_MENU_SETTINGSResetToDefaults[] =
 {
     GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
 };
@@ -573,19 +574,19 @@ static const uint8_t* uiPageTable[] =
     PAGE_REF( Page_MenuRestore             ) , // PAGE_MENU_RESTORE
     PAGE_REF( Page_MenuInfo                ) , // PAGE_MENU_INFO
     PAGE_REF( Page_MenuAbout               ) , // PAGE_MENU_ABOUT
-    PAGE_REF( Page_SettingsTimeDate        ) , // PAGE_SETTINGS_TIMEDATE
-    PAGE_REF( Page_SettingsTimeDateSet     ) , // PAGE_SETTINGS_TIMEDATE_SET
-    PAGE_REF( Page_SettingsDisplay         ) , // PAGE_SETTINGS_DISPLAY
+    PAGE_REF( PAGE_MENU_SETTINGSTimeDate        ) , // PAGE_SETTINGS_TIMEDATE
+    PAGE_REF( PAGE_MENU_SETTINGSTimeDateSet     ) , // PAGE_SETTINGS_TIMEDATE_SET
+    PAGE_REF( PAGE_MENU_SETTINGSDisplay         ) , // PAGE_SETTINGS_DISPLAY
 #ifdef GPS_PRESENT
-    PAGE_REF( Page_SettingsGPS             ) , // PAGE_SETTINGS_GPS
+    PAGE_REF( PAGE_MENU_SETTINGSGPS             ) , // PAGE_SETTINGS_GPS
 #endif // GPS_PRESENT
-    PAGE_REF( Page_SettingsRadio           ) , // PAGE_SETTINGS_RADIO
-    PAGE_REF( Page_SettingsM17             ) , // PAGE_SETTINGS_M17
-    PAGE_REF( Page_SettingsVoice           ) , // PAGE_SETTINGS_VOICE
-    PAGE_REF( Page_SettingsResetToDefaults ) , // PAGE_SETTINGS_RESET_TO_DEFAULTS
+    PAGE_REF( PAGE_MENU_SETTINGSRadio           ) , // PAGE_SETTINGS_RADIO
+    PAGE_REF( PAGE_MENU_SETTINGSM17             ) , // PAGE_SETTINGS_M17
+    PAGE_REF( PAGE_MENU_SETTINGSVoice           ) , // PAGE_SETTINGS_VOICE
+    PAGE_REF( PAGE_MENU_SETTINGSResetToDefaults ) , // PAGE_SETTINGS_RESET_TO_DEFAULTS
     PAGE_REF( Page_LowBat                  ) , // PAGE_LOW_BAT
     PAGE_REF( Page_About                   ) , // PAGE_ABOUT
-    PAGE_REF( Page_Stubbed                 )   // PAGE_BLANK
+    PAGE_REF( Page_Stubbed                 )   // PAGE_STUBBED
 };
 
 GuiState_st GuiState ;
@@ -1745,7 +1746,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_VOICE( GuiState_st* guiState );
 static bool ui_updateFSM_PAGE_SETTINGS_RESET_TO_DEFAULTS( GuiState_st* guiState );
 static bool ui_updateFSM_PAGE_LOW_BAT( GuiState_st* guiState );
 static bool ui_updateFSM_PAGE_ABOUT( GuiState_st* guiState );
-static bool ui_updateFSM_PAGE_BLANK( GuiState_st* guiState );
+static bool ui_updateFSM_PAGE_STUBBED( GuiState_st* guiState );
 
 typedef bool (*ui_updateFSM_PAGE_fn)( GuiState_st* guiState );
 
@@ -1777,19 +1778,20 @@ static const ui_updateFSM_PAGE_fn ui_updateFSM_PageTable[ PAGE_NUM_OF ] =
     ui_updateFSM_PAGE_SETTINGS_RESET_TO_DEFAULTS ,
     ui_updateFSM_PAGE_LOW_BAT                    ,
     ui_updateFSM_PAGE_ABOUT                      ,
-    ui_updateFSM_PAGE_BLANK
+    ui_updateFSM_PAGE_STUBBED
 };
 
-uint8_t uiGetPageNumOf( uiPageNum_en pageNum )
+uint8_t uiGetPageNumOf( GuiState_st* guiState )
 {
-    uiPageNum_en pgNum = pageNum ;
+    (void)guiState ;
+    uiPageNum_en pgNum = state.ui_screen ;
     uint8_t*     ptr ;
     uint16_t     index ;
     uint8_t      numOf ;
 
     if( pgNum >= PAGE_NUM_OF )
     {
-        pgNum = PAGE_BLANK ;
+        pgNum = PAGE_STUBBED ;
     }
 
     ptr = (uint8_t*)uiPageTable[ pgNum ] ;
@@ -1814,7 +1816,7 @@ char* uiGetPageTextString( uiPageNum_en pageNum , uint8_t textStringIndex )
 
     if( pgNum >= PAGE_NUM_OF )
     {
-        pgNum = PAGE_BLANK ;
+        pgNum = PAGE_STUBBED ;
     }
 
     ptr = (char*)uiPageTable[ pgNum ] ;
@@ -1835,17 +1837,11 @@ char* uiGetPageTextString( uiPageNum_en pageNum , uint8_t textStringIndex )
     return ptr ;
 }
 
-static bool ui_UpdatePage( GuiState_st* guiState , uiPageNum_en pageNum )
+static bool ui_UpdatePage( GuiState_st* guiState )
 {
-    uiPageNum_en pgNum    = pageNum ;
-    bool         sync_rtx ;
+    bool sync_rtx ;
 
-    if( pgNum >= PAGE_NUM_OF )
-    {
-        pgNum = PAGE_BLANK ;
-    }
-
-    sync_rtx = ui_updateFSM_PageTable[ pgNum ]( guiState );
+    sync_rtx = ui_updateFSM_PageTable[ state.ui_screen ]( guiState );
 
     return sync_rtx ;
 }
@@ -3115,7 +3111,7 @@ void ui_updateFSM( bool* sync_rtx )
                         int priorUIScreen ;
                         priorUIScreen = state.ui_screen ;
 
-                        *sync_rtx = ui_UpdatePage( &GuiState , state.ui_screen );
+                        *sync_rtx = ui_UpdatePage( &GuiState );
 
                         // Enable Tx only if in PAGE_MAIN_VFO or PAGE_MAIN_MEM states
                         bool inMemOrVfo ;
@@ -3561,11 +3557,11 @@ static bool ui_updateFSM_PAGE_MENU_TOP( GuiState_st* guiState )
 
     if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
     {
-        _ui_menuUp( uiGetPageNumOf( PAGE_MENU_TOP ) );
+        _ui_menuUp( uiGetPageNumOf( guiState ) );
     }
     else if( guiState->msg.keys & ( KEY_DOWN | KNOB_RIGHT ) )
     {
-        _ui_menuDown( uiGetPageNumOf( PAGE_MENU_TOP ) );
+        _ui_menuDown( uiGetPageNumOf( guiState ) );
     }
     else if( guiState->msg.keys & KEY_ENTER )
     {
@@ -3728,11 +3724,11 @@ static bool ui_updateFSM_PAGE_MENU_SETTINGS( GuiState_st* guiState )
 
     if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
     {
-        _ui_menuUp( uiGetPageNumOf( PAGE_MENU_SETTINGS ) );
+        _ui_menuUp( uiGetPageNumOf( guiState ) );
     }
     else if( guiState->msg.keys & ( KEY_DOWN | KNOB_RIGHT ) )
     {
-        _ui_menuDown( uiGetPageNumOf( PAGE_MENU_SETTINGS ) );
+        _ui_menuDown( uiGetPageNumOf( guiState ) );
     }
     else if( guiState->msg.keys & KEY_ENTER )
     {
@@ -3755,11 +3751,11 @@ static bool ui_updateFSM_PAGE_MENU_BACKUP_RESTORE( GuiState_st* guiState )
 
     if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
     {
-        _ui_menuUp( uiGetPageNumOf( PAGE_MENU_SETTINGS ) );
+        _ui_menuUp( uiGetPageNumOf( guiState ) );
     }
     else if( guiState->msg.keys & ( KEY_DOWN | KNOB_RIGHT ) )
     {
-        _ui_menuDown( uiGetPageNumOf( PAGE_MENU_SETTINGS ) );
+        _ui_menuDown( uiGetPageNumOf( guiState ) );
     }
     else if( guiState->msg.keys & KEY_ENTER )
     {
@@ -3800,11 +3796,11 @@ static bool ui_updateFSM_PAGE_MENU_INFO( GuiState_st* guiState )
 
     if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
     {
-        _ui_menuUp( uiGetPageNumOf( PAGE_MENU_INFO ) );
+        _ui_menuUp( uiGetPageNumOf( guiState ) );
     }
     else if( guiState->msg.keys & ( KEY_DOWN | KNOB_RIGHT ) )
     {
-        _ui_menuDown( uiGetPageNumOf( PAGE_MENU_INFO ) );
+        _ui_menuDown( uiGetPageNumOf( guiState ) );
     }
     else if( guiState->msg.keys & KEY_ESC )
     {
@@ -3901,11 +3897,11 @@ static bool ui_updateFSM_PAGE_SETTINGS_DISPLAY( GuiState_st* guiState )
     {
         if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
         {
-            _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_DISPLAY ) );
+            _ui_menuUp( uiGetPageNumOf( guiState ) );
         }
         else if( guiState->msg.keys & ( KEY_DOWN | KNOB_RIGHT ) )
         {
-            _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_DISPLAY ) );
+            _ui_menuDown( uiGetPageNumOf( guiState ) );
         }
         else if( guiState->msg.keys & KEY_ENTER )
         {
@@ -3933,11 +3929,11 @@ static bool ui_updateFSM_PAGE_SETTINGS_GPS( GuiState_st* guiState )
     {
         if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
         {
-            _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_GPS ) );
+            _ui_menuUp( uiGetPageNumOf( guiState ) );
         }
         else if( guiState->msg.keys & ( KEY_DOWN | KNOB_RIGHT ) )
         {
-            _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_GPS ) );
+            _ui_menuDown( uiGetPageNumOf( guiState ) );
         }
         else if( guiState->msg.keys & KEY_ENTER )
         {
@@ -3965,11 +3961,11 @@ static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState )
     {
         if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
         {
-            _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_RADIO ) );
+            _ui_menuUp( uiGetPageNumOf( guiState ) );
         }
         else if( ( guiState->msg.keys & KEY_DOWN ) || ( guiState->msg.keys & KNOB_RIGHT ) )
         {
-            _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_RADIO ) );
+            _ui_menuDown( uiGetPageNumOf( guiState ) );
         }
         else if( guiState->msg.keys & KEY_ESC )
         {
@@ -3998,11 +3994,11 @@ static bool ui_updateFSM_PAGE_SETTINGS_M17( GuiState_st* guiState )
         }
         else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
         {
-            _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_M17 ) );
+            _ui_menuUp( uiGetPageNumOf( guiState ) );
         }
         else if( guiState->msg.keys & ( KEY_DOWN | KNOB_RIGHT ) )
         {
-            _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_M17 ) );
+            _ui_menuDown( uiGetPageNumOf( guiState ) );
         }
         else if( guiState->msg.keys & KEY_ESC )
         {
@@ -4027,11 +4023,11 @@ static bool ui_updateFSM_PAGE_SETTINGS_VOICE( GuiState_st* guiState )
     {
         if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
         {
-            _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_VOICE ) );
+            _ui_menuUp( uiGetPageNumOf( guiState ) );
         }
         else if( guiState->msg.keys & ( KEY_DOWN | KNOB_RIGHT ) )
         {
-            _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_VOICE ) );
+            _ui_menuDown( uiGetPageNumOf( guiState ) );
         }
         else if( guiState->msg.keys & KEY_ENTER )
         {
@@ -4097,7 +4093,7 @@ static bool ui_updateFSM_PAGE_ABOUT( GuiState_st* guiState )
     return false ;
 }
 
-static bool ui_updateFSM_PAGE_BLANK( GuiState_st* guiState )
+static bool ui_updateFSM_PAGE_STUBBED( GuiState_st* guiState )
 {
     (void)guiState ;
     return false ;
@@ -4468,11 +4464,11 @@ static bool ui_InputValue_DIRECTION( GuiState_st* guiState , bool* handled )
     }
     else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
     {
-        _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_RADIO ) );
+        _ui_menuUp( uiGetPageNumOf( guiState ) );
     }
     else if( ( guiState->msg.keys & KEY_DOWN ) || ( guiState->msg.keys & KNOB_RIGHT ) )
     {
-        _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_RADIO ) );
+        _ui_menuDown( uiGetPageNumOf( guiState ) );
     }
     else if( guiState->msg.keys & KEY_ENTER )
     {
@@ -4525,11 +4521,11 @@ static bool ui_InputValue_STEP( GuiState_st* guiState , bool* handled )
     }
     else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
     {
-        _ui_menuUp( uiGetPageNumOf( PAGE_SETTINGS_RADIO ) );
+        _ui_menuUp( uiGetPageNumOf( guiState ) );
     }
     else if( ( guiState->msg.keys & KEY_DOWN ) || ( guiState->msg.keys & KNOB_RIGHT ) )
     {
-        _ui_menuDown( uiGetPageNumOf( PAGE_SETTINGS_RADIO ) );
+        _ui_menuDown( uiGetPageNumOf( guiState ) );
     }
     else if( guiState->msg.keys & KEY_ENTER )
     {

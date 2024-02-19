@@ -44,26 +44,28 @@ extern void _ui_drawMainBottom( GuiState_st* guiState , Event_st* event );
 
 void ui_drawMenuItem( GuiState_st* guiState , char* entryBuf );
 
-int _ui_getMenuTopEntryName( char* buf , uint8_t max_len , uint8_t index );
-int _ui_getBankName( char* buf , uint8_t max_len , uint8_t index );
-int _ui_getChannelName( char* buf , uint8_t max_len , uint8_t index );
-int _ui_getContactName( char* buf , uint8_t max_len , uint8_t index );
-int _ui_getSettingsEntryName( char* buf , uint8_t max_len , uint8_t index );
-int _ui_getBackupRestoreEntryName( char* buf , uint8_t max_len , uint8_t index );
+int _ui_getMenuTopEntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index );
+int _ui_getBankName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index );
+int _ui_getChannelName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index );
+int _ui_getContactName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index );
+int _ui_getSettingsEntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index );
+int _ui_getBackupRestoreEntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index );
 
-int _ui_getInfoEntryName( char* buf , uint8_t max_len , uint8_t index );
-int _ui_getDisplayEntryName( char* buf , uint8_t max_len , uint8_t index );
-int _ui_getSettingsGPSEntryName( char* buf , uint8_t max_len , uint8_t index );
-int _ui_getM17EntryName( char* buf , uint8_t max_len , uint8_t index );
-int _ui_getVoiceEntryName( char* buf , uint8_t max_len , uint8_t index );
-int _ui_getRadioEntryName( char* buf , uint8_t max_len , uint8_t index );
+int _ui_getInfoEntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index );
+int _ui_getDisplayEntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index );
+int _ui_getSettingsGPSEntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index );
+int _ui_getM17EntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index );
+int _ui_getVoiceEntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index );
+int _ui_getRadioEntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index );
 
-int _ui_getInfoValueName( char* buf , uint8_t max_len , uint8_t index );
-int _ui_getDisplayValueName( char* buf , uint8_t max_len , uint8_t index );
-int _ui_getSettingsGPSValueName( char* buf , uint8_t max_len , uint8_t index );
-int _ui_getM17ValueName( char* buf , uint8_t max_len , uint8_t index );
-int _ui_getVoiceValueName( char* buf , uint8_t max_len , uint8_t index );
-int _ui_getRadioValueName( char* buf , uint8_t max_len , uint8_t index );
+int _ui_getInfoValueName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index );
+int _ui_getDisplayValueName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index );
+int _ui_getSettingsGPSValueName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index );
+int _ui_getM17ValueName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index );
+int _ui_getVoiceValueName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index );
+int _ui_getRadioValueName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index );
+
+int _ui_getStubbedName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index );
 
 static char     priorSelectedMenuName[ MAX_ENTRY_LEN ]  = "\0" ;
 static char     priorSelectedMenuValue[ MAX_ENTRY_LEN ] = "\0" ;
@@ -198,23 +200,38 @@ static void announceMenuItemIfNeeded( char* name , char* value , bool editMode )
     vp_play();
 }
 
-static const GetMenuList_fn GetEntryName_table[ ENTRY_NAME_NUM_OF ] =
+static const GetMenuList_fn GetEntryName_table[ PAGE_NUM_OF ] =
 {
-    _ui_getMenuTopEntryName       ,
-    _ui_getBankName               ,
-    _ui_getChannelName            ,
-    _ui_getContactName            ,
-    _ui_getSettingsEntryName      ,
-    _ui_getBackupRestoreEntryName ,
-    _ui_getInfoEntryName          ,
-    _ui_getDisplayEntryName       ,
-    _ui_getSettingsGPSEntryName   ,
-    _ui_getM17EntryName           ,
-    _ui_getVoiceEntryName         ,
-    _ui_getRadioEntryName
+    _ui_getStubbedName            , // PAGE_MAIN_VFO
+    _ui_getStubbedName            , // PAGE_MAIN_VFO_INPUT
+    _ui_getStubbedName            , // PAGE_MAIN_MEM
+    _ui_getStubbedName            , // PAGE_MODE_VFO
+    _ui_getStubbedName            , // PAGE_MODE_MEM
+    _ui_getMenuTopEntryName       , // PAGE_MENU_TOP
+    _ui_getBankName               , // PAGE_MENU_BANK
+    _ui_getChannelName            , // PAGE_MENU_CHANNEL
+    _ui_getContactName            , // PAGE_MENU_CONTACTS
+    _ui_getStubbedName            , // PAGE_MENU_GPS
+    _ui_getSettingsEntryName      , // PAGE_MENU_SETTINGS
+    _ui_getBackupRestoreEntryName , // PAGE_MENU_BACKUP_RESTORE
+    _ui_getStubbedName            , // PAGE_MENU_BACKUP
+    _ui_getStubbedName            , // PAGE_MENU_RESTORE
+    _ui_getInfoEntryName          , // PAGE_MENU_INFO
+    _ui_getStubbedName            , // PAGE_MENU_ABOUT
+    _ui_getStubbedName            , // PAGE_SETTINGS_TIMEDATE
+    _ui_getStubbedName            , // PAGE_SETTINGS_TIMEDATE_SET
+    _ui_getDisplayEntryName       , // PAGE_SETTINGS_DISPLAY
+    _ui_getSettingsGPSEntryName   , // PAGE_SETTINGS_GPS
+    _ui_getRadioEntryName         , // PAGE_SETTINGS_RADIO
+    _ui_getM17EntryName           , // PAGE_SETTINGS_M17
+    _ui_getVoiceEntryName         , // PAGE_SETTINGS_VOICE
+    _ui_getStubbedName            , // PAGE_SETTINGS_RESET_TO_DEFAULTS
+    _ui_getStubbedName            , // PAGE_LOW_BAT
+    _ui_getStubbedName            , // PAGE_ABOUT
+    _ui_getStubbedName            , // PAGE_STUBBED
 };
 
-void _ui_drawMenuList( GuiState_st* guiState , EntryName_en currentEntry )
+void _ui_drawMenuList( GuiState_st* guiState , uiPageNum_en currentEntry )
 {
     char entryBuf[ MAX_ENTRY_LEN ] = "" ;
     int  result ;
@@ -239,7 +256,8 @@ void _ui_drawMenuList( GuiState_st* guiState , EntryName_en currentEntry )
         GetMenuList_fn getCurrentEntry = GetEntryName_table[ currentEntry ];
 
         // Call function pointer to get current menu entry string
-        result = (*getCurrentEntry)( entryBuf , sizeof( entryBuf ) ,
+        result = (*getCurrentEntry)( guiState ,
+                                     entryBuf , sizeof( entryBuf ) ,
                                      guiState->layout.linkIndex +
                                      guiState->layout.scrollOffset );
 
@@ -274,18 +292,39 @@ void ui_drawMenuItem( GuiState_st* guiState , char* entryBuf )
 
 }
 
-static const GetMenuList_fn GetEntryValue_table[ ENTRY_VALUE_NUM_OF ] =
+static const GetMenuList_fn GetEntryValue_table[ PAGE_NUM_OF ] =
 {
-    _ui_getInfoValueName        ,
-    _ui_getDisplayValueName     ,
-    _ui_getSettingsGPSValueName ,
-    _ui_getM17ValueName         ,
-    _ui_getVoiceValueName       ,
-    _ui_getRadioValueName
+    _ui_getStubbedName          , // PAGE_MAIN_VFO
+    _ui_getStubbedName          , // PAGE_MAIN_VFO_INPUT
+    _ui_getStubbedName          , // PAGE_MAIN_MEM
+    _ui_getStubbedName          , // PAGE_MODE_VFO
+    _ui_getStubbedName          , // PAGE_MODE_MEM
+    _ui_getStubbedName          , // PAGE_MENU_TOP
+    _ui_getStubbedName          , // PAGE_MENU_BANK
+    _ui_getStubbedName          , // PAGE_MENU_CHANNEL
+    _ui_getStubbedName          , // PAGE_MENU_CONTACTS
+    _ui_getStubbedName          , // PAGE_MENU_GPS
+    _ui_getStubbedName          , // PAGE_MENU_SETTINGS
+    _ui_getStubbedName          , // PAGE_MENU_BACKUP_RESTORE
+    _ui_getStubbedName          , // PAGE_MENU_BACKUP
+    _ui_getStubbedName          , // PAGE_MENU_RESTORE
+    _ui_getInfoValueName        , // PAGE_MENU_INFO
+    _ui_getStubbedName          , // PAGE_MENU_ABOUT
+    _ui_getStubbedName          , // PAGE_SETTINGS_TIMEDATE
+    _ui_getStubbedName          , // PAGE_SETTINGS_TIMEDATE_SET
+    _ui_getDisplayValueName     , // PAGE_SETTINGS_DISPLAY
+    _ui_getSettingsGPSValueName , // PAGE_SETTINGS_GPS
+    _ui_getRadioValueName       , // PAGE_SETTINGS_RADIO
+    _ui_getM17ValueName         , // PAGE_SETTINGS_M17
+    _ui_getVoiceValueName       , // PAGE_SETTINGS_VOICE
+    _ui_getStubbedName          , // PAGE_SETTINGS_RESET_TO_DEFAULTS
+    _ui_getStubbedName          , // PAGE_LOW_BAT
+    _ui_getStubbedName          , // PAGE_ABOUT
+    _ui_getStubbedName            // PAGE_STUBBED
 };
 
 void _ui_drawMenuListValue( GuiState_st* guiState ,
-                            EntryName_en currentEntry , EntryValue_en currentEntryValue )
+                            uiPageNum_en currentEntry , uiPageNum_en currentEntryValue )
 {
     // Number of menu entries that fit in the screen height
     uint8_t numOfEntries ;
@@ -315,9 +354,9 @@ void _ui_drawMenuListValue( GuiState_st* guiState ,
             scroll = ( guiState->uiState.menu_selected - numOfEntries ) + 1 ; //@@@KL check this
         }
         // Call function pointer to get current menu entry string
-        result = (*getCurrentEntry)( entry_buf , sizeof( entry_buf ) , item+scroll );
+        result = (*getCurrentEntry)( guiState , entry_buf , sizeof( entry_buf ) , item + scroll );
         // Call function pointer to get current entry value string
-        result = (*getCurrentValue)( value_buf , sizeof( value_buf ) , item+scroll );
+        result = (*getCurrentValue)( guiState , value_buf , sizeof( value_buf ) , item + scroll );
         if( result != -1 )
         {
             text_color = color_fg;
@@ -356,9 +395,9 @@ void _ui_drawMenuListValue( GuiState_st* guiState ,
     }
 }
 
-int _ui_getMenuTopEntryName( char* buf , uint8_t max_len , uint8_t index )
+int _ui_getMenuTopEntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >=  uiGetPageNumOf( PAGE_MENU_TOP ) )
+    if( index >=  uiGetPageNumOf( guiState ) )
     {
         return -1;
     }
@@ -367,9 +406,9 @@ int _ui_getMenuTopEntryName( char* buf , uint8_t max_len , uint8_t index )
     return 0;
 }
 
-int _ui_getSettingsEntryName( char* buf , uint8_t max_len , uint8_t index )
+int _ui_getSettingsEntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >= uiGetPageNumOf( PAGE_MENU_SETTINGS ) )
+    if( index >= uiGetPageNumOf( guiState ) )
     {
         return -1;
     }
@@ -378,9 +417,9 @@ int _ui_getSettingsEntryName( char* buf , uint8_t max_len , uint8_t index )
     return 0;
 }
 
-int _ui_getDisplayEntryName( char* buf , uint8_t max_len , uint8_t index )
+int _ui_getDisplayEntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >= uiGetPageNumOf( PAGE_SETTINGS_DISPLAY ) )
+    if( index >= uiGetPageNumOf( guiState ) )
     {
         return -1;
     }
@@ -389,9 +428,9 @@ int _ui_getDisplayEntryName( char* buf , uint8_t max_len , uint8_t index )
     return 0;
 }
 
-int _ui_getDisplayValueName( char* buf , uint8_t max_len , uint8_t index )
+int _ui_getDisplayValueName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >= uiGetPageNumOf( PAGE_SETTINGS_DISPLAY ) )
+    if( index >= uiGetPageNumOf( guiState ) )
     {
         return -1;
     }
@@ -423,9 +462,9 @@ int _ui_getDisplayValueName( char* buf , uint8_t max_len , uint8_t index )
 }
 
 #ifdef GPS_PRESENT
-int _ui_getSettingsGPSEntryName( char* buf , uint8_t max_len , uint8_t index )
+int _ui_getSettingsGPSEntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >= uiGetPageNumOf( PAGE_SETTINGS_GPS ) )
+    if( index >= uiGetPageNumOf( guiState ) )
     {
         return -1 ;
     }
@@ -434,9 +473,9 @@ int _ui_getSettingsGPSEntryName( char* buf , uint8_t max_len , uint8_t index )
     return 0 ;
 }
 
-int _ui_getSettingsGPSValueName( char* buf , uint8_t max_len , uint8_t index )
+int _ui_getSettingsGPSValueName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >= uiGetPageNumOf( PAGE_SETTINGS_GPS ) )
+    if( index >= uiGetPageNumOf( guiState ) )
     {
         return -1 ;
     }
@@ -479,9 +518,9 @@ int _ui_getSettingsGPSValueName( char* buf , uint8_t max_len , uint8_t index )
 }
 #endif
 
-int _ui_getRadioEntryName( char* buf , uint8_t max_len , uint8_t index )
+int _ui_getRadioEntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >= uiGetPageNumOf( PAGE_SETTINGS_RADIO ) )
+    if( index >= uiGetPageNumOf( guiState ) )
     {
         return -1 ;
     }
@@ -490,9 +529,9 @@ int _ui_getRadioEntryName( char* buf , uint8_t max_len , uint8_t index )
     return 0 ;
 }
 
-int _ui_getRadioValueName( char* buf , uint8_t max_len , uint8_t index )
+int _ui_getRadioValueName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >= uiGetPageNumOf( PAGE_SETTINGS_RADIO ) )
+    if( index >= uiGetPageNumOf( guiState ) )
     {
         return -1;
     }
@@ -530,9 +569,9 @@ int _ui_getRadioValueName( char* buf , uint8_t max_len , uint8_t index )
     return 0;
 }
 
-int _ui_getM17EntryName( char* buf , uint8_t max_len , uint8_t index )
+int _ui_getM17EntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >= uiGetPageNumOf( PAGE_SETTINGS_M17 ) )
+    if( index >= uiGetPageNumOf( guiState ) )
     {
        return -1 ;
     }
@@ -541,9 +580,9 @@ int _ui_getM17EntryName( char* buf , uint8_t max_len , uint8_t index )
     return 0;
 }
 
-int _ui_getM17ValueName( char* buf , uint8_t max_len , uint8_t index )
+int _ui_getM17ValueName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >= uiGetPageNumOf( PAGE_SETTINGS_M17 ) )
+    if( index >= uiGetPageNumOf( guiState ) )
     {
         return -1;
     }
@@ -570,9 +609,9 @@ int _ui_getM17ValueName( char* buf , uint8_t max_len , uint8_t index )
     return 0;
 }
 
-int _ui_getVoiceEntryName( char* buf , uint8_t max_len , uint8_t index )
+int _ui_getVoiceEntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >= uiGetPageNumOf( PAGE_SETTINGS_VOICE ) )
+    if( index >= uiGetPageNumOf( guiState ) )
     {
         return -1 ;
     }
@@ -581,9 +620,9 @@ int _ui_getVoiceEntryName( char* buf , uint8_t max_len , uint8_t index )
     return 0 ;
 }
 
-int _ui_getVoiceValueName( char* buf , uint8_t max_len , uint8_t index )
+int _ui_getVoiceValueName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >= uiGetPageNumOf( PAGE_SETTINGS_VOICE ) )
+    if( index >= uiGetPageNumOf( guiState ) )
     {
         return -1 ;
     }
@@ -622,9 +661,9 @@ int _ui_getVoiceValueName( char* buf , uint8_t max_len , uint8_t index )
     return 0;
 }
 
-int _ui_getBackupRestoreEntryName( char* buf , uint8_t max_len , uint8_t index )
+int _ui_getBackupRestoreEntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >= uiGetPageNumOf( PAGE_MENU_BACKUP_RESTORE ) )
+    if( index >= uiGetPageNumOf( guiState ) )
     {
         return -1;
     }
@@ -633,9 +672,9 @@ int _ui_getBackupRestoreEntryName( char* buf , uint8_t max_len , uint8_t index )
     return 0;
 }
 
-int _ui_getInfoEntryName( char* buf , uint8_t max_len , uint8_t index )
+int _ui_getInfoEntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >= uiGetPageNumOf( PAGE_MENU_INFO ) )
+    if( index >= uiGetPageNumOf( guiState ) )
     {
         return -1;
     }
@@ -644,10 +683,10 @@ int _ui_getInfoEntryName( char* buf , uint8_t max_len , uint8_t index )
     return 0;
 }
 
-int _ui_getInfoValueName( char* buf , uint8_t max_len , uint8_t index )
+int _ui_getInfoValueName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
     const hwInfo_t* hwinfo = platform_getHwInfo();
-    if( index >= uiGetPageNumOf( PAGE_MENU_INFO ) )
+    if( index >= uiGetPageNumOf( guiState ) )
     {
        return -1;
     }
@@ -724,8 +763,9 @@ int _ui_getInfoValueName( char* buf , uint8_t max_len , uint8_t index )
     return 0;
 }
 
-int _ui_getBankName( char* buf , uint8_t max_len , uint8_t index )
+int _ui_getBankName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
+    (void)guiState ;
     int result = 0 ;
     // First bank "All channels" is not read from flash
     if( index == 0 )
@@ -744,8 +784,9 @@ int _ui_getBankName( char* buf , uint8_t max_len , uint8_t index )
     return result;
 }
 
-int _ui_getChannelName( char* buf , uint8_t max_len , uint8_t index )
+int _ui_getChannelName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
+    (void)guiState ;
     channel_t channel ;
     int       result = cps_readChannel( &channel , index );
 
@@ -757,8 +798,9 @@ int _ui_getChannelName( char* buf , uint8_t max_len , uint8_t index )
     return result ;
 }
 
-int _ui_getContactName( char* buf , uint8_t max_len , uint8_t index )
+int _ui_getContactName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
+    (void)guiState ;
     contact_t contact ;
     int       result = cps_readContact( &contact , index );
 
@@ -768,6 +810,17 @@ int _ui_getContactName( char* buf , uint8_t max_len , uint8_t index )
     }
 
     return result ;
+}
+
+int _ui_getStubbedName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
+{
+    (void)guiState ;
+    (void)buf ;
+    (void)max_len ;
+    (void)index ;
+
+    return 0 ;
+
 }
 
 void _ui_drawMenuTop( GuiState_st* guiState )
@@ -780,7 +833,7 @@ void _ui_drawMenuTop( GuiState_st* guiState )
     gfx_print( guiState->layout.lineStyle[ GUI_LINE_TOP ].pos , guiState->layout.lineStyle[ GUI_LINE_TOP ].font.size , ALIGN_CENTER ,
                color_fg , currentLanguage->menu );
     // Print menu entries
-    _ui_drawMenuList( guiState , ENTRY_NAME_MENU_TOP );
+    _ui_drawMenuList( guiState , PAGE_MENU_TOP );
 }
 
 void _ui_drawMenuBank( GuiState_st* guiState )
@@ -793,7 +846,7 @@ void _ui_drawMenuBank( GuiState_st* guiState )
     gfx_print( guiState->layout.lineStyle[ GUI_LINE_TOP ].pos , guiState->layout.lineStyle[ GUI_LINE_TOP ].font.size , ALIGN_CENTER ,
                color_fg , currentLanguage->banks );
     // Print bank entries
-    _ui_drawMenuList( guiState , ENTRY_NAME_BANK_NAME );
+    _ui_drawMenuList( guiState , PAGE_MENU_BANK );
 }
 
 void _ui_drawMenuChannel( GuiState_st* guiState )
@@ -806,7 +859,7 @@ void _ui_drawMenuChannel( GuiState_st* guiState )
     gfx_print( guiState->layout.lineStyle[ GUI_LINE_TOP ].pos , guiState->layout.lineStyle[ GUI_LINE_TOP ].font.size , ALIGN_CENTER ,
                color_fg , currentLanguage->channels );
     // Print channel entries
-    _ui_drawMenuList( guiState , ENTRY_NAME_CHANNEL_NAME );
+    _ui_drawMenuList( guiState , PAGE_MENU_CHANNEL );
 }
 
 void _ui_drawMenuContacts( GuiState_st* guiState )
@@ -819,7 +872,7 @@ void _ui_drawMenuContacts( GuiState_st* guiState )
     gfx_print( guiState->layout.lineStyle[ GUI_LINE_TOP ].pos , guiState->layout.lineStyle[ GUI_LINE_TOP ].font.size , ALIGN_CENTER ,
                color_fg , currentLanguage->contacts );
     // Print contact entries
-    _ui_drawMenuList( guiState , ENTRY_NAME_CONTACT_NAME );
+    _ui_drawMenuList( guiState , PAGE_MENU_CONTACTS );
 }
 
 #ifdef GPS_PRESENT
@@ -947,7 +1000,7 @@ void _ui_drawMenuSettings( GuiState_st* guiState , Event_st* event )
     gfx_print( guiState->layout.lineStyle[ GUI_LINE_TOP ].pos , guiState->layout.lineStyle[ GUI_LINE_TOP ].font.size , ALIGN_CENTER ,
                color_fg , currentLanguage->settings );
     // Print menu entries
-    _ui_drawMenuList( guiState , ENTRY_NAME_SETTINGS );
+    _ui_drawMenuList( guiState , PAGE_MENU_SETTINGS );
 }
 
 void _ui_drawMenuBackupRestore( GuiState_st* guiState , Event_st* event )
@@ -961,7 +1014,7 @@ void _ui_drawMenuBackupRestore( GuiState_st* guiState , Event_st* event )
     gfx_print( guiState->layout.lineStyle[ GUI_LINE_TOP ].pos , guiState->layout.lineStyle[ GUI_LINE_TOP ].font.size , ALIGN_CENTER ,
                color_fg , currentLanguage->backupAndRestore );
     // Print menu entries
-    _ui_drawMenuList( guiState , ENTRY_NAME_BACKUP_RESTORE );
+    _ui_drawMenuList( guiState , PAGE_MENU_BACKUP_RESTORE );
 }
 
 void _ui_drawMenuBackup( GuiState_st* guiState , Event_st* event )
@@ -1036,7 +1089,7 @@ void _ui_drawMenuInfo( GuiState_st* guiState , Event_st* event )
                color_fg , currentLanguage->info );
     // Print menu entries
     _ui_drawMenuListValue( guiState ,
-                           ENTRY_NAME_INFO , ENTRY_VALUE_INFO );
+                           PAGE_MENU_INFO , PAGE_MENU_INFO );
 }
 
 void _ui_drawMenuAbout( GuiState_st* guiState )
@@ -1069,9 +1122,9 @@ void _ui_drawMenuAbout( GuiState_st* guiState )
     uint8_t line_h = guiState->layout.menu_h ;
 //@@@KL check this
     Pos_st pos    = { SCREEN_WIDTH / 7 , SCREEN_HEIGHT -
-                       (line_h * ( uiGetPageNumOf( PAGE_ABOUT ) - 1 ) ) - 5 };
+                       (line_h * ( uiGetPageNumOf( guiState ) - 1 ) ) - 5 };
 //@@@KL and this - looks like dangerous code
-    for( int author = 0 ; author < uiGetPageNumOf( PAGE_ABOUT ) ; author++ )
+    for( int author = 0 ; author < uiGetPageNumOf( guiState ) ; author++ )
     {
         gfx_print( pos , guiState->layout.lineStyle[ GUI_LINE_TOP ].font.size , ALIGN_LEFT ,
                    color_fg , "%s" , *( &currentLanguage->Niccolo + author ) );
@@ -1092,7 +1145,7 @@ void _ui_drawSettingsDisplay( GuiState_st* guiState , Event_st* event )
                color_fg , currentLanguage->display );
     // Print display settings entries
     _ui_drawMenuListValue( guiState ,
-                           ENTRY_NAME_DISPLAY , ENTRY_VALUE_DISPLAY );
+                           PAGE_SETTINGS_DISPLAY , PAGE_SETTINGS_DISPLAY );
 }
 
 #ifdef GPS_PRESENT
@@ -1108,7 +1161,7 @@ void _ui_drawSettingsGPS( GuiState_st* guiState , Event_st* event )
                color_fg , currentLanguage->gpsSettings );
     // Print display settings entries
     _ui_drawMenuListValue( guiState ,
-                           ENTRY_NAME_SETTINGS_GPS , ENTRY_VALUE_SETTINGS_GPS );
+                           PAGE_SETTINGS_GPS , PAGE_SETTINGS_GPS );
 }
 #endif
 
@@ -1205,7 +1258,7 @@ void _ui_drawSettingsM17( GuiState_st* guiState , Event_st* event )
     else
     {
         _ui_drawMenuListValue( guiState ,
-                               ENTRY_NAME_M17 , ENTRY_VALUE_M17 );
+                               PAGE_SETTINGS_M17 , PAGE_SETTINGS_M17 );
     }
 }
 
@@ -1221,7 +1274,7 @@ void _ui_drawSettingsVoicePrompts( GuiState_st* guiState , Event_st* event )
                color_fg , currentLanguage->voice );
     // Print voice settings entries
     _ui_drawMenuListValue( guiState ,
-                           ENTRY_NAME_VOICE , ENTRY_VALUE_VOICE );
+                           PAGE_SETTINGS_VOICE , PAGE_SETTINGS_VOICE );
 }
 
 void _ui_drawSettingsReset2Defaults( GuiState_st* guiState , Event_st* event )
@@ -1306,7 +1359,7 @@ void _ui_drawSettingsRadio( GuiState_st* guiState , Event_st* event )
     {
         // Print radio settings entries
         _ui_drawMenuListValue( guiState ,
-                               ENTRY_NAME_RADIO , ENTRY_VALUE_RADIO );
+                               PAGE_SETTINGS_RADIO , PAGE_SETTINGS_RADIO );
     }
 }
 

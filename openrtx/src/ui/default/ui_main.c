@@ -94,7 +94,7 @@ static const ui_draw_fn uiPageDescTable[ PAGE_NUM_OF ] =
     _ui_drawSettingsReset2Defaults , // PAGE_SETTINGS_RESET_TO_DEFAULTS
     ui_drawLowBatteryScreen        , // PAGE_LOW_BAT
     ui_drawAuthors                 , // PAGE_ABOUT
-    ui_drawBlank                     // PAGE_BLANK
+    ui_drawBlank                     // PAGE_STUBBED
 };
 
 void ui_draw( GuiState_st* guiState , State_st* state , Event_st* event )
@@ -105,7 +105,7 @@ void ui_draw( GuiState_st* guiState , State_st* state , Event_st* event )
 
     if( pgNum >= PAGE_NUM_OF )
     {
-        pgNum = PAGE_BLANK ;
+        pgNum = PAGE_STUBBED ;
     }
 
     if( state->ui_prevScreen != pgNum )
@@ -116,7 +116,7 @@ void ui_draw( GuiState_st* guiState , State_st* state , Event_st* event )
 
     if( pgNum >= PAGE_NUM_OF )
     {
-        pgNum = PAGE_BLANK ;
+        pgNum = PAGE_STUBBED ;
     }
 
     // attempt to display the page as a scripted page

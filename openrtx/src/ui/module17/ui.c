@@ -86,7 +86,7 @@ const char *Page_MenuSettings[] =
     "Default Settings"
 };
 
-const char *Page_SettingsDisplay[] =
+const char *PAGE_MENU_SETTINGSDisplay[] =
 {
 #ifdef SCREEN_CONTRAST
     "Contrast",
@@ -111,7 +111,7 @@ const char *module17_items[] =
 };
 
 #ifdef GPS_PRESENT
-const char *Page_SettingsGPS[] =
+const char *PAGE_MENU_SETTINGSGPS[] =
 {
     "GPS Enabled",
     "GPS Set Time",
@@ -171,9 +171,9 @@ static const char symbols_callsign[] = "_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890/- 
 // Calculate number of menu entries
 const uint8_t menu_num = sizeof(Page_MenuItems)/sizeof(Page_MenuItems[0]);
 const uint8_t settings_num = sizeof(Page_MenuSettings)/sizeof(Page_MenuSettings[0]);
-const uint8_t display_num = sizeof(Page_SettingsDisplay)/sizeof(Page_SettingsDisplay[0]);
+const uint8_t display_num = sizeof(PAGE_MENU_SETTINGSDisplay)/sizeof(PAGE_MENU_SETTINGSDisplay[0]);
 #ifdef GPS_PRESENT
-const uint8_t settings_gps_num = sizeof(Page_SettingsGPS)/sizeof(Page_SettingsGPS[0]);
+const uint8_t settings_gps_num = sizeof(PAGE_MENU_SETTINGSGPS)/sizeof(PAGE_MENU_SETTINGSGPS[0]);
 #endif
 const uint8_t m17_num = sizeof(m17_items)/sizeof(m17_items[0]);
 const uint8_t module17_num = sizeof(module17_items)/sizeof(module17_items[0]);

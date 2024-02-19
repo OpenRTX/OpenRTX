@@ -68,7 +68,7 @@ typedef enum
     PAGE_SETTINGS_RESET_TO_DEFAULTS ,
     PAGE_LOW_BAT                    ,
     PAGE_ABOUT                      ,
-    PAGE_BLANK                      ,
+    PAGE_STUBBED                    ,
     PAGE_NUM_OF
 }uiPageNum_en;
 
@@ -416,36 +416,8 @@ extern void uiColorLoad( Color_st* color , ColorSelector_en colorSelector );
 
 extern const uiPageDesc_st* uiGetPageDesc( uiPageNum_en pageNum );
 extern const char**         uiGetPageLoc( uiPageNum_en pageNum );
-extern uint8_t              uiGetPageNumOf( uiPageNum_en pageNum );
+extern uint8_t              uiGetPageNumOf( GuiState_st* guiState );
 
-typedef int (*GetMenuList_fn)( char* buf , uint8_t max_len , uint8_t index );
-
-typedef enum
-{
-    ENTRY_NAME_MENU_TOP       ,
-    ENTRY_NAME_BANK_NAME      ,
-    ENTRY_NAME_CHANNEL_NAME   ,
-    ENTRY_NAME_CONTACT_NAME   ,
-    ENTRY_NAME_SETTINGS       ,
-    ENTRY_NAME_BACKUP_RESTORE ,
-    ENTRY_NAME_INFO           ,
-    ENTRY_NAME_DISPLAY        ,
-    ENTRY_NAME_SETTINGS_GPS   ,
-    ENTRY_NAME_M17            ,
-    ENTRY_NAME_VOICE          ,
-    ENTRY_NAME_RADIO          ,
-    ENTRY_NAME_NUM_OF
-}EntryName_en;
-
-typedef enum
-{
-    ENTRY_VALUE_INFO         ,
-    ENTRY_VALUE_DISPLAY      ,
-    ENTRY_VALUE_SETTINGS_GPS ,
-    ENTRY_VALUE_M17          ,
-    ENTRY_VALUE_VOICE        ,
-    ENTRY_VALUE_RADIO        ,
-    ENTRY_VALUE_NUM_OF
-}EntryValue_en;
+typedef int (*GetMenuList_fn)( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index );
 
 #endif /* UI_DEFAULT_H */
