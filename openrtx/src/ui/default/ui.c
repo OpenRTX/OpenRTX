@@ -307,17 +307,17 @@ static const uint8_t Page_MenuAbout[] =
     GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
 };
 
-static const uint8_t PAGE_MENU_SETTINGSTimeDate[] =
+static const uint8_t Page_SettingsTimeDate[] =
 {
     GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
 };
 
-static const uint8_t PAGE_MENU_SETTINGSTimeDateSet[] =
+static const uint8_t Page_SettingsTimeDateSet[] =
 {
     GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
 };
 
-static const uint8_t PAGE_MENU_SETTINGSDisplay[] =
+static const uint8_t Page_SettingsDisplay[] =
 {
     GUI_CMD_LINE_STYLE , ST_VAL( GUI_LINE_TOP ) ,
     GUI_CMD_ALIGN_CENTER ,
@@ -352,7 +352,7 @@ static const uint8_t PAGE_MENU_SETTINGSDisplay[] =
 };
 
 #ifdef GPS_PRESENT
-static const uint8_t PAGE_MENU_SETTINGSGPS[] =
+static const uint8_t Page_SettingsGPS[] =
 {
     GUI_CMD_LINE_STYLE , ST_VAL( GUI_LINE_TOP ) ,
     GUI_CMD_ALIGN_CENTER ,
@@ -376,7 +376,7 @@ static const uint8_t PAGE_MENU_SETTINGSGPS[] =
 
 #endif // GPS_PRESENT
 
-static const uint8_t PAGE_MENU_SETTINGSRadio[] =
+static const uint8_t Page_SettingsRadio[] =
 {
     GUI_CMD_LINE_STYLE , ST_VAL( GUI_LINE_TOP ) ,
     GUI_CMD_ALIGN_CENTER ,
@@ -397,7 +397,7 @@ static const uint8_t PAGE_MENU_SETTINGSRadio[] =
     GUI_CMD_PAGE_END
 };
 
-static const uint8_t PAGE_MENU_SETTINGSM17[] =
+static const uint8_t Page_SettingsM17[] =
 {
     GUI_CMD_LINE_STYLE , ST_VAL( GUI_LINE_TOP ) ,
     GUI_CMD_ALIGN_CENTER ,
@@ -418,7 +418,7 @@ static const uint8_t PAGE_MENU_SETTINGSM17[] =
     GUI_CMD_PAGE_END
 };
 
-static const uint8_t PAGE_MENU_SETTINGSVoice[] =
+static const uint8_t Page_SettingsVoice[] =
 {
     GUI_CMD_LINE_STYLE , ST_VAL( GUI_LINE_TOP ) ,
     GUI_CMD_ALIGN_CENTER ,
@@ -502,7 +502,7 @@ static const uint8_t Page_MenuInfo[] =
     GUI_CMD_PAGE_END
 };
 
-static const uint8_t PAGE_MENU_SETTINGSResetToDefaults[] =
+static const uint8_t Page_SettingsResetToDefaults[] =
 {
     GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
 };
@@ -574,16 +574,16 @@ static const uint8_t* uiPageTable[] =
     PAGE_REF( Page_MenuRestore             ) , // PAGE_MENU_RESTORE
     PAGE_REF( Page_MenuInfo                ) , // PAGE_MENU_INFO
     PAGE_REF( Page_MenuAbout               ) , // PAGE_MENU_ABOUT
-    PAGE_REF( PAGE_MENU_SETTINGSTimeDate        ) , // PAGE_SETTINGS_TIMEDATE
-    PAGE_REF( PAGE_MENU_SETTINGSTimeDateSet     ) , // PAGE_SETTINGS_TIMEDATE_SET
-    PAGE_REF( PAGE_MENU_SETTINGSDisplay         ) , // PAGE_SETTINGS_DISPLAY
+    PAGE_REF( Page_SettingsTimeDate        ) , // PAGE_SETTINGS_TIMEDATE
+    PAGE_REF( Page_SettingsTimeDateSet     ) , // PAGE_SETTINGS_TIMEDATE_SET
+    PAGE_REF( Page_SettingsDisplay         ) , // PAGE_SETTINGS_DISPLAY
 #ifdef GPS_PRESENT
-    PAGE_REF( PAGE_MENU_SETTINGSGPS             ) , // PAGE_SETTINGS_GPS
+    PAGE_REF( Page_SettingsGPS             ) , // PAGE_SETTINGS_GPS
 #endif // GPS_PRESENT
-    PAGE_REF( PAGE_MENU_SETTINGSRadio           ) , // PAGE_SETTINGS_RADIO
-    PAGE_REF( PAGE_MENU_SETTINGSM17             ) , // PAGE_SETTINGS_M17
-    PAGE_REF( PAGE_MENU_SETTINGSVoice           ) , // PAGE_SETTINGS_VOICE
-    PAGE_REF( PAGE_MENU_SETTINGSResetToDefaults ) , // PAGE_SETTINGS_RESET_TO_DEFAULTS
+    PAGE_REF( Page_SettingsRadio           ) , // PAGE_SETTINGS_RADIO
+    PAGE_REF( Page_SettingsM17             ) , // PAGE_SETTINGS_M17
+    PAGE_REF( Page_SettingsVoice           ) , // PAGE_SETTINGS_VOICE
+    PAGE_REF( Page_SettingsResetToDefaults ) , // PAGE_SETTINGS_RESET_TO_DEFAULTS
     PAGE_REF( Page_LowBat                  ) , // PAGE_LOW_BAT
     PAGE_REF( Page_About                   ) , // PAGE_ABOUT
     PAGE_REF( Page_Stubbed                 )   // PAGE_STUBBED
