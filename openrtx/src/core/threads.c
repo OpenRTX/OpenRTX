@@ -43,6 +43,8 @@
 #include <pmu.h>
 #endif
 
+extern bool ui_popEvent( Event_st* event );
+
 /* Mutex for concurrent access to RTX state variable */
 pthread_mutex_t rtx_mutex;
 
@@ -56,13 +58,17 @@ void* ui_threadFunc(void *arg)
 
     kbd_msg_t   kbd_msg ;
     rtxStatus_t rtx_cfg      = { 0 } ;
+    Event_st    event ;
     bool        handleEvent  = false ;
     bool        sync_rtx     = true ;
     long long   time         = 0 ;
 
+    event.type    = EVENT_NONE ;
+    event.payload = 0 ;
+
     // Load initial state and update the UI
     ui_saveState();
-    ui_updateGUI();
+    ui_updateGUI( &event );
 
     // Keep the splash screen for one second  before rendering the new UI screen
     sleepFor( 1u , 0u );
@@ -75,19 +81,6 @@ void* ui_threadFunc(void *arg)
         if( input_scanKeyboard( &kbd_msg ) )
         {
             ui_pushEvent( EVENT_KBD , kbd_msg.value );
-        }
-
-        if( ui_eventPresent() )
-        {
-            handleEvent = true ;
-        }
-
-        if( handleEvent )
-        {
-            pthread_mutex_lock( &state_mutex );     // Lock r/w access to radio state
-            ui_updateFSM( &sync_rtx );              // Update UI FSM
-            ui_saveState();                         // Save local state copy
-            pthread_mutex_unlock( &state_mutex );   // Unlock r/w access to radio state
         }
 
         vp_tick();                                  // continue playing voice prompts in progress if any.
@@ -122,20 +115,25 @@ void* ui_threadFunc(void *arg)
             pthread_mutex_unlock( &rtx_mutex );
 
             rtx_configure (&rtx_cfg );
-            handleEvent         = true ;
             sync_rtx            = false ;
+
+            ui_pushEvent( EVENT_RTX , 0 );
         }
+
+        handleEvent = ui_popEvent( &event );
 
         if( handleEvent )
         {
+            pthread_mutex_lock( &state_mutex );     // Lock r/w access to radio state
+            ui_updateFSM( &sync_rtx , &event );     // Update UI FSM
+            ui_saveState();                         // Save local state copy
+            pthread_mutex_unlock( &state_mutex );   // Unlock r/w access to radio state
             // Update UI and render on screen, if necessary
-            if( ui_updateGUI() == true )
+            if( ui_updateGUI( &event ) == true )
             {
                 gfx_render();
             }
         }
-
-        handleEvent = false ;
 
         // 40Hz update rate for keyboard and UI
         time += 25 ;

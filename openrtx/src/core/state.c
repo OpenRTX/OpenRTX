@@ -60,8 +60,8 @@ void state_init( void )
         state.channel = cps_getDefaultChannel();
     }
 
-    state.ui_prevScreen = ~0;
-    state.ui_screen     = 0 ;
+    state.ui_prevPage   = ~0;
+    state.ui_page       = 0 ;
 
     /*
      * Initialise remaining fields
@@ -104,33 +104,37 @@ void state_terminate( void )
 
 enum
 {
-    STATE_TASK_UPDATE_PERIOD              =  100 ,
-    STATE_TASK_TIME_DISPLAY_UPDATE_PERIOD = 1000
+    STATE_TASK_UPDATE_PERIOD         =  100 ,
+    STATE_TASK_DISPLAY_UPDATE_PERIOD = 1000 ,
+    STATE_TASK_BATTERY_HYSTERESIS    =    0 ,
+    STATE_TASK_RSSI_HYSTERESIS       =    0
 };
 
 void state_task( void )
 {
     static long long int  lastUpdateTimeTick        = 0 ;
     static long long int  lastTimeDisplayUpdateTick = 0 ;
-    static uint16_t       v_bat_prev                = 0 ;
-           float          lastRssi ;
-           bool           pushEvent                 = false ;
-           EventStatus_en data                      = 0 ;
+    static uint16_t       v_bat_prev                = STATE_TASK_BATTERY_HYSTERESIS ;
+           uint16_t       v_bat ;
+    static float          rssi_prev                 = STATE_TASK_RSSI_HYSTERESIS ;
+           EventStatus_en eventPayload              = 0 ;
 
     // Update radio state once every 100ms
     if( ( getTick() - lastUpdateTimeTick ) >= STATE_TASK_UPDATE_PERIOD )
     {
+        eventPayload       |= EVENT_STATUS_TIME_TICK ;
+
         lastUpdateTimeTick  = getTick();
 
-        if( ( getTick() - lastTimeDisplayUpdateTick ) >= STATE_TASK_TIME_DISPLAY_UPDATE_PERIOD )
+        if( ( lastUpdateTimeTick - lastTimeDisplayUpdateTick ) >= STATE_TASK_DISPLAY_UPDATE_PERIOD )
         {
             lastTimeDisplayUpdateTick  = lastUpdateTimeTick ;
-            data                      |= EVENT_STATUS_TIME_DISPLAY_TICK ;
-            pushEvent                  = true ;
+            eventPayload              |= EVENT_STATUS_DISPLAY_TIME_TICK ;
         }
 
-        data               |= EVENT_STATUS_TIME_TICK ;
-
+#ifdef RTC_PRESENT
+        state.time    = platform_getCurrentTime();
+#endif
         pthread_mutex_lock( &state_mutex );
 
         /*
@@ -138,39 +142,62 @@ void state_task( void )
          * Original computation: state.v_bat = 0.02*vbat + 0.98*state.v_bat
          * Peak error is 18mV when input voltage is 49mV.
          */
-        uint16_t vbat  = platform_getVbat();
-        state.v_bat   -= ( state.v_bat * 2 ) / 100 ;
-        state.v_bat   += ( vbat * 2 ) / 100 ;
+        v_bat         = platform_getVbat();
+        state.v_bat  -= ( state.v_bat * 2 ) / 100 ;
+        state.v_bat  += ( v_bat * 2 ) / 100 ;
 
-        if( state.v_bat != v_bat_prev )
+        state.charge  = battery_getCharge( state.v_bat );
+
+        state.rssi    = rtx_getRssi();
+
+        if( eventPayload & EVENT_STATUS_DISPLAY_TIME_TICK )
         {
-            data      |= EVENT_STATUS_BATTERY ;
-            pushEvent  = true ;
+            if( state.v_bat > v_bat_prev )
+            {
+                if( state.v_bat >= ( v_bat_prev + STATE_TASK_BATTERY_HYSTERESIS ) )
+                {
+                    eventPayload |= EVENT_STATUS_BATTERY ;
+                    v_bat_prev    = state.v_bat ;
+                }
+            }
+            else
+            {
+                if( state.v_bat < v_bat_prev )
+                {
+                    if( state.v_bat <= ( v_bat_prev - STATE_TASK_BATTERY_HYSTERESIS ) )
+                    {
+                        eventPayload |= EVENT_STATUS_BATTERY ;
+                        v_bat_prev    = state.v_bat ;
+                    }
+                }
+            }
+
+            if( state.rssi > rssi_prev )
+            {
+                if( state.rssi >= ( rssi_prev + STATE_TASK_RSSI_HYSTERESIS ) )
+                {
+                    eventPayload |= EVENT_STATUS_RSSI ;
+                    rssi_prev     = state.rssi ;
+                }
+            }
+            else
+            {
+                if( state.rssi < rssi_prev )
+                {
+                    if( state.rssi <= ( rssi_prev - STATE_TASK_RSSI_HYSTERESIS ) )
+                    {
+                        eventPayload |= EVENT_STATUS_RSSI ;
+                        rssi_prev     = state.rssi ;
+                    }
+                }
+            }
         }
-
-        v_bat_prev     = state.v_bat ;
-
-        state.charge   = battery_getCharge( state.v_bat );
-
-        lastRssi       = state.rssi ;
-        state.rssi     = rtx_getRssi();
-
-        if( state.rssi != lastRssi )
-        {
-            data      |= EVENT_STATUS_RSSI ;
-            pushEvent  = true ;
-        }
-
-#ifdef RTC_PRESENT
-        state.time     = platform_getCurrentTime();
-#endif
 
         pthread_mutex_unlock( &state_mutex );
 
-        if( pushEvent )
+        if( eventPayload )
         {
-            ui_pushEvent( EVENT_STATUS , (uint32_t)data );
-            pushEvent = false ;
+            ui_pushEvent( EVENT_STATUS , (uint32_t)eventPayload );
         }
 
     }

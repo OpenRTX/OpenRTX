@@ -162,7 +162,7 @@ static bool ScreenContainsReadOnlyEntries( int menuScreen )
     return false ;
 }
 
-static void announceMenuItemIfNeeded( char* name , char* value , bool editMode )
+static void announceMenuItemIfNeeded( GuiState_st* guiState , char* name , char* value , bool editMode )
 {
     if( state.settings.vpLevel < VPP_LOW )
     {
@@ -185,7 +185,7 @@ static void announceMenuItemIfNeeded( char* name , char* value , bool editMode )
 // i.e. does not represent a modifyable name/value pair.
 // We're not in edit mode.
 // The screen is navigable but entries  are readonly.
-    if( !value && !editMode && !ScreenContainsReadOnlyEntries( state.ui_screen ) )
+    if( !value && !editMode && !ScreenContainsReadOnlyEntries( guiState->page.num ) )
     {
         vp_queueStringTableEntry( &currentLanguage->menu );
     }
@@ -228,7 +228,7 @@ static const GetMenuList_fn GetEntryName_table[ PAGE_NUM_OF ] =
     _ui_getStubbedName            , // PAGE_SETTINGS_RESET_TO_DEFAULTS
     _ui_getStubbedName            , // PAGE_LOW_BAT
     _ui_getStubbedName            , // PAGE_ABOUT
-    _ui_getStubbedName            , // PAGE_STUBBED
+    _ui_getStubbedName              // PAGE_STUBBED
 };
 
 void _ui_drawMenuList( GuiState_st* guiState , uiPageNum_en currentEntry )
@@ -284,7 +284,7 @@ void ui_drawMenuItem( GuiState_st* guiState , char* entryBuf )
         // Draw rectangle under selected item, compensating for text height
         Pos_st rect_pos = { 0 , guiState->layout.line.pos.y - guiState->layout.menu_h + 3 };
         gfx_drawRect( rect_pos , SCREEN_WIDTH , guiState->layout.menu_h , color_fg , true );
-        announceMenuItemIfNeeded( entryBuf , NULL , false );
+        announceMenuItemIfNeeded( guiState , entryBuf , NULL , false );
     }
     gfx_print( guiState->layout.line.pos , guiState->layout.menu_font.size ,
                ALIGN_LEFT , Color_stext , entryBuf );
@@ -385,7 +385,7 @@ void _ui_drawMenuListValue( GuiState_st* guiState ,
                 if( !guiState->uiState.edit_mode || editModeChanged )
                 {// If in edit mode, only want to speak the char being entered,,
             //not repeat the entire display.
-                    announceMenuItemIfNeeded( entry_buf , value_buf , guiState->uiState.edit_mode );
+                    announceMenuItemIfNeeded( guiState , entry_buf , value_buf , guiState->uiState.edit_mode );
                 }
             }
             gfx_print( guiState->layout.line.pos , guiState->layout.menu_font.size , ALIGN_LEFT , text_color , entry_buf );

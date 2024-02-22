@@ -31,6 +31,29 @@
 #include <event.h>
 #include <ui.h>
 
+//#define DISPLAY_DEBUG_MSG
+
+#ifndef DISPLAY_DEBUG_MSG
+
+#define DEBUG_SET_TRACE0( traceVal )
+#define DEBUG_SET_TRACE1( traceVal )
+#define DEBUG_SET_TRACE2( traceVal )
+#define DEBUG_SET_TRACE3( traceVal )
+
+#else // DISPLAY_DEBUG_MSG
+
+extern void Debug_SetTrace0( uint8_t traceVal );
+extern void Debug_SetTrace1( uint8_t traceVal );
+extern void Debug_SetTrace2( uint8_t traceVal );
+extern void Debug_SetTrace3( uint8_t traceVal );
+
+#define DEBUG_SET_TRACE0( traceVal )     Debug_SetTrace0( (uint8_t)traceVal );
+#define DEBUG_SET_TRACE1( traceVal )     Debug_SetTrace1( (uint8_t)traceVal );
+#define DEBUG_SET_TRACE2( traceVal )     Debug_SetTrace2( (uint8_t)traceVal );
+#define DEBUG_SET_TRACE3( traceVal )     Debug_SetTrace3( (uint8_t)traceVal );
+
+#endif // DISPLAY_DEBUG_MSG
+
 // Maximum menu entry length
 #define MAX_ENTRY_LEN 21
 // Frequency digits
@@ -42,34 +65,34 @@
 
 typedef enum
 {
-    PAGE_MAIN_VFO                   ,
-    PAGE_MAIN_VFO_INPUT             ,
-    PAGE_MAIN_MEM                   ,
-    PAGE_MODE_VFO                   ,
-    PAGE_MODE_MEM                   ,
-    PAGE_MENU_TOP                   ,
-    PAGE_MENU_BANK                  ,
-    PAGE_MENU_CHANNEL               ,
-    PAGE_MENU_CONTACTS              ,
-    PAGE_MENU_GPS                   ,
-    PAGE_MENU_SETTINGS              ,
-    PAGE_MENU_BACKUP_RESTORE        ,
-    PAGE_MENU_BACKUP                ,
-    PAGE_MENU_RESTORE               ,
-    PAGE_MENU_INFO                  ,
-    PAGE_MENU_ABOUT                 ,
-    PAGE_SETTINGS_TIMEDATE          ,
-    PAGE_SETTINGS_TIMEDATE_SET      ,
-    PAGE_SETTINGS_DISPLAY           ,
-    PAGE_SETTINGS_GPS               ,
-    PAGE_SETTINGS_RADIO             ,
-    PAGE_SETTINGS_M17               ,
-    PAGE_SETTINGS_VOICE             ,
-    PAGE_SETTINGS_RESET_TO_DEFAULTS ,
-    PAGE_LOW_BAT                    ,
-    PAGE_ABOUT                      ,
-    PAGE_STUBBED                    ,
-    PAGE_NUM_OF
+    PAGE_MAIN_VFO                   , // 0x00
+    PAGE_MAIN_VFO_INPUT             , // 0x01
+    PAGE_MAIN_MEM                   , // 0x02
+    PAGE_MODE_VFO                   , // 0x03
+    PAGE_MODE_MEM                   , // 0x04
+    PAGE_MENU_TOP                   , // 0x05
+    PAGE_MENU_BANK                  , // 0x06
+    PAGE_MENU_CHANNEL               , // 0x07
+    PAGE_MENU_CONTACTS              , // 0x08
+    PAGE_MENU_GPS                   , // 0x09
+    PAGE_MENU_SETTINGS              , // 0x0A
+    PAGE_MENU_BACKUP_RESTORE        , // 0x0B
+    PAGE_MENU_BACKUP                , // 0x0C
+    PAGE_MENU_RESTORE               , // 0x0D
+    PAGE_MENU_INFO                  , // 0x0E
+    PAGE_MENU_ABOUT                 , // 0x0F
+    PAGE_SETTINGS_TIMEDATE          , // 0x10
+    PAGE_SETTINGS_TIMEDATE_SET      , // 0x11
+    PAGE_SETTINGS_DISPLAY           , // 0x12
+    PAGE_SETTINGS_GPS               , // 0x13
+    PAGE_SETTINGS_RADIO             , // 0x14
+    PAGE_SETTINGS_M17               , // 0x15
+    PAGE_SETTINGS_VOICE             , // 0x16
+    PAGE_SETTINGS_RESET_TO_DEFAULTS , // 0x17
+    PAGE_LOW_BAT                    , // 0x18
+    PAGE_ABOUT                      , // 0x19
+    PAGE_STUBBED                    , // 0x1A
+    PAGE_NUM_OF                       // 0x1B
 }uiPageNum_en;
 
 enum
@@ -225,7 +248,7 @@ enum SetRxTx
 
 enum
 {
-    MAX_SCRIPT_DEPTH = 5
+    MAX_PAGE_DEPTH = 8
 };
 
 /**
@@ -257,8 +280,6 @@ typedef struct
 #endif
     char        new_callsign[ 10 ] ;
     freq_t      new_offset ;
-    // Which state to return to when we exit menu
-    uint8_t     last_main_state ;
 #if defined(UI_NO_KEYBOARD)
     uint8_t     macro_menu_selected ;
 #endif // UI_NO_KEYBOARD
@@ -317,7 +338,8 @@ typedef struct
 
 typedef struct
 {
-    uint8_t         num[ MAX_SCRIPT_DEPTH ] ;
+    uint8_t         num ;
+    uint8_t         levelList[ MAX_PAGE_DEPTH ] ;
     uint8_t         level ;
     uint8_t*        ptr ;
     uint16_t        index ;
@@ -326,8 +348,8 @@ typedef struct
 typedef struct
 {
     UI_State_st     uiState ;
-    Layout_st       layout ;
     Page_st         page ;
+    Layout_st       layout ;
     kbd_msg_t       msg ;
     VPQueueFlags_en queueFlags ;
     bool            f1Handled ;

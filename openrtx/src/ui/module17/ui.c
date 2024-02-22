@@ -31,17 +31,6 @@
 #include <battery.h>
 #include <input.h>
 #include <hwconfig.h>
-aaa
-/* UI main screen functions, their implementation is in "ui_main.c" */
-extern void _ui_drawMainBackground();
-extern void _ui_drawMainTop();
-extern void _ui_drawVFOMiddle();
-extern void _ui_drawMEMMiddle();
-extern void _ui_drawVFOBottom();
-extern void _ui_drawMEMBottom();
-extern void _ui_drawMainVFO(UI_State_st* ui_state);
-extern void _ui_drawMainVFOInput(UI_State_st* ui_state);
-extern void _ui_drawMainMEM(UI_State_st* ui_state);
 /* UI menu functions, their implementation is in "ui_menu.c" */
 extern void _ui_drawMenuTop(UI_State_st* ui_state);
 #ifdef GPS_PRESENT
@@ -771,7 +760,7 @@ void ui_saveState()
     last_state = state;
 }
 
-void ui_updateFSM(bool *sync_rtx)
+void ui_updateFSM( bool* sync_rtx , Event_st* event )
 {
     // Check for events
     if(evQueue_wrPos == evQueue_rdPos) return;
@@ -1140,7 +1129,7 @@ void ui_updateFSM(bool *sync_rtx)
     }
 }
 
-bool ui_updateGUI()
+bool ui_updateGUI( Event_st* event )
 {
     if(redraw_needed == false)
         return false;

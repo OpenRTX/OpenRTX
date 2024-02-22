@@ -196,14 +196,21 @@ bool gfx_renderingInProgress()
     return display_renderingInProgress();
 }
 
-void gfx_clearRows(uint8_t startRow, uint8_t endRow)
+void gfx_clearRows( uint8_t startRow , uint8_t endRow )
 {
-    if(!initialized) return;
-    if(endRow < startRow) return;
-    uint16_t start = startRow * SCREEN_WIDTH * sizeof(PIXEL_T);
-    uint16_t height = endRow - startRow * SCREEN_WIDTH * sizeof(PIXEL_T);
-    // Set the specified rows to 0x00 = make the screen black
-    memset(buf + start, 0x00, height);
+    uint16_t start ;
+    uint16_t length ;
+
+    if( initialized )
+    {
+        if( endRow > startRow )
+        {
+            start  = startRow * SCREEN_WIDTH ;
+            length = ( endRow - startRow ) * ( SCREEN_WIDTH * sizeof( PIXEL_T ) ) ;
+            // Set the specified rows to 0x00 = make the screen black
+            memset( &buf[ start ] , 0x00 , length );
+        }
+    }
 }
 
 void gfx_clearScreen()

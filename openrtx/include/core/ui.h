@@ -22,6 +22,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <ui/ui_default.h>
 
 /**
  * This function initialises the User Interface, starting the
@@ -48,22 +49,14 @@ void ui_saveState();
  *
  * @param sync_rtx: If true RTX needs to be synchronized
  */
-void ui_updateFSM(bool *sync_rtx);
-
-/**
- * This function returns a flag that indicates whether
- * there is an event in the event queue to be processed.
- *
- * @return true if there is an event in the event queue to be processed.
- */
-bool ui_eventPresent( void );
+void ui_updateFSM( bool* sync_rtx , Event_st* event );
 
 /**
  * This function redraws the GUI based on the last radio state.
  *
  * @return true if GUI has been updated and a screen render is necessary.
  */
-bool ui_updateGUI();
+bool ui_updateGUI( Event_st* event );
 
 /**
  * Push an event to the UI event queue.

@@ -27,14 +27,16 @@
  */
 typedef enum
 {
-    EVENT_KBD    = 0 ,
-    EVENT_STATUS = 1
+    EVENT_NONE   = 0 ,
+    EVENT_KBD    = 1 ,
+    EVENT_STATUS = 2 ,
+    EVENT_RTX    = 3
 }EventType_en;
 
 typedef enum
 {
     EVENT_STATUS_TIME_TICK         = ( 1 << 0 ) ,
-    EVENT_STATUS_TIME_DISPLAY_TICK = ( 1 << 1 ) ,
+    EVENT_STATUS_DISPLAY_TIME_TICK = ( 1 << 1 ) ,
     EVENT_STATUS_BATTERY           = ( 1 << 2 ) ,
     EVENT_STATUS_RSSI              = ( 1 << 3 ) ,
     EVENT_STATUS_ALL               = 0x0F
