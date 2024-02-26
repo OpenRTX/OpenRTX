@@ -47,8 +47,7 @@ void spiFlash_init()
 
     SPI1->CR1 = SPI_CR1_SSM     /* Software managment of nCS */
               | SPI_CR1_SSI     /* Force internal nCS        */
-              | SPI_CR1_BR_2    /* Fclock: 84MHz/64 = 1.3MHz */
-              | SPI_CR1_BR_0
+              | SPI_CR1_BR_0    /* Fclock: 84MHz/4 = 21MHz   */
               | SPI_CR1_MSTR    /* Master mode               */
               | SPI_CR1_SPE;    /* Enable peripheral         */
 }
