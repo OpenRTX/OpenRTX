@@ -77,9 +77,9 @@ uint64_t benchmark(uint32_t n)
         gfx_clearScreen();
         Pos_st origin = {0, i % 128};
         Color_st color_op0   = {255, 0, 0, 255};
-        uiColorLoad( &color_op0 , COLOR_OP0 );
+        ui_ColorLoad( &color_op0 , COLOR_OP0 );
         Color_st color_fg = {255, 255, 255, 255};
-        uiColorLoad( &color_fg , COLOR_FG );
+        ui_ColorLoad( &color_fg , COLOR_FG );
 
         gfx_drawRect(origin, 160, 20, color_op0, 1);
         gfx_print(origin, buffer, FONT_SIZE_24PT, ALIGN_LEFT,

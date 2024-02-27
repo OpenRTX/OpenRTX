@@ -118,9 +118,9 @@ void _ui_drawMenuList(uint8_t selected, uiPageNum_en currentEntry )
     uint8_t scroll = 0;
     char entry_buf[MAX_ENTRY_LEN] = "";
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
     Color_st color_bg ;
-    uiColorLoad( &color_bg , COLOR_BG );
+    ui_ColorLoad( &color_bg , COLOR_BG );
     Color_st text_color = color_fg ;
 
     for(int item=0, result=0; (result == 0) && (pos.y < SCREEN_HEIGHT); item++)
@@ -169,9 +169,9 @@ void _ui_drawMenuListValue( UI_State_st* ui_state , uint8_t selected ,
     char entry_buf[MAX_ENTRY_LEN] = "";
     char value_buf[MAX_ENTRY_LEN] = "";
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
     Color_st color_bg ;
-    uiColorLoad( &color_bg , COLOR_BG );
+    ui_ColorLoad( &color_bg , COLOR_BG );
     Color_st text_color = color_fg ;
 
     for(int item=0, result=0; (result == 0) && (pos.y < SCREEN_HEIGHT); item++)
@@ -372,7 +372,7 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
 void _ui_drawMenuTop(UI_State_st* ui_state)
 {
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Menu" on top bar
@@ -387,7 +387,7 @@ void _ui_drawMenuGPS()
 {
     char *fix_buf, *type_buf;
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "GPS" on top bar
@@ -478,7 +478,7 @@ void _ui_drawMenuGPS()
 void _ui_drawMenuSettings(UI_State_st* ui_state)
 {
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Settings" on top bar
@@ -491,7 +491,7 @@ void _ui_drawMenuSettings(UI_State_st* ui_state)
 void _ui_drawMenuInfo(UI_State_st* ui_state)
 {
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Info" on top bar
@@ -505,7 +505,7 @@ void _ui_drawMenuInfo(UI_State_st* ui_state)
 void _ui_drawMenuAbout()
 {
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
 
@@ -526,7 +526,7 @@ void _ui_drawMenuAbout()
 void _ui_drawSettingsDisplay(UI_State_st* ui_state)
 {
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Display" on top bar
@@ -541,7 +541,7 @@ void _ui_drawSettingsDisplay(UI_State_st* ui_state)
 void _ui_drawSettingsGPS(UI_State_st* ui_state)
 {
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "GPS Settings" on top bar
@@ -557,7 +557,7 @@ void _ui_drawSettingsGPS(UI_State_st* ui_state)
 void _ui_drawSettingsTimeDate()
 {
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     datetime_t local_time = utcToLocalTime(last_state.time,
@@ -578,7 +578,7 @@ void _ui_drawSettingsTimeDateSet(UI_State_st* ui_state)
 {
     (void) last_state;
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Time&Date" on top bar
@@ -620,7 +620,7 @@ void _ui_drawSettingsTimeDateSet(UI_State_st* ui_state)
 void _ui_drawSettingsM17(UI_State_st* ui_state)
 {
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
@@ -669,7 +669,7 @@ void _ui_drawSettingsReset2Defaults(UI_State_st* ui_state)
     static int drawcnt = 0;
     static long long lastDraw = 0;
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,

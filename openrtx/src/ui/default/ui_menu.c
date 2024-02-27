@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <utils.h>
 #include <ui/ui_default.h>
+#include "ui_commands.h"
 #include <interfaces/nvmem.h>
 #include <interfaces/cps_io.h>
 #include <interfaces/platform.h>
@@ -31,12 +32,13 @@
 #include <memory_profiling.h>
 #include <ui/ui_strings.h>
 #include <core/voicePromptUtils.h>
+#include "ui_value_display.h"
+#include "ui_value_arrays.h"
 
 #ifdef PLATFORM_TTWRPLUS
 #include <SA8x8.h>
 #endif
 
-extern bool  ui_DisplayPage( GuiState_st* guiState , uiPageNum_en pageNum );
 extern char* uiGetPageTextString( uiPageNum_en pageNum , uint8_t textStringIndex );
 
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
@@ -71,26 +73,6 @@ static char     priorSelectedMenuName[ MAX_ENTRY_LEN ]  = "\0" ;
 static char     priorSelectedMenuValue[ MAX_ENTRY_LEN ] = "\0" ;
 static bool     priorEditMode                           = false ;
 static uint32_t lastValueUpdate                         = 0 ;
-
-const char *display_timer_values[] =
-{
-    "Off" ,
-    "5 s" ,
-    "10 s" ,
-    "15 s" ,
-    "20 s" ,
-    "25 s" ,
-    "30 s" ,
-    "1 min" ,
-    "2 min" ,
-    "3 min" ,
-    "4 min" ,
-    "5 min" ,
-    "15 min" ,
-    "30 min" ,
-    "45 min" ,
-    "1 hour"
-};
 
 void _ui_reset_menu_anouncement_tracking( void )
 {
@@ -272,9 +254,9 @@ void _ui_drawMenuList( GuiState_st* guiState , uiPageNum_en currentEntry )
 void ui_drawMenuItem( GuiState_st* guiState , char* entryBuf )
 {
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
     Color_st color_bg ;
-    uiColorLoad( &color_bg , COLOR_BG );
+    ui_ColorLoad( &color_bg , COLOR_BG );
     Color_st Color_stext = color_fg ;
 
     if( ( guiState->layout.linkIndex + guiState->layout.scrollOffset ) ==
@@ -332,9 +314,9 @@ void _ui_drawMenuListValue( GuiState_st* guiState ,
     char entry_buf[ MAX_ENTRY_LEN ] = "" ;
     char value_buf[ MAX_ENTRY_LEN ] = "" ;
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
     Color_st color_bg ;
-    uiColorLoad( &color_bg , COLOR_BG );
+    ui_ColorLoad( &color_bg , COLOR_BG );
     Color_st text_color = color_fg ;
 
     GetMenuList_fn getCurrentEntry = GetEntryName_table[ currentEntry ];
@@ -826,7 +808,7 @@ int _ui_getStubbedName( GuiState_st* guiState , char* buf , uint8_t max_len , ui
 void _ui_drawMenuTop( GuiState_st* guiState )
 {
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Menu" on top bar
@@ -839,7 +821,7 @@ void _ui_drawMenuTop( GuiState_st* guiState )
 void _ui_drawMenuBank( GuiState_st* guiState )
 {
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Bank" on top bar
@@ -852,7 +834,7 @@ void _ui_drawMenuBank( GuiState_st* guiState )
 void _ui_drawMenuChannel( GuiState_st* guiState )
 {
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Channel" on top bar
@@ -865,7 +847,7 @@ void _ui_drawMenuChannel( GuiState_st* guiState )
 void _ui_drawMenuContacts( GuiState_st* guiState )
 {
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Contacts" on top bar
@@ -881,7 +863,7 @@ void _ui_drawMenuGPS( GuiState_st* guiState )
     char* fix_buf ;
     char* type_buf ;
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "GPS" on top bar
@@ -993,7 +975,7 @@ void _ui_drawMenuSettings( GuiState_st* guiState , Event_st* event )
 {
     (void)event ;
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Settings" on top bar
@@ -1007,7 +989,7 @@ void _ui_drawMenuBackupRestore( GuiState_st* guiState , Event_st* event )
 {
     (void)event ;
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Backup & Restore" on top bar
@@ -1021,7 +1003,7 @@ void _ui_drawMenuBackup( GuiState_st* guiState , Event_st* event )
 {
     (void)event ;
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Flash Backup" on top bar
@@ -1051,7 +1033,7 @@ void _ui_drawMenuRestore( GuiState_st* guiState , Event_st* event )
 {
     (void)event ;
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Flash Restore" on top bar
@@ -1081,7 +1063,7 @@ void _ui_drawMenuInfo( GuiState_st* guiState , Event_st* event )
 {
     (void)event ;
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Info" on top bar
@@ -1094,13 +1076,14 @@ void _ui_drawMenuInfo( GuiState_st* guiState , Event_st* event )
 
 void _ui_drawMenuAbout( GuiState_st* guiState )
 {
-    ui_DisplayPage( guiState , PAGE_ABOUT );
+    ui_SetPageNum( guiState , PAGE_ABOUT );
+    ui_DisplayPage( guiState );
 /* @@@KL
     Pos_st logo_pos;
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
     Color_st color_op3 ;
-    uiColorLoad( &color_op3 , COLOR_OP3 );
+    ui_ColorLoad( &color_op3 , COLOR_OP3 );
 
     gfx_clearScreen();
 
@@ -1137,7 +1120,7 @@ void _ui_drawSettingsDisplay( GuiState_st* guiState , Event_st* event )
 {
     (void)event ;
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Display" on top bar
@@ -1153,7 +1136,7 @@ void _ui_drawSettingsGPS( GuiState_st* guiState , Event_st* event )
 {
     (void)event ;
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "GPS Settings" on top bar
@@ -1169,7 +1152,7 @@ void _ui_drawSettingsGPS( GuiState_st* guiState , Event_st* event )
 void _ui_drawSettingsTimeDate( GuiState_st* guiState )
 {
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     datetime_t local_time = utcToLocalTime( last_state.time ,
@@ -1190,7 +1173,7 @@ void _ui_drawSettingsTimeDateSet( GuiState_st* guiState , Event_st* event )
 {
     (void)event ;
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Time&Date" on top bar
@@ -1234,7 +1217,7 @@ void _ui_drawSettingsM17( GuiState_st* guiState , Event_st* event )
 {
     (void)event ;
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "M17 Settings" on top bar
@@ -1266,7 +1249,7 @@ void _ui_drawSettingsVoicePrompts( GuiState_st* guiState , Event_st* event )
 {
     (void)event ;
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     // Print "Voice" on top bar
@@ -1284,7 +1267,7 @@ void _ui_drawSettingsReset2Defaults( GuiState_st* guiState , Event_st* event )
     static long long lastDraw = 0 ;
     Color_st          text_color ;
     Color_st          color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
     gfx_print( guiState->layout.lineStyle[ GUI_LINE_TOP ].pos , guiState->layout.lineStyle[ GUI_LINE_TOP ].font.size , ALIGN_CENTER ,
@@ -1293,11 +1276,11 @@ void _ui_drawSettingsReset2Defaults( GuiState_st* guiState , Event_st* event )
     // Make text flash yellow once every 1s
     if( drawcnt % 2 == 0 )
     {
-        uiColorLoad( &text_color , COLOR_FG );
+        ui_ColorLoad( &text_color , COLOR_FG );
     }
     else
     {
-        uiColorLoad( &text_color , COLOR_OP3 );
+        ui_ColorLoad( &text_color , COLOR_OP3 );
     }
     gfx_printLine( 1 , 4 , guiState->layout.lineStyle[ GUI_LINE_TOP ].height , SCREEN_HEIGHT - guiState->layout.lineStyle[ GUI_LINE_BOTTOM ].height ,
                    guiState->layout.horizontal_pad , guiState->layout.lineStyle[ GUI_LINE_TOP ].font.size ,
@@ -1319,7 +1302,7 @@ void _ui_drawSettingsRadio( GuiState_st* guiState , Event_st* event )
 {
     (void)event ;
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
 
@@ -1366,7 +1349,7 @@ void _ui_drawSettingsRadio( GuiState_st* guiState , Event_st* event )
 void _ui_drawMacroTop( GuiState_st* guiState )
 {
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_print( guiState->layout.lineStyle[ GUI_LINE_TOP ].pos , guiState->layout.lineStyle[ GUI_LINE_TOP ].font.size , ALIGN_CENTER ,
                color_fg , currentLanguage->macroMenu );
@@ -1395,9 +1378,9 @@ bool _ui_drawMacroMenu( GuiState_st* guiState , Event_st* event )
 {
     (void)event ;
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
     Color_st color_op3 ;
-    uiColorLoad( &color_op3 , COLOR_OP3 );
+    ui_ColorLoad( &color_op3 , COLOR_OP3 );
 
     // Header
     _ui_drawMacroTop( guiState );

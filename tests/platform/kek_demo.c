@@ -96,9 +96,9 @@ static void gfxThread(void *arg)
         gfx_clearScreen();
         Pos_st origin = {0, pos};
         Color_st color_op0 ;
-        uiColorLoad( &color_op0 , COLOR_OP0 );
+        ui_ColorLoad( &color_op0 , COLOR_OP0 );
         Color_st color_fg ;
-        uiColorLoad( &color_fg , COLOR_FG );
+        ui_ColorLoad( &color_fg , COLOR_FG );
         gfx_drawRect(origin, SCREEN_WIDTH, 20, color_op0, 1);
         gfx_print(origin, FONT_SIZE_4, ALIGN_LEFT,
                   color_fg, "KEK");

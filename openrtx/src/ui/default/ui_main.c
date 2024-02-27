@@ -23,10 +23,10 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <ui/ui_default.h>
+#include "ui_commands.h"
 #include <string.h>
 #include <ui/ui_strings.h>
 
-extern bool ui_DisplayPage( GuiState_st* guiState );
 static void ui_drawMainVFO( GuiState_st* guiState , bool update , Event_st* event );
 static void ui_drawMainVFOInput( GuiState_st* guiState , bool update , Event_st* event );
 static void ui_drawMainMEM( GuiState_st* guiState , bool update , Event_st* event );
@@ -199,7 +199,7 @@ static void ui_drawLowBatteryScreen( GuiState_st* guiState , bool update , Event
     (void)update ;
     (void)event ;
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     if( !update )
     {
@@ -257,8 +257,8 @@ static void ui_drawMainTop( GuiState_st* guiState , Event_st* event )
     Pos_st   start ;
     Color_st color_bg ;
     Color_st color_fg ;
-    uiColorLoad( &color_bg , COLOR_BG );
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_bg , COLOR_BG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     if( event->type == EVENT_TYPE_STATUS )
     {
@@ -316,7 +316,7 @@ static void ui_drawMainTop( GuiState_st* guiState , Event_st* event )
 static void ui_drawBankChannel( GuiState_st* guiState )
 {
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     // Print Bank number, channel number and Channel name
     uint16_t bank_enabled = ( last_state.bank_enabled ) ? last_state.bank : 0 ;
@@ -330,7 +330,7 @@ static void ui_drawModeInfo( GuiState_st* guiState )
     char bw_str[ 8 ]     = { 0 };
     char encdec_str[ 9 ] = { 0 };
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     switch( last_state.channel.mode )
     {
@@ -475,7 +475,7 @@ static void ui_drawFrequency( GuiState_st* guiState )
     unsigned long frequency = platform_getPttStatus() ? last_state.channel.tx_frequency
                                                       : last_state.channel.rx_frequency;
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     // Print big numbers frequency
     gfx_print( guiState->layout.lineStyle[ GUI_LINE_3_LARGE ].pos , guiState->layout.lineStyle[ GUI_LINE_3_LARGE ].font.size , ALIGN_CENTER ,
@@ -487,7 +487,7 @@ static void ui_drawVFOMiddleInput( GuiState_st* guiState )
     // Add inserted number to string, skipping "Rx: "/"Tx: " and "."
     uint8_t insert_pos = guiState->uiState.input_position + 3;
     Color_st color_fg ;
-    uiColorLoad( &color_fg , COLOR_FG );
+    ui_ColorLoad( &color_fg , COLOR_FG );
 
     if( guiState->uiState.input_position > 3 )
     {
@@ -561,7 +561,7 @@ void _ui_drawMainBottom( GuiState_st* guiState , Event_st* event )
     uint8_t  mic_level    = platform_getMicLevel();
     Color_st color_op3 ;
 
-    uiColorLoad( &color_op3 , COLOR_OP3 );
+    ui_ColorLoad( &color_op3 , COLOR_OP3 );
 
     if( event->type == EVENT_TYPE_STATUS )
     {
