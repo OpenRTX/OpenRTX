@@ -111,11 +111,13 @@ enum
 enum
 {
     GUI_CMD_NULL         = 0x00 ,
-    GUI_CMD_LINE_STYLE   = 0x01 ,
-    GUI_CMD_ALIGN_LEFT   = 0x02 ,
-    GUI_CMD_ALIGN_CENTER = 0x03 ,
-    GUI_CMD_ALIGN_RIGHT  = 0x04 ,
-    GUI_CMD_FONT_SIZE    = 0x05 ,
+    GUI_CMD_EVENT_START  = 0x01 ,
+    GUI_CMD_EVENT_END    = 0x02 ,
+    GUI_CMD_LINE_STYLE   = 0x03 ,
+    GUI_CMD_ALIGN_LEFT   = 0x04 ,
+    GUI_CMD_ALIGN_CENTER = 0x05 ,
+    GUI_CMD_ALIGN_RIGHT  = 0x06 ,
+    GUI_CMD_FONT_SIZE    = 0x07 ,
     GUI_CMD_LINE_END     = 0x0A ,
     GUI_CMD_LINK         = 0x0B ,
     GUI_CMD_LINK_END     = 0x0C ,
@@ -125,6 +127,7 @@ enum
     GUI_CMD_TEXT         = 0x11 ,
     GUI_CMD_STUBBED      = 0x1E ,
     GUI_CMD_PAGE_END     = 0x1F ,
+    GUI_CMD_DATA_AREA           ,
     GUI_CMD_NUM_OF
 };
 
@@ -143,6 +146,13 @@ typedef enum
 // GUI Values - Display
 enum
 {
+    GUI_VAL_CURRENT_TIME     ,
+    GUI_VAL_BATTERY_LEVEL    ,
+    GUI_VAL_LOCK_STATE       ,
+    GUI_VAL_MODE_INFO        ,
+    GUI_VAL_FREQUENCY        ,
+    GUI_VAL_RSSI_METER       ,
+
     GUI_VAL_BANKS            ,
     GUI_VAL_CHANNELS         ,
     GUI_VAL_CONTACTS         ,
@@ -187,11 +197,16 @@ enum
     GUI_VAL_RADIO            ,
     GUI_VAL_RADIO_FW         ,
 #endif // PLATFORM_TTWRPLUS
-
     GUI_VAL_STUBBED          ,
-    GUI_VAL_NUM_OF           ,
+    GUI_VAL_NUM_OF
+};
 
-    GUI_VALUE_MAX_NUM_OF = 12
+// GUI Values - Input
+enum
+{
+    GUI_VAL_INPUT_VFO_MIDDLE ,
+
+    GUI_VALUE_INPUT_NUM_OF = 12
 };
 
 typedef enum
@@ -348,6 +363,10 @@ typedef struct
 typedef struct
 {
     UI_State_st     uiState ;
+    Event_st        event ;
+    bool            update ;
+    bool            pageHasEvents ;
+    bool            inEventArea ;
     Page_st         page ;
     Layout_st       layout ;
     kbd_msg_t       msg ;

@@ -197,7 +197,7 @@ void state_task( void )
 
         if( eventPayload )
         {
-            ui_pushEvent( EVENT_STATUS , (uint32_t)eventPayload );
+            ui_pushEvent( EVENT_TYPE_STATUS , (uint32_t)eventPayload );
         }
 
     }

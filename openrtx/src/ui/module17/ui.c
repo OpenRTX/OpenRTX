@@ -777,7 +777,7 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
 
     long long now = getTick();
     // Process pressed keys
-    if(event.type == EVENT_KBD)
+    if(event.type == EVENT_TYPE_KBD)
     {
         kbd_msg_t msg;
         msg.value = event.payload;
@@ -1114,7 +1114,7 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
                 break;
         }
     }
-    else if(event.type == EVENT_STATUS)
+    else if(event.type == EVENT_TYPE_STATUS)
     {
         if (platform_getPttStatus() || rtx_rxSquelchOpen())
         {

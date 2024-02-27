@@ -63,7 +63,7 @@ void* ui_threadFunc(void *arg)
     bool        sync_rtx     = true ;
     long long   time         = 0 ;
 
-    event.type    = EVENT_NONE ;
+    event.type    = EVENT_TYPE_NONE ;
     event.payload = 0 ;
 
     // Load initial state and update the UI
@@ -80,7 +80,7 @@ void* ui_threadFunc(void *arg)
 
         if( input_scanKeyboard( &kbd_msg ) )
         {
-            ui_pushEvent( EVENT_KBD , kbd_msg.value );
+            ui_pushEvent( EVENT_TYPE_KBD , kbd_msg.value );
         }
 
         vp_tick();                                  // continue playing voice prompts in progress if any.
@@ -117,7 +117,7 @@ void* ui_threadFunc(void *arg)
             rtx_configure (&rtx_cfg );
             sync_rtx            = false ;
 
-            ui_pushEvent( EVENT_RTX , 0 );
+            ui_pushEvent( EVENT_TYPE_RTX , 0 );
         }
 
         handleEvent = ui_popEvent( &event );

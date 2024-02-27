@@ -96,28 +96,28 @@ static const ui_draw_fn uiPageDescTable[ PAGE_NUM_OF ] =
     ui_drawAuthors                 , // PAGE_ABOUT
     ui_drawBlank                     // PAGE_STUBBED
 };
-
+//@@@KL check how the cursor bar is displayed and ensure that it is
 void ui_draw( GuiState_st* guiState , Event_st* event )
 {
     static uint8_t  prevPageNum = ~0 ;
-           Event_st evnt        = *event ;
            bool     drawPage    = false ;
-           bool     update      = false ;
 
-    if( evnt.type == EVENT_STATUS )
+    guiState->event = *event ;
+
+    if( guiState->event.type == EVENT_TYPE_STATUS )
     {
-        drawPage = true ;
-        update   = true ;
+        drawPage         = true ;
+        guiState->update = true ;
     }
 
     if( guiState->page.num != prevPageNum )
     {
-        prevPageNum  = guiState->page.num ;
+        prevPageNum             = guiState->page.num ;
         gfx_clearScreen();
-        evnt.type    = EVENT_STATUS ;
-        evnt.payload = EVENT_STATUS_ALL ;
-        drawPage     = true ;
-        update       = false ;
+        guiState->event.type    = EVENT_TYPE_STATUS ;
+        guiState->event.payload = EVENT_STATUS_ALL ;
+        drawPage                = true ;
+        guiState->update        = false ;
     }
 
     if( drawPage )
@@ -126,7 +126,7 @@ void ui_draw( GuiState_st* guiState , Event_st* event )
         if( !ui_DisplayPage( guiState ) )
         {
             // if not successful - display using the legacy fn.
-            uiPageDescTable[ guiState->page.num ]( guiState , update , &evnt ) ;
+            uiPageDescTable[ guiState->page.num ]( guiState , guiState->update , &guiState->event ) ;
         }
     }
 
@@ -152,8 +152,6 @@ static void ui_drawMainVFO( GuiState_st* guiState , bool update , Event_st* even
 
 static void ui_drawMainVFOInput( GuiState_st* guiState , bool update , Event_st* event )
 {
-    (void)update ;
-
     ui_drawMainTop( guiState , event );
     if( !update )
     {
@@ -262,7 +260,7 @@ static void ui_drawMainTop( GuiState_st* guiState , Event_st* event )
     uiColorLoad( &color_bg , COLOR_BG );
     uiColorLoad( &color_fg , COLOR_FG );
 
-    if( event->type == EVENT_STATUS )
+    if( event->type == EVENT_TYPE_STATUS )
     {
 #ifdef RTC_PRESENT
         if( event->payload & EVENT_STATUS_DISPLAY_TIME_TICK )
@@ -565,7 +563,7 @@ void _ui_drawMainBottom( GuiState_st* guiState , Event_st* event )
 
     uiColorLoad( &color_op3 , COLOR_OP3 );
 
-    if( event->type == EVENT_STATUS )
+    if( event->type == EVENT_TYPE_STATUS )
     {
         if( event->payload & EVENT_STATUS_RSSI )
         {

@@ -22,15 +22,15 @@
 
 /**
  * This enum describes the event message type:
- * - EVENT_KBD is used to send a keypress
- * - EVENT_STATUS is used to send a status change notification
+ * - EVENT_TYPE_KBD is used to send a keypress
+ * - EVENT_TYPE_STATUS is used to send a status change notification
  */
 typedef enum
 {
-    EVENT_NONE   = 0 ,
-    EVENT_KBD    = 1 ,
-    EVENT_STATUS = 2 ,
-    EVENT_RTX    = 3
+    EVENT_TYPE_NONE   = 0 ,
+    EVENT_TYPE_KBD    = 1 ,
+    EVENT_TYPE_STATUS = 2 ,
+    EVENT_TYPE_RTX    = 3
 }EventType_en;
 
 typedef enum
