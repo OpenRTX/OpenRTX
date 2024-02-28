@@ -1276,8 +1276,6 @@ static bool ui_updateFSM_PAGE_MENU_ABOUT( GuiState_st* guiState )
 
 static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE( GuiState_st* guiState )
 {
-    (void)guiState ;
-
     bool sync_rtx = false ;
 
     if( guiState->msg.keys & KEY_ENTER )
@@ -1338,12 +1336,9 @@ static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE_SET( GuiState_st* guiState )
 // D_BRIGHTNESS , D_CONTRAST , D_TIMER
 static bool ui_updateFSM_PAGE_SETTINGS_DISPLAY( GuiState_st* guiState )
 {
-    bool handled ;
-    bool sync_rtx ;
+    ui_ValueInputFSM( guiState );
 
-    sync_rtx = ui_ValueInput( guiState , &handled );
-
-    if( !handled )
+    if( !guiState->handled )
     {
         if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
         {
@@ -1363,19 +1358,16 @@ static bool ui_updateFSM_PAGE_SETTINGS_DISPLAY( GuiState_st* guiState )
         }
     }
 
-    return sync_rtx ;
+    return guiState->sync_rtx ;
 
 }
 
 // G_ENABLED , G_SET_TIME , G_TIMEZONE
 static bool ui_updateFSM_PAGE_SETTINGS_GPS( GuiState_st* guiState )
 {
-    bool handled ;
-    bool sync_rtx ;
+    ui_ValueInputFSM( guiState );
 
-    sync_rtx = ui_ValueInput( guiState , &handled );
-
-    if( !handled )
+    if( !guiState->handled )
     {
         if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
         {
@@ -1395,19 +1387,16 @@ static bool ui_updateFSM_PAGE_SETTINGS_GPS( GuiState_st* guiState )
         }
     }
 
-    return sync_rtx ;
+    return guiState->sync_rtx ;
 
 }
 
 // R_OFFSET , R_DIRECTION , R_STEP
 static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState )
 {
-    bool handled ;
-    bool sync_rtx ;
+    ui_ValueInputFSM( guiState );
 
-    sync_rtx = ui_ValueInput( guiState , &handled );
-
-    if( !handled )
+    if( !guiState->handled )
     {
         if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
         {
@@ -1423,19 +1412,16 @@ static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState )
         }
     }
 
-    return sync_rtx ;
+    return guiState->sync_rtx ;
 
 }
 
 // M17_CALLSIGN , M17_CAN , M17_CAN_RX
 static bool ui_updateFSM_PAGE_SETTINGS_M17( GuiState_st* guiState )
 {
-    bool handled ;
-    bool sync_rtx ;
+    ui_ValueInputFSM( guiState );
 
-    sync_rtx = ui_ValueInput( guiState , &handled );
-
-    if( !handled )
+    if( !guiState->handled )
     {
         if( guiState->msg.keys & KEY_ENTER )
         {
@@ -1452,24 +1438,21 @@ static bool ui_updateFSM_PAGE_SETTINGS_M17( GuiState_st* guiState )
         }
         else if( guiState->msg.keys & KEY_ESC )
         {
-            sync_rtx = true ;
+            guiState->sync_rtx = true ;
             ui_States_MenuBack( guiState );
         }
     }
 
-    return sync_rtx ;
+    return guiState->sync_rtx ;
 
 }
 
 // VP_LEVEL , VP_PHONETIC
 static bool ui_updateFSM_PAGE_SETTINGS_VOICE( GuiState_st* guiState )
 {
-    bool handled ;
-    bool sync_rtx ;
+    ui_ValueInputFSM( guiState );
 
-    sync_rtx = ui_ValueInput( guiState , &handled );
-
-    if( !handled )
+    if( !guiState->handled )
     {
         if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
         {
@@ -1489,16 +1472,12 @@ static bool ui_updateFSM_PAGE_SETTINGS_VOICE( GuiState_st* guiState )
         }
     }
 
-    return sync_rtx ;
+    return guiState->sync_rtx ;
 
 }
 
 static bool ui_updateFSM_PAGE_SETTINGS_RESET_TO_DEFAULTS( GuiState_st* guiState )
 {
-    (void)guiState ;
-
-    bool sync_rtx = false ;
-
     if( !guiState->uiState.edit_mode )
     {
         //require a confirmation ENTER, then another
@@ -1527,7 +1506,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_RESET_TO_DEFAULTS( GuiState_st* guiState 
         }
     }
 
-    return sync_rtx ;
+    return guiState->sync_rtx ;
 
 }
 
@@ -2068,23 +2047,22 @@ void ui_States_MenuDown( GuiState_st* guiState , uint8_t menu_entries )
 
 void ui_States_MenuBack( GuiState_st* guiState )
 {
-    if( guiState->page.level > 0 )
+    guiState->uiState.edit_mode = false ;
+
+    if( guiState->page.level > 1 )
     {
         guiState->page.level-- ;
-
-        if( guiState->uiState.edit_mode )
-        {
-            guiState->uiState.edit_mode = false ;
-        }
-        else
-        {
-            // Return to previous menu
-            ui_SetPageNum( guiState , guiState->page.levelList[ guiState->page.level ] );
-            // Reset menu selection
-            guiState->uiState.menu_selected = 0 ;
-            vp_playMenuBeepIfNeeded( true );
-        }
+        // Return to previous menu
+        ui_SetPageNum( guiState , guiState->page.levelList[ guiState->page.level - 1 ] );
     }
+    else
+    {
+        ui_SetPageNum( guiState , PAGE_INITIAL );
+    }
+
+    // Reset menu selection
+    guiState->uiState.menu_selected = 0 ;
+    vp_playMenuBeepIfNeeded( true );
 
 }
 

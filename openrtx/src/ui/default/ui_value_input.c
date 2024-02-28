@@ -23,111 +23,124 @@
 #include "ui_states.h"
 #include "ui_value_input.h"
 
-
+static void ui_ValueInput_VFOMiddleInput( GuiState_st* guiState );
 #ifdef SCREEN_BRIGHTNESS
-static bool ui_ValueInput_BRIGHTNESS( GuiState_st* guiState , bool* handled );
+static void ui_ValueInput_BRIGHTNESS( GuiState_st* guiState );
 #endif // SCREEN_BRIGHTNESS
 #ifdef SCREEN_CONTRAST
-static bool ui_ValueInput_CONTRAST( GuiState_st* guiState , bool* handled );
+static void ui_ValueInput_CONTRAST( GuiState_st* guiState );
 #endif // SCREEN_CONTRAST
-static bool ui_ValueInput_TIMER( GuiState_st* guiState , bool* handled );
+static void ui_ValueInput_TIMER( GuiState_st* guiState );
 #ifdef GPS_PRESENT
-static bool ui_ValueInput_ENABLED( GuiState_st* guiState , bool* handled );
-static bool ui_ValueInput_SET_TIME( GuiState_st* guiState , bool* handled );
-static bool ui_ValueInput_TIMEZONE( GuiState_st* guiState , bool* handled );
+static void ui_ValueInput_ENABLED( GuiState_st* guiState );
+static void ui_ValueInput_SET_TIME( GuiState_st* guiState );
+static void ui_ValueInput_TIMEZONE( GuiState_st* guiState );
 #endif // GPS_PRESENT
-static bool ui_ValueInput_LEVEL( GuiState_st* guiState , bool* handled );
-static bool ui_ValueInput_PHONETIC( GuiState_st* guiState , bool* handled );
-static bool ui_ValueInput_OFFSET( GuiState_st* guiState , bool* handled );
-static bool ui_ValueInput_DIRECTION( GuiState_st* guiState , bool* handled );
-static bool ui_ValueInput_STEP( GuiState_st* guiState , bool* handled );
-static bool ui_ValueInput_CALLSIGN( GuiState_st* guiState , bool* handled );
-static bool ui_ValueInput_CAN( GuiState_st* guiState , bool* handled );
-static bool ui_ValueInput_CAN_RX( GuiState_st* guiState , bool* handled );
-static bool ui_ValueInput_STUBBED( GuiState_st* guiState , bool* handled );
+static void ui_ValueInput_LEVEL( GuiState_st* guiState );
+static void ui_ValueInput_PHONETIC( GuiState_st* guiState );
+static void ui_ValueInput_OFFSET( GuiState_st* guiState );
+static void ui_ValueInput_DIRECTION( GuiState_st* guiState );
+static void ui_ValueInput_STEP( GuiState_st* guiState );
+static void ui_ValueInput_CALLSIGN( GuiState_st* guiState );
+static void ui_ValueInput_CAN( GuiState_st* guiState );
+static void ui_ValueInput_CAN_RX( GuiState_st* guiState );
+static void ui_ValueInput_STUBBED( GuiState_st* guiState );
 
-typedef bool (*ui_ValueInput_fn)( GuiState_st* guiState , bool* handled );
+typedef void (*ui_ValueInput_fn)( GuiState_st* guiState );
 
 // GUI Values - Set
 static const ui_ValueInput_fn ui_ValueInput_Table[ GUI_VAL_INP_NUM_OF ] =
 {
-    ui_ValueInput_STUBBED     , // GUI_VAL_INP_CURRENT_TIME
-    ui_ValueInput_STUBBED     , // GUI_VAL_INP_BATTERY_LEVEL
-    ui_ValueInput_STUBBED     , // GUI_VAL_INP_LOCK_STATE
-    ui_ValueInput_STUBBED     , // GUI_VAL_INP_MODE_INFO
-    ui_ValueInput_STUBBED     , // GUI_VAL_INP_FREQUENCY
-    ui_ValueInput_STUBBED     , // GUI_VAL_INP_RSSI_METER
+    ui_ValueInput_VFOMiddleInput , // GUI_VAL_INP_VFO_MIDDLE_INPUT
 
-    ui_ValueInput_STUBBED     , // GUI_VAL_INP_BANKS
-    ui_ValueInput_STUBBED     , // GUI_VAL_INP_CHANNELS
-    ui_ValueInput_STUBBED     , // GUI_VAL_INP_CONTACTS
-    ui_ValueInput_STUBBED     , // GUI_VAL_INP_GPS
+    ui_ValueInput_STUBBED        , // GUI_VAL_INP_CURRENT_TIME
+    ui_ValueInput_STUBBED        , // GUI_VAL_INP_BATTERY_LEVEL
+    ui_ValueInput_STUBBED        , // GUI_VAL_INP_LOCK_STATE
+    ui_ValueInput_STUBBED        , // GUI_VAL_INP_MODE_INFO
+    ui_ValueInput_STUBBED        , // GUI_VAL_INP_FREQUENCY
+    ui_ValueInput_STUBBED        , // GUI_VAL_INP_RSSI_METER
+
+    ui_ValueInput_STUBBED        , // GUI_VAL_INP_BANKS
+    ui_ValueInput_STUBBED        , // GUI_VAL_INP_CHANNELS
+    ui_ValueInput_STUBBED        , // GUI_VAL_INP_CONTACTS
+    ui_ValueInput_STUBBED        , // GUI_VAL_INP_GPS
 #ifdef SCREEN_BRIGHTNESS
-    ui_ValueInput_BRIGHTNESS  , // GUI_VAL_INP_BRIGHTNESS       , D_BRIGHTNESS
+    ui_ValueInput_BRIGHTNESS     , // GUI_VAL_INP_BRIGHTNESS          , D_BRIGHTNESS
 #endif // SCREEN_BRIGHTNESS
 #ifdef SCREEN_CONTRAST
-    ui_ValueInput_CONTRAST    , // GUI_VAL_INP_CONTRAST         , D_CONTRAST
+    ui_ValueInput_CONTRAST       , // GUI_VAL_INP_CONTRAST            , D_CONTRAST
 #endif // SCREEN_CONTRAST
-    ui_ValueInput_TIMER       , // GUI_VAL_INP_TIMER            , D_TIMER
-    ui_ValueInput_STUBBED     , // GUI_VAL_INP_DATE
-    ui_ValueInput_STUBBED     , // GUI_VAL_INP_TIME
-    ui_ValueInput_ENABLED     , // GUI_VAL_INP_GPS_ENABLED      , G_ENABLED
-    ui_ValueInput_SET_TIME    , // GUI_VAL_INP_GPS_SET_TIME     , G_SET_TIME
-    ui_ValueInput_TIMEZONE    , // GUI_VAL_INP_GPS_TIME_ZONE    , G_TIMEZONE
-    ui_ValueInput_OFFSET      , // GUI_VAL_INP_RADIO_OFFSET     , R_OFFSET
-    ui_ValueInput_DIRECTION   , // GUI_VAL_INP_RADIO_DIRECTION  , R_DIRECTION
-    ui_ValueInput_STEP        , // GUI_VAL_INP_RADIO_STEP       , R_STEP
-    ui_ValueInput_CALLSIGN    , // GUI_VAL_INP_M17_CALLSIGN     , M17_CALLSIGN
-    ui_ValueInput_CAN         , // GUI_VAL_INP_M17_CAN          , M17_CAN
-    ui_ValueInput_CAN_RX      , // GUI_VAL_INP_M17_CAN_RX_CHECK , M17_CAN_RX
-    ui_ValueInput_LEVEL       , // GUI_VAL_INP_LEVEL            , VP_LEVEL
-    ui_ValueInput_PHONETIC    , // GUI_VAL_INP_PHONETIC         , VP_PHONETIC
-    ui_ValueInput_STUBBED     , // GUI_VAL_INP_BATTERY_VOLTAGE
-    ui_ValueInput_STUBBED     , // GUI_VAL_INP_BATTERY_CHARGE
-    ui_ValueInput_STUBBED     , // GUI_VAL_INP_RSSI
-    ui_ValueInput_STUBBED     , // GUI_VAL_INP_USED_HEAP
-    ui_ValueInput_STUBBED     , // GUI_VAL_INP_BAND
-    ui_ValueInput_STUBBED     , // GUI_VAL_INP_VHF
-    ui_ValueInput_STUBBED     , // GUI_VAL_INP_UHF
-    ui_ValueInput_STUBBED     , // GUI_VAL_INP_HW_VERSION
+    ui_ValueInput_TIMER          , // GUI_VAL_INP_TIMER               , D_TIMER
+    ui_ValueInput_STUBBED        , // GUI_VAL_INP_DATE
+    ui_ValueInput_STUBBED        , // GUI_VAL_INP_TIME
+    ui_ValueInput_ENABLED        , // GUI_VAL_INP_GPS_ENABLED         , G_ENABLED
+    ui_ValueInput_SET_TIME       , // GUI_VAL_INP_GPS_SET_TIME        , G_SET_TIME
+    ui_ValueInput_TIMEZONE       , // GUI_VAL_INP_GPS_TIME_ZONE       , G_TIMEZONE
+    ui_ValueInput_OFFSET         , // GUI_VAL_INP_RADIO_OFFSET        , R_OFFSET
+    ui_ValueInput_DIRECTION      , // GUI_VAL_INP_RADIO_DIRECTION     , R_DIRECTION
+    ui_ValueInput_STEP           , // GUI_VAL_INP_RADIO_STEP          , R_STEP
+    ui_ValueInput_CALLSIGN       , // GUI_VAL_INP_M17_CALLSIGN        , M17_CALLSIGN
+    ui_ValueInput_CAN            , // GUI_VAL_INP_M17_CAN             , M17_CAN
+    ui_ValueInput_CAN_RX         , // GUI_VAL_INP_M17_CAN_RX_CHECK    , M17_CAN_RX
+    ui_ValueInput_LEVEL          , // GUI_VAL_INP_LEVEL               , VP_LEVEL
+    ui_ValueInput_PHONETIC       , // GUI_VAL_INP_PHONETIC            , VP_PHONETIC
+    ui_ValueInput_STUBBED        , // GUI_VAL_INP_BATTERY_VOLTAGE
+    ui_ValueInput_STUBBED        , // GUI_VAL_INP_BATTERY_CHARGE
+    ui_ValueInput_STUBBED        , // GUI_VAL_INP_RSSI
+    ui_ValueInput_STUBBED        , // GUI_VAL_INP_USED_HEAP
+    ui_ValueInput_STUBBED        , // GUI_VAL_INP_BAND
+    ui_ValueInput_STUBBED        , // GUI_VAL_INP_VHF
+    ui_ValueInput_STUBBED        , // GUI_VAL_INP_UHF
+    ui_ValueInput_STUBBED        , // GUI_VAL_INP_HW_VERSION
 #ifdef PLATFORM_TTWRPLUS
-    ui_ValueInput_STUBBED     , // GUI_VAL_INP_RADIO
-    ui_ValueInput_STUBBED     , // GUI_VAL_INP_RADIO_FW
+    ui_ValueInput_STUBBED        , // GUI_VAL_INP_RADIO
+    ui_ValueInput_STUBBED        , // GUI_VAL_INP_RADIO_FW
 #endif // PLATFORM_TTWRPLUS
-    ui_ValueInput_STUBBED     , // GUI_VAL_INP_STUBBED
+    ui_ValueInput_STUBBED          // GUI_VAL_INP_STUBBED
 };
 
-bool ui_ValueInput( GuiState_st* guiState , bool* handled )
+void ui_ValueInputFSM( GuiState_st* guiState )
 {
     uint8_t linkSelected = guiState->uiState.menu_selected ;
     uint8_t valueNum     = guiState->layout.links[ linkSelected ].num ;
 
+    ui_ValueInput( guiState , valueNum );
+
+}
+
+void ui_ValueInput( GuiState_st* guiState , uint8_t valueNum )
+{
     if( valueNum >= GUI_VAL_INP_NUM_OF )
     {
         valueNum = GUI_VAL_INP_STUBBED ;
     }
 
-    *handled = true ;
+    guiState->sync_rtx = false ;
+    guiState->handled  = true ;
 
-    return ui_ValueInput_Table[ valueNum ]( guiState , handled );
+    ui_ValueInput_Table[ valueNum ]( guiState );
 
+}
+
+static void ui_ValueInput_VFOMiddleInput( GuiState_st* guiState )
+{
+    (void)guiState;
 }
 
 #ifdef SCREEN_BRIGHTNESS
 // D_BRIGHTNESS
-static bool ui_ValueInput_BRIGHTNESS( GuiState_st* guiState , bool* handled )
+static void ui_ValueInput_BRIGHTNESS( GuiState_st* guiState )
 {
-    bool sync_rtx = false ;
+    guiState->sync_rtx = false ;
+    guiState->handled  = true ;
 
-    *handled = true ;
-
-    if( (   guiState->msg.keys & KEY_LEFT                                         ) ||
+    if( (   guiState->msg.keys & KEY_LEFT                                                  ) ||
         ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) ) && guiState->uiState.edit_mode )    )
     {
         _ui_changeBrightness( -5 );
         vp_announceSettingsInt( &currentLanguage->brightness , guiState->queueFlags , state.settings.brightness );
     }
-    else if( (   guiState->msg.keys & KEY_RIGHT                                       ) ||
+    else if( (   guiState->msg.keys & KEY_RIGHT                                                ) ||
              ( ( guiState->msg.keys & ( KEY_UP | KNOB_RIGHT ) ) && guiState->uiState.edit_mode )    )
     {
         _ui_changeBrightness( +5 );
@@ -135,20 +148,17 @@ static bool ui_ValueInput_BRIGHTNESS( GuiState_st* guiState , bool* handled )
     }
     else
     {
-        *handled = false ;
+        guiState->handled = false ;
     }
-
-    return sync_rtx ;
 
 }
 #endif // SCREEN_BRIGHTNESS
 #ifdef SCREEN_CONTRAST
 // D_CONTRAST
-static bool ui_ValueInput_CONTRAST( GuiState_st* guiState , bool* handled )
+static void ui_ValueInput_CONTRAST( GuiState_st* guiState )
 {
-    bool sync_rtx = false ;
-
-    *handled = true ;
+    guiState->sync_rtx = false ;
+    guiState->handled  = true ;
 
     if( (   guiState->msg.keys & KEY_LEFT                      ) ||
         ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) ) &&
@@ -166,19 +176,16 @@ static bool ui_ValueInput_CONTRAST( GuiState_st* guiState , bool* handled )
     }
     else
     {
-        *handled = false ;
+        guiState->handled = false ;
     }
-
-    return sync_rtx ;
 
 }
 #endif // SCREEN_CONTRAST
 // D_TIMER
-static bool ui_ValueInput_TIMER( GuiState_st* guiState , bool* handled )
+static void ui_ValueInput_TIMER( GuiState_st* guiState )
 {
-    bool sync_rtx = false ;
-
-    *handled = true ;
+    guiState->sync_rtx = false ;
+    guiState->handled  = true ;
 
     if( (   guiState->msg.keys & KEY_LEFT                      ) ||
         ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) ) &&
@@ -196,19 +203,16 @@ static bool ui_ValueInput_TIMER( GuiState_st* guiState , bool* handled )
     }
     else
     {
-        *handled = false ;
+        guiState->handled = false ;
     }
-
-    return sync_rtx ;
 
 }
 #ifdef GPS_PRESENT
 // G_ENABLED
-static bool ui_ValueInput_ENABLED( GuiState_st* guiState , bool* handled )
+static void ui_ValueInput_ENABLED( GuiState_st* guiState )
 {
-    bool sync_rtx = false ;
-
-    *handled = true ;
+    guiState->sync_rtx = false ;
+    guiState->handled  = true ;
 
     if( (   guiState->msg.keys & ( KEY_LEFT | KEY_RIGHT )                            ) ||
         ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT | KEY_UP | KNOB_RIGHT ) ) &&
@@ -227,19 +231,16 @@ static bool ui_ValueInput_ENABLED( GuiState_st* guiState , bool* handled )
     }
     else
     {
-        *handled = false ;
+        guiState->handled = false ;
     }
-
-    return sync_rtx ;
 
 }
 
 // G_SET_TIME
-static bool ui_ValueInput_SET_TIME( GuiState_st* guiState , bool* handled )
+static void ui_ValueInput_SET_TIME( GuiState_st* guiState )
 {
-    bool sync_rtx = false ;
-
-    *handled = true ;
+    guiState->sync_rtx = false ;
+    guiState->handled  = true ;
 
     if( (   guiState->msg.keys & ( KEY_LEFT | KEY_RIGHT )                            ) ||
         ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT | KEY_UP | KNOB_RIGHT ) ) &&
@@ -251,19 +252,16 @@ static bool ui_ValueInput_SET_TIME( GuiState_st* guiState , bool* handled )
     }
     else
     {
-        *handled = false ;
+        guiState->handled = false ;
     }
-
-    return sync_rtx ;
 
 }
 
 // G_TIMEZONE
-static bool ui_ValueInput_TIMEZONE( GuiState_st* guiState , bool* handled )
+static void ui_ValueInput_TIMEZONE( GuiState_st* guiState )
 {
-    bool sync_rtx = false ;
-
-    *handled = true ;
+    guiState->sync_rtx = false ;
+    guiState->handled  = true ;
 
     if( (   guiState->msg.keys & ( KEY_LEFT | KEY_RIGHT )                            ) ||
         ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT | KEY_UP | KNOB_RIGHT ) ) &&
@@ -281,20 +279,17 @@ static bool ui_ValueInput_TIMEZONE( GuiState_st* guiState , bool* handled )
     }
     else
     {
-        *handled = false ;
+        guiState->handled = false ;
     }
-
-    return sync_rtx ;
 
 }
 #endif // GPS_PRESENT
 
 // R_OFFSET
-static bool ui_ValueInput_OFFSET( GuiState_st* guiState , bool* handled )
+static void ui_ValueInput_OFFSET( GuiState_st* guiState )
 {
-    bool sync_rtx = false ;
-
-    *handled = true ;
+    guiState->sync_rtx = false ;
+    guiState->handled  = true ;
 
     // If the entry is selected with enter we are in edit_mode
     if( guiState->uiState.edit_mode )
@@ -356,19 +351,16 @@ static bool ui_ValueInput_OFFSET( GuiState_st* guiState , bool* handled )
     }
     else
     {
-        *handled = false ;
+        guiState->handled = false ;
     }
-
-    return sync_rtx ;
 
 }
 
 // R_DIRECTION
-static bool ui_ValueInput_DIRECTION( GuiState_st* guiState , bool* handled )
+static void ui_ValueInput_DIRECTION( GuiState_st* guiState )
 {
-    bool sync_rtx = false ;
-
-    *handled = true ;
+    guiState->sync_rtx = false ;
+    guiState->handled  = true ;
 
     // If the entry is selected with enter we are in edit_mode
     if( guiState->uiState.edit_mode )
@@ -415,19 +407,16 @@ static bool ui_ValueInput_DIRECTION( GuiState_st* guiState , bool* handled )
     }
     else
     {
-        *handled = false ;
+        guiState->handled = false ;
     }
-
-    return sync_rtx ;
 
 }
 
 // R_STEP
-static bool ui_ValueInput_STEP( GuiState_st* guiState , bool* handled )
+static void ui_ValueInput_STEP( GuiState_st* guiState )
 {
-    bool sync_rtx = false ;
-
-    *handled = true ;
+    guiState->sync_rtx = false ;
+    guiState->handled  = true ;
 
     // If the entry is selected with enter we are in edit_mode
     if( guiState->uiState.edit_mode )
@@ -472,19 +461,16 @@ static bool ui_ValueInput_STEP( GuiState_st* guiState , bool* handled )
     }
     else
     {
-        *handled = false ;
+        guiState->handled = false ;
     }
-
-    return sync_rtx ;
 
 }
 
 // M17_CALLSIGN
-static bool ui_ValueInput_CALLSIGN( GuiState_st* guiState , bool* handled )
+static void ui_ValueInput_CALLSIGN( GuiState_st* guiState )
 {
-    bool sync_rtx = false ;
-
-    *handled = true ;
+    guiState->sync_rtx = false ;
+    guiState->handled  = true ;
 
     if( guiState->uiState.edit_mode )
     {
@@ -520,7 +506,7 @@ static bool ui_ValueInput_CALLSIGN( GuiState_st* guiState , bool* handled )
         }
         else
         {
-            *handled = false ;
+            guiState->handled = false ;
         }
     }
     else
@@ -534,20 +520,17 @@ static bool ui_ValueInput_CALLSIGN( GuiState_st* guiState , bool* handled )
         }
 	    else
 	    {
-	        *handled = false ;
+	        guiState->handled = false ;
     	}
     }
-
-    return sync_rtx ;
 
 }
 
 // M17_CAN
-static bool ui_ValueInput_CAN( GuiState_st* guiState , bool* handled )
+static void ui_ValueInput_CAN( GuiState_st* guiState )
 {
-    bool sync_rtx = false ;
-
-    *handled = true ;
+    guiState->sync_rtx = false ;
+    guiState->handled  = true ;
 
     if( guiState->uiState.edit_mode )
     {
@@ -569,7 +552,7 @@ static bool ui_ValueInput_CAN( GuiState_st* guiState , bool* handled )
         }
         else
         {
-            *handled = false ;
+            guiState->handled = false ;
         }
     }
     else
@@ -589,20 +572,17 @@ static bool ui_ValueInput_CAN( GuiState_st* guiState , bool* handled )
         }
 	    else
 	    {
-	        *handled = false ;
+	        guiState->handled = false ;
 	    }
     }
-
-    return sync_rtx ;
 
 }
 
 // M17_CAN_RX
-static bool ui_ValueInput_CAN_RX( GuiState_st* guiState , bool* handled )
+static void ui_ValueInput_CAN_RX( GuiState_st* guiState )
 {
-    bool sync_rtx = false ;
-
-    *handled = true ;
+    guiState->sync_rtx = false ;
+    guiState->handled  = true ;
 
     if( guiState->uiState.edit_mode )
     {
@@ -622,7 +602,7 @@ static bool ui_ValueInput_CAN_RX( GuiState_st* guiState , bool* handled )
         }
         else
         {
-            *handled = false ;
+            guiState->handled = false ;
         }
     }
     else
@@ -634,25 +614,22 @@ static bool ui_ValueInput_CAN_RX( GuiState_st* guiState , bool* handled )
         }
         else if( guiState->msg.keys & KEY_ESC )
         {
-            sync_rtx = true ;
+            guiState->sync_rtx = true ;
             ui_States_MenuBack( guiState );
         }
         else
         {
-            *handled = false ;
+            guiState->handled = false ;
         }
     }
-
-    return sync_rtx ;
 
 }
 
 // VP_LEVEL
-static bool ui_ValueInput_LEVEL( GuiState_st* guiState , bool* handled )
+static void ui_ValueInput_LEVEL( GuiState_st* guiState )
 {
-    bool sync_rtx = false ;
-
-    *handled = true ;
+    guiState->sync_rtx = false ;
+    guiState->handled  = true ;
 
     if( (   guiState->msg.keys & KEY_LEFT                      ) ||
         ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) ) &&
@@ -668,19 +645,16 @@ static bool ui_ValueInput_LEVEL( GuiState_st* guiState , bool* handled )
     }
     else
     {
-        *handled = false ;
+        guiState->handled = false ;
     }
-
-    return sync_rtx ;
 
 }
 
 // VP_PHONETIC
-static bool ui_ValueInput_PHONETIC( GuiState_st* guiState , bool* handled )
+static void ui_ValueInput_PHONETIC( GuiState_st* guiState )
 {
-    bool sync_rtx = false ;
-
-    *handled = true ;
+    guiState->sync_rtx = false ;
+    guiState->handled  = true ;
 
     if( (   guiState->msg.keys & KEY_LEFT                      ) ||
         ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) ) &&
@@ -696,18 +670,13 @@ static bool ui_ValueInput_PHONETIC( GuiState_st* guiState , bool* handled )
     }
     else
     {
-        *handled = false ;
+        guiState->handled = false ;
     }
-
-    return sync_rtx ;
 
 }
 
-static bool ui_ValueInput_STUBBED( GuiState_st* guiState , bool* handled )
+static void ui_ValueInput_STUBBED( GuiState_st* guiState )
 {
-    (void)guiState;
-
-    *handled = true ;
-
-    return false ;
+    guiState->sync_rtx = false ;
+    guiState->handled  = true ;
 }

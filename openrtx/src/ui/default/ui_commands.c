@@ -38,7 +38,8 @@ static bool GuiCmd_LineEnd( GuiState_st* guiState );
 static bool GuiCmd_Link( GuiState_st* guiState );
 static bool GuiCmd_LinkEnd( GuiState_st* guiState );
 static bool GuiCmd_Page( GuiState_st* guiState );
-static bool GuiCmd_Value( GuiState_st* guiState );
+static bool GuiCmd_ValueDisplay( GuiState_st* guiState );
+static bool GuiCmd_ValueInput( GuiState_st* guiState );
 static bool GuiCmd_Title( GuiState_st* guiState );
 static bool GuiCmd_Text( GuiState_st* guiState );
 static bool GuiCmd_PageEnd( GuiState_st* guiState );
@@ -52,38 +53,38 @@ typedef bool (*ui_GuiCmd_fn)( GuiState_st* guiState );
 
 static const ui_GuiCmd_fn ui_GuiCmd_Table[ GUI_CMD_NUM_OF ] =
 {
-    GuiCmd_Null        , // 0x00
-    GuiCmd_EventStart  , // 0x01
-    GuiCmd_EventEnd    , // 0x02
-    GuiCmd_GoToLine    , // 0x03
-    GuiCmd_AlignLeft   , // 0x04
-    GuiCmd_AlignCenter , // 0x05
-    GuiCmd_AlignRight  , // 0x06
-    GuiCmd_FontSize    , // 0x07
-    GuiCmd_Stubbed     , // 0x08
-    GuiCmd_Stubbed     , // 0x09
-    GuiCmd_LineEnd     , // 0x0A
-    GuiCmd_Link        , // 0x0B
-    GuiCmd_LinkEnd     , // 0x0C
-    GuiCmd_Stubbed     , // 0x0D
-    GuiCmd_Page        , // 0x0E
-    GuiCmd_Value       , // 0x0F
-    GuiCmd_Title       , // 0x10
-    GuiCmd_Text        , // 0x11
-    GuiCmd_Stubbed     , // 0x12
-    GuiCmd_Stubbed     , // 0x13
-    GuiCmd_Stubbed     , // 0x14
-    GuiCmd_Stubbed     , // 0x15
-    GuiCmd_Stubbed     , // 0x16
-    GuiCmd_Stubbed     , // 0x17
-    GuiCmd_Stubbed     , // 0x18
-    GuiCmd_Stubbed     , // 0x19
-    GuiCmd_Stubbed     , // 0x1A
-    GuiCmd_Stubbed     , // 0x1B
-    GuiCmd_Stubbed     , // 0x1C
-    GuiCmd_Stubbed     , // 0x1D
-    GuiCmd_Stubbed     , // 0x1E
-    GuiCmd_PageEnd       // 0x1F
+    GuiCmd_Null         , // 0x00
+    GuiCmd_EventStart   , // 0x01
+    GuiCmd_EventEnd     , // 0x02
+    GuiCmd_GoToLine     , // 0x03
+    GuiCmd_AlignLeft    , // 0x04
+    GuiCmd_AlignCenter  , // 0x05
+    GuiCmd_AlignRight   , // 0x06
+    GuiCmd_FontSize     , // 0x07
+    GuiCmd_Stubbed      , // 0x08
+    GuiCmd_Stubbed      , // 0x09
+    GuiCmd_LineEnd      , // 0x0A
+    GuiCmd_Link         , // 0x0B
+    GuiCmd_LinkEnd      , // 0x0C
+    GuiCmd_Stubbed      , // 0x0D
+    GuiCmd_Page         , // 0x0E
+    GuiCmd_ValueDisplay , // 0x0F
+    GuiCmd_ValueInput   , // 0x10
+    GuiCmd_Title        , // 0x11
+    GuiCmd_Text         , // 0x12
+    GuiCmd_Stubbed      , // 0x13
+    GuiCmd_Stubbed      , // 0x14
+    GuiCmd_Stubbed      , // 0x15
+    GuiCmd_Stubbed      , // 0x16
+    GuiCmd_Stubbed      , // 0x17
+    GuiCmd_Stubbed      , // 0x18
+    GuiCmd_Stubbed      , // 0x19
+    GuiCmd_Stubbed      , // 0x1A
+    GuiCmd_Stubbed      , // 0x1B
+    GuiCmd_Stubbed      , // 0x1C
+    GuiCmd_Stubbed      , // 0x1D
+    GuiCmd_Stubbed      , // 0x1E
+    GuiCmd_PageEnd        // 0x1F
 };
 
 bool ui_DisplayPage( GuiState_st* guiState )
@@ -96,13 +97,25 @@ bool ui_DisplayPage( GuiState_st* guiState )
     guiState->layout.printDisplayOn = true ;
     guiState->layout.inSelect       = false ;
 
-    if( guiState->page.num != guiState->page.levelList[ guiState->page.level ] )
+    if( guiState->page.level == 0 )
+    {
+        guiState->page.levelList[ guiState->page.level ] = guiState->page.num ;
+        guiState->page.level++ ;
+    }
+    else
     {
         if( guiState->page.level < MAX_PAGE_DEPTH )
         {
-            guiState->page.level++ ;
+            if( guiState->page.num != guiState->page.levelList[ guiState->page.level - 1 ] )
+            {
+                guiState->page.levelList[ guiState->page.level ] = guiState->page.num ;
+                guiState->page.level++ ;
+            }
         }
-        guiState->page.levelList[ guiState->page.level ] = guiState->page.num ;
+        else
+        {
+            guiState->page.levelList[ guiState->page.level - 1 ] = guiState->page.num ;
+        }
     }
 
     guiState->page.ptr              = (uint8_t*)uiPageTable[ guiState->page.num ] ;
@@ -378,7 +391,7 @@ static bool GuiCmd_Page( GuiState_st* guiState )
     return pageEnd ;
 }
 
-static bool GuiCmd_Value( GuiState_st* guiState )
+static bool GuiCmd_ValueDisplay( GuiState_st* guiState )
 {
     uint8_t valueNum ;
     bool    pageEnd  = false ;
@@ -397,6 +410,23 @@ static bool GuiCmd_Value( GuiState_st* guiState )
     guiState->layout.links[ guiState->layout.linkIndex ].amt  = 0 ;
 
     GuiCmd_DisplayValue( guiState , valueNum );
+
+    GuiCmd_AdvToNextCmd( guiState );
+
+    return pageEnd ;
+
+}
+
+static bool GuiCmd_ValueInput( GuiState_st* guiState )
+{
+    uint8_t valueNum ;
+    bool    pageEnd  = false ;
+
+    guiState->page.index++ ;
+
+    valueNum = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+
+    ui_ValueInput( guiState , valueNum );
 
     GuiCmd_AdvToNextCmd( guiState );
 

@@ -383,6 +383,8 @@ static void ui_InitGuiState( GuiState_st* guiState )
     guiState->update        = false ;
     guiState->pageHasEvents = false ;
     guiState->inEventArea   = false ;
+    guiState->sync_rtx      = false ;
+    guiState->handled       = false ;
     ui_InitGuiStatePage( &guiState->page );
     ui_InitGuiStateLayout( &guiState->layout );
 }
@@ -397,11 +399,11 @@ static void ui_InitGuiStatePage( Page_st* page )
 {
     uint16_t index ;
 
-    page->num   = 0 ;
+    page->num   = PAGE_INITIAL ;
 
     for( index = 0 ; index < MAX_PAGE_DEPTH ; index++ )
     {
-        page->levelList[ index ] = 0 ;
+        page->levelList[ index ] = PAGE_INITIAL ;
     }
 
     page->level = 0 ;

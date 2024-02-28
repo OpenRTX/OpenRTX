@@ -110,6 +110,8 @@ void ui_draw( GuiState_st* guiState , Event_st* event )
         guiState->update = true ;
     }
 
+static uint8_t count = 0 ;
+
     if( guiState->page.num != prevPageNum )
     {
         prevPageNum             = guiState->page.num ;
@@ -118,6 +120,9 @@ void ui_draw( GuiState_st* guiState , Event_st* event )
         guiState->event.payload = EVENT_STATUS_ALL ;
         drawPage                = true ;
         guiState->update        = false ;
+DEBUG_SET_TRACE0( count++ )
+if( count == 10 )count=0;
+DEBUG_SET_TRACE1( guiState->page.num )
     }
 
     if( drawPage )

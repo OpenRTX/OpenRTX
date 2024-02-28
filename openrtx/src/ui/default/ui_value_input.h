@@ -27,6 +27,8 @@
 // GUI Values - Input
 enum
 {
+    GUI_VAL_INP_VFO_MIDDLE_INPUT ,
+
     GUI_VAL_INP_CURRENT_TIME     ,
     GUI_VAL_INP_BATTERY_LEVEL    ,
     GUI_VAL_INP_LOCK_STATE       ,
@@ -75,7 +77,8 @@ enum
     GUI_VAL_INP_NUM_OF
 };
 
-extern bool ui_ValueInput( GuiState_st* guiState , bool* handled );
+extern void ui_ValueInputFSM( GuiState_st* guiState );
+extern void ui_ValueInput( GuiState_st* guiState , uint8_t valueNum );
 
 
 #endif // UI_VALUE_INPUT_H

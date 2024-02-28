@@ -79,6 +79,8 @@ typedef void (*ui_GuiVal_fn)( GuiState_st* guiState );
 
 static const ui_GuiVal_fn ui_GuiVal_Table[ GUI_VAL_DSP_NUM_OF ] =
 {
+    GuiVal_Stubbed          , // GUI_VAL_INP_VFO_MIDDLE_INPUT
+
     GuiVal_CurrentTime      ,
     GuiVal_BatteryLevel     ,
     GuiVal_LockState        ,

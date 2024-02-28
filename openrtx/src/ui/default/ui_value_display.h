@@ -27,6 +27,8 @@
 // GUI Values - Display
 enum
 {
+    GUI_VAL_DSP_INP_STUBBED_0    , // GUI_VAL_INP_VFO_MIDDLE_INPUT
+
     GUI_VAL_DSP_CURRENT_TIME     ,
     GUI_VAL_DSP_BATTERY_LEVEL    ,
     GUI_VAL_DSP_LOCK_STATE       ,

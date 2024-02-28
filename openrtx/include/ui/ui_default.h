@@ -31,7 +31,7 @@
 #include <event.h>
 #include <ui.h>
 
-//#define DISPLAY_DEBUG_MSG
+#define DISPLAY_DEBUG_MSG
 
 #ifndef DISPLAY_DEBUG_MSG
 
@@ -94,6 +94,11 @@ typedef enum
     PAGE_STUBBED                    , // 0x1A
     PAGE_NUM_OF                       // 0x1B
 }uiPageNum_en;
+
+enum
+{
+    PAGE_INITIAL = PAGE_MAIN_MEM
+};
 
 enum
 {
@@ -237,6 +242,8 @@ typedef struct
     bool            update ;
     bool            pageHasEvents ;
     bool            inEventArea ;
+    bool            sync_rtx ;
+    bool            handled ;
     Page_st         page ;
     Layout_st       layout ;
     kbd_msg_t       msg ;
