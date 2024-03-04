@@ -24,8 +24,22 @@
 
 #include <ui/ui_default.h>
 
-extern State_st last_state ;
-extern bool     macro_latched ;
+extern long long last_event_tick ;
+extern State_st  last_state ;
+extern bool      macro_latched ;
+extern bool      macro_menu ;
+extern bool      redraw_needed ;
+extern uint8_t   evQueue_rdPos ;
+extern uint8_t   evQueue_wrPos ;
+extern Event_st  evQueue[ MAX_NUM_EVENTS ] ;
+
+extern bool _ui_drawDarkOverlay( void );
+extern void _ui_changePhoneticSpell( bool newVal );
+extern void _ui_changeVoiceLevel( int variation );
+extern void _ui_changeM17Can( int variation );
+extern void _ui_numberInputDel( GuiState_st* guiState , uint32_t* num );
+extern void _ui_numberInputKeypad( GuiState_st* guiState , uint32_t* num , kbd_msg_t msg );
+extern void _ui_changeTimer( int variation );
 
 extern void ui_States_MenuUp( GuiState_st* guiState , uint8_t menu_entries );
 extern void ui_States_MenuDown( GuiState_st* guiState , uint8_t menu_entries );

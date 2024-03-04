@@ -18,8 +18,39 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <math.h>
+#include <input.h>
+#include <hwconfig.h>
+#include <voicePromptUtils.h>
 #include <ui/ui_default.h>
+#include <rtx.h>
+#include <interfaces/platform.h>
+#include <interfaces/display.h>
+#include <interfaces/cps_io.h>
+#include <interfaces/nvmem.h>
+#include <interfaces/delays.h>
+#include <string.h>
+#include <battery.h>
+#include <utils.h>
+#include <beeps.h>
+#include <memory_profiling.h>
+
+#ifdef PLATFORM_TTWRPLUS
+#include <SA8x8.h>
+#endif
+
+//@@@KL #include "ui_m17.h"
+
+#include "ui.h"
+#include "ui_value_arrays.h"
 #include "ui_scripts.h"
+#include "ui_commands.h"
+#include "ui_value_display.h"
+#include "ui_states.h"
+#include "ui_value_input.h"
 
 static const uint32_t ColorTable[ COLOR_NUM_OF ] =
 {
@@ -46,7 +77,6 @@ static bool GuiCmd_PageEnd( GuiState_st* guiState );
 static bool GuiCmd_Stubbed( GuiState_st* guiState );
 
 static bool GuiCmd_Select( GuiState_st* guiState );
-static void GuiCmd_DisplayValue( GuiState_st* guiState , uint8_t valueNum );
 static void GuiCmd_AdvToNextCmd( GuiState_st* guiState );
 
 typedef bool (*ui_GuiCmd_fn)( GuiState_st* guiState );
@@ -409,7 +439,7 @@ static bool GuiCmd_ValueDisplay( GuiState_st* guiState )
     guiState->layout.links[ guiState->layout.linkIndex ].num  = valueNum ;
     guiState->layout.links[ guiState->layout.linkIndex ].amt  = 0 ;
 
-    GuiCmd_DisplayValue( guiState , valueNum );
+    GuiVal_DisplayValue( guiState , valueNum );
 
     GuiCmd_AdvToNextCmd( guiState );
 

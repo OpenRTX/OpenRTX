@@ -19,7 +19,37 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <math.h>
+#include <input.h>
+#include <hwconfig.h>
+#include <voicePromptUtils.h>
 #include <ui/ui_default.h>
+#include <rtx.h>
+#include <interfaces/platform.h>
+#include <interfaces/display.h>
+#include <interfaces/cps_io.h>
+#include <interfaces/nvmem.h>
+#include <interfaces/delays.h>
+#include <string.h>
+#include <battery.h>
+#include <utils.h>
+#include <beeps.h>
+#include <memory_profiling.h>
+
+#ifdef PLATFORM_TTWRPLUS
+#include <SA8x8.h>
+#endif
+
+//@@@KL #include "ui_m17.h"
+
+#include "ui.h"
+#include "ui_value_arrays.h"
+#include "ui_scripts.h"
+#include "ui_commands.h"
+#include "ui_value_display.h"
 #include "ui_states.h"
 #include "ui_value_input.h"
 

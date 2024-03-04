@@ -68,6 +68,7 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/protocols/M17/M17LinkSetupFrame.cpp']
 
 openrtx_inc = ['openrtx/include',
+               'openrtx/src/ui/default',
                'openrtx/include/rtx',
                'openrtx/include/core',
                'openrtx/include/calibration',
@@ -90,11 +91,23 @@ openrtx_inc = ['openrtx/include',
 openrtx_ui_default = ['openrtx/src/ui/default/ui.c',
                       'openrtx/src/ui/default/ui_main.c',
                       'openrtx/src/ui/default/ui_menu.c',
+                      'openrtx/src/ui/default/ui_value_arrays.c',
+                      'openrtx/src/ui/default/ui_scripts.c',
+                      'openrtx/src/ui/default/ui_commands.c',
+                      'openrtx/src/ui/default/ui_value_display.c',
+                      'openrtx/src/ui/default/ui_states.c',
+                      'openrtx/src/ui/default/ui_value_input.c',
                       'openrtx/src/ui/default/ui_strings.c']
 
 openrtx_ui_module17 = ['openrtx/src/ui/module17/ui.c',
                        'openrtx/src/ui/module17/ui_main.c',
-                       'openrtx/src/ui/module17/ui_menu.c']
+                       'openrtx/src/ui/module17/ui_menu.c',
+                      'openrtx/src/ui/default/ui_value_arrays.c',
+                      'openrtx/src/ui/default/ui_scripts.c',
+                      'openrtx/src/ui/default/ui_commands.c',
+                      'openrtx/src/ui/default/ui_value_display.c',
+                      'openrtx/src/ui/default/ui_states.c',
+                      'openrtx/src/ui/default/ui_value_input.c']
 
 ##
 ## Selection of main entrypoint

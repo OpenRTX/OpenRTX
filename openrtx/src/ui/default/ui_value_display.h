@@ -124,6 +124,6 @@ typedef enum
     M17_CAN_RX              // GUI_VAL_INP_CAN_RX
 }SettingsM17Items_en;
 
-extern void GuiVal_DisplayValue( GuiState_st* guiState , char* valueBuffer );
+extern void GuiVal_DisplayValue( GuiState_st* guiState , uint8_t valueNum );
 
 #endif // UI_VALUE_DISPLAY_H

@@ -95,13 +95,8 @@
 #include "ui_value_display.h"
 #include "ui_states.h"
 #include "ui_value_input.h"
-//@@@KL these will have to be put in the makefile
-#include "ui_value_arrays.c"
-#include "ui_scripts.c"
-#include "ui_commands.c"
-#include "ui_value_display.c"
-#include "ui_states.c"
-#include "ui_value_input.c"
+
+extern long long getTick();
 
 #ifdef DISPLAY_DEBUG_MSG
 
@@ -359,8 +354,8 @@ void ui_init( void )
     ui_InitUIState( &guiState->uiState );
     ui_InitGuiState( guiState );
 
-    last_event_tick  = getTick();
-    redraw_needed    = true ;
+    last_event_tick = getTick();
+    redraw_needed   = true ;
 }
 
 static void ui_InitUIState( UI_State_st* uiState )
@@ -537,12 +532,12 @@ void ui_saveState( void )
 {
     last_state = state ;
 }
-
+//@@@KL redraw_needed will need to be redacted
 bool ui_updateGUI( Event_st* event )
 {
     bool render = false ;
 
-    if( redraw_needed == true )
+    if( redraw_needed )
     {
         ui_draw( &GuiState , event );
         // If MACRO menu is active draw it

@@ -19,22 +19,56 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <math.h>
+#include <input.h>
+#include <hwconfig.h>
+#include <voicePromptUtils.h>
 #include <ui/ui_default.h>
-#include "ui_menu.h"
+#include <rtx.h>
+#include <interfaces/platform.h>
+#include <interfaces/display.h>
+#include <interfaces/cps_io.h>
+#include <interfaces/nvmem.h>
+#include <interfaces/delays.h>
+#include <string.h>
+#include <battery.h>
+#include <utils.h>
+#include <beeps.h>
+#include <memory_profiling.h>
+
+#ifdef PLATFORM_TTWRPLUS
+#include <SA8x8.h>
+#endif
+
+//@@@KL #include "ui_m17.h"
+
+#include "ui.h"
+#include "ui_value_arrays.h"
+#include "ui_scripts.h"
+#include "ui_commands.h"
+#include "ui_value_display.h"
 #include "ui_states.h"
+#include "ui_value_input.h"
+
+#include "ui_menu.h"
 
        State_st    last_state ;
        bool        macro_latched ;
-static bool        macro_menu      = false ;
-static bool        redraw_needed   = true ;
+       bool        macro_menu      = false ;
+       bool        redraw_needed   = true ;
 
 static bool        standby         = false ;
-static long long   last_event_tick = 0 ;
+       long long   last_event_tick = 0 ;
 
 // UI event queue
-static uint8_t     evQueue_rdPos ;
-static uint8_t     evQueue_wrPos ;
-static Event_st    evQueue[ MAX_NUM_EVENTS ] ;
+       uint8_t     evQueue_rdPos ;
+       uint8_t     evQueue_wrPos ;
+       Event_st    evQueue[ MAX_NUM_EVENTS ] ;
+
+extern long long getTick();
 
 static void   EnterStandby( void );
 static bool   ExitStandby( long long now );
@@ -924,7 +958,7 @@ static bool _ui_channel_valid( channel_t* channel )
     return valid ;
 }
 
-static bool _ui_drawDarkOverlay( void )
+bool _ui_drawDarkOverlay( void )
 {
     Color_st color_agg ;
     ui_ColorLoad( &color_agg , COLOR_AGG );
@@ -1695,7 +1729,7 @@ static void _ui_changeContrast( int variation )
 }
 #endif // SCREEN_CONTRAST
 
-static void _ui_changeTimer( int variation )
+void _ui_changeTimer( int variation )
 {
     if( !( ( ( state.settings.display_timer == TIMER_OFF ) && ( variation < 0 ) ) ||
            ( ( state.settings.display_timer == TIMER_1H  ) && ( variation > 0 ) )    ) )
@@ -1704,7 +1738,7 @@ static void _ui_changeTimer( int variation )
     }
 }
 
-static inline void _ui_changeM17Can( int variation )
+void _ui_changeM17Can( int variation )
 {
     uint8_t can = state.settings.m17_can ;
 
@@ -1712,7 +1746,7 @@ static inline void _ui_changeM17Can( int variation )
 
 }
 
-static void _ui_changeVoiceLevel( int variation )
+void _ui_changeVoiceLevel( int variation )
 {
     if( ( ( state.settings.vpLevel == VPP_NONE ) && ( variation < 0 ) ) ||
         ( ( state.settings.vpLevel == VPP_HIGH ) && ( variation > 0 ) )    )
@@ -1735,7 +1769,7 @@ static void _ui_changeVoiceLevel( int variation )
     vp_announceSettingsVoiceLevel( flags );
 }
 
-static void _ui_changePhoneticSpell( bool newVal )
+void _ui_changePhoneticSpell( bool newVal )
 {
     state.settings.vpPhoneticSpell = newVal ? 1 : 0 ;
 
@@ -2160,7 +2194,7 @@ void ui_States_TextInputDelete( GuiState_st* guiState , char* buf )
     guiState->uiState.input_set = 0 ;
 }
 
-static void _ui_numberInputKeypad( GuiState_st* guiState , uint32_t* num , kbd_msg_t msg )
+void _ui_numberInputKeypad( GuiState_st* guiState , uint32_t* num , kbd_msg_t msg )
 {
     long long now = getTick();
 
@@ -2222,7 +2256,7 @@ static void _ui_numberInputKeypad( GuiState_st* guiState , uint32_t* num , kbd_m
     guiState->uiState.last_keypress = now;
 }
 
-static void _ui_numberInputDel( GuiState_st* guiState , uint32_t* num )
+void _ui_numberInputDel( GuiState_st* guiState , uint32_t* num )
 {
     // announce the digit about to be backspaced.
     vp_announceInputChar( '0' + ( *num % 10 ) );

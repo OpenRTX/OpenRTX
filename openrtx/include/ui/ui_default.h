@@ -31,7 +31,7 @@
 #include <event.h>
 #include <ui.h>
 
-#define DISPLAY_DEBUG_MSG
+//#define DISPLAY_DEBUG_MSG
 
 #ifndef DISPLAY_DEBUG_MSG
 
