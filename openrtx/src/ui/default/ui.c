@@ -394,16 +394,17 @@ static void ui_InitGuiStatePage( Page_st* page )
 {
     uint16_t index ;
 
-    page->num   = PAGE_INITIAL ;
+    page->num        = PAGE_INITIAL ;
 
     for( index = 0 ; index < MAX_PAGE_DEPTH ; index++ )
     {
         page->levelList[ index ] = PAGE_INITIAL ;
     }
 
-    page->level = 0 ;
-    page->ptr   = (uint8_t*)uiPageTable[ 0 ] ;
-    page->index = 0 ;
+    page->level      = 0 ;
+    page->ptr        = (uint8_t*)uiPageTable[ 0 ] ;
+    page->index      = 0 ;
+    page->renderPage = false ;
 }
 
 static void ui_InitGuiStateLayout( Layout_st* layout )
@@ -532,11 +533,9 @@ void ui_saveState( void )
 {
     last_state = state ;
 }
-//@@@KL redraw_needed will need to be redacted
+//@@@KL redraw_needed will need to be redacted \ name changed \ put into GuiState
 bool ui_updateGUI( Event_st* event )
 {
-    bool render = false ;
-
     if( redraw_needed )
     {
         ui_draw( &GuiState , event );
@@ -550,10 +549,9 @@ bool ui_updateGUI( Event_st* event )
         Debug_DisplayMsg();
 #endif // DISPLAY_DEBUG_MSG
         redraw_needed = false ;
-        render        = true ;
     }
 
-    return render ;
+    return GuiState.page.renderPage ;
 }
 
 bool ui_pushEvent( const uint8_t type , const uint32_t data )

@@ -74,7 +74,7 @@ int main()
         SDL_PollEvent(&eventListener);
         if(eventListener.type == SDL_QUIT) break;
     }
-    
+
     display_terminate();
     return 0;
 }

@@ -104,54 +104,55 @@ void state_terminate( void )
 
 enum
 {
-    STATE_TASK_UPDATE_PERIOD         =  100 ,
-    STATE_TASK_DISPLAY_UPDATE_PERIOD = 1000 ,
-    STATE_TASK_BATTERY_HYSTERESIS    =    0 ,
-    STATE_TASK_RSSI_HYSTERESIS       =    0
+    STATE_TASK_UPDATE_PERIOD            =  100 ,
+    STATE_TASK_DISPLAY_TIME_TICK_PERIOD = 1000 ,
+    STATE_TASK_DEVICE_STATUS_PERIOD     =  500 ,
+    STATE_TASK_BATTERY_HYSTERESIS       =   10 ,
+    STATE_TASK_RSSI_HYSTERESIS          =   10
 };
 
 void state_task( void )
 {
-    static long long int  lastUpdateTimeTick        = 0 ;
-    static long long int  lastTimeDisplayUpdateTick = 0 ;
-    static uint16_t       v_bat_prev                = STATE_TASK_BATTERY_HYSTERESIS ;
+    static long long int  lastUpdateTimeTick          = 0 ;
+    static long long int  lastTimeDisplayUpdateTick   = 0 ;
+    static long long int  lastDeviceUpdateTick = 0 ;
+    static uint16_t       v_bat_prev                  = ~0 ;
            uint16_t       v_bat ;
-    static float          rssi_prev                 = STATE_TASK_RSSI_HYSTERESIS ;
-           EventStatus_en eventPayload              = 0 ;
+    static float          rssi_prev                   = ~0 ;
+           EventStatus_en eventPayload                = 0 ;
 
     // Update radio state once every 100ms
     if( ( getTick() - lastUpdateTimeTick ) >= STATE_TASK_UPDATE_PERIOD )
     {
+#ifdef RTC_PRESENT
+        state.time          = platform_getCurrentTime();
+#endif
+        lastUpdateTimeTick  = getTick();
         eventPayload       |= EVENT_STATUS_TIME_TICK ;
 
-        lastUpdateTimeTick  = getTick();
-
-        if( ( lastUpdateTimeTick - lastTimeDisplayUpdateTick ) >= STATE_TASK_DISPLAY_UPDATE_PERIOD )
+        if( ( lastUpdateTimeTick - lastTimeDisplayUpdateTick ) >= STATE_TASK_DISPLAY_TIME_TICK_PERIOD )
         {
             lastTimeDisplayUpdateTick  = lastUpdateTimeTick ;
             eventPayload              |= EVENT_STATUS_DISPLAY_TIME_TICK ;
         }
 
-#ifdef RTC_PRESENT
-        state.time    = platform_getCurrentTime();
-#endif
         pthread_mutex_lock( &state_mutex );
 
-        /*
-         * Low-pass filtering with a time constant of 10s when updated at 1Hz
-         * Original computation: state.v_bat = 0.02*vbat + 0.98*state.v_bat
-         * Peak error is 18mV when input voltage is 49mV.
-         */
-        v_bat         = platform_getVbat();
-        state.v_bat  -= ( state.v_bat * 2 ) / 100 ;
-        state.v_bat  += ( v_bat * 2 ) / 100 ;
-
-        state.charge  = battery_getCharge( state.v_bat );
-
-        state.rssi    = rtx_getRssi();
-
-        if( eventPayload & EVENT_STATUS_DISPLAY_TIME_TICK )
+        if( ( lastUpdateTimeTick - lastDeviceUpdateTick ) >= STATE_TASK_DEVICE_STATUS_PERIOD )
         {
+            lastDeviceUpdateTick = lastUpdateTimeTick ;
+
+            /*
+             * Low-pass filtering with a time constant of 10s when updated at 1Hz
+             * Original computation: state.v_bat = 0.02*vbat + 0.98*state.v_bat
+             * Peak error is 18mV when input voltage is 49mV.
+             */
+            v_bat         = platform_getVbat();
+            state.v_bat  -= ( state.v_bat * 2 ) / 100 ;
+            state.v_bat  += ( v_bat * 2 ) / 100 ;
+
+            state.charge  = battery_getCharge( state.v_bat );
+
             if( state.v_bat > v_bat_prev )
             {
                 if( state.v_bat >= ( v_bat_prev + STATE_TASK_BATTERY_HYSTERESIS ) )
@@ -172,6 +173,8 @@ void state_task( void )
                 }
             }
 
+            state.rssi    = rtx_getRssi();
+
             if( state.rssi > rssi_prev )
             {
                 if( state.rssi >= ( rssi_prev + STATE_TASK_RSSI_HYSTERESIS ) )
@@ -191,11 +194,12 @@ void state_task( void )
                     }
                 }
             }
+
         }
 
         pthread_mutex_unlock( &state_mutex );
 
-        if( eventPayload )
+        if( eventPayload  )
         {
             ui_pushEvent( EVENT_TYPE_STATUS , (uint32_t)eventPayload );
         }

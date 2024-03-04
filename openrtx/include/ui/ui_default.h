@@ -233,6 +233,7 @@ typedef struct
     uint8_t         level ;
     uint8_t*        ptr ;
     uint16_t        index ;
+    bool            renderPage ;
 }Page_st;
 
 typedef struct

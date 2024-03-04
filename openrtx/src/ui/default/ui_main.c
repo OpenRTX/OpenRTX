@@ -99,10 +99,10 @@ static const ui_draw_fn uiPageDescTable[ PAGE_NUM_OF ] =
 //@@@KL check how the cursor bar is displayed and ensure that it is
 void ui_draw( GuiState_st* guiState , Event_st* event )
 {
-    static uint8_t  prevPageNum = ~0 ;
-           bool     drawPage    = false ;
+    static uint8_t prevPageNum = ~0 ;
+           bool    drawPage    = false ;
 
-    guiState->event = *event ;
+    guiState->event           = *event ;
 
     if( guiState->event.type == EVENT_TYPE_STATUS )
     {
@@ -110,14 +110,15 @@ void ui_draw( GuiState_st* guiState , Event_st* event )
         guiState->update = true ;
     }
 
-    if( guiState->page.num != prevPageNum )
+//    if( guiState->page.num != prevPageNum )
     {
-        prevPageNum             = guiState->page.num ;
+        prevPageNum               = guiState->page.num ;
         gfx_clearScreen();
-        guiState->event.type    = EVENT_TYPE_STATUS ;
-        guiState->event.payload = EVENT_STATUS_ALL ;
-        drawPage                = true ;
-        guiState->update        = false ;
+        guiState->event.type      = EVENT_TYPE_STATUS ;
+        guiState->event.payload   = EVENT_STATUS_ALL ;
+        drawPage                  = true ;
+        guiState->update          = false ;
+        guiState->page.renderPage = true ;
     }
 
     if( drawPage )
@@ -223,6 +224,7 @@ static void ui_drawLowBatteryScreen( GuiState_st* guiState , bool update , Event
                    ALIGN_CENTER                    ,
                    color_fg                        ,
                    currentLanguage->pressAnyButton   );
+        guiState->page.renderPage = true ;
     }
 }
 
@@ -265,15 +267,14 @@ static void ui_drawMainTop( GuiState_st* guiState , Event_st* event )
 #ifdef RTC_PRESENT
         if( event->payload & EVENT_STATUS_DISPLAY_TIME_TICK )
         {
+            // clear the time display area
             //@@@KL needs to be more objectively determined
             lineIndex = GUI_LINE_TOP ;
             height    = GuiState.layout.lineStyle[ lineIndex ].height ;
             width     = 68 ;
             start.y   = ( GuiState.layout.lineStyle[ lineIndex ].pos.y - height ) + 1 ;
             start.x   = 44 ;
-
-            // clear the time display area
-            gfx_drawRect( start , width , height , color_bg , true );
+            gfx_clearRectangle( start , width , height );
 
             // Print clock on top bar
             datetime_t local_time = utcToLocalTime( last_state.time ,
@@ -281,33 +282,37 @@ static void ui_drawMainTop( GuiState_st* guiState , Event_st* event )
             gfx_print( guiState->layout.lineStyle[ GUI_LINE_TOP ].pos , guiState->layout.lineStyle[ GUI_LINE_TOP ].font.size , ALIGN_CENTER ,
                        color_fg , "%02d:%02d:%02d" , local_time.hour ,
                        local_time.minute , local_time.second );
+            guiState->page.renderPage = true ;
         }
 #endif // RTC_PRESENT
         if( event->payload & EVENT_STATUS_BATTERY )
         {
-//static uint8_t count = 0 ;//@@@KL
-//count++ ;
-//DEBUG_SET_TRACE0( count )
+            // clear the time display area
+            width   = SCREEN_WIDTH / 9 ;
+            height  = guiState->layout.lineStyle[ GUI_LINE_TOP ].height - ( guiState->layout.status_v_pad * 2 );
+            start.x = SCREEN_WIDTH - width - guiState->layout.horizontal_pad ;
+            start.y = guiState->layout.status_v_pad ;
+            gfx_clearRectangle( start , width , height );
             // If the radio has no built-in battery, print input voltage
 #ifdef BAT_NONE
-            gfx_print( guiState->layout.lineStyle[ GUI_LINE_TOP ].pos , guiState->layout.lineStyle[ GUI_LINE_TOP ].font.size , ALIGN_RIGHT ,
-                       color_fg , "%.1fV" , last_state.v_bat );
+            gfx_print( guiState->layout.lineStyle[ GUI_LINE_TOP ].pos ,
+                       guiState->layout.lineStyle[ GUI_LINE_TOP ].font.size ,
+                       ALIGN_RIGHT , color_fg , "%.1fV" , last_state.v_bat );
 #else // BAT_NONE
             // Otherwise print battery icon on top bar, use 4 px padding
-            uint16_t bat_width  = SCREEN_WIDTH / 9 ;
-            uint16_t bat_height = guiState->layout.lineStyle[ GUI_LINE_TOP ].height - ( guiState->layout.status_v_pad * 2 );
-            Pos_st   bat_pos    = { SCREEN_WIDTH - bat_width - guiState->layout.horizontal_pad ,
-                                    guiState->layout.status_v_pad };
-            gfx_drawBattery( bat_pos , bat_width , bat_height , last_state.charge );
+            gfx_drawBattery( start , width , height , last_state.charge );
 #endif // BAT_NONE
+            guiState->page.renderPage = true ;
         }
         if( event->payload & EVENT_STATUS_DISPLAY_TIME_TICK )
         {
             if( guiState->uiState.input_locked == true )
             {
-              gfx_drawSymbol( guiState->layout.lineStyle[ GUI_LINE_TOP ].pos ,
-                              guiState->layout.lineStyle[ GUI_LINE_TOP ].symbolSize ,
-                              ALIGN_LEFT , color_fg , SYMBOL_LOCK );
+                start  = guiState->layout.lineStyle[ GUI_LINE_TOP ].pos ;
+                width  = guiState->layout.lineStyle[ GUI_LINE_TOP ].symbolSize + FONT_SIZE_24PT + 1 ;
+                height = width ;
+                gfx_drawSymbol( start , width , ALIGN_LEFT , color_fg , SYMBOL_LOCK );
+                guiState->page.renderPage = true ;
             }
         }
     }
@@ -323,6 +328,7 @@ static void ui_drawBankChannel( GuiState_st* guiState )
     gfx_print( guiState->layout.lineStyle[ GUI_LINE_1 ].pos , guiState->layout.lineStyle[ GUI_LINE_1 ].font.size , ALIGN_CENTER ,
                color_fg , "%01d-%03d: %.12s" ,
                bank_enabled , last_state.channel_index + 1 , last_state.channel.name );
+    guiState->page.renderPage = true ;
 }
 
 static void ui_drawModeInfo( GuiState_st* guiState )
@@ -395,6 +401,7 @@ static void ui_drawModeInfo( GuiState_st* guiState )
                 gfx_print( guiState->layout.lineStyle[ GUI_LINE_2 ].pos , guiState->layout.lineStyle[ GUI_LINE_2 ].font.size , ALIGN_CENTER ,
                            color_fg , "%s" , bw_str );
             }
+            guiState->page.renderPage = true ;
             break ;
         }
         case OPMODE_DMR :
@@ -402,6 +409,7 @@ static void ui_drawModeInfo( GuiState_st* guiState )
             // Print Contact
             gfx_print( guiState->layout.lineStyle[ GUI_LINE_2 ].pos , guiState->layout.lineStyle[ GUI_LINE_2 ].font.size , ALIGN_CENTER ,
                        color_fg , "%s" , last_state.contact.name );
+            guiState->page.renderPage = true ;
             break ;
         }
         case OPMODE_M17 :
@@ -442,6 +450,7 @@ static void ui_drawModeInfo( GuiState_st* guiState )
                     gfx_print( guiState->layout.lineStyle[ GUI_LINE_3 ].pos , guiState->layout.lineStyle[ GUI_LINE_2 ].font.size , ALIGN_CENTER ,
                                color_fg , "%s" , rtxStatus.M17_refl );
                 }
+                guiState->page.renderPage = true ;
             }
             else
             {
@@ -464,6 +473,7 @@ static void ui_drawModeInfo( GuiState_st* guiState )
 
                 gfx_print( guiState->layout.lineStyle[ GUI_LINE_2 ].pos , guiState->layout.lineStyle[ GUI_LINE_2 ].font.size , ALIGN_CENTER ,
                            color_fg , "M17 #%s" , dst );
+                guiState->page.renderPage = true ;
             }
             break ;
         }
@@ -480,6 +490,7 @@ static void ui_drawFrequency( GuiState_st* guiState )
     // Print big numbers frequency
     gfx_print( guiState->layout.lineStyle[ GUI_LINE_3_LARGE ].pos , guiState->layout.lineStyle[ GUI_LINE_3_LARGE ].font.size , ALIGN_CENTER ,
                color_fg , "%.7g" , (float)frequency / 1000000.0f );
+    guiState->page.renderPage = true ;
 }
 
 static void ui_drawVFOMiddleInput( GuiState_st* guiState )
@@ -519,6 +530,7 @@ static void ui_drawVFOMiddleInput( GuiState_st* guiState )
                    color_fg , " Tx:%03lu.%04lu" ,
                    (unsigned long)last_state.channel.tx_frequency / 1000000 ,
                    (unsigned long)( last_state.channel.tx_frequency % 1000000 ) / 100 );
+        guiState->page.renderPage = true ;
     }
     else
     {
@@ -546,6 +558,7 @@ static void ui_drawVFOMiddleInput( GuiState_st* guiState )
                 gfx_print( guiState->layout.lineStyle[ GUI_LINE_3_LARGE ].pos , guiState->layout.input_font.size , ALIGN_CENTER ,
                            color_fg , guiState->uiState.new_tx_freq_buf );
             }
+            guiState->page.renderPage = true ;
         }
     }
 }
@@ -567,6 +580,7 @@ void _ui_drawMainBottom( GuiState_st* guiState , Event_st* event )
     {
         if( event->payload & EVENT_STATUS_RSSI )
         {
+            gfx_clearRectangle( meter_pos , meter_width , meter_height );
             switch( last_state.channel.mode )
             {
                 case OPMODE_FM :

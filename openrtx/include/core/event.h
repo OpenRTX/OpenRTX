@@ -39,7 +39,8 @@ typedef enum
     EVENT_STATUS_DISPLAY_TIME_TICK = ( 1 << 1 ) ,
     EVENT_STATUS_BATTERY           = ( 1 << 2 ) ,
     EVENT_STATUS_RSSI              = ( 1 << 3 ) ,
-    EVENT_STATUS_ALL               = 0x0F
+    EVENT_STATUS_ALL               = 0x0F       ,
+    EVENT_STATUS_DEVICE            = EVENT_STATUS_BATTERY | EVENT_STATUS_RSSI
 }EventStatus_en;
 
 /**

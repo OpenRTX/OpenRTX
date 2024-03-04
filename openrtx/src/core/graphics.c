@@ -233,6 +233,24 @@ void gfx_fillScreen(Color_st color)
     }
 }
 
+inline void gfx_clearPixel( Pos_st pos )
+{
+    if (pos.x >= SCREEN_WIDTH || pos.y >= SCREEN_HEIGHT
+            || pos.x < 0 || pos.y < 0)
+        return; // off the screen
+    Color_st color = { 0 , 0 , 0 , 0 };
+
+#ifdef PIX_FMT_RGB565
+    buf[ ( pos.y * SCREEN_WIDTH ) + pos.x ] = _true2highColor( color );
+#elif defined PIX_FMT_BW
+    // Ignore more than half transparent pixels
+    uint16_t cell = (pos.x + pos.y*SCREEN_WIDTH) / 8;
+    uint16_t elem = (pos.x + pos.y*SCREEN_WIDTH) % 8;
+    buf[cell] &= ~(1 << elem);
+    buf[cell] |= (_color2bw(color) << elem);
+#endif
+}
+
 inline void gfx_setPixel(Pos_st pos, Color_st color)
 {
     if (pos.x >= SCREEN_WIDTH || pos.y >= SCREEN_HEIGHT
@@ -328,6 +346,27 @@ void gfx_drawLine(Pos_st start, Pos_st end, Color_st color)
     }
 }
 
+void gfx_clearRectangle( Pos_st start , uint16_t width , uint16_t height )
+{
+    if( !initialized ) return ;
+    if( width == 0 ) return ;
+    if( height == 0 ) return ;
+    uint16_t x_max = start.x + width ;
+    uint16_t y_max = start.y + height ;
+    Pos_st   pos ;
+
+    if( x_max > ( SCREEN_WIDTH - 1  ) ) x_max = SCREEN_WIDTH  - 1 ;
+    if( y_max > ( SCREEN_HEIGHT - 1 ) ) y_max = SCREEN_HEIGHT - 1 ;
+
+    for( pos.y = start.y ; pos.y <= y_max ; pos.y++ )
+    {
+        for( pos.x = start.x ; pos.x <= x_max ; pos.x++ )
+        {
+            gfx_clearPixel( pos );
+        }
+    }
+}
+
 void gfx_drawRect(Pos_st start, uint16_t width, uint16_t height, Color_st color, bool fill)
 {
     if(!initialized) return;
@@ -338,6 +377,7 @@ void gfx_drawRect(Pos_st start, uint16_t width, uint16_t height, Color_st color,
     bool perimeter = 0;
     if(x_max > (SCREEN_WIDTH - 1)) x_max = SCREEN_WIDTH - 1;
     if(y_max > (SCREEN_HEIGHT - 1)) y_max = SCREEN_HEIGHT - 1;
+
     for(int16_t y = start.y; y <= y_max; y++)
     {
         for(int16_t x = start.x; x <= x_max; x++)
@@ -670,13 +710,13 @@ Pos_st gfx_drawSymbol(Pos_st start, SymbolSize_t size, Align_t alignment,
  *
  */
 void gfx_drawBattery(Pos_st start, uint16_t width, uint16_t height,
-                                                    uint8_t percentage)
+                                                   uint16_t percentage)
 {
     Color_st white =  {255, 255, 255, 255};
     Color_st black =  {0,   0,   0  , 255};
 
-    // Cap percentage to 1
-    percentage = (percentage > 100) ? 100 : percentage;
+    // Cap percentage to 100
+    percentage = ( percentage > 100 ) ? 100 : percentage;
 
 #ifdef PIX_FMT_RGB565
     Color_st green =  {0,   255, 0  , 255};
@@ -685,13 +725,20 @@ void gfx_drawBattery(Pos_st start, uint16_t width, uint16_t height,
 
     // Select color according to percentage
     Color_st bat_color = yellow;
-    if (percentage < 30)
-        bat_color = red;
-    else if (percentage > 60)
-        bat_color = green;
+    if( percentage < 30 )
+    {
+        bat_color = red ;
+    }
+    else
+    {
+        if( percentage > 60 )
+        {
+            bat_color = green ;
+        }
+    }
 #elif defined PIX_FMT_BW
     Color_st bat_color = white;
-#endif
+#endif // defined PIX_FMT_BW
 
     // Draw the battery outline
     gfx_drawRect(start, width, height, white, false);
@@ -700,7 +747,7 @@ void gfx_drawBattery(Pos_st start, uint16_t width, uint16_t height,
     Pos_st fill_start;
     fill_start.x = start.x + 2;
     fill_start.y = start.y + 2;
-    int fillWidth = ((width - 4) * percentage) / 100;
+    uint16_t fillWidth = ((width - 4) * percentage) / 100;
     gfx_drawRect(fill_start, fillWidth, height - 4, bat_color, true);
 
     // Round corners

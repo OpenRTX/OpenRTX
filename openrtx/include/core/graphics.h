@@ -165,6 +165,12 @@ void gfx_clearScreen();
 void gfx_fillScreen(Color_st color);
 
 /**
+ * Clear the color of a single pixel.
+ * @param pos: x,y coordinates of the pixel.
+ */
+void gfx_clearPixel( Pos_st pos );
+
+/**
  * Change the color of a single pixel.
  * @param pos: x,y coordinates of the pixel.
  * @param color: desired pixel color, in Color_st format.
@@ -195,6 +201,14 @@ void gfx_drawHLine(int16_t y, uint16_t height, Color_st color);
  * @param color: line color, in Color_st format.
  */
 void gfx_drawVLine(int16_t x, uint16_t width, Color_st color);
+
+/**
+ * Clear a rectangle of specified width, height and color.
+ * @param start: screen position of the rectangle, in pixels
+ * @param width: rectangle width, in pixels, borders included.
+ * @param height: rectangle height, in pixels, borders included.
+ */
+void gfx_clearRectangle( Pos_st start, uint16_t width, uint16_t height );
 
 /**
  * Draw a rectangle of specified width, height and color.
@@ -294,7 +308,7 @@ Pos_st gfx_drawSymbol(Pos_st start, SymbolSize_t size, Align_t alignment,
  * @param percentage: battery charge percentage
  */
 void gfx_drawBattery(Pos_st start, uint16_t width, uint16_t height,
-                     uint8_t percentage);
+                     uint16_t percentage);
 
 /**
  * Function to draw Smeter of arbitrary size.
