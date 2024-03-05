@@ -38,56 +38,66 @@
  */
 
 #include "interfaces/arch_registers.h"
-#include <kernel/kernel.h>
 
 namespace miosix {
 
+// Can't include kernel.h as it would cause an include loop
+void disableInterrupts();
+void enableInterrupts();
 
 inline int atomicSwap(volatile int *p, int v)
 {
-    InterruptDisableLock dLock;
-    
+    disableInterrupts();
     int result = *p;
     *p = v;
+    enableInterrupts();
+    asm volatile("":::"memory");
     return result;
 }
 
 inline void atomicAdd(volatile int *p, int incr)
 {
-    InterruptDisableLock dLock;
-    
+    disableInterrupts();
     *p += incr;
+    enableInterrupts();
+    asm volatile("":::"memory");
 }
 
 inline int atomicAddExchange(volatile int *p, int incr)
 {
-    InterruptDisableLock dLock;
-    
+    disableInterrupts();
     int result = *p;
     *p += incr;
+    enableInterrupts();
+    asm volatile("":::"memory");
     return result;
 }
 
 inline int atomicCompareAndSwap(volatile int *p, int prev, int next)
 {
-    InterruptDisableLock dLock;
-    
+    disableInterrupts();
     int result = *p;
     if(*p == prev) *p = next;
+    enableInterrupts();
+    asm volatile("":::"memory");
     return result;
 }
 
 inline void *atomicFetchAndIncrement(void * const volatile * p, int offset,
         int incr)
 {
-    InterruptDisableLock dLock;
-    
-    volatile uint32_t *pt;
-    
+    disableInterrupts();
     void *result = *p;
-    if(result == 0) return 0;
-    pt = reinterpret_cast<uint32_t*>(result) + offset;
+    if(result == 0)
+    {
+        enableInterrupts();
+        return 0;
+    }
+    volatile uint32_t *pt = reinterpret_cast<uint32_t*>(result) + offset;
     *pt += incr;
+    enableInterrupts();
+    asm volatile("":::"memory");
+
     return result;
 }
 

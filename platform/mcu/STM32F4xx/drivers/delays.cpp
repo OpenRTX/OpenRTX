@@ -18,6 +18,7 @@
 
 #include <interfaces/delays.h>
 #include <miosix.h>
+#include <kernel/timeconversion.h>
 
 /**
  * Implementation of the delay functions for STM32F405 MCU.
@@ -60,10 +61,10 @@ void sleepFor(unsigned int seconds, unsigned int mseconds)
 
 void sleepUntil(long long timestamp)
 {
-    miosix::Thread::sleepUntil(timestamp);
+    miosix::Thread::nanoSleepUntil(miosix::mul32x32to64(timestamp, 1000000));
 }
 
-long long getTick()
+long long getTimeMs()
 {
-    return miosix::getTick();
+    return miosix::getTime()/1000000;
 }

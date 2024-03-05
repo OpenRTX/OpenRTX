@@ -29,9 +29,7 @@
 #include <cstdlib>
 #include <unistd.h>
 #include <cxxabi.h>
-#if _MIOSIX_GCC_PATCH_MAJOR > 2
 #include <thread>
-#endif
 //// Settings
 #include "config/miosix_settings.h"
 //// Console
@@ -80,23 +78,22 @@ void operator delete(void *p) noexcept
     free(p);
 }
 
+void operator delete(void *p, std::size_t s) noexcept
+{
+    (void)s;
+
+    free(p);
+}
+
 void operator delete[](void *p) noexcept
 {
     free(p);
 }
 
-
-void operator delete(void *p, std::size_t size) noexcept
+void operator delete[](void *p, std::size_t s) noexcept
 {
-    (void) size;
-
-    free(p);
-}
-
-void operator delete[](void *p, std::size_t size) noexcept
-{
-    (void) size;
-
+    (void)s;
+    
     free(p);
 }
 
@@ -120,10 +117,9 @@ extern "C" void __cxxabiv1::__cxa_deleted_virtual(void)
     _exit(1);
 }
 
-#if _MIOSIX_GCC_PATCH_MAJOR > 2
 namespace std {
-void terminate()  noexcept { _exit(1); } //Since GCC 9.2.0
-void unexpected() noexcept { _exit(1); } //Since GCC 9.2.0
+void terminate()  noexcept { _exit(1); }
+void unexpected() noexcept { _exit(1); }
 /*
  * This one comes from thread.cc, the need to call the class destructor makes it
  * call __cxa_end_cleanup which pulls in exception code.
@@ -135,7 +131,6 @@ extern "C" void* execute_native_thread_routine(void* __p)
     return nullptr;
 }
 } //namespace std
-#endif
 
 /*
  * If not using exceptions, ovverride these functions with
@@ -151,24 +146,21 @@ void __throw_domain_error(const char*) { _exit(1); }
 void __throw_invalid_argument(const char*) { _exit(1); }
 void __throw_length_error(const char*) { _exit(1); }
 void __throw_out_of_range(const char*) { _exit(1); }
-void __throw_out_of_range_fmt(const char*, ...) { exit(1); } //Since GCC 9.2.0
+void __throw_out_of_range_fmt(const char*, ...) { exit(1); }
 void __throw_runtime_error(const char*) { _exit(1); }
 void __throw_range_error(const char*) { _exit(1); }
 void __throw_overflow_error(const char*) { _exit(1); }
 void __throw_underflow_error(const char*) { _exit(1); }
-#if !defined(_MIOSIX_GCC_PATCH_MAJOR) || _MIOSIX_GCC_PATCH_MAJOR <= 2
-void __throw_ios_failure(const char*) { _exit(1); } //Unused since GCC 9.2.0
-#endif
 void __throw_system_error(int) { _exit(1); }
 void __throw_future_error(int) { _exit(1); }
 void __throw_bad_function_call() { _exit(1); }
 } //namespace std
 
 namespace __cxxabiv1 {
-extern "C" void __cxa_throw_bad_array_length() { exit(1); } //Since GCC 9.2.0
-extern "C" void __cxa_bad_cast() { exit(1); } //Since GCC 9.2.0
-extern "C" void __cxa_bad_typeid() { exit(1); } //Since GCC 9.2.0
-extern "C" void __cxa_throw_bad_array_new_length() { exit(1); } //Since GCC 9.2.0
+extern "C" void __cxa_throw_bad_array_length() { exit(1); }
+extern "C" void __cxa_bad_cast() { exit(1); }
+extern "C" void __cxa_bad_typeid() { exit(1); }
+extern "C" void __cxa_throw_bad_array_new_length() { exit(1); }
 } //namespace __cxxabiv1
 
 #endif //__NO_EXCEPTIONS
@@ -342,7 +334,7 @@ extern "C" void __cxa_guard_abort(__guard *g) noexcept
 
 extern "C" unsigned int libat_quick_lock_n(void *ptr)
 {
-    (void) ptr;
+    (void)ptr;
 
     miosix::disableInterrupts();
     return 0;
@@ -350,8 +342,8 @@ extern "C" unsigned int libat_quick_lock_n(void *ptr)
 
 extern "C" void libat_quick_unlock_n(void *ptr, unsigned int token)
 {
-    (void) ptr;
-    (void) token;
+    (void)ptr;
+    (void)token;
 
     miosix::enableInterrupts();
 }

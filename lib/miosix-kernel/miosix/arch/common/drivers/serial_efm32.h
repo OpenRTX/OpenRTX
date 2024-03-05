@@ -31,7 +31,6 @@
 #include "filesystem/console/console_device.h"
 #include "kernel/sync.h"
 #include "kernel/queue.h"
-#include "board_settings.h"
 
 namespace miosix {
 

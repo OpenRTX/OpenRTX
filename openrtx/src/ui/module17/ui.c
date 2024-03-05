@@ -614,7 +614,7 @@ void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg, bool callsig
 {
     if(ui_state.input_position >= max_len)
         return;
-    long long now = getTick();
+    long long now = getTimeMs();
     // Get currently pressed number key
     uint8_t num_key = input_getPressedNumber(msg);
     // Get number of symbols related to currently pressed key

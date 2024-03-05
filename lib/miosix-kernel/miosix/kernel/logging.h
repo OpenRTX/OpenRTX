@@ -28,13 +28,10 @@
 #ifndef LOGGING_H
 #define	LOGGING_H
 
-#pragma GCC system_header
-
 #include "config/miosix_settings.h"
 #include "filesystem/console/console_device.h"
 #include <cstdio>
 #include <cstdarg>
-
 
 /**
  * Print boot logs. Contrary to (i)printf(), this can be disabled in
@@ -83,7 +80,7 @@ inline void errorLog(const char *fmt, ...)
     va_end(arg);
 }
 #else //WITH_ERRLOG
-#define errorLog(x,...) ;
+#define errorLog(...) ;
 #endif //WITH_ERRLOG
 
 /**

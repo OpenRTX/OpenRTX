@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2012, 2013, 2014, 2105, 2106 by Terraneo Federico       *
+ *   Copyright (C) 2012-2023 by Terraneo Federico                          *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,8 +25,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/ 
 
-#ifndef CALLBACK_H
-#define CALLBACK_H
+#pragma once
 
 #include <stdint.h>
 
@@ -115,14 +114,14 @@ public:
     /**
      * Default constructor. Produces an empty callback.
      */
-    Callback() : operation(0) {}
+    Callback() : operation(nullptr) {}
 
     /**
      * Constructor. Not explicit by design.
      * \param functor function object a copy of which is stored internally
      */
     template<typename T>
-    Callback(T functor) : operation(0)
+    Callback(T functor) : operation(nullptr)
     {
         *this=functor;
     }
@@ -156,8 +155,8 @@ public:
      */
     void clear()
     {
-        if(operation) operation(any,0,DESTROY);
-        operation=0;
+        if(operation) operation(any,nullptr,DESTROY);
+        operation=nullptr;
     }
 
     /**
@@ -165,7 +164,7 @@ public:
      */
     void operator() ()
     {
-        if(operation) operation(any,0,CALL);
+        if(operation) operation(any,nullptr,CALL);
     }
     
     /**
@@ -173,19 +172,15 @@ public:
      */
     void call()
     {
-        operation(any,0,CALL);
+        operation(any,nullptr,CALL);
     }
-
-    //Safe bool idiom
-    struct SafeBoolStruct { void* b; };
-    typedef void* SafeBoolStruct::* SafeBool;
     
     /**
      * \return true if the object contains a callback
      */
-    operator SafeBool() const
+    explicit operator bool() const
     {
-        return operation==0 ? 0 : &SafeBoolStruct::b;
+        return operation!=nullptr;
     }
 
     /**
@@ -193,7 +188,7 @@ public:
      */
     ~Callback()
     {
-        if(operation) operation(any,0,DESTROY);
+        if(operation) operation(any,nullptr,DESTROY);
     }
 
 private:
@@ -214,7 +209,7 @@ template<unsigned N>
 Callback<N>& Callback<N>::operator= (const Callback<N>& rhs)
 {
     if(this==&rhs) return *this; //Handle assignmento to self
-    if(operation) operation(any,0,DESTROY);
+    if(operation) operation(any,nullptr,DESTROY);
     operation=rhs.operation;
     if(operation) operation(any,rhs.any,ASSIGN);
     return *this;
@@ -231,7 +226,7 @@ Callback<N>& Callback<N>::operator= (T functor)
     //This should not fail unless something has a stricter alignment than double
     static_assert(__alignof__(any)>=__alignof__(T),"");
 
-    if(operation) operation(any,0,DESTROY);
+    if(operation) operation(any,nullptr,DESTROY);
 
     new (reinterpret_cast<T*>(any)) T(functor);
     operation=TypeDependentOperation<T>::operation;
@@ -239,5 +234,3 @@ Callback<N>& Callback<N>::operator= (T functor)
 }
 
 } //namespace miosix
-
-#endif //CALLBACK_H

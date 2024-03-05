@@ -117,12 +117,12 @@ void gpio_setOutputSpeed(void *port, uint8_t pin, enum Speed spd)
 
 void gpio_setPin(void *port, uint8_t pin)
 {
-    ((GPIO_TypeDef *)(port))->BSRR = (1 << pin);
+    ((GPIO_TypeDef *)(port))->BSRRL = (1 << pin);
 }
 
 void gpio_clearPin(void *port, uint8_t pin)
 {
-    ((GPIO_TypeDef *)(port))->BSRR = (1 << (pin + 16));
+    ((GPIO_TypeDef *)(port))->BSRRH = (1 << pin);
 }
 
 void gpio_togglePin(void *port, uint8_t pin)
