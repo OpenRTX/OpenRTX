@@ -20,7 +20,7 @@
 #ifndef UI_STRINGS_H
 #define UI_STRINGS_H
 
-#define NUM_LANGUAGES 1
+#define NUM_LANGUAGES 2
 
 /*
  * NOTE: This string table's order must not be altered as voice prompts will be
