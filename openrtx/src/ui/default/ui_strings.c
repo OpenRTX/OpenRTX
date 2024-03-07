@@ -25,7 +25,7 @@
 #include <ui/EnglishStrings.h>
 #include <ui/SpanishStrings.h>
 
-const stringsTable_t languages[NUM_LANGUAGES] = {englishStrings,SpanishStrings};
+const stringsTable_t languages[NUM_LANGUAGES] = {englishStrings,spanishStrings};
 const stringsTable_t* currentLanguage = &languages[0];
 
 int GetEnglishStringTableOffset(const char* text)
