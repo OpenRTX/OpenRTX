@@ -128,14 +128,15 @@ void Debug_SetTrace3( uint8_t traceVal )
 
 static void Debug_DisplayMsg( void )
 {
-    uint8_t  lineIndex = GUI_LINE_TOP ;
-    uint16_t height    = GuiState.layout.lineStyle[ lineIndex ].height ;
-    uint16_t width     = 56 ;
-    Pos_st   start ;
-    Color_st color_bg ;
-    Color_st color_fg ;
+    Line_st*  lineTop   = &guiState->layout.lines[ GUI_LINE_TOP ] ;
+    Style_st* styleTop  = &guiState->layout.styles[ GUI_STYLE_TOP ] ;
+    uint16_t  height    = lineTop->height ;
+    uint16_t  width     = 56 ;
+    Pos_st    start ;
+    Color_st  color_bg ;
+    Color_st  color_fg ;
 
-    start.y = ( GuiState.layout.lineStyle[ lineIndex ].pos.y - height ) + 1 ;
+    start.y = ( lineTop->pos.y - height ) + 1 ;
     start.x = 0 ;
 
     ui_ColorLoad( &color_bg , COLOR_BG );
@@ -143,8 +144,7 @@ static void Debug_DisplayMsg( void )
 
     gfx_drawRect( start , width , height , color_bg , true );
 
-    gfx_print( GuiState.layout.lineStyle[ lineIndex ].pos       ,
-               GuiState.layout.lineStyle[ lineIndex ].font.size , ALIGN_LEFT , color_fg ,
+    gfx_print( lineTop->pos , styleTop->font.size, ALIGN_LEFT , color_fg ,
                "%c%X%X%X%X" , (char)( '0' + counter ) ,
                trace0 & 0x0F , trace1 & 0x0F , trace2 & 0x0F , trace3 & 0x0F );//@@@KL
 
@@ -205,6 +205,7 @@ enum
     SCREEN_LINE_3_HEIGHT          = 20 ,
     SCREEN_LINE_3_LARGE_HEIGHT    = 40 ,
     SCREEN_LINE_4_HEIGHT          = 20 ,
+    SCREEN_LINE_5_HEIGHT          = 20 ,
     SCREEN_MENU_HEIGHT            = 16 ,
     SCREEN_BOTTOM_ALIGN           =  ALIGN_LEFT ,
     SCREEN_BOTTOM_HEIGHT          = 23 ,
@@ -215,6 +216,9 @@ enum
     SCREEN_HORIZONTAL_PAD         =  4 ,
     SCREEN_INITIAL_FONT_SIZE      = FONT_SIZE_8PT     ,
     SCREEN_INITIAL_SYMBOL_SIZE    = SYMBOLS_SIZE_8PT  ,
+    SCREEN_INITIAL_COLOR_BG       = COLOR_BG ,
+    SCREEN_INITIAL_COLOR_FG       = COLOR_FG ,
+
     // Top bar font: 8 pt
     SCREEN_TOP_FONT_SIZE          = FONT_SIZE_8PT     , // FontSize_t
     SCREEN_TOP_SYMBOL_SIZE        = SYMBOLS_SIZE_8PT  , // SymbolSize_t
@@ -227,6 +231,8 @@ enum
     SCREEN_LINE_3_SYMBOL_SIZE     = SYMBOLS_SIZE_8PT  , // SymbolSize_t
     SCREEN_LINE_4_FONT_SIZE       = FONT_SIZE_8PT     , // FontSize_t
     SCREEN_LINE_4_SYMBOL_SIZE     = SYMBOLS_SIZE_8PT  , // SymbolSize_t
+    SCREEN_LINE_5_FONT_SIZE       = FONT_SIZE_8PT     , // FontSize_t
+    SCREEN_LINE_5_SYMBOL_SIZE     = SYMBOLS_SIZE_8PT  , // SymbolSize_t
     // Frequency line font: 16 pt
     SCREEN_LINE_3_LARGE_FONT_SIZE = FONT_SIZE_16PT    , // FontSize_t
     // Bottom bar font: 8 pt
@@ -239,7 +245,32 @@ enum
     // Mode screen frequency font: 12 pt
     SCREEN_MODE_FONT_SIZE_BIG     = FONT_SIZE_12PT    , // FontSize_t
     // Mode screen details font: 9 pt
-    SCREEN_MODE_FONT_SIZE_SMALL   = FONT_SIZE_9PT       // FontSize_t
+    SCREEN_MODE_FONT_SIZE_SMALL   = FONT_SIZE_9PT     , // FontSize_t
+
+    COLOR_GG_BG                   = COLOR_GG                ,
+    COLOR_GG_FG                   = SCREEN_INITIAL_COLOR_FG ,
+
+    COLOR_AGG_BG                  = SCREEN_INITIAL_COLOR_BG ,
+    COLOR_AGG_FG                  = COLOR_AGG               ,
+
+    COLOR_HL_BG                   = COLOR_HL                ,
+    COLOR_HL_FG                   = SCREEN_INITIAL_COLOR_FG ,
+
+    COLOR_OP0_BG                  = SCREEN_INITIAL_COLOR_BG ,
+    COLOR_OP0_FG                  = COLOR_OP0               ,
+
+    COLOR_OP1_BG                  = SCREEN_INITIAL_COLOR_BG ,
+    COLOR_OP1_FG                  = COLOR_OP1               ,
+
+    COLOR_OP2_BG                  = SCREEN_INITIAL_COLOR_BG ,
+    COLOR_OP2_FG                  = COLOR_OP2               ,
+
+    COLOR_OP3_BG                  = SCREEN_INITIAL_COLOR_BG ,
+    COLOR_OP3_FG                  = COLOR_OP3               ,
+
+    COLOR_AL_BG                   = SCREEN_INITIAL_COLOR_BG ,
+    COLOR_AL_FG                   = COLOR_AL
+
 };
 
 // Radioddity GD-77
@@ -293,7 +324,32 @@ enum
     // Mode screen frequency font: 9 pt
     SCREEN_MODE_FONT_SIZE_BIG     = FONT_SIZE_9PT     , // FontSize_t
     // Mode screen details font: 6 pt
-    SCREEN_MODE_FONT_SIZE_SMALL   = FONT_SIZE_6PT       // FontSize_t
+    SCREEN_MODE_FONT_SIZE_SMALL   = FONT_SIZE_6PT     , // FontSize_t
+
+    COLOR_GG_BG                   = COLOR_GG                ,
+    COLOR_GG_FG                   = SCREEN_INITIAL_COLOR_FG ,
+
+    COLOR_AGG_BG                  = SCREEN_INITIAL_COLOR_BG ,
+    COLOR_AGG_FG                  = COLOR_AGG               ,
+
+    COLOR_HL_BG                   = COLOR_HL                ,
+    COLOR_HL_FG                   = SCREEN_INITIAL_COLOR_FG ,
+
+    COLOR_OP0_BG                  = SCREEN_INITIAL_COLOR_BG ,
+    COLOR_OP0_FG                  = COLOR_OP0               ,
+
+    COLOR_OP1_BG                  = SCREEN_INITIAL_COLOR_BG ,
+    COLOR_OP1_FG                  = COLOR_OP1               ,
+
+    COLOR_OP2_BG                  = SCREEN_INITIAL_COLOR_BG ,
+    COLOR_OP2_FG                  = COLOR_OP2               ,
+
+    COLOR_OP3_BG                  = SCREEN_INITIAL_COLOR_BG ,
+    COLOR_OP3_FG                  = COLOR_OP3               ,
+
+    COLOR_AL_BG                   = SCREEN_INITIAL_COLOR_BG ,
+    COLOR_AL_FG                   = COLOR_AL
+
 };
 
 // Radioddity RD-5R
@@ -342,7 +398,32 @@ enum
     // Not present on this resolution
     SCREEN_LINE_1_FONT_SIZE       =  0                , // FontSize_t
     SCREEN_BOTTOM_FONT_SIZE       =  0                , // FontSize_t
-    SCREEN_BOTTOM_SYMBOL_SIZE     = SYMBOLS_SIZE_8PT    // SymbolSize_t
+    SCREEN_BOTTOM_SYMBOL_SIZE     = SYMBOLS_SIZE_8PT  , // SymbolSize_t
+
+    COLOR_GG_BG                   = COLOR_GG                ,
+    COLOR_GG_FG                   = SCREEN_INITIAL_COLOR_FG ,
+
+    COLOR_AGG_BG                  = SCREEN_INITIAL_COLOR_BG ,
+    COLOR_AGG_FG                  = COLOR_AGG               ,
+
+    COLOR_HL_BG                   = COLOR_HL                ,
+    COLOR_HL_FG                   = SCREEN_INITIAL_COLOR_FG ,
+
+    COLOR_OP0_BG                  = SCREEN_INITIAL_COLOR_BG ,
+    COLOR_OP0_FG                  = COLOR_OP0               ,
+
+    COLOR_OP1_BG                  = SCREEN_INITIAL_COLOR_BG ,
+    COLOR_OP1_FG                  = COLOR_OP1               ,
+
+    COLOR_OP2_BG                  = SCREEN_INITIAL_COLOR_BG ,
+    COLOR_OP2_FG                  = COLOR_OP2               ,
+
+    COLOR_OP3_BG                  = SCREEN_INITIAL_COLOR_BG ,
+    COLOR_OP3_FG                  = COLOR_OP3               ,
+
+    COLOR_AL_BG                   = SCREEN_INITIAL_COLOR_BG ,
+    COLOR_AL_FG                   = COLOR_AL
+
 };
 #else
     #error Unsupported vertical resolution!
@@ -375,11 +456,16 @@ static void ui_InitUIState( UI_State_st* uiState )
 static void ui_InitGuiState( GuiState_st* guiState )
 {
     ui_InitGuiStateEvent( &guiState->event );
-    guiState->update        = false ;
-    guiState->pageHasEvents = false ;
-    guiState->inEventArea   = false ;
-    guiState->sync_rtx      = false ;
-    guiState->handled       = false ;
+    guiState->initialPageDisplay  = true ;
+    guiState->update              = false ;
+    guiState->pageHasEvents       = false ;
+    guiState->inStaticArea        = false ;
+    guiState->inEventArea         = false ;
+    guiState->timeStamp           = 0 ;
+    guiState->timer.timeOut       = 0 ;
+    guiState->timer.scriptPageNum = PAGE_STUBBED ;
+    guiState->sync_rtx            = false ;
+    guiState->handled             = false ;
     ui_InitGuiStatePage( &guiState->page );
     ui_InitGuiStateLayout( &guiState->layout );
 }
@@ -411,76 +497,127 @@ static void ui_InitGuiStateLayout( Layout_st* layout )
 {
     uint8_t index ;
 
-    layout->hline_h                                  = SCREEN_HLINE_H ;
-    layout->menu_h                                   = SCREEN_MENU_HEIGHT ;
-    layout->bottom_pad                               = SCREEN_BOTTOM_PAD ;
-    layout->status_v_pad                             = SCREEN_STATUS_V_PAD ;
-    layout->horizontal_pad                           = SCREEN_HORIZONTAL_PAD ;
-    layout->text_v_offset                            = SCREEN_TEXT_V_OFFSET ;
+    layout->hline_h                                = SCREEN_HLINE_H ;
+    layout->menu_h                                 = SCREEN_MENU_HEIGHT ;
+    layout->bottom_pad                             = SCREEN_BOTTOM_PAD ;
+    layout->status_v_pad                           = SCREEN_STATUS_V_PAD ;
+    layout->horizontal_pad                         = SCREEN_HORIZONTAL_PAD ;
+    layout->text_v_offset                          = SCREEN_TEXT_V_OFFSET ;
 
-    layout->line.pos.x              			     = SCREEN_INITIAL_X ;
-    layout->line.pos.y              			     = SCREEN_INITIAL_Y ;
-    layout->line.height             			     = SCREEN_INITIAL_HEIGHT ;
-    layout->line.align                   		     = SCREEN_INITIAL_ALIGN ;
-    layout->line.font.size             			     = SCREEN_INITIAL_FONT_SIZE ;
-    layout->line.symbolSize         			     = SCREEN_INITIAL_SYMBOL_SIZE ;
+    layout->line.pos.x                             = SCREEN_INITIAL_X ;
+    layout->line.pos.y                             = SCREEN_INITIAL_Y ;
+    layout->line.height                            = SCREEN_INITIAL_HEIGHT ;
+    layout->style.align                            = SCREEN_INITIAL_ALIGN ;
+    layout->style.font.size                        = SCREEN_INITIAL_FONT_SIZE ;
+    layout->style.symbolSize                       = SCREEN_INITIAL_SYMBOL_SIZE ;
+    layout->style.colorBG                          = SCREEN_INITIAL_COLOR_BG ;
+    layout->style.colorFG                          = SCREEN_INITIAL_COLOR_FG ;
 
-    layout->lineStyle[ GUI_LINE_TOP ].pos.x          = SCREEN_HORIZONTAL_PAD ;
-    layout->lineStyle[ GUI_LINE_TOP ].pos.y          = SCREEN_TOP_HEIGHT - SCREEN_STATUS_V_PAD - SCREEN_TEXT_V_OFFSET ;
-    layout->lineStyle[ GUI_LINE_TOP ].height         = SCREEN_TOP_HEIGHT ;
-    layout->lineStyle[ GUI_LINE_TOP ].align          = SCREEN_TOP_ALIGN ;
-    layout->lineStyle[ GUI_LINE_TOP ].font.size      = SCREEN_TOP_FONT_SIZE ;
-    layout->lineStyle[ GUI_LINE_TOP ].symbolSize     = SCREEN_TOP_SYMBOL_SIZE ;
+    layout->lines[ GUI_LINE_TOP ].pos.x            = SCREEN_HORIZONTAL_PAD ;
+    layout->lines[ GUI_LINE_TOP ].pos.y            = SCREEN_TOP_HEIGHT - SCREEN_STATUS_V_PAD - SCREEN_TEXT_V_OFFSET ;
+    layout->lines[ GUI_LINE_TOP ].height           = SCREEN_TOP_HEIGHT ;
+    layout->styles[ GUI_STYLE_TOP ].align          = SCREEN_TOP_ALIGN ;
+    layout->styles[ GUI_STYLE_TOP ].font.size      = SCREEN_TOP_FONT_SIZE ;
+    layout->styles[ GUI_STYLE_TOP ].symbolSize     = SCREEN_TOP_SYMBOL_SIZE ;
+    layout->styles[ GUI_STYLE_TOP ].colorBG        = SCREEN_INITIAL_COLOR_BG ;
+    layout->styles[ GUI_STYLE_TOP ].colorFG        = SCREEN_INITIAL_COLOR_FG ;
 
-    layout->lineStyle[ GUI_LINE_1 ].pos.x            = SCREEN_HORIZONTAL_PAD ;
-    layout->lineStyle[ GUI_LINE_1 ].pos.y            = layout->lineStyle[ GUI_LINE_TOP ].pos.y + SCREEN_TOP_PAD + SCREEN_LINE_1_HEIGHT ;
-    layout->lineStyle[ GUI_LINE_1 ].height           = SCREEN_LINE_1_HEIGHT ;
-    layout->lineStyle[ GUI_LINE_1 ].align            = SCREEN_LINE_ALIGN ;
-    layout->lineStyle[ GUI_LINE_1 ].font.size        = SCREEN_LINE_1_FONT_SIZE ;
-    layout->lineStyle[ GUI_LINE_1 ].symbolSize       = SCREEN_LINE_1_SYMBOL_SIZE ;
+    layout->lines[ GUI_LINE_1 ].pos.x              = SCREEN_HORIZONTAL_PAD ;
+    layout->lines[ GUI_LINE_1 ].pos.y              = layout->lines[ GUI_LINE_TOP ].pos.y + SCREEN_TOP_PAD + SCREEN_LINE_1_HEIGHT ;
+    layout->lines[ GUI_LINE_1 ].height             = SCREEN_LINE_1_HEIGHT ;
+    layout->styles[ GUI_STYLE_1 ].align            = SCREEN_LINE_ALIGN ;
+    layout->styles[ GUI_STYLE_1 ].font.size        = SCREEN_LINE_1_FONT_SIZE ;
+    layout->styles[ GUI_STYLE_1 ].symbolSize       = SCREEN_LINE_1_SYMBOL_SIZE ;
+    layout->styles[ GUI_STYLE_1 ].colorBG          = SCREEN_INITIAL_COLOR_BG ;
+    layout->styles[ GUI_STYLE_1 ].colorFG          = SCREEN_INITIAL_COLOR_FG ;
 
-    layout->lineStyle[ GUI_LINE_2 ].pos.x            = SCREEN_HORIZONTAL_PAD ;
-    layout->lineStyle[ GUI_LINE_2 ].pos.y            = layout->lineStyle[ GUI_LINE_1 ].pos.y + SCREEN_LINE_2_HEIGHT ;
-    layout->lineStyle[ GUI_LINE_2 ].height           = SCREEN_LINE_2_HEIGHT ;
-    layout->lineStyle[ GUI_LINE_2 ].align            = SCREEN_LINE_ALIGN ;
-    layout->lineStyle[ GUI_LINE_2 ].font.size        = SCREEN_LINE_2_FONT_SIZE ;
-    layout->lineStyle[ GUI_LINE_2 ].symbolSize       = SCREEN_LINE_2_SYMBOL_SIZE ;
+    layout->lines[ GUI_LINE_2 ].pos.x              = SCREEN_HORIZONTAL_PAD ;
+    layout->lines[ GUI_LINE_2 ].pos.y              = layout->lines[ GUI_LINE_1 ].pos.y + SCREEN_LINE_2_HEIGHT ;
+    layout->lines[ GUI_LINE_2 ].height             = SCREEN_LINE_2_HEIGHT ;
+    layout->styles[ GUI_STYLE_2 ].align            = SCREEN_LINE_ALIGN ;
+    layout->styles[ GUI_STYLE_2 ].font.size        = SCREEN_LINE_2_FONT_SIZE ;
+    layout->styles[ GUI_STYLE_2 ].symbolSize       = SCREEN_LINE_2_SYMBOL_SIZE ;
+    layout->styles[ GUI_STYLE_2 ].colorBG          = SCREEN_INITIAL_COLOR_BG ;
+    layout->styles[ GUI_STYLE_2 ].colorFG          = SCREEN_INITIAL_COLOR_FG ;
 
-    layout->lineStyle[ GUI_LINE_3 ].pos.x            = SCREEN_HORIZONTAL_PAD ;
-    layout->lineStyle[ GUI_LINE_3 ].pos.y            = layout->lineStyle[ GUI_LINE_2 ].pos.y + SCREEN_LINE_3_HEIGHT ;
-    layout->lineStyle[ GUI_LINE_3 ].height           = SCREEN_LINE_3_HEIGHT ;
-    layout->lineStyle[ GUI_LINE_3 ].align            = SCREEN_LINE_ALIGN ;
-    layout->lineStyle[ GUI_LINE_3 ].font.size        = SCREEN_LINE_3_FONT_SIZE ;
-    layout->lineStyle[ GUI_LINE_3 ].symbolSize       = SCREEN_LINE_3_SYMBOL_SIZE ;
+    layout->lines[ GUI_LINE_3 ].pos.x              = SCREEN_HORIZONTAL_PAD ;
+    layout->lines[ GUI_LINE_3 ].pos.y              = layout->lines[ GUI_LINE_2 ].pos.y + SCREEN_LINE_3_HEIGHT ;
+    layout->lines[ GUI_LINE_3 ].height             = SCREEN_LINE_3_HEIGHT ;
+    layout->styles[ GUI_STYLE_3 ].align            = SCREEN_LINE_ALIGN ;
+    layout->styles[ GUI_STYLE_3 ].font.size        = SCREEN_LINE_3_FONT_SIZE ;
+    layout->styles[ GUI_STYLE_3 ].symbolSize       = SCREEN_LINE_3_SYMBOL_SIZE ;
+    layout->styles[ GUI_STYLE_3 ].colorBG          = SCREEN_INITIAL_COLOR_BG ;
+    layout->styles[ GUI_STYLE_3 ].colorFG          = SCREEN_INITIAL_COLOR_FG ;
 
-    layout->lineStyle[ GUI_LINE_3_LARGE ].pos.x      = SCREEN_HORIZONTAL_PAD ;
-    layout->lineStyle[ GUI_LINE_3_LARGE ].pos.y      = layout->lineStyle[ GUI_LINE_2 ].pos.y + SCREEN_LINE_3_LARGE_HEIGHT ;
-    layout->lineStyle[ GUI_LINE_3_LARGE ].height     = SCREEN_LINE_3_LARGE_HEIGHT ;
-    layout->lineStyle[ GUI_LINE_3_LARGE ].align      = SCREEN_LINE_ALIGN ;
-    layout->lineStyle[ GUI_LINE_3_LARGE ].font.size  = SCREEN_LINE_3_LARGE_FONT_SIZE ;
-    layout->lineStyle[ GUI_LINE_3_LARGE ].symbolSize = SCREEN_LINE_3_SYMBOL_SIZE ;
+    layout->lines[ GUI_LINE_3_LARGE ].pos.x        = SCREEN_HORIZONTAL_PAD ;
+    layout->lines[ GUI_LINE_3_LARGE ].pos.y        = layout->lines[ GUI_LINE_2 ].pos.y + SCREEN_LINE_3_LARGE_HEIGHT ;
+    layout->lines[ GUI_LINE_3_LARGE ].height       = SCREEN_LINE_3_LARGE_HEIGHT ;
+    layout->styles[ GUI_STYLE_3_LARGE ].align      = SCREEN_LINE_ALIGN ;
+    layout->styles[ GUI_STYLE_3_LARGE ].font.size  = SCREEN_LINE_3_LARGE_FONT_SIZE ;
+    layout->styles[ GUI_STYLE_3_LARGE ].symbolSize = SCREEN_LINE_3_SYMBOL_SIZE ;
+    layout->styles[ GUI_STYLE_3_LARGE ].colorBG    = SCREEN_INITIAL_COLOR_BG ;
+    layout->styles[ GUI_STYLE_3_LARGE ].colorFG    = SCREEN_INITIAL_COLOR_FG ;
 
-    layout->lineStyle[ GUI_LINE_4 ].pos.x            = SCREEN_HORIZONTAL_PAD ;
-    layout->lineStyle[ GUI_LINE_4 ].pos.y            = layout->lineStyle[ GUI_LINE_3 ].pos.y + SCREEN_LINE_4_HEIGHT ;
-    layout->lineStyle[ GUI_LINE_4 ].height           = SCREEN_LINE_4_HEIGHT ;
-    layout->lineStyle[ GUI_LINE_4 ].align            = SCREEN_LINE_ALIGN ;
-    layout->lineStyle[ GUI_LINE_4 ].font.size        = SCREEN_LINE_4_FONT_SIZE ;
-    layout->lineStyle[ GUI_LINE_4 ].symbolSize       = SCREEN_LINE_4_SYMBOL_SIZE ;
+    layout->lines[ GUI_LINE_4 ].pos.x              = SCREEN_HORIZONTAL_PAD ;
+    layout->lines[ GUI_LINE_4 ].pos.y              = layout->lines[ GUI_LINE_3 ].pos.y + SCREEN_LINE_4_HEIGHT ;
+    layout->lines[ GUI_LINE_4 ].height             = SCREEN_LINE_4_HEIGHT ;
+    layout->styles[ GUI_STYLE_4 ].align            = SCREEN_LINE_ALIGN ;
+    layout->styles[ GUI_STYLE_4 ].font.size        = SCREEN_LINE_4_FONT_SIZE ;
+    layout->styles[ GUI_STYLE_4 ].symbolSize       = SCREEN_LINE_4_SYMBOL_SIZE ;
+    layout->styles[ GUI_STYLE_4 ].colorBG          = SCREEN_INITIAL_COLOR_BG ;
+    layout->styles[ GUI_STYLE_4 ].colorFG          = SCREEN_INITIAL_COLOR_FG ;
 
-    layout->lineStyle[ GUI_LINE_BOTTOM ].pos.x       = SCREEN_HORIZONTAL_PAD ;
-    layout->lineStyle[ GUI_LINE_BOTTOM ].pos.y       = SCREEN_HEIGHT - SCREEN_BOTTOM_PAD - SCREEN_STATUS_V_PAD - SCREEN_TEXT_V_OFFSET ;
-    layout->lineStyle[ GUI_LINE_BOTTOM ].height      = SCREEN_BOTTOM_HEIGHT ;
-    layout->lineStyle[ GUI_LINE_BOTTOM ].align       = SCREEN_LINE_ALIGN ;
-    layout->lineStyle[ GUI_LINE_BOTTOM ].font.size   = SCREEN_BOTTOM_FONT_SIZE ;
-    layout->lineStyle[ GUI_LINE_BOTTOM ].symbolSize  = SCREEN_BOTTOM_SYMBOL_SIZE ;
+    layout->lines[ GUI_LINE_5 ].pos.x              = SCREEN_HORIZONTAL_PAD ;
+    layout->lines[ GUI_LINE_5 ].pos.y              = layout->lines[ GUI_LINE_4 ].pos.y + SCREEN_LINE_5_HEIGHT ;
+    layout->lines[ GUI_LINE_5 ].height             = SCREEN_LINE_5_HEIGHT ;
+    layout->styles[ GUI_STYLE_5 ].align            = SCREEN_LINE_ALIGN ;
+    layout->styles[ GUI_STYLE_5 ].font.size        = SCREEN_LINE_5_FONT_SIZE ;
+    layout->styles[ GUI_STYLE_5 ].symbolSize       = SCREEN_LINE_5_SYMBOL_SIZE ;
+    layout->styles[ GUI_STYLE_5 ].colorBG          = SCREEN_INITIAL_COLOR_BG ;
+    layout->styles[ GUI_STYLE_5 ].colorFG          = SCREEN_INITIAL_COLOR_FG ;
 
-    layout->input_font.size                          = SCREEN_INPUT_FONT_SIZE ;
-    layout->menu_font.size                           = SCREEN_MENU_FONT_SIZE ;
-    layout->mode_font_big.size                       = SCREEN_MODE_FONT_SIZE_BIG ;
-    layout->mode_font_small.size                     = SCREEN_MODE_FONT_SIZE_SMALL ;
+    layout->lines[ GUI_LINE_BOTTOM ].pos.x         = SCREEN_HORIZONTAL_PAD ;
+    layout->lines[ GUI_LINE_BOTTOM ].pos.y         = SCREEN_HEIGHT - SCREEN_BOTTOM_PAD - SCREEN_STATUS_V_PAD - SCREEN_TEXT_V_OFFSET ;
+    layout->lines[ GUI_LINE_BOTTOM ].height        = SCREEN_BOTTOM_HEIGHT ;
+    layout->styles[ GUI_STYLE_BOTTOM ].align       = SCREEN_LINE_ALIGN ;
+    layout->styles[ GUI_STYLE_BOTTOM ].font.size   = SCREEN_BOTTOM_FONT_SIZE ;
+    layout->styles[ GUI_STYLE_BOTTOM ].symbolSize  = SCREEN_BOTTOM_SYMBOL_SIZE ;
+    layout->styles[ GUI_STYLE_BOTTOM ].colorBG     = SCREEN_INITIAL_COLOR_BG ;
+    layout->styles[ GUI_STYLE_BOTTOM ].colorFG     = SCREEN_INITIAL_COLOR_FG ;
 
-    layout->printDisplayOn                           = true ;
-    layout->inSelect                                 = false ;
+    layout->styles[ GUI_STYLE_GG ].colorBG         = COLOR_GG_BG ;
+    layout->styles[ GUI_STYLE_GG ].colorFG         = COLOR_GG_FG ;
+
+    layout->styles[ GUI_STYLE_AGG ].colorBG        = COLOR_AGG_BG ;
+    layout->styles[ GUI_STYLE_AGG ].colorFG        = COLOR_AGG_FG ;
+
+    layout->styles[ GUI_STYLE_HL ].colorBG         = COLOR_HL_BG ;
+    layout->styles[ GUI_STYLE_HL ].colorFG         = COLOR_HL_FG ;
+
+    layout->styles[ GUI_STYLE_OP0 ].colorBG        = COLOR_OP0_BG ;
+    layout->styles[ GUI_STYLE_OP0 ].colorFG        = COLOR_OP0_FG ;
+
+    layout->styles[ GUI_STYLE_OP1 ].colorBG        = COLOR_OP1_BG ;
+    layout->styles[ GUI_STYLE_OP1 ].colorFG        = COLOR_OP1_FG ;
+
+    layout->styles[ GUI_STYLE_OP2 ].colorBG        = COLOR_OP2_BG ;
+    layout->styles[ GUI_STYLE_OP2 ].colorFG        = COLOR_OP2_FG ;
+
+    layout->styles[ GUI_STYLE_OP3 ].colorBG        = COLOR_OP3_BG ;
+    layout->styles[ GUI_STYLE_OP3 ].colorFG        = COLOR_OP3_FG ;
+
+    layout->styles[ GUI_STYLE_AL ].colorBG         = COLOR_AL_BG ;
+    layout->styles[ GUI_STYLE_AL ].colorFG         = COLOR_AL_FG ;
+
+	layout->lineIndex							   = 0 ;
+
+    layout->input_font.size                        = SCREEN_INPUT_FONT_SIZE ;
+    layout->menu_font.size                         = SCREEN_MENU_FONT_SIZE ;
+    layout->mode_font_big.size                     = SCREEN_MODE_FONT_SIZE_BIG ;
+    layout->mode_font_small.size                   = SCREEN_MODE_FONT_SIZE_SMALL ;
+
+    layout->printDisplayOn                         = true ;
+    layout->inSelect                               = false ;
 
     for( index = 0 ; index < LINK_MAX_NUM_OF ; index++ )
     {
@@ -495,10 +632,10 @@ static void ui_InitGuiStateLayout( Layout_st* layout )
 
 void ui_drawSplashScreen( void )
 {
-    Pos_st logo_pos ;
-    Pos_st call_pos ;
-    Font_st logo_font ;
-    Font_st call_font ;
+    Pos_st   logo_pos ;
+    Pos_st   call_pos ;
+    Font_st  logo_font ;
+    Font_st  call_font ;
     Color_st color_fg ;
     Color_st color_op3 ;
 

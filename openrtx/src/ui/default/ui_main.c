@@ -96,33 +96,61 @@ static const ui_draw_fn uiPageDescTable[ PAGE_NUM_OF ] =
     ui_drawAuthors                 , // PAGE_ABOUT
     ui_drawBlank                     // PAGE_STUBBED
 };
-//@@@KL check how the cursor bar is displayed and ensure that it is
+
 void ui_draw( GuiState_st* guiState , Event_st* event )
 {
     static uint8_t prevPageNum = ~0 ;
            bool    drawPage    = false ;
 
+    guiState->update          = false ;
+    guiState->page.renderPage = false ;
     guiState->event           = *event ;
 
-    if( guiState->event.type == EVENT_TYPE_STATUS )
+    if( guiState->page.num != prevPageNum )
     {
-        drawPage         = true ;
-        guiState->update = true ;
+        guiState->initialPageDisplay = true ;
+        prevPageNum                  = guiState->page.num ;
+        drawPage                     = true ;
     }
-
-//    if( guiState->page.num != prevPageNum )
+    else
     {
-        prevPageNum               = guiState->page.num ;
-        gfx_clearScreen();
-        guiState->event.type      = EVENT_TYPE_STATUS ;
-        guiState->event.payload   = EVENT_STATUS_ALL ;
-        drawPage                  = true ;
-        guiState->update          = false ;
-        guiState->page.renderPage = true ;
+        guiState->initialPageDisplay = false ;
+        switch( guiState->event.type )
+        {
+            case EVENT_TYPE_KBD :
+            {
+                drawPage = true ;
+                break ;
+            }
+            case EVENT_TYPE_STATUS :
+            {
+                if( guiState->event.payload & EVENT_STATUS_DEVICE )
+                {
+                    guiState->update = true ; //@@@KL comment out to remove the flashing
+                    drawPage         = true ;
+                }
+                break ;
+            }
+            case EVENT_TYPE_RTX :
+            {
+                drawPage = true ;
+                break ;
+            }
+            default :
+            {
+                drawPage = true ;
+                break ;
+            }
+        }
     }
 
     if( drawPage )
     {
+        if( !guiState->update )
+        {
+            gfx_clearScreen();
+        }
+
         // attempt to display the page as a scripted page
         if( !ui_DisplayPage( guiState ) )
         {
@@ -246,19 +274,20 @@ static void ui_drawBlank( GuiState_st* guiState , bool update , Event_st* event 
 static void ui_drawMainBackground( void )
 {
     // Print top bar line of hline_h pixel height
-    gfx_drawHLine(guiState->layout.lineStyle[ GUI_LINE_TOP ].height, guiState->layout.hline_h, color_gg);
+    gfx_drawHLine(lineTop->height, guiState->layout.hline_h, color_gg);
     // Print bottom bar line of 1 pixel height
     gfx_drawHLine(SCREEN_HEIGHT - guiState->layout.lineStyle[ GUI_LINE_BOTTOM ].height - 1, guiState->layout.hline_h, color_gg);
 }
 */
 static void ui_drawMainTop( GuiState_st* guiState , Event_st* event )
 {
-    uint8_t  lineIndex ;
-    uint16_t height ;
-    uint16_t width ;
-    Pos_st   start ;
-    Color_st color_bg ;
-    Color_st color_fg ;
+    Line_st*  lineTop  = &guiState->layout.lines[ GUI_LINE_TOP ] ;
+    Style_st* styleTop = &guiState->layout.styles[ GUI_STYLE_TOP ] ;
+    uint16_t  height ;
+    uint16_t  width ;
+    Pos_st    start ;
+    Color_st  color_bg ;
+    Color_st  color_fg ;
     ui_ColorLoad( &color_bg , COLOR_BG );
     ui_ColorLoad( &color_fg , COLOR_FG );
 
@@ -269,17 +298,17 @@ static void ui_drawMainTop( GuiState_st* guiState , Event_st* event )
         {
             // clear the time display area
             //@@@KL needs to be more objectively determined
-            lineIndex = GUI_LINE_TOP ;
-            height    = GuiState.layout.lineStyle[ lineIndex ].height ;
+            height    = lineTop->height ;
             width     = 68 ;
-            start.y   = ( GuiState.layout.lineStyle[ lineIndex ].pos.y - height ) + 1 ;
+            start.y   = ( lineTop->pos.y - height ) + 1 ;
             start.x   = 44 ;
             gfx_clearRectangle( start , width , height );
 
             // Print clock on top bar
             datetime_t local_time = utcToLocalTime( last_state.time ,
                                                     last_state.settings.utc_timezone );
-            gfx_print( guiState->layout.lineStyle[ GUI_LINE_TOP ].pos , guiState->layout.lineStyle[ GUI_LINE_TOP ].font.size , ALIGN_CENTER ,
+            gfx_print( lineTop->pos ,
+                       styleTop->font.size , ALIGN_CENTER ,
                        color_fg , "%02d:%02d:%02d" , local_time.hour ,
                        local_time.minute , local_time.second );
             guiState->page.renderPage = true ;
@@ -289,14 +318,14 @@ static void ui_drawMainTop( GuiState_st* guiState , Event_st* event )
         {
             // clear the time display area
             width   = SCREEN_WIDTH / 9 ;
-            height  = guiState->layout.lineStyle[ GUI_LINE_TOP ].height - ( guiState->layout.status_v_pad * 2 );
+            height  = lineTop->height - ( guiState->layout.status_v_pad * 2 );
             start.x = SCREEN_WIDTH - width - guiState->layout.horizontal_pad ;
             start.y = guiState->layout.status_v_pad ;
             gfx_clearRectangle( start , width , height );
             // If the radio has no built-in battery, print input voltage
 #ifdef BAT_NONE
-            gfx_print( guiState->layout.lineStyle[ GUI_LINE_TOP ].pos ,
-                       guiState->layout.lineStyle[ GUI_LINE_TOP ].font.size ,
+            gfx_print( lineTop->pos ,
+                       styleTop->font.size ,
                        ALIGN_RIGHT , color_fg , "%.1fV" , last_state.v_bat );
 #else // BAT_NONE
             // Otherwise print battery icon on top bar, use 4 px padding
@@ -308,8 +337,8 @@ static void ui_drawMainTop( GuiState_st* guiState , Event_st* event )
         {
             if( guiState->uiState.input_locked == true )
             {
-                start  = guiState->layout.lineStyle[ GUI_LINE_TOP ].pos ;
-                width  = guiState->layout.lineStyle[ GUI_LINE_TOP ].symbolSize + FONT_SIZE_24PT + 1 ;
+                start  = lineTop->pos ;
+                width  = styleTop->symbolSize + FONT_SIZE_24PT + 1 ;
                 height = width ;
                 gfx_drawSymbol( start , width , ALIGN_LEFT , color_fg , SYMBOL_LOCK );
                 guiState->page.renderPage = true ;
@@ -320,12 +349,14 @@ static void ui_drawMainTop( GuiState_st* guiState , Event_st* event )
 
 static void ui_drawBankChannel( GuiState_st* guiState )
 {
-    Color_st color_fg ;
+    Line_st*  line1    = &guiState->layout.lines[ GUI_LINE_1 ] ;
+    Style_st* style1   = &guiState->layout.styles[ GUI_STYLE_1 ] ;
+    Color_st  color_fg ;
     ui_ColorLoad( &color_fg , COLOR_FG );
 
     // Print Bank number, channel number and Channel name
     uint16_t bank_enabled = ( last_state.bank_enabled ) ? last_state.bank : 0 ;
-    gfx_print( guiState->layout.lineStyle[ GUI_LINE_1 ].pos , guiState->layout.lineStyle[ GUI_LINE_1 ].font.size , ALIGN_CENTER ,
+    gfx_print( line1->pos , style1->font.size , ALIGN_CENTER ,
                color_fg , "%01d-%03d: %.12s" ,
                bank_enabled , last_state.channel_index + 1 , last_state.channel.name );
     guiState->page.renderPage = true ;
@@ -333,9 +364,18 @@ static void ui_drawBankChannel( GuiState_st* guiState )
 
 static void ui_drawModeInfo( GuiState_st* guiState )
 {
-    char bw_str[ 8 ]     = { 0 };
-    char encdec_str[ 9 ] = { 0 };
-    Color_st color_fg ;
+    Line_st*  line1       = &guiState->layout.lines[ GUI_LINE_1 ] ;
+    Style_st* style1      = &guiState->layout.styles[ GUI_STYLE_1 ] ;
+    Line_st*  line2       = &guiState->layout.lines[ GUI_LINE_2 ] ;
+    Style_st* style2      = &guiState->layout.styles[ GUI_STYLE_2 ] ;
+    Line_st*  line3       = &guiState->layout.lines[ GUI_LINE_3 ] ;
+    Style_st* style3      = &guiState->layout.styles[ GUI_STYLE_3 ] ;
+    Line_st*  line4       = &guiState->layout.lines[ GUI_LINE_4 ] ;
+    Style_st* style4      = &guiState->layout.styles[ GUI_STYLE_4 ] ;
+    char      bw_str[ 8 ]     = { 0 };
+    char      encdec_str[ 9 ] = { 0 };
+    Color_st  color_fg ;
+
     ui_ColorLoad( &color_fg , COLOR_FG );
 
     switch( last_state.channel.mode )
@@ -392,13 +432,13 @@ static void ui_drawModeInfo( GuiState_st* guiState )
             // Print Bandwidth, Tone and encdec info
             if( tone_tx_enable || tone_rx_enable )
             {
-                gfx_print( guiState->layout.lineStyle[ GUI_LINE_2 ].pos , guiState->layout.lineStyle[ GUI_LINE_2 ].font.size , ALIGN_CENTER ,
+                gfx_print( line2->pos , style2->font.size , ALIGN_CENTER ,
                            color_fg , "%s %4.1f %s" , bw_str ,
                            ctcss_tone[ last_state.channel.fm.txTone ] / 10.0f , encdec_str );
             }
             else
             {
-                gfx_print( guiState->layout.lineStyle[ GUI_LINE_2 ].pos , guiState->layout.lineStyle[ GUI_LINE_2 ].font.size , ALIGN_CENTER ,
+                gfx_print( line2->pos , style2->font.size , ALIGN_CENTER ,
                            color_fg , "%s" , bw_str );
             }
             guiState->page.renderPage = true ;
@@ -407,7 +447,7 @@ static void ui_drawModeInfo( GuiState_st* guiState )
         case OPMODE_DMR :
         {
             // Print Contact
-            gfx_print( guiState->layout.lineStyle[ GUI_LINE_2 ].pos , guiState->layout.lineStyle[ GUI_LINE_2 ].font.size , ALIGN_CENTER ,
+            gfx_print( line2->pos , style2->font.size , ALIGN_CENTER ,
                        color_fg , "%s" , last_state.contact.name );
             guiState->page.renderPage = true ;
             break ;
@@ -420,34 +460,34 @@ static void ui_drawModeInfo( GuiState_st* guiState )
             if( rtxStatus.lsfOk )
             {
                 // Destination address
-                gfx_drawSymbol( guiState->layout.lineStyle[ GUI_LINE_2 ].pos , guiState->layout.lineStyle[ GUI_LINE_2 ].symbolSize , ALIGN_LEFT ,
+                gfx_drawSymbol( line2->pos , style2->symbolSize , ALIGN_LEFT ,
                                 color_fg , SYMBOL_CALL_RECEIVED );
 
-                gfx_print( guiState->layout.lineStyle[ GUI_LINE_2 ].pos , guiState->layout.lineStyle[ GUI_LINE_2 ].font.size , ALIGN_CENTER ,
+                gfx_print( line2->pos , style2->font.size , ALIGN_CENTER ,
                            color_fg , "%s" , rtxStatus.M17_dst );
 
                 // Source address
-                gfx_drawSymbol( guiState->layout.lineStyle[ GUI_LINE_1 ].pos , guiState->layout.lineStyle[ GUI_LINE_1 ].symbolSize , ALIGN_LEFT ,
+                gfx_drawSymbol( line1->pos , style1->symbolSize , ALIGN_LEFT ,
                                 color_fg , SYMBOL_CALL_MADE );
 
-                gfx_print( guiState->layout.lineStyle[ GUI_LINE_1 ].pos , guiState->layout.lineStyle[ GUI_LINE_2 ].font.size , ALIGN_CENTER ,
+                gfx_print( line1->pos , style2->font.size , ALIGN_CENTER ,
                            color_fg , "%s" , rtxStatus.M17_src );
 
                 // RF link (if present)
                 if( rtxStatus.M17_link[0] != '\0' )
                 {
-                    gfx_drawSymbol( guiState->layout.lineStyle[ GUI_LINE_4 ].pos , guiState->layout.lineStyle[ GUI_LINE_3 ].symbolSize , ALIGN_LEFT ,
+                    gfx_drawSymbol( line4->pos , style3->symbolSize , ALIGN_LEFT ,
                                     color_fg , SYMBOL_ACCESS_POINT );
-                    gfx_print( guiState->layout.lineStyle[ GUI_LINE_4 ].pos , guiState->layout.lineStyle[ GUI_LINE_2 ].font.size , ALIGN_CENTER ,
+                    gfx_print( line4->pos , style2->font.size , ALIGN_CENTER ,
                                color_fg , "%s" , rtxStatus.M17_link );
                 }
 
                 // Reflector (if present)
                 if( rtxStatus.M17_refl[0] != '\0' )
                 {
-                    gfx_drawSymbol( guiState->layout.lineStyle[ GUI_LINE_3 ].pos , guiState->layout.lineStyle[ GUI_LINE_4 ].symbolSize , ALIGN_LEFT ,
+                    gfx_drawSymbol( line3->pos , style4->symbolSize , ALIGN_LEFT ,
                                     color_fg , SYMBOL_NETWORK );
-                    gfx_print( guiState->layout.lineStyle[ GUI_LINE_3 ].pos , guiState->layout.lineStyle[ GUI_LINE_2 ].font.size , ALIGN_CENTER ,
+                    gfx_print( line3->pos , style2->font.size , ALIGN_CENTER ,
                                color_fg , "%s" , rtxStatus.M17_refl );
                 }
                 guiState->page.renderPage = true ;
@@ -471,7 +511,7 @@ static void ui_drawModeInfo( GuiState_st* guiState )
                     }
                 }
 
-                gfx_print( guiState->layout.lineStyle[ GUI_LINE_2 ].pos , guiState->layout.lineStyle[ GUI_LINE_2 ].font.size , ALIGN_CENTER ,
+                gfx_print( line2->pos , style2->font.size , ALIGN_CENTER ,
                            color_fg , "M17 #%s" , dst );
                 guiState->page.renderPage = true ;
             }
@@ -482,22 +522,29 @@ static void ui_drawModeInfo( GuiState_st* guiState )
 
 static void ui_drawFrequency( GuiState_st* guiState )
 {
-    unsigned long frequency = platform_getPttStatus() ? last_state.channel.tx_frequency
+    Line_st*      line3Large  = &guiState->layout.lines[ GUI_LINE_3_LARGE ] ;
+    Style_st*     style3Large = &guiState->layout.styles[ GUI_STYLE_3_LARGE ] ;
+    unsigned long frequency   = platform_getPttStatus() ? last_state.channel.tx_frequency
                                                       : last_state.channel.rx_frequency;
     Color_st color_fg ;
     ui_ColorLoad( &color_fg , COLOR_FG );
 
     // Print big numbers frequency
-    gfx_print( guiState->layout.lineStyle[ GUI_LINE_3_LARGE ].pos , guiState->layout.lineStyle[ GUI_LINE_3_LARGE ].font.size , ALIGN_CENTER ,
+    gfx_print( line3Large->pos , style3Large->font.size , ALIGN_CENTER ,
                color_fg , "%.7g" , (float)frequency / 1000000.0f );
     guiState->page.renderPage = true ;
 }
 
 static void ui_drawVFOMiddleInput( GuiState_st* guiState )
 {
+    Line_st*  line2       = &guiState->layout.lines[ GUI_LINE_2 ] ;
+//    Style_st* style2      = &guiState->layout.styles[ GUI_STYLE_2 ] ;
+    Line_st*  line3Large  = &guiState->layout.lines[ GUI_LINE_3_LARGE ] ;
+//    Style_st* style3Large = &guiState->layout.styles[ GUI_STYLE_3_LARGE ] ;
     // Add inserted number to string, skipping "Rx: "/"Tx: " and "."
-    uint8_t insert_pos = guiState->uiState.input_position + 3;
-    Color_st color_fg ;
+    uint8_t   insert_pos  = guiState->uiState.input_position + 3;
+    Color_st  color_fg ;
+
     ui_ColorLoad( &color_fg , COLOR_FG );
 
     if( guiState->uiState.input_position > 3 )
@@ -510,7 +557,7 @@ static void ui_drawVFOMiddleInput( GuiState_st* guiState )
     {
         if( guiState->uiState.input_position == 0 )
         {
-            gfx_print( guiState->layout.lineStyle[ GUI_LINE_2 ].pos , guiState->layout.input_font.size , ALIGN_CENTER ,
+            gfx_print( line2->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
                        color_fg , ">Rx:%03lu.%04lu" ,
                        (unsigned long)guiState->uiState.new_rx_frequency / 1000000 ,
                        (unsigned long)( guiState->uiState.new_rx_frequency % 1000000 ) / 100 );
@@ -523,10 +570,10 @@ static void ui_drawVFOMiddleInput( GuiState_st* guiState )
                 strcpy( guiState->uiState.new_rx_freq_buf , ">Rx:___.____" );
             }
             guiState->uiState.new_rx_freq_buf[ insert_pos ] = input_char ;
-            gfx_print( guiState->layout.lineStyle[ GUI_LINE_2 ].pos , guiState->layout.input_font.size , ALIGN_CENTER ,
+            gfx_print( line2->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
                        color_fg , guiState->uiState.new_rx_freq_buf );
         }
-        gfx_print( guiState->layout.lineStyle[ GUI_LINE_3_LARGE ].pos , guiState->layout.input_font.size , ALIGN_CENTER ,
+        gfx_print( line3Large->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
                    color_fg , " Tx:%03lu.%04lu" ,
                    (unsigned long)last_state.channel.tx_frequency / 1000000 ,
                    (unsigned long)( last_state.channel.tx_frequency % 1000000 ) / 100 );
@@ -536,14 +583,14 @@ static void ui_drawVFOMiddleInput( GuiState_st* guiState )
     {
         if( guiState->uiState.input_set == SET_TX )
         {
-            gfx_print( guiState->layout.lineStyle[ GUI_LINE_2 ].pos , guiState->layout.input_font.size , ALIGN_CENTER ,
+            gfx_print( line2->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
                        color_fg , " Rx:%03lu.%04lu" ,
                        (unsigned long)guiState->uiState.new_rx_frequency / 1000000 ,
                        (unsigned long)( guiState->uiState.new_rx_frequency % 1000000 ) / 100 );
             // Replace Rx frequency with underscorses
             if( guiState->uiState.input_position == 0 )
             {
-                gfx_print( guiState->layout.lineStyle[ GUI_LINE_3_LARGE ].pos , guiState->layout.input_font.size , ALIGN_CENTER ,
+                gfx_print( line3Large->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
                            color_fg , ">Tx:%03lu.%04lu" ,
                            (unsigned long)guiState->uiState.new_rx_frequency / 1000000 ,
                            (unsigned long)( guiState->uiState.new_rx_frequency % 1000000 ) / 100 );
@@ -555,7 +602,7 @@ static void ui_drawVFOMiddleInput( GuiState_st* guiState )
                     strcpy( guiState->uiState.new_tx_freq_buf , ">Tx:___.____" );
                 }
                 guiState->uiState.new_tx_freq_buf[ insert_pos ] = input_char ;
-                gfx_print( guiState->layout.lineStyle[ GUI_LINE_3_LARGE ].pos , guiState->layout.input_font.size , ALIGN_CENTER ,
+                gfx_print( line3Large->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
                            color_fg , guiState->uiState.new_tx_freq_buf );
             }
             guiState->page.renderPage = true ;
@@ -565,12 +612,15 @@ static void ui_drawVFOMiddleInput( GuiState_st* guiState )
 
 void _ui_drawMainBottom( GuiState_st* guiState , Event_st* event )
 {
+    Line_st*  lineBottom  = &guiState->layout.lines[ GUI_LINE_BOTTOM ] ;
+//    Style_st* styleBottom = &guiState->layout.styles[ GUI_STYLE_BOTTOM ] ;
     // Squelch bar
     float    rssi         = last_state.rssi ;
     float    squelch      = last_state.settings.sqlLevel / 16.0f ;
     uint16_t meter_width  = SCREEN_WIDTH - ( 2 * guiState->layout.horizontal_pad ) ;
-    uint16_t meter_height = guiState->layout.lineStyle[ GUI_LINE_BOTTOM ].height ;
-    Pos_st   meter_pos    = { guiState->layout.horizontal_pad , ( SCREEN_HEIGHT - meter_height ) - guiState->layout.bottom_pad };
+    uint16_t meter_height = lineBottom->height ;
+    Pos_st   meter_pos    = { guiState->layout.horizontal_pad ,
+                              ( SCREEN_HEIGHT - meter_height ) - guiState->layout.bottom_pad };
     uint8_t  mic_level    = platform_getMicLevel();
     Color_st color_op3 ;
 

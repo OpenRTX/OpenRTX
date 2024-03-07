@@ -57,15 +57,22 @@ static const uint32_t ColorTable[ COLOR_NUM_OF ] =
     COLOR_TABLE
 };
 
+static void RunScript( GuiState_st* guiState , uint8_t scriptPageNum );
+
 static bool GuiCmd_Null( GuiState_st* guiState );
+static bool GuiCmd_StaticStart( GuiState_st* guiState );
+static bool GuiCmd_StaticEnd( GuiState_st* guiState );
 static bool GuiCmd_EventStart( GuiState_st* guiState );
 static bool GuiCmd_EventEnd( GuiState_st* guiState );
-static bool GuiCmd_GoToLine( GuiState_st* guiState );
+static bool GuiCmd_TimerCheck( GuiState_st* guiState );
+static bool GuiCmd_TimerSet( GuiState_st* guiState );
 static bool GuiCmd_AlignLeft( GuiState_st* guiState );
 static bool GuiCmd_AlignCenter( GuiState_st* guiState );
 static bool GuiCmd_AlignRight( GuiState_st* guiState );
-static bool GuiCmd_FontSize( GuiState_st* guiState );
 static bool GuiCmd_LineEnd( GuiState_st* guiState );
+static bool GuiCmd_Line( GuiState_st* guiState );
+static bool GuiCmd_Style( GuiState_st* guiState );
+static bool GuiCmd_RunScript( GuiState_st* guiState );
 static bool GuiCmd_Link( GuiState_st* guiState );
 static bool GuiCmd_LinkEnd( GuiState_st* guiState );
 static bool GuiCmd_Page( GuiState_st* guiState );
@@ -76,7 +83,7 @@ static bool GuiCmd_Text( GuiState_st* guiState );
 static bool GuiCmd_PageEnd( GuiState_st* guiState );
 static bool GuiCmd_Stubbed( GuiState_st* guiState );
 
-static bool GuiCmd_Select( GuiState_st* guiState );
+static bool GuiCmd_( GuiState_st* guiState );
 static void GuiCmd_AdvToNextCmd( GuiState_st* guiState );
 
 typedef bool (*ui_GuiCmd_fn)( GuiState_st* guiState );
@@ -84,26 +91,26 @@ typedef bool (*ui_GuiCmd_fn)( GuiState_st* guiState );
 static const ui_GuiCmd_fn ui_GuiCmd_Table[ GUI_CMD_NUM_OF ] =
 {
     GuiCmd_Null         , // 0x00
-    GuiCmd_EventStart   , // 0x01
-    GuiCmd_EventEnd     , // 0x02
-    GuiCmd_GoToLine     , // 0x03
-    GuiCmd_AlignLeft    , // 0x04
-    GuiCmd_AlignCenter  , // 0x05
-    GuiCmd_AlignRight   , // 0x06
-    GuiCmd_FontSize     , // 0x07
-    GuiCmd_Stubbed      , // 0x08
-    GuiCmd_Stubbed      , // 0x09
+    GuiCmd_StaticStart  , // 0x01
+    GuiCmd_StaticEnd    , // 0x02
+    GuiCmd_EventStart   , // 0x03
+    GuiCmd_EventEnd     , // 0x04
+    GuiCmd_TimerCheck   , // 0x05
+    GuiCmd_TimerSet     , // 0x06
+    GuiCmd_AlignLeft    , // 0x07
+    GuiCmd_AlignCenter  , // 0x08
+    GuiCmd_AlignRight   , // 0x09
     GuiCmd_LineEnd      , // 0x0A
-    GuiCmd_Link         , // 0x0B
-    GuiCmd_LinkEnd      , // 0x0C
-    GuiCmd_Stubbed      , // 0x0D
-    GuiCmd_Page         , // 0x0E
-    GuiCmd_ValueDisplay , // 0x0F
-    GuiCmd_ValueInput   , // 0x10
-    GuiCmd_Title        , // 0x11
-    GuiCmd_Text         , // 0x12
-    GuiCmd_Stubbed      , // 0x13
-    GuiCmd_Stubbed      , // 0x14
+    GuiCmd_Line         , // 0x0B
+    GuiCmd_Style        , // 0x0C
+    GuiCmd_RunScript    , // 0x0D
+    GuiCmd_Link         , // 0x0E
+    GuiCmd_LinkEnd      , // 0x0F
+    GuiCmd_Page         , // 0x10
+    GuiCmd_ValueDisplay , // 0x11
+    GuiCmd_ValueInput   , // 0x12
+    GuiCmd_Title        , // 0x13
+    GuiCmd_Text         , // 0x14
     GuiCmd_Stubbed      , // 0x15
     GuiCmd_Stubbed      , // 0x16
     GuiCmd_Stubbed      , // 0x17
@@ -124,6 +131,7 @@ bool ui_DisplayPage( GuiState_st* guiState )
     bool     exit ;
     bool     pageDisplayed = false ;
 
+    guiState->timeStamp             = getTick();
     guiState->layout.printDisplayOn = true ;
     guiState->layout.inSelect       = false ;
 
@@ -151,7 +159,10 @@ bool ui_DisplayPage( GuiState_st* guiState )
     guiState->page.ptr              = (uint8_t*)uiPageTable[ guiState->page.num ] ;
 
     guiState->layout.numOfEntries   = 0 ;
+
     guiState->layout.lineIndex      = 0 ;
+    guiState->layout.line           = guiState->layout.lines[ guiState->layout.lineIndex ] ;
+    guiState->layout.style          = guiState->layout.styles[ guiState->layout.lineIndex ] ;
 
     guiState->layout.linkNumOf      = 0 ;
     guiState->layout.linkIndex      = 0 ;
@@ -172,7 +183,6 @@ bool ui_DisplayPage( GuiState_st* guiState )
 
 	    if( !guiState->pageHasEvents )
 	    {
-            gfx_clearScreen();
             for( exit = false , count = 256 ; !exit && count ; count-- )
             {
                 cmd = guiState->page.ptr[ guiState->page.index ] ;
@@ -220,6 +230,35 @@ bool ui_DisplayPage( GuiState_st* guiState )
 
 }
 
+static void RunScript( GuiState_st* guiState , uint8_t scriptPageNum )
+{
+    Page_st  parentPage = guiState->page ;
+    uint16_t count ;
+    uint8_t  cmd ;
+    bool     exit ;
+
+    guiState->page.ptr   = (uint8_t*)uiPageTable[ scriptPageNum ] ;
+
+    guiState->page.index = 0 ;
+
+    for( exit = false , count = 256 ; !exit && count ; count-- )
+    {
+        cmd = guiState->page.ptr[ guiState->page.index ] ;
+
+        if( cmd < GUI_CMD_DATA_AREA )
+        {
+            exit = ui_GuiCmd_Table[ cmd ]( guiState );
+        }
+        else
+        {
+            guiState->page.index++ ;
+        }
+    }
+
+    guiState->page = parentPage ;
+
+}
+
 static bool GuiCmd_Null( GuiState_st* guiState )
 {
     bool pageEnd = false ;
@@ -232,6 +271,49 @@ static bool GuiCmd_Null( GuiState_st* guiState )
 
 }
 
+static bool GuiCmd_StaticStart( GuiState_st* guiState )
+{
+    uint16_t count   = 256 ;
+    bool     pageEnd = false ;
+
+    guiState->inStaticArea = false ;
+
+    guiState->page.index++ ;
+
+    if( guiState->update )
+    {
+        while( ( guiState->page.ptr[ guiState->page.index ] != GUI_CMD_STATIC_END ) &&
+               ( guiState->page.ptr[ guiState->page.index ] != GUI_CMD_PAGE_END   )    )
+        {
+            count-- ;
+            if( count == 0 )
+            {
+                break ;
+            }
+            guiState->page.index++ ;
+        }
+    }
+    else
+    {
+        guiState->inStaticArea = true ;
+    }
+
+    return pageEnd ;
+
+}
+
+static bool GuiCmd_StaticEnd( GuiState_st* guiState )
+{
+    bool pageEnd = false ;
+
+    guiState->page.index++ ;
+
+    guiState->inStaticArea = false ;
+
+    return pageEnd ;
+
+}
+
 static bool GuiCmd_EventStart( GuiState_st* guiState )
 {
     uint8_t  eventType ;
@@ -239,14 +321,17 @@ static bool GuiCmd_EventStart( GuiState_st* guiState )
     uint16_t count   = 256 ;
     bool     pageEnd = false ;
 
+    guiState->inEventArea = false ;
+
     guiState->page.index++ ;
-    eventType    = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+    eventType             = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
     guiState->page.index++ ;
-    eventPayload = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+    eventPayload          = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
     guiState->page.index++ ;
 
-    if( !( ( guiState->event.type    == eventType    ) &&
-           ( guiState->event.payload == eventPayload )    ) )
+    if( guiState->update                                                       &&
+        !( ( guiState->event.type                       == eventType    ) &&
+           ( ( guiState->event.payload & eventPayload ) == eventPayload )    )    )
     {
         while( ( guiState->page.ptr[ guiState->page.index ] != GUI_CMD_EVENT_END ) &&
                ( guiState->page.ptr[ guiState->page.index ] != GUI_CMD_PAGE_END  )    )
@@ -282,16 +367,103 @@ static bool GuiCmd_EventEnd( GuiState_st* guiState )
 
 }
 
-static bool GuiCmd_GoToLine( GuiState_st* guiState )
+static bool GuiCmd_TimerCheck( GuiState_st* guiState )
 {
-    uint8_t lineIndex ;
+    uint8_t scriptPageNum ;
+    bool    pageEnd       = false ;
+
+    guiState->page.index++ ;
+    scriptPageNum = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+    guiState->page.index++ ;
+
+    if( guiState->initialPageDisplay )
+    {
+        guiState->timer.timeOut       = 0 ;
+        guiState->timer.scriptPageNum = PAGE_STUBBED ;
+    }
+
+    if( guiState->timer.timeOut == 0 )
+    {
+        RunScript( guiState , scriptPageNum );
+    }
+    else
+    {
+        if( guiState->timeStamp >= guiState->timer.timeOut )
+        {
+            guiState->timer.timeOut = 0 ;
+            RunScript( guiState , guiState->timer.scriptPageNum );
+        }
+    }
+
+    return pageEnd ;
+
+}
+
+static bool GuiCmd_TimerSet( GuiState_st* guiState )
+{
+    uint8_t  period_u ;
+    uint8_t  period_l ;
+    uint16_t period ;
+    uint8_t  scriptPageNum ;
+    bool     pageEnd       = false ;
+
+    guiState->page.index++ ;
+    scriptPageNum = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+    guiState->page.index++ ;
+    period_u      = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+    guiState->page.index++ ;
+    period_l      = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+    guiState->page.index++ ;
+    period        = ( (uint16_t)period_u * 100 ) + (uint16_t)period_l ;
+    guiState->page.index++ ;
+
+    if( guiState->timer.timeOut == 0 )
+    {
+        guiState->timer.timeOut       = guiState->timeStamp + (long long int)period ;
+        guiState->timer.scriptPageNum = scriptPageNum ;
+    }
+
+    return pageEnd ;
+
+}
+
+static bool GuiCmd_Line( GuiState_st* guiState )
+{
+    uint8_t lineSelect ;
     bool    pageEnd = false ;
 
     guiState->page.index++ ;
 
-    lineIndex                  = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
-    guiState->layout.lineIndex = lineIndex ;
-    guiState->layout.line 	   = guiState->layout.lineStyle[ lineIndex ] ;
+    lineSelect            = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+
+    if( lineSelect >= GUI_LINE_NUM_OF )
+    {
+        lineSelect = GUI_LINE_DEFAULT ;
+    }
+
+    guiState->layout.line = guiState->layout.lines[ lineSelect ] ;
+
+    guiState->page.index++ ;
+
+    return pageEnd ;
+
+}
+
+static bool GuiCmd_Style( GuiState_st* guiState )
+{
+    uint8_t styleSelect ;
+    bool    pageEnd = false ;
+
+    guiState->page.index++ ;
+
+    styleSelect            = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+
+    if( styleSelect >= GUI_STYLE_NUM_OF )
+    {
+        styleSelect = GUI_STYLE_DEFAULT ;
+    }
+
+    guiState->layout.style = guiState->layout.styles[ styleSelect ] ;
 
     guiState->page.index++ ;
 
@@ -305,7 +477,7 @@ static bool GuiCmd_AlignLeft( GuiState_st* guiState )
 
     guiState->page.index++ ;
 
-    guiState->layout.line.align = ALIGN_LEFT ;
+    guiState->layout.style.align = ALIGN_LEFT ;
 
     return pageEnd ;
 
@@ -317,7 +489,7 @@ static bool GuiCmd_AlignCenter( GuiState_st* guiState )
 
     guiState->page.index++ ;
 
-    guiState->layout.line.align = ALIGN_CENTER ;
+    guiState->layout.style.align = ALIGN_CENTER ;
 
     return pageEnd ;
 
@@ -329,23 +501,7 @@ static bool GuiCmd_AlignRight( GuiState_st* guiState )
 
     guiState->page.index++ ;
 
-    guiState->layout.line.align = ALIGN_RIGHT ;
-
-    return pageEnd ;
-
-}
-
-static bool GuiCmd_FontSize( GuiState_st* guiState )
-{
-    uint8_t fontSize ;
-    bool    pageEnd  = false ;
-
-    guiState->page.index++ ;
-
-    fontSize                        = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
-    guiState->layout.line.font.size = fontSize ;
-
-    guiState->page.index++ ;
+    guiState->layout.style.align = ALIGN_RIGHT ;
 
     return pageEnd ;
 
@@ -357,18 +513,34 @@ static bool GuiCmd_LineEnd( GuiState_st* guiState )
 
     guiState->page.index++ ;
 
-    if( guiState->layout.printDisplayOn )
-    {
-        guiState->layout.line.pos.y += guiState->layout.menu_h ;
-    }
-
     if( ( guiState->layout.lineIndex + 1 ) < GUI_LINE_NUM_OF )
     {
         guiState->layout.lineIndex++ ;
     }
 
+    if( guiState->layout.printDisplayOn )
+    {
+        guiState->layout.line.pos.y += guiState->layout.menu_h ;
+//        guiState->layout.line  = guiState->layout.lines[ guiState->layout.lineIndex ] ;
+//        guiState->layout.style = guiState->layout.styles[ guiState->layout.lineIndex ] ;
+    }
+
     return pageEnd ;
 
+}
+
+static bool GuiCmd_RunScript( GuiState_st* guiState )
+{
+    uint8_t scriptPageNum ;
+    bool    pageEnd       = false ;
+
+    guiState->page.index++ ;
+    scriptPageNum = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+    guiState->page.index++ ;
+
+    RunScript( guiState , scriptPageNum );
+
+    return pageEnd ;
 }
 
 static bool GuiCmd_Link( GuiState_st* guiState )
@@ -382,7 +554,7 @@ static bool GuiCmd_Link( GuiState_st* guiState )
         guiState->layout.linkNumOf++ ;
     }
 
-    pageEnd = GuiCmd_Select( guiState );
+    pageEnd = GuiCmd_( guiState );
 
     return pageEnd ;
 }
@@ -476,15 +648,18 @@ static bool GuiCmd_Title( GuiState_st* guiState )
 
     ui_ColorLoad( &color_fg , COLOR_FG );
 
-    guiState->layout.lineIndex = GUI_LINE_TOP ;
+    guiState->layout.line  = guiState->layout.lines[ GUI_LINE_TOP ] ;
+    guiState->layout.style = guiState->layout.styles[ GUI_STYLE_TOP ] ;
 
     // print the title on the top bar
-    gfx_print( guiState->layout.line.pos       ,
-               guiState->layout.line.font.size ,
-               guiState->layout.line.align     ,
+    gfx_print( guiState->layout.line.pos             ,
+               guiState->layout.style.font.size ,
+               guiState->layout.style.align     ,
                color_fg , (char*)scriptPtr );
 
     GuiCmd_AdvToNextCmd( guiState );
+
+    guiState->page.renderPage = true ;
 
     return pageEnd ;
 
@@ -519,13 +694,15 @@ static bool GuiCmd_Text( GuiState_st* guiState )
             gfx_drawRect( rect_pos , SCREEN_WIDTH , guiState->layout.menu_h , color_fg , true );
         }
 //@@@KL            announceMenuItemIfNeeded( entryBuf , NULL , false );
-        gfx_print( guiState->layout.line.pos       ,
-                   guiState->layout.line.font.size ,
-                   guiState->layout.line.align     ,
+        gfx_print( guiState->layout.line.pos             ,
+                   guiState->layout.style.font.size ,
+                   guiState->layout.style.align     ,
                    color_text , (char*)scriptPtr );
     }
 
     GuiCmd_AdvToNextCmd( guiState );
+
+    guiState->page.renderPage = true ;
 
     return pageEnd ;
 
@@ -553,7 +730,7 @@ static bool GuiCmd_Stubbed( GuiState_st* guiState )
 
 }
 
-static bool GuiCmd_Select( GuiState_st* guiState )
+static bool GuiCmd_( GuiState_st* guiState )
 {
     bool    pageEnd = false ;
 

@@ -100,17 +100,45 @@ enum
     PAGE_INITIAL = PAGE_MAIN_MEM
 };
 
-enum
+typedef enum
 {
     GUI_LINE_TOP     ,
     GUI_LINE_1       ,
     GUI_LINE_2       ,
     GUI_LINE_3       ,
     GUI_LINE_4       ,
+    GUI_LINE_5       ,
     GUI_LINE_BOTTOM  ,
     GUI_LINE_3_LARGE ,
-    GUI_LINE_NUM_OF
-};
+    GUI_LINE_NUM_OF  ,
+    GUI_LINE_DEFAULT = GUI_LINE_TOP
+}Line_en;
+
+typedef enum
+{
+    GUI_STYLE_TOP     ,
+    GUI_STYLE_1       ,
+    GUI_STYLE_2       ,
+    GUI_STYLE_3       ,
+    GUI_STYLE_4       ,
+    GUI_STYLE_5       ,
+    GUI_STYLE_BOTTOM  ,
+    GUI_STYLE_3_LARGE ,
+
+    GUI_STYLE_GG      , // grey background
+    GUI_STYLE_AGG     , // alpha grey overlay foreground
+    GUI_STYLE_HL      , // highlight background
+    GUI_STYLE_OP0     , // option 0 foreground
+    GUI_STYLE_OP1     , // option 1 foreground
+    GUI_STYLE_OP2     , // option 2 foreground
+    GUI_STYLE_OP3     , // option 3 foreground
+    GUI_STYLE_AL      , // alarm foreground
+
+    GUI_STYLE_NUM_OF  ,
+
+    GUI_STYLE_DEFAULT = GUI_STYLE_1
+
+}Style_en;
 
 enum
 {
@@ -140,6 +168,79 @@ enum
 {
     MAX_PAGE_DEPTH = 8
 };
+// Color Variable Field Unshifted Masks and Shifts
+enum
+{
+    COLOR_ENC_RED_SHIFT   =   24 ,
+    COLOR_ENC_RED_MASK    = 0xFF ,
+    COLOR_ENC_GREEN_SHIFT =   16 ,
+    COLOR_ENC_GREEN_MASK  = 0xFF ,
+    COLOR_ENC_BLUE_SHIFT  =    8 ,
+    COLOR_ENC_BLUE_MASK   = 0xFF ,
+    COLOR_ENC_ALPHA_SHIFT =    0 ,
+    COLOR_ENC_ALPHA_MASK  = 0xFF
+};
+
+// Color Variable Field Encoder
+#define COLOR_DEF_ENC( r , g , b , a ) (const uint32_t)(                        \
+    ( ( (const uint32_t)r & COLOR_ENC_RED_MASK   ) << COLOR_ENC_RED_SHIFT   ) | \
+    ( ( (const uint32_t)g & COLOR_ENC_GREEN_MASK ) << COLOR_ENC_GREEN_SHIFT ) | \
+    ( ( (const uint32_t)b & COLOR_ENC_BLUE_MASK  ) << COLOR_ENC_BLUE_SHIFT  ) | \
+    ( ( (const uint32_t)a & COLOR_ENC_ALPHA_MASK ) << COLOR_ENC_ALPHA_SHIFT )   )
+
+// Color Definitions
+#define COLOR_DEF_WHITE         COLOR_DEF_ENC( 255 , 255 , 255 , 255 )
+#define COLOR_DEF_BLACK         COLOR_DEF_ENC(   0 ,   0 ,  0  , 255 )
+#define COLOR_DEF_GREY          COLOR_DEF_ENC(  60 ,  60 ,  60 , 255 )
+#define COLOR_DEF_ALPHA_GREY    COLOR_DEF_ENC(   0 ,   0 ,   0 , 255 )
+#define COLOR_DEF_YELLOW_FAB413 COLOR_DEF_ENC( 250 , 180 ,  19 , 255 )
+#define COLOR_DEF_RED           COLOR_DEF_ENC( 255 ,   0 ,   0 , 255 )
+#define COLOR_DEF_GREEN         COLOR_DEF_ENC(   0 , 255 ,   0 , 255 )
+#define COLOR_DEF_BLUE          COLOR_DEF_ENC(   0 ,   0 , 255 , 255 )
+
+// Color Table Definition
+#define COLOR_TABLE             \
+    COLOR_DEF_BLACK         ,   \
+    COLOR_DEF_WHITE         ,   \
+    COLOR_DEF_GREY          ,   \
+    COLOR_DEF_ALPHA_GREY    ,   \
+    COLOR_DEF_YELLOW_FAB413 ,   \
+    COLOR_DEF_RED           ,   \
+    COLOR_DEF_GREEN         ,   \
+    COLOR_DEF_BLUE
+
+// Color Selectors
+typedef enum
+{
+    COLOR_BLACK         ,
+    COLOR_WHITE         ,
+    COLOR_GREY          ,
+    COLOR_ALPHA_GREY    ,
+    COLOR_YELLOW_FAB413 ,
+    COLOR_RED           ,
+    COLOR_GREEN         ,
+    COLOR_BLUE          ,
+    COLOR_NUM_OF        ,
+
+    COLOR_BG  = COLOR_BLACK         , // background
+    COLOR_FG  = COLOR_WHITE         , // foreground
+    COLOR_GG  = COLOR_GREY          , // grey background
+    COLOR_AGG = COLOR_ALPHA_GREY    , // alpha grey overlay foreground
+    COLOR_HL  = COLOR_YELLOW_FAB413 , // highlight background
+    COLOR_OP0 = COLOR_RED           , // option 0 foreground
+    COLOR_OP1 = COLOR_GREEN         , // option 1 foreground
+    COLOR_OP2 = COLOR_BLUE          , // option 2 foreground
+    COLOR_OP3 = COLOR_YELLOW_FAB413 , // option 3 foreground
+    COLOR_AL  = COLOR_RED             // alarm foreground
+
+}ColorSelector_en;
+
+// Load the Color_st structure with the color variable fields
+#define COLOR_LD( c , cv )                                                       \
+c->red   = (uint8_t)( ( cv >> COLOR_ENC_RED_SHIFT   ) & COLOR_ENC_RED_MASK   ) ; \
+c->green = (uint8_t)( ( cv >> COLOR_ENC_GREEN_SHIFT ) & COLOR_ENC_GREEN_MASK ) ; \
+c->blue  = (uint8_t)( ( cv >> COLOR_ENC_BLUE_SHIFT  ) & COLOR_ENC_BLUE_MASK  ) ; \
+c->alpha = (uint8_t)( ( cv >> COLOR_ENC_ALPHA_SHIFT ) & COLOR_ENC_ALPHA_MASK ) ;
 
 /**
  * This structs contains state variables internal to the
@@ -182,11 +283,17 @@ typedef struct
 
 typedef struct
 {
-    Pos_st       pos ;
-    Pos_t        height ;
-    Align_t      align ;
-    Font_st      font ;
-    SymbolSize_t symbolSize ;
+    Align_t          align ;
+    Font_st          font ;
+    SymbolSize_t     symbolSize ;
+    ColorSelector_en colorBG ;
+    ColorSelector_en colorFG ;
+}Style_st;
+
+typedef struct
+{
+    Pos_st pos ;
+    Pos_t  height ;
 }Line_st;
 
 typedef struct
@@ -213,7 +320,9 @@ typedef struct
     uint8_t  numOfEntries ;
     uint8_t  scrollOffset ;
     Line_st  line ;
-    Line_st  lineStyle[ GUI_LINE_NUM_OF ] ;
+    Style_st style ;
+    Line_st  lines[ GUI_LINE_NUM_OF ] ;
+    Style_st styles[ GUI_STYLE_NUM_OF ] ;
     uint8_t  lineIndex ;
     Link_st  links[ LINK_MAX_NUM_OF ] ;
     uint8_t  linkNumOf ;
@@ -228,21 +337,31 @@ typedef struct
 
 typedef struct
 {
-    uint8_t         num ;
-    uint8_t         levelList[ MAX_PAGE_DEPTH ] ;
-    uint8_t         level ;
-    uint8_t*        ptr ;
-    uint16_t        index ;
-    bool            renderPage ;
+    uint8_t  num ;
+    uint8_t  levelList[ MAX_PAGE_DEPTH ] ;
+    uint8_t  level ;
+    uint8_t* ptr ;
+    uint16_t index ;
+    bool     renderPage ;
 }Page_st;
+
+typedef struct
+{
+    long long int timeOut ;
+    uint8_t       scriptPageNum ;
+}Timer_st;
 
 typedef struct
 {
     UI_State_st     uiState ;
     Event_st        event ;
+    bool            initialPageDisplay ;
     bool            update ;
     bool            pageHasEvents ;
+    bool            inStaticArea ;
     bool            inEventArea ;
+    long long int   timeStamp ;
+    Timer_st        timer ;
     bool            sync_rtx ;
     bool            handled ;
     Page_st         page ;

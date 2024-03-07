@@ -24,6 +24,8 @@
 
 #include <ui/ui_default.h>
 
+extern void _ui_drawMenuList( GuiState_st* guiState , uiPageNum_en currentEntry );
+
 extern void _ui_reset_menu_anouncement_tracking( void );
 
 #endif // UI_MENU_H

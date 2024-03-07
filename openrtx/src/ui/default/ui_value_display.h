@@ -27,19 +27,20 @@
 // GUI Values - Display
 enum
 {
-    GUI_VAL_DSP_INP_STUBBED_0    , // GUI_VAL_INP_VFO_MIDDLE_INPUT
-
     GUI_VAL_DSP_CURRENT_TIME     ,
     GUI_VAL_DSP_BATTERY_LEVEL    ,
     GUI_VAL_DSP_LOCK_STATE       ,
     GUI_VAL_DSP_MODE_INFO        ,
+    GUI_VAL_DSP_BANK_CHANNEL     ,
     GUI_VAL_DSP_FREQUENCY        ,
     GUI_VAL_DSP_RSSI_METER       ,
 
     GUI_VAL_DSP_BANKS            ,
     GUI_VAL_DSP_CHANNELS         ,
     GUI_VAL_DSP_CONTACTS         ,
+#ifdef GPS_PRESENT
     GUI_VAL_DSP_GPS              ,
+#endif // GPS_PRESENT
     // Settings
     // Display
 #ifdef SCREEN_BRIGHTNESS
@@ -53,9 +54,11 @@ enum
     GUI_VAL_DSP_DATE             ,
     GUI_VAL_DSP_TIME             ,
     // GPS
+#ifdef GPS_PRESENT
     GUI_VAL_DSP_GPS_ENABLED      ,
     GUI_VAL_DSP_GPS_SET_TIME     ,
     GUI_VAL_DSP_GPS_TIME_ZONE    ,
+#endif // GPS_PRESENT
     // Radio
     GUI_VAL_DSP_RADIO_OFFSET     ,
     GUI_VAL_DSP_RADIO_DIRECTION  ,
@@ -80,6 +83,8 @@ enum
     GUI_VAL_DSP_RADIO            ,
     GUI_VAL_DSP_RADIO_FW         ,
 #endif // PLATFORM_TTWRPLUS
+    GUI_VAL_DSP_BACKUP_RESTORE   ,
+    GUI_VAL_DSP_LOW_BATTERY      ,
     GUI_VAL_DSP_STUBBED          ,
     GUI_VAL_DSP_NUM_OF
 };

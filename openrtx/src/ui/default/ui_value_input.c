@@ -154,7 +154,76 @@ void ui_ValueInput( GuiState_st* guiState , uint8_t valueNum )
 
 static void ui_ValueInput_VFOMiddleInput( GuiState_st* guiState )
 {
-    (void)guiState;
+    Line_st*  line2       = &guiState->layout.lines[ GUI_LINE_2 ] ;
+//    Style_st* style2      = &guiState->layout.styles[ GUI_STYLE_2 ] ;
+    Line_st*  line3Large  = &guiState->layout.lines[ GUI_LINE_3_LARGE ] ;
+//    Style_st* style3Large = &guiState->layout.styles[ GUI_STYLE_3_LARGE ] ;
+    // Add inserted number to string, skipping "Rx: "/"Tx: " and "."
+    uint8_t insert_pos = guiState->uiState.input_position + 3;
+    Color_st color_fg ;
+    ui_ColorLoad( &color_fg , COLOR_FG );
+
+    if( guiState->uiState.input_position > 3 )
+    {
+        insert_pos += 1 ;
+    }
+    char input_char = guiState->uiState.input_number + '0' ;
+
+    if( guiState->uiState.input_set == SET_RX )
+    {
+        if( guiState->uiState.input_position == 0 )
+        {
+            gfx_print( line2->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
+                       color_fg , ">Rx:%03lu.%04lu" ,
+                       (unsigned long)guiState->uiState.new_rx_frequency / 1000000 ,
+                       (unsigned long)( guiState->uiState.new_rx_frequency % 1000000 ) / 100 );
+        }
+        else
+        {
+            // Replace Rx frequency with underscorses
+            if( guiState->uiState.input_position == 1 )
+            {
+                strcpy( guiState->uiState.new_rx_freq_buf , ">Rx:___.____" );
+            }
+            guiState->uiState.new_rx_freq_buf[ insert_pos ] = input_char ;
+            gfx_print( line2->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
+                       color_fg , guiState->uiState.new_rx_freq_buf );
+        }
+        gfx_print( line3Large->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
+                   color_fg , " Tx:%03lu.%04lu" ,
+                   (unsigned long)last_state.channel.tx_frequency / 1000000 ,
+                   (unsigned long)( last_state.channel.tx_frequency % 1000000 ) / 100 );
+        guiState->page.renderPage = true ;
+    }
+    else
+    {
+        if( guiState->uiState.input_set == SET_TX )
+        {
+            gfx_print( line2->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
+                       color_fg , " Rx:%03lu.%04lu" ,
+                       (unsigned long)guiState->uiState.new_rx_frequency / 1000000 ,
+                       (unsigned long)( guiState->uiState.new_rx_frequency % 1000000 ) / 100 );
+            // Replace Rx frequency with underscorses
+            if( guiState->uiState.input_position == 0 )
+            {
+                gfx_print( line3Large->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
+                           color_fg , ">Tx:%03lu.%04lu" ,
+                           (unsigned long)guiState->uiState.new_rx_frequency / 1000000 ,
+                           (unsigned long)( guiState->uiState.new_rx_frequency % 1000000 ) / 100 );
+            }
+            else
+            {
+                if( guiState->uiState.input_position == 1 )
+                {
+                    strcpy( guiState->uiState.new_tx_freq_buf , ">Tx:___.____" );
+                }
+                guiState->uiState.new_tx_freq_buf[ insert_pos ] = input_char ;
+                gfx_print( line3Large->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
+                           color_fg , guiState->uiState.new_tx_freq_buf );
+            }
+            guiState->page.renderPage = true ;
+        }
+    }
 }
 
 #ifdef SCREEN_BRIGHTNESS

@@ -106,20 +106,20 @@ enum
 {
     STATE_TASK_UPDATE_PERIOD            =  100 ,
     STATE_TASK_DISPLAY_TIME_TICK_PERIOD = 1000 ,
-    STATE_TASK_DEVICE_STATUS_PERIOD     =  500 ,
+    STATE_TASK_DEVICE_STATUS_PERIOD     = 1000 ,
     STATE_TASK_BATTERY_HYSTERESIS       =   10 ,
     STATE_TASK_RSSI_HYSTERESIS          =   10
 };
 
 void state_task( void )
 {
-    static long long int  lastUpdateTimeTick          = 0 ;
-    static long long int  lastTimeDisplayUpdateTick   = 0 ;
-    static long long int  lastDeviceUpdateTick = 0 ;
-    static uint16_t       v_bat_prev                  = ~0 ;
+    static long long int  lastUpdateTimeTick        = 0 ;
+    static long long int  lastTimeDisplayUpdateTick = 0 ;
+    static long long int  lastDeviceUpdateTick      = 0 ;
+    static uint16_t       v_bat_prev                = ~0 ;
            uint16_t       v_bat ;
-    static float          rssi_prev                   = ~0 ;
-           EventStatus_en eventPayload                = 0 ;
+    static float          rssi_prev                 = ~0 ;
+           EventStatus_en eventPayload              = 0 ;
 
     // Update radio state once every 100ms
     if( ( getTick() - lastUpdateTimeTick ) >= STATE_TASK_UPDATE_PERIOD )
@@ -140,7 +140,8 @@ void state_task( void )
 
         if( ( lastUpdateTimeTick - lastDeviceUpdateTick ) >= STATE_TASK_DEVICE_STATUS_PERIOD )
         {
-            lastDeviceUpdateTick = lastUpdateTimeTick ;
+            lastDeviceUpdateTick  = lastUpdateTimeTick ;
+            eventPayload         |= EVENT_STATUS_DEVICE_TIME_TICK ;
 
             /*
              * Low-pass filtering with a time constant of 10s when updated at 1Hz
