@@ -194,7 +194,7 @@ static uint8_t evQueue_rdPos;
 static uint8_t evQueue_wrPos;
 static event_t evQueue[MAX_NUM_EVENTS];
 
-layout_t _ui_calculateLayout()
+static layout_t _ui_calculateLayout()
 {
     // Horizontal line height
     const uint16_t hline_h = 1;
@@ -509,56 +509,49 @@ static void _ui_changeBrightness(int variation)
     display_setBacklightLevel(state.settings.brightness);
 }
 
-void _ui_changeCAN(int variation)
+static void _ui_changeCAN(int variation)
 {
-    // M17 CAN ranges from 0 to 15
     int8_t can = state.settings.m17_can + variation;
-    if(can > 15) can = 0;
-    if(can < 0)  can = 15;
+
+    // M17 CAN ranges from 0 to 15
+    if(can > 15)
+        can = 0;
+
+    if(can < 0)
+        can = 15;
 
     state.settings.m17_can = can;
 }
 
-void _ui_changeTxWiper(int variation)
+static void _ui_changeWiper(uint16_t *wiper, int variation)
 {
-    mod17CalData.tx_wiper += variation;
+    uint16_t value = *wiper;
+    value         += variation;
 
     // Max value for softpot is 0x100, min value is set to 0x001
-    if(mod17CalData.tx_wiper > 0x100) mod17CalData.tx_wiper = 0x100;
-    if(mod17CalData.tx_wiper < 0x001) mod17CalData.tx_wiper = 0x001;
+    if(value > 0x100)
+        value = 0x100;
+
+    if(value < 0x001)
+        value = 0x001;
+
+    *wiper = value;
 }
 
-void _ui_changeRxWiper(int variation)
-{
-    mod17CalData.rx_wiper += variation;
-
-    // Max value for softpot is 0x100, min value is set to 0x001
-    if(mod17CalData.rx_wiper > 0x100) mod17CalData.rx_wiper = 0x100;
-    if(mod17CalData.rx_wiper < 0x001) mod17CalData.rx_wiper = 0x001;
-}
-
-void _ui_changeTxInvert(int variation)
-{
-    // Inversion can be 1 or 0, bit field value ensures no overflow
-    mod17CalData.bb_tx_invert += variation;
-}
-
-void _ui_changeRxInvert(int variation)
-{
-    // Inversion can be 1 or 0, bit field value ensures no overflow
-    mod17CalData.bb_rx_invert += variation;
-}
-
-void _ui_changeMicGain(int variation)
+static void _ui_changeMicGain(int variation)
 {
     int8_t gain = mod17CalData.mic_gain + variation;
-    if(gain > 2) gain = 0;
-    if(gain < 0) gain = 2;
+
+    if(gain > 2)
+        gain = 0;
+
+    if(gain < 0)
+        gain = 2;
 
     mod17CalData.mic_gain = gain;
 }
 
-void _ui_menuUp(uint8_t menu_entries)
+static void _ui_menuUp(uint8_t menu_entries)
 {
     uint8_t maxEntries = menu_entries - 1;
     uint8_t ver = platform_getHwInfo()->hw_version;
@@ -573,7 +566,7 @@ void _ui_menuUp(uint8_t menu_entries)
         ui_state.menu_selected = maxEntries;
 }
 
-void _ui_menuDown(uint8_t menu_entries)
+static void _ui_menuDown(uint8_t menu_entries)
 {
    uint8_t maxEntries = menu_entries - 1;
    uint8_t ver = platform_getHwInfo()->hw_version;
@@ -588,7 +581,7 @@ void _ui_menuDown(uint8_t menu_entries)
         ui_state.menu_selected = 0;
 }
 
-void _ui_menuBack(uint8_t prev_state)
+static void _ui_menuBack(uint8_t prev_state)
 {
     if(ui_state.edit_mode)
     {
@@ -603,7 +596,7 @@ void _ui_menuBack(uint8_t prev_state)
     }
 }
 
-void _ui_textInputReset(char *buf)
+static void _ui_textInputReset(char *buf)
 {
     ui_state.input_number = 0;
     ui_state.input_position = 0;
@@ -612,7 +605,7 @@ void _ui_textInputReset(char *buf)
     memset(buf, 0, 9);
 }
 
-void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg, bool callsign)
+static void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg, bool callsign)
 {
     if(ui_state.input_position >= max_len)
         return;
@@ -651,7 +644,7 @@ void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg, bool callsig
     ui_state.last_keypress = now;
 }
 
-void _ui_textInputArrows(char *buf, uint8_t max_len, kbd_msg_t msg)
+static void _ui_textInputArrows(char *buf, uint8_t max_len, kbd_msg_t msg)
 {
     if(ui_state.input_position >= max_len)
         return;
@@ -686,12 +679,12 @@ void _ui_textInputArrows(char *buf, uint8_t max_len, kbd_msg_t msg)
     buf[ui_state.input_position] = symbols_callsign[ui_state.input_set];
 }
 
-void _ui_textInputConfirm(char *buf)
+static void _ui_textInputConfirm(char *buf)
 {
     buf[ui_state.input_position + 1] = '\0';
 }
 
-void _ui_textInputDel(char *buf)
+static void _ui_textInputDel(char *buf)
 {
     buf[ui_state.input_position] = '\0';
     // Move back input cursor
@@ -988,16 +981,16 @@ void ui_updateFSM(bool *sync_rtx)
                     switch(ui_state.menu_selected)
                     {
                         case D_TXWIPER:
-                            _ui_changeTxWiper(-1);
+                            _ui_changeWiper(&mod17CalData.tx_wiper, -1);
                             break;
                         case D_RXWIPER:
-                            _ui_changeRxWiper(-1);
+                            _ui_changeWiper(&mod17CalData.tx_wiper, -1);
                             break;
                         case D_TXINVERT:
-                            _ui_changeTxInvert(-1);
+                            mod17CalData.bb_tx_invert -= 1;
                             break;
                         case D_RXINVERT:
-                            _ui_changeRxInvert(-1);
+                            mod17CalData.bb_rx_invert -= 1;
                             break;
                         case D_MICGAIN:
                             _ui_changeMicGain(-1);
@@ -1017,16 +1010,16 @@ void ui_updateFSM(bool *sync_rtx)
                     switch(ui_state.menu_selected)
                     {
                         case D_TXWIPER:
-                            _ui_changeTxWiper(+1);
+                            _ui_changeWiper(&mod17CalData.tx_wiper, +1);
                             break;
                         case D_RXWIPER:
-                            _ui_changeRxWiper(+1);
+                            _ui_changeWiper(&mod17CalData.rx_wiper, +1);
                             break;
                         case D_TXINVERT:
-                            _ui_changeTxInvert(+1);
+                            mod17CalData.bb_tx_invert += 1;
                             break;
                         case D_RXINVERT:
-                            _ui_changeRxInvert(+1);
+                            mod17CalData.bb_rx_invert += 1;
                             break;
                         case D_MICGAIN:
                             _ui_changeMicGain(+1);
