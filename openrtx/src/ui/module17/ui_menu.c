@@ -32,25 +32,6 @@
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBottom();
 
-const char *display_timer_values[] =
-{
-    "Off",
-    "5 s",
-    "10 s",
-    "15 s",
-    "20 s",
-    "25 s",
-    "30 s",
-    "1 min",
-    "2 min",
-    "3 min",
-    "4 min",
-    "5 min",
-    "15 min",
-    "30 min",
-    "45 min",
-    "1 hour"
-};
 
 const char *mic_gain_values[] =
 {

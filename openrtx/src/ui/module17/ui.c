@@ -133,38 +133,6 @@ const char *authors[] =
     "Fred IU2NRO",
 };
 
-static const char *symbols_ITU_T_E161[] =
-{
-    " 0",
-    ",.?1",
-    "abc2ABC",
-    "def3DEF",
-    "ghi4GHI",
-    "jkl5JKL",
-    "mno6MNO",
-    "pqrs7PQRS",
-    "tuv8TUV",
-    "wxyz9WXYZ",
-    "-/*",
-    "#"
-};
-
-static const char *symbols_ITU_T_E161_callsign[] =
-{
-    "0 ",
-    "1",
-    "ABC2",
-    "DEF3",
-    "GHI4",
-    "JKL5",
-    "MNO6",
-    "PQRS7",
-    "TUV8",
-    "WXYZ9",
-    "-/",
-    ""
-};
-
 static const char symbols_callsign[] = "_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890/-.";
 
 // Calculate number of menu entries
@@ -315,16 +283,6 @@ void ui_drawSplashScreen()
     gfx_print(origin, FONT_SIZE_12PT, TEXT_ALIGN_CENTER, yellow_fab413, "O P N\nR T X");
 }
 
-freq_t _ui_freq_add_digit(freq_t freq, uint8_t pos, uint8_t number)
-{
-    freq_t coefficient = 100;
-    for(uint8_t i=0; i < FREQ_DIGITS - pos; i++)
-    {
-        coefficient *= 10;
-    }
-    return freq += number * coefficient;
-}
-
 #ifdef CONFIG_RTC
 void _ui_timedate_add_digit(datetime_t *timedate, uint8_t pos, uint8_t number)
 {
@@ -368,132 +326,6 @@ void _ui_timedate_add_digit(datetime_t *timedate, uint8_t pos, uint8_t number)
     }
 }
 #endif
-
-bool _ui_freq_check_limits(freq_t freq)
-{
-    bool valid = false;
-    const hwInfo_t* hwinfo = platform_getHwInfo();
-    if(hwinfo->vhf_band)
-    {
-        // hwInfo_t frequencies are in MHz
-        if(freq >= (hwinfo->vhf_minFreq * 1000000) &&
-           freq <= (hwinfo->vhf_maxFreq * 1000000))
-        valid = true;
-    }
-    if(hwinfo->uhf_band)
-    {
-        // hwInfo_t frequencies are in MHz
-        if(freq >= (hwinfo->uhf_minFreq * 1000000) &&
-           freq <= (hwinfo->uhf_maxFreq * 1000000))
-        valid = true;
-    }
-    return valid;
-}
-
-bool _ui_channel_valid(channel_t* channel)
-{
-return _ui_freq_check_limits(channel->rx_frequency) &&
-       _ui_freq_check_limits(channel->tx_frequency);
-}
-
-int _ui_fsm_loadChannel(int16_t channel_index, bool *sync_rtx) {
-    channel_t channel;
-    int32_t selected_channel = channel_index;
-    // If a bank is active, get index from current bank
-    if(state.bank_enabled)
-    {
-        bankHdr_t bank = { 0 };
-        cps_readBankHeader(&bank, state.bank);
-        if((channel_index < 0) || (channel_index >= bank.ch_count))
-            return -1;
-        channel_index = cps_readBankData(state.bank, channel_index);
-    }
-    int result = cps_readChannel(&channel, channel_index);
-    // Read successful and channel is valid
-    if(result != -1 && _ui_channel_valid(&channel))
-    {
-        // Set new channel index
-        state.channel_index = selected_channel;
-        // Copy channel read to state
-        state.channel = channel;
-        *sync_rtx = true;
-    }
-    return result;
-}
-
-void _ui_fsm_confirmVFOInput(bool *sync_rtx)
-{
-    // Switch to TX input
-    if(ui_state.input_set == SET_RX)
-    {
-        ui_state.input_set = SET_TX;
-        // Reset input position
-        ui_state.input_position = 0;
-    }
-    else if(ui_state.input_set == SET_TX)
-    {
-        // Save new frequency setting
-        // If TX frequency was not set, TX = RX
-        if(ui_state.new_tx_frequency == 0)
-        {
-            ui_state.new_tx_frequency = ui_state.new_rx_frequency;
-        }
-        // Apply new frequencies if they are valid
-        if(_ui_freq_check_limits(ui_state.new_rx_frequency) &&
-           _ui_freq_check_limits(ui_state.new_tx_frequency))
-        {
-            state.channel.rx_frequency = ui_state.new_rx_frequency;
-            state.channel.tx_frequency = ui_state.new_tx_frequency;
-            *sync_rtx = true;
-        }
-        state.ui_screen = MAIN_VFO;
-    }
-}
-
-void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx)
-{
-    // Advance input position
-    ui_state.input_position += 1;
-    // Save pressed number to calculate frequency and show in GUI
-    ui_state.input_number = input_getPressedNumber(msg);
-    if(ui_state.input_set == SET_RX)
-    {
-        if(ui_state.input_position == 1)
-            ui_state.new_rx_frequency = 0;
-        // Calculate portion of the new RX frequency
-        ui_state.new_rx_frequency = _ui_freq_add_digit(ui_state.new_rx_frequency,
-                                ui_state.input_position, ui_state.input_number);
-        if(ui_state.input_position >= FREQ_DIGITS)
-        {
-            // Switch to TX input
-            ui_state.input_set = SET_TX;
-            // Reset input position
-            ui_state.input_position = 0;
-            // Reset TX frequency
-            ui_state.new_tx_frequency = 0;
-        }
-    }
-    else if(ui_state.input_set == SET_TX)
-    {
-        if(ui_state.input_position == 1)
-            ui_state.new_tx_frequency = 0;
-        // Calculate portion of the new TX frequency
-        ui_state.new_tx_frequency = _ui_freq_add_digit(ui_state.new_tx_frequency,
-                                ui_state.input_position, ui_state.input_number);
-        if(ui_state.input_position >= FREQ_DIGITS)
-        {
-            // Save both inserted frequencies
-            if(_ui_freq_check_limits(ui_state.new_rx_frequency) &&
-               _ui_freq_check_limits(ui_state.new_tx_frequency))
-            {
-                state.channel.rx_frequency = ui_state.new_rx_frequency;
-                state.channel.tx_frequency = ui_state.new_tx_frequency;
-                *sync_rtx = true;
-            }
-            state.ui_screen = MAIN_VFO;
-        }
-    }
-}
 
 static void _ui_changeBrightness(int variation)
 {
@@ -605,45 +437,6 @@ static void _ui_textInputReset(char *buf)
     memset(buf, 0, 9);
 }
 
-static void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg, bool callsign)
-{
-    if(ui_state.input_position >= max_len)
-        return;
-    long long now = getTick();
-    // Get currently pressed number key
-    uint8_t num_key = input_getPressedNumber(msg);
-    // Get number of symbols related to currently pressed key
-    uint8_t num_symbols = 0;
-    if(callsign)
-        num_symbols = strlen(symbols_ITU_T_E161_callsign[num_key]);
-    else
-        num_symbols = strlen(symbols_ITU_T_E161[num_key]);
-
-    // Skip keypad logic for first keypress
-    if(ui_state.last_keypress != 0)
-    {
-        // Same key pressed and timeout not expired: cycle over chars of current key
-        if((ui_state.input_number == num_key) && ((now - ui_state.last_keypress) < input_longPressTimeout))
-        {
-            ui_state.input_set = (ui_state.input_set + 1) % num_symbols;
-        }
-        // Differnt key pressed: save current char and change key
-        else
-        {
-            ui_state.input_position += 1;
-            ui_state.input_set = 0;
-        }
-    }
-    // Show current character on buffer
-    if(callsign)
-        buf[ui_state.input_position] = symbols_ITU_T_E161_callsign[num_key][ui_state.input_set];
-    else
-        buf[ui_state.input_position] = symbols_ITU_T_E161[num_key][ui_state.input_set];
-    // Update reference values
-    ui_state.input_number = num_key;
-    ui_state.last_keypress = now;
-}
-
 static void _ui_textInputArrows(char *buf, uint8_t max_len, kbd_msg_t msg)
 {
     if(ui_state.input_position >= max_len)
@@ -682,18 +475,6 @@ static void _ui_textInputArrows(char *buf, uint8_t max_len, kbd_msg_t msg)
 static void _ui_textInputConfirm(char *buf)
 {
     buf[ui_state.input_position + 1] = '\0';
-}
-
-static void _ui_textInputDel(char *buf)
-{
-    buf[ui_state.input_position] = '\0';
-    // Move back input cursor
-    if(ui_state.input_position > 0)
-        ui_state.input_position--;
-    // If we deleted the initial character, reset starting condition
-    else
-        ui_state.last_keypress = 0;
-    ui_state.input_set = 0;
 }
 
 void ui_saveState()
