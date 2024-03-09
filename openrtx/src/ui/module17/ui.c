@@ -104,7 +104,9 @@ const char *module17_items[] =
     "RX Softpot",
     "TX Phase",
     "RX Phase",
-    "Mic Gain"
+    "Mic Gain",
+    "PTT In",
+    "PTT Out"
 };
 
 #ifdef CONFIG_GPS
@@ -1000,6 +1002,12 @@ void ui_updateFSM(bool *sync_rtx)
                         case D_MICGAIN:
                             _ui_changeMicGain(-1);
                             break;
+                        case D_PTTINLEVEL:
+                            mod17CalData.ptt_in_level -= 1;
+                            break;
+                        case D_PTTOUTLEVEL:
+                            mod17CalData.ptt_out_level -= 1;
+                            break;
                         default:
                             state.ui_screen = SETTINGS_MODULE17;
                     }
@@ -1022,6 +1030,12 @@ void ui_updateFSM(bool *sync_rtx)
                             break;
                         case D_MICGAIN:
                             _ui_changeMicGain(+1);
+                            break;
+                        case D_PTTINLEVEL:
+                            mod17CalData.ptt_in_level += 1;
+                            break;
+                        case D_PTTOUTLEVEL:
+                            mod17CalData.ptt_out_level += 1;
                             break;
                         default:
                             state.ui_screen = SETTINGS_MODULE17;

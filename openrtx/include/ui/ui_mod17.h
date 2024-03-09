@@ -133,7 +133,9 @@ enum module17Items
     D_RXWIPER,
     D_TXINVERT,
     D_RXINVERT,
-    D_MICGAIN
+    D_MICGAIN,
+    D_PTTINLEVEL,
+    D_PTTOUTLEVEL
 };
 
 /**
