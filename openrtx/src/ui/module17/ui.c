@@ -540,13 +540,13 @@ void _ui_changeRxWiper(int variation)
 void _ui_changeTxInvert(int variation)
 {
     // Inversion can be 1 or 0, bit field value ensures no overflow
-    mod17CalData.tx_invert += variation;
+    mod17CalData.bb_tx_invert += variation;
 }
 
 void _ui_changeRxInvert(int variation)
 {
     // Inversion can be 1 or 0, bit field value ensures no overflow
-    mod17CalData.rx_invert += variation;
+    mod17CalData.bb_rx_invert += variation;
 }
 
 void _ui_changeMicGain(int variation)
@@ -964,11 +964,11 @@ void ui_updateFSM(bool *sync_rtx)
                         ui_state.edit_mode = false;
 
                         // Reset calibration values
-                        mod17CalData.tx_wiper  = 0x080;
-                        mod17CalData.rx_wiper  = 0x080;
-                        mod17CalData.tx_invert = 0;
-                        mod17CalData.rx_invert = 0;
-                        mod17CalData.mic_gain  = 0;
+                        mod17CalData.tx_wiper     = 0x080;
+                        mod17CalData.rx_wiper     = 0x080;
+                        mod17CalData.bb_tx_invert = 0;
+                        mod17CalData.bb_rx_invert = 0;
+                        mod17CalData.mic_gain     = 0;
 
                         state_resetSettingsAndVfo();
                         nvm_writeSettings(&state.settings);
