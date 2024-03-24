@@ -97,5 +97,6 @@ const stringsTable_t englishStrings =
     .macroLatching     = "Macro Latch",
     .noGps             = "No GPS",
     .batteryIcon       = "Battery Icon",
+    .CTCSSTone         = "CTCSS Frequency",
 };
 #endif  // ENGLISHSTRINGS_H

@@ -446,6 +446,31 @@ int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
 }
 #endif
 
+int _ui_getFMEntryName(char* buf, uint8_t max_len, uint8_t index)
+{
+    if (index >= settings_fm_num)
+        return -1;
+
+    sniprintf(buf, max_len, "%s", settings_fm_items[index]);
+    return 0;
+}
+
+int _ui_getFMValueName(char* buf, uint8_t max_len, uint8_t index)
+{
+    if (index >= settings_fm_num)
+        return -1;
+
+    switch (index) {
+        case CTCSS_Tone: {
+            uint16_t tone = ctcss_tone[last_state.channel.fm.txTone];
+            sniprintf(buf, max_len, "%d.%d", (tone / 10), (tone % 10));
+            break;
+        }
+    }
+
+    return 0;
+}
+
 int _ui_getAccessibilityEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= settings_accessibility_num) return -1;
@@ -968,6 +993,17 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
     }
 }
 #endif
+
+void _ui_drawSettingsFM(ui_state_t* ui_state)
+{
+    gfx_clearScreen();
+    // Print "FM Settings" on top bar
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER, color_white,
+              currentLanguage->fm);
+    // Print FM settings entries
+    _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getFMEntryName,
+                          _ui_getFMValueName);
+}
 
 void _ui_drawSettingsAccessibility(ui_state_t* ui_state)
 {
