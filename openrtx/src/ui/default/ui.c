@@ -915,7 +915,23 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
         case 1:
             if(state.channel.mode == OPMODE_FM)
             {
-                if(state.channel.fm.txTone == 0)
+                tone_flags++;
+                tone_flags %= 4;
+                tone_tx_enable            = tone_flags >> 1;
+                tone_rx_enable            = tone_flags & 1;
+                state.channel.fm.txToneEn = tone_tx_enable;
+                state.channel.fm.rxToneEn = tone_rx_enable;
+                *sync_rtx                 = true;
+                vp_announceCTCSS(
+                    state.channel.fm.rxToneEn, state.channel.fm.rxTone,
+                    state.channel.fm.txToneEn, state.channel.fm.txTone,
+                    queueFlags | vpqIncludeDescriptions);
+            }
+            break;
+        case 2:
+            if (state.channel.mode == OPMODE_FM)
+            {
+                if (state.channel.fm.txTone == 0)
                 {
                     state.channel.fm.txTone = CTCSS_FREQ_NUM-1;
                 }
@@ -935,29 +951,12 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             }
             break;
 
-        case 2:
+        case 3:
             if(state.channel.mode == OPMODE_FM)
             {
                 state.channel.fm.txTone++;
                 state.channel.fm.txTone %= CTCSS_FREQ_NUM;
                 state.channel.fm.rxTone = state.channel.fm.txTone;
-                *sync_rtx = true;
-                vp_announceCTCSS(state.channel.fm.rxToneEn,
-                                 state.channel.fm.rxTone,
-                                 state.channel.fm.txToneEn,
-                                 state.channel.fm.txTone,
-                                 queueFlags);
-            }
-            break;
-        case 3:
-            if(state.channel.mode == OPMODE_FM)
-            {
-                tone_flags++;
-                tone_flags %= 4;
-                tone_tx_enable = tone_flags >> 1;
-                tone_rx_enable = tone_flags & 1;
-                state.channel.fm.txToneEn = tone_tx_enable;
-                state.channel.fm.rxToneEn = tone_rx_enable;
                 *sync_rtx = true;
                 vp_announceCTCSS(state.channel.fm.rxToneEn,
                                  state.channel.fm.rxTone,
@@ -2356,6 +2355,7 @@ void ui_updateFSM(bool *sync_rtx)
                 }
                 break;
 #endif
+
             case SETTINGS_ACCESSIBILITY:
                 if(msg.keys & KEY_LEFT || (ui_state.edit_mode &&
                    (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)))
