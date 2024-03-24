@@ -113,6 +113,7 @@ extern void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state);
 #endif
 extern void _ui_drawSettingsDisplay(ui_state_t* ui_state);
 extern void _ui_drawSettingsM17(ui_state_t* ui_state);
+extern void _ui_drawSettingsFM(ui_state_t* ui_state);
 extern void _ui_drawSettingsVoicePrompts(ui_state_t* ui_state);
 extern void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state);
 extern void _ui_drawSettingsRadio(ui_state_t* ui_state);
@@ -145,6 +146,7 @@ const char *settings_items[] =
 #ifdef CONFIG_M17
     "M17",
 #endif
+    "FM Settings",
     "Accessibility",
     "Default Settings"
 };
@@ -182,6 +184,11 @@ const char * settings_m17_items[] =
     "Callsign",
     "CAN",
     "CAN RX Check"
+};
+
+const char* settings_fm_items[] =
+{
+    "CTCSS Tone"
 };
 
 const char * settings_accessibility_items[] =
@@ -268,6 +275,7 @@ const uint8_t settings_radio_num = sizeof(settings_radio_items)/sizeof(settings_
 #ifdef CONFIG_M17
 const uint8_t settings_m17_num = sizeof(settings_m17_items)/sizeof(settings_m17_items[0]);
 #endif
+const uint8_t settings_fm_num = sizeof(settings_fm_items) / sizeof(settings_fm_items[0]);
 const uint8_t settings_accessibility_num = sizeof(settings_accessibility_items)/sizeof(settings_accessibility_items[0]);
 const uint8_t backup_restore_num = sizeof(backup_restore_items)/sizeof(backup_restore_items[0]);
 const uint8_t info_num = sizeof(info_items)/sizeof(info_items[0]);
@@ -1932,6 +1940,9 @@ void ui_updateFSM(bool *sync_rtx)
                             state.ui_screen = SETTINGS_M17;
                             break;
 #endif
+                        case S_FM:
+                            state.ui_screen = SETTINGS_FM;
+                            break;
                         case S_ACCESSIBILITY:
                             state.ui_screen = SETTINGS_ACCESSIBILITY;
                             break;
@@ -2355,6 +2366,62 @@ void ui_updateFSM(bool *sync_rtx)
                 }
                 break;
 #endif
+            case SETTINGS_FM:
+                if (ui_state.edit_mode)
+                {
+                    if (msg.keys & KEY_ESC)
+                    ui_state.edit_mode = false;
+                    switch (ui_state.menu_selected)
+                    {
+                        case CTCSS_Tone:
+                            if (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
+                            {
+                                if (state.channel.fm.txTone == 0)
+                                {
+                                    state.channel.fm.txTone =
+                                        CTCSS_FREQ_NUM - 1;
+                                }
+                                else
+                                {
+                                    state.channel.fm.txTone--;
+                                }
+                            }
+                            state.channel.fm.txTone %= CTCSS_FREQ_NUM;
+                            state.channel.fm.rxTone = state.channel.fm.txTone;
+                            *sync_rtx               = true;
+                            vp_announceCTCSS(state.channel.fm.rxToneEn,
+                                             state.channel.fm.rxTone,
+                                             state.channel.fm.txToneEn,
+                                             state.channel.fm.txTone,
+                                             queueFlags);
+                            if (msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
+                            {
+                                state.channel.fm.txTone++;
+                                state.channel.fm.txTone %= CTCSS_FREQ_NUM;
+                                state.channel.fm.rxTone =
+                                    state.channel.fm.txTone;
+                                *sync_rtx = true;
+                                vp_announceCTCSS(state.channel.fm.rxToneEn,
+                                                 state.channel.fm.rxTone,
+                                                 state.channel.fm.txToneEn,
+                                                 state.channel.fm.txTone,
+                                                 queueFlags);
+                            }
+                    }
+                }
+                else if (msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                    _ui_menuUp(settings_fm_num);
+                else if (msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                    _ui_menuDown(settings_fm_num);
+                else if (msg.keys & KEY_ENTER)
+                    ui_state.edit_mode = !ui_state.edit_mode;
+                else if (msg.keys & KEY_ESC)
+                    _ui_menuBack(MENU_SETTINGS);
+                else if (msg.keys & KEY_ENTER)
+                    ui_state.edit_mode = !ui_state.edit_mode;
+                else if (msg.keys & KEY_ESC)
+                    _ui_menuBack(MENU_SETTINGS);
+                break;
 
             case SETTINGS_ACCESSIBILITY:
                 if(msg.keys & KEY_LEFT || (ui_state.edit_mode &&
@@ -2581,6 +2648,10 @@ bool ui_updateGUI()
             _ui_drawSettingsM17(&ui_state);
             break;
 #endif
+        // FM settings screen
+        case SETTINGS_FM:
+            _ui_drawSettingsFM(&ui_state);
+            break;
         case SETTINGS_ACCESSIBILITY:
             _ui_drawSettingsAccessibility(&ui_state);
             break;
