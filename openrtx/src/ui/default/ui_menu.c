@@ -422,7 +422,6 @@ int _ui_getM17ValueName(char* buf, uint8_t max_len, uint8_t index)
         case M17_CALLSIGN:
             sniprintf(buf, max_len, "%s", last_state.settings.callsign);
             break;
-
         case M17_CAN:
             sniprintf(buf, max_len, "%d", last_state.settings.m17_can);
             break;
@@ -443,10 +442,10 @@ int _ui_getFMEntryName(char* buf, uint8_t max_len, uint8_t index)
     sniprintf(buf, max_len, "%s", settings_fm_items[index]);
     return 0;
 }
+
 int _ui_getFMValueName(char* buf, uint8_t max_len, uint8_t index)
 {
     if (index >= settings_fm_num) return -1;
-    uint16_t value = 0;
     switch (index)
     {
         case CTCSS_Tone:
