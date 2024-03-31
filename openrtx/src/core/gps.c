@@ -167,8 +167,8 @@ void gps_task()
             if (minmea_parse_vtg(&frame, sentence))
             {
                 gps_data.speed = minmea_toint(&frame.speed_kph);
-                gps_data.tmg_mag = minmea_tofloat(&frame.magnetic_track_degrees);
-                gps_data.tmg_true = minmea_tofloat(&frame.true_track_degrees);
+                gps_data.tmg_mag = minmea_toint(&frame.magnetic_track_degrees);
+                gps_data.tmg_true = minmea_toint(&frame.true_track_degrees);
             }
         }
         break;

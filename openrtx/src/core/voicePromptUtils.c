@@ -550,7 +550,7 @@ void vp_announceM17Info(const channel_t* channel, bool isEditing,
 
 static bool IsCompassCloseEnoughToCardinalPoint()
 {
-    float tmg_true = state.gps_data.tmg_true;
+    int16_t tmg_true = state.gps_data.tmg_true;
 
     return (tmg_true < (0   + margin) || tmg_true > (360 - margin)) || // north
            (tmg_true > (90  - margin) && tmg_true < (90  + margin)) || // east
@@ -638,7 +638,7 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
         vp_queuePrompt(PROMPT_COMPASS);
         if (!IsCompassCloseEnoughToCardinalPoint())
         {
-            sniprintf(buffer, 16, "%3.1f", state.gps_data.tmg_true);
+            sniprintf(buffer, 16, "%d", state.gps_data.tmg_true);
             vp_queueString(buffer, vpAnnounceCommonSymbols);
             vp_queuePrompt(PROMPT_DEGREES);
         }

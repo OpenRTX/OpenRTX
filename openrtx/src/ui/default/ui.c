@@ -1272,10 +1272,10 @@ void ui_saveState()
 #ifdef CONFIG_GPS
 static uint16_t priorGPSSpeed = 0;
 static int16_t  priorGPSAltitude = 0;
-static float  priorGPSDirection = 500; // impossible value init.
-static uint8_t priorGPSFixQuality= 0;
-static uint8_t priorGPSFixType = 0;
-static uint8_t    priorSatellitesInView = 0;
+static int16_t  priorGPSDirection = 500; // impossible value init.
+static uint8_t  priorGPSFixQuality= 0;
+static uint8_t  priorGPSFixType = 0;
+static uint8_t  priorSatellitesInView = 0;
 static uint32_t vpGPSLastUpdate = 0;
 
 static vpGPSInfoFlags_t GetGPSDirectionOrSpeedChanged()
@@ -1313,8 +1313,7 @@ static vpGPSInfoFlags_t GetGPSDirectionOrSpeedChanged()
         priorGPSAltitude = state.gps_data.altitude;
     }
 
-    float degreeDiff = fabs(state.gps_data.tmg_true - priorGPSDirection);
-    if (degreeDiff  >= 1)
+    if (state.gps_data.tmg_true != priorGPSDirection)
     {
         whatChanged |= vpGPSDirection;
         priorGPSDirection = state.gps_data.tmg_true;
