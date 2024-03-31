@@ -689,20 +689,28 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
 
     if ((gpsInfoFlags & vpGPSLatitude) != 0)
     {
-        // lat/long
-        sniprintf(buffer, 16, "%8.6f", state.gps_data.latitude);
+        // Convert from signed longitude, to unsigned + direction
+        int32_t latitude = last_state.gps_data.latitude;
+        voicePrompt_t direction = (latitude < 0) ? PROMPT_SOUTH : PROMPT_NORTH;
+        latitude = (latitude < 0) ? -latitude : latitude;
+        uint8_t latitude_int = latitude/1000000;
+        int32_t latitude_dec = latitude%1000000;
+        sniprintf(buffer, 16, "%d.%.6d", latitude_int, latitude_dec);
         stripTrailingZeroes(buffer);
         vp_queuePrompt(PROMPT_LATITUDE);
         vp_queueString(buffer, vpAnnounceCommonSymbols);
-        vp_queuePrompt(PROMPT_NORTH);
+        vp_queuePrompt(direction);
     }
 
     if ((gpsInfoFlags & vpGPSLongitude) != 0)
     {
-        float longitude         = state.gps_data.longitude;
+        // Convert from signed longitude, to unsigned + direction
+        int32_t longitude = last_state.gps_data.longitude;
         voicePrompt_t direction = (longitude < 0) ? PROMPT_WEST : PROMPT_EAST;
-        longitude               = (longitude < 0) ? -longitude : longitude;
-        sniprintf(buffer, 16, "%8.6f", longitude);
+        longitude = (longitude < 0) ? -longitude : longitude;
+        uint8_t longitude_int = longitude/1000000;
+        int32_t longitude_dec = longitude%1000000;
+        sniprintf(buffer, 16, "%d.%.6d", longitude_int, longitude_dec);
         stripTrailingZeroes(buffer);
 
         vp_queuePrompt(PROMPT_LONGITUDE);
