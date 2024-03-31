@@ -682,7 +682,7 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
     {
         vp_queuePrompt(PROMPT_ALTITUDE);
 
-        sniprintf(buffer, 16, "%4.1fm", state.gps_data.altitude);
+        sniprintf(buffer, 16, "%dm", state.gps_data.altitude);
         vp_queueString(buffer, vpAnnounceCommonSymbols);
         addSilenceIfNeeded(flags);
     }

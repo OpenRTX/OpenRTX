@@ -113,7 +113,9 @@ void gps_task()
             {
                 gps_data.fix_quality = frame.fix_quality;
                 gps_data.satellites_tracked = frame.satellites_tracked;
-                gps_data.altitude = minmea_tofloat(&frame.altitude);
+                if (frame.altitude.scale) {
+                    gps_data.altitude = frame.altitude.value / frame.altitude.scale;
+                }
             }
         }
         break;

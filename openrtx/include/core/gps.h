@@ -50,7 +50,7 @@ typedef struct
     uint32_t   active_sats;          // Bitmap representing which sats are part of the fix
     int32_t    latitude;             // Latitude coordinates
     int32_t    longitude;            // Longitude coordinates
-    float      altitude;             // Antenna altitude above mean sea level (geoid) in m
+    int32_t    altitude;             // Antenna altitude above mean sea level (geoid) in m
     float      speed;                // Ground speed in km/h
     float      tmg_mag;              // Course over ground, degrees, magnetic
     float      tmg_true;             // Course over ground, degrees, true
