@@ -682,20 +682,30 @@ void _ui_drawMenuGPS()
         }
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white, fix_buf);
+
+        // Convert from signed longitude, to unsigned + direction
+        int32_t latitude     = abs(last_state.gps_data.latitude);
+        uint8_t latitude_int = latitude / 1000000;
+        int32_t latitude_dec = latitude % 1000000;
+        char *direction_lat  = (last_state.gps_data.latitude < 0) ? "S     " : "N     ";
+
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
-                  color_white, "N     ");
+                  color_white, direction_lat);
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
-                  color_white, "%8.6f", last_state.gps_data.latitude);
+                  color_white, "%d.%.6d", latitude_int, latitude_dec);
         gfx_print(layout.line2_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white, type_buf);
+
         // Convert from signed longitude, to unsigned + direction
-        float longitude = last_state.gps_data.longitude;
-        char *direction = (longitude < 0) ? "W     " : "E     ";
-        longitude = (longitude < 0) ? -longitude : longitude;
+        int32_t longitude     = abs(last_state.gps_data.longitude);
+        uint8_t longitude_int = longitude / 1000000;
+        int32_t longitude_dec = longitude % 1000000;
+        char *direction_lon   = (last_state.gps_data.longitude < 0) ? "W     " : "E     ";
+
         gfx_print(layout.line2_pos, layout.top_font, TEXT_ALIGN_CENTER,
-                  color_white, direction);
+                  color_white, direction_lon);
         gfx_print(layout.line2_pos, layout.top_font, TEXT_ALIGN_RIGHT,
-                  color_white, "%8.6f", longitude);
+                  color_white, "%d.%.6d", longitude_int, longitude_dec);
         gfx_print(layout.bottom_pos, layout.bottom_font, TEXT_ALIGN_CENTER,
                   color_white, "S %4.1fkm/h  A %4.1fm",
                   last_state.gps_data.speed,

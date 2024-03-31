@@ -90,8 +90,8 @@ void gps_task()
             struct minmea_sentence_rmc frame;
             if (minmea_parse_rmc(&frame, sentence))
             {
-                gps_data.latitude = minmea_tocoord(&frame.latitude);
-                gps_data.longitude = minmea_tocoord(&frame.longitude);
+                gps_data.latitude = minmea_tofixedpoint(&frame.latitude);
+                gps_data.longitude = minmea_tofixedpoint(&frame.longitude);
                 gps_data.timestamp.hour = frame.time.hours;
                 gps_data.timestamp.minute = frame.time.minutes;
                 gps_data.timestamp.second = frame.time.seconds;

@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <utils.h>
+#include <inttypes.h>
 #include <ui/ui_default.h>
 #include <beeps.h>
 #include "interfaces/cps_io.h"
@@ -689,20 +690,26 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
 
     if ((gpsInfoFlags & vpGPSLatitude) != 0)
     {
-        // lat/long
-        sniprintf(buffer, 16, "%8.6f", state.gps_data.latitude);
+        // Convert from signed longitude, to unsigned + direction
+        int32_t latitude        = abs(state.gps_data.latitude);
+        uint8_t latitude_int    = latitude / 1000000;
+        int32_t latitude_dec    = latitude % 1000000;
+        voicePrompt_t direction = (state.gps_data.latitude < 0) ? PROMPT_SOUTH : PROMPT_NORTH;
+        sniprintf(buffer, 16, "%d.%06"PRId32, latitude_int, latitude_dec);
         stripTrailingZeroes(buffer);
         vp_queuePrompt(PROMPT_LATITUDE);
         vp_queueString(buffer, vpAnnounceCommonSymbols);
-        vp_queuePrompt(PROMPT_NORTH);
+        vp_queuePrompt(direction);
     }
 
     if ((gpsInfoFlags & vpGPSLongitude) != 0)
     {
-        float longitude         = state.gps_data.longitude;
-        voicePrompt_t direction = (longitude < 0) ? PROMPT_WEST : PROMPT_EAST;
-        longitude               = (longitude < 0) ? -longitude : longitude;
-        sniprintf(buffer, 16, "%8.6f", longitude);
+        // Convert from signed longitude, to unsigned + direction
+        int32_t longitude       = abs(state.gps_data.longitude);
+        uint8_t longitude_int   = longitude / 1000000;
+        int32_t longitude_dec   = longitude % 1000000;
+        voicePrompt_t direction = (state.gps_data.longitude < 0) ? PROMPT_WEST : PROMPT_EAST;
+        sniprintf(buffer, 16, "%d.%06"PRId32, longitude_int, longitude_dec);
         stripTrailingZeroes(buffer);
 
         vp_queuePrompt(PROMPT_LONGITUDE);
