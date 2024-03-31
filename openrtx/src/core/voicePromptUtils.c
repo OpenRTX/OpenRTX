@@ -672,7 +672,7 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
     if ((gpsInfoFlags & vpGPSSpeed) != 0)
     {
         // speed/altitude:
-        sniprintf(buffer, 16, "%4.1fkm/h", state.gps_data.speed);
+        sniprintf(buffer, 16, "%dkm/h", state.gps_data.speed);
         vp_queuePrompt(PROMPT_SPEED);
         vp_queueString(buffer, vpAnnounceCommonSymbols |
                                vpAnnounceLessCommonSymbols);

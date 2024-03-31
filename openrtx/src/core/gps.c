@@ -102,7 +102,9 @@ void gps_task()
             }
 
             gps_data.tmg_true = minmea_tofloat(&frame.course);
-            gps_data.speed = minmea_tofloat(&frame.speed) * KNOTS2KMH;
+            if (frame.speed.scale) {
+                gps_data.speed = frame.speed.value/frame.speed.scale * KNOTS2KMH;
+            }
         }
         break;
 
@@ -168,7 +170,9 @@ void gps_task()
             struct minmea_sentence_vtg frame;
             if (minmea_parse_vtg(&frame, sentence))
             {
-                gps_data.speed = minmea_tofloat(&frame.speed_kph);
+                if (frame.speed_kph.scale) {
+                    gps_data.speed = frame.speed_kph.value/frame.speed_kph.scale;
+                }
                 gps_data.tmg_mag = minmea_tofloat(&frame.magnetic_track_degrees);
                 gps_data.tmg_true = minmea_tofloat(&frame.true_track_degrees);
             }
