@@ -310,11 +310,15 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
 #endif
             break;
         case 4: // Baseband tuning potentiometers
+#ifdef PLATFORM_LINUX
+            snprintf(buf, max_len, "%s", "Linux");
+#else
             if(((Mod17_HwInfo_t *)(hwinfo->other))->flags & CONFIG_BASEBAND_SOFTPOT_Msk){
                 snprintf(buf, max_len, "%s", bbTuningPot[0]);
             }else{
                 snprintf(buf, max_len, "%s", bbTuningPot[1]);
             }
+#endif
             break;
     }
     return 0;
