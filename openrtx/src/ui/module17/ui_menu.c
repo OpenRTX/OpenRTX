@@ -300,10 +300,14 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
             snprintf(buf, max_len, "%s", hwVersions[hwinfo->hw_version]);
             break;
         case 3: // HMI Version
+#ifdef PLATFORM_LINUX
+            snprintf(buf, max_len, "%s", "Linux");
+#else
             if(!((Mod17_HwInfo_t *)(hwinfo->other))->HMI_present)
                 snprintf(buf, max_len, "%s", hmiVersions[0]);
             else
                 snprintf(buf, max_len, "%s", hmiVersions[((Mod17_HwInfo_t *)(hwinfo->other))->HMI_hw_version]);
+#endif
             break;
         case 4: // Baseband tuning potentiometers
             if(((Mod17_HwInfo_t *)(hwinfo->other))->flags & CONFIG_BASEBAND_SOFTPOT_Msk){
