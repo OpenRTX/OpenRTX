@@ -22,6 +22,7 @@
 
 #include <datetime.h>
 #include <stdint.h>
+#include <minmea.h>
 
 /**
  * Data structure representing a single satellite as part of a GPS fix.
@@ -62,5 +63,19 @@ gps_t;
  * the radio state with the retrieved data.
  */
 void gps_task();
+
+static void convert_minmea_coord_to_int(struct minmea_float *f, int32_t *output) {
+    // Check that scale is not 0
+    if (f->scale) {
+        int32_t value = f->value;
+        int32_t scale = f->scale;
+        int8_t sign = value < 0 ? -1 : 1;
+        // Ensure value is always positive
+        value = value * sign;
+        int32_t coord_int = value / (scale*100);
+        int32_t coord_dec = (value % (scale*100))*(100000/scale)/6;
+        *output = (coord_int*1000000 + coord_dec) * sign;
+    }
+}
 
 #endif /* GPS_H */

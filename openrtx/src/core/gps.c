@@ -92,6 +92,8 @@ void gps_task()
             {
                 gps_data.latitude = minmea_tocoord(&frame.latitude);
                 gps_data.longitude = minmea_tocoord(&frame.longitude);
+                int32_t test = 0;
+                convert_minmea_coord_to_int(&frame.latitude, &test);
                 gps_data.timestamp.hour = frame.time.hours;
                 gps_data.timestamp.minute = frame.time.minutes;
                 gps_data.timestamp.second = frame.time.seconds;
