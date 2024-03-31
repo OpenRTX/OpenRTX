@@ -549,7 +549,7 @@ void vp_announceM17Info(const channel_t* channel, bool isEditing,
 
 static bool IsCompassCloseEnoughToCardinalPoint()
 {
-    float tmg_true = state.gps_data.tmg_true;
+    int16_t tmg_true = state.gps_data.tmg_true;
 
     return (tmg_true < (0   + margin) || tmg_true > (360 - margin)) || // north
            (tmg_true > (90  - margin) && tmg_true < (90  + margin)) || // east

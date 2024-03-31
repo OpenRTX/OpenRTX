@@ -173,8 +173,12 @@ void gps_task()
                 if (frame.speed_kph.scale) {
                     gps_data.speed = frame.speed_kph.value/frame.speed_kph.scale;
                 }
-                gps_data.tmg_mag = minmea_tofloat(&frame.magnetic_track_degrees);
-                gps_data.tmg_true = minmea_tofloat(&frame.true_track_degrees);
+                if (frame.magnetic_track_degrees.scale) {
+                    gps_data.tmg_mag = frame.magnetic_track_degrees.value/frame.magnetic_track_degrees.scale;
+                }
+                if (frame.true_track_degrees.scale) {
+                    gps_data.tmg_true = frame.true_track_degrees.value/frame.true_track_degrees.scale;
+                }
             }
         }
         break;
