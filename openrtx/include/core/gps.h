@@ -22,6 +22,7 @@
 
 #include <datetime.h>
 #include <stdint.h>
+#include <minmea.h>
 
 /**
  * Data structure representing a single satellite as part of a GPS fix.
@@ -62,5 +63,6 @@ gps_t;
  * the radio state with the retrieved data.
  */
 void gps_task();
+
 
 #endif /* GPS_H */

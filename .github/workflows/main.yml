@@ -80,6 +80,8 @@ jobs:
         run: meson test -C build "M17 RRC Test"
       - name: Codeplug Test
         run: meson test -C build "Codeplug Test"
+      - name: minmea Conversion Test
+        run: meson test -C build "minmea conversion Test"
       # The following tests are disabled because they appear to be flakey when run in CI
       # - name: Sine Test
       #   run: meson test -C build "Sine Test"

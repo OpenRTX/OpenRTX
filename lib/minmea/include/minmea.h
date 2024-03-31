@@ -252,6 +252,12 @@ static inline float minmea_tocoord(struct minmea_float *f)
     return (float) degrees + (float) minutes / (60 * f->scale);
 }
 
+/**
+ * Convert a raw coordinate to a fixed point value.
+ * Returns zero for "unknown" values.
+ */
+int minmea_tofixedpoint(struct minmea_float *f);
+
 #ifdef __cplusplus
 }
 #endif
