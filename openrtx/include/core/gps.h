@@ -48,8 +48,8 @@ typedef struct
     uint8_t    satellites_in_view;   // Satellites in view
     gpssat_t   satellites[12];       // Details about satellites in view
     uint32_t   active_sats;          // Bitmap representing which sats are part of the fix
-    float      latitude;             // Latitude coordinates
-    float      longitude;            // Longitude coordinates
+    int32_t    latitude;             // Latitude coordinates
+    int32_t    longitude;            // Longitude coordinates
     float      altitude;             // Antenna altitude above mean sea level (geoid) in m
     float      speed;                // Ground speed in km/h
     float      tmg_mag;              // Course over ground, degrees, magnetic
