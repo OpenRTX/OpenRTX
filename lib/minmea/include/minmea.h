@@ -258,6 +258,19 @@ static inline float minmea_tocoord(struct minmea_float *f)
  */
 int minmea_tofixedpoint(struct minmea_float *f);
 
+
+/**
+ * Convert a fixed-point value to an integer value.
+ * Returns zero for "unknown" values.
+ */
+static inline int minmea_toint(struct minmea_float *f)
+{
+    if(f->scale == 0)
+    return 0;
+
+    return f->value / f->scale;
+}
+
 #ifdef __cplusplus
 }
 #endif

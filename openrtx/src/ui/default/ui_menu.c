@@ -707,7 +707,7 @@ void _ui_drawMenuGPS()
         gfx_print(layout.line2_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white, "%d.%.6d", longitude_int, longitude_dec);
         gfx_print(layout.bottom_pos, layout.bottom_font, TEXT_ALIGN_CENTER,
-                  color_white, "S %4.1fkm/h  A %4.1fm",
+                  color_white, "S %dkm/h  A %dm",
                   last_state.gps_data.speed,
                   last_state.gps_data.altitude);
     }
