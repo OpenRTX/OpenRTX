@@ -24,6 +24,12 @@ int main() {
     test.scale = 1000;
     test.value = -5333735;
     assert_conversion(&test, -53562250);
+    test.scale = 1000;
+    test.value = -330;
+    assert_conversion(&test, -5500);
+    test.scale = 1000;
+    test.value = -3296;
+    assert_conversion(&test, -54933);
     printf("PASS\n");
 
     return 0;
