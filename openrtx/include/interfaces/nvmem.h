@@ -41,23 +41,33 @@ enum nvmType
 };
 
 /**
- * Nonvolatile memory device parameters. The content of this data structure is
- * filled by the device driver and then kept constant.
+ * Enumeration field for nonvolatile memory properties.
  */
-struct nvmParams
+enum nvmProperties
 {
-    size_t  write_size;    ///< Minimum write size (write unit)
-    size_t  erase_size;    ///< Minimum erase size (erase unit)
-    size_t  erase_cycles;  ///< Maximum allowed erase cycles of a block
-    uint8_t type;          ///< Device type
+    NVM_WRITE    = 0x100,    ///< Device allows write access
+    NVM_BITWRITE = 0x200,    ///< Device allows to change the value of single bits
+    NVM_ERASE    = 0x400,    ///< Device memory needs to be erased before writing
+};
+
+/**
+ * Nonvolatile memory device information block. The content of this data structure
+ * is defined by the device driver and remains constant.
+ */
+struct nvmInfo
+{
+    size_t   write_size;    ///< Minimum write size (write unit)
+    size_t   erase_size;    ///< Minimum erase size (erase unit)
+    size_t   erase_cycles;  ///< Maximum allowed erase cycles of a block
+    uint32_t device_info;   ///< Device type and flags
 };
 
 struct nvmDevice;
 
 /**
- * Standard API for nonvolatile memory driver.
+ * Nonvolatile memory device driver.
  */
-struct nvmApi
+struct nvmOps
 {
     /**
      * Read data from nonvolatile memory device.
@@ -104,29 +114,19 @@ struct nvmApi
      * @return 0 on success, negative errno code on fail.
      */
     int (*sync)(const struct nvmDevice *dev);
-
-    /**
-     * Get device parameters.
-     *
-     * @param dev: pointer to NVM device descriptor.
-     * @return pointer to the device parameters' data structure.
-     */
-    const struct nvmParams *(*params)(const struct nvmDevice *dev);
 };
 
-/**
- * Nonvolatile memory device driver.
- */
 struct nvmDevice
 {
-    const struct nvmApi *api;       ///< Driver API
-    const void          *config;    ///< Driver configuration data
-    void  *const         priv;      ///< Driver runtime data
+    const void           *priv;    ///< Device driver private data
+    const struct nvmOps  *ops;     ///< Device operations
+    const struct nvmInfo *info;    ///< Device info
+    const size_t          size;    ///< Device size
 };
 
 /**
- * Data structure representing a partition of a NVM area. The offset of the
- * partition is referred to the beginning of the area itself.
+ * Data structure representing a partition of a nonvolatile memory. The offset
+ * of the partition is referred to the beginning of the memory area.
  */
 struct nvmPartition
 {
@@ -135,17 +135,16 @@ struct nvmPartition
 };
 
 /**
- * Nonvolatile memory area descriptor. This data structure contains all the data
+ * Nonvolatile memory descriptor. This data structure contains all the data
  * relative to an area of nonvolatile memory with a fixed size, managed by a
  * given device and with zero or more partition.
  */
-struct nvmArea
+struct nvmDescriptor
 {
-    const char                *name;          ///< Area name
-    const struct nvmDevice    *dev;           ///< Device driver to manage the area
-    const size_t               startAddr;     ///< Start address of the area from the beginning of the device
-    const size_t               size;          ///< Size of the area, in bytes
-    const struct nvmPartition *partitions;    ///< List of partitions
+    const char                *name;        ///< Name
+    const struct nvmDevice    *dev;         ///< Associated device driver
+    const size_t               partNum;     ///< Number of partitions
+    const struct nvmPartition *partitions;  ///< Partion table
 };
 
 
@@ -160,12 +159,13 @@ void nvm_init();
 void nvm_terminate();
 
 /**
- * Get a list of the available nonvolatile memory areas of the device.
+ * Obtain the descriptor of a given nonvolatile memory.
  *
- * @param list: pointer where to store the pointer to the list head.
- * @return number of elements in the list.
+ * @param index: index of the nonvolatile memory.
+ * @return a pointer to the memory descriptor or NULL if the requested descriptor
+ * does not exist.
  */
-size_t nvm_getMemoryAreas(const struct nvmArea **list);
+const struct nvmDescriptor *nvm_getDesc(const size_t index);
 
 /**
  * Load calibration data from nonvolatile memory.

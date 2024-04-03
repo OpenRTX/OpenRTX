@@ -25,16 +25,65 @@
 #include <stdint.h>
 #include <errno.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
- * Perform a byte-aligned read operation on an NVM area.
+ * Perform a byte-aligned read operation on a nonvolatile memory.
  *
- * @param area: pointer to the NVM are descriptor.
- * @param address: start address for the read operation.
+ * @param dev: NVM device number.
+ * @param part: partition number, -1 for direct device access.
+ * @param address: offset for the read operation.
  * @param data: pointer to a buffer where to store the data read.
  * @param len: number of bytes to read.
  * @return zero on success, a negative error code otherwise.
  */
-int nvmArea_read(const struct nvmArea *area, uint32_t address, void *data, size_t len);
+int nvm_read(const uint32_t dev, const int part, uint32_t offset, void *data,
+             size_t len);
+
+/**
+ * Perform a write operation on a nonvolatile memory.
+ *
+ * @param dev: NVM device number.
+ * @param part: partition number, -1 for direct device access.
+ * @param offset: offset for the write operation.
+ * @param data: pointer to a buffer containing the data to write.
+ * @param len: number of bytes to write.
+ * @return zero on success, a negative error code otherwise.
+ */
+int nvm_write(const uint32_t dev, const int part, uint32_t offset, const void *data,
+              size_t len);
+
+/**
+ * Perform an erase operation on a nonvolatile memory. Acceptable offset and
+ * size depend on characteristics of the underlying device.
+ *
+ * @param dev: NVM device number.
+ * @param part: partition number, -1 for direct device access.
+ * @param offset: offset for the erase operation.
+ * @param size: size of the area to be erased.
+ * @return zero on success, a negative error code otherwise.
+ */
+int nvm_erase(const uint32_t dev, const int part, uint32_t offset, size_t size);
+
+/**
+ * Perform a byte-aligned read operation on an NVM area.
+ *
+ * @param area: pointer to the NVM are descriptor.
+ * @param offset: offset for the read operation.
+ * @param data: pointer to a buffer where to store the data read.
+ * @param len: number of bytes to read.
+ * @return zero on success, a negative error code otherwise.
+ */
+static inline int nvm_devRead(const struct nvmDevice *dev, uint32_t offset,
+                              void *data, size_t len)
+{
+    if((offset + len) > dev->size)
+        return -EINVAL;
+
+    return dev->ops->read(dev, offset, data, len);
+}
 
 /**
  * Perform a byte-aligned write operation on an NVM area. If the underlying
@@ -42,98 +91,51 @@ int nvmArea_read(const struct nvmArea *area, uint32_t address, void *data, size_
  * the write.
  *
  * @param area: pointer to the NVM are descriptor.
- * @param address: start address for the write operation.
+ * @param offset: offset for the write operation.
  * @param data: pointer to a buffer containing the data to write.
  * @param len: number of bytes to write.
  * @return zero on success, a negative error code otherwise.
  */
-int nvmArea_write(const struct nvmArea *area, uint32_t address, const void *data,
-                  size_t len);
+static inline int nvm_devWrite(const struct nvmDevice *dev, uint32_t offset,
+                               const void *data, size_t len)
+{
+    if(dev->ops->write == NULL)
+        return -ENOTSUP;
+
+    if((offset + len) > dev->size)
+        return -EINVAL;
+
+    return dev->ops->write(dev, offset, data, len);
+}
 
 /**
- * Perform an erase operation on an NVM area. Acceptable start address and size
- * depend on the NVM device the area belongs to.
+ * Perform an erase operation on an NVM area. Acceptable offset and size depend
+ * on the NVM device the area belongs to.
  *
  * @param area: pointer to the NVM are descriptor.
- * @param address: start address for the erase operation.
+ * @param offset: offset for the erase operation.
  * @param size: size of the area to be erased.
  * @return zero on success, a negative error code otherwise.
  */
-int nvmArea_erase(const struct nvmArea *area, uint32_t address, size_t size);
+int nvm_devErase(const struct nvmDevice *dev, uint32_t offset, size_t size);
 
 /**
- * Get the parameters of the NVM device associated to a memory area.
+ * Sync device cache and state to its underlying hardware.
+ * If the device does not support sync this function pointer is set to NULL.
  *
- * @param area: pointer to the NVM are descriptor.
- * @return pointer to the device parameters' data structure.
+ * @param dev: pointer to NVM device descriptor.
+ * @return 0 on success, negative errno code on fail.
  */
-static inline const struct nvmParams *nvmArea_params(const struct nvmArea *area)
+static inline int nvm_devSync(const struct nvmDevice *dev)
 {
-    const struct nvmDevice *dev = area->dev;
+    if(dev->ops->sync == NULL)
+        return -ENOTSUP;
 
-    return dev->api->params(dev);
+    return dev->ops->sync(dev);
 }
 
-/**
- * Perform a byte-aligned read operation on an NVM area partition.
- *
- * @param area: pointer to the NVM are descriptor.
- * @param pNum: partition number.
- * @param address: start address for the read operation.
- * @param data: pointer to a buffer where to store the data read.
- * @param len: number of bytes to read.
- * @return zero on success, a negative error code otherwise.
- */
-static inline int nvmArea_readPartition(const struct nvmArea *area,
-                                        const uint32_t pNum, uint32_t offset,
-                                        void *data, size_t len)
-{
-    const struct nvmPartition *partition = &(area->partitions[pNum]);
-    const size_t startAddr = area->startAddr + partition->offset + offset;
-
-    return nvmArea_read(area, startAddr, data, len);
+#ifdef __cplusplus
 }
-
-/**
- * Perform a byte-aligned write operation on an NVM area partition. If the
- * underlying device requires state syncing, a sync operation is performed at
- * the end of the write.
- *
- * @param area: pointer to the NVM are descriptor.
- * @param pNum: partition number.
- * @param address: start address for the write operation.
- * @param data: pointer to a buffer containing the data to write.
- * @param len: number of bytes to write.
- * @return zero on success, a negative error code otherwise.
- */
-static inline int nvmArea_writePartition(const struct nvmArea *area,
-                                         const uint32_t pNum, uint32_t offset,
-                                         const void *data, size_t len)
-{
-    const struct nvmPartition *partition = &(area->partitions[pNum]);
-    const size_t startAddr = area->startAddr + partition->offset + offset;
-
-    return nvmArea_write(area, startAddr, data, len);
-}
-
-/**
- * Perform an erase operation on an NVM area partition. Acceptable start address
- * and size depend on the NVM device the area belongs to.
- *
- * @param area: pointer to the NVM are descriptor.
- * @param pNum: partition number.
- * @param address: start address for the erase operation.
- * @param size: size of the area to be erased.
- * @return zero on success, a negative error code otherwise.
- */
-static inline int nvmArea_erasePartition(const struct nvmArea *area,
-                                         const uint32_t pNum, uint32_t offset,
-                                         size_t size)
-{
-    const struct nvmPartition *partition = &(area->partitions[pNum]);
-    const size_t startAddr = area->startAddr + partition->offset + offset;
-
-    return nvmArea_erase(area, startAddr, size);
-}
+#endif
 
 #endif
