@@ -29,7 +29,7 @@
 
 #define NVM_MAX_PATHLEN 256
 
-POSIX_FILE_DEVICE_DEFINE(stateDevice, NULL, 1024)
+POSIX_FILE_DEVICE_DEFINE(stateDevice, 1024)
 
 const struct nvmPartition statePartitions[] =
 {
@@ -43,15 +43,12 @@ const struct nvmPartition statePartitions[] =
     }
 };
 
-const struct nvmArea areas[] =
+const struct nvmDescriptor stateNvm =
 {
-    {
-        .name       = "Device state NVM area",
-        .dev        = &stateDevice,
-        .startAddr  = 0x0000,
-        .size       = 1024,
-        .partitions = statePartitions
-    }
+    .name       = "Device state NVM area",
+    .dev        = (const struct nvmDevice *) &stateDevice,
+    .partNum    = sizeof(statePartitions) / sizeof(struct nvmPartition),
+    .partitions = statePartitions
 };
 
 
@@ -153,11 +150,12 @@ void nvm_terminate()
     posixFile_terminate(&stateDevice);
 }
 
-size_t nvm_getMemoryAreas(const struct nvmArea **list)
+const struct nvmDescriptor *nvm_getDesc(const size_t index)
 {
-    *list = &areas[0];
+    if(index > 0)
+        return NULL;
 
-    return (sizeof(areas) / sizeof(struct nvmArea));
+    return &stateNvm;
 }
 
 void nvm_readHwInfo(hwInfo_t *info)
@@ -168,7 +166,7 @@ void nvm_readHwInfo(hwInfo_t *info)
 
 int nvm_readVfoChannelData(channel_t *channel)
 {
-    int ret = nvmArea_readPartition(&areas[0], 0, 0, channel, sizeof(channel_t));
+    int ret = nvm_read(0, 0, 0, channel, sizeof(channel_t));
     if(ret < 0)
         return ret;
 
@@ -185,7 +183,7 @@ int nvm_readVfoChannelData(channel_t *channel)
 
 int nvm_readSettings(settings_t *settings)
 {
-    int ret = nvmArea_readPartition(&areas[0], 1, 0, settings, sizeof(settings_t));
+    int ret = nvm_read(0, 1, 0, settings, sizeof(settings_t));
     if(ret < 0)
         return ret;
 
@@ -202,14 +200,14 @@ int nvm_readSettings(settings_t *settings)
 
 int nvm_writeSettings(const settings_t *settings)
 {
-    return nvmArea_writePartition(&areas[0], 1, 0, settings, sizeof(settings_t));
+    return nvm_write(0, 1, 0, settings, sizeof(settings_t));
 }
 
 int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
 {
-    int ret = nvmArea_writePartition(&areas[0], 1, 0, settings, sizeof(settings_t));
+    int ret = nvm_write(0, 1, 0, settings, sizeof(settings_t));
     if(ret < 0)
         return ret;
 
-    return nvmArea_writePartition(&areas[0], 0, 0, vfo, sizeof(channel_t));
+    return nvm_write(0, 0, 0, vfo, sizeof(channel_t));
 }

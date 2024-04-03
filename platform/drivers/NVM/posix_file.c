@@ -24,55 +24,43 @@
 #include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <string.h>
 #include "posix_file.h"
 
-static const struct nvmParams posix_file_params =
+int posixFile_init(struct nvmFileDevice *dev, const char *fileName)
 {
-    .write_size   = 1,
-    .erase_size   = 1,
-    .erase_cycles = INT_MAX,
-    .type         = NVM_FILE
-};
-
-
-int posixFile_init(const struct nvmDevice *dev, const char *fileName)
-{
-    const struct posixFileCfg *cfg = (const struct posixFileCfg *)(dev->config);
-    const char *name = cfg->fileName;
-
-    // Override filename from config, if a new one is provided.
-    if(fileName != NULL)
-        name = fileName;
+    // struct nvmFileDevice *pDev = (struct nvmFileDevice *)(dev);
 
     // Test if file exists, if it doesn't create it.
     int flags = O_RDWR;
-    int ret   = access(name, F_OK);
+    int ret   = access(fileName, F_OK);
     if(ret != 0)
         flags |= O_CREAT | O_EXCL;
 
     // Open file
-    int fd = open(name, flags, S_IRUSR | S_IWUSR);
+    int fd = open(fileName, flags, S_IRUSR | S_IWUSR);
     if(fd < 0)
         return fd;
 
     // Truncate to size, pad with zeroes if extending.
-    ftruncate(fd, cfg->fileSize);
+    ftruncate(fd, dev->size);
 
-    *(int *)(dev->priv) = fd;
+    dev->fd = fd;
 
     return 0;
 }
 
-int posixFile_terminate(const struct nvmDevice *dev)
+int posixFile_terminate(struct nvmFileDevice *dev)
 {
-    int fd = *(int *)(dev->priv);
-    if(fd < 0)
+    // struct nvmFileDevice *pDev = (struct nvmFileDevice *)(dev);
+
+    if(dev->fd < 0)
         return -EBADF;
 
-    fsync(fd);
-    close(fd);
+    fsync(dev->fd);
+    close(dev->fd);
 
-    *(int *)(dev->priv) = -1;
+    dev->fd = -1;
 
     return 0;
 }
@@ -81,47 +69,45 @@ int posixFile_terminate(const struct nvmDevice *dev)
 static int nvm_api_read(const struct nvmDevice *dev, uint32_t offset,
                         void *data, size_t len)
 {
-    const struct posixFileCfg *cfg = (const struct posixFileCfg *)(dev->config);
-    const int fd = *(int *)(dev->priv);
+    struct nvmFileDevice *pDev = (struct nvmFileDevice *)(dev);
 
-    if(fd < 0)
+    if(pDev->fd < 0)
         return -EBADF;
 
-    if((offset + len) >= cfg->fileSize)
+    if((offset + len) >= pDev->size)
         return -EINVAL;
 
-    lseek(fd, offset, SEEK_SET);
-    return read(fd, data, len);
+    lseek(pDev->fd, offset, SEEK_SET);
+    return read(pDev->fd, data, len);
 }
 
 static int nvm_api_write(const struct nvmDevice *dev, uint32_t offset,
                          const void *data, size_t len)
 {
-    const struct posixFileCfg *cfg = (const struct posixFileCfg *)(dev->config);
-    const int fd = *(int *)(dev->priv);
+    struct nvmFileDevice *pDev = (struct nvmFileDevice *)(dev);
 
-    if(fd < 0)
+    if(pDev->fd < 0)
         return -EBADF;
 
-    if((offset + len) >= cfg->fileSize)
+    if((offset + len) > pDev->size)
         return -EINVAL;
 
-    lseek(fd, offset, SEEK_SET);
-    return write(fd, data, len);
+    lseek(pDev->fd, offset, SEEK_SET);
+    return write(pDev->fd, data, len);
 }
 
-static const struct nvmParams *nvm_api_params(const struct nvmDevice *dev)
-{
-    (void) dev;
-
-    return &posix_file_params;
-}
-
-const struct nvmApi posix_file_api =
+const struct nvmOps posix_file_ops =
 {
     .read   = nvm_api_read,
     .write  = nvm_api_write,
     .erase  = NULL,
     .sync   = NULL,
-    .params = nvm_api_params
+};
+
+const struct nvmInfo posix_file_info =
+{
+    .write_size   = 1,
+    .erase_size   = 1,
+    .erase_cycles = INT_MAX,
+    .device_info  = NVM_FILE | NVM_WRITE | NVM_BITWRITE
 };

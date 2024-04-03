@@ -32,37 +32,35 @@
 /**
  * Driver configuration data structure.
  */
-struct posixFileCfg
+struct nvmFileDevice
 {
-    const char  *fileName;     ///< Full path of the file used for data storage
-    const size_t fileSize;     ///< File size, in bytes
+    const void           *priv;    ///< Device driver private data
+    const struct nvmOps  *ops;     ///< Device operations
+    const struct nvmInfo *info;    ///< Device info
+    const size_t          size;    ///< Device size
+    int                     fd;    ///< File descriptor
 };
 
 /**
- * Driver API functions.
+ * Driver API functions and info.
  */
-extern const struct nvmApi posix_file_api;
-
+extern const struct nvmOps  posix_file_ops;
+extern const struct nvmInfo posix_file_info;
 
 /**
  * Instantiate a POSIX file storage NVM device.
  *
  * @param name: device name.
  * @param path: full path of the file used for data storage.
- * @param size: size of the storage file, in bytes.
+ * @param dim: size of the storage file, in bytes.
  */
-#define POSIX_FILE_DEVICE_DEFINE(name, path, size)  \
-static int fd_##name;                               \
-static const struct posixFileCfg cfg_##name =       \
-{                                                   \
-    .fileName = path,                               \
-    .fileSize = size                                \
-};                                                  \
-static const struct nvmDevice name =                \
-{                                                   \
-    .config = &cfg_##name,                          \
-    .priv   = &fd_##name,                           \
-    .api    = &posix_file_api                       \
+#define POSIX_FILE_DEVICE_DEFINE(name, dim) \
+static struct nvmFileDevice name =          \
+{                                           \
+    .ops  = &posix_file_ops,                \
+    .info = &posix_file_info,               \
+    .size = dim,                            \
+    .fd   = -1                              \
 };
 
 /**
@@ -71,10 +69,10 @@ static const struct nvmDevice name =                \
  * storage, where necessary.
  *
  * @param dev: pointer to device descriptor.
- * @param fileName: alternative path of the file used for data storage or NULL.
+ * @param fileName: full path of the file used for data storage.
  * @return zero on success, a negative error code otherwise.
  */
-int posixFile_init(const struct nvmDevice *dev, const char *fileName);
+int posixFile_init(struct nvmFileDevice *dev, const char *fileName);
 
 /**
  * Shut down a POSIX file driver instance.
@@ -83,6 +81,6 @@ int posixFile_init(const struct nvmDevice *dev, const char *fileName);
  * @param maxSize: maximum size for the storage file, in bytes.
  * @return zero on success, a negative error code otherwise.
  */
-int posixFile_terminate(const struct nvmDevice *dev);
+int posixFile_terminate(struct nvmFileDevice *dev);
 
 #endif /* POSIX_FILE_H */
