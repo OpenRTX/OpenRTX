@@ -2327,6 +2327,8 @@ void ui_updateFSM(bool* sync_rtx)
             case SETTINGS_FM:
                 if (ui_state.edit_mode)
                 {
+                    if (msg.keys & KEY_ESC)
+                    ui_state.edit_mode = false;
                     switch (ui_state.menu_selected)
                     {
                         case CTCSS_Tone:
@@ -2376,7 +2378,7 @@ void ui_updateFSM(bool* sync_rtx)
                 else if (msg.keys & KEY_ENTER)
                     ui_state.edit_mode = !ui_state.edit_mode;
                 else if (msg.keys & KEY_ESC)
-                    ui_state.edit_mode = false;
+                    _ui_menuBack(MENU_SETTINGS);
                 break;
 
             case SETTINGS_ACCESSIBILITY:
