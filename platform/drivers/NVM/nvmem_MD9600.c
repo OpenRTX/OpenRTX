@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2024 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -26,30 +26,28 @@
 #include <utils.h>
 #include "W25Qx.h"
 
-W25Qx_DEVICE_DEFINE(W25Q128_main, W25Qx_api)
-W25Qx_DEVICE_DEFINE(W25Q128_secr, W25Qx_secReg_api)
+W25Qx_DEVICE_DEFINE(eflash, 0x1000000)        // 16 MB, 128 Mbit
+W25Qx_SECREG_DEFINE(cal1,   0x1000, 0x100)    // 256 byte
+W25Qx_SECREG_DEFINE(cal2,   0x2000, 0x100)    // 256 byte
 
-static const struct nvmArea areas[] =
+static const struct nvmDescriptor nvmDevices[] =
 {
     {
         .name       = "External flash",
-        .dev        = &W25Q128_main,
-        .startAddr  = 0x0000,
-        .size       = 0x1000000,  // 16 MB, 128 Mbit
+        .dev        = &eflash,
+        .partNum    = 0,
         .partitions = NULL
     },
     {
         .name       = "Cal. data 1",
-        .dev        = &W25Q128_secr,
-        .startAddr  = 0x1000,
-        .size       = 0x100,      // 256 byte
+        .dev        = (const struct nvmDevice *) &cal1,
+        .partNum    = 0,
         .partitions = NULL
     },
     {
         .name       = "Cal. data 2",
-        .dev        = &W25Q128_secr,
-        .startAddr  = 0x2000,
-        .size       = 0x100,      // 256 byte
+        .dev        = (const struct nvmDevice *) &cal2,
+        .partNum    = 0,
         .partitions = NULL
     }
 };
@@ -65,11 +63,12 @@ void nvm_terminate()
     W25Qx_terminate();
 }
 
-size_t nvm_getMemoryAreas(const struct nvmArea **list)
+const struct nvmDescriptor *nvm_getDesc(const size_t index)
 {
-    *list = &areas[0];
+    if(index > 3)
+        return NULL;
 
-    return (sizeof(areas) / sizeof(struct nvmArea));
+    return &nvmDevices[index];
 }
 
 void nvm_readCalibData(void *buf)
