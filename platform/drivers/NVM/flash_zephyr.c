@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2023 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2023 - 2024 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -22,51 +22,45 @@
 #include <zephyr/drivers/flash.h>
 #include "flash_zephyr.h"
 
+#define TO_DEV_HANDLE(x) ((const struct device *) x)
+
+
 static int nvm_api_read(const struct nvmDevice *dev, uint32_t offset,
                         void *data, size_t len)
 {
-    const struct device *fDev = (const struct device *)(dev->config);
-
-    return flash_read(fDev, offset, data, len);
+    return flash_read(TO_DEV_HANDLE(dev->priv), offset, data, len);
 }
 
 static int nvm_api_write(const struct nvmDevice *dev, uint32_t offset,
                          const void *data, size_t len)
 {
-    const struct device *fDev = (const struct device *)(dev->config);
-
-    return flash_write(fDev, offset, data, len);
+    return flash_write(TO_DEV_HANDLE(dev->priv), offset, data, len);
 }
 
 static int nvm_api_erase(const struct nvmDevice *dev, uint32_t offset, size_t size)
 {
-    const struct device *fDev = (const struct device *)(dev->config);
-
-    return flash_erase(fDev, offset, size);
+    return flash_erase(TO_DEV_HANDLE(dev->priv), offset, size);
 }
 
-static const struct nvmParams *nvm_api_params(const struct nvmDevice *dev)
-{
-    struct nvmParams    *params = (struct nvmParams *)(dev->priv);
-    const struct device *fDev   = (const struct device *)(dev->config);
 
+int zephirFlash_init(const struct nvmDevice* dev)
+{
     // Retrieve write size
-    const struct flash_parameters *info = flash_get_parameters(fDev);
-    params->write_size = info->write_block_size;
+    const struct flash_parameters *info = flash_get_parameters(TO_DEV_HANDLE(dev->priv));
 
     // TODO: erase size and erase cycles to be retrieved from the real device.
-    params->erase_size   = 4096;
-    params->erase_cycles = 100000;
-    params->type         = NVM_FLASH;
+    dev->info->write_size   = info->write_block_size;
+    dev->info->erase_size   = 4096;
+    dev->info->erase_cycles = 100000;
+    dev->info->device_info  = NVM_FLASH | NVM_WRITE | NVM_BITWRITE | NVM_ERASE;
 
-    return params;
+    return 0;
 }
 
-const struct nvmApi zephyr_flash_api =
+const struct nvmOps zephyr_flash_ops =
 {
     .read   = nvm_api_read,
     .write  = nvm_api_write,
     .erase  = nvm_api_erase,
-    .sync   = NULL,
-    .params = nvm_api_params
+    .sync   = NULL
 };
