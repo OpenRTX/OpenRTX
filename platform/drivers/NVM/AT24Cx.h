@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2024 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -31,22 +31,23 @@
  */
 
 /**
- * Device driver API for AT24Cx EEPROM memory.
+ * Device driver and information block for AT24Cx EEPROM memory.
  */
-extern const struct nvmApi AT24Cx_api;
-
+extern const struct nvmOps  AT24Cx_ops;
+extern const struct nvmInfo AT24Cx_info;
 
 /**
  * Instantiate an AT24Cx nonvolatile memory device.
  *
  * @param name: instance name.
+ * @param sz: memory size, in bytes.
  */
-#define AT24Cx_DEVICE_DEFINE(name) \
-struct nvmDevice name =            \
-{                                  \
-    .config = NULL,                \
-    .priv   = NULL,                \
-    .api    = &AT24Cx_api          \
+#define AT24Cx_DEVICE_DEFINE(name, sz) \
+struct nvmDevice name =                \
+{                                      \
+    .ops  = &AT24Cx_ops,               \
+    .info = &AT24Cx_info,              \
+    .size = sz                         \
 };
 
 /**

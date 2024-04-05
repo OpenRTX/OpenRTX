@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2024 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -27,23 +27,21 @@
 #include "AT24Cx.h"
 #include "W25Qx.h"
 
-W25Qx_DEVICE_DEFINE(W25Q80, W25Qx_api)
-AT24Cx_DEVICE_DEFINE(AT24C512)
+W25Qx_DEVICE_DEFINE(eflash,  0x100000)  // 1 MB,  8 Mbit
+AT24Cx_DEVICE_DEFINE(eeprom, 0x10000)   // 64 kB, 512 kbit
 
-static const struct nvmArea areas[] =
+static const struct nvmDescriptor nvmDevices[] =
 {
     {
         .name       = "External flash",
-        .dev        = &W25Q80,
-        .startAddr  = 0x0000,
-        .size       = 0x100000,  // 1 MB, 8 Mbit
+        .dev        = &eflash,
+        .partNum    = 0,
         .partitions = NULL
     },
     {
         .name       = "EEPROM",
-        .dev        = &AT24C512,
-        .startAddr  = 0x0000,
-        .size       = 0x10000,   // 64 kB, 512 kbit
+        .dev        = &eeprom,
+        .partNum    = 0,
         .partitions = NULL
     }
 };
@@ -124,11 +122,12 @@ void nvm_terminate()
     AT24Cx_terminate();
 }
 
-size_t nvm_getMemoryAreas(const struct nvmArea **list)
+const struct nvmDescriptor *nvm_getDesc(const size_t index)
 {
-    *list = &areas[0];
+    if(index > 2)
+        return NULL;
 
-    return (sizeof(areas) / sizeof(struct nvmArea));
+    return &nvmDevices[index];
 }
 
 void nvm_readCalibData(void *buf)

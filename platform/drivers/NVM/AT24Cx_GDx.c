@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2024 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -96,15 +96,6 @@ int AT24Cx_writeData(uint32_t addr, const void *buf, size_t len)
     return 0;
 }
 
-static const struct nvmParams AT24Cx_params =
-{
-    .write_size   = 1,
-    .erase_size   = 1,
-    .erase_cycles = 1000000,
-    .type         = NVM_EEPROM,
-};
-
-
 static int nvm_api_read(const struct nvmDevice *dev, uint32_t offset, void *data, size_t len)
 {
     (void) dev;
@@ -119,18 +110,19 @@ static int nvm_api_write(const struct nvmDevice *dev, uint32_t offset, const voi
     return AT24Cx_writeData(offset, data, len);
 }
 
-static const struct nvmParams *nvm_api_params(const struct nvmDevice *dev)
-{
-    (void) dev;
 
-    return &AT24Cx_params;
-}
-
-const struct nvmApi AT24Cx_api =
+const struct nvmOps AT24Cx_ops =
 {
     .read   = nvm_api_read,
     .write  = nvm_api_write,
     .erase  = NULL,
-    .sync   = NULL,
-    .params = nvm_api_params
+    .sync   = NULL
+};
+
+const struct nvmInfo AT24Cx_info =
+{
+    .write_size   = 1,
+    .erase_size   = 1,
+    .erase_cycles = 1000000,
+    .device_info  = NVM_EEPROM,
 };
