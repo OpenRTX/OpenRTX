@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
+set(CMAKE_CXX_STANDARD 14)
+
 include(cmake/ConfigureTarget.cmake)
 project(OpenRTX)
 
@@ -6,6 +8,13 @@ find_program(RADIO_TOOL radio_tool)
 find_program(BIN2SGL "bin2sgl.${CMAKE_HOST_SYSTEM_NAME}"
     PATHS scripts 
 )
+
+if(NOT OPENRTX_LINUX_FLAVOR)
+    set(OPENRTX_LINUX_FLAVOR "default")
+endif()
+if(NOT OPENRTX_UI)
+    set(OPENRTX_UI "default")
+endif()
 
 include(cmake/TargetOptions.cmake)
 
@@ -40,10 +49,12 @@ add_subdirectory(platform)
 add_subdirectory(openrtx)
 add_subdirectory(lib)
 add_subdirectory(subprojects)
+#add_subdirectory(tests)
 
 add_executable(OpenRTX
     openrtx/src/main.c
 )
+
 
 target_link_libraries(OpenRTX PUBLIC Core Protocols RTX UI codec2 minmea)
 
@@ -72,6 +83,20 @@ elseif( OPENRTX_TARGET STREQUAL "gd77"
 
     target_link_options(OpenRTX PUBLIC 
         -Wl,-T../platform/mcu/MK22FN512xxx12/linker_script.ld
+        -Wl,--print-memory-usage
+    )
+
+    add_custom_target(OpenRTX_bin ALL
+        COMMAND ${CMAKE_OBJCOPY} -O binary OpenRTX OpenRTX.bin
+        DEPENDS OpenRTX
+        BYPRODUCTS OpenRTX.bin
+        COMMENT "Objcopy OpenRTX -> OpenRTX.bin"
+    )
+elseif( OPENRTX_TARGET STREQUAL "module17")
+    target_link_libraries(OpenRTX PUBLIC Miosix)
+
+    target_link_options(OpenRTX PUBLIC 
+        -Wl,-T../platform/mcu/STM32F4xx/linker_script_Mod17.ld
         -Wl,--print-memory-usage
     )
 
