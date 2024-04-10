@@ -192,6 +192,27 @@ set(dm1801_sources
     targets/DM-1801/platform.c
 )
 
+##
+## Module 17
+##
+set(module17_includes targets/Module17)
+set(module17_defines -DPLATFORM_MOD17)
+set(module17_sources
+    drivers/ADC/ADC1_Mod17.c
+    drivers/CPS/cps_io_native_Mod17.c
+    drivers/NVM/nvmem_Mod17.c
+    drivers/audio/MAX9814_Mod17.cpp
+    drivers/audio/audio_Mod17.c
+    drivers/baseband/MCP4551_Mod17.cpp
+    drivers/baseband/radio_Mod17.cpp
+    drivers/display/SH110x_Mod17.c
+    drivers/keyboard/keyboard_Mod17.c
+    targets/Module17/platform.c
+)
+
+##
+## Linux
+##
 set(linux_sources
     drivers/CPS/cps_io_libc.c
     drivers/GPS/GPS_linux.c
@@ -218,43 +239,36 @@ target_include_directories(Platform PUBLIC ${general_includes})
 target_link_libraries(Platform PUBLIC Core)
 
 if(OPENRTX_TARGET STREQUAL "md3x0")
-
     target_sources(Platform PRIVATE ${md3x0_sources} ${stm32f405_sources})
     target_include_directories(Platform PUBLIC ${md3x0_includes} ${stm32f405_includes})
     target_compile_definitions(Platform PUBLIC ${md3x0_defines} ${stm32f405_defines})
     target_link_libraries(Platform PUBLIC Miosix)
-
 elseif(OPENRTX_TARGET STREQUAL "mduv3x0")
-
     target_sources(Platform PRIVATE ${mduv3x0_sources} ${stm32f405_sources})
     target_include_directories(Platform PUBLIC ${mduv3x0_includes} ${stm32f405_includes})
     target_compile_definitions(Platform PUBLIC ${mduv3x0_defines} ${stm32f405_defines})
     target_link_libraries(Platform PUBLIC Miosix qdec)
-
 elseif(OPENRTX_TARGET STREQUAL "md9600")
-
     target_sources(Platform PRIVATE ${md9600_sources} ${stm32f405_sources})
     target_include_directories(Platform PUBLIC ${md9600_includes} ${stm32f405_includes})
     target_compile_definitions(Platform PUBLIC ${md9600_defines} ${stm32f405_defines})
     target_link_libraries(Platform PUBLIC Miosix qdec)
-
 elseif(OPENRTX_TARGET STREQUAL "gd77")
-
     target_sources(Platform PRIVATE ${gd77_sources} ${mk22fn512_sources})
     target_include_directories(Platform PUBLIC ${gd77_includes} ${mk22fn512_includes})
     target_compile_definitions(Platform PUBLIC ${gd77_defines} ${mk22fn512_defines})
     target_link_libraries(Platform PUBLIC Miosix qdec)
-
 elseif(OPENRTX_TARGET STREQUAL "dm1801")
-
     target_sources(Platform PRIVATE ${dm1801_sources} ${mk22fn512_sources})
     target_include_directories(Platform PUBLIC ${dm1801_includes} ${mk22fn512_includes})
     target_compile_definitions(Platform PUBLIC ${dm1801_defines} ${mk22fn512_defines})
     target_link_libraries(Platform PUBLIC Miosix qdec)
-
+elseif(OPENRTX_TARGET STREQUAL "module17")
+    target_sources(Platform PRIVATE ${module17_sources} ${stm32f405_sources})
+    target_include_directories(Platform PUBLIC ${module17_includes} ${stm32f405_includes})
+    target_compile_definitions(Platform PUBLIC ${module17_defines} ${stm32f405_defines})
+    target_link_libraries(Platform PUBLIC Miosix qdec)
 elseif(OPENRTX_TARGET STREQUAL "linux")
-
     target_sources(Platform PRIVATE ${linux_sources})
     target_include_directories(Platform PUBLIC ${linux_includes})
-
 endif()
