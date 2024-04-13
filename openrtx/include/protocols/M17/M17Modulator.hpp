@@ -64,9 +64,16 @@ public:
     void terminate();
 
     /**
-     * Start baseband transmission and send an 80ms preamble.
+     * Start the modulator.
+     *
+     * @return true if the modulator has been successfully started.
      */
-    void start();
+    bool start();
+
+    /**
+     * Send an 80ms long transmission preamble.
+     */
+    void sendPreamble();
 
     /**
      * Generate and transmit the baseband signal obtained by 4FSK modulation of
@@ -76,7 +83,7 @@ public:
      * @param isLast: flag signalling that current block is the last one being
      * transmitted.
      */
-    void send(const frame_t& frame);
+    void sendFrame(const frame_t& frame);
 
     /**
      * Terminate baseband transmission.

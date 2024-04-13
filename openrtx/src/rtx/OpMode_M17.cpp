@@ -326,7 +326,8 @@ void OpMode_M17::txState(rtxStatus_t *const status)
 
         modulator.invertPhase(invertTxPhase);
         modulator.start();
-        modulator.send(m17Frame);
+        modulator.sendPreamble();
+        modulator.sendFrame(m17Frame);
     }
 
     payload_t dataFrame;
@@ -344,12 +345,12 @@ void OpMode_M17::txState(rtxStatus_t *const status)
     }
 
     encoder.encodeStreamFrame(dataFrame, m17Frame, lastFrame);
-    modulator.send(m17Frame);
+    modulator.sendFrame(m17Frame);
 
     if(lastFrame)
     {
         encoder.encodeEotFrame(m17Frame);
-        modulator.send(m17Frame);
+        modulator.sendFrame(m17Frame);
         modulator.stop();
     }
 }

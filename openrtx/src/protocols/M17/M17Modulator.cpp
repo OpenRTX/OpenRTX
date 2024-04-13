@@ -74,12 +74,33 @@ void M17Modulator::terminate()
     baseband_buffer.reset();
 }
 
-void M17Modulator::start()
+bool M17Modulator::start()
 {
-    if(txRunning) return;
+    if(txRunning)
+        return true;
+
+    #ifndef PLATFORM_LINUX
+    outPath = audioPath_request(SOURCE_MCU, SINK_RTX, PRIO_TX);
+    if(outPath < 0)
+        return false;
+
+    outStream = audioStream_start(outPath, baseband_buffer.get(),
+                                  2*M17_FRAME_SAMPLES, M17_TX_SAMPLE_RATE,
+                                  STREAM_OUTPUT | BUF_CIRC_DOUBLE);
+
+    if(outStream < 0)
+        return false;
+
+    idleBuffer = outputStream_getIdleBuffer(outStream);
+    #endif
 
     txRunning = true;
 
+    return true;
+}
+
+void M17Modulator::sendPreamble()
+{
     // Fill symbol buffer with preamble, made of alternated +3 and -3 symbols
     for(size_t i = 0; i < symbols.size(); i += 2)
     {
@@ -89,21 +110,7 @@ void M17Modulator::start()
 
     // Generate baseband signal and then start transmission
     symbolsToBaseband();
-    #ifndef PLATFORM_LINUX
-    outPath = audioPath_request(SOURCE_MCU, SINK_RTX, PRIO_TX);
-    if(outPath < 0)
-    {
-        txRunning = false;
-        return;
-    }
-
-    outStream = audioStream_start(outPath, baseband_buffer.get(),
-                                  2*M17_FRAME_SAMPLES, M17_TX_SAMPLE_RATE,
-                                  STREAM_OUTPUT | BUF_CIRC_DOUBLE);
-    idleBuffer = outputStream_getIdleBuffer(outStream);
-    #else
     sendBaseband();
-    #endif
 
     // Repeat baseband generation and transmission, this makes the preamble to
     // be long 80ms (two frames)
@@ -111,8 +118,7 @@ void M17Modulator::start()
     sendBaseband();
 }
 
-
-void M17Modulator::send(const frame_t& frame)
+void M17Modulator::sendFrame(const frame_t& frame)
 {
     auto it = symbols.begin();
     for(size_t i = 0; i < frame.size(); i++)
