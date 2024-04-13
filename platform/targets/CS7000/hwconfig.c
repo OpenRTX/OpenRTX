@@ -15,15 +15,20 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef GPIO_NATIVE_H
-#define GPIO_NATIVE_H
+#include <gpio_shiftReg.h>
+#include <spi_bitbang.h>
+#include <pthread.h>
 
-#if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0) \
- || defined(PLATFORM_MD9600) || defined(PLATFORM_MOD17) \
- || defined(PLATFORM_CS7000)
-#include <gpio_stm32.h>
-#elif defined(PLATFORM_GD77) || defined(PLATFORM_DM1801)
-#include <gpio_mk22.h>
-#endif
+static const struct spiConfig spiSrConfig =
+{
+    .clk  = {GPIOEXT_CLK},
+    .miso = {GPIOEXT_DAT},
+    .mosi = {GPIOEXT_DAT},
+    .clkPeriod = SCK_PERIOD_FROM_FREQ(1000000),
+    .flags = SPI_HALF_DUPLEX
+};
 
-#endif /* GPIO_NATIVE_H */
+static const struct gpioPin shiftRegStrobe = { GPIOEXT_STR };
+
+SPI_BITBANG_DEVICE_DEFINE(spiSr, spiSrConfig, NULL)
+GPIO_SHIFTREG_DEVICE_DEFINE(extGpio, (const struct spiDevice *) &spiSr, shiftRegStrobe, 24)
