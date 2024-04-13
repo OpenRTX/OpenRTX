@@ -455,6 +455,28 @@ mod17_inc += openrtx_inc + stm32f405_inc
 mod17_def += openrtx_def + stm32f405_def
 
 ##
+## Connect Systems CS70000
+##
+cs7000_src = ['platform/drivers/stubs/nvmem_stub.c',
+             'platform/drivers/stubs/cps_io_stub.c',
+             'platform/drivers/stubs/radio_stub.c',
+             'platform/drivers/stubs/keyboard_stub.c',
+             'platform/drivers/stubs/display_stub.c',
+             'platform/drivers/stubs/audio_stub.c',
+             'platform/drivers/GPIO/gpio_shiftReg.c',
+             'platform/drivers/SPI/spi_custom.c',
+             'platform/drivers/SPI/spi_bitbang.c',
+             'platform/targets/CS7000/hwconfig.c',
+             'platform/targets/CS7000/platform.c']
+
+cs7000_inc = ['platform/targets/CS7000']
+cs7000_def = {'PLATFORM_CS7000': '', 'timegm': 'mktime'}
+
+cs7000_src += openrtx_src + stm32f405_src + ui_src_default
+cs7000_inc += openrtx_inc + stm32f405_inc
+cs7000_def += openrtx_def + stm32f405_def
+
+##
 ## -------------------------- Compilation arguments ----------------------------
 ##
 
@@ -546,6 +568,15 @@ foreach k, v : mod17_def
     mod17_args += '-D@0@'.format(k)
   else
     mod17_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
+
+cs7000_args = []
+foreach k, v : cs7000_def
+  if v == ''
+    cs7000_args += '-D@0@'.format(k)
+  else
+    cs7000_args += '-D@0@=@1@'.format(k, v)
   endif
 endforeach
 
@@ -645,6 +676,16 @@ ttwrplus_opts = {
   'link_args'          : [],
 }
 
+cs7000_opts = {
+  'sources'            : cs7000_src,
+  'include_directories': cs7000_inc,
+  'dependencies'       : [codec2_dep],
+  'c_args'             : cs7000_args,
+  'cpp_args'           : cs7000_args,
+  'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_Mod17.ld',
+                          '-Wl,--print-memory-usage']
+}
+
 ##
 ## ---------------------------- Compilation targets ----------------------------
 ##
@@ -714,6 +755,13 @@ targets = [
     'wrap'     : ' ',
     'load_addr': ' '
   },
+  {
+    'name'     : 'cs7000',
+    'opts'     : cs7000_opts,
+    'flashable': true,
+    'wrap'     : ' ',
+    'load_addr': '0x08000000'
+  },
 ]
 
 if build_machine.system() == 'linux'
@@ -730,6 +778,7 @@ gd77_loader = find_program('scripts/gd-77_firmware_loader.py', required:false, d
 dfu_util    = find_program('dfu-util',                         required:false, disabler:true)
 west        = find_program('west',                             required:false, disabler:true)
 uf2conv     = find_program('scripts/uf2conv.py',               required:false, disabler:true)
+dfu_convert = find_program('scripts/dfu-convert.py',           required:false, disabler:true)
 
 foreach t : targets
 
@@ -822,7 +871,7 @@ foreach t : targets
                       output  : name+'_flash',
                       command : [gd77_loader, '-f', '@INPUT@', '-m', t['wrap']])
 
-      # Module17 also uses dfu-tool for flashing
+      # Module17 uses dfu-tool for flashing
       elif name == 'openrtx_mod17'
 
         # Wrap target for Module17 for consistency, same output as bin target
@@ -841,6 +890,23 @@ foreach t : targets
                                  '-D', '@INPUT@',
                                  '-s', '0x08000000'])
 
+      # For CS7000 'wrap' target prepares a .dfu file
+      elif name == 'openrtx_cs7000'
+
+        custom_target(name+'_wrap',
+                      output  : name+'.dfu',
+                      input   : bin,
+                      command : [dfu_convert, '-b', t['load_addr']+':@INPUT@', '@OUTPUT@'])
+
+
+        custom_target(name+'_flash',
+                      input   : bin,
+                      output  : name+'_flash',
+                      command : [dfu_util,
+                                 '-d', '0483:df11',
+                                 '-a', '0',
+                                 '-D', '@INPUT@',
+                                 '-s', t['load_addr']])
       else
 
         wrap = custom_target(name+'_wrap',
