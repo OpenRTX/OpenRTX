@@ -447,6 +447,28 @@ mod17_inc += openrtx_inc + stm32f405_inc
 mod17_def += openrtx_def + stm32f405_def
 
 ##
+## Connect Systems CS70000
+##
+cs7000_src = ['platform/drivers/stubs/nvmem_stub.c',
+             'platform/drivers/stubs/cps_io_stub.c',
+             'platform/drivers/stubs/radio_stub.c',
+             'platform/drivers/stubs/keyboard_stub.c',
+             'platform/drivers/stubs/display_stub.c',
+             'platform/drivers/stubs/audio_stub.c',
+             'platform/drivers/GPIO/gpio_shiftReg.c',
+             'platform/drivers/SPI/spi_custom.c',
+             'platform/drivers/SPI/spi_bitbang.c',
+             'platform/targets/CS7000/hwconfig.c',
+             'platform/targets/CS7000/platform.c']
+
+cs7000_inc = ['platform/targets/CS7000']
+cs7000_def = {'PLATFORM_CS7000': '', 'timegm': 'mktime'}
+
+cs7000_src += openrtx_src + stm32f405_src + ui_src_default
+cs7000_inc += openrtx_inc + stm32f405_inc
+cs7000_def += openrtx_def + stm32f405_def
+
+##
 ## -------------------------- Compilation arguments ----------------------------
 ##
 
@@ -538,6 +560,15 @@ foreach k, v : mod17_def
     mod17_args += '-D@0@'.format(k)
   else
     mod17_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
+
+cs7000_args = []
+foreach k, v : cs7000_def
+  if v == ''
+    cs7000_args += '-D@0@'.format(k)
+  else
+    cs7000_args += '-D@0@=@1@'.format(k, v)
   endif
 endforeach
 
@@ -637,6 +668,16 @@ ttwrplus_opts = {
   'link_args'          : [],
 }
 
+cs7000_opts = {
+  'sources'            : cs7000_src,
+  'include_directories': cs7000_inc,
+  'dependencies'       : [codec2_dep],
+  'c_args'             : cs7000_args,
+  'cpp_args'           : cs7000_args,
+  'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_Mod17.ld',
+                          '-Wl,--print-memory-usage']
+}
+
 ##
 ## ---------------------------- Compilation targets ----------------------------
 ##
@@ -702,6 +743,13 @@ targets = [
   {
     'name'     : 'ttwrplus',
     'opts'     : ttwrplus_opts,
+    'flashable': true,
+    'wrap'     : ' ',
+    'load_addr': ' '
+  },
+  {
+    'name'     : 'cs7000',
+    'opts'     : cs7000_opts,
     'flashable': true,
     'wrap'     : ' ',
     'load_addr': ' '
@@ -815,7 +863,7 @@ foreach t : targets
                       command : [gd77_loader, '-f', '@INPUT@', '-m', t['wrap']])
 
       # Module17 also uses dfu-tool for flashing
-      elif name == 'openrtx_mod17'
+      elif name == 'openrtx_mod17' or name == 'openrtx_cs7000'
 
         # Wrap target for Module17 for consistency, same output as bin target
         custom_target(name+'_wrap',
