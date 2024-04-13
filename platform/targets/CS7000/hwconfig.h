@@ -15,15 +15,37 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef GPIO_NATIVE_H
-#define GPIO_NATIVE_H
+#ifndef HWCONFIG_H
+#define HWCONFIG_H
 
-#if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0) \
- || defined(PLATFORM_MD9600) || defined(PLATFORM_MOD17) \
- || defined(PLATFORM_CS7000)
-#include <gpio_stm32.h>
-#elif defined(PLATFORM_GD77) || defined(PLATFORM_DM1801)
-#include <gpio_mk22.h>
+#include <stm32f4xx.h>
+#include "pinmap.h"
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#endif /* GPIO_NATIVE_H */
+extern const struct spiCustomDevice spiSr;
+extern const struct gpioDev extGpio;
+
+/* Screen dimensions */
+#define CONFIG_SCREEN_WIDTH 160
+#define CONFIG_SCREEN_HEIGHT 128
+
+/* Screen pixel format */
+#define CONFIG_PIX_FMT_RGB565
+
+/* Screen has adjustable brightness */
+#define CONFIG_SCREEN_BRIGHTNESS
+
+/* Battery type */
+#define CONFIG_BAT_LIPO_2S
+
+/* Device supports M17 mode */
+#define CONFIG_M17
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* HWCONFIG_H */
