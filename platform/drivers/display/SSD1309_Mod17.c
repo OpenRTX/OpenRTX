@@ -28,9 +28,15 @@
 #include <hwconfig.h>
 #include <SPI2.h>
 #include "SSD1309_Mod17.h"
+#include <framebuffer.h>
+
+static PIXEL_T *framebuffer;
 
 void SSD1309_init()
 {
+    framebuffer_init(1);
+    framebuffer = framebuffer_getPointer();
+
     gpio_setPin(LCD_CS);
     gpio_clearPin(LCD_DC);
 
@@ -61,9 +67,10 @@ void SSD1309_init()
 void SSD1309_terminate()
 {
     spi2_sendRecv(0xAE);
+    framebuffer_terminate();
 }
 
-void SSD1309_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
+void SSD1309_renderRows(uint8_t startRow, uint8_t endRow)
 {
     gpio_clearPin(LCD_CS);
 
@@ -72,11 +79,9 @@ void SSD1309_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
     uint8_t endPage = endRow / 8;
 
     gpio_clearPin(LCD_DC);
-    spi2_sendRecv(0x20); // Set page addressing mode
+    spi2_sendRecv(0x20); // Set page addressing mode to horizontal
     spi2_sendRecv(0x02); 
     
-    uint8_t *framebuffer = (uint8_t *)fb;
-
     for(uint8_t page = startPage; page < endPage; page++)
     {
         gpio_clearPin(LCD_DC);
@@ -86,7 +91,6 @@ void SSD1309_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
         gpio_setPin(LCD_DC); // DC high -> data mode
 
         uint8_t topRow = page*8;
-
         for(uint8_t col = 0; col < CONFIG_SCREEN_WIDTH; col++)
         {
             uint8_t data = 0;
@@ -105,10 +109,9 @@ void SSD1309_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
     gpio_setPin(LCD_CS);
 }
 
-void SSD1309_render(void *fb)
+void SSD1309_render()
 {
     gpio_clearPin(LCD_CS);
-
     gpio_clearPin(LCD_DC);
     spi2_sendRecv(0xB0);
     spi2_sendRecv(0x20); // Set horizontal addressing mode
@@ -117,24 +120,8 @@ void SSD1309_render(void *fb)
     spi2_sendRecv(0x10);
     gpio_setPin(LCD_DC); // DC high -> data mode
 
-    uint8_t *framebuffer = (uint8_t *)fb;
-
-    // Refresh the whole screen 8 rows by 8 rows
-    for(uint8_t topRow = 0; topRow <= 56; topRow += 8)
-    {
-        for(uint8_t col = 0; col < CONFIG_SCREEN_WIDTH; col++)
-        {
-            uint8_t data = 0;
-            uint8_t bit_offset = col%8; // Bit offset in the fb for the column we are refreshing
-            // Gather the 8 rows of data
-            for(uint8_t subRow = 0; subRow < 8; subRow++)
-            {
-                uint8_t cell =  framebuffer[((topRow+subRow)*CONFIG_SCREEN_WIDTH+col)/8];
-                data |= ((cell>>bit_offset)&0x01) << subRow;
-            }
-            spi2_sendRecv(data);
-        }
-        
+    for(size_t i = 0; i < FB_SIZE; i++){
+        spi2_sendRecv(framebuffer[i]);
     }
     
     gpio_setPin(LCD_CS); 

@@ -34,6 +34,9 @@
 /* Screen pixel format */
 #define CONFIG_PIX_FMT_BW
 
+/* Device supports bit banding */
+#define CONFIG_BIT_BANDING
+
 /* Device has no battery */
 #define CONFIG_BAT_NONE
 

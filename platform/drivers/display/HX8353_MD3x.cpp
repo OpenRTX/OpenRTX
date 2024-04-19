@@ -25,6 +25,7 @@
 #include <string.h>
 #include <miosix.h>
 #include <kernel/scheduler/scheduler.h>
+#include <framebuffer.h>
 
 /**
  * LCD command set, basic and extended
@@ -90,6 +91,7 @@
 
 using namespace miosix;
 static Thread *lcdWaiting = 0;
+static PIXEL_T *framebuffer;
 
 void __attribute__((used)) DmaImpl()
 {
@@ -122,6 +124,9 @@ static inline __attribute__((__always_inline__)) void writeData(uint8_t val)
 
 void display_init()
 {
+    framebuffer_init(0);
+    framebuffer = framebuffer_getPointer();
+
     /* Initialise backlight driver */
     backlight_init();
 
@@ -431,9 +436,10 @@ void display_terminate()
     /* Shut off FSMC and deallocate framebuffer */
     RCC->AHB3ENR &= ~RCC_AHB3ENR_FSMCEN;
     __DSB();
+    framebuffer_terminate();
 }
 
-void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
+void display_renderRows(uint8_t startRow, uint8_t endRow)
 {
     /*
      * Put screen data lines back to alternate function mode, since they are in
@@ -456,7 +462,7 @@ void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
      * the CS pin low, in this way user code calling the renderingInProgress
      * function gets true as return value and does not stomp our work.
      */
-    uint16_t *frameBuffer = (uint16_t *) fb;
+    uint16_t *frameBuffer = (uint16_t *) framebuffer;
     for(uint8_t y = startRow; y < endRow; y++)
     {
         for(uint8_t x = 0; x < CONFIG_SCREEN_WIDTH; x++)
@@ -511,9 +517,9 @@ void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
     }
 }
 
-void display_render(void *fb)
+void display_render()
 {
-    display_renderRows(0, CONFIG_SCREEN_HEIGHT, fb);
+    display_renderRows(0, CONFIG_SCREEN_HEIGHT);
 }
 
 void display_setContrast(uint8_t contrast)

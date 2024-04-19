@@ -157,13 +157,6 @@ void gfx_clearScreen();
 void gfx_fillScreen(color_t color);
 
 /**
- * Change the color of a single pixel.
- * @param pos: x,y coordinates of the pixel.
- * @param color: desired pixel color, in color_t format.
- */
-void gfx_setPixel(point_t pos, color_t color);
-
-/**
  * Draw a line from start to end coordinates, ends included.
  * @param start: line start point, in pixel coordinates.
  * @param end: line end point, in pixel coordinates.

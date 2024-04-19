@@ -28,9 +28,15 @@
 #include <hwconfig.h>
 #include <SPI2.h>
 #include "SH110x_Mod17.h"
+#include <framebuffer.h>
+
+static PIXEL_T *framebuffer;
 
 void SH110x_init()
 {
+    framebuffer_init(0);
+    framebuffer = framebuffer_getPointer();
+
     gpio_setPin(LCD_CS);
     gpio_clearPin(LCD_DC);
 
@@ -64,40 +70,43 @@ void SH110x_init()
     spi2_sendRecv(0xA4);    /* SH110X_DISPLAYALLON_RESUME      */
     spi2_sendRecv(0xA6);    /* SH110X_NORMALDISPLAY            */
     spi2_sendRecv(0xAF);    /* SH110x_DISPLAYON                */
+    spi2_sendRecv(0x21);
     gpio_setPin(LCD_CS);
 }
 
 void SH110x_terminate()
 {
     spi2_sendRecv(0xAE);
+    framebuffer_terminate();
 }
 
-void SH110x_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
+void SH110x_renderRows(uint8_t startRow, uint8_t endRow)
 {
     gpio_clearPin(LCD_CS);
+    gpio_clearPin(LCD_DC);              /* RS low -> command mode */
+    (void) spi2_sendRecv(0xB0);         /* Set X position         */
+    gpio_setPin(LCD_DC);                /* RS high -> data mode   */
+    size_t index = 0; 
 
-    uint8_t *frameBuffer = (uint8_t *) fb;
     for(uint8_t y = startRow; y < endRow; y++)
     {
+        gpio_clearPin(LCD_DC);              /* RS low -> command mode */
+        (void) spi2_sendRecv(y & 0x0F);     /* Set Y position         */
+        (void) spi2_sendRecv(0x10 | ((y >> 4) & 0x07));
+        gpio_setPin(LCD_DC);                /* RS high -> data mode   */
+
         for(uint8_t x = 0; x < CONFIG_SCREEN_WIDTH/8; x++)
         {
-            gpio_clearPin(LCD_DC);              /* RS low -> command mode */
-            (void) spi2_sendRecv(y & 0x0F);     /* Set Y position         */
-            (void) spi2_sendRecv(0x10 | ((y >> 4) & 0x07));
-            (void) spi2_sendRecv(0xB0 | x);     /* Set X position         */
-            gpio_setPin(LCD_DC);                /* RS high -> data mode   */
-
-            size_t pos = x + y * (CONFIG_SCREEN_WIDTH/8);
-            spi2_sendRecv(frameBuffer[pos]);
+            spi2_sendRecv(framebuffer[index++]);
         }
     }
 
     gpio_setPin(LCD_CS);
 }
 
-void SH110x_render(void *fb)
+void SH110x_render()
 {
-    SH110x_renderRows(0, CONFIG_SCREEN_HEIGHT, fb);
+    SH110x_renderRows(0, CONFIG_SCREEN_HEIGHT);
 }
 
 void SH110x_setContrast(uint8_t contrast)

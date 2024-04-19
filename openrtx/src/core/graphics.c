@@ -18,8 +18,8 @@
  ***************************************************************************/
 
 /**
- * This source file provides an  implementation for the graphics.h interface
- * It is suitable for both color, grayscale and B/W display
+ * This source file provides an implementation for the graphics.h interface
+ * It is suitable for both color, grayscale and B/W display.
  */
 
 #include <interfaces/display.h>
@@ -31,6 +31,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <math.h>
+#include <framebuffer.h>
 
 #include <gfxfont.h>
 #include <TomThumb.h>
@@ -86,72 +87,7 @@ static const GFXfont fonts[] = { TomThumb,            // 5pt
                                  Symbols8pt7b       // 8pt
                                };
 
-#ifdef CONFIG_PIX_FMT_RGB565
-
-/* This specialization is meant for an RGB565 little endian pixel format.
- * Thus, to accomodate for the endianness, the fields in struct rgb565_t have to
- * be written in reversed order.
- *
- * For more details about endianness and bitfield structs see the following web
- * page: http://mjfrazer.org/mjfrazer/bitfields/
- */
-
-#define PIXEL_T rgb565_t
-#define FB_SIZE (CONFIG_SCREEN_HEIGHT * CONFIG_SCREEN_WIDTH)
-
-typedef struct
-{
-    uint16_t b : 5;
-    uint16_t g : 6;
-    uint16_t r : 5;
-}
-rgb565_t;
-
-static rgb565_t _true2highColor(color_t true_color)
-{
-    rgb565_t high_color;
-    high_color.r = true_color.r >> 3;
-    high_color.g = true_color.g >> 2;
-    high_color.b = true_color.b >> 3;
-
-    return high_color;
-}
-
-#elif defined CONFIG_PIX_FMT_BW
-
-/**
- * This specialization is meant for black and white pixel format.
- * It is suitable for monochromatic displays with 1 bit per pixel,
- * it will have RGB and grayscale counterparts
- */
-
-#define PIXEL_T uint8_t
-#define FB_SIZE (((CONFIG_SCREEN_HEIGHT * CONFIG_SCREEN_WIDTH) / 8 ) + 1)
-
-typedef enum
-{
-    WHITE = 0,
-    BLACK = 1,
-}
-bw_t;
-
-static bw_t _color2bw(color_t true_color)
-{
-    if(true_color.r == 0 &&
-       true_color.g == 0 &&
-       true_color.b == 0)
-        return WHITE;
-    else
-        return BLACK;
-}
-
-#else
-#error Please define a pixel format type into hwconfig.h or meson.build
-#endif
-
-static PIXEL_T __attribute__((section(".bss.fb"))) framebuffer[FB_SIZE];
 static char text[32];
-
 
 void gfx_init()
 {
@@ -164,33 +100,17 @@ void gfx_init()
 void gfx_terminate()
 {
     display_terminate();
-}
-
-void gfx_renderRows(uint8_t startRow, uint8_t endRow)
-{
-    display_renderRows(startRow, endRow, framebuffer);
+    framebuffer_terminate();
 }
 
 void gfx_render()
 {
-    display_render(framebuffer);
-}
-
-void gfx_clearRows(uint8_t startRow, uint8_t endRow)
-{
-    if(endRow < startRow)
-        return;
-
-    uint16_t start = startRow * CONFIG_SCREEN_WIDTH * sizeof(PIXEL_T);
-    uint16_t height = endRow - startRow * CONFIG_SCREEN_WIDTH * sizeof(PIXEL_T);
-    // Set the specified rows to 0x00 = make the screen black
-    memset(framebuffer + start, 0x00, height);
+    display_render();
 }
 
 void gfx_clearScreen()
 {
-    // Set the whole framebuffer to 0x00 = make the screen black
-    memset(framebuffer, 0x00, FB_SIZE * sizeof(PIXEL_T));
+    framebuffer_clear();
 }
 
 void gfx_fillScreen(color_t color)
@@ -200,44 +120,9 @@ void gfx_fillScreen(color_t color)
         for(int16_t x = 0; x < CONFIG_SCREEN_WIDTH; x++)
         {
             point_t pos = {x, y};
-            gfx_setPixel(pos, color);
+            framebuffer_setPixel(pos, color);
         }
     }
-}
-
-inline void gfx_setPixel(point_t pos, color_t color)
-{
-    if (pos.x >= CONFIG_SCREEN_WIDTH || pos.y >= CONFIG_SCREEN_HEIGHT ||
-        pos.x < 0 || pos.y < 0)
-        return; // off the screen
-
-#ifdef CONFIG_PIX_FMT_RGB565
-    // Blend old pixel value and new one
-    if (color.alpha < 255)
-    {
-        uint8_t alpha = color.alpha;
-        rgb565_t new_pixel = _true2highColor(color);
-        rgb565_t old_pixel = framebuffer[pos.x + pos.y*CONFIG_SCREEN_WIDTH];
-        rgb565_t pixel;
-        pixel.r = ((255-alpha)*old_pixel.r+alpha*new_pixel.r)/255;
-        pixel.g = ((255-alpha)*old_pixel.g+alpha*new_pixel.g)/255;
-        pixel.b = ((255-alpha)*old_pixel.b+alpha*new_pixel.b)/255;
-        framebuffer[pos.x + pos.y*CONFIG_SCREEN_WIDTH] = pixel;
-    }
-    else
-    {
-        framebuffer[pos.x + pos.y*CONFIG_SCREEN_WIDTH] = _true2highColor(color);
-    }
-#elif defined CONFIG_PIX_FMT_BW
-    // Ignore more than half transparent pixels
-    if (color.alpha >= 128)
-    {
-        uint16_t cell = (pos.x + pos.y*CONFIG_SCREEN_WIDTH) / 8;
-        uint16_t elem = (pos.x + pos.y*CONFIG_SCREEN_WIDTH) % 8;
-        framebuffer[cell] &= ~(1 << elem);
-        framebuffer[cell] |= (_color2bw(color) << elem);
-    }
-#endif
 }
 
 void gfx_drawLine(point_t start, point_t end, color_t color)
@@ -286,9 +171,9 @@ void gfx_drawLine(point_t start, point_t end, color_t color)
     {
         point_t pos = {start.y, start.x};
         if (steep)
-            gfx_setPixel(pos, color);
+            framebuffer_setPixel(pos, color);
         else
-            gfx_setPixel(start, color);
+            framebuffer_setPixel(start, color);
 
         err -= dy;
         if (err < 0)
@@ -318,7 +203,7 @@ void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color,
             if(fill || perimeter)
             {
                 point_t pos = {x, y};
-                gfx_setPixel(pos, color);
+                framebuffer_setPixel(pos, color);
             }
         }
     }
@@ -334,14 +219,14 @@ void gfx_drawCircle(point_t start, uint16_t r, color_t color)
 
     point_t pos = start;
     pos.y += r;
-    gfx_setPixel(pos, color);
+    framebuffer_setPixel(pos, color);
     pos.y -= 2 * r;
-    gfx_setPixel(pos, color);
+    framebuffer_setPixel(pos, color);
     pos.y += r;
     pos.x += r;
-    gfx_setPixel(pos, color);
+    framebuffer_setPixel(pos, color);
     pos.x -= 2 * r;
-    gfx_setPixel(pos, color);
+    framebuffer_setPixel(pos, color);
 
     while (x < y)
     {
@@ -358,28 +243,28 @@ void gfx_drawCircle(point_t start, uint16_t r, color_t color)
 
         pos.x = start.x + x;
         pos.y = start.y + y;
-        gfx_setPixel(pos, color);
+        framebuffer_setPixel(pos, color);
         pos.x = start.x - x;
         pos.y = start.y + y;
-        gfx_setPixel(pos, color);
+        framebuffer_setPixel(pos, color);
         pos.x = start.x + x;
         pos.y = start.y - y;
-        gfx_setPixel(pos, color);
+        framebuffer_setPixel(pos, color);
         pos.x = start.x - x;
         pos.y = start.y - y;
-        gfx_setPixel(pos, color);
+        framebuffer_setPixel(pos, color);
         pos.x = start.x + y;
         pos.y = start.y + x;
-        gfx_setPixel(pos, color);
+        framebuffer_setPixel(pos, color);
         pos.x = start.x - y;
         pos.y = start.y + x;
-        gfx_setPixel(pos, color);
+        framebuffer_setPixel(pos, color);
         pos.x = start.x + y;
         pos.y = start.y - x;
-        gfx_setPixel(pos, color);
+        framebuffer_setPixel(pos, color);
         pos.x = start.x - y;
         pos.y = start.y - x;
-        gfx_setPixel(pos, color);
+        framebuffer_setPixel(pos, color);
     }
 }
 
@@ -523,7 +408,7 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
                         point_t pos;
                         pos.x = start.x + xo + xx;
                         pos.y = start.y + yo + yy;
-                        gfx_setPixel(pos, color);
+                        framebuffer_setPixel(pos, color);
 
                     }
                 }
@@ -684,10 +569,10 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
     bottom_right.x += width - 1;
     bottom_right.y += height - 1;
 
-    gfx_setPixel(top_left, black);
-    gfx_setPixel(top_right, black);
-    gfx_setPixel(bottom_left, black);
-    gfx_setPixel(bottom_right, black);
+    framebuffer_setPixel(top_left, black);
+    framebuffer_setPixel(top_right, black);
+    framebuffer_setPixel(bottom_left, black);
+    framebuffer_setPixel(bottom_right, black);
 
     // Draw the button
     point_t button_start;
@@ -741,7 +626,7 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, rssi_t rssi,
         color = (i > 9) ? red : color;
         point_t pixel_pos = start;
         pixel_pos.x += i * (width - 1) / 11;
-        gfx_setPixel(pixel_pos, color);
+        framebuffer_setPixel(pixel_pos, color);
         pixel_pos.y += height;
         if (i == 10) {
             pixel_pos.x -= 8;
@@ -834,9 +719,9 @@ void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, rssi_t 
     {
         point_t pixel_pos =  {start.x, (uint8_t) (start.y + volume_height)};
         pixel_pos.x += i * (width - 1) / 4;
-        gfx_setPixel(pixel_pos, white);
+        framebuffer_setPixel(pixel_pos, white);
         pixel_pos.y += ((bar_height / bar_height_divider * 3) + 3);
-        gfx_setPixel(pixel_pos, white);
+        framebuffer_setPixel(pixel_pos, white);
     }
     // Level bar
     uint16_t level_height = bar_height * 3 / bar_height_divider;

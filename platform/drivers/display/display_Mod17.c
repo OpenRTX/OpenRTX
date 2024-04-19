@@ -25,6 +25,7 @@
 #include "SH110x_Mod17.h"
 #include "SSD1309_Mod17.h"
 #include <SPI2.h>
+#include <framebuffer.h>
 
 const hwInfo_t *hwInfo = NULL;
 Mod17_HwInfo_t *mod17HwInfo = NULL;
@@ -32,8 +33,8 @@ Mod17_HwInfo_t *mod17HwInfo = NULL;
 typedef struct {
     void (*init)(void);
     void (*terminate)(void);
-    void (*renderRows)(uint8_t , uint8_t, void *);
-    void (*render)(void *);
+    void (*renderRows)(uint8_t , uint8_t);
+    void (*render)();
     void (*setContrast)(uint8_t);
     void (*setBacklightLevel)(uint8_t);
 } display_fcts_t;
@@ -97,14 +98,14 @@ void display_terminate()
     spi2_terminate();
 }
 
-void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
+void display_renderRows(uint8_t startRow, uint8_t endRow)
 {
-    disp_fcts.renderRows(startRow, endRow, fb);
+    disp_fcts.renderRows(startRow, endRow);
 }
 
-void display_render(void *fb)
+void display_render()
 {
-    disp_fcts.render(fb);
+    disp_fcts.render();
 }
 
 void display_setContrast(uint8_t contrast)

@@ -12,9 +12,9 @@ void SH110x_init();
 
 void SH110x_terminate();
 
-void SH110x_renderRows(uint8_t startRow, uint8_t endRow, void *fb);
+void SH110x_renderRows(uint8_t startRow, uint8_t endRow);
 
-void SH110x_render(void *fb);
+void SH110x_render();
 
 void SH110x_setContrast(uint8_t contrast);
 

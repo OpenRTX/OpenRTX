@@ -28,7 +28,9 @@
 #include <interfaces/delays.h>
 #include <hwconfig.h>
 #include <SPI2.h>
+#include <framebuffer.h>
 
+static PIXEL_T *framebuffer;
 
 /**
  * \internal
@@ -38,12 +40,12 @@
  *
  * @param row: pixel row to be be sent.
  */
-void SSD1306_renderRow(uint8_t row, uint8_t *frameBuffer)
+void SSD1306_renderRow(uint8_t row)
 {
     for(uint16_t i = 0; i < 64; i++)
     {
         uint8_t out = 0;
-        uint8_t tmp = frameBuffer[(i * 16) + (15 - row)];
+        uint8_t tmp = framebuffer[(i * 16) + (15 - row)];
 
         for(uint8_t j = 0; j < 8; j++)
         {
@@ -57,6 +59,9 @@ void SSD1306_renderRow(uint8_t row, uint8_t *frameBuffer)
 
 void SSD1306_init()
 {
+    framebuffer_init(0);
+    framebuffer = framebuffer_getPointer();
+
     gpio_setPin(LCD_CS);
     gpio_clearPin(LCD_RS);
 
@@ -96,9 +101,10 @@ void SSD1306_init()
 void SSD1306_terminate()
 {
     spi2_terminate();
+    framebuffer_terminate();
 }
 
-void SSD1306_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
+void SSD1306_renderRows(uint8_t startRow, uint8_t endRow)
 {
     gpio_clearPin(LCD_CS);
 
@@ -109,15 +115,15 @@ void SSD1306_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
         (void) spi2_sendRecv(0x00);       /* Set X position         */
         (void) spi2_sendRecv(0x10);
         gpio_setPin(LCD_RS);              /* RS high -> data mode   */
-        SSD1306_renderRow(row, (uint8_t *) fb);
+        SSD1306_renderRow(row, framebuffer);
     }
 
     gpio_setPin(LCD_CS);
 }
 
-void SSD1306_render(void *fb)
+void SSD1306_render()
 {
-    SSD1306_renderRows(0, (CONFIG_SCREEN_WIDTH / 8) - 1, fb);
+    SSD1306_renderRows(0, (CONFIG_SCREEN_WIDTH / 8) - 1, framebuffer);
 }
 
 void SSD1306_setContrast(uint8_t contrast)

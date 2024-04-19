@@ -27,6 +27,9 @@
 #include <interfaces/display.h>
 #include <interfaces/delays.h>
 #include <hwconfig.h>
+#include <framebuffer.h>
+
+static PIXEL_T *framebuffer;
 
 /**
  * \internal
@@ -62,10 +65,10 @@ static void sendByteToController(uint8_t value)
  *
  * @param row: pixel row to be be sent.
  */
-static void display_renderRow(uint8_t row, uint8_t *frameBuffer)
+static void display_renderRow(uint8_t row)
 {
     /* magic stuff */
-    uint8_t *buf = (frameBuffer + 128 * row);
+    uint8_t *buf = (framebuffer + 128 * row);
     for (uint8_t i = 0; i<16; i++)
     {
         uint8_t tmp[8] = {0};
@@ -92,6 +95,9 @@ static void display_renderRow(uint8_t row, uint8_t *frameBuffer)
 
 void display_init()
 {
+    framebuffer_init(0);
+    framebuffer = framebuffer_getPointer();
+
     backlight_init();           /* Initialise backlight driver */
 
     gpio_setMode(LCD_CS,  OUTPUT);
@@ -132,9 +138,10 @@ void display_terminate()
     gpio_setMode(LCD_RS,  INPUT);
     gpio_setMode(LCD_CLK, INPUT);
     gpio_setMode(LCD_DAT, INPUT);
+    framebuffer_terminate();
 }
 
-void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
+void display_renderRows(uint8_t startRow, uint8_t endRow)
 {
     for(uint8_t row = startRow; row < endRow; row++)
     {
@@ -143,14 +150,14 @@ void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
         sendByteToController(0x10);       /* Set X position         */
         sendByteToController(0x04);
         gpio_setPin(LCD_RS);              /* RS high -> data mode   */
-        display_renderRow(row, (uint8_t *) fb);
+        display_renderRow(row);
     }
 
 }
 
-void display_render(void *fb)
+void display_render()
 {
-    display_renderRows(0, CONFIG_SCREEN_HEIGHT / 8, fb);
+    display_renderRows(0, CONFIG_SCREEN_HEIGHT / 8);
 }
 
 void display_setContrast(uint8_t contrast)

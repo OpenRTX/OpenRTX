@@ -21,6 +21,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <framebuffer.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -49,18 +50,12 @@ extern "C" {
  */
 
 /**
- * This function initialises the display and allocates framebuffer on the heap.
- *
- * NOTE: framebuffer allocation is the first operation performed, if fails an
- * error message is printed on the virtual COM port and this function returns
- * prematurely, without configuring the display.
- * Thus, a dark screen can be symptom of failed allocation.
+ * This function initialises the display and the framebuffer.
  */
 void display_init();
 
 /**
- * When called, this function terminates the display driver
- * and deallocates the framebuffer.
+ * When called, this function terminates the display driver and the framebuffer.
  */
 void display_terminate();
 
@@ -72,7 +67,7 @@ void display_terminate();
  * @param endRow: last row of the framebuffer section to be copied
  * @param fb: pointer to frameBuffer.
  */
-void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb);
+void display_renderRows(uint8_t startRow, uint8_t endRow);
 
 /**
  * Copy framebuffer content to the display internal buffer, to be called
@@ -81,7 +76,7 @@ void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb);
  *
  * @param fb: pointer to framebuffer.
  */
-void display_render(void *fb);
+void display_render();
 
 /**
  * Set display contrast.

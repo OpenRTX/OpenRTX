@@ -27,7 +27,9 @@
 #include <interfaces/delays.h>
 #include "hwconfig.h"
 #include <SPI2.h>
+#include <framebuffer.h>
 
+static PIXEL_T *framebuffer;
 
 /**
  * \internal
@@ -67,6 +69,9 @@ static void display_renderRow(uint8_t row, uint8_t *frameBuffer)
 
 void display_init()
 {
+    framebuffer_init(0);
+    framebuffer = framebuffer_getPointer();
+
     gpio_setMode(LCD_CS,  OUTPUT);
     gpio_setMode(LCD_RST, OUTPUT);
     gpio_setMode(LCD_RS,  OUTPUT);
@@ -98,10 +103,10 @@ void display_init()
 
 void display_terminate()
 {
-
+    framebuffer_terminate();
 }
 
-void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
+void display_renderRows(uint8_t startRow, uint8_t endRow)
 {
     spi2_lockDeviceBlocking();
     gpio_clearPin(LCD_CS);
@@ -113,16 +118,16 @@ void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
         (void) spi2_sendRecv(0x10);       /* Set X position         */
         (void) spi2_sendRecv(0x04);
         gpio_setPin(LCD_RS);              /* RS high -> data mode   */
-        display_renderRow(row, (uint8_t *) fb);
+        display_renderRow(row, framebuffer);
     }
 
     gpio_setPin(LCD_CS);
     spi2_releaseDevice();
 }
 
-void display_render(void *fb)
+void display_render()
 {
-    display_renderRows(0, CONFIG_SCREEN_HEIGHT / 8, fb);
+    display_renderRows(0, CONFIG_SCREEN_HEIGHT / 8);
 }
 
 void display_setContrast(uint8_t contrast)

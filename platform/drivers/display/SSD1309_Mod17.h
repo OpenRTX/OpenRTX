@@ -34,9 +34,9 @@ void SSD1309_init();
 
 void SSD1309_terminate();
 
-void SSD1309_renderRows(uint8_t startRow, uint8_t endRow, void *fb);
+void SSD1309_renderRows(uint8_t startRow, uint8_t endRow);
 
-void SSD1309_render(void *fb);
+void SSD1309_render();
 
 void SSD1309_setContrast(uint8_t contrast);
 
