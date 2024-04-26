@@ -765,7 +765,7 @@ void ui_updateFSM(bool *sync_rtx)
                             _ui_changeWiper(&mod17CalData.tx_wiper, -1);
                             break;
                         case D_RXWIPER:
-                            _ui_changeWiper(&mod17CalData.tx_wiper, -1);
+                            _ui_changeWiper(&mod17CalData.rx_wiper, -1);
                             break;
                         case D_TXINVERT:
                             mod17CalData.bb_tx_invert -= 1;
