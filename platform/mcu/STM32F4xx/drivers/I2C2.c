@@ -73,6 +73,7 @@ void smb2_init()
     
     /* Enable ERR interrupt to handle timeouts and alerts (if needed) */
     I2C2->CR2 = I2C_CR2_ITERREN | 42;   /* ERR interrupt, APB1 clock is 42MHz   */
+    NVIC_ClearPendingIRQ(I2C2_ER_IRQn);
     NVIC_EnableIRQ(I2C2_ER_IRQn);
     NVIC_SetPriority(I2C2_ER_IRQn, 10);
 
@@ -150,7 +151,10 @@ error_t i2c2_write_bytes(uint8_t addr, uint8_t *bytes, uint16_t length, bool sto
     while(!(I2C2->SR1 & I2C_SR1_ADDR_Msk))
     {
         if(i2c2_smb_state.timeout)
+        {
+            i2c2_smb_state.timeout = false;
             return ETIMEDOUT;
+        }
         else if(I2C2->SR1 & I2C_SR1_AF_Msk)
         {
             I2C2->CR1 |= I2C_CR1_STOP;
@@ -174,7 +178,10 @@ error_t i2c2_write_bytes(uint8_t addr, uint8_t *bytes, uint16_t length, bool sto
         while(!(I2C2->SR1 & I2C_SR1_TXE_Msk))
         {
             if(i2c2_smb_state.timeout)
+            {
+                i2c2_smb_state.timeout = false;
                 return ETIMEDOUT;
+            }
         }
     }
 
@@ -210,7 +217,10 @@ error_t i2c2_read_bytes(uint8_t addr, uint8_t *bytes, uint16_t length, bool stop
     while(!(I2C2->SR1 & I2C_SR1_ADDR_Msk))
     {
         if(i2c2_smb_state.timeout)
+        {
+            i2c2_smb_state.timeout = false;
             return ETIMEDOUT;
+        }
         else if(I2C2->SR1 & I2C_SR1_AF_Msk)
         {
             I2C2->CR1 |= I2C_CR1_STOP;
@@ -236,7 +246,10 @@ error_t i2c2_read_bytes(uint8_t addr, uint8_t *bytes, uint16_t length, bool stop
         while(!(I2C2->SR1 & I2C_SR1_RXNE_Msk))
         {
             if(i2c2_smb_state.timeout)
+            {
+                i2c2_smb_state.timeout = false;
                 return ETIMEDOUT;
+            }
         }
         if(i+2 >= length)
             I2C2->CR1 &= ~I2C_CR1_ACK; // Nack
@@ -351,7 +364,10 @@ error_t smb2_block_read(uint8_t addr, uint8_t command, uint8_t *bytes, uint8_t *
     while(!(I2C2->SR1 & I2C_SR1_ADDR_Msk))
     {
         if(i2c2_smb_state.timeout)
+        {
+            i2c2_smb_state.timeout = false;
             return ETIMEDOUT;
+        }
         else if(I2C2->SR1 & I2C_SR1_AF_Msk)
         {
             I2C2->CR1 |= I2C_CR1_STOP;
@@ -385,6 +401,7 @@ error_t smb2_block_read(uint8_t addr, uint8_t command, uint8_t *bytes, uint8_t *
             if(i2c2_smb_state.timeout)
             {
                 free(bytes);
+                i2c2_smb_state.timeout = false;
                 return ETIMEDOUT;
             }
         }
@@ -427,7 +444,10 @@ error_t smb2_block_write_block_read_process_call(uint8_t addr, uint8_t command, 
     while(!(I2C2->SR1 & I2C_SR1_ADDR_Msk))
     {
         if(i2c2_smb_state.timeout)
+        {
+            i2c2_smb_state.timeout = false;
             return ETIMEDOUT;
+        }
         else if(I2C2->SR1 & I2C_SR1_AF_Msk)
         {
             I2C2->CR1 |= I2C_CR1_STOP;
@@ -462,6 +482,7 @@ error_t smb2_block_write_block_read_process_call(uint8_t addr, uint8_t command, 
             if(i2c2_smb_state.timeout)
             {
                 free(bytesR);
+                i2c2_smb_state.timeout = false;
                 return ETIMEDOUT;
             }
         }
@@ -479,7 +500,10 @@ error_t smb2_block_write_block_read_process_call(uint8_t addr, uint8_t command, 
 
 }
 
-void I2C2_ER_IRQHandler()
+// Definition of C++ mangled name for linking to NVIC table
+void __attribute__((alias("I2C2_ER_IRQHandler"))) _Z18I2C2_ER_IRQHandlerv();
+
+void __attribute__((used)) I2C2_ER_IRQHandler()
 {    
     if(I2C2->SR1 & I2C_SR1_TIMEOUT_Msk)
     {
