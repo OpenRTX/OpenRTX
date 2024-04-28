@@ -13,7 +13,7 @@ if(NOT OPENRTX_UI)
 endif()
 
 if(OPENRTX_UI STREQUAL "default")
-    target_sources(UI INTERFACE ${DEFAULT_SRC})
+    target_sources(UI PRIVATE ${DEFAULT_SRC})
 elseif(OPENRTX_UI STREQUAL "module17")
     target_sources(UI PRIVATE ${MODULE17_SRC})
 else()
