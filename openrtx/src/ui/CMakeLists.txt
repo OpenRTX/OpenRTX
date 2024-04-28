@@ -24,4 +24,7 @@ endif()
 message("Using OpenRTX UI: ${OPENRTX_UI}")
 
 target_link_libraries(UI PRIVATE Core Platform)
+
+if(OPENRTX_TARGET STREQUAL "linux")
 target_link_libraries(UIDefault PRIVATE Core Platform)
+endif()
