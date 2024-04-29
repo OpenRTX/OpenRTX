@@ -452,7 +452,7 @@ mod17_def += openrtx_def + stm32f405_def
 cs7000_src = ['platform/drivers/stubs/nvmem_stub.c',
              'platform/drivers/stubs/cps_io_stub.c',
              'platform/drivers/stubs/radio_stub.c',
-             'platform/drivers/stubs/keyboard_stub.c',
+             'platform/drivers/keyboard/keyboard_CS7000.c',
              'platform/drivers/display/ST7735R_CS7000.c',
              'platform/drivers/backlight/backlight_CS7000.c',
              'platform/drivers/stubs/audio_stub.c',
