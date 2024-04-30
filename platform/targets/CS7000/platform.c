@@ -19,6 +19,7 @@
 #include <peripherals/gpio.h>
 #include <gpio_shiftReg.h>
 #include <spi_bitbang.h>
+#include <adc_stm32.h>
 #include <hwconfig.h>
 #include <string.h>
 
@@ -37,14 +38,19 @@ static const hwInfo_t hwInfo =
 
 void platform_init()
 {
-    gpio_setMode(PTT_SW,   INPUT);
-    gpio_setMode(PTT_EXT,  INPUT);
+    gpio_setMode(PTT_SW,       INPUT);
+    gpio_setMode(PTT_EXT,      INPUT);
+
+    gpio_setMode(MAIN_PWR_DET, ANALOG);
+    gpio_setMode(AIN_MIC,      ANALOG);
+    gpio_setMode(AIN_VOLUME,   ANALOG);
 
     gpio_setMode(GPIOEXT_CLK, OUTPUT);
     gpio_setMode(GPIOEXT_DAT, OUTPUT);
 
     spi_init((const struct spiDevice *) &spiSr);
     gpioShiftReg_init(&extGpio);
+    adcStm32_init(&adc1);
 
     #ifndef RUNNING_TESTSUITE
     gpioDev_set(MAIN_PWR_SW);
@@ -53,6 +59,7 @@ void platform_init()
 
 void platform_terminate()
 {
+    adcStm32_terminate(&adc1);
 
     #ifndef RUNNING_TESTSUITE
     gpioDev_clear(MAIN_PWR_SW);
@@ -63,17 +70,49 @@ void platform_terminate()
 
 uint16_t platform_getVbat()
 {
-    return 7400;   // TODO
+    /*
+     * Battery voltage is measured through an 1:3.9 voltage divider and
+     * adc1_getMeasurement returns a value in uV.
+     */
+    uint32_t vbat = adc_getVoltage(&adc1, ADC_VBAT_CH) * 39;
+    return vbat / 10000;
 }
 
 uint8_t platform_getMicLevel()
 {
-    return 0;   // TODO
+    /* Value from ADC is 12 bit wide: shift right by four to get 0 - 255 */
+    return adc_getRawSample(&adc1, ADC_MIC_CH) >> 4;
 }
 
 uint8_t platform_getVolumeLevel()
 {
-    return 0;   // TODO
+    /*
+     * Volume level corresponds to an analog signal in the range 20 - 2520mV.
+     * Potentiometer has pseudo-logarithmic law, well described with two straight
+     * lines with a breakpoint around 410mV.
+     * Output value has range 0 - 255 with breakpoint at 139.
+     */
+    uint16_t value = adc_getRawSample(&adc1, ADC_VOL_CH);
+    uint32_t output;
+
+    if(value <= 512)
+    {
+        // First line: offset zero, slope 0.271
+        output = value;
+        output = (output * 271) / 1000;
+    }
+    else
+    {
+        // Second line: offset 512, slope 0.044
+        output  = value - 512;
+        output  = (output * 44) / 1000;
+        output += 139;
+    }
+
+    if(output > 255)
+        output = 255;
+
+    return output;
 }
 
 int8_t platform_getChSelector()
@@ -97,7 +136,11 @@ bool platform_pwrButtonStatus()
      * is always a bit of noise in the ADC measurement making the returned
      * voltage not to be exactly zero.
      */
-    return (platform_getVbat() > 1000) ? true : false;
+    uint16_t vbat = platform_getVbat();
+    if(vbat < 1000)
+        return false;
+
+    return true;
 }
 
 void platform_ledOn(led_t led)

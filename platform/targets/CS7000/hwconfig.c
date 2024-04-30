@@ -17,6 +17,8 @@
 
 #include <gpio_shiftReg.h>
 #include <spi_bitbang.h>
+#include <adc_stm32.h>
+#include <hwconfig.h>
 #include <pthread.h>
 
 /**
@@ -56,6 +58,8 @@ static uint8_t spiSr_func(const void *priv, uint8_t value)
 }
 
 static const struct gpioPin shiftRegStrobe = { GPIOEXT_STR };
+static pthread_mutex_t adc1Mutex;
 
 SPI_CUSTOM_DEVICE_DEFINE(spiSr, spiSr_func, NULL, NULL)
 GPIO_SHIFTREG_DEVICE_DEFINE(extGpio, (const struct spiDevice *) &spiSr, shiftRegStrobe, 24)
+ADC_STM32_DEVICE_DEFINE(adc1, ADC1, &adc1Mutex, 3300000)
