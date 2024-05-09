@@ -27,7 +27,7 @@ int cap1206_init(const struct i2cDevice *i2c)
 
     // Config 1 register, enable SMB timeout
     data[0] = CAP1206_CONFIG_1;
-    data[1] = CAP1206_CONFIG_1_TIMEOUT | CAP1206_CONFIG_1_DIS_DIG_NOISE;
+    data[1] = /*CAP1206_CONFIG_1_TIMEOUT |*/ CAP1206_CONFIG_1_DIS_DIG_NOISE;
     ret = i2c_write(i2c, CAP1206_ADDR, data, 2, true);
     if(ret < 0)
     {
