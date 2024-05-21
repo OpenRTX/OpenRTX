@@ -226,6 +226,24 @@ stm32f405_inc = ['platform/mcu/CMSIS/Include',
 stm32f405_def = {'STM32F405xx': '', 'HSE_VALUE':'8000000'}
 
 ##
+## STM32G474
+##
+
+stm32g474_src = ['platform/mcu/STM32G4xx/boot/startup.cpp',
+                 'platform/mcu/STM32G4xx/boot/bsp.cpp',
+                 'platform/mcu/STM32G4xx/boot/libc_integration.cpp',
+                 'platform/mcu/STM32G4xx/drivers/gpio.c',
+                 'platform/mcu/STM32G4xx/drivers/delays.cpp',
+                 'platform/mcu/CMSIS/Device/ST/STM32G4xx/Source/system_stm32g4xx.c']
+
+stm32g474_inc = ['platform/mcu/CMSIS/Include',
+                 'platform/mcu/CMSIS/Device/ST/STM32G4xx/Include',
+                 'platform/mcu/STM32G4xx',
+                 'platform/mcu/STM32G4xx/drivers']
+
+stm32g474_def = {'STM32G474xx': '', 'HSE_VALUE':'8000000', 'SYSCLK_FREQ_170MHz':''}
+
+##
 ## MK22FN512
 ##
 
