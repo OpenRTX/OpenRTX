@@ -58,10 +58,10 @@ void audio_init()
 {
     gpio_setMode(SPK_MUTE,    OUTPUT);
     gpio_setMode(MIC_MUTE,    OUTPUT);
-    gpio_setMode(AUDIO_MIC,   INPUT_ANALOG);
-    gpio_setMode(AUDIO_SPK,   INPUT_ANALOG);
-    gpio_setMode(BASEBAND_RX, INPUT_ANALOG);
-    gpio_setMode(BASEBAND_TX, INPUT_ANALOG);
+    gpio_setMode(AUDIO_MIC,   ANALOG);
+    gpio_setMode(AUDIO_SPK,   ANALOG);
+    gpio_setMode(BASEBAND_RX, ANALOG);
+    gpio_setMode(BASEBAND_TX, ANALOG);
 
     gpio_setPin(SPK_MUTE);      // Off  = logic high
     gpio_clearPin(MIC_MUTE);    // Off  = logic low

@@ -109,8 +109,7 @@ void __attribute__((naked)) USART1_IRQHandler()
 void gps_init(const uint16_t baud)
 {
     gpio_setMode(GPS_EN,   OUTPUT);
-    gpio_setMode(GPS_DATA, ALTERNATE);
-    gpio_setAlternateFunction(GPS_DATA, 7);
+    gpio_setMode(GPS_DATA, ALTERNATE | ALTERNATE_FUNC(7));
 
     #ifdef PLATFORM_MD3x0
     const unsigned int quot = 2*42000000/baud;  /* APB1 clock is 42MHz */

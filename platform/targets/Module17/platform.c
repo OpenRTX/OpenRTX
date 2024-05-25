@@ -59,7 +59,7 @@ void platform_init()
     gpio_clearPin(PTT_OUT);
 
     /* Set analog output for baseband signal to an idle level of 1.1V */
-    gpio_setMode(BASEBAND_TX, INPUT_ANALOG);
+    gpio_setMode(BASEBAND_TX, ANALOG);
     RCC->APB1ENR |= RCC_APB1ENR_DACEN;
     DAC->CR      |= DAC_CR_EN1;
     DAC->DHR12R1  = 1365;

@@ -54,8 +54,7 @@ void _Z29TIM1_TRG_COM_TIM11_IRQHandlerv()
 void backlight_init()
 {
     #ifndef PLATFORM_MDUV3x0    /* MD-3x0 and MD-9600 */
-    gpio_setMode(LCD_BKLIGHT, ALTERNATE);
-    gpio_setAlternateFunction(LCD_BKLIGHT, 3);
+    gpio_setMode(LCD_BKLIGHT, ALTERNATE | ALTERNATE_FUNC(3));
 
     /*
      * Configure TIM8 for backlight PWM: Fpwm = 1kHz with 8 bit of resolution.

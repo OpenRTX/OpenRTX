@@ -63,12 +63,9 @@ void platform_init()
     /*
      * Initialise SPI2 for external flash and LCD
      */
-    gpio_setMode(SPI2_CLK, ALTERNATE);
-    gpio_setMode(SPI2_SDO, ALTERNATE);
-    gpio_setMode(SPI2_SDI, ALTERNATE);
-    gpio_setAlternateFunction(SPI2_CLK, 5); /* SPI2 is on AF5 */
-    gpio_setAlternateFunction(SPI2_SDO, 5);
-    gpio_setAlternateFunction(SPI2_SDI, 5);
+    gpio_setMode(SPI2_CLK, ALTERNATE | ALTERNATE_FUNC(5));
+    gpio_setMode(SPI2_SDO, ALTERNATE | ALTERNATE_FUNC(5));
+    gpio_setMode(SPI2_SDI, ALTERNATE | ALTERNATE_FUNC(5));
 
     spi2_init();
 

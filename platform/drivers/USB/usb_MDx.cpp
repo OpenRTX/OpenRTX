@@ -35,12 +35,10 @@ void OTG_FS_IRQHandler(void)
 
 void usb_init()
 {
-    gpio_setMode(GPIOA, 11, ALTERNATE);
-    gpio_setAlternateFunction(GPIOA, 11, 10);
-    gpio_setOutputSpeed(GPIOA, 11, HIGH);      // 100MHz output speed
+    gpio_setMode(GPIOA, 11, ALTERNATE | ALTERNATE_FUNC(10));
+    gpio_setMode(GPIOA, 12, ALTERNATE | ALTERNATE_FUNC(10));
 
-    gpio_setMode(GPIOA, 12, ALTERNATE);
-    gpio_setAlternateFunction(GPIOA, 12, 10);
+    gpio_setOutputSpeed(GPIOA, 11, HIGH);      // 100MHz output speed
     gpio_setOutputSpeed(GPIOA, 12, HIGH);      // 100MHz output speed
 
     RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;

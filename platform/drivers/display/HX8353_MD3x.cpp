@@ -180,29 +180,17 @@ void display_init()
                         | 7;        /* ADDSET */
 
     /* Configure alternate function for data and control lines. */
-    gpio_setMode(LCD_D0, ALTERNATE);
-    gpio_setMode(LCD_D1, ALTERNATE);
-    gpio_setMode(LCD_D2, ALTERNATE);
-    gpio_setMode(LCD_D3, ALTERNATE);
-    gpio_setMode(LCD_D4, ALTERNATE);
-    gpio_setMode(LCD_D5, ALTERNATE);
-    gpio_setMode(LCD_D6, ALTERNATE);
-    gpio_setMode(LCD_D7, ALTERNATE);
-    gpio_setMode(LCD_RS, ALTERNATE);
-    gpio_setMode(LCD_WR, ALTERNATE);
-    gpio_setMode(LCD_RD, ALTERNATE);
-
-    gpio_setAlternateFunction(LCD_D0, 12);
-    gpio_setAlternateFunction(LCD_D1, 12);
-    gpio_setAlternateFunction(LCD_D2, 12);
-    gpio_setAlternateFunction(LCD_D3, 12);
-    gpio_setAlternateFunction(LCD_D4, 12);
-    gpio_setAlternateFunction(LCD_D5, 12);
-    gpio_setAlternateFunction(LCD_D6, 12);
-    gpio_setAlternateFunction(LCD_D7, 12);
-    gpio_setAlternateFunction(LCD_RS, 12);
-    gpio_setAlternateFunction(LCD_WR, 12);
-    gpio_setAlternateFunction(LCD_RD, 12);
+    gpio_setMode(LCD_D0, ALTERNATE | ALTERNATE_FUNC(12));
+    gpio_setMode(LCD_D1, ALTERNATE | ALTERNATE_FUNC(12));
+    gpio_setMode(LCD_D2, ALTERNATE | ALTERNATE_FUNC(12));
+    gpio_setMode(LCD_D3, ALTERNATE | ALTERNATE_FUNC(12));
+    gpio_setMode(LCD_D4, ALTERNATE | ALTERNATE_FUNC(12));
+    gpio_setMode(LCD_D5, ALTERNATE | ALTERNATE_FUNC(12));
+    gpio_setMode(LCD_D6, ALTERNATE | ALTERNATE_FUNC(12));
+    gpio_setMode(LCD_D7, ALTERNATE | ALTERNATE_FUNC(12));
+    gpio_setMode(LCD_RS, ALTERNATE | ALTERNATE_FUNC(12));
+    gpio_setMode(LCD_WR, ALTERNATE | ALTERNATE_FUNC(12));
+    gpio_setMode(LCD_RD, ALTERNATE | ALTERNATE_FUNC(12));
 
     /* Reset and chip select lines as outputs */
     gpio_setMode(LCD_CS,  OUTPUT);
@@ -439,14 +427,14 @@ void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
      * Put screen data lines back to alternate function mode, since they are in
      * common with keyboard buttons and the keyboard driver sets them as inputs.
      */
-    gpio_setMode(LCD_D0, ALTERNATE);
-    gpio_setMode(LCD_D1, ALTERNATE);
-    gpio_setMode(LCD_D2, ALTERNATE);
-    gpio_setMode(LCD_D3, ALTERNATE);
-    gpio_setMode(LCD_D4, ALTERNATE);
-    gpio_setMode(LCD_D5, ALTERNATE);
-    gpio_setMode(LCD_D6, ALTERNATE);
-    gpio_setMode(LCD_D7, ALTERNATE);
+    gpio_setMode(LCD_D0, ALTERNATE | ALTERNATE_FUNC(12));
+    gpio_setMode(LCD_D1, ALTERNATE | ALTERNATE_FUNC(12));
+    gpio_setMode(LCD_D2, ALTERNATE | ALTERNATE_FUNC(12));
+    gpio_setMode(LCD_D3, ALTERNATE | ALTERNATE_FUNC(12));
+    gpio_setMode(LCD_D4, ALTERNATE | ALTERNATE_FUNC(12));
+    gpio_setMode(LCD_D5, ALTERNATE | ALTERNATE_FUNC(12));
+    gpio_setMode(LCD_D6, ALTERNATE | ALTERNATE_FUNC(12));
+    gpio_setMode(LCD_D7, ALTERNATE | ALTERNATE_FUNC(12));
 
     gpio_clearPin(LCD_CS);
 
