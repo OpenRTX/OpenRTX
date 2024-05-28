@@ -66,7 +66,8 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/protocols/M17/M17Demodulator.cpp',
                'openrtx/src/protocols/M17/M17FrameEncoder.cpp',
                'openrtx/src/protocols/M17/M17FrameDecoder.cpp',
-               'openrtx/src/protocols/M17/M17LinkSetupFrame.cpp']
+               'openrtx/src/protocols/M17/M17LinkSetupFrame.cpp',
+               'platform/drivers/SPI/spi_bitbang.c']
 
 openrtx_inc = ['openrtx/include',
                'openrtx/include/rtx',
@@ -78,6 +79,7 @@ openrtx_inc = ['openrtx/include',
                'platform/drivers/ADC',
                'platform/drivers/NVM',
                'platform/drivers/GPS',
+               'platform/drivers/SPI',
                'platform/drivers/USB',
                'platform/drivers/tones',
                'platform/drivers/baseband',
