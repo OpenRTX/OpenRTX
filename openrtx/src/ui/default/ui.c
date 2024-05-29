@@ -1106,7 +1106,8 @@ static void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg,
     else
         num_symbols = strlen(symbols_ITU_T_E161[num_key]);
 
-    if((ui_state.input_position > max_len) || ((ui_state.input_position == max_len) && (key_timeout || !same_key)))
+    // Return if max length is reached or finished editing last character
+    if((ui_state.input_position >= max_len) || ((ui_state.input_position == (max_len-1)) && (key_timeout || !same_key)))
         return;
 
     // Skip keypad logic for first keypress
