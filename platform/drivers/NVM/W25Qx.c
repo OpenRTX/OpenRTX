@@ -37,14 +37,6 @@
 #define CMD_PDWN  0xB9   /* Power down             */
 #define CMD_ECHIP 0xC7   /* Full chip erase        */
 
-/*
- * Target-specific SPI interface functions, their implementation can be found
- * in source files "spiFlash_xxx.c"
- */
-extern uint8_t spiFlash_SendRecv(uint8_t val);
-extern void spiFlash_init();
-extern void spiFlash_terminate();
-
 static const size_t PAGE_SIZE = 256;
 static const size_t SECT_SIZE = 4096;
 
@@ -56,7 +48,7 @@ static const size_t SECT_SIZE = 4096;
  * @param timeout: wait timeout, in ms.
  * @return zero on success, -EIO if timeout expires.
  */
-static int waitUntilReady(uint32_t timeout)
+static int waitUntilReady(const struct W25QxCfg *cfg, uint32_t timeout)
 {
     // Each wait tick is 500us
     timeout *= 2;
@@ -66,13 +58,15 @@ static int waitUntilReady(uint32_t timeout)
         delayUs(500);
         timeout--;
 
-        gpio_clearPin(FLASH_CS);
-        spiFlash_SendRecv(CMD_RDSTA);
-        uint8_t status = spiFlash_SendRecv(0x00);
-        gpio_setPin(FLASH_CS);
+        uint8_t cmd[] = {CMD_RDSTA, 0x00};
+        uint8_t ret[2];
+
+        gpioPin_clear(&cfg->cs);
+        spi_transfer(cfg->spi, cmd, ret, 2);
+        gpioPin_set(&cfg->cs);
 
         /* If busy flag is low, we're done */
-        if((status & 0x01) == 0)
+        if((ret[1] & 0x01) == 0)
             return 0;
     }
 
@@ -80,146 +74,162 @@ static int waitUntilReady(uint32_t timeout)
 }
 
 
-void W25Qx_init()
+void W25Qx_init(const struct nvmDevice *dev)
 {
-    gpio_setMode(FLASH_CS, OUTPUT);
-    gpio_setPin(FLASH_CS);
+    const struct W25QxCfg *cfg = (const struct W25QxCfg *) dev->priv;
 
-    spiFlash_init();
-    W25Qx_wakeup();
+    gpioPin_setMode(&cfg->cs, OUTPUT);
+    gpioPin_set(&cfg->cs);
+
+    W25Qx_wakeup(dev);
     // TODO: Implement sleep to increase power saving
 }
 
-void W25Qx_terminate()
+void W25Qx_terminate(const struct nvmDevice *dev)
 {
-    W25Qx_sleep();
+    const struct W25QxCfg *cfg = (const struct W25QxCfg *) dev->priv;
 
-    gpio_setMode(FLASH_CS,  INPUT);
-
-    spiFlash_terminate();
+    W25Qx_sleep(dev);
+    gpioPin_setMode(&cfg->cs, INPUT);
 }
 
-void W25Qx_wakeup()
+void W25Qx_wakeup(const struct nvmDevice *dev)
 {
-    gpio_clearPin(FLASH_CS);
-    spiFlash_SendRecv(CMD_WKUP);
-    gpio_setPin(FLASH_CS);
+    const struct W25QxCfg *cfg = (const struct W25QxCfg *) dev->priv;
+    const uint8_t cmd = CMD_WKUP;
+
+    spi_acquire(cfg->spi);
+
+    gpioPin_clear(&cfg->cs);
+    spi_send(cfg->spi, &cmd, 1);
+    gpioPin_set(&cfg->cs);
+
+    spi_release(cfg->spi);
 }
 
-void W25Qx_sleep()
+void W25Qx_sleep(const struct nvmDevice *dev)
 {
-    gpio_clearPin(FLASH_CS);
-    spiFlash_SendRecv(CMD_PDWN);
-    gpio_setPin(FLASH_CS);
+    const struct W25QxCfg *cfg = (const struct W25QxCfg *) dev->priv;
+    const uint8_t cmd = CMD_PDWN;
+
+    spi_acquire(cfg->spi);
+
+    gpioPin_clear(&cfg->cs);
+    spi_send(cfg->spi, &cmd, 1);
+    gpioPin_set(&cfg->cs);
+
+    spi_release(cfg->spi);
 }
 
-ssize_t W25Qx_readSecurityRegister(uint32_t addr, void* buf, size_t len)
+static int nvm_api_readSecReg(const struct nvmDevice *dev, uint32_t offset, void *data, size_t len)
 {
-    uint32_t addrBase  = addr & 0x3000;
-    uint32_t addrRange = addr & 0xCFFF;
-    if((addrBase < 0x1000) || (addrBase > 0x3000)) return -1; /* Out of base  */
-    if(addrRange > 0xFF) return -1;                           /* Out of range */
+    const struct W25QxSecRegDevice *pDev = (const struct W25QxSecRegDevice *) dev;
+    const struct W25QxCfg *cfg = (const struct W25QxCfg *) dev->priv;
 
-    /* Keep 256-byte boundary to avoid wrap-around when reading */
+    // Keep 256-byte boundary to avoid wrap-around when reading
     size_t readLen = len;
-    if((addrRange + len) > 0xFF)
+    if((offset + len) > 0xFF)
     {
-        readLen = 0xFF - (addrRange & 0xFF);
+        readLen = 0xFF - (offset & 0xFF);
     }
 
-    gpio_clearPin(FLASH_CS);
-    spiFlash_SendRecv(CMD_RSECR);            /* Command        */
-    spiFlash_SendRecv((addr >> 16) & 0xFF);  /* Address high   */
-    spiFlash_SendRecv((addr >> 8) & 0xFF);   /* Address middle */
-    spiFlash_SendRecv(addr & 0xFF);          /* Address low    */
-    spiFlash_SendRecv(0x00);                 /* Dummy byte     */
-
-    for(size_t i = 0; i < readLen; i++)
+    uint32_t address = pDev->baseAddr + offset;
+    const uint8_t command[] =
     {
-        ((uint8_t *) buf)[i] = spiFlash_SendRecv(0x00);
-    }
+        CMD_RSECR,              // Command
+        (address >> 16) & 0xFF, // Address high
+        (address >> 8)  & 0xFF, // Address middle
+        address & 0xFF,         // Address low
+        0x00                    // Dummy byte
+    };
 
-    gpio_setPin(FLASH_CS);
+    spi_acquire(cfg->spi);
+    gpioPin_clear(&cfg->cs);
 
-    return ((ssize_t) readLen);
-}
+    spi_send(cfg->spi, command, sizeof(command));
+    spi_receive(cfg->spi, data, readLen);
 
-int W25Qx_readData(uint32_t addr, void* buf, size_t len)
-{
-    gpio_clearPin(FLASH_CS);
-    spiFlash_SendRecv(CMD_READ);             /* Command        */
-    spiFlash_SendRecv((addr >> 16) & 0xFF);  /* Address high   */
-    spiFlash_SendRecv((addr >> 8) & 0xFF);   /* Address middle */
-    spiFlash_SendRecv(addr & 0xFF);          /* Address low    */
-
-    for(size_t i = 0; i < len; i++)
-    {
-        ((uint8_t *) buf)[i] = spiFlash_SendRecv(0x00);
-    }
-
-    gpio_setPin(FLASH_CS);
+    gpioPin_set(&cfg->cs);
+    spi_release(cfg->spi);
 
     return 0;
 }
 
-int W25Qx_erase(uint32_t addr, size_t size)
+static int nvm_api_read(const struct nvmDevice *dev, uint32_t offset, void *data, size_t len)
 {
+    const struct W25QxCfg *cfg = (const struct W25QxCfg *) dev->priv;
+
+    const uint8_t command[] =
+    {
+        CMD_READ,               // Command
+        (offset >> 16) & 0xFF,  // Address high
+        (offset >> 8)  & 0xFF,  // Address middle
+        offset & 0xFF,          // Address low
+    };
+
+    spi_acquire(cfg->spi);
+    gpioPin_clear(&cfg->cs);
+
+    spi_send(cfg->spi, command, sizeof(command));
+    spi_receive(cfg->spi, data, len);
+
+    gpioPin_set(&cfg->cs);
+    spi_release(cfg->spi);
+
+    return 0;
+}
+
+static int nvm_api_erase(const struct nvmDevice *dev, uint32_t offset, size_t size)
+{
+    const struct W25QxCfg *cfg = (const struct W25QxCfg *) dev->priv;
+    uint8_t command[4];
+
     // Addr or size not aligned to sector size
-    if(((addr % SECT_SIZE) != 0) || ((size % SECT_SIZE) != 0))
+    if(((offset % SECT_SIZE) != 0) || ((size % SECT_SIZE) != 0))
         return -EINVAL;
 
-    gpio_clearPin(FLASH_CS);
-    spiFlash_SendRecv(CMD_WREN);             /* Write enable   */
-    gpio_setPin(FLASH_CS);
-
-    delayUs(5);
+    spi_acquire(cfg->spi);
 
     int ret = 0;
     while(size > 0)
     {
-        gpio_clearPin(FLASH_CS);
-        spiFlash_SendRecv(CMD_ESECT);            /* Command        */
-        spiFlash_SendRecv((addr >> 16) & 0xFF);  /* Address high   */
-        spiFlash_SendRecv((addr >> 8) & 0xFF);   /* Address middle */
-        spiFlash_SendRecv(addr & 0xFF);          /* Address low    */
-        gpio_setPin(FLASH_CS);
+        // Write enable, has to be issued for each erase operation
+        command[0] = CMD_WREN;
+        gpioPin_clear(&cfg->cs);
+        spi_send(cfg->spi, command, 1);
+        gpioPin_set(&cfg->cs);
 
-        ret = waitUntilReady(500);
+        delayUs(5);
+
+        // Sector erase
+        command[0] = CMD_ESECT;             // Command
+        command[1] = (offset >> 16) & 0xFF; // Address high
+        command[2] = (offset >> 8)  & 0xFF; // Address middle
+        command[3] = offset & 0xFF;         // Address low
+
+        gpioPin_clear(&cfg->cs);
+        spi_send(cfg->spi, command, 4);
+        gpioPin_set(&cfg->cs);
+
+        ret = waitUntilReady(cfg, 500);
         if(ret < 0)
             break;
 
         size -= SECT_SIZE;
-        addr += SECT_SIZE;
+        offset += SECT_SIZE;
     }
+
+    spi_release(cfg->spi);
 
     return ret;
 }
 
-bool W25Qx_eraseChip()
+static ssize_t W25Qx_writePage(const struct nvmDevice *dev, uint32_t addr,
+                               const void* buf, size_t len)
 {
-    gpio_clearPin(FLASH_CS);
-    spiFlash_SendRecv(CMD_WREN);
-    gpio_setPin(FLASH_CS);
+    const struct W25QxCfg *cfg = (const struct W25QxCfg *) dev->priv;
 
-    delayUs(5);
-
-    gpio_clearPin(FLASH_CS);
-    spiFlash_SendRecv(CMD_ECHIP);
-    gpio_setPin(FLASH_CS);
-
-    /*
-     * Wait until erase terminates, timeout after 200s.
-     */
-    int ret = waitUntilReady(200000);
-    if(ret == 0)
-        return true;
-
-    return false;
-}
-
-ssize_t W25Qx_writePage(uint32_t addr, const void* buf, size_t len)
-{
-    /* Keep page boundary to avoid wrap-around when writing */
+    // Keep page boundary to avoid wrap-around when writing
     size_t addrRange = addr & (PAGE_SIZE - 1);
     size_t writeLen  = len;
     if((addrRange + len) > PAGE_SIZE)
@@ -227,84 +237,55 @@ ssize_t W25Qx_writePage(uint32_t addr, const void* buf, size_t len)
         writeLen = PAGE_SIZE - addrRange;
     }
 
-    gpio_clearPin(FLASH_CS);
-    spiFlash_SendRecv(CMD_WREN);             /* Write enable   */
-    gpio_setPin(FLASH_CS);
+    // Write enable bit has to be set before each page program
+    uint8_t command[4];
+    command[0] = CMD_WREN;
 
-    delayUs(5);
+    spi_acquire(cfg->spi);
+    gpioPin_clear(&cfg->cs);
+    spi_send(cfg->spi, command, 1);
+    gpioPin_set(&cfg->cs);
 
-    gpio_clearPin(FLASH_CS);
-    spiFlash_SendRecv(CMD_WRITE);            /* Command        */
-    spiFlash_SendRecv((addr >> 16) & 0xFF);  /* Address high   */
-    spiFlash_SendRecv((addr >> 8) & 0xFF);   /* Address middle */
-    spiFlash_SendRecv(addr & 0xFF);          /* Address low    */
+    // Page program
+    command[0] = CMD_WRITE;           // Command
+    command[1] = (addr >> 16) & 0xFF; // Address high
+    command[2] = (addr >> 8)  & 0xFF; // Address middle
+    command[3] = addr & 0xFF;         // Address low
 
-    for(size_t i = 0; i < writeLen; i++)
-    {
-        uint8_t value = ((uint8_t *) buf)[i];
-        (void) spiFlash_SendRecv(value);
-    }
+    gpioPin_clear(&cfg->cs);
+    spi_send(cfg->spi, command, 4);
+    spi_send(cfg->spi, buf, writeLen);
+    gpioPin_set(&cfg->cs);
 
-    gpio_setPin(FLASH_CS);
+    // Wait until write terminates, timeout after 500ms.
+    int ret = waitUntilReady(cfg, 500);
+    spi_release(cfg->spi);
 
-    /*
-     * Wait until erase terminates, timeout after 500ms.
-     */
-    int ret = waitUntilReady(500);
     if(ret < 0)
         return (ssize_t) ret;
-
-    return writeLen;
-}
-
-int W25Qx_writeData(uint32_t addr, const void *buf, size_t len)
-{
-    while(len > 0)
-    {
-        size_t toWrite = len;
-
-        // Maximum single-shot write lenght is one page
-        if(toWrite >= PAGE_SIZE)
-            toWrite = PAGE_SIZE;
-
-        ssize_t written = W25Qx_writePage(addr, buf, toWrite);
-        if(written < 0)
-            return (int) written;
-
-        len  -= (size_t) written;
-        buf   = ((const uint8_t *) buf) + (size_t) written;
-        addr += (size_t) written;
-    }
-
-    return 0;
-}
-
-static int nvm_api_readSecReg(const struct nvmDevice *dev, uint32_t offset, void *data, size_t len)
-{
-    (void) dev;
-
-    return W25Qx_readSecurityRegister(offset, data, len);
-}
-
-static int nvm_api_read(const struct nvmDevice *dev, uint32_t offset, void *data, size_t len)
-{
-    (void) dev;
-
-    return W25Qx_readData(offset, data, len);
+    else
+        return writeLen;
 }
 
 static int nvm_api_write(const struct nvmDevice *dev, uint32_t offset, const void *data, size_t len)
 {
-    (void) dev;
+    while(len > 0)
+    {
+        // Maximum single-shot write length is one page
+        size_t toWrite = len;
+        if(toWrite >= PAGE_SIZE)
+            toWrite = PAGE_SIZE;
 
-    return W25Qx_writeData(offset, data, len);
-}
+        ssize_t written = W25Qx_writePage(dev, offset, data, toWrite);
+        if(written < 0)
+            return (int) written;
 
-static int nvm_api_erase(const struct nvmDevice *dev, uint32_t offset, size_t size)
-{
-    (void) dev;
+        len    -= (size_t) written;
+        data    = ((const uint8_t *) data) + (size_t) written;
+        offset += (size_t) written;
+    }
 
-    return W25Qx_erase(offset, size);
+    return 0;
 }
 
 const struct nvmOps W25Qx_ops =
