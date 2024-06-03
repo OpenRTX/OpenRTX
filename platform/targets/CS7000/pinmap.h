@@ -89,7 +89,7 @@
 #define BEEP_OUT      GPIOA,5   // System "beep"
 
 /* External flash */
-#define FLASH_CS      GPIOE,2
+#define FLASH_CS      &GpioE,2
 #define FLASH_CLK     GPIOE,3
 #define FLASH_SDO     GPIOE,4
 #define FLASH_SDI     GPIOE,5

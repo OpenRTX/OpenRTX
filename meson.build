@@ -449,7 +449,9 @@ mod17_def += openrtx_def + stm32f405_def
 ##
 ## Connect Systems CS70000
 ##
-cs7000_src = ['platform/drivers/stubs/nvmem_stub.c',
+cs7000_src = ['platform/drivers/NVM/nvmem_CS7000.c',
+             'platform/drivers/NVM/W25Qx.c',
+             'platform/drivers/NVM/eeep.c',
              'platform/drivers/stubs/cps_io_stub.c',
              'platform/drivers/stubs/radio_stub.c',
              'platform/drivers/keyboard/keyboard_CS7000.c',

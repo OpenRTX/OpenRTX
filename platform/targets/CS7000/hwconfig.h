@@ -36,6 +36,7 @@ enum AdcChannels
 
 extern const struct Adc adc1;
 extern const struct spiCustomDevice spiSr;
+extern const struct spiCustomDevice flash_spi;
 extern const struct gpioDev extGpio;
 
 /* Screen dimensions */
