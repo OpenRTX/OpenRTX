@@ -297,16 +297,16 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
             snprintf(buf, max_len, "%dB", getHeapSize() - getCurrentFreeHeap());
             break;
         case 2: // HW Revision
-            snprintf(buf, max_len, "%s", hwVersions[hwinfo->hw_version]);
+            snprintf(buf, max_len, "%s", hwVersions[hwinfo->hw_version & 0xFF]);
             break;
         case 3: // HMI Version
         #ifdef PLATFORM_LINUX
             snprintf(buf, max_len, "%s", "Linux");
         #else
-            if((hwinfo->flags & MOD17_FLAGS_HMI_PRESENT) == 0)
-                snprintf(buf, max_len, "%s", hmiVersions[0]);
+            if(hwinfo->flags & MOD17_FLAGS_HMI_PRESENT)
+                snprintf(buf, max_len, "%s", hmiVersions[(hwinfo->hw_version >> 8) & 0xFF]);
             else
-                snprintf(buf, max_len, "%s", hmiVersions[(hwinfo->flags >> 8) & 0xFF]);
+                snprintf(buf, max_len, "%s", hmiVersions[0]);
         #endif
             break;
         case 4: // Baseband tuning potentiometers

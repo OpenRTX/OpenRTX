@@ -149,7 +149,7 @@ void platform_init()
 
         if(i2cPullups)
         {
-            hwInfo.flags = MOD17_FLAGS_HMI_PRESENT;
+            hwInfo.flags |= MOD17_FLAGS_HMI_PRESENT;
 
             /* Determine HMI hardware version */
             gpio_setMode(HMI_AIN_HWVER, INPUT_ANALOG);
