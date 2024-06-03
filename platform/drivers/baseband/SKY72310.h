@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Silvano Seva IU2KWO                      *
+ *   Copyright (C) 2020 - 2024 by Silvano Seva IU2KWO                      *
  *                            and Niccolò Izzo IU2KIN                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -19,6 +19,8 @@
 #ifndef SKY73210_H
 #define SKY73210_H
 
+#include <peripherals/gpio.h>
+#include <peripherals/spi.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -27,45 +29,38 @@ extern "C" {
 #endif
 
 /**
- * Driver for SKY73210 PLL IC.
- *
- * WARNING: on MD3x0 devices the PLL and DMR chips share the SPI MOSI line,
- * thus particular care has to be put to avoid them stomping reciprocally.
- * This driver does not make any check if a SPI transfer is already in progress,
- * deferring the correct bus management to higher level modules. However,
- * a function returning true if the bus is currently in use by this driver
- * is provided.
+ * SKY73210 device data.
  */
+struct sky73210
+{
+    const struct spiDevice *spi;      ///< SPI bus device driver
+    const struct gpioPin   cs;        ///< Chip select gpio
+    const uint32_t         refClk;    ///< Reference clock frequency, in Hz
+};
 
 /**
  * Initialise the PLL.
+ *
+ * @param dev: pointer to device data.
  */
-void SKY73210_init();
+void SKY73210_init(const struct sky73210 *dev);
 
 /**
- * Terminate PLL driver, bringing GPIOs back to reset state.
+ * Terminate PLL driver.
+ *
+ * @param dev: pointer to device data.
  */
-void SKY73210_terminate();
+void SKY73210_terminate(const struct sky73210 *dev);
 
 /**
  * Change VCO frequency.
+ *
+ * @param dev: pointer to device data.
  * @param freq: new VCO frequency, in Hz.
  * @param clkDiv: reference clock division factor.
  */
-void SKY73210_setFrequency(float freq, uint8_t clkDiv);
-
-/**
- * Check if PLL is locked.
- * @return true if PLL is locked.
- */
-bool SKY73210_isPllLocked();
-
-/**
- * Check if the SPI bus in common between PLL and DMR chips is in use by this
- * driver.
- * @return true if this driver is using the SPI bus.
- */
-bool SKY73210_spiInUse();
+void SKY73210_setFrequency(const struct sky73210 *dev, const uint32_t freq,
+                           uint8_t clkDiv);
 
 #ifdef __cplusplus
 }
