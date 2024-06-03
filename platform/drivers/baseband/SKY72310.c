@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Silvano Seva IU2KWO                      *
+ *   Copyright (C) 2020 - 2024 by Silvano Seva IU2KWO                      *
  *                            and Niccolò Izzo IU2KIN                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -16,78 +16,58 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <peripherals/gpio.h>
 #include <interfaces/delays.h>
-#include <hwconfig.h>
 #include <math.h>
 #include "SKY72310.h"
 
-#define REF_CLK 16800000.0F  /* Reference clock: 16.8MHz                 */
-#define PHD_GAIN 0x1F        /* Phase detector gain: hex value, max 0x1F */
-
-void _spiSend(uint16_t value)
+static inline void writeReg(const struct sky73210 *dev, const uint16_t value)
 {
-    uint16_t temp = value;
+    const uint16_t tmp = __builtin_bswap16(value);
 
-    gpio_clearPin(PLL_CS);
+    /*
+     * NOTE: for some (yet) unknown reason, there must be at least 10us between
+     * chip select assertion/deassertion and the SPI transaction. For lower
+     * values the PLL seems to go nuts.
+     */
+    spi_acquire(dev->spi);
+    gpioPin_clear(&dev->cs);
     delayUs(10);
 
-    for(uint8_t i = 0; i < 16; i++)
-    {
-        gpio_setPin(PLL_CLK);
-        delayUs(1);
-
-        if(temp & 0x8000)
-        {
-            gpio_setPin(PLL_DAT);
-        }
-        else
-        {
-            gpio_clearPin(PLL_DAT);
-        }
-
-        temp <<= 1;
-
-        delayUs(1);
-        gpio_clearPin(PLL_CLK);
-        delayUs(1);
-    }
-
-    gpio_setPin(PLL_CLK);
+    spi_send(dev->spi, &tmp, 2);
 
     delayUs(10);
-    gpio_setPin(PLL_CS);
+    gpioPin_set(&dev->cs);
+    spi_release(dev->spi);
 }
 
-void SKY73210_init()
-{
-    gpio_setMode(PLL_CLK, OUTPUT);
-    gpio_setMode(PLL_DAT, OUTPUT);
-    gpio_setMode(PLL_CS,  OUTPUT);
-    gpio_setPin(PLL_CS);
-    gpio_setMode(PLL_LD, INPUT);
 
-    _spiSend(0x6000 | ((uint16_t) PHD_GAIN)); /* Phase detector gain                     */
-    _spiSend(0x73D0);                         /* Power down/multiplexer control register */
-    _spiSend(0x8000);                         /* Modulation control register             */
-    _spiSend(0x9000);                         /* Modulation data register                */
+void SKY73210_init(const struct sky73210 *dev)
+{
+    gpioPin_setMode(&dev->cs, OUTPUT);
+    gpioPin_set(&dev->cs);
+
+    writeReg(dev, 0x6000 | 0x1F); // Phase detector gain
+    writeReg(dev, 0x73D0);        // Power down/multiplexer control register
+    writeReg(dev, 0x8000);        // Modulation control register
+    writeReg(dev, 0x9000);        // Modulation data register
 }
 
-void SKY73210_terminate()
+void SKY73210_terminate(const struct sky73210 *dev)
 {
-    gpio_setMode(PLL_CLK, INPUT);
-    gpio_setMode(PLL_DAT, INPUT);
-    gpio_setMode(PLL_CS,  INPUT);
+    (void) dev;
 }
 
-void SKY73210_setFrequency(float freq, uint8_t clkDiv)
+void SKY73210_setFrequency(const struct sky73210 *dev, const uint32_t freq,
+                           uint8_t clkDiv)
 {
-    /* Maximum allowable value for reference clock divider is 32 */
-    if (clkDiv > 32) clkDiv = 32;
+    // Maximum allowable value for reference clock divider is 32
+    if (clkDiv > 32)
+        clkDiv = 32;
 
-    float K = freq/(REF_CLK/((float) clkDiv));
+    float clk = ((float) dev->refClk) / ((float) clkDiv);
+    float K = ((float) freq) / clk;
     float Ndiv = floor(K) - 32.0;
-    float Ndnd = round(262144*(K - Ndiv - 32.0));
+    float Ndnd = round(262144 * (K - Ndiv - 32.0));
 
     /*
      * With PLL in fractional mode, dividend range is [-131017 +131071].
@@ -95,25 +75,14 @@ void SKY73210_setFrequency(float freq, uint8_t clkDiv)
      * signed 18-bit one and increment the divider by one if dividend is negative.
      */
     uint32_t dnd = ((uint32_t) Ndnd) & 0x03FFFF;
-    if(dnd & 0x20000) Ndiv += 1;
+    if(dnd & 0x20000)
+        Ndiv += 1;
 
     uint16_t dndMsb = dnd >> 8;
     uint16_t dndLsb = dnd & 0x00FF;
 
-    _spiSend((uint16_t) Ndiv);                   /* Divider register      */
-    _spiSend(0x2000 | dndLsb);                   /* Dividend LSB register */
-    _spiSend(0x1000 | dndMsb);                   /* Dividend MSB register */
-    _spiSend(0x5000 | ((uint16_t)clkDiv - 1));   /* Reference clock divider */
+    writeReg(dev, (uint16_t) Ndiv);                   // Divider register
+    writeReg(dev, 0x2000 | dndLsb);                   // Dividend LSB register
+    writeReg(dev, 0x1000 | dndMsb);                   // Dividend MSB register
+    writeReg(dev, 0x5000 | ((uint16_t)clkDiv - 1));   // Reference clock divider
 }
-
-bool SKY73210_isPllLocked()
-{
-    return (gpio_readPin(PLL_LD) == 1) ? true : false;
-}
-
-bool SKY73210_spiInUse()
-{
-    /* If PLL chip select is low, SPI is being used by this driver. */
-    return (gpio_readPin(PLL_CS) == 1) ? false : true;
-}
-
