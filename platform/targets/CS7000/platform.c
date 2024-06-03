@@ -17,6 +17,7 @@
 
 #include <interfaces/platform.h>
 #include <peripherals/gpio.h>
+#include <interfaces/nvmem.h>
 #include <gpio_shiftReg.h>
 #include <spi_bitbang.h>
 #include <adc_stm32.h>
@@ -51,6 +52,7 @@ void platform_init()
     spi_init((const struct spiDevice *) &spiSr);
     gpioShiftReg_init(&extGpio);
     adcStm32_init(&adc1);
+    nvm_init();
 
     #ifndef RUNNING_TESTSUITE
     gpioDev_set(MAIN_PWR_SW);
