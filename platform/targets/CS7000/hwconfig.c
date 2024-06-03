@@ -21,6 +21,15 @@
 #include <hwconfig.h>
 #include <pthread.h>
 
+static const struct spiConfig spiFlashCfg =
+{
+    .clk       = { FLASH_CLK },
+    .mosi      = { FLASH_SDI },
+    .miso      = { FLASH_SDO },
+    .clkPeriod = SCK_PERIOD_FROM_FREQ(1000000),
+    .flags     = 0
+};
+
 /**
  * SPI bitbang function for SN74HC595 gpio extender.
  *
@@ -61,5 +70,6 @@ static const struct gpioPin shiftRegStrobe = { GPIOEXT_STR };
 static pthread_mutex_t adc1Mutex;
 
 SPI_CUSTOM_DEVICE_DEFINE(spiSr, spiSr_func, NULL, NULL)
+SPI_BITBANG_DEVICE_DEFINE(flash_spi, spiFlashCfg, NULL)
 GPIO_SHIFTREG_DEVICE_DEFINE(extGpio, (const struct spiDevice *) &spiSr, shiftRegStrobe, 24)
 ADC_STM32_DEVICE_DEFINE(adc1, ADC1, &adc1Mutex, 3300000)
