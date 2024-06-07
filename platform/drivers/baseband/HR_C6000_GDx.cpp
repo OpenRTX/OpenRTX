@@ -140,7 +140,6 @@ template< class M >
 void HR_Cx000< M >::terminate()
 {
     gpio_setPin(DMR_SLEEP);
-    gpio_setMode(DMR_CS, INPUT);
 }
 
 template< class M >

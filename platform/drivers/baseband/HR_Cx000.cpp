@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2021 - 2024 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -25,11 +25,6 @@
 #include "HR_Cx000.h"
 #include "HR_C5000.h"
 #include "HR_C6000.h"
-
-bool Cx000_uSpiBusy()
-{
-    return (gpio_readPin(DMR_CS) == 0) ? true : false;
-}
 
 template <>
 void HR_Cx000< C5000_SpiOpModes >::setDacGain(int8_t gain)
@@ -120,16 +115,22 @@ void HR_Cx000< C6000_SpiOpModes >::setInputGain(int8_t value)
     writeReg(C6000_SpiOpModes::CONFIG, 0xE4, regValue);
 }
 
-ScopedChipSelect::ScopedChipSelect()
+ScopedChipSelect::ScopedChipSelect(const struct spiDevice *spi,
+                                   const struct gpioPin& cs) : spi(spi), cs(cs)
 {
-    gpio_clearPin(DMR_CS);
+    spi_acquire(spi);
+    gpioPin_clear(&cs);
 }
 
 ScopedChipSelect::~ScopedChipSelect()
 {
+    // NOTE: it seems that, without the 2us delays before and after the nCS
+    // deassertion, the HR_C6000 doesn't work properly. At least this is what
+    // has been observed on the Retevis RT3s.
     delayUs(2);
-    gpio_setPin(DMR_CS);
+    gpioPin_set(&cs);
     delayUs(2);
+    spi_release(spi);
 }
 
 FmConfig operator |(FmConfig lhs, FmConfig rhs)
