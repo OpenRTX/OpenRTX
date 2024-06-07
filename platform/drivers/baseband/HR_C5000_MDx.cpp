@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2024 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -63,10 +63,6 @@ template< class M >
 void HR_Cx000< M >::terminate()
 {
     gpio_setPin(DMR_SLEEP);
-    gpio_setMode(DMR_CS,    INPUT);
-    gpio_setMode(DMR_CLK,   INPUT);
-    gpio_setMode(DMR_MOSI,  INPUT);
-    gpio_setMode(DMR_MISO,  INPUT);
     gpio_setMode(DMR_SLEEP, INPUT);
 }
 
@@ -185,48 +181,4 @@ template< class M >
 void HR_Cx000< M >::stopAnalogTx()
 {
     writeReg(M::CONFIG, 0x60, 0x00);    // Disable both analog and DMR transmission
-}
-
-/*
- * SPI interface driver
- */
-template< class M >
-void HR_Cx000< M >::uSpi_init()
-{
-    gpio_setMode(DMR_CS,    OUTPUT);
-    gpio_setMode(DMR_CLK,   OUTPUT);
-    gpio_setMode(DMR_MOSI,  OUTPUT);
-    gpio_setMode(DMR_MISO,  OUTPUT);
-
-    // Deselect HR_C5000, idle state of the CS line.
-    gpio_setPin(DMR_CS);
-}
-
-template< class M >
-uint8_t HR_Cx000< M >::uSpi_sendRecv(const uint8_t value)
-{
-    gpio_clearPin(DMR_CLK);
-
-    uint8_t incoming = 0;
-
-    for(uint8_t cnt = 0; cnt < 8; cnt++)
-    {
-        gpio_setPin(DMR_CLK);
-
-        if(value & (0x80 >> cnt))
-        {
-            gpio_setPin(DMR_MOSI);
-        }
-        else
-        {
-            gpio_clearPin(DMR_MOSI);
-        }
-
-        delayUs(1);
-        gpio_clearPin(DMR_CLK);
-        incoming = (incoming << 1) | gpio_readPin(DMR_MISO);
-        delayUs(1);
-    }
-
-    return incoming;
 }
