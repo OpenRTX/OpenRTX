@@ -18,9 +18,11 @@
 #include <interfaces/platform.h>
 #include <peripherals/gpio.h>
 #include <interfaces/nvmem.h>
+#include <interfaces/audio.h>
 #include <gpio_shiftReg.h>
 #include <spi_bitbang.h>
 #include <adc_stm32.h>
+#include <Cx000_dac.h>
 #include <hwconfig.h>
 #include <string.h>
 
@@ -53,6 +55,7 @@ void platform_init()
     gpioShiftReg_init(&extGpio);
     adcStm32_init(&adc1);
     nvm_init();
+    audio_init();
 
     #ifndef RUNNING_TESTSUITE
     gpioDev_set(MAIN_PWR_SW);
@@ -191,12 +194,12 @@ void platform_ledOff(led_t led)
 
 void platform_beepStart(uint16_t freq)
 {
-    (void) freq;
+    Cx000dac_startBeep(freq);
 }
 
 void platform_beepStop()
 {
-
+    Cx000dac_stopBeep();
 }
 
 const hwInfo_t *platform_getHwInfo()

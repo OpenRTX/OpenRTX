@@ -123,7 +123,6 @@ void radio_init(const rtxStatus_t *rtxState)
 
     spiBitbang_init(&det_spi);
     spiBitbang_init(&pll_spi);
-    spiBitbang_init(&c6000_spi);
 
     /*
      * Load calibration data
@@ -137,11 +136,8 @@ void radio_init(const rtxStatus_t *rtxState)
     SKY73210_init(&pll);
 
     /*
-     * Configure HR_C5000
+     * Set VCTXO bias
      */
-    gpioDev_clear(C6K_SLEEP);        // Exit from sleep
-    delayMs(10);
-    C6000.init();
     C6000.setModOffset(calData.errorRate[0]);
 }
 
@@ -153,11 +149,9 @@ void radio_terminate()
     gpioDev_clear(CTCSS_AMP_EN);    // Power off CTCSS amplifier and filter
     gpioDev_clear(VCO_PWR_EN);      // Power off PLL and VCO
     gpioDev_clear(DET_PDN);         // Power off FM demod chip
-    gpioDev_set(C6K_SLEEP);         // Power off HR_C6000
 
     SKY73210_terminate(&pll);
     AK2365A_terminate(&detector);
-    C6000.terminate();
 
     DAC->DHR12R1 = 0;
     RCC->APB1ENR &= ~RCC_APB1ENR_DACEN;
