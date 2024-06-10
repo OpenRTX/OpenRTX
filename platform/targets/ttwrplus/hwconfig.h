@@ -33,4 +33,6 @@
 
 #define CONFIG_BAT_LIPO_1S
 
+#define CONFIG_M17
+
 #endif /* HWCONFIG_H */

@@ -108,13 +108,7 @@ enum backupRestoreItems
 
 enum displayItems
 {
-#ifdef CONFIG_SCREEN_CONTRAST
-    D_CONTRAST = 0
-    ,D_TIMER
-#endif
-#ifndef CONFIG_SCREEN_CONTRAST
-    D_TIMER = 0
-#endif
+    D_BRIGHTNESS = 0
 };
 
 #ifdef CONFIG_GPS
@@ -139,7 +133,9 @@ enum module17Items
     D_RXWIPER,
     D_TXINVERT,
     D_RXINVERT,
-    D_MICGAIN
+    D_MICGAIN,
+    D_PTTINLEVEL,
+    D_PTTOUTLEVEL
 };
 
 /**

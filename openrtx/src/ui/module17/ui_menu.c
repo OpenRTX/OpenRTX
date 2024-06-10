@@ -32,25 +32,6 @@
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBottom();
 
-const char *display_timer_values[] =
-{
-    "Off",
-    "5 s",
-    "10 s",
-    "15 s",
-    "20 s",
-    "25 s",
-    "30 s",
-    "1 min",
-    "2 min",
-    "3 min",
-    "4 min",
-    "5 min",
-    "15 min",
-    "30 min",
-    "45 min",
-    "1 hour"
-};
 
 const char *mic_gain_values[] =
 {
@@ -177,15 +158,9 @@ int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
     uint8_t value = 0;
     switch(index)
     {
-#ifdef CONFIG_SCREEN_CONTRAST
-        case D_CONTRAST:
-            value = last_state.settings.contrast;
+        case D_BRIGHTNESS:
+            value = last_state.settings.brightness;
             break;
-#endif
-        case D_TIMER:
-            snprintf(buf, max_len, "%s",
-                     display_timer_values[last_state.settings.display_timer]);
-            return 0;
     }
     snprintf(buf, max_len, "%d", value);
     return 0;
@@ -238,13 +213,19 @@ int _ui_getModule17ValueName(char *buf, uint8_t max_len, uint8_t index)
             snprintf(buf, max_len, "%d", mod17CalData.rx_wiper);
             break;
         case D_TXINVERT:
-            snprintf(buf, max_len, "%s", phase_values[mod17CalData.tx_invert]);
+            snprintf(buf, max_len, "%s", phase_values[mod17CalData.bb_tx_invert]);
             break;
         case D_RXINVERT:
-            snprintf(buf, max_len, "%s", phase_values[mod17CalData.rx_invert]);
+            snprintf(buf, max_len, "%s", phase_values[mod17CalData.bb_rx_invert]);
             break;
         case D_MICGAIN:
             snprintf(buf, max_len, "%s", mic_gain_values[mod17CalData.mic_gain]);
+            break;
+        case D_PTTINLEVEL:
+            snprintf(buf, max_len, "%s", mod17CalData.ptt_in_level ? "Act high" : "Act low");
+            break;
+        case D_PTTOUTLEVEL:
+            snprintf(buf, max_len, "%s", mod17CalData.ptt_out_level ? "Act high" : "Act low");
             break;
     }
 

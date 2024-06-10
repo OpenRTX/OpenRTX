@@ -78,6 +78,7 @@ void OpMode_M17::disable()
 
 void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
 {
+    (void) newCfg;
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
     //
     // Invert TX phase for all MDx models.
@@ -93,8 +94,8 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
     //
     // Get phase inversion settings from calibration.
     //
-    invertTxPhase = (mod17CalData.tx_invert == 1) ? true : false;
-    invertRxPhase = (mod17CalData.rx_invert == 1) ? true : false;
+    invertTxPhase = (mod17CalData.bb_tx_invert == 1) ? true : false;
+    invertRxPhase = (mod17CalData.bb_rx_invert == 1) ? true : false;
     #endif
 
     // Main FSM logic
@@ -169,14 +170,13 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
     if(startRx)
     {
         demodulator.startBasebandSampling();
-        demodulator.invertPhase(invertRxPhase);
 
         radio_enableRx();
 
         startRx = false;
     }
 
-    bool newData = demodulator.update();
+    bool newData = demodulator.update(invertRxPhase);
     bool lock    = demodulator.isLocked();
 
     // Reset frame decoder when transitioning from unlocked to locked state.
@@ -357,7 +357,7 @@ void OpMode_M17::txState(rtxStatus_t *const status)
 bool OpMode_M17::compareCallsigns(const std::string& localCs,
                                   const std::string& incomingCs)
 {
-    if(incomingCs == "ALL")
+    if((incomingCs == "ALL") || (incomingCs == "INFO") || (incomingCs == "ECHO"))
         return true;
 
     std::string truncatedLocal(localCs);

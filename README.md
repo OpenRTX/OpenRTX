@@ -14,7 +14,7 @@ Currently OpenRTX is being actively developed for the following radios:
 This firmware is *highly experimental* and currently under development, this means
 that it may not have all the expected functionalities. Anyway, contributions and testing will be warmly welcomed and accepted!
 
-For information on the radios that are currently supported and their features, see the [Supported Platforms](https://openrtx.org/#/platforms) page on our website.
+For information on the radios that are currently supported and their features, see the [Development Status](https://openrtx.org/#/dev_status?id=current-support) page on our website.
 
 For hardware and software documentation visit [openrtx.org](https://openrtx.org/)
 

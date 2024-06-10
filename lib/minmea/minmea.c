@@ -642,4 +642,20 @@ int minmea_gettime(struct timespec *ts, const struct minmea_date *date, const st
     }
 }
 
+int minmea_tofixedpoint(struct minmea_float *f) {
+
+    if (f->scale == 0)
+        return 0;
+
+    int32_t value = f->value;
+    int32_t scale = f->scale;
+    int8_t sign = value < 0 ? -1 : 1;
+    // Ensure value is always positive
+    value = value * sign;
+    int32_t coord_int = value / (scale * 100);
+    int32_t coord_dec = (value % (scale * 100)) * (100000 / scale) / 6;
+    return (coord_int * 1000000 + coord_dec) * sign;
+}
+
+
 /* vim: set ts=4 sw=4 et: */

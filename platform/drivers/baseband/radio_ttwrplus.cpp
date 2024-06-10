@@ -131,7 +131,7 @@ void radio_enableTx()
     if(config->txDisable == 1) return;
 
     // Constrain output power between 1W and 5W.
-    float power  = std::max(std::min(config->txPower, 5000), 1000);
+    uint32_t power = std::max(std::min(config->txPower, 5000U), 1000U);
     sa8x8_setTxPower(power);
 
     at1846s.setFrequency(config->txFrequency);

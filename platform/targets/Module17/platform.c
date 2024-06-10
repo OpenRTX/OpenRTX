@@ -72,11 +72,11 @@ void platform_init()
     audio_init();
 
     /* Set defaults for calibration */
-    mod17CalData.tx_wiper  = 0x080;
-    mod17CalData.rx_wiper  = 0x080;
-    mod17CalData.tx_invert = 0;
-    mod17CalData.rx_invert = 0;
-    mod17CalData.mic_gain  = 0;
+    mod17CalData.tx_wiper     = 0x080;
+    mod17CalData.rx_wiper     = 0x080;
+    mod17CalData.bb_tx_invert = 0;
+    mod17CalData.bb_rx_invert = 0;
+    mod17CalData.mic_gain     = 0;
 
     /*
      * Hardware version is set using a voltage divider on PA3.
@@ -104,7 +104,13 @@ void platform_terminate()
     nvm_terminate();
     audio_terminate();
 
+    /*
+     * Cut off the power switch then wait 100ms to allow the 3.3V rail to
+     * effectively go down to 0V. Without this delay, the board fails to power
+     * off because the main() function returns, triggering an OS reboot.
+     */
     gpio_clearPin(POWER_SW);
+    sleepFor(0, 100);
 }
 
 uint16_t platform_getVbat()
@@ -129,8 +135,12 @@ int8_t platform_getChSelector()
 
 bool platform_getPttStatus()
 {
-    /* PTT line has a pullup resistor with PTT switch closing to ground */
-    return (gpio_readPin(PTT_SW) == 0) ? true : false;
+    // Return true if gpio status matches the PTT in active level
+    uint8_t ptt_status = gpio_readPin(PTT_SW);
+    if(ptt_status == mod17CalData.ptt_in_level)
+        return true;
+
+    return false;
 }
 
 bool platform_pwrButtonStatus()

@@ -63,6 +63,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <math.h>
 #include <ui/ui_default.h>
 #include <rtx.h>
@@ -1269,12 +1270,12 @@ void ui_saveState()
 }
 
 #ifdef CONFIG_GPS
-static float priorGPSSpeed = 0;
-static float priorGPSAltitude = 0;
-static float  priorGPSDirection = 500; // impossible value init.
-static uint8_t priorGPSFixQuality= 0;
-static uint8_t priorGPSFixType = 0;
-static uint8_t    priorSatellitesInView = 0;
+static uint16_t priorGPSSpeed = 0;
+static int16_t  priorGPSAltitude = 0;
+static int16_t  priorGPSDirection = 500; // impossible value init.
+static uint8_t  priorGPSFixQuality= 0;
+static uint8_t  priorGPSFixType = 0;
+static uint8_t  priorSatellitesInView = 0;
 static uint32_t vpGPSLastUpdate = 0;
 
 static vpGPSInfoFlags_t GetGPSDirectionOrSpeedChanged()
@@ -1300,22 +1301,19 @@ static vpGPSInfoFlags_t GetGPSDirectionOrSpeedChanged()
         priorGPSFixType = state.gps_data.fix_type;
     }
 
-    float speedDiff=fabs(state.gps_data.speed - priorGPSSpeed);
-    if (speedDiff >= 1)
+    if (state.gps_data.speed != priorGPSSpeed)
     {
         whatChanged |= vpGPSSpeed;
         priorGPSSpeed = state.gps_data.speed;
     }
 
-    float altitudeDiff = fabs(state.gps_data.altitude - priorGPSAltitude);
-    if (altitudeDiff >= 5)
+    if (state.gps_data.altitude != priorGPSAltitude)
     {
         whatChanged |= vpGPSAltitude;
         priorGPSAltitude = state.gps_data.altitude;
     }
 
-    float degreeDiff = fabs(state.gps_data.tmg_true - priorGPSDirection);
-    if (degreeDiff  >= 1)
+    if (state.gps_data.tmg_true != priorGPSDirection)
     {
         whatChanged |= vpGPSDirection;
         priorGPSDirection = state.gps_data.tmg_true;

@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: install-deps
@@ -49,17 +49,19 @@ jobs:
           meson compile -C build_arm openrtx_gd77_wrap
           meson compile -C build_arm openrtx_dm1801_wrap
           meson compile -C build_arm openrtx_mod17_wrap
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: release-bins
           path: |
             ${{github.workspace}}/build_arm/openrtx_*_wrap
             ${{github.workspace}}/build_linux/openrtx_linux
+            ${{github.workspace}}/build_linux/openrtx_linux_smallscreen
+            ${{github.workspace}}/build_linux/openrtx_linux_mod17
   unit-test:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: install-deps
@@ -78,6 +80,8 @@ jobs:
         run: meson test -C build "M17 RRC Test"
       - name: Codeplug Test
         run: meson test -C build "Codeplug Test"
+      - name: minmea Conversion Test
+        run: meson test -C build "minmea conversion Test"
       # The following tests are disabled because they appear to be flakey when run in CI
       # - name: Sine Test
       #   run: meson test -C build "Sine Test"

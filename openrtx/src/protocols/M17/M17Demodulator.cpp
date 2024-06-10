@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2021 - 2024 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Wojciech Kaczmarski SP5WWP               *
  *                                Frederik Saraci IU2NRO                   *
@@ -166,15 +166,11 @@ void M17Demodulator::init()
      * placement new.
      */
 
-    baseband_buffer = std::make_unique< int16_t[] >(2 * M17_SAMPLE_BUF_SIZE);
+    baseband_buffer = std::make_unique< int16_t[] >(2 * SAMPLE_BUF_SIZE);
     demodFrame      = std::make_unique< frame_t >();
     readyFrame      = std::make_unique< frame_t >();
-    baseband        = { nullptr, 0 };
-    frame_index     = 0;
-    phase           = 0;
-    syncDetected    = false;
-    locked          = false;
-    newFrame        = false;
+
+    reset();
 
     #ifdef ENABLE_DEMOD_LOG
     logRunning = true;
@@ -206,163 +202,17 @@ void M17Demodulator::startBasebandSampling()
 {
     basebandPath = audioPath_request(SOURCE_RTX, SINK_MCU, PRIO_RX);
     basebandId = audioStream_start(basebandPath, baseband_buffer.get(),
-                                   2 * M17_SAMPLE_BUF_SIZE, M17_RX_SAMPLE_RATE,
+                                   2 * SAMPLE_BUF_SIZE, RX_SAMPLE_RATE,
                                    STREAM_INPUT | BUF_CIRC_DOUBLE);
 
-    // Clean start of the demodulation statistics
-    resetCorrelationStats();
-    resetQuantizationStats();
-    // DC removal filter reset
-    dsp_resetFilterState(&dsp_state);
+    reset();
 }
 
 void M17Demodulator::stopBasebandSampling()
 {
     audioStream_terminate(basebandId);
     audioPath_release(basebandPath);
-    phase = 0;
-    syncDetected = false;
     locked = false;
-}
-
-void M17Demodulator::resetCorrelationStats()
-{
-    conv_emvar = 40000000.0f;
-}
-
-/**
- * Algorithms taken from
- * https://fanf2.user.srcf.net/hermes/doc/antiforgery/stats.pdf
- */
-void M17Demodulator::updateCorrelationStats(int32_t value)
-{
-    float incr  = CONV_STATS_ALPHA * static_cast<float>(value);
-    conv_emvar  = (1.0f - CONV_STATS_ALPHA) * (conv_emvar + static_cast<float>(value) * incr);
-}
-
-float M17Demodulator::getCorrelationStddev()
-{
-    return sqrt(conv_emvar);
-}
-
-void M17Demodulator::resetQuantizationStats()
-{
-    qnt_pos_avg = 0.0f;
-    qnt_neg_avg = 0.0f;
-}
-
-void M17Demodulator::updateQuantizationStats(int32_t frame_index,
-                                             int32_t symbol_index)
-{
-    int16_t sample = 0;
-    // When we are at negative indices use bridge buffer
-    if (symbol_index < 0)
-        sample = basebandBridge[M17_BRIDGE_SIZE + symbol_index];
-    else
-        sample = baseband.data[symbol_index];
-    if (sample > 0)
-    {
-        qnt_pos_acc += sample;
-        qnt_pos_cnt++;
-    }
-    else
-    {
-        qnt_neg_acc += sample;
-        qnt_neg_cnt++;
-    }
-    // If we reached end of the syncword, compute average and reset queue
-    if(frame_index == M17_SYNCWORD_SYMBOLS - 1)
-    {
-        qnt_pos_avg = qnt_pos_acc / static_cast<float>(qnt_pos_cnt);
-        qnt_neg_avg = qnt_neg_acc / static_cast<float>(qnt_neg_cnt);
-        qnt_pos_acc = 0;
-        qnt_neg_acc = 0;
-        qnt_pos_cnt = 0;
-        qnt_neg_cnt = 0;
-    }
-}
-
-int32_t M17Demodulator::convolution(int32_t offset,
-                                    int8_t *target,
-                                    size_t target_size)
-{
-    // Compute convolution
-    int32_t conv = 0;
-    for(uint32_t i = 0; i < target_size; i++)
-    {
-        int32_t sample_index = offset + i * M17_SAMPLES_PER_SYMBOL;
-        int16_t sample = 0;
-        // When we are at negative indices use bridge buffer
-        if (sample_index < 0)
-            sample = basebandBridge[M17_BRIDGE_SIZE + sample_index];
-        else
-            sample = baseband.data[sample_index];
-        conv += (int32_t) target[i] * (int32_t) sample;
-    }
-    return conv;
-}
-
-sync_t M17Demodulator::nextFrameSync(int32_t offset)
-{
-
-    sync_t syncword = { -1, false };
-    // Find peaks in the correlation between the baseband and the frame syncword
-    // Leverage the fact LSF syncword is the opposite of the frame syncword
-    // to detect both syncwords at once. Stop early because convolution needs
-    // access samples ahead of the starting offset.
-    int32_t maxLen = static_cast < int32_t >(baseband.len - M17_SYNCWORD_SAMPLES);
-    for(int32_t i = offset; (syncword.index == -1) && (i < maxLen); i++)
-    {
-        int32_t conv = convolution(i, stream_syncword, M17_SYNCWORD_SYMBOLS);
-        updateCorrelationStats(conv);
-
-        #ifdef ENABLE_DEMOD_LOG
-        log_entry_t log;
-        log.sample       = (i < 0) ? basebandBridge[M17_BRIDGE_SIZE + i] : baseband.data[i];
-        log.conv         = conv;
-        log.conv_th      = CONV_THRESHOLD_FACTOR * getCorrelationStddev();
-        log.sample_index = i;
-        log.qnt_pos_avg  = 0.0;
-        log.qnt_neg_avg  = 0.0;
-        log.symbol       = 0;
-        log.frame_index  = 0;
-        log.flags        = 1;
-
-        pushLog(log);
-        #endif
-
-        // Positive correlation peak -> frame syncword
-        if (conv > (getCorrelationStddev() * CONV_THRESHOLD_FACTOR))
-        {
-            syncword.lsf = false;
-            syncword.index = i;
-        }
-        // Negative correlation peak -> LSF syncword
-        else if (conv < -(getCorrelationStddev() * CONV_THRESHOLD_FACTOR))
-        {
-            syncword.lsf = true;
-            syncword.index = i;
-        }
-    }
-
-    return syncword;
-}
-
-int8_t M17Demodulator::quantize(int32_t offset)
-{
-    int16_t sample = 0;
-    if (offset < 0) // When we are at negative offsets use bridge buffer
-        sample = basebandBridge[M17_BRIDGE_SIZE + offset];
-    else            // Otherwise use regular data buffer
-        sample = baseband.data[offset];
-    if (sample > static_cast< int16_t >(qnt_pos_avg / 1.5f))
-        return +3;
-    else if (sample < static_cast< int16_t >(qnt_neg_avg / 1.5f))
-        return -3;
-    else if (sample > 0)
-        return +1;
-    else
-        return -1;
 }
 
 const frame_t& M17Demodulator::getFrame()
@@ -377,220 +227,211 @@ bool M17Demodulator::isLocked()
     return locked;
 }
 
-int32_t M17Demodulator::syncwordSweep(int32_t offset)
+bool M17Demodulator::update(const bool invertPhase)
 {
-    int32_t max_conv = 0, max_index = 0;
-    // Start from 5 samples behind, end 5 samples after
-    for(int i = -SYNC_SWEEP_WIDTH; i <= SYNC_SWEEP_WIDTH; i++)
-    {
-        // TODO: Extend for LSF and BER syncwords
-        int32_t conv = convolution(offset + i,
-                                   stream_syncword,
-                                   M17_SYNCWORD_SYMBOLS);
-        #ifdef ENABLE_DEMOD_LOG
-        int16_t sample;
-        if (offset + i < 0)
-            sample = basebandBridge[M17_BRIDGE_SIZE + offset + i];
-        else
-            sample = baseband.data[offset + i];
-
-        log_entry_t log;
-        log.sample       = sample;
-        log.conv         = conv;
-        log.conv_th      = 0.0;
-        log.sample_index = offset + i;
-        log.qnt_pos_avg  = 0.0;
-        log.qnt_neg_avg  = 0.0;
-        log.symbol       = 0;
-        log.frame_index  = 0;
-        log.flags        = 2;
-
-        pushLog(log);
-        #endif
-
-        if (conv > max_conv)
-        {
-            max_conv = conv;
-            max_index = i;
-        }
-    }
-
-    return max_index;
-}
-
-bool M17Demodulator::update()
-{
-    sync_t syncword = { 0, false };
-    phase = (syncDetected) ? phase % M17_SAMPLES_PER_SYMBOL : -M17_BRIDGE_SIZE;
-    uint16_t decoded_syms = 0;
+    // Audio path closed, nothing to do
+    if(audioPath_getStatus(basebandPath) != PATH_OPEN)
+        return false;
 
     // Read samples from the ADC
-    if(audioPath_getStatus(basebandPath) != PATH_OPEN) return false;
-    baseband = inputStream_getData(basebandId);
-
+    dataBlock_t baseband = inputStream_getData(basebandId);
     if(baseband.data != NULL)
     {
         // Apply DC removal filter
-        dsp_dcRemoval(&dsp_state, baseband.data, baseband.len);
+        dsp_dcRemoval(&dcrState, baseband.data, baseband.len);
 
-        // Apply RRC on the baseband buffer
+        // Process samples
         for(size_t i = 0; i < baseband.len; i++)
         {
-            float elem = static_cast< float >(baseband.data[i]);
-            if(invPhase) elem = 0.0f - elem;
-            baseband.data[i]  = static_cast< int16_t >(M17::rrc_24k(elem));
-        }
+            // Apply RRC on the baseband sample
+            float           elem   = static_cast< float >(baseband.data[i]);
+            if(invertPhase) elem   = 0.0f - elem;
+            int16_t         sample = static_cast< int16_t >(M17::rrc_24k(elem));
 
-        // Process the buffer
-        while(syncword.index != -1)
-        {
+            // Update correlator and sample filter for correlation thresholds
+            correlator.sample(sample);
+            corrThreshold = sampleFilter(std::abs(sample));
 
-            // If we are not demodulating a syncword, search for one
-            if (syncDetected == false)
+            switch(demodState)
             {
-                syncword = nextFrameSync(phase);
-
-                if (syncword.index != -1) // Valid syncword found
+                case DemodState::INIT:
                 {
-                    phase = syncword.index + 1;
-                    syncDetected = true;
-                    frame_index  = 0;
-                    decoded_syms = 0;
+                    initCount -= 1;
+                    if(initCount == 0)
+                        demodState = DemodState::UNLOCKED;
                 }
-            }
-            // While we detected a syncword, demodulate available samples
-            else
-            {
-                // Slice the input buffer to extract a frame and quantize
-                int32_t symbol_index = phase
-                    + (M17_SAMPLES_PER_SYMBOL * decoded_syms);
-                if (symbol_index >= static_cast<int32_t>(baseband.len))
                     break;
-                // Update quantization stats only on syncwords
-                if (frame_index < M17_SYNCWORD_SYMBOLS)
-                    updateQuantizationStats(frame_index, symbol_index);
-                int8_t symbol = quantize(symbol_index);
 
-                #ifdef ENABLE_DEMOD_LOG
-                // Log quantization
-                for (int i = -2; i <= 2; i++)
+                case DemodState::UNLOCKED:
                 {
-                    if ((symbol_index + i) >= 0 &&
-                        (symbol_index + i) < static_cast<int32_t> (baseband.len))
-                    {
-                        log_entry_t log;
-                        log.sample       = baseband.data[symbol_index + i];
-                        log.conv         = phase;
-                        log.conv_th      = 0.0;
-                        log.sample_index = symbol_index + i;
-                        log.qnt_pos_avg  = qnt_pos_avg / 1.5f;
-                        log.qnt_neg_avg  = qnt_neg_avg / 1.5f;
-                        log.symbol       = symbol;
-                        log.frame_index  = frame_index;
-                        log.flags        = 3;
-                        if(i == 0) log.flags += 8;
+                    int32_t syncThresh = static_cast< int32_t >(corrThreshold * 33.0f);
+                    int8_t  syncStatus = streamSync.update(correlator, syncThresh, -syncThresh);
 
-                        pushLog(log);
-                    }
+                    if(syncStatus != 0)
+                        demodState = DemodState::SYNCED;
                 }
-                #endif
+                    break;
 
-                setSymbol(*demodFrame, frame_index, symbol);
-                decoded_syms++;
-                frame_index++;
-
-                if (frame_index == M17_SYNCWORD_SYMBOLS)
+                case DemodState::SYNCED:
                 {
-                    /*
-                     * Check for valid syncword using hamming distance.
-                     * The demodulator switches to locked state only if there
-                     * is an exact syncword match, this avoids continuous false
-                     * detections in absence of an M17 signal.
-                     */
-                    uint8_t maxHamming = 2;
-                    if(locked == false) maxHamming = 0;
+                    // Set sampling point and deviation, zero frame symbol count
+                    samplingPoint  = streamSync.samplingIndex();
+                    outerDeviation = correlator.maxDeviation(samplingPoint);
+                    frameIndex     = 0;
 
-                    uint8_t hammingSync = hammingDistance((*demodFrame)[0],
-                                                          STREAM_SYNC_WORD[0])
-                                        + hammingDistance((*demodFrame)[1],
-                                                          STREAM_SYNC_WORD[1]);
-
-                    uint8_t hammingLsf = hammingDistance((*demodFrame)[0],
-                                                         LSF_SYNC_WORD[0])
-                                       + hammingDistance((*demodFrame)[1],
-                                                         LSF_SYNC_WORD[1]);
-
-                    if ((hammingSync > maxHamming) && (hammingLsf > maxHamming))
+                    // Quantize the syncword taking data from the correlator
+                    // memory.
+                    for(size_t i = 0; i < SYNCWORD_SAMPLES; i++)
                     {
-                        // Lock lost, reset demodulator alignment (phase) only
-                        // if we were locked on a valid signal.
-                        // This to avoid, in case of absence of carrier, to fall
-                        // in a loop where the demodulator continues to search
-                        // for the syncword in the same block of samples, causing
-                        // the update function to take more than 20ms to complete.
-                        if(locked) phase = 0;
-                        syncDetected = false;
-                        locked       = false;
+                        size_t  pos = (correlator.index() + i) % SYNCWORD_SAMPLES;
+                        int16_t val = correlator.data()[pos];
 
-                        #ifdef ENABLE_DEMOD_LOG
-                        // Pre-arm the log trigger.
-                        trigEnable = true;
-                        #endif
+                        if((pos % SAMPLES_PER_SYMBOL) == samplingPoint)
+                            updateFrame(val);
+                    }
+
+                    uint8_t hd  = hammingDistance((*demodFrame)[0], STREAM_SYNC_WORD[0]);
+                            hd += hammingDistance((*demodFrame)[1], STREAM_SYNC_WORD[1]);
+
+                    if(hd == 0)
+                    {
+                        locked     = true;
+                        demodState = DemodState::LOCKED;
                     }
                     else
                     {
-                        // Correct syncword found
-                        locked = true;
-
-                        #ifdef ENABLE_DEMOD_LOG
-                        // Trigger a data dump when lock is re-acquired.
-                        if((dumpData == false) && (trigEnable == true))
-                        {
-                            trigEnable = false;
-                            triggered  = true;
-                        }
-                        #endif
+                        demodState = DemodState::UNLOCKED;
                     }
                 }
+                    break;
 
-                // Locate syncword to correct clock skew between Tx and Rx
-                if (frame_index == M17_SYNCWORD_SYMBOLS + SYNC_SWEEP_OFFSET)
+                case DemodState::LOCKED:
                 {
-                    // Find index (possibly negative) of the syncword
-                    int32_t expected_sync =
-                        phase +
-                        M17_SAMPLES_PER_SYMBOL * decoded_syms -
-                        M17_SYNCWORD_SAMPLES -
-                        SYNC_SWEEP_OFFSET * M17_SAMPLES_PER_SYMBOL;
-                    int32_t sync_skew = syncwordSweep(expected_sync);
-                    phase += sync_skew;
-                }
+                    // Quantize and update frame at each sampling point
+                    if(sampleIndex == samplingPoint)
+                    {
+                        updateFrame(sample);
 
-                // If the frame buffer is full switch demod and ready frame
-                if (frame_index == M17_FRAME_SYMBOLS)
-                {
-                    demodFrame.swap(readyFrame);
-                    frame_index = 0;
-                    newFrame    = true;
+                        // When we have reached almost the end of a frame, switch
+                        // to syncpoint update.
+                        if(frameIndex == (M17_FRAME_SYMBOLS - M17_SYNCWORD_SYMBOLS/2))
+                        {
+                            demodState = DemodState::SYNC_UPDATE;
+                            syncCount  = SYNCWORD_SAMPLES * 2;
+                        }
+                    }
                 }
+                    break;
+
+                case DemodState::SYNC_UPDATE:
+                {
+                    // Keep filling the ongoing frame!
+                    if(sampleIndex == samplingPoint)
+                        updateFrame(sample);
+
+                    // Find the new correlation peak
+                    int32_t syncThresh = static_cast< int32_t >(corrThreshold * 33.0f);
+                    int8_t  syncStatus = streamSync.update(correlator, syncThresh, -syncThresh);
+
+                    if(syncStatus != 0)
+                    {
+                        // Correlation has to coincide with a syncword!
+                        if(frameIndex == M17_SYNCWORD_SYMBOLS)
+                        {
+                            uint8_t hd  = hammingDistance((*demodFrame)[0], STREAM_SYNC_WORD[0]);
+                                    hd += hammingDistance((*demodFrame)[1], STREAM_SYNC_WORD[1]);
+
+                            // Valid sync found: update deviation and sample
+                            // point, then go back to locked state
+                            if(hd <= 1)
+                            {
+                                outerDeviation = correlator.maxDeviation(samplingPoint);
+                                samplingPoint  = streamSync.samplingIndex();
+                                missedSyncs    = 0;
+                                demodState     = DemodState::LOCKED;
+                                break;
+                            }
+                        }
+                    }
+
+                    // No syncword found within the window, increase the count
+                    // of missed syncs and choose where to go. The lock is lost
+                    // after four consecutive sync misses.
+                    if(syncCount == 0)
+                    {
+                        if(missedSyncs >= 4)
+                        {
+                            demodState = DemodState::UNLOCKED;
+                            locked     = false;
+                        }
+                        else
+                        {
+                            demodState = DemodState::LOCKED;
+                        }
+
+                        missedSyncs += 1;
+                    }
+
+                    syncCount -= 1;
+                }
+                    break;
             }
+
+            sampleCount += 1;
+            sampleIndex  = (sampleIndex + 1) % SAMPLES_PER_SYMBOL;
         }
-
-        // Copy last N samples to bridge buffer
-        memcpy(basebandBridge,
-               baseband.data + (baseband.len - M17_BRIDGE_SIZE),
-               sizeof(int16_t) * M17_BRIDGE_SIZE);
     }
-
-    #if defined(PLATFORM_LINUX) && defined(ENABLE_DEMOD_LOG)
-    if (baseband.data == NULL)
-        dumpData = true;
-    #endif
 
     return newFrame;
 }
 
-void M17Demodulator::invertPhase(const bool status)
+int8_t M17Demodulator::updateFrame(stream_sample_t sample)
 {
-    invPhase = status;
+    int8_t symbol;
+
+    if(sample > (2 * outerDeviation.first)/3)
+    {
+        symbol = +3;
+    }
+    else if(sample < (2 * outerDeviation.second)/3)
+    {
+        symbol = -3;
+    }
+    else if(sample > 0)
+    {
+        symbol = +1;
+    }
+    else
+    {
+        symbol = -1;
+    }
+
+    setSymbol(*demodFrame, frameIndex, symbol);
+    frameIndex += 1;
+
+    if(frameIndex >= M17_FRAME_SYMBOLS)
+    {
+        std::swap(readyFrame, demodFrame);
+        frameIndex = 0;
+        newFrame   = true;
+    }
+
+    return symbol;
 }
+
+void M17Demodulator::reset()
+{
+    sampleIndex = 0;
+    frameIndex  = 0;
+    sampleCount = 0;
+    newFrame    = false;
+    locked      = false;
+    demodState  = DemodState::INIT;
+    initCount   = RX_SAMPLE_RATE / 50;  // 50ms of init time
+
+    dsp_resetFilterState(&dcrState);
+}
+
+
+constexpr std::array < float, 3 > M17Demodulator::sfNum;
+constexpr std::array < float, 3 > M17Demodulator::sfDen;
