@@ -266,8 +266,6 @@ inline void gfx_setPixel(point_t pos, color_t color)
         framebuffer[cell] &= ~(1 << elem);
         framebuffer[cell] |= (_color2bw(color) << elem);
     }
-    #endif
-
 #endif
 }
 
