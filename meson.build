@@ -58,7 +58,7 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/nvmem_access.c',
                'openrtx/src/rtx/rtx.cpp',
                'openrtx/src/rtx/OpMode_FM.cpp',
-               'openrtx/src/rtx/OpMode_M17.cpp',
+#               'openrtx/src/rtx/OpMode_M17.cpp',
                'openrtx/src/protocols/M17/M17DSP.cpp',
                'openrtx/src/protocols/M17/M17Golay.cpp',
                'openrtx/src/protocols/M17/M17Callsign.cpp',
@@ -291,6 +291,24 @@ at32f421_inc = ['platform/mcu/AT32F421',
 at32f421_def = {'AT32F421C8T7':''}
 
 ##
+## GD32F330
+##
+
+gd32f330_src = ['platform/mcu/GD32F330/boot/startup.cpp',
+                'platform/mcu/GD32F330/boot/bsp.cpp',
+                'platform/mcu/GD32F330/boot/libc_integration.cpp',
+                'platform/mcu/GD32F330/drivers/gpio.c',
+                'platform/mcu/GD32F330/drivers/delays.cpp',
+                'platform/mcu/GD32F330/drivers/USART1.cpp',
+                  'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/system_gd32f3x0.c']
+
+gd32f330_inc = ['platform/mcu/GD32F330',
+                'platform/mcu/CMSIS/Include',
+                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Include']
+
+gd32f330_def = {'GD32F330':''}
+
+##
 ## ----------------------- Platform specializations ----------------------------
 ##
 
@@ -485,9 +503,29 @@ rt890_src = ['platform/targets/RT-890/platform.c',
 rt890_inc = ['platform/targets/RT-890']
 rt890_def = {'PLATFORM_RT890': ''}
 
-rt890_src += openrtx_src + at32f421_src + miosix_cm4_src + ui_src_default
-rt890_inc += openrtx_inc + at32f421_inc + miosix_cm4_inc
-rt890_def += openrtx_def + at32f421_def + miosix_cm4_def
+rt890_src += openrtx_src + gd32f330_src + miosix_cm4_src + ui_src_default
+rt890_inc += openrtx_inc + gd32f330_inc + miosix_cm4_inc
+rt890_def += openrtx_def + gd32f330_def + miosix_cm4_def
+
+
+##
+## Talkpod A36Plus
+##
+
+a36plus_src = ['platform/targets/A36Plus/platform.c',
+             'platform/drivers/display/ST7735S_a36plus.c',
+             'platform/drivers/keyboard/keyboard_a36plus.c',
+             'platform/drivers/stubs/audio_stub.c',
+             'platform/drivers/stubs/cps_io_stub.c',
+             'platform/drivers/stubs/nvmem_stub.c',
+             'platform/drivers/stubs/radio_stub.c']
+
+a36plus_inc = ['platform/targets/A36Plus']
+a36plus_def = {'PLATFORM_A36PLUS': ''}
+
+a36plus_src += openrtx_src + gd32f330_src + miosix_cm4_src + ui_src_default
+a36plus_inc += openrtx_inc + gd32f330_inc + miosix_cm4_inc
+a36plus_def += openrtx_def + gd32f330_def + miosix_cm4_def
 
 ##
 ## -------------------------- Compilation arguments ----------------------------
@@ -593,6 +631,15 @@ foreach k, v : rt890_def
   endif
 endforeach
 
+a36plus_args = []
+foreach k, v : a36plus_def
+  if v == ''
+    a36plus_args += '-D@0@'.format(k)
+  else
+    a36plus_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
+
 linux_opts = {
   'sources'            : linux_default_src,
   'include_directories': linux_inc,
@@ -690,6 +737,16 @@ rt890_opts = {
                           '-Wl,--print-memory-usage'],
 }
 
+a36plus_opts = {
+  'sources'            : a36plus_src,
+  'include_directories': a36plus_inc,
+  'dependencies'       : [],
+  'c_args'             : a36plus_args,
+  'cpp_args'           : a36plus_args,
+  'link_args'          : ['-Wl,-T../platform/mcu/GD32F330/linker_script.ld',
+                          '-Wl,--print-memory-usage'],
+}
+
 ttwrplus_opts = {
   'sources'            : ['CMakeLists.txt'],
   'include_directories': [],
@@ -764,6 +821,13 @@ targets = [
   {
     'name'     : 'rt890',
     'opts'     : rt890_opts,
+    'flashable': true,
+    'wrap'     : ' ',
+    'load_addr': ' '
+  },
+  {
+    'name'     : 'a36plus',
+    'opts'     : a36plus_opts,
     'flashable': true,
     'wrap'     : ' ',
     'load_addr': ' '
