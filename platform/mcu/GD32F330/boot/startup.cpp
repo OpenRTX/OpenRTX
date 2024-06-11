@@ -32,6 +32,7 @@
 #include "kernel/stage_2_boot.h"
 #include "core/interrupts.h" //For the unexpected interrupt call
 #include <string.h>
+#include <gd32f3x0.h>
 
 /**
  * Called by Reset_Handler, performs initialization and calls main.

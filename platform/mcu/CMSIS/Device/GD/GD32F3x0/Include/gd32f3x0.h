@@ -35,7 +35,7 @@
 
 #ifndef GD32F3X0_H
 #define GD32F3X0_H
-
+#include <stdint.h>
     /* define GD32F3x0 */
 #if !defined (GD32F3x0)
 #define GD32F3x0
@@ -228,7 +228,8 @@
 #define USE_STDPERIPH_DRIVER
 #endif
 #ifdef USE_STDPERIPH_DRIVER
-#include "gd32f3x0_libopt.h"
+//#include "gd32f3x0_libopt.h"
 #endif /* USE_STDPERIPH_DRIVER */
+#include "gd32f3x0_libopt.h"
 
 #endif

@@ -179,8 +179,8 @@ typedef struct
 } usart_type;
 
 /* USARTx(x=0,1) definitions */
-#define USART0                        (usart_type *)(USART_BASE + 0x0000F400U)
-#define USART1                        (usart_type *)USART_BASE
+#define USART0                        (uint32_t)(USART_BASE + 0x0000F400U)
+#define USART1                        (uint32_t)USART_BASE
 
 /* registers definitions */
 #define USART_CTL0(usartx)            REG32((usartx) + 0x00000000U)         /*!< USART control register 0 */
