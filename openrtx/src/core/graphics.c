@@ -98,7 +98,7 @@ static const GFXfont fonts[] = { TomThumb,            // 5pt
  */
 
 #define PIXEL_T rgb565_t
-#define FB_SIZE (CONFIG_SCREEN_HEIGHT * CONFIG_SCREEN_WIDTH)
+#define FB_SIZE (32*32)
 
 typedef struct
 {

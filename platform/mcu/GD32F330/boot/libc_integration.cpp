@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include <reent.h>
 #include <filesystem/file_access.h>
-#include <drivers/USART1.h>
+#include <drivers/USART0.h>
 
 using namespace std;
 
@@ -34,7 +34,7 @@ int _write_r(struct _reent *ptr, int fd, const void *buf, size_t cnt)
 {
     if(fd == STDOUT_FILENO || fd == STDERR_FILENO)
     {
-        usart1_writeBlock((void *) buf, cnt, 0);
+        usart0_writeBlock((void *) buf, cnt, 0);
         return cnt;
     }
 

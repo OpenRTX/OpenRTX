@@ -34,12 +34,12 @@ extern "C" {
  *
  * @param baudrate: serial port baud rate, in bits per second.
  */
-void usart1_init(unsigned int baudrate);
+void usart0_init(unsigned int baudrate);
 
 /**
  * Shut down USART1 peripheral.
  */
-void usart1_terminate();
+void usart0_terminate();
 
 /**
  * Read a block of data.
@@ -51,7 +51,7 @@ void usart1_terminate();
  * it is normal for this function to return less character than the amount
  * asked.
  */
-ssize_t usart1_readBlock(void *buffer, size_t size, off_t where);
+ssize_t usart0_readBlock(void *buffer, size_t size, off_t where);
 
 /**
  * Write a block of data.
@@ -61,7 +61,7 @@ ssize_t usart1_readBlock(void *buffer, size_t size, off_t where);
  * \param where where to write to.
  * \return number of bytes written or a negative number on failure.
  */
-ssize_t usart1_writeBlock(void *buffer, size_t size, off_t where);
+ssize_t usart0_writeBlock(void *buffer, size_t size, off_t where);
 
 /**
  * Write a string.
@@ -72,7 +72,7 @@ ssize_t usart1_writeBlock(void *buffer, size_t size, off_t where);
  *
  * \param str the string to write. The string must be NUL terminated.
  */
-void usart1_IRQwrite(const char *str);
+void usart0_IRQwrite(const char *str);
 
 #ifdef __cplusplus
 }
