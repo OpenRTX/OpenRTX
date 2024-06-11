@@ -78,6 +78,6 @@
 #define TX_PA_EN    GPIOB,11
 
 // USART
-#define USART1_TX   GPIOB,6
+#define USART0_TX   GPIOB,6
 
 #endif

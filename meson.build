@@ -294,13 +294,17 @@ at32f421_def = {'AT32F421C8T7':''}
 ## GD32F330
 ##
 
-gd32f330_src = ['platform/mcu/GD32F330/boot/startup.cpp',
-                'platform/mcu/GD32F330/boot/bsp.cpp',
-                'platform/mcu/GD32F330/boot/libc_integration.cpp',
+gd32f330_src = [
+                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/system_gd32f3x0.c',
+                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_misc.c',
+                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_usart.c',
                 'platform/mcu/GD32F330/drivers/gpio.c',
                 'platform/mcu/GD32F330/drivers/delays.cpp',
-                'platform/mcu/GD32F330/drivers/USART1.cpp',
-                  'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/system_gd32f3x0.c']
+                'platform/mcu/GD32F330/drivers/USART0.cpp',
+                'platform/mcu/GD32F330/boot/startup.cpp',
+                'platform/mcu/GD32F330/boot/bsp.cpp',
+                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_rcu.c',
+                'platform/mcu/GD32F330/boot/libc_integration.cpp']
 
 gd32f330_inc = ['platform/mcu/GD32F330',
                 'platform/mcu/CMSIS/Include',
@@ -503,9 +507,9 @@ rt890_src = ['platform/targets/RT-890/platform.c',
 rt890_inc = ['platform/targets/RT-890']
 rt890_def = {'PLATFORM_RT890': ''}
 
-rt890_src += openrtx_src + gd32f330_src + miosix_cm4_src + ui_src_default
-rt890_inc += openrtx_inc + gd32f330_inc + miosix_cm4_inc
-rt890_def += openrtx_def + gd32f330_def + miosix_cm4_def
+rt890_src += openrtx_src + at32f421_src + miosix_cm4_src + ui_src_default
+rt890_inc += openrtx_inc + at32f421_inc + miosix_cm4_inc
+rt890_def += openrtx_def + at32f421_def + miosix_cm4_def
 
 
 ##

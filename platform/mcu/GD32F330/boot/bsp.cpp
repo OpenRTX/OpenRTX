@@ -24,8 +24,9 @@
 * Board support package, this file initializes hardware.
 ************************************************************************/
 
-#include <peripherals/gpio.h>
-#include <drivers/USART1.h>
+#include <gd32f3x0.h>
+#include <gd32f3x0_rcu.h>
+#include <drivers/USART0.h>
 #include <interfaces/bsp.h>
 #include <kernel/kernel.h>
 #include <kernel/sync.h>
@@ -40,18 +41,22 @@ namespace miosix
 
 void IRQbspInit()
 {
-    RCU->ahben |= (1 << 17)     // Enable GPIOA
-               |  (1 << 18)     // Enable GPIOB
-               |  (1 << 19)     // Enable GPIOC
-               |  (1 << 22);    // Enable GPIOF
+    // RCU->ahben |= (1 << 17)     // Enable GPIOA
+    //            |  (1 << 18)     // Enable GPIOB
+    //            |  (1 << 19)     // Enable GPIOC
+    //            |  (1 << 22);    // Enable GPIOF
+    rcu_periph_clock_enable(RCU_GPIOA);
+    rcu_periph_clock_enable(RCU_GPIOB);
+    rcu_periph_clock_enable(RCU_GPIOC);
+    rcu_periph_clock_enable(RCU_GPIOF);
 
     // Configure SysTick
-    SysTick->LOAD = SystemCoreClock / miosix::TICK_FREQ;
-
+    SysTick_Config(SystemCoreClock / miosix::TICK_FREQ);
+    
     // Bring up USART1
-    gpio_setMode(USART1_TX, ALTERNATE);
-    usart1_init(115200);
-    usart1_IRQwrite("Starting system...\r\n");
+    gpio_af_set((uint32_t)GPIOA, GPIO_AF_1, GPIO_PIN_9 | GPIO_PIN_10);
+    usart0_init(115200);
+    usart0_IRQwrite("Starting system...\r\n");
 }
 
 void bspInit2()

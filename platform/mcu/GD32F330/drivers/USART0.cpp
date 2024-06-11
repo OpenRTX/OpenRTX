@@ -21,8 +21,9 @@
 #include <kernel/scheduler/scheduler.h>
 #include <kernel/queue.h>
 #include <miosix.h>
-#include <gd32f3x0.h>
-#include "USART1.h"
+#include "gd32f3x0.h"
+#include "../platform/mcu/CMSIS/Device/GD/GD32F3x0/Include/gd32f3x0_usart.h"
+#include "USART0.h"
 
 using namespace miosix;
 
@@ -41,26 +42,26 @@ static FastMutex txMutex;                    // Mutex locked during transmission
  */
 static inline void waitSerialTxFifoEmpty()
 {
-    while((USART1-> & (1 << 6)) == 0) ;
+//    while((USART0-> & (1 << 6)) == 0) ;
+    while(usart_flag_get((uint32_t)USART0, USART_FLAG_TBE) == RESET);
 }
 
 /**
  * \internal
- * Interrupt handler function, called by USART1_IRQHandler.
+ * Interrupt handler function, called by USART0_IRQHandler.
  */
-void __attribute__((noinline)) usart1irqImpl()
+void __attribute__((noinline)) usart0irqImpl()
 {
-    unsigned int status = USART1->sts;
     char c;
 
     // New character received
-    if(status & (1 << 5))
+    if(usart_flag_get(USART0, USART_FLAG_RBNE))
     {
         //Always read data, since this clears interrupt flags
-        c = USART1->dt;
+        c = usart_data_receive(USART0);
 
         //If no error put data in buffer
-        if((status & (1 << 1)) == 0)
+        if(usart_flag_get(USART0, USART_FLAG_ORERR) == RESET)
         {
             if(rxQueue.tryPut(c) == false) {/*fifo overflow*/}
         }
@@ -69,14 +70,16 @@ void __attribute__((noinline)) usart1irqImpl()
     }
 
     // Idle line
-    if(status & (1 << 4))
+    if(usart_flag_get(USART0, USART_FLAG_IDLE))
     {
-        c = USART1->dt; //clears interrupt flags
+        // Clear interrupt flags
+        usart_flag_clear(USART0, USART_FLAG_IDLE);
         rxIdle = true;
     }
 
     // Enough data in buffer or idle line, awake thread
-    if((status & (1 << 4)) || rxQueue.size() >= rxQueueMin)
+    if(usart_flag_get(USART0, USART_FLAG_RBNE) == RESET ||
+       rxQueue.size() >= rxQueueMin)
     {
         if(rxWaiting)
         {
@@ -89,48 +92,51 @@ void __attribute__((noinline)) usart1irqImpl()
     }
 }
 
-void __attribute__((naked)) USART1_IRQHandler()
+void __attribute__((naked)) USART0_IRQHandler()
 {
     saveContext();
-    asm volatile("bl _Z13usart1irqImplv");
+    asm volatile("bl _Z13usart0irqImplv");
     restoreContext();
 }
 
-
-void usart1_init(unsigned int baudrate)
+void rcu_periph_clock_enable(rcu_periph_enum periph)
 {
-    CRM->apb2en |= (1 << 14);
-    __DSB();
-
-    // Get current frequency of APB2 clock
-    unsigned int freq = SystemCoreClock;
-    if(CRM->cfg_bit.apb2div != 0)
-        freq /= ((CRM->cfg_bit.apb2div & 0x03) + 1);
-
-    const unsigned int quot = 2*freq/baudrate; // 2*freq for round to nearest
-    USART1->baudr = quot/2 + (quot & 1);       // Round to nearest
-    USART1->ctrl1 = (1 << 13)                  // Enable port
-                  | (1 <<  5)                  // Interrupt on data received
-                  | (1 <<  4)                  // Interrupt on idle line
-                  | (1 <<  3)                  // Transmission enbled
-                  | (1 <<  2);                 // Reception enabled
-
-    NVIC_SetPriority(USART1_IRQn, 15);         // Lowest priority for serial
-    NVIC_EnableIRQ(USART1_IRQn);
+    RCU_REG_VAL(periph) |= BIT(RCU_BIT_POS(periph));
 }
 
-void usart1_terminate()
+void usart0_init(unsigned int baudrate)
+{
+    rcu_periph_clock_enable(RCU_USART0);
+ 
+    usart_deinit(USART0);
+
+    usart_baudrate_set(USART0, baudrate);
+    usart_word_length_set(USART0, USART_WL_8BIT);
+    usart_stop_bit_set(USART0, USART_STB_1BIT);
+    usart_parity_config(USART0, USART_PM_NONE);
+    usart_baudrate_set(USART0, 115200U);
+    usart_receive_config(USART0, USART_RECEIVE_ENABLE);
+    usart_transmit_config(USART0, USART_TRANSMIT_ENABLE);
+    usart_enable(USART0);
+
+    NVIC_SetPriority(USART0_IRQn, 15);         // Lowest priority for serial
+    NVIC_EnableIRQ(USART0_IRQn);
+}
+
+void usart0_terminate()
 {
     waitSerialTxFifoEmpty();
 
-    NVIC_DisableIRQ(USART1_IRQn);
+    NVIC_DisableIRQ(USART0_IRQn);
 
-    USART1->ctrl1 &= ~(1 << 13);
-    CRM->apb2en   &= ~(1 << 14);
+    //USART0->ctrl1 &= ~(1 << 13);
+    usart_disable(USART0);
+    //CRM->apb2en   &= ~(1 << 14);
+    rcu_periph_clock_disable(RCU_USART0);
     __DSB();
 }
 
-ssize_t usart1_readBlock(void *buffer, size_t size, off_t where)
+ssize_t usart0_readBlock(void *buffer, size_t size, off_t where)
 {
     (void) where;
 
@@ -164,7 +170,7 @@ ssize_t usart1_readBlock(void *buffer, size_t size, off_t where)
     return result;
 }
 
-ssize_t usart1_writeBlock(void *buffer, size_t size, off_t where)
+ssize_t usart0_writeBlock(void *buffer, size_t size, off_t where)
 {
     (void) where;
 
@@ -172,14 +178,14 @@ ssize_t usart1_writeBlock(void *buffer, size_t size, off_t where)
     const char *buf = reinterpret_cast< const char* >(buffer);
     for(size_t i = 0; i < size; i++)
     {
-        while((USART1->sts & (1 << 7)) == 0) ;
-        USART1->dt = *buf++;
+        while(usart_flag_get(USART0, USART_FLAG_TBE) == RESET);
+        USART_TDATA(USART0) = *buf++;
     }
 
     return size;
 }
 
-void usart1_IRQwrite(const char *str)
+void usart0_IRQwrite(const char *str)
 {
     // We can reach here also with only kernel paused, so make sure
     // interrupts are disabled. This is important for the DMA case
@@ -188,8 +194,8 @@ void usart1_IRQwrite(const char *str)
 
     while(*str)
     {
-        while((USART1->sts & (1 << 7)) == 0) ;
-        USART1->dt = *str++;
+        while(usart_flag_get(USART0, USART_FLAG_TBE) == RESET);
+        USART_TDATA(USART0) = *str++;
     }
 
     waitSerialTxFifoEmpty();

@@ -353,6 +353,7 @@ static bool beep_tick()
 
 void vp_init()
 {
+    return;
     #ifdef VP_USE_FILESYSTEM
     if(vpFile == NULL)
         vpFile = fopen("voiceprompts.vpc", "r");
@@ -388,7 +389,7 @@ void vp_init()
     }
 
     // Initialize codec2 module
-    codec_init();
+    //codec_init();
 }
 
 void vp_terminate()
@@ -563,6 +564,7 @@ void vp_play()
 
 void vp_tick()
 {
+    return;
     if (platform_getPttStatus() && (voicePromptActive || (currentBeepDuration > 0)))
     {
         vp_stop();
@@ -581,10 +583,10 @@ void vp_tick()
     // management.
     if((vpStartTime > 0) && ((getTick() - vpStartTime) > 50))
     {
-        vpStartTime       = 0;
-        voicePromptActive = true;
-        enableSpkOutput();
-        codec_startDecode(vpAudioPath);
+        // vpStartTime       = 0;
+        // voicePromptActive = true;
+        // enableSpkOutput();
+        // codec_startDecode(vpAudioPath);
     }
 
     if (voicePromptActive == false)
