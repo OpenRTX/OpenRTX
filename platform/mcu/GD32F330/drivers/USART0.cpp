@@ -99,11 +99,6 @@ void __attribute__((naked)) USART0_IRQHandler()
     restoreContext();
 }
 
-void rcu_periph_clock_enable(rcu_periph_enum periph)
-{
-    RCU_REG_VAL(periph) |= BIT(RCU_BIT_POS(periph));
-}
-
 void usart0_init(unsigned int baudrate)
 {
     rcu_periph_clock_enable(RCU_USART0);
