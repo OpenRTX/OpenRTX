@@ -24,40 +24,40 @@
 #include <gd32f3x0.h>
 
 // LCD display
-#define LCD_CLK     GPIOA,0
-#define LCD_DAT     GPIOA,4
-#define LCD_PWR     GPIOA,5
-#define LCD_RST     GPIOF,0
-#define LCD_CS      GPIOC,15
-#define LCD_DC      GPIOF,1
+#define LCD_CLK     GPIOB,13
+#define LCD_DAT     GPIOB,15
+#define LCD_PWR     GPIOB,7
+#define LCD_RST     GPIOB,12
+#define LCD_CS      GPIOB,2
+#define LCD_DC      GPIOB,10                
 
 // LEDs
 #define GREEN_LED   GPIOA,14
 #define RED_LED     GPIOA,13
 
 // Analog inputs
-#define AIN_VBAT    GPIOB,12
+#define AIN_VBAT    GPIOA,1
 
 // Push-to-talk
-#define PTT_SW      GPIOB,7
+#define PTT_SW      GPIOA,10
 
 // Keyboard and side keys
-#define KBD_ROW0    GPIOA,10
-#define KBD_ROW1    GPIOB,1
-#define KBD_ROW2    GPIOB,2
-#define KBD_ROW3    GPIOA,9
-#define KBD_COL0    GPIOB,15
-#define KBD_COL1    GPIOB,14
-#define KBD_COL2    GPIOB,13
+#define KBD_ROW0    GPIOB,3
+#define KBD_ROW1    GPIOB,4
+#define KBD_ROW2    GPIOB,5
+#define KBD_ROW3    GPIOA,6
+#define KBD_COL0    GPIOB,11
+#define KBD_COL1    GPIOB,9
+#define KBD_COL2    GPIOB,14
 #define KBD_COL3    GPIOA,8
 #define SKB_1       GPIOA,15
 #define SKB_2       GPIOF,7
 
 // External flash
-#define EFLASH_MISO GPIOB,3
+#define EFLASH_MISO GPIOA,6
 #define EFLASH_MOSI GPIOA,7
-#define EFLASH_SCK  GPIOB,4     // Shared with BK1080 DAT
-#define EFLASH_CS   GPIOB,0
+#define EFLASH_SCK  GPIOB,5
+#define EFLASH_CS   GPIOB,4
 
 // BK1080
 #define BK1080_CLK  GPIOC,14
