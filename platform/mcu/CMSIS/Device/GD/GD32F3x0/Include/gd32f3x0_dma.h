@@ -36,6 +36,9 @@ OF SUCH DAMAGE.
 #define GD32F3X0_DMA_H
 
 #include "gd32f3x0.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* DMA definitions */
 #define DMA                               DMA_BASE                    /*!< DMA base address */
@@ -267,4 +270,7 @@ FlagStatus dma_interrupt_flag_get(dma_channel_enum channelx, uint32_t flag);
 /* clear DMA a channel flag */
 void dma_interrupt_flag_clear(dma_channel_enum channelx, uint32_t flag);
 
-#endif /* GD32F3X0_DMA_H */
+#ifdef __cplusplus
+}
+#endif
+#endif

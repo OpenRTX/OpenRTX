@@ -36,6 +36,9 @@ OF SUCH DAMAGE.
 #define GD32F3X0_GPIO_H
 
 #include "gd32f3x0.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdint.h>
 
 /* GPIOx(x=A,B,C,D,F) definitions */
@@ -748,4 +751,7 @@ void gpio_bit_toggle(uint32_t gpio_periph, uint32_t pin);
 /* toggle GPIO port status */
 void gpio_port_toggle(uint32_t gpio_periph);
 
-#endif /* GD32F3X0_GPIO_H */
+#ifdef __cplusplus
+}
+#endif
+#endif

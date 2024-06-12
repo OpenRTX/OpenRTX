@@ -36,6 +36,9 @@ OF SUCH DAMAGE.
 #define GD32F3X0_CRC_H
 
 #include "gd32f3x0.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* CRC definitions */
 #define CRC                            CRC_BASE
@@ -120,4 +123,7 @@ uint32_t crc_single_data_calculate(uint32_t sdata, uint8_t data_format);
 /* CRC calculate a data array */
 uint32_t crc_block_data_calculate(void *array, uint32_t size, uint8_t data_format);
 
-#endif /* GD32F3X0_CRC_H */
+#ifdef __cplusplus
+}
+#endif
+#endif

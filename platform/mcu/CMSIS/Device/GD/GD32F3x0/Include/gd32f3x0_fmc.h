@@ -37,6 +37,9 @@ OF SUCH DAMAGE.
 #define GD32F3X0_FMC_H
 
 #include "gd32f3x0.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* FMC and option byte definition */
 #define FMC                     FMC_BASE                    /*!< FMC register base address */
@@ -252,4 +255,7 @@ void ob_parm_get(ob_parm_struct *ob_parm);
 /* modify the target option byte depending on the original value */
 void ob_value_modify(uint32_t address, uint16_t value, ob_parm_struct *ob_parm);
 
-#endif /* GD32F3X0_FMC_H */
+#ifdef __cplusplus
+}
+#endif
+#endif

@@ -36,6 +36,9 @@ OF SUCH DAMAGE.
 #define GD32F3X0_PMU_H
 
 #include "gd32f3x0.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* PMU definitions */
 #define PMU                           PMU_BASE                 /*!< PMU base address */
@@ -193,4 +196,7 @@ FlagStatus pmu_flag_get(uint32_t flag);
 /* clear flag bit */
 void pmu_flag_clear(uint32_t flag);
 
-#endif /* GD32F3X0_PMU_H */
+#ifdef __cplusplus
+}
+#endif
+#endif

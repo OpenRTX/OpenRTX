@@ -36,6 +36,9 @@ OF SUCH DAMAGE.
 #define GD32F3X0_WWDGT_H
 
 #include "gd32f3x0.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* WWDGT definitions */
 #define WWDGT                       WWDGT_BASE                                     /*!< WWDGT base address */
@@ -89,4 +92,7 @@ void wwdgt_flag_clear(void);
 /* enable early wakeup interrupt of WWDGT */
 void wwdgt_interrupt_enable(void);
 
-#endif /* GD32F3X0_WWDGT_H */
+#ifdef __cplusplus
+}
+#endif
+#endif
