@@ -36,6 +36,9 @@ OF SUCH DAMAGE.
 #define GD32F3X0_DBG_H
 
 #include "gd32f3x0.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* DBG definitions */
 #define DBG                      DBG_BASE
@@ -126,4 +129,7 @@ void dbg_periph_enable(dbg_periph_enum dbg_periph);
 /* disable peripheral behavior when the MCU is in debug mode */
 void dbg_periph_disable(dbg_periph_enum dbg_periph);
 
-#endif /* GD32F3X0_DBG_H */
+#ifdef __cplusplus
+}
+#endif
+#endif

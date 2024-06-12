@@ -36,6 +36,9 @@ OF SUCH DAMAGE.
 #define GD32F3X0_CTC_H
 
 #include "gd32f3x0.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* CTC definitions */
 #define CTC                          CTC_BASE                  /*!< base address */
@@ -183,4 +186,7 @@ FlagStatus ctc_interrupt_flag_get(uint32_t int_flag);
 /* clear CTC interrupt flag */
 void ctc_interrupt_flag_clear(uint32_t int_flag);
 
-#endif /* GD32F3X0_CTC_H */
+#ifdef __cplusplus
+}
+#endif
+#endif

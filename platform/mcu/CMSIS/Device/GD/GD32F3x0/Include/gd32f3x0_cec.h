@@ -38,6 +38,9 @@ OF SUCH DAMAGE.
 #define GD32F3X0_CEC_H
 
 #include "gd32f3x0.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* CEC definitions */
 #define CEC                                CEC_BASE                   /*!< CEC base address */
@@ -244,6 +247,8 @@ FlagStatus cec_interrupt_flag_get(uint32_t flag);
 /* clear CEC int flag and status */
 void cec_interrupt_flag_clear(uint32_t flag);
 
-#endif /* GD32F3X0_CEC_H */
-
-#endif /* GD32F350 */
+#ifdef __cplusplus
+}
+#endif
+#endif
+#endif

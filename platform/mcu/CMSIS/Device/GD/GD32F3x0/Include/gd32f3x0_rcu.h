@@ -36,6 +36,9 @@ OF SUCH DAMAGE.
 #define GD32F3X0_RCU_H
 
 #include "gd32f3x0.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* RCU definitions */
 #define RCU                         RCU_BASE
@@ -796,4 +799,7 @@ void rcu_interrupt_enable(rcu_int_enum stab_int);
 /* disable the stabilization interrupt */
 void rcu_interrupt_disable(rcu_int_enum stab_int);
 
-#endif /* GD32F3X0_RCU_H */
+#ifdef __cplusplus
+}
+#endif
+#endif

@@ -36,6 +36,9 @@ OF SUCH DAMAGE.
 #define GD32F3X0_I2C_H
 
 #include "gd32f3x0.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* I2Cx(x=0,1) definitions */
 #define I2C0                          I2C_BASE                         /*!< I2C0 base address */
@@ -341,4 +344,7 @@ FlagStatus i2c_interrupt_flag_get(uint32_t i2c_periph, i2c_interrupt_flag_enum i
 /* clear I2C interrupt flag status */
 void i2c_interrupt_flag_clear(uint32_t i2c_periph, i2c_interrupt_flag_enum int_flag);
 
-#endif /* GD32F3X0_I2C_H */
+#ifdef __cplusplus
+}
+#endif
+#endif

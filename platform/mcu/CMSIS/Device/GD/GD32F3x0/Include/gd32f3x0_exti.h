@@ -36,6 +36,9 @@ OF SUCH DAMAGE.
 #define GD32F3X0_EXTI_H
 
 #include "gd32f3x0.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* EXTI definitions */
 #define EXTI                         EXTI_BASE                 /*!< EXTI base address */
@@ -280,4 +283,7 @@ FlagStatus exti_interrupt_flag_get(exti_line_enum linex);
 /* clear EXTI line x interrupt pending flag */
 void exti_interrupt_flag_clear(exti_line_enum linex);
 
-#endif /* GD32F3X0_EXTI_H */
+#ifdef __cplusplus
+}
+#endif
+#endif

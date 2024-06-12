@@ -38,6 +38,9 @@ OF SUCH DAMAGE.
 #define GD32F3X0_TSI_H
 
 #include "gd32f3x0.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* TSI definitions */
 #define TSI                     TSI_BASE                    /*!< TSI base address */
@@ -385,6 +388,11 @@ FlagStatus tsi_interrupt_flag_get(uint32_t flag);
 /* clear interrupt flag */
 void tsi_interrupt_flag_clear(uint32_t flag);
 
-#endif /* GD32F3X0_TSI_H */
-
-#endif /* GD32F350 */
+#ifdef __cplusplus
+}
+#endif
+#endif
+#ifdef __cplusplus
+}
+#endif
+#endif
