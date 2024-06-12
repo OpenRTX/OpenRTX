@@ -18,6 +18,34 @@
 #include <gd32f3x0.h>
 #include <peripherals/gpio.h>
 
+void gpio_af_set(uint32_t gpio_periph, uint32_t alt_func_num, uint32_t pin)
+{
+    uint16_t i;
+    uint32_t afrl, afrh;
+
+    afrl = GPIO_AFSEL0(gpio_periph);
+    afrh = GPIO_AFSEL1(gpio_periph);
+
+    for(i = 0U; i < 8U; i++) {
+        if((1U << i) & pin) {
+            /* clear the specified pin alternate function bits */
+            afrl &= ~GPIO_AFR_MASK(i);
+            afrl |= GPIO_AFR_SET(i, alt_func_num);
+        }
+    }
+
+    for(i = 8U; i < 16U; i++) {
+        if((1U << i) & pin) {
+            /* clear the specified pin alternate function bits */
+            afrh &= ~GPIO_AFR_MASK(i - 8U);
+            afrh |= GPIO_AFR_SET(i - 8U, alt_func_num);
+        }
+    }
+
+    GPIO_AFSEL0(gpio_periph) = afrl;
+    GPIO_AFSEL1(gpio_periph) = afrh;
+}
+
 void gpio_setMode(void *port, uint8_t pin, enum Mode mode)
 {
     gpio_type *p = (gpio_type *)(port);
