@@ -36,6 +36,9 @@ OF SUCH DAMAGE.
 #define GD32F3X0_USART_H
 
 #include "gd32f3x0.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
   * @brief type define usart register all
@@ -710,4 +713,7 @@ FlagStatus usart_interrupt_flag_get(uint32_t usart_periph, usart_interrupt_flag_
 /* clear USART interrupt flag */
 void usart_interrupt_flag_clear(uint32_t usart_periph, usart_interrupt_flag_enum int_flag);
 
-#endif /* GD32F3X0_USART_H */
+#ifdef __cplusplus
+}
+#endif
+#endif

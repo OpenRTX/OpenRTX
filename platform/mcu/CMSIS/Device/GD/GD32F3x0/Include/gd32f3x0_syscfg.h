@@ -36,6 +36,9 @@ OF SUCH DAMAGE.
 #define GD32F3X0_SYSCFG_H
 
 #include "gd32f3x0.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* SYSCFG definitions */
 #define SYSCFG                              SYSCFG_BASE
@@ -186,4 +189,7 @@ void syscfg_compensation_config(uint32_t syscfg_compensation);
 /* check if the I/O compensation cell ready flag is set or not */
 FlagStatus syscfg_cps_rdy_flag_get(void);
 
-#endif /* GD32F3X0_SYSCFG_H */
+#ifdef __cplusplus
+}
+#endif
+#endif

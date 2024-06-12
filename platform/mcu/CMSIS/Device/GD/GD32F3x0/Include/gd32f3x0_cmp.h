@@ -36,6 +36,9 @@ OF SUCH DAMAGE.
 #define GD32F3X0_CMP_H
 
 #include "gd32f3x0.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* CMP definitions */
 #define CMP                                      CMP_BASE                       /*!< CMP base address */
@@ -144,4 +147,7 @@ void cmp_lock_enable(cmp_enum cmp_periph);
 /* get output level */
 uint32_t cmp_output_level_get(cmp_enum cmp_periph);
 
-#endif /* GD32F3X0_CMP_H */
+#ifdef __cplusplus
+}
+#endif
+#endif

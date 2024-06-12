@@ -36,6 +36,9 @@ OF SUCH DAMAGE.
 #define GD32F3X0_SPI_H
 
 #include "gd32f3x0.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* SPIx(x=0,1) definitions */
 #define SPI0                            (SPI_BASE + 0x0000F800U)
@@ -219,8 +222,10 @@ typedef struct {
 /* I2S clock polarity */
 #define I2S_CKPL_LOW                    ((uint32_t)0x00000000U)                 /*!< I2S clock polarity low level */
 #define I2S_CKPL_HIGH                   SPI_I2SCTL_CKPL                         /*!< I2S clock polarity high level */
-#endif /* GD32F350 and GD32F310 */
-
+#ifdef __cplusplus
+}
+#endif
+#endif
 /* SPI DMA constants definitions */
 #define SPI_DMA_TRANSMIT                ((uint8_t)0x00U)                        /*!< SPI transmit data use DMA */
 #define SPI_DMA_RECEIVE                 ((uint8_t)0x01U)                        /*!< SPI receive data use DMA */
@@ -261,8 +266,10 @@ typedef struct {
 #define I2S_FLAG_RXORERR                SPI_STAT_RXORERR                        /*!< overrun error flag */
 #define I2S_FLAG_TRANS                  SPI_STAT_TRANS                          /*!< transmit on-going flag */
 #define I2S_FLAG_FERR                   SPI_STAT_FERR                           /*!< format error interrupt flag */
-#endif /* GD32F350 and GD32F310 */
-
+#ifdef __cplusplus
+}
+#endif
+#endif
 /* function declarations */
 /* SPI deinitialization and initialization functions */
 /* reset SPI and I2S */
@@ -286,8 +293,10 @@ void i2s_psc_config(uint32_t spi_periph, uint32_t audiosample, uint32_t framefor
 void i2s_enable(uint32_t spi_periph);
 /* disable I2S */
 void i2s_disable(uint32_t spi_periph);
-#endif /* GD32F350 and GD32F310 */
-
+#ifdef __cplusplus
+}
+#endif
+#endif
 /* NSS functions */
 /* enable SPI NSS output */
 void spi_nss_output_enable(uint32_t spi_periph);
@@ -368,4 +377,7 @@ void spi_i2s_interrupt_disable(uint32_t spi_periph, uint8_t interrupt);
 /* get SPI and I2S interrupt status */
 FlagStatus spi_i2s_interrupt_flag_get(uint32_t spi_periph, uint8_t interrupt);
 
-#endif /* GD32F3X0_SPI_H */
+#ifdef __cplusplus
+}
+#endif
+#endif

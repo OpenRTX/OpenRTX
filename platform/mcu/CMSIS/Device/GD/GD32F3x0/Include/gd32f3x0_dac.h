@@ -37,6 +37,9 @@ OF SUCH DAMAGE.
 #define GD32F3X0_DAC_H
 
 #include "gd32f3x0.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* DACx(x=0) definitions */
 #define DAC0                             (DAC_BASE)
@@ -213,6 +216,11 @@ FlagStatus dac_interrupt_flag_get(uint32_t dac_periph, uint32_t int_flag);
 /* clear DAC interrupt flag */
 void dac_interrupt_flag_clear(uint32_t dac_periph, uint32_t int_flag);
 
-#endif /* GD32F3X0_DAC_H */
-
-#endif /* GD32F350 */
+#ifdef __cplusplus
+}
+#endif
+#endif
+#ifdef __cplusplus
+}
+#endif
+#endif

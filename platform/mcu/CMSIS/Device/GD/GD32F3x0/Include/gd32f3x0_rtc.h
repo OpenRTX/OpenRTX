@@ -36,6 +36,9 @@ OF SUCH DAMAGE.
 #define GD32F3X0_RTC_H
 
 #include "gd32f3x0.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* RTC definitions */
 #define RTC                                RTC_BASE
@@ -553,4 +556,7 @@ ErrStatus rtc_refclock_detection_enable(void);
 /* disable RTC reference clock detection function */
 ErrStatus rtc_refclock_detection_disable(void);
 
-#endif /* GD32F3X0_RTC_H */
+#ifdef __cplusplus
+}
+#endif
+#endif

@@ -36,6 +36,9 @@ OF SUCH DAMAGE.
 #define GD32F3X0_MISC_H
 
 #include "gd32f3x0.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* constants definitions */
 /* set the RAM and FLASH base address */
@@ -88,4 +91,7 @@ void system_lowpower_reset(uint8_t lowpower_mode);
 /* set the systick clock source */
 void systick_clksource_set(uint32_t systick_clksource);
 
-#endif /* GD32F3X0_MISC_H */
+#ifdef __cplusplus
+}
+#endif
+#endif

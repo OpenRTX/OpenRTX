@@ -36,6 +36,9 @@ OF SUCH DAMAGE.
 #define GD32F3X0_ADC_H
 
 #include "gd32f3x0.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* ADC definitions */
 #define ADC                              ADC_BASE                                    /*!< ADC base address */
@@ -361,4 +364,8 @@ FlagStatus adc_interrupt_flag_get(uint32_t flag);
 /* clear the ADC interrupt flag */
 void adc_interrupt_flag_clear(uint32_t flag);
 
-#endif /* GD32F3X0_ADC_H */
+#ifdef __cplusplus
+}
+#endif
+
+#endif

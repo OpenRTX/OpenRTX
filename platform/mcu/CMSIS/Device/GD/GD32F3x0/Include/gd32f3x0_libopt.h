@@ -60,6 +60,8 @@ OF SUCH DAMAGE.
 #include "gd32f3x0_cec.h"
 #include "gd32f3x0_cmp.h"
 #include "gd32f3x0_dac.h"
-#endif /* GD32F350 */
-
-#endif /* GD32F3X0_LIBOPT_H */
+#ifdef __cplusplus
+}
+#endif
+#endif
+#endif

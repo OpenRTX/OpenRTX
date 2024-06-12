@@ -36,6 +36,9 @@ OF SUCH DAMAGE.
 #define GD32F3X0_TIMER_H
 
 #include "gd32f3x0.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* TIMERx(x=0,1,2,5,13..16) definitions */
 #define TIMER0                           (TIMER_BASE + 0x00012C00U)                 /*!< TIMER0 base address */
@@ -761,4 +764,7 @@ void timer_write_chxval_register_config(uint32_t timer_periph, uint16_t ccsel);
 /* configure TIMER output value selection */
 void timer_output_value_selection_config(uint32_t timer_periph, uint16_t outsel);
 
-#endif /* GD32F3X0_TIMER_H */
+#ifdef __cplusplus
+}
+#endif
+#endif
