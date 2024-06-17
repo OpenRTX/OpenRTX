@@ -445,6 +445,24 @@ mod17_inc += openrtx_inc + stm32f405_inc + miosix_cm4f_inc
 mod17_def += openrtx_def + stm32f405_def + miosix_cm4f_def
 
 ##
+## Micro 17
+##
+micro17_src = ['platform/targets/Micro17/platform.c',
+               'platform/drivers/baseband/radio_Micro17.cpp',
+               'platform/drivers/NVM/nvmem_Micro17.c',
+               'platform/drivers/stubs/audio_stub.c',
+               'platform/drivers/stubs/cps_io_stub.c',
+               'platform/drivers/stubs/display_stub.c',
+               'platform/drivers/stubs/keyboard_stub.c']
+
+micro17_inc = ['platform/targets/Micro17']
+micro17_def = {'PLATFORM_MICRO17': ''}
+
+micro17_src += openrtx_src + stm32g474_src + miosix_cm4f_src + ui_src_default
+micro17_inc += openrtx_inc + stm32g474_inc + miosix_cm4f_inc
+micro17_def += openrtx_def + stm32g474_def + miosix_cm4f_def
+
+##
 ## -------------------------- Compilation arguments ----------------------------
 ##
 
@@ -539,6 +557,15 @@ foreach k, v : mod17_def
   endif
 endforeach
 
+micro17_args = []
+foreach k, v : micro17_def
+  if v == ''
+    micro17_args += '-D@0@'.format(k)
+  else
+    micro17_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
+
 linux_opts = {
   'sources'            : linux_default_src,
   'include_directories': linux_inc,
@@ -626,6 +653,16 @@ mod17_opts = {
                           '-Wl,--print-memory-usage'],
 }
 
+micro17_opts = {
+  'sources'            : micro17_src,
+  'include_directories': micro17_inc,
+  'dependencies'       : [codec2_dep],
+  'c_args'             : micro17_args,
+  'cpp_args'           : micro17_args,
+  'link_args'          : ['-Wl,-T../platform/mcu/STM32G4xx/linker_script.ld',
+                          '-Wl,--print-memory-usage'],
+}
+
 ttwrplus_opts = {
   'sources'            : ['CMakeLists.txt'],
   'include_directories': [],
@@ -693,6 +730,13 @@ targets = [
   {
     'name'     : 'mod17',
     'opts'     : mod17_opts,
+    'flashable': true,
+    'wrap'     : ' ',
+    'load_addr': ' '
+  },
+  {
+    'name'     : 'micro17',
+    'opts'     : micro17_opts,
     'flashable': true,
     'wrap'     : ' ',
     'load_addr': ' '
