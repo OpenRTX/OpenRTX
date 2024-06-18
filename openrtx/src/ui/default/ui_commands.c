@@ -793,18 +793,3 @@ void ui_ColorLoad( Color_st* color , ColorSelector_en colorSelector )
 
     COLOR_LD( color , ColorTable[ colorSel ] )
 }
-
-void ui_SetPageNum( GuiState_st* guiState , uint8_t pageNum )
-{
-    uint8_t pgNum = pageNum ;
-
-    if( pgNum >= PAGE_NUM_OF )
-    {
-        pgNum = PAGE_STUBBED ;
-    }
-
-    guiState->page.num = pgNum ;
-    state.ui_page      = pgNum ;
-}
-
-

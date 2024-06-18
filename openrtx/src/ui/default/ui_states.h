@@ -41,15 +41,18 @@ extern void _ui_numberInputDel( GuiState_st* guiState , uint32_t* num );
 extern void _ui_numberInputKeypad( GuiState_st* guiState , uint32_t* num , kbd_msg_t msg );
 extern void _ui_changeTimer( int variation );
 
-extern void ui_States_MenuUp( GuiState_st* guiState , uint8_t menu_entries );
-extern void ui_States_MenuDown( GuiState_st* guiState , uint8_t menu_entries );
-extern void ui_States_MenuBack( GuiState_st* guiState );
+extern void    ui_States_MenuUp( GuiState_st* guiState );
+extern void    ui_States_MenuDown( GuiState_st* guiState );
+extern void    ui_States_MenuBack( GuiState_st* guiState );
+extern uint8_t ui_States_GetPageNumOfEntries( GuiState_st* guiState );
 
 extern void ui_States_TextInputConfirm( GuiState_st* guiState , char* buf );
 extern void ui_States_TextInputDelete( GuiState_st* guiState , char* buf );
 extern void ui_States_TextInputKeypad( GuiState_st* guiState , char* buf , uint8_t max_len , kbd_msg_t msg , bool callsign );
 extern void ui_States_TextInputReset( GuiState_st* guiState , char* buf );
 
-extern void ui_SetPageNum( GuiState_st* guiState , uint8_t pageNum );
+extern void ui_States_SelectPage( GuiState_st* guiState );
+//extern void ui_States_SelectPageNum( GuiState_st* guiState , uint8_t pageNum );
+extern void ui_States_SetPageNum( GuiState_st* guiState , uint8_t pageNum );
 
 #endif // UI_STATES_H

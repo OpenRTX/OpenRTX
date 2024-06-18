@@ -396,7 +396,7 @@ void _ui_drawMenuListValue( GuiState_st* guiState ,
 
 int _ui_getMenuTopEntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >=  uiGetPageNumOf( guiState ) )
+    if( index >=  ui_States_GetPageNumOfEntries( guiState ) ) // @@@KL rationalise this
     {
         return -1;
     }
@@ -407,7 +407,7 @@ int _ui_getMenuTopEntryName( GuiState_st* guiState , char* buf , uint8_t max_len
 
 int _ui_getSettingsEntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >= uiGetPageNumOf( guiState ) )
+    if( index >= ui_States_GetPageNumOfEntries( guiState ) ) // @@@KL rationalise this
     {
         return -1;
     }
@@ -418,7 +418,7 @@ int _ui_getSettingsEntryName( GuiState_st* guiState , char* buf , uint8_t max_le
 
 int _ui_getDisplayEntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >= uiGetPageNumOf( guiState ) )
+    if( index >= ui_States_GetPageNumOfEntries( guiState ) )
     {
         return -1;
     }
@@ -429,7 +429,7 @@ int _ui_getDisplayEntryName( GuiState_st* guiState , char* buf , uint8_t max_len
 
 int _ui_getDisplayValueName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >= uiGetPageNumOf( guiState ) )
+    if( index >= ui_States_GetPageNumOfEntries( guiState ) )
     {
         return -1;
     }
@@ -463,7 +463,7 @@ int _ui_getDisplayValueName( GuiState_st* guiState , char* buf , uint8_t max_len
 #ifdef GPS_PRESENT
 int _ui_getSettingsGPSEntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >= uiGetPageNumOf( guiState ) )
+    if( index >= ui_States_GetPageNumOfEntries( guiState ) )
     {
         return -1 ;
     }
@@ -474,7 +474,7 @@ int _ui_getSettingsGPSEntryName( GuiState_st* guiState , char* buf , uint8_t max
 
 int _ui_getSettingsGPSValueName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >= uiGetPageNumOf( guiState ) )
+    if( index >= ui_States_GetPageNumOfEntries( guiState ) )
     {
         return -1 ;
     }
@@ -519,7 +519,7 @@ int _ui_getSettingsGPSValueName( GuiState_st* guiState , char* buf , uint8_t max
 
 int _ui_getRadioEntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >= uiGetPageNumOf( guiState ) )
+    if( index >= ui_States_GetPageNumOfEntries( guiState ) )
     {
         return -1 ;
     }
@@ -530,7 +530,7 @@ int _ui_getRadioEntryName( GuiState_st* guiState , char* buf , uint8_t max_len ,
 
 int _ui_getRadioValueName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >= uiGetPageNumOf( guiState ) )
+    if( index >= ui_States_GetPageNumOfEntries( guiState ) )
     {
         return -1;
     }
@@ -570,7 +570,7 @@ int _ui_getRadioValueName( GuiState_st* guiState , char* buf , uint8_t max_len ,
 
 int _ui_getM17EntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >= uiGetPageNumOf( guiState ) )
+    if( index >= ui_States_GetPageNumOfEntries( guiState ) )
     {
        return -1 ;
     }
@@ -581,7 +581,7 @@ int _ui_getM17EntryName( GuiState_st* guiState , char* buf , uint8_t max_len , u
 
 int _ui_getM17ValueName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >= uiGetPageNumOf( guiState ) )
+    if( index >= ui_States_GetPageNumOfEntries( guiState ) )
     {
         return -1;
     }
@@ -610,7 +610,7 @@ int _ui_getM17ValueName( GuiState_st* guiState , char* buf , uint8_t max_len , u
 
 int _ui_getVoiceEntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >= uiGetPageNumOf( guiState ) )
+    if( index >= ui_States_GetPageNumOfEntries( guiState ) )
     {
         return -1 ;
     }
@@ -621,7 +621,7 @@ int _ui_getVoiceEntryName( GuiState_st* guiState , char* buf , uint8_t max_len ,
 
 int _ui_getVoiceValueName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >= uiGetPageNumOf( guiState ) )
+    if( index >= ui_States_GetPageNumOfEntries( guiState ) )
     {
         return -1 ;
     }
@@ -662,7 +662,7 @@ int _ui_getVoiceValueName( GuiState_st* guiState , char* buf , uint8_t max_len ,
 
 int _ui_getBackupRestoreEntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >= uiGetPageNumOf( guiState ) )
+    if( index >= ui_States_GetPageNumOfEntries( guiState ) )
     {
         return -1;
     }
@@ -673,7 +673,7 @@ int _ui_getBackupRestoreEntryName( GuiState_st* guiState , char* buf , uint8_t m
 
 int _ui_getInfoEntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >= uiGetPageNumOf( guiState ) )
+    if( index >= ui_States_GetPageNumOfEntries( guiState ) )
     {
         return -1;
     }
@@ -685,7 +685,7 @@ int _ui_getInfoEntryName( GuiState_st* guiState , char* buf , uint8_t max_len , 
 int _ui_getInfoValueName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
     const hwInfo_t* hwinfo = platform_getHwInfo();
-    if( index >= uiGetPageNumOf( guiState ) )
+    if( index >= ui_States_GetPageNumOfEntries( guiState ) )
     {
        return -1;
     }
@@ -1135,7 +1135,7 @@ void _ui_drawMenuInfo( GuiState_st* guiState , Event_st* event )
 
 void _ui_drawMenuAbout( GuiState_st* guiState )
 {
-    ui_SetPageNum( guiState , PAGE_ABOUT );
+    ui_States_SetPageNum( guiState , PAGE_ABOUT );
     ui_DisplayPage( guiState );
 /* @@@KL
     Pos_st logo_pos;
@@ -1164,9 +1164,9 @@ void _ui_drawMenuAbout( GuiState_st* guiState )
     uint8_t line_h = guiState->layout.menu_h ;
 //@@@KL check this
     Pos_st pos    = { SCREEN_WIDTH / 7 , SCREEN_HEIGHT -
-                       (line_h * ( uiGetPageNumOf( guiState ) - 1 ) ) - 5 };
+                       (line_h * ( ui_States_GetPageNumOfEntries( guiState ) - 1 ) ) - 5 };
 //@@@KL and this - looks like dangerous code
-    for( int author = 0 ; author < uiGetPageNumOf( guiState ) ; author++ )
+    for( int author = 0 ; author < ui_States_GetPageNumOfEntries( guiState ) ; author++ )
     {
         gfx_print( pos , styleTop->font.size , ALIGN_LEFT ,
                    color_fg , "%s" , *( &currentLanguage->Niccolo + author ) );

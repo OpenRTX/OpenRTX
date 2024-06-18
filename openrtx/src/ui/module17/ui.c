@@ -323,39 +323,59 @@ void _ui_timedate_add_digit(datetime_t *timedate, uint8_t pos, uint8_t number)
     {
         // Set date
         case 1:
+        {
             timedate->date += number * 10;
             break;
+        }
         case 2:
+        {
             timedate->date += number;
             break;
+        }
         // Set month
         case 3:
+        {
             timedate->month += number * 10;
             break;
+        }
         case 4:
+        {
             timedate->month += number;
             break;
+        }
         // Set year
         case 5:
+        {
             timedate->year += number * 10;
             break;
+        }
         case 6:
+        {
             timedate->year += number;
             break;
+        }
         // Set hour
         case 7:
+        {
             timedate->hour += number * 10;
             break;
+        }
         case 8:
+        {
             timedate->hour += number;
             break;
+        }
         // Set minute
         case 9:
+        {
             timedate->minute += number * 10;
             break;
+        }
         case 10:
+        {
             timedate->minute += number;
             break;
+        }
     }
 }
 #endif
@@ -369,25 +389,30 @@ bool _ui_freq_check_limits(freq_t freq)
         // hwInfo_t frequencies are in MHz
         if(freq >= (hwinfo->vhf_minFreq * 1000000) &&
            freq <= (hwinfo->vhf_maxFreq * 1000000))
-        valid = true;
+        {
+            valid = true;
+        }
     }
     if(hwinfo->uhf_band)
     {
         // hwInfo_t frequencies are in MHz
         if(freq >= (hwinfo->uhf_minFreq * 1000000) &&
            freq <= (hwinfo->uhf_maxFreq * 1000000))
-        valid = true;
+        {
+            valid = true;
+        }
     }
     return valid;
 }
 
 bool _ui_channel_valid(channel_t* channel)
 {
-return _ui_freq_check_limits(channel->rx_frequency) &&
-       _ui_freq_check_limits(channel->tx_frequency);
+    return _ui_freq_check_limits(channel->rx_frequency) &&
+           _ui_freq_check_limits(channel->tx_frequency);
 }
 
-int _ui_fsm_loadChannel(int16_t channel_index, bool *sync_rtx) {
+int _ui_fsm_loadChannel(int16_t channel_index, bool *sync_rtx)
+{
     channel_t channel;
     int32_t selected_channel = channel_index;
     // If a bank is active, get index from current bank
@@ -421,23 +446,26 @@ void _ui_fsm_confirmVFOInput(bool *sync_rtx)
         // Reset input position
         ui_state.input_position = 0;
     }
-    else if(ui_state.input_set == SET_TX)
+    else
     {
-        // Save new frequency setting
-        // If TX frequency was not set, TX = RX
-        if(ui_state.new_tx_frequency == 0)
+        if(ui_state.input_set == SET_TX)
         {
-            ui_state.new_tx_frequency = ui_state.new_rx_frequency;
+            // Save new frequency setting
+            // If TX frequency was not set, TX = RX
+            if(ui_state.new_tx_frequency == 0)
+            {
+                ui_state.new_tx_frequency = ui_state.new_rx_frequency;
+            }
+            // Apply new frequencies if they are valid
+            if(_ui_freq_check_limits(ui_state.new_rx_frequency) &&
+               _ui_freq_check_limits(ui_state.new_tx_frequency))
+            {
+                state.channel.rx_frequency = ui_state.new_rx_frequency;
+                state.channel.tx_frequency = ui_state.new_tx_frequency;
+                *sync_rtx = true;
+            }
+            state.ui_screen = PAGE_MAIN_VFO;
         }
-        // Apply new frequencies if they are valid
-        if(_ui_freq_check_limits(ui_state.new_rx_frequency) &&
-           _ui_freq_check_limits(ui_state.new_tx_frequency))
-        {
-            state.channel.rx_frequency = ui_state.new_rx_frequency;
-            state.channel.tx_frequency = ui_state.new_tx_frequency;
-            *sync_rtx = true;
-        }
-        state.ui_screen = PAGE_MAIN_VFO;
     }
 }
 
@@ -450,7 +478,9 @@ void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx)
     if(ui_state.input_set == SET_RX)
     {
         if(ui_state.input_position == 1)
+        {
             ui_state.new_rx_frequency = 0;
+        }
         // Calculate portion of the new RX frequency
         ui_state.new_rx_frequency = _ui_freq_add_digit(ui_state.new_rx_frequency,
                                 ui_state.input_position, ui_state.input_number);
@@ -464,24 +494,29 @@ void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx)
             ui_state.new_tx_frequency = 0;
         }
     }
-    else if(ui_state.input_set == SET_TX)
+    else
     {
-        if(ui_state.input_position == 1)
-            ui_state.new_tx_frequency = 0;
-        // Calculate portion of the new TX frequency
-        ui_state.new_tx_frequency = _ui_freq_add_digit(ui_state.new_tx_frequency,
-                                ui_state.input_position, ui_state.input_number);
-        if(ui_state.input_position >= FREQ_DIGITS)
+        if(ui_state.input_set == SET_TX)
         {
-            // Save both inserted frequencies
-            if(_ui_freq_check_limits(ui_state.new_rx_frequency) &&
-               _ui_freq_check_limits(ui_state.new_tx_frequency))
+            if(ui_state.input_position == 1)
             {
-                state.channel.rx_frequency = ui_state.new_rx_frequency;
-                state.channel.tx_frequency = ui_state.new_tx_frequency;
-                *sync_rtx = true;
+                ui_state.new_tx_frequency = 0;
             }
-            state.ui_screen = PAGE_MAIN_VFO;
+            // Calculate portion of the new TX frequency
+            ui_state.new_tx_frequency = _ui_freq_add_digit(ui_state.new_tx_frequency,
+                                    ui_state.input_position, ui_state.input_number);
+            if(ui_state.input_position >= FREQ_DIGITS)
+            {
+                // Save both inserted frequencies
+                if(_ui_freq_check_limits(ui_state.new_rx_frequency) &&
+                   _ui_freq_check_limits(ui_state.new_tx_frequency))
+                {
+                    state.channel.rx_frequency = ui_state.new_rx_frequency;
+                    state.channel.tx_frequency = ui_state.new_tx_frequency;
+                    *sync_rtx = true;
+                }
+                state.ui_screen = PAGE_MAIN_VFO;
+            }
         }
     }
 }
@@ -489,11 +524,13 @@ void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx)
 void _ui_changeContrast(int variation)
 {
     if(variation >= 0)
-        state.settings.contrast =
-        (255 - state.settings.contrast < variation) ? 255 : state.settings.contrast + variation;
+    {
+        state.settings.contrast = (255 - state.settings.contrast < variation) ? 255 : state.settings.contrast + variation;
+    }
     else
-        state.settings.contrast =
-        (state.settings.contrast < -variation) ? 0 : state.settings.contrast + variation;
+    {
+        state.settings.contrast = (state.settings.contrast < -variation) ? 0 : state.settings.contrast + variation;
+    }
     display_setContrast(state.settings.contrast);
 }
 
@@ -517,30 +554,37 @@ bool _ui_checkStandby(long long time_since_last_event)
 
     switch (state.settings.display_timer)
     {
-    case TIMER_OFF:
-        return false;
-    case TIMER_5S:
-    case TIMER_10S:
-    case TIMER_15S:
-    case TIMER_20S:
-    case TIMER_25S:
-    case TIMER_30S:
-        return time_since_last_event >=
-            (5000 * state.settings.display_timer);
-    case TIMER_1M:
-    case TIMER_2M:
-    case TIMER_3M:
-    case TIMER_4M:
-    case TIMER_5M:
-        return time_since_last_event >=
-            (60000 * (state.settings.display_timer - (TIMER_1M - 1)));
-    case TIMER_15M:
-    case TIMER_30M:
-    case TIMER_45M:
-        return time_since_last_event >=
-            (60000 * 15 * (state.settings.display_timer - (TIMER_15M - 1)));
-    case TIMER_1H:
-        return time_since_last_event >= 60 * 60 * 1000;
+        case TIMER_OFF:
+        {
+            return false;
+        }
+        case TIMER_5S:
+        case TIMER_10S:
+        case TIMER_15S:
+        case TIMER_20S:
+        case TIMER_25S:
+        case TIMER_30S:
+        {
+            return time_since_last_event >= (5000 * state.settings.display_timer);
+        }
+        case TIMER_1M:
+        case TIMER_2M:
+        case TIMER_3M:
+        case TIMER_4M:
+        case TIMER_5M:
+        {
+            return time_since_last_event >= (60000 * (state.settings.display_timer - (TIMER_1M - 1)));
+        }
+        case TIMER_15M:
+        case TIMER_30M:
+        case TIMER_45M:
+        {
+            return time_since_last_event >= (60000 * 15 * (state.settings.display_timer - (TIMER_15M - 1)));
+        }
+        case TIMER_1H:
+        {
+            return time_since_last_event >= 60 * 60 * 1000;
+        }
     }
 
     // unreachable code
@@ -550,7 +594,9 @@ bool _ui_checkStandby(long long time_since_last_event)
 void _ui_enterStandby()
 {
     if(standby)
+    {
         return;
+    }
 
     standby = true;
     redraw_needed = false;
@@ -562,8 +608,9 @@ bool _ui_exitStandby(long long now)
     last_event_tick = now;
 
     if(!standby)
+    {
         return false;
-
+    }
     standby = false;
     redraw_needed = true;
     display_setBacklightLevel(state.settings.brightness);
@@ -626,12 +673,17 @@ void _ui_menuUp(uint8_t menu_entries)
 
     // Hide the "shutdown" main menu entry for versions lower than 0.1e
     if((ver < 1) && (state.ui_screen == PAGE_MENU_TOP))
+    {
         maxEntries -= 1;
-
+    }
     if(ui_state.menu_selected > 0)
+    {
         ui_state.menu_selected -= 1;
+    }
     else
+    {
         ui_state.menu_selected = maxEntries;
+    }
 }
 
 void _ui_menuDown(uint8_t menu_entries)
@@ -641,12 +693,17 @@ void _ui_menuDown(uint8_t menu_entries)
 
     // Hide the "shutdown" main menu entry for versions lower than 0.1e
     if((ver < 1) && (state.ui_screen == PAGE_MENU_TOP))
+    {
         maxEntries -= 1;
-
+    }
     if(ui_state.menu_selected < maxEntries)
+    {
         ui_state.menu_selected += 1;
+    }
     else
+    {
         ui_state.menu_selected = 0;
+    }
 }
 
 void _ui_menuBack(uint8_t prev_state)
@@ -676,17 +733,22 @@ void _ui_textInputReset(char *buf)
 void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg, bool callsign)
 {
     if(ui_state.input_position >= max_len)
+    {
         return;
+    }
     long long now = getTick();
     // Get currently pressed number key
     uint8_t num_key = input_getPressedNumber(msg);
     // Get number of symbols related to currently pressed key
     uint8_t num_symbols = 0;
     if(callsign)
+    {
         num_symbols = strlen(symbols_ITU_T_E161_callsign[num_key]);
+    }
     else
+    {
         num_symbols = strlen(symbols_ITU_T_E161[num_key]);
-
+    }
     // Skip keypad logic for first keypress
     if(ui_state.last_keypress != 0)
     {
@@ -704,9 +766,13 @@ void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg, bool callsig
     }
     // Show current character on buffer
     if(callsign)
+    {
         buf[ui_state.input_position] = symbols_ITU_T_E161_callsign[num_key][ui_state.input_set];
+    }
     else
+    {
         buf[ui_state.input_position] = symbols_ITU_T_E161[num_key][ui_state.input_set];
+    }
     // Update reference values
     ui_state.input_number = num_key;
     ui_state.last_keypress = now;
@@ -715,7 +781,9 @@ void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg, bool callsig
 void _ui_textInputArrows(char *buf, uint8_t max_len, kbd_msg_t msg)
 {
     if(ui_state.input_position >= max_len)
+    {
         return;
+    }
 
     uint8_t num_symbols = 0;
     num_symbols = strlen(symbols_callsign);
@@ -725,16 +793,28 @@ void _ui_textInputArrows(char *buf, uint8_t max_len, kbd_msg_t msg)
         ui_state.input_position = (ui_state.input_position + 1) % max_len;
         ui_state.input_set = 0;
     }
-    else if (msg.keys & KEY_LEFT)
+    else
     {
-        ui_state.input_position = (ui_state.input_position - 1) % max_len;
-        ui_state.input_set = 0;
+        if (msg.keys & KEY_LEFT)
+        {
+            ui_state.input_position = (ui_state.input_position - 1) % max_len;
+            ui_state.input_set = 0;
+        }
+        else
+        {
+            if (msg.keys & KEY_UP)
+            {
+                ui_state.input_set = (ui_state.input_set + 1) % num_symbols;
+            }
+            else
+            {
+                if (msg.keys & KEY_DOWN)
+                {
+                    ui_state.input_set = ui_state.input_set==0 ? num_symbols-1 : ui_state.input_set-1;
+                }
+            }
+        }
     }
-    else if (msg.keys & KEY_UP)
-        ui_state.input_set = (ui_state.input_set + 1) % num_symbols;
-    else if (msg.keys & KEY_DOWN)
-        ui_state.input_set = ui_state.input_set==0 ? num_symbols-1 : ui_state.input_set-1;
-
     buf[ui_state.input_position] = symbols_callsign[ui_state.input_set];
 }
 
@@ -767,7 +847,7 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
 
     // Pop an event from the queue
     uint8_t newTail = (evQueue_rdPos + 1) % MAX_NUM_EVENTS;
-    Event_st event   = evQueue[evQueue_rdPos];
+    Event_st event  = evQueue[evQueue_rdPos];
     evQueue_rdPos   = newTail;
 
     // There is some event to process, we need an UI redraw.
@@ -785,12 +865,14 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
         // If we get out of standby, we ignore the kdb event
         // unless is the MONI key for the MACRO functions
         if (_ui_exitStandby(now) && !(msg.keys & KEY_MONI))
+        {
             return;
-
+        }
         switch(state.ui_screen)
         {
             // VFO screen
             case PAGE_MAIN_VFO:
+            {
                 if(ui_state.edit_mode)
                 {
                     if(msg.keys & KEY_ENTER)
@@ -801,10 +883,17 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
                         *sync_rtx = true;
                         ui_state.edit_mode = false;
                     }
-                    else if(msg.keys & KEY_ESC)
-                        ui_state.edit_mode = false;
                     else
-                        _ui_textInputArrows(ui_state.new_callsign, 9, msg);
+                    {
+                        if(msg.keys & KEY_ESC)
+                        {
+                            ui_state.edit_mode = false;
+                        }
+                        else
+                        {
+                            _ui_textInputArrows(ui_state.new_callsign, 9, msg);
+                        }
+                    }
                 }
                 else
                 {
@@ -821,131 +910,227 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
                     }
                 }
                 break;
-
+            }
             // Top menu screen
             case PAGE_MENU_TOP:
+            {
                 if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                    _ui_menuUp(menu_num);
-                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                    _ui_menuDown(menu_num);
-                else if(msg.keys & KEY_ENTER)
                 {
-                    switch(ui_state.menu_selected)
-                    {
-                        case M_SETTINGS:
-                            state.ui_screen = PAGE_MENU_SETTINGS;
-                            break;
-                        case M_INFO:
-                            state.ui_screen = PAGE_MENU_INFO;
-                            break;
-                        case M_ABOUT:
-                            state.ui_screen = PAGE_MENU_ABOUT;
-                            break;
-                        case M_SHUTDOWN:
-                            state.devStatus = SHUTDOWN;
-                            break;
-                    }
-                    // Reset menu selection
-                    ui_state.menu_selected = 0;
+                    _ui_menuUp(menu_num);
                 }
-                else if(msg.keys & KEY_ESC)
-                    _ui_menuBack(ui_state.last_main_state);
+                else
+                {
+                    if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                    {
+                        _ui_menuDown(menu_num);
+                    }
+                    else
+                    {
+                        if(msg.keys & KEY_ENTER)
+                        {
+                            switch(ui_state.menu_selected)
+                            {
+                                case M_SETTINGS:
+                                {
+                                    state.ui_screen = PAGE_MENU_SETTINGS;
+                                    break;
+                                }
+                                case M_INFO:
+                                {
+                                    state.ui_screen = PAGE_MENU_INFO;
+                                    break;
+                                }
+                                case M_ABOUT:
+                                {
+                                    state.ui_screen = PAGE_MENU_ABOUT;
+                                    break;
+                                }
+                                case M_SHUTDOWN:
+                                {
+                                    state.devStatus = SHUTDOWN;
+                                    break;
+                                }
+                            }
+                            // Reset menu selection
+                            ui_state.menu_selected = 0;
+                        }
+                        else
+                        {
+                            if(msg.keys & KEY_ESC)
+                            {
+                                _ui_menuBack(ui_state.last_main_state);
+                            }
+                        }
+                    }
+                }
                 break;
-
+            }
             // Settings menu screen
             case PAGE_MENU_SETTINGS:
+            {
                 if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                    _ui_menuUp(settings_num);
-                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                    _ui_menuDown(settings_num);
-                else if(msg.keys & KEY_ENTER)
                 {
-
-                    switch(ui_state.menu_selected)
-                    {
-                        case S_DISPLAY:
-                            state.ui_screen = PAGE_SETTINGS_DISPLAY;
-                            break;
-                        case S_M17:
-                            state.ui_screen = PAGE_SETTINGS_M17;
-                            break;
-                        case S_MOD17:
-                            state.ui_screen = PAGE_SETTINGS_MODULE17;
-                            break;
-                        case S_RESET2DEFAULTS:
-                            state.ui_screen = PAGE_SETTINGS_RESET_TO_DEFAULTS;
-                            break;
-                        default:
-                            state.ui_screen = PAGE_MENU_SETTINGS;
-                    }
-                    // Reset menu selection
-                    ui_state.menu_selected = 0;
+                    _ui_menuUp(settings_num);
                 }
-                else if(msg.keys & KEY_ESC)
-                    _ui_menuBack(PAGE_MENU_TOP);
+                else
+                {
+                    if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                    {
+                        _ui_menuDown(settings_num);
+                    }
+                    else
+                    {
+                        if(msg.keys & KEY_ENTER)
+                        {
+                            switch(ui_state.menu_selected)
+                            {
+                                case S_DISPLAY:
+                                {
+                                    state.ui_screen = PAGE_SETTINGS_DISPLAY;
+                                    break;
+                                }
+                                case S_M17:
+                                {
+                                    state.ui_screen = PAGE_SETTINGS_M17;
+                                    break;
+                                }
+                                case S_MOD17:
+                                {
+                                    state.ui_screen = PAGE_SETTINGS_MODULE17;
+                                    break;
+                                }
+                                case S_RESET2DEFAULTS:
+                                {
+                                    state.ui_screen = PAGE_SETTINGS_RESET_TO_DEFAULTS;
+                                    break;
+                                }
+                                default:
+                                {
+                                    state.ui_screen = PAGE_MENU_SETTINGS;
+                                }
+                            }
+                            // Reset menu selection
+                            ui_state.menu_selected = 0;
+                        }
+                        else
+                        {
+                            if(msg.keys & KEY_ESC)
+                            {
+                                _ui_menuBack(PAGE_MENU_TOP);
+                            }
+                        }
+                    }
+                }
                 break;
+            }
             // Info menu screen
             case PAGE_MENU_INFO:
+            {
                 if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                {
                     _ui_menuUp(info_num);
-                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                    _ui_menuDown(info_num);
-                else if(msg.keys & KEY_ESC)
-                    _ui_menuBack(PAGE_MENU_TOP);
+                }
+                else
+                {
+                    if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                    {
+                        _ui_menuDown(info_num);
+                    }
+                    else
+                    {
+                        if(msg.keys & KEY_ESC)
+                        {
+                        _   ui_menuBack(PAGE_MENU_TOP);
+                        }
+                    }
+                }
                 break;
+            }
             // About screen
             case PAGE_MENU_ABOUT:
+            {
                 if(msg.keys & KEY_ESC)
+                {
                     _ui_menuBack(PAGE_MENU_TOP);
+                }
                 break;
-
+            }
             case PAGE_SETTINGS_DISPLAY:
+            {
                 if(msg.keys & KEY_LEFT)
                 {
                     switch(ui_state.menu_selected)
                     {
 #ifdef SCREEN_CONTRAST
                         case D_CONTRAST:
+                        {
                             _ui_changeContrast(-4);
                             break;
+                        }
 #endif
                         case D_TIMER:
+                        {
                             _ui_changeTimer(-1);
                             break;
+                        }
                         default:
+                        {
                             state.ui_screen = PAGE_SETTINGS_DISPLAY;
+                        }
                     }
                 }
-                else if(msg.keys & KEY_RIGHT)
+                else
                 {
-                    switch(ui_state.menu_selected)
+                    if(msg.keys & KEY_RIGHT)
                     {
+                        switch(ui_state.menu_selected)
+                        {
 #ifdef SCREEN_CONTRAST
-                        case D_CONTRAST:
-                            _ui_changeContrast(+4);
-                            break;
+                            case D_CONTRAST:
+                            {
+                                _ui_changeContrast(+4);
+                                break;
+                            }
 #endif
-                        case D_TIMER:
-                            _ui_changeTimer(+1);
-                            break;
-                        default:
-                            state.ui_screen = PAGE_SETTINGS_DISPLAY;
+                            case D_TIMER:
+                            {
+                                _ui_changeTimer(+1);
+                                break;
+                            }
+                            default:
+                            {
+                                state.ui_screen = PAGE_SETTINGS_DISPLAY;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                        {
+                            _ui_menuUp(display_num);
+                        }
+                        else
+                        {
+                            if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                            {
+                                _ui_menuDown(display_num);
+                            }
+                            else
+                            {
+                                if(msg.keys & KEY_ESC)
+                                {
+                                    nvm_writeSettings(&state.settings);
+                                    _ui_menuBack(PAGE_MENU_SETTINGS);
+                                }
+                            }
+                        }
                     }
                 }
-                else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                    _ui_menuUp(display_num);
-                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                    _ui_menuDown(display_num);
-                else if(msg.keys & KEY_ESC)
-                    {
-                        nvm_writeSettings(&state.settings);
-                        _ui_menuBack(PAGE_MENU_SETTINGS);
-                    }
                 break;
-
+            }
             // M17 Settings
             case PAGE_SETTINGS_M17:
-
+            {
                 if(ui_state.edit_mode)
                 {
                     if(msg.keys & KEY_ENTER)
@@ -955,10 +1140,17 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
                         strncpy(state.settings.callsign, ui_state.new_callsign, 10);
                         ui_state.edit_mode = false;
                     }
-                    else if(msg.keys & KEY_ESC)
-                        ui_state.edit_mode = false;
                     else
-                        _ui_textInputArrows(ui_state.new_callsign, 9, msg);
+                    {
+                        if(msg.keys & KEY_ESC)
+                        {
+                            ui_state.edit_mode = false;
+                        }
+                        else
+                        {
+                            _ui_textInputArrows(ui_state.new_callsign, 9, msg);
+                        }
+                    }
                 }
                 else
                 {
@@ -968,55 +1160,92 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
                         switch(ui_state.menu_selected)
                         {
                             case M_CAN:
+                            {
                                 _ui_changeCAN(-1);
                                 break;
+                            }
                             case M_CAN_RX:
+                            {
                                 state.settings.m17_can_rx = !state.settings.m17_can_rx;
                                 break;
+                            }
                             default:
+                            {
                                 state.ui_screen = PAGE_SETTINGS_M17;
+                            }
                         }
                     }
-                    else if(msg.keys & KEY_RIGHT)
+                    else
                     {
-                        switch(ui_state.menu_selected)
+                        if(msg.keys & KEY_RIGHT)
                         {
-                            case M_CAN:
-                                _ui_changeCAN(+1);
-                                break;
-                            case M_CAN_RX:
-                                state.settings.m17_can_rx = !state.settings.m17_can_rx;
-                                break;
-                            default:
-                                state.ui_screen = PAGE_SETTINGS_M17;
+                            switch(ui_state.menu_selected)
+                            {
+                                case M_CAN:
+                                {
+                                    _ui_changeCAN(+1);
+                                    break;
+                                }
+                                case M_CAN_RX:
+                                {
+                                    state.settings.m17_can_rx = !state.settings.m17_can_rx;
+                                    break;
+                                }
+                                default:
+                                {
+                                    state.ui_screen = PAGE_SETTINGS_M17;
+                                }
+                            }
                         }
-                    }
-                    else if(msg.keys & KEY_ENTER)
-                    {
-                        switch(ui_state.menu_selected)
+                        else
                         {
-                            // Enable callsign input
-                            case M_CALLSIGN:
-                                ui_state.edit_mode = true;
-                                _ui_textInputReset(ui_state.new_callsign);
-                                break;
-                            default:
-                                state.ui_screen = PAGE_SETTINGS_M17;
+                            if(msg.keys & KEY_ENTER)
+                            {
+                                switch(ui_state.menu_selected)
+                                {
+                                    // Enable callsign input
+                                    case M_CALLSIGN:
+                                    {
+                                        ui_state.edit_mode = true;
+                                        _ui_textInputReset(ui_state.new_callsign);
+                                        break;
+                                    }
+                                    default:
+                                    {
+                                        state.ui_screen = PAGE_SETTINGS_M17;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                                {
+                                    _ui_menuUp(m17_num);
+                                }
+                                else
+                                {
+                                    if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                                    {
+                                        _ui_menuDown(m17_num);
+                                    }
+                                    else
+                                    {
+                                        if(msg.keys & KEY_ESC)
+                                        {
+                                            *sync_rtx = true;
+                                            nvm_writeSettings(&state.settings);
+                                            _ui_menuBack(PAGE_MENU_SETTINGS);
+                                        }
+                                    }
+                                }
+                            }
                         }
-                    }
-                    else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                        _ui_menuUp(m17_num);
-                    else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                        _ui_menuDown(m17_num);
-                    else if(msg.keys & KEY_ESC)
-                    {
-                        *sync_rtx = true;
-                        nvm_writeSettings(&state.settings);
-                        _ui_menuBack(PAGE_MENU_SETTINGS);
                     }
                 }
                 break;
+            }
             case PAGE_SETTINGS_RESET_TO_DEFAULTS:
+            {
                 if(! ui_state.edit_mode)
                 {
                     //require a confirmation ENTER, then another
@@ -1047,84 +1276,133 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
                         nvm_writeSettings(&state.settings);
                         _ui_menuBack(PAGE_MENU_SETTINGS);
                     }
-                    else if(msg.keys & KEY_ESC)
+                    else
                     {
-                        ui_state.edit_mode = false;
-                        _ui_menuBack(PAGE_MENU_SETTINGS);
+                        if(msg.keys & KEY_ESC)
+                        {
+                            ui_state.edit_mode = false;
+                            _ui_menuBack(PAGE_MENU_SETTINGS);
+                        }
                     }
                 }
                 break;
+            }
             // Module17 Settings
             case PAGE_SETTINGS_MODULE17:
+            {
                 if(msg.keys & KEY_LEFT)
                 {
                     switch(ui_state.menu_selected)
                     {
                         case D_TXWIPER:
+                        {
                             _ui_changeTxWiper(-1);
                             break;
+                        }
                         case D_RXWIPER:
+                        {
                             _ui_changeRxWiper(-1);
                             break;
+                        }
                         case D_TXINVERT:
+                        {
                             _ui_changeTxInvert(-1);
                             break;
+                        }
                         case D_RXINVERT:
+                        {
                             _ui_changeRxInvert(-1);
                             break;
+                        }
                         case D_MICGAIN:
+                        {
                             _ui_changeMicGain(-1);
                             break;
+                        }
                         default:
+                        {
                             state.ui_screen = PAGE_SETTINGS_MODULE17;
+                        }
                     }
                 }
-                else if(msg.keys & KEY_RIGHT)
+                else
                 {
-                    switch(ui_state.menu_selected)
+                    if(msg.keys & KEY_RIGHT)
                     {
-                        case D_TXWIPER:
-                            _ui_changeTxWiper(+1);
-                            break;
-                        case D_RXWIPER:
-                            _ui_changeRxWiper(+1);
-                            break;
-                        case D_TXINVERT:
-                            _ui_changeTxInvert(+1);
-                            break;
-                        case D_RXINVERT:
-                            _ui_changeRxInvert(+1);
-                            break;
-                        case D_MICGAIN:
-                            _ui_changeMicGain(+1);
-                            break;
-                        default:
-                            state.ui_screen = PAGE_SETTINGS_MODULE17;
+                        switch(ui_state.menu_selected)
+                        {
+                            case D_TXWIPER:
+                            {
+                                _ui_changeTxWiper(+1);
+                                break;
+                            }
+                            case D_RXWIPER:
+                            {
+                                _ui_changeRxWiper(+1);
+                                break;
+                            }
+                            case D_TXINVERT:
+                            {
+                                _ui_changeTxInvert(+1);
+                                break;
+                            }
+                            case D_RXINVERT:
+                            {
+                                _ui_changeRxInvert(+1);
+                                break;
+                            }
+                            case D_MICGAIN:
+                            {
+                                _ui_changeMicGain(+1);
+                                break;
+                            }
+                            default:
+                            {
+                                state.ui_screen = PAGE_SETTINGS_MODULE17;
+                            }
+                        }
                     }
-                }
-                else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                    _ui_menuUp(module17_num);
-                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                    _ui_menuDown(module17_num);
-                else if(msg.keys & KEY_ESC)
-                {
-                    nvm_writeSettings(&state.settings);
-                    _ui_menuBack(PAGE_MENU_SETTINGS);
+                    else
+                    {
+                        if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                        {
+                            _ui_menuUp(module17_num);
+                        }
+                        else
+                        {
+                            if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                            {
+                                _ui_menuDown(module17_num);
+                            }
+                            else
+                            {
+                                if(msg.keys & KEY_ESC)
+                                {
+                                    nvm_writeSettings(&state.settings);
+                                    _ui_menuBack(PAGE_MENU_SETTINGS);
+                                }
+                            }
+                        }
+                    }
                 }
                 break;
+            }
         }
     }
-    else if(event.type == EVENT_TYPE_STATUS)
+    else
     {
-        if (platform_getPttStatus() || rtx_rxSquelchOpen())
+        if(event.type == EVENT_TYPE_STATUS)
         {
-            _ui_exitStandby(now);
-            return;
-        }
+            if (platform_getPttStatus() || rtx_rxSquelchOpen())
+            {
+                _ui_exitStandby(now);
+                return;
+            }
 
-        if (_ui_checkStandby(now - last_event_tick))
-        {
-            _ui_enterStandby();
+            if (_ui_checkStandby(now - last_event_tick))
+            {
+                _ui_enterStandby();
+            }
         }
     }
 }
@@ -1132,8 +1410,9 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
 bool ui_updateGUI( Event_st* event )
 {
     if(redraw_needed == false)
+    {
         return false;
-
+    }
     if(!layout_ready)
     {
         layout = _ui_calculateLayout();
@@ -1144,40 +1423,58 @@ bool ui_updateGUI( Event_st* event )
     {
         // VFO main screen
         case PAGE_MAIN_VFO:
+        {
             _ui_drawMainVFO(&ui_state);
             break;
+        }
         // Top menu screen
         case PAGE_MENU_TOP:
+        {
             _ui_drawMenuTop(&ui_state);
             break;
+        }
         // Settings menu screen
         case PAGE_MENU_SETTINGS:
+        {
             _ui_drawMenuSettings(&ui_state);
             break;
+        }
         // Info menu screen
         case PAGE_MENU_INFO:
+        {
             _ui_drawMenuInfo(&ui_state);
             break;
+        }
         // About menu screen
         case PAGE_MENU_ABOUT:
+        {
             _ui_drawMenuAbout();
             break;
+        }
         // Display settings screen
         case PAGE_SETTINGS_DISPLAY:
+        {
             _ui_drawSettingsDisplay(&ui_state);
             break;
+        }
         // M17 settings screen
         case PAGE_SETTINGS_M17:
+        {
             _ui_drawSettingsM17(&ui_state);
             break;
+        }
         // Module 17 settings screen
         case PAGE_SETTINGS_MODULE17:
+        {
             _ui_drawSettingsModule17(&ui_state);
             break;
+        }
         // Screen to support resetting Settings and VFO to defaults
         case PAGE_SETTINGS_RESET_TO_DEFAULTS:
+        {
             _ui_drawSettingsReset2Defaults(&ui_state);
             break;
+        }
     }
 
     redraw_needed = false;
@@ -1189,7 +1486,10 @@ bool ui_pushEvent(const uint8_t type, const uint32_t data)
     uint8_t newHead = (evQueue_wrPos + 1) % MAX_NUM_EVENTS;
 
     // Queue is full
-    if(newHead == evQueue_rdPos) return false;
+    if(newHead == evQueue_rdPos)
+    {
+        return false;
+    }
 
     // Preserve atomicity when writing the new element into the queue.
     Event_st event;

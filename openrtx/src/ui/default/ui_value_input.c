@@ -487,11 +487,11 @@ static void ui_ValueInput_DIRECTION( GuiState_st* guiState )
     }
     else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
     {
-        ui_States_MenuUp( guiState , uiGetPageNumOf( guiState ) );
+        ui_States_MenuUp( guiState );
     }
     else if( ( guiState->msg.keys & KEY_DOWN ) || ( guiState->msg.keys & KNOB_RIGHT ) )
     {
-        ui_States_MenuDown( guiState , uiGetPageNumOf( guiState ) );
+        ui_States_MenuDown( guiState );
     }
     else if( guiState->msg.keys & KEY_ENTER )
     {
@@ -541,11 +541,11 @@ static void ui_ValueInput_STEP( GuiState_st* guiState )
     }
     else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
     {
-        ui_States_MenuUp( guiState , uiGetPageNumOf( guiState ) );
+        ui_States_MenuUp( guiState );
     }
     else if( ( guiState->msg.keys & KEY_DOWN ) || ( guiState->msg.keys & KNOB_RIGHT ) )
     {
-        ui_States_MenuDown( guiState , uiGetPageNumOf( guiState ) );
+        ui_States_MenuDown( guiState );
     }
     else if( guiState->msg.keys & KEY_ENTER )
     {

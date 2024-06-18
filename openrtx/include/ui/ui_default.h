@@ -377,7 +377,7 @@ extern bool         macro_latched ;
 
 extern const uiPageDesc_st* uiGetPageDesc( uiPageNum_en pageNum );
 extern const char**         uiGetPageLoc( uiPageNum_en pageNum );
-extern uint8_t              uiGetPageNumOf( GuiState_st* guiState );
+extern uint8_t              ui_States_GetPageNumOfLinks( GuiState_st* guiState );
 
 typedef int (*GetMenuList_fn)( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index );
 

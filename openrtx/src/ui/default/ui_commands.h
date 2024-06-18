@@ -132,6 +132,6 @@ c->alpha = (uint8_t)( ( cv >> COLOR_ENC_ALPHA_SHIFT ) & COLOR_ENC_ALPHA_MASK ) ;
 extern void ui_ColorLoad( Color_st* color , ColorSelector_en colorSelector );
 
 extern bool ui_DisplayPage( GuiState_st* guiState );
-extern void ui_SetPageNum( GuiState_st* guiState , uint8_t pageNum );
+extern void ui_States_SetPageNum( GuiState_st* guiState , uint8_t pageNum );
 
 #endif // UI_COMMANDS_H
