@@ -379,7 +379,7 @@ void _ui_drawMenuTop(UI_State_st* ui_state)
     gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
               color_fg, "Menu");
     // Print menu entries
-    _ui_drawMenuList(ui_state->menu_selected, PAGE_MENU_TOP );
+    _ui_drawMenuList(ui_state->entrySelected, PAGE_MENU_TOP );
 }
 
 #ifdef GPS_PRESENT
@@ -485,7 +485,7 @@ void _ui_drawMenuSettings(UI_State_st* ui_state)
     gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
               color_fg, "Settings");
     // Print menu entries
-    _ui_drawMenuList(ui_state->menu_selected, PAGE_MENU_SETTINGS );
+    _ui_drawMenuList(ui_state->entrySelected, PAGE_MENU_SETTINGS );
 }
 
 void _ui_drawMenuInfo(UI_State_st* ui_state)
@@ -498,7 +498,7 @@ void _ui_drawMenuInfo(UI_State_st* ui_state)
     gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
               color_fg, "Info");
     // Print menu entries
-    _ui_drawMenuListValue(ui_state, ui_state->menu_selected,
+    _ui_drawMenuListValue(ui_state, ui_state->entrySelected,
                           PAGE_MENU_INFO , PAGE_MENU_INFO);
 }
 
@@ -533,7 +533,7 @@ void _ui_drawSettingsDisplay(UI_State_st* ui_state)
     gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
               color_fg, "Display");
     // Print display settings entries
-    _ui_drawMenuListValue(ui_state, ui_state->menu_selected,
+    _ui_drawMenuListValue(ui_state, ui_state->entrySelected,
                            PAGE_SETTINGS_DISPLAY , PAGE_SETTINGS_DISPLAY);
 }
 
@@ -548,7 +548,7 @@ void _ui_drawSettingsGPS(UI_State_st* ui_state)
     gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
               color_fg, "GPS Settings");
     // Print display settings entries
-    _ui_drawMenuListValue(ui_state, ui_state->menu_selected,
+    _ui_drawMenuListValue(ui_state, ui_state->entrySelected,
                           PAGE_SETTINGS_GPS, PAGE_SETTINGS_GPS);
 }
 #endif
@@ -644,7 +644,7 @@ void _ui_drawSettingsM17(UI_State_st* ui_state)
     }
     else
     {
-        _ui_drawMenuListValue(ui_state, ui_state->menu_selected,
+        _ui_drawMenuListValue(ui_state, ui_state->entrySelected,
                               PAGE_SETTINGS_M17, PAGE_SETTINGS_M17);
     }
 }
@@ -656,7 +656,7 @@ void _ui_drawSettingsModule17(UI_State_st* ui_state)
     gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
               color_fg, "Module17 Settings");
     // Print Module17 settings entries
-    _ui_drawMenuListValue(ui_state, ui_state->menu_selected,
+    _ui_drawMenuListValue(ui_state, ui_state->entrySelected,
 //                           _ui_getModule17EntryName , _ui_getModule17ValueName);
 // not provided for as it's not provided for in the compiled version
                            PAGE_SETTINGS_M17 , PAGE_SETTINGS_M17);

@@ -131,7 +131,7 @@ static const ui_ValueInput_fn ui_ValueInput_Table[ GUI_VAL_INP_NUM_OF ] =
 
 void ui_ValueInputFSM( GuiState_st* guiState )
 {
-    uint8_t linkSelected = guiState->uiState.menu_selected ;
+    uint8_t linkSelected = guiState->uiState.entrySelected ;
     uint8_t valueNum     = guiState->layout.links[ linkSelected ].num ;
 
     ui_ValueInput( guiState , valueNum );
@@ -497,7 +497,7 @@ static void ui_ValueInput_DIRECTION( GuiState_st* guiState )
     {
         guiState->uiState.edit_mode = true;
         // If we are entering R_OFFSET clear temp offset
-        if( guiState->uiState.menu_selected == R_OFFSET )
+        if( guiState->uiState.entrySelected == R_OFFSET )
         {
             guiState->uiState.new_offset = 0 ;
         }
@@ -533,7 +533,7 @@ static void ui_ValueInput_STEP( GuiState_st* guiState )
             state.step_index %= n_freq_steps ;
         }
         // If ENTER or ESC are pressed, exit edit mode, R_OFFSET is managed separately
-        if( ( ( guiState->msg.keys & KEY_ENTER ) && ( guiState->uiState.menu_selected != R_OFFSET ) ) ||
+        if( ( ( guiState->msg.keys & KEY_ENTER ) && ( guiState->uiState.entrySelected != R_OFFSET ) ) ||
               ( guiState->msg.keys & KEY_ESC   )                                                )
         {
             guiState->uiState.edit_mode = false ;
@@ -551,7 +551,7 @@ static void ui_ValueInput_STEP( GuiState_st* guiState )
     {
         guiState->uiState.edit_mode = true;
         // If we are entering R_OFFSET clear temp offset
-        if( guiState->uiState.menu_selected == R_OFFSET )
+        if( guiState->uiState.entrySelected == R_OFFSET )
         {
             guiState->uiState.new_offset = 0 ;
         }

@@ -742,9 +742,9 @@ static bool GuiCmd_( GuiState_st* guiState )
     }
 
     // If selection is off the screen, scroll screen
-    if( guiState->uiState.menu_selected >= guiState->layout.numOfEntries )
+    if( guiState->uiState.entrySelected >= guiState->layout.numOfEntries )
     {
-        guiState->layout.scrollOffset = guiState->uiState.menu_selected -
+        guiState->layout.scrollOffset = guiState->uiState.entrySelected -
                                         guiState->layout.numOfEntries + 1 ;
     }
 
@@ -754,7 +754,7 @@ static bool GuiCmd_( GuiState_st* guiState )
     if( (   guiState->layout.linkIndex >= guiState->layout.scrollOffset ) &&
         ( ( guiState->layout.linkIndex  - guiState->layout.scrollOffset )  < guiState->layout.numOfEntries ) )
     {
-        if( guiState->layout.linkIndex == guiState->uiState.menu_selected )
+        if( guiState->layout.linkIndex == guiState->uiState.entrySelected )
         {
             guiState->layout.inSelect = true ;
         }

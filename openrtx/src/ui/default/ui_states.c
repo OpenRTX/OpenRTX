@@ -1051,25 +1051,25 @@ static bool ui_updateFSM_PAGE_MENU_CONTACTS( GuiState_st* guiState )
             // manu_selected is 0-based
             // bank 0 means "All Channel" mode
             // banks (1, n) are mapped to banks (0, n-1)
-            if( cps_readBankHeader( &bank , guiState->uiState.menu_selected ) != -1 )
+            if( cps_readBankHeader( &bank , guiState->uiState.entrySelected ) != -1 )
             {
-                guiState->uiState.menu_selected += 1 ;
+                guiState->uiState.entrySelected += 1 ;
             }
         }
         else if( guiState->page.num == PAGE_MENU_CHANNEL )
         {
             channel_t channel ;
-            if( cps_readChannel( &channel , guiState->uiState.menu_selected + 1 ) != -1 )
+            if( cps_readChannel( &channel , guiState->uiState.entrySelected + 1 ) != -1 )
             {
-                guiState->uiState.menu_selected += 1 ;
+                guiState->uiState.entrySelected += 1 ;
             }
         }
         else if( guiState->page.num == PAGE_MENU_CONTACTS )
         {
             contact_t contact ;
-            if( cps_readContact( &contact , guiState->uiState.menu_selected + 1 ) != -1 )
+            if( cps_readContact( &contact , guiState->uiState.entrySelected + 1 ) != -1 )
             {
-                guiState->uiState.menu_selected += 1 ;
+                guiState->uiState.entrySelected += 1 ;
             }
         }
     }
@@ -1082,18 +1082,18 @@ static bool ui_updateFSM_PAGE_MENU_CONTACTS( GuiState_st* guiState )
                 bankHdr_t newbank ;
                 int       result  = 0 ;
                 // If "All channels" is selected, load default bank
-                if( guiState->uiState.menu_selected == 0 )
+                if( guiState->uiState.entrySelected == 0 )
                 {
                     state.bank_enabled = false ;
                 }
                 else
                 {
                     state.bank_enabled = true;
-                    result = cps_readBankHeader( &newbank , guiState->uiState.menu_selected - 1 );
+                    result = cps_readBankHeader( &newbank , guiState->uiState.entrySelected - 1 );
                 }
                 if( result != -1 )
                 {
-                    state.bank = guiState->uiState.menu_selected - 1 ;
+                    state.bank = guiState->uiState.entrySelected - 1 ;
                     // If we were in VFO mode, save VFO channel
                     if( guiState->page.num == PAGE_MAIN_VFO )
                     {
@@ -1113,14 +1113,14 @@ static bool ui_updateFSM_PAGE_MENU_CONTACTS( GuiState_st* guiState )
                 {
                     state.vfo_channel = state.channel;
                 }
-                FSM_LoadChannel( guiState->uiState.menu_selected , &sync_rtx );
+                FSM_LoadChannel( guiState->uiState.entrySelected , &sync_rtx );
                 // Switch to MEM screen
                 ui_States_SetPageNum( guiState , PAGE_MAIN_MEM );
                 break ;
             }
             case PAGE_MENU_CONTACTS :
             {
-                _ui_fsm_loadContact( guiState->uiState.menu_selected , &sync_rtx );
+                _ui_fsm_loadContact( guiState->uiState.entrySelected , &sync_rtx );
                 // Switch to MEM screen
                 ui_States_SetPageNum( guiState , PAGE_MAIN_MEM );
                 break ;
@@ -1766,22 +1766,22 @@ static void FSM_MenuMacro( GuiState_st* guiState , kbd_msg_t msg , bool* sync_rt
     {
         case KNOB_LEFT :
         {
-            guiState->uiState.macro_menu_selected-- ;
-            guiState->uiState.macro_menu_selected += 9 ;
-            guiState->uiState.macro_menu_selected %= 9 ;
+            guiState->uiState.macro_entrySelected-- ;
+            guiState->uiState.macro_entrySelected += 9 ;
+            guiState->uiState.macro_entrySelected %= 9 ;
             break ;
         }
         case KNOB_RIGHT :
         {
-            guiState->uiState.macro_menu_selected++ ;
-            guiState->uiState.macro_menu_selected %= 9 ;
+            guiState->uiState.macro_entrySelected++ ;
+            guiState->uiState.macro_entrySelected %= 9 ;
             break ;
         }
         case KEY_ENTER :
         {
             if( !msg.long_press )
             {
-                guiState->uiState.input_number = guiState->uiState.macro_menu_selected + 1 ;
+                guiState->uiState.input_number = guiState->uiState.macro_entrySelected + 1 ;
             }
             else
             {
@@ -2191,28 +2191,28 @@ void ui_States_MenuUp( GuiState_st* guiState )
 {
     uint8_t numOfEntries = ui_States_GetPageNumOfEntries( guiState );
 
-    if( guiState->uiState.menu_selected > 0 )
+    if( guiState->uiState.entrySelected > 0 )
     {
-        guiState->uiState.menu_selected -= 1 ;
+        guiState->uiState.entrySelected -= 1 ;
     }
     else
     {
-        guiState->uiState.menu_selected = numOfEntries - 1 ;
+        guiState->uiState.entrySelected = numOfEntries - 1 ;
     }
-    vp_playMenuBeepIfNeeded( guiState->uiState.menu_selected == 0 );
+    vp_playMenuBeepIfNeeded( guiState->uiState.entrySelected == 0 );
 }
 
 static void ui_States_MenuUpNoWrapAround( GuiState_st* guiState )
 {
-    if( guiState->uiState.menu_selected > 0 )
+    if( guiState->uiState.entrySelected > 0 )
     {
-        guiState->uiState.menu_selected -= 1 ;
+        guiState->uiState.entrySelected -= 1 ;
     }
     else
     {
-        guiState->uiState.menu_selected = 0 ;
+        guiState->uiState.entrySelected = 0 ;
     }
-    vp_playMenuBeepIfNeeded( guiState->uiState.menu_selected == 0 );
+    vp_playMenuBeepIfNeeded( guiState->uiState.entrySelected == 0 );
 }
 
 
@@ -2220,15 +2220,15 @@ void ui_States_MenuDown( GuiState_st* guiState )
 {
     uint8_t numOfEntries = ui_States_GetPageNumOfEntries( guiState );
 
-    if( guiState->uiState.menu_selected < ( numOfEntries - 1 ) )
+    if( guiState->uiState.entrySelected < ( numOfEntries - 1 ) )
     {
-        guiState->uiState.menu_selected += 1 ;
+        guiState->uiState.entrySelected += 1 ;
     }
     else
     {
-        guiState->uiState.menu_selected = 0 ;
+        guiState->uiState.entrySelected = 0 ;
     }
-    vp_playMenuBeepIfNeeded( guiState->uiState.menu_selected == 0 );
+    vp_playMenuBeepIfNeeded( guiState->uiState.entrySelected == 0 );
 }
 
 void ui_States_MenuBack( GuiState_st* guiState )
@@ -2241,7 +2241,7 @@ void ui_States_MenuBack( GuiState_st* guiState )
         // Return to previous menu
         ui_States_SetPageNum( guiState , guiState->page.levelList[ guiState->page.level - 1 ] );
         // reset menu selection - sets the menu cursor to the top of the screen
-        guiState->uiState.menu_selected = 0 ;
+        guiState->uiState.entrySelected = 0 ;
     }
     else
     {
@@ -2255,7 +2255,7 @@ void ui_States_MenuBack( GuiState_st* guiState )
 void ui_States_SelectPage( GuiState_st* guiState )
 {
 //@@@KL change .links to .entries
-    uint8_t pageNum = guiState->layout.links[ guiState->uiState.menu_selected ].num ;
+    uint8_t pageNum = guiState->layout.links[ guiState->uiState.entrySelected ].num ;
 
     ui_States_SelectPageNum( guiState , pageNum );
 }
@@ -2264,7 +2264,7 @@ void ui_States_SelectPageNum( GuiState_st* guiState , uint8_t pageNum )
 {
     ui_States_SetPageNum( guiState , pageNum );
     // reset menu selection - sets the menu cursor to the top of the screen
-    guiState->uiState.menu_selected = 0 ;
+    guiState->uiState.entrySelected = 0 ;
 }
 
 void ui_States_SetPageNum( GuiState_st* guiState , uint8_t pageNum )

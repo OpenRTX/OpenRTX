@@ -676,13 +676,13 @@ void _ui_menuUp(uint8_t menu_entries)
     {
         maxEntries -= 1;
     }
-    if(ui_state.menu_selected > 0)
+    if(ui_state.entrySelected > 0)
     {
-        ui_state.menu_selected -= 1;
+        ui_state.entrySelected -= 1;
     }
     else
     {
-        ui_state.menu_selected = maxEntries;
+        ui_state.entrySelected = maxEntries;
     }
 }
 
@@ -696,13 +696,13 @@ void _ui_menuDown(uint8_t menu_entries)
     {
         maxEntries -= 1;
     }
-    if(ui_state.menu_selected < maxEntries)
+    if(ui_state.entrySelected < maxEntries)
     {
-        ui_state.menu_selected += 1;
+        ui_state.entrySelected += 1;
     }
     else
     {
-        ui_state.menu_selected = 0;
+        ui_state.entrySelected = 0;
     }
 }
 
@@ -717,7 +717,7 @@ void _ui_menuBack(uint8_t prev_state)
         // Return to previous menu
         state.ui_screen = prev_state;
         // Reset menu selection
-        ui_state.menu_selected = 0;
+        ui_state.entrySelected = 0;
     }
 }
 
@@ -928,7 +928,7 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
                     {
                         if(msg.keys & KEY_ENTER)
                         {
-                            switch(ui_state.menu_selected)
+                            switch(ui_state.entrySelected)
                             {
                                 case M_SETTINGS:
                                 {
@@ -952,7 +952,7 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
                                 }
                             }
                             // Reset menu selection
-                            ui_state.menu_selected = 0;
+                            ui_state.entrySelected = 0;
                         }
                         else
                         {
@@ -982,7 +982,7 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
                     {
                         if(msg.keys & KEY_ENTER)
                         {
-                            switch(ui_state.menu_selected)
+                            switch(ui_state.entrySelected)
                             {
                                 case S_DISPLAY:
                                 {
@@ -1010,7 +1010,7 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
                                 }
                             }
                             // Reset menu selection
-                            ui_state.menu_selected = 0;
+                            ui_state.entrySelected = 0;
                         }
                         else
                         {
@@ -1059,7 +1059,7 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
             {
                 if(msg.keys & KEY_LEFT)
                 {
-                    switch(ui_state.menu_selected)
+                    switch(ui_state.entrySelected)
                     {
 #ifdef SCREEN_CONTRAST
                         case D_CONTRAST:
@@ -1083,7 +1083,7 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
                 {
                     if(msg.keys & KEY_RIGHT)
                     {
-                        switch(ui_state.menu_selected)
+                        switch(ui_state.entrySelected)
                         {
 #ifdef SCREEN_CONTRAST
                             case D_CONTRAST:
@@ -1157,7 +1157,7 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
                     // Not in edit mode: handle CAN setting
                     if(msg.keys & KEY_LEFT)
                     {
-                        switch(ui_state.menu_selected)
+                        switch(ui_state.entrySelected)
                         {
                             case M_CAN:
                             {
@@ -1179,7 +1179,7 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
                     {
                         if(msg.keys & KEY_RIGHT)
                         {
-                            switch(ui_state.menu_selected)
+                            switch(ui_state.entrySelected)
                             {
                                 case M_CAN:
                                 {
@@ -1201,7 +1201,7 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
                         {
                             if(msg.keys & KEY_ENTER)
                             {
-                                switch(ui_state.menu_selected)
+                                switch(ui_state.entrySelected)
                                 {
                                     // Enable callsign input
                                     case M_CALLSIGN:
@@ -1292,7 +1292,7 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
             {
                 if(msg.keys & KEY_LEFT)
                 {
-                    switch(ui_state.menu_selected)
+                    switch(ui_state.entrySelected)
                     {
                         case D_TXWIPER:
                         {
@@ -1329,7 +1329,7 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
                 {
                     if(msg.keys & KEY_RIGHT)
                     {
-                        switch(ui_state.menu_selected)
+                        switch(ui_state.entrySelected)
                         {
                             case D_TXWIPER:
                             {

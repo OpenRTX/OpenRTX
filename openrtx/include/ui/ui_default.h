@@ -250,7 +250,7 @@ c->alpha = (uint8_t)( ( cv >> COLOR_ENC_ALPHA_SHIFT ) & COLOR_ENC_ALPHA_MASK ) ;
 typedef struct
 {
     // Index of the currently selected menu entry
-    uint8_t     menu_selected ;
+    uint8_t     entrySelected ;
     // If true we can change a menu entry value with UP/DOWN
     bool        edit_mode ;
     bool        input_locked ;
@@ -272,7 +272,7 @@ typedef struct
     char        new_callsign[ 10 ] ;
     freq_t      new_offset ;
 #if defined(UI_NO_KEYBOARD)
-    uint8_t     macro_menu_selected ;
+    uint8_t     macro_entrySelected ;
 #endif // UI_NO_KEYBOARD
 }UI_State_st;
 
@@ -377,7 +377,6 @@ extern bool         macro_latched ;
 
 extern const uiPageDesc_st* uiGetPageDesc( uiPageNum_en pageNum );
 extern const char**         uiGetPageLoc( uiPageNum_en pageNum );
-extern uint8_t              ui_States_GetPageNumOfLinks( GuiState_st* guiState );
 
 typedef int (*GetMenuList_fn)( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index );
 

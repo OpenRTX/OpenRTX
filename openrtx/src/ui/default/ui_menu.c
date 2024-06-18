@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <utils.h>
 #include <ui/ui_default.h>
+#include "ui_states.h"
 #include "ui_commands.h"
 #include <interfaces/nvmem.h>
 #include <interfaces/cps_io.h>
@@ -235,9 +236,9 @@ void _ui_drawMenuList( GuiState_st* guiState , uiPageNum_en currentEntry )
          guiState->layout.linkIndex++ )
     {
         // If selection is off the screen, scroll screen
-        if( guiState->uiState.menu_selected >= guiState->layout.numOfEntries )
+        if( guiState->uiState.entrySelected >= guiState->layout.numOfEntries )
         {
-            guiState->layout.scrollOffset = guiState->uiState.menu_selected -
+            guiState->layout.scrollOffset = guiState->uiState.entrySelected -
                                             guiState->layout.numOfEntries + 1 ;
         }
 
@@ -270,7 +271,7 @@ void ui_drawMenuItem( GuiState_st* guiState , char* entryBuf )
     Color_text = color_fg ;
 
     if( ( guiState->layout.linkIndex + guiState->layout.scrollOffset ) ==
-        guiState->uiState.menu_selected )
+        guiState->uiState.entrySelected )
     {
         Color_text = color_bg ;
         // Draw rectangle under selected item, compensating for text height
@@ -348,9 +349,9 @@ void _ui_drawMenuListValue( GuiState_st* guiState ,
          item++ )
     {
         // If selection is off the screen, scroll screen
-        if( guiState->uiState.menu_selected >= numOfEntries )
+        if( guiState->uiState.entrySelected >= numOfEntries )
         {
-            scroll = ( guiState->uiState.menu_selected - numOfEntries ) + 1 ; //@@@KL check this
+            scroll = ( guiState->uiState.entrySelected - numOfEntries ) + 1 ; //@@@KL check this
         }
         // Call function pointer to get current menu entry string
         result = (*getCurrentEntry)( guiState , entry_buf , sizeof( entry_buf ) , item + scroll );
@@ -359,7 +360,7 @@ void _ui_drawMenuListValue( GuiState_st* guiState ,
         if( result != -1 )
         {
             text_color = color_fg;
-            if( ( item + scroll ) == guiState->uiState.menu_selected )
+            if( ( item + scroll ) == guiState->uiState.entrySelected )
             {
                 // Draw rectangle under selected item, compensating for text height
                 // If we are in edit mode, draw a hollow rectangle
@@ -396,7 +397,7 @@ void _ui_drawMenuListValue( GuiState_st* guiState ,
 
 int _ui_getMenuTopEntryName( GuiState_st* guiState , char* buf , uint8_t max_len , uint8_t index )
 {
-    if( index >=  ui_States_GetPageNumOfEntries( guiState ) ) // @@@KL rationalise this
+    if( index >= ui_States_GetPageNumOfEntries( guiState ) ) // @@@KL rationalise this
     {
         return -1;
     }
@@ -1310,7 +1311,7 @@ void _ui_drawSettingsM17( GuiState_st* guiState , Event_st* event )
     gfx_printLine( 1 , 4 , lineTop->height , SCREEN_HEIGHT - lineBottom->height ,
                    guiState->layout.horizontal_pad , guiState->layout.menu_font.size ,
                    ALIGN_LEFT , color_fg , currentLanguage->callsign );
-    if( guiState->uiState.edit_mode && ( guiState->uiState.menu_selected == M17_CALLSIGN ) )
+    if( guiState->uiState.edit_mode && ( guiState->uiState.entrySelected == M17_CALLSIGN ) )
     {
         uint16_t rect_width  = SCREEN_WIDTH - ( guiState->layout.horizontal_pad * 2 ) ;
         uint16_t rect_height = ( SCREEN_HEIGHT - ( lineTop->height + lineBottom->height ) ) / 2 ;
@@ -1412,7 +1413,7 @@ void _ui_drawSettingsRadio( GuiState_st* guiState , Event_st* event )
                color_fg , currentLanguage->radioSettings );
 
     // Handle the special case where a frequency is being input
-    if( ( guiState->uiState.menu_selected == R_OFFSET ) && ( guiState->uiState.edit_mode ) )
+    if( ( guiState->uiState.entrySelected == R_OFFSET ) && ( guiState->uiState.edit_mode ) )
     {
         char buf[ 17 ] = { 0 };
         uint16_t rect_width  = SCREEN_WIDTH - ( guiState->layout.horizontal_pad * 2 );
@@ -1505,7 +1506,7 @@ bool _ui_drawMacroMenu( GuiState_st* guiState , Event_st* event )
  * currently selected number.
  */
 #ifdef UI_NO_KEYBOARD
-        if( guiState->uiState.macro_menu_selected == 0 )
+        if( guiState->uiState.macro_entrySelected == 0 )
         {
 #endif // UI_NO_KEYBOARD
             gfx_print( line1->pos , styleTop->font.size , ALIGN_LEFT ,
@@ -1519,7 +1520,7 @@ bool _ui_drawMacroMenu( GuiState_st* guiState , Event_st* event )
         }
 #endif // UI_NO_KEYBOARD
 #ifdef UI_NO_KEYBOARD
-        if( guiState->uiState.macro_menu_selected == 1 )
+        if( guiState->uiState.macro_entrySelected == 1 )
         {
 #endif // UI_NO_KEYBOARD
             gfx_print( line1->pos , styleTop->font.size , ALIGN_CENTER ,
@@ -1543,7 +1544,7 @@ bool _ui_drawMacroMenu( GuiState_st* guiState , Event_st* event )
         }
     }
 #ifdef UI_NO_KEYBOARD
-    if( guiState->uiState.macro_menu_selected == 2 )
+    if( guiState->uiState.macro_entrySelected == 2 )
     {
 #endif // UI_NO_KEYBOARD
         gfx_print( line1->pos , styleTop->font.size , ALIGN_RIGHT ,
@@ -1597,7 +1598,7 @@ bool _ui_drawMacroMenu( GuiState_st* guiState , Event_st* event )
     Pos_st pos_2 = { line1->pos.x ,
                       line1->pos.y + ( line3Large->pos.y - line3Large->pos.y ) / 2 };
 #ifdef UI_NO_KEYBOARD
-    if( guiState->uiState.macro_menu_selected == 3 )
+    if( guiState->uiState.macro_entrySelected == 3 )
     {
 #endif // UI_NO_KEYBOARD
         gfx_print( pos_2 , styleTop->font.size , ALIGN_LEFT ,
@@ -1639,7 +1640,7 @@ bool _ui_drawMacroMenu( GuiState_st* guiState , Event_st* event )
         }
     }
 #ifdef UI_NO_KEYBOARD
-    if( guiState->uiState.macro_menu_selected == 4 )
+    if( guiState->uiState.macro_entrySelected == 4 )
     {
 #endif // UI_NO_KEYBOARD
         gfx_print( pos_2 , styleTop->font.size , ALIGN_CENTER ,
@@ -1669,7 +1670,7 @@ bool _ui_drawMacroMenu( GuiState_st* guiState , Event_st* event )
     gfx_print( pos_2 , styleTop->font.size , ALIGN_CENTER ,
                color_fg , mode_str );
 #ifdef UI_NO_KEYBOARD
-    if( guiState->uiState.macro_menu_selected == 5 )
+    if( guiState->uiState.macro_entrySelected == 5 )
     {
 #endif // UI_NO_KEYBOARD
         gfx_print( pos_2 , styleTop->font.size , ALIGN_RIGHT ,
@@ -1681,7 +1682,7 @@ bool _ui_drawMacroMenu( GuiState_st* guiState , Event_st* event )
                color_fg , "%.1gW" , dBmToWatt( last_state.channel.power ) );
     // Third row
 #ifdef UI_NO_KEYBOARD
-    if( guiState->uiState.macro_menu_selected == 6 )
+    if( guiState->uiState.macro_entrySelected == 6 )
     {
 #endif // UI_NO_KEYBOARD
         gfx_print( line3Large->pos , styleTop->font.size , ALIGN_LEFT ,
@@ -1696,7 +1697,7 @@ bool _ui_drawMacroMenu( GuiState_st* guiState , Event_st* event )
                color_fg , "       %5d" , state.settings.brightness );
 #endif
 #ifdef UI_NO_KEYBOARD
-    if( guiState->uiState.macro_menu_selected == 7 )
+    if( guiState->uiState.macro_entrySelected == 7 )
     {
 #endif // UI_NO_KEYBOARD
         gfx_print( line3Large->pos , styleTop->font.size , ALIGN_CENTER ,
@@ -1709,7 +1710,7 @@ bool _ui_drawMacroMenu( GuiState_st* guiState , Event_st* event )
                color_fg ,   "       B+" );
 #endif
 #ifdef UI_NO_KEYBOARD
-    if( guiState->uiState.macro_menu_selected == 8 )
+    if( guiState->uiState.macro_entrySelected == 8 )
     {
 #endif // UI_NO_KEYBOARD
         gfx_print( line3Large->pos , styleTop->font.size , ALIGN_RIGHT ,

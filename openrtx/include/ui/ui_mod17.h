@@ -197,7 +197,7 @@ typedef struct Layout_st
 typedef struct UI_State_st
 {
     // Index of the currently selected menu entry
-    uint8_t menu_selected;
+    uint8_t entrySelected;
     // If true we can change a menu entry value with UP/DOWN
     bool edit_mode;
     // Variables used for VFO input
