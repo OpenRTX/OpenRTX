@@ -22,6 +22,12 @@
 #include "pinmap.h"
 
 #ifdef __cplusplus
+
+// Export the HR_C6000 driver only for C++ sources
+#include <HR_C6000.h>
+
+extern HR_C6000 C6000;
+
 extern "C" {
 #endif
 
@@ -37,7 +43,12 @@ enum AdcChannels
 extern const struct Adc adc1;
 extern const struct spiCustomDevice spiSr;
 extern const struct spiCustomDevice flash_spi;
+extern const struct spiCustomDevice det_spi;
+extern const struct spiCustomDevice pll_spi;
+extern const struct spiCustomDevice c6000_spi;
 extern const struct gpioDev extGpio;
+extern const struct ak2365a detector;
+extern const struct sky73210 pll;
 
 /* Screen dimensions */
 #define CONFIG_SCREEN_WIDTH 160
