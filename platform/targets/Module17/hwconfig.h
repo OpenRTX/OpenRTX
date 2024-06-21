@@ -26,6 +26,11 @@
 #include <stm32f4xx.h>
 #include "pinmap.h"
 
+enum AdcChannel
+{
+    ADC_HWVER_CH = 3,
+};
+
 extern const struct i2cDevice i2c1;
 
 /* Screen dimensions */

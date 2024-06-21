@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2021 - 2024 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN,                     *
  *                                Frederik Saraci IU2NRO,                  *
  *                                Silvano Seva IU2KWO                      *
@@ -24,14 +24,15 @@
 #include <interfaces/nvmem.h>
 #include <interfaces/audio.h>
 #include <peripherals/gpio.h>
+#include <drivers/adc_stm32.h>
 #include <drivers/i2c_stm32.h>
 #include <calibInfo_Mod17.h>
-#include <ADC1_Mod17.h>
 #include <backlight.h>
 #include <hwconfig.h>
 #include <MCP4551.h>
 
 
+ADC_STM32_DEVICE_DEFINE(adc1, ADC1, NULL, 3300000)
 I2C_STM32_DEVICE_DEFINE(i2c1, I2C1, NULL)
 
 extern mod17Calib_t mod17CalData;
@@ -62,10 +63,12 @@ void platform_init()
     gpio_setMode(PTT_OUT, OUTPUT);
     gpio_clearPin(PTT_OUT);
 
+    gpio_setMode(AIN_HWVER, ANALOG);
+
     /*
      * Check if external I2C1 pull-ups are present. If they are not,
      * enable internal pull-ups and slow-down I2C1.
-     */ 
+     */
     gpio_setMode(I2C1_SCL, INPUT_PULL_DOWN);
     gpio_setMode(I2C1_SDA, INPUT_PULL_DOWN);
 
@@ -95,8 +98,8 @@ void platform_init()
     DAC->DHR12R1  = 1365;
 
     nvm_init();
-    adc1_init();
     audio_init();
+    adcStm32_init(&adc1);
     mcp4551_init(&i2c1, SOFTPOT_RX);
     mcp4551_init(&i2c1, SOFTPOT_TX);
 
@@ -112,8 +115,8 @@ void platform_init()
      * - 0V:   rev. 0.1d or lower
      * - 3.3V: rev 0.1e
      */
-    uint16_t ver = adc1_getMeasurement(ADC_HWVER_CH);
-    if(ver >= 3000)
+    uint32_t ver = adc_getVoltage(&adc1, ADC_HWVER_CH);
+    if(ver >= 3000000)
         hwInfo.hw_version = 1;
 
     /* 100ms blink of sync led to signal device startup */
@@ -129,7 +132,7 @@ void platform_terminate()
     gpio_clearPin(SYNC_LED);
     gpio_clearPin(ERR_LED);
 
-    adc1_terminate();
+    adcStm32_terminate(&adc1);
     nvm_terminate();
     audio_terminate();
 

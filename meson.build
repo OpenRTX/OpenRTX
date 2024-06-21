@@ -415,7 +415,6 @@ dm1801_def += openrtx_def + mk22fn512_def + miosix_cm4f_def
 ##
 mod17_src = ['platform/targets/Module17/platform.c',
              'platform/drivers/display/SH110x_Mod17.c',
-             'platform/drivers/ADC/ADC1_Mod17.c',
              'platform/drivers/keyboard/keyboard_Mod17.c',
              'platform/drivers/NVM/nvmem_Mod17.c',
              'platform/drivers/CPS/cps_io_native_Mod17.c',
