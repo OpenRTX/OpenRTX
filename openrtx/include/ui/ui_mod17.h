@@ -129,13 +129,13 @@ enum m17Items
 
 enum module17Items
 {
-    D_TXWIPER = 0,
-    D_RXWIPER,
+    D_MICGAIN = 0,
+    D_PTTINLEVEL,
+    D_PTTOUTLEVEL,
     D_TXINVERT,
     D_RXINVERT,
-    D_MICGAIN,
-    D_PTTINLEVEL,
-    D_PTTOUTLEVEL
+    D_TXWIPER,
+    D_RXWIPER
 };
 
 /**

@@ -220,18 +220,6 @@ int _ui_getModule17ValueName(char *buf, uint8_t max_len, uint8_t index)
 
     switch(index)
     {
-        case D_TXWIPER:
-            snprintf(buf, max_len, "%d", mod17CalData.tx_wiper);
-            break;
-        case D_RXWIPER:
-            snprintf(buf, max_len, "%d", mod17CalData.rx_wiper);
-            break;
-        case D_TXINVERT:
-            snprintf(buf, max_len, "%s", phase_values[mod17CalData.bb_tx_invert]);
-            break;
-        case D_RXINVERT:
-            snprintf(buf, max_len, "%s", phase_values[mod17CalData.bb_rx_invert]);
-            break;
         case D_MICGAIN:
             snprintf(buf, max_len, "%s", mic_gain_values[mod17CalData.mic_gain]);
             break;
@@ -240,6 +228,18 @@ int _ui_getModule17ValueName(char *buf, uint8_t max_len, uint8_t index)
             break;
         case D_PTTOUTLEVEL:
             snprintf(buf, max_len, "%s", mod17CalData.ptt_out_level ? "Act high" : "Act low");
+            break;
+        case D_TXINVERT:
+            snprintf(buf, max_len, "%s", phase_values[mod17CalData.bb_tx_invert]);
+            break;
+        case D_RXINVERT:
+            snprintf(buf, max_len, "%s", phase_values[mod17CalData.bb_rx_invert]);
+            break;
+        case D_TXWIPER:
+            snprintf(buf, max_len, "%d", mod17CalData.tx_wiper);
+            break;
+        case D_RXWIPER:
+            snprintf(buf, max_len, "%d", mod17CalData.rx_wiper);
             break;
     }
 
