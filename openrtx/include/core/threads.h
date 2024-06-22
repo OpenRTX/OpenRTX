@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2024 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -24,28 +24,25 @@
 #include <stddef.h>
 
 /**
+ * Threads' stack sizes
+ */
+#define UI_THREAD_STKSIZE     2048
+#define RTX_THREAD_STKSIZE    512
+#define CODEC2_THREAD_STKSIZE 16384
+
+/**
+ * Thread priority levels, UNIX-like: lower level, higher thread priority
+ */
+#ifdef _MIOSIX
+#define THREAD_PRIO_RT      0
+#define THREAD_PRIO_HIGH    1
+#define THREAD_PRIO_NORMAL  2
+#define THREAD_PRIO_LOW     3
+#endif
+
+/**
  * Spawn all the threads for the various functionalities.
  */
 void create_threads();
-
-/**
- * Stack size for state update task, in bytes.
- */
-#define DEV_TASK_STKSIZE 2048
-
-/**
- * Stack size for UI management, in bytes.
- */
-#define UI_TASK_STKSIZE 2048
-
-/**
- * Stack size for baseband control task, in bytes.
- */
-#define RTX_TASK_STKSIZE 512
-
-/**
- * Stack size for codec2 task, in bytes.
- */
-#define CODEC2_TASK_STKSIZE 16384
 
 #endif /* THREADS_H */

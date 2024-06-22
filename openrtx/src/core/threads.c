@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2024 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -205,16 +205,16 @@ void create_threads()
     pthread_attr_init(&rtx_attr);
 
     #ifndef __ZEPHYR__
-    pthread_attr_setstacksize(&rtx_attr, RTX_TASK_STKSIZE);
+    pthread_attr_setstacksize(&rtx_attr, RTX_THREAD_STKSIZE);
     #else
-    void *rtx_thread_stack = malloc(RTX_TASK_STKSIZE * sizeof(uint8_t));
-    pthread_attr_setstack(&rtx_attr, rtx_thread_stack, RTX_TASK_STKSIZE);
+    void *rtx_thread_stack = malloc(RTX_THREAD_STKSIZE * sizeof(uint8_t));
+    pthread_attr_setstack(&rtx_attr, rtx_thread_stack, RTX_THREAD_STKSIZE);
     #endif
 
     #ifdef _MIOSIX
     // Max priority for RTX thread when running with miosix rtos
     struct sched_param param;
-    param.sched_priority = sched_get_priority_max(0);
+    param.sched_priority = THREAD_PRIO_HIGH;
     pthread_attr_setschedparam(&rtx_attr, &param);
     #endif
 
@@ -226,10 +226,10 @@ void create_threads()
     pthread_attr_init(&ui_attr);
 
     #ifndef __ZEPHYR__
-    pthread_attr_setstacksize(&ui_attr, UI_TASK_STKSIZE);
+    pthread_attr_setstacksize(&ui_attr, UI_THREAD_STKSIZE);
     #else
-    void *ui_thread_stack = malloc(UI_TASK_STKSIZE * sizeof(uint8_t));
-    pthread_attr_setstack(&ui_attr, ui_thread_stack, UI_TASK_STKSIZE);
+    void *ui_thread_stack = malloc(UI_THREAD_STKSIZE * sizeof(uint8_t));
+    pthread_attr_setstack(&ui_attr, ui_thread_stack, UI_THREAD_STKSIZE);
     #endif
 
     pthread_t ui_thread;

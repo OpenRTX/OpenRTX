@@ -400,16 +400,16 @@ static bool startThread(const pathId path, void *(*func) (void *))
 
     #if defined(_MIOSIX)
     // Set stack size of CODEC2 thread to 16kB.
-    pthread_attr_setstacksize(&codecAttr, CODEC2_TASK_STKSIZE);
+    pthread_attr_setstacksize(&codecAttr, CODEC2_THREAD_STKSIZE);
 
     // Set priority of CODEC2 thread to the maximum one, the same of RTX thread.
     struct sched_param param;
-    param.sched_priority = sched_get_priority_max(0);
+    param.sched_priority = THREAD_PRIO_HIGH;
     pthread_attr_setschedparam(&codecAttr, &param);
     #elif defined(__ZEPHYR__)
     // Allocate and set the stack for CODEC2 thread
-    void *codec_thread_stack = malloc(CODEC2_TASK_STKSIZE * sizeof(uint8_t));
-    pthread_attr_setstack(&codecAttr, codec_thread_stack, CODEC2_TASK_STKSIZE);
+    void *codec_thread_stack = malloc(CODEC2_THREAD_STKSIZE * sizeof(uint8_t));
+    pthread_attr_setstack(&codecAttr, codec_thread_stack, CODEC2_THREAD_STKSIZE);
     #endif
 
     // Start thread
