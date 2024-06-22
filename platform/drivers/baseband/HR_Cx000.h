@@ -188,6 +188,24 @@ public:
         return readReg(M::CONFIG, reg);
     }
 
+    /**
+     * Send audio to the DAC FIFO for playback via the "OpenMusic" mode.
+     * This function assumes that audio chunk is composed of 64 bytes.
+     *
+     * @param audio: pointer to a 64 byte audio chunk.
+     */
+    inline void sendAudio(const uint8_t *audio)
+    {
+        uint8_t cmd[2];
+
+        cmd[0] = 0x03;
+        cmd[1] = 0x00;
+
+        ScopedChipSelect cs(uSpi, uCs);
+        spi_send(uSpi, cmd, 2);
+        spi_send(uSpi, audio, 64);
+    }
+
 private:
 
     /**
