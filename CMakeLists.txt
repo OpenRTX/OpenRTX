@@ -61,8 +61,8 @@ target_compile_definitions(app
 
 target_include_directories(app
   PRIVATE
-
     openrtx/include
+
     platform
 
     subprojects/codec2
@@ -70,6 +70,7 @@ target_include_directories(app
 
     lib/minmea/include
     lib/qdec/include
+
 )
 
 target_sources(app

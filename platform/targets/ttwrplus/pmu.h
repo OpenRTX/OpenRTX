@@ -53,6 +53,13 @@ uint16_t pmu_getVbat();
 void pmu_setBasebandPower(bool enable);
 
 /**
+ * Control the baseband programmer power supply rail.
+ *
+ * @param enable: set to true to enable the baseband programmer power supply.
+ */
+void pmu_setBasebandProgramPower(bool enable);
+
+/**
  * Control the GPS power supply rail.
  *
  * @param enable: set to true to enable the GPS power supply.
