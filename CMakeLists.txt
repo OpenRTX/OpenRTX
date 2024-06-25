@@ -77,6 +77,7 @@ target_include_directories(app
     platform/drivers/baseband
     platform/drivers/backlight
     platform/drivers/chSelector
+    platform/drivers/program
 
     subprojects/codec2
     subprojects/codec2/src

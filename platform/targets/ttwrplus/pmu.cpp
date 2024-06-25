@@ -151,6 +151,10 @@ void pmu_init()
     //500~3500mV, 100mV/step,31steps
     PMU.setBLDO2Voltage(3300);
 
+    //DLDO1 IMAX=300mA
+    //500~3500mV, 100mV/step,31steps
+    PMU.setDLDO1Voltage(3300);
+
     // Turn on the power that needs to be used
     //! DC1 ESP32S3 Core VDD , Don't change
     // PMU.enableDC3();
@@ -316,6 +320,7 @@ void pmu_init()
 void pmu_terminate()
 {
     PMU.disableDC3();   // Turn off baseband power
+    PMU.disableDLDO1(); // Turn off baseband programmer power
     PMU.disableALDO4(); // Turn off GPS power
     PMU.shutdown();     // General shutdown
 }
@@ -331,6 +336,14 @@ void pmu_setBasebandPower(bool enable)
         PMU.enableDC3();
     else
         PMU.disableDC3();
+}
+
+void pmu_setBasebandProgramPower(bool enable)
+{
+    if (enable)
+        PMU.enableDLDO1();
+    else
+        PMU.disableDLDO1();
 }
 
 void pmu_setGPSPower(bool enable)
