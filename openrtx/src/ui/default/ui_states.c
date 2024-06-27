@@ -26,6 +26,7 @@
 #include <input.h>
 #include <hwconfig.h>
 #include <voicePromptUtils.h>
+#include <ui.h>
 #include <ui/ui_default.h>
 #include <rtx.h>
 #include <interfaces/platform.h>
@@ -38,6 +39,7 @@
 #include <utils.h>
 #include <beeps.h>
 #include <memory_profiling.h>
+#include "ui_list_display.h"
 
 #ifdef PLATFORM_TTWRPLUS
 #include <SA8x8.h>
@@ -52,8 +54,6 @@
 #include "ui_value_display.h"
 #include "ui_states.h"
 #include "ui_value_input.h"
-
-#include "ui_menu.h"
 
        State_st    last_state ;
        bool        macro_latched ;
@@ -102,7 +102,6 @@ static bool ui_updateFSM_PAGE_MENU_BACKUP_RESTORE( GuiState_st* guiState );
 static bool ui_updateFSM_PAGE_MENU_BACKUP( GuiState_st* guiState );
 static bool ui_updateFSM_PAGE_MENU_RESTORE( GuiState_st* guiState );
 static bool ui_updateFSM_PAGE_MENU_INFO( GuiState_st* guiState );
-static bool ui_updateFSM_PAGE_MENU_ABOUT( GuiState_st* guiState );
 static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE( GuiState_st* guiState );
 static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE_SET( GuiState_st* guiState );
 static bool ui_updateFSM_PAGE_SETTINGS_DISPLAY( GuiState_st* guiState );
@@ -134,7 +133,6 @@ static const ui_updateFSM_PAGE_fn ui_updateFSM_PageTable[ PAGE_NUM_OF ] =
     ui_updateFSM_PAGE_MENU_BACKUP                ,
     ui_updateFSM_PAGE_MENU_RESTORE               ,
     ui_updateFSM_PAGE_MENU_INFO                  ,
-    ui_updateFSM_PAGE_MENU_ABOUT                 ,
     ui_updateFSM_PAGE_SETTINGS_TIMEDATE          ,
     ui_updateFSM_PAGE_SETTINGS_TIMEDATE_SET      ,
     ui_updateFSM_PAGE_SETTINGS_DISPLAY           ,
@@ -944,13 +942,13 @@ static bool _ui_channel_valid( channel_t* channel )
     return valid ;
 }
 
-bool _ui_drawDarkOverlay( void )
+bool _ui_Draw_DarkOverlay( void )
 {
     Color_st color_agg ;
     ui_ColorLoad( &color_agg , COLOR_AGG );
-    Pos_st origin     = { 0 , 0 };
+    Pos_st origin = { 0 , 0 , SCREEN_WIDTH , SCREEN_HEIGHT };
 
-    gfx_drawRect( origin , SCREEN_WIDTH , SCREEN_HEIGHT , color_agg , true );
+    gfx_drawRect( &origin , &color_agg , true );
 
     return true;
 
@@ -1215,19 +1213,6 @@ static bool ui_updateFSM_PAGE_MENU_INFO( GuiState_st* guiState )
         ui_States_MenuDown( guiState );
     }
     else if( guiState->msg.keys & KEY_ESC )
-    {
-        ui_States_MenuBack( guiState );
-    }
-
-    return sync_rtx ;
-
-}
-
-static bool ui_updateFSM_PAGE_MENU_ABOUT( GuiState_st* guiState )
-{
-    bool sync_rtx = false ;
-
-    if( guiState->msg.keys & KEY_ESC )
     {
         ui_States_MenuBack( guiState );
     }

@@ -69,6 +69,7 @@
 #include <input.h>
 #include <hwconfig.h>
 #include <voicePromptUtils.h>
+#include <ui.h>
 #include <ui/ui_default.h>
 #include <rtx.h>
 #include <interfaces/platform.h>
@@ -98,79 +99,14 @@
 
 extern long long getTick();
 
-#ifdef DISPLAY_DEBUG_MSG
-
-static char    counter = 0 ; //@@@KL
-static uint8_t trace0  = 0 ; //@@@KL
-static uint8_t trace1  = 0 ; //@@@KL
-static uint8_t trace2  = 0 ; //@@@KL
-static uint8_t trace3  = 0 ; //@@@KL
-
-void Debug_SetTrace0( uint8_t traceVal )
-{
-    trace0 = traceVal ;
-}
-
-void Debug_SetTrace1( uint8_t traceVal )
-{
-    trace1 = traceVal ;
-}
-
-void Debug_SetTrace2( uint8_t traceVal )
-{
-    trace2 = traceVal ;
-}
-
-void Debug_SetTrace3( uint8_t traceVal )
-{
-    trace3 = traceVal ;
-}
-
-static void Debug_DisplayMsg( void )
-{
-    Line_st*  lineTop   = &guiState->layout.lines[ GUI_LINE_TOP ] ;
-    Style_st* styleTop  = &guiState->layout.styles[ GUI_STYLE_TOP ] ;
-    uint16_t  height    = lineTop->height ;
-    uint16_t  width     = 56 ;
-    Pos_st    start ;
-    Color_st  color_bg ;
-    Color_st  color_fg ;
-
-    start.y = ( lineTop->pos.y - height ) + 1 ;
-    start.x = 0 ;
-
-    ui_ColorLoad( &color_bg , COLOR_BG );
-    ui_ColorLoad( &color_fg , COLOR_FG );
-
-    gfx_drawRect( start , width , height , color_bg , true );
-
-    gfx_print( lineTop->pos , styleTop->font.size, ALIGN_LEFT , color_fg ,
-               "%c%X%X%X%X" , (char)( '0' + counter ) ,
-               trace0 & 0x0F , trace1 & 0x0F , trace2 & 0x0F , trace3 & 0x0F );//@@@KL
-
-    if( counter < 10 )
-    {
-        counter++ ;
-    }
-    else
-    {
-        counter = 0 ;
-    }
-
-}
-
-#endif // DISPLAY_DEBUG_MSG
-
 static void ui_InitUIState( UI_State_st* uiState );
 static void ui_InitGuiState( GuiState_st* guiState );
 static void ui_InitGuiStateEvent( Event_st* event );
 static void ui_InitGuiStatePage( Page_st* page );
 static void ui_InitGuiStateLayout( Layout_st* layout );
 /* UI main screen functions, their implementation is in "ui_main.c" */
-extern void ui_draw( GuiState_st* guiState , Event_st* sysEvent );
-extern bool _ui_drawMacroMenu( GuiState_st* guiState );
-
-extern void ui_drawMenuItem( GuiState_st* guiState , char* entryBuf );
+extern void ui_Draw_Page( GuiState_st* guiState , Event_st* sysEvent );
+extern bool _ui_Draw_MacroMenu( GuiState_st* guiState );
 
 extern const char* display_timer_values[];
 
@@ -456,16 +392,17 @@ static void ui_InitUIState( UI_State_st* uiState )
 static void ui_InitGuiState( GuiState_st* guiState )
 {
     ui_InitGuiStateEvent( &guiState->event );
-    guiState->initialPageDisplay  = true ;
-    guiState->update              = false ;
-    guiState->pageHasEvents       = false ;
-    guiState->inStaticArea        = false ;
-    guiState->inEventArea         = false ;
-    guiState->timeStamp           = 0 ;
-    guiState->timer.timeOut       = 0 ;
-    guiState->timer.scriptPageNum = PAGE_STUBBED ;
-    guiState->sync_rtx            = false ;
-    guiState->handled             = false ;
+    guiState->initialPageDisplay    = true ;
+    guiState->update                = false ;
+    guiState->pageHasEvents         = false ;
+    guiState->inEventArea           = false ;
+    guiState->displayEnabledInitial = false ;
+    guiState->displayEnabled        = false ;
+    guiState->timeStamp             = 0 ;
+    guiState->timer.timeOut         = 0 ;
+    guiState->timer.scriptPageNum   = PAGE_STUBBED ;
+    guiState->sync_rtx              = false ;
+    guiState->handled               = false ;
     ui_InitGuiStatePage( &guiState->page );
     ui_InitGuiStateLayout( &guiState->layout );
 }
@@ -490,13 +427,12 @@ static void ui_InitGuiStatePage( Page_st* page )
     page->level      = 0 ;
     page->ptr        = (uint8_t*)uiPageTable[ 0 ] ;
     page->index      = 0 ;
+    page->cmdIndex   = 0 ;
     page->renderPage = false ;
 }
 
 static void ui_InitGuiStateLayout( Layout_st* layout )
 {
-    uint8_t index ;
-
     layout->hline_h                                = SCREEN_HLINE_H ;
     layout->menu_h                                 = SCREEN_MENU_HEIGHT ;
     layout->bottom_pad                             = SCREEN_BOTTOM_PAD ;
@@ -611,13 +547,26 @@ static void ui_InitGuiStateLayout( Layout_st* layout )
 
 	layout->lineIndex							   = 0 ;
 
+	layout->itemPos.x       					   = 0 ;
+	layout->itemPos.y       					   = 0 ;
+	layout->itemPos.w       					   = 0 ;
+	layout->itemPos.h       					   = 0 ;
+
     layout->input_font.size                        = SCREEN_INPUT_FONT_SIZE ;
     layout->menu_font.size                         = SCREEN_MENU_FONT_SIZE ;
     layout->mode_font_big.size                     = SCREEN_MODE_FONT_SIZE_BIG ;
     layout->mode_font_small.size                   = SCREEN_MODE_FONT_SIZE_SMALL ;
 
-    layout->printDisplayOn                         = true ;
     layout->inSelect                               = false ;
+
+    ui_InitGuiStateLayoutLinks( layout );
+    ui_InitGuiStateLayoutVars( layout );
+
+}
+
+void ui_InitGuiStateLayoutLinks( Layout_st* layout )
+{
+    uint8_t index ;
 
     for( index = 0 ; index < LINK_MAX_NUM_OF ; index++ )
     {
@@ -630,7 +579,23 @@ static void ui_InitGuiStateLayout( Layout_st* layout )
 
 }
 
-void ui_drawSplashScreen( void )
+void ui_InitGuiStateLayoutVars( Layout_st* layout )
+{
+    uint8_t index ;
+
+    for( index = 0 ; index < VAR_MAX_NUM_OF ; index++ )
+    {
+        layout->vars[ index ].varNum = GUI_VAL_DSP_STUBBED ;
+        layout->vars[ index ].pos.y  = 0 ;
+        layout->vars[ index ].pos.x  = 0 ;
+        layout->vars[ index ].pos.h  = 0 ;
+        layout->vars[ index ].pos.w  = 0 ;
+    }
+    layout->varNumOf = 0 ;
+    layout->varIndex = 0 ;
+}
+
+void ui_Draw_SplashScreen( void )
 {
     Pos_st   logo_pos ;
     Pos_st   call_pos ;
@@ -660,8 +625,8 @@ void ui_drawSplashScreen( void )
     call_font.size = FONT_SIZE_6PT ;
     #endif
 
-    gfx_print( logo_pos , logo_font.size , ALIGN_CENTER , color_op3 , "O P N\nR T X" );
-    gfx_print( call_pos , call_font.size , ALIGN_CENTER , color_fg  , state.settings.callsign );
+    gfx_print( &logo_pos , logo_font.size , ALIGN_CENTER , &color_op3 , "O P N\nR T X" );
+    gfx_print( &call_pos , call_font.size , ALIGN_CENTER , &color_fg  , state.settings.callsign );
 
     vp_announceSplashScreen();
 }
@@ -675,16 +640,13 @@ bool ui_updateGUI( Event_st* event )
 {
     if( redraw_needed )
     {
-        ui_draw( &GuiState , event );
+        ui_Draw_Page( &GuiState , event );
         // If MACRO menu is active draw it
         if( macro_menu )
         {
-            _ui_drawDarkOverlay();
-            _ui_drawMacroMenu( &GuiState );
+            _ui_Draw_DarkOverlay();
+            _ui_Draw_MacroMenu( &GuiState );
         }
-#ifdef DISPLAY_DEBUG_MSG
-        Debug_DisplayMsg();
-#endif // DISPLAY_DEBUG_MSG
         redraw_needed = false ;
     }
 

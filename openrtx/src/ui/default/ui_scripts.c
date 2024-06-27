@@ -19,18 +19,20 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <ui.h>
 #include <ui/ui_default.h>
 #include "ui_commands.h"
 #include "ui_value_display.h"
 #include "ui_value_input.h"
 #include "ui_scripts.h"
 
-#define ST_VAL( val )   ( val + GUI_CMD_NUM_OF )
-
 static const uint8_t Page_MainVFO[] =
 {
+//    GUI_CMD_LINE , ST_VAL( GUI_LINE_TOP ) ,
+//    GUI_CMD_STYLE , ST_VAL( GUI_STYLE_TOP ) ,
+//    GUI_CMD_ALIGN_CENTER ,
     GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( EVENT_STATUS_DISPLAY_TIME_TICK ) ,
-      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_CURRENT_TIME ) ,
+      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_TIME ) ,
     GUI_CMD_EVENT_END ,
     GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_BATTERY ) ) ,
       GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_BATTERY_LEVEL ) ,
@@ -38,10 +40,8 @@ static const uint8_t Page_MainVFO[] =
     GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_DISPLAY_TIME_TICK ) ) ,
       GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_LOCK_STATE ) ,
     GUI_CMD_EVENT_END ,
-    GUI_CMD_STATIC_START ,
-      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_MODE_INFO ) ,
-      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_FREQUENCY ) ,
-    GUI_CMD_STATIC_END ,
+    GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_MODE_INFO ) ,
+    GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_FREQUENCY ) ,
     GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_RSSI ) ) ,
       GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_RSSI_METER ) ,
     GUI_CMD_EVENT_END ,
@@ -51,7 +51,7 @@ static const uint8_t Page_MainVFO[] =
 static const uint8_t Page_MainInput[] =
 {
     GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( EVENT_STATUS_DISPLAY_TIME_TICK ) ,
-      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_CURRENT_TIME ) ,
+      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_TIME ) ,
     GUI_CMD_EVENT_END ,
     GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_BATTERY ) ) ,
       GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_BATTERY_LEVEL ) ,
@@ -59,9 +59,7 @@ static const uint8_t Page_MainInput[] =
     GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_DISPLAY_TIME_TICK ) ) ,
       GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_LOCK_STATE ) ,
     GUI_CMD_EVENT_END ,
-    GUI_CMD_STATIC_START ,
-      GUI_CMD_VALUE_INP , ST_VAL( GUI_VAL_INP_VFO_MIDDLE_INPUT ) ,
-    GUI_CMD_STATIC_END ,
+    GUI_CMD_VALUE_INP , ST_VAL( GUI_VAL_INP_VFO_MIDDLE_INPUT ) ,
     GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_RSSI ) ) ,
       GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_RSSI_METER ) ,
     GUI_CMD_EVENT_END ,
@@ -72,40 +70,44 @@ static const uint8_t Page_MainInput[] =
 static const uint8_t Page_MainMem[] =
 {
     GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( EVENT_STATUS_DISPLAY_TIME_TICK ) ,
-      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_CURRENT_TIME ) ,
+      GUI_CMD_BG_COLOR , ST_VAL( COLOR_RED ) ,
+      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_TIME ) ,
     GUI_CMD_EVENT_END ,
     GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_BATTERY ) ) ,
+//      GUI_CMD_ALIGN_RIGHT ,
       GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_BATTERY_LEVEL ) ,
     GUI_CMD_EVENT_END ,
     GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_DISPLAY_TIME_TICK ) ) ,
       GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_LOCK_STATE ) ,
     GUI_CMD_EVENT_END ,
-    GUI_CMD_STATIC_START ,
-      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_MODE_INFO ) ,
-      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_BANK_CHANNEL ) ,
-      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_FREQUENCY ) ,
-    GUI_CMD_STATIC_END ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_MODE_INFO ) ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_BANK_CHANNEL ) ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_FREQUENCY ) ,
+    GUI_CMD_LINE_END ,
     GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_RSSI ) ) ,
       GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_RSSI_METER ) ,
     GUI_CMD_EVENT_END ,
+    GUI_CMD_PAGE_END ,//@@@KL
     GUI_CMD_PAGE_END
 };
 
 static const uint8_t Page_ModeVFO[] =
 {
-    GUI_CMD_PAGE_END
+    GUI_CMD_TITLE , 'W','T','D',':',' ','M','o','d','e','V','F','O', GUI_CMD_NULL ,
+    GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
 };
 
 static const uint8_t Page_ModeMem[] =
 {
-    GUI_CMD_PAGE_END
+    GUI_CMD_TITLE , 'W','T','D',':',' ','M','o','d','e','M','e','m', GUI_CMD_NULL ,
+    GUI_CMD_PAGE_END   //@@@KL if at start of page indicates use the legacy script
 };
 
 static const uint8_t Page_MenuTop[] =
 {
-    GUI_CMD_LINE , ST_VAL( GUI_LINE_TOP ) ,
-    GUI_CMD_STYLE , ST_VAL( GUI_STYLE_TOP ) ,
-    GUI_CMD_ALIGN_CENTER ,
     GUI_CMD_TITLE , 'M','e','n','u' , GUI_CMD_NULL ,
     GUI_CMD_LINE , ST_VAL( GUI_LINE_1 ) ,
     GUI_CMD_STYLE , ST_VAL( GUI_STYLE_1 ) ,
@@ -136,7 +138,7 @@ static const uint8_t Page_MenuTop[] =
     GUI_CMD_TEXT , 'I','n','f','o' , GUI_CMD_NULL ,
     GUI_CMD_LINK_END ,
     GUI_CMD_LINE_END ,
-    GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_MENU_ABOUT ) ,
+    GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_ABOUT ) ,
     GUI_CMD_TEXT , 'A','b','o','u','t' , GUI_CMD_NULL ,
     GUI_CMD_LINK_END ,
     GUI_CMD_PAGE_END
@@ -172,9 +174,6 @@ static const uint8_t Page_MenuGPS[] =
 
 static const uint8_t Page_MenuSettings[] =
 {
-    GUI_CMD_LINE , ST_VAL( GUI_LINE_TOP ) ,
-    GUI_CMD_STYLE , ST_VAL( GUI_STYLE_TOP ) ,
-    GUI_CMD_ALIGN_CENTER ,
     GUI_CMD_TITLE , 'S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
     GUI_CMD_LINE , ST_VAL( GUI_LINE_1 ) ,
     GUI_CMD_STYLE , ST_VAL( GUI_STYLE_1 ) ,
@@ -213,26 +212,57 @@ static const uint8_t Page_MenuSettings[] =
     GUI_CMD_PAGE_END
 };
 
-static const uint8_t Page_MenuAbout[] =
-{
-    GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
-};
-
 static const uint8_t Page_SettingsTimeDate[] =
 {
+    GUI_CMD_TITLE , 'T','i','m','e',' ','&',' ','D','a','t','e', GUI_CMD_NULL ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_ALIGN_CENTER ,
+      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_DATE ) ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_LINE_END ,
+    GUI_CMD_ALIGN_CENTER ,
+    GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( EVENT_STATUS_DISPLAY_TIME_TICK ) ,
+      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_TIME ) ,
+    GUI_CMD_EVENT_END ,
+
+
+/*
+    Line_st*  lineTop     = &guiState->layout.lines[ GUI_LINE_TOP ] ;
+    Style_st* styleTop    = &guiState->layout.styles[ GUI_STYLE_TOP ] ;
+    Line_st*  line2       = &guiState->layout.lines[ GUI_LINE_2 ] ;
+//    Style_st* style2      = &guiState->layout.styles[ GUI_STYLE_2 ] ;
+    Line_st*  line3Large  = &guiState->layout.lines[ GUI_LINE_3_LARGE ] ;
+//    Style_st* style3Large = &guiState->layout.styles[ GUI_STYLE_3_LARGE ] ;
+    Color_st  color_fg ;
+
+    ui_ColorLoad( &color_fg , COLOR_FG );
+
+    gfx_clearScreen();
+    datetime_t local_time = utcToLocalTime( last_state.time ,
+                                            last_state.settings.utc_timezone );
+    // Print "Time&Date" on top bar
+    gfx_print( lineTop->pos , styleTop->font.size , ALIGN_CENTER ,
+               color_fg , currentLanguage->timeAndDate );
+    // Print current time and date
+    gfx_print( line2->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
+               color_fg , "%02d/%02d/%02d" ,
+               local_time.date , local_time.month , local_time.year );
+    gfx_print( line3Large->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
+               color_fg , "%02d:%02d:%02d" ,
+               local_time.hour , local_time.minute , local_time.second );
+*/
     GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
 };
 
 static const uint8_t Page_SettingsTimeDateSet[] =
 {
+    GUI_CMD_TITLE , 'W','T','D',':',' ','S','T','D','S','e','t', GUI_CMD_NULL ,
     GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
 };
 
 static const uint8_t Page_SettingsDisplay[] =
 {
-    GUI_CMD_LINE , ST_VAL( GUI_LINE_TOP ) ,
-    GUI_CMD_STYLE , ST_VAL( GUI_STYLE_TOP ) ,
-    GUI_CMD_ALIGN_CENTER ,
     GUI_CMD_TITLE , 'D','i','s','p','l','a','y' , GUI_CMD_NULL ,
     GUI_CMD_LINE , ST_VAL( GUI_LINE_1 ) ,
     GUI_CMD_STYLE , ST_VAL( GUI_STYLE_1 ) ,
@@ -266,9 +296,6 @@ static const uint8_t Page_SettingsDisplay[] =
 #ifdef GPS_PRESENT
 static const uint8_t Page_SettingsGPS[] =
 {
-    GUI_CMD_LINE , ST_VAL( GUI_LINE_TOP ) ,
-    GUI_CMD_STYLE , ST_VAL( GUI_STYLE_TOP ) ,
-    GUI_CMD_ALIGN_CENTER ,
     GUI_CMD_TITLE , 'G','P','S',' ','S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
     GUI_CMD_LINE , ST_VAL( GUI_LINE_1 ) ,
     GUI_CMD_STYLE , ST_VAL( GUI_STYLE_1 ) ,
@@ -291,9 +318,6 @@ static const uint8_t Page_SettingsGPS[] =
 
 static const uint8_t Page_SettingsRadio[] =
 {
-    GUI_CMD_LINE , ST_VAL( GUI_LINE_TOP ) ,
-    GUI_CMD_STYLE , ST_VAL( GUI_STYLE_TOP ) ,
-    GUI_CMD_ALIGN_CENTER ,
     GUI_CMD_TITLE , 'R','a','d','i','o',' ','S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
     GUI_CMD_LINE , ST_VAL( GUI_LINE_1 ) ,
     GUI_CMD_STYLE , ST_VAL( GUI_STYLE_1 ) ,
@@ -313,9 +337,6 @@ static const uint8_t Page_SettingsRadio[] =
 
 static const uint8_t Page_SettingsM17[] =
 {
-    GUI_CMD_LINE , ST_VAL( GUI_LINE_TOP ) ,
-    GUI_CMD_STYLE , ST_VAL( GUI_STYLE_TOP ) ,
-    GUI_CMD_ALIGN_CENTER ,
     GUI_CMD_TITLE , 'M','1','7',' ','S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
     GUI_CMD_LINE , ST_VAL( GUI_LINE_1 ) ,
     GUI_CMD_STYLE , ST_VAL( GUI_STYLE_1 ) ,
@@ -335,9 +356,6 @@ static const uint8_t Page_SettingsM17[] =
 
 static const uint8_t Page_SettingsVoice[] =
 {
-    GUI_CMD_LINE , ST_VAL( GUI_LINE_TOP ) ,
-    GUI_CMD_STYLE , ST_VAL( GUI_STYLE_TOP ) ,
-    GUI_CMD_ALIGN_CENTER ,
     GUI_CMD_TITLE , 'V','o','i','c','e' , GUI_CMD_NULL ,
     GUI_CMD_LINE , ST_VAL( GUI_LINE_1 ) ,
     GUI_CMD_STYLE , ST_VAL( GUI_STYLE_1 ) ,
@@ -443,9 +461,6 @@ static const uint8_t Page_LowBat[] =
 
 static const uint8_t Page_About[] =
 {
-    GUI_CMD_LINE , ST_VAL( GUI_LINE_TOP ) ,
-    GUI_CMD_STYLE , ST_VAL( GUI_STYLE_TOP ) ,
-    GUI_CMD_ALIGN_CENTER ,
     GUI_CMD_TITLE , 'A','b','o','u','t' , GUI_CMD_NULL ,
     GUI_CMD_LINE , ST_VAL( GUI_LINE_1 ) ,
     GUI_CMD_STYLE , ST_VAL( GUI_STYLE_1 ) ,
@@ -503,7 +518,6 @@ const uint8_t* uiPageTable[ PAGE_NUM_OF ] =
     PAGE_REF( Page_MenuBackup              ) , // PAGE_MENU_BACKUP
     PAGE_REF( Page_MenuRestore             ) , // PAGE_MENU_RESTORE
     PAGE_REF( Page_MenuInfo                ) , // PAGE_MENU_INFO
-    PAGE_REF( Page_MenuAbout               ) , // PAGE_MENU_ABOUT
     PAGE_REF( Page_SettingsTimeDate        ) , // PAGE_SETTINGS_TIMEDATE
     PAGE_REF( Page_SettingsTimeDateSet     ) , // PAGE_SETTINGS_TIMEDATE_SET
     PAGE_REF( Page_SettingsDisplay         ) , // PAGE_SETTINGS_DISPLAY

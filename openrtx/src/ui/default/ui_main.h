@@ -24,5 +24,7 @@
 
 #include <ui/ui_default.h>
 
+extern void _ui_Draw_MainBottom( GuiState_st* guiState , Event_st* event );
+
 
 #endif // UI_MAIN_H

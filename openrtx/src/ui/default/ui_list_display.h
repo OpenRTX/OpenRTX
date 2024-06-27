@@ -19,40 +19,15 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef UI_STATES_H
-#define UI_STATES_H
+#ifndef UI_LIST_DISPLAY_H
+#define UI_LIST_DISPLAY_H
 
 #include <ui/ui_default.h>
 
-extern long long last_event_tick ;
-extern State_st  last_state ;
-extern bool      macro_latched ;
-extern bool      macro_menu ;
-extern bool      redraw_needed ;
-extern uint8_t   evQueue_rdPos ;
-extern uint8_t   evQueue_wrPos ;
-extern Event_st  evQueue[ MAX_NUM_EVENTS ] ;
+extern void _ui_Draw_MenuList( GuiState_st* guiState , uiPageNum_en currentEntry );
+extern void _ui_Draw_MenuListValue( GuiState_st* guiState ,
+                                    uiPageNum_en currentEntry , uiPageNum_en currentEntryValue );
+extern void _ui_reset_menu_anouncement_tracking( void );
 
-extern bool _ui_Draw_DarkOverlay( void );
-extern void _ui_changePhoneticSpell( bool newVal );
-extern void _ui_changeVoiceLevel( int variation );
-extern void _ui_changeM17Can( int variation );
-extern void _ui_numberInputDel( GuiState_st* guiState , uint32_t* num );
-extern void _ui_numberInputKeypad( GuiState_st* guiState , uint32_t* num , kbd_msg_t msg );
-extern void _ui_changeTimer( int variation );
 
-extern void    ui_States_MenuUp( GuiState_st* guiState );
-extern void    ui_States_MenuDown( GuiState_st* guiState );
-extern void    ui_States_MenuBack( GuiState_st* guiState );
-extern uint8_t ui_States_GetPageNumOfEntries( GuiState_st* guiState );
-
-extern void ui_States_TextInputConfirm( GuiState_st* guiState , char* buf );
-extern void ui_States_TextInputDelete( GuiState_st* guiState , char* buf );
-extern void ui_States_TextInputKeypad( GuiState_st* guiState , char* buf , uint8_t max_len , kbd_msg_t msg , bool callsign );
-extern void ui_States_TextInputReset( GuiState_st* guiState , char* buf );
-
-extern void ui_States_SelectPage( GuiState_st* guiState );
-//extern void ui_States_SelectPageNum( GuiState_st* guiState , uint8_t pageNum );
-extern void ui_States_SetPageNum( GuiState_st* guiState , uint8_t pageNum );
-
-#endif // UI_STATES_H
+#endif // UI_LIST_DISPLAY_H

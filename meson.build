@@ -94,6 +94,7 @@ openrtx_ui_default = ['openrtx/src/ui/default/ui.c',
                       'openrtx/src/ui/default/ui_value_arrays.c',
                       'openrtx/src/ui/default/ui_scripts.c',
                       'openrtx/src/ui/default/ui_commands.c',
+                      'openrtx/src/ui/default/ui_list_display.c',
                       'openrtx/src/ui/default/ui_value_display.c',
                       'openrtx/src/ui/default/ui_states.c',
                       'openrtx/src/ui/default/ui_value_input.c',
@@ -102,12 +103,13 @@ openrtx_ui_default = ['openrtx/src/ui/default/ui.c',
 openrtx_ui_module17 = ['openrtx/src/ui/module17/ui.c',
                        'openrtx/src/ui/module17/ui_main.c',
                        'openrtx/src/ui/module17/ui_menu.c',
-                      'openrtx/src/ui/default/ui_value_arrays.c',
-                      'openrtx/src/ui/default/ui_scripts.c',
-                      'openrtx/src/ui/default/ui_commands.c',
-                      'openrtx/src/ui/default/ui_value_display.c',
-                      'openrtx/src/ui/default/ui_states.c',
-                      'openrtx/src/ui/default/ui_value_input.c']
+                       'openrtx/src/ui/default/ui_value_arrays.c',
+                       'openrtx/src/ui/default/ui_scripts.c',
+                       'openrtx/src/ui/default/ui_commands.c',
+                       'openrtx/src/ui/default/ui_list_display.c',
+                       'openrtx/src/ui/default/ui_value_display.c',
+                       'openrtx/src/ui/default/ui_states.c',
+                       'openrtx/src/ui/default/ui_value_input.c']
 
 ##
 ## Selection of main entrypoint

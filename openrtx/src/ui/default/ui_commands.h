@@ -23,36 +23,72 @@
 #define UI_COMMANDS_H
 
 #include <ui/ui_default.h>
+#include "ui_scripts.h"
 
 // GUI Commands
 enum
 {
     GUI_CMD_NULL         = 0x00 ,
-    GUI_CMD_STATIC_START = 0x01 , // static display - new page - text and variables
-    GUI_CMD_STATIC_END   = 0x02 , //  used with pages that respond to events
-    GUI_CMD_EVENT_START  = 0x03 , // dynamic display - variables updated
-    GUI_CMD_EVENT_END    = 0x04 , //  used with pages that respond to events
-    GUI_CMD_TIMER_CHECK  = 0x05 ,
-    GUI_CMD_TIMER_SET    = 0x06 ,
-    GUI_CMD_ALIGN_LEFT   = 0x07 ,
-    GUI_CMD_ALIGN_CENTER = 0x08 ,
-    GUI_CMD_ALIGN_RIGHT  = 0x09 ,
+    GUI_CMD_EVENT_START  = 0x01 , // dynamic display - variables updated
+    GUI_CMD_EVENT_END    = 0x02 , //  used with page sections that respond to events
+    GUI_CMD_TIMER_CHECK  = 0x03 ,
+    GUI_CMD_TIMER_SET    = 0x04 ,
+    GUI_CMD_LINE         = 0x05 ,
+    GUI_CMD_GOTO_POS     = 0x06 ,
+    GUI_CMD_STYLE        = 0x07 ,
+    GUI_CMD_BG_COLOR     = 0x08 ,
+    GUI_CMD_FG_COLOR     = 0x09 ,
     GUI_CMD_LINE_END     = 0x0A ,
-    GUI_CMD_LINE         = 0x0B ,
-    GUI_CMD_STYLE        = 0x0C ,
+    GUI_CMD_FONT_SIZE    = 0x0B ,
+    GUI_CMD_ALIGN        = 0x0C ,
     GUI_CMD_RUN_SCRIPT   = 0x0D ,
     GUI_CMD_LINK         = 0x0E ,
     GUI_CMD_LINK_END     = 0x0F ,
     GUI_CMD_PAGE         = 0x10 ,
-    GUI_CMD_VALUE_DSP    = 0x11 ,
-    GUI_CMD_VALUE_INP    = 0x12 ,
-    GUI_CMD_TITLE        = 0x13 ,
-    GUI_CMD_TEXT         = 0x14 ,
+    GUI_CMD_TITLE        = 0x11 ,
+    GUI_CMD_TEXT         = 0x12 ,
+    GUI_CMD_VALUE_DSP    = 0x13 ,
+    GUI_CMD_VALUE_INP    = 0x14 ,
+#ifdef DISPLAY_DEBUG_MSG
+    GUI_CMD_SET_DBG_MSG  = 0x15 ,
+#endif // DISPLAY_DEBUG_MSG
     GUI_CMD_STUBBED      = 0x1E ,
     GUI_CMD_PAGE_END     = 0x1F ,
     GUI_CMD_NUM_OF              ,
     GUI_CMD_DATA_AREA    = 0x20
 };
+
+enum
+{
+    GUI_CMD_GOTO_POS_PARA_X   = 0x01 ,
+    GUI_CMD_GOTO_POS_PARA_Y   = 0x02 ,
+    GUI_CMD_GOTO_POS_PARA_XY  = GUI_CMD_GOTO_POS_PARA_Y | GUI_CMD_GOTO_POS_PARA_X
+};
+
+#define GUI_CMD_GOTO_POS_X   = GUI_CMD_GOTO_POS , ST_VAL( GUI_CMD_GOTO_POS_PARA_X )
+#define GUI_CMD_GOTO_POS_Y   = GUI_CMD_GOTO_POS , ST_VAL( GUI_CMD_GOTO_POS_PARA_Y )
+#define GUI_CMD_GOTO_POS_XY  = GUI_CMD_GOTO_POS , ST_VAL( GUI_CMD_GOTO_POS_PARA_X | \
+                                                          GUI_CMD_GOTO_POS_PARA_Y     )
+
+enum
+{
+    GUI_CMD_ALIGN_PARA_LEFT   = 0x01 ,
+    GUI_CMD_ALIGN_PARA_CENTER = 0x02 ,
+    GUI_CMD_ALIGN_PARA_RIGHT  = 0x03 ,
+    GUI_CMD_ALIGN_PARA_MASK_X = 0x0F ,
+    GUI_CMD_ALIGN_PARA_TOP    = 0x10 /*,
+    GUI_CMD_ALIGN_PARA_MIDDLE = 0x20 ,
+    GUI_CMD_ALIGN_PARA_BOTTOM = 0x30 ,
+    GUI_CMD_ALIGN_PARA_MASK_Y = 0xF0 */
+};
+
+#define GUI_CMD_ALIGN_LEFT      GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_LEFT   )
+#define GUI_CMD_ALIGN_CENTER    GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_CENTER )
+#define GUI_CMD_ALIGN_RIGHT     GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_RIGHT  )
+//#define GUI_CMD_ALIGN_TOP       GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_TOP    )
+//#define GUI_CMD_ALIGN_MIDDLE    GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_MIDDLE )
+//#define GUI_CMD_ALIGN_BOTTOM    GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_BOTTOM )
+
 /*
 // Color Variable Field Unshifted Masks and Shifts
 enum

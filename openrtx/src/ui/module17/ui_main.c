@@ -25,7 +25,7 @@
 #include <ui/ui_mod17.h>
 #include <string.h>
 
-void _ui_drawMainBackground()
+void _ui_Draw_MainBackground()
 {
     // Print top bar line of hline_h pixel height
     gfx_drawHLine(layout.lines[ GUI_LINE_TOP ].height, layout.hline_h, color_gg);
@@ -33,7 +33,7 @@ void _ui_drawMainBackground()
     gfx_drawHLine(SCREEN_HEIGHT - layout.lines[ GUI_LINE_BOTTOM ].height - 1, layout.hline_h, color_gg);
 }
 
-void _ui_drawMainTop()
+void _ui_Draw_MainTop()
 {
 #ifdef RTC_PRESENT
     // Print clock on top bar
@@ -49,7 +49,7 @@ void _ui_drawMainTop()
                   color_fg, state.settings.callsign);
 }
 
-void _ui_drawBankChannel()
+void _ui_Draw_BankChannel()
 {
     // Print Bank number, channel number and Channel name
     uint16_t b = (last_state.bank_enabled) ? last_state.bank : 0;
@@ -58,7 +58,7 @@ void _ui_drawBankChannel()
               b, last_state.channel_index + 1, last_state.channel.name);
 }
 
-void _ui_drawModeInfo(UI_State_st* ui_state)
+void _ui_Draw_ModeInfo(UI_State_st* ui_state)
 {
     char bw_str[8] = { 0 };
     char encdec_str[9] = { 0 };
@@ -167,7 +167,7 @@ void _ui_drawModeInfo(UI_State_st* ui_state)
     }
 }
 
-void _ui_drawFrequency()
+void _ui_Draw_Frequency()
 {
   unsigned long frequency = platform_getPttStatus() ?
        frequency = last_state.channel.tx_frequency : last_state.channel.rx_frequency;
@@ -179,7 +179,7 @@ void _ui_drawFrequency()
               (unsigned long)frequency%1000000/10);
 }
 
-void _ui_drawVFOMiddleInput(UI_State_st* ui_state)
+void _ui_Draw_VFOMiddleInput(UI_State_st* ui_state)
 {
     // Add inserted number to string, skipping "Rx: "/"Tx: " and "."
     uint8_t insert_pos = ui_state->input_position + 3;
@@ -234,7 +234,7 @@ void _ui_drawVFOMiddleInput(UI_State_st* ui_state)
     }
 }
 
-void _ui_drawMainBottom()
+void _ui_Draw_MainBottom()
 {
     // Squelch bar
     float rssi = last_state.rssi;
@@ -271,29 +271,29 @@ void _ui_drawMainBottom()
     }
 }
 
-void _ui_drawMainVFO(UI_State_st* ui_state)
+void _ui_Draw_MainVFO(UI_State_st* ui_state)
 {
     gfx_clearScreen();
-    _ui_drawMainTop();
-    _ui_drawModeInfo(ui_state);
-    //_ui_drawFrequency(); //has to be replaced with Line 1 and Line 2
-    _ui_drawMainBottom();
+    _ui_Draw_MainTop();
+    _ui_Draw_ModeInfo(ui_state);
+    //_ui_Draw_Frequency(); //has to be replaced with Line 1 and Line 2
+    _ui_Draw_MainBottom();
 }
 
-void _ui_drawMainVFOInput(UI_State_st* ui_state)
+void _ui_Draw_MainVFOInput(UI_State_st* ui_state)
 {
     gfx_clearScreen();
-    _ui_drawMainTop();
-    _ui_drawVFOMiddleInput(ui_state);
-    _ui_drawMainBottom();
+    _ui_Draw_MainTop();
+    _ui_Draw_VFOMiddleInput(ui_state);
+    _ui_Draw_MainBottom();
 }
 
-void _ui_drawMainMEM(UI_State_st* ui_state)
+void _ui_Draw_MainMEM(UI_State_st* ui_state)
 {
     gfx_clearScreen();
-    _ui_drawMainTop();
-    _ui_drawBankChannel();
-    _ui_drawModeInfo(ui_state);
-    //_ui_drawFrequency(); //has to be replaced with Line 1 and Line 2
-    _ui_drawMainBottom();
+    _ui_Draw_MainTop();
+    _ui_Draw_BankChannel();
+    _ui_Draw_ModeInfo(ui_state);
+    //_ui_Draw_Frequency(); //has to be replaced with Line 1 and Line 2
+    _ui_Draw_MainBottom();
 }

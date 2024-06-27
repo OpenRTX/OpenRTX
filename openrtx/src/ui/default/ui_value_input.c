@@ -26,6 +26,7 @@
 #include <input.h>
 #include <hwconfig.h>
 #include <voicePromptUtils.h>
+#include <ui.h>
 #include <ui/ui_default.h>
 #include <rtx.h>
 #include <interfaces/platform.h>
@@ -173,8 +174,8 @@ static void ui_ValueInput_VFOMiddleInput( GuiState_st* guiState )
     {
         if( guiState->uiState.input_position == 0 )
         {
-            gfx_print( line2->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
-                       color_fg , ">Rx:%03lu.%04lu" ,
+            gfx_print( &line2->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
+                       &color_fg , ">Rx:%03lu.%04lu" ,
                        (unsigned long)guiState->uiState.new_rx_frequency / 1000000 ,
                        (unsigned long)( guiState->uiState.new_rx_frequency % 1000000 ) / 100 );
         }
@@ -186,11 +187,11 @@ static void ui_ValueInput_VFOMiddleInput( GuiState_st* guiState )
                 strcpy( guiState->uiState.new_rx_freq_buf , ">Rx:___.____" );
             }
             guiState->uiState.new_rx_freq_buf[ insert_pos ] = input_char ;
-            gfx_print( line2->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
-                       color_fg , guiState->uiState.new_rx_freq_buf );
+            gfx_print( &line2->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
+                       &color_fg , guiState->uiState.new_rx_freq_buf );
         }
-        gfx_print( line3Large->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
-                   color_fg , " Tx:%03lu.%04lu" ,
+        gfx_print( &line3Large->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
+                   &color_fg , " Tx:%03lu.%04lu" ,
                    (unsigned long)last_state.channel.tx_frequency / 1000000 ,
                    (unsigned long)( last_state.channel.tx_frequency % 1000000 ) / 100 );
         guiState->page.renderPage = true ;
@@ -199,15 +200,15 @@ static void ui_ValueInput_VFOMiddleInput( GuiState_st* guiState )
     {
         if( guiState->uiState.input_set == SET_TX )
         {
-            gfx_print( line2->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
-                       color_fg , " Rx:%03lu.%04lu" ,
+            gfx_print( &line2->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
+                       &color_fg , " Rx:%03lu.%04lu" ,
                        (unsigned long)guiState->uiState.new_rx_frequency / 1000000 ,
                        (unsigned long)( guiState->uiState.new_rx_frequency % 1000000 ) / 100 );
             // Replace Rx frequency with underscorses
             if( guiState->uiState.input_position == 0 )
             {
-                gfx_print( line3Large->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
-                           color_fg , ">Tx:%03lu.%04lu" ,
+                gfx_print( &line3Large->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
+                           &color_fg , ">Tx:%03lu.%04lu" ,
                            (unsigned long)guiState->uiState.new_rx_frequency / 1000000 ,
                            (unsigned long)( guiState->uiState.new_rx_frequency % 1000000 ) / 100 );
             }
@@ -218,8 +219,8 @@ static void ui_ValueInput_VFOMiddleInput( GuiState_st* guiState )
                     strcpy( guiState->uiState.new_tx_freq_buf , ">Tx:___.____" );
                 }
                 guiState->uiState.new_tx_freq_buf[ insert_pos ] = input_char ;
-                gfx_print( line3Large->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
-                           color_fg , guiState->uiState.new_tx_freq_buf );
+                gfx_print( &line3Large->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
+                           &color_fg , guiState->uiState.new_tx_freq_buf );
             }
             guiState->page.renderPage = true ;
         }

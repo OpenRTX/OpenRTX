@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <utils.h>
+#include <ui.h>
 #include <ui/ui_default.h>
 #include <beeps.h>
 #include "interfaces/cps_io.h"
@@ -884,7 +885,7 @@ void vp_announceScreen(uint8_t ui_screen)
             vp_announceRestoreScreen();
             break;
 
-        case PAGE_MENU_ABOUT:
+        case PAGE_ABOUT:
             vp_announceAboutScreen();
             break;
 

@@ -50,8 +50,12 @@ int _ui_getM17ValueName( char* buf , uint8_t max_len , uint8_t index );
 int _ui_getVoiceValueName( char* buf , uint8_t max_len , uint8_t index );
 int _ui_getRadioValueName( char* buf , uint8_t max_len , uint8_t index );
 
+static bool DidSelectedMenuItemChange( char* menuName , char* menuValue );
+static bool ScreenContainsReadOnlyEntries( int menuScreen );
+static void announceMenuItemIfNeeded( GuiState_st* guiState , char* name , char* value , bool editMode );
+
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
-extern void _ui_drawMainBottom();
+extern void _ui_Draw_MainBottom();
 
 const char *display_timer_values[] =
 {
@@ -108,7 +112,7 @@ static const GetMenuList_fn GetEntryName_table[ PAGE_NUM_OF ] =
     _ui_getRadioEntryName
 };
 
-void _ui_drawMenuList(uint8_t selected, uiPageNum_en currentEntry )
+void _ui_Draw_MenuList(uint8_t selected, uiPageNum_en currentEntry )
 {
     GetMenuList_fn getCurrentEntry = GetEntryName_table[ currentEntry ];
 
@@ -156,7 +160,7 @@ static const GetMenuList_fn GetEntryValue_table[ ENTRY_VALUE_NUM_OF ] =
     _ui_getRadioValueName
 };
 
-void _ui_drawMenuListValue( UI_State_st* ui_state , uint8_t selected ,
+void _ui_Draw_MenuListValue( UI_State_st* ui_state , uint8_t selected ,
                             uiPageNum_en currentEntry , uiPageNum_en currentEntryValue )
 {
     GetMenuList_fn getCurrentEntry = GetEntryName_table[ currentEntry ];
@@ -369,7 +373,7 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
     return 0;
 }
 
-void _ui_drawMenuTop(UI_State_st* ui_state)
+void _ui_Draw_MenuTop(UI_State_st* ui_state)
 {
     Color_st color_fg ;
     ui_ColorLoad( &color_fg , COLOR_FG );
@@ -379,11 +383,11 @@ void _ui_drawMenuTop(UI_State_st* ui_state)
     gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
               color_fg, "Menu");
     // Print menu entries
-    _ui_drawMenuList(ui_state->entrySelected, PAGE_MENU_TOP );
+    _ui_Draw_MenuList(ui_state->entrySelected, PAGE_MENU_TOP );
 }
 
 #ifdef GPS_PRESENT
-void _ui_drawMenuGPS()
+void _ui_Draw_MenuGPS()
 {
     char *fix_buf, *type_buf;
     Color_st color_fg ;
@@ -475,7 +479,7 @@ void _ui_drawMenuGPS()
 }
 #endif
 
-void _ui_drawMenuSettings(UI_State_st* ui_state)
+void _ui_Draw_MenuSettings(UI_State_st* ui_state)
 {
     Color_st color_fg ;
     ui_ColorLoad( &color_fg , COLOR_FG );
@@ -485,10 +489,10 @@ void _ui_drawMenuSettings(UI_State_st* ui_state)
     gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
               color_fg, "Settings");
     // Print menu entries
-    _ui_drawMenuList(ui_state->entrySelected, PAGE_MENU_SETTINGS );
+    _ui_Draw_MenuList(ui_state->entrySelected, PAGE_MENU_SETTINGS );
 }
 
-void _ui_drawMenuInfo(UI_State_st* ui_state)
+void _ui_Draw_MenuInfo(UI_State_st* ui_state)
 {
     Color_st color_fg ;
     ui_ColorLoad( &color_fg , COLOR_FG );
@@ -498,11 +502,11 @@ void _ui_drawMenuInfo(UI_State_st* ui_state)
     gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
               color_fg, "Info");
     // Print menu entries
-    _ui_drawMenuListValue(ui_state, ui_state->entrySelected,
+    _ui_Draw_MenuListValue(ui_state, ui_state->entrySelected,
                           PAGE_MENU_INFO , PAGE_MENU_INFO);
 }
 
-void _ui_drawMenuAbout()
+void _ui_Draw_MenuAbout()
 {
     Color_st color_fg ;
     ui_ColorLoad( &color_fg , COLOR_FG );
@@ -523,7 +527,7 @@ void _ui_drawMenuAbout()
     }
 }
 
-void _ui_drawSettingsDisplay(UI_State_st* ui_state)
+void _ui_Draw_SettingsDisplay(UI_State_st* ui_state)
 {
     Color_st color_fg ;
     ui_ColorLoad( &color_fg , COLOR_FG );
@@ -533,12 +537,12 @@ void _ui_drawSettingsDisplay(UI_State_st* ui_state)
     gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
               color_fg, "Display");
     // Print display settings entries
-    _ui_drawMenuListValue(ui_state, ui_state->entrySelected,
+    _ui_Draw_MenuListValue(ui_state, ui_state->entrySelected,
                            PAGE_SETTINGS_DISPLAY , PAGE_SETTINGS_DISPLAY);
 }
 
 #ifdef GPS_PRESENT
-void _ui_drawSettingsGPS(UI_State_st* ui_state)
+void _ui_Draw_SettingsGPS(UI_State_st* ui_state)
 {
     Color_st color_fg ;
     ui_ColorLoad( &color_fg , COLOR_FG );
@@ -548,13 +552,13 @@ void _ui_drawSettingsGPS(UI_State_st* ui_state)
     gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
               color_fg, "GPS Settings");
     // Print display settings entries
-    _ui_drawMenuListValue(ui_state, ui_state->entrySelected,
+    _ui_Draw_MenuListValue(ui_state, ui_state->entrySelected,
                           PAGE_SETTINGS_GPS, PAGE_SETTINGS_GPS);
 }
 #endif
 
 #ifdef RTC_PRESENT
-void _ui_drawSettingsTimeDate()
+void _ui_Draw_SettingsTimeDate()
 {
     Color_st color_fg ;
     ui_ColorLoad( &color_fg , COLOR_FG );
@@ -574,7 +578,7 @@ void _ui_drawSettingsTimeDate()
               local_time.hour, local_time.minute, local_time.second);
 }
 
-void _ui_drawSettingsTimeDateSet(UI_State_st* ui_state)
+void _ui_Draw_SettingsTimeDateSet(UI_State_st* ui_state)
 {
     (void) last_state;
     Color_st color_fg ;
@@ -617,7 +621,7 @@ void _ui_drawSettingsTimeDateSet(UI_State_st* ui_state)
 }
 #endif
 
-void _ui_drawSettingsM17(UI_State_st* ui_state)
+void _ui_Draw_SettingsM17(UI_State_st* ui_state)
 {
     Color_st color_fg ;
     ui_ColorLoad( &color_fg , COLOR_FG );
@@ -644,25 +648,25 @@ void _ui_drawSettingsM17(UI_State_st* ui_state)
     }
     else
     {
-        _ui_drawMenuListValue(ui_state, ui_state->entrySelected,
+        _ui_Draw_MenuListValue(ui_state, ui_state->entrySelected,
                               PAGE_SETTINGS_M17, PAGE_SETTINGS_M17);
     }
 }
 
-void _ui_drawSettingsModule17(UI_State_st* ui_state)
+void _ui_Draw_SettingsModule17(UI_State_st* ui_state)
 {
     gfx_clearScreen();
     // Print "Module17 Settings" on top bar
     gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
               color_fg, "Module17 Settings");
     // Print Module17 settings entries
-    _ui_drawMenuListValue(ui_state, ui_state->entrySelected,
+    _ui_Draw_MenuListValue(ui_state, ui_state->entrySelected,
 //                           _ui_getModule17EntryName , _ui_getModule17ValueName);
 // not provided for as it's not provided for in the compiled version
                            PAGE_SETTINGS_M17 , PAGE_SETTINGS_M17);
 }
 
-void _ui_drawSettingsReset2Defaults(UI_State_st* ui_state)
+void _ui_Draw_SettingsReset2Defaults(UI_State_st* ui_state)
 {
     (void) ui_state;
 

@@ -66,6 +66,8 @@ typedef struct Pos_st
 {
     Pos_t x ;
     Pos_t y ;
+    Pos_t w ;
+    Pos_t h ;
 }Pos_st;
 
 /**
@@ -89,7 +91,8 @@ typedef enum
     FONT_SIZE_12PT ,
     FONT_SIZE_16PT ,
     FONT_SIZE_18PT ,
-    FONT_SIZE_24PT
+    FONT_SIZE_24PT ,
+    FONT_SIZE_NUM_OF
 }FontSize_t;
 
 typedef enum
@@ -110,13 +113,13 @@ typedef enum
  * This function calls the correspondent method of the low level interface display.h
  * It initializes the display.
  */
-void gfx_init();
+void gfx_init( void );
 
 /**
  * This function calls the correspondent method of the low level interface display.h
  * It terminates the display driver and deallocates the framebuffer.
  */
-void gfx_terminate();
+void gfx_terminate( void );
 
 /**
  * This function calls the correspondent method of the low level interface display.h
@@ -125,14 +128,14 @@ void gfx_terminate();
  * @param startRow: first row of the framebuffer section to be copied
  * @param endRow: last row of the framebuffer section to be copied
  */
-void gfx_renderRows(uint8_t startRow, uint8_t endRow);
+void gfx_renderRows( uint8_t startRow , uint8_t endRow );
 
 /**
  * This function calls the correspondent method of the low level interface display.h
  * Copy framebuffer content to the display internal buffer. To be called
  * whenever there is need to update the display.
  */
-void gfx_render();
+void gfx_render( void );
 
 /**
  * This function calls the correspondent method of the low level interface display.h
@@ -140,7 +143,7 @@ void gfx_render();
  * can be modified without problems.
  * @return false if rendering is not in progress.
  */
-bool gfx_renderingInProgress();
+bool gfx_renderingInProgress( void );
 
 /**
  * Clears a portion of the screen content
@@ -149,33 +152,33 @@ bool gfx_renderingInProgress();
  * @param startRow: first row of the framebuffer section to be cleared
  * @param endRow: last row of the framebuffer section to be cleared
  */
-void gfx_clearRows(uint8_t startRow, uint8_t endRow);
+void gfx_clearRows( uint8_t startRow , uint8_t endRow );
 
 /**
  * Clears the content of the screen
  * This results in a black screen on color displays
  * And a white screen on B/W displays
  */
-void gfx_clearScreen();
+void gfx_clearScreen( void );
 
 /**
  * Fills screen with the specified color.
  * @param color: border and fill color, in Color_st format.
  */
-void gfx_fillScreen(Color_st color);
+void gfx_fillScreen( Color_st* color );
 
 /**
  * Clear the color of a single pixel.
  * @param pos: x,y coordinates of the pixel.
  */
-void gfx_clearPixel( Pos_st pos );
+void gfx_clearPixel( Pos_st* pos );
 
 /**
  * Change the color of a single pixel.
  * @param pos: x,y coordinates of the pixel.
  * @param color: desired pixel color, in Color_st format.
  */
-void gfx_setPixel(Pos_st pos, Color_st color);
+void gfx_setPixel( Pos_st* pos , Color_st* color );
 
 /**
  * Draw a line from start to end coordinates, ends included.
@@ -183,8 +186,7 @@ void gfx_setPixel(Pos_st pos, Color_st color);
  * @param end: line end point, in pixel coordinates.
  * @param color: line color, in Color_st format.
  */
-void gfx_drawLine(Pos_st start, Pos_st end, Color_st color);
-
+void gfx_drawLine( Pos_st* startPos , Pos_st* end , Color_st* color );
 
 /**
  * Draw a horizontal line with specified vertical position and width.
@@ -192,7 +194,7 @@ void gfx_drawLine(Pos_st start, Pos_st end, Color_st color);
  * @param height: line height, in pixel coordinates.
  * @param color: line color, in Color_st format.
  */
-void gfx_drawHLine(int16_t y, uint16_t height, Color_st color);
+void gfx_drawHLine( int16_t y , uint16_t height , Color_st* color );
 
 /**
  * Draw a vertical line with specified horizontal position and width.
@@ -200,7 +202,7 @@ void gfx_drawHLine(int16_t y, uint16_t height, Color_st color);
  * @param width: line width, in pixel coordinates.
  * @param color: line color, in Color_st format.
  */
-void gfx_drawVLine(int16_t x, uint16_t width, Color_st color);
+void gfx_drawVLine( int16_t x , uint16_t width , Color_st* color );
 
 /**
  * Clear a rectangle of specified width, height and color.
@@ -208,7 +210,7 @@ void gfx_drawVLine(int16_t x, uint16_t width, Color_st color);
  * @param width: rectangle width, in pixels, borders included.
  * @param height: rectangle height, in pixels, borders included.
  */
-void gfx_clearRectangle( Pos_st start, uint16_t width, uint16_t height );
+void gfx_clearRectangle( Pos_st* startPos );
 
 /**
  * Draw a rectangle of specified width, height and color.
@@ -218,8 +220,7 @@ void gfx_clearRectangle( Pos_st start, uint16_t width, uint16_t height );
  * @param color: border and fill color, in Color_st format.
  * @param fill: if true the rectangle will be solid, otherwise it will be empty with a 1-pixel border
  */
-void gfx_drawRect(Pos_st start, uint16_t width, uint16_t height, Color_st color,
-                  bool fill);
+void gfx_drawRect( Pos_st* startPos , Color_st* color , bool fill );
 
 /**
  * Draw the outline of a circle of specified radius and color.
@@ -227,14 +228,14 @@ void gfx_drawRect(Pos_st start, uint16_t width, uint16_t height, Color_st color,
  * @param r: circle radius, in pixels, border included.
  * @param color: border color, in Color_st format.
  */
-void gfx_drawCircle(Pos_st start, uint16_t r, Color_st color);
+void gfx_drawCircle( Pos_st* startPos , uint16_t r , Color_st* color );
 
 /**
  * Estimates the maximum font height by reading the gliph | height
  * @param size: text font size, defined as enum.
  * @return font height
  */
-uint8_t gfx_getFontHeight(FontSize_t size);
+uint8_t gfx_getFontHeight( FontSize_t size );
 
 /**
  * Prints text on the screen at the specified coordinates.
@@ -244,10 +245,10 @@ uint8_t gfx_getFontHeight(FontSize_t size);
  * @param alignment: text alignment type, defined as enum.
  * @param color: text color, in Color_st format.
  * @param buf: char buffer
- * @return text width and height as Pos_st coordinates
+ * @return text display position, width and height as Pos_st coordinates
  */
-Pos_st gfx_printBuffer(Pos_st start, FontSize_t size, Align_t alignment,
-                        Color_st color, const char *buf);
+Pos_st gfx_printBuffer( Pos_st*   startPos , FontSize_t  size , Align_t alignment ,
+                        Color_st* color    , const char* buf                        );
 
 /**
  * Prints text on the screen at the specified coordinates.
@@ -256,10 +257,10 @@ Pos_st gfx_printBuffer(Pos_st start, FontSize_t size, Align_t alignment,
  * @param alignment: text alignment type, defined as enum.
  * @param color: text color, in Color_st format.
  * @param fmt: printf style format string
- * @return text width and height as Pos_st coordinates
+ * @return text display position, width and height as Pos_st coordinates
  */
-Pos_st gfx_print(Pos_st start, FontSize_t size, Align_t alignment,
-                  Color_st color, const char* fmt, ... );
+Pos_st gfx_print( Pos_st*   startPos , FontSize_t size , Align_t alignment ,
+                  Color_st* color    , const char* fmt , ... );
 
 /**
  * Prints text on the screen, calculating the print position.
@@ -275,16 +276,16 @@ Pos_st gfx_print(Pos_st start, FontSize_t size, Align_t alignment,
  * @param fmt: printf style format string
  * @return text width and height as Pos_st coordinates
  */
-Pos_st gfx_printLine(uint8_t cur, uint8_t tot, int16_t startY, int16_t endY,
-                      int16_t startX, FontSize_t size, Align_t alignment,
-                      Color_st color, const char* fmt, ... );
+Pos_st gfx_printLine( uint8_t   cur    , uint8_t     tot  , int16_t startY , int16_t endY ,
+                      int16_t   startX , FontSize_t  size , Align_t alignment ,
+                      Color_st* color  , const char* fmt  , ... );
 
 /**
  * Prints an error message surrounded by a red box on the screen.
  * @param text: text to print.
  * @param size: text font size, defined as enum.
  */
-void gfx_printError(const char *text, FontSize_t size);
+void gfx_printError( const char* text , FontSize_t size );
 
 /**
  * Prints text on the screen at the specified coordinates.
@@ -296,8 +297,8 @@ void gfx_printError(const char *text, FontSize_t size);
  * @param symbol: symbol to be printed.
  * @return text width and height as Pos_st coordinates
  */
-Pos_st gfx_drawSymbol(Pos_st start, SymbolSize_t size, Align_t alignment,
-                       Color_st color, symbol_t symbol);
+Pos_st gfx_drawSymbol( Pos_st*   startPos , SymbolSize_t size , Align_t alignment ,
+                       Color_st* color    , symbol_t symbol );
 
 /**
  * Function to draw battery of arbitrary size.
@@ -307,8 +308,7 @@ Pos_st gfx_drawSymbol(Pos_st start, SymbolSize_t size, Align_t alignment,
  * @param height: battery icon height
  * @param percentage: battery charge percentage
  */
-void gfx_drawBattery(Pos_st start, uint16_t width, uint16_t height,
-                     uint16_t percentage);
+Pos_st gfx_drawBattery( Pos_st*  startPos , uint16_t percentage );
 
 /**
  * Function to draw Smeter of arbitrary size.
@@ -320,8 +320,8 @@ void gfx_drawBattery(Pos_st start, uint16_t width, uint16_t height,
  * @param squelch: squelch level in percentage
  * @param color: color of the squelch bar
  */
-void gfx_drawSmeter(Pos_st start, uint16_t width, uint16_t height, float rssi,
-                    float squelch, Color_st color);
+void gfx_drawSmeter( Pos_st* startPos , float rssi ,
+                     float   squelch  , Color_st* color );
 
 /**
  * Function to draw Smeter + level meter of arbitrary size.
@@ -333,8 +333,7 @@ void gfx_drawSmeter(Pos_st start, uint16_t width, uint16_t height, float rssi,
  * @param rssi: rssi level in dBm
  * @param level: level in range {0, 255}
  */
-void gfx_drawSmeterLevel(Pos_st start, uint16_t width, uint16_t height,
-                         float rssi, uint8_t level);
+void gfx_drawSmeterLevel( Pos_st* startPos , float rssi , uint8_t level );
 
 /**
  * Function to draw GPS SNR bar graph of arbitrary size.
@@ -345,8 +344,7 @@ void gfx_drawSmeterLevel(Pos_st start, uint16_t width, uint16_t height,
  * @param sats: pointer to the array of satellites data
  * @param active_sats: bitset representing which sats are part of the fix
  */
-void gfx_drawGPSgraph(Pos_st start, uint16_t width, uint16_t height,
-                      gpssat_t *sats, uint32_t active_sats);
+void gfx_drawGPSgraph( Pos_st* startPos , gpssat_t* sats , uint32_t active_sats );
 
 /**
  * Function to draw a compass of arbitrary size.
@@ -356,7 +354,7 @@ void gfx_drawGPSgraph(Pos_st start, uint16_t width, uint16_t height,
  * @param deg: degrees marked by the compass needle
  * @param active: whether the needle is to be drawn or not
  */
-void gfx_drawGPScompass(Pos_st start, uint16_t radius, float deg, bool active);
+void gfx_drawGPScompass( Pos_st* startPos , uint16_t radius , float deg , bool active );
 
 /**
  * Function to plot a collection of data on the screen.
@@ -367,8 +365,7 @@ void gfx_drawGPScompass(Pos_st start, uint16_t radius, float deg, bool active);
  * @param data: pointer to data buffer
  * @param len: data length, in elements
  */
-void gfx_plotData(Pos_st start, uint16_t width, uint16_t height,
-                  const int16_t *data, size_t len);
+void gfx_plotData( Pos_st* startPos , const int16_t* data , size_t len );
 
 #ifdef __cplusplus
 }

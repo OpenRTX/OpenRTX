@@ -63,31 +63,31 @@
 /**
  * Fonts, ordered by the FontSize_t enum.
  */
-static const GFXfont fonts[] = { TomThumb,            // 5pt
+static const GFXfont fonts[] = { TomThumb            , //  5pt
     #if defined FONT_FREE_SANS
-                                 FreeSans6pt7b,       // 6pt
-                                 FreeSans8pt7b,       // 8pt
-                                 FreeSans9pt7b,       // 9pt
-                                 FreeSans10pt7b,      // 10pt
-                                 FreeSans12pt7b,      // 12pt
-                                 FreeSans16pt7b,      // 16pt
-                                 FreeSans18pt7b,      // 16pt
-                                 FreeSans24pt7b,      // 24pt
+                                 FreeSans6pt7b       , //  6pt
+                                 FreeSans8pt7b       , //  8pt
+                                 FreeSans9pt7b       , //  9pt
+                                 FreeSans10pt7b      , // 10pt
+                                 FreeSans12pt7b      , // 12pt
+                                 FreeSans16pt7b      , // 16pt
+                                 FreeSans18pt7b      , // 16pt
+                                 FreeSans24pt7b      , // 24pt
     #elif defined FONT_UBUNTU_REGULAR
-                                 UbuntuRegular6pt7b,  // 6pt
-                                 UbuntuRegular8pt7b,  // 8pt
-                                 UbuntuRegular9pt7b,  // 9pt
-                                 UbuntuRegular10pt7b, // 10pt
-                                 UbuntuRegular12pt7b, // 12pt
-                                 UbuntuRegular16pt7b, // 16pt
-                                 UbuntuRegular18pt7b, // 16pt
-                                 UbuntuRegular24pt7b, // 24pt
+                                 UbuntuRegular6pt7b  , //  6pt
+                                 UbuntuRegular8pt7b  , //  8pt
+                                 UbuntuRegular9pt7b  , //  9pt
+                                 UbuntuRegular10pt7b , // 10pt
+                                 UbuntuRegular12pt7b , // 12pt
+                                 UbuntuRegular16pt7b , // 16pt
+                                 UbuntuRegular18pt7b , // 16pt
+                                 UbuntuRegular24pt7b , // 24pt
     #else
     #error Unsupported font family!
     #endif
-                                 Symbols5pt7b,      // 5pt
-                                 Symbols6pt7b,      // 6pt
-                                 Symbols8pt7b       // 8pt
+                                 Symbols5pt7b        , //  5pt
+                                 Symbols6pt7b        , //  6pt
+                                 Symbols8pt7b          //  8pt
                                };
 
 #ifdef PIX_FMT_RGB565
@@ -104,18 +104,18 @@ static const GFXfont fonts[] = { TomThumb,            // 5pt
 
 typedef struct
 {
-    uint16_t b : 5;
-    uint16_t g : 6;
-    uint16_t r : 5;
+    uint16_t b : 5 ;
+    uint16_t g : 6 ;
+    uint16_t r : 5 ;
 }
 rgb565_t;
 
-static rgb565_t _true2highColor( Color_st true_color )
+static rgb565_t _true2highColor( Color_st* true_color )
 {
     rgb565_t high_color;
-    high_color.r = true_color.red   >> 3 ;
-    high_color.g = true_color.green >> 2 ;
-    high_color.b = true_color.blue  >> 3 ;
+    high_color.r = true_color->red   >> 3 ;
+    high_color.g = true_color->green >> 2 ;
+    high_color.b = true_color->blue  >> 3 ;
 
     return high_color;
 }
@@ -132,58 +132,63 @@ static rgb565_t _true2highColor( Color_st true_color )
 
 typedef enum
 {
-    WHITE = 0,
-    BLACK = 1,
+    WHITE = 0 ,
+    BLACK = 1
 }
 bw_t;
 
-static bw_t _color2bw( Color_st true_color )
+static bw_t _color2bw( Color_st* true_color )
 {
-    if(true_color.red   == 0 &&
-       true_color.green == 0 &&
-       true_color.blue  == 0    )
-        return WHITE ;
-    else
-        return BLACK ;
+    colorType = BLACK ;
+    if( ( true_color.red   == 0 ) &&
+        ( true_color.green == 0 ) &&
+        ( true_color.blue  == 0 )    )
+    {
+        colorType = WHITE ;
+    }
+    return colorType ;
 }
 
 #else
 #error Please define a pixel format type into hwconfig.h or meson.build
 #endif
 
-static bool initialized = 0;
-static PIXEL_T *buf;
-static uint16_t fbSize;
-static char text[32];
+static bool     initialized = 0 ;
+static PIXEL_T* buf ;
+static uint16_t fbSize ;
+static char     text[ 32 ] ;
 
-void gfx_init()
+void gfx_init( void )
 {
     display_init();
-    buf = (PIXEL_T *)(display_getFrameBuffer());
+    buf = (PIXEL_T*)( display_getFrameBuffer() );
     initialized = 1;
 
 // Calculate framebuffer size
 #ifdef PIX_FMT_RGB565
-    fbSize = SCREEN_HEIGHT * SCREEN_WIDTH * sizeof(PIXEL_T);
+    fbSize = SCREEN_HEIGHT * SCREEN_WIDTH * sizeof( PIXEL_T ) ;
 #elif defined PIX_FMT_BW
-    fbSize = (SCREEN_HEIGHT * SCREEN_WIDTH) / 8;
+    fbSize = ( SCREEN_HEIGHT * SCREEN_WIDTH ) / 8 ;
     /* Compensate for eventual truncation error in division */
-    if((fbSize * 8) < (SCREEN_HEIGHT * SCREEN_WIDTH)) fbSize += 1;
-    fbSize *= sizeof(uint8_t);
+    if( ( fbSize * 8 ) < ( SCREEN_HEIGHT * SCREEN_WIDTH ) )
+    {
+        fbSize += 1 ;
+    }
+    fbSize *= sizeof( uint8_t );
 #endif
     // Clear text buffer
-    memset(text, 0x00, 32);
+    memset( text , 0x00 , 32 );
 }
 
-void gfx_terminate()
+void gfx_terminate( void )
 {
     display_terminate();
     initialized = 0;
 }
 
-void gfx_renderRows(uint8_t startRow, uint8_t endRow)
+void gfx_renderRows( uint8_t startRow , uint8_t endRow )
 {
-    display_renderRows(startRow, endRow);
+    display_renderRows( startRow , endRow );
 }
 
 void gfx_render()
@@ -198,271 +203,305 @@ bool gfx_renderingInProgress()
 
 void gfx_clearRows( uint8_t startRow , uint8_t endRow )
 {
-    uint16_t start ;
+    uint16_t startPos ;
     uint16_t length ;
 
     if( initialized )
     {
         if( endRow > startRow )
         {
-            start  = startRow * SCREEN_WIDTH ;
-            length = ( endRow - startRow ) * ( SCREEN_WIDTH * sizeof( PIXEL_T ) ) ;
+            startPos = startRow * SCREEN_WIDTH ;
+            length   = ( endRow - startRow ) * ( SCREEN_WIDTH * sizeof( PIXEL_T ) ) ;
             // Set the specified rows to 0x00 = make the screen black
-            memset( &buf[ start ] , 0x00 , length );
+            memset( &buf[ startPos ] , 0x00 , length );
         }
     }
 }
 
-void gfx_clearScreen()
+void gfx_clearScreen( void )
 {
-    if(!initialized) return;
-    // Set the whole framebuffer to 0x00 = make the screen black
-    memset(buf, 0x00, fbSize);
+    if( initialized )
+    {
+        // Set the whole framebuffer to 0x00 = make the screen black
+        memset( buf , 0x00 , fbSize );
+    }
 }
 
-void gfx_fillScreen(Color_st color)
+void gfx_fillScreen( Color_st* color )
 {
-    if(!initialized) return;
-    for(int16_t y = 0; y < SCREEN_HEIGHT; y++)
+    if( initialized )
     {
-        for(int16_t x = 0; x < SCREEN_WIDTH; x++)
+        for( int16_t y = 0 ; y < SCREEN_HEIGHT ; y++ )
         {
-            Pos_st pos = {x, y};
-            gfx_setPixel(pos, color);
-        }
-    }
-}
-
-inline void gfx_clearPixel( Pos_st pos )
-{
-    if (pos.x >= SCREEN_WIDTH || pos.y >= SCREEN_HEIGHT
-            || pos.x < 0 || pos.y < 0)
-        return; // off the screen
-    Color_st color = { 0 , 0 , 0 , 0 };
-
-#ifdef PIX_FMT_RGB565
-    buf[ ( pos.y * SCREEN_WIDTH ) + pos.x ] = _true2highColor( color );
-#elif defined PIX_FMT_BW
-    // Ignore more than half transparent pixels
-    uint16_t cell = (pos.x + pos.y*SCREEN_WIDTH) / 8;
-    uint16_t elem = (pos.x + pos.y*SCREEN_WIDTH) % 8;
-    buf[cell] &= ~(1 << elem);
-    buf[cell] |= (_color2bw(color) << elem);
-#endif
-}
-
-inline void gfx_setPixel(Pos_st pos, Color_st color)
-{
-    if (pos.x >= SCREEN_WIDTH || pos.y >= SCREEN_HEIGHT
-            || pos.x < 0 || pos.y < 0)
-        return; // off the screen
-
-#ifdef PIX_FMT_RGB565
-    // Blend old pixel value and new one
-    if (color.alpha < 255)
-    {
-        uint8_t alpha = color.alpha;
-        rgb565_t new_pixel = _true2highColor(color);
-        rgb565_t old_pixel = buf[pos.x + pos.y*SCREEN_WIDTH];
-        rgb565_t pixel;
-        pixel.r = ((255-alpha)*old_pixel.r+alpha*new_pixel.r)/255;
-        pixel.g = ((255-alpha)*old_pixel.g+alpha*new_pixel.g)/255;
-        pixel.b = ((255-alpha)*old_pixel.b+alpha*new_pixel.b)/255;
-        buf[pos.x + pos.y*SCREEN_WIDTH] = pixel;
-    }
-    else
-    {
-        buf[pos.x + pos.y*SCREEN_WIDTH] = _true2highColor(color);
-    }
-#elif defined PIX_FMT_BW
-    // Ignore more than half transparent pixels
-    if (color.alpha >= 128)
-    {
-        uint16_t cell = (pos.x + pos.y*SCREEN_WIDTH) / 8;
-        uint16_t elem = (pos.x + pos.y*SCREEN_WIDTH) % 8;
-        buf[cell] &= ~(1 << elem);
-        buf[cell] |= (_color2bw(color) << elem);
-    }
-#endif
-}
-
-void gfx_drawLine(Pos_st start, Pos_st end, Color_st color)
-{
-    if(!initialized) return;
-    int16_t steep = abs(end.y - start.y) > abs(end.x - start.x);
-
-    if (steep)
-    {
-        uint16_t tmp;
-        // Swap start.x and start.y
-        tmp = start.x;
-        start.x = start.y;
-        start.y = tmp;
-        // Swap end.x and end.y
-        tmp = end.x;
-        end.x = end.y;
-        end.y = tmp;
-    }
-
-    if (start.x > end.x)
-    {
-        uint16_t tmp;
-        // Swap start.x and end.x
-        tmp = start.x;
-        start.x = end.x;
-        end.x = tmp;
-        // Swap start.y and end.y
-        tmp = start.y;
-        start.y = end.y;
-        end.y = tmp;
-    }
-
-    int16_t dx, dy;
-    dx = end.x - start.x;
-    dy = abs(end.y - start.y);
-
-    int16_t err = dx >> 1;
-    int16_t ystep;
-
-    if (start.y < end.y)
-        ystep = 1;
-    else
-        ystep = -1;
-
-    for (; start.x<=end.x; start.x++)
-    {
-        Pos_st pos = {start.y, start.x};
-        if (steep)
-            gfx_setPixel(pos, color);
-        else
-            gfx_setPixel(start, color);
-
-        err -= dy;
-        if (err < 0)
-        {
-            start.y += ystep;
-            err += dx;
-        }
-    }
-}
-
-void gfx_clearRectangle( Pos_st start , uint16_t width , uint16_t height )
-{
-    if( !initialized ) return ;
-    if( width == 0 ) return ;
-    if( height == 0 ) return ;
-    uint16_t x_max = start.x + width ;
-    uint16_t y_max = start.y + height ;
-    Pos_st   pos ;
-
-    if( x_max > ( SCREEN_WIDTH - 1  ) ) x_max = SCREEN_WIDTH  - 1 ;
-    if( y_max > ( SCREEN_HEIGHT - 1 ) ) y_max = SCREEN_HEIGHT - 1 ;
-
-    for( pos.y = start.y ; pos.y <= y_max ; pos.y++ )
-    {
-        for( pos.x = start.x ; pos.x <= x_max ; pos.x++ )
-        {
-            gfx_clearPixel( pos );
-        }
-    }
-}
-
-void gfx_drawRect(Pos_st start, uint16_t width, uint16_t height, Color_st color, bool fill)
-{
-    if(!initialized) return;
-    if(width == 0) return;
-    if(height == 0) return;
-    uint16_t x_max = start.x + width - 1;
-    uint16_t y_max = start.y + height - 1;
-    bool perimeter = 0;
-    if(x_max > (SCREEN_WIDTH - 1)) x_max = SCREEN_WIDTH - 1;
-    if(y_max > (SCREEN_HEIGHT - 1)) y_max = SCREEN_HEIGHT - 1;
-
-    for(int16_t y = start.y; y <= y_max; y++)
-    {
-        for(int16_t x = start.x; x <= x_max; x++)
-        {
-            if(y == start.y || y == y_max || x == start.x || x == x_max) perimeter = 1;
-            else perimeter = 0;
-            // If fill is false, draw only rectangle perimeter
-            if(fill || perimeter)
+            for( int16_t x = 0 ; x < SCREEN_WIDTH ; x++ )
             {
-                Pos_st pos = {x, y};
-                gfx_setPixel(pos, color);
+                Pos_st pos = { x , y , 0 , 0 };
+                gfx_setPixel( &pos , color );
             }
         }
     }
 }
 
-void gfx_drawCircle(Pos_st start, uint16_t r, Color_st color)
+inline void gfx_clearPixel( Pos_st* pos )
 {
-    int16_t f     = 1 - r;
-    int16_t ddF_x = 1;
-    int16_t ddF_y = -2 * r;
-    int16_t x     = 0;
-    int16_t y     = r;
-
-    Pos_st pos = start;
-    pos.y += r;
-    gfx_setPixel(pos, color);
-    pos.y -= 2 * r;
-    gfx_setPixel(pos, color);
-    pos.y += r;
-    pos.x += r;
-    gfx_setPixel(pos, color);
-    pos.x -= 2 * r;
-    gfx_setPixel(pos, color);
-
-    while (x < y)
+    if( ( pos->x < SCREEN_WIDTH ) && ( pos->y < SCREEN_HEIGHT ) &&
+        ( pos->x >= 0           ) && ( pos->y >= 0            )    )
     {
-        if (f >= 0)
-        {
-            y--;
-            ddF_y += 2;
-            f += ddF_y;
-        }
-
-        x++;
-        ddF_x += 2;
-        f += ddF_x;
-
-        pos.x = start.x + x;
-        pos.y = start.y + y;
-        gfx_setPixel(pos, color);
-        pos.x = start.x - x;
-        pos.y = start.y + y;
-        gfx_setPixel(pos, color);
-        pos.x = start.x + x;
-        pos.y = start.y - y;
-        gfx_setPixel(pos, color);
-        pos.x = start.x - x;
-        pos.y = start.y - y;
-        gfx_setPixel(pos, color);
-        pos.x = start.x + y;
-        pos.y = start.y + x;
-        gfx_setPixel(pos, color);
-        pos.x = start.x - y;
-        pos.y = start.y + x;
-        gfx_setPixel(pos, color);
-        pos.x = start.x + y;
-        pos.y = start.y - x;
-        gfx_setPixel(pos, color);
-        pos.x = start.x - y;
-        pos.y = start.y - x;
-        gfx_setPixel(pos, color);
+        Color_st color = { 0 , 0 , 0 , 0 };
+#ifdef PIX_FMT_RGB565
+        buf[ ( pos->y * SCREEN_WIDTH ) + pos->x ] = _true2highColor( &color );
+#elif defined PIX_FMT_BW
+        // Ignore more than half transparent pixels
+        uint16_t cell         = ( ( pos->y * SCREEN_WIDTH ) + pos->x ) / 8 ;
+        uint16_t elem         = ( ( pos->y * SCREEN_WIDTH ) + pos->x ) % 8 ;
+                 buf[ cell ] &= ~( 1 << elem );
+                 buf[ cell ] |= ( _color2bw( &color ) << elem );
+#endif
     }
 }
 
-void gfx_drawHLine(int16_t y, uint16_t height, Color_st color)
+inline void gfx_setPixel( Pos_st* pos , Color_st* color )
 {
-    Pos_st start = {0, y};
-    gfx_drawRect(start, SCREEN_WIDTH, height, color, 1);
+    if( ( pos->x < SCREEN_WIDTH ) && ( pos->y < SCREEN_HEIGHT ) &&
+        ( pos->x >= 0           ) && ( pos->y >= 0            )    )
+    {
+#ifdef PIX_FMT_RGB565
+        // Blend old pixel value and new one
+        if( color->alpha < 255 )
+        {
+            uint8_t  alpha     = color->alpha;
+            rgb565_t new_pixel = _true2highColor( color );
+            rgb565_t old_pixel = buf[ ( pos->y * SCREEN_WIDTH ) + pos->x ] ;
+            rgb565_t pixel ;
+                     pixel.r   = ( ( ( 255 - alpha ) * old_pixel.r ) + ( alpha * new_pixel.r ) / 255 ) ;
+                     pixel.g   = ( ( ( 255 - alpha ) * old_pixel.g ) + ( alpha * new_pixel.g ) / 255 ) ;
+                     pixel.b   = ( ( ( 255 - alpha ) * old_pixel.b ) + ( alpha * new_pixel.b ) / 255 ) ;
+                     buf[ ( pos->y * SCREEN_WIDTH ) + pos->x ] = pixel ;
+        }
+        else
+        {
+            buf[ ( pos->y * SCREEN_WIDTH ) + pos->x ] = _true2highColor( color );
+        }
+#elif defined PIX_FMT_BW
+        // Ignore more than half transparent pixels
+        if( color->alpha >= 128 )
+        {
+            uint16_t cell  = ( ( pos->y * SCREEN_WIDTH ) + pos->x ) / 8 ;
+            uint16_t elem  = ( ( pos->y * SCREEN_WIDTH ) + pos->x ) % 8 ;
+            buf[ cell ]   &= ~( 1 << elem ) ;
+            buf[ cell ]   |= ( _color2bw( color ) << elem );
+        }
+#endif
+    }
 }
 
-void gfx_drawVLine(int16_t x, uint16_t width, Color_st color)
+void gfx_drawLine( Pos_st* startPos , Pos_st* endPos , Color_st* color )
 {
-    Pos_st start = {x, 0};
-    gfx_drawRect(start, width, SCREEN_HEIGHT, color, 1);
+    if( initialized )
+    {
+        int16_t steep = abs( endPos->y - startPos->y ) > abs( endPos->x - startPos->x );
+
+        if( steep )
+        {
+            uint16_t tmp;
+            // Swap startPos->x and startPos->y
+            tmp         = startPos->x ;
+            startPos->x = startPos->y ;
+            startPos->y = tmp ;
+            // Swap endPos->x and endPos->y
+            tmp         = endPos->x ;
+            endPos->x   = endPos->y ;
+            endPos->y   = tmp ;
+        }
+
+        if( startPos->x > endPos->x )
+        {
+            uint16_t tmp ;
+            // Swap startPos->x and endPos->x
+            tmp         = startPos->x ;
+            startPos->x = endPos->x ;
+            endPos->x   = tmp ;
+            // Swap startPos->y and endPos->y
+            tmp         = startPos->y ;
+            startPos->y = endPos->y ;
+            endPos->y   = tmp ;
+        }
+
+        int16_t dx ;
+        int16_t dy ;
+        dx = endPos->x      - startPos->x ;
+        dy = abs( endPos->y - startPos->y );
+
+        int16_t err = dx >> 1 ;
+        int16_t ystep ;
+
+        if( startPos->y < endPos->y )
+        {
+            ystep = 1 ;
+        }
+        else
+        {
+            ystep = -1 ;
+        }
+
+        for( ; startPos->x <= endPos->x ; startPos->x++ )
+        {
+            Pos_st pos = { startPos->y , startPos->x , 0 , 0 };
+            if( steep )
+            {
+                gfx_setPixel( &pos , color );
+            }
+            else
+            {
+                gfx_setPixel( startPos , color );
+            }
+
+            err -= dy ;
+            if( err < 0 )
+            {
+                startPos->y += ystep ;
+                err         += dx ;
+            }
+        }
+    }
+}
+
+void gfx_clearRectangle( Pos_st* startPos )
+{
+    if( initialized )
+    {
+        if( ( startPos->w > 0 ) && ( startPos->h > 0 ) )
+        {
+            uint16_t x_max = startPos->x + startPos->w ;
+            uint16_t y_max = startPos->y + startPos->h ;
+            Pos_st     pos ;
+
+            if( x_max > ( SCREEN_WIDTH - 1  ) ) x_max = SCREEN_WIDTH  - 1 ;
+            if( y_max > ( SCREEN_HEIGHT - 1 ) ) y_max = SCREEN_HEIGHT - 1 ;
+
+            for( pos.y = startPos->y ; pos.y <= y_max ; pos.y++ )
+            {
+                for( pos.x = startPos->x ; pos.x <= x_max ; pos.x++ )
+                {
+                    gfx_clearPixel( &pos );
+                }
+            }
+        }
+    }
+}
+
+void gfx_drawRect( Pos_st* startPos , Color_st* color , bool fill )
+{
+    if( initialized )
+    {
+        if( ( startPos->w > 0 ) && ( startPos->h > 0 ) )
+        {
+            uint16_t x_max     = startPos->x + startPos->w - 1 ;
+            uint16_t y_max     = startPos->y + startPos->h - 1 ;
+            bool     perimeter = 0 ;
+
+            if( x_max > ( SCREEN_WIDTH  - 1 ) )
+            {
+                x_max = SCREEN_WIDTH - 1 ;
+            }
+            if( y_max > ( SCREEN_HEIGHT - 1 ) )
+            {
+                y_max = SCREEN_HEIGHT - 1 ;
+            }
+
+            for( int16_t y = startPos->y ; y <= y_max ; y++ )
+            {
+                for( int16_t x = startPos->x ; x <= x_max ; x++ )
+                {
+                    if( ( y == startPos->y ) || ( y == y_max ) || ( x == startPos->x ) || ( x == x_max ) )
+                    {
+                       perimeter = 1 ;
+                    }
+                    else
+                    {
+                        perimeter = 0 ;
+                    }
+                    // If fill is false, draw only rectangle perimeter
+                    if( fill || perimeter )
+                    {
+                        Pos_st pos = { x , y , 0 , 0 };
+                        gfx_setPixel( &pos, color );
+                    }
+                }
+            }
+        }
+    }
+}
+
+void gfx_drawCircle( Pos_st* startPos, uint16_t r , Color_st* color )
+{
+    int16_t f     = 1 - r ;
+    int16_t ddF_x = 1 ;
+    int16_t ddF_y = -2 * r ;
+    int16_t x     = 0 ;
+    int16_t y     = r ;
+
+    Pos_st pos  = *startPos ;
+    pos.y      += r ;
+    gfx_setPixel( &pos , color );
+    pos.y      -= 2 * r;
+    gfx_setPixel( &pos , color );
+    pos.y      += r ;
+    pos.x      += r;
+    gfx_setPixel( &pos , color );
+    pos.x      -= 2 * r ;
+    gfx_setPixel( &pos , color );
+
+    while( x < y )
+    {
+        if( f >= 0 )
+        {
+            y-- ;
+            ddF_y += 2 ;
+            f     += ddF_y ;
+        }
+
+        x++ ;
+        ddF_x += 2 ;
+        f     += ddF_x ;
+
+        pos.x = startPos->x + x ;
+        pos.y = startPos->y + y ;
+        gfx_setPixel( &pos , color ) ;
+        pos.x = startPos->x - x ;
+        pos.y = startPos->y + y ;
+        gfx_setPixel( &pos , color );
+        pos.x = startPos->x + x ;
+        pos.y = startPos->y - y ;
+        gfx_setPixel( &pos , color );
+        pos.x = startPos->x - x ;
+        pos.y = startPos->y - y ;
+        gfx_setPixel( &pos , color );
+        pos.x = startPos->x + y ;
+        pos.y = startPos->y + x ;
+        gfx_setPixel( &pos , color );
+        pos.x = startPos->x - y ;
+        pos.y = startPos->y + x ;
+        gfx_setPixel( &pos , color );
+        pos.x = startPos->x + y ;
+        pos.y = startPos->y - x ;
+        gfx_setPixel( &pos , color );
+        pos.x = startPos->x - y ;
+        pos.y = startPos->y - x ;
+        gfx_setPixel( &pos , color );
+    }
+}
+
+void gfx_drawHLine(int16_t y, uint16_t height, Color_st* color)
+{
+    Pos_st startPos = { 0 , y , SCREEN_WIDTH , height };
+    gfx_drawRect( &startPos , color , 1 );
+}
+
+void gfx_drawVLine(int16_t x, uint16_t width, Color_st* color)
+{
+    Pos_st startPos = { x , 0 , width , SCREEN_HEIGHT };
+    gfx_drawRect( &startPos , color , 1 );
 }
 
 /**
@@ -471,207 +510,257 @@ void gfx_drawVLine(int16_t x, uint16_t width, Color_st color)
  * @param text: the input text
  * @param length: the length of the input text, used for boundary checking
  */
-static inline uint16_t get_line_size(GFXfont f, const char *text, uint16_t length)
+static inline uint16_t get_line_size( uint16_t startX , GFXfont font , const char* text , uint16_t length )
 {
-    uint16_t line_size = 0;
-    for(unsigned i = 0; i < length && text[i] != '\n' && text[i] != '\r'; i++)
+    uint16_t line_size = 0 ;
+
+    for( unsigned index = 0 ; ( index < length ) && ( text[ index ] != '\n' ) && ( text[ index ] != '\r' ) ; index++ )
     {
-        GFXglyph glyph = f.glyph[text[i] - f.first];
-        if (line_size + glyph.xAdvance < SCREEN_WIDTH)
-            line_size += glyph.xAdvance;
+        GFXglyph glyph = font.glyph[text[ index ] - font.first ];
+
+        if( ( startX + line_size + glyph.xAdvance ) < SCREEN_WIDTH )
+        {
+            line_size += glyph.xAdvance ;
+        }
         else
-            break;
+        {
+            break ;
+        }
     }
 
-    return line_size;
+    return line_size ;
+
 }
 
 /**
- * Compute the start x coordinate of a new line of given pixel size
+ * Compute the display startPos x coordinate of a new line of given pixel size
  * @param alinment: enum representing the text alignment
- * @param line_size: the size of the current text line in pixels
+ * @param lineLen: the size of the current text line in pixels
  */
-static inline uint16_t get_reset_x(Align_t alignment, uint16_t line_size,
-                                                          uint16_t startx)
+static inline uint16_t get_display_x( uint16_t startX , uint16_t lineLen , Align_t alignment )
 {
-    switch(alignment)
+    uint16_t displayX ;
+
+    switch( alignment )
     {
-        case ALIGN_LEFT:
-            return startx;
-        case ALIGN_CENTER:
-            return (SCREEN_WIDTH - line_size)/2;
+        case ALIGN_LEFT :
+        {
+            displayX = startX ;
+            break ;
+        }
+        case ALIGN_CENTER :
+        {
+            displayX = startX + ( ( SCREEN_WIDTH - ( startX + lineLen ) ) / 2 ) ;
+            break ;
+        }
         case ALIGN_RIGHT:
-            return SCREEN_WIDTH - line_size - startx;
+        {
+            displayX = SCREEN_WIDTH - lineLen ;
+            break ;
+        }
+        default :
+        {
+            displayX = startX ;
+            break ;
+        }
     }
 
-    return 0;
+    return displayX ;
 }
 
-uint8_t gfx_getFontHeight(FontSize_t size)
+uint8_t gfx_getFontHeight( FontSize_t size )
 {
-    GFXfont f = fonts[size];
-    GFXglyph glyph = f.glyph['|' - f.first];
-    return glyph.height;
+    GFXfont  font  = fonts[ size ] ;
+    GFXglyph glyph = font.glyph[ '|' - font.first ] ;
+    return   glyph.height ;
 }
 
-Pos_st gfx_printBuffer(Pos_st start, FontSize_t size, Align_t alignment,
-                        Color_st color, const char *buf)
+Pos_st gfx_printBuffer( Pos_st*   startPos , FontSize_t  fontSize , Align_t alignment ,
+                        Color_st* color    , const char* buf                            )
 {
-    GFXfont f = fonts[size];
+    GFXfont  font         = fonts[ fontSize ];
+    size_t   strLen       = strlen( buf );
+    Pos_st   textStartPos = *startPos ;
+    // Compute fontSize of the first row in pixels
+    Pos_st   textPos ;
 
-    size_t len = strlen(buf);
+    textStartPos.w = get_line_size( startPos->x , font , buf , strLen );
+    textStartPos.x = get_display_x( startPos->x , textStartPos.w , alignment );
+    textStartPos.h = font.yAdvance ;
 
-    // Compute size of the first row in pixels
-    uint16_t line_size = get_line_size(f, buf, len);
-    uint16_t reset_x = get_reset_x(alignment, line_size, start.x);
-    start.x = reset_x;
-    // Save initial start.y value to calculate vertical size
-    uint16_t saved_start_y = start.y;
-    uint16_t line_h = 0;
+    textPos        = textStartPos ;
 
     /* For each char in the string */
-    for(unsigned i = 0; i < len; i++)
+    for( unsigned index = 0 ; index < strLen ; index++ )
     {
-        char c = buf[i];
-        GFXglyph glyph = f.glyph[c - f.first];
-        uint8_t *bitmap = f.bitmap;
-
-        uint16_t bo = glyph.bitmapOffset;
-        uint8_t w = glyph.width, h = glyph.height;
-        int8_t xo = glyph.xOffset,
-               yo = glyph.yOffset;
-        uint8_t xx, yy, bits = 0, bit = 0;
-        line_h = h;
+        char     ch     = buf[ index ] ;
+        GFXglyph glyph  = font.glyph[ ch - font.first ] ;
+        uint8_t* bitmap = font.bitmap ;
+        uint16_t bo     = glyph.bitmapOffset ;
+        uint8_t  w      = glyph.width ;
+        uint8_t  h      = glyph.height ;
+        int8_t   xo     = glyph.xOffset ;
+        int8_t   yo     = glyph.yOffset ;
+        uint8_t  xx ;
+        uint8_t  yy ;
+        uint8_t  bits   = 0 ;
+        uint8_t  bit    = 0 ;
 
         // Handle newline and carriage return
-        if (c == '\n')
+        if( ch == '\n' )
         {
-          if(alignment!=ALIGN_CENTER)
+          if( alignment != ALIGN_CENTER )
           {
-            start.x = reset_x;
+            textPos.x = startPos->x ;
           }
           else
           {
-            line_size = get_line_size(f, &buf[i+1], len-(i+1));
-            start.x = reset_x = get_reset_x(alignment, line_size, start.x);
-          }
-          start.y += f.yAdvance;
-          continue;
-        }
-        else if (c == '\r')
-        {
-          start.x = reset_x;
-          continue;
-        }
-
-        // Handle wrap around
-        if (start.x + glyph.xAdvance > SCREEN_WIDTH)
-        {
-            // Compute size of the first row in pixels
-            line_size = get_line_size(f, buf, len);
-            start.x = reset_x = get_reset_x(alignment, line_size, start.x);
-            start.y += f.yAdvance;
-        }
-
-        // Draw bitmap
-        for (yy = 0; yy < h; yy++)
-        {
-            for (xx = 0; xx < w; xx++)
+            textPos.w = get_line_size( startPos->x , font , &buf[ index + 1 ] , strLen - ( index + 1 ) );
+            textPos.x = get_display_x( startPos->x , textPos.w , alignment );
+            if( textPos.x < textStartPos.x )
             {
-                if (!(bit++ & 7))
-                {
-                    bits = bitmap[bo++];
-                }
-
-                if (bits & 0x80)
-                {
-                    if (start.y + yo + yy < SCREEN_HEIGHT &&
-                        start.x + xo + xx < SCREEN_WIDTH &&
-                        start.y + yo + yy > 0 &&
-                        start.x + xo + xx > 0)
-                    {
-                        Pos_st pos;
-                        pos.x = start.x + xo + xx;
-                        pos.y = start.y + yo + yy;
-                        gfx_setPixel(pos, color);
-
-                    }
-                }
-
-                bits <<= 1;
+                textStartPos.x = textPos.x ;
+                textStartPos.w = textPos.w ;
+            }
+          }
+          textPos.y      += font.yAdvance ;
+          textStartPos.h += font.yAdvance ;
+          continue ;
+        }
+        else
+        {
+            if( ch == '\r' )
+            {
+              textPos.x = startPos->x ;
+              continue ;
             }
         }
 
-        start.x += glyph.xAdvance;
+        // Handle wrap around
+        if( ( textPos.x + glyph.xAdvance ) > SCREEN_WIDTH )
+        {
+            // Compute fontSize of the first row in pixels
+            textPos.w       = get_line_size( startPos->x , font , buf , strLen );
+            textPos.x       = get_display_x( startPos->x , textPos.w , alignment );
+            textPos.y      += font.yAdvance ;
+            textStartPos.h += font.yAdvance ;
+            if( textPos.x < textStartPos.x )
+            {
+                textStartPos.x = textPos.x ;
+                textStartPos.w = textPos.w ;
+            }
+        }
+
+        // Draw bitmap
+        for( yy = 0 ; yy < h ; yy++ )
+        {
+            for( xx = 0 ; xx < w ; xx++ )
+            {
+                if( !( bit++ & 7 ) )
+                {
+                    bits = bitmap[ bo++ ] ;
+                }
+
+                if( bits & 0x80 )
+                {
+                    if( ( ( textPos.y + yo + yy ) < SCREEN_HEIGHT ) &&
+                        ( ( textPos.x + xo + xx ) < SCREEN_WIDTH  ) &&
+                        ( ( textPos.y + yo + yy ) > 0             ) &&
+                        ( ( textPos.x + xo + xx ) > 0             )    )
+                    {
+                        Pos_st pos;
+                        pos.x = textPos.x + xo + xx ;
+                        pos.y = textPos.y + yo + yy ;
+                        gfx_setPixel( &pos , color );
+                    }
+                }
+
+                bits <<= 1 ;
+            }
+        }
+
+        textPos.x += glyph.xAdvance ;
+
     }
-    // Calculate text size
-    Pos_st text_size = {0, 0};
-    text_size.x = line_size;
-    text_size.y = (saved_start_y - start.y) + line_h;
-    return text_size;
+
+    if( textStartPos.y < textStartPos.h )
+    {
+        textStartPos.y  = 0 ;
+    }
+    else
+    {
+        textStartPos.y -= textStartPos.h ;
+    }
+
+    return textStartPos ;
+
 }
 
-Pos_st gfx_print(Pos_st start, FontSize_t size, Align_t alignment,
-                  Color_st color, const char *fmt, ... )
+Pos_st gfx_print( Pos_st*   startPos , FontSize_t  size , Align_t alignment ,
+                  Color_st* color , const char* fmt  , ...                 )
 {
     // Get format string and arguments from var char
-    va_list ap;
-    va_start(ap, fmt);
-    vsnprintf(text, sizeof(text)-1, fmt, ap);
-    va_end(ap);
+    va_list ap ;
+    va_start( ap , fmt );
+    vsnprintf( text , sizeof( text ) - 1 , fmt , ap );
+    va_end( ap );
 
-    return gfx_printBuffer(start, size, alignment, color, text);
+    return gfx_printBuffer( startPos , size , alignment , color , text );
 }
 
-Pos_st gfx_printLine(uint8_t cur, uint8_t tot, int16_t startY, int16_t endY,
-                      int16_t startX, FontSize_t size, Align_t alignment,
-                      Color_st color, const char* fmt, ... )
+Pos_st gfx_printLine( uint8_t   cur    , uint8_t    tot  , int16_t startY    , int16_t endY ,
+                      int16_t   startX , FontSize_t size , Align_t alignment ,
+                      Color_st* color  , const char* fmt, ... )
 {
     // Get format string and arguments from var char
-    va_list ap;
-    va_start(ap, fmt);
-    vsnprintf(text, sizeof(text)-1, fmt, ap);
-    va_end(ap);
+    va_list ap ;
+    va_start( ap , fmt );
+    vsnprintf( text , sizeof( text ) - 1 , fmt , ap );
+    va_end( ap );
 
     // Estimate font height by reading the gliph | height
-    uint8_t fontH = gfx_getFontHeight(size);
+    uint8_t fontH = gfx_getFontHeight( size );
 
     // If endY is 0 set it to default value = SCREEN_HEIGHT
-    if(endY == 0) endY = SCREEN_HEIGHT;
-
+    if( endY == 0 )
+    {
+       endY = SCREEN_HEIGHT ;
+    }
     // Calculate print coordinates
-    int16_t height = endY - startY;
+    int16_t height  = endY - startY ;
     // to print 2 lines we need 3 padding spaces
-    int16_t gap = (height - (fontH * tot)) / (tot + 1);
+    int16_t gap     = ( height - ( fontH * tot ) ) / ( tot + 1 );
     // We need a gap and a line height for each line
-    int16_t printY = startY + (cur * (gap + fontH));
+    int16_t printY  = startY + ( cur * ( gap + fontH ) ) ;
 
-    Pos_st start = {startX, printY};
-    return gfx_printBuffer(start, size, alignment, color, text);
+    Pos_st startPos = { startX , printY , 0 , 0 };
+    return gfx_printBuffer( &startPos , size , alignment , color , text );
 }
 
 // Print an error message to the center of the screen, surronded by a red (when possible) box
-void gfx_printError(const char *text, FontSize_t size)
+void gfx_printError( const char* text , FontSize_t size )
 {
     // 3 px box padding
-    uint16_t box_padding = 16;
-    Color_st white = {255, 255, 255, 255};
-    Color_st red =   {255,   0,   0, 255};
-    Pos_st start = {0, SCREEN_HEIGHT/2 + 5};
+    uint16_t box_padding  = 16 ;
+    Color_st white        = { 255 , 255 , 255 , 255 } ;
+    Color_st red          =   { 255 ,   0 ,   0 , 255 } ;
+    Pos_st   startPos     = { 0 , SCREEN_HEIGHT / 2 + 5 , 0 , 0 } ;
 
     // Print the error message
-    Pos_st text_size = gfx_print(start, size, ALIGN_CENTER, white, text);
-    text_size.x += box_padding;
-    text_size.y += box_padding;
-    Pos_st box_start = {0, 0};
-    box_start.x = (SCREEN_WIDTH / 2) - (text_size.x / 2);
-    box_start.y = (SCREEN_HEIGHT / 2) - (text_size.y / 2);
+    Pos_st text_size      = gfx_print( &startPos , size , ALIGN_CENTER , &white , text );
+    text_size.x          += box_padding ;
+    text_size.y          += box_padding ;
+    Pos_st box_start      = { 0 , 0 , 0 , 0 };
+    box_start.x           = ( SCREEN_WIDTH  / 2 ) - ( text_size.x / 2 ) ;
+    box_start.y           = ( SCREEN_HEIGHT / 2 ) - ( text_size.y / 2 ) ;
+    box_start.w           = text_size.x ;
+    box_start.h           = text_size.y ;
     // Draw the error box
-    gfx_drawRect(box_start, text_size.x, text_size.y, red, false);
+    gfx_drawRect( &box_start , &red , false );
 }
 
-Pos_st gfx_drawSymbol(Pos_st start, SymbolSize_t size, Align_t alignment,
-                       Color_st color, symbol_t symbol)
+Pos_st gfx_drawSymbol( Pos_st*   startPos , SymbolSize_t size   , Align_t alignment ,
+                       Color_st* color    , symbol_t     symbol )
 {
     /*
      * Symbol tables come immediately after fonts in the general font table.
@@ -681,11 +770,11 @@ Pos_st gfx_drawSymbol(Pos_st start, SymbolSize_t size, Align_t alignment,
      *
      * TODO: improve this.
      */
-    int symSize = size + FONT_SIZE_24PT + 1;
-    char buffer[2] = {0};
+    int  symSize     = size + FONT_SIZE_24PT + 1 ;
+    char buffer[ 2 ] = { 0 } ;
 
-    buffer[0] = (char) symbol;
-    return gfx_printBuffer(start, symSize, alignment, color, buffer);
+    buffer[ 0 ]      = (char)symbol ;
+    return gfx_printBuffer( startPos , symSize , alignment , color , buffer );
 }
 
 /*
@@ -709,72 +798,76 @@ Pos_st gfx_drawSymbol(Pos_st start, SymbolSize_t size, Align_t alignment,
  * Width (px)
  *
  */
-void gfx_drawBattery(Pos_st start, uint16_t width, uint16_t height,
-                                                   uint16_t percentage)
+Pos_st gfx_drawBattery( Pos_st* startPos , uint16_t prcntg )
 {
-    Color_st white =  {255, 255, 255, 255};
-    Color_st black =  {0,   0,   0  , 255};
-
+    Color_st white      = { 255 , 255 , 255 , 255 } ;
+    Color_st black      = {   0 ,   0 ,   0 , 255 } ;
     // Cap percentage to 100
-    percentage = ( percentage > 100 ) ? 100 : percentage;
+    uint16_t percentage = ( prcntg > 100 ) ? 100 : prcntg ;
 
 #ifdef PIX_FMT_RGB565
-    Color_st green =  {0,   255, 0  , 255};
-    Color_st yellow = {250, 180, 19 , 255};
-    Color_st red =    {255, 0,   0  , 255};
+    Color_st green      = {   0 , 255 ,  0 , 255 } ;
+    Color_st yellow     = { 250 , 180 , 19 , 255 } ;
+    Color_st red        = { 255 ,   0 ,  0 , 255 } ;
 
     // Select color according to percentage
-    Color_st bat_color = yellow;
+    Color_st batColor  = yellow;
+
     if( percentage < 30 )
     {
-        bat_color = red ;
+        batColor = red ;
     }
     else
     {
         if( percentage > 60 )
         {
-            bat_color = green ;
+            batColor = green ;
         }
     }
 #elif defined PIX_FMT_BW
-    Color_st bat_color = white;
+    Color_st batColor = white ;
 #endif // defined PIX_FMT_BW
 
     // Draw the battery outline
-    gfx_drawRect(start, width, height, white, false);
+    gfx_drawRect( startPos , &white , false );
 
     // Draw the battery fill
-    Pos_st fill_start;
-    fill_start.x = start.x + 2;
-    fill_start.y = start.y + 2;
-    uint16_t fillWidth = ((width - 4) * percentage) / 100;
-    gfx_drawRect(fill_start, fillWidth, height - 4, bat_color, true);
+    Pos_st   fillStart ;
+    uint16_t fillWidth ;
+    fillWidth           = ( ( startPos->w - 4 ) * percentage ) / 100 ;
+    fillStart.x         = startPos->x + 2 ;
+    fillStart.y         = startPos->y + 2 ;
+    fillStart.w         = fillWidth ;
+    fillStart.h         = startPos->h - 4 ;
+    gfx_drawRect( &fillStart , &batColor , true );
 
     // Round corners
-    Pos_st top_left     = start;
-    Pos_st top_right    = start;
-    Pos_st bottom_left  = start;
-    Pos_st bottom_right = start;
+    Pos_st topLeft      = *startPos ;
+    Pos_st topRight     = *startPos ;
+    Pos_st bottomLeft   = *startPos ;
+    Pos_st bottomRight  = *startPos ;
 
-    top_right.x    += width - 1;
-    bottom_left.y  += height - 1;
-    bottom_right.x += width - 1;
-    bottom_right.y += height - 1;
+    topRight.x         += startPos->w  - 1 ;
+    bottomLeft.y       += startPos->h - 1 ;
+    bottomRight.x      += startPos->w  - 1 ;
+    bottomRight.y      += startPos->h - 1 ;
 
-    gfx_setPixel(top_left, black);
-    gfx_setPixel(top_right, black);
-    gfx_setPixel(bottom_left, black);
-    gfx_setPixel(bottom_right, black);
+    gfx_setPixel( &topLeft     , &black );
+    gfx_setPixel( &topRight    , &black );
+    gfx_setPixel( &bottomLeft  , &black );
+    gfx_setPixel( &bottomRight , &black );
 
     // Draw the button
-    Pos_st button_start;
-    Pos_st button_end;
+    Pos_st buttonStart;
+    Pos_st buttonEnd;
 
-    button_start.x = start.x + width;
-    button_start.y = start.y + height / 2 - (height / 8) - 1 + (height % 2);
-    button_end.x   = start.x + width;
-    button_end.y   = start.y + height / 2 + (height / 8);
-    gfx_drawLine(button_start, button_end, white);
+    buttonStart.x       = startPos->x + startPos->w ;
+    buttonStart.y       = startPos->y + ( startPos->h / 2 ) - ( startPos->h / 8 ) - 1 + ( startPos->h % 2 );
+    buttonEnd.x         = startPos->x + startPos->w;
+    buttonEnd.y         = startPos->y + ( startPos->h / 2 ) + ( startPos->h / 8 );
+    gfx_drawLine( &buttonStart , &buttonEnd , &white );
+
+    return *startPos ;
 }
 
 /*
@@ -797,54 +890,61 @@ void gfx_drawBattery(Pos_st start, uint16_t width, uint16_t height,
  * Width (px)
  *
  */
-void gfx_drawSmeter(Pos_st start, uint16_t width, uint16_t height, float rssi,
-                                                   float squelch, Color_st color)
+void gfx_drawSmeter( Pos_st* startPos , float rssi , float squelch , Color_st* color )
 {
-    Color_st white =  {255, 255, 255, 255};
-    Color_st yellow = {250, 180, 19 , 255};
-    Color_st red =    {255, 0,   0  , 255};
-
-    FontSize_t font = FONT_SIZE_5PT;
-    uint8_t font_height =  gfx_getFontHeight(font);
-    uint16_t bar_height = (height - 3 - font_height);
+    Color_st   white      = { 255 , 255 , 255 , 255 } ;
+    Color_st   yellow     = { 250 , 180 ,  19 , 255 } ;
+    Color_st   red        = { 255 ,   0 ,   0 , 255 } ;
+    FontSize_t font       = FONT_SIZE_5PT ;
+    uint8_t    fontHeight = gfx_getFontHeight( font );
+    uint16_t   barHeight  = ( startPos->h - 3 ) - fontHeight ;
 
     // S-level marks and numbers
-    for(int i = 0; i < 12; i++)
+    for( int index = 0 ; index < 12 ; index++ )
     {
-        Color_st color = (i % 3 == 0) ? yellow : white;
-        color = (i > 9) ? red : color;
-        Pos_st pixel_pos = start;
-        pixel_pos.x += i * (width - 1) / 11;
-        gfx_setPixel(pixel_pos, color);
-        pixel_pos.y += height;
-        if (i == 10) {
-            pixel_pos.x -= 8;
-            gfx_print(pixel_pos, font, ALIGN_LEFT, color, "+%d", i);
-        }
-        else if(i == 11){
-            pixel_pos.x -= 10;
-            gfx_print(pixel_pos, font, ALIGN_LEFT, red, "+20");
+        Color_st color    = ( ( index % 3 ) == 0 ) ? yellow : white ;
+                 color    = ( index > 9 ) ? red : color ;
+        Pos_st   pixelPos = *startPos;
+
+        pixelPos.x += index * ( ( startPos->w - 1) / 11 ) ;
+        gfx_setPixel( &pixelPos , &color );
+        pixelPos.y += startPos->h ;
+
+        if( index == 10 )
+        {
+            pixelPos.x -= 8 ;
+            gfx_print( &pixelPos , font , ALIGN_LEFT , &color , "+%d" , index );
         }
         else
-            gfx_print(pixel_pos, font, ALIGN_LEFT, color, "%d", i);
-        if (i == 10) {
-            pixel_pos.x += 8;
+        {
+            if( index == 11 )
+            {
+                pixelPos.x -= 10 ;
+                gfx_print( &pixelPos , font , ALIGN_LEFT , &red , "+20" );
+            }
+            else
+            {
+                gfx_print( &pixelPos , font , ALIGN_LEFT , &color , "%d" , index );
+            }
+        }
+        if( index == 10 )
+        {
+            pixelPos.x += 8 ;
         }
     }
 
     // Squelch bar
-    uint16_t squelch_height = bar_height / 3 ;
-    uint16_t squelch_width = width * squelch;
-    Pos_st squelch_pos = {start.x, (uint8_t) (start.y + 2)};
-    gfx_drawRect(squelch_pos, squelch_width, squelch_height, color, true);
+    Pos_st squelchPos = { startPos->x , (uint8_t)( startPos->y + 2 ) , startPos->w * squelch , barHeight / 3 };
+
+    gfx_drawRect( &squelchPos , color , true );
 
     // RSSI bar
-    uint16_t rssi_height = bar_height * 2 / 3;
-    float s_level =  (127.0f + rssi) / 6.0f;
-    uint16_t rssi_width = (s_level < 0.0f) ? 0 : (s_level * (width - 1) / 11);
-    rssi_width = (s_level > 10.0f) ? width : rssi_width;
-    Pos_st rssi_pos = { start.x, (uint8_t) (start.y + 2 + squelch_height)};
-    gfx_drawRect(rssi_pos, rssi_width, rssi_height, white, true);
+    uint16_t rssiHeight = ( barHeight * 2 ) / 3 ;
+    float    s_level    = ( 127.0f + rssi ) / 6.0f ;
+    uint16_t rssiWidth  = ( s_level < 0.0f ) ? 0 : ( s_level * ( startPos->w - 1 ) / 11 ) ;
+             rssiWidth  = ( s_level > 10.0f ) ? startPos->w : rssiWidth ;
+    Pos_st   rssiPos    = { startPos->x , (uint8_t) ( startPos->y + 2 + squelchPos.h ) , rssiWidth , rssiHeight };
+    gfx_drawRect( &rssiPos , &white , true );
 }
 
 /*
@@ -871,58 +971,64 @@ void gfx_drawSmeter(Pos_st start, uint16_t width, uint16_t height, float rssi,
  * Width (px)
  *
  */
-void gfx_drawSmeterLevel(Pos_st start, uint16_t width, uint16_t height, float rssi,
-                         uint8_t level)
+void gfx_drawSmeterLevel( Pos_st* startPos , float rssi , uint8_t level )
 {
-    Color_st red =    {255, 0,   0  , 255};
-    Color_st green =  {0,   255,   0, 255};
-    Color_st white =  {255, 255, 255, 255};
-    Color_st yellow = {250, 180, 19 , 255};
-
-    FontSize_t font = FONT_SIZE_5PT;
-    uint8_t font_height =  gfx_getFontHeight(font);
-    uint16_t bar_height = (height - 6 - font_height) / 2;
+    Color_st   red        = { 255 ,   0 ,   0 , 255 } ;
+    Color_st   green      = {   0 , 255 ,   0 , 255 } ;
+    Color_st   white      = { 255 , 255 , 255 , 255 } ;
+    Color_st   yellow     = { 250 , 180 , 19  , 255 } ;
+    FontSize_t font       = FONT_SIZE_5PT ;
+    uint8_t    fontHeight = gfx_getFontHeight(font);
+    uint16_t   barHeight  = ( ( startPos->h - 6 ) - fontHeight ) / 2;
 
     // Level meter marks
-    for(int i = 0; i <= 4; i++)
+    for( int index = 0 ; index <= 4 ; index++ )
     {
-        Pos_st pixel_pos = start;
-        pixel_pos.x += i * (width - 1) / 4;
-        gfx_setPixel(pixel_pos, white);
-        pixel_pos.y += (bar_height + 3);
-        gfx_setPixel(pixel_pos, white);
+        Pos_st pixelPos  = *startPos ;
+        pixelPos.x      += ( index * ( startPos->w - 1 ) ) / 4;
+        gfx_setPixel( &pixelPos , &white ) ;
+        pixelPos.y      += ( barHeight + 3 ) ;
+        gfx_setPixel( &pixelPos , &white );
     }
     // Level bar
-    uint16_t level_width = (level / 255.0 * width);
-    Pos_st level_pos = { start.x, (uint8_t) (start.y + 2)};
-    gfx_drawRect(level_pos, level_width, bar_height, green, true);
+    uint16_t levelWidth = ( level / ( 255.0 * startPos->w ) ) ;
+    Pos_st   levelPos   = { startPos->x , (uint8_t)( startPos->y + 2 ) , levelWidth , barHeight };
+    gfx_drawRect( &levelPos , &green , true );
     // RSSI bar
-    float s_level =  (127.0f + rssi) / 6.0f;
-    uint16_t rssi_width = (s_level < 0.0f) ? 0 : (s_level * (width - 1) / 11);
-    rssi_width = (s_level > 10.0f) ? width : rssi_width;
-    Pos_st rssi_pos = {start.x, (uint8_t) (start.y + 5 + bar_height)};
-    gfx_drawRect(rssi_pos, rssi_width, bar_height, white, true);
+    float    s_level    = ( 127.0f + rssi ) / 6.0f ;
+    uint16_t rssiWidth  = ( s_level < 0.0f ) ? 0 : ( s_level * ( startPos->w - 1 ) / 11 );
+             rssiWidth  = ( s_level > 10.0f ) ? startPos->w : rssiWidth ;
+    Pos_st   rssiPos    = { startPos->x , (uint8_t) (startPos->y + 5 + barHeight) , rssiWidth , barHeight };
+    gfx_drawRect( &rssiPos , &white, true);
     // S-level marks and numbers
-    for(int i = 0; i < 12; i++)
+    for(int index = 0; index < 12; index++)
     {
-        Color_st color = (i % 3 == 0) ? yellow : white;
-        color = (i > 9) ? red : color;
-        Pos_st pixel_pos = start;
-        pixel_pos.x += i * (width - 1) / 11;
-        pixel_pos.y += height;
+        Color_st color     = ( ( index % 3 ) == 0 ) ? yellow : white ;
+                 color     = ( index > 9 ) ? red : color ;
+        Pos_st   pixelPos  = *startPos ;
+        pixelPos.x        += ( index * ( startPos->w - 1 ) ) / 11 ;
+        pixelPos.y        += startPos->h ;
 
-        if (i == 10) {
-            pixel_pos.x -= 8;
-            gfx_print(pixel_pos, font, ALIGN_LEFT, color, "+%d", i);
-        }
-        else if(i == 11){
-            pixel_pos.x -= 10;
-            gfx_print(pixel_pos, font, ALIGN_LEFT, red, "+20");
+        if( index == 10 )
+        {
+            pixelPos.x -= 8 ;
+            gfx_print( &pixelPos , font , ALIGN_LEFT , &color , "+%d" , index );
         }
         else
-            gfx_print(pixel_pos, font, ALIGN_LEFT, color, "%d", i);
-        if (i == 10) {
-            pixel_pos.x += 8;
+        {
+            if( index == 11 )
+            {
+                pixelPos.x -= 10;
+                gfx_print( &pixelPos , font , ALIGN_LEFT , &red , "+20" );
+            }
+            else
+            {
+                gfx_print( &pixelPos , font , ALIGN_LEFT , &color , "%d" , index );
+            }
+            if( index == 10 )
+            {
+                pixelPos.x += 8 ;
+            }
         }
     }
 }
@@ -947,106 +1053,111 @@ void gfx_drawSmeterLevel(Pos_st start, uint16_t width, uint16_t height, float rs
  * Width (px)
  *
  */
-void gfx_drawGPSgraph(Pos_st start,
-                      uint16_t width,
-                      uint16_t height,
-                      gpssat_t *sats,
-                      uint32_t active_sats)
+void gfx_drawGPSgraph( Pos_st* startPos , gpssat_t* sats , uint32_t activeSats )
 {
-    Color_st white =  {255, 255, 255, 255};
-    Color_st yellow = {250, 180, 19 , 255};
-
+    Color_st white    = { 255 , 255 , 255 , 255 } ;
+    Color_st yellow   = { 250 , 180 ,  19 , 255 } ;
     // SNR Bars and satellite identifiers
-    uint8_t bar_width = (width - 26) / 12;
-    uint8_t bar_height = 1;
-    for(int i = 0; i < 12; i++)
+    uint8_t barWidth  = ( startPos->w - 26 ) / 12;
+
+    for( int index = 0 ; index < 12 ; index++ )
     {
-        bar_height = (height - 8) * sats[i].snr / 100 + 1;
-        Pos_st bar_pos = start;
-        bar_pos.x += 2 + i * (bar_width + 2);
-        bar_pos.y += (height - 8) - bar_height;
-        Color_st bar_color = (active_sats & 1 << (sats[i].id - 1)) ? yellow : white;
-        gfx_drawRect(bar_pos, bar_width, bar_height, bar_color, true);
-        Pos_st id_pos = {bar_pos.x, (uint8_t) (start.y + height)};
-        gfx_print(id_pos, FONT_SIZE_5PT, ALIGN_LEFT,
-                  bar_color, "%2d ", sats[i].id);
+        uint8_t  barHeight = ( ( ( startPos->h - 8 ) * sats[ index ].snr ) / 100 ) + 1 ;
+        Pos_st   barPos    = *startPos ;
+                 barPos.x += 2 + index * ( barWidth + 2 ) ;
+                 barPos.y += ( startPos->h - 8 ) - barHeight ;
+                 barPos.w  = barWidth ;
+                 barPos.h  = barHeight ;
+        Color_st barColor  = ( activeSats & ( 1 << ( sats[ index ].id - 1 ) ) ) ? yellow : white ;
+
+        gfx_drawRect( &barPos , &barColor, true );
+        Pos_st idPos = { barPos.x , (uint8_t)( startPos->y + startPos->h ) , 0 , 0 };
+        gfx_print( &idPos, FONT_SIZE_5PT, ALIGN_LEFT, &barColor, "%2d ", sats[ index ].id );
     }
-    uint8_t bars_width = 9 + 11 * (bar_width + 2);
-    Pos_st left_line_end    = start;
-    Pos_st right_Line_start = start;
-    Pos_st right_line_end   = start;
+    uint8_t barsWidth        = 9 + ( 11 * ( barWidth + 2 ) ) ;
+    Pos_st  left_line_end    = *startPos ;
+    Pos_st  right_Line_start = *startPos ;
+    Pos_st  right_line_end   = *startPos ;
 
-    left_line_end.y    += height - 9;
-    right_Line_start.x += bars_width;
-    right_line_end.x   += bars_width;
-    right_line_end.y   += height - 9;
+    left_line_end.y    += startPos->h - 9 ;
+    right_Line_start.x += barsWidth ;
+    right_line_end.x   += barsWidth ;
+    right_line_end.y   += startPos->h - 9 ;
 
-    gfx_drawLine(start, left_line_end, white);
-    gfx_drawLine(right_Line_start, right_line_end, white);
+    gfx_drawLine( startPos          , &left_line_end  , &white );
+    gfx_drawLine( &right_Line_start , &right_line_end , &white );
 }
 
-void gfx_drawGPScompass(Pos_st start,
-                        uint16_t radius,
-                        float deg,
-                        bool active)
+void gfx_drawGPScompass( Pos_st* startPos , uint16_t radius ,
+                         float   deg      , bool     active   )
 {
-    Color_st white =  {255, 255, 255, 255};
-    Color_st black =  {  0,   0,   0, 255};
-    Color_st yellow = {250, 180, 19 , 255};
-
+    Color_st white      = { 255 , 255 , 255 , 255 } ;
+    Color_st black      = {   0 ,   0 ,   0 , 255 } ;
+    Color_st yellow     = { 250 , 180 ,  19 , 255 } ;
     // Compass circle
-    Pos_st circle_pos = start;
-    circle_pos.x += radius + 1;
-    circle_pos.y += radius + 3;
-    gfx_drawCircle(circle_pos, radius, white);
-    Pos_st n_box = {(uint8_t)(start.x + radius - 5), start.y};
-    gfx_drawRect(n_box, 13, 13, black, true);
+    Pos_st circlePos    = *startPos ;
+           circlePos.x += radius + 1 ;
+           circlePos.y += radius + 3 ;
+
+    gfx_drawCircle( &circlePos , radius , &white );
+
+    Pos_st nBox = { (uint8_t)( ( startPos->x + radius ) - 5 ) , startPos->y , 13 , 13 };
+
+    gfx_drawRect( &nBox , &black , true );
+
     float needle_radius = radius - 4;
-    if (active)
+    if( active )
     {
         // Needle
         deg -= 90.0f;
-        Pos_st p1 = {(uint8_t)(circle_pos.x + needle_radius * COS(deg)),
-                      (uint8_t)(circle_pos.y + needle_radius * SIN(deg))};
-        Pos_st p2 = {(uint8_t)(circle_pos.x + needle_radius * COS(deg + 145.0f)),
-                      (uint8_t)(circle_pos.y + needle_radius * SIN(deg + 145.0f))};
-        Pos_st p3 = {(uint8_t)(circle_pos.x + needle_radius / 2 * COS(deg + 180.0f)),
-                      (uint8_t)(circle_pos.y + needle_radius / 2 * SIN(deg + 180.0f))};
-        Pos_st p4 = {(uint8_t)(circle_pos.x + needle_radius * COS(deg - 145.0f)),
-                      (uint8_t)(circle_pos.y + needle_radius * SIN(deg - 145.0f))};
-        gfx_drawLine(p1, p2, yellow);
-        gfx_drawLine(p2, p3, yellow);
-        gfx_drawLine(p3, p4, yellow);
-        gfx_drawLine(p4, p1, yellow);
+        Pos_st pos1 = { (uint8_t)( circlePos.x + ( needle_radius         * COS( deg           ) ) ) ,
+                        (uint8_t)( circlePos.y + ( needle_radius         * SIN( deg           ) ) ) , 0 , 0 };
+        Pos_st pos2 = { (uint8_t)( circlePos.x + ( needle_radius         * COS( deg + 145.0f  ) ) ) ,
+                        (uint8_t)( circlePos.y + ( needle_radius         * SIN( deg + 145.0f  ) ) ) , 0 , 0 };
+        Pos_st pos3 = { (uint8_t)( circlePos.x + ( ( needle_radius / 2 ) * COS( deg + 180.0f  ) ) ) ,
+                        (uint8_t)( circlePos.y + ( ( needle_radius / 2 ) * SIN( deg + 180.0f  ) ) ) , 0 , 0 };
+        Pos_st pos4 = { (uint8_t)( circlePos.x + ( needle_radius         * COS( deg - 145.0f  ) ) ) ,
+                        (uint8_t)( circlePos.y + ( needle_radius         * SIN( deg - 145.0f  ) ) ) , 0 , 0 };
+        gfx_drawLine( &pos1 , &pos2 , &yellow );
+        gfx_drawLine( &pos2 , &pos3 , &yellow );
+        gfx_drawLine( &pos3 , &pos4 , &yellow );
+        gfx_drawLine( &pos4 , &pos1 , &yellow );
     }
     // North indicator
-    Pos_st n_pos = {(uint8_t)(start.x + radius - 3),
-                     (uint8_t)(start.y + 7)};
-    gfx_print(n_pos, FONT_SIZE_6PT, ALIGN_LEFT, white, "N");
+    Pos_st n_pos = { (uint8_t)(startPos->x + radius - 3) ,
+                     (uint8_t)(startPos->y + 7) , 0 , 0 };
+    gfx_print( &n_pos , FONT_SIZE_6PT , ALIGN_LEFT , &white, "N");
 }
 
-void gfx_plotData(Pos_st start, uint16_t width, uint16_t height,
-                  const int16_t *data, size_t len)
+void gfx_plotData( Pos_st* startPos , const int16_t* data , size_t len )
 {
-    uint16_t horizontal_pos = start.x;
-    Color_st white = {255, 255, 255, 255};
-    Pos_st prev_pos = {0, 0};
-    Pos_st pos = {0, 0};
-    bool first_iteration = true;
-    for (size_t i = 0; i < len; i++)
+    uint16_t horizontalPos  = startPos->x ;
+    Color_st white          = {255 , 255 , 255 , 255 } ;
+    Pos_st   prevPos        = { 0 , 0 , 0 , 0 } ;
+    Pos_st   pos            = { 0 , 0 , 0 , 0 } ;
+    bool     firstIteration = true ;
+
+    for( size_t index = 0 ; index < len ; index++ )
     {
-        horizontal_pos++;
-        if (horizontal_pos > (start.x + width))
-            break;
-        pos.x = horizontal_pos;
-        pos.y = start.y + (height / 2)
-              + ((data[i] * 4) / (2 * SHRT_MAX) * height);
-        if (pos.y > SCREEN_HEIGHT)
-            pos.y = SCREEN_HEIGHT;
-        if (!first_iteration)
-            gfx_drawLine(prev_pos, pos, white);
-        prev_pos = pos;
-        if (first_iteration)
-            first_iteration = false;
+        horizontalPos++ ;
+        if( horizontalPos > ( startPos->x + startPos->w ) )
+        {
+            break ;
+        }
+        pos.x = horizontalPos ;
+        pos.y = startPos->y + ( startPos->h / 2 ) + ( ( data[ index ] * 4 ) / ( 2 * SHRT_MAX ) * startPos->h );
+        if( pos.y > SCREEN_HEIGHT )
+        {
+            pos.y = SCREEN_HEIGHT ;
+        }
+        if( !firstIteration )
+        {
+            gfx_drawLine( &prevPos , &pos , &white );
+        }
+        prevPos = pos ;
+        if( firstIteration )
+        {
+            firstIteration = false ;
+        }
     }
 }

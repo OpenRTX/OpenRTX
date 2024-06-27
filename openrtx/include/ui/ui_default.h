@@ -31,28 +31,7 @@
 #include <event.h>
 #include <ui.h>
 
-//#define DISPLAY_DEBUG_MSG
-
-#ifndef DISPLAY_DEBUG_MSG
-
-#define DEBUG_SET_TRACE0( traceVal )
-#define DEBUG_SET_TRACE1( traceVal )
-#define DEBUG_SET_TRACE2( traceVal )
-#define DEBUG_SET_TRACE3( traceVal )
-
-#else // DISPLAY_DEBUG_MSG
-
-extern void Debug_SetTrace0( uint8_t traceVal );
-extern void Debug_SetTrace1( uint8_t traceVal );
-extern void Debug_SetTrace2( uint8_t traceVal );
-extern void Debug_SetTrace3( uint8_t traceVal );
-
-#define DEBUG_SET_TRACE0( traceVal )     Debug_SetTrace0( (uint8_t)traceVal );
-#define DEBUG_SET_TRACE1( traceVal )     Debug_SetTrace1( (uint8_t)traceVal );
-#define DEBUG_SET_TRACE2( traceVal )     Debug_SetTrace2( (uint8_t)traceVal );
-#define DEBUG_SET_TRACE3( traceVal )     Debug_SetTrace3( (uint8_t)traceVal );
-
-#endif // DISPLAY_DEBUG_MSG
+#define DISPLAY_DEBUG_MSG
 
 // Maximum menu entry length
 #define MAX_ENTRY_LEN 21
@@ -80,19 +59,18 @@ typedef enum
     PAGE_MENU_BACKUP                , // 0x0C
     PAGE_MENU_RESTORE               , // 0x0D
     PAGE_MENU_INFO                  , // 0x0E
-    PAGE_MENU_ABOUT                 , // 0x0F
-    PAGE_SETTINGS_TIMEDATE          , // 0x10
-    PAGE_SETTINGS_TIMEDATE_SET      , // 0x11
-    PAGE_SETTINGS_DISPLAY           , // 0x12
-    PAGE_SETTINGS_GPS               , // 0x13
-    PAGE_SETTINGS_RADIO             , // 0x14
-    PAGE_SETTINGS_M17               , // 0x15
-    PAGE_SETTINGS_VOICE             , // 0x16
-    PAGE_SETTINGS_RESET_TO_DEFAULTS , // 0x17
-    PAGE_LOW_BAT                    , // 0x18
-    PAGE_ABOUT                      , // 0x19
-    PAGE_STUBBED                    , // 0x1A
-    PAGE_NUM_OF                       // 0x1B
+    PAGE_SETTINGS_TIMEDATE          , // 0x0F
+    PAGE_SETTINGS_TIMEDATE_SET      , // 0x10
+    PAGE_SETTINGS_DISPLAY           , // 0x11
+    PAGE_SETTINGS_GPS               , // 0x12
+    PAGE_SETTINGS_RADIO             , // 0x13
+    PAGE_SETTINGS_M17               , // 0x14
+    PAGE_SETTINGS_VOICE             , // 0x15
+    PAGE_SETTINGS_RESET_TO_DEFAULTS , // 0x16
+    PAGE_LOW_BAT                    , // 0x17
+    PAGE_ABOUT                      , // 0x18
+    PAGE_STUBBED                    , // 0x19
+    PAGE_NUM_OF                       // 0x1A
 }uiPageNum_en;
 
 enum
@@ -111,7 +89,8 @@ typedef enum
     GUI_LINE_BOTTOM  ,
     GUI_LINE_3_LARGE ,
     GUI_LINE_NUM_OF  ,
-    GUI_LINE_DEFAULT = GUI_LINE_TOP
+    GUI_LINE_DEFAULT = GUI_LINE_TOP ,
+    GUI_LINE_INITIAL = GUI_LINE_TOP
 }Line_en;
 
 typedef enum
@@ -136,7 +115,8 @@ typedef enum
 
     GUI_STYLE_NUM_OF  ,
 
-    GUI_STYLE_DEFAULT = GUI_STYLE_1
+    GUI_STYLE_DEFAULT = GUI_STYLE_1 ,
+    GUI_STYLE_INITIAL = GUI_STYLE_TOP
 
 }Style_en;
 
@@ -151,6 +131,11 @@ typedef enum
     LINK_TYPE_PAGE  ,
     LINK_TYPE_VALUE
 }LinkType_en;
+
+enum
+{
+    VAR_MAX_NUM_OF = 8
+};
 
 typedef struct
 {
@@ -293,7 +278,7 @@ typedef struct
 typedef struct
 {
     Pos_st pos ;
-    Pos_t  height ;
+    Pos_t  height ;//@@@KL redact
 }Line_st;
 
 typedef struct
@@ -302,6 +287,12 @@ typedef struct
     uint8_t num ;
     uint8_t amt ;
 }Link_st;
+
+typedef struct
+{
+    uint8_t varNum ;
+    Pos_st  pos ;
+}Var_st;
 
 /**
  * Struct containing a set of positions and sizes that get
@@ -321,17 +312,20 @@ typedef struct
     uint8_t  scrollOffset ;
     Line_st  line ;
     Style_st style ;
+    Pos_st   itemPos ;
     Line_st  lines[ GUI_LINE_NUM_OF ] ;
     Style_st styles[ GUI_STYLE_NUM_OF ] ;
     uint8_t  lineIndex ;
     Link_st  links[ LINK_MAX_NUM_OF ] ;
     uint8_t  linkNumOf ;
     uint8_t  linkIndex ;
+    Var_st   vars[ VAR_MAX_NUM_OF ] ;
+    uint8_t  varNumOf ;
+    uint8_t  varIndex ;
     Font_st  input_font ;
     Font_st  menu_font ;
     Font_st  mode_font_big ;
     Font_st  mode_font_small ;
-    bool     printDisplayOn ;
     bool     inSelect ;
 }Layout_st;
 
@@ -342,6 +336,7 @@ typedef struct
     uint8_t  level ;
     uint8_t* ptr ;
     uint16_t index ;
+    uint16_t cmdIndex ;
     bool     renderPage ;
 }Page_st;
 
@@ -358,8 +353,9 @@ typedef struct
     bool            initialPageDisplay ;
     bool            update ;
     bool            pageHasEvents ;
-    bool            inStaticArea ;
     bool            inEventArea ;
+    bool            displayEnabledInitial ;
+    bool            displayEnabled ;
     long long int   timeStamp ;
     Timer_st        timer ;
     bool            sync_rtx ;

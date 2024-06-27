@@ -32,23 +32,23 @@
 #include <input.h>
 #include <hwconfig.h>
 /* UI menu functions, their implementation is in "ui_menu.c" */
-extern void _ui_drawMenuTop(UI_State_st* ui_state);
+extern void _ui_Draw_MenuTop(UI_State_st* ui_state);
 #ifdef GPS_PRESENT
-extern void _ui_drawMenuGPS();
-extern void _ui_drawSettingsGPS(UI_State_st* ui_state);
+extern void _ui_Draw_MenuGPS();
+extern void _ui_Draw_SettingsGPS(UI_State_st* ui_state);
 #endif
-extern void _ui_drawMenuSettings(UI_State_st* ui_state);
-extern void _ui_drawMenuInfo(UI_State_st* ui_state);
-extern void _ui_drawMenuAbout();
+extern void _ui_Draw_MenuSettings(UI_State_st* ui_state);
+extern void _ui_Draw_MenuInfo(UI_State_st* ui_state);
+extern void _ui_Draw_MenuAbout();
 #ifdef RTC_PRESENT
-extern void _ui_drawSettingsTimeDate();
-extern void _ui_drawSettingsTimeDateSet(UI_State_st* ui_state);
+extern void _ui_Draw_SettingsTimeDate();
+extern void _ui_Draw_SettingsTimeDateSet(UI_State_st* ui_state);
 #endif
-extern void _ui_drawSettingsDisplay(UI_State_st* ui_state);
-extern void _ui_drawSettingsM17(UI_State_st* ui_state);
-extern void _ui_drawSettingsModule17(UI_State_st* ui_state);
-extern void _ui_drawSettingsReset2Defaults(UI_State_st* ui_state);
-extern bool _ui_drawMacroMenu(UI_State_st* ui_state);
+extern void _ui_Draw_SettingsDisplay(UI_State_st* ui_state);
+extern void _ui_Draw_SettingsM17(UI_State_st* ui_state);
+extern void _ui_Draw_SettingsModule17(UI_State_st* ui_state);
+extern void _ui_Draw_SettingsReset2Defaults(UI_State_st* ui_state);
+extern bool _ui_Draw_MacroMenu(UI_State_st* ui_state);
 
 const char *Page_MenuItems[] =
 {
@@ -298,7 +298,7 @@ void ui_init()
     ui_state = (const struct UI_State_st){ 0 };
 }
 
-void ui_drawSplashScreen()
+void ui_Draw_SplashScreen()
 {
     gfx_clearScreen();
 
@@ -942,7 +942,7 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
                                 }
                                 case M_ABOUT:
                                 {
-                                    state.ui_screen = PAGE_MENU_ABOUT;
+                                    state.ui_screen = PAGE_ABOUT;
                                     break;
                                 }
                                 case M_SHUTDOWN:
@@ -1047,7 +1047,7 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
                 break;
             }
             // About screen
-            case PAGE_MENU_ABOUT:
+            case PAGE_ABOUT:
             {
                 if(msg.keys & KEY_ESC)
                 {
@@ -1424,55 +1424,55 @@ bool ui_updateGUI( Event_st* event )
         // VFO main screen
         case PAGE_MAIN_VFO:
         {
-            _ui_drawMainVFO(&ui_state);
+            _ui_Draw_MainVFO(&ui_state);
             break;
         }
         // Top menu screen
         case PAGE_MENU_TOP:
         {
-            _ui_drawMenuTop(&ui_state);
+            _ui_Draw_MenuTop(&ui_state);
             break;
         }
         // Settings menu screen
         case PAGE_MENU_SETTINGS:
         {
-            _ui_drawMenuSettings(&ui_state);
+            _ui_Draw_MenuSettings(&ui_state);
             break;
         }
         // Info menu screen
         case PAGE_MENU_INFO:
         {
-            _ui_drawMenuInfo(&ui_state);
+            _ui_Draw_MenuInfo(&ui_state);
             break;
         }
         // About menu screen
-        case PAGE_MENU_ABOUT:
+        case PAGE_ABOUT:
         {
-            _ui_drawMenuAbout();
+            _ui_Draw_MenuAbout();
             break;
         }
         // Display settings screen
         case PAGE_SETTINGS_DISPLAY:
         {
-            _ui_drawSettingsDisplay(&ui_state);
+            _ui_Draw_SettingsDisplay(&ui_state);
             break;
         }
         // M17 settings screen
         case PAGE_SETTINGS_M17:
         {
-            _ui_drawSettingsM17(&ui_state);
+            _ui_Draw_SettingsM17(&ui_state);
             break;
         }
         // Module 17 settings screen
         case PAGE_SETTINGS_MODULE17:
         {
-            _ui_drawSettingsModule17(&ui_state);
+            _ui_Draw_SettingsModule17(&ui_state);
             break;
         }
         // Screen to support resetting Settings and VFO to defaults
         case PAGE_SETTINGS_RESET_TO_DEFAULTS:
         {
-            _ui_drawSettingsReset2Defaults(&ui_state);
+            _ui_Draw_SettingsReset2Defaults(&ui_state);
             break;
         }
     }

@@ -26,6 +26,7 @@
 #include <input.h>
 #include <hwconfig.h>
 #include <voicePromptUtils.h>
+#include <ui.h>
 #include <ui/ui_default.h>
 #include <rtx.h>
 #include <interfaces/platform.h>
@@ -50,13 +51,15 @@
 #include "ui_scripts.h"
 #include "ui_commands.h"
 #include "ui_value_display.h"
+#include "ui_list_display.h"
 #include "ui_states.h"
 #include "ui_value_input.h"
-#include "ui_menu.h"
 
-static void GuiVal_DispVal( GuiState_st* guiState , char* valueBuffer );
+static void GuiVal_Disp_Val( GuiState_st* guiState , char* valueBuffer );
+static void GuiVal_Disp_Bat( GuiState_st* guiState , Pos_st* pos , uint16_t percentage );
+static void GuiVal_Disp_StoreVarPos( GuiState_st* guiState );
+static void GuiVal_Disp_ClearVarPos( GuiState_st* guiState );
 
-static void GuiVal_CurrentTime( GuiState_st* guiState );
 static void GuiVal_BatteryLevel( GuiState_st* guiState );
 static void GuiVal_LockState( GuiState_st* guiState );
 static void GuiVal_ModeInfo( GuiState_st* guiState );
@@ -114,68 +117,90 @@ static void GuiVal_RadioFw( GuiState_st* guiState );
 #endif // PLATFORM_TTWRPLUS
 static void GuiVal_BackupRestore( GuiState_st* guiState );
 static void GuiVal_LowBattery( GuiState_st* guiState );
+#ifdef DISPLAY_DEBUG_MSG
+enum
+{
+    DEBUG_MSG_ALLOC = 10
+};
+static char    DebugMsg[ DEBUG_MSG_ALLOC + 1 ] = "\0" ;
+static uint8_t DebugVal0 = 0 ;
+static uint8_t DebugVal1 = 0 ;
+static uint8_t DebugVal2 = 0 ;
+static uint8_t DebugVal3 = 0 ;
+static uint8_t DebugVal4 = 0 ;
+static uint8_t DebugVal5 = 0 ;
+static uint8_t DebugCnt  = 0 ;
+static void GuiVal_DebugMsg( GuiState_st* guiState );
+static void GuiVal_DebugValues( GuiState_st* guiState );
+#endif // DISPLAY_DEBUG_MSG
 static void GuiVal_Stubbed( GuiState_st* guiState );
 
 typedef void (*ui_GuiVal_fn)( GuiState_st* guiState );
 
 static const ui_GuiVal_fn ui_GuiVal_Table[ GUI_VAL_DSP_NUM_OF ] =
 {
-    GuiVal_CurrentTime      ,
-    GuiVal_BatteryLevel     ,
-    GuiVal_LockState        ,
-    GuiVal_ModeInfo         ,
-    GuiVal_BankChannel      ,
-    GuiVal_Frequency        ,
-    GuiVal_RSSIMeter        ,
+    GuiVal_BatteryLevel     ,   // GUI_VAL_DSP_BATTERY_LEVEL    0x00
+    GuiVal_LockState        ,   // GUI_VAL_DSP_LOCK_STATE       0x01
+    GuiVal_ModeInfo         ,   // GUI_VAL_DSP_MODE_INFO        0x02
+    GuiVal_BankChannel      ,   // GUI_VAL_DSP_BANK_CHANNEL     0x03
+    GuiVal_Frequency        ,   // GUI_VAL_DSP_FREQUENCY        0x04
+    GuiVal_RSSIMeter        ,   // GUI_VAL_DSP_RSSI_METER       0x05
 
-    GuiVal_Banks            ,
-    GuiVal_Channels         ,
-    GuiVal_Contacts         ,
-    GuiVal_GPS              ,
+    GuiVal_Banks            ,   // GUI_VAL_DSP_BANKS            0x06
+    GuiVal_Channels         ,   // GUI_VAL_DSP_CHANNELS         0x07
+    GuiVal_Contacts         ,   // GUI_VAL_DSP_CONTACTS         0x08
+#ifdef GPS_PRESENT
+    GuiVal_GPS              ,   // GUI_VAL_DSP_GPS              0x09
+#endif // GPS_PRESENT
     // Settings
     // Display
 #ifdef SCREEN_BRIGHTNESS
-    GuiVal_ScreenBrightness ,
+    GuiVal_ScreenBrightness ,   // GUI_VAL_DSP_BRIGHTNESS       0x0A
 #endif
 #ifdef SCREEN_CONTRAST
-    GuiVal_ScreenContrast   ,
+    GuiVal_ScreenContrast   ,   // GUI_VAL_DSP_CONTRAST         0x0B
 #endif
-    GuiVal_Timer            ,
+    GuiVal_Timer            ,   // GUI_VAL_DSP_TIMER            0x0C
     // Time and Date
-    GuiVal_Date             ,
-    GuiVal_Time             ,
+    GuiVal_Date             ,   // GUI_VAL_DSP_DATE             0x0D
+    GuiVal_Time             ,   // GUI_VAL_DSP_TIME             0x0E
     // GPS
-    GuiVal_GPSEnables       ,
-    GuiVal_GPSSetTime       ,
-    GuiVal_GPSTimeZone      ,
+#ifdef GPS_PRESENT
+    GuiVal_GPSEnables       ,   // GUI_VAL_DSP_GPS_ENABLED      0x0F
+    GuiVal_GPSSetTime       ,   // GUI_VAL_DSP_GPS_SET_TIME     0x10
+    GuiVal_GPSTimeZone      ,   // GUI_VAL_DSP_GPS_TIME_ZONE    0x11
+#endif // GPS_PRESENT
     // Radio
-    GuiVal_RadioOffset      ,
-    GuiVal_RadioDirection   ,
-    GuiVal_RadioStep        ,
+    GuiVal_RadioOffset      ,   // GUI_VAL_DSP_RADIO_OFFSET     0x12
+    GuiVal_RadioDirection   ,   // GUI_VAL_DSP_RADIO_DIRECTION  0x13
+    GuiVal_RadioStep        ,   // GUI_VAL_DSP_RADIO_STEP       0x14
     // M17
-    GuiVal_M17Callsign      ,
-    GuiVal_M17Can           ,
-    GuiVal_M17CanRxCheck    ,
+    GuiVal_M17Callsign      ,   // GUI_VAL_DSP_M17_CALLSIGN     0x15
+    GuiVal_M17Can           ,   // GUI_VAL_DSP_M17_CAN          0x16
+    GuiVal_M17CanRxCheck    ,   // GUI_VAL_DSP_M17_CAN_RX_CHECK 0x17
     // Accessibility - Voice
-    GuiVal_Voice            ,
-    GuiVal_Phonetic         ,
+    GuiVal_Voice            ,   // GUI_VAL_DSP_LEVEL            0x18
+    GuiVal_Phonetic         ,   // GUI_VAL_DSP_PHONETIC         0x19
     // Info
-    GuiVal_BatteryVoltage   ,
-    GuiVal_BatteryCharge    ,
-    GuiVal_Rssi             ,
-    GuiVal_UsedHeap         ,
-    GuiVal_Band             ,
-    GuiVal_Vhf              ,
-    GuiVal_Uhf              ,
-    GuiVal_HwVersion        ,
+    GuiVal_BatteryVoltage   ,   // GUI_VAL_DSP_BATTERY_VOLTAGE  0x1A
+    GuiVal_BatteryCharge    ,   // GUI_VAL_DSP_BATTERY_CHARGE   0x1B
+    GuiVal_Rssi             ,   // GUI_VAL_DSP_RSSI             0x1C
+    GuiVal_UsedHeap         ,   // GUI_VAL_DSP_USED_HEAP        0x1D
+    GuiVal_Band             ,   // GUI_VAL_DSP_BAND             0x1E
+    GuiVal_Vhf              ,   // GUI_VAL_DSP_VHF              0x1F
+    GuiVal_Uhf              ,   // GUI_VAL_DSP_UHF              0x20
+    GuiVal_HwVersion        ,   // GUI_VAL_DSP_HW_VERSION       0x21
 #ifdef PLATFORM_TTWRPLUS
-    GuiVal_Radio            ,
-    GuiVal_RadioFw          ,
+    GuiVal_Radio            ,   // GUI_VAL_DSP_RADIO            0x22
+    GuiVal_RadioFw          ,   // GUI_VAL_DSP_RADIO_FW         0x23
 #endif // PLATFORM_TTWRPLUS
-    GuiVal_BackupRestore    ,
-    GuiVal_LowBattery       ,
-
-    GuiVal_Stubbed
+    GuiVal_BackupRestore    ,   // GUI_VAL_DSP_BACKUP_RESTORE   0x24
+    GuiVal_LowBattery       ,   // GUI_VAL_DSP_LOW_BATTERY      0x25
+#ifdef DISPLAY_DEBUG_MSG
+    GuiVal_DebugMsg         ,   // GUI_VAL_DSP_DEBUG_MSG        0x26
+    GuiVal_DebugValues      ,   // GUI_VAL_DSP_DEBUG_VALUES     0x27
+#endif // DISPLAY_DEBUG_MSG
+    GuiVal_Stubbed              // GUI_VAL_DSP_STUBBED          0x28
 };
 
 void GuiVal_DisplayValue( GuiState_st* guiState , uint8_t valueNum )
@@ -188,35 +213,6 @@ void GuiVal_DisplayValue( GuiState_st* guiState , uint8_t valueNum )
     }
 
     ui_GuiVal_Table[ valNum ]( guiState );
-    guiState->page.renderPage = true ;
-}
-
-static void GuiVal_CurrentTime( GuiState_st* guiState )
-{
-    Line_st*  line     = &guiState->layout.lines[ GUI_LINE_TOP ] ;
-    Style_st* style    = &guiState->layout.styles[ GUI_STYLE_TOP ] ;
-    Pos_st    start ;
-    uint16_t  height ;
-    uint16_t  width ;
-    Color_st  color_bg ;
-    Color_st  color_fg ;
-
-    ui_ColorLoad( &color_bg , COLOR_BG );
-    ui_ColorLoad( &color_fg , COLOR_FG );
-
-#ifdef RTC_PRESENT
-    // clear the time display area
-    //@@@KL needs to be more objectively determined
-    height    = line->height ;
-    width     = 68 ;
-    start.y   = ( line->pos.y - height ) + 1 ;
-    start.x   = 44 ;
-    gfx_clearRectangle( start , width , height );
-    // Print clock on top bar
-    datetime_t local_time = utcToLocalTime( last_state.time , last_state.settings.utc_timezone );
-    gfx_print( line->pos , style->font.size , ALIGN_CENTER ,
-               color_fg , "%02d:%02d:%02d" , local_time.hour , local_time.minute , local_time.second );
-#endif // RTC_PRESENT
 
 }
 
@@ -227,8 +223,6 @@ static void GuiVal_BatteryLevel( GuiState_st* guiState )
     Style_st* styleTop = &guiState->layout.styles[ GUI_STYLE_TOP ] ;
 #endif // BAT_NONE
     Pos_st    start ;
-    uint16_t  height ;
-    uint16_t  width ;
     Color_st  color_bg ;
     Color_st  color_fg ;
 
@@ -236,19 +230,19 @@ static void GuiVal_BatteryLevel( GuiState_st* guiState )
     ui_ColorLoad( &color_fg , COLOR_FG );
 
     // clear the time display area
-    width   = SCREEN_WIDTH / 9 ;
-    height  = lineTop->height - ( guiState->layout.status_v_pad * 2 );
-    start.x = SCREEN_WIDTH - width - guiState->layout.horizontal_pad ;
+    start.w = SCREEN_WIDTH / 9 ;
+    start.h = lineTop->height - ( guiState->layout.status_v_pad * 2 );
+    start.x = SCREEN_WIDTH - start.w - guiState->layout.horizontal_pad ;
     start.y = guiState->layout.status_v_pad ;
-    gfx_clearRectangle( start , width , height );
+    gfx_clearRectangle( &start );
     // If the radio has no built-in battery, print input voltage
 #ifdef BAT_NONE
-    gfx_print( lineTop->pos ,
-               styleTop->font.size ,
-               ALIGN_RIGHT , color_fg , "%.1fV" , last_state.v_bat );
+    guiState->layout.itemPos = gfx_print( &lineTop->pos , styleTop->font.size ,
+                                          ALIGN_RIGHT , &color_fg , "%.1fV" ,
+                                          last_state.v_bat );
 #else // BAT_NONE
     // Otherwise print battery icon on top bar, use 4 px padding
-    gfx_drawBattery( start , width , height , last_state.charge );
+    GuiVal_Disp_Bat( guiState , &start , last_state.charge );
 #endif // BAT_NONE
 
 }
@@ -269,7 +263,8 @@ static void GuiVal_LockState( GuiState_st* guiState )
     {
         start  = lineTop->pos ;
         width  = styleTop->symbolSize + FONT_SIZE_24PT + 1 ;
-        gfx_drawSymbol( start , width , ALIGN_LEFT , color_fg , SYMBOL_LOCK );
+        gfx_drawSymbol( &start , width , ALIGN_LEFT ,
+                        &color_fg , SYMBOL_LOCK );
     }
 
 }
@@ -344,22 +339,22 @@ static void GuiVal_ModeInfo( GuiState_st* guiState )
             // Print Bandwidth, Tone and encdec info
             if( tone_tx_enable || tone_rx_enable )
             {
-                gfx_print( line2->pos , style2->font.size , ALIGN_CENTER ,
-                           color_fg , "%s %4.1f %s" , bw_str ,
+                gfx_print( &line2->pos , style2->font.size , ALIGN_CENTER ,
+                           &color_fg , "%s %4.1f %s" , bw_str ,
                            ctcss_tone[ last_state.channel.fm.txTone ] / 10.0f , encdec_str );
             }
             else
             {
-                gfx_print( line2->pos , style2->font.size , ALIGN_CENTER ,
-                           color_fg , "%s" , bw_str );
+                gfx_print( &line2->pos , style2->font.size , ALIGN_CENTER ,
+                           &color_fg , "%s" , bw_str );
             }
             break ;
         }
         case OPMODE_DMR :
         {
             // Print Contact
-            gfx_print( line2->pos , style2->font.size , ALIGN_CENTER ,
-                       color_fg , "%s" , last_state.contact.name );
+            gfx_print( &line2->pos , style2->font.size , ALIGN_CENTER ,
+                       &color_fg , "%s" , last_state.contact.name );
             break ;
         }
         case OPMODE_M17 :
@@ -370,35 +365,35 @@ static void GuiVal_ModeInfo( GuiState_st* guiState )
             if( rtxStatus.lsfOk )
             {
                 // Destination address
-                gfx_drawSymbol( line2->pos , style2->symbolSize , ALIGN_LEFT ,
-                                color_fg , SYMBOL_CALL_RECEIVED );
+                gfx_drawSymbol( &line2->pos , style2->symbolSize , ALIGN_LEFT ,
+                                &color_fg , SYMBOL_CALL_RECEIVED );
 
-                gfx_print( line2->pos , style2->font.size , ALIGN_CENTER ,
-                           color_fg , "%s" , rtxStatus.M17_dst );
+                gfx_print( &line2->pos , style2->font.size , ALIGN_CENTER ,
+                           &color_fg , "%s" , rtxStatus.M17_dst );
 
                 // Source address
-                gfx_drawSymbol( line1->pos , style1->symbolSize , ALIGN_LEFT ,
-                                color_fg , SYMBOL_CALL_MADE );
+                gfx_drawSymbol( &line1->pos , style1->symbolSize , ALIGN_LEFT ,
+                                &color_fg , SYMBOL_CALL_MADE );
 
-                gfx_print( line1->pos , style2->font.size , ALIGN_CENTER ,
-                           color_fg , "%s" , rtxStatus.M17_src );
+                gfx_print( &line1->pos , style2->font.size , ALIGN_CENTER ,
+                           &color_fg , "%s" , rtxStatus.M17_src );
 
                 // RF link (if present)
                 if( rtxStatus.M17_link[0] != '\0' )
                 {
-                    gfx_drawSymbol( line4->pos , style3->symbolSize , ALIGN_LEFT ,
-                                    color_fg , SYMBOL_ACCESS_POINT );
-                    gfx_print( line4->pos , style2->font.size , ALIGN_CENTER ,
-                               color_fg , "%s" , rtxStatus.M17_link );
+                    gfx_drawSymbol( &line4->pos , style3->symbolSize , ALIGN_LEFT ,
+                                    &color_fg , SYMBOL_ACCESS_POINT );
+                    gfx_print( &line4->pos , style2->font.size , ALIGN_CENTER ,
+                               &color_fg , "%s" , rtxStatus.M17_link );
                 }
 
                 // Reflector (if present)
                 if( rtxStatus.M17_refl[0] != '\0' )
                 {
-                    gfx_drawSymbol( line3->pos , style4->symbolSize , ALIGN_LEFT ,
-                                    color_fg , SYMBOL_NETWORK );
-                    gfx_print( line3->pos , style2->font.size , ALIGN_CENTER ,
-                               color_fg , "%s" , rtxStatus.M17_refl );
+                    gfx_drawSymbol( &line3->pos , style4->symbolSize , ALIGN_LEFT ,
+                                    &color_fg , SYMBOL_NETWORK );
+                    gfx_print( &line3->pos , style2->font.size , ALIGN_CENTER ,
+                               &color_fg , "%s" , rtxStatus.M17_refl );
                 }
             }
             else
@@ -420,8 +415,8 @@ static void GuiVal_ModeInfo( GuiState_st* guiState )
                     }
                 }
 
-                gfx_print( line2->pos , style2->font.size , ALIGN_CENTER ,
-                           color_fg , "M17 #%s" , dst );
+                gfx_print( &line2->pos , style2->font.size , ALIGN_CENTER ,
+                           &color_fg , "M17 #%s" , dst );
             }
             break ;
         }
@@ -439,9 +434,9 @@ static void GuiVal_BankChannel( GuiState_st* guiState )
     ui_ColorLoad( &color_fg , COLOR_FG );
 
     // Print Bank number, channel number and Channel name
-    gfx_print( line1->pos ,
+    gfx_print( &line1->pos ,
                style1->font.size , ALIGN_CENTER ,
-               color_fg , "%01d-%03d: %.12s" ,
+               &color_fg , "%01d-%03d: %.12s" ,
                bank_enabled , last_state.channel_index + 1 , last_state.channel.name );
 }
 
@@ -461,8 +456,8 @@ static void GuiVal_Frequency( GuiState_st* guiState )
         ui_ColorLoad( &color_fg , COLOR_FG );
 
         // Print big numbers frequency
-        gfx_print( line3Large->pos , style3Large->font.size , ALIGN_CENTER ,
-                   color_fg , "%.7g" , (float)frequency / 1000000.0f );
+        gfx_print( &line3Large->pos , style3Large->font.size , ALIGN_CENTER ,
+                   &color_fg , "%.7g" , (float)frequency / 1000000.0f );
     }
 
 }
@@ -474,15 +469,13 @@ static void GuiVal_RSSIMeter( GuiState_st* guiState )
     float     rssi         = last_state.rssi ;
     float     squelch      = last_state.settings.sqlLevel / 16.0f ; // squelch bar
     Pos_st    meter_pos ;
-    uint16_t  meter_width ;
-    uint16_t  meter_height ;
     uint8_t   mic_level    = platform_getMicLevel();
     Color_st  color_op3 ;
 
-    meter_width  = SCREEN_WIDTH - ( 2 * guiState->layout.horizontal_pad ) ;
-    meter_height = lineBottom->height ;
-    meter_pos.x  = guiState->layout.horizontal_pad ;
-    meter_pos.y  = ( SCREEN_HEIGHT - meter_height ) - guiState->layout.bottom_pad ;
+    meter_pos.w = SCREEN_WIDTH - ( 2 * guiState->layout.horizontal_pad ) ;
+    meter_pos.h = lineBottom->height ;
+    meter_pos.x = guiState->layout.horizontal_pad ;
+    meter_pos.y = ( SCREEN_HEIGHT - meter_pos.h ) - guiState->layout.bottom_pad ;
 
     ui_ColorLoad( &color_op3 , COLOR_OP3 );
 
@@ -490,20 +483,17 @@ static void GuiVal_RSSIMeter( GuiState_st* guiState )
     {
         case OPMODE_FM :
         {
-            gfx_drawSmeter( meter_pos , meter_width , meter_height ,
-                            rssi , squelch , color_op3 );
+            gfx_drawSmeter( &meter_pos , rssi , squelch , &color_op3 );
             break ;
         }
         case OPMODE_DMR :
         {
-            gfx_drawSmeter( meter_pos , meter_width , meter_height ,
-                            rssi , squelch , color_op3 );
+            gfx_drawSmeter( &meter_pos , rssi , squelch , &color_op3 );
             break ;
         }
         case OPMODE_M17 :
         {
-            gfx_drawSmeterLevel( meter_pos , meter_width , meter_height ,
-                                 rssi , mic_level );
+            gfx_drawSmeterLevel( &meter_pos , rssi , mic_level );
             break ;
         }
     }
@@ -512,17 +502,17 @@ static void GuiVal_RSSIMeter( GuiState_st* guiState )
 
 static void GuiVal_Banks( GuiState_st* guiState )
 {
-    _ui_drawMenuList( guiState , PAGE_MENU_BANK );
+    _ui_Draw_MenuList( guiState , PAGE_MENU_BANK );
 }
 
 static void GuiVal_Channels( GuiState_st* guiState )
 {
-    _ui_drawMenuList( guiState , PAGE_MENU_CHANNEL );
+    _ui_Draw_MenuList( guiState , PAGE_MENU_CHANNEL );
 }
 
 static void GuiVal_Contacts( GuiState_st* guiState )
 {
-    _ui_drawMenuList( guiState , PAGE_MENU_CONTACTS );
+    _ui_Draw_MenuList( guiState , PAGE_MENU_CONTACTS );
 }
 
 #ifdef GPS_PRESENT
@@ -545,24 +535,24 @@ static void GuiVal_GPS( GuiState_st* guiState )
     ui_ColorLoad( &color_fg , COLOR_FG );
 
     // Print "GPS" on top bar
-    gfx_print( lineTop->pos , styleTop->font.size , ALIGN_CENTER ,
-               color_fg , currentLanguage->gps );
-    Pos_st fix_pos = { line2->pos.x , ( SCREEN_HEIGHT * 2 ) / 5 };
+    gfx_print( &lineTop->pos , styleTop->font.size , ALIGN_CENTER ,
+               &color_fg , currentLanguage->gps );
+    Pos_st fix_pos = { line2->pos.x , ( SCREEN_HEIGHT * 2 ) / 5 , 0 , 0 };
     // Print GPS status, if no fix, hide details
     if( !last_state.settings.gps_enabled )
     {
-        gfx_print( fix_pos , style3Large->font.size , ALIGN_CENTER ,
-                   color_fg , currentLanguage->gpsOff );
+        gfx_print( &fix_pos , style3Large->font.size , ALIGN_CENTER ,
+                   &color_fg , currentLanguage->gpsOff );
     }
     else if( last_state.gps_data.fix_quality == 0 )
     {
-        gfx_print( fix_pos , style3Large->font.size , ALIGN_CENTER ,
-                   color_fg , currentLanguage->noFix );
+        gfx_print( &fix_pos , style3Large->font.size , ALIGN_CENTER ,
+                   &color_fg , currentLanguage->noFix );
     }
     else if( last_state.gps_data.fix_quality == 6 )
     {
-        gfx_print( fix_pos , style3Large->font.size , ALIGN_CENTER ,
-                   color_fg , currentLanguage->fixLost );
+        gfx_print( &fix_pos , style3Large->font.size , ALIGN_CENTER ,
+                   &color_fg , currentLanguage->fixLost );
     }
     else
     {
@@ -613,37 +603,38 @@ static void GuiVal_GPS( GuiState_st* guiState )
                 break ;
             }
         }
-        gfx_print( line1->pos , styleTop->font.size , ALIGN_LEFT ,
-                   color_fg , fix_buf );
-        gfx_print( line1->pos , styleTop->font.size , ALIGN_CENTER ,
-                   color_fg , "N     " );
-        gfx_print( line1->pos , styleTop->font.size , ALIGN_RIGHT ,
-                   color_fg , "%8.6f" , last_state.gps_data.latitude );
-        gfx_print( line2->pos , styleTop->font.size , ALIGN_LEFT ,
-                   color_fg , type_buf);
+        gfx_print( &line1->pos , styleTop->font.size , ALIGN_LEFT ,
+                   &color_fg , fix_buf );
+        gfx_print( &line1->pos , styleTop->font.size , ALIGN_CENTER ,
+                   &color_fg , "N     " );
+        gfx_print( &line1->pos , styleTop->font.size , ALIGN_RIGHT ,
+                   &color_fg , "%8.6f" , last_state.gps_data.latitude );
+        gfx_print( &line2->pos , styleTop->font.size , ALIGN_LEFT ,
+                   &color_fg , type_buf);
         // Convert from signed longitude, to unsigned + direction
         float longitude = last_state.gps_data.longitude ;
         char* direction = (longitude < 0) ? "W     " : "E     " ;
         longitude = (longitude < 0) ? -longitude : longitude ;
-        gfx_print( line2->pos , styleTop->font.size , ALIGN_CENTER ,
-                   color_fg , direction );
-        gfx_print( line2->pos , styleTop->font.size , ALIGN_RIGHT ,
-                   color_fg , "%8.6f" , longitude );
-        gfx_print( lineBottom->pos , styleBottom->font.size , ALIGN_CENTER ,
-                   color_fg , "S %4.1fkm/h  A %4.1fm" ,
+        gfx_print( &line2->pos , styleTop->font.size , ALIGN_CENTER ,
+                   &color_fg , direction );
+        gfx_print( &line2->pos , styleTop->font.size , ALIGN_RIGHT ,
+                   &color_fg , "%8.6f" , longitude );
+        gfx_print( &lineBottom->pos , styleBottom->font.size , ALIGN_CENTER ,
+                   &color_fg , "S %4.1fkm/h  A %4.1fm" ,
                    last_state.gps_data.speed , last_state.gps_data.altitude );
     }
     // Draw compass
-    Pos_st compass_pos = { guiState->layout.horizontal_pad * 2 , SCREEN_HEIGHT / 2 };
-    gfx_drawGPScompass( compass_pos , SCREEN_WIDTH / 9 + 2 ,
+    Pos_st compass_pos = { guiState->layout.horizontal_pad * 2 , SCREEN_HEIGHT / 2 , 0 , 0 };
+    gfx_drawGPScompass( &compass_pos , SCREEN_WIDTH / 9 + 2 ,
                         last_state.gps_data.tmg_true ,
                         last_state.gps_data.fix_quality != 0 &&
                         last_state.gps_data.fix_quality != 6 );
     // Draw satellites bar graph
-    Pos_st bar_pos = { line3Large->pos.x + SCREEN_WIDTH * 1 / 3 , SCREEN_HEIGHT / 2 };
-    gfx_drawGPSgraph( bar_pos ,
-                      ( ( SCREEN_WIDTH * 2 ) / 3) - guiState->layout.horizontal_pad ,
-                      SCREEN_HEIGHT / 3 ,
+    Pos_st bar_pos = { line3Large->pos.x + SCREEN_WIDTH * 1 / 3 ,
+                       SCREEN_HEIGHT / 2 ,
+                       ( ( SCREEN_WIDTH * 2 ) / 3) - guiState->layout.horizontal_pad ,
+                       SCREEN_HEIGHT / 3 };
+    gfx_drawGPSgraph( &bar_pos ,
                       last_state.gps_data.satellites ,
                       last_state.gps_data.active_sats );
 }
@@ -655,7 +646,7 @@ static void GuiVal_ScreenBrightness( GuiState_st* guiState )
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%d" , last_state.settings.brightness );
-    GuiVal_DispVal( guiState , valueBuffer );
+    GuiVal_Disp_Val( guiState , valueBuffer );
 
 }
 #endif // SCREEN_BRIGHTNESS
@@ -665,7 +656,7 @@ static void GuiVal_ScreenContrast( GuiState_st* guiState )
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%d" , last_state.settings.contrast );
-    GuiVal_DispVal( guiState , valueBuffer );
+    GuiVal_Disp_Val( guiState , valueBuffer );
 
 }
 #endif
@@ -675,7 +666,7 @@ static void GuiVal_Timer( GuiState_st* guiState )
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%s" ,
               display_timer_values[ last_state.settings.display_timer ] );
-    GuiVal_DispVal( guiState , valueBuffer );
+    GuiVal_Disp_Val( guiState , valueBuffer );
 
 }
 
@@ -686,7 +677,7 @@ static void GuiVal_Date( GuiState_st* guiState )
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%02d/%02d/%02d" ,
               local_time.date , local_time.month , local_time.year );
-    GuiVal_DispVal( guiState , valueBuffer );
+    GuiVal_Disp_Val( guiState , valueBuffer );
 
 }
 
@@ -697,7 +688,9 @@ static void GuiVal_Time( GuiState_st* guiState )
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%02d:%02d:%02d" ,
               local_time.hour , local_time.minute , local_time.second );
-    GuiVal_DispVal( guiState , valueBuffer );
+    GuiVal_Disp_Val( guiState , valueBuffer );
+
+    GuiVal_SetDebugMessage( "Time" );//@@@KL
 
 }
 
@@ -707,7 +700,7 @@ static void GuiVal_GPSEnables( GuiState_st* guiState )
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%s" ,
               (last_state.settings.gps_enabled) ? currentLanguage->on : currentLanguage->off );
-    GuiVal_DispVal( guiState , valueBuffer );
+    GuiVal_Disp_Val( guiState , valueBuffer );
 
 }
 
@@ -718,7 +711,7 @@ static void GuiVal_GPSSetTime( GuiState_st* guiState )
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%s" ,
               (last_state.gps_set_time) ? currentLanguage->on : currentLanguage->off );
-    GuiVal_DispVal( guiState , valueBuffer );
+    GuiVal_Disp_Val( guiState , valueBuffer );
 
 }
 
@@ -741,7 +734,7 @@ static void GuiVal_GPSTimeZone( GuiState_st* guiState )
     }
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%c%d.%d" , sign , tz_hr , tz_mn );
-    GuiVal_DispVal( guiState , valueBuffer );
+    GuiVal_Disp_Val( guiState , valueBuffer );
 
 }
 #endif // GPS_PRESENT
@@ -755,7 +748,7 @@ static void GuiVal_RadioOffset( GuiState_st* guiState )
     offset = abs( (int32_t)last_state.channel.tx_frequency -
                   (int32_t)last_state.channel.rx_frequency );
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%gMHz" , (float)offset / 1000000.0f );
-    GuiVal_DispVal( guiState , valueBuffer );
+    GuiVal_Disp_Val( guiState , valueBuffer );
 
 }
 
@@ -765,7 +758,7 @@ static void GuiVal_RadioDirection( GuiState_st* guiState )
 
     valueBuffer[ 0 ] = ( last_state.channel.tx_frequency >= last_state.channel.rx_frequency ) ? '+' : '-';
     valueBuffer[ 1 ] = '\0';
-    GuiVal_DispVal( guiState , valueBuffer );
+    GuiVal_Disp_Val( guiState , valueBuffer );
 
 }
 
@@ -782,7 +775,7 @@ static void GuiVal_RadioStep( GuiState_st* guiState )
     {
         snprintf( valueBuffer , MAX_ENTRY_LEN , "%gMHz" , (float)freq_steps[last_state.step_index] / 1000000.0f );
     }
-    GuiVal_DispVal( guiState , valueBuffer );
+    GuiVal_Disp_Val( guiState , valueBuffer );
 
 }
 
@@ -791,7 +784,7 @@ static void GuiVal_M17Callsign( GuiState_st* guiState )
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%s" , last_state.settings.callsign );
-    GuiVal_DispVal( guiState , valueBuffer );
+    GuiVal_Disp_Val( guiState , valueBuffer );
 
 }
 
@@ -800,7 +793,7 @@ static void GuiVal_M17Can( GuiState_st* guiState )
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%d" , last_state.settings.m17_can );
-    GuiVal_DispVal( guiState , valueBuffer );
+    GuiVal_Disp_Val( guiState , valueBuffer );
 
 }
 
@@ -810,7 +803,7 @@ static void GuiVal_M17CanRxCheck( GuiState_st* guiState )
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%s" ,
               (last_state.settings.m17_can_rx) ? currentLanguage->on : currentLanguage->off );
-    GuiVal_DispVal( guiState , valueBuffer );
+    GuiVal_Disp_Val( guiState , valueBuffer );
 
 }
 
@@ -841,7 +834,7 @@ static void GuiVal_Voice( GuiState_st* guiState )
             break ;
         }
     }
-    GuiVal_DispVal( guiState , valueBuffer );
+    GuiVal_Disp_Val( guiState , valueBuffer );
 
 }
 
@@ -851,7 +844,7 @@ static void GuiVal_Phonetic( GuiState_st* guiState )
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%s" ,
               last_state.settings.vpPhoneticSpell ? currentLanguage->on : currentLanguage->off );
-    GuiVal_DispVal( guiState , valueBuffer );
+    GuiVal_Disp_Val( guiState , valueBuffer );
 
 }
 
@@ -864,7 +857,7 @@ static void GuiVal_BatteryVoltage( GuiState_st* guiState )
     uint16_t volt  = ( last_state.v_bat + 50 ) / 1000 ;
     uint16_t mvolt = ( ( last_state.v_bat - volt * 1000 ) + 50 ) / 100 ;
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%d.%dV" , volt, mvolt );
-    GuiVal_DispVal( guiState , valueBuffer );
+    GuiVal_Disp_Val( guiState , valueBuffer );
 
 }
 
@@ -873,7 +866,7 @@ static void GuiVal_BatteryCharge( GuiState_st* guiState )
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%d%%" , last_state.charge );
-    GuiVal_DispVal( guiState , valueBuffer );
+    GuiVal_Disp_Val( guiState , valueBuffer );
 
 }
 
@@ -882,7 +875,7 @@ static void GuiVal_Rssi( GuiState_st* guiState )
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%.1fdBm" , last_state.rssi );
-    GuiVal_DispVal( guiState , valueBuffer );
+    GuiVal_Disp_Val( guiState , valueBuffer );
 
 }
 
@@ -891,7 +884,7 @@ static void GuiVal_UsedHeap( GuiState_st* guiState )
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%dB" , getHeapSize() - getCurrentFreeHeap() );
-    GuiVal_DispVal( guiState , valueBuffer );
+    GuiVal_Disp_Val( guiState , valueBuffer );
 
 }
 
@@ -901,7 +894,7 @@ static void GuiVal_Band( GuiState_st* guiState )
     hwInfo_t* hwinfo = (hwInfo_t*)platform_getHwInfo();
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%s %s" , hwinfo->vhf_band ? currentLanguage->VHF : "" , hwinfo->uhf_band ? currentLanguage->UHF : "" );
-    GuiVal_DispVal( guiState , valueBuffer );
+    GuiVal_Disp_Val( guiState , valueBuffer );
 
 }
 
@@ -911,7 +904,7 @@ static void GuiVal_Vhf( GuiState_st* guiState )
     hwInfo_t* hwinfo = (hwInfo_t*)platform_getHwInfo();
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%d - %d" , hwinfo->vhf_minFreq, hwinfo->vhf_maxFreq );
-    GuiVal_DispVal( guiState , valueBuffer );
+    GuiVal_Disp_Val( guiState , valueBuffer );
 
 }
 
@@ -921,7 +914,7 @@ static void GuiVal_Uhf( GuiState_st* guiState )
     hwInfo_t* hwinfo = (hwInfo_t*)platform_getHwInfo();
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%d - %d" , hwinfo->uhf_minFreq, hwinfo->uhf_maxFreq );
-    GuiVal_DispVal( guiState , valueBuffer );
+    GuiVal_Disp_Val( guiState , valueBuffer );
 
 }
 
@@ -931,7 +924,7 @@ static void GuiVal_HwVersion( GuiState_st* guiState )
     hwInfo_t* hwinfo = (hwInfo_t*)platform_getHwInfo();
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%d" , hwinfo->hw_version );
 
-    GuiVal_DispVal( guiState , valueBuffer );
+    GuiVal_Disp_Val( guiState , valueBuffer );
 
 }
 
@@ -940,32 +933,84 @@ static void GuiVal_Radio( GuiState_st* guiState )
 {
     (void)guiState ;
     //@@@KL Populate
-//    GuiVal_DispVal( guiState , valueBuffer );
+//    GuiVal_Disp_Val( guiState , valueBuffer );
 }
 
 static void GuiVal_RadioFw( GuiState_st* guiState )
 {
     (void)guiState ;
     //@@@KL Populate
-//    GuiVal_DispVal( guiState , valueBuffer );
+//    GuiVal_Disp_Val( guiState , valueBuffer );
 }
 #endif // PLATFORM_TTWRPLUS
 
 static void GuiVal_BackupRestore( GuiState_st* guiState )
 {
-    _ui_drawMenuList( guiState , PAGE_MENU_BACKUP_RESTORE );
+    _ui_Draw_MenuList( guiState , PAGE_MENU_BACKUP_RESTORE );
 }
 
 static void GuiVal_LowBattery( GuiState_st* guiState )
 {
     (void)guiState ;
-    uint16_t bat_width  = SCREEN_WIDTH / 2 ;
-    uint16_t bat_height = SCREEN_HEIGHT / 3 ;
-    Pos_st   bat_pos    = { SCREEN_WIDTH / 4 , SCREEN_HEIGHT / 8 };
+    Pos_st bat_pos = { SCREEN_WIDTH / 4 , SCREEN_HEIGHT / 8 ,
+                       SCREEN_WIDTH / 2 , SCREEN_HEIGHT / 3 };
 
-    gfx_drawBattery( bat_pos , bat_width , bat_height , 10 );
+    GuiVal_Disp_Bat( guiState , &bat_pos , 10 );
 
 }
+
+#ifdef DISPLAY_DEBUG_MSG
+void GuiVal_SetDebugMessage( char* debugMsg )
+{
+    uint8_t index ;
+
+    for( index = 0 ;
+         debugMsg[ index ]           &&
+         ( index < DEBUG_MSG_ALLOC )    ;
+         index++ )
+    {
+        DebugMsg[ index ] = debugMsg[ index ] ;
+    }
+    DebugMsg[ index ] = '\0' ;
+}
+
+static void GuiVal_DebugMsg( GuiState_st* guiState )
+{
+    GuiVal_Disp_Val( guiState , DebugMsg );
+
+    guiState->layout.line.pos.w = 0 ;
+    guiState->layout.line.pos.h = 0 ;
+}
+
+void GuiVal_SetDebugValues( uint8_t debugVal0 , uint8_t debugVal1 ,
+                            uint8_t debugVal2 , uint8_t debugVal3 ,
+                            uint8_t debugVal4 , uint8_t debugVal5   )
+{
+    DebugVal0 = debugVal0 ;
+    DebugVal1 = debugVal1 ;
+    DebugVal2 = debugVal2 ;
+    DebugVal3 = debugVal3 ;
+    DebugVal4 = debugVal4 ;
+    DebugVal5 = debugVal5 ;
+}
+
+static void GuiVal_DebugValues( GuiState_st* guiState )
+{
+    char valueBuffer[ 65 ] ;
+
+    snprintf( valueBuffer , 64 , "%d   \n%d   \n%d   \n%d   \n%d   \n%d   \n%d   " ,
+    DebugVal0 , DebugVal1 , DebugVal2 , DebugVal3 ,
+    DebugVal4 , DebugVal5 , DebugCnt );
+
+    GuiVal_Disp_Val( guiState , valueBuffer );
+
+    guiState->layout.line.pos.w = 0 ;
+    guiState->layout.line.pos.h = 0 ;
+
+    DebugCnt++;
+
+}
+#endif // DISPLAY_DEBUG_MSG
 
 // Default
 static void GuiVal_Stubbed( GuiState_st* guiState )
@@ -974,30 +1019,61 @@ static void GuiVal_Stubbed( GuiState_st* guiState )
 
     valueBuffer[ 0 ] = '?' ;
     valueBuffer[ 1 ] = '\0' ;
-    GuiVal_DispVal( guiState , valueBuffer );
+    GuiVal_Disp_Val( guiState , valueBuffer );
 
 }
 
-void GuiVal_DispVal( GuiState_st* guiState , char* valueBuffer )
+static void GuiVal_Disp_Val( GuiState_st* guiState , char* valueBuffer )
 {
     Color_st color_fg ;
     Color_st color_bg ;
     Color_st color_text ;
 
-    ui_ColorLoad( &color_fg , COLOR_FG );
-    ui_ColorLoad( &color_bg , COLOR_BG );
+    ui_ColorLoad( &color_fg , guiState->layout.style.colorFG );
+    ui_ColorLoad( &color_bg , guiState->layout.style.colorBG );
     color_text = color_fg ;
 
-    if( guiState->layout.printDisplayOn )
+    if( guiState->layout.inSelect )
     {
-        if( guiState->layout.inSelect )
-        {
-            color_text = color_bg ;
-        }
-        gfx_print( guiState->layout.line.pos        ,
-                   guiState->layout.style.font.size ,
-                   guiState->layout.style.align     ,
-                   color_text , valueBuffer           );
+        color_text = color_bg ;
     }
 
+    if( guiState->update )
+    {
+        GuiVal_Disp_ClearVarPos( guiState );
+    }
+
+    guiState->layout.itemPos = gfx_print( &guiState->layout.line.pos ,
+                               guiState->layout.style.font.size      ,
+                               guiState->layout.style.align          ,
+                               &color_text , valueBuffer               );
+
+    GuiVal_Disp_StoreVarPos( guiState );
+
+}
+
+static void GuiVal_Disp_Bat( GuiState_st* guiState , Pos_st* pos , uint16_t percentage )
+{
+    if( guiState->update )
+    {
+        GuiVal_Disp_ClearVarPos( guiState );
+    }
+    guiState->layout.itemPos = gfx_drawBattery( pos , percentage );
+    GuiVal_Disp_StoreVarPos( guiState );
+}
+
+static void GuiVal_Disp_StoreVarPos( GuiState_st* guiState )
+{
+    guiState->layout.vars[ guiState->layout.varIndex ].pos =
+    guiState->layout.itemPos ;
+}
+
+static void GuiVal_Disp_ClearVarPos( GuiState_st* guiState )
+{
+    Pos_st   pos      = guiState->layout.vars[ guiState->layout.varIndex ].pos ;
+    Color_st color_bg ;
+
+    ui_ColorLoad( &color_bg , guiState->layout.style.colorBG );
+    gfx_drawRect( &pos , &color_bg , true );
+    GuiVal_SetDebugValues( pos.y , pos.x , pos.w , pos.h , guiState->layout.lines[ GUI_LINE_TOP ].pos.y , 0 );//@@@KL
 }

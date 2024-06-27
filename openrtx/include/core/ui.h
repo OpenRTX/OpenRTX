@@ -34,7 +34,7 @@ void ui_init();
  * This function writes the OpenRTX splash screen image into the framebuffer
  * centered in the screen space.
  */
-void ui_drawSplashScreen();
+void ui_Draw_SplashScreen();
 
 /**
  * This function updates the local copy of the radio state
@@ -71,5 +71,8 @@ bool ui_pushEvent(const uint8_t type, const uint32_t data);
  * This function terminates the User Interface.
  */
 void ui_terminate();
+
+extern void ui_InitGuiStateLayoutLinks( Layout_st* layout );
+extern void ui_InitGuiStateLayoutVars( Layout_st* layout );
 
 #endif /* UI_H */
