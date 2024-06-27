@@ -1,0 +1,64 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+/dts-v1/;
+
+#include <ttwrplus-common.dtsi>
+
+/ {
+    model = "LILYGO T-TWR Plus 2.1 Preview";
+    compatible = "espressif,esp32s3";
+
+    aliases {
+        radio-prg = &uart2;
+        radio-prg-reset = &radio_prg_reset;
+    };
+
+&leds {
+    compatible = "gpio-leds";
+
+    radio_prg_reset: radio_prg_reset {
+        gpios = <&gpio0 14 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+        label = "SA868S RL78 reset on IO14";
+    };
+};
+
+&uart2 {
+    status = "okay";
+    current-speed = <115200>;
+    pinctrl-0 = <&uart2_default>;
+    pinctrl-names = "default";
+};
+
+&i2c0 {
+    sh1106_alt: sh1106_alt@3d {
+        compatible = "sinowealth,sh1106";
+        reg = <0x3d>;
+
+        width = <128>;
+        height = <64>;
+
+        segment-offset = <2>;
+        page-offset = <0>;
+        display-offset = <0>;
+        multiplex-ratio = <63>;
+        prechargep = <0x22>;
+
+        segment-remap;
+        com-invdir;
+    };
+};
+
+&pinctrl {
+    /* SA868S programming */
+    uart2_default: uart2_default {
+        group1 {
+            pinmux = <UART2_TX_GPIO43>;
+            output-high;
+        };
+        group2 {
+            pinmux = <UART2_RX_GPIO44>;
+            bias-pull-up;
+        };
+    };
+};
