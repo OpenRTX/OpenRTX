@@ -278,7 +278,7 @@ typedef struct
 typedef struct
 {
     Pos_st pos ;
-    Pos_t  height ;//@@@KL redact
+    Pos_t  height ;
 }Line_st;
 
 typedef struct

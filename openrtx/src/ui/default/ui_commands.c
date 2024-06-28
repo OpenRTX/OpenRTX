@@ -65,9 +65,9 @@ static bool GuiCmd_EventStart( GuiState_st* guiState );
 static bool GuiCmd_EventEnd( GuiState_st* guiState );
 static bool GuiCmd_TimerCheck( GuiState_st* guiState );
 static bool GuiCmd_TimerSet( GuiState_st* guiState );
-static bool GuiCmd_Line( GuiState_st* guiState );
+static bool GuiCmd_GoToLine( GuiState_st* guiState );
 static bool GuiCmd_GoToPos( GuiState_st* guiState );
-static bool GuiCmd_Style( GuiState_st* guiState );
+static bool GuiCmd_LoadStyle( GuiState_st* guiState );
 static bool GuiCmd_BGColor( GuiState_st* guiState );
 static bool GuiCmd_FGColor( GuiState_st* guiState );
 static bool GuiCmd_FontSize( GuiState_st* guiState );
@@ -81,57 +81,62 @@ static bool GuiCmd_Title( GuiState_st* guiState );
 static bool GuiCmd_Text( GuiState_st* guiState );
 static bool GuiCmd_ValueDisplay( GuiState_st* guiState );
 static bool GuiCmd_ValueInput( GuiState_st* guiState );
+static bool GuiCmd_DrawLine( GuiState_st* guiState );
+static bool GuiCmd_DrawRect( GuiState_st* guiState );
+static bool GuiCmd_DrawRectFilled( GuiState_st* guiState );
 #ifdef DISPLAY_DEBUG_MSG
 static bool GuiCmd_SetDbgMsg( GuiState_st* guiState );
 #endif // DISPLAY_DEBUG_MSG
 static bool GuiCmd_PageEnd( GuiState_st* guiState );
 static bool GuiCmd_Stubbed( GuiState_st* guiState );
 
-static bool GuiCmd_LinkStart( GuiState_st* guiState );
-static void GuiCmd_AdvToNextCmd( GuiState_st* guiState );
+static bool    GuiCmd_LinkStart( GuiState_st* guiState );
 
-static void GuiCmd_Print( GuiState_st* guiState , Color_st color , char* scriptPtr );
+static uint8_t GuiCmd_LdVal( GuiState_st* guiState );
+static void    GuiCmd_AdvToNextCmd( GuiState_st* guiState );
+
+static void    GuiCmd_Print( GuiState_st* guiState , Color_st color , char* scriptPtr );
 
 typedef bool (*ui_GuiCmd_fn)( GuiState_st* guiState );
 
 static const ui_GuiCmd_fn ui_GuiCmd_Table[ GUI_CMD_NUM_OF ] =
 {
-    GuiCmd_Null         , // GUI_CMD_NULL         0x00
-    GuiCmd_EventStart   , // GUI_CMD_EVENT_START  0x01
-    GuiCmd_EventEnd     , // GUI_CMD_EVENT_END    0x02
-    GuiCmd_TimerCheck   , // GUI_CMD_TIMER_CHECK  0x03
-    GuiCmd_TimerSet     , // GUI_CMD_TIMER_SET    0x04
-    GuiCmd_Line         , // GUI_CMD_LINE         0x05
-    GuiCmd_GoToPos      , // GUI_CMD_GOTO_POS     0x06
-    GuiCmd_Style        , // GUI_CMD_STYLE        0x07
-    GuiCmd_BGColor      , // GUI_CMD_BG_COLOR     0x08
-    GuiCmd_FGColor      , // GUI_CMD_FG_COLOR     0x09
-    GuiCmd_LineEnd      , // GUI_CMD_LINE_END     0x0A
-    GuiCmd_FontSize     , // GUI_CMD_FONT_SIZE    0x0B
-    GuiCmd_Align        , // GUI_CMD_ALIGN        0x0C
-    GuiCmd_RunScript    , // GUI_CMD_RUN_SCRIPT   0x0D
-    GuiCmd_Link         , // GUI_CMD_LINK         0x0E
-    GuiCmd_LinkEnd      , // GUI_CMD_LINK_END     0x0F
-    GuiCmd_Page         , // GUI_CMD_PAGE         0x10
-    GuiCmd_Title        , // GUI_CMD_TITLE        0x11
-    GuiCmd_Text         , // GUI_CMD_TEXT         0x12
-    GuiCmd_ValueDisplay , // GUI_CMD_VALUE_DSP    0x13
-    GuiCmd_ValueInput   , // GUI_CMD_VALUE_INP    0x14
+    GuiCmd_Null           , // GUI_CMD_NULL              0x00
+    GuiCmd_EventStart     , // GUI_CMD_EVENT_START       0x01
+    GuiCmd_EventEnd       , // GUI_CMD_EVENT_END         0x02
+    GuiCmd_TimerCheck     , // GUI_CMD_TIMER_CHECK       0x03
+    GuiCmd_TimerSet       , // GUI_CMD_TIMER_SET         0x04
+    GuiCmd_GoToLine       , // GUI_CMD_GOTO_LINE         0x05
+    GuiCmd_GoToPos        , // GUI_CMD_GOTO_POS          0x06
+    GuiCmd_LoadStyle      , // GUI_CMD_LOAD_STYLE        0x07
+    GuiCmd_BGColor        , // GUI_CMD_BG_COLOR          0x08
+    GuiCmd_FGColor        , // GUI_CMD_FG_COLOR          0x09
+    GuiCmd_LineEnd        , // GUI_CMD_LINE_END          0x0A
+    GuiCmd_FontSize       , // GUI_CMD_FONT_SIZE         0x0B
+    GuiCmd_Align          , // GUI_CMD_ALIGN             0x0C
+    GuiCmd_RunScript      , // GUI_CMD_RUN_SCRIPT        0x0D
+    GuiCmd_Link           , // GUI_CMD_LINK              0x0E
+    GuiCmd_LinkEnd        , // GUI_CMD_LINK_END          0x0F
+    GuiCmd_Page           , // GUI_CMD_PAGE              0x10
+    GuiCmd_Title          , // GUI_CMD_TITLE             0x11
+    GuiCmd_Text           , // GUI_CMD_TEXT              0x12
+    GuiCmd_ValueDisplay   , // GUI_CMD_VALUE_DSP         0x13
+    GuiCmd_ValueInput     , // GUI_CMD_VALUE_INP         0x14
+    GuiCmd_DrawLine       , // GUI_CMD_DRAW_LINE         0x15
+    GuiCmd_DrawRect       , // GUI_CMD_DRAW_RECT         0x16
+    GuiCmd_DrawRectFilled , // GUI_CMD_DRAW_RECT_FILLED  0x17
+    GuiCmd_Stubbed        , // 0x18
+    GuiCmd_Stubbed        , // 0x19
+    GuiCmd_Stubbed        , // 0x1A
+    GuiCmd_Stubbed        , // 0x1B
+    GuiCmd_Stubbed        , // 0x1C
 #ifndef DISPLAY_DEBUG_MSG
-    GuiCmd_Stubbed      , // GUI_CMD_STUBBED      0x15
+    GuiCmd_Stubbed        , // GUI_CMD_STUBBED           0x1D
 #else // DISPLAY_DEBUG_MSG
-    GuiCmd_SetDbgMsg    , // GUI_CMD_SET_DBG_MSG  0x15
+    GuiCmd_SetDbgMsg      , // GUI_CMD_SET_DBG_MSG       0x1D
 #endif // DISPLAY_DEBUG_MSG
-    GuiCmd_Stubbed      , // 0x16
-    GuiCmd_Stubbed      , // 0x17
-    GuiCmd_Stubbed      , // 0x18
-    GuiCmd_Stubbed      , // 0x19
-    GuiCmd_Stubbed      , // 0x1A
-    GuiCmd_Stubbed      , // 0x1B
-    GuiCmd_Stubbed      , // 0x1C
-    GuiCmd_Stubbed      , // 0x1D
-    GuiCmd_Stubbed      , // 0x1E
-    GuiCmd_PageEnd        // GUI_CMD_PAGE_END     0x1F
+    GuiCmd_Stubbed        , // 0x1E
+    GuiCmd_PageEnd          // GUI_CMD_PAGE_END          0x1F
 };
 
 bool ui_DisplayPage( GuiState_st* guiState )
@@ -298,10 +303,8 @@ static bool GuiCmd_EventStart( GuiState_st* guiState )
     bool     pageEnd = false ;
 
     guiState->page.index++ ;
-    eventType                       = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
-    guiState->page.index++ ;
-    eventPayload                    = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
-    guiState->page.index++ ;
+    eventType                       = GuiCmd_LdVal( guiState );
+    eventPayload                    = GuiCmd_LdVal( guiState );
 
     guiState->pageHasEvents         = true ;
 
@@ -344,8 +347,7 @@ static bool GuiCmd_TimerCheck( GuiState_st* guiState )
     bool    pageEnd       = false ;
 
     guiState->page.index++ ;
-    scriptPageNum = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
-    guiState->page.index++ ;
+    scriptPageNum = GuiCmd_LdVal( guiState );
 
     if( guiState->initialPageDisplay )
     {
@@ -379,14 +381,10 @@ static bool GuiCmd_TimerSet( GuiState_st* guiState )
     bool     pageEnd       = false ;
 
     guiState->page.index++ ;
-    scriptPageNum = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
-    guiState->page.index++ ;
-    period_u      = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
-    guiState->page.index++ ;
-    period_l      = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
-    guiState->page.index++ ;
+    scriptPageNum = GuiCmd_LdVal( guiState );
+    period_u      = GuiCmd_LdVal( guiState );
+    period_l      = GuiCmd_LdVal( guiState );
     period        = ( (uint16_t)period_u * 100 ) + (uint16_t)period_l ;
-    guiState->page.index++ ;
 
     if( guiState->timer.timeOut == 0 )
     {
@@ -398,14 +396,14 @@ static bool GuiCmd_TimerSet( GuiState_st* guiState )
 
 }
 
-static bool GuiCmd_Line( GuiState_st* guiState )
+static bool GuiCmd_GoToLine( GuiState_st* guiState )
 {
     uint8_t select ;
     bool    pageEnd = false ;
 
     guiState->page.index++ ;
 
-    select                = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+    select                = GuiCmd_LdVal( guiState );
 
     if( select >= GUI_LINE_NUM_OF )
     {
@@ -413,8 +411,6 @@ static bool GuiCmd_Line( GuiState_st* guiState )
     }
 
     guiState->layout.line = guiState->layout.lines[ select ] ;
-
-    guiState->page.index++ ;
 
     return pageEnd ;
 
@@ -424,28 +420,93 @@ static bool GuiCmd_GoToPos( GuiState_st* guiState )
 {
     Pos_st  pos     = guiState->layout.line.pos ;
     uint8_t select ;
+    uint8_t val ;
     bool    pageEnd = false ;
 
     guiState->page.index++ ;
 
-    select = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+    select = GuiCmd_LdVal( guiState );
 
     guiState->page.index++ ;
 
-    switch( select )
+    if( select & GUI_CMD_GOTO_POS_PARA_X )
     {
-        case GUI_CMD_GOTO_POS_PARA_X :
+        val = GuiCmd_LdVal( guiState );
+        if( val >= SCREEN_WIDTH )
         {
-            pos.x = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
-            guiState->page.index++ ;
-            break ;
+            pos.x = SCREEN_WIDTH - 1 ;
         }
-        case GUI_CMD_GOTO_POS_PARA_Y :
+        else
         {
-            pos.y = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
-            guiState->page.index++ ;
-            break ;
+            pos.x = val ;
         }
+        guiState->page.index++ ;
+    }
+    if( select & GUI_CMD_GOTO_ADD_PARA_X )
+    {
+        val = GuiCmd_LdVal( guiState );
+        if( ( pos.x + val ) >= SCREEN_WIDTH )
+        {
+            pos.x  = SCREEN_WIDTH - 1 ;
+        }
+        else
+        {
+            pos.x += val ;
+        }
+        guiState->page.index++ ;
+    }
+    if( select & GUI_CMD_GOTO_SUB_PARA_X )
+    {
+        val = GuiCmd_LdVal( guiState );
+        if( val > pos.x )
+        {
+            pos.x  = 0 ;
+        }
+        else
+        {
+            pos.x -= val ;
+        }
+        pos.x -= val ;
+        guiState->page.index++ ;
+    }
+    if( select & GUI_CMD_GOTO_POS_PARA_Y )
+    {
+        val = GuiCmd_LdVal( guiState );
+        if( val >= SCREEN_HEIGHT )
+        {
+            pos.y = SCREEN_HEIGHT - 1 ;
+        }
+        else
+        {
+            pos.y = val ;
+        }
+        guiState->page.index++ ;
+    }
+    if( select & GUI_CMD_GOTO_ADD_PARA_Y )
+    {
+        val = GuiCmd_LdVal( guiState );
+        if( ( pos.y + val ) >= SCREEN_HEIGHT )
+        {
+            pos.y  = SCREEN_HEIGHT - 1 ;
+        }
+        else
+        {
+            pos.y += val ;
+        }
+        guiState->page.index++ ;
+    }
+    if( select & GUI_CMD_GOTO_SUB_PARA_Y )
+    {
+        val = GuiCmd_LdVal( guiState );
+        if( val > pos.y )
+        {
+            pos.y  = 0 ;
+        }
+        else
+        {
+            pos.y -= val ;
+        }
+        guiState->page.index++ ;
     }
 
     guiState->layout.line.pos = pos ;
@@ -454,14 +515,14 @@ static bool GuiCmd_GoToPos( GuiState_st* guiState )
 
 }
 
-static bool GuiCmd_Style( GuiState_st* guiState )
+static bool GuiCmd_LoadStyle( GuiState_st* guiState )
 {
     uint8_t select ;
     bool    pageEnd = false ;
 
     guiState->page.index++ ;
 
-    select                 = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+    select                 = GuiCmd_LdVal( guiState );
 
     if( select >= GUI_STYLE_NUM_OF )
     {
@@ -483,7 +544,7 @@ static bool GuiCmd_BGColor( GuiState_st* guiState )
 
     guiState->page.index++ ;
 
-    color = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+    color = GuiCmd_LdVal( guiState );
 
     if( color >= COLOR_NUM_OF )
     {
@@ -491,8 +552,6 @@ static bool GuiCmd_BGColor( GuiState_st* guiState )
     }
 
     guiState->layout.style.colorBG = color ;
-
-    guiState->page.index++ ;
 
     return pageEnd ;
 
@@ -505,7 +564,7 @@ static bool GuiCmd_FGColor( GuiState_st* guiState )
 
     guiState->page.index++ ;
 
-    color = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+    color = GuiCmd_LdVal( guiState );
 
     if( color >= COLOR_NUM_OF )
     {
@@ -513,8 +572,6 @@ static bool GuiCmd_FGColor( GuiState_st* guiState )
     }
 
     guiState->layout.style.colorFG = color ;
-
-    guiState->page.index++ ;
 
     return pageEnd ;
 
@@ -546,7 +603,7 @@ static bool GuiCmd_FontSize( GuiState_st* guiState )
 
     guiState->page.index++ ;
 
-    fontSize = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+    fontSize = GuiCmd_LdVal( guiState );
 
     if( fontSize >= FONT_SIZE_NUM_OF )
     {
@@ -569,7 +626,7 @@ static bool GuiCmd_Align( GuiState_st* guiState )
 
     guiState->page.index++ ;
 
-    select = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+    select = GuiCmd_LdVal( guiState );
 
     guiState->page.index++ ;
 
@@ -596,7 +653,7 @@ static bool GuiCmd_Align( GuiState_st* guiState )
             break ;
         }
     }
-/*
+#ifdef ENABLE_ALIGN_VERTICAL
     switch( select & GUI_CMD_ALIGN_PARA_MASK_Y )
     {
         case GUI_CMD_ALIGN_PARA_TOP :
@@ -618,7 +675,7 @@ static bool GuiCmd_Align( GuiState_st* guiState )
             break ;
         }
     }
-*/
+#endif // ENABLE_ALIGN_VERTICAL
     guiState->layout.style = style ;
 
     return pageEnd ;
@@ -631,7 +688,7 @@ static bool GuiCmd_RunScript( GuiState_st* guiState )
     bool    pageEnd       = false ;
 
     guiState->page.index++ ;
-    scriptPageNum = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+    scriptPageNum = GuiCmd_LdVal( guiState );
     guiState->page.index++ ;
 
     if( !guiState->update )
@@ -682,7 +739,7 @@ static bool GuiCmd_Page( GuiState_st* guiState )
 
     guiState->page.index++ ;
 
-    linkNum = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+    linkNum = GuiCmd_LdVal( guiState );
     guiState->layout.links[ guiState->layout.linkIndex ].type = LINK_TYPE_PAGE ;
     guiState->layout.links[ guiState->layout.linkIndex ].num  = linkNum ;
     guiState->layout.links[ guiState->layout.linkIndex ].amt  = 0 ;
@@ -765,7 +822,7 @@ static bool GuiCmd_ValueDisplay( GuiState_st* guiState )
 
     guiState->page.index++ ;
 
-    valueNum = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+    valueNum = GuiCmd_LdVal( guiState );
 
     if( valueNum >= GUI_VAL_DSP_NUM_OF )
     {
@@ -801,11 +858,79 @@ static bool GuiCmd_ValueInput( GuiState_st* guiState )
 
     guiState->page.index++ ;
 
-    valueNum = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+    valueNum = GuiCmd_LdVal( guiState );
 
     ui_ValueInput( guiState , valueNum );
 
     guiState->page.renderPage = true ;
+
+    return pageEnd ;
+
+}
+
+static bool GuiCmd_DrawLine( GuiState_st* guiState )
+{
+    Pos_st   pos ;
+    Pos_st   startPos = guiState->layout.line.pos ;
+    Pos_st   endPos   = startPos ;
+    Color_st color ;
+    bool     pageEnd  = false ;
+
+    ui_ColorLoad( &color , guiState->layout.style.colorFG );
+
+    pos.w = GuiCmd_LdVal( guiState );
+    pos.h = GuiCmd_LdVal( guiState );
+
+    endPos.x += pos.w ;
+    endPos.y += pos.h ;
+
+    if( endPos.x > SCREEN_WIDTH )
+    {
+        endPos.x = SCREEN_WIDTH - 1 ;
+    }
+
+    if( endPos.y > SCREEN_HEIGHT )
+    {
+        endPos.y = SCREEN_HEIGHT - 1 ;
+    }
+
+    gfx_drawLine( &startPos , &endPos , &color );
+
+    guiState->layout.line.pos = endPos ;
+
+    return pageEnd ;
+
+}
+
+static bool GuiCmd_DrawRect( GuiState_st* guiState )
+{
+    Pos_st   pos      = guiState->layout.line.pos ;
+    Color_st color ;
+    bool     pageEnd  = false ;
+
+    ui_ColorLoad( &color , guiState->layout.style.colorFG );
+
+    pos.w = GuiCmd_LdVal( guiState );
+    pos.h = GuiCmd_LdVal( guiState );
+
+    gfx_drawRect( &pos , &color , false );
+
+    return pageEnd ;
+
+}
+
+static bool GuiCmd_DrawRectFilled( GuiState_st* guiState )
+{
+    Pos_st   pos      = guiState->layout.line.pos ;
+    Color_st color ;
+    bool     pageEnd  = false ;
+
+    ui_ColorLoad( &color , guiState->layout.style.colorFG );
+
+    pos.w = GuiCmd_LdVal( guiState );
+    pos.h = GuiCmd_LdVal( guiState );
+
+    gfx_drawRect( &pos , &color , true );
 
     return pageEnd ;
 
@@ -884,6 +1009,130 @@ static bool GuiCmd_LinkStart( GuiState_st* guiState )
     return pageEnd ;
 
 }
+
+#ifndef ENABLE_SYSTEM_VARIABLES
+static uint8_t GuiCmd_LdVal( GuiState_st* guiState )
+{
+    uint8_t value ;
+
+    value = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+    guiState->page.index++ ;
+
+    return value ;
+}
+#else // ENABLE_SYSTEM_VARIABLES
+static uint8_t GuiCmd_LdVal( GuiState_st* guiState )
+{
+    bool    selectorPresent = false ;
+    uint8_t selector ;
+    uint8_t operation ;
+    bool    modifierPresent = false ;
+    uint8_t modifier ;
+    uint8_t value ;
+
+    value     = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+    guiState->page.index++ ;
+
+    selector  = value ;
+
+    value    &= GUI_CMD_PARA_VALUE_MASK ;
+
+    if( selector & GUI_CMD_PARA_SYSTEM_FLAG )
+    {
+        selectorPresent = true ;
+
+        if( selector & GUI_CMD_PARA_MODIFIER_FLAG )
+        {
+            operation  = LD_VAL( guiState->page.ptr[ guiState->page.index ] );
+            guiState->page.index++ ;
+
+            modifier   = operation & GUI_CMD_PARA_VALUE_MASK ;
+            operation &= ~GUI_CMD_PARA_VALUE_MASK ;
+
+            if( modifier & GUI_CMD_PARA_SIGNED_FLAG )
+            {
+                modifier |= ~GUI_CMD_PARA_VALUE_MASK ;
+            }
+
+            modifierPresent = true ;
+
+        }
+
+        if( value & GUI_CMD_PARA_SIGNED_FLAG )
+        {
+            value |= ~GUI_CMD_PARA_VALUE_MASK ;
+        }
+
+    }
+    else
+    {
+        if( value & ( GUI_CMD_PARA_SIGNED_FLAG << 1 ) )
+        {
+            value |= ~ ( GUI_CMD_PARA_VALUE_MASK | GUI_CMD_PARA_SIGNED_FLAG ) ;
+        }
+    }
+
+    selector &= GUI_CMD_PARA_VALUE_MASK ;
+
+    // determine whether the value is a system variable selector present
+    if( selectorPresent )
+    {
+        // if so - set the value to the specified system variable
+        switch( selector )
+        {
+            case GUI_CMD_PARA_SYS_SCREEN_WIDTH :
+            {
+                value = SCREEN_WIDTH ;
+                break ;
+            }
+            case GUI_CMD_PARA_SYS_SCREEN_HEIGHT :
+            {
+                value = GUI_CMD_PARA_SYS_SCREEN_HEIGHT ;
+                break ;
+            }
+            case GUI_CMD_PARA_SYS_LINE_HEIGHT :
+            {
+                value = (uint8_t)guiState->layout.line.height ;
+                break ;
+            }
+            case GUI_CMD_PARA_SYS_FONT_SIZE :
+            {
+                value = (uint8_t)guiState->layout.style.font.size ;
+                break ;
+            }
+            case GUI_CMD_PARA_SYS_BG_COLOR :
+            {
+                value = (uint8_t)guiState->layout.style.colorBG ;
+                break ;
+            }
+            case GUI_CMD_PARA_SYS_FG_COLOR :
+            {
+                value = (uint8_t)guiState->layout.style.colorFG ;
+                break ;
+            }
+        }
+        // determine whether there is a modifier present
+        if( modifierPresent )
+        {
+            // modify the variable
+            switch( operation )
+            {
+                case GUI_CMD_PARA_MOD_ADD :
+                {
+                    value += modifier ;
+                    break ;
+                }
+                case GUI_CMD_PARA_MOD_SUB :
+                {
+                    value -= modifier ;
+                    break ;
+                }
+            }
+        }
+    }
+    return value ;
+}
+#endif // ENABLE_SYSTEM_VARIABLES
 
 static void GuiCmd_AdvToNextCmd( GuiState_st* guiState )
 {

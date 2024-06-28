@@ -28,11 +28,11 @@
 #include <string.h>
 #include <ui/ui_strings.h>
 
-static void ui_Draw_MainVFO( GuiState_st* guiState , bool update , Event_st* event );
-static void ui_Draw_MainVFOInput( GuiState_st* guiState , bool update , Event_st* event );
-static void ui_Draw_MainMEM( GuiState_st* guiState , bool update , Event_st* event );
-static void ui_Draw_ModeVFO( GuiState_st* guiState , bool update , Event_st* event );
-static void ui_Draw_ModeMEM( GuiState_st* guiState , bool update , Event_st* event );
+//static void ui_Draw_MainVFO( GuiState_st* guiState , bool update , Event_st* event );
+//static void ui_Draw_MainVFOInput( GuiState_st* guiState , bool update , Event_st* event );
+//static void ui_Draw_MainMEM( GuiState_st* guiState , bool update , Event_st* event );
+//static void ui_Draw_ModeVFO( GuiState_st* guiState , bool update , Event_st* event );
+//static void ui_Draw_ModeMEM( GuiState_st* guiState , bool update , Event_st* event );
 extern void _ui_Draw_MenuTop( GuiState_st* guiState , bool update , Event_st* event );
 extern void _ui_Draw_MenuBank( GuiState_st* guiState , bool update , Event_st* event );
 extern void _ui_Draw_MenuChannel( GuiState_st* guiState , bool update , Event_st* event );
@@ -52,19 +52,19 @@ extern void _ui_Draw_SettingsRadio( GuiState_st* guiState , bool update , Event_
 extern void _ui_Draw_SettingsM17( GuiState_st* guiState , bool update , Event_st* event );
 extern void _ui_Draw_SettingsVoicePrompts( GuiState_st* guiState , bool update , Event_st* event );
 extern void _ui_Draw_SettingsReset2Defaults( GuiState_st* guiState , bool update , Event_st* event );
-static void ui_Draw_LowBatteryScreen( GuiState_st* guiState , bool update , Event_st* event );
-static void ui_Draw_Authors( GuiState_st* guiState , bool update , Event_st* event );
-static void ui_Draw_Blank( GuiState_st* guiState , bool update , Event_st* event );
+//static void ui_Draw_LowBatteryScreen( GuiState_st* guiState , bool update , Event_st* event );
+//static void ui_Draw_Authors( GuiState_st* guiState , bool update , Event_st* event );
+//static void ui_Draw_Blank( GuiState_st* guiState , bool update , Event_st* event );
 
 //@@@KL static void ui_Draw_MainBackground( void );
-static void ui_Draw_MainTop( GuiState_st* guiState , Event_st* event );
-static void ui_Draw_BankChannel( GuiState_st* guiState );
-static void ui_Draw_ModeInfo( GuiState_st* guiState );
-static void ui_Draw_Frequency( GuiState_st* guiState );
-static void ui_Draw_VFOMiddleInput( GuiState_st* guiState );
+//static void ui_Draw_MainTop( GuiState_st* guiState , Event_st* event );
+//static void ui_Draw_BankChannel( GuiState_st* guiState );
+//static void ui_Draw_ModeInfo( GuiState_st* guiState );
+//static void ui_Draw_Frequency( GuiState_st* guiState );
+//static void ui_Draw_VFOMiddleInput( GuiState_st* guiState );
 
 void _ui_Draw_MainBottom( GuiState_st* guiState , Event_st* event );
-
+/*
 typedef void (*ui_Draw__fn)( GuiState_st* guiState , bool update , Event_st* event );
 
 static const ui_Draw__fn uiPageDescTable[ PAGE_NUM_OF ] =
@@ -96,7 +96,7 @@ static const ui_Draw__fn uiPageDescTable[ PAGE_NUM_OF ] =
     ui_Draw_Authors                 , // PAGE_ABOUT
     ui_Draw_Blank                     // PAGE_STUBBED
 };
-
+*/
 void ui_Draw_Page( GuiState_st* guiState , Event_st* event )
 {
     static uint8_t prevPageNum = ~0 ;
@@ -158,7 +158,7 @@ void ui_Draw_Page( GuiState_st* guiState , Event_st* event )
     }
 
 }
-
+/*
 static void ui_Draw_MainVFO( GuiState_st* guiState , bool update , Event_st* event )
 {
     ui_Draw_MainTop( guiState , event );
@@ -176,7 +176,8 @@ static void ui_Draw_MainVFO( GuiState_st* guiState , bool update , Event_st* eve
     _ui_Draw_MainBottom( guiState , event );
 
 }
-
+*/
+/*
 static void ui_Draw_MainVFOInput( GuiState_st* guiState , bool update , Event_st* event )
 {
     ui_Draw_MainTop( guiState , event );
@@ -187,7 +188,8 @@ static void ui_Draw_MainVFOInput( GuiState_st* guiState , bool update , Event_st
     _ui_Draw_MainBottom( guiState , event );
 
 }
-
+*/
+/*
 void ui_Draw_MainMEM( GuiState_st* guiState , bool update , Event_st* event )
 {
     ui_Draw_MainTop( guiState , event );
@@ -205,21 +207,24 @@ void ui_Draw_MainMEM( GuiState_st* guiState , bool update , Event_st* event )
     _ui_Draw_MainBottom( guiState , event );
 
 }
-
+*/
+/*
 static void ui_Draw_ModeVFO( GuiState_st* guiState , bool update , Event_st* event )
 {
     (void)guiState ;
     (void)update ;
     (void)event ;
 }
-
+*/
+/*
 static void ui_Draw_ModeMEM( GuiState_st* guiState , bool update , Event_st* event )
 {
     (void)guiState ;
     (void)update ;
     (void)event ;
 }
-
+*/
+/*
 static void ui_Draw_LowBatteryScreen( GuiState_st* guiState , bool update , Event_st* event )
 {
     (void)guiState ;
@@ -252,20 +257,23 @@ static void ui_Draw_LowBatteryScreen( GuiState_st* guiState , bool update , Even
         guiState->page.renderPage = true ;
     }
 }
-
+*/
+/*
 static void ui_Draw_Authors( GuiState_st* guiState , bool update , Event_st* event )
 {
     (void)guiState ;
     (void)update ;
     (void)event ;
 }
-
+*/
+/*
 static void ui_Draw_Blank( GuiState_st* guiState , bool update , Event_st* event )
 {
     (void)guiState ;
     (void)update ;
     (void)event ;
 }
+*/
 //@@@KL - not being called - remove?
 /*
 static void ui_Draw_MainBackground( void )
@@ -276,6 +284,7 @@ static void ui_Draw_MainBackground( void )
     gfx_drawHLine(SCREEN_HEIGHT - guiState->layout.lineStyle[ GUI_LINE_BOTTOM ].height - 1, guiState->layout.hline_h, color_gg);
 }
 */
+/*
 static void ui_Draw_MainTop( GuiState_st* guiState , Event_st* event )
 {
     Line_st*  lineTop  = &guiState->layout.lines[ GUI_LINE_TOP ] ;
@@ -341,7 +350,8 @@ static void ui_Draw_MainTop( GuiState_st* guiState , Event_st* event )
         }
     }
 }
-
+*/
+/*
 static void ui_Draw_BankChannel( GuiState_st* guiState )
 {
     Line_st*  line1    = &guiState->layout.lines[ GUI_LINE_1 ] ;
@@ -356,7 +366,8 @@ static void ui_Draw_BankChannel( GuiState_st* guiState )
                bank_enabled , last_state.channel_index + 1 , last_state.channel.name );
     guiState->page.renderPage = true ;
 }
-
+*/
+/*
 static void ui_Draw_ModeInfo( GuiState_st* guiState )
 {
     Line_st*  line1       = &guiState->layout.lines[ GUI_LINE_1 ] ;
@@ -514,7 +525,8 @@ static void ui_Draw_ModeInfo( GuiState_st* guiState )
         }
     }
 }
-
+*/
+/*
 static void ui_Draw_Frequency( GuiState_st* guiState )
 {
     Line_st*      line3Large  = &guiState->layout.lines[ GUI_LINE_3_LARGE ] ;
@@ -529,7 +541,8 @@ static void ui_Draw_Frequency( GuiState_st* guiState )
                &color_fg , "%.7g" , (float)frequency / 1000000.0f );
     guiState->page.renderPage = true ;
 }
-
+*/
+/*
 static void ui_Draw_VFOMiddleInput( GuiState_st* guiState )
 {
     Line_st*  line2       = &guiState->layout.lines[ GUI_LINE_2 ] ;
@@ -604,7 +617,7 @@ static void ui_Draw_VFOMiddleInput( GuiState_st* guiState )
         }
     }
 }
-
+*/
 void _ui_Draw_MainBottom( GuiState_st* guiState , Event_st* event )
 {
     Line_st*  lineBottom  = &guiState->layout.lines[ GUI_LINE_BOTTOM ] ;

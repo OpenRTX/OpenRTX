@@ -22,6 +22,12 @@
  * It is suitable for both color, grayscale and B/W display
  */
 
+ /*
+ *  Please Note :- The XY position starts at the top left corner.
+ *                 Characters are displayed from their bottom left corner.
+ *                 As such the XY position for the lines is from this position.
+ */
+
 #include <interfaces/display.h>
 #include <hwconfig.h>
 #include <graphics.h>

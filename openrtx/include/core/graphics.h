@@ -186,7 +186,7 @@ void gfx_setPixel( Pos_st* pos , Color_st* color );
  * @param end: line end point, in pixel coordinates.
  * @param color: line color, in Color_st format.
  */
-void gfx_drawLine( Pos_st* startPos , Pos_st* end , Color_st* color );
+void gfx_drawLine( Pos_st* startPos , Pos_st* endPos , Color_st* color );
 
 /**
  * Draw a horizontal line with specified vertical position and width.

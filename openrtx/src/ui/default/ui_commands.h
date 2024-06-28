@@ -28,41 +28,76 @@
 // GUI Commands
 enum
 {
-    GUI_CMD_NULL         = 0x00 ,
-    GUI_CMD_EVENT_START  = 0x01 , // dynamic display - variables updated
-    GUI_CMD_EVENT_END    = 0x02 , //  used with page sections that respond to events
-    GUI_CMD_TIMER_CHECK  = 0x03 ,
-    GUI_CMD_TIMER_SET    = 0x04 ,
-    GUI_CMD_LINE         = 0x05 ,
-    GUI_CMD_GOTO_POS     = 0x06 ,
-    GUI_CMD_STYLE        = 0x07 ,
-    GUI_CMD_BG_COLOR     = 0x08 ,
-    GUI_CMD_FG_COLOR     = 0x09 ,
-    GUI_CMD_LINE_END     = 0x0A ,
-    GUI_CMD_FONT_SIZE    = 0x0B ,
-    GUI_CMD_ALIGN        = 0x0C ,
-    GUI_CMD_RUN_SCRIPT   = 0x0D ,
-    GUI_CMD_LINK         = 0x0E ,
-    GUI_CMD_LINK_END     = 0x0F ,
-    GUI_CMD_PAGE         = 0x10 ,
-    GUI_CMD_TITLE        = 0x11 ,
-    GUI_CMD_TEXT         = 0x12 ,
-    GUI_CMD_VALUE_DSP    = 0x13 ,
-    GUI_CMD_VALUE_INP    = 0x14 ,
+    GUI_CMD_NULL             = 0x00 ,
+    GUI_CMD_EVENT_START      = 0x01 , // dynamic display - variables updated
+    GUI_CMD_EVENT_END        = 0x02 , //  used with page sections that respond to events
+    GUI_CMD_TIMER_CHECK      = 0x03 ,
+    GUI_CMD_TIMER_SET        = 0x04 ,
+    GUI_CMD_GOTO_LINE        = 0x05 ,
+    GUI_CMD_GOTO_POS         = 0x06 ,
+    GUI_CMD_LOAD_STYLE       = 0x07 ,
+    GUI_CMD_BG_COLOR         = 0x08 ,
+    GUI_CMD_FG_COLOR         = 0x09 ,
+    GUI_CMD_LINE_END         = 0x0A ,
+    GUI_CMD_FONT_SIZE        = 0x0B ,
+    GUI_CMD_ALIGN            = 0x0C ,
+    GUI_CMD_RUN_SCRIPT       = 0x0D ,
+    GUI_CMD_LINK             = 0x0E ,
+    GUI_CMD_LINK_END         = 0x0F ,
+    GUI_CMD_PAGE             = 0x10 ,
+    GUI_CMD_TITLE            = 0x11 ,
+    GUI_CMD_TEXT             = 0x12 ,
+    GUI_CMD_VALUE_DSP        = 0x13 ,
+    GUI_CMD_VALUE_INP        = 0x14 ,
+    GUI_CMD_DRAW_LINE        = 0x15 ,
+    GUI_CMD_DRAW_RECT        = 0x16 ,
+    GUI_CMD_DRAW_RECT_FILLED = 0x17 ,
 #ifdef DISPLAY_DEBUG_MSG
-    GUI_CMD_SET_DBG_MSG  = 0x15 ,
+    GUI_CMD_SET_DBG_MSG      = 0x1D ,
 #endif // DISPLAY_DEBUG_MSG
-    GUI_CMD_STUBBED      = 0x1E ,
-    GUI_CMD_PAGE_END     = 0x1F ,
-    GUI_CMD_NUM_OF              ,
-    GUI_CMD_DATA_AREA    = 0x20
+    GUI_CMD_STUBBED          = 0x1E ,
+    GUI_CMD_PAGE_END         = 0x1F ,
+    GUI_CMD_NUM_OF                  ,
+    GUI_CMD_DATA_AREA        = 0x20
+};
+
+// System Parameter Values
+//#define ENABLE_SYSTEM_VARIABLES
+#ifdef ENABLE_SYSTEM_VARIABLES
+enum
+{
+    GUI_CMD_PARA_SYSTEM_FLAG   = 0x80 ,
+    GUI_CMD_PARA_MODIFIER_FLAG = GUI_CMD_PARA_SYSTEM_FLAG >> 1 ,
+    GUI_CMD_PARA_SIGNED_FLAG   = 0x20 ,
+    GUI_CMD_PARA_VALUE_MASK    = 0x3F
 };
 
 enum
 {
-    GUI_CMD_GOTO_POS_PARA_X   = 0x01 ,
-    GUI_CMD_GOTO_POS_PARA_Y   = 0x02 ,
-    GUI_CMD_GOTO_POS_PARA_XY  = GUI_CMD_GOTO_POS_PARA_Y | GUI_CMD_GOTO_POS_PARA_X
+    GUI_CMD_PARA_SYS_SCREEN_WIDTH  ,
+    GUI_CMD_PARA_SYS_SCREEN_HEIGHT ,
+    GUI_CMD_PARA_SYS_LINE_HEIGHT   ,
+    GUI_CMD_PARA_SYS_FONT_SIZE     ,
+    GUI_CMD_PARA_SYS_BG_COLOR      ,
+    GUI_CMD_PARA_SYS_FG_COLOR
+};
+
+enum
+{
+    GUI_CMD_PARA_MOD_ADD  = 0x00 ,
+    GUI_CMD_PARA_MOD_SUB  = 0x40 ,
+    GUI_CMD_PARA_MOD_MASK = 0xC0
+};
+#endif // ENABLE_SYSTEM_VARIABLES
+enum
+{
+    GUI_CMD_GOTO_POS_PARA_X  = 0x40 ,
+    GUI_CMD_GOTO_ADD_PARA_X  = 0x20 ,
+    GUI_CMD_GOTO_SUB_PARA_X  = 0x10 ,
+    GUI_CMD_GOTO_POS_PARA_Y  = 0x04 ,
+    GUI_CMD_GOTO_ADD_PARA_Y  = 0x02 ,
+    GUI_CMD_GOTO_SUB_PARA_Y  = 0x01 ,
+    GUI_CMD_GOTO_POS_PARA_XY = GUI_CMD_GOTO_POS_PARA_Y | GUI_CMD_GOTO_POS_PARA_X
 };
 
 #define GUI_CMD_GOTO_POS_X   = GUI_CMD_GOTO_POS , ST_VAL( GUI_CMD_GOTO_POS_PARA_X )
@@ -70,16 +105,21 @@ enum
 #define GUI_CMD_GOTO_POS_XY  = GUI_CMD_GOTO_POS , ST_VAL( GUI_CMD_GOTO_POS_PARA_X | \
                                                           GUI_CMD_GOTO_POS_PARA_Y     )
 
+//#define ENABLE_ALIGN_VERTICAL
+
 enum
 {
     GUI_CMD_ALIGN_PARA_LEFT   = 0x01 ,
     GUI_CMD_ALIGN_PARA_CENTER = 0x02 ,
     GUI_CMD_ALIGN_PARA_RIGHT  = 0x03 ,
-    GUI_CMD_ALIGN_PARA_MASK_X = 0x0F ,
-    GUI_CMD_ALIGN_PARA_TOP    = 0x10 /*,
-    GUI_CMD_ALIGN_PARA_MIDDLE = 0x20 ,
-    GUI_CMD_ALIGN_PARA_BOTTOM = 0x30 ,
-    GUI_CMD_ALIGN_PARA_MASK_Y = 0xF0 */
+    GUI_CMD_ALIGN_PARA_MASK_X = 0x07
+#ifdef ENABLE_ALIGN_VERTICAL
+    ,
+    GUI_CMD_ALIGN_PARA_TOP    = 0x01 << 3 ,
+    GUI_CMD_ALIGN_PARA_MIDDLE = 0x02 << 3 ,
+    GUI_CMD_ALIGN_PARA_BOTTOM = 0x03 << 3 ,
+    GUI_CMD_ALIGN_PARA_MASK_Y = 0x07 << 3
+#endif // ENABLE_ALIGN_VERTICAL
 };
 
 #define GUI_CMD_ALIGN_LEFT      GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_LEFT   )
