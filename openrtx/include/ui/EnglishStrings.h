@@ -94,6 +94,8 @@ const stringsTable_t englishStrings =
     .broadcast         = "ALL",
     .radioSettings     = "Radio Settings",
     .frequencyOffset   = "Frequency Offset",
-    .macroLatching     = "Macro Latching"
+    .macroLatching     = "Macro Latching",
+    .fmSettings        = "FM Settings",
+    .CTCSSTone         = "CTCSS Frequency"
 };
 #endif  // ENGLISHSTRINGS_H

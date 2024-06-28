@@ -440,6 +440,28 @@ int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
 }
 #endif
 
+int _ui_getFMEntryName(char* buf, uint8_t max_len, uint8_t index)
+{
+    if (index >= settings_fm_num) return -1;
+    sniprintf(buf, max_len, "%s", settings_fm_items[index]);
+    return 0;
+}
+
+int _ui_getFMValueName(char* buf, uint8_t max_len, uint8_t index)
+{
+    if (index >= settings_fm_num) return -1;
+    switch (index)
+    {
+        case CTCSS_Tone:
+        {
+            uint16_t tone = ctcss_tone[last_state.channel.fm.txTone];
+            sniprintf(buf, max_len, "%d.%d", (tone / 10), (tone % 10));
+            break;
+        }
+    }
+    return 0;
+}
+
 int _ui_getAccessibilityEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= settings_accessibility_num) return -1;
@@ -955,6 +977,17 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
 }
 #endif
 
+void _ui_drawSettingsFM(ui_state_t* ui_state)
+{
+    gfx_clearScreen();
+    // Print "FM Settings" on top bar
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER, color_white,
+              currentLanguage->fmSettings);
+    // Print FM settings entries
+    _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getFMEntryName,
+                          _ui_getFMValueName);
+}
+
 void _ui_drawSettingsAccessibility(ui_state_t* ui_state)
 {
     gfx_clearScreen();
@@ -1083,22 +1116,34 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
  */
 #if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 0)
-#endif // CONFIG_UI_NO_KEYBOARD
-        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
-                  yellow_fab413, "1");
-        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
-                  color_white, "   T-");
-
-        uint16_t tone = ctcss_tone[last_state.channel.fm.txTone];
-        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
-                  color_white, "     %d.%d", (tone / 10), (tone % 10));
+#endif  // CONFIG_UI_NO_KEYBOARD
+            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
+                      yellow_fab413, "1");
+        if (last_state.channel.mode == OPMODE_FM)
+        {
+            char encdec_str[9]  = {0};
+            bool tone_tx_enable = last_state.channel.fm.txToneEn;
+            bool tone_rx_enable = last_state.channel.fm.rxToneEn;
+            if (tone_tx_enable && tone_rx_enable)
+                sniprintf(encdec_str, 9, "  B ");
+            else if (tone_tx_enable && !tone_rx_enable)
+                sniprintf(encdec_str, 9, "  E ");
+            else if (!tone_tx_enable && tone_rx_enable)
+                sniprintf(encdec_str, 9, "  D ");
+            else
+                sniprintf(encdec_str, 9, "  N ");
+            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
+                      color_white, encdec_str);
+            uint16_t tone = ctcss_tone[last_state.channel.fm.txTone];
+            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
+                      color_white, "     %d.%d", (tone / 10), (tone % 10));
 #if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 1)
 #endif // CONFIG_UI_NO_KEYBOARD
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   yellow_fab413, "2");
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
-                  color_white,   "       T+");
+                  color_white,   "       T-");
     }
 #ifdef CONFIG_M17
     else if (last_state.channel.mode == OPMODE_M17)
@@ -1112,26 +1157,12 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
     }
 #endif
 #if defined(CONFIG_UI_NO_KEYBOARD)
-    if (ui_state->macro_menu_selected == 2)
-#endif // CONFIG_UI_NO_KEYBOARD
-    gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
-              yellow_fab413, "3        ");
-
-    if (last_state.channel.mode == OPMODE_FM)
-    {
-        char encdec_str[9] = { 0 };
-        bool tone_tx_enable = last_state.channel.fm.txToneEn;
-        bool tone_rx_enable = last_state.channel.fm.rxToneEn;
-        if (tone_tx_enable && tone_rx_enable)
-            sniprintf(encdec_str, 9, "     E+D");
-        else if (tone_tx_enable && !tone_rx_enable)
-            sniprintf(encdec_str, 9, "      E ");
-        else if (!tone_tx_enable && tone_rx_enable)
-            sniprintf(encdec_str, 9, "      D ");
-        else
-            sniprintf(encdec_str, 9, "        ");
+        if (ui_state->macro_menu_selected == 2)
+#endif  // CONFIG_UI_NO_KEYBOARD
+            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
+                      yellow_fab413, "3        ");
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
-                  color_white, encdec_str);
+                  color_white, " T+");
     }
 #ifdef CONFIG_M17
     else if (last_state.channel.mode == OPMODE_M17)
@@ -1159,10 +1190,10 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
         switch (last_state.channel.bandwidth)
         {
             case BW_12_5:
-                sniprintf(bw_str, 12, "   BW 12.5");
+                sniprintf(bw_str, 12, "  BW12.5");
                 break;
             case BW_25:
-                sniprintf(bw_str, 12, "   BW  25 ");
+                sniprintf(bw_str, 12, "  BW   25");
                 break;
         }
 
@@ -1188,15 +1219,15 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
     switch(last_state.channel.mode)
     {
         case OPMODE_FM:
-        sniprintf(mode_str, 12,"         FM");
-        break;
+            gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER, color_white, "         FM");
+            break;
         case OPMODE_DMR:
-        sniprintf(mode_str, 12,"        DMR");
-        break;
+            gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER, color_white, "          DMR");
+            break;
 #ifdef CONFIG_M17
         case OPMODE_M17:
-        sniprintf(mode_str, 12,"        M17");
-        break;
+            gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER, color_white, "          M17");
+            break;
 #endif
     }
 
@@ -1224,7 +1255,7 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
               yellow_fab413, "7");
 #ifdef CONFIG_SCREEN_BRIGHTNESS
     gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_LEFT,
-              color_white, "   B-");
+              color_white, "  B-");
     gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_LEFT,
               color_white, "       %5d",
               state.settings.brightness);
@@ -1237,7 +1268,7 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
               yellow_fab413, "8");
 #ifdef CONFIG_SCREEN_BRIGHTNESS
     gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white,   "       B+");
+              color_white, "        B+");
 #endif
 
 #if defined(CONFIG_UI_NO_KEYBOARD)

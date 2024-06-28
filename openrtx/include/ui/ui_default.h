@@ -62,6 +62,7 @@ enum uiScreen
     SETTINGS_GPS,
     SETTINGS_RADIO,
     SETTINGS_M17,
+    SETTINGS_FM,
     SETTINGS_ACCESSIBILITY,
     SETTINGS_RESET2DEFAULTS,
     LOW_BAT
@@ -101,6 +102,7 @@ enum settingsItems
 #ifdef CONFIG_M17
     S_M17,
 #endif
+    S_FM,
     S_ACCESSIBILITY,
     S_RESET2DEFAULTS,
 };
@@ -150,6 +152,11 @@ enum settingsM17Items
     M17_CALLSIGN = 0,
     M17_CAN,
     M17_CAN_RX
+};
+
+enum settingsFMItems
+{
+    CTCSS_Tone
 };
 
 /**
@@ -242,8 +249,8 @@ extern const char *display_items[];
 extern const char *settings_gps_items[];
 extern const char *settings_radio_items[];
 extern const char *settings_m17_items[];
+extern const char *settings_fm_items[];
 extern const char * settings_accessibility_items[];
-
 extern const char *backup_restore_items[];
 extern const char *info_items[];
 extern const char *authors[];
@@ -253,6 +260,7 @@ extern const uint8_t display_num;
 extern const uint8_t settings_gps_num;
 extern const uint8_t settings_radio_num;
 extern const uint8_t settings_m17_num;
+extern const uint8_t settings_fm_num;
 extern const uint8_t settings_accessibility_num;
 extern const uint8_t backup_restore_num;
 extern const uint8_t info_num;
