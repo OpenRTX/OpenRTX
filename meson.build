@@ -341,7 +341,7 @@ md3x0_src = ['platform/drivers/NVM/nvmem_MD3x0.c',
              'platform/targets/MD-3x0/platform.c']
 
 md3x0_inc = ['platform/targets/MD-3x0']
-md3x0_def = {'PLATFORM_MD3x0': '', 'timegm': 'mktime'}
+md3x0_def = {'PLATFORM_MD3x0': '', 'timegm': 'mktime', 'VECT_TAB_OFFSET': '0xC000'}
 
 md3x0_src += openrtx_src + stm32f405_src + miosix_stm32f4_src + ui_src_default + mdx_src
 md3x0_inc += openrtx_inc + stm32f405_inc + miosix_stm32f4_inc
@@ -363,7 +363,7 @@ mduv3x0_src = ['platform/drivers/NVM/nvmem_MDUV3x0.c',
                'platform/drivers/baseband/HR_C6000_UV3x0.cpp']
 
 mduv3x0_inc = ['platform/targets/MD-UV3x0']
-mduv3x0_def =  {'PLATFORM_MDUV3x0': '', 'timegm': 'mktime'}
+mduv3x0_def =  {'PLATFORM_MDUV3x0': '', 'timegm': 'mktime', 'VECT_TAB_OFFSET': '0xC000'}
 
 mduv3x0_src += openrtx_src + stm32f405_src + miosix_stm32f4_src + ui_src_default + mdx_src
 mduv3x0_inc += openrtx_inc + stm32f405_inc + miosix_stm32f4_inc
