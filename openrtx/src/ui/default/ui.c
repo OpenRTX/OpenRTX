@@ -1093,7 +1093,7 @@ static void _ui_textInputReset(char *buf)
 static void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg,
                          bool callsign)
 {
-    long long now = getTick();
+    long long now = getTimeMs();
     // Get currently pressed number key
     uint8_t num_key = input_getPressedNumber(msg);
 
