@@ -25,13 +25,12 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#pragma once
+
 #include "config/miosix_settings.h"
 #include "kernel/scheduler/priority/priority_scheduler_types.h"
 #include "kernel/scheduler/control/control_scheduler_types.h"
 #include "kernel/scheduler/edf/edf_scheduler_types.h"
-
-#ifndef SCHED_TYPES_H
-#define	SCHED_TYPES_H
 
 namespace miosix {
 
@@ -49,5 +48,3 @@ typedef EDFSchedulerData SchedulerData;
 #endif
 
 } //namespace miosix
-
-#endif //SCHED_TYPES_H

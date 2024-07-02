@@ -33,6 +33,9 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#include "kernel/cpu_time_counter.h"
+#include <vector>
+
 namespace miosix {
 
 /**
@@ -108,6 +111,98 @@ private:
  * \param len length of memory block to dump
  */
 void memDump(const void *start, int len);
+
+#ifdef WITH_CPU_TIME_COUNTER
+
+/**
+ * This class implements a top-like view of the CPU usage of all current
+ * threads. The implementation is built upon CPUTimeCounter and therefore also
+ * requires `WITH_CPU_TIME_COUNTER` to be defined in config/miosix_settings.h.
+ * 
+ * CPUProfiler can be integrated in an existing update loop by instantiating it
+ * and then invoking the update() and print() methods at regular intervals:
+ * 
+ *      CPUProfiler p;
+ *      long long t = p.update();
+ *      while (...)
+ *      {
+ *          t += 1000000000LL;
+ *          Thread::nanoSleepUntil(t);
+ *          p.update();
+ *          p.print();
+ *          ...
+ *      }
+ * 
+ * The profiler will automatically keep track of the actual update period.
+ * 
+ * Alternatively, you can use the static thread() method as the main function
+ * of a thread which will implement the logic shown above to periodically
+ * print profiling information on stdout:
+ * 
+ *      std::thread profThread(CPUProfiler::thread, 1000000000LL);
+ * 
+ * It is recommended to guard CPUTimeCounter with `#ifdef WITH_CPU_TIME_COUNTER`
+ * to automatically remove all related code when CPUTimeCounter is not available
+ * (i.e. in release builds).
+ */
+class CPUProfiler
+{
+public:
+    /**
+     * Construct a new profiler object.
+     */
+    CPUProfiler() {}
+
+    /**
+     * Update the profiler status with the latest information about all
+     * threads in the system.
+     * \returns the time (in nanoseconds) at which the data was collected.
+     */
+    long long update();
+
+    /**
+     * Prints the profiling information to stdout in a tabular top-like display.
+     */
+    void print();
+
+    /**
+     * Continuously collects and print CPU usage information for all threads.
+     * Returns once Thread::testTerminate() returns `true'.
+     * \param nsInterval The interval between subsequent CPU usage information
+     * printouts.
+     * \warning The current implementation can wait up to `nsInterval'
+     * nanoseconds before the thread termination condition is noticed.
+     */
+    static void thread(long long nsInterval);
+
+private:
+    /**
+     * \internal
+     * Structure containing a snapshot of the CPU data information returned
+     * by CPUTimeCounter for each thread.
+     */
+    struct Snapshot
+    {
+        /// The thread data objects, one per thread
+        std::vector<CPUTimeCounter::Data> threadData;
+        /// The time (in ns) at which the snapshot was collected
+        long long time = 0;
+
+        /**
+         * Fills the snapshot with information collected from CPUTimeCounter.
+         * Discards the previous content of the snapshot.
+         */
+        void collect();
+    };
+
+    /// Two thread data snapshots used for computing the amount of CPU time
+    /// used by each thread between the two.
+    Snapshot snapshots[2];
+    /// Which of the two snapshots is the last one collected.
+    unsigned int lastSnapshotIndex = 0;
+};
+
+#endif // WITH_CPU_TIME_COUNTER
 
 /**
  * \}

@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2013 by Terraneo Federico                               *
+ *   Copyright (C) 2013-2023 by Terraneo Federico                          *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,17 +25,19 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef INTRUSIVE_H
-#define INTRUSIVE_H
+#pragma once
 
 #include <ostream>
 #include <cstddef>
 #include <cassert>
-#include "interfaces/atomic_ops.h"
-
-#if __cplusplus > 199711L
 #include <type_traits>
-#endif // c++11
+#ifndef TEST_ALGORITHM
+#include "interfaces/atomic_ops.h"
+#include "error.h"
+#endif //TEST_ALGORITHM
+
+//Only enable when testing code that uses IntrusiveList
+//#define INTRUSIVE_LIST_ERROR_CHECK
 
 namespace miosix {
 
@@ -181,7 +183,7 @@ public:
     /**
      * Default constructor
      */
-    intrusive_ref_ptr() : object(0) {}
+    intrusive_ref_ptr() : object(nullptr) {}
     
     /**
      * Constructor, with raw pointer
@@ -267,17 +269,13 @@ public:
      * \return a pointer to the managed object
      */
     T *operator->() const { return object; }
-    
-    //Safe bool idiom
-    struct SafeBoolStruct { void* b; };
-    typedef void* SafeBoolStruct::* SafeBool;
 
     /**
      * \return true if the object contains a callback
      */
-    operator SafeBool() const
+    explicit operator bool() const
     {
-        return object==0 ? 0 : &SafeBoolStruct::b;
+        return object!=nullptr;
     }
     
     /**
@@ -294,9 +292,9 @@ public:
     void reset()
     {
         if(decrementRefCount()) delete object;
-        // Object needs to be set to 0 regardless
+        // Object needs to be set to nullptr regardless
         // of whether the object is deleted
-        object=0;
+        object=nullptr;
     }
     
     /**
@@ -349,7 +347,7 @@ private:
      */
     bool decrementRefCount()
     {
-        if(object==0) return false;
+        if(object==nullptr) return false;
         return atomicAddExchange(&object->intrusive.referenceCount,-1)==1;
     }
 
@@ -395,7 +393,7 @@ intrusive_ref_ptr<T>& intrusive_ref_ptr<T>::operator= (T* o)
 template<typename T>
 intrusive_ref_ptr<T> intrusive_ref_ptr<T>::atomic_load() const
 {
-    intrusive_ref_ptr<T> result; // This gets initialized with 0
+    intrusive_ref_ptr<T> result; // This gets initialized with nullptr
     
     // According to the C++ standard, this causes undefined behaviour if
     // T has virtual functions, but GCC (and clang) have an implementation
@@ -442,7 +440,7 @@ intrusive_ref_ptr<T> intrusive_ref_ptr<T>::atomic_exchange(
     volatile int *objectAddrInt=reinterpret_cast<volatile int*>(&object);
     temp=reinterpret_cast<T*>(atomicSwap(objectAddrInt,tempInt));
     
-    intrusive_ref_ptr<T> result; // This gets initialized with 0
+    intrusive_ref_ptr<T> result; // This gets initialized with nullptr
     // This does not increment referenceCount, as the pointer was swapped
     result.object=temp;
     return result;
@@ -595,7 +593,7 @@ intrusive_ref_ptr<T> const_pointer_cast(const intrusive_ref_ptr<U>& r)
 template<typename T>
 intrusive_ref_ptr<T> atomic_load(const intrusive_ref_ptr<T> *p)
 {
-    if(p==0) return intrusive_ref_ptr<T>();
+    if(p==nullptr) return intrusive_ref_ptr<T>();
     return p->atomic_load();
 }
 
@@ -630,10 +628,271 @@ template<typename T>
 intrusive_ref_ptr<T> atomic_exchange(intrusive_ref_ptr<T> *p,
         intrusive_ref_ptr<T> r)
 {
-    if(p==0) return intrusive_ref_ptr<T>();
+    if(p==nullptr) return intrusive_ref_ptr<T>();
     return p->atomic_exchange(r);
 }
 
-} //namenpace miosix
+//Forward declarations
+class IntrusiveListBase;
+template<typename T>
+class IntrusiveList;
 
-#endif //INTRUSIVE_H
+/**
+ * Base class from which all items to be put in an IntrusiveList must derive,
+ * contains the next and prev pointer that create the list
+ */
+class IntrusiveListItem
+{
+private:
+    IntrusiveListItem *next=nullptr;
+    IntrusiveListItem *prev=nullptr;
+
+    friend class IntrusiveListBase;
+    template<typename T>
+    friend class IntrusiveList;
+};
+
+/**
+ * \internal
+ * Base class of IntrusiveList with the non-template-dependent part to improve
+ * code size when instantiationg multiple IntrusiveLists
+ */
+class IntrusiveListBase
+{
+protected:
+    IntrusiveListBase() : head(nullptr), tail(nullptr) {}
+
+    void push_back(IntrusiveListItem *item);
+
+    void pop_back();
+
+    void push_front(IntrusiveListItem *item);
+
+    void pop_front();
+
+    void insert(IntrusiveListItem *cur, IntrusiveListItem *item);
+
+    IntrusiveListItem *erase(IntrusiveListItem *cur);
+
+    IntrusiveListItem* front() { return head; }
+
+    IntrusiveListItem* back() { return tail; }
+
+    bool empty() const { return head==nullptr; }
+
+    #ifdef INTRUSIVE_LIST_ERROR_CHECK
+    static void fail();
+    #endif //INTRUSIVE_LIST_ERROR_CHECK
+
+private:
+    IntrusiveListItem *head;
+    IntrusiveListItem *tail;
+};
+
+/**
+ * A doubly linked list that only accepts objects that derive from
+ * IntrusiveListItem.
+ * 
+ * Compared to std::list, this class offers the guarantee that no dynamic memory
+ * allocation is performed. Differently from std::list, objects are not copied
+ * when put in the list, so this is a non-owning container. For this reason,
+ * this class unlike std::list accepts objects by pointer instead of reference
+ * in member functions like insert() or push_front(), and returns objects by
+ * pointer when dereferncing iterators or in member functions like front().
+ * The caller is thus responsible for managing the lifetime of objects put in
+ * this list.
+ */
+template<typename T>
+class IntrusiveList : private IntrusiveListBase
+{
+public:
+    /**
+     * Intrusive list iterator type
+     */
+    class iterator
+    {
+    public:
+        iterator() : list(nullptr), cur(nullptr) {}
+
+        T* operator*()
+        {
+            #ifdef INTRUSIVE_LIST_ERROR_CHECK
+            if(list==nullptr || cur==nullptr) IntrusiveListBase::fail();
+            #endif //INTRUSIVE_LIST_ERROR_CHECK
+            return static_cast<T*>(cur);
+        }
+
+        iterator operator++()
+        {
+            #ifdef INTRUSIVE_LIST_ERROR_CHECK
+            if(list==nullptr || cur==nullptr) IntrusiveListBase::fail();
+            #endif //INTRUSIVE_LIST_ERROR_CHECK
+            cur=cur->next; return *this;
+        }
+
+        iterator operator--()
+        {
+            #ifdef INTRUSIVE_LIST_ERROR_CHECK
+            if(list==nullptr || list->empty()) IntrusiveListBase::fail();
+            #endif //INTRUSIVE_LIST_ERROR_CHECK
+            if(cur!=nullptr) cur=cur->prev;
+            else cur=list->IntrusiveListBase::back(); //Special case: decrementing end()
+            return *this;
+        }
+
+        iterator operator++(int)
+        {
+            #ifdef INTRUSIVE_LIST_ERROR_CHECK
+            if(list==nullptr || cur==nullptr) IntrusiveListBase::fail();
+            #endif //INTRUSIVE_LIST_ERROR_CHECK
+            iterator result=*this;
+            cur=cur->next;
+            return result;
+        }
+
+        iterator operator--(int)
+        {
+            #ifdef INTRUSIVE_LIST_ERROR_CHECK
+            if(list==nullptr || list->empty()) IntrusiveListBase::fail();
+            #endif //INTRUSIVE_LIST_ERROR_CHECK
+            iterator result=*this;
+            if(cur!=nullptr) cur=cur->prev;
+            else cur=list->IntrusiveListBase::back(); //Special case: decrementing end()
+            return result;
+        }
+
+        bool operator==(const iterator& rhs) { return cur==rhs.cur; }
+        bool operator!=(const iterator& rhs) { return cur!=rhs.cur; }
+
+    private:
+        iterator(IntrusiveList<T> *list, IntrusiveListItem *cur)
+            : list(list), cur(cur) {}
+
+        IntrusiveList<T> *list;
+        IntrusiveListItem *cur;
+
+        friend class IntrusiveList<T>;
+    };
+    
+    /**
+     * Constructor, produces an empty list
+     */
+    IntrusiveList() {}
+
+    /**
+     * Disabled copy constructor and operator=
+     * Since intrusive lists do not store objects by value, and an item can
+     * only belong to at most one list, intrusive lists are not copyable.
+     */
+    IntrusiveList(const IntrusiveList&)=delete;
+    IntrusiveList& operator=(const IntrusiveList&)=delete;
+    
+    /**
+     * Adds item to the end of the list
+     * \param item item to add
+     */
+    void push_back(T *item) { IntrusiveListBase::push_back(item); }
+    
+    /**
+     * Removes the last element in the list
+     */
+    void pop_back() { IntrusiveListBase::pop_back(); }
+    
+    /**
+     * Adds item to the front of the list
+     * \param item item to add
+     */
+    void push_front(T *item) { IntrusiveListBase::push_front(item); }
+    
+    /**
+     * Removes the first item of the list
+     */
+    void pop_front() { IntrusiveListBase::pop_front(); }
+    
+    /**
+     * Inserts the given item before the position indicated by the iterator
+     * \param it position where to insert the item
+     * \param item item to insert
+     */
+    void insert(iterator it, T *item)
+    {
+        #ifdef INTRUSIVE_LIST_ERROR_CHECK
+        if(it.list!=this) fail();
+        #endif //INTRUSIVE_LIST_ERROR_CHECK
+        IntrusiveListItem *cur=it.cur; //Safe even if it==end() -> cur=nullptr
+        IntrusiveListBase::insert(cur,item);
+    }
+    
+    /**
+     * Removes the specified item from the list
+     * \param it iterator to the item to remove
+     * \return an iterator to the next item
+     */
+    iterator erase(iterator it)
+    {
+        #ifdef INTRUSIVE_LIST_ERROR_CHECK
+        if(it.list!=this) fail();
+        #endif //INTRUSIVE_LIST_ERROR_CHECK
+        IntrusiveListItem *cur=it.cur;
+        return iterator(this,IntrusiveListBase::erase(cur));
+    }
+
+    /**
+     * Nonportable version of std::list::remove that is O(1) since it relies on
+     * the list being intrusive
+     * NOTE: can ONLY be called if you are sure the item to remove is either not
+     * in any list (in this case, nothing is done) or is in the list it is being
+     * removed from. Trying to remove an item that is present in another list
+     * produces undefined bahavior.
+     * \param item item to remove, must not be nullptr
+     * \return true if the item was removed, false if the item was not present
+     * in the list
+     */
+    bool removeFast(T *item)
+    {
+        if(item->prev==nullptr && IntrusiveListBase::front()!=item) return false;
+        IntrusiveListBase::erase(item);
+        return true;
+    }
+    
+    /**
+     * \return an iterator to the first item
+     */
+    iterator begin() { return iterator(this,IntrusiveListBase::front()); }
+    
+    /**
+     * \return an iterator to the last item
+     */
+    iterator end() { return iterator(this,nullptr); }
+    
+    /**
+     * \return a pointer to the first item. List must not be empty
+     */
+    T* front()
+    {
+        auto result=IntrusiveListBase::front();
+        #ifdef INTRUSIVE_LIST_ERROR_CHECK
+        if(result==nullptr) fail();
+        #endif //INTRUSIVE_LIST_ERROR_CHECK
+        return static_cast<T*>(result);
+    }
+    
+    /**
+     * \return a pointer to the last item. List must not be empty
+     */
+    T* back()
+    {
+        auto result=IntrusiveListBase::back();
+        #ifdef INTRUSIVE_LIST_ERROR_CHECK
+        if(result==nullptr) fail();
+        #endif //INTRUSIVE_LIST_ERROR_CHECK
+        return static_cast<T*>(result);
+    }
+    
+    /**
+     * \return true if the list is empty
+     */
+    bool empty() const { return IntrusiveListBase::empty(); }
+};
+
+} //namespace miosix

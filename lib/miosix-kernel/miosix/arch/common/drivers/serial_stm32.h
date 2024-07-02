@@ -34,7 +34,7 @@
 #include "interfaces/gpio.h"
 #include "board_settings.h"
 
-#if defined(_ARCH_CORTEXM3_STM32) && defined(__ENABLE_XRAM)
+#if defined(_ARCH_CORTEXM3_STM32F1) && defined(__ENABLE_XRAM)
 //Quirk: concurrent access to the FSMC from both core and DMA is broken in
 //the stm32f1, so disable DMA mode if XRAM is enabled.
 #undef SERIAL_1_DMA
@@ -46,7 +46,7 @@
 #define SERIAL_DMA
 #endif
 
-#if defined(SERIAL_DMA) && defined(_ARCH_CORTEXM0_STM32)
+#if defined(SERIAL_DMA) && defined(_ARCH_CORTEXM0_STM32F0)
 #undef SERIAL_1_DMA
 #undef SERIAL_2_DMA
 #undef SERIAL_3_DMA
@@ -248,7 +248,7 @@ private:
     void waitSerialTxFifoEmpty()
     {
         #if !defined(_ARCH_CORTEXM7_STM32F7) && !defined(_ARCH_CORTEXM7_STM32H7) \
-         && !defined(_ARCH_CORTEXM0_STM32)   && !defined(_ARCH_CORTEXM4_STM32F3) \
+         && !defined(_ARCH_CORTEXM0_STM32F0) && !defined(_ARCH_CORTEXM4_STM32F3) \
          && !defined(_ARCH_CORTEXM4_STM32L4)
         while((port->SR & USART_SR_TC)==0) ;
         #else //_ARCH_CORTEXM7_STM32F7/H7
@@ -265,14 +265,14 @@ private:
     
     USART_TypeDef *port;              ///< Pointer to USART peripheral
     #ifdef SERIAL_DMA
-    #if defined(_ARCH_CORTEXM3_STM32) || defined(_ARCH_CORTEXM4_STM32F3) \
+    #if defined(_ARCH_CORTEXM3_STM32F1) || defined(_ARCH_CORTEXM4_STM32F3) \
      || defined(_ARCH_CORTEXM4_STM32L4)
     DMA_Channel_TypeDef *dmaTx;       ///< Pointer to DMA TX peripheral
     DMA_Channel_TypeDef *dmaRx;       ///< Pointer to DMA RX peripheral
-    #else //_ARCH_CORTEXM3_STM32 and _ARCH_CORTEXM4_STM32F3
+    #else //_ARCH_CORTEXM3_STM32F1 and _ARCH_CORTEXM4_STM32F3
     DMA_Stream_TypeDef *dmaTx;        ///< Pointer to DMA TX peripheral
     DMA_Stream_TypeDef *dmaRx;        ///< Pointer to DMA RX peripheral
-    #endif //_ARCH_CORTEXM3_STM32 and _ARCH_CORTEXM4_STM32F3
+    #endif //_ARCH_CORTEXM3_STM32F1 and _ARCH_CORTEXM4_STM32F3
     Thread *txWaiting;                ///< Thread waiting for tx, or 0
     static const unsigned int txBufferSize=16; ///< Size of tx buffer, for tx speedup
     /// Tx buffer, for tx speedup. This buffer must not end up in the CCM of the

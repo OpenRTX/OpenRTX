@@ -171,8 +171,9 @@ private:
     FastMutex txMutex;///< Mutex used to guard the tx queue
     FastMutex rxMutex;///< Mutex used to guard the rx queue
 
-    Queue<char,swTxQueue> txQueue;///< Tx software queue
+    DynUnsyncQueue<char>  txQueue;///< Rx software queue
     DynUnsyncQueue<char>  rxQueue;///< Rx software queue
+    Thread *txWaiting;  ///< Thread waiting on rx queue
     Thread *rxWaiting;  ///< Thread waiting on rx queue
     bool idle;          ///< Receiver idle
     

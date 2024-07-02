@@ -507,7 +507,7 @@ FilesystemManager& FilesystemManager::instance()
 
 int FilesystemManager::kmount(const char* path, intrusive_ref_ptr<FilesystemBase> fs)
 {
-    if(path==0 || path[0]=='\0' || fs==0) return -EFAULT;
+    if(path==0 || path[0]=='\0' || !fs) return -EFAULT;
     Lock<FastMutex> l(mutex);
     size_t len=strlen(path);
     if(len>PATH_MAX) return -ENAMETOOLONG;

@@ -102,10 +102,10 @@ void state_terminate()
 void state_task()
 {
     // Update radio state once every 100ms
-    if((getTick() - lastUpdate) < 100)
+    if((getTimeMs() - lastUpdate) < 100)
         return;
 
-    lastUpdate = getTick();
+    lastUpdate = getTimeMs();
 
     pthread_mutex_lock(&state_mutex);
 

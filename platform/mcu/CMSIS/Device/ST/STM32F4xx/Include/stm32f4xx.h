@@ -2,6 +2,8 @@
   ******************************************************************************
   * @file    stm32f4xx.h
   * @author  MCD Application Team
+  * @version V2.5.1
+  * @date    28-June-2016
   * @brief   CMSIS STM32F4xx Device Peripheral Access Layer Header File.
   *            
   *          The file is the unique include file that the application programmer
@@ -16,13 +18,29 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2017 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2016 STMicroelectronics</center></h2>
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
+  * Redistribution and use in source and binary forms, with or without modification,
+  * are permitted provided that the following conditions are met:
+  *   1. Redistributions of source code must retain the above copyright notice,
+  *      this list of conditions and the following disclaimer.
+  *   2. Redistributions in binary form must reproduce the above copyright notice,
+  *      this list of conditions and the following disclaimer in the documentation
+  *      and/or other materials provided with the distribution.
+  *   3. Neither the name of STMicroelectronics nor the names of its contributors
+  *      may be used to endorse or promote products derived from this software
+  *      without specific prior written permission.
+  *
+  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+  * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   *
   ******************************************************************************
   */
@@ -61,7 +79,7 @@
     !defined (STM32F401xC) && !defined (STM32F401xE) && !defined (STM32F410Tx) && !defined (STM32F410Cx) && \
     !defined (STM32F410Rx) && !defined (STM32F411xE) && !defined (STM32F446xx) && !defined (STM32F469xx) && \
     !defined (STM32F479xx) && !defined (STM32F412Cx) && !defined (STM32F412Rx) && !defined (STM32F412Vx) && \
-    !defined (STM32F412Zx) && !defined (STM32F413xx) && !defined (STM32F423xx)
+    !defined (STM32F412Zx)
   /* #define STM32F405xx */   /*!< STM32F405RG, STM32F405VG and STM32F405ZG Devices */
   /* #define STM32F415xx */   /*!< STM32F415RG, STM32F415VG and STM32F415ZG Devices */
   /* #define STM32F407xx */   /*!< STM32F407VG, STM32F407VE, STM32F407ZG, STM32F407ZE, STM32F407IG  and STM32F407IE Devices */
@@ -88,9 +106,6 @@
   /* #define STM32F412Zx */   /*!< STM32F412ZET, STM32F412ZGT, STM32F412ZEJ and STM32F412ZGJ Devices */
   /* #define STM32F412Vx */   /*!< STM32F412VET, STM32F412VGT, STM32F412VEH and STM32F412VGH Devices */
   /* #define STM32F412Rx */   /*!< STM32F412RET, STM32F412RGT, STM32F412REY and STM32F412RGY Devices */
-  /* #define STM32F413xx */   /*!< STM32F413CH, STM32F413MH, STM32F413RH, STM32F413VH, STM32F413ZH, STM32F413CG, STM32F413MG,
-                                   STM32F413RG, STM32F413VG and STM32F413ZG Devices */
-  /* #define STM32F423xx */   /*!< STM32F423CH, STM32F423RH, STM32F423VH and STM32F423ZH Devices */
 #endif
    
 /*  Tip: To avoid modifying this file each time you need to switch between these
@@ -106,16 +121,16 @@
 #endif /* USE_HAL_DRIVER */
 
 /**
-  * @brief CMSIS version number V2.6.7
+  * @brief CMSIS version number V2.5.1
   */
 #define __STM32F4xx_CMSIS_VERSION_MAIN   (0x02U) /*!< [31:24] main version */
-#define __STM32F4xx_CMSIS_VERSION_SUB1   (0x06U) /*!< [23:16] sub1 version */
-#define __STM32F4xx_CMSIS_VERSION_SUB2   (0x07U) /*!< [15:8]  sub2 version */
+#define __STM32F4xx_CMSIS_VERSION_SUB1   (0x05U) /*!< [23:16] sub1 version */
+#define __STM32F4xx_CMSIS_VERSION_SUB2   (0x01U) /*!< [15:8]  sub2 version */
 #define __STM32F4xx_CMSIS_VERSION_RC     (0x00U) /*!< [7:0]  release candidate */
 #define __STM32F4xx_CMSIS_VERSION        ((__STM32F4xx_CMSIS_VERSION_MAIN << 24)\
                                          |(__STM32F4xx_CMSIS_VERSION_SUB1 << 16)\
                                          |(__STM32F4xx_CMSIS_VERSION_SUB2 << 8 )\
-                                         |(__STM32F4xx_CMSIS_VERSION_RC))
+                                         |(__STM32F4xx_CMSIS_VERSION))
 
 /**
   * @}
@@ -167,10 +182,6 @@
   #include "stm32f412rx.h"
 #elif defined(STM32F412Vx)
   #include "stm32f412vx.h"
-#elif defined(STM32F413xx)
-  #include "stm32f413xx.h"
-#elif defined(STM32F423xx)
-  #include "stm32f423xx.h"
 #else
  #error "Please select first the target STM32F4xx device used in your application (in stm32f4xx.h file)"
 #endif
@@ -195,10 +206,10 @@ typedef enum
 } FunctionalState;
 #define IS_FUNCTIONAL_STATE(STATE) (((STATE) == DISABLE) || ((STATE) == ENABLE))
 
-typedef enum
+typedef enum 
 {
-  SUCCESS = 0U,
-  ERROR = !SUCCESS
+  ERROR = 0U, 
+  SUCCESS = !ERROR
 } ErrorStatus;
 
 /**
@@ -225,60 +236,6 @@ typedef enum
 
 #define POSITION_VAL(VAL)     (__CLZ(__RBIT(VAL))) 
 
-/* Use of CMSIS compiler intrinsics for register exclusive access */
-/* Atomic 32-bit register access macro to set one or several bits */
-#define ATOMIC_SET_BIT(REG, BIT)                             \
-  do {                                                       \
-    uint32_t val;                                            \
-    do {                                                     \
-      val = __LDREXW((__IO uint32_t *)&(REG)) | (BIT);       \
-    } while ((__STREXW(val,(__IO uint32_t *)&(REG))) != 0U); \
-  } while(0)
-
-/* Atomic 32-bit register access macro to clear one or several bits */
-#define ATOMIC_CLEAR_BIT(REG, BIT)                           \
-  do {                                                       \
-    uint32_t val;                                            \
-    do {                                                     \
-      val = __LDREXW((__IO uint32_t *)&(REG)) & ~(BIT);      \
-    } while ((__STREXW(val,(__IO uint32_t *)&(REG))) != 0U); \
-  } while(0)
-
-/* Atomic 32-bit register access macro to clear and set one or several bits */
-#define ATOMIC_MODIFY_REG(REG, CLEARMSK, SETMASK)                          \
-  do {                                                                     \
-    uint32_t val;                                                          \
-    do {                                                                   \
-      val = (__LDREXW((__IO uint32_t *)&(REG)) & ~(CLEARMSK)) | (SETMASK); \
-    } while ((__STREXW(val,(__IO uint32_t *)&(REG))) != 0U);               \
-  } while(0)
-
-/* Atomic 16-bit register access macro to set one or several bits */
-#define ATOMIC_SETH_BIT(REG, BIT)                            \
-  do {                                                       \
-    uint16_t val;                                            \
-    do {                                                     \
-      val = __LDREXH((__IO uint16_t *)&(REG)) | (BIT);       \
-    } while ((__STREXH(val,(__IO uint16_t *)&(REG))) != 0U); \
-  } while(0)
-
-/* Atomic 16-bit register access macro to clear one or several bits */
-#define ATOMIC_CLEARH_BIT(REG, BIT)                          \
-  do {                                                       \
-    uint16_t val;                                            \
-    do {                                                     \
-      val = __LDREXH((__IO uint16_t *)&(REG)) & ~(BIT);      \
-    } while ((__STREXH(val,(__IO uint16_t *)&(REG))) != 0U); \
-  } while(0)
-
-/* Atomic 16-bit register access macro to clear and set one or several bits */
-#define ATOMIC_MODIFYH_REG(REG, CLEARMSK, SETMASK)                         \
-  do {                                                                     \
-    uint16_t val;                                                          \
-    do {                                                                   \
-      val = (__LDREXH((__IO uint16_t *)&(REG)) & ~(CLEARMSK)) | (SETMASK); \
-    } while ((__STREXH(val,(__IO uint16_t *)&(REG))) != 0U);               \
-  } while(0)
 
 /**
   * @}

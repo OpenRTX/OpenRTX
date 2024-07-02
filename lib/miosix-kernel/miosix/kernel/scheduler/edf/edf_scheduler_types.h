@@ -25,11 +25,10 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#pragma once
+
 #include "config/miosix_settings.h"
 #include <limits>
-
-#ifndef EDF_SCHEDULER_TYPES_H
-#define	EDF_SCHEDULER_TYPES_H
 
 #ifdef SCHED_TYPE_EDF
 
@@ -49,12 +48,12 @@ public:
      * Constructor. Not explicit for backward compatibility.
      * \param deadline the thread deadline.
      */
-    EDFSchedulerPriority(long long deadline): deadline(deadline) {}
+    EDFSchedulerPriority(long long deadline) : deadline(deadline) {}
 
     /**
      * Default constructor.
      */
-    EDFSchedulerPriority(): deadline(MAIN_PRIORITY) {}
+    EDFSchedulerPriority() : deadline(MAIN_PRIORITY) {}
 
     /**
      * \return the priority value
@@ -76,45 +75,57 @@ public:
         return this->deadline>=0 &&
                this->deadline!=std::numeric_limits<long long>::max()-1;
     }
+    
+    /**
+     * This function acts like a less-than operator but should be only used in
+     * synchronization module for priority inheritance. The concept of priority
+     * for preemption is not exactly the same for priority inheritance, hence,
+     * this operation is a branch out of preemption priority for inheritance
+     * purpose.
+     */
+    inline bool mutexLessOp(EDFSchedulerPriority b)
+    {
+        return deadline > b.deadline;
+    }
 
 private:
     long long deadline;///< The deadline time
 };
 
-inline bool operator <(EDFSchedulerPriority a, EDFSchedulerPriority b)
+inline bool operator<(EDFSchedulerPriority a, EDFSchedulerPriority b)
 {
     //Not that the comparison is reversed on purpose. In fact, the thread which
     //has the lower deadline has higher priority
     return a.get() > b.get();
 }
 
-inline bool operator <=(EDFSchedulerPriority a, EDFSchedulerPriority b)
+inline bool operator<=(EDFSchedulerPriority a, EDFSchedulerPriority b)
 {
     //Not that the comparison is reversed on purpose. In fact, the thread which
     //has the lower deadline has higher priority
     return a.get() >= b.get();
 }
 
-inline bool operator >(EDFSchedulerPriority a, EDFSchedulerPriority b)
+inline bool operator>(EDFSchedulerPriority a, EDFSchedulerPriority b)
 {
     //Not that the comparison is reversed on purpose. In fact, the thread which
     //has the lower deadline has higher priority
     return a.get() < b.get();
 }
 
-inline bool operator >=(EDFSchedulerPriority a, EDFSchedulerPriority b)
+inline bool operator>=(EDFSchedulerPriority a, EDFSchedulerPriority b)
 {
     //Not that the comparison is reversed on purpose. In fact, the thread which
     //has the lower deadline has higher priority
     return a.get() <= b.get();
 }
 
-inline bool operator ==(EDFSchedulerPriority a, EDFSchedulerPriority b)
+inline bool operator==(EDFSchedulerPriority a, EDFSchedulerPriority b)
 {
     return a.get() == b.get();
 }
 
-inline bool operator !=(EDFSchedulerPriority a, EDFSchedulerPriority b)
+inline bool operator!=(EDFSchedulerPriority a, EDFSchedulerPriority b)
 {
     return a.get() != b.get();
 }
@@ -127,14 +138,10 @@ inline bool operator !=(EDFSchedulerPriority a, EDFSchedulerPriority b)
 class EDFSchedulerData
 {
 public:
-    EDFSchedulerData(): deadline(), next(0) {}
-
     EDFSchedulerPriority deadline; ///<\internal thread deadline
-    Thread *next; ///<\internal to make a list of threads, ordered by deadline
+    Thread *next=nullptr; ///<\internal list of threads, ordered by deadline
 };
 
 } //namespace miosix
 
 #endif //SCHED_TYPE_EDF
-
-#endif //EDF_SCHEDULER_TYPES_H
