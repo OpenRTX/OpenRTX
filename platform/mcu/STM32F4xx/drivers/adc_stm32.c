@@ -109,7 +109,7 @@ uint16_t adcStm32_sample(const struct Adc *adc, const uint32_t channel)
 
     /* Channel 18 is Vbat, enable it if requested */
     if(channel == 18)
-        ADC123_COMMON->CCR |= ADC_CCR_VBATE;
+        ADC->CCR |= ADC_CCR_VBATE;
 
     pAdc->SQR3 = channel;
     pAdc->CR2 |= ADC_CR2_SWSTART;
@@ -122,7 +122,7 @@ uint16_t adcStm32_sample(const struct Adc *adc, const uint32_t channel)
     if(channel == 18)
     {
         value *= 2;
-        ADC123_COMMON->CCR &= ~ADC_CCR_VBATE;
+        ADC->CCR &= ~ADC_CCR_VBATE;
     }
 
     return value;
