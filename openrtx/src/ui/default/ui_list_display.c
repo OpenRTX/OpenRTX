@@ -171,7 +171,7 @@ static void ui_Draw_MenuItem( GuiState_st* guiState , char* entryBuf )
         announceMenuItemIfNeeded( guiState , entryBuf , NULL , false );
     }
     gfx_print( &line->pos , guiState->layout.menu_font.size ,
-               ALIGN_LEFT , &Color_text , entryBuf );
+               GFX_ALIGN_LEFT , &Color_text , entryBuf );
     line->pos.y += guiState->layout.menu_h ;
 
 }
@@ -278,8 +278,8 @@ void _ui_Draw_MenuListValue( GuiState_st* guiState ,
                     announceMenuItemIfNeeded( guiState , entry_buf , value_buf , guiState->uiState.edit_mode );
                 }
             }
-            gfx_print( &line->pos , guiState->layout.menu_font.size , ALIGN_LEFT , &text_color , entry_buf );
-            gfx_print( &line->pos , guiState->layout.menu_font.size , ALIGN_RIGHT , &text_color , value_buf );
+            gfx_print( &line->pos , guiState->layout.menu_font.size , GFX_ALIGN_LEFT , &text_color , entry_buf );
+            gfx_print( &line->pos , guiState->layout.menu_font.size , GFX_ALIGN_RIGHT , &text_color , value_buf );
             line1->pos.y += guiState->layout.menu_h ;
         }
     }

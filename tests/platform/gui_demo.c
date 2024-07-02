@@ -46,7 +46,7 @@ int main(void)
     Color_st color_op3 ;
     ui_ColorLoad( &color_op3 , COLOR_OP3 );
     gfx_clearScreen();
-    gfx_print(splash_origin, FONT_SIZE_4, ALIGN_CENTER,
+    gfx_print(splash_origin, FONT_SIZE_4, GFX_ALIGN_CENTER,
               color_op3, "OpenRTX");
     gfx_render();
     while(gfx_renderingInProgress());

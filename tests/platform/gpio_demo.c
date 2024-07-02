@@ -39,7 +39,7 @@ void printBits(uint16_t value, Pos_st pos)
 
     Color_st color_fg ;
     ui_ColorLoad( &color_fg , COLOR_FG );
-    gfx_print(pos, FONT_SIZE_1, ALIGN_LEFT, color_fg, buf);
+    gfx_print(pos, FONT_SIZE_1, GFX_ALIGN_LEFT, color_fg, buf);
 }
 
 int main(void)

@@ -25,6 +25,25 @@
 #include <ui/ui_default.h>
 #include "ui_scripts.h"
 
+// System Parameter Values
+enum
+{
+    GUI_CMD_PARA_SIGNED_BIT  = 0x80 ,
+    GUI_CMD_PARA_SIGNED_FLAG = 0x40 ,
+
+    GUI_CMD_PARA_VALUE_MASK  = ~GUI_CMD_PARA_SIGNED_BIT
+};
+
+#define ST_VAL( val )   ( (uint8_t)( val & GUI_CMD_PARA_VALUE_MASK ) + \
+                          (uint8_t)GUI_CMD_DATA_AREA )
+
+#define LD_VAL( val )   ( (uint8_t)val - (uint8_t)GUI_CMD_DATA_AREA )
+
+#define ST_EXT_VAL( o , v )     ST_VAL( o ) , ST_VAL( v )
+#define ST_LOAD_EXT_VAL( v )
+#define ST_ADD_EXT_VAL( v )
+#define ST_SUB_EXT_VAL( v )
+
 // GUI Commands
 enum
 {
@@ -33,25 +52,29 @@ enum
     GUI_CMD_EVENT_END        = 0x02 , //  used with page sections that respond to events
     GUI_CMD_TIMER_CHECK      = 0x03 ,
     GUI_CMD_TIMER_SET        = 0x04 ,
-    GUI_CMD_GOTO_LINE        = 0x05 ,
-    GUI_CMD_GOTO_POS         = 0x06 ,
-    GUI_CMD_LOAD_STYLE       = 0x07 ,
-    GUI_CMD_BG_COLOR         = 0x08 ,
-    GUI_CMD_FG_COLOR         = 0x09 ,
+    GUI_CMD_GOTO_TEXT_LINE   = 0x05 ,
+    GUI_CMD_LOAD_STYLE       = 0x06 ,
+    GUI_CMD_BG_COLOR         = 0x07 ,
+    GUI_CMD_FG_COLOR         = 0x08 ,
+    GUI_CMD_FONT_SIZE        = 0x09 ,
     GUI_CMD_LINE_END         = 0x0A ,
-    GUI_CMD_FONT_SIZE        = 0x0B ,
-    GUI_CMD_ALIGN            = 0x0C ,
-    GUI_CMD_RUN_SCRIPT       = 0x0D ,
-    GUI_CMD_LINK             = 0x0E ,
-    GUI_CMD_LINK_END         = 0x0F ,
-    GUI_CMD_PAGE             = 0x10 ,
-    GUI_CMD_TITLE            = 0x11 ,
-    GUI_CMD_TEXT             = 0x12 ,
-    GUI_CMD_VALUE_DSP        = 0x13 ,
-    GUI_CMD_VALUE_INP        = 0x14 ,
-    GUI_CMD_DRAW_LINE        = 0x15 ,
-    GUI_CMD_DRAW_RECT        = 0x16 ,
-    GUI_CMD_DRAW_RECT_FILLED = 0x17 ,
+    GUI_CMD_ALIGN            = 0x0B ,
+    GUI_CMD_RUN_SCRIPT       = 0x0C ,
+    GUI_CMD_LINK             = 0x0D ,
+    GUI_CMD_LINK_END         = 0x0E ,
+    GUI_CMD_PAGE             = 0x0F ,
+    GUI_CMD_TITLE            = 0x10 ,
+    GUI_CMD_TEXT             = 0x11 ,
+    GUI_CMD_VALUE_DSP        = 0x12 ,
+    GUI_CMD_VALUE_INP        = 0x13 ,
+    GUI_CMD_GOTO_POS_X       = 0x14 ,
+    GUI_CMD_GOTO_POS_Y       = 0x15 ,
+    GUI_CMD_ADD_TO_POS_X     = 0x16 ,
+    GUI_CMD_ADD_TO_POS_Y     = 0x17 ,
+    GUI_CMD_DRAW_LINE        = 0x18 ,
+    GUI_CMD_DRAW_RECT        = 0x19 ,
+    GUI_CMD_DRAW_RECT_FILLED = 0x1A ,
+    GUI_CMD_OPERATION        = 0x1B ,
 #ifdef DISPLAY_DEBUG_MSG
     GUI_CMD_SET_DBG_MSG      = 0x1D ,
 #endif // DISPLAY_DEBUG_MSG
@@ -60,50 +83,6 @@ enum
     GUI_CMD_NUM_OF                  ,
     GUI_CMD_DATA_AREA        = 0x20
 };
-
-// System Parameter Values
-//#define ENABLE_SYSTEM_VARIABLES
-#ifdef ENABLE_SYSTEM_VARIABLES
-enum
-{
-    GUI_CMD_PARA_SYSTEM_FLAG   = 0x80 ,
-    GUI_CMD_PARA_MODIFIER_FLAG = GUI_CMD_PARA_SYSTEM_FLAG >> 1 ,
-    GUI_CMD_PARA_SIGNED_FLAG   = 0x20 ,
-    GUI_CMD_PARA_VALUE_MASK    = 0x3F
-};
-
-enum
-{
-    GUI_CMD_PARA_SYS_SCREEN_WIDTH  ,
-    GUI_CMD_PARA_SYS_SCREEN_HEIGHT ,
-    GUI_CMD_PARA_SYS_LINE_HEIGHT   ,
-    GUI_CMD_PARA_SYS_FONT_SIZE     ,
-    GUI_CMD_PARA_SYS_BG_COLOR      ,
-    GUI_CMD_PARA_SYS_FG_COLOR
-};
-
-enum
-{
-    GUI_CMD_PARA_MOD_ADD  = 0x00 ,
-    GUI_CMD_PARA_MOD_SUB  = 0x40 ,
-    GUI_CMD_PARA_MOD_MASK = 0xC0
-};
-#endif // ENABLE_SYSTEM_VARIABLES
-enum
-{
-    GUI_CMD_GOTO_POS_PARA_X  = 0x40 ,
-    GUI_CMD_GOTO_ADD_PARA_X  = 0x20 ,
-    GUI_CMD_GOTO_SUB_PARA_X  = 0x10 ,
-    GUI_CMD_GOTO_POS_PARA_Y  = 0x04 ,
-    GUI_CMD_GOTO_ADD_PARA_Y  = 0x02 ,
-    GUI_CMD_GOTO_SUB_PARA_Y  = 0x01 ,
-    GUI_CMD_GOTO_POS_PARA_XY = GUI_CMD_GOTO_POS_PARA_Y | GUI_CMD_GOTO_POS_PARA_X
-};
-
-#define GUI_CMD_GOTO_POS_X   = GUI_CMD_GOTO_POS , ST_VAL( GUI_CMD_GOTO_POS_PARA_X )
-#define GUI_CMD_GOTO_POS_Y   = GUI_CMD_GOTO_POS , ST_VAL( GUI_CMD_GOTO_POS_PARA_Y )
-#define GUI_CMD_GOTO_POS_XY  = GUI_CMD_GOTO_POS , ST_VAL( GUI_CMD_GOTO_POS_PARA_X | \
-                                                          GUI_CMD_GOTO_POS_PARA_Y     )
 
 //#define ENABLE_ALIGN_VERTICAL
 
@@ -122,12 +101,13 @@ enum
 #endif // ENABLE_ALIGN_VERTICAL
 };
 
-#define GUI_CMD_ALIGN_LEFT      GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_LEFT   )
-#define GUI_CMD_ALIGN_CENTER    GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_CENTER )
-#define GUI_CMD_ALIGN_RIGHT     GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_RIGHT  )
-//#define GUI_CMD_ALIGN_TOP       GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_TOP    )
-//#define GUI_CMD_ALIGN_MIDDLE    GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_MIDDLE )
-//#define GUI_CMD_ALIGN_BOTTOM    GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_BOTTOM )
+// Script Command Macros
+#define ALIGN_LEFT      GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_LEFT   )
+#define ALIGN_CENTER    GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_CENTER )
+#define ALIGN_RIGHT     GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_RIGHT  )
+//#define ALIGN_TOP       GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_TOP    )
+//#define ALIGN_MIDDLE    GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_MIDDLE )
+//#define ALIGN_BOTTOM    GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_BOTTOM )
 
 /*
 // Color Variable Field Unshifted Masks and Shifts
@@ -204,6 +184,43 @@ c->green = (uint8_t)( ( cv >> COLOR_ENC_GREEN_SHIFT ) & COLOR_ENC_GREEN_MASK ) ;
 c->blue  = (uint8_t)( ( cv >> COLOR_ENC_BLUE_SHIFT  ) & COLOR_ENC_BLUE_MASK  ) ; \
 c->alpha = (uint8_t)( ( cv >> COLOR_ENC_ALPHA_SHIFT ) & COLOR_ENC_ALPHA_MASK ) ;
 */
+
+// Script Command Macros
+#define GOTO_TEXT_LINE( l ) GUI_CMD_GOTO_TEXT_LINE , ST_VAL( l )
+
+// Script Command Macros
+#define BG_COLOR( c )       GUI_CMD_BG_COLOR   , ST_VAL( COLOR_##c )
+#define FG_COLOR( c )       GUI_CMD_FG_COLOR   , ST_VAL( COLOR_##c )
+
+// Script Command Macros
+#define GOTO_X( x )         GUI_CMD_GOTO_POS_X   , ST_VAL( x )
+#define GOTO_Y( y )         GUI_CMD_GOTO_POS_Y   , ST_VAL( y )
+#define ADD_TO_X( x )       GUI_CMD_ADD_TO_POS_X , ST_VAL( x )
+#define ADD_TO_Y( y )       GUI_CMD_ADD_TO_POS_Y , ST_VAL( y )
+
+#define LINE( w , h )       GUI_CMD_DRAW_LINE , ST_VAL( w ) , ST_VAL( h )
+#define RECT( w , h )       GUI_CMD_DRAW_RECT , ST_VAL( w ) , ST_VAL( h )
+#define RECT_FILL( w , h )  GUI_CMD_DRAW_RECT_FILLED , ST_VAL( w ) , ST_VAL( h )
+
+// Script Command Macros
+
+enum
+{
+    GUI_CMD_OPR_GOTO_SCREEN_LEFT  ,
+    GUI_CMD_OPR_GOTO_SCREEN_RIGHT ,
+    GUI_CMD_OPR_GOTO_SCREEN_TOP   ,
+    GUI_CMD_OPR_GOTO_SCREEN_BASE  ,
+    GUI_CMD_OPR_GOTO_LINE_TOP     ,
+    GUI_CMD_OPR_GOTO_LINE_BASE
+};
+
+#define GOTO_SCREEN_LEFT    GUI_CMD_OPERATION , ST_VAL( GUI_CMD_OPR_GOTO_SCREEN_LEFT )
+#define GOTO_SCREEN_RIGHT   GUI_CMD_OPERATION , ST_VAL( GUI_CMD_OPR_GOTO_SCREEN_RIGHT )
+#define GOTO_SCREEN_TOP     GUI_CMD_OPERATION , ST_VAL( GUI_CMD_OPR_GOTO_SCREEN_TOP )
+#define GOTO_SCREEN_BASE    GUI_CMD_OPERATION , ST_VAL( GUI_CMD_OPR_GOTO_SCREEN_BASE )
+#define GOTO_LINE_TOP       GUI_CMD_OPERATION , ST_VAL( GUI_CMD_OPR_GOTO_LINE_TOP )
+#define GOTO_LINE_BASE      GUI_CMD_OPERATION , ST_VAL( GUI_CMD_OPR_GOTO_LINE_BASE )
+
 // Color load fn.
 extern void ui_ColorLoad( Color_st* color , ColorSelector_en colorSelector );
 

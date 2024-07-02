@@ -127,15 +127,15 @@ enum
 #if SCREEN_HEIGHT > 127
 enum
 {
-    SCREEN_INITIAL_ALIGN       	  =  ALIGN_LEFT ,
+    SCREEN_INITIAL_ALIGN       	  =  GFX_ALIGN_LEFT ,
     // Height and padding shown in diagram at beginning of file
     SCREEN_INITIAL_X              =  0 ,
     SCREEN_INITIAL_Y              =  0 ,
     SCREEN_INITIAL_HEIGHT         = 20 ,
-    SCREEN_TOP_ALIGN              = ALIGN_CENTER ,
+    SCREEN_TOP_ALIGN              = GFX_ALIGN_CENTER ,
     SCREEN_TOP_HEIGHT             = 16 ,
     SCREEN_TOP_PAD                =  4 ,
-    SCREEN_LINE_ALIGN             =  ALIGN_LEFT ,
+    SCREEN_LINE_ALIGN             =  GFX_ALIGN_LEFT ,
     SCREEN_LINE_1_HEIGHT          = 20 ,
     SCREEN_LINE_2_HEIGHT          = 20 ,
     SCREEN_LINE_3_HEIGHT          = 20 ,
@@ -143,7 +143,7 @@ enum
     SCREEN_LINE_4_HEIGHT          = 20 ,
     SCREEN_LINE_5_HEIGHT          = 20 ,
     SCREEN_MENU_HEIGHT            = 16 ,
-    SCREEN_BOTTOM_ALIGN           =  ALIGN_LEFT ,
+    SCREEN_BOTTOM_ALIGN           =  GFX_ALIGN_LEFT ,
     SCREEN_BOTTOM_HEIGHT          = 23 ,
     SCREEN_BOTTOM_PAD             = SCREEN_TOP_PAD ,
     SCREEN_STATUS_V_PAD           =  2 ,
@@ -213,22 +213,22 @@ enum
 #elif SCREEN_HEIGHT > 63
 enum
 {
-    SCREEN_INITIAL_ALIGN          = ALIGN_LEFT ,
+    SCREEN_INITIAL_ALIGN          = GFX_ALIGN_LEFT ,
     // Height and padding shown in diagram at beginning of file
     SCREEN_INITIAL_X              =  0 ,
     SCREEN_INITIAL_Y              =  0 ,
     SCREEN_INITIAL_HEIGHT         = 10 ,
-    SCREEN_TOP_ALIGN              = ALIGN_CENTER ,
+    SCREEN_TOP_ALIGN              = GFX_ALIGN_CENTER ,
     SCREEN_TOP_HEIGHT             = 11 ,
     SCREEN_TOP_PAD                =  1 ,
-    SCREEN_LINE_ALIGN             = ALIGN_LEFT ,
+    SCREEN_LINE_ALIGN             = GFX_ALIGN_LEFT ,
     SCREEN_LINE_1_HEIGHT          = 10 ,
     SCREEN_LINE_2_HEIGHT          = 10 ,
     SCREEN_LINE_3_HEIGHT          = 10 ,
     SCREEN_LINE_3_LARGE_HEIGHT    = 16 ,
     SCREEN_LINE_4_HEIGHT          = 10 ,
     SCREEN_MENU_HEIGHT            = 10 ,
-    SCREEN_BOTTOM_ALIGN           = ALIGN_LEFT ,
+    SCREEN_BOTTOM_ALIGN           = GFX_ALIGN_LEFT ,
     SCREEN_BOTTOM_HEIGHT          = 15 ,
     SCREEN_BOTTOM_PAD             =  0 ,
     SCREEN_STATUS_V_PAD           =  1 ,
@@ -292,21 +292,21 @@ enum
 #elif SCREEN_HEIGHT > 47
 enum
 {
-    SCREEN_INITIAL_ALIGN          = ALIGN_LEFT ,
+    SCREEN_INITIAL_ALIGN          = GFX_ALIGN_LEFT ,
     // Height and padding shown in diagram at beginning of file
     SCREEN_INITIAL_HEIGHT         = 10 ,
     // Height and padding shown in diagram at beginning of file
-    SCREEN_TOP_ALIGN              = ALIGN_CENTER ,
+    SCREEN_TOP_ALIGN              = GFX_ALIGN_CENTER ,
     SCREEN_TOP_HEIGHT             = 11 ,
     SCREEN_TOP_PAD                =  1 ,
-    SCREEN_LINE_ALIGN             = ALIGN_LEFT ,
+    SCREEN_LINE_ALIGN             = GFX_ALIGN_LEFT ,
     SCREEN_LINE_1_HEIGHT          =  0 ,
     SCREEN_LINE_2_HEIGHT          = 10 ,
     SCREEN_LINE_3_HEIGHT          = 10 ,
     SCREEN_LINE_3_LARGE_HEIGHT    = 18 ,
     SCREEN_LINE_4_HEIGHT          = 10 ,
     SCREEN_MENU_HEIGHT            = 10 ,
-    SCREEN_BOTTOM_ALIGN           = ALIGN_LEFT ,
+    SCREEN_BOTTOM_ALIGN           = GFX_ALIGN_LEFT ,
     SCREEN_BOTTOM_HEIGHT          =  0 ,
     SCREEN_BOTTOM_PAD             =  0 ,
     SCREEN_STATUS_V_PAD           =  1 ,
@@ -625,8 +625,8 @@ void ui_Draw_SplashScreen( void )
     call_font.size = FONT_SIZE_6PT ;
     #endif
 
-    gfx_print( &logo_pos , logo_font.size , ALIGN_CENTER , &color_op3 , "O P N\nR T X" );
-    gfx_print( &call_pos , call_font.size , ALIGN_CENTER , &color_fg  , state.settings.callsign );
+    gfx_print( &logo_pos , logo_font.size , GFX_ALIGN_CENTER , &color_op3 , "O P N\nR T X" );
+    gfx_print( &call_pos , call_font.size , GFX_ALIGN_CENTER , &color_fg  , state.settings.callsign );
 
     vp_announceSplashScreen();
 }

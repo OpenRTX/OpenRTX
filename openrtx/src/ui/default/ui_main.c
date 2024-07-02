@@ -245,13 +245,13 @@ static void ui_Draw_LowBatteryScreen( GuiState_st* guiState , bool update , Even
 
         gfx_print( &text_pos_1                      ,
                    FONT_SIZE_6PT                    ,
-                   ALIGN_CENTER                     ,
+                   GFX_ALIGN_CENTER                     ,
                    &color_fg                        ,
                    currentLanguage->forEmergencyUse   );
 
         gfx_print( &text_pos_2                     ,
                    FONT_SIZE_6PT                   ,
-                   ALIGN_CENTER                    ,
+                   GFX_ALIGN_CENTER                    ,
                    &color_fg                       ,
                    currentLanguage->pressAnyButton   );
         guiState->page.renderPage = true ;
@@ -312,7 +312,7 @@ static void ui_Draw_MainTop( GuiState_st* guiState , Event_st* event )
             datetime_t local_time = utcToLocalTime( last_state.time ,
                                                     last_state.settings.utc_timezone );
             gfx_print( &lineTop->pos ,
-                       styleTop->font.size , ALIGN_CENTER ,
+                       styleTop->font.size , GFX_ALIGN_CENTER ,
                        &color_fg , "%02d:%02d:%02d" , local_time.hour ,
                        local_time.minute , local_time.second );
             guiState->page.renderPage = true ;
@@ -330,7 +330,7 @@ static void ui_Draw_MainTop( GuiState_st* guiState , Event_st* event )
 #ifdef BAT_NONE
             gfx_print( &lineTop->pos ,
                        styleTop->font.size ,
-                       ALIGN_RIGHT , &color_fg , "%.1fV" , last_state.v_bat );
+                       GFX_ALIGN_RIGHT , &color_fg , "%.1fV" , last_state.v_bat );
 #else // BAT_NONE
             // Otherwise print battery icon on top bar, use 4 px padding
             gfx_drawBattery( &start , last_state.charge );
@@ -344,7 +344,7 @@ static void ui_Draw_MainTop( GuiState_st* guiState , Event_st* event )
                 start  = lineTop->pos ;
                 start.w = styleTop->symbolSize + FONT_SIZE_24PT + 1 ;
                 start.h = start.w ;
-                gfx_drawSymbol( &start , start.w , ALIGN_LEFT , &color_fg , SYMBOL_LOCK );
+                gfx_drawSymbol( &start , start.w , GFX_ALIGN_LEFT , &color_fg , SYMBOL_LOCK );
                 guiState->page.renderPage = true ;
             }
         }
@@ -361,7 +361,7 @@ static void ui_Draw_BankChannel( GuiState_st* guiState )
 
     // Print Bank number, channel number and Channel name
     uint16_t bank_enabled = ( last_state.bank_enabled ) ? last_state.bank : 0 ;
-    gfx_print( &line1->pos , style1->font.size , ALIGN_CENTER ,
+    gfx_print( &line1->pos , style1->font.size , GFX_ALIGN_CENTER ,
                &color_fg , "%01d-%03d: %.12s" ,
                bank_enabled , last_state.channel_index + 1 , last_state.channel.name );
     guiState->page.renderPage = true ;
@@ -438,13 +438,13 @@ static void ui_Draw_ModeInfo( GuiState_st* guiState )
             // Print Bandwidth, Tone and encdec info
             if( tone_tx_enable || tone_rx_enable )
             {
-                gfx_print( &line2->pos , style2->font.size , ALIGN_CENTER ,
+                gfx_print( &line2->pos , style2->font.size , GFX_ALIGN_CENTER ,
                            &color_fg , "%s %4.1f %s" , bw_str ,
                            ctcss_tone[ last_state.channel.fm.txTone ] / 10.0f , encdec_str );
             }
             else
             {
-                gfx_print( &line2->pos , style2->font.size , ALIGN_CENTER ,
+                gfx_print( &line2->pos , style2->font.size , GFX_ALIGN_CENTER ,
                            &color_fg , "%s" , bw_str );
             }
             guiState->page.renderPage = true ;
@@ -453,7 +453,7 @@ static void ui_Draw_ModeInfo( GuiState_st* guiState )
         case OPMODE_DMR :
         {
             // Print Contact
-            gfx_print( &line2->pos , style2->font.size , ALIGN_CENTER ,
+            gfx_print( &line2->pos , style2->font.size , GFX_ALIGN_CENTER ,
                        &color_fg , "%s" , last_state.contact.name );
             guiState->page.renderPage = true ;
             break ;
@@ -466,34 +466,34 @@ static void ui_Draw_ModeInfo( GuiState_st* guiState )
             if( rtxStatus.lsfOk )
             {
                 // Destination address
-                gfx_drawSymbol( &line2->pos , style2->symbolSize , ALIGN_LEFT ,
+                gfx_drawSymbol( &line2->pos , style2->symbolSize , GFX_ALIGN_LEFT ,
                                 &color_fg , SYMBOL_CALL_RECEIVED );
 
-                gfx_print( &line2->pos , style2->font.size , ALIGN_CENTER ,
+                gfx_print( &line2->pos , style2->font.size , GFX_ALIGN_CENTER ,
                            &color_fg , "%s" , rtxStatus.M17_dst );
 
                 // Source address
-                gfx_drawSymbol( &line1->pos , style1->symbolSize , ALIGN_LEFT ,
+                gfx_drawSymbol( &line1->pos , style1->symbolSize , GFX_ALIGN_LEFT ,
                                 &color_fg , SYMBOL_CALL_MADE );
 
-                gfx_print( &line1->pos , style2->font.size , ALIGN_CENTER ,
+                gfx_print( &line1->pos , style2->font.size , GFX_ALIGN_CENTER ,
                            &color_fg , "%s" , rtxStatus.M17_src );
 
                 // RF link (if present)
                 if( rtxStatus.M17_link[0] != '\0' )
                 {
-                    gfx_drawSymbol( &line4->pos , style3->symbolSize , ALIGN_LEFT ,
+                    gfx_drawSymbol( &line4->pos , style3->symbolSize , GFX_ALIGN_LEFT ,
                                     &color_fg , SYMBOL_ACCESS_POINT );
-                    gfx_print( &line4->pos , style2->font.size , ALIGN_CENTER ,
+                    gfx_print( &line4->pos , style2->font.size , GFX_ALIGN_CENTER ,
                                &color_fg , "%s" , rtxStatus.M17_link );
                 }
 
                 // Reflector (if present)
                 if( rtxStatus.M17_refl[0] != '\0' )
                 {
-                    gfx_drawSymbol( &line3->pos , style4->symbolSize , ALIGN_LEFT ,
+                    gfx_drawSymbol( &line3->pos , style4->symbolSize , GFX_ALIGN_LEFT ,
                                     &color_fg , SYMBOL_NETWORK );
-                    gfx_print( &line3->pos , style2->font.size , ALIGN_CENTER ,
+                    gfx_print( &line3->pos , style2->font.size , GFX_ALIGN_CENTER ,
                                &color_fg , "%s" , rtxStatus.M17_refl );
                 }
                 guiState->page.renderPage = true ;
@@ -517,7 +517,7 @@ static void ui_Draw_ModeInfo( GuiState_st* guiState )
                     }
                 }
 
-                gfx_print( &line2->pos , style2->font.size , ALIGN_CENTER ,
+                gfx_print( &line2->pos , style2->font.size , GFX_ALIGN_CENTER ,
                            &color_fg , "M17 #%s" , dst );
                 guiState->page.renderPage = true ;
             }
@@ -537,7 +537,7 @@ static void ui_Draw_Frequency( GuiState_st* guiState )
     ui_ColorLoad( &color_fg , COLOR_FG );
 
     // Print big numbers frequency
-    gfx_print( &line3Large->pos , style3Large->font.size , ALIGN_CENTER ,
+    gfx_print( &line3Large->pos , style3Large->font.size , GFX_ALIGN_CENTER ,
                &color_fg , "%.7g" , (float)frequency / 1000000.0f );
     guiState->page.renderPage = true ;
 }
@@ -565,7 +565,7 @@ static void ui_Draw_VFOMiddleInput( GuiState_st* guiState )
     {
         if( guiState->uiState.input_position == 0 )
         {
-            gfx_print( &line2->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
+            gfx_print( &line2->pos , guiState->layout.input_font.size , GFX_ALIGN_CENTER ,
                        &color_fg , ">Rx:%03lu.%04lu" ,
                        (unsigned long)guiState->uiState.new_rx_frequency / 1000000 ,
                        (unsigned long)( guiState->uiState.new_rx_frequency % 1000000 ) / 100 );
@@ -578,10 +578,10 @@ static void ui_Draw_VFOMiddleInput( GuiState_st* guiState )
                 strcpy( guiState->uiState.new_rx_freq_buf , ">Rx:___.____" );
             }
             guiState->uiState.new_rx_freq_buf[ insert_pos ] = input_char ;
-            gfx_print( &line2->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
+            gfx_print( &line2->pos , guiState->layout.input_font.size , GFX_ALIGN_CENTER ,
                        &color_fg , guiState->uiState.new_rx_freq_buf );
         }
-        gfx_print( &line3Large->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
+        gfx_print( &line3Large->pos , guiState->layout.input_font.size , GFX_ALIGN_CENTER ,
                    &color_fg , " Tx:%03lu.%04lu" ,
                    (unsigned long)last_state.channel.tx_frequency / 1000000 ,
                    (unsigned long)( last_state.channel.tx_frequency % 1000000 ) / 100 );
@@ -591,14 +591,14 @@ static void ui_Draw_VFOMiddleInput( GuiState_st* guiState )
     {
         if( guiState->uiState.input_set == SET_TX )
         {
-            gfx_print( &line2->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
+            gfx_print( &line2->pos , guiState->layout.input_font.size , GFX_ALIGN_CENTER ,
                        &color_fg , " Rx:%03lu.%04lu" ,
                        (unsigned long)guiState->uiState.new_rx_frequency / 1000000 ,
                        (unsigned long)( guiState->uiState.new_rx_frequency % 1000000 ) / 100 );
             // Replace Rx frequency with underscorses
             if( guiState->uiState.input_position == 0 )
             {
-                gfx_print( &line3Large->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
+                gfx_print( &line3Large->pos , guiState->layout.input_font.size , GFX_ALIGN_CENTER ,
                            &color_fg , ">Tx:%03lu.%04lu" ,
                            (unsigned long)guiState->uiState.new_rx_frequency / 1000000 ,
                            (unsigned long)( guiState->uiState.new_rx_frequency % 1000000 ) / 100 );
@@ -610,7 +610,7 @@ static void ui_Draw_VFOMiddleInput( GuiState_st* guiState )
                     strcpy( guiState->uiState.new_tx_freq_buf , ">Tx:___.____" );
                 }
                 guiState->uiState.new_tx_freq_buf[ insert_pos ] = input_char ;
-                gfx_print( &line3Large->pos , guiState->layout.input_font.size , ALIGN_CENTER ,
+                gfx_print( &line3Large->pos , guiState->layout.input_font.size , GFX_ALIGN_CENTER ,
                            &color_fg , guiState->uiState.new_tx_freq_buf );
             }
             guiState->page.renderPage = true ;

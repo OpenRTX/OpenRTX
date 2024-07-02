@@ -301,47 +301,53 @@ inline void gfx_setPixel( Pos_st* pos , Color_st* color )
     }
 }
 
-void gfx_drawLine( Pos_st* startPos , Pos_st* endPos , Color_st* color )
+//@@@KL WTF is going on here? I understand the basic intent but is it working?!!! - not fully.
+Pos_st gfx_drawLine( Pos_st* start_pos , Pos_st* end_pos , Color_st* color )
 {
+    Pos_st   startPos = *start_pos ;
+    Pos_st   endPos   = *end_pos ;
+    Pos_st   pos ;
+    int16_t  steep ;
+    uint16_t tmp ;
+    int16_t  dx ;
+    int16_t  dy ;
+    int16_t  err ;
+    int16_t  ystep ;
+
     if( initialized )
     {
-        int16_t steep = abs( endPos->y - startPos->y ) > abs( endPos->x - startPos->x );
+        steep = abs( endPos.y - startPos.y ) > abs( endPos.x - startPos.x );
 
         if( steep )
         {
-            uint16_t tmp;
-            // Swap startPos->x and startPos->y
-            tmp         = startPos->x ;
-            startPos->x = startPos->y ;
-            startPos->y = tmp ;
-            // Swap endPos->x and endPos->y
-            tmp         = endPos->x ;
-            endPos->x   = endPos->y ;
-            endPos->y   = tmp ;
+            // Swap startPos.x and startPos.y
+            tmp        = startPos.x ;
+            startPos.x = startPos.y ;
+            startPos.y = tmp ;
+            // Swap endPos.x and endPos.y
+            tmp        = endPos.x ;
+            endPos.x   = endPos.y ;
+            endPos.y   = tmp ;
         }
 
-        if( startPos->x > endPos->x )
+        if( startPos.x > endPos.x )
         {
-            uint16_t tmp ;
-            // Swap startPos->x and endPos->x
-            tmp         = startPos->x ;
-            startPos->x = endPos->x ;
-            endPos->x   = tmp ;
-            // Swap startPos->y and endPos->y
-            tmp         = startPos->y ;
-            startPos->y = endPos->y ;
-            endPos->y   = tmp ;
+            // Swap startPos.x and endPos.x
+            tmp        = startPos.x ;
+            startPos.x = endPos.x ;
+            endPos.x   = tmp ;
+            // Swap startPos.y and endPos.y
+            tmp        = startPos.y ;
+            startPos.y = endPos.y ;
+            endPos.y   = tmp ;
         }
 
-        int16_t dx ;
-        int16_t dy ;
-        dx = endPos->x      - startPos->x ;
-        dy = abs( endPos->y - startPos->y );
+        dx = endPos.x      - startPos.x ;
+        dy = abs( endPos.y - startPos.y );
 
-        int16_t err = dx >> 1 ;
-        int16_t ystep ;
+        err = dx >> 1 ;
 
-        if( startPos->y < endPos->y )
+        if( startPos.y < endPos.y )
         {
             ystep = 1 ;
         }
@@ -350,26 +356,75 @@ void gfx_drawLine( Pos_st* startPos , Pos_st* endPos , Color_st* color )
             ystep = -1 ;
         }
 
-        for( ; startPos->x <= endPos->x ; startPos->x++ )
+        for( ; startPos.x <= endPos.x ; startPos.x++ )
         {
-            Pos_st pos = { startPos->y , startPos->x , 0 , 0 };
+            pos   = startPos ;
+            pos.w = 0 ;
+            pos.h = 0 ;
             if( steep )
             {
                 gfx_setPixel( &pos , color );
             }
             else
             {
-                gfx_setPixel( startPos , color );
+                gfx_setPixel( &startPos , color );
             }
 
             err -= dy ;
             if( err < 0 )
             {
-                startPos->y += ystep ;
+                startPos.y += ystep ;
                 err         += dx ;
             }
         }
     }
+
+    return endPos ;
+
+}
+
+enum
+{
+    NUMBER_OF_STEPS       =   256 ,
+    RESOLUTION_MULTIPLIER = 32768
+};
+
+Pos_st gfx_line( Pos_st* startPos , Color_st* color )
+{
+    Pos_st   pos       = *startPos ;
+    Pos_st   prevPos   = pos ;
+    int32_t  startPosX = (int32_t)pos.x ;
+    int32_t  startPosY = (int32_t)pos.y ;
+    int32_t  startPosW = (int32_t)pos.w ;
+    int32_t  startPosH = (int32_t)pos.h ;
+    int32_t  accumX    = 0 ;
+    int32_t  stepX     = ( startPosW * RESOLUTION_MULTIPLIER ) / NUMBER_OF_STEPS ;
+    int32_t  accumY    = 0 ;
+    int32_t  stepY     = ( startPosH * RESOLUTION_MULTIPLIER ) / NUMBER_OF_STEPS ;
+    uint16_t index ;
+
+    // force the displaying of the first pixel
+    prevPos.x = ~pos.x ;
+    // draw the line
+    for( index = 0 ; index < NUMBER_OF_STEPS ; index++ )
+    {
+        pos.x  = (Pos_t)( startPosX + ( accumX / RESOLUTION_MULTIPLIER ) ) ;
+        pos.y  = (Pos_t)( startPosY + ( accumY / RESOLUTION_MULTIPLIER ) ) ;
+        if( ( pos.x != prevPos.x ) || ( pos.y != prevPos.y ) )
+        {
+            gfx_setPixel( &pos , color );
+            prevPos = pos ;
+        }
+        accumX += stepX ;
+        accumY += stepY ;
+    }
+
+    pos    = *startPos ;
+    pos.x += pos.w ;
+    pos.y += pos.h ;
+
+    return pos ;
+
 }
 
 void gfx_clearRectangle( Pos_st* startPos )
@@ -549,17 +604,17 @@ static inline uint16_t get_display_x( uint16_t startX , uint16_t lineLen , Align
 
     switch( alignment )
     {
-        case ALIGN_LEFT :
+        case GFX_ALIGN_LEFT :
         {
             displayX = startX ;
             break ;
         }
-        case ALIGN_CENTER :
+        case GFX_ALIGN_CENTER :
         {
             displayX = startX + ( ( SCREEN_WIDTH - ( startX + lineLen ) ) / 2 ) ;
             break ;
         }
-        case ALIGN_RIGHT:
+        case GFX_ALIGN_RIGHT:
         {
             displayX = SCREEN_WIDTH - lineLen ;
             break ;
@@ -615,7 +670,7 @@ Pos_st gfx_printBuffer( Pos_st*   startPos , FontSize_t  fontSize , Align_t alig
         // Handle newline and carriage return
         if( ch == '\n' )
         {
-          if( alignment != ALIGN_CENTER )
+          if( alignment != GFX_ALIGN_CENTER )
           {
             textPos.x = startPos->x ;
           }
@@ -753,7 +808,7 @@ void gfx_printError( const char* text , FontSize_t size )
     Pos_st   startPos     = { 0 , SCREEN_HEIGHT / 2 + 5 , 0 , 0 } ;
 
     // Print the error message
-    Pos_st text_size      = gfx_print( &startPos , size , ALIGN_CENTER , &white , text );
+    Pos_st text_size      = gfx_print( &startPos , size , GFX_ALIGN_CENTER , &white , text );
     text_size.x          += box_padding ;
     text_size.y          += box_padding ;
     Pos_st box_start      = { 0 , 0 , 0 , 0 };
@@ -919,18 +974,18 @@ void gfx_drawSmeter( Pos_st* startPos , float rssi , float squelch , Color_st* c
         if( index == 10 )
         {
             pixelPos.x -= 8 ;
-            gfx_print( &pixelPos , font , ALIGN_LEFT , &color , "+%d" , index );
+            gfx_print( &pixelPos , font , GFX_ALIGN_LEFT , &color , "+%d" , index );
         }
         else
         {
             if( index == 11 )
             {
                 pixelPos.x -= 10 ;
-                gfx_print( &pixelPos , font , ALIGN_LEFT , &red , "+20" );
+                gfx_print( &pixelPos , font , GFX_ALIGN_LEFT , &red , "+20" );
             }
             else
             {
-                gfx_print( &pixelPos , font , ALIGN_LEFT , &color , "%d" , index );
+                gfx_print( &pixelPos , font , GFX_ALIGN_LEFT , &color , "%d" , index );
             }
         }
         if( index == 10 )
@@ -1018,18 +1073,18 @@ void gfx_drawSmeterLevel( Pos_st* startPos , float rssi , uint8_t level )
         if( index == 10 )
         {
             pixelPos.x -= 8 ;
-            gfx_print( &pixelPos , font , ALIGN_LEFT , &color , "+%d" , index );
+            gfx_print( &pixelPos , font , GFX_ALIGN_LEFT , &color , "+%d" , index );
         }
         else
         {
             if( index == 11 )
             {
                 pixelPos.x -= 10;
-                gfx_print( &pixelPos , font , ALIGN_LEFT , &red , "+20" );
+                gfx_print( &pixelPos , font , GFX_ALIGN_LEFT , &red , "+20" );
             }
             else
             {
-                gfx_print( &pixelPos , font , ALIGN_LEFT , &color , "%d" , index );
+                gfx_print( &pixelPos , font , GFX_ALIGN_LEFT , &color , "%d" , index );
             }
             if( index == 10 )
             {
@@ -1078,7 +1133,7 @@ void gfx_drawGPSgraph( Pos_st* startPos , gpssat_t* sats , uint32_t activeSats )
 
         gfx_drawRect( &barPos , &barColor, true );
         Pos_st idPos = { barPos.x , (uint8_t)( startPos->y + startPos->h ) , 0 , 0 };
-        gfx_print( &idPos, FONT_SIZE_5PT, ALIGN_LEFT, &barColor, "%2d ", sats[ index ].id );
+        gfx_print( &idPos, FONT_SIZE_5PT, GFX_ALIGN_LEFT, &barColor, "%2d ", sats[ index ].id );
     }
     uint8_t barsWidth        = 9 + ( 11 * ( barWidth + 2 ) ) ;
     Pos_st  left_line_end    = *startPos ;
@@ -1132,7 +1187,7 @@ void gfx_drawGPScompass( Pos_st* startPos , uint16_t radius ,
     // North indicator
     Pos_st n_pos = { (uint8_t)(startPos->x + radius - 3) ,
                      (uint8_t)(startPos->y + 7) , 0 , 0 };
-    gfx_print( &n_pos , FONT_SIZE_6PT , ALIGN_LEFT , &white, "N");
+    gfx_print( &n_pos , FONT_SIZE_6PT , GFX_ALIGN_LEFT , &white, "N");
 }
 
 void gfx_plotData( Pos_st* startPos , const int16_t* data , size_t len )

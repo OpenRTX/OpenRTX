@@ -212,7 +212,13 @@ void GuiVal_DisplayValue( GuiState_st* guiState , uint8_t valueNum )
         valNum = GUI_VAL_DSP_STUBBED ;
     }
 
+    guiState->layout.itemPos.y  = 0 ;
+    guiState->layout.itemPos.x  = 0 ;
+    guiState->layout.itemPos.h  = 0 ;
+    guiState->layout.itemPos.w  = 0 ;
     ui_GuiVal_Table[ valNum ]( guiState );
+    guiState->layout.line.pos.x = guiState->layout.itemPos.x +
+                                  guiState->layout.itemPos.w ;
 
 }
 
@@ -238,7 +244,7 @@ static void GuiVal_BatteryLevel( GuiState_st* guiState )
     // If the radio has no built-in battery, print input voltage
 #ifdef BAT_NONE
     guiState->layout.itemPos = gfx_print( &lineTop->pos , styleTop->font.size ,
-                                          ALIGN_RIGHT , &color_fg , "%.1fV" ,
+                                          GFX_ALIGN_RIGHT , &color_fg , "%.1fV" ,
                                           last_state.v_bat );
 #else // BAT_NONE
     // Otherwise print battery icon on top bar, use 4 px padding
@@ -263,7 +269,7 @@ static void GuiVal_LockState( GuiState_st* guiState )
     {
         start  = lineTop->pos ;
         width  = styleTop->symbolSize + FONT_SIZE_24PT + 1 ;
-        gfx_drawSymbol( &start , width , ALIGN_LEFT ,
+        gfx_drawSymbol( &start , width , GFX_ALIGN_LEFT ,
                         &color_fg , SYMBOL_LOCK );
     }
 
@@ -339,13 +345,13 @@ static void GuiVal_ModeInfo( GuiState_st* guiState )
             // Print Bandwidth, Tone and encdec info
             if( tone_tx_enable || tone_rx_enable )
             {
-                gfx_print( &line2->pos , style2->font.size , ALIGN_CENTER ,
+                gfx_print( &line2->pos , style2->font.size , GFX_ALIGN_CENTER ,
                            &color_fg , "%s %4.1f %s" , bw_str ,
                            ctcss_tone[ last_state.channel.fm.txTone ] / 10.0f , encdec_str );
             }
             else
             {
-                gfx_print( &line2->pos , style2->font.size , ALIGN_CENTER ,
+                gfx_print( &line2->pos , style2->font.size , GFX_ALIGN_CENTER ,
                            &color_fg , "%s" , bw_str );
             }
             break ;
@@ -353,7 +359,7 @@ static void GuiVal_ModeInfo( GuiState_st* guiState )
         case OPMODE_DMR :
         {
             // Print Contact
-            gfx_print( &line2->pos , style2->font.size , ALIGN_CENTER ,
+            gfx_print( &line2->pos , style2->font.size , GFX_ALIGN_CENTER ,
                        &color_fg , "%s" , last_state.contact.name );
             break ;
         }
@@ -365,34 +371,34 @@ static void GuiVal_ModeInfo( GuiState_st* guiState )
             if( rtxStatus.lsfOk )
             {
                 // Destination address
-                gfx_drawSymbol( &line2->pos , style2->symbolSize , ALIGN_LEFT ,
+                gfx_drawSymbol( &line2->pos , style2->symbolSize , GFX_ALIGN_LEFT ,
                                 &color_fg , SYMBOL_CALL_RECEIVED );
 
-                gfx_print( &line2->pos , style2->font.size , ALIGN_CENTER ,
+                gfx_print( &line2->pos , style2->font.size , GFX_ALIGN_CENTER ,
                            &color_fg , "%s" , rtxStatus.M17_dst );
 
                 // Source address
-                gfx_drawSymbol( &line1->pos , style1->symbolSize , ALIGN_LEFT ,
+                gfx_drawSymbol( &line1->pos , style1->symbolSize , GFX_ALIGN_LEFT ,
                                 &color_fg , SYMBOL_CALL_MADE );
 
-                gfx_print( &line1->pos , style2->font.size , ALIGN_CENTER ,
+                gfx_print( &line1->pos , style2->font.size , GFX_ALIGN_CENTER ,
                            &color_fg , "%s" , rtxStatus.M17_src );
 
                 // RF link (if present)
                 if( rtxStatus.M17_link[0] != '\0' )
                 {
-                    gfx_drawSymbol( &line4->pos , style3->symbolSize , ALIGN_LEFT ,
+                    gfx_drawSymbol( &line4->pos , style3->symbolSize , GFX_ALIGN_LEFT ,
                                     &color_fg , SYMBOL_ACCESS_POINT );
-                    gfx_print( &line4->pos , style2->font.size , ALIGN_CENTER ,
+                    gfx_print( &line4->pos , style2->font.size , GFX_ALIGN_CENTER ,
                                &color_fg , "%s" , rtxStatus.M17_link );
                 }
 
                 // Reflector (if present)
                 if( rtxStatus.M17_refl[0] != '\0' )
                 {
-                    gfx_drawSymbol( &line3->pos , style4->symbolSize , ALIGN_LEFT ,
+                    gfx_drawSymbol( &line3->pos , style4->symbolSize , GFX_ALIGN_LEFT ,
                                     &color_fg , SYMBOL_NETWORK );
-                    gfx_print( &line3->pos , style2->font.size , ALIGN_CENTER ,
+                    gfx_print( &line3->pos , style2->font.size , GFX_ALIGN_CENTER ,
                                &color_fg , "%s" , rtxStatus.M17_refl );
                 }
             }
@@ -415,7 +421,7 @@ static void GuiVal_ModeInfo( GuiState_st* guiState )
                     }
                 }
 
-                gfx_print( &line2->pos , style2->font.size , ALIGN_CENTER ,
+                gfx_print( &line2->pos , style2->font.size , GFX_ALIGN_CENTER ,
                            &color_fg , "M17 #%s" , dst );
             }
             break ;
@@ -435,7 +441,7 @@ static void GuiVal_BankChannel( GuiState_st* guiState )
 
     // Print Bank number, channel number and Channel name
     gfx_print( &line1->pos ,
-               style1->font.size , ALIGN_CENTER ,
+               style1->font.size , GFX_ALIGN_CENTER ,
                &color_fg , "%01d-%03d: %.12s" ,
                bank_enabled , last_state.channel_index + 1 , last_state.channel.name );
 }
@@ -456,7 +462,7 @@ static void GuiVal_Frequency( GuiState_st* guiState )
         ui_ColorLoad( &color_fg , COLOR_FG );
 
         // Print big numbers frequency
-        gfx_print( &line3Large->pos , style3Large->font.size , ALIGN_CENTER ,
+        gfx_print( &line3Large->pos , style3Large->font.size , GFX_ALIGN_CENTER ,
                    &color_fg , "%.7g" , (float)frequency / 1000000.0f );
     }
 
@@ -535,23 +541,23 @@ static void GuiVal_GPS( GuiState_st* guiState )
     ui_ColorLoad( &color_fg , COLOR_FG );
 
     // Print "GPS" on top bar
-    gfx_print( &lineTop->pos , styleTop->font.size , ALIGN_CENTER ,
+    gfx_print( &lineTop->pos , styleTop->font.size , GFX_ALIGN_CENTER ,
                &color_fg , currentLanguage->gps );
     Pos_st fix_pos = { line2->pos.x , ( SCREEN_HEIGHT * 2 ) / 5 , 0 , 0 };
     // Print GPS status, if no fix, hide details
     if( !last_state.settings.gps_enabled )
     {
-        gfx_print( &fix_pos , style3Large->font.size , ALIGN_CENTER ,
+        gfx_print( &fix_pos , style3Large->font.size , GFX_ALIGN_CENTER ,
                    &color_fg , currentLanguage->gpsOff );
     }
     else if( last_state.gps_data.fix_quality == 0 )
     {
-        gfx_print( &fix_pos , style3Large->font.size , ALIGN_CENTER ,
+        gfx_print( &fix_pos , style3Large->font.size , GFX_ALIGN_CENTER ,
                    &color_fg , currentLanguage->noFix );
     }
     else if( last_state.gps_data.fix_quality == 6 )
     {
-        gfx_print( &fix_pos , style3Large->font.size , ALIGN_CENTER ,
+        gfx_print( &fix_pos , style3Large->font.size , GFX_ALIGN_CENTER ,
                    &color_fg , currentLanguage->fixLost );
     }
     else
@@ -603,23 +609,23 @@ static void GuiVal_GPS( GuiState_st* guiState )
                 break ;
             }
         }
-        gfx_print( &line1->pos , styleTop->font.size , ALIGN_LEFT ,
+        gfx_print( &line1->pos , styleTop->font.size , GFX_ALIGN_LEFT ,
                    &color_fg , fix_buf );
-        gfx_print( &line1->pos , styleTop->font.size , ALIGN_CENTER ,
+        gfx_print( &line1->pos , styleTop->font.size , GFX_ALIGN_CENTER ,
                    &color_fg , "N     " );
-        gfx_print( &line1->pos , styleTop->font.size , ALIGN_RIGHT ,
+        gfx_print( &line1->pos , styleTop->font.size , GFX_ALIGN_RIGHT ,
                    &color_fg , "%8.6f" , last_state.gps_data.latitude );
-        gfx_print( &line2->pos , styleTop->font.size , ALIGN_LEFT ,
+        gfx_print( &line2->pos , styleTop->font.size , GFX_ALIGN_LEFT ,
                    &color_fg , type_buf);
         // Convert from signed longitude, to unsigned + direction
         float longitude = last_state.gps_data.longitude ;
         char* direction = (longitude < 0) ? "W     " : "E     " ;
         longitude = (longitude < 0) ? -longitude : longitude ;
-        gfx_print( &line2->pos , styleTop->font.size , ALIGN_CENTER ,
+        gfx_print( &line2->pos , styleTop->font.size , GFX_ALIGN_CENTER ,
                    &color_fg , direction );
-        gfx_print( &line2->pos , styleTop->font.size , ALIGN_RIGHT ,
+        gfx_print( &line2->pos , styleTop->font.size , GFX_ALIGN_RIGHT ,
                    &color_fg , "%8.6f" , longitude );
-        gfx_print( &lineBottom->pos , styleBottom->font.size , ALIGN_CENTER ,
+        gfx_print( &lineBottom->pos , styleBottom->font.size , GFX_ALIGN_CENTER ,
                    &color_fg , "S %4.1fkm/h  A %4.1fm" ,
                    last_state.gps_data.speed , last_state.gps_data.altitude );
     }

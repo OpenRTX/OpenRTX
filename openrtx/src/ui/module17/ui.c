@@ -303,7 +303,7 @@ void ui_Draw_SplashScreen()
     gfx_clearScreen();
 
     Pos_st origin = {0, (SCREEN_HEIGHT / 2) - 6};
-    gfx_print(origin, FONT_SIZE_12PT, ALIGN_CENTER, yellow_fab413, "O P N\nR T X");
+    gfx_print(origin, FONT_SIZE_12PT, GFX_ALIGN_CENTER, yellow_fab413, "O P N\nR T X");
 }
 
 freq_t _ui_freq_add_digit(freq_t freq, uint8_t pos, uint8_t number)

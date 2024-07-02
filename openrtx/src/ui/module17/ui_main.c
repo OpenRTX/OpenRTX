@@ -39,13 +39,13 @@ void _ui_Draw_MainTop()
     // Print clock on top bar
     datetime_t local_time = utcToLocalTime(last_state.time,
                                            last_state.settings.utc_timezone);
-    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, GFX_ALIGN_CENTER,
               color_fg, "%02d:%02d:%02d", local_time.hour,
               local_time.minute, local_time.second);
 #endif
 
     // Print the source callsign on top bar
-    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_LEFT,
+    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, GFX_ALIGN_LEFT,
                   color_fg, state.settings.callsign);
 }
 
@@ -53,7 +53,7 @@ void _ui_Draw_BankChannel()
 {
     // Print Bank number, channel number and Channel name
     uint16_t b = (last_state.bank_enabled) ? last_state.bank : 0;
-    gfx_print(layout.lines[ GUI_LINE_1 ].pos, layout.lines[ GUI_LINE_1 ].font, ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_1 ].pos, layout.lines[ GUI_LINE_1 ].font, GFX_ALIGN_CENTER,
               color_fg, "%01d-%03d: %.12s",
               b, last_state.channel_index + 1, last_state.channel.name);
 }
@@ -86,14 +86,14 @@ void _ui_Draw_ModeInfo(UI_State_st* ui_state)
             snprintf(encdec_str, 9, " ");
 
         // Print Bandwidth, Tone and encdec info
-        gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.lines[ GUI_LINE_2 ].font, ALIGN_CENTER,
+        gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.lines[ GUI_LINE_2 ].font, GFX_ALIGN_CENTER,
               color_fg, "B:%s T:%4.1f S:%s",
               bw_str, ctcss_tone[last_state.channel.fm.txTone]/10.0f,
               encdec_str);
         break;
         case OPMODE_DMR:
         // Print talkgroup
-        gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.lines[ GUI_LINE_2 ].font, ALIGN_CENTER,
+        gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.lines[ GUI_LINE_2 ].font, GFX_ALIGN_CENTER,
               color_fg, "TG:%s",
               "");
         break;
@@ -103,28 +103,28 @@ void _ui_Draw_ModeInfo(UI_State_st* ui_state)
 
             if(rtxStatus.lsfOk)
             {
-                gfx_drawSymbol(layout.lines[ GUI_LINE_2 ].pos, layout.lines[ GUI_LINE_2 ].symbol_font, ALIGN_LEFT,
+                gfx_drawSymbol(layout.lines[ GUI_LINE_2 ].pos, layout.lines[ GUI_LINE_2 ].symbol_font, GFX_ALIGN_LEFT,
                                color_fg, SYMBOL_CALL_RECEIVED);
-                gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.lines[ GUI_LINE_2 ].font, ALIGN_CENTER,
+                gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.lines[ GUI_LINE_2 ].font, GFX_ALIGN_CENTER,
                           color_fg, "%s", rtxStatus.M17_dst);
-                gfx_drawSymbol(layout.lines[ GUI_LINE_1 ].pos, layout.lines[ GUI_LINE_1 ].symbol_font, ALIGN_LEFT,
+                gfx_drawSymbol(layout.lines[ GUI_LINE_1 ].pos, layout.lines[ GUI_LINE_1 ].symbol_font, GFX_ALIGN_LEFT,
                                color_fg, SYMBOL_CALL_MADE);
-                gfx_print(layout.lines[ GUI_LINE_1 ].pos, layout.lines[ GUI_LINE_2 ].font, ALIGN_CENTER,
+                gfx_print(layout.lines[ GUI_LINE_1 ].pos, layout.lines[ GUI_LINE_2 ].font, GFX_ALIGN_CENTER,
                           color_fg, "%s", rtxStatus.M17_src);
 
                 if(rtxStatus.M17_link[0] != '\0')
                 {
-                    gfx_drawSymbol(layout.lines[ GUI_LINE_4 ].pos, layout.lines[ GUI_LINE_3 ]_symbol_font, ALIGN_LEFT,
+                    gfx_drawSymbol(layout.lines[ GUI_LINE_4 ].pos, layout.lines[ GUI_LINE_3 ]_symbol_font, GFX_ALIGN_LEFT,
                                 color_fg, SYMBOL_ACCESS_POINT);
-                    gfx_print(layout.lines[ GUI_LINE_4 ].pos, layout.lines[ GUI_LINE_2 ].font, ALIGN_CENTER,
+                    gfx_print(layout.lines[ GUI_LINE_4 ].pos, layout.lines[ GUI_LINE_2 ].font, GFX_ALIGN_CENTER,
                             color_fg, "%s", rtxStatus.M17_link);
                 }
 
                 if(rtxStatus.M17_refl[0] != '\0')
                 {
-                    gfx_drawSymbol(layout.lines[ GUI_LINE_3 ].pos, layout.lines[ GUI_LINE_4 ]_symbol_font, ALIGN_LEFT,
+                    gfx_drawSymbol(layout.lines[ GUI_LINE_3 ].pos, layout.lines[ GUI_LINE_4 ]_symbol_font, GFX_ALIGN_LEFT,
                                    color_fg, SYMBOL_NETWORK);
-                    gfx_print(layout.lines[ GUI_LINE_3 ].pos, layout.lines[ GUI_LINE_2 ].font, ALIGN_CENTER,
+                    gfx_print(layout.lines[ GUI_LINE_3 ].pos, layout.lines[ GUI_LINE_2 ].font, GFX_ALIGN_CENTER,
                               color_fg, "%s", rtxStatus.M17_refl);
                 }
             }
@@ -151,15 +151,15 @@ void _ui_Draw_ModeInfo(UI_State_st* ui_state)
                     last = rtxStatus.M17_src;
 
                 // Print CAN
-                gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_RIGHT,
+                gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, GFX_ALIGN_RIGHT,
                           color_fg, "CAN %02d", state.settings.m17_can);
-                gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.lines[ GUI_LINE_2 ].font, ALIGN_CENTER,
+                gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.lines[ GUI_LINE_2 ].font, GFX_ALIGN_CENTER,
                           color_fg, last);
                 // Print M17 Destination ID on line 2
-                gfx_print(layout.lines[ GUI_LINE_3 ].pos, layout.lines[ GUI_LINE_3 ]_font, ALIGN_CENTER,
+                gfx_print(layout.lines[ GUI_LINE_3 ].pos, layout.lines[ GUI_LINE_3 ]_font, GFX_ALIGN_CENTER,
                           color_fg, "%s", dst);
                 // Menu
-                gfx_print(layout.line5_pos, layout.line5_font, ALIGN_RIGHT,
+                gfx_print(layout.line5_pos, layout.line5_font, GFX_ALIGN_RIGHT,
                           color_fg, "Menu");
                 break;
             }
@@ -173,7 +173,7 @@ void _ui_Draw_Frequency()
        frequency = last_state.channel.tx_frequency : last_state.channel.rx_frequency;
 
     // Print big numbers frequency
-    gfx_print(layout.lines[ GUI_LINE_3 ].pos, layout.lines[ GUI_LINE_3 ]_font, ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_3 ].pos, layout.lines[ GUI_LINE_3 ]_font, GFX_ALIGN_CENTER,
               color_fg, "%03lu.%05lu",
               (unsigned long)frequency/1000000,
               (unsigned long)frequency%1000000/10);
@@ -190,7 +190,7 @@ void _ui_Draw_VFOMiddleInput(UI_State_st* ui_state)
     {
         if(ui_state->input_position == 0)
         {
-            gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.input_font.size, ALIGN_CENTER,
+            gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.input_font.size, GFX_ALIGN_CENTER,
                       color_fg, ">Rx:%03lu.%04lu",
                       (unsigned long)ui_state->new_rx_frequency/1000000,
                       (unsigned long)(ui_state->new_rx_frequency%1000000)/100);
@@ -201,24 +201,24 @@ void _ui_Draw_VFOMiddleInput(UI_State_st* ui_state)
             if(ui_state->input_position == 1)
                 strcpy(ui_state->new_rx_freq_buf, ">Rx:___.____");
             ui_state->new_rx_freq_buf[insert_pos] = input_char;
-            gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.input_font.size, ALIGN_CENTER,
+            gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.input_font.size, GFX_ALIGN_CENTER,
                       color_fg, ui_state->new_rx_freq_buf);
         }
-        gfx_print(layout.lines[ GUI_LINE_3 ].pos, layout.input_font.size, ALIGN_CENTER,
+        gfx_print(layout.lines[ GUI_LINE_3 ].pos, layout.input_font.size, GFX_ALIGN_CENTER,
                   color_fg, " Tx:%03lu.%04lu",
                   (unsigned long)last_state.channel.tx_frequency/1000000,
                   (unsigned long)(last_state.channel.tx_frequency%1000000)/100);
     }
     else if(ui_state->input_set == SET_TX)
     {
-        gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.input_font.size, ALIGN_CENTER,
+        gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.input_font.size, GFX_ALIGN_CENTER,
                   color_fg, " Rx:%03lu.%04lu",
                   (unsigned long)ui_state->new_rx_frequency/1000000,
                   (unsigned long)(ui_state->new_rx_frequency%1000000)/100);
         // Replace Rx frequency with underscorses
         if(ui_state->input_position == 0)
         {
-            gfx_print(layout.lines[ GUI_LINE_3 ].pos, layout.input_font.size, ALIGN_CENTER,
+            gfx_print(layout.lines[ GUI_LINE_3 ].pos, layout.input_font.size, GFX_ALIGN_CENTER,
                       color_fg, ">Tx:%03lu.%04lu",
                       (unsigned long)ui_state->new_rx_frequency/1000000,
                       (unsigned long)(ui_state->new_rx_frequency%1000000)/100);
@@ -228,7 +228,7 @@ void _ui_Draw_VFOMiddleInput(UI_State_st* ui_state)
             if(ui_state->input_position == 1)
                 strcpy(ui_state->new_tx_freq_buf, ">Tx:___.____");
             ui_state->new_tx_freq_buf[insert_pos] = input_char;
-            gfx_print(layout.lines[ GUI_LINE_3 ].pos, layout.input_font.size, ALIGN_CENTER,
+            gfx_print(layout.lines[ GUI_LINE_3 ].pos, layout.input_font.size, GFX_ALIGN_CENTER,
                       color_fg, ui_state->new_tx_freq_buf);
         }
     }

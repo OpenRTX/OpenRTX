@@ -50,7 +50,7 @@ void *print_keys(keyboard_t keys)
     while (i > 0) {
         //position of the first set bit
         int pos = __builtin_ctz(keys);
-        gfx_print(origin, FONT_SIZE_8PT, ALIGN_LEFT,
+        gfx_print(origin, FONT_SIZE_8PT, GFX_ALIGN_LEFT,
                   color_op1, "Pressed: %s", keys_list[pos + 1]);
         origin.y += 9;
         //unset the bit we already handled
@@ -84,7 +84,7 @@ int main(void) {
     // UI update infinite loop
     while (1) {
         gfx_clearScreen();
-        gfx_print(title_origin, FONT_SIZE_8PT, ALIGN_CENTER,
+        gfx_print(title_origin, FONT_SIZE_8PT, GFX_ALIGN_CENTER,
                   color_op0, "Keyboard demo");
         keyboard_t keys = kbd_getKeys();
         if (keys != 0)

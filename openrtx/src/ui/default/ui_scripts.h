@@ -24,9 +24,6 @@
 
 #include <ui/ui_default.h>
 
-#define ST_VAL( val )   ( (uint8_t)val + GUI_CMD_DATA_AREA )
-#define LD_VAL( val )   (uint8_t)( val - GUI_CMD_DATA_AREA )
-
 extern const uint8_t* uiPageTable[ PAGE_NUM_OF ];
 
 #endif // UI_SCRIPTS_H

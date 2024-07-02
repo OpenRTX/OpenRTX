@@ -35,16 +35,16 @@ void platform_test()
     Pos_st pos_line3 = {0, 17};
     Color_st color_fg = {255, 255, 255};
     ui_ColorLoad( &color_fg , COLOR_FG );
-    gfx_print(pos_line1, FONT_SIZE_1, ALIGN_LEFT,
+    gfx_print(pos_line1, FONT_SIZE_1, GFX_ALIGN_LEFT,
               color_fg, "Platform Test");
     float vBat = platform_getVbat();
     float micLevel = platform_getMicLevel();
     float volumeLevel = platform_getVolumeLevel();
     uint8_t currentCh = platform_getChSelector();
     bool ptt = platform_getPttStatus();
-    gfx_print(pos_line2, FONT_SIZE_1, ALIGN_LEFT,
+    gfx_print(pos_line2, FONT_SIZE_1, GFX_ALIGN_LEFT,
               color_fg, "bat:%.2f mic:%.2f", vBat, micLevel);
-    gfx_print(pos_line3, FONT_SIZE_1, ALIGN_LEFT,
+    gfx_print(pos_line3, FONT_SIZE_1, GFX_ALIGN_LEFT,
               color_fg, "vol:%.2f ch:%d ptt:%s", volumeLevel,
               currentCh, ptt?"on":"off");
     gfx_render();
@@ -70,7 +70,7 @@ int main(void)
     while(1)
     {
         gfx_clearScreen();
-        gfx_print(origin, FONT_SIZE_4, ALIGN_CENTER,
+        gfx_print(origin, FONT_SIZE_4, GFX_ALIGN_CENTER,
                   color_op3, "OpenRTX");
         //gfx_render();
         //while(gfx_renderingInProgress());

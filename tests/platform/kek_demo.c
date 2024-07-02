@@ -100,7 +100,7 @@ static void gfxThread(void *arg)
         Color_st color_fg ;
         ui_ColorLoad( &color_fg , COLOR_FG );
         gfx_drawRect(origin, SCREEN_WIDTH, 20, color_op0, 1);
-        gfx_print(origin, FONT_SIZE_4, ALIGN_LEFT,
+        gfx_print(origin, FONT_SIZE_4, GFX_ALIGN_LEFT,
                   color_fg, "KEK");
         gfx_render();
         while(gfx_renderingInProgress()) ;

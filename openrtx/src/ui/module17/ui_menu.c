@@ -144,7 +144,7 @@ void _ui_Draw_MenuList(uint8_t selected, uiPageNum_en currentEntry )
                 Pos_st rect_pos = {0, pos.y - layout.menu_h + 3};
                 gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.menu_h, color_fg, true);
             }
-            gfx_print(pos, layout.menu_font.size, ALIGN_LEFT, text_color, entry_buf);
+            gfx_print(pos, layout.menu_font.size, GFX_ALIGN_LEFT, text_color, entry_buf);
             pos.y += layout.menu_h;
         }
     }
@@ -204,8 +204,8 @@ void _ui_Draw_MenuListValue( UI_State_st* ui_state , uint8_t selected ,
                 Pos_st rect_pos = {0, pos.y - layout.menu_h + 3};
                 gfx_drawRect(rect_pos, SCREEN_WIDTH, layout.menu_h, color_fg, full_rect);
             }
-            gfx_print(pos, layout.menu_font.size, ALIGN_LEFT, text_color, entry_buf);
-            gfx_print(pos, layout.menu_font.size, ALIGN_RIGHT, text_color, value_buf);
+            gfx_print(pos, layout.menu_font.size, GFX_ALIGN_LEFT, text_color, entry_buf);
+            gfx_print(pos, layout.menu_font.size, GFX_ALIGN_RIGHT, text_color, value_buf);
             pos.y += layout.menu_h;
         }
     }
@@ -380,7 +380,7 @@ void _ui_Draw_MenuTop(UI_State_st* ui_state)
 
     gfx_clearScreen();
     // Print "Menu" on top bar
-    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, GFX_ALIGN_CENTER,
               color_fg, "Menu");
     // Print menu entries
     _ui_Draw_MenuList(ui_state->entrySelected, PAGE_MENU_TOP );
@@ -395,18 +395,18 @@ void _ui_Draw_MenuGPS()
 
     gfx_clearScreen();
     // Print "GPS" on top bar
-    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, GFX_ALIGN_CENTER,
               color_fg, "GPS");
     Pos_st fix_pos = {layout.lines[ GUI_LINE_2 ].pos.x, SCREEN_HEIGHT * 2 / 5};
     // Print GPS status, if no fix, hide details
     if(!last_state.settings.gps_enabled)
-        gfx_print(fix_pos, layout.lines[ GUI_LINE_3 ]_font, ALIGN_CENTER,
+        gfx_print(fix_pos, layout.lines[ GUI_LINE_3 ]_font, GFX_ALIGN_CENTER,
                   color_fg, "GPS OFF");
     else if (last_state.gps_data.fix_quality == 0)
-        gfx_print(fix_pos, layout.lines[ GUI_LINE_3 ]_font, ALIGN_CENTER,
+        gfx_print(fix_pos, layout.lines[ GUI_LINE_3 ]_font, GFX_ALIGN_CENTER,
                   color_fg, "No Fix");
     else if (last_state.gps_data.fix_quality == 6)
-        gfx_print(fix_pos, layout.lines[ GUI_LINE_3 ]_font, ALIGN_CENTER,
+        gfx_print(fix_pos, layout.lines[ GUI_LINE_3 ]_font, GFX_ALIGN_CENTER,
                   color_fg, "Fix Lost");
     else
     {
@@ -441,23 +441,23 @@ void _ui_Draw_MenuGPS()
                 type_buf = "ERROR";
                 break;
         }
-        gfx_print(layout.lines[ GUI_LINE_1 ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_LEFT,
+        gfx_print(layout.lines[ GUI_LINE_1 ].pos, layout.lines[ GUI_LINE_TOP ].font, GFX_ALIGN_LEFT,
                   color_fg, fix_buf);
-        gfx_print(layout.lines[ GUI_LINE_1 ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
+        gfx_print(layout.lines[ GUI_LINE_1 ].pos, layout.lines[ GUI_LINE_TOP ].font, GFX_ALIGN_CENTER,
                   color_fg, "N     ");
-        gfx_print(layout.lines[ GUI_LINE_1 ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_RIGHT,
+        gfx_print(layout.lines[ GUI_LINE_1 ].pos, layout.lines[ GUI_LINE_TOP ].font, GFX_ALIGN_RIGHT,
                   color_fg, "%8.6f", last_state.gps_data.latitude);
-        gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_LEFT,
+        gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.lines[ GUI_LINE_TOP ].font, GFX_ALIGN_LEFT,
                   color_fg, type_buf);
         // Convert from signed longitude, to unsigned + direction
         float longitude = last_state.gps_data.longitude;
         char *direction = (longitude < 0) ? "W     " : "E     ";
         longitude = (longitude < 0) ? -longitude : longitude;
-        gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
+        gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.lines[ GUI_LINE_TOP ].font, GFX_ALIGN_CENTER,
                   color_fg, direction);
-        gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_RIGHT,
+        gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.lines[ GUI_LINE_TOP ].font, GFX_ALIGN_RIGHT,
                   color_fg, "%8.6f", longitude);
-        gfx_print(layout.lines[ GUI_LINE_BOTTOM ].pos, layout.lines[ GUI_LINE_BOTTOM ].font, ALIGN_CENTER,
+        gfx_print(layout.lines[ GUI_LINE_BOTTOM ].pos, layout.lines[ GUI_LINE_BOTTOM ].font, GFX_ALIGN_CENTER,
                   color_fg, "S %4.1fkm/h  A %4.1fm",
                   last_state.gps_data.speed,
                   last_state.gps_data.altitude);
@@ -486,7 +486,7 @@ void _ui_Draw_MenuSettings(UI_State_st* ui_state)
 
     gfx_clearScreen();
     // Print "Settings" on top bar
-    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, GFX_ALIGN_CENTER,
               color_fg, "Settings");
     // Print menu entries
     _ui_Draw_MenuList(ui_state->entrySelected, PAGE_MENU_SETTINGS );
@@ -499,7 +499,7 @@ void _ui_Draw_MenuInfo(UI_State_st* ui_state)
 
     gfx_clearScreen();
     // Print "Info" on top bar
-    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, GFX_ALIGN_CENTER,
               color_fg, "Info");
     // Print menu entries
     _ui_Draw_MenuListValue(ui_state, ui_state->entrySelected,
@@ -514,14 +514,14 @@ void _ui_Draw_MenuAbout()
     gfx_clearScreen();
 
     Pos_st openrtx_pos = {layout.horizontal_pad, layout.lines[ GUI_LINE_3 ].height};
-    gfx_print(openrtx_pos, layout.lines[ GUI_LINE_3 ]_font, ALIGN_CENTER, color_fg,
+    gfx_print(openrtx_pos, layout.lines[ GUI_LINE_3 ]_font, GFX_ALIGN_CENTER, color_fg,
               "OpenRTX");
 
     uint8_t line_h = layout.menu_h;
     Pos_st pos = {SCREEN_WIDTH / 7, SCREEN_HEIGHT - (line_h * (author_num - 1)) - 5};
     for(int author = 0; author < author_num; author++)
     {
-        gfx_print(pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_LEFT,
+        gfx_print(pos, layout.lines[ GUI_LINE_TOP ].font, GFX_ALIGN_LEFT,
                   color_fg, "%s", authors[author]);
         pos.y += line_h;
     }
@@ -534,7 +534,7 @@ void _ui_Draw_SettingsDisplay(UI_State_st* ui_state)
 
     gfx_clearScreen();
     // Print "Display" on top bar
-    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, GFX_ALIGN_CENTER,
               color_fg, "Display");
     // Print display settings entries
     _ui_Draw_MenuListValue(ui_state, ui_state->entrySelected,
@@ -549,7 +549,7 @@ void _ui_Draw_SettingsGPS(UI_State_st* ui_state)
 
     gfx_clearScreen();
     // Print "GPS Settings" on top bar
-    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, GFX_ALIGN_CENTER,
               color_fg, "GPS Settings");
     // Print display settings entries
     _ui_Draw_MenuListValue(ui_state, ui_state->entrySelected,
@@ -567,13 +567,13 @@ void _ui_Draw_SettingsTimeDate()
     datetime_t local_time = utcToLocalTime(last_state.time,
                                            last_state.settings.utc_timezone);
     // Print "Time&Date" on top bar
-    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, GFX_ALIGN_CENTER,
               color_fg, "Time&Date");
     // Print current time and date
-    gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.input_font.size, ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.input_font.size, GFX_ALIGN_CENTER,
               color_fg, "%02d/%02d/%02d",
               local_time.date, local_time.month, local_time.year);
-    gfx_print(layout.lines[ GUI_LINE_3 ].pos, layout.input_font.size, ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_3 ].pos, layout.input_font.size, GFX_ALIGN_CENTER,
               color_fg, "%02d:%02d:%02d",
               local_time.hour, local_time.minute, local_time.second);
 }
@@ -586,7 +586,7 @@ void _ui_Draw_SettingsTimeDateSet(UI_State_st* ui_state)
 
     gfx_clearScreen();
     // Print "Time&Date" on top bar
-    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, GFX_ALIGN_CENTER,
               color_fg, "Time&Date");
     if(ui_state->input_position <= 0)
     {
@@ -614,9 +614,9 @@ void _ui_Draw_SettingsTimeDateSet(UI_State_st* ui_state)
             ui_state->new_time_buf[pos] = input_char;
         }
     }
-    gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.input_font.size, ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_2 ].pos, layout.input_font.size, GFX_ALIGN_CENTER,
               color_fg, ui_state->new_date_buf);
-    gfx_print(layout.lines[ GUI_LINE_3 ].pos, layout.input_font.size, ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_3 ].pos, layout.input_font.size, GFX_ALIGN_CENTER,
               color_fg, ui_state->new_time_buf);
 }
 #endif
@@ -627,14 +627,14 @@ void _ui_Draw_SettingsM17(UI_State_st* ui_state)
     ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
-    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, GFX_ALIGN_CENTER,
               color_fg, "M17 Settings");
 
     if(ui_state->edit_mode)
     {
         gfx_printLine(1, 4, layout.lines[ GUI_LINE_TOP ].height, SCREEN_HEIGHT - layout.lines[ GUI_LINE_BOTTOM ].height,
                     layout.horizontal_pad, layout.menu_font.size,
-                    ALIGN_LEFT, color_fg, "Callsign:");
+                    GFX_ALIGN_LEFT, color_fg, "Callsign:");
 
         // uint16_t rect_width = SCREEN_WIDTH - (layout.horizontal_pad * 2);
         // uint16_t rect_height = (SCREEN_HEIGHT - (layout.lines[ GUI_LINE_TOP ].height + layout.lines[ GUI_LINE_BOTTOM ].height))/2;
@@ -644,7 +644,7 @@ void _ui_Draw_SettingsM17(UI_State_st* ui_state)
         // Print M17 callsign being typed
         gfx_printLine(1, 1, layout.lines[ GUI_LINE_TOP ].height, SCREEN_HEIGHT - layout.lines[ GUI_LINE_BOTTOM ].height,
                       layout.horizontal_pad, layout.input_font.size,
-                      ALIGN_CENTER, color_fg, ui_state->new_callsign);
+                      GFX_ALIGN_CENTER, color_fg, ui_state->new_callsign);
     }
     else
     {
@@ -657,7 +657,7 @@ void _ui_Draw_SettingsModule17(UI_State_st* ui_state)
 {
     gfx_clearScreen();
     // Print "Module17 Settings" on top bar
-    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, GFX_ALIGN_CENTER,
               color_fg, "Module17 Settings");
     // Print Module17 settings entries
     _ui_Draw_MenuListValue(ui_state, ui_state->entrySelected,
@@ -676,17 +676,17 @@ void _ui_Draw_SettingsReset2Defaults(UI_State_st* ui_state)
     ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
-    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, ALIGN_CENTER,
+    gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, GFX_ALIGN_CENTER,
               color_fg, "Reset to Defaults");
 
     // Make text flash yellow once every 1s
     Color_st textcolor = drawcnt % 2 == 0 ? color_fg : yellow_fab413;
     gfx_printLine(1, 4, layout.lines[ GUI_LINE_TOP ].height, SCREEN_HEIGHT - layout.lines[ GUI_LINE_BOTTOM ].height,
                   layout.horizontal_pad, layout.lines[ GUI_LINE_TOP ].font,
-                  ALIGN_CENTER, textcolor, "To reset:");
+                  GFX_ALIGN_CENTER, textcolor, "To reset:");
     gfx_printLine(2, 4, layout.lines[ GUI_LINE_TOP ].height, SCREEN_HEIGHT - layout.lines[ GUI_LINE_BOTTOM ].height,
                   layout.horizontal_pad, layout.lines[ GUI_LINE_TOP ].font,
-                  ALIGN_CENTER, textcolor, "Press Enter twice");
+                  GFX_ALIGN_CENTER, textcolor, "Press Enter twice");
 
     if((getTick() - lastDraw) > 1000)
     {
