@@ -100,11 +100,13 @@ const char *m17_items[] =
 
 const char *module17_items[] =
 {
-    "TX Softpot",
-    "RX Softpot",
+    "Mic Gain",
+    "PTT In",
+    "PTT Out",
     "TX Phase",
     "RX Phase",
-    "Mic Gain"
+    "TX Softpot",
+    "RX Softpot"
 };
 
 #ifdef CONFIG_GPS
@@ -120,7 +122,9 @@ const char *info_items[] =
 {
     "",
     "Used heap",
-    "Hw Version"
+    "Hw Version",
+    "HMI",
+    "BB Tuning Pot",
 };
 
 const char *authors[] =
@@ -129,38 +133,6 @@ const char *authors[] =
     "Silvano IU2KWO",
     "Federico IU2NUO",
     "Fred IU2NRO",
-};
-
-static const char *symbols_ITU_T_E161[] =
-{
-    " 0",
-    ",.?1",
-    "abc2ABC",
-    "def3DEF",
-    "ghi4GHI",
-    "jkl5JKL",
-    "mno6MNO",
-    "pqrs7PQRS",
-    "tuv8TUV",
-    "wxyz9WXYZ",
-    "-/*",
-    "#"
-};
-
-static const char *symbols_ITU_T_E161_callsign[] =
-{
-    "0 ",
-    "1",
-    "ABC2",
-    "DEF3",
-    "GHI4",
-    "JKL5",
-    "MNO6",
-    "PQRS7",
-    "TUV8",
-    "WXYZ9",
-    "-/",
-    ""
 };
 
 static const char symbols_callsign[] = "_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890/-.";
@@ -192,7 +164,7 @@ static uint8_t evQueue_rdPos;
 static uint8_t evQueue_wrPos;
 static event_t evQueue[MAX_NUM_EVENTS];
 
-layout_t _ui_calculateLayout()
+static layout_t _ui_calculateLayout()
 {
     // Horizontal line height
     const uint16_t hline_h = 1;
@@ -313,16 +285,6 @@ void ui_drawSplashScreen()
     gfx_print(origin, FONT_SIZE_12PT, TEXT_ALIGN_CENTER, yellow_fab413, "O P N\nR T X");
 }
 
-freq_t _ui_freq_add_digit(freq_t freq, uint8_t pos, uint8_t number)
-{
-    freq_t coefficient = 100;
-    for(uint8_t i=0; i < FREQ_DIGITS - pos; i++)
-    {
-        coefficient *= 10;
-    }
-    return freq += number * coefficient;
-}
-
 #ifdef CONFIG_RTC
 void _ui_timedate_add_digit(datetime_t *timedate, uint8_t pos, uint8_t number)
 {
@@ -367,132 +329,6 @@ void _ui_timedate_add_digit(datetime_t *timedate, uint8_t pos, uint8_t number)
 }
 #endif
 
-bool _ui_freq_check_limits(freq_t freq)
-{
-    bool valid = false;
-    const hwInfo_t* hwinfo = platform_getHwInfo();
-    if(hwinfo->vhf_band)
-    {
-        // hwInfo_t frequencies are in MHz
-        if(freq >= (hwinfo->vhf_minFreq * 1000000) &&
-           freq <= (hwinfo->vhf_maxFreq * 1000000))
-        valid = true;
-    }
-    if(hwinfo->uhf_band)
-    {
-        // hwInfo_t frequencies are in MHz
-        if(freq >= (hwinfo->uhf_minFreq * 1000000) &&
-           freq <= (hwinfo->uhf_maxFreq * 1000000))
-        valid = true;
-    }
-    return valid;
-}
-
-bool _ui_channel_valid(channel_t* channel)
-{
-return _ui_freq_check_limits(channel->rx_frequency) &&
-       _ui_freq_check_limits(channel->tx_frequency);
-}
-
-int _ui_fsm_loadChannel(int16_t channel_index, bool *sync_rtx) {
-    channel_t channel;
-    int32_t selected_channel = channel_index;
-    // If a bank is active, get index from current bank
-    if(state.bank_enabled)
-    {
-        bankHdr_t bank = { 0 };
-        cps_readBankHeader(&bank, state.bank);
-        if((channel_index < 0) || (channel_index >= bank.ch_count))
-            return -1;
-        channel_index = cps_readBankData(state.bank, channel_index);
-    }
-    int result = cps_readChannel(&channel, channel_index);
-    // Read successful and channel is valid
-    if(result != -1 && _ui_channel_valid(&channel))
-    {
-        // Set new channel index
-        state.channel_index = selected_channel;
-        // Copy channel read to state
-        state.channel = channel;
-        *sync_rtx = true;
-    }
-    return result;
-}
-
-void _ui_fsm_confirmVFOInput(bool *sync_rtx)
-{
-    // Switch to TX input
-    if(ui_state.input_set == SET_RX)
-    {
-        ui_state.input_set = SET_TX;
-        // Reset input position
-        ui_state.input_position = 0;
-    }
-    else if(ui_state.input_set == SET_TX)
-    {
-        // Save new frequency setting
-        // If TX frequency was not set, TX = RX
-        if(ui_state.new_tx_frequency == 0)
-        {
-            ui_state.new_tx_frequency = ui_state.new_rx_frequency;
-        }
-        // Apply new frequencies if they are valid
-        if(_ui_freq_check_limits(ui_state.new_rx_frequency) &&
-           _ui_freq_check_limits(ui_state.new_tx_frequency))
-        {
-            state.channel.rx_frequency = ui_state.new_rx_frequency;
-            state.channel.tx_frequency = ui_state.new_tx_frequency;
-            *sync_rtx = true;
-        }
-        state.ui_screen = MAIN_VFO;
-    }
-}
-
-void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx)
-{
-    // Advance input position
-    ui_state.input_position += 1;
-    // Save pressed number to calculate frequency and show in GUI
-    ui_state.input_number = input_getPressedNumber(msg);
-    if(ui_state.input_set == SET_RX)
-    {
-        if(ui_state.input_position == 1)
-            ui_state.new_rx_frequency = 0;
-        // Calculate portion of the new RX frequency
-        ui_state.new_rx_frequency = _ui_freq_add_digit(ui_state.new_rx_frequency,
-                                ui_state.input_position, ui_state.input_number);
-        if(ui_state.input_position >= FREQ_DIGITS)
-        {
-            // Switch to TX input
-            ui_state.input_set = SET_TX;
-            // Reset input position
-            ui_state.input_position = 0;
-            // Reset TX frequency
-            ui_state.new_tx_frequency = 0;
-        }
-    }
-    else if(ui_state.input_set == SET_TX)
-    {
-        if(ui_state.input_position == 1)
-            ui_state.new_tx_frequency = 0;
-        // Calculate portion of the new TX frequency
-        ui_state.new_tx_frequency = _ui_freq_add_digit(ui_state.new_tx_frequency,
-                                ui_state.input_position, ui_state.input_number);
-        if(ui_state.input_position >= FREQ_DIGITS)
-        {
-            // Save both inserted frequencies
-            if(_ui_freq_check_limits(ui_state.new_rx_frequency) &&
-               _ui_freq_check_limits(ui_state.new_tx_frequency))
-            {
-                state.channel.rx_frequency = ui_state.new_rx_frequency;
-                state.channel.tx_frequency = ui_state.new_tx_frequency;
-                *sync_rtx = true;
-            }
-            state.ui_screen = MAIN_VFO;
-        }
-    }
-}
-
 static void _ui_changeBrightness(int variation)
 {
     // Avoid rollover if current value is zero.
@@ -507,63 +343,61 @@ static void _ui_changeBrightness(int variation)
     display_setBacklightLevel(state.settings.brightness);
 }
 
-void _ui_changeCAN(int variation)
+static void _ui_changeCAN(int variation)
 {
-    // M17 CAN ranges from 0 to 15
     int8_t can = state.settings.m17_can + variation;
-    if(can > 15) can = 0;
-    if(can < 0)  can = 15;
+
+    // M17 CAN ranges from 0 to 15
+    if(can > 15)
+        can = 0;
+
+    if(can < 0)
+        can = 15;
 
     state.settings.m17_can = can;
 }
 
-void _ui_changeTxWiper(int variation)
+static void _ui_changeWiper(uint16_t *wiper, int variation)
 {
-    mod17CalData.tx_wiper += variation;
+    uint16_t value = *wiper;
+    value         += variation;
 
     // Max value for softpot is 0x100, min value is set to 0x001
-    if(mod17CalData.tx_wiper > 0x100) mod17CalData.tx_wiper = 0x100;
-    if(mod17CalData.tx_wiper < 0x001) mod17CalData.tx_wiper = 0x001;
+    if(value > 0x100)
+        value = 0x100;
+
+    if(value < 0x001)
+        value = 0x001;
+
+    *wiper = value;
 }
 
-void _ui_changeRxWiper(int variation)
-{
-    mod17CalData.rx_wiper += variation;
-
-    // Max value for softpot is 0x100, min value is set to 0x001
-    if(mod17CalData.rx_wiper > 0x100) mod17CalData.rx_wiper = 0x100;
-    if(mod17CalData.rx_wiper < 0x001) mod17CalData.rx_wiper = 0x001;
-}
-
-void _ui_changeTxInvert(int variation)
-{
-    // Inversion can be 1 or 0, bit field value ensures no overflow
-    mod17CalData.tx_invert += variation;
-}
-
-void _ui_changeRxInvert(int variation)
-{
-    // Inversion can be 1 or 0, bit field value ensures no overflow
-    mod17CalData.rx_invert += variation;
-}
-
-void _ui_changeMicGain(int variation)
+static void _ui_changeMicGain(int variation)
 {
     int8_t gain = mod17CalData.mic_gain + variation;
-    if(gain > 2) gain = 0;
-    if(gain < 0) gain = 2;
+
+    if(gain > 2)
+        gain = 0;
+
+    if(gain < 0)
+        gain = 2;
 
     mod17CalData.mic_gain = gain;
 }
 
-void _ui_menuUp(uint8_t menu_entries)
+static void _ui_menuUp(uint8_t menu_entries)
 {
     uint8_t maxEntries = menu_entries - 1;
-    uint8_t ver = platform_getHwInfo()->hw_version;
+    const hwInfo_t* hwinfo = platform_getHwInfo();
 
     // Hide the "shutdown" main menu entry for versions lower than 0.1e
-    if((ver < 1) && (state.ui_screen == MENU_TOP))
+    if((hwinfo->hw_version < 1) && (state.ui_screen == MENU_TOP))
         maxEntries -= 1;
+
+    // Hide the softpot menu entries if hardware does not have them
+    uint8_t softpot = hwinfo->flags & MOD17_FLAGS_SOFTPOT;
+    if((softpot == 0) && (state.ui_screen == SETTINGS_MODULE17))
+        maxEntries -= 2;
 
     if(ui_state.menu_selected > 0)
         ui_state.menu_selected -= 1;
@@ -571,14 +405,19 @@ void _ui_menuUp(uint8_t menu_entries)
         ui_state.menu_selected = maxEntries;
 }
 
-void _ui_menuDown(uint8_t menu_entries)
+static void _ui_menuDown(uint8_t menu_entries)
 {
    uint8_t maxEntries = menu_entries - 1;
-   uint8_t ver = platform_getHwInfo()->hw_version;
+   const hwInfo_t* hwinfo = platform_getHwInfo();
 
     // Hide the "shutdown" main menu entry for versions lower than 0.1e
-    if((ver < 1) && (state.ui_screen == MENU_TOP))
+    if((hwinfo->hw_version < 1) && (state.ui_screen == MENU_TOP))
         maxEntries -= 1;
+
+    // Hide the softpot menu entries if hardware does not have them
+    uint8_t softpot = hwinfo->flags & MOD17_FLAGS_SOFTPOT;
+    if((softpot == 0) && (state.ui_screen == SETTINGS_MODULE17))
+        maxEntries -= 2;
 
     if(ui_state.menu_selected < maxEntries)
         ui_state.menu_selected += 1;
@@ -586,7 +425,7 @@ void _ui_menuDown(uint8_t menu_entries)
         ui_state.menu_selected = 0;
 }
 
-void _ui_menuBack(uint8_t prev_state)
+static void _ui_menuBack(uint8_t prev_state)
 {
     if(ui_state.edit_mode)
     {
@@ -601,7 +440,7 @@ void _ui_menuBack(uint8_t prev_state)
     }
 }
 
-void _ui_textInputReset(char *buf)
+static void _ui_textInputReset(char *buf)
 {
     ui_state.input_number = 0;
     ui_state.input_position = 0;
@@ -610,46 +449,7 @@ void _ui_textInputReset(char *buf)
     memset(buf, 0, 9);
 }
 
-void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg, bool callsign)
-{
-    if(ui_state.input_position >= max_len)
-        return;
-    long long now = getTick();
-    // Get currently pressed number key
-    uint8_t num_key = input_getPressedNumber(msg);
-    // Get number of symbols related to currently pressed key
-    uint8_t num_symbols = 0;
-    if(callsign)
-        num_symbols = strlen(symbols_ITU_T_E161_callsign[num_key]);
-    else
-        num_symbols = strlen(symbols_ITU_T_E161[num_key]);
-
-    // Skip keypad logic for first keypress
-    if(ui_state.last_keypress != 0)
-    {
-        // Same key pressed and timeout not expired: cycle over chars of current key
-        if((ui_state.input_number == num_key) && ((now - ui_state.last_keypress) < input_longPressTimeout))
-        {
-            ui_state.input_set = (ui_state.input_set + 1) % num_symbols;
-        }
-        // Differnt key pressed: save current char and change key
-        else
-        {
-            ui_state.input_position += 1;
-            ui_state.input_set = 0;
-        }
-    }
-    // Show current character on buffer
-    if(callsign)
-        buf[ui_state.input_position] = symbols_ITU_T_E161_callsign[num_key][ui_state.input_set];
-    else
-        buf[ui_state.input_position] = symbols_ITU_T_E161[num_key][ui_state.input_set];
-    // Update reference values
-    ui_state.input_number = num_key;
-    ui_state.last_keypress = now;
-}
-
-void _ui_textInputArrows(char *buf, uint8_t max_len, kbd_msg_t msg)
+static void _ui_textInputArrows(char *buf, uint8_t max_len, kbd_msg_t msg)
 {
     if(ui_state.input_position >= max_len)
         return;
@@ -684,21 +484,9 @@ void _ui_textInputArrows(char *buf, uint8_t max_len, kbd_msg_t msg)
     buf[ui_state.input_position] = symbols_callsign[ui_state.input_set];
 }
 
-void _ui_textInputConfirm(char *buf)
+static void _ui_textInputConfirm(char *buf)
 {
     buf[ui_state.input_position + 1] = '\0';
-}
-
-void _ui_textInputDel(char *buf)
-{
-    buf[ui_state.input_position] = '\0';
-    // Move back input cursor
-    if(ui_state.input_position > 0)
-        ui_state.input_position--;
-    // If we deleted the initial character, reset starting condition
-    else
-        ui_state.last_keypress = 0;
-    ui_state.input_set = 0;
 }
 
 void ui_saveState()
@@ -962,11 +750,11 @@ void ui_updateFSM(bool *sync_rtx)
                         ui_state.edit_mode = false;
 
                         // Reset calibration values
-                        mod17CalData.tx_wiper  = 0x080;
-                        mod17CalData.rx_wiper  = 0x080;
-                        mod17CalData.tx_invert = 0;
-                        mod17CalData.rx_invert = 0;
-                        mod17CalData.mic_gain  = 0;
+                        mod17CalData.tx_wiper     = 0x080;
+                        mod17CalData.rx_wiper     = 0x080;
+                        mod17CalData.bb_tx_invert = 0;
+                        mod17CalData.bb_rx_invert = 0;
+                        mod17CalData.mic_gain     = 0;
 
                         state_resetSettingsAndVfo();
                         nvm_writeSettings(&state.settings);
@@ -986,19 +774,25 @@ void ui_updateFSM(bool *sync_rtx)
                     switch(ui_state.menu_selected)
                     {
                         case D_TXWIPER:
-                            _ui_changeTxWiper(-1);
+                            _ui_changeWiper(&mod17CalData.tx_wiper, -1);
                             break;
                         case D_RXWIPER:
-                            _ui_changeRxWiper(-1);
+                            _ui_changeWiper(&mod17CalData.rx_wiper, -1);
                             break;
                         case D_TXINVERT:
-                            _ui_changeTxInvert(-1);
+                            mod17CalData.bb_tx_invert -= 1;
                             break;
                         case D_RXINVERT:
-                            _ui_changeRxInvert(-1);
+                            mod17CalData.bb_rx_invert -= 1;
                             break;
                         case D_MICGAIN:
                             _ui_changeMicGain(-1);
+                            break;
+                        case D_PTTINLEVEL:
+                            mod17CalData.ptt_in_level -= 1;
+                            break;
+                        case D_PTTOUTLEVEL:
+                            mod17CalData.ptt_out_level -= 1;
                             break;
                         default:
                             state.ui_screen = SETTINGS_MODULE17;
@@ -1009,19 +803,25 @@ void ui_updateFSM(bool *sync_rtx)
                     switch(ui_state.menu_selected)
                     {
                         case D_TXWIPER:
-                            _ui_changeTxWiper(+1);
+                            _ui_changeWiper(&mod17CalData.tx_wiper, +1);
                             break;
                         case D_RXWIPER:
-                            _ui_changeRxWiper(+1);
+                            _ui_changeWiper(&mod17CalData.rx_wiper, +1);
                             break;
                         case D_TXINVERT:
-                            _ui_changeTxInvert(+1);
+                            mod17CalData.bb_tx_invert += 1;
                             break;
                         case D_RXINVERT:
-                            _ui_changeRxInvert(+1);
+                            mod17CalData.bb_rx_invert += 1;
                             break;
                         case D_MICGAIN:
                             _ui_changeMicGain(+1);
+                            break;
+                        case D_PTTINLEVEL:
+                            mod17CalData.ptt_in_level += 1;
+                            break;
+                        case D_PTTOUTLEVEL:
+                            mod17CalData.ptt_out_level += 1;
                             break;
                         default:
                             state.ui_screen = SETTINGS_MODULE17;

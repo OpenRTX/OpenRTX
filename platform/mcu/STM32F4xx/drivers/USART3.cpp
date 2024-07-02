@@ -95,10 +95,8 @@ void __attribute__((noinline)) usart3irqImpl()
 
 void usart3_init(unsigned int baudrate)
 {
-    gpio_setMode(U3RXD, ALTERNATE);
-    gpio_setMode(U3TXD, ALTERNATE);
-    gpio_setAlternateFunction(U3RXD, 7);
-    gpio_setAlternateFunction(U3TXD, 7);
+    gpio_setMode(U3RXD, ALTERNATE | ALTERNATE_FUNC(7));
+    gpio_setMode(U3TXD, ALTERNATE | ALTERNATE_FUNC(7));
 
     RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
     __DSB();

@@ -193,7 +193,7 @@ void _ui_drawFrequency()
 
     // Print big numbers frequency
     char freq_str[16] = {0};
-    sniprintf(freq_str, sizeof(freq_str), "%lu.%lu", (freq / 1000000lu), (freq % 1000000lu));
+    sniprintf(freq_str, sizeof(freq_str), "%lu.%06lu", (freq / 1000000lu), (freq % 1000000lu));
     stripTrailingZeroes(freq_str);
 
     gfx_print(layout.line3_large_pos, layout.line3_large_font, TEXT_ALIGN_CENTER,

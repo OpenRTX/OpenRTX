@@ -38,8 +38,7 @@ void backlight_init()
     FTM0->SC   = FTM_SC_PS(3)                  /* Prescaler divide by 8            */
                | FTM_SC_CLKS(1);               /* Enable timer                     */
 
-    gpio_setMode(LCD_BKLIGHT, OUTPUT);
-    gpio_setAlternateFunction(LCD_BKLIGHT, 2);
+    gpio_setMode(LCD_BKLIGHT, OUTPUT | ALTERNATE_FUNC(4));
 }
 
 void backlight_terminate()

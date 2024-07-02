@@ -47,6 +47,16 @@ bool radio_checkRxDigitalSquelch()
     return false;
 }
 
+void radio_enableAfOutput()
+{
+
+}
+
+void radio_disableAfOutput()
+{
+
+}
+
 void radio_enableRx()
 {
 

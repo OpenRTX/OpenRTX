@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Silvano Seva IU2KWO                      *
+ *   Copyright (C) 2020 - 2024 by Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -15,17 +15,35 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <errno.h>
 #include "stm32f4xx.h"
-#include <peripherals/gpio.h>
+#include "gpio-native.h"
 
-void gpio_setMode(void *port, uint8_t pin, enum Mode mode)
+static inline void setGpioAf(GPIO_TypeDef *port, uint8_t pin, const uint8_t af)
+{
+    if(pin < 8)
+    {
+        port->AFR[0] &= ~(0x0F << (pin*4));
+        port->AFR[0] |=  (af   << (pin*4));
+    }
+    else
+    {
+        pin -= 8;
+        port->AFR[1] &= ~(0x0F << (pin*4));
+        port->AFR[1] |=  (af   << (pin*4));
+    }
+}
+
+void gpio_setMode(const void *port, const uint8_t pin, const uint16_t mode)
 {
     GPIO_TypeDef *p = (GPIO_TypeDef *)(port);
+    uint8_t      af = (mode >> 8) & 0x0F;
+
     p->MODER  &= ~(3 << (pin*2));
     p->OTYPER &= ~(1 << pin);
     p->PUPDR  &= ~(3 << (pin*2));
 
-    switch(mode)
+    switch(mode & 0xFF)
     {
         case INPUT:
             // (MODE=00 TYPE=0 PUP=00)
@@ -48,7 +66,7 @@ void gpio_setMode(void *port, uint8_t pin, enum Mode mode)
             p->PUPDR  |= 0x02 << (pin*2);
             break;
 
-        case INPUT_ANALOG:
+        case ANALOG:
             // (MODE=11 TYPE=0 PUP=00)
             p->MODER  |= 0x03 << (pin*2);
             p->OTYPER |= 0x00 << pin;
@@ -69,11 +87,19 @@ void gpio_setMode(void *port, uint8_t pin, enum Mode mode)
             p->PUPDR  |= 0x00 << (pin*2);
             break;
 
+        case OPEN_DRAIN_PU:
+            // (MODE=01 TYPE=1 PUP=01)
+            p->MODER  |= 0x01 << (pin*2);
+            p->OTYPER |= 0x01 << pin;
+            p->PUPDR  |= 0x00 << (pin*2);
+            break;
+
         case ALTERNATE:
             // (MODE=10 TYPE=0 PUP=00)
             p->MODER  |= 0x02 << (pin*2);
             p->OTYPER |= 0x00 << pin;
-            p->PUPDR  |= 0x00 << (pin*2);
+            p->PUPDR  |= 0x01 << (pin*2);
+            setGpioAf(p, pin, af);
             break;
 
         case ALTERNATE_OD:
@@ -81,6 +107,15 @@ void gpio_setMode(void *port, uint8_t pin, enum Mode mode)
             p->MODER  |= 0x02 << (pin*2);
             p->OTYPER |= 0x01 << pin;
             p->PUPDR  |= 0x00 << (pin*2);
+            setGpioAf(p, pin, af);
+            break;
+
+        case ALTERNATE_OD_PU:
+            // (MODE=10 TYPE=1 PUP=01)
+            p->MODER  |= 0x02 << (pin*2);
+            p->OTYPER |= 0x01 << pin;
+            p->PUPDR  |= 0x01 << (pin*2);
+            setGpioAf(p, pin, af);
             break;
 
         default:
@@ -92,46 +127,48 @@ void gpio_setMode(void *port, uint8_t pin, enum Mode mode)
     }
 }
 
-void gpio_setAlternateFunction(void *port, uint8_t pin, uint8_t afNum)
-{
-    GPIO_TypeDef *p = (GPIO_TypeDef *)(port);
-    afNum &= 0x0F;
-    if(pin < 8)
-    {
-        p->AFR[0] &= ~(0x0F << (pin*4));
-        p->AFR[0] |= (afNum << (pin*4));
-    }
-    else
-    {
-        pin -= 8;
-        p->AFR[1] &= ~(0x0F << (pin*4));
-        p->AFR[1] |= (afNum << (pin*4));
-    }
-}
-
-void gpio_setOutputSpeed(void *port, uint8_t pin, enum Speed spd)
+void gpio_setOutputSpeed(const void *port, const uint8_t pin, const enum Speed spd)
 {
     ((GPIO_TypeDef *)(port))->OSPEEDR &= ~(3 << (pin*2));   // Clear old value
     ((GPIO_TypeDef *)(port))->OSPEEDR |= spd << (pin*2);    // Set new value
 }
 
-void gpio_setPin(void *port, uint8_t pin)
+static int gpioApi_mode(const struct gpioDev *dev, const uint8_t pin,
+                        const uint16_t mode)
 {
-    ((GPIO_TypeDef *)(port))->BSRR = (1 << pin);
+    if(pin > 15)
+        return -EINVAL;
+
+    gpio_setMode((void *) dev->priv, pin, mode);
+    return 0;
 }
 
-void gpio_clearPin(void *port, uint8_t pin)
+static void gpioApi_set(const struct gpioDev *dev, const uint8_t pin)
 {
-    ((GPIO_TypeDef *)(port))->BSRR = (1 << (pin + 16));
+    gpio_setPin((void *) dev->priv, pin);
 }
 
-void gpio_togglePin(void *port, uint8_t pin)
+static void gpioApi_clear(const struct gpioDev *dev, const uint8_t pin)
 {
-    ((GPIO_TypeDef *)(port))->ODR ^= (1 << pin);
+    gpio_clearPin((void *) dev->priv, pin);
 }
 
-uint8_t gpio_readPin(const void *port, uint8_t pin)
+static bool gpioApi_read(const struct gpioDev *dev, const uint8_t pin)
 {
-    GPIO_TypeDef *p = (GPIO_TypeDef *)(port);
-    return ((p->IDR & (1 << pin)) != 0) ? 1 : 0;
+    uint8_t val = gpio_readPin(dev->priv, pin);
+    return (val != 0) ? true : false;
 }
+
+static const struct gpioApi gpioApi =
+{
+    .mode  = gpioApi_mode,
+    .set   = gpioApi_set,
+    .clear = gpioApi_clear,
+    .read  = gpioApi_read
+};
+
+const struct gpioDev GpioA = { .api = &gpioApi, .priv = GPIOA };
+const struct gpioDev GpioB = { .api = &gpioApi, .priv = GPIOB };
+const struct gpioDev GpioC = { .api = &gpioApi, .priv = GPIOC };
+const struct gpioDev GpioD = { .api = &gpioApi, .priv = GPIOD };
+const struct gpioDev GpioE = { .api = &gpioApi, .priv = GPIOE };

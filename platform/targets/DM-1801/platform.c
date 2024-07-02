@@ -67,10 +67,8 @@ void platform_init()
     /*
      * Initialise I2C driver, once for all the modules
      */
-    gpio_setMode(I2C_SDA, OPEN_DRAIN);
-    gpio_setMode(I2C_SCL, OPEN_DRAIN);
-    gpio_setAlternateFunction(I2C_SDA, 3);
-    gpio_setAlternateFunction(I2C_SCL, 3);
+    gpio_setMode(I2C_SDA, OPEN_DRAIN | ALTERNATE_FUNC(5));
+    gpio_setMode(I2C_SCL, OPEN_DRAIN | ALTERNATE_FUNC(5));
     i2c0_init();
 }
 

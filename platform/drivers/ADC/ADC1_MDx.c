@@ -34,16 +34,16 @@ void adc1_init()
     /*
      * Configure GPIOs to analog input mode:
      */
-    gpio_setMode(AIN_VBAT,   INPUT_ANALOG);
-    gpio_setMode(AIN_VOLUME, INPUT_ANALOG);
+    gpio_setMode(AIN_VBAT,   ANALOG);
+    gpio_setMode(AIN_VOLUME, ANALOG);
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MD9600)
-    gpio_setMode(AIN_MIC,   INPUT_ANALOG);
-    gpio_setMode(AIN_RSSI,  INPUT_ANALOG);
+    gpio_setMode(AIN_MIC,   ANALOG);
+    gpio_setMode(AIN_RSSI,  ANALOG);
     #if defined(PLATFORM_MD9600)
-    gpio_setMode(AIN_SW2,   INPUT_ANALOG);
-    gpio_setMode(AIN_SW1,   INPUT_ANALOG);
-    gpio_setMode(AIN_RSSI2, INPUT_ANALOG);
-    gpio_setMode(AIN_HTEMP, INPUT_ANALOG);
+    gpio_setMode(AIN_SW2,   ANALOG);
+    gpio_setMode(AIN_SW1,   ANALOG);
+    gpio_setMode(AIN_RSSI2, ANALOG);
+    gpio_setMode(AIN_HTEMP, ANALOG);
     #endif
     #endif
 

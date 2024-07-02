@@ -63,6 +63,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <math.h>
 #include <ui/ui_default.h>
 #include <rtx.h>
@@ -1092,11 +1093,12 @@ static void _ui_textInputReset(char *buf)
 static void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg,
                          bool callsign)
 {
-    if(ui_state.input_position >= max_len)
-        return;
     long long now = getTick();
     // Get currently pressed number key
     uint8_t num_key = input_getPressedNumber(msg);
+
+    bool key_timeout = ((now - ui_state.last_keypress) >= input_longPressTimeout);
+    bool same_key = ui_state.input_number == num_key;
     // Get number of symbols related to currently pressed key
     uint8_t num_symbols = 0;
     if(callsign)
@@ -1104,11 +1106,15 @@ static void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg,
     else
         num_symbols = strlen(symbols_ITU_T_E161[num_key]);
 
+    // Return if max length is reached or finished editing last character
+    if((ui_state.input_position >= max_len) || ((ui_state.input_position == (max_len-1)) && (key_timeout || !same_key)))
+        return;
+
     // Skip keypad logic for first keypress
     if(ui_state.last_keypress != 0)
     {
         // Same key pressed and timeout not expired: cycle over chars of current key
-        if((ui_state.input_number == num_key) && ((now - ui_state.last_keypress) < input_longPressTimeout))
+        if(same_key && !key_timeout)
         {
             ui_state.input_set = (ui_state.input_set + 1) % num_symbols;
         }
@@ -1269,12 +1275,12 @@ void ui_saveState()
 }
 
 #ifdef CONFIG_GPS
-static float priorGPSSpeed = 0;
-static float priorGPSAltitude = 0;
-static float  priorGPSDirection = 500; // impossible value init.
-static uint8_t priorGPSFixQuality= 0;
-static uint8_t priorGPSFixType = 0;
-static uint8_t    priorSatellitesInView = 0;
+static uint16_t priorGPSSpeed = 0;
+static int16_t  priorGPSAltitude = 0;
+static int16_t  priorGPSDirection = 500; // impossible value init.
+static uint8_t  priorGPSFixQuality= 0;
+static uint8_t  priorGPSFixType = 0;
+static uint8_t  priorSatellitesInView = 0;
 static uint32_t vpGPSLastUpdate = 0;
 
 static vpGPSInfoFlags_t GetGPSDirectionOrSpeedChanged()
@@ -1300,22 +1306,19 @@ static vpGPSInfoFlags_t GetGPSDirectionOrSpeedChanged()
         priorGPSFixType = state.gps_data.fix_type;
     }
 
-    float speedDiff=fabs(state.gps_data.speed - priorGPSSpeed);
-    if (speedDiff >= 1)
+    if (state.gps_data.speed != priorGPSSpeed)
     {
         whatChanged |= vpGPSSpeed;
         priorGPSSpeed = state.gps_data.speed;
     }
 
-    float altitudeDiff = fabs(state.gps_data.altitude - priorGPSAltitude);
-    if (altitudeDiff >= 5)
+    if (state.gps_data.altitude != priorGPSAltitude)
     {
         whatChanged |= vpGPSAltitude;
         priorGPSAltitude = state.gps_data.altitude;
     }
 
-    float degreeDiff = fabs(state.gps_data.tmg_true - priorGPSDirection);
-    if (degreeDiff  >= 1)
+    if (state.gps_data.tmg_true != priorGPSDirection)
     {
         whatChanged |= vpGPSDirection;
         priorGPSDirection = state.gps_data.tmg_true;

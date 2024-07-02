@@ -28,29 +28,11 @@
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
 #include <memory_profiling.h>
+#include <hwconfig.h>
 
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBottom();
 
-const char *display_timer_values[] =
-{
-    "Off",
-    "5 s",
-    "10 s",
-    "15 s",
-    "20 s",
-    "25 s",
-    "30 s",
-    "1 min",
-    "2 min",
-    "3 min",
-    "4 min",
-    "5 min",
-    "15 min",
-    "30 min",
-    "45 min",
-    "1 hour"
-};
 
 const char *mic_gain_values[] =
 {
@@ -68,7 +50,20 @@ const char *phase_values[] =
 const char *hwVersions[] =
 {
     "0.1d",
-    "0.1e"
+    "0.1e",
+    "1.0"
+};
+
+const char *hmiVersions[] =
+{
+    "None",
+    "1.0"
+};
+
+const char *bbTuningPot[] =
+{
+    "Soft",
+    "Hard"
 };
 
 void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_t max_len, uint8_t index))
@@ -225,20 +220,26 @@ int _ui_getModule17ValueName(char *buf, uint8_t max_len, uint8_t index)
 
     switch(index)
     {
+        case D_MICGAIN:
+            snprintf(buf, max_len, "%s", mic_gain_values[mod17CalData.mic_gain]);
+            break;
+        case D_PTTINLEVEL:
+            snprintf(buf, max_len, "%s", mod17CalData.ptt_in_level ? "Act high" : "Act low");
+            break;
+        case D_PTTOUTLEVEL:
+            snprintf(buf, max_len, "%s", mod17CalData.ptt_out_level ? "Act high" : "Act low");
+            break;
+        case D_TXINVERT:
+            snprintf(buf, max_len, "%s", phase_values[mod17CalData.bb_tx_invert]);
+            break;
+        case D_RXINVERT:
+            snprintf(buf, max_len, "%s", phase_values[mod17CalData.bb_rx_invert]);
+            break;
         case D_TXWIPER:
             snprintf(buf, max_len, "%d", mod17CalData.tx_wiper);
             break;
         case D_RXWIPER:
             snprintf(buf, max_len, "%d", mod17CalData.rx_wiper);
-            break;
-        case D_TXINVERT:
-            snprintf(buf, max_len, "%s", phase_values[mod17CalData.tx_invert]);
-            break;
-        case D_RXINVERT:
-            snprintf(buf, max_len, "%s", phase_values[mod17CalData.rx_invert]);
-            break;
-        case D_MICGAIN:
-            snprintf(buf, max_len, "%s", mic_gain_values[mod17CalData.mic_gain]);
             break;
     }
 
@@ -295,8 +296,28 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
         case 1: // Heap usage
             snprintf(buf, max_len, "%dB", getHeapSize() - getCurrentFreeHeap());
             break;
-        case 2: // LCD Type
-            snprintf(buf, max_len, "%s", hwVersions[hwinfo->hw_version]);
+        case 2: // HW Revision
+            snprintf(buf, max_len, "%s", hwVersions[hwinfo->hw_version & 0xFF]);
+            break;
+        case 3: // HMI Version
+        #ifdef PLATFORM_LINUX
+            snprintf(buf, max_len, "%s", "Linux");
+        #else
+            if(hwinfo->flags & MOD17_FLAGS_HMI_PRESENT)
+                snprintf(buf, max_len, "%s", hmiVersions[(hwinfo->hw_version >> 8) & 0xFF]);
+            else
+                snprintf(buf, max_len, "%s", hmiVersions[0]);
+        #endif
+            break;
+        case 4: // Baseband tuning potentiometers
+        #ifdef PLATFORM_LINUX
+            snprintf(buf, max_len, "%s", "Linux");
+        #else
+            if((hwinfo->flags & MOD17_FLAGS_SOFTPOT) != 0)
+                snprintf(buf, max_len, "%s", bbTuningPot[0]);
+            else
+                snprintf(buf, max_len, "%s", bbTuningPot[1]);
+        #endif
             break;
     }
     return 0;

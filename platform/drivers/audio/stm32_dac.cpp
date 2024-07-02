@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2023 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2023 - 2024 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -110,32 +110,42 @@ void __attribute__((used)) DMA1_Stream6_IRQHandler()
 
 
 
-void stm32dac_init()
+void stm32dac_init(const uint8_t instance)
 {
-    // Configure GPIOs
-    gpio_setMode(GPIOA, 4, INPUT_ANALOG);
-    gpio_setMode(GPIOA, 5, INPUT_ANALOG);
-
     // Enable peripherals
-    RCC->APB1ENR |= RCC_APB1ENR_DACEN
-                 |  RCC_APB1ENR_TIM6EN
-                 |  RCC_APB1ENR_TIM7EN;
-    __DSB();
+    RCC->APB1ENR |= RCC_APB1ENR_DACEN;
 
-    // DAC common configuration
-    DAC->CR = DAC_CR_DMAEN2     // Enable DMA
-            | DAC_CR_TSEL2_1    // TIM7 as trigger source for CH2
-            | DAC_CR_TEN2       // Enable trigger input
-            | DAC_CR_EN2        // Enable CH2
+    switch(instance)
+    {
+        case STM32_DAC_CH1:
+        {
+            RCC->APB1ENR |= RCC_APB1ENR_TIM6EN;
+            __DSB();
 
-            | DAC_CR_DMAEN1     // Enable DMA
-            | 0x00              // TIM6 as trigger source for CH1
-            | DAC_CR_TEN1       // Enable trigger input
-            | DAC_CR_EN1;       // Enable CH1
+            DAC->CR |= DAC_CR_DMAEN1    // Enable DMA
+                    | 0x00              // TIM6 as trigger source for CH1
+                    | DAC_CR_TEN1       // Enable trigger input
+                    | DAC_CR_EN1;       // Enable CH1
+        }
+            break;
 
-    // Register end-of-transfer callbacks
-    chState[0].stream.setEndTransferCallback(std::bind(stopTransfer, 0));
-    chState[1].stream.setEndTransferCallback(std::bind(stopTransfer, 1));
+        case STM32_DAC_CH2:
+        {
+            RCC->APB1ENR |= RCC_APB1ENR_TIM7EN;
+            __DSB();
+
+            DAC->CR |= DAC_CR_DMAEN2    // Enable DMA
+                    | DAC_CR_TSEL2_1    // TIM7 as trigger source for CH2
+                    | DAC_CR_TEN2       // Enable trigger input
+                    | DAC_CR_EN2;       // Enable CH2
+        }
+            break;
+
+        default:
+            break;
+    }
+
+    chState[instance].stream.setEndTransferCallback(std::bind(stopTransfer, instance));
 }
 
 void stm32dac_terminate()

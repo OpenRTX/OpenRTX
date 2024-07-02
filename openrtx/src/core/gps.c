@@ -26,7 +26,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-#define KNOTS2KMH 1.852f
+#define KNOTS2KMH(x) ((((int) x) * 1852) / 1000)
 
 static char sentence[2*MINMEA_MAX_LENGTH];
 static bool gpsEnabled        = false;
@@ -90,8 +90,8 @@ void gps_task()
             struct minmea_sentence_rmc frame;
             if (minmea_parse_rmc(&frame, sentence))
             {
-                gps_data.latitude = minmea_tocoord(&frame.latitude);
-                gps_data.longitude = minmea_tocoord(&frame.longitude);
+                gps_data.latitude = minmea_tofixedpoint(&frame.latitude);
+                gps_data.longitude = minmea_tofixedpoint(&frame.longitude);
                 gps_data.timestamp.hour = frame.time.hours;
                 gps_data.timestamp.minute = frame.time.minutes;
                 gps_data.timestamp.second = frame.time.seconds;
@@ -102,7 +102,7 @@ void gps_task()
             }
 
             gps_data.tmg_true = minmea_tofloat(&frame.course);
-            gps_data.speed = minmea_tofloat(&frame.speed) * KNOTS2KMH;
+            gps_data.speed = KNOTS2KMH(minmea_toint(&frame.speed));
         }
         break;
 
@@ -113,7 +113,7 @@ void gps_task()
             {
                 gps_data.fix_quality = frame.fix_quality;
                 gps_data.satellites_tracked = frame.satellites_tracked;
-                gps_data.altitude = minmea_tofloat(&frame.altitude);
+                gps_data.altitude = minmea_toint(&frame.altitude);
             }
         }
         break;
@@ -166,9 +166,9 @@ void gps_task()
             struct minmea_sentence_vtg frame;
             if (minmea_parse_vtg(&frame, sentence))
             {
-                gps_data.speed = minmea_tofloat(&frame.speed_kph);
-                gps_data.tmg_mag = minmea_tofloat(&frame.magnetic_track_degrees);
-                gps_data.tmg_true = minmea_tofloat(&frame.true_track_degrees);
+                gps_data.speed = minmea_toint(&frame.speed_kph);
+                gps_data.tmg_mag = minmea_toint(&frame.magnetic_track_degrees);
+                gps_data.tmg_true = minmea_toint(&frame.true_track_degrees);
             }
         }
         break;

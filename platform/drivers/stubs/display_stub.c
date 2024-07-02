@@ -44,11 +44,6 @@ void display_render(void *fb)
     (void) fb;
 }
 
-void *display_getFrameBuffer()
-{
-    return (void *) (frameBuffer);
-}
-
 void display_setContrast(uint8_t contrast)
 {
     (void) contrast;

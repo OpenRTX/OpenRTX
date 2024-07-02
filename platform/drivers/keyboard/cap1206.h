@@ -1,6 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Silvano Seva IU2KWO                      *
- *                            and Niccolò Izzo IU2KIN                      *
+ *   Copyright (C) 2024 by Morgan Diepart ON4MOD                           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,9 +15,10 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef ADC1_H
-#define ADC1_H
+#ifndef CAP1206_H
+#define CAP1206_H
 
+#include <peripherals/i2c.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -26,50 +26,24 @@ extern "C" {
 #endif
 
 /**
- * Driver for ADC1, used on Module 17 to sample input voltage
+ * Initialize the CAP1206 device.
  *
- * NOTE: values inside the enum are the channel numbers of STM32 ADC1 peripheral.
+ * @param i2c: driver managing the I2C bus the chip is connected to.
+ * @return zero on success, a negative error code otherwise.
  */
-
-enum adcCh
-{
-    ADC_HWVER_CH = 3,
-};
+int cap1206_init(const struct i2cDevice *i2c);
 
 /**
- * Initialise ADC1.
- */
-void adc1_init();
-
-/**
- * Turn off ADC1.
- */
-void adc1_terminate();
-
-/**
- * Get current measurement of a given channel returning the raw ADC value.
+ * Read the status of the touch keys connected to the CAP1206 device.
  *
- * NOTE: the mapping provided in enum adcCh DOES NOT correspond to the physical
- * ADC channel mapping!
- *
- * @param ch: channel number.
- * @return current value of the specified channel, in ADC counts.
+ * @param i2c: driver managing the I2C bus the chip is connected to.
+ * @return a bitmap representing the status of the keys or a negative error code.
  */
-uint16_t adc1_getRawSample(uint8_t ch);
-
-/**
- * Get current measurement of a given channel.
- *
- * NOTE: the mapping provided in enum adcCh DOES NOT correspond to the physical
- * ADC channel mapping!
- *
- * @param ch: channel number.
- * @return current value of the specified channel in mV.
- */
-uint16_t adc1_getMeasurement(uint8_t ch);
+int cap1206_readkeys(const struct i2cDevice *i2c);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ADC1_H */
+#endif /* CAP1206_H */
+

@@ -58,14 +58,17 @@ void audio_init()
 {
     gpio_setMode(SPK_MUTE,    OUTPUT);
     gpio_setMode(MIC_MUTE,    OUTPUT);
-    gpio_setMode(AUDIO_MIC,   INPUT_ANALOG);
-    gpio_setMode(BASEBAND_RX, INPUT_ANALOG);
+    gpio_setMode(AUDIO_MIC,   ANALOG);
+    gpio_setMode(AUDIO_SPK,   ANALOG);
+    gpio_setMode(BASEBAND_RX, ANALOG);
+    gpio_setMode(BASEBAND_TX, ANALOG);
 
     gpio_setPin(SPK_MUTE);      // Off  = logic high
     gpio_clearPin(MIC_MUTE);    // Off  = logic low
     max9814_setGain(0);         // 40 dB gain
 
-    stm32dac_init();
+    stm32dac_init(STM32_DAC_CH1);
+    stm32dac_init(STM32_DAC_CH2);
     stm32adc_init(STM32_ADC_ADC2);
 }
 

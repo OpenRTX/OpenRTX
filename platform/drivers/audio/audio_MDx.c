@@ -80,10 +80,10 @@ const struct audioDevice inputDevices[] =
 
 void audio_init()
 {
-    gpio_setMode(AIN_MIC,  INPUT_ANALOG);
+    gpio_setMode(AIN_MIC,  ANALOG);
     gpio_setMode(SPK_MUTE, OUTPUT);
     #ifndef PLATFORM_MD9600
-    gpio_setMode(AIN_RTX,      INPUT_ANALOG);
+    gpio_setMode(AIN_RTX,      ANALOG);
     gpio_setMode(AUDIO_AMP_EN, OUTPUT);
     #ifndef MDx_ENABLE_SWD
     gpio_setMode(MIC_PWR,      OUTPUT);
@@ -138,7 +138,7 @@ void audio_connect(const enum AudioSource source, const enum AudioSink sink)
 
         case PATH(SOURCE_MCU, SINK_SPK):
         case PATH(SOURCE_MCU, SINK_RTX):
-            gpio_setMode(BEEP_OUT, ALTERNATE);
+            gpio_setMode(BEEP_OUT, ALTERNATE | ALTERNATE_FUNC(2));
             break;
 
         default:

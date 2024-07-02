@@ -35,12 +35,9 @@ uint8_t spiFlash_SendRecv(uint8_t val)
 
 void spiFlash_init()
 {
-    gpio_setMode(FLASH_CLK, ALTERNATE);
-    gpio_setMode(FLASH_SDO, ALTERNATE);
-    gpio_setMode(FLASH_SDI, ALTERNATE);
-    gpio_setAlternateFunction(FLASH_CLK, 5); /* SPI1 is on AF5 */
-    gpio_setAlternateFunction(FLASH_SDO, 5);
-    gpio_setAlternateFunction(FLASH_SDI, 5);
+    gpio_setMode(FLASH_CLK, ALTERNATE | ALTERNATE_FUNC(5));
+    gpio_setMode(FLASH_SDO, ALTERNATE | ALTERNATE_FUNC(5));
+    gpio_setMode(FLASH_SDI, ALTERNATE | ALTERNATE_FUNC(5));
 
     RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
     __DSB();

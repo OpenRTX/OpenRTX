@@ -171,13 +171,9 @@ template< class M >
 void HR_Cx000< M >::uSpi_init()
 {
     gpio_setMode(DMR_CS,   OUTPUT);
-    gpio_setMode(DMR_CLK,  OUTPUT);
-    gpio_setMode(DMR_MOSI, OUTPUT);
-    gpio_setMode(DMR_MISO, INPUT);
-
-    gpio_setAlternateFunction(DMR_CLK,  0);
-    gpio_setAlternateFunction(DMR_MOSI, 0);
-    gpio_setAlternateFunction(DMR_MISO, 0);
+    gpio_setMode(DMR_CLK,  OUTPUT | ALTERNATE_FUNC(2));
+    gpio_setMode(DMR_MOSI, OUTPUT | ALTERNATE_FUNC(2));
+    gpio_setMode(DMR_MISO, INPUT  | ALTERNATE_FUNC(2));
 
     SIM->SCGC6 |= SIM_SCGC6_SPI0_MASK;
 
