@@ -59,10 +59,10 @@ ENTRY(_Z13Reset_Handlerv)
 MEMORY
 {
     /* Reserve space for bootloader and settings */
-    flash(rx)    : ORIGIN = 0x0800C000, LENGTH = 1M - 48K - 128K
+    flash(rx)    : ORIGIN = 0x0800C000, LENGTH = 1M - 0xC000 - 128K
     /*
-     * Note, the small ram starts at 0x10000000 but it is necessary to add the
-     * size of the main stack, so it is 0x10000200.
+     * Note, the large ram starts at 0x20000000 but it is necessary to add the
+     * size of the main stack, so it is 0x20000200.
      */
     smallram(wx) : ORIGIN = 0x10000000, LENGTH = 64K
     largeram(wx) : ORIGIN = 0x20000200, LENGTH = 128K-0x200
