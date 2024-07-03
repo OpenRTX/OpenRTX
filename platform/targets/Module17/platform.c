@@ -73,7 +73,7 @@ void platform_init()
      * enable internal pull-ups and slow-down I2C1.
      * The sequence of operation have to be respected otherwise the
      * I2C peripheral might report as continuously busy.
-     */ 
+     */
     gpio_setMode(I2C1_SCL, INPUT_PULL_DOWN);
     gpio_setMode(I2C1_SDA, INPUT_PULL_DOWN);
     delayUs(100);
@@ -96,12 +96,6 @@ void platform_init()
     }
 
     i2c_init(&i2c1, i2cSpeed);
-
-    /* Set analog output for baseband signal to an idle level of 1.1V */
-    gpio_setMode(BASEBAND_TX, ANALOG);
-    RCC->APB1ENR |= RCC_APB1ENR_DACEN;
-    DAC->CR      |= DAC_CR_EN1;
-    DAC->DHR12R1  = 1365;
 
     nvm_init();
     audio_init();
