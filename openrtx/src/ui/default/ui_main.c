@@ -97,67 +97,6 @@ static const ui_Draw__fn uiPageDescTable[ PAGE_NUM_OF ] =
     ui_Draw_Blank                     // PAGE_STUBBED
 };
 */
-void ui_Draw_Page( GuiState_st* guiState , Event_st* event )
-{
-    static uint8_t prevPageNum = ~0 ;
-           bool    drawPage    = false ;
-
-    guiState->update          = false ;
-    guiState->page.renderPage = false ;
-    guiState->event           = *event ;
-
-    if( guiState->page.num != prevPageNum )
-    {
-        guiState->initialPageDisplay = true ;
-        prevPageNum                  = guiState->page.num ;
-        drawPage                     = true ;
-    }
-    else
-    {
-        guiState->initialPageDisplay = false ;
-        switch( guiState->event.type )
-        {
-            case EVENT_TYPE_KBD :
-            {
-                drawPage = true ;
-                break ;
-            }
-            case EVENT_TYPE_STATUS :
-            {
-                if( guiState->event.payload & EVENT_STATUS_DEVICE )
-                {
-                    guiState->update = true ; //@@@KL comment out to remove the flashing
-                    drawPage         = true ;
-                }
-                break ;
-            }
-            case EVENT_TYPE_RTX :
-            {
-                drawPage = true ;
-                break ;
-            }
-            default :
-            {
-                drawPage = true ;
-                break ;
-            }
-        }
-    }
-
-    if( drawPage )
-    {
-        ui_DisplayPage( guiState );
-
-        // attempt to display the page as a scripted page
-        //@@@KL redact
-/*        if( !ui_DisplayPage( guiState ) )
-        {
-            // if not successful - display using the legacy fn.
-//            uiPageDescTable[ guiState->page.num ]( guiState , guiState->update , &guiState->event ) ;
-        }*/
-    }
-
-}
 /*
 static void ui_Draw_MainVFO( GuiState_st* guiState , bool update , Event_st* event )
 {

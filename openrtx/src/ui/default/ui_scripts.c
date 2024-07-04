@@ -69,6 +69,34 @@ static const uint8_t Page_MainInput[] =
 
 static const uint8_t Page_MainMem[] =
 {
+    // Debug Test
+/*
+    LINE_END ,
+    LINE_END ,
+    ALIGN_CENTER ,
+    EVENT_START( EVENT_TYPE_STATUS , EVENT_STATUS_BATTERY ) ,
+/-*
+    GOTO_XY( 40 , 40 ) ,
+    FG_COLOR( GREEN ) ,
+    RECT_FILL( 20 , 10 ) ,
+*-/
+      VALUE_DSP( DEBUG_GFX ) ,
+//      VALUE_DSP( BATTERY_LEVEL ) ,
+    EVENT_END ,
+
+    GOTO_TEXT_LINE( GUI_LINE_TOP ) ,
+    ALIGN_CENTER ,
+    EVENT_START( EVENT_TYPE_STATUS , EVENT_STATUS_DISPLAY_TIME_TICK ) ,
+      BG_COLOR( RED ) ,
+      FG_COLOR( WHITE ) ,
+//      VALUE_DSP( DEBUG_CH ) ,
+//      DBG_VAL( -10 ) ,
+//      VALUE_DSP( DEBUG_CH ) ,
+      VALUE_DSP( TIME ) ,
+
+    EVENT_END ,
+*/
+/*
     // Graphics Test
     GOTO_X( 20 ) ,
     GOTO_Y( 20 ) ,
@@ -90,16 +118,30 @@ static const uint8_t Page_MainMem[] =
     ADD_TO_X( 20 ) ,
     FG_COLOR( GREEN ) ,
     RECT_FILL( 20 , 15 ) ,
+    FG_COLOR( WHITE ) ,
+    ADD_TO_X( 20 ) ,
+    ADD_TO_Y( 20 ) ,
+    CIRCLE( 15 ) ,
 
-    GUI_CMD_PAGE_END ,//@@@KL
+    FG_COLOR( WHITE ) ,
+    ADD_TO_X( -30 ) ,
+    ADD_TO_Y( -60 ) ,
+    RECT( 25 , 20 ) ,
+//    ADD_TO_Y( -20 ) ,
+    FG_COLOR( RED ) ,
+    ADD_TO_X( 1 ) ,
+    ADD_TO_Y( 1 ) ,
+    RECT_FILL( 23 , 18 ) ,
+*/
+//    GUI_CMD_PAGE_END ,//@@@KL
 
     ALIGN_CENTER ,
     GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( EVENT_STATUS_DISPLAY_TIME_TICK ) ,
-      GUI_CMD_BG_COLOR , ST_VAL( COLOR_RED ) ,
+      BG_COLOR( RED ) ,
       GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_TIME ) ,
     GUI_CMD_EVENT_END ,
     GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_BATTERY ) ) ,
-//      ALIGN_RIGHT , //@@@KL ensure works
+      ALIGN_RIGHT ,
       GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_BATTERY_LEVEL ) ,
     GUI_CMD_EVENT_END ,
     GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_DISPLAY_TIME_TICK ) ) ,
@@ -115,7 +157,6 @@ static const uint8_t Page_MainMem[] =
     GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_RSSI ) ) ,
       GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_RSSI_METER ) ,
     GUI_CMD_EVENT_END ,
-    GUI_CMD_PAGE_END ,//@@@KL
     GUI_CMD_PAGE_END
 };
 

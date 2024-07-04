@@ -84,10 +84,15 @@ enum
 #endif // PLATFORM_TTWRPLUS
     GUI_VAL_DSP_BACKUP_RESTORE   , // 0x24
     GUI_VAL_DSP_LOW_BATTERY      , // 0x25
-#ifdef DISPLAY_DEBUG_MSG
+#ifdef ENABLE_DEBUG_MSG
+  #ifndef DISPLAY_DEBUG_MSG
+    GUI_VAL_DSP_DEBUG_CH         , // 0x26
+    GUI_VAL_DSP_DEBUG_GFX        , // 0x27
+  #else // DISPLAY_DEBUG_MSG
     GUI_VAL_DSP_DEBUG_MSG        , // 0x26
     GUI_VAL_DSP_DEBUG_VALUES     , // 0x27
-#endif // DISPLAY_DEBUG_MSG
+  #endif // DISPLAY_DEBUG_MSG
+#endif // ENABLE_DEBUG_MSG
     GUI_VAL_DSP_STUBBED          , // 0x28
     GUI_VAL_DSP_NUM_OF
 };
@@ -132,7 +137,7 @@ typedef enum
     M17_CAN_RX              // GUI_VAL_INP_CAN_RX
 }SettingsM17Items_en;
 
-extern void GuiVal_DisplayValue( GuiState_st* guiState , uint8_t valueNum );
+extern void GuiVal_DisplayValue( GuiState_st* guiState );
 #ifdef DISPLAY_DEBUG_MSG
 extern void GuiVal_SetDebugMessage( char* debugMsg );
 extern void GuiVal_SetDebugValues( uint8_t debugVal0 , uint8_t debugVal1 ,

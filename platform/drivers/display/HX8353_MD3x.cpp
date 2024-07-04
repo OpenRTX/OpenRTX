@@ -517,6 +517,20 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
             }
         } while(lcdWaiting);
     }
+
+    /*
+     * Restore the frame buffer to the original values - ensures that the display does not flash.
+     */
+    for(uint8_t y = startRow; y < endRow; y++)
+    {
+        for(uint8_t x = 0; x < SCREEN_WIDTH; x++)
+        {
+            size_t pos = x + y * SCREEN_WIDTH;
+            uint16_t pixel = frameBuffer[pos];
+            frameBuffer[pos] = __builtin_bswap16(pixel);
+        }
+    }
+
 }
 
 void display_render()

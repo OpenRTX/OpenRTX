@@ -301,95 +301,13 @@ inline void gfx_setPixel( Pos_st* pos , Color_st* color )
     }
 }
 
-//@@@KL WTF is going on here? I understand the basic intent but is it working?!!! - not fully.
-Pos_st gfx_drawLine( Pos_st* start_pos , Pos_st* end_pos , Color_st* color )
-{
-    Pos_st   startPos = *start_pos ;
-    Pos_st   endPos   = *end_pos ;
-    Pos_st   pos ;
-    int16_t  steep ;
-    uint16_t tmp ;
-    int16_t  dx ;
-    int16_t  dy ;
-    int16_t  err ;
-    int16_t  ystep ;
-
-    if( initialized )
-    {
-        steep = abs( endPos.y - startPos.y ) > abs( endPos.x - startPos.x );
-
-        if( steep )
-        {
-            // Swap startPos.x and startPos.y
-            tmp        = startPos.x ;
-            startPos.x = startPos.y ;
-            startPos.y = tmp ;
-            // Swap endPos.x and endPos.y
-            tmp        = endPos.x ;
-            endPos.x   = endPos.y ;
-            endPos.y   = tmp ;
-        }
-
-        if( startPos.x > endPos.x )
-        {
-            // Swap startPos.x and endPos.x
-            tmp        = startPos.x ;
-            startPos.x = endPos.x ;
-            endPos.x   = tmp ;
-            // Swap startPos.y and endPos.y
-            tmp        = startPos.y ;
-            startPos.y = endPos.y ;
-            endPos.y   = tmp ;
-        }
-
-        dx = endPos.x      - startPos.x ;
-        dy = abs( endPos.y - startPos.y );
-
-        err = dx >> 1 ;
-
-        if( startPos.y < endPos.y )
-        {
-            ystep = 1 ;
-        }
-        else
-        {
-            ystep = -1 ;
-        }
-
-        for( ; startPos.x <= endPos.x ; startPos.x++ )
-        {
-            pos   = startPos ;
-            pos.w = 0 ;
-            pos.h = 0 ;
-            if( steep )
-            {
-                gfx_setPixel( &pos , color );
-            }
-            else
-            {
-                gfx_setPixel( &startPos , color );
-            }
-
-            err -= dy ;
-            if( err < 0 )
-            {
-                startPos.y += ystep ;
-                err         += dx ;
-            }
-        }
-    }
-
-    return endPos ;
-
-}
-
 enum
 {
     NUMBER_OF_STEPS       =   256 ,
     RESOLUTION_MULTIPLIER = 32768
 };
 
-Pos_st gfx_line( Pos_st* startPos , Color_st* color )
+Pos_st gfx_drawLine( Pos_st* startPos , Color_st* color )
 {
     Pos_st   pos       = *startPos ;
     Pos_st   prevPos   = pos ;
@@ -451,66 +369,76 @@ void gfx_clearRectangle( Pos_st* startPos )
     }
 }
 
-void gfx_drawRect( Pos_st* startPos , Color_st* color , bool fill )
+void gfx_drawRect( Pos_st* startPos , Color_st* color , bool fillRect )
 {
+    Pos_st pos ;
+    Pos_t  index ;
+
     if( initialized )
     {
-        if( ( startPos->w > 0 ) && ( startPos->h > 0 ) )
+        if( !fillRect )
         {
-            uint16_t x_max     = startPos->x + startPos->w - 1 ;
-            uint16_t y_max     = startPos->y + startPos->h - 1 ;
-            bool     perimeter = 0 ;
+            // top
+            pos.x = startPos->x ;
+            pos.y = startPos->y ;
+            pos.w = startPos->w ;
+            pos.h = 1 ;
+            gfx_drawLine( &pos , color );
+            // lhs
+            pos.x = startPos->x ;
+            pos.y = startPos->y ;
+            pos.w = 1 ;
+            pos.h = startPos->h ;
+            gfx_drawLine( &pos , color );
+            // rhs
+            pos.x = ( startPos->x + startPos->w ) - 1 ;
+            pos.y = startPos->y ;
+            pos.w = 1 ;
+            pos.h = startPos->h ;
+            gfx_drawLine( &pos , color );
+            // bottom
+            pos.x = startPos->x ;
+            pos.y = ( startPos->y + startPos->h ) - 1 ;
+            pos.w = startPos->w ;
+            pos.h = 1 ;
+            gfx_drawLine( &pos , color );
+        }
+        else
+        {
+            // top
+            pos.x = startPos->x ;
+            pos.y = startPos->y ;
+            pos.w = startPos->w ;
+            pos.h = 1 ;
 
-            if( x_max > ( SCREEN_WIDTH  - 1 ) )
+            for( index = 0 ; index < startPos->h ; index++ )
             {
-                x_max = SCREEN_WIDTH - 1 ;
-            }
-            if( y_max > ( SCREEN_HEIGHT - 1 ) )
-            {
-                y_max = SCREEN_HEIGHT - 1 ;
+                gfx_drawLine( &pos , color );
+                pos.y++ ;
             }
 
-            for( int16_t y = startPos->y ; y <= y_max ; y++ )
-            {
-                for( int16_t x = startPos->x ; x <= x_max ; x++ )
-                {
-                    if( ( y == startPos->y ) || ( y == y_max ) || ( x == startPos->x ) || ( x == x_max ) )
-                    {
-                       perimeter = 1 ;
-                    }
-                    else
-                    {
-                        perimeter = 0 ;
-                    }
-                    // If fill is false, draw only rectangle perimeter
-                    if( fill || perimeter )
-                    {
-                        Pos_st pos = { x , y , 0 , 0 };
-                        gfx_setPixel( &pos, color );
-                    }
-                }
-            }
         }
     }
+
 }
 
-void gfx_drawCircle( Pos_st* startPos, uint16_t r , Color_st* color )
+void gfx_drawCircle( Pos_st* startPos , Color_st* color )
 {
-    int16_t f     = 1 - r ;
+    int16_t f     = 1 - startPos->h ;
     int16_t ddF_x = 1 ;
-    int16_t ddF_y = -2 * r ;
+    int16_t ddF_y = -2 * startPos->h ;
     int16_t x     = 0 ;
-    int16_t y     = r ;
+    int16_t y     = startPos->h ;
 
     Pos_st pos  = *startPos ;
-    pos.y      += r ;
+    pos.y      += startPos->h ;
     gfx_setPixel( &pos , color );
-    pos.y      -= 2 * r;
+    pos.y      -= 2 * startPos->h;
     gfx_setPixel( &pos , color );
-    pos.y      += r ;
-    pos.x      += r;
+    pos.y      += startPos->h ;
+    pos.x      += startPos->h;
     gfx_setPixel( &pos , color );
-    pos.x      -= 2 * r ;
+    pos.x      -= 2 * startPos->h ;
     gfx_setPixel( &pos , color );
 
     while( x < y )
@@ -556,13 +484,13 @@ void gfx_drawCircle( Pos_st* startPos, uint16_t r , Color_st* color )
 void gfx_drawHLine(int16_t y, uint16_t height, Color_st* color)
 {
     Pos_st startPos = { 0 , y , SCREEN_WIDTH , height };
-    gfx_drawRect( &startPos , color , 1 );
+    gfx_drawRect( &startPos , color , true );
 }
 
 void gfx_drawVLine(int16_t x, uint16_t width, Color_st* color)
 {
     Pos_st startPos = { x , 0 , width , SCREEN_HEIGHT };
-    gfx_drawRect( &startPos , color , 1 );
+    gfx_drawRect( &startPos , color , true );
 }
 
 /**
@@ -861,8 +789,13 @@ Pos_st gfx_drawSymbol( Pos_st*   startPos , SymbolSize_t size   , Align_t alignm
  */
 Pos_st gfx_drawBattery( Pos_st* startPos , uint16_t prcntg )
 {
+    Pos_st   outerPos ;
+    Pos_st   innerPos ;
+    Pos_st   cornerPos ;
+
     Color_st white      = { 255 , 255 , 255 , 255 } ;
     Color_st black      = {   0 ,   0 ,   0 , 255 } ;
+
     // Cap percentage to 100
     uint16_t percentage = ( prcntg > 100 ) ? 100 : prcntg ;
 
@@ -870,6 +803,15 @@ Pos_st gfx_drawBattery( Pos_st* startPos , uint16_t prcntg )
     Color_st green      = {   0 , 255 ,  0 , 255 } ;
     Color_st yellow     = { 250 , 180 , 19 , 255 } ;
     Color_st red        = { 255 ,   0 ,  0 , 255 } ;
+
+    outerPos    = *startPos ;
+    outerPos.w -= 2 ; // offset for the button width
+
+    innerPos    = outerPos ;
+    innerPos.x += 1 ;
+    innerPos.y += 1 ;
+    innerPos.w -= 2 ;
+    innerPos.h -= 2 ;
 
     // Select color according to percentage
     Color_st batColor  = yellow;
@@ -890,43 +832,38 @@ Pos_st gfx_drawBattery( Pos_st* startPos , uint16_t prcntg )
 #endif // defined PIX_FMT_BW
 
     // Draw the battery outline
-    gfx_drawRect( startPos , &white , false );
-
+    gfx_drawRect( &outerPos , &white , false );
     // Draw the battery fill
-    Pos_st   fillStart ;
-    uint16_t fillWidth ;
-    fillWidth           = ( ( startPos->w - 4 ) * percentage ) / 100 ;
-    fillStart.x         = startPos->x + 2 ;
-    fillStart.y         = startPos->y + 2 ;
-    fillStart.w         = fillWidth ;
-    fillStart.h         = startPos->h - 4 ;
-    gfx_drawRect( &fillStart , &batColor , true );
+    gfx_drawRect( &innerPos , &batColor , true );
 
     // Round corners
-    Pos_st topLeft      = *startPos ;
-    Pos_st topRight     = *startPos ;
-    Pos_st bottomLeft   = *startPos ;
-    Pos_st bottomRight  = *startPos ;
-
-    topRight.x         += startPos->w  - 1 ;
-    bottomLeft.y       += startPos->h - 1 ;
-    bottomRight.x      += startPos->w  - 1 ;
-    bottomRight.y      += startPos->h - 1 ;
-
-    gfx_setPixel( &topLeft     , &black );
-    gfx_setPixel( &topRight    , &black );
-    gfx_setPixel( &bottomLeft  , &black );
-    gfx_setPixel( &bottomRight , &black );
+    cornerPos.w = 1 ;
+    cornerPos.h = 1 ;
+    // tlc
+    cornerPos.x = outerPos.x ;
+    cornerPos.y = outerPos.y ;
+    gfx_setPixel( &cornerPos , &black );
+    // trc
+    cornerPos.x = ( outerPos.x + outerPos.w ) - 1 ;
+    cornerPos.y = outerPos.y ;
+    gfx_setPixel( &cornerPos , &black );
+    // blc
+    cornerPos.x = outerPos.x ;
+    cornerPos.y = ( outerPos.y + outerPos.h ) - 1 ;
+    gfx_setPixel( &cornerPos , &black );
+    // brc
+    cornerPos.x = ( outerPos.x + outerPos.w ) - 1 ;
+    cornerPos.y = ( outerPos.y + outerPos.h ) - 1 ;
+    gfx_setPixel( &cornerPos , &black );
 
     // Draw the button
-    Pos_st buttonStart;
-    Pos_st buttonEnd;
+    Pos_st buttonStart ;
 
-    buttonStart.x       = startPos->x + startPos->w ;
-    buttonStart.y       = startPos->y + ( startPos->h / 2 ) - ( startPos->h / 8 ) - 1 + ( startPos->h % 2 );
-    buttonEnd.x         = startPos->x + startPos->w;
-    buttonEnd.y         = startPos->y + ( startPos->h / 2 ) + ( startPos->h / 8 );
-    gfx_drawLine( &buttonStart , &buttonEnd , &white );
+    buttonStart.x       = outerPos.x + outerPos.w ;
+    buttonStart.y       = outerPos.y + 3 ;
+    buttonStart.w       = 2 ;
+    buttonStart.h       = outerPos.h - 6 ;
+    gfx_drawRect( &buttonStart , &white , true );
 
     return *startPos ;
 }
@@ -1136,17 +1073,18 @@ void gfx_drawGPSgraph( Pos_st* startPos , gpssat_t* sats , uint32_t activeSats )
         gfx_print( &idPos, FONT_SIZE_5PT, GFX_ALIGN_LEFT, &barColor, "%2d ", sats[ index ].id );
     }
     uint8_t barsWidth        = 9 + ( 11 * ( barWidth + 2 ) ) ;
-    Pos_st  left_line_end    = *startPos ;
-    Pos_st  right_Line_start = *startPos ;
-    Pos_st  right_line_end   = *startPos ;
 
-    left_line_end.y    += startPos->h - 9 ;
-    right_Line_start.x += barsWidth ;
-    right_line_end.x   += barsWidth ;
-    right_line_end.y   += startPos->h - 9 ;
+    Pos_st left_line    = *startPos ;
+    Pos_st right_line   = *startPos ;
 
-    gfx_drawLine( startPos          , &left_line_end  , &white );
-    gfx_drawLine( &right_Line_start , &right_line_end , &white );
+    left_line.h         = startPos->h - 9 ;
+
+    right_line.x       += barsWidth ;
+    right_line.w        = barsWidth ;
+    right_line.h        = startPos->h - 9 ;
+
+    gfx_drawLine( &left_line , &white );
+    gfx_drawLine( &right_line , &white );
 }
 
 void gfx_drawGPScompass( Pos_st* startPos , uint16_t radius ,
@@ -1159,8 +1097,10 @@ void gfx_drawGPScompass( Pos_st* startPos , uint16_t radius ,
     Pos_st circlePos    = *startPos ;
            circlePos.x += radius + 1 ;
            circlePos.y += radius + 3 ;
+           circlePos.w  = 1 ;
+           circlePos.h += radius ;
 
-    gfx_drawCircle( &circlePos , radius , &white );
+    gfx_drawCircle( &circlePos , &white );
 
     Pos_st nBox = { (uint8_t)( ( startPos->x + radius ) - 5 ) , startPos->y , 13 , 13 };
 
@@ -1179,10 +1119,23 @@ void gfx_drawGPScompass( Pos_st* startPos , uint16_t radius ,
                         (uint8_t)( circlePos.y + ( ( needle_radius / 2 ) * SIN( deg + 180.0f  ) ) ) , 0 , 0 };
         Pos_st pos4 = { (uint8_t)( circlePos.x + ( needle_radius         * COS( deg - 145.0f  ) ) ) ,
                         (uint8_t)( circlePos.y + ( needle_radius         * SIN( deg - 145.0f  ) ) ) , 0 , 0 };
-        gfx_drawLine( &pos1 , &pos2 , &yellow );
-        gfx_drawLine( &pos2 , &pos3 , &yellow );
-        gfx_drawLine( &pos3 , &pos4 , &yellow );
-        gfx_drawLine( &pos4 , &pos1 , &yellow );
+        Pos_st pos ;
+        pos   = pos1 ;
+        pos.w = pos2.x - pos1.x ;
+        pos.h = pos2.y - pos1.y ;
+        gfx_drawLine( &pos , &yellow );
+        pos   = pos2 ;
+        pos.w = pos3.x - pos2.x ;
+        pos.h = pos3.y - pos2.y ;
+        gfx_drawLine( &pos , &yellow );
+        pos   = pos3 ;
+        pos.w = pos4.x - pos3.x ;
+        pos.h = pos4.y - pos3.y ;
+        gfx_drawLine( &pos , &yellow );
+        pos   = pos4 ;
+        pos.w = pos1.x - pos4.x ;
+        pos.h = pos1.y - pos4.y ;
+        gfx_drawLine( &pos , &yellow );
     }
     // North indicator
     Pos_st n_pos = { (uint8_t)(startPos->x + radius - 3) ,
@@ -1196,6 +1149,7 @@ void gfx_plotData( Pos_st* startPos , const int16_t* data , size_t len )
     Color_st white          = {255 , 255 , 255 , 255 } ;
     Pos_st   prevPos        = { 0 , 0 , 0 , 0 } ;
     Pos_st   pos            = { 0 , 0 , 0 , 0 } ;
+    Pos_st   linePos ;
     bool     firstIteration = true ;
 
     for( size_t index = 0 ; index < len ; index++ )
@@ -1213,7 +1167,10 @@ void gfx_plotData( Pos_st* startPos , const int16_t* data , size_t len )
         }
         if( !firstIteration )
         {
-            gfx_drawLine( &prevPos , &pos , &white );
+            linePos   = prevPos ;
+            linePos.w = pos.x - prevPos.x ;
+            linePos.h = pos.y - prevPos.y ;
+            gfx_drawLine( &linePos , &white );
         }
         prevPos = pos ;
         if( firstIteration )

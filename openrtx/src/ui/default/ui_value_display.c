@@ -56,7 +56,7 @@
 #include "ui_value_input.h"
 
 static void GuiVal_Disp_Val( GuiState_st* guiState , char* valueBuffer );
-static void GuiVal_Disp_Bat( GuiState_st* guiState , Pos_st* pos , uint16_t percentage );
+static void GuiVal_Disp_Bat( GuiState_st* guiState , uint16_t percentage );
 static void GuiVal_Disp_StoreVarPos( GuiState_st* guiState );
 static void GuiVal_Disp_ClearVarPos( GuiState_st* guiState );
 
@@ -117,7 +117,11 @@ static void GuiVal_RadioFw( GuiState_st* guiState );
 #endif // PLATFORM_TTWRPLUS
 static void GuiVal_BackupRestore( GuiState_st* guiState );
 static void GuiVal_LowBattery( GuiState_st* guiState );
-#ifdef DISPLAY_DEBUG_MSG
+#ifdef ENABLE_DEBUG_MSG
+  #ifndef DISPLAY_DEBUG_MSG
+static void GuiVal_DebugCh( GuiState_st* guiState );
+static void GuiVal_DebugGfx( GuiState_st* guiState );
+  #else // DISPLAY_DEBUG_MSG
 enum
 {
     DEBUG_MSG_ALLOC = 10
@@ -132,8 +136,11 @@ static uint8_t DebugVal5 = 0 ;
 static uint8_t DebugCnt  = 0 ;
 static void GuiVal_DebugMsg( GuiState_st* guiState );
 static void GuiVal_DebugValues( GuiState_st* guiState );
-#endif // DISPLAY_DEBUG_MSG
+  #endif // DISPLAY_DEBUG_MSG
+#endif // ENABLE_DEBUG_MSG
 static void GuiVal_Stubbed( GuiState_st* guiState );
+
+static bool GuiVal_Disp_HasValueChanged( GuiState_st* guiState , uint32_t value );
 
 typedef void (*ui_GuiVal_fn)( GuiState_st* guiState );
 
@@ -196,27 +203,27 @@ static const ui_GuiVal_fn ui_GuiVal_Table[ GUI_VAL_DSP_NUM_OF ] =
 #endif // PLATFORM_TTWRPLUS
     GuiVal_BackupRestore    ,   // GUI_VAL_DSP_BACKUP_RESTORE   0x24
     GuiVal_LowBattery       ,   // GUI_VAL_DSP_LOW_BATTERY      0x25
-#ifdef DISPLAY_DEBUG_MSG
+#ifdef ENABLE_DEBUG_MSG
+  #ifndef DISPLAY_DEBUG_MSG
+    GuiVal_DebugCh          ,   // GUI_VAL_DSP_DEBUG_CH         0x26
+    GuiVal_DebugGfx         ,   // GUI_VAL_DSP_DEBUG_GFX        0x27
+  #else // DISPLAY_DEBUG_MSG
     GuiVal_DebugMsg         ,   // GUI_VAL_DSP_DEBUG_MSG        0x26
     GuiVal_DebugValues      ,   // GUI_VAL_DSP_DEBUG_VALUES     0x27
-#endif // DISPLAY_DEBUG_MSG
+  #endif // DISPLAY_DEBUG_MSG
+#endif // ENABLE_DEBUG_MSG
     GuiVal_Stubbed              // GUI_VAL_DSP_STUBBED          0x28
 };
 
-void GuiVal_DisplayValue( GuiState_st* guiState , uint8_t valueNum )
+void GuiVal_DisplayValue( GuiState_st* guiState )
 {
-    uint8_t valNum = valueNum ;
-
-    if( valNum >= GUI_VAL_DSP_NUM_OF )
-    {
-        valNum = GUI_VAL_DSP_STUBBED ;
-    }
+    uint8_t varNum = guiState->layout.vars[ guiState->layout.varIndex ].varNum ;
 
     guiState->layout.itemPos.y  = 0 ;
     guiState->layout.itemPos.x  = 0 ;
     guiState->layout.itemPos.h  = 0 ;
     guiState->layout.itemPos.w  = 0 ;
-    ui_GuiVal_Table[ valNum ]( guiState );
+    ui_GuiVal_Table[ varNum ]( guiState );
     guiState->layout.line.pos.x = guiState->layout.itemPos.x +
                                   guiState->layout.itemPos.w ;
 
@@ -224,33 +231,7 @@ void GuiVal_DisplayValue( GuiState_st* guiState , uint8_t valueNum )
 
 static void GuiVal_BatteryLevel( GuiState_st* guiState )
 {
-    Line_st*  lineTop  = &guiState->layout.lines[ GUI_LINE_TOP ] ;
-#ifdef BAT_NONE
-    Style_st* styleTop = &guiState->layout.styles[ GUI_STYLE_TOP ] ;
-#endif // BAT_NONE
-    Pos_st    start ;
-    Color_st  color_bg ;
-    Color_st  color_fg ;
-
-    ui_ColorLoad( &color_bg , COLOR_BG );
-    ui_ColorLoad( &color_fg , COLOR_FG );
-
-    // clear the time display area
-    start.w = SCREEN_WIDTH / 9 ;
-    start.h = lineTop->height - ( guiState->layout.status_v_pad * 2 );
-    start.x = SCREEN_WIDTH - start.w - guiState->layout.horizontal_pad ;
-    start.y = guiState->layout.status_v_pad ;
-    gfx_clearRectangle( &start );
-    // If the radio has no built-in battery, print input voltage
-#ifdef BAT_NONE
-    guiState->layout.itemPos = gfx_print( &lineTop->pos , styleTop->font.size ,
-                                          GFX_ALIGN_RIGHT , &color_fg , "%.1fV" ,
-                                          last_state.v_bat );
-#else // BAT_NONE
-    // Otherwise print battery icon on top bar, use 4 px padding
-    GuiVal_Disp_Bat( guiState , &start , last_state.charge );
-#endif // BAT_NONE
-
+    GuiVal_Disp_Bat( guiState , last_state.charge );
 }
 
 static void GuiVal_LockState( GuiState_st* guiState )
@@ -684,6 +665,7 @@ static void GuiVal_Date( GuiState_st* guiState )
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%02d/%02d/%02d" ,
               local_time.date , local_time.month , local_time.year );
     GuiVal_Disp_Val( guiState , valueBuffer );
+    ui_RenderDisplay( guiState );
 
 }
 
@@ -695,8 +677,7 @@ static void GuiVal_Time( GuiState_st* guiState )
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%02d:%02d:%02d" ,
               local_time.hour , local_time.minute , local_time.second );
     GuiVal_Disp_Val( guiState , valueBuffer );
-
-    GuiVal_SetDebugMessage( "Time" );//@@@KL
+    ui_RenderDisplay( guiState );
 
 }
 
@@ -957,15 +938,39 @@ static void GuiVal_BackupRestore( GuiState_st* guiState )
 
 static void GuiVal_LowBattery( GuiState_st* guiState )
 {
-    (void)guiState ;
-    Pos_st bat_pos = { SCREEN_WIDTH / 4 , SCREEN_HEIGHT / 8 ,
-                       SCREEN_WIDTH / 2 , SCREEN_HEIGHT / 3 };
+    GuiVal_Disp_Bat( guiState , 10 );
+}
 
-    GuiVal_Disp_Bat( guiState , &bat_pos , 10 );
+#ifdef ENABLE_DEBUG_MSG
+  #ifndef DISPLAY_DEBUG_MSG
+static void GuiVal_DebugCh( GuiState_st* guiState )
+{
+           char debugMsg[ 2 ] = { 'A' , '\0' } ;
+    static char count = 0 ;
+
+    debugMsg[ 0 ] += count ;
+    count++ ;
+    if( count == 26 )
+    {
+        count = 0 ;
+    }
+    GuiVal_Disp_Val( guiState , debugMsg );
+
+    guiState->layout.line.pos.w = 0 ;
+    guiState->layout.line.pos.h = 0 ;
 
 }
 
-#ifdef DISPLAY_DEBUG_MSG
+static void GuiVal_DebugGfx( GuiState_st* guiState )
+{
+    Pos_st   pos = { 40 , 40 , 20 , 10 } ;
+    Color_st color_fg ;
+
+    ui_ColorLoad( &color_fg , COLOR_GREEN );
+    gfx_drawRect( &pos , &color_fg , true );
+
+}
+  #else // DISPLAY_DEBUG_MSG
 void GuiVal_SetDebugMessage( char* debugMsg )
 {
     uint8_t index ;
@@ -1016,7 +1021,8 @@ static void GuiVal_DebugValues( GuiState_st* guiState )
     DebugCnt++;
 
 }
-#endif // DISPLAY_DEBUG_MSG
+  #endif // DISPLAY_DEBUG_MSG
+#endif // ENABLE_DEBUG_MSG
 
 // Default
 static void GuiVal_Stubbed( GuiState_st* guiState )
@@ -1056,16 +1062,47 @@ static void GuiVal_Disp_Val( GuiState_st* guiState , char* valueBuffer )
 
     GuiVal_Disp_StoreVarPos( guiState );
 
+    ui_RenderDisplay( guiState );
 }
 
-static void GuiVal_Disp_Bat( GuiState_st* guiState , Pos_st* pos , uint16_t percentage )
+static void GuiVal_Disp_Bat( GuiState_st* guiState , uint16_t percentage )
 {
-    if( guiState->update )
+    Pos_st pos ;
+
+    pos.w = ( SCREEN_WIDTH / 9 ) + ( SCREEN_WIDTH / 24 ) ;
+    pos.h = guiState->layout.line.height - ( guiState->layout.status_v_pad * 2 ) ;
+    pos.y = ( guiState->layout.line.pos.y - guiState->layout.line.height ) +
+            ( guiState->layout.status_v_pad * 2 ) ;
+
+    switch( guiState->layout.style.align )
     {
-        GuiVal_Disp_ClearVarPos( guiState );
+        case GFX_ALIGN_LEFT :
+        {
+            pos.x = guiState->layout.horizontal_pad ;
+            break ;
+        }
+        case GFX_ALIGN_CENTER :
+        {
+            pos.x = ( SCREEN_WIDTH - pos.w ) / 2 ;
+            break ;
+        }
+        case GFX_ALIGN_RIGHT :
+        {
+            pos.x = ( SCREEN_WIDTH - pos.w ) - guiState->layout.horizontal_pad ;
+            break ;
+        }
     }
-    guiState->layout.itemPos = gfx_drawBattery( pos , percentage );
-    GuiVal_Disp_StoreVarPos( guiState );
+
+    if( GuiVal_Disp_HasValueChanged( guiState , (uint32_t)percentage ) )
+    {
+        if( guiState->update )
+        {
+            GuiVal_Disp_ClearVarPos( guiState );
+        }
+        guiState->layout.itemPos  = gfx_drawBattery( &pos , percentage );
+        GuiVal_Disp_StoreVarPos( guiState );
+        ui_RenderDisplay( guiState );
+    }
 }
 
 static void GuiVal_Disp_StoreVarPos( GuiState_st* guiState )
@@ -1081,5 +1118,28 @@ static void GuiVal_Disp_ClearVarPos( GuiState_st* guiState )
 
     ui_ColorLoad( &color_bg , guiState->layout.style.colorBG );
     gfx_drawRect( &pos , &color_bg , true );
-    GuiVal_SetDebugValues( pos.y , pos.x , pos.w , pos.h , guiState->layout.lines[ GUI_LINE_TOP ].pos.y , 0 );//@@@KL
+}
+
+static bool GuiVal_Disp_HasValueChanged( GuiState_st* guiState , uint32_t value )
+{
+    bool valueHasChanged = false ;
+
+    if( !guiState->update )
+    {
+        valueHasChanged = true ;
+    }
+    else
+    {
+        if( guiState->layout.vars[ guiState->layout.varIndex ].value != value )
+        {
+            valueHasChanged = true ;
+        }
+    }
+
+    if( valueHasChanged )
+    {
+        guiState->layout.vars[ guiState->layout.varIndex ].value = value ;
+    }
+
+    return valueHasChanged ;
 }

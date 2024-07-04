@@ -186,8 +186,7 @@ void gfx_setPixel( Pos_st* pos , Color_st* color );
  * @param end: line end point, in pixel coordinates.
  * @param color: line color, in Color_st format.
  */
-Pos_st gfx_drawLine( Pos_st* startPos , Pos_st* endPos , Color_st* color );
-Pos_st gfx_line( Pos_st* startPos , Color_st* color );
+Pos_st gfx_drawLine( Pos_st* startPos , Color_st* color );
 
 /**
  * Draw a horizontal line with specified vertical position and width.
@@ -221,7 +220,7 @@ void gfx_clearRectangle( Pos_st* startPos );
  * @param color: border and fill color, in Color_st format.
  * @param fill: if true the rectangle will be solid, otherwise it will be empty with a 1-pixel border
  */
-void gfx_drawRect( Pos_st* startPos , Color_st* color , bool fill );
+void gfx_drawRect( Pos_st* startPos , Color_st* color , bool fillRect );
 
 /**
  * Draw the outline of a circle of specified radius and color.
@@ -229,7 +228,7 @@ void gfx_drawRect( Pos_st* startPos , Color_st* color , bool fill );
  * @param r: circle radius, in pixels, border included.
  * @param color: border color, in Color_st format.
  */
-void gfx_drawCircle( Pos_st* startPos , uint16_t r , Color_st* color );
+void gfx_drawCircle( Pos_st* startPos , Color_st* color );
 
 /**
  * Estimates the maximum font height by reading the gliph | height

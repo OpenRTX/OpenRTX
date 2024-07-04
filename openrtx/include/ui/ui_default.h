@@ -31,7 +31,8 @@
 #include <event.h>
 #include <ui.h>
 
-#define DISPLAY_DEBUG_MSG
+#define ENABLE_DEBUG_MSG
+//#define DISPLAY_DEBUG_MSG
 
 // Maximum menu entry length
 #define MAX_ENTRY_LEN 21
@@ -134,7 +135,7 @@ typedef enum
 
 enum
 {
-    VAR_MAX_NUM_OF = 8
+    VAR_MAX_NUM_OF = 16
 };
 
 typedef struct
@@ -174,8 +175,8 @@ enum
     ( ( (const uint32_t)a & COLOR_ENC_ALPHA_MASK ) << COLOR_ENC_ALPHA_SHIFT )   )
 
 // Color Definitions
-#define COLOR_DEF_WHITE         COLOR_DEF_ENC( 255 , 255 , 255 , 255 )
 #define COLOR_DEF_BLACK         COLOR_DEF_ENC(   0 ,   0 ,  0  , 255 )
+#define COLOR_DEF_WHITE         COLOR_DEF_ENC( 255 , 255 , 255 , 255 )
 #define COLOR_DEF_GREY          COLOR_DEF_ENC(  60 ,  60 ,  60 , 255 )
 #define COLOR_DEF_ALPHA_GREY    COLOR_DEF_ENC(   0 ,   0 ,   0 , 255 )
 #define COLOR_DEF_YELLOW_FAB413 COLOR_DEF_ENC( 250 , 180 ,  19 , 255 )
@@ -290,8 +291,9 @@ typedef struct
 
 typedef struct
 {
-    uint8_t varNum ;
-    Pos_st  pos ;
+    uint8_t  varNum ;
+    Pos_st   pos ;
+    uint32_t value ;
 }Var_st;
 
 /**
@@ -350,7 +352,6 @@ typedef struct
 {
     UI_State_st     uiState ;
     Event_st        event ;
-    bool            initialPageDisplay ;
     bool            update ;
     bool            pageHasEvents ;
     bool            inEventArea ;

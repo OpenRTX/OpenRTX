@@ -105,7 +105,6 @@ static void ui_InitGuiStateEvent( Event_st* event );
 static void ui_InitGuiStatePage( Page_st* page );
 static void ui_InitGuiStateLayout( Layout_st* layout );
 /* UI main screen functions, their implementation is in "ui_main.c" */
-extern void ui_Draw_Page( GuiState_st* guiState , Event_st* sysEvent );
 extern bool _ui_Draw_MacroMenu( GuiState_st* guiState );
 
 extern const char* display_timer_values[];
@@ -392,7 +391,6 @@ static void ui_InitUIState( UI_State_st* uiState )
 static void ui_InitGuiState( GuiState_st* guiState )
 {
     ui_InitGuiStateEvent( &guiState->event );
-    guiState->initialPageDisplay    = true ;
     guiState->update                = false ;
     guiState->pageHasEvents         = false ;
     guiState->inEventArea           = false ;
@@ -586,10 +584,11 @@ void ui_InitGuiStateLayoutVars( Layout_st* layout )
     for( index = 0 ; index < VAR_MAX_NUM_OF ; index++ )
     {
         layout->vars[ index ].varNum = GUI_VAL_DSP_STUBBED ;
-        layout->vars[ index ].pos.y  = 0 ;
-        layout->vars[ index ].pos.x  = 0 ;
-        layout->vars[ index ].pos.h  = 0 ;
-        layout->vars[ index ].pos.w  = 0 ;
+        layout->vars[ index ].pos.y  =  0 ;
+        layout->vars[ index ].pos.x  =  0 ;
+        layout->vars[ index ].pos.h  =  0 ;
+        layout->vars[ index ].pos.w  =  0 ;
+        layout->vars[ index ].value  = ~0 ;
     }
     layout->varNumOf = 0 ;
     layout->varIndex = 0 ;
@@ -638,19 +637,9 @@ void ui_saveState( void )
 //@@@KL redraw_needed will need to be redacted \ name changed \ put into GuiState
 bool ui_updateGUI( Event_st* event )
 {
-    if( redraw_needed )
-    {
-        ui_Draw_Page( &GuiState , event );
-        // If MACRO menu is active draw it
-        if( macro_menu )
-        {
-            _ui_Draw_DarkOverlay();
-            _ui_Draw_MacroMenu( &GuiState );
-        }
-        redraw_needed = false ;
-    }
+    ui_Draw_Page( &GuiState , event );
 
-    return GuiState.page.renderPage ;
+    return redraw_needed ;
 }
 
 bool ui_pushEvent( const uint8_t type , const uint32_t data )

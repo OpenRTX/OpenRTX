@@ -58,7 +58,7 @@
        State_st    last_state ;
        bool        macro_latched ;
        bool        macro_menu      = false ;
-       bool        redraw_needed   = true ;
+       bool        redraw_needed   = false ;
 
 static bool        standby         = false ;
        long long   last_event_tick = 0 ;
@@ -358,12 +358,12 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
                         _ui_reset_menu_anouncement_tracking();
                     }
                 }
-                redraw_needed = true ;
+//@@@KL                redraw_needed = true ;
                 break ;
             }// case EVENT_TYPE_KBD :
             case EVENT_TYPE_STATUS :
             {
-                redraw_needed = true ;
+//@@@KL                redraw_needed = true ;
 #ifdef GPS_PRESENT
                 if( ( guiState->page.num == PAGE_MENU_GPS ) &&
                     !vp_isPlaying()                         &&
