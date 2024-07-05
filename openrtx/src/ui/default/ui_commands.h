@@ -66,11 +66,8 @@ enum
     GUI_CMD_GOTO_POS_Y       = 0x15 ,
     GUI_CMD_ADD_TO_POS_X     = 0x16 ,
     GUI_CMD_ADD_TO_POS_Y     = 0x17 ,
-    GUI_CMD_DRAW_LINE        = 0x18 ,
-    GUI_CMD_DRAW_RECT        = 0x19 ,
-    GUI_CMD_DRAW_RECT_FILLED = 0x1A ,
-    GUI_CMD_DRAW_CIRCLE      = 0x1B ,
-    GUI_CMD_OPERATION        = 0x1C ,
+    GUI_CMD_DRAW_GRAPHIC     = 0x18 ,
+    GUI_CMD_OPERATION        = 0x19 ,
 #ifndef DISPLAY_DEBUG_MSG
     GUI_CMD_DBG_VAL          = 0x1D ,
 #else // DISPLAY_DEBUG_MSG
@@ -177,6 +174,15 @@ enum
 #endif // ENABLE_ALIGN_VERTICAL
 };
 
+enum
+{
+    GUI_CMD_GRAPHIC_LINE        ,
+    GUI_CMD_GRAPHIC_RECT        ,
+    GUI_CMD_GRAPHIC_RECT_FILLED ,
+    GUI_CMD_GRAPHIC_CIRCLE      ,
+    GUI_CMD_GRAPHIC_NUM_OF
+};
+
 #define ALIGN_LEFT      GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_LEFT   )
 #define ALIGN_CENTER    GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_CENTER )
 #define ALIGN_RIGHT     GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_RIGHT  )
@@ -201,6 +207,7 @@ enum
 
 #define TITLE               GUI_CMD_TITLE
 #define TEXT                GUI_CMD_TEXT
+#define NULL_CH             GUI_CMD_NULL
 #define VALUE_DSP( n )      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_##n )
 #define VALUE_INP( n )      GUI_CMD_VALUE_INP , ST_VAL( GUI_VAL_INP_##n )
 
@@ -211,10 +218,11 @@ enum
 #define ADD_TO_Y( y )       GUI_CMD_ADD_TO_POS_Y , ST_VAL( y )
 #define ADD_XY( x , y )     ADD_X( x ) , ADD_Y( y )
 
-#define LINE( w , h )       GUI_CMD_DRAW_LINE , ST_VAL( w ) , ST_VAL( h )
-#define RECT( w , h )       GUI_CMD_DRAW_RECT , ST_VAL( w ) , ST_VAL( h )
-#define RECT_FILL( w , h )  GUI_CMD_DRAW_RECT_FILLED , ST_VAL( w ) , ST_VAL( h )
-#define CIRCLE( r )         GUI_CMD_DRAW_CIRCLE , ST_VAL( r )
+#define DRAW_GRAPHIC( g )   GUI_CMD_DRAW_GRAPHIC , ST_VAL( g )
+#define LINE( w , h )       DRAW_GRAPHIC( GUI_CMD_GRAPHIC_LINE ) , ST_VAL( w ) , ST_VAL( h )
+#define RECT( w , h )       DRAW_GRAPHIC( GUI_CMD_GRAPHIC_RECT ) , ST_VAL( w ) , ST_VAL( h )
+#define RECT_FILL( w , h )  DRAW_GRAPHIC( GUI_CMD_GRAPHIC_RECT_FILLED ) , ST_VAL( w ) , ST_VAL( h )
+#define CIRCLE( r )         DRAW_GRAPHIC( GUI_CMD_GRAPHIC_CIRCLE ) , ST_VAL( r )
 
 enum
 {
@@ -236,6 +244,8 @@ enum
 #ifndef DISPLAY_DEBUG_MSG
   #define DBG_VAL( v )      GUI_CMD_DBG_VAL   , ST_VAL( v )
 #endif // DISPLAY_DEBUG_MSG
+
+#define PAGE_END            GUI_CMD_PAGE_END
 
 // Color load fn.
 extern void ui_ColorLoad( Color_st* color , ColorSelector_en colorSelector );

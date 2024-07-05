@@ -28,75 +28,48 @@
 
 static const uint8_t Page_MainVFO[] =
 {
-//    GUI_CMD_GOTO_TEXT_LINE , ST_VAL( GUI_LINE_TOP ) ,
-//    GUI_CMD_LOAD_STYLE , ST_VAL( GUI_STYLE_TOP ) ,
+//    GOTO_TEXT_LINE( GUI_LINE_TOP ) ,
+//    LOAD_STYLE( GUI_STYLE_TOP ) ,
 //    ALIGN_CENTER ,
-    GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( EVENT_STATUS_DISPLAY_TIME_TICK ) ,
-      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_TIME ) ,
-    GUI_CMD_EVENT_END ,
-    GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_BATTERY ) ) ,
-      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_BATTERY_LEVEL ) ,
-    GUI_CMD_EVENT_END ,
-    GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_DISPLAY_TIME_TICK ) ) ,
-      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_LOCK_STATE ) ,
-    GUI_CMD_EVENT_END ,
-    GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_MODE_INFO ) ,
-    GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_FREQUENCY ) ,
-    GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_RSSI ) ) ,
-      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_RSSI_METER ) ,
-    GUI_CMD_EVENT_END ,
-    GUI_CMD_PAGE_END
+    EVENT_START( EVENT_TYPE_STATUS , EVENT_STATUS_DISPLAY_TIME_TICK ) ,
+      VALUE_DSP( TIME ) ,
+    EVENT_END ,
+    EVENT_START( EVENT_TYPE_STATUS , ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_BATTERY ) ) ,
+      VALUE_DSP( BATTERY_LEVEL ) ,
+    EVENT_END ,
+    EVENT_START( EVENT_TYPE_STATUS , ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_DISPLAY_TIME_TICK ) ) ,
+      VALUE_DSP( LOCK_STATE ) ,
+    EVENT_END ,
+    VALUE_DSP( MODE_INFO ) ,
+    VALUE_DSP( FREQUENCY ) ,
+    EVENT_START( EVENT_TYPE_STATUS , ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_RSSI ) ) ,
+      VALUE_DSP( RSSI_METER ) ,
+    EVENT_END ,
+    PAGE_END
 };
 
 static const uint8_t Page_MainInput[] =
 {
-    GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( EVENT_STATUS_DISPLAY_TIME_TICK ) ,
-      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_TIME ) ,
-    GUI_CMD_EVENT_END ,
-    GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_BATTERY ) ) ,
-      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_BATTERY_LEVEL ) ,
-    GUI_CMD_EVENT_END ,
-    GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_DISPLAY_TIME_TICK ) ) ,
-      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_LOCK_STATE ) ,
-    GUI_CMD_EVENT_END ,
-    GUI_CMD_VALUE_INP , ST_VAL( GUI_VAL_INP_VFO_MIDDLE_INPUT ) ,
-    GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_RSSI ) ) ,
-      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_RSSI_METER ) ,
-    GUI_CMD_EVENT_END ,
-    GUI_CMD_PAGE_END
+    EVENT_START( EVENT_TYPE_STATUS , EVENT_STATUS_DISPLAY_TIME_TICK ) ,
+      VALUE_DSP( TIME ) ,
+    EVENT_END ,
+    EVENT_START( EVENT_TYPE_STATUS , ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_BATTERY ) ) ,
+      VALUE_DSP( BATTERY_LEVEL ) ,
+    EVENT_END ,
+    EVENT_START( EVENT_TYPE_STATUS , ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_DISPLAY_TIME_TICK ) ) ,
+      VALUE_DSP( LOCK_STATE ) ,
+    EVENT_END ,
+    VALUE_INP( VFO_MIDDLE_INPUT ) ,
+    EVENT_START( EVENT_TYPE_STATUS , ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_RSSI ) ) ,
+      VALUE_DSP( RSSI_METER ) ,
+    EVENT_END ,
+    PAGE_END
 
 };
 
 static const uint8_t Page_MainMem[] =
 {
-    // Debug Test
-/*
-    LINE_END ,
-    LINE_END ,
-    ALIGN_CENTER ,
-    EVENT_START( EVENT_TYPE_STATUS , EVENT_STATUS_BATTERY ) ,
-/-*
-    GOTO_XY( 40 , 40 ) ,
-    FG_COLOR( GREEN ) ,
-    RECT_FILL( 20 , 10 ) ,
-*-/
-      VALUE_DSP( DEBUG_GFX ) ,
-//      VALUE_DSP( BATTERY_LEVEL ) ,
-    EVENT_END ,
 
-    GOTO_TEXT_LINE( GUI_LINE_TOP ) ,
-    ALIGN_CENTER ,
-    EVENT_START( EVENT_TYPE_STATUS , EVENT_STATUS_DISPLAY_TIME_TICK ) ,
-      BG_COLOR( RED ) ,
-      FG_COLOR( WHITE ) ,
-//      VALUE_DSP( DEBUG_CH ) ,
-//      DBG_VAL( -10 ) ,
-//      VALUE_DSP( DEBUG_CH ) ,
-      VALUE_DSP( TIME ) ,
-
-    EVENT_END ,
-*/
-/*
     // Graphics Test
     GOTO_X( 20 ) ,
     GOTO_Y( 20 ) ,
@@ -132,165 +105,160 @@ static const uint8_t Page_MainMem[] =
     ADD_TO_X( 1 ) ,
     ADD_TO_Y( 1 ) ,
     RECT_FILL( 23 , 18 ) ,
-*/
-//    GUI_CMD_PAGE_END ,//@@@KL
 
-    ALIGN_CENTER ,
-    GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( EVENT_STATUS_DISPLAY_TIME_TICK ) ,
-      BG_COLOR( RED ) ,
-      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_TIME ) ,
-    GUI_CMD_EVENT_END ,
-    GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_BATTERY ) ) ,
+    GUI_CMD_PAGE_END ,//@@@KL
+
+    EVENT_START( EVENT_TYPE_STATUS , ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_BATTERY ) ) ,
       ALIGN_RIGHT ,
-      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_BATTERY_LEVEL ) ,
-    GUI_CMD_EVENT_END ,
-    GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_DISPLAY_TIME_TICK ) ) ,
-      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_LOCK_STATE ) ,
-    GUI_CMD_EVENT_END ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_MODE_INFO ) ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_BANK_CHANNEL ) ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_FREQUENCY ) ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_RSSI ) ) ,
-      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_RSSI_METER ) ,
-    GUI_CMD_EVENT_END ,
-    GUI_CMD_PAGE_END
+      VALUE_DSP( BATTERY_LEVEL ) ,
+    EVENT_END ,
+    EVENT_START( EVENT_TYPE_STATUS , ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_DISPLAY_TIME_TICK ) ) ,
+      VALUE_DSP( LOCK_STATE ) ,
+    EVENT_END ,
+    LINE_END ,
+    VALUE_DSP( MODE_INFO ) ,
+    LINE_END ,
+    VALUE_DSP( BANK_CHANNEL ) ,
+    LINE_END ,
+    VALUE_DSP( FREQUENCY ) ,
+    LINE_END ,
+    EVENT_START( EVENT_TYPE_STATUS , ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_RSSI ) ) ,
+      VALUE_DSP( RSSI_METER ) ,
+    EVENT_END ,
+    PAGE_END
 };
 
 static const uint8_t Page_ModeVFO[] =
 {
-    GUI_CMD_TITLE , 'W','T','D',':',' ','M','o','d','e','V','F','O', GUI_CMD_NULL ,
-    GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
+    TITLE , 'W','T','D',':',' ','M','o','d','e','V','F','O', NULL_CH ,
+    PAGE_END
 };
 
 static const uint8_t Page_ModeMem[] =
 {
-    GUI_CMD_TITLE , 'W','T','D',':',' ','M','o','d','e','M','e','m', GUI_CMD_NULL ,
-    GUI_CMD_PAGE_END   //@@@KL if at start of page indicates use the legacy script
+    TITLE , 'W','T','D',':',' ','M','o','d','e','M','e','m', NULL_CH ,
+    PAGE_END
 };
 
 static const uint8_t Page_MenuTop[] =
 {
-    GUI_CMD_TITLE , 'M','e','n','u' , GUI_CMD_NULL ,
-    GUI_CMD_GOTO_TEXT_LINE , ST_VAL( GUI_LINE_1 ) ,
-    GUI_CMD_LOAD_STYLE , ST_VAL( GUI_STYLE_1 ) ,
+    TITLE , 'M','e','n','u' , NULL_CH ,
+    GOTO_TEXT_LINE( GUI_LINE_1 ) ,
+    LOAD_STYLE( GUI_STYLE_1 ) ,
     ALIGN_LEFT ,
     GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_MENU_BANK ) ,
-    GUI_CMD_TEXT , 'B','a','n','k','s' , GUI_CMD_NULL ,
+    TEXT , 'B','a','n','k','s' , NULL_CH ,
     GUI_CMD_LINK_END ,
-    GUI_CMD_LINE_END ,
+    LINE_END ,
     GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_MENU_CHANNEL ) ,
-    GUI_CMD_TEXT , 'C','h','a','n','n','e','l','s' , GUI_CMD_NULL ,
+    TEXT , 'C','h','a','n','n','e','l','s' , NULL_CH ,
     GUI_CMD_LINK_END ,
-    GUI_CMD_LINE_END ,
+    LINE_END ,
     GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_MENU_CONTACTS ) ,
-    GUI_CMD_TEXT , 'C','o','n','t','a','c','t','s' , GUI_CMD_NULL ,
+    TEXT , 'C','o','n','t','a','c','t','s' , NULL_CH ,
     GUI_CMD_LINK_END ,
-    GUI_CMD_LINE_END ,
+    LINE_END ,
 #ifdef GPS_PRESENT
     GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_MENU_GPS ) ,
-    GUI_CMD_TEXT , 'G','P','S' , GUI_CMD_NULL ,
+    TEXT , 'G','P','S' , NULL_CH ,
     GUI_CMD_LINK_END ,
-    GUI_CMD_LINE_END ,
+    LINE_END ,
 #endif // RTC_PRESENT
     GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_MENU_SETTINGS ) ,
-    GUI_CMD_TEXT , 'S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
+    TEXT , 'S','e','t','t','i','n','g','s' , NULL_CH ,
     GUI_CMD_LINK_END ,
-    GUI_CMD_LINE_END ,
+    LINE_END ,
     GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_MENU_INFO ) ,
-    GUI_CMD_TEXT , 'I','n','f','o' , GUI_CMD_NULL ,
+    TEXT , 'I','n','f','o' , NULL_CH ,
     GUI_CMD_LINK_END ,
-    GUI_CMD_LINE_END ,
+    LINE_END ,
     GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_ABOUT ) ,
-    GUI_CMD_TEXT , 'A','b','o','u','t' , GUI_CMD_NULL ,
+    TEXT , 'A','b','o','u','t' , NULL_CH ,
     GUI_CMD_LINK_END ,
-    GUI_CMD_PAGE_END
+    PAGE_END
 };
 
 static const uint8_t Page_MenuBank[] =
 {
-    GUI_CMD_TITLE , 'B','a','n','k' , GUI_CMD_NULL ,
-    GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_BANKS ) ,
-    GUI_CMD_PAGE_END
+    TITLE , 'B','a','n','k' , NULL_CH ,
+    VALUE_DSP( BANKS ) ,
+    PAGE_END
 };
 
 static const uint8_t Page_MenuChannel[] =
 {
-    GUI_CMD_TITLE , 'C','h','a','n','n','e','l' , GUI_CMD_NULL ,
-    GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_CHANNELS ) ,
-    GUI_CMD_PAGE_END
+    TITLE , 'C','h','a','n','n','e','l' , NULL_CH ,
+    VALUE_DSP( CHANNELS ) ,
+    PAGE_END
 };
 
 static const uint8_t Page_MenuContact[] =
 {
-    GUI_CMD_TITLE , 'C','o','n','t','a','c','t' , GUI_CMD_NULL ,
-    GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_CONTACTS ) ,
-    GUI_CMD_PAGE_END
+    TITLE , 'C','o','n','t','a','c','t' , NULL_CH ,
+    VALUE_DSP( CONTACTS ) ,
+    PAGE_END
 };
 
 static const uint8_t Page_MenuGPS[] =
 {
-    GUI_CMD_TITLE , 'G','P','S' , GUI_CMD_NULL ,
-    GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_GPS ) ,
-    GUI_CMD_PAGE_END
+    TITLE , 'G','P','S' , NULL_CH ,
+    VALUE_DSP( GPS ) ,
+    PAGE_END
 };
 
 static const uint8_t Page_MenuSettings[] =
 {
-    GUI_CMD_TITLE , 'S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
-    GUI_CMD_GOTO_TEXT_LINE , ST_VAL( GUI_LINE_1 ) ,
-    GUI_CMD_LOAD_STYLE , ST_VAL( GUI_STYLE_1 ) ,
+    TITLE , 'S','e','t','t','i','n','g','s' , NULL_CH ,
+    GOTO_TEXT_LINE( GUI_LINE_1 ) ,
+    LOAD_STYLE( GUI_STYLE_1 ) ,
     ALIGN_LEFT ,
     GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_SETTINGS_DISPLAY ) ,
-    GUI_CMD_TEXT , 'D','i','s','p','l','a','y' , GUI_CMD_NULL ,
+    TEXT , 'D','i','s','p','l','a','y' , NULL_CH ,
     GUI_CMD_LINK_END ,
-    GUI_CMD_LINE_END ,
+    LINE_END ,
 #ifdef RTC_PRESENT
     GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_SETTINGS_TIMEDATE ) ,
-    GUI_CMD_TEXT , 'T','i','m','e',' ','&',' ','D','a','t','e' , GUI_CMD_NULL ,
+    TEXT , 'T','i','m','e',' ','&',' ','D','a','t','e' , NULL_CH ,
     GUI_CMD_LINK_END ,
-    GUI_CMD_LINE_END ,
+    LINE_END ,
 #endif // RTC_PRESENT
 #ifdef GPS_PRESENT
     GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_SETTINGS_GPS ) ,
-    GUI_CMD_TEXT , 'G','P','S' , GUI_CMD_NULL ,
+    TEXT , 'G','P','S' , NULL_CH ,
     GUI_CMD_LINK_END ,
-    GUI_CMD_LINE_END ,
+    LINE_END ,
 #endif // GPS_PRESENT
     GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_SETTINGS_RADIO ) ,
-    GUI_CMD_TEXT , 'R','a','d','i','o' , GUI_CMD_NULL ,
+    TEXT , 'R','a','d','i','o' , NULL_CH ,
     GUI_CMD_LINK_END ,
-    GUI_CMD_LINE_END ,
+    LINE_END ,
     GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_SETTINGS_M17 ) ,
-    GUI_CMD_TEXT , 'M','1','7' , GUI_CMD_NULL ,
+    TEXT , 'M','1','7' , NULL_CH ,
     GUI_CMD_LINK_END ,
-    GUI_CMD_LINE_END ,
+    LINE_END ,
     GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_SETTINGS_VOICE ) ,
-    GUI_CMD_TEXT , 'A','c','c','e','s','s','i','b','i','l','i','t','y' , GUI_CMD_NULL ,
+    TEXT , 'A','c','c','e','s','s','i','b','i','l','i','t','y' , NULL_CH ,
     GUI_CMD_LINK_END ,
-    GUI_CMD_LINE_END ,
+    LINE_END ,
     GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_SETTINGS_RESET_TO_DEFAULTS ) ,
-    GUI_CMD_TEXT , 'D','e','f','a','u','l','t',' ','S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
+    TEXT , 'D','e','f','a','u','l','t',' ','S','e','t','t','i','n','g','s' , NULL_CH ,
     GUI_CMD_LINK_END ,
-    GUI_CMD_PAGE_END
+    PAGE_END
 };
 
 static const uint8_t Page_SettingsTimeDate[] =
 {
-    GUI_CMD_TITLE , 'T','i','m','e',' ','&',' ','D','a','t','e', GUI_CMD_NULL ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_LINE_END ,
+    TITLE , 'T','i','m','e',' ','&',' ','D','a','t','e', NULL_CH ,
+    LINE_END ,
+    LINE_END ,
     ALIGN_CENTER ,
-      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_DATE ) ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_LINE_END ,
+      VALUE_DSP( DATE ) ,
+    LINE_END ,
+    LINE_END ,
     ALIGN_CENTER ,
-    GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( EVENT_STATUS_DISPLAY_TIME_TICK ) ,
-      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_TIME ) ,
-    GUI_CMD_EVENT_END ,
+    EVENT_START( EVENT_TYPE_STATUS , EVENT_STATUS_DISPLAY_TIME_TICK ) ,
+      VALUE_DSP( TIME ) ,
+    EVENT_END ,
 
 
 /*
@@ -318,251 +286,251 @@ static const uint8_t Page_SettingsTimeDate[] =
                color_fg , "%02d:%02d:%02d" ,
                local_time.hour , local_time.minute , local_time.second );
 */
-    GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
+    PAGE_END   //@@@KL indicates use the legacy script
 };
 
 static const uint8_t Page_SettingsTimeDateSet[] =
 {
-    GUI_CMD_TITLE , 'W','T','D',':',' ','S','T','D','S','e','t', GUI_CMD_NULL ,
-    GUI_CMD_PAGE_END   //@@@KL indicates use the legacy script
+    TITLE , 'W','T','D',':',' ','S','T','D','S','e','t', NULL_CH ,
+    PAGE_END   //@@@KL indicates use the legacy script
 };
 
 static const uint8_t Page_SettingsDisplay[] =
 {
-    GUI_CMD_TITLE , 'D','i','s','p','l','a','y' , GUI_CMD_NULL ,
-    GUI_CMD_GOTO_TEXT_LINE , ST_VAL( GUI_LINE_1 ) ,
-    GUI_CMD_LOAD_STYLE , ST_VAL( GUI_STYLE_1 ) ,
+    TITLE , 'D','i','s','p','l','a','y' , NULL_CH ,
+    GOTO_TEXT_LINE( GUI_LINE_1 ) ,
+    LOAD_STYLE( GUI_STYLE_1 ) ,
 #ifdef SCREEN_BRIGHTNESS
     GUI_CMD_LINK ,
-    ALIGN_LEFT , GUI_CMD_TEXT ,
-     'B','r','i','g','h','t','n','e','s','s' , GUI_CMD_NULL ,
+    ALIGN_LEFT , TEXT ,
+     'B','r','i','g','h','t','n','e','s','s' , NULL_CH ,
     ALIGN_RIGHT ,
-    GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_BRIGHTNESS ) ,
+    VALUE_DSP( BRIGHTNESS ) ,
     GUI_CMD_LINK_END ,
-    GUI_CMD_LINE_END ,
+    LINE_END ,
 #endif // SCREEN_BRIGHTNESS
 #ifdef SCREEN_CONTRAST
     GUI_CMD_LINK ,
-    ALIGN_LEFT , GUI_CMD_TEXT ,
-     'C','o','n','t','r','a','s','t' , GUI_CMD_NULL ,
+    ALIGN_LEFT , TEXT ,
+     'C','o','n','t','r','a','s','t' , NULL_CH ,
     ALIGN_RIGHT ,
-    GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_CONTRAST ) ,
+    VALUE_DSP( CONTRAST ) ,
     GUI_CMD_LINK_END ,
-    GUI_CMD_LINE_END ,
+    LINE_END ,
 #endif // SCREEN_CONTRAST
     GUI_CMD_LINK ,
-    ALIGN_LEFT , GUI_CMD_TEXT ,
-     'T','i','m','e','r' , GUI_CMD_NULL ,
+    ALIGN_LEFT , TEXT ,
+     'T','i','m','e','r' , NULL_CH ,
     ALIGN_RIGHT ,
-    GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_TIMER ) ,
+    VALUE_DSP( TIMER ) ,
     GUI_CMD_LINK_END ,
-    GUI_CMD_PAGE_END
+    PAGE_END
 };
 
 #ifdef GPS_PRESENT
 static const uint8_t Page_SettingsGPS[] =
 {
-    GUI_CMD_TITLE , 'G','P','S',' ','S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
-    GUI_CMD_GOTO_TEXT_LINE , ST_VAL( GUI_LINE_1 ) ,
-    GUI_CMD_LOAD_STYLE , ST_VAL( GUI_STYLE_1 ) ,
+    TITLE , 'G','P','S',' ','S','e','t','t','i','n','g','s' , NULL_CH ,
+    GOTO_TEXT_LINE( GUI_LINE_1 ) ,
+    LOAD_STYLE( GUI_STYLE_1 ) ,
     ALIGN_LEFT ,
-    ALIGN_LEFT , GUI_CMD_TEXT ,
-     'G','P','S',' ','E','n','a','b','l','e','d' , GUI_CMD_NULL ,
-    ALIGN_RIGHT , GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_GPS_ENABLED ) ,
-    GUI_CMD_LINE_END ,
-    ALIGN_LEFT , GUI_CMD_TEXT ,
-     'G','P','S',' ','S','e','t',' ','T','i','m','e' , GUI_CMD_NULL ,
-    ALIGN_RIGHT , GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_GPS_SET_TIME ) ,
-    GUI_CMD_LINE_END ,
-    ALIGN_LEFT , GUI_CMD_TEXT ,
-     'U','T','C',' ','T','i','m','e','z','o','n','e', GUI_CMD_NULL ,
-    ALIGN_RIGHT , GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_GPS_TIME_ZONE ) ,
-    GUI_CMD_PAGE_END
+    ALIGN_LEFT , TEXT ,
+     'G','P','S',' ','E','n','a','b','l','e','d' , NULL_CH ,
+    ALIGN_RIGHT , VALUE_DSP( GPS_ENABLED ) ,
+    LINE_END ,
+    ALIGN_LEFT , TEXT ,
+     'G','P','S',' ','S','e','t',' ','T','i','m','e' , NULL_CH ,
+    ALIGN_RIGHT , VALUE_DSP( GPS_SET_TIME ) ,
+    LINE_END ,
+    ALIGN_LEFT , TEXT ,
+     'U','T','C',' ','T','i','m','e','z','o','n','e', NULL_CH ,
+    ALIGN_RIGHT , VALUE_DSP( GPS_TIME_ZONE ) ,
+    PAGE_END
 };
 
 #endif // GPS_PRESENT
 
 static const uint8_t Page_SettingsRadio[] =
 {
-    GUI_CMD_TITLE , 'R','a','d','i','o',' ','S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
-    GUI_CMD_GOTO_TEXT_LINE , ST_VAL( GUI_LINE_1 ) ,
-    GUI_CMD_LOAD_STYLE , ST_VAL( GUI_STYLE_1 ) ,
-    ALIGN_LEFT , GUI_CMD_TEXT ,
-     'O','f','f','s','e','t', GUI_CMD_NULL ,
-    ALIGN_RIGHT , GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_RADIO_OFFSET ) ,
-    GUI_CMD_LINE_END ,
-    ALIGN_LEFT , GUI_CMD_TEXT ,
-     'D','i','r','e','c','t','i','o','n', GUI_CMD_NULL ,
-    ALIGN_RIGHT , GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_RADIO_DIRECTION ) ,
-    GUI_CMD_LINE_END ,
-    ALIGN_LEFT , GUI_CMD_TEXT ,
-     'S','t','e','p' , GUI_CMD_NULL ,
-    ALIGN_RIGHT , GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_RADIO_STEP ) ,
-    GUI_CMD_PAGE_END
+    TITLE , 'R','a','d','i','o',' ','S','e','t','t','i','n','g','s' , NULL_CH ,
+    GOTO_TEXT_LINE( GUI_LINE_1 ) ,
+    LOAD_STYLE( GUI_STYLE_1 ) ,
+    ALIGN_LEFT , TEXT ,
+     'O','f','f','s','e','t', NULL_CH ,
+    ALIGN_RIGHT , VALUE_DSP( RADIO_OFFSET ) ,
+    LINE_END ,
+    ALIGN_LEFT , TEXT ,
+     'D','i','r','e','c','t','i','o','n', NULL_CH ,
+    ALIGN_RIGHT , VALUE_DSP( RADIO_DIRECTION ) ,
+    LINE_END ,
+    ALIGN_LEFT , TEXT ,
+     'S','t','e','p' , NULL_CH ,
+    ALIGN_RIGHT , VALUE_DSP( RADIO_STEP ) ,
+    PAGE_END
 };
 
 static const uint8_t Page_SettingsM17[] =
 {
-    GUI_CMD_TITLE , 'M','1','7',' ','S','e','t','t','i','n','g','s' , GUI_CMD_NULL ,
-    GUI_CMD_GOTO_TEXT_LINE , ST_VAL( GUI_LINE_1 ) ,
-    GUI_CMD_LOAD_STYLE , ST_VAL( GUI_STYLE_1 ) ,
-    ALIGN_LEFT , GUI_CMD_TEXT ,
-     'C','a','l','l','s','i','g','n' , GUI_CMD_NULL ,
-    ALIGN_RIGHT , GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_M17_CALLSIGN ) ,
-    GUI_CMD_LINE_END ,
-    ALIGN_LEFT , GUI_CMD_TEXT ,
-     'C','A','N' , GUI_CMD_NULL ,
-    ALIGN_RIGHT , GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_M17_CAN ) ,
-    GUI_CMD_LINE_END ,
-    ALIGN_LEFT , GUI_CMD_TEXT ,
-     'C','A','N',' ','R','X',' ','C','h','e','c','k' , GUI_CMD_NULL ,
-    ALIGN_RIGHT , GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_M17_CAN_RX_CHECK ) ,
-    GUI_CMD_PAGE_END
+    TITLE , 'M','1','7',' ','S','e','t','t','i','n','g','s' , NULL_CH ,
+    GOTO_TEXT_LINE( GUI_LINE_1 ) ,
+    LOAD_STYLE( GUI_STYLE_1 ) ,
+    ALIGN_LEFT , TEXT ,
+     'C','a','l','l','s','i','g','n' , NULL_CH ,
+    ALIGN_RIGHT , VALUE_DSP( M17_CALLSIGN ) ,
+    LINE_END ,
+    ALIGN_LEFT , TEXT ,
+     'C','A','N' , NULL_CH ,
+    ALIGN_RIGHT , VALUE_DSP( M17_CAN ) ,
+    LINE_END ,
+    ALIGN_LEFT , TEXT ,
+     'C','A','N',' ','R','X',' ','C','h','e','c','k' , NULL_CH ,
+    ALIGN_RIGHT , VALUE_DSP( M17_CAN_RX_CHECK ) ,
+    PAGE_END
 };
 
 static const uint8_t Page_SettingsVoice[] =
 {
-    GUI_CMD_TITLE , 'V','o','i','c','e' , GUI_CMD_NULL ,
-    GUI_CMD_GOTO_TEXT_LINE , ST_VAL( GUI_LINE_1 ) ,
-    GUI_CMD_LOAD_STYLE , ST_VAL( GUI_STYLE_1 ) ,
-    ALIGN_LEFT , GUI_CMD_TEXT , 'V','o','i','c','e' , GUI_CMD_NULL ,
-    ALIGN_RIGHT , GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_LEVEL ) ,
-    GUI_CMD_LINE_END ,
-    ALIGN_LEFT , GUI_CMD_TEXT , 'P','h','o','n','e','t','i','c' , GUI_CMD_NULL ,
-    ALIGN_RIGHT , GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_PHONETIC ) ,
-    GUI_CMD_PAGE_END
+    TITLE , 'V','o','i','c','e' , NULL_CH ,
+    GOTO_TEXT_LINE( GUI_LINE_1 ) ,
+    LOAD_STYLE( GUI_STYLE_1 ) ,
+    ALIGN_LEFT , TEXT , 'V','o','i','c','e' , NULL_CH ,
+    ALIGN_RIGHT , VALUE_DSP( LEVEL ) ,
+    LINE_END ,
+    ALIGN_LEFT , TEXT , 'P','h','o','n','e','t','i','c' , NULL_CH ,
+    ALIGN_RIGHT , VALUE_DSP( PHONETIC ) ,
+    PAGE_END
 };
 
 static const uint8_t Page_MenuBackupRestore[] =
 {
-    GUI_CMD_TITLE , 'B','a','c','k','u','p',' ','A','n','d',' ','R','e','s','t','o','r','e' , GUI_CMD_NULL ,
-    GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_BACKUP_RESTORE ) ,
-    GUI_CMD_PAGE_END
+    TITLE , 'B','a','c','k','u','p',' ','A','n','d',' ','R','e','s','t','o','r','e' , NULL_CH ,
+    VALUE_DSP( BACKUP_RESTORE ) ,
+    PAGE_END
 };
 
 static const uint8_t Page_MenuBackup[] =
 {
-    GUI_CMD_TITLE , 'F','l','a','s','h',' ','B','a','c','k','u','p' , GUI_CMD_NULL ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_TEXT , 'C','o','n','n','e','c','t',' ','t','o',' ','R','T','X',' ','T','o','o','l' , GUI_CMD_NULL ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_TEXT , 'T','o',' ','B','a','c','k','u','p',' ','F','l','a','s','h',' ','A','n','d' , GUI_CMD_NULL ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_TEXT , 'P','r','e','s','s',' ','P','T','T',' ','t','o',' ','S','t','a','r','t' , GUI_CMD_NULL ,
-    GUI_CMD_PAGE_END
+    TITLE , 'F','l','a','s','h',' ','B','a','c','k','u','p' , NULL_CH ,
+    LINE_END ,
+    TEXT , 'C','o','n','n','e','c','t',' ','t','o',' ','R','T','X',' ','T','o','o','l' , NULL_CH ,
+    LINE_END ,
+    TEXT , 'T','o',' ','B','a','c','k','u','p',' ','F','l','a','s','h',' ','A','n','d' , NULL_CH ,
+    LINE_END ,
+    TEXT , 'P','r','e','s','s',' ','P','T','T',' ','t','o',' ','S','t','a','r','t' , NULL_CH ,
+    PAGE_END
 };
 
 static const uint8_t Page_MenuRestore[] =
 {
-    GUI_CMD_TITLE , 'F','l','a','s','h',' ','R','e','s','t','o','r','e' , GUI_CMD_NULL ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_TEXT , 'C','o','n','n','e','c','t',' ','t','o',' ','R','T','X',' ','T','o','o','l' , GUI_CMD_NULL ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_TEXT , 'T','o',' ','R','e','s','t','o','r','e',' ','F','l','a','s','h',' ','A','n','d' , GUI_CMD_NULL ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_TEXT , 'P','r','e','s','s',' ','P','T','T',' ','t','o',' ','S','t','a','r','t' , GUI_CMD_NULL ,
-    GUI_CMD_PAGE_END
+    TITLE , 'F','l','a','s','h',' ','R','e','s','t','o','r','e' , NULL_CH ,
+    LINE_END ,
+    TEXT , 'C','o','n','n','e','c','t',' ','t','o',' ','R','T','X',' ','T','o','o','l' , NULL_CH ,
+    LINE_END ,
+    TEXT , 'T','o',' ','R','e','s','t','o','r','e',' ','F','l','a','s','h',' ','A','n','d' , NULL_CH ,
+    LINE_END ,
+    TEXT , 'P','r','e','s','s',' ','P','T','T',' ','t','o',' ','S','t','a','r','t' , NULL_CH ,
+    PAGE_END
 };
 
 static const uint8_t Page_MenuInfo[] =
 {
     ALIGN_LEFT ,
-    GUI_CMD_TEXT , 'B','a','t','.',' ','V','o','l','t','a','g','e' , GUI_CMD_NULL ,
-    ALIGN_RIGHT , GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_BATTERY_VOLTAGE ) ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_TEXT , 'B','a','t','.',' ','C','h','a','r','g','e' , GUI_CMD_NULL ,
-    ALIGN_RIGHT , GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_BATTERY_CHARGE ) ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_TEXT , 'R','S','S','I' , GUI_CMD_NULL ,
-    ALIGN_RIGHT , GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_RSSI ) ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_TEXT , 'U','s','e','d',' ','h','e','a','p' , GUI_CMD_NULL ,
-    ALIGN_RIGHT , GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_USED_HEAP ) ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_TEXT , 'B','a','n','d' , GUI_CMD_NULL ,
-    ALIGN_RIGHT , GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_BAND ) ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_TEXT , 'V','H','F' , GUI_CMD_NULL ,
-    ALIGN_RIGHT , GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_VHF ) ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_TEXT , 'U','H','F' , GUI_CMD_NULL ,
-    ALIGN_RIGHT , GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_UHF ) ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_TEXT , 'H','W',' ','V','e','r','s','i','o','n' , GUI_CMD_NULL ,
-    ALIGN_RIGHT , GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_HW_VERSION ) ,
-    GUI_CMD_LINE_END ,
+    TEXT , 'B','a','t','.',' ','V','o','l','t','a','g','e' , NULL_CH ,
+    ALIGN_RIGHT , VALUE_DSP( BATTERY_VOLTAGE ) ,
+    LINE_END ,
+    TEXT , 'B','a','t','.',' ','C','h','a','r','g','e' , NULL_CH ,
+    ALIGN_RIGHT , VALUE_DSP( BATTERY_CHARGE ) ,
+    LINE_END ,
+    TEXT , 'R','S','S','I' , NULL_CH ,
+    ALIGN_RIGHT , VALUE_DSP( RSSI ) ,
+    LINE_END ,
+    TEXT , 'U','s','e','d',' ','h','e','a','p' , NULL_CH ,
+    ALIGN_RIGHT , VALUE_DSP( USED_HEAP ) ,
+    LINE_END ,
+    TEXT , 'B','a','n','d' , NULL_CH ,
+    ALIGN_RIGHT , VALUE_DSP( BAND ) ,
+    LINE_END ,
+    TEXT , 'V','H','F' , NULL_CH ,
+    ALIGN_RIGHT , VALUE_DSP( VHF ) ,
+    LINE_END ,
+    TEXT , 'U','H','F' , NULL_CH ,
+    ALIGN_RIGHT , VALUE_DSP( UHF ) ,
+    LINE_END ,
+    TEXT , 'H','W',' ','V','e','r','s','i','o','n' , NULL_CH ,
+    ALIGN_RIGHT , VALUE_DSP( HW_VERSION ) ,
+    LINE_END ,
 #ifdef PLATFORM_TTWRPLUS
-    GUI_CMD_TEXT , 'R','a','d','i','o' , GUI_CMD_NULL ,
-    ALIGN_RIGHT , GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_RADIO ) ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_TEXT , 'R','a','d','i','o',' ','F','W' , GUI_CMD_NULL ,
-    ALIGN_RIGHT , GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_RADIO_FW ) ,
+    TEXT , 'R','a','d','i','o' , NULL_CH ,
+    ALIGN_RIGHT , VALUE_DSP( RADIO ) ,
+    LINE_END ,
+    TEXT , 'R','a','d','i','o',' ','F','W' , NULL_CH ,
+    ALIGN_RIGHT , VALUE_DSP( RADIO_FW ) ,
 #endif // PLATFORM_TTWRPLUS
-    GUI_CMD_PAGE_END
+    PAGE_END
 };
 
 static const uint8_t Page_SettingsResetToDefaults[] =
 {
-    GUI_CMD_TITLE , 'R','e','s','e','t',' ','t','o',' ','D','e','f','a','u','l','t','s' , GUI_CMD_NULL ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_TEXT , 'T','o',' ','R','e','s','e','t' , GUI_CMD_NULL ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_TEXT , 'P','r','e','s','s',' ','E','n','t','e','r',' ','T','w','i','c','e' , GUI_CMD_NULL ,
-    GUI_CMD_PAGE_END
+    TITLE , 'R','e','s','e','t',' ','t','o',' ','D','e','f','a','u','l','t','s' , NULL_CH ,
+    LINE_END ,
+    TEXT , 'T','o',' ','R','e','s','e','t' , NULL_CH ,
+    LINE_END ,
+    TEXT , 'P','r','e','s','s',' ','E','n','t','e','r',' ','T','w','i','c','e' , NULL_CH ,
+    PAGE_END
 };
 
 static const uint8_t Page_LowBat[] =
 {
-    GUI_CMD_TITLE , 'L','o','w',' ','B' ,'a' ,'t' ,'t' ,'e' ,'r','y' , GUI_CMD_NULL ,
+    TITLE , 'L','o','w',' ','B' ,'a' ,'t' ,'t' ,'e' ,'r','y' , NULL_CH ,
     ALIGN_CENTER ,
-    GUI_CMD_GOTO_TEXT_LINE , ST_VAL( GUI_LINE_1 ) ,
-    GUI_CMD_LOAD_STYLE , ST_VAL( GUI_STYLE_1 ) ,
-    GUI_CMD_TEXT , 'F','o','r',' ','E','m','e','r','g','e','n','c','y',' ','U','s','e' , GUI_CMD_NULL ,
-    GUI_CMD_GOTO_TEXT_LINE , ST_VAL( GUI_LINE_2 ) ,
-    GUI_CMD_LOAD_STYLE , ST_VAL( GUI_STYLE_2 ) ,
-    GUI_CMD_TEXT , 'P','r','e','s','s',' ','A','n','y',' ','B','u','t','t','o','n' , GUI_CMD_NULL ,
-    GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_LOW_BATTERY ) ,
-    GUI_CMD_PAGE_END
+    GOTO_TEXT_LINE( GUI_LINE_1 ) ,
+    LOAD_STYLE( GUI_STYLE_1 ) ,
+    TEXT , 'F','o','r',' ','E','m','e','r','g','e','n','c','y',' ','U','s','e' , NULL_CH ,
+    GOTO_TEXT_LINE( GUI_LINE_2 ) ,
+    LOAD_STYLE( GUI_STYLE_2 ) ,
+    TEXT , 'P','r','e','s','s',' ','A','n','y',' ','B','u','t','t','o','n' , NULL_CH ,
+    VALUE_DSP( LOW_BATTERY ) ,
+    PAGE_END
 };
 
 static const uint8_t Page_About[] =
 {
-    GUI_CMD_TITLE , 'A','b','o','u','t' , GUI_CMD_NULL ,
-    GUI_CMD_GOTO_TEXT_LINE , ST_VAL( GUI_LINE_1 ) ,
-    GUI_CMD_LOAD_STYLE , ST_VAL( GUI_STYLE_1 ) ,
+    TITLE , 'A','b','o','u','t' , NULL_CH ,
+    GOTO_TEXT_LINE( GUI_LINE_1 ) ,
+    LOAD_STYLE( GUI_STYLE_1 ) ,
     ALIGN_LEFT ,
-    GUI_CMD_TEXT ,
-     'A','u','t','h','o','r','s' , GUI_CMD_NULL ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_TEXT ,
+    TEXT ,
+     'A','u','t','h','o','r','s' , NULL_CH ,
+    LINE_END ,
+    TEXT ,
      'N','i','c','c','o','l','o',' ',
-     'I','U','2','K','I','N' , GUI_CMD_NULL ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_TEXT ,
+     'I','U','2','K','I','N' , NULL_CH ,
+    LINE_END ,
+    TEXT ,
      'S','i','l','v','a','n','o',' ',
-     'I','U','2','K','W','O' , GUI_CMD_NULL ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_TEXT ,
+     'I','U','2','K','W','O' , NULL_CH ,
+    LINE_END ,
+    TEXT ,
      'F','e','d','e','r','i','c','o',' ',
-     'I','U','2','N','U','O' , GUI_CMD_NULL ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_TEXT ,
+     'I','U','2','N','U','O' , NULL_CH ,
+    LINE_END ,
+    TEXT ,
      'F','r','e','d',' ',
-     'I','U','2','N','R','O' , GUI_CMD_NULL ,
-    GUI_CMD_LINE_END ,
-    GUI_CMD_TEXT ,
+     'I','U','2','N','R','O' , NULL_CH ,
+    LINE_END ,
+    TEXT ,
      'K','i','m',' ',
-     'V','K','6','K','L', GUI_CMD_NULL ,
-    GUI_CMD_PAGE_END
+     'V','K','6','K','L', NULL_CH ,
+    PAGE_END
 };
 
 static const uint8_t Page_Stubbed[] =
 {
     ALIGN_LEFT ,
-    GUI_CMD_TEXT ,
+    TEXT ,
      'P','a','g','e',' ',
-     'S','t','u','b','b','e','d', GUI_CMD_NULL ,
-    GUI_CMD_PAGE_END
+     'S','t','u','b','b','e','d', NULL_CH ,
+    PAGE_END
 };
 
 #define PAGE_REF( loc )    loc

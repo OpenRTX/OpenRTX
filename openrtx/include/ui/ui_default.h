@@ -96,6 +96,11 @@ typedef enum
 
 typedef enum
 {
+    GUI_LIST_LINE_NUM_OF = GUI_LINE_NUM_OF
+}ListLine_en;
+
+typedef enum
+{
     GUI_STYLE_TOP     ,
     GUI_STYLE_1       ,
     GUI_STYLE_2       ,
@@ -123,7 +128,7 @@ typedef enum
 
 enum
 {
-    LINK_MAX_NUM_OF = 12
+    GUI_LINK_NUM_OF = 12
 };
 
 typedef enum
@@ -135,7 +140,7 @@ typedef enum
 
 enum
 {
-    VAR_MAX_NUM_OF = 16
+    GUI_VAR_NUM_OF = 16
 };
 
 typedef struct
@@ -284,6 +289,11 @@ typedef struct
 
 typedef struct
 {
+    Pos_st pos ;
+}ListLine_st;
+
+typedef struct
+{
     uint8_t type ;
     uint8_t num ;
     uint8_t amt ;
@@ -304,31 +314,36 @@ typedef struct
  */
 typedef struct
 {
-    uint16_t hline_h ;
-    uint16_t menu_h ;
-    uint16_t bottom_pad ;
-    uint16_t status_v_pad ;
-    uint16_t horizontal_pad ;
-    uint16_t text_v_offset ;
-    uint8_t  numOfEntries ;
-    uint8_t  scrollOffset ;
-    Line_st  line ;
-    Style_st style ;
-    Pos_st   itemPos ;
-    Line_st  lines[ GUI_LINE_NUM_OF ] ;
-    Style_st styles[ GUI_STYLE_NUM_OF ] ;
-    uint8_t  lineIndex ;
-    Link_st  links[ LINK_MAX_NUM_OF ] ;
-    uint8_t  linkNumOf ;
-    uint8_t  linkIndex ;
-    Var_st   vars[ VAR_MAX_NUM_OF ] ;
-    uint8_t  varNumOf ;
-    uint8_t  varIndex ;
-    Font_st  input_font ;
-    Font_st  menu_font ;
-    Font_st  mode_font_big ;
-    Font_st  mode_font_small ;
-    bool     inSelect ;
+    uint16_t    hline_h ;
+    uint16_t    menu_h ;
+    uint16_t    bottom_pad ;
+    uint16_t    status_v_pad ;
+    uint16_t    horizontal_pad ;
+    uint16_t    text_v_offset ;
+    uint8_t     numOfEntries ;
+    uint8_t     scrollOffset ;
+    Line_st     line ;
+    Style_st    style ;
+    Pos_st      itemPos ;
+    Line_st     lines[ GUI_LINE_NUM_OF ] ;
+    Style_st    styles[ GUI_STYLE_NUM_OF ] ;
+    uint8_t     lineIndex ;
+    ListLine_st listLines[ GUI_LIST_LINE_NUM_OF ] ;
+    uint8_t     numOfListLines ;
+    uint8_t     listLineStart ;
+    uint8_t     listLineOffset ;
+    uint8_t     listLineIndex ;
+    Link_st     links[ GUI_LINK_NUM_OF ] ;
+    uint8_t     linkNumOf ;
+    uint8_t     linkIndex ;
+    Var_st      vars[ GUI_VAR_NUM_OF ] ;
+    uint8_t     varNumOf ;
+    uint8_t     varIndex ;
+    Font_st     input_font ;
+    Font_st     menu_font ;
+    Font_st     mode_font_big ;
+    Font_st     mode_font_small ;
+    bool        inSelect ;
 }Layout_st;
 
 typedef struct

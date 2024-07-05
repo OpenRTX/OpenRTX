@@ -557,8 +557,28 @@ static void ui_InitGuiStateLayout( Layout_st* layout )
 
     layout->inSelect                               = false ;
 
+    ui_InitGuiStateListLines( layout );
     ui_InitGuiStateLayoutLinks( layout );
     ui_InitGuiStateLayoutVars( layout );
+
+}
+
+void ui_InitGuiStateListLines( Layout_st* layout )
+{
+    uint8_t index ;
+
+    for( index = 0 ; index < GUI_LIST_LINE_NUM_OF ; index++ )
+    {
+        layout->listLines[ index ].pos.x = 0 ;
+        layout->listLines[ index ].pos.y = 0 ;
+        layout->listLines[ index ].pos.w = 0 ;
+        layout->listLines[ index ].pos.h = 0 ;
+    }
+
+    layout->numOfListLines = 0 ;
+    layout->listLineStart  = 0 ;
+    layout->listLineOffset = 0 ;
+    layout->listLineIndex  = 0 ;
 
 }
 
@@ -566,12 +586,13 @@ void ui_InitGuiStateLayoutLinks( Layout_st* layout )
 {
     uint8_t index ;
 
-    for( index = 0 ; index < LINK_MAX_NUM_OF ; index++ )
+    for( index = 0 ; index < GUI_LINK_NUM_OF ; index++ )
     {
         layout->links[ index ].type = LINK_TYPE_NONE ;
         layout->links[ index ].num  = 0 ;
         layout->links[ index ].amt  = 0 ;
     }
+
     layout->linkNumOf = 0 ;
     layout->linkIndex = 0 ;
 
@@ -581,7 +602,7 @@ void ui_InitGuiStateLayoutVars( Layout_st* layout )
 {
     uint8_t index ;
 
-    for( index = 0 ; index < VAR_MAX_NUM_OF ; index++ )
+    for( index = 0 ; index < GUI_VAR_NUM_OF ; index++ )
     {
         layout->vars[ index ].varNum = GUI_VAL_DSP_STUBBED ;
         layout->vars[ index ].pos.y  =  0 ;

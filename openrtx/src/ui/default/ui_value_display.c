@@ -963,6 +963,7 @@ static void GuiVal_DebugCh( GuiState_st* guiState )
 
 static void GuiVal_DebugGfx( GuiState_st* guiState )
 {
+    (void)guiState ;
     Pos_st   pos = { 40 , 40 , 20 , 10 } ;
     Color_st color_fg ;
 

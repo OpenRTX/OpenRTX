@@ -86,6 +86,7 @@ static bool GuiCmd_GoToPosX( GuiState_st* guiState );
 static bool GuiCmd_GoToPosY( GuiState_st* guiState );
 static bool GuiCmd_AddToPosX( GuiState_st* guiState );
 static bool GuiCmd_AddToPosY( GuiState_st* guiState );
+static bool GuiCmd_DrawGraphic( GuiState_st* guiState );
 static bool GuiCmd_DrawLine( GuiState_st* guiState );
 static bool GuiCmd_DrawRect( GuiState_st* guiState );
 static bool GuiCmd_DrawRectFilled( GuiState_st* guiState );
@@ -138,21 +139,30 @@ static const ui_GuiCmd_fn ui_GuiCmd_Table[ GUI_CMD_NUM_OF ] =
     GuiCmd_GoToPosY       , // GUI_CMD_GOTO_POS_Y        0x15
     GuiCmd_AddToPosX      , // GUI_CMD_ADD_TO_POS_X      0x16
     GuiCmd_AddToPosY      , // GUI_CMD_ADD_TO_POS_Y      0x17
-    GuiCmd_DrawLine       , // GUI_CMD_DRAW_LINE         0x18
-    GuiCmd_DrawRect       , // GUI_CMD_DRAW_RECT         0x19
-    GuiCmd_DrawRectFilled , // GUI_CMD_DRAW_RECT_FILLED  0x1A
-    GuiCmd_DrawCircle     , // GUI_CMD_DRAW_CIRCLE       0x1B
-    GuiCmd_Operation      , // GUI_CMD_OPERATION         0x1C
+    GuiCmd_DrawGraphic    , // GUI_CMD_DRAW_GRAPHIC      0x18
+    GuiCmd_Operation      , // GUI_CMD_OPERATION         0x19
+    GuiCmd_Stubbed        , // 0x1A
+    GuiCmd_Stubbed        , // 0x1B
+    GuiCmd_Stubbed        , // 0x1C
 #ifdef ENABLE_DEBUG_MSG
   #ifndef DISPLAY_DEBUG_MSG
     GuiCmd_DispDgbVal     , // GUI_CMD_DBG_VAL           0x1D
-//    GuiCmd_Stubbed        , // GUI_CMD_STUBBED           0x1D
   #else // DISPLAY_DEBUG_MSG
     GuiCmd_SetDbgMsg      , // GUI_CMD_SET_DBG_MSG       0x1D
   #endif // DISPLAY_DEBUG_MSG
+#else // ENABLE_DEBUG_MSG
+    GuiCmd_Stubbed        , // GUI_CMD_STUBBED           0x1D
 #endif // ENABLE_DEBUG_MSG
     GuiCmd_Stubbed        , // 0x1E
     GuiCmd_PageEnd          // GUI_CMD_PAGE_END          0x1F
+};
+
+static const ui_GuiCmd_fn ui_GuiGraphic_Table[ GUI_CMD_GRAPHIC_NUM_OF ] =
+{
+    GuiCmd_DrawLine       , // GUI_CMD_GRAPHIC_LINE         0x00
+    GuiCmd_DrawRect       , // GUI_CMD_GRAPHIC_RECT         0x01
+    GuiCmd_DrawRectFilled , // GUI_CMD_GRAPHIC_RECT_FILLED  0x10
+    GuiCmd_DrawCircle       // GUI_CMD_GRAPHIC_CIRCLE       0x11
 };
 
 void ui_Draw_Page( GuiState_st* guiState , Event_st* event )
@@ -239,6 +249,7 @@ static void ui_DisplayPage( GuiState_st* guiState )
     {
         if( !guiState->update )
         {
+            ui_InitGuiStateListLines( &guiState->layout );
             ui_InitGuiStateLayoutLinks( &guiState->layout );
             ui_InitGuiStateLayoutVars( &guiState->layout );
             gfx_clearScreen();
@@ -633,7 +644,7 @@ static bool GuiCmd_Link( GuiState_st* guiState )
 {
     bool pageEnd ;
 
-    if( guiState->layout.linkNumOf < LINK_MAX_NUM_OF )
+    if( guiState->layout.linkNumOf < GUI_LINK_NUM_OF )
     {
         guiState->layout.linkNumOf++ ;
     }
@@ -647,7 +658,7 @@ static bool GuiCmd_LinkEnd( GuiState_st* guiState )
 {
     bool pageEnd = false ;
 
-    if( guiState->layout.linkNumOf < LINK_MAX_NUM_OF )
+    if( guiState->layout.linkNumOf < GUI_LINK_NUM_OF )
     {
         guiState->layout.linkIndex++ ;
     }
@@ -833,6 +844,20 @@ static bool GuiCmd_AddToPosY( GuiState_st* guiState )
 
 }
 
+static bool GuiCmd_DrawGraphic( GuiState_st* guiState )
+{
+    uint8_t graphic = GuiCmd_LdValUI( guiState );
+    bool    pageEnd = false ;
+
+    if( graphic < GUI_CMD_GRAPHIC_NUM_OF )
+    {
+        pageEnd = ui_GuiGraphic_Table[ graphic ]( guiState );
+    }
+
+    return pageEnd ;
+
+}
+
 static bool GuiCmd_DrawLine( GuiState_st* guiState )
 {
     Pos_st   pos     = guiState->layout.line.pos ;
@@ -841,8 +866,8 @@ static bool GuiCmd_DrawLine( GuiState_st* guiState )
 
     ui_ColorLoad( &color , guiState->layout.style.colorFG );
 
-    pos.w = (Pos_t)GuiCmd_LdValUI( guiState );
-    pos.h = (Pos_t)GuiCmd_LdValUI( guiState );
+    pos.w = (Pos_t)GuiCmd_LdValI( guiState );
+    pos.h = (Pos_t)GuiCmd_LdValI( guiState );
 
     guiState->layout.line.pos = gfx_drawLine( &pos , &color );
 
@@ -858,8 +883,8 @@ static bool GuiCmd_DrawRect( GuiState_st* guiState )
 
     ui_ColorLoad( &color , guiState->layout.style.colorFG );
 
-    pos.w = (Pos_t)GuiCmd_LdValUI( guiState );
-    pos.h = (Pos_t)GuiCmd_LdValUI( guiState );
+    pos.w = (Pos_t)GuiCmd_LdValI( guiState );
+    pos.h = (Pos_t)GuiCmd_LdValI( guiState );
 
     gfx_drawRect( &pos , &color , false );
 
@@ -875,8 +900,8 @@ static bool GuiCmd_DrawRectFilled( GuiState_st* guiState )
 
     ui_ColorLoad( &color , guiState->layout.style.colorFG );
 
-    pos.w = (Pos_t)GuiCmd_LdValUI( guiState );
-    pos.h = (Pos_t)GuiCmd_LdValUI( guiState );
+    pos.w = (Pos_t)GuiCmd_LdValI( guiState );
+    pos.h = (Pos_t)GuiCmd_LdValI( guiState );
 
     gfx_drawRect( &pos , &color , true );
 
