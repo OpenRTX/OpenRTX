@@ -24,7 +24,7 @@
 #include <gd32f3x0.h>
 
 // LCD display
-#define LCD_CLK     GPIOB,13
+#define LCD_CLK     GPIOB,13    
 #define LCD_DAT     GPIOB,15
 #define LCD_PWR     GPIOB,7
 #define LCD_RST     GPIOB,12
@@ -45,11 +45,11 @@
 #define KBD_ROW0    GPIOB,3
 #define KBD_ROW1    GPIOB,4
 #define KBD_ROW2    GPIOB,5
-#define KBD_ROW3    GPIOA,6
+#define KBD_ROW3    GPIOB,6
 #define KBD_COL0    GPIOB,11
 #define KBD_COL1    GPIOB,9
 #define KBD_COL2    GPIOB,14
-#define KBD_COL3    GPIOA,8
+#define KBD_COL3    GPIOB,8
 #define SKB_1       GPIOA,15
 #define SKB_2       GPIOF,7
 
