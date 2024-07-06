@@ -182,7 +182,7 @@
 #define GET_BITS(regval, start, end) (((regval) & BITS((start),(end))) >> (start))
 
     /* main flash and SRAM memory map */
-#define FLASH_BASE            ((uint32_t)0x08000000U)       /*!< main FLASH base address          */
+#define FLASH_BASE            ((uint32_t)0x08001000U)       /*!< main FLASH base address          */
 #define SRAM_BASE             ((uint32_t)0x20000000U)       /*!< SRAM base address                */
     /* SRAM and peripheral base bit-band region */
 #define SRAM_BB_BASE          ((uint32_t)0x22000000U)       /*!< SRAM bit-band base address       */
