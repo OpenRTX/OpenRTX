@@ -260,7 +260,7 @@ void display_render(void *fb)
 
 void display_fill(uint32_t color)
 {
-    setPosition(0, 0);
+    setPosition(28, 0);
 
     sendCommand(ST7735S_CMD_RAMWR);
     for(size_t i = 0; i < (CONFIG_SCREEN_WIDTH * CONFIG_SCREEN_HEIGHT); i++)
@@ -269,7 +269,7 @@ void display_fill(uint32_t color)
 
 void display_setPixel(uint16_t x, uint16_t y, uint32_t color)
 {
-    setPosition(x, CONFIG_SCREEN_HEIGHT - y);
+    setPosition(x+28, CONFIG_SCREEN_HEIGHT - y);
     sendCommand(ST7735S_CMD_RAMWR);
     sendShort(color & 0x0000FFFF);
 }
