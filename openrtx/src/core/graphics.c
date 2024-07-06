@@ -233,7 +233,7 @@ inline void gfx_setPixel(point_t pos, color_t color)
 
     #ifdef CONFIG_GFX_NOFRAMEBUF
     rgb565_t pixel = _true2highColor(color);
-    display_setPixel(pos.x, pos.y, (pixel.b << 11) | (pixel.g << 5) | (pixel.r));
+    display_setPixel(pos.x, pos.y, (pixel.r << 11) | (pixel.g << 5) | (pixel.b));
     #else
     // Blend old pixel value and new one
     if (color.alpha < 255)
