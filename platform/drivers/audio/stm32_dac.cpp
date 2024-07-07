@@ -110,7 +110,7 @@ void __attribute__((used)) DMA1_Stream6_IRQHandler()
 
 
 
-void stm32dac_init(const uint8_t instance)
+void stm32dac_init(const uint8_t instance, const uint16_t idleLevel)
 {
     // Enable peripherals
     RCC->APB1ENR |= RCC_APB1ENR_DACEN;
@@ -122,6 +122,7 @@ void stm32dac_init(const uint8_t instance)
             RCC->APB1ENR |= RCC_APB1ENR_TIM6EN;
             __DSB();
 
+            DAC->DHR12R1 = idleLevel;
             DAC->CR |= DAC_CR_DMAEN1    // Enable DMA
                     | 0x00              // TIM6 as trigger source for CH1
                     | DAC_CR_TEN1       // Enable trigger input
@@ -134,6 +135,7 @@ void stm32dac_init(const uint8_t instance)
             RCC->APB1ENR |= RCC_APB1ENR_TIM7EN;
             __DSB();
 
+            DAC->DHR12R2 = idleLevel;
             DAC->CR |= DAC_CR_DMAEN2    // Enable DMA
                     | DAC_CR_TSEL2_1    // TIM7 as trigger source for CH2
                     | DAC_CR_TEN2       // Enable trigger input
@@ -145,6 +147,7 @@ void stm32dac_init(const uint8_t instance)
             break;
     }
 
+    chState[instance].idleLevel = idleLevel;
     chState[instance].stream.setEndTransferCallback(std::bind(stopTransfer, instance));
 }
 
@@ -169,6 +172,8 @@ void stm32dac_terminate()
 static int stm32dac_start(const uint8_t instance, const void *config,
                           struct streamCtx *ctx)
 {
+    (void) config;
+
     if((ctx == NULL) || (ctx->running != 0))
         return -EINVAL;
 
@@ -181,7 +186,6 @@ static int stm32dac_start(const uint8_t instance, const void *config,
 
     ctx->priv = &chState[instance];
     chState[instance].ctx = ctx;
-    chState[instance].idleLevel = reinterpret_cast< uint32_t >(config);
 
     /*
      * Convert buffer elements from int16_t to unsigned 12 bit values as required

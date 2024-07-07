@@ -42,9 +42,9 @@ static const uint8_t pathCompatibilityMatrix[9][9] =
 
 const struct audioDevice outputDevices[] =
 {
-    {NULL,                    0,                   0,             SINK_MCU},
-    {&stm32_dac_audio_driver, (const void *) 2048, STM32_DAC_CH1, SINK_RTX},
-    {&stm32_dac_audio_driver, 0,                   STM32_DAC_CH2, SINK_SPK},
+    {NULL,                    0, 0,             SINK_MCU},
+    {&stm32_dac_audio_driver, 0, STM32_DAC_CH1, SINK_RTX},
+    {&stm32_dac_audio_driver, 0, STM32_DAC_CH2, SINK_SPK},
 };
 
 const struct audioDevice inputDevices[] =
@@ -67,8 +67,8 @@ void audio_init()
     gpio_clearPin(MIC_MUTE);    // Off  = logic low
     max9814_setGain(0);         // 40 dB gain
 
-    stm32dac_init(STM32_DAC_CH1);
-    stm32dac_init(STM32_DAC_CH2);
+    stm32dac_init(STM32_DAC_CH1, 2048);
+    stm32dac_init(STM32_DAC_CH2, 2048);
     stm32adc_init(STM32_ADC_ADC2);
 }
 

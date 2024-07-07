@@ -60,8 +60,9 @@ extern const struct audioDriver stm32_dac_audio_driver;
  * Initialize the driver and the peripherals.
  *
  * @param instance: DAC instance number.
+ * @param idleLevel: DAC output level when idle.
  */
-void stm32dac_init(const uint8_t instance);
+void stm32dac_init(const uint8_t instance, const uint16_t idleLevel);
 
 /**
  * Shutdown the driver and the peripherals.
