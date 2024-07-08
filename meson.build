@@ -15,8 +15,8 @@ openrtx_def = {}
 ## UI font configuration, only one uncommented at a time
 ##
 
-openrtx_def += {'FONT_UBUNTU_REGULAR': ''}
-# openrtx_def += {'FONT_FREE_SANS': ''}
+# openrtx_def += {'FONT_UBUNTU_REGULAR': ''}
+openrtx_def += {'FONT_FREE_SANS': ''}
 
 ##
 ## Firmware configuration parameters
@@ -298,6 +298,7 @@ gd32f330_src = [
                 'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/system_gd32f3x0.c',
                 'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_misc.c',
                 'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_usart.c',
+                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_spi.c',
                 'platform/mcu/GD32F330/drivers/gpio.c',
                 'platform/mcu/GD32F330/drivers/delays.cpp',
                 'platform/mcu/GD32F330/drivers/USART0.cpp',
