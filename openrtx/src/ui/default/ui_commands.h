@@ -28,16 +28,29 @@
 // System Parameter Values
 enum
 {
-    GUI_CMD_PARA_SIGNED_BIT  = 0x80 ,
-    GUI_CMD_PARA_SIGNED_FLAG = 0x40 ,
-
-    GUI_CMD_PARA_VALUE_MASK  = ~GUI_CMD_PARA_SIGNED_BIT
+    GUI_CMD_PARA_VALUE_SHIFT   = 7 ,
+    // Short
+    GUI_CMD_PARA_SIGNED_BIT    = 0x01 << GUI_CMD_PARA_VALUE_SHIFT ,
+    GUI_CMD_PARA_SIGNED_FLAG   = GUI_CMD_PARA_SIGNED_BIT >> 1 ,
+    GUI_CMD_PARA_VALUE_MASK    = ~GUI_CMD_PARA_SIGNED_BIT ,
+    // Long
+    GUI_CMD_PARA_VALUE_SHIFT_0 = GUI_CMD_PARA_VALUE_SHIFT * 0 , //  0
+    GUI_CMD_PARA_VALUE_SHIFT_1 = GUI_CMD_PARA_VALUE_SHIFT * 1 , //  7
+    GUI_CMD_PARA_VALUE_SHIFT_2 = GUI_CMD_PARA_VALUE_SHIFT * 2 , // 14
+    GUI_CMD_PARA_VALUE_SHIFT_3 = GUI_CMD_PARA_VALUE_SHIFT * 3 , // 21
+    GUI_CMD_PARA_VALUE_SHIFT_4 = GUI_CMD_PARA_VALUE_SHIFT * 4   // 28
 };
 
-#define ST_VAL( val )   ( (uint8_t)( val & GUI_CMD_PARA_VALUE_MASK ) + \
-                          (uint8_t)GUI_CMD_DATA_AREA )
+#define ST_VAL( val )       ( (uint8_t)( val & GUI_CMD_PARA_VALUE_MASK ) + \
+                              (uint8_t)GUI_CMD_DATA_AREA )
 
-#define LD_VAL( val )   ( (uint8_t)val - (uint8_t)GUI_CMD_DATA_AREA )
+#define LD_VAL( val )       ( (uint8_t)val - (uint8_t)GUI_CMD_DATA_AREA )
+
+#define ST_VAL_LONG( val )  ST_VAL( (uint8_t)( (uint32_t)val >> GUI_CMD_PARA_VALUE_SHIFT_0 ) ) , \
+                            ST_VAL( (uint8_t)( (uint32_t)val >> GUI_CMD_PARA_VALUE_SHIFT_1 ) ) , \
+                            ST_VAL( (uint8_t)( (uint32_t)val >> GUI_CMD_PARA_VALUE_SHIFT_2 ) ) , \
+                            ST_VAL( (uint8_t)( (uint32_t)val >> GUI_CMD_PARA_VALUE_SHIFT_3 ) ) , \
+                            ST_VAL( (uint8_t)( (uint32_t)val >> GUI_CMD_PARA_VALUE_SHIFT_4 ) )
 
 // GUI Commands
 enum
@@ -45,19 +58,19 @@ enum
     GUI_CMD_NULL             = 0x00 ,
     GUI_CMD_EVENT_START      = 0x01 , // dynamic display - variables updated
     GUI_CMD_EVENT_END        = 0x02 , //  used with page sections that respond to events
-    GUI_CMD_TIMER_CHECK      = 0x03 ,
-    GUI_CMD_TIMER_SET        = 0x04 ,
-    GUI_CMD_GOTO_TEXT_LINE   = 0x05 ,
-    GUI_CMD_LOAD_STYLE       = 0x06 ,
-    GUI_CMD_BG_COLOR         = 0x07 ,
-    GUI_CMD_FG_COLOR         = 0x08 ,
-    GUI_CMD_FONT_SIZE        = 0x09 ,
+    GUI_CMD_ON_EVENT         = 0x03 , // undertakes action on event occurance (not on initial page display)
+    GUI_CMD_TIMER_CHECK      = 0x04 ,
+    GUI_CMD_TIMER_SET        = 0x05 ,
+    GUI_CMD_GOTO_TEXT_LINE   = 0x06 ,
+    GUI_CMD_LOAD_STYLE       = 0x07 ,
+    GUI_CMD_BG_COLOR         = 0x08 ,
+    GUI_CMD_FG_COLOR         = 0x09 ,
     GUI_CMD_LINE_END         = 0x0A ,
-    GUI_CMD_ALIGN            = 0x0B ,
-    GUI_CMD_RUN_SCRIPT       = 0x0C ,
-    GUI_CMD_LINK             = 0x0D ,
-    GUI_CMD_LINK_END         = 0x0E ,
-    GUI_CMD_PAGE             = 0x0F ,
+    GUI_CMD_FONT_SIZE        = 0x0B ,
+    GUI_CMD_ALIGN            = 0x0C ,
+    GUI_CMD_RUN_SCRIPT       = 0x0D ,
+    GUI_CMD_LIST             = 0x0E ,
+    GUI_CMD_LINK             = 0x0F ,
     GUI_CMD_TITLE            = 0x10 ,
     GUI_CMD_TEXT             = 0x11 ,
     GUI_CMD_VALUE_DSP        = 0x12 ,
@@ -155,7 +168,33 @@ c->blue  = (uint8_t)( ( cv >> COLOR_ENC_BLUE_SHIFT  ) & COLOR_ENC_BLUE_MASK  ) ;
 c->alpha = (uint8_t)( ( cv >> COLOR_ENC_ALPHA_SHIFT ) & COLOR_ENC_ALPHA_MASK ) ;
 */
 
-// Script Command Macros
+/*******************************************************************************
+*   Script Command Macros
+*******************************************************************************/
+
+#define EVENT_START( s , t )    GUI_CMD_EVENT_START , ST_VAL( s ) , ST_VAL( t )
+#define EVENT_END               GUI_CMD_EVENT_END
+
+// GUI_CMD_ON_EVENT Actions
+enum
+{
+    ON_EVENT_ACTION_GOTO_PAGE
+};
+
+#define EVENT_BIT_ENC( t , p )              ( ( (uint32_t)t << EVENT_TYPE_SHIFT ) | (uint32_t)p )
+#define EVENT_KBD( p )                      EVENT_BIT_ENC( EVENT_TYPE_KBD , p )
+
+#define ON_EVENT( e , a , p )               GUI_CMD_ON_EVENT , ST_VAL_LONG( e ) , ST_VAL( a ) , ST_VAL( p )
+
+#define ON_EVENT_KBD_ENTER_GOTO_PAGE( p )   ON_EVENT( EVENT_KBD( KEY_ENTER ) , ON_EVENT_ACTION_GOTO_PAGE , p )
+
+#define GOTO_TEXT_LINE( l ) GUI_CMD_GOTO_TEXT_LINE , ST_VAL( l )
+#define LOAD_STYLE( l )     GUI_CMD_LOAD_STYLE , ST_VAL( l )
+
+#define BG_COLOR( c )       GUI_CMD_BG_COLOR   , ST_VAL( COLOR_##c )
+#define FG_COLOR( c )       GUI_CMD_FG_COLOR   , ST_VAL( COLOR_##c )
+
+#define FONT_SIZE( s )      GUI_CMD_FONT_SIZE  , ST_VAL( s )
 
 //#define ENABLE_ALIGN_VERTICAL
 
@@ -183,27 +222,19 @@ enum
     GUI_CMD_GRAPHIC_NUM_OF
 };
 
-#define ALIGN_LEFT      GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_LEFT   )
-#define ALIGN_CENTER    GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_CENTER )
-#define ALIGN_RIGHT     GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_RIGHT  )
+#define ALIGN_LEFT              GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_LEFT   )
+#define ALIGN_CENTER            GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_CENTER )
+#define ALIGN_RIGHT             GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_RIGHT  )
 #ifdef ENABLE_ALIGN_VERTICAL
-  #define ALIGN_TOP     GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_TOP    )
-  #define ALIGN_MIDDLE  GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_MIDDLE )
-  #define ALIGN_BOTTOM  GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_BOTTOM )
+  #define ALIGN_TOP               GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_TOP    )
+  #define ALIGN_MIDDLE            GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_MIDDLE )
+  #define ALIGN_BOTTOM            GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_BOTTOM )
 #endif // ENABLE_ALIGN_VERTICAL
 
-#define EVENT_START( s , t )    GUI_CMD_EVENT_START , ST_VAL( s ) , ST_VAL( t )
-#define EVENT_END               GUI_CMD_EVENT_END
-
-#define GOTO_TEXT_LINE( l ) GUI_CMD_GOTO_TEXT_LINE , ST_VAL( l )
-#define LOAD_STYLE( l )     GUI_CMD_LOAD_STYLE , ST_VAL( l )
-
-#define BG_COLOR( c )       GUI_CMD_BG_COLOR   , ST_VAL( COLOR_##c )
-#define FG_COLOR( c )       GUI_CMD_FG_COLOR   , ST_VAL( COLOR_##c )
-
-#define FONT_SIZE( s )      GUI_CMD_FONT_SIZE  , ST_VAL( s )
-
 #define LINE_END            GUI_CMD_LINE_END
+
+#define LIST( p , l )       GUI_CMD_LIST , ST_VAL( p ) , ST_VAL( l )
+#define LINK( p )           GUI_CMD_LINK , ST_VAL( p )
 
 #define TITLE               GUI_CMD_TITLE
 #define TEXT                GUI_CMD_TEXT
@@ -250,7 +281,7 @@ enum
 // Color load fn.
 extern void ui_ColorLoad( Color_st* color , ColorSelector_en colorSelector );
 
-extern void ui_Draw_Page( GuiState_st* guiState , Event_st* sysEvent );
+extern void ui_Draw_Page( GuiState_st* guiState );
 extern void ui_States_SetPageNum( GuiState_st* guiState , uint8_t pageNum );
 extern void ui_RenderDisplay( GuiState_st* guiState );
 

@@ -27,14 +27,16 @@
  */
 typedef enum
 {
-    EVENT_TYPE_NONE   = 0 ,
-    EVENT_TYPE_KBD    = 1 ,
-    EVENT_TYPE_STATUS = 2 ,
-    EVENT_TYPE_RTX    = 3
+    EVENT_TYPE_NONE   = 0x00 ,
+    EVENT_TYPE_KBD    = 0x01 ,
+    EVENT_TYPE_STATUS = 0x02 ,
+    EVENT_TYPE_RTX    = 0x03 ,
+    EVENT_TYPE_SHIFT  =   30
 }EventType_en;
 
 typedef enum
 {
+    EVENT_STATUS_ALL_KEYS          = 0x3F       ,
     EVENT_STATUS_TIME_TICK         = ( 1 << 0 ) ,
     EVENT_STATUS_DISPLAY_TIME_TICK = ( 1 << 1 ) ,
     EVENT_STATUS_DEVICE_TIME_TICK  = ( 1 << 2 ) ,

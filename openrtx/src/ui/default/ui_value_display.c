@@ -1038,18 +1038,9 @@ static void GuiVal_Stubbed( GuiState_st* guiState )
 
 static void GuiVal_Disp_Val( GuiState_st* guiState , char* valueBuffer )
 {
-    Color_st color_fg ;
-    Color_st color_bg ;
     Color_st color_text ;
 
-    ui_ColorLoad( &color_fg , guiState->layout.style.colorFG );
-    ui_ColorLoad( &color_bg , guiState->layout.style.colorBG );
-    color_text = color_fg ;
-
-    if( guiState->layout.inSelect )
-    {
-        color_text = color_bg ;
-    }
+    ui_ColorLoad( &color_text , guiState->layout.style.colorFG );
 
     if( guiState->update )
     {

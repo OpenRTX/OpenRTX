@@ -51,27 +51,30 @@ typedef enum
     PAGE_MODE_VFO                   , // 0x03
     PAGE_MODE_MEM                   , // 0x04
     PAGE_MENU_TOP                   , // 0x05
-    PAGE_MENU_BANK                  , // 0x06
-    PAGE_MENU_CHANNEL               , // 0x07
-    PAGE_MENU_CONTACTS              , // 0x08
-    PAGE_MENU_GPS                   , // 0x09
-    PAGE_MENU_SETTINGS              , // 0x0A
-    PAGE_MENU_BACKUP_RESTORE        , // 0x0B
-    PAGE_MENU_BACKUP                , // 0x0C
-    PAGE_MENU_RESTORE               , // 0x0D
-    PAGE_MENU_INFO                  , // 0x0E
-    PAGE_SETTINGS_TIMEDATE          , // 0x0F
-    PAGE_SETTINGS_TIMEDATE_SET      , // 0x10
-    PAGE_SETTINGS_DISPLAY           , // 0x11
-    PAGE_SETTINGS_GPS               , // 0x12
-    PAGE_SETTINGS_RADIO             , // 0x13
-    PAGE_SETTINGS_M17               , // 0x14
-    PAGE_SETTINGS_VOICE             , // 0x15
-    PAGE_SETTINGS_RESET_TO_DEFAULTS , // 0x16
-    PAGE_LOW_BAT                    , // 0x17
-    PAGE_ABOUT                      , // 0x18
-    PAGE_STUBBED                    , // 0x19
-    PAGE_NUM_OF                       // 0x1A
+    PAGE_MENU_TOP_LIST              , // 0x06
+    PAGE_MENU_BANK                  , // 0x07
+    PAGE_MENU_CHANNEL               , // 0x08
+    PAGE_MENU_CONTACTS              , // 0x09
+    PAGE_MENU_GPS                   , // 0x0A
+    PAGE_MENU_SETTINGS              , // 0x0B
+    PAGE_MENU_SETTINGS_LIST         , // 0x0C
+    PAGE_MENU_BACKUP_RESTORE        , // 0x0D
+    PAGE_MENU_BACKUP                , // 0x0E
+    PAGE_MENU_RESTORE               , // 0x0F
+    PAGE_MENU_INFO                  , // 0x10
+    PAGE_SETTINGS_TIMEDATE          , // 0x11
+    PAGE_SETTINGS_TIMEDATE_SET      , // 0x12
+    PAGE_SETTINGS_DISPLAY           , // 0x13
+    PAGE_SETTINGS_DISPLAY_LIST      , // 0x14
+    PAGE_SETTINGS_GPS               , // 0x15
+    PAGE_SETTINGS_RADIO             , // 0x16
+    PAGE_SETTINGS_M17               , // 0x17
+    PAGE_SETTINGS_VOICE             , // 0x18
+    PAGE_SETTINGS_RESET_TO_DEFAULTS , // 0x19
+    PAGE_LOW_BAT                    , // 0x1A
+    PAGE_ABOUT                      , // 0x1B
+    PAGE_STUBBED                    , // 0x1C
+    PAGE_NUM_OF                       // 0x1D
 }uiPageNum_en;
 
 enum
@@ -289,8 +292,14 @@ typedef struct
 
 typedef struct
 {
-    Pos_st pos ;
-}ListLine_st;
+    uint8_t pageNum ;
+    Pos_st  pos ;
+    bool    displayingList ;
+    uint8_t numOfDisplayedLines ;
+    uint8_t numOfListLines ;
+    uint8_t lineIndex ;
+    uint8_t lineSelection ;
+}List_st;
 
 typedef struct
 {
@@ -314,36 +323,31 @@ typedef struct
  */
 typedef struct
 {
-    uint16_t    hline_h ;
-    uint16_t    menu_h ;
-    uint16_t    bottom_pad ;
-    uint16_t    status_v_pad ;
-    uint16_t    horizontal_pad ;
-    uint16_t    text_v_offset ;
-    uint8_t     numOfEntries ;
-    uint8_t     scrollOffset ;
-    Line_st     line ;
-    Style_st    style ;
-    Pos_st      itemPos ;
-    Line_st     lines[ GUI_LINE_NUM_OF ] ;
-    Style_st    styles[ GUI_STYLE_NUM_OF ] ;
-    uint8_t     lineIndex ;
-    ListLine_st listLines[ GUI_LIST_LINE_NUM_OF ] ;
-    uint8_t     numOfListLines ;
-    uint8_t     listLineStart ;
-    uint8_t     listLineOffset ;
-    uint8_t     listLineIndex ;
-    Link_st     links[ GUI_LINK_NUM_OF ] ;
-    uint8_t     linkNumOf ;
-    uint8_t     linkIndex ;
-    Var_st      vars[ GUI_VAR_NUM_OF ] ;
-    uint8_t     varNumOf ;
-    uint8_t     varIndex ;
-    Font_st     input_font ;
-    Font_st     menu_font ;
-    Font_st     mode_font_big ;
-    Font_st     mode_font_small ;
-    bool        inSelect ;
+    uint16_t hline_h ;
+    uint16_t menu_h ;
+    uint16_t bottom_pad ;
+    uint16_t status_v_pad ;
+    uint16_t horizontal_pad ;
+    uint16_t text_v_offset ;
+    uint8_t  numOfEntries ;
+    uint8_t  scrollOffset ;
+    Line_st  line ;
+    Style_st style ;
+    Pos_st   itemPos ;
+    Line_st  lines[ GUI_LINE_NUM_OF ] ;
+    Style_st styles[ GUI_STYLE_NUM_OF ] ;
+    uint8_t  lineIndex ;
+    List_st  list ;
+    Link_st  links[ GUI_LINK_NUM_OF ] ;
+    uint8_t  linkNumOf ;
+    uint8_t  linkIndex ;
+    Var_st   vars[ GUI_VAR_NUM_OF ] ;
+    uint8_t  varNumOf ;
+    uint8_t  varIndex ;
+    Font_st  input_font ;
+    Font_st  menu_font ;
+    Font_st  mode_font_big ;
+    Font_st  mode_font_small ;
 }Layout_st;
 
 typedef struct

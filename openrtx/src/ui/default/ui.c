@@ -555,31 +555,24 @@ static void ui_InitGuiStateLayout( Layout_st* layout )
     layout->mode_font_big.size                     = SCREEN_MODE_FONT_SIZE_BIG ;
     layout->mode_font_small.size                   = SCREEN_MODE_FONT_SIZE_SMALL ;
 
-    layout->inSelect                               = false ;
-
-    ui_InitGuiStateListLines( layout );
+    ui_InitGuiStateLayoutList( layout );
     ui_InitGuiStateLayoutLinks( layout );
     ui_InitGuiStateLayoutVars( layout );
 
 }
 
-void ui_InitGuiStateListLines( Layout_st* layout )
+void ui_InitGuiStateLayoutList( Layout_st* layout )
 {
-    uint8_t index ;
-
-    for( index = 0 ; index < GUI_LIST_LINE_NUM_OF ; index++ )
-    {
-        layout->listLines[ index ].pos.x = 0 ;
-        layout->listLines[ index ].pos.y = 0 ;
-        layout->listLines[ index ].pos.w = 0 ;
-        layout->listLines[ index ].pos.h = 0 ;
-    }
-
-    layout->numOfListLines = 0 ;
-    layout->listLineStart  = 0 ;
-    layout->listLineOffset = 0 ;
-    layout->listLineIndex  = 0 ;
-
+    layout->list.pageNum             = PAGE_STUBBED ;
+	layout->list.pos.x       		 = 0 ;
+	layout->list.pos.y       		 = 0 ;
+	layout->list.pos.w       		 = 0 ;
+	layout->list.pos.h       		 = 0 ;
+    layout->list.displayingList      = false ;
+    layout->list.numOfDisplayedLines = 0 ;
+    layout->list.numOfListLines      = 0 ;
+    layout->list.lineIndex     		 = 0 ;
+    layout->list.lineSelection       = 0 ;
 }
 
 void ui_InitGuiStateLayoutLinks( Layout_st* layout )
@@ -655,10 +648,12 @@ void ui_saveState( void )
 {
     last_state = state ;
 }
-//@@@KL redraw_needed will need to be redacted \ name changed \ put into GuiState
+
 bool ui_updateGUI( Event_st* event )
 {
-    ui_Draw_Page( &GuiState , event );
+    GuiState.event = *event ;
+
+    ui_Draw_Page( &GuiState );
 
     return redraw_needed ;
 }

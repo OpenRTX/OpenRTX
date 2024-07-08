@@ -72,7 +72,7 @@ extern long long getTick();
 
 static void    EnterStandby( void );
 static bool    ExitStandby( long long now );
-static bool    UpdatePage( GuiState_st* guiState );
+//static bool    UpdatePage( GuiState_st* guiState , Event_st* event );
 static bool    CheckStandby( long long time_since_last_event );
 static freq_t  FreqAddDigit( freq_t freq , uint8_t pos , uint8_t number );
 static bool    FreqCheckLimits( freq_t freq );
@@ -319,7 +319,7 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
 
                     int priorUIScreen = guiState->page.num ;
 
-                    *sync_rtx = UpdatePage( &GuiState );
+//                    *sync_rtx = UpdatePage( &GuiState , event );
 
                     // Enable Tx only if in PAGE_MAIN_VFO or PAGE_MAIN_MEM states
                     bool inMemOrVfo ;
@@ -797,16 +797,19 @@ char* uiGetPageTextString( uiPageNum_en pageNum , uint8_t textStringIndex )
 
     return ptr ;
 }
-
-static bool UpdatePage( GuiState_st* guiState )
+/*
+static bool UpdatePage( GuiState_st* guiState , Event_st* event )
 {
     bool sync_rtx ;
 
-    sync_rtx = ui_updateFSM_PageTable[ guiState->page.num ]( guiState );
+    guiState->event = *event ;
+
+    ui_Draw_Page( guiState );
+//@@@KL - redact    sync_rtx = ui_updateFSM_PageTable[ guiState->page.num ]( guiState );
 
     return sync_rtx ;
 }
-
+*/
 static freq_t FreqAddDigit( freq_t freq , uint8_t pos , uint8_t number )
 {
     freq_t coefficient = 100 ;
@@ -2239,10 +2242,11 @@ void ui_States_MenuBack( GuiState_st* guiState )
 
 void ui_States_SelectPage( GuiState_st* guiState )
 {
+    (void)guiState;
 //@@@KL change .links to .entries
-    uint8_t pageNum = guiState->layout.links[ guiState->uiState.entrySelected ].num ;
+//    uint8_t pageNum = guiState->layout.links[ guiState->uiState.entrySelected ].num ;
 
-    ui_States_SelectPageNum( guiState , pageNum );
+//    ui_States_SelectPageNum( guiState , pageNum );
 }
 
 void ui_States_SelectPageNum( GuiState_st* guiState , uint8_t pageNum )

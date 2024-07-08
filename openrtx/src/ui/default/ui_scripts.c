@@ -69,7 +69,7 @@ static const uint8_t Page_MainInput[] =
 
 static const uint8_t Page_MainMem[] =
 {
-
+/*
     // Graphics Test
     GOTO_X( 20 ) ,
     GOTO_Y( 20 ) ,
@@ -107,7 +107,12 @@ static const uint8_t Page_MainMem[] =
     RECT_FILL( 23 , 18 ) ,
 
     GUI_CMD_PAGE_END ,//@@@KL
-
+*/
+    ALIGN_CENTER ,
+    GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( EVENT_STATUS_DISPLAY_TIME_TICK ) ,
+      BG_COLOR( RED ) ,
+      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_TIME ) ,
+    GUI_CMD_EVENT_END ,
     EVENT_START( EVENT_TYPE_STATUS , ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_BATTERY ) ) ,
       ALIGN_RIGHT ,
       VALUE_DSP( BATTERY_LEVEL ) ,
@@ -116,6 +121,7 @@ static const uint8_t Page_MainMem[] =
       VALUE_DSP( LOCK_STATE ) ,
     EVENT_END ,
     LINE_END ,
+    ALIGN_CENTER ,
     VALUE_DSP( MODE_INFO ) ,
     LINE_END ,
     VALUE_DSP( BANK_CHANNEL ) ,
@@ -125,6 +131,7 @@ static const uint8_t Page_MainMem[] =
     EVENT_START( EVENT_TYPE_STATUS , ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_RSSI ) ) ,
       VALUE_DSP( RSSI_METER ) ,
     EVENT_END ,
+    ON_EVENT_KBD_ENTER_GOTO_PAGE( PAGE_MENU_TOP ) ,
     PAGE_END
 };
 
@@ -146,36 +153,23 @@ static const uint8_t Page_MenuTop[] =
     GOTO_TEXT_LINE( GUI_LINE_1 ) ,
     LOAD_STYLE( GUI_STYLE_1 ) ,
     ALIGN_LEFT ,
-    GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_MENU_BANK ) ,
-    TEXT , 'B','a','n','k','s' , NULL_CH ,
-    GUI_CMD_LINK_END ,
-    LINE_END ,
-    GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_MENU_CHANNEL ) ,
-    TEXT , 'C','h','a','n','n','e','l','s' , NULL_CH ,
-    GUI_CMD_LINK_END ,
-    LINE_END ,
-    GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_MENU_CONTACTS ) ,
-    TEXT , 'C','o','n','t','a','c','t','s' , NULL_CH ,
-    GUI_CMD_LINK_END ,
-    LINE_END ,
-#ifdef GPS_PRESENT
-    GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_MENU_GPS ) ,
-    TEXT , 'G','P','S' , NULL_CH ,
-    GUI_CMD_LINK_END ,
-    LINE_END ,
-#endif // RTC_PRESENT
-    GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_MENU_SETTINGS ) ,
-    TEXT , 'S','e','t','t','i','n','g','s' , NULL_CH ,
-    GUI_CMD_LINK_END ,
-    LINE_END ,
-    GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_MENU_INFO ) ,
-    TEXT , 'I','n','f','o' , NULL_CH ,
-    GUI_CMD_LINK_END ,
-    LINE_END ,
-    GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_ABOUT ) ,
-    TEXT , 'A','b','o','u','t' , NULL_CH ,
-    GUI_CMD_LINK_END ,
+    EVENT_START( EVENT_TYPE_KBD , EVENT_STATUS_ALL_KEYS ) ,
+      LIST( PAGE_MENU_TOP_LIST , 3 ) ,
+    EVENT_END ,
     PAGE_END
+};
+
+static const uint8_t Page_MenuTopList[] =
+{
+    TEXT , 'B','a','n','k','s' , NULL_CH ,             LINK( PAGE_MENU_BANK )     , LINE_END ,
+    TEXT , 'C','h','a','n','n','e','l','s' , NULL_CH , LINK( PAGE_MENU_CHANNEL )  , LINE_END ,
+    TEXT , 'C','o','n','t','a','c','t','s' , NULL_CH , LINK( PAGE_MENU_CONTACTS ) , LINE_END ,
+#ifdef GPS_PRESENT
+    TEXT , 'G','P','S' , NULL_CH ,                     LINK( PAGE_MENU_GPS )      , LINE_END ,
+#endif // RTC_PRESENT
+    TEXT , 'S','e','t','t','i','n','g','s' , NULL_CH , LINK( PAGE_MENU_SETTINGS ) , LINE_END ,
+    TEXT , 'I','n','f','o' , NULL_CH ,                 LINK( PAGE_MENU_INFO )     , LINE_END ,
+    TEXT , 'A','b','o','u','t' , NULL_CH ,             LINK( PAGE_ABOUT )         , PAGE_END
 };
 
 static const uint8_t Page_MenuBank[] =
@@ -212,38 +206,25 @@ static const uint8_t Page_MenuSettings[] =
     GOTO_TEXT_LINE( GUI_LINE_1 ) ,
     LOAD_STYLE( GUI_STYLE_1 ) ,
     ALIGN_LEFT ,
-    GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_SETTINGS_DISPLAY ) ,
-    TEXT , 'D','i','s','p','l','a','y' , NULL_CH ,
-    GUI_CMD_LINK_END ,
-    LINE_END ,
+    EVENT_START( EVENT_TYPE_KBD , EVENT_STATUS_ALL_KEYS ) ,
+      LIST( PAGE_MENU_SETTINGS_LIST , 5 ) ,
+    EVENT_END ,
+    PAGE_END
+};
+
+static const uint8_t Page_MenuSettingsList[] =
+{
+    TEXT , 'D','i','s','p','l','a','y' , NULL_CH ,                                     LINK( PAGE_SETTINGS_DISPLAY )           , LINE_END ,
 #ifdef RTC_PRESENT
-    GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_SETTINGS_TIMEDATE ) ,
-    TEXT , 'T','i','m','e',' ','&',' ','D','a','t','e' , NULL_CH ,
-    GUI_CMD_LINK_END ,
-    LINE_END ,
+    TEXT , 'T','i','m','e',' ','&',' ','D','a','t','e' , NULL_CH ,                     LINK( PAGE_SETTINGS_TIMEDATE )          , LINE_END ,
 #endif // RTC_PRESENT
 #ifdef GPS_PRESENT
-    GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_SETTINGS_GPS ) ,
-    TEXT , 'G','P','S' , NULL_CH ,
-    GUI_CMD_LINK_END ,
-    LINE_END ,
+    TEXT , 'G','P','S' , NULL_CH ,                                                     LINK( PAGE_SETTINGS_GPS )               , LINE_END ,
 #endif // GPS_PRESENT
-    GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_SETTINGS_RADIO ) ,
-    TEXT , 'R','a','d','i','o' , NULL_CH ,
-    GUI_CMD_LINK_END ,
-    LINE_END ,
-    GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_SETTINGS_M17 ) ,
-    TEXT , 'M','1','7' , NULL_CH ,
-    GUI_CMD_LINK_END ,
-    LINE_END ,
-    GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_SETTINGS_VOICE ) ,
-    TEXT , 'A','c','c','e','s','s','i','b','i','l','i','t','y' , NULL_CH ,
-    GUI_CMD_LINK_END ,
-    LINE_END ,
-    GUI_CMD_LINK , GUI_CMD_PAGE , ST_VAL( PAGE_SETTINGS_RESET_TO_DEFAULTS ) ,
-    TEXT , 'D','e','f','a','u','l','t',' ','S','e','t','t','i','n','g','s' , NULL_CH ,
-    GUI_CMD_LINK_END ,
-    PAGE_END
+    TEXT , 'R','a','d','i','o' , NULL_CH ,                                             LINK( PAGE_SETTINGS_RADIO )             , LINE_END ,
+    TEXT , 'M','1','7' , NULL_CH ,                                                     LINK( PAGE_SETTINGS_M17 )               , LINE_END ,
+    TEXT , 'A','c','c','e','s','s','i','b','i','l','i','t','y' , NULL_CH ,             LINK( PAGE_SETTINGS_VOICE )             , LINE_END ,
+    TEXT , 'D','e','f','a','u','l','t',' ','S','e','t','t','i','n','g','s' , NULL_CH , LINK( PAGE_SETTINGS_RESET_TO_DEFAULTS ) , PAGE_END
 };
 
 static const uint8_t Page_SettingsTimeDate[] =
@@ -286,13 +267,13 @@ static const uint8_t Page_SettingsTimeDate[] =
                color_fg , "%02d:%02d:%02d" ,
                local_time.hour , local_time.minute , local_time.second );
 */
-    PAGE_END   //@@@KL indicates use the legacy script
+    PAGE_END
 };
 
 static const uint8_t Page_SettingsTimeDateSet[] =
 {
     TITLE , 'W','T','D',':',' ','S','T','D','S','e','t', NULL_CH ,
-    PAGE_END   //@@@KL indicates use the legacy script
+    PAGE_END
 };
 
 static const uint8_t Page_SettingsDisplay[] =
@@ -301,30 +282,20 @@ static const uint8_t Page_SettingsDisplay[] =
     GOTO_TEXT_LINE( GUI_LINE_1 ) ,
     LOAD_STYLE( GUI_STYLE_1 ) ,
 #ifdef SCREEN_BRIGHTNESS
-    GUI_CMD_LINK ,
-    ALIGN_LEFT , TEXT ,
-     'B','r','i','g','h','t','n','e','s','s' , NULL_CH ,
-    ALIGN_RIGHT ,
-    VALUE_DSP( BRIGHTNESS ) ,
-    GUI_CMD_LINK_END ,
-    LINE_END ,
+    EVENT_START( EVENT_TYPE_KBD , EVENT_STATUS_ALL_KEYS ) ,
+      LIST( PAGE_SETTINGS_DISPLAY_LIST , 5 ) ,
+    EVENT_END ,
+    PAGE_END
+};
+
+static const uint8_t Page_SettingsDisplayList[] =
+{
+    ALIGN_LEFT , TEXT , 'B','r','i','g','h','t','n','e','s','s' , NULL_CH , ALIGN_RIGHT , VALUE_DSP( BRIGHTNESS ) , LINE_END ,
 #endif // SCREEN_BRIGHTNESS
 #ifdef SCREEN_CONTRAST
-    GUI_CMD_LINK ,
-    ALIGN_LEFT , TEXT ,
-     'C','o','n','t','r','a','s','t' , NULL_CH ,
-    ALIGN_RIGHT ,
-    VALUE_DSP( CONTRAST ) ,
-    GUI_CMD_LINK_END ,
-    LINE_END ,
+    ALIGN_LEFT , TEXT , 'C','o','n','t','r','a','s','t' , NULL_CH ,         ALIGN_RIGHT , VALUE_DSP( CONTRAST )   , LINE_END ,
 #endif // SCREEN_CONTRAST
-    GUI_CMD_LINK ,
-    ALIGN_LEFT , TEXT ,
-     'T','i','m','e','r' , NULL_CH ,
-    ALIGN_RIGHT ,
-    VALUE_DSP( TIMER ) ,
-    GUI_CMD_LINK_END ,
-    PAGE_END
+    ALIGN_LEFT , TEXT , 'T','i','m','e','r' , NULL_CH ,                     ALIGN_RIGHT , VALUE_DSP( TIMER )      , PAGE_END
 };
 
 #ifdef GPS_PRESENT
@@ -543,11 +514,13 @@ const uint8_t* uiPageTable[ PAGE_NUM_OF ] =
     PAGE_REF( Page_ModeVFO                 ) , // PAGE_MODE_VFO
     PAGE_REF( Page_ModeMem                 ) , // PAGE_MODE_MEM
     PAGE_REF( Page_MenuTop                 ) , // PAGE_MENU_TOP
+    PAGE_REF( Page_MenuTopList             ) , // PAGE_MENU_TOP_LIST
     PAGE_REF( Page_MenuBank                ) , // PAGE_MENU_BANK
     PAGE_REF( Page_MenuChannel             ) , // PAGE_MENU_CHANNEL
     PAGE_REF( Page_MenuContact             ) , // PAGE_MENU_CONTACTS
     PAGE_REF( Page_MenuGPS                 ) , // PAGE_MENU_GPS
     PAGE_REF( Page_MenuSettings            ) , // PAGE_MENU_SETTINGS
+    PAGE_REF( Page_MenuSettingsList        ) , // PAGE_MENU_SETTINGS_LIST
     PAGE_REF( Page_MenuBackupRestore       ) , // PAGE_MENU_BACKUP_RESTORE
     PAGE_REF( Page_MenuBackup              ) , // PAGE_MENU_BACKUP
     PAGE_REF( Page_MenuRestore             ) , // PAGE_MENU_RESTORE
