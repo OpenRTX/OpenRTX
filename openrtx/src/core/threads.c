@@ -72,6 +72,7 @@ void *ui_threadFunc(void *arg)
 
         if(input_scanKeyboard(&kbd_msg))
         {
+            gfx_clearScreen();
             ui_pushEvent(EVENT_KBD, kbd_msg.value);
         }
 
@@ -114,10 +115,15 @@ void *ui_threadFunc(void *arg)
         }
 
         // Update UI and render on screen, if necessary
+        #ifndef CONFIG_GFX_NOFRAMEBUF
         if(ui_updateGUI() == true)
         {
             gfx_render();
         }
+        #else
+        ui_updateGUI();
+        #endif
+
 
         // 40Hz update rate for keyboard and UI
         time += 25;
