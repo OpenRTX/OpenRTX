@@ -213,14 +213,7 @@ void gfx_clearScreen()
 
 void gfx_fillScreen(color_t color)
 {
-    for(int16_t y = 0; y < CONFIG_SCREEN_HEIGHT; y++)
-    {
-        for(int16_t x = 0; x < CONFIG_SCREEN_WIDTH; x++)
-        {
-            point_t pos = {x, y};
-            gfx_setPixel(pos, color);
-        }
-    }
+    display_fill(color);
 }
 
 inline void gfx_setPixel(point_t pos, color_t color)
