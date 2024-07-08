@@ -21,6 +21,7 @@
 #include <peripherals/gpio.h>
 #include <interfaces/platform.h>
 #include <hwconfig.h>
+#include <platform/drivers/display/ST7735S_a36plus.h>
 
 static const hwInfo_t hwInfo =
 {
@@ -34,13 +35,50 @@ static const hwInfo_t hwInfo =
     .name        = "A36Plus"
 };
 
+static void lcd_spi_config(void)
+{
+    rcu_periph_clock_enable(LCD_GPIO_RCU);
+    gpio_af_set(LCD_GPIO_PORT, GPIO_AF_0, LCD_GPIO_SCK_PIN | LCD_GPIO_SDA_PIN);
+    gpio_mode_set(LCD_GPIO_PORT, GPIO_MODE_AF, GPIO_PUPD_NONE, LCD_GPIO_SCK_PIN | LCD_GPIO_SDA_PIN);
+    gpio_output_options_set(LCD_GPIO_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, LCD_GPIO_SCK_PIN | LCD_GPIO_SDA_PIN);
+
+    gpio_mode_set(LCD_GPIO_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP, LCD_GPIO_RST_PIN | LCD_GPIO_CS_PIN | LCD_GPIO_WR_PIN | LCD_GPIO_LIGHT_PIN);
+    gpio_output_options_set(LCD_GPIO_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, LCD_GPIO_RST_PIN | LCD_GPIO_CS_PIN | LCD_GPIO_WR_PIN | LCD_GPIO_LIGHT_PIN);
+    spi_parameter_struct spi_init_struct;
+    /* deinitialize SPI and the parameters */
+    spi_i2s_deinit(SPI1);
+
+    spi_struct_para_init(&spi_init_struct);
+
+    /* configure SPI1 parameter */
+    spi_init_struct.nss = SPI_NSS_SOFT;
+    spi_init_struct.prescale = SPI_PSC_2;
+    spi_init_struct.endian = SPI_ENDIAN_MSB;
+    spi_init_struct.device_mode = SPI_MASTER;
+    spi_init_struct.frame_size = SPI_FRAMESIZE_8BIT;
+    spi_init_struct.trans_mode = SPI_TRANSMODE_BDTRANSMIT;
+    spi_init_struct.clock_polarity_phase = SPI_CK_PL_HIGH_PH_2EDGE;
+    spi_init(SPI1, &spi_init_struct);
+    spi_enable(SPI1);
+}
+
+void spi_config(void)
+{
+    rcu_periph_clock_enable(RCU_SPI0);
+    rcu_periph_clock_enable(RCU_SPI1);
+    lcd_spi_config();
+}
+
 void platform_init()
 {
     // Configure GPIOs
-    gpio_setMode(GREEN_LED, OUTPUT);
-    gpio_setMode(RED_LED,   OUTPUT);
+    // gpio_setMode(GREEN_LED, OUTPUT);
+    // gpio_setMode(RED_LED,   OUTPUT);
     gpio_setMode(PTT_SW,    INPUT_PULL_UP);
+    spi_config();
 }
+
+
 
 void platform_terminate()
 {

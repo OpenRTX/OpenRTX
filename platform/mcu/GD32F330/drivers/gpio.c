@@ -46,6 +46,72 @@ void gpio_af_set(uint32_t gpio_periph, uint32_t alt_func_num, uint32_t pin)
     GPIO_AFSEL1(gpio_periph) = afrh;
 }
 
+void gpio_output_options_set(uint32_t gpio_periph, uint8_t otype, uint32_t speed, uint32_t pin)
+{
+    uint16_t i;
+    uint32_t ospeed0, ospeed1;
+
+    if(GPIO_OTYPE_OD == otype) {
+        GPIO_OMODE(gpio_periph) |= (uint32_t)pin;
+    } else {
+        GPIO_OMODE(gpio_periph) &= (uint32_t)(~pin);
+    }
+
+    /* get the specified pin output speed bits value */
+    ospeed0 = GPIO_OSPD0(gpio_periph);
+
+    if(GPIO_OSPEED_MAX == speed) {
+        ospeed1 = GPIO_OSPD1(gpio_periph);
+
+        for(i = 0U; i < 16U; i++) {
+            if((1U << i) & pin) {
+                /* enable very high output speed function of the pin when the corresponding OSPDy(y=0..15)
+                   is "11" (output max speed 50MHz) */
+                ospeed0 |= GPIO_OSPEED_SET(i, 0x03);
+                ospeed1 |= (1U << i);
+            }
+        }
+        GPIO_OSPD0(gpio_periph) = ospeed0;
+        GPIO_OSPD1(gpio_periph) = ospeed1;
+    } else {
+        for(i = 0U; i < 16U; i++) {
+            if((1U << i) & pin) {
+                /* clear the specified pin output speed bits */
+                ospeed0 &= ~GPIO_OSPEED_MASK(i);
+                /* set the specified pin output speed bits */
+                ospeed0 |= GPIO_OSPEED_SET(i, speed);
+            }
+        }
+        GPIO_OSPD0(gpio_periph) = ospeed0;
+    }
+}
+
+void gpio_mode_set(uint32_t gpio_periph, uint32_t mode, uint32_t pull_up_down, uint32_t pin)
+{
+    uint16_t i;
+    uint32_t ctl, pupd;
+
+    ctl = GPIO_CTL(gpio_periph);
+    pupd = GPIO_PUD(gpio_periph);
+
+    for(i = 0U; i < 16U; i++) {
+        if((1U << i) & pin) {
+            /* clear the specified pin mode bits */
+            ctl &= ~GPIO_MODE_MASK(i);
+            /* set the specified pin mode bits */
+            ctl |= GPIO_MODE_SET(i, mode);
+
+            /* clear the specified pin pupd bits */
+            pupd &= ~GPIO_PUPD_MASK(i);
+            /* set the specified pin pupd bits */
+            pupd |= GPIO_PUPD_SET(i, pull_up_down);
+        }
+    }
+
+    GPIO_CTL(gpio_periph) = ctl;
+    GPIO_PUD(gpio_periph) = pupd;
+}
+
 void gpio_setMode(void *port, uint8_t pin, enum Mode mode)
 {
     gpio_type *p = (gpio_type *)(port);
