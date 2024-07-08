@@ -590,7 +590,6 @@ int _ui_getContactName(char *buf, uint8_t max_len, uint8_t index)
 
 void _ui_drawMenuTop(ui_state_t* ui_state)
 {
-    gfx_clearScreen();
     // Print "Menu" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->menu);
@@ -600,7 +599,7 @@ void _ui_drawMenuTop(ui_state_t* ui_state)
 
 void _ui_drawMenuBank(ui_state_t* ui_state)
 {
-    gfx_clearScreen();
+    //gfx_clearScreen();
     // Print "Bank" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->banks);
@@ -610,7 +609,7 @@ void _ui_drawMenuBank(ui_state_t* ui_state)
 
 void _ui_drawMenuChannel(ui_state_t* ui_state)
 {
-    gfx_clearScreen();
+    //gfx_clearScreen();
     // Print "Channel" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->channels);
@@ -620,7 +619,7 @@ void _ui_drawMenuChannel(ui_state_t* ui_state)
 
 void _ui_drawMenuContacts(ui_state_t* ui_state)
 {
-    gfx_clearScreen();
+    //gfx_clearScreen();
     // Print "Contacts" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->contacts);
@@ -730,7 +729,7 @@ void _ui_drawMenuGPS()
 
 void _ui_drawMenuSettings(ui_state_t* ui_state)
 {
-    gfx_clearScreen();
+    //gfx_clearScreen();
     // Print "Settings" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->settings);
@@ -740,7 +739,7 @@ void _ui_drawMenuSettings(ui_state_t* ui_state)
 
 void _ui_drawMenuBackupRestore(ui_state_t* ui_state)
 {
-    gfx_clearScreen();
+    //gfx_clearScreen();
     // Print "Backup & Restore" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->backupAndRestore);
@@ -752,7 +751,7 @@ void _ui_drawMenuBackup(ui_state_t* ui_state)
 {
     (void) ui_state;
 
-    gfx_clearScreen();
+    //gfx_clearScreen();
     // Print "Flash Backup" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->flashBackup);
@@ -778,7 +777,7 @@ void _ui_drawMenuRestore(ui_state_t* ui_state)
 {
     (void) ui_state;
 
-    gfx_clearScreen();
+    //gfx_clearScreen();
     // Print "Flash Restore" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->flashRestore);
@@ -802,7 +801,7 @@ void _ui_drawMenuRestore(ui_state_t* ui_state)
 
 void _ui_drawMenuInfo(ui_state_t* ui_state)
 {
-    gfx_clearScreen();
+    //gfx_clearScreen();
     // Print "Info" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->info);
@@ -848,7 +847,7 @@ void _ui_drawMenuAbout(ui_state_t* ui_state)
 
 void _ui_drawSettingsDisplay(ui_state_t* ui_state)
 {
-    gfx_clearScreen();
+    //gfx_clearScreen();
     // Print "Display" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->display);
@@ -1002,7 +1001,7 @@ void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state)
 
 void _ui_drawSettingsRadio(ui_state_t* ui_state)
 {
-    gfx_clearScreen();
+    //gfx_clearScreen();
 
     // Print "Radio Settings" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
