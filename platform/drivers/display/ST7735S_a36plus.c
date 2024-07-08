@@ -86,17 +86,12 @@ enum ST7735S_command
 
 static inline void sendByte(uint8_t data)
 {
-    for(uint8_t i = 0; i < 8; i++)
-    {
-        if(data & 0x80)
-            gpio_setPin(LCD_DAT);
-        else
-            gpio_clearPin(LCD_DAT);
-
-        gpio_clearPin(LCD_CLK);
-        gpio_setPin(LCD_CLK);
-        data <<= 1;
-    }
+    // Use SPI1 peripheral
+    while (spi_i2s_flag_get(SPI1, SPI_FLAG_TBE) == RESET)
+        ;
+    spi_i2s_data_transmit(SPI1, data);
+    while (spi_i2s_flag_get(SPI1, SPI_FLAG_TRANS) != RESET)
+        ;
 }
 
 static inline void sendShort(uint16_t val)
@@ -140,12 +135,12 @@ static inline void setPosition(uint16_t x, uint16_t y)
 
 void display_init(void)
 {
-    gpio_setMode(LCD_PWR, OUTPUT);
-    gpio_setMode(LCD_DC,  OUTPUT);
-    gpio_setMode(LCD_CS,  OUTPUT);
-    gpio_setMode(LCD_CLK, OUTPUT);
-    gpio_setMode(LCD_DAT, OUTPUT);
-    gpio_setMode(LCD_RST, OUTPUT);
+    // gpio_setMode(LCD_PWR, OUTPUT);
+    // gpio_setMode(LCD_DC,  OUTPUT);
+    // gpio_setMode(LCD_CS,  OUTPUT);
+    // gpio_setMode(LCD_CLK, OUTPUT);
+    // gpio_setMode(LCD_DAT, OUTPUT);
+    // gpio_setMode(LCD_RST, OUTPUT);
 
     // Display power on
     gpio_setPin(LCD_PWR);
@@ -156,10 +151,10 @@ void display_init(void)
     gpio_clearPin(LCD_RST);
     delayMs(10);
     gpio_setPin(LCD_RST);
-    delayMs(240);
+    delayMs(100);
 
     sendCommand(ST7735S_CMD_SLPOUT);
-    delayMs(240);
+    delayMs(100);
 
     sendCommand(ST7735S_CMD_FRMCTR1);
     sendData(0x05);
@@ -258,10 +253,21 @@ void display_render(void *fb)
     (void) fb;
 }
 
+void display_setWindow(uint16_t x, uint16_t y, uint16_t width, uint16_t height)
+{
+    // Set column address
+    sendCommand(ST7735S_CMD_CASET);
+    sendShort(y);
+    sendShort(y + height - 1);
+    // Set row address
+    sendCommand(ST7735S_CMD_RASET);
+    sendShort(x);
+    sendShort(x + width - 1);
+}
+
 void display_fill(uint32_t color)
 {
     setPosition(28, 0);
-
     sendCommand(ST7735S_CMD_RAMWR);
     for(size_t i = 0; i < (CONFIG_SCREEN_WIDTH * CONFIG_SCREEN_HEIGHT); i++)
         sendShort(color & 0x0000FFFF);
