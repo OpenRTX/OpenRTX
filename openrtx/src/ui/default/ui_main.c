@@ -303,7 +303,7 @@ void _ui_drawMainBottom()
 
 void _ui_drawMainVFO(ui_state_t* ui_state)
 {
-    gfx_clearScreen();
+    //gfx_clearScreen();
     _ui_drawMainTop(ui_state);
     _ui_drawModeInfo(ui_state);
 
