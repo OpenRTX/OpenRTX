@@ -50,7 +50,7 @@
 #define KBD_COL1    GPIOB,9
 #define KBD_COL2    GPIOB,14
 #define KBD_COL3    GPIOB,8
-#define SKB_1       GPIOA,15
+#define SKB_1       GPIOB,11
 #define SKB_2       GPIOF,7
 
 // External flash
