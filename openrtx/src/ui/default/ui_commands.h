@@ -172,7 +172,10 @@ c->alpha = (uint8_t)( ( cv >> COLOR_ENC_ALPHA_SHIFT ) & COLOR_ENC_ALPHA_MASK ) ;
 *   Script Command Macros
 *******************************************************************************/
 
-#define EVENT_START( s , t )    GUI_CMD_EVENT_START , ST_VAL( s ) , ST_VAL( t )
+#define EVENT_ENC( t , p )      ( ( (uint32_t)t << EVENT_TYPE_SHIFT ) | (uint32_t)p )
+#define ST_EVENT( t , p )       ST_VAL_LONG( EVENT_ENC( t , p ) )
+
+#define EVENT_START( t , p )    GUI_CMD_EVENT_START , ST_EVENT( t , p )
 #define EVENT_END               GUI_CMD_EVENT_END
 
 // GUI_CMD_ON_EVENT Actions
@@ -181,12 +184,9 @@ enum
     ON_EVENT_ACTION_GOTO_PAGE
 };
 
-#define EVENT_BIT_ENC( t , p )              ( ( (uint32_t)t << EVENT_TYPE_SHIFT ) | (uint32_t)p )
-#define EVENT_KBD( p )                      EVENT_BIT_ENC( EVENT_TYPE_KBD , p )
+#define ON_EVENT( t , p , a , v )           GUI_CMD_ON_EVENT , ST_EVENT( t , p ) , ST_VAL( a ) , ST_VAL( v )
 
-#define ON_EVENT( e , a , p )               GUI_CMD_ON_EVENT , ST_VAL_LONG( e ) , ST_VAL( a ) , ST_VAL( p )
-
-#define ON_EVENT_KBD_ENTER_GOTO_PAGE( p )   ON_EVENT( EVENT_KBD( KEY_ENTER ) , ON_EVENT_ACTION_GOTO_PAGE , p )
+#define ON_EVENT_KBD_ENTER_GOTO_PAGE( v )   ON_EVENT( EVENT_TYPE_KBD , KEY_ENTER , ON_EVENT_ACTION_GOTO_PAGE , v )
 
 #define GOTO_TEXT_LINE( l ) GUI_CMD_GOTO_TEXT_LINE , ST_VAL( l )
 #define LOAD_STYLE( l )     GUI_CMD_LOAD_STYLE , ST_VAL( l )

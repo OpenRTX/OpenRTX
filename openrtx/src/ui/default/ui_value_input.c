@@ -132,11 +132,12 @@ static const ui_ValueInput_fn ui_ValueInput_Table[ GUI_VAL_INP_NUM_OF ] =
 
 void ui_ValueInputFSM( GuiState_st* guiState )
 {
+/*
     uint8_t linkSelected = guiState->uiState.entrySelected ;
     uint8_t valueNum     = guiState->layout.links[ linkSelected ].num ;
 
     ui_ValueInput( guiState , valueNum );
-
+*/
 }
 
 void ui_ValueInput( GuiState_st* guiState , uint8_t valueNum )

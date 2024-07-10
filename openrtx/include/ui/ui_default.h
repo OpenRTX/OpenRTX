@@ -287,6 +287,7 @@ typedef struct
 typedef struct
 {
     Pos_st pos ;
+    Pos_t  textY ;
     Pos_t  height ;
 }Line_st;
 
@@ -297,15 +298,14 @@ typedef struct
     bool    displayingList ;
     uint8_t numOfDisplayedLines ;
     uint8_t numOfListLines ;
-    uint8_t lineIndex ;
-    uint8_t lineSelection ;
+    uint8_t index ;
+    uint8_t selection ;
+    uint8_t offset ;
 }List_st;
 
 typedef struct
 {
-    uint8_t type ;
-    uint8_t num ;
-    uint8_t amt ;
+    uint8_t pageNum ;
 }Link_st;
 
 typedef struct
@@ -338,9 +338,7 @@ typedef struct
     Style_st styles[ GUI_STYLE_NUM_OF ] ;
     uint8_t  lineIndex ;
     List_st  list ;
-    Link_st  links[ GUI_LINK_NUM_OF ] ;
-    uint8_t  linkNumOf ;
-    uint8_t  linkIndex ;
+    Link_st  link ;
     Var_st   vars[ GUI_VAR_NUM_OF ] ;
     uint8_t  varNumOf ;
     uint8_t  varIndex ;
@@ -357,7 +355,6 @@ typedef struct
     uint8_t  level ;
     uint8_t* ptr ;
     uint16_t index ;
-    uint16_t cmdIndex ;
     bool     renderPage ;
 }Page_st;
 

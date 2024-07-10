@@ -121,7 +121,7 @@ void _ui_Draw_MenuList( GuiState_st* guiState , uiPageNum_en currentEntry )
     guiState->layout.numOfEntries = ( SCREEN_HEIGHT - 1 - line->pos.y ) /
                                     guiState->layout.menu_h + 1 ;
     guiState->layout.scrollOffset = 0 ;
-
+/*
     for( guiState->layout.linkIndex = 0 , result = 0 ;
          ( result == 0 ) && ( line->pos.y < SCREEN_HEIGHT );
          guiState->layout.linkIndex++ )
@@ -147,10 +147,12 @@ void _ui_Draw_MenuList( GuiState_st* guiState , uiPageNum_en currentEntry )
         }
 
     }
+*/
 }
 
 static void ui_Draw_MenuItem( GuiState_st* guiState , char* entryBuf )
 {
+/*
     Line_st*  line   = &guiState->layout.line ;
 //    Style_st* style  = &guiState->layout.style ;
     Color_st  color_fg ;
@@ -173,7 +175,7 @@ static void ui_Draw_MenuItem( GuiState_st* guiState , char* entryBuf )
     gfx_print( &line->pos , guiState->layout.menu_font.size ,
                GFX_ALIGN_LEFT , &Color_text , entryBuf );
     line->pos.y += guiState->layout.menu_h ;
-
+*/
 }
 
 static const GetMenuList_fn GetEntryValue_table[ PAGE_NUM_OF ] =

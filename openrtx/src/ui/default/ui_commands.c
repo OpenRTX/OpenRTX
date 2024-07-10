@@ -55,7 +55,7 @@
 
 enum
 {
-    MAX_NUM_PAGE_COMMANDS = 256
+    MAX_NUM_PAGE_BYTES = 256
 };
 
 static const uint32_t ColorTable[ COLOR_NUM_OF ] =
@@ -66,6 +66,7 @@ static const uint32_t ColorTable[ COLOR_NUM_OF ] =
 static void ui_DisplayPage( GuiState_st* guiState );
 
 static void RunScript( GuiState_st* guiState , uint8_t scriptPageNum );
+static void DisplayList( GuiState_st* guiState );
 
 static bool GuiCmd_Null( GuiState_st* guiState );
 static bool GuiCmd_EventStart( GuiState_st* guiState );
@@ -97,9 +98,10 @@ static bool GuiCmd_DrawRect( GuiState_st* guiState );
 static bool GuiCmd_DrawRectFilled( GuiState_st* guiState );
 static bool GuiCmd_DrawCircle( GuiState_st* guiState );
 static bool GuiCmd_Operation( GuiState_st* guiState );
+// debug fns
 #ifdef ENABLE_DEBUG_MSG
   #ifndef DISPLAY_DEBUG_MSG
-static bool GuiCmd_DispDgbVal( GuiState_st* guiState ); // debug fn
+static bool GuiCmd_DispDgbVal( GuiState_st* guiState );
   #else // DISPLAY_DEBUG_MSG
 static bool GuiCmd_SetDbgMsg( GuiState_st* guiState );
   #endif // DISPLAY_DEBUG_MSG
@@ -116,7 +118,9 @@ static uint32_t GuiCmd_LdValUILong( GuiState_st* guiState );
 static void     GuiCmd_AdvToNextCmd( GuiState_st* guiState );
 
 static void     GuiCmd_Print( GuiState_st* guiState , Color_st color , char* scriptPtr );
-//static void     GuiCmd_PrintLine( GuiState_st* guiState , char* scriptPtr );
+static void     GuiCmd_PrintStr( GuiState_st* guiState , char* scriptPtr );
+static void     GuiCmd_PrintLine( GuiState_st* guiState , char* scriptPtr );
+static void     BlankLine( GuiState_st* guiState );
 
 typedef bool (*ui_GuiCmd_fn)( GuiState_st* guiState );
 
@@ -242,10 +246,9 @@ void ui_Draw_Page( GuiState_st* guiState )
 
 static void ui_DisplayPage( GuiState_st* guiState )
 {
-    bool     displayPage = false ;
-    uint16_t count ;
-    uint8_t  cmd ;
-    bool     exit ;
+    bool    displayPage = false ;
+    uint8_t cmd ;
+    bool    exit ;
 
     if( !guiState->update       ||
         guiState->pageHasEvents    )
@@ -258,7 +261,7 @@ static void ui_DisplayPage( GuiState_st* guiState )
         if( !guiState->update )
         {
             ui_InitGuiStateLayoutList( &guiState->layout );
-            ui_InitGuiStateLayoutLinks( &guiState->layout );
+            ui_InitGuiStateLayoutLink( &guiState->layout );
             ui_InitGuiStateLayoutVars( &guiState->layout );
             gfx_clearScreen();
         }
@@ -296,14 +299,11 @@ static void ui_DisplayPage( GuiState_st* guiState )
 
         guiState->layout.lineIndex    = 0 ;
 
-        guiState->layout.linkNumOf    = 0 ;
-        guiState->layout.linkIndex    = 0 ;
         guiState->layout.varIndex     = 0 ;
 
         guiState->layout.scrollOffset = 0 ;//@@@KL handle scrolling
 
         guiState->page.index          = 0 ;
-        guiState->page.cmdIndex       = 0 ;
 
         guiState->layout.line         = guiState->layout.lines[ GUI_LINE_INITIAL ] ;
         guiState->layout.style        = guiState->layout.styles[ GUI_STYLE_INITIAL ] ;
@@ -325,7 +325,8 @@ static void ui_DisplayPage( GuiState_st* guiState )
 
         LineStart( guiState );
 
-        for( exit = false , count = MAX_NUM_PAGE_COMMANDS ; !exit && count ; count-- )
+        exit = false ;
+        while( !exit && ( guiState->page.index < MAX_NUM_PAGE_BYTES ) )
         {
             cmd = guiState->page.ptr[ guiState->page.index ] ;
             guiState->page.index++ ;
@@ -333,7 +334,6 @@ static void ui_DisplayPage( GuiState_st* guiState )
             if( cmd < GUI_CMD_DATA_AREA )
             {
                 exit = ui_GuiCmd_Table[ cmd ]( guiState );
-                guiState->page.cmdIndex++ ;
             }
         }
 
@@ -343,10 +343,9 @@ static void ui_DisplayPage( GuiState_st* guiState )
 
 static void RunScript( GuiState_st* guiState , uint8_t scriptPageNum )
 {
-    Page_st  parentPage = guiState->page ;
-    uint16_t count ;
-    uint8_t  cmd ;
-    bool     exit ;
+    Page_st parentPage = guiState->page ;
+    uint8_t cmd ;
+    bool    exit ;
 
     guiState->page.ptr   = (uint8_t*)uiPageTable[ scriptPageNum ] ;
 
@@ -354,7 +353,8 @@ static void RunScript( GuiState_st* guiState , uint8_t scriptPageNum )
 
     LineStart( guiState );
 
-    for( exit = false , count = MAX_NUM_PAGE_COMMANDS ; !exit && count ; count-- )
+    exit = false ;
+    while( !exit && ( guiState->page.index < MAX_NUM_PAGE_BYTES ) )
     {
         cmd = guiState->page.ptr[ guiState->page.index ] ;
         guiState->page.index++ ;
@@ -362,7 +362,6 @@ static void RunScript( GuiState_st* guiState , uint8_t scriptPageNum )
         if( cmd < GUI_CMD_DATA_AREA )
         {
             exit = ui_GuiCmd_Table[ cmd ]( guiState );
-            guiState->page.cmdIndex++ ;
         }
     }
 
@@ -382,12 +381,14 @@ static bool GuiCmd_Null( GuiState_st* guiState )
 
 static bool GuiCmd_EventStart( GuiState_st* guiState )
 {
-    uint8_t eventType ;
-    uint8_t eventPayload ;
-    bool    pageEnd = false ;
+    uint32_t scriptEventValue ;
+    uint32_t scriptEventType ;
+    uint32_t scriptEventPayload ;
+    bool     pageEnd = false ;
 
-    eventType                       = GuiCmd_LdValUI( guiState );
-    eventPayload                    = GuiCmd_LdValUI( guiState );
+    scriptEventValue   = GuiCmd_LdValUILong( guiState );
+    scriptEventType    = scriptEventValue >> EVENT_TYPE_SHIFT ;
+    scriptEventPayload = scriptEventValue & EVENT_PAYLOAD_MASK ;
 
     guiState->pageHasEvents         = true ;
 
@@ -399,8 +400,8 @@ static bool GuiCmd_EventStart( GuiState_st* guiState )
     }
     else
     {
-        if( ( guiState->event.type                       == eventType    ) &&
-            ( ( guiState->event.payload & eventPayload ) == eventPayload )    )
+        if( ( guiState->event.type    == scriptEventType    ) &&
+            ( guiState->event.payload  & scriptEventPayload )    )
         {
             guiState->inEventArea    = true ;
             guiState->displayEnabled = true ;
@@ -424,22 +425,24 @@ static bool GuiCmd_EventEnd( GuiState_st* guiState )
 
 static bool GuiCmd_OnEvent( GuiState_st* guiState )
 {
-    uint32_t guiEventValue ;
     uint32_t scriptEventValue ;
+    uint32_t scriptEventType ;
+    uint32_t scriptEventPayload ;
     uint8_t  action ;
     uint8_t  parameter ;
     bool     pageEnd = false ;
 
-    guiEventValue     = guiState->event.type << EVENT_TYPE_SHIFT ;
-    guiEventValue    |= guiState->event.payload ;
+    scriptEventValue   = GuiCmd_LdValUILong( guiState );
+    scriptEventType    = scriptEventValue >> EVENT_TYPE_SHIFT ;
+    scriptEventPayload = scriptEventValue & EVENT_PAYLOAD_MASK ;
 
-    scriptEventValue  = GuiCmd_LdValUILong( guiState );
-    action            = GuiCmd_LdValUI( guiState );
-    parameter         = GuiCmd_LdValUI( guiState );
+    action             = GuiCmd_LdValUI( guiState );
+    parameter          = GuiCmd_LdValUI( guiState );
 
     if( guiState->update )
     {
-        if( guiEventValue == scriptEventValue )
+        if( ( guiState->event.type    == scriptEventType    ) &&
+            ( guiState->event.payload == scriptEventPayload )    )
         {
             switch( action )
             {
@@ -521,7 +524,10 @@ static bool GuiCmd_GoToTextLine( GuiState_st* guiState )
         select = GUI_LINE_DEFAULT ;
     }
 
-    guiState->layout.line = guiState->layout.lines[ select ] ;
+    guiState->layout.lineIndex = select ;
+
+    guiState->layout.line  = guiState->layout.lines[ guiState->layout.lineIndex ] ;
+    guiState->layout.style = guiState->layout.styles[ guiState->layout.lineIndex ] ;
 
     return pageEnd ;
 
@@ -585,17 +591,7 @@ static bool GuiCmd_LineEnd( GuiState_st* guiState )
 {
     bool pageEnd = false ;
 
-    if( ( guiState->layout.lineIndex + 1 ) < GUI_LINE_NUM_OF )
-    {
-        guiState->layout.lineIndex++ ;
-    }
-
     LineEnd( guiState );
-
-    if( guiState->layout.line.pos.y >= SCREEN_HEIGHT )
-    {
-        guiState->displayEnabled = false ;
-    }
 
     LineStart( guiState );
 
@@ -605,55 +601,62 @@ static bool GuiCmd_LineEnd( GuiState_st* guiState )
 
 static void LineStart( GuiState_st* guiState )
 {
-    Pos_st   pos ;
-    uint8_t  colorBG ;
-    uint8_t  colorFG ;
-    Color_st color ;
-    bool     pageEnd = false ;
+    uint8_t colorBG ;
+    uint8_t colorFG ;
+
+    guiState->layout.line  = guiState->layout.lines[ guiState->layout.lineIndex ] ;
+    guiState->layout.style = guiState->layout.styles[ guiState->layout.lineIndex ] ;
 
     if( guiState->layout.list.displayingList )
     {
         if( guiState->inEventArea )
         {
-            if( guiState->layout.list.lineIndex < guiState->layout.list.numOfDisplayedLines )
+            if( guiState->layout.list.index == guiState->layout.list.selection )
             {
-                guiState->displayEnabled = true ;
-                if( guiState->layout.list.lineIndex == guiState->layout.list.lineSelection )
-                {
-                    colorBG  = guiState->layout.style.colorBG ;
-                    colorFG  = guiState->layout.style.colorFG ;
-                    guiState->layout.style.colorBG = colorFG ;
-                    guiState->layout.style.colorFG = colorBG ;
-                    pos      = guiState->layout.line.pos ;
-                    pos.w    = SCREEN_WIDTH ;
-                    pos.h    = guiState->layout.line.height ;
-                    pos.y   -= pos.h ;
-                    ui_ColorLoad( &color , guiState->layout.style.colorBG );
-                    gfx_drawRect( &pos , &color , true );
-                }
+                colorBG = guiState->layout.style.colorBG ;
+                colorFG = guiState->layout.style.colorFG ;
+                guiState->layout.style.colorBG = colorFG ;
+                guiState->layout.style.colorFG = colorBG ;
             }
-            else
+            if( !guiState->update )
             {
-                guiState->displayEnabled = false ;
+                BlankLine( guiState );
             }
         }
+    }
+
+    if( guiState->layout.line.pos.y >= SCREEN_HEIGHT )
+    {
+        guiState->displayEnabled = false ;
     }
 
 }
 
 static void LineEnd( GuiState_st* guiState )
 {
-    guiState->layout.line        = guiState->layout.lines[ guiState->layout.lineIndex ] ;
-    guiState->layout.line.pos.y += guiState->layout.line.height ;
-    guiState->layout.style       = guiState->layout.styles[ guiState->layout.lineIndex ] ;
+    uint8_t colorBG ;
+    uint8_t colorFG ;
+
     if( guiState->layout.list.displayingList )
     {
-        if( guiState->update )
+        if( guiState->inEventArea )
         {
-            guiState->layout.list.numOfListLines++ ;
+            if( guiState->layout.list.index == guiState->layout.list.selection )
+            {
+                colorBG = guiState->layout.style.colorBG ;
+                colorFG = guiState->layout.style.colorFG ;
+                guiState->layout.style.colorBG = colorFG ;
+                guiState->layout.style.colorFG = colorBG ;
+            }
         }
-        guiState->layout.list.lineIndex++ ;
+        guiState->layout.list.index++ ;
     }
+
+    if( ( guiState->layout.lineIndex + 1 ) < GUI_LINE_NUM_OF )
+    {
+        guiState->layout.lineIndex++ ;
+    }
+
 }
 
 static bool GuiCmd_FontSize( GuiState_st* guiState )
@@ -742,7 +745,11 @@ static bool GuiCmd_RunScript( GuiState_st* guiState )
 
 static bool GuiCmd_List( GuiState_st* guiState )
 {
-    bool pageEnd = false ;
+    bool     displayList = false ;
+    bool     pageEnd     = false ;
+    uint8_t* ptr ;
+    uint16_t index ;
+    uint8_t  cmd ;
 
     guiState->layout.list.pageNum             = GuiCmd_LdValUI( guiState );
     guiState->layout.list.numOfDisplayedLines = GuiCmd_LdValUI( guiState );
@@ -751,7 +758,31 @@ static bool GuiCmd_List( GuiState_st* guiState )
     {
         guiState->layout.list.pos            = guiState->layout.line.pos ;
         guiState->layout.list.numOfListLines = 0 ;
-        guiState->layout.list.lineSelection  = 0 ;
+        guiState->layout.list.selection      = 0 ;
+        guiState->layout.list.offset         = 0 ;
+        displayList                          = true ;
+
+        // determine the number of list lines
+        for( ptr = (uint8_t*)uiPageTable[ guiState->layout.list.pageNum ] , index = 0 ;
+             index < MAX_NUM_PAGE_BYTES ;
+             index++ )
+        {
+            cmd = ptr[ index ] ;
+
+            if( cmd == GUI_CMD_LINE_END )
+            {
+                guiState->layout.list.numOfListLines++ ;
+            }
+            else
+            {
+                if( cmd == GUI_CMD_PAGE_END )
+                {
+                    guiState->layout.list.numOfListLines++ ;
+                    break ;
+                }
+            }
+        }
+
     }
     else
     {
@@ -762,34 +793,129 @@ static bool GuiCmd_List( GuiState_st* guiState )
                 case KEY_UP :
 //                case KEY_VOLUP :
                 {
-                    if( guiState->layout.list.lineSelection       <
-                        guiState->layout.list.numOfDisplayedLines   )
+                    if( guiState->layout.list.selection )
                     {
-                        guiState->layout.list.lineSelection++ ;
-                        guiState->page.renderPage = true ;
+                        guiState->layout.list.selection-- ;
+                        displayList = true ;
+                    }
+                    else
+                    {
+                        if( guiState->layout.list.offset )
+                        {
+                            guiState->layout.list.offset-- ;
+                            displayList = true ;
+                        }
                     }
                     break ;
                 }
                 case KEY_DOWN :
 //                case KEY_VOLDOWN :
                 {
-                    if( guiState->layout.list.lineSelection )
+                    if( ( guiState->layout.list.selection + 1 )   <
+                        guiState->layout.list.numOfDisplayedLines   )
                     {
-                        guiState->layout.list.lineSelection-- ;
-                        guiState->page.renderPage = true ;
+                        guiState->layout.list.selection++ ;
+                        displayList = true ;
                     }
+                    else
+                    {
+                        if( ( guiState->layout.list.offset +
+                              guiState->layout.list.numOfDisplayedLines ) <
+                            guiState->layout.list.numOfListLines            )
+                        {
+                            guiState->layout.list.offset++ ;
+                            displayList = true ;
+                        }
+                    }
+                    break ;
+                }
+                case KEY_ENTER :
+                {
+                    guiState->page.num = guiState->layout.link.pageNum ;
                     break ;
                 }
             }
         }
     }
 
-    guiState->layout.list.displayingList = true ;
-    guiState->layout.list.lineIndex      = 0 ;
-    RunScript( guiState , guiState->layout.list.pageNum );
-    guiState->layout.list.displayingList = false ;
+    if( displayList )
+    {
+        DisplayList( guiState );
+    }
 
     return pageEnd ;
+}
+
+static void DisplayList( GuiState_st* guiState )
+{
+    Page_st  parentPage = guiState->page ;
+    uint8_t  offset ;
+    bool     update ;
+    uint8_t  cmd ;
+    bool     exit ;
+
+    guiState->page.num   = guiState->layout.list.pageNum ;
+    guiState->page.ptr   = (uint8_t*)uiPageTable[ guiState->page.num ] ;
+
+    guiState->page.index = 0 ;
+
+    guiState->layout.list.displayingList = true ;
+    guiState->layout.list.index          = 0 ;
+
+    update           = guiState->update ;
+    guiState->update = false ;
+
+    // go to the start of the list - entry at offset position
+    offset = 0 ;
+    while( offset < guiState->layout.list.offset )
+    {
+        cmd = guiState->page.ptr[ guiState->page.index ] ;
+
+        if( cmd == GUI_CMD_LINE_END )
+        {
+            offset++ ;
+        }
+        else
+        {
+            if( cmd == GUI_CMD_PAGE_END )
+            {
+                offset++ ;
+                break ;
+            }
+        }
+
+        guiState->page.index++ ;
+
+    }
+
+    LineStart( guiState );
+
+    exit = false ;
+    while( !exit && ( guiState->page.index < MAX_NUM_PAGE_BYTES ) )
+    {
+        cmd = guiState->page.ptr[ guiState->page.index ] ;
+        guiState->page.index++ ;
+
+        if( cmd < GUI_CMD_DATA_AREA )
+        {
+            exit = ui_GuiCmd_Table[ cmd ]( guiState );
+        }
+
+        if( guiState->layout.list.index == guiState->layout.list.numOfDisplayedLines )
+        {
+            break ;
+        }
+
+    }
+
+    guiState->update = update ;
+
+    guiState->layout.list.displayingList = false ;
+
+    guiState->page.renderPage  = true ;
+    parentPage.renderPage     |= guiState->page.renderPage ;
+    guiState->page             = parentPage ;
+
 }
 
 static bool GuiCmd_Link( GuiState_st* guiState )
@@ -798,6 +924,17 @@ static bool GuiCmd_Link( GuiState_st* guiState )
     bool    pageEnd = false ;
 
     linkNum = GuiCmd_LdValUI( guiState );
+
+    if( guiState->layout.list.displayingList )
+    {
+        if( guiState->inEventArea )
+        {
+            if( guiState->layout.list.index == guiState->layout.list.selection )
+            {
+                guiState->layout.link.pageNum = linkNum ;
+            }
+        }
+    }
 
     return pageEnd ;
 }
@@ -1096,6 +1233,8 @@ static bool GuiCmd_DispDgbVal( GuiState_st* guiState )
 
     ui_ColorLoad( &color , guiState->layout.style.colorFG );
 
+    pos.y = guiState->layout.line.textY ;
+
     gfx_print( &pos                             ,
                guiState->layout.style.font.size ,
                guiState->layout.style.align     ,
@@ -1218,37 +1357,69 @@ static void GuiCmd_AdvToNextCmd( GuiState_st* guiState )
 
 static void GuiCmd_Print( GuiState_st* guiState , Color_st color , char* scriptPtr )
 {
-    guiState->layout.itemPos  = gfx_print( &guiState->layout.line.pos       ,
+    Pos_st pos = guiState->layout.line.pos ;
+
+    pos.y = guiState->layout.line.textY ;
+
+    guiState->layout.itemPos  = gfx_print( &pos                             ,
                                            guiState->layout.style.font.size ,
                                            guiState->layout.style.align     ,
-                                           &color , scriptPtr );
+                                           &color , scriptPtr                 );
     guiState->page.renderPage = true ;
 
 }
-/*
+
+static void GuiCmd_PrintStr( GuiState_st* guiState , char* scriptPtr )
+{
+    Pos_st   pos      = guiState->layout.line.pos ;
+    Color_st color_fg ;
+
+    ui_ColorLoad( &color_fg , guiState->layout.style.colorFG );
+
+    pos.y = guiState->layout.line.textY ;
+
+    guiState->layout.itemPos = gfx_print( &pos                             ,
+                                          guiState->layout.style.font.size ,
+                                          guiState->layout.style.align     ,
+                                          &color_fg , scriptPtr );
+
+    guiState->layout.line.pos.x += guiState->layout.itemPos.w ;
+
+}
+
 static void GuiCmd_PrintLine( GuiState_st* guiState , char* scriptPtr )
 {
     Pos_st   pos      = guiState->layout.line.pos ;
-    Color_st color_bg ;
     Color_st color_fg ;
 
-    pos.w  = SCREEN_WIDTH ;
-    pos.h  = guiState->layout.line.height ;
-    pos.y -= pos.h ;
-
-    ui_ColorLoad( &color_bg , guiState->layout.style.colorBG );
     ui_ColorLoad( &color_fg , guiState->layout.style.colorFG );
 
-    gfx_drawRect( &pos , &color_bg , true );
+    BlankLine( guiState );
 
-    guiState->layout.itemPos  = gfx_print( &guiState->layout.line.pos       ,
+    pos.y = guiState->layout.line.textY ;
+
+    guiState->layout.itemPos  = gfx_print( &pos                             ,
                                            guiState->layout.style.font.size ,
                                            guiState->layout.style.align     ,
                                            &color_fg , scriptPtr );
     guiState->page.renderPage = true ;
 
 }
-*/
+
+static void BlankLine( GuiState_st* guiState )
+{
+    Pos_st   pos      = guiState->layout.line.pos ;
+    Color_st color_bg ;
+
+    pos.w = SCREEN_WIDTH ;
+    pos.h = guiState->layout.line.height ;
+
+    ui_ColorLoad( &color_bg , guiState->layout.style.colorBG );
+
+    gfx_drawRect( &pos , &color_bg , true );
+
+}
+
 void ui_ColorLoad( Color_st* color , ColorSelector_en colorSelector )
 {
     ColorSelector_en colorSel = colorSelector ;

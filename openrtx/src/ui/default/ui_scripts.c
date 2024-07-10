@@ -109,7 +109,7 @@ static const uint8_t Page_MainMem[] =
     GUI_CMD_PAGE_END ,//@@@KL
 */
     ALIGN_CENTER ,
-    GUI_CMD_EVENT_START , ST_VAL( EVENT_TYPE_STATUS ) , ST_VAL( EVENT_STATUS_DISPLAY_TIME_TICK ) ,
+    EVENT_START( EVENT_TYPE_STATUS , EVENT_STATUS_DISPLAY_TIME_TICK ) ,
       BG_COLOR( RED ) ,
       GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_TIME ) ,
     GUI_CMD_EVENT_END ,
@@ -149,10 +149,7 @@ static const uint8_t Page_ModeMem[] =
 
 static const uint8_t Page_MenuTop[] =
 {
-    TITLE , 'M','e','n','u' , NULL_CH ,
-    GOTO_TEXT_LINE( GUI_LINE_1 ) ,
-    LOAD_STYLE( GUI_STYLE_1 ) ,
-    ALIGN_LEFT ,
+    TITLE , 'M','e','n','u' , NULL_CH , LINE_END ,
     EVENT_START( EVENT_TYPE_KBD , EVENT_STATUS_ALL_KEYS ) ,
       LIST( PAGE_MENU_TOP_LIST , 3 ) ,
     EVENT_END ,

@@ -73,7 +73,7 @@ bool ui_pushEvent(const uint8_t type, const uint32_t data);
 void ui_terminate();
 
 extern void ui_InitGuiStateLayoutList( Layout_st* layout );
-extern void ui_InitGuiStateLayoutLinks( Layout_st* layout );
+extern void ui_InitGuiStateLayoutLink( Layout_st* layout );
 extern void ui_InitGuiStateLayoutVars( Layout_st* layout );
 
 #endif /* UI_H */

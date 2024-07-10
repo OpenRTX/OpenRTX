@@ -425,7 +425,6 @@ static void ui_InitGuiStatePage( Page_st* page )
     page->level      = 0 ;
     page->ptr        = (uint8_t*)uiPageTable[ 0 ] ;
     page->index      = 0 ;
-    page->cmdIndex   = 0 ;
     page->renderPage = false ;
 }
 
@@ -448,7 +447,8 @@ static void ui_InitGuiStateLayout( Layout_st* layout )
     layout->style.colorFG                          = SCREEN_INITIAL_COLOR_FG ;
 
     layout->lines[ GUI_LINE_TOP ].pos.x            = SCREEN_HORIZONTAL_PAD ;
-    layout->lines[ GUI_LINE_TOP ].pos.y            = SCREEN_TOP_HEIGHT - SCREEN_STATUS_V_PAD - SCREEN_TEXT_V_OFFSET ;
+    layout->lines[ GUI_LINE_TOP ].pos.y            = SCREEN_STATUS_V_PAD + 2 ;
+    layout->lines[ GUI_LINE_TOP ].textY            = SCREEN_TOP_HEIGHT - SCREEN_STATUS_V_PAD - SCREEN_TEXT_V_OFFSET ;
     layout->lines[ GUI_LINE_TOP ].height           = SCREEN_TOP_HEIGHT ;
     layout->styles[ GUI_STYLE_TOP ].align          = SCREEN_TOP_ALIGN ;
     layout->styles[ GUI_STYLE_TOP ].font.size      = SCREEN_TOP_FONT_SIZE ;
@@ -457,7 +457,8 @@ static void ui_InitGuiStateLayout( Layout_st* layout )
     layout->styles[ GUI_STYLE_TOP ].colorFG        = SCREEN_INITIAL_COLOR_FG ;
 
     layout->lines[ GUI_LINE_1 ].pos.x              = SCREEN_HORIZONTAL_PAD ;
-    layout->lines[ GUI_LINE_1 ].pos.y              = layout->lines[ GUI_LINE_TOP ].pos.y + SCREEN_TOP_PAD + SCREEN_LINE_1_HEIGHT ;
+    layout->lines[ GUI_LINE_1 ].pos.y              = layout->lines[ GUI_LINE_TOP ].pos.y + layout->lines[ GUI_LINE_TOP ].height ;
+    layout->lines[ GUI_LINE_1 ].textY              = layout->lines[ GUI_LINE_TOP ].textY + SCREEN_TOP_PAD + SCREEN_LINE_1_HEIGHT ;
     layout->lines[ GUI_LINE_1 ].height             = SCREEN_LINE_1_HEIGHT ;
     layout->styles[ GUI_STYLE_1 ].align            = SCREEN_LINE_ALIGN ;
     layout->styles[ GUI_STYLE_1 ].font.size        = SCREEN_LINE_1_FONT_SIZE ;
@@ -466,7 +467,8 @@ static void ui_InitGuiStateLayout( Layout_st* layout )
     layout->styles[ GUI_STYLE_1 ].colorFG          = SCREEN_INITIAL_COLOR_FG ;
 
     layout->lines[ GUI_LINE_2 ].pos.x              = SCREEN_HORIZONTAL_PAD ;
-    layout->lines[ GUI_LINE_2 ].pos.y              = layout->lines[ GUI_LINE_1 ].pos.y + SCREEN_LINE_2_HEIGHT ;
+    layout->lines[ GUI_LINE_2 ].pos.y              = layout->lines[ GUI_LINE_1 ].pos.y + layout->lines[ GUI_LINE_1 ].height ;
+    layout->lines[ GUI_LINE_2 ].textY              = layout->lines[ GUI_LINE_1 ].textY + SCREEN_LINE_2_HEIGHT ;
     layout->lines[ GUI_LINE_2 ].height             = SCREEN_LINE_2_HEIGHT ;
     layout->styles[ GUI_STYLE_2 ].align            = SCREEN_LINE_ALIGN ;
     layout->styles[ GUI_STYLE_2 ].font.size        = SCREEN_LINE_2_FONT_SIZE ;
@@ -475,7 +477,8 @@ static void ui_InitGuiStateLayout( Layout_st* layout )
     layout->styles[ GUI_STYLE_2 ].colorFG          = SCREEN_INITIAL_COLOR_FG ;
 
     layout->lines[ GUI_LINE_3 ].pos.x              = SCREEN_HORIZONTAL_PAD ;
-    layout->lines[ GUI_LINE_3 ].pos.y              = layout->lines[ GUI_LINE_2 ].pos.y + SCREEN_LINE_3_HEIGHT ;
+    layout->lines[ GUI_LINE_3 ].pos.y              = layout->lines[ GUI_LINE_2 ].pos.y + layout->lines[ GUI_LINE_2 ].height ;
+    layout->lines[ GUI_LINE_3 ].textY              = layout->lines[ GUI_LINE_2 ].textY + SCREEN_LINE_3_HEIGHT ;
     layout->lines[ GUI_LINE_3 ].height             = SCREEN_LINE_3_HEIGHT ;
     layout->styles[ GUI_STYLE_3 ].align            = SCREEN_LINE_ALIGN ;
     layout->styles[ GUI_STYLE_3 ].font.size        = SCREEN_LINE_3_FONT_SIZE ;
@@ -483,17 +486,9 @@ static void ui_InitGuiStateLayout( Layout_st* layout )
     layout->styles[ GUI_STYLE_3 ].colorBG          = SCREEN_INITIAL_COLOR_BG ;
     layout->styles[ GUI_STYLE_3 ].colorFG          = SCREEN_INITIAL_COLOR_FG ;
 
-    layout->lines[ GUI_LINE_3_LARGE ].pos.x        = SCREEN_HORIZONTAL_PAD ;
-    layout->lines[ GUI_LINE_3_LARGE ].pos.y        = layout->lines[ GUI_LINE_2 ].pos.y + SCREEN_LINE_3_LARGE_HEIGHT ;
-    layout->lines[ GUI_LINE_3_LARGE ].height       = SCREEN_LINE_3_LARGE_HEIGHT ;
-    layout->styles[ GUI_STYLE_3_LARGE ].align      = SCREEN_LINE_ALIGN ;
-    layout->styles[ GUI_STYLE_3_LARGE ].font.size  = SCREEN_LINE_3_LARGE_FONT_SIZE ;
-    layout->styles[ GUI_STYLE_3_LARGE ].symbolSize = SCREEN_LINE_3_SYMBOL_SIZE ;
-    layout->styles[ GUI_STYLE_3_LARGE ].colorBG    = SCREEN_INITIAL_COLOR_BG ;
-    layout->styles[ GUI_STYLE_3_LARGE ].colorFG    = SCREEN_INITIAL_COLOR_FG ;
-
     layout->lines[ GUI_LINE_4 ].pos.x              = SCREEN_HORIZONTAL_PAD ;
-    layout->lines[ GUI_LINE_4 ].pos.y              = layout->lines[ GUI_LINE_3 ].pos.y + SCREEN_LINE_4_HEIGHT ;
+    layout->lines[ GUI_LINE_4 ].pos.y              = layout->lines[ GUI_LINE_3 ].pos.y + layout->lines[ GUI_LINE_3 ].height ;
+    layout->lines[ GUI_LINE_4 ].textY              = layout->lines[ GUI_LINE_3 ].textY + SCREEN_LINE_4_HEIGHT ;
     layout->lines[ GUI_LINE_4 ].height             = SCREEN_LINE_4_HEIGHT ;
     layout->styles[ GUI_STYLE_4 ].align            = SCREEN_LINE_ALIGN ;
     layout->styles[ GUI_STYLE_4 ].font.size        = SCREEN_LINE_4_FONT_SIZE ;
@@ -502,7 +497,8 @@ static void ui_InitGuiStateLayout( Layout_st* layout )
     layout->styles[ GUI_STYLE_4 ].colorFG          = SCREEN_INITIAL_COLOR_FG ;
 
     layout->lines[ GUI_LINE_5 ].pos.x              = SCREEN_HORIZONTAL_PAD ;
-    layout->lines[ GUI_LINE_5 ].pos.y              = layout->lines[ GUI_LINE_4 ].pos.y + SCREEN_LINE_5_HEIGHT ;
+    layout->lines[ GUI_LINE_5 ].pos.y              = layout->lines[ GUI_LINE_4 ].pos.y + layout->lines[ GUI_LINE_4 ].height ;
+    layout->lines[ GUI_LINE_5 ].textY              = layout->lines[ GUI_LINE_4 ].textY + SCREEN_LINE_5_HEIGHT ;
     layout->lines[ GUI_LINE_5 ].height             = SCREEN_LINE_5_HEIGHT ;
     layout->styles[ GUI_STYLE_5 ].align            = SCREEN_LINE_ALIGN ;
     layout->styles[ GUI_STYLE_5 ].font.size        = SCREEN_LINE_5_FONT_SIZE ;
@@ -511,13 +507,24 @@ static void ui_InitGuiStateLayout( Layout_st* layout )
     layout->styles[ GUI_STYLE_5 ].colorFG          = SCREEN_INITIAL_COLOR_FG ;
 
     layout->lines[ GUI_LINE_BOTTOM ].pos.x         = SCREEN_HORIZONTAL_PAD ;
-    layout->lines[ GUI_LINE_BOTTOM ].pos.y         = SCREEN_HEIGHT - SCREEN_BOTTOM_PAD - SCREEN_STATUS_V_PAD - SCREEN_TEXT_V_OFFSET ;
+    layout->lines[ GUI_LINE_BOTTOM ].pos.y         = layout->lines[ GUI_LINE_5 ].pos.y + layout->lines[ GUI_LINE_5 ].height ;
+    layout->lines[ GUI_LINE_BOTTOM ].textY         = SCREEN_HEIGHT - SCREEN_BOTTOM_PAD - SCREEN_STATUS_V_PAD - SCREEN_TEXT_V_OFFSET ;
     layout->lines[ GUI_LINE_BOTTOM ].height        = SCREEN_BOTTOM_HEIGHT ;
     layout->styles[ GUI_STYLE_BOTTOM ].align       = SCREEN_LINE_ALIGN ;
     layout->styles[ GUI_STYLE_BOTTOM ].font.size   = SCREEN_BOTTOM_FONT_SIZE ;
     layout->styles[ GUI_STYLE_BOTTOM ].symbolSize  = SCREEN_BOTTOM_SYMBOL_SIZE ;
     layout->styles[ GUI_STYLE_BOTTOM ].colorBG     = SCREEN_INITIAL_COLOR_BG ;
     layout->styles[ GUI_STYLE_BOTTOM ].colorFG     = SCREEN_INITIAL_COLOR_FG ;
+
+    layout->lines[ GUI_LINE_3_LARGE ].pos.x        = SCREEN_HORIZONTAL_PAD ;
+    layout->lines[ GUI_LINE_3_LARGE ].pos.y        = layout->lines[ GUI_LINE_2 ].pos.y + layout->lines[ GUI_LINE_2 ].height ;
+    layout->lines[ GUI_LINE_3_LARGE ].textY        = layout->lines[ GUI_LINE_2 ].textY + SCREEN_LINE_3_LARGE_HEIGHT ;
+    layout->lines[ GUI_LINE_3_LARGE ].height       = SCREEN_LINE_3_LARGE_HEIGHT ;
+    layout->styles[ GUI_STYLE_3_LARGE ].align      = SCREEN_LINE_ALIGN ;
+    layout->styles[ GUI_STYLE_3_LARGE ].font.size  = SCREEN_LINE_3_LARGE_FONT_SIZE ;
+    layout->styles[ GUI_STYLE_3_LARGE ].symbolSize = SCREEN_LINE_3_SYMBOL_SIZE ;
+    layout->styles[ GUI_STYLE_3_LARGE ].colorBG    = SCREEN_INITIAL_COLOR_BG ;
+    layout->styles[ GUI_STYLE_3_LARGE ].colorFG    = SCREEN_INITIAL_COLOR_FG ;
 
     layout->styles[ GUI_STYLE_GG ].colorBG         = COLOR_GG_BG ;
     layout->styles[ GUI_STYLE_GG ].colorFG         = COLOR_GG_FG ;
@@ -556,7 +563,7 @@ static void ui_InitGuiStateLayout( Layout_st* layout )
     layout->mode_font_small.size                   = SCREEN_MODE_FONT_SIZE_SMALL ;
 
     ui_InitGuiStateLayoutList( layout );
-    ui_InitGuiStateLayoutLinks( layout );
+    ui_InitGuiStateLayoutLink( layout );
     ui_InitGuiStateLayoutVars( layout );
 
 }
@@ -571,24 +578,14 @@ void ui_InitGuiStateLayoutList( Layout_st* layout )
     layout->list.displayingList      = false ;
     layout->list.numOfDisplayedLines = 0 ;
     layout->list.numOfListLines      = 0 ;
-    layout->list.lineIndex     		 = 0 ;
-    layout->list.lineSelection       = 0 ;
+    layout->list.index     		     = 0 ;
+    layout->list.selection           = 0 ;
+    layout->list.offset              = 0 ;
 }
 
-void ui_InitGuiStateLayoutLinks( Layout_st* layout )
+void ui_InitGuiStateLayoutLink( Layout_st* layout )
 {
-    uint8_t index ;
-
-    for( index = 0 ; index < GUI_LINK_NUM_OF ; index++ )
-    {
-        layout->links[ index ].type = LINK_TYPE_NONE ;
-        layout->links[ index ].num  = 0 ;
-        layout->links[ index ].amt  = 0 ;
-    }
-
-    layout->linkNumOf = 0 ;
-    layout->linkIndex = 0 ;
-
+    layout->link.pageNum = PAGE_INITIAL ;
 }
 
 void ui_InitGuiStateLayoutVars( Layout_st* layout )

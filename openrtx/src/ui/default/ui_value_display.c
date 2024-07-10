@@ -258,6 +258,7 @@ static void GuiVal_LockState( GuiState_st* guiState )
 
 static void GuiVal_ModeInfo( GuiState_st* guiState )
 {
+    Pos_st    pos ;
     Line_st*  line1           = &guiState->layout.lines[ GUI_LINE_1 ] ;
     Style_st* style1          = &guiState->layout.styles[ GUI_STYLE_1 ] ;
     Line_st*  line2           = &guiState->layout.lines[ GUI_LINE_2 ] ;
@@ -324,15 +325,17 @@ static void GuiVal_ModeInfo( GuiState_st* guiState )
             }
 
             // Print Bandwidth, Tone and encdec info
+            pos   = line2->pos ;
+            pos.y = line2->textY ;
             if( tone_tx_enable || tone_rx_enable )
             {
-                gfx_print( &line2->pos , style2->font.size , GFX_ALIGN_CENTER ,
+                gfx_print( &pos , style2->font.size , GFX_ALIGN_CENTER ,
                            &color_fg , "%s %4.1f %s" , bw_str ,
                            ctcss_tone[ last_state.channel.fm.txTone ] / 10.0f , encdec_str );
             }
             else
             {
-                gfx_print( &line2->pos , style2->font.size , GFX_ALIGN_CENTER ,
+                gfx_print( &pos , style2->font.size , GFX_ALIGN_CENTER ,
                            &color_fg , "%s" , bw_str );
             }
             break ;
@@ -340,7 +343,9 @@ static void GuiVal_ModeInfo( GuiState_st* guiState )
         case OPMODE_DMR :
         {
             // Print Contact
-            gfx_print( &line2->pos , style2->font.size , GFX_ALIGN_CENTER ,
+            pos   = line2->pos ;
+            pos.y = line2->textY ;
+            gfx_print( &pos , style2->font.size , GFX_ALIGN_CENTER ,
                        &color_fg , "%s" , last_state.contact.name );
             break ;
         }
@@ -352,32 +357,40 @@ static void GuiVal_ModeInfo( GuiState_st* guiState )
             if( rtxStatus.lsfOk )
             {
                 // Destination address
-                gfx_drawSymbol( &line2->pos , style2->symbolSize , GFX_ALIGN_LEFT ,
+                pos   = line2->pos ;
+                pos.y = line2->textY ;
+                gfx_drawSymbol( &pos , style2->symbolSize , GFX_ALIGN_LEFT ,
                                 &color_fg , SYMBOL_CALL_RECEIVED );
 
-                gfx_print( &line2->pos , style2->font.size , GFX_ALIGN_CENTER ,
+                gfx_print( &pos , style2->font.size , GFX_ALIGN_CENTER ,
                            &color_fg , "%s" , rtxStatus.M17_dst );
 
                 // Source address
-                gfx_drawSymbol( &line1->pos , style1->symbolSize , GFX_ALIGN_LEFT ,
+                pos   = line1->pos ;
+                pos.y = line1->textY ;
+                gfx_drawSymbol( &pos , style1->symbolSize , GFX_ALIGN_LEFT ,
                                 &color_fg , SYMBOL_CALL_MADE );
 
-                gfx_print( &line1->pos , style2->font.size , GFX_ALIGN_CENTER ,
+                gfx_print( &pos , style2->font.size , GFX_ALIGN_CENTER ,
                            &color_fg , "%s" , rtxStatus.M17_src );
 
                 // RF link (if present)
                 if( rtxStatus.M17_link[0] != '\0' )
                 {
-                    gfx_drawSymbol( &line4->pos , style3->symbolSize , GFX_ALIGN_LEFT ,
+                    pos   = line4->pos ;
+                    pos.y = line4->textY ;
+                    gfx_drawSymbol( &pos , style3->symbolSize , GFX_ALIGN_LEFT ,
                                     &color_fg , SYMBOL_ACCESS_POINT );
-                    gfx_print( &line4->pos , style2->font.size , GFX_ALIGN_CENTER ,
+                    gfx_print( &pos , style2->font.size , GFX_ALIGN_CENTER ,
                                &color_fg , "%s" , rtxStatus.M17_link );
                 }
 
                 // Reflector (if present)
                 if( rtxStatus.M17_refl[0] != '\0' )
                 {
-                    gfx_drawSymbol( &line3->pos , style4->symbolSize , GFX_ALIGN_LEFT ,
+                    pos   = line3->pos ;
+                    pos.y = line3->textY ;
+                    gfx_drawSymbol( &pos , style4->symbolSize , GFX_ALIGN_LEFT ,
                                     &color_fg , SYMBOL_NETWORK );
                     gfx_print( &line3->pos , style2->font.size , GFX_ALIGN_CENTER ,
                                &color_fg , "%s" , rtxStatus.M17_refl );
@@ -402,7 +415,9 @@ static void GuiVal_ModeInfo( GuiState_st* guiState )
                     }
                 }
 
-                gfx_print( &line2->pos , style2->font.size , GFX_ALIGN_CENTER ,
+                pos   = line2->pos ;
+                pos.y = line2->textY ;
+                gfx_print( &pos , style2->font.size , GFX_ALIGN_CENTER ,
                            &color_fg , "M17 #%s" , dst );
             }
             break ;
@@ -413,6 +428,7 @@ static void GuiVal_ModeInfo( GuiState_st* guiState )
 
 static void GuiVal_BankChannel( GuiState_st* guiState )
 {
+    Pos_st    pos ;
     Line_st*  line1       = &guiState->layout.lines[ GUI_LINE_1 ] ;
     Style_st* style1      = &guiState->layout.styles[ GUI_STYLE_1 ] ;
     uint16_t bank_enabled = ( last_state.bank_enabled ) ? last_state.bank : 0 ;
@@ -421,7 +437,9 @@ static void GuiVal_BankChannel( GuiState_st* guiState )
     ui_ColorLoad( &color_fg , COLOR_FG );
 
     // Print Bank number, channel number and Channel name
-    gfx_print( &line1->pos ,
+    pos   = line1->pos ;
+    pos.y = line1->textY ;
+    gfx_print( &pos ,
                style1->font.size , GFX_ALIGN_CENTER ,
                &color_fg , "%01d-%03d: %.12s" ,
                bank_enabled , last_state.channel_index + 1 , last_state.channel.name );
@@ -429,6 +447,7 @@ static void GuiVal_BankChannel( GuiState_st* guiState )
 
 static void GuiVal_Frequency( GuiState_st* guiState )
 {
+    Pos_st    pos ;
     Line_st*  line3Large  = &guiState->layout.lines[ GUI_LINE_3_LARGE ] ;
     Style_st* style3Large = &guiState->layout.styles[ GUI_STYLE_3_LARGE ] ;
 
@@ -443,7 +462,9 @@ static void GuiVal_Frequency( GuiState_st* guiState )
         ui_ColorLoad( &color_fg , COLOR_FG );
 
         // Print big numbers frequency
-        gfx_print( &line3Large->pos , style3Large->font.size , GFX_ALIGN_CENTER ,
+        pos   = line3Large->pos ;
+        pos.y = line3Large->textY ;
+        gfx_print( &pos , style3Large->font.size , GFX_ALIGN_CENTER ,
                    &color_fg , "%.7g" , (float)frequency / 1000000.0f );
     }
 
@@ -1038,6 +1059,7 @@ static void GuiVal_Stubbed( GuiState_st* guiState )
 
 static void GuiVal_Disp_Val( GuiState_st* guiState , char* valueBuffer )
 {
+    Pos_st   pos        = guiState->layout.line.pos ;
     Color_st color_text ;
 
     ui_ColorLoad( &color_text , guiState->layout.style.colorFG );
@@ -1047,10 +1069,12 @@ static void GuiVal_Disp_Val( GuiState_st* guiState , char* valueBuffer )
         GuiVal_Disp_ClearVarPos( guiState );
     }
 
-    guiState->layout.itemPos = gfx_print( &guiState->layout.line.pos ,
-                               guiState->layout.style.font.size      ,
-                               guiState->layout.style.align          ,
-                               &color_text , valueBuffer               );
+    pos.y = guiState->layout.line.textY ;
+
+    guiState->layout.itemPos = gfx_print( &pos                  ,
+                               guiState->layout.style.font.size ,
+                               guiState->layout.style.align     ,
+                               &color_text , valueBuffer          );
 
     GuiVal_Disp_StoreVarPos( guiState );
 
@@ -1063,7 +1087,7 @@ static void GuiVal_Disp_Bat( GuiState_st* guiState , uint16_t percentage )
 
     pos.w = ( SCREEN_WIDTH / 9 ) + ( SCREEN_WIDTH / 24 ) ;
     pos.h = guiState->layout.line.height - ( guiState->layout.status_v_pad * 2 ) ;
-    pos.y = ( guiState->layout.line.pos.y - guiState->layout.line.height ) +
+    pos.y = guiState->layout.line.pos.y +
             ( guiState->layout.status_v_pad * 2 ) ;
 
     switch( guiState->layout.style.align )
