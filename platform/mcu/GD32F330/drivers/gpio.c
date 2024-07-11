@@ -17,6 +17,7 @@
 
 #include <gd32f3x0.h>
 #include <peripherals/gpio.h>
+#include <gpio-native.h>
 
 void gpio_af_set(uint32_t gpio_periph, uint32_t alt_func_num, uint32_t pin)
 {
@@ -112,7 +113,7 @@ void gpio_mode_set(uint32_t gpio_periph, uint32_t mode, uint32_t pull_up_down, u
     GPIO_PUD(gpio_periph) = pupd;
 }
 
-void gpio_setMode(void *port, uint8_t pin, enum Mode mode)
+void gpio_setMode(const void *port, const uint8_t pin, const uint16_t mode)
 {
     gpio_type *p = (gpio_type *)(port);
     p->cfgr  &= ~(3 << (pin*2));
@@ -142,7 +143,7 @@ void gpio_setMode(void *port, uint8_t pin, enum Mode mode)
             p->pull  |= 0x02 << (pin*2);
             break;
 
-        case INPUT_ANALOG:
+        case ANALOG:
             // (MODE=11 TYPE=0 PUP=00)
             p->cfgr  |= 0x03 << (pin*2);
             p->omode |= 0x00 << pin;
@@ -203,29 +204,8 @@ void gpio_setAlternateFunction(void *port, uint8_t pin, uint8_t afNum)
     }
 }
 
-void gpio_setOutputSpeed(void *port, uint8_t pin, enum Speed spd)
+void gpio_setOutputSpeed(const void *port, const uint8_t pin, const enum Speed spd)
 {
     ((gpio_type *)(port))->odrvr &= ~(3 << (pin*2));   // Clear old value
     ((gpio_type *)(port))->odrvr |= spd << (pin*2);    // Set new value
-}
-
-void gpio_setPin(void *port, uint8_t pin)
-{
-    ((gpio_type *)(port))->scr = (1 << pin);
-}
-
-void gpio_clearPin(void *port, uint8_t pin)
-{
-    ((gpio_type *)(port))->scr = (1 << (pin + 16));
-}
-
-void gpio_togglePin(void *port, uint8_t pin)
-{
-    ((gpio_type *)(port))->odt ^= (1 << pin);
-}
-
-uint8_t gpio_readPin(const void *port, uint8_t pin)
-{
-    gpio_type *p = (gpio_type *)(port);
-    return ((p->idt & (1 << pin)) != 0) ? 1 : 0;
 }
