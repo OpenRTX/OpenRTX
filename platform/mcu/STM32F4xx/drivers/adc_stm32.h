@@ -1,9 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 - 2024 by Federico Amedeo Izzo IU2NUO,             *
- *                                Niccolò Izzo IU2KIN                      *
- *                                Frederik Saraci IU2NRO                   *
- *                                Silvano Seva IU2KWO                      *
- *                                Mathis Schmieder DB9MAT                  *
+ *   Copyright (C) 2024 by Silvano Seva IU2KWO                             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -19,40 +15,52 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef MCP4551_H
-#define MCP4551_H
+#ifndef ADC_STM32_H
+#define ADC_STM32_H
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <datatypes.h>
-#include <peripherals/i2c.h>
+#include <peripherals/adc.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * Initialize the MCP4551 device.
+ * Define an instance of an STM32 ADC device driver.
  *
- * @param i2c: driver managing the I2C bus the chip is connected to.
- * @param devAddr: I2C device address of the chip.
- * @return zero on success, a negative error code otherwise.
+ * @param name: instance name.
+ * @param periph: pointer to hardware peripheral.
+ * @param mutx: pointer to mutex for concurrent access, can be NULL.
+ * @param vref: ADC reference voltage, in uV.
  */
-int mcp4551_init(const struct i2cDevice *i2c, const uint8_t devAddr);
+#define ADC_STM32_DEVICE_DEFINE(name, periph, mutx, vref) \
+extern uint16_t adcStm32_sample(const struct Adc *adc,    \
+                                const uint32_t channel);  \
+const struct Adc name =                                   \
+{                                                         \
+    .sample     = &adcStm32_sample,                       \
+    .priv       = periph,                                 \
+    .mutex      = mutx,                                   \
+    .countsTouV = ADC_COUNTS_TO_UV(vref, 12)              \
+};
 
 /**
- * Set the MCP4551 wiper to a given position.
+ * Initialize an STM32 ADC peripheral.
  *
- * @param i2c: driver managing the I2C bus the chip is connected to.
- * @param devAddr: I2C device address of the chip.
- * @param value: new wiper position.
+ * @param adc: pointer to ADC device handle.
  * @return zero on success, a negative error code otherwise.
  */
-int mcp4551_setWiper(const struct i2cDevice *i2c, const uint8_t devAddr,
-                     const uint16_t value);
+int adcStm32_init(const struct Adc *adc);
+
+/**
+ * Shut down an STM32 ADC peripheral.
+ *
+ * @param adc: pointer to ADC device handle.
+ * @return zero on success, a negative error code otherwise.
+ */
+void adcStm32_terminate(const struct Adc *adc);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* MCP4551_H */
+#endif /* ADC_STM32_H */

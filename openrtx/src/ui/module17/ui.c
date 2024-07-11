@@ -100,13 +100,13 @@ const char *m17_items[] =
 
 const char *module17_items[] =
 {
-    "TX Softpot",
-    "RX Softpot",
-    "TX Phase",
-    "RX Phase",
     "Mic Gain",
     "PTT In",
-    "PTT Out"
+    "PTT Out",
+    "TX Phase",
+    "RX Phase",
+    "TX Softpot",
+    "RX Softpot"
 };
 
 #ifdef CONFIG_GPS
@@ -122,7 +122,9 @@ const char *info_items[] =
 {
     "",
     "Used heap",
-    "Hw Version"
+    "Hw Version",
+    "HMI",
+    "BB Tuning Pot",
 };
 
 const char *authors[] =
@@ -386,11 +388,16 @@ static void _ui_changeMicGain(int variation)
 static void _ui_menuUp(uint8_t menu_entries)
 {
     uint8_t maxEntries = menu_entries - 1;
-    uint8_t ver = platform_getHwInfo()->hw_version;
+    const hwInfo_t* hwinfo = platform_getHwInfo();
 
     // Hide the "shutdown" main menu entry for versions lower than 0.1e
-    if((ver < 1) && (state.ui_screen == MENU_TOP))
+    if((hwinfo->hw_version < 1) && (state.ui_screen == MENU_TOP))
         maxEntries -= 1;
+
+    // Hide the softpot menu entries if hardware does not have them
+    uint8_t softpot = hwinfo->flags & MOD17_FLAGS_SOFTPOT;
+    if((softpot == 0) && (state.ui_screen == SETTINGS_MODULE17))
+        maxEntries -= 2;
 
     if(ui_state.menu_selected > 0)
         ui_state.menu_selected -= 1;
@@ -401,11 +408,16 @@ static void _ui_menuUp(uint8_t menu_entries)
 static void _ui_menuDown(uint8_t menu_entries)
 {
    uint8_t maxEntries = menu_entries - 1;
-   uint8_t ver = platform_getHwInfo()->hw_version;
+   const hwInfo_t* hwinfo = platform_getHwInfo();
 
     // Hide the "shutdown" main menu entry for versions lower than 0.1e
-    if((ver < 1) && (state.ui_screen == MENU_TOP))
+    if((hwinfo->hw_version < 1) && (state.ui_screen == MENU_TOP))
         maxEntries -= 1;
+
+    // Hide the softpot menu entries if hardware does not have them
+    uint8_t softpot = hwinfo->flags & MOD17_FLAGS_SOFTPOT;
+    if((softpot == 0) && (state.ui_screen == SETTINGS_MODULE17))
+        maxEntries -= 2;
 
     if(ui_state.menu_selected < maxEntries)
         ui_state.menu_selected += 1;

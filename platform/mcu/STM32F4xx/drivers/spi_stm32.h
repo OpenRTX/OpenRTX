@@ -3,7 +3,6 @@
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
- *                                Mathis Schmieder DB9MAT                  *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -19,40 +18,46 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef MCP4551_H
-#define MCP4551_H
+#ifndef SPI_STM32_H
+#define SPI_STM32_H
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <datatypes.h>
-#include <peripherals/i2c.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <peripherals/spi.h>
 
 /**
- * Initialize the MCP4551 device.
+ *  Instantiate an STM32 I2C master device.
  *
- * @param i2c: driver managing the I2C bus the chip is connected to.
- * @param devAddr: I2C device address of the chip.
- * @return zero on success, a negative error code otherwise.
+ * @param name: device name.
+ * @param peripheral: underlying MCU peripheral.
+ * @param mutx: pointer to mutex, or NULL.
  */
-int mcp4551_init(const struct i2cDevice *i2c, const uint8_t devAddr);
+#define SPI_STM32_DEVICE_DEFINE(name, peripheral, mutx)                      \
+extern int spiStm32_transfer(const struct spiDevice *dev, const void *txBuf, \
+                             const size_t txSize, void *rxBuf,               \
+                             const size_t rxSize);                           \
+const struct spiDevice name =                                                \
+{                                                                            \
+    .transfer = &spiStm32_transfer,                                          \
+    .priv     = peripheral,                                                  \
+    .mutex    = mutx                                                         \
+};
 
 /**
- * Set the MCP4551 wiper to a given position.
+ * Initialise an SPI peripheral and driver.
+ * Is left to application code to change the operating mode and alternate function
+ * mapping of the corresponding gpio lines.
  *
- * @param i2c: driver managing the I2C bus the chip is connected to.
- * @param devAddr: I2C device address of the chip.
- * @param value: new wiper position.
+ * @param dev: SPI device descriptor.
+ * @param speed: SPI clock speed.
+ * @param flags: SPI configuration flags.
  * @return zero on success, a negative error code otherwise.
  */
-int mcp4551_setWiper(const struct i2cDevice *i2c, const uint8_t devAddr,
-                     const uint16_t value);
+int spi_init(const struct spiDevice *dev, const uint32_t speed, const uint8_t flags);
 
-#ifdef __cplusplus
-}
-#endif
+/**
+ * Shut down an SPI peripheral and driver.
+ *
+ * @param dev: SPI device descriptor.
+ */
+void spi_terminate(const struct spiDevice *dev);
 
-#endif /* MCP4551_H */
+#endif /* SPI_STM32_H */

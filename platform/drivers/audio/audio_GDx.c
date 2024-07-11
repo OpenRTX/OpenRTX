@@ -20,8 +20,10 @@
 
 #include <interfaces/audio.h>
 #include <peripherals/gpio.h>
+#include <interfaces/radio.h>
 #include <hwconfig.h>
 
+#define PATH(x,y) ((x << 4) | y)
 
 static const uint8_t pathCompatibilityMatrix[9][9] =
 {
@@ -64,17 +66,19 @@ void audio_terminate()
 
 void audio_connect(const enum AudioSource source, const enum AudioSink sink)
 {
-    if(sink == SINK_SPK)
+    if(PATH(source, sink) == PATH(SOURCE_RTX, SINK_SPK))
     {
+        radio_enableAfOutput();
         gpio_setPin(AUDIO_AMP_EN);
     }
 }
 
 void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
 {
-    if(sink == SINK_SPK)
+    if(PATH(source, sink) == PATH(SOURCE_RTX, SINK_SPK))
     {
         gpio_clearPin(AUDIO_AMP_EN);
+        radio_disableAfOutput();
     }
 }
 

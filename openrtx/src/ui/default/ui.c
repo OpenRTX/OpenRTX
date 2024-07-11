@@ -1093,23 +1093,32 @@ static void _ui_textInputReset(char *buf)
 static void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg,
                          bool callsign)
 {
-    if(ui_state.input_position >= max_len)
-        return;
     long long now = getTick();
     // Get currently pressed number key
-    uint8_t num_key = input_getPressedNumber(msg);
+    uint8_t num_key = input_getPressedChar(msg);
+
+    bool key_timeout = ((now - ui_state.last_keypress) >= input_longPressTimeout);
+    bool same_key = ui_state.input_number == num_key;
     // Get number of symbols related to currently pressed key
     uint8_t num_symbols = 0;
     if(callsign)
+    {
         num_symbols = strlen(symbols_ITU_T_E161_callsign[num_key]);
+        if(num_symbols == 0)
+            return;
+    }
     else
         num_symbols = strlen(symbols_ITU_T_E161[num_key]);
+
+    // Return if max length is reached or finished editing last character
+    if((ui_state.input_position >= max_len) || ((ui_state.input_position == (max_len-1)) && (key_timeout || !same_key)))
+        return;
 
     // Skip keypad logic for first keypress
     if(ui_state.last_keypress != 0)
     {
         // Same key pressed and timeout not expired: cycle over chars of current key
-        if((ui_state.input_number == num_key) && ((now - ui_state.last_keypress) < input_longPressTimeout))
+        if(same_key && !key_timeout)
         {
             ui_state.input_set = (ui_state.input_set + 1) % num_symbols;
         }
@@ -1471,7 +1480,7 @@ void ui_updateFSM(bool *sync_rtx)
                         else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
                                 msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
                             _ui_textInputDel(ui_state.new_callsign);
-                        else if(input_isNumberPressed(msg))
+                        else if(input_isCharPressed(msg))
                             _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
                         break;
                     }
@@ -1677,7 +1686,7 @@ void ui_updateFSM(bool *sync_rtx)
                         else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
                                 msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
                             _ui_textInputDel(ui_state.new_callsign);
-                        else if(input_isNumberPressed(msg))
+                        else if(input_isCharPressed(msg))
                             _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
                         break;
                     }
@@ -2258,7 +2267,7 @@ void ui_updateFSM(bool *sync_rtx)
                             {
                                 _ui_textInputDel(ui_state.new_callsign);
                             }
-                            else if(input_isNumberPressed(msg))
+                            else if(input_isCharPressed(msg))
                             {
                                 _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
                             }

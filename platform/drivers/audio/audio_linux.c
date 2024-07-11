@@ -19,7 +19,6 @@
  ***************************************************************************/
 
 #include <interfaces/audio.h>
-#include <peripherals/gpio.h>
 #include <hwconfig.h>
 #include "file_source.h"
 

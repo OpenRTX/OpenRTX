@@ -1,8 +1,9 @@
 /***************************************************************************
- *   Copyright (C) 2023 - 2024 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2021 - 2023 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
+ *                                Mathis Schmieder DB9MAT                  *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -18,60 +19,51 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef STM32_DAC_H
-#define STM32_DAC_H
+#ifndef SSD1309_MOD17_H
+#define SSD1309_MOD17_H
 
-#include <stdbool.h>
 #include <stdint.h>
-#include <stm32f4xx.h>
-#include <interfaces/audio.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * Driver for STM32F4xx DAC peripheral used as audio output stream device.
- * Input data format is signed 16-bit, internally converted to unsigned 12-bit
- * values for compatibility with the hardware.
- *
- * This driver has two instances:
- *
- * - instance 0: DAC_CH1, DMA1_Stream5, TIM6,
- * - instance 1: DAC_CH2, DMA1_Stream6, TIM7
- *
- * The possible configuration for each channel is the idle level for the DAC
- * output, ranging from 0 to 4096. Idle level is passed by value directly in the
- * config field.
+ * Initialize the SSD1309 display driver.
  */
-
-
-enum Stm32DacInstance
-{
-    STM32_DAC_CH1 = 0,
-    STM32_DAC_CH2,
-};
-
-
-extern const struct audioDriver stm32_dac_audio_driver;
-
+void SSD1309_init();
 
 /**
- * Initialize the driver and the peripherals.
- *
- * @param instance: DAC instance number.
- * @param idleLevel: DAC output level when idle.
+ * Shut down the SSD1309 display driver.
  */
-void stm32dac_init(const uint8_t instance, const uint16_t idleLevel);
+void SSD1309_terminate();
 
 /**
- * Shutdown the driver and the peripherals.
+ * Do a partial framebuffer render.
+ *
+ * @param startRow: first row of the partial render.
+ * @param endRow: last row of the partial render.
+ * @param fb: pointer to framebuffer.
  */
-void stm32dac_terminate();
+void SSD1309_renderRows(uint8_t startRow, uint8_t endRow, void *fb);
 
+/**
+ * Render the framebuffer on the screen.
+ *
+ * @param fb: pointer to framebuffer.
+ */
+void SSD1309_render(void *fb);
+
+/**
+ * Set display contrast.
+ *
+ * @param contrast: display contrast level, 0 to 63.
+ */
+void SSD1309_setContrast(uint8_t contrast);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* STM32_DAC_H */
+#endif /* SSD1309_MOD17_H */

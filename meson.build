@@ -78,6 +78,7 @@ openrtx_inc = ['openrtx/include',
                'platform/drivers/ADC',
                'platform/drivers/NVM',
                'platform/drivers/GPS',
+               'platform/drivers/SPI',
                'platform/drivers/USB',
                'platform/drivers/tones',
                'platform/drivers/baseband',
@@ -212,9 +213,13 @@ stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.cpp',
                  'platform/mcu/STM32F4xx/drivers/USART3.cpp',
                  'platform/mcu/STM32F4xx/drivers/flash.c',
                  'platform/mcu/STM32F4xx/drivers/rng.c',
+                 'platform/mcu/STM32F4xx/drivers/i2c_stm32.c',
+                 'platform/mcu/STM32F4xx/drivers/spi_stm32.c',
+                 'platform/mcu/STM32F4xx/drivers/adc_stm32.c',
                  'platform/drivers/audio/stm32_dac.cpp',
                  'platform/drivers/audio/stm32_adc.cpp',
                  'platform/drivers/audio/stm32_pwm.cpp',
+                 'platform/drivers/keyboard/cap1206.c',
                  'platform/mcu/CMSIS/Device/ST/STM32F4xx/Source/system_stm32f4xx.c']
 
 stm32f405_inc = ['platform/mcu/CMSIS/Include',
@@ -450,15 +455,16 @@ dm1801_def += openrtx_def + mk22fn512_def + miosix_cm4f_def
 ## Module 17
 ##
 mod17_src = ['platform/targets/Module17/platform.c',
+             'platform/drivers/display/display_Mod17.c',
              'platform/drivers/display/SH110x_Mod17.c',
-             'platform/drivers/ADC/ADC1_Mod17.c',
+             'platform/drivers/display/SSD1309_Mod17.c',
              'platform/drivers/keyboard/keyboard_Mod17.c',
              'platform/drivers/NVM/nvmem_Mod17.c',
              'platform/drivers/CPS/cps_io_native_Mod17.c',
              'platform/drivers/baseband/radio_Mod17.cpp',
              'platform/drivers/audio/audio_Mod17.c',
              'platform/drivers/audio/MAX9814_Mod17.cpp',
-             'platform/drivers/baseband/MCP4551_Mod17.cpp']
+             'platform/drivers/baseband/MCP4551.c']
 
 mod17_inc = ['platform/targets/Module17']
 mod17_def = {'PLATFORM_MOD17': ''}

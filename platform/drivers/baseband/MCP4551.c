@@ -1,8 +1,9 @@
 /***************************************************************************
- *   Copyright (C) 2023 - 2024 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2021 - 2024 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
+ *                                Mathis Schmieder DB9MAT                  *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -18,60 +19,37 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef STM32_DAC_H
-#define STM32_DAC_H
+#include "MCP4551.h"
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <stm32f4xx.h>
-#include <interfaces/audio.h>
+// Common WIPER values
+#define MCP4551_WIPER_MID   0x080
+#define MCP4551_WIPER_A     0x100
+#define MCP4551_WIPER_B     0x000
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/**
- * Driver for STM32F4xx DAC peripheral used as audio output stream device.
- * Input data format is signed 16-bit, internally converted to unsigned 12-bit
- * values for compatibility with the hardware.
- *
- * This driver has two instances:
- *
- * - instance 0: DAC_CH1, DMA1_Stream5, TIM6,
- * - instance 1: DAC_CH2, DMA1_Stream6, TIM7
- *
- * The possible configuration for each channel is the idle level for the DAC
- * output, ranging from 0 to 4096. Idle level is passed by value directly in the
- * config field.
- */
+// Command definitions (sent to WIPER register)
+#define MCP4551_CMD_WRITE   0x00
+#define MCP4551_CMD_INC     0x04
+#define MCP4551_CMD_DEC     0x08
+#define MCP4551_CMD_READ    0x0C
 
 
-enum Stm32DacInstance
+int mcp4551_init(const struct i2cDevice *i2c, const uint8_t devAddr)
 {
-    STM32_DAC_CH1 = 0,
-    STM32_DAC_CH2,
-};
-
-
-extern const struct audioDriver stm32_dac_audio_driver;
-
-
-/**
- * Initialize the driver and the peripherals.
- *
- * @param instance: DAC instance number.
- * @param idleLevel: DAC output level when idle.
- */
-void stm32dac_init(const uint8_t instance, const uint16_t idleLevel);
-
-/**
- * Shutdown the driver and the peripherals.
- */
-void stm32dac_terminate();
-
-
-#ifdef __cplusplus
+    return mcp4551_setWiper(i2c, devAddr, MCP4551_WIPER_MID);
 }
-#endif
 
-#endif /* STM32_DAC_H */
+int mcp4551_setWiper(const struct i2cDevice *i2c, const uint8_t devAddr,
+                     const uint16_t value)
+{
+    uint8_t data[2] =
+    {
+        (uint8_t)(value >> 8 & 0x01) | MCP4551_CMD_WRITE,
+        (uint8_t) value
+    };
+
+    i2c_acquire(i2c);
+    int ret = i2c_write(i2c, devAddr, data, 2, true);
+    i2c_release(i2c);
+
+    return ret;
+}

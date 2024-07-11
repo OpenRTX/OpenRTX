@@ -115,8 +115,8 @@ void radio_init(const rtxStatus_t *rtxState)
     /*
      * Configure and enable DAC
      */
-    gpio_setMode(APC_TV,    INPUT_ANALOG);
-    gpio_setMode(MOD2_BIAS, INPUT_ANALOG);
+    gpio_setMode(APC_TV,    ANALOG);
+    gpio_setMode(MOD2_BIAS, ANALOG);
     RCC->APB1ENR |= RCC_APB1ENR_DACEN;
     DAC->CR = DAC_CR_EN2 | DAC_CR_EN1;
     DAC->DHR12R2 = 0;

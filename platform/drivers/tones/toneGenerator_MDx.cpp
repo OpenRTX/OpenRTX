@@ -101,9 +101,7 @@ void toneGen_init()
      * NOTE: change of "beep" output gpio to alternate/input mode is handled by
      * the audio driver.
      */
-    gpio_setMode(CTCSS_OUT, ALTERNATE);
-    gpio_setAlternateFunction(CTCSS_OUT, 2);
-    gpio_setAlternateFunction(BEEP_OUT,  2);
+    gpio_setMode(CTCSS_OUT, ALTERNATE | ALTERNATE_FUNC(2));
 
     /*
      * TIM3 configuration:
