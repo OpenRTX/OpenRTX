@@ -48,7 +48,7 @@ void gpio_setMode(void *port, uint8_t pin, enum Mode mode)
             p->pull  |= 0x02 << (pin*2);
             break;
 
-        case INPUT_ANALOG:
+        case ANALOG:
             // (MODE=11 TYPE=0 PUP=00)
             p->cfgr  |= 0x03 << (pin*2);
             p->omode |= 0x00 << pin;
