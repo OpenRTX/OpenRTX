@@ -444,7 +444,7 @@ void _ui_drawMenuInfo(ui_state_t* ui_state)
                            _ui_getInfoValueName);
 }
 
-void _ui_drawMenuAbout()
+void _ui_drawMenuAbout(ui_state_t* ui_state)
 {
     gfx_clearScreen();
 
@@ -452,13 +452,18 @@ void _ui_drawMenuAbout()
     gfx_print(openrtx_pos, layout.line3_font, TEXT_ALIGN_CENTER, color_white,
               "OpenRTX");
 
-    uint8_t line_h = layout.menu_h;
-    point_t pos = {CONFIG_SCREEN_WIDTH / 7, CONFIG_SCREEN_HEIGHT - (line_h * (author_num - 1)) - 5};
-    for(int author = 0; author < author_num; author++)
+    point_t pos = {CONFIG_SCREEN_WIDTH / 7, CONFIG_SCREEN_HEIGHT - (layout.menu_h * 3) - 5};
+    uint8_t entries_in_screen = (CONFIG_SCREEN_HEIGHT - 1 - pos.y) / layout.menu_h + 1;
+    uint8_t max_scroll = author_num - entries_in_screen;
+
+    if(ui_state->menu_selected >= max_scroll)
+        ui_state->menu_selected = max_scroll;
+
+    for(uint8_t item = 0; item < entries_in_screen; item++)
     {
-        gfx_print(pos, layout.top_font, TEXT_ALIGN_LEFT,
-                  color_white, "%s", authors[author]);
-        pos.y += line_h;
+        uint8_t elem = ui_state->menu_selected + item;
+        gfx_print(pos, layout.menu_font, TEXT_ALIGN_LEFT, color_white, authors[elem]);
+        pos.y += layout.menu_h;
     }
 }
 

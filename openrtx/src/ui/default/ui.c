@@ -1983,9 +1983,16 @@ void ui_updateFSM(bool *sync_rtx)
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_TOP);
                 break;
-            // About screen
+            // About screen, scroll without rollover
             case MENU_ABOUT:
-                if(msg.keys & KEY_ESC)
+                if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                {
+                    if(ui_state.menu_selected > 0)
+                        ui_state.menu_selected -= 1;
+                }
+                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                    ui_state.menu_selected += 1;
+                else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_TOP);
                 break;
 #ifdef CONFIG_RTC
@@ -2538,7 +2545,7 @@ bool ui_updateGUI()
             break;
         // About menu screen
         case MENU_ABOUT:
-            _ui_drawMenuAbout();
+            _ui_drawMenuAbout(&ui_state);
             break;
 #ifdef CONFIG_RTC
         // Time&Date settings screen
