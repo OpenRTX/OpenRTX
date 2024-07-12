@@ -22,13 +22,16 @@
 #include <hwconfig.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/radio.h>
+#include <drivers/USART0.h>
+#include <string>
 #include <peripherals/gpio.h>
 #include <utils.h>
 
 #include <algorithm>
 
-#include "HR_C6000.h"
+#include "bk4819.h"
 #include "radioUtils.h"
+
 static const rtxStatus_t*
     config;  // Pointer to data structure with radio configuration
 
@@ -112,7 +115,8 @@ void radio_disableAfOutput()
 
 void radio_enableRx()
 {
-
+    bk4819_rx_on();
+    //bk4819_set_freq(config->rxFrequency/10);
 }
 
 void radio_enableTx()
@@ -132,10 +136,10 @@ void radio_updateConfiguration()
 
 rssi_t radio_getRssi()
 {
-    return -121.0f;  // S1 level: -121dBm
+    return (ReadRegister(0x67) & 0xff) / 2 - 160;
 }
 
 enum opstatus radio_getStatus()
 {
-    return OFF;
+    return RX;
 }

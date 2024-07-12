@@ -44,11 +44,11 @@ static void spi_write_byte(uint8_t data)
             BK4819_SDA_HIGH;
         else
             BK4819_SDA_LOW;
-        // bk4819_delay(1);
+        // delayUs(1);
         BK4819_SCK_HIGH;
-        bk4819_delay(1);
+        delayUs(1);
         BK4819_SCK_LOW;
-        bk4819_delay(1);
+        delayUs(1);
         data <<= 1;
     }
 }
@@ -68,104 +68,96 @@ static uint16_t spi_read_half_word(void)
     {
         data <<= 1;
         BK4819_SCK_LOW;
-        bk4819_delay(1);
+        delayUs(1);
         BK4819_SCK_HIGH;
-        bk4819_delay(1);
+        delayUs(1);
         data |= BK4819_SDA_READ;
     }
     return data;
 }
 
-uint16_t bk4819_read_reg(bk4819_reg_t reg)
+uint16_t ReadRegister(unsigned char reg)
 {
     uint16_t data;
     BK4819_SCN_LOW;
-    bk4819_delay(1);
+    delayUs(1);
 
     spi_write_byte(reg | BK4819_REG_READ);
     data = spi_read_half_word();
 
-    bk4819_delay(1);
+    delayUs(1);
     BK4819_SCN_HIGH;
-    delay_1ms(10);
+    delayUs(1);
     return data;
 }
 
-void bk4819_write_reg(bk4819_reg_t reg, uint16_t data)
+void WriteRegister(bk4819_reg_t reg, uint16_t data)
 {
     BK4819_SCN_LOW;
-    bk4819_delay(1);
+    delayUs(1);
 
     spi_write_byte(reg | BK4819_REG_WRITE);
     spi_write_half_word(data);
 
-    bk4819_delay(1);
+    delayUs(1);
     BK4819_SCN_HIGH;
 }
 
 void bk4819_init(void)
 {
-    uint8_t data;
-    bk4819_write_reg(BK4819_REG_00, 0x8000); // reset
-    bk4819_delay(1000);
-    bk4819_write_reg(BK4819_REG_00, 0x00);
-
-    bk4819_write_reg(BK4819_REG_37, 0x1d0f); //
-    bk4819_write_reg(BK4819_REG_13, 0x3be);
-    bk4819_write_reg(BK4819_REG_12, 0x37b);
-    bk4819_write_reg(BK4819_REG_53, 59000);
-    bk4819_write_reg(BK4819_REG_09, 0x603a);
-    bk4819_write_reg(BK4819_REG_11, 0x27b);
-    bk4819_write_reg(BK4819_REG_10, 0x7a);
-    bk4819_write_reg(BK4819_REG_14, 0x19);
-    bk4819_write_reg(BK4819_REG_49, 0x2a38);
-    bk4819_write_reg(BK4819_REG_7B, 0x8420);
-    bk4819_write_reg(BK4819_REG_48, 0xb3ff);
-    bk4819_write_reg(BK4819_REG_1E, 0x4c58);
-    bk4819_write_reg(BK4819_REG_1F, 0xa656);
-    bk4819_write_reg(BK4819_REG_3E, 0xa037);
-    bk4819_write_reg(BK4819_REG_3F, 0x7fe);
-    bk4819_write_reg(BK4819_REG_2A, 0x7fff);
-    bk4819_write_reg(BK4819_REG_28, 0x6b00);
-    bk4819_write_reg(BK4819_REG_7D, 0xe952);
-    bk4819_write_reg(BK4819_REG_2C, 0x5705);
-    bk4819_write_reg(BK4819_REG_4B, 0x7102);
-    bk4819_write_reg(BK4819_REG_77, 0x88ef);
-    bk4819_write_reg(BK4819_REG_26, 0x13a0);
-    bk4819_write_reg(BK4819_REG_4E, 0x6f15);
-    bk4819_write_reg(BK4819_REG_4F, 0x3f3e);
-    bk4819_write_reg(BK4819_REG_09, 0x6f);
-    bk4819_write_reg(BK4819_REG_09, 0x106b);
-    bk4819_write_reg(BK4819_REG_09, 0x2067);
-    bk4819_write_reg(BK4819_REG_09, 0x3062);
-    bk4819_write_reg(BK4819_REG_09, 0x4050);
-    bk4819_write_reg(BK4819_REG_09, 0x5047);
-    bk4819_write_reg(BK4819_REG_09, 0x702c);
-    bk4819_write_reg(BK4819_REG_09, 0x8041);
-    bk4819_write_reg(BK4819_REG_09, 0x9037);
-    bk4819_write_reg(BK4819_REG_28, 0x6b38);
-    bk4819_write_reg(BK4819_REG_09, 0xa025);
-    bk4819_write_reg(BK4819_REG_09, 0xb017);
-    bk4819_write_reg(BK4819_REG_09, 0xc0e4);
-    bk4819_write_reg(BK4819_REG_09, 0xd0cb);
-    bk4819_write_reg(BK4819_REG_09, 0xe0b5);
-    bk4819_write_reg(BK4819_REG_09, 0xf09f);
-    bk4819_write_reg(BK4819_REG_74, 0xfa02);
-    bk4819_write_reg(BK4819_REG_44, 0x8f88);
-    bk4819_write_reg(BK4819_REG_45, 0x3201);
-    bk4819_write_reg(BK4819_REG_29, 0xb4cb);
-    bk4819_write_reg(BK4819_REG_40, bk4819_read_reg(BK4819_REG_40) & 0xf000 | 0x4d2);
-    bk4819_write_reg(BK4819_REG_31, bk4819_read_reg(BK4819_REG_31) & 0xfffffff7);
+uint16_t uVar1;
+    WriteRegister(0, 0x8000);
+    WriteRegister(0, 0);
+    WriteRegister(0x37, 0x1d0f);
+    WriteRegister(0x13, 0x3be);
+    WriteRegister(0x12, 0x37b);
+    WriteRegister(0x11, 0x27b);
+    WriteRegister(0x10, 0x7a);
+    WriteRegister(0x14, 0x19);
+    WriteRegister(0x49, 0x2a38);
+    WriteRegister(0x7b, 0x8420);
+    WriteRegister(0x7d, 0xe952);
+    WriteRegister(0x48, 0xb3ff);
+    WriteRegister(0x1e, 0x4c58);
+    WriteRegister(0x1f, 0xa656);
+    WriteRegister(0x3e, 0xa037);
+    WriteRegister(0x3f, 0x7fe);
+    WriteRegister(0x2a, 0x7fff);
+    WriteRegister(0x28, 0x6b00);
+    WriteRegister(0x53, 59000);
+    WriteRegister(0x2c, 0x5705);
+    WriteRegister(0x4b, 0x7102);
+    uVar1 = ReadRegister(0x40);
+    WriteRegister(0x40, uVar1 & 0xf000 | 0x4d2);
+    WriteRegister(0x77, 0x88ef);
+    WriteRegister(0x26, 0x13a0);
+    WriteRegister(0x4e, 0x6f15);
+    WriteRegister(0x4f, 0x3f3e);
+    WriteRegister(9, 0x6f);
+    WriteRegister(9, 0x106b);
+    WriteRegister(9, 0x2067);
+    WriteRegister(9, 0x3062);
+    WriteRegister(9, 0x4050);
+    WriteRegister(9, 0x5047);
+    WriteRegister(9, 0x603a);
+    WriteRegister(9, 0x702c);
+    WriteRegister(9, 0x8041);
+    WriteRegister(9, 0x9037);
+    WriteRegister(9, 0xa025);
+    WriteRegister(9, 0xb017);
+    WriteRegister(9, 0xc0e4);
+    WriteRegister(9, 0xd0cb);
+    WriteRegister(9, 0xe0b5);
+    WriteRegister(9, 0xf09f);
+    WriteRegister(0x74, 0xfa02);
+    WriteRegister(0x44, 0x8f88);
+    WriteRegister(0x45, 0x3201);
+    uVar1 = ReadRegister(0x31);
+    WriteRegister(0x31, uVar1 & 0xfffffff7);
+    WriteRegister(0x28, 0x6b38);
+    WriteRegister(0x29, 0xb4cb);
     bk4819_set_freq(43949500);
-    bk4819_CTDCSS_enable(1);
-    bk4819_CTDCSS_set(0, 1485);
-    // bk4819_rx_on();
-    bk4819_tx_on();
-}
-
-static void bk4819_delay(uint32_t count)
-{
-    delayMs(count);
+    bk4819_rx_on();
 }
 
 /**
@@ -176,7 +168,7 @@ static void bk4819_delay(uint32_t count)
  */
 uint8_t bk4819_int_get(bk4819_int_t interrupt)
 {
-    return bk4819_read_reg(BK4819_REG_02 & interrupt);
+    return ReadRegister(BK4819_REG_02 & interrupt);
 }
 
 /**
@@ -186,8 +178,8 @@ uint8_t bk4819_int_get(bk4819_int_t interrupt)
  */
 void bk4819_set_freq(uint32_t freq)
 {
-    bk4819_write_reg(BK4819_REG_39, (freq >> 16) & 0xFFFF);
-    bk4819_write_reg(BK4819_REG_38, freq & 0xFFFF);
+    WriteRegister(BK4819_REG_39, (freq >> 16) & 0xFFFF);
+    WriteRegister(BK4819_REG_38, freq & 0xFFFF);
 }
 
 /**
@@ -196,18 +188,10 @@ void bk4819_set_freq(uint32_t freq)
  */
 void bk4819_rx_on(void)
 {
-    bk4819_write_reg(BK4819_REG_30, 0x00); // reset
-
-    bk4819_write_reg(BK4819_REG_30,
-                     BK4819_REG30_REVERSE2_ENABLE |
-                         BK4819_REG30_REVERSE1_ENABLE |
-                         BK4819_REG30_VCO_CALIBRATION |
-                         BK4819_REG30_RX_LINK_ENABLE |
-                         BK4819_REG30_AF_DAC_ENABLE |
-                         BK4819_REG30_PLL_VCO_ENABLE |
-                         BK4819_REG30_MIC_ADC_ENABLE |
-                         BK4819_REG30_PA_GAIN_ENABLE |
-                         BK4819_REG30_RX_DSP_ENABLE);
+	WriteRegister(0x37, 0x1F0F);
+	delayUs(10);
+	WriteRegister(0x30, 0x0200);
+	WriteRegister(0x30, 0xBFF1);
 }
 
 /**
@@ -218,9 +202,9 @@ void bk4819_tx_on(void)
 {
     gpio_bit_reset(MIC_EN_GPIO_PORT, MIC_EN_GPIO_PIN); // open microphone
 
-    bk4819_write_reg(BK4819_REG_30, 0x00); // reset
+    WriteRegister(BK4819_REG_30, 0x00); // reset
 
-    bk4819_write_reg(BK4819_REG_30,
+    WriteRegister(BK4819_REG_30,
                      BK4819_REG30_REVERSE1_ENABLE |
                          BK4819_REG30_REVERSE2_ENABLE |
                          BK4819_REG30_VCO_CALIBRATION |
@@ -238,7 +222,7 @@ void bk4819_tx_on(void)
  */
 void bk4819_CTDCSS_set(uint8_t sel, uint16_t frequency)
 {
-    bk4819_write_reg(BK4819_REG_07, (sel << 13) | frequency);
+    WriteRegister(BK4819_REG_07, (sel << 13) | frequency);
 }
 
 /**
@@ -253,10 +237,10 @@ void bk4819_CTDCSS_set(uint8_t sel, uint16_t frequency)
  */
 void bk4819_set_Squelch(uint8_t RTSO, uint8_t RTSC, uint8_t ETSO, uint8_t ETSC, uint8_t GTSO, uint8_t GTSC)
 {
-    bk1080_write_reg(BK4819_REG_78, (RTSO << 8) | RTSC);
-    bk1080_write_reg(BK4819_REG_4F, (ETSC << 8) | ETSO);
-    bk1080_write_reg(BK4819_REG_4D, GTSC);
-    bk1080_write_reg(BK4819_REG_4E, GTSO);
+    WriteRegister(BK4819_REG_78, (RTSO << 8) | RTSC);
+    WriteRegister(BK4819_REG_4F, (ETSC << 8) | ETSO);
+    WriteRegister(BK4819_REG_4D, GTSC);
+    WriteRegister(BK4819_REG_4E, GTSO);
 }
 
 /**
@@ -266,7 +250,7 @@ void bk4819_set_Squelch(uint8_t RTSO, uint8_t RTSC, uint8_t ETSO, uint8_t ETSC, 
  */
 void bk4819_CTDCSS_enable(uint8_t sel)
 {
-    uint16_t reg = bk4819_read_reg(BK4819_REG_51);
+    uint16_t reg = ReadRegister(BK4819_REG_51);
     reg |= BK4819_REG51_TX_CTCDSS_ENABLE;
     if (sel)
         reg |= BK4819_REG51_CTCSCSS_MODE_SEL;
@@ -276,9 +260,9 @@ void bk4819_CTDCSS_enable(uint8_t sel)
 
 void bk4819_CTDCSS_disable(void)
 {
-    uint16_t reg = bk4819_read_reg(BK4819_REG_51);
+    uint16_t reg = ReadRegister(BK4819_REG_51);
     reg &= ~BK4819_REG51_TX_CTCDSS_ENABLE;
-    bk4819_write_reg(BK4819_REG_51, reg);
+    WriteRegister(BK4819_REG_51, reg);
 }
 
 /**
@@ -289,7 +273,7 @@ void bk4819_CTDCSS_disable(void)
  */
 void bk4819_CDCSS_set(uint8_t sel, uint16_t code)
 {
-    bk1080_write_reg(BK4819_REG_08, (BK4819_REG_08, sel << 15) | code);
+    WriteRegister(BK4819_REG_08, (BK4819_REG_08, sel << 15) | code);
 }
 
 /**
@@ -300,6 +284,6 @@ void bk4819_CDCSS_set(uint8_t sel, uint16_t code)
  */
 void bk4819_DTMF_SELCall_set(uint8_t number, uint8_t coeff)
 {
-    bk1080_write_reg(BK4819_REG_09, (number << 12) | (coeff));
+    WriteRegister(BK4819_REG_09, (number << 12) | (coeff));
 }
 
