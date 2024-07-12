@@ -32,8 +32,8 @@
 #define LCD_DC      GPIOB,10                
 
 // LEDs
-#define GREEN_LED   GPIOA,14
-#define RED_LED     GPIOA,13
+#define GREEN_LED   GPIOB,1
+#define RED_LED     GPIOF,2
 
 // Analog inputs
 #define AIN_VBAT    GPIOA,1
@@ -65,9 +65,9 @@
 #define BK1080_CS   GPIOC,13
 
 // BK4819
-#define BK4819_CLK  GPIOB,9
-#define BK4819_DAT  GPIOB,5
-#define BK4819_CS   GPIOB,8
+#define BK4819_CLK  GPIOA,2
+#define BK4819_DAT  GPIOA,3
+#define BK4819_CS   GPIOC,13
 
 // Audio control
 #define SPK_EN      GPIOA,1
@@ -76,8 +76,4 @@
 // RF stage
 #define TX_LDO      GPIOB,10
 #define TX_PA_EN    GPIOB,11
-
-// USART
-#define USART0_TX   GPIOB,6
-
 #endif
