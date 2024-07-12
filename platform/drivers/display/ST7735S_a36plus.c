@@ -142,8 +142,6 @@ void display_init(void)
     // gpio_setMode(LCD_DAT, OUTPUT);
     // gpio_setMode(LCD_RST, OUTPUT);
 
-    // Display power on
-    gpio_setPin(LCD_PWR);
 
     // Reset display controller
     gpio_setPin(LCD_RST);
@@ -229,6 +227,8 @@ void display_init(void)
     sendCommand(ST7735S_CMD_COLMOD);
     sendData(0x05);
     sendCommand(ST7735S_CMD_DISPON);
+    // Display power on
+    gpio_setPin(LCD_PWR);
 }
 
 void *display_getFrameBuffer()
@@ -253,16 +253,27 @@ void display_render(void *fb)
     (void) fb;
 }
 
-void display_setWindow(uint16_t x, uint16_t y, uint16_t width, uint16_t height)
+void display_setWindow(uint16_t x, uint16_t y, uint16_t height, uint16_t width)
 {
     // Set column address
     sendCommand(ST7735S_CMD_CASET);
-    sendShort(y);
-    sendShort(y + height - 1);
+    sendShort(x);
+    sendShort(x + height - 1);
     // Set row address
     sendCommand(ST7735S_CMD_RASET);
-    sendShort(x);
-    sendShort(x + width - 1);
+    sendShort(y);
+    sendShort(y + 28 + width - 1);
+
+    sendCommand(ST7735S_CMD_RAMWR);
+}
+
+void display_clearWindow(uint16_t x, uint16_t y, uint16_t height, uint16_t width)
+{
+    display_setWindow(x, y, height, width);
+    // setPosition(x, y);
+    sendCommand(ST7735S_CMD_RAMWR);
+    for(size_t i = 0; i < (160*32); i++)
+        sendShort(0x0000);
 }
 
 void display_fill(uint32_t color)

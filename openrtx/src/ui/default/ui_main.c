@@ -303,7 +303,7 @@ void _ui_drawMainBottom()
 
 void _ui_drawMainVFO(ui_state_t* ui_state)
 {
-    gfx_clearScreen();
+    //gfx_clearScreen();
     _ui_drawMainTop(ui_state);
     _ui_drawModeInfo(ui_state);
 
@@ -312,8 +312,10 @@ void _ui_drawMainVFO(ui_state_t* ui_state)
     rtxStatus_t status = rtx_getCurrentStatus();
     if((status.opMode != OPMODE_M17) || (status.lsfOk == false))
     #endif
-        _ui_drawFrequency();
-
+    _ui_drawFrequency();
+    // We want to cover the s-meter bar area,
+    // along the whole display width
+    gfx_clearWindow(10, 0, 16, 160);
     _ui_drawMainBottom();
 }
 

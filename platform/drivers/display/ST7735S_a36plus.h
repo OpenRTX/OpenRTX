@@ -150,6 +150,8 @@ void st7735s_set_pixel_format(_color_format x);                    // st7735s se
 void st7735s_draw_pixel(uint8_t x, uint8_t y);
 void st7735s_fill_react(uint16_t x, uint16_t y, uint16_t width, uint16_t height); // st7735s fill react
 void st7735s_flush(void);
+void display_setWindow(uint16_t x1, uint16_t x2, uint16_t y1, uint16_t y2);
+void display_clearWindow(uint16_t x1, uint16_t x2, uint16_t width, uint16_t height);
 
 static void st7735s_reset_window(void);                                             // st7735s reset window
 static void st7735s_update_window(uint16_t x, uint16_t y);                          // st7735s update window
