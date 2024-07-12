@@ -1,21 +1,27 @@
 #ifndef __BK4818_JAMIEXU_H__
 #define __BK4818_JAMIEXU_H__
+
+
 #include "gpio.h"
+#include "peripherals/gpio.h"
 // Written by Jamiexu
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#define BK4819_SCK_LOW (BK4819_GPIO_PORT, BK4819_GPIO_SCK_PIN)
-#define BK4819_SCK_HIGH gpio_bit_set(BK4819_GPIO_PORT, BK4819_GPIO_SCK_PIN)
+#define BK4819_SCK_LOW gpio_clearPin(BK4819_CLK)
+#define BK4819_SCK_HIGH gpio_setPin(BK4819_CLK)
 
-#define BK4819_SDA_LOW gpio_bit_reset(BK4819_GPIO_PORT, BK4819_GPIO_SDA_PIN)
-#define BK4819_SDA_HIGH gpio_bit_set(BK4819_GPIO_PORT, BK4819_GPIO_SDA_PIN)
+#define BK4819_SDA_LOW gpio_clearPin(BK4819_DAT)
+#define BK4819_SDA_HIGH gpio_setPin(BK4819_DAT)
 
-#define BK4819_SCN_LOW gpio_bit_reset(BK4819_GPIO_SCN_PORT, BK4819_GPIO_SCN_PIN)
-#define BK4819_SCN_HIGH gpio_bit_set(BK4819_GPIO_SCN_PORT, BK4819_GPIO_SCN_PIN)
+#define BK4819_SCN_LOW gpio_clearPin(BK4819_CS)
+#define BK4819_SCN_HIGH gpio_setPin(BK4819_CS)
 
-#define BK4819_SDA_READ gpio_input_bit_get(BK4819_GPIO_PORT, BK1080_GPIO_SDA_PIN)
+#define BK4819_SDA_READ gpio_readPin(BK4819_DAT)
 
-#define BK4819_SDA_DIR_OUT gpio_mode_set(BK4819_GPIO_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP, BK4819_GPIO_SDA_PIN)
-#define BK4819_SDA_DIR_IN gpio_mode_set(BK4819_GPIO_PORT, GPIO_MODE_INPUT, GPIO_PUPD_PULLUP, BK4819_GPIO_SDA_PIN)
+#define BK4819_SDA_DIR_OUT gpio_setMode(BK4819_DAT, OUTPUT)
+#define BK4819_SDA_DIR_IN gpio_setMode(BK4819_DAT, INPUT_PULL_UP)
 
 #define BK4819_REG_READ 0x80
 #define BK4819_REG_WRITE 0x00
@@ -194,10 +200,9 @@ typedef enum
 static void spi_write_byte(uint8_t data);
 static void spi_write_half_word(uint16_t data);
 static uint16_t spi_read_half_word(void);
-static void bk4819_delay(uint32_t count);
 
-uint16_t bk4819_read_reg(bk4819_reg_t reg);
-void bk4819_write_reg(bk4819_reg_t reg, uint16_t data);
+uint16_t ReadRegister(unsigned char reg);
+void WriteRegister(bk4819_reg_t reg, uint16_t data);
 
 uint8_t bk4819_int_get(bk4819_int_t interrupt);
 uint8_t bk4819_flag_get(void);
@@ -219,5 +224,10 @@ void bk4819_set_Squelch(uint8_t RTSO, uint8_t RTSC, uint8_t ETSO, uint8_t ETSC, 
 void bk4819_CTDCSS_set(uint8_t sel, uint16_t frequency);
 
 void bk4819_set_CTDCSS(uint8_t sel, uint16_t frequency);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
