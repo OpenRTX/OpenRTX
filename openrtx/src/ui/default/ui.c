@@ -2597,7 +2597,7 @@ bool ui_updateGUI()
     // If MACRO menu is active draw it
     if(macro_menu)
     {
-        _ui_drawDarkOverlay();
+        //_ui_drawDarkOverlay();
         _ui_drawMacroMenu(&ui_state);
     }
 
