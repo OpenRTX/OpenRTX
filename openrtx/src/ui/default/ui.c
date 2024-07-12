@@ -1374,6 +1374,13 @@ void ui_updateFSM(bool *sync_rtx)
     }
 #endif // PLATFORM_TTWRPLUS
 
+    // Unlatch and exit from macro menu on PTT press
+    if(macro_latched && txOngoing)
+    {
+        macro_latched = false;
+        macro_menu = false;
+    }
+
     long long now = getTick();
     // Process pressed keys
     if(event.type == EVENT_KBD)
@@ -2451,8 +2458,6 @@ void ui_updateFSM(bool *sync_rtx)
 
         if (txOngoing || rtx_rxSquelchOpen())
         {
-            if (txOngoing)
-                macro_latched = 0;
             _ui_exitStandby(now);
             return;
         }
