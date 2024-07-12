@@ -218,6 +218,9 @@ const char *authors[] =
     "Silvano IU2KWO",
     "Federico IU2NUO",
     "Fred IU2NRO",
+    "Joseph VK7JS",
+    "Morgan ON4MOD",
+    "Marco DM4RCO"
 };
 
 static const char *symbols_ITU_T_E161[] =

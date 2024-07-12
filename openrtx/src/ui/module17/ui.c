@@ -132,7 +132,9 @@ const char *authors[] =
     "Niccolo' IU2KIN",
     "Silvano IU2KWO",
     "Federico IU2NUO",
-    "Fred IU2NRO",
+    "Mathis DB9MAT",
+    "Morgan ON4MOD",
+    "Marco DM4RCO"
 };
 
 static const char symbols_callsign[] = "_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890/-.";
