@@ -31,7 +31,7 @@ channel_t cps_getDefaultChannel()
     channel.mode      = OPMODE_FM;
     #endif
     channel.bandwidth = BW_25;
-    channel.power     = 100;    // 1W, P = 10dBm + n*0.2dBm, we store n
+    channel.power     = 1000;   // 1W
     channel.rx_only   = false;  // Enable tx by default
 
     // Set initial frequency based on supported bands
