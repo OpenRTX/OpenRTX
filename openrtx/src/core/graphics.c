@@ -213,7 +213,13 @@ void gfx_clearScreen()
 
 void gfx_fillScreen(color_t color)
 {
-    display_fill(color);
+    // Convert color to high color
+    #ifdef CONFIG_PIX_FMT_RGB565
+    rgb565_t high_color = _true2highColor(color);
+    display_fill((high_color.r << 11) | (high_color.g << 5) | high_color.b);
+    #elif defined CONFIG_PIX_FMT_BW
+    display_fill(_color2bw(color));
+    #endif
 }
 
 inline void gfx_setPixel(point_t pos, color_t color)
