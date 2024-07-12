@@ -17,14 +17,15 @@
 
 #include <interfaces/nvmem.h>
 #include <interfaces/delays.h>
+#include <calibInfo_CS760.h>
 #include <nvmem_access.h>
 #include <spi_bitbang.h>
 #include <string.h>
 #include <wchar.h>
 #include <utils.h>
 #include <crc.h>
-#include "W25Qx.h"
-#include "eeep.h"
+#include <W25Qx.h>
+#include <eeep.h>
 
 static const struct W25QxCfg cfg =
 {
@@ -94,7 +95,22 @@ const struct nvmDescriptor *nvm_getDesc(const size_t index)
 
 void nvm_readCalibData(void *buf)
 {
-    (void) buf;
+    struct CS760Calib *calData = (struct CS7000 *) buf;
+
+    nvm_read(0, 0, 0x1000, &(calData->txCalFreq),      sizeof(calData.txCalFreq));
+    nvm_read(0, 0, 0x1020, &(calData->rxCalFreq),      sizeof(calData.rxCalFreq));
+    nvm_read(0, 0, 0x1044, &(calData->rxSensitivity),  sizeof(calData.rxSensitivity));
+    nvm_read(0, 0, 0x106C, &(calData->txHighPwr),      sizeof(calData.txHighPwr));
+    nvm_read(0, 0, 0x1074, &(calData->txMiddlePwr),    sizeof(calData.txMiddlePwr));
+    nvm_read(0, 0, 0x10C4, &(calData->txDigitalPathQ), sizeof(calData.txDigitalPathQ));
+    nvm_read(0, 0, 0x10CC, &(calData->txAnalogPathI),  sizeof(calData.txAnalogPathI));
+    nvm_read(0, 0, 0x10DC, &(calData->errorRate),      sizeof(calData.errorRate));
+
+    for(int i = 0; i < 8; i++)
+    {
+        calData->txCalFreq[i] = __builtin_bswap32(calData->txCalFreq[i]);
+        calData->rxCalFreq[i] = __builtin_bswap32(calData->rxCalFreq[i]);
+    }
 }
 
 void nvm_readHwInfo(hwInfo_t *info)
