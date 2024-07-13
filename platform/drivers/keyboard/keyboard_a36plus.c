@@ -62,7 +62,11 @@ keyboard_t kbd_getKeys()
 {
     keyboard_t keys = 0;
     
-    if(!gpio_readPin(SKB_1)) keys |= KEY_MONI;
+    if(!gpio_readPin(SKB_1)) 
+    {
+        keys |= KEY_MONI;
+        return keys;
+    }
     
     gpio_setPin(KBD_ROW3);
     gpio_clearPin(KBD_ROW0);
