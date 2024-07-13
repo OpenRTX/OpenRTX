@@ -70,7 +70,7 @@
 #define BK4819_CS   GPIOC,13
 
 // Audio control
-#define SPK_EN      GPIOA,1
+#define MIC_SPK_EN      GPIOA,12
 #define AF_OUT      GPIOA,6
 
 // RF stage
