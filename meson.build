@@ -527,7 +527,9 @@ a36plus_src = ['platform/targets/A36Plus/platform.c',
              'platform/drivers/baseband/bk4819.c',
              'platform/drivers/baseband/radio_A36Plus.cpp']
 
-a36plus_inc = ['platform/targets/A36Plus']
+a36plus_inc = ['platform/targets/A36Plus',
+               'platform/drivers/baseband']
+
 a36plus_def = {'PLATFORM_A36PLUS': ''}
 
 a36plus_src += openrtx_src + gd32f330_src + miosix_cm4_src + ui_src_default
