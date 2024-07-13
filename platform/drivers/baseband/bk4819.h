@@ -221,9 +221,11 @@ void bk4819_CTDCSS_disable(void);
 
 void bk4819_set_Squelch(uint8_t RTSO, uint8_t RTSC, uint8_t ETSO, uint8_t ETSC, uint8_t GTSO, uint8_t GTSC);
 
-void bk4819_CTDCSS_set(uint8_t sel, uint16_t frequency);
+void bk4819_set_CTCSS(uint8_t sel, uint16_t frequency);
 
-void bk4819_set_CTDCSS(uint8_t sel, uint16_t frequency);
+uint8_t bk4819_get_CTCSS_flag(uint8_t sel);
+
+uint16_t bk4819_get_CTCSS(void);
 
 
 #ifdef __cplusplus

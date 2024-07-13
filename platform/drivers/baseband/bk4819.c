@@ -155,7 +155,7 @@ void bk4819_init(void)
     WriteRegister(0x31, uVar1 & 0xfffffff7);
     WriteRegister(0x28, 0x6b38);
     WriteRegister(0x29, 0xb4cb);
-    bk4819_set_freq(43949500);
+    // bk4819_set_freq(43949500);
     // bk4819_rx_on();
     // bk4819_tx_on();
 }
@@ -214,10 +214,10 @@ void bk4819_tx_on(void)
 /**
  * @brief Set CTCSS/CDCSS
  *
- * @param sel 0:CTC1 1:CTC2 2:CSCSS
+ * @param sel 0:CTC1 1:CTC2
  * @param frequency frquency control word
  */
-void bk4819_CTDCSS_set(uint8_t sel, uint16_t frequency)
+void bk4819_set_CTCSS(uint8_t sel, uint16_t frequency)
 {
     WriteRegister(BK4819_REG_07, (sel << 13) | frequency);
 }
@@ -258,6 +258,7 @@ void bk4819_CTDCSS_enable(uint8_t sel)
         reg |= BK4819_REG51_CTCSCSS_MODE_SEL;
     else
         reg &= ~BK4819_REG51_CTCSCSS_MODE_SEL;
+    WriteRegister(BK4819_REG_51, reg);
 }
 
 void bk4819_CTDCSS_disable(void)
@@ -287,4 +288,23 @@ void bk4819_CDCSS_set(uint8_t sel, uint16_t code)
 void bk4819_DTMF_SELCall_set(uint8_t number, uint8_t coeff)
 {
     WriteRegister(BK4819_REG_09, (number << 12) | (coeff));
+}
+
+/**
+ * @brief Get CTCSS
+ * 
+ * @param sel   0:CTC1      1:CTC2
+ * @return uint16_t 
+ */
+uint8_t bk4819_get_CTCSS_flag(uint8_t sel){
+    return ReadRegister(BK4819_REG_0C) & (1 << (sel == 0 ? 10 : 11));
+}
+
+/**
+ * @brief 
+ * 
+ * @return uint16_t 
+ */
+uint16_t bk4819_get_CTCSS(void){
+    return ReadRegister(BK4819_REG_68) & 0xFFF;
 }
