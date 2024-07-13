@@ -119,14 +119,14 @@ void radio_enableRx()
 {
     gpio_setPin(MIC_SPK_EN);  // open speaker
     bk4819_set_freq(config->rxFrequency / 10);
-    bk4819_rx_on(); 
+    bk4819_rx_on();
     radioStatus = RX;
 }
 
 void radio_enableTx()
 {
     gpio_clearPin(MIC_SPK_EN);  // open microphone
-    bk4819_set_freq(config->rxFrequency / 10);
+    bk4819_set_freq(config->txFrequency / 10);
     // if (config->txToneEn){
         bk4819_CTDCSS_enable(1);
         bk4819_set_CTCSS(0, 1646);
@@ -145,6 +145,7 @@ void radio_disableRtx()
 
 void radio_updateConfiguration()
 {
+    bk4819_set_freq(config->rxFrequency / 10);
 }
 
 rssi_t radio_getRssi()
