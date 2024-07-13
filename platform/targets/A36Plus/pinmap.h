@@ -72,6 +72,7 @@
 // Audio control
 #define MIC_SPK_EN      GPIOA,12
 #define AF_OUT      GPIOA,6
+#define MIC_EN      GPIOA,12
 
 // RF stage
 #define TX_LDO      GPIOB,10
