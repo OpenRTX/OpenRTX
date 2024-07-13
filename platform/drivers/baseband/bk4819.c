@@ -30,9 +30,8 @@ SOFTWARE.
  */
 
 #include "bk4819.h"
+
 #include "interfaces/delays.h"
-
-
 
 static void spi_write_byte(uint8_t data)
 {
@@ -105,7 +104,7 @@ void WriteRegister(bk4819_reg_t reg, uint16_t data)
 
 void bk4819_init(void)
 {
-uint16_t uVar1;
+    uint16_t uVar1;
     WriteRegister(0, 0x8000);
     WriteRegister(0, 0);
     WriteRegister(0x37, 0x1d0f);
@@ -157,7 +156,8 @@ uint16_t uVar1;
     WriteRegister(0x28, 0x6b38);
     WriteRegister(0x29, 0xb4cb);
     bk4819_set_freq(43949500);
-    bk4819_rx_on();
+    // bk4819_rx_on();
+    // bk4819_tx_on();
 }
 
 /**
@@ -188,10 +188,10 @@ void bk4819_set_freq(uint32_t freq)
  */
 void bk4819_rx_on(void)
 {
-	WriteRegister(0x37, 0x1F0F);
-	delayUs(10);
-	WriteRegister(0x30, 0x0200);
-	WriteRegister(0x30, 0xBFF1);
+    WriteRegister(0x37, 0x1F0F);
+    delayUs(10);
+    WriteRegister(0x30, 0x0200);
+    WriteRegister(0x30, 0xBFF1);
 }
 
 /**
@@ -200,18 +200,15 @@ void bk4819_rx_on(void)
  */
 void bk4819_tx_on(void)
 {
-    gpio_bit_reset(MIC_EN_GPIO_PORT, MIC_EN_GPIO_PIN); // open microphone
 
-    WriteRegister(BK4819_REG_30, 0x00); // reset
+    WriteRegister(BK4819_REG_30, 0x00);  // reset
 
     WriteRegister(BK4819_REG_30,
-                     BK4819_REG30_REVERSE1_ENABLE |
-                         BK4819_REG30_REVERSE2_ENABLE |
-                         BK4819_REG30_VCO_CALIBRATION |
-                         BK4819_REG30_MIC_ADC_ENABLE |
-                         BK4819_REG30_TX_DSP_ENABLE |
-                         BK4819_REG30_PLL_VCO_ENABLE |
-                         BK4819_REG30_PA_GAIN_ENABLE);
+                  BK4819_REG30_REVERSE1_ENABLE | BK4819_REG30_REVERSE2_ENABLE |
+                      BK4819_REG30_VCO_CALIBRATION |
+                      BK4819_REG30_MIC_ADC_ENABLE | BK4819_REG30_TX_DSP_ENABLE |
+                      BK4819_REG30_PLL_VCO_ENABLE |
+                      BK4819_REG30_PA_GAIN_ENABLE);
 }
 
 /**
@@ -235,7 +232,12 @@ void bk4819_CTDCSS_set(uint8_t sel, uint16_t frequency)
  * @param GTSO Glitch threshold for Squelch =1
  * @param GTSC Glitch threshold for Squelch =0
  */
-void bk4819_set_Squelch(uint8_t RTSO, uint8_t RTSC, uint8_t ETSO, uint8_t ETSC, uint8_t GTSO, uint8_t GTSC)
+void bk4819_set_Squelch(uint8_t RTSO,
+                        uint8_t RTSC,
+                        uint8_t ETSO,
+                        uint8_t ETSC,
+                        uint8_t GTSO,
+                        uint8_t GTSC)
 {
     WriteRegister(BK4819_REG_78, (RTSO << 8) | RTSC);
     WriteRegister(BK4819_REG_4F, (ETSC << 8) | ETSO);
@@ -286,4 +288,3 @@ void bk4819_DTMF_SELCall_set(uint8_t number, uint8_t coeff)
 {
     WriteRegister(BK4819_REG_09, (number << 12) | (coeff));
 }
-

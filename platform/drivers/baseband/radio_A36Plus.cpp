@@ -40,7 +40,7 @@ static const rtxStatus_t*
 // static Band currTxBand     = BND_NONE;  // Current band for TX
 // static uint16_t apcVoltage = 0;  // APC voltage for TX output power control
 
-// static enum opstatus radioStatus;  // Current operating status
+static enum opstatus radioStatus;  // Current operating status
 
 // static HR_C6000& C6000  = HR_C6000::instance();  // HR_C5000 driver
 // static AT1846S& at1846s = AT1846S::instance();   // AT1846S driver
@@ -48,17 +48,19 @@ static const rtxStatus_t*
 void radio_init(const rtxStatus_t* rtxState)
 {
     config      = rtxState;
-    // radioStatus = OFF;
+    radioStatus = OFF;
 
     /*
      * Configure RTX GPIOs
      */
+    rcu_periph_clock_enable(RCU_GPIOA);
     rcu_periph_clock_enable(RCU_GPIOB);
 
     gpio_setMode(BK4819_CLK, OUTPUT);
     gpio_setMode(BK4819_DAT, OUTPUT);
     gpio_setMode(BK4819_CS, OUTPUT);
-
+    gpio_setMode(MIC_EN, OUTPUT);
+    bk4819_init();
     /*
      * Enable and configure DAC for PA drive control
      */
@@ -116,17 +118,20 @@ void radio_disableAfOutput()
 void radio_enableRx()
 {
     bk4819_rx_on();
+    radioStatus = RX;
     //bk4819_set_freq(config->rxFrequency/10);
 }
 
 void radio_enableTx()
 {
-
+    radioStatus = TX;
+    gpio_clearPin(MIC_EN);  // open microphone
+    bk4819_tx_on();
 }
 
 void radio_disableRtx()
 {
-
+    
 }
 
 void radio_updateConfiguration()
@@ -141,5 +146,5 @@ rssi_t radio_getRssi()
 
 enum opstatus radio_getStatus()
 {
-    return RX;
+    return radioStatus;
 }
