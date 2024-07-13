@@ -18,16 +18,16 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <drivers/USART0.h>
 #include <gd32f3x0.h>
 #include <hwconfig.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/radio.h>
-#include <drivers/USART0.h>
-#include <string>
 #include <peripherals/gpio.h>
 #include <utils.h>
 
 #include <algorithm>
+#include <string>
 
 #include "bk4819.h"
 #include "radioUtils.h"
@@ -59,7 +59,8 @@ void radio_init(const rtxStatus_t* rtxState)
     gpio_setMode(BK4819_CLK, OUTPUT);
     gpio_setMode(BK4819_DAT, OUTPUT);
     gpio_setMode(BK4819_CS, OUTPUT);
-    gpio_setMode(MIC_EN, OUTPUT);
+    gpio_setMode(MIC_SPK_EN, OUTPUT);
+    gpio_setPin(MIC_SPK_EN);
     bk4819_init();
     /*
      * Enable and configure DAC for PA drive control
@@ -86,18 +87,17 @@ void radio_init(const rtxStatus_t* rtxState)
 }
 void radio_terminate()
 {
-
 }
 
 void radio_tuneVcxo(const int16_t vhfOffset, const int16_t uhfOffset)
 {
-    (void) vhfOffset;
-    (void) uhfOffset;
+    (void)vhfOffset;
+    (void)uhfOffset;
 }
 
 void radio_setOpmode(const enum opmode mode)
 {
-    (void) mode;
+    (void)mode;
 }
 
 bool radio_checkRxDigitalSquelch()
@@ -107,36 +107,44 @@ bool radio_checkRxDigitalSquelch()
 
 void radio_enableAfOutput()
 {
-
+    // gpio_clearPin(MIC_EN);  // open microphone
 }
 
 void radio_disableAfOutput()
 {
-
+    // gpio_setPin(MIC_EN);  // close microphone
 }
 
 void radio_enableRx()
 {
-    bk4819_rx_on();
+    gpio_setPin(MIC_SPK_EN);  // open speaker
+    bk4819_set_freq(config->rxFrequency / 10);
+    bk4819_rx_on(); 
     radioStatus = RX;
-    //bk4819_set_freq(config->rxFrequency/10);
 }
 
 void radio_enableTx()
 {
-    radioStatus = TX;
-    gpio_clearPin(MIC_EN);  // open microphone
+    gpio_clearPin(MIC_SPK_EN);  // open microphone
+    bk4819_set_freq(config->rxFrequency / 10);
+    // if (config->txToneEn){
+        bk4819_CTDCSS_enable(1);
+        bk4819_set_CTCSS(0, 1646);
+    // }
     bk4819_tx_on();
+    radioStatus = TX;
 }
 
 void radio_disableRtx()
 {
-    
+    // if (radioStatus == TX){
+    //     gpio_setPin(MIC_EN);  // close microphone
+    // }
+    // radioStatus = OFF;
 }
 
 void radio_updateConfiguration()
 {
-
 }
 
 rssi_t radio_getRssi()
