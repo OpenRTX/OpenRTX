@@ -338,7 +338,7 @@ static void _ui_calculateLayout(layout_t *layout)
     // Bottom bar font: 8 pt
     static const fontSize_t bottom_font = FONT_SIZE_8PT;
     // TimeDate/Frequency input font
-    static const fontSize_t input_font = FONT_SIZE_12PT;
+    static const fontSize_t input_font = FONT_SIZE_10PT;
     // Menu font
     static const fontSize_t menu_font = FONT_SIZE_8PT;
 
