@@ -219,7 +219,7 @@ void bk4819_enable_ctcss(uint16_t frequency);
 
 void bk4819_enable_ctcss2(uint16_t frequency);
 
-void bk4819_enable_cdcss();
+void bk4819_enable_cdcss(uint8_t np_code, uint8_t bit_sel, uint32_t cdcss_code);
 
 void bk4819_disable_ctdcss(void);
 
