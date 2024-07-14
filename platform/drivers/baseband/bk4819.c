@@ -259,6 +259,17 @@ void bk4819_enable_ctcss2(uint16_t frequency){
 }
 
 /**
+ * @brief Disable all and enable CDCSS
+ * 
+ * @param np_code 0:positive code   1:negative code
+ * @param bit_sel 0: 23bit          1:24bit
+ * @param cdcss_code cdcss code
+ */
+void bk4819_enable_cdcss(uint8_t np_code, uint8_t bit_sel, uint32_t cdcss_code){
+
+}
+
+/**
  * @brief Disable CTCSS/CDCSS
  * 
  */
@@ -274,9 +285,9 @@ void bk4819_disable_ctdcss(void)
  * 
  * @return uint8_t 
  */
-// uint16_t bk4819_get_ctcss(void){
-
-// }
+uint16_t bk4819_get_ctcss(void){
+    return ReadRegister(BK4819_REG_0C) & BIT(10);
+}
 
 /**
  * @brief Set CDCSS code

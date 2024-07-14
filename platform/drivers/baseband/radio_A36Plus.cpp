@@ -102,7 +102,7 @@ void radio_setOpmode(const enum opmode mode)
 
 bool radio_checkRxDigitalSquelch()
 {
-    return false;
+    return bk4819_get_ctcss();
 }
 
 void radio_enableAfOutput()
@@ -120,6 +120,7 @@ void radio_enableRx()
     // config->rxToneEn = 1;
     gpio_setPin(MIC_SPK_EN);  // open speaker
     bk4819_set_freq(config->rxFrequency / 10);
+    bk4819_enable_ctcss(1646);
     bk4819_rx_on();
     radioStatus = RX;
 }
