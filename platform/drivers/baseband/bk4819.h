@@ -201,8 +201,8 @@ static void spi_write_byte(uint8_t data);
 static void spi_write_half_word(uint16_t data);
 static uint16_t spi_read_half_word(void);
 
-uint16_t ReadRegister(unsigned char reg);
-void WriteRegister(bk4819_reg_t reg, uint16_t data);
+static uint16_t ReadRegister(unsigned char reg);
+static void WriteRegister(bk4819_reg_t reg, uint16_t data);
 
 uint8_t bk4819_int_get(bk4819_int_t interrupt);
 uint8_t bk4819_flag_get(void);
@@ -215,17 +215,19 @@ void bk4819_rx_on(void);
 
 void bk4819_tx_on(void);
 
-void bk4819_CTDCSS_enable(uint8_t sel);
+void bk4819_enable_ctcss(uint16_t frequency);
 
-void bk4819_CTDCSS_disable(void);
+void bk4819_enable_ctcss2(uint16_t frequency);
+
+void bk4819_enable_cdcss();
+
+void bk4819_disable_ctdcss(void);
+
+uint16_t bk4819_get_ctcss(void);
 
 void bk4819_set_Squelch(uint8_t RTSO, uint8_t RTSC, uint8_t ETSO, uint8_t ETSC, uint8_t GTSO, uint8_t GTSC);
 
-void bk4819_set_CTCSS(uint8_t sel, uint16_t frequency);
-
-uint8_t bk4819_get_CTCSS_flag(uint8_t sel);
-
-uint16_t bk4819_get_CTCSS(void);
+int16_t bk4819_get_rssi(void);
 
 
 #ifdef __cplusplus
