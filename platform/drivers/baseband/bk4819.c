@@ -75,7 +75,7 @@ static uint16_t spi_read_half_word(void)
     return data;
 }
 
-uint16_t ReadRegister(unsigned char reg)
+static uint16_t ReadRegister(unsigned char reg)
 {
     uint16_t data;
     BK4819_SCN_LOW;
@@ -90,7 +90,7 @@ uint16_t ReadRegister(unsigned char reg)
     return data;
 }
 
-void WriteRegister(bk4819_reg_t reg, uint16_t data)
+static void WriteRegister(bk4819_reg_t reg, uint16_t data)
 {
     BK4819_SCN_LOW;
     delayUs(1);
@@ -212,17 +212,6 @@ void bk4819_tx_on(void)
 }
 
 /**
- * @brief Set CTCSS/CDCSS
- *
- * @param sel 0:CTC1 1:CTC2
- * @param frequency frquency control word
- */
-void bk4819_set_CTCSS(uint8_t sel, uint16_t frequency)
-{
-    WriteRegister(BK4819_REG_07, (sel << 13) | frequency);
-}
-
-/**
  * @brief Set squelch threshold
  *
  * @param RTSO RSSI threshold for Squelch=1, 0.5dB/step
@@ -246,27 +235,48 @@ void bk4819_set_Squelch(uint8_t RTSO,
 }
 
 /**
- * @brief Enable CTCSS/CDCSS
+ * @brief Disable all and enable CTCSS1
  *
- * @param sel 0:CDCSS   1:CTCSS
+ * @param frequency
  */
-void bk4819_CTDCSS_enable(uint8_t sel)
+void bk4819_enable_ctcss(uint16_t frequency)
 {
     uint16_t reg = ReadRegister(BK4819_REG_51);
-    reg |= BK4819_REG51_TX_CTCDSS_ENABLE;
-    if (sel)
-        reg |= BK4819_REG51_CTCSCSS_MODE_SEL;
-    else
-        reg &= ~BK4819_REG51_CTCSCSS_MODE_SEL;
+    reg |= BK4819_REG51_TX_CTCDSS_ENABLE | BK4819_REG51_CTCSCSS_MODE_SEL;
     WriteRegister(BK4819_REG_51, reg);
+    WriteRegister(BK4819_REG_07, frequency);
 }
 
-void bk4819_CTDCSS_disable(void)
+/**
+ * @brief Disable all and enable CTCSS2
+ * 
+ * @param frequency 
+ */
+void bk4819_enable_ctcss2(uint16_t frequency){
+    uint16_t reg = ReadRegister(BK4819_REG_51);
+    reg |= BK4819_REG51_TX_CTCDSS_ENABLE | BK4819_REG51_CTCSCSS_MODE_SEL;
+    WriteRegister(BK4819_REG_07, frequency | BIT(13));
+}
+
+/**
+ * @brief Disable CTCSS/CDCSS
+ * 
+ */
+void bk4819_disable_ctdcss(void)
 {
     uint16_t reg = ReadRegister(BK4819_REG_51);
     reg &= ~BK4819_REG51_TX_CTCDSS_ENABLE;
     WriteRegister(BK4819_REG_51, reg);
 }
+
+/**
+ * @brief Get CTCSS
+ * 
+ * @return uint8_t 
+ */
+// uint16_t bk4819_get_ctcss(void){
+
+// }
 
 /**
  * @brief Set CDCSS code
@@ -301,10 +311,10 @@ uint8_t bk4819_get_CTCSS_flag(uint8_t sel){
 }
 
 /**
- * @brief 
+ * @brief Get RSSI value 0.5dB/step
  * 
- * @return uint16_t 
+ * @return uint8_t 
  */
-uint16_t bk4819_get_CTCSS(void){
-    return ReadRegister(BK4819_REG_68) & 0xFFF;
+int16_t bk4819_get_rssi(void){
+    return (ReadRegister(BK4819_REG_67) & 0xFF) / 2 - 160;
 }

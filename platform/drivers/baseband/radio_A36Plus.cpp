@@ -107,16 +107,17 @@ bool radio_checkRxDigitalSquelch()
 
 void radio_enableAfOutput()
 {
-    // gpio_clearPin(MIC_EN);  // open microphone
+    
 }
 
 void radio_disableAfOutput()
 {
-    // gpio_setPin(MIC_EN);  // close microphone
+    
 }
 
 void radio_enableRx()
 {
+    // config->rxToneEn = 1;
     gpio_setPin(MIC_SPK_EN);  // open speaker
     bk4819_set_freq(config->rxFrequency / 10);
     bk4819_rx_on();
@@ -128,8 +129,7 @@ void radio_enableTx()
     gpio_clearPin(MIC_SPK_EN);  // open microphone
     bk4819_set_freq(config->txFrequency / 10);
     // if (config->txToneEn){
-        bk4819_CTDCSS_enable(1);
-        bk4819_set_CTCSS(0, 1646);
+        bk4819_enable_ctcss(1646);
     // }
     bk4819_tx_on();
     radioStatus = TX;
@@ -137,10 +137,8 @@ void radio_enableTx()
 
 void radio_disableRtx()
 {
-    // if (radioStatus == TX){
-    //     gpio_setPin(MIC_EN);  // close microphone
-    // }
-    // radioStatus = OFF;
+    bk4819_disable_ctdcss();
+    radioStatus = OFF;
 }
 
 void radio_updateConfiguration()
@@ -150,7 +148,7 @@ void radio_updateConfiguration()
 
 rssi_t radio_getRssi()
 {
-    return (ReadRegister(0x67) & 0xff) / 2 - 160;
+    return bk4819_get_rssi();
 }
 
 enum opstatus radio_getStatus()
