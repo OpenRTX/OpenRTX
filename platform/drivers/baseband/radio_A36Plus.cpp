@@ -64,7 +64,9 @@ void radio_init(const rtxStatus_t* rtxState)
     gpio_clearPin(MIC_SPK_EN);
     bk4819_init();
     
+    bk4819_enable_vox(0, 0x10, 0x30, 0x30);
 }
+
 void radio_terminate()
 {
 }
@@ -95,6 +97,17 @@ void radio_disableAfOutput()
     
 }
 
+void radio_VOX(){
+    if (bk4819_get_vox()){
+        if (radioStatus != TX)
+            radio_enableTx();
+    }else{
+        radio_disableRtx();
+        if (radioStatus != RX)
+        radio_enableRx();
+    }
+}
+
 void radio_enableRx()
 {
     bk4819_set_freq(config->rxFrequency / 10);
@@ -123,7 +136,7 @@ void radio_disableRtx()
 
 void radio_updateConfiguration()
 {
-    
+
 }
 
 rssi_t radio_getRssi()

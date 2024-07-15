@@ -48,7 +48,7 @@ ENTRY(_Z13Reset_Handlerv)
 /* specify the memory areas  */
 MEMORY
 {
-    flash(rx) : ORIGIN = 0x08001000, LENGTH = 124K
+    flash(rx) : ORIGIN = 0x08000000, LENGTH = 124K
     ram(wx)   : ORIGIN = 0x20000200, LENGTH = 16K - 0x200
 }
 
