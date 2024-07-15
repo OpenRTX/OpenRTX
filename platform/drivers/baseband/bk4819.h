@@ -232,6 +232,10 @@ void bk4819_disable_ctdcss(void);
 
 uint16_t bk4819_get_ctcss(void);
 
+void bk4819_enable_vox(uint8_t delay_time, uint8_t interval_time, uint16_t threshold_on, uint16_t threshold_off);
+
+uint8_t bk4819_get_vox(void);
+
 void bk4819_set_Squelch(uint8_t RTSO, uint8_t RTSC, uint8_t ETSO, uint8_t ETSC, uint8_t GTSO, uint8_t GTSC);
 
 int16_t bk4819_get_rssi(void);

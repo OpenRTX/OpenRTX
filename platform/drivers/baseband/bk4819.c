@@ -168,29 +168,29 @@ void bk4819_init(void)
  */
 uint8_t bk4819_int_get(bk4819_int_t interrupt)
 {
-    if ((ReadRegister(BK4819_REG_0C) & BIT(0x01)) == 0)
-        return 0;
+    if ((ReadRegister(BK4819_REG_0C) & BIT(0x01)) == 0) return 0;
     return ReadRegister(BK4819_REG_02 & interrupt);
 }
 
 /**
  * @brief Enable interrupt
- * 
- * @param interrupt 
+ *
+ * @param interrupt
  */
-void bk4819_int_enable(bk4819_int_t interrupt){
+void bk4819_int_enable(bk4819_int_t interrupt)
+{
     WriteRegister(BK4819_REG_3F, ReadRegister(BK4819_REG_3F) | interrupt);
 }
 
 /**
  * @brief Disable interrupt
- * 
- * @param interrupt 
+ *
+ * @param interrupt
  */
-void bk4819_int_disable(bk4819_int_t interrupt){
+void bk4819_int_disable(bk4819_int_t interrupt)
+{
     WriteRegister(BK4819_REG_3F, ReadRegister(BK4819_REG_3F) & (~interrupt));
 }
-
 
 /**
  * @brief Set frequency
@@ -221,7 +221,6 @@ void bk4819_rx_on(void)
  */
 void bk4819_tx_on(void)
 {
-
     WriteRegister(BK4819_REG_30, 0x00);  // reset
 
     WriteRegister(BK4819_REG_30,
@@ -283,10 +282,11 @@ void bk4819_enable_rx_ctcss(uint16_t frequency)
 
 /**
  * @brief Disable all and enable CTCSS2
- * 
- * @param frequency 
+ *
+ * @param frequency
  */
-void bk4819_enable_ctcss2(uint16_t frequency){
+void bk4819_enable_ctcss2(uint16_t frequency)
+{
     uint16_t reg = ReadRegister(BK4819_REG_51);
     reg |= BK4819_REG51_TX_CTCDSS_ENABLE | BK4819_REG51_CTCSCSS_MODE_SEL;
     WriteRegister(BK4819_REG_07, frequency | BIT(13));
@@ -294,18 +294,18 @@ void bk4819_enable_ctcss2(uint16_t frequency){
 
 /**
  * @brief Disable all and enable CDCSS
- * 
+ *
  * @param np_code 0:positive code   1:negative code
  * @param bit_sel 0: 23bit          1:24bit
  * @param cdcss_code cdcss code
  */
-void bk4819_enable_cdcss(uint8_t np_code, uint8_t bit_sel, uint32_t cdcss_code){
-
+void bk4819_enable_cdcss(uint8_t np_code, uint8_t bit_sel, uint32_t cdcss_code)
+{
 }
 
 /**
  * @brief Disable CTCSS/CDCSS
- * 
+ *
  */
 void bk4819_disable_ctdcss(void)
 {
@@ -316,11 +316,39 @@ void bk4819_disable_ctdcss(void)
 
 /**
  * @brief Get CTCSS
+ *
+ * @return uint8_t
+ */
+uint16_t bk4819_get_ctcss(void)
+{
+    return ReadRegister(BK4819_REG_0C) & BIT(10);
+}
+
+/**
+ * @brief Enable VOX
+ *
+ * @param delay_time VOX = 0 detection delay, ~ 128 ms
+ * @param interval_time VOX detection interval time
+ * @param threshold_on  Voice amplitude threshold for VOX on
+ * @param threshold_off Voice amplitude threshold for VOX off
+ */
+void bk4819_enable_vox(uint8_t delay_time,
+                       uint8_t interval_time,
+                       uint16_t threshold_on,
+                       uint16_t threshold_off)
+{
+    WriteRegister(BK4819_REG_31, ReadRegister(BK4819_REG_31) | BIT(2));
+    WriteRegister(BK4819_REG_79, BITV(interval_time, 10) | threshold_off);
+    WriteRegister(BK4819_REG_46, threshold_on);
+}
+
+/**
+ * @brief Get VOX indicator
  * 
  * @return uint8_t 
  */
-uint16_t bk4819_get_ctcss(void){
-    return ReadRegister(BK4819_REG_0C) & BIT(10);
+uint8_t bk4819_get_vox(void){
+    return ReadRegister(BK4819_REG_0C) & BIT(2);
 }
 
 /**
@@ -347,19 +375,21 @@ void bk4819_DTMF_SELCall_set(uint8_t number, uint8_t coeff)
 
 /**
  * @brief Get CTCSS
- * 
+ *
  * @param sel   0:CTC1      1:CTC2
- * @return uint16_t 
+ * @return uint16_t
  */
-uint8_t bk4819_get_CTCSS_flag(uint8_t sel){
+uint8_t bk4819_get_CTCSS_flag(uint8_t sel)
+{
     return ReadRegister(BK4819_REG_0C) & (1 << (sel == 0 ? 10 : 11));
 }
 
 /**
  * @brief Get RSSI value 0.5dB/step
- * 
- * @return uint8_t 
+ *
+ * @return uint8_t
  */
-int16_t bk4819_get_rssi(void){
+int16_t bk4819_get_rssi(void)
+{
     return (ReadRegister(BK4819_REG_67) & 0xFF) / 2 - 160;
 }

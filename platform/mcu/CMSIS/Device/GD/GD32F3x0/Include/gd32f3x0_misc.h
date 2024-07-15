@@ -43,7 +43,7 @@ extern "C" {
 /* constants definitions */
 /* set the RAM and FLASH base address */
 #define NVIC_VECTTAB_RAM            ((uint32_t)0x20000000)                      /*!< RAM base address */
-#define NVIC_VECTTAB_FLASH          ((uint32_t)0x08001000)                      /*!< Flash base address */
+#define NVIC_VECTTAB_FLASH          ((uint32_t)0x08000000)                      /*!< Flash base address */
 
 /* set the NVIC vector table offset mask */
 #define NVIC_VECTTAB_OFFSET_MASK    ((uint32_t)0x1FFFFF80)                      /*!< NVIC vector table offset mask */
