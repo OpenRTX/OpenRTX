@@ -521,7 +521,7 @@ rt890_def += openrtx_def + at32f421_def + miosix_cm4_def
 a36plus_src = ['platform/targets/A36Plus/platform.c',
              'platform/drivers/display/ST7735S_a36plus.c',
              'platform/drivers/keyboard/keyboard_a36plus.c',
-             'platform/drivers/stubs/audio_stub.c',
+             'platform/drivers/audio/audio_A36Plus.c',
              'platform/drivers/stubs/cps_io_stub.c',
              'platform/drivers/stubs/nvmem_stub.c',
              'platform/drivers/baseband/bk4819.c',
