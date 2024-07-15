@@ -97,7 +97,7 @@ void radio_disableAfOutput()
     
 }
 
-void radio_VOX(){
+void radio_checkVOX(){
     if (bk4819_get_vox()){
         if (radioStatus != TX)
             radio_enableTx();
