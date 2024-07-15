@@ -150,8 +150,8 @@ void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
         enterRx = true;
         sqlOpen = false;  // Force squelch to be redetected.
     }
-
-    radio_checkVOX();
+    if (status->voxEn)
+        radio_checkVOX();   
 
     // Led control logic
     switch(status->opStatus)
