@@ -168,8 +168,29 @@ void bk4819_init(void)
  */
 uint8_t bk4819_int_get(bk4819_int_t interrupt)
 {
+    if ((ReadRegister(BK4819_REG_0C) & BIT(0x01)) == 0)
+        return 0;
     return ReadRegister(BK4819_REG_02 & interrupt);
 }
+
+/**
+ * @brief Enable interrupt
+ * 
+ * @param interrupt 
+ */
+void bk4819_int_enable(bk4819_int_t interrupt){
+    WriteRegister(BK4819_REG_3F, ReadRegister(BK4819_REG_3F) | interrupt);
+}
+
+/**
+ * @brief Disable interrupt
+ * 
+ * @param interrupt 
+ */
+void bk4819_int_disable(bk4819_int_t interrupt){
+    WriteRegister(BK4819_REG_3F, ReadRegister(BK4819_REG_3F) & (~interrupt));
+}
+
 
 /**
  * @brief Set frequency
@@ -239,12 +260,25 @@ void bk4819_set_Squelch(uint8_t RTSO,
  *
  * @param frequency
  */
-void bk4819_enable_ctcss(uint16_t frequency)
+void bk4819_enable_tx_ctcss(uint16_t frequency)
 {
     uint16_t reg = ReadRegister(BK4819_REG_51);
     reg |= BK4819_REG51_TX_CTCDSS_ENABLE | BK4819_REG51_CTCSCSS_MODE_SEL;
     WriteRegister(BK4819_REG_51, reg);
-    WriteRegister(BK4819_REG_07, frequency);
+    WriteRegister(BK4819_REG_07, frequency * 20.64888);
+}
+
+/**
+ * @brief Enable Rx CTCSS.
+ *
+ * @param frequency
+ */
+void bk4819_enable_rx_ctcss(uint16_t frequency)
+{
+    uint16_t reg = ReadRegister(BK4819_REG_51);
+    reg |= BK4819_REG51_CTCSCSS_MODE_SEL;
+    WriteRegister(BK4819_REG_51, reg);
+    WriteRegister(BK4819_REG_07, frequency * 20.64888);
 }
 
 /**

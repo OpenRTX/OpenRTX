@@ -205,6 +205,11 @@ static uint16_t ReadRegister(unsigned char reg);
 static void WriteRegister(bk4819_reg_t reg, uint16_t data);
 
 uint8_t bk4819_int_get(bk4819_int_t interrupt);
+
+void bk4819_int_enable(bk4819_int_t interrupt);
+
+void bk4819_int_disable(bk4819_int_t interrupt);
+
 uint8_t bk4819_flag_get(void);
 
 void bk4819_init(void);
@@ -215,7 +220,9 @@ void bk4819_rx_on(void);
 
 void bk4819_tx_on(void);
 
-void bk4819_enable_ctcss(uint16_t frequency);
+void bk4819_enable_tx_ctcss(uint16_t frequency);
+
+void bk4819_enable_rx_ctcss(uint16_t frequency);
 
 void bk4819_enable_ctcss2(uint16_t frequency);
 

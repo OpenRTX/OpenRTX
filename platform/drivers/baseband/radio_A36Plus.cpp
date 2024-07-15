@@ -3,6 +3,7 @@
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
+ *   Copyright (C) 2024 by Jamiexu                                         *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -60,30 +61,9 @@ void radio_init(const rtxStatus_t* rtxState)
     gpio_setMode(BK4819_DAT, OUTPUT);
     gpio_setMode(BK4819_CS, OUTPUT);
     gpio_setMode(MIC_SPK_EN, OUTPUT);
-    gpio_setPin(MIC_SPK_EN);
+    gpio_clearPin(MIC_SPK_EN);
     bk4819_init();
-    /*
-     * Enable and configure DAC for PA drive control
-     */
-    // SIM->SCGC6 |= SIM_SCGC6_DAC0_MASK;
-    // DAC0->DAT[0].DATL = 0;
-    // DAC0->DAT[0].DATH = 0;
-    // DAC0->C0   |= DAC_C0_DACRFS_MASK    // Reference voltage is Vref2
-    //            |  DAC_C0_DACEN_MASK;    // Enable DAC
-
-    // /*
-    //  * Load calibration data
-    //  */
-    // nvm_readCalibData(&calData);
-
-    // /*
-    //  * Enable and configure both AT1846S and HR_C6000, keep AF output
-    //  disabled
-    //  * at power on.
-    //  */
-    // at1846s.init();
-    // C6000.init();
-    // radio_disableAfOutput();
+    
 }
 void radio_terminate()
 {
@@ -117,21 +97,20 @@ void radio_disableAfOutput()
 
 void radio_enableRx()
 {
-    // config->rxToneEn = 1;
-    gpio_setPin(MIC_SPK_EN);  // open speaker
     bk4819_set_freq(config->rxFrequency / 10);
-    bk4819_enable_ctcss(1646);
+    if (config->rxToneEn){
+        bk4819_enable_rx_ctcss(config->rxTone / 10);
+    }
     bk4819_rx_on();
     radioStatus = RX;
 }
 
 void radio_enableTx()
 {
-    gpio_clearPin(MIC_SPK_EN);  // open microphone
     bk4819_set_freq(config->txFrequency / 10);
-    // if (config->txToneEn){
-        bk4819_enable_ctcss(1646);
-    // }
+    if (config->txToneEn){
+        bk4819_enable_tx_ctcss(config->txTone / 10);
+    }
     bk4819_tx_on();
     radioStatus = TX;
 }
@@ -144,7 +123,7 @@ void radio_disableRtx()
 
 void radio_updateConfiguration()
 {
-    bk4819_set_freq(config->rxFrequency / 10);
+    
 }
 
 rssi_t radio_getRssi()
