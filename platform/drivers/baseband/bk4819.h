@@ -204,40 +204,129 @@ static uint16_t spi_read_half_word(void);
 static uint16_t ReadRegister(unsigned char reg);
 static void WriteRegister(bk4819_reg_t reg, uint16_t data);
 
+/**
+ * @brief Get interrupt
+ *
+ * @param interrupt Interrupt type
+ * @return uint8_t 0:SET 1:RESET
+ */
 uint8_t bk4819_int_get(bk4819_int_t interrupt);
 
+/**
+ * @brief Enable interrupt
+ *
+ * @param interrupt
+ */
 void bk4819_int_enable(bk4819_int_t interrupt);
 
+/**
+ * @brief Disable interrupt
+ *
+ * @param interrupt
+ */
 void bk4819_int_disable(bk4819_int_t interrupt);
 
 uint8_t bk4819_flag_get(void);
 
 void bk4819_init(void);
 
+/**
+ * @brief Set frequency
+ *
+ * @param freq
+ */
 void bk4819_set_freq(uint32_t frq);
 
+/**
+ * @brief Turn on RX
+ *
+ */
 void bk4819_rx_on(void);
 
+/**
+ * @brief Turn on TX
+ *
+ */
 void bk4819_tx_on(void);
 
+/**
+ * @brief Disable all and enable CTCSS1
+ *
+ * @param frequency
+ */
 void bk4819_enable_tx_ctcss(uint16_t frequency);
 
+/**
+ * @brief Enable Rx CTCSS.
+ *
+ * @param frequency
+ */
 void bk4819_enable_rx_ctcss(uint16_t frequency);
 
+/**
+ * @brief Disable all and enable CTCSS2
+ *
+ * @param frequency
+ */
 void bk4819_enable_ctcss2(uint16_t frequency);
 
+/**
+ * @brief Disable all and enable CDCSS
+ *
+ * @param code_type 0:positive code   1:negative code
+ * @param bit_sel 0: 23bit          1:24bit
+ * @param cdcss_code cdcss code
+ */
 void bk4819_enable_tx_cdcss(uint8_t code_type, uint8_t bit_sel, uint32_t cdcss_code);
 
+/**
+ * @brief Disable CTCSS/CDCSS
+ *
+ */
 void bk4819_disable_ctdcss(void);
 
+/**
+ * @brief Get CTCSS
+ *
+ * @return uint8_t
+ */
 uint16_t bk4819_get_ctcss(void);
 
+/**
+ * @brief Enable VOX
+ *
+ * @param delay_time VOX = 0 detection delay, ~ 128 ms
+ * @param interval_time VOX detection interval time
+ * @param threshold_on  Voice amplitude threshold for VOX on
+ * @param threshold_off Voice amplitude threshold for VOX off
+ */
 void bk4819_enable_vox(uint8_t delay_time, uint8_t interval_time, uint16_t threshold_on, uint16_t threshold_off);
 
+/**
+ * @brief Get VOX indicator
+ * 
+ * @return uint8_t 
+ */
 uint8_t bk4819_get_vox(void);
 
+/**
+ * @brief Set squelch threshold
+ *
+ * @param RTSO RSSI threshold for Squelch=1, 0.5dB/step
+ * @param RTSC RSSI threshold for Squelch =0, 0.5dB/step
+ * @param ETSO Ex-noise threshold for Squelch =1
+ * @param ETSC Ex-noise threshold for Squelch =0
+ * @param GTSO Glitch threshold for Squelch =1
+ * @param GTSC Glitch threshold for Squelch =0
+ */
 void bk4819_set_Squelch(uint8_t RTSO, uint8_t RTSC, uint8_t ETSO, uint8_t ETSC, uint8_t GTSO, uint8_t GTSC);
 
+
+/**
+ * @brief Get RSSI value 0.5dB/step
+ *
+ * @return uint8_t
+ */
 int16_t bk4819_get_rssi(void);
 
 
