@@ -60,9 +60,9 @@
 #define EFLASH_CS   GPIOB,4
 
 // BK1080
-#define BK1080_CLK  GPIOC,14
-#define BK1080_DAT  GPIOB,4     // Shared with external flash SCK
-#define BK1080_CS   GPIOC,13
+#define BK1080_CLK  GPIOF,6
+#define BK1080_DAT  GPIOA,3     // Shared with external flash SCK
+#define BK1080_EN  GPIOA,8
 
 // BK4819
 #define BK4819_CLK  GPIOA,2

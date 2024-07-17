@@ -31,6 +31,7 @@
 #include <string>
 
 #include "bk4819.h"
+#include "bk1080.h"
 #include "radioUtils.h"
 
 static const rtxStatus_t*
@@ -83,11 +84,25 @@ void radio_init(const rtxStatus_t* rtxState)
      */
     rcu_periph_clock_enable(RCU_GPIOA);
     rcu_periph_clock_enable(RCU_GPIOB);
+    rcu_periph_clock_enable(RCU_GPIOF);
+
 
     gpio_setMode(BK4819_CLK, OUTPUT);
     gpio_setMode(BK4819_DAT, OUTPUT);
     gpio_setMode(BK4819_CS, OUTPUT);
     gpio_setMode(MIC_SPK_EN, OUTPUT);
+
+    gpio_setMode(BK1080_DAT, OUTPUT);
+    gpio_setMode(BK1080_CLK, OUTPUT);
+    gpio_setMode(BK1080_EN, OUTPUT);
+
+    gpio_clearPin(BK1080_EN);
+    // uint16_t data1 = bk1080_read_reg(BK1080_REG00);
+    // uint16_t data2 = bk1080_read_reg(BK1080_REG01);
+    // uint16_t data3 = bk1080_read_reg(BK1080_REG02);
+    // bk1080_write_reg(BK1080_REG02, 0x2048);
+    // uint16_t data4 = bk1080_read_reg(BK1080_REG02);
+    // printf("%d%d%d%d", data1,data2,data3,data4);
     gpio_clearPin(MIC_SPK_EN);
     bk4819_init();
     
@@ -159,6 +174,8 @@ void radio_enableTx()
 void radio_disableRtx()
 {
     // bk4819_disable_ctdcss();
+
+
     radioStatus = OFF;
 }
 

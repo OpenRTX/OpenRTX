@@ -525,6 +525,7 @@ a36plus_src = ['platform/targets/A36Plus/platform.c',
              'platform/drivers/stubs/cps_io_stub.c',
              'platform/drivers/stubs/nvmem_stub.c',
              'platform/drivers/baseband/bk4819.c',
+             'platform/drivers/baseband/bk1080.c',
              'platform/drivers/baseband/radio_A36Plus.cpp']
 
 a36plus_inc = ['platform/targets/A36Plus',
