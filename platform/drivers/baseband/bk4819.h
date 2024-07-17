@@ -50,6 +50,11 @@ extern "C" {
 #define BK4819_REG51_AUTO_CTCSS_BW_MOD BIT(8)
 #define BK4819_REG51_CTCDCSS_TX_GAIN1T(x) BITV((x), 0)
 
+#define BK4819_SCAN_FRE_TIME_2 0x00
+#define BK4819_SCAN_FRE_TIME_4 0x01
+#define BK4819_SCAN_FRE_TIME_8 0x02
+#define BK4819_SCAN_FRE_TIME_16 0x03
+
 typedef enum
 {
     BK4819_REG_00 = 0x00,
@@ -226,8 +231,6 @@ void bk4819_int_enable(bk4819_int_t interrupt);
  */
 void bk4819_int_disable(bk4819_int_t interrupt);
 
-uint8_t bk4819_flag_get(void);
-
 void bk4819_init(void);
 
 /**
@@ -328,6 +331,36 @@ void bk4819_set_Squelch(uint8_t RTSO, uint8_t RTSC, uint8_t ETSO, uint8_t ETSC, 
  * @return uint8_t
  */
 int16_t bk4819_get_rssi(void);
+
+/**
+ * @brief Scna frequency
+ * 
+ * @param scna_time BK4819_SCAN_FRE_TIME_2  0.2s
+                    BK4819_SCAN_FRE_TIME_4  0.4s
+                    BK4819_SCAN_FRE_TIME_8  0.8s
+                    BK4819_SCAN_FRE_TIME_16 1.6s 
+ */
+void bk4819_enable_freq_scan(uint8_t scna_time);
+
+/**
+ * @brief Disable scanning frequcny 
+ * 
+ */
+void bk4819_disable_freq_scan(void);
+
+/**
+ * @brief Get scanning freqency flag
+ * 
+ * @return uint8_t 
+ */
+uint8_t bk4819_get_scan_freq_flag(void);
+
+/**
+ * @brief Get frequency
+ * 
+ * @return uint32_t 
+ */
+uint32_t bk4819_get_scan_freq(void);
 
 
 #ifdef __cplusplus

@@ -276,3 +276,20 @@ int16_t bk4819_get_rssi(void)
 {
     return (ReadRegister(BK4819_REG_67) & 0xFF) / 2 - 160;
 }
+
+void bk4819_enable_freq_scan(uint8_t scna_time){
+    WriteRegister(BK4819_REG_32, ReadRegister(BK4819_REG_32) | BITV(scna_time, 14));
+    WriteRegister(BK4819_REG_32, ReadRegister(BK4819_REG_32) | 0x01);
+}
+
+void bk4819_disable_freq_scan(void){
+     WriteRegister(BK4819_REG_32, ReadRegister(BK4819_REG_32) & (~0x01));
+}
+
+uint8_t bk4819_get_scan_freq_flag(void){
+    return ReadRegister(BK4819_REG_0D) & BIT(15);
+}
+
+uint32_t bk4819_get_scan_freq(void){
+    return ((ReadRegister(BK4819_REG_0D) << 16) | ReadRegister(BK4819_REG_0E)) / 10;
+}
