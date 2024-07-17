@@ -96,16 +96,11 @@ void radio_init(const rtxStatus_t* rtxState)
     gpio_setMode(BK1080_CLK, OUTPUT);
     gpio_setMode(BK1080_EN, OUTPUT);
 
-    gpio_clearPin(BK1080_EN);
-    // uint16_t data1 = bk1080_read_reg(BK1080_REG00);
-    // uint16_t data2 = bk1080_read_reg(BK1080_REG01);
-    // uint16_t data3 = bk1080_read_reg(BK1080_REG02);
-    // bk1080_write_reg(BK1080_REG02, 0x2048);
-    // uint16_t data4 = bk1080_read_reg(BK1080_REG02);
-    // printf("%d%d%d%d", data1,data2,data3,data4);
+    // gpio_clearPin(BK1080_EN);
     gpio_clearPin(MIC_SPK_EN);
     bk4819_init();
     
+    bk4819_enable_freq_scan(BK4819_SCAN_FRE_TIME_2);
     // bk4819_enable_vox(0, 0x10, 0x30, 0x30);
 }
 
