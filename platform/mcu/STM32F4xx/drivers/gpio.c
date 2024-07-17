@@ -98,7 +98,7 @@ void gpio_setMode(const void *port, const uint8_t pin, const uint16_t mode)
             // (MODE=10 TYPE=0 PUP=00)
             p->MODER  |= 0x02 << (pin*2);
             p->OTYPER |= 0x00 << pin;
-            p->PUPDR  |= 0x01 << (pin*2);
+            p->PUPDR  |= 0x00 << (pin*2);
             setGpioAf(p, pin, af);
             break;
 
