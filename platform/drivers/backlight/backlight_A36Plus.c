@@ -49,7 +49,7 @@ void backlight_init()
     timer_initpara.prescaler = (84 - 1);
     timer_initpara.alignedmode = TIMER_COUNTER_EDGE;
     timer_initpara.counterdirection = TIMER_COUNTER_UP;
-    timer_initpara.period = (1000 - 1);
+    timer_initpara.period = (255 - 1);
     timer_initpara.clockdivision = TIMER_CKDIV_DIV1;
     timer_initpara.repetitioncounter = 1;
     timer_init(TIMER16, &timer_initpara);
