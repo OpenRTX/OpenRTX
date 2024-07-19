@@ -22,13 +22,13 @@
 #include "gd32f3x0.h"
 // #include <peripherals/gpio.h>
 #include "../../mcu/GD32F330/drivers/gpio.h"
-#include <hwconfig.h>
+#include <hwconfig.h> 
 #include "backlight.h"
 
 
 void TIMER16_IRQHandler(void){
     if (timer_interrupt_flag_get(TIMER16, TIMER_INT_UP) != RESET){
-        gpio_bit_toggle(LCD_GPIO_PORT, LCD_GPIO_LIGHT_PIN);
+        // gpio_bit_toggle(LCD_GPIO_PORT, LCD_GPIO_LIGHT_PIN);
         timer_flag_clear(TIMER16, TIMER_INT_UP);
     }
 }
@@ -39,10 +39,10 @@ void backlight_init()
     timer_oc_parameter_struct time_ocpar;
     rcu_periph_clock_enable(RCU_TIMER16);
     rcu_periph_clock_enable(LCD_GPIO_RCU);
-    // gpio_af_set(LCD_GPIO_PORT, GPIO_AF_0, LCD_GPIO_LIGHT_PIN);
-    gpio_mode_set(LCD_GPIO_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, LCD_GPIO_LIGHT_PIN);
+
+    gpio_af_set(LCD_GPIO_PORT, GPIO_AF_2, LCD_GPIO_LIGHT_PIN);
+    gpio_mode_set(LCD_GPIO_PORT, GPIO_MODE_AF, GPIO_PUPD_NONE, LCD_GPIO_LIGHT_PIN);
     gpio_output_options_set(LCD_GPIO_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, LCD_GPIO_LIGHT_PIN);
-    // gpio_bit_toggle(LCD_GPIO_PORT, LCD_GPIO_LIGHT_PIN);
     
     timer_deinit(TIMER16);
     /* TIMER16 configuration */
@@ -56,29 +56,26 @@ void backlight_init()
     /* auto-reload preload enable */
     timer_auto_reload_shadow_enable(TIMER16);
 
-    /* TIMER16 counter enable */
-    
-    timer_interrupt_flag_clear(TIMER16, TIMER_INT_UP);
-    timer_interrupt_enable(TIMER16, TIMER_INT_UP);
-    timer_enable(TIMER16);
     /* CH0 configuration in PWM mode */
-    // time_ocpar.outputstate  = TIMER_CCX_ENABLE;
-    // time_ocpar.outputnstate = TIMER_CCXN_ENABLE;
-    // time_ocpar.ocpolarity   = TIMER_OC_POLARITY_HIGH;
-    // time_ocpar.ocnpolarity  = TIMER_OCN_POLARITY_LOW;
-    // time_ocpar.ocidlestate  = TIMER_OC_IDLE_STATE_LOW;
-    // time_ocpar.ocnidlestate = TIMER_OCN_IDLE_STATE_LOW;
+    time_ocpar.outputstate  = TIMER_CCX_ENABLE;
+    time_ocpar.outputnstate = TIMER_CCXN_ENABLE;
+    time_ocpar.ocpolarity   = TIMER_OC_POLARITY_LOW;
+    time_ocpar.ocnpolarity  = TIMER_OCN_POLARITY_HIGH;
+    time_ocpar.ocidlestate  = TIMER_OC_IDLE_STATE_HIGH;
+    time_ocpar.ocnidlestate = TIMER_OCN_IDLE_STATE_LOW;
+    
 
-    // timer_channel_output_config(TIMER16, TIMER_CH_0, &time_ocpar);
-    // timer_primary_output_config(TIMER16, ENABLE);
+    timer_channel_output_config(TIMER16, TIMER_CH_0, &time_ocpar);
+    timer_primary_output_config(TIMER16, ENABLE);
 
-    // timer_channel_output_pulse_value_config(TIMER16, TIMER_CH_0, 20000);
-    // timer_channel_output_mode_config(TIMER16, TIMER_CH_0, TIMER_OC_MODE_PWM0);
-    // timer_channel_output_shadow_config(TIMER16, TIMER_CH_0, TIMER_OC_SHADOW_DISABLE);
+    // timer_channel_output_pulse_value_config(TIMER16, TIMER_CH_0, 0);
+    timer_channel_output_mode_config(TIMER16, TIMER_CH_0, TIMER_OC_MODE_PWM1);
+    timer_channel_output_shadow_config(TIMER16, TIMER_CH_0, TIMER_OC_SHADOW_DISABLE);
+
     /* auto-reload preload enable */
-    // timer_auto_reload_shadow_enable(TIMER16);
-    /* auto-reload preload enable */
-    // timer_enable(TIMER16);
+    timer_auto_reload_shadow_enable(TIMER16);
+    
+    timer_enable(TIMER16);
     // timer_interrupt_enable(TIMER16, TIMER_INT_UP);
 }
 
