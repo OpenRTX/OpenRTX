@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2021 - 2024 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -23,6 +23,7 @@
 #include <interfaces/radio.h>
 #include <peripherals/gpio.h>
 #include <calibInfo_MDx.h>
+#include <spi_bitbang.h>
 #include <hwconfig.h>
 #include <ADC1_MDx.h>
 #include <algorithm>
@@ -42,7 +43,7 @@ static uint8_t txpwr_hi  = 0;                   // APC voltage for TX output pow
 
 static enum opstatus radioStatus;               // Current operating status
 
-static HR_C5000& C5000 = HR_C5000::instance();  // HR_C5000 driver
+static HR_C5000 C5000((const struct spiDevice *) &c5000_spi, { DMR_CS });
 
 /*
  * Parameters for RSSI voltage (mV) to input power (dBm) conversion.
@@ -128,14 +129,13 @@ void radio_init(const rtxStatus_t *rtxState)
     nvm_readCalibData(&calData);
 
     /*
-     * Enable and configure PLL
+     * Enable and configure PLL and HR_C5000
      */
-    gpio_setPin(PLL_PWR);
-    SKY73210_init();
+    spiBitbang_init(&pll_spi);
+    spiBitbang_init(&c5000_spi);
 
-    /*
-     * Configure HR_C5000
-     */
+    gpio_setPin(PLL_PWR);
+    SKY73210_init(&pll);
     C5000.init();
 
     /*
@@ -147,7 +147,7 @@ void radio_init(const rtxStatus_t *rtxState)
 
 void radio_terminate()
 {
-    SKY73210_terminate();
+    SKY73210_terminate(&pll);
     C5000.terminate();
 
     gpio_clearPin(PLL_PWR);    // PLL off
@@ -251,7 +251,7 @@ void radio_enableRx()
         pllFreq -= static_cast< float >(IF_FREQ);
     }
 
-    SKY73210_setFrequency(pllFreq, 5);
+    SKY73210_setFrequency(&pll, pllFreq, 5);
     DAC->DHR12L1 = vtune_rx * 0xFF;
 
     gpio_setPin(RX_STG_EN);            // Enable RX LNA
@@ -270,7 +270,7 @@ void radio_enableTx()
     // Set PLL frequency.
     float pllFreq = static_cast< float >(config->txFrequency);
     if(isVhfBand) pllFreq *= 2.0f;
-    SKY73210_setFrequency(pllFreq, 5);
+    SKY73210_setFrequency(&pll, pllFreq, 5);
 
     // Set TX output power, constrain between 1W and 5W.
     float power  = static_cast < float >(config->txPower) / 1000.0f;

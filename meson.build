@@ -161,7 +161,9 @@ mdx_src = ['platform/drivers/ADC/ADC1_MDx.c',
            'platform/drivers/NVM/nvmem_MDx.c',
            'platform/drivers/audio/audio_MDx.c',
            'platform/drivers/baseband/HR_Cx000.cpp',
-           'platform/drivers/tones/toneGenerator_MDx.cpp']
+           'platform/drivers/tones/toneGenerator_MDx.cpp',
+           'platform/drivers/SPI/spi_custom.c',
+           'platform/drivers/SPI/spi_bitbang.c']
 
 ##
 ## GDx family: Radioddity GD-77 and Baofeng DM-1801
@@ -341,7 +343,8 @@ md3x0_src = ['platform/drivers/CPS/cps_io_native_MD3x0.c',
              'platform/drivers/keyboard/keyboard_MD3x.c',
              'platform/drivers/display/HX8353_MD3x.cpp',
              'platform/drivers/backlight/backlight_MDx.c',
-             'platform/targets/MD-3x0/platform.c']
+             'platform/targets/MD-3x0/platform.c',
+             'platform/targets/MD-3x0/hwconfig.c']
 
 md3x0_inc = ['platform/targets/MD-3x0']
 md3x0_def = {'PLATFORM_MD3x0': '', 'timegm': 'mktime'}

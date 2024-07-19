@@ -87,13 +87,13 @@
 #define FLASH_SDI GPIOB,5
 
 /* PLL */
-#define PLL_CS  GPIOD,11
+#define PLL_CS  &GpioD,11
 #define PLL_CLK GPIOE,4
 #define PLL_DAT GPIOE,5     /* WARNING: this line is also HR_C5000 MOSI */
 #define PLL_LD  GPIOD,10
 
 /* HR_C5000 */
-#define DMR_CS    GPIOE,2
+#define DMR_CS    &GpioE,2
 #define DMR_CLK   GPIOC,13
 #define DMR_MOSI  PLL_DAT
 #define DMR_MISO  GPIOE,3
