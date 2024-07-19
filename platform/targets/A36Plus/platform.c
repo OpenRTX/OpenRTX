@@ -76,6 +76,7 @@ void platform_init()
     // gpio_setMode(RED_LED,   OUTPUT);
     gpio_setMode(PTT_SW,    INPUT_PULL_UP);
     spi_config();
+    backlight_init();
 }
 
 
@@ -85,6 +86,8 @@ void platform_terminate()
     // Shut down LED
     gpio_clearPin(GREEN_LED);
     gpio_clearPin(RED_LED);
+    backlight_terminate();
+    
 }
 
 uint16_t platform_getVbat()

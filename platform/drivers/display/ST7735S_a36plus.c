@@ -24,6 +24,7 @@
 #include <peripherals/gpio.h>
 #include <hwconfig.h>
 #include <stddef.h>
+#include "gd32f3x0.h"
 
 enum ST7735S_command
 {
@@ -228,7 +229,8 @@ void display_init(void)
     sendData(0x05);
     sendCommand(ST7735S_CMD_DISPON);
     // Display power on
-    gpio_setPin(LCD_PWR);
+    // gpio_setPin(LCD_PWR);
+    display_setBacklightLevel(100);
 }
 
 void *display_getFrameBuffer()
@@ -293,5 +295,9 @@ void display_setPixel(uint16_t x, uint16_t y, uint32_t color)
 
 void display_setBacklightLevel(uint8_t level)
 {
-    (void) level;
+     if(level > 100)
+        level = 100;
+
+    uint32_t pwmLevel = (level / 100.0) * 1000;
+    TIMER_CH0CV(TIMER16) = pwmLevel;
 }
