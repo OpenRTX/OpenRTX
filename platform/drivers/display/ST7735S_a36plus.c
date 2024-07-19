@@ -230,7 +230,7 @@ void display_init(void)
     sendCommand(ST7735S_CMD_DISPON);
     // Display power on
     // gpio_setPin(LCD_PWR);
-    display_setBacklightLevel(100);
+    // display_setBacklightLevel(5);
 }
 
 void *display_getFrameBuffer()
@@ -298,6 +298,6 @@ void display_setBacklightLevel(uint8_t level)
      if(level > 100)
         level = 100;
 
-    uint32_t pwmLevel = (level / 100.0) * 1000;
+    uint32_t pwmLevel = (level / 100.0) * 255;
     TIMER_CH0CV(TIMER16) = pwmLevel;
 }
