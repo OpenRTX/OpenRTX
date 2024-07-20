@@ -155,9 +155,7 @@ void bk4819_init(void)
     WriteRegister(0x31, uVar1 & 0xfffffff7);
     WriteRegister(0x28, 0x6b38);
     WriteRegister(0x29, 0xb4cb);
-    // bk4819_set_freq(43949500);
-    // bk4819_rx_on();
-    // bk4819_tx_on();
+
 }
 
 uint8_t bk4819_int_get(bk4819_int_t interrupt)
@@ -200,6 +198,10 @@ void bk4819_tx_on(void)
                       BK4819_REG30_MIC_ADC_ENABLE | BK4819_REG30_TX_DSP_ENABLE |
                       BK4819_REG30_PLL_VCO_ENABLE |
                       BK4819_REG30_PA_GAIN_ENABLE);
+}
+
+void bk4819_rtx_off(void){
+    WriteRegister(BK4819_REG_30, 0x00);  // reset
 }
 
 void bk4819_enable_tx_ctcss(uint16_t frequency)

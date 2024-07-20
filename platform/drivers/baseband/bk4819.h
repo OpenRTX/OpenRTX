@@ -253,6 +253,12 @@ void bk4819_rx_on(void);
 void bk4819_tx_on(void);
 
 /**
+ * @brief Disable Rx and Tx
+ * 
+ */
+void bk4819_rtx_off(void);
+
+/**
  * @brief Disable all and enable CTCSS1
  *
  * @param frequency
