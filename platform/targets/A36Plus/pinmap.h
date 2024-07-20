@@ -24,57 +24,61 @@
 #include <gd32f3x0.h>
 
 // LCD display
-#define LCD_CLK     GPIOB,13    
-#define LCD_DAT     GPIOB,15
-#define LCD_PWR     GPIOB,7
-#define LCD_RST     GPIOB,12
-#define LCD_CS      GPIOB,2
-#define LCD_DC      GPIOB,10                
+#define LCD_CLK GPIOB, 13
+#define LCD_DAT GPIOB, 15
+#define LCD_PWR GPIOB, 7
+#define LCD_RST GPIOB, 12
+#define LCD_CS GPIOB, 2
+#define LCD_DC GPIOB, 10
 
 // LEDs
-#define GREEN_LED   GPIOB,1
-#define RED_LED     GPIOF,2
+#define GREEN_LED GPIOB, 1
+#define RED_LED GPIOF, 2
 
 // Analog inputs
-#define AIN_VBAT    GPIOA,1
+#define AIN_VBAT GPIOA, 1
 
 // Push-to-talk
-#define PTT_SW      GPIOA,10
+#define PTT_SW GPIOA, 10
 
 // Keyboard and side keys
-#define KBD_ROW0    GPIOB,3
-#define KBD_ROW1    GPIOB,4
-#define KBD_ROW2    GPIOB,5
-#define KBD_ROW3    GPIOB,6
-#define KBD_COL0    GPIOB,11
-#define KBD_COL1    GPIOB,9
-#define KBD_COL2    GPIOB,14
-#define KBD_COL3    GPIOB,8
-#define SKB_1       GPIOB,11
-#define SKB_2       GPIOF,7
+#define KBD_ROW0 GPIOB, 3
+#define KBD_ROW1 GPIOB, 4
+#define KBD_ROW2 GPIOB, 5
+#define KBD_ROW3 GPIOB, 6
+#define KBD_COL0 GPIOB, 11
+#define KBD_COL1 GPIOB, 9
+#define KBD_COL2 GPIOB, 14
+#define KBD_COL3 GPIOB, 8
+#define SKB_1 GPIOB, 11
+#define SKB_2 GPIOF, 7
 
 // External flash
-#define EFLASH_MISO GPIOA,6
-#define EFLASH_MOSI GPIOA,7
-#define EFLASH_SCK  GPIOB,5
-#define EFLASH_CS   GPIOB,4
+#define EFLASH_MISO GPIOA, 6
+#define EFLASH_MOSI GPIOA, 7
+#define EFLASH_SCK GPIOB, 5
+#define EFLASH_CS GPIOB, 4
 
 // BK1080
-#define BK1080_CLK  GPIOF,6
-#define BK1080_DAT  GPIOA,3     // Shared with external flash SCK
-#define BK1080_EN  GPIOA,8
+#define BK1080_CLK GPIOF, 6
+#define BK1080_DAT GPIOA, 3  // Shared with external flash SCK
+#define BK1080_EN GPIOA, 8
 
 // BK4819
-#define BK4819_CLK  GPIOA,2
-#define BK4819_DAT  GPIOA,3
-#define BK4819_CS   GPIOC,13
+#define BK4819_CLK GPIOA, 2
+#define BK4819_DAT GPIOA, 3
+#define BK4819_CS GPIOC, 13
 
 // Audio control
-#define MIC_SPK_EN      GPIOA,12
-#define AF_OUT      GPIOA,6
-#define MIC_EN      GPIOA,12
+#define MIC_SPK_EN GPIOA, 12
+#define AF_OUT GPIOA, 6
+#define MIC_EN GPIOA, 12
 
 // RF stage
-#define TX_LDO      GPIOB,10
-#define TX_PA_EN    GPIOB,11
+#define RFV3R_EN GPIOB, 1
+#define RFU3T_EN GPIOB, 0
+
+#define RFV3T_EN GPIOC, 15
+#define RFU3R_EN GPIOC, 14
+
 #endif
