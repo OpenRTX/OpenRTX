@@ -1,10 +1,10 @@
 /**
  * @file bk1080.c
  * @author Jamiexu (doxm@foxmail.com)
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2024-05-24
- * 
+ *
  * @copyright MIT License
 
 Copyright (c) 2024 (Jamiexu or Jamie793)
@@ -26,7 +26,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
- * 
+ *
  */
 #include "bk1080.h"
 
@@ -125,32 +125,33 @@ static void bk1080_delay(uint32_t count)
     delayUs(count);
 }
 
-void bk1080_write_reg(bk1080_reg_t reg, uint16_t data)
+static void bk1080_write_reg(bk1080_reg_t reg, uint16_t data)
 {
     i2c_start();
     i2c_write_byte(BK1080_ADDRESS);
     if (i2c_get_ack() == I2C_ACK)
     {
-        i2c_write_byte(reg << 1);
+        i2c_write_byte((reg << 1));
         if (i2c_get_ack() == I2C_ACK)
         {
             i2c_write_byte((data >> 8) & 0xFF);
             if (i2c_get_ack() == I2C_ACK)
+            {
                 i2c_write_byte(data & 0xFF);
-            else
-                printf("wACK3 Not in...\r\n");
+                i2c_send_ack(I2C_NACK);
+            }
         }
-        else
-            printf("wACK2 Not in...\r\n");
+        // else
+        //     printf("ACK2 Not in...\r\n");
     }
-    else
-    {
-        printf("wACK1 Not in...\r\n");
-    }
+    // else
+    // {
+    //     printf("ACK1 Not in...\r\n");
+    // }
     i2c_stop();
 }
 
-uint16_t bk1080_read_reg(bk1080_reg_t reg)
+static uint16_t bk1080_read_reg(bk1080_reg_t reg)
 {
     uint16_t data = 0;
     i2c_start();
@@ -165,13 +166,74 @@ uint16_t bk1080_read_reg(bk1080_reg_t reg)
             data |= i2c_read_byte();
             i2c_send_ack(I2C_NACK);
         }
-        else
-            printf("ACK2 Not in...\r\n");
+        // else
+        //     printf("ACK2 Not in...\r\n");
     }
-    else
-    {
-        printf("ACK1 Not in...\r\n");
-    }
+    // else
+    // {
+    //     printf("ACK1 Not in...\r\n");
+    // }
     i2c_stop();
     return data;
+}
+
+void bk1080_init(void)
+{
+    for (uint8_t i = 0; i < sizeof(BK1080_RegisterTable) / sizeof(uint16_t);
+         i++)
+    {
+        bk1080_write_reg(i, BK1080_RegisterTable[i]);
+    }
+}
+
+uint16_t bk1080_chan_to_freq(uint16_t channel){
+    uint16_t reg5 = bk1080_read_reg(BK1080_REG_05);
+    uint16_t band = 0;
+    uint16_t spacing = 0;
+
+    if (((reg5 >> 4) & 0x03) == 0x00)
+        spacing = 20;
+    else if (((reg5 >> 4) & 0x03) == 0x01)
+        spacing = 10;
+    else if (((reg5 >> 4) & 0x03) == 0x02)
+        spacing = 50;
+    
+     if (((reg5 >> 6) & 0x03) == 0x00)
+        band = 875;
+    else if (((reg5 >> 6) & 0x03) == 0x01)
+        band = 760;
+    else if (((reg5 >> 6) & 0x03) == 0x02)
+        band = 760;
+    else if (((reg5 >> 6) & 0x03) == 0x03)
+        band = 640;
+    
+    return channel / 10 * spacing + band;
+}
+
+uint16_t bk1080_freq_to_chan(uint16_t freq){
+    uint16_t reg5 = bk1080_read_reg(BK1080_REG_05);
+    uint16_t band = 0;
+    uint16_t spacing = 0;
+
+    if (((reg5 >> 4) & 0x03) == 0x00)
+        spacing = 20;
+    else if (((reg5 >> 4) & 0x03) == 0x01)
+        spacing = 10;
+    else if (((reg5 >> 4) & 0x03) == 0x02)
+        spacing = 50;
+    
+     if (((reg5 >> 6) & 0x03) == 0x00)
+        band = 875;
+    else if (((reg5 >> 6) & 0x03) == 0x01)
+        band = 760;
+    else if (((reg5 >> 6) & 0x03) == 0x02)
+        band = 760;
+    else if (((reg5 >> 6) & 0x03) == 0x03)
+        band = 640;
+    
+    return (freq - band) * 10 / spacing;
+}
+
+void bk1080_set_frequency(uint16_t freq){
+    bk1080_write_reg(BK1080_REG_03, bk1080_freq_to_chan(freq) | (1 << 15));
 }
