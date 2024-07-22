@@ -78,7 +78,6 @@ static freq_t  FreqAddDigit( freq_t freq , uint8_t pos , uint8_t number );
 static bool    FreqCheckLimits( freq_t freq );
 static bool    FreqCheckLimits( freq_t freq );
 static void    FSM_MenuMacro( GuiState_st* guiState , kbd_msg_t msg , bool* sync_rtx );
-static int     FSM_LoadChannel( int16_t channel_index , bool* sync_rtx );
 static void    FSM_ConfirmVFOInput( GuiState_st* guiState , bool* sync_rtx );
 static void    FSM_InsertVFONumber( GuiState_st* guiState , kbd_msg_t msg , bool* sync_rtx );
 static bool    ui_States_HandleKeyEvent( GuiState_st* guiState );
@@ -957,7 +956,7 @@ bool _ui_Draw_DarkOverlay( void )
 
 }
 
-static int FSM_LoadChannel( int16_t channel_index , bool* sync_rtx )
+int FSM_LoadChannel( int16_t channel_index , bool* sync_rtx )
 {
     channel_t channel ;
     int32_t   selected_channel = channel_index ;
@@ -990,7 +989,7 @@ static int FSM_LoadChannel( int16_t channel_index , bool* sync_rtx )
     return result ;
 }
 
-static int _ui_fsm_loadContact( int16_t contact_index , bool* sync_rtx )
+int _ui_fsm_loadContact( int16_t contact_index , bool* sync_rtx )
 {
     contact_t contact ;
     int       result = 0 ;

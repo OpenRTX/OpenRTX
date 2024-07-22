@@ -93,6 +93,7 @@
 #include "ui_value_arrays.h"
 #include "ui_scripts.h"
 #include "ui_commands.h"
+#include "ui_list_display.h"
 #include "ui_value_display.h"
 #include "ui_states.h"
 #include "ui_value_input.h"
@@ -571,13 +572,14 @@ static void ui_InitGuiStateLayout( Layout_st* layout )
 void ui_InitGuiStateLayoutList( Layout_st* layout )
 {
     layout->list.pageNum             = PAGE_STUBBED ;
+    layout->list.dataSource          = LIST_DATA_SOURCE_STUBBED ;
 	layout->list.pos.x       		 = 0 ;
 	layout->list.pos.y       		 = 0 ;
 	layout->list.pos.w       		 = 0 ;
 	layout->list.pos.h       		 = 0 ;
     layout->list.displayingList      = false ;
     layout->list.numOfDisplayedLines = 0 ;
-    layout->list.numOfListLines      = 0 ;
+    layout->list.numOfEntries        = 0 ;
     layout->list.index     		     = 0 ;
     layout->list.selection           = 0 ;
     layout->list.offset              = 0 ;

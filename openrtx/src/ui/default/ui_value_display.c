@@ -66,10 +66,6 @@ static void GuiVal_ModeInfo( GuiState_st* guiState );
 static void GuiVal_BankChannel( GuiState_st* guiState );
 static void GuiVal_Frequency( GuiState_st* guiState );
 static void GuiVal_RSSIMeter( GuiState_st* guiState );
-
-static void GuiVal_Banks( GuiState_st* guiState );
-static void GuiVal_Channels( GuiState_st* guiState );
-static void GuiVal_Contacts( GuiState_st* guiState );
 #ifdef GPS_PRESENT
 static void GuiVal_GPS( GuiState_st* guiState );
 #endif // GPS_PRESENT
@@ -152,67 +148,63 @@ static const ui_GuiVal_fn ui_GuiVal_Table[ GUI_VAL_DSP_NUM_OF ] =
     GuiVal_BankChannel      ,   // GUI_VAL_DSP_BANK_CHANNEL     0x03
     GuiVal_Frequency        ,   // GUI_VAL_DSP_FREQUENCY        0x04
     GuiVal_RSSIMeter        ,   // GUI_VAL_DSP_RSSI_METER       0x05
-
-    GuiVal_Banks            ,   // GUI_VAL_DSP_BANKS            0x06
-    GuiVal_Channels         ,   // GUI_VAL_DSP_CHANNELS         0x07
-    GuiVal_Contacts         ,   // GUI_VAL_DSP_CONTACTS         0x08
 #ifdef GPS_PRESENT
-    GuiVal_GPS              ,   // GUI_VAL_DSP_GPS              0x09
+    GuiVal_GPS              ,   // GUI_VAL_DSP_GPS              0x06
 #endif // GPS_PRESENT
     // Settings
     // Display
 #ifdef SCREEN_BRIGHTNESS
-    GuiVal_ScreenBrightness ,   // GUI_VAL_DSP_BRIGHTNESS       0x0A
+    GuiVal_ScreenBrightness ,   // GUI_VAL_DSP_BRIGHTNESS       0x07
 #endif
 #ifdef SCREEN_CONTRAST
-    GuiVal_ScreenContrast   ,   // GUI_VAL_DSP_CONTRAST         0x0B
+    GuiVal_ScreenContrast   ,   // GUI_VAL_DSP_CONTRAST         0x08
 #endif
-    GuiVal_Timer            ,   // GUI_VAL_DSP_TIMER            0x0C
+    GuiVal_Timer            ,   // GUI_VAL_DSP_TIMER            0x09
     // Time and Date
-    GuiVal_Date             ,   // GUI_VAL_DSP_DATE             0x0D
-    GuiVal_Time             ,   // GUI_VAL_DSP_TIME             0x0E
+    GuiVal_Date             ,   // GUI_VAL_DSP_DATE             0x0A
+    GuiVal_Time             ,   // GUI_VAL_DSP_TIME             0x0B
     // GPS
 #ifdef GPS_PRESENT
-    GuiVal_GPSEnables       ,   // GUI_VAL_DSP_GPS_ENABLED      0x0F
-    GuiVal_GPSSetTime       ,   // GUI_VAL_DSP_GPS_SET_TIME     0x10
-    GuiVal_GPSTimeZone      ,   // GUI_VAL_DSP_GPS_TIME_ZONE    0x11
+    GuiVal_GPSEnables       ,   // GUI_VAL_DSP_GPS_ENABLED      0x0C
+    GuiVal_GPSSetTime       ,   // GUI_VAL_DSP_GPS_SET_TIME     0x0D
+    GuiVal_GPSTimeZone      ,   // GUI_VAL_DSP_GPS_TIME_ZONE    0x0E
 #endif // GPS_PRESENT
     // Radio
-    GuiVal_RadioOffset      ,   // GUI_VAL_DSP_RADIO_OFFSET     0x12
-    GuiVal_RadioDirection   ,   // GUI_VAL_DSP_RADIO_DIRECTION  0x13
-    GuiVal_RadioStep        ,   // GUI_VAL_DSP_RADIO_STEP       0x14
+    GuiVal_RadioOffset      ,   // GUI_VAL_DSP_RADIO_OFFSET     0x0F
+    GuiVal_RadioDirection   ,   // GUI_VAL_DSP_RADIO_DIRECTION  0x10
+    GuiVal_RadioStep        ,   // GUI_VAL_DSP_RADIO_STEP       0x11
     // M17
-    GuiVal_M17Callsign      ,   // GUI_VAL_DSP_M17_CALLSIGN     0x15
-    GuiVal_M17Can           ,   // GUI_VAL_DSP_M17_CAN          0x16
-    GuiVal_M17CanRxCheck    ,   // GUI_VAL_DSP_M17_CAN_RX_CHECK 0x17
+    GuiVal_M17Callsign      ,   // GUI_VAL_DSP_M17_CALLSIGN     0x12
+    GuiVal_M17Can           ,   // GUI_VAL_DSP_M17_CAN          0x13
+    GuiVal_M17CanRxCheck    ,   // GUI_VAL_DSP_M17_CAN_RX_CHECK 0x14
     // Accessibility - Voice
-    GuiVal_Voice            ,   // GUI_VAL_DSP_LEVEL            0x18
-    GuiVal_Phonetic         ,   // GUI_VAL_DSP_PHONETIC         0x19
+    GuiVal_Voice            ,   // GUI_VAL_DSP_LEVEL            0x15
+    GuiVal_Phonetic         ,   // GUI_VAL_DSP_PHONETIC         0x16
     // Info
-    GuiVal_BatteryVoltage   ,   // GUI_VAL_DSP_BATTERY_VOLTAGE  0x1A
-    GuiVal_BatteryCharge    ,   // GUI_VAL_DSP_BATTERY_CHARGE   0x1B
-    GuiVal_Rssi             ,   // GUI_VAL_DSP_RSSI             0x1C
-    GuiVal_UsedHeap         ,   // GUI_VAL_DSP_USED_HEAP        0x1D
-    GuiVal_Band             ,   // GUI_VAL_DSP_BAND             0x1E
-    GuiVal_Vhf              ,   // GUI_VAL_DSP_VHF              0x1F
-    GuiVal_Uhf              ,   // GUI_VAL_DSP_UHF              0x20
-    GuiVal_HwVersion        ,   // GUI_VAL_DSP_HW_VERSION       0x21
+    GuiVal_BatteryVoltage   ,   // GUI_VAL_DSP_BATTERY_VOLTAGE  0x17
+    GuiVal_BatteryCharge    ,   // GUI_VAL_DSP_BATTERY_CHARGE   0x18
+    GuiVal_Rssi             ,   // GUI_VAL_DSP_RSSI             0x19
+    GuiVal_UsedHeap         ,   // GUI_VAL_DSP_USED_HEAP        0x1A
+    GuiVal_Band             ,   // GUI_VAL_DSP_BAND             0x1B
+    GuiVal_Vhf              ,   // GUI_VAL_DSP_VHF              0x1C
+    GuiVal_Uhf              ,   // GUI_VAL_DSP_UHF              0x1D
+    GuiVal_HwVersion        ,   // GUI_VAL_DSP_HW_VERSION       0x1E
 #ifdef PLATFORM_TTWRPLUS
-    GuiVal_Radio            ,   // GUI_VAL_DSP_RADIO            0x22
-    GuiVal_RadioFw          ,   // GUI_VAL_DSP_RADIO_FW         0x23
+    GuiVal_Radio            ,   // GUI_VAL_DSP_RADIO            0x1F
+    GuiVal_RadioFw          ,   // GUI_VAL_DSP_RADIO_FW         0x20
 #endif // PLATFORM_TTWRPLUS
-    GuiVal_BackupRestore    ,   // GUI_VAL_DSP_BACKUP_RESTORE   0x24
-    GuiVal_LowBattery       ,   // GUI_VAL_DSP_LOW_BATTERY      0x25
+    GuiVal_BackupRestore    ,   // GUI_VAL_DSP_BACKUP_RESTORE   0x21
+    GuiVal_LowBattery       ,   // GUI_VAL_DSP_LOW_BATTERY      0x22
 #ifdef ENABLE_DEBUG_MSG
   #ifndef DISPLAY_DEBUG_MSG
-    GuiVal_DebugCh          ,   // GUI_VAL_DSP_DEBUG_CH         0x26
-    GuiVal_DebugGfx         ,   // GUI_VAL_DSP_DEBUG_GFX        0x27
+    GuiVal_DebugCh          ,   // GUI_VAL_DSP_DEBUG_CH         0x23
+    GuiVal_DebugGfx         ,   // GUI_VAL_DSP_DEBUG_GFX        0x24
   #else // DISPLAY_DEBUG_MSG
-    GuiVal_DebugMsg         ,   // GUI_VAL_DSP_DEBUG_MSG        0x26
-    GuiVal_DebugValues      ,   // GUI_VAL_DSP_DEBUG_VALUES     0x27
+    GuiVal_DebugMsg         ,   // GUI_VAL_DSP_DEBUG_MSG        0x25
+    GuiVal_DebugValues      ,   // GUI_VAL_DSP_DEBUG_VALUES     0x26
   #endif // DISPLAY_DEBUG_MSG
 #endif // ENABLE_DEBUG_MSG
-    GuiVal_Stubbed              // GUI_VAL_DSP_STUBBED          0x28
+    GuiVal_Stubbed              // GUI_VAL_DSP_STUBBED          0x27
 };
 
 void GuiVal_DisplayValue( GuiState_st* guiState )
@@ -508,30 +500,12 @@ static void GuiVal_RSSIMeter( GuiState_st* guiState )
 
 }
 
-static void GuiVal_Banks( GuiState_st* guiState )
-{
-    _ui_Draw_MenuList( guiState , PAGE_MENU_BANK );
-}
-
-static void GuiVal_Channels( GuiState_st* guiState )
-{
-    _ui_Draw_MenuList( guiState , PAGE_MENU_CHANNEL );
-}
-
-static void GuiVal_Contacts( GuiState_st* guiState )
-{
-    _ui_Draw_MenuList( guiState , PAGE_MENU_CONTACTS );
-}
-
 #ifdef GPS_PRESENT
 static void GuiVal_GPS( GuiState_st* guiState )
 {
-    Line_st*  lineTop     = &guiState->layout.lines[ GUI_LINE_TOP ] ;
     Style_st* styleTop    = &guiState->layout.styles[ GUI_STYLE_TOP ] ;
     Line_st*  line1       = &guiState->layout.lines[ GUI_LINE_1 ] ;
-//    Style_st* style1      = &guiState->layout.styles[ GUI_STYLE_1 ] ;
     Line_st*  line2       = &guiState->layout.lines[ GUI_LINE_2 ] ;
-//    Style_st* style2      = &guiState->layout.styles[ GUI_STYLE_2 ] ;
     Line_st*  line3Large  = &guiState->layout.lines[ GUI_LINE_3_LARGE ] ;
     Style_st* style3Large = &guiState->layout.styles[ GUI_STYLE_3_LARGE ] ;
     Line_st*  lineBottom  = &guiState->layout.lines[ GUI_LINE_BOTTOM ] ;
@@ -542,9 +516,6 @@ static void GuiVal_GPS( GuiState_st* guiState )
 
     ui_ColorLoad( &color_fg , COLOR_FG );
 
-    // Print "GPS" on top bar
-    gfx_print( &lineTop->pos , styleTop->font.size , GFX_ALIGN_CENTER ,
-               &color_fg , currentLanguage->gps );
     Pos_st fix_pos = { line2->pos.x , ( SCREEN_HEIGHT * 2 ) / 5 , 0 , 0 };
     // Print GPS status, if no fix, hide details
     if( !last_state.settings.gps_enabled )
@@ -552,99 +523,106 @@ static void GuiVal_GPS( GuiState_st* guiState )
         gfx_print( &fix_pos , style3Large->font.size , GFX_ALIGN_CENTER ,
                    &color_fg , currentLanguage->gpsOff );
     }
-    else if( last_state.gps_data.fix_quality == 0 )
-    {
-        gfx_print( &fix_pos , style3Large->font.size , GFX_ALIGN_CENTER ,
-                   &color_fg , currentLanguage->noFix );
-    }
-    else if( last_state.gps_data.fix_quality == 6 )
-    {
-        gfx_print( &fix_pos , style3Large->font.size , GFX_ALIGN_CENTER ,
-                   &color_fg , currentLanguage->fixLost );
-    }
     else
     {
-        switch(last_state.gps_data.fix_quality)
+        if( last_state.gps_data.fix_quality == 0 )
         {
-            case 1 :
-            {
-                fix_buf = "SPS" ;
-                break ;
-            }
-            case 2 :
-            {
-                fix_buf = "DGPS" ;
-                break ;
-            }
-            case 3:
-            {
-                fix_buf = "PPS" ;
-                break ;
-            }
-            default:
-            {
-                fix_buf = (char*)currentLanguage->error ;
-                break ;
-            }
+            gfx_print( &fix_pos , style3Large->font.size , GFX_ALIGN_CENTER ,
+                       &color_fg , currentLanguage->noFix );
         }
+        else
+        {
+            if( last_state.gps_data.fix_quality == 6 )
+            {
+                gfx_print( &fix_pos , style3Large->font.size , GFX_ALIGN_CENTER ,
+                           &color_fg , currentLanguage->fixLost );
+            }
+            else
+            {
+                switch( last_state.gps_data.fix_quality )
+                {
+                    case 1 :
+                    {
+                        fix_buf = "SPS" ;
+                        break ;
+                    }
+                    case 2 :
+                    {
+                        fix_buf = "DGPS" ;
+                        break ;
+                    }
+                    case 3:
+                    {
+                        fix_buf = "PPS" ;
+                        break ;
+                    }
+                    default:
+                    {
+                        fix_buf = (char*)currentLanguage->error ;
+                        break ;
+                    }
+                }
 
-        switch(last_state.gps_data.fix_type)
-        {
-            case 1:
-            {
-                type_buf = "" ;
-                break ;
-            }
-            case 2:
-            {
-                type_buf = "2D" ;
-                break ;
-            }
-            case 3:
-            {
-                type_buf = "3D" ;
-                break ;
-            }
-            default:
-            {
-                type_buf = (char*)currentLanguage->error ;
-                break ;
+                switch( last_state.gps_data.fix_type )
+                {
+                    case 1:
+                    {
+                        type_buf = "" ;
+                        break ;
+                    }
+                    case 2:
+                    {
+                        type_buf = "2D" ;
+                        break ;
+                    }
+                    case 3:
+                    {
+                        type_buf = "3D" ;
+                        break ;
+                    }
+                    default:
+                    {
+                        type_buf = (char*)currentLanguage->error ;
+                        break ;
+                    }
+                }
+                gfx_print( &line1->pos , styleTop->font.size , GFX_ALIGN_LEFT ,
+                           &color_fg , fix_buf );
+                gfx_print( &line1->pos , styleTop->font.size , GFX_ALIGN_CENTER ,
+                           &color_fg , "N     " );
+                gfx_print( &line1->pos , styleTop->font.size , GFX_ALIGN_RIGHT ,
+                           &color_fg , "%8.6f" , last_state.gps_data.latitude );
+                gfx_print( &line2->pos , styleTop->font.size , GFX_ALIGN_LEFT ,
+                           &color_fg , type_buf );
+                // Convert from signed longitude, to unsigned + direction
+                float longitude = last_state.gps_data.longitude ;
+                char* direction = (longitude < 0) ? "W     " : "E     " ;
+                longitude = (longitude < 0) ? -longitude : longitude ;
+                gfx_print( &line2->pos , styleTop->font.size , GFX_ALIGN_CENTER ,
+                           &color_fg , direction );
+                gfx_print( &line2->pos , styleTop->font.size , GFX_ALIGN_RIGHT ,
+                           &color_fg , "%8.6f" , longitude );
+                gfx_print( &lineBottom->pos , styleBottom->font.size , GFX_ALIGN_CENTER ,
+                           &color_fg , "S %4.1fkm/h  A %4.1fm" ,
+                           last_state.gps_data.speed , last_state.gps_data.altitude );
             }
         }
-        gfx_print( &line1->pos , styleTop->font.size , GFX_ALIGN_LEFT ,
-                   &color_fg , fix_buf );
-        gfx_print( &line1->pos , styleTop->font.size , GFX_ALIGN_CENTER ,
-                   &color_fg , "N     " );
-        gfx_print( &line1->pos , styleTop->font.size , GFX_ALIGN_RIGHT ,
-                   &color_fg , "%8.6f" , last_state.gps_data.latitude );
-        gfx_print( &line2->pos , styleTop->font.size , GFX_ALIGN_LEFT ,
-                   &color_fg , type_buf);
-        // Convert from signed longitude, to unsigned + direction
-        float longitude = last_state.gps_data.longitude ;
-        char* direction = (longitude < 0) ? "W     " : "E     " ;
-        longitude = (longitude < 0) ? -longitude : longitude ;
-        gfx_print( &line2->pos , styleTop->font.size , GFX_ALIGN_CENTER ,
-                   &color_fg , direction );
-        gfx_print( &line2->pos , styleTop->font.size , GFX_ALIGN_RIGHT ,
-                   &color_fg , "%8.6f" , longitude );
-        gfx_print( &lineBottom->pos , styleBottom->font.size , GFX_ALIGN_CENTER ,
-                   &color_fg , "S %4.1fkm/h  A %4.1fm" ,
-                   last_state.gps_data.speed , last_state.gps_data.altitude );
     }
     // Draw compass
     Pos_st compass_pos = { guiState->layout.horizontal_pad * 2 , SCREEN_HEIGHT / 2 , 0 , 0 };
     gfx_drawGPScompass( &compass_pos , SCREEN_WIDTH / 9 + 2 ,
                         last_state.gps_data.tmg_true ,
-                        last_state.gps_data.fix_quality != 0 &&
-                        last_state.gps_data.fix_quality != 6 );
+                        ( last_state.gps_data.fix_quality != 0 ) &&
+                        ( last_state.gps_data.fix_quality != 6 )    );
     // Draw satellites bar graph
     Pos_st bar_pos = { line3Large->pos.x + SCREEN_WIDTH * 1 / 3 ,
                        SCREEN_HEIGHT / 2 ,
-                       ( ( SCREEN_WIDTH * 2 ) / 3) - guiState->layout.horizontal_pad ,
+                       ( ( SCREEN_WIDTH * 2 ) / 3 ) - guiState->layout.horizontal_pad ,
                        SCREEN_HEIGHT / 3 };
     gfx_drawGPSgraph( &bar_pos ,
                       last_state.gps_data.satellites ,
                       last_state.gps_data.active_sats );
+
 }
 #endif // GPS_PRESENT
 
@@ -1086,9 +1064,10 @@ static void GuiVal_Disp_Bat( GuiState_st* guiState , uint16_t percentage )
     Pos_st pos ;
 
     pos.w = ( SCREEN_WIDTH / 9 ) + ( SCREEN_WIDTH / 24 ) ;
-    pos.h = guiState->layout.line.height - ( guiState->layout.status_v_pad * 2 ) ;
-    pos.y = guiState->layout.line.pos.y +
+    pos.h = guiState->layout.line.height -
             ( guiState->layout.status_v_pad * 2 ) ;
+    pos.y = guiState->layout.line.pos.y -
+            guiState->layout.status_v_pad ;
 
     switch( guiState->layout.style.align )
     {

@@ -24,6 +24,21 @@
 
 #include <ui/ui_default.h>
 
+// List Data Source
+enum
+{
+    LIST_DATA_SOURCE_TEXT     ,
+    LIST_DATA_SOURCE_BANKS    ,
+    LIST_DATA_SOURCE_CHANNELS ,
+    LIST_DATA_SOURCE_CONTACTS ,
+    LIST_DATA_SOURCE_NUM_OF   ,
+    LIST_DATA_SOURCE_STUBBED  = LIST_DATA_SOURCE_NUM_OF
+};
+
+extern void List_GetNumOfEntries( GuiState_st* guiState );
+extern void List_EntryDisplay( GuiState_st* guiState );
+extern void List_EntrySelect( GuiState_st* guiState );
+
 extern void _ui_Draw_MenuList( GuiState_st* guiState , uiPageNum_en currentEntry );
 extern void _ui_Draw_MenuListValue( GuiState_st* guiState ,
                                     uiPageNum_en currentEntry , uiPageNum_en currentEntryValue );

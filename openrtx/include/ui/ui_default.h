@@ -35,7 +35,7 @@
 //#define DISPLAY_DEBUG_MSG
 
 // Maximum menu entry length
-#define MAX_ENTRY_LEN 21
+#define MAX_ENTRY_LEN 33
 // Frequency digits
 #define FREQ_DIGITS 7
 // Time & Date digits
@@ -53,28 +53,33 @@ typedef enum
     PAGE_MENU_TOP                   , // 0x05
     PAGE_MENU_TOP_LIST              , // 0x06
     PAGE_MENU_BANK                  , // 0x07
-    PAGE_MENU_CHANNEL               , // 0x08
-    PAGE_MENU_CONTACTS              , // 0x09
-    PAGE_MENU_GPS                   , // 0x0A
-    PAGE_MENU_SETTINGS              , // 0x0B
-    PAGE_MENU_SETTINGS_LIST         , // 0x0C
-    PAGE_MENU_BACKUP_RESTORE        , // 0x0D
-    PAGE_MENU_BACKUP                , // 0x0E
-    PAGE_MENU_RESTORE               , // 0x0F
-    PAGE_MENU_INFO                  , // 0x10
-    PAGE_SETTINGS_TIMEDATE          , // 0x11
-    PAGE_SETTINGS_TIMEDATE_SET      , // 0x12
-    PAGE_SETTINGS_DISPLAY           , // 0x13
-    PAGE_SETTINGS_DISPLAY_LIST      , // 0x14
-    PAGE_SETTINGS_GPS               , // 0x15
-    PAGE_SETTINGS_RADIO             , // 0x16
-    PAGE_SETTINGS_M17               , // 0x17
-    PAGE_SETTINGS_VOICE             , // 0x18
-    PAGE_SETTINGS_RESET_TO_DEFAULTS , // 0x19
-    PAGE_LOW_BAT                    , // 0x1A
-    PAGE_ABOUT                      , // 0x1B
-    PAGE_STUBBED                    , // 0x1C
-    PAGE_NUM_OF                       // 0x1D
+    PAGE_MENU_BANK_LIST             , // 0x08
+    PAGE_MENU_CHANNEL               , // 0x09
+    PAGE_MENU_CHANNEL_LIST          , // 0x0A
+    PAGE_MENU_CONTACTS              , // 0x0B
+    PAGE_MENU_CONTACTS_LIST         , // 0x0C
+    PAGE_MENU_GPS                   , // 0x0D
+    PAGE_MENU_SETTINGS              , // 0x0E
+    PAGE_MENU_SETTINGS_LIST         , // 0x0F
+    PAGE_MENU_BACKUP_RESTORE        , // 0x10
+    PAGE_MENU_BACKUP                , // 0x11
+    PAGE_MENU_RESTORE               , // 0x12
+    PAGE_MENU_INFO                  , // 0x13
+    PAGE_SETTINGS_TIMEDATE          , // 0x14
+    PAGE_SETTINGS_TIMEDATE_SET      , // 0x15
+    PAGE_SETTINGS_DISPLAY           , // 0x16
+    PAGE_SETTINGS_DISPLAY_LIST      , // 0x17
+#ifdef GPS_PRESENT
+    PAGE_SETTINGS_GPS               , // 0x18
+#endif // GPS_PRESENT
+    PAGE_SETTINGS_RADIO             , // 0x19
+    PAGE_SETTINGS_M17               , // 0x1A
+    PAGE_SETTINGS_VOICE             , // 0x1B
+    PAGE_SETTINGS_RESET_TO_DEFAULTS , // 0x1C
+    PAGE_LOW_BAT                    , // 0x1D
+    PAGE_ABOUT                      , // 0x1E
+    PAGE_STUBBED                    , // 0x1F
+    PAGE_NUM_OF                       // 0x20
 }uiPageNum_en;
 
 enum
@@ -160,7 +165,7 @@ enum SetRxTx
 
 enum
 {
-    MAX_PAGE_DEPTH = 8
+    MAX_PAGE_DEPTH = 12
 };
 // Color Variable Field Unshifted Masks and Shifts
 enum
@@ -294,10 +299,11 @@ typedef struct
 typedef struct
 {
     uint8_t pageNum ;
+    uint8_t dataSource ;
     Pos_st  pos ;
     bool    displayingList ;
     uint8_t numOfDisplayedLines ;
-    uint8_t numOfListLines ;
+    uint8_t numOfEntries ;
     uint8_t index ;
     uint8_t selection ;
     uint8_t offset ;

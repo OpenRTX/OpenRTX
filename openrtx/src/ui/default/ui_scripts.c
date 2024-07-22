@@ -22,15 +22,13 @@
 #include <ui.h>
 #include <ui/ui_default.h>
 #include "ui_commands.h"
+#include "ui_list_display.h"
 #include "ui_value_display.h"
 #include "ui_value_input.h"
 #include "ui_scripts.h"
 
 static const uint8_t Page_MainVFO[] =
 {
-//    GOTO_TEXT_LINE( GUI_LINE_TOP ) ,
-//    LOAD_STYLE( GUI_STYLE_TOP ) ,
-//    ALIGN_CENTER ,
     EVENT_START( EVENT_TYPE_STATUS , EVENT_STATUS_DISPLAY_TIME_TICK ) ,
       VALUE_DSP( TIME ) ,
     EVENT_END ,
@@ -64,7 +62,6 @@ static const uint8_t Page_MainInput[] =
       VALUE_DSP( RSSI_METER ) ,
     EVENT_END ,
     PAGE_END
-
 };
 
 static const uint8_t Page_MainMem[] =
@@ -108,6 +105,7 @@ static const uint8_t Page_MainMem[] =
 
     GUI_CMD_PAGE_END ,//@@@KL
 */
+    PAGE_TREE_TOP ,
     ALIGN_CENTER ,
     EVENT_START( EVENT_TYPE_STATUS , EVENT_STATUS_DISPLAY_TIME_TICK ) ,
       BG_COLOR( RED ) ,
@@ -151,49 +149,88 @@ static const uint8_t Page_MenuTop[] =
 {
     TITLE , 'M','e','n','u' , NULL_CH , LINE_END ,
     EVENT_START( EVENT_TYPE_KBD , EVENT_STATUS_ALL_KEYS ) ,
-      LIST( PAGE_MENU_TOP_LIST , 3 ) ,
+      LIST( PAGE_MENU_TOP_LIST , LIST_DATA_SOURCE_TEXT , 5 ) ,
     EVENT_END ,
+    ON_EVENT_KBD_ESC_GO_BACK ,
     PAGE_END
 };
 
 static const uint8_t Page_MenuTopList[] =
 {
-    TEXT , 'B','a','n','k','s' , NULL_CH ,             LINK( PAGE_MENU_BANK )     , LINE_END ,
-    TEXT , 'C','h','a','n','n','e','l','s' , NULL_CH , LINK( PAGE_MENU_CHANNEL )  , LINE_END ,
-    TEXT , 'C','o','n','t','a','c','t','s' , NULL_CH , LINK( PAGE_MENU_CONTACTS ) , LINE_END ,
+    LIST_ELEMENT , 'B','a','n','k','s' , NULL_CH ,             LINK( PAGE_MENU_BANK )     , LINE_END ,
+    LIST_ELEMENT , 'C','h','a','n','n','e','l','s' , NULL_CH , LINK( PAGE_MENU_CHANNEL )  , LINE_END ,
+    LIST_ELEMENT , 'C','o','n','t','a','c','t','s' , NULL_CH , LINK( PAGE_MENU_CONTACTS ) , LINE_END ,
 #ifdef GPS_PRESENT
-    TEXT , 'G','P','S' , NULL_CH ,                     LINK( PAGE_MENU_GPS )      , LINE_END ,
+    LIST_ELEMENT , 'G','P','S' , NULL_CH ,                     LINK( PAGE_MENU_GPS )      , LINE_END ,
 #endif // RTC_PRESENT
-    TEXT , 'S','e','t','t','i','n','g','s' , NULL_CH , LINK( PAGE_MENU_SETTINGS ) , LINE_END ,
-    TEXT , 'I','n','f','o' , NULL_CH ,                 LINK( PAGE_MENU_INFO )     , LINE_END ,
-    TEXT , 'A','b','o','u','t' , NULL_CH ,             LINK( PAGE_ABOUT )         , PAGE_END
+    LIST_ELEMENT , 'S','e','t','t','i','n','g','s' , NULL_CH , LINK( PAGE_MENU_SETTINGS ) , LINE_END ,
+    LIST_ELEMENT , 'I','n','f','o' , NULL_CH ,                 LINK( PAGE_MENU_INFO )     , LINE_END ,
+    LIST_ELEMENT , 'A','b','o','u','t' , NULL_CH ,             LINK( PAGE_ABOUT )         , PAGE_END
 };
 
 static const uint8_t Page_MenuBank[] =
 {
-    TITLE , 'B','a','n','k' , NULL_CH ,
-    VALUE_DSP( BANKS ) ,
+    TITLE , 'B','a','n','k' , NULL_CH , LINE_END ,
+    EVENT_START( EVENT_TYPE_KBD , EVENT_STATUS_ALL_KEYS ) ,
+      LIST( PAGE_MENU_BANK_LIST , LIST_DATA_SOURCE_BANKS , 5 ) ,
+    EVENT_END ,
+    ON_EVENT_KBD_ENTER_GOTO_PAGE( PAGE_MAIN_MEM ) ,
+    ON_EVENT_KBD_ESC_GO_BACK ,
     PAGE_END
+};
+
+static const uint8_t Page_MenuBankList[] =
+{
+    LIST_ELEMENT , LINE_END ,
+    LIST_ELEMENT , LINE_END ,
+    LIST_ELEMENT , LINE_END ,
+    LIST_ELEMENT , LINE_END ,
+    LIST_ELEMENT , PAGE_END
 };
 
 static const uint8_t Page_MenuChannel[] =
 {
-    TITLE , 'C','h','a','n','n','e','l' , NULL_CH ,
-    VALUE_DSP( CHANNELS ) ,
+    TITLE , 'C','h','a','n','n','e','l' , NULL_CH , LINE_END ,
+    EVENT_START( EVENT_TYPE_KBD , EVENT_STATUS_ALL_KEYS ) ,
+      LIST( PAGE_MENU_CHANNEL_LIST , LIST_DATA_SOURCE_CHANNELS , 5 ) ,
+    EVENT_END ,
+    ON_EVENT_KBD_ENTER_GOTO_PAGE( PAGE_MAIN_MEM ) ,
+    ON_EVENT_KBD_ESC_GO_BACK ,
     PAGE_END
 };
 
+static const uint8_t Page_MenuChannelList[] =
+{
+    LIST_ELEMENT , LINE_END ,
+    LIST_ELEMENT , LINE_END ,
+    LIST_ELEMENT , LINE_END ,
+    LIST_ELEMENT , LINE_END ,
+    LIST_ELEMENT , PAGE_END
+};
 static const uint8_t Page_MenuContact[] =
 {
-    TITLE , 'C','o','n','t','a','c','t' , NULL_CH ,
-    VALUE_DSP( CONTACTS ) ,
+    TITLE , 'C','o','n','t','a','c','t' , NULL_CH , LINE_END ,
+    EVENT_START( EVENT_TYPE_KBD , EVENT_STATUS_ALL_KEYS ) ,
+      LIST( PAGE_MENU_CONTACTS_LIST , LIST_DATA_SOURCE_CONTACTS , 5 ) ,
+    EVENT_END ,
+    ON_EVENT_KBD_ENTER_GOTO_PAGE( PAGE_MAIN_MEM ) ,
+    ON_EVENT_KBD_ESC_GO_BACK ,
     PAGE_END
 };
 
+static const uint8_t Page_MenuContactList[] =
+{
+    LIST_ELEMENT , LINE_END ,
+    LIST_ELEMENT , LINE_END ,
+    LIST_ELEMENT , LINE_END ,
+    LIST_ELEMENT , LINE_END ,
+    LIST_ELEMENT , PAGE_END
+};
 static const uint8_t Page_MenuGPS[] =
 {
-    TITLE , 'G','P','S' , NULL_CH ,
+    TITLE , 'G','P','S' , NULL_CH , LINE_END ,
     VALUE_DSP( GPS ) ,
+    ON_EVENT_KBD_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -204,8 +241,9 @@ static const uint8_t Page_MenuSettings[] =
     LOAD_STYLE( GUI_STYLE_1 ) ,
     ALIGN_LEFT ,
     EVENT_START( EVENT_TYPE_KBD , EVENT_STATUS_ALL_KEYS ) ,
-      LIST( PAGE_MENU_SETTINGS_LIST , 5 ) ,
+      LIST( PAGE_MENU_SETTINGS_LIST , LIST_DATA_SOURCE_TEXT , 5 ) ,
     EVENT_END ,
+    ON_EVENT_KBD_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -237,56 +275,31 @@ static const uint8_t Page_SettingsTimeDate[] =
     EVENT_START( EVENT_TYPE_STATUS , EVENT_STATUS_DISPLAY_TIME_TICK ) ,
       VALUE_DSP( TIME ) ,
     EVENT_END ,
-
-
-/*
-    Line_st*  lineTop     = &guiState->layout.lines[ GUI_LINE_TOP ] ;
-    Style_st* styleTop    = &guiState->layout.styles[ GUI_STYLE_TOP ] ;
-    Line_st*  line2       = &guiState->layout.lines[ GUI_LINE_2 ] ;
-//    Style_st* style2      = &guiState->layout.styles[ GUI_STYLE_2 ] ;
-    Line_st*  line3Large  = &guiState->layout.lines[ GUI_LINE_3_LARGE ] ;
-//    Style_st* style3Large = &guiState->layout.styles[ GUI_STYLE_3_LARGE ] ;
-    Color_st  color_fg ;
-
-    ui_ColorLoad( &color_fg , COLOR_FG );
-
-    gfx_clearScreen();
-    datetime_t local_time = utcToLocalTime( last_state.time ,
-                                            last_state.settings.utc_timezone );
-    // Print "Time&Date" on top bar
-    gfx_print( lineTop->pos , styleTop->font.size , GFX_ALIGN_CENTER ,
-               color_fg , currentLanguage->timeAndDate );
-    // Print current time and date
-    gfx_print( line2->pos , guiState->layout.input_font.size , GFX_ALIGN_CENTER ,
-               color_fg , "%02d/%02d/%02d" ,
-               local_time.date , local_time.month , local_time.year );
-    gfx_print( line3Large->pos , guiState->layout.input_font.size , GFX_ALIGN_CENTER ,
-               color_fg , "%02d:%02d:%02d" ,
-               local_time.hour , local_time.minute , local_time.second );
-*/
+    ON_EVENT_KBD_ESC_GO_BACK ,
     PAGE_END
 };
 
 static const uint8_t Page_SettingsTimeDateSet[] =
 {
     TITLE , 'W','T','D',':',' ','S','T','D','S','e','t', NULL_CH ,
+    ON_EVENT_KBD_ESC_GO_BACK ,
     PAGE_END
 };
 
 static const uint8_t Page_SettingsDisplay[] =
 {
     TITLE , 'D','i','s','p','l','a','y' , NULL_CH ,
-    GOTO_TEXT_LINE( GUI_LINE_1 ) ,
-    LOAD_STYLE( GUI_STYLE_1 ) ,
-#ifdef SCREEN_BRIGHTNESS
+    LINE_END ,
     EVENT_START( EVENT_TYPE_KBD , EVENT_STATUS_ALL_KEYS ) ,
-      LIST( PAGE_SETTINGS_DISPLAY_LIST , 5 ) ,
+      LIST( PAGE_SETTINGS_DISPLAY_LIST , LIST_DATA_SOURCE_TEXT , 5 ) ,
     EVENT_END ,
+    ON_EVENT_KBD_ESC_GO_BACK ,
     PAGE_END
 };
 
 static const uint8_t Page_SettingsDisplayList[] =
 {
+#ifdef SCREEN_BRIGHTNESS
     ALIGN_LEFT , TEXT , 'B','r','i','g','h','t','n','e','s','s' , NULL_CH , ALIGN_RIGHT , VALUE_DSP( BRIGHTNESS ) , LINE_END ,
 #endif // SCREEN_BRIGHTNESS
 #ifdef SCREEN_CONTRAST
@@ -299,8 +312,7 @@ static const uint8_t Page_SettingsDisplayList[] =
 static const uint8_t Page_SettingsGPS[] =
 {
     TITLE , 'G','P','S',' ','S','e','t','t','i','n','g','s' , NULL_CH ,
-    GOTO_TEXT_LINE( GUI_LINE_1 ) ,
-    LOAD_STYLE( GUI_STYLE_1 ) ,
+    LINE_END ,
     ALIGN_LEFT ,
     ALIGN_LEFT , TEXT ,
      'G','P','S',' ','E','n','a','b','l','e','d' , NULL_CH ,
@@ -313,6 +325,7 @@ static const uint8_t Page_SettingsGPS[] =
     ALIGN_LEFT , TEXT ,
      'U','T','C',' ','T','i','m','e','z','o','n','e', NULL_CH ,
     ALIGN_RIGHT , VALUE_DSP( GPS_TIME_ZONE ) ,
+    ON_EVENT_KBD_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -321,8 +334,7 @@ static const uint8_t Page_SettingsGPS[] =
 static const uint8_t Page_SettingsRadio[] =
 {
     TITLE , 'R','a','d','i','o',' ','S','e','t','t','i','n','g','s' , NULL_CH ,
-    GOTO_TEXT_LINE( GUI_LINE_1 ) ,
-    LOAD_STYLE( GUI_STYLE_1 ) ,
+    LINE_END ,
     ALIGN_LEFT , TEXT ,
      'O','f','f','s','e','t', NULL_CH ,
     ALIGN_RIGHT , VALUE_DSP( RADIO_OFFSET ) ,
@@ -334,14 +346,14 @@ static const uint8_t Page_SettingsRadio[] =
     ALIGN_LEFT , TEXT ,
      'S','t','e','p' , NULL_CH ,
     ALIGN_RIGHT , VALUE_DSP( RADIO_STEP ) ,
+    ON_EVENT_KBD_ESC_GO_BACK ,
     PAGE_END
 };
 
 static const uint8_t Page_SettingsM17[] =
 {
     TITLE , 'M','1','7',' ','S','e','t','t','i','n','g','s' , NULL_CH ,
-    GOTO_TEXT_LINE( GUI_LINE_1 ) ,
-    LOAD_STYLE( GUI_STYLE_1 ) ,
+    LINE_END ,
     ALIGN_LEFT , TEXT ,
      'C','a','l','l','s','i','g','n' , NULL_CH ,
     ALIGN_RIGHT , VALUE_DSP( M17_CALLSIGN ) ,
@@ -353,19 +365,20 @@ static const uint8_t Page_SettingsM17[] =
     ALIGN_LEFT , TEXT ,
      'C','A','N',' ','R','X',' ','C','h','e','c','k' , NULL_CH ,
     ALIGN_RIGHT , VALUE_DSP( M17_CAN_RX_CHECK ) ,
+    ON_EVENT_KBD_ESC_GO_BACK ,
     PAGE_END
 };
 
 static const uint8_t Page_SettingsVoice[] =
 {
     TITLE , 'V','o','i','c','e' , NULL_CH ,
-    GOTO_TEXT_LINE( GUI_LINE_1 ) ,
-    LOAD_STYLE( GUI_STYLE_1 ) ,
+    LINE_END ,
     ALIGN_LEFT , TEXT , 'V','o','i','c','e' , NULL_CH ,
     ALIGN_RIGHT , VALUE_DSP( LEVEL ) ,
     LINE_END ,
     ALIGN_LEFT , TEXT , 'P','h','o','n','e','t','i','c' , NULL_CH ,
     ALIGN_RIGHT , VALUE_DSP( PHONETIC ) ,
+    ON_EVENT_KBD_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -373,6 +386,7 @@ static const uint8_t Page_MenuBackupRestore[] =
 {
     TITLE , 'B','a','c','k','u','p',' ','A','n','d',' ','R','e','s','t','o','r','e' , NULL_CH ,
     VALUE_DSP( BACKUP_RESTORE ) ,
+    ON_EVENT_KBD_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -385,6 +399,7 @@ static const uint8_t Page_MenuBackup[] =
     TEXT , 'T','o',' ','B','a','c','k','u','p',' ','F','l','a','s','h',' ','A','n','d' , NULL_CH ,
     LINE_END ,
     TEXT , 'P','r','e','s','s',' ','P','T','T',' ','t','o',' ','S','t','a','r','t' , NULL_CH ,
+    ON_EVENT_KBD_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -397,6 +412,7 @@ static const uint8_t Page_MenuRestore[] =
     TEXT , 'T','o',' ','R','e','s','t','o','r','e',' ','F','l','a','s','h',' ','A','n','d' , NULL_CH ,
     LINE_END ,
     TEXT , 'P','r','e','s','s',' ','P','T','T',' ','t','o',' ','S','t','a','r','t' , NULL_CH ,
+    ON_EVENT_KBD_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -434,6 +450,7 @@ static const uint8_t Page_MenuInfo[] =
     TEXT , 'R','a','d','i','o',' ','F','W' , NULL_CH ,
     ALIGN_RIGHT , VALUE_DSP( RADIO_FW ) ,
 #endif // PLATFORM_TTWRPLUS
+    ON_EVENT_KBD_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -444,28 +461,27 @@ static const uint8_t Page_SettingsResetToDefaults[] =
     TEXT , 'T','o',' ','R','e','s','e','t' , NULL_CH ,
     LINE_END ,
     TEXT , 'P','r','e','s','s',' ','E','n','t','e','r',' ','T','w','i','c','e' , NULL_CH ,
+    ON_EVENT_KBD_ESC_GO_BACK ,
     PAGE_END
 };
 
 static const uint8_t Page_LowBat[] =
 {
     TITLE , 'L','o','w',' ','B' ,'a' ,'t' ,'t' ,'e' ,'r','y' , NULL_CH ,
+    LINE_END ,
     ALIGN_CENTER ,
-    GOTO_TEXT_LINE( GUI_LINE_1 ) ,
-    LOAD_STYLE( GUI_STYLE_1 ) ,
     TEXT , 'F','o','r',' ','E','m','e','r','g','e','n','c','y',' ','U','s','e' , NULL_CH ,
-    GOTO_TEXT_LINE( GUI_LINE_2 ) ,
-    LOAD_STYLE( GUI_STYLE_2 ) ,
+    LINE_END ,
     TEXT , 'P','r','e','s','s',' ','A','n','y',' ','B','u','t','t','o','n' , NULL_CH ,
     VALUE_DSP( LOW_BATTERY ) ,
+    ON_EVENT_KBD_ESC_GO_BACK ,
     PAGE_END
 };
 
 static const uint8_t Page_About[] =
 {
     TITLE , 'A','b','o','u','t' , NULL_CH ,
-    GOTO_TEXT_LINE( GUI_LINE_1 ) ,
-    LOAD_STYLE( GUI_STYLE_1 ) ,
+    LINE_END ,
     ALIGN_LEFT ,
     TEXT ,
      'A','u','t','h','o','r','s' , NULL_CH ,
@@ -489,6 +505,7 @@ static const uint8_t Page_About[] =
     TEXT ,
      'K','i','m',' ',
      'V','K','6','K','L', NULL_CH ,
+    ON_EVENT_KBD_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -498,6 +515,7 @@ static const uint8_t Page_Stubbed[] =
     TEXT ,
      'P','a','g','e',' ',
      'S','t','u','b','b','e','d', NULL_CH ,
+    ON_EVENT_KBD_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -505,34 +523,38 @@ static const uint8_t Page_Stubbed[] =
 
 const uint8_t* uiPageTable[ PAGE_NUM_OF ] =
 {
-    PAGE_REF( Page_MainVFO                 ) , // PAGE_MAIN_VFO
-    PAGE_REF( Page_MainInput               ) , // PAGE_MAIN_VFO_INPUT
-    PAGE_REF( Page_MainMem                 ) , // PAGE_MAIN_MEM
-    PAGE_REF( Page_ModeVFO                 ) , // PAGE_MODE_VFO
-    PAGE_REF( Page_ModeMem                 ) , // PAGE_MODE_MEM
-    PAGE_REF( Page_MenuTop                 ) , // PAGE_MENU_TOP
-    PAGE_REF( Page_MenuTopList             ) , // PAGE_MENU_TOP_LIST
-    PAGE_REF( Page_MenuBank                ) , // PAGE_MENU_BANK
-    PAGE_REF( Page_MenuChannel             ) , // PAGE_MENU_CHANNEL
-    PAGE_REF( Page_MenuContact             ) , // PAGE_MENU_CONTACTS
-    PAGE_REF( Page_MenuGPS                 ) , // PAGE_MENU_GPS
-    PAGE_REF( Page_MenuSettings            ) , // PAGE_MENU_SETTINGS
-    PAGE_REF( Page_MenuSettingsList        ) , // PAGE_MENU_SETTINGS_LIST
-    PAGE_REF( Page_MenuBackupRestore       ) , // PAGE_MENU_BACKUP_RESTORE
-    PAGE_REF( Page_MenuBackup              ) , // PAGE_MENU_BACKUP
-    PAGE_REF( Page_MenuRestore             ) , // PAGE_MENU_RESTORE
-    PAGE_REF( Page_MenuInfo                ) , // PAGE_MENU_INFO
-    PAGE_REF( Page_SettingsTimeDate        ) , // PAGE_SETTINGS_TIMEDATE
-    PAGE_REF( Page_SettingsTimeDateSet     ) , // PAGE_SETTINGS_TIMEDATE_SET
-    PAGE_REF( Page_SettingsDisplay         ) , // PAGE_SETTINGS_DISPLAY
+    PAGE_REF( Page_MainVFO                 ) , // PAGE_MAIN_VFO                     0x00
+    PAGE_REF( Page_MainInput               ) , // PAGE_MAIN_VFO_INPUT               0x01
+    PAGE_REF( Page_MainMem                 ) , // PAGE_MAIN_MEM                     0x02
+    PAGE_REF( Page_ModeVFO                 ) , // PAGE_MODE_VFO                     0x03
+    PAGE_REF( Page_ModeMem                 ) , // PAGE_MODE_MEM                     0x04
+    PAGE_REF( Page_MenuTop                 ) , // PAGE_MENU_TOP                     0x05
+    PAGE_REF( Page_MenuTopList             ) , // PAGE_MENU_TOP_LIST                0x06
+    PAGE_REF( Page_MenuBank                ) , // PAGE_MENU_BANK                    0x07
+    PAGE_REF( Page_MenuBankList            ) , // PAGE_MENU_BANK_LIST               0x08
+    PAGE_REF( Page_MenuChannel             ) , // PAGE_MENU_CHANNEL                 0x09
+    PAGE_REF( Page_MenuChannelList         ) , // PAGE_MENU_CHANNEL_LIST            0x0A
+    PAGE_REF( Page_MenuContact             ) , // PAGE_MENU_CONTACTS                0x0B
+    PAGE_REF( Page_MenuContactList         ) , // PAGE_MENU_CONTACTS_LIST           0x0C
+    PAGE_REF( Page_MenuGPS                 ) , // PAGE_MENU_GPS                     0x0D
+    PAGE_REF( Page_MenuSettings            ) , // PAGE_MENU_SETTINGS                0x0E
+    PAGE_REF( Page_MenuSettingsList        ) , // PAGE_MENU_SETTINGS_LIST           0x0F
+    PAGE_REF( Page_MenuBackupRestore       ) , // PAGE_MENU_BACKUP_RESTORE          0x10
+    PAGE_REF( Page_MenuBackup              ) , // PAGE_MENU_BACKUP                  0x11
+    PAGE_REF( Page_MenuRestore             ) , // PAGE_MENU_RESTORE                 0x12
+    PAGE_REF( Page_MenuInfo                ) , // PAGE_MENU_INFO                    0x13
+    PAGE_REF( Page_SettingsTimeDate        ) , // PAGE_SETTINGS_TIMEDATE            0x14
+    PAGE_REF( Page_SettingsTimeDateSet     ) , // PAGE_SETTINGS_TIMEDATE_SET        0x15
+    PAGE_REF( Page_SettingsDisplay         ) , // PAGE_SETTINGS_DISPLAY             0x16
+    PAGE_REF( Page_SettingsDisplayList     ) , // PAGE_SETTINGS_DISPLAY             0x17
 #ifdef GPS_PRESENT
-    PAGE_REF( Page_SettingsGPS             ) , // PAGE_SETTINGS_GPS
+    PAGE_REF( Page_SettingsGPS             ) , // PAGE_SETTINGS_GPS                 0x18
 #endif // GPS_PRESENT
-    PAGE_REF( Page_SettingsRadio           ) , // PAGE_SETTINGS_RADIO
-    PAGE_REF( Page_SettingsM17             ) , // PAGE_SETTINGS_M17
-    PAGE_REF( Page_SettingsVoice           ) , // PAGE_SETTINGS_VOICE
-    PAGE_REF( Page_SettingsResetToDefaults ) , // PAGE_SETTINGS_RESET_TO_DEFAULTS
-    PAGE_REF( Page_LowBat                  ) , // PAGE_LOW_BAT
-    PAGE_REF( Page_About                   ) , // PAGE_ABOUT
-    PAGE_REF( Page_Stubbed                 )   // PAGE_STUBBED
+    PAGE_REF( Page_SettingsRadio           ) , // PAGE_SETTINGS_RADIO               0x19
+    PAGE_REF( Page_SettingsM17             ) , // PAGE_SETTINGS_M17                 0x1A
+    PAGE_REF( Page_SettingsVoice           ) , // PAGE_SETTINGS_VOICE               0x1B
+    PAGE_REF( Page_SettingsResetToDefaults ) , // PAGE_SETTINGS_RESET_TO_DEFAULTS   0x1C
+    PAGE_REF( Page_LowBat                  ) , // PAGE_LOW_BAT                      0x1D
+    PAGE_REF( Page_About                   ) , // PAGE_ABOUT                        0x1E
+    PAGE_REF( Page_Stubbed                 )   // PAGE_STUBBED                      0x1F
 };

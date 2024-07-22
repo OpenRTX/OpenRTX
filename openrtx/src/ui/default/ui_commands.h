@@ -70,17 +70,18 @@ enum
     GUI_CMD_ALIGN            = 0x0C ,
     GUI_CMD_RUN_SCRIPT       = 0x0D ,
     GUI_CMD_LIST             = 0x0E ,
-    GUI_CMD_LINK             = 0x0F ,
-    GUI_CMD_TITLE            = 0x10 ,
-    GUI_CMD_TEXT             = 0x11 ,
-    GUI_CMD_VALUE_DSP        = 0x12 ,
-    GUI_CMD_VALUE_INP        = 0x13 ,
-    GUI_CMD_GOTO_POS_X       = 0x14 ,
-    GUI_CMD_GOTO_POS_Y       = 0x15 ,
-    GUI_CMD_ADD_TO_POS_X     = 0x16 ,
-    GUI_CMD_ADD_TO_POS_Y     = 0x17 ,
-    GUI_CMD_DRAW_GRAPHIC     = 0x18 ,
-    GUI_CMD_OPERATION        = 0x19 ,
+    GUI_CMD_LIST_ELEMENT     = 0x0F ,
+    GUI_CMD_LINK             = 0x10 ,
+    GUI_CMD_TITLE            = 0x11 ,
+    GUI_CMD_TEXT             = 0x12 ,
+    GUI_CMD_VALUE_DSP        = 0x13 ,
+    GUI_CMD_VALUE_INP        = 0x14 ,
+    GUI_CMD_GOTO_POS_X       = 0x15 ,
+    GUI_CMD_GOTO_POS_Y       = 0x16 ,
+    GUI_CMD_ADD_TO_POS_X     = 0x17 ,
+    GUI_CMD_ADD_TO_POS_Y     = 0x18 ,
+    GUI_CMD_DRAW_GRAPHIC     = 0x19 ,
+    GUI_CMD_OPERATION        = 0x1A ,
 #ifndef DISPLAY_DEBUG_MSG
     GUI_CMD_DBG_VAL          = 0x1D ,
 #else // DISPLAY_DEBUG_MSG
@@ -181,12 +182,15 @@ c->alpha = (uint8_t)( ( cv >> COLOR_ENC_ALPHA_SHIFT ) & COLOR_ENC_ALPHA_MASK ) ;
 // GUI_CMD_ON_EVENT Actions
 enum
 {
-    ON_EVENT_ACTION_GOTO_PAGE
+    ON_EVENT_ACTION_GOTO_PAGE ,
+    ON_EVENT_ACTION_GO_BACK
 };
 
 #define ON_EVENT( t , p , a , v )           GUI_CMD_ON_EVENT , ST_EVENT( t , p ) , ST_VAL( a ) , ST_VAL( v )
 
 #define ON_EVENT_KBD_ENTER_GOTO_PAGE( v )   ON_EVENT( EVENT_TYPE_KBD , KEY_ENTER , ON_EVENT_ACTION_GOTO_PAGE , v )
+
+#define ON_EVENT_KBD_ESC_GO_BACK            ON_EVENT( EVENT_TYPE_KBD , KEY_ESC , ON_EVENT_ACTION_GO_BACK , 0 )
 
 #define GOTO_TEXT_LINE( l ) GUI_CMD_GOTO_TEXT_LINE , ST_VAL( l )
 #define LOAD_STYLE( l )     GUI_CMD_LOAD_STYLE , ST_VAL( l )
@@ -233,7 +237,8 @@ enum
 
 #define LINE_END            GUI_CMD_LINE_END
 
-#define LIST( p , l )       GUI_CMD_LIST , ST_VAL( p ) , ST_VAL( l )
+#define LIST( p , s , l )   GUI_CMD_LIST , ST_VAL( p ) , ST_VAL( s ) , ST_VAL( l )
+#define LIST_ELEMENT        GUI_CMD_LIST_ELEMENT
 #define LINK( p )           GUI_CMD_LINK , ST_VAL( p )
 
 #define TITLE               GUI_CMD_TITLE
@@ -257,6 +262,7 @@ enum
 
 enum
 {
+    GUI_CMD_OPR_PAGE_TREE_TOP     ,
     GUI_CMD_OPR_GOTO_SCREEN_LEFT  ,
     GUI_CMD_OPR_GOTO_SCREEN_RIGHT ,
     GUI_CMD_OPR_GOTO_SCREEN_TOP   ,
@@ -265,6 +271,7 @@ enum
     GUI_CMD_OPR_GOTO_LINE_BASE
 };
 
+#define PAGE_TREE_TOP       GUI_CMD_OPERATION , ST_VAL( GUI_CMD_OPR_PAGE_TREE_TOP )
 #define GOTO_SCREEN_LEFT    GUI_CMD_OPERATION , ST_VAL( GUI_CMD_OPR_GOTO_SCREEN_LEFT )
 #define GOTO_SCREEN_RIGHT   GUI_CMD_OPERATION , ST_VAL( GUI_CMD_OPR_GOTO_SCREEN_RIGHT )
 #define GOTO_SCREEN_TOP     GUI_CMD_OPERATION , ST_VAL( GUI_CMD_OPR_GOTO_SCREEN_TOP )
@@ -277,6 +284,13 @@ enum
 #endif // DISPLAY_DEBUG_MSG
 
 #define PAGE_END            GUI_CMD_PAGE_END
+
+// List Handling
+extern void GuiCmd_List_GetNumOfEntries_Text( GuiState_st* guiState );
+extern bool GuiCmd_List_EntryDisplay_Text( GuiState_st* guiState );
+extern void GuiCmd_List_EntrySelect_Text( GuiState_st* guiState );
+extern bool GuiCmd_List_EntryDisplay_Stubbed( GuiState_st* guiState );
+extern void GuiCmd_List_EntryDisplay_TextString( GuiState_st* guiState , char* str );
 
 // Color load fn.
 extern void ui_ColorLoad( Color_st* color , ColorSelector_en colorSelector );
