@@ -234,6 +234,44 @@ uint16_t bk1080_freq_to_chan(uint16_t freq){
     return (freq - band) * 10 / spacing;
 }
 
-void bk1080_set_frequency(uint16_t freq){
-    bk1080_write_reg(BK1080_REG_03, bk1080_freq_to_chan(freq) | (1 << 15));
+void bk1080_set_channel(uint16_t channel){
+    bk1080_write_reg(BK1080_REG_03, channel | (1 << 15));
+}
+
+void bk1080_seek_channel_hw(uint8_t mode, uint8_t dir, uint16_t startChannel, uint8_t timeout, seek_tune_complete_cb cb){
+    uint16_t data;
+
+    bk1080_write_reg(BK1080_REG_03, 0x8000);
+    delayMs(50);
+    bk1080_write_reg(BK1080_REG_03, startChannel);
+
+    data = bk1080_read_reg(BK1080_REG_02);
+    data &= ~(0x11 << 9);
+    data |= (((mode << 1) | dir) << 9) | (0x01 << 8);
+
+    bk1080_write_reg(BK1080_REG_02, data);
+
+    while (timeout-- && !bk1080_get_flag(BK1080_FLAG_STC))
+    {
+        delayMs(1);
+    }
+
+   cb(bk1080_get_flag(BK1080_FLAG_SFBL), bk1080_read_reg(BK1080_REG_10) & 0x7F, bk1080_read_reg(BK1080_REG_03) & 0x01FF);
+    
+}
+
+void bk1080_set_band_spacing(uint8_t band, uint8_t spacing){
+    uint16_t data = bk1080_read_reg(BK1080_REG_05);
+    data &= ~(0x03 << 4);
+    data &= ~(0x03 << 6);
+    data |= (spacing << 4);
+    data |= (band << 6);
+    bk1080_write_reg(BK1080_REG_05, data);
+}
+
+uint8_t bk1080_get_flag(bk1080_flag_t flag){
+    if (bk1080_read_reg(BK1080_REG_10) & flag)
+        return 1;
+    else
+        return 0;
 }
