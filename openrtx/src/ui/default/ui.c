@@ -596,7 +596,7 @@ void ui_InitGuiStateLayoutVars( Layout_st* layout )
 
     for( index = 0 ; index < GUI_VAR_NUM_OF ; index++ )
     {
-        layout->vars[ index ].varNum = GUI_VAL_DSP_STUBBED ;
+        layout->vars[ index ].varNum = GUI_VAL_STUBBED ;
         layout->vars[ index ].pos.y  =  0 ;
         layout->vars[ index ].pos.x  =  0 ;
         layout->vars[ index ].pos.h  =  0 ;

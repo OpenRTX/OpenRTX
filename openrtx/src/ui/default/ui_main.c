@@ -85,7 +85,7 @@ static const ui_Draw__fn uiPageDescTable[ PAGE_NUM_OF ] =
     _ui_Draw_MenuRestore            , // PAGE_MENU_RESTORE
     _ui_Draw_MenuInfo               , // PAGE_MENU_INFO
     _ui_Draw_SettingsTimeDate       , // PAGE_SETTINGS_TIMEDATE
-    _ui_Draw_SettingsTimeDateSet    , // PAGE_SETTINGS_TIMEDATE_SET
+    _ui_Draw_SettingsTimeDateSet    , // PAGE_SETTINGS_TIMEDATE
     _ui_Draw_SettingsDisplay        , // PAGE_SETTINGS_DISPLAY
     _ui_Draw_SettingsGPS            , // PAGE_SETTINGS_GPS
     _ui_Draw_SettingsRadio          , // PAGE_SETTINGS_RADIO

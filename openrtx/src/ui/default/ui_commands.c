@@ -851,7 +851,7 @@ static bool GuiCmd_List( GuiState_st* guiState )
     return pageEnd ;
 }
 
-void GuiCmd_List_GetNumOfEntries_Text( GuiState_st* guiState )
+void GuiCmd_List_GetNumOfEntries_Script( GuiState_st* guiState )
 {
     uint8_t* ptr ;
     uint16_t index ;
@@ -898,7 +898,7 @@ static void DisplayList( GuiState_st* guiState )
     update           = guiState->update ;
     guiState->update = false ;
 
-    if( guiState->layout.list.dataSource == LIST_DATA_SOURCE_TEXT )
+    if( guiState->layout.list.dataSource == LIST_DATA_SOURCE_SCRIPT )
     {
         // go to the start of the list - entry at offset position
         offset = 0 ;
@@ -963,14 +963,14 @@ static bool GuiCmd_ListElement( GuiState_st* guiState )
     return pageEnd ;
 }
 
-bool GuiCmd_List_EntryDisplay_Text( GuiState_st* guiState )
+bool GuiCmd_List_EntryDisplay_Script( GuiState_st* guiState )
 {
-    bool pageEnd = GuiCmd_Text( guiState );
+    bool pageEnd = false ;
 
     return pageEnd ;
 }
 
-void GuiCmd_List_EntrySelect_Text( GuiState_st* guiState )
+void GuiCmd_List_EntrySelect_Script( GuiState_st* guiState )
 {
     guiState->page.num = guiState->layout.link.pageNum ;
 }
@@ -1072,24 +1072,20 @@ static bool GuiCmd_ValueDisplay( GuiState_st* guiState )
 
     varNum = GuiCmd_LdValUI( guiState );
 
-    if( varNum >= GUI_VAL_DSP_NUM_OF )
+    if( varNum >= GUI_VAL_NUM_OF )
     {
-        varNum = GUI_VAL_DSP_STUBBED ;
+        varNum = GUI_VAL_STUBBED ;
     }
 
     if( !guiState->update )
     {
         guiState->layout.vars[ guiState->layout.varIndex ].varNum = varNum ;
         guiState->layout.varNumOf++ ;
-//        guiState->layout.links[ guiState->layout.linkIndex ].type = LINK_TYPE_VALUE ;
-//        guiState->layout.links[ guiState->layout.linkIndex ].num  = valueNum ;
-//        guiState->layout.links[ guiState->layout.linkIndex ].amt  = 0 ;
-//        guiState->layout.linkIndex++ ;
     }
 
     if( guiState->displayEnabled )
     {
-        GuiVal_DisplayValue( guiState );
+        GuiValDsp_DisplayValue( guiState );
     }
 
     guiState->layout.varIndex++ ;
@@ -1100,14 +1096,29 @@ static bool GuiCmd_ValueDisplay( GuiState_st* guiState )
 
 static bool GuiCmd_ValueInput( GuiState_st* guiState )
 {
-    uint8_t valueNum ;
+    uint8_t varNum ;
     bool    pageEnd  = false ;
 
-    valueNum = GuiCmd_LdValUI( guiState );
+    varNum = GuiCmd_LdValUI( guiState );
 
-    ui_ValueInput( guiState , valueNum );
+    if( varNum >= GUI_VAL_NUM_OF )
+    {
+        varNum = GUI_VAL_STUBBED ;
+    }
 
-    guiState->page.renderPage = true ;
+    if( !guiState->update )
+    {
+        guiState->layout.vars[ guiState->layout.varIndex ].varNum = varNum ;
+        guiState->layout.varNumOf++ ;
+    }
+
+    if( guiState->displayEnabled )
+    {
+//        ui_ValueInput( guiState , valueNum );
+        GuiValDsp_DisplayValue( guiState );
+    }
+
+    guiState->layout.varIndex++ ;
 
     return pageEnd ;
 

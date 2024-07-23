@@ -39,9 +39,9 @@
 #include "ui_value_display.h"
 #include "ui_value_arrays.h"
 
-static void List_GetNumOfEntries_Text( GuiState_st* guiState );
-static void List_EntryDisplay_Text( GuiState_st* guiState );
-static void List_EntrySelect_Text( GuiState_st* guiState );
+static void List_GetNumOfEntries_Script( GuiState_st* guiState );
+static void List_EntryDisplay_Script( GuiState_st* guiState );
+static void List_EntrySelect_Script( GuiState_st* guiState );
 
 static void List_GetNumOfEntries_Banks( GuiState_st* guiState );
 static void List_EntryDisplay_Banks( GuiState_st* guiState );
@@ -72,7 +72,7 @@ typedef struct
 
 static const ListDisplay_st ui_ListDisplay_Table[ LIST_DATA_SOURCE_NUM_OF + 1 ] =
 {
-    { List_GetNumOfEntries_Text     , List_EntryDisplay_Text     , List_EntrySelect_Text     } ,
+    { List_GetNumOfEntries_Script     , List_EntryDisplay_Script     , List_EntrySelect_Script     } ,
     { List_GetNumOfEntries_Banks    , List_EntryDisplay_Banks    , List_EntrySelect_Banks    } ,
     { List_GetNumOfEntries_Channels , List_EntryDisplay_Channels , List_EntrySelect_Channels } ,
     { List_GetNumOfEntries_Contacts , List_EntryDisplay_Contacts , List_EntrySelect_Contacts } ,
@@ -95,22 +95,22 @@ void List_EntrySelect( GuiState_st* guiState )
 }
 
 /*******************************************************************************
-*   Text
+*   Script
 *******************************************************************************/
 
-static void List_GetNumOfEntries_Text( GuiState_st* guiState )
+static void List_GetNumOfEntries_Script( GuiState_st* guiState )
 {
-    GuiCmd_List_GetNumOfEntries_Text( guiState );
+    GuiCmd_List_GetNumOfEntries_Script( guiState );
 }
 
-static void List_EntryDisplay_Text( GuiState_st* guiState )
+static void List_EntryDisplay_Script( GuiState_st* guiState )
 {
-    GuiCmd_List_EntryDisplay_Text( guiState );
+    GuiCmd_List_EntryDisplay_Script( guiState );
 }
 
-static void List_EntrySelect_Text( GuiState_st* guiState )
+static void List_EntrySelect_Script( GuiState_st* guiState )
 {
-    GuiCmd_List_EntrySelect_Text( guiState );
+    GuiCmd_List_EntrySelect_Script( guiState );
 }
 
 /*******************************************************************************
@@ -310,9 +310,9 @@ static void List_EntrySelect_Stubbed( GuiState_st* guiState )
 {
 }
 
-/*******************************************************************************
-*
-*******************************************************************************/
+/*******************************************************************************/
+// @@@KL Redact
+/*******************************************************************************/
 
 extern char* uiGetPageTextString( uiPageNum_en pageNum , uint8_t textStringIndex );
 
@@ -368,7 +368,7 @@ static const GetMenuList_fn GetEntryName_table[ PAGE_NUM_OF ] =
     ui_Get_StubbedName            , // PAGE_MENU_RESTORE
     ui_Get_InfoEntryName          , // PAGE_MENU_INFO
     ui_Get_StubbedName            , // PAGE_SETTINGS_TIMEDATE
-    ui_Get_StubbedName            , // PAGE_SETTINGS_TIMEDATE_SET
+    ui_Get_StubbedName            , // PAGE_SETTINGS_TIMEDATE
     ui_Get_DisplayEntryName       , // PAGE_SETTINGS_DISPLAY
     ui_Get_SettingsGPSEntryName   , // PAGE_SETTINGS_GPS
     ui_Get_RadioEntryName         , // PAGE_SETTINGS_RADIO
@@ -471,7 +471,7 @@ static const GetMenuList_fn GetEntryValue_table[ PAGE_NUM_OF ] =
     ui_Get_StubbedName          , // PAGE_MENU_RESTORE
     ui_Get_InfoValueName        , // PAGE_MENU_INFO
     ui_Get_StubbedName          , // PAGE_SETTINGS_TIMEDATE
-    ui_Get_StubbedName          , // PAGE_SETTINGS_TIMEDATE_SET
+    ui_Get_StubbedName          , // PAGE_SETTINGS_TIMEDATE
     ui_Get_DisplayValueName     , // PAGE_SETTINGS_DISPLAY
     ui_Get_SettingsGPSValueName , // PAGE_SETTINGS_GPS
     ui_Get_RadioValueName       , // PAGE_SETTINGS_RADIO

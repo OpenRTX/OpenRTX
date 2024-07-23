@@ -1230,7 +1230,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE( GuiState_st* guiState )
     if( guiState->msg.keys & KEY_ENTER )
     {
         // Switch to set Time&Date mode
-        ui_States_SetPageNum( guiState , PAGE_SETTINGS_TIMEDATE_SET );
+        ui_States_SetPageNum( guiState , PAGE_SETTINGS_TIMEDATE );
         // Reset input position and selection
         guiState->uiState.input_position = 0 ;
         memset( &guiState->uiState.new_timedate , 0 , sizeof( datetime_t ) );
@@ -1260,7 +1260,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE_SET( GuiState_st* guiState )
             platform_setTime( utc_time );
             state.time          = utc_time ;
             vp_announceSettingsTimeDate();
-            ui_States_SetPageNum( guiState , PAGE_SETTINGS_TIMEDATE_SET );
+            ui_States_SetPageNum( guiState , PAGE_SETTINGS_TIMEDATE );
         }
     }
     else if( guiState->msg.keys & KEY_ESC )

@@ -55,68 +55,68 @@
 #include "ui_states.h"
 #include "ui_value_input.h"
 
-static void GuiVal_Disp_Val( GuiState_st* guiState , char* valueBuffer );
-static void GuiVal_Disp_Bat( GuiState_st* guiState , uint16_t percentage );
-static void GuiVal_Disp_StoreVarPos( GuiState_st* guiState );
-static void GuiVal_Disp_ClearVarPos( GuiState_st* guiState );
+static void GuiValDsp_Disp_Val( GuiState_st* guiState , char* valueBuffer );
+static void GuiValDsp_Disp_Bat( GuiState_st* guiState , uint16_t percentage );
+static void GuiValDsp_Disp_StoreVarPos( GuiState_st* guiState );
+static void GuiValDsp_Disp_ClearVarPos( GuiState_st* guiState );
 
-static void GuiVal_BatteryLevel( GuiState_st* guiState );
-static void GuiVal_LockState( GuiState_st* guiState );
-static void GuiVal_ModeInfo( GuiState_st* guiState );
-static void GuiVal_BankChannel( GuiState_st* guiState );
-static void GuiVal_Frequency( GuiState_st* guiState );
-static void GuiVal_RSSIMeter( GuiState_st* guiState );
+static void GuiValDsp_BatteryLevel( GuiState_st* guiState );
+static void GuiValDsp_LockState( GuiState_st* guiState );
+static void GuiValDsp_ModeInfo( GuiState_st* guiState );
+static void GuiValDsp_BankChannel( GuiState_st* guiState );
+static void GuiValDsp_Frequency( GuiState_st* guiState );
+static void GuiValDsp_RSSIMeter( GuiState_st* guiState );
 #ifdef GPS_PRESENT
-static void GuiVal_GPS( GuiState_st* guiState );
+static void GuiValDsp_GPS( GuiState_st* guiState );
 #endif // GPS_PRESENT
 // Settings
 // Display
 #ifdef SCREEN_BRIGHTNESS
-static void GuiVal_ScreenBrightness( GuiState_st* guiState );
+static void GuiValDsp_ScreenBrightness( GuiState_st* guiState );
 #endif // SCREEN_BRIGHTNESS
 #ifdef SCREEN_CONTRAST
-static void GuiVal_ScreenContrast( GuiState_st* guiState );
+static void GuiValDsp_ScreenContrast( GuiState_st* guiState );
 #endif // SCREEN_CONTRAST
-static void GuiVal_Timer( GuiState_st* guiState );
+static void GuiValDsp_Timer( GuiState_st* guiState );
 // Time and Date
-static void GuiVal_Date( GuiState_st* guiState );
-static void GuiVal_Time( GuiState_st* guiState );
+static void GuiValDsp_Date( GuiState_st* guiState );
+static void GuiValDsp_Time( GuiState_st* guiState );
 // GPS
 #ifdef GPS_PRESENT
-static void GuiVal_GPSEnables( GuiState_st* guiState );
-static void GuiVal_GPSSetTime( GuiState_st* guiState );
-static void GuiVal_GPSTimeZone( GuiState_st* guiState );
+static void GuiValDsp_GPSEnables( GuiState_st* guiState );
+static void GuiValDsp_GPSTime( GuiState_st* guiState );
+static void GuiValDsp_GPSTimeZone( GuiState_st* guiState );
 #endif // GPS_PRESENT
 // Radio
-static void GuiVal_RadioOffset( GuiState_st* guiState );
-static void GuiVal_RadioDirection( GuiState_st* guiState );
-static void GuiVal_RadioStep( GuiState_st* guiState );
+static void GuiValDsp_RadioOffset( GuiState_st* guiState );
+static void GuiValDsp_RadioDirection( GuiState_st* guiState );
+static void GuiValDsp_RadioStep( GuiState_st* guiState );
 // M17
-static void GuiVal_M17Callsign( GuiState_st* guiState );
-static void GuiVal_M17Can( GuiState_st* guiState );
-static void GuiVal_M17CanRxCheck( GuiState_st* guiState );
+static void GuiValDsp_M17Callsign( GuiState_st* guiState );
+static void GuiValDsp_M17Can( GuiState_st* guiState );
+static void GuiValDsp_M17CanRxCheck( GuiState_st* guiState );
 // Accessibility - Voice
-static void GuiVal_Voice( GuiState_st* guiState );
-static void GuiVal_Phonetic( GuiState_st* guiState );
+static void GuiValDsp_Voice( GuiState_st* guiState );
+static void GuiValDsp_Phonetic( GuiState_st* guiState );
 // Info
-static void GuiVal_BatteryVoltage( GuiState_st* guiState );
-static void GuiVal_BatteryCharge( GuiState_st* guiState );
-static void GuiVal_Rssi( GuiState_st* guiState );
-static void GuiVal_UsedHeap( GuiState_st* guiState );
-static void GuiVal_Band( GuiState_st* guiState );
-static void GuiVal_Vhf( GuiState_st* guiState );
-static void GuiVal_Uhf( GuiState_st* guiState );
-static void GuiVal_HwVersion( GuiState_st* guiState );
+static void GuiValDsp_BatteryVoltage( GuiState_st* guiState );
+static void GuiValDsp_BatteryCharge( GuiState_st* guiState );
+static void GuiValDsp_Rssi( GuiState_st* guiState );
+static void GuiValDsp_UsedHeap( GuiState_st* guiState );
+static void GuiValDsp_Band( GuiState_st* guiState );
+static void GuiValDsp_Vhf( GuiState_st* guiState );
+static void GuiValDsp_Uhf( GuiState_st* guiState );
+static void GuiValDsp_HwVersion( GuiState_st* guiState );
 #ifdef PLATFORM_TTWRPLUS
-static void GuiVal_Radio( GuiState_st* guiState );
-static void GuiVal_RadioFw( GuiState_st* guiState );
+static void GuiValDsp_Radio( GuiState_st* guiState );
+static void GuiValDsp_RadioFw( GuiState_st* guiState );
 #endif // PLATFORM_TTWRPLUS
-static void GuiVal_BackupRestore( GuiState_st* guiState );
-static void GuiVal_LowBattery( GuiState_st* guiState );
+static void GuiValDsp_BackupRestore( GuiState_st* guiState );
+static void GuiValDsp_LowBattery( GuiState_st* guiState );
 #ifdef ENABLE_DEBUG_MSG
   #ifndef DISPLAY_DEBUG_MSG
-static void GuiVal_DebugCh( GuiState_st* guiState );
-static void GuiVal_DebugGfx( GuiState_st* guiState );
+static void GuiValDsp_DebugCh( GuiState_st* guiState );
+static void GuiValDsp_DebugGfx( GuiState_st* guiState );
   #else // DISPLAY_DEBUG_MSG
 enum
 {
@@ -130,84 +130,84 @@ static uint8_t DebugVal3 = 0 ;
 static uint8_t DebugVal4 = 0 ;
 static uint8_t DebugVal5 = 0 ;
 static uint8_t DebugCnt  = 0 ;
-static void GuiVal_DebugMsg( GuiState_st* guiState );
-static void GuiVal_DebugValues( GuiState_st* guiState );
+static void GuiValDsp_DebugMsg( GuiState_st* guiState );
+static void GuiValDsp_DebugValues( GuiState_st* guiState );
   #endif // DISPLAY_DEBUG_MSG
 #endif // ENABLE_DEBUG_MSG
-static void GuiVal_Stubbed( GuiState_st* guiState );
+static void GuiValDsp_Stubbed( GuiState_st* guiState );
 
-static bool GuiVal_Disp_HasValueChanged( GuiState_st* guiState , uint32_t value );
+static bool GuiValDsp_Disp_HasValueChanged( GuiState_st* guiState , uint32_t value );
 
-typedef void (*ui_GuiVal_fn)( GuiState_st* guiState );
+typedef void (*ui_GuiValDsp_fn)( GuiState_st* guiState );
 
-static const ui_GuiVal_fn ui_GuiVal_Table[ GUI_VAL_DSP_NUM_OF ] =
+static const ui_GuiValDsp_fn ui_GuiValDsp_Table[ GUI_VAL_NUM_OF ] =
 {
-    GuiVal_BatteryLevel     ,   // GUI_VAL_DSP_BATTERY_LEVEL    0x00
-    GuiVal_LockState        ,   // GUI_VAL_DSP_LOCK_STATE       0x01
-    GuiVal_ModeInfo         ,   // GUI_VAL_DSP_MODE_INFO        0x02
-    GuiVal_BankChannel      ,   // GUI_VAL_DSP_BANK_CHANNEL     0x03
-    GuiVal_Frequency        ,   // GUI_VAL_DSP_FREQUENCY        0x04
-    GuiVal_RSSIMeter        ,   // GUI_VAL_DSP_RSSI_METER       0x05
+    GuiValDsp_BatteryLevel     ,   // GUI_VAL_BATTERY_LEVEL    0x00
+    GuiValDsp_LockState        ,   // GUI_VAL_LOCK_STATE       0x01
+    GuiValDsp_ModeInfo         ,   // GUI_VAL_MODE_INFO        0x02
+    GuiValDsp_BankChannel      ,   // GUI_VAL_BANK_CHANNEL     0x03
+    GuiValDsp_Frequency        ,   // GUI_VAL_FREQUENCY        0x04
+    GuiValDsp_RSSIMeter        ,   // GUI_VAL_RSSI_METER       0x05
 #ifdef GPS_PRESENT
-    GuiVal_GPS              ,   // GUI_VAL_DSP_GPS              0x06
+    GuiValDsp_GPS              ,   // GUI_VAL_GPS              0x06
 #endif // GPS_PRESENT
     // Settings
     // Display
 #ifdef SCREEN_BRIGHTNESS
-    GuiVal_ScreenBrightness ,   // GUI_VAL_DSP_BRIGHTNESS       0x07
+    GuiValDsp_ScreenBrightness ,   // GUI_VAL_BRIGHTNESS       0x07
 #endif
 #ifdef SCREEN_CONTRAST
-    GuiVal_ScreenContrast   ,   // GUI_VAL_DSP_CONTRAST         0x08
+    GuiValDsp_ScreenContrast   ,   // GUI_VAL_CONTRAST         0x08
 #endif
-    GuiVal_Timer            ,   // GUI_VAL_DSP_TIMER            0x09
+    GuiValDsp_Timer            ,   // GUI_VAL_TIMER            0x09
     // Time and Date
-    GuiVal_Date             ,   // GUI_VAL_DSP_DATE             0x0A
-    GuiVal_Time             ,   // GUI_VAL_DSP_TIME             0x0B
+    GuiValDsp_Date             ,   // GUI_VAL_DATE             0x0A
+    GuiValDsp_Time             ,   // GUI_VAL_TIME             0x0B
     // GPS
 #ifdef GPS_PRESENT
-    GuiVal_GPSEnables       ,   // GUI_VAL_DSP_GPS_ENABLED      0x0C
-    GuiVal_GPSSetTime       ,   // GUI_VAL_DSP_GPS_SET_TIME     0x0D
-    GuiVal_GPSTimeZone      ,   // GUI_VAL_DSP_GPS_TIME_ZONE    0x0E
+    GuiValDsp_GPSEnables       ,   // GUI_VAL_GPS_ENABLED      0x0C
+    GuiValDsp_GPSTime          ,   // GUI_VAL_GPS_TIME         0x0D
+    GuiValDsp_GPSTimeZone      ,   // GUI_VAL_GPS_TIME_ZONE    0x0E
 #endif // GPS_PRESENT
     // Radio
-    GuiVal_RadioOffset      ,   // GUI_VAL_DSP_RADIO_OFFSET     0x0F
-    GuiVal_RadioDirection   ,   // GUI_VAL_DSP_RADIO_DIRECTION  0x10
-    GuiVal_RadioStep        ,   // GUI_VAL_DSP_RADIO_STEP       0x11
+    GuiValDsp_RadioOffset      ,   // GUI_VAL_RADIO_OFFSET     0x0F
+    GuiValDsp_RadioDirection   ,   // GUI_VAL_RADIO_DIRECTION  0x10
+    GuiValDsp_RadioStep        ,   // GUI_VAL_RADIO_STEP       0x11
     // M17
-    GuiVal_M17Callsign      ,   // GUI_VAL_DSP_M17_CALLSIGN     0x12
-    GuiVal_M17Can           ,   // GUI_VAL_DSP_M17_CAN          0x13
-    GuiVal_M17CanRxCheck    ,   // GUI_VAL_DSP_M17_CAN_RX_CHECK 0x14
+    GuiValDsp_M17Callsign      ,   // GUI_VAL_M17_CALLSIGN     0x12
+    GuiValDsp_M17Can           ,   // GUI_VAL_M17_CAN          0x13
+    GuiValDsp_M17CanRxCheck    ,   // GUI_VAL_M17_CAN_RX_CHECK 0x14
     // Accessibility - Voice
-    GuiVal_Voice            ,   // GUI_VAL_DSP_LEVEL            0x15
-    GuiVal_Phonetic         ,   // GUI_VAL_DSP_PHONETIC         0x16
+    GuiValDsp_Voice            ,   // GUI_VAL_LEVEL            0x15
+    GuiValDsp_Phonetic         ,   // GUI_VAL_PHONETIC         0x16
     // Info
-    GuiVal_BatteryVoltage   ,   // GUI_VAL_DSP_BATTERY_VOLTAGE  0x17
-    GuiVal_BatteryCharge    ,   // GUI_VAL_DSP_BATTERY_CHARGE   0x18
-    GuiVal_Rssi             ,   // GUI_VAL_DSP_RSSI             0x19
-    GuiVal_UsedHeap         ,   // GUI_VAL_DSP_USED_HEAP        0x1A
-    GuiVal_Band             ,   // GUI_VAL_DSP_BAND             0x1B
-    GuiVal_Vhf              ,   // GUI_VAL_DSP_VHF              0x1C
-    GuiVal_Uhf              ,   // GUI_VAL_DSP_UHF              0x1D
-    GuiVal_HwVersion        ,   // GUI_VAL_DSP_HW_VERSION       0x1E
+    GuiValDsp_BatteryVoltage   ,   // GUI_VAL_BATTERY_VOLTAGE  0x17
+    GuiValDsp_BatteryCharge    ,   // GUI_VAL_BATTERY_CHARGE   0x18
+    GuiValDsp_Rssi             ,   // GUI_VAL_RSSI             0x19
+    GuiValDsp_UsedHeap         ,   // GUI_VAL_USED_HEAP        0x1A
+    GuiValDsp_Band             ,   // GUI_VAL_BAND             0x1B
+    GuiValDsp_Vhf              ,   // GUI_VAL_VHF              0x1C
+    GuiValDsp_Uhf              ,   // GUI_VAL_UHF              0x1D
+    GuiValDsp_HwVersion        ,   // GUI_VAL_HW_VERSION       0x1E
 #ifdef PLATFORM_TTWRPLUS
-    GuiVal_Radio            ,   // GUI_VAL_DSP_RADIO            0x1F
-    GuiVal_RadioFw          ,   // GUI_VAL_DSP_RADIO_FW         0x20
+    GuiValDsp_Radio            ,   // GUI_VAL_RADIO            0x1F
+    GuiValDsp_RadioFw          ,   // GUI_VAL_RADIO_FW         0x20
 #endif // PLATFORM_TTWRPLUS
-    GuiVal_BackupRestore    ,   // GUI_VAL_DSP_BACKUP_RESTORE   0x21
-    GuiVal_LowBattery       ,   // GUI_VAL_DSP_LOW_BATTERY      0x22
+    GuiValDsp_BackupRestore    ,   // GUI_VAL_BACKUP_RESTORE   0x21
+    GuiValDsp_LowBattery       ,   // GUI_VAL_LOW_BATTERY      0x22
 #ifdef ENABLE_DEBUG_MSG
   #ifndef DISPLAY_DEBUG_MSG
-    GuiVal_DebugCh          ,   // GUI_VAL_DSP_DEBUG_CH         0x23
-    GuiVal_DebugGfx         ,   // GUI_VAL_DSP_DEBUG_GFX        0x24
+    GuiValDsp_DebugCh          ,   // GUI_VAL_DEBUG_CH         0x23
+    GuiValDsp_DebugGfx         ,   // GUI_VAL_DEBUG_GFX        0x24
   #else // DISPLAY_DEBUG_MSG
-    GuiVal_DebugMsg         ,   // GUI_VAL_DSP_DEBUG_MSG        0x25
-    GuiVal_DebugValues      ,   // GUI_VAL_DSP_DEBUG_VALUES     0x26
+    GuiValDsp_DebugMsg         ,   // GUI_VAL_DEBUG_MSG        0x25
+    GuiValDsp_DebugValues      ,   // GUI_VAL_DEBUG_VALUES     0x26
   #endif // DISPLAY_DEBUG_MSG
 #endif // ENABLE_DEBUG_MSG
-    GuiVal_Stubbed              // GUI_VAL_DSP_STUBBED          0x27
+    GuiValDsp_Stubbed              // GUI_VAL_STUBBED          0x27
 };
 
-void GuiVal_DisplayValue( GuiState_st* guiState )
+void GuiValDsp_DisplayValue( GuiState_st* guiState )
 {
     uint8_t varNum = guiState->layout.vars[ guiState->layout.varIndex ].varNum ;
 
@@ -215,18 +215,18 @@ void GuiVal_DisplayValue( GuiState_st* guiState )
     guiState->layout.itemPos.x  = 0 ;
     guiState->layout.itemPos.h  = 0 ;
     guiState->layout.itemPos.w  = 0 ;
-    ui_GuiVal_Table[ varNum ]( guiState );
+    ui_GuiValDsp_Table[ varNum ]( guiState );
     guiState->layout.line.pos.x = guiState->layout.itemPos.x +
                                   guiState->layout.itemPos.w ;
 
 }
 
-static void GuiVal_BatteryLevel( GuiState_st* guiState )
+static void GuiValDsp_BatteryLevel( GuiState_st* guiState )
 {
-    GuiVal_Disp_Bat( guiState , last_state.charge );
+    GuiValDsp_Disp_Bat( guiState , last_state.charge );
 }
 
-static void GuiVal_LockState( GuiState_st* guiState )
+static void GuiValDsp_LockState( GuiState_st* guiState )
 {
     Line_st*  lineTop     = &guiState->layout.lines[ GUI_LINE_TOP ] ;
     Style_st* styleTop    = &guiState->layout.styles[ GUI_STYLE_TOP ] ;
@@ -248,7 +248,7 @@ static void GuiVal_LockState( GuiState_st* guiState )
 
 }
 
-static void GuiVal_ModeInfo( GuiState_st* guiState )
+static void GuiValDsp_ModeInfo( GuiState_st* guiState )
 {
     Pos_st    pos ;
     Line_st*  line1           = &guiState->layout.lines[ GUI_LINE_1 ] ;
@@ -418,7 +418,7 @@ static void GuiVal_ModeInfo( GuiState_st* guiState )
 
 }
 
-static void GuiVal_BankChannel( GuiState_st* guiState )
+static void GuiValDsp_BankChannel( GuiState_st* guiState )
 {
     Pos_st    pos ;
     Line_st*  line1       = &guiState->layout.lines[ GUI_LINE_1 ] ;
@@ -437,7 +437,7 @@ static void GuiVal_BankChannel( GuiState_st* guiState )
                bank_enabled , last_state.channel_index + 1 , last_state.channel.name );
 }
 
-static void GuiVal_Frequency( GuiState_st* guiState )
+static void GuiValDsp_Frequency( GuiState_st* guiState )
 {
     Pos_st    pos ;
     Line_st*  line3Large  = &guiState->layout.lines[ GUI_LINE_3_LARGE ] ;
@@ -462,7 +462,7 @@ static void GuiVal_Frequency( GuiState_st* guiState )
 
 }
 
-static void GuiVal_RSSIMeter( GuiState_st* guiState )
+static void GuiValDsp_RSSIMeter( GuiState_st* guiState )
 {
     Line_st*  lineBottom   = &guiState->layout.lines[ GUI_LINE_BOTTOM ] ;
 //    Style_st* styleBottom  = &guiState->layout.styles[ GUI_STYLE_BOTTOM ] ;
@@ -501,7 +501,7 @@ static void GuiVal_RSSIMeter( GuiState_st* guiState )
 }
 
 #ifdef GPS_PRESENT
-static void GuiVal_GPS( GuiState_st* guiState )
+static void GuiValDsp_GPS( GuiState_st* guiState )
 {
     Style_st* styleTop    = &guiState->layout.styles[ GUI_STYLE_TOP ] ;
     Line_st*  line1       = &guiState->layout.lines[ GUI_LINE_1 ] ;
@@ -627,81 +627,77 @@ static void GuiVal_GPS( GuiState_st* guiState )
 #endif // GPS_PRESENT
 
 #ifdef SCREEN_BRIGHTNESS
-static void GuiVal_ScreenBrightness( GuiState_st* guiState )
+static void GuiValDsp_ScreenBrightness( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%d" , last_state.settings.brightness );
-    GuiVal_Disp_Val( guiState , valueBuffer );
+    GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
 #endif // SCREEN_BRIGHTNESS
 #ifdef SCREEN_CONTRAST
-static void GuiVal_ScreenContrast( GuiState_st* guiState )
+static void GuiValDsp_ScreenContrast( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%d" , last_state.settings.contrast );
-    GuiVal_Disp_Val( guiState , valueBuffer );
+    GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
 #endif
-static void GuiVal_Timer( GuiState_st* guiState )
+static void GuiValDsp_Timer( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%s" ,
               display_timer_values[ last_state.settings.display_timer ] );
-    GuiVal_Disp_Val( guiState , valueBuffer );
+    GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
 
-static void GuiVal_Date( GuiState_st* guiState )
+static void GuiValDsp_Date( GuiState_st* guiState )
 {
     char       valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
-    datetime_t local_time = utcToLocalTime( last_state.time , last_state.settings.utc_timezone );
-
+    datetime_t local_time = utcToLocalTime( last_state.time ,
+                                            last_state.settings.utc_timezone );
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%02d/%02d/%02d" ,
               local_time.date , local_time.month , local_time.year );
-    GuiVal_Disp_Val( guiState , valueBuffer );
-    ui_RenderDisplay( guiState );
-
+    GuiValDsp_Disp_Val( guiState , valueBuffer );
 }
 
-static void GuiVal_Time( GuiState_st* guiState )
+static void GuiValDsp_Time( GuiState_st* guiState )
 {
     char       valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
-    datetime_t local_time = utcToLocalTime( last_state.time , last_state.settings.utc_timezone );
-
+    datetime_t local_time = utcToLocalTime( last_state.time ,
+                                            last_state.settings.utc_timezone );
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%02d:%02d:%02d" ,
               local_time.hour , local_time.minute , local_time.second );
-    GuiVal_Disp_Val( guiState , valueBuffer );
-    ui_RenderDisplay( guiState );
-
+    GuiValDsp_Disp_Val( guiState , valueBuffer );
 }
 
-static void GuiVal_GPSEnables( GuiState_st* guiState )
+static void GuiValDsp_GPSEnables( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%s" ,
               (last_state.settings.gps_enabled) ? currentLanguage->on : currentLanguage->off );
-    GuiVal_Disp_Val( guiState , valueBuffer );
+    GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
 
 #ifdef GPS_PRESENT
-static void GuiVal_GPSSetTime( GuiState_st* guiState )
+static void GuiValDsp_GPSTime( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%s" ,
               (last_state.gps_set_time) ? currentLanguage->on : currentLanguage->off );
-    GuiVal_Disp_Val( guiState , valueBuffer );
+    GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
 
-static void GuiVal_GPSTimeZone( GuiState_st* guiState )
+static void GuiValDsp_GPSTimeZone( GuiState_st* guiState )
 {
     char   valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
     int8_t tz_hr = ( last_state.settings.utc_timezone / 2 ) ;
@@ -720,13 +716,13 @@ static void GuiVal_GPSTimeZone( GuiState_st* guiState )
     }
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%c%d.%d" , sign , tz_hr , tz_mn );
-    GuiVal_Disp_Val( guiState , valueBuffer );
+    GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
 #endif // GPS_PRESENT
 
 // Radio
-static void GuiVal_RadioOffset( GuiState_st* guiState )
+static void GuiValDsp_RadioOffset( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
     int32_t offset = 0 ;
@@ -734,21 +730,21 @@ static void GuiVal_RadioOffset( GuiState_st* guiState )
     offset = abs( (int32_t)last_state.channel.tx_frequency -
                   (int32_t)last_state.channel.rx_frequency );
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%gMHz" , (float)offset / 1000000.0f );
-    GuiVal_Disp_Val( guiState , valueBuffer );
+    GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
 
-static void GuiVal_RadioDirection( GuiState_st* guiState )
+static void GuiValDsp_RadioDirection( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     valueBuffer[ 0 ] = ( last_state.channel.tx_frequency >= last_state.channel.rx_frequency ) ? '+' : '-';
     valueBuffer[ 1 ] = '\0';
-    GuiVal_Disp_Val( guiState , valueBuffer );
+    GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
 
-static void GuiVal_RadioStep( GuiState_st* guiState )
+static void GuiValDsp_RadioStep( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
@@ -761,40 +757,40 @@ static void GuiVal_RadioStep( GuiState_st* guiState )
     {
         snprintf( valueBuffer , MAX_ENTRY_LEN , "%gMHz" , (float)freq_steps[last_state.step_index] / 1000000.0f );
     }
-    GuiVal_Disp_Val( guiState , valueBuffer );
+    GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
 
-static void GuiVal_M17Callsign( GuiState_st* guiState )
+static void GuiValDsp_M17Callsign( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%s" , last_state.settings.callsign );
-    GuiVal_Disp_Val( guiState , valueBuffer );
+    GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
 
-static void GuiVal_M17Can( GuiState_st* guiState )
+static void GuiValDsp_M17Can( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%d" , last_state.settings.m17_can );
-    GuiVal_Disp_Val( guiState , valueBuffer );
+    GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
 
-static void GuiVal_M17CanRxCheck( GuiState_st* guiState )
+static void GuiValDsp_M17CanRxCheck( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%s" ,
               (last_state.settings.m17_can_rx) ? currentLanguage->on : currentLanguage->off );
-    GuiVal_Disp_Val( guiState , valueBuffer );
+    GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
 
 // Accessibility - Voice
-static void GuiVal_Voice( GuiState_st* guiState )
+static void GuiValDsp_Voice( GuiState_st* guiState )
 {
     char    valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
     uint8_t value = last_state.settings.vpLevel ;
@@ -820,22 +816,22 @@ static void GuiVal_Voice( GuiState_st* guiState )
             break ;
         }
     }
-    GuiVal_Disp_Val( guiState , valueBuffer );
+    GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
 
-static void GuiVal_Phonetic( GuiState_st* guiState )
+static void GuiValDsp_Phonetic( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%s" ,
               last_state.settings.vpPhoneticSpell ? currentLanguage->on : currentLanguage->off );
-    GuiVal_Disp_Val( guiState , valueBuffer );
+    GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
 
 // Info
-static void GuiVal_BatteryVoltage( GuiState_st* guiState )
+static void GuiValDsp_BatteryVoltage( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
     // Compute integer part and mantissa of voltage value, adding 50mV
@@ -843,106 +839,106 @@ static void GuiVal_BatteryVoltage( GuiState_st* guiState )
     uint16_t volt  = ( last_state.v_bat + 50 ) / 1000 ;
     uint16_t mvolt = ( ( last_state.v_bat - volt * 1000 ) + 50 ) / 100 ;
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%d.%dV" , volt, mvolt );
-    GuiVal_Disp_Val( guiState , valueBuffer );
+    GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
 
-static void GuiVal_BatteryCharge( GuiState_st* guiState )
+static void GuiValDsp_BatteryCharge( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%d%%" , last_state.charge );
-    GuiVal_Disp_Val( guiState , valueBuffer );
+    GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
 
-static void GuiVal_Rssi( GuiState_st* guiState )
+static void GuiValDsp_Rssi( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%.1fdBm" , last_state.rssi );
-    GuiVal_Disp_Val( guiState , valueBuffer );
+    GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
 
-static void GuiVal_UsedHeap( GuiState_st* guiState )
+static void GuiValDsp_UsedHeap( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%dB" , getHeapSize() - getCurrentFreeHeap() );
-    GuiVal_Disp_Val( guiState , valueBuffer );
+    GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
 
-static void GuiVal_Band( GuiState_st* guiState )
+static void GuiValDsp_Band( GuiState_st* guiState )
 {
     char      valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
     hwInfo_t* hwinfo = (hwInfo_t*)platform_getHwInfo();
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%s %s" , hwinfo->vhf_band ? currentLanguage->VHF : "" , hwinfo->uhf_band ? currentLanguage->UHF : "" );
-    GuiVal_Disp_Val( guiState , valueBuffer );
+    GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
 
-static void GuiVal_Vhf( GuiState_st* guiState )
+static void GuiValDsp_Vhf( GuiState_st* guiState )
 {
     char      valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
     hwInfo_t* hwinfo = (hwInfo_t*)platform_getHwInfo();
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%d - %d" , hwinfo->vhf_minFreq, hwinfo->vhf_maxFreq );
-    GuiVal_Disp_Val( guiState , valueBuffer );
+    GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
 
-static void GuiVal_Uhf( GuiState_st* guiState )
+static void GuiValDsp_Uhf( GuiState_st* guiState )
 {
     char      valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
     hwInfo_t* hwinfo = (hwInfo_t*)platform_getHwInfo();
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%d - %d" , hwinfo->uhf_minFreq, hwinfo->uhf_maxFreq );
-    GuiVal_Disp_Val( guiState , valueBuffer );
+    GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
 
-static void GuiVal_HwVersion( GuiState_st* guiState )
+static void GuiValDsp_HwVersion( GuiState_st* guiState )
 {
     char      valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
     hwInfo_t* hwinfo = (hwInfo_t*)platform_getHwInfo();
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%d" , hwinfo->hw_version );
 
-    GuiVal_Disp_Val( guiState , valueBuffer );
+    GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
 
 #ifdef PLATFORM_TTWRPLUS
-static void GuiVal_Radio( GuiState_st* guiState )
+static void GuiValDsp_Radio( GuiState_st* guiState )
 {
     (void)guiState ;
     //@@@KL Populate
-//    GuiVal_Disp_Val( guiState , valueBuffer );
+//    GuiValDsp_Disp_Val( guiState , valueBuffer );
 }
 
-static void GuiVal_RadioFw( GuiState_st* guiState )
+static void GuiValDsp_RadioFw( GuiState_st* guiState )
 {
     (void)guiState ;
     //@@@KL Populate
-//    GuiVal_Disp_Val( guiState , valueBuffer );
+//    GuiValDsp_Disp_Val( guiState , valueBuffer );
 }
 #endif // PLATFORM_TTWRPLUS
 
-static void GuiVal_BackupRestore( GuiState_st* guiState )
+static void GuiValDsp_BackupRestore( GuiState_st* guiState )
 {
     _ui_Draw_MenuList( guiState , PAGE_MENU_BACKUP_RESTORE );
 }
 
-static void GuiVal_LowBattery( GuiState_st* guiState )
+static void GuiValDsp_LowBattery( GuiState_st* guiState )
 {
-    GuiVal_Disp_Bat( guiState , 10 );
+    GuiValDsp_Disp_Bat( guiState , 10 );
 }
 
 #ifdef ENABLE_DEBUG_MSG
   #ifndef DISPLAY_DEBUG_MSG
-static void GuiVal_DebugCh( GuiState_st* guiState )
+static void GuiValDsp_DebugCh( GuiState_st* guiState )
 {
            char debugMsg[ 2 ] = { 'A' , '\0' } ;
     static char count = 0 ;
@@ -953,14 +949,14 @@ static void GuiVal_DebugCh( GuiState_st* guiState )
     {
         count = 0 ;
     }
-    GuiVal_Disp_Val( guiState , debugMsg );
+    GuiValDsp_Disp_Val( guiState , debugMsg );
 
     guiState->layout.line.pos.w = 0 ;
     guiState->layout.line.pos.h = 0 ;
 
 }
 
-static void GuiVal_DebugGfx( GuiState_st* guiState )
+static void GuiValDsp_DebugGfx( GuiState_st* guiState )
 {
     (void)guiState ;
     Pos_st   pos = { 40 , 40 , 20 , 10 } ;
@@ -971,7 +967,7 @@ static void GuiVal_DebugGfx( GuiState_st* guiState )
 
 }
   #else // DISPLAY_DEBUG_MSG
-void GuiVal_SetDebugMessage( char* debugMsg )
+void GuiValDsp_SetDebugMessage( char* debugMsg )
 {
     uint8_t index ;
 
@@ -985,15 +981,15 @@ void GuiVal_SetDebugMessage( char* debugMsg )
     DebugMsg[ index ] = '\0' ;
 }
 
-static void GuiVal_DebugMsg( GuiState_st* guiState )
+static void GuiValDsp_DebugMsg( GuiState_st* guiState )
 {
-    GuiVal_Disp_Val( guiState , DebugMsg );
+    GuiValDsp_Disp_Val( guiState , DebugMsg );
 
     guiState->layout.line.pos.w = 0 ;
     guiState->layout.line.pos.h = 0 ;
 }
 
-void GuiVal_SetDebugValues( uint8_t debugVal0 , uint8_t debugVal1 ,
+void GuiValDsp_SetDebugValues( uint8_t debugVal0 , uint8_t debugVal1 ,
                             uint8_t debugVal2 , uint8_t debugVal3 ,
                             uint8_t debugVal4 , uint8_t debugVal5   )
 {
@@ -1005,7 +1001,7 @@ void GuiVal_SetDebugValues( uint8_t debugVal0 , uint8_t debugVal1 ,
     DebugVal5 = debugVal5 ;
 }
 
-static void GuiVal_DebugValues( GuiState_st* guiState )
+static void GuiValDsp_DebugValues( GuiState_st* guiState )
 {
     char valueBuffer[ 65 ] ;
 
@@ -1013,7 +1009,7 @@ static void GuiVal_DebugValues( GuiState_st* guiState )
     DebugVal0 , DebugVal1 , DebugVal2 , DebugVal3 ,
     DebugVal4 , DebugVal5 , DebugCnt );
 
-    GuiVal_Disp_Val( guiState , valueBuffer );
+    GuiValDsp_Disp_Val( guiState , valueBuffer );
 
     guiState->layout.line.pos.w = 0 ;
     guiState->layout.line.pos.h = 0 ;
@@ -1025,17 +1021,17 @@ static void GuiVal_DebugValues( GuiState_st* guiState )
 #endif // ENABLE_DEBUG_MSG
 
 // Default
-static void GuiVal_Stubbed( GuiState_st* guiState )
+static void GuiValDsp_Stubbed( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] ;
 
     valueBuffer[ 0 ] = '?' ;
     valueBuffer[ 1 ] = '\0' ;
-    GuiVal_Disp_Val( guiState , valueBuffer );
+    GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
 
-static void GuiVal_Disp_Val( GuiState_st* guiState , char* valueBuffer )
+static void GuiValDsp_Disp_Val( GuiState_st* guiState , char* valueBuffer )
 {
     Pos_st   pos        = guiState->layout.line.pos ;
     Color_st color_text ;
@@ -1044,7 +1040,7 @@ static void GuiVal_Disp_Val( GuiState_st* guiState , char* valueBuffer )
 
     if( guiState->update )
     {
-        GuiVal_Disp_ClearVarPos( guiState );
+        GuiValDsp_Disp_ClearVarPos( guiState );
     }
 
     pos.y = guiState->layout.line.textY ;
@@ -1054,12 +1050,12 @@ static void GuiVal_Disp_Val( GuiState_st* guiState , char* valueBuffer )
                                guiState->layout.style.align     ,
                                &color_text , valueBuffer          );
 
-    GuiVal_Disp_StoreVarPos( guiState );
+    GuiValDsp_Disp_StoreVarPos( guiState );
 
     ui_RenderDisplay( guiState );
 }
 
-static void GuiVal_Disp_Bat( GuiState_st* guiState , uint16_t percentage )
+static void GuiValDsp_Disp_Bat( GuiState_st* guiState , uint16_t percentage )
 {
     Pos_st pos ;
 
@@ -1088,25 +1084,25 @@ static void GuiVal_Disp_Bat( GuiState_st* guiState , uint16_t percentage )
         }
     }
 
-    if( GuiVal_Disp_HasValueChanged( guiState , (uint32_t)percentage ) )
+    if( GuiValDsp_Disp_HasValueChanged( guiState , (uint32_t)percentage ) )
     {
         if( guiState->update )
         {
-            GuiVal_Disp_ClearVarPos( guiState );
+            GuiValDsp_Disp_ClearVarPos( guiState );
         }
         guiState->layout.itemPos  = gfx_drawBattery( &pos , percentage );
-        GuiVal_Disp_StoreVarPos( guiState );
+        GuiValDsp_Disp_StoreVarPos( guiState );
         ui_RenderDisplay( guiState );
     }
 }
 
-static void GuiVal_Disp_StoreVarPos( GuiState_st* guiState )
+static void GuiValDsp_Disp_StoreVarPos( GuiState_st* guiState )
 {
     guiState->layout.vars[ guiState->layout.varIndex ].pos =
     guiState->layout.itemPos ;
 }
 
-static void GuiVal_Disp_ClearVarPos( GuiState_st* guiState )
+static void GuiValDsp_Disp_ClearVarPos( GuiState_st* guiState )
 {
     Pos_st   pos      = guiState->layout.vars[ guiState->layout.varIndex ].pos ;
     Color_st color_bg ;
@@ -1115,7 +1111,7 @@ static void GuiVal_Disp_ClearVarPos( GuiState_st* guiState )
     gfx_drawRect( &pos , &color_bg , true );
 }
 
-static bool GuiVal_Disp_HasValueChanged( GuiState_st* guiState , uint32_t value )
+static bool GuiValDsp_Disp_HasValueChanged( GuiState_st* guiState , uint32_t value )
 {
     bool valueHasChanged = false ;
 

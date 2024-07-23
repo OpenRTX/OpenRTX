@@ -244,8 +244,8 @@ enum
 #define TITLE               GUI_CMD_TITLE
 #define TEXT                GUI_CMD_TEXT
 #define NULL_CH             GUI_CMD_NULL
-#define VALUE_DSP( n )      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_DSP_##n )
-#define VALUE_INP( n )      GUI_CMD_VALUE_INP , ST_VAL( GUI_VAL_INP_##n )
+#define VALUE_DSP( n )      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_##n )
+#define VALUE_INP( n )      GUI_CMD_VALUE_INP , ST_VAL( GUI_VAL_##n )
 
 #define GOTO_X( x )         GUI_CMD_GOTO_POS_X   , ST_VAL( x )
 #define GOTO_Y( y )         GUI_CMD_GOTO_POS_Y   , ST_VAL( y )
@@ -286,9 +286,9 @@ enum
 #define PAGE_END            GUI_CMD_PAGE_END
 
 // List Handling
-extern void GuiCmd_List_GetNumOfEntries_Text( GuiState_st* guiState );
-extern bool GuiCmd_List_EntryDisplay_Text( GuiState_st* guiState );
-extern void GuiCmd_List_EntrySelect_Text( GuiState_st* guiState );
+extern void GuiCmd_List_GetNumOfEntries_Script( GuiState_st* guiState );
+extern bool GuiCmd_List_EntryDisplay_Script( GuiState_st* guiState );
+extern void GuiCmd_List_EntrySelect_Script( GuiState_st* guiState );
 extern bool GuiCmd_List_EntryDisplay_Stubbed( GuiState_st* guiState );
 extern void GuiCmd_List_EntryDisplay_TextString( GuiState_st* guiState , char* str );
 

@@ -54,93 +54,110 @@
 #include "ui_states.h"
 #include "ui_value_input.h"
 
-static void ui_ValueInput_VFOMiddleInput( GuiState_st* guiState );
+static void GuiValInp_VFOMiddleInput( GuiState_st* guiState );
 #ifdef SCREEN_BRIGHTNESS
-static void ui_ValueInput_BRIGHTNESS( GuiState_st* guiState );
+static void GuiValInp_ScreenBrightness( GuiState_st* guiState );
 #endif // SCREEN_BRIGHTNESS
 #ifdef SCREEN_CONTRAST
-static void ui_ValueInput_CONTRAST( GuiState_st* guiState );
+static void GuiValInp_ScreenContrast( GuiState_st* guiState );
 #endif // SCREEN_CONTRAST
-static void ui_ValueInput_TIMER( GuiState_st* guiState );
+static void GuiValInp_Timer( GuiState_st* guiState );
 #ifdef GPS_PRESENT
-static void ui_ValueInput_ENABLED( GuiState_st* guiState );
-static void ui_ValueInput_SET_TIME( GuiState_st* guiState );
-static void ui_ValueInput_TIMEZONE( GuiState_st* guiState );
+static void GuiValInp_GPSEnabled( GuiState_st* guiState );
+static void GuiValInp_GPSTime( GuiState_st* guiState );
+static void GuiValInp_GPSTimeZone( GuiState_st* guiState );
 #endif // GPS_PRESENT
-static void ui_ValueInput_LEVEL( GuiState_st* guiState );
-static void ui_ValueInput_PHONETIC( GuiState_st* guiState );
-static void ui_ValueInput_OFFSET( GuiState_st* guiState );
-static void ui_ValueInput_DIRECTION( GuiState_st* guiState );
-static void ui_ValueInput_STEP( GuiState_st* guiState );
-static void ui_ValueInput_CALLSIGN( GuiState_st* guiState );
-static void ui_ValueInput_CAN( GuiState_st* guiState );
-static void ui_ValueInput_CAN_RX( GuiState_st* guiState );
-static void ui_ValueInput_STUBBED( GuiState_st* guiState );
+static void GuiValInp_Level( GuiState_st* guiState );
+static void GuiValInp_Phonetic( GuiState_st* guiState );
+static void GuiValInp_Offset( GuiState_st* guiState );
+static void GuiValInp_Direction( GuiState_st* guiState );
+static void GuiValInp_Step( GuiState_st* guiState );
+static void GuiValInp_Callsign( GuiState_st* guiState );
+static void GuiValInp_M17Can( GuiState_st* guiState );
+static void GuiValInp_M17CanRx( GuiState_st* guiState );
+static void GuiValInp_Stubbed( GuiState_st* guiState );
 
-typedef void (*ui_ValueInput_fn)( GuiState_st* guiState );
+typedef void (*GuiValInp_fn)( GuiState_st* guiState );
 
 // GUI Values - Set
-static const ui_ValueInput_fn ui_ValueInput_Table[ GUI_VAL_INP_NUM_OF ] =
+static const GuiValInp_fn GuiValInp_Table[ GUI_VAL_INP_NUM_OF ] =
 {
-    ui_ValueInput_VFOMiddleInput , // GUI_VAL_INP_VFO_MIDDLE_INPUT
-
-    ui_ValueInput_STUBBED        , // GUI_VAL_INP_CURRENT_TIME
-    ui_ValueInput_STUBBED        , // GUI_VAL_INP_BATTERY_LEVEL
-    ui_ValueInput_STUBBED        , // GUI_VAL_INP_LOCK_STATE
-    ui_ValueInput_STUBBED        , // GUI_VAL_INP_MODE_INFO
-    ui_ValueInput_STUBBED        , // GUI_VAL_INP_FREQUENCY
-    ui_ValueInput_STUBBED        , // GUI_VAL_INP_RSSI_METER
-
-    ui_ValueInput_STUBBED        , // GUI_VAL_INP_BANKS
-    ui_ValueInput_STUBBED        , // GUI_VAL_INP_CHANNELS
-    ui_ValueInput_STUBBED        , // GUI_VAL_INP_CONTACTS
-    ui_ValueInput_STUBBED        , // GUI_VAL_INP_GPS
+    GuiValInp_Stubbed           , // GUI_VAL_BATTERY_LEVEL      0x00
+    GuiValInp_Stubbed           , // GUI_VAL_LOCK_STATE         0x01
+    GuiValInp_Stubbed           , // GUI_VAL_MODE_INFO          0x02
+    GuiValInp_Stubbed           , // GUI_VAL_BANK_CHANNEL       0x03
+    GuiValInp_Stubbed           , // GUI_VAL_FREQUENCY          0x04
+    GuiValInp_Stubbed           , // GUI_VAL_RSSI_METER         0x05
+#ifdef GPS_PRESENT
+    GuiValInp_Stubbed           , // GUI_VAL_GPS                0x06
+#endif // GPS_PRESENT
+    // Settings
+    // Display
 #ifdef SCREEN_BRIGHTNESS
-    ui_ValueInput_BRIGHTNESS     , // GUI_VAL_INP_BRIGHTNESS          , D_BRIGHTNESS
-#endif // SCREEN_BRIGHTNESS
+    GuiValInp_ScreenBrightness  , // GUI_VAL_BRIGHTNESS         0x07
+#endif
 #ifdef SCREEN_CONTRAST
-    ui_ValueInput_CONTRAST       , // GUI_VAL_INP_CONTRAST            , D_CONTRAST
-#endif // SCREEN_CONTRAST
-    ui_ValueInput_TIMER          , // GUI_VAL_INP_TIMER               , D_TIMER
-    ui_ValueInput_STUBBED        , // GUI_VAL_INP_DATE
-    ui_ValueInput_STUBBED        , // GUI_VAL_INP_TIME
-    ui_ValueInput_ENABLED        , // GUI_VAL_INP_GPS_ENABLED         , G_ENABLED
-    ui_ValueInput_SET_TIME       , // GUI_VAL_INP_GPS_SET_TIME        , G_SET_TIME
-    ui_ValueInput_TIMEZONE       , // GUI_VAL_INP_GPS_TIME_ZONE       , G_TIMEZONE
-    ui_ValueInput_OFFSET         , // GUI_VAL_INP_RADIO_OFFSET        , R_OFFSET
-    ui_ValueInput_DIRECTION      , // GUI_VAL_INP_RADIO_DIRECTION     , R_DIRECTION
-    ui_ValueInput_STEP           , // GUI_VAL_INP_RADIO_STEP          , R_STEP
-    ui_ValueInput_CALLSIGN       , // GUI_VAL_INP_M17_CALLSIGN        , M17_CALLSIGN
-    ui_ValueInput_CAN            , // GUI_VAL_INP_M17_CAN             , M17_CAN
-    ui_ValueInput_CAN_RX         , // GUI_VAL_INP_M17_CAN_RX_CHECK    , M17_CAN_RX
-    ui_ValueInput_LEVEL          , // GUI_VAL_INP_LEVEL               , VP_LEVEL
-    ui_ValueInput_PHONETIC       , // GUI_VAL_INP_PHONETIC            , VP_PHONETIC
-    ui_ValueInput_STUBBED        , // GUI_VAL_INP_BATTERY_VOLTAGE
-    ui_ValueInput_STUBBED        , // GUI_VAL_INP_BATTERY_CHARGE
-    ui_ValueInput_STUBBED        , // GUI_VAL_INP_RSSI
-    ui_ValueInput_STUBBED        , // GUI_VAL_INP_USED_HEAP
-    ui_ValueInput_STUBBED        , // GUI_VAL_INP_BAND
-    ui_ValueInput_STUBBED        , // GUI_VAL_INP_VHF
-    ui_ValueInput_STUBBED        , // GUI_VAL_INP_UHF
-    ui_ValueInput_STUBBED        , // GUI_VAL_INP_HW_VERSION
+    GuiValInp_ScreenContrast    , // GUI_VAL_CONTRAST           0x08
+#endif
+    GuiValInp_Timer             , // GUI_VAL_TIMER              0x09
+    // Time and Date
+    GuiValInp_Stubbed           , // GUI_VAL_DATE               0x0A
+    GuiValInp_Stubbed           , // GUI_VAL_TIME               0x0B
+    // GPS
+#ifdef GPS_PRESENT
+    GuiValInp_GPSEnabled        , // GUI_VAL_GPS_ENABLED        0x0C
+    GuiValInp_GPSTime           , // GUI_VAL_GPS_TIME           0x0D
+    GuiValInp_GPSTimeZone       , // GUI_VAL_GPS_TIME_ZONE      0x0E
+#endif // GPS_PRESENT
+    // Radio
+    GuiValInp_Offset            , // GUI_VAL_RADIO_OFFSET       0x0F
+    GuiValInp_Direction         , // GUI_VAL_RADIO_DIRECTION    0x10
+    GuiValInp_Step              , // GUI_VAL_RADIO_STEP         0x11
+    // M17
+    GuiValInp_Callsign          , // GUI_VAL_M17_CALLSIGN       0x12
+    GuiValInp_M17Can            , // GUI_VAL_M17_CAN            0x13
+    GuiValInp_M17CanRx          , // GUI_VAL_M17_CAN_RX_CHECK   0x14
+    // Accessibility - Voice
+    GuiValInp_Level             , // GUI_VAL_LEVEL              0x15
+    GuiValInp_Phonetic          , // GUI_VAL_PHONETIC           0x16
+    // Info
+    GuiValInp_Stubbed           , // GUI_VAL_BATTERY_VOLTAGE    0x17
+    GuiValInp_Stubbed           , // GUI_VAL_BATTERY_CHARGE     0x18
+    GuiValInp_Stubbed           , // GUI_VAL_RSSI               0x19
+    GuiValInp_Stubbed           , // GUI_VAL_USED_HEAP          0x1A
+    GuiValInp_Stubbed           , // GUI_VAL_BAND               0x1B
+    GuiValInp_Stubbed           , // GUI_VAL_VHF                0x1C
+    GuiValInp_Stubbed           , // GUI_VAL_UHF                0x1D
+    GuiValInp_Stubbed           , // GUI_VAL_HW_VERSION         0x1E
 #ifdef PLATFORM_TTWRPLUS
-    ui_ValueInput_STUBBED        , // GUI_VAL_INP_RADIO
-    ui_ValueInput_STUBBED        , // GUI_VAL_INP_RADIO_FW
+    GuiValInp_Stubbed           , // GUI_VAL_RADIO              0x1F
+    GuiValInp_Stubbed           , // GUI_VAL_RADIO_FW           0x20
 #endif // PLATFORM_TTWRPLUS
-    ui_ValueInput_STUBBED          // GUI_VAL_INP_STUBBED
+    GuiValInp_Stubbed           , // GUI_VAL_BACKUP_RESTORE     0x21
+    GuiValInp_Stubbed           , // GUI_VAL_LOW_BATTERY        0x22
+#ifdef ENABLE_DEBUG_MSG
+  #ifndef DISPLAY_DEBUG_MSG
+    GuiValInp_Stubbed           , // GUI_VAL_DEBUG_CH           0x23
+    GuiValInp_Stubbed           , // GUI_VAL_DEBUG_GFX          0x24
+  #else // DISPLAY_DEBUG_MSG
+    GuiValInp_Stubbed           , // GUI_VAL_DEBUG_MSG          0x25
+    GuiValInp_Stubbed           , // GUI_VAL_DEBUG_VALUES       0x26
+  #endif // DISPLAY_DEBUG_MSG
+#endif // ENABLE_DEBUG_MSG
+    GuiValInp_Stubbed             // GUI_VAL_STUBBED            0x27
 };
 
-void ui_ValueInputFSM( GuiState_st* guiState )
+void GuiValInpFSM( GuiState_st* guiState )
 {
 /*
     uint8_t linkSelected = guiState->uiState.entrySelected ;
     uint8_t valueNum     = guiState->layout.links[ linkSelected ].num ;
 
-    ui_ValueInput( guiState , valueNum );
+    GuiValInp( guiState , valueNum );
 */
 }
 
-void ui_ValueInput( GuiState_st* guiState , uint8_t valueNum )
+void GuiValInp( GuiState_st* guiState , uint8_t valueNum )
 {
     if( valueNum >= GUI_VAL_INP_NUM_OF )
     {
@@ -150,11 +167,11 @@ void ui_ValueInput( GuiState_st* guiState , uint8_t valueNum )
     guiState->sync_rtx = false ;
     guiState->handled  = true ;
 
-    ui_ValueInput_Table[ valueNum ]( guiState );
+    GuiValInp_Table[ valueNum ]( guiState );
 
 }
 
-static void ui_ValueInput_VFOMiddleInput( GuiState_st* guiState )
+static void GuiValInp_VFOMiddleInput( GuiState_st* guiState )
 {
     Line_st*  line2       = &guiState->layout.lines[ GUI_LINE_2 ] ;
 //    Style_st* style2      = &guiState->layout.styles[ GUI_STYLE_2 ] ;
@@ -230,7 +247,7 @@ static void ui_ValueInput_VFOMiddleInput( GuiState_st* guiState )
 
 #ifdef SCREEN_BRIGHTNESS
 // D_BRIGHTNESS
-static void ui_ValueInput_BRIGHTNESS( GuiState_st* guiState )
+static void GuiValInp_ScreenBrightness( GuiState_st* guiState )
 {
     guiState->sync_rtx = false ;
     guiState->handled  = true ;
@@ -256,7 +273,7 @@ static void ui_ValueInput_BRIGHTNESS( GuiState_st* guiState )
 #endif // SCREEN_BRIGHTNESS
 #ifdef SCREEN_CONTRAST
 // D_CONTRAST
-static void ui_ValueInput_CONTRAST( GuiState_st* guiState )
+static void GuiValInp_ScreenContrast( GuiState_st* guiState )
 {
     guiState->sync_rtx = false ;
     guiState->handled  = true ;
@@ -283,7 +300,7 @@ static void ui_ValueInput_CONTRAST( GuiState_st* guiState )
 }
 #endif // SCREEN_CONTRAST
 // D_TIMER
-static void ui_ValueInput_TIMER( GuiState_st* guiState )
+static void GuiValInp_Timer( GuiState_st* guiState )
 {
     guiState->sync_rtx = false ;
     guiState->handled  = true ;
@@ -310,7 +327,7 @@ static void ui_ValueInput_TIMER( GuiState_st* guiState )
 }
 #ifdef GPS_PRESENT
 // G_ENABLED
-static void ui_ValueInput_ENABLED( GuiState_st* guiState )
+static void GuiValInp_GPSEnabled( GuiState_st* guiState )
 {
     guiState->sync_rtx = false ;
     guiState->handled  = true ;
@@ -338,7 +355,7 @@ static void ui_ValueInput_ENABLED( GuiState_st* guiState )
 }
 
 // G_SET_TIME
-static void ui_ValueInput_SET_TIME( GuiState_st* guiState )
+static void GuiValInp_GPSTime( GuiState_st* guiState )
 {
     guiState->sync_rtx = false ;
     guiState->handled  = true ;
@@ -359,7 +376,7 @@ static void ui_ValueInput_SET_TIME( GuiState_st* guiState )
 }
 
 // G_TIMEZONE
-static void ui_ValueInput_TIMEZONE( GuiState_st* guiState )
+static void GuiValInp_GPSTimeZone( GuiState_st* guiState )
 {
     guiState->sync_rtx = false ;
     guiState->handled  = true ;
@@ -387,7 +404,7 @@ static void ui_ValueInput_TIMEZONE( GuiState_st* guiState )
 #endif // GPS_PRESENT
 
 // R_OFFSET
-static void ui_ValueInput_OFFSET( GuiState_st* guiState )
+static void GuiValInp_Offset( GuiState_st* guiState )
 {
     guiState->sync_rtx = false ;
     guiState->handled  = true ;
@@ -458,7 +475,7 @@ static void ui_ValueInput_OFFSET( GuiState_st* guiState )
 }
 
 // R_DIRECTION
-static void ui_ValueInput_DIRECTION( GuiState_st* guiState )
+static void GuiValInp_Direction( GuiState_st* guiState )
 {
     guiState->sync_rtx = false ;
     guiState->handled  = true ;
@@ -514,7 +531,7 @@ static void ui_ValueInput_DIRECTION( GuiState_st* guiState )
 }
 
 // R_STEP
-static void ui_ValueInput_STEP( GuiState_st* guiState )
+static void GuiValInp_Step( GuiState_st* guiState )
 {
     guiState->sync_rtx = false ;
     guiState->handled  = true ;
@@ -568,7 +585,7 @@ static void ui_ValueInput_STEP( GuiState_st* guiState )
 }
 
 // M17_CALLSIGN
-static void ui_ValueInput_CALLSIGN( GuiState_st* guiState )
+static void GuiValInp_Callsign( GuiState_st* guiState )
 {
     guiState->sync_rtx = false ;
     guiState->handled  = true ;
@@ -628,7 +645,7 @@ static void ui_ValueInput_CALLSIGN( GuiState_st* guiState )
 }
 
 // M17_CAN
-static void ui_ValueInput_CAN( GuiState_st* guiState )
+static void GuiValInp_M17Can( GuiState_st* guiState )
 {
     guiState->sync_rtx = false ;
     guiState->handled  = true ;
@@ -680,7 +697,7 @@ static void ui_ValueInput_CAN( GuiState_st* guiState )
 }
 
 // M17_CAN_RX
-static void ui_ValueInput_CAN_RX( GuiState_st* guiState )
+static void GuiValInp_M17CanRx( GuiState_st* guiState )
 {
     guiState->sync_rtx = false ;
     guiState->handled  = true ;
@@ -727,7 +744,7 @@ static void ui_ValueInput_CAN_RX( GuiState_st* guiState )
 }
 
 // VP_LEVEL
-static void ui_ValueInput_LEVEL( GuiState_st* guiState )
+static void GuiValInp_Level( GuiState_st* guiState )
 {
     guiState->sync_rtx = false ;
     guiState->handled  = true ;
@@ -752,7 +769,7 @@ static void ui_ValueInput_LEVEL( GuiState_st* guiState )
 }
 
 // VP_PHONETIC
-static void ui_ValueInput_PHONETIC( GuiState_st* guiState )
+static void GuiValInp_Phonetic( GuiState_st* guiState )
 {
     guiState->sync_rtx = false ;
     guiState->handled  = true ;
@@ -776,7 +793,7 @@ static void ui_ValueInput_PHONETIC( GuiState_st* guiState )
 
 }
 
-static void ui_ValueInput_STUBBED( GuiState_st* guiState )
+static void GuiValInp_Stubbed( GuiState_st* guiState )
 {
     guiState->sync_rtx = false ;
     guiState->handled  = true ;

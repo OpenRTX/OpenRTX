@@ -45,41 +45,65 @@
 
 typedef enum
 {
-    PAGE_MAIN_VFO                   , // 0x00
-    PAGE_MAIN_VFO_INPUT             , // 0x01
-    PAGE_MAIN_MEM                   , // 0x02
-    PAGE_MODE_VFO                   , // 0x03
-    PAGE_MODE_MEM                   , // 0x04
-    PAGE_MENU_TOP                   , // 0x05
-    PAGE_MENU_TOP_LIST              , // 0x06
-    PAGE_MENU_BANK                  , // 0x07
-    PAGE_MENU_BANK_LIST             , // 0x08
-    PAGE_MENU_CHANNEL               , // 0x09
-    PAGE_MENU_CHANNEL_LIST          , // 0x0A
-    PAGE_MENU_CONTACTS              , // 0x0B
-    PAGE_MENU_CONTACTS_LIST         , // 0x0C
-    PAGE_MENU_GPS                   , // 0x0D
-    PAGE_MENU_SETTINGS              , // 0x0E
-    PAGE_MENU_SETTINGS_LIST         , // 0x0F
-    PAGE_MENU_BACKUP_RESTORE        , // 0x10
-    PAGE_MENU_BACKUP                , // 0x11
-    PAGE_MENU_RESTORE               , // 0x12
-    PAGE_MENU_INFO                  , // 0x13
-    PAGE_SETTINGS_TIMEDATE          , // 0x14
-    PAGE_SETTINGS_TIMEDATE_SET      , // 0x15
-    PAGE_SETTINGS_DISPLAY           , // 0x16
-    PAGE_SETTINGS_DISPLAY_LIST      , // 0x17
+    PAGE_MAIN_VFO                       , // 0x00
+    PAGE_MAIN_VFO_INPUT                 , // 0x01
+    PAGE_MAIN_MEM                       , // 0x02
+    PAGE_MODE_VFO                       , // 0x03
+    PAGE_MODE_MEM                       , // 0x04
+    PAGE_MENU_TOP                       , // 0x05
+    PAGE_MENU_TOP_LIST                  , // 0x06
+    PAGE_MENU_BANK                      , // 0x07
+    PAGE_MENU_BANK_LIST                 , // 0x08
+    PAGE_MENU_CHANNEL                   , // 0x09
+    PAGE_MENU_CHANNEL_LIST              , // 0x0A
+    PAGE_MENU_CONTACTS                  , // 0x0B
+    PAGE_MENU_CONTACTS_LIST             , // 0x0C
+    PAGE_MENU_GPS                       , // 0x0D
+    PAGE_MENU_SETTINGS                  , // 0x0E
+    PAGE_MENU_SETTINGS_LIST             , // 0x0F
+    PAGE_SETTINGS_DISPLAY               , // 0x10
+    PAGE_SETTINGS_DISPLAY_LIST          , // 0x11
+#ifdef SCREEN_BRIGHTNESS
+    PAGE_SETTINGS_SET_BRIGHTNESS        , // 0x--
+#endif // SCREEN_BRIGHTNESS
+#ifdef SCREEN_CONTRAST
+    PAGE_SETTINGS_SET_CONTRAST          , // 0x--
+#endif // SCREEN_CONTRAST
+    PAGE_SETTINGS_SET_TIMER             , // 0x12
+    PAGE_SETTINGS_TIMEDATE              , // 0x13
+    PAGE_SETTINGS_TIMEDATE_LIST         , // 0x14
+    PAGE_SETTINGS_SET_DATE              , // 0x15
+    PAGE_SETTINGS_SET_TIME              , // 0x16
 #ifdef GPS_PRESENT
-    PAGE_SETTINGS_GPS               , // 0x18
+    PAGE_SETTINGS_GPS                   , // 0x17
+    PAGE_SETTINGS_GPS_LIST              , // 0x18
+    PAGE_SETTINGS_GPS_SET_ENABLED       , // 0x19
+    PAGE_SETTINGS_GPS_SET_TIME          , // 0x1A
+    PAGE_SETTINGS_GPS_SET_TIMEZONE      , // 0x1B
 #endif // GPS_PRESENT
-    PAGE_SETTINGS_RADIO             , // 0x19
-    PAGE_SETTINGS_M17               , // 0x1A
-    PAGE_SETTINGS_VOICE             , // 0x1B
-    PAGE_SETTINGS_RESET_TO_DEFAULTS , // 0x1C
-    PAGE_LOW_BAT                    , // 0x1D
-    PAGE_ABOUT                      , // 0x1E
-    PAGE_STUBBED                    , // 0x1F
-    PAGE_NUM_OF                       // 0x20
+    PAGE_SETTINGS_RADIO                 , // 0x1C
+    PAGE_SETTINGS_RADIO_LIST            , // 0x1D
+    PAGE_SETTINGS_RADIO_SET_OFFSET      , // 0x1E
+    PAGE_SETTINGS_RADIO_SET_DIRECTION   , // 0x1F
+    PAGE_SETTINGS_RADIO_SET_STEP        , // 0x20
+    PAGE_SETTINGS_M17                   , // 0x21
+    PAGE_SETTINGS_M17_LIST              , // 0x22
+    PAGE_SETTINGS_M17_SET_CALLSIGN      , // 0x23
+    PAGE_SETTINGS_M17_SET_CAN           , // 0x24
+    PAGE_SETTINGS_M17_SET_CAN_RX_CHECK  , // 0x25
+    PAGE_SETTINGS_VOICE                 , // 0x26
+    PAGE_SETTINGS_VOICE_LIST            , // 0x27
+    PAGE_SETTINGS_VOICE_SET_LEVEL       , // 0x28
+    PAGE_SETTINGS_VOICE_SET_PHONETIC    , // 0x29
+    PAGE_SETTINGS_RESET_TO_DEFAULTS     , // 0x2A
+    PAGE_MENU_BACKUP_RESTORE            , // 0x2B
+    PAGE_MENU_BACKUP                    , // 0x2C
+    PAGE_MENU_RESTORE                   , // 0x2D
+    PAGE_MENU_INFO                      , // 0x2E
+    PAGE_LOW_BAT                        , // 0x2F
+    PAGE_ABOUT                          , // 0x30
+    PAGE_STUBBED                        , // 0x31
+    PAGE_NUM_OF                           // 0x32
 }uiPageNum_en;
 
 enum
