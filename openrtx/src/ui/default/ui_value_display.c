@@ -46,6 +46,13 @@
 
 //@@@KL #include "ui_m17.h"
 
+//@@@KL Note - in order to update the display the state
+// needs to be propagated through to the state
+// hence last_ state has been replaced with state in this file
+// however where values change constantly - eg time -
+//  they will have to be handled statically
+// a lot of these values are not state variables so will have to be rationalised
+
 #include "ui.h"
 #include "ui_value_arrays.h"
 #include "ui_scripts.h"
@@ -223,7 +230,7 @@ void GuiValDsp_DisplayValue( GuiState_st* guiState )
 
 static void GuiValDsp_BatteryLevel( GuiState_st* guiState )
 {
-    GuiValDsp_Disp_Bat( guiState , last_state.charge );
+    GuiValDsp_Disp_Bat( guiState , state.charge );
 }
 
 static void GuiValDsp_LockState( GuiState_st* guiState )
@@ -265,24 +272,24 @@ static void GuiValDsp_ModeInfo( GuiState_st* guiState )
 
     ui_ColorLoad( &color_fg , COLOR_FG );
 
-    switch( last_state.channel.mode )
+    switch( state.channel.mode )
     {
         case OPMODE_FM :
         {
             // Get Bandwidth string
-            if( last_state.channel.bandwidth == BW_12_5 )
+            if( state.channel.bandwidth == BW_12_5 )
             {
                 snprintf( bw_str , 8 , "NFM" );
             }
             else
             {
-                if( last_state.channel.bandwidth == BW_20 )
+                if( state.channel.bandwidth == BW_20 )
                 {
                     snprintf( bw_str , 8 , "FM20" );
                 }
                 else
                 {
-                    if( last_state.channel.bandwidth == BW_25 )
+                    if( state.channel.bandwidth == BW_25 )
                     {
                         snprintf( bw_str , 8 , "FM" );
                     }
@@ -290,8 +297,8 @@ static void GuiValDsp_ModeInfo( GuiState_st* guiState )
             }
 
             // Get encdec string
-            bool tone_tx_enable = last_state.channel.fm.txToneEn ;
-            bool tone_rx_enable = last_state.channel.fm.rxToneEn ;
+            bool tone_tx_enable = state.channel.fm.txToneEn ;
+            bool tone_rx_enable = state.channel.fm.rxToneEn ;
 
             if( tone_tx_enable && tone_rx_enable )
             {
@@ -323,7 +330,7 @@ static void GuiValDsp_ModeInfo( GuiState_st* guiState )
             {
                 gfx_print( &pos , style2->font.size , GFX_ALIGN_CENTER ,
                            &color_fg , "%s %4.1f %s" , bw_str ,
-                           ctcss_tone[ last_state.channel.fm.txTone ] / 10.0f , encdec_str );
+                           ctcss_tone[ state.channel.fm.txTone ] / 10.0f , encdec_str );
             }
             else
             {
@@ -338,7 +345,7 @@ static void GuiValDsp_ModeInfo( GuiState_st* guiState )
             pos   = line2->pos ;
             pos.y = line2->textY ;
             gfx_print( &pos , style2->font.size , GFX_ALIGN_CENTER ,
-                       &color_fg , "%s" , last_state.contact.name );
+                       &color_fg , "%s" , state.contact.name );
             break ;
         }
         case OPMODE_M17 :
@@ -423,7 +430,7 @@ static void GuiValDsp_BankChannel( GuiState_st* guiState )
     Pos_st    pos ;
     Line_st*  line1       = &guiState->layout.lines[ GUI_LINE_1 ] ;
     Style_st* style1      = &guiState->layout.styles[ GUI_STYLE_1 ] ;
-    uint16_t bank_enabled = ( last_state.bank_enabled ) ? last_state.bank : 0 ;
+    uint16_t bank_enabled = ( state.bank_enabled ) ? state.bank : 0 ;
     Color_st color_fg ;
 
     ui_ColorLoad( &color_fg , COLOR_FG );
@@ -434,7 +441,7 @@ static void GuiValDsp_BankChannel( GuiState_st* guiState )
     gfx_print( &pos ,
                style1->font.size , GFX_ALIGN_CENTER ,
                &color_fg , "%01d-%03d: %.12s" ,
-               bank_enabled , last_state.channel_index + 1 , last_state.channel.name );
+               bank_enabled , state.channel_index + 1 , state.channel.name );
 }
 
 static void GuiValDsp_Frequency( GuiState_st* guiState )
@@ -448,8 +455,8 @@ static void GuiValDsp_Frequency( GuiState_st* guiState )
 
     if( ( status.opMode != OPMODE_M17 ) || ( status.lsfOk == false ) )
     {
-        unsigned long frequency = platform_getPttStatus() ? last_state.channel.tx_frequency
-                                                          : last_state.channel.rx_frequency;
+        unsigned long frequency = platform_getPttStatus() ? state.channel.tx_frequency
+                                                          : state.channel.rx_frequency;
         Color_st color_fg ;
         ui_ColorLoad( &color_fg , COLOR_FG );
 
@@ -466,8 +473,8 @@ static void GuiValDsp_RSSIMeter( GuiState_st* guiState )
 {
     Line_st*  lineBottom   = &guiState->layout.lines[ GUI_LINE_BOTTOM ] ;
 //    Style_st* styleBottom  = &guiState->layout.styles[ GUI_STYLE_BOTTOM ] ;
-    float     rssi         = last_state.rssi ;
-    float     squelch      = last_state.settings.sqlLevel / 16.0f ; // squelch bar
+    float     rssi         = state.rssi ;
+    float     squelch      = state.settings.sqlLevel / 16.0f ; // squelch bar
     Pos_st    meter_pos ;
     uint8_t   mic_level    = platform_getMicLevel();
     Color_st  color_op3 ;
@@ -479,7 +486,7 @@ static void GuiValDsp_RSSIMeter( GuiState_st* guiState )
 
     ui_ColorLoad( &color_op3 , COLOR_OP3 );
 
-    switch( last_state.channel.mode )
+    switch( state.channel.mode )
     {
         case OPMODE_FM :
         {
@@ -518,28 +525,28 @@ static void GuiValDsp_GPS( GuiState_st* guiState )
 
     Pos_st fix_pos = { line2->pos.x , ( SCREEN_HEIGHT * 2 ) / 5 , 0 , 0 };
     // Print GPS status, if no fix, hide details
-    if( !last_state.settings.gps_enabled )
+    if( !state.settings.gps_enabled )
     {
         gfx_print( &fix_pos , style3Large->font.size , GFX_ALIGN_CENTER ,
                    &color_fg , currentLanguage->gpsOff );
     }
     else
     {
-        if( last_state.gps_data.fix_quality == 0 )
+        if( state.gps_data.fix_quality == 0 )
         {
             gfx_print( &fix_pos , style3Large->font.size , GFX_ALIGN_CENTER ,
                        &color_fg , currentLanguage->noFix );
         }
         else
         {
-            if( last_state.gps_data.fix_quality == 6 )
+            if( state.gps_data.fix_quality == 6 )
             {
                 gfx_print( &fix_pos , style3Large->font.size , GFX_ALIGN_CENTER ,
                            &color_fg , currentLanguage->fixLost );
             }
             else
             {
-                switch( last_state.gps_data.fix_quality )
+                switch( state.gps_data.fix_quality )
                 {
                     case 1 :
                     {
@@ -563,7 +570,7 @@ static void GuiValDsp_GPS( GuiState_st* guiState )
                     }
                 }
 
-                switch( last_state.gps_data.fix_type )
+                switch( state.gps_data.fix_type )
                 {
                     case 1:
                     {
@@ -591,11 +598,11 @@ static void GuiValDsp_GPS( GuiState_st* guiState )
                 gfx_print( &line1->pos , styleTop->font.size , GFX_ALIGN_CENTER ,
                            &color_fg , "N     " );
                 gfx_print( &line1->pos , styleTop->font.size , GFX_ALIGN_RIGHT ,
-                           &color_fg , "%8.6f" , last_state.gps_data.latitude );
+                           &color_fg , "%8.6f" , state.gps_data.latitude );
                 gfx_print( &line2->pos , styleTop->font.size , GFX_ALIGN_LEFT ,
                            &color_fg , type_buf );
                 // Convert from signed longitude, to unsigned + direction
-                float longitude = last_state.gps_data.longitude ;
+                float longitude = state.gps_data.longitude ;
                 char* direction = (longitude < 0) ? "W     " : "E     " ;
                 longitude = (longitude < 0) ? -longitude : longitude ;
                 gfx_print( &line2->pos , styleTop->font.size , GFX_ALIGN_CENTER ,
@@ -604,24 +611,24 @@ static void GuiValDsp_GPS( GuiState_st* guiState )
                            &color_fg , "%8.6f" , longitude );
                 gfx_print( &lineBottom->pos , styleBottom->font.size , GFX_ALIGN_CENTER ,
                            &color_fg , "S %4.1fkm/h  A %4.1fm" ,
-                           last_state.gps_data.speed , last_state.gps_data.altitude );
+                           state.gps_data.speed , state.gps_data.altitude );
             }
         }
     }
     // Draw compass
     Pos_st compass_pos = { guiState->layout.horizontal_pad * 2 , SCREEN_HEIGHT / 2 , 0 , 0 };
     gfx_drawGPScompass( &compass_pos , SCREEN_WIDTH / 9 + 2 ,
-                        last_state.gps_data.tmg_true ,
-                        ( last_state.gps_data.fix_quality != 0 ) &&
-                        ( last_state.gps_data.fix_quality != 6 )    );
+                        state.gps_data.tmg_true ,
+                        ( state.gps_data.fix_quality != 0 ) &&
+                        ( state.gps_data.fix_quality != 6 )    );
     // Draw satellites bar graph
     Pos_st bar_pos = { line3Large->pos.x + SCREEN_WIDTH * 1 / 3 ,
                        SCREEN_HEIGHT / 2 ,
                        ( ( SCREEN_WIDTH * 2 ) / 3 ) - guiState->layout.horizontal_pad ,
                        SCREEN_HEIGHT / 3 };
     gfx_drawGPSgraph( &bar_pos ,
-                      last_state.gps_data.satellites ,
-                      last_state.gps_data.active_sats );
+                      state.gps_data.satellites ,
+                      state.gps_data.active_sats );
 
 }
 #endif // GPS_PRESENT
@@ -631,7 +638,7 @@ static void GuiValDsp_ScreenBrightness( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
-    snprintf( valueBuffer , MAX_ENTRY_LEN , "%d" , last_state.settings.brightness );
+    snprintf( valueBuffer , MAX_ENTRY_LEN , "%d" , state.settings.brightness );
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
@@ -641,7 +648,7 @@ static void GuiValDsp_ScreenContrast( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
-    snprintf( valueBuffer , MAX_ENTRY_LEN , "%d" , last_state.settings.contrast );
+    snprintf( valueBuffer , MAX_ENTRY_LEN , "%d" , state.settings.contrast );
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
@@ -651,7 +658,7 @@ static void GuiValDsp_Timer( GuiState_st* guiState )
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%s" ,
-              display_timer_values[ last_state.settings.display_timer ] );
+              display_timer_values[ state.settings.display_timer ] );
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
@@ -659,8 +666,8 @@ static void GuiValDsp_Timer( GuiState_st* guiState )
 static void GuiValDsp_Date( GuiState_st* guiState )
 {
     char       valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
-    datetime_t local_time = utcToLocalTime( last_state.time ,
-                                            last_state.settings.utc_timezone );
+    datetime_t local_time = utcToLocalTime( state.time ,
+                                            state.settings.utc_timezone );
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%02d/%02d/%02d" ,
               local_time.date , local_time.month , local_time.year );
     GuiValDsp_Disp_Val( guiState , valueBuffer );
@@ -669,8 +676,8 @@ static void GuiValDsp_Date( GuiState_st* guiState )
 static void GuiValDsp_Time( GuiState_st* guiState )
 {
     char       valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
-    datetime_t local_time = utcToLocalTime( last_state.time ,
-                                            last_state.settings.utc_timezone );
+    datetime_t local_time = utcToLocalTime( state.time ,
+                                            state.settings.utc_timezone );
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%02d:%02d:%02d" ,
               local_time.hour , local_time.minute , local_time.second );
     GuiValDsp_Disp_Val( guiState , valueBuffer );
@@ -681,7 +688,7 @@ static void GuiValDsp_GPSEnables( GuiState_st* guiState )
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%s" ,
-              (last_state.settings.gps_enabled) ? currentLanguage->on : currentLanguage->off );
+              (state.settings.gps_enabled) ? currentLanguage->on : currentLanguage->off );
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
@@ -692,7 +699,7 @@ static void GuiValDsp_GPSTime( GuiState_st* guiState )
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%s" ,
-              (last_state.gps_set_time) ? currentLanguage->on : currentLanguage->off );
+              (state.gps_set_time) ? currentLanguage->on : currentLanguage->off );
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
@@ -700,15 +707,15 @@ static void GuiValDsp_GPSTime( GuiState_st* guiState )
 static void GuiValDsp_GPSTimeZone( GuiState_st* guiState )
 {
     char   valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
-    int8_t tz_hr = ( last_state.settings.utc_timezone / 2 ) ;
-    int8_t tz_mn = ( last_state.settings.utc_timezone % 2 ) * 5 ;
+    int8_t tz_hr = ( state.settings.utc_timezone / 2 ) ;
+    int8_t tz_mn = ( state.settings.utc_timezone % 2 ) * 5 ;
     char   sign  = ' ';
 
-    if(last_state.settings.utc_timezone > 0)
+    if(state.settings.utc_timezone > 0)
     {
         sign = '+' ;
     }
-    else if(last_state.settings.utc_timezone < 0)
+    else if(state.settings.utc_timezone < 0)
     {
         sign   = '-' ;
         tz_hr *= (-1) ;
@@ -727,8 +734,8 @@ static void GuiValDsp_RadioOffset( GuiState_st* guiState )
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
     int32_t offset = 0 ;
 
-    offset = abs( (int32_t)last_state.channel.tx_frequency -
-                  (int32_t)last_state.channel.rx_frequency );
+    offset = abs( (int32_t)state.channel.tx_frequency -
+                  (int32_t)state.channel.rx_frequency );
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%gMHz" , (float)offset / 1000000.0f );
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
@@ -738,7 +745,7 @@ static void GuiValDsp_RadioDirection( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
-    valueBuffer[ 0 ] = ( last_state.channel.tx_frequency >= last_state.channel.rx_frequency ) ? '+' : '-';
+    valueBuffer[ 0 ] = ( state.channel.tx_frequency >= state.channel.rx_frequency ) ? '+' : '-';
     valueBuffer[ 1 ] = '\0';
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
@@ -749,13 +756,13 @@ static void GuiValDsp_RadioStep( GuiState_st* guiState )
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     // Print in kHz if it is smaller than 1MHz
-    if( freq_steps[ last_state.step_index ] < 1000000 )
+    if( freq_steps[ state.step_index ] < 1000000 )
     {
-        snprintf( valueBuffer , MAX_ENTRY_LEN , "%gkHz" , (float)freq_steps[last_state.step_index] / 1000.0f );
+        snprintf( valueBuffer , MAX_ENTRY_LEN , "%gkHz" , (float)freq_steps[state.step_index] / 1000.0f );
     }
     else
     {
-        snprintf( valueBuffer , MAX_ENTRY_LEN , "%gMHz" , (float)freq_steps[last_state.step_index] / 1000000.0f );
+        snprintf( valueBuffer , MAX_ENTRY_LEN , "%gMHz" , (float)freq_steps[state.step_index] / 1000000.0f );
     }
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
@@ -765,7 +772,7 @@ static void GuiValDsp_M17Callsign( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
-    snprintf( valueBuffer , MAX_ENTRY_LEN , "%s" , last_state.settings.callsign );
+    snprintf( valueBuffer , MAX_ENTRY_LEN , "%s" , state.settings.callsign );
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
@@ -774,7 +781,7 @@ static void GuiValDsp_M17Can( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
-    snprintf( valueBuffer , MAX_ENTRY_LEN , "%d" , last_state.settings.m17_can );
+    snprintf( valueBuffer , MAX_ENTRY_LEN , "%d" , state.settings.m17_can );
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
@@ -784,7 +791,7 @@ static void GuiValDsp_M17CanRxCheck( GuiState_st* guiState )
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%s" ,
-              (last_state.settings.m17_can_rx) ? currentLanguage->on : currentLanguage->off );
+              (state.settings.m17_can_rx) ? currentLanguage->on : currentLanguage->off );
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
@@ -793,7 +800,7 @@ static void GuiValDsp_M17CanRxCheck( GuiState_st* guiState )
 static void GuiValDsp_Voice( GuiState_st* guiState )
 {
     char    valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
-    uint8_t value = last_state.settings.vpLevel ;
+    uint8_t value = state.settings.vpLevel ;
 
     switch( value )
     {
@@ -825,7 +832,7 @@ static void GuiValDsp_Phonetic( GuiState_st* guiState )
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%s" ,
-              last_state.settings.vpPhoneticSpell ? currentLanguage->on : currentLanguage->off );
+              state.settings.vpPhoneticSpell ? currentLanguage->on : currentLanguage->off );
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
@@ -836,8 +843,8 @@ static void GuiValDsp_BatteryVoltage( GuiState_st* guiState )
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
     // Compute integer part and mantissa of voltage value, adding 50mV
     // to mantissa for rounding to nearest integer
-    uint16_t volt  = ( last_state.v_bat + 50 ) / 1000 ;
-    uint16_t mvolt = ( ( last_state.v_bat - volt * 1000 ) + 50 ) / 100 ;
+    uint16_t volt  = ( state.v_bat + 50 ) / 1000 ;
+    uint16_t mvolt = ( ( state.v_bat - volt * 1000 ) + 50 ) / 100 ;
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%d.%dV" , volt, mvolt );
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
@@ -847,7 +854,7 @@ static void GuiValDsp_BatteryCharge( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
-    snprintf( valueBuffer , MAX_ENTRY_LEN , "%d%%" , last_state.charge );
+    snprintf( valueBuffer , MAX_ENTRY_LEN , "%d%%" , state.charge );
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
@@ -856,7 +863,7 @@ static void GuiValDsp_Rssi( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
-    snprintf( valueBuffer , MAX_ENTRY_LEN , "%.1fdBm" , last_state.rssi );
+    snprintf( valueBuffer , MAX_ENTRY_LEN , "%.1fdBm" , state.rssi );
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
@@ -1107,6 +1114,7 @@ static void GuiValDsp_Disp_ClearVarPos( GuiState_st* guiState )
     Pos_st   pos      = guiState->layout.vars[ guiState->layout.varIndex ].pos ;
     Color_st color_bg ;
 
+    pos.h++ ;
     ui_ColorLoad( &color_bg , guiState->layout.style.colorBG );
     gfx_drawRect( &pos , &color_bg , true );
 }

@@ -77,8 +77,8 @@ enum
     GUI_VAL_INP_NUM_OF
 };
 
+extern bool GuiValInp_InputValue( GuiState_st* guiState );
 extern void ui_ValueInputFSM( GuiState_st* guiState );
-extern void ui_ValueInput( GuiState_st* guiState , uint8_t valueNum );
 
 
 #endif // UI_VALUE_INPUT_H

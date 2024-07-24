@@ -1285,6 +1285,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_TIMEDATE_SET( GuiState_st* guiState )
 // D_BRIGHTNESS , D_CONTRAST , D_TIMER
 static bool ui_updateFSM_PAGE_SETTINGS_DISPLAY( GuiState_st* guiState )
 {
+/*
     ui_ValueInputFSM( guiState );
 
     if( !guiState->handled )
@@ -1306,7 +1307,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_DISPLAY( GuiState_st* guiState )
             ui_States_MenuBack( guiState );
         }
     }
-
+*/
     return guiState->sync_rtx ;
 
 }
@@ -1314,6 +1315,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_DISPLAY( GuiState_st* guiState )
 // G_ENABLED , G_SET_TIME , G_TIMEZONE
 static bool ui_updateFSM_PAGE_SETTINGS_GPS( GuiState_st* guiState )
 {
+/*
     ui_ValueInputFSM( guiState );
 
     if( !guiState->handled )
@@ -1335,7 +1337,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_GPS( GuiState_st* guiState )
             ui_States_MenuBack( guiState );
         }
     }
-
+*/
     return guiState->sync_rtx ;
 
 }
@@ -1343,6 +1345,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_GPS( GuiState_st* guiState )
 // R_OFFSET , R_DIRECTION , R_STEP
 static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState )
 {
+/*
     ui_ValueInputFSM( guiState );
 
     if( !guiState->handled )
@@ -1360,7 +1363,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState )
             ui_States_MenuBack( guiState );
         }
     }
-
+*/
     return guiState->sync_rtx ;
 
 }
@@ -1368,6 +1371,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_RADIO( GuiState_st* guiState )
 // M17_CALLSIGN , M17_CAN , M17_CAN_RX
 static bool ui_updateFSM_PAGE_SETTINGS_M17( GuiState_st* guiState )
 {
+/*
     ui_ValueInputFSM( guiState );
 
     if( !guiState->handled )
@@ -1391,7 +1395,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_M17( GuiState_st* guiState )
             ui_States_MenuBack( guiState );
         }
     }
-
+*/
     return guiState->sync_rtx ;
 
 }
@@ -1399,6 +1403,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_M17( GuiState_st* guiState )
 // VP_LEVEL , VP_PHONETIC
 static bool ui_updateFSM_PAGE_SETTINGS_VOICE( GuiState_st* guiState )
 {
+/*
     ui_ValueInputFSM( guiState );
 
     if( !guiState->handled )
@@ -1420,7 +1425,7 @@ static bool ui_updateFSM_PAGE_SETTINGS_VOICE( GuiState_st* guiState )
             ui_States_MenuBack( guiState );
         }
     }
-
+*/
     return guiState->sync_rtx ;
 
 }

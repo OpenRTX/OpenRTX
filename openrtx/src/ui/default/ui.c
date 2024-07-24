@@ -401,7 +401,6 @@ static void ui_InitGuiState( GuiState_st* guiState )
     guiState->timer.timeOut         = 0 ;
     guiState->timer.scriptPageNum   = PAGE_STUBBED ;
     guiState->sync_rtx              = false ;
-    guiState->handled               = false ;
     ui_InitGuiStatePage( &guiState->page );
     ui_InitGuiStateLayout( &guiState->layout );
 }

@@ -299,4 +299,7 @@ extern void ui_Draw_Page( GuiState_st* guiState );
 extern void ui_States_SetPageNum( GuiState_st* guiState , uint8_t pageNum );
 extern void ui_RenderDisplay( GuiState_st* guiState );
 
+extern void DebugMsg_PrintStr( GuiState_st* guiState , char* scriptPtr );
+extern void DebugMsg_PrintLine( GuiState_st* guiState , char* scriptPtr , uint8_t lineNum );
+
 #endif // UI_COMMANDS_H

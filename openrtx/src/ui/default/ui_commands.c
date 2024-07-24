@@ -120,8 +120,6 @@ static uint32_t GuiCmd_LdValUILong( GuiState_st* guiState );
 static void     GuiCmd_AdvToNextCmd( GuiState_st* guiState );
 
 static void     GuiCmd_Print( GuiState_st* guiState , Color_st color , char* scriptPtr );
-static void     GuiCmd_PrintStr( GuiState_st* guiState , char* scriptPtr );
-static void     GuiCmd_PrintLine( GuiState_st* guiState , char* scriptPtr );
 static void     BlankLine( GuiState_st* guiState );
 
 typedef bool (*ui_GuiCmd_fn)( GuiState_st* guiState );
@@ -266,15 +264,13 @@ static void ui_DisplayPage( GuiState_st* guiState )
             ui_InitGuiStateLayoutLink( &guiState->layout );
             ui_InitGuiStateLayoutVars( &guiState->layout );
             gfx_clearScreen();
-        }
 
-        if( !guiState->update )
-        {
             if( guiState->page.level == 0 )
             {
                 guiState->page.levelList[ guiState->page.level ] = guiState->page.num ;
                 guiState->page.level++ ;
             }
+
         }
 
         guiState->timeStamp           = getTick();
@@ -774,11 +770,11 @@ static bool GuiCmd_List( GuiState_st* guiState )
 
     if( !guiState->update )
     {
-        guiState->layout.list.pos            = guiState->layout.line.pos ;
+        guiState->layout.list.pos          = guiState->layout.line.pos ;
         guiState->layout.list.numOfEntries = 0 ;
-        guiState->layout.list.selection      = 0 ;
-        guiState->layout.list.offset         = 0 ;
-        displayList                          = true ;
+        guiState->layout.list.selection    = 0 ;
+        guiState->layout.list.offset       = 0 ;
+        displayList                        = true ;
 
         // determine the number of list lines
         List_GetNumOfEntries( guiState );
@@ -1050,11 +1046,10 @@ static bool GuiCmd_Text( GuiState_st* guiState )
 
     ui_ColorLoad( &color_text , guiState->layout.style.colorFG );
 
-    scriptPtr  = &guiState->page.ptr[ guiState->page.index ] ;
+    scriptPtr = &guiState->page.ptr[ guiState->page.index ] ;
 
     if( guiState->displayEnabled )
     {
-//@@@KL            announceMenuItemIfNeeded( entryBuf , NULL , false );
         GuiCmd_Print( guiState , color_text , (char*)scriptPtr );
         guiState->page.renderPage = true ;
     }
@@ -1086,6 +1081,7 @@ static bool GuiCmd_ValueDisplay( GuiState_st* guiState )
     if( guiState->displayEnabled )
     {
         GuiValDsp_DisplayValue( guiState );
+        guiState->page.renderPage = true ;
     }
 
     guiState->layout.varIndex++ ;
@@ -1108,14 +1104,23 @@ static bool GuiCmd_ValueInput( GuiState_st* guiState )
 
     if( !guiState->update )
     {
+        guiState->pageHasEvents = true ;
         guiState->layout.vars[ guiState->layout.varIndex ].varNum = varNum ;
         guiState->layout.varNumOf++ ;
     }
 
-    if( guiState->displayEnabled )
+    if( !guiState->update )
     {
-//        ui_ValueInput( guiState , valueNum );
         GuiValDsp_DisplayValue( guiState );
+        guiState->page.renderPage = true ;
+    }
+    else
+    {
+        if( GuiValInp_InputValue( guiState ) )
+        {
+            GuiValDsp_DisplayValue( guiState );
+            guiState->page.renderPage = true ;
+        }
     }
 
     guiState->layout.varIndex++ ;
@@ -1463,14 +1468,11 @@ static void GuiCmd_Print( GuiState_st* guiState , Color_st color , char* scriptP
     guiState->page.renderPage = true ;
 
 }
-
-static void GuiCmd_PrintStr( GuiState_st* guiState , char* scriptPtr )
+//@@@Kl conditionally compile out
+void DebugMsg_PrintStr( GuiState_st* guiState , char* scriptPtr )
 {
-//    Line_st  line     = guiState->layout.line ;
     Pos_st   pos ;
     Color_st color_fg ;
-
-//    guiState->layout.line = guiState->layout.lines[ GUI_LINE_5 ] ;
 
     pos                   = guiState->layout.line.pos ;
 
@@ -1484,16 +1486,19 @@ static void GuiCmd_PrintStr( GuiState_st* guiState , char* scriptPtr )
                                           &color_fg , scriptPtr );
 
     guiState->layout.line.pos.x += guiState->layout.itemPos.w ;
-//    guiState->layout.line        = line ;
+    guiState->page.renderPage    = true ;
 
 }
 
-static void GuiCmd_PrintLine( GuiState_st* guiState , char* scriptPtr )
+void DebugMsg_PrintLine( GuiState_st* guiState , char* scriptPtr , uint8_t lineNum )
 {
+    Line_st  line     = guiState->layout.line ;
     Pos_st   pos      = guiState->layout.line.pos ;
     Color_st color_fg ;
 
     ui_ColorLoad( &color_fg , guiState->layout.style.colorFG );
+
+    guiState->layout.line = guiState->layout.lines[ lineNum ] ;
 
     BlankLine( guiState );
 
@@ -1501,8 +1506,10 @@ static void GuiCmd_PrintLine( GuiState_st* guiState , char* scriptPtr )
 
     guiState->layout.itemPos  = gfx_print( &pos                             ,
                                            guiState->layout.style.font.size ,
-                                           guiState->layout.style.align     ,
+                                           GFX_ALIGN_LEFT                   ,
+//                                           guiState->layout.style.align     ,
                                            &color_fg , scriptPtr );
+    guiState->layout.line     = line ;
     guiState->page.renderPage = true ;
 
 }

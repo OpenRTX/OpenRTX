@@ -45,6 +45,7 @@
 #endif
 
 //@@@KL #include "ui_m17.h"
+//@@@KL redact guiState->uiState.edit_mode
 
 #include "ui.h"
 #include "ui_value_arrays.h"
@@ -54,30 +55,30 @@
 #include "ui_states.h"
 #include "ui_value_input.h"
 
-static void GuiValInp_VFOMiddleInput( GuiState_st* guiState );
+static bool GuiValInp_VFOMiddleInput( GuiState_st* guiState );
 #ifdef SCREEN_BRIGHTNESS
-static void GuiValInp_ScreenBrightness( GuiState_st* guiState );
+static bool GuiValInp_ScreenBrightness( GuiState_st* guiState );
 #endif // SCREEN_BRIGHTNESS
 #ifdef SCREEN_CONTRAST
-static void GuiValInp_ScreenContrast( GuiState_st* guiState );
+static bool GuiValInp_ScreenContrast( GuiState_st* guiState );
 #endif // SCREEN_CONTRAST
-static void GuiValInp_Timer( GuiState_st* guiState );
+static bool GuiValInp_Timer( GuiState_st* guiState );
 #ifdef GPS_PRESENT
-static void GuiValInp_GPSEnabled( GuiState_st* guiState );
-static void GuiValInp_GPSTime( GuiState_st* guiState );
-static void GuiValInp_GPSTimeZone( GuiState_st* guiState );
+static bool GuiValInp_GPSEnabled( GuiState_st* guiState );
+static bool GuiValInp_GPSTime( GuiState_st* guiState );
+static bool GuiValInp_GPSTimeZone( GuiState_st* guiState );
 #endif // GPS_PRESENT
-static void GuiValInp_Level( GuiState_st* guiState );
-static void GuiValInp_Phonetic( GuiState_st* guiState );
-static void GuiValInp_Offset( GuiState_st* guiState );
-static void GuiValInp_Direction( GuiState_st* guiState );
-static void GuiValInp_Step( GuiState_st* guiState );
-static void GuiValInp_Callsign( GuiState_st* guiState );
-static void GuiValInp_M17Can( GuiState_st* guiState );
-static void GuiValInp_M17CanRx( GuiState_st* guiState );
-static void GuiValInp_Stubbed( GuiState_st* guiState );
+static bool GuiValInp_Level( GuiState_st* guiState );
+static bool GuiValInp_Phonetic( GuiState_st* guiState );
+static bool GuiValInp_Offset( GuiState_st* guiState );
+static bool GuiValInp_Direction( GuiState_st* guiState );
+static bool GuiValInp_Step( GuiState_st* guiState );
+static bool GuiValInp_Callsign( GuiState_st* guiState );
+static bool GuiValInp_M17Can( GuiState_st* guiState );
+static bool GuiValInp_M17CanRx( GuiState_st* guiState );
+static bool GuiValInp_Stubbed( GuiState_st* guiState );
 
-typedef void (*GuiValInp_fn)( GuiState_st* guiState );
+typedef bool (*GuiValInp_fn)( GuiState_st* guiState );
 
 // GUI Values - Set
 static const GuiValInp_fn GuiValInp_Table[ GUI_VAL_INP_NUM_OF ] =
@@ -149,30 +150,22 @@ static const GuiValInp_fn GuiValInp_Table[ GUI_VAL_INP_NUM_OF ] =
 
 void GuiValInpFSM( GuiState_st* guiState )
 {
-/*
-    uint8_t linkSelected = guiState->uiState.entrySelected ;
-    uint8_t valueNum     = guiState->layout.links[ linkSelected ].num ;
-
-    GuiValInp( guiState , valueNum );
-*/
 }
 
-void GuiValInp( GuiState_st* guiState , uint8_t valueNum )
+bool GuiValInp_InputValue( GuiState_st* guiState )
 {
-    if( valueNum >= GUI_VAL_INP_NUM_OF )
-    {
-        valueNum = GUI_VAL_INP_STUBBED ;
-    }
+    guiState->sync_rtx = false ;
+
+    return GuiValInp_Table[ guiState->layout.vars[ guiState->layout.varIndex ].varNum ]( guiState );
+
+}
+
+static bool GuiValInp_VFOMiddleInput( GuiState_st* guiState )
+{
+    bool handled = false ;
 
     guiState->sync_rtx = false ;
-    guiState->handled  = true ;
 
-    GuiValInp_Table[ valueNum ]( guiState );
-
-}
-
-static void GuiValInp_VFOMiddleInput( GuiState_st* guiState )
-{
     Line_st*  line2       = &guiState->layout.lines[ GUI_LINE_2 ] ;
 //    Style_st* style2      = &guiState->layout.styles[ GUI_STYLE_2 ] ;
     Line_st*  line3Large  = &guiState->layout.lines[ GUI_LINE_3_LARGE ] ;
@@ -243,558 +236,604 @@ static void GuiValInp_VFOMiddleInput( GuiState_st* guiState )
             guiState->page.renderPage = true ;
         }
     }
+
+    return handled ;
+
 }
 
 #ifdef SCREEN_BRIGHTNESS
 // D_BRIGHTNESS
-static void GuiValInp_ScreenBrightness( GuiState_st* guiState )
+static bool GuiValInp_ScreenBrightness( GuiState_st* guiState )
 {
-    guiState->sync_rtx = false ;
-    guiState->handled  = true ;
+    bool handled = false ;
 
-    if( (   guiState->msg.keys & KEY_LEFT                                                  ) ||
-        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) ) && guiState->uiState.edit_mode )    )
+    guiState->sync_rtx = false ;
+
+    if( guiState->event.type == EVENT_TYPE_KBD )
     {
-        _ui_changeBrightness( -5 );
-        vp_announceSettingsInt( &currentLanguage->brightness , guiState->queueFlags , state.settings.brightness );
+        if( guiState->event.payload & ( KEY_LEFT | KEY_DOWN | KNOB_LEFT )    )
+        {
+            _ui_changeBrightness( -5 );
+            vp_announceSettingsInt( &currentLanguage->brightness , guiState->queueFlags , state.settings.brightness );
+            handled = true ;
+        }
+        else if( guiState->event.payload & ( KEY_RIGHT | KEY_UP | KNOB_RIGHT ) )
+        {
+            _ui_changeBrightness( +5 );
+            vp_announceSettingsInt( &currentLanguage->brightness , guiState->queueFlags , state.settings.brightness );
+            handled = true ;
+        }
     }
-    else if( (   guiState->msg.keys & KEY_RIGHT                                                ) ||
-             ( ( guiState->msg.keys & ( KEY_UP | KNOB_RIGHT ) ) && guiState->uiState.edit_mode )    )
-    {
-        _ui_changeBrightness( +5 );
-        vp_announceSettingsInt( &currentLanguage->brightness , guiState->queueFlags , state.settings.brightness );
-    }
-    else
-    {
-        guiState->handled = false ;
-    }
+
+    return handled ;
 
 }
 #endif // SCREEN_BRIGHTNESS
 #ifdef SCREEN_CONTRAST
 // D_CONTRAST
-static void GuiValInp_ScreenContrast( GuiState_st* guiState )
+static bool GuiValInp_ScreenContrast( GuiState_st* guiState )
 {
-    guiState->sync_rtx = false ;
-    guiState->handled  = true ;
+    bool handled = false ;
 
-    if( (   guiState->msg.keys & KEY_LEFT                      ) ||
-        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) ) &&
-        guiState->uiState.edit_mode                            )    )
+    guiState->sync_rtx = false ;
+
+    if( guiState->event.type == EVENT_TYPE_KBD )
     {
-        _ui_changeContrast( -4 );
-        vp_announceSettingsInt( &currentLanguage->brightness , guiState->queueFlags , state.settings.contrast );
+        if( guiState->event.payload & ( KEY_LEFT | KEY_DOWN | KNOB_LEFT ) )
+        {
+            _ui_changeContrast( -4 );
+            vp_announceSettingsInt( &currentLanguage->brightness , guiState->queueFlags , state.settings.contrast );
+            handled = true ;
+        }
+        else if( guiState->event.payload & ( KEY_RIGHT | KEY_UP | KNOB_RIGHT ) )
+        {
+            _ui_changeContrast( +4 );
+            vp_announceSettingsInt( &currentLanguage->brightness , guiState->queueFlags , state.settings.contrast );
+            handled = true ;
+        }
     }
-    else if( (   guiState->msg.keys & KEY_RIGHT                    ) ||
-             ( ( guiState->msg.keys & ( KEY_UP | KNOB_RIGHT ) ) &&
-             guiState->uiState.edit_mode                           )    )
-    {
-        _ui_changeContrast( +4 );
-        vp_announceSettingsInt( &currentLanguage->brightness , guiState->queueFlags , state.settings.contrast );
-    }
-    else
-    {
-        guiState->handled = false ;
-    }
+
+    return handled ;
 
 }
 #endif // SCREEN_CONTRAST
 // D_TIMER
-static void GuiValInp_Timer( GuiState_st* guiState )
+static bool GuiValInp_Timer( GuiState_st* guiState )
 {
-    guiState->sync_rtx = false ;
-    guiState->handled  = true ;
+    bool handled = false ;
 
-    if( (   guiState->msg.keys & KEY_LEFT                      ) ||
-        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) ) &&
-        guiState->uiState.edit_mode                            )    )
+    guiState->sync_rtx = false ;
+
+    if( guiState->event.type == EVENT_TYPE_KBD )
     {
-        _ui_changeTimer( -1 );
-        vp_announceDisplayTimer();
+        if( guiState->event.payload & ( KEY_LEFT | KEY_DOWN | KNOB_LEFT )    )
+        {
+            _ui_changeTimer( -1 );
+            handled = true ;
+        }
+        else if( guiState->event.payload & ( KEY_RIGHT | KEY_UP | KNOB_RIGHT ) )
+        {
+            _ui_changeTimer( +1 );
+            handled = true ;
+        }
     }
-    else if( (   guiState->msg.keys & KEY_RIGHT                    ) ||
-             ( ( guiState->msg.keys & ( KEY_UP | KNOB_RIGHT ) ) &&
-             guiState->uiState.edit_mode                           )    )
-    {
-        _ui_changeTimer( +1 );
-        vp_announceDisplayTimer();
-    }
-    else
-    {
-        guiState->handled = false ;
-    }
+
+    return handled ;
 
 }
 #ifdef GPS_PRESENT
 // G_ENABLED
-static void GuiValInp_GPSEnabled( GuiState_st* guiState )
+static bool GuiValInp_GPSEnabled( GuiState_st* guiState )
 {
-    guiState->sync_rtx = false ;
-    guiState->handled  = true ;
+    bool handled = false ;
 
-    if( (   guiState->msg.keys & ( KEY_LEFT | KEY_RIGHT )                            ) ||
-        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT | KEY_UP | KNOB_RIGHT ) ) &&
-        guiState->uiState.edit_mode                                                  )    )
+    guiState->sync_rtx = false ;
+
+    if( guiState->event.type == EVENT_TYPE_KBD )
     {
-        if( state.settings.gps_enabled )
+        if( guiState->event.payload & ( KEY_LEFT  | KEY_DOWN | KNOB_LEFT  |
+                                        KEY_RIGHT | KEY_UP   | KNOB_RIGHT   ) )
         {
-            state.settings.gps_enabled = 0 ;
+            if( state.settings.gps_enabled )
+            {
+                state.settings.gps_enabled = 0 ;
+            }
+            else
+            {
+                state.settings.gps_enabled = 1 ;
+            }
+            vp_announceSettingsOnOffToggle( &currentLanguage->gpsEnabled ,
+                                            guiState->queueFlags , state.settings.gps_enabled );
+            handled = true ;
         }
-        else
-        {
-            state.settings.gps_enabled = 1 ;
-        }
-        vp_announceSettingsOnOffToggle( &currentLanguage->gpsEnabled ,
-                                        guiState->queueFlags , state.settings.gps_enabled );
     }
-    else
-    {
-        guiState->handled = false ;
-    }
+
+    return handled ;
 
 }
 
 // G_SET_TIME
-static void GuiValInp_GPSTime( GuiState_st* guiState )
+static bool GuiValInp_GPSTime( GuiState_st* guiState )
 {
-    guiState->sync_rtx = false ;
-    guiState->handled  = true ;
+    bool handled = false ;
 
-    if( (   guiState->msg.keys & ( KEY_LEFT | KEY_RIGHT )                            ) ||
-        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT | KEY_UP | KNOB_RIGHT ) ) &&
-        guiState->uiState.edit_mode                                                  )    )
+    guiState->sync_rtx = false ;
+
+    if( guiState->event.type == EVENT_TYPE_KBD )
     {
-        state.gps_set_time = !state.gps_set_time ;
-        vp_announceSettingsOnOffToggle( &currentLanguage->gpsSetTime ,
-                                        guiState->queueFlags , state.gps_set_time );
+        if( guiState->event.payload & ( KEY_LEFT  | KEY_DOWN | KNOB_LEFT  |
+                                        KEY_RIGHT | KEY_UP   | KNOB_RIGHT   ) )
+        {
+            state.gps_set_time = !state.gps_set_time ;
+            vp_announceSettingsOnOffToggle( &currentLanguage->gpsSetTime ,
+                                            guiState->queueFlags , state.gps_set_time );
+            handled = true ;
+        }
     }
-    else
-    {
-        guiState->handled = false ;
-    }
+
+    return handled ;
 
 }
 
 // G_TIMEZONE
-static void GuiValInp_GPSTimeZone( GuiState_st* guiState )
+static bool GuiValInp_GPSTimeZone( GuiState_st* guiState )
 {
-    guiState->sync_rtx = false ;
-    guiState->handled  = true ;
+    bool handled = false ;
 
-    if( (   guiState->msg.keys & ( KEY_LEFT | KEY_RIGHT )                            ) ||
-        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT | KEY_UP | KNOB_RIGHT ) ) &&
-        guiState->uiState.edit_mode                                                  )    )
+    guiState->sync_rtx = false ;
+
+    if( guiState->event.type == EVENT_TYPE_KBD )
     {
-        if( guiState->msg.keys & ( KEY_LEFT | KEY_DOWN | KNOB_LEFT ) )
+        if( guiState->event.payload & ( KEY_LEFT | KEY_DOWN | KNOB_LEFT ) )
         {
             state.settings.utc_timezone -= 1 ;
         }
-        else if( guiState->msg.keys & ( KEY_RIGHT | KEY_UP | KNOB_RIGHT ) )
+        else if( guiState->event.payload & ( KEY_RIGHT | KEY_UP | KNOB_RIGHT ) )
         {
             state.settings.utc_timezone += 1 ;
         }
         vp_announceTimeZone( state.settings.utc_timezone , guiState->queueFlags );
+        handled = true ;
     }
-    else
-    {
-        guiState->handled = false ;
-    }
+
+    return handled ;
 
 }
 #endif // GPS_PRESENT
 
 // R_OFFSET
-static void GuiValInp_Offset( GuiState_st* guiState )
+static bool GuiValInp_Offset( GuiState_st* guiState )
 {
-    guiState->sync_rtx = false ;
-    guiState->handled  = true ;
+    bool handled = false ;
 
-    // If the entry is selected with enter we are in edit_mode
-    if( guiState->uiState.edit_mode )
+    guiState->sync_rtx = false ;
+
+    if( guiState->event.type == EVENT_TYPE_KBD )
     {
-#ifdef UI_NO_KEYBOARD
-        if( guiState->msg.long_press && ( guiState->msg.keys & KEY_ENTER ) )
+        // If the entry is selected with enter we are in edit_mode
+        if( guiState->uiState.edit_mode )
         {
-            // Long press on UI_NO_KEYBOARD causes digits to advance by one
-            guiState->uiState.new_offset /= 10 ;
-#else // UI_NO_KEYBOARD
-        if( guiState->msg.keys & KEY_ENTER )
-        {
-#endif // UI_NO_KEYBOARD
-            // Apply new offset
-            state.channel.tx_frequency  = state.channel.rx_frequency + guiState->uiState.new_offset ;
-            vp_queueStringTableEntry( &currentLanguage->frequencyOffset );
-            vp_queueFrequency( guiState->uiState.new_offset );
-            guiState->uiState.edit_mode = false ;
+    #ifdef UI_NO_KEYBOARD
+            if( guiState->msg.long_press && ( guiState->event.payload & KEY_ENTER ) )
+            {
+                // Long press on UI_NO_KEYBOARD causes digits to advance by one
+                guiState->uiState.new_offset /= 10 ;
+    #else // UI_NO_KEYBOARD
+            if( guiState->event.payload & KEY_ENTER )
+            {
+    #endif // UI_NO_KEYBOARD
+                // Apply new offset
+                state.channel.tx_frequency  = state.channel.rx_frequency + guiState->uiState.new_offset ;
+                vp_queueStringTableEntry( &currentLanguage->frequencyOffset );
+                vp_queueFrequency( guiState->uiState.new_offset );
+                guiState->uiState.edit_mode = false ;
+                handled = true ;
+            }
+            else if( guiState->event.payload & KEY_ESC )
+            {
+                // Announce old frequency offset
+                vp_queueStringTableEntry( &currentLanguage->frequencyOffset );
+                vp_queueFrequency( (int32_t)state.channel.tx_frequency -
+                                   (int32_t)state.channel.rx_frequency );
+                handled = true ;
+            }
+            else if( guiState->event.payload & ( KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT ) )
+            {
+                _ui_numberInputDel( guiState , &guiState->uiState.new_offset );
+                handled = true ;
+            }
+    #ifdef UI_NO_KEYBOARD
+            else if( guiState->event.payload & ( KNOB_LEFT | KNOB_RIGHT | KEY_ENTER ) )
+    #else // UI_NO_KEYBOARD
+            else if( input_isNumberPressed( guiState->msg ) )
+    #endif // UI_NO_KEYBOARD
+            {
+                _ui_numberInputKeypad( guiState , &guiState->uiState.new_offset , guiState->msg );
+                guiState->uiState.input_position += 1 ;
+                handled = true ;
+            }
+            else if( guiState->msg.long_press              &&
+                     ( guiState->event.payload     & KEY_F1   ) &&
+                     ( state.settings.vpLevel > VPP_BEEP )    )
+            {
+                vp_queueFrequency( guiState->uiState.new_offset );
+                guiState->f1Handled = true ;
+            }
+            // If ENTER or ESC are pressed, exit edit mode, R_OFFSET is managed separately
+            if( !( guiState->event.payload & KEY_ENTER ) && ( guiState->event.payload & KEY_ESC ) )
+            {
+                guiState->uiState.edit_mode = false ;
+                handled = true ;
+            }
         }
-        else if( guiState->msg.keys & KEY_ESC )
+        else if( guiState->event.payload & KEY_ENTER )
         {
-            // Announce old frequency offset
-            vp_queueStringTableEntry( &currentLanguage->frequencyOffset );
-            vp_queueFrequency( (int32_t)state.channel.tx_frequency -
-                               (int32_t)state.channel.rx_frequency );
-        }
-        else if( guiState->msg.keys & ( KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT ) )
-        {
-            _ui_numberInputDel( guiState , &guiState->uiState.new_offset );
-        }
-#ifdef UI_NO_KEYBOARD
-        else if( guiState->msg.keys & ( KNOB_LEFT | KNOB_RIGHT | KEY_ENTER ) )
-#else // UI_NO_KEYBOARD
-        else if( input_isNumberPressed( guiState->msg ) )
-#endif // UI_NO_KEYBOARD
-        {
-            _ui_numberInputKeypad( guiState , &guiState->uiState.new_offset , guiState->msg );
-            guiState->uiState.input_position += 1 ;
-        }
-        else if( guiState->msg.long_press              &&
-                 ( guiState->msg.keys     & KEY_F1   ) &&
-                 ( state.settings.vpLevel > VPP_BEEP )    )
-        {
-            vp_queueFrequency( guiState->uiState.new_offset );
-            guiState->f1Handled = true ;
-        }
-        // If ENTER or ESC are pressed, exit edit mode, R_OFFSET is managed separately
-        if( !( guiState->msg.keys & KEY_ENTER ) && ( guiState->msg.keys & KEY_ESC ) )
-        {
-            guiState->uiState.edit_mode = false ;
+            guiState->uiState.edit_mode      = true;
+            guiState->uiState.new_offset     = 0 ;
+            // Reset input position
+            guiState->uiState.input_position = 0 ;
+            handled = true ;
         }
     }
-    else if( guiState->msg.keys & KEY_ENTER )
-    {
-        guiState->uiState.edit_mode      = true;
-        guiState->uiState.new_offset     = 0 ;
-        // Reset input position
-        guiState->uiState.input_position = 0 ;
-    }
-    else
-    {
-        guiState->handled = false ;
-    }
+
+    return handled ;
 
 }
 
 // R_DIRECTION
-static void GuiValInp_Direction( GuiState_st* guiState )
+static bool GuiValInp_Direction( GuiState_st* guiState )
 {
-    guiState->sync_rtx = false ;
-    guiState->handled  = true ;
+    bool handled = false ;
 
-    // If the entry is selected with enter we are in edit_mode
-    if( guiState->uiState.edit_mode )
+    guiState->sync_rtx = false ;
+
+    if( guiState->event.type == EVENT_TYPE_KBD )
     {
-        if( guiState->msg.keys & ( KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT | KNOB_LEFT | KNOB_RIGHT ) )
+        // If the entry is selected with enter we are in edit_mode
+        if( guiState->uiState.edit_mode )
         {
-            // Invert frequency offset direction
-            if( state.channel.tx_frequency >= state.channel.rx_frequency )
+            if( guiState->event.payload & ( KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT | KNOB_LEFT | KNOB_RIGHT ) )
             {
-                state.channel.tx_frequency -= 2 * ( (int32_t)state.channel.tx_frequency -
-                                                    (int32_t)state.channel.rx_frequency );
+                // Invert frequency offset direction
+                if( state.channel.tx_frequency >= state.channel.rx_frequency )
+                {
+                    state.channel.tx_frequency -= 2 * ( (int32_t)state.channel.tx_frequency -
+                                                        (int32_t)state.channel.rx_frequency );
+                }
+                else // Switch to positive offset
+                {
+                    state.channel.tx_frequency -= 2 * ( (int32_t)state.channel.tx_frequency -
+                                                        (int32_t)state.channel.rx_frequency );
+                }
+                handled = true ;
             }
-            else // Switch to positive offset
+            // If ENTER or ESC are pressed, exit edit mode
+            if( ( guiState->event.payload & KEY_ENTER ) ||
+                ( guiState->event.payload & KEY_ESC   )    )
             {
-                state.channel.tx_frequency -= 2 * ( (int32_t)state.channel.tx_frequency -
-                                                    (int32_t)state.channel.rx_frequency );
+                guiState->uiState.edit_mode = false ;
             }
         }
-        // If ENTER or ESC are pressed, exit edit mode
-        if( ( guiState->msg.keys & KEY_ENTER ) ||
-            ( guiState->msg.keys & KEY_ESC   )    )
+        else if( guiState->event.payload & ( KEY_UP | KNOB_LEFT ) )
         {
-            guiState->uiState.edit_mode = false ;
+            ui_States_MenuUp( guiState );
+            handled = true ;
+        }
+        else if( ( guiState->event.payload & KEY_DOWN ) || ( guiState->event.payload & KNOB_RIGHT ) )
+        {
+            ui_States_MenuDown( guiState );
+            handled = true ;
+        }
+        else if( guiState->event.payload & KEY_ENTER )
+        {
+            guiState->uiState.edit_mode = true;
+            // If we are entering R_OFFSET clear temp offset
+            if( guiState->uiState.entrySelected == R_OFFSET )
+            {
+                guiState->uiState.new_offset = 0 ;
+            }
+            // Reset input position
+            guiState->uiState.input_position = 0 ;
+            handled = true ;
         }
     }
-    else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
-    {
-        ui_States_MenuUp( guiState );
-    }
-    else if( ( guiState->msg.keys & KEY_DOWN ) || ( guiState->msg.keys & KNOB_RIGHT ) )
-    {
-        ui_States_MenuDown( guiState );
-    }
-    else if( guiState->msg.keys & KEY_ENTER )
-    {
-        guiState->uiState.edit_mode = true;
-        // If we are entering R_OFFSET clear temp offset
-        if( guiState->uiState.entrySelected == R_OFFSET )
-        {
-            guiState->uiState.new_offset = 0 ;
-        }
-        // Reset input position
-        guiState->uiState.input_position = 0 ;
-    }
-    else
-    {
-        guiState->handled = false ;
-    }
+
+    return handled ;
 
 }
 
 // R_STEP
-static void GuiValInp_Step( GuiState_st* guiState )
+static bool GuiValInp_Step( GuiState_st* guiState )
 {
-    guiState->sync_rtx = false ;
-    guiState->handled  = true ;
+    bool handled = false ;
 
-    // If the entry is selected with enter we are in edit_mode
-    if( guiState->uiState.edit_mode )
+    guiState->sync_rtx = false ;
+
+    if( guiState->event.type == EVENT_TYPE_KBD )
     {
-        if( guiState->msg.keys & ( KEY_UP | KEY_RIGHT | KNOB_RIGHT ) )
+        // If the entry is selected with enter we are in edit_mode
+        if( guiState->uiState.edit_mode )
         {
-            // Cycle over the available frequency steps
-            state.step_index++ ;
-            state.step_index %= n_freq_steps ;
+            if( guiState->event.payload & ( KEY_UP | KEY_RIGHT | KNOB_RIGHT ) )
+            {
+                // Cycle over the available frequency steps
+                state.step_index++ ;
+                state.step_index %= n_freq_steps ;
+                handled = true ;
+            }
+            else if( guiState->event.payload & ( KEY_DOWN | KEY_LEFT | KNOB_LEFT ) )
+            {
+                state.step_index += n_freq_steps ;
+                state.step_index-- ;
+                state.step_index %= n_freq_steps ;
+                handled = true ;
+            }
+            // If ENTER or ESC are pressed, exit edit mode, R_OFFSET is managed separately
+            if( ( ( guiState->event.payload & KEY_ENTER ) && ( guiState->uiState.entrySelected != R_OFFSET ) ) ||
+                  ( guiState->event.payload & KEY_ESC   )                                                )
+            {
+                guiState->uiState.edit_mode = false ;
+            }
         }
-        else if( guiState->msg.keys & ( KEY_DOWN | KEY_LEFT | KNOB_LEFT ) )
+        else if( guiState->event.payload & ( KEY_UP | KNOB_LEFT ) )
         {
-            state.step_index += n_freq_steps ;
-            state.step_index-- ;
-            state.step_index %= n_freq_steps ;
+            ui_States_MenuUp( guiState );
+            handled = true ;
         }
-        // If ENTER or ESC are pressed, exit edit mode, R_OFFSET is managed separately
-        if( ( ( guiState->msg.keys & KEY_ENTER ) && ( guiState->uiState.entrySelected != R_OFFSET ) ) ||
-              ( guiState->msg.keys & KEY_ESC   )                                                )
+        else if( ( guiState->event.payload & KEY_DOWN ) || ( guiState->event.payload & KNOB_RIGHT ) )
         {
-            guiState->uiState.edit_mode = false ;
+            ui_States_MenuDown( guiState );
+            handled = true ;
         }
-    }
-    else if( guiState->msg.keys & ( KEY_UP | KNOB_LEFT ) )
-    {
-        ui_States_MenuUp( guiState );
-    }
-    else if( ( guiState->msg.keys & KEY_DOWN ) || ( guiState->msg.keys & KNOB_RIGHT ) )
-    {
-        ui_States_MenuDown( guiState );
-    }
-    else if( guiState->msg.keys & KEY_ENTER )
-    {
-        guiState->uiState.edit_mode = true;
-        // If we are entering R_OFFSET clear temp offset
-        if( guiState->uiState.entrySelected == R_OFFSET )
+        else if( guiState->event.payload & KEY_ENTER )
         {
-            guiState->uiState.new_offset = 0 ;
+            guiState->uiState.edit_mode = true;
+            // If we are entering R_OFFSET clear temp offset
+            if( guiState->uiState.entrySelected == R_OFFSET )
+            {
+                guiState->uiState.new_offset = 0 ;
+            }
+            // Reset input position
+            guiState->uiState.input_position = 0 ;
+            handled = true ;
         }
-        // Reset input position
-        guiState->uiState.input_position = 0 ;
     }
-    else
-    {
-        guiState->handled = false ;
-    }
+
+    return handled ;
 
 }
 
 // M17_CALLSIGN
-static void GuiValInp_Callsign( GuiState_st* guiState )
+static bool GuiValInp_Callsign( GuiState_st* guiState )
 {
-    guiState->sync_rtx = false ;
-    guiState->handled  = true ;
+    bool handled = false ;
 
-    if( guiState->uiState.edit_mode )
+    guiState->sync_rtx = false ;
+
+    if( guiState->event.type == EVENT_TYPE_KBD )
     {
-        // Handle text input for M17 callsign
-        if( guiState->msg.keys & KEY_ENTER )
+        if( guiState->uiState.edit_mode )
         {
-            ui_States_TextInputConfirm( guiState , guiState->uiState.new_callsign );
-            // Save selected callsign and disable input mode
-            strncpy( state.settings.callsign , guiState->uiState.new_callsign , 10 );
-            guiState->uiState.edit_mode = false;
-            vp_announceBuffer( &currentLanguage->callsign , false , true , state.settings.callsign );
-        }
-        else if( guiState->msg.keys & KEY_ESC )
-        {
-            // Discard selected callsign and disable input mode
-            guiState->uiState.edit_mode = false ;
-            vp_announceBuffer( &currentLanguage->callsign , false , true , state.settings.callsign );
-        }
-        else if( guiState->msg.keys & ( KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT ) )
-        {
-            ui_States_TextInputDelete( guiState , guiState->uiState.new_callsign );
-        }
-        else if( input_isNumberPressed( guiState->msg ) )
-        {
-            ui_States_TextInputKeypad( guiState , guiState->uiState.new_callsign , 9 , guiState->msg , true );
-        }
-        else if( guiState->msg.long_press              &&
-                 ( guiState->msg.keys     & KEY_F1   ) &&
-                 ( state.settings.vpLevel > VPP_BEEP )    )
-        {
-            vp_announceBuffer( &currentLanguage->callsign , true , true , guiState->uiState.new_callsign );
-            guiState->f1Handled = true ;
+            // Handle text input for M17 callsign
+            if( guiState->event.payload & KEY_ENTER )
+            {
+                ui_States_TextInputConfirm( guiState , guiState->uiState.new_callsign );
+                // Save selected callsign and disable input mode
+                strncpy( state.settings.callsign , guiState->uiState.new_callsign , 10 );
+                guiState->uiState.edit_mode = false;
+                vp_announceBuffer( &currentLanguage->callsign , false , true , state.settings.callsign );
+                handled = true ;
+            }
+            else if( guiState->event.payload & KEY_ESC )
+            {
+                // Discard selected callsign and disable input mode
+                guiState->uiState.edit_mode = false ;
+                vp_announceBuffer( &currentLanguage->callsign , false , true , state.settings.callsign );
+                handled = true ;
+            }
+            else if( guiState->event.payload & ( KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT ) )
+            {
+                ui_States_TextInputDelete( guiState , guiState->uiState.new_callsign );
+                handled = true ;
+            }
+            else if( input_isNumberPressed( guiState->msg ) )
+            {
+                ui_States_TextInputKeypad( guiState , guiState->uiState.new_callsign , 9 , guiState->msg , true );
+                handled = true ;
+            }
+            else if( guiState->msg.long_press              &&
+                     ( guiState->event.payload     & KEY_F1   ) &&
+                     ( state.settings.vpLevel > VPP_BEEP )    )
+            {
+                vp_announceBuffer( &currentLanguage->callsign , true , true , guiState->uiState.new_callsign );
+                guiState->f1Handled = true ;
+                handled = true ;
+            }
         }
         else
         {
-            guiState->handled = false ;
+            if( guiState->event.payload & KEY_ENTER )
+            {
+                // Enable edit mode
+                guiState->uiState.edit_mode = true;
+                ui_States_TextInputReset( guiState , guiState->uiState.new_callsign );
+                vp_announceBuffer( &currentLanguage->callsign , true , true , guiState->uiState.new_callsign );
+                handled = true ;
+            }
         }
     }
-    else
-    {
-        if( guiState->msg.keys & KEY_ENTER )
-        {
-            // Enable edit mode
-            guiState->uiState.edit_mode = true;
-            ui_States_TextInputReset( guiState , guiState->uiState.new_callsign );
-            vp_announceBuffer( &currentLanguage->callsign , true , true , guiState->uiState.new_callsign );
-        }
-	    else
-	    {
-	        guiState->handled = false ;
-    	}
-    }
+
+    return handled ;
 
 }
 
 // M17_CAN
-static void GuiValInp_M17Can( GuiState_st* guiState )
+static bool GuiValInp_M17Can( GuiState_st* guiState )
 {
-    guiState->sync_rtx = false ;
-    guiState->handled  = true ;
+    bool handled = false ;
 
-    if( guiState->uiState.edit_mode )
+    guiState->sync_rtx = false ;
+
+    if( guiState->event.type == EVENT_TYPE_KBD )
     {
-        if( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) )
+        if( guiState->uiState.edit_mode )
         {
-            _ui_changeM17Can( -1 );
-        }
-        else if( guiState->msg.keys & ( KEY_UP | KNOB_RIGHT ) )
-        {
-            _ui_changeM17Can( +1 );
-        }
-        else if( guiState->msg.keys & KEY_ENTER )
-        {
-            guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
-        }
-        else if( guiState->msg.keys & KEY_ESC )
-        {
-            guiState->uiState.edit_mode = false ;
+            if( guiState->event.payload & ( KEY_DOWN | KNOB_LEFT ) )
+            {
+                _ui_changeM17Can( -1 );
+                handled = true ;
+            }
+            else if( guiState->event.payload & ( KEY_UP | KNOB_RIGHT ) )
+            {
+                _ui_changeM17Can( +1 );
+                handled = true ;
+            }
+            else if( guiState->event.payload & KEY_ENTER )
+            {
+                guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
+                handled = true ;
+            }
+            else if( guiState->event.payload & KEY_ESC )
+            {
+                guiState->uiState.edit_mode = false ;
+                handled = true ;
+            }
         }
         else
         {
-            guiState->handled = false ;
+            if( guiState->event.payload & KEY_ENTER )
+            {
+                // Enable edit mode
+                guiState->uiState.edit_mode = true;
+                handled = true ;
+            }
+            else if( guiState->event.payload & KEY_RIGHT )
+            {
+                _ui_changeM17Can( +1 );
+                handled = true ;
+            }
+            else if( guiState->event.payload & KEY_LEFT )
+            {
+                _ui_changeM17Can( -1 );
+                handled = true ;
+            }
         }
     }
-    else
-    {
-        if( guiState->msg.keys & KEY_ENTER )
-        {
-            // Enable edit mode
-            guiState->uiState.edit_mode = true;
-        }
-        else if( guiState->msg.keys & KEY_RIGHT )
-        {
-            _ui_changeM17Can( +1 );
-        }
-        else if( guiState->msg.keys & KEY_LEFT )
-        {
-            _ui_changeM17Can( -1 );
-        }
-	    else
-	    {
-	        guiState->handled = false ;
-	    }
-    }
+
+    return handled ;
 
 }
 
 // M17_CAN_RX
-static void GuiValInp_M17CanRx( GuiState_st* guiState )
+static bool GuiValInp_M17CanRx( GuiState_st* guiState )
 {
-    guiState->sync_rtx = false ;
-    guiState->handled  = true ;
+    bool handled = false ;
 
-    if( guiState->uiState.edit_mode )
+    guiState->sync_rtx = false ;
+
+    if( guiState->event.type == EVENT_TYPE_KBD )
     {
-        if( (   guiState->msg.keys & ( KEY_LEFT | KEY_RIGHT                       )      ) ||
-            ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT | KEY_UP | KNOB_RIGHT ) ) &&
-            guiState->uiState.edit_mode                                                  )    )
+        if( guiState->uiState.edit_mode )
         {
-            state.settings.m17_can_rx = !state.settings.m17_can_rx ;
-        }
-        else if( guiState->msg.keys & KEY_ENTER )
-        {
-            guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
-        }
-        else if( guiState->msg.keys & KEY_ESC )
-        {
-            guiState->uiState.edit_mode = false ;
+            if( (   guiState->event.payload & ( KEY_LEFT | KEY_RIGHT                       )      ) ||
+                ( ( guiState->event.payload & ( KEY_DOWN | KNOB_LEFT | KEY_UP | KNOB_RIGHT ) ) &&
+                guiState->uiState.edit_mode                                                  )    )
+            {
+                state.settings.m17_can_rx = !state.settings.m17_can_rx ;
+                handled = true ;
+            }
+            else if( guiState->event.payload & KEY_ENTER )
+            {
+                guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
+                handled = true ;
+            }
+            else if( guiState->event.payload & KEY_ESC )
+            {
+                guiState->uiState.edit_mode = false ;
+                handled = true ;
+            }
         }
         else
         {
-            guiState->handled = false ;
+            if( guiState->event.payload & KEY_ENTER )
+            {
+                // Enable edit mode
+                guiState->uiState.edit_mode = true;
+                handled = true ;
+            }
+            else if( guiState->event.payload & KEY_ESC )
+            {
+                guiState->sync_rtx = true ;
+                ui_States_MenuBack( guiState );
+                handled = true ;
+            }
         }
     }
-    else
-    {
-        if( guiState->msg.keys & KEY_ENTER )
-        {
-            // Enable edit mode
-            guiState->uiState.edit_mode = true;
-        }
-        else if( guiState->msg.keys & KEY_ESC )
-        {
-            guiState->sync_rtx = true ;
-            ui_States_MenuBack( guiState );
-        }
-        else
-        {
-            guiState->handled = false ;
-        }
-    }
+
+    return handled ;
 
 }
 
 // VP_LEVEL
-static void GuiValInp_Level( GuiState_st* guiState )
+static bool GuiValInp_Level( GuiState_st* guiState )
 {
-    guiState->sync_rtx = false ;
-    guiState->handled  = true ;
+    bool handled = false ;
 
-    if( (   guiState->msg.keys & KEY_LEFT                      ) ||
-        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) ) &&
-          guiState->uiState.edit_mode                          )    )
+    guiState->sync_rtx = false ;
+
+    if( guiState->event.type == EVENT_TYPE_KBD )
     {
-        _ui_changeVoiceLevel( -1 );
+        if( guiState->event.payload & ( KEY_LEFT | KEY_DOWN | KNOB_LEFT )    )
+        {
+            _ui_changeVoiceLevel( -1 );
+            handled = true ;
+        }
+        else if( (   guiState->event.payload & KEY_RIGHT                    ) ||
+                 ( ( guiState->event.payload & ( KEY_UP | KNOB_RIGHT ) ) &&
+                 guiState->uiState.edit_mode                           )    )
+        {
+            _ui_changeVoiceLevel( 1 );
+            handled = true ;
+        }
     }
-    else if( (   guiState->msg.keys & KEY_RIGHT                    ) ||
-             ( ( guiState->msg.keys & ( KEY_UP | KNOB_RIGHT ) ) &&
-             guiState->uiState.edit_mode                           )    )
-    {
-        _ui_changeVoiceLevel( 1 );
-    }
-    else
-    {
-        guiState->handled = false ;
-    }
+
+    return handled ;
 
 }
 
 // VP_PHONETIC
-static void GuiValInp_Phonetic( GuiState_st* guiState )
+static bool GuiValInp_Phonetic( GuiState_st* guiState )
 {
-    guiState->sync_rtx = false ;
-    guiState->handled  = true ;
+    bool handled = false ;
 
-    if( (   guiState->msg.keys & KEY_LEFT                      ) ||
-        ( ( guiState->msg.keys & ( KEY_DOWN | KNOB_LEFT ) ) &&
-        guiState->uiState.edit_mode                            )    )
+    guiState->sync_rtx = false ;
+
+    if( guiState->event.type == EVENT_TYPE_KBD )
     {
-        _ui_changePhoneticSpell( false );
+        if( guiState->event.payload & ( KEY_LEFT | KEY_DOWN | KNOB_LEFT )    )
+        {
+            _ui_changePhoneticSpell( false );
+            handled = true ;
+        }
+        else if( (   guiState->event.payload & KEY_RIGHT                    ) ||
+                 ( ( guiState->event.payload & ( KEY_UP | KNOB_RIGHT ) ) &&
+                 guiState->uiState.edit_mode                           )    )
+        {
+            _ui_changePhoneticSpell( true );
+            handled = true ;
+        }
     }
-    else if( (   guiState->msg.keys & KEY_RIGHT                    ) ||
-             ( ( guiState->msg.keys & ( KEY_UP | KNOB_RIGHT ) ) &&
-             guiState->uiState.edit_mode                           )    )
-    {
-        _ui_changePhoneticSpell( true );
-    }
-    else
-    {
-        guiState->handled = false ;
-    }
+
+    return handled ;
 
 }
 
-static void GuiValInp_Stubbed( GuiState_st* guiState )
+static bool GuiValInp_Stubbed( GuiState_st* guiState )
 {
+    bool handled = false ;
+
     guiState->sync_rtx = false ;
-    guiState->handled  = true ;
+
+    return handled ;
+
 }

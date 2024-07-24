@@ -406,7 +406,6 @@ typedef struct
     long long int   timeStamp ;
     Timer_st        timer ;
     bool            sync_rtx ;
-    bool            handled ;
     Page_st         page ;
     Layout_st       layout ;
     kbd_msg_t       msg ;
