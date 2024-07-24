@@ -37,11 +37,11 @@ void _ui_Draw_MainTop()
 {
 #ifdef RTC_PRESENT
     // Print clock on top bar
-    datetime_t local_time = utcToLocalTime(last_state.time,
+    datetime_t localTime = utcToLocalTime(last_state.time,
                                            last_state.settings.utc_timezone);
     gfx_print(layout.lines[ GUI_LINE_TOP ].pos, layout.lines[ GUI_LINE_TOP ].font, GFX_ALIGN_CENTER,
-              color_fg, "%02d:%02d:%02d", local_time.hour,
-              local_time.minute, local_time.second);
+              color_fg, "%02d:%02d:%02d", localTime.hour,
+              localTime.minute, localTime.second);
 #endif
 
     // Print the source callsign on top bar

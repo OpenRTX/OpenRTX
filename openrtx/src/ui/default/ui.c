@@ -602,8 +602,17 @@ void ui_InitGuiStateLayoutVars( Layout_st* layout )
         layout->vars[ index ].pos.w  =  0 ;
         layout->vars[ index ].value  = ~0 ;
     }
-    layout->varNumOf = 0 ;
-    layout->varIndex = 0 ;
+    layout->varNumOf         = 0 ;
+    layout->varIndex         = 0 ;
+    layout->varInputDisplay  = false ;
+    layout->varInputSelect   = 0 ;
+    layout->localTime.hour   = 0 ;
+    layout->localTime.minute = 0 ;
+    layout->localTime.second = 0 ;
+    layout->localTime.day    = 1 ;
+    layout->localTime.date   = 1 ;
+    layout->localTime.month  = 1 ;
+    layout->localTime.year   = 0 ;
 }
 
 void ui_Draw_SplashScreen( void )

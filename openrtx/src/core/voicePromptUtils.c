@@ -779,20 +779,20 @@ void vp_announceSettingsTimeDate()
 
     vp_queueStringTableEntry(&currentLanguage->timeAndDate);
 
-    datetime_t local_time = utcToLocalTime(state.time,
+    datetime_t localTime = utcToLocalTime(state.time,
                                            state.settings.utc_timezone);
 
     char buffer[16] = "\0";
-    snprintf(buffer, 16, "%02d/%02d/%02d", local_time.date, local_time.month,
-                                           local_time.year);
+    snprintf(buffer, 16, "%02d/%02d/%02d", localTime.date, localTime.month,
+                                           localTime.year);
     vp_queueString(buffer, VP_ANNOUNCE_COMMON_SYMBOLS |
                            VP_ANNOUNCE_LESS_COMMON_SYMBOLS);
 
     vp_queuePrompt(PROMPT_SILENCE);
     vp_queuePrompt(PROMPT_SILENCE);
 
-    snprintf(buffer, 16, "%02d:%02d:%02d", local_time.hour, local_time.minute,
-                                           local_time.second);
+    snprintf(buffer, 16, "%02d:%02d:%02d", localTime.hour, localTime.minute,
+                                           localTime.second);
     vp_queueString(buffer, VP_ANNOUNCE_COMMON_SYMBOLS |
                            VP_ANNOUNCE_LESS_COMMON_SYMBOLS);
 

@@ -63,6 +63,8 @@ static bool GuiValInp_ScreenBrightness( GuiState_st* guiState );
 static bool GuiValInp_ScreenContrast( GuiState_st* guiState );
 #endif // SCREEN_CONTRAST
 static bool GuiValInp_Timer( GuiState_st* guiState );
+static bool GuiValInp_Date( GuiState_st* guiState );
+static bool GuiValInp_Time( GuiState_st* guiState );
 #ifdef GPS_PRESENT
 static bool GuiValInp_GPSEnabled( GuiState_st* guiState );
 static bool GuiValInp_GPSTime( GuiState_st* guiState );
@@ -102,8 +104,8 @@ static const GuiValInp_fn GuiValInp_Table[ GUI_VAL_INP_NUM_OF ] =
 #endif
     GuiValInp_Timer             , // GUI_VAL_TIMER              0x09
     // Time and Date
-    GuiValInp_Stubbed           , // GUI_VAL_DATE               0x0A
-    GuiValInp_Stubbed           , // GUI_VAL_TIME               0x0B
+    GuiValInp_Date              , // GUI_VAL_DATE               0x0A
+    GuiValInp_Time              , // GUI_VAL_TIME               0x0B
     // GPS
 #ifdef GPS_PRESENT
     GuiValInp_GPSEnabled        , // GUI_VAL_GPS_ENABLED        0x0C
@@ -321,6 +323,227 @@ static bool GuiValInp_Timer( GuiState_st* guiState )
     return handled ;
 
 }
+
+static const uint8_t maxDaysInMonth[ 12 ] =
+{ 31 , 28 , 31 , 30 , 31 , 30 , 31 , 31 , 30 , 31 , 30 , 31 };
+
+static bool GuiValInp_Date( GuiState_st* guiState )
+{
+    datetime_t utc_time ;
+    uint8_t    maxDay  = maxDaysInMonth[ guiState->layout.localTime.month - 1 ] ;
+    bool       handled = false ;
+
+    if( guiState->layout.localTime.month == 2 )
+    {
+        if( !( guiState->layout.localTime.year % 4 ) )
+        {
+            maxDay++ ;
+        }
+    }
+
+    guiState->sync_rtx = false ;
+
+    if( guiState->event.type == EVENT_TYPE_KBD )
+    {
+        if( guiState->event.payload & KEY_UP )
+        {
+            if( guiState->layout.varInputSelect )
+            {
+                guiState->layout.varInputSelect-- ;
+                handled = true ;
+            }
+        }
+        else if( guiState->event.payload & KEY_DOWN )
+        {
+            if( guiState->layout.varInputSelect < VAR_INPUT_SELECT_2 )
+            {
+                guiState->layout.varInputSelect++ ;
+                handled = true ;
+            }
+        }
+
+        if( guiState->event.payload & ( KEY_LEFT  | KNOB_LEFT ) )
+        {
+            switch( guiState->layout.varInputSelect )
+            {
+                case VAR_INPUT_SELECT_0 :
+                {
+                    if( guiState->layout.localTime.date > 1 )
+                    {
+                        guiState->layout.localTime.date-- ;
+                    }
+                    break ;
+                }
+                case VAR_INPUT_SELECT_1 :
+                {
+                    if( guiState->layout.localTime.month > 1 )
+                    {
+                        guiState->layout.localTime.month-- ;
+                    }
+                    break ;
+                }
+                case VAR_INPUT_SELECT_2 :
+                {
+                    if( guiState->layout.localTime.year )
+                    {
+                        guiState->layout.localTime.year-- ;
+                    }
+                    break ;
+                }
+            }
+            handled = true ;
+        }
+        else if( guiState->event.payload & ( KEY_RIGHT | KNOB_RIGHT ) )
+        {
+            switch( guiState->layout.varInputSelect )
+            {
+                case VAR_INPUT_SELECT_0 :
+                {
+                    if( guiState->layout.localTime.date < maxDay )
+                    {
+                        guiState->layout.localTime.date++ ;
+                    }
+                    break ;
+                }
+                case VAR_INPUT_SELECT_1 :
+                {
+                    if( guiState->layout.localTime.month < 12 )
+                    {
+                        guiState->layout.localTime.month++ ;
+                    }
+                    break ;
+                }
+                case VAR_INPUT_SELECT_2 :
+                {
+                    if( guiState->layout.localTime.year < 99 )
+                    {
+                        guiState->layout.localTime.year++ ;
+                    }
+                    break ;
+                }
+            }
+            handled = true ;
+        }
+        else if( guiState->event.payload & KEY_ENTER )
+        {
+            if( guiState->layout.localTime.date > maxDay )
+            {
+                guiState->layout.localTime.date = maxDay ;
+            }
+            utc_time = localTimeToUtc( guiState->layout.localTime  ,
+                                       state.settings.utc_timezone   );
+            platform_setTime( utc_time );
+            handled = true ;
+        }
+
+    }
+
+    return handled ;
+
+}
+
+static bool GuiValInp_Time( GuiState_st* guiState )
+{
+    datetime_t utc_time ;
+    bool       handled  = false ;
+
+    guiState->sync_rtx = false ;
+
+    if( guiState->event.type == EVENT_TYPE_KBD )
+    {
+        if( guiState->event.payload & KEY_UP )
+        {
+            if( guiState->layout.varInputSelect )
+            {
+                guiState->layout.varInputSelect-- ;
+                handled = true ;
+            }
+        }
+        else if( guiState->event.payload & KEY_DOWN )
+        {
+            if( guiState->layout.varInputSelect < VAR_INPUT_SELECT_2 )
+            {
+                guiState->layout.varInputSelect++ ;
+                handled = true ;
+            }
+        }
+
+        if( guiState->event.payload & ( KEY_LEFT  | KNOB_LEFT ) )
+        {
+            switch( guiState->layout.varInputSelect )
+            {
+                case VAR_INPUT_SELECT_0 :
+                {
+                    if( guiState->layout.localTime.hour )
+                    {
+                        guiState->layout.localTime.hour-- ;
+                    }
+                    break ;
+                }
+                case VAR_INPUT_SELECT_1 :
+                {
+                    if( guiState->layout.localTime.minute )
+                    {
+                        guiState->layout.localTime.minute-- ;
+                    }
+                    break ;
+                }
+                case VAR_INPUT_SELECT_2 :
+                {
+                    if( guiState->layout.localTime.second )
+                    {
+                        guiState->layout.localTime.second-- ;
+                    }
+                    break ;
+                }
+            }
+            handled = true ;
+        }
+        else if( guiState->event.payload & ( KEY_RIGHT | KNOB_RIGHT ) )
+        {
+            switch( guiState->layout.varInputSelect )
+            {
+                case VAR_INPUT_SELECT_0 :
+                {
+                    if( guiState->layout.localTime.hour < 23 )
+                    {
+                        guiState->layout.localTime.hour++ ;
+                    }
+                    break ;
+                }
+                case VAR_INPUT_SELECT_1 :
+                {
+                    if( guiState->layout.localTime.minute < 59 )
+                    {
+                        guiState->layout.localTime.minute++ ;
+                    }
+                    break ;
+                }
+                case VAR_INPUT_SELECT_2 :
+                {
+                    if( guiState->layout.localTime.second < 59 )
+                    {
+                        guiState->layout.localTime.second++ ;
+                    }
+                    break ;
+                }
+            }
+            handled = true ;
+        }
+        else if( guiState->event.payload & KEY_ENTER )
+        {
+            utc_time = localTimeToUtc( guiState->layout.localTime  ,
+                                       state.settings.utc_timezone   );
+            platform_setTime( utc_time );
+            handled = true ;
+        }
+
+    }
+
+    return handled ;
+
+}
+
 #ifdef GPS_PRESENT
 // G_ENABLED
 static bool GuiValInp_GPSEnabled( GuiState_st* guiState )
@@ -364,7 +587,14 @@ static bool GuiValInp_GPSTime( GuiState_st* guiState )
         if( guiState->event.payload & ( KEY_LEFT  | KEY_DOWN | KNOB_LEFT  |
                                         KEY_RIGHT | KEY_UP   | KNOB_RIGHT   ) )
         {
-            state.gps_set_time = !state.gps_set_time ;
+            if( state.gps_set_time )
+            {
+                state.gps_set_time = false ;
+            }
+            else
+            {
+                state.gps_set_time = true ;
+            }
             vp_announceSettingsOnOffToggle( &currentLanguage->gpsSetTime ,
                                             guiState->queueFlags , state.gps_set_time );
             handled = true ;
@@ -387,13 +617,14 @@ static bool GuiValInp_GPSTimeZone( GuiState_st* guiState )
         if( guiState->event.payload & ( KEY_LEFT | KEY_DOWN | KNOB_LEFT ) )
         {
             state.settings.utc_timezone -= 1 ;
+            handled = true ;
         }
         else if( guiState->event.payload & ( KEY_RIGHT | KEY_UP | KNOB_RIGHT ) )
         {
             state.settings.utc_timezone += 1 ;
+            handled = true ;
         }
         vp_announceTimeZone( state.settings.utc_timezone , guiState->queueFlags );
-        handled = true ;
     }
 
     return handled ;
@@ -411,7 +642,7 @@ static bool GuiValInp_Offset( GuiState_st* guiState )
     if( guiState->event.type == EVENT_TYPE_KBD )
     {
         // If the entry is selected with enter we are in edit_mode
-        if( guiState->uiState.edit_mode )
+//@@@KL        if( guiState->uiState.edit_mode )
         {
     #ifdef UI_NO_KEYBOARD
             if( guiState->msg.long_press && ( guiState->event.payload & KEY_ENTER ) )
@@ -466,7 +697,7 @@ static bool GuiValInp_Offset( GuiState_st* guiState )
                 handled = true ;
             }
         }
-        else if( guiState->event.payload & KEY_ENTER )
+        /*else*/ if( guiState->event.payload & KEY_ENTER )
         {
             guiState->uiState.edit_mode      = true;
             guiState->uiState.new_offset     = 0 ;
@@ -490,7 +721,7 @@ static bool GuiValInp_Direction( GuiState_st* guiState )
     if( guiState->event.type == EVENT_TYPE_KBD )
     {
         // If the entry is selected with enter we are in edit_mode
-        if( guiState->uiState.edit_mode )
+//@@@KL        if( guiState->uiState.edit_mode )
         {
             if( guiState->event.payload & ( KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT | KNOB_LEFT | KNOB_RIGHT ) )
             {
@@ -514,7 +745,7 @@ static bool GuiValInp_Direction( GuiState_st* guiState )
                 guiState->uiState.edit_mode = false ;
             }
         }
-        else if( guiState->event.payload & ( KEY_UP | KNOB_LEFT ) )
+        /*else*/ if( guiState->event.payload & ( KEY_UP | KNOB_LEFT ) )
         {
             ui_States_MenuUp( guiState );
             handled = true ;
@@ -552,7 +783,7 @@ static bool GuiValInp_Step( GuiState_st* guiState )
     if( guiState->event.type == EVENT_TYPE_KBD )
     {
         // If the entry is selected with enter we are in edit_mode
-        if( guiState->uiState.edit_mode )
+//@@@KL        if( guiState->uiState.edit_mode )
         {
             if( guiState->event.payload & ( KEY_UP | KEY_RIGHT | KNOB_RIGHT ) )
             {
@@ -575,7 +806,7 @@ static bool GuiValInp_Step( GuiState_st* guiState )
                 guiState->uiState.edit_mode = false ;
             }
         }
-        else if( guiState->event.payload & ( KEY_UP | KNOB_LEFT ) )
+        /*else*/ if( guiState->event.payload & ( KEY_UP | KNOB_LEFT ) )
         {
             ui_States_MenuUp( guiState );
             handled = true ;
@@ -612,7 +843,7 @@ static bool GuiValInp_Callsign( GuiState_st* guiState )
 
     if( guiState->event.type == EVENT_TYPE_KBD )
     {
-        if( guiState->uiState.edit_mode )
+//@@@KL        if( guiState->uiState.edit_mode )
         {
             // Handle text input for M17 callsign
             if( guiState->event.payload & KEY_ENTER )
@@ -650,7 +881,7 @@ static bool GuiValInp_Callsign( GuiState_st* guiState )
                 handled = true ;
             }
         }
-        else
+        /*else*/
         {
             if( guiState->event.payload & KEY_ENTER )
             {
@@ -676,7 +907,7 @@ static bool GuiValInp_M17Can( GuiState_st* guiState )
 
     if( guiState->event.type == EVENT_TYPE_KBD )
     {
-        if( guiState->uiState.edit_mode )
+//@@@KL        if( guiState->uiState.edit_mode )
         {
             if( guiState->event.payload & ( KEY_DOWN | KNOB_LEFT ) )
             {
@@ -699,7 +930,7 @@ static bool GuiValInp_M17Can( GuiState_st* guiState )
                 handled = true ;
             }
         }
-        else
+        /*else*/
         {
             if( guiState->event.payload & KEY_ENTER )
             {
@@ -733,7 +964,7 @@ static bool GuiValInp_M17CanRx( GuiState_st* guiState )
 
     if( guiState->event.type == EVENT_TYPE_KBD )
     {
-        if( guiState->uiState.edit_mode )
+//@@@KL        if( guiState->uiState.edit_mode )
         {
             if( (   guiState->event.payload & ( KEY_LEFT | KEY_RIGHT                       )      ) ||
                 ( ( guiState->event.payload & ( KEY_DOWN | KNOB_LEFT | KEY_UP | KNOB_RIGHT ) ) &&
@@ -753,7 +984,7 @@ static bool GuiValInp_M17CanRx( GuiState_st* guiState )
                 handled = true ;
             }
         }
-        else
+        /*else*/
         {
             if( guiState->event.payload & KEY_ENTER )
             {

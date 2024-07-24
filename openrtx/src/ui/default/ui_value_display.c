@@ -665,21 +665,103 @@ static void GuiValDsp_Timer( GuiState_st* guiState )
 
 static void GuiValDsp_Date( GuiState_st* guiState )
 {
-    char       valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
-    datetime_t local_time = utcToLocalTime( state.time ,
-                                            state.settings.utc_timezone );
-    snprintf( valueBuffer , MAX_ENTRY_LEN , "%02d/%02d/%02d" ,
-              local_time.date , local_time.month , local_time.year );
+    char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
+
+    if( !guiState->update )
+    {
+        guiState->layout.localTime = utcToLocalTime( state.time ,
+                                                      state.settings.utc_timezone );
+    }
+
+    if( !guiState->layout.varInputDisplay )
+    {
+        snprintf( valueBuffer , MAX_ENTRY_LEN , "%02d/%02d/%02d" ,
+                  guiState->layout.localTime.date  ,
+                  guiState->layout.localTime.month ,
+                  guiState->layout.localTime.year    );
+    }
+    else
+    {
+        switch( guiState->layout.varInputSelect )
+        {
+            case VAR_INPUT_SELECT_0 :
+            {
+                snprintf( valueBuffer , MAX_ENTRY_LEN , "[%02d]/%02d/%02d" ,
+                          guiState->layout.localTime.date  ,
+                          guiState->layout.localTime.month ,
+                          guiState->layout.localTime.year    );
+                break ;
+            }
+            case VAR_INPUT_SELECT_1 :
+            {
+                snprintf( valueBuffer , MAX_ENTRY_LEN , "%02d/[%02d]/%02d" ,
+                          guiState->layout.localTime.date  ,
+                          guiState->layout.localTime.month ,
+                          guiState->layout.localTime.year    );
+                break ;
+            }
+            case VAR_INPUT_SELECT_2 :
+            {
+                snprintf( valueBuffer , MAX_ENTRY_LEN , "%02d/%02d/[%02d]" ,
+                          guiState->layout.localTime.date  ,
+                          guiState->layout.localTime.month ,
+                          guiState->layout.localTime.year    );
+                break ;
+            }
+        }
+    }
+
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 }
 
 static void GuiValDsp_Time( GuiState_st* guiState )
 {
-    char       valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
-    datetime_t local_time = utcToLocalTime( state.time ,
-                                            state.settings.utc_timezone );
-    snprintf( valueBuffer , MAX_ENTRY_LEN , "%02d:%02d:%02d" ,
-              local_time.hour , local_time.minute , local_time.second );
+    char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
+
+    if( !guiState->update )
+    {
+        guiState->layout.localTime = utcToLocalTime( state.time ,
+                                                      state.settings.utc_timezone );
+    }
+
+    if( !guiState->layout.varInputDisplay )
+    {
+        snprintf( valueBuffer , MAX_ENTRY_LEN , "%02d:%02d:%02d" ,
+                  guiState->layout.localTime.hour   ,
+                  guiState->layout.localTime.minute ,
+                  guiState->layout.localTime.second   );
+    }
+    else
+    {
+        switch( guiState->layout.varInputSelect )
+        {
+            case VAR_INPUT_SELECT_0 :
+            {
+                snprintf( valueBuffer , MAX_ENTRY_LEN , "[%02d]:%02d:%02d" ,
+                          guiState->layout.localTime.hour   ,
+                          guiState->layout.localTime.minute ,
+                          guiState->layout.localTime.second   );
+                break ;
+            }
+            case VAR_INPUT_SELECT_1 :
+            {
+                snprintf( valueBuffer , MAX_ENTRY_LEN , "%02d:[%02d]:%02d" ,
+                          guiState->layout.localTime.hour   ,
+                          guiState->layout.localTime.minute ,
+                          guiState->layout.localTime.second   );
+                break ;
+            }
+            case VAR_INPUT_SELECT_2 :
+            {
+                snprintf( valueBuffer , MAX_ENTRY_LEN , "%02d:%02d:[%02d]" ,
+                          guiState->layout.localTime.hour   ,
+                          guiState->layout.localTime.minute ,
+                          guiState->layout.localTime.second   );
+                break ;
+            }
+        }
+    }
+
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 }
 
@@ -1114,7 +1196,6 @@ static void GuiValDsp_Disp_ClearVarPos( GuiState_st* guiState )
     Pos_st   pos      = guiState->layout.vars[ guiState->layout.varIndex ].pos ;
     Color_st color_bg ;
 
-    pos.h++ ;
     ui_ColorLoad( &color_bg , guiState->layout.style.colorBG );
     gfx_drawRect( &pos , &color_bg , true );
 }

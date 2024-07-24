@@ -429,6 +429,13 @@ static bool GuiCmd_OnEvent( GuiState_st* guiState )
         {
             case ON_EVENT_ACTION_GO_BACK :
             {
+                if( guiState->page.level )
+                {
+                    if( guiState->page.levelList[ guiState->page.level - 1 ] == guiState->page.num )
+                    {
+                        guiState->page.level-- ;
+                    }
+                }
                 if( guiState->page.level < MAX_PAGE_DEPTH )
                 {
                     guiState->page.levelList[ guiState->page.level ] = guiState->page.num ;
@@ -1109,6 +1116,8 @@ static bool GuiCmd_ValueInput( GuiState_st* guiState )
         guiState->layout.varNumOf++ ;
     }
 
+    guiState->layout.varInputDisplay = true ;
+
     if( !guiState->update )
     {
         GuiValDsp_DisplayValue( guiState );
@@ -1122,6 +1131,8 @@ static bool GuiCmd_ValueInput( GuiState_st* guiState )
             guiState->page.renderPage = true ;
         }
     }
+
+    guiState->layout.varInputDisplay = false ;
 
     guiState->layout.varIndex++ ;
 

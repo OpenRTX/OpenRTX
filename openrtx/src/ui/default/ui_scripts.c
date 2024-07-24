@@ -132,7 +132,7 @@ static const uint8_t Page_MainMem[] =
     EVENT_START( EVENT_TYPE_STATUS , ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_RSSI ) ) ,
       VALUE_DSP( RSSI_METER ) ,
     EVENT_END ,
-    ON_EVENT_KBD_ENTER_GOTO_PAGE( PAGE_MENU_TOP ) ,
+    ON_EVENT_KEY_ENTER_GOTO_PAGE( PAGE_MENU_TOP ) ,
     PAGE_END
 };
 
@@ -157,7 +157,7 @@ static const uint8_t Page_MenuTop[] =
     EVENT_START( EVENT_TYPE_KBD , EVENT_STATUS_ALL_KEYS ) ,
       LIST( PAGE_MENU_TOP_LIST , LIST_DATA_SOURCE_SCRIPT , 5 ) ,
     EVENT_END ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -182,8 +182,8 @@ static const uint8_t Page_MenuBank[] =
     EVENT_START( EVENT_TYPE_KBD , EVENT_STATUS_ALL_KEYS ) ,
       LIST( PAGE_MENU_BANK_LIST , LIST_DATA_SOURCE_BANKS , 5 ) ,
     EVENT_END ,
-    ON_EVENT_KBD_ENTER_GOTO_PAGE( PAGE_MAIN_MEM ) ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ENTER_GOTO_PAGE( PAGE_MAIN_MEM ) ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -204,8 +204,8 @@ static const uint8_t Page_MenuChannel[] =
     EVENT_START( EVENT_TYPE_KBD , EVENT_STATUS_ALL_KEYS ) ,
       LIST( PAGE_MENU_CHANNEL_LIST , LIST_DATA_SOURCE_CHANNELS , 5 ) ,
     EVENT_END ,
-    ON_EVENT_KBD_ENTER_GOTO_PAGE( PAGE_MAIN_MEM ) ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ENTER_GOTO_PAGE( PAGE_MAIN_MEM ) ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -226,8 +226,8 @@ static const uint8_t Page_MenuContact[] =
     EVENT_START( EVENT_TYPE_KBD , EVENT_STATUS_ALL_KEYS ) ,
       LIST( PAGE_MENU_CONTACTS_LIST , LIST_DATA_SOURCE_CONTACTS , 5 ) ,
     EVENT_END ,
-    ON_EVENT_KBD_ENTER_GOTO_PAGE( PAGE_MAIN_MEM ) ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ENTER_GOTO_PAGE( PAGE_MAIN_MEM ) ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -246,7 +246,7 @@ static const uint8_t Page_MenuGPS[] =
 {
     TITLE , 'G','P','S' , NULL_CH , LINE_END ,
     VALUE_DSP( GPS ) ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -260,7 +260,7 @@ static const uint8_t Page_MenuSettings[] =
     EVENT_START( EVENT_TYPE_KBD , EVENT_STATUS_ALL_KEYS ) ,
       LIST( PAGE_MENU_SETTINGS_LIST , LIST_DATA_SOURCE_SCRIPT , 5 ) ,
     EVENT_END ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -287,7 +287,7 @@ static const uint8_t Page_SettingsDisplay[] =
     EVENT_START( EVENT_TYPE_KBD , EVENT_STATUS_ALL_KEYS ) ,
       LIST( PAGE_SETTINGS_DISPLAY_LIST , LIST_DATA_SOURCE_SCRIPT , 3 ) ,
     EVENT_END ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -320,7 +320,8 @@ static const uint8_t Page_Settings_Set_Brightness[] =
     TITLE , 'D','i','s','p','l','a','y' , NULL_CH , LINE_END ,
     ALIGN_LEFT , TEXT , 'B','r','i','g','h','t','n','e','s','s' , NULL_CH ,
     ALIGN_RIGHT , VALUE_INP( BRIGHTNESS ) ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ENTER_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 #endif // SCREEN_BRIGHTNESS
@@ -332,7 +333,8 @@ static const uint8_t Page_Settings_Set_Contrast[] =
     TITLE , 'D','i','s','p','l','a','y' , NULL_CH , LINE_END ,
     ALIGN_LEFT , TEXT , 'C','o','n','t','r','a','s','t' , NULL_CH ,
     ALIGN_RIGHT , VALUE_INP( CONTRAST ) ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ENTER_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 #endif // SCREEN_CONTRAST
@@ -343,7 +345,7 @@ static const uint8_t Page_Settings_Set_Timer[] =
     TITLE , 'D','i','s','p','l','a','y' , NULL_CH , LINE_END ,
     ALIGN_LEFT , TEXT , 'T','i','m','e','r' , NULL_CH ,
     ALIGN_RIGHT , VALUE_INP( TIMER ) ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -354,7 +356,7 @@ static const uint8_t Page_SettingsTimeDate[] =
     EVENT_START( EVENT_TYPE_KBD , EVENT_STATUS_ALL_KEYS ) ,
       LIST( PAGE_SETTINGS_TIMEDATE_LIST , LIST_DATA_SOURCE_SCRIPT , 2 ) ,
     EVENT_END ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -378,7 +380,8 @@ static const uint8_t Page_Settings_Set_Date[] =
 {
     TITLE , 'D','a','t','e', NULL_CH , LINE_END ,
     ALIGN_CENTER , VALUE_INP( DATE ) ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ENTER_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -387,7 +390,8 @@ static const uint8_t Page_Settings_Set_Time[] =
 {
     TITLE , 'T','i','m','e', NULL_CH , LINE_END ,
     ALIGN_CENTER , VALUE_INP( TIME ) ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ENTER_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -399,7 +403,7 @@ static const uint8_t Page_SettingsGPS[] =
     EVENT_START( EVENT_TYPE_KBD , EVENT_STATUS_ALL_KEYS ) ,
       LIST( PAGE_SETTINGS_GPS_LIST , LIST_DATA_SOURCE_SCRIPT , 3 ) ,
     EVENT_END ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -430,7 +434,8 @@ static const uint8_t Page_SettingsGPS_Set_Enabled[] =
     ALIGN_LEFT ,
     TEXT , 'G','P','S',' ','E','n','a','b','l','e','d' , NULL_CH ,
     ALIGN_RIGHT , VALUE_INP( GPS_ENABLED ) ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ENTER_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -441,7 +446,8 @@ static const uint8_t Page_SettingsGPS_Set_Time[] =
     ALIGN_LEFT ,
     TEXT , 'G','P','S',' ','S','e','t',' ','T','i','m','e' , NULL_CH ,
     ALIGN_RIGHT , VALUE_INP( GPS_TIME ) ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ENTER_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -452,7 +458,8 @@ static const uint8_t Page_SettingsGPS_Set_TimeZone[] =
     ALIGN_LEFT ,
     TEXT , 'U','T','C',' ','T','i','m','e','z','o','n','e', NULL_CH ,
     ALIGN_RIGHT , VALUE_INP( GPS_TIME_ZONE ) ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ENTER_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -465,7 +472,7 @@ static const uint8_t Page_SettingsRadio[] =
     EVENT_START( EVENT_TYPE_KBD , EVENT_STATUS_ALL_KEYS ) ,
       LIST( PAGE_SETTINGS_RADIO_LIST , LIST_DATA_SOURCE_SCRIPT , 3 ) ,
     EVENT_END ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -495,7 +502,8 @@ static const uint8_t Page_SettingsRadio_Set_Offset[] =
     TITLE , 'R','a','d','i','o',' ','S','e','t','t','i','n','g','s' , NULL_CH , LINE_END ,
     ALIGN_LEFT , TEXT , 'O','f','f','s','e','t', NULL_CH ,
     ALIGN_RIGHT , VALUE_INP( RADIO_OFFSET ) ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ENTER_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -505,7 +513,8 @@ static const uint8_t Page_SettingsRadio_Set_Direction[] =
     TITLE , 'R','a','d','i','o',' ','S','e','t','t','i','n','g','s' , NULL_CH , LINE_END ,
     ALIGN_LEFT , TEXT , 'D','i','r','e','c','t','i','o','n', NULL_CH ,
     ALIGN_RIGHT , VALUE_INP( RADIO_DIRECTION ) ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ENTER_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -515,7 +524,8 @@ static const uint8_t Page_SettingsRadio_Set_Step[] =
     TITLE , 'R','a','d','i','o',' ','S','e','t','t','i','n','g','s' , NULL_CH , LINE_END ,
     ALIGN_LEFT , TEXT , 'S','t','e','p' , NULL_CH ,
     ALIGN_RIGHT , VALUE_INP( RADIO_STEP ) ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ENTER_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -526,7 +536,7 @@ static const uint8_t Page_SettingsM17[] =
     EVENT_START( EVENT_TYPE_KBD , EVENT_STATUS_ALL_KEYS ) ,
       LIST( PAGE_SETTINGS_M17_LIST , LIST_DATA_SOURCE_SCRIPT , 3 ) ,
     EVENT_END ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -556,7 +566,8 @@ static const uint8_t Page_SettingsM17_Set_Callsign[] =
     TITLE , 'M','1','7',' ','S','e','t','t','i','n','g','s' , NULL_CH , LINE_END ,
     ALIGN_LEFT , TEXT , 'C','a','l','l','s','i','g','n' , NULL_CH ,
     ALIGN_RIGHT , VALUE_INP( M17_CALLSIGN ) ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ENTER_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -566,7 +577,8 @@ static const uint8_t Page_SettingsM17_Set_CAN[] =
     TITLE , 'M','1','7',' ','S','e','t','t','i','n','g','s' , NULL_CH , LINE_END ,
     ALIGN_LEFT , TEXT , 'C','A','N' , NULL_CH ,
     ALIGN_RIGHT , VALUE_INP( M17_CAN ) ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ENTER_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -576,7 +588,7 @@ static const uint8_t Page_SettingsM17_Set_CAN_Rx_Check[] =
     TITLE , 'M','1','7',' ','S','e','t','t','i','n','g','s' , NULL_CH , LINE_END ,
     ALIGN_LEFT , TEXT , 'C','A','N',' ','R','X',' ','C','h','e','c','k' , NULL_CH ,
     ALIGN_RIGHT , VALUE_INP( M17_CAN_RX_CHECK ) ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -587,7 +599,7 @@ static const uint8_t Page_SettingsVoice[] =
     EVENT_START( EVENT_TYPE_KBD , EVENT_STATUS_ALL_KEYS ) ,
       LIST( PAGE_SETTINGS_M17_LIST , LIST_DATA_SOURCE_SCRIPT , 2 ) ,
     EVENT_END ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -612,7 +624,8 @@ static const uint8_t Page_SettingsVoice_Set_Level[] =
     TITLE , 'V','o','i','c','e' , NULL_CH , LINE_END ,
     ALIGN_LEFT , TEXT , 'V','o','i','c','e' , NULL_CH ,
     ALIGN_RIGHT , VALUE_INP( LEVEL ) ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ENTER_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -622,7 +635,8 @@ static const uint8_t Page_SettingsVoice_Set_Phonetic[] =
     TITLE , 'V','o','i','c','e' , NULL_CH , LINE_END ,
     ALIGN_LEFT , TEXT , 'P','h','o','n','e','t','i','c' , NULL_CH ,
     ALIGN_RIGHT , VALUE_INP( PHONETIC ) ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ENTER_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -634,7 +648,7 @@ static const uint8_t Page_SettingsResetToDefaults[] =
     TEXT , 'T','o',' ','R','e','s','e','t' , NULL_CH ,
     LINE_END ,
     TEXT , 'P','r','e','s','s',' ','E','n','t','e','r',' ','T','w','i','c','e' , NULL_CH ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -643,7 +657,7 @@ static const uint8_t Page_MenuBackupRestore[] =
 {
     TITLE , 'B','a','c','k','u','p',' ','A','n','d',' ','R','e','s','t','o','r','e' , NULL_CH ,
     VALUE_DSP( BACKUP_RESTORE ) ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -657,7 +671,7 @@ static const uint8_t Page_MenuBackup[] =
     TEXT , 'T','o',' ','B','a','c','k','u','p',' ','F','l','a','s','h',' ','A','n','d' , NULL_CH ,
     LINE_END ,
     TEXT , 'P','r','e','s','s',' ','P','T','T',' ','t','o',' ','S','t','a','r','t' , NULL_CH ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -671,7 +685,7 @@ static const uint8_t Page_MenuRestore[] =
     TEXT , 'T','o',' ','R','e','s','t','o','r','e',' ','F','l','a','s','h',' ','A','n','d' , NULL_CH ,
     LINE_END ,
     TEXT , 'P','r','e','s','s',' ','P','T','T',' ','t','o',' ','S','t','a','r','t' , NULL_CH ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -710,7 +724,7 @@ static const uint8_t Page_MenuInfo[] =
     TEXT , 'R','a','d','i','o',' ','F','W' , NULL_CH ,
     ALIGN_RIGHT , VALUE_DSP( RADIO_FW ) ,
 #endif // PLATFORM_TTWRPLUS
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -724,7 +738,7 @@ static const uint8_t Page_LowBat[] =
     LINE_END ,
     TEXT , 'P','r','e','s','s',' ','A','n','y',' ','B','u','t','t','o','n' , NULL_CH ,
     VALUE_DSP( LOW_BATTERY ) ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -756,7 +770,7 @@ static const uint8_t Page_About[] =
     TEXT ,
      'K','i','m',' ',
      'V','K','6','K','L', NULL_CH ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 
@@ -767,7 +781,7 @@ static const uint8_t Page_Stubbed[] =
     TEXT ,
      'P','a','g','e',' ',
      'S','t','u','b','b','e','d', NULL_CH ,
-    ON_EVENT_KBD_ESC_GO_BACK ,
+    ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
 

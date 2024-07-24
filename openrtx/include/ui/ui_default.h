@@ -353,30 +353,40 @@ typedef struct
  */
 typedef struct
 {
-    uint16_t hline_h ;
-    uint16_t menu_h ;
-    uint16_t bottom_pad ;
-    uint16_t status_v_pad ;
-    uint16_t horizontal_pad ;
-    uint16_t text_v_offset ;
-    uint8_t  numOfEntries ;
-    uint8_t  scrollOffset ;
-    Line_st  line ;
-    Style_st style ;
-    Pos_st   itemPos ;
-    Line_st  lines[ GUI_LINE_NUM_OF ] ;
-    Style_st styles[ GUI_STYLE_NUM_OF ] ;
-    uint8_t  lineIndex ;
-    List_st  list ;
-    Link_st  link ;
-    Var_st   vars[ GUI_VAR_NUM_OF ] ;
-    uint8_t  varNumOf ;
-    uint8_t  varIndex ;
-    Font_st  input_font ;
-    Font_st  menu_font ;
-    Font_st  mode_font_big ;
-    Font_st  mode_font_small ;
+    uint16_t   hline_h ;
+    uint16_t   menu_h ;
+    uint16_t   bottom_pad ;
+    uint16_t   status_v_pad ;
+    uint16_t   horizontal_pad ;
+    uint16_t   text_v_offset ;
+    uint8_t    numOfEntries ;
+    uint8_t    scrollOffset ;
+    Line_st    line ;
+    Style_st   style ;
+    Pos_st     itemPos ;
+    Line_st    lines[ GUI_LINE_NUM_OF ] ;
+    Style_st   styles[ GUI_STYLE_NUM_OF ] ;
+    uint8_t    lineIndex ;
+    List_st    list ;
+    Link_st    link ;
+    Var_st     vars[ GUI_VAR_NUM_OF ] ;
+    uint8_t    varNumOf ;
+    uint8_t    varIndex ;
+    bool       varInputDisplay ;
+    uint8_t    varInputSelect ;
+    datetime_t localTime ;
+    Font_st    input_font ;
+    Font_st    menu_font ;
+    Font_st    mode_font_big ;
+    Font_st    mode_font_small ;
 }Layout_st;
+
+enum
+{
+    VAR_INPUT_SELECT_0 ,
+    VAR_INPUT_SELECT_1 ,
+    VAR_INPUT_SELECT_2
+};
 
 typedef struct
 {

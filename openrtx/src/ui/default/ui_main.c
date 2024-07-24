@@ -248,12 +248,12 @@ static void ui_Draw_MainTop( GuiState_st* guiState , Event_st* event )
             gfx_clearRectangle( &start );
 
             // Print clock on top bar
-            datetime_t local_time = utcToLocalTime( last_state.time ,
+            datetime_t localTime = utcToLocalTime( last_state.time ,
                                                     last_state.settings.utc_timezone );
             gfx_print( &lineTop->pos ,
                        styleTop->font.size , GFX_ALIGN_CENTER ,
-                       &color_fg , "%02d:%02d:%02d" , local_time.hour ,
-                       local_time.minute , local_time.second );
+                       &color_fg , "%02d:%02d:%02d" , localTime.hour ,
+                       localTime.minute , localTime.second );
             guiState->page.renderPage = true ;
         }
 #endif // RTC_PRESENT

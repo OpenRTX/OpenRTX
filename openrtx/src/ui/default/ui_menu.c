@@ -409,7 +409,7 @@ void _ui_Draw_SettingsTimeDate( GuiState_st* guiState )
     ui_ColorLoad( &color_fg , COLOR_FG );
 
     gfx_clearScreen();
-    datetime_t local_time = utcToLocalTime( last_state.time ,
+    datetime_t localTime = utcToLocalTime( last_state.time ,
                                             last_state.settings.utc_timezone );
     // Print "Time&Date" on top bar
     gfx_print( &lineTop->pos , styleTop->font.size , GFX_ALIGN_CENTER ,
@@ -417,10 +417,10 @@ void _ui_Draw_SettingsTimeDate( GuiState_st* guiState )
     // Print current time and date
     gfx_print( &line2->pos , guiState->layout.input_font.size , GFX_ALIGN_CENTER ,
                &color_fg , "%02d/%02d/%02d" ,
-               local_time.date , local_time.month , local_time.year );
+               localTime.date , localTime.month , localTime.year );
     gfx_print( &line3Large->pos , guiState->layout.input_font.size , GFX_ALIGN_CENTER ,
                &color_fg , "%02d:%02d:%02d" ,
-               local_time.hour , local_time.minute , local_time.second );
+               localTime.hour , localTime.minute , localTime.second );
 }
 
 void _ui_Draw_SettingsTimeDateSet( GuiState_st* guiState , Event_st* event )
