@@ -215,8 +215,7 @@ stm32f405_src = ['platform/mcu/STM32F4xx/init.c',
                  'platform/mcu/STM32F4xx/drivers/adc_stm32.c',
                  'platform/drivers/audio/stm32_dac.cpp',
                  'platform/drivers/audio/stm32_adc.cpp',
-                 'platform/drivers/audio/stm32_pwm.cpp',
-                 'platform/drivers/keyboard/cap1206.c']
+                 'platform/drivers/audio/stm32_pwm.cpp']
 
 stm32f405_inc = ['platform/mcu/STM32F4xx',
                  'platform/mcu/STM32F4xx/drivers',
@@ -421,7 +420,8 @@ mod17_src = ['platform/targets/Module17/platform.c',
              'platform/drivers/baseband/radio_Mod17.cpp',
              'platform/drivers/audio/audio_Mod17.c',
              'platform/drivers/audio/MAX9814_Mod17.cpp',
-             'platform/drivers/baseband/MCP4551.c']
+             'platform/drivers/baseband/MCP4551.c',
+             'platform/drivers/keyboard/cap1206.c']
 
 mod17_inc = ['platform/targets/Module17']
 mod17_def = {'PLATFORM_MOD17': ''}
