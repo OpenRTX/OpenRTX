@@ -93,7 +93,7 @@ static Thread *lcdWaiting = 0;
 
 void __attribute__((used)) DmaImpl()
 {
-    DMA2->HIFCR |= DMA_HIFCR_CTCIF7 | DMA_HIFCR_CTEIF7;    /* Clear flags */
+    DMA2->HIFCR |= DMA_HIFCR_CTCIF6 | DMA_HIFCR_CTEIF6;    /* Clear flags */
     gpio_setPin(LCD_CS);
 
     if(lcdWaiting == 0) return;
@@ -103,7 +103,7 @@ void __attribute__((used)) DmaImpl()
     lcdWaiting = 0;
 }
 
-void __attribute__((naked)) DMA2_Stream7_IRQHandler()
+void __attribute__((naked)) DMA2_Stream6_IRQHandler()
 {
     saveContext();
     asm volatile("bl _Z7DmaImplv");
@@ -132,9 +132,9 @@ void display_init()
     RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
     __DSB();
 
-    NVIC_ClearPendingIRQ(DMA2_Stream7_IRQn);
-    NVIC_SetPriority(DMA2_Stream7_IRQn, 14);
-    NVIC_EnableIRQ(DMA2_Stream7_IRQn);
+    NVIC_ClearPendingIRQ(DMA2_Stream6_IRQn);
+    NVIC_SetPriority(DMA2_Stream6_IRQn, 14);
+    NVIC_EnableIRQ(DMA2_Stream6_IRQn);
 
     /*
      * Turn on FSMC, used to efficiently manage the display data and control
@@ -466,16 +466,16 @@ void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
     writeCmd(CMD_RAMWR);
 
     /*
-     * Configure DMA2 stream 7 to send framebuffer data to the screen.
+     * Configure DMA2 stream 6 to send framebuffer data to the screen.
      * Both source and destination memory sizes are configured to 8 bit, thus
      * we have to set the transfer size to twice the framebuffer size, since
      * this one is made of 16 bit variables.
      */
-    DMA2_Stream7->NDTR = (endRow - startRow) * CONFIG_SCREEN_WIDTH * sizeof(uint16_t);
-    DMA2_Stream7->PAR  = ((uint32_t ) frameBuffer + (startRow * CONFIG_SCREEN_WIDTH
+    DMA2_Stream6->NDTR = (endRow - startRow) * CONFIG_SCREEN_WIDTH * sizeof(uint16_t);
+    DMA2_Stream6->PAR  = ((uint32_t ) frameBuffer + (startRow * CONFIG_SCREEN_WIDTH
                                                      * sizeof(uint16_t)));
-    DMA2_Stream7->M0AR = LCD_FSMC_ADDR_DATA;
-    DMA2_Stream7->CR = DMA_SxCR_CHSEL         /* Channel 7                   */
+    DMA2_Stream6->M0AR = LCD_FSMC_ADDR_DATA;
+    DMA2_Stream6->CR = DMA_SxCR_CHSEL         /* Channel 6                   */
                      | DMA_SxCR_PINC          /* Increment source pointer    */
                      | DMA_SxCR_DIR_1         /* Memory to memory            */
                      | DMA_SxCR_TCIE          /* Transfer complete interrupt */
