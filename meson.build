@@ -193,9 +193,7 @@ gdx_src = ['openrtx/src/core/xmodem.c',
 ## STM32F405
 ##
 
-stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.cpp',
-                 'platform/mcu/STM32F4xx/boot/bsp.cpp',
-                 'platform/mcu/STM32F4xx/boot/libc_integration.cpp',
+stm32f405_src = ['platform/mcu/STM32F4xx/init.c',
                  'platform/mcu/STM32F4xx/drivers/usb/usb_bsp.c',
                  'platform/mcu/STM32F4xx/drivers/usb/usb_core.c',
                  'platform/mcu/STM32F4xx/drivers/usb/usb_dcd.c',
@@ -210,7 +208,6 @@ stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.cpp',
                  'platform/mcu/STM32F4xx/drivers/delays.cpp',
                  'platform/mcu/STM32F4xx/drivers/rtc.c',
                  'platform/mcu/STM32F4xx/drivers/SPI2.c',
-                 'platform/mcu/STM32F4xx/drivers/USART3.cpp',
                  'platform/mcu/STM32F4xx/drivers/flash.c',
                  'platform/mcu/STM32F4xx/drivers/rng.c',
                  'platform/mcu/STM32F4xx/drivers/i2c_stm32.c',
@@ -219,12 +216,9 @@ stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.cpp',
                  'platform/drivers/audio/stm32_dac.cpp',
                  'platform/drivers/audio/stm32_adc.cpp',
                  'platform/drivers/audio/stm32_pwm.cpp',
-                 'platform/drivers/keyboard/cap1206.c',
-                 'platform/mcu/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c']
+                 'platform/drivers/keyboard/cap1206.c']
 
-stm32f405_inc = ['platform/mcu/CMSIS/Include',
-                 'platform/mcu/CMSIS/Device/ST/STM32F4xx/Include',
-                 'platform/mcu/STM32F4xx',
+stm32f405_inc = ['platform/mcu/STM32F4xx',
                  'platform/mcu/STM32F4xx/drivers',
                  'platform/mcu/STM32F4xx/drivers/usb']
 
@@ -341,7 +335,10 @@ md3x0_src = ['platform/drivers/NVM/nvmem_MD3x0.c',
              'platform/targets/MD-3x0/platform.c']
 
 md3x0_inc = ['platform/targets/MD-3x0']
-md3x0_def = {'PLATFORM_MD3x0': '', 'timegm': 'mktime'}
+md3x0_def = {'PLATFORM_MD3x0': '',
+                       'timegm': 'mktime',
+                       'SERIAL3_EXCLUDE': '',
+                       'CONSOLE_SERIAL': '1'}
 
 md3x0_src += openrtx_src + stm32f405_src + miosix_stm32f4_src + ui_src_default + mdx_src
 md3x0_inc += openrtx_inc + stm32f405_inc + miosix_stm32f4_inc
@@ -363,7 +360,10 @@ mduv3x0_src = ['platform/drivers/NVM/nvmem_MDUV3x0.c',
                'platform/drivers/baseband/HR_C6000_UV3x0.cpp']
 
 mduv3x0_inc = ['platform/targets/MD-UV3x0']
-mduv3x0_def =  {'PLATFORM_MDUV3x0': '', 'timegm': 'mktime', 'VECT_TAB_OFFSET': '0xC000'}
+mduv3x0_def =  {'PLATFORM_MDUV3x0': '',
+                          'timegm': 'mktime',
+                          'CONSOLE_SERIAL': '3',
+                          'SERIAL1_EXCLUDE': ''}
 
 mduv3x0_src += openrtx_src + stm32f405_src + miosix_stm32f4_src + ui_src_default + mdx_src
 mduv3x0_inc += openrtx_inc + stm32f405_inc + miosix_stm32f4_inc
