@@ -79,7 +79,7 @@ void gpio_setOutputSpeed(const void *port, const uint8_t pin, const enum Speed s
  */
 static inline void gpio_setPin(const void *port, const uint8_t pin)
 {
-    ((GPIO_TypeDef *)(port))->BSRRL = (1 << pin);
+    ((GPIO_TypeDef *)(port))->BSRR = (1 << pin);
 }
 
 /**
@@ -91,7 +91,7 @@ static inline void gpio_setPin(const void *port, const uint8_t pin)
  */
 static inline void gpio_clearPin(const void *port, const uint8_t pin)
 {
-    ((GPIO_TypeDef *)(port))->BSRRH = (1 << pin);
+    ((GPIO_TypeDef *)(port))->BSRR = (1 << (pin+16));
 }
 
 /**

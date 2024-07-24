@@ -28,16 +28,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "usb_core.h"
 #include "usb_bsp.h"
-
-/* Workaround to suppress -Wattributes warning */
-struct __attribute__((packed, aligned(1))) T_UINT32_WRITE { uint32_t v; };
-#define __UNALIGNED_UINT32_WRITE(addr, val) \
-        (void)((((struct T_UINT32_WRITE *)(void *)(addr))->v) = (val))
-
-struct __attribute__((packed, aligned(1))) T_UINT32_READ { uint32_t v; };
-#define __UNALIGNED_UINT32_READ(addr) \
-        (((const struct T_UINT32_READ *)(const void *)(addr))->v)
-
+#include <arch/common/CMSIS/Include/cmsis_gcc.h>
 
 /** @addtogroup USB_OTG_DRIVER
 * @{
