@@ -78,6 +78,12 @@ static uint16_t bk1080_read_reg(bk1080_reg_t reg);
 void bk1080_init(void);
 
 /**
+ * @brief Set frequency
+ * 
+ */
+void bk1080_set_frequency(uint16_t freq);
+
+/**
  * @brief Convert channel to frequency
  *
  * @param channel
