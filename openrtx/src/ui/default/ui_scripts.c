@@ -59,7 +59,7 @@ static const uint8_t Page_MainInput[] =
     EVENT_START( EVENT_TYPE_STATUS , ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_DISPLAY_TIME_TICK ) ) ,
       VALUE_DSP( LOCK_STATE ) ,
     EVENT_END ,
-//@@@KL    VALUE_INP( VFO_MIDDLE_INPUT ) ,
+    VALUE_INP( FREQUENCY ) ,
     EVENT_START( EVENT_TYPE_STATUS , ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_RSSI ) ) ,
       VALUE_DSP( RSSI_METER ) ,
     EVENT_END ,
@@ -345,6 +345,7 @@ static const uint8_t Page_Settings_Set_Timer[] =
     TITLE , 'D','i','s','p','l','a','y' , NULL_CH , LINE_END ,
     ALIGN_LEFT , TEXT , 'T','i','m','e','r' , NULL_CH ,
     ALIGN_RIGHT , VALUE_INP( TIMER ) ,
+    ON_EVENT_KEY_ENTER_GO_BACK ,
     ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
