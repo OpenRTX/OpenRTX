@@ -228,9 +228,8 @@ stm32f405_def = {'STM32F405xx': '', 'HSE_VALUE':'8000000', 'SYSCLK_FREQ_168MHz' 
 ## MK22FN512
 ##
 
-mk22fn512_src = ['platform/mcu/MK22FN512xxx12/boot/startup.cpp',
-                 'platform/mcu/MK22FN512xxx12/boot/bsp.cpp',
-                 'platform/mcu/MK22FN512xxx12/boot/libc_integration.cpp',
+mk22fn512_src = ['platform/mcu/MK22FN512xxx12/init_12_288M.c',
+                 'platform/mcu/MK22FN512xxx12/libc_integration.cpp',
                  'platform/mcu/MK22FN512xxx12/drivers/gpio.c',
                  'platform/mcu/MK22FN512xxx12/drivers/delays.cpp',
                  'platform/mcu/MK22FN512xxx12/drivers/I2C0.c',
@@ -241,12 +240,9 @@ mk22fn512_src = ['platform/mcu/MK22FN512xxx12/boot/startup.cpp',
                  'platform/mcu/MK22FN512xxx12/drivers/usb/usb_device_descriptor.c',
                  'platform/mcu/MK22FN512xxx12/drivers/usb/usb_device_khci.c',
                  'platform/mcu/MK22FN512xxx12/drivers/usb/usb_osa_bm.c',
-                 'platform/mcu/MK22FN512xxx12/drivers/usb_vcom.c',
-                 'platform/mcu/CMSIS/Device/NXP/MK22FN512xxx12/Source/system_MK22F51212.c']
+                 'platform/mcu/MK22FN512xxx12/drivers/usb_vcom.c']
 
-mk22fn512_inc = ['platform/mcu/CMSIS/Include',
-                 'platform/mcu/CMSIS/Device/NXP/MK22FN512xxx12/Include',
-                 'platform/mcu/MK22FN512xxx12',
+mk22fn512_inc = ['platform/mcu/MK22FN512xxx12',
                  'platform/mcu/MK22FN512xxx12/drivers']
 
 mk22fn512_def = {}
