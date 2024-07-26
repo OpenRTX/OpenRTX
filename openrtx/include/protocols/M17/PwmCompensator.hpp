@@ -59,11 +59,11 @@ public:
     float operator()(const float& input)
     {
         u[0] = input;
-        y[0] = (a/d)*(u[0])
-             + (b/d)*(u[1])
-             + (c/d)*(u[2])
-             - (e/d)*(y[1])
-             - (f/d)*(y[2]);
+        y[0] = b[0] * u[0]
+             + b[1] * u[1]
+             + b[2] * u[2]
+             - a[1] * y[1]
+             - a[2] * y[2];
 
         for(size_t i = 2; i > 0; i--)
         {
@@ -71,7 +71,7 @@ public:
             y[i] = y[i - 1];
         }
 
-        return y[0] * 0.5f;
+        return y[0];
     }
 
     /**
@@ -85,12 +85,13 @@ public:
 
 private:
 
-    static constexpr float a =  4982680082321166792352.0f;
-    static constexpr float b = -6330013275146484168000.0f;
-    static constexpr float c =  1871109008789062500000.0f;
-    static constexpr float d =  548027992248535162477.0f;
-    static constexpr float e = -24496793746948241250.0f;
-    static constexpr float f =  244617462158203125.0f;
+    static constexpr float b[3]={
+        4.098580379420818f, -5.206850085165959f, 1.539109584496514f
+    };
+
+    static constexpr float a[3]={
+        0.0f, -0.044699895066380f, 0.000446359429843f
+    };
 
     std::array< float, 3 > u;   ///< History of past inputs.
     std::array< float, 3 > y;   ///< History of past outputs.
