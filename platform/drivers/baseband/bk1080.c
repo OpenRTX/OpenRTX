@@ -186,6 +186,12 @@ void bk1080_init(void)
     }
 }
 
+void bk1080_set_frequency(uint16_t freq)
+{
+    uint16_t channel = bk1080_freq_to_chan(freq);
+    bk1080_set_channel(channel);
+}
+
 uint16_t bk1080_chan_to_freq(uint16_t channel){
     uint16_t reg5 = bk1080_read_reg(BK1080_REG_05);
     uint16_t band = 0;
