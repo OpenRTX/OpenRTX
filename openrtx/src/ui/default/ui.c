@@ -102,6 +102,7 @@ extern long long getTick();
 
 static void ui_InitUIState( UI_State_st* uiState );
 static void ui_InitGuiState( GuiState_st* guiState );
+static void ui_InitGuiStateEdit( Edit_st* edit );
 static void ui_InitGuiStateEvent( Event_st* event );
 static void ui_InitGuiStatePage( Page_st* page );
 static void ui_InitGuiStateLayout( Layout_st* layout );
@@ -391,6 +392,7 @@ static void ui_InitUIState( UI_State_st* uiState )
 
 static void ui_InitGuiState( GuiState_st* guiState )
 {
+    ui_InitGuiStateEdit( &guiState->edit );
     ui_InitGuiStateEvent( &guiState->event );
     guiState->update                = false ;
     guiState->pageHasEvents         = false ;
@@ -403,6 +405,17 @@ static void ui_InitGuiState( GuiState_st* guiState )
     guiState->sync_rtx              = false ;
     ui_InitGuiStatePage( &guiState->page );
     ui_InitGuiStateLayout( &guiState->layout );
+}
+
+static void ui_InitGuiStateEdit( Edit_st* edit )
+{
+    edit->localTime.hour   = 0 ;
+    edit->localTime.minute = 0 ;
+    edit->localTime.second = 0 ;
+    edit->localTime.day    = 1 ;
+    edit->localTime.date   = 1 ;
+    edit->localTime.month  = 1 ;
+    edit->localTime.year   = 0 ;
 }
 
 static void ui_InitGuiStateEvent( Event_st* event )
@@ -606,13 +619,6 @@ void ui_InitGuiStateLayoutVars( Layout_st* layout )
     layout->varIndex         = 0 ;
     layout->varInputDisplay  = false ;
     layout->varInputSelect   = 0 ;
-    layout->localTime.hour   = 0 ;
-    layout->localTime.minute = 0 ;
-    layout->localTime.second = 0 ;
-    layout->localTime.day    = 1 ;
-    layout->localTime.date   = 1 ;
-    layout->localTime.month  = 1 ;
-    layout->localTime.year   = 0 ;
 }
 
 void ui_Draw_SplashScreen( void )

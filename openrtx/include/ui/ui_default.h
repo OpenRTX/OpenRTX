@@ -374,7 +374,6 @@ typedef struct
     uint8_t    varIndex ;
     bool       varInputDisplay ;
     uint8_t    varInputSelect ;
-    datetime_t localTime ;
     Font_st    input_font ;
     Font_st    menu_font ;
     Font_st    mode_font_big ;
@@ -406,6 +405,16 @@ typedef struct
 
 typedef struct
 {
+    datetime_t localTime ;
+    settings_t settings ;
+    uint8_t    step_index ;
+    bool       gps_set_time ;
+    channel_t  channel ;
+}Edit_st;
+
+typedef struct
+{
+    Edit_st         edit ;
     UI_State_st     uiState ;
     Event_st        event ;
     bool            update ;

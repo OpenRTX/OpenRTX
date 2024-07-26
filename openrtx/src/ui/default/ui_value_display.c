@@ -638,7 +638,12 @@ static void GuiValDsp_ScreenBrightness( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
-    snprintf( valueBuffer , MAX_ENTRY_LEN , "%d" , state.settings.brightness );
+    if( !guiState->update )
+    {
+        guiState->edit.settings.brightness = state.settings.brightness ;
+    }
+
+    snprintf( valueBuffer , MAX_ENTRY_LEN , "%d" , guiState->edit.settings.brightness );
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
@@ -648,7 +653,12 @@ static void GuiValDsp_ScreenContrast( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
-    snprintf( valueBuffer , MAX_ENTRY_LEN , "%d" , state.settings.contrast );
+    if( !guiState->update )
+    {
+        guiState->edit.settings.contrast = state.settings.contrast ;
+    }
+
+    snprintf( valueBuffer , MAX_ENTRY_LEN , "%d" , guiState->edit.settings.contrast );
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
@@ -657,8 +667,13 @@ static void GuiValDsp_Timer( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
+    if( !guiState->update )
+    {
+        guiState->edit.settings.display_timer = state.settings.display_timer ;
+    }
+
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%s" ,
-              display_timer_values[ state.settings.display_timer ] );
+              display_timer_values[ guiState->edit.settings.display_timer ] );
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
@@ -669,16 +684,16 @@ static void GuiValDsp_Date( GuiState_st* guiState )
 
     if( !guiState->update )
     {
-        guiState->layout.localTime = utcToLocalTime( state.time ,
-                                                      state.settings.utc_timezone );
+        guiState->edit.localTime = utcToLocalTime( state.time ,
+                                                   state.settings.utc_timezone );
     }
 
     if( !guiState->layout.varInputDisplay )
     {
         snprintf( valueBuffer , MAX_ENTRY_LEN , "%02d/%02d/%02d" ,
-                  guiState->layout.localTime.date  ,
-                  guiState->layout.localTime.month ,
-                  guiState->layout.localTime.year    );
+                  guiState->edit.localTime.date  ,
+                  guiState->edit.localTime.month ,
+                  guiState->edit.localTime.year    );
     }
     else
     {
@@ -687,25 +702,25 @@ static void GuiValDsp_Date( GuiState_st* guiState )
             case VAR_INPUT_SELECT_0 :
             {
                 snprintf( valueBuffer , MAX_ENTRY_LEN , "[%02d]/%02d/%02d" ,
-                          guiState->layout.localTime.date  ,
-                          guiState->layout.localTime.month ,
-                          guiState->layout.localTime.year    );
+                          guiState->edit.localTime.date  ,
+                          guiState->edit.localTime.month ,
+                          guiState->edit.localTime.year    );
                 break ;
             }
             case VAR_INPUT_SELECT_1 :
             {
                 snprintf( valueBuffer , MAX_ENTRY_LEN , "%02d/[%02d]/%02d" ,
-                          guiState->layout.localTime.date  ,
-                          guiState->layout.localTime.month ,
-                          guiState->layout.localTime.year    );
+                          guiState->edit.localTime.date  ,
+                          guiState->edit.localTime.month ,
+                          guiState->edit.localTime.year    );
                 break ;
             }
             case VAR_INPUT_SELECT_2 :
             {
                 snprintf( valueBuffer , MAX_ENTRY_LEN , "%02d/%02d/[%02d]" ,
-                          guiState->layout.localTime.date  ,
-                          guiState->layout.localTime.month ,
-                          guiState->layout.localTime.year    );
+                          guiState->edit.localTime.date  ,
+                          guiState->edit.localTime.month ,
+                          guiState->edit.localTime.year    );
                 break ;
             }
         }
@@ -720,16 +735,16 @@ static void GuiValDsp_Time( GuiState_st* guiState )
 
     if( !guiState->update )
     {
-        guiState->layout.localTime = utcToLocalTime( state.time ,
-                                                      state.settings.utc_timezone );
+        guiState->edit.localTime = utcToLocalTime( state.time ,
+                                                   state.settings.utc_timezone );
     }
 
     if( !guiState->layout.varInputDisplay )
     {
         snprintf( valueBuffer , MAX_ENTRY_LEN , "%02d:%02d:%02d" ,
-                  guiState->layout.localTime.hour   ,
-                  guiState->layout.localTime.minute ,
-                  guiState->layout.localTime.second   );
+                  guiState->edit.localTime.hour   ,
+                  guiState->edit.localTime.minute ,
+                  guiState->edit.localTime.second   );
     }
     else
     {
@@ -738,25 +753,25 @@ static void GuiValDsp_Time( GuiState_st* guiState )
             case VAR_INPUT_SELECT_0 :
             {
                 snprintf( valueBuffer , MAX_ENTRY_LEN , "[%02d]:%02d:%02d" ,
-                          guiState->layout.localTime.hour   ,
-                          guiState->layout.localTime.minute ,
-                          guiState->layout.localTime.second   );
+                          guiState->edit.localTime.hour   ,
+                          guiState->edit.localTime.minute ,
+                          guiState->edit.localTime.second   );
                 break ;
             }
             case VAR_INPUT_SELECT_1 :
             {
                 snprintf( valueBuffer , MAX_ENTRY_LEN , "%02d:[%02d]:%02d" ,
-                          guiState->layout.localTime.hour   ,
-                          guiState->layout.localTime.minute ,
-                          guiState->layout.localTime.second   );
+                          guiState->edit.localTime.hour   ,
+                          guiState->edit.localTime.minute ,
+                          guiState->edit.localTime.second   );
                 break ;
             }
             case VAR_INPUT_SELECT_2 :
             {
                 snprintf( valueBuffer , MAX_ENTRY_LEN , "%02d:%02d:[%02d]" ,
-                          guiState->layout.localTime.hour   ,
-                          guiState->layout.localTime.minute ,
-                          guiState->layout.localTime.second   );
+                          guiState->edit.localTime.hour   ,
+                          guiState->edit.localTime.minute ,
+                          guiState->edit.localTime.second   );
                 break ;
             }
         }
@@ -769,8 +784,13 @@ static void GuiValDsp_GPSEnables( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
+    if( !guiState->update )
+    {
+        guiState->edit.settings.gps_enabled = state.settings.gps_enabled ;
+    }
+
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%s" ,
-              (state.settings.gps_enabled) ? currentLanguage->on : currentLanguage->off );
+              (guiState->edit.settings.gps_enabled) ? currentLanguage->on : currentLanguage->off );
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
@@ -780,8 +800,13 @@ static void GuiValDsp_GPSTime( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
+    if( !guiState->update )
+    {
+        guiState->edit.gps_set_time = state.gps_set_time ;
+    }
+
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%s" ,
-              (state.gps_set_time) ? currentLanguage->on : currentLanguage->off );
+              (guiState->edit.gps_set_time) ? currentLanguage->on : currentLanguage->off );
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
@@ -789,15 +814,23 @@ static void GuiValDsp_GPSTime( GuiState_st* guiState )
 static void GuiValDsp_GPSTimeZone( GuiState_st* guiState )
 {
     char   valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
-    int8_t tz_hr = ( state.settings.utc_timezone / 2 ) ;
-    int8_t tz_mn = ( state.settings.utc_timezone % 2 ) * 5 ;
+    int8_t tz_hr ;
+    int8_t tz_mn ;
     char   sign  = ' ';
 
-    if(state.settings.utc_timezone > 0)
+    if( !guiState->update )
+    {
+        guiState->edit.settings.utc_timezone = state.settings.utc_timezone ;
+    }
+
+    tz_hr = ( guiState->edit.settings.utc_timezone / 2 ) ;
+    tz_mn = ( guiState->edit.settings.utc_timezone % 2 ) * 5 ;
+
+    if( guiState->edit.settings.utc_timezone > 0 )
     {
         sign = '+' ;
     }
-    else if(state.settings.utc_timezone < 0)
+    else if( guiState->edit.settings.utc_timezone < 0 )
     {
         sign   = '-' ;
         tz_hr *= (-1) ;
@@ -816,8 +849,14 @@ static void GuiValDsp_RadioOffset( GuiState_st* guiState )
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
     int32_t offset = 0 ;
 
-    offset = abs( (int32_t)state.channel.tx_frequency -
-                  (int32_t)state.channel.rx_frequency );
+    if( !guiState->update )
+    {
+        guiState->edit.channel.tx_frequency = state.channel.tx_frequency ;
+        guiState->edit.channel.rx_frequency = state.channel.rx_frequency ;
+    }
+
+    offset = abs( (int32_t)guiState->edit.channel.tx_frequency -
+                  (int32_t)guiState->edit.channel.rx_frequency );
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%gMHz" , (float)offset / 1000000.0f );
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
@@ -827,7 +866,13 @@ static void GuiValDsp_RadioDirection( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
-    valueBuffer[ 0 ] = ( state.channel.tx_frequency >= state.channel.rx_frequency ) ? '+' : '-';
+    if( !guiState->update )
+    {
+        guiState->edit.channel.tx_frequency = state.channel.tx_frequency ;
+        guiState->edit.channel.rx_frequency = state.channel.rx_frequency ;
+    }
+
+    valueBuffer[ 0 ] = ( guiState->edit.channel.tx_frequency >= guiState->edit.channel.rx_frequency ) ? '+' : '-';
     valueBuffer[ 1 ] = '\0';
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
@@ -837,14 +882,19 @@ static void GuiValDsp_RadioStep( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
+    if( !guiState->update )
+    {
+        guiState->edit.step_index = state.step_index ;
+    }
+
     // Print in kHz if it is smaller than 1MHz
     if( freq_steps[ state.step_index ] < 1000000 )
     {
-        snprintf( valueBuffer , MAX_ENTRY_LEN , "%gkHz" , (float)freq_steps[state.step_index] / 1000.0f );
+        snprintf( valueBuffer , MAX_ENTRY_LEN , "%gkHz" , (float)freq_steps[ guiState->edit.step_index ] / 1000.0f );
     }
     else
     {
-        snprintf( valueBuffer , MAX_ENTRY_LEN , "%gMHz" , (float)freq_steps[state.step_index] / 1000000.0f );
+        snprintf( valueBuffer , MAX_ENTRY_LEN , "%gMHz" , (float)freq_steps[ guiState->edit.step_index ] / 1000000.0f );
     }
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
@@ -852,9 +902,19 @@ static void GuiValDsp_RadioStep( GuiState_st* guiState )
 
 static void GuiValDsp_M17Callsign( GuiState_st* guiState )
 {
-    char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
+    uint8_t index ;
+    char    valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
-    snprintf( valueBuffer , MAX_ENTRY_LEN , "%s" , state.settings.callsign );
+    if( !guiState->update )
+    {
+        for( index = 0 ; index < CALLSIGN_MAX_LENGTH ; index++ )
+        {
+            guiState->edit.settings.callsign[ index ] = state.settings.callsign[ index ] ;
+        }
+        guiState->edit.settings.callsign[ index ] = '\0' ;
+    }
+
+    snprintf( valueBuffer , MAX_ENTRY_LEN , "%s" , guiState->edit.settings.callsign );
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
@@ -863,7 +923,12 @@ static void GuiValDsp_M17Can( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
-    snprintf( valueBuffer , MAX_ENTRY_LEN , "%d" , state.settings.m17_can );
+    if( !guiState->update )
+    {
+        guiState->edit.settings.m17_can = state.settings.m17_can ;
+    }
+
+    snprintf( valueBuffer , MAX_ENTRY_LEN , "%d" , guiState->edit.settings.m17_can );
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
@@ -872,8 +937,13 @@ static void GuiValDsp_M17CanRxCheck( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
+    if( !guiState->update )
+    {
+        guiState->edit.settings.m17_can_rx = state.settings.m17_can_rx ;
+    }
+
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%s" ,
-              (state.settings.m17_can_rx) ? currentLanguage->on : currentLanguage->off );
+              (guiState->edit.settings.m17_can_rx) ? currentLanguage->on : currentLanguage->off );
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
@@ -883,6 +953,13 @@ static void GuiValDsp_Voice( GuiState_st* guiState )
 {
     char    valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
     uint8_t value = state.settings.vpLevel ;
+
+    if( !guiState->update )
+    {
+        guiState->edit.settings.vpLevel = state.settings.vpLevel ;
+    }
+
+    value = guiState->edit.settings.vpLevel ;
 
     switch( value )
     {
@@ -913,8 +990,13 @@ static void GuiValDsp_Phonetic( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
+    if( !guiState->update )
+    {
+        guiState->edit.settings.vpPhoneticSpell = state.settings.vpPhoneticSpell ;
+    }
+
     snprintf( valueBuffer , MAX_ENTRY_LEN , "%s" ,
-              state.settings.vpPhoneticSpell ? currentLanguage->on : currentLanguage->off );
+              guiState->edit.settings.vpPhoneticSpell ? currentLanguage->on : currentLanguage->off );
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }

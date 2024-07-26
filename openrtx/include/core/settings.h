@@ -45,22 +45,27 @@ typedef enum
 }
 display_timer_t;
 
+enum
+{
+    CALLSIGN_MAX_LENGTH = 10
+};
+
 typedef struct
 {
-    uint8_t brightness;           // Display brightness
-    uint8_t contrast;             // Display contrast
-    uint8_t sqlLevel;             // Squelch level
-    uint8_t voxLevel;             // Vox level
-    int8_t  utc_timezone;         // Timezone, in units of half hours
-    bool    gps_enabled;          // GPS active
-    char    callsign[10];         // Plaintext callsign
-    uint8_t display_timer   : 4,  // Standby timer
-            m17_can         : 4;  // M17 CAN
-    uint8_t vpLevel         : 3,  // Voice prompt level
-            vpPhoneticSpell : 1,  // Phonetic spell enabled
+    uint8_t brightness;                             // Display brightness
+    uint8_t contrast;                               // Display contrast
+    uint8_t sqlLevel;                               // Squelch level
+    uint8_t voxLevel;                               // Vox level
+    int8_t  utc_timezone;                           // Timezone, in units of half hours
+    bool    gps_enabled;                            // GPS active
+    char    callsign[ CALLSIGN_MAX_LENGTH + 1 ];    // Plaintext callsign
+    uint8_t display_timer   : 4,                    // Standby timer
+            m17_can         : 4;                    // M17 CAN
+    uint8_t vpLevel         : 3,                    // Voice prompt level
+            vpPhoneticSpell : 1,                    // Phonetic spell enabled
             _reserved       : 4;
-    bool    m17_can_rx;           // Check M17 CAN on RX
-    char    m17_dest[10];         // M17 destination
+    bool    m17_can_rx;                             // Check M17 CAN on RX
+    char    m17_dest[10];                           // M17 destination
 }
 __attribute__((packed)) settings_t;
 

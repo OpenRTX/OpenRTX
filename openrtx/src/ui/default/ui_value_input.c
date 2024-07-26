@@ -255,16 +255,31 @@ static bool GuiValInp_ScreenBrightness( GuiState_st* guiState )
     {
         if( guiState->event.payload & ( KEY_LEFT | KEY_DOWN | KNOB_LEFT )    )
         {
-            _ui_changeBrightness( -5 );
-            vp_announceSettingsInt( &currentLanguage->brightness , guiState->queueFlags , state.settings.brightness );
+            guiState->edit.settings.brightness -= 5 ;
+            if( guiState->edit.brightness < 5 )
+            {
+                guiState->edit.settings.brightness = 5 ;
+            }
+            vp_announceSettingsInt( &currentLanguage->brightness , guiState->queueFlags ,
+                                    guiState->edit.settings.brightness );
             handled = true ;
         }
         else if( guiState->event.payload & ( KEY_RIGHT | KEY_UP | KNOB_RIGHT ) )
         {
-            _ui_changeBrightness( +5 );
+            guiState->edit.settings.brightness += 5 ;
+            if( guiState->edit.settings.brightness > 100 )
+            {
+                guiState->edit.settings.brightness = 100 ;
+            }
             vp_announceSettingsInt( &currentLanguage->brightness , guiState->queueFlags , state.settings.brightness );
             handled = true ;
         }
+        else if( guiState->event.payload & KEY_ENTER )
+        {
+            _ui_changeBrightness( guiState->edit.settings.brightness - state.settings.brightness );
+            handled = true ;
+        }
+
     }
 
     return handled ;
@@ -283,14 +298,33 @@ static bool GuiValInp_ScreenContrast( GuiState_st* guiState )
     {
         if( guiState->event.payload & ( KEY_LEFT | KEY_DOWN | KNOB_LEFT ) )
         {
-            _ui_changeContrast( -4 );
-            vp_announceSettingsInt( &currentLanguage->brightness , guiState->queueFlags , state.settings.contrast );
+            if( guiState->edit.contrast < 4 )
+            {
+                guiState->edit.settings.contrast = 0 ;
+            }
+            else
+            {
+                guiState->edit.settings.contrast -= 4 ;
+            }
+            vp_announceSettingsInt( &currentLanguage->contrast , guiState->queueFlags , state.settings.contrast );
             handled = true ;
         }
         else if( guiState->event.payload & ( KEY_RIGHT | KEY_UP | KNOB_RIGHT ) )
         {
-            _ui_changeContrast( +4 );
-            vp_announceSettingsInt( &currentLanguage->brightness , guiState->queueFlags , state.settings.contrast );
+            if( guiState->edit.contrast > ( 255 - 4 ) )
+            {
+                guiState->edit.settings.contrast = 255 ;
+            }
+            else
+            {
+                guiState->edit.settings.contrast += 4 ;
+            }
+            vp_announceSettingsInt( &currentLanguage->contrast , guiState->queueFlags , state.settings.contrast );
+            handled = true ;
+        }
+        else if( guiState->event.payload & KEY_ENTER )
+        {
+            _ui_changeContrast( guiState->edit.settings.contrast - state.settings.contrast );
             handled = true ;
         }
     }
@@ -310,12 +344,23 @@ static bool GuiValInp_Timer( GuiState_st* guiState )
     {
         if( guiState->event.payload & ( KEY_LEFT | KEY_DOWN | KNOB_LEFT )    )
         {
-            _ui_changeTimer( -1 );
+            if( guiState->edit.settings.display_timer > TIMER_OFF )
+            {
+                guiState->edit.settings.display_timer -= 1 ;
+            }
             handled = true ;
         }
         else if( guiState->event.payload & ( KEY_RIGHT | KEY_UP | KNOB_RIGHT ) )
         {
-            _ui_changeTimer( +1 );
+            if( guiState->edit.settings.display_timer < TIMER_1H )
+            {
+                guiState->edit.settings.display_timer += 1 ;
+            }
+            handled = true ;
+        }
+        else if( guiState->event.payload & KEY_ENTER )
+        {
+            _ui_changeTimer( guiState->edit.settings.display_timer - state.settings.display_timer );
             handled = true ;
         }
     }
@@ -330,12 +375,12 @@ static const uint8_t maxDaysInMonth[ 12 ] =
 static bool GuiValInp_Date( GuiState_st* guiState )
 {
     datetime_t utc_time ;
-    uint8_t    maxDay  = maxDaysInMonth[ guiState->layout.localTime.month - 1 ] ;
+    uint8_t    maxDay  = maxDaysInMonth[ guiState->edit.localTime.month - 1 ] ;
     bool       handled = false ;
 
-    if( guiState->layout.localTime.month == 2 )
+    if( guiState->edit.localTime.month == 2 )
     {
-        if( !( guiState->layout.localTime.year % 4 ) )
+        if( !( guiState->edit.localTime.year % 4 ) )
         {
             maxDay++ ;
         }
@@ -368,25 +413,25 @@ static bool GuiValInp_Date( GuiState_st* guiState )
             {
                 case VAR_INPUT_SELECT_0 :
                 {
-                    if( guiState->layout.localTime.date > 1 )
+                    if( guiState->edit.localTime.date > 1 )
                     {
-                        guiState->layout.localTime.date-- ;
+                        guiState->edit.localTime.date-- ;
                     }
                     break ;
                 }
                 case VAR_INPUT_SELECT_1 :
                 {
-                    if( guiState->layout.localTime.month > 1 )
+                    if( guiState->edit.localTime.month > 1 )
                     {
-                        guiState->layout.localTime.month-- ;
+                        guiState->edit.localTime.month-- ;
                     }
                     break ;
                 }
                 case VAR_INPUT_SELECT_2 :
                 {
-                    if( guiState->layout.localTime.year )
+                    if( guiState->edit.localTime.year )
                     {
-                        guiState->layout.localTime.year-- ;
+                        guiState->edit.localTime.year-- ;
                     }
                     break ;
                 }
@@ -399,25 +444,25 @@ static bool GuiValInp_Date( GuiState_st* guiState )
             {
                 case VAR_INPUT_SELECT_0 :
                 {
-                    if( guiState->layout.localTime.date < maxDay )
+                    if( guiState->edit.localTime.date < maxDay )
                     {
-                        guiState->layout.localTime.date++ ;
+                        guiState->edit.localTime.date++ ;
                     }
                     break ;
                 }
                 case VAR_INPUT_SELECT_1 :
                 {
-                    if( guiState->layout.localTime.month < 12 )
+                    if( guiState->edit.localTime.month < 12 )
                     {
-                        guiState->layout.localTime.month++ ;
+                        guiState->edit.localTime.month++ ;
                     }
                     break ;
                 }
                 case VAR_INPUT_SELECT_2 :
                 {
-                    if( guiState->layout.localTime.year < 99 )
+                    if( guiState->edit.localTime.year < 99 )
                     {
-                        guiState->layout.localTime.year++ ;
+                        guiState->edit.localTime.year++ ;
                     }
                     break ;
                 }
@@ -426,11 +471,11 @@ static bool GuiValInp_Date( GuiState_st* guiState )
         }
         else if( guiState->event.payload & KEY_ENTER )
         {
-            if( guiState->layout.localTime.date > maxDay )
+            if( guiState->edit.localTime.date > maxDay )
             {
-                guiState->layout.localTime.date = maxDay ;
+                guiState->edit.localTime.date = maxDay ;
             }
-            utc_time = localTimeToUtc( guiState->layout.localTime  ,
+            utc_time = localTimeToUtc( guiState->edit.localTime  ,
                                        state.settings.utc_timezone   );
             platform_setTime( utc_time );
             handled = true ;
@@ -474,25 +519,25 @@ static bool GuiValInp_Time( GuiState_st* guiState )
             {
                 case VAR_INPUT_SELECT_0 :
                 {
-                    if( guiState->layout.localTime.hour )
+                    if( guiState->edit.localTime.hour )
                     {
-                        guiState->layout.localTime.hour-- ;
+                        guiState->edit.localTime.hour-- ;
                     }
                     break ;
                 }
                 case VAR_INPUT_SELECT_1 :
                 {
-                    if( guiState->layout.localTime.minute )
+                    if( guiState->edit.localTime.minute )
                     {
-                        guiState->layout.localTime.minute-- ;
+                        guiState->edit.localTime.minute-- ;
                     }
                     break ;
                 }
                 case VAR_INPUT_SELECT_2 :
                 {
-                    if( guiState->layout.localTime.second )
+                    if( guiState->edit.localTime.second )
                     {
-                        guiState->layout.localTime.second-- ;
+                        guiState->edit.localTime.second-- ;
                     }
                     break ;
                 }
@@ -505,25 +550,25 @@ static bool GuiValInp_Time( GuiState_st* guiState )
             {
                 case VAR_INPUT_SELECT_0 :
                 {
-                    if( guiState->layout.localTime.hour < 23 )
+                    if( guiState->edit.localTime.hour < 23 )
                     {
-                        guiState->layout.localTime.hour++ ;
+                        guiState->edit.localTime.hour++ ;
                     }
                     break ;
                 }
                 case VAR_INPUT_SELECT_1 :
                 {
-                    if( guiState->layout.localTime.minute < 59 )
+                    if( guiState->edit.localTime.minute < 59 )
                     {
-                        guiState->layout.localTime.minute++ ;
+                        guiState->edit.localTime.minute++ ;
                     }
                     break ;
                 }
                 case VAR_INPUT_SELECT_2 :
                 {
-                    if( guiState->layout.localTime.second < 59 )
+                    if( guiState->edit.localTime.second < 59 )
                     {
-                        guiState->layout.localTime.second++ ;
+                        guiState->edit.localTime.second++ ;
                     }
                     break ;
                 }
@@ -532,7 +577,7 @@ static bool GuiValInp_Time( GuiState_st* guiState )
         }
         else if( guiState->event.payload & KEY_ENTER )
         {
-            utc_time = localTimeToUtc( guiState->layout.localTime  ,
+            utc_time = localTimeToUtc( guiState->edit.localTime  ,
                                        state.settings.utc_timezone   );
             platform_setTime( utc_time );
             handled = true ;
@@ -557,16 +602,21 @@ static bool GuiValInp_GPSEnabled( GuiState_st* guiState )
         if( guiState->event.payload & ( KEY_LEFT  | KEY_DOWN | KNOB_LEFT  |
                                         KEY_RIGHT | KEY_UP   | KNOB_RIGHT   ) )
         {
-            if( state.settings.gps_enabled )
+            if( guiState->edit.settings.gps_enabled )
             {
-                state.settings.gps_enabled = 0 ;
+                guiState->edit.settings.gps_enabled = 0 ;
             }
             else
             {
-                state.settings.gps_enabled = 1 ;
+                guiState->edit.settings.gps_enabled = 1 ;
             }
             vp_announceSettingsOnOffToggle( &currentLanguage->gpsEnabled ,
-                                            guiState->queueFlags , state.settings.gps_enabled );
+                                            guiState->queueFlags , guiState->edit.settings.gps_enabled );
+            handled = true ;
+        }
+        else if( guiState->event.payload & KEY_ENTER )
+        {
+            state.settings.gps_enabled = guiState->edit.settings.gps_enabled ;
             handled = true ;
         }
     }
@@ -587,16 +637,21 @@ static bool GuiValInp_GPSTime( GuiState_st* guiState )
         if( guiState->event.payload & ( KEY_LEFT  | KEY_DOWN | KNOB_LEFT  |
                                         KEY_RIGHT | KEY_UP   | KNOB_RIGHT   ) )
         {
-            if( state.gps_set_time )
+            if( guiState->edit.gps_set_time )
             {
-                state.gps_set_time = false ;
+                guiState->edit.gps_set_time = false ;
             }
             else
             {
-                state.gps_set_time = true ;
+                guiState->edit.gps_set_time = true ;
             }
             vp_announceSettingsOnOffToggle( &currentLanguage->gpsSetTime ,
-                                            guiState->queueFlags , state.gps_set_time );
+                                            guiState->queueFlags , guiState->edit.gps_set_time );
+            handled = true ;
+        }
+        else if( guiState->event.payload & KEY_ENTER )
+        {
+            state.gps_set_time = guiState->edit.gps_set_time ;
             handled = true ;
         }
     }
@@ -616,15 +671,20 @@ static bool GuiValInp_GPSTimeZone( GuiState_st* guiState )
     {
         if( guiState->event.payload & ( KEY_LEFT | KEY_DOWN | KNOB_LEFT ) )
         {
-            state.settings.utc_timezone -= 1 ;
+            guiState->edit.settings.utc_timezone -= 1 ;
             handled = true ;
         }
         else if( guiState->event.payload & ( KEY_RIGHT | KEY_UP | KNOB_RIGHT ) )
         {
-            state.settings.utc_timezone += 1 ;
+            guiState->edit.settings.utc_timezone += 1 ;
             handled = true ;
         }
-        vp_announceTimeZone( state.settings.utc_timezone , guiState->queueFlags );
+        else if( guiState->event.payload & KEY_ENTER )
+        {
+            state.settings.utc_timezone = guiState->edit.settings.utc_timezone ;
+            handled = true ;
+        }
+        vp_announceTimeZone( guiState->edit.settings.utc_timezone , guiState->queueFlags );
     }
 
     return handled ;
@@ -633,6 +693,7 @@ static bool GuiValInp_GPSTimeZone( GuiState_st* guiState )
 #endif // GPS_PRESENT
 
 // R_OFFSET
+//@@@ fix
 static bool GuiValInp_Offset( GuiState_st* guiState )
 {
     bool handled = false ;
@@ -641,63 +702,53 @@ static bool GuiValInp_Offset( GuiState_st* guiState )
 
     if( guiState->event.type == EVENT_TYPE_KBD )
     {
-        // If the entry is selected with enter we are in edit_mode
-//@@@KL        if( guiState->uiState.edit_mode )
+#ifdef UI_NO_KEYBOARD
+        if( guiState->msg.long_press && ( guiState->event.payload & KEY_ENTER ) )
         {
-    #ifdef UI_NO_KEYBOARD
-            if( guiState->msg.long_press && ( guiState->event.payload & KEY_ENTER ) )
-            {
-                // Long press on UI_NO_KEYBOARD causes digits to advance by one
-                guiState->uiState.new_offset /= 10 ;
-    #else // UI_NO_KEYBOARD
-            if( guiState->event.payload & KEY_ENTER )
-            {
-    #endif // UI_NO_KEYBOARD
-                // Apply new offset
-                state.channel.tx_frequency  = state.channel.rx_frequency + guiState->uiState.new_offset ;
-                vp_queueStringTableEntry( &currentLanguage->frequencyOffset );
-                vp_queueFrequency( guiState->uiState.new_offset );
-                guiState->uiState.edit_mode = false ;
-                handled = true ;
-            }
-            else if( guiState->event.payload & KEY_ESC )
-            {
-                // Announce old frequency offset
-                vp_queueStringTableEntry( &currentLanguage->frequencyOffset );
-                vp_queueFrequency( (int32_t)state.channel.tx_frequency -
-                                   (int32_t)state.channel.rx_frequency );
-                handled = true ;
-            }
-            else if( guiState->event.payload & ( KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT ) )
-            {
-                _ui_numberInputDel( guiState , &guiState->uiState.new_offset );
-                handled = true ;
-            }
-    #ifdef UI_NO_KEYBOARD
-            else if( guiState->event.payload & ( KNOB_LEFT | KNOB_RIGHT | KEY_ENTER ) )
-    #else // UI_NO_KEYBOARD
-            else if( input_isNumberPressed( guiState->msg ) )
-    #endif // UI_NO_KEYBOARD
-            {
-                _ui_numberInputKeypad( guiState , &guiState->uiState.new_offset , guiState->msg );
-                guiState->uiState.input_position += 1 ;
-                handled = true ;
-            }
-            else if( guiState->msg.long_press              &&
-                     ( guiState->event.payload     & KEY_F1   ) &&
-                     ( state.settings.vpLevel > VPP_BEEP )    )
-            {
-                vp_queueFrequency( guiState->uiState.new_offset );
-                guiState->f1Handled = true ;
-            }
-            // If ENTER or ESC are pressed, exit edit mode, R_OFFSET is managed separately
-            if( !( guiState->event.payload & KEY_ENTER ) && ( guiState->event.payload & KEY_ESC ) )
-            {
-                guiState->uiState.edit_mode = false ;
-                handled = true ;
-            }
+            // Long press on UI_NO_KEYBOARD causes digits to advance by one
+            guiState->uiState.new_offset /= 10 ;
+#else // UI_NO_KEYBOARD
+        if( guiState->event.payload & KEY_ENTER )
+        {
+#endif // UI_NO_KEYBOARD
+            // Apply new offset
+            state.channel.tx_frequency  = state.channel.rx_frequency + guiState->uiState.new_offset ;
+            vp_queueStringTableEntry( &currentLanguage->frequencyOffset );
+            vp_queueFrequency( guiState->uiState.new_offset );
+            guiState->uiState.edit_mode = false ;
+            handled = true ;
         }
-        /*else*/ if( guiState->event.payload & KEY_ENTER )
+        else if( guiState->event.payload & KEY_ESC )
+        {
+            // Announce old frequency offset
+            vp_queueStringTableEntry( &currentLanguage->frequencyOffset );
+            vp_queueFrequency( (int32_t)state.channel.tx_frequency -
+                               (int32_t)state.channel.rx_frequency );
+            handled = true ;
+        }
+        else if( guiState->event.payload & ( KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT ) )
+        {
+            _ui_numberInputDel( guiState , &guiState->uiState.new_offset );
+            handled = true ;
+        }
+#ifdef UI_NO_KEYBOARD
+        else if( guiState->event.payload & ( KNOB_LEFT | KNOB_RIGHT | KEY_ENTER ) )
+#else // UI_NO_KEYBOARD
+        else if( input_isNumberPressed( guiState->msg ) )
+#endif // UI_NO_KEYBOARD
+        {
+            _ui_numberInputKeypad( guiState , &guiState->uiState.new_offset , guiState->msg );
+            guiState->uiState.input_position += 1 ;
+            handled = true ;
+        }
+        else if( guiState->msg.long_press               &&
+                 ( guiState->event.payload & KEY_F1   ) &&
+                 ( state.settings.vpLevel  > VPP_BEEP )    )
+        {
+            vp_queueFrequency( guiState->uiState.new_offset );
+            guiState->f1Handled = true ;
+        }
+        else if( guiState->event.payload & KEY_ENTER )
         {
             guiState->uiState.edit_mode      = true;
             guiState->uiState.new_offset     = 0 ;
@@ -712,6 +763,7 @@ static bool GuiValInp_Offset( GuiState_st* guiState )
 }
 
 // R_DIRECTION
+//@@@KL fix
 static bool GuiValInp_Direction( GuiState_st* guiState )
 {
     bool handled = false ;
@@ -720,32 +772,22 @@ static bool GuiValInp_Direction( GuiState_st* guiState )
 
     if( guiState->event.type == EVENT_TYPE_KBD )
     {
-        // If the entry is selected with enter we are in edit_mode
-//@@@KL        if( guiState->uiState.edit_mode )
+        if( guiState->event.payload & ( KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT | KNOB_LEFT | KNOB_RIGHT ) )
         {
-            if( guiState->event.payload & ( KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT | KNOB_LEFT | KNOB_RIGHT ) )
+            // Invert frequency offset direction
+            if( state.channel.tx_frequency >= state.channel.rx_frequency )
             {
-                // Invert frequency offset direction
-                if( state.channel.tx_frequency >= state.channel.rx_frequency )
-                {
-                    state.channel.tx_frequency -= 2 * ( (int32_t)state.channel.tx_frequency -
-                                                        (int32_t)state.channel.rx_frequency );
-                }
-                else // Switch to positive offset
-                {
-                    state.channel.tx_frequency -= 2 * ( (int32_t)state.channel.tx_frequency -
-                                                        (int32_t)state.channel.rx_frequency );
-                }
-                handled = true ;
+                state.channel.tx_frequency -= 2 * ( (int32_t)state.channel.tx_frequency -
+                                                    (int32_t)state.channel.rx_frequency );
             }
-            // If ENTER or ESC are pressed, exit edit mode
-            if( ( guiState->event.payload & KEY_ENTER ) ||
-                ( guiState->event.payload & KEY_ESC   )    )
+            else // Switch to positive offset
             {
-                guiState->uiState.edit_mode = false ;
+                state.channel.tx_frequency -= 2 * ( (int32_t)state.channel.tx_frequency -
+                                                    (int32_t)state.channel.rx_frequency );
             }
+            handled = true ;
         }
-        /*else*/ if( guiState->event.payload & ( KEY_UP | KNOB_LEFT ) )
+        else if( guiState->event.payload & ( KEY_UP | KNOB_LEFT ) )
         {
             ui_States_MenuUp( guiState );
             handled = true ;
@@ -774,6 +816,7 @@ static bool GuiValInp_Direction( GuiState_st* guiState )
 }
 
 // R_STEP
+//@@@ fix
 static bool GuiValInp_Step( GuiState_st* guiState )
 {
     bool handled = false ;
@@ -782,52 +825,48 @@ static bool GuiValInp_Step( GuiState_st* guiState )
 
     if( guiState->event.type == EVENT_TYPE_KBD )
     {
-        // If the entry is selected with enter we are in edit_mode
-//@@@KL        if( guiState->uiState.edit_mode )
+        if( guiState->event.payload & ( KEY_UP | KEY_RIGHT | KNOB_RIGHT ) )
         {
-            if( guiState->event.payload & ( KEY_UP | KEY_RIGHT | KNOB_RIGHT ) )
-            {
-                // Cycle over the available frequency steps
-                state.step_index++ ;
-                state.step_index %= n_freq_steps ;
-                handled = true ;
-            }
-            else if( guiState->event.payload & ( KEY_DOWN | KEY_LEFT | KNOB_LEFT ) )
-            {
-                state.step_index += n_freq_steps ;
-                state.step_index-- ;
-                state.step_index %= n_freq_steps ;
-                handled = true ;
-            }
-            // If ENTER or ESC are pressed, exit edit mode, R_OFFSET is managed separately
-            if( ( ( guiState->event.payload & KEY_ENTER ) && ( guiState->uiState.entrySelected != R_OFFSET ) ) ||
-                  ( guiState->event.payload & KEY_ESC   )                                                )
-            {
-                guiState->uiState.edit_mode = false ;
-            }
-        }
-        /*else*/ if( guiState->event.payload & ( KEY_UP | KNOB_LEFT ) )
-        {
-            ui_States_MenuUp( guiState );
+            // Cycle over the available frequency steps
+            state.step_index++ ;
+            state.step_index %= n_freq_steps ;
             handled = true ;
         }
-        else if( ( guiState->event.payload & KEY_DOWN ) || ( guiState->event.payload & KNOB_RIGHT ) )
+        else if( guiState->event.payload & ( KEY_DOWN | KEY_LEFT | KNOB_LEFT ) )
         {
-            ui_States_MenuDown( guiState );
+            state.step_index += n_freq_steps ;
+            state.step_index-- ;
+            state.step_index %= n_freq_steps ;
             handled = true ;
         }
-        else if( guiState->event.payload & KEY_ENTER )
+        // If ENTER or ESC are pressed, exit edit mode, R_OFFSET is managed separately
+        if( ( ( guiState->event.payload & KEY_ENTER ) && ( guiState->uiState.entrySelected != R_OFFSET ) ) ||
+              ( guiState->event.payload & KEY_ESC   )                                                )
         {
-            guiState->uiState.edit_mode = true;
-            // If we are entering R_OFFSET clear temp offset
-            if( guiState->uiState.entrySelected == R_OFFSET )
-            {
-                guiState->uiState.new_offset = 0 ;
-            }
-            // Reset input position
-            guiState->uiState.input_position = 0 ;
-            handled = true ;
+            guiState->uiState.edit_mode = false ;
         }
+    }
+    else if( guiState->event.payload & ( KEY_UP | KNOB_LEFT ) )
+    {
+        ui_States_MenuUp( guiState );
+        handled = true ;
+    }
+    else if( ( guiState->event.payload & KEY_DOWN ) || ( guiState->event.payload & KNOB_RIGHT ) )
+    {
+        ui_States_MenuDown( guiState );
+        handled = true ;
+    }
+    else if( guiState->event.payload & KEY_ENTER )
+    {
+        guiState->uiState.edit_mode = true;
+        // If we are entering R_OFFSET clear temp offset
+        if( guiState->uiState.entrySelected == R_OFFSET )
+        {
+            guiState->uiState.new_offset = 0 ;
+        }
+        // Reset input position
+        guiState->uiState.input_position = 0 ;
+        handled = true ;
     }
 
     return handled ;
@@ -835,6 +874,7 @@ static bool GuiValInp_Step( GuiState_st* guiState )
 }
 
 // M17_CALLSIGN
+//@@@KL fix
 static bool GuiValInp_Callsign( GuiState_st* guiState )
 {
     bool handled = false ;
@@ -843,54 +883,51 @@ static bool GuiValInp_Callsign( GuiState_st* guiState )
 
     if( guiState->event.type == EVENT_TYPE_KBD )
     {
-//@@@KL        if( guiState->uiState.edit_mode )
+        // Handle text input for M17 callsign
+        if( guiState->event.payload & KEY_ENTER )
         {
-            // Handle text input for M17 callsign
-            if( guiState->event.payload & KEY_ENTER )
-            {
-                ui_States_TextInputConfirm( guiState , guiState->uiState.new_callsign );
-                // Save selected callsign and disable input mode
-                strncpy( state.settings.callsign , guiState->uiState.new_callsign , 10 );
-                guiState->uiState.edit_mode = false;
-                vp_announceBuffer( &currentLanguage->callsign , false , true , state.settings.callsign );
-                handled = true ;
-            }
-            else if( guiState->event.payload & KEY_ESC )
-            {
-                // Discard selected callsign and disable input mode
-                guiState->uiState.edit_mode = false ;
-                vp_announceBuffer( &currentLanguage->callsign , false , true , state.settings.callsign );
-                handled = true ;
-            }
-            else if( guiState->event.payload & ( KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT ) )
-            {
-                ui_States_TextInputDelete( guiState , guiState->uiState.new_callsign );
-                handled = true ;
-            }
-            else if( input_isNumberPressed( guiState->msg ) )
-            {
-                ui_States_TextInputKeypad( guiState , guiState->uiState.new_callsign , 9 , guiState->msg , true );
-                handled = true ;
-            }
-            else if( guiState->msg.long_press              &&
-                     ( guiState->event.payload     & KEY_F1   ) &&
-                     ( state.settings.vpLevel > VPP_BEEP )    )
-            {
-                vp_announceBuffer( &currentLanguage->callsign , true , true , guiState->uiState.new_callsign );
-                guiState->f1Handled = true ;
-                handled = true ;
-            }
+            ui_States_TextInputConfirm( guiState , guiState->uiState.new_callsign );
+            // Save selected callsign and disable input mode
+            strncpy( state.settings.callsign , guiState->uiState.new_callsign , 10 );
+            guiState->uiState.edit_mode = false;
+            vp_announceBuffer( &currentLanguage->callsign , false , true , state.settings.callsign );
+            handled = true ;
         }
-        /*else*/
+        else if( guiState->event.payload & KEY_ESC )
         {
-            if( guiState->event.payload & KEY_ENTER )
-            {
-                // Enable edit mode
-                guiState->uiState.edit_mode = true;
-                ui_States_TextInputReset( guiState , guiState->uiState.new_callsign );
-                vp_announceBuffer( &currentLanguage->callsign , true , true , guiState->uiState.new_callsign );
-                handled = true ;
-            }
+            // Discard selected callsign and disable input mode
+            guiState->uiState.edit_mode = false ;
+            vp_announceBuffer( &currentLanguage->callsign , false , true , state.settings.callsign );
+            handled = true ;
+        }
+        else if( guiState->event.payload & ( KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT ) )
+        {
+            ui_States_TextInputDelete( guiState , guiState->uiState.new_callsign );
+            handled = true ;
+        }
+        else if( input_isNumberPressed( guiState->msg ) )
+        {
+            ui_States_TextInputKeypad( guiState , guiState->uiState.new_callsign , 9 , guiState->msg , true );
+            handled = true ;
+        }
+        else if( guiState->msg.long_press              &&
+                 ( guiState->event.payload     & KEY_F1   ) &&
+                 ( state.settings.vpLevel > VPP_BEEP )    )
+        {
+            vp_announceBuffer( &currentLanguage->callsign , true , true , guiState->uiState.new_callsign );
+            guiState->f1Handled = true ;
+            handled = true ;
+        }
+    }
+    else
+    {
+        if( guiState->event.payload & KEY_ENTER )
+        {
+            // Enable edit mode
+            guiState->uiState.edit_mode = true;
+            ui_States_TextInputReset( guiState , guiState->uiState.new_callsign );
+            vp_announceBuffer( &currentLanguage->callsign , true , true , guiState->uiState.new_callsign );
+            handled = true ;
         }
     }
 
@@ -899,6 +936,7 @@ static bool GuiValInp_Callsign( GuiState_st* guiState )
 }
 
 // M17_CAN
+//@@@KL fix
 static bool GuiValInp_M17Can( GuiState_st* guiState )
 {
     bool handled = false ;
@@ -907,47 +945,25 @@ static bool GuiValInp_M17Can( GuiState_st* guiState )
 
     if( guiState->event.type == EVENT_TYPE_KBD )
     {
-//@@@KL        if( guiState->uiState.edit_mode )
+        if( guiState->event.payload & ( KEY_DOWN | KNOB_LEFT ) )
         {
-            if( guiState->event.payload & ( KEY_DOWN | KNOB_LEFT ) )
-            {
-                _ui_changeM17Can( -1 );
-                handled = true ;
-            }
-            else if( guiState->event.payload & ( KEY_UP | KNOB_RIGHT ) )
-            {
-                _ui_changeM17Can( +1 );
-                handled = true ;
-            }
-            else if( guiState->event.payload & KEY_ENTER )
-            {
-                guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
-                handled = true ;
-            }
-            else if( guiState->event.payload & KEY_ESC )
-            {
-                guiState->uiState.edit_mode = false ;
-                handled = true ;
-            }
+            _ui_changeM17Can( -1 );
+            handled = true ;
         }
-        /*else*/
+        else if( guiState->event.payload & ( KEY_UP | KNOB_RIGHT ) )
         {
-            if( guiState->event.payload & KEY_ENTER )
-            {
-                // Enable edit mode
-                guiState->uiState.edit_mode = true;
-                handled = true ;
-            }
-            else if( guiState->event.payload & KEY_RIGHT )
-            {
-                _ui_changeM17Can( +1 );
-                handled = true ;
-            }
-            else if( guiState->event.payload & KEY_LEFT )
-            {
-                _ui_changeM17Can( -1 );
-                handled = true ;
-            }
+            _ui_changeM17Can( +1 );
+            handled = true ;
+        }
+        else if( guiState->event.payload & KEY_ENTER )
+        {
+            guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
+            handled = true ;
+        }
+        else if( guiState->event.payload & KEY_ESC )
+        {
+            guiState->uiState.edit_mode = false ;
+            handled = true ;
         }
     }
 
@@ -956,6 +972,7 @@ static bool GuiValInp_M17Can( GuiState_st* guiState )
 }
 
 // M17_CAN_RX
+//@@@KL fix
 static bool GuiValInp_M17CanRx( GuiState_st* guiState )
 {
     bool handled = false ;
@@ -964,40 +981,22 @@ static bool GuiValInp_M17CanRx( GuiState_st* guiState )
 
     if( guiState->event.type == EVENT_TYPE_KBD )
     {
-//@@@KL        if( guiState->uiState.edit_mode )
+        if( (   guiState->event.payload & ( KEY_LEFT | KEY_RIGHT                       )      ) ||
+            ( ( guiState->event.payload & ( KEY_DOWN | KNOB_LEFT | KEY_UP | KNOB_RIGHT ) ) &&
+            guiState->uiState.edit_mode                                                  )    )
         {
-            if( (   guiState->event.payload & ( KEY_LEFT | KEY_RIGHT                       )      ) ||
-                ( ( guiState->event.payload & ( KEY_DOWN | KNOB_LEFT | KEY_UP | KNOB_RIGHT ) ) &&
-                guiState->uiState.edit_mode                                                  )    )
-            {
-                state.settings.m17_can_rx = !state.settings.m17_can_rx ;
-                handled = true ;
-            }
-            else if( guiState->event.payload & KEY_ENTER )
-            {
-                guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
-                handled = true ;
-            }
-            else if( guiState->event.payload & KEY_ESC )
-            {
-                guiState->uiState.edit_mode = false ;
-                handled = true ;
-            }
+            state.settings.m17_can_rx = !state.settings.m17_can_rx ;
+            handled = true ;
         }
-        /*else*/
+        else if( guiState->event.payload & KEY_ENTER )
         {
-            if( guiState->event.payload & KEY_ENTER )
-            {
-                // Enable edit mode
-                guiState->uiState.edit_mode = true;
-                handled = true ;
-            }
-            else if( guiState->event.payload & KEY_ESC )
-            {
-                guiState->sync_rtx = true ;
-                ui_States_MenuBack( guiState );
-                handled = true ;
-            }
+            guiState->uiState.edit_mode = !guiState->uiState.edit_mode ;
+            handled = true ;
+        }
+        else if( guiState->event.payload & KEY_ESC )
+        {
+            guiState->uiState.edit_mode = false ;
+            handled = true ;
         }
     }
 
@@ -1016,14 +1015,25 @@ static bool GuiValInp_Level( GuiState_st* guiState )
     {
         if( guiState->event.payload & ( KEY_LEFT | KEY_DOWN | KNOB_LEFT )    )
         {
-            _ui_changeVoiceLevel( -1 );
+            if( guiState->edit.settings.vpLevel )
+            {
+                guiState->edit.settings.vpLevel-- ;
+            }
             handled = true ;
         }
         else if( (   guiState->event.payload & KEY_RIGHT                    ) ||
                  ( ( guiState->event.payload & ( KEY_UP | KNOB_RIGHT ) ) &&
                  guiState->uiState.edit_mode                           )    )
         {
-            _ui_changeVoiceLevel( 1 );
+            if( guiState->edit.settings.vpLevel < 255 )
+            {
+                guiState->edit.settings.vpLevel++ ;
+            }
+            handled = true ;
+        }
+        else if( guiState->event.payload & KEY_ENTER )
+        {
+            _ui_changeVoiceLevel( state.settings.vpLevel - guiState->edit.settings.vpLevel );
             handled = true ;
         }
     }
@@ -1043,14 +1053,19 @@ static bool GuiValInp_Phonetic( GuiState_st* guiState )
     {
         if( guiState->event.payload & ( KEY_LEFT | KEY_DOWN | KNOB_LEFT )    )
         {
-            _ui_changePhoneticSpell( false );
+            guiState->edit.settings.vpPhoneticSpell = false ;
             handled = true ;
         }
         else if( (   guiState->event.payload & KEY_RIGHT                    ) ||
                  ( ( guiState->event.payload & ( KEY_UP | KNOB_RIGHT ) ) &&
                  guiState->uiState.edit_mode                           )    )
         {
-            _ui_changePhoneticSpell( true );
+            guiState->edit.settings.vpPhoneticSpell = true ;
+            handled = true ;
+        }
+        else if( guiState->event.payload & KEY_ENTER )
+        {
+            _ui_changePhoneticSpell( guiState->edit.settings.vpPhoneticSpell );
             handled = true ;
         }
     }
