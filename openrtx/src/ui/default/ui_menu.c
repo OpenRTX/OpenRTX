@@ -812,7 +812,7 @@ void _ui_drawMenuInfo(ui_state_t* ui_state)
 
 void _ui_drawMenuAbout(ui_state_t* ui_state)
 {
-    gfx_clearScreen();
+    //gfx_clearScreen();
 
     point_t logo_pos;
     if(CONFIG_SCREEN_HEIGHT >= 100)
@@ -840,7 +840,7 @@ void _ui_drawMenuAbout(ui_state_t* ui_state)
     for(uint8_t item = 0; item < entries_in_screen; item++)
     {
         uint8_t elem = ui_state->menu_selected + item;
-        gfx_print(pos, layout.menu_font, TEXT_ALIGN_LEFT, color_white, authors[elem]);
+        gfx_print(pos, FONT_SIZE_6PT, TEXT_ALIGN_LEFT, color_white, authors[elem]);
         pos.y += layout.menu_h;
     }
 }
