@@ -220,7 +220,7 @@ stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.cpp',
                  'platform/drivers/audio/stm32_adc.cpp',
                  'platform/drivers/audio/stm32_pwm.cpp',
                  'platform/drivers/keyboard/cap1206.c',
-                 'platform/mcu/CMSIS/Device/ST/STM32F4xx/Source/system_stm32f4xx.c']
+                 'platform/mcu/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c']
 
 stm32f405_inc = ['platform/mcu/CMSIS/Include',
                  'platform/mcu/CMSIS/Device/ST/STM32F4xx/Include',
@@ -228,7 +228,7 @@ stm32f405_inc = ['platform/mcu/CMSIS/Include',
                  'platform/mcu/STM32F4xx/drivers',
                  'platform/mcu/STM32F4xx/drivers/usb']
 
-stm32f405_def = {'STM32F405xx': '', 'HSE_VALUE':'8000000'}
+stm32f405_def = {'STM32F405xx': '', 'HSE_VALUE':'8000000', 'SYSCLK_FREQ_168MHz' : '168000000'}
 
 ##
 ## MK22FN512
@@ -343,9 +343,9 @@ md3x0_src = ['platform/drivers/NVM/nvmem_MD3x0.c',
 md3x0_inc = ['platform/targets/MD-3x0']
 md3x0_def = {'PLATFORM_MD3x0': '', 'timegm': 'mktime'}
 
-md3x0_src += openrtx_src + stm32f405_src + miosix_cm4f_src + ui_src_default + mdx_src
-md3x0_inc += openrtx_inc + stm32f405_inc + miosix_cm4f_inc
-md3x0_def += openrtx_def + stm32f405_def + miosix_cm4f_def
+md3x0_src += openrtx_src + stm32f405_src + miosix_stm32f4_src + ui_src_default + mdx_src
+md3x0_inc += openrtx_inc + stm32f405_inc + miosix_stm32f4_inc
+md3x0_def += openrtx_def + stm32f405_def + miosix_stm32f4_def
 
 ##
 ## TYT MD-UV380
@@ -363,11 +363,11 @@ mduv3x0_src = ['platform/drivers/NVM/nvmem_MDUV3x0.c',
                'platform/drivers/baseband/HR_C6000_UV3x0.cpp']
 
 mduv3x0_inc = ['platform/targets/MD-UV3x0']
-mduv3x0_def =  {'PLATFORM_MDUV3x0': '', 'timegm': 'mktime'}
+mduv3x0_def =  {'PLATFORM_MDUV3x0': '', 'timegm': 'mktime', 'VECT_TAB_OFFSET': '0xC000'}
 
-mduv3x0_src += openrtx_src + stm32f405_src + miosix_cm4f_src + ui_src_default + mdx_src
-mduv3x0_inc += openrtx_inc + stm32f405_inc + miosix_cm4f_inc
-mduv3x0_def += openrtx_def + stm32f405_def + miosix_cm4f_def
+mduv3x0_src += openrtx_src + stm32f405_src + miosix_stm32f4_src + ui_src_default + mdx_src
+mduv3x0_inc += openrtx_inc + stm32f405_inc + miosix_stm32f4_inc
+mduv3x0_def += openrtx_def + stm32f405_def + miosix_stm32f4_def
 
 ##
 ## TYT MD-9600
@@ -384,9 +384,9 @@ md9600_src = ['platform/targets/MD-9600/platform.c',
 md9600_inc = ['platform/targets/MD-9600']
 md9600_def = {'PLATFORM_MD9600': ''}
 
-md9600_src += openrtx_src + stm32f405_src + miosix_cm4f_src + ui_src_default + mdx_src
-md9600_inc += openrtx_inc + stm32f405_inc + miosix_cm4f_inc
-md9600_def += openrtx_def + stm32f405_def + miosix_cm4f_def
+md9600_src += openrtx_src + stm32f405_src + miosix_stm32f4_src + ui_src_default + mdx_src
+md9600_inc += openrtx_inc + stm32f405_inc + miosix_stm32f4_inc
+md9600_def += openrtx_def + stm32f405_def + miosix_stm32f4_def
 
 ##
 ## Radioddity GD-77
@@ -395,9 +395,9 @@ gd77_src = ['platform/targets/GD-77/platform.c']
 gd77_inc = ['platform/targets/GD-77']
 gd77_def = {'PLATFORM_GD77': ''}
 
-gd77_src += openrtx_src + mk22fn512_src + miosix_cm4f_src + ui_src_default + gdx_src
-gd77_inc += openrtx_inc + mk22fn512_inc + miosix_cm4f_inc
-gd77_def += openrtx_def + mk22fn512_def + miosix_cm4f_def
+gd77_src += openrtx_src + mk22fn512_src + miosix_nxpmk22_src + ui_src_default + gdx_src
+gd77_inc += openrtx_inc + mk22fn512_inc + miosix_nxpmk22_inc
+gd77_def += openrtx_def + mk22fn512_def + miosix_nxpmk22_def
 
 ##
 ## Baofeng DM-1801
@@ -406,9 +406,9 @@ dm1801_src = ['platform/targets/DM-1801/platform.c']
 dm1801_inc = ['platform/targets/DM-1801']
 dm1801_def = {'PLATFORM_DM1801': ''}
 
-dm1801_src += openrtx_src + mk22fn512_src + miosix_cm4f_src + ui_src_default + gdx_src
-dm1801_inc += openrtx_inc + mk22fn512_inc + miosix_cm4f_inc
-dm1801_def += openrtx_def + mk22fn512_def + miosix_cm4f_def
+dm1801_src += openrtx_src + mk22fn512_src + miosix_nxpmk22_src + ui_src_default + gdx_src
+dm1801_inc += openrtx_inc + mk22fn512_inc + miosix_nxpmk22_inc
+dm1801_def += openrtx_def + mk22fn512_def + miosix_nxpmk22_def
 
 ##
 ## Module 17
@@ -428,9 +428,9 @@ mod17_src = ['platform/targets/Module17/platform.c',
 mod17_inc = ['platform/targets/Module17']
 mod17_def = {'PLATFORM_MOD17': ''}
 
-mod17_src += openrtx_src + stm32f405_src + miosix_cm4f_src + ui_src_module17
-mod17_inc += openrtx_inc + stm32f405_inc + miosix_cm4f_inc
-mod17_def += openrtx_def + stm32f405_def + miosix_cm4f_def
+mod17_src += openrtx_src + stm32f405_src + miosix_stm32f4_src + ui_src_module17
+mod17_inc += openrtx_inc + stm32f405_inc + miosix_stm32f4_inc
+mod17_def += openrtx_def + stm32f405_def + miosix_stm32f4_def
 
 ##
 ## -------------------------- Compilation arguments ----------------------------
