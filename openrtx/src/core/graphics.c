@@ -149,7 +149,9 @@ static bw_t _color2bw(color_t true_color)
 #error Please define a pixel format type into hwconfig.h or meson.build
 #endif
 
+#ifndef CONFIG_GFX_NOFRAMEBUF
 static PIXEL_T __attribute__((section(".bss.fb"))) framebuffer[FB_SIZE];
+#endif
 static char text[32];
 
 
@@ -168,12 +170,19 @@ void gfx_terminate()
 
 void gfx_renderRows(uint8_t startRow, uint8_t endRow)
 {
+#ifdef CONFIG_GFX_NOFRAMEBUF
+    (void) startRow;
+    (void) endRow;
+#else
     display_renderRows(startRow, endRow, framebuffer);
+#endif
 }
 
 void gfx_render()
 {
+#ifndef CONFIG_GFX_NOFRAMEBUF
     display_render(framebuffer);
+#endif
 }
 
 void gfx_clearRows(uint8_t startRow, uint8_t endRow)
@@ -181,28 +190,45 @@ void gfx_clearRows(uint8_t startRow, uint8_t endRow)
     if(endRow < startRow)
         return;
 
+#ifndef CONFIG_GFX_NOFRAMEBUF
     uint16_t start = startRow * CONFIG_SCREEN_WIDTH * sizeof(PIXEL_T);
     uint16_t height = endRow - startRow * CONFIG_SCREEN_WIDTH * sizeof(PIXEL_T);
     // Set the specified rows to 0x00 = make the screen black
     memset(framebuffer + start, 0x00, height);
+#endif
 }
 
 void gfx_clearScreen()
 {
     // Set the whole framebuffer to 0x00 = make the screen black
+    #ifdef CONFIG_GFX_NOFRAMEBUF
+    display_fill(0x00);
+    #else
     memset(framebuffer, 0x00, FB_SIZE * sizeof(PIXEL_T));
+    #endif
 }
 
 void gfx_fillScreen(color_t color)
 {
-    for(int16_t y = 0; y < CONFIG_SCREEN_HEIGHT; y++)
-    {
-        for(int16_t x = 0; x < CONFIG_SCREEN_WIDTH; x++)
-        {
-            point_t pos = {x, y};
-            gfx_setPixel(pos, color);
-        }
-    }
+    // Convert color to high color
+    #ifdef CONFIG_PIX_FMT_RGB565
+    rgb565_t high_color = _true2highColor(color);
+    display_fill((high_color.r << 11) | (high_color.g << 5) | high_color.b);
+    #elif defined CONFIG_PIX_FMT_BW
+    display_fill(_color2bw(color));
+    #endif
+}
+// Set window: x, y, width, height
+void gfx_setWindow(uint16_t x, uint16_t y, uint16_t height, uint16_t width)
+{
+    display_setWindow(x, y, height, width);
+}
+
+void gfx_clearWindow(uint16_t x, uint16_t y, uint16_t height, uint16_t width)
+{
+    display_clearWindow(x, y, height, width);
+    // Restore window
+    display_setWindow(0,0,CONFIG_SCREEN_HEIGHT, CONFIG_SCREEN_WIDTH+28);
 }
 
 inline void gfx_setPixel(point_t pos, color_t color)
@@ -212,6 +238,11 @@ inline void gfx_setPixel(point_t pos, color_t color)
         return; // off the screen
 
 #ifdef CONFIG_PIX_FMT_RGB565
+
+    #ifdef CONFIG_GFX_NOFRAMEBUF
+    rgb565_t pixel = _true2highColor(color);
+    display_setPixel(pos.x, pos.y, (pixel.r << 11) | (pixel.g << 5) | (pixel.b));
+    #else
     // Blend old pixel value and new one
     if (color.alpha < 255)
     {
@@ -228,7 +259,13 @@ inline void gfx_setPixel(point_t pos, color_t color)
     {
         framebuffer[pos.x + pos.y*CONFIG_SCREEN_WIDTH] = _true2highColor(color);
     }
+    #endif
+
 #elif defined CONFIG_PIX_FMT_BW
+
+    #ifdef CONFIG_GFX_NOFRAMEBUF
+    display_setPixel(pos.x, pos.y, _color2bw(color));
+    #else
     // Ignore more than half transparent pixels
     if (color.alpha >= 128)
     {
@@ -237,6 +274,8 @@ inline void gfx_setPixel(point_t pos, color_t color)
         framebuffer[cell] &= ~(1 << elem);
         framebuffer[cell] |= (_color2bw(color) << elem);
     }
+    #endif
+
 #endif
 }
 

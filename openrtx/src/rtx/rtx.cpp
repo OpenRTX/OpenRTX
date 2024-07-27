@@ -60,6 +60,7 @@ void rtx_init(pthread_mutex_t *m)
     rtxStatus.rxTone        = 0;
     rtxStatus.txToneEn      = 0;
     rtxStatus.txTone        = 0;
+    rtxStatus.voxEn         = 0;
     rtxStatus.invertRxPhase = false;
     rtxStatus.lsfOk         = false;
     rtxStatus.M17_src[0]    = '\0';

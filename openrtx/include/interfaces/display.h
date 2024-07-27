@@ -84,6 +84,22 @@ void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb);
 void display_render(void *fb);
 
 /**
+ * Fill the entire display with a given color.
+ *
+ * @param color: fill color, expressed in the display color space.
+ */
+void display_fill(uint32_t color);
+
+/**
+ * Set a pixel of the display to a given color.
+ *
+ * @param x: horizontal coordinate of the pixel.
+ * @param y: vertical coordinate of the pixel.
+ * @param color: pixel color, expressed in the display color space.
+ */
+void display_setPixel(uint16_t x, uint16_t y, uint32_t color);
+
+/**
  * Set display contrast.
  * NOTE: not all the display controllers support contrast control, thus on some
  * targets this function has no effect.

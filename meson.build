@@ -15,8 +15,8 @@ openrtx_def = {}
 ## UI font configuration, only one uncommented at a time
 ##
 
-openrtx_def += {'FONT_UBUNTU_REGULAR': ''}
-# openrtx_def += {'FONT_FREE_SANS': ''}
+# openrtx_def += {'FONT_UBUNTU_REGULAR': ''}
+openrtx_def += {'FONT_FREE_SANS': ''}
 
 ##
 ## Firmware configuration parameters
@@ -47,10 +47,10 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/crc.c',
                'openrtx/src/core/datetime.c',
                'openrtx/src/core/openrtx.c',
-               'openrtx/src/core/audio_codec.c',
+#                'openrtx/src/core/audio_codec.c',
                'openrtx/src/core/audio_stream.c',
                'openrtx/src/core/audio_path.cpp',
-               'openrtx/src/core/data_conversion.c',
+#                'openrtx/src/core/data_conversion.c',
                'openrtx/src/core/memory_profiling.cpp',
                'openrtx/src/core/voicePrompts.c',
                'openrtx/src/core/voicePromptUtils.c',
@@ -58,7 +58,7 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/nvmem_access.c',
                'openrtx/src/rtx/rtx.cpp',
                'openrtx/src/rtx/OpMode_FM.cpp',
-               'openrtx/src/rtx/OpMode_M17.cpp',
+#               'openrtx/src/rtx/OpMode_M17.cpp',
                'openrtx/src/protocols/M17/M17DSP.cpp',
                'openrtx/src/protocols/M17/M17Golay.cpp',
                'openrtx/src/protocols/M17/M17Callsign.cpp',
@@ -248,7 +248,7 @@ mk22fn512_src = ['platform/mcu/MK22FN512xxx12/boot/startup.cpp',
                  'platform/mcu/MK22FN512xxx12/drivers/usb/usb_device_khci.c',
                  'platform/mcu/MK22FN512xxx12/drivers/usb/usb_osa_bm.c',
                  'platform/mcu/MK22FN512xxx12/drivers/usb_vcom.c',
-                 'platform/mcu/CMSIS/Device/NXP/MK22FN512xxx12/Source/system_MK22F51212.c']
+                  'platform/mcu/CMSIS/Device/NXP/MK22FN512xxx12/Source/system_MK22F51212.c']
 
 mk22fn512_inc = ['platform/mcu/CMSIS/Include',
                  'platform/mcu/CMSIS/Device/NXP/MK22FN512xxx12/Include',
@@ -256,6 +256,50 @@ mk22fn512_inc = ['platform/mcu/CMSIS/Include',
                  'platform/mcu/MK22FN512xxx12/drivers']
 
 mk22fn512_def = {}
+
+##
+## AT32F421
+##
+
+at32f421_src = ['platform/mcu/AT32F421/boot/startup.cpp',
+                'platform/mcu/AT32F421/boot/bsp.cpp',
+                'platform/mcu/AT32F421/boot/libc_integration.cpp',
+                'platform/mcu/AT32F421/drivers/gpio.c',
+                'platform/mcu/AT32F421/drivers/delays.cpp',
+                'platform/mcu/AT32F421/drivers/USART1.cpp',
+                'platform/mcu/CMSIS/Device/Artery/AT32F421/Source/system_at32f421.c']
+
+at32f421_inc = ['platform/mcu/AT32F421',
+                'platform/mcu/CMSIS/Include',
+                'platform/mcu/CMSIS/Device/Artery/AT32F421/Include']
+
+at32f421_def = {'AT32F421C8T7':''}
+
+##
+## GD32F330
+##
+
+gd32f330_src = [
+                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/system_gd32f3x0.c',
+                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_misc.c',
+                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_gpio.c',
+                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_usart.c',
+                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_spi.c',
+                'platform/mcu/GD32F330/drivers/gpio.c',
+                'platform/mcu/GD32F330/drivers/delays.cpp',
+                'platform/mcu/GD32F330/drivers/USART0.cpp',
+                'platform/mcu/GD32F330/boot/startup.cpp',
+                'platform/mcu/GD32F330/boot/bsp.cpp',
+                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_timer.c',
+                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_rcu.c',
+                'platform/mcu/GD32F330/boot/libc_integration.cpp']
+
+gd32f330_inc = ['platform/mcu/GD32F330',
+                'platform/mcu/GD32F330/drivers',
+                'platform/mcu/CMSIS/Include',
+                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Include']
+
+gd32f330_def = {'GD32F330':''}
 
 ##
 ## ----------------------- Platform specializations ----------------------------
@@ -433,6 +477,50 @@ mod17_inc += openrtx_inc + stm32f405_inc + miosix_cm4f_inc
 mod17_def += openrtx_def + stm32f405_def + miosix_cm4f_def
 
 ##
+## Radtel RT-890
+##
+
+rt890_src = ['platform/targets/RT-890/platform.c',
+             'platform/drivers/display/ST7735S_RT890.c',
+             'platform/drivers/keyboard/keyboard_RT890.c',
+             'platform/drivers/stubs/audio_stub.c',
+             'platform/drivers/stubs/cps_io_stub.c',
+             'platform/drivers/stubs/nvmem_stub.c',
+             'platform/drivers/stubs/radio_stub.c']
+
+rt890_inc = ['platform/targets/RT-890']
+rt890_def = {'PLATFORM_RT890': ''}
+
+rt890_src += openrtx_src + at32f421_src + miosix_cm4_src + ui_src_default
+rt890_inc += openrtx_inc + at32f421_inc + miosix_cm4_inc
+rt890_def += openrtx_def + at32f421_def + miosix_cm4_def
+
+
+##
+## Talkpod A36Plus
+##
+
+a36plus_src = ['platform/targets/A36Plus/platform.c',
+             'platform/drivers/display/ST7735S_a36plus.c',
+             'platform/drivers/keyboard/keyboard_a36plus.c',
+             'platform/drivers/audio/audio_A36Plus.c',
+             'platform/drivers/stubs/cps_io_stub.c',
+             'platform/drivers/stubs/nvmem_stub.c',
+             'platform/drivers/baseband/bk4819.c',
+             'platform/drivers/baseband/bk1080.c',
+             'platform/drivers/backlight/backlight_A36Plus.c',
+             'platform/drivers/baseband/radio_A36Plus.cpp']
+
+a36plus_inc = ['platform/targets/A36Plus',
+               'platform/drivers/baseband']
+
+a36plus_def = {'PLATFORM_A36PLUS': ''}
+
+a36plus_src += openrtx_src + gd32f330_src + miosix_cm4_src + ui_src_default
+a36plus_inc += openrtx_inc + gd32f330_inc + miosix_cm4_inc
+a36plus_def += openrtx_def + gd32f330_def + miosix_cm4_def
+
+##
 ## -------------------------- Compilation arguments ----------------------------
 ##
 
@@ -527,6 +615,24 @@ foreach k, v : mod17_def
   endif
 endforeach
 
+rt890_args = []
+foreach k, v : rt890_def
+  if v == ''
+    rt890_args += '-D@0@'.format(k)
+  else
+    rt890_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
+
+a36plus_args = []
+foreach k, v : a36plus_def
+  if v == ''
+    a36plus_args += '-D@0@'.format(k)
+  else
+    a36plus_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
+
 linux_opts = {
   'sources'            : linux_default_src,
   'include_directories': linux_inc,
@@ -614,6 +720,26 @@ mod17_opts = {
                           '-Wl,--print-memory-usage'],
 }
 
+rt890_opts = {
+  'sources'            : rt890_src,
+  'include_directories': rt890_inc,
+  'dependencies'       : [],
+  'c_args'             : rt890_args,
+  'cpp_args'           : rt890_args,
+  'link_args'          : ['-Wl,-T../platform/mcu/AT32F421/linker_script.ld',
+                          '-Wl,--print-memory-usage'],
+}
+
+a36plus_opts = {
+  'sources'            : a36plus_src,
+  'include_directories': a36plus_inc,
+  'dependencies'       : [],
+  'c_args'             : a36plus_args,
+  'cpp_args'           : a36plus_args,
+  'link_args'          : ['-Wl,-T../platform/mcu/GD32F330/linker_script.ld',
+                          '-Wl,--print-memory-usage'],
+}
+
 ttwrplus_opts = {
   'sources'            : ['CMakeLists.txt'],
   'include_directories': [],
@@ -681,6 +807,20 @@ targets = [
   {
     'name'     : 'mod17',
     'opts'     : mod17_opts,
+    'flashable': true,
+    'wrap'     : ' ',
+    'load_addr': ' '
+  },
+  {
+    'name'     : 'rt890',
+    'opts'     : rt890_opts,
+    'flashable': true,
+    'wrap'     : ' ',
+    'load_addr': ' '
+  },
+  {
+    'name'     : 'a36plus',
+    'opts'     : a36plus_opts,
     'flashable': true,
     'wrap'     : ' ',
     'load_addr': ' '

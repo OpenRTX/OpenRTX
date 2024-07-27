@@ -72,6 +72,7 @@ void *ui_threadFunc(void *arg)
 
         if(input_scanKeyboard(&kbd_msg))
         {
+            gfx_clearScreen();
             ui_pushEvent(EVENT_KBD, kbd_msg.value);
         }
 
@@ -80,7 +81,7 @@ void *ui_threadFunc(void *arg)
         ui_saveState();                     // Save local state copy
         pthread_mutex_unlock(&state_mutex); // Unlock r/w access to radio state
 
-        vp_tick();                           // continue playing voice prompts in progress if any.
+        // vp_tick();                           // continue playing voice prompts in progress if any.
 
         // If synchronization needed take mutex and update RTX configuration
         if(sync_rtx)
@@ -114,10 +115,15 @@ void *ui_threadFunc(void *arg)
         }
 
         // Update UI and render on screen, if necessary
+        #ifndef CONFIG_GFX_NOFRAMEBUF
         if(ui_updateGUI() == true)
         {
             gfx_render();
         }
+        #else
+        ui_updateGUI();
+        #endif
+
 
         // 40Hz update rate for keyboard and UI
         time += 25;
