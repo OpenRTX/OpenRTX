@@ -10,6 +10,7 @@ project('OpenRTX', ['c', 'cpp'],
 ##
 
 openrtx_def = {}
+#openrtx_def += {'ENABLE_STDIO' : ''} # Enable vcom input/output
 
 ##
 ## UI font configuration, only one uncommented at a time
@@ -194,6 +195,7 @@ gdx_src = ['openrtx/src/core/xmodem.c',
 ##
 
 stm32f405_src = ['platform/mcu/STM32F4xx/init.c',
+                 'platform/mcu/STM32F4xx/libc_integration.cpp',
                  'platform/mcu/STM32F4xx/drivers/usb/usb_bsp.c',
                  'platform/mcu/STM32F4xx/drivers/usb/usb_core.c',
                  'platform/mcu/STM32F4xx/drivers/usb/usb_dcd.c',

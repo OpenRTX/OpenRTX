@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2024 by Morgan Diepart ON4MOD                           *
+ *   Copyright (C) 2020 - 2023 by Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -15,29 +15,67 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-/*
- * This file is mainly used to define the SystemInitHook function.
- * This function is called at the end of the SystemInit function.
- * 
- * The SystemInitHook function sets the vector table offset
- * 
- * The bspInit2_callback function initializes VCOM if STDIO is enabled.
+#include <stdio.h>
+#include <reent.h>
+#include "drivers/usb_vcom.h"
+#include <filesystem/file_access.h>
+
+using namespace std;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * \internal
+ * _write_r, write to a file
  */
-
-#include "arch/cortexM4_stm32f4/stm32f405_generic/interfaces-impl/arch_registers_impl.h"
-#include "CMSIS/Device/ST/STM32F4xx/Include/system_stm32f4xx.h"
-#include <drivers/usb_vcom.h>
-
-extern void (* const __Vectors[])();
-
-void SystemInitHook(void)
+int _write_r(struct _reent *ptr, int fd, const void *buf, size_t cnt)
 {
-    SCB->VTOR = (unsigned int)(&__Vectors); // Relocates ISR vector   
+    #ifdef ENABLE_STDIO
+    if(fd == STDOUT_FILENO || fd == STDERR_FILENO)
+    {
+        return vcom_writeBlock(buf, cnt);
+    }
+    #else
+    (void) ptr;
+    (void) fd;
+    (void) buf;
+    (void) cnt;
+    #endif
+
+    /* If fd is not stdout or stderr */
+    ptr->_errno = EBADF;
+    return -1;
 }
 
-void bspInit2_callback()
+/**
+ * \internal
+ * _read_r, read from a file.
+ */
+int _read_r(struct _reent *ptr, int fd, void *buf, size_t cnt)
 {
-#ifdef ENABLE_STDIO
-    vcom_init();
-#endif   
+    #ifdef ENABLE_STDIO
+    if(fd == STDIN_FILENO)
+    {
+        for(;;)
+        {
+            ssize_t r = vcom_readBlock(buf, cnt);
+            if((r < 0) || (r == (ssize_t)(cnt))) return r;
+        }
+    }
+    #else
+    (void) ptr;
+    (void) fd;
+    (void) buf;
+    (void) cnt;
+    #endif
+
+    /* If fd is not stdin */
+    ptr->_errno = EBADF;
+    return -1;
 }
+
+#ifdef __cplusplus
+}
+#endif
