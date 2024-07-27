@@ -155,7 +155,6 @@ void bk4819_init(void)
     WriteRegister(0x31, uVar1 & 0xfffffff7);
     WriteRegister(0x28, 0x6b38);
     WriteRegister(0x29, 0xb4cb);
-
 }
 
 uint8_t bk4819_int_get(bk4819_int_t interrupt)
@@ -178,6 +177,7 @@ void bk4819_set_freq(uint32_t freq)
 {
     WriteRegister(BK4819_REG_39, (freq >> 16) & 0xFFFF);
     WriteRegister(BK4819_REG_38, freq & 0xFFFF);
+    bk4819_rx_on();
 }
 
 void bk4819_rx_on(void)
@@ -276,7 +276,7 @@ void bk4819_set_Squelch(uint8_t RTSO,
 
 int16_t bk4819_get_rssi(void)
 {
-    return (ReadRegister(BK4819_REG_67) & 0xFF) / 2 - 160;
+    return ((ReadRegister(BK4819_REG_67)) / 2) - 160;
 }
 
 void bk4819_enable_freq_scan(uint8_t scna_time){
