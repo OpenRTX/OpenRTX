@@ -24,6 +24,7 @@
 #include <kernel/scheduler/scheduler.h>
 #include <stm32f4xx.h>
 #include <miosix.h>
+#include <functional>
 
 /**
  * Enumerating type describing the memory and peripheral data sizes allowed
@@ -104,7 +105,7 @@ public:
         miosix::FastInterruptDisableLock dLock;
         uint32_t curPos = stream->NDTR;
         uint32_t idle   = stream->M0AR;
-        uint32_t size   = (stream->CR >> DMA_SxCR_MSIZE_Pos) & 0x03;
+        uint32_t size   = (stream->CR >> 13U) & 0x03;
 
         if(curPos > (transferSize / 2))
             idle += (transferSize / 2) * size * 2;

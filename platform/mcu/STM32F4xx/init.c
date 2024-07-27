@@ -1,9 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 - 2023 by Federico Amedeo Izzo IU2NUO,             *
- *                                Niccolò Izzo IU2KIN                      *
- *                                Frederik Saraci IU2NRO                   *
- *                                Silvano Seva IU2KWO,                     *
- *                                Federico Terraneo                        *
+ *   Copyright (C) 2024 by Morgan Diepart ON4MOD                           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -19,51 +15,29 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-/***********************************************************************
-* bsp.cpp Part of the Miosix Embedded OS.
-* Board support package, this file initializes hardware.
-************************************************************************/
+/*
+ * This file is mainly used to define the SystemInitHook function.
+ * This function is called at the end of the SystemInit function.
+ * 
+ * The SystemInitHook function sets the vector table offset
+ * 
+ * The bspInit2_callback function initializes VCOM if STDIO is enabled.
+ */
 
-#include <interfaces/bsp.h>
-#include <kernel/kernel.h>
-#include <kernel/sync.h>
-#include <hwconfig.h>
+#include "arch/cortexM4_stm32f4/stm32f405_generic/interfaces-impl/arch_registers_impl.h"
+#include "CMSIS/Device/ST/STM32F4xx/Include/system_stm32f4xx.h"
+#include <drivers/usb_vcom.h>
 
-#include <peripherals/gpio.h>
+extern void (* const __Vectors[])();
 
-namespace miosix
+void SystemInitHook(void)
 {
-
-//
-// Initialization
-//
-
-void IRQbspInit()
-{
-    SIM->SCGC5 |= 0x3E00;   // Enable GPIO clock
-
-    // Configure SysTick
-    SysTick->LOAD = SystemCoreClock / miosix::TICK_FREQ;
+    SCB->VTOR = (unsigned int)(&__Vectors); // Relocates ISR vector   
 }
 
-void bspInit2()
+void bspInit2_callback()
 {
-
+#ifdef ENABLE_STDIO
+    vcom_init();
+#endif   
 }
-
-//
-// Shutdown and reboot
-//
-
-void shutdown()
-{
-    reboot();
-}
-
-void reboot()
-{
-    disableInterrupts();
-    miosix_private::IRQsystemReboot();
-}
-
-} //namespace miosix

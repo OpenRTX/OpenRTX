@@ -91,7 +91,7 @@ static inline void gpio_setPin(const void *port, const uint8_t pin)
  */
 static inline void gpio_clearPin(const void *port, const uint8_t pin)
 {
-    ((GPIO_TypeDef *)(port))->BSRR = (1 << (pin + 16));
+    ((GPIO_TypeDef *)(port))->BSRR = (1 << (pin+16));
 }
 
 /**

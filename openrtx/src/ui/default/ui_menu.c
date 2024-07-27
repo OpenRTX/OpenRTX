@@ -93,7 +93,7 @@ static bool DidSelectedMenuItemChange(char* menuName, char* menuValue)
     if ((menuValue != NULL) && (strcmp(menuValue, priorSelectedMenuValue) != 0))
     {
         // avoid chatter when value changes rapidly!
-    uint32_t now=getTick();
+    uint32_t now=getTimeMs();
 
         uint32_t interval=now - lastValueUpdate;
         lastValueUpdate = now;
@@ -991,10 +991,10 @@ void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state)
                   layout.horizontal_pad, layout.top_font,
                   TEXT_ALIGN_CENTER, textcolor, currentLanguage->pressEnterTwice);
 
-    if((getTick() - lastDraw) > 1000)
+    if((getTimeMs() - lastDraw) > 1000)
     {
         drawcnt++;
-        lastDraw = getTick();
+        lastDraw = getTimeMs();
     }
 
     drawcnt++;

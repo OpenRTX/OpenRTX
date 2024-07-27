@@ -10,6 +10,7 @@ project('OpenRTX', ['c', 'cpp'],
 ##
 
 openrtx_def = {}
+#openrtx_def += {'ENABLE_STDIO' : ''} # Enable vcom input/output
 
 ##
 ## UI font configuration, only one uncommented at a time
@@ -193,9 +194,8 @@ gdx_src = ['openrtx/src/core/xmodem.c',
 ## STM32F405
 ##
 
-stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.cpp',
-                 'platform/mcu/STM32F4xx/boot/bsp.cpp',
-                 'platform/mcu/STM32F4xx/boot/libc_integration.cpp',
+stm32f405_src = ['platform/mcu/STM32F4xx/init.c',
+                 'platform/mcu/STM32F4xx/libc_integration.cpp',
                  'platform/mcu/STM32F4xx/drivers/usb/usb_bsp.c',
                  'platform/mcu/STM32F4xx/drivers/usb/usb_core.c',
                  'platform/mcu/STM32F4xx/drivers/usb/usb_dcd.c',
@@ -210,7 +210,6 @@ stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.cpp',
                  'platform/mcu/STM32F4xx/drivers/delays.cpp',
                  'platform/mcu/STM32F4xx/drivers/rtc.c',
                  'platform/mcu/STM32F4xx/drivers/SPI2.c',
-                 'platform/mcu/STM32F4xx/drivers/USART3.cpp',
                  'platform/mcu/STM32F4xx/drivers/flash.c',
                  'platform/mcu/STM32F4xx/drivers/rng.c',
                  'platform/mcu/STM32F4xx/drivers/i2c_stm32.c',
@@ -218,25 +217,20 @@ stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.cpp',
                  'platform/mcu/STM32F4xx/drivers/adc_stm32.c',
                  'platform/drivers/audio/stm32_dac.cpp',
                  'platform/drivers/audio/stm32_adc.cpp',
-                 'platform/drivers/audio/stm32_pwm.cpp',
-                 'platform/drivers/keyboard/cap1206.c',
-                 'platform/mcu/CMSIS/Device/ST/STM32F4xx/Source/system_stm32f4xx.c']
+                 'platform/drivers/audio/stm32_pwm.cpp']
 
-stm32f405_inc = ['platform/mcu/CMSIS/Include',
-                 'platform/mcu/CMSIS/Device/ST/STM32F4xx/Include',
-                 'platform/mcu/STM32F4xx',
+stm32f405_inc = ['platform/mcu/STM32F4xx',
                  'platform/mcu/STM32F4xx/drivers',
                  'platform/mcu/STM32F4xx/drivers/usb']
 
-stm32f405_def = {'STM32F405xx': '', 'HSE_VALUE':'8000000'}
+stm32f405_def = {'STM32F405xx': '', 'HSE_VALUE':'8000000', 'SYSCLK_FREQ_168MHz' : '168000000'}
 
 ##
 ## MK22FN512
 ##
 
-mk22fn512_src = ['platform/mcu/MK22FN512xxx12/boot/startup.cpp',
-                 'platform/mcu/MK22FN512xxx12/boot/bsp.cpp',
-                 'platform/mcu/MK22FN512xxx12/boot/libc_integration.cpp',
+mk22fn512_src = ['platform/mcu/MK22FN512xxx12/init_12_288M.c',
+                 'platform/mcu/MK22FN512xxx12/libc_integration.cpp',
                  'platform/mcu/MK22FN512xxx12/drivers/gpio.c',
                  'platform/mcu/MK22FN512xxx12/drivers/delays.cpp',
                  'platform/mcu/MK22FN512xxx12/drivers/I2C0.c',
@@ -247,12 +241,9 @@ mk22fn512_src = ['platform/mcu/MK22FN512xxx12/boot/startup.cpp',
                  'platform/mcu/MK22FN512xxx12/drivers/usb/usb_device_descriptor.c',
                  'platform/mcu/MK22FN512xxx12/drivers/usb/usb_device_khci.c',
                  'platform/mcu/MK22FN512xxx12/drivers/usb/usb_osa_bm.c',
-                 'platform/mcu/MK22FN512xxx12/drivers/usb_vcom.c',
-                 'platform/mcu/CMSIS/Device/NXP/MK22FN512xxx12/Source/system_MK22F51212.c']
+                 'platform/mcu/MK22FN512xxx12/drivers/usb_vcom.c']
 
-mk22fn512_inc = ['platform/mcu/CMSIS/Include',
-                 'platform/mcu/CMSIS/Device/NXP/MK22FN512xxx12/Include',
-                 'platform/mcu/MK22FN512xxx12',
+mk22fn512_inc = ['platform/mcu/MK22FN512xxx12',
                  'platform/mcu/MK22FN512xxx12/drivers']
 
 mk22fn512_def = {}
@@ -341,11 +332,14 @@ md3x0_src = ['platform/drivers/NVM/nvmem_MD3x0.c',
              'platform/targets/MD-3x0/platform.c']
 
 md3x0_inc = ['platform/targets/MD-3x0']
-md3x0_def = {'PLATFORM_MD3x0': '', 'timegm': 'mktime'}
+md3x0_def = {'PLATFORM_MD3x0': '',
+                       'timegm': 'mktime',
+                       'SERIAL3_EXCLUDE': '',
+                       'CONSOLE_SERIAL': '1'}
 
-md3x0_src += openrtx_src + stm32f405_src + miosix_cm4f_src + ui_src_default + mdx_src
-md3x0_inc += openrtx_inc + stm32f405_inc + miosix_cm4f_inc
-md3x0_def += openrtx_def + stm32f405_def + miosix_cm4f_def
+md3x0_src += openrtx_src + stm32f405_src + miosix_stm32f4_src + ui_src_default + mdx_src
+md3x0_inc += openrtx_inc + stm32f405_inc + miosix_stm32f4_inc
+md3x0_def += openrtx_def + stm32f405_def + miosix_stm32f4_def
 
 ##
 ## TYT MD-UV380
@@ -363,11 +357,14 @@ mduv3x0_src = ['platform/drivers/NVM/nvmem_MDUV3x0.c',
                'platform/drivers/baseband/HR_C6000_UV3x0.cpp']
 
 mduv3x0_inc = ['platform/targets/MD-UV3x0']
-mduv3x0_def =  {'PLATFORM_MDUV3x0': '', 'timegm': 'mktime'}
+mduv3x0_def =  {'PLATFORM_MDUV3x0': '',
+                          'timegm': 'mktime',
+                          'CONSOLE_SERIAL': '3',
+                          'SERIAL1_EXCLUDE': ''}
 
-mduv3x0_src += openrtx_src + stm32f405_src + miosix_cm4f_src + ui_src_default + mdx_src
-mduv3x0_inc += openrtx_inc + stm32f405_inc + miosix_cm4f_inc
-mduv3x0_def += openrtx_def + stm32f405_def + miosix_cm4f_def
+mduv3x0_src += openrtx_src + stm32f405_src + miosix_stm32f4_src + ui_src_default + mdx_src
+mduv3x0_inc += openrtx_inc + stm32f405_inc + miosix_stm32f4_inc
+mduv3x0_def += openrtx_def + stm32f405_def + miosix_stm32f4_def
 
 ##
 ## TYT MD-9600
@@ -382,11 +379,13 @@ md9600_src = ['platform/targets/MD-9600/platform.c',
               'platform/drivers/CPS/cps_io_native_MD9600.c']
 
 md9600_inc = ['platform/targets/MD-9600']
-md9600_def = {'PLATFORM_MD9600': ''}
+md9600_def = {'PLATFORM_MD9600': '',
+                        'CONSOLE_SERIAL' : '3',
+                        'SERIAL1_EXCLUDE': ''}
 
-md9600_src += openrtx_src + stm32f405_src + miosix_cm4f_src + ui_src_default + mdx_src
-md9600_inc += openrtx_inc + stm32f405_inc + miosix_cm4f_inc
-md9600_def += openrtx_def + stm32f405_def + miosix_cm4f_def
+md9600_src += openrtx_src + stm32f405_src + miosix_stm32f4_src + ui_src_default + mdx_src
+md9600_inc += openrtx_inc + stm32f405_inc + miosix_stm32f4_inc
+md9600_def += openrtx_def + stm32f405_def + miosix_stm32f4_def
 
 ##
 ## Radioddity GD-77
@@ -395,9 +394,9 @@ gd77_src = ['platform/targets/GD-77/platform.c']
 gd77_inc = ['platform/targets/GD-77']
 gd77_def = {'PLATFORM_GD77': ''}
 
-gd77_src += openrtx_src + mk22fn512_src + miosix_cm4f_src + ui_src_default + gdx_src
-gd77_inc += openrtx_inc + mk22fn512_inc + miosix_cm4f_inc
-gd77_def += openrtx_def + mk22fn512_def + miosix_cm4f_def
+gd77_src += openrtx_src + mk22fn512_src + miosix_nxpmk22_src + ui_src_default + gdx_src
+gd77_inc += openrtx_inc + mk22fn512_inc + miosix_nxpmk22_inc
+gd77_def += openrtx_def + mk22fn512_def + miosix_nxpmk22_def
 
 ##
 ## Baofeng DM-1801
@@ -406,9 +405,9 @@ dm1801_src = ['platform/targets/DM-1801/platform.c']
 dm1801_inc = ['platform/targets/DM-1801']
 dm1801_def = {'PLATFORM_DM1801': ''}
 
-dm1801_src += openrtx_src + mk22fn512_src + miosix_cm4f_src + ui_src_default + gdx_src
-dm1801_inc += openrtx_inc + mk22fn512_inc + miosix_cm4f_inc
-dm1801_def += openrtx_def + mk22fn512_def + miosix_cm4f_def
+dm1801_src += openrtx_src + mk22fn512_src + miosix_nxpmk22_src + ui_src_default + gdx_src
+dm1801_inc += openrtx_inc + mk22fn512_inc + miosix_nxpmk22_inc
+dm1801_def += openrtx_def + mk22fn512_def + miosix_nxpmk22_def
 
 ##
 ## Module 17
@@ -423,14 +422,15 @@ mod17_src = ['platform/targets/Module17/platform.c',
              'platform/drivers/baseband/radio_Mod17.cpp',
              'platform/drivers/audio/audio_Mod17.c',
              'platform/drivers/audio/MAX9814_Mod17.cpp',
-             'platform/drivers/baseband/MCP4551.c']
+             'platform/drivers/baseband/MCP4551.c',
+             'platform/drivers/keyboard/cap1206.c']
 
 mod17_inc = ['platform/targets/Module17']
 mod17_def = {'PLATFORM_MOD17': ''}
 
-mod17_src += openrtx_src + stm32f405_src + miosix_cm4f_src + ui_src_module17
-mod17_inc += openrtx_inc + stm32f405_inc + miosix_cm4f_inc
-mod17_def += openrtx_def + stm32f405_def + miosix_cm4f_def
+mod17_src += openrtx_src + stm32f405_src + miosix_stm32f4_src + ui_src_module17
+mod17_inc += openrtx_inc + stm32f405_inc + miosix_stm32f4_inc
+mod17_def += openrtx_def + stm32f405_def + miosix_stm32f4_def
 
 ##
 ## -------------------------- Compilation arguments ----------------------------

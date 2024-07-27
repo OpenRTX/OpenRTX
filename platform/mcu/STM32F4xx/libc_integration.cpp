@@ -17,8 +17,8 @@
 
 #include <stdio.h>
 #include <reent.h>
-#include "../drivers/usb_vcom.h"
-#include "filesystem/file_access.h"
+#include "drivers/usb_vcom.h"
+#include <filesystem/file_access.h>
 
 using namespace std;
 
@@ -35,8 +35,7 @@ int _write_r(struct _reent *ptr, int fd, const void *buf, size_t cnt)
     #ifdef ENABLE_STDIO
     if(fd == STDOUT_FILENO || fd == STDERR_FILENO)
     {
-        vcom_writeBlock(buf, cnt);
-        return cnt;
+        return vcom_writeBlock(buf, cnt);
     }
     #else
     (void) ptr;

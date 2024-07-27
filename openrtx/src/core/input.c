@@ -32,7 +32,7 @@ bool input_scanKeyboard(kbd_msg_t *msg)
     bool kbd_event = false;
 
     keyboard_t keys = kbd_getKeys();
-    long long now   = getTick();
+    long long now   = getTimeMs();
 
     // The key status has changed
     if(keys != prevKeys)

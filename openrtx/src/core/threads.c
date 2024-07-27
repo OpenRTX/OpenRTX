@@ -68,7 +68,7 @@ void *ui_threadFunc(void *arg)
 
     while(state.devStatus != SHUTDOWN)
     {
-        time = getTick();
+        time = getTimeMs();
 
         if(input_scanKeyboard(&kbd_msg))
         {
@@ -141,7 +141,7 @@ void *main_thread(void *arg)
 
     while(state.devStatus != SHUTDOWN)
     {
-        time = getTick();
+        time = getTimeMs();
 
         #if defined(PLATFORM_TTWRPLUS)
         pmu_handleIRQ();
