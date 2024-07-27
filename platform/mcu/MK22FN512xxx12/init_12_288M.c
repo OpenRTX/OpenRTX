@@ -27,11 +27,14 @@
  * in NXP's CMSIS pack files. In this case, it will initialize the clock tree to
  * full speed, that is, a system clock of 119.808 MHz.
  * 
- * The SystemInitHook also sets the vector table offset.
+ * The SystemInitHook function sets the vector table offset.
+ * 
+ * The bspInit2_callback function initializes VCOM if STDIO is enabled.
  */
 
 #include "arch/cortexM4_nxpmk22/nxpmk22f51212_generic/interfaces-impl/arch_registers_impl.h"
 #include "CMSIS/Device/NXP/MK22FN512xxx12/Include/system_MK22F51212.h"
+#include "drivers/usb_vcom.h"
 
 extern void (* const __Vectors[])();
 
@@ -67,4 +70,11 @@ void SystemInitHook(void)
     MCG->C6 |= MCG_C6_PLLS(1);              // Connect PLL to MCG source
 
     SCB->VTOR = (unsigned int)(&__Vectors); // Relocates ISR vector   
+}
+
+void bspInit2_callback()
+{
+#ifdef ENABLE_STDIO
+    vcom_init();
+#endif
 }
