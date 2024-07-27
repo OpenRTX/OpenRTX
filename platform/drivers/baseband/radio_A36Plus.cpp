@@ -87,52 +87,20 @@ void radio_init(const rtxStatus_t* rtxState)
     rcu_periph_clock_enable(RCU_GPIOF);
 
 
-    gpio_setMode(MIC_SPK_EN, OUTPUT);
-
     gpio_setMode(BK4819_CLK, OUTPUT);
     gpio_setMode(BK4819_DAT, OUTPUT);
     gpio_setMode(BK4819_CS, OUTPUT);
+    gpio_setMode(MIC_SPK_EN, OUTPUT);
 
     gpio_setMode(BK1080_DAT, OUTPUT);
     gpio_setMode(BK1080_CLK, OUTPUT);
     gpio_setMode(BK1080_EN, OUTPUT);
 
-    // gpio_setMode(RFV3R_EN, OUTPUT);
-    // gpio_setMode(RFU3T_EN, OUTPUT);
-
-
-
-    // gpio_setMode(RFV3T_EN, OUTPUT);
-    // gpio_setMode(RFU3R_EN, OUTPUT);
-
-    // gpio_setMode(RFV3R_EN, OUTPUT);
-    // gpio_setMode(RFU3T_EN, OUTPUT);
-
-    // gpio_setMode(RFV3T_EN, OUTPUT);
-    // gpio_setMode(RFU3R_EN, OUTPUT);
-
-
-    // gpio_setPin(RFV3T_EN);
-    // gpio_setPin(RFU3R_EN);
-
-    // gpio_setPin(RFV3R_EN);
-    // gpio_setPin(RFU3T_EN);
-
-    // gpio_setPin(RFV3T_EN);
-    // gpio_setPin(RFU3R_EN);
-
-
-    gpio_clearPin(BK1080_EN);
-    gpio_setPin(MIC_SPK_EN);
-
-    bk1080_init();
-    bk1080_set_frequency(1062);
-
+    // gpio_clearPin(BK1080_EN);
+    gpio_clearPin(MIC_SPK_EN);
     bk4819_init();
-    bk4819_rtx_off();
-   
     
-    // bk4819_enable_freq_scan(BK4819_SCAN_FRE_TIME_8);
+    bk4819_enable_freq_scan(BK4819_SCAN_FRE_TIME_2);
     // bk4819_enable_vox(0, 0x10, 0x30, 0x30);
 }
 
@@ -183,7 +151,7 @@ void radio_enableRx()
     if (config->rxToneEn){
         bk4819_enable_rx_ctcss(config->rxTone / 10);
     }
-    // bk4819_rx_on();
+    bk4819_rx_on();
     radioStatus = RX;
 }
 
@@ -213,7 +181,7 @@ void radio_updateConfiguration()
 
 rssi_t radio_getRssi()
 {
-    return 100;
+    return bk4819_get_rssi();
 }
 
 enum opstatus radio_getStatus()
