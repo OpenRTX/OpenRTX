@@ -682,6 +682,7 @@ static void GuiValDsp_Date( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
+    //@@@KL ensure that the display is updated when the date is set
     if( !guiState->update )
     {
         guiState->edit.localTime = utcToLocalTime( state.time ,
@@ -733,6 +734,7 @@ static void GuiValDsp_Time( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
+    //@@@KL ensure that the display is updated when the time is set
     if( !guiState->update )
     {
         guiState->edit.localTime = utcToLocalTime( state.time ,
@@ -855,25 +857,34 @@ static void GuiValDsp_RadioOffset( GuiState_st* guiState )
         guiState->edit.channel.rx_frequency = state.channel.rx_frequency ;
     }
 
-    offset = abs( (int32_t)guiState->edit.channel.tx_frequency -
-                  (int32_t)guiState->edit.channel.rx_frequency );
-    snprintf( valueBuffer , MAX_ENTRY_LEN , "%gMHz" , (float)offset / 1000000.0f );
+    offset = (int32_t)guiState->edit.channel.tx_frequency -
+             (int32_t)guiState->edit.channel.rx_frequency   ;
+
+    snprintf( valueBuffer , MAX_ENTRY_LEN , "%dKHz" , (int)offset );
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
 
 static void GuiValDsp_RadioDirection( GuiState_st* guiState )
 {
+    char chDirection ;
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
-
+/*
     if( !guiState->update )
     {
-        guiState->edit.channel.tx_frequency = state.channel.tx_frequency ;
-        guiState->edit.channel.rx_frequency = state.channel.rx_frequency ;
+        guiState->edit.direction = true ;
+    }
+*/
+    if( !guiState->edit.direction )
+    {
+        chDirection = '-' ;
+    }
+    else
+    {
+        chDirection = '+' ;
     }
 
-    valueBuffer[ 0 ] = ( guiState->edit.channel.tx_frequency >= guiState->edit.channel.rx_frequency ) ? '+' : '-';
-    valueBuffer[ 1 ] = '\0';
+    snprintf( valueBuffer , MAX_ENTRY_LEN , "%c" , chDirection );
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }
@@ -888,7 +899,7 @@ static void GuiValDsp_RadioStep( GuiState_st* guiState )
     }
 
     // Print in kHz if it is smaller than 1MHz
-    if( freq_steps[ state.step_index ] < 1000000 )
+    if( freq_steps[ guiState->edit.step_index ] < 1000000 )
     {
         snprintf( valueBuffer , MAX_ENTRY_LEN , "%gkHz" , (float)freq_steps[ guiState->edit.step_index ] / 1000.0f );
     }
@@ -902,19 +913,57 @@ static void GuiValDsp_RadioStep( GuiState_st* guiState )
 
 static void GuiValDsp_M17Callsign( GuiState_st* guiState )
 {
-    uint8_t index ;
+    uint8_t indexDst ;
+    uint8_t indexSrc ;
     char    valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     if( !guiState->update )
     {
-        for( index = 0 ; index < CALLSIGN_MAX_LENGTH ; index++ )
+        for( indexDst = 0 ; indexDst < CALLSIGN_MAX_LENGTH ; indexDst++ )
         {
-            guiState->edit.settings.callsign[ index ] = state.settings.callsign[ index ] ;
+            guiState->edit.settings.callsign[ indexDst ] = state.settings.callsign[ indexDst ] ;
         }
-        guiState->edit.settings.callsign[ index ] = '\0' ;
     }
 
-    snprintf( valueBuffer , MAX_ENTRY_LEN , "%s" , guiState->edit.settings.callsign );
+    if( !guiState->layout.varInputDisplay )
+    {
+        for( indexDst = 0 ; indexDst < CALLSIGN_MAX_LENGTH ; indexDst++ )
+        {
+            valueBuffer[ indexDst ] = guiState->edit.settings.callsign[ indexDst ] ;
+            if( !valueBuffer[ indexDst ] )
+            {
+                break ;
+            }
+        }
+    }
+    else
+    {
+        for( indexDst = 0 , indexSrc = 0 ; indexSrc < guiState->layout.varInputSelect ; indexDst++ , indexSrc++ )
+        {
+            valueBuffer[ indexDst ] = guiState->edit.settings.callsign[ indexSrc ] ;
+        }
+
+        valueBuffer[ indexDst ] = '[' ;
+        indexDst++ ;
+        valueBuffer[ indexDst ] = guiState->edit.settings.callsign[ indexSrc ] ;
+        indexDst++ ;
+        valueBuffer[ indexDst ] = ']' ;
+        indexDst++ ;
+        indexSrc++ ;
+
+        while( indexDst < CALLSIGN_MAX_LENGTH )
+        {
+            valueBuffer[ indexDst ] = guiState->edit.settings.callsign[ indexSrc ] ;
+            if( !valueBuffer[ indexDst ] )
+            {
+                break ;
+            }
+            indexDst++ ;
+            indexSrc++ ;
+        }
+
+    }
+
     GuiValDsp_Disp_Val( guiState , valueBuffer );
 
 }

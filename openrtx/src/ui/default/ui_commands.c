@@ -1120,8 +1120,9 @@ static bool GuiCmd_ValueInput( GuiState_st* guiState )
 
     if( !guiState->update )
     {
+        guiState->layout.varInputSelect = 0 ;
         GuiValDsp_DisplayValue( guiState );
-        guiState->page.renderPage = true ;
+        guiState->page.renderPage       = true ;
     }
     else
     {

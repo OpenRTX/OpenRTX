@@ -382,9 +382,17 @@ typedef struct
 
 enum
 {
-    VAR_INPUT_SELECT_0 ,
-    VAR_INPUT_SELECT_1 ,
-    VAR_INPUT_SELECT_2
+    VAR_INPUT_SELECT_0      ,
+    VAR_INPUT_SELECT_1      ,
+    VAR_INPUT_SELECT_2      ,
+    VAR_INPUT_SELECT_3      ,
+    VAR_INPUT_SELECT_4      ,
+    VAR_INPUT_SELECT_5      ,
+    VAR_INPUT_SELECT_6      ,
+    VAR_INPUT_SELECT_7      ,
+    VAR_INPUT_SELECT_8      ,
+    VAR_INPUT_SELECT_9      ,
+    VAR_INPUT_SELECT_NUM_OF
 };
 
 typedef struct
@@ -410,6 +418,7 @@ typedef struct
     uint8_t    step_index ;
     bool       gps_set_time ;
     channel_t  channel ;
+    bool       direction ;
 }Edit_st;
 
 typedef struct

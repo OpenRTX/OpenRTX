@@ -566,7 +566,9 @@ static const uint8_t Page_SettingsM17_Set_Callsign[] =
 {
     TITLE , 'M','1','7',' ','S','e','t','t','i','n','g','s' , NULL_CH , LINE_END ,
     ALIGN_LEFT , TEXT , 'C','a','l','l','s','i','g','n' , NULL_CH ,
-    ALIGN_RIGHT , VALUE_INP( M17_CALLSIGN ) ,
+    ALIGN_RIGHT , VALUE_INP( M17_CALLSIGN ) , LINE_END , LINE_END ,
+    TEXT , '*',' ',' ',' ','i','n','s','e','r','t',' ','c','h', NULL_CH , LINE_END ,
+    TEXT , '#',' ',' ',' ','d','e','l','e','t','e',' ','c','h', NULL_CH , LINE_END ,
     ON_EVENT_KEY_ENTER_GO_BACK ,
     ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
@@ -589,6 +591,7 @@ static const uint8_t Page_SettingsM17_Set_CAN_Rx_Check[] =
     TITLE , 'M','1','7',' ','S','e','t','t','i','n','g','s' , NULL_CH , LINE_END ,
     ALIGN_LEFT , TEXT , 'C','A','N',' ','R','X',' ','C','h','e','c','k' , NULL_CH ,
     ALIGN_RIGHT , VALUE_INP( M17_CAN_RX_CHECK ) ,
+    ON_EVENT_KEY_ENTER_GO_BACK ,
     ON_EVENT_KEY_ESC_GO_BACK ,
     PAGE_END
 };
