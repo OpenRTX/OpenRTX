@@ -683,14 +683,10 @@ static void GuiValDsp_Date( GuiState_st* guiState )
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     //@@@KL ensure that the display is updated when the date is set
-    if( !guiState->update )
+    if( !guiState->layout.varInputDisplay )
     {
         guiState->edit.localTime = utcToLocalTime( state.time ,
                                                    state.settings.utc_timezone );
-    }
-
-    if( !guiState->layout.varInputDisplay )
-    {
         snprintf( valueBuffer , MAX_ENTRY_LEN , "%02d/%02d/%02d" ,
                   guiState->edit.localTime.date  ,
                   guiState->edit.localTime.month ,
@@ -698,6 +694,11 @@ static void GuiValDsp_Date( GuiState_st* guiState )
     }
     else
     {
+        if( !guiState->update )
+        {
+            guiState->edit.localTime = utcToLocalTime( state.time ,
+                                                       state.settings.utc_timezone );
+        }
         switch( guiState->layout.varInputSelect )
         {
             case VAR_INPUT_SELECT_0 :
@@ -735,14 +736,10 @@ static void GuiValDsp_Time( GuiState_st* guiState )
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
     //@@@KL ensure that the display is updated when the time is set
-    if( !guiState->update )
+    if( !guiState->layout.varInputDisplay )
     {
         guiState->edit.localTime = utcToLocalTime( state.time ,
                                                    state.settings.utc_timezone );
-    }
-
-    if( !guiState->layout.varInputDisplay )
-    {
         snprintf( valueBuffer , MAX_ENTRY_LEN , "%02d:%02d:%02d" ,
                   guiState->edit.localTime.hour   ,
                   guiState->edit.localTime.minute ,
@@ -750,6 +747,11 @@ static void GuiValDsp_Time( GuiState_st* guiState )
     }
     else
     {
+        if( !guiState->update )
+        {
+            guiState->edit.localTime = utcToLocalTime( state.time ,
+                                                       state.settings.utc_timezone );
+        }
         switch( guiState->layout.varInputSelect )
         {
             case VAR_INPUT_SELECT_0 :

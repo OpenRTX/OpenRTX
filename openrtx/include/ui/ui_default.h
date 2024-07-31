@@ -33,6 +33,7 @@
 
 #define ENABLE_DEBUG_MSG
 //#define DISPLAY_DEBUG_MSG
+//#define ENABLE_TEST_SCRIPTS
 
 // Maximum menu entry length
 #define MAX_ENTRY_LEN 33
@@ -103,6 +104,11 @@ typedef enum
     PAGE_LOW_BAT                        , // 0x2F
     PAGE_ABOUT                          , // 0x30
     PAGE_STUBBED                        , // 0x31
+#ifdef ENABLE_TEST_SCRIPTS
+    PAGE_TEST_1                         , // 0x32
+    PAGE_TEST_2                         , // 0x33
+    PAGE_TEST_3                         , // 0x34
+#endif // ENABLE_TEST_SCRIPTS
     PAGE_NUM_OF                           // 0x32
 }uiPageNum_en;
 

@@ -69,7 +69,7 @@ static const uint8_t Page_MainInput[] =
 // PAGE_MAIN_MEM 0x02
 static const uint8_t Page_MainMem[] =
 {
-/*
+#ifdef ENABLE_TEST_SCRIPTS
     // Graphics Test
     GOTO_X( 20 ) ,
     GOTO_Y( 20 ) ,
@@ -81,39 +81,42 @@ static const uint8_t Page_MainMem[] =
     FG_COLOR( BLUE ) ,
     LINE(   0 , -20 ) ,
     GOTO_TEXT_LINE( GUI_LINE_3 ) ,
-    ADD_TO_X( 40 ) ,
+    ADD_X( 40 ) ,
     FG_COLOR( RED ) ,
     LINE( 20 , 20 ) ,
-    ADD_TO_X( 10 ) ,
-    ADD_TO_Y( -30 ) ,
+    ADD_X( 10 ) ,
+    ADD_Y( -30 ) ,
     FG_COLOR( BLUE ) ,
     RECT( 15 , 20 ) ,
-    ADD_TO_X( 20 ) ,
+    ADD_X( 20 ) ,
     FG_COLOR( GREEN ) ,
     RECT_FILL( 20 , 15 ) ,
     FG_COLOR( WHITE ) ,
-    ADD_TO_X( 20 ) ,
-    ADD_TO_Y( 20 ) ,
+    ADD_X( 20 ) ,
+    ADD_Y( 20 ) ,
     CIRCLE( 15 ) ,
-
     FG_COLOR( WHITE ) ,
-    ADD_TO_X( -30 ) ,
-    ADD_TO_Y( -60 ) ,
+    ADD_X( -30 ) ,
+    ADD_Y( -60 ) ,
     RECT( 25 , 20 ) ,
-//    ADD_TO_Y( -20 ) ,
+//    ADD_Y( -20 ) ,
     FG_COLOR( RED ) ,
-    ADD_TO_X( 1 ) ,
-    ADD_TO_Y( 1 ) ,
+    ADD_X( 1 ) ,
+    ADD_Y( 1 ) ,
     RECT_FILL( 23 , 18 ) ,
-
-    GUI_CMD_PAGE_END ,//@@@KL
-*/
+//    ADD_XY( -10 , 10 ) ,
+    GOTO_XY( 20 , 100 ) ,
+//    TEXT , 'T','e','s','t' , NULL_CH ,
+//    RUN_SCRIPT( PAGE_TEST_1 ) ,
+    TIMER_CHECK( PAGE_TEST_2 ) ,
+    GUI_CMD_PAGE_END ,
+#else // ENABLE_TEST_SCRIPTS
     PAGE_TREE_TOP ,
     ALIGN_CENTER ,
     EVENT_START( EVENT_TYPE_STATUS , EVENT_STATUS_DISPLAY_TIME_TICK ) ,
       BG_COLOR( RED ) ,
-      GUI_CMD_VALUE_DSP , ST_VAL( GUI_VAL_TIME ) ,
-    GUI_CMD_EVENT_END ,
+      VALUE_DSP( TIME ) ,
+    EVENT_END ,
     EVENT_START( EVENT_TYPE_STATUS , ( EVENT_STATUS_DEVICE_TIME_TICK | EVENT_STATUS_BATTERY ) ) ,
       ALIGN_RIGHT ,
       VALUE_DSP( BATTERY_LEVEL ) ,
@@ -134,7 +137,32 @@ static const uint8_t Page_MainMem[] =
     EVENT_END ,
     ON_EVENT_KEY_ENTER_GOTO_PAGE( PAGE_MENU_TOP ) ,
     PAGE_END
+#endif // ENABLE_TEST_SCRIPTS
 };
+
+#ifdef ENABLE_TEST_SCRIPTS
+static const uint8_t Page_Test1[] =
+{
+    TEXT , 'T','e','s','t' , NULL_CH ,
+    PAGE_END
+};
+
+static const uint8_t Page_Test2[] =
+{
+    TIMER_SET( PAGE_TEST_3 , 500 ) ,
+    FG_COLOR( BLUE ) ,
+    RECT_FILL( 10 , 10 ) ,
+    PAGE_END
+};
+
+static const uint8_t Page_Test3[] =
+{
+    TIMER_SET( PAGE_TEST_2 , 500 ) ,
+    FG_COLOR( RED ) ,
+    RECT_FILL( 10 , 10 ) ,
+    PAGE_END
+};
+#endif // ENABLE_TEST_SCRIPTS
 
 // PAGE_MODE_VFO 0x03
 static const uint8_t Page_ModeVFO[] =
@@ -851,4 +879,10 @@ const uint8_t* uiPageTable[ PAGE_NUM_OF ] =
     PAGE_REF( Page_LowBat                       ) , // PAGE_LOW_BAT                         0x2F
     PAGE_REF( Page_About                        ) , // PAGE_ABOUT                           0x30
     PAGE_REF( Page_Stubbed                      )   // PAGE_STUBBED                         0x31
+#ifdef ENABLE_TEST_SCRIPTS
+    ,
+    PAGE_REF( Page_Test1                        ) ,
+    PAGE_REF( Page_Test2                        ) ,
+    PAGE_REF( Page_Test3                        )
+#endif // ENABLE_TEST_SCRIPTS
 };

@@ -46,6 +46,10 @@ enum
 
 #define LD_VAL( val )       ( (uint8_t)val - (uint8_t)GUI_CMD_DATA_AREA )
 
+#define ST_VAL_WORD( val )  ST_VAL( (uint8_t)( (uint32_t)val >> GUI_CMD_PARA_VALUE_SHIFT_0 ) ) , \
+                            ST_VAL( (uint8_t)( (uint32_t)val >> GUI_CMD_PARA_VALUE_SHIFT_1 ) ) , \
+                            ST_VAL( (uint8_t)( (uint32_t)val >> GUI_CMD_PARA_VALUE_SHIFT_2 ) )
+
 #define ST_VAL_LONG( val )  ST_VAL( (uint8_t)( (uint32_t)val >> GUI_CMD_PARA_VALUE_SHIFT_0 ) ) , \
                             ST_VAL( (uint8_t)( (uint32_t)val >> GUI_CMD_PARA_VALUE_SHIFT_1 ) ) , \
                             ST_VAL( (uint8_t)( (uint32_t)val >> GUI_CMD_PARA_VALUE_SHIFT_2 ) ) , \
@@ -78,8 +82,8 @@ enum
     GUI_CMD_VALUE_INP        = 0x14 ,
     GUI_CMD_GOTO_POS_X       = 0x15 ,
     GUI_CMD_GOTO_POS_Y       = 0x16 ,
-    GUI_CMD_ADD_TO_POS_X     = 0x17 ,
-    GUI_CMD_ADD_TO_POS_Y     = 0x18 ,
+    GUI_CMD_ADD_POS_X        = 0x17 ,
+    GUI_CMD_ADD_POS_Y        = 0x18 ,
     GUI_CMD_DRAW_GRAPHIC     = 0x19 ,
     GUI_CMD_OPERATION        = 0x1A ,
 #ifndef DISPLAY_DEBUG_MSG
@@ -193,6 +197,9 @@ enum
 #define ON_EVENT_KEY_ENTER_GO_BACK          ON_EVENT( EVENT_TYPE_KBD , KEY_ENTER , ON_EVENT_ACTION_GO_BACK , 0 )
 #define ON_EVENT_KEY_ESC_GO_BACK            ON_EVENT( EVENT_TYPE_KBD , KEY_ESC   , ON_EVENT_ACTION_GO_BACK , 0 )
 
+#define TIMER_CHECK( p )                    GUI_CMD_TIMER_CHECK , ST_VAL( p )
+#define TIMER_SET( pg , period )            GUI_CMD_TIMER_SET , ST_VAL( pg ) , ST_VAL_WORD( period )
+
 #define GOTO_TEXT_LINE( l ) GUI_CMD_GOTO_TEXT_LINE , ST_VAL( l )
 #define LOAD_STYLE( l )     GUI_CMD_LOAD_STYLE , ST_VAL( l )
 
@@ -236,6 +243,8 @@ enum
   #define ALIGN_BOTTOM            GUI_CMD_ALIGN , ST_VAL( GUI_CMD_ALIGN_PARA_BOTTOM )
 #endif // ENABLE_ALIGN_VERTICAL
 
+#define RUN_SCRIPT( p )     GUI_CMD_RUN_SCRIPT , ST_VAL( p )
+
 #define LINE_END            GUI_CMD_LINE_END
 
 #define LIST( p , s , l )   GUI_CMD_LIST , ST_VAL( p ) , ST_VAL( s ) , ST_VAL( l )
@@ -251,8 +260,8 @@ enum
 #define GOTO_X( x )         GUI_CMD_GOTO_POS_X   , ST_VAL( x )
 #define GOTO_Y( y )         GUI_CMD_GOTO_POS_Y   , ST_VAL( y )
 #define GOTO_XY( x , y )    GOTO_X( x ) , GOTO_Y( y )
-#define ADD_TO_X( x )       GUI_CMD_ADD_TO_POS_X , ST_VAL( x )
-#define ADD_TO_Y( y )       GUI_CMD_ADD_TO_POS_Y , ST_VAL( y )
+#define ADD_X( x )          GUI_CMD_ADD_POS_X , ST_VAL( x )
+#define ADD_Y( y )          GUI_CMD_ADD_POS_Y , ST_VAL( y )
 #define ADD_XY( x , y )     ADD_X( x ) , ADD_Y( y )
 
 #define DRAW_GRAPHIC( g )   GUI_CMD_DRAW_GRAPHIC , ST_VAL( g )

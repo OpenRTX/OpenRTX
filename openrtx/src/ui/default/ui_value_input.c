@@ -155,9 +155,24 @@ void GuiValInpFSM( GuiState_st* guiState )
 
 bool GuiValInp_InputValue( GuiState_st* guiState )
 {
+    bool handled ;
+
     guiState->sync_rtx = false ;
 
-    return GuiValInp_Table[ guiState->layout.vars[ guiState->layout.varIndex ].varNum ]( guiState );
+    handled = GuiValInp_Table[ guiState->layout.vars[ guiState->layout.varIndex ].varNum ]( guiState );
+/*
+    if( guiState->event.type == EVENT_TYPE_KBD )
+    {
+        if( guiState->event.payload & KEY_ENTER )
+        {
+            if( handled )
+            {*/
+                nvm_writeSettingsAndVfo( &state.settings , &state.channel );
+/*            }
+        }
+    }
+*/
+    return handled ;
 
 }
 
@@ -341,11 +356,13 @@ static bool GuiValInp_Timer( GuiState_st* guiState )
 
     if( guiState->event.type == EVENT_TYPE_KBD )
     {
-        if( guiState->event.payload & ( KEY_LEFT | KEY_DOWN | KNOB_LEFT )    )
+        if( guiState->event.payload & ( KEY_LEFT | KEY_DOWN | KNOB_LEFT ) )
         {
             if( guiState->edit.settings.display_timer > TIMER_OFF )
             {
                 guiState->edit.settings.display_timer -= 1 ;
+                _ui_changeTimer( -1 );
+                vp_announceDisplayTimer();
             }
             handled = true ;
         }
@@ -354,12 +371,13 @@ static bool GuiValInp_Timer( GuiState_st* guiState )
             if( guiState->edit.settings.display_timer < TIMER_1H )
             {
                 guiState->edit.settings.display_timer += 1 ;
+                _ui_changeTimer( +1 );
+                vp_announceDisplayTimer();
             }
             handled = true ;
         }
         else if( guiState->event.payload & KEY_ENTER )
         {
-            _ui_changeTimer( guiState->edit.settings.display_timer - state.settings.display_timer );
             handled = true ;
         }
     }
