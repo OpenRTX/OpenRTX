@@ -37,7 +37,8 @@ enum nvmType
 {
     NVM_FLASH  = 0,   ///< FLASH type non volatile memory
     NVM_EEPROM,       ///< EEPROM type non volatile memory
-    NVM_FILE          ///< File type non volatile memory
+    NVM_FILE,         ///< File type non volatile memory
+    NVM_EEEPROM       ///< Emulated EEPROM type non volatile memory
 };
 
 /**
