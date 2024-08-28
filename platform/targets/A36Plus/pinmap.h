@@ -81,4 +81,7 @@
 #define RFV3T_EN GPIOC, 15
 #define RFU3R_EN GPIOC, 14
 
+// Power button
+#define POWER_SW GPIOF,7
+
 #endif

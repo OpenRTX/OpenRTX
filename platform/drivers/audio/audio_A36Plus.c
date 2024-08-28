@@ -89,5 +89,5 @@ bool audio_checkPathCompatibility(const enum AudioSource p1Source,
     //     return true;
 
     // Disallow all the other path combinations
-    return false;
+    return true;
 }
