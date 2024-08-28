@@ -205,7 +205,7 @@ static void spi_write_byte(uint8_t data);
 static void spi_write_half_word(uint16_t data);
 static uint16_t spi_read_half_word(void);
 
-static uint16_t ReadRegister(unsigned char reg);
+uint16_t ReadRegister(unsigned char reg);
 static void WriteRegister(bk4819_reg_t reg, uint16_t data);
 
 /**
@@ -238,6 +238,13 @@ void bk4819_init(void);
  * @param freq
  */
 void bk4819_set_freq(uint32_t frq);
+
+/**
+ * @brief Set TX power
+ *
+ * @param power
+ */
+void bk4819_setTxPower(uint32_t power);
 
 /**
  * @brief Turn on RX

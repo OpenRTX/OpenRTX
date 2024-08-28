@@ -84,6 +84,7 @@ void radio_init(const rtxStatus_t* rtxState)
      */
     rcu_periph_clock_enable(RCU_GPIOA);
     rcu_periph_clock_enable(RCU_GPIOB);
+    rcu_periph_clock_enable(RCU_GPIOC);
     rcu_periph_clock_enable(RCU_GPIOF);
 
 
@@ -92,9 +93,14 @@ void radio_init(const rtxStatus_t* rtxState)
     gpio_setMode(BK4819_CS, OUTPUT);
     gpio_setMode(MIC_SPK_EN, OUTPUT);
 
+    gpio_setMode(RFV3R_EN, OUTPUT);
+    gpio_setMode(RFV3T_EN, OUTPUT);
+    gpio_setMode(RFU3R_EN, OUTPUT);
+
     gpio_setMode(BK1080_DAT, OUTPUT);
     gpio_setMode(BK1080_CLK, OUTPUT);
     gpio_setMode(BK1080_EN, OUTPUT);
+
 
     // gpio_clearPin(BK1080_EN);
     gpio_clearPin(MIC_SPK_EN);
@@ -147,17 +153,17 @@ void radio_checkVOX(){
 
 void radio_enableRx()
 {
-    // Disable corresponding filter
-    // If frequency is VHF, toggle GPIO C15
-    // If frequency is UHF, toggle BK4819 GPIO 4
+    // Set squelch
+    bk4819_set_Squelch(218, 214, 0x2f, 0x2e, 0x20, 0x08);
+    // Disable power amplifiers
+    gpio_clearPin(RFV3T_EN);
+    bk4819_gpio_pin_set(4, false);          
     if (config->txFrequency < 174000000){
-        gpio_clearPin(GPIOC, 15);
         gpio_clearPin(RFU3R_EN);
         // enable V3R
         gpio_setPin(RFV3R_EN);
         usart0_IRQwrite("V3R\r\n");
     }else{
-        bk4819_gpio_pin_set(4, false);
         gpio_clearPin(RFV3R_EN);
         // enable U3R
         gpio_setPin(RFU3R_EN);
@@ -182,11 +188,13 @@ void radio_enableTx()
     // If frequency is VHF, toggle GPIO C15
     // If frequency is UHF, toggle BK4819 GPIO 4
     if (config->txFrequency < 174000000){
-        gpio_setPin(GPIOC, 15);
+        gpio_setPin(RFV3T_EN);
         usart0_IRQwrite("V3T\r\n");
     }else{
         bk4819_gpio_pin_set(4, true);
-        usart0_IRQwrite("U3T\r\n");         
+        // Check if it was set
+        if (ReadRegister(0x0A) & 0x10)
+            usart0_IRQwrite("U3T\r\n");
     }
 
     bk4819_tx_on();
@@ -203,22 +211,27 @@ void radio_disableRtx()
 
 void radio_updateConfiguration()
 {
+    // Set BK4819 PA Gain tuning according to TX power (config->txPower)
+    bk4819_setTxPower(config->txPower);
     bk4819_set_freq(config->rxFrequency / 10);
-      // Disable corresponding filter
+    // Disable corresponding filter
     // If frequency is VHF, toggle GPIO C15
     // If frequency is UHF, toggle BK4819 GPIO 4
-    if (config->rxFrequency < 174000000){
-        gpio_clearPin(GPIOC, 15);
-        gpio_clearPin(RFU3R_EN);
-        // enable V3R
-        gpio_setPin(RFV3R_EN);
-        usart0_IRQwrite("V3R\r\n");
-    }else{
-        bk4819_gpio_pin_set(4, false);
-        gpio_clearPin(RFV3R_EN);
-        // enable U3R
-        gpio_setPin(RFU3R_EN);
-        usart0_IRQwrite("U3R\r\n");
+    // If TX:
+    if (radioStatus == RX){
+        if (config->txFrequency < 174000000){
+            gpio_clearPin(RFV3T_EN);
+            gpio_clearPin(RFU3R_EN);
+            // enable V3R
+            gpio_setPin(RFV3R_EN);
+            usart0_IRQwrite("V3R\r\n");
+        }else{
+            bk4819_gpio_pin_set(4, false);
+            gpio_clearPin(RFV3R_EN);
+            // enable U3R
+            gpio_setPin(RFU3R_EN);
+            usart0_IRQwrite("U3R\r\n");
+        }
     }
 }
 
