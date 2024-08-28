@@ -75,7 +75,7 @@ static uint16_t spi_read_half_word(void)
     return data;
 }
 
-static uint16_t ReadRegister(unsigned char reg)
+uint16_t ReadRegister(unsigned char reg)
 {
     uint16_t data;
     BK4819_SCN_LOW;
@@ -115,7 +115,7 @@ void bk4819_init(void)
     WriteRegister(0x14, 0x19);
     WriteRegister(0x49, 0x2a38);
     WriteRegister(0x7b, 0x8420);
-    WriteRegister(0x7d, 0xe952);
+    WriteRegister(0x7d, 0xe959);
     WriteRegister(0x48, 0xb3ff);
     WriteRegister(0x1e, 0x4c58);
     WriteRegister(0x1f, 0xa656);
@@ -155,6 +155,7 @@ void bk4819_init(void)
     WriteRegister(0x31, uVar1 & 0xfffffff7);
     WriteRegister(0x28, 0x6b38);
     WriteRegister(0x29, 0xb4cb);
+    WriteRegister(BK4819_REG_36, 0xdfbf);
 }
 
 uint8_t bk4819_int_get(bk4819_int_t interrupt)
@@ -191,7 +192,6 @@ void bk4819_rx_on(void)
 void bk4819_tx_on(void)
 {
     WriteRegister(BK4819_REG_30, 0x00);  // reset
-
     WriteRegister(BK4819_REG_30,
                   BK4819_REG30_REVERSE1_ENABLE | BK4819_REG30_REVERSE2_ENABLE |
                       BK4819_REG30_VCO_CALIBRATION |
@@ -204,16 +204,51 @@ void bk4819_rtx_off(void){
     WriteRegister(BK4819_REG_30, 0x00);  // reset
 }
 
+// set BK4819 power
+void bk4819_setTxPower(uint32_t power)
+{
+    // Power setting is done by setting the PA bias voltage
+    // in REG_36<15:8> and the gain tuning values in <5:0>.
+    // I'm eyeballing what 1W, 5W and 10W should be,
+    // but I'm not at all sure if the values are correct.
+    // 1W: 0x20, 5W: 0x60, 10W: 0xFF
+    // The gain tuning values are:
+    // 1W: 0b011, 5W: 0b100, 10W: 0b111
+    uint16_t reg = 0;
+    switch (power)
+    {
+    case 1000:
+        reg = 0x2095;
+        break;
+    case 5000:
+        reg = 0x6099;
+        break;
+    case 10000:
+        reg = 0xFFBF;
+        break;
+    default:
+        reg = 0x2092;
+        break;
+    }
+    WriteRegister(BK4819_REG_36, reg);
+}
+
 // toggle BK4819 GPIO pins
 void bk4819_gpio_pin_set(uint8_t Pin, bool bSet)
 {
-    uint16_t gBK4819_GpioOutState = ReadRegister(BK4819_REG_33);
-	if (bSet)
-		gBK4819_GpioOutState |=  (0x40u >> Pin);
-	else
-		gBK4819_GpioOutState &= ~(0x40u >> Pin);
-
-	WriteRegister(BK4819_REG_33, gBK4819_GpioOutState);
+    uint16_t BK4819_GpioOutState = ReadRegister(BK4819_REG_33);
+    // Enable GPIO output (set REG_33<15:8> to 0x00)
+    // HACK: this enables all GPIO pins as output
+    BK4819_GpioOutState &= 0x00FF;
+    if (bSet)
+    {
+        BK4819_GpioOutState |= (1 << Pin);
+    }
+    else
+    {
+        BK4819_GpioOutState &= ~(1 << Pin);
+    }
+    WriteRegister(BK4819_REG_33, BK4819_GpioOutState);
 }
 
 void bk4819_enable_tx_ctcss(uint16_t frequency)

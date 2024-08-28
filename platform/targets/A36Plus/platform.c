@@ -28,10 +28,10 @@
 
 static const hwInfo_t hwInfo =
 {
-    .vhf_maxFreq = 174,
-    .vhf_minFreq = 18,
+    .vhf_maxFreq = 200,
+    .vhf_minFreq = 136,
     .vhf_band    = 1,
-    .uhf_maxFreq = 999,
+    .uhf_maxFreq = 650,
     .uhf_minFreq = 200,
     .uhf_band    = 1,
     .hw_version  = 0,
