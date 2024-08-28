@@ -22,6 +22,9 @@
 #include <interfaces/platform.h>
 #include <hwconfig.h>
 #include <platform/drivers/display/ST7735S_a36plus.h>
+#include "gd32f3x0_rtc.h"
+#include "gd32f3x0_pmu.h"
+#include <platform/drivers/baseband/bk4819.h>
 
 static const hwInfo_t hwInfo =
 {
@@ -77,6 +80,8 @@ void platform_init()
     gpio_setMode(PTT_SW,    INPUT_PULL_UP);
     spi_config();
     backlight_init();
+    gpio_setMode(AIN_VBAT, ANALOG);
+    //adc0_init();
 }
 
 
@@ -92,6 +97,8 @@ void platform_terminate()
 
 uint16_t platform_getVbat()
 {
+    // Return the ADC reading from AIN_VBAT
+    //return adc0_read(AIN_VBAT);
     return 0;
 }
 
@@ -118,7 +125,7 @@ bool platform_getPttStatus()
 
 bool platform_pwrButtonStatus()
 {
-    return true;
+    return !gpio_readPin(POWER_SW);
 }
 
 void platform_ledOn(led_t led)
@@ -157,12 +164,49 @@ void platform_ledOff(led_t led)
 
 void platform_beepStart(uint16_t freq)
 {
-    (void) freq;
+    BK4819_PlayTone(freq, true);
 }
 
 void platform_beepStop()
 {
+    return;
+}
 
+// Helper function to convert BCD to normal numbers
+static uint8_t bcd2dec(uint8_t bcd)
+{
+    return ((bcd >> 4) * 10) + (bcd & 0x0F);
+}
+
+datetime_t platform_getCurrentTime()
+{
+    // Initialize the RTC peripheral
+    rtc_parameter_struct rtc_init_struct;
+    rtc_current_time_get(&rtc_init_struct);
+    datetime_t t;
+    // rtc_parameter_struct stores stuff in BCD
+    // so, convert
+    t.year = bcd2dec(rtc_init_struct.rtc_year);
+    t.month = bcd2dec(rtc_init_struct.rtc_month);
+    t.date = bcd2dec(rtc_init_struct.rtc_date);
+    t.day = bcd2dec(rtc_init_struct.rtc_day_of_week);
+    t.hour = bcd2dec(rtc_init_struct.rtc_hour);
+    t.minute = bcd2dec(rtc_init_struct.rtc_minute);
+    t.second = bcd2dec(rtc_init_struct.rtc_second);
+    return t;
+}
+
+void platform_setTime(datetime_t t)
+{
+    rtc_parameter_struct rtc_init_struct;
+    rtc_current_time_get(&rtc_init_struct);
+    rtc_init_struct.rtc_year = (t.year / 10) << 4 | (t.year % 10);
+    rtc_init_struct.rtc_month = (t.month / 10) << 4 | (t.month % 10);
+    rtc_init_struct.rtc_date = (t.day / 10) << 4 | (t.day % 10);
+    rtc_init_struct.rtc_hour = (t.hour / 10) << 4 | (t.hour % 10);
+    rtc_init_struct.rtc_minute = (t.minute / 10) << 4 | (t.minute % 10);
+    rtc_init_struct.rtc_second = (t.second / 10) << 4 | (t.second % 10);
+    rtc_init(&rtc_init_struct);
 }
 
 const hwInfo_t *platform_getHwInfo()

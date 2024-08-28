@@ -183,7 +183,7 @@ void bk4819_set_freq(uint32_t freq)
 void bk4819_rx_on(void)
 {
     WriteRegister(0x37, 0x1F0F);
-    delayUs(10);
+    delayUs(5);
     WriteRegister(0x30, 0x0200);
     WriteRegister(0x30, 0xBFF1);
 }
@@ -202,6 +202,18 @@ void bk4819_tx_on(void)
 
 void bk4819_rtx_off(void){
     WriteRegister(BK4819_REG_30, 0x00);  // reset
+}
+
+// toggle BK4819 GPIO pins
+void bk4819_gpio_pin_set(uint8_t Pin, bool bSet)
+{
+    uint16_t gBK4819_GpioOutState = ReadRegister(BK4819_REG_33);
+	if (bSet)
+		gBK4819_GpioOutState |=  (0x40u >> Pin);
+	else
+		gBK4819_GpioOutState &= ~(0x40u >> Pin);
+
+	WriteRegister(BK4819_REG_33, gBK4819_GpioOutState);
 }
 
 void bk4819_enable_tx_ctcss(uint16_t frequency)
@@ -294,4 +306,40 @@ uint8_t bk4819_get_scan_freq_flag(void){
 
 uint32_t bk4819_get_scan_freq(void){
     return ((ReadRegister(BK4819_REG_0D) << 16) | ReadRegister(BK4819_REG_0E)) / 10;
+}
+
+void BK4819_SetAF(uint8_t AF)
+{
+	// AF Output Inverse Mode = Inverse
+	// Undocumented bits 0x2040
+	//
+//	BK4819_WriteRegister(BK4819_REG_47, 0x6040 | (AF << 8));
+	WriteRegister(BK4819_REG_47, (6u << 12) | (AF << 8) | (1u << 6));
+}
+
+__inline uint16_t scale_freq(const uint16_t freq)
+{
+//	return (((uint32_t)freq * 1032444u) + 50000u) / 100000u;   // with rounding
+	return (((uint32_t)freq * 1353245u) + (1u << 16)) >> 17;   // with rounding
+}
+
+// Play tone
+void BK4819_PlayTone(uint16_t Frequency, bool bTuningGainSwitch)
+{
+	uint16_t ToneConfig = BK4819_REG_70_ENABLE_TONE1;
+    //gpio_setPin(MIC_SPK_EN);              
+	WriteRegister(BK4819_REG_50, 0xBB20);
+	BK4819_SetAF(3); // AF Beep
+
+	if (bTuningGainSwitch == 0)
+		ToneConfig |=  96u << BK4819_REG_70_SHIFT_TONE1_TUNING_GAIN;
+	else
+		ToneConfig |= 28u << BK4819_REG_70_SHIFT_TONE1_TUNING_GAIN;
+	WriteRegister(BK4819_REG_70, ToneConfig);   
+
+	WriteRegister(BK4819_REG_30, 0);
+	WriteRegister(BK4819_REG_30, BK4819_REG_30_ENABLE_AF_DAC | BK4819_REG_30_ENABLE_DISC_MODE | BK4819_REG_30_ENABLE_TX_DSP);
+
+	WriteRegister(BK4819_REG_71, scale_freq(Frequency));
+    usart0_IRQwrite("BK4819_PlayTone\r\n");
 }
