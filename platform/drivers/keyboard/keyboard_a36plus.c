@@ -37,7 +37,6 @@ void kbd_init()
     gpio_setMode(KBD_COL1, INPUT_PULL_UP);
     gpio_setMode(KBD_COL2, INPUT_PULL_UP);
     gpio_setMode(KBD_COL3, INPUT_PULL_UP);
-    gpio_setMode(SKB_1,    INPUT);
 
     gpio_setPin(KBD_ROW0);
     gpio_setPin(KBD_ROW1);
@@ -62,43 +61,68 @@ keyboard_t kbd_getKeys()
 {
     keyboard_t keys = 0;
     
-    if(!gpio_readPin(SKB_1)) 
+    // Set the rows as inputs and test for the side keys:
+    gpio_setMode(KBD_ROW0, INPUT);
+    gpio_setMode(KBD_ROW1, INPUT);
+    gpio_setMode(KBD_ROW2, INPUT);
+    gpio_setMode(KBD_ROW3, INPUT);
+    
+    if(!gpio_readPin(KBD_COL2)) 
+    {
+        keys |= KEY_F1;
+        return keys;
+    }
+    if(!gpio_readPin(KBD_COL1)) 
+    {
+        keys |= KEY_F2;
+        return keys;
+    }
+    if(!gpio_readPin(KBD_COL0))
     {
         keys |= KEY_MONI;
         return keys;
     }
-    
+    //Set all rows as output low
+    gpio_setMode(KBD_ROW0, OUTPUT);
+    gpio_setMode(KBD_ROW1, OUTPUT);
+    gpio_setMode(KBD_ROW2, OUTPUT);
+    gpio_setMode(KBD_ROW3, OUTPUT);
+
+    gpio_setPin(KBD_ROW0);
+    gpio_setPin(KBD_ROW1);
+    gpio_setPin(KBD_ROW2);
     gpio_setPin(KBD_ROW3);
+    
     gpio_clearPin(KBD_ROW0);
 
-    delayUs(10);
+    delayUs(1);
     if(!gpio_readPin(KBD_COL0)) keys |= KEY_ENTER;
     if(!gpio_readPin(KBD_COL1)) keys |= KEY_UP;
     if(!gpio_readPin(KBD_COL2)) keys |= KEY_DOWN;
     if(!gpio_readPin(KBD_COL3)) keys |= KEY_ESC;
 
-    gpio_clearPin(KBD_ROW1);
     gpio_setPin(KBD_ROW0);
+    gpio_clearPin(KBD_ROW1);
 
-    delayUs(10);
+    delayUs(1);
     if(!gpio_readPin(KBD_COL0)) keys |= KEY_1;
     if(!gpio_readPin(KBD_COL1)) keys |= KEY_2;
     if(!gpio_readPin(KBD_COL2)) keys |= KEY_3;
     if(!gpio_readPin(KBD_COL3)) keys |= KEY_STAR;
 
-    gpio_clearPin(KBD_ROW2);
     gpio_setPin(KBD_ROW1);
+    gpio_clearPin(KBD_ROW2);
 
-    delayUs(10);
+    delayUs(1);
     if(!gpio_readPin(KBD_COL0)) keys |= KEY_4;
     if(!gpio_readPin(KBD_COL1)) keys |= KEY_5;
     if(!gpio_readPin(KBD_COL2)) keys |= KEY_6;
     if(!gpio_readPin(KBD_COL3)) keys |= KEY_0;
 
-    gpio_clearPin(KBD_ROW3);
     gpio_setPin(KBD_ROW2);
+    gpio_clearPin(KBD_ROW3);
 
-    delayUs(10);
+    delayUs(1);
     if(!gpio_readPin(KBD_COL0)) keys |= KEY_7;
     if(!gpio_readPin(KBD_COL1)) keys |= KEY_8;
     if(!gpio_readPin(KBD_COL2)) keys |= KEY_9;
