@@ -988,10 +988,19 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             vp_announceRadioMode(state.channel.mode, queueFlags);
             break;
         case 6:
-            if (state.channel.power == 1000)
-                state.channel.power = 5000;
-            else
-                state.channel.power = 1000;
+            // Three power levels: 1W, 5W, 10W
+            switch(state.channel.power)
+            {
+                case 1000:
+                    state.channel.power = 5000;
+                    break;
+                case 5000:
+                    state.channel.power = 10000;
+                    break;
+                case 10000:
+                    state.channel.power = 1000;
+                    break;
+            }
             *sync_rtx = true;
             vp_announcePower(state.channel.power, queueFlags);
             break;
@@ -2495,11 +2504,13 @@ bool ui_updateGUI()
     {
         // VFO main screen
         case MAIN_VFO:
-            _ui_drawMainVFO(&ui_state);
+            if(!macro_menu)
+                _ui_drawMainVFO(&ui_state);
             break;
         // VFO frequency input screen
         case MAIN_VFO_INPUT:
-            _ui_drawMainVFOInput(&ui_state);
+            if(!macro_menu)
+                _ui_drawMainVFOInput(&ui_state);
             break;
         // MEM main screen
         case MAIN_MEM:
