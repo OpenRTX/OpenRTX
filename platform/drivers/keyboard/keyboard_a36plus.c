@@ -69,17 +69,12 @@ keyboard_t kbd_getKeys()
     
     if(!gpio_readPin(KBD_COL2)) 
     {
-        keys |= KEY_F1;
+        keys |= KEY_MONI;
         return keys;
     }
     if(!gpio_readPin(KBD_COL1)) 
     {
         keys |= KEY_F2;
-        return keys;
-    }
-    if(!gpio_readPin(KBD_COL0))
-    {
-        keys |= KEY_MONI;
         return keys;
     }
     //Set all rows as output low
