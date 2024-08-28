@@ -20,19 +20,19 @@
 
 #include <peripherals/gpio.h>
 #include <interfaces/platform.h>
+#include <platform/drivers/baseband/bk4819.h>
 #include <hwconfig.h>
 #include <platform/drivers/display/ST7735S_a36plus.h>
 #include "gd32f3x0_rtc.h"
 #include "gd32f3x0_pmu.h"
-#include <platform/drivers/baseband/bk4819.h>
 
 static const hwInfo_t hwInfo =
 {
     .vhf_maxFreq = 174,
-    .vhf_minFreq = 136,
+    .vhf_minFreq = 18,
     .vhf_band    = 1,
-    .uhf_maxFreq = 470,
-    .uhf_minFreq = 400,
+    .uhf_maxFreq = 999,
+    .uhf_minFreq = 200,
     .uhf_band    = 1,
     .hw_version  = 0,
     .name        = "A36Plus"
@@ -104,7 +104,7 @@ uint16_t platform_getVbat()
 
 uint8_t platform_getMicLevel()
 {
-    return 0;
+    return ReadRegister(0x64) / 255;
 }
 
 uint8_t platform_getVolumeLevel()
