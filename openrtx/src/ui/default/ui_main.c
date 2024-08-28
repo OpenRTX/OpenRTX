@@ -273,7 +273,7 @@ void _ui_drawMainBottom()
                            meter_width,
                            meter_height,
                            rssi,
-                           squelch,
+                           mic_level,
                            volume,
                            true,
                            yellow_fab413);
