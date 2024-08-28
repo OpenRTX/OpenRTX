@@ -274,7 +274,7 @@ void display_clearWindow(uint16_t x, uint16_t y, uint16_t height, uint16_t width
     display_setWindow(x, y, height, width);
     // setPosition(x, y);
     sendCommand(ST7735S_CMD_RAMWR);
-    for(size_t i = 0; i < (160*32); i++)
+    for(size_t i = 0; i < (width*height); i++)
         sendShort(0x0000);
 }
 

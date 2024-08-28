@@ -273,8 +273,8 @@ void _ui_drawMainBottom()
                            meter_width,
                            meter_height,
                            rssi,
+                           squelch,
                            mic_level,
-                           volume,
                            true,
                            yellow_fab413);
             break;
@@ -322,7 +322,7 @@ void _ui_drawMainVFO(ui_state_t* ui_state)
 void _ui_drawMainVFOInput(ui_state_t* ui_state)
 {
     _ui_drawMainTop(ui_state);
-    gfx_clearWindow(32, 0, 96, 160);
+    gfx_clearWindow(32, 0, 48, 160);
     _ui_drawVFOMiddleInput(ui_state);
     _ui_drawMainBottom();
 }
