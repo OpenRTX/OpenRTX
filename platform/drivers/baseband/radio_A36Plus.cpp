@@ -147,6 +147,22 @@ void radio_checkVOX(){
 
 void radio_enableRx()
 {
+    // Disable corresponding filter
+    // If frequency is VHF, toggle GPIO C15
+    // If frequency is UHF, toggle BK4819 GPIO 4
+    if (config->txFrequency < 174000000){
+        gpio_clearPin(GPIOC, 15);
+        gpio_clearPin(RFU3R_EN);
+        // enable V3R
+        gpio_setPin(RFV3R_EN);
+        usart0_IRQwrite("V3R\r\n");
+    }else{
+        bk4819_gpio_pin_set(4, false);
+        gpio_clearPin(RFV3R_EN);
+        // enable U3R
+        gpio_setPin(RFU3R_EN);
+        usart0_IRQwrite("U3R\r\n");
+    }
     bk4819_set_freq(config->rxFrequency / 10);
     if (config->rxToneEn){
         bk4819_enable_rx_ctcss(config->rxTone / 10);
@@ -162,6 +178,17 @@ void radio_enableTx()
     if (config->txToneEn){
         bk4819_enable_tx_ctcss(config->txTone / 10);
     }
+    // Enable corresponding filter
+    // If frequency is VHF, toggle GPIO C15
+    // If frequency is UHF, toggle BK4819 GPIO 4
+    if (config->txFrequency < 174000000){
+        gpio_setPin(GPIOC, 15);
+        usart0_IRQwrite("V3T\r\n");
+    }else{
+        bk4819_gpio_pin_set(4, true);
+        usart0_IRQwrite("U3T\r\n");         
+    }
+
     bk4819_tx_on();
     radioStatus = TX;
 }
@@ -177,6 +204,22 @@ void radio_disableRtx()
 void radio_updateConfiguration()
 {
     bk4819_set_freq(config->rxFrequency / 10);
+      // Disable corresponding filter
+    // If frequency is VHF, toggle GPIO C15
+    // If frequency is UHF, toggle BK4819 GPIO 4
+    if (config->rxFrequency < 174000000){
+        gpio_clearPin(GPIOC, 15);
+        gpio_clearPin(RFU3R_EN);
+        // enable V3R
+        gpio_setPin(RFV3R_EN);
+        usart0_IRQwrite("V3R\r\n");
+    }else{
+        bk4819_gpio_pin_set(4, false);
+        gpio_clearPin(RFV3R_EN);
+        // enable U3R
+        gpio_setPin(RFU3R_EN);
+        usart0_IRQwrite("U3R\r\n");
+    }
 }
 
 rssi_t radio_getRssi()

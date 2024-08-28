@@ -75,8 +75,8 @@
 #define MIC_EN GPIOA, 12
 
 // RF stage
-#define RFV3R_EN GPIOB, 1
-#define RFU3T_EN GPIOB, 0
+#define RF_AM_AGC GPIOB, 1
+#define RFV3R_EN GPIOB, 0
 
 #define RFV3T_EN GPIOC, 15
 #define RFU3R_EN GPIOC, 14
