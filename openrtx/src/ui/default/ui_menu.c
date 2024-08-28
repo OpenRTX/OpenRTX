@@ -873,7 +873,7 @@ void _ui_drawSettingsGPS(ui_state_t* ui_state)
 #ifdef CONFIG_RTC
 void _ui_drawSettingsTimeDate()
 {
-    gfx_clearScreen();
+    //gfx_clearScreen();
     datetime_t local_time = utcToLocalTime(last_state.time,
                                            last_state.settings.utc_timezone);
     // Print "Time&Date" on top bar
@@ -892,7 +892,7 @@ void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state)
 {
     (void) last_state;
 
-    gfx_clearScreen();
+    //gfx_clearScreen();
     // Print "Time&Date" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->timeAndDate);
@@ -961,7 +961,7 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
 
 void _ui_drawSettingsAccessibility(ui_state_t* ui_state)
 {
-    gfx_clearScreen();
+    //gfx_clearScreen();
     // Print "Accessibility" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->accessibility);
@@ -1256,6 +1256,6 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
                     color_white, "Lck");
 
     // Draw S-meter bar
-    _ui_drawMainBottom();
+    //_ui_drawMainBottom();
     return true;
 }
