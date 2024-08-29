@@ -153,8 +153,6 @@ void radio_checkVOX(){
 
 void radio_enableRx()
 {
-    // Set squelch
-    bk4819_set_Squelch(218, 214, 0x2f, 0x2e, 0x20, 0x08);
     // Disable power amplifiers
     gpio_clearPin(RFV3T_EN);
     bk4819_gpio_pin_set(4, false);          
@@ -211,6 +209,12 @@ void radio_disableRtx()
 
 void radio_updateConfiguration()
 {
+    // Set squelch
+    int squelch = -127 + (config->sqlLevel * 66) / 15;
+    bk4819_set_Squelch((squelch / 2 + 160) * 2,
+                        ((squelch - 2) / 2 + 160) * 2,
+                         0x5f, 0x5e, 0x20, 0x08
+                      );
     // Set BK4819 PA Gain tuning according to TX power (config->txPower)
     bk4819_setTxPower(config->txPower);
     bk4819_set_freq(config->rxFrequency / 10);

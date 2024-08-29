@@ -376,18 +376,6 @@ uint32_t bk4819_get_scan_freq(void);
 
 void bk4819_gpio_pin_set(uint8_t Pin, bool bSet);
 
-typedef struct {
-  const char *name;
-  uint8_t num;
-  uint8_t offset;
-  uint16_t mask;
-  uint16_t inc;
-} RegisterSpec;
-
-static const RegisterSpec afcDisableRegSpec = {"AFC Disable", 0x73, 4, 1, 1};
-static const RegisterSpec afOutRegSpec = {"AF Output Select", 0x47, 8, 0xF, 1};
-static const RegisterSpec afDacGainRegSpec = {"AF DAC Gain", 0x48, 0, 0xF, 1};
-
 enum BK4819_GPIO_PIN_t {
 	BK4819_GPIO0_PIN28_RX_ENABLE = 0,
 	BK4819_GPIO1_PIN29_PA_ENABLE = 1,
