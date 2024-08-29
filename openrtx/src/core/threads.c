@@ -72,8 +72,8 @@ void *ui_threadFunc(void *arg)
 
         if(input_scanKeyboard(&kbd_msg))
         {
-            gfx_clearScreen();
             ui_pushEvent(EVENT_KBD, kbd_msg.value);
+            gfx_clearScreen();
         }
 
         pthread_mutex_lock(&state_mutex);   // Lock r/w access to radio state
