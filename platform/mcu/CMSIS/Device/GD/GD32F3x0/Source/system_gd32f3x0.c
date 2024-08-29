@@ -59,7 +59,7 @@ OF SUCH DAMAGE.
 //#define __SYSTEM_CLOCK_72M_PLL_HXTAL         (uint32_t)(72000000)
 //#define __SYSTEM_CLOCK_72M_PLL_IRC8M_DIV2    (uint32_t)(72000000)
 //#define __SYSTEM_CLOCK_72M_PLL_IRC48M_DIV2     (uint32_t)(72000000)
-#define __SYSTEM_CLOCK_84M_PLL_HXTAL           (uint32_t)(108000000)
+#define __SYSTEM_CLOCK_84M_PLL_HXTAL           (uint32_t)(120000000)
 //#define __SYSTEM_CLOCK_84M_PLL_IRC8M_DIV2    (uint32_t)(84000000)
 #endif /* GD32F330 */
 
