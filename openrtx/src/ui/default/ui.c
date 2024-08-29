@@ -2505,6 +2505,9 @@ bool ui_updateGUI()
         case MAIN_VFO:
             if(!macro_menu)
                 _ui_drawMainVFO(&ui_state);
+            else
+                // draw only the s-meter
+                _ui_drawMainBottom();
             break;
         // VFO frequency input screen
         case MAIN_VFO_INPUT:
