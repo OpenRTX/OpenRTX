@@ -178,7 +178,7 @@ void radio_enableRx()
 void radio_enableTx()
 {
     bk4819_set_freq(config->txFrequency / 10);
-    bk4819_enable_tx_cdcss(1, 0, cdcss_compose(492));
+    //bk4819_enable_tx_cdcss(1, 0, cdcss_compose(492));
     if (config->txToneEn){
         bk4819_enable_tx_ctcss(config->txTone / 10);
     }
