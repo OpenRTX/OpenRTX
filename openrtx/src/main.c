@@ -52,7 +52,7 @@ int main(void)
     #ifdef PLATFORM_A36PLUS
     if(!platform_pwrButtonStatus())
     {
-        sleepFor(1, 0);
+        //sleepFor(0, 5);
         if(!platform_pwrButtonStatus())
         {
             return 0;
