@@ -56,7 +56,7 @@ void IRQbspInit()
     // Bring up USART1
     gpio_af_set((uint32_t)GPIOA, GPIO_AF_1, GPIO_PIN_9 | GPIO_PIN_10);
     usart0_init(115200);
-    usart0_IRQwrite("Starting system...\r\n");
+    //usart0_IRQwrite("Starting system...\r\n");
 }
 
 void bspInit2()
