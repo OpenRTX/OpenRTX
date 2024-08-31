@@ -376,5 +376,5 @@ void BK4819_PlayTone(uint16_t Frequency, bool bTuningGainSwitch)
 	WriteRegister(BK4819_REG_30, BK4819_REG_30_ENABLE_AF_DAC | BK4819_REG_30_ENABLE_DISC_MODE | BK4819_REG_30_ENABLE_TX_DSP);
 
 	WriteRegister(BK4819_REG_71, scale_freq(Frequency));
-    usart0_IRQwrite("BK4819_PlayTone\r\n");
+    //usart0_IRQwrite("BK4819_PlayTone\r\n");
 }
