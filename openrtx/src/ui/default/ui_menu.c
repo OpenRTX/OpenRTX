@@ -407,7 +407,6 @@ int _ui_getRadioValueName(char *buf, uint8_t max_len, uint8_t index)
     return 0;
 }
 
-#ifdef CONFIG_M17
 int _ui_getM17EntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= settings_m17_num) return -1;
@@ -438,7 +437,6 @@ int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
 
     return 0;
 }
-#endif
 
 int _ui_getAccessibilityEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
@@ -802,6 +800,7 @@ void _ui_drawMenuRestore(ui_state_t* ui_state)
 void _ui_drawMenuInfo(ui_state_t* ui_state)
 {
     //gfx_clearScreen();
+    gfx_clearWindow(0, 96, 128, 64);
     // Print "Info" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->info);
@@ -929,7 +928,6 @@ void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state)
 }
 #endif
 
-#ifdef CONFIG_M17
 void _ui_drawSettingsM17(ui_state_t* ui_state)
 {
     gfx_clearScreen();
@@ -957,7 +955,6 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
                               _ui_getM17ValueName);
     }
 }
-#endif
 
 void _ui_drawSettingsAccessibility(ui_state_t* ui_state)
 {
@@ -977,7 +974,6 @@ void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state)
     static int drawcnt = 0;
     static long long lastDraw = 0;
 
-    gfx_clearScreen();
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->resetToDefaults);
 
@@ -1088,36 +1084,36 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
 #if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 0)
 #endif // CONFIG_UI_NO_KEYBOARD
-        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
+        gfx_print(layout.line1_pos, FONT_SIZE_6PT, TEXT_ALIGN_LEFT,
                   yellow_fab413, "1");
 
         uint16_t tone = ctcss_tone[last_state.channel.fm.txTone];
-        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
+        gfx_print(layout.line1_pos, layout.macro_font, TEXT_ALIGN_LEFT,
                   color_white, "   T- %d.%d", (tone / 10), (tone % 10));
 
 #if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 1)
 #endif // CONFIG_UI_NO_KEYBOARD
-        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
+        gfx_print(layout.line1_pos, layout.macro_font, TEXT_ALIGN_CENTER,
                   yellow_fab413, "2");
-        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
+        gfx_print(layout.line1_pos, layout.macro_font, TEXT_ALIGN_CENTER,
                   color_white,   "       T+");
     }
 #ifdef CONFIG_M17
     else if (last_state.channel.mode == OPMODE_M17)
     {
-        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
+        gfx_print(layout.line1_pos, layout.macro_font, TEXT_ALIGN_LEFT,
                   yellow_fab413, "1");
-        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
+        gfx_print(layout.line1_pos, layout.macro_font, TEXT_ALIGN_LEFT,
                   color_white, "          ");
-        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
+        gfx_print(layout.line1_pos, layout.macro_font, TEXT_ALIGN_CENTER,
                   yellow_fab413, "2");
     }
 #endif
 #if defined(CONFIG_UI_NO_KEYBOARD)
     if (ui_state->macro_menu_selected == 2)
 #endif // CONFIG_UI_NO_KEYBOARD
-    gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
+    gfx_print(layout.line1_pos, layout.macro_font, TEXT_ALIGN_RIGHT,
               yellow_fab413, "3        ");
 
     if (last_state.channel.mode == OPMODE_FM)
@@ -1133,14 +1129,14 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
             sniprintf(encdec_str, 9, "      D ");
         else
             sniprintf(encdec_str, 9, "        ");
-        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
+        gfx_print(layout.line1_pos, layout.macro_font, TEXT_ALIGN_RIGHT,
                   color_white, encdec_str);
     }
 #ifdef CONFIG_M17
     else if (last_state.channel.mode == OPMODE_M17)
     {
         char encdec_str[9] = "        ";
-        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
+        gfx_print(layout.line1_pos, layout.macro_font, TEXT_ALIGN_CENTER,
                   color_white, encdec_str);
     }
 #endif
@@ -1153,7 +1149,7 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
 #if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 3)
 #endif // CONFIG_UI_NO_KEYBOARD
-    gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
+    gfx_print(pos_2, layout.macro_font, TEXT_ALIGN_LEFT,
               yellow_fab413, "4");
 
     if (last_state.channel.mode == OPMODE_FM)
@@ -1169,13 +1165,13 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
                 break;
         }
 
-        gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
+        gfx_print(pos_2, layout.macro_font, TEXT_ALIGN_LEFT,
                   color_white, bw_str);
     }
 #ifdef CONFIG_M17
     else if (last_state.channel.mode == OPMODE_M17)
     {
-        gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
+        gfx_print(pos_2, layout.macro_font, TEXT_ALIGN_LEFT,
                   color_white, "       ");
 
     }
@@ -1184,7 +1180,7 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
 #if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 4)
 #endif // CONFIG_UI_NO_KEYBOARD
-    gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER,
+    gfx_print(pos_2, layout.macro_font, TEXT_ALIGN_CENTER,
               yellow_fab413, "5");
 
     char mode_str[12] = "";
@@ -1203,32 +1199,32 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
 #endif
     }
 
-    gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER,
+    gfx_print(pos_2, layout.macro_font, TEXT_ALIGN_CENTER,
               color_white, mode_str);
 
 #if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 5)
 #endif // CONFIG_UI_NO_KEYBOARD
-    gfx_print(pos_2, layout.top_font, TEXT_ALIGN_RIGHT,
+    gfx_print(pos_2, layout.macro_font, TEXT_ALIGN_RIGHT,
               yellow_fab413, "6        ");
 
     // Compute x.y format for TX power avoiding to pull in floating point math.
     // Remember that power is expressed in mW!
     unsigned int power_int = (last_state.channel.power / 1000);
     unsigned int power_dec = (last_state.channel.power % 1000) / 100;
-    gfx_print(pos_2, layout.top_font, TEXT_ALIGN_RIGHT,
+    gfx_print(pos_2, layout.macro_font, TEXT_ALIGN_RIGHT,
               color_white, "%d.%dW", power_int, power_dec);
 
     // Third row
 #if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 6)
 #endif // CONFIG_UI_NO_KEYBOARD
-    gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_LEFT,
+    gfx_print(layout.line3_large_pos, layout.macro_font, TEXT_ALIGN_LEFT,
               yellow_fab413, "7");
 #ifdef CONFIG_SCREEN_BRIGHTNESS
-    gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_LEFT,
+    gfx_print(layout.line3_large_pos, layout.macro_font, TEXT_ALIGN_LEFT,
               color_white, "   B-");
-    gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_LEFT,
+    gfx_print(layout.line3_large_pos, layout.macro_font, TEXT_ALIGN_LEFT,
               color_white, "       %5d",
               state.settings.brightness);
 #endif
@@ -1236,23 +1232,23 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
 #if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 7)
 #endif // CONFIG_UI_NO_KEYBOARD
-    gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.line3_large_pos, layout.macro_font, TEXT_ALIGN_CENTER,
               yellow_fab413, "8");
 #ifdef CONFIG_SCREEN_BRIGHTNESS
-    gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_CENTER,
+    gfx_print(layout.line3_large_pos, layout.macro_font, TEXT_ALIGN_CENTER,
               color_white,   "       B+");
 #endif
 
 #if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 8)
 #endif // CONFIG_UI_NO_KEYBOARD
-    gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_RIGHT,
+    gfx_print(layout.line3_large_pos, layout.macro_font, TEXT_ALIGN_RIGHT,
               yellow_fab413, "9        ");
     if( ui_state->input_locked == true )
-        gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_RIGHT,
+        gfx_print(layout.line3_large_pos, layout.macro_font, TEXT_ALIGN_RIGHT,
                   color_white, "Unlk");
     else
-        gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_RIGHT,
+        gfx_print(layout.line3_large_pos, layout.macro_font, TEXT_ALIGN_RIGHT,
                     color_white, "Lck");
 
     // Draw S-meter bar

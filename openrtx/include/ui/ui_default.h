@@ -98,9 +98,7 @@ enum settingsItems
     S_GPS,
 #endif
     S_RADIO,
-#ifdef CONFIG_M17
     S_M17,
-#endif
     S_ACCESSIBILITY,
     S_RESET2DEFAULTS,
 };
@@ -194,6 +192,7 @@ typedef struct layout_t
     fontSize_t bottom_font;
     fontSize_t input_font;
     fontSize_t menu_font;
+    fontSize_t macro_font;
 } layout_t;
 
 /**
