@@ -142,9 +142,7 @@ const char *settings_items[] =
     "GPS",
 #endif
     "Radio",
-#ifdef CONFIG_M17
     "M17",
-#endif
     "Accessibility",
     "Default Settings"
 };
@@ -179,8 +177,10 @@ const char *settings_radio_items[] =
 const char * settings_m17_items[] =
 {
     "Callsign",
+#ifdef CONFIG_M17
     "CAN",
     "CAN RX Check"
+#endif
 };
 
 const char * settings_accessibility_items[] =
@@ -264,9 +264,7 @@ const uint8_t display_num = sizeof(display_items)/sizeof(display_items[0]);
 const uint8_t settings_gps_num = sizeof(settings_gps_items)/sizeof(settings_gps_items[0]);
 #endif
 const uint8_t settings_radio_num = sizeof(settings_radio_items)/sizeof(settings_radio_items[0]);
-#ifdef CONFIG_M17
 const uint8_t settings_m17_num = sizeof(settings_m17_items)/sizeof(settings_m17_items[0]);
-#endif
 const uint8_t settings_accessibility_num = sizeof(settings_accessibility_items)/sizeof(settings_accessibility_items[0]);
 const uint8_t backup_restore_num = sizeof(backup_restore_items)/sizeof(backup_restore_items[0]);
 const uint8_t info_num = sizeof(info_items)/sizeof(info_items[0]);
@@ -334,13 +332,15 @@ static void _ui_calculateLayout(layout_t *layout)
     static const fontSize_t line4_font = FONT_SIZE_8PT;
     static const symbolSize_t line4_symbol_size = SYMBOLS_SIZE_8PT;
     // Frequency line font: 16 pt
-    static const fontSize_t line3_large_font = FONT_SIZE_16PT;
+    static const fontSize_t line3_large_font = FONT_SIZE_12PT;
     // Bottom bar font: 8 pt
     static const fontSize_t bottom_font = FONT_SIZE_8PT;
     // TimeDate/Frequency input font
     static const fontSize_t input_font = FONT_SIZE_10PT;
     // Menu font
     static const fontSize_t menu_font = FONT_SIZE_8PT;
+    // Macro font: 6 pt
+    static const fontSize_t   macro_font = FONT_SIZE_6PT;
 
     // Radioddity GD-77
     #elif CONFIG_SCREEN_HEIGHT > 63
@@ -464,7 +464,8 @@ static void _ui_calculateLayout(layout_t *layout)
         line4_symbol_size,
         bottom_font,
         input_font,
-        menu_font
+        menu_font,
+        macro_font
     };
 
     memcpy(layout, &new_layout, sizeof(layout_t));
@@ -779,13 +780,11 @@ static void _ui_changeMacroLatch(bool newVal)
                                    state.settings.macroMenuLatch);
 }
 
-#ifdef CONFIG_M17
 static inline void _ui_changeM17Can(int variation)
 {
     uint8_t can = state.settings.m17_can;
     state.settings.m17_can = (can + variation) % 16;
 }
-#endif
 
 static void _ui_changeVoiceLevel(int variation)
 {
@@ -1936,11 +1935,9 @@ void ui_updateFSM(bool *sync_rtx)
                         case S_RADIO:
                             state.ui_screen = SETTINGS_RADIO;
                             break;
-#ifdef CONFIG_M17
                         case S_M17:
                             state.ui_screen = SETTINGS_M17;
                             break;
-#endif
                         case S_ACCESSIBILITY:
                             state.ui_screen = SETTINGS_ACCESSIBILITY;
                             break;
@@ -2264,7 +2261,6 @@ void ui_updateFSM(bool *sync_rtx)
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_SETTINGS);
                 break;
-#ifdef CONFIG_M17
             // M17 Settings
             case SETTINGS_M17:
                 if(ui_state.edit_mode)
@@ -2360,7 +2356,6 @@ void ui_updateFSM(bool *sync_rtx)
                     }
                 }
                 break;
-#endif
             case SETTINGS_ACCESSIBILITY:
                 if(msg.keys & KEY_LEFT || (ui_state.edit_mode &&
                    (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)))
@@ -2585,12 +2580,10 @@ bool ui_updateGUI()
             _ui_drawSettingsGPS(&ui_state);
             break;
 #endif
-#ifdef CONFIG_M17
-        // M17 settings screen
+       // M17 settings screen
         case SETTINGS_M17:
             _ui_drawSettingsM17(&ui_state);
             break;
-#endif
         case SETTINGS_ACCESSIBILITY:
             _ui_drawSettingsAccessibility(&ui_state);
             break;

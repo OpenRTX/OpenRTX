@@ -29,7 +29,7 @@
 #define CONFIG_SCREEN_HEIGHT 128
 
 // Battery type
-#define CONFIG_BAT_NONE
+#define CONFIG_BAT_LIPO_2S
 
 #define CONFIG_PIX_FMT_RGB565
 #define CONFIG_GFX_NOFRAMEBUF
