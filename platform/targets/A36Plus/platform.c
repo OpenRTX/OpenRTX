@@ -23,6 +23,7 @@
 #include <platform/drivers/baseband/bk4819.h>
 #include <hwconfig.h>
 #include <platform/drivers/display/ST7735S_a36plus.h>
+#include <platform/drivers/ADC/ADC0_A36plus.h>
 #include "gd32f3x0_rtc.h"
 #include "gd32f3x0_pmu.h"
 
@@ -80,6 +81,8 @@ void platform_init()
     gpio_setMode(PTT_SW,    INPUT_PULL_UP);
     spi_config();
     backlight_init();
+    nvm_init();         // Initialize nonvolatile memory
+    //rtc_initialize();   // Initialize the RTC peripheral
     gpio_setMode(AIN_VBAT, ANALOG);
     //adc0_init();
 }
@@ -98,8 +101,7 @@ void platform_terminate()
 uint16_t platform_getVbat()
 {
     // Return the ADC reading from AIN_VBAT
-    //return adc0_read(AIN_VBAT);
-    return 0;
+    return adc0_getMeasurement(0);
 }
 
 uint8_t platform_getMicLevel()
@@ -125,7 +127,7 @@ bool platform_getPttStatus()
 
 bool platform_pwrButtonStatus()
 {
-    return !gpio_readPin(POWER_SW);
+    return !gpio_readPin(PWR_SW);
 }
 
 void platform_ledOn(led_t led)
