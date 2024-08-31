@@ -84,9 +84,8 @@ void platform_init()
     nvm_init();         // Initialize nonvolatile memory
     //rtc_initialize();   // Initialize the RTC peripheral
     gpio_setMode(AIN_VBAT, ANALOG);
-    //adc0_init();
+    adc0_init();
 }
-
 
 
 void platform_terminate()
