@@ -54,10 +54,10 @@
 #define SKB_2 GPIOF, 7
 
 // External flash
-#define EFLASH_MISO GPIOA, 6
-#define EFLASH_MOSI GPIOA, 7
-#define EFLASH_SCK GPIOB, 5
-#define EFLASH_CS GPIOB, 4
+#define FLASH_SDI GPIOA, 7
+#define FLASH_SDO GPIOA, 6
+#define FLASH_CLK GPIOA, 5
+#define FLASH_CS GPIOA, 4
 
 // BK1080
 #define BK1080_CLK GPIOF, 6
@@ -82,6 +82,6 @@
 #define RFU3R_EN GPIOC, 14
 
 // Power button
-#define POWER_SW GPIOF,7
+#define PWR_SW GPIOF,7
 
 #endif
