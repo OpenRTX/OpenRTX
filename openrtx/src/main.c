@@ -24,6 +24,7 @@
 #ifdef PLATFORM_A36PLUS
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
+#include <peripherals/gpio.h>
 #endif
 
 #ifdef PLATFORM_MD9600
@@ -52,9 +53,12 @@ int main(void)
     #ifdef PLATFORM_A36PLUS
     if(!platform_pwrButtonStatus())
     {
-        //sleepFor(0, 5);
+        sleepFor(0, 50);
         if(!platform_pwrButtonStatus())
         {
+            gpio_clearPin(GPIOA, 15);
+            delayMs(500);
+            NVIC_SystemReset();
             return 0;
         }
     }
