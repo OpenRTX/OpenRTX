@@ -220,7 +220,8 @@ const char *authors[] =
     "Fred IU2NRO",
     "Joseph VK7JS",
     "Morgan ON4MOD",
-    "Marco DM4RCO"
+    "Marco DM4RCO",
+    "Andrej K8TUN",
 };
 
 static const char *symbols_ITU_T_E161[] =
