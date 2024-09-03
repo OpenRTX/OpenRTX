@@ -800,7 +800,7 @@ void _ui_drawMenuRestore(ui_state_t* ui_state)
 void _ui_drawMenuInfo(ui_state_t* ui_state)
 {
     //gfx_clearScreen();
-    gfx_clearWindow(0, 96, 96, 64);
+    gfx_clearWindow(0, 96, 104, 64);
     // Print "Info" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->info);
