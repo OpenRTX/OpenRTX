@@ -23,6 +23,7 @@
 
 #include <peripherals/gpio.h>
 #include <peripherals/spi.h>
+#include "spi_custom.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -50,38 +51,33 @@ struct spiConfig
  *  Instantiate an SPI bitbang device.
  *
  * @param name: device name.
- * @param mutx: pointer to mutex, or NULL.
  * @param cfg: driver configuration data.
+ * @param mutx: pointer to mutex, or NULL.
  */
-#define SPI_BITBANG_DEVICE_DEFINE(name, mutx, cfg)                          \
-int spiBitbang_impl(const struct spiDevice *dev, const void *txBuf,         \
-                    const size_t txSize, void *rxBuf, const size_t rxSize); \
-const struct spiDevice name =                                               \
-{                                                                           \
-    .transfer = spiBitbang_impl,                                            \
-    .priv     = &cfg,                                                       \
-    .mutex    = mutx,                                                       \
+#define SPI_BITBANG_DEVICE_DEFINE(name, cfg, mutx)           \
+uint8_t spiBitbang_sendRecv(const void *priv, uint8_t data); \
+const struct spiCustomDevice name =                          \
+{                                                            \
+    .transfer = spiCustom_transfer,                          \
+    .priv     = &cfg,                                        \
+    .mutex    = mutx,                                        \
+    .spiFunc  = spiBitbang_sendRecv                          \
 };
 
 /**
  * Initialise a bitbang SPI driver.
- * Is left to application code to change the operating mode and alternate function
- * mapping of the corresponding gpio lines.
  *
  * @param dev: SPI bitbang device descriptor.
- * @param speed: SPI clock speed.
- * @param flags: SPI configuration flags.
  * @return zero on success, a negative error code otherwise.
  */
-int spiBitbang_init(const struct spiDevice *dev);
+int spiBitbang_init(const struct spiCustomDevice *dev);
 
 /**
  * Shut down a bitbang SPI driver.
  *
  * @param dev: SPI bitbang device descriptor.
  */
-void spiBitbang_terminate(const struct spiDevice *dev);
-
+void spiBitbang_terminate(const struct spiCustomDevice *dev);
 
 #ifdef __cplusplus
 }
