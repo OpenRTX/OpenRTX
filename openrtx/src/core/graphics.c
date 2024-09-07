@@ -221,18 +221,27 @@ void gfx_fillScreen(color_t color)
     display_fill(_color2bw(color));
     #endif
 }
+
+#ifdef PLATFORM_A36PLUS
 // Set window: x, y, width, height
 void gfx_setWindow(uint16_t x, uint16_t y, uint16_t height, uint16_t width)
 {
+    return;
     display_setWindow(x, y, height, width);
 }
 
 void gfx_clearWindow(uint16_t x, uint16_t y, uint16_t height, uint16_t width)
 {
+    //return;
     display_clearWindow(x, y, height, width);
     // Restore window
     display_setWindow(0,0,CONFIG_SCREEN_HEIGHT, CONFIG_SCREEN_WIDTH+28);
 }
+#else
+// empty declarations
+void gfx_setWindow(uint16_t x, uint16_t y, uint16_t height, uint16_t width) {}
+void gfx_clearWindow(uint16_t x, uint16_t y, uint16_t height, uint16_t width) {}
+#endif
 
 inline void gfx_setPixel(point_t pos, color_t color)
 {
@@ -342,7 +351,7 @@ void gfx_drawLine(point_t start, point_t end, color_t color)
 }
 
 void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color, bool fill)
-{
+{   
     if(width == 0) return;
     if(height == 0) return;
     uint16_t x_max = start.x + width - 1;

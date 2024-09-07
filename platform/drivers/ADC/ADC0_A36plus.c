@@ -44,7 +44,6 @@ void adc0_terminate()
 
 uint16_t adc0_getRawSample(uint8_t ch)
 {
-    //usart0_IRQwrite("ADC0 getRawSample\r\n");
     adc_regular_channel_config(0, 1, 5);
     adc_software_trigger_enable(1);
     char bVar1;
