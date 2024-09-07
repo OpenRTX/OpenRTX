@@ -211,17 +211,14 @@ void bk4819_setTxPower(uint32_t power)
     // in REG_36<15:8> and the gain tuning values in <5:0>.
     // I'm eyeballing what 1W, 5W and 10W should be,
     // but I'm not at all sure if the values are correct.
-    // 1W: 0x20, 5W: 0x60, 10W: 0xFF
-    // The gain tuning values are:
-    // 1W: 0b011, 5W: 0b100, 10W: 0b111
     uint16_t reg = 0;
     switch (power)
     {
     case 1000:
-        reg = 0x2095;
+        reg = 0x70AA;
         break;
     case 5000:
-        reg = 0x6099;
+        reg = 0xA2AD;
         break;
     case 10000:
         reg = 0xFFBF;
@@ -236,17 +233,18 @@ void bk4819_setTxPower(uint32_t power)
 // toggle BK4819 GPIO pins
 void bk4819_gpio_pin_set(uint8_t Pin, bool bSet)
 {
+    Pin += 1;
     uint16_t BK4819_GpioOutState = ReadRegister(BK4819_REG_33);
     // Enable GPIO output (set REG_33<15:8> to 0x00)
     // HACK: this enables all GPIO pins as output
     BK4819_GpioOutState &= 0x00FF;
     if (bSet)
     {
-        BK4819_GpioOutState |= (1 << Pin);
+        BK4819_GpioOutState |= (0x0080 >> Pin);
     }
     else
     {
-        BK4819_GpioOutState &= ~(1 << Pin);
+        BK4819_GpioOutState &= ~(0x0080 >> Pin);
     }
     WriteRegister(BK4819_REG_33, BK4819_GpioOutState);
 }
