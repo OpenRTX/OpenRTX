@@ -474,7 +474,9 @@ static void _ui_calculateLayout(layout_t *layout)
 
 static void _ui_drawLowBatteryScreen()
 {
+    #ifndef CONFIG_GFX_NOFRAMEBUF
     gfx_clearScreen();
+    #endif
     uint16_t bat_width = CONFIG_SCREEN_WIDTH / 2;
     uint16_t bat_height = CONFIG_SCREEN_HEIGHT / 3;
     point_t bat_pos = {CONFIG_SCREEN_WIDTH / 4, CONFIG_SCREEN_HEIGHT / 8};
@@ -2500,11 +2502,15 @@ bool ui_updateGUI()
     {
         // VFO main screen
         case MAIN_VFO:
+        #ifdef PLATFORM_A36PLUS
             if(!macro_menu)
                 _ui_drawMainVFO(&ui_state);
             else
                 // draw only the s-meter
                 _ui_drawMainBottom();
+        #else
+            _ui_drawMainVFO(&ui_state);
+        #endif
             break;
         // VFO frequency input screen
         case MAIN_VFO_INPUT:
