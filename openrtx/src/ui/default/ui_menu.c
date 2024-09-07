@@ -597,7 +597,9 @@ void _ui_drawMenuTop(ui_state_t* ui_state)
 
 void _ui_drawMenuBank(ui_state_t* ui_state)
 {
-    //gfx_clearScreen();
+    #ifndef CONFIG_GFX_NOFRAMEBUF
+    gfx_clearScreen();
+    #endif
     // Print "Bank" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->banks);
@@ -607,7 +609,9 @@ void _ui_drawMenuBank(ui_state_t* ui_state)
 
 void _ui_drawMenuChannel(ui_state_t* ui_state)
 {
-    //gfx_clearScreen();
+    #ifndef CONFIG_GFX_NOFRAMEBUF
+    gfx_clearScreen();
+    #endif
     // Print "Channel" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->channels);
@@ -617,7 +621,9 @@ void _ui_drawMenuChannel(ui_state_t* ui_state)
 
 void _ui_drawMenuContacts(ui_state_t* ui_state)
 {
-    //gfx_clearScreen();
+    #ifndef CONFIG_GFX_NOFRAMEBUF
+    gfx_clearScreen();
+    #endif
     // Print "Contacts" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->contacts);
@@ -727,7 +733,9 @@ void _ui_drawMenuGPS()
 
 void _ui_drawMenuSettings(ui_state_t* ui_state)
 {
-    //gfx_clearScreen();
+    #ifndef CONFIG_GFX_NOFRAMEBUF
+    gfx_clearScreen();
+    #endif
     // Print "Settings" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->settings);
@@ -737,7 +745,9 @@ void _ui_drawMenuSettings(ui_state_t* ui_state)
 
 void _ui_drawMenuBackupRestore(ui_state_t* ui_state)
 {
-    //gfx_clearScreen();
+    #ifndef CONFIG_GFX_NOFRAMEBUF
+    gfx_clearScreen();
+    #endif
     // Print "Backup & Restore" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->backupAndRestore);
@@ -749,7 +759,9 @@ void _ui_drawMenuBackup(ui_state_t* ui_state)
 {
     (void) ui_state;
 
-    //gfx_clearScreen();
+    #ifndef CONFIG_GFX_NOFRAMEBUF
+    gfx_clearScreen();
+    #endif
     // Print "Flash Backup" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->flashBackup);
@@ -775,7 +787,9 @@ void _ui_drawMenuRestore(ui_state_t* ui_state)
 {
     (void) ui_state;
 
-    //gfx_clearScreen();
+    #ifndef CONFIG_GFX_NOFRAMEBUF
+    gfx_clearScreen();
+    #endif
     // Print "Flash Restore" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->flashRestore);
@@ -799,7 +813,9 @@ void _ui_drawMenuRestore(ui_state_t* ui_state)
 
 void _ui_drawMenuInfo(ui_state_t* ui_state)
 {
-    //gfx_clearScreen();
+    #ifndef CONFIG_GFX_NOFRAMEBUF
+    gfx_clearScreen();
+    #endif
     gfx_clearWindow(0, 96, 104, 64);
     // Print "Info" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
@@ -811,7 +827,9 @@ void _ui_drawMenuInfo(ui_state_t* ui_state)
 
 void _ui_drawMenuAbout(ui_state_t* ui_state)
 {
-    //gfx_clearScreen();
+    #ifndef CONFIG_GFX_NOFRAMEBUF
+    gfx_clearScreen();
+    #endif
 
     point_t logo_pos;
     if(CONFIG_SCREEN_HEIGHT >= 100)
@@ -846,7 +864,9 @@ void _ui_drawMenuAbout(ui_state_t* ui_state)
 
 void _ui_drawSettingsDisplay(ui_state_t* ui_state)
 {
-    //gfx_clearScreen();
+    #ifndef CONFIG_GFX_NOFRAMEBUF
+    gfx_clearScreen();
+    #endif
     // Print "Display" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->display);
@@ -872,7 +892,9 @@ void _ui_drawSettingsGPS(ui_state_t* ui_state)
 #ifdef CONFIG_RTC
 void _ui_drawSettingsTimeDate()
 {
-    //gfx_clearScreen();
+    #ifndef CONFIG_GFX_NOFRAMEBUF
+    gfx_clearScreen();
+    #endif
     datetime_t local_time = utcToLocalTime(last_state.time,
                                            last_state.settings.utc_timezone);
     // Print "Time&Date" on top bar
@@ -891,7 +913,9 @@ void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state)
 {
     (void) last_state;
 
-    //gfx_clearScreen();
+    #ifndef CONFIG_GFX_NOFRAMEBUF
+    gfx_clearScreen();
+    #endif
     // Print "Time&Date" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->timeAndDate);
@@ -958,7 +982,9 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
 
 void _ui_drawSettingsAccessibility(ui_state_t* ui_state)
 {
-    //gfx_clearScreen();
+    #ifndef CONFIG_GFX_NOFRAMEBUF
+    gfx_clearScreen();
+    #endif
     // Print "Accessibility" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->accessibility);
@@ -997,7 +1023,9 @@ void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state)
 
 void _ui_drawSettingsRadio(ui_state_t* ui_state)
 {
-    //gfx_clearScreen();
+    #ifndef CONFIG_GFX_NOFRAMEBUF
+    gfx_clearScreen();
+    #endif
 
     // Print "Radio Settings" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
