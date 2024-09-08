@@ -141,6 +141,7 @@ void radio_disableAfOutput()
 }
 
 void radio_checkVOX(){
+    return;
     radio_disableRtx();
     if (bk4819_get_vox()){
         if (radioStatus != TX)
@@ -151,22 +152,27 @@ void radio_checkVOX(){
     }
 }
 
+void radio_setRxFilters(uint32_t freq)
+{
+    if (freq < 17400000){
+        gpio_clearPin(RFU3R_EN);
+        // enable V3R
+        gpio_setPin(RFV3R_EN);
+       // usart0_IRQwrite("V3R\r\n");
+    }else{
+        gpio_clearPin(RFV3R_EN);
+        // enable U3R
+        gpio_setPin(RFU3R_EN);
+     //   usart0_IRQwrite("U3R\r\n");
+    }
+}
+
 void radio_enableRx()
 {
     // Disable power amplifiers
     gpio_clearPin(RFV3T_EN);
     bk4819_gpio_pin_set(4, false);          
-    if (config->txFrequency < 174000000){
-        gpio_clearPin(RFU3R_EN);
-        // enable V3R
-        gpio_setPin(RFV3R_EN);
-        usart0_IRQwrite("V3R\r\n");
-    }else{
-        gpio_clearPin(RFV3R_EN);
-        // enable U3R
-        gpio_setPin(RFU3R_EN);
-        usart0_IRQwrite("U3R\r\n");
-    }
+    radio_setRxFilters(config->rxFrequency / 10);
     bk4819_set_freq(config->rxFrequency / 10);
     if (config->rxToneEn){
         bk4819_enable_rx_ctcss(config->rxTone / 10);
@@ -174,6 +180,7 @@ void radio_enableRx()
     bk4819_rx_on();
     radioStatus = RX;
 }
+
 
 void radio_enableTx()
 {
@@ -190,6 +197,7 @@ void radio_enableTx()
         usart0_IRQwrite("V3T\r\n");
     }else{
         bk4819_gpio_pin_set(4, true);
+        // gpio_setPin(RFV3T_EN);
         // Check if it was set
         if (ReadRegister(0x0A) & 0x10)
             usart0_IRQwrite("U3T\r\n");
@@ -241,7 +249,7 @@ void radio_updateConfiguration()
 
 rssi_t radio_getRssi()
 {
-    return bk4819_get_rssi();
+    return bk4819_get_rssi();   
 }
 
 enum opstatus radio_getStatus()

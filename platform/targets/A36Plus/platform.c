@@ -105,7 +105,8 @@ uint16_t platform_getVbat()
 
 uint8_t platform_getMicLevel()
 {
-    return ReadRegister(0x64) / 255;
+    // bits 6:0
+    return (ReadRegister(0x6f) & 0x7f) * 2;
 }
 
 uint8_t platform_getVolumeLevel()

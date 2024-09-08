@@ -24,7 +24,9 @@
 #include <rtx.h>
 #include <OpMode_FM.hpp>
 #include <OpMode_M17.hpp>
+#include <state.h>
 
+extern state_t state;
 static pthread_mutex_t   *cfgMutex;     // Mutex for incoming config messages
 static const rtxStatus_t *newCnf;       // Pointer for incoming config messages
 static rtxStatus_t        rtxStatus;    // RTX driver status
@@ -186,23 +188,25 @@ void rtx_task()
      */
     if(rtxStatus.opStatus == RX)
     {
-
-        if(!reconfigure)
+        if(state.rtxStatus != RTX_SPECTRUM)
         {
-            if(!reinitFilter)
+            if(!reconfigure)
             {
-                /*
-                 * Filter RSSI value using 15.16 fixed point math. Equivalent
-                 * floating point code is: rssi = 0.74*radio_getRssi() + 0.26*rssi
-                 */
-                int32_t filt_rssi = radio_getRssi() * 0xBD70    // 0.74 * radio_getRssi
-                                  + rssi            * 0x428F;   // 0.26 * rssi
-                rssi = (filt_rssi + 32768) >> 16;               // Round to nearest
-            }
-            else
-            {
-                rssi = radio_getRssi();
-                reinitFilter = false;
+                if(!reinitFilter)
+                {
+                    /*
+                    * Filter RSSI value using 15.16 fixed point math. Equivalent
+                    * floating point code is: rssi = 0.74*radio_getRssi() + 0.26*rssi
+                    */
+                    int32_t filt_rssi = radio_getRssi() * 0xBD70    // 0.74 * radio_getRssi
+                                    + rssi            * 0x428F;   // 0.26 * rssi
+                    rssi = (filt_rssi + 32768) >> 16;               // Round to nearest
+                }
+                else
+                {
+                    rssi = radio_getRssi();
+                    reinitFilter = false;
+                }
             }
         }
     }

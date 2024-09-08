@@ -81,10 +81,18 @@ void radio_enableAfOutput();
  */
 void radio_disableAfOutput();
 
+
+#ifdef PLATFORM_A36PLUS
 /**
  * Get VOX status
  */
 void radio_checkVOX();
+
+/**
+ * Set up the RX filters for the current operating frequency.
+ */
+void radio_setRxFilters(uint32_t freq);
+#endif
 
 /**
  * Enable the RX stage.

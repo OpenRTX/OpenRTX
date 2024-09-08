@@ -56,6 +56,8 @@ enum uiScreen
     MENU_RESTORE,
     MENU_INFO,
     MENU_ABOUT,
+    MENU_SPECTRUM,
+    MENU_SPECTRUM_SETTINGS,
     SETTINGS_TIMEDATE,
     SETTINGS_TIMEDATE_SET,
     SETTINGS_DISPLAY,
@@ -85,7 +87,8 @@ enum menuItems
 #endif
     M_SETTINGS,
     M_INFO,
-    M_ABOUT
+    M_ABOUT,
+    M_SPECTRUM,
 };
 
 enum settingsItems

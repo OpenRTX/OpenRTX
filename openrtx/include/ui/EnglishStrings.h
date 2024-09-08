@@ -32,6 +32,7 @@ const stringsTable_t englishStrings =
     .channels          = "Channels",
     .contacts          = "Contacts",
     .gps               = "GPS",
+    .spectrum          = "Spectrum",
     .settings          = "Settings",
     .backupAndRestore  = "Backup & Restore",
     .info              = "Info",
