@@ -150,10 +150,10 @@ void display_init(void)
     gpio_clearPin(LCD_RST);
     delayMs(10);
     gpio_setPin(LCD_RST);
-    delayMs(100);
+    delayMs(10);
 
     sendCommand(ST7735S_CMD_SLPOUT);
-    delayMs(100);
+    delayMs(10);
 
     sendCommand(ST7735S_CMD_FRMCTR1);
     sendData(0x05);

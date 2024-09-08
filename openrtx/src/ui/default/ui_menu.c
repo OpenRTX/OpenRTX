@@ -28,9 +28,11 @@
 #include <interfaces/cps_io.h>
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
+#include <interfaces/radio.h>
 #include <memory_profiling.h>
 #include <ui/ui_strings.h>
 #include <core/voicePromptUtils.h>
+#include <lib/printf/printf.h>
 
 #ifdef PLATFORM_TTWRPLUS
 #include <SA8x8.h>
@@ -38,6 +40,7 @@
 
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBottom();
+extern void radio_setRxFilters(uint32_t freq);
 
 static char priorSelectedMenuName[MAX_ENTRY_LEN] = "\0";
 static char priorSelectedMenuValue[MAX_ENTRY_LEN] = "\0";
@@ -728,6 +731,105 @@ void _ui_drawMenuGPS()
                      CONFIG_SCREEN_HEIGHT / 3,
                      last_state.gps_data.satellites,
                      last_state.gps_data.active_sats);
+}
+#endif
+
+#ifdef PLATFORM_A36PLUS
+void _ui_drawMenuSpectrum(ui_state_t* ui_state)
+{   
+    color_t bar_color = (color_t){255, 255, 255};
+    #define NUMBER_BARS 64
+    #define NUMBER_DIVS 16
+    state.rtxStatus = RTX_SPECTRUM;
+    // If there's a mismatch between the current and last state, reset everything
+    if(last_state.spectrum_startFreq != state.spectrum_startFreq)
+    {
+        state.spectrum_currentPart = 0;
+        return;
+    }
+    if(state.spectrum_currentPart == 0)
+    {
+        gfx_clearScreen();
+        state.spectrum_peakRssi = -160;
+    }
+    // Print "Spectrum" on top bar
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
+            color_white, currentLanguage->spectrum);
+    uint32_t spectrumStep = freq_steps[state.step_index]/10;
+    // End frequency is start frequency + 128 * step frequency
+    char freq_str[16];
+    gfx_clearWindow(80,0,32,160);
+    sniprintf(freq_str, sizeof(freq_str), "%d.%05d MHz",
+              state.spectrum_peakFreq / 100000,
+              (state.spectrum_peakFreq % 100000));
+    gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
+              color_white, freq_str);
+    // Print small text on the left of the spectrum with the start frequency
+    sniprintf(freq_str, sizeof(freq_str), "%d.%02d",
+              state.spectrum_startFreq / 100000,
+              (state.spectrum_startFreq % 100000 / 1000));
+    gfx_print((point_t){layout.horizontal_pad, layout.line2_pos.y - 10}, FONT_SIZE_5PT, TEXT_ALIGN_LEFT,
+                color_white, freq_str);
+    // Print small text on the right of the spectrum with the end frequency
+    sniprintf(freq_str, sizeof(freq_str), "%d.%02d",
+              (state.spectrum_startFreq + NUMBER_BARS * spectrumStep) / 100000,
+              ((state.spectrum_startFreq + NUMBER_BARS * spectrumStep) % 100000 / 1000));
+    gfx_print((point_t){layout.horizontal_pad, layout.line2_pos.y - 10}, FONT_SIZE_5PT, TEXT_ALIGN_RIGHT,
+                color_white, freq_str);
+    // Draw spectrum.
+    point_t rect_pos = {layout.horizontal_pad + state.spectrum_currentPart * 128 / NUMBER_DIVS, layout.line2_pos.y - 8};
+    for(int i = state.spectrum_currentPart * (NUMBER_BARS) / NUMBER_DIVS;
+            i < (state.spectrum_currentPart + 1) * (NUMBER_BARS) / NUMBER_DIVS; i++)
+    {
+        bk4819_set_freq((last_state.spectrum_startFreq + i * spectrumStep));
+        // If there's a mismatch between the current and last state, reset everything
+        if(last_state.spectrum_startFreq != state.spectrum_startFreq)
+        {
+            state.spectrum_currentPart = 0;
+            return;
+        }
+        int16_t rssi = bk4819_get_rssi();
+        uint8_t height = (rssi + 155) / 2;
+        // Don't draw, just store the values in a buffer
+        //state.spectrum_data[i] = height;
+        // If the current value is higher than the last peak, update the peak
+        if(rssi > state.spectrum_peakRssi)
+        {
+            state.spectrum_peakRssi = rssi;
+            state.spectrum_peakFreq = last_state.spectrum_startFreq + i * spectrumStep;
+        }
+        // Map color of bar to rssi value, such that <-140dBm is red and >-40dBm is green, with a gradient in between
+        if(height > 0)
+        {
+            uint8_t r = 0;
+            uint8_t g = 0;
+            uint8_t b = 0;
+            if(height < 40)
+            {
+                r = 255;
+                g = 255 * height / 20;
+            }
+            else if(height < 60)
+            {
+                r = 255 * (40 - height) / 20;
+                g = 255;
+            }
+            else
+            {
+                g = 255;
+            }
+            bar_color = (color_t){r, g, b};
+        }
+        gfx_drawRect((point_t){rect_pos.x, (128-height)}, (128/NUMBER_BARS), height, bar_color, true);
+        rect_pos.x += 128/NUMBER_BARS;
+    }
+    state.spectrum_currentPart = (state.spectrum_currentPart + 1) % NUMBER_DIVS;
+    ui_updateFSM(true);
+}
+
+void spectrum_changeFrequency(int32_t direction)
+{
+    state.spectrum_startFreq += direction;
 }
 #endif
 

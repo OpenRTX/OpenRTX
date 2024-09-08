@@ -254,7 +254,7 @@ void bk4819_enable_tx_ctcss(uint16_t frequency)
     uint16_t reg = ReadRegister(BK4819_REG_51);
     reg |= BK4819_REG51_TX_CTCDSS_ENABLE | BK4819_REG51_CTCSCSS_MODE_SEL;
     WriteRegister(BK4819_REG_51, reg);
-    WriteRegister(BK4819_REG_07, frequency * 20.64888);
+    WriteRegister(BK4819_REG_07, frequency * 2064888 / 100000);
 }
 
 void bk4819_enable_rx_ctcss(uint16_t frequency)
@@ -262,7 +262,7 @@ void bk4819_enable_rx_ctcss(uint16_t frequency)
     uint16_t reg = ReadRegister(BK4819_REG_51);
     reg |= BK4819_REG51_CTCSCSS_MODE_SEL;
     WriteRegister(BK4819_REG_51, reg);
-    WriteRegister(BK4819_REG_07, frequency * 20.64888);
+    WriteRegister(BK4819_REG_07, frequency * 2064888 / 100000);
 }
 
 void bk4819_enable_ctcss2(uint16_t frequency)
@@ -321,7 +321,19 @@ void bk4819_set_Squelch(uint8_t RTSO,
 
 int16_t bk4819_get_rssi(void)
 {
-    return ((ReadRegister(BK4819_REG_67)) / 2) - 160;
+    // uint8_t tryCounter = 0;
+    while ((ReadRegister(0x63) & 0xFF) >= 255) {
+        // if(tryCounter++ > 10) {
+        //      //usart0_IRQwrite("u\r\n");
+        //      bk4819_init();
+        //      delayMs(5);
+        //      bk4819_rx_on();
+        //      return -133;
+        // }
+        delayUs(100);
+    }
+    sleepFor(0, 3);
+    return ((ReadRegister(0x67) & 0x01FF) / 2) - 160;
 }
 
 void bk4819_enable_freq_scan(uint8_t scna_time){
