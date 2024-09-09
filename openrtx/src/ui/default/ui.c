@@ -88,6 +88,7 @@ extern void _ui_drawVFOMiddle();
 extern void _ui_drawMEMMiddle();
 extern void _ui_drawVFOBottom();
 extern void _ui_drawMEMBottom();
+extern void _ui_drawMainBottom();
 extern void _ui_drawMainVFO(ui_state_t* ui_state);
 extern void _ui_drawMainVFOInput(ui_state_t* ui_state);
 extern void _ui_drawMainMEM(ui_state_t* ui_state);
@@ -99,6 +100,11 @@ extern void _ui_drawMenuContacts(ui_state_t* ui_state);
 #ifdef CONFIG_GPS
 extern void _ui_drawMenuGPS();
 extern void _ui_drawSettingsGPS(ui_state_t* ui_state);
+#endif
+#ifdef PLATFORM_A36PLUS
+extern void _ui_drawMenuSpectrum(ui_state_t* ui_state);
+extern void spectrum_changeFrequency(int32_t freq);
+extern void radio_setRxFilters(uint32_t freq);
 #endif
 extern void _ui_drawSettingsAccessibility(ui_state_t* ui_state);
 extern void _ui_drawMenuSettings(ui_state_t* ui_state);
@@ -124,6 +130,9 @@ const char *menu_items[] =
     "Banks",
     "Channels",
     "Contacts",
+#ifdef PLATFORM_A36PLUS
+    "Spectrum",
+#endif
 #ifdef CONFIG_GPS
     "GPS",
 #endif
@@ -1808,6 +1817,15 @@ void ui_updateFSM(bool *sync_rtx)
                             state.ui_screen = MENU_GPS;
                             break;
 #endif
+#ifdef PLATFORM_A36PLUS
+                        case M_SPECTRUM:
+                            state.spectrum_startFreq = state.channel.rx_frequency/10;
+                            //display_defineScrollArea(116,160);
+                            state.ui_screen = MENU_SPECTRUM;
+                            state.rtxStatus = RTX_SPECTRUM;
+                            state.spectrum_currentPart = 0;
+                            break;
+#endif
                         case M_SETTINGS:
                             state.ui_screen = MENU_SETTINGS;
                             break;
@@ -1909,6 +1927,36 @@ void ui_updateFSM(bool *sync_rtx)
                 }
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_TOP);
+                break;
+#endif
+#ifdef PLATFORM_A36PLUS
+            // Spectrum menu screen
+            case MENU_SPECTRUM:
+                if(msg.keys & KEY_ESC) {
+                    state.rtxStatus = RTX_RX;
+                    radio_enableRx();
+                    //display_init();
+                    _ui_menuBack(MENU_TOP);
+                }
+                // Up and down keys change displayed frequency by 100KHz
+                if(msg.keys & KEY_UP)
+                {
+                    spectrum_changeFrequency(25000);
+                    // Enable corresponding filters
+                    #ifndef PLATFORM_LINUX
+                    radio_setRxFilters(state.spectrum_startFreq);
+                    #endif
+                    state.spectrum_currentPart = 0;
+                }
+                if(msg.keys & KEY_DOWN)
+                {
+                    spectrum_changeFrequency(-25000);
+                    // Enable corresponding filters
+                    #ifndef PLATFORM_LINUX
+                    radio_setRxFilters(state.spectrum_startFreq);
+                    #endif
+                    state.spectrum_currentPart = 0;
+                }
                 break;
 #endif
             // Settings menu screen
@@ -2541,6 +2589,11 @@ bool ui_updateGUI()
         // GPS menu screen
         case MENU_GPS:
             _ui_drawMenuGPS();
+            break;
+#endif
+#ifdef PLATFORM_A36PLUS
+        case MENU_SPECTRUM:
+            _ui_drawMenuSpectrum(&ui_state);
             break;
 #endif
         // Settings menu screen
