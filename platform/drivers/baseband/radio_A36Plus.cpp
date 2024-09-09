@@ -96,6 +96,7 @@ void radio_init(const rtxStatus_t* rtxState)
     gpio_setMode(RFV3R_EN, OUTPUT);
     gpio_setMode(RFV3T_EN, OUTPUT);
     gpio_setMode(RFU3R_EN, OUTPUT);
+    gpio_setMode(RF_AM_AGC, OUTPUT);
 
     gpio_setMode(BK1080_DAT, OUTPUT);
     gpio_setMode(BK1080_CLK, OUTPUT);
@@ -158,12 +159,14 @@ void radio_setRxFilters(uint32_t freq)
         gpio_clearPin(RFU3R_EN);
         // enable V3R
         gpio_setPin(RFV3R_EN);
-       // usart0_IRQwrite("V3R\r\n");
+        gpio_setPin(RF_AM_AGC);
+        // usart0_IRQwrite("V3R\r\n");
     }else{
         gpio_clearPin(RFV3R_EN);
         // enable U3R
+        gpio_clearPin(RF_AM_AGC);
         gpio_setPin(RFU3R_EN);
-     //   usart0_IRQwrite("U3R\r\n");
+        // usart0_IRQwrite("U3R\r\n");
     }
 }
 
@@ -231,19 +234,7 @@ void radio_updateConfiguration()
     // If frequency is UHF, toggle BK4819 GPIO 4
     // If TX:
     if (radioStatus == RX){
-        if (config->txFrequency < 174000000){
-            gpio_clearPin(RFV3T_EN);
-            gpio_clearPin(RFU3R_EN);
-            // enable V3R
-            gpio_setPin(RFV3R_EN);
-            usart0_IRQwrite("V3R\r\n");
-        }else{
-            bk4819_gpio_pin_set(4, false);
-            gpio_clearPin(RFV3R_EN);
-            // enable U3R
-            gpio_setPin(RFU3R_EN);
-            usart0_IRQwrite("U3R\r\n");
-        }
+        radio_setRxFilters(config->rxFrequency / 10);
     }
 }
 
