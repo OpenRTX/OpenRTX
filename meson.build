@@ -15,8 +15,8 @@ openrtx_def = {}
 ## UI font configuration, only one uncommented at a time
 ##
 
-# openrtx_def += {'FONT_UBUNTU_REGULAR': ''}
-openrtx_def += {'FONT_FREE_SANS': ''}
+openrtx_def += {'FONT_UBUNTU_REGULAR': ''}
+#openrtx_def += {'FONT_FREE_SANS': ''}
 
 ##
 ## Firmware configuration parameters
@@ -47,10 +47,10 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/crc.c',
                'openrtx/src/core/datetime.c',
                'openrtx/src/core/openrtx.c',
-#                'openrtx/src/core/audio_codec.c',
+                'openrtx/src/core/audio_codec.c',
                'openrtx/src/core/audio_stream.c',
                'openrtx/src/core/audio_path.cpp',
-#                'openrtx/src/core/data_conversion.c',
+#              'openrtx/src/core/data_conversion.c',
                'openrtx/src/core/memory_profiling.cpp',
                'openrtx/src/core/voicePrompts.c',
                'openrtx/src/core/voicePromptUtils.c',
@@ -58,7 +58,7 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/nvmem_access.c',
                'openrtx/src/rtx/rtx.cpp',
                'openrtx/src/rtx/OpMode_FM.cpp',
-#               'openrtx/src/rtx/OpMode_M17.cpp',
+               'openrtx/src/rtx/OpMode_M17.cpp',
                'openrtx/src/protocols/M17/M17DSP.cpp',
                'openrtx/src/protocols/M17/M17Golay.cpp',
                'openrtx/src/protocols/M17/M17Callsign.cpp',
@@ -120,6 +120,10 @@ openrtx_inc += ['lib/minmea/include']
 
 # QDEC, a very simple, header only, quadrature decoding library
 openrtx_inc += ['lib/qdec/include']
+
+# A more minimal printf implementation
+openrtx_src += ['lib/printf/printf.c']
+openrtx_inc += ['lib/printf']
 
 # CODEC2, open source speech codec, compile from source on embedded
 codec2_proj = subproject('codec2')
@@ -300,6 +304,10 @@ gd32f330_src = [
                 'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_gpio.c',
                 'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_usart.c',
                 'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_spi.c',
+                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_rtc.c',
+                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_adc.c',
+                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_pmu.c',
+                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_dma.c',
                 'platform/mcu/GD32F330/drivers/gpio.c',
                 'platform/mcu/GD32F330/drivers/delays.cpp',
                 'platform/mcu/GD32F330/drivers/USART0.cpp',
@@ -520,19 +528,23 @@ rt890_def += openrtx_def + at32f421_def + miosix_cm4_def
 ## Talkpod A36Plus
 ##
 
-a36plus_src = ['platform/targets/A36Plus/platform.c',
+a36plus_src = ['platform/drivers/baseband/bk4819.c',
+              'platform/targets/A36Plus/platform.c',
              'platform/drivers/display/ST7735S_a36plus.c',
              'platform/drivers/keyboard/keyboard_a36plus.c',
              'platform/drivers/audio/audio_A36Plus.c',
              'platform/drivers/stubs/cps_io_stub.c',
-             'platform/drivers/stubs/nvmem_stub.c',
-             'platform/drivers/baseband/bk4819.c',
+             'platform/drivers/NVM/W25Qx.c',
+             'platform/drivers/NVM/nvmem_A36Plus.c',
+             'platform/drivers/NVM/spiFlash_A36plus.c',
+             'platform/drivers/ADC/ADC0_A36plus.c',
              'platform/drivers/baseband/bk1080.c',
+             'openrtx/src/rtx/OpMode_WFM.cpp',
              'platform/drivers/backlight/backlight_A36Plus.c',
              'platform/drivers/baseband/radio_A36Plus.cpp']
 
-a36plus_inc = ['platform/targets/A36Plus',
-               'platform/drivers/baseband']
+a36plus_inc = ['platform/drivers/baseband',
+               'platform/targets/A36Plus']
 
 a36plus_def = {'PLATFORM_A36PLUS': ''}
 
@@ -753,7 +765,7 @@ rt890_opts = {
 a36plus_opts = {
   'sources'            : a36plus_src,
   'include_directories': a36plus_inc,
-  'dependencies'       : [],
+  'dependencies'       : [codec2_dep],
   'c_args'             : a36plus_args,
   'cpp_args'           : a36plus_args,
   'link_args'          : ['-Wl,-T../platform/mcu/GD32F330/linker_script.ld',
@@ -868,6 +880,7 @@ gd77_loader = find_program('scripts/gd-77_firmware_loader.py', required:false, d
 dfu_util    = find_program('dfu-util',                         required:false, disabler:true)
 west        = find_program('west',                             required:false, disabler:true)
 uf2conv     = find_program('scripts/uf2conv.py',               required:false, disabler:true)
+encrypt	    = find_program('a36plus_encrypt',		               required:false, disabler:true)
 
 foreach t : targets
 
