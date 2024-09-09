@@ -72,6 +72,7 @@ static void _loadBandCalData(uint32_t baseAddr, bandCalData_t *cal)
 }
 
 // A function that dumps a portion of external flash to UART
+#if 0
 void nvm_dumpFlash()
 {
     W25Qx_wakeup();
@@ -92,6 +93,7 @@ void nvm_dumpFlash()
 
     //W25Qx_sleep();
 }
+#endif
 
 void nvm_init()
 {
@@ -234,15 +236,12 @@ int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
     // Create datablock of settings and vfoData
     dataBlock_t dataBlock;
     dataBlock.crc = 0x6969;
-    //usart0_IRQwrite("Writing Settings and VFO to flash\r\n");
     memcpy(&dataBlock.settings, settings, sizeof(settings_t));
     memcpy(&dataBlock.vfoData, vfo, sizeof(channel_t));
     // Write dataBlock to the external flash: write sizeof(dataBlock)
     if(W25Qx_writeData(baseAddress, &dataBlock, sizeof(dataBlock_t)) < 0)
     {
-        //usart0_IRQwrite("Error writing to flash\r\n");
         return -1;
     }
-    //nvm_dumpFlash();
     return 0;
 }
