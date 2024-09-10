@@ -86,7 +86,6 @@ uint16_t ReadRegister(unsigned char reg)
 
     delayUs(1);
     BK4819_SCN_HIGH;
-    delayUs(1);
     return data;
 }
 
@@ -322,17 +321,7 @@ void bk4819_set_Squelch(uint8_t RTSO,
 int16_t bk4819_get_rssi(void)
 {
     // uint8_t tryCounter = 0;
-    while ((ReadRegister(0x63) & 0xFF) >= 255) {
-        // if(tryCounter++ > 10) {
-        //      //usart0_IRQwrite("u\r\n");
-        //      bk4819_init();
-        //      delayMs(5);
-        //      bk4819_rx_on();
-        //      return -133;
-        // }
-        delayUs(100);
-    }
-    sleepFor(0, 3);
+    delayMs(2);
     return ((ReadRegister(0x67) & 0x01FF) / 2) - 160;
 }
 

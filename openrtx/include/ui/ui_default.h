@@ -49,6 +49,7 @@ enum uiScreen
     MENU_BANK,
     MENU_CHANNEL,
     MENU_CONTACTS,
+    MENU_SPECTRUM,
     MENU_GPS,
     MENU_SETTINGS,
     MENU_BACKUP_RESTORE,
@@ -56,7 +57,6 @@ enum uiScreen
     MENU_RESTORE,
     MENU_INFO,
     MENU_ABOUT,
-    MENU_SPECTRUM,
     MENU_SPECTRUM_SETTINGS,
     SETTINGS_TIMEDATE,
     SETTINGS_TIMEDATE_SET,
@@ -82,13 +82,13 @@ enum menuItems
     M_BANK = 0,
     M_CHANNEL,
     M_CONTACTS,
+    M_SPECTRUM,
 #ifdef CONFIG_GPS
     M_GPS,
 #endif
     M_SETTINGS,
     M_INFO,
     M_ABOUT,
-    M_SPECTRUM,
 };
 
 enum settingsItems
