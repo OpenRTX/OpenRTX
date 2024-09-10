@@ -758,10 +758,9 @@ void _ui_drawMenuSpectrum(ui_state_t* ui_state)
         for (int i = 0; i < NUMBER_BARS; i++)
         {
             uint8_t height = state.spectrum_data[i];
-            gfx_drawRect((point_t){91-height,i*CONFIG_SCREEN_HEIGHT/NUMBER_BARS}, (height*90)/100, (CONFIG_SCREEN_HEIGHT/NUMBER_BARS),
-                        spectrum_getColorFromLevel((height*4)/3), true);
+            gfx_drawRect((point_t){91-height,i*CONFIG_SCREEN_HEIGHT/NUMBER_BARS}, ((height-20)/50) * height + height, (CONFIG_SCREEN_HEIGHT/NUMBER_BARS),
+                        spectrum_getColorFromLevel(((height-20)/50) * height + height), true);
         }
-        // End frequency is start frequency + 128 * step frequency
         char freq_str[16];
         // Print small text at the peak of the spectrum with the peak frequency,
         // but only if the peak is between indices 8 and 56
@@ -812,7 +811,7 @@ void _ui_drawMenuSpectrum(ui_state_t* ui_state)
             state.spectrum_peakFreq = last_state.spectrum_startFreq + i * spectrumStep;
             state.spectrum_peakIndex = i;
         }
-        bar_color = spectrum_getColorFromLevel((height*4)/3);
+        bar_color = spectrum_getColorFromLevel(((height-20)/50) * height + height);
         // Draw a new line on the waterfall
         gfx_setPixel((point_t){(133-state.spectrum_currentWFLine), rect_pos}, bar_color);
         gfx_setPixel((point_t){(133-state.spectrum_currentWFLine), rect_pos+1}, bar_color);
@@ -840,7 +839,7 @@ color_t spectrum_getColorFromLevel(uint16_t Level) {
                 R = 255;
                 G = 255;
                 B = 255;
-            } else if (Level <= 70) {
+            } else if (Level <= 50) {
                 Level = (Level * 100) / 70;
                 R = 0; // Blue_R + ((Green_R - Blue_R) * Level / 100);
                 G = Blue_G + ((Green_G - Blue_G) * Level / 100);

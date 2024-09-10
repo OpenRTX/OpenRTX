@@ -64,7 +64,7 @@ typedef struct
     uint8_t    step_index;
     uint32_t   spectrum_startFreq; // Start frequency for spectrum display, in 10Hz units
     uint32_t   spectrum_peakFreq;  // Current peak frequency for spectrum display, in 10Hz units
-    uint32_t   spectrum_peakRssi; // Current peak RSSI for spectrum display
+    int16_t   spectrum_peakRssi; // Current peak RSSI for spectrum display
     uint8_t    spectrum_peakIndex; // Current peak index for spectrum display
     uint8_t    spectrum_currentPart; // Current quadrant for spectrum display
     uint8_t    spectrum_currentWFLine; // Current line for waterfall display
