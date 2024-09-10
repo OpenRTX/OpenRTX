@@ -1451,6 +1451,10 @@ void ui_updateFSM(bool *sync_rtx)
         }
         else
         {
+            if(macro_menu)
+            {
+                gfx_clearScreen();
+            }
             macro_menu = false;
         }
 #if defined(PLATFORM_TTWRPLUS)
