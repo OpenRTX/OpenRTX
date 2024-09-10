@@ -539,7 +539,7 @@ a36plus_src = ['platform/drivers/baseband/bk4819.c',
              'platform/drivers/NVM/spiFlash_A36plus.c',
              'platform/drivers/ADC/ADC0_A36plus.c',
              'platform/drivers/baseband/bk1080.c',
-             'openrtx/src/rtx/OpMode_WFM.cpp',
+             #'openrtx/src/rtx/OpMode_WFM.cpp',
              'platform/drivers/backlight/backlight_A36Plus.c',
              'platform/drivers/baseband/radio_A36Plus.cpp']
 
