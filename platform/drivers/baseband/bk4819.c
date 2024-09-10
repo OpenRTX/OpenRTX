@@ -214,7 +214,7 @@ void bk4819_setTxPower(uint32_t power)
     switch (power)
     {
     case 1000:
-        reg = 0x70AA;
+        reg = 0x40A6;
         break;
     case 5000:
         reg = 0xA2AD;
@@ -321,7 +321,7 @@ void bk4819_set_Squelch(uint8_t RTSO,
 int16_t bk4819_get_rssi(void)
 {
     // uint8_t tryCounter = 0;
-    delayMs(2);
+    sleepFor(0,6);
     return ((ReadRegister(0x67) & 0x01FF) / 2) - 160;
 }
 
