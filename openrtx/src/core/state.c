@@ -109,7 +109,7 @@ void state_task()
     // Update radio state once every 100ms (or faster for spectrum)
     if(state.rtxStatus != RTX_SPECTRUM && (getTick() - lastUpdate) < 150)
         return;
-    if((getTick() - lastUpdate) < 15)
+    if((getTick() - lastUpdate) < 20)
         return;
 
     lastUpdate = getTick();
