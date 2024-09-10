@@ -25,6 +25,7 @@
 #include <hwconfig.h>
 #include <stddef.h>
 #include "gd32f3x0.h"
+#include <graphics.h>
 
 enum ST7735S_command
 {
@@ -88,8 +89,8 @@ enum ST7735S_command
 static inline void sendByte(uint8_t data)
 {
     // Use SPI1 peripheral
-    while (spi_i2s_flag_get(SPI1, SPI_FLAG_TBE) == RESET)
-        ;
+    // while (spi_i2s_flag_get(SPI1, SPI_FLAG_TBE) == RESET)
+    //     ;
     spi_i2s_data_transmit(SPI1, data);
     while (spi_i2s_flag_get(SPI1, SPI_FLAG_TRANS) != RESET)
         ;
@@ -146,14 +147,14 @@ void display_init(void)
 
     // Reset display controller
     gpio_setPin(LCD_RST);
-    delayMs(10);
+    delayMs(1);
     gpio_clearPin(LCD_RST);
-    delayMs(10);
+    delayMs(1);
     gpio_setPin(LCD_RST);
-    delayMs(10);
+    delayMs(1);
 
     sendCommand(ST7735S_CMD_SLPOUT);
-    delayMs(10);
+    delayMs(1);
 
     sendCommand(ST7735S_CMD_FRMCTR1);
     sendData(0x05);
@@ -267,6 +268,39 @@ void display_setWindow(uint16_t x, uint16_t y, uint16_t height, uint16_t width)
     sendShort(y + 28 + width - 1);
 
     sendCommand(ST7735S_CMD_RAMWR);
+}
+
+void display_defineScrollArea(uint16_t x, uint16_t x2)
+{
+
+	/* tfa: top fixed area: nr of line from top of the frame mem and display) */
+	uint16_t tfa = 160 - x2 + 1;
+	/* vsa: height of the vertical scrolling area in nr of line of the frame mem
+	   (not the display) from the vertical scrolling address. the first line appears
+	   immediately after the bottom most line of the top fixed area. */
+	uint16_t vsa = x2 - x + 1;
+	/* bfa: bottom fixed are in nr of lines from bottom of the frame memory and display */
+	uint16_t bfa = x + 1;
+
+	if (tfa + vsa + bfa < 162)
+		return;
+
+	/* reset mv */
+
+	//sendCommand(ST7735S_CMD_MADCTL);                
+	//sendShort(0xC8 & ~(1 << 5));
+
+	sendCommand(ST7735S_CMD_SCRLAR);
+
+	sendShort(tfa);
+	sendShort(vsa);
+	sendShort(bfa);
+}
+
+void display_scroll(uint8_t line)
+{
+	sendCommand(ST7735S_CMD_VSCSAD);
+	sendShort(line);
 }
 
 void display_clearWindow(uint16_t x, uint16_t y, uint16_t height, uint16_t width)

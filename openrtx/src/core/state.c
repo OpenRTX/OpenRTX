@@ -82,6 +82,8 @@ void state_init()
     state.step_index    = 4; // Default frequency step 12.5kHz
     state.spectrum_startFreq = 14655000; // Default start frequency for spectrum display
     state.spectrum_currentPart = 0;
+    state.spectrum_currentWFLine = 0;
+    state.spectrum_peakIndex = 32;
 
     // Force brightness field to be in range 0 - 100
     if(state.settings.brightness > 100 || state.settings.brightness == 0)
@@ -105,9 +107,9 @@ void state_terminate()
 void state_task()
 {
     // Update radio state once every 100ms (or faster for spectrum)
-    if(state.rtxStatus != RTX_SPECTRUM && (getTick() - lastUpdate) < 100)
+    if(state.rtxStatus != RTX_SPECTRUM && (getTick() - lastUpdate) < 150)
         return;
-    if((getTick() - lastUpdate) < 25)
+    if((getTick() - lastUpdate) < 15)
         return;
 
     lastUpdate = getTick();

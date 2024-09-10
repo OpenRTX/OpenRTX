@@ -1072,6 +1072,7 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
 
 static void _ui_menuUp(uint8_t menu_entries)
 {
+    gfx_clearScreen();
     if(ui_state.menu_selected > 0)
         ui_state.menu_selected -= 1;
     else
@@ -1081,6 +1082,7 @@ static void _ui_menuUp(uint8_t menu_entries)
 
 static void _ui_menuDown(uint8_t menu_entries)
 {
+    gfx_clearScreen();
     if(ui_state.menu_selected < menu_entries - 1)
         ui_state.menu_selected += 1;
     else
@@ -1097,6 +1099,7 @@ static void _ui_menuBack(uint8_t prev_state)
     else
     {
         // Return to previous menu
+        gfx_clearScreen();
         state.ui_screen = prev_state;
         // Reset menu selection
         ui_state.menu_selected = 0;
@@ -1413,6 +1416,11 @@ void ui_updateFSM(bool *sync_rtx)
         msg.value = event.payload;
         bool f1Handled = false;
         vpQueueFlags_t queueFlags = vp_getVoiceLevelQueueFlags();
+        #ifdef PLATFORM_A36PLUS
+        // If there is any key press, we need to clear the screen
+        if (msg.keys)
+            gfx_clearScreen();
+        #endif
         // If we get out of standby, we ignore the kdb event
         // unless is the MONI key for the MACRO functions
         if (_ui_exitStandby(now) && !(msg.keys & KEY_MONI))
@@ -1434,6 +1442,7 @@ void ui_updateFSM(bool *sync_rtx)
                 else if (moniPressed && macro_latched)
                 {
                     macro_latched = false;
+                    gfx_clearScreen();
                     vp_beep(BEEP_FUNCTION_LATCH_OFF, LONG_BEEP);
                 }
             }
@@ -1819,8 +1828,8 @@ void ui_updateFSM(bool *sync_rtx)
 #endif
 #ifdef PLATFORM_A36PLUS
                         case M_SPECTRUM:
-                            state.spectrum_startFreq = state.channel.rx_frequency/10;
-                            //display_defineScrollArea(116,160);
+                            state.spectrum_startFreq = (state.channel.rx_frequency/10) - 32 * freq_steps[state.step_index]/10;
+                            display_defineScrollArea(116,160);
                             state.ui_screen = MENU_SPECTRUM;
                             state.rtxStatus = RTX_SPECTRUM;
                             state.spectrum_currentPart = 0;
@@ -1935,13 +1944,13 @@ void ui_updateFSM(bool *sync_rtx)
                 if(msg.keys & KEY_ESC) {
                     state.rtxStatus = RTX_RX;
                     radio_enableRx();
-                    //display_init();
+                    display_init();
                     _ui_menuBack(MENU_TOP);
                 }
                 // Up and down keys change displayed frequency by 100KHz
                 if(msg.keys & KEY_UP)
                 {
-                    spectrum_changeFrequency(25000);
+                    spectrum_changeFrequency(freq_steps[state.step_index]*32/10);
                     // Enable corresponding filters
                     #ifndef PLATFORM_LINUX
                     radio_setRxFilters(state.spectrum_startFreq);
@@ -1950,7 +1959,7 @@ void ui_updateFSM(bool *sync_rtx)
                 }
                 if(msg.keys & KEY_DOWN)
                 {
-                    spectrum_changeFrequency(-25000);
+                    spectrum_changeFrequency(-freq_steps[state.step_index]*32/10);
                     // Enable corresponding filters
                     #ifndef PLATFORM_LINUX
                     radio_setRxFilters(state.spectrum_startFreq);
