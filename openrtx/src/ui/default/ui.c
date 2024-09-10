@@ -1837,6 +1837,8 @@ void ui_updateFSM(bool *sync_rtx)
                             state.ui_screen = MENU_SPECTRUM;
                             state.rtxStatus = RTX_SPECTRUM;
                             state.spectrum_currentPart = 0;
+                            // Fill the waterfall with blue, to make it less jarring
+                            gfx_drawRect((point_t){88, 0}, 44, 128, (color_t){0,0,255}, true);
                             break;
 #endif
                         case M_SETTINGS:
