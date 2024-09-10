@@ -754,6 +754,7 @@ void _ui_drawMenuSpectrum(ui_state_t* ui_state)
         state.spectrum_currentWFLine = (state.spectrum_currentWFLine + 1) % 44;
         display_scroll(state.spectrum_currentWFLine);
         gfx_clearWindow(0,0,128,116);
+
         // Draw all the bars in the spectrum
         for (int i = 0; i < NUMBER_BARS; i++)
         {
@@ -802,6 +803,7 @@ void _ui_drawMenuSpectrum(ui_state_t* ui_state)
         }
         int16_t rssi = bk4819_get_rssi();
         uint8_t height = (rssi + 160)/2;
+        height = height*exp((2*height-60)/80);
         // Don't draw, just store the values in a buffer
         state.spectrum_data[i] = height;
         // If the current value is higher than the last peak, update the peak
@@ -840,12 +842,12 @@ color_t spectrum_getColorFromLevel(uint16_t Level) {
                 G = 255;
                 B = 255;
             } else if (Level <= 50) {
-                Level = (Level * 100) / 70;
+                Level = (Level * 100) / 50;
                 R = 0; // Blue_R + ((Green_R - Blue_R) * Level / 100);
                 G = Blue_G + ((Green_G - Blue_G) * Level / 100);
                 B = Blue_B + ((Green_B - Blue_B) * Level / 100);
             } else {
-                Level = ((Level - 70) * 100) / 30;
+                Level = ((Level - 50) * 100) / 3;
                 R = Green_R + ((Red_R - Green_R) * Level / 100);
                 G = Green_G + ((Red_G - Green_G) * Level / 100);
                 B = 0; // Green_B + ((Red_B - Green_B) * Level / 100);
