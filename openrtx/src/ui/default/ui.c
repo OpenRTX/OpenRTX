@@ -1949,7 +1949,7 @@ void ui_updateFSM(bool *sync_rtx)
                 // Up and down keys change displayed frequency by 100KHz
                 if(msg.keys & KEY_UP)
                 {
-                    spectrum_changeFrequency(freq_steps[state.step_index]*32/10);
+                    spectrum_changeFrequency(freq_steps[state.step_index]/10*32);
                     // Enable corresponding filters
                     #ifndef PLATFORM_LINUX
                     radio_setRxFilters(state.spectrum_startFreq);
@@ -1958,7 +1958,7 @@ void ui_updateFSM(bool *sync_rtx)
                 }
                 if(msg.keys & KEY_DOWN)
                 {
-                    spectrum_changeFrequency(-freq_steps[state.step_index]*32/10);
+                    spectrum_changeFrequency(-(freq_steps[state.step_index]/10*32));
                     // Enable corresponding filters
                     #ifndef PLATFORM_LINUX
                     radio_setRxFilters(state.spectrum_startFreq);
