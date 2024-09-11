@@ -59,11 +59,32 @@ typedef int (*spi_transfer_impl)(const struct spiDevice *dev, const void *txBuf,
  */
 struct spiDevice
 {
-    const spi_transfer_impl transfer; ///< Device-specific implementation of the SPI transfer function
-    const void              *priv;    ///< Pointer to device driver private data
-    const pthread_mutex_t   *mutex;   ///< Pointer to mutex for exclusive access
+    spi_transfer_impl transfer; ///< Device-specific implementation of the SPI transfer function
+    const void        *priv;    ///< Pointer to device driver private data
+    pthread_mutex_t   *mutex;   ///< Pointer to mutex for exclusive access
 };
 
+/**
+ * Perform basic initialization of a generic SPI device.
+ *
+ * @param dev: pointer to peripheral descriptor.
+ */
+static inline void spi_init(const struct spiDevice *dev)
+{
+    if(dev->mutex != NULL)
+        pthread_mutex_init(dev->mutex, NULL);
+}
+
+/**
+ * Perform basic initialization of a generic SPI device.
+ *
+ * @param dev: pointer to peripheral descriptor.
+ */
+static inline void spi_terminate(const struct spiDevice *dev)
+{
+    if(dev->mutex != NULL)
+        pthread_mutex_destroy(dev->mutex);
+}
 
 /**
  * Acquire exclusive ownership on an SPI peripheral.
@@ -76,7 +97,7 @@ static inline int spi_acquire(const struct spiDevice *dev)
     if(dev->mutex == NULL)
         return 0;
 
-    return pthread_mutex_lock((pthread_mutex_t *) dev->mutex);
+    return pthread_mutex_lock(dev->mutex);
 }
 
 /**
@@ -90,7 +111,7 @@ static inline int spi_tryAcquire(const struct spiDevice *dev)
     if(dev->mutex == NULL)
         return 0;
 
-    return pthread_mutex_trylock((pthread_mutex_t *) dev->mutex);
+    return pthread_mutex_trylock(dev->mutex);
 }
 
 /**
@@ -104,7 +125,7 @@ static inline int spi_release(const struct spiDevice *dev)
     if(dev->mutex == NULL)
         return 0;
 
-    return pthread_mutex_unlock((pthread_mutex_t *) dev->mutex);
+    return pthread_mutex_unlock(dev->mutex);
 }
 
 /**
