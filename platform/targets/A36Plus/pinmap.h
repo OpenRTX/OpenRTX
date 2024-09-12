@@ -42,14 +42,14 @@
 #define PTT_SW GPIOA, 10
 
 // Keyboard and side keys
-#define KBD_ROW0 GPIOB, 3
-#define KBD_ROW1 GPIOB, 4
-#define KBD_ROW2 GPIOB, 5
-#define KBD_ROW3 GPIOB, 6
-#define KBD_COL0 GPIOB, 11
-#define KBD_COL1 GPIOB, 9
-#define KBD_COL2 GPIOB, 14
-#define KBD_COL3 GPIOB, 8
+#define KBD_K0 GPIOB, 3
+#define KBD_K1 GPIOB, 4
+#define KBD_K2 GPIOB, 5
+#define KBD_K3 GPIOB, 6
+#define KBD_DB3 GPIOB, 11
+#define KBD_DB2 GPIOB, 9
+#define KBD_DB1 GPIOB, 14
+#define KBD_DB0 GPIOB, 8
 #define SKB_1 GPIOB, 11
 #define SKB_2 GPIOF, 7
 
