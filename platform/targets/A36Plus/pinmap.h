@@ -32,8 +32,8 @@
 #define LCD_DC GPIOB, 10
 
 // LEDs
-#define GREEN_LED GPIOB, 1
-#define RED_LED GPIOF, 2
+#define GREEN_LED GPIOA, 14
+#define RED_LED GPIOA, 13
 
 // Analog inputs
 #define AIN_VBAT GPIOA, 1
@@ -50,8 +50,6 @@
 #define KBD_DB2 GPIOB, 9
 #define KBD_DB1 GPIOB, 14
 #define KBD_DB0 GPIOB, 8
-#define SKB_1 GPIOB, 11
-#define SKB_2 GPIOF, 7
 
 // External flash
 #define FLASH_SDI GPIOA, 7

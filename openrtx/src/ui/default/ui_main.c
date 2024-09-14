@@ -188,6 +188,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
 
 void _ui_drawFrequency()
 {
+    gfx_clearWindow(32, 0, 32, 160);
     freq_t freq = platform_getPttStatus() ? last_state.channel.tx_frequency
                                           : last_state.channel.rx_frequency;
 
@@ -266,6 +267,11 @@ void _ui_drawMainBottom()
     point_t meter_pos = { layout.horizontal_pad,
                           CONFIG_SCREEN_HEIGHT - meter_height - layout.bottom_pad};
     uint8_t mic_level = platform_getMicLevel();
+
+    // We want to cover the s-meter bar area,
+    // along the whole display width
+    gfx_clearWindow(10, 0, 16, 160);
+
     switch(last_state.channel.mode)
     {
         case OPMODE_FM:
@@ -313,9 +319,6 @@ void _ui_drawMainVFO(ui_state_t* ui_state)
     if((status.opMode != OPMODE_M17) || (status.lsfOk == false))
     #endif
     _ui_drawFrequency();
-    // We want to cover the s-meter bar area,
-    // along the whole display width
-    gfx_clearWindow(10, 0, 16, 160);
     _ui_drawMainBottom();
 }
 
@@ -329,7 +332,7 @@ void _ui_drawMainVFOInput(ui_state_t* ui_state)
 
 void _ui_drawMainMEM(ui_state_t* ui_state)
 {
-    gfx_clearScreen();
+    //gfx_clearScreen();
     _ui_drawMainTop(ui_state);
     _ui_drawModeInfo(ui_state);
 

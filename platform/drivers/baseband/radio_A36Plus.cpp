@@ -44,10 +44,6 @@ static const rtxStatus_t*
 
 static enum opstatus radioStatus;  // Current operating status
 
-// static HR_C6000& C6000  = HR_C6000::instance();  // HR_C5000 driver
-// static AT1846S& at1846s = AT1846S::instance();   // AT1846S driver
-
-
 /**
  * Calculate DCS parity and compose
  */
@@ -200,10 +196,6 @@ void radio_enableTx()
         usart0_IRQwrite("V3T\r\n");
     }else{
         bk4819_gpio_pin_set(4, true);
-        // gpio_setPin(RFV3T_EN);
-        // Check if it was set
-        if (ReadRegister(0x0A) & 0x10)
-            usart0_IRQwrite("U3T\r\n");
     }
 
     bk4819_tx_on();
