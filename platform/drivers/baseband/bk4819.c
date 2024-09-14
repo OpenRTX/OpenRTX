@@ -43,11 +43,11 @@ static void spi_write_byte(uint8_t data)
             BK4819_SDA_HIGH;
         else
             BK4819_SDA_LOW;
-        // delayUs(1);
+        // delayUs(10);
         BK4819_SCK_HIGH;
-        delayUs(1);
+        delayUs(10);
         BK4819_SCK_LOW;
-        delayUs(1);
+        delayUs(10);
         data <<= 1;
     }
 }
@@ -67,9 +67,9 @@ static uint16_t spi_read_half_word(void)
     {
         data <<= 1;
         BK4819_SCK_LOW;
-        delayUs(1);
+        delayUs(10);
         BK4819_SCK_HIGH;
-        delayUs(1);
+        delayUs(10);
         data |= BK4819_SDA_READ;
     }
     return data;
@@ -79,12 +79,12 @@ uint16_t ReadRegister(unsigned char reg)
 {
     uint16_t data;
     BK4819_SCN_LOW;
-    delayUs(1);
+    delayUs(10);
 
     spi_write_byte(reg | BK4819_REG_READ);
     data = spi_read_half_word();
 
-    delayUs(1);
+    delayUs(10);
     BK4819_SCN_HIGH;
     return data;
 }
@@ -92,12 +92,12 @@ uint16_t ReadRegister(unsigned char reg)
 static void WriteRegister(bk4819_reg_t reg, uint16_t data)
 {
     BK4819_SCN_LOW;
-    delayUs(1);
+    delayUs(10);
 
     spi_write_byte(reg | BK4819_REG_WRITE);
     spi_write_half_word(data);
 
-    delayUs(1);
+    delayUs(10);
     BK4819_SCN_HIGH;
 }
 
@@ -217,7 +217,7 @@ void bk4819_setTxPower(uint32_t power)
         reg = 0x40A6;
         break;
     case 5000:
-        reg = 0xA2AD;
+        reg = 0x9FAD;
         break;
     case 10000:
         reg = 0xFFBF;
@@ -320,9 +320,19 @@ void bk4819_set_Squelch(uint8_t RTSO,
 
 int16_t bk4819_get_rssi(void)
 {
-    // uint8_t tryCounter = 0;
+    // while ((ReadRegister(0x63) & 0b11111111) >= 255) {
+    //     usart0_IRQwrite("glitch\r\n");
+    //     delayMs(10);
+    // }
     sleepFor(0,6);
     return ((ReadRegister(0x67) & 0x01FF) / 2) - 160;
+    //sleepFor(0,2);
+}
+
+uint16_t bk4819_get_mic_level(void)
+{
+    // bits 6:0 of AF TX/RX Input Amplitude
+    return (ReadRegister(0x6f) & 0x7f) * 2;
 }
 
 void bk4819_enable_freq_scan(uint8_t scna_time){
