@@ -533,7 +533,7 @@ a36plus_src = ['platform/drivers/baseband/bk4819.c',
              'platform/drivers/display/ST7735S_a36plus.c',
              'platform/drivers/keyboard/keyboard_a36plus.c',
              'platform/drivers/audio/audio_A36Plus.c',
-             'platform/drivers/stubs/cps_io_stub.c',
+             'platform/drivers/CPS/cps_io_native_A36plus.c',
              'platform/drivers/NVM/W25Qx.c',
              'platform/drivers/NVM/nvmem_A36Plus.c',
              'platform/drivers/NVM/spiFlash_A36plus.c',
@@ -880,7 +880,7 @@ gd77_loader = find_program('scripts/gd-77_firmware_loader.py', required:false, d
 dfu_util    = find_program('dfu-util',                         required:false, disabler:true)
 west        = find_program('west',                             required:false, disabler:true)
 uf2conv     = find_program('scripts/uf2conv.py',               required:false, disabler:true)
-encrypt	    = find_program('a36plus_encrypt',		               required:false, disabler:true)
+rtxflash    = find_program('rtxflash',      		               required:false, disabler:true)
 
 foreach t : targets
 
