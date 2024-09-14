@@ -332,7 +332,7 @@ static void _ui_calculateLayout(layout_t *layout)
     static const fontSize_t   top_font = FONT_SIZE_8PT;
     static const symbolSize_t top_symbol_size = SYMBOLS_SIZE_8PT;
     // Text line font: 8 pt
-    static const fontSize_t line1_font = FONT_SIZE_8PT;
+    static const fontSize_t line1_font = FONT_SIZE_6PT;
     static const symbolSize_t line1_symbol_size = SYMBOLS_SIZE_8PT;
     static const fontSize_t line2_font = FONT_SIZE_8PT;
     static const symbolSize_t line2_symbol_size = SYMBOLS_SIZE_8PT;
@@ -1435,6 +1435,9 @@ void ui_updateFSM(bool *sync_rtx)
                 // long press moni on its own latches function.
                 if (moniPressed && msg.long_press && !macro_latched)
                 {
+                    #ifdef CONFIG_GFX_NOFRAMEBUF
+                    gfx_clearScreen();
+                    #endif
                     macro_latched = true;
                     vp_beep(BEEP_FUNCTION_LATCH_ON, LONG_BEEP);
                 }
@@ -1791,14 +1794,36 @@ void ui_updateFSM(bool *sync_rtx)
                     }
                     else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
                     {
+                        #ifdef PLATFORM_A36PLUS
+                        // If a channel is empty, skip it
+                        while(cps_readChannel(&state.channel, state.channel_index + 1) == -1)
+                        {
+                            state.channel_index++;
+                            if(state.channel_index >= 512)
+                                state.channel_index = 0;
+                        }
                         _ui_fsm_loadChannel(state.channel_index + 1, sync_rtx);
+                        #else
+                        _ui_fsm_loadChannel(state.channel_index + 1, sync_rtx);
+                        #endif
                         vp_announceChannelName(&state.channel,
                                                state.channel_index+1,
                                                queueFlags);
                     }
                     else if(msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
                     {
+                        #ifdef PLATFORM_A36PLUS
+                        // If a channel is empty, skip it
+                        while(cps_readChannel(&state.channel, state.channel_index - 1) == -1)
+                        {
+                            state.channel_index--;
+                            if(state.channel_index <= 0)
+                                state.channel_index = 512;
+                        }
                         _ui_fsm_loadChannel(state.channel_index - 1, sync_rtx);
+                        #else
+                        _ui_fsm_loadChannel(state.channel_index - 1, sync_rtx);
+                        #endif
                         vp_announceChannelName(&state.channel,
                                                state.channel_index+1,
                                                queueFlags);
@@ -1815,6 +1840,11 @@ void ui_updateFSM(bool *sync_rtx)
                 {
                     switch(ui_state.menu_selected)
                     {
+                        #ifdef PLATFORM_A36PLUS
+                        case M_CHANNEL:
+                            state.ui_screen = MENU_CHANNEL;
+                            break;
+                        #else
                         case M_BANK:
                             state.ui_screen = MENU_BANK;
                             break;
@@ -1824,6 +1854,7 @@ void ui_updateFSM(bool *sync_rtx)
                         case M_CONTACTS:
                             state.ui_screen = MENU_CONTACTS;
                             break;
+                        #endif
 #ifdef CONFIG_GPS
                         case M_GPS:
                             state.ui_screen = MENU_GPS;
@@ -2581,7 +2612,13 @@ bool ui_updateGUI()
             break;
         // MEM main screen
         case MAIN_MEM:
+            #ifdef PLATFORM_A36PLUS
+            if(!macro_menu)
             _ui_drawMainMEM(&ui_state);
+                _ui_drawMainBottom();
+            #else
+                _ui_drawMainMEM(&ui_state);
+            #endif
             break;
         // Top menu screen
         case MENU_TOP:
