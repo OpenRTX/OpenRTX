@@ -330,7 +330,7 @@ linux_mod17_def = linux_def + {'CONFIG_SCREEN_WIDTH': '128', 'CONFIG_SCREEN_HEIG
 
 linux_c_args   = ['-ffunction-sections', '-fdata-sections', '-DPLATFORM_LINUX']
 linux_cpp_args = ['-ffunction-sections', '-fdata-sections', '-std=c++14', '-DPLATFORM_LINUX']
-linux_l_args   = ['-lm', '-lreadline', '-lpulse-simple', '-Wl,--gc-sections', '-Wl,-Map,main.map']
+linux_l_args   = ['-lm', '-lreadline', '-Wl,--gc-sections', '-Wl,-Map,main.map']
 
 # Add AddressSanitizer if required
 if get_option('asan')
