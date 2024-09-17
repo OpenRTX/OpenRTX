@@ -286,7 +286,6 @@ linux_def = {'PLATFORM_LINUX': '', 'VP_USE_FILESYSTEM':''}
 
 sdl_dep     = dependency('SDL2',     required: false)
 threads_dep = dependency('threads',  required: false)
-pulse_dep   = dependency('libpulse', required: false)
 linux_src  += openrtx_src
 linux_inc  += openrtx_inc
 linux_def  += openrtx_def
@@ -309,7 +308,7 @@ linux_mod17_def = linux_def + {'CONFIG_SCREEN_WIDTH': '128', 'CONFIG_SCREEN_HEIG
 
 linux_c_args   = ['-ffunction-sections', '-fdata-sections']
 linux_cpp_args = ['-ffunction-sections', '-fdata-sections', '-std=c++14']
-linux_l_args   = ['-lm', '-lreadline', '-lpulse-simple', '-Wl,--gc-sections']
+linux_l_args   = ['-lm', '-lreadline', '-Wl,--gc-sections']
 
 # Add AddressSanitizer if required
 if get_option('asan')
@@ -530,7 +529,7 @@ endforeach
 linux_opts = {
   'sources'            : linux_default_src,
   'include_directories': linux_inc,
-  'dependencies'       : [sdl_dep, threads_dep, pulse_dep, codec2_dep],
+  'dependencies'       : [sdl_dep, threads_dep, codec2_dep],
   'c_args'             : linux_c_args,
   'cpp_args'           : linux_cpp_args,
   'link_args'          : linux_l_args
@@ -539,7 +538,7 @@ linux_opts = {
 linux_small_opts = {
     'sources'            : linux_default_src,
     'include_directories': linux_inc,
-    'dependencies'       : [sdl_dep, threads_dep, pulse_dep, codec2_dep],
+    'dependencies'       : [sdl_dep, threads_dep, codec2_dep],
     'c_args'             : linux_small_c_args,
     'cpp_args'           : linux_small_cpp_args,
     'link_args'          : linux_l_args
@@ -548,7 +547,7 @@ linux_small_opts = {
 linux_mod17_opts = {
     'sources'            : linux_mod17_src,
     'include_directories': linux_inc,
-    'dependencies'       : [sdl_dep, threads_dep, pulse_dep, codec2_dep],
+    'dependencies'       : [sdl_dep, threads_dep, codec2_dep],
     'c_args'             : linux_mod17_c_args,
     'cpp_args'           : linux_mod17_cpp_args,
     'link_args'          : linux_l_args
@@ -849,7 +848,7 @@ endforeach
 unit_test_opts = {'c_args'             : linux_c_args,
                   'cpp_args'           : linux_cpp_args,
                   'include_directories': linux_inc,
-                  'dependencies'       : [sdl_dep, threads_dep, pulse_dep, codec2_dep],
+                  'dependencies'       : [sdl_dep, threads_dep, codec2_dep],
                   'link_args'          : linux_l_args}
 
 unit_test_src = linux_src + ui_src_default
