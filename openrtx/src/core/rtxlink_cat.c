@@ -20,7 +20,12 @@
 
 #define __LINUX_ERRNO_EXTENSIONS__
 
+#include <stdio.h>
+#include <arpa/inet.h>
+
 #include <interfaces/platform.h>
+#include <interfaces/radio.h>
+#include <graphics.h>
 #include <rtxlink_cat.h>
 #include <stdbool.h>
 #include <rtxlink.h>
@@ -39,8 +44,10 @@ enum catFrameType
     CAT_FRAME_DATA = 0x44,
 };
 
+extern pthread_mutex_t rtx_mutex;
 
-static size_t catCommandGet(const uint8_t *args, const size_t len, uint8_t *reply)
+static size_t catCommandGet(const uint8_t *args, const size_t len,
+                            uint8_t *reply)
 {
     (void) len;
 
@@ -87,9 +94,11 @@ static size_t catCommandGet(const uint8_t *args, const size_t len, uint8_t *repl
     return ret;
 }
 
-static size_t catCommandSet(const uint8_t *args, const size_t len, uint8_t *reply)
+static size_t catCommandSet(const uint8_t *args, const size_t len,
+                            uint8_t *reply)
 {
     (void) len;
+    rtxStatus_t status;
 
     uint16_t id = (args[0] << 8) | args[1];
     reply[0] = CAT_FRAME_ACK;
@@ -98,6 +107,27 @@ static size_t catCommandSet(const uint8_t *args, const size_t len, uint8_t *repl
     switch(id)
     {
         case 0x5246:    // Receive frequency
+
+            /* XXX this does not work as expected */
+
+            /* This updates the display properly with the new frequency */
+            pthread_mutex_lock(&state_mutex);
+            state.channel.rx_frequency = *(uint32_t *)&args[2];
+            pthread_mutex_unlock(&state_mutex);
+
+            /*
+             * This is supposed to change the configuration, but it does not,
+             * subsequent calls to get the frequency return 0 or -1.
+             */
+            status = rtx_getCurrentStatus();
+
+            /* XXX is this lock really needed here? */
+            pthread_mutex_lock(&rtx_mutex);
+            status.rxFrequency = *(uint32_t *)&args[2];
+            pthread_mutex_unlock(&rtx_mutex);
+            rtx_configure(&status);
+            break;
+
         case 0x5446:    // Transmit frequency
         case 0x5043:    // Power cycle
 
