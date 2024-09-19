@@ -25,6 +25,9 @@
 #include <OpMode_FM.hpp>
 #include <OpMode_M17.hpp>
 #include <state.h>
+#ifdef PLATFORM_A36PLUS
+#include <platform/drivers/baseband/bk4819.h>
+#endif
 
 extern state_t state;
 static pthread_mutex_t   *cfgMutex;     // Mutex for incoming config messages
@@ -129,6 +132,60 @@ void rtx_task()
 
         pthread_mutex_unlock(cfgMutex);
     }
+
+        /* Spectrum update block, run when in SPECTRUM mode.
+    *
+    * The spectrum mode is a special mode where the radio is in RX mode but
+    * the audio path is disabled. This allows to display the RSSI level of the
+    * received signals across a frequency range in a waterfall-like display.
+    * 
+    * This block writes the received RSSI levels to the spectrum buffer.
+    */
+    #ifdef PLATFORM_A36PLUS
+    if(state.rtxStatus == RTX_SPECTRUM)
+    {
+        //state.spectrum_peakRssi = -160;
+        #define SPECTRUM_WF_LINES 64 // must match NUMBER_BARS in ui_menu.c!
+        uint32_t spectrumStep = freq_steps[state.settings.spectrum_step]/10;
+        // Get the current RSSI level
+
+        uint8_t peakIndex;
+        // Write the RSSI level to the spectrum buffer
+        for (int i = 0; i < SPECTRUM_WF_LINES; i++)
+        {
+            bk4819_set_freq((state.spectrum_startFreq + i * spectrumStep));
+            rssi = radio_getRssi();
+            uint8_t height = (rssi + 160) / 2;
+            state.spectrum_data[i] = height;
+            // set peak value
+            if(rssi > state.spectrum_peakRssi)
+            {
+                state.spectrum_peakRssi = rssi;
+                state.spectrum_peakFreq = state.spectrum_startFreq + i * spectrumStep;
+                state.spectrum_peakIndex = i;
+            }
+            // stop scanning if the rssi is greater than the current squelch rssi,
+            // and listen to that frequency
+            if(radio_getRssi() > (-127 + (state.settings.sqlLevel * 66) / 15))
+            {
+                // turn the speaker on
+                radio_enableAfOutput();
+                while(radio_getRssi() > (-127 + (state.settings.sqlLevel * 66) / 15))
+                {
+                    // wait for the squelch to close
+                    uint8_t height = (rssi + 160) / 2;
+                    state.spectrum_data[i] = height;
+                    // give the UI a chance to refresh
+                    state.spectrum_shouldRefresh = true;
+                }
+                // turn the speaker off
+                radio_disableAfOutput();
+            }
+        }
+        state.spectrum_shouldRefresh = true;
+        //state.spectrum_peakIndex = peakIndex;
+    }
+    #endif
 
     if(reconfigure)
     {
