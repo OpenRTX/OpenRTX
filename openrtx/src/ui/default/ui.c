@@ -126,11 +126,13 @@ extern void _ui_reset_menu_anouncement_tracking();
 
 const char *menu_items[] =
 {
+#ifdef PLATFORM_A36PLUS
+    "Channels",
+    "Spectrum",
+#else
     "Banks",
     "Channels",
     "Contacts",
-#ifdef PLATFORM_A36PLUS
-    "Spectrum",
 #endif
 #ifdef CONFIG_GPS
     "GPS",
@@ -150,6 +152,9 @@ const char *settings_items[] =
     "GPS",
 #endif
     "Radio",
+#ifdef PLATFORM_A36PLUS
+    "Spectrum",
+#endif
     "M17",
     "Accessibility",
     "Default Settings"
@@ -181,6 +186,14 @@ const char *settings_radio_items[] =
     "Direction",
     "Step",
 };
+
+#ifdef PLATFORM_A36PLUS
+const char *settings_spectrum_items[] =
+{
+    "Color Multiplier",
+    "Step",
+};
+#endif
 
 const char * settings_m17_items[] =
 {
@@ -273,6 +286,9 @@ const uint8_t display_num = sizeof(display_items)/sizeof(display_items[0]);
 const uint8_t settings_gps_num = sizeof(settings_gps_items)/sizeof(settings_gps_items[0]);
 #endif
 const uint8_t settings_radio_num = sizeof(settings_radio_items)/sizeof(settings_radio_items[0]);
+#ifdef PLATFORM_A36PLUS
+const uint8_t settings_spectrum_num = sizeof(settings_spectrum_items)/sizeof(settings_spectrum_items[0]);
+#endif
 const uint8_t settings_m17_num = sizeof(settings_m17_items)/sizeof(settings_m17_items[0]);
 const uint8_t settings_accessibility_num = sizeof(settings_accessibility_items)/sizeof(settings_accessibility_items[0]);
 const uint8_t backup_restore_num = sizeof(backup_restore_items)/sizeof(backup_restore_items[0]);
@@ -1862,13 +1878,13 @@ void ui_updateFSM(bool *sync_rtx)
 #endif
 #ifdef PLATFORM_A36PLUS
                         case M_SPECTRUM:
-                            state.spectrum_startFreq = (state.channel.rx_frequency/10) - 32 * freq_steps[state.step_index]/10;
-                            display_defineScrollArea(116,160);
+                            state.spectrum_startFreq = (state.channel.rx_frequency/10) - 32 * freq_steps[state.settings.spectrum_step]/10;
+                            display_defineScrollArea(119,160);
                             state.ui_screen = MENU_SPECTRUM;
                             state.rtxStatus = RTX_SPECTRUM;
                             state.spectrum_currentPart = 0;
                             // Fill the waterfall with blue, to make it less jarring
-                            gfx_drawRect((point_t){88, 0}, 44, 128, (color_t){0,0,255}, true);
+                            gfx_drawRect((point_t){92, 0}, 44, 128, (color_t){0,0,255}, true);
                             break;
 #endif
                         case M_SETTINGS:
@@ -1977,16 +1993,22 @@ void ui_updateFSM(bool *sync_rtx)
 #ifdef PLATFORM_A36PLUS
             // Spectrum menu screen
             case MENU_SPECTRUM:
+            // Go to the Spectrum Settings if we press ENTER
+                if(msg.keys & KEY_ENTER)
+                {
+                    display_init();
+                    state.rtxStatus = RTX_RX;
+                    state.ui_screen = SETTINGS_SPECTRUM;
+                }
                 if(msg.keys & KEY_ESC) {
                     state.rtxStatus = RTX_RX;
                     radio_enableRx();
                     display_init();
                     _ui_menuBack(MENU_TOP);
                 }
-                // Up and down keys change displayed frequency by 100KHz
                 if(msg.keys & KEY_UP)
                 {
-                    spectrum_changeFrequency(freq_steps[state.step_index]/10*32);
+                    spectrum_changeFrequency(freq_steps[state.settings.spectrum_step]/10*32);
                     // Enable corresponding filters
                     #ifndef PLATFORM_LINUX
                     radio_setRxFilters(state.spectrum_startFreq);
@@ -1995,7 +2017,7 @@ void ui_updateFSM(bool *sync_rtx)
                 }
                 if(msg.keys & KEY_DOWN)
                 {
-                    spectrum_changeFrequency(-(freq_steps[state.step_index]/10*32));
+                    spectrum_changeFrequency(-(freq_steps[state.settings.spectrum_step]/10*32));
                     // Enable corresponding filters
                     #ifndef PLATFORM_LINUX
                     radio_setRxFilters(state.spectrum_startFreq);
@@ -2031,6 +2053,11 @@ void ui_updateFSM(bool *sync_rtx)
                         case S_RADIO:
                             state.ui_screen = SETTINGS_RADIO;
                             break;
+#ifdef PLATFORM_A36PLUS
+                        case S_SPECTRUM:
+                            state.ui_screen = SETTINGS_SPECTRUM;
+                            break;                            
+#endif
                         case S_M17:
                             state.ui_screen = SETTINGS_M17;
                             break;
@@ -2210,6 +2237,53 @@ void ui_updateFSM(bool *sync_rtx)
                     ui_state.edit_mode = !ui_state.edit_mode;
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_SETTINGS);
+                break;
+            case SETTINGS_SPECTRUM:
+                if(msg.keys & KEY_LEFT || (ui_state.edit_mode &&
+                   (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)))
+                {
+                    switch(ui_state.menu_selected)
+                    {
+                        case SP_MULTIPLIER:
+                            if(state.settings.spectrum_multiplier > 0)
+                                state.settings.spectrum_multiplier -= 1;
+                            else
+                                state.settings.spectrum_multiplier = 4;       
+                            break;
+                        case SP_STEP:
+                            if(state.settings.spectrum_step > 0)
+                                state.settings.spectrum_step -= 1;
+                            else
+                                state.settings.spectrum_step = n_freq_steps - 1;
+                            break;
+                    }
+                }
+                else if(msg.keys & KEY_RIGHT || (ui_state.edit_mode &&
+                        (msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)))
+                {
+                    switch(ui_state.menu_selected)
+                    {
+                        case SP_MULTIPLIER:
+                            state.settings.spectrum_multiplier = (state.settings.spectrum_multiplier + 1) % 5;
+                            break;
+                        case SP_STEP:
+                            state.settings.spectrum_step += 1;
+                            state.settings.spectrum_step %= n_freq_steps;
+                            break;
+                    }
+                }
+                else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                    _ui_menuUp(display_num);
+                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                    _ui_menuDown(display_num);
+                else if(msg.keys & KEY_ENTER)
+                    ui_state.edit_mode = !ui_state.edit_mode;
+                else if(msg.keys & KEY_ESC) {
+                    state.rtxStatus = RTX_SPECTRUM;
+                    display_defineScrollArea(119,160);
+                    state.spectrum_currentPart = 0;
+                    _ui_menuBack(MENU_SPECTRUM);
+                }
                 break;
 #ifdef CONFIG_GPS
             case SETTINGS_GPS:
@@ -2614,7 +2688,7 @@ bool ui_updateGUI()
         case MAIN_MEM:
             #ifdef PLATFORM_A36PLUS
             if(!macro_menu)
-            _ui_drawMainMEM(&ui_state);
+                _ui_drawMainMEM(&ui_state);
                 _ui_drawMainBottom();
             #else
                 _ui_drawMainMEM(&ui_state);
@@ -2691,6 +2765,12 @@ bool ui_updateGUI()
             _ui_drawSettingsGPS(&ui_state);
             break;
 #endif
+#ifdef PLATFORM_A36PLUS
+        // Spectrum settings screen
+        case SETTINGS_SPECTRUM:
+            _ui_drawSettingsSpectrum(&ui_state);
+            break;
+#endif
        // M17 settings screen
         case SETTINGS_M17:
             _ui_drawSettingsM17(&ui_state);
@@ -2712,8 +2792,9 @@ bool ui_updateGUI()
             break;
     }
 
-    // If MACRO menu is active draw it
-    if(macro_menu)
+    // If MACRO menu is active draw it,
+    // but only in the main screens
+    if(macro_menu && (last_state.ui_screen <= 2)) // MAIN_VFO, MAIN_MEM, MENU_TOP
     {
         //_ui_drawDarkOverlay();
         _ui_drawMacroMenu(&ui_state);

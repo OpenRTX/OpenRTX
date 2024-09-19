@@ -341,6 +341,32 @@ int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
 }
 #endif
 
+int _ui_getSpectrumEntryName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= settings_spectrum_num) return -1;
+    sniprintf(buf, max_len, "%s", settings_spectrum_items[index]);
+    return 0;
+}
+
+int _ui_getSpectrumValueName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= settings_spectrum_num) return -1;
+    uint32_t value = 0;
+    switch(index)
+    {
+        case SP_MULTIPLIER:
+            value = last_state.settings.spectrum_multiplier + 1;
+            sniprintf(buf, max_len, "%d", value);
+            break;
+        case SP_STEP:
+            value = freq_steps[last_state.settings.spectrum_step];
+            sniprintf(buf, max_len, "%u.%uKHz", (unsigned int)(value / 1000),
+                                                 (unsigned int)(value % 1000));
+            break;
+    }
+    return 0;
+}
+
 int _ui_getRadioEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= settings_radio_num) return -1;
@@ -404,7 +430,7 @@ int _ui_getRadioValueName(char *buf, uint8_t max_len, uint8_t index)
     // sniprintf.
     char str[16];
     sniprintf(str, sizeof(str), "%u.%u", (unsigned int)(value / div),
-                                        (unsigned int)(value % div));
+                                         (unsigned int)(value % div));
     stripTrailingZeroes(str);
     sniprintf(buf, max_len, "%s%cHz", str, prefix);
 
@@ -739,33 +765,24 @@ void _ui_drawMenuGPS()
 void _ui_drawMenuSpectrum(ui_state_t* ui_state)
 {   
     color_t bar_color = (color_t){255, 255, 255};
-    uint32_t spectrumStep = freq_steps[state.step_index]/10;
+    uint32_t spectrumStep = freq_steps[state.settings.spectrum_step]/10;
+    char freq_str[16];
     #define NUMBER_BARS 64
-    #define NUMBER_DIVS 8
-    state.rtxStatus = RTX_SPECTRUM;
+    #define NUMBER_DIVS 2
     // If there's a mismatch between the current and last state, reset everything
     if(last_state.spectrum_startFreq != state.spectrum_startFreq)
     {
         state.spectrum_currentPart = 0;
+    //    state.spectrum_currentWFLine = 0;
         return;
     }
-    if(state.spectrum_currentPart == 0)
+    if(state.spectrum_shouldRefresh)
     {
-        state.spectrum_currentWFLine = (state.spectrum_currentWFLine + 1) % 44;
-        display_scroll(state.spectrum_currentWFLine);
         gfx_clearWindow(0,0,128,116);
-
-        // Draw all the bars in the spectrum
-        for (int i = 0; i < NUMBER_BARS; i++)
-        {
-            uint8_t height = state.spectrum_data[i];
-            gfx_drawRect((point_t){91-height,i*CONFIG_SCREEN_HEIGHT/NUMBER_BARS}, ((height-20)/50) * height + height, (CONFIG_SCREEN_HEIGHT/NUMBER_BARS),
-                        spectrum_getColorFromLevel(((height-20)/50) * height + height), true);
-        }
-        char freq_str[16];
+        state.spectrum_peakRssi = -160;
         // Print small text at the peak of the spectrum with the peak frequency,
         // but only if the peak is between indices 8 and 56
-        if (state.spectrum_peakIndex > 8 && state.spectrum_peakIndex < 56)
+        if (state.spectrum_peakIndex > 4 && state.spectrum_peakIndex < 56)
         {
             sniprintf(freq_str, sizeof(freq_str), "%d.%03d",
                     state.spectrum_peakFreq / 100000,
@@ -773,87 +790,85 @@ void _ui_drawMenuSpectrum(ui_state_t* ui_state)
             gfx_print((point_t){4,state.spectrum_peakIndex*2}, FONT_SIZE_5PT, TEXT_ALIGN_LEFT,
                     yellow_fab413, freq_str);
         }
-        // Print small text on the left of the spectrum with the start frequency
-        sniprintf(freq_str, sizeof(freq_str), "%d.%02d",
-                state.spectrum_startFreq / 100000,
-                (state.spectrum_startFreq % 100000 / 1000));
-        gfx_print((point_t){4, 8}, FONT_SIZE_5PT, TEXT_ALIGN_LEFT,
-                    color_white, freq_str);
-        // Print small text on the right of the spectrum with the end frequency
-        sniprintf(freq_str, sizeof(freq_str), "%d.%02d",
-                (state.spectrum_startFreq + NUMBER_BARS * spectrumStep) / 100000,
-                ((state.spectrum_startFreq + NUMBER_BARS * spectrumStep) % 100000 / 1000));
-        gfx_print((point_t){layout.horizontal_pad, 126}, FONT_SIZE_5PT, TEXT_ALIGN_LEFT,
-                    color_white, freq_str);
-        //gfx_clearScreen();
-        state.spectrum_peakRssi = -160;
-    }
-    // Draw spectrum.
-    uint8_t rect_pos = state.spectrum_currentPart * 128 / NUMBER_DIVS;
-    for(int i = state.spectrum_currentPart * (NUMBER_BARS) / NUMBER_DIVS;
-            i < (state.spectrum_currentPart + 1) * (NUMBER_BARS) / NUMBER_DIVS; i++)
-    {
-        bk4819_set_freq((last_state.spectrum_startFreq + i * spectrumStep));
-        // If there's a mismatch between the current and last state, reset everything
-        if(last_state.spectrum_startFreq != state.spectrum_startFreq)
+            // Draw all the bars in the spectrum
+        for (int i = 0; i < NUMBER_BARS; i++)
         {
-            state.spectrum_currentPart = 0;
-            state.spectrum_currentWFLine = 0;
-            return;
+            uint8_t height = state.spectrum_data[i];
+            gfx_drawRect((point_t){88-height,i*(CONFIG_SCREEN_HEIGHT/NUMBER_BARS)+1}, height, (CONFIG_SCREEN_HEIGHT/NUMBER_BARS),
+                        spectrum_getColorFromLevel(height * (state.settings.spectrum_multiplier-1) + height), true);
         }
-        int16_t rssi = bk4819_get_rssi();
-        uint8_t height = (rssi + 160)/2;
-        height = height*exp((2*height-60)/80);
-        // Don't draw, just store the values in a buffer
-        state.spectrum_data[i] = height;
-        // If the current value is higher than the last peak, update the peak
-        if(rssi > state.spectrum_peakRssi)
-        {
-            state.spectrum_peakRssi = rssi;
-            state.spectrum_peakFreq = last_state.spectrum_startFreq + i * spectrumStep;
-            state.spectrum_peakIndex = i;
-        }
-        bar_color = spectrum_getColorFromLevel(((height-20)/50) * height + height);
-        // Draw a new line on the waterfall
-        gfx_setPixel((point_t){(133-state.spectrum_currentWFLine), rect_pos}, bar_color);
-        gfx_setPixel((point_t){(133-state.spectrum_currentWFLine), rect_pos+1}, bar_color);
-        rect_pos += 128/NUMBER_BARS;
+        state.spectrum_shouldRefresh = false;
     }
-    state.spectrum_currentPart = (state.spectrum_currentPart + 1) % NUMBER_DIVS;
+    // Print small text on the left of the spectrum with the start frequency
+    sniprintf(freq_str, sizeof(freq_str), "%d.%02d",
+            state.spectrum_startFreq / 100000,
+            (state.spectrum_startFreq % 100000 / 1000));
+    gfx_print((point_t){4, 8}, FONT_SIZE_5PT, TEXT_ALIGN_LEFT,
+                color_white, freq_str);
+    // Print small text on the right of the spectrum with the end frequency
+    sniprintf(freq_str, sizeof(freq_str), "%d.%02d",
+            (state.spectrum_startFreq + NUMBER_BARS * spectrumStep) / 100000,
+            ((state.spectrum_startFreq + NUMBER_BARS * spectrumStep) % 100000 / 1000));
+    gfx_print((point_t){layout.horizontal_pad, 126}, FONT_SIZE_5PT, TEXT_ALIGN_LEFT,
+                color_white, freq_str);
+
+    if(state.spectrum_currentPart == 1){
+        display_scroll(state.spectrum_currentWFLine);
+        // Draw spectrum.
+        display_setWindow(0, 160-state.spectrum_currentWFLine, 128, 1);
+        for(int i = 0; i < (NUMBER_BARS); i++)
+        {
+            uint8_t height = state.spectrum_data[NUMBER_BARS-(i+1)];
+            // If the current value is higher than the last peak, update the peak
+            // if(rssi > state.spectrum_peakRssi)
+            // {
+            //     state.spectrum_peakRssi = rssi;
+            //     state.spectrum_peakFreq = last_state.spectrum_startFreq + i * spectrumStep;
+            //     state.spectrum_peakIndex = i;
+            // }
+            bar_color = spectrum_getColorFromLevel(height * (state.settings.spectrum_multiplier-1) + height);
+            // Draw a new line on the waterfall
+            display_sendRawPixel((bar_color.r >> 3) << 11 | (bar_color.g >> 2) << 5 | (bar_color.b >> 3));
+            display_sendRawPixel((bar_color.r >> 3) << 11 | (bar_color.g >> 2) << 5 | (bar_color.b >> 3));
+        }
+        display_setWindow(0, 0, 128, 162);
+        state.spectrum_currentWFLine = ((state.spectrum_currentWFLine+1) % 41);
+    }
+    state.spectrum_currentPart = (state.spectrum_currentPart + 1) % 2;
     ui_updateFSM(NULL);
 }
 
 color_t spectrum_getColorFromLevel(uint16_t Level) {
-            const uint8_t Blue_G = 0;
-            const uint8_t Blue_B = 255;
-            
-            const uint8_t Green_R = 0;
-            const uint8_t Green_G = 149;
-            const uint8_t Green_B = 0;
-            
-            const uint8_t Red_R = 255;
-            const uint8_t Red_G = 0;
-            //const uint8_t Red_B = 0
-            
-            uint8_t R, G, B;
+    const uint8_t Blue_G = 0;
+    const uint8_t Blue_B = 255;
+    
+    const uint8_t Green_R = 0;
+    const uint8_t Green_G = 149;
+    const uint8_t Green_B = 0;
+    
+    const uint8_t Red_R = 255;
+    const uint8_t Red_G = 0;
+    //const uint8_t Red_B = 0
+    
+    uint8_t R, G, B;
 
-            if (Level > 100) {
-                R = 255;
-                G = 255;
-                B = 255;
-            } else if (Level <= 50) {
-                Level = (Level * 100) / 50;
-                R = 0; // Blue_R + ((Green_R - Blue_R) * Level / 100);
-                G = Blue_G + ((Green_G - Blue_G) * Level / 100);
-                B = Blue_B + ((Green_B - Blue_B) * Level / 100);
-            } else {
-                Level = ((Level - 50) * 100) / 3;
-                R = Green_R + ((Red_R - Green_R) * Level / 100);
-                G = Green_G + ((Red_G - Green_G) * Level / 100);
-                B = 0; // Green_B + ((Red_B - Green_B) * Level / 100);
-            }
-            return (color_t){R, G, B};
-        }
+    if (Level > 80) {
+        R = 255;
+        G = 255;
+        B = 255;
+    } else if (Level <= 40) {
+        Level = (Level * 100) / 40;
+        R = 0; // Blue_R + ((Green_R - Blue_R) * Level / 100);
+        G = Blue_G + ((Green_G - Blue_G) * Level / 100);
+        B = Blue_B + ((Green_B - Blue_B) * Level / 100);
+    } else {
+        Level = ((Level - 50) * 100) / 40;
+        R = Green_R + ((Red_R - Green_R) * Level / 100);
+        G = Green_G + ((Red_G - Green_G) * Level / 100);
+        B = 0; // Green_B + ((Red_B - Green_B) * Level / 100);
+    }
+    return (color_t){R, G, B};
+}
 
 void spectrum_changeFrequency(int32_t direction)
 {
@@ -1016,6 +1031,20 @@ void _ui_drawSettingsGPS(ui_state_t* ui_state)
     _ui_drawMenuListValue(ui_state, ui_state->menu_selected,
                           _ui_getSettingsGPSEntryName,
                           _ui_getSettingsGPSValueName);
+}
+#endif
+
+#ifdef PLATFORM_A36PLUS
+void _ui_drawSettingsSpectrum(ui_state_t* ui_state)
+{
+    //gfx_clearScreen();
+    // Print "Spectrum Settings" on top bar
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
+              color_white, currentLanguage->spectrum);
+    // Print display settings entries
+    _ui_drawMenuListValue(ui_state, ui_state->menu_selected,
+                          _ui_getSpectrumEntryName,
+                          _ui_getSpectrumValueName);
 }
 #endif
 

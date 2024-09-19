@@ -105,8 +105,7 @@ uint16_t platform_getVbat()
 
 uint8_t platform_getMicLevel()
 {
-    // bits 6:0
-    return (ReadRegister(0x6f) & 0x7f) * 2;
+    return bk4819_get_mic_level();
 }
 
 uint8_t platform_getVolumeLevel()

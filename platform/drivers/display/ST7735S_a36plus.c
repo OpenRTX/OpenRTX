@@ -270,6 +270,11 @@ void display_setWindow(uint16_t x, uint16_t y, uint16_t height, uint16_t width)
     sendCommand(ST7735S_CMD_RAMWR);
 }
 
+void display_sendRawPixel(uint16_t data)
+{
+    sendShort(data);
+}
+
 void display_defineScrollArea(uint16_t x, uint16_t x2)
 {
 

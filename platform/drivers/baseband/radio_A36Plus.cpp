@@ -129,12 +129,12 @@ bool radio_checkRxDigitalSquelch()
 
 void radio_enableAfOutput()
 {
-    
+    gpio_setPin(MIC_SPK_EN);   
 }
 
 void radio_disableAfOutput()
 {
-    
+    gpio_clearPin(MIC_SPK_EN);
 }
 
 void radio_checkVOX(){
@@ -193,7 +193,6 @@ void radio_enableTx()
     // If frequency is UHF, toggle BK4819 GPIO 4
     if (config->txFrequency < 174000000){
         gpio_setPin(RFV3T_EN);
-        usart0_IRQwrite("V3T\r\n");
     }else{
         bk4819_gpio_pin_set(4, true);
     }
@@ -205,8 +204,11 @@ void radio_enableTx()
 void radio_disableRtx()
 {
     // bk4819_disable_ctdcss();
-
-
+    if (config->txFrequency < 174000000){
+        gpio_clearPin(RFV3T_EN);
+    }else{
+        bk4819_gpio_pin_set(4, false);
+    }
     radioStatus = OFF;
 }
 
