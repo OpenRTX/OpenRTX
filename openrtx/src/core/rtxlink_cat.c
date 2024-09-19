@@ -93,12 +93,43 @@ static size_t catCommandGet(const uint8_t *args, const size_t len,
     return ret;
 }
 
+static void catConfigureRtx(void)
+{
+    rtxStatus_t rtx_cfg;
+
+    /*
+     * This is supposed to change the configuration, but it does not,
+     * subsequent calls to get the frequency return 0 or -1.
+     */
+    pthread_mutex_lock(&rtx_mutex);
+    rtx_cfg.opMode      = state.channel.mode;
+    rtx_cfg.bandwidth   = state.channel.bandwidth;
+    rtx_cfg.rxFrequency = state.channel.rx_frequency;
+    rtx_cfg.txFrequency = state.channel.tx_frequency;
+    rtx_cfg.txPower     = dBmToWatt(state.channel.power);
+    rtx_cfg.sqlLevel    = state.settings.sqlLevel;
+    rtx_cfg.rxToneEn    = state.channel.fm.rxToneEn;
+    rtx_cfg.rxTone      = ctcss_tone[state.channel.fm.rxTone];
+    rtx_cfg.txToneEn    = state.channel.fm.txToneEn;
+    rtx_cfg.txTone      = ctcss_tone[state.channel.fm.txTone];
+    rtx_cfg.toneEn      = state.tone_enabled;
+
+    // Enable Tx if channel allows it and we are in UI main screen
+    rtx_cfg.txDisable = state.channel.rx_only || state.txDisable;
+
+    // Copy new M17 CAN, source and destination addresses
+    rtx_cfg.can = state.settings.m17_can;
+    rtx_cfg.canRxEn = state.settings.m17_can_rx;
+    strncpy(rtx_cfg.source_address,      state.settings.callsign, 10);
+    strncpy(rtx_cfg.destination_address, state.settings.m17_dest, 10);
+    pthread_mutex_unlock(&rtx_mutex);
+    rtx_configure(&rtx_cfg);
+}
+
 static size_t catCommandSet(const uint8_t *args, const size_t len,
                             uint8_t *reply)
 {
     (void) len;
-    rtxStatus_t rtx_cfg;
-    float       power    = dBmToWatt(state.channel.power);
 
     uint16_t id = (args[0] << 8) | args[1];
     reply[0] = CAT_FRAME_ACK;
@@ -108,43 +139,20 @@ static size_t catCommandSet(const uint8_t *args, const size_t len,
     {
         case 0x5246:    // Receive frequency
 
-            /* XXX this does not work as expected */
-
-            /* This updates the display properly with the new frequency */
             pthread_mutex_lock(&state_mutex);
             state.channel.rx_frequency = *(uint32_t *)&args[2];
             pthread_mutex_unlock(&state_mutex);
-
-            /*
-             * This is supposed to change the configuration, but it does not,
-             * subsequent calls to get the frequency return 0 or -1.
-             */
-            pthread_mutex_lock(&rtx_mutex);
-            rtx_cfg.opMode      = state.channel.mode;
-            rtx_cfg.bandwidth   = state.channel.bandwidth;
-            rtx_cfg.rxFrequency = state.channel.rx_frequency;
-            rtx_cfg.txFrequency = state.channel.tx_frequency;
-            rtx_cfg.txPower     = power;
-            rtx_cfg.sqlLevel    = state.settings.sqlLevel;
-            rtx_cfg.rxToneEn    = state.channel.fm.rxToneEn;
-            rtx_cfg.rxTone      = ctcss_tone[state.channel.fm.rxTone];
-            rtx_cfg.txToneEn    = state.channel.fm.txToneEn;
-            rtx_cfg.txTone      = ctcss_tone[state.channel.fm.txTone];
-            rtx_cfg.toneEn      = state.tone_enabled;
-
-            // Enable Tx if channel allows it and we are in UI main screen
-            rtx_cfg.txDisable = state.channel.rx_only || state.txDisable;
-
-            // Copy new M17 CAN, source and destination addresses
-            rtx_cfg.can = state.settings.m17_can;
-            rtx_cfg.canRxEn = state.settings.m17_can_rx;
-            strncpy(rtx_cfg.source_address,      state.settings.callsign, 10);
-            strncpy(rtx_cfg.destination_address, state.settings.m17_dest, 10);
-            pthread_mutex_unlock(&rtx_mutex);
-            rtx_configure(&rtx_cfg);
+            catConfigureRtx();
             break;
 
         case 0x5446:    // Transmit frequency
+
+            pthread_mutex_lock(&state_mutex);
+            state.channel.tx_frequency = *(uint32_t *)&args[2];
+            pthread_mutex_unlock(&state_mutex);
+            catConfigureRtx();
+            break;
+
         case 0x5043:    // Power cycle
 
             // TODO: to be implemented
