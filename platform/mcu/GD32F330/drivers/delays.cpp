@@ -39,7 +39,7 @@ void delayUs(unsigned int useconds)
 
 void delayMs(unsigned int mseconds)
 {
-    register const unsigned int count=23125*4-7725;
+    register const unsigned int count=23125-7725;
 
     for(unsigned int i=0;i<mseconds;i++)
     {

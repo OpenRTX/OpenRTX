@@ -62,6 +62,7 @@ typedef struct
     bool       restore_eflash;
     bool       txDisable;
     uint8_t    step_index;
+    bool       spectrum_shouldRefresh; // True if one scanning cycle is done.
     uint32_t   spectrum_startFreq; // Start frequency for spectrum display, in 10Hz units
     uint32_t   spectrum_peakFreq;  // Current peak frequency for spectrum display, in 10Hz units
     int16_t   spectrum_peakRssi; // Current peak RSSI for spectrum display

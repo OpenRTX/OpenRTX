@@ -57,11 +57,13 @@ enum uiScreen
     MENU_RESTORE,
     MENU_INFO,
     MENU_ABOUT,
-    MENU_SPECTRUM_SETTINGS,
     SETTINGS_TIMEDATE,
     SETTINGS_TIMEDATE_SET,
     SETTINGS_DISPLAY,
     SETTINGS_GPS,
+    #ifdef PLATFORM_A36PLUS
+    SETTINGS_SPECTRUM,
+    #endif
     SETTINGS_RADIO,
     SETTINGS_M17,
     SETTINGS_ACCESSIBILITY,
@@ -79,10 +81,14 @@ enum SetRxTx
 // menu elements even if some elements may be missing (GPS)
 enum menuItems
 {
+#ifdef PLATFORM_A36PLUS
+    M_CHANNEL = 0,
+    M_SPECTRUM,
+#else
     M_BANK = 0,
     M_CHANNEL,
     M_CONTACTS,
-    M_SPECTRUM,
+#endif
 #ifdef CONFIG_GPS
     M_GPS,
 #endif
@@ -101,6 +107,9 @@ enum settingsItems
     S_GPS,
 #endif
     S_RADIO,
+#ifdef PLATFORM_A36PLUS
+    S_SPECTRUM,
+#endif
     S_M17,
     S_ACCESSIBILITY,
     S_RESET2DEFAULTS,
@@ -122,6 +131,13 @@ enum displayItems
 #endif
     D_TIMER,
 };
+
+enum spectrumItems
+{
+    SP_MULTIPLIER = 0,
+    SP_STEP
+};
+
 
 #ifdef CONFIG_GPS
 enum settingsGPSItems
@@ -243,6 +259,9 @@ extern const char *settings_items[];
 extern const char *display_items[];
 extern const char *settings_gps_items[];
 extern const char *settings_radio_items[];
+#ifdef PLATFORM_A36PLUS
+extern const char *settings_spectrum_items[];
+#endif
 extern const char *settings_m17_items[];
 extern const char * settings_accessibility_items[];
 
@@ -254,6 +273,9 @@ extern const uint8_t settings_num;
 extern const uint8_t display_num;
 extern const uint8_t settings_gps_num;
 extern const uint8_t settings_radio_num;
+#ifdef PLATFORM_A36PLUS
+extern const uint8_t settings_spectrum_num;
+#endif
 extern const uint8_t settings_m17_num;
 extern const uint8_t settings_accessibility_num;
 extern const uint8_t backup_restore_num;
