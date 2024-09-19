@@ -25,7 +25,6 @@
 
 #include <interfaces/platform.h>
 #include <interfaces/radio.h>
-#include <graphics.h>
 #include <rtxlink_cat.h>
 #include <stdbool.h>
 #include <rtxlink.h>
@@ -33,7 +32,7 @@
 #include <errno.h>
 #include <state.h>
 #include <rtx.h>
-
+#include <utils.h>
 
 enum catFrameType
 {
@@ -98,7 +97,8 @@ static size_t catCommandSet(const uint8_t *args, const size_t len,
                             uint8_t *reply)
 {
     (void) len;
-    rtxStatus_t status;
+    rtxStatus_t rtx_cfg;
+    float       power    = dBmToWatt(state.channel.power);
 
     uint16_t id = (args[0] << 8) | args[1];
     reply[0] = CAT_FRAME_ACK;
@@ -119,13 +119,29 @@ static size_t catCommandSet(const uint8_t *args, const size_t len,
              * This is supposed to change the configuration, but it does not,
              * subsequent calls to get the frequency return 0 or -1.
              */
-            status = rtx_getCurrentStatus();
-
-            /* XXX is this lock really needed here? */
             pthread_mutex_lock(&rtx_mutex);
-            status.rxFrequency = *(uint32_t *)&args[2];
+            rtx_cfg.opMode      = state.channel.mode;
+            rtx_cfg.bandwidth   = state.channel.bandwidth;
+            rtx_cfg.rxFrequency = state.channel.rx_frequency;
+            rtx_cfg.txFrequency = state.channel.tx_frequency;
+            rtx_cfg.txPower     = power;
+            rtx_cfg.sqlLevel    = state.settings.sqlLevel;
+            rtx_cfg.rxToneEn    = state.channel.fm.rxToneEn;
+            rtx_cfg.rxTone      = ctcss_tone[state.channel.fm.rxTone];
+            rtx_cfg.txToneEn    = state.channel.fm.txToneEn;
+            rtx_cfg.txTone      = ctcss_tone[state.channel.fm.txTone];
+            rtx_cfg.toneEn      = state.tone_enabled;
+
+            // Enable Tx if channel allows it and we are in UI main screen
+            rtx_cfg.txDisable = state.channel.rx_only || state.txDisable;
+
+            // Copy new M17 CAN, source and destination addresses
+            rtx_cfg.can = state.settings.m17_can;
+            rtx_cfg.canRxEn = state.settings.m17_can_rx;
+            strncpy(rtx_cfg.source_address,      state.settings.callsign, 10);
+            strncpy(rtx_cfg.destination_address, state.settings.m17_dest, 10);
             pthread_mutex_unlock(&rtx_mutex);
-            rtx_configure(&status);
+            rtx_configure(&rtx_cfg);
             break;
 
         case 0x5446:    // Transmit frequency
