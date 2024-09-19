@@ -47,10 +47,10 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/crc.c',
                'openrtx/src/core/datetime.c',
                'openrtx/src/core/openrtx.c',
-                'openrtx/src/core/audio_codec.c',
+               'openrtx/src/core/audio_codec.c',
                'openrtx/src/core/audio_stream.c',
                'openrtx/src/core/audio_path.cpp',
-#              'openrtx/src/core/data_conversion.c',
+               'openrtx/src/core/data_conversion.c',
                'openrtx/src/core/memory_profiling.cpp',
                'openrtx/src/core/voicePrompts.c',
                'openrtx/src/core/voicePromptUtils.c',
@@ -548,9 +548,9 @@ a36plus_inc = ['platform/drivers/baseband',
 
 a36plus_def = {'PLATFORM_A36PLUS': ''}
 
-a36plus_src += openrtx_src + gd32f330_src + miosix_cm4_src + ui_src_default
-a36plus_inc += openrtx_inc + gd32f330_inc + miosix_cm4_inc
-a36plus_def += openrtx_def + gd32f330_def + miosix_cm4_def
+a36plus_src += openrtx_src + gd32f330_src + miosix_cm4f_src + ui_src_default
+a36plus_inc += openrtx_inc + gd32f330_inc + miosix_cm4f_inc
+a36plus_def += openrtx_def + gd32f330_def + miosix_cm4f_def
 
 ##
 ## -------------------------- Compilation arguments ----------------------------
