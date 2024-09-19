@@ -20,9 +20,6 @@
 
 #define __LINUX_ERRNO_EXTENSIONS__
 
-#include <stdio.h>
-#include <arpa/inet.h>
-
 #include <interfaces/platform.h>
 #include <interfaces/radio.h>
 #include <rtxlink_cat.h>
