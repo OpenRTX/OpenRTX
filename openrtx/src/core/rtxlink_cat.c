@@ -97,10 +97,6 @@ static void catConfigureRtx(void)
 {
     rtxStatus_t rtx_cfg;
 
-    /*
-     * This is supposed to change the configuration, but it does not,
-     * subsequent calls to get the frequency return 0 or -1.
-     */
     pthread_mutex_lock(&rtx_mutex);
     rtx_cfg.opMode      = state.channel.mode;
     rtx_cfg.bandwidth   = state.channel.bandwidth;
