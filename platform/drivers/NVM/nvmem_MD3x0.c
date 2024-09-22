@@ -21,14 +21,26 @@
 #include <interfaces/nvmem.h>
 #include <interfaces/delays.h>
 #include <calibInfo_MDx.h>
+#include <nvmem_access.h>
+#include <spi_stm32.h>
 #include <string.h>
 #include <wchar.h>
 #include <utils.h>
 #include "W25Qx.h"
 
-W25Qx_DEVICE_DEFINE(eflash, 0x1000000)        // 16 MB, 128 Mbit
-W25Qx_SECREG_DEFINE(cal1,   0x1000, 0x100)    // 256 byte
-W25Qx_SECREG_DEFINE(cal2,   0x2000, 0x100)    // 256 byte
+#define SECREG_READ(dev, offs, data, len) \
+    nvm_devRead((const struct nvmDevice *) dev, offs, data, len)
+
+static const struct W25QxCfg eflashCfg =
+{
+    .spi = &nvm_spi,
+    .cs  = { FLASH_CS }
+};
+
+W25Qx_DEVICE_DEFINE(eflash, eflashCfg, 0x1000000)        // 16 MB, 128 Mbit
+W25Qx_SECREG_DEFINE(cal1,   eflashCfg, 0x1000, 0x100)    // 256 byte
+W25Qx_SECREG_DEFINE(cal2,   eflashCfg, 0x2000, 0x100)    // 256 byte
+W25Qx_SECREG_DEFINE(hwInfo, eflashCfg, 0x3000, 0x100)    // 256 byte
 
 static const struct nvmDescriptor nvmDevices[] =
 {
@@ -55,12 +67,17 @@ static const struct nvmDescriptor nvmDevices[] =
 
 void nvm_init()
 {
-    W25Qx_init();
+    gpio_setMode(FLASH_CLK, ALTERNATE | ALTERNATE_FUNC(5));
+    gpio_setMode(FLASH_SDO, ALTERNATE | ALTERNATE_FUNC(5));
+    gpio_setMode(FLASH_SDI, ALTERNATE | ALTERNATE_FUNC(5));
+
+    spiStm32_init(&nvm_spi, 21000000, 0);
+    W25Qx_init(&eflash);
 }
 
 void nvm_terminate()
 {
-    W25Qx_terminate();
+    W25Qx_terminate(&eflash);
 }
 
 const struct nvmDescriptor *nvm_getDesc(const size_t index)
@@ -73,55 +90,23 @@ const struct nvmDescriptor *nvm_getDesc(const size_t index)
 
 void nvm_readCalibData(void *buf)
 {
-    W25Qx_wakeup();
-    delayUs(5);
-
+    uint32_t freqs[18];
     md3x0Calib_t *calib = ((md3x0Calib_t *) buf);
 
-    (void) W25Qx_readSecurityRegister(0x1000, &(calib->vox1), 1);
-    (void) W25Qx_readSecurityRegister(0x1001, &(calib->vox10), 1);
-    (void) W25Qx_readSecurityRegister(0x1002, &(calib->rxLowVoltage), 1);
-    (void) W25Qx_readSecurityRegister(0x1003, &(calib->rxFullVoltage), 1);
-    (void) W25Qx_readSecurityRegister(0x1004, &(calib->rssi1), 1);
-    (void) W25Qx_readSecurityRegister(0x1005, &(calib->rssi4), 1);
-    (void) W25Qx_readSecurityRegister(0x1006, &(calib->analogMic), 1);
-    (void) W25Qx_readSecurityRegister(0x1007, &(calib->digitalMic), 1);
-    (void) W25Qx_readSecurityRegister(0x1008, &(calib->freqAdjustHigh), 1);
-    (void) W25Qx_readSecurityRegister(0x1009, &(calib->freqAdjustMid), 1);
-    (void) W25Qx_readSecurityRegister(0x100A, &(calib->freqAdjustLow), 1);
-    (void) W25Qx_readSecurityRegister(0x1010, calib->txHighPower, 9);
-    (void) W25Qx_readSecurityRegister(0x1020, calib->txLowPower, 9);
-    (void) W25Qx_readSecurityRegister(0x1030, calib->rxSensitivity, 9);
-    (void) W25Qx_readSecurityRegister(0x1040, calib->openSql9, 9);
-    (void) W25Qx_readSecurityRegister(0x1050, calib->closeSql9, 9);
-    (void) W25Qx_readSecurityRegister(0x1060, calib->openSql1, 9);
-    (void) W25Qx_readSecurityRegister(0x1070, calib->closeSql1, 9);
-    (void) W25Qx_readSecurityRegister(0x1080, calib->maxVolume, 9);
-    (void) W25Qx_readSecurityRegister(0x1090, calib->ctcss67Hz, 9);
-    (void) W25Qx_readSecurityRegister(0x10a0, calib->ctcss151Hz, 9);
-    (void) W25Qx_readSecurityRegister(0x10b0, calib->ctcss254Hz, 9);
-    (void) W25Qx_readSecurityRegister(0x10c0, calib->dcsMod2, 9);
-    (void) W25Qx_readSecurityRegister(0x10d0, calib->dcsMod1, 9);
-    (void) W25Qx_readSecurityRegister(0x10e0, calib->mod1Partial, 9);
-    (void) W25Qx_readSecurityRegister(0x10f0, calib->analogVoiceAdjust, 9);
+    // Security register 1: base address 0x1000
+    SECREG_READ(&cal1, 0x0009, &(calib->freqAdjustMid), 1);
+    SECREG_READ(&cal1, 0x0010, calib->txHighPower, 9);
+    SECREG_READ(&cal1, 0x0020, calib->txLowPower, 9);
+    SECREG_READ(&cal1, 0x0030, calib->rxSensitivity, 9);
 
-    (void) W25Qx_readSecurityRegister(0x2000, calib->lockVoltagePartial, 9);
-    (void) W25Qx_readSecurityRegister(0x2010, calib->sendIpartial, 9);
-    (void) W25Qx_readSecurityRegister(0x2020, calib->sendQpartial, 9);
-    (void) W25Qx_readSecurityRegister(0x2030, calib->sendIrange, 9);
-    (void) W25Qx_readSecurityRegister(0x2040, calib->sendQrange, 9);
-    (void) W25Qx_readSecurityRegister(0x2050, calib->rxIpartial, 9);
-    (void) W25Qx_readSecurityRegister(0x2060, calib->rxQpartial, 9);
-    (void) W25Qx_readSecurityRegister(0x2070, calib->analogSendIrange, 9);
-    (void) W25Qx_readSecurityRegister(0x2080, calib->analogSendQrange, 9);
-
-    uint32_t freqs[18];
-    (void) W25Qx_readSecurityRegister(0x20b0, ((uint8_t *) &freqs), 72);
-    W25Qx_sleep();
+    // Security register 2: base address 0x2000
+    SECREG_READ(&cal2, 0x0030, calib->sendIrange, 9);
+    SECREG_READ(&cal2, 0x0040, calib->sendQrange, 9);
+    SECREG_READ(&cal2, 0x00b0, ((uint8_t *) &freqs), 72);
 
     /*
-     * Ugly quirk: frequency stored in calibration data is divided by ten, so,
-     * after bcdToBin conversion we have something like 40'135'000. To ajdust
+     * Frequency stored in calibration data is divided by ten: so, after
+     * bcdToBin conversion, we have something like 40'135'000. To ajdust
      * things, frequency has to be multiplied by ten.
      */
     for(uint8_t i = 0; i < 9; i++)
@@ -137,23 +122,17 @@ void nvm_readHwInfo(hwInfo_t *info)
     uint16_t freqMax = 0;
     uint8_t  lcdInfo = 0;
 
-    /*
-     * Hardware information data in MD3x0 devices is stored in security register
-     * 0x3000.
-     */
-    W25Qx_wakeup();
-    delayUs(5);
-
-    (void) W25Qx_readSecurityRegister(0x3000, info->name, 8);
-    (void) W25Qx_readSecurityRegister(0x3014, &freqMin, 2);
-    (void) W25Qx_readSecurityRegister(0x3016, &freqMax, 2);
-    (void) W25Qx_readSecurityRegister(0x301D, &lcdInfo, 1);
-    W25Qx_sleep();
+    // Security register 3: base address 0x3000
+    SECREG_READ(&hwInfo, 0x0000, info->name, 8);
+    SECREG_READ(&hwInfo, 0x0014, &freqMin, 2);
+    SECREG_READ(&hwInfo, 0x0016, &freqMax, 2);
+    SECREG_READ(&hwInfo, 0x001D, &lcdInfo, 1);
 
     /* Ensure correct null-termination of device name by removing the 0xff. */
     for(uint8_t i = 0; i < sizeof(info->name); i++)
     {
-        if(info->name[i] == 0xFF) info->name[i] = '\0';
+        if(info->name[i] == 0xFF)
+            info->name[i] = '\0';
     }
 
     /* These devices are single-band only, either VHF or UHF. */
