@@ -21,6 +21,7 @@
 #ifndef SPI_H
 #define SPI_H
 
+#include <errno.h>
 #include <stdint.h>
 #include <pthread.h>
 
@@ -46,13 +47,12 @@ struct spiDevice;
  *
  * @param dev: SPI device handle.
  * @param txBuf: pointer to TX buffer, can be NULL.
- * @param txSize: number of bytes to send.
  * @param rxBuf: pointer to RX buffer, can be NULL.
- * @param rxSize: number of bytes to receive.
+ * @param size: number of bytes to transfer.
  * @return zero on success, a negative error code otherwise.
  */
 typedef int (*spi_transfer_impl)(const struct spiDevice *dev, const void *txBuf,
-                                 const size_t txSize, void *rxBuf, const size_t rxSize);
+                                 void *rxBuf, const size_t size);
 
 /**
  * SPI peripheral descriptor.
@@ -129,18 +129,18 @@ static inline int spi_release(const struct spiDevice *dev)
 }
 
 /**
- * Transfer data on the SPI bus.
+ * Transfer data on the SPI bus. Only symmetric transfers (same TX and RX size)
+ * are allowed!
  *
  * @param txBuf: pointer to TX buffer, can be NULL.
- * @param txSize: number of bytes to send.
  * @param rxBuf: pointer to RX buffer, can be NULL.
- * @param rxSize: number of bytes to receive.
+ * @param size: number of bytes to transfer.
  * @return zero on success, a negative error code otherwise.
  */
 static inline int spi_transfer(const struct spiDevice *dev, const void *txBuf,
-                               const size_t txSize, void *rxBuf, const size_t rxSize)
+                               void *rxBuf, const size_t size)
 {
-    return dev->transfer(dev, txBuf, txSize, rxBuf, rxSize);
+    return dev->transfer(dev, txBuf, rxBuf, size);
 }
 
 /**
@@ -153,7 +153,7 @@ static inline int spi_transfer(const struct spiDevice *dev, const void *txBuf,
 static inline int spi_send(const struct spiDevice *dev, const void *txBuf,
                            const size_t txSize)
 {
-    return dev->transfer(dev, txBuf, txSize, NULL, 0);
+    return dev->transfer(dev, txBuf, NULL, txSize);
 }
 
 /**
@@ -166,7 +166,7 @@ static inline int spi_send(const struct spiDevice *dev, const void *txBuf,
 static inline int spi_receive(const struct spiDevice *dev, void *rxBuf,
                               const size_t rxSize)
 {
-    return dev->transfer(dev, NULL, 0, rxBuf, rxSize);
+    return dev->transfer(dev, NULL, rxBuf, rxSize);
 }
 
 #ifdef __cplusplus
