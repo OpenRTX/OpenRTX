@@ -250,6 +250,7 @@ mk22fn512_src = ['platform/mcu/MK22FN512xxx12/boot/startup.cpp',
                  'platform/mcu/MK22FN512xxx12/drivers/usb/usb_device_khci.c',
                  'platform/mcu/MK22FN512xxx12/drivers/usb/usb_osa_bm.c',
                  'platform/mcu/MK22FN512xxx12/drivers/usb_vcom.c',
+                 'platform/drivers/SPI/spi_mk22.c',
                  'platform/mcu/CMSIS/Device/NXP/MK22FN512xxx12/Source/system_MK22F51212.c']
 
 mk22fn512_inc = ['platform/mcu/CMSIS/Include',
