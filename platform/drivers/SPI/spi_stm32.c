@@ -18,6 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <rcc.h>
 #include <errno.h>
 #include <stm32f4xx.h>
 #include "spi_stm32.h"
@@ -30,27 +31,27 @@ static inline uint8_t spi_sendRecv(SPI_TypeDef *spi, const uint8_t val)
     return spi->DR;
 }
 
-int spi_init(const struct spiDevice *dev, const uint32_t speed, const uint8_t flags)
+int spiStm32_init(const struct spiDevice *dev, const uint32_t speed, const uint8_t flags)
 {
     SPI_TypeDef *spi = (SPI_TypeDef *) dev->priv;
-    uint32_t clkDiv = 0;
+    uint8_t busId;
 
     switch((uint32_t) spi)
     {
         case SPI1_BASE:
-            clkDiv = (RCC->CFGR >> 13) & 0x07;
+            busId = PERIPH_BUS_APB2;
             RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
             __DSB();
             break;
 
         case SPI2_BASE:
-            clkDiv = (RCC->CFGR >> 10) & 0x07;
+            busId = PERIPH_BUS_APB1;
             RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
             __DSB();
             break;
 
         case SPI3_BASE:
-            clkDiv = (RCC->CFGR >> 10) & 0x07;
+            busId = PERIPH_BUS_APB1;
             RCC->APB1ENR |= RCC_APB1ENR_SPI3EN;
             __DSB();
             break;
@@ -60,15 +61,14 @@ int spi_init(const struct spiDevice *dev, const uint32_t speed, const uint8_t fl
             break;
     }
 
-    uint32_t apbClk = SystemCoreClock;
-    if((clkDiv & 0x04) != 0)
-         apbClk /= (1 << ((clkDiv & 0x03) + 1));
-
     uint8_t spiDiv;
     uint32_t spiClk;
+    uint32_t busClk = rcc_getBusClock(busId);
+
+    // Find nearest clock frequency, round down
     for(spiDiv = 0; spiDiv < 7; spiDiv += 1)
     {
-        spiClk = apbClk / (1 << (spiDiv + 1));
+        spiClk = busClk / (1 << (spiDiv + 1));
         if(spiClk <= speed)
             break;
     }
@@ -98,7 +98,7 @@ int spi_init(const struct spiDevice *dev, const uint32_t speed, const uint8_t fl
     return 0;
 }
 
-void spi_terminate(const struct spiDevice *dev)
+void spiStm32_terminate(const struct spiDevice *dev)
 {
     SPI_TypeDef *spi = (SPI_TypeDef *) dev->priv;
 
@@ -125,54 +125,33 @@ void spi_terminate(const struct spiDevice *dev)
 }
 
 int spiStm32_transfer(const struct spiDevice *dev, const void *txBuf,
-                      const size_t txSize, void *rxBuf, const size_t rxSize)
+                      void *rxBuf, const size_t size)
 {
     SPI_TypeDef *spi = (SPI_TypeDef *) dev->priv;
     uint8_t *rxData = (uint8_t *) rxBuf;
     const uint8_t *txData = (const uint8_t *) txBuf;
 
     // Send only
-    if((rxBuf == NULL) || (rxSize == 0))
+    if(rxBuf == NULL)
     {
-        for(size_t i = 0; i < txSize; i++)
+        for(size_t i = 0; i < size; i++)
             spi_sendRecv(spi, txData[i]);
 
         return 0;
     }
 
     // Receive only
-    if((txBuf == NULL) || (txSize == 0))
+    if(txBuf == NULL)
     {
-        for(size_t i = 0; i < rxSize; i++)
+        for(size_t i = 0; i < size; i++)
             rxData[i] = spi_sendRecv(spi, 0x00);
 
         return 0;
     }
 
     // Transmit and receive
-    size_t txRxSize = (txSize < rxSize) ? txSize : rxSize;
-    for(size_t i = 0; i < txRxSize; i++)
+    for(size_t i = 0; i < size; i++)
         rxData[i] = spi_sendRecv(spi, txData[i]);
-
-    // Still something to send?
-    if(txSize > txRxSize)
-    {
-        for(size_t i = 0; i < (txSize - txRxSize); i++)
-        {
-            size_t pos = txRxSize + i;
-            spi_sendRecv(spi, txData[pos]);
-        }
-    }
-
-    // Still something to receive?
-    if(rxSize > txRxSize)
-    {
-        for(size_t i = 0; i < (rxSize - txRxSize); i++)
-        {
-            size_t pos = txRxSize + i;
-            rxData[pos] = spi_sendRecv(spi, 0x00);
-        }
-    }
 
     return 0;
 }
