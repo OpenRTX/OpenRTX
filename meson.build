@@ -154,9 +154,7 @@ openrtx_def += {'GIT_VERSION': git_version}
 ## TYT MDx family
 ##
 
-mdx_src = ['openrtx/src/core/xmodem.c',
-           'openrtx/src/core/backup.c',
-           'platform/drivers/ADC/ADC1_MDx.c',
+mdx_src = ['platform/drivers/ADC/ADC1_MDx.c',
            'platform/drivers/GPS/GPS_MDx.cpp',
            'platform/drivers/NVM/W25Qx.c',
            'platform/drivers/NVM/nvmem_settings_MDx.c',
@@ -333,14 +331,14 @@ endif
 ## TYT MD-3x0 family
 ##
 md3x0_src = ['platform/drivers/CPS/cps_io_native_MD3x0.c',
-             'platform/drivers/NVM/spiFlash_MD3x.c',
              'platform/drivers/baseband/SKY72310.c',
              'platform/drivers/baseband/radio_MD3x0.cpp',
              'platform/drivers/baseband/HR_C5000_MDx.cpp',
              'platform/drivers/keyboard/keyboard_MD3x.c',
              'platform/drivers/display/HX8353_MD3x.cpp',
              'platform/drivers/backlight/backlight_MDx.c',
-             'platform/targets/MD-3x0/platform.c']
+             'platform/targets/MD-3x0/platform.c',
+             'platform/targets/MD-3x0/hwconfig.c']
 
 md3x0_inc = ['platform/targets/MD-3x0']
 md3x0_def = {'PLATFORM_MD3x0': '', 'timegm': 'mktime'}

@@ -1,7 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
- *                                Niccolò Izzo IU2KIN                      *
- *                                Silvano Seva IU2KWO                      *
+ *   Copyright (C) 2024 by Federico Amedeo Izzo IU2NUO,                    *
+ *                         Niccolò Izzo IU2KIN,                            *
+ *                         Frederik Saraci IU2NRO,                         *
+ *                         Silvano Seva IU2KWO                             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -17,45 +18,10 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef HWCONFIG_H
-#define HWCONFIG_H
+#include <spi_bitbang.h>
+#include <spi_custom.h>
+#include <spi_stm32.h>
+#include <hwconfig.h>
+#include <pinmap.h>
 
-#include <stm32f4xx.h>
-#include "pinmap.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-extern const struct spiDevice nvm_spi;
-
-/* Device has a working real time clock */
-#define CONFIG_RTC
-
-/* Device supports an optional GPS chip */
-#define CONFIG_GPS
-
-/* Device has a channel selection knob */
-#define CONFIG_KNOB_ABSOLUTE
-
-/* Screen dimensions */
-#define CONFIG_SCREEN_WIDTH 160
-#define CONFIG_SCREEN_HEIGHT 128
-
-/* Screen pixel format */
-#define CONFIG_PIX_FMT_RGB565
-
-/* Screen has adjustable brightness */
-#define CONFIG_SCREEN_BRIGHTNESS
-
-/* Battery type */
-#define CONFIG_BAT_LIPO_2S
-
-/* Device supports M17 mode */
-#define CONFIG_M17
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* HWCONFIG_H */
+SPI_STM32_DEVICE_DEFINE(nvm_spi, SPI1, NULL)
