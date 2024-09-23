@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2023 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2023, 2024 by Federico Amedeo Izzo IU2NUO,              *
+ *                               Niccolò Izzo IU2KIN                       *
+ *                               Frederik Saraci IU2NRO                    *
+ *                               Silvano Seva IU2KWO                       *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -40,6 +40,19 @@ enum catFrameType
     CAT_FRAME_DATA = 0x44,
 };
 
+enum catCommand
+{
+    // CAT command to get/set resources
+    CAT_DEVICE_ID    = 0x494E,
+    CAT_RX_FREQUENCY = 0x5246,
+    CAT_TX_FREQUENCY = 0x5446,
+
+    // Miscellaneous CAT command
+    CAT_POWER_CYCLE  = 0x5043,
+    CAT_BAUD_RATE    = 0x4252,
+    CAT_DATATRANSFER = 0x4654
+};
+
 extern pthread_mutex_t rtx_mutex;
 
 static size_t catCommandGet(const uint8_t *args, const size_t len,
@@ -53,7 +66,7 @@ static size_t catCommandGet(const uint8_t *args, const size_t len,
 
     switch(id)
     {
-        case 0x494E:    // Device ID
+        case CAT_DEVICE_ID:
         {
             const hwInfo_t *hwinfo = platform_getHwInfo();
             size_t sl = strlen(hwinfo->name);
@@ -64,7 +77,7 @@ static size_t catCommandGet(const uint8_t *args, const size_t len,
         }
             break;
 
-        case 0x5246:    // Receive frequency
+        case CAT_RX_FREQUENCY:
         {
             rtxStatus_t status = rtx_getCurrentStatus();
             memcpy(&reply[1], &status.rxFrequency, 4);
@@ -72,7 +85,7 @@ static size_t catCommandGet(const uint8_t *args, const size_t len,
         }
             break;
 
-        case 0x5446:    // Transmit frequency
+        case CAT_TX_FREQUENCY:
         {
             rtxStatus_t status = rtx_getCurrentStatus();
             memcpy(&reply[1], &status.txFrequency, 4);
@@ -130,7 +143,7 @@ static size_t catCommandSet(const uint8_t *args, const size_t len,
 
     switch(id)
     {
-        case 0x5246:    // Receive frequency
+        case CAT_RX_FREQUENCY:
 
             pthread_mutex_lock(&state_mutex);
             state.channel.rx_frequency = *(uint32_t *)&args[2];
@@ -138,7 +151,7 @@ static size_t catCommandSet(const uint8_t *args, const size_t len,
             catConfigureRtx();
             break;
 
-        case 0x5446:    // Transmit frequency
+        case CAT_TX_FREQUENCY:
 
             pthread_mutex_lock(&state_mutex);
             state.channel.tx_frequency = *(uint32_t *)&args[2];
@@ -146,13 +159,13 @@ static size_t catCommandSet(const uint8_t *args, const size_t len,
             catConfigureRtx();
             break;
 
-        case 0x5043:    // Power cycle
+        case CAT_POWER_CYCLE:
 
             // TODO: to be implemented
             reply[1] = ENOTSUP;
             break;
 
-        case 0x4252:    // Baud rate
+        case CAT_BAUD_RATE:
         {
             uint32_t baud = *(uint32_t *)(args + 2);
 
@@ -164,7 +177,7 @@ static size_t catCommandSet(const uint8_t *args, const size_t len,
         }
             break;
 
-        case 0x4654:    // File transfer mode
+        case CAT_DATATRANSFER:
 
             pthread_mutex_lock(&state_mutex);
             state.devStatus = DATATRANSFER;
