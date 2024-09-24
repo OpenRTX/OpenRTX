@@ -126,8 +126,10 @@ static void catConfigureRtx(void)
     // Copy new M17 CAN, source and destination addresses
     rtx_cfg.can = state.settings.m17_can;
     rtx_cfg.canRxEn = state.settings.m17_can_rx;
-    strncpy(rtx_cfg.source_address,      state.settings.callsign, 10);
-    strncpy(rtx_cfg.destination_address, state.settings.m17_dest, 10);
+    strncpy(rtx_cfg.source_address, state.settings.callsign,
+        sizeof(rtx_cfg.source_address));
+    strncpy(rtx_cfg.destination_address, state.settings.m17_dest,
+        sizeof(rtx_cfg.destination_address));
     pthread_mutex_unlock(&rtx_mutex);
     rtx_configure(&rtx_cfg);
 }
