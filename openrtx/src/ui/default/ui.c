@@ -185,6 +185,9 @@ const char *settings_radio_items[] =
     "Offset",
     "Direction",
     "Step",
+    #ifdef PLATFORM_A36PLUS
+    "RX Mode",
+    #endif
 };
 
 #ifdef PLATFORM_A36PLUS
@@ -2393,6 +2396,16 @@ void ui_updateFSM(bool *sync_rtx)
                                     state.channel.tx_frequency -= 2 * ((int32_t)state.channel.tx_frequency - (int32_t)state.channel.rx_frequency);
                                 else // Switch to positive offset
                                     state.channel.tx_frequency -= 2 * ((int32_t)state.channel.tx_frequency - (int32_t)state.channel.rx_frequency);
+                            }
+                            break;
+                        case R_MODULATION:
+                            if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
+                               msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT ||
+                               msg.keys & KNOB_LEFT || msg.keys & KNOB_RIGHT)
+                            {
+                                // Cycle over the available modulations
+                                state.settings.rx_modulation = !state.settings.rx_modulation;
+                                bk4819_set_modulation(state.settings.rx_modulation); // required for instant feedback
                             }
                             break;
                         case R_STEP:

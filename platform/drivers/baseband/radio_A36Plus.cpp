@@ -176,6 +176,7 @@ void radio_enableRx()
     if (config->rxToneEn){
         bk4819_enable_rx_ctcss(config->rxTone / 10);
     }
+    bk4819_set_modulation(config->modulation);
     bk4819_rx_on();
     radioStatus = RX;
 }

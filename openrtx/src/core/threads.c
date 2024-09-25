@@ -98,6 +98,9 @@ void *ui_threadFunc(void *arg)
             rtx_cfg.txToneEn    = state.channel.fm.txToneEn;
             rtx_cfg.txTone      = ctcss_tone[state.channel.fm.txTone];
             rtx_cfg.toneEn      = state.tone_enabled;
+            #ifdef PLATFORM_A36PLUS
+            rtx_cfg.modulation  = state.settings.rx_modulation;
+            #endif
 
             // Enable Tx if channel allows it and we are in UI main screen
             rtx_cfg.txDisable = state.channel.rx_only || state.txDisable;

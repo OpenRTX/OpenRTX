@@ -188,6 +188,11 @@ void bk4819_rx_on(void)
     WriteRegister(0x30, 0xBFF1);
 }
 
+void bk4819_set_modulation(bool is_FM)
+{
+    BK4819_SetAF(is_FM ? 1 : 7);
+}
+
 void bk4819_tx_on(void)
 {
     WriteRegister(BK4819_REG_30, 0x00);  // reset
