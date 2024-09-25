@@ -160,6 +160,9 @@ enum settingsRadioItems
     R_OFFSET,
     R_DIRECTION,
     R_STEP,
+    #ifdef PLATFORM_A36PLUS
+    R_MODULATION,
+    #endif
 };
 
 enum settingsM17Items

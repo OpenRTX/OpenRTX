@@ -67,6 +67,7 @@ typedef struct
     uint8_t spectrum_multiplier;  // Multiplier for colors in spectrum display
     uint8_t spectrum_step;        // Step for spectrum display
     #endif
+    bool       rx_modulation; // True if FM, false if AM
 }
 __attribute__((packed)) settings_t;
 
@@ -94,7 +95,8 @@ static const settings_t default_settings =
     ""                            // Empty M17 destination
     #ifdef PLATFORM_A36PLUS
     , 1,                          // Multiplier for colors in spectrum display
-    1                           // Step for spectrum display
+    1,                           // Step for spectrum display
+    false                         // FM modulation
     #endif
 };
 

@@ -410,6 +410,12 @@ int _ui_getRadioValueName(char *buf, uint8_t max_len, uint8_t index)
         case R_STEP:
             value = freq_steps[last_state.step_index];
             break;
+        
+#ifdef PLATFORM_A36PLUS
+        case R_MODULATION:
+            sniprintf(buf, max_len, "%sM", (last_state.settings.rx_modulation) ? "F" : "A");
+            return 0;
+#endif
     }
 
     uint32_t div    = 1;

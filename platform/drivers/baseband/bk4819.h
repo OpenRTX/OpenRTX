@@ -253,6 +253,13 @@ void bk4819_setTxPower(uint32_t power);
 void bk4819_rx_on(void);
 
 /**
+ * @brief Set modulation
+ *
+ * @param is_FM 0:AM 1:FM
+ */
+void bk4819_set_modulation(bool is_FM);
+
+/**
  * @brief Turn on TX
  *
  */
