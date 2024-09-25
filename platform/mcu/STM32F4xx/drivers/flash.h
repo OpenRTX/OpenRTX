@@ -48,7 +48,7 @@ bool flash_eraseSector(const uint8_t secNum);
  * @param data: data to be written.
  * @param len: data length.
  */
-void flash_write(const uint32_t address, const void *data, const size_t len);
+int flash_write( const uint32_t address , const void* data , const size_t len );
 
 #ifdef __cplusplus
 }

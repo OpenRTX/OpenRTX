@@ -28,66 +28,96 @@
  *
  * @true on success, false on failure.
  */
-static inline bool unlock()
+static inline bool unlock( void )
 {
     // Flash already unlocked
-    if((FLASH->CR & FLASH_CR_LOCK) == 0)
+    if( ( FLASH->CR & FLASH_CR_LOCK ) == 0 )
     {
-        return true;
+        return true ;
     }
 
-    FLASH->KEYR = 0x45670123;
-    FLASH->KEYR = 0xCDEF89AB;
+    FLASH->KEYR = 0x45670123 ;
+    FLASH->KEYR = 0xCDEF89AB ;
 
     // Succesful unlock
-    if((FLASH->CR & FLASH_CR_LOCK) == 0)
+    if( ( FLASH->CR & FLASH_CR_LOCK ) == 0 )
     {
-        return true;
+        return true ;
     }
 
-    return false;
+    return false ;
 }
 
-
-
-bool flash_eraseSector(const uint8_t secNum)
+bool flash_eraseSector( const uint8_t secNum )
 {
-    if(secNum > 11) return false;
-    if(unlock() == false) return false;
+    bool result = true ;
 
-    // Flash busy, wait until previous operation finishes
-    while((FLASH->SR & FLASH_SR_BSY) != 0) ;
-
-    FLASH->CR |= FLASH_CR_SER;      // Sector erase
-    FLASH->CR &= ~FLASH_CR_SNB;
-    FLASH->CR |= (secNum << 3);     // Sector number
-    FLASH->CR |= FLASH_CR_STRT;     // Start erase
-
-    // Wait until erase ends
-    while((FLASH->SR & FLASH_SR_BSY) != 0) ;
-
-    FLASH->CR &= ~FLASH_CR_SER;
-
-    return true;
-}
-
-void flash_write(const uint32_t address, const void *data, const size_t len)
-{
-    if(unlock() == false) return;
-    if((data == NULL) || (len == 0)) return;
-
-    // Write data to memory, 8 bit at a time
-    const uint8_t *buf = ((uint8_t *) data);
-    uint8_t *mem       = ((uint8_t *) address);
-    for(size_t i = 0; i < len; i++)
+    if( secNum > 11 )
     {
-        while((FLASH->SR & FLASH_SR_BSY) != 0) ;
-        FLASH->CR = FLASH_CR_PG;
-
-        *mem = buf[i];
-        mem++;
-
-        while((FLASH->SR & FLASH_SR_BSY) != 0) ;
-        FLASH->CR &= ~FLASH_CR_PG;
+        result = false ;
     }
+    else
+    {
+        if( unlock() == false )
+        {
+            result = false ;
+        }
+        else
+        {
+            // Flash busy, wait until previous operation finishes
+            while( ( FLASH->SR & FLASH_SR_BSY ) != 0 );
+
+            FLASH->CR |= FLASH_CR_SER ;     // Sector erase
+            FLASH->CR &= ~FLASH_CR_SNB ;
+            FLASH->CR |= secNum << 3 ;      // Sector number
+            FLASH->CR |= FLASH_CR_STRT ;    // Start erase
+
+            // Wait until erase ends
+            while( ( FLASH->SR & FLASH_SR_BSY ) != 0 );
+
+            FLASH->CR &= ~FLASH_CR_SER ;
+        }
+    }
+
+    return result ;
+}
+
+int flash_write( const uint32_t address , const void* data , const size_t len )
+{
+    const uint8_t* buf ;
+    uint8_t*       mem ;
+    size_t         index ;
+    int            result = 0 ;
+
+    if( unlock() == false )
+    {
+        result = -1 ;
+    }
+    else
+    {
+        if( ( data != NULL ) &&
+            ( len  != 0    )    )
+        {
+            // Write data to memory, 8 bit at a time
+            buf = (uint8_t*)data ;
+            mem = (uint8_t*)address ;
+
+            for( index = 0 ; index < len ; index++ , mem++ )
+            {
+                while( ( FLASH->SR & FLASH_SR_BSY ) != 0 ) ;
+
+                FLASH->CR  = FLASH_CR_PG ;
+
+                *mem       = buf[ index ] ;
+
+                while( ( FLASH->SR & FLASH_SR_BSY ) != 0 ) ;
+
+                FLASH->CR &= ~FLASH_CR_PG ;
+
+            }
+        }
+    }
+
+    return result ;
+
 }

@@ -394,6 +394,7 @@ static void ui_InitGuiState( GuiState_st* guiState )
 {
     ui_InitGuiStateEdit( &guiState->edit );
     ui_InitGuiStateEvent( &guiState->event );
+    guiState->result                = 0 ;
     guiState->update                = false ;
     guiState->pageHasEvents         = false ;
     guiState->inEventArea           = false ;

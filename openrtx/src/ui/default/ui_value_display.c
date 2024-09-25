@@ -224,7 +224,7 @@ void GuiValDsp_DisplayValue( GuiState_st* guiState )
     guiState->layout.itemPos.w  = 0 ;
     ui_GuiValDsp_Table[ varNum ]( guiState );
     guiState->layout.line.pos.x = guiState->layout.itemPos.x +
-                                  guiState->layout.itemPos.w ;
+                                  guiState->layout.itemPos.w   ;
 
 }
 
@@ -235,8 +235,8 @@ static void GuiValDsp_BatteryLevel( GuiState_st* guiState )
 
 static void GuiValDsp_LockState( GuiState_st* guiState )
 {
-    Line_st*  lineTop     = &guiState->layout.lines[ GUI_LINE_TOP ] ;
-    Style_st* styleTop    = &guiState->layout.styles[ GUI_STYLE_TOP ] ;
+    Line_st*  lineTop  = &guiState->layout.lines[ GUI_LINE_TOP ] ;
+    Style_st* styleTop = &guiState->layout.styles[ GUI_STYLE_TOP ] ;
     Pos_st    start ;
     uint16_t  width ;
     Color_st  color_bg ;
@@ -247,8 +247,8 @@ static void GuiValDsp_LockState( GuiState_st* guiState )
 
     if( guiState->uiState.input_locked == true )
     {
-        start  = lineTop->pos ;
-        width  = styleTop->symbolSize + FONT_SIZE_24PT + 1 ;
+        start = lineTop->pos ;
+        width = styleTop->symbolSize + FONT_SIZE_24PT + 1 ;
         gfx_drawSymbol( &start , width , GFX_ALIGN_LEFT ,
                         &color_fg , SYMBOL_LOCK );
     }

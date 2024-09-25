@@ -429,6 +429,7 @@ typedef struct
 
 typedef struct
 {
+    int             result ;
     Edit_st         edit ;
     UI_State_st     uiState ;
     Event_st        event ;

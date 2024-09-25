@@ -173,6 +173,8 @@ c->blue  = (uint8_t)( ( cv >> COLOR_ENC_BLUE_SHIFT  ) & COLOR_ENC_BLUE_MASK  ) ;
 c->alpha = (uint8_t)( ( cv >> COLOR_ENC_ALPHA_SHIFT ) & COLOR_ENC_ALPHA_MASK ) ;
 */
 
+#define COLOR_ERROR     COLOR_RED
+
 /*******************************************************************************
 *   Script Command Macros
 *******************************************************************************/

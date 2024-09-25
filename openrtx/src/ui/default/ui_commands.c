@@ -637,7 +637,17 @@ static void LineStart( GuiState_st* guiState )
             {
                 colorBG = guiState->layout.style.colorBG ;
                 colorFG = guiState->layout.style.colorFG ;
-                guiState->layout.style.colorBG = colorFG ;
+                // determine whether there is an error condition associated with the variable
+                if( guiState->result != 0 )
+                {
+                    // if so  - indicate that there is an error
+                    guiState->layout.style.colorBG = COLOR_ERROR ;
+                    guiState->result               = 0 ;
+                }
+                else
+                {
+                    guiState->layout.style.colorBG = colorFG ;
+                }
                 guiState->layout.style.colorFG = colorBG ;
             }
             if( !guiState->update )

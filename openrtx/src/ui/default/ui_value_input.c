@@ -157,21 +157,21 @@ bool GuiValInp_InputValue( GuiState_st* guiState )
 {
     bool handled ;
 
+    guiState->result   = 0 ;
     guiState->sync_rtx = false ;
 
     handled = GuiValInp_Table[ guiState->layout.vars[ guiState->layout.varIndex ].varNum ]( guiState );
-/*
     if( guiState->event.type == EVENT_TYPE_KBD )
     {
         if( guiState->event.payload & KEY_ENTER )
         {
             if( handled )
-            {*/
-                nvm_writeSettingsAndVfo( &state.settings , &state.channel );
-/*            }
+            {
+                guiState->result = nvm_writeSettingsAndVfo( &state.settings , &state.channel );
+            }
         }
     }
-*/
+
     return handled ;
 
 }
