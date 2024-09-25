@@ -2689,8 +2689,10 @@ bool ui_updateGUI()
         case MAIN_MEM:
             #ifdef PLATFORM_A36PLUS
             if(!macro_menu)
+            {
                 _ui_drawMainMEM(&ui_state);
                 _ui_drawMainBottom();
+            }
             #else
                 _ui_drawMainMEM(&ui_state);
             #endif
