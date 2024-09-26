@@ -1150,7 +1150,7 @@ static void GuiValDsp_RadioFw( GuiState_st* guiState )
 
 static void GuiValDsp_BackupRestore( GuiState_st* guiState )
 {
-    _ui_Draw_MenuList( guiState , PAGE_MENU_BACKUP_RESTORE );
+    (void)guiState ;
 }
 
 static void GuiValDsp_LowBattery( GuiState_st* guiState )

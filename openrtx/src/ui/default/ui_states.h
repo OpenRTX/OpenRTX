@@ -55,7 +55,5 @@ extern int     FSM_LoadChannel( int16_t channel_index , bool* sync_rtx );
 extern int     _ui_fsm_loadContact( int16_t contact_index , bool* sync_rtx );
 
 extern void ui_States_SelectPage( GuiState_st* guiState );
-//extern void ui_States_SelectPageNum( GuiState_st* guiState , uint8_t pageNum );
-extern void ui_States_SetPageNum( GuiState_st* guiState , uint8_t pageNum );
 
 #endif // UI_STATES_H

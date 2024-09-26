@@ -308,7 +308,6 @@ extern void GuiCmd_List_EntryDisplay_TextString( GuiState_st* guiState , char* s
 extern void ui_ColorLoad( Color_st* color , ColorSelector_en colorSelector );
 
 extern void ui_Draw_Page( GuiState_st* guiState );
-extern void ui_States_SetPageNum( GuiState_st* guiState , uint8_t pageNum );
 extern void ui_RenderDisplay( GuiState_st* guiState );
 
 extern void DebugMsg_PrintStr( GuiState_st* guiState , char* scriptPtr );
