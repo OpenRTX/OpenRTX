@@ -20,6 +20,8 @@
 
 #define __LINUX_ERRNO_EXTENSIONS__
 
+#include <sys/param.h>
+
 #include <interfaces/platform.h>
 #include <interfaces/radio.h>
 #include <rtxlink_cat.h>
@@ -46,6 +48,10 @@ enum catCommand
     CAT_DEVICE_ID    = 0x494E,
     CAT_RX_FREQUENCY = 0x5246,
     CAT_TX_FREQUENCY = 0x5446,
+    CAT_OP_MODE      = 0x4F4D,
+    CAT_BANDWIDTH    = 0x4257,
+    CAT_M17_CALLSIGN = 0x4D43,
+    CAT_M17_DEST     = 0x4D44,
 
     // Miscellaneous CAT command
     CAT_POWER_CYCLE  = 0x5043,
@@ -63,6 +69,7 @@ static size_t catCommandGet(const uint8_t *args, const size_t len,
     uint16_t id = (args[0] << 8) | args[1];
     size_t  ret = 1;
     reply[0]    = CAT_FRAME_DATA;
+    rtxStatus_t status;
 
     switch(id)
     {
@@ -78,19 +85,45 @@ static size_t catCommandGet(const uint8_t *args, const size_t len,
             break;
 
         case CAT_RX_FREQUENCY:
-        {
-            rtxStatus_t status = rtx_getCurrentStatus();
+            status = rtx_getCurrentStatus();
             memcpy(&reply[1], &status.rxFrequency, 4);
             ret += 4;
-        }
             break;
 
         case CAT_TX_FREQUENCY:
-        {
-            rtxStatus_t status = rtx_getCurrentStatus();
+            status = rtx_getCurrentStatus();
             memcpy(&reply[1], &status.txFrequency, 4);
             ret += 4;
-        }
+            break;
+
+        case CAT_OP_MODE:
+
+            status = rtx_getCurrentStatus();
+            reply[1] = status.opMode;
+            ret += 1;
+            break;
+
+        case CAT_BANDWIDTH:
+
+            status = rtx_getCurrentStatus();
+            reply[1] = status.bandwidth;
+            ret += 1;
+            break;
+
+        case CAT_M17_CALLSIGN:
+
+            status = rtx_getCurrentStatus();
+            memset(&reply[1], 0x00, 16);
+            memcpy(&reply[1], status.source_address, sizeof(status.source_address));
+            ret += sizeof(status.source_address);
+            break;
+
+        case CAT_M17_DEST:
+
+            status = rtx_getCurrentStatus();
+            memset(&reply[1], 0x00, 16);
+            memcpy(&reply[1], status.destination_address, sizeof(status.destination_address));
+            ret += sizeof(status.M17_dst);
             break;
 
         default:
@@ -157,6 +190,42 @@ static size_t catCommandSet(const uint8_t *args, const size_t len,
 
             pthread_mutex_lock(&state_mutex);
             state.channel.tx_frequency = *(uint32_t *)&args[2];
+            pthread_mutex_unlock(&state_mutex);
+            catConfigureRtx();
+            break;
+
+        case CAT_OP_MODE:
+
+            pthread_mutex_lock(&state_mutex);
+            state.channel.mode = args[2];
+            pthread_mutex_unlock(&state_mutex);
+            catConfigureRtx();
+            break;
+
+        case CAT_BANDWIDTH:
+
+            pthread_mutex_lock(&state_mutex);
+            state.channel.bandwidth = args[2];
+            pthread_mutex_unlock(&state_mutex);
+            catConfigureRtx();
+            break;
+
+        case CAT_M17_CALLSIGN:
+
+            pthread_mutex_lock(&state_mutex);
+            strncpy(state.settings.callsign, (const char *)&args[2],
+                MIN(strlen((const char *)&args[2]),
+                sizeof(state.settings.callsign)));
+            pthread_mutex_unlock(&state_mutex);
+            catConfigureRtx();
+            break;
+
+        case CAT_M17_DEST:
+
+            pthread_mutex_lock(&state_mutex);
+            strncpy(state.settings.m17_dest, (const char *)&args[2],
+                MIN(strlen((const char *)&args[2]),
+                sizeof(state.settings.m17_dest)));
             pthread_mutex_unlock(&state_mutex);
             catConfigureRtx();
             break;
