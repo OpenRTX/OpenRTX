@@ -160,6 +160,7 @@ mdx_src = ['openrtx/src/core/xmodem.c',
            'platform/drivers/GPS/GPS_MDx.cpp',
            'platform/drivers/NVM/W25Qx.c',
            'platform/drivers/NVM/nvmem_settings_MDx.c',
+           'platform/drivers/NVM/nvmem_MDx.c',
            'platform/drivers/audio/audio_MDx.c',
            'platform/drivers/baseband/HR_Cx000.cpp',
            'platform/drivers/tones/toneGenerator_MDx.cpp']
@@ -331,8 +332,7 @@ endif
 ##
 ## TYT MD-3x0 family
 ##
-md3x0_src = ['platform/drivers/NVM/nvmem_MD3x0.c',
-             'platform/drivers/CPS/cps_io_native_MD3x0.c',
+md3x0_src = ['platform/drivers/CPS/cps_io_native_MD3x0.c',
              'platform/drivers/NVM/spiFlash_MD3x.c',
              'platform/drivers/baseband/SKY72310.c',
              'platform/drivers/baseband/radio_MD3x0.cpp',
@@ -352,8 +352,7 @@ md3x0_def += openrtx_def + stm32f405_def + miosix_cm4f_def
 ##
 ## TYT MD-UV380
 ##
-mduv3x0_src = ['platform/drivers/NVM/nvmem_MDUV3x0.c',
-               'platform/drivers/NVM/spiFlash_MD3x.c',
+mduv3x0_src = ['platform/drivers/NVM/spiFlash_MD3x.c',
                'platform/drivers/CPS/cps_io_native_MDUV3x0.c',
                'platform/targets/MD-UV3x0/platform.c',
                'platform/drivers/keyboard/keyboard_MD3x.c',
@@ -379,7 +378,6 @@ md9600_src = ['platform/targets/MD-9600/platform.c',
               'platform/drivers/keyboard/keyboard_MD9600.c',
               'platform/drivers/chSelector/chSelector_MD9600.c',
               'platform/drivers/baseband/radio_MD9600.cpp',
-              'platform/drivers/NVM/nvmem_MD9600.c',
               'platform/drivers/NVM/spiFlash_MD9600.c',
               'platform/drivers/CPS/cps_io_native_MD9600.c']
 
