@@ -91,7 +91,9 @@ const struct nvmDescriptor *nvm_getDesc(const size_t index)
 void nvm_readCalibData(void *buf)
 {
     uint32_t freqs[18];
-    md3x0Calib_t *calib = ((md3x0Calib_t *) buf);
+
+    // Common calibration data between single and dual-band radios
+    struct CalData *calib = ((struct CalData *) buf);
 
     // Security register 1: base address 0x1000
     SECREG_READ(&cal1, 0x0009, &(calib->freqAdjustMid), 1);
@@ -102,6 +104,8 @@ void nvm_readCalibData(void *buf)
     // Security register 2: base address 0x2000
     SECREG_READ(&cal2, 0x0030, calib->sendIrange, 9);
     SECREG_READ(&cal2, 0x0040, calib->sendQrange, 9);
+    SECREG_READ(&cal2, 0x0070, calib->analogSendIrange, 9);
+    SECREG_READ(&cal2, 0x0080, calib->analogSendQrange, 9);
     SECREG_READ(&cal2, 0x00b0, ((uint8_t *) &freqs), 72);
 
     /*
@@ -114,6 +118,31 @@ void nvm_readCalibData(void *buf)
         calib->rxFreq[i] = ((freq_t) bcdToBin(freqs[2*i])) * 10;
         calib->txFreq[i] = ((freq_t) bcdToBin(freqs[2*i+1])) * 10;
     }
+
+    // Calibration data for dual-band radios only
+    #ifndef PLATFORM_MD3x0
+    mduv3x0Calib_t *cal = (mduv3x0Calib_t *) buf;
+    struct CalData *vhfCal = &(cal->vhfCal);
+
+    // Security register 1: base address 0x1000
+    SECREG_READ(&cal1, 0x000c, (&vhfCal->freqAdjustMid), 1);
+    SECREG_READ(&cal1, 0x0019, vhfCal->txHighPower, 5);
+    SECREG_READ(&cal1, 0x0029, vhfCal->txLowPower, 5);
+    SECREG_READ(&cal1, 0x0039, vhfCal->rxSensitivity, 5);
+
+    // Security register 2: base address 0x2000
+    SECREG_READ(&cal2, 0x0039, vhfCal->sendIrange, 5);
+    SECREG_READ(&cal2, 0x0049, vhfCal->sendQrange, 5);
+    SECREG_READ(&cal2, 0x0079, vhfCal->analogSendIrange, 5);
+    SECREG_READ(&cal2, 0x0089, vhfCal->analogSendQrange, 5);
+    SECREG_READ(&cal2, 0x0000, ((uint8_t *) &freqs), 40);
+
+    for(uint8_t i = 0; i < 5; i++)
+    {
+        vhfCal->rxFreq[i] = ((freq_t) bcdToBin(freqs[2*i]));
+        vhfCal->txFreq[i] = ((freq_t) bcdToBin(freqs[2*i+1]));
+    }
+    #endif
 }
 
 void nvm_readHwInfo(hwInfo_t *info)
@@ -128,17 +157,20 @@ void nvm_readHwInfo(hwInfo_t *info)
     SECREG_READ(&hwInfo, 0x0016, &freqMax, 2);
     SECREG_READ(&hwInfo, 0x001D, &lcdInfo, 1);
 
-    /* Ensure correct null-termination of device name by removing the 0xff. */
+    // Ensure correct null-termination of device name by removing the 0xff.
     for(uint8_t i = 0; i < sizeof(info->name); i++)
     {
         if(info->name[i] == 0xFF)
             info->name[i] = '\0';
     }
 
-    /* These devices are single-band only, either VHF or UHF. */
     freqMin = ((uint16_t) bcdToBin(freqMin))/10;
     freqMax = ((uint16_t) bcdToBin(freqMax))/10;
 
+    info->hw_version = lcdInfo & 0x03;
+
+    #ifdef PLATFORM_MD3x0
+    // Single band device, either VHF or UHF
     if(freqMin < 200)
     {
         info->vhf_maxFreq = freqMax;
@@ -151,8 +183,21 @@ void nvm_readHwInfo(hwInfo_t *info)
         info->uhf_minFreq = freqMin;
         info->uhf_band    = 1;
     }
+    #else
+    // For dual band devices load the remaining data
+    uint16_t vhf_freqMin = 0;
+    uint16_t vhf_freqMax = 0;
 
-    info->hw_version = lcdInfo & 0x03;
+    SECREG_READ(&hwInfo, 0x0018, &vhf_freqMin, 2);
+    SECREG_READ(&hwInfo, 0x001a, &vhf_freqMax, 2);
+
+    info->vhf_minFreq = ((uint16_t) bcdToBin(vhf_freqMin))/10;
+    info->vhf_maxFreq = ((uint16_t) bcdToBin(vhf_freqMax))/10;
+    info->uhf_minFreq = freqMin;
+    info->uhf_maxFreq = freqMax;
+    info->vhf_band = 1;
+    info->uhf_band = 1;
+    #endif
 }
 
 /**
