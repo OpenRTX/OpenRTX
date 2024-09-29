@@ -34,6 +34,7 @@ extern "C" {
 #endif
 
 extern const struct spiCustomDevice nvm_spi;
+extern const struct spiDevice c6000_spi;
 
 /* Screen dimensions */
 #define CONFIG_SCREEN_WIDTH 128
