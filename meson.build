@@ -185,7 +185,8 @@ gdx_src = ['platform/targets/GDx/platform.c',
            'platform/drivers/keyboard/keyboard_GDx.c',
            'platform/drivers/audio/audio_GDx.c',
            'platform/drivers/SPI/spi_custom.c',
-           'platform/drivers/SPI/spi_bitbang.c']
+           'platform/drivers/SPI/spi_bitbang.c',
+           'platform/drivers/SPI/spi_mk22.c']
 
 gdx_inc = ['platform/targets/GDx']
 

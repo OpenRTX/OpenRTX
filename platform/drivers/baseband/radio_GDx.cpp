@@ -23,6 +23,7 @@
 #include <peripherals/gpio.h>
 #include <calibInfo_GDx.h>
 #include <hwconfig.h>
+#include <spi_mk22.h>
 #include <algorithm>
 #include <utils.h>
 #include "radioUtils.h"
@@ -38,7 +39,7 @@ static uint16_t apcVoltage = 0;                  // APC voltage for TX output po
 
 static enum opstatus radioStatus;                // Current operating status
 
-static HR_C6000& C6000  = HR_C6000::instance();  // HR_C5000 driver
+static HR_C6000 C6000(&c6000_spi, { DMR_CS });   // HR_C6000 driver
 static AT1846S& at1846s = AT1846S::instance();   // AT1846S driver
 
 void radio_init(const rtxStatus_t *rtxState)
@@ -63,6 +64,11 @@ void radio_init(const rtxStatus_t *rtxState)
     gpio_clearPin(UHF_PA_EN);       // Turn UHF PA off
     gpio_clearPin(RX_AUDIO_MUX);    // Audio out to HR_C6000
     gpio_clearPin(TX_AUDIO_MUX);    // Audio in to microphone
+
+    gpio_setMode(DMR_CLK,  OUTPUT | ALTERNATE_FUNC(2));
+    gpio_setMode(DMR_MOSI, OUTPUT | ALTERNATE_FUNC(2));
+    gpio_setMode(DMR_MISO, INPUT  | ALTERNATE_FUNC(2));
+    spiMk22_init(&c6000_spi, 2, 3, SPI_FLAG_CPHA);
 
     /*
      * Enable and configure DAC for PA drive control

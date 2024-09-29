@@ -20,6 +20,7 @@
 
 #include <spi_bitbang.h>
 #include <spi_custom.h>
+#include <spi_mk22.h>
 #include <hwconfig.h>
 
 static const struct spiConfig spiFlashCfg =
@@ -32,3 +33,4 @@ static const struct spiConfig spiFlashCfg =
 };
 
 SPI_BITBANG_DEVICE_DEFINE(nvm_spi, spiFlashCfg, NULL)
+SPI_MK22_DEVICE_DEFINE(c6000_spi, SPI0, NULL)

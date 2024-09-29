@@ -79,7 +79,7 @@
 /* HR_C6000 control interface */
 #define DMR_RESET GPIOE,2
 #define DMR_SLEEP GPIOE,3
-#define DMR_CS    GPIOD,0
+#define DMR_CS    &GpioD,0
 #define DMR_CLK   GPIOD,1
 #define DMR_MOSI  GPIOD,2
 #define DMR_MISO  GPIOD,3
