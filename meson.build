@@ -350,9 +350,9 @@ md3x0_def += openrtx_def + stm32f405_def + miosix_cm4f_def
 ##
 ## TYT MD-UV380
 ##
-mduv3x0_src = ['platform/drivers/NVM/spiFlash_MD3x.c',
-               'platform/drivers/CPS/cps_io_native_MDUV3x0.c',
+mduv3x0_src = ['platform/drivers/CPS/cps_io_native_MDUV3x0.c',
                'platform/targets/MD-UV3x0/platform.c',
+               'platform/targets/MD-UV3x0/hwconfig.c',
                'platform/drivers/keyboard/keyboard_MD3x.c',
                'platform/drivers/display/HX8353_MD3x.cpp',
                'platform/drivers/backlight/backlight_MDx.c',
