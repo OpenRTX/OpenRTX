@@ -168,6 +168,7 @@ mdx_src = ['platform/drivers/ADC/ADC1_MDx.c',
 ##
 
 gdx_src = ['platform/targets/GDx/platform.c',
+           'platform/targets/GDx/hwconfig.c',
            'platform/drivers/NVM/W25Qx.c',
            'platform/drivers/NVM/AT24Cx_GDx.c',
            'platform/drivers/NVM/spiFlash_GDx.c',
@@ -181,7 +182,9 @@ gdx_src = ['platform/targets/GDx/platform.c',
            'platform/drivers/baseband/HR_C6000_GDx.cpp',
            'platform/drivers/display/UC1701_GDx.c',
            'platform/drivers/keyboard/keyboard_GDx.c',
-           'platform/drivers/audio/audio_GDx.c']
+           'platform/drivers/audio/audio_GDx.c',
+           'platform/drivers/SPI/spi_custom.c',
+           'platform/drivers/SPI/spi_bitbang.c']
 
 gdx_inc = ['platform/targets/GDx']
 

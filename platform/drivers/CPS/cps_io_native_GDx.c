@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2024 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -22,6 +22,7 @@
 #include <wchar.h>
 #include <interfaces/delays.h>
 #include <interfaces/cps_io.h>
+#include <nvmem_access.h>
 #include <utils.h>
 #include "AT24Cx.h"
 #include "W25Qx.h"
@@ -36,6 +37,8 @@ static const uint32_t contactBaseAddr       = 0x87620;  /**< Base address of con
 static const uint32_t maxNumChannels        = 1024;     /**< Maximum number of channels in memory */
 static const uint32_t maxNumZones           = 68;       /**< Maximum number of zones in memory    */
 static const uint32_t maxNumContacts        = 1024;     /**< Maximum number of contacts in memory */
+
+extern const struct nvmDevice eflash;
 
 // Strings in GD-77 codeplug are terminated with 0xFF,
 // replace 0xFF terminator with 0x00 to be compatible with C strings
@@ -100,11 +103,8 @@ int cps_readChannel(channel_t *channel, uint16_t pos)
     // Remaining 7 channel banks (896 channels) are saved in SPI Flash
     else
     {
-        W25Qx_wakeup();
-        delayUs(5);
         uint32_t readAddr = channelBaseAddrFlash + (bank_num - 1) * sizeof(gdxChannelBank_t);
-        W25Qx_readData(readAddr, ((uint8_t *) &bitmap), sizeof(bitmap));
-        W25Qx_sleep();
+        nvm_devRead(&eflash, readAddr, ((uint8_t *) &bitmap), sizeof(bitmap));
     }
     uint8_t bitmap_byte = bank_channel / 8;
     uint8_t bitmap_bit = bank_channel % 8;
@@ -126,11 +126,8 @@ int cps_readChannel(channel_t *channel, uint16_t pos)
         // Remaining 7 channel banks (896 channels) are saved in SPI Flash
         else
         {
-            W25Qx_wakeup();
-            delayUs(5);
             uint32_t bankAddr = channelBaseAddrFlash + bank_num * sizeof(gdxChannelBank_t);
-            W25Qx_readData(bankAddr + channelOffset, ((uint8_t *) &chData), sizeof(gdxChannel_t));
-            W25Qx_sleep();
+            nvm_devRead(&eflash, bankAddr + channelOffset, ((uint8_t *) &chData), sizeof(gdxChannel_t));
         }
     }
     // Copy data to OpenRTX channel_t
@@ -245,13 +242,9 @@ int cps_readContact(contact_t *contact, uint16_t pos)
 {
     if(pos >= maxNumContacts) return -1;
 
-    W25Qx_wakeup();
-    delayUs(5);
-
     gdxContact_t contactData;
     uint32_t contactAddr = contactBaseAddr + pos * sizeof(gdxContact_t);
-    W25Qx_readData(contactAddr, ((uint8_t *) &contactData), sizeof(gdxContact_t));
-    W25Qx_sleep();
+    nvm_devRead(&eflash, contactAddr, ((uint8_t *) &contactData), sizeof(gdxContact_t));
 
     // Check if contact is empty
     if(wcslen((wchar_t *) contactData.name) == 0) return -1;
