@@ -18,7 +18,20 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <spi_bitbang.h>
+#include <spi_custom.h>
 #include <hwconfig.h>
+#include <pinmap.h>
 #include <spi_stm32.h>
 
+const struct spiConfig spiC6000Cfg =
+{
+    .clk       = { DMR_CLK  },
+    .mosi      = { DMR_MOSI },
+    .miso      = { DMR_MISO },
+    .clkPeriod = SCK_PERIOD_FROM_FREQ(1000000),
+    .flags     = SPI_FLAG_CPHA
+};
+
+SPI_BITBANG_DEVICE_DEFINE(c6000_spi, NULL, spiC6000Cfg)
 SPI_STM32_DEVICE_DEFINE(nvm_spi, SPI1, NULL)
