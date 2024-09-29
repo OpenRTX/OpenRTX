@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2024 by Federico Amedeo Izzo IU2NUO,             *
- *                                Niccolò Izzo IU2KIN                      *
- *                                Frederik Saraci IU2NRO                   *
- *                                Silvano Seva IU2KWO                      *
+ *   Copyright (C) 2024 by Federico Amedeo Izzo IU2NUO,                    *
+ *                         Niccolò Izzo IU2KIN,                            *
+ *                         Frederik Saraci IU2NRO,                         *
+ *                         Silvano Seva IU2KWO                             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -18,42 +18,17 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef HWCONFIG_H
-#define HWCONFIG_H
+#include <spi_bitbang.h>
+#include <spi_custom.h>
+#include <hwconfig.h>
 
-#include <MK22F51212.h>
+static const struct spiConfig spiFlashCfg =
+{
+    .clk       = { FLASH_CLK },
+    .mosi      = { FLASH_SDO },
+    .miso      = { FLASH_SDI },
+    .clkPeriod = SCK_PERIOD_FROM_FREQ(1000000),
+    .flags     = 0
+};
 
-#ifdef PLATFORM_GD77
-#include "pinmap_GD77.h"
-#else
-#include "pinmap_DM1801.h"
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-extern const struct spiCustomDevice nvm_spi;
-
-/* Screen dimensions */
-#define CONFIG_SCREEN_WIDTH 128
-#define CONFIG_SCREEN_HEIGHT 64
-
-/* Screen pixel format */
-#define CONFIG_PIX_FMT_BW
-
-/* Screen has adjustable contrast */
-#define CONFIG_SCREEN_CONTRAST
-#define CONFIG_DEFAULT_CONTRAST 71
-
-/* Screen has adjustable brightness */
-#define CONFIG_SCREEN_BRIGHTNESS
-
-/* Battery type */
-#define CONFIG_BAT_LIPO_2S
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* HWCONFIG_H */
+SPI_BITBANG_DEVICE_DEFINE(nvm_spi, spiFlashCfg, NULL)

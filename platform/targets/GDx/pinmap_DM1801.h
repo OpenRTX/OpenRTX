@@ -56,7 +56,7 @@
 #define MONI_SW  GPIOB,9
 
 /* External flash */
-#define FLASH_CS  GPIOE,6
+#define FLASH_CS  &GpioE,6
 #define FLASH_CLK GPIOE,5
 #define FLASH_SDO GPIOE,4
 #define FLASH_SDI GPIOA,19
