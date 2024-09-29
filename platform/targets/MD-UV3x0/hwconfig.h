@@ -24,9 +24,16 @@
 #include "pinmap.h"
 
 #ifdef __cplusplus
+
+// Export the HR_C6000 driver only for C++ sources
+#include <HR_C6000.h>
+
+extern HR_C6000 C6000;
+
 extern "C" {
 #endif
 
+extern const struct spiCustomDevice c6000_spi;
 extern const struct spiDevice nvm_spi;
 
 /* Device has a working real time clock */

@@ -43,7 +43,7 @@ static uint8_t txModBias  = 0;                   // VCXO bias for TX
 
 static enum opstatus radioStatus;                // Current operating status
 
-static HR_C6000& C6000  = HR_C6000::instance();  // HR_C5000 driver
+HR_C6000 C6000((const struct spiDevice *) &c6000_spi, { DMR_CS }); // HR_C6000 driver
 static AT1846S& at1846s = AT1846S::instance();   // AT1846S driver
 
 void radio_init(const rtxStatus_t *rtxState)
@@ -87,6 +87,11 @@ void radio_init(const rtxStatus_t *rtxState)
     /*
      * Configure AT1846S and HR_C6000, keep AF output disabled at power on.
      */
+    gpio_setMode(DMR_CLK,  OUTPUT);
+    gpio_setMode(DMR_MOSI, OUTPUT);
+    gpio_setMode(DMR_MISO, INPUT);
+    spi_init((const struct spiDevice *) &c6000_spi);
+
     at1846s.init();
     C6000.init();
     radio_disableAfOutput();
