@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2024 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -22,7 +22,12 @@
 #define HWCONFIG_H
 
 #include <MK22F51212.h>
-#include "pinmap.h"
+
+#ifdef PLATFORM_GD77
+#include "pinmap_GD77.h"
+#else
+#include "pinmap_DM1801.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {

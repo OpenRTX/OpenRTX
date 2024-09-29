@@ -168,8 +168,7 @@ mdx_src = ['openrtx/src/core/xmodem.c',
 ## GDx family: Radioddity GD-77 and Baofeng DM-1801
 ##
 
-gdx_src = ['openrtx/src/core/xmodem.c',
-           'openrtx/src/core/backup.c',
+gdx_src = ['platform/targets/GDx/platform.c',
            'platform/drivers/NVM/W25Qx.c',
            'platform/drivers/NVM/AT24Cx_GDx.c',
            'platform/drivers/NVM/spiFlash_GDx.c',
@@ -184,6 +183,8 @@ gdx_src = ['openrtx/src/core/xmodem.c',
            'platform/drivers/display/UC1701_GDx.c',
            'platform/drivers/keyboard/keyboard_GDx.c',
            'platform/drivers/audio/audio_GDx.c']
+
+gdx_inc = ['platform/targets/GDx']
 
 ##
 ## --------------------- MCU-dependent source files ----------------------------
@@ -390,23 +391,23 @@ md9600_def += openrtx_def + stm32f405_def + miosix_cm4f_def
 ##
 ## Radioddity GD-77
 ##
-gd77_src = ['platform/targets/GD-77/platform.c']
-gd77_inc = ['platform/targets/GD-77']
+gd77_src = []
+gd77_inc = []
 gd77_def = {'PLATFORM_GD77': ''}
 
 gd77_src += openrtx_src + mk22fn512_src + miosix_cm4f_src + ui_src_default + gdx_src
-gd77_inc += openrtx_inc + mk22fn512_inc + miosix_cm4f_inc
+gd77_inc += openrtx_inc + mk22fn512_inc + miosix_cm4f_inc + gdx_inc
 gd77_def += openrtx_def + mk22fn512_def + miosix_cm4f_def
 
 ##
 ## Baofeng DM-1801
 ##
-dm1801_src = ['platform/targets/DM-1801/platform.c']
-dm1801_inc = ['platform/targets/DM-1801']
+dm1801_src = []
+dm1801_inc = []
 dm1801_def = {'PLATFORM_DM1801': ''}
 
 dm1801_src += openrtx_src + mk22fn512_src + miosix_cm4f_src + ui_src_default + gdx_src
-dm1801_inc += openrtx_inc + mk22fn512_inc + miosix_cm4f_inc
+dm1801_inc += openrtx_inc + mk22fn512_inc + miosix_cm4f_inc + gdx_inc
 dm1801_def += openrtx_def + mk22fn512_def + miosix_cm4f_def
 
 ##

@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2024 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -43,7 +43,11 @@ static const hwInfo_t hwInfo =
     .uhf_minFreq = 400,
     .uhf_band    = 1,
     .hw_version  = 0,
+    #ifdef PLATFORM_GD77
     .name        = "GD-77"
+    #else
+    .name        = "DM-1801"
+    #endif
 };
 
 void platform_init()
