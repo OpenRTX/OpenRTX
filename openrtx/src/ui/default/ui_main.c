@@ -188,7 +188,13 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
 
 void _ui_drawFrequency()
 {
-    gfx_clearWindow(32, 0, 32, 160);
+    // Clear the frequency area if PTT status has changed
+    static bool last_ptt_status = false;
+    if(last_ptt_status != platform_getPttStatus())
+    {
+        gfx_clearWindow(32, 0, 32, 160);
+        last_ptt_status = platform_getPttStatus();
+    }
     freq_t freq = platform_getPttStatus() ? last_state.channel.tx_frequency
                                           : last_state.channel.rx_frequency;
 
