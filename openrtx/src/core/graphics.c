@@ -879,6 +879,7 @@ void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, rssi_t 
     }
 
     // Level meter marks
+    #if 0
     for(int i = 0; i <= 4; i++)
     {
         point_t pixel_pos =  {start.x, (uint8_t) (start.y + volume_height)};
@@ -887,6 +888,7 @@ void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, rssi_t 
         pixel_pos.y += ((bar_height / bar_height_divider * 3) + 3);
         gfx_setPixel(pixel_pos, white);
     }
+    #endif
     // Level bar
     uint16_t level_height = bar_height * 3 / bar_height_divider;
     uint16_t level_width = (width * level) / 255;
