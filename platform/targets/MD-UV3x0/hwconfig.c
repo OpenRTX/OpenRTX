@@ -24,14 +24,48 @@
 #include <pinmap.h>
 #include <spi_stm32.h>
 
-const struct spiConfig spiC6000Cfg =
+/**
+ * SPI bitbang function for HR_C6000 command interface (U_SPI).
+ *
+ * Hand-tuned to be as fast as possible, gives the following clock performance
+ * when compiled with -Os and run on STM32F405 at 168MHz:
+ *
+ * - Freq 6.46MHz
+ * - Pos. width 71ns
+ * - Neg. with 83ns
+ */
+static uint8_t spiC6000_func(const void *priv, uint8_t value)
 {
-    .clk       = { DMR_CLK  },
-    .mosi      = { DMR_MOSI },
-    .miso      = { DMR_MISO },
-    .clkPeriod = SCK_PERIOD_FROM_FREQ(1000000),
-    .flags     = SPI_FLAG_CPHA
-};
+    (void) priv;
+    uint8_t incoming = 0;
 
-SPI_BITBANG_DEVICE_DEFINE(c6000_spi, NULL, spiC6000Cfg)
+    __disable_irq();
+
+    for(uint8_t cnt = 0; cnt < 8; cnt++)
+    {
+        GPIOE->BSRR = (1 << 3);     // Set PE3 (CLK)
+
+        if(value & (0x80 >> cnt))
+            GPIOE->BSRR = 1 << 4;   // Set PE4 (MOSI)
+        else
+            GPIOE->BSRR = 1 << 20;  // Clear PE4 (MOSI)
+
+        // ~70ns delay
+        asm volatile("           mov   r1, #1     \n"
+                     "___loop_1: cmp   r1, #0     \n"
+                     "           itt   ne         \n"
+                     "           subne r1, r1, #1 \n"
+                     "           bne   ___loop_1  \n":::"r1");
+
+        incoming <<= 1;
+        GPIOE->BSRR = (1 << 19);                // Clear PE3 (CLK)
+        incoming |= (GPIOE->IDR >> 5) & 0x01;   // Read PE5 (MISO)
+    }
+
+    __enable_irq();
+
+    return incoming;
+}
+
+SPI_CUSTOM_DEVICE_DEFINE(c6000_spi, NULL, spiC6000_func, NULL)
 SPI_STM32_DEVICE_DEFINE(nvm_spi, SPI1, NULL)

@@ -87,6 +87,11 @@ void radio_init(const rtxStatus_t *rtxState)
     /*
      * Configure AT1846S and HR_C6000, keep AF output disabled at power on.
      */
+    gpio_setMode(DMR_CLK,  OUTPUT);
+    gpio_setMode(DMR_MOSI, OUTPUT);
+    gpio_setMode(DMR_MISO, INPUT);
+    spi_init((const struct spiDevice *) &c6000_spi);
+
     at1846s.init();
     C6000.init();
     radio_disableAfOutput();
