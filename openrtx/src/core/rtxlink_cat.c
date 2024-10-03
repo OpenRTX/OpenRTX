@@ -49,7 +49,6 @@ enum catCommand
     CAT_RX_FREQUENCY = 0x5246,
     CAT_TX_FREQUENCY = 0x5446,
     CAT_OP_MODE      = 0x4F4D,
-    CAT_BANDWIDTH    = 0x4257,
     CAT_M17_CALLSIGN = 0x4D43,
     CAT_M17_DEST     = 0x4D44,
 
@@ -57,6 +56,16 @@ enum catCommand
     CAT_POWER_CYCLE  = 0x5043,
     CAT_BAUD_RATE    = 0x4252,
     CAT_DATATRANSFER = 0x4654
+};
+
+enum catOpMode
+{
+    CAT_OP_MODE_NONE = 0x00,    // No op mode selected
+    CAT_OP_MODE_FM   = 0x01,    // FM with 25.0 kHz bandwidth
+    CAT_OP_MODE_FM20 = 0x02,    // FM with 20.0 kHz bandwidth
+    CAT_OP_MODE_NFM  = 0x03,    // Narrowband FM with 12.5 kHz bandwidth
+    CAT_OP_MODE_DMR  = 0x04,    // Digital mobile radio
+    CAT_OP_MODE_M17  = 0x05     // M17
 };
 
 extern pthread_mutex_t rtx_mutex;
@@ -99,14 +108,31 @@ static size_t catCommandGet(const uint8_t *args, const size_t len,
         case CAT_OP_MODE:
 
             status = rtx_getCurrentStatus();
-            reply[1] = status.opMode;
-            ret += 1;
-            break;
-
-        case CAT_BANDWIDTH:
-
-            status = rtx_getCurrentStatus();
-            reply[1] = status.bandwidth;
+            switch (status.opMode)
+            {
+                case OPMODE_FM:
+                    switch (status.bandwidth)
+                    {
+                        case BW_12_5:
+                            reply[1] = CAT_OP_MODE_NFM;
+                            break;
+                        case BW_20:
+                            reply[1] = CAT_OP_MODE_FM20;
+                            break;
+                        case BW_25:
+                            reply[1] = CAT_OP_MODE_FM;
+                            break;
+                    }
+                    break;
+                case OPMODE_DMR:
+                    reply[1] = CAT_OP_MODE_DMR;
+                    break;
+                case OPMODE_M17:
+                    reply[1] = CAT_OP_MODE_M17;
+                    break;
+                default:
+                    reply[1] = CAT_OP_MODE_NONE;
+            }
             ret += 1;
             break;
 
@@ -197,15 +223,29 @@ static size_t catCommandSet(const uint8_t *args, const size_t len,
         case CAT_OP_MODE:
 
             pthread_mutex_lock(&state_mutex);
-            state.channel.mode = args[2];
-            pthread_mutex_unlock(&state_mutex);
-            catConfigureRtx();
-            break;
-
-        case CAT_BANDWIDTH:
-
-            pthread_mutex_lock(&state_mutex);
-            state.channel.bandwidth = args[2];
+            switch (args[2])
+            {
+                case CAT_OP_MODE_FM:
+                    state.channel.mode = OPMODE_FM;
+                    state.channel.bandwidth = BW_25;
+                    break;
+                case CAT_OP_MODE_FM20:
+                    state.channel.mode = OPMODE_FM;
+                    state.channel.bandwidth = BW_20;
+                    break;
+                case CAT_OP_MODE_NFM:
+                    state.channel.mode = OPMODE_FM;
+                    state.channel.bandwidth = BW_12_5;
+                    break;
+                case CAT_OP_MODE_DMR:
+                    state.channel.mode = OPMODE_DMR;
+                    break;
+                case CAT_OP_MODE_M17:
+                    state.channel.mode = OPMODE_M17;
+                    break;
+                default:
+                    state.channel.mode = OPMODE_NONE;
+            }
             pthread_mutex_unlock(&state_mutex);
             catConfigureRtx();
             break;
