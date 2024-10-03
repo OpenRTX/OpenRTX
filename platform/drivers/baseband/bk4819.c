@@ -47,11 +47,11 @@ static void spi_write_byte(uint8_t data)
             BK4819_SDA_HIGH;
         else
             BK4819_SDA_LOW;
-        // delayUs(10);
+        // delayUs(1);
         BK4819_SCK_HIGH;
-        delayUs(10);
+        delayUs(1);
         BK4819_SCK_LOW;
-        delayUs(10);
+        delayUs(1);
         data <<= 1;
     }
 }
@@ -71,9 +71,9 @@ static uint16_t spi_read_half_word(void)
     {
         data <<= 1;
         BK4819_SCK_LOW;
-        delayUs(10);
+        delayUs(1);
         BK4819_SCK_HIGH;
-        delayUs(10);
+        delayUs(1);
         data |= BK4819_SDA_READ;
     }
     return data;
@@ -81,27 +81,28 @@ static uint16_t spi_read_half_word(void)
 
 uint16_t ReadRegister(unsigned char reg)
 {
+    //return 0x00;
     uint16_t data;
     BK4819_SCN_LOW;
-    delayUs(10);
+    delayUs(1);
 
     spi_write_byte(reg | BK4819_REG_READ);
     data = spi_read_half_word();
 
-    delayUs(10);
+    delayUs(1);
     BK4819_SCN_HIGH;
     return data;
 }
 
-static void WriteRegister(bk4819_reg_t reg, uint16_t data)
+void WriteRegister(bk4819_reg_t reg, uint16_t data)
 {
     BK4819_SCN_LOW;
-    delayUs(10);
+    delayUs(1);
 
     spi_write_byte(reg | BK4819_REG_WRITE);
     spi_write_half_word(data);
 
-    delayUs(10);
+    delayUs(1);
     BK4819_SCN_HIGH;
 }
 
@@ -187,7 +188,7 @@ void bk4819_set_freq(uint32_t freq)
 void bk4819_rx_on(void)
 {
     WriteRegister(0x37, 0x1F0F);
-    delayUs(5);
+    delayUs(1);
     WriteRegister(0x30, 0x0200);
     WriteRegister(0x30, 0xBFF1);
 }
@@ -210,6 +211,7 @@ void bk4819_tx_on(void)
 
 void bk4819_rtx_off(void){
     WriteRegister(BK4819_REG_30, 0x00);  // reset
+    WriteRegister(BK4819_REG_30, BK4819_REG_30_ENABLE_AF_DAC);
 }
 
 // Consolidated function to get the calibration value based on frequency
@@ -366,7 +368,7 @@ int16_t bk4819_get_rssi(void)
     //     usart0_IRQwrite("glitch\r\n");
     //     delayMs(10);
     // }
-    sleepFor(0,6);
+    sleepFor(0,3);
     return ((ReadRegister(0x67) & 0x01FF) / 2) - 160;
     //sleepFor(0,2);
 }
@@ -399,33 +401,42 @@ void BK4819_SetAF(uint8_t AF)
 	// AF Output Inverse Mode = Inverse
 	// Undocumented bits 0x2040
 	//
-//	BK4819_WriteRegister(BK4819_REG_47, 0x6040 | (AF << 8));
+//	WriteRegister(BK4819_REG_47, 0x6040 | (AF << 8));
 	WriteRegister(BK4819_REG_47, (6u << 12) | (AF << 8) | (1u << 6));
 }
 
 __inline uint16_t scale_freq(const uint16_t freq)
 {
-//	return (((uint32_t)freq * 1032444u) + 50000u) / 100000u;   // with rounding
-	return (((uint32_t)freq * 1353245u) + (1u << 16)) >> 17;   // with rounding
+	return (((uint32_t)freq * 1048576u) + 50000u) / 100000u;   // with rounding
 }
 
 // Play tone
-void BK4819_PlayTone(uint16_t Frequency, bool bTuningGainSwitch)
+void BK4819_BeepStart(uint16_t Frequency, bool bTuningGainSwitch)
 {
-	uint16_t ToneConfig = BK4819_REG_70_ENABLE_TONE1;
+	
     //gpio_setPin(MIC_SPK_EN);              
-	WriteRegister(BK4819_REG_50, 0xBB20);
-	BK4819_SetAF(3); // AF Beep
-
-	if (bTuningGainSwitch == 0)
-		ToneConfig |=  96u << BK4819_REG_70_SHIFT_TONE1_TUNING_GAIN;
-	else
-		ToneConfig |= 28u << BK4819_REG_70_SHIFT_TONE1_TUNING_GAIN;
-	WriteRegister(BK4819_REG_70, ToneConfig);   
-
-	WriteRegister(BK4819_REG_30, 0);
-	WriteRegister(BK4819_REG_30, BK4819_REG_30_ENABLE_AF_DAC | BK4819_REG_30_ENABLE_DISC_MODE | BK4819_REG_30_ENABLE_TX_DSP);
+	WriteRegister(BK4819_REG_50, 0x3B20);
+    BK4819_SetAF(3); // AF Beep
+	uint16_t ToneConfig = BK4819_REG_70_ENABLE_TONE1;
+    ToneConfig |=  96u << BK4819_REG_70_SHIFT_TONE1_TUNING_GAIN;
+	WriteRegister(BK4819_REG_70, ToneConfig);  
 
 	WriteRegister(BK4819_REG_71, scale_freq(Frequency));
+    WriteRegister(BK4819_REG_30, 0);
+	WriteRegister(BK4819_REG_30, BK4819_REG_30_ENABLE_AF_DAC | BK4819_REG_30_ENABLE_DISC_MODE | BK4819_REG_30_ENABLE_TX_DSP);
     //usart0_IRQwrite("BK4819_PlayTone\r\n");
+    WriteRegister(BK4819_REG_50, 0x3B20);
+    // for(int i = 0; i < 1000; i++)
+    // {
+    //     WriteRegister(BK4819_REG_71,scale_freq((i % 2) ? 1200 : 2200));
+    //     delayUs(833);
+    // }
+}
+
+
+void BK4819_BeepStop(void)
+{
+    WriteRegister(BK4819_REG_50, 0xBB20);   
+	// WriteRegister(BK4819_REG_30, 0xC1FE);
+    //BK4819_SetAF(1);
 }
