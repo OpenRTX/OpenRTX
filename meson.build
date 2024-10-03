@@ -992,6 +992,23 @@ foreach t : targets
                                  '-D', '@INPUT@',
                                  '-s', '0x08000000'])
 
+      # A36Plus handling
+      elif name == 'openrtx_a36plus'
+        
+          # Wrap target for A36Plus for consistency, same output as bin target
+          # Wrapping is done by "rtxflash wrap A36Plus [input] [output.kdhx]
+          wrap = custom_target(name+'_wrap',
+                        output  : name+'_wrap.kdhx',
+                        input   : bin,
+                        command : [rtxflash, 'wrap', 'A36Plus', '@INPUT@', '@OUTPUT@'])
+  
+          # Flash target for A36Plus
+          # rtxflash flash A36Plus [serialport] [input.kdhx]
+          # FIXME: The serial port should be a parameter!
+          custom_target(name+'_flash',
+                        input   : wrap,
+                        output  : name+'_flash',
+                        command : [rtxflash, 'flash', 'A36Plus', '/dev/ttyUSB0', '@INPUT@'])  
       else
 
         wrap = custom_target(name+'_wrap',
