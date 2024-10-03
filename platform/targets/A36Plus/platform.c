@@ -165,7 +165,7 @@ void platform_ledOff(led_t led)
 
 void platform_beepStart(uint16_t freq)
 {
-    BK4819_PlayTone(freq, true);
+    // BK4819_PlayTone(freq, true);
 }
 
 void platform_beepStop()
