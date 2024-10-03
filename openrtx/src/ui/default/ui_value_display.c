@@ -44,15 +44,6 @@
 #include <SA8x8.h>
 #endif
 
-//@@@KL #include "ui_m17.h"
-
-//@@@KL Note - in order to update the display the state
-// needs to be propagated through to the state
-// hence last_ state has been replaced with state in this file
-// however where values change constantly - eg time -
-//  they will have to be handled statically
-// a lot of these values are not state variables so will have to be rationalised
-
 #include "ui.h"
 #include "ui_value_arrays.h"
 #include "ui_scripts.h"
@@ -682,7 +673,6 @@ static void GuiValDsp_Date( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
-    //@@@KL ensure that the display is updated when the date is set
     if( !guiState->layout.varInputDisplay )
     {
         guiState->edit.localTime = utcToLocalTime( state.time ,
@@ -735,7 +725,6 @@ static void GuiValDsp_Time( GuiState_st* guiState )
 {
     char valueBuffer[ MAX_ENTRY_LEN + 1 ] = "" ;
 
-    //@@@KL ensure that the display is updated when the time is set
     if( !guiState->layout.varInputDisplay )
     {
         guiState->edit.localTime = utcToLocalTime( state.time ,
@@ -1136,15 +1125,11 @@ static void GuiValDsp_HwVersion( GuiState_st* guiState )
 static void GuiValDsp_Radio( GuiState_st* guiState )
 {
     (void)guiState ;
-    //@@@KL Populate
-//    GuiValDsp_Disp_Val( guiState , valueBuffer );
 }
 
 static void GuiValDsp_RadioFw( GuiState_st* guiState )
 {
     (void)guiState ;
-    //@@@KL Populate
-//    GuiValDsp_Disp_Val( guiState , valueBuffer );
 }
 #endif // PLATFORM_TTWRPLUS
 

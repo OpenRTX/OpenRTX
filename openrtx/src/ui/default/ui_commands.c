@@ -43,8 +43,6 @@
 #include <SA8x8.h>
 #endif
 
-//@@@KL #include "ui_m17.h"
-
 #include "ui.h"
 #include "ui_value_arrays.h"
 #include "ui_scripts.h"
@@ -1518,7 +1516,8 @@ static void GuiCmd_Print( GuiState_st* guiState , Color_st color , char* scriptP
     guiState->page.renderPage = true ;
 
 }
-//@@@Kl conditionally compile out
+
+#ifdef DISPLAY_DEBUG_STRING
 void DebugMsg_PrintStr( GuiState_st* guiState , char* scriptPtr )
 {
     Pos_st   pos ;
@@ -1563,6 +1562,7 @@ void DebugMsg_PrintLine( GuiState_st* guiState , char* scriptPtr , uint8_t lineN
     guiState->page.renderPage = true ;
 
 }
+#endif // DISPLAY_DEBUG_STRING
 
 static void BlankLine( GuiState_st* guiState )
 {

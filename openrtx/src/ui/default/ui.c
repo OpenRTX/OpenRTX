@@ -87,8 +87,6 @@
 #include <SA8x8.h>
 #endif
 
-//@@@KL #include "ui_m17.h"
-
 #include "ui.h"
 #include "ui_value_arrays.h"
 #include "ui_scripts.h"
@@ -110,8 +108,6 @@ static void ui_InitGuiStateLayout( Layout_st* layout );
 extern bool _ui_Draw_MacroMenu( GuiState_st* guiState );
 
 extern const char* display_timer_values[];
-
-//@@@KL change all strings over to use englishStrings in EnglishStrings.h
 
 GuiState_st GuiState ;
 

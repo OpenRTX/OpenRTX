@@ -173,7 +173,6 @@ Layout_st layout;
 State_st last_state;
 static UI_State_st ui_state;
 static bool layout_ready = false;
-//@@@KL static bool redraw_needed = true; - defined twice
 
 static bool standby = false;
 static long long last_event_tick = 0;
@@ -852,7 +851,6 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
 
     // There is some event to process, we need an UI redraw.
     // UI redraw request is cancelled if we're in standby mode.
-//@@@KL    redraw_needed = true;
     if(standby) redraw_needed = false;
 
     long long now = getTick();

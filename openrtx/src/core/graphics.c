@@ -681,7 +681,7 @@ Pos_st gfx_printBuffer( Pos_st*   startPos , FontSize_t  fontSize , Align_t alig
         textStartPos.y -= textStartPos.h ;
     }
 
-    //@@@KL - fiddle factor - covers clearing the descender - needs to be objectively determined
+    // fiddle factor - covers clearing the descender - needs to be objectively determined
     textStartPos.h += 4 ;
 
     return textStartPos ;

@@ -31,8 +31,9 @@
 #include <event.h>
 #include <ui.h>
 
-#define ENABLE_DEBUG_MSG
+//#define ENABLE_DEBUG_MSG
 //#define DISPLAY_DEBUG_MSG
+//#define DISPLAY_DEBUG_STRING
 //#define ENABLE_TEST_SCRIPTS
 
 // Maximum menu entry length

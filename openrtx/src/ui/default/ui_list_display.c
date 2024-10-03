@@ -286,6 +286,7 @@ static void List_EntryDisplay_Contacts( GuiState_st* guiState )
 
 static void List_EntrySelect_Contacts( GuiState_st* guiState )
 {
+    (void)guiState;
     bool sync_rtx = false ;
 
     _ui_fsm_loadContact( guiState->layout.list.selection , &sync_rtx );

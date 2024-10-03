@@ -310,7 +310,9 @@ extern void ui_ColorLoad( Color_st* color , ColorSelector_en colorSelector );
 extern void ui_Draw_Page( GuiState_st* guiState );
 extern void ui_RenderDisplay( GuiState_st* guiState );
 
+#ifdef DISPLAY_DEBUG_STRING
 extern void DebugMsg_PrintStr( GuiState_st* guiState , char* scriptPtr );
 extern void DebugMsg_PrintLine( GuiState_st* guiState , char* scriptPtr , uint8_t lineNum );
+#endif // DISPLAY_DEBUG_STRING
 
 #endif // UI_COMMANDS_H

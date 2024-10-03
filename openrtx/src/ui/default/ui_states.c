@@ -45,8 +45,6 @@
 #include <SA8x8.h>
 #endif
 
-//@@@KL #include "ui_m17.h"
-
 #include "ui.h"
 #include "ui_value_arrays.h"
 #include "ui_scripts.h"
@@ -77,9 +75,6 @@ static bool    CheckStandby( long long time_since_last_event );
 static freq_t  FreqAddDigit( freq_t freq , uint8_t pos , uint8_t number );
 static bool    FreqCheckLimits( freq_t freq );
 static bool    FreqCheckLimits( freq_t freq );
-static void    ui_States_MenuUpNoWrapAround( GuiState_st* guiState );
-static bool    ui_States_IsEntryPage( GuiState_st* guiState );
-//static uint8_t ui_States_GetPageNumOfEntries( GuiState_st* guiState );
 
 static void ui_States_SetPageNum( GuiState_st* guiState , uint8_t pageNum );
 
@@ -231,7 +226,6 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
                             macro_latched = false ;
                             vp_beep( BEEP_FUNCTION_LATCH_OFF , LONG_BEEP );
                         }
-//@@@KL                        FSM_MenuMacro( guiState , guiState->msg , sync_rtx );
                         processEvent = false ;
                     }
                     else
@@ -291,18 +285,11 @@ void ui_updateFSM( bool* sync_rtx , Event_st* event )
                     {
                         vp_beep( BEEP_KEY_GENERIC , SHORT_BEEP );
                     }
-                    // If we exit and re-enter the same menu, we want to ensure it speaks.
-/*@@@KL                    if( guiState->msg.keys & KEY_ESC )
-                    {
-                        _ui_reset_menu_anouncement_tracking();
-                    }*/
                 }
-//@@@KL                redraw_needed = true ;
                 break ;
             }// case EVENT_TYPE_KBD :
             case EVENT_TYPE_STATUS :
             {
-//@@@KL                redraw_needed = true ;
 #ifdef GPS_PRESENT
                 if( ( guiState->page.num == PAGE_MENU_GPS ) &&
                     !vp_isPlaying()                         &&
@@ -407,19 +394,7 @@ char* uiGetPageTextString( uiPageNum_en pageNum , uint8_t textStringIndex )
 
     return ptr ;
 }
-/*
-static bool UpdatePage( GuiState_st* guiState , Event_st* event )
-{
-    bool sync_rtx ;
 
-    guiState->event = *event ;
-
-    ui_Draw_Page( guiState );
-//@@@KL - redact    sync_rtx = ui_updateFSM_PageTable[ guiState->page.num ]( guiState );
-
-    return sync_rtx ;
-}
-*/
 static freq_t FreqAddDigit( freq_t freq , uint8_t pos , uint8_t number )
 {
     freq_t coefficient = 100 ;
@@ -432,89 +407,6 @@ static freq_t FreqAddDigit( freq_t freq , uint8_t pos , uint8_t number )
     return freq += number * coefficient ;
 
 }
-
-#ifdef RTC_PRESENT
-static void _ui_timedate_add_digit( datetime_t* timedate ,
-                                    uint8_t     pos      ,
-                                    uint8_t     number     )
-{
-    vp_flush();
-    vp_queueInteger( number );
-    if( ( pos == 2 ) || ( pos == 4 ) )
-    {
-        vp_queuePrompt( PROMPT_SLASH );
-    }
-    // just indicates separation of date and time.
-    if( pos == 6 ) // start of time.
-    {
-        vp_queueString( "hh:mm" , VP_ANNOUNCE_COMMON_SYMBOLS | VP_ANNOUNCE_LESS_COMMON_SYMBOLS );
-    }
-    if( pos == 8 )
-    {
-        vp_queuePrompt( PROMPT_COLON );
-    }
-    vp_play();
-
-    switch( pos )
-    {
-        // Set date
-        case 1:
-        {
-            timedate->date += number * 10 ;
-            break ;
-        }
-        case 2:
-        {
-            timedate->date += number ;
-            break ;
-        }
-        // Set month
-        case 3:
-        {
-            timedate->month += number * 10 ;
-            break ;
-        }
-        case 4:
-        {
-            timedate->month += number ;
-            break ;
-        }
-        // Set year
-        case 5:
-        {
-            timedate->year += number * 10 ;
-            break ;
-        }
-        case 6:
-        {
-            timedate->year += number ;
-            break ;
-        }
-        // Set hour
-        case 7:
-        {
-            timedate->hour += number * 10 ;
-            break ;
-        }
-        case 8:
-        {
-            timedate->hour += number ;
-            break ;
-        }
-        // Set minute
-        case 9:
-        {
-            timedate->minute += number * 10 ;
-            break ;
-        }
-        case 10:
-        {
-            timedate->minute += number ;
-            break ;
-        }
-    }
-}
-#endif
 
 static bool FreqCheckLimits( freq_t freq )
 {
@@ -618,82 +510,6 @@ int _ui_fsm_loadContact( int16_t contact_index , bool* sync_rtx )
     }
 
     return result ;
-}
-
-static void FSM_InsertVFONumber( GuiState_st* guiState , kbd_msg_t msg , bool* sync_rtx )
-{
-    // Advance input position
-    guiState->uiState.input_position += 1 ;
-    // clear any prompts in progress.
-    vp_flush() ;
-    // Save pressed number to calculate frequency and show in GUI
-    guiState->uiState.input_number = input_getPressedNumber( msg );
-    // queue the digit just pressed.
-    vp_queueInteger( guiState->uiState.input_number );
-    // queue  point if user has entered three digits.
-    if( guiState->uiState.input_position == 3 )
-    {
-        vp_queuePrompt( PROMPT_POINT );
-    }
-
-    switch( guiState->uiState.input_set )
-    {
-        case SET_RX :
-        {
-            if( guiState->uiState.input_position == 1 )
-            {
-                guiState->uiState.new_rx_frequency = 0 ;
-            }
-            // Calculate portion of the new RX frequency
-            guiState->uiState.new_rx_frequency = FreqAddDigit( guiState->uiState.new_rx_frequency ,
-                                                                     guiState->uiState.input_position   ,
-                                                                     guiState->uiState.input_number       );
-            if( guiState->uiState.input_position >= FREQ_DIGITS )
-            {
-                // queue the rx freq just completed.
-                vp_queueFrequency( guiState->uiState.new_rx_frequency );
-                /// now queue tx as user has changed fields.
-                vp_queuePrompt( PROMPT_TRANSMIT );
-                // Switch to TX input
-                guiState->uiState.input_set        = SET_TX ;
-                // Reset input position
-                guiState->uiState.input_position   = 0 ;
-                // Reset TX frequency
-                guiState->uiState.new_tx_frequency = 0 ;
-            }
-            break ;
-        }
-        case SET_TX :
-        {
-            if( guiState->uiState.input_position == 1 )
-            {
-                guiState->uiState.new_tx_frequency = 0 ;
-            }
-            // Calculate portion of the new TX frequency
-            guiState->uiState.new_tx_frequency = FreqAddDigit( guiState->uiState.new_tx_frequency ,
-                                                                     guiState->uiState.input_position   ,
-                                                                     guiState->uiState.input_number       );
-            if( guiState->uiState.input_position >= FREQ_DIGITS )
-            {
-                // Save both inserted frequencies
-                if( FreqCheckLimits( guiState->uiState.new_rx_frequency ) &&
-                    FreqCheckLimits( guiState->uiState.new_tx_frequency )    )
-                {
-                    state.channel.rx_frequency = guiState->uiState.new_rx_frequency ;
-                    state.channel.tx_frequency = guiState->uiState.new_tx_frequency ;
-                    *sync_rtx                  = true;
-                    // play is called at end.
-                    vp_announceFrequencies( state.channel.rx_frequency ,
-                                            state.channel.tx_frequency , VPQ_INIT );
-                }
-
-                ui_States_SetPageNum( guiState , PAGE_MAIN_VFO );
-            }
-            break ;
-        }
-    }
-
-    vp_play();
 }
 
 #ifdef SCREEN_BRIGHTNESS
