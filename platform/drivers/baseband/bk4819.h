@@ -4,6 +4,7 @@
 
 #include "gpio.h"
 #include "peripherals/gpio.h"
+#include <calibInfo_A36Plus.h>
 // Written by Jamiexu
 #ifdef __cplusplus
 extern "C" {
@@ -242,9 +243,18 @@ void bk4819_set_freq(uint32_t frq);
 /**
  * @brief Set TX power
  *
- * @param power
+ * @param power TX power in mW
+ * @param freq Frequency
+ * @param calData Calibration data
  */
-void bk4819_setTxPower(uint32_t power);
+void bk4819_setTxPower(uint32_t power, uint32_t freq, PowerCalibrationTables calData);
+
+/**
+ * @brief Get band from frequency
+ * 
+ * @return uint32_t 
+ */
+uint8_t getBandFromFreq(uint32_t freq);
 
 /**
  * @brief Turn on RX

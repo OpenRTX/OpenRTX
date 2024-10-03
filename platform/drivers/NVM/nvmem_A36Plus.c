@@ -22,7 +22,7 @@
 #include <wchar.h>
 #include <interfaces/delays.h>
 #include <interfaces/nvmem.h>
-#include <calibInfo_GDx.h>
+#include <calibInfo_A36Plus.h>
 #include <utils.h>
 #include "AT24Cx.h"
 #include "W25Qx.h"
@@ -52,24 +52,9 @@ typedef struct
 }
 __attribute__((packed)) dataBlock_t;
 
-//TODO: change these to real addresses when I figure out the
-// cal data location and format
-static const uint32_t UHF_CAL_BASE = 0x8F000;
-static const uint32_t VHF_CAL_BASE = 0x8F070;
+static const uint32_t CAL_BASE = 0xF000;
 
 static const uint32_t baseAddress = 0x000A1000;     // 0x000A1000;
-
-/**
- * \internal Utility function for loading band-specific calibration data into
- * the corresponding data structure.
- *
- * @param baseAddr: start address of the data block;
- * @param cal: pointer to calibration data structure to be filled.
- */
-static void _loadBandCalData(uint32_t baseAddr, bandCalData_t *cal)
-{
-    return;
-}
 
 // A function that dumps a portion of external flash to UART
 #if 0
@@ -80,14 +65,16 @@ void nvm_dumpFlash()
 
     uint8_t buf[16];
     // there's no printf, so use sprintf to write to a buffer and then write the buffer to UART
-    char str[16];
-    for(uint32_t i = 0xA1000; i < 0xA1100; i += 16)
+    char str[64];
+    for(uint32_t i = 0; i < 0x4000; i += 16)
     {
         W25Qx_readData(i, buf, 16);
-        printf("\r\nx%08X ", i);
+        sprintf(str, "\r\nx%08X ", i);
+        usart0_IRQwrite(str);
         for(uint8_t j = 0; j < 16; j++)
         {
-            printf("%02X", buf[j]);
+            sprintf(str, "%02X", buf[j]);
+            usart0_IRQwrite(str);
         }
     }
 
@@ -115,38 +102,20 @@ const struct nvmDescriptor *nvm_getDesc(const size_t index)
 
 void nvm_readCalibData(void *buf)
 {
-    return; // for now
     W25Qx_wakeup();
     delayUs(5);
 
+    PowerCalibrationTables *calib = ((PowerCalibrationTables *) buf);
 
-    gdxCalibration_t *calib = ((gdxCalibration_t *) buf);
-
-    _loadBandCalData(VHF_CAL_BASE, &(calib->data[0]));  /* Load VHF band calibration data */
-    _loadBandCalData(UHF_CAL_BASE, &(calib->data[1]));  /* Load UHF band calibration data */
+    // Load calibration data
+    uint32_t addr = CAL_BASE;
+    W25Qx_readData(addr, &calib->high, sizeof(PowerCalibration));
+    addr += sizeof(PowerCalibration);
+    W25Qx_readData(addr, &calib->med, sizeof(PowerCalibration));
+    addr += sizeof(PowerCalibration);
+    W25Qx_readData(addr, &calib->low, sizeof(PowerCalibration));
 
     // W25Qx_sleep();
-
-    /*
-     * Finally, load calibration points. These are common among all the GDx
-     * devices.
-     * VHF calibration head and tail are not equally spaced as the other points,
-     * so we manually override the values.
-     */
-    for(uint8_t i = 0; i < 16; i++)
-    {
-        uint8_t ii = i/2;
-        calib->uhfCalPoints[ii]     = 405000000 + (5000000 * ii);
-        calib->uhfPwrCalPoints[i]   = 400000000 + (5000000 * i);
-    }
-
-    for(uint8_t i = 0; i < 8; i++)
-    {
-        calib->vhfCalPoints[i] = 135000000 + (5000000 * i);
-    }
-
-    calib->vhfCalPoints[0] = 136000000;
-    calib->vhfCalPoints[7] = 172000000;
 }
 
 void nvm_readHwInfo(hwInfo_t *info)
@@ -154,36 +123,6 @@ void nvm_readHwInfo(hwInfo_t *info)
     /* Not sure yet. */
     (void) info;
 }
-/*
-int nvm_readVfoChannelData(channel_t *channel)
-{
-    // Read the channel data from the external flash
-    W25Qx_readData(0x000A1000, channel, sizeof(channel_t));
-    return 0;
-}
-
-int nvm_readSettings(settings_t *settings)
-{
-    // Read the settings from the external flash
-    W25Qx_readData(0x000A1000 + sizeof(channel_t), settings, sizeof(settings_t));
-    return 0;
-}
-
-int nvm_writeSettings(const settings_t *settings)
-{
-    // Write the settings to the external flash
-    W25Qx_writeData(0x000A1000 + sizeof(channel_t), settings, sizeof(settings_t));
-    return 0;
-}
-
-int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
-{
-    // Write the settings and VFO data to the external flash
-    W25Qx_writeData(0x000A1000, vfo, sizeof(channel_t));
-    W25Qx_writeData(0x000A1000 + sizeof(channel_t), settings, sizeof(settings_t));
-    return 0;
-}
-*/
 
 int nvm_readVfoChannelData(channel_t *channel)
 {
