@@ -177,6 +177,7 @@ void rtx_task()
                     state.spectrum_data[i] = height;
                     // give the UI a chance to refresh
                     state.spectrum_shouldRefresh = true;
+                    sleepFor(0, 50);
                 }
                 // turn the speaker off
                 radio_disableAfOutput();
