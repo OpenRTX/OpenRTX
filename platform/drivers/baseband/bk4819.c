@@ -30,8 +30,12 @@ SOFTWARE.
  */
 
 #include "bk4819.h"
+#include <calibInfo_A36Plus.h>
+#include <lib/printf/printf.h>
 
 #include "interfaces/delays.h"
+
+extern PowerCalibrationTables *calData;
 
 static void spi_write_byte(uint8_t data)
 {
@@ -208,29 +212,62 @@ void bk4819_rtx_off(void){
     WriteRegister(BK4819_REG_30, 0x00);  // reset
 }
 
-// set BK4819 power
-void bk4819_setTxPower(uint32_t power)
+// Consolidated function to get the calibration value based on frequency
+uint8_t getPaBiasCalValue(uint32_t freq, PowerCalibration calTable) {
+    if (freq < 130000000) {
+        return calTable.power_below_130mhz;
+    } else if (freq >= 455000000 && freq <= 470000000) {
+        return calTable.power_455_470mhz;
+    } else if (freq >= 420000000 && freq < 455000000) {
+        return calTable.power_420_455mhz;
+    } else if (freq >= 300000000 && freq < 420000000) {
+        return calTable.power_300_420mhz;
+    } else if (freq >= 200000000 && freq < 300000000) {
+        return calTable.power_200_300mhz;
+    } else if (freq >= 166000000 && freq < 200000000) {
+        return calTable.power_166_200mhz;
+    } else if (freq >= 145000000 && freq < 166000000) {
+        return calTable.power_145_166mhz;
+    } else if (freq >= 130000000 && freq < 145000000) {
+        return calTable.power_130_145mhz;
+    }
+    // Default case, should not happen if freq is within valid range
+    return calTable.power_below_130mhz;
+}
+
+void bk4819_setTxPower(uint32_t power, uint32_t freq, PowerCalibrationTables calData)
 {
-    // Power setting is done by setting the PA bias voltage
-    // in REG_36<15:8> and the gain tuning values in <5:0>.
-    // I'm eyeballing what 1W, 5W and 10W should be,
-    // but I'm not at all sure if the values are correct.
     uint16_t reg = 0;
+    uint8_t PaBias = 0;
+    uint8_t PaGainValues = 0;
+    
+    // NOTE: PaGainValues taken straight from disassembly.
+
+    // Determine the PaGainValues based on power
     switch (power)
     {
     case 1000:
-        reg = 0x40A6;
+        PaGainValues = 0xD7;
+        // Retrieve the top byte from calData based on power and frequency
+        PaBias = getPaBiasCalValue(freq, calData.low);
         break;
     case 5000:
-        reg = 0x9FAD;
+        PaGainValues = 0xD7;
+        PaBias = getPaBiasCalValue(freq, calData.med);
         break;
     case 10000:
-        reg = 0xFFBF;
+        PaGainValues = 0xFF;
+        PaBias = getPaBiasCalValue(freq, calData.high);
         break;
     default:
-        reg = 0x2092;
+        PaGainValues = 0x13;
+        PaBias = getPaBiasCalValue(freq, calData.low);
         break;
     }
+
+    // Combine the top byte with the least significant byte
+    reg = (PaBias << 8) | PaGainValues;
+
     WriteRegister(BK4819_REG_36, reg);
 }
 

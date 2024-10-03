@@ -19,6 +19,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <calibInfo_A36Plus.h>
+#include <interfaces/nvmem.h>
 #include <drivers/USART0.h>
 #include <gd32f3x0.h>
 #include <hwconfig.h>
@@ -37,9 +39,7 @@
 static const rtxStatus_t*
     config;  // Pointer to data structure with radio configuration
 
-// static gdxCalibration_t calData;        // Calibration data
-// static Band currRxBand     = BND_NONE;  // Current band for RX
-// static Band currTxBand     = BND_NONE;  // Current band for TX
+static PowerCalibrationTables calData;        // Power (PA bias) calibration data
 // static uint16_t apcVoltage = 0;  // APC voltage for TX output power control
 
 static enum opstatus radioStatus;  // Current operating status
@@ -74,6 +74,9 @@ void radio_init(const rtxStatus_t* rtxState)
 {
     config      = rtxState;
     radioStatus = OFF;
+
+    // Load calibration data
+    nvm_readCalibData(&calData);
 
     /*
      * Configure RTX GPIOs
@@ -222,7 +225,7 @@ void radio_updateConfiguration()
                          0x5f, 0x5e, 0x20, 0x08
                       );
     // Set BK4819 PA Gain tuning according to TX power (config->txPower)
-    bk4819_setTxPower(config->txPower);
+    bk4819_setTxPower(config->txPower, config->txFrequency, calData);
     bk4819_set_freq(config->rxFrequency / 10);
     // Disable corresponding filter
     // If frequency is VHF, toggle GPIO C15
