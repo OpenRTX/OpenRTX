@@ -60,6 +60,7 @@ typedef struct
     bool       backup_eflash;
     bool       restore_eflash;
     bool       txDisable;
+    bool       ptt;
     uint8_t    step_index;
 }
 state_t;
