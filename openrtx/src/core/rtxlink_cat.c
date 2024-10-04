@@ -51,6 +51,7 @@ enum catCommand
     CAT_OP_MODE      = 0x4F4D,
     CAT_M17_CALLSIGN = 0x4D43,
     CAT_M17_DEST     = 0x4D44,
+    CAT_PTT          = 0x5054,
 
     // Miscellaneous CAT command
     CAT_POWER_CYCLE  = 0x5043,
@@ -132,6 +133,13 @@ static size_t catCommandGet(const uint8_t *args, const size_t len,
             ret += 1;
             break;
 
+        case CAT_PTT:
+
+            status = rtx_getCurrentStatus();
+            reply[1] = status.opStatus;
+            ret += 1;
+            break;
+
         case CAT_M17_CALLSIGN:
 
             status = rtx_getCurrentStatus();
@@ -163,6 +171,7 @@ static void catConfigureRtx(void)
     rtxStatus_t rtx_cfg;
 
     pthread_mutex_lock(&rtx_mutex);
+    rtx_cfg.ptt         = state.ptt;
     rtx_cfg.opMode      = state.channel.mode;
     rtx_cfg.bandwidth   = state.channel.bandwidth;
     rtx_cfg.rxFrequency = state.channel.rx_frequency;
@@ -240,6 +249,17 @@ static size_t catCommandSet(const uint8_t *args, const size_t len,
             }
             pthread_mutex_unlock(&state_mutex);
             catConfigureRtx();
+            break;
+
+        case CAT_PTT:
+
+            if (args[2] <= RTX_TX)
+            {
+                pthread_mutex_lock(&state_mutex);
+                state.ptt = args[2] == TX ? 1 : 0;
+                pthread_mutex_unlock(&state_mutex);
+                catConfigureRtx();
+            }
             break;
 
         case CAT_M17_CALLSIGN:
