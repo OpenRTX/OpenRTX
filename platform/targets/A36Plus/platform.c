@@ -30,7 +30,7 @@
 static const hwInfo_t hwInfo =
 {
     .vhf_maxFreq = 200,
-    .vhf_minFreq = 136,
+    .vhf_minFreq = 108,
     .vhf_band    = 1,
     .uhf_maxFreq = 650,
     .uhf_minFreq = 200,
@@ -76,8 +76,8 @@ void spi_config(void)
 void platform_init()
 {
     // Configure GPIOs
-    // gpio_setMode(GREEN_LED, OUTPUT);
-    // gpio_setMode(RED_LED,   OUTPUT);
+    gpio_setMode(GREEN_LED, OUTPUT);
+    gpio_setMode(RED_LED,   OUTPUT);
     gpio_setMode(PTT_SW,    INPUT_PULL_UP);
     spi_config();
     backlight_init();

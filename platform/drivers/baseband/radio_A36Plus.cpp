@@ -187,6 +187,10 @@ void radio_enableRx()
 
 void radio_enableTx()
 {
+    // if(config->txDisable == 1) return;
+    // TODO: do this better
+    if (config->txFrequency < 136000000 || config->txFrequency > 600000000)
+        return;
     bk4819_set_freq(config->txFrequency / 10);
     //bk4819_enable_tx_cdcss(1, 0, cdcss_compose(492));
     if (config->txToneEn){
@@ -218,19 +222,21 @@ void radio_disableRtx()
 
 void radio_updateConfiguration()
 {
+    // // If we're in < 136MHz or > 600MHz, disallow transmitting
+    // if (config->txFrequency < 136000000 || config->txFrequency > 600000000)
+    //     config->txDisable = 1;
+    // else
+    //     config->txDisable = 0;
     // Set squelch
     int squelch = -127 + (config->sqlLevel * 66) / 15;
     bk4819_set_Squelch((squelch / 2 + 160) * 2,
                         ((squelch - 2) / 2 + 160) * 2,
                          0x5f, 0x5e, 0x20, 0x08
                       );
-    // Set BK4819 PA Gain tuning according to TX power (config->txPower)
+    // Set BK4819 PA Gain tuning according to TX power and frequency
     bk4819_setTxPower(config->txPower, config->txFrequency, calData);
     bk4819_set_freq(config->rxFrequency / 10);
-    // Disable corresponding filter
-    // If frequency is VHF, toggle GPIO C15
-    // If frequency is UHF, toggle BK4819 GPIO 4
-    // If TX:
+
     if (radioStatus == RX){
         radio_setRxFilters(config->rxFrequency / 10);
     }
