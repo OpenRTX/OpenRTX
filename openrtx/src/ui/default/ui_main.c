@@ -79,7 +79,12 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
     switch(last_state.channel.mode)
     {
         case OPMODE_FM:
-
+            #ifdef PLATFORM_A36PLUS
+            // Account for AM
+            if(!last_state.settings.rx_modulation)
+                sniprintf(bw_str, 8, "AM");
+            else
+            #endif
             // Get Bandwidth string
             if(last_state.channel.bandwidth == BW_12_5)
                 sniprintf(bw_str, 8, "NFM");

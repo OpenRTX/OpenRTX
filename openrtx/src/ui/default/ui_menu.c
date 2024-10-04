@@ -1380,8 +1380,15 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
     switch(last_state.channel.mode)
     {
         case OPMODE_FM:
-        sniprintf(mode_str, 12,"         FM");
+        #ifdef PLATFORM_A36PLUS
+        // check for AM mode
+        if (last_state.settings.rx_modulation)
+            sniprintf(mode_str, 12,"         FM");
+        else
+            sniprintf(mode_str, 12,"         AM");
         break;
+        #endif
+        sniprintf(mode_str, 12,"         FM");
         case OPMODE_DMR:
         sniprintf(mode_str, 12,"        DMR");
         break;
