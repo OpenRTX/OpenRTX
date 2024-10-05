@@ -38,7 +38,8 @@ typedef struct
             txDisable : 1,  /**< Disable TX operation          */
             scan      : 1,  /**< Scan enabled                  */
             opStatus  : 2,  /**< Operating status (OFF, ...)   */
-            _padding  : 2;  /**< Padding to 8 bits             */
+            ptt       : 1,  /**< Override platform PTT button  */
+            _padding  : 1;  /**< Padding to 8 bits             */
 
     freq_t rxFrequency;     /**< RX frequency, in Hz           */
     freq_t txFrequency;     /**< TX frequency, in Hz           */
