@@ -155,7 +155,10 @@ void rtx_task()
         {
             bk4819_set_freq((state.spectrum_startFreq + i * spectrumStep));
             rssi = radio_getRssi();
-            uint8_t height = (rssi + 160) / 2;
+            // uint8_t height = (rssi + 160) / 2;
+            // Macro for log2, not using the math library
+            #define log2(x) (31 - __builtin_clz(x))
+            uint8_t height = ((rssi + 160)*log2(22-rssi>>1))>>3;
             state.spectrum_data[i] = height;
             // set peak value
             if(rssi > state.spectrum_peakRssi)
@@ -170,14 +173,23 @@ void rtx_task()
             {
                 // turn the speaker on
                 radio_enableAfOutput();
-                while(radio_getRssi() > (-127 + (state.settings.sqlLevel * 66) / 15))
+                rssi = radio_getRssi();
+                while(rssi > (-127 + (state.settings.sqlLevel * 66) / 15))
                 {
-                    // wait for the squelch to close
-                    uint8_t height = (rssi + 160) / 2;
+                    // allow us to exit the loop if the spectrum has been exited,
+                    // or the frequency has changed
+                    if(state.rtxStatus != RTX_SPECTRUM ||
+                       state.spectrum_peakFreq != state.spectrum_startFreq + i * spectrumStep)
+                    {
+                        state.spectrum_data[i] = 0;
+                        break;
+                    }
+                    rssi = radio_getRssi();
+                    height = ((rssi + 160)*log2(22-rssi>>1))>>3;
                     state.spectrum_data[i] = height;
                     // give the UI a chance to refresh
                     state.spectrum_shouldRefresh = true;
-                    sleepFor(0, 50);
+                    sleepFor(0, 150);
                 }
                 // turn the speaker off
                 radio_disableAfOutput();
