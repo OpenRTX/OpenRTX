@@ -175,7 +175,6 @@ static void catConfigureRtx(void)
     rtxStatus_t rtx_cfg;
 
     pthread_mutex_lock(&rtx_mutex);
-    rtx_cfg.opStatus    = state.rtxStatus;
     rtx_cfg.ptt         = state.ptt;
     rtx_cfg.opMode      = state.channel.mode;
     rtx_cfg.bandwidth   = state.channel.bandwidth;
