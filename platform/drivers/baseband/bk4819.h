@@ -325,6 +325,11 @@ void bk4819_disable_ctdcss(void);
 uint16_t bk4819_get_ctcss(void);
 
 /**
+ * @brief Set filter bandwidth (0:12.5KHz 1:25KHz)
+ */
+void bk4819_SetFilterBandwidth(uint8_t bandwidth);
+
+/**
  * @brief Enable VOX
  *
  * @param delay_time VOX = 0 detection delay, ~ 128 ms

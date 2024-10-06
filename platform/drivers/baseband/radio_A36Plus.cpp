@@ -114,6 +114,11 @@ void radio_terminate()
 {
 }
 
+void radio_setBandwidth(const uint8_t bandwidth)
+{
+    bk4819_SetFilterBandwidth(bandwidth);
+}
+
 void radio_tuneVcxo(const int16_t vhfOffset, const int16_t uhfOffset)
 {
     (void)vhfOffset;
@@ -239,6 +244,7 @@ void radio_updateConfiguration()
 
     if (radioStatus == RX){
         radio_setRxFilters(config->rxFrequency / 10);
+        radio_setBandwidth(config->bandwidth);
     }
 }
 

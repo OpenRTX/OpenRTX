@@ -214,6 +214,16 @@ void bk4819_rtx_off(void){
     WriteRegister(BK4819_REG_30, BK4819_REG_30_ENABLE_AF_DAC);
 }
 
+void bk4819_SetFilterBandwidth(uint8_t bandwidth)
+{
+    uint16_t Value = ReadRegister(0x43); 
+    if (bandwidth) { // 25kHz
+        WriteRegister(0x43, (Value & ~0x30) | 32);
+    } else { //12.5kHz
+        WriteRegister(0x43, (Value & ~0x30) | 0);
+    }
+}
+
 // Consolidated function to get the calibration value based on frequency
 uint8_t getPaBiasCalValue(uint32_t freq, PowerCalibration calTable) {
     if (freq < 130000000) {
