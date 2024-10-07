@@ -36,7 +36,8 @@ typedef struct
    uint16_t ctcss_transmit; // divide by 10 to get Hz
    uint8_t unknown[2];
    uint8_t power; // high 0x00, low 0x01, medium 0x02
-   uint8_t unknown2;
+   uint8_t bandwidth : 2; // 0x00 = 25 kHz, 0x01 = 12.5 kHz
+   uint8_t unknown2 : 6;
    uint8_t unknown3[4]; // always 0xff? maybe the name can be 16 chars
    char name[12]; // channel name
 }

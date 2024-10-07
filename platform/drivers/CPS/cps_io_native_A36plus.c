@@ -77,11 +77,11 @@ int cps_readChannel(channel_t *channel, uint16_t pos)
     }
 
     channel->mode            = OPMODE_FM;
-    channel->bandwidth       = 1;            // TODO: find the channel mode setting and implement it
-    channel->rx_only         = false; // TODO: implement rx_only for channels that are RX only (airband, for instance)
+    channel->bandwidth       = !chData.bandwidth;            // inverted because 0x00 = 25 kHz, 0x01 = 12.5 kHz
     channel->power           = chData.power == 0x00 ? 10000 : chData.power == 0x01 ? 1000 : 5000; // 0x00 = high, 0x01 = low, 0x02 = medium
     channel->rx_frequency    = bcdToBin(chData.rx_frequency) * 10;
     channel->tx_frequency    = bcdToBin(chData.tx_frequency) * 10;
+    channel->rx_only         = channel->tx_frequency < 136000000 ? 1 : 0;
     channel->scanList_index  = 0;
     channel->groupList_index = 0;
 
