@@ -22,10 +22,12 @@
 #include <string.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/delays.h>
-#include <calibInfo_MDx.h>
+#include <nvmem_access.h>
 #include <utils.h>
 #include "cps_data_MDUV3x0.h"
 #include "W25Qx.h"
+
+extern const struct nvmDevice eflash;
 
 //static const uint32_t vfoChannelBaseAddr = 0x2EF00; /**< Base address of VFO channel                           */
 static const uint32_t zoneBaseAddr       = 0x149E0;   /**< Base address of zones                                 */
@@ -36,17 +38,18 @@ static const uint32_t maxNumChannels     = 3000;      /**< Maximum number of cha
 static const uint32_t maxNumZones        = 250;       /**< Maximum number of zones and zone extensions in memory */
 static const uint32_t maxNumContacts     = 10000;     /**< Maximum number of contacts in memory                  */
 
+static inline void W25Qx_readData(uint32_t addr, void *buf, size_t len)
+{
+    nvm_devRead(&eflash, addr, buf, len);
+}
 
 /**
  * Used to read channel data from SPI flash into a channel_t struct
  */
 static int _readChannelAtAddress(channel_t *channel, uint32_t addr)
 {
-    W25Qx_wakeup();
-    delayUs(5);
     mduv3x0Channel_t chData;
     W25Qx_readData(addr, ((uint8_t *) &chData), sizeof(mduv3x0Channel_t));
-    W25Qx_sleep();
 
     // Check if the channel is empty
     #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
@@ -171,16 +174,12 @@ int cps_readBankHeader(bankHdr_t *b_header, uint16_t pos)
 {
     if(pos >= maxNumZones) return -1;
 
-    W25Qx_wakeup();
-    delayUs(5);
-
     mduv3x0Zone_t zoneData;
     mduv3x0ZoneExt_t zoneExtData;
     uint32_t zoneAddr = zoneBaseAddr + pos * sizeof(mduv3x0Zone_t);
     uint32_t zoneExtAddr = zoneExtBaseAddr + pos * sizeof(mduv3x0ZoneExt_t);
     W25Qx_readData(zoneAddr, ((uint8_t *) &zoneData), sizeof(mduv3x0Zone_t));
     W25Qx_readData(zoneExtAddr, ((uint8_t *) &zoneExtData), sizeof(mduv3x0ZoneExt_t));
-    W25Qx_sleep();
 
     // Check if zone is empty
     #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
@@ -200,16 +199,12 @@ int cps_readBankData(uint16_t bank_pos, uint16_t ch_pos)
 {
     if(bank_pos >= maxNumZones) return -1;
 
-    W25Qx_wakeup();
-    delayUs(5);
-
     mduv3x0Zone_t zoneData;
     mduv3x0ZoneExt_t zoneExtData;
     uint32_t zoneAddr = zoneBaseAddr + bank_pos * sizeof(mduv3x0Zone_t);
     uint32_t zoneExtAddr = zoneExtBaseAddr + bank_pos * sizeof(mduv3x0ZoneExt_t);
     W25Qx_readData(zoneAddr, ((uint8_t *) &zoneData), sizeof(mduv3x0Zone_t));
     W25Qx_readData(zoneExtAddr, ((uint8_t *) &zoneExtData), sizeof(mduv3x0ZoneExt_t));
-    W25Qx_sleep();
 
     // Check if zone is empty
     #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
@@ -226,13 +221,9 @@ int cps_readContact(contact_t *contact, uint16_t pos)
 {
     if(pos >= maxNumContacts) return -1;
 
-    W25Qx_wakeup();
-    delayUs(5);
-
     mduv3x0Contact_t contactData;
     uint32_t contactAddr = contactBaseAddr + pos * sizeof(mduv3x0Contact_t);
     W25Qx_readData(contactAddr, ((uint8_t *) &contactData), sizeof(mduv3x0Contact_t));
-    W25Qx_sleep();
 
     // Check if contact is empty
     if(wcslen((wchar_t *) contactData.name) == 0) return -1;

@@ -209,7 +209,6 @@ stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.cpp',
                  'platform/mcu/STM32F4xx/drivers/usb_vcom.c',
                  'platform/mcu/STM32F4xx/drivers/delays.cpp',
                  'platform/mcu/STM32F4xx/drivers/rtc.c',
-                 'platform/mcu/STM32F4xx/drivers/SPI2.c',
                  'platform/mcu/STM32F4xx/drivers/USART3.cpp',
                  'platform/mcu/STM32F4xx/drivers/flash.c',
                  'platform/mcu/STM32F4xx/drivers/rng.c',
@@ -372,11 +371,11 @@ mduv3x0_def += openrtx_def + stm32f405_def + miosix_cm4f_def
 ## TYT MD-9600
 ##
 md9600_src = ['platform/targets/MD-9600/platform.c',
+              'platform/targets/MD-9600/hwconfig.c',
               'platform/drivers/display/ST7567_MD9600.c',
               'platform/drivers/keyboard/keyboard_MD9600.c',
               'platform/drivers/chSelector/chSelector_MD9600.c',
               'platform/drivers/baseband/radio_MD9600.cpp',
-              'platform/drivers/NVM/spiFlash_MD9600.c',
               'platform/drivers/CPS/cps_io_native_MD9600.c']
 
 md9600_inc = ['platform/targets/MD-9600']

@@ -28,6 +28,8 @@
 extern "C" {
 #endif
 
+extern const struct spiDevice spi2;
+
 /* Device has a working real time clock */
 #define CONFIG_RTC
 

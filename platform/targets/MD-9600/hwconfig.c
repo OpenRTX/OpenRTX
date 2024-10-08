@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
- *                                Niccolò Izzo IU2KIN                      *
- *                                Frederik Saraci IU2NRO                   *
- *                                Silvano Seva IU2KWO                      *
+ *   Copyright (C) 2024 by Federico Amedeo Izzo IU2NUO,                    *
+ *                         Niccolò Izzo IU2KIN,                            *
+ *                         Frederik Saraci IU2NRO,                         *
+ *                         Silvano Seva IU2KWO                             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -18,28 +18,10 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <peripherals/gpio.h>
 #include <hwconfig.h>
-#include <stdint.h>
-#include <SPI2.h>
+#include <spi_stm32.h>
+#include <pthread.h>
 
-/*
- * Implementation of external flash SPI interface for MD9600 devices.
- */
+static pthread_mutex_t spi2Mutex;
 
-uint8_t spiFlash_SendRecv(uint8_t val)
-{
-    spi2_lockDeviceBlocking();
-    uint8_t x = spi2_sendRecv(val);
-    spi2_releaseDevice();
-
-    return x;
-}
-
-void spiFlash_init()
-{
-}
-
-void spiFlash_terminate()
-{
-}
+SPI_STM32_DEVICE_DEFINE(spi2, SPI2, &spi2Mutex)

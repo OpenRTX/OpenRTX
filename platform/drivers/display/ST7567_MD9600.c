@@ -23,10 +23,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <peripherals/gpio.h>
+#include <peripherals/spi.h>
 #include <interfaces/display.h>
 #include <interfaces/delays.h>
 #include "hwconfig.h"
-#include <SPI2.h>
 
 
 /**
@@ -57,10 +57,7 @@ static void display_renderRow(uint8_t row, uint8_t *frameBuffer)
             }
         }
 
-        for (uint8_t s = 0; s < 8; s++)
-        {
-            (void) spi2_sendRecv(tmp[s]);
-        }
+        spi_send(&spi2, tmp, 8);
     }
 }
 
@@ -79,21 +76,24 @@ void display_init()
     gpio_setPin(LCD_RST);
     delayMs(5);
 
+    uint8_t initData[] =
+    {
+        0x2F, /* Voltage Follower On            */
+        0x81, /* Set Electronic Volume          */
+        0x15, /* Contrast, initial setting      */
+        0xA2, /* Set Bias = 1/9                 */
+        0xA1, /* A0 Set SEG Direction           */
+        0xC0, /* Set COM Direction              */
+        0xA4, /* White background, black pixels */
+        0xAF, /* Set Display Enable             */
+    };
 
-    spi2_lockDeviceBlocking();
+    spi_acquire(&spi2);
     gpio_clearPin(LCD_CS);
-
-    gpio_clearPin(LCD_RS);      /* RS low -> command mode                    */
-    (void) spi2_sendRecv(0x2F); /* Voltage Follower On                       */
-    (void) spi2_sendRecv(0x81); /* Set Electronic Volume                     */
-    (void) spi2_sendRecv(0x15); /* Contrast, initial setting                 */
-    (void) spi2_sendRecv(0xA2); /* Set Bias = 1/9                            */
-    (void) spi2_sendRecv(0xA1); /* A0 Set SEG Direction                      */
-    (void) spi2_sendRecv(0xC0); /* Set COM Direction                         */
-    (void) spi2_sendRecv(0xA4); /* White background, black pixels            */
-    (void) spi2_sendRecv(0xAF); /* Set Display Enable                        */
+    gpio_clearPin(LCD_RS);      /* RS low -> command mode   */
+    spi_send(&spi2, initData, sizeof(initData));
     gpio_clearPin(LCD_CS);
-    spi2_releaseDevice();
+    spi_release(&spi2);
 }
 
 void display_terminate()
@@ -103,21 +103,24 @@ void display_terminate()
 
 void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
 {
-    spi2_lockDeviceBlocking();
+    spi_acquire(&spi2);
     gpio_clearPin(LCD_CS);
 
     for(uint8_t row = startRow; row < endRow; row++)
     {
+        uint8_t command[3];
+        command[0] = 0xB0 | row; /* Set Y position */
+        command[1] = 0x10;       /* Set X position */
+        command[2] = 0x04;
+
         gpio_clearPin(LCD_RS);            /* RS low -> command mode */
-        (void) spi2_sendRecv(0xB0 | row); /* Set Y position         */
-        (void) spi2_sendRecv(0x10);       /* Set X position         */
-        (void) spi2_sendRecv(0x04);
+        spi_send(&spi2, command, 3);
         gpio_setPin(LCD_RS);              /* RS high -> data mode   */
         display_renderRow(row, (uint8_t *) fb);
     }
 
     gpio_setPin(LCD_CS);
-    spi2_releaseDevice();
+    spi_release(&spi2);
 }
 
 void display_render(void *fb)
@@ -127,15 +130,17 @@ void display_render(void *fb)
 
 void display_setContrast(uint8_t contrast)
 {
-    spi2_lockDeviceBlocking();
+    uint8_t command[2];
+    command[0] = 0x81;             /* Set Electronic Volume               */
+    command[1] = contrast >> 2;    /* Controller contrast range is 0 - 63 */
+
+    spi_acquire(&spi2);
     gpio_clearPin(LCD_CS);
 
-    gpio_clearPin(LCD_RS);               /* RS low -> command mode              */
-    (void) spi2_sendRecv(0x81);          /* Set Electronic Volume               */
-    (void) spi2_sendRecv(contrast >> 2); /* Controller contrast range is 0 - 63 */
-
+    gpio_clearPin(LCD_RS);          /* RS low -> command mode              */
+    spi_send(&spi2, command, 2);
     gpio_setPin(LCD_CS);
-    spi2_releaseDevice();
+    spi_release(&spi2);
 }
 
 void display_setBacklightLevel(uint8_t level)

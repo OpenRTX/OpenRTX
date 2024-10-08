@@ -33,7 +33,11 @@
 
 static const struct W25QxCfg eflashCfg =
 {
+    #ifdef PLATFORM_MD9600
+    .spi = &spi2,
+    #else
     .spi = &nvm_spi,
+    #endif
     .cs  = { FLASH_CS }
 };
 
@@ -67,11 +71,14 @@ static const struct nvmDescriptor nvmDevices[] =
 
 void nvm_init()
 {
+    #ifndef PLATFORM_MD9600
     gpio_setMode(FLASH_CLK, ALTERNATE | ALTERNATE_FUNC(5));
     gpio_setMode(FLASH_SDO, ALTERNATE | ALTERNATE_FUNC(5));
     gpio_setMode(FLASH_SDI, ALTERNATE | ALTERNATE_FUNC(5));
 
     spiStm32_init(&nvm_spi, 21000000, 0);
+    #endif
+
     W25Qx_init(&eflash);
 }
 

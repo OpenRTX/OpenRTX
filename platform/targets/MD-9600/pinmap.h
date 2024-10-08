@@ -67,7 +67,7 @@ extern "C" {
 #define BEEP_OUT  GPIOC,8   /* CTCSS tone    */
 
 /* SPI2, connected to external flash and LCD */
-#define FLASH_CS GPIOB,12
+#define FLASH_CS &GpioB,12
 #define SPI2_CLK GPIOB,13
 #define SPI2_SDO GPIOB,14
 #define SPI2_SDI GPIOB,15

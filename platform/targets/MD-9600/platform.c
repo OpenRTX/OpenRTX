@@ -29,7 +29,7 @@
 #include <toneGenerator_MDx.h>
 #include <peripherals/rtc.h>
 #include <interfaces/audio.h>
-#include <SPI2.h>
+#include <spi_stm32.h>
 #include <chSelector.h>
 
 /* TODO: Hardcoded hwInfo until we implement reading from flash */
@@ -66,8 +66,7 @@ void platform_init()
     gpio_setMode(SPI2_CLK, ALTERNATE | ALTERNATE_FUNC(5));
     gpio_setMode(SPI2_SDO, ALTERNATE | ALTERNATE_FUNC(5));
     gpio_setMode(SPI2_SDI, ALTERNATE | ALTERNATE_FUNC(5));
-
-    spi2_init();
+    spiStm32_init(&spi2, 1300000, 0);
 
     nvm_init();                      /* Initialise non volatile memory manager */
     toneGen_init();                  /* Initialise tone generator              */
