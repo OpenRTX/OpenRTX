@@ -48,4 +48,11 @@ void create_threads();
  */
 #define CODEC2_TASK_STKSIZE 16384
 
+/**
+ * Stack size for user functions task, in bytes
+ */
+#ifdef CONFIG_USER_FUNCTIONS
+#define USER_FUNCTIONS_STKSIZE 512 + 128*CONFIG_USER_FUNCTIONS
+#endif
+
 #endif /* THREADS_H */
