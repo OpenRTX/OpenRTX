@@ -79,14 +79,6 @@
 #define MIC_EN_GPIO_PIN GPIO_PIN_12
 #define MIC_EN_GPIO_RCU RCU_GPIOA
 
-static void LCD_gpio_init(void);
-static void key_gpio_init(void);
-static void usart_gpio_init(void);
-static void eeprom_gpio_init(void);
-static void bk4819_gpio_init(void);
-static void bk1080_gpio_init(void);
-static void misc_gpio_init(void);
-
 void gpio_config(void);
 
 #endif

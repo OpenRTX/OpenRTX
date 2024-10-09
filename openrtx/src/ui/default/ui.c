@@ -2407,6 +2407,7 @@ void ui_updateFSM(bool *sync_rtx)
                                 // Cycle over the available modulations
                                 state.settings.rx_modulation = !state.settings.rx_modulation;
                                 bk4819_set_modulation(state.settings.rx_modulation); // required for instant feedback
+                                radio_updateConfiguration();
                             }
                             break;
                         case R_STEP:
