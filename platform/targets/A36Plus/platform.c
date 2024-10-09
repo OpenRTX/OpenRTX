@@ -163,15 +163,81 @@ void platform_ledOff(led_t led)
     }
 }
 
+// TIMER0 interrupt handler
+void TIMER0_IRQHandler()
+{
+    if (timer_interrupt_flag_get(TIMER0, TIMER_INT_UP) != RESET)
+    {
+        // Clear the interrupt flag
+        timer_interrupt_flag_clear(TIMER0, TIMER_INT_UP);
+        // Change the duty cycle
+        timer_channel_output_pulse_value_config(TIMER0, TIMER_CH_3, rand() % 256);
+    }
+}
+
 void platform_beepStart(uint16_t freq)
 {
-    // BK4819_PlayTone(freq, true);
+    // Enable necessary peripherals
+    rcu_periph_clock_enable(RCU_GPIOA);
+    // Disable UART to make sure it doesn't interfere with the speaker
+    //usart_deinit(USART0);
+    rcu_periph_clock_disable(RCU_USART0);
+    rcu_periph_clock_enable(RCU_TIMER0);
+
+    // Configure GPIO pin A11 for alternate function (TIMER1_CH4)
+    gpio_af_set(GPIOA, GPIO_AF_2, GPIO_PIN_11);
+    gpio_mode_set(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO_PIN_11);
+    gpio_output_options_set(GPIOA, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_11);
+    
+
+    // Configure Timer for PWM
+    timer_oc_parameter_struct timer_ocinitpara;
+    timer_parameter_struct timer_initpara;
+
+    // Deinitialize TIMER0
+    timer_deinit(TIMER0);
+
+    // Initialize TIMER0 parameters
+    timer_initpara.prescaler = 84; // Prescaler to get 1us per tick (assuming 84MHz system clock)
+    timer_initpara.alignedmode = TIMER_COUNTER_EDGE;
+    timer_initpara.counterdirection = TIMER_COUNTER_UP;
+    // period = 1 / (freq * 1us) - 1
+    timer_initpara.period = (uint32_t)(1.0f / ((float)freq * 0.00000101f));
+    timer_initpara.clockdivision = TIMER_CKDIV_DIV1;
+    timer_init(TIMER0, &timer_initpara);
+
+    // Initialize TIMER0 Channel 3 parameters
+    timer_ocinitpara.outputstate = TIMER_CCX_ENABLE;
+    //timer_ocinitpara.outputnstate = TIMER_CCXN_ENABLE;
+    timer_ocinitpara.ocpolarity = TIMER_OC_POLARITY_HIGH;
+    //timer_ocinitpara.ocnpolarity = TIMER_OCN_POLARITY_LOW;
+    timer_ocinitpara.ocidlestate = TIMER_OC_IDLE_STATE_LOW;
+    //timer_ocinitpara.ocnidlestate = TIMER_OCN_IDLE_STATE_HIGH;
+    timer_channel_output_config(TIMER0, TIMER_CH_3, &timer_ocinitpara);
+    timer_primary_output_config(TIMER0, ENABLE);
+
+    // Set PWM mode and duty cycle
+    timer_channel_output_pulse_value_config(TIMER0, TIMER_CH_3, 160); // 50% duty cycle
+    timer_channel_output_mode_config(TIMER0, TIMER_CH_3, TIMER_OC_MODE_PWM0);
+    timer_channel_output_shadow_config(TIMER0, TIMER_CH_3, TIMER_OC_SHADOW_DISABLE);
+    timer_auto_reload_shadow_enable(TIMER0);
+
+    // Enable TIMER0
+    timer_enable(TIMER0);
+
+    // Enable the TIMER0 interrupt
+    timer_interrupt_enable(TIMER0, TIMER_INT_UP);
 }
+
+
 
 void platform_beepStop()
 {
-    return;
+    // Disable the speaker and stop the timer
+    timer_disable(TIMER0);
+    rcu_periph_clock_enable(RCU_USART0);
 }
+
 
 // Helper function to convert BCD to normal numbers
 static uint8_t bcd2dec(uint8_t bcd)

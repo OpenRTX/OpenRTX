@@ -203,11 +203,10 @@ typedef enum
 // } bk4819_RX_ACG_GAIN;
 
 static void spi_write_byte(uint8_t data);
-static void spi_write_half_word(uint16_t data);
 static uint16_t spi_read_half_word(void);
 
 uint16_t ReadRegister(unsigned char reg);
-static void WriteRegister(bk4819_reg_t reg, uint16_t data);
+void WriteRegister(bk4819_reg_t reg, uint16_t data);
 
 /**
  * @brief Get interrupt
@@ -358,6 +357,7 @@ uint8_t bk4819_get_vox(void);
  */
 void bk4819_set_Squelch(uint8_t RTSO, uint8_t RTSC, uint8_t ETSO, uint8_t ETSC, uint8_t GTSO, uint8_t GTSC);
 
+void BK4819_SetAF(uint8_t AF);
 
 /**
  * @brief Get RSSI value 0.5dB/step

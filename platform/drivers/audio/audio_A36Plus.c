@@ -21,6 +21,7 @@
 
 #include <interfaces/audio.h>
 #include <peripherals/gpio.h>
+#include <bk4819.h>
 
 const struct audioDevice outputDevices[] =
 {
@@ -54,8 +55,13 @@ void audio_connect(const enum AudioSource source, const enum AudioSink sink)
      * speaker power amplifier to hear analog fm audio.
      */
     if (source == SOURCE_RTX && sink == SINK_SPK)
-        gpio_setPin(MIC_SPK_EN);  // open speaker
+    {
+        radio_enableAfOutput();
+    }
+    gpio_setPin(MIC_SPK_EN);  // open speaker
+
 }
+
 
 void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
 {
@@ -65,7 +71,11 @@ void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
      * speaker power amplifier to squelch noise.
      */
     if (source == SOURCE_RTX && sink == SINK_SPK)
-        gpio_clearPin(MIC_SPK_EN);  // open microphone
+    {
+        radio_disableAfOutput();
+        //gpio_clearPin(MIC_SPK_EN);  // open microphone
+    }
+
 }
 
 bool audio_checkPathCompatibility(const enum AudioSource p1Source,

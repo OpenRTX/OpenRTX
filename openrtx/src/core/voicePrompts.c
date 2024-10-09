@@ -353,7 +353,8 @@ static bool beep_tick()
 
 void vp_init()
 {
-    return;
+
+    #ifdef PLATFORM_A36PLUS
     #ifdef VP_USE_FILESYSTEM
     if(vpFile == NULL)
         vpFile = fopen("voiceprompts.vpc", "r");
@@ -373,7 +374,7 @@ void vp_init()
     {
         loadVpToC();
     }
-
+    #endif
     if (vpDataLoaded)
     {
         // If the hash key is down, set vpLevel to high, if beep or less.
@@ -564,7 +565,6 @@ void vp_play()
 
 void vp_tick()
 {
-    return;
     if (platform_getPttStatus() && (voicePromptActive || (currentBeepDuration > 0)))
     {
         vp_stop();

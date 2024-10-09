@@ -158,7 +158,7 @@ void rtx_task()
             // uint8_t height = (rssi + 160) / 2;
             // Macro for log2, not using the math library
             #define log2(x) (31 - __builtin_clz(x))
-            uint8_t height = ((rssi + 160)*log2(22-rssi>>1))>>3;
+            uint8_t height = ((rssi + 160)*log2(22 - (rssi>>1) )) >> 3;
             state.spectrum_data[i] = height;
             // set peak value
             if(rssi > state.spectrum_peakRssi)
@@ -185,7 +185,7 @@ void rtx_task()
                         break;
                     }
                     rssi = radio_getRssi();
-                    height = ((rssi + 160)*log2(22-rssi>>1))>>3;
+                    height = ((rssi + 160)*log2(22 - (rssi>>1) )) >> 3;
                     state.spectrum_data[i] = height;
                     // give the UI a chance to refresh
                     state.spectrum_shouldRefresh = true;
