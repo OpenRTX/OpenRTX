@@ -27,8 +27,9 @@
 #include <interfaces/display.h>
 #include <interfaces/delays.h>
 #include <hwconfig.h>
-#include <SPI2.h>
+#include <spi_stm32.h>
 
+extern const struct spiDevice spi2;
 
 /**
  * \internal
@@ -50,7 +51,7 @@ void SSD1306_renderRow(uint8_t row, uint8_t *frameBuffer)
             out |= ((tmp >> (7-j)) & 0x01) << j;
         }
 
-        spi2_sendRecv(out);
+        spi_send(&spi2, &out, 1);
     }
 }
 
@@ -65,37 +66,41 @@ void SSD1306_init()
     gpio_setPin(LCD_RST);
     delayMs(50);
 
-    gpio_clearPin(LCD_CS);
+    static const uint8_t init[] =
+    {
+        0xAE,    // SH110X_DISPLAYOFF
+        0xD5,    // SH110X_SETDISPLAYCLOCKDIV, 0x51
+        0x51,
+        0x81,    // SH110X_SETCONTRAST, 0x4F
+        0x4F,
+        0xAD,    // SH110X_DCDC, 0x8A
+        0x8A,
+        0xA0,    // SH110X_SEGREMAP
+        0xC0,    // SH110X_COMSCANINC
+        0xDC,    // SH110X_SETDISPSTARTLINE, 0x0
+        0x00,
+        0xD3,    // SH110X_SETDISPLAYOFFSET, 0x60
+        0x60,
+        0xD9,    // SH110X_SETPRECHARGE, 0x22
+        0x22,
+        0xDB,    // SH110X_SETVCOMDETECT, 0x35
+        0x35,
+        0xA8,    // SH110X_SETMULTIPLEX, 0x3F
+        0x3F,
+        0xA4,    // SH110X_DISPLAYALLON_RESUME
+        0xA6,    // SH110X_NORMALDISPLAY
+        0xAF     // SH110x_DISPLAYON
+    };
 
-    gpio_clearPin(LCD_RS);// RS low -> command mode
-    spi2_sendRecv(0xAE);  // SH110X_DISPLAYOFF,
-    spi2_sendRecv(0xd5);  // SH110X_SETDISPLAYCLOCKDIV, 0x51,
-    spi2_sendRecv(0x51);
-    spi2_sendRecv(0x81);  // SH110X_SETCONTRAST, 0x4F,
-    spi2_sendRecv(0x4F);
-    spi2_sendRecv(0xAD);  // SH110X_DCDC, 0x8A,
-    spi2_sendRecv(0x8A);
-    spi2_sendRecv(0xA0);  // SH110X_SEGREMAP,
-    spi2_sendRecv(0xC0);  // SH110X_COMSCANINC,
-    spi2_sendRecv(0xDC);  // SH110X_SETDISPSTARTLINE, 0x0,
-    spi2_sendRecv(0x00);
-    spi2_sendRecv(0xd3);  // SH110X_SETDISPLAYOFFSET, 0x60,
-    spi2_sendRecv(0x60);
-    spi2_sendRecv(0xd9);  // SH110X_SETPRECHARGE, 0x22,
-    spi2_sendRecv(0x22);
-    spi2_sendRecv(0xdb);  // SH110X_SETVCOMDETECT, 0x35,
-    spi2_sendRecv(0x35);
-    spi2_sendRecv(0xa8);  // SH110X_SETMULTIPLEX, 0x3F,
-    spi2_sendRecv(0x3f);
-    spi2_sendRecv(0xa4);  // SH110X_DISPLAYALLON_RESUME,
-    spi2_sendRecv(0xa6);  // SH110X_NORMALDISPLAY,
-    spi2_sendRecv(0xAF);  // SH110x_DISPLAYON
+    gpio_clearPin(LCD_CS);
+    gpio_clearPin(LCD_DC);
+    spi_send(&spi2, init, sizeof(init));
     gpio_setPin(LCD_CS);
 }
 
 void SSD1306_terminate()
 {
-    spi2_terminate();
+
 }
 
 void SSD1306_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
@@ -104,10 +109,13 @@ void SSD1306_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
 
     for(uint8_t row = startRow; row <= endRow; row++)
     {
+        uint8_t cmd[3];
+        cmd[0] = 0xB0 | row; /* Set Y position         */
+        cmd[1] = 0x00;       /* Set X position         */
+        cmd[2] = 0x10;
+
         gpio_clearPin(LCD_RS);            /* RS low -> command mode */
-        (void) spi2_sendRecv(0xB0 | row); /* Set Y position         */
-        (void) spi2_sendRecv(0x00);       /* Set X position         */
-        (void) spi2_sendRecv(0x10);
+        spi_send(&spi2, cmd, sizeof(cmd));
         gpio_setPin(LCD_RS);              /* RS high -> data mode   */
         SSD1306_renderRow(row, (uint8_t *) fb);
     }
@@ -122,11 +130,12 @@ void SSD1306_render(void *fb)
 
 void SSD1306_setContrast(uint8_t contrast)
 {
+    uint8_t cmd[2];
+    cmd[0] = 0x81;          /* Set Electronic Volume               */
+    cmd[0] = contrast;      /* Controller contrast range is 0 - 63 */
+
     gpio_clearPin(LCD_CS);
-
-    gpio_clearPin(LCD_RS);             /* RS low -> command mode              */
-    (void) spi2_sendRecv(0x81);        /* Set Electronic Volume               */
-    (void) spi2_sendRecv(contrast);    /* Controller contrast range is 0 - 63 */
-
+    gpio_clearPin(LCD_DC);  /* RS low -> command mode              */
+    spi_send(&spi2, cmd, sizeof(cmd));
     gpio_setPin(LCD_CS);
 }

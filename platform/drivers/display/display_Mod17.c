@@ -22,10 +22,11 @@
 #include <peripherals/gpio.h>
 #include <hwconfig.h>
 #include <interfaces/platform.h>
-#include <SPI2.h>
+#include <spi_stm32.h>
 #include "SH110x_Mod17.h"
 #include "SSD1309_Mod17.h"
 
+SPI_STM32_DEVICE_DEFINE(spi2, SPI2, NULL)
 
 struct displayFuncs
 {
@@ -73,7 +74,7 @@ void display_init()
     gpio_setMode(SPI2_SCK,  ALTERNATE | ALTERNATE_FUNC(5));
     gpio_setMode(SPI2_MOSI, ALTERNATE | ALTERNATE_FUNC(5));
     gpio_setMode(SPI2_MISO, ALTERNATE | ALTERNATE_FUNC(5));
-    spi2_init();
+    spiStm32_init(&spi2, 1300000, 0);
 
     /*
      * Initialise GPIOs for LCD control
@@ -88,7 +89,7 @@ void display_init()
 void display_terminate()
 {
     display.terminate();
-    spi2_terminate();
+    spiStm32_terminate(&spi2);
 }
 
 void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
