@@ -354,7 +354,7 @@ static bool beep_tick()
 void vp_init()
 {
 
-    #ifdef PLATFORM_A36PLUS
+    #ifndef PLATFORM_A36PLUS
     #ifdef VP_USE_FILESYSTEM
     if(vpFile == NULL)
         vpFile = fopen("voiceprompts.vpc", "r");
