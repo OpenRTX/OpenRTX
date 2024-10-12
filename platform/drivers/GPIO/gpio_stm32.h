@@ -15,11 +15,11 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef GPIO_NATIVE_H
-#define GPIO_NATIVE_H
+#ifndef GPIO_STM32_H
+#define GPIO_STM32_H
 
 #include <peripherals/gpio.h>
-#include <hwconfig.h>
+#include <stm32f4xx.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -27,7 +27,7 @@ extern "C" {
 #endif
 
 /**
- * This file provides the interface for MK22 gpio.
+ * This file provides the interface for STM32 gpio.
  */
 
 /**
@@ -36,12 +36,14 @@ extern "C" {
  */
 enum Speed
 {
-    SLOW   = 0x0,   ///< 2MHz
-    FAST   = 0x1    ///< 50MHz
+    LOW    = 0x0,   ///< 2MHz
+    MEDIUM = 0x1,   ///< 25MHz
+    FAST   = 0x2,   ///< 50MHz
+    HIGH   = 0x3    ///< 100MHz
 };
 
 /**
- * MK22 gpio devices
+ * STM32 gpio devices
  */
 extern const struct gpioDev GpioA;
 extern const struct gpioDev GpioB;
@@ -77,7 +79,7 @@ void gpio_setOutputSpeed(const void *port, const uint8_t pin, const enum Speed s
  */
 static inline void gpio_setPin(const void *port, const uint8_t pin)
 {
-    ((GPIO_Type *)(port))->PSOR = (1 << pin);
+    ((GPIO_TypeDef *)(port))->BSRR = (1 << pin);
 }
 
 /**
@@ -89,7 +91,7 @@ static inline void gpio_setPin(const void *port, const uint8_t pin)
  */
 static inline void gpio_clearPin(const void *port, const uint8_t pin)
 {
-    ((GPIO_Type *)(port))->PCOR = (1 << pin);
+    ((GPIO_TypeDef *)(port))->BSRR = (1 << (pin + 16));
 }
 
 /**
@@ -101,12 +103,12 @@ static inline void gpio_clearPin(const void *port, const uint8_t pin)
  */
 static inline uint8_t gpio_readPin(const void *port, const uint8_t pin)
 {
-    GPIO_Type *g = (GPIO_Type *)(port);
-    return ((g->PDIR & (1 << pin)) != 0) ? 1 : 0;
+    GPIO_TypeDef *p = (GPIO_TypeDef *)(port);
+    return ((p->IDR & (1 << pin)) != 0) ? 1 : 0;
 }
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* GPIO_NATIVE_H */
+#endif /* GPIO_STM32_H */
