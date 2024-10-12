@@ -202,7 +202,6 @@ void HR_Cx000< M >::startAnalogTx(const TxAudioSource source, const FmConfig cfg
     writeReg(M::CONFIG, 0xC2, 0x00);    // Codec AGC gain
     writeReg(M::CONFIG, 0xE5, 0x1A);    // Unknown (Default value = 0A)
     writeReg(M::CONFIG, 0x25, 0x0E);    // Undocumented Register
-    writeReg(M::CONFIG, 0x26, 0xFE);    // Undocumented register Turns off FM receive
     writeReg(M::CONFIG, 0x83, 0xFF);    // Clear all Interrupts
     writeReg(M::CONFIG, 0x87, 0x00);    // Clear Int Masks
     writeReg(M::CONFIG, 0xA1, 0x80);    // FM_mod, all modes cleared
@@ -221,5 +220,4 @@ void HR_Cx000< M >::stopAnalogTx()
     writeReg(M::CONFIG, 0x60, 0x00);    // Stop analog transmission
     writeReg(M::CONFIG, 0xE0, 0xC9);    // Codec enabled, LineIn1, LineOut2, I2S slave mode
     writeReg(M::CONFIG, 0x34, 0x98);    // FM bpf enabled, 25kHz bandwidth
-    writeReg(M::CONFIG, 0x26, 0xFD);    // Undocumented register, enable FM receive
 }

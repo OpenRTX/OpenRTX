@@ -85,15 +85,10 @@ void radio_init(const rtxStatus_t *rtxState)
     nvm_readCalibData(&calData);
 
     /*
-     * Configure AT1846S and HR_C6000, keep AF output disabled at power on.
+     * Initialize AT1846S keep AF output disabled at power on.
+     * HR_C6000 is initialized in advance by the audio system.
      */
-    gpio_setMode(DMR_CLK,  OUTPUT);
-    gpio_setMode(DMR_MOSI, OUTPUT);
-    gpio_setMode(DMR_MISO, INPUT);
-    spi_init((const struct spiDevice *) &c6000_spi);
-
     at1846s.init();
-    C6000.init();
     radio_disableAfOutput();
 }
 
@@ -150,14 +145,16 @@ bool radio_checkRxDigitalSquelch()
 
 void radio_enableAfOutput()
 {
-    // Bit 2 of register 0x36: enable voice channel in FM mode
+    // Undocumented register, bits [1:0] seem to enable/disable FM audio RX.
     // TODO: AF output management for DMR mode
-    C6000.writeCfgRegister(0x36, 0x02);
+    // 0xFD enable FM receive.
+    C6000.writeCfgRegister(0x26, 0xFD);
 }
 
 void radio_disableAfOutput()
 {
-    C6000.writeCfgRegister(0x36, 0x00);
+    // Undocumented register, disable FM receive
+    C6000.writeCfgRegister(0x26, 0xFE);
 }
 
 void radio_enableRx()
@@ -173,18 +170,6 @@ void radio_enableRx()
     C6000.setModOffset(rxModBias);
     at1846s.setFrequency(config->rxFrequency);
     at1846s.setFuncMode(AT1846S_FuncMode::RX);
-
-    /*
-     * Force silencing of audio output when RX is enabled with M17 operating
-     * mode selected. Avoids the spillover of baseband signal towards the
-     * speaker.
-     *
-     * TODO: improve this solution.
-     */
-    if(config->opMode == OPMODE_M17)
-    {
-        C6000.writeCfgRegister(0xE0, 0x00);
-    }
 
     if(currRxBand == BND_VHF)
     {

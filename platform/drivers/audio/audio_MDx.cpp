@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2021 - 2024 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -18,14 +18,23 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <interfaces/platform.h>
 #include <interfaces/delays.h>
 #include <interfaces/audio.h>
 #include <interfaces/radio.h>
 #include <peripherals/gpio.h>
 #include <hwconfig.h>
+#include <threads.h>
+#include <state.h>
 #include "toneGenerator_MDx.h"
 #include "stm32_pwm.h"
 #include "stm32_adc.h"
+
+#ifdef PLATFORM_MDUV3x0
+#include <HR_C6000.h>
+#include "Cx000_dac.h"
+#endif
+
 
 #define PATH(x,y) ((x << 4) | y)
 
@@ -64,10 +73,48 @@ static const struct PwmChannelCfg stm32pwm_cfg =
     stm32pwm_stopCbk
 };
 
+#ifdef PLATFORM_MDUV3x0
+static void *audio_thread(void *arg)
+{
+    (void) arg;
+
+    static uint8_t oldVolume = 0xFF;
+    unsigned long long now = getTick();
+
+    Cx000dac_init(&C6000);
+
+    while(state.devStatus != SHUTDOWN)
+    {
+        Cx000dac_task();
+
+        uint8_t volume = platform_getVolumeLevel();
+        if(volume != oldVolume)
+        {
+            // Apply new volume level, map 0 - 255 range into -31 to 31
+            int8_t gain = ((int8_t) (volume / 4)) - 31;
+            C6000.setDacGain(gain);
+
+            oldVolume = volume;
+        }
+
+        now += 4;
+        sleepUntil(now);
+    }
+
+    Cx000dac_terminate();
+
+    return NULL;
+}
+#endif
+
 const struct audioDevice outputDevices[] =
 {
     {NULL,                    NULL,          0, SINK_MCU},
+    #ifdef PLATFORM_MDUV3x0
+    {&Cx000_dac_audio_driver, NULL,          0, SINK_SPK},
+    #else
     {&stm32_pwm_audio_driver, &stm32pwm_cfg, 0, SINK_SPK},
+    #endif
     {&stm32_pwm_audio_driver, &stm32pwm_cfg, 0, SINK_RTX},
 };
 
@@ -102,6 +149,25 @@ void audio_init()
 
     stm32pwm_init();
     stm32adc_init(STM32_ADC_ADC2);
+
+    #ifdef PLATFORM_MDUV3x0
+    gpio_setMode(DMR_CLK,  OUTPUT);
+    gpio_setMode(DMR_MOSI, OUTPUT);
+    gpio_setMode(DMR_MISO, INPUT);
+    spi_init((const struct spiDevice *) &c6000_spi);
+    C6000.init();
+
+    pthread_attr_t attr;
+    pthread_t      thread;
+    struct sched_param param;
+
+    pthread_attr_init(&attr);
+    pthread_attr_setstacksize(&attr, AUDIO_THREAD_STKSIZE);
+
+    param.sched_priority = THREAD_PRIO_RT;
+    pthread_attr_setschedparam(&attr, &param);
+    pthread_create(&thread, &attr, audio_thread, NULL);
+    #endif
 }
 
 void audio_terminate()
@@ -136,7 +202,11 @@ void audio_connect(const enum AudioSource source, const enum AudioSink sink)
             radio_enableAfOutput();
             break;
 
+        // MD-UV380 uses HR_C6000 for MCU->SPK audio output. Switching between
+        // incoming FM audio and DAC output is done automatically inside the IC.
+        #ifndef PLATFORM_MDUV3x0
         case PATH(SOURCE_MCU, SINK_SPK):
+        #endif
         case PATH(SOURCE_MCU, SINK_RTX):
             gpio_setMode(BEEP_OUT, ALTERNATE | ALTERNATE_FUNC(2));
             break;
@@ -182,7 +252,9 @@ void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
             radio_disableAfOutput();
             break;
 
+        #ifndef PLATFORM_MDUV3x0
         case PATH(SOURCE_MCU, SINK_SPK):
+        #endif
         case PATH(SOURCE_MCU, SINK_RTX):
             gpio_setMode(BEEP_OUT, INPUT);  // Set output to Hi-Z
             break;
