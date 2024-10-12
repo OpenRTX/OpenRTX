@@ -50,6 +50,13 @@ static int pty_init(const struct chardev *dev)
 
     *((int *)dev->data) = ptyFd;
 
+    char *pty_link = getenv("OPENRTX_PTY_LINK");
+    if (pty_link != NULL) {
+        if (symlink(ptsname(ptyFd), pty_link))
+            return errno;
+        else
+            printf("Linked pseudoTTY to %s\n", pty_link);
+    }
     return 0;
 }
 
@@ -61,6 +68,10 @@ static int pty_terminate(const struct chardev *dev)
 
     close(ptyFd);
     *((int *)dev->data) = -1;
+
+    char *pty_link = getenv("OPENRTX_PTY_LINK");
+    if (pty_link != NULL)
+        unlink(pty_link);
 
     return 0;
 }
