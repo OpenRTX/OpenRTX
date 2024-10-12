@@ -17,7 +17,7 @@
 
 #include <interfaces/nvmem.h>
 #include <interfaces/delays.h>
-#include <calibInfo_CS760.h>
+#include <calibInfo_CS7000.h>
 #include <nvmem_access.h>
 #include <spi_bitbang.h>
 #include <string.h>
@@ -95,16 +95,16 @@ const struct nvmDescriptor *nvm_getDesc(const size_t index)
 
 void nvm_readCalibData(void *buf)
 {
-    struct CS760Calib *calData = (struct CS7000 *) buf;
+    struct CS7000Calib *calData = (struct CS7000Calib *) buf;
 
-    nvm_read(0, 0, 0x1000, &(calData->txCalFreq),      sizeof(calData.txCalFreq));
-    nvm_read(0, 0, 0x1020, &(calData->rxCalFreq),      sizeof(calData.rxCalFreq));
-    nvm_read(0, 0, 0x1044, &(calData->rxSensitivity),  sizeof(calData.rxSensitivity));
-    nvm_read(0, 0, 0x106C, &(calData->txHighPwr),      sizeof(calData.txHighPwr));
-    nvm_read(0, 0, 0x1074, &(calData->txMiddlePwr),    sizeof(calData.txMiddlePwr));
-    nvm_read(0, 0, 0x10C4, &(calData->txDigitalPathQ), sizeof(calData.txDigitalPathQ));
-    nvm_read(0, 0, 0x10CC, &(calData->txAnalogPathI),  sizeof(calData.txAnalogPathI));
-    nvm_read(0, 0, 0x10DC, &(calData->errorRate),      sizeof(calData.errorRate));
+    nvm_read(0, 0, 0x1000, &(calData->txCalFreq),      sizeof(calData->txCalFreq));
+    nvm_read(0, 0, 0x1020, &(calData->rxCalFreq),      sizeof(calData->rxCalFreq));
+    nvm_read(0, 0, 0x1044, &(calData->rxSensitivity),  sizeof(calData->rxSensitivity));
+    nvm_read(0, 0, 0x106C, &(calData->txHighPwr),      sizeof(calData->txHighPwr));
+    nvm_read(0, 0, 0x1074, &(calData->txMiddlePwr),    sizeof(calData->txMiddlePwr));
+    nvm_read(0, 0, 0x10C4, &(calData->txDigitalPathQ), sizeof(calData->txDigitalPathQ));
+    nvm_read(0, 0, 0x10CC, &(calData->txAnalogPathI),  sizeof(calData->txAnalogPathI));
+    nvm_read(0, 0, 0x10DC, &(calData->errorRate),      sizeof(calData->errorRate));
 
     for(int i = 0; i < 8; i++)
     {
