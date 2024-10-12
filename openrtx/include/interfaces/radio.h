@@ -56,19 +56,6 @@ void radio_init(const rtxStatus_t *rtxState);
 void radio_terminate();
 
 /**
- * This function allows to fine tune the VCXO frequency by acting on the
- * polarisation voltage.
- * The offset parameters allowed range of ±32768 and they are algebraically
- * added to the tuning value provided by the manufacturer's calibration data.
- * Not calling this function results in leaving the VCXO tuning as provided by
- * the manufacturer's calibration data.
- *
- * @param vhfOffset: VCXO tuning offset for VHF band.
- * @param uhfOffset: VCXO tuning offset for UHF band.
- */
-void radio_tuneVcxo(const int16_t vhfOffset, const int16_t uhfOffset);
-
-/**
  * Set current operating mode.
  *
  * @param mode: new operating mode.
