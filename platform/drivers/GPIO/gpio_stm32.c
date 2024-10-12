@@ -17,7 +17,7 @@
 
 #include <errno.h>
 #include "stm32f4xx.h"
-#include "gpio-native.h"
+#include "gpio_stm32.h"
 
 static inline void setGpioAf(GPIO_TypeDef *port, uint8_t pin, const uint8_t af)
 {
