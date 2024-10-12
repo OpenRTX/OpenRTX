@@ -136,7 +136,10 @@ void rtxlink_task()
 
 void rtxlink_terminate()
 {
+    if(cDev == NULL)
+        return;
 
+    chardev_terminate(cDev);
 }
 
 int rtxlink_send(const enum ProtocolID proto, const void *data, const size_t len)
