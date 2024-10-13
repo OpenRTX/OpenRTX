@@ -20,7 +20,10 @@
 #define SA8x8_H
 
 #include <stdint.h>
+#include <stddef.h>
 #include <stdbool.h>
+
+#define SA8X8_MSG_SIZE 32U
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,9 +61,9 @@ int sa8x8_enableHSMode();
 /**
  * Set the transmission power.
  *
- * @param power: transmission power in mW.
+ * @param power: transmission power in Watt.
  */
-void sa8x8_setTxPower(const uint32_t power);
+void sa8x8_setTxPower(const float power);
 
 /**
  * Enable or disable the speaker power amplifier.

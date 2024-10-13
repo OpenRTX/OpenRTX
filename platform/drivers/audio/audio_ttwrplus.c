@@ -19,6 +19,7 @@
  ***************************************************************************/
 
 #include <interfaces/audio.h>
+#include <SA8x8.h>
 
 const struct audioDevice outputDevices[] =
 {
