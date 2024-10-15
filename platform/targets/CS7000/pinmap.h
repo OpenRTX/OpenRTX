@@ -148,8 +148,8 @@
 #define PHONE_DETECT  GPIOA,13
 
 /* GPS */
-#define GPS_RXD       GPIOC,6
-#define GPS_TXD       GPIOC,7
+#define GPS_TXD       GPIOC,6
+#define GPS_RXD       GPIOC,7
 
 /* Accessory connector */
 #define PHONE_TXD     GPIOA,0
