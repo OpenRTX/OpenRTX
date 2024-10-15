@@ -19,7 +19,9 @@
 #include <peripherals/gpio.h>
 #include <interfaces/delays.h>
 #include <interfaces/keyboard.h>
+#include <interfaces/platform.h>
 #include <hwconfig.h>
+#include <qdec.h>
 
 
 /*
@@ -40,6 +42,8 @@
  *
  */
 
+static uint8_t last_state = 0;
+static int8_t knob_pos    = 0;
 
 void kbd_init()
 {
@@ -48,6 +52,11 @@ void kbd_init()
     gpio_setMode(SIDE_KEY2, INPUT);
     gpio_setMode(SIDE_KEY3, INPUT);
     gpio_setMode(ALARM_KEY, INPUT);
+
+    gpio_setMode(CH_SELECTOR_0, INPUT);
+    gpio_setMode(CH_SELECTOR_1, INPUT);
+    gpio_setMode(CH_SELECTOR_2, INPUT);
+    gpio_setMode(CH_SELECTOR_3, INPUT);
 }
 
 void kbd_terminate()
@@ -58,6 +67,30 @@ void kbd_terminate()
 keyboard_t kbd_getKeys()
 {
     keyboard_t keys = 0;
+    knob_pos = (gpio_readPin(CH_SELECTOR_0) << 3)
+             | (gpio_readPin(CH_SELECTOR_2) << 2)
+             | (gpio_readPin(CH_SELECTOR_1) << 1)
+             |  gpio_readPin(CH_SELECTOR_3);
+
+    // uint8_t next_state = FULL_STEP_STATE_TRANSITIONS[last_state][chSelPins];
+    // uint8_t event = next_state & QDECODER_EVENT_BITMASK;
+    // last_state    = next_state & QDECODER_STATE_BITMASK;
+
+    // switch(event)
+    // {
+    //     case QDECODER_EVENT_CW:
+    //         keys |= KNOB_LEFT;
+    //         knob_pos++;
+    //         break;
+    //
+    //     case QDECODER_EVENT_CCW:
+    //         keys |= KNOB_RIGHT;
+    //         knob_pos--;
+    //         break;
+    //
+    //     default:
+    //         break;
+    // }
 
     /*
      * Rows and columns lines are in common with the display, so we have to
@@ -135,4 +168,16 @@ keyboard_t kbd_getKeys()
     if(gpio_readPin(ALARM_KEY) == 0) keys |= KEY_F3;
 
     return keys;
+}
+
+/*
+ * This function is defined in platform.h
+ */
+int8_t platform_getChSelector()
+{
+    /*
+     * The knob_pos variable is set in the EXTI15_10 interrupt handler
+     * this is safe because interrupt nesting is not allowed.
+     */
+    return knob_pos;
 }

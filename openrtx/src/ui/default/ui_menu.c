@@ -513,7 +513,7 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
         }
             break;
         case 2: // Battery charge
-            sniprintf(buf, max_len, "%d%%", last_state.charge);
+            sniprintf(buf, max_len, "%d%%", platform_getChSelector());
             break;
         case 3: // RSSI
             sniprintf(buf, max_len, "%"PRIi32"dBm", last_state.rssi);
