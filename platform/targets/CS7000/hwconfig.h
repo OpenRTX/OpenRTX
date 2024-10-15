@@ -66,6 +66,9 @@ extern const struct sky73210 pll;
 /* Device supports M17 mode */
 #define CONFIG_M17
 
+/* Device has a GPS chip */
+#define CONFIG_GPS
+
 #ifdef __cplusplus
 }
 #endif
