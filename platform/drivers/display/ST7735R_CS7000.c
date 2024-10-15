@@ -64,18 +64,24 @@ static inline void sendCmd(uint8_t cmd)
 {
     // Set D/C low (command mode), clear WR and data lines
     GPIOD->BSRR = 0x30FF0000;
-    __NOP();
+    asm volatile("           mov   r1, #21    \n"
+                 "___loop_d: cmp   r1, #0     \n"
+                 "           itt   ne         \n"
+                 "           subne r1, r1, #1 \n"
+                 "           bne   ___loop_d  \n":::"r1");
     GPIOD->BSRR = cmd | (1 << 13);
-    __NOP();
 }
 
 static inline void sendData(uint8_t val)
 {
     // Set D/C high (data mode), clear WR and data lines
     GPIOD->BSRR = 0x20FF1000;
-    __NOP();
+    asm volatile("           mov   r1, #21    \n"
+                 "___loop_e: cmp   r1, #0     \n"
+                 "           itt   ne         \n"
+                 "           subne r1, r1, #1 \n"
+                 "           bne   ___loop_e  \n":::"r1");
     GPIOD->BSRR = val | (1 << 13);
-    __NOP();
 }
 
 void display_init()
