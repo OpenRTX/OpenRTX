@@ -72,6 +72,7 @@ void state_init()
     state.v_bat  = platform_getVbat();
     state.charge = battery_getCharge(state.v_bat);
     state.rssi   = -127.0f;
+    state.volume = platform_getVolumeLevel();
 
     state.channel_index = 0;    // Set default channel index (it is 0-based)
     state.bank_enabled  = false;
@@ -125,6 +126,14 @@ void state_task()
     state.v_bat  -= (state.v_bat * 2) / 100;
     state.v_bat  += (vbat * 2) / 100;
     #endif
+
+    /*
+     * Update volume level, as a 50% average between previous value and a new
+     * read of the knob position. This gives a good reactivity while preventing
+     * the volume level to jitter when the knob is not being moved.
+     */
+    uint16_t vol = platform_getVolumeLevel() + state.volume;
+    state.volume = vol / 2;
 
     state.charge = battery_getCharge(state.v_bat);
     state.rssi = rtx_getRssi();

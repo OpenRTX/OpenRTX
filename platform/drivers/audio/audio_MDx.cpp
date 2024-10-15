@@ -87,14 +87,13 @@ static void *audio_thread(void *arg)
     {
         Cx000dac_task();
 
-        uint8_t volume = platform_getVolumeLevel();
-        if(volume != oldVolume)
+        if(state.volume != oldVolume)
         {
             // Apply new volume level, map 0 - 255 range into -31 to 31
-            int8_t gain = ((int8_t) (volume / 4)) - 31;
+            int8_t gain = ((int8_t) (state.volume / 4)) - 31;
             C6000.setDacGain(gain);
 
-            oldVolume = volume;
+            oldVolume = state.volume;
         }
 
         now += 4;

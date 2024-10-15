@@ -40,6 +40,7 @@ typedef struct
     uint16_t   v_bat;
     uint8_t    charge;
     rssi_t     rssi;
+    uint8_t    volume;
 
     uint8_t    ui_screen;
     uint8_t    tuner_mode;
