@@ -66,6 +66,7 @@ static inline void sendCmd(uint8_t cmd)
     GPIOD->BSRR = 0x30FF0000;
     __NOP();
     GPIOD->BSRR = cmd | (1 << 13);
+    __NOP();
 }
 
 static inline void sendData(uint8_t val)
@@ -74,6 +75,7 @@ static inline void sendData(uint8_t val)
     GPIOD->BSRR = 0x20FF1000;
     __NOP();
     GPIOD->BSRR = val | (1 << 13);
+    __NOP();
 }
 
 void display_init()
