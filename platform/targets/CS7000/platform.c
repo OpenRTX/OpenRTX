@@ -120,11 +120,6 @@ uint8_t platform_getVolumeLevel()
     return output;
 }
 
-int8_t platform_getChSelector()
-{
-    return 0;    // TODO
-}
-
 bool platform_getPttStatus()
 {
     /* PTT line has a pullup resistor with PTT switch closing to ground */

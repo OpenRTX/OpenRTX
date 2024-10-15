@@ -19,6 +19,7 @@
 #include <peripherals/gpio.h>
 #include <interfaces/delays.h>
 #include <interfaces/keyboard.h>
+#include <interfaces/platform.h>
 #include <hwconfig.h>
 
 
@@ -40,6 +41,25 @@
  *
  */
 
+static uint8_t knobPrev = 0;
+static uint8_t knobPos = 0;
+
+static uint8_t getKnobPos()
+{
+    static const uint8_t knobTable[] =
+    {
+        0x09, 0x0A, 0x04, 0x03, 0x08,
+        0x07, 0x05, 0x06, 0x0C, 0x0B,
+        0x01, 0x02, 0x0D, 0x0E, 0x10, 0x0F
+    };
+
+    uint8_t encState = (gpio_readPin(CH_SELECTOR_3) << 3)
+                     | (gpio_readPin(CH_SELECTOR_2) << 2)
+                     | (gpio_readPin(CH_SELECTOR_1) << 1)
+                     |  gpio_readPin(CH_SELECTOR_0);
+
+    return knobTable[encState];
+}
 
 void kbd_init()
 {
@@ -48,6 +68,14 @@ void kbd_init()
     gpio_setMode(SIDE_KEY2, INPUT);
     gpio_setMode(SIDE_KEY3, INPUT);
     gpio_setMode(ALARM_KEY, INPUT);
+
+    gpio_setMode(CH_SELECTOR_0, INPUT);
+    gpio_setMode(CH_SELECTOR_1, INPUT);
+    gpio_setMode(CH_SELECTOR_2, INPUT);
+    gpio_setMode(CH_SELECTOR_3, INPUT);
+
+    knobPos = getKnobPos();
+    knobPrev = knobPos;
 }
 
 void kbd_terminate()
@@ -58,6 +86,29 @@ void kbd_terminate()
 keyboard_t kbd_getKeys()
 {
     keyboard_t keys = 0;
+
+    knobPos = getKnobPos();
+    if(knobPos != knobPrev)
+    {
+        if(knobPos > knobPrev)
+            keys |= KNOB_RIGHT;
+        else if(knobPos < knobPrev)
+            keys |= KNOB_LEFT;
+
+        if((knobPos > 8) && (knobPrev < 8))
+        {
+            keys |= KNOB_LEFT;
+            keys &= ~KNOB_RIGHT;
+        }
+
+        if((knobPos < 8) && (knobPrev > 8))
+        {
+            keys |= KNOB_RIGHT;
+            keys &= ~KNOB_LEFT;
+        }
+
+        knobPrev = knobPos;
+    }
 
     /*
      * Rows and columns lines are in common with the display, so we have to
@@ -135,4 +186,12 @@ keyboard_t kbd_getKeys()
     if(gpio_readPin(ALARM_KEY) == 0) keys |= KEY_F3;
 
     return keys;
+}
+
+/*
+ * This function is defined in platform.h
+ */
+int8_t platform_getChSelector()
+{
+    return knobPos;
 }
