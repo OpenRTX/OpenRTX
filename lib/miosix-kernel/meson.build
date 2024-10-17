@@ -26,3 +26,14 @@ miosix_cm4f_inc = miosix_inc + ['lib/miosix-kernel/miosix/arch/cortexM4F']
 miosix_cm4f_src = miosix_src + ['lib/miosix-kernel/miosix/arch/cortexM4F/portability.cpp',
                                'lib/miosix-kernel/miosix/arch/common/core/interrupts_cortexMx.cpp']
 miosix_cm4f_def = miosix_def + {'_ARCH_CORTEXM4' : ''}
+
+
+##
+## ARM Cortex M7
+##
+miosix_cm7_inc = miosix_inc + ['lib/miosix-kernel/miosix/arch/cortexM7']
+miosix_cm7_src = miosix_src + ['lib/miosix-kernel/miosix/arch/cortexM7/portability.cpp',
+                               'lib/miosix-kernel/miosix/arch/common/core/cache_cortexMx.cpp',
+                               'lib/miosix-kernel/miosix/arch/common/core/mpu_cortexMx.cpp',
+                               'lib/miosix-kernel/miosix/arch/common/core/interrupts_cortexMx.cpp']
+miosix_cm7_def = miosix_def + {'_ARCH_CORTEXM7' : ''}
