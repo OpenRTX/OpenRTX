@@ -19,7 +19,6 @@
 #define GPIO_STM32_H
 
 #include <peripherals/gpio.h>
-#include <stm32f4xx.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
