@@ -504,6 +504,30 @@ cs7000_inc += openrtx_inc + stm32f405_inc
 cs7000_def += openrtx_def + stm32f405_def
 
 ##
+## Connect Systems CS70000-PLUS
+##
+cs7000p_src = ['platform/drivers/stubs/nvmem_stub.c',
+               'platform/drivers/stubs/cps_io_stub.c',
+               'platform/drivers/stubs/radio_stub.c',
+               'platform/drivers/stubs/audio_stub.c',
+               'platform/drivers/stubs/radio_stub.c',
+               'platform/drivers/display/ST7735R_CS7000.c',
+               'platform/drivers/keyboard/keyboard_CS7000.c',
+               'platform/drivers/backlight/backlight_CS7000.c',
+               'platform/drivers/GPIO/gpio_shiftReg.c',
+               'platform/drivers/SPI/spi_custom.c',
+               'platform/drivers/SPI/spi_bitbang.c',
+               'platform/targets/CS7000-PLUS/hwconfig.c',
+               'platform/targets/CS7000-PLUS/platform.c']
+
+cs7000p_inc = ['platform/targets/CS7000-PLUS']
+cs7000p_def = {'PLATFORM_CS7000P': '', 'timegm': 'mktime'}
+
+cs7000p_src += openrtx_src + stm32h743_src + miosix_cm7_src + ui_src_default
+cs7000p_inc += openrtx_inc + stm32h743_inc + miosix_cm7_inc
+cs7000p_def += openrtx_def + stm32h743_def + miosix_cm7_def
+
+##
 ## -------------------------- Compilation arguments ----------------------------
 ##
 
@@ -604,6 +628,15 @@ foreach k, v : cs7000_def
     cs7000_args += '-D@0@'.format(k)
   else
     cs7000_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
+
+cs7000p_args = []
+foreach k, v : cs7000p_def
+  if v == ''
+    cs7000p_args += '-D@0@'.format(k)
+  else
+    cs7000p_args += '-D@0@=@1@'.format(k, v)
   endif
 endforeach
 
@@ -713,6 +746,16 @@ cs7000_opts = {
                           '-Wl,--print-memory-usage']
 }
 
+cs7000p_opts = {
+  'sources'            : cs7000p_src,
+  'include_directories': cs7000p_inc,
+  'dependencies'       : [codec2_dep],
+  'c_args'             : cs7000p_args,
+  'cpp_args'           : cs7000p_args,
+  'link_args'          : ['-Wl,-T../platform/mcu/STM32H7xx/stm32_2m+512k_rom.ld',
+                          '-Wl,--print-memory-usage']
+}
+
 ##
 ## ---------------------------- Compilation targets ----------------------------
 ##
@@ -785,6 +828,13 @@ targets = [
   {
     'name'     : 'cs7000',
     'opts'     : cs7000_opts,
+    'flashable': true,
+    'wrap'     : ' ',
+    'load_addr': ' '
+  },
+  {
+    'name'     : 'cs7000p',
+    'opts'     : cs7000p_opts,
     'flashable': true,
     'wrap'     : ' ',
     'load_addr': ' '
