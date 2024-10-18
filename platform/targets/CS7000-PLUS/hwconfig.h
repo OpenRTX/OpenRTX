@@ -15,19 +15,62 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef GPIO_NATIVE_H
-#define GPIO_NATIVE_H
+#ifndef HWCONFIG_H
+#define HWCONFIG_H
 
-#if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0) \
- || defined(PLATFORM_MD9600) || defined(PLATFORM_MOD17) \
- || defined(PLATFORM_CS7000)
-#include <stm32f4xx.h>
-#include <gpio_stm32.h>
-#elif defined(PLATFORM_CS7000P)
 #include <stm32h7xx.h>
-#include <gpio_stm32.h>
-#elif defined(PLATFORM_GD77) || defined(PLATFORM_DM1801)
-#include <gpio_mk22.h>
+#include "pinmap.h"
+
+#ifdef __cplusplus
+
+// Export the HR_C6000 driver only for C++ sources
+#include <HR_C6000.h>
+
+extern HR_C6000 C6000;
+
+extern "C" {
 #endif
 
-#endif /* GPIO_NATIVE_H */
+enum AdcChannels
+{
+    ADC_VOL_CH  = 15,  /* PC5  */
+    ADC_VBAT_CH = 6,   /* PA6  */
+    ADC_MIC_CH  = 3,   /* PA3  */
+    ADC_RSSI_CH = 8,   /* PB0  */
+    ADC_RTX_CH  = 7,   /* PA7  */
+};
+
+// extern const struct Adc adc1;
+extern const struct spiCustomDevice spiSr;
+extern const struct spiCustomDevice flash_spi;
+extern const struct spiCustomDevice det_spi;
+extern const struct spiCustomDevice pll_spi;
+extern const struct spiCustomDevice c6000_spi;
+extern const struct gpioDev extGpio;
+extern const struct ak2365a detector;
+extern const struct sky73210 pll;
+
+/* Screen dimensions */
+#define CONFIG_SCREEN_WIDTH 160
+#define CONFIG_SCREEN_HEIGHT 128
+
+/* Screen pixel format */
+#define CONFIG_PIX_FMT_RGB565
+
+/* Screen has adjustable brightness */
+#define CONFIG_SCREEN_BRIGHTNESS
+
+/* Battery type */
+#define CONFIG_BAT_LIPO_2S
+
+/* Device supports M17 mode */
+#define CONFIG_M17
+
+/* Device has a GPS chip */
+// #define CONFIG_GPS
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* HWCONFIG_H */
