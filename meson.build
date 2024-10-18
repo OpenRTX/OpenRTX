@@ -275,6 +275,29 @@ mk22fn512_inc += miosix_cm4f_inc
 mk22fn512_def += miosix_cm4f_def
 
 ##
+## STM32H743
+##
+
+stm32h743_src = ['platform/mcu/STM32H7xx/boot/startup.cpp',
+                 'platform/mcu/STM32H7xx/boot/bsp.cpp',
+                 'platform/mcu/STM32H7xx/boot/libc_integration.cpp',
+                 'platform/mcu/STM32H7xx/drivers/pll.cpp',
+                 'platform/mcu/STM32H7xx/drivers/delays.cpp',
+                 'platform/drivers/GPIO/gpio_stm32.c',
+                 'platform/mcu/CMSIS/Device/ST/STM32H7xx/Source/system_stm32h7xx.c']
+
+stm32h743_inc = ['platform/mcu/CMSIS/Include',
+                 'platform/mcu/CMSIS/Device/ST/STM32H7xx/Include',
+                 'platform/mcu/STM32H7xx',
+                 'platform/mcu/STM32H7xx/drivers']
+
+stm32h743_def = {'STM32H743xx': '', 'HSE_VALUE':'25000000'}
+
+stm32h743_src += miosix_cm7_src
+stm32h743_inc += miosix_cm7_inc
+stm32h743_def += miosix_cm7_def
+
+##
 ## ----------------------- Platform specializations ----------------------------
 ##
 

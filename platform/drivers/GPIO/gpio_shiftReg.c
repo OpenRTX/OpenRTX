@@ -19,7 +19,6 @@
 #include <peripherals/gpio.h>
 #include <string.h>
 #include <errno.h>
-#include <core_cm4.h>
 #include "gpio_shiftReg.h"
 
 void gpioShiftReg_init(const struct gpioDev *dev)
