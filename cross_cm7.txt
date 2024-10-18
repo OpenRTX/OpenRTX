@@ -1,0 +1,75 @@
+[binaries]
+c       = 'arm-miosix-eabi-gcc'
+cpp     = 'arm-miosix-eabi-g++'
+ld      = 'arm-miosix-eabi-ld'
+ar      = 'arm-miosix-eabi-ar'
+as      = 'arm-miosix-eabi-as'
+size    = 'arm-miosix-eabi-size'
+objdump = 'arm-miosix-eabi-objdump'
+objcopy = 'arm-miosix-eabi-objcopy'
+strip   = 'arm-miosix-eabi-strip'
+gdb     = 'arm-miosix-eabi-gdb'
+terminal= 'x-terminal-emulator'
+openocd = '/usr/local/bin/openocd'
+
+[built-in options]
+c_args      = [
+               '-D_DEFAULT_SOURCE=1',
+               '-ffunction-sections',
+               '-fdata-sections',
+               '-Wall',
+               '-Werror=return-type',
+               '-g',
+               '-mcpu=cortex-m7',           # Cortex-M4 CPU
+               '-mthumb',                   # ARM Thumb2 ISA
+               '-mfloat-abi=hard',          # Hard floating point support
+               '-mfpu=fpv5-d16',
+               '-Os'
+              ]
+
+cpp_args    = [
+               '-D_DEFAULT_SOURCE=1',
+               '-ffunction-sections',
+               '-fdata-sections',
+               '-Wall',
+               '-Werror=return-type',
+               '-g',
+               '-fno-exceptions',
+               '-fno-rtti',
+               '-D__NO_EXCEPTIONS',
+               '-std=c++14',
+               '-mcpu=cortex-m7',           # Cortex-M4 CPU
+               '-mthumb',                   # ARM Thumb2 ISA
+               '-mfloat-abi=hard',          # Hard floating point support
+               '-mfpu=fpv5-d16',
+               '-Os'
+              ]
+
+c_link_args = [
+               '-mcpu=cortex-m7',
+               '-mthumb',
+               '-mfloat-abi=hard',
+               '-mfpu=fpv5-d16',
+               '-ffunction-sections',
+               '-fdata-sections',
+               '-fno-exceptions',
+               '-fno-rtti',
+               '-Wl,-L../lib/miosix-kernel',
+               '-Wl,--gc-sections',
+               '-Wl,-Map,main.map',
+               '-Wl,--warn-common',
+               '-nostdlib',
+               '-lstdc++',
+               '-lc',
+               '-lm',
+               '-lgcc',
+               '-latomic'
+              ]
+
+cpp_link_args = c_link_args
+
+[host_machine]
+system = 'none'
+cpu_family = 'arm'
+cpu = 'cortex-m4'
+endian = 'little'

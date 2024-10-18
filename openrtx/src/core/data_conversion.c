@@ -25,7 +25,7 @@
  * Trivial implementation of Cortex M4 SIMD instructions for all the
  * targets not supporting them.
  */
-#if (__CORTEX_M != 0x04)
+#if (__CORTEX_M < 0x04)
 static inline uint32_t __SADD16(uint32_t a, uint32_t b)
 {
     uint16_t resHi = ((a >> 16) & 0x0000FFFF) + ((b >> 16) & 0x0000FFFF);
