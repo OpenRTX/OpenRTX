@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2024 by Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2020 - 2024 by Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -15,16 +15,48 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef GPIO_NATIVE_H
-#define GPIO_NATIVE_H
+#include <stdio.h>
+#include <reent.h>
+#include "filesystem/file_access.h"
 
-#if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0) \
- || defined(PLATFORM_MD9600) || defined(PLATFORM_MOD17) \
- || defined(PLATFORM_CS7000)
-#include <stm32f4xx.h>
-#include <gpio_stm32.h>
-#elif defined(PLATFORM_GD77) || defined(PLATFORM_DM1801)
-#include <gpio_mk22.h>
+using namespace std;
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#endif /* GPIO_NATIVE_H */
+/**
+ * \internal
+ * _write_r, write to a file
+ */
+int _write_r(struct _reent *ptr, int fd, const void *buf, size_t cnt)
+{
+    (void) ptr;
+    (void) fd;
+    (void) buf;
+    (void) cnt;
+
+    /* If fd is not stdout or stderr */
+    ptr->_errno = EBADF;
+    return -1;
+}
+
+/**
+ * \internal
+ * _read_r, read from a file.
+ */
+int _read_r(struct _reent *ptr, int fd, void *buf, size_t cnt)
+{
+    (void) ptr;
+    (void) fd;
+    (void) buf;
+    (void) cnt;
+
+    /* If fd is not stdin */
+    ptr->_errno = EBADF;
+    return -1;
+}
+
+#ifdef __cplusplus
+}
+#endif
