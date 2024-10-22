@@ -777,6 +777,7 @@ gd77_loader = find_program('scripts/gd-77_firmware_loader.py', required:false, d
 dfu_util    = find_program('dfu-util',                         required:false, disabler:true)
 west        = find_program('west',                             required:false, disabler:true)
 uf2conv     = find_program('scripts/uf2conv.py',               required:false, disabler:true)
+dfu_convert = find_program('scripts/dfu-convert.py',           required:false, disabler:true)
 
 foreach t : targets
 
@@ -871,8 +872,8 @@ foreach t : targets
                       output  : name+'_flash',
                       command : [gd77_loader, '-f', '@INPUT@', '-m', t['wrap']])
 
-      # Module17 also uses dfu-tool for flashing
-      elif name == 'openrtx_mod17' or name == 'openrtx_cs7000'
+      # Module17 uses dfu-tool for flashing
+      elif name == 'openrtx_mod17'
 
         # Wrap target for Module17 for consistency, same output as bin target
         custom_target(name+'_wrap',
@@ -890,6 +891,23 @@ foreach t : targets
                                  '-D', '@INPUT@',
                                  '-s', '0x08000000'])
 
+      # For CS7000 'wrap' target prepares a .dfu file
+      elif name == 'openrtx_cs7000'
+
+        custom_target(name+'_wrap',
+                      output  : name+'.dfu',
+                      input   : bin,
+                      command : [dfu_convert, '-b', '0x08000000:@INPUT@', '@OUTPUT@'])
+
+
+        custom_target(name+'_flash',
+                      input   : bin,
+                      output  : name+'_flash',
+                      command : [dfu_util,
+                                 '-d', '0483:df11',
+                                 '-a', '0',
+                                 '-D', '@INPUT@',
+                                 '-s', '0x08000000'])
       else
 
         wrap = custom_target(name+'_wrap',
