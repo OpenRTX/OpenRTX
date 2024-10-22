@@ -201,6 +201,7 @@ void HR_Cx000< M >::fmMode()
     writeReg(M::CONFIG, 0x36, 0x10); // Vocoder codec packet interface enabled
     writeReg(M::CONFIG, 0x36, 0x12); // Receiving and opening the voice channel in FM mode Codec switch, 1 means on, 0 means off.
     writeReg(M::CONFIG, 0xE0, 0x8B);
+    writeReg(M::CONFIG, 0x26, 0xFE); // Undocumented register, disable FM audio output
 }
 
 template< class M >
@@ -221,5 +222,4 @@ void HR_Cx000< M >::stopAnalogTx()
     writeReg(M::CONFIG, 0x60, 0x00);    // Stop analog transmission
     writeReg(M::CONFIG, 0xE0, 0xC9);    // Codec enabled, LineIn1, LineOut2, I2S slave mode
     writeReg(M::CONFIG, 0x34, 0x98);    // FM bpf enabled, 25kHz bandwidth
-    writeReg(M::CONFIG, 0x26, 0xFD);    // Undocumented register, enable FM receive
 }
