@@ -122,9 +122,12 @@ void audio_connect(const enum AudioSource source, const enum AudioSink sink)
             gpioDev_set(INT_MIC_SEL);
             break;
 
-        case PATH(SOURCE_MCU, SINK_SPK):
         case PATH(SOURCE_RTX, SINK_SPK):
             radio_enableAfOutput();
+            // Fallthrough
+
+        case PATH(SOURCE_MCU, SINK_SPK):
+            gpioDev_set(AF_MUTE);
             break;
 
         default:
@@ -159,9 +162,12 @@ void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
             gpioDev_clear(INT_MIC_SEL);
             break;
 
-        case PATH(SOURCE_MCU, SINK_SPK):
         case PATH(SOURCE_RTX, SINK_SPK):
             radio_disableAfOutput();
+            // Fallthrough
+
+        case PATH(SOURCE_MCU, SINK_SPK):
+            gpioDev_clear(AF_MUTE);
             break;
 
         default:
