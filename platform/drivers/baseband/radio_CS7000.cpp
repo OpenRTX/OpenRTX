@@ -184,12 +184,15 @@ bool radio_checkRxDigitalSquelch()
 
 void radio_enableAfOutput()
 {
-    gpioDev_set(AF_MUTE);
+    // Undocumented register, bits [1:0] seem to enable/disable FM audio RX.
+    // 0xFD enable FM receive.
+    C6000.writeCfgRegister(0x26, 0xFD);
 }
 
 void radio_disableAfOutput()
 {
-    gpioDev_clear(AF_MUTE);
+    // Undocumented register, disable FM receive
+    C6000.writeCfgRegister(0x26, 0xFE);
 }
 
 void radio_enableRx()
