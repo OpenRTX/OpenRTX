@@ -83,7 +83,7 @@ uint16_t M17FrameEncoder::encodeStreamFrame(const payload_t& payload,
     M17StreamFrame streamFrame;
 
     streamFrame.setFrameNumber(streamFrameNumber);
-    streamFrameNumber = (streamFrameNumber + 1) & 0x07FF;
+    streamFrameNumber = (streamFrameNumber + 1) & 0x7FFF;
     if(isLast) streamFrame.lastFrame();
     std::copy(payload.begin(), payload.end(), streamFrame.payload().begin());
 
