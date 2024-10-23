@@ -136,7 +136,7 @@ void M17FrameDecoder::decodeStream(const std::array< uint8_t, 46 >& data)
         // Mark this segment as present
         lsfSegmentMap |= 1 << segmentNum;
 
-        // Check if we have received all the five LICH segments
+        // Check if we have received all the six LICH segments
         if(lsfSegmentMap == 0x3F)
         {
             if(lsfFromLich.valid()) lsf = lsfFromLich;
