@@ -245,10 +245,20 @@ void radio_enableTx()
     {
         case OPMODE_FM:
         {
-            TxAudioSource source = TxAudioSource::MIC;
+            // WARNING: HR_C6000 quirk!
+            // If the CTCSS tone is disabled immediately after TX stop, the IC
+            // stops outputting demodulated audio until a reset. This may be
+            // something related to the "tail tone elimination" function. To
+            // overcome this, the CTCSS tone is enabled/disabled before starting
+            // a new transmission.
+            if(config->txToneEn)
+                C6000.setTxCtcss(config->txTone, 0x20);
+            else
+                C6000.disableCtcss();
+
             FmConfig cfg = (config->bandwidth == BW_12_5) ? FmConfig::BW_12p5kHz
                                                           : FmConfig::BW_25kHz;
-            C6000.startAnalogTx(source, cfg | FmConfig::PREEMPH_EN);
+            C6000.startAnalogTx(TxAudioSource::MIC, cfg | FmConfig::PREEMPH_EN);
         }
             break;
 
