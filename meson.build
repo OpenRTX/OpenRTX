@@ -82,6 +82,7 @@ openrtx_inc = ['openrtx/include',
                'platform/drivers/USB',
                'platform/drivers/GPIO',
                'platform/drivers/tones',
+               'platform/drivers/audio',
                'platform/drivers/baseband',
                'platform/drivers/backlight',
                'platform/drivers/chSelector']
