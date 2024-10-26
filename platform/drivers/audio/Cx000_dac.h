@@ -34,6 +34,19 @@ extern "C" {
 
 extern const struct audioDriver Cx000_dac_audio_driver;
 
+/**
+ * Start generation of a "beep" tone from DAC output.
+ *
+ * @param freq: tone frequency in Hz.
+ * @return zero on success, a negative error code otherwise.
+ */
+int Cx000dac_startBeep(const uint16_t freq);
+
+/**
+ * Stop an ongoing "beep" tone.
+ */
+void Cx000dac_stopBeep();
+
 #ifdef __cplusplus
 }   // extern "C"
 

@@ -20,20 +20,46 @@
 #include <errno.h>
 #include "Cx000_dac.h"
 
-#include <stdio.h>
+#define TONE_BASE_FREQ    125 // [Hz]
+#define DAC_FIFO_SIZE     32
+
+enum FuncMode
+{
+    DAC_OFF    = 0,
+    DAC_BEEP   = 1,
+    DAC_STREAM = 2
+};
+
+/*
+ * Sine table for beep tone generation, composed of 64 samples of a 125Hz
+ * sinewave sampled at 8kHz. Data is in big endian format as required by the
+ * HR_Cx000 DAC.
+ */
+static const uint16_t sineTable[] =
+{
+    0x0000, 0x8c0c, 0xf918, 0x2825, 0xfb30, 0x563c, 0x1c47, 0x3351,
+    0x825a, 0xf162, 0x6d6a, 0xe270, 0x4176, 0x7c7a, 0x897d, 0x617f,
+    0xff7f, 0x617f, 0x897d, 0x7c7a, 0x4176, 0xe270, 0x6d6a, 0xf162,
+    0x825a, 0x3351, 0x1c47, 0x563c, 0xfb30, 0x2825, 0xf918, 0x8c0c,
+    0x0000, 0x74f3, 0x07e7, 0xd8da, 0x05cf, 0xaac3, 0xe4b8, 0xcdae,
+    0x7ea5, 0x0f9d, 0x9395, 0x1e8f, 0xbf89, 0x8485, 0x7782, 0x9f80,
+    0x0180, 0x9f80, 0x7782, 0x8485, 0xbf89, 0x1e8f, 0x9395, 0x0f9d,
+    0x7ea5, 0xcdae, 0xe4b8, 0xaac3, 0x05cf, 0xd8da, 0x07e7, 0x74f3
+};
 
 static HR_C6000 *c6000;
-static bool running   = false;
+static uint8_t funcMode = DAC_OFF;
 static bool syncPoint = false;
 static bool stopReq   = false;
 static size_t readPos;
+static size_t beepIncr;
 static struct streamCtx *stream;
 static pthread_mutex_t  mutex;
 static pthread_cond_t   wakeup_cond;
 
 static inline void stopStream()
 {
-    running = false;
+    funcMode = DAC_OFF;
     stream->running = 0;
 
     // Clear the "OpenMusic" bit
@@ -57,7 +83,7 @@ void Cx000dac_terminate()
 
 void Cx000dac_task()
 {
-    if(running == false)
+    if(funcMode == DAC_OFF)
         return;
 
     // Check if FIFO is empty
@@ -68,8 +94,25 @@ void Cx000dac_task()
     // Need to refill the FIFO
     bool isSyncPoint = false;
     size_t prevRdPos = readPos;
-    uint8_t *sound   = (uint8_t *)(&stream->buffer[readPos]);
 
+    // In beep mode, just refill the DAC FIFO and return since there is no
+    // thread to wake up.
+    if(funcMode == DAC_BEEP)
+    {
+        uint16_t data[DAC_FIFO_SIZE];
+        for(size_t i = 0; i < DAC_FIFO_SIZE; i += 1)
+        {
+            readPos += beepIncr;
+            data[i] = sineTable[(readPos >> 16) & 0x3F];
+        }
+
+        c6000->sendAudio((uint8_t *) data);
+        return;
+    }
+
+    // Stream mode: copy a new block of samples, update the read index and
+    // manage thread synchronization.
+    uint8_t *sound = (uint8_t *)(&stream->buffer[readPos]);
     c6000->sendAudio(sound);
     readPos += 32;
 
@@ -108,6 +151,34 @@ void Cx000dac_task()
     }
 }
 
+int Cx000dac_startBeep(const uint16_t freq)
+{
+    if(freq < TONE_BASE_FREQ)
+        return -EINVAL;
+
+    if(funcMode != DAC_OFF)
+        return -EBUSY;
+
+    beepIncr = (freq << 16) / TONE_BASE_FREQ;
+    readPos  = 0;
+    funcMode = DAC_BEEP;
+
+    // Set the "OpenMusic" bit
+    c6000->writeCfgRegister(0x06, 0x22);
+
+    return 0;
+}
+
+void Cx000dac_stopBeep()
+{
+    // Stop only beeps, streams have an higher priority
+    if(funcMode != DAC_BEEP)
+        return;
+
+    // Clear the "OpenMusic" bit
+    c6000->writeCfgRegister(0x06, 0x20);
+    funcMode = DAC_OFF;
+}
 
 static int Cx000dac_start(const uint8_t instance, const void *config,
                           struct streamCtx *ctx)
@@ -122,7 +193,7 @@ static int Cx000dac_start(const uint8_t instance, const void *config,
     if((ctx->bufSize % 32) != 0)
         return -EINVAL;
 
-    if(running == true)
+    if(funcMode == DAC_STREAM)
         return -EBUSY;
 
     // Stream not running and thread idle, set up a new stream
@@ -144,7 +215,14 @@ static int Cx000dac_start(const uint8_t instance, const void *config,
 
     // Set the "OpenMusic" bit
     c6000->writeCfgRegister(0x06, 0x22);
-    running = true;
+
+    // Audio stream mode takes over beep: switching to stream mode will start
+    // the new stream as soon as the HR_Cx000 sample buffer is empty.
+    //
+    // TODO: the audio management module ensures that the DAC is accessed by
+    // only one thread at a time, so we *should* be safe setting the funcMode
+    // without a critical section.
+    funcMode = DAC_STREAM;
 
     return 0;
 }
