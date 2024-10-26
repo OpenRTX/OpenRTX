@@ -28,6 +28,7 @@
 #include <peripherals/rtc.h>
 #include <interfaces/audio.h>
 #include <chSelector.h>
+#include <Cx000_dac.h>
 
 #ifdef CONFIG_SCREEN_BRIGHTNESS
 #include <backlight.h>
@@ -62,7 +63,6 @@ void platform_init()
     nvm_init();                      /* Initialise non volatile memory manager */
     nvm_readCalibData(&calibration); /* Load calibration data                  */
     nvm_readHwInfo(&hwInfo);         /* Load hardware information data         */
-    toneGen_init();                  /* Initialise tone generator              */
     rtc_init();                      /* Initialise RTC                         */
     chSelector_init();               /* Initialise channel selector handler    */
     audio_init();                    /* Initialise audio management module     */
@@ -77,7 +77,6 @@ void platform_terminate()
     /* Shut down all the modules */
     adc1_terminate();
     nvm_terminate();
-    toneGen_terminate();
     chSelector_terminate();
     audio_terminate();
 
@@ -190,20 +189,12 @@ void platform_ledOff(led_t led)
 
 void platform_beepStart(uint16_t freq)
 {
-    // calculate appropriate volume.
-    uint8_t vol = platform_getVolumeLevel();
-    // Since beeps have been requested, we do not want to have 0 volume.
-    // We also do not want the volume to be excessive.
-    if (vol < 10)
-        vol = 5;
-    if (vol > 176)
-        vol = 176;
-    toneGen_beepOn((float)freq, vol, 0);
+    Cx000dac_startBeep(freq);
 }
 
 void platform_beepStop()
 {
-    toneGen_beepOff();
+    Cx000dac_stopBeep();
 }
 
 datetime_t platform_getCurrentTime()
