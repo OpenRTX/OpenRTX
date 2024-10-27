@@ -21,6 +21,7 @@
 #ifndef HRC6000_H
 #define HRC6000_H
 
+#include <datatypes.h>
 #include "HR_Cx000.h"
 
 enum class C6000_SpiOpModes : uint8_t
@@ -46,6 +47,40 @@ public:
      */
     HR_C6000(const struct spiDevice *uSpi, const struct gpioPin uCs) :
         HR_Cx000< C6000_SpiOpModes >(uSpi, uCs) { }
+
+    /**
+     * Configure CTCSS tone transmission.
+     *
+     * @param tone: CTCSS tone frequency.
+     * @param deviation: CTCSS tone deviation.
+     */
+    void setTxCtcss(const tone_t tone, const uint8_t deviation);
+
+    /**
+     * Configure CTCSS tone detection.
+     *
+     * @param tone: CTCSS tone frequency.
+     */
+    void setRxCtcss(const tone_t tone);
+
+    /**
+     * Test if RX CTCSS tone has been detected.
+     *
+     * @return true if RX CTCSS tone has been detected.
+     */
+    inline bool ctcssDetected()
+    {
+        uint8_t reg = readCfgRegister(0x93);
+        return ((reg & 0x01) != 0) ? true : false;
+    }
+
+    /**
+     * Disable CTCSS tone encode and decode.
+     */
+    inline void disableCtcss()
+    {
+        writeCfgRegister(0xA1, 0x00);     // Disable all tones
+    }
 };
 
 #endif /* HRC6000_H */
