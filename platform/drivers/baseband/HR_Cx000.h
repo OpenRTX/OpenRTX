@@ -263,6 +263,8 @@ private:
         spi_send(uSpi, seq, len);
     }
 
+protected:
+
     const struct spiDevice *uSpi;
     const struct gpioPin uCs;
 };

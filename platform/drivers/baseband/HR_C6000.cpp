@@ -67,3 +67,25 @@ void HR_C6000::setRxCtcss(const tone_t tone)
     writeCfgRegister(0xD2, 0xD0);
     writeCfgRegister(0xD4, index);        // Tone index
 }
+
+void HR_C6000::sendTone(const uint32_t freq, const uint8_t deviation)
+{
+    uint32_t tone = (freq * 65536) / 32000;
+
+    // Set  DTMF tone osc 1 to frequency of the required tone
+    writeReg16(C6000_SpiOpModes::CONFIG, 0x11A, (tone & 0xFF));
+    writeReg16(C6000_SpiOpModes::CONFIG, 0x11B, (tone >> 8) & 0xFF);
+
+    // Set  DTMF tone osc 2 to frequency of the required tone
+    writeReg16(C6000_SpiOpModes::CONFIG, 0x122, (tone & 0xFF));
+    writeReg16(C6000_SpiOpModes::CONFIG, 0x123, (tone >> 8) & 0xFF);
+
+    writeCfgRegister(0xA1, 0x02);         // Enable DTMF
+    writeCfgRegister(0xA0, deviation);    // Set DTMF tone deviation
+    writeCfgRegister(0xA4, 0xFF);         // Set the tone time to maximum
+    writeCfgRegister(0xA3, 0x00);         // Set the tone gap to zero
+    writeCfgRegister(0xD1, 0x06);         // Set the number of codes to six
+    writeCfgRegister(0xAF, 0x11);         // Set the same code to be sent six times (2 codes per register)
+    writeCfgRegister(0xAE, 0x11);
+    writeCfgRegister(0xAD, 0x11);
+}

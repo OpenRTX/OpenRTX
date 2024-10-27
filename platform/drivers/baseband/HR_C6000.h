@@ -81,6 +81,36 @@ public:
     {
         writeCfgRegister(0xA1, 0x00);     // Disable all tones
     }
+
+    /**
+     * Transmit a tone of a given frequency.
+     *
+     * @param freq: tone frequency in Hz.
+     * @param deviation: tone deviation.
+     */
+    void sendTone(const uint32_t freq, const uint8_t deviation);
+
+private:
+
+    /**
+     * Write a register with 16-bit address.
+     *
+     * @param opMode: "operating mode" specifier, see datasheet for details.
+     * @param addr: register address.
+     * @param value: value to be written.
+     */
+    void writeReg16(const C6000_SpiOpModes opMode, const uint16_t addr, const uint8_t value)
+    {
+        uint8_t data[4];
+
+        data[0] =  static_cast< uint8_t >(opMode) | 0x40;
+        data[2] = (addr >> 8) & 0x07;
+        data[1] = addr & 0xFF;
+        data[3] = value;
+
+        ScopedChipSelect cs(uSpi, uCs);
+        spi_send(uSpi, data, 4);
+    }
 };
 
 #endif /* HRC6000_H */
