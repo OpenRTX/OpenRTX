@@ -62,7 +62,8 @@ public:
     /**
      * Constructor.
      *
-     * @param dev: pointer to chip's hardware interface descriptor.
+     * @param uSpi: pointer to SPI device for "user" SPI interface.
+     * @param uCs: gpioPin object for "user" SPI chip select.
      */
     HR_Cx000(const struct spiDevice *uSpi, const struct gpioPin uCs) : uSpi(uSpi), uCs(uCs)
     {

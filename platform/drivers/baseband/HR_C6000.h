@@ -34,6 +34,18 @@ enum class C6000_SpiOpModes : uint8_t
     AMBE1K = 7      ///< AMBE1000 configuration register.
 };
 
-using HR_C6000 = HR_Cx000 < C6000_SpiOpModes >;
+class HR_C6000 : public HR_Cx000 < C6000_SpiOpModes >
+{
+public:
+
+    /**
+     * Constructor.
+     *
+     * @param uSpi: pointer to SPI device for "user" SPI interface.
+     * @param uCs: gpioPin object for "user" SPI chip select.
+     */
+    HR_C6000(const struct spiDevice *uSpi, const struct gpioPin uCs) :
+        HR_Cx000< C6000_SpiOpModes >(uSpi, uCs) { }
+};
 
 #endif /* HRC6000_H */
