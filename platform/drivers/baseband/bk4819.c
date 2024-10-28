@@ -200,6 +200,7 @@ void bk4819_set_modulation(bool is_FM)
 
 void bk4819_tx_on(void)
 {
+    gpio_clearPin(MIC_SPK_EN);
     WriteRegister(BK4819_REG_30, 0x00);  // reset
     WriteRegister(BK4819_REG_30,
                   BK4819_REG30_REVERSE1_ENABLE | BK4819_REG30_REVERSE2_ENABLE |

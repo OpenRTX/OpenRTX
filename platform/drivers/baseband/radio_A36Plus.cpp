@@ -176,6 +176,7 @@ void radio_setRxFilters(uint32_t freq)
 
 void radio_enableRx()
 {
+    gpio_setPin(MIC_SPK_EN);
     // Disable power amplifiers
     gpio_clearPin(RFV3T_EN);
     bk4819_gpio_pin_set(4, false);          
