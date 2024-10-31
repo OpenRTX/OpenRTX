@@ -2551,7 +2551,7 @@ bool ui_updateGUI()
             break;
         // Contacts menu screen
         case MENU_HISTORY:
-            _ui_drawHistoryItem(&ui_state);
+            _ui_drawMenuHistory(&ui_state); // fixed
             break;
 #ifdef CONFIG_GPS
         // GPS menu screen
