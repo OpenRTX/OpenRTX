@@ -50,7 +50,7 @@ extern history_list_t *history_list;
  * Initialise radio state mutex and radio state variable, reading the
  * informations from device drivers.
  */
-history_list_t* history_init();
+history_list_t *history_init();
 void history_add(history_list_t *list, const char* callsign, const char* module, datetime_t state_time);
 history_t* find_callsign(history_list_t *list, const char* callsign);
 uint8_t history_size(history_list_t *list);
