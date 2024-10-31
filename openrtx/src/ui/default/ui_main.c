@@ -56,6 +56,12 @@ void _ui_drawMainTop(ui_state_t * ui_state)
     point_t bat_pos = {CONFIG_SCREEN_WIDTH - bat_width - layout.horizontal_pad,
                        layout.status_v_pad};
     gfx_drawBattery(bat_pos, bat_width, bat_height, last_state.charge);
+    point_t charge_pos = {layout.top_pos.x, layout.top_pos.y};
+    gfx_print(charge_pos , layout.line1_font, TEXT_ALIGN_LEFT,
+              color_white,"%02d", last_state.charge);
+    point_t list_pos = {layout.top_pos.x + 16, layout.top_pos.y};
+    gfx_print(list_pos , layout.line1_font, TEXT_ALIGN_LEFT,
+              color_white,"-%02d", history_size(history_list));
 #endif
     if (ui_state->input_locked == true)
       gfx_drawSymbol(layout.top_pos, layout.top_symbol_size, TEXT_ALIGN_LEFT,
@@ -161,6 +167,8 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                     gfx_print(layout.line3_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                               color_white, "%s", rtxStatus.M17_refl);
                 }
+                history_add(history_list, RtxStatus.M17_src, rtxStatus.M17_refl, 
+                            utcToLocalTime(last_state.time, last_state.settings.utc_timezone));
             }
             else
             {
