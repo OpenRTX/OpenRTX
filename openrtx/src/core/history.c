@@ -89,18 +89,18 @@ void history_add(history_list_t *list, const char* callsign, const char* module,
         history_push(list, callsign, module, state_time); 
 }
 
-int read_history(history_list_t *list, history_t *history, uint8_t pos)
+int *read_history(history_list_t *list,  history_t *history, uint8_t pos)
 {
     history_t *current = list->head;
     uint8_t index = 0;
-    if (pos>history_size(list)) return -1;
-    while(index<pos)
+    if (pos>history_size(list)) return NULL;
+    while(pos<index)
     {
         current = current->next;
         index++;
     }
     history = current;
-    return 0;
+    return index;
 }
 
 uint8_t history_size(history_list_t *list)
