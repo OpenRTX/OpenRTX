@@ -52,7 +52,7 @@ history_t *history_create(const char* callsign, const char* module, datetime_t s
     if(node==NULL)
         return NULL;
     strncpy(node->callsign, callsign, 9);
-    if((module!=NULL) && (module!="\0"))
+    if((module!=NULL) && (module[0]!='\0'))
         strncpy(node->module, module, 9);
     node->time = state_time;
     node->next = NULL;
@@ -73,7 +73,7 @@ void history_update(history_list_t *list, const char* callsign, const char* modu
 {
     history_t *node = history_find(list, callsign);
     if(node!=NULL) {
-        if((module!=NULL) && (module!="\0"))
+        if((module!=NULL) && (module[0]!='\0'))
             strncpy(node->module, module, 9);
         node->time = state_time;
     }
