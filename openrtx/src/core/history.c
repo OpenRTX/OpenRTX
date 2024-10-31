@@ -91,9 +91,9 @@ void history_add(history_list_t *list, const char* callsign, const char* module,
 
 int read_history(history_list_t *list, history_t *history, uint8_t pos)
 {
-    if (pos>index) return -1;
     history_t *current = list->head;
     uint8_t index = 0;
+    if (pos>history_size(list)) return -1;
     while(index<pos)
     {
         current = current->next;
