@@ -118,6 +118,7 @@ static bool ScreenContainsReadOnlyEntries(int menuScreen)
     {
     case MENU_CHANNEL:
     case MENU_CONTACTS:
+    case MENU_HISTORY:
     case MENU_INFO:
         return true;
     }

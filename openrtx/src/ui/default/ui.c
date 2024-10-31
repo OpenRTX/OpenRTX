@@ -123,6 +123,9 @@ const char *menu_items[] =
     "Banks",
     "Channels",
     "Contacts",
+#ifdef CONFIG_M17
+    "History",
+#endif
 #ifdef CONFIG_GPS
     "GPS",
 #endif
@@ -1791,6 +1794,11 @@ void ui_updateFSM(bool *sync_rtx)
                         case M_CONTACTS:
                             state.ui_screen = MENU_CONTACTS;
                             break;
+#ifdef CONFIG_M17
+                        case M_HISTORY:
+                            state.ui_screen = MENU_HISTORY;
+                            break;
+#endif
 #ifdef CONFIG_GPS
                         case M_GPS:
                             state.ui_screen = MENU_GPS;
@@ -1884,6 +1892,23 @@ void ui_updateFSM(bool *sync_rtx)
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_TOP);
                 break;
+#ifdef CONFIG_M17
+            // History menu screen
+            // M0VVA - implement history displays
+            case MENU_HISTORY:
+                // if ((msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
+                // {// quick press repeat vp, long press summary.
+                //     if (msg.long_press)
+                //         vp_announceGPSInfo(vpGPSAll);
+                //     else
+                //         vp_replayLastPrompt();
+                //     f1Handled = true;
+                // }
+                // else if(msg.keys & KEY_ESC)
+                if(msg.keys & KEY_ESC)
+                    _ui_menuBack(MENU_TOP);
+                break;
+#endif
 #ifdef CONFIG_GPS
             // GPS menu screen
             case MENU_GPS:
