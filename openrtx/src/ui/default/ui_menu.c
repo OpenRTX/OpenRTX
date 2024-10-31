@@ -589,6 +589,15 @@ int _ui_getContactName(char *buf, uint8_t max_len, uint8_t index)
     return result;
 }
 
+int _ui_getHistoryItem(char *buf, uint8_t max_len, uint8_t index)
+{
+    history_t history;
+    int result = read_history(history_list, &history, index);
+    if(result != -1)
+        sniprintf(buf, max_len, "%s", history.callsign);
+    return result;
+}
+
 void _ui_drawMenuTop(ui_state_t* ui_state)
 {
     gfx_clearScreen();
@@ -627,6 +636,16 @@ void _ui_drawMenuContacts(ui_state_t* ui_state)
               color_white, currentLanguage->contacts);
     // Print contact entries
     _ui_drawMenuList(ui_state->menu_selected, _ui_getContactName);
+}
+
+void _ui_drawMenuHistory(ui_state_t* ui_state)
+{
+    gfx_clearScreen();
+    // Print "Contacts" on top bar
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
+              color_white, currentLanguage->history);
+    // Print contact entries
+    _ui_drawMenuList(ui_state->menu_selected, _ui_getHistoryItem);
 }
 
 #ifdef CONFIG_GPS
