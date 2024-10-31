@@ -95,6 +95,7 @@ extern void _ui_drawMenuTop(ui_state_t* ui_state);
 extern void _ui_drawMenuBank(ui_state_t* ui_state);
 extern void _ui_drawMenuChannel(ui_state_t* ui_state);
 extern void _ui_drawMenuContacts(ui_state_t* ui_state);
+extern void _ui_drawMenuHistory(ui_state_t* ui_state);
 #ifdef CONFIG_GPS
 extern void _ui_drawMenuGPS();
 extern void _ui_drawSettingsGPS(ui_state_t* ui_state);
