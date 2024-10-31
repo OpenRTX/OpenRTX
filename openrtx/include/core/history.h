@@ -52,6 +52,7 @@ extern history_list_t *history_list;
  */
 history_list_t *history_init();
 void history_add(history_list_t *list, const char* callsign, const char* module, datetime_t state_time);
+int read_history(history_list_t *list, history_t *history, uint8_t pos);
 history_t* find_callsign(history_list_t *list, const char* callsign);
 uint8_t history_size(history_list_t *list);
 

@@ -1896,16 +1896,19 @@ void ui_updateFSM(bool *sync_rtx)
             // History menu screen
             // M0VVA - implement history displays
             case MENU_HISTORY:
-                // if ((msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
-                // {// quick press repeat vp, long press summary.
-                //     if (msg.long_press)
-                //         vp_announceGPSInfo(vpGPSAll);
-                //     else
-                //         vp_replayLastPrompt();
-                //     f1Handled = true;
-                // }
-                // else if(msg.keys & KEY_ESC)
-                if(msg.keys & KEY_ESC)
+                if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                    // Using 1 as parameter disables menu wrap around
+                    _ui_menuUp(1);
+                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                {
+                    history_t history;
+                    if(read_history(history_list, &history, ui_state.menu_selected + 1) != -1)
+                        ui_state.menu_selected += 1;
+                }
+                else if(msg.keys & KEY_ENTER)
+                {
+                }
+                else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_TOP);
                 break;
 #endif
