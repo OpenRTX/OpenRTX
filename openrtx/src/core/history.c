@@ -99,7 +99,7 @@ int read_history(history_list_t *list,  history_t *history, uint8_t pos)
         current = current->next;
         index++;
     }
-    memcpy(history, current, sizeof(current));
+    memcpy(history, current, sizeof(history_t));
     return index;
 }
 
