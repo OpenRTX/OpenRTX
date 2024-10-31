@@ -82,6 +82,7 @@ void history_update(history_list_t *list, const char* callsign, const char* modu
 
 void history_add(history_list_t *list, const char* callsign, const char* module, datetime_t state_time)
 {
+    if((strncmp(module, "INFO", 4)==0) || (strncmp(module, "ECHO", 4)==0)) return;
     if(history_find(list, callsign)) 
         history_update(list, callsign, module, state_time);
     else 
