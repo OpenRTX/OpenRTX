@@ -43,7 +43,7 @@ void openrtx_init()
 
     platform_init();    // Initialize low-level platform drivers
     state_init();       // Initialize radio state
-    history_init();     // Initialize callsign history
+    history_list = history_init();     // Initialize callsign history
 
     gfx_init();         // Initialize display and graphics driver
     kbd_init();         // Initialize keyboard driver

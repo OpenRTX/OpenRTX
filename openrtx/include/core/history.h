@@ -25,7 +25,6 @@
 #include <settings.h>
 #include <pthread.h>
 #include <stdbool.h>
-// #include <cps.h>
 #include <gps.h>
 
 typedef struct history 
