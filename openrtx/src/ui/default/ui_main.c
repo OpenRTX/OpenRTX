@@ -135,10 +135,6 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                 history_add(history_list, "G4XIX", "MOD_B", utcToLocalTime(last_state.time, last_state.settings.utc_timezone));
                 // Cleanup above
             }
-    // Add some sample data
-    history_add(history_list, "M0VVA", "MOD_A", utcToLocalTime(last_state.time, last_state.settings.utc_timezone));
-    history_add(history_list, "G4XIX", "MOD_B", utcToLocalTime(last_state.time, last_state.settings.utc_timezone));
-    // Cleanup above
 
             // Print M17 Destination ID on line 3 of 3
             rtxStatus_t rtxStatus = rtx_getCurrentStatus();
