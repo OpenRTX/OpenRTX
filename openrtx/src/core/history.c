@@ -94,7 +94,7 @@ int read_history(history_list_t *list,  history_t *history, uint8_t pos)
     history_t *current = list->head;
     uint8_t index = 0;
     if (pos>history_size(list)) return -1;
-    while(pos<index)
+    while(pos>index)
     {
         current = current->next;
         index++;
