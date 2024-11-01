@@ -148,7 +148,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                                color_white, SYMBOL_CALL_RECEIVED);
 
                 gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                          yellow_fab413, "%s", rtxStatus.M17_dst);
+                          color_white, "%s", rtxStatus.M17_dst);
 
                 // Source address
                 gfx_drawSymbol(layout.line1_pos, layout.line1_symbol_size, TEXT_ALIGN_LEFT,
@@ -164,7 +164,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                                    color_white, SYMBOL_ACCESS_POINT);
 
                     gfx_print(layout.line4_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                              color_grey, "%s", rtxStatus.M17_link);
+                              color_white, "%s", rtxStatus.M17_link);
                 }
 
                 // Reflector (if present)
@@ -176,7 +176,8 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                     gfx_print(layout.line3_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                               color_white, "%s", rtxStatus.M17_refl);
                 }
-                history_add(history_list, rtxStatus.M17_src, rtxStatus.M17_refl, 
+                if((!(strcmp(rtxStatus.M17_dst, "INFO"))&&(strcmp(rtxStatus.M17_dst, "ECHO"))))
+                    history_add(history_list, rtxStatus.M17_src, rtxStatus.M17_refl, 
                             utcToLocalTime(last_state.time, last_state.settings.utc_timezone));
             }
             else
