@@ -75,4 +75,4 @@ static uint8_t spiC6000_func(const void *priv, uint8_t value)
 
 SPI_CUSTOM_DEVICE_DEFINE(c6000_spi, spiC6000_func, NULL, &c6000_mutex)
 SPI_STM32_DEVICE_DEFINE(nvm_spi, SPI1, NULL)
-ADC_STM32_DEVICE_DEFINE(adc1, ADC1, &adcMutex, 3300000)
+ADC_STM32_DEVICE_DEFINE(adc1, ADC1, &adcMutex, ADC_COUNTS_TO_UV(3300000, 12))
