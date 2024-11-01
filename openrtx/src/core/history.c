@@ -89,6 +89,7 @@ void history_push(history_list_t *list, const char* callsign, const char* module
         list->tail = node;
     list->head = node;
     list->length++;
+    new_history = true;
 }
 
 void history_update(history_list_t *list, const char* callsign, const char* module, datetime_t state_time)
@@ -115,7 +116,6 @@ void history_add(history_list_t *list, const char* callsign, const char* module,
         history_update(list, callsign, module, state_time);
     else 
         history_push(list, callsign, module, state_time); 
-    new_history = true;
 }
 
 int read_history(history_list_t *list,  history_t *history, uint8_t pos)
