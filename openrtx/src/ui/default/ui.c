@@ -1895,7 +1895,6 @@ void ui_updateFSM(bool *sync_rtx)
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_TOP);
                 break;
-#define CONFIG_M17
 #ifdef CONFIG_M17
             // History menu screen
             // M0VVA - implement history displays
