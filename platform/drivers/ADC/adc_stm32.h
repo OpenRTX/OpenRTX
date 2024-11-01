@@ -30,9 +30,9 @@ extern "C" {
  * @param name: instance name.
  * @param periph: pointer to hardware peripheral.
  * @param mutx: pointer to mutex for concurrent access, can be NULL.
- * @param vref: ADC reference voltage, in uV.
+ * @param res: ADC resolution in uV/LSB.
  */
-#define ADC_STM32_DEVICE_DEFINE(name, periph, mutx, vref) \
+#define ADC_STM32_DEVICE_DEFINE(name, periph, mutx, res)  \
 extern uint16_t adcStm32_sample(const struct Adc *adc,    \
                                 const uint32_t channel);  \
 const struct Adc name =                                   \
@@ -40,7 +40,7 @@ const struct Adc name =                                   \
     .sample     = &adcStm32_sample,                       \
     .priv       = periph,                                 \
     .mutex      = mutx,                                   \
-    .countsTouV = ADC_COUNTS_TO_UV(vref, 12)              \
+    .countsTouV = res                                     \
 };
 
 /**

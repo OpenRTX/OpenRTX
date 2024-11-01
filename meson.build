@@ -284,6 +284,7 @@ stm32h743_src = ['platform/mcu/STM32H7xx/boot/startup.cpp',
                  'platform/mcu/STM32H7xx/drivers/pll.cpp',
                  'platform/mcu/STM32H7xx/drivers/delays.cpp',
                  'platform/drivers/GPIO/gpio_stm32.c',
+                 'platform/drivers/ADC/adc_stm32h7.c',
                  'platform/mcu/CMSIS/Device/ST/STM32H7xx/Source/system_stm32h7xx.c']
 
 stm32h743_inc = ['platform/mcu/CMSIS/Include',

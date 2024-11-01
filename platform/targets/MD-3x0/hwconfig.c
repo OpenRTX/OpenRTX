@@ -49,7 +49,7 @@ static pthread_mutex_t adc1Mutex;
 SPI_STM32_DEVICE_DEFINE(nvm_spi, SPI1, NULL)
 SPI_BITBANG_DEVICE_DEFINE(pll_spi, spiPllCfg, NULL)
 SPI_BITBANG_DEVICE_DEFINE(c5000_spi, spiC5000Cfg, NULL)
-ADC_STM32_DEVICE_DEFINE(adc1, ADC1, &adc1Mutex, 3300000)
+ADC_STM32_DEVICE_DEFINE(adc1, ADC1, &adc1Mutex, ADC_COUNTS_TO_UV(3300000, 12))
 
 const struct sky73210 pll =
 {
