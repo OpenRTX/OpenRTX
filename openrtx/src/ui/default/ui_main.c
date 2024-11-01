@@ -46,7 +46,7 @@ void _ui_drawMainTop(ui_state_t * ui_state)
               color_white, "%02d:%02d:%02d", local_time.hour,
               local_time.minute, local_time.second);
 
-    if(history_size()==0) {
+    if(history_size(history_list)==0) {
         history_add(history_list, "M0VVA", "NONE", local_time);
         history_add(history_list, "G4XIX", "NONE", local_time);
     }
