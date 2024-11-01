@@ -35,6 +35,7 @@ static struct CS7000Calib calData;             // Calibration data
 static uint8_t vtune_rx  = 0;                  // Tuning voltage for RX input filter
 static uint8_t txpwr_lo  = 0;                  // APC voltage for TX output power control, low power
 static uint8_t txpwr_hi  = 0;                  // APC voltage for TX output power control, high power
+static struct rssiParams rssi;                 // RSSI curve parameters
 
 static enum opstatus radioStatus;               // Current operating status
 
@@ -42,14 +43,22 @@ HR_C6000 C6000((const struct spiDevice *) &c6000_spi, { C6K_CS });
 
 /*
  * Parameters for RSSI voltage (mV) to input power (dBm) conversion.
- * Gain is constant, while offset values are aligned to calibration frequency
- * test points.
+ * Measurements have been taked in the RX calibration points with input signal
+ * going from -121dBm to -63dBm.
  * Thanks to Wojciech SP5WWP for the measurements!
+ *
+ * NOTE: there are seven calibration points over eight RX frequencies.
  */
-const float rssi_gain = 22.0f;
-const float rssi_offset[] = {3277.618f, 3654.755f, 3808.191f,
-                             3811.318f, 3804.936f, 3806.591f,
-                             3723.882f, 3621.373f, 3559.782f};
+static const struct rssiParams rssiCal[] =
+{   //  slope        offset     rxFreq
+    {0.0360569f, -140.38024f, 400250000 },    // 400.250MHz
+    {0.0360291f, -140.10274f, 425050000 },    // 425.050MHz
+    {0.0363494f, -137.79727f, 449950000 },    // 449.950MHz
+    {0.0362992f, -138.03016f, 460050000 },    // 460.050MHz
+    {0.0357469f, -139.45613f, 470050000 },    // 470.050MHz
+    {0.0360546f, -139.67421f, 478985000 },    // 478.985MHz
+    {0.0360529f, -139.62515f, 479050000 }     // 479.050MHz
+};
 
 static uint8_t interpParameter(uint32_t freq, uint32_t *calFreq, uint8_t param[8])
 {
@@ -94,6 +103,31 @@ static uint8_t interpParameter(uint32_t freq, uint32_t *calFreq, uint8_t param[8
     return ret;
 }
 
+static rssiParams interpRssi(const uint32_t freq, const struct rssiParams cal[7])
+{
+    if(freq < cal[0].rxFreq)
+        return cal[0];
+
+    if(freq > cal[6].rxFreq)
+        return cal[6];
+
+    uint8_t idx;
+    for(idx = 5; idx > 0; idx--)
+    {
+        if(freq >= cal[idx].rxFreq)
+            break;
+    }
+
+    uint32_t freqLo = cal[idx].rxFreq;
+    uint32_t freqHi = cal[idx + 1].rxFreq;
+    float    ratio  = ((float)(freq - freqLo)) / ((float)(freqHi - freqLo));
+
+    struct rssiParams result;
+    result.offset = (1.0f + ratio) * cal[idx].offset;
+    result.slope  = (1.0f + ratio) * cal[idx].slope;
+
+    return result;
+}
 
 void radio_init(const rtxStatus_t *rtxState)
 {
@@ -301,6 +335,9 @@ void radio_updateConfiguration()
     C6000.writeCfgRegister(0x45, qAmp);   // Adjustment of Mod2 amplitude
     C6000.writeCfgRegister(0x46, iAmp);   // Adjustment of Mod1 amplitude
 
+    // RSSI interpolation curve
+    rssi = interpRssi(config->rxFrequency, rssiCal);
+
     /*
      * Update VCO frequency and tuning parameters if current operating status
      * is different from OFF.
@@ -314,21 +351,12 @@ void radio_updateConfiguration()
 rssi_t radio_getRssi()
 {
     /*
-     * On MD3x0 devices, RSSI value is get by reading the analog RSSI output
-     * from second IF stage (GT3136 IC).
-     * The corresponding power value is obtained through the linear correlation
-     * existing between measured voltage in mV and power in dBm. While gain is
-     * constant, offset depends from the rx frequency.
+     * RSSI value is get by reading the analog RSSI output from second IF stage
+     * (AK2365 IC). The corresponding power value is obtained through the linear
+     * correlation existing between measured voltage in mV and power in dBm.
      */
-
-    freq_t rxFreq = config->rxFrequency;
-    uint32_t offset_index = (rxFreq - 400035000)/10000000;
-
-    if(rxFreq < 401035000) offset_index = 0;
-    if(rxFreq > 479995000) offset_index = 8;
-
     float rssi_mv  = ((float) adc_getVoltage(&adc1, ADC_RSSI_CH)) / 1000.0f;
-    float rssi_dbm = (rssi_mv - rssi_offset[offset_index]) / rssi_gain;
+    float rssi_dbm = (rssi_mv * rssi.slope) + rssi.offset;
     return static_cast< rssi_t >(rssi_dbm);
 }
 
