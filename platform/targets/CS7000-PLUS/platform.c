@@ -22,6 +22,7 @@
 #include <gpio_shiftReg.h>
 #include <spi_bitbang.h>
 #include <adc_stm32.h>
+#include <Cx000_dac.h>
 #include <hwconfig.h>
 #include <string.h>
 
@@ -190,12 +191,12 @@ void platform_ledOff(led_t led)
 
 void platform_beepStart(uint16_t freq)
 {
-    (void) freq;
+    Cx000dac_startBeep(freq);
 }
 
 void platform_beepStop()
 {
-
+    Cx000dac_stopBeep();
 }
 
 const hwInfo_t *platform_getHwInfo()
