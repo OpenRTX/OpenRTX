@@ -27,6 +27,7 @@
 #include <threads.h>
 #include <state.h>
 #include <HR_C6000.h>
+#include <spi_stm32.h>
 #include "stm32_dac.h"
 #include "stm32_adc.h"
 #include "Cx000_dac.h"
@@ -73,16 +74,16 @@ void audio_init()
     gpio_setMode(BEEP_OUT, ANALOG);
     gpio_setMode(AIN_MIC,  ANALOG);
     gpio_setMode(AIN_RTX,  ANALOG);
-    gpio_setMode(C6K_CLK,  OUTPUT);
-    gpio_setMode(C6K_MOSI, OUTPUT);
-    gpio_setMode(C6K_MISO, INPUT);
+    gpio_setMode(C6K_CLK,  ALTERNATE | ALTERNATE_FUNC(5));
+    gpio_setMode(C6K_MOSI, ALTERNATE | ALTERNATE_FUNC(5));
+    gpio_setMode(C6K_MISO, ALTERNATE | ALTERNATE_FUNC(5));
 
     stm32dac_init(STM32_DAC_CH2, 2048);
     stm32adc_init(STM32_ADC_ADC2);
 
     gpioDev_clear(C6K_SLEEP);
     delayMs(10);
-    spi_init((const struct spiDevice *) &c6000_spi);
+    spiStm32_init(&c6000_spi, 11000000, SPI_FLAG_CPHA);
     C6000.init();
 
     pthread_attr_t attr;
