@@ -148,14 +148,14 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                                color_white, SYMBOL_CALL_RECEIVED);
 
                 gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                          color_white, "%s", rtxStatus.M17_dst);
+                          yellow_fab413, "%s", rtxStatus.M17_dst);
 
                 // Source address
                 gfx_drawSymbol(layout.line1_pos, layout.line1_symbol_size, TEXT_ALIGN_LEFT,
                                color_white, SYMBOL_CALL_MADE);
 
                 gfx_print(layout.line1_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                          yellow_fab413, "%s", rtxStatus.M17_src);
+                          color_white, "%s", rtxStatus.M17_src);
 
                 // RF link (if present)
                 if(rtxStatus.M17_link[0] != '\0')
@@ -164,7 +164,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                                    color_white, SYMBOL_ACCESS_POINT);
 
                     gfx_print(layout.line4_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                              color_white, "%s", rtxStatus.M17_link);
+                              color_grey, "%s", rtxStatus.M17_link);
                 }
 
                 // Reflector (if present)
