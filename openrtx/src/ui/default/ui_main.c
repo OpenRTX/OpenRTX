@@ -155,7 +155,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                                color_white, SYMBOL_CALL_MADE);
 
                 gfx_print(layout.line1_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                          color_white, "%s", rtxStatus.M17_src);
+                          yellow_fab413, "%s", rtxStatus.M17_src);
 
                 // RF link (if present)
                 if(rtxStatus.M17_link[0] != '\0')
