@@ -160,7 +160,8 @@ const char *display_items[] =
 #ifdef CONFIG_SCREEN_CONTRAST
     "Contrast",
 #endif
-    "Timer"
+    "Timer",
+    "History"
 };
 
 #ifdef CONFIG_GPS
