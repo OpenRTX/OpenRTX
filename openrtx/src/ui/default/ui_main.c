@@ -176,7 +176,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                     gfx_print(layout.line3_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                               color_white, "%s", rtxStatus.M17_refl);
                 }
-                if((!(strcmp(rtxStatus.M17_dst, "INFO"))&&(strcmp(rtxStatus.M17_dst, "ECHO"))))
+                if((!(strcmp(rtxStatus.M17_dst, "INFO"))||(strcmp(rtxStatus.M17_dst, "ECHO"))))
                     history_add(history_list, rtxStatus.M17_src, rtxStatus.M17_refl, 
                             utcToLocalTime(last_state.time, last_state.settings.utc_timezone));
             }
