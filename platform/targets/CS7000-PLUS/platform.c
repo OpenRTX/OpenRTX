@@ -21,7 +21,7 @@
 #include <interfaces/audio.h>
 #include <gpio_shiftReg.h>
 #include <spi_bitbang.h>
-// #include <adc_stm32.h>
+#include <adc_stm32.h>
 #include <hwconfig.h>
 #include <string.h>
 
@@ -49,7 +49,7 @@ void platform_init()
 
     spiBitbang_init(&spiSr);
     gpioShiftReg_init(&extGpio);
-    // adcStm32_init(&adc1);
+    adcStm32_init(&adc1);
     nvm_init();
     audio_init();
 
@@ -60,7 +60,7 @@ void platform_init()
 
 void platform_terminate()
 {
-    // adcStm32_terminate(&adc1);
+    adcStm32_terminate(&adc1);
 
     #ifndef RUNNING_TESTSUITE
     gpioDev_clear(MAIN_PWR_SW);
@@ -72,17 +72,17 @@ void platform_terminate()
 uint16_t platform_getVbat()
 {
     /*
-     * Battery voltage is measured through an 1:3.9 voltage divider and
+     * Battery voltage is measured through an 1:3.95 voltage divider and
      * adc1_getMeasurement returns a value in uV.
      */
-    // uint32_t vbat = adc_getVoltage(&adc1, ADC_VBAT_CH) * 39;
-    return 7000;//vbat / 10000;
+    uint32_t vbat = adc_getVoltage(&adc1, ADC_VBAT_CH) * 395;
+    return vbat / 100000;
 }
 
 uint8_t platform_getMicLevel()
 {
-    /* Value from ADC is 12 bit wide: shift right by four to get 0 - 255 */
-    return 0;//adc_getRawSample(&adc1, ADC_MIC_CH) >> 4;
+    // ADC1 returns a 16-bit value: shift right by eight to get 0 - 255
+    return adc_getRawSample(&adc1, ADC_MIC_CH) >> 8;
 }
 
 uint8_t platform_getVolumeLevel()
@@ -93,7 +93,7 @@ uint8_t platform_getVolumeLevel()
      * lines with a breakpoint around 410mV.
      * Output value has range 0 - 255 with breakpoint at 139.
      */
-    uint16_t value = 0;//adc_getRawSample(&adc1, ADC_VOL_CH);
+    uint16_t value = adc_getRawSample(&adc1, ADC_VOL_CH) >> 4;
     uint32_t output;
 
     if(value <= 512)
