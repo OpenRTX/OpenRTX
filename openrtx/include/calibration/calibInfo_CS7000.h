@@ -40,4 +40,14 @@ struct CS7000Calib
     uint8_t  errorRate[8];       // 0x0DC
 };
 
+/**
+ * \brief RSSI calibration data.
+ */
+struct rssiParams
+{
+    float    slope;
+    float    offset;
+    uint32_t rxFreq;
+};
+
 #endif /* CALIBINFO_CS7000_H */
