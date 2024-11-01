@@ -47,8 +47,8 @@ void _ui_drawMainTop(ui_state_t * ui_state)
               local_time.minute, local_time.second);
 
     if(history_size==0) {
-        history_add(history_list, "M0VVA", "NONE", localtime);
-        history_add(history_list, "G4XIX", "NONE", localtime);
+        history_add(history_list, "M0VVA", "NONE", local_time);
+        history_add(history_list, "G4XIX", "NONE", local_time);
     }
 
 #endif
