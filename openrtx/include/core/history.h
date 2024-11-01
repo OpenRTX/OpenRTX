@@ -60,5 +60,7 @@ int read_history(history_list_t *list, history_t *history, uint8_t pos);
 history_t* find_callsign(history_list_t *list, const char* callsign);
 uint8_t history_size(history_list_t *list);
 void format_history_value(char *buf, int max_len, history_t history);
+bool is_new_history();
+void reset_new_history();
 
 #endif /* HISTORY_H */

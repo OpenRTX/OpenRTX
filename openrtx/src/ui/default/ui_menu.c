@@ -647,6 +647,7 @@ void _ui_drawMenuHistory(ui_state_t* ui_state)
               color_white, currentLanguage->history);
     // Print contact entries
     _ui_drawMenuList(ui_state->menu_selected, _ui_getHistoryItem);
+    if(is_new_history()) reset_new_history();
 }
 
 #ifdef CONFIG_GPS

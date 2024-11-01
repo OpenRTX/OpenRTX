@@ -24,6 +24,7 @@
 #include <history.h>
 
 history_list_t *history_list;
+bool new_history;
 
 history_list_t *history_init()
 {
@@ -32,6 +33,7 @@ history_list_t *history_init()
     list->head = NULL;
     list->tail = NULL;
     list->length = 0;
+    new_history = false;
     return list;
 }
 
@@ -113,6 +115,7 @@ void history_add(history_list_t *list, const char* callsign, const char* module,
         history_update(list, callsign, module, state_time);
     else 
         history_push(list, callsign, module, state_time); 
+    new_history = true;
 }
 
 int read_history(history_list_t *list,  history_t *history, uint8_t pos)
@@ -138,4 +141,12 @@ void format_history_value(char *buf, int max_len, history_t history) {
     char temp[9];
     sniprintf(temp, max_len-9, "%s         ", history.callsign);
     sniprintf(buf, max_len, "%s %02d:%02d:%02d", temp, history.time.hour, history.time.minute, history.time.second);
+}
+
+bool is_new_history() {
+    return new_history;
+}
+
+void reset_new_history() {
+    new_history = false;
 }

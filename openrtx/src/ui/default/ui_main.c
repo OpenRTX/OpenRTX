@@ -59,10 +59,12 @@ void _ui_drawMainTop(ui_state_t * ui_state)
     point_t charge_pos = {layout.top_pos.x, layout.top_pos.y};
     gfx_print(charge_pos , layout.line1_font, TEXT_ALIGN_LEFT,
               color_white,"%02d", last_state.charge);
-    point_t list_pos = {layout.top_pos.x + 16, layout.top_pos.y};
-    gfx_print(list_pos , layout.line1_font, TEXT_ALIGN_LEFT,
-              color_white,"-%02d", history_size(history_list));
 #endif
+
+    point_t list_pos = {layout.top_pos.x + 24, layout.top_pos.y};
+    gfx_print(list_pos , layout.line1_font, TEXT_ALIGN_LEFT,
+            is_new_history() ? yellow_fab413 : color_black, "H");
+
     if (ui_state->input_locked == true)
       gfx_drawSymbol(layout.top_pos, layout.top_symbol_size, TEXT_ALIGN_LEFT,
                      color_white, SYMBOL_LOCK);
