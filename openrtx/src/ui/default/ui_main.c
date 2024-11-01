@@ -189,8 +189,8 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                               color_white, "%s", rtxStatus.M17_refl);
                 }
                 if((!(strncmp(rtxStatus.M17_dst, "INFO",4)==0)||(strncmp(rtxStatus.M17_dst, "ECHO",4)==0)))
-                    history_add(history_list, rtxStatus.M17_src, rtxStatus.M17_refl, 
-                            utcToLocalTime(last_state.time, last_state.settings.utc_timezone));
+                    // history_add(history_list, rtxStatus.M17_src, rtxStatus.M17_refl, 
+                    //         utcToLocalTime(last_state.time, last_state.settings.utc_timezone));
             }
             else
             {
