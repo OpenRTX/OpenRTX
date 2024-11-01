@@ -48,6 +48,7 @@ const struct audioDevice inputDevices[] =
     {&stm32_adc_audio_driver, (const void *) ADC_MIC_CH,  STM32_ADC_ADC2, SOURCE_MIC},
 };
 
+HR_C6000 C6000((const struct spiDevice *) &c6000_spi, { C6K_CS });
 static bool spkEnabled = false;
 
 static inline void selectSpk()
@@ -106,10 +107,12 @@ void audio_init()
     gpioDev_clear(INT_MIC_SEL);
     gpioDev_clear(EXT_MIC_SEL);
 
+    gpioDev_set(RX_PWR_EN);
     gpioDev_clear(C6K_SLEEP);
     delayMs(10);
-    spiStm32_init(&c6000_spi, 11000000, SPI_FLAG_CPHA);
+    spiStm32_init(&c6000_spi, 12500000, SPI_FLAG_CPHA);
     C6000.init();
+    C6000.fmMode();
 
     pthread_attr_t attr;
     pthread_t      thread;

@@ -35,9 +35,9 @@ enum AdcChannels
 {
     ADC_VOL_CH  = 8,   /* PC5  */
     ADC_VBAT_CH = 3,   /* PA6  */
-    ADC_MIC_CH  = 15,  /* PA3  */
+    ADC_RTX_CH  = 15,  /* PA3  */
     ADC_RSSI_CH = 9,   /* PB0  */
-    ADC_RTX_CH  = 7,   /* PA7  */
+    ADC_MIC_CH  = 7,   /* PA7  */
 };
 
 extern const struct Adc adc1;
@@ -45,6 +45,7 @@ extern const struct spiCustomDevice spiSr;
 extern const struct spiCustomDevice det_spi;
 extern const struct spiCustomDevice pll_spi;
 extern const struct spiDevice flash_spi;
+extern const struct spiDevice c6000_spi;
 extern const struct gpioDev extGpio;
 extern const struct ak2365a detector;
 extern const struct sky73210 pll;
