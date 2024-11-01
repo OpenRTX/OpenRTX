@@ -65,14 +65,15 @@ history_t *history_create(const char* callsign, const char* module, datetime_t s
 
 void history_prune(history_list_t *list, history_t *this)
 {
-    if(this->prev!=NULL)
-        this->prev->next = this->next;
-    if (this->next!=NULL)
-        this->next->prev = this->prev;
-    if (list->tail == this)
-        list->tail = this->prev;
+    history_t *current = this;
+    if(current->prev!=NULL)
+        current->prev->next =  current->next;
+    if (current->next!=NULL)
+        current->next->prev = current->prev;
+    if (list->tail == current)
+        list->tail = current->prev;
     list->length--;
-    free(this);
+    free(current);
 }
 
 void history_push(history_list_t *list, const char* callsign, const char* module, datetime_t state_time)

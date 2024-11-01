@@ -37,6 +37,7 @@ void _ui_drawMainBackground()
 
 void _ui_drawMainTop(ui_state_t * ui_state)
 {
+
 #ifdef CONFIG_RTC
     // Print clock on top bar
     datetime_t local_time = utcToLocalTime(last_state.time,
@@ -44,6 +45,12 @@ void _ui_drawMainTop(ui_state_t * ui_state)
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "%02d:%02d:%02d", local_time.hour,
               local_time.minute, local_time.second);
+
+    if(history_size==0) {
+        history_add(history_list, "M0VVA", "NONE", localtime);
+        history_add(history_list, "G4XIX", "NONE", localtime);
+    }
+
 #endif
     // If the radio has no built-in battery, print input voltage
 #ifdef CONFIG_BAT_NONE

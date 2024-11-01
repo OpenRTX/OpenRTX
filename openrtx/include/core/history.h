@@ -27,7 +27,7 @@
 #include <stdbool.h>
 #include <gps.h>
 
-#define HISTORY_MAX 10
+#define HISTORY_MAX 2
 
 typedef struct history 
 {
