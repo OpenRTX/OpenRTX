@@ -137,5 +137,5 @@ uint8_t history_size(history_list_t *list)
 void format_history_value(char *buf, int max_len, history_t history) {
     char temp[9];
     sniprintf(temp, max_len-8, "%s         ", history.callsign);
-    sniprintf(buf, max_len, "%s %02d:%02d%:02d", temp, history.time.hour, history.time.minute, history.time.second);
+    sniprintf(buf, max_len, "%s %02d:%02d:%02d", temp, history.time.hour, history.time.minute, history.time.second);
 }
