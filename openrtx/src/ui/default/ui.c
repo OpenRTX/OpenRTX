@@ -1895,6 +1895,7 @@ void ui_updateFSM(bool *sync_rtx)
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_TOP);
                 break;
+#define CONFIG_M17
 #ifdef CONFIG_M17
             // History menu screen
             // M0VVA - implement history displays
@@ -1908,8 +1909,12 @@ void ui_updateFSM(bool *sync_rtx)
                     if(read_history(history_list, &history, ui_state.menu_selected + 1) != -1)
                         ui_state.menu_selected += 1;
                 }
-                else if(msg.keys & KEY_ENTER)
+                else if(msg.long_press && msg.keys & KEY_ENTER)
                 {
+                    history_t history;
+                    read_history(history_list, &history, ui_state.menu_selected);
+                    strncpy(state.settings.m17_dest, history.callsign, 10);
+                    *sync_rtx = true;
                 }
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_TOP);
