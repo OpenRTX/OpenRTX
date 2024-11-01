@@ -285,6 +285,12 @@ int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
             sniprintf(buf, max_len, "%s",
                      display_timer_values[last_state.settings.display_timer]);
             return 0;
+        case D_HISTORY_INDICATOR:
+            sniprintf(buf, max_len, "%s",
+                     (last_state.settings.history_indicator_enabled) ?
+                                                currentLanguage->on :
+                                                currentLanguage->off);
+            return 0;
     }
     sniprintf(buf, max_len, "%d", value);
     return 0;

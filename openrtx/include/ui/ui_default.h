@@ -125,6 +125,7 @@ enum displayItems
     D_CONTRAST,
 #endif
     D_TIMER,
+    D_HISTORY_INDICATOR,
 };
 
 #ifdef CONFIG_GPS
