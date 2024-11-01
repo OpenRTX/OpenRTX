@@ -48,8 +48,6 @@ static streamCtx ctcssCtx;
 static int16_t *prevCtcssBuf;
 static CtcssDetector ctcss(ctcssCoeffs2k, (CTCSS_SAMPLE_RATE / 4), 20.0f);
 
-HR_C6000 C6000((const struct spiDevice *) &c6000_spi, { C6K_CS });
-
 /*
  * Parameters for RSSI voltage (mV) to input power (dBm) conversion.
  * Measurements have been taked in the RX calibration points with input signal
