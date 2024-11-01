@@ -87,7 +87,7 @@ static uint8_t spiC6000_func(const void *priv, uint8_t value)
             GPIOB->BSRR = 1 << 31;  // Clear PB15 (MOSI)
 
         // ~70ns delay
-        asm volatile("           mov   r1, #1     \n"
+        asm volatile("           mov   r1, #25    \n"
                      "___loop_1: cmp   r1, #0     \n"
                      "           itt   ne         \n"
                      "           subne r1, r1, #1 \n"
@@ -96,6 +96,12 @@ static uint8_t spiC6000_func(const void *priv, uint8_t value)
         incoming <<= 1;
         GPIOB->BSRR = (1 << 29);                // Clear PB13 (CLK)
         incoming |= (GPIOB->IDR >> 14) & 0x01;  // Read PB14 (MISO)
+
+        asm volatile("           mov   r1, #25    \n"
+                     "___loop_2: cmp   r1, #0     \n"
+                     "           itt   ne         \n"
+                     "           subne r1, r1, #1 \n"
+                     "           bne   ___loop_2  \n":::"r1");
     }
 
     __enable_irq();
