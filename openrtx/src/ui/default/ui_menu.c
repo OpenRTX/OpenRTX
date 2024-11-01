@@ -594,7 +594,7 @@ int _ui_getHistoryItem(char *buf, uint8_t max_len, uint8_t index)
     history_t history;
     int result = read_history(history_list, &history, index);
     if(result != -1) {
-        sniprintf(buf, max_len, "%s %02d:%02d%02d", history.callsign, history.time.hour, history.time.minute, history.time.second);
+        format_history_value(buf, max_len, history);
     }
     return result;
 }
