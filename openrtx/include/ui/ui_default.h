@@ -266,5 +266,6 @@ extern const color_t color_black;
 extern const color_t color_grey;
 extern const color_t color_white;
 extern const color_t yellow_fab413;
+extern const color_t color_blue;
 
 #endif /* UI_DEFAULT_H */
