@@ -50,6 +50,9 @@ void _ui_drawMainTop(ui_state_t * ui_state)
         history_add(history_list, "M0VVA", "NONE", local_time);
         history_add(history_list, "G4XIX", "NONE", local_time);
         history_add(history_list, "M7TFT", "NONE", local_time);
+        history_add(history_list, "G0WCZ", "NONE", local_time);
+        history_add(history_list, "2E0MXA", "NONE", local_time);
+        history_add(history_list, "MM7RBK", "NONE", local_time);
     }
 
 #endif
