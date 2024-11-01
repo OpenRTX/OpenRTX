@@ -2099,6 +2099,9 @@ void ui_updateFSM(bool *sync_rtx)
                             _ui_changeTimer(-1);
                             vp_announceDisplayTimer();
                             break;
+                        case D_HISTORY_INDICATOR:
+                            state.settings.history_indicator_enabled = !state.settings.history_indicator_enabled;
+                            break;
                         default:
                             state.ui_screen = SETTINGS_DISPLAY;
                     }
@@ -2125,6 +2128,9 @@ void ui_updateFSM(bool *sync_rtx)
                         case D_TIMER:
                             _ui_changeTimer(+1);
                             vp_announceDisplayTimer();
+                            break;
+                        case D_HISTORY_INDICATOR:
+                            state.settings.history_indicator_enabled = !state.settings.history_indicator_enabled;
                             break;
                         default:
                             state.ui_screen = SETTINGS_DISPLAY;
