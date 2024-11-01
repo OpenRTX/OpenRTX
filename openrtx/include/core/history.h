@@ -27,18 +27,22 @@
 #include <stdbool.h>
 #include <gps.h>
 
+#define HISTORY_MAX 10
+
 typedef struct history 
 {
     char callsign[10];
     char module[10];
     datetime_t time;
     struct history * next;
+    struct history * prev;
 }
 history_t;
 
 typedef struct history_list
 {
     history_t *head;
+    history_t *tail;
     uint8_t length;
 }
 history_list_t;
