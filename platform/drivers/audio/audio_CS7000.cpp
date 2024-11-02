@@ -48,8 +48,6 @@ const struct audioDevice inputDevices[] =
     {NULL,                    0,                          0,              SOURCE_MIC},
 };
 
-HR_C6000 C6000((const struct spiDevice *) &c6000_spi, { C6K_CS });
-
 static void *audio_thread(void *arg)
 {
     (void) arg;
@@ -76,16 +74,17 @@ void audio_init()
     gpio_setMode(BEEP_OUT, ANALOG);
     gpio_setMode(AIN_MIC,  ANALOG);
     gpio_setMode(AIN_RTX,  ANALOG);
-    gpio_setMode(C6K_CLK,  ALTERNATE | ALTERNATE_FUNC(5));
-    gpio_setMode(C6K_MOSI, ALTERNATE | ALTERNATE_FUNC(5));
-    gpio_setMode(C6K_MISO, ALTERNATE | ALTERNATE_FUNC(5));
+    gpio_setMode(C6K_CLK,  OUTPUT);
+    gpio_setMode(C6K_MOSI, OUTPUT);
+    gpio_setMode(C6K_MISO, INPUT);
 
     // stm32dac_init(STM32_DAC_CH2, 2048);
     // stm32adc_init(STM32_ADC_ADC2);
 
+    gpioDev_set(RX_PWR_EN);
     gpioDev_clear(C6K_SLEEP);
     delayMs(10);
-    spiStm32_init(&c6000_spi, 11000000, SPI_FLAG_CPHA);
+    spi_init((const struct spiDevice *) &c6000_spi);
     C6000.init();
     C6000.fmMode();
 
