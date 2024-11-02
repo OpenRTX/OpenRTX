@@ -89,3 +89,12 @@ void startPll()
     RCC->CFGR |= RCC_CFGR_SW_PLL1;
     while((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL1) ; //Wait
 }
+
+uint32_t getBusClock(const uint8_t bus)
+{
+    if(bus >= PERIPH_BUS_NUM)
+        return 0;
+
+    // All busses run at 200MHz
+    return 200000000;
+}
