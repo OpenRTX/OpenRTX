@@ -31,6 +31,10 @@
 #include "SKY72310.h"
 #include "AK2365A.h"
 
+#ifdef PLATFORM_CS7000P
+#define DAC     DAC1
+#endif
+
 static constexpr uint32_t CTCSS_SAMPLE_RATE = 2000;
 static constexpr freq_t IF_FREQ = 49950000;    // Intermediate frequency: 49.95MHz
 
@@ -173,9 +177,14 @@ void radio_init(const rtxStatus_t *rtxState)
     /*
      * Configure and enable DAC
      */
+#ifdef PLATFORM_CS7000P
+    RCC->APB1LENR |= RCC_APB1LENR_DAC12EN;
+#else
     RCC->APB1ENR |= RCC_APB1ENR_DACEN;
-    DAC->DHR12R1  = 0;
-    DAC->CR      |= DAC_CR_EN1;
+#endif
+
+    DAC->DHR12R1 = 0;
+    DAC->CR     |= DAC_CR_EN1;
 
     spiBitbang_init(&det_spi);
     spiBitbang_init(&pll_spi);
@@ -210,7 +219,11 @@ void radio_terminate()
     AK2365A_terminate(&detector);
 
     DAC->DHR12R1 = 0;
+#ifdef PLATFORM_CS7000P
+    RCC->APB1LENR &= ~RCC_APB1LENR_DAC12EN;
+#else
     RCC->APB1ENR &= ~RCC_APB1ENR_DACEN;
+#endif
 }
 
 void radio_setOpmode(const enum opmode mode)
@@ -313,7 +326,7 @@ void radio_enableTx()
     float pwrHi = static_cast< float >(txpwr_hi);
     float pwrLo = static_cast< float >(txpwr_lo);
     float apc   = pwrLo + (pwrHi - pwrLo)/4.0f*(power - 1.0f);
-    DAC->DHR8R1 = static_cast< uint8_t >(apc);
+    DAC1->DHR8R1 = static_cast< uint8_t >(apc);
 
     switch(config->opMode)
     {
