@@ -20,6 +20,7 @@
 #include <calibInfo_CS7000.h>
 #include <nvmem_access.h>
 #include <spi_bitbang.h>
+#include <spi_stm32.h>
 #include <string.h>
 #include <wchar.h>
 #include <utils.h>
@@ -33,7 +34,12 @@ static const struct W25QxCfg cfg =
     .cs  = { FLASH_CS }
 };
 
+#ifdef PLATFORM_CS7000P
+W25Qx_DEVICE_DEFINE(eflash, cfg, 0x2000000)        // 32 MB, 256 Mbit
+#else
 W25Qx_DEVICE_DEFINE(eflash, cfg, 0x1000000)        // 16 MB, 128 Mbit
+#endif
+
 EEEP_DEVICE_DEFINE(eeep)
 
 const struct nvmPartition memPartitions[] =
@@ -42,6 +48,16 @@ const struct nvmPartition memPartitions[] =
         .offset = 0x0000,   // First partition, calibration and other OEM data
         .size   = 32768     // 32kB
     },
+#ifdef PLATFORM_CS7000P
+    {
+        .offset = 0x1000000,// Second partition EEEP storage
+        .size   = 16384     // 16kB
+    },
+    {
+        .offset = 0x1000C000,// Third partition, available memory
+        .size   = 0xFF4000
+    }
+#else
     {
         .offset = 0x8000,   // Second partition EEEP storage
         .size   = 16384     // 16kB
@@ -50,6 +66,7 @@ const struct nvmPartition memPartitions[] =
         .offset = 0xC000,   // Third partition, available memory
         .size   = 0xFF4000
     }
+#endif
 };
 
 static const struct nvmDescriptor extMem[] =
@@ -73,7 +90,14 @@ static uint16_t vfoCrc;
 
 void nvm_init()
 {
+#ifdef PLATFORM_CS7000P
+    gpio_setMode(FLASH_CLK, ALTERNATE | ALTERNATE_FUNC(5));
+    gpio_setMode(FLASH_SDI, ALTERNATE | ALTERNATE_FUNC(5));
+    gpio_setMode(FLASH_SDO, ALTERNATE | ALTERNATE_FUNC(5));
+    spiStm32_init(&flash_spi, 25000000, 0);
+#else
     spiBitbang_init(&flash_spi);
+#endif
     W25Qx_init(&eflash);
     eeep_init(&eeep, 0, 1);
 }
@@ -82,7 +106,11 @@ void nvm_terminate()
 {
     eeep_terminate(&eeep);
     W25Qx_terminate(&eflash);
+#ifdef PLATFORM_CS7000P
+    spiStm32_terminate(&flash_spi);
+#else
     spiBitbang_terminate(&flash_spi);
+#endif
 }
 
 const struct nvmDescriptor *nvm_getDesc(const size_t index)

@@ -70,5 +70,6 @@ static const struct gpioPin shiftRegStrobe = { GPIOEXT_STR };
 static pthread_mutex_t adc1Mutex;
 
 SPI_CUSTOM_DEVICE_DEFINE(spiSr, spiSr_func, NULL, NULL)
+SPI_STM32_DEVICE_DEFINE(flash_spi, SPI4, NULL)
 GPIO_SHIFTREG_DEVICE_DEFINE(extGpio, (const struct spiDevice *) &spiSr, shiftRegStrobe, 24)
 ADC_STM32_DEVICE_DEFINE(adc1, ADC1, &adc1Mutex, ADC_COUNTS_TO_UV(3300000, 16))
