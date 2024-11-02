@@ -151,9 +151,15 @@ void radio_init(const rtxStatus_t *rtxState)
     /*
      * Configure and enable DAC
      */
+#ifdef PLATFORM_CS7000P
+    RCC->APB1LENR |= RCC_APB1LENR_DAC12EN;
+    DAC1->DHR12R1  = 0;
+    DAC1->CR      |= DAC_CR_EN1;
+#else
     RCC->APB1ENR |= RCC_APB1ENR_DACEN;
     DAC->DHR12R1  = 0;
     DAC->CR      |= DAC_CR_EN1;
+#endif
 
     spiBitbang_init(&det_spi);
     spiBitbang_init(&pll_spi);
@@ -187,8 +193,13 @@ void radio_terminate()
     SKY73210_terminate(&pll);
     AK2365A_terminate(&detector);
 
+#ifdef PLATFORM_CS7000P
+    DAC1->DHR12R1 = 0;
+    RCC->APB1LENR &= ~RCC_APB1LENR_DAC12EN;
+#else
     DAC->DHR12R1 = 0;
     RCC->APB1ENR &= ~RCC_APB1ENR_DACEN;
+#endif
 }
 
 void radio_setOpmode(const enum opmode mode)
@@ -242,8 +253,13 @@ void radio_enableRx()
     SKY73210_setFrequency(&pll, pllFreq, 3);
 
     // Set input filter tune voltage
+#ifdef PLATFORM_CS7000P
+    DAC1->DHR8R1  = vtune_rx;
+    DAC1->SWTRIGR = DAC_SWTRIGR_SWTRIG1;
+#else
     DAC->DHR8R1  = vtune_rx;
     DAC->SWTRIGR = DAC_SWTRIGR_SWTRIG1;
+#endif
 
     // Enable RX LNA and first IF stage
     gpioDev_set(RX_PWR_EN);
@@ -273,8 +289,14 @@ void radio_enableTx()
     float pwrHi = static_cast< float >(txpwr_hi);
     float pwrLo = static_cast< float >(txpwr_lo);
     float apc   = pwrLo + (pwrHi - pwrLo)/4.0f*(power - 1.0f);
+
+#ifdef PLATFORM_CS7000P
+    DAC1->DHR8R1 = static_cast< uint8_t >(apc);
+    DAC1->SWTRIGR = DAC_SWTRIGR_SWTRIG1;
+#else
     DAC->DHR8R1 = static_cast< uint8_t >(apc);
     DAC->SWTRIGR = DAC_SWTRIGR_SWTRIG1;
+#endif
 
     switch(config->opMode)
     {

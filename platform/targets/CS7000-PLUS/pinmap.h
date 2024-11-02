@@ -124,7 +124,7 @@
 /* AK2365 */
 #define DET_PDN       &extGpio,6
 #define DET_CS        &extGpio,0
-#define DET_CLK       GPIOE,6
+#define DET_CLK       GPIOE,3
 #define DET_DAT       GPIOC,13
 #define DET_RST       &GpioC,14
 
