@@ -506,7 +506,9 @@ cs7000_def += openrtx_def + stm32f405_def
 ##
 ## Connect Systems CS70000-PLUS
 ##
-cs7000p_src = ['platform/drivers/stubs/nvmem_stub.c',
+cs7000p_src = ['platform/drivers/NVM/nvmem_CS7000.c',
+               'platform/drivers/NVM/W25Qx.c',
+               'platform/drivers/NVM/eeep.c',
                'platform/drivers/stubs/cps_io_stub.c',
                'platform/drivers/stubs/radio_stub.c',
                'platform/drivers/stubs/audio_stub.c',
