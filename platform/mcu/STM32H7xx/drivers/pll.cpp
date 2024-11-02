@@ -97,3 +97,12 @@ void startPll()
     RCC->CR |= RCC_CR_PLL2ON;                           // Start PLL2
     while((RCC->CR & RCC_CR_PLL2RDY)==0) ;              // Wait until ready
 }
+
+uint32_t getBusClock(const uint8_t bus)
+{
+    if(bus >= PERIPH_BUS_NUM)
+        return 0;
+
+    // All busses run at 200MHz
+    return 200000000;
+}
