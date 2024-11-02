@@ -29,6 +29,40 @@
 #ifndef PLL_H
 #define PLL_H
 
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * Enumeration type for STM32 internal busses.
+ */
+enum PeriphBus
+{
+    PERIPH_BUS_AHB  = 0,
+    PERIPH_BUS_APB1 = 1,
+    PERIPH_BUS_APB2 = 2,
+    PERIPH_BUS_APB4 = 3,
+
+    PERIPH_BUS_NUM
+};
+
+/**
+ * Configure and start the PLL.
+ */
 void startPll();
+
+/**
+ * Get the clock frequency of a given peripheral bus.
+ *
+ * @param bus: bus identifier.
+ * @return bus clock frequency in Hz or zero in case of errors.
+ */
+uint32_t getBusClock(const uint8_t bus);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //PLL_H
