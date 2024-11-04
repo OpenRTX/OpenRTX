@@ -51,6 +51,7 @@ enum catCommand
     CAT_OP_MODE      = 0x4F4D,
     CAT_M17_CALLSIGN = 0x4D43,
     CAT_M17_DEST     = 0x4D44,
+    CAT_M17_CAN      = 0x4341,
     CAT_PTT          = 0x5054,
 
     // Miscellaneous CAT command
@@ -158,6 +159,13 @@ static size_t catCommandGet(const uint8_t *args, const size_t len,
             memset(&reply[1], 0x00, 16);
             memcpy(&reply[1], status.destination_address, sizeof(status.destination_address));
             ret += sizeof(status.M17_dst);
+            break;
+
+        case CAT_M17_CAN:
+
+            status = rtx_getCurrentStatus();
+            reply[1] = status.can;
+            ret += 1;
             break;
 
         default:
@@ -288,6 +296,17 @@ static size_t catCommandSet(const uint8_t *args, const size_t len,
                 sizeof(state.settings.m17_dest)));
             pthread_mutex_unlock(&state_mutex);
             catConfigureRtx();
+            break;
+
+        case CAT_M17_CAN:
+
+            if (args[2] <= 15)
+            {
+                pthread_mutex_lock(&state_mutex);
+                state.settings.m17_can = args[2];
+                pthread_mutex_unlock(&state_mutex);
+                catConfigureRtx();
+            }
             break;
 
         case CAT_POWER_CYCLE:
