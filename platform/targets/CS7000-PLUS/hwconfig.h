@@ -45,7 +45,7 @@ extern const struct spiCustomDevice spiSr;
 extern const struct spiCustomDevice flash_spi;
 extern const struct spiCustomDevice det_spi;
 extern const struct spiCustomDevice pll_spi;
-extern const struct spiCustomDevice c6000_spi;
+extern const struct spiDevice c6000_spi;
 extern const struct gpioDev extGpio;
 extern const struct ak2365a detector;
 extern const struct sky73210 pll;

@@ -39,8 +39,6 @@ static struct rssiParams rssi;                 // RSSI curve parameters
 
 static enum opstatus radioStatus;               // Current operating status
 
-HR_C6000 C6000((const struct spiDevice *) &c6000_spi, { C6K_CS });
-
 /*
  * Parameters for RSSI voltage (mV) to input power (dBm) conversion.
  * Measurements have been taked in the RX calibration points with input signal

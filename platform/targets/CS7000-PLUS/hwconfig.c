@@ -18,6 +18,7 @@
 #include <gpio_shiftReg.h>
 #include <spi_bitbang.h>
 #include <spi_custom.h>
+#include <spi_stm32.h>
 #include <adc_stm32.h>
 #include <SKY72310.h>
 #include <hwconfig.h>
@@ -118,7 +119,7 @@ SPI_BITBANG_DEVICE_DEFINE(spiSr,     spiSrConfig,   NULL)
 SPI_BITBANG_DEVICE_DEFINE(flash_spi, spiFlashCfg,   NULL)
 SPI_BITBANG_DEVICE_DEFINE(det_spi,   spiDetCfg,     NULL)
 SPI_BITBANG_DEVICE_DEFINE(pll_spi,   spiPllCfg,     NULL)
-SPI_CUSTOM_DEVICE_DEFINE(c6000_spi,  spiC6000_func, NULL, &c6000_mutex)
+SPI_STM32_DEVICE_DEFINE(c6000_spi, SPI2, &c6000_mutex)
 GPIO_SHIFTREG_DEVICE_DEFINE(extGpio, (const struct spiDevice *) &spiSr, shiftRegStrobe, 24)
 ADC_STM32_DEVICE_DEFINE(adc1, ADC1, &adc1Mutex, ADC_COUNTS_TO_UV(3300000, 16))
 
