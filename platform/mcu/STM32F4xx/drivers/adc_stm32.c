@@ -21,6 +21,13 @@
 #include <errno.h>
 #include "adc_stm32.h"
 
+// Internal voltage reference calibration value, measured with Vref = 3.3V
+// at 30°C. See Table 73 in STM32F405 datasheet
+static const uint16_t *vRefCal = (uint16_t *) 0x1FFF7A2A;
+static uint16_t vrefInt = 0;
+
+uint16_t adcStm32_sample(const struct Adc *adc, const uint32_t channel);
+
 int adcStm32_init(const struct Adc *adc)
 {
     switch((uint32_t) adc->priv)
@@ -63,6 +70,14 @@ int adcStm32_init(const struct Adc *adc)
      */
     pAdc->SQR1 = 0;
     pAdc->CR2  = ADC_CR2_ADON;
+
+    // Read internal voltage reference
+    if((uint32_t) pAdc == ADC1_BASE)
+    {
+        ADC123_COMMON->CCR |= ADC_CCR_TSVREFE;
+        vrefInt = adcStm32_sample(adc, 17);
+        ADC123_COMMON->CCR &= ~ADC_CCR_TSVREFE;
+    }
 
     if(adc->mutex != NULL)
         pthread_mutex_init((pthread_mutex_t *) adc->mutex, NULL);
@@ -116,7 +131,7 @@ uint16_t adcStm32_sample(const struct Adc *adc, const uint32_t channel)
 
     while((pAdc->SR & ADC_SR_EOC) == 0) ;
 
-    uint16_t value = pAdc->DR;
+    uint32_t value = pAdc->DR;
 
     /* Disconnect Vbat channel. Vbat has an internal x2 voltage divider */
     if(channel == 18)
@@ -125,5 +140,15 @@ uint16_t adcStm32_sample(const struct Adc *adc, const uint32_t channel)
         ADC123_COMMON->CCR &= ~ADC_CCR_VBATE;
     }
 
-    return value;
+    /*
+     * Apply the Vref correction, if present.
+     * NOTE: this is valid only if VDDA/VREF+ is connected to 3.3V
+     */
+    if(vrefInt != 0)
+    {
+        value *= (*vRefCal);
+        value /= vrefInt;
+    }
+
+    return (uint16_t) value;
 }
