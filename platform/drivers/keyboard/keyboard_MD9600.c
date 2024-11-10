@@ -26,7 +26,7 @@
 #include <interfaces/delays.h>
 #include <interfaces/keyboard.h>
 #include <interfaces/platform.h>
-#include <ADC1_MDx.h>
+#include <adc_stm32.h>
 #include "hwconfig.h"
 
 /**
@@ -178,8 +178,8 @@ keyboard_t kbd_getKeys()
     */
 
     /* Retrieve row/coloumn voltage measurements. */
-    uint16_t row = ((uint16_t) adc1_getMeasurement(ADC_SW2_CH) + 0.5f);
-    uint16_t col = ((uint16_t) adc1_getMeasurement(ADC_SW1_CH) + 0.5f);
+    uint16_t row = ((uint16_t) adc_getVoltage(&adc1, ADC_SW2_CH) / 1000);
+    uint16_t col = ((uint16_t) adc_getVoltage(&adc1, ADC_SW1_CH) / 1000);
 
     /* Map row voltage to row index. */
     uint8_t rowIdx = 0xFF;
