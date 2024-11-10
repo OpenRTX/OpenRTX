@@ -21,6 +21,7 @@
 #include <spi_bitbang.h>
 #include <spi_custom.h>
 #include <spi_stm32.h>
+#include <adc_stm32.h>
 #include <SKY72310.h>
 #include <hwconfig.h>
 #include <pinmap.h>
@@ -43,9 +44,12 @@ const struct spiConfig spiC5000Cfg =
     .flags     = SPI_FLAG_CPHA
 };
 
+static pthread_mutex_t adc1Mutex;
+
 SPI_STM32_DEVICE_DEFINE(nvm_spi, SPI1, NULL)
 SPI_BITBANG_DEVICE_DEFINE(pll_spi, spiPllCfg, NULL)
 SPI_BITBANG_DEVICE_DEFINE(c5000_spi, spiC5000Cfg, NULL)
+ADC_STM32_DEVICE_DEFINE(adc1, ADC1, &adc1Mutex, 3300000)
 
 const struct sky73210 pll =
 {

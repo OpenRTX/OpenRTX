@@ -156,8 +156,7 @@ openrtx_def += {'GIT_VERSION': git_version}
 ## TYT MDx family
 ##
 
-mdx_src = ['platform/drivers/ADC/ADC1_MDx.c',
-           'platform/drivers/GPS/GPS_MDx.cpp',
+mdx_src = ['platform/drivers/GPS/GPS_MDx.cpp',
            'platform/drivers/NVM/W25Qx.c',
            'platform/drivers/NVM/nvmem_settings_MDx.c',
            'platform/drivers/NVM/nvmem_MDx.c',

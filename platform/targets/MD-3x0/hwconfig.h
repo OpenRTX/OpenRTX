@@ -27,10 +27,19 @@
 extern "C" {
 #endif
 
+enum adcChannel
+{
+    ADC_VOL_CH   = 0,
+    ADC_VBAT_CH  = 1,
+    ADC_VOX_CH   = 3,
+    ADC_RSSI_CH  = 8
+};
+
 extern const struct spiDevice nvm_spi;
 extern const struct spiCustomDevice pll_spi;
 extern const struct spiCustomDevice c5000_spi;
 extern const struct sky73210 pll;
+extern const struct Adc adc1;
 
 /* Device has a working real time clock */
 #define CONFIG_RTC
