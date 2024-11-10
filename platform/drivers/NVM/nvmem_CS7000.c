@@ -20,6 +20,7 @@
 #include <calibInfo_CS7000.h>
 #include <nvmem_access.h>
 #include <spi_bitbang.h>
+#include <spi_stm32.h>
 #include <string.h>
 #include <wchar.h>
 #include <utils.h>
@@ -73,7 +74,14 @@ static uint16_t vfoCrc;
 
 void nvm_init()
 {
+#ifdef PLATFORM_CS7000P
+    gpio_setMode(FLASH_CLK, ALTERNATE | ALTERNATE_FUNC(5));
+    gpio_setMode(FLASH_SDI, ALTERNATE | ALTERNATE_FUNC(5));
+    gpio_setMode(FLASH_SDO, ALTERNATE | ALTERNATE_FUNC(5));
+    spiStm32_init(&flash_spi, 25000000, 0);
+#else
     spiBitbang_init(&flash_spi);
+#endif
     W25Qx_init(&eflash);
     eeep_init(&eeep, 0, 1);
 }
@@ -82,7 +90,11 @@ void nvm_terminate()
 {
     eeep_terminate(&eeep);
     W25Qx_terminate(&eflash);
+#ifdef PLATFORM_CS7000P
+    spiStm32_terminate(&flash_spi);
+#else
     spiBitbang_terminate(&flash_spi);
+#endif
 }
 
 const struct nvmDescriptor *nvm_getDesc(const size_t index)
