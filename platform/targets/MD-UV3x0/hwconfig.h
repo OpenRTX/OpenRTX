@@ -33,8 +33,16 @@ extern HR_C6000 C6000;
 extern "C" {
 #endif
 
+enum AdcChannel
+{
+    ADC_VOL_CH   = 0,
+    ADC_VBAT_CH  = 1,
+    ADC_MIC_CH   = 3,
+};
+
 extern const struct spiCustomDevice c6000_spi;
 extern const struct spiDevice nvm_spi;
+extern const struct Adc adc1;
 
 /* Device has a working real time clock */
 #define CONFIG_RTC
