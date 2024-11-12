@@ -98,32 +98,28 @@ static inline void sendByte(uint8_t data)
 
 static inline void sendShort(uint16_t val)
 {
-    gpio_clearPin(LCD_CS);
-
+    //gpio_clearPin(LCD_CS);
     sendByte((val >> 8) & 0xFF);
     sendByte( val       & 0xFF);
-
-    gpio_setPin(LCD_CS);
 }
 
 static inline void sendCommand(uint8_t command)
 {
     gpio_clearPin(LCD_DC);
-    gpio_clearPin(LCD_CS);
+    //gpio_clearPin(LCD_CS);
 
     sendByte(command);
 
-    gpio_setPin(LCD_CS);
     gpio_setPin(LCD_DC);
 }
 
 static inline void sendData(uint8_t data)
 {
-    gpio_clearPin(LCD_CS);
+    //gpio_clearPin(LCD_CS);
 
     sendByte(data);
 
-    gpio_setPin(LCD_CS);
+    //gpio_setPin(LCD_CS);
 }
 
 static inline void setPosition(uint16_t x, uint16_t y)
@@ -152,6 +148,7 @@ void display_init(void)
     delayMs(1);
     gpio_setPin(LCD_RST);
     delayMs(1);
+    gpio_clearPin(LCD_CS);
 
     sendCommand(ST7735S_CMD_SLPOUT);
     delayMs(1);
