@@ -25,7 +25,17 @@
 #include <Timer.hpp>
 #include <miosix.h>
 #include <errno.h>
+#include <hwconfig.h>
 #include "stm32_dac.h"
+
+#if defined(STM32H743xx)
+#define DAC             DAC1
+#define DAC_TRIG_CH1    (5 <<  2)
+#define DAC_TRIG_CH2    (6 << 18)
+#else
+#define DAC_TRIG_CH1    0x00
+#define DAC_TRIG_CH2    DAC_CR_TSEL2_1
+#endif
 
 struct ChannelState
 {
@@ -113,18 +123,27 @@ void __attribute__((used)) DMA1_Stream6_IRQHandler()
 void stm32dac_init(const uint8_t instance, const uint16_t idleLevel)
 {
     // Enable peripherals
+    #if defined(STM32H743xx)
+    RCC->APB1LENR |= RCC_APB1LENR_DAC12EN;
+    #else
     RCC->APB1ENR |= RCC_APB1ENR_DACEN;
+    #endif
 
     switch(instance)
     {
         case STM32_DAC_CH1:
         {
+            #if defined(STM32H743xx)
+            RCC->APB1LENR |= RCC_APB1LENR_TIM6EN;
+            DMAMUX1_Channel5->CCR = 67;
+            #else
             RCC->APB1ENR |= RCC_APB1ENR_TIM6EN;
+            #endif
             __DSB();
 
             DAC->DHR12R1 = idleLevel;
             DAC->CR |= DAC_CR_DMAEN1    // Enable DMA
-                    | 0x00              // TIM6 as trigger source for CH1
+                    | DAC_TRIG_CH1      // TIM6 as trigger source for CH1
                     | DAC_CR_TEN1       // Enable trigger input
                     | DAC_CR_EN1;       // Enable CH1
         }
@@ -132,12 +151,17 @@ void stm32dac_init(const uint8_t instance, const uint16_t idleLevel)
 
         case STM32_DAC_CH2:
         {
+            #if defined(STM32H743xx)
+            RCC->APB1LENR |= RCC_APB1LENR_TIM7EN;
+            DMAMUX1_Channel6->CCR = 68;
+            #else
             RCC->APB1ENR |= RCC_APB1ENR_TIM7EN;
+            #endif
             __DSB();
 
             DAC->DHR12R2 = idleLevel;
             DAC->CR |= DAC_CR_DMAEN2    // Enable DMA
-                    | DAC_CR_TSEL2_1    // TIM7 as trigger source for CH2
+                    | DAC_TRIG_CH2      // TIM7 as trigger source for CH2
                     | DAC_CR_TEN2       // Enable trigger input
                     | DAC_CR_EN2;       // Enable CH2
         }
@@ -163,9 +187,11 @@ void stm32dac_terminate()
         }
     }
 
-    RCC->APB1ENR &= ~(RCC_APB1ENR_DACEN  |
-                      RCC_APB1ENR_TIM6EN |
-                      RCC_APB1ENR_TIM7EN);
+    #if defined(STM32H743xx)
+    RCC->APB1LENR &= ~(RCC_APB1LENR_DAC12EN | RCC_APB1LENR_TIM6EN | RCC_APB1LENR_TIM7EN);
+    #else
+    RCC->APB1ENR &= ~(RCC_APB1ENR_DACEN  | RCC_APB1ENR_TIM6EN | RCC_APB1ENR_TIM7EN);
+    #endif
     __DSB();
 }
 
@@ -203,7 +229,12 @@ static int stm32dac_start(const uint8_t instance, const void *config,
                                   ctx->bufSize, circ);
 
     // Configure DAC trigger
+    #if defined(STM32H743xx)
+    uint32_t clockFreq = getBusClock(PERIPH_BUS_APB1);
+    channels[instance].tim.setUpdateFrequency(clockFreq, ctx->sampleRate);
+    #else
     channels[instance].tim.setUpdateFrequency(ctx->sampleRate);
+    #endif
     channels[instance].tim.start();
 
     return 0;
