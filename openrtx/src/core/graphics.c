@@ -825,8 +825,17 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, rssi_t rssi,
     gfx_drawRect(squelch_pos, squelch_width, squelch_height, color, true);
 
     // RSSI bar
+    int16_t s_level;
+    if (rssi >= -53) { s_level = 11; }		   		// rssi >= -53dB set s_level to "11" (S9 + 20 dB)
+    else if (rssi >= -73) {
+        s_level =  (rssi_t)(163 + rssi) / 10; 	// Increase s_level /10dB instead of /6dB for > S9
+    }
+    else if (rssi < -121) { s_level = 0;	}   	// s_level should not be negative + avoid overflow if rssi (int32_t) =< -196741
+    else{
+        s_level =  (rssi_t)(127 + rssi) / 6;    // 6dB increase per S-Point
+    }
     uint16_t rssi_height = bar_height * 4 / bar_height_divider;
-    uint16_t rssi_width = (rssiToSlevel(rssi) * (width - 1) / 11);
+    uint16_t rssi_width = (s_level < 0) ? 0 : (s_level * (width - 1) / 11);
     point_t rssi_pos = { start.x, (uint8_t) (start.y + 2 + squelch_height + volume_height)};
     gfx_drawRect(rssi_pos, rssi_width, rssi_height, white, true);
 }
@@ -896,8 +905,17 @@ void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, rssi_t 
     gfx_drawRect(level_pos, level_width, level_height, green, true);
 
     // RSSI bar
+    int16_t s_level;
+    if (rssi >= -53) { s_level = 11; }		   		// rssi >= -53dB set s_level to "11" (S9 + 20 dB)
+    else if (rssi >= -73) {
+        s_level =  (rssi_t)(163 + rssi) / 10; 	// Increase s_level /10dB instead of /6dB for > S9
+    }
+    else if (rssi < -121) { s_level = 0;	}   	// s_level should not be negative + avoid overflow if rssi (int32_t) =< -196741
+    else{
+        s_level =  (rssi_t)(127 + rssi) / 6;    // 6dB increase per S-Point
+    }
     uint16_t rssi_height = bar_height * 3 / bar_height_divider;
-    uint16_t rssi_width = (rssiToSlevel(rssi) * (width - 1) / 11);
+    uint16_t rssi_width = (s_level < 0) ? 0 : (s_level * (width - 1) / 11);
     point_t rssi_pos = {start.x, (uint8_t) (start.y + 5 + level_height + volume_height)};
     gfx_drawRect(rssi_pos, rssi_width, rssi_height, white, true);
     // S-level marks and numbers
