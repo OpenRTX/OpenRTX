@@ -775,12 +775,12 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, rssi_t rssi,
 
     // RSSI bar
     int16_t s_level;
-    if (rssi >= -53) { s_level = 11; }		   		// rssi >= -53dB set s_level to "11" (S9 + 20 dB)
+    if (rssi >= -53) { s_level = 11; }           // rssi >= -53dB set s_level to "11" (S9 + 20 dB)
     else if (rssi >= -73) {
         s_level =  (rssi_t)(163 + rssi) / 10; 	// Increase s_level /10dB instead of /6dB for > S9
     }
-    else if (rssi < -121) { s_level = 0;	}   	// s_level should not be negative + avoid overflow if rssi (int32_t) =< -196741
-    else{
+    else if (rssi < -121) { s_level = 0; }   	// s_level should not be negative + avoid overflow if rssi (int32_t) =< -196741
+    else {
         s_level =  (rssi_t)(127 + rssi) / 6;    // 6dB increase per S-Point
     }
     uint16_t rssi_height = bar_height * 4 / bar_height_divider;
@@ -852,12 +852,12 @@ void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, rssi_t 
     gfx_drawRect(level_pos, level_width, level_height, green, true);
     // RSSI bar
     int16_t s_level;
-    if (rssi >= -53) { s_level = 11; }		   		// rssi >= -53dB set s_level to "11" (S9 + 20 dB)
+    if (rssi >= -53) { s_level = 11; }          // rssi >= -53dB set s_level to "11" (S9 + 20 dB)
     else if (rssi >= -73) {
         s_level =  (rssi_t)(163 + rssi) / 10; 	// Increase s_level /10dB instead of /6dB for > S9
     }
-    else if (rssi < -121) { s_level = 0;	}   	// s_level should not be negative + avoid overflow if rssi (int32_t) =< -196741
-    else{
+    else if (rssi < -121) { s_level = 0; }   	// s_level should not be negative + avoid overflow if rssi (int32_t) =< -196741
+    else {
         s_level =  (rssi_t)(127 + rssi) / 6;    // 6dB increase per S-Point
     }
     uint16_t rssi_height = bar_height * 3 / bar_height_divider;
