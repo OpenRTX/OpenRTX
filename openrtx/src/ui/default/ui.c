@@ -2688,7 +2688,7 @@ bool ui_updateGUI()
                 _ui_drawMainVFO(&ui_state);
             else
                 // draw only the s-meter
-                _ui_drawMainBottom();
+                _ui_drawMainBottom(&ui_state);
         #else
             _ui_drawMainVFO(&ui_state);
         #endif
@@ -2705,7 +2705,7 @@ bool ui_updateGUI()
             {
                 _ui_drawMainMEM(&ui_state);
             }
-                _ui_drawMainBottom();
+                _ui_drawMainBottom(&ui_state);
             #else
                 _ui_drawMainMEM(&ui_state);
             #endif
