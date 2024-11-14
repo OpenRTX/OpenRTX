@@ -267,7 +267,7 @@ void _ui_drawVFOMiddleInput(ui_state_t* ui_state)
     }
 }
 
-void _ui_drawMainBottom()
+void _ui_drawMainBottom(ui_state_t * ui_state)
 {
     // Squelch bar
     rssi_t   rssi = last_state.rssi;
@@ -278,21 +278,25 @@ void _ui_drawMainBottom()
     point_t meter_pos = { layout.horizontal_pad,
                           CONFIG_SCREEN_HEIGHT - meter_height - layout.bottom_pad};
     uint8_t mic_level = platform_getMicLevel();
-
-    // We want to cover the s-meter bar area,
-    // along the whole display width
-    gfx_clearWindow(10, 0, 16, 160);
+    uint16_t old_rssi_end = (((127+ui_state->last_rssi)/6) * (meter_width - 1) / 11);
+    uint16_t new_rssi_end = (((127+last_state.rssi)/6) * (meter_width - 1) / 11);
 
     switch(last_state.channel.mode)
     {
         case OPMODE_FM:
+            if(old_rssi_end > new_rssi_end)
+            {
+                // gfx_clearWindow the area between the old and new rssi
+                gfx_clearWindow(10, new_rssi_end, 11, 160 - new_rssi_end);
+            }
+            ui_state->last_rssi = last_state.rssi; // Update last_rssi
             gfx_drawSmeter(meter_pos,
                            meter_width,
                            meter_height,
                            rssi,
                            squelch,
                            mic_level,
-                           true,
+                           false,
                            yellow_fab413);
             break;
         case OPMODE_DMR:
@@ -330,7 +334,7 @@ void _ui_drawMainVFO(ui_state_t* ui_state)
     if((status.opMode != OPMODE_M17) || (status.lsfOk == false))
     #endif
     _ui_drawFrequency();
-    _ui_drawMainBottom();
+    _ui_drawMainBottom(ui_state);
 }
 
 void _ui_drawMainVFOInput(ui_state_t* ui_state)
@@ -338,7 +342,7 @@ void _ui_drawMainVFOInput(ui_state_t* ui_state)
     _ui_drawMainTop(ui_state);
     gfx_clearWindow(32, 0, 48, 160);
     _ui_drawVFOMiddleInput(ui_state);
-    _ui_drawMainBottom();
+    _ui_drawMainBottom(ui_state);
 }
 
 void _ui_drawMainMEM(ui_state_t* ui_state)
@@ -357,5 +361,5 @@ void _ui_drawMainMEM(ui_state_t* ui_state)
         _ui_drawFrequency();
     }
 
-    _ui_drawMainBottom();
+    _ui_drawMainBottom(ui_state);
 }

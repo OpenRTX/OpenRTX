@@ -251,6 +251,7 @@ typedef struct ui_state_t
 #if defined(CONFIG_UI_NO_KEYBOARD)
     uint8_t macro_menu_selected;
 #endif // UI_NO_KEYBOARD
+    int16_t last_rssi; // Last rssi value
 }
 ui_state_t;
 
