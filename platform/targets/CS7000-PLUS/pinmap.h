@@ -77,10 +77,10 @@
 /* Analog inputs */
 #define AIN_VOLUME    GPIOC,5
 #define AIN_VBAT      GPIOC,4   // BATT
-#define AIN_MIC       GPIOA,3   // VOX
+#define AIN_MIC       GPIOA,7
 #define AIN_RSSI      GPIOB,0
 #define AIN_NOISE     GPIOB,1
-#define AIN_RTX       GPIOA,7   // 2T/5T
+#define AIN_RTX       GPIOA,3
 #define AIN_CTCSS     GPIOA,2   // QT_DQT_IN
 #define AIN_TEMP      GPIOA,7   // Batt. temp.
 

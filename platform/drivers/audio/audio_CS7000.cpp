@@ -28,8 +28,8 @@
 #include <state.h>
 #include <HR_C6000.h>
 #include <spi_stm32.h>
-// #include "stm32_dac.h"
-// #include "stm32_adc.h"
+#include "stm32_dac.h"
+#include "stm32_adc.h"
 #include "Cx000_dac.h"
 
 #define PATH(x,y) ((x << 4) | y)
@@ -37,15 +37,15 @@
 const struct audioDevice outputDevices[] =
 {
     {NULL,                    NULL, 0,             SINK_MCU},
-    {NULL,                    NULL, 0,             SINK_MCU},
+    {&stm32_dac_audio_driver, NULL, STM32_DAC_CH2, SINK_RTX},
     {&Cx000_dac_audio_driver, NULL, 0,             SINK_SPK},
 };
 
 const struct audioDevice inputDevices[] =
 {
     {NULL,                    0,                          0,              SOURCE_MCU},
-    {NULL,                    0,                          0,              SOURCE_RTX},
-    {NULL,                    0,                          0,              SOURCE_MIC},
+    {&stm32_adc_audio_driver, (const void *) ADC_RTX_CH,  STM32_ADC_ADC2, SOURCE_RTX},
+    {&stm32_adc_audio_driver, (const void *) ADC_MIC_CH,  STM32_ADC_ADC2, SOURCE_MIC},
 };
 
 HR_C6000 C6000((const struct spiDevice *) &c6000_spi, { C6K_CS });
@@ -80,8 +80,8 @@ void audio_init()
     gpio_setMode(C6K_MOSI, ALTERNATE | ALTERNATE_FUNC(5));
     gpio_setMode(C6K_MISO, ALTERNATE | ALTERNATE_FUNC(5));
 
-    // stm32dac_init(STM32_DAC_CH2, 2048);
-    // stm32adc_init(STM32_ADC_ADC2);
+    stm32dac_init(STM32_DAC_CH2, 2048);
+    stm32adc_init(STM32_ADC_ADC2);
 
     gpioDev_set(RX_PWR_EN);
     gpioDev_clear(C6K_SLEEP);
@@ -108,8 +108,8 @@ void audio_terminate()
     gpioDev_clear(MIC_PWR_EN);
     gpioDev_set(C6K_SLEEP);
 
-    // stm32dac_terminate();
-    // stm32adc_terminate();
+    stm32dac_terminate();
+    stm32adc_terminate();
     C6000.terminate();
 }
 
