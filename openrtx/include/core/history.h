@@ -27,7 +27,7 @@
 #include <stdbool.h>
 #include <gps.h>
 
-#define HISTORY_MAX 2
+#define HISTORY_MAX 20
 
 typedef struct history 
 {
@@ -56,6 +56,7 @@ extern history_list_t *history_list;
  */
 history_list_t *history_init();
 void history_add(history_list_t *list, const char* callsign, const char* module, datetime_t state_time);
+void history_test(history_list_t *list, const char* src, const char* dest, const char* refl, const char *link , datetime_t state_time);
 int read_history(history_list_t *list, history_t *history, uint8_t pos);
 history_t* find_callsign(history_list_t *list, const char* callsign);
 uint8_t history_size(history_list_t *list);

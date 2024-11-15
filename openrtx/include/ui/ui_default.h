@@ -155,7 +155,8 @@ enum settingsM17Items
 {
     M17_CALLSIGN = 0,
     M17_CAN,
-    M17_CAN_RX
+    M17_CAN_RX,
+    M17_HISTORY_ENABLED
 };
 
 /**

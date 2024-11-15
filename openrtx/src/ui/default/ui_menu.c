@@ -441,6 +441,11 @@ int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
                                                            currentLanguage->on :
                                                            currentLanguage->off);
             break;
+        case M17_HISTORY_ENABLED:
+            sniprintf(buf, max_len, "%s", (last_state.settings.history_indicator_enabled) ?
+                                                           currentLanguage->on :
+                                                           currentLanguage->off);
+            break;
     }
 
     return 0;

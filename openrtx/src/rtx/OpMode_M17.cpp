@@ -60,6 +60,9 @@ void OpMode_M17::enable()
     extendedCall = false;
     startRx      = true;
     startTx      = false;
+    blinkOn      = false;
+    blinkTimer   = getTick();
+    blinkState   = 0;
 }
 
 void OpMode_M17::disable()
@@ -74,6 +77,29 @@ void OpMode_M17::disable()
     radio_disableRtx();
     modulator.terminate();
     demodulator.terminate();
+}
+
+void OpMode_M17::blinkLed(rtxStatus_t *const status)
+{
+   if (!status->historyEnabled)
+   {
+      platform_ledOff(GREEN);
+      return;
+   }
+
+   if( blinkTimer > getTick() )
+      return;
+
+   if(blinkOn) {
+            platform_ledOn(RED);
+            blinkTimer = getTick() + 50;
+   } else {
+            platform_ledOff(RED);
+            blinkTimer = getTick() + (blinkState < 1 ? 200 : 2000);
+            blinkState++;
+            if(blinkState>1) blinkState=0;
+   }
+   blinkOn = !blinkOn;
 }
 
 void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
@@ -121,11 +147,11 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
     switch(status->opStatus)
     {
         case RX:
-
             if(dataValid)
                 platform_ledOn(GREEN);
             else
-                platform_ledOff(GREEN);
+               // platform_ledOff(GREEN);
+                blinkLed(status);
             break;
 
         case TX:

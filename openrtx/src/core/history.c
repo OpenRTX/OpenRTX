@@ -54,7 +54,9 @@ history_t *history_create(const char* callsign, const char* module, datetime_t s
     history_t *node = (history_t *) malloc(sizeof(history_t));
     if(node==NULL)
         return NULL;
-    strncpy(node->callsign, callsign, 9);
+    int i;
+    for (i = 0; callsign[i] != ' ' && callsign[i] != '\0' && i<9; i++);
+    strncpy(node->callsign, callsign, i);
     // if((module!=NULL) && (module[0]!='\0'))
     //     strncpy(node->module, module, 9);
     node->time = state_time;
@@ -93,9 +95,8 @@ void history_push(history_list_t *list, const char* callsign, const char* module
     new_history = true;
 }
 
-void history_update(history_list_t *list, const char* callsign, const char* module, datetime_t state_time)
+void history_update(history_list_t *list, history_t* node, const char* module, datetime_t state_time)
 {
-    history_t *node = history_find(list, callsign);
     if(node!=NULL) {
         if((module!=NULL) && (module[0]!='\0'))
             strncpy(node->module, module, 9);
@@ -105,15 +106,24 @@ void history_update(history_list_t *list, const char* callsign, const char* modu
         if(list->tail == node)
             list->tail = node->next;
         node->next = list->head;
+	list->head = node;
         node->prev = NULL;
     }
 
 }
 
+void history_test(history_list_t *list, const char* src, const char* dest, const char* refl, const char *link , datetime_t state_time)
+{
+    char message[10];
+    snprintf(message,9,"%2s%2s%2s%2s",src,dest,refl,link);
+    history_push(list, message, NULL, state_time); 
+}
+
 void history_add(history_list_t *list, const char* callsign, const char* module, datetime_t state_time)
 {
-    if(history_find(list, callsign)) 
-        history_update(list, callsign, module, state_time);
+    history_t *node = history_find(list, callsign);
+    if(node) 
+        history_update(list, node, module, state_time);
     else 
         history_push(list, callsign, module, state_time); 
 }
@@ -138,9 +148,7 @@ uint8_t history_size(history_list_t *list)
 }
 
 void format_history_value(char *buf, int max_len, history_t history) {
-    char temp[9];
-    sniprintf(temp, max_len-9, "%s         ", history.callsign);
-    sniprintf(buf, max_len, "%s %02d:%02d:%02d", temp, history.time.hour, history.time.minute, history.time.second);
+    sniprintf(buf, max_len, "%10s  %02d:%02d:%02d", history.callsign, history.time.hour, history.time.minute, history.time.second);
 }
 
 bool is_new_history() {

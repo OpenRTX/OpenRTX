@@ -184,7 +184,8 @@ const char * settings_m17_items[] =
 {
     "Callsign",
     "CAN",
-    "CAN RX Check"
+    "CAN RX Check",
+    "Keep History"
 };
 
 const char * settings_accessibility_items[] =
@@ -2105,6 +2106,7 @@ void ui_updateFSM(bool *sync_rtx)
                             break;
                         case D_HISTORY_INDICATOR:
                             state.settings.history_indicator_enabled = !state.settings.history_indicator_enabled;
+                            *sync_rtx = true;
                             break;
                         default:
                             state.ui_screen = SETTINGS_DISPLAY;
@@ -2135,6 +2137,7 @@ void ui_updateFSM(bool *sync_rtx)
                             break;
                         case D_HISTORY_INDICATOR:
                             state.settings.history_indicator_enabled = !state.settings.history_indicator_enabled;
+                            *sync_rtx = true;
                             break;
                         default:
                             state.ui_screen = SETTINGS_DISPLAY;
@@ -2359,6 +2362,21 @@ void ui_updateFSM(bool *sync_rtx)
                                 ui_state.edit_mode = !ui_state.edit_mode;
                             else if(msg.keys & KEY_ESC)
                                 ui_state.edit_mode = false;
+                            break;
+                        case M17_HISTORY_ENABLED:
+                            if(msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT ||
+                                (ui_state.edit_mode &&
+                                 (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT ||
+                                  msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)))
+                            {
+                                state.settings.history_indicator_enabled =
+                                    !state.settings.history_indicator_enabled;
+                            }
+                            else if(msg.keys & KEY_ENTER)
+                                ui_state.edit_mode = !ui_state.edit_mode;
+                            else if(msg.keys & KEY_ESC)
+                                ui_state.edit_mode = false;
+                            break;
                     }
                 }
                 else
