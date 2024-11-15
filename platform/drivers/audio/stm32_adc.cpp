@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2023 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2023 - 2024 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -20,6 +20,7 @@
 
 #include <kernel/scheduler/scheduler.h>
 #include <DmaStream.hpp>
+#include <hwconfig.h>
 #include <Timer.hpp>
 #include <miosix.h>
 #include <errno.h>
@@ -56,8 +57,16 @@ static constexpr AdcPeriph periph[] =
  */
 static void stopTransfer(const uint8_t instNum)
 {
+    ADC_TypeDef *adc = periph[instNum].adc;
+
+    #ifdef STM32H743xx
+    adc->CR |= ADC_CR_ADSTP;
+    while((adc->CR & ADC_CR_ADSTP) != 0) ;
+    #else
+    adc->CR2 &= ~ADC_CR2_ADON;
+    #endif
+
     periph[instNum].tim.stop();
-    periph[instNum].adc->CR2 &= ~ADC_CR2_ADON;
     AdcContext[instNum]->running = 0;
 }
 
@@ -117,16 +126,37 @@ void stm32adc_init(const uint8_t instance)
     // Enable peripherals
     switch(instance)
     {
-        case 0:
+        case STM32_ADC_ADC1:
+            #ifdef STM32H743xx
+            RCC->AHB1ENR     |= RCC_AHB1ENR_ADC12EN;
+            ADC12_COMMON->CCR = ADC_CCR_CKMODE_1
+                              | ADC_CCR_CKMODE_0;
+            DMAMUX1_Channel8->CCR = 9;
+            #else
             RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
+            #endif
             break;
 
-        case 1:
+        case STM32_ADC_ADC2:
+            #ifdef STM32H743xx
+            RCC->AHB1ENR     |= RCC_AHB1ENR_ADC12EN;
+            ADC12_COMMON->CCR = ADC_CCR_CKMODE_1
+                              | ADC_CCR_CKMODE_0;
+            DMAMUX1_Channel10->CCR = 10;
+            #else
             RCC->APB2ENR |= RCC_APB2ENR_ADC2EN;
+            #endif
             break;
 
-        case 2:
+        case STM32_ADC_ADC3:
+            #ifdef STM32H743xx
+            RCC->AHB4ENR    |= RCC_AHB4ENR_ADC3EN;
+            ADC3_COMMON->CCR = ADC_CCR_CKMODE_1
+                             | ADC_CCR_CKMODE_0;
+            DMAMUX1_Channel9->CCR = 115;
+            #else
             RCC->APB2ENR |= RCC_APB2ENR_ADC3EN;
+            #endif
             break;
     }
 
@@ -134,24 +164,41 @@ void stm32adc_init(const uint8_t instance)
      * Use TIM2 as trigger source for all the ADCs.
      * TODO: change this with a dedicated timer for each ADC.
      */
-    RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
-    uint32_t adcTrig = ADC_CR2_EXTSEL_1     // 0b0110 TIM2_TRGO trig. source
-                     | ADC_CR2_EXTSEL_2;
-
+    #ifdef STM32H743xx
+    RCC->APB1LENR   |= RCC_APB1LENR_TIM2EN;
+    uint32_t adcTrig = ADC_CFGR_EXTSEL_3    // 0b1011 TIM2_TRGO trig. source
+                     | ADC_CFGR_EXTSEL_1
+                     | ADC_CFGR_EXTSEL_0;
+    #else
+    RCC->APB1ENR    |= RCC_APB1ENR_TIM2EN;
+    ADC->CCR        |= ADC_CCR_ADCPRE_0;
+    uint32_t adcTrig = ADC_CR2_EXTSEL_2     // 0b0110 TIM2_TRGO trig. source
+                     | ADC_CR2_EXTSEL_1;
+    #endif
     __DSB();
 
-    /*
-     * ADC configuration.
-     *
-     * ADC clock is APB2 frequency divided by 4, giving 21MHz.
-     * Channel sample time set to 84 cycles, total conversion time is 100
-     * cycles: this leads to a maximum sampling frequency of 210kHz.
-     * Convert one channel only, no overrun interrupt, 12-bit resolution,
-     * no analog watchdog, discontinuous mode, no end of conversion interrupts.
-     */
     ADC_TypeDef *adc = periph[instance].adc;
 
-    ADC->CCR  |= ADC_CCR_ADCPRE_0;
+    #ifdef STM32H743xx
+    adc->CR = ADC_CR_ADVREGEN
+            | ADC_CR_BOOST_1
+            | ADC_CR_BOOST_0;
+
+    while((adc->ISR & ADC_ISR_LDORDY) == 0) ;
+
+    adc->ISR   = ADC_ISR_ADRDY;     // Clear the ADRDY flag
+    adc->CR   |= ADC_CR_ADEN;
+    while((adc->ISR & ADC_ISR_ADRDY) != 0) ;
+
+    adc->SMPR2 = 0x36DB6DB6;
+    adc->SMPR1 = 0x36DB6DB6;
+    adc->SQR1  = 0;                 // Convert one channel
+    adc->CFGR |= ADC_CFGR_DISCEN
+              |  ADC_CFGR_EXTEN_0   // Trigger on rising edge
+              |  adcTrig            // Trigger source
+              |  ADC_CFGR_DMNGT_1   // Continuous DMA requests
+              |  ADC_CFGR_DMNGT_0;  // Enable DMA data transfer
+    #else
     adc->SMPR2 = ADC_SMPR2_SMP2_2
                | ADC_SMPR2_SMP1_2;
     adc->SQR1  = 0;                 // Convert one channel
@@ -160,6 +207,7 @@ void stm32adc_init(const uint8_t instance)
               |  adcTrig            // Trigger source
               |  ADC_CR2_DDS        // Continuous DMA requests
               |  ADC_CR2_DMA;       // Enable DMA data transfer
+    #endif
 
     // Register end-of-transfer callbacks
     periph[instance].stream->setEndTransferCallback(std::bind(stopTransfer, instance));
@@ -178,7 +226,11 @@ void stm32adc_terminate()
     }
 
     // TODO: turn off peripherals
+    #ifdef STM32H743xx
+    RCC->APB1LENR &= ~RCC_APB1LENR_TIM2EN;
+    #else
     RCC->APB1ENR &= ~RCC_APB1ENR_TIM2EN;
+    #endif
     __DSB();
 }
 
@@ -198,8 +250,16 @@ static int stm32adc_start(const uint8_t instance, const void *config, struct str
     AdcContext[instance] = ctx;
 
     // Set conversion channel and enable the ADC
+    #ifdef STM32H743xx
+    ADC_TypeDef *adc = periph[instance].adc;
+    uint32_t channel = (uint32_t) config;
+    adc->SQR1  = channel << ADC_SQR1_SQ1_Pos;
+    adc->PCSEL = 1 << channel;
+    adc->CR   |= ADC_CR_ADSTART;
+    #else
     periph[instance].adc->SQR3 = (uint32_t) config;
     periph[instance].adc->CR2 |= ADC_CR2_ADON;
+    #endif
 
     // Start DMA stream
     bool circ = false;
@@ -210,7 +270,12 @@ static int stm32adc_start(const uint8_t instance, const void *config, struct str
                                    ctx->bufSize, circ);
 
     // Configure ADC trigger
+    #if defined(STM32H743xx)
+    uint32_t clockFreq = getBusClock(PERIPH_BUS_APB1);
+    periph[instance].tim.setUpdateFrequency(clockFreq, ctx->sampleRate);
+    #else
     periph[instance].tim.setUpdateFrequency(ctx->sampleRate);
+    #endif
     periph[instance].tim.start();
 
     return 0;
