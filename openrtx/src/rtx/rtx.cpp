@@ -67,6 +67,7 @@ void rtx_init(pthread_mutex_t *m)
     rtxStatus.M17_link[0]   = '\0';
     rtxStatus.M17_refl[0]   = '\0';
     rtxStatus.historyEnabled = false;
+    rtxStatus.notificationsEnabled = true;
     currMode = &noMode;
 
     /*
@@ -234,4 +235,3 @@ void rtx_setHistory(bool value)
 {
     rtxStatus.historyEnabled = value;
 }
-

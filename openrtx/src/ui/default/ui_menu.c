@@ -285,9 +285,9 @@ int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
             sniprintf(buf, max_len, "%s",
                      display_timer_values[last_state.settings.display_timer]);
             return 0;
-        case D_HISTORY_INDICATOR:
+        case D_NOTIFICATIONS:
             sniprintf(buf, max_len, "%s",
-                     (last_state.settings.history_indicator_enabled) ?
+                     (last_state.settings.notifications_enabled) ?
                                                 currentLanguage->on :
                                                 currentLanguage->off);
             return 0;
@@ -442,7 +442,7 @@ int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
                                                            currentLanguage->off);
             break;
         case M17_HISTORY_ENABLED:
-            sniprintf(buf, max_len, "%s", (last_state.settings.history_indicator_enabled) ?
+            sniprintf(buf, max_len, "%s", (last_state.settings.history_enabled) ?
                                                            currentLanguage->on :
                                                            currentLanguage->off);
             break;

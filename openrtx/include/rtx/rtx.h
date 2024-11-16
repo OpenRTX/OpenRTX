@@ -68,6 +68,7 @@ typedef struct
     char     M17_refl[10];             /**  M17 LSF reflector module   */
     
     bool     historyEnabled;
+    bool     notificationsEnabled;
 }
 rtxStatus_t;
 

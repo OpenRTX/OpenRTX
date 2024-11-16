@@ -125,7 +125,7 @@ enum displayItems
     D_CONTRAST,
 #endif
     D_TIMER,
-    D_HISTORY_INDICATOR,
+    D_NOTIFICATIONS,
 };
 
 #ifdef CONFIG_GPS
@@ -156,7 +156,7 @@ enum settingsM17Items
     M17_CALLSIGN = 0,
     M17_CAN,
     M17_CAN_RX,
-    M17_HISTORY_ENABLED
+    M17_HISTORY
 };
 
 /**

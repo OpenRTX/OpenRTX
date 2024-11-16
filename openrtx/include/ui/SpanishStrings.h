@@ -33,6 +33,7 @@ const stringsTable_t spanishStrings =
     .channels          = "Canales",
     .contacts          = "Contactos",
     .history           = "Historico",
+    .notifications     = "Notificacion",
     .gps               = "GPS",
     .settings          = "Ajustes",
     .backupAndRestore  = "Backup & Restaurar",

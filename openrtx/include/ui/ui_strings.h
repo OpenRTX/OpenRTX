@@ -36,6 +36,7 @@ typedef struct
     const char* channels;
     const char* contacts;
     const char* history;
+    const char* notifications;
     const char* gps;
     const char* settings;
     const char* backupAndRestore;

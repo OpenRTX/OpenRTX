@@ -161,7 +161,7 @@ const char *display_items[] =
     "Contrast",
 #endif
     "Timer",
-    "History"
+    "Notifications"
 };
 
 #ifdef CONFIG_GPS
@@ -2104,8 +2104,8 @@ void ui_updateFSM(bool *sync_rtx)
                             _ui_changeTimer(-1);
                             vp_announceDisplayTimer();
                             break;
-                        case D_HISTORY_INDICATOR:
-                            state.settings.history_indicator_enabled = !state.settings.history_indicator_enabled;
+                        case D_NOTIFICATIONS:
+                            state.settings.notifications_enabled = !state.settings.notifications_enabled;
                             *sync_rtx = true;
                             break;
                         default:
@@ -2135,8 +2135,8 @@ void ui_updateFSM(bool *sync_rtx)
                             _ui_changeTimer(+1);
                             vp_announceDisplayTimer();
                             break;
-                        case D_HISTORY_INDICATOR:
-                            state.settings.history_indicator_enabled = !state.settings.history_indicator_enabled;
+                        case D_NOTIFICATIONS:
+                            state.settings.notifications_enabled = !state.settings.notifications_enabled;
                             *sync_rtx = true;
                             break;
                         default:
@@ -2298,6 +2298,7 @@ void ui_updateFSM(bool *sync_rtx)
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_SETTINGS);
                 break;
+#define CONFIG_M17
 #ifdef CONFIG_M17
             // M17 Settings
             case SETTINGS_M17:
@@ -2363,14 +2364,15 @@ void ui_updateFSM(bool *sync_rtx)
                             else if(msg.keys & KEY_ESC)
                                 ui_state.edit_mode = false;
                             break;
-                        case M17_HISTORY_ENABLED:
+                        case M17_HISTORY:
                             if(msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT ||
                                 (ui_state.edit_mode &&
                                  (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT ||
                                   msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)))
                             {
-                                state.settings.history_indicator_enabled =
-                                    !state.settings.history_indicator_enabled;
+                                state.settings.history_enabled =
+                                    !state.settings.history_enabled;
+                                rtx_setNotifications(state.settings.history_enabled);
                             }
                             else if(msg.keys & KEY_ENTER)
                                 ui_state.edit_mode = !ui_state.edit_mode;
@@ -2581,7 +2583,8 @@ bool ui_updateGUI()
             break;
         // Contacts menu screen
         case MENU_HISTORY:
-            _ui_drawMenuHistory(&ui_state); // fixed
+            if(state.settings.history_enabled)
+                _ui_drawMenuHistory(&ui_state); // fixed
             break;
 #ifdef CONFIG_GPS
         // GPS menu screen

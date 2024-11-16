@@ -81,9 +81,10 @@ void OpMode_M17::disable()
 
 void OpMode_M17::blinkLed(rtxStatus_t *const status)
 {
-   if (!status->historyEnabled)
+   if (!status->historyEnabled || !status->notificationsEnabled)
    {
       platform_ledOff(GREEN);
+      platform_ledOff(RED);
       return;
    }
 
