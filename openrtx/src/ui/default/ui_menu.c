@@ -849,7 +849,7 @@ color_t spectrum_getColorFromLevel(uint16_t Level) {
     const uint8_t Blue_B = 255;
     
     const uint8_t Green_R = 0;
-    const uint8_t Green_G = 149;
+    const uint8_t Green_G = 192;
     const uint8_t Green_B = 0;
     
     const uint8_t Red_R = 255;
@@ -868,7 +868,7 @@ color_t spectrum_getColorFromLevel(uint16_t Level) {
         G = Blue_G + ((Green_G - Blue_G) * Level / 100);
         B = Blue_B + ((Green_B - Blue_B) * Level / 100);
     } else {
-        Level = ((Level - 50) * 100) / 40;
+        Level = ((Level) * 100) / 30;
         R = Green_R + ((Red_R - Green_R) * Level / 100);
         G = Green_G + ((Red_G - Green_G) * Level / 100);
         B = 0; // Green_B + ((Red_B - Green_B) * Level / 100);
