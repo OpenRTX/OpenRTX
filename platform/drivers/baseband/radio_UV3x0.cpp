@@ -124,7 +124,11 @@ void radio_setOpmode(const enum opmode mode)
             at1846s.setOpMode(AT1846S_OpMode::DMR); // AT1846S in DMR mode, disables RX filter
             at1846s.setBandwidth(AT1846S_BW::_25);  // Set bandwidth to 25kHz for proper deviation
             C6000.fmMode();                         // HR_C6000 in FM mode
+            #if defined(PLATFORM_DM1701)
+            C6000.setInputGain(-6);                 // Input gain in dB, found experimentally
+            #else
             C6000.setInputGain(+6);                 // Input gain in dB, found experimentally
+            #endif
             break;
 
         default:
