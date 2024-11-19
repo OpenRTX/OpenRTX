@@ -168,7 +168,8 @@ void AT1846S::setOpMode(const AT1846S_OpMode mode)
         i2c_writeReg16(0x41, 0x4731);
         i2c_writeReg16(0x42, 0x1036);
         i2c_writeReg16(0x43, 0x00BB);
-        i2c_writeReg16(0x58, 0xBCFD);   // Bit 0  = 1: CTCSS LPF bandwidth to 250Hz
+        i2c_writeReg16(0x58, 0xBCFF);   // Bit 0  = 1: CTCSS LPF bandwidth to 250Hz
+                                        // Bit 1  = 1: "voice HPF bypass"
                                         // Bit 3  = 1: bypass CTCSS HPF
                                         // Bit 4  = 1: bypass CTCSS LPF
                                         // Bit 5  = 1: bypass voice LPF
