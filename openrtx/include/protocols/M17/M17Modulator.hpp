@@ -113,7 +113,12 @@ private:
     static constexpr size_t M17_SAMPLES_PER_SYMBOL = M17_TX_SAMPLE_RATE / M17_SYMBOL_RATE;
     static constexpr size_t M17_FRAME_SAMPLES      = M17_FRAME_SYMBOLS * M17_SAMPLES_PER_SYMBOL;
 
+    //M17 deviation fix for DM-1701
+    #if defined(PLATFORM_DM1701)
+    static constexpr float  M17_RRC_GAIN          = 18000.0f;
+    #else
     static constexpr float  M17_RRC_GAIN          = 23000.0f;
+    #endif
     static constexpr float  M17_RRC_OFFSET        = 0.0f;
 
     std::array< int8_t, M17_FRAME_SYMBOLS > symbols;
