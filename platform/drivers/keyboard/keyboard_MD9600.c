@@ -178,8 +178,8 @@ keyboard_t kbd_getKeys()
     */
 
     /* Retrieve row/coloumn voltage measurements. */
-    uint16_t row = ((uint16_t) adc_getVoltage(&adc1, ADC_SW2_CH) / 1000);
-    uint16_t col = ((uint16_t) adc_getVoltage(&adc1, ADC_SW1_CH) / 1000);
+    uint16_t row = (uint16_t) (adc_getVoltage(&adc1, ADC_SW2_CH) / 1000);
+    uint16_t col = (uint16_t) (adc_getVoltage(&adc1, ADC_SW1_CH) / 1000);
 
     /* Map row voltage to row index. */
     uint8_t rowIdx = 0xFF;
