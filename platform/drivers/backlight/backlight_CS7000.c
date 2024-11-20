@@ -22,6 +22,7 @@
 
 void backlight_init()
 {
+    gpioDev_clear(KBD_BKLIGHT);
     gpio_setMode(LCD_BKLIGHT, ALTERNATE | ALTERNATE_FUNC(3));
 
     /*
@@ -69,4 +70,10 @@ void display_setBacklightLevel(uint8_t level)
 
     uint8_t pwmLevel = (2 * level) + (level * 55)/100;    // Convert value to 0 - 255
     TIM8->CCR4 = pwmLevel;
+
+    // Keyboard backlight does not have dimming, only on/off
+    if(level > 0)
+        gpioDev_set(KBD_BKLIGHT);
+    else
+        gpioDev_clear(KBD_BKLIGHT);
 }
