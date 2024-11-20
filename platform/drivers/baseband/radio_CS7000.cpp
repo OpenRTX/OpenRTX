@@ -245,11 +245,12 @@ void radio_enableRx()
     DAC->DHR8R1  = vtune_rx;
     DAC->SWTRIGR = DAC_SWTRIGR_SWTRIG1;
 
+    // Enable RX LNA and first IF stage
+    gpioDev_set(RX_PWR_EN);
+
     // Configure FM detector
     AK2365A_init(&detector);
     AK2365A_setFilterBandwidth(&detector, AK2365A_BPF_6);
-
-    gpioDev_set(RX_PWR_EN);   // Enable RX LNA
 
     radioStatus = RX;
 }
@@ -297,6 +298,7 @@ void radio_enableTx()
             break;
 
         case OPMODE_M17:
+            C6000.disableCtcss();
             C6000.startAnalogTx(TxAudioSource::LINE_IN, FmConfig::BW_25kHz);
             break;
 
