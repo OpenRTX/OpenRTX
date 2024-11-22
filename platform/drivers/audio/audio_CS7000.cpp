@@ -140,7 +140,7 @@ void audio_connect(const enum AudioSource source, const enum AudioSink sink)
         // Anti-pop: unmute speaker after 10ms from amp. power on
         gpioDev_set(AUDIO_AMP_EN);
         sleepFor(0, 10);
-        gpioDev_set(INT_SPK_MUTE);
+        gpioDev_clear(INT_SPK_MUTE);
     }
 }
 
@@ -150,7 +150,7 @@ void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
 
     if(sink == SINK_SPK)
     {
-        gpioDev_clear(INT_SPK_MUTE);
+        gpioDev_set(INT_SPK_MUTE);
         gpioDev_clear(AUDIO_AMP_EN);
     }
 
