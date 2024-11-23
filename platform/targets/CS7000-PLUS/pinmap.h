@@ -54,7 +54,7 @@
 #define KB_COL3       LCD_D5    // R904
 #define KB_COL4       LCD_D4    // R909
 #define KB_COL5       GPIOB,7   // R926
-#define KBD_BKLIGHT   &extGpio,17
+#define KBD_BKLIGHT   &extGpio,16
 
 /* Push-to-talk and side keys */
 #define PTT_SW        GPIOA,8
@@ -139,7 +139,7 @@
 
 /* Audio control */
 #define AUDIO_AMP_EN  &extGpio,14
-#define INT_SPK_MUTE  &extGpio,18
+#define INT_SPK_MUTE  &extGpio,17
 #define EXT_SPK_MUTE  &extGpio,19
 #define MIC_PWR_EN    &extGpio,18
 #define INT_MIC_SEL   &extGpio,10
