@@ -977,7 +977,7 @@ foreach t : targets
                                  '-s', '0x08000000'])
 
       # For CS7000 'wrap' target prepares a .dfu file
-      elif name == 'openrtx_cs7000'
+      elif name == 'openrtx_cs7000' or name == 'openrtx_cs7000p'
 
         custom_target(name+'_wrap',
                       output  : name+'.dfu',
