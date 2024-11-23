@@ -34,7 +34,12 @@ static const struct W25QxCfg cfg =
     .cs  = { FLASH_CS }
 };
 
+#ifdef PLATFORM_CS7000P
+W25Qx_DEVICE_DEFINE(eflash, cfg, 0x2000000)        // 32 MB, 256 Mbit
+#else
 W25Qx_DEVICE_DEFINE(eflash, cfg, 0x1000000)        // 16 MB, 128 Mbit
+#endif
+
 EEEP_DEVICE_DEFINE(eeep)
 
 const struct nvmPartition memPartitions[] =
@@ -43,6 +48,16 @@ const struct nvmPartition memPartitions[] =
         .offset = 0x0000,   // First partition, calibration and other OEM data
         .size   = 32768     // 32kB
     },
+#ifdef PLATFORM_CS7000P
+    {
+        .offset = 0x1000000,// Second partition EEEP storage
+        .size   = 16384     // 16kB
+    },
+    {
+        .offset = 0x1000C000,// Third partition, available memory
+        .size   = 0xFF4000
+    }
+#else
     {
         .offset = 0x8000,   // Second partition EEEP storage
         .size   = 16384     // 16kB
@@ -51,6 +66,7 @@ const struct nvmPartition memPartitions[] =
         .offset = 0xC000,   // Third partition, available memory
         .size   = 0xFF4000
     }
+#endif
 };
 
 static const struct nvmDescriptor extMem[] =
