@@ -36,12 +36,7 @@ public:
      *
      * @param tim: base address of timer peripheral to manage.
      */
-    constexpr Lptim(const uint32_t tim) : tim(tim)
-    {
-        // Timer needs to be enabled before configuring the other registers.
-        reinterpret_cast< LPTIM_TypeDef * >(tim)->CFGR = 0;
-        reinterpret_cast< LPTIM_TypeDef * >(tim)->CR   = LPTIM_CR_ENABLE;
-    }
+    constexpr Lptim(const uint32_t tim) : tim(tim) {}
 
     ~Lptim() = default;
 
@@ -75,7 +70,8 @@ public:
                 break;
         }
 
-        // Values put in registers have to be decremented by one, see RM
+        // Timer needs to be enabled before configuring the other registers.
+        reinterpret_cast< LPTIM_TypeDef * >(tim)->CR   = LPTIM_CR_ENABLE;
         reinterpret_cast< LPTIM_TypeDef * >(tim)->CFGR = div << 9;
         reinterpret_cast< LPTIM_TypeDef * >(tim)->ARR  = arr - 1;
 
