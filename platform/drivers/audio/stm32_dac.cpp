@@ -19,6 +19,7 @@
  ***************************************************************************/
 
 #include <kernel/scheduler/scheduler.h>
+#include <core/cache_cortexMx.h>
 #include <peripherals/gpio.h>
 #include <data_conversion.h>
 #include <DmaStream.hpp>
@@ -29,9 +30,11 @@
 #include "stm32_dac.h"
 
 #if defined(STM32H743xx)
+#include <Lptim.hpp>
+
 #define DAC             DAC1
-#define DAC_TRIG_CH1    (5 <<  2)
-#define DAC_TRIG_CH2    (6 << 18)
+#define DAC_TRIG_CH1    (11 <<  2)  // lptim1_out
+#define DAC_TRIG_CH2    (12 << 18)  // lptim2_out
 #else
 #define DAC_TRIG_CH1    0x00
 #define DAC_TRIG_CH2    DAC_CR_TSEL2_1
@@ -47,7 +50,11 @@ struct ChannelState
 struct DacChannel
 {
     volatile uint32_t  *dacReg;     // DAC data register
+#if defined(STM32H743xx)
+    Lptim               tim;
+#else
     Timer               tim;        // TIM peripheral for DAC trigger
+#endif
 };
 
 
@@ -56,8 +63,13 @@ using Dma1_Stream6 = DmaStream< DMA1_BASE, 6, 7, 3 >; // DMA 1, Stream 6, channe
 
 static constexpr DacChannel channels[] =
 {
+#if defined(STM32H743xx)
+    {&(DAC->DHR12R1), Lptim(LPTIM1_BASE)},
+    {&(DAC->DHR12R2), Lptim(LPTIM2_BASE)},
+#else
     {&(DAC->DHR12R1), Timer(TIM6_BASE)},
     {&(DAC->DHR12R2), Timer(TIM7_BASE)},
+#endif
 };
 
 #pragma GCC diagnostic ignored "-Wpedantic"
@@ -134,7 +146,8 @@ void stm32dac_init(const uint8_t instance, const uint16_t idleLevel)
         case STM32_DAC_CH1:
         {
             #if defined(STM32H743xx)
-            RCC->APB1LENR |= RCC_APB1LENR_TIM6EN;
+            RCC->APB1LENR |= RCC_APB1LENR_LPTIM1EN;
+            RCC->D2CCIP2R |= RCC_D2CCIP2R_LPTIM1SEL_0;
             DMAMUX1_Channel5->CCR = 67;
             #else
             RCC->APB1ENR |= RCC_APB1ENR_TIM6EN;
@@ -143,7 +156,7 @@ void stm32dac_init(const uint8_t instance, const uint16_t idleLevel)
 
             DAC->DHR12R1 = idleLevel;
             DAC->CR |= DAC_CR_DMAEN1    // Enable DMA
-                    | DAC_TRIG_CH1      // TIM6 as trigger source for CH1
+                    | DAC_TRIG_CH1      // Set trigger source for CH1
                     | DAC_CR_TEN1       // Enable trigger input
                     | DAC_CR_EN1;       // Enable CH1
         }
@@ -152,7 +165,8 @@ void stm32dac_init(const uint8_t instance, const uint16_t idleLevel)
         case STM32_DAC_CH2:
         {
             #if defined(STM32H743xx)
-            RCC->APB1LENR |= RCC_APB1LENR_TIM7EN;
+            RCC->APB4ENR |= RCC_APB4ENR_LPTIM2EN;
+            RCC->D3CCIPR |= RCC_D3CCIPR_LPTIM2SEL_0;
             DMAMUX1_Channel6->CCR = 68;
             #else
             RCC->APB1ENR |= RCC_APB1ENR_TIM7EN;
@@ -161,7 +175,7 @@ void stm32dac_init(const uint8_t instance, const uint16_t idleLevel)
 
             DAC->DHR12R2 = idleLevel;
             DAC->CR |= DAC_CR_DMAEN2    // Enable DMA
-                    | DAC_TRIG_CH2      // TIM7 as trigger source for CH2
+                    | DAC_TRIG_CH2      // Set trigger source for CH2
                     | DAC_CR_TEN2       // Enable trigger input
                     | DAC_CR_EN2;       // Enable CH2
         }
@@ -188,7 +202,8 @@ void stm32dac_terminate()
     }
 
     #if defined(STM32H743xx)
-    RCC->APB1LENR &= ~(RCC_APB1LENR_DAC12EN | RCC_APB1LENR_TIM6EN | RCC_APB1LENR_TIM7EN);
+    RCC->APB1LENR &= ~(RCC_APB1LENR_DAC12EN | RCC_APB1LENR_LPTIM1EN);
+    RCC->APB4ENR  &= ~RCC_APB4ENR_LPTIM2EN;
     #else
     RCC->APB1ENR &= ~(RCC_APB1ENR_DACEN  | RCC_APB1ENR_TIM6EN | RCC_APB1ENR_TIM7EN);
     #endif
@@ -230,8 +245,8 @@ static int stm32dac_start(const uint8_t instance, const void *config,
 
     // Configure DAC trigger
     #if defined(STM32H743xx)
-    uint32_t clockFreq = getBusClock(PERIPH_BUS_APB1);
-    channels[instance].tim.setUpdateFrequency(clockFreq, ctx->sampleRate);
+    channels[instance].tim.setUpdateFrequency(168000000, ctx->sampleRate);
+    miosix::markBufferBeforeDmaWrite(ctx->buffer, ctx->bufSize);
     #else
     channels[instance].tim.setUpdateFrequency(ctx->sampleRate);
     #endif
@@ -256,6 +271,7 @@ static int stm32dac_sync(struct streamCtx *ctx, uint8_t dirty)
     {
         void *ptr = state->stream.idleBuf();
         S16toU12(reinterpret_cast< int16_t *>(ptr), ctx->bufSize/2);
+        miosix::markBufferBeforeDmaWrite(ctx->buffer, ctx->bufSize);
     }
 
    bool ok = state->stream.sync();
