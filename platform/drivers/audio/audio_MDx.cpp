@@ -109,7 +109,7 @@ static void *audio_thread(void *arg)
 const struct audioDevice outputDevices[] =
 {
     {NULL,                    NULL,          0, SINK_MCU},
-    #ifdef PLATFORM_MDUV3x0
+    #if defined(PLATFORM_MDUV3x0) || defined (PLATFORM_DM1701)
     {&Cx000_dac_audio_driver, NULL,          0, SINK_SPK},
     #else
     {&stm32_pwm_audio_driver, &stm32pwm_cfg, 0, SINK_SPK},
