@@ -88,6 +88,14 @@ void startPll()
     //Finally, increase frequency
     RCC->CFGR |= RCC_CFGR_SW_PLL1;
     while((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL1) ; //Wait
+
+    //Configure PLL2 to have 168MHz on P output
+    RCC->PLLCKSELR |= 25 << RCC_PLLCKSELR_DIVM2_Pos;    // M=25, VCO input 1MHz
+    RCC->PLL2DIVR   = (168-1);                          // N=168, P,Q,R = 1
+    RCC->PLLCFGR   |= RCC_PLLCFGR_PLL2VCOSEL            // Medium VCO range
+                   |  RCC_PLLCFGR_DIVP2EN;
+    RCC->CR |= RCC_CR_PLL2ON;                           // Start PLL2
+    while((RCC->CR & RCC_CR_PLL2RDY)==0) ;              // Wait until ready
 }
 
 uint32_t getBusClock(const uint8_t bus)
