@@ -237,16 +237,22 @@ bool M17Demodulator::update(const bool invertPhase)
     dataBlock_t baseband = inputStream_getData(basebandId);
     if(baseband.data != NULL)
     {
-        // Apply DC removal filter
-        dsp_dcRemoval(&dcrState, baseband.data, baseband.len);
+        uint32_t avg = 0;
+
+        // Compute average of the samples, for DC bias removal
+        for(size_t i = 0; i < baseband.len; i++)
+            avg += (uint32_t) baseband.data[i];
+
+        avg /= baseband.len;
 
         // Process samples
         for(size_t i = 0; i < baseband.len; i++)
         {
             // Apply RRC on the baseband sample
-            float           elem   = static_cast< float >(baseband.data[i]);
+            stream_sample_t sample = baseband.data[i] - (stream_sample_t) avg;
+            float           elem   = static_cast< float >(sample);
             if(invertPhase) elem   = 0.0f - elem;
-            int16_t         sample = static_cast< int16_t >(M17::rrc_24k(elem));
+            sample = static_cast< int16_t >(M17::rrc_24k(elem));
 
             // Update correlator and sample filter for correlation thresholds
             correlator.sample(sample);
@@ -428,8 +434,6 @@ void M17Demodulator::reset()
     locked      = false;
     demodState  = DemodState::INIT;
     initCount   = RX_SAMPLE_RATE / 50;  // 50ms of init time
-
-    dsp_resetFilterState(&dcrState);
 }
 
 
