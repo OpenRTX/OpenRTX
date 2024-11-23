@@ -19,6 +19,9 @@
  ***************************************************************************/
 
 #include <kernel/scheduler/scheduler.h>
+#include <core/cache_cortexMx.h>
+#include <interfaces/delays.h>
+#include <peripherals/gpio.h>
 #include <DmaStream.hpp>
 #include <hwconfig.h>
 #include <Timer.hpp>
@@ -26,11 +29,19 @@
 #include <errno.h>
 #include "stm32_adc.h"
 
+#if defined(STM32H743xx)
+#include <Lptim.hpp>
+#endif
+
 struct AdcPeriph
 {
     ADC_TypeDef   *adc;
     StreamHandler *stream;
+#if defined(STM32H743xx)
+    Lptim          tim;
+#else
     Timer          tim;
+#endif
 };
 
 using Dma2_Stream0 = DmaStream< DMA2_BASE, 0, 0, 2 >; // DMA 2, Stream 2, channel 0, high priority (ADC1)
@@ -45,9 +56,15 @@ static struct streamCtx *AdcContext[3];
 
 static constexpr AdcPeriph periph[] =
 {
+#if defined(STM32H743xx)
+    {(ADC_TypeDef *) ADC1_BASE, &Dma2_Stream0_hdl, Lptim(LPTIM3_BASE)},
+    {(ADC_TypeDef *) ADC2_BASE, &Dma2_Stream2_hdl, Lptim(LPTIM3_BASE)},
+    {(ADC_TypeDef *) ADC3_BASE, &Dma2_Stream1_hdl, Lptim(LPTIM3_BASE)},
+#else
     {(ADC_TypeDef *) ADC1_BASE, &Dma2_Stream0_hdl, Timer(TIM2_BASE)},
     {(ADC_TypeDef *) ADC2_BASE, &Dma2_Stream2_hdl, Timer(TIM2_BASE)},
     {(ADC_TypeDef *) ADC3_BASE, &Dma2_Stream1_hdl, Timer(TIM2_BASE)},
+#endif
 };
 
 
@@ -165,13 +182,12 @@ void stm32adc_init(const uint8_t instance)
      * TODO: change this with a dedicated timer for each ADC.
      */
     #ifdef STM32H743xx
-    RCC->APB1LENR   |= RCC_APB1LENR_TIM2EN;
-    uint32_t adcTrig = ADC_CFGR_EXTSEL_3    // 0b1011 TIM2_TRGO trig. source
-                     | ADC_CFGR_EXTSEL_1
-                     | ADC_CFGR_EXTSEL_0;
+    RCC->APB4ENR |= RCC_APB4ENR_LPTIM3EN;
+    RCC->D3CCIPR |= RCC_D3CCIPR_LPTIM345SEL_0;
+    uint32_t adcTrig = 20 << ADC_CFGR_EXTSEL_Pos;    // lptim3_out as trig. source
     #else
-    RCC->APB1ENR    |= RCC_APB1ENR_TIM2EN;
-    ADC->CCR        |= ADC_CCR_ADCPRE_0;
+    RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
+    ADC->CCR     |= ADC_CCR_ADCPRE_0;
     uint32_t adcTrig = ADC_CR2_EXTSEL_2     // 0b0110 TIM2_TRGO trig. source
                      | ADC_CR2_EXTSEL_1;
     #endif
@@ -196,6 +212,7 @@ void stm32adc_init(const uint8_t instance)
     adc->CFGR |= ADC_CFGR_DISCEN
               |  ADC_CFGR_EXTEN_0   // Trigger on rising edge
               |  adcTrig            // Trigger source
+              |  ADC_CFGR_RES_1     // 12-bit resolution
               |  ADC_CFGR_DMNGT_1   // Continuous DMA requests
               |  ADC_CFGR_DMNGT_0;  // Enable DMA data transfer
     #else
@@ -271,8 +288,7 @@ static int stm32adc_start(const uint8_t instance, const void *config, struct str
 
     // Configure ADC trigger
     #if defined(STM32H743xx)
-    uint32_t clockFreq = getBusClock(PERIPH_BUS_APB1);
-    periph[instance].tim.setUpdateFrequency(clockFreq, ctx->sampleRate);
+    periph[instance].tim.setUpdateFrequency(168000000, ctx->sampleRate);
     #else
     periph[instance].tim.setUpdateFrequency(ctx->sampleRate);
     #endif
@@ -284,6 +300,8 @@ static int stm32adc_start(const uint8_t instance, const void *config, struct str
 static int stm32adc_data(struct streamCtx *ctx, stream_sample_t **buf)
 {
     AdcPeriph *p = reinterpret_cast< AdcPeriph * >(ctx->priv);
+
+    miosix::markBufferAfterDmaRead(ctx->buffer, ctx->bufSize);
 
     if(ctx->bufMode == BUF_CIRC_DOUBLE)
     {
