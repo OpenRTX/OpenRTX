@@ -58,7 +58,8 @@ void audio_connect(const enum AudioSource source, const enum AudioSink sink)
     {
         radio_enableAfOutput();
     }
-    //gpio_setPin(MIC_SPK_EN);  // open speaker
+    else
+        gpio_setPin(MIC_SPK_EN);  // open speaker
 
 }
 
@@ -75,7 +76,7 @@ void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
         radio_disableAfOutput();
         //gpio_clearPin(MIC_SPK_EN);  // open microphone
     }
-
+    gpio_clearPin(MIC_SPK_EN);  // open speaker
 }
 
 bool audio_checkPathCompatibility(const enum AudioSource p1Source,
