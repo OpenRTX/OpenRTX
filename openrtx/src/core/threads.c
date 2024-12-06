@@ -3,6 +3,7 @@
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
+ *                                Grzegorz Kaczmarek SP6HFE                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -67,7 +68,7 @@ void *ui_threadFunc(void *arg)
     {
         time = getTick();
 
-        if(input_scanKeyboard(&kbd_msg))
+        if(input_scanKeyboard(time, &kbd_msg))
         {
             ui_pushEvent(EVENT_KBD, kbd_msg.value);
         }
