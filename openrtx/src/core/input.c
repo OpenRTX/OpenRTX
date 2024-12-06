@@ -2,6 +2,7 @@
  *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN,                     *
  *                                Silvano Seva IU2KWO                      *
+ *                                Grzegorz Kaczmarek SP6HFE                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -17,16 +18,16 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <input.h>
 #include <interfaces/delays.h>
 #include <inttypes.h>
 #include <stdbool.h>
-#include <input.h>
 
 static long long  keyTs[KBD_NUM_KEYS];  // Timestamp of each keypress
 static uint32_t   longPressSent;        // Flags to manage long-press events
 static keyboard_t prevKeys = 0;         // Previous keyboard status
 
-bool input_scanKeyboard(long long timestamp, kbd_msg_t *msg)
+bool input_scanKeyboard(long long timestamp, kbd_msg_t* msg)
 {
     msg->value     = 0;
     bool kbd_event = false;
@@ -34,19 +35,23 @@ bool input_scanKeyboard(long long timestamp, kbd_msg_t *msg)
     keyboard_t keys = kbd_getKeys();
 
     // The key status has changed
-    if(keys != prevKeys)
+    if (keys != prevKeys)
     {
-        // Find newly pressed keys
-        keyboard_t newKeys = (keys ^ prevKeys) & keys;
-
-        // Save timestamp
-        for(uint8_t k = 0; k < KBD_NUM_KEYS; k++)
+        // Store time only when something was pressed
+        if (keys != 0)
         {
-            keyboard_t mask = 1 << k;
-            if((newKeys & mask) != 0)
+            // Find newly pressed keys
+            keyboard_t newKeys = (keys ^ prevKeys) & keys;
+
+            // Save timestamp
+            for (uint8_t k = 0; k < KBD_NUM_KEYS; k++)
             {
-                keyTs[k]       = timestamp;
-                longPressSent &= ~mask;
+                keyboard_t mask = 1 << k;
+                if ((newKeys & mask) != 0)
+                {
+                    keyTs[k]       = timestamp;
+                    longPressSent &= ~mask;
+                }
             }
         }
 
@@ -65,7 +70,7 @@ bool input_scanKeyboard(long long timestamp, kbd_msg_t *msg)
             // The key is pressed and its long-press timer is over
             if(((keys & mask) != 0)          &&
                ((longPressSent & mask) == 0) &&
-               ((timestamp - keyTs[k]) >= input_longPressTimeout))
+                ((timestamp - keyTs[k]) >= input_longPressTimeout))
             {
                 msg->long_press = 1;
                 msg->keys       = keys;
