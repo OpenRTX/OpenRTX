@@ -54,10 +54,11 @@ kbd_msg_t;
  * keyboard event data structure. The function returns true if a keyboard event
  * has been detected.
  *
+ * @param timestamp: system time when keyboard scanning takes place.
  * @param msg: keyboard event message to be filled.
  * @return true if a keyboard event has been detected, false otherwise.
  */
-bool input_scanKeyboard(kbd_msg_t *msg);
+bool input_scanKeyboard(long long timestamp, kbd_msg_t *msg);
 
 /**
  * This function returns true if at least one number is pressed on the
