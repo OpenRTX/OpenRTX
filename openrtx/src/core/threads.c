@@ -70,7 +70,7 @@ void *ui_threadFunc(void *arg)
     {
         time = getTick();
 
-        if(input_scanKeyboard(&kbd_msg))
+        if(input_scanKeyboard(time, &kbd_msg))
         {
             ui_pushEvent(EVENT_KBD, kbd_msg.value);
         }

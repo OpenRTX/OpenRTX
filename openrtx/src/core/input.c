@@ -26,13 +26,12 @@ static long long  keyTs[KBD_NUM_KEYS];  // Timestamp of each keypress
 static uint32_t   longPressSent;        // Flags to manage long-press events
 static keyboard_t prevKeys = 0;         // Previous keyboard status
 
-bool input_scanKeyboard(kbd_msg_t *msg)
+bool input_scanKeyboard(long long timestamp, kbd_msg_t *msg)
 {
     msg->value     = 0;
     bool kbd_event = false;
 
     keyboard_t keys = kbd_getKeys();
-    long long now   = getTick();
 
     // The key status has changed
     if(keys != prevKeys)
@@ -46,7 +45,7 @@ bool input_scanKeyboard(kbd_msg_t *msg)
             keyboard_t mask = 1 << k;
             if((newKeys & mask) != 0)
             {
-                keyTs[k]       = now;
+                keyTs[k]       = timestamp;
                 longPressSent &= ~mask;
             }
         }
@@ -66,7 +65,7 @@ bool input_scanKeyboard(kbd_msg_t *msg)
             // The key is pressed and its long-press timer is over
             if(((keys & mask) != 0)          &&
                ((longPressSent & mask) == 0) &&
-               ((now - keyTs[k]) >= input_longPressTimeout))
+               ((timestamp - keyTs[k]) >= input_longPressTimeout))
             {
                 msg->long_press = 1;
                 msg->keys       = keys;
