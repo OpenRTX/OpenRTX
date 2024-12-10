@@ -1,8 +1,9 @@
 /***************************************************************************
  *   Copyright (C) 2020 - 2025 by Federico Amedeo Izzo IU2NUO,             *
- *                                Niccolò Izzo IU2KIN                      *
- *                                Frederik Saraci IU2NRO                   *
- *                                Silvano Seva IU2KWO                      *
+ *                                Niccolò Izzo IU2KIN,                     *
+ *                                Frederik Saraci IU2NRO,                  *
+ *                                Silvano Seva IU2KWO,                     *
+ *                                Grzegorz Kaczmarek SP6HFE                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -141,7 +142,7 @@ static keyboard_t keyname2keyboard(char *name)
         "KEY_0", "KEY_1", "KEY_2", "KEY_3", "KEY_4", "KEY_5", "KEY_6", "KEY_7",
         "KEY_8", "KEY_9", "KEY_STAR", "KEY_HASH", "KEY_ENTER", "KEY_ESC",
         "KEY_UP","KEY_DOWN", "KEY_LEFT", "KEY_RIGHT", "KEY_MONI", "KEY_F1",
-        "KEY_F2", "KEY_F3", "KEY_F4", "KEY_F5", "KEY_F6", "KEY_VOLUP", "KEY_VOLDOWN",
+        "KEY_F2", "KEY_F3", "KEY_F4", "KEY_F5", "KEY_VOLUP", "KEY_VOLDOWN",
         "KNOB_LEFT", "KNOB_RIGHT",
     };
 

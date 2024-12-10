@@ -2,6 +2,7 @@
  *   Copyright (C) 2020 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Silvano Seva IU2KWO                      *
+ *                                Grzegorz Kaczmarek SP6HFE                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -53,17 +54,16 @@ enum key
     KEY_F3      = (1 << 21),  /* Function button (device specific) */
     KEY_F4      = (1 << 22),  /* Function button (device specific) */
     KEY_F5      = (1 << 23),  /* Function button (device specific) */
-    KEY_F6      = (1 << 24),  /* Function button (device specific) */
-    KEY_VOLUP   = (1 << 25),  /* Volume increase button            */
-    KEY_VOLDOWN = (1 << 26),  /* Volume decrease button            */
-    KNOB_LEFT   = (1 << 27),  /* Knob rotated counter clockwise    */
-    KNOB_RIGHT  = (1 << 28),  /* Knob rotated clockwise            */
+    KEY_VOLUP   = (1 << 24),  /* Volume increase button            */
+    KEY_VOLDOWN = (1 << 25),  /* Volume decrease button            */
+    KNOB_LEFT   = (1 << 26),  /* Knob rotated counter clockwise    */
+    KNOB_RIGHT  = (1 << 27),  /* Knob rotated clockwise            */
 };
 
 /**
  * Number of supported keys
  */
-#define KBD_NUM_KEYS 29
+#define KBD_NUM_KEYS 28
 
 /**
  * Mask for the numeric keys in a key map
