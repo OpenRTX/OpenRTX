@@ -1,7 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2024 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN,                     *
- *                                Silvano Seva IU2KWO                      *
+ *                                Silvano Seva IU2KWO,                     *
  *                                Grzegorz Kaczmarek SP6HFE                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -23,66 +23,144 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-static long long  keyTs[KBD_NUM_KEYS];  // Timestamp of each keypress
-static uint32_t   longPressSent;        // Flags to manage long-press events
-static keyboard_t prevKeys = 0;         // Previous keyboard status
-
 bool input_scanKeyboard(long long timestamp, kbd_msg_t* msg)
 {
-    msg->value     = 0;
-    bool kbd_event = false;
+    static bool longPressReached   = false;  // asdadasd
+    static keyboard_t previousKeys = 0;      // Previous keyboard status
+    static long long eventStart    = 0;      // asdasd
+    static bool keyboardReleaseAwaiting = false;
 
-    keyboard_t keys = kbd_getKeys();
+    const bool isKeyboardEvent           = true;
+    const bool noKeyboardEvent           = false;
+    const keyboard_t keysWithoutKnobMask = 0x3FFFFFF;
 
-    // The key status has changed
-    if (keys != prevKeys)
+    const keyboard_t keys               = kbd_getKeys();
+    const uint8_t keysNumberWithoutKnob = (uint8_t)(__builtin_popcount(keys & keysWithoutKnobMask));
+
+    msg->value = 0;
+
+    // Handle keyboard release (no keys pressed, no knob movement)
+    if (keys == 0)
     {
-        // Store time only when something was pressed
-        if (keys != 0)
+        if (previousKeys != 0)
         {
-            // Find newly pressed keys
-            keyboard_t newKeys = (keys ^ prevKeys) & keys;
+            // Clear data
+            longPressReached        = false;
+            previousKeys            = 0;
+            keyboardReleaseAwaiting = false;
+        }
 
-            // Save timestamp
-            for (uint8_t k = 0; k < KBD_NUM_KEYS; k++)
+        return noKeyboardEvent;
+    }
+
+    // No event until keyboard is released (in certain conditions)
+    if (keyboardReleaseAwaiting == true)
+    {
+        return noKeyboardEvent;
+    }
+
+    // Remember pressed keys
+    msg->keys = keys;
+
+    // Handle knob movement only (keys is != 0)
+    if (keysNumberWithoutKnob == 0)
+    {
+        msg->event = KEY_EVENT_SINGLE_PRESS;
+        return isKeyboardEvent;
+    }
+
+    // Handle continuous pressing of the same key set (knob movement is not considered)
+    if ((keys & keysWithoutKnobMask) == (previousKeys & keysWithoutKnobMask))
+    {
+        // When knob was turned we want only that event to go through (to not wrongly repeat the keys)
+        if ((keys & KNOB_LEFT) || (keys & KNOB_RIGHT))
+        {
+            msg->keys &= ~keysWithoutKnobMask;
+            msg->event = KEY_EVENT_SINGLE_PRESS;
+            return isKeyboardEvent;
+        }
+
+        // Calculate timings
+        bool longPressDetected = (!longPressReached &&
+                             ((timestamp - eventStart) >= input_longPressTimeout));
+
+        bool repeatDetected = (longPressReached &&
+                          ((timestamp - eventStart) >= input_repeatInterval));
+
+        // Long press event is possible for single and multi key presses
+        if (longPressDetected)
+        {
+            longPressReached = true;
+            eventStart       = timestamp;
+            msg->event       = ((keysNumberWithoutKnob > 1) ? KEY_EVENT_MULTI_LONG_PRESS : KEY_EVENT_SINGLE_LONG_PRESS);
+
+            return isKeyboardEvent;
+        }
+
+        // Repeat event is reserved for single key press only
+        if (repeatDetected && (keysNumberWithoutKnob == 1))
+        {
+            eventStart = timestamp;
+            msg->event = KEY_EVENT_SINGLE_REPEAT;
+
+            return isKeyboardEvent;
+        }
+    }
+
+    // Handle pressed keys set change (knob movement is not considered)
+    uint8_t previousKeysNumberWithoutKnob = (uint8_t)(__builtin_popcount(previousKeys & keysWithoutKnobMask));
+
+    switch (previousKeysNumberWithoutKnob)
+    {
+        // Keyboard was released, now something is pressed
+        case 0:
+        /* fallthrough */
+        // Single press was before
+        case 1:
+            eventStart   = timestamp;
+            previousKeys = keys;
+
+            if (keysNumberWithoutKnob > 1)
             {
-                keyboard_t mask = 1 << k;
-                if ((newKeys & mask) != 0)
+                // Multi press started - waiting for long press timeout
+                return noKeyboardEvent;
+            }
+            else
+            {
+                // Single press (keysNumberWithoutKnob == 1)
+                msg->event = KEY_EVENT_SINGLE_REPEAT;
+                return isKeyboardEvent;
+            }
+            break;
+        // Multi press was before
+        default:
+            if (keysNumberWithoutKnob > 1)
+            {
+                if (keysNumberWithoutKnob >= previousKeysNumberWithoutKnob)
                 {
-                    keyTs[k]       = timestamp;
-                    longPressSent &= ~mask;
+                    // Multi press keys modified (keys pressed number increased or same)
+                    eventStart   = timestamp;
+                    previousKeys = keys;
+                    return noKeyboardEvent;
+                }
+                else
+                {
+                    // Keys pressed number decreased
+                    keyboardReleaseAwaiting = true;
+                    return noKeyboardEvent;
                 }
             }
-        }
-
-        // New keyboard event
-        msg->keys = keys;
-        kbd_event = true;
-    }
-    // Some key is kept pressed
-    else if(keys != 0)
-    {
-        // Check for saved timestamp to trigger long-presses
-        for(uint8_t k = 0; k < KBD_NUM_KEYS; k++)
-        {
-            keyboard_t mask = 1 << k;
-
-            // The key is pressed and its long-press timer is over
-            if(((keys & mask) != 0)          &&
-               ((longPressSent & mask) == 0) &&
-                ((timestamp - keyTs[k]) >= input_longPressTimeout))
+            else
             {
-                msg->long_press = 1;
-                msg->keys       = keys;
-                kbd_event       = true;
-                longPressSent  |= mask;
+                // Can't go back to single press - need to release keyboard first
+                keyboardReleaseAwaiting = true;
+                return noKeyboardEvent;
             }
-        }
+            break;
     }
 
-    prevKeys = keys;
-
-    return kbd_event;
+    // In case code reached here there is certainly no keyboard event
+    return noKeyboardEvent;
 }
 
 bool input_isNumberPressed(kbd_msg_t msg)
