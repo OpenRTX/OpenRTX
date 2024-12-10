@@ -30,6 +30,11 @@
 static const uint16_t input_longPressTimeout = 700;
 
 /**
+ * Time interval in milliseconds for repeat event generation after long-press was detected
+ */
+static const uint16_t input_repeatInterval = 250;
+
+/**
  * This enum describes the key event type:
  * - KEY_EVENT_SINGLE_PRESS single button press
  *   (1st event on initial press but also when continuously pressed)
