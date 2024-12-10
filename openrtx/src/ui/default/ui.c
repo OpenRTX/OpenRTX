@@ -895,7 +895,7 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
         ui_state.macro_menu_selected++;
         ui_state.macro_menu_selected %= 9;
     }
-    if ((msg.keys & KEY_ENTER) && !msg.long_press)
+    if ((msg.keys & KEY_ENTER) && !(msg.event == KEY_EVENT_SINGLE_LONG_PRESS))
         ui_state.input_number = ui_state.macro_menu_selected + 1;
     else
         ui_state.input_number = 0;
@@ -1392,7 +1392,7 @@ void ui_updateFSM(bool *sync_rtx)
         msg.value = event.payload;
         bool f1Handled = false;
         vpQueueFlags_t queueFlags = vp_getVoiceLevelQueueFlags();
-        // If we get out of standby, we ignore the kdb event
+        // If we get out of standby, we ignore the kbd event
         // unless is the MONI key for the MACRO functions
         if (_ui_exitStandby(now) && !(msg.keys & KEY_MONI))
             return;
@@ -1405,7 +1405,7 @@ void ui_updateFSM(bool *sync_rtx)
             if(state.settings.macroMenuLatch == 1)
             {
                 // long press moni on its own latches function.
-                if (moniPressed && msg.long_press && !macro_latched)
+                if (moniPressed && (msg.event == KEY_EVENT_SINGLE_LONG_PRESS) && !macro_latched)
                 {
                     macro_latched = true;
                     vp_beep(BEEP_FUNCTION_LATCH_ON, LONG_BEEP);
@@ -1426,7 +1426,7 @@ void ui_updateFSM(bool *sync_rtx)
         }
 #if defined(PLATFORM_TTWRPLUS)
         // T-TWR Plus has no KEY_MONI, using KEY_VOLDOWN long press instead
-        if ((msg.keys & KEY_VOLDOWN) && msg.long_press)
+        if ((msg.keys & KEY_VOLDOWN) && (msg.event == KEY_EVENT_SINGLE_LONG_PRESS))
         {
             macro_menu = true;
             macro_latched = true;
@@ -1577,7 +1577,7 @@ void ui_updateFSM(bool *sync_rtx)
                     {
                         if (state.settings.vpLevel > vpBeep)
                         {// quick press repeat vp, long press summary.
-                            if (msg.long_press)
+                            if (msg.event == KEY_EVENT_SINGLE_LONG_PRESS)
                                 vp_announceChannelSummary(&state.channel, 0,
                                                           state.bank, vpAllInfo);
                             else
@@ -1677,7 +1677,7 @@ void ui_updateFSM(bool *sync_rtx)
                             if (state.settings.vpLevel > vpBeep)
                             {
                                 // Quick press repeat vp, long press summary.
-                                if (msg.long_press)
+                                if (msg.event == KEY_EVENT_SINGLE_LONG_PRESS)
                                 {
                                     vp_announceChannelSummary(
                                             &state.channel,
@@ -1742,7 +1742,7 @@ void ui_updateFSM(bool *sync_rtx)
                     {
                         if (state.settings.vpLevel > vpBeep)
                         {// quick press repeat vp, long press summary.
-                            if (msg.long_press)
+                            if (msg.event == KEY_EVENT_SINGLE_LONG_PRESS)
                             {
                                 vp_announceChannelSummary(&state.channel,
                                                           state.channel_index+1,
@@ -1889,7 +1889,7 @@ void ui_updateFSM(bool *sync_rtx)
             case MENU_GPS:
                 if ((msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
                 {// quick press repeat vp, long press summary.
-                    if (msg.long_press)
+                    if (msg.event == KEY_EVENT_SINGLE_LONG_PRESS)
                         vp_announceGPSInfo(vpGPSAll);
                     else
                         vp_replayLastPrompt();
@@ -2165,7 +2165,7 @@ void ui_updateFSM(bool *sync_rtx)
                         case R_OFFSET:
                             // Handle offset frequency input
 #if defined(CONFIG_UI_NO_KEYBOARD)
-                            if(msg.long_press && msg.keys & KEY_ENTER)
+                            if((msg.event == KEY_EVENT_SINGLE_LONG_PRESS) && msg.keys & KEY_ENTER)
                             {
                                 // Long press on CONFIG_UI_NO_KEYBOARD causes digits to advance by one
                                 ui_state.new_offset /= 10;
@@ -2200,7 +2200,7 @@ void ui_updateFSM(bool *sync_rtx)
                                 _ui_numberInputKeypad(&ui_state.new_offset, msg);
                                 ui_state.input_position += 1;
                             }
-                            else if (msg.long_press && (msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
+                            else if ((msg.event == KEY_EVENT_SINGLE_LONG_PRESS) && (msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
                             {
                                 vp_queueFrequency(ui_state.new_offset);
                                 f1Handled=true;
@@ -2288,7 +2288,7 @@ void ui_updateFSM(bool *sync_rtx)
                             {
                                 _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
                             }
-                            else if (msg.long_press && (msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
+                            else if ((msg.event == KEY_EVENT_SINGLE_LONG_PRESS) && (msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
                             {
                                 vp_announceBuffer(&currentLanguage->callsign,
                                                   true, true, ui_state.new_callsign);
