@@ -25,19 +25,19 @@
 
 bool input_scanKeyboard(long long timestamp, kbd_msg_t* msg)
 {
-    static bool longPressReached   = false;  // asdadasd
-    static keyboard_t previousKeys = 0;      // Previous keyboard status
-    static long long eventStart    = 0;      // asdasd
-    static bool keyboardReleaseAwaiting = false;
+    static keyboard_t previousKeys      = 0;     // Previous keys pressed
+    static bool longPressReached        = false; // Long-press time was reached
+    static bool keyboardReleaseAwaiting = false; // Awaiting for keyboard release
+    static long long eventStart         = 0;     // Current timeout calculation start
 
-    const bool isKeyboardEvent           = true;
-    const bool noKeyboardEvent           = false;
-    const keyboard_t keysWithoutKnobMask = 0x3FFFFFF;
+    const bool isKeyboardEvent           = true;      // Return value
+    const bool noKeyboardEvent           = false;     // Return value
+    const keyboard_t keysWithoutKnobMask = 0x3FFFFFF; // Keys mask without knob signals
 
-    const keyboard_t keys               = kbd_getKeys();
+    const keyboard_t keys               = kbd_getKeys(); // Current keys pressed
     const uint8_t keysNumberWithoutKnob = (uint8_t)(__builtin_popcount(keys & keysWithoutKnobMask));
 
-    msg->value = 0;
+    msg->value = 0; // Init out message (no keys pressed)
 
     // Handle keyboard release (no keys pressed, no knob movement)
     if (keys == 0)
@@ -45,9 +45,13 @@ bool input_scanKeyboard(long long timestamp, kbd_msg_t* msg)
         if (previousKeys != 0)
         {
             // Clear data
-            longPressReached        = false;
             previousKeys            = 0;
+            longPressReached        = false;
             keyboardReleaseAwaiting = false;
+
+            // Send empty keyset once
+            msg->event = KEY_EVENT_SINGLE_PRESS;
+            return isKeyboardEvent;
         }
 
         return noKeyboardEvent;
@@ -72,10 +76,12 @@ bool input_scanKeyboard(long long timestamp, kbd_msg_t* msg)
     // Handle continuous pressing of the same key set (knob movement is not considered)
     if ((keys & keysWithoutKnobMask) == (previousKeys & keysWithoutKnobMask))
     {
-        // When knob was turned we want only that event to go through (to not wrongly repeat the keys)
+        // When knob was turned while other keys are depressed we want only knob event (to not wrongly repeat the keys)
         if ((keys & KNOB_LEFT) || (keys & KNOB_RIGHT))
         {
+            // Leave only knob-related signals
             msg->keys &= ~keysWithoutKnobMask;
+
             msg->event = KEY_EVENT_SINGLE_PRESS;
             return isKeyboardEvent;
         }
@@ -105,6 +111,9 @@ bool input_scanKeyboard(long long timestamp, kbd_msg_t* msg)
 
             return isKeyboardEvent;
         }
+
+        // No knob movement, no long press, no repeat
+        return noKeyboardEvent;
     }
 
     // Handle pressed keys set change (knob movement is not considered)
