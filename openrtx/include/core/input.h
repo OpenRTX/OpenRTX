@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2024 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN,                     *
  *                                Silvano Seva IU2KWO,                     *
  *                                Grzegorz Kaczmarek SP6HFE                *
@@ -31,6 +31,23 @@
 static const uint16_t input_longPressTimeout = 700;
 
 /**
+ * This enum describes the key event type:
+ * - KEY_EVENT_SINGLE_PRESS single button press
+ *   (1st event on initial press but also when continuously pressed)
+ * - KEY_EVENT_SINGLE_LONG_PRESS single button pressed long time
+ *   (2nd /special/ event for the same button being continuously pressed)
+ * - KEY_EVENT_SINGLE_REPEAT single button depressed more than long press
+ * - KEY_EVENT_MULTI_LONG_PRESS over 1 button pressed long time
+ */
+enum keyEventType_t
+{
+    KEY_EVENT_SINGLE_PRESS      = 0,
+    KEY_EVENT_SINGLE_LONG_PRESS = 1,
+    KEY_EVENT_SINGLE_REPEAT     = 2,
+    KEY_EVENT_MULTI_LONG_PRESS  = 3
+};
+
+/**
  * Structure that represents a keyboard event payload
  * The maximum size of an event payload is 30 bits
  * For a keyboard event we use 1 bit to signal a short or long press
@@ -40,9 +57,9 @@ typedef union
 {
     struct
     {
-        uint32_t long_press : 1,
-                 keys       : 29,
-                 _padding   : 2;
+        uint32_t event    : 2,
+                 keys     : 28,
+                 _padding : 2;
     };
 
     uint32_t value;
