@@ -63,7 +63,7 @@ void *ui_threadFunc(void *arg)
     ui_saveState();
     ui_updateGUI();
 
-    // Keep the splash screen for one second  before rendering the new UI screen
+    // Keep the splash screen for one second before rendering the new UI screen
     sleepFor(1u, 0u);
     gfx_render();
 
