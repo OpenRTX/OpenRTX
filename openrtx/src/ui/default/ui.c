@@ -1430,15 +1430,18 @@ void ui_updateFSM(bool *sync_rtx)
             if(state.settings.macroMenuLatch == 1)
             {
                 // long press moni on its own latches function.
-                if (moniPressed && (msg.event == KEY_EVENT_SINGLE_LONG_PRESS) && !macro_latched)
+                if (moniPressed && (msg.event == KEY_EVENT_SINGLE_LONG_PRESS))
                 {
-                    macro_latched = true;
-                    vp_beep(BEEP_FUNCTION_LATCH_ON, LONG_BEEP);
-                }
-                else if (moniPressed && macro_latched)
-                {
-                    macro_latched = false;
-                    vp_beep(BEEP_FUNCTION_LATCH_OFF, LONG_BEEP);
+                    if (macro_latched)
+                    {
+                        macro_latched = false;
+                        vp_beep(BEEP_FUNCTION_LATCH_OFF, LONG_BEEP);
+                    }
+                    else
+                    {
+                        macro_latched = true;
+                        vp_beep(BEEP_FUNCTION_LATCH_ON, LONG_BEEP);
+                    }
                 }
             }
 
