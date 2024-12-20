@@ -710,6 +710,8 @@ if build_machine.system() == 'linux'
   bin2sgl     = find_program('scripts/bin2sgl.Linux',          required:false, disabler:true)
 elif build_machine.system() == 'windows'
   bin2sgl     = find_program('scripts/bin2sgl.exe',            required:false, disabler:true)
+elif build_machine.system() == 'darwin'
+  bin2sgl     = find_program('scripts/bin2sgl.Darwin',         required:false, disabler:true)
 endif
 
 radio_tool  = find_program('radio_tool')
@@ -726,16 +728,7 @@ foreach t : targets
   # ttwrplus is a Zephyr target, we compile it using west and package it in uf2 format
   if name == 'openrtx_ttwrplus'
 
-      if build_machine.system() == 'linux'
-
-          txt = custom_target('Copy CMakeLists.txt',
-                              input            : 'CMakeLists.txt',
-                              output           :  'CMakeLists.txt',
-                              command          : ['cp', '@INPUT@', '@OUTPUT@'],
-                              install          : false,
-                              build_by_default : true)
-
-      elif build_machine.system() == 'windows'
+      if build_machine.system() == 'windows'
 
           txt = custom_target('Copy CMakeLists.txt',
                               input            : 'CMakeLists.txt',
@@ -743,6 +736,14 @@ foreach t : targets
                               command          : ['xcopy', '@INPUT@', '@OUTPUT@'],
                               install          : false,
                               build_by_default : true)
+      else  # Unix-like OS that has cp
+
+          txt = custom_target('Copy CMakeLists.txt',
+                        input            : 'CMakeLists.txt',
+                        output           :  'CMakeLists.txt',
+                        command          : ['cp', '@INPUT@', '@OUTPUT@'],
+                        install          : false,
+                        build_by_default : true)
       endif
 
 
@@ -790,7 +791,12 @@ foreach t : targets
       # Handle GD77 custom wrapping and flashing tools
       if name == 'openrtx_gd77' or name == 'openrtx_dm1801'
 
-        if build_machine.system() == 'linux'
+        if build_machine.system() == 'windows'
+              wrap = custom_target(name+'_wrap',
+                                   output  : name+'_bin.sgl',
+                                   input   : bin,
+                                   command : [bin2sgl, '@INPUT@', '-m', t['wrap']])
+        else  # Unix-like OS that has mv
               wrap = custom_target(name+'_wrap',
                                    output  : name+'_wrap.sgl',
                                    input   : bin,
@@ -799,12 +805,6 @@ foreach t : targets
                                              '-m', t['wrap'],
                                              '&&',
                                              'mv', '@INPUT@.sgl', '@OUTPUT@'])
-
-        elif build_machine.system() == 'windows'
-              wrap = custom_target(name+'_wrap',
-                                   output  : name+'_bin.sgl',
-                                   input   : bin,
-                                   command : [bin2sgl, '@INPUT@', '-m', t['wrap']])
         endif
 
         custom_target(name+'_flash',
