@@ -26,6 +26,11 @@
 #include <stdbool.h>
 
 /**
+ * Max number of keys pressed allowed
+ */
+static const uint8_t input_maxKeysForMultiPress = 3;
+
+/**
  * Time interval in milliseconds after which a keypress is considered a long-press
  */
 static const uint16_t input_longPressTimeout = 700;
@@ -37,16 +42,14 @@ static const uint16_t input_repeatInterval = 250;
 
 /**
  * This enum describes the key event type:
- * - KEY_EVENT_SINGLE_PRESS single button press
- *   (1st event on initial press but also when continuously pressed)
+ * - KEY_EVENT_PRESS a button(s) press
  * - KEY_EVENT_SINGLE_LONG_PRESS single button pressed long time
- *   (2nd /special/ event for the same button being continuously pressed)
- * - KEY_EVENT_SINGLE_REPEAT single button depressed more than long press
- * - KEY_EVENT_MULTI_LONG_PRESS over 1 button pressed long time
+ * - KEY_EVENT_SINGLE_REPEAT single button continuously pressed (more than long press)
+ * - KEY_EVENT_MULTI_LONG_PRESS over 1 button pressed together long time (since last press)
  */
 enum keyEventType_t
 {
-    KEY_EVENT_SINGLE_PRESS      = 0,
+    KEY_EVENT_PRESS             = 0,
     KEY_EVENT_SINGLE_LONG_PRESS = 1,
     KEY_EVENT_SINGLE_REPEAT     = 2,
     KEY_EVENT_MULTI_LONG_PRESS  = 3
@@ -55,8 +58,8 @@ enum keyEventType_t
 /**
  * Structure that represents a keyboard event payload
  * The maximum size of an event payload is 30 bits
- * For a keyboard event we use 1 bit to signal a short or long press
- * And the remaining 29 bits to communicate currently pressed keys.
+ * For a keyboard events we use 2 bits
+ * And the remaining 28 bits to communicate currently pressed keys
  */
 typedef union
 {
@@ -71,7 +74,25 @@ typedef union
 }
 kbd_msg_t;
 
+/**
+ * Turn on or off a support of press event generation on
+ * new key pressed while 1+ keys is pressed at the time
+ * This is used when some keys stay pressed while
+ * others are changed
+ * 
+ * @param isPressEventAllowed: press events support during multi-press
+ */
+void input_allowPressEventOnMultilpeKeysPressed(bool isPressEventAllowed);
 
+/**
+ * @brief 
+ * 
+ * @param keys keys pressed
+ * @param msg keyboard event message to be filled
+ * @return true msg contain valid event message
+ * @return false msg contents are not valid
+ */
+bool processKnobMovementDetection(keyboard_t keys, kbd_msg_t* msg);
 /**
  * Scan all the keyboard buttons to detect possible keypresses filling a
  * keyboard event data structure. The function returns true if a keyboard event
