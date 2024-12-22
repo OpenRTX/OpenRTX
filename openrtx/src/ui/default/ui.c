@@ -1426,6 +1426,7 @@ void ui_updateFSM(bool *sync_rtx)
         if(moniPressed || macro_latched)
         {
             macro_menu = true;
+            input_enableMultiKeyPressEvent(true);
 
             if(state.settings.macroMenuLatch == 1)
             {
@@ -1451,6 +1452,7 @@ void ui_updateFSM(bool *sync_rtx)
         else
         {
             macro_menu = false;
+            input_enableMultiKeyPressEvent(false);
         }
 #if defined(PLATFORM_TTWRPLUS)
         // T-TWR Plus has no KEY_MONI, using KEY_VOLDOWN long press instead
