@@ -51,13 +51,13 @@ HR_C6000 C6000((const struct spiDevice *) &c6000_spi, { C6K_CS });
  */
 static const struct rssiParams rssiCal[] =
 {   //  slope        offset     rxFreq
-    {0.0360569f, -140.38024f, 400250000 },    // 400.250MHz
-    {0.0360291f, -140.10274f, 425050000 },    // 425.050MHz
-    {0.0363494f, -137.79727f, 449950000 },    // 449.950MHz
-    {0.0362992f, -138.03016f, 460050000 },    // 460.050MHz
-    {0.0357469f, -139.45613f, 470050000 },    // 470.050MHz
-    {0.0360546f, -139.67421f, 478985000 },    // 478.985MHz
-    {0.0360529f, -139.62515f, 479050000 }     // 479.050MHz
+    {0.0370f, -138.76814f, 400250000 },    // 400.250MHz
+    {0.0371f, -135.07381f, 425050000 },    // 425.050MHz
+    {0.0372f, -136.61596f, 449950000 },    // 449.950MHz
+    {0.0375f, -136.87895f, 460050000 },    // 460.050MHz
+    {0.0374f, -136.56000f, 470050000 },    // 470.050MHz
+    {0.0374f, -136.34097f, 478985000 },    // 478.985MHz
+    {0.0372f, -135.62165f, 479050000 }     // 479.050MHz
 };
 
 static uint8_t interpParameter(uint32_t freq, uint32_t *calFreq, uint8_t param[8])
@@ -103,7 +103,7 @@ static uint8_t interpParameter(uint32_t freq, uint32_t *calFreq, uint8_t param[8
     return ret;
 }
 
-static rssiParams interpRssi(const uint32_t freq, const struct rssiParams cal[7])
+static struct rssiParams interpRssi(const uint32_t freq, const struct rssiParams cal[7])
 {
     if(freq < cal[0].rxFreq)
         return cal[0];
@@ -118,13 +118,17 @@ static rssiParams interpRssi(const uint32_t freq, const struct rssiParams cal[7]
             break;
     }
 
-    uint32_t freqLo = cal[idx].rxFreq;
-    uint32_t freqHi = cal[idx + 1].rxFreq;
-    float    ratio  = ((float)(freq - freqLo)) / ((float)(freqHi - freqLo));
+    const struct rssiParams *calLo = &cal[idx];
+    const struct rssiParams *calHi = &cal[idx + 1];
+
+    float num   = ((float)(freq - calLo->rxFreq));
+    float den   = ((float)(calHi->rxFreq - calLo->rxFreq));
+    float offs  = calHi->offset - calLo->offset;
+    float slope = calHi->slope - calLo->slope;
 
     struct rssiParams result;
-    result.offset = (1.0f + ratio) * cal[idx].offset;
-    result.slope  = (1.0f + ratio) * cal[idx].slope;
+    result.offset = calLo->offset + ((offs * num) / den);
+    result.slope  = calLo->slope  + ((slope * num) / den);
 
     return result;
 }
