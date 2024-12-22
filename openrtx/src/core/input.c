@@ -22,11 +22,42 @@
 #include <interfaces/delays.h>
 #include <inttypes.h>
 #include <stdbool.h>
+#include <stddef.h>
+
+bool pressEventAllowedForMultipleKeys;
+
+void input_allowPressEventOnMultilpeKeysPressed(bool isPressEventAllowed)
+{
+    pressEventAllowedForMultipleKeys = isPressEventAllowed;
+}
+
+bool processKnobMovementDetection(keyboard_t keys, kbd_msg_t* msg)
+{
+    const bool isKeyboardEvent = true;      // Return value
+    const bool noKeyboardEvent = false;     // Return value
+
+    if (msg == NULL)
+    {
+        return noKeyboardEvent;
+    }
+
+    if ((keys & KNOB_LEFT) || (keys & KNOB_RIGHT))
+    {
+        // Leave only knob-related signals
+        msg->keys = (keys & ((uint32_t)(KNOB_LEFT) | (uint32_t)(KNOB_RIGHT)));
+
+        msg->event = KEY_EVENT_PRESS;
+        return isKeyboardEvent;
+    }
+
+    return noKeyboardEvent;
+}
 
 bool input_scanKeyboard(long long timestamp, kbd_msg_t* msg)
 {
-    static keyboard_t previousKeys      = 0;     // Previous keys pressed
+    static keyboard_t previousKeys      = 0;     // Previously pressed keys
     static bool longPressReached        = false; // Long-press time was reached
+    static bool keysReleaseDetected     = false; // One or more keys were released
     static bool keyboardReleaseAwaiting = false; // Awaiting for keyboard release
     static long long eventStart         = 0;     // Current timeout calculation start
 
@@ -46,44 +77,42 @@ bool input_scanKeyboard(long long timestamp, kbd_msg_t* msg)
         {
             // Clear data
             previousKeys            = 0;
+            keysReleaseDetected     = false;
             longPressReached        = false;
             keyboardReleaseAwaiting = false;
 
             // Send empty keyset once
-            msg->event = KEY_EVENT_SINGLE_PRESS;
+            msg->event = KEY_EVENT_PRESS;
             return isKeyboardEvent;
         }
 
         return noKeyboardEvent;
     }
 
-    // No event until keyboard is released (in certain conditions)
+    // Keyboard release awaiting (knob movements are handled)
     if (keyboardReleaseAwaiting == true)
     {
-        return noKeyboardEvent;
+        return processKnobMovementDetection(keys, msg);
     }
 
-    // Remember pressed keys
-    msg->keys = keys;
-
-    // Handle knob movement only (keys is != 0)
-    if (keysNumberWithoutKnob == 0)
+    // Too many keys pressed (knob movements are handled)
+    if (keysNumberWithoutKnob > input_maxKeysForMultiPress)
     {
-        msg->event = KEY_EVENT_SINGLE_PRESS;
-        return isKeyboardEvent;
+        keyboardReleaseAwaiting = true;
+
+        return processKnobMovementDetection(keys, msg);
     }
+
+    // Key events handling -> remember what's pressed
+    msg->keys = keys;
 
     // Handle continuous pressing of the same key set (knob movement is not considered)
     if ((keys & keysWithoutKnobMask) == (previousKeys & keysWithoutKnobMask))
     {
-        // When knob was turned while other keys are depressed we want only knob event (to not wrongly repeat the keys)
-        if ((keys & KNOB_LEFT) || (keys & KNOB_RIGHT))
+        // Key release was detected during multi-press (knob movements are handled)
+        if (keysReleaseDetected == true)
         {
-            // Leave only knob-related signals
-            msg->keys &= ~keysWithoutKnobMask;
-
-            msg->event = KEY_EVENT_SINGLE_PRESS;
-            return isKeyboardEvent;
+            return processKnobMovementDetection(keys, msg);
         }
 
         // Calculate timings
@@ -93,7 +122,7 @@ bool input_scanKeyboard(long long timestamp, kbd_msg_t* msg)
         bool repeatDetected = (longPressReached &&
                           ((timestamp - eventStart) >= input_repeatInterval));
 
-        // Long press event is possible for single and multi key presses
+        // Long press event
         if (longPressDetected)
         {
             longPressReached = true;
@@ -103,7 +132,7 @@ bool input_scanKeyboard(long long timestamp, kbd_msg_t* msg)
             return isKeyboardEvent;
         }
 
-        // Repeat event is reserved for single key press only
+        // Repeat event (reserved for single key press only)
         if (repeatDetected && (keysNumberWithoutKnob == 1))
         {
             eventStart = timestamp;
@@ -112,60 +141,42 @@ bool input_scanKeyboard(long long timestamp, kbd_msg_t* msg)
             return isKeyboardEvent;
         }
 
-        // No knob movement, no long press, no repeat
+        // No long press, no repeat (knob movements are handled)
+        return processKnobMovementDetection(keys, msg);
+    }
+
+    // Handle change of the amount of keys pressed (knob movement is not considered)
+    uint8_t previousKeysNumberWithoutKnob = (uint8_t)(__builtin_popcount(previousKeys & keysWithoutKnobMask));
+
+    // Additional button(s) pressed (still within allowed amount)
+    if (keysNumberWithoutKnob > previousKeysNumberWithoutKnob)
+    {
+        keysReleaseDetected = false;
+        previousKeys        = keys;
+
+        // Restart timings calculation
+        eventStart       = timestamp;
+        longPressReached = false;
+
+        if((keysNumberWithoutKnob == 1) || (pressEventAllowedForMultipleKeys == true))
+        {
+            msg->event = KEY_EVENT_PRESS;
+
+            return isKeyboardEvent;
+        }
+
+        // No event for multi-press when pressEventAllowedForMultipleKeys == false
         return noKeyboardEvent;
     }
 
-    // Handle pressed keys set change (knob movement is not considered)
-    uint8_t previousKeysNumberWithoutKnob = (uint8_t)(__builtin_popcount(previousKeys & keysWithoutKnobMask));
-
-    switch (previousKeysNumberWithoutKnob)
+    // Some buttons were released (still at least 1 is pressed)
+    if (keysNumberWithoutKnob < previousKeysNumberWithoutKnob)
     {
-        // Keyboard was released, now something is pressed
-        case 0:
-        /* fallthrough */
-        // Single press was before
-        case 1:
-            eventStart   = timestamp;
-            previousKeys = keys;
+        keysReleaseDetected = true;
+        previousKeys        = keys;
 
-            if (keysNumberWithoutKnob > 1)
-            {
-                // Multi press started - waiting for long press timeout
-                return noKeyboardEvent;
-            }
-            else
-            {
-                // Single press (keysNumberWithoutKnob == 1)
-                msg->event = KEY_EVENT_SINGLE_REPEAT;
-                return isKeyboardEvent;
-            }
-            break;
-        // Multi press was before
-        default:
-            if (keysNumberWithoutKnob > 1)
-            {
-                if (keysNumberWithoutKnob >= previousKeysNumberWithoutKnob)
-                {
-                    // Multi press keys modified (keys pressed number increased or same)
-                    eventStart   = timestamp;
-                    previousKeys = keys;
-                    return noKeyboardEvent;
-                }
-                else
-                {
-                    // Keys pressed number decreased
-                    keyboardReleaseAwaiting = true;
-                    return noKeyboardEvent;
-                }
-            }
-            else
-            {
-                // Can't go back to single press - need to release keyboard first
-                keyboardReleaseAwaiting = true;
-                return noKeyboardEvent;
-            }
-            break;
+        // No event on buttons release
+        return noKeyboardEvent;
     }
 
     // In case code reached here there is certainly no keyboard event
