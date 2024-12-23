@@ -65,7 +65,7 @@ static inline void sendCmd(uint8_t cmd)
     // Set D/C low (command mode), clear WR and data lines
     GPIOD->BSRR = 0x30FF0000;
 #ifdef PLATFORM_CS7000P
-    asm volatile("           mov   r1, #60    \n"
+    asm volatile("           mov   r1, #65    \n"
 #else
     asm volatile("           mov   r1, #21    \n"
 #endif
@@ -81,7 +81,7 @@ static inline void sendData(uint8_t val)
     // Set D/C high (data mode), clear WR and data lines
     GPIOD->BSRR = 0x20FF1000;
 #ifdef PLATFORM_CS7000P
-    asm volatile("           mov   r1, #60    \n"
+    asm volatile("           mov   r1, #65    \n"
 #else
     asm volatile("           mov   r1, #21    \n"
 #endif
