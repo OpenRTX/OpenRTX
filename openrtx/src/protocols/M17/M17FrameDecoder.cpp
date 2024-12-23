@@ -202,8 +202,12 @@ bool M17FrameDecoder::decodeLich(std::array < uint8_t, 6 >& segment,
     }
 
     // Last byte of the segment contains the segment number, shift left
-    // by five when packing the LICH.
+    // by five when packing the LICH. The segment number must range between
+    // zero and five.
     segment[5] >>= 5;
+
+    if(segment[5] > 5)
+        return false;
 
     return true;
 }
