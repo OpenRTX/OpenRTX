@@ -35,6 +35,7 @@
 #define CMD_RSECR 0x48   /* Read security register */
 #define CMD_WKUP  0xAB   /* Release power down     */
 #define CMD_PDWN  0xB9   /* Power down             */
+#define CMD_EXADD 0xB7   /* Enter 4-byte addr mode */
 #define CMD_ECHIP 0xC7   /* Full chip erase        */
 
 static const size_t PAGE_SIZE = 256;
@@ -73,6 +74,16 @@ static int waitUntilReady(const struct W25QxCfg *cfg, uint32_t timeout)
     return -EIO;
 }
 
+static inline void enableWrite(const struct W25QxCfg *cfg)
+{
+    const uint8_t cmd = CMD_WREN;
+
+    gpioPin_clear(&cfg->cs);
+    spi_send(cfg->spi, &cmd, 1);
+    gpioPin_set(&cfg->cs);
+
+    delayUs(5);
+}
 
 void W25Qx_init(const struct nvmDevice *dev)
 {
@@ -81,8 +92,16 @@ void W25Qx_init(const struct nvmDevice *dev)
     gpioPin_setMode(&cfg->cs, OUTPUT);
     gpioPin_set(&cfg->cs);
 
-    W25Qx_wakeup(dev);
     // TODO: Implement sleep to increase power saving
+    W25Qx_wakeup(dev);
+
+#ifdef CONFIG_W25Qx_EXT_ADDR
+    const uint8_t cmd = CMD_EXADD;
+
+    gpioPin_clear(&cfg->cs);
+    spi_send(cfg->spi, &cmd, 1);
+    gpioPin_set(&cfg->cs);
+#endif
 }
 
 void W25Qx_terminate(const struct nvmDevice *dev)
@@ -162,6 +181,9 @@ static int nvm_api_read(const struct nvmDevice *dev, uint32_t offset, void *data
     const uint8_t command[] =
     {
         CMD_READ,               // Command
+#ifdef CONFIG_W25Qx_EXT_ADDR
+        (offset >> 24) & 0xFF,  // Address 31:24
+#endif
         (offset >> 16) & 0xFF,  // Address high
         (offset >> 8)  & 0xFF,  // Address middle
         offset & 0xFF,          // Address low
@@ -182,7 +204,6 @@ static int nvm_api_read(const struct nvmDevice *dev, uint32_t offset, void *data
 static int nvm_api_erase(const struct nvmDevice *dev, uint32_t offset, size_t size)
 {
     const struct W25QxCfg *cfg = (const struct W25QxCfg *) dev->priv;
-    uint8_t command[4];
 
     // Addr or size not aligned to sector size
     if(((offset % SECT_SIZE) != 0) || ((size % SECT_SIZE) != 0))
@@ -194,21 +215,22 @@ static int nvm_api_erase(const struct nvmDevice *dev, uint32_t offset, size_t si
     while(size > 0)
     {
         // Write enable, has to be issued for each erase operation
-        command[0] = CMD_WREN;
-        gpioPin_clear(&cfg->cs);
-        spi_send(cfg->spi, command, 1);
-        gpioPin_set(&cfg->cs);
-
-        delayUs(5);
+        enableWrite(cfg);
 
         // Sector erase
-        command[0] = CMD_ESECT;             // Command
-        command[1] = (offset >> 16) & 0xFF; // Address high
-        command[2] = (offset >> 8)  & 0xFF; // Address middle
-        command[3] = offset & 0xFF;         // Address low
+        const uint8_t command[] =
+        {
+            CMD_ESECT,              // Command
+#ifdef CONFIG_W25Qx_EXT_ADDR
+            (offset >> 24) & 0xFF,  // Address 31:24
+#endif
+            (offset >> 16) & 0xFF,  // Address high
+            (offset >> 8)  & 0xFF,  // Address middle
+            offset & 0xFF,          // Address low
+        };
 
         gpioPin_clear(&cfg->cs);
-        spi_send(cfg->spi, command, 4);
+        spi_send(cfg->spi, command, sizeof(command));
         gpioPin_set(&cfg->cs);
 
         ret = waitUntilReady(cfg, 500);
@@ -238,22 +260,22 @@ static ssize_t W25Qx_writePage(const struct nvmDevice *dev, uint32_t addr,
     }
 
     // Write enable bit has to be set before each page program
-    uint8_t command[4];
-    command[0] = CMD_WREN;
-
-    spi_acquire(cfg->spi);
-    gpioPin_clear(&cfg->cs);
-    spi_send(cfg->spi, command, 1);
-    gpioPin_set(&cfg->cs);
+    enableWrite(cfg);
 
     // Page program
-    command[0] = CMD_WRITE;           // Command
-    command[1] = (addr >> 16) & 0xFF; // Address high
-    command[2] = (addr >> 8)  & 0xFF; // Address middle
-    command[3] = addr & 0xFF;         // Address low
+    const uint8_t command[] =
+    {
+        CMD_WRITE,            // Command
+#ifdef CONFIG_W25Qx_EXT_ADDR
+        (addr >> 24) & 0xFF,  // Address 31:24
+#endif
+        (addr >> 16) & 0xFF,  // Address high
+        (addr >> 8)  & 0xFF,  // Address middle
+         addr        & 0xFF,  // Address low
+    };
 
     gpioPin_clear(&cfg->cs);
-    spi_send(cfg->spi, command, 4);
+    spi_send(cfg->spi, command, sizeof(command));
     spi_send(cfg->spi, buf, writeLen);
     gpioPin_set(&cfg->cs);
 
