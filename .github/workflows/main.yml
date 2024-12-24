@@ -131,6 +131,7 @@ jobs:
             meson compile -C build_cm4 openrtx_md3x0_wrap &&
             meson compile -C build_cm4 openrtx_md9600_wrap &&
             meson compile -C build_cm4 openrtx_mduv3x0_wrap &&
+            meson compile -C build_cm4 openrtx_mduv3x0p_wrap &&
             meson compile -C build_cm4 openrtx_mod17_bin &&
             meson compile -C build_cm4 openrtx_gd77_wrap &&
             meson compile -C build_cm7 openrtx_cs7000p_wrap &&
@@ -160,6 +161,7 @@ jobs:
           build_cm4/openrtx_md3x0_wrap      openrtx_md3x0_${BRANCH_NAME}.bin
           build_cm4/openrtx_md9600_wrap     openrtx_md9600_${BRANCH_NAME}.bin
           build_cm4/openrtx_mduv3x0_wrap    openrtx_mduv3x0_${BRANCH_NAME}.bin
+          build_cm4/openrtx_mduv3x0p_wrap   openrtx_mduv3x0p_${BRANCH_NAME}.bin
           build_cm4/openrtx_mod17_bin       openrtx_mod17_${BRANCH_NAME}.bin
           build_cm4/openrtx_rt4d_bin        openrtx_rt4d_${BRANCH_NAME}.bin
           EOF
@@ -178,6 +180,7 @@ jobs:
             ${{github.workspace}}/openrtx_md3x0_${{ env.BRANCH_NAME }}.bin
             ${{github.workspace}}/openrtx_md9600_${{ env.BRANCH_NAME }}.bin
             ${{github.workspace}}/openrtx_mduv3x0_${{ env.BRANCH_NAME }}.bin
+            ${{github.workspace}}/openrtx_mduv3x0p_${{ env.BRANCH_NAME }}.bin
             ${{github.workspace}}/openrtx_mod17_${{ env.BRANCH_NAME }}.bin
             ${{github.workspace}}/openrtx_rt4d_${{ env.BRANCH_NAME }}.bin
           if-no-files-found: error
