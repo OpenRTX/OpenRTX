@@ -383,6 +383,13 @@ mduv3x0_inc += openrtx_inc + stm32f405_inc
 mduv3x0_def += openrtx_def + stm32f405_def
 
 ##
+## TYT MD-UV380 Plus
+##
+mduv3x0p_def =  {'PLATFORM_MDUV3x0P': ''}
+
+mduv3x0p_def += mduv3x0_def
+
+##
 ## TYT MD-9600
 ##
 md9600_src = ['platform/targets/MD-9600/platform.c',
@@ -503,6 +510,15 @@ foreach k, v : mduv3x0_def
   endif
 endforeach
 
+mduv3x0p_args = []
+foreach k, v : mduv3x0p_def
+  if v == ''
+    mduv3x0p_args += '-D@0@'.format(k)
+  else
+    mduv3x0p_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
+
 gd77_args = []
 foreach k, v : gd77_def
   if v == ''
@@ -586,6 +602,16 @@ mduv3x0_opts = {
                           '-Wl,--print-memory-usage']
 }
 
+mduv3x0p_opts = {
+  'sources'            : mduv3x0_src,
+  'include_directories': mduv3x0_inc,
+  'dependencies'       : [codec2_dep],
+  'c_args'             : mduv3x0p_args,
+  'cpp_args'           : mduv3x0p_args,
+  'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld',
+                          '-Wl,--print-memory-usage']
+}
+
 gd77_opts = {
   'sources'            : gd77_src,
   'include_directories': gd77_inc,
@@ -665,6 +691,13 @@ targets = [
   {
     'name'     : 'mduv3x0',
     'opts'     : mduv3x0_opts,
+    'flashable': true,
+    'wrap'     : 'UV3X0',
+    'load_addr': '0x0800C000'
+  },
+  {
+    'name'     : 'mduv3x0p',
+    'opts'     : mduv3x0p_opts,
     'flashable': true,
     'wrap'     : 'UV3X0',
     'load_addr': '0x0800C000'
