@@ -45,6 +45,7 @@ jobs:
           echo $PATH
           meson compile -C build_arm openrtx_md3x0_wrap
           meson compile -C build_arm openrtx_mduv3x0_wrap
+          meson compile -C build_arm openrtx_mduv3x0p_wrap
           meson compile -C build_arm openrtx_md9600_wrap
           meson compile -C build_arm openrtx_gd77_wrap
           meson compile -C build_arm openrtx_dm1801_wrap
