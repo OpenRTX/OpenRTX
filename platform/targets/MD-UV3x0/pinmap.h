@@ -113,4 +113,13 @@
 #define DMR_MOSI  GPIOE,4
 #define DMR_MISO  GPIOE,5
 
+#if defined(PLATFORM_MDUV3x0P)
+#undef PA_SEL_SW
+#undef LCD_BKLIGHT
+
+#define PA_SEL_SW   GPIOD,8
+#define LCD_BKLIGHT GPIOC,6
+
+#endif
+
 #endif /* PINMAP_H */
