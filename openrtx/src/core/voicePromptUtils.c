@@ -93,7 +93,7 @@ void vp_queueFrequency(const freq_t freq)
 {
     char buffer[16];
     int MHz = (freq / 1000000);
-    int kHz = ((freq % 1000000) / 100);
+    int kHz = ((freq % 1000000) / 10);
 
     sniprintf(buffer, 16, "%d.%05d", MHz, kHz);
 
