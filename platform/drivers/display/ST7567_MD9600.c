@@ -143,7 +143,8 @@ void display_setContrast(uint8_t contrast)
     spi_release(&spi2);
 }
 
-void display_setBacklightLevel(uint8_t level)
-{
-    (void) level;
-}
+/*
+ * Function implemented in backlight_MDx driver
+ *
+ * void display_setBacklightLevel(uint8_t level)
+ */
