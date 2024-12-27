@@ -22,6 +22,7 @@
 #include <interfaces/nvmem.h>
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
+#include <backlight.h>
 #include <hwconfig.h>
 #include <string.h>
 #include <adc_stm32.h>
@@ -75,6 +76,7 @@ void platform_init()
     nvm_init();                      /* Initialise non volatile memory manager */
     toneGen_init();                  /* Initialise tone generator              */
     rtc_init();                      /* Initialise RTC                         */
+    backlight_init();                /* Initialize Backlight                   */
     chSelector_init();               /* Initialise channel selector handler    */
     audio_init();                    /* Initialise audio management module     */
 }
