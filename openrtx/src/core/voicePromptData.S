@@ -1,3 +1,4 @@
+#ifndef VP_USE_FILESYSTEM
 .section .note.GNU-stack,""
 .section .rodata
 
@@ -8,3 +9,4 @@ _vpdata_start:
     .incbin "../voiceprompts.vpc"
 
 .set _vpdata_end, .
+#endif

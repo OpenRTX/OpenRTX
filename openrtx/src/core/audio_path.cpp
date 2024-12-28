@@ -33,6 +33,13 @@ struct Path
     int8_t destination = -1;   ///< Destination endpoint of the path.
     int8_t priority    = -1;   ///< Path priority level.
 
+    Path(enum AudioSource src, enum AudioSink sink, enum AudioPriority prio)
+    {
+        source = static_cast<int8_t>(src);
+        destination = static_cast<int8_t>(sink);
+        priority = static_cast<int8_t>(prio);
+    }
+
     bool isValid() const
     {
         return (source      != -1) &&
@@ -110,7 +117,7 @@ static int                    pathCounter = 1;  // Counter for path ID generatio
 pathId audioPath_request(enum AudioSource source, enum AudioSink sink,
                          enum AudioPriority prio)
 {
-    const Path path{source, sink, prio};
+    const Path path(source, sink, prio);
     if (!path.isValid())
         return -1;
 
