@@ -149,7 +149,11 @@ static bw_t _color2bw(color_t true_color)
 #error Please define a pixel format type into hwconfig.h or meson.build
 #endif
 
+#if defined(PLATFORM_LINUX)
+static PIXEL_T framebuffer[FB_SIZE];
+#else
 static PIXEL_T __attribute__((section(".bss.fb"))) framebuffer[FB_SIZE];
+#endif
 static char text[32];
 
 

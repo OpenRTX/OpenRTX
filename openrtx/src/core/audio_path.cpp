@@ -110,7 +110,7 @@ static int                    pathCounter = 1;  // Counter for path ID generatio
 pathId audioPath_request(enum AudioSource source, enum AudioSink sink,
                          enum AudioPriority prio)
 {
-    const Path path{source, sink, prio};
+    const Path path{static_cast<int8_t>(source), static_cast<int8_t>(sink), static_cast<int8_t>(prio)};
     if (!path.isValid())
         return -1;
 
