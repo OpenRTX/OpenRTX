@@ -1200,7 +1200,7 @@ static void _ui_numberInputKeypad(uint32_t *num, kbd_msg_t msg)
     }
 
     // If enter is pressed, advance to the next digit
-    if (msg.keys & KEY_ENTER)
+    if ((msg.keys & KEY_ENTER) && (msg.event == KEY_EVENT_PRESS))
         *num *= 10;
 
     // Announce the character
@@ -1436,7 +1436,7 @@ void ui_updateFSM(bool *sync_rtx)
             macro_menu = true;
             macro_latched = true;
         }
-#endif // PLA%FORM_TTWRPLUS
+#endif // PLATFORM_TTWRPLUS
 
         if(state.tone_enabled && !(msg.keys & KEY_HASH))
         {
@@ -1470,7 +1470,7 @@ void ui_updateFSM(bool *sync_rtx)
                     #ifdef CONFIG_M17
                     if(state.channel.mode == OPMODE_M17)
                     {
-                        if(msg.keys & KEY_ENTER)
+                        if((msg.keys & KEY_ENTER) && (msg.event == KEY_EVENT_PRESS))
                         {
                             _ui_textInputConfirm(ui_state.new_callsign);
                             // Save selected dst ID and disable input mode
@@ -1503,7 +1503,7 @@ void ui_updateFSM(bool *sync_rtx)
                 }
                 else
                 {
-                    if(msg.keys & KEY_ENTER)
+                    if((msg.keys & KEY_ENTER) && (msg.event == KEY_EVENT_PRESS))
                     {
                         // Save current main state
                         ui_state.last_main_state = state.ui_screen;
@@ -1513,40 +1513,46 @@ void ui_updateFSM(bool *sync_rtx)
                     }
                     else if(msg.keys & KEY_ESC)
                     {
-                        // Save VFO channel
-                        state.vfo_channel = state.channel;
-                        int result = _ui_fsm_loadChannel(state.channel_index, sync_rtx);
-                        // Read successful and channel is valid
-                        if(result != -1)
+                        if (msg.event == KEY_EVENT_PRESS)
                         {
-                            // Switch to MEM screen
-                            state.ui_screen = MAIN_MEM;
-                            // anounce the active channel name.
-                            vp_announceChannelName(&state.channel,
-                                                   state.channel_index,
-                                                   queueFlags);
+                            // Save VFO channel
+                            state.vfo_channel = state.channel;
+                            int result = _ui_fsm_loadChannel(state.channel_index, sync_rtx);
+                            // Read successful and channel is valid
+                            if(result != -1)
+                            {
+                                // Switch to MEM screen
+                                state.ui_screen = MAIN_MEM;
+                                // anounce the active channel name.
+                                vp_announceChannelName(&state.channel,
+                                                    state.channel_index,
+                                                    queueFlags);
+                            }
                         }
                     }
                     else if(msg.keys & KEY_HASH)
                     {
-                        #ifdef CONFIG_M17
-                        // Only enter edit mode when using M17
-                        if(state.channel.mode == OPMODE_M17)
+                        if (msg.event == KEY_EVENT_PRESS)
                         {
-                            // Enable dst ID input
-                            ui_state.edit_mode = true;
-                            // Reset text input variables
-                            _ui_textInputReset(ui_state.new_callsign);
-                            vp_announceM17Info(NULL,  ui_state.edit_mode,
-                                               queueFlags);
-                        }
-                        else
-                        #endif
-                        {
-                            if(!state.tone_enabled)
+                            #ifdef CONFIG_M17
+                            // Only enter edit mode when using M17
+                            if(state.channel.mode == OPMODE_M17)
                             {
-                                state.tone_enabled = true;
-                                *sync_rtx = true;
+                                // Enable dst ID input
+                                ui_state.edit_mode = true;
+                                // Reset text input variables
+                                _ui_textInputReset(ui_state.new_callsign);
+                                vp_announceM17Info(NULL,  ui_state.edit_mode,
+                                                queueFlags);
+                            }
+                            else
+                            #endif
+                            {
+                                if(!state.tone_enabled)
+                                {
+                                    state.tone_enabled = true;
+                                    *sync_rtx = true;
+                                }
                             }
                         }
                     }
@@ -1585,38 +1591,41 @@ void ui_updateFSM(bool *sync_rtx)
                             if (msg.event == KEY_EVENT_SINGLE_LONG_PRESS)
                                 vp_announceChannelSummary(&state.channel, 0,
                                                           state.bank, vpAllInfo);
-                            else
+                            else if (msg.event == KEY_EVENT_PRESS)
                                 vp_replayLastPrompt();
                             f1Handled = true;
                         }
                     }
                     else if(input_isNumberPressed(msg))
                     {
-                        // Open Frequency input screen
-                        state.ui_screen = MAIN_VFO_INPUT;
-                        // Reset input position and selection
-                        ui_state.input_position = 1;
-                        ui_state.input_set = SET_RX;
-                        // Do not play because we will also announce the number just entered
-                        vp_announceInputReceiveOrTransmit(false, vpqInit);
-                        vp_queueInteger(input_getPressedNumber(msg));
-                        vp_play();
+                        if (msg.event == KEY_EVENT_PRESS)
+                        {
+                            // Open Frequency input screen
+                            state.ui_screen = MAIN_VFO_INPUT;
+                            // Reset input position and selection
+                            ui_state.input_position = 1;
+                            ui_state.input_set = SET_RX;
+                            // Do not play because we will also announce the number just entered
+                            vp_announceInputReceiveOrTransmit(false, vpqInit);
+                            vp_queueInteger(input_getPressedNumber(msg));
+                            vp_play();
 
-                        ui_state.new_rx_frequency = 0;
-                        ui_state.new_tx_frequency = 0;
-                        // Save pressed number to calculate frequency and show in GUI
-                        ui_state.input_number = input_getPressedNumber(msg);
-                        // Calculate portion of the new frequency
-                        ui_state.new_rx_frequency = _ui_freq_add_digit(ui_state.new_rx_frequency,
-                                                                       ui_state.input_position,
-                                                                       ui_state.input_number);
+                            ui_state.new_rx_frequency = 0;
+                            ui_state.new_tx_frequency = 0;
+                            // Save pressed number to calculate frequency and show in GUI
+                            ui_state.input_number = input_getPressedNumber(msg);
+                            // Calculate portion of the new frequency
+                            ui_state.new_rx_frequency = _ui_freq_add_digit(ui_state.new_rx_frequency,
+                                                                        ui_state.input_position,
+                                                                        ui_state.input_number);
+                        }
                     }
                 }
             }
                 break;
             // VFO frequency input screen
             case MAIN_VFO_INPUT:
-                if(msg.keys & KEY_ENTER)
+                if((msg.keys & KEY_ENTER) && (msg.event == KEY_EVENT_PRESS))
                 {
                     _ui_fsm_confirmVFOInput(sync_rtx);
                 }
@@ -1659,7 +1668,7 @@ void ui_updateFSM(bool *sync_rtx)
                 if(ui_state.edit_mode)
                 {
                     {
-                        if(msg.keys & KEY_ENTER)
+                        if((msg.keys & KEY_ENTER) && (msg.event == KEY_EVENT_PRESS))
                         {
                             _ui_textInputConfirm(ui_state.new_callsign);
                             // Save selected dst ID and disable input mode
@@ -1708,7 +1717,7 @@ void ui_updateFSM(bool *sync_rtx)
                 }
                 else
                 {
-                    if(msg.keys & KEY_ENTER)
+                    if((msg.keys & KEY_ENTER) && (msg.event == KEY_EVENT_PRESS))
                     {
                         // Save current main state
                         ui_state.last_main_state = state.ui_screen;
@@ -1783,7 +1792,7 @@ void ui_updateFSM(bool *sync_rtx)
                     _ui_menuUp(menu_num);
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
                     _ui_menuDown(menu_num);
-                else if(msg.keys & KEY_ENTER)
+                else if((msg.keys & KEY_ENTER) && (msg.event == KEY_EVENT_PRESS))
                 {
                     switch(ui_state.menu_selected)
                     {
@@ -1850,7 +1859,7 @@ void ui_updateFSM(bool *sync_rtx)
                             ui_state.menu_selected += 1;
                     }
                 }
-                else if(msg.keys & KEY_ENTER)
+                else if((msg.keys & KEY_ENTER) && (msg.event == KEY_EVENT_PRESS))
                 {
                     if(state.ui_screen == MENU_BANK)
                     {
@@ -1910,7 +1919,7 @@ void ui_updateFSM(bool *sync_rtx)
                     _ui_menuUp(settings_num);
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
                     _ui_menuDown(settings_num);
-                else if(msg.keys & KEY_ENTER)
+                else if((msg.keys & KEY_ENTER) && (msg.event == KEY_EVENT_PRESS))
                 {
 
                     switch(ui_state.menu_selected)
@@ -1957,7 +1966,7 @@ void ui_updateFSM(bool *sync_rtx)
                     _ui_menuUp(settings_num);
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
                     _ui_menuDown(settings_num);
-                else if(msg.keys & KEY_ENTER)
+                else if((msg.keys & KEY_ENTER) && (msg.event == KEY_EVENT_PRESS))
                 {
 
                     switch(ui_state.menu_selected)
@@ -2006,7 +2015,7 @@ void ui_updateFSM(bool *sync_rtx)
 #ifdef CONFIG_RTC
             // Time&Date settings screen
             case SETTINGS_TIMEDATE:
-                if(msg.keys & KEY_ENTER)
+                if((msg.keys & KEY_ENTER) && (msg.event == KEY_EVENT_PRESS))
                 {
                     // Switch to set Time&Date mode
                     state.ui_screen = SETTINGS_TIMEDATE_SET;
@@ -2021,7 +2030,7 @@ void ui_updateFSM(bool *sync_rtx)
                 break;
             // Time&Date settings screen, edit mode
             case SETTINGS_TIMEDATE_SET:
-                if(msg.keys & KEY_ENTER)
+                if((msg.keys & KEY_ENTER) && (msg.event == KEY_EVENT_PRESS))
                 {
                     // Save time only if all digits have been inserted
                     if(ui_state.input_position < TIMEDATE_DIGITS)
@@ -2108,7 +2117,7 @@ void ui_updateFSM(bool *sync_rtx)
                     _ui_menuUp(display_num);
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
                     _ui_menuDown(display_num);
-                else if(msg.keys & KEY_ENTER)
+                else if((msg.keys & KEY_ENTER) && (msg.event == KEY_EVENT_PRESS))
                     ui_state.edit_mode = !ui_state.edit_mode;
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_SETTINGS);
@@ -2154,7 +2163,7 @@ void ui_updateFSM(bool *sync_rtx)
                     _ui_menuUp(settings_gps_num);
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
                     _ui_menuDown(settings_gps_num);
-                else if(msg.keys & KEY_ENTER)
+                else if((msg.keys & KEY_ENTER) && (msg.event == KEY_EVENT_PRESS))
                     ui_state.edit_mode = !ui_state.edit_mode;
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_SETTINGS);
@@ -2175,7 +2184,7 @@ void ui_updateFSM(bool *sync_rtx)
                                 // Long press on CONFIG_UI_NO_KEYBOARD causes digits to advance by one
                                 ui_state.new_offset /= 10;
 #else
-                            if(msg.keys & KEY_ENTER)
+                            if((msg.keys & KEY_ENTER) && (msg.event == KEY_EVENT_PRESS))
                             {
 #endif
                                 // Apply new offset
@@ -2248,7 +2257,7 @@ void ui_updateFSM(bool *sync_rtx)
                     _ui_menuUp(settings_radio_num);
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
                     _ui_menuDown(settings_radio_num);
-                else if(msg.keys & KEY_ENTER) {
+                else if((msg.keys & KEY_ENTER) && (msg.event == KEY_EVENT_PRESS)) {
                     ui_state.edit_mode = true;
                     // If we are entering R_OFFSET clear temp offset
                     if (ui_state.menu_selected == R_OFFSET)
@@ -2268,7 +2277,7 @@ void ui_updateFSM(bool *sync_rtx)
                     {
                         case M17_CALLSIGN:
                             // Handle text input for M17 callsign
-                            if(msg.keys & KEY_ENTER)
+                            if((msg.keys & KEY_ENTER) && (msg.event == KEY_EVENT_PRESS))
                             {
                                 _ui_textInputConfirm(ui_state.new_callsign);
                                 // Save selected callsign and disable input mode
@@ -2305,7 +2314,7 @@ void ui_updateFSM(bool *sync_rtx)
                                 _ui_changeM17Can(-1);
                             else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
                                 _ui_changeM17Can(+1);
-                            else if(msg.keys & KEY_ENTER)
+                            else if((msg.keys & KEY_ENTER) && (msg.event == KEY_EVENT_PRESS))
                                 ui_state.edit_mode = !ui_state.edit_mode;
                             else if(msg.keys & KEY_ESC)
                                 ui_state.edit_mode = false;
@@ -2319,7 +2328,7 @@ void ui_updateFSM(bool *sync_rtx)
                                 state.settings.m17_can_rx =
                                     !state.settings.m17_can_rx;
                             }
-                            else if(msg.keys & KEY_ENTER)
+                            else if((msg.keys & KEY_ENTER) && (msg.event == KEY_EVENT_PRESS))
                                 ui_state.edit_mode = !ui_state.edit_mode;
                             else if(msg.keys & KEY_ESC)
                                 ui_state.edit_mode = false;
@@ -2327,7 +2336,7 @@ void ui_updateFSM(bool *sync_rtx)
                 }
                 else
                 {
-                    if(msg.keys & KEY_ENTER)
+                    if((msg.keys & KEY_ENTER) && (msg.event == KEY_EVENT_PRESS))
                     {
                         // Enable edit mode
                         ui_state.edit_mode = true;
@@ -2397,7 +2406,7 @@ void ui_updateFSM(bool *sync_rtx)
                     _ui_menuUp(settings_accessibility_num);
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
                     _ui_menuDown(settings_accessibility_num);
-                else if(msg.keys & KEY_ENTER)
+                else if((msg.keys & KEY_ENTER) && (msg.event == KEY_EVENT_PRESS))
                     ui_state.edit_mode = !ui_state.edit_mode;
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_SETTINGS);
@@ -2406,7 +2415,7 @@ void ui_updateFSM(bool *sync_rtx)
                 if(! ui_state.edit_mode){
                     //require a confirmation ENTER, then another
                     //edit_mode is slightly misused to allow for this
-                    if(msg.keys & KEY_ENTER)
+                    if((msg.keys & KEY_ENTER) && (msg.event == KEY_EVENT_PRESS))
                     {
                         ui_state.edit_mode = true;
                     }
@@ -2415,7 +2424,7 @@ void ui_updateFSM(bool *sync_rtx)
                         _ui_menuBack(MENU_SETTINGS);
                     }
                 } else {
-                    if(msg.keys & KEY_ENTER)
+                    if((msg.keys & KEY_ENTER) && (msg.event == KEY_EVENT_PRESS))
                     {
                         ui_state.edit_mode = false;
                         state_resetSettingsAndVfo();
