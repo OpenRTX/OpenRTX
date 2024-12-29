@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN,                     *
  *                                Silvano Seva IU2KWO                      *
  *                                                                         *
@@ -75,4 +75,22 @@ void stripTrailingZeroes(char *str)
             return;
         }
     }
+}
+
+uint8_t rssiToSlevel(const rssi_t rssi)
+{
+    // RSSI >= -53dB is S11 (S9 + 20 dB)
+    if(rssi >= -53)
+        return 11;
+
+    // RSSI lower than -121dB is always S0
+    if(rssi < -121)
+        return 0;
+
+    // For S level > 9 use 10dB steps instead of 6dB
+    if (rssi >= -73)
+        return (uint8_t)((163 + rssi) / 10);
+
+    // For S1 - S9 use 6dB increase per S-Point
+    return (uint8_t)(127 + rssi) / 6;
 }

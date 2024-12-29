@@ -41,7 +41,7 @@ public:
      * @param sync_word: symbols of the target syncword.
      */
     Synchronizer(std::array< int8_t, SYNCW_SIZE >&& sync_word) :
-        syncword(std::move(sync_word)) { }
+        syncword(std::move(sync_word)), triggered(false) { }
 
     /**
      * Destructor.
@@ -96,7 +96,7 @@ public:
                     index += 1;
                 }
 
-                if(values[index] >= 0)
+                if(peak >= 0)
                     sign = 1;
                 else
                     sign = -1;
