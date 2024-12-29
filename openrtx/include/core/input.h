@@ -1,7 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2024 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN,                     *
- *                                Silvano Seva IU2KWO                      *
+ *                                Silvano Seva IU2KWO,                     *
+ *                                Grzegorz Kaczmarek SP6HFE                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,39 +26,83 @@
 #include <stdbool.h>
 
 /**
+ * Max number of keys pressed allowed
+ */
+static const uint8_t input_maxKeysForMultiPress = 3;
+
+/**
  * Time interval in milliseconds after which a keypress is considered a long-press
  */
 static const uint16_t input_longPressTimeout = 700;
 
 /**
+ * Time interval in milliseconds for repeat event generation after long-press was detected
+ */
+static const uint16_t input_repeatInterval = 250;
+
+/**
+ * This enum describes the key event type:
+ * - KEY_EVENT_PRESS a button(s) press
+ * - KEY_EVENT_SINGLE_LONG_PRESS single button pressed long time
+ * - KEY_EVENT_SINGLE_REPEAT single button continuously pressed (more than long press)
+ * - KEY_EVENT_MULTI_LONG_PRESS over 1 button pressed together long time (since last press)
+ */
+enum keyEventType_t
+{
+    KEY_EVENT_PRESS             = 0,
+    KEY_EVENT_SINGLE_LONG_PRESS = 1,
+    KEY_EVENT_SINGLE_REPEAT     = 2,
+    KEY_EVENT_MULTI_LONG_PRESS  = 3
+};
+
+/**
  * Structure that represents a keyboard event payload
  * The maximum size of an event payload is 30 bits
- * For a keyboard event we use 1 bit to signal a short or long press
- * And the remaining 29 bits to communicate currently pressed keys.
+ * For a keyboard events we use 2 bits
+ * And the remaining 28 bits to communicate currently pressed keys
  */
 typedef union
 {
     struct
     {
-        uint32_t long_press : 1,
-                 keys       : 29,
-                 _padding   : 2;
+        uint32_t event    : 2,
+                 keys     : 28,
+                 _padding : 2;
     };
 
     uint32_t value;
 }
 kbd_msg_t;
 
+/**
+ * Turn on or off a support of press event generation on
+ * new key pressed while 1+ keys is pressed at the time
+ * This is used when some keys stay pressed while
+ * others are changed
+ * 
+ * @param isPressEventAllowed: press events support during multi-press
+ */
+void input_allowPressEventOnMultilpeKeysPressed(bool isPressEventAllowed);
 
+/**
+ * @brief 
+ * 
+ * @param keys keys pressed
+ * @param msg keyboard event message to be filled
+ * @return true msg contain valid event message
+ * @return false msg contents are not valid
+ */
+bool processKnobMovementDetection(keyboard_t keys, kbd_msg_t* msg);
 /**
  * Scan all the keyboard buttons to detect possible keypresses filling a
  * keyboard event data structure. The function returns true if a keyboard event
  * has been detected.
  *
+ * @param timestamp: system time when keyboard scanning takes place.
  * @param msg: keyboard event message to be filled.
  * @return true if a keyboard event has been detected, false otherwise.
  */
-bool input_scanKeyboard(kbd_msg_t *msg);
+bool input_scanKeyboard(long long timestamp, kbd_msg_t *msg);
 
 /**
  * This function returns true if at least one number is pressed on the

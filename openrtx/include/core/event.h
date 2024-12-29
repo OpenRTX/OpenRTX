@@ -20,6 +20,8 @@
 #ifndef EVENT_H
 #define EVENT_H
 
+#include <stdint.h>
+
 /**
  * This enum describes the event message type:
  * - EVENT_KBD is used to send a keypress
