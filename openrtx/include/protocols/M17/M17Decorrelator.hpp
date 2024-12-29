@@ -27,7 +27,6 @@
 #error This header is C++ only!
 #endif
 
-#include <experimental/array>
 #include <string>
 #include <array>
 

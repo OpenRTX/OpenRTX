@@ -21,7 +21,6 @@
 #include <new>
 #include <cstddef>
 #include <cstring>
-#include <experimental/array>
 #include <M17/M17Modulator.hpp>
 #include <M17/M17Utils.hpp>
 #include <M17/M17DSP.hpp>
