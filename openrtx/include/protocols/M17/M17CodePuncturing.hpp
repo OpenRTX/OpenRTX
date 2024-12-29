@@ -27,7 +27,7 @@
 #error This header is C++ only!
 #endif
 
-#include <experimental/array>
+#include <array>
 #include "M17Utils.hpp"
 
 namespace M17
@@ -36,21 +36,21 @@ namespace M17
 /**
  * Puncture matrix for linx setup frame.
  */
-static constexpr auto LSF_PUNCTURE = std::experimental::make_array< uint8_t >
-(
+static constexpr std::array< uint8_t, 61 > LSF_PUNCTURE =
+{
     1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1,
     0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1,
     1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1
-);
+};
 
 /**
  *  Puncture matrix for audio frames.
  */
-static constexpr auto DATA_PUNCTURE = std::experimental::make_array< uint8_t >
-(
+static constexpr std::array< uint8_t, 12 > DATA_PUNCTURE =
+{
     1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 0
-);
+};
 
 
 /**
