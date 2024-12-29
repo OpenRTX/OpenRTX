@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <interfaces/platform.h>
+#include <interfaces/delays.h>
 
 int main()
 {
@@ -30,7 +31,7 @@ int main()
 
     while(1)
     {
-        getchar();
+        delayMs(5000);
         puts("** Hardware information **\r\n\r");
         printf("- Hardware name: %s\r\n", info->name);
         printf("- Band support: VHF %s, UHF %s\r\n", info->vhf_band ? "yes" : "no",

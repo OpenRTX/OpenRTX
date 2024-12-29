@@ -26,6 +26,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include "W25Qx.h"
+#include <interfaces/delays.h>
 
 void printChunk(void *chunk)
 {
@@ -48,7 +49,7 @@ int main()
     
     while(1)
     {
-        getchar();
+        delayMs(5000);
         
         // On UV380 flash at 0x6000 there are 36032 bytes of 0xFF
         uint32_t addr = 0x6000;

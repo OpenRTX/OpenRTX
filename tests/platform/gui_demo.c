@@ -21,52 +21,48 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <os.h>
-#include <interfaces/gpio.h>
-#include <interfaces/graphics.h>
+#include <peripherals/gpio.h>
+#include <graphics.h>
 #include "hwconfig.h"
 #include <interfaces/platform.h>
 #include "state.h"
 #include <interfaces/keyboard.h>
+#include <interfaces/delays.h>
+#include <interfaces/display.h>
 #include "ui.h"
 
 
 int main(void)
 {
-    OS_ERR os_err;
 
     // Initialize the radio state
     state_init();
     
     // Init the graphic stack
     gfx_init();
-    platform_setBacklightLevel(255);
+    display_setBacklightLevel(100);
 
     // Print splash screen
-    point_t splash_origin = {0, SCREEN_HEIGHT / 2};
-    color_t color_yellow_fab413 = {250, 180, 19};
+    point_t splash_origin = {0, CONFIG_SCREEN_HEIGHT / 2};
+    color_t color_yellow_fab413 = {250, 180, 19, 255};
     gfx_clearScreen();
-    gfx_print(splash_origin, FONT_SIZE_4, TEXT_ALIGN_CENTER,
+    gfx_print(splash_origin, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
               color_yellow_fab413, "OpenRTX");
     gfx_render();
-    while(gfx_renderingInProgress());
-    OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+    delayMs(1000);
     
     // Clear screen
     gfx_clearScreen();
     gfx_render();
-    while(gfx_renderingInProgress());
 
     // UI update infinite loop
     while(1)
     {
-	state_t state = state_update();
-	keyboard_t keys = kbd_getKeys();
-	bool renderNeeded = ui_update(state, keys);
+	bool renderNeeded = ui_updateGUI();
 	if(renderNeeded)
 	{
 	    gfx_render();
-	    while(gfx_renderingInProgress());
 	}
-        OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+        delayMs(100);
     }
 }

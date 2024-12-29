@@ -21,10 +21,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <os.h>
-#include <interfaces/gpio.h>
-#include <interfaces/graphics.h>
+#include <peripherals/gpio.h>
+#include <core/graphics.h>
 #include "hwconfig.h"
 #include <interfaces/platform.h>
+#include <interfaces/delays.h>
+#include <interfaces/display.h>
 
 void printBits(uint16_t value, point_t pos)
 {
@@ -37,12 +39,13 @@ void printBits(uint16_t value, point_t pos)
         if(value & (1 << i)) buf[i] += 1;
     }
 
-    color_t color_white = {255, 255, 255};
-    gfx_print(pos, FONT_SIZE_1, TEXT_ALIGN_LEFT, color_white, buf);
+    color_t color_white = {255, 255, 255, 255};
+    gfx_print(pos, FONT_SIZE_5PT, TEXT_ALIGN_LEFT, color_white, buf);
 }
 
 int main(void)
 {
+    bool toggle = true;
     GPIOA->MODER = 0;
     GPIOB->MODER = 0;
     GPIOC->MODER = 0;
@@ -54,14 +57,18 @@ int main(void)
 
     // Init the graphic stack
     gfx_init();
-    platform_setBacklightLevel(255);
+    display_setBacklightLevel(100);
 
-    OS_ERR os_err;
 
     // Task infinite loop
     while(1)
     {
-        gpio_togglePin(GREEN_LED);
+        if (toggle) {
+            gpio_setPin(GREEN_LED);
+        } else {
+            gpio_clearPin(GREEN_LED);
+        }
+        toggle = !toggle;
         gfx_clearScreen();
 
         point_t pos_line1 = {0, 0};
@@ -77,7 +84,6 @@ int main(void)
         printBits((GPIOE->IDR & 0x0000FFFF), pos_line5);
 
         gfx_render();
-        while(gfx_renderingInProgress());
-        OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+        delayMs(100);
     }
 }

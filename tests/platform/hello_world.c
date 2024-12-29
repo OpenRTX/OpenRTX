@@ -21,6 +21,7 @@
 #include <os.h>
 #include <stdio.h>
 #include <interfaces/platform.h>
+#include <interfaces/delays.h>
 
 int main()
 {
@@ -28,9 +29,8 @@ int main()
 
     while(1)
     {
-        OS_ERR err;
         printf("Hello world\n");
-        OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
+        delayMs(1000);
     }
 
     return 0;

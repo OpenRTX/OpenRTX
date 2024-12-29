@@ -18,20 +18,22 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/graphics.h>
+#include <graphics.h>
 #include <interfaces/platform.h>
 #include <interfaces/keyboard.h>
 #include <hwconfig.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <os.h>
+#include <interfaces/delays.h>
+#include <interfaces/display.h>
 
 uint64_t benchmark(uint32_t n);
 
 int main()
 {
     platform_init();
-    platform_setBacklightLevel(255);
+    display_setBacklightLevel(100);
 
     gfx_init();
     kbd_init();
@@ -56,7 +58,7 @@ int main()
 
     while(1)
     {
-        getchar();
+        delayMs(5000);
 
         uint64_t tot_ticks = benchmark(numIterations);
 
@@ -79,7 +81,7 @@ uint64_t benchmark(uint32_t n)
         color_t color_red = {255, 0, 0, 255};
         color_t color_white = {255, 255, 255, 255};
         gfx_drawRect(origin, 160, 20, color_red, 1);
-        gfx_print(origin, buffer, FONT_SIZE_24PT, TEXT_ALIGN_LEFT,
+        gfx_print(origin, FONT_SIZE_16PT, TEXT_ALIGN_LEFT,
                   color_white, "KEK");
 
         dummy += kbd_getKeys();

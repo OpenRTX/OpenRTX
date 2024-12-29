@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
-#include <interfaces/gpio.h>
+#include <peripherals/gpio.h>
 #include <hwconfig.h>
 
 int main()

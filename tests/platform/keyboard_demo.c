@@ -22,25 +22,27 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <os.h>
-#include <interfaces/gpio.h>
-#include <interfaces/graphics.h>
+#include <peripherals/gpio.h>
+#include <graphics.h>
 #include "hwconfig.h"
 #include <interfaces/platform.h>
 #include "state.h"
 #include <interfaces/keyboard.h>
+#include <interfaces/delays.h>
+#include <interfaces/display.h>
 #include "ui.h"
 
-color_t color_yellow_fab413 = {250, 180, 19};
-color_t color_red = {255, 0, 0};
-color_t color_green = {0, 255, 0};
+color_t color_yellow_fab413 = {250, 180, 19, 255};
+color_t color_red = {255, 0, 0, 255};
+color_t color_green = {0, 255, 0, 255};
 
 char *keys_list[] = {
         " ", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "#", "ENTER", "ESC", "UP", "DOWN", "LEFT", "RIGHT",
         "MONI", "F1"
 };
 
-void *print_keys(keyboard_t keys) {
-    point_t origin = {0, SCREEN_HEIGHT / 4};
+void print_keys(keyboard_t keys) {
+    point_t origin = {0, CONFIG_SCREEN_HEIGHT / 4};
     //count set bits to check how many keys are being pressed
     int i = __builtin_popcount(keys);
     while (i > 0) {
@@ -54,11 +56,9 @@ void *print_keys(keyboard_t keys) {
         i--;
     }
     gfx_render();
-    while (gfx_renderingInProgress());
 }
 
 int main(void) {
-    OS_ERR os_err;
 
     // Initialize platform drivers
     platform_init();
@@ -69,13 +69,12 @@ int main(void) {
     // Clear screen
     gfx_clearScreen();
     gfx_render();
-    while (gfx_renderingInProgress());
-    platform_setBacklightLevel(255);
+    display_setBacklightLevel(100);
 
     // Initialize keyboard driver
     kbd_init();
 
-    point_t title_origin = {0, SCREEN_HEIGHT / 9};
+    point_t title_origin = {0, CONFIG_SCREEN_HEIGHT / 9};
 
     // UI update infinite loop
     while (1) {
@@ -85,7 +84,7 @@ int main(void) {
         keyboard_t keys = kbd_getKeys();
         if (keys != 0)
             print_keys(keys);
-        OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+        delayMs(100);
     }
 }
 

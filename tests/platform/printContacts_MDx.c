@@ -22,7 +22,9 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <interfaces/nvmem.h>
+#include <interfaces/cps_io.h>
 #include <cps.h>
+#include <interfaces/delays.h>
 
 int main()
 {
@@ -32,7 +34,7 @@ int main()
 
     while(1)
     {
-        getchar();
+        delayMs(5000);
 
         channel_t ch;
         cps_readChannel(&ch, pos);
@@ -42,7 +44,7 @@ int main()
                ch.tx_frequency,
                ch.rx_frequency,
                (ch.mode == 1) ? "DMR" : "FM",
-               (ch.bandwidth == BW_12_5) ? "12.5kHz" : ((ch.bandwidth == BW_20)
+               (ch.bandwidth == BW_12_5) ? "12.5kHz" : ((ch.bandwidth == BW_25)
                                                           ? "20kHz" : "25kHz"));
         puts("\r");
         pos += 1;

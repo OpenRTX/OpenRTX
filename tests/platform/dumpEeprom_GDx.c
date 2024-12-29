@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <AT24Cx.h>
+#include <interfaces/delays.h>
 
 void printChunk(void *chunk)
 {
@@ -47,9 +48,9 @@ int main()
 
     while(1)
     {
-        getchar();
+        delayMs(5000);
 
-        for(uint16_t addr = 0; addr < 0x10000; addr += 16)
+        for(uint32_t addr = 0; addr < 0x10000; addr += 16)
         {
             uint8_t buf[16];
             AT24Cx_readData(addr, buf, 16);
