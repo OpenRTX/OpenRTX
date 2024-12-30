@@ -325,6 +325,13 @@ linux_c_args   = ['-ffunction-sections', '-fdata-sections']
 linux_cpp_args = ['-ffunction-sections', '-fdata-sections', '-std=c++14']
 linux_l_args   = ['-lm', '-lreadline']
 
+# MacOS Clang linker uses -deadstrip instead of --gc-sections
+if build_machine.system() == 'darwin'
+  linux_l_args += '-Wl,-dead_strip'
+else
+  linux_l_args += '-Wl,--gc-sections'
+endif
+
 # Add AddressSanitizer if required
 if get_option('asan')
   linux_c_args   += '-fsanitize=address'
