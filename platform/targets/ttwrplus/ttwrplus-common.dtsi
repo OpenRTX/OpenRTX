@@ -11,9 +11,6 @@
 #include <zephyr/dt-bindings/led/led.h>
 
 / {
-    model = "ttwrplus";
-    compatible = "espressif,esp32s3";
-
     aliases {
         i2c-0 = &i2c0;
         watchdog0 = &wdt0;
@@ -22,7 +19,7 @@
         radio-pwr = &radio_pwr;
         radio-pdn = &radio_pdn;
         radio-ptt = &radio_ptt;
-        pmu-irq   = &pmu_irq;
+        pmu-irq = &pmu_irq;
         qdec0 = &pcnt;
         led0 = &ws2812c;
         flash = &flash0;
@@ -37,27 +34,27 @@
     };
 
     leds: leds {
-            compatible = "gpio-leds";
+        compatible = "gpio-leds";
 
-            radio_pwr: radio_pwr {
-                    gpios = <&gpio1 6 GPIO_ACTIVE_HIGH>;
-                    label = "SA868S H/L on IO38";
-            };
+        radio_pwr: radio_pwr {
+            gpios = <&gpio1 6 GPIO_ACTIVE_HIGH>;
+            label = "SA868S H/L on IO38";
+        };
 
-            radio_pdn: radio_pdn {
-                    gpios = <&gpio1 8 GPIO_ACTIVE_LOW>;
-                    label = "SA868S PDN on IO40";
-            };
+        radio_pdn: radio_pdn {
+            gpios = <&gpio1 8 GPIO_ACTIVE_LOW>;
+            label = "SA868S PDN on IO40";
+        };
 
-            radio_ptt: radio_ptt {
-                    gpios = <&gpio1 9 GPIO_ACTIVE_HIGH>;
-                    label = "SA868S PTT on IO41";
-            };
+        radio_ptt: radio_ptt {
+            gpios = <&gpio1 9 GPIO_ACTIVE_HIGH>;
+            label = "SA868S PTT on IO41";
+        };
 
-            pmu_irq: pmu_irq {
-                gpios = <&gpio0 4 GPIO_ACTIVE_LOW>;
-                label = "PMU IRQ Pin";
-            };
+        pmu_irq: pmu_irq {
+            gpios = <&gpio0 4 GPIO_ACTIVE_LOW>;
+            label = "PMU IRQ Pin on IO4";
+        };
     };
 
     buttons: buttons {
@@ -80,7 +77,13 @@
             zephyr,code = <INPUT_BTN_SELECT>;
             label = "PTT Button";
         };
-  };
+
+        button_mode: button_3 {
+            gpios = <&gpio0 15 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            zephyr,code = <INPUT_BTN_MODE>;
+            label = "Mode Button";
+        };
+    };
 };
 
 &cpu0 {
@@ -116,21 +119,21 @@
     pinctrl-names = "default";
 
     sh1106: sh1106@3c {
-                compatible = "sinowealth,sh1106";
-                reg = <0x3c>;
+        compatible = "sinowealth,sh1106";
+        reg = <0x3c>;
 
-                width  = <128>;
-                height = <64>;
+        width = <128>;
+        height = <64>;
 
-                segment-offset  = <2>;
-                page-offset     = <0>;
-                display-offset  = <0>;
-                multiplex-ratio = <63>;
-                prechargep      = <0x22>;
+        segment-offset = <2>;
+        page-offset = <0>;
+        display-offset = <0>;
+        multiplex-ratio = <63>;
+        prechargep = <0x22>;
 
-                segment-remap;
-                com-invdir;
-        };
+        segment-remap;
+        com-invdir;
+    };
 };
 
 &spi3 {
@@ -141,43 +144,41 @@
     pinctrl-0 = <&spim3_default>;
     pinctrl-names = "default";
     ws2812c: ws2812@0 {
-            compatible = "worldsemi,ws2812-spi";
+        compatible = "worldsemi,ws2812-spi";
 
-            /* SPI */
-            reg = <0x0>; /* ignored, but necessary for SPI bindings */
-            spi-max-frequency = <6400000>;
+        /* SPI */
+        reg = <0x0>; /* ignored, but necessary for SPI bindings */
+        spi-max-frequency = <6400000>;
 
-            /* WS2812C */
-            chain-length = <1>; /* arbitrary; change at will */
-            spi-cpha;
-            spi-one-frame = <0xf0>; /* 11110000: 625 ns high and 625 ns low */
-            spi-zero-frame = <0xc0>; /* 11000000: 312.5 ns high and 937.5 ns low */
-            color-mapping = <LED_COLOR_ID_GREEN
-                             LED_COLOR_ID_RED
-                             LED_COLOR_ID_BLUE>;
-            reset-delay = <280>; /* > 280us by WS2812C datasheet */
+        /* WS2812C */
+        chain-length = <1>; /* arbitrary; change at will */
+        spi-cpha;
+        spi-one-frame = <0xf0>; /* 11110000: 625 ns high and 625 ns low */
+        spi-zero-frame = <0xc0>; /* 11000000: 312.5 ns high and 937.5 ns low */
+        color-mapping = <LED_COLOR_ID_GREEN LED_COLOR_ID_RED LED_COLOR_ID_BLUE>;
+        reset-delay = <280>; /* > 280us by WS2812C datasheet */
     };
 };
 
 &pcnt {
-  pinctrl-0 = <&pcnt_default>;
-  pinctrl-names = "default";
-  status = "okay";
-  #address-cells = <1>;
-  #size-cells = <0>;
-  unit0@0 {
-    reg = <0>;
+    pinctrl-0 = <&pcnt_default>;
+    pinctrl-names = "default";
+    status = "okay";
     #address-cells = <1>;
     #size-cells = <0>;
-    filter = <100>;
-    channelA@0 {
+    unit0@0 {
         reg = <0>;
-        sig-pos-mode = <2>;
-        sig-neg-mode = <1>;
-        ctrl-h-mode = <0>;
-        ctrl-l-mode = <1>;
+        #address-cells = <1>;
+        #size-cells = <0>;
+        filter = <100>;
+        channelA@0 {
+            reg = <0>;
+            sig-pos-mode = <2>;
+            sig-neg-mode = <1>;
+            ctrl-h-mode = <0>;
+            ctrl-l-mode = <1>;
+        };
     };
-  };
 };
 
 &timer0 {
@@ -205,6 +206,7 @@
 };
 
 &pinctrl {
+    /* SA868S control */
     uart0_default: uart0_default {
         group1 {
             pinmux = <UART0_TX_GPIO39>;
@@ -216,6 +218,7 @@
         };
     };
 
+    /* GNSS control */
     uart1_default: uart1_default {
         group1 {
             pinmux = <UART1_TX_GPIO6>;
@@ -230,7 +233,7 @@
     i2c0_default: i2c0_default {
         group1 {
             pinmux = <I2C0_SDA_GPIO8>,
-                 <I2C0_SCL_GPIO9>;
+                     <I2C0_SCL_GPIO9>;
             bias-pull-up;
             drive-open-drain;
             output-high;

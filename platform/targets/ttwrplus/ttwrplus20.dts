@@ -1,0 +1,11 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+/dts-v1/;
+
+#include <ttwrplus-common.dtsi>
+
+/ {
+    model = "LILYGO T-TWR Plus 2.0";
+    compatible = "espressif,esp32s3";
+};
