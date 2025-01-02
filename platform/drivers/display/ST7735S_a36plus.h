@@ -135,13 +135,6 @@ typedef struct
     uint16_t ye;
 } st7735s_window_t;
 
-static void spi_send_bytes(uint8_t len, uint8_t *data); // spi send data
-static void spi_send_byte(uint8_t data);                // spi send one byte data
-static void spi_send_bit(uint8_t data);                 // spi send one bit data
-static void st7735s_send_command(st7735s_cmd_t cmd);    // st7735s send command
-static void st7735s_send_data(uint8_t data);            // st7735s data
-static void st7735s_delay(uint32_t count);            // st7735s data
-
 void st7735s_init(void);    
 void st7735s_test(void);                                     // st7735s init
 void st7735s_set_color(uint8_t red, uint8_t green, uint8_t blue); // st7735s set color
@@ -152,10 +145,5 @@ void st7735s_fill_react(uint16_t x, uint16_t y, uint16_t width, uint16_t height)
 void st7735s_flush(void);
 void display_setWindow(uint16_t x1, uint16_t x2, uint16_t y1, uint16_t y2);
 void display_clearWindow(uint16_t x1, uint16_t x2, uint16_t width, uint16_t height);
-
-static void st7735s_reset_window(void);                                             // st7735s reset window
-static void st7735s_update_window(uint16_t x, uint16_t y);                          // st7735s update window
-static void st7735s_set_window(uint16_t x1, uint16_t x2, uint16_t y1, uint16_t y2); // st7735s set window
-static void st7735s_send_color(void);
 
 #endif
