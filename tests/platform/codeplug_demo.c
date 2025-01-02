@@ -23,12 +23,13 @@
 #include <sys/types.h>
 #include <interfaces/nvmem.h>
 #include <cps.h>
+#include <interfaces/delays.h>
 
 int main()
 {
     nvm_init();
 
-    getchar();
+    delayMs(5000);
     printf("Codeplug Demo!\r\n\r\n");
     printf("Channels:\r\n");
     for(int pos=0,result=0; result != -1; pos++)
