@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2024 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN,                     *
  *                                Silvano Seva IU2KWO,                     *
  *                                Grzegorz Kaczmarek SP6HFE                *
@@ -24,21 +24,24 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-bool pressEventAllowedForMultipleKeys;
+static keyboard_t previousKeys      = 0;     // Previously pressed keys
+static bool longPressReached        = false; // Long-press time was reached
+static bool keysReleaseDetected     = false; // One or more keys were released
+static bool keyboardReleaseAwaiting = false; // Awaiting for keyboard release
+static long long eventStart         = 0;     // Timeout calculation start
 
-void input_allowPressEventOnMultilpeKeysPressed(bool isPressEventAllowed)
+static bool multiKeyPressEventsEnabled = false; // Multi-key press events generation flag
+
+void input_enableMultiKeyPressEvent(bool isEnabled)
 {
-    pressEventAllowedForMultipleKeys = isPressEventAllowed;
+    multiKeyPressEventsEnabled = isEnabled;
 }
 
-bool processKnobMovementDetection(keyboard_t keys, kbd_msg_t* msg)
+bool input_handleKnobEvents(keyboard_t keys, kbd_msg_t* msg)
 {
-    const bool isKeyboardEvent = true;      // Return value
-    const bool noKeyboardEvent = false;     // Return value
-
     if (msg == NULL)
     {
-        return noKeyboardEvent;
+        return false;
     }
 
     if ((keys & KNOB_LEFT) || (keys & KNOB_RIGHT))
@@ -47,22 +50,14 @@ bool processKnobMovementDetection(keyboard_t keys, kbd_msg_t* msg)
         msg->keys = (keys & ((uint32_t)(KNOB_LEFT) | (uint32_t)(KNOB_RIGHT)));
 
         msg->event = KEY_EVENT_PRESS;
-        return isKeyboardEvent;
+        return true;
     }
 
-    return noKeyboardEvent;
+    return false;
 }
 
 bool input_scanKeyboard(long long timestamp, kbd_msg_t* msg)
 {
-    static keyboard_t previousKeys      = 0;     // Previously pressed keys
-    static bool longPressReached        = false; // Long-press time was reached
-    static bool keysReleaseDetected     = false; // One or more keys were released
-    static bool keyboardReleaseAwaiting = false; // Awaiting for keyboard release
-    static long long eventStart         = 0;     // Current timeout calculation start
-
-    const bool isKeyboardEvent           = true;      // Return value
-    const bool noKeyboardEvent           = false;     // Return value
     const keyboard_t keysWithoutKnobMask = 0x3FFFFFF; // Keys mask without knob signals
 
     const keyboard_t keys               = kbd_getKeys(); // Current keys pressed
@@ -83,16 +78,16 @@ bool input_scanKeyboard(long long timestamp, kbd_msg_t* msg)
 
             // Send empty keyset once
             msg->event = KEY_EVENT_PRESS;
-            return isKeyboardEvent;
+            return true;
         }
 
-        return noKeyboardEvent;
+        return false;
     }
 
     // Keyboard release awaiting (knob movements are handled)
     if (keyboardReleaseAwaiting == true)
     {
-        return processKnobMovementDetection(keys, msg);
+        return input_handleKnobEvents(keys, msg);
     }
 
     // Too many keys pressed (knob movements are handled)
@@ -100,7 +95,7 @@ bool input_scanKeyboard(long long timestamp, kbd_msg_t* msg)
     {
         keyboardReleaseAwaiting = true;
 
-        return processKnobMovementDetection(keys, msg);
+        return input_handleKnobEvents(keys, msg);
     }
 
     // Key events handling -> remember what's pressed
@@ -112,7 +107,7 @@ bool input_scanKeyboard(long long timestamp, kbd_msg_t* msg)
         // Key release was detected during multi-press (knob movements are handled)
         if (keysReleaseDetected == true)
         {
-            return processKnobMovementDetection(keys, msg);
+            return input_handleKnobEvents(keys, msg);
         }
 
         // Calculate timings
@@ -129,7 +124,7 @@ bool input_scanKeyboard(long long timestamp, kbd_msg_t* msg)
             eventStart       = timestamp;
             msg->event       = ((keysNumberWithoutKnob > 1) ? KEY_EVENT_MULTI_LONG_PRESS : KEY_EVENT_SINGLE_LONG_PRESS);
 
-            return isKeyboardEvent;
+            return true;
         }
 
         // Repeat event (reserved for single key press only)
@@ -138,11 +133,11 @@ bool input_scanKeyboard(long long timestamp, kbd_msg_t* msg)
             eventStart = timestamp;
             msg->event = KEY_EVENT_SINGLE_REPEAT;
 
-            return isKeyboardEvent;
+            return true;
         }
 
         // No long press, no repeat (knob movements are handled)
-        return processKnobMovementDetection(keys, msg);
+        return input_handleKnobEvents(keys, msg);
     }
 
     // Handle change of the amount of keys pressed (knob movement is not considered)
@@ -158,15 +153,15 @@ bool input_scanKeyboard(long long timestamp, kbd_msg_t* msg)
         eventStart       = timestamp;
         longPressReached = false;
 
-        if((keysNumberWithoutKnob == 1) || (pressEventAllowedForMultipleKeys == true))
+        if((keysNumberWithoutKnob == 1) || (multiKeyPressEventsEnabled == true))
         {
             msg->event = KEY_EVENT_PRESS;
 
-            return isKeyboardEvent;
+            return true;
         }
 
-        // No event for multi-press when pressEventAllowedForMultipleKeys == false
-        return noKeyboardEvent;
+        // No event for multi-press when multiKeyPressEventsEnabled == false
+        return false;
     }
 
     // Some buttons were released (still at least 1 is pressed)
@@ -176,11 +171,11 @@ bool input_scanKeyboard(long long timestamp, kbd_msg_t* msg)
         previousKeys        = keys;
 
         // No event on buttons release
-        return noKeyboardEvent;
+        return false;
     }
 
     // In case code reached here there is certainly no keyboard event
-    return noKeyboardEvent;
+    return false;
 }
 
 bool input_isNumberPressed(kbd_msg_t msg)

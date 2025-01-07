@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2024 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN,                     *
  *                                Silvano Seva IU2KWO,                     *
  *                                Grzegorz Kaczmarek SP6HFE                *
@@ -76,23 +76,26 @@ kbd_msg_t;
 
 /**
  * Turn on or off a support of press event generation on
- * new key pressed while 1+ keys is pressed at the time
- * This is used when some keys stay pressed while
- * others are changed
+ * new key pressed while 1+ keys pressed at the time
+ * This is used by UI when some key/s stay pressed while
+ * other/s change
  * 
- * @param isPressEventAllowed: press events support during multi-press
+ * @param isEnabled: feature enabling flag
  */
-void input_allowPressEventOnMultilpeKeysPressed(bool isPressEventAllowed);
+void input_enableMultiKeyPressEvent(bool isEnabled);
 
 /**
- * @brief 
+ * Looks up knob events only in provided keyboard_t data
+ * Useful in a situation where no real keys are pressed
+ * (keys detection is handled separately) 
  * 
  * @param keys keys pressed
  * @param msg keyboard event message to be filled
  * @return true msg contain valid event message
  * @return false msg contents are not valid
  */
-bool processKnobMovementDetection(keyboard_t keys, kbd_msg_t* msg);
+bool input_handleKnobEvents(keyboard_t keys, kbd_msg_t* msg);
+
 /**
  * Scan all the keyboard buttons to detect possible keypresses filling a
  * keyboard event data structure. The function returns true if a keyboard event
