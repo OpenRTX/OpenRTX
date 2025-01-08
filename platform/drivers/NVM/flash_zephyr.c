@@ -49,10 +49,11 @@ int zephirFlash_init(const struct nvmDevice* dev)
     const struct flash_parameters *info = flash_get_parameters(TO_DEV_HANDLE(dev->priv));
 
     // TODO: erase size and erase cycles to be retrieved from the real device.
-    dev->info->write_size   = info->write_block_size;
-    dev->info->erase_size   = 4096;
-    dev->info->erase_cycles = 100000;
-    dev->info->device_info  = NVM_FLASH | NVM_WRITE | NVM_BITWRITE | NVM_ERASE;
+    struct nvmInfo *nvm_info = (struct nvmInfo *) dev->info;
+    nvm_info->write_size   = info->write_block_size;
+    nvm_info->erase_size   = 4096;
+    nvm_info->erase_cycles = 100000;
+    nvm_info->device_info  = NVM_FLASH | NVM_WRITE | NVM_BITWRITE | NVM_ERASE;
 
     return 0;
 }
