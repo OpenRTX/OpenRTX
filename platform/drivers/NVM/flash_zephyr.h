@@ -44,7 +44,7 @@ extern const struct nvmOps zephyr_flash_ops;
 static struct nvmInfo nvm_devInfo_##name;           \
 static const struct nvmDevice name =                \
 {                                                   \
-    .priv   = DEVICE_DT_GET(DT_ALIAS(alias))        \
+    .priv   = DEVICE_DT_GET(DT_ALIAS(alias)),       \
     .ops    = &zephyr_flash_ops,                    \
     .info   = &nvm_devInfo_##name,                  \
     .size   = sz                                    \
