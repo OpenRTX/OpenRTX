@@ -1,8 +1,9 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
+ *                                Grzegorz Kaczmarek SP6HFE                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -2466,7 +2467,7 @@ void ui_updateFSM(bool *sync_rtx)
         }
 #endif //            CONFIG_GPS
 
-        if (txOngoing || rtx_rxSquelchOpen())
+        if (txOngoing || rtx_rxSquelchOpen() || (state.volume != last_state.volume))
         {
             _ui_exitStandby(now);
             return;
