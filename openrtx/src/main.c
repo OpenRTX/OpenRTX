@@ -56,7 +56,7 @@ int main(void)
         sleepFor(0, 50);
         if(!platform_pwrButtonStatus())
         {
-            gpio_clearPin(GPIOA, 15);
+            gpio_clearPin((void *)GPIOA, 15);
             delayMs(500);
             NVIC_SystemReset();
             return 0;

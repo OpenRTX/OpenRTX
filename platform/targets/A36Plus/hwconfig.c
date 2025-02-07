@@ -1,5 +1,9 @@
 /***************************************************************************
- *   Copyright (C) 2024 by Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2024 by Federico Amedeo Izzo IU2NUO,                    *
+ *                         Niccolò Izzo IU2KIN,                            *
+ *                         Frederik Saraci IU2NRO,                         *
+ *                         Silvano Seva IU2KWO,                            *
+ *                         Andrej Antunovikj K8TUN                         *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -15,15 +19,19 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef GPIO_NATIVE_H
-#define GPIO_NATIVE_H
+#include <spi_bitbang.h>
+#include <spi_custom.h>
+#include <spi_mk22.h>
+#include <hwconfig.h>
 
-#if defined(STM32F405xx)
-#include <gpio_stm32.h>
-#elif defined(MK22FN512xx)
-#include <gpio_mk22.h>
-#elif defined(PLATFORM_A36PLUS)
-#include <gpio_gd32.h>
-#endif
+static const struct spiConfig spiFlashCfg =
+{
+    .clk       = { FLASH_CLK },
+    .mosi      = { FLASH_SDO },
+    .miso      = { FLASH_SDI },
+    .clkPeriod = SCK_PERIOD_FROM_FREQ(1000000),
+    .flags     = 0
+};
 
-#endif /* GPIO_NATIVE_H */
+SPI_BITBANG_DEVICE_DEFINE(nvm_spi, spiFlashCfg, NULL)
+

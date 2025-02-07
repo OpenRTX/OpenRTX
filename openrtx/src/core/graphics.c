@@ -835,7 +835,6 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, rssi_t rssi,
         s_level =  (rssi_t)(127 + rssi) / 6;    // 6dB increase per S-Point
     }
     uint16_t rssi_height = bar_height * 4 / bar_height_divider;
-    uint16_t rssi_width = (s_level * (width - 1) / 11);
     point_t rssi_pos = { start.x, (uint8_t) (start.y + 2 + squelch_height + volume_height)};
     extern color_t spectrum_getColorFromLevel(uint16_t Level);
     for (int i = 0; i < s_level*2; i++) {

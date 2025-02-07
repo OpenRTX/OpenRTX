@@ -277,7 +277,8 @@ void spi_i2s_deinit(uint32_t spi_periph);
 /* initialize the parameters of SPI structure with the default values */
 void spi_struct_para_init(spi_parameter_struct *spi_struct);
 /* initialize SPI parameters */
-void spi_init(uint32_t spi_periph, spi_parameter_struct *spi_struct);
+/* CAUTION: renamed to GD32_spi_init to avoid conflict with OpenRTX/peripherals/spi.h */
+void GD32_spi_init(uint32_t spi_periph, spi_parameter_struct *spi_struct);
 /* enable SPI */
 void spi_enable(uint32_t spi_periph);
 /* disable SPI */

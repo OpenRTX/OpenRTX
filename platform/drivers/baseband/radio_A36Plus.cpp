@@ -22,6 +22,7 @@
 #include <calibInfo_A36Plus.h>
 #include <interfaces/nvmem.h>
 #include <drivers/USART0.h>
+#include <platform/mcu/GD32F330/drivers/gpio.h>
 #include <gd32f3x0.h>
 #include <hwconfig.h>
 #include <interfaces/nvmem.h>
