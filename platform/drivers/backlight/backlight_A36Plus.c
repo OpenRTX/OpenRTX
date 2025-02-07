@@ -20,7 +20,7 @@
 
 #include <interfaces/platform.h>
 #include "gd32f3x0.h"
-// #include <peripherals/gpio.h>
+#include <peripherals/gpio.h>
 #include "../../mcu/GD32F330/drivers/gpio.h"
 #include <hwconfig.h> 
 #include "backlight.h"

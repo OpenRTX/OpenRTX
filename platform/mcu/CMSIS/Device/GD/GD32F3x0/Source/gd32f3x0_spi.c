@@ -99,7 +99,7 @@ void spi_struct_para_init(spi_parameter_struct *spi_struct)
     \param[out] none
     \retval     none
 */
-void spi_init(uint32_t spi_periph, spi_parameter_struct *spi_struct)
+void GD32_spi_init(uint32_t spi_periph, spi_parameter_struct *spi_struct)
 {
     uint32_t reg = 0U;
     reg = SPI_CTL0(spi_periph);

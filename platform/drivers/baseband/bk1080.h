@@ -60,14 +60,6 @@ static const uint16_t BK1080_RegisterTable[] = {
 
 typedef void(*seek_tune_complete_cb)(uint8_t status, uint8_t rssi, uint16_t channel);
 
-static void i2c_start(void);
-static void i2c_stop(void);
-static void i2c_write_byte(uint8_t data);
-static uint8_t i2c_read_byte(void);
-static void i2c_send_ack(iic_ack_t ack);
-static uint8_t i2c_get_ack(void);
-static void bk1080_delay(uint32_t count);
-
 static void bk1080_write_reg(bk1080_reg_t reg, uint16_t data);
 static uint16_t bk1080_read_reg(bk1080_reg_t reg);
 
