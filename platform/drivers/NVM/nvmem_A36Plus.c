@@ -27,7 +27,13 @@
 #include "AT24Cx.h"
 #include "W25Qx.h"
 
-W25Qx_DEVICE_DEFINE(eflash,  0x200000)  // 2 MB,  16 Mbit
+static const struct W25QxCfg eflashCfg =
+{
+    .spi = (const struct spiDevice *) &nvm_spi,
+    .cs  = { &GpioA,4 }
+};
+
+W25Qx_DEVICE_DEFINE(eflash, NULL, 0x200000)  // 2 MB,  16 Mbit
 
 static const struct nvmDescriptor nvmDevices[] =
 {

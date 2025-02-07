@@ -20,6 +20,7 @@
  ***************************************************************************/
 
 #include <interfaces/audio.h>
+#include <interfaces/platform.h>
 #include <peripherals/gpio.h>
 #include <bk4819.h>
 

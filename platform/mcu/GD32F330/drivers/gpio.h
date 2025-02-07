@@ -81,4 +81,13 @@
 
 void gpio_config(void);
 
+// void gpio_setMode(void *port, uint8_t pin, uint8_t mode);
+// void gpio_setPin(void *port, uint8_t pin);
+// void gpio_clearPin(void *port, uint8_t pin);
+// void gpio_togglePin(void *port, uint8_t pin);
+// uint8_t gpio_getPin(void *port, uint8_t pin);
+// void gpio_af_set(void *port, uint8_t af, uint16_t pin);
+// void gpio_mode_set(void *port, uint8_t mode, uint8_t pupd, uint16_t pin);
+// void gpio_output_options_set(void *port, uint8_t otype, uint8_t ospeed, uint16_t pin);
+
 #endif

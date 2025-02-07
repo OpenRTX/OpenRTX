@@ -67,7 +67,7 @@ void spiFlash_init()
     spi_init_struct.frame_size = SPI_FRAMESIZE_8BIT;
     spi_init_struct.trans_mode = SPI_TRANSMODE_FULLDUPLEX;
     spi_init_struct.clock_polarity_phase = SPI_CK_PL_HIGH_PH_2EDGE;
-    spi_init(SPI0, &spi_init_struct);
+    GD32_spi_init(SPI0, &spi_init_struct);
     spi_enable(SPI0);
     return;
 }
