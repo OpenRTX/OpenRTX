@@ -40,7 +40,7 @@ enum DatStatus
  * @param area: NVM area to be read.
  * @return zero on success, a negative error code otherwhise.
  */
-int dat_readNvmArea(const struct nvmArea *area);
+int dat_readNvmArea(const struct nvmDescriptor *area);
 
 /**
  * Start an rtxlink data transfer from the host to a nonvolatile memory area
@@ -50,7 +50,7 @@ int dat_readNvmArea(const struct nvmArea *area);
  * @param area: NVM area to be written.
  * @return zero on success, a negative error code otherwhise.
  */
-int dat_writeNvmArea(const struct nvmArea *area);
+int dat_writeNvmArea(const struct nvmDescriptor *area);
 
 /**
  * Get the current status of the DAT endpoint.

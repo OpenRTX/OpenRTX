@@ -18,12 +18,12 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <errno.h>
 #include <interfaces/nvmem.h>
+#include <limits.h>
 #include <nvmem_access.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <errno.h>
-
 
 /**
  * \internal
@@ -35,10 +35,10 @@
  * @param len: size of the read/write/erase operation
  * @return true if the operation is within the NVM area bounds
  */
-static inline bool checkBounds(const struct nvmArea *area, uint32_t addr, size_t len)
+static inline bool checkBounds(const struct nvmDescriptor *area, uint32_t addr, size_t len)
 {
-    return (addr >= area->startAddr)
-        && ((addr + len) <= (area->startAddr + area->size));
+    return (addr < area->dev->size)
+        && ((addr + len) <= (area->dev->size));
 }
 
 

@@ -184,7 +184,7 @@ static void catConfigureRtx(void)
     rtx_cfg.bandwidth   = state.channel.bandwidth;
     rtx_cfg.rxFrequency = state.channel.rx_frequency;
     rtx_cfg.txFrequency = state.channel.tx_frequency;
-    rtx_cfg.txPower     = dBmToWatt(state.channel.power);
+    rtx_cfg.txPower     = state.channel.power;
     rtx_cfg.sqlLevel    = state.settings.sqlLevel;
     rtx_cfg.rxToneEn    = state.channel.fm.rxToneEn;
     rtx_cfg.rxTone      = ctcss_tone[state.channel.fm.rxTone];

@@ -29,11 +29,11 @@
 #define ACK   (0x06)  // ACKnowledge, receive OK
 #define NAK   (0x15)  // Negative ACKnowledge, receiver ERROR, retry
 
-static enum DatStatus        status = RTXLINK_DAT_IDLE;
-static const struct nvmArea *memArea;
-static uint8_t               blockCnt;
-static size_t                curAddr;
-static size_t                readSize;
+static enum DatStatus              status = RTXLINK_DAT_IDLE;
+static const struct nvmDescriptor *memArea;
+static uint8_t                     blockCnt;
+static size_t                      curAddr;
+static size_t                      readSize;
 
 static size_t datReadHandler(const uint8_t *rxData, size_t rxLen, uint8_t *txData,
                              size_t txMaxLen)
@@ -59,7 +59,7 @@ static size_t datReadHandler(const uint8_t *rxData, size_t rxLen, uint8_t *txDat
         }
 
         // Previous read ok, update the size for the next read
-        readSize = memArea->size - (curAddr - memArea->startAddr);
+        readSize = memArea->dev->size - curAddr;
         if(readSize == 0)
         {
             status = RTXLINK_DAT_IDLE;
@@ -74,7 +74,7 @@ static size_t datReadHandler(const uint8_t *rxData, size_t rxLen, uint8_t *txDat
     // Read from memory and send
     txData[0] = blockCnt;
     txData[1] = blockCnt ^ 0xFF;
-    nvmArea_read(memArea, curAddr, &txData[2], readSize);
+    nvm_devRead(memArea->dev, curAddr, &txData[2], readSize);
 
     return readSize + 2;
 }
@@ -94,7 +94,7 @@ static size_t datWriteHandler(const uint8_t *rxData, size_t rxLen, uint8_t *txDa
     if(((bNum ^ ibNum) != 0xFF) || (bNum != blockCnt))
         return 1;
 
-    int ret = nvmArea_write(memArea, curAddr, &rxData[2], rxLen - 2);
+    int ret = nvm_devWrite(memArea->dev, curAddr, &rxData[2], rxLen - 2);
     if(ret < 0)
         return 1;
 
@@ -107,28 +107,28 @@ static size_t datWriteHandler(const uint8_t *rxData, size_t rxLen, uint8_t *txDa
 }
 
 
-int dat_readNvmArea(const struct nvmArea *area)
+int dat_readNvmArea(const struct nvmDescriptor *area)
 {
     if(status != RTXLINK_DAT_IDLE)
         return -EBUSY;
 
     status   = RTXLINK_DAT_START_READ;
     memArea  = area;
-    curAddr  = memArea->startAddr;
+    curAddr  = 0;
     blockCnt = 0;
 
     rtxlink_setProtocolHandler(RTXLINK_FRAME_DAT, datReadHandler);
     return 0;
 }
 
-int dat_writeNvmArea(const struct nvmArea *area)
+int dat_writeNvmArea(const struct nvmDescriptor *area)
 {
     if(status != RTXLINK_DAT_IDLE)
         return -EBUSY;
 
     status = RTXLINK_DAT_WRITE;
     memArea  = area;
-    curAddr  = memArea->startAddr;
+    curAddr  = 0;
     blockCnt = 0;
 
     rtxlink_setProtocolHandler(RTXLINK_FRAME_DAT, datWriteHandler);
