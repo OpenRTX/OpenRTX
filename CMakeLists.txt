@@ -103,6 +103,9 @@ target_sources(app
     openrtx/src/core/crc.c
     openrtx/src/core/slip.c
     openrtx/src/core/rtxlink.c
+    openrtx/src/core/rtxlink_cat.c
+    openrtx/src/core/rtxlink_dat.c
+    openrtx/src/core/rtxlink_fmp.c
     openrtx/src/core/datetime.c
     openrtx/src/core/openrtx.c
     openrtx/src/core/audio_codec.c
