@@ -112,6 +112,12 @@ void nvm_readCalibData(void *buf)
     (void) buf;
 }
 
+const struct nvmDescriptor *nvm_getDesc(const size_t index)
+{
+    (void) index;
+    return NULL;
+}
+
 void nvm_readHwInfo(hwInfo_t *info)
 {
     (void) info;
