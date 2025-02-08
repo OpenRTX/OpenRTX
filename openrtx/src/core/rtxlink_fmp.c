@@ -62,32 +62,35 @@ static size_t cmd_meminfo(const uint8_t *args, const uint8_t nArg, uint8_t *repl
     (void) nArg;
 
     // Get the list of the NVM areas on the device
-    const struct nvmArea *areas;
-    size_t numAreas = nvm_getMemoryAreas(&areas);
+    const struct nvmDescriptor *area;
+    size_t numAreas = 0;
 
     // Prepare the response frame
     size_t replySize = 3;
     reply[0]         = FMP_FRAME_MEMINFO;   // Command ID
     reply[1]         = 0x00;                // Status = OK
-    reply[2]         = numAreas;            // Num of elements
 
     // Append the memory information blocks in the reply
-    for(size_t i = 0; i < numAreas; i++)
+    while (NULL != nvm_getDesc(numAreas))
     {
+        numAreas++;
         // Set length of the parameter and parameter data
         reply[replySize] = sizeof(struct memInfo);
         replySize       += 1;
     }
+
+    reply[2]         = numAreas;            // Num of elements
 
     for(size_t i = 0; i < numAreas; i++)
     {
         if(replySize == (MAX_REPLY_SIZE - 1))
             break;
 
+        area = nvm_getDesc(i);
         struct memInfo infoBlock;
-        infoBlock.size  = areas[i].size;
-        infoBlock.flags = nvmArea_params(&areas[i])->type;
-        strncpy(infoBlock.name, areas[i].name, sizeof(infoBlock.name));
+        infoBlock.size  = area->dev->size;
+        infoBlock.flags = 0;
+        strncpy(infoBlock.name, area->name, sizeof(infoBlock.name));
 
         memcpy(&reply[replySize], &infoBlock, sizeof(infoBlock));
 
@@ -103,17 +106,17 @@ static size_t cmd_dumpRestore(const uint8_t cmd, const uint8_t *args,
 {
     (void) nArg;
 
-    const struct nvmArea *areas;
-    size_t numAreas = nvm_getMemoryAreas(&areas);
+    // Verify memory index
+    uint8_t area_index = args[1];
+    const struct nvmDescriptor *area = nvm_getDesc(area_index);
+
 
     // Prepare the response frame
     size_t replySize = 3;
     reply[1]         = 0x00;    // Status = OK
     reply[2]         = 0x00;    // Empty response, no parameters
 
-    // Verify memory index
-    uint8_t area = args[1];
-    if(area >= numAreas)
+    if(area == NULL)
     {
         reply[1] = EINVAL;
         return replySize;
@@ -121,9 +124,9 @@ static size_t cmd_dumpRestore(const uint8_t cmd, const uint8_t *args,
 
     int ret;
     if(cmd == FMP_FRAME_DUMP)
-        ret = dat_readNvmArea(&areas[area]);
+        ret = dat_readNvmArea(area);
     else
-        ret = dat_writeNvmArea(&areas[area]);
+        ret = dat_writeNvmArea(area);
 
     if(ret < 0)
         reply[1] = -ret;

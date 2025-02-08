@@ -107,13 +107,6 @@ void nvm_terminate()
 
 }
 
-size_t nvm_getMemoryAreas(const struct nvmArea **list)
-{
-    *list = NULL;
-
-    return 0;
-}
-
 void nvm_readCalibData(void *buf)
 {
     (void) buf;
