@@ -152,7 +152,7 @@ void nvm_terminate()
 
 const struct nvmDescriptor *nvm_getDesc(const size_t index)
 {
-    if(index > 0)
+    if(index >= 0)
         return NULL;
 
     return &stateNvm;
