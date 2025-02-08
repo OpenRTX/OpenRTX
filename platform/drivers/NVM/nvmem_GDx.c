@@ -134,7 +134,7 @@ void nvm_terminate()
 
 const struct nvmDescriptor *nvm_getDesc(const size_t index)
 {
-    if(index > 2)
+    if(index >= (sizeof(nvmDevices) / sizeof(struct nvmDescriptor)))
         return NULL;
 
     return &nvmDevices[index];
