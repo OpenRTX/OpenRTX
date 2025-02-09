@@ -20,6 +20,7 @@
 
 #include <calibInfo_A36Plus.h>
 #include <interfaces/delays.h>
+#include <nvmem_access.h>
 #include <interfaces/nvmem.h>
 #include <string.h>
 #include <utils.h>
@@ -28,6 +29,18 @@
 #include "AT24Cx.h"
 #include "W25Qx.h"
 #include "spi_gd32.h"
+
+extern const struct nvmDevice eflash;
+
+static inline void W25Qx_readData(uint32_t addr, void *buf, size_t len)
+{
+    nvm_devRead(&eflash, addr, buf, len);
+}
+
+static inline int W25Qx_erase(uint32_t addr, size_t size)
+{
+    nvm_devErase(&eflash, addr, size);
+}
 
 static const struct W25QxCfg eflashCfg =
 {
@@ -96,7 +109,7 @@ void nvm_init()
     gpio_setMode(FLASH_CLK, ALTERNATE | ALTERNATE_FUNC(0));
     gpio_setMode(FLASH_SDO, ALTERNATE | ALTERNATE_FUNC(0));
     gpio_setMode(FLASH_SDI, ALTERNATE | ALTERNATE_FUNC(0));
--
+
     spiGd32_init(&nvm_spi, 21000000, 0);
     W25Qx_init(&eflash);
 }
