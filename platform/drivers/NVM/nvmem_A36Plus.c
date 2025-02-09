@@ -18,14 +18,16 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <string.h>
-#include <wchar.h>
+#include <calibInfo_A36Plus.h>
 #include <interfaces/delays.h>
 #include <interfaces/nvmem.h>
-#include <calibInfo_A36Plus.h>
+#include <string.h>
 #include <utils.h>
+#include <wchar.h>
+
 #include "AT24Cx.h"
 #include "W25Qx.h"
+#include "spi_gd32.h"
 
 static const struct W25QxCfg eflashCfg =
 {
@@ -33,7 +35,8 @@ static const struct W25QxCfg eflashCfg =
     .cs  = { &GpioA,4 }
 };
 
-W25Qx_DEVICE_DEFINE(eflash, NULL, 0x200000)  // 2 MB,  16 Mbit
+//W25Qx_DEVICE_DEFINE(eflash, NULL, 0x200000)  // 2 MB,  16 Mbit
+W25Qx_DEVICE_DEFINE(eflash, eflashCfg, 0x200000)  // 2 MB,  16 Mbit
 
 static const struct nvmDescriptor nvmDevices[] =
 {
@@ -66,7 +69,7 @@ static const uint32_t baseAddress = 0x000A1000;     // 0x000A1000;
 #if 0
 void nvm_dumpFlash()
 {
-    W25Qx_wakeup();
+    W25Qx_wakeup(&eflash);
     delayUs(5);
 
     uint8_t buf[16];
@@ -90,12 +93,18 @@ void nvm_dumpFlash()
 
 void nvm_init()
 {
-    W25Qx_init();
+    gpio_setMode(FLASH_CLK, ALTERNATE | ALTERNATE_FUNC(0));
+    gpio_setMode(FLASH_SDO, ALTERNATE | ALTERNATE_FUNC(0));
+    gpio_setMode(FLASH_SDI, ALTERNATE | ALTERNATE_FUNC(0));
+-
+    spiGd32_init(&nvm_spi, 21000000, 0);
+    W25Qx_init(&eflash);
 }
 
 void nvm_terminate()
 {
-    W25Qx_terminate();
+    W25Qx_terminate(&eflash);
+    spiGd32_terminate(&nvm_spi);
 }
 
 const struct nvmDescriptor *nvm_getDesc(const size_t index)
@@ -108,7 +117,7 @@ const struct nvmDescriptor *nvm_getDesc(const size_t index)
 
 void nvm_readCalibData(void *buf)
 {
-    W25Qx_wakeup();
+    W25Qx_wakeup(&eflash);
     delayUs(5);
 
     PowerCalibrationTables *calib = ((PowerCalibrationTables *) buf);
@@ -176,7 +185,7 @@ int nvm_readSettings(settings_t *settings)
 
 int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
 {
-    W25Qx_wakeup();
+    W25Qx_wakeup(&eflash);
     W25Qx_erase(baseAddress, 4096);
     // Create datablock of settings and vfoData
     dataBlock_t dataBlock;

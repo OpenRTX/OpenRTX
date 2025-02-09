@@ -316,12 +316,14 @@ gd32f330_src = [
                 'platform/mcu/GD32F330/boot/bsp.cpp',
                 'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_timer.c',
                 'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_rcu.c',
+                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_spi.c',
                 'platform/mcu/GD32F330/boot/libc_integration.cpp']
 
 gd32f330_inc = ['platform/mcu/GD32F330',
                 'platform/mcu/GD32F330/drivers',
                 'platform/mcu/CMSIS/Include',
                 'platform/mcu/CMSIS/Device/GD/GD32F3x0/Include']
+
 
 gd32f330_def = {'GD32F330':''}
 

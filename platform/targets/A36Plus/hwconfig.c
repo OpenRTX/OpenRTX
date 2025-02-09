@@ -23,6 +23,7 @@
 #include <spi_custom.h>
 #include <spi_mk22.h>
 #include <hwconfig.h>
+#include <spi_gd32.h>
 
 static const struct spiConfig spiFlashCfg =
 {
@@ -33,5 +34,10 @@ static const struct spiConfig spiFlashCfg =
     .flags     = 0
 };
 
-SPI_BITBANG_DEVICE_DEFINE(nvm_spi, spiFlashCfg, NULL)
+static pthread_mutex_t nvm_mutex;
+
+
+SPI_BITBANG_DEVICE_DEFINE(bk4819_spi, spiFlashCfg, NULL)
+SPI_GD32_DEVICE_DEFINE(nvm_spi, SPI0, NULL)
+SPI_GD32_DEVICE_DEFINE(st7735s_spi, SPI1, NULL)
 
