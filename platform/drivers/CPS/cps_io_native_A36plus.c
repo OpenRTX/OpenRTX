@@ -29,6 +29,8 @@
 static const uint32_t chDataBaseAddr  = 0x0;  /**< Base address of channel data         */
 static const uint32_t maxNumChannels  = 512;     /**< Maximum number of channels in memory */
 
+extern const struct nvmDevice eflash;
+
 
 /**
  * This function does not apply to address-based codeplugs
@@ -62,13 +64,13 @@ int cps_readChannel(channel_t *channel, uint16_t pos)
 
     memset(channel, 0x00, sizeof(channel_t));
 
-    W25Qx_wakeup();
+    W25Qx_wakeup(&eflash);
     delayUs(5);
 
     a36plusChannel_t chData;
     uint32_t readAddr = chDataBaseAddr + pos * sizeof(a36plusChannel_t);
     W25Qx_readData(readAddr, ((uint8_t *) &chData), sizeof(a36plusChannel_t));
-    W25Qx_sleep();
+    W25Qx_sleep(&eflash);
 
     // Check if channel is empty
     if(chData.rx_frequency == 0xFFFFFFFF)
