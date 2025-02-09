@@ -21,7 +21,6 @@
 
 #include <spi_bitbang.h>
 #include <spi_custom.h>
-#include <spi_mk22.h>
 #include <hwconfig.h>
 #include <spi_gd32.h>
 
@@ -33,8 +32,6 @@ static const struct spiConfig spiFlashCfg =
     .clkPeriod = SCK_PERIOD_FROM_FREQ(1000000),
     .flags     = 0
 };
-
-static pthread_mutex_t nvm_mutex;
 
 
 SPI_BITBANG_DEVICE_DEFINE(bk4819_spi, spiFlashCfg, NULL)
