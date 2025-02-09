@@ -22,11 +22,13 @@
 void gpio_setMode(const void *port, const uint8_t pin, const uint16_t mode)
 {
     gpio_type *p = (gpio_type *)(port);
+    uint8_t af = (mode >> 8) & 0x0F;
+
     p->cfgr  &= ~(3 << (pin*2));
     p->omode &= ~(1 << pin);
     p->pull  &= ~(3 << (pin*2));
 
-    switch(mode)
+    switch(mode & 0xFF)
     {
         case INPUT:
             // (CFGR=00 OMODE=0 PULL=00)
@@ -70,11 +72,19 @@ void gpio_setMode(const void *port, const uint8_t pin, const uint16_t mode)
             p->pull  |= 0x00 << (pin*2);
             break;
 
+        case OPEN_DRAIN_PU:
+            // (MODE=01 TYPE=1 PUP=01)
+            p->cfgr  |= 0x01 << (pin*2);
+            p->omode |= 0x01 << pin;
+            p->pull  |= 0x01 << (pin*2);
+            break;
+
         case ALTERNATE:
             // (MODE=10 TYPE=0 PUP=00)
             p->cfgr  |= 0x02 << (pin*2);
             p->omode |= 0x00 << pin;
             p->pull  |= 0x00 << (pin*2);
+            gpio_af_set((uint32_t)p, af, pin);
             break;
 
         case ALTERNATE_OD:
@@ -82,6 +92,15 @@ void gpio_setMode(const void *port, const uint8_t pin, const uint16_t mode)
             p->cfgr  |= 0x02 << (pin*2);
             p->omode |= 0x01 << pin;
             p->pull  |= 0x00 << (pin*2);
+            gpio_af_set((uint32_t)p, af, pin);
+            break;
+
+        case ALTERNATE_OD_PU:
+            // (MODE=10 TYPE=1 PUP=01)
+            p->cfgr  |= 0x02 << (pin*2);
+            p->omode |= 0x01 << pin;
+            p->pull  |= 0x01 << (pin*2);
+            gpio_af_set((uint32_t)p, af, pin);
             break;
 
         default:
