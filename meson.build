@@ -309,6 +309,7 @@ gd32f330_src = [
                 'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_adc.c',
                 'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_pmu.c',
                 'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_dma.c',
+                'platform/drivers/SPI/spi_gd32.c',
                 'platform/drivers/GPIO/gpio_gd32.c',
                 'platform/mcu/GD32F330/drivers/delays.cpp',
                 'platform/mcu/GD32F330/drivers/USART0.cpp',

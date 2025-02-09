@@ -28,7 +28,8 @@
 
 #include "AT24Cx.h"
 #include "W25Qx.h"
-#include "spi_gd32.h"
+//#include "spi_gd32.h"
+#include <spi_stm32.h>
 
 extern const struct nvmDevice eflash;
 
@@ -39,7 +40,12 @@ static inline void W25Qx_readData(uint32_t addr, void *buf, size_t len)
 
 static inline int W25Qx_erase(uint32_t addr, size_t size)
 {
-    nvm_devErase(&eflash, addr, size);
+    return nvm_devErase(&eflash, addr, size);
+}
+
+int W25Qx_writeData(uint32_t addr, const void *buf, size_t len)
+{
+    return nvm_devWrite(&eflash, addr, buf, len);
 }
 
 static const struct W25QxCfg eflashCfg =
