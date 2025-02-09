@@ -20,6 +20,7 @@
 
 #include <interfaces/cps_io.h>
 #include <interfaces/delays.h>
+#include <nvmem_access.h>
 #include <string.h>
 #include <wchar.h>
 #include <utils.h>
@@ -31,6 +32,10 @@ static const uint32_t maxNumChannels  = 512;     /**< Maximum number of channels
 
 extern const struct nvmDevice eflash;
 
+static inline void W25Qx_readData(uint32_t addr, void *buf, size_t len)
+{
+    nvm_devRead(&eflash, addr, buf, len);
+}
 
 /**
  * This function does not apply to address-based codeplugs
