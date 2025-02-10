@@ -25,27 +25,28 @@
 #include "gd32f3x0_spi.h"
 #include "spi_gd32.h"
 
-//static inline uint8_t spi_sendRecv(SPI_TypeDef *spi, const uint8_t val)
-/*!
-    \brief      SPI receive/transmit data
-    \param[in]  spi_periph: SPIx(x=0,1)
-    \param[in]  val: 8-bit data
-    \param[out] none
-    \retval     8-bit data
-*/
 static inline uint8_t spi_sendRecv(uint32_t spi_periph, const uint8_t val)
 {
-    SPI_DATA(spi_periph) = (uint32_t)val;   // Write to SPI
-    while((SPI_STAT(spi_periph) & SPI_STAT_RBNE) == 0);  // Wait for receive buffer not empty
-    return ((uint8_t)SPI_DATA(spi_periph));
+
+    //Reusing code from spiFlash_A36plus, which should be working, later try if it's possible with less branching
+    while (spi_i2s_flag_get(spi_periph, SPI_FLAG_TBE) == RESET)
+        ;
+    spi_i2s_data_transmit(spi_periph, val);
+    while (spi_i2s_flag_get(spi_periph, SPI_FLAG_TRANS) != RESET)
+        ;
+    while (spi_i2s_flag_get(spi_periph, SPI_FLAG_RBNE) == RESET)
+        ;
+    return spi_i2s_data_receive(spi_periph);
+
 }
 
 int spiGd32_init(const struct spiDevice *dev, const uint32_t speed, const uint8_t flags)
 {
-    spi_parameter_struct *spi = (spi_parameter_struct *) dev->priv;
-    rcu_clock_freq_enum busId;
+    uint32_t spi_periph = (uint32_t)dev->priv;
+    spi_parameter_struct spi_init_struct;
+    uint8_t busId;
 
-    switch((uint32_t) spi)
+    switch(spi_periph)
     {
         case SPI0:
             busId = CK_APB2;
@@ -58,6 +59,13 @@ int spiGd32_init(const struct spiDevice *dev, const uint32_t speed, const uint8_
             rcu_periph_clock_enable(RCU_SPI1);
             __DSB();
             break;
+
+        // F303 seems to have SPI2, F330 does not
+        // case SPI2:
+        //     busId = CK_APB1; //check for f303!!
+        //     rcu_periph_clock_enable(RCU_SPI2);
+        //     __DSB();
+        //     break;
 
         default:
             return -ENODEV;
@@ -79,19 +87,22 @@ int spiGd32_init(const struct spiDevice *dev, const uint32_t speed, const uint8_
     if(spiClk > speed)
         return -EINVAL;
 
-    spi->prescale = spiDiv;             // Prescale Divider
-    spi->device_mode = SPI_MASTER;      // Master mode and Software NSS (SPI_master is defined as SPI_CTL0_MSTMOD | SPI_CTL0_SWNSS)
+    // Initialize SPI parameter structure with default values
+    spi_struct_para_init(&spi_init_struct);
 
-    if((flags & SPI_FLAG_CPOL) != 0)
-        spi->clock_polarity_phase |= SPI_CTL0_CKPL;
+    /* configure SPI1 parameters based on the flags */
+    spi_init_struct.device_mode = SPI_MASTER;                                                  /*!< SPI master or slave */
+    spi_init_struct.trans_mode = SPI_TRANSMODE_FULLDUPLEX;                                     /*!< SPI transfer type */
+    spi_init_struct.frame_size = SPI_FRAMESIZE_8BIT;                                           /*!< SPI frame size */
+    spi_init_struct.nss = SPI_NSS_SOFT;                                                        /*!< SPI NSS control by handware or software */
+    spi_init_struct.endian = (flags & SPI_LSB_FIRST) ? SPI_ENDIAN_LSB : SPI_ENDIAN_MSB;        /*!< SPI big endian or little endian */
+    spi_init_struct.clock_polarity_phase =                                                     /*!< SPI clock phase and polarity */
+        ((flags & SPI_FLAG_CPOL) ? SPI_CTL0_CKPL : 0) |
+        ((flags & SPI_FLAG_CPHA) ? SPI_CTL0_CKPH : 0);
+    spi_init_struct.prescale = CTL0_PSC(spiDiv);                                               /*!< Prescale Divider */
 
-    if((flags & SPI_FLAG_CPHA) != 0)
-        spi->clock_polarity_phase |= SPI_CTL0_CKPH;
-
-    if((flags & SPI_LSB_FIRST) != 0)
-        spi->endian |= SPI_ENDIAN_LSB;
-
-    spi_enable((uint32_t) spi);     // Enable peripheral
+    GD32_spi_init(spi_periph, &spi_init_struct);
+    spi_enable(spi_periph);
 
     if(dev->mutex != NULL)
         pthread_mutex_init((pthread_mutex_t *) dev->mutex, NULL);
@@ -99,22 +110,10 @@ int spiGd32_init(const struct spiDevice *dev, const uint32_t speed, const uint8_
     return 0;
 }
 
-void spiGd32_terminate(const struct spiDevice *dev)
+void spiStm32_terminate(const struct spiDevice *dev)
 {
-    spi_parameter_struct *spi = (spi_parameter_struct *) dev->priv;
-
-    switch((uint32_t) spi)
-    {
-        case SPI0:
-            rcu_periph_clock_disable(RCU_SPI0);
-            __DSB();
-            break;
-
-        case SPI1:
-            rcu_periph_clock_disable(RCU_SPI1);
-            __DSB();
-            break;
-    }
+    uint32_t spi_periph = (uint32_t)dev->priv;
+    spi_i2s_deinit(spi_periph);
 
     if(dev->mutex != NULL)
         pthread_mutex_destroy((pthread_mutex_t *) dev->mutex);
@@ -123,7 +122,9 @@ void spiGd32_terminate(const struct spiDevice *dev)
 int spiGd32_transfer(const struct spiDevice *dev, const void *txBuf,
                       void *rxBuf, const size_t size)
 {
-    spi_parameter_struct *spi = (spi_parameter_struct *) dev->priv;
+    //SPI_TypeDef *spi = (SPI_TypeDef *) dev->priv;
+    uint32_t spi_periph = (uint32_t)dev->priv;
+
     uint8_t *rxData = (uint8_t *) rxBuf;
     const uint8_t *txData = (const uint8_t *) txBuf;
 
@@ -131,7 +132,7 @@ int spiGd32_transfer(const struct spiDevice *dev, const void *txBuf,
     if(rxBuf == NULL)
     {
         for(size_t i = 0; i < size; i++)
-            spi_sendRecv(spi, txData[i]);
+            spi_sendRecv(spi_periph, txData[i]);
 
         return 0;
     }
@@ -140,14 +141,14 @@ int spiGd32_transfer(const struct spiDevice *dev, const void *txBuf,
     if(txBuf == NULL)
     {
         for(size_t i = 0; i < size; i++)
-            rxData[i] = spi_sendRecv(spi, 0x00);
+            rxData[i] = spi_sendRecv(spi_periph, 0x00);
 
         return 0;
     }
 
     // Transmit and receive
     for(size_t i = 0; i < size; i++)
-        rxData[i] = spi_sendRecv(spi, txData[i]);
+        rxData[i] = spi_sendRecv(spi_periph, txData[i]);
 
     return 0;
 }

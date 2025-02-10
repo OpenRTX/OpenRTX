@@ -55,7 +55,8 @@
 #define FLASH_SDI GPIOA, 7
 #define FLASH_SDO GPIOA, 6
 #define FLASH_CLK GPIOA, 5
-#define FLASH_CS GPIOA, 4
+//#define FLASH_CS GPIOA, 4
+#define FLASH_CS  &GpioA,4
 
 // BK1080
 #define BK1080_CLK GPIOF, 6

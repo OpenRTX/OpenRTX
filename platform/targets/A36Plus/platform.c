@@ -68,6 +68,7 @@ static void lcd_spi_config(void)
 
 void spi_config(void)
 {
+    //TRIS To Be Removed once everything uses spiDevice
     rcu_periph_clock_enable(RCU_SPI0);
     rcu_periph_clock_enable(RCU_SPI1);
     lcd_spi_config();
