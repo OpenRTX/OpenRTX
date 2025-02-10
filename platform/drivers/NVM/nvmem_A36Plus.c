@@ -21,6 +21,8 @@
 #include <string.h>
 #include <wchar.h>
 #include <interfaces/delays.h>
+#include <nvmem_access.h>
+#include <spi_gd32.h>
 #include <interfaces/nvmem.h>
 #include <calibInfo_A36Plus.h>
 #include <utils.h>
@@ -29,11 +31,26 @@
 
 static const struct W25QxCfg eflashCfg =
 {
-    .spi = (const struct spiDevice *) &nvm_spi,
-    .cs  = { &GpioA,4 }
+    .spi = (const struct spiDevice *) &nvm_spi0,
+    .cs  = { FLASH_CS }
 };
+W25Qx_DEVICE_DEFINE(eflash, eflashCfg, 0x200000)  // 2 MB,  16 Mbit
 
-W25Qx_DEVICE_DEFINE(eflash, NULL, 0x200000)  // 2 MB,  16 Mbit
+
+static inline void W25Qx_readData(uint32_t addr, void *buf, size_t len)
+{
+    nvm_devRead(&eflash, addr, buf, len);
+}
+
+static inline int W25Qx_erase(uint32_t addr, size_t size)
+{
+    return nvm_devErase(&eflash, addr, size);
+}
+
+int W25Qx_writeData(uint32_t addr, const void *buf, size_t len)
+{
+    return nvm_devWrite(&eflash, addr, buf, len);
+}
 
 static const struct nvmDescriptor nvmDevices[] =
 {
@@ -66,7 +83,7 @@ static const uint32_t baseAddress = 0x000A1000;     // 0x000A1000;
 #if 0
 void nvm_dumpFlash()
 {
-    W25Qx_wakeup();
+    W25Qx_wakeup(&eflash);
     delayUs(5);
 
     uint8_t buf[16];
@@ -84,18 +101,44 @@ void nvm_dumpFlash()
         }
     }
 
-    //W25Qx_sleep();
+    //W25Qx_sleep(&eflash);
 }
 #endif
 
 void nvm_init()
 {
-    W25Qx_init();
+
+    //taking from spiFlash_A36 plus .. should be working
+    #define FLASH_GPIO_PORT GPIOA
+    #define FLASH_GPIO_SCK_PIN GPIO_PIN_5
+    #define FLASH_GPIO_DIN_PIN GPIO_PIN_6
+    #define FLASH_GPIO_DOUT_PIN GPIO_PIN_7
+    #define FLASH_GPIO_CS_PIN GPIO_PIN_4
+
+    gpio_af_set(FLASH_GPIO_PORT, GPIO_AF_0, FLASH_GPIO_SCK_PIN | FLASH_GPIO_DIN_PIN | FLASH_GPIO_DOUT_PIN);
+    gpio_mode_set(FLASH_GPIO_PORT, GPIO_MODE_AF, GPIO_PUPD_NONE, FLASH_GPIO_SCK_PIN | FLASH_GPIO_DIN_PIN | FLASH_GPIO_DOUT_PIN);
+    gpio_output_options_set(FLASH_GPIO_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, FLASH_GPIO_SCK_PIN | FLASH_GPIO_DIN_PIN | FLASH_GPIO_DOUT_PIN);
+
+    gpio_mode_set(FLASH_GPIO_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP, FLASH_GPIO_CS_PIN);
+    gpio_output_options_set(FLASH_GPIO_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, FLASH_GPIO_CS_PIN);
+    spi_parameter_struct spi_init_struct;
+
+    //For testing later if all works
+    // gpio_setMode(FLASH_CLK, ALTERNATE | ALTERNATE_FUNC(0));
+    // gpio_setMode(FLASH_SDO, ALTERNATE | ALTERNATE_FUNC(0));
+    // gpio_setMode(FLASH_SDI, ALTERNATE | ALTERNATE_FUNC(0));
+
+    spiGd32_init(&nvm_spi0, 21000000, 0);
+    W25Qx_init(&eflash);
 }
 
 void nvm_terminate()
 {
-    W25Qx_terminate();
+    W25Qx_terminate(&eflash);
+    spiGd32_terminate(&nvm_spi0);
+
+    //
+
 }
 
 const struct nvmDescriptor *nvm_getDesc(const size_t index)
@@ -108,7 +151,7 @@ const struct nvmDescriptor *nvm_getDesc(const size_t index)
 
 void nvm_readCalibData(void *buf)
 {
-    W25Qx_wakeup();
+    W25Qx_wakeup(&eflash);
     delayUs(5);
 
     PowerCalibrationTables *calib = ((PowerCalibrationTables *) buf);
@@ -121,7 +164,7 @@ void nvm_readCalibData(void *buf)
     addr += sizeof(PowerCalibration);
     W25Qx_readData(addr, &calib->low, sizeof(PowerCalibration));
 
-    // W25Qx_sleep();
+    // W25Qx_sleep(&eflash);
 }
 
 void nvm_readHwInfo(hwInfo_t *info)
@@ -176,7 +219,7 @@ int nvm_readSettings(settings_t *settings)
 
 int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
 {
-    W25Qx_wakeup();
+    W25Qx_wakeup(&eflash);
     W25Qx_erase(baseAddress, 4096);
     // Create datablock of settings and vfoData
     dataBlock_t dataBlock;

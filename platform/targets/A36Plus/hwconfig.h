@@ -24,6 +24,10 @@
 #include <gd32f3x0.h>
 #include "pinmap.h"
 
+//extern const struct spiCustomDevice nvm_spi;
+extern const struct spiDevice nvm_spi0;
+extern const struct spiDevice st7735s_spi1;
+
 // Screen dimensions and pixel format
 #define CONFIG_SCREEN_WIDTH  132
 #define CONFIG_SCREEN_HEIGHT 128
