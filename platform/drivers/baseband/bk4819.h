@@ -355,6 +355,11 @@ uint8_t bk4819_get_vox(void);
  */
 void bk4819_set_Squelch(uint8_t RTSO, uint8_t RTSC, uint8_t ETSO, uint8_t ETSC, uint8_t GTSO, uint8_t GTSC);
 
+/**
+ * @brief Set AF mode
+ *
+ * @param mode
+ */
 void BK4819_SetAF(uint8_t AF);
 
 /**

@@ -1410,12 +1410,23 @@ void ui_updateFSM(bool *sync_rtx)
 #if !defined(PLATFORM_TTWRPLUS)
     if ((!state.emergency) && (!txOngoing) && (state.charge <= 0))
     {
+#ifdef GD32F30X_XD
+        // We have to rely on low battery voltage to detect the power switch being turned off
+        // since the power switch is not connected to the MCU anymore.
+        if (state.charge <= 0)
+        {
+            // shutdown
+            state.devStatus = SHUTDOWN;
+        }
+
+#else
         state.ui_screen = LOW_BAT;
         if(event.type == EVENT_KBD && event.payload)
         {
             state.ui_screen = MAIN_VFO;
             state.emergency = true;
         }
+#endif
         return;
     }
 #endif // PLATFORM_TTWRPLUS

@@ -32,7 +32,13 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#ifdef GD32F330
 #include <platform/mcu/GD32F330/drivers/USART0.h>
+#endif
+#ifdef GD32F30X_XD
+#include <platform/mcu/GD32F303/drivers/USART0.h>
+#endif
+
 
 #include "printf.h"
 
