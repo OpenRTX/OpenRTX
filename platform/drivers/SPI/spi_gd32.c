@@ -20,9 +20,17 @@
 
 //#include <rcc.h>
 #include <errno.h>
-//#include <stm32f4xx.h>
+
+#ifdef GD32F330
 #include "gd32f3x0_rcu.h"
 #include "gd32f3x0_spi.h"
+#endif
+#ifdef GD32F30X_XD
+#include "gd32f30x_rcu.h"
+#include "gd32f30x_spi.h"
+#endif
+
+
 #include "spi_gd32.h"
 
 static inline uint8_t spi_sendRecv(uint32_t spi_periph, const uint8_t val)

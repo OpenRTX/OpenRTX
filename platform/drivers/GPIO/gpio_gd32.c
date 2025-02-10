@@ -16,7 +16,14 @@
  ***************************************************************************/
 
 #include <errno.h>
-#include "gd32f3x0.h"
+
+#ifdef GD32F330
+#include <gd32f3x0.h>
+#endif
+#ifdef GD32F30X_XD
+#include "gd32f30x.h"
+#endif
+
 #include "gpio_gd32.h"
 
 void gpio_setMode(const void *port, const uint8_t pin, const uint16_t mode)

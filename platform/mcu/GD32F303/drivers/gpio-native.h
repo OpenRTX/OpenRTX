@@ -15,26 +15,19 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef GPIO_GD32_H
-#define GPIO_GD32_H
+#ifndef GPIO_NATIVE_H
+#define GPIO_NATIVE_H
 
 #include <peripherals/gpio.h>
-
-#ifdef GD32F330
-#include <gd32f3x0.h>
-#endif
-#ifdef GD32F30X_XD
-#include "gd32f30x.h"
-#endif
-
-
+#include <hwconfig.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * This file provides the interface for GD32 gpio.
+ * This file provides the interface for STM32 gpio.
  */
 
 /**
@@ -48,15 +41,6 @@ enum Speed
     FAST   = 0x2,   ///< 50MHz
     HIGH   = 0x3    ///< 100MHz
 };
-
-/**
- * GD32 gpio devices
- */
-extern const struct gpioDev GpioA;
-extern const struct gpioDev GpioB;
-extern const struct gpioDev GpioC;
-extern const struct gpioDev GpioD;
-extern const struct gpioDev GpioE;
 
 /**
  * Configure gpio pin functional mode.
@@ -86,7 +70,7 @@ void gpio_setOutputSpeed(const void *port, const uint8_t pin, const enum Speed s
  */
 static inline void gpio_setPin(const void *port, const uint8_t pin)
 {
-    ((gpio_type *)(port))->scr = (1 << pin);
+    gpio_bit_set((uint32_t)port, (1 << pin));
 }
 
 /**
@@ -98,7 +82,7 @@ static inline void gpio_setPin(const void *port, const uint8_t pin)
  */
 static inline void gpio_clearPin(void *port, uint8_t pin)
 {
-    ((gpio_type *)(port))->scr = (1 << (pin + 16));
+    gpio_bit_reset((uint32_t)port, (1 << pin));
 }
 
 /**
@@ -110,12 +94,11 @@ static inline void gpio_clearPin(void *port, uint8_t pin)
  */
 static inline uint8_t gpio_readPin(const void *port, const uint8_t pin)
 {
-    gpio_type *p = (gpio_type *)(port);
-    return ((p->idt & (1 << pin)) != 0) ? 1 : 0;
+    return gpio_input_bit_get((uint32_t)port, (1 << pin)) ? 1 : 0;
 }
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* GPIO_GD32_H */
+#endif /* GPIO_NATIVE_H */

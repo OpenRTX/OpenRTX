@@ -58,6 +58,7 @@ void audio_connect(const enum AudioSource source, const enum AudioSink sink)
     if (source == SOURCE_RTX && sink == SINK_SPK)
     {
         radio_enableAfOutput();
+        //BK4819_SetAF(1); // AF FM
     }
     gpio_setPin(MIC_SPK_EN);  // open speaker
 }
@@ -73,6 +74,7 @@ void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
     if (source == SOURCE_RTX && sink == SINK_SPK)
     {
         radio_disableAfOutput();
+        //BK4819_SetAF(0); // AF Mute
         //gpio_clearPin(MIC_SPK_EN);  // open microphone
     }
     //gpio_clearPin(MIC_SPK_EN);  // open speaker
