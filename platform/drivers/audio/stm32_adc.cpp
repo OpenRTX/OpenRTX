@@ -301,17 +301,18 @@ static int stm32adc_data(struct streamCtx *ctx, stream_sample_t **buf)
 {
     AdcPeriph *p = reinterpret_cast< AdcPeriph * >(ctx->priv);
 
-    miosix::markBufferAfterDmaRead(ctx->buffer, ctx->bufSize);
+    // Default case: linear mode
+    *buf = ctx->buffer;
+    int size = ctx->bufSize;
 
     if(ctx->bufMode == BUF_CIRC_DOUBLE)
     {
         *buf = reinterpret_cast< stream_sample_t *>(p->stream->idleBuf());
-        return ctx->bufSize/2;
+        size = ctx->bufSize/2;
     }
 
-    // Linear mode: return the full buffer
-    *buf = ctx->buffer;
-    return ctx->bufSize;
+    miosix::markBufferAfterDmaRead(*buf, size*sizeof(stream_sample_t));
+    return size;
 }
 
 static int stm32adc_sync(struct streamCtx *ctx, uint8_t dirty)
