@@ -246,7 +246,7 @@ static int stm32dac_start(const uint8_t instance, const void *config,
     // Configure DAC trigger
     #if defined(STM32H743xx)
     channels[instance].tim.setUpdateFrequency(168000000, ctx->sampleRate);
-    miosix::markBufferBeforeDmaWrite(ctx->buffer, ctx->bufSize);
+    miosix::markBufferBeforeDmaWrite(ctx->buffer, ctx->bufSize*sizeof(stream_sample_t));
     #else
     channels[instance].tim.setUpdateFrequency(ctx->sampleRate);
     #endif
@@ -270,8 +270,9 @@ static int stm32dac_sync(struct streamCtx *ctx, uint8_t dirty)
     if((ctx->bufMode == BUF_CIRC_DOUBLE) && (dirty != 0))
     {
         void *ptr = state->stream.idleBuf();
-        S16toU12(reinterpret_cast< int16_t *>(ptr), ctx->bufSize/2);
-        miosix::markBufferBeforeDmaWrite(ctx->buffer, ctx->bufSize);
+        size_t writeSize = ctx->bufSize/2;
+        S16toU12(reinterpret_cast< int16_t *>(ptr), writeSize);
+        miosix::markBufferBeforeDmaWrite(ctx->buffer, writeSize*sizeof(stream_sample_t));
     }
 
    bool ok = state->stream.sync();
