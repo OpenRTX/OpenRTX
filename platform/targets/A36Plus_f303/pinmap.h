@@ -81,4 +81,17 @@
 // Power button
 #define PWR_SW GPIOF,7
 
+
+//[Tristan]Not for production! For testing with gd32f303 board. PB2 not reachable
+//Uncomment #define GD303_DEV_BOARD to enable
+//#define GD303_DEV_BOARD
+#ifdef GD303_DEV_BOARD
+    // Undefine the previous LCD_CS definition and redefine it for debug mode
+    #undef LCD_CS
+    #undef RF_AM_AGC
+    #define LCD_CS GPIOB, 1
+    #define RF_AM_AGC GPIOB, 2
+#endif
+
+
 #endif
