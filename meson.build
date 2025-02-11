@@ -266,7 +266,7 @@ mk22fn512_inc = ['platform/mcu/CMSIS/Include',
                  'platform/mcu/MK22FN512xxx12',
                  'platform/mcu/MK22FN512xxx12/drivers']
 
-mk22fn512_def = {}
+mk22fn512_def = {'MK22FN512xx': ''}
 
 mk22fn512_src += miosix_cm4f_src
 mk22fn512_inc += miosix_cm4f_inc

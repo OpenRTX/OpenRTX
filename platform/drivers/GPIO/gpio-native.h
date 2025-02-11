@@ -18,10 +18,9 @@
 #ifndef GPIO_NATIVE_H
 #define GPIO_NATIVE_H
 
-#if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0) \
- || defined(PLATFORM_MD9600) || defined(PLATFORM_MOD17)
+#if defined(STM32F405xx)
 #include <gpio_stm32.h>
-#elif defined(PLATFORM_GD77) || defined(PLATFORM_DM1801)
+#elif defined(MK22FN512xx)
 #include <gpio_mk22.h>
 #endif
 
