@@ -24,7 +24,14 @@
 #include <peripherals/gpio.h>
 #include <hwconfig.h>
 #include <stddef.h>
+
+#ifdef GD32F330
 #include "gd32f3x0.h"
+#endif
+#ifdef GD32F30X_XD
+#include "gd32f30x.h"
+#endif
+
 #include <graphics.h>
 
 enum ST7735S_command
@@ -238,6 +245,8 @@ void *display_getFrameBuffer()
 
 void display_terminate()
 {
+    sendCommand(ST7735S_CMD_DISPOFF);
+    gpio_clearPin(LCD_RST);
 
 }
 
@@ -289,7 +298,7 @@ void display_defineScrollArea(uint16_t x, uint16_t x2)
 
 	/* reset mv */
 
-	//sendCommand(ST7735S_CMD_MADCTL);                
+	//sendCommand(ST7735S_CMD_MADCTL);
 	//sendShort(0xC8 & ~(1 << 5));
 
 	sendCommand(ST7735S_CMD_SCRLAR);
@@ -335,5 +344,11 @@ void display_setBacklightLevel(uint8_t level)
         level = 100;
 
     uint32_t pwmLevel = (level / 100.0) * 255;
-    TIMER_CH0CV(TIMER16) = pwmLevel;
+
+	#ifdef GD32F330
+	TIMER_CH0CV(TIMER16) = pwmLevel;
+	#endif
+	#ifdef GD32F30X_XD
+    TIMER_CH1CV(TIMER3) = pwmLevel;
+	#endif
 }

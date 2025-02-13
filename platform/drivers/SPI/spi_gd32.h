@@ -28,7 +28,7 @@ extern "C" {
 #endif
 
 /**
- *  Instantiate an GigaDevice GD32 SPI master device.
+ *  Instantiate a GigaDevice GD32 SPI master device.
  *
  * @param name: device name.
  * @param peripheral: underlying MCU peripheral.

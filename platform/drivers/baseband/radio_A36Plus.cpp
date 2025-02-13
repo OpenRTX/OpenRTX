@@ -22,8 +22,16 @@
 #include <calibInfo_A36Plus.h>
 #include <interfaces/nvmem.h>
 #include <drivers/USART0.h>
+
+#ifdef GD32F330
 #include <platform/mcu/GD32F330/drivers/gpio.h>
 #include <gd32f3x0.h>
+#endif
+#ifdef GD32F30X_XD
+#include <platform/mcu/GD32F303/drivers/gpio.h>
+#include "gd32f30x.h"
+#endif
+
 #include <hwconfig.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/radio.h>
@@ -85,8 +93,14 @@ void radio_init(const rtxStatus_t* rtxState)
     rcu_periph_clock_enable(RCU_GPIOA);
     rcu_periph_clock_enable(RCU_GPIOB);
     rcu_periph_clock_enable(RCU_GPIOC);
-    rcu_periph_clock_enable(RCU_GPIOF);
 
+    #ifdef GD32F330
+    rcu_periph_clock_enable(RCU_GPIOF);
+    #endif
+    #ifdef GD32F30X_XD
+    rcu_periph_clock_enable(RCU_GPIOD);
+    rcu_periph_clock_enable(RCU_AF);
+    #endif
 
     gpio_setMode(BK4819_CLK, OUTPUT);
     gpio_setMode(BK4819_DAT, OUTPUT);

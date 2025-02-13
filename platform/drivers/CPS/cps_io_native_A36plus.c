@@ -27,10 +27,10 @@
 #include "cps_data_A36plus.h"
 #include "W25Qx.h"
 
+extern const struct nvmDevice eflash;
+
 static const uint32_t chDataBaseAddr  = 0x0;  /**< Base address of channel data         */
 static const uint32_t maxNumChannels  = 512;     /**< Maximum number of channels in memory */
-
-extern const struct nvmDevice eflash;
 
 static inline void W25Qx_readData(uint32_t addr, void *buf, size_t len)
 {

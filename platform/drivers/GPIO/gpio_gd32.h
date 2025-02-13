@@ -19,7 +19,15 @@
 #define GPIO_GD32_H
 
 #include <peripherals/gpio.h>
+
+#ifdef GD32F330
 #include <gd32f3x0.h>
+#endif
+#ifdef GD32F30X_XD
+#include "gd32f30x.h"
+#endif
+
+
 
 #ifdef __cplusplus
 extern "C" {

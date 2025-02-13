@@ -50,11 +50,9 @@ int W25Qx_writeData(uint32_t addr, const void *buf, size_t len)
 
 static const struct W25QxCfg eflashCfg =
 {
-    .spi = (const struct spiDevice *) &nvm_spi,
-    .cs  = { &GpioA,4 }
+    .spi = (const struct spiDevice *) &nvm_spi0,
+    .cs  = { FLASH_CS }
 };
-
-//W25Qx_DEVICE_DEFINE(eflash, NULL, 0x200000)  // 2 MB,  16 Mbit
 W25Qx_DEVICE_DEFINE(eflash, eflashCfg, 0x200000)  // 2 MB,  16 Mbit
 
 static const struct nvmDescriptor nvmDevices[] =
@@ -106,24 +104,54 @@ void nvm_dumpFlash()
         }
     }
 
-    //W25Qx_sleep();
+    //W25Qx_sleep(&eflash);
 }
 #endif
 
 void nvm_init()
 {
-    gpio_setMode(FLASH_CLK, ALTERNATE | ALTERNATE_FUNC(0));
-    gpio_setMode(FLASH_SDO, ALTERNATE | ALTERNATE_FUNC(0));
-    gpio_setMode(FLASH_SDI, ALTERNATE | ALTERNATE_FUNC(0));
 
-    spiGd32_init(&nvm_spi, 21000000, 0);
+    //taking from spiFlash_A36 plus .. should be working
+    #define FLASH_GPIO_PORT GPIOA
+    #define FLASH_GPIO_SCK_PIN GPIO_PIN_5
+    #define FLASH_GPIO_DIN_PIN GPIO_PIN_6
+    #define FLASH_GPIO_DOUT_PIN GPIO_PIN_7
+    #define FLASH_GPIO_CS_PIN GPIO_PIN_4
+
+#ifdef GD32F330
+    gpio_af_set(FLASH_GPIO_PORT, GPIO_AF_0, FLASH_GPIO_SCK_PIN | FLASH_GPIO_DIN_PIN | FLASH_GPIO_DOUT_PIN);
+    gpio_mode_set(FLASH_GPIO_PORT, GPIO_MODE_AF, GPIO_PUPD_NONE, FLASH_GPIO_SCK_PIN | FLASH_GPIO_DIN_PIN | FLASH_GPIO_DOUT_PIN);
+    gpio_output_options_set(FLASH_GPIO_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, FLASH_GPIO_SCK_PIN | FLASH_GPIO_DIN_PIN | FLASH_GPIO_DOUT_PIN);
+
+    gpio_mode_set(FLASH_GPIO_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP, FLASH_GPIO_CS_PIN);
+    gpio_output_options_set(FLASH_GPIO_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, FLASH_GPIO_CS_PIN);
+#endif
+#ifdef GD32F30X_XD
+    gpio_init(FLASH_GPIO_PORT, GPIO_MODE_AF_PP, GPIO_OSPEED_50MHZ, FLASH_GPIO_SCK_PIN | FLASH_GPIO_DIN_PIN | FLASH_GPIO_DOUT_PIN);
+    gpio_init(FLASH_GPIO_PORT, GPIO_MODE_OUT_PP, GPIO_OSPEED_50MHZ, FLASH_GPIO_CS_PIN);
+    // SPI0_REMAP = 0
+    gpio_pin_remap_config(GPIO_SPI0_REMAP, DISABLE);
+    //gpio_bit_set(FLASH_GPIO_PORT, FLASH_GPIO_CS_PIN);
+#endif
+
+    spi_parameter_struct spi_init_struct;
+
+    //For testing later if all works
+    // gpio_setMode(FLASH_CLK, ALTERNATE | ALTERNATE_FUNC(0));
+    // gpio_setMode(FLASH_SDO, ALTERNATE | ALTERNATE_FUNC(0));
+    // gpio_setMode(FLASH_SDI, ALTERNATE | ALTERNATE_FUNC(0));
+
+    spiGd32_init(&nvm_spi0, 21000000, 0);
     W25Qx_init(&eflash);
 }
 
 void nvm_terminate()
 {
     W25Qx_terminate(&eflash);
-    spiGd32_terminate(&nvm_spi);
+    spiGd32_terminate(&nvm_spi0);
+
+    //
+
 }
 
 const struct nvmDescriptor *nvm_getDesc(const size_t index)
@@ -149,7 +177,7 @@ void nvm_readCalibData(void *buf)
     addr += sizeof(PowerCalibration);
     W25Qx_readData(addr, &calib->low, sizeof(PowerCalibration));
 
-    // W25Qx_sleep();
+    // W25Qx_sleep(&eflash);
 }
 
 void nvm_readHwInfo(hwInfo_t *info)
