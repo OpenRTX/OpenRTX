@@ -23,6 +23,14 @@
 #include <sys/types.h>
 #include "W25Qx.h"
 #include <interfaces/delays.h>
+#include <nvmem_access.h>
+
+extern const struct nvmDevice eflash;
+
+static inline void W25Qx_readData(uint32_t addr, void *buf, size_t len)
+{
+    nvm_devRead(&eflash, addr, buf, len);
+}
 
 void printChunk(void *chunk)
 {
@@ -38,8 +46,6 @@ void printChunk(void *chunk)
 int main()
 {
     delayMs(5000);
-    W25Qx_init();
-    W25Qx_wakeup();
 
     for(uint32_t addr = 0; addr < 0xFFFFFF; addr += 16)
     {

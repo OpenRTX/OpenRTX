@@ -20,12 +20,12 @@
 
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
-#include <interfaces/gpio.h>
+#include <peripherals/gpio.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <hwconfig.h>
 #include <minmea.h>
-#include <interfaces/gps.h>
+#include <peripherals/gps.h>
 
 char line[MINMEA_MAX_LENGTH*10];
 
@@ -52,11 +52,11 @@ int main()
                 {
                     struct minmea_sentence_rmc frame;
                     if (minmea_parse_rmc(&frame, line)) {
-                        printf("$RMC: raw coordinates and speed: (%d/%d,%d/%d) %d/%d\n\r",
+                        printf("$RMC: raw coordinates and speed: (%ld/%ld,%ld/%ld) %ld/%ld\n\r",
                                 frame.latitude.value, frame.latitude.scale,
                                 frame.longitude.value, frame.longitude.scale,
                                 frame.speed.value, frame.speed.scale);
-                        printf("$RMC fixed-point coordinates and speed scaled to three decimal places: (%d,%d) %d\n\r",
+                        printf("$RMC fixed-point coordinates and speed scaled to three decimal places: (%ld,%ld) %ld\n\r",
                                 minmea_rescale(&frame.latitude, 1000),
                                 minmea_rescale(&frame.longitude, 1000),
                                 minmea_rescale(&frame.speed, 1000));
