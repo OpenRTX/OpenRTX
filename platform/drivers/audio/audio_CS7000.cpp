@@ -49,6 +49,23 @@ const struct audioDevice inputDevices[] =
 };
 
 HR_C6000 C6000((const struct spiDevice *) &c6000_spi, { C6K_CS });
+static bool spkEnabled = false;
+
+static inline void selectSpk()
+{
+    if(spkEnabled == false)
+    {
+        gpioDev_set(INT_SPK_MUTE);
+        gpioDev_set(EXT_SPK_MUTE);
+        return;
+    }
+
+    // Phone detect pin is active low
+    if(gpio_readPin(PHONE_DETECT) == 0)
+        gpioDev_clear(EXT_SPK_MUTE);
+    else
+        gpioDev_clear(INT_SPK_MUTE);
+}
 
 static void *audio_thread(void *arg)
 {
@@ -60,6 +77,7 @@ static void *audio_thread(void *arg)
 
     while(state.devStatus != SHUTDOWN)
     {
+        selectSpk();
         Cx000dac_task();
 
         now += 4;
@@ -79,9 +97,15 @@ void audio_init()
     gpio_setMode(C6K_CLK,  ALTERNATE | ALTERNATE_FUNC(5));
     gpio_setMode(C6K_MOSI, ALTERNATE | ALTERNATE_FUNC(5));
     gpio_setMode(C6K_MISO, ALTERNATE | ALTERNATE_FUNC(5));
+    gpio_setMode(PHONE_DETECT, INPUT_PULL_UP);
 
     stm32dac_init(STM32_DAC_CH2, 2048);
     stm32adc_init(STM32_ADC_ADC2);
+
+    gpioDev_set(INT_SPK_MUTE);
+    gpioDev_set(EXT_SPK_MUTE);
+    gpioDev_clear(INT_MIC_SEL);
+    gpioDev_clear(EXT_MIC_SEL);
 
     gpioDev_set(RX_PWR_EN);
     gpioDev_clear(C6K_SLEEP);
@@ -123,8 +147,13 @@ void audio_connect(const enum AudioSource source, const enum AudioSink sink)
         case PATH(SOURCE_MIC, SINK_SPK):
         case PATH(SOURCE_MIC, SINK_RTX):
         case PATH(SOURCE_MIC, SINK_MCU):
+            // Phone detect pin is active low
+            if(gpio_readPin(PHONE_DETECT) == 0)
+                gpioDev_set(EXT_MIC_SEL);
+            else
+                gpioDev_set(INT_MIC_SEL);
+
             gpioDev_set(MIC_PWR_EN);
-            gpioDev_set(INT_MIC_SEL);
             break;
 
         case PATH(SOURCE_RTX, SINK_SPK):
@@ -144,7 +173,7 @@ void audio_connect(const enum AudioSource source, const enum AudioSink sink)
         // Anti-pop: unmute speaker after 10ms from amp. power on
         gpioDev_set(AUDIO_AMP_EN);
         sleepFor(0, 10);
-        gpioDev_clear(INT_SPK_MUTE);
+        spkEnabled = true;
     }
 }
 
@@ -154,8 +183,8 @@ void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
 
     if(sink == SINK_SPK)
     {
-        gpioDev_set(INT_SPK_MUTE);
         gpioDev_clear(AUDIO_AMP_EN);
+        spkEnabled = false;
     }
 
     switch(path)
@@ -165,6 +194,7 @@ void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
         case PATH(SOURCE_MIC, SINK_MCU):
             gpioDev_clear(MIC_PWR_EN);
             gpioDev_clear(INT_MIC_SEL);
+            gpioDev_clear(EXT_MIC_SEL);
             break;
 
         case PATH(SOURCE_RTX, SINK_SPK):
