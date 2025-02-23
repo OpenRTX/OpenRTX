@@ -108,6 +108,15 @@ SPDX-License-Identifier = "BSD-3-Clause"
 SPDX-FileCopyrightText = "2017 STMicroelectronics"
 
 [[annotations]]
+path = [
+    "platform/mcu/CMSIS/Device/Artery/AT32F423/Include/**/*",
+    "platform/mcu/CMSIS/Device/Artery/AT32F423/Source/system_at32f423.c"
+]
+precedence = "aggregate"
+SPDX-License-Identifier = "BSD-3-Clause-Clear"
+SPDX-FileCopyrightText = "2025, Artery Technology"
+
+[[annotations]]
 path = "lib/minmea/**/*"
 precedence = "aggregate"
 SPDX-License-Identifier = "WTFPL"
