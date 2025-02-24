@@ -300,6 +300,26 @@ stm32h743_inc += miosix_cm7_inc
 stm32h743_def += miosix_cm7_def
 
 ##
+## AT32F423
+##
+
+at32f423_src = ['platform/mcu/AT32F423/boot/startup.cpp',
+                'platform/mcu/AT32F423/boot/bsp.cpp',
+                'platform/mcu/AT32F423/boot/libc_integration.cpp',
+                'platform/drivers/GPIO/gpio_at32f423.c',
+                'platform/mcu/CMSIS/Device/Artery/AT32F423/Source/system_at32f423.c']
+
+at32f423_inc = ['platform/mcu/AT32F423',
+                'platform/mcu/CMSIS/Include',
+                'platform/mcu/CMSIS/Device/Artery/AT32F423/Include']
+
+at32f423_def = {'AT32F423CCT7':''}
+
+at32f423_src += miosix_cm4f_src
+at32f423_inc += miosix_cm4f_inc
+at32f423_def += miosix_cm4f_def
+
+##
 ## ----------------------- Platform specializations ----------------------------
 ##
 
