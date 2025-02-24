@@ -613,6 +613,24 @@ dm1701_inc += openrtx_inc + stm32f405_inc
 dm1701_def += openrtx_def + stm32f405_def
 
 ##
+## Radtel RT-4D
+##
+
+rt4d_src = ['platform/targets/RT-4D/platform.c',
+            'platform/drivers/stubs/audio_stub.c',
+            'platform/drivers/stubs/cps_io_stub.c',
+            'platform/drivers/stubs/display_stub.c',
+            'platform/drivers/stubs/keyboard_stub.c',
+            'platform/drivers/stubs/nvmem_stub.c',
+            'platform/drivers/stubs/radio_stub.c']
+rt4d_inc = ['platform/targets/RT-4D']
+rt4d_def = {'PLATFORM_RT4D': ''}
+
+rt4d_src += openrtx_src + at32f423_src + ui_src_default
+rt4d_inc += openrtx_inc + at32f423_inc
+rt4d_def += openrtx_def + at32f423_def
+
+##
 ## -------------------------- Compilation arguments ----------------------------
 ##
 
@@ -734,6 +752,15 @@ foreach k, v : dm1701_def
   endif
 endforeach
 
+rt4d_args = []
+foreach k, v : rt4d_def
+  if v == ''
+    rt4d_args += '-D@0@'.format(k)
+  else
+    rt4d_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
+
 linux_opts = {
   'sources'            : linux_default_src,
   'include_directories': linux_inc,
@@ -813,6 +840,16 @@ mod17_opts = {
   'c_args'             : mod17_args,
   'cpp_args'           : mod17_args,
   'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/stm32_1m+192k_rom.ld']
+}
+
+rt4d_opts = {
+  'sources'            : rt4d_src,
+  'include_directories': rt4d_inc,
+  'dependencies'       : [codec2_dep],
+  'c_args'             : rt4d_args,
+  'cpp_args'           : rt4d_args,
+  'link_args'          : ['-Wl,-T../platform/mcu/AT32F423/linker_script.ld',
+                          '-Wl,--print-memory-usage'],
 }
 
 ttwrplus_opts = {
@@ -918,6 +955,14 @@ targets = [
   {
     'name'     : 'mod17',
     'opts'     : mod17_opts,
+    'flashable': true,
+    'wrap'     : ' ',
+    'load_addr': ' ',
+    'cpu'      : 'cm4'
+  },
+  {
+    'name'     : 'rt4d',
+    'opts'     : rt4d_opts,
     'flashable': true,
     'wrap'     : ' ',
     'load_addr': ' ',
