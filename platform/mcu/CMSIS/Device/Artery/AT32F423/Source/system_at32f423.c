@@ -67,10 +67,6 @@ void SystemInit (void)
                  (3U << 11U * 2U)  );       /* set cp11 full access */
 #endif
 
-  /* reset the crm clock configuration to the default reset state(for debug purpose) */
-  /* enable auto step mode */
-  crm_auto_step_mode_enable(TRUE);
-
   /* set hicken bit */
   CRM->ctrl_bit.hicken = TRUE;
 
@@ -98,9 +94,6 @@ void SystemInit (void)
 
   /* disable all interrupts enable and clear pending bits  */
   CRM->clkint = 0x009F0000U;
-
-  /* disable auto step mode */
-  crm_auto_step_mode_enable(FALSE);
 
 #ifdef VECT_TAB_SRAM
   SCB->VTOR = SRAM_BASE  | VECT_TAB_OFFSET;  /* vector table relocation in internal sram. */
