@@ -20,6 +20,13 @@
 
 #include <openrtx.h>
 
+
+#ifdef PLATFORM_A36PLUS
+#include <interfaces/platform.h>
+#include <interfaces/delays.h>
+#include <peripherals/gpio.h>
+#endif
+
 #ifdef PLATFORM_MD9600
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
@@ -42,6 +49,19 @@ int main(void)
         sleepFor(1, 0);
     }
     while(!platform_pwrButtonStatus());
+    #endif
+    #ifdef PLATFORM_A36PLUS
+    if(!platform_pwrButtonStatus())
+    {
+        sleepFor(0, 50);
+        if(!platform_pwrButtonStatus())
+        {
+            gpio_clearPin((void *)GPIOA, 15);
+            delayMs(500);
+            NVIC_SystemReset();
+            return 0;
+        }
+    }
     #endif
 
     openrtx_init();

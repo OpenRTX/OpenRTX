@@ -79,7 +79,12 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
     switch(last_state.channel.mode)
     {
         case OPMODE_FM:
-
+            #ifdef PLATFORM_A36PLUS
+            // Account for AM
+            if(!last_state.settings.rx_modulation)
+                sniprintf(bw_str, 8, "AM");
+            else
+            #endif
             // Get Bandwidth string
             if(last_state.channel.bandwidth == BW_12_5)
                 sniprintf(bw_str, 8, "NFM");
@@ -188,6 +193,13 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
 
 void _ui_drawFrequency()
 {
+    // Clear the frequency area if PTT status has changed
+    static bool last_ptt_status = false;
+    if(last_ptt_status != platform_getPttStatus())
+    {
+        gfx_clearWindow(32, 0, 32, 160);
+        last_ptt_status = platform_getPttStatus();
+    }
     freq_t freq = platform_getPttStatus() ? last_state.channel.tx_frequency
                                           : last_state.channel.rx_frequency;
 
@@ -255,7 +267,7 @@ void _ui_drawVFOMiddleInput(ui_state_t* ui_state)
     }
 }
 
-void _ui_drawMainBottom()
+void _ui_drawMainBottom(ui_state_t * ui_state)
 {
     // Squelch bar
     rssi_t   rssi = last_state.rssi;
@@ -266,16 +278,25 @@ void _ui_drawMainBottom()
     point_t meter_pos = { layout.horizontal_pad,
                           CONFIG_SCREEN_HEIGHT - meter_height - layout.bottom_pad};
     uint8_t mic_level = platform_getMicLevel();
+    uint16_t old_rssi_end = (((127+ui_state->last_rssi)/6) * (meter_width - 1) / 11);
+    uint16_t new_rssi_end = (((127+last_state.rssi)/6) * (meter_width - 1) / 11);
+
     switch(last_state.channel.mode)
     {
         case OPMODE_FM:
+            if(old_rssi_end > new_rssi_end)
+            {
+                // gfx_clearWindow the area between the old and new rssi
+                gfx_clearWindow(10, new_rssi_end, 11, 160 - new_rssi_end);
+            }
+            ui_state->last_rssi = last_state.rssi; // Update last_rssi
             gfx_drawSmeter(meter_pos,
                            meter_width,
                            meter_height,
                            rssi,
                            squelch,
-                           volume,
-                           true,
+                           mic_level,
+                           false,
                            yellow_fab413);
             break;
         case OPMODE_DMR:
@@ -303,7 +324,7 @@ void _ui_drawMainBottom()
 
 void _ui_drawMainVFO(ui_state_t* ui_state)
 {
-    gfx_clearScreen();
+    //gfx_clearScreen();
     _ui_drawMainTop(ui_state);
     _ui_drawModeInfo(ui_state);
 
@@ -312,22 +333,21 @@ void _ui_drawMainVFO(ui_state_t* ui_state)
     rtxStatus_t status = rtx_getCurrentStatus();
     if((status.opMode != OPMODE_M17) || (status.lsfOk == false))
     #endif
-        _ui_drawFrequency();
-
-    _ui_drawMainBottom();
+    _ui_drawFrequency();
+    _ui_drawMainBottom(ui_state);
 }
 
 void _ui_drawMainVFOInput(ui_state_t* ui_state)
 {
-    gfx_clearScreen();
     _ui_drawMainTop(ui_state);
+    gfx_clearWindow(32, 0, 48, 160);
     _ui_drawVFOMiddleInput(ui_state);
-    _ui_drawMainBottom();
+    _ui_drawMainBottom(ui_state);
 }
 
 void _ui_drawMainMEM(ui_state_t* ui_state)
 {
-    gfx_clearScreen();
+    //gfx_clearScreen();
     _ui_drawMainTop(ui_state);
     _ui_drawModeInfo(ui_state);
 
@@ -341,5 +361,5 @@ void _ui_drawMainMEM(ui_state_t* ui_state)
         _ui_drawFrequency();
     }
 
-    _ui_drawMainBottom();
+    _ui_drawMainBottom(ui_state);
 }

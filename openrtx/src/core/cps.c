@@ -38,13 +38,13 @@ channel_t cps_getDefaultChannel()
     const hwInfo_t* hwinfo  = platform_getHwInfo();
     if(hwinfo->uhf_band)
     {
-        channel.rx_frequency = 430000000;
-        channel.tx_frequency = 430000000;
+        channel.rx_frequency = 431025000;
+        channel.tx_frequency = 431025000;
     }
     else if(hwinfo->vhf_band)
     {
-        channel.rx_frequency = 144000000;
-        channel.tx_frequency = 144000000;
+        channel.rx_frequency = 146550000;
+        channel.tx_frequency = 146550000;
     }
 
     channel.fm.rxToneEn = 0; //disabled

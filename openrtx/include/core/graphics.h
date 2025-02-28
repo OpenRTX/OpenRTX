@@ -135,6 +135,15 @@ void gfx_renderRows(uint8_t startRow, uint8_t endRow);
 void gfx_render();
 
 /**
+ * This function calls the correspondent method of the low level interface display.h
+ * Set the window of the display to be updated. This function is used to
+ * optimize the rendering process by updating only a portion of the display.
+ */
+void gfx_setWindow(uint16_t x, uint16_t y, uint16_t width, uint16_t height);
+
+void gfx_clearWindow(uint16_t x, uint16_t y, uint16_t width, uint16_t height);
+
+/**
  * Clears a portion of the screen content
  * This results in a black screen on color displays
  * And a white screen on B/W displays

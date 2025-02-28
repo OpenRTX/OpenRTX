@@ -38,7 +38,12 @@ typedef struct
             txDisable : 1,  /**< Disable TX operation          */
             scan      : 1,  /**< Scan enabled                  */
             opStatus  : 2,  /**< Operating status (OFF, ...)   */
+            #ifdef PLATFORM_A36PLUS
+            modulation: 1,  /**< Modulation type               */
+            _padding  : 1;  /**< Padding to 8 bits             */
+            #else
             _padding  : 2;  /**< Padding to 8 bits             */
+            #endif
 
     freq_t rxFrequency;     /**< RX frequency, in Hz           */
     freq_t txFrequency;     /**< TX frequency, in Hz           */
@@ -53,6 +58,8 @@ typedef struct
              txTone   : 15; /**< TX CTC/DCS tone               */
 
     bool     toneEn;
+
+    bool     voxEn;
 
     uint8_t  can      : 4,  /**< M17 Channel Access Number     */
              canRxEn  : 1,  /**< M17 Check CAN on RX           */

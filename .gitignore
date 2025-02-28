@@ -39,6 +39,7 @@ build*
 *.elf
 *.hex
 *.map
+*.kdhx
 
 # Python byte-compiled
 */__pycache__
