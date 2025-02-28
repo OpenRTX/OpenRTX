@@ -247,6 +247,7 @@ const char *authors[] =
     "Morgan ON4MOD",
     "Marco DM4RCO",
     "Andrej K8TUN",
+    "Jamie Xu"
 };
 
 static const char *symbols_ITU_T_E161[] =
