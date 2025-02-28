@@ -54,6 +54,45 @@ extern uint32_t __Vectors[];
   * @{
   */
 
+/** @addtogroup AT32F421_system_private_functions
+  * @{
+  */
+static void SetSysClock()
+{
+    FLASH->psr = flash_psr_set(FLASH_WAIT_CYCLE_4); /* Three wait cycles, prefetch enabled */
+
+    CRM_REG(CRM_PWC_PERIPH_CLOCK) |= (CRM_REG_BIT(TRUE));
+
+    pwc_ldo_output_voltage_set(PWC_LDO_OUTPUT_1V3);
+
+    CRM->ctrl_bit.hicken = TRUE;
+    while (CRM->ctrl_bit.hickstbl == 0) ;
+
+    CRM->pllcfg_bit.pllrcs = CRM_PLL_SOURCE_HICK;
+    CRM->pllcfg_bit.pllns = 72;
+    CRM->pllcfg_bit.pllms = 1;
+    CRM->pllcfg_bit.pllfr = CRM_PLL_FR_2;
+
+    CRM->ctrl_bit.pllen = 1;                        /* Start PLL and wait until is stable  */
+    while (CRM->ctrl_bit.pllstbl == 0) ;
+
+    CRM->misc2_bit.auto_step_en = CRM_AUTO_STEP_MODE_ENABLE;
+    CRM->cfg_bit.ahbdiv = CRM_AHB_DIV_1;
+    CRM->misc2_bit.auto_step_en = CRM_AUTO_STEP_MODE_DISABLE;
+
+    CRM->cfg_bit.apb2div = CRM_APB2_DIV_1;
+
+    CRM->cfg_bit.apb1div = CRM_APB1_DIV_2;
+
+    CRM->misc2_bit.auto_step_en = CRM_AUTO_STEP_MODE_ENABLE;
+    CRM->cfg_bit.sclksel = CRM_SCLK_PLL;            /* Switch to PLL clock                 */
+    CRM->misc2_bit.auto_step_en = CRM_AUTO_STEP_MODE_DISABLE;
+    while (CRM->cfg_bit.sclksts != CRM_SCLK_PLL) ;
+
+    CRM->misc2_bit.auto_step_en = CRM_AUTO_STEP_MODE_DISABLE;
+}
+
+
 /**
   * @brief  setup the microcontroller system
   *         initialize the flash interface.
@@ -67,6 +106,8 @@ void SystemInit (void)
   SCB->CPACR |= ((3U << 10U * 2U) |         /* set cp10 full access */
                  (3U << 11U * 2U)  );       /* set cp11 full access */
 #endif
+
+  CRM->misc2_bit.auto_step_en = CRM_AUTO_STEP_MODE_ENABLE;
 
   /* set hicken bit */
   CRM->ctrl_bit.hicken = TRUE;
@@ -120,7 +161,7 @@ void system_core_clock_update(void)
   static const uint8_t pll_fr_table[6] = {1, 2, 4, 8, 16, 32};
 
   /* get sclk source */
-  sclk_source = crm_sysclk_switch_status_get();
+  sclk_source = CRM->cfg_bit.sclksts;
 
   switch(sclk_source)
   {
