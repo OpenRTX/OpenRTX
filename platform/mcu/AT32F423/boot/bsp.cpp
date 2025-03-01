@@ -24,9 +24,13 @@
 * Board support package, this file initializes hardware.
 ************************************************************************/
 
+#include <interfaces/platform.h>
+#include <peripherals/gpio.h>
+#include <drivers/USART6.h>
 #include <interfaces/bsp.h>
 #include <kernel/kernel.h>
 #include <kernel/sync.h>
+#include <hwconfig.h>
 
 namespace miosix
 {
@@ -44,6 +48,14 @@ void IRQbspInit()
 
     // Configure SysTick
     SysTick->LOAD = SystemCoreClock / miosix::TICK_FREQ;
+
+
+
+
+    // Bring up USART1
+    gpio_setMode(USART6_TX, ALTERNATE);
+    usart6_init(115200);
+    usart6_IRQwrite("Starting system...\r\n");
 }
 
 void bspInit2()

@@ -307,6 +307,7 @@ at32f423_src = ['platform/mcu/AT32F423/boot/startup.cpp',
                 'platform/drivers/GPIO/gpio_at32f423.c',
                 'platform/mcu/AT32F423/drivers/adc_at32.c',
                 'platform/mcu/AT32F423/drivers/delays.cpp',
+                'platform/mcu/AT32F423/drivers/USART6.cpp',
                 'platform/mcu/CMSIS/Device/Artery/AT32F423/Source/system_at32f423.c']
 
 at32f423_inc = ['platform/mcu/AT32F423',

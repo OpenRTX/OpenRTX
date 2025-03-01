@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <reent.h>
 #include <filesystem/file_access.h>
+#include <drivers/USART6.h>
 
 using namespace std;
 
@@ -31,11 +32,19 @@ extern "C" {
  */
 int _write_r(struct _reent *ptr, int fd, const void *buf, size_t cnt)
 {
-
+#ifdef ENABLE_STDIO
+    if(fd == STDOUT_FILENO || fd == STDERR_FILENO)
+    {
+        usart6_writeBlock((void *) buf, cnt, 0);
+        return cnt;
+    }
+#else
     (void) ptr;
     (void) fd;
     (void) buf;
     (void) cnt;
+#endif
+
 
     /* If fd is not stdout or stderr */
     ptr->_errno = EBADF;
@@ -48,10 +57,26 @@ int _write_r(struct _reent *ptr, int fd, const void *buf, size_t cnt)
  */
 int _read_r(struct _reent *ptr, int fd, void *buf, size_t cnt)
 {
+#ifdef ENABLE_STDIO
+    if(fd == STDOUT_FILENO || fd == STDERR_FILENO)
+    {
+        usart6_readBlock((void *) buf, cnt, 0);
+        return cnt;
+    }
+    if(fd == STDIN_FILENO)
+    {
+        for(;;)
+        {
+            ssize_t r = usart6_readBlock((void *) buf, cnt, 0);
+            if((r < 0) || (r == (ssize_t)(cnt))) return r;
+        }
+    }
+#else
     (void) ptr;
     (void) fd;
     (void) buf;
     (void) cnt;
+#endif
 
     /* If fd is not stdin */
     ptr->_errno = EBADF;
