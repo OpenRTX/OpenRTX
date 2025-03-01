@@ -21,6 +21,7 @@
 #include <utils.h>
 #include <stdio.h>
 #include <math.h>
+#include <cps.h>
 
 uint8_t interpCalParameter(const freq_t freq, const freq_t *calPoints,
                            const uint8_t *param, const uint8_t elems)
@@ -93,4 +94,15 @@ uint8_t rssiToSlevel(const rssi_t rssi)
 
     // For S1 - S9 use 6dB increase per S-Point
     return (uint8_t)(127 + rssi) / 6;
+}
+
+uint8_t ctcssFreqToIndex(const uint16_t freq)
+{
+    for(uint8_t idx = 0; idx < CTCSS_FREQ_NUM; idx += 1)
+    {
+        if(ctcss_tone[idx] == freq)
+            return idx;
+    }
+
+    return 255;
 }

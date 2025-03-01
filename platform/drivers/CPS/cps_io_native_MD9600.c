@@ -96,7 +96,7 @@ static int _readChannelAtAddress(channel_t *channel, uint32_t addr)
         // TODO: Implement binary search to speed up this lookup
         if((rx_css != 0) && (rx_css != 0xFFFF))
         {
-            for(int i = 0; i < MAX_TONE_INDEX; i++)
+            for(int i = 0; i < CTCSS_FREQ_NUM; i++)
             {
                 if(ctcss_tone[i] == ((uint16_t) bcdToBin(rx_css)))
                 {
@@ -109,7 +109,7 @@ static int _readChannelAtAddress(channel_t *channel, uint32_t addr)
 
         if((tx_css != 0) && (tx_css != 0xFFFF))
         {
-            for(int i = 0; i < MAX_TONE_INDEX; i++)
+            for(int i = 0; i < CTCSS_FREQ_NUM; i++)
             {
                 if(ctcss_tone[i] == ((uint16_t) bcdToBin(tx_css)))
                 {

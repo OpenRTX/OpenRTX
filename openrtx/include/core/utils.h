@@ -74,6 +74,14 @@ void stripTrailingZeroes(char *str);
  */
 uint8_t rssiToSlevel(const rssi_t rssi);
 
+/**
+ * Retrieve the CTCSS tone index given its frequency in tenths of Hz.
+ *
+ * @param freq: CTCSS frequency
+ * @return tone index or 255 if the tone has not been found
+ */
+uint8_t ctcssFreqToIndex(const uint16_t freq);
+
 #ifdef __cplusplus
 }
 #endif

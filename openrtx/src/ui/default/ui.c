@@ -916,14 +916,14 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             {
                 if(state.channel.fm.txTone == 0)
                 {
-                    state.channel.fm.txTone = MAX_TONE_INDEX-1;
+                    state.channel.fm.txTone = CTCSS_FREQ_NUM-1;
                 }
                 else
                 {
                     state.channel.fm.txTone--;
                 }
 
-                state.channel.fm.txTone %= MAX_TONE_INDEX;
+                state.channel.fm.txTone %= CTCSS_FREQ_NUM;
                 state.channel.fm.rxTone = state.channel.fm.txTone;
                 *sync_rtx = true;
                 vp_announceCTCSS(state.channel.fm.rxToneEn,
@@ -938,7 +938,7 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             if(state.channel.mode == OPMODE_FM)
             {
                 state.channel.fm.txTone++;
-                state.channel.fm.txTone %= MAX_TONE_INDEX;
+                state.channel.fm.txTone %= CTCSS_FREQ_NUM;
                 state.channel.fm.rxTone = state.channel.fm.txTone;
                 *sync_rtx = true;
                 vp_announceCTCSS(state.channel.fm.rxToneEn,
