@@ -620,7 +620,7 @@ rt4d_src = ['platform/targets/RT-4D/platform.c',
             'platform/drivers/stubs/audio_stub.c',
             'platform/drivers/stubs/cps_io_stub.c',
             'platform/drivers/stubs/display_stub.c',
-            'platform/drivers/stubs/keyboard_stub.c',
+            'platform/drivers/keyboard/keyboard_rt4d.c',
             'platform/drivers/stubs/nvmem_stub.c',
             'platform/drivers/stubs/radio_stub.c']
 rt4d_inc = ['platform/targets/RT-4D']
