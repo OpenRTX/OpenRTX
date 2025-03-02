@@ -29,6 +29,14 @@ extern "C" {
 #endif
 
 /**
+ * Get the number of elements of an array.
+ *
+ * @param x: array.
+ * @return number of elements.
+ */
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+
+/**
  * This function allows to obtain the value of a given calibration parameter for
  * frequencies outside the calibration points. It works by searching the two
  * calibration points containing the target frequency and then by linearly
