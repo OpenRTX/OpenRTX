@@ -840,14 +840,14 @@ targets = [
     'opts'     : cs7000_opts,
     'flashable': true,
     'wrap'     : ' ',
-    'load_addr': ' '
+    'load_addr': '0x08000000'
   },
   {
     'name'     : 'cs7000p',
     'opts'     : cs7000p_opts,
     'flashable': true,
     'wrap'     : ' ',
-    'load_addr': ' '
+    'load_addr': '0x08100000'
   },
 ]
 
@@ -983,7 +983,7 @@ foreach t : targets
         custom_target(name+'_wrap',
                       output  : name+'.dfu',
                       input   : bin,
-                      command : [dfu_convert, '-b', '0x08100000:@INPUT@', '@OUTPUT@'])
+                      command : [dfu_convert, '-b', t['load_addr']+':@INPUT@', '@OUTPUT@'])
 
 
         custom_target(name+'_flash',
@@ -993,7 +993,7 @@ foreach t : targets
                                  '-d', '0483:df11',
                                  '-a', '0',
                                  '-D', '@INPUT@',
-                                 '-s', '0x08100000'])
+                                 '-s', t['load_addr']])
       else
 
         wrap = custom_target(name+'_wrap',
