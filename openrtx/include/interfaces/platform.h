@@ -123,6 +123,12 @@ bool platform_getPttStatus();
 bool platform_pwrButtonStatus();
 
 /**
+ * This function turns on radio transmitter.
+ * @param ptt: on/off
+ */
+void platform_PTT(bool ptt);
+
+/**
  * This function turns on the selected led.
  * @param led: which led to control
  */

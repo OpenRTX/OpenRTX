@@ -16,6 +16,8 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
+ *                                                                         *
+ *   (2025) Modified by KD0OSS for new modes on Module17                   *
  ***************************************************************************/
 
 #ifndef RTX_H
@@ -40,8 +42,8 @@ typedef struct
             opStatus  : 2,  /**< Operating status (OFF, ...)   */
             _padding  : 2;  /**< Padding to 8 bits             */
 
-    freq_t rxFrequency;     /**< RX frequency, in Hz           */
-    freq_t txFrequency;     /**< TX frequency, in Hz           */
+    freq_t  rxFrequency;    /**< RX frequency, in Hz           */
+    freq_t  txFrequency;    /**< TX frequency, in Hz           */
 
     uint32_t txPower;       /**< TX power, in mW               */
     uint8_t  sqlLevel;      /**< Squelch opening level         */
@@ -58,14 +60,29 @@ typedef struct
              canRxEn  : 1,  /**< M17 Check CAN on RX           */
              _unused  : 3;
 
-    char     source_address[10];       /**< M17 call source address    */
-    char     destination_address[10];  /**< M17 call routing address   */
-    bool     invertRxPhase;            /**< M17 RX phase inversion     */
-    bool     lsfOk;                    /**  M17 LSF is valid           */
-    char     M17_dst[10];              /**  M17 LSF destination        */
-    char     M17_src[10];              /**  M17 LSF source             */
-    char     M17_link[10];             /**  M17 LSF traffic originator */
-    char     M17_refl[10];             /**  M17 LSF reflector module   */
+    char     source_address[10];       /**< M17 call source address      */
+    char     destination_address[10];  /**< M17 call routing address     */
+    bool     invertRxPhase;            /**< M17 RX phase inversion       */
+    bool     lsfOk;                    /**  M17 LSF is valid             */
+    char     M17_dst[10];              /**  M17 LSF destination          */
+    char     M17_src[10];              /**  M17 LSF source               */
+    char     M17_link[10];             /**  M17 LSF traffic originator   */
+    char     M17_refl[10];             /**  M17 LSF reflector module     */
+    char     M17_Meta_Text[53];        /**< M17 Meta Text                */
+#if defined(CONFIG_DSTAR)
+    char     DSTAR_dst[9];             /**  DSTAR LSF destination        */
+    char     DSTAR_src[9];             /**  DSTAR LSF source             */
+    char     DSTAR_link[10];           /**  DSTAR LSF traffic originator */
+    char     DSTAR_rpt1[9];            /**  DSTAR LSF RPT1 Call          */
+    char     DSTAR_rpt2[9];            /**  DSTAR LSF RPT2 Call          */
+    char     DSTAR_sufx[5];            /**  DSTAR LSF Suffix             */
+    char     DSTAR_refl[10];           /**  DSTAR LSF reflector module   */
+    char     DSTAR_message[22];        /**  DSTAR LSF slowspeed data     */
+#endif
+#if defined(CONFIG_P25)
+    uint32_t P25_SrcId;                /**< P25 Source ID (DMR ID)       */
+    uint32_t P25_DstId;                /**< P25 Destination ID (DMR ID/TG)*/
+#endif
 }
 rtxStatus_t;
 
@@ -83,10 +100,12 @@ enum bandwidth
  */
 enum opmode
 {
-    OPMODE_NONE = 0,        /**< No opMode selected */
-    OPMODE_FM   = 1,        /**< Analog FM          */
-    OPMODE_DMR  = 2,        /**< DMR                */
-    OPMODE_M17  = 3         /**< M17                */
+    OPMODE_NONE  = 0,        /**< No opMode selected */
+    OPMODE_FM    = 1,        /**< Analog FM          */
+    OPMODE_DMR   = 2,        /**< DMR                */
+    OPMODE_M17   = 3,        /**< M17                */
+    OPMODE_DSTAR = 4,        /**< DSTAR              */
+    OPMODE_P25   = 5         /**< P25                */
 };
 
 /**
@@ -145,6 +164,10 @@ rssi_t rtx_getRssi();
  * @return true if RX squelch is open.
  */
 bool rtx_rxSquelchOpen();
+
+bool rtx_getSMSMessage(uint8_t mesg_num, char *sender, char *message);
+
+void rtx_delSMSMessage(uint8_t mesg_num);
 
 #ifdef __cplusplus
 }

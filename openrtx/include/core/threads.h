@@ -27,8 +27,10 @@
  * Threads' stack sizes
  */
 #define UI_THREAD_STKSIZE     2048
-#define RTX_THREAD_STKSIZE    512
+#define RTX_THREAD_STKSIZE    2048
 #define CODEC2_THREAD_STKSIZE 16384
+#define IMBE_THREAD_STKSIZE   8192
+#define AMBE_THREAD_STKSIZE   8192
 #define AUDIO_THREAD_STKSIZE  512
 
 /**

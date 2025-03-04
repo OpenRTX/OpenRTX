@@ -16,13 +16,24 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
+ *                                                                         *
+ *   (2025) Modified by KD0OSS for FM mode on Module17                     *
  ***************************************************************************/
 
 #ifndef OPMODE_FM_H
 #define OPMODE_FM_H
 
+#include <stdint.h>
+#include <cstddef>
+#include <memory>
 #include <audio_path.h>
 #include "OpMode.hpp"
+#include <audio_path.h>
+#include <audio_stream.h>
+#if defined(PLATFORM_MOD17)
+#include <FM.h>
+#include "FMCTCSSTX.h"
+#endif
 
 /**
  * Specialisation of the OpMode class for the management of analog FM operating
@@ -82,14 +93,42 @@ public:
         return OPMODE_FM;
     }
 
+    #if defined(PLATFORM_MOD17)
+    void reset();
+    void startBasebandSampling(const bool isTx);
+    void stopBasebandSampling();
+    #else
     /**
      * Check if RX squelch is open.
      *
      * @return true if RX squelch is open.
      */
     virtual bool rxSquelchOpen() override;
+    #endif
 
 private:
+    #if defined(PLATFORM_MOD17)
+    std::unique_ptr< int16_t[] >   baseband_buffer; ///< Buffer for baseband audio handling.
+    //  std::unique_ptr< int16_t[] >   baseband_txbuffer; ///< Buffer for baseband audio handling.
+    pathId           basebandPath;
+    streamId         basebandId;      ///< Id of the baseband input stream.
+    stream_sample_t *idleBuffer;      ///< Half baseband buffer, free for processing.
+    CFM              fm;
+    CFMCTCSSTX       m_ctcssTX;
+    uint8_t          m_ctcssRX_freq;
+    uint8_t          m_ctcssTX_freq;
+    uint8_t          m_ctcssRX_thrshLo;
+    uint8_t          m_ctcssRX_thrshHi;
+    uint8_t          m_noiseSq_thrshLo;
+    uint8_t          m_noiseSq_thrshHi;
+    bool             m_noiseSq_on;
+    uint8_t          m_ctcssTX_level;
+    uint8_t          m_rxLevel;
+    uint8_t          m_txLevel;
+    uint16_t         m_preRxLevel;
+    uint8_t          m_maxDev;
+    uint8_t          m_accessMode;
+    #endif
 
     bool   rfSqlOpen;   ///< Flag for RF squelch status (analog squelch).
     bool   sqlOpen;     ///< Flag for squelch status.
