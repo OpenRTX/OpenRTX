@@ -168,6 +168,7 @@ SECTIONS
     .bss2 (NOLOAD) :
     {
         *(.bss.fb)
+        *(.bss2)
         . = ALIGN(8);
         _end = .;
         PROVIDE(end = .);
