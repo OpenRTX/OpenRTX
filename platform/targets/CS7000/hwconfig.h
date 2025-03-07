@@ -38,6 +38,7 @@ enum AdcChannels
     ADC_MIC_CH  = 3,   /* PA3  */
     ADC_RSSI_CH = 8,   /* PB0  */
     ADC_RTX_CH  = 7,   /* PA7  */
+    ADC_CTCSS_CH = 2,  /* PA2  */
 };
 
 extern const struct Adc adc1;

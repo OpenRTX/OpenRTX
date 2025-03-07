@@ -22,12 +22,16 @@
 #include <peripherals/adc.h>
 #include <calibInfo_CS7000.h>
 #include <spi_bitbang.h>
+#include <ctcssDetector.hpp>
+#include <stm32_adc.h>
 #include <hwconfig.h>
 #include <algorithm>
+#include <utils.h>
 #include "HR_C6000.h"
 #include "SKY72310.h"
 #include "AK2365A.h"
 
+static constexpr uint32_t CTCSS_SAMPLE_RATE = 2000;
 static constexpr freq_t IF_FREQ = 49950000;    // Intermediate frequency: 49.95MHz
 
 static const rtxStatus_t  *config;             // Pointer to data structure with radio configuration
@@ -38,6 +42,11 @@ static uint8_t txpwr_hi  = 0;                  // APC voltage for TX output powe
 static struct rssiParams rssi;                 // RSSI curve parameters
 
 static enum opstatus radioStatus;               // Current operating status
+
+static int16_t __attribute__((section(".bss2"))) ctcssSamples[128];
+static streamCtx ctcssCtx;
+static int16_t *prevCtcssBuf;
+static CtcssDetector ctcss(ctcssCoeffs2k, (CTCSS_SAMPLE_RATE / 4), 20.0f);
 
 HR_C6000 C6000((const struct spiDevice *) &c6000_spi, { C6K_CS });
 
@@ -151,6 +160,17 @@ void radio_init(const rtxStatus_t *rtxState)
     gpio_setMode(APC_TV,   ANALOG);
     gpio_setMode(AIN_RTX,  ANALOG);
     gpio_setMode(AIN_RSSI, ANALOG);
+    gpio_setMode(AIN_CTCSS,ANALOG);
+
+    /*
+     * Configure ADC3 stream, used for CTCSS detection
+     */
+    ctcssCtx.buffer = ctcssSamples;
+    ctcssCtx.bufSize = ARRAY_SIZE(ctcssSamples);
+    ctcssCtx.bufMode = BUF_CIRC_DOUBLE;
+    ctcssCtx.sampleRate = CTCSS_SAMPLE_RATE;
+    ctcssCtx.running = 0;
+    stm32adc_init(STM32_ADC_ADC3);
 
     /*
      * Configure and enable DAC
@@ -217,7 +237,22 @@ void radio_setOpmode(const enum opmode mode)
 
 bool radio_checkRxDigitalSquelch()
 {
-    return false;
+    int16_t *data;
+    size_t len;
+
+    // CTCSS sampling stream is stopped, cannot detect the tone
+    if(ctcssCtx.running == 0)
+        return false;
+
+    // Update the CTCSS detector each time there is new data from the ADC
+    len = stm32_adc_audio_driver.data(&ctcssCtx, &data);
+    if(data != prevCtcssBuf)
+    {
+        prevCtcssBuf = data;
+        ctcss.update(data, len);
+    }
+
+    return ctcss.toneDetected(ctcssFreqToIndex(config->rxTone));
 }
 
 void radio_enableAfOutput()
@@ -254,6 +289,10 @@ void radio_enableRx()
     // Configure FM detector
     AK2365A_init(&detector);
     AK2365A_setFilterBandwidth(&detector, AK2365A_BPF_6);
+
+    // Start sampling of CTCSS signal, if enabled
+    if((config->opMode == OPMODE_FM) && (config->rxToneEn == true))
+        stm32_adc_audio_driver.start(STM32_ADC_ADC3, (void *) ADC_CTCSS_CH, &ctcssCtx);
 
     radioStatus = RX;
 }
@@ -320,6 +359,13 @@ void radio_disableRtx()
 
     if(radioStatus == TX)
         C6000.stopAnalogTx();   // Stop HR_C6000 Tx
+
+    // Shut down CTCSS ADC sampling and reset tone detector
+    if(ctcssCtx.running)
+    {
+        stm32_adc_audio_driver.terminate(&ctcssCtx);
+        ctcss.reset();
+    }
 
     radioStatus = OFF;
 }
