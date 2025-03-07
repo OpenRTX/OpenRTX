@@ -36,6 +36,7 @@ extern "C" {
  * @return CCITT CRC.
  */
 uint16_t crc_ccitt(const void *data, const size_t len);
+void addCCITT161(unsigned char *in, unsigned int length);
 
 #ifdef __cplusplus
 }

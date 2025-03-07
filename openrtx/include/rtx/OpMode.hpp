@@ -45,6 +45,8 @@ public:
      */
     virtual ~OpMode() { }
 
+    virtual void reset() { }
+
     /**
      * Enable the operating mode.
      *
@@ -97,6 +99,24 @@ public:
     virtual bool rxSquelchOpen()
     {
         return false;
+    }
+
+    /**
+     * Return select SMS message from queue if any.
+     *
+     * This is only valid for M17 mode.
+     */
+    virtual bool getSMSMessage(uint8_t mesg_num, char *sender, char *message)
+    {
+        (void) sender;
+        (void) message;
+        (void) mesg_num;
+        return false;
+    }
+
+    virtual void delSMSMessage(uint8_t mesg_num)
+    {
+    	(void) mesg_num;
     }
 };
 

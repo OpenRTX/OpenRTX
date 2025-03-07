@@ -18,6 +18,11 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+/***************************************************************************
+ *   Added code to restart I2C to remedy touch panel lock ups.                    *
+ *   By: Rick Schnicker KD0OSS                                             *
+ * *************************************************************************/
+
 #include <stdio.h>
 #include <stdint.h>
 #include <peripherals/gpio.h>
@@ -73,7 +78,13 @@ keyboard_t kbd_getKeys()
     {
         int resp = cap1206_readkeys(&i2c2);
         if(resp < 0)
+        {
+            // teminate and restart I2C on error
+            i2c_terminate(&i2c2);
+            i2c_init(&i2c2, I2C_SPEED_100kHz);
+            cap1206_init(&i2c2);
             return 0;
+        }
 
         if(resp & 1)  keys |= KEY_LEFT;  // CS1
         if(resp & 2)  keys |= KEY_DOWN;  // CS2

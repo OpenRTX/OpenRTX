@@ -15,6 +15,8 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
+ *                                                                         *
+ *   (2025) Modified by KD0OSS for new modes on Module17                   *
  ***************************************************************************/
 
 #ifndef UI_DEFAULT_H
@@ -56,11 +58,15 @@ enum uiScreen
     MENU_RESTORE,
     MENU_INFO,
     MENU_ABOUT,
+    SETTINGS_SMS,
     SETTINGS_TIMEDATE,
     SETTINGS_TIMEDATE_SET,
     SETTINGS_DISPLAY,
     SETTINGS_GPS,
     SETTINGS_RADIO,
+    #ifdef NO_FMMACROMENU
+    SETTINGS_FM,
+    #endif
     SETTINGS_M17,
     SETTINGS_ACCESSIBILITY,
     SETTINGS_RESET2DEFAULTS,
@@ -98,11 +104,26 @@ enum settingsItems
     S_GPS,
 #endif
     S_RADIO,
+#ifdef NO_FMMACROMENU
+    S_FM,
+#endif
 #ifdef CONFIG_M17
     S_M17,
 #endif
     S_ACCESSIBILITY,
     S_RESET2DEFAULTS,
+};
+
+enum modeItems
+{
+    M17
+    ,FM
+#if defined(CONFIG_P25)
+    ,P25
+#endif
+#if defined(CONFIG_DSTAR)
+    ,DSTAR
+#endif
 };
 
 enum backupRestoreItems
@@ -145,9 +166,25 @@ enum settingsRadioItems
     R_STEP,
 };
 
+enum settingsFMItems
+{
+    FM_CTCSSRX = 0,
+    FM_CTCSSTX,
+    FM_BW
+};
+
+enum menuM17SMSItems
+{
+    M17_SMSSEND = 0,
+    M17_SMSVIEW,
+    M17_SMSMATCHCALL
+};
+
 enum settingsM17Items
 {
     M17_CALLSIGN = 0,
+    M17_METATEXT,
+    M17_SMS,
     M17_CAN,
     M17_CAN_RX
 };
@@ -193,6 +230,7 @@ typedef struct layout_t
     symbolSize_t line4_symbol_size;
     fontSize_t bottom_font;
     fontSize_t input_font;
+    fontSize_t message_font;
     fontSize_t menu_font;
 } layout_t;
 
@@ -207,6 +245,10 @@ typedef struct ui_state_t
     uint8_t menu_selected;
     // If true we can change a menu entry value with UP/DOWN
     bool edit_mode;
+    bool edit_message;
+    bool edit_sms;
+    bool view_sms;
+    bool useT9;
     bool input_locked;
     // Variables used for VFO input
     uint8_t input_number;
@@ -224,6 +266,7 @@ typedef struct ui_state_t
     char new_time_buf[9];
 #endif
     char new_callsign[10];
+    char new_message[822];
     freq_t new_offset;
     // Which state to return to when we exit menu
     uint8_t last_main_state;
@@ -238,20 +281,30 @@ extern state_t last_state;
 extern bool    macro_latched;
 extern const char *menu_items[];
 extern const char *settings_items[];
+extern const char *mode_items[];
 extern const char *display_items[];
 extern const char *settings_gps_items[];
 extern const char *settings_radio_items[];
+extern const char *settings_fm_items[];
+extern const char *menu_m17sms_items[];
 extern const char *settings_m17_items[];
-extern const char * settings_accessibility_items[];
+extern const char *settings_accessibility_items[];
+extern const char *mode_items[];
+extern const char *settings_accessibility_items[];
 
 extern const char *backup_restore_items[];
 extern const char *info_items[];
 extern const char *authors[];
+
+extern uint8_t digital_mode;
 extern const uint8_t menu_num;
+extern const uint8_t mode_num;
 extern const uint8_t settings_num;
 extern const uint8_t display_num;
 extern const uint8_t settings_gps_num;
 extern const uint8_t settings_radio_num;
+extern const uint8_t settings_fm_num;
+extern const uint8_t menu_m17sms_num;
 extern const uint8_t settings_m17_num;
 extern const uint8_t settings_accessibility_num;
 extern const uint8_t backup_restore_num;
