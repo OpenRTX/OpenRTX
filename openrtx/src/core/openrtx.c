@@ -73,6 +73,8 @@ void openrtx_init()
     gfx_render();
     sleepFor(0u, 30u);
     display_setBacklightLevel(state.settings.brightness);
+    sleepFor(0, 500u);
+    gfx_clearScreen();
 
     #if defined(CONFIG_GPS)
     // Detect and initialise GPS

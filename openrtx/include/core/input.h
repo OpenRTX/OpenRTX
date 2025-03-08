@@ -27,7 +27,7 @@
 /**
  * Time interval in milliseconds after which a keypress is considered a long-press
  */
-static const uint16_t input_longPressTimeout = 700;
+static const uint16_t input_longPressTimeout = 500;
 
 /**
  * Structure that represents a keyboard event payload

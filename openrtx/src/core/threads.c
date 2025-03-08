@@ -73,6 +73,7 @@ void *ui_threadFunc(void *arg)
         if(input_scanKeyboard(&kbd_msg))
         {
             ui_pushEvent(EVENT_KBD, kbd_msg.value);
+            //gfx_clearScreen();
         }
 
         pthread_mutex_lock(&state_mutex);   // Lock r/w access to radio state
@@ -97,6 +98,9 @@ void *ui_threadFunc(void *arg)
             rtx_cfg.txToneEn    = state.channel.fm.txToneEn;
             rtx_cfg.txTone      = ctcss_tone[state.channel.fm.txTone];
             rtx_cfg.toneEn      = state.tone_enabled;
+            #ifdef PLATFORM_A36PLUS
+            rtx_cfg.modulation  = state.settings.rx_modulation;
+            #endif
 
             // Enable Tx if channel allows it and we are in UI main screen
             rtx_cfg.txDisable = state.channel.rx_only || state.txDisable;
@@ -114,10 +118,15 @@ void *ui_threadFunc(void *arg)
         }
 
         // Update UI and render on screen, if necessary
+        #ifndef CONFIG_GFX_NOFRAMEBUF
         if(ui_updateGUI() == true)
         {
             gfx_render();
         }
+        #else
+        ui_updateGUI();
+        #endif
+
 
         // 40Hz update rate for keyboard and UI
         time += 25;

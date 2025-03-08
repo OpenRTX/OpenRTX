@@ -62,6 +62,16 @@ typedef struct
     bool       restore_eflash;
     bool       txDisable;
     uint8_t    step_index;
+    #ifdef PLATFORM_A36PLUS
+    bool       spectrum_shouldRefresh; // True if one scanning cycle is done.
+    uint32_t   spectrum_startFreq; // Start frequency for spectrum display, in 10Hz units
+    uint32_t   spectrum_peakFreq;  // Current peak frequency for spectrum display, in 10Hz units
+    int16_t   spectrum_peakRssi; // Current peak RSSI for spectrum display
+    uint8_t    spectrum_peakIndex; // Current peak index for spectrum display
+    uint8_t    spectrum_currentPart; // Current quadrant for spectrum display
+    uint8_t    spectrum_currentWFLine; // Current line for waterfall display
+    uint8_t    spectrum_data[128]; // Spectrum data buffer
+    #endif
 }
 state_t;
 
@@ -80,7 +90,8 @@ enum RtxStatus
 {
     RTX_OFF = 0,
     RTX_RX,
-    RTX_TX
+    RTX_TX,
+    RTX_SPECTRUM
 };
 
 enum DeviceStatus

@@ -22,6 +22,8 @@
 #include <gpio_stm32.h>
 #elif defined(MK22FN512xx)
 #include <gpio_mk22.h>
+#elif defined(PLATFORM_A36PLUS)
+#include <gpio_gd32.h>
 #endif
 
 #endif /* GPIO_NATIVE_H */

@@ -80,9 +80,15 @@ void state_init()
     state.emergency     = false;
     state.txDisable     = false;
     state.step_index    = 4; // Default frequency step 12.5kHz
+    #ifdef PLATFORM_A36PLUS
+    state.spectrum_startFreq = 14655000; // Default start frequency for spectrum display
+    state.spectrum_currentPart = 0;
+    state.spectrum_currentWFLine = 0;
+    state.spectrum_peakIndex = 32;
+    #endif
 
     // Force brightness field to be in range 0 - 100
-    if(state.settings.brightness > 100)
+    if(state.settings.brightness > 100 || state.settings.brightness == 0)
     {
         state.settings.brightness = 100;
     }
@@ -93,7 +99,7 @@ void state_terminate()
     // Never store a brightness of 0 to avoid booting with a black screen
     if(state.settings.brightness == 0)
     {
-        state.settings.brightness = 5;
+        state.settings.brightness = 100;
     }
 
     nvm_writeSettingsAndVfo(&state.settings, &state.channel);
@@ -102,8 +108,10 @@ void state_terminate()
 
 void state_task()
 {
-    // Update radio state once every 100ms
-    if((getTick() - lastUpdate) < 100)
+    // Update radio state once every 150ms (or faster for spectrum)
+    if(state.rtxStatus != RTX_SPECTRUM && (getTick() - lastUpdate) < 150)
+        return;
+    if((getTick() - lastUpdate) < 25)
         return;
 
     lastUpdate = getTick();
@@ -136,7 +144,11 @@ void state_task()
     state.volume = vol / 2;
 
     state.charge = battery_getCharge(state.v_bat);
-    state.rssi = rtx_getRssi();
+    // There is a bug where during spectrum operation, the RSSI reads collide.
+    // This is a workaround to prevent the RSSI from being updated during spectrum operation.
+    if(state.rtxStatus != RTX_SPECTRUM)
+        state.rssi = rtx_getRssi();
+    else state.rssi = -127.0;
 
     #ifdef CONFIG_RTC
     state.time = platform_getCurrentTime();
@@ -151,4 +163,5 @@ void state_resetSettingsAndVfo()
 {
     state.settings = default_settings;
     state.channel  = cps_getDefaultChannel();
+    nvm_writeSettingsAndVfo(&state.settings, &state.channel);
 }

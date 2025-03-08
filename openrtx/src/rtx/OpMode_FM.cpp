@@ -150,6 +150,10 @@ void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
         enterRx = true;
         sqlOpen = false;  // Force squelch to be redetected.
     }
+    #ifdef PLATFORM_A36PLUS
+    if (status->voxEn)
+        radio_checkVOX();   
+    #endif
 
     // Led control logic
     switch(status->opStatus)

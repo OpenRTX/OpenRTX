@@ -99,6 +99,7 @@ typedef struct
     const char* radioSettings;
     const char* frequencyOffset;
     const char* macroLatching;
+    const char* spectrum;
 }
 stringsTable_t;
 

@@ -152,7 +152,7 @@ static bw_t _color2bw(color_t true_color)
 
 #if defined(PLATFORM_LINUX)
 static PIXEL_T framebuffer[FB_SIZE];
-#else
+#else ifndef CONFIG_GFX_NOFRAMEBUF
 static PIXEL_T __attribute__((section(".bss.fb"))) framebuffer[FB_SIZE];
 #endif
 static char text[32];
@@ -173,12 +173,19 @@ void gfx_terminate()
 
 void gfx_renderRows(uint8_t startRow, uint8_t endRow)
 {
+#ifdef CONFIG_GFX_NOFRAMEBUF
+    (void) startRow;
+    (void) endRow;
+#else
     display_renderRows(startRow, endRow, framebuffer);
+#endif
 }
 
 void gfx_render()
 {
+#ifndef CONFIG_GFX_NOFRAMEBUF
     display_render(framebuffer);
+#endif
 }
 
 void gfx_clearRows(uint8_t startRow, uint8_t endRow)
@@ -186,29 +193,55 @@ void gfx_clearRows(uint8_t startRow, uint8_t endRow)
     if(endRow < startRow)
         return;
 
+#ifndef CONFIG_GFX_NOFRAMEBUF
     uint16_t start = startRow * CONFIG_SCREEN_WIDTH * sizeof(PIXEL_T);
     uint16_t height = endRow - startRow * CONFIG_SCREEN_WIDTH * sizeof(PIXEL_T);
     // Set the specified rows to 0x00 = make the screen black
     memset(framebuffer + start, 0x00, height);
+#endif
 }
 
 void gfx_clearScreen()
 {
     // Set the whole framebuffer to 0x00 = make the screen black
+    #ifdef CONFIG_GFX_NOFRAMEBUF
+    display_fill(0x00);
+    #else
     memset(framebuffer, 0x00, FB_SIZE * sizeof(PIXEL_T));
+    #endif
 }
 
 void gfx_fillScreen(color_t color)
 {
-    for(int16_t y = 0; y < CONFIG_SCREEN_HEIGHT; y++)
-    {
-        for(int16_t x = 0; x < CONFIG_SCREEN_WIDTH; x++)
-        {
-            point_t pos = {x, y};
-            gfx_setPixel(pos, color);
-        }
-    }
+    // Convert color to high color
+    #ifdef CONFIG_PIX_FMT_RGB565
+    rgb565_t high_color = _true2highColor(color);
+    display_fill((high_color.r << 11) | (high_color.g << 5) | high_color.b);
+    #elif defined CONFIG_PIX_FMT_BW
+    display_fill(_color2bw(color));
+    #endif
 }
+
+#ifdef PLATFORM_A36PLUS
+// Set window: x, y, width, height
+void gfx_setWindow(uint16_t x, uint16_t y, uint16_t height, uint16_t width)
+{
+    return;
+    display_setWindow(x, y, height, width);
+}
+
+void gfx_clearWindow(uint16_t x, uint16_t y, uint16_t height, uint16_t width)
+{
+    //return;
+    display_clearWindow(x, y, height, width);
+    // Restore window
+    display_setWindow(0,0,CONFIG_SCREEN_HEIGHT, CONFIG_SCREEN_WIDTH+28);
+}
+#else
+// empty declarations
+void gfx_setWindow(uint16_t x, uint16_t y, uint16_t height, uint16_t width) {}
+void gfx_clearWindow(uint16_t x, uint16_t y, uint16_t height, uint16_t width) {}
+#endif
 
 inline void gfx_setPixel(point_t pos, color_t color)
 {
@@ -217,6 +250,11 @@ inline void gfx_setPixel(point_t pos, color_t color)
         return; // off the screen
 
 #ifdef CONFIG_PIX_FMT_RGB565
+
+    #ifdef CONFIG_GFX_NOFRAMEBUF
+    rgb565_t pixel = _true2highColor(color);
+    display_setPixel(pos.x, pos.y, (pixel.r << 11) | (pixel.g << 5) | (pixel.b));
+    #else
     // Blend old pixel value and new one
     if (color.alpha < 255)
     {
@@ -233,7 +271,13 @@ inline void gfx_setPixel(point_t pos, color_t color)
     {
         framebuffer[pos.x + pos.y*CONFIG_SCREEN_WIDTH] = _true2highColor(color);
     }
+    #endif
+
 #elif defined CONFIG_PIX_FMT_BW
+
+    #ifdef CONFIG_GFX_NOFRAMEBUF
+    display_setPixel(pos.x, pos.y, _color2bw(color));
+    #else
     // Ignore more than half transparent pixels
     if (color.alpha >= 128)
     {
@@ -242,6 +286,8 @@ inline void gfx_setPixel(point_t pos, color_t color)
         framebuffer[cell] &= ~(1 << elem);
         framebuffer[cell] |= (_color2bw(color) << elem);
     }
+    #endif
+
 #endif
 }
 
@@ -305,7 +351,7 @@ void gfx_drawLine(point_t start, point_t end, color_t color)
 }
 
 void gfx_drawRect(point_t start, uint16_t width, uint16_t height, color_t color, bool fill)
-{
+{   
     if(width == 0) return;
     if(height == 0) return;
     uint16_t x_max = start.x + width - 1;
@@ -779,10 +825,23 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, rssi_t rssi,
     gfx_drawRect(squelch_pos, squelch_width, squelch_height, color, true);
 
     // RSSI bar
+    int16_t s_level;
+    if (rssi >= -53) { s_level = 12; }           // rssi >= -53dB set s_level to "11" (S9 + 20 dB)
+    else if (rssi >= -73) {
+        s_level =  (rssi_t)(163 + rssi) / 10; 	// Increase s_level /10dB instead of /6dB for > S9
+    }
+    else if (rssi < -121) { s_level = 0; }   	// s_level should not be negative + avoid overflow if rssi (int32_t) =< -196741
+    else {
+        s_level =  (rssi_t)(127 + rssi) / 6;    // 6dB increase per S-Point
+    }
     uint16_t rssi_height = bar_height * 4 / bar_height_divider;
-    uint16_t rssi_width = (rssiToSlevel(rssi) * (width - 1) / 11);
     point_t rssi_pos = { start.x, (uint8_t) (start.y + 2 + squelch_height + volume_height)};
-    gfx_drawRect(rssi_pos, rssi_width, rssi_height, white, true);
+    extern color_t getColorFromLevel(uint16_t Level);
+    for (int i = 0; i < s_level*2; i++) {
+        uint16_t fragment_width = (width - 1) / 22;
+        point_t fragment_pos = {start.x + i * fragment_width, rssi_pos.y};
+        gfx_drawRect(fragment_pos, fragment_width, rssi_height, getColorFromLevel((80+6*i)/4), true);
+    }
 }
 
 /*
@@ -833,6 +892,7 @@ void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, rssi_t 
     }
 
     // Level meter marks
+    #if 0
     for(int i = 0; i <= 4; i++)
     {
         point_t pixel_pos =  {start.x, (uint8_t) (start.y + volume_height)};
@@ -841,6 +901,7 @@ void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, rssi_t 
         pixel_pos.y += ((bar_height / bar_height_divider * 3) + 3);
         gfx_setPixel(pixel_pos, white);
     }
+    #endif
     // Level bar
     uint16_t level_height = bar_height * 3 / bar_height_divider;
     uint16_t level_width = (width * level) / 255;
@@ -848,8 +909,17 @@ void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height, rssi_t 
     gfx_drawRect(level_pos, level_width, level_height, green, true);
 
     // RSSI bar
+    int16_t s_level;
+    if (rssi >= -53) { s_level = 11; }          // rssi >= -53dB set s_level to "11" (S9 + 20 dB)
+    else if (rssi >= -73) {
+        s_level =  (rssi_t)(163 + rssi) / 10; 	// Increase s_level /10dB instead of /6dB for > S9
+    }
+    else if (rssi < -121) { s_level = 0; }   	// s_level should not be negative + avoid overflow if rssi (int32_t) =< -196741
+    else {
+        s_level =  (rssi_t)(127 + rssi) / 6;    // 6dB increase per S-Point
+    }
     uint16_t rssi_height = bar_height * 3 / bar_height_divider;
-    uint16_t rssi_width = (rssiToSlevel(rssi) * (width - 1) / 11);
+    uint16_t rssi_width = (s_level * (width - 1) / 11);
     point_t rssi_pos = {start.x, (uint8_t) (start.y + 5 + level_height + volume_height)};
     gfx_drawRect(rssi_pos, rssi_width, rssi_height, white, true);
     // S-level marks and numbers

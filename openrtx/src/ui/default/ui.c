@@ -88,6 +88,7 @@ extern void _ui_drawVFOMiddle();
 extern void _ui_drawMEMMiddle();
 extern void _ui_drawVFOBottom();
 extern void _ui_drawMEMBottom();
+extern void _ui_drawMainBottom();
 extern void _ui_drawMainVFO(ui_state_t* ui_state);
 extern void _ui_drawMainVFOInput(ui_state_t* ui_state);
 extern void _ui_drawMainMEM(ui_state_t* ui_state);
@@ -99,6 +100,11 @@ extern void _ui_drawMenuContacts(ui_state_t* ui_state);
 #ifdef CONFIG_GPS
 extern void _ui_drawMenuGPS();
 extern void _ui_drawSettingsGPS(ui_state_t* ui_state);
+#endif
+#ifdef PLATFORM_A36PLUS
+extern void _ui_drawMenuSpectrum(ui_state_t* ui_state);
+extern void spectrum_changeFrequency(int32_t freq);
+extern void radio_setRxFilters(uint32_t freq);
 #endif
 extern void _ui_drawSettingsAccessibility(ui_state_t* ui_state);
 extern void _ui_drawMenuSettings(ui_state_t* ui_state);
@@ -121,9 +127,14 @@ extern void _ui_reset_menu_anouncement_tracking();
 
 const char *menu_items[] =
 {
+#ifdef PLATFORM_A36PLUS
+    "Channels",
+    "Spectrum",
+#else
     "Banks",
     "Channels",
     "Contacts",
+#endif
 #ifdef CONFIG_GPS
     "GPS",
 #endif
@@ -142,9 +153,10 @@ const char *settings_items[] =
     "GPS",
 #endif
     "Radio",
-#ifdef CONFIG_M17
-    "M17",
+#ifdef PLATFORM_A36PLUS
+    "Spectrum",
 #endif
+    "M17",
     "Accessibility",
     "Default Settings"
 };
@@ -174,13 +186,26 @@ const char *settings_radio_items[] =
     "Offset",
     "Direction",
     "Step",
+    #ifdef PLATFORM_A36PLUS
+    "RX Mode",
+    #endif
 };
+
+#ifdef PLATFORM_A36PLUS
+const char *settings_spectrum_items[] =
+{
+    "Color Multiplier",
+    "Step",
+};
+#endif
 
 const char * settings_m17_items[] =
 {
     "Callsign",
+#ifdef CONFIG_M17
     "CAN",
     "CAN RX Check"
+#endif
 };
 
 const char * settings_accessibility_items[] =
@@ -221,7 +246,8 @@ const char *authors[] =
     "Fred IU2NRO",
     "Joseph VK7JS",
     "Morgan ON4MOD",
-    "Marco DM4RCO"
+    "Marco DM4RCO",
+    "Andrej K8TUN",
 };
 
 static const char *symbols_ITU_T_E161[] =
@@ -264,9 +290,10 @@ const uint8_t display_num = sizeof(display_items)/sizeof(display_items[0]);
 const uint8_t settings_gps_num = sizeof(settings_gps_items)/sizeof(settings_gps_items[0]);
 #endif
 const uint8_t settings_radio_num = sizeof(settings_radio_items)/sizeof(settings_radio_items[0]);
-#ifdef CONFIG_M17
-const uint8_t settings_m17_num = sizeof(settings_m17_items)/sizeof(settings_m17_items[0]);
+#ifdef PLATFORM_A36PLUS
+const uint8_t settings_spectrum_num = sizeof(settings_spectrum_items)/sizeof(settings_spectrum_items[0]);
 #endif
+const uint8_t settings_m17_num = sizeof(settings_m17_items)/sizeof(settings_m17_items[0]);
 const uint8_t settings_accessibility_num = sizeof(settings_accessibility_items)/sizeof(settings_accessibility_items[0]);
 const uint8_t backup_restore_num = sizeof(backup_restore_items)/sizeof(backup_restore_items[0]);
 const uint8_t info_num = sizeof(info_items)/sizeof(info_items[0]);
@@ -325,7 +352,7 @@ static void _ui_calculateLayout(layout_t *layout)
     static const fontSize_t   top_font = FONT_SIZE_8PT;
     static const symbolSize_t top_symbol_size = SYMBOLS_SIZE_8PT;
     // Text line font: 8 pt
-    static const fontSize_t line1_font = FONT_SIZE_8PT;
+    static const fontSize_t line1_font = FONT_SIZE_6PT;
     static const symbolSize_t line1_symbol_size = SYMBOLS_SIZE_8PT;
     static const fontSize_t line2_font = FONT_SIZE_8PT;
     static const symbolSize_t line2_symbol_size = SYMBOLS_SIZE_8PT;
@@ -334,13 +361,15 @@ static void _ui_calculateLayout(layout_t *layout)
     static const fontSize_t line4_font = FONT_SIZE_8PT;
     static const symbolSize_t line4_symbol_size = SYMBOLS_SIZE_8PT;
     // Frequency line font: 16 pt
-    static const fontSize_t line3_large_font = FONT_SIZE_16PT;
+    static const fontSize_t line3_large_font = FONT_SIZE_12PT;
     // Bottom bar font: 8 pt
     static const fontSize_t bottom_font = FONT_SIZE_8PT;
     // TimeDate/Frequency input font
-    static const fontSize_t input_font = FONT_SIZE_12PT;
+    static const fontSize_t input_font = FONT_SIZE_10PT;
     // Menu font
     static const fontSize_t menu_font = FONT_SIZE_8PT;
+    // Macro font: 6 pt
+    static const fontSize_t   macro_font = FONT_SIZE_6PT;
 
     // Radioddity GD-77
     #elif CONFIG_SCREEN_HEIGHT > 63
@@ -464,7 +493,8 @@ static void _ui_calculateLayout(layout_t *layout)
         line4_symbol_size,
         bottom_font,
         input_font,
-        menu_font
+        menu_font,
+        macro_font
     };
 
     memcpy(layout, &new_layout, sizeof(layout_t));
@@ -472,7 +502,9 @@ static void _ui_calculateLayout(layout_t *layout)
 
 static void _ui_drawLowBatteryScreen()
 {
+    #ifndef CONFIG_GFX_NOFRAMEBUF
     gfx_clearScreen();
+    #endif
     uint16_t bat_width = CONFIG_SCREEN_WIDTH / 2;
     uint16_t bat_height = CONFIG_SCREEN_HEIGHT / 3;
     point_t bat_pos = {CONFIG_SCREEN_WIDTH / 4, CONFIG_SCREEN_HEIGHT / 8};
@@ -779,13 +811,11 @@ static void _ui_changeMacroLatch(bool newVal)
                                    state.settings.macroMenuLatch);
 }
 
-#ifdef CONFIG_M17
 static inline void _ui_changeM17Can(int variation)
 {
     uint8_t can = state.settings.m17_can;
     state.settings.m17_can = (can + variation) % 16;
 }
-#endif
 
 static void _ui_changeVoiceLevel(int variation)
 {
@@ -988,10 +1018,19 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             vp_announceRadioMode(state.channel.mode, queueFlags);
             break;
         case 6:
-            if (state.channel.power == 1000)
-                state.channel.power = 5000;
-            else
-                state.channel.power = 1000;
+            // Three power levels: 1W, 5W, 10W
+            switch(state.channel.power)
+            {
+                case 1000:
+                    state.channel.power = 5000;
+                    break;
+                case 5000:
+                    state.channel.power = 10000;
+                    break;
+                case 10000:
+                    state.channel.power = 1000;
+                    break;
+            }
             *sync_rtx = true;
             vp_announcePower(state.channel.power, queueFlags);
             break;
@@ -1052,6 +1091,7 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
 
 static void _ui_menuUp(uint8_t menu_entries)
 {
+    gfx_clearScreen();
     if(ui_state.menu_selected > 0)
         ui_state.menu_selected -= 1;
     else
@@ -1061,6 +1101,7 @@ static void _ui_menuUp(uint8_t menu_entries)
 
 static void _ui_menuDown(uint8_t menu_entries)
 {
+    gfx_clearScreen();
     if(ui_state.menu_selected < menu_entries - 1)
         ui_state.menu_selected += 1;
     else
@@ -1077,6 +1118,7 @@ static void _ui_menuBack(uint8_t prev_state)
     else
     {
         // Return to previous menu
+        gfx_clearScreen();
         state.ui_screen = prev_state;
         // Reset menu selection
         ui_state.menu_selected = 0;
@@ -1368,12 +1410,23 @@ void ui_updateFSM(bool *sync_rtx)
 #if !defined(PLATFORM_TTWRPLUS)
     if ((!state.emergency) && (!txOngoing) && (state.charge <= 0))
     {
+#ifdef GD32F30X_XD
+        // We have to rely on low battery voltage to detect the power switch being turned off
+        // since the power switch is not connected to the MCU anymore.
+        if (state.charge <= 0)
+        {
+            // shutdown
+            state.devStatus = SHUTDOWN;
+        }
+
+#else
         state.ui_screen = LOW_BAT;
         if(event.type == EVENT_KBD && event.payload)
         {
             state.ui_screen = MAIN_VFO;
             state.emergency = true;
         }
+#endif
         return;
     }
 #endif // PLATFORM_TTWRPLUS
@@ -1393,6 +1446,11 @@ void ui_updateFSM(bool *sync_rtx)
         msg.value = event.payload;
         bool f1Handled = false;
         vpQueueFlags_t queueFlags = vp_getVoiceLevelQueueFlags();
+        #ifdef PLATFORM_A36PLUS
+        // If there is any key press, we need to clear the screen
+        if (msg.keys)
+            gfx_clearScreen();
+        #endif
         // If we get out of standby, we ignore the kdb event
         // unless is the MONI key for the MACRO functions
         if (_ui_exitStandby(now) && !(msg.keys & KEY_MONI))
@@ -1408,12 +1466,16 @@ void ui_updateFSM(bool *sync_rtx)
                 // long press moni on its own latches function.
                 if (moniPressed && msg.long_press && !macro_latched)
                 {
+                    #ifdef CONFIG_GFX_NOFRAMEBUF
+                    gfx_clearScreen();
+                    #endif
                     macro_latched = true;
                     vp_beep(BEEP_FUNCTION_LATCH_ON, LONG_BEEP);
                 }
                 else if (moniPressed && macro_latched)
                 {
                     macro_latched = false;
+                    gfx_clearScreen();
                     vp_beep(BEEP_FUNCTION_LATCH_OFF, LONG_BEEP);
                 }
             }
@@ -1423,6 +1485,10 @@ void ui_updateFSM(bool *sync_rtx)
         }
         else
         {
+            if(macro_menu)
+            {
+                gfx_clearScreen();
+            }
             macro_menu = false;
         }
 #if defined(PLATFORM_TTWRPLUS)
@@ -1759,14 +1825,36 @@ void ui_updateFSM(bool *sync_rtx)
                     }
                     else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
                     {
+                        #ifdef PLATFORM_A36PLUS
+                        // If a channel is empty, skip it
+                        while(cps_readChannel(&state.channel, state.channel_index + 1) == -1)
+                        {
+                            state.channel_index++;
+                            if(state.channel_index >= 512)
+                                state.channel_index = 0;
+                        }
                         _ui_fsm_loadChannel(state.channel_index + 1, sync_rtx);
+                        #else
+                        _ui_fsm_loadChannel(state.channel_index + 1, sync_rtx);
+                        #endif
                         vp_announceChannelName(&state.channel,
                                                state.channel_index+1,
                                                queueFlags);
                     }
                     else if(msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
                     {
+                        #ifdef PLATFORM_A36PLUS
+                        // If a channel is empty, skip it
+                        while(cps_readChannel(&state.channel, state.channel_index - 1) == -1)
+                        {
+                            state.channel_index--;
+                            if(state.channel_index <= 0)
+                                state.channel_index = 512;
+                        }
                         _ui_fsm_loadChannel(state.channel_index - 1, sync_rtx);
+                        #else
+                        _ui_fsm_loadChannel(state.channel_index - 1, sync_rtx);
+                        #endif
                         vp_announceChannelName(&state.channel,
                                                state.channel_index+1,
                                                queueFlags);
@@ -1783,6 +1871,11 @@ void ui_updateFSM(bool *sync_rtx)
                 {
                     switch(ui_state.menu_selected)
                     {
+                        #ifdef PLATFORM_A36PLUS
+                        case M_CHANNEL:
+                            state.ui_screen = MENU_CHANNEL;
+                            break;
+                        #else
                         case M_BANK:
                             state.ui_screen = MENU_BANK;
                             break;
@@ -1792,9 +1885,21 @@ void ui_updateFSM(bool *sync_rtx)
                         case M_CONTACTS:
                             state.ui_screen = MENU_CONTACTS;
                             break;
+                        #endif
 #ifdef CONFIG_GPS
                         case M_GPS:
                             state.ui_screen = MENU_GPS;
+                            break;
+#endif
+#ifdef PLATFORM_A36PLUS
+                        case M_SPECTRUM:
+                            state.spectrum_startFreq = (state.channel.rx_frequency/10) - 32 * freq_steps[state.settings.spectrum_step]/10;
+                            display_defineScrollArea(119,160);
+                            state.ui_screen = MENU_SPECTRUM;
+                            state.rtxStatus = RTX_SPECTRUM;
+                            state.spectrum_currentPart = 0;
+                            // Fill the waterfall with blue, to make it less jarring
+                            gfx_drawRect((point_t){92, 0}, 44, 128, (color_t){0,0,255}, true);
                             break;
 #endif
                         case M_SETTINGS:
@@ -1900,6 +2005,42 @@ void ui_updateFSM(bool *sync_rtx)
                     _ui_menuBack(MENU_TOP);
                 break;
 #endif
+#ifdef PLATFORM_A36PLUS
+            // Spectrum menu screen
+            case MENU_SPECTRUM:
+            // Go to the Spectrum Settings if we press ENTER
+                if(msg.keys & KEY_ENTER)
+                {
+                    display_init();
+                    state.rtxStatus = RTX_RX;
+                    state.ui_screen = SETTINGS_SPECTRUM;
+                }
+                if(msg.keys & KEY_ESC) {
+                    state.rtxStatus = RTX_RX;
+                    radio_enableRx();
+                    display_init();
+                    _ui_menuBack(MENU_TOP);
+                }
+                if(msg.keys & KEY_UP)
+                {
+                    spectrum_changeFrequency(freq_steps[state.settings.spectrum_step]/10*32);
+                    // Enable corresponding filters
+                    #ifndef PLATFORM_LINUX
+                    radio_setRxFilters(state.spectrum_startFreq);
+                    #endif
+                    state.spectrum_currentPart = 0;
+                }
+                if(msg.keys & KEY_DOWN)
+                {
+                    spectrum_changeFrequency(-(freq_steps[state.settings.spectrum_step]/10*32));
+                    // Enable corresponding filters
+                    #ifndef PLATFORM_LINUX
+                    radio_setRxFilters(state.spectrum_startFreq);
+                    #endif
+                    state.spectrum_currentPart = 0;
+                }
+                break;
+#endif
             // Settings menu screen
             case MENU_SETTINGS:
                 if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
@@ -1927,11 +2068,14 @@ void ui_updateFSM(bool *sync_rtx)
                         case S_RADIO:
                             state.ui_screen = SETTINGS_RADIO;
                             break;
-#ifdef CONFIG_M17
+#ifdef PLATFORM_A36PLUS
+                        case S_SPECTRUM:
+                            state.ui_screen = SETTINGS_SPECTRUM;
+                            break;                            
+#endif
                         case S_M17:
                             state.ui_screen = SETTINGS_M17;
                             break;
-#endif
                         case S_ACCESSIBILITY:
                             state.ui_screen = SETTINGS_ACCESSIBILITY;
                             break;
@@ -2109,6 +2253,55 @@ void ui_updateFSM(bool *sync_rtx)
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_SETTINGS);
                 break;
+            #ifdef PLATFORM_A36PLUS
+            case SETTINGS_SPECTRUM:
+                if(msg.keys & KEY_LEFT || (ui_state.edit_mode &&
+                   (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)))
+                {
+                    switch(ui_state.menu_selected)
+                    {
+                        case SP_MULTIPLIER:
+                            if(state.settings.spectrum_multiplier > 0)
+                                state.settings.spectrum_multiplier -= 1;
+                            else
+                                state.settings.spectrum_multiplier = 4;       
+                            break;
+                        case SP_STEP:
+                            if(state.settings.spectrum_step > 0)
+                                state.settings.spectrum_step -= 1;
+                            else
+                                state.settings.spectrum_step = n_freq_steps - 1;
+                            break;
+                    }
+                }
+                else if(msg.keys & KEY_RIGHT || (ui_state.edit_mode &&
+                        (msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)))
+                {
+                    switch(ui_state.menu_selected)
+                    {
+                        case SP_MULTIPLIER:
+                            state.settings.spectrum_multiplier = (state.settings.spectrum_multiplier + 1) % 5;
+                            break;
+                        case SP_STEP:
+                            state.settings.spectrum_step += 1;
+                            state.settings.spectrum_step %= n_freq_steps;
+                            break;
+                    }
+                }
+                else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                    _ui_menuUp(display_num);
+                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                    _ui_menuDown(display_num);
+                else if(msg.keys & KEY_ENTER)
+                    ui_state.edit_mode = !ui_state.edit_mode;
+                else if(msg.keys & KEY_ESC) {
+                    state.rtxStatus = RTX_SPECTRUM;
+                    display_defineScrollArea(119,160);
+                    state.spectrum_currentPart = 0;
+                    _ui_menuBack(MENU_SPECTRUM);
+                }
+                break;
+            #endif
 #ifdef CONFIG_GPS
             case SETTINGS_GPS:
                 if(msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT ||
@@ -2219,6 +2412,19 @@ void ui_updateFSM(bool *sync_rtx)
                                     state.channel.tx_frequency -= 2 * ((int32_t)state.channel.tx_frequency - (int32_t)state.channel.rx_frequency);
                             }
                             break;
+                        #ifdef PLATFORM_A36PLUS
+                        case R_MODULATION:
+                            if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
+                               msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT ||
+                               msg.keys & KNOB_LEFT || msg.keys & KNOB_RIGHT)
+                            {
+                                // Cycle over the available modulations
+                                state.settings.rx_modulation = !state.settings.rx_modulation;
+                                bk4819_set_modulation(state.settings.rx_modulation); // required for instant feedback
+                                radio_updateConfiguration();
+                            }
+                            break;
+                        #endif
                         case R_STEP:
                             if (msg.keys & KEY_UP || msg.keys & KEY_RIGHT || msg.keys & KNOB_RIGHT)
                             {
@@ -2255,7 +2461,6 @@ void ui_updateFSM(bool *sync_rtx)
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_SETTINGS);
                 break;
-#ifdef CONFIG_M17
             // M17 Settings
             case SETTINGS_M17:
                 if(ui_state.edit_mode)
@@ -2351,7 +2556,6 @@ void ui_updateFSM(bool *sync_rtx)
                     }
                 }
                 break;
-#endif
             case SETTINGS_ACCESSIBILITY:
                 if(msg.keys & KEY_LEFT || (ui_state.edit_mode &&
                    (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)))
@@ -2495,15 +2699,32 @@ bool ui_updateGUI()
     {
         // VFO main screen
         case MAIN_VFO:
+        #ifdef PLATFORM_A36PLUS
+            if(!macro_menu)
+                _ui_drawMainVFO(&ui_state);
+            else
+                // draw only the s-meter
+                _ui_drawMainBottom(&ui_state);
+        #else
             _ui_drawMainVFO(&ui_state);
+        #endif
             break;
         // VFO frequency input screen
         case MAIN_VFO_INPUT:
-            _ui_drawMainVFOInput(&ui_state);
+            if(!macro_menu)
+                _ui_drawMainVFOInput(&ui_state);
             break;
         // MEM main screen
         case MAIN_MEM:
-            _ui_drawMainMEM(&ui_state);
+            #ifdef PLATFORM_A36PLUS
+            if(!macro_menu)
+            {
+                _ui_drawMainMEM(&ui_state);
+            }
+                _ui_drawMainBottom(&ui_state);
+            #else
+                _ui_drawMainMEM(&ui_state);
+            #endif
             break;
         // Top menu screen
         case MENU_TOP:
@@ -2525,6 +2746,11 @@ bool ui_updateGUI()
         // GPS menu screen
         case MENU_GPS:
             _ui_drawMenuGPS();
+            break;
+#endif
+#ifdef PLATFORM_A36PLUS
+        case MENU_SPECTRUM:
+            _ui_drawMenuSpectrum(&ui_state);
             break;
 #endif
         // Settings menu screen
@@ -2571,12 +2797,16 @@ bool ui_updateGUI()
             _ui_drawSettingsGPS(&ui_state);
             break;
 #endif
-#ifdef CONFIG_M17
-        // M17 settings screen
+#ifdef PLATFORM_A36PLUS
+        // Spectrum settings screen
+        case SETTINGS_SPECTRUM:
+            _ui_drawSettingsSpectrum(&ui_state);
+            break;
+#endif
+       // M17 settings screen
         case SETTINGS_M17:
             _ui_drawSettingsM17(&ui_state);
             break;
-#endif
         case SETTINGS_ACCESSIBILITY:
             _ui_drawSettingsAccessibility(&ui_state);
             break;
@@ -2594,10 +2824,11 @@ bool ui_updateGUI()
             break;
     }
 
-    // If MACRO menu is active draw it
-    if(macro_menu)
+    // If MACRO menu is active draw it,
+    // but only in the main screens
+    if(macro_menu && (last_state.ui_screen <= 2)) // MAIN_VFO, MAIN_MEM, MENU_TOP
     {
-        _ui_drawDarkOverlay();
+        //_ui_drawDarkOverlay();
         _ui_drawMacroMenu(&ui_state);
     }
 

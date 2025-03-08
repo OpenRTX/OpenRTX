@@ -353,6 +353,8 @@ static bool beep_tick()
 
 void vp_init()
 {
+
+    #ifndef PLATFORM_A36PLUS
     #ifdef VP_USE_FILESYSTEM
     if(vpFile == NULL)
         vpFile = fopen("voiceprompts.vpc", "r");
@@ -372,7 +374,7 @@ void vp_init()
     {
         loadVpToC();
     }
-
+    #endif
     if (vpDataLoaded)
     {
         // If the hash key is down, set vpLevel to high, if beep or less.
@@ -388,7 +390,7 @@ void vp_init()
     }
 
     // Initialize codec2 module
-    codec_init();
+    //codec_init();
 }
 
 void vp_terminate()
@@ -406,7 +408,7 @@ void vp_terminate()
 void vp_stop()
 {
     voicePromptActive = false;
-    codec_stop(vpAudioPath);
+    // codec_stop(vpAudioPath);
     disableSpkOutput();
 
     // Clear voice prompt sequence data
@@ -581,10 +583,10 @@ void vp_tick()
     // management.
     if((vpStartTime > 0) && ((getTick() - vpStartTime) > 50))
     {
-        vpStartTime       = 0;
-        voicePromptActive = true;
-        enableSpkOutput();
-        codec_startDecode(vpAudioPath);
+        // vpStartTime       = 0;
+        // voicePromptActive = true;
+        // enableSpkOutput();
+        // codec_startDecode(vpAudioPath);
     }
 
     if (voicePromptActive == false)
