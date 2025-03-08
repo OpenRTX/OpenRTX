@@ -41,7 +41,7 @@
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBottom();
 extern void radio_setRxFilters(uint32_t freq);
-color_t spectrum_getColorFromLevel(uint16_t Level);
+color_t getColorFromLevel(uint16_t Level);
 
 static char priorSelectedMenuName[MAX_ENTRY_LEN] = "\0";
 static char priorSelectedMenuValue[MAX_ENTRY_LEN] = "\0";
@@ -341,6 +341,8 @@ int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
 }
 #endif
 
+
+#ifdef PLATFORM_A36PLUS
 int _ui_getSpectrumEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= settings_spectrum_num) return -1;
@@ -366,6 +368,7 @@ int _ui_getSpectrumValueName(char *buf, uint8_t max_len, uint8_t index)
     }
     return 0;
 }
+#endif
 
 int _ui_getRadioEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
@@ -801,7 +804,7 @@ void _ui_drawMenuSpectrum(ui_state_t* ui_state)
         {
             uint8_t height = state.spectrum_data[i];
             gfx_drawRect((point_t){88-height,i*(CONFIG_SCREEN_HEIGHT/NUMBER_BARS)+1}, height, (CONFIG_SCREEN_HEIGHT/NUMBER_BARS),
-                        spectrum_getColorFromLevel(height * (state.settings.spectrum_multiplier-1) + height), true);
+                        getColorFromLevel(height * (state.settings.spectrum_multiplier-1) + height), true);
         }
         state.spectrum_shouldRefresh = false;
     }
@@ -832,7 +835,7 @@ void _ui_drawMenuSpectrum(ui_state_t* ui_state)
             //     state.spectrum_peakFreq = last_state.spectrum_startFreq + i * spectrumStep;
             //     state.spectrum_peakIndex = i;
             // }
-            bar_color = spectrum_getColorFromLevel(height * (state.settings.spectrum_multiplier-1) + height);
+            bar_color = getColorFromLevel(height * (state.settings.spectrum_multiplier-1) + height);
             // Draw a new line on the waterfall
             display_sendRawPixel((bar_color.r >> 3) << 11 | (bar_color.g >> 2) << 5 | (bar_color.b >> 3));
             display_sendRawPixel((bar_color.r >> 3) << 11 | (bar_color.g >> 2) << 5 | (bar_color.b >> 3));
@@ -844,7 +847,13 @@ void _ui_drawMenuSpectrum(ui_state_t* ui_state)
     ui_updateFSM(NULL);
 }
 
-color_t spectrum_getColorFromLevel(uint16_t Level) {
+void spectrum_changeFrequency(int32_t direction)
+{
+    state.spectrum_startFreq += direction;
+}
+#endif
+
+color_t getColorFromLevel(uint16_t Level) {
     const uint8_t Blue_G = 0;
     const uint8_t Blue_B = 255;
     
@@ -875,12 +884,6 @@ color_t spectrum_getColorFromLevel(uint16_t Level) {
     }
     return (color_t){R, G, B};
 }
-
-void spectrum_changeFrequency(int32_t direction)
-{
-    state.spectrum_startFreq += direction;
-}
-#endif
 
 void _ui_drawMenuSettings(ui_state_t* ui_state)
 {

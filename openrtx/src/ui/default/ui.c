@@ -2253,6 +2253,7 @@ void ui_updateFSM(bool *sync_rtx)
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_SETTINGS);
                 break;
+            #ifdef PLATFORM_A36PLUS
             case SETTINGS_SPECTRUM:
                 if(msg.keys & KEY_LEFT || (ui_state.edit_mode &&
                    (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)))
@@ -2300,6 +2301,7 @@ void ui_updateFSM(bool *sync_rtx)
                     _ui_menuBack(MENU_SPECTRUM);
                 }
                 break;
+            #endif
 #ifdef CONFIG_GPS
             case SETTINGS_GPS:
                 if(msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT ||
@@ -2410,6 +2412,7 @@ void ui_updateFSM(bool *sync_rtx)
                                     state.channel.tx_frequency -= 2 * ((int32_t)state.channel.tx_frequency - (int32_t)state.channel.rx_frequency);
                             }
                             break;
+                        #ifdef PLATFORM_A36PLUS
                         case R_MODULATION:
                             if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
                                msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT ||
@@ -2421,6 +2424,7 @@ void ui_updateFSM(bool *sync_rtx)
                                 radio_updateConfiguration();
                             }
                             break;
+                        #endif
                         case R_STEP:
                             if (msg.keys & KEY_UP || msg.keys & KEY_RIGHT || msg.keys & KNOB_RIGHT)
                             {
