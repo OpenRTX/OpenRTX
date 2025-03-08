@@ -61,22 +61,6 @@ static const struct W25QxCfg eflashCfg =
 };
 W25Qx_DEVICE_DEFINE(eflash, eflashCfg, 0x200000)  // 2 MB,  16 Mbit
 
-
-static inline void W25Qx_readData(uint32_t addr, void *buf, size_t len)
-{
-    nvm_devRead(&eflash, addr, buf, len);
-}
-
-static inline int W25Qx_erase(uint32_t addr, size_t size)
-{
-    return nvm_devErase(&eflash, addr, size);
-}
-
-int W25Qx_writeData(uint32_t addr, const void *buf, size_t len)
-{
-    return nvm_devWrite(&eflash, addr, buf, len);
-}
-
 static const struct nvmDescriptor nvmDevices[] =
 {
     {
