@@ -580,8 +580,7 @@ md3x0_opts = {
   'dependencies'       : [codec2_dep],
   'c_args'             : md3x0_args,
   'cpp_args'           : md3x0_args,
-  'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld',
-                          '-Wl,--print-memory-usage']
+  'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld']
 }
 
 mduv3x0_opts = {
@@ -590,8 +589,7 @@ mduv3x0_opts = {
   'dependencies'       : [codec2_dep],
   'c_args'             : mduv3x0_args,
   'cpp_args'           : mduv3x0_args,
-  'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld',
-                          '-Wl,--print-memory-usage']
+  'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld']
 }
 
 gd77_opts = {
@@ -600,8 +598,7 @@ gd77_opts = {
   'dependencies'       : [codec2_dep],
   'c_args'             : gd77_args,
   'cpp_args'           : gd77_args,
-  'link_args'          : ['-Wl,-T../platform/mcu/MK22FN512xxx12/linker_script.ld',
-                          '-Wl,--print-memory-usage'],
+  'link_args'          : ['-Wl,-T../platform/mcu/MK22FN512xxx12/linker_script.ld']
 }
 
 dm1801_opts = {
@@ -610,8 +607,7 @@ dm1801_opts = {
   'dependencies'       : [codec2_dep],
   'c_args'             : dm1801_args,
   'cpp_args'           : dm1801_args,
-  'link_args'          : ['-Wl,-T../platform/mcu/MK22FN512xxx12/linker_script.ld',
-                          '-Wl,--print-memory-usage'],
+  'link_args'          : ['-Wl,-T../platform/mcu/MK22FN512xxx12/linker_script.ld']
 }
 
 md9600_opts = {
@@ -620,8 +616,7 @@ md9600_opts = {
   'dependencies'       : [codec2_dep],
   'c_args'             : md9600_args,
   'cpp_args'           : md9600_args,
-  'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld',
-                          '-Wl,--print-memory-usage'],
+  'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld']
 }
 
 mod17_opts = {
@@ -630,8 +625,7 @@ mod17_opts = {
   'dependencies'       : [codec2_dep],
   'c_args'             : mod17_args,
   'cpp_args'           : mod17_args,
-  'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/stm32_1m+192k_rom.ld',
-                          '-Wl,--print-memory-usage'],
+  'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/stm32_1m+192k_rom.ld']
 }
 
 ttwrplus_opts = {
