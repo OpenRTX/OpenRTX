@@ -58,6 +58,7 @@ c_link_args = [
                '-Wl,--gc-sections',
                '-Wl,-Map,main.map',
                '-Wl,--warn-common',
+               '-Wl,--print-memory-usage',
                '-nostdlib',
                '-lstdc++',
                '-lc',
