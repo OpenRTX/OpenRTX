@@ -19,7 +19,6 @@ c_args      = [
                '-fdata-sections',
                '-Wall',
                '-Werror=return-type',
-               '-g',
                '-mcpu=cortex-m4',           # Cortex-M4 CPU
                '-mthumb',                   # ARM Thumb2 ISA
                '-mfloat-abi=hard',          # Hard floating point support
@@ -33,7 +32,6 @@ cpp_args    = [
                '-fdata-sections',
                '-Wall',
                '-Werror=return-type',
-               '-g',
                '-fno-exceptions',
                '-fno-rtti',
                '-D__NO_EXCEPTIONS',
