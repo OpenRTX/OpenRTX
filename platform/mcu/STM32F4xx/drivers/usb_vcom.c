@@ -158,13 +158,13 @@ typedef struct
   uint8_t  format;
   uint8_t  paritytype;
   uint8_t  datatype;
-    uint8_t changed;
+  uint8_t changed;
 }LINE_CODING;
 
 /* USB virtual com settings: 115200 baud, 8n1 */
 LINE_CODING linecoding =
 {
-    115200, /* baud rate */
+    460800, /* baud rate */
     0x00,   /* stop bits-1 */
     0x00,   /* parity - none */
     0x08,   /* nb. of bits 8 */
@@ -237,19 +237,45 @@ ssize_t vcom_writeBlock(const void* buf, size_t len)
     return len;
 }
 
+// Added by KD0OSS 2025
+ssize_t vcom_bytesReady()
+{
+	ssize_t len = 0;
+
+	if (rxRingBuf.readPtr <= rxRingBuf.writePtr)
+		len = rxRingBuf.writePtr - rxRingBuf.readPtr;
+	else
+		len = (RX_RING_BUF_SIZE - rxRingBuf.readPtr) + rxRingBuf.writePtr;
+
+	return len;
+}
+
+// Added by KD0OSS 2025
+bool vcom_peekByte(void* buf, size_t pos)
+{
+	uint8_t *b = ((uint8_t *) buf);
+
+	if (pos > (size_t)(vcom_bytesReady() - 1))
+	    return false;
+
+	b[0] = rxRingBuf.data[(rxRingBuf.readPtr + pos)%RX_RING_BUF_SIZE];
+	return true;
+}
+
 ssize_t vcom_readBlock(void* buf, size_t len)
 {
-    uint8_t *b = ((uint8_t *) buf);
-    size_t i;
-    for(i = 0; i < len; i++)
-    {
-        /* Terminate if all data available has been popped out */
-        if(rxRingBuf.readPtr == rxRingBuf.writePtr) break;
-        b[i] = rxRingBuf.data[rxRingBuf.readPtr];
-        rxRingBuf.readPtr = (rxRingBuf.readPtr + 1)%RX_RING_BUF_SIZE;
-    }
+	uint8_t *b = ((uint8_t *) buf);
+	size_t i;
 
-    return i;
+	for(i = 0; i < len; i++)
+	{
+		/* Terminate if all data available has been popped out */
+		if(rxRingBuf.readPtr == rxRingBuf.writePtr)	break;
+		b[i] = rxRingBuf.data[rxRingBuf.readPtr];
+		rxRingBuf.readPtr = (rxRingBuf.readPtr + 1)%RX_RING_BUF_SIZE;
+	}
+
+	return i;
 }
 
 /******************************************************************************

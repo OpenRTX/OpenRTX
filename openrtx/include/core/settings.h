@@ -16,6 +16,8 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
+ *                                                                         *
+ *   (2025) Modified by KD0OSS for new modes on Module17                   *
  ***************************************************************************/
 
 #ifndef SETTINGS_H
@@ -61,7 +63,23 @@ typedef struct
             macroMenuLatch  : 1,  // Automatic latch of macro menu
             _reserved       : 3;
     bool    m17_can_rx;           // Check M17 CAN on RX
+    bool    m17_sms_match_call;   // SMS match callsign to receive
     char    m17_dest[10];         // M17 destination
+    char    M17_meta_text[53];    // M17 Meta Text to send
+    #if defined(CONFIG_DSTAR)
+    char    dstar_mycall[9];      // DSTAR MyCall
+    char    dstar_urcall[9];      // DSTAR UrCall
+    char    dstar_rpt1call[9];    // DSTAR Rpt1Call
+    char    dstar_rpt2call[9];    // DSTAR Rpt2Call
+    char    dstar_suffix[5];      // DSTAR Suffix
+    char    dstar_message[21];    // DSTAR slow speed txt
+    char    dstar_header[38];     // DSTAR TX header data
+    #endif
+    #if defined(CONFIG_P25)
+    uint32_t p25_srcId;           // P25 Source ID (DMR ID)
+    uint32_t p25_dstId;           // P25 Destination ID (DMR ID or TG)
+    uint16_t p25_nac;             // P25 NAC
+    #endif
 }
 __attribute__((packed)) settings_t;
 
@@ -86,7 +104,23 @@ static const settings_t default_settings =
     1,                            // Automatic latch of macro menu enabled
     0,                            // not used
     false,                        // Check M17 CAN on RX
-    ""                            // Empty M17 destination
+    true,                         // SMS match callsign
+    "",                           // Empty M17 destination
+    "OpenRTX"                     // Default M17 meta text
+    #if defined(CONFIG_DSTAR)
+    ,""                           // Empty DSTAR MyCall
+    ,""                           // Empty DSTAR UrCall
+    ,""                           // Empty DSTAR Rpt1Call
+    ,""                           // Empty DSTAR Rpt2Call
+    ,""                           // Empty DSTAR Suffix
+    ,""                           // Empty DSTAR slow speed txt
+    ,""                           // Empty DSTAR TX header data
+    #endif
+    #if defined(CONFIG_P25)
+    ,0                            // Empty P25 Source ID
+    ,0                            // Empty P25 Destination ID
+    ,293                          // Default P25 NAC
+    #endif
 };
 
 #endif /* SETTINGS_H */

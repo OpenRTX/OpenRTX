@@ -59,6 +59,7 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/rtx/rtx.cpp',
                'openrtx/src/rtx/OpMode_FM.cpp',
                'openrtx/src/rtx/OpMode_M17.cpp',
+               'openrtx/src/protocols/M17/T9.c',
                'openrtx/src/protocols/M17/M17DSP.cpp',
                'openrtx/src/protocols/M17/M17Golay.cpp',
                'openrtx/src/protocols/M17/M17Callsign.cpp',
@@ -67,6 +68,42 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/protocols/M17/M17FrameEncoder.cpp',
                'openrtx/src/protocols/M17/M17FrameDecoder.cpp',
                'openrtx/src/protocols/M17/M17LinkSetupFrame.cpp']
+
+openrtx_rpt_src = ['openrtx/src/core/state.c',
+'openrtx/src/core/threads.c',
+# 'openrtx/src/core/battery.c',
+'openrtx/src/core/graphics.c',
+'openrtx/src/core/input.c',
+'openrtx/src/core/utils.c',
+'openrtx/src/core/queue.c',
+'openrtx/src/core/chan.c',
+'openrtx/src/core/gps.c',
+'openrtx/src/core/dsp.cpp',
+'openrtx/src/core/cps.c',
+'openrtx/src/core/crc.c',
+'openrtx/src/core/datetime.c',
+'openrtx/src/core/openrtx.c',
+#'openrtx/src/core/audio_codec.c',
+'openrtx/src/core/audio_stream.c',
+'openrtx/src/core/audio_path.cpp',
+'openrtx/src/core/data_conversion.c',
+'openrtx/src/core/memory_profiling.cpp',
+#'openrtx/src/core/voicePrompts.c',
+#'openrtx/src/core/voicePromptUtils.c',
+#'openrtx/src/core/voicePromptData.S',
+'openrtx/src/core/nvmem_access.c',
+#'openrtx/src/rtx/rtx_rpt.cpp',
+'openrtx/src/rtx/OpMode_FM.cpp',
+'openrtx/src/rtx/OpMode_M17.cpp',
+'openrtx/src/protocols/M17/T9.c',
+'openrtx/src/protocols/M17/M17DSP.cpp',
+'openrtx/src/protocols/M17/M17Golay.cpp',
+'openrtx/src/protocols/M17/M17Callsign.cpp',
+'openrtx/src/protocols/M17/M17Modulator.cpp',
+'openrtx/src/protocols/M17/M17Demodulator.cpp',
+'openrtx/src/protocols/M17/M17FrameEncoder.cpp',
+'openrtx/src/protocols/M17/M17FrameDecoder.cpp',
+'openrtx/src/protocols/M17/M17LinkSetupFrame.cpp']
 
 openrtx_inc = ['openrtx/include',
                'openrtx/include/rtx',
@@ -266,7 +303,7 @@ mk22fn512_inc = ['platform/mcu/CMSIS/Include',
                  'platform/mcu/MK22FN512xxx12',
                  'platform/mcu/MK22FN512xxx12/drivers']
 
-mk22fn512_def = {'MK22FN512xx': ''}
+mk22fn512_def = {}
 
 mk22fn512_src += miosix_cm4f_src
 mk22fn512_inc += miosix_cm4f_inc
@@ -323,14 +360,7 @@ linux_mod17_def = linux_def + {'CONFIG_SCREEN_WIDTH': '128', 'CONFIG_SCREEN_HEIG
 
 linux_c_args   = ['-ffunction-sections', '-fdata-sections']
 linux_cpp_args = ['-ffunction-sections', '-fdata-sections', '-std=c++14']
-linux_l_args   = ['-lm', '-lreadline']
-
-# MacOS Clang linker uses -deadstrip instead of --gc-sections
-if build_machine.system() == 'darwin'
-  linux_l_args += '-Wl,-dead_strip'
-else
-  linux_l_args += '-Wl,--gc-sections'
-endif
+linux_l_args   = ['-lm', '-lreadline', '-Wl,--gc-sections']
 
 # Add AddressSanitizer if required
 if get_option('asan')
@@ -396,7 +426,6 @@ md9600_src = ['platform/targets/MD-9600/platform.c',
               'platform/targets/MD-9600/hwconfig.c',
               'platform/drivers/display/ST7567_MD9600.c',
               'platform/drivers/keyboard/keyboard_MD9600.c',
-              'platform/drivers/backlight/backlight_MDx.c',
               'platform/drivers/chSelector/chSelector_MD9600.c',
               'platform/drivers/baseband/radio_MD9600.cpp',
               'platform/drivers/CPS/cps_io_native_MD9600.c']
@@ -434,22 +463,99 @@ dm1801_def += openrtx_def + mk22fn512_def
 ## Module 17
 ##
 mod17_src = ['platform/targets/Module17/platform.c',
+             'openrtx/src/core/arm_math.c',
              'platform/drivers/display/display_Mod17.c',
              'platform/drivers/display/SH110x_Mod17.c',
              'platform/drivers/display/SSD1309_Mod17.c',
              'platform/drivers/keyboard/keyboard_Mod17.c',
              'platform/drivers/NVM/nvmem_Mod17.c',
              'platform/drivers/CPS/cps_io_native_Mod17.c',
+             'platform/mcu/STM32F4xx/drivers/USART3_MOD17.cpp',
              'platform/drivers/baseband/radio_Mod17.cpp',
              'platform/drivers/audio/audio_Mod17.c',
+             'openrtx/src/protocols/DSTAR/Utils.cpp',
              'platform/drivers/audio/MAX9814_Mod17.cpp',
              'platform/drivers/baseband/MCP4551.c']
 
-mod17_inc = ['platform/targets/Module17']
-mod17_def = {'PLATFORM_MOD17': ''}
+dstar_src = ['openrtx/src/protocols/DSTAR/DStarRX.cpp',
+             'openrtx/src/protocols/DSTAR/DStarTX.cpp',
+             'openrtx/src/protocols/DSTAR/DStar_IO.cpp',
+             'openrtx/src/rtx/OpMode_DSTAR.cpp']
 
-mod17_src += openrtx_src + stm32f405_src + ui_src_module17
-mod17_inc += openrtx_inc + stm32f405_inc
+p25_src =     ['openrtx/src/protocols/P25/P25RX.cpp',
+               'openrtx/src/protocols/P25/P25TX.cpp',
+               'openrtx/src/protocols/P25/P25_IO.cpp',
+               'openrtx/src/protocols/P25/AMBEFEC.cpp',
+               'openrtx/src/protocols/P25/RS241213.cpp',
+               'openrtx/src/protocols/P25/P25Utils.cpp',
+               'openrtx/src/protocols/P25/P25NID.cpp',
+               'openrtx/src/protocols/P25/P25LowSpeedData.cpp',
+               'openrtx/src/protocols/P25/P25Data.cpp',
+               'openrtx/src/protocols/P25/P25_Audio.cpp',
+               'openrtx/src/protocols/P25/Hamming.cpp',
+               'openrtx/src/protocols/P25/Golay24128.cpp',
+               'openrtx/src/rtx/OpMode_P25.cpp',
+               'openrtx/src/protocols/P25/BCH.cpp']
+
+imbe_vocoder_src =['openrtx/src/imbe_vocoder/aux_sub.cc',
+                   'openrtx/src/imbe_vocoder/basicop2.cc',
+                   'openrtx/src/imbe_vocoder/ch_decode.cc',
+                   'openrtx/src/imbe_vocoder/ch_encode.cc',
+                   'openrtx/src/imbe_vocoder/dc_rmv.cc',
+                   'openrtx/src/imbe_vocoder/decode.cc',
+                   'openrtx/src/imbe_vocoder/dsp_sub.cc',
+                   'openrtx/src/imbe_vocoder/encode.cc',
+                   'openrtx/src/imbe_vocoder/imbe_vocoder_impl.cc',
+                   'openrtx/src/imbe_vocoder/imbe_vocoder.cc',
+                   'openrtx/src/imbe_vocoder/math_sub.cc',
+                   'openrtx/src/imbe_vocoder/pe_lpf.cc',
+                   'openrtx/src/imbe_vocoder/pitch_est.cc',
+                   'openrtx/src/imbe_vocoder/pitch_ref.cc',
+                   'openrtx/src/imbe_vocoder/qnt_sub.cc',
+                   'openrtx/src/imbe_vocoder/rand_gen.cc',
+                   'openrtx/src/imbe_vocoder/sa_decode.cc',
+                   'openrtx/src/imbe_vocoder/sa_encode.cc',
+                   'openrtx/src/imbe_vocoder/sa_enh.cc',
+                   'openrtx/src/imbe_vocoder/tbls.cc',
+                   'openrtx/src/imbe_vocoder/uv_synt.cc',
+                   'openrtx/src/imbe_vocoder/v_synt.cc',
+                   'openrtx/src/imbe_vocoder/v_uv_det.cc']
+
+fm_src  =         ['openrtx/src/rtx/OpMode_FM.cpp',
+                   'openrtx/src/protocols/FM/arm_sin_q31.c',
+                   'openrtx/src/protocols/FM/arm_const_structs.c',
+                   'openrtx/src/protocols/FM/arm_common_tables.c',
+                   'openrtx/src/protocols/FM/FM.cpp',
+                   'openrtx/src/protocols/FM/FMCTCSSRX.cpp',
+                   'openrtx/src/protocols/FM/FMCTCSSTX.cpp',
+                   'openrtx/src/protocols/FM/FMNoiseSquelch.cpp']
+
+fm_audio_src =    ['openrtx/src/core/fm_audio_module17.cpp']
+p25_audio_src =   ['openrtx/src/core/imbe_audio_codec.cpp']
+dstar_auido_src = ['openrtx/src/core/dstar_audio_codec.cpp']
+
+mod17_inc = ['platform/targets/Module17']
+fm_inc = ['openrtx/include/protocols/FM']
+imbe_vocoder_inc = ['openrtx/src/imbe_vocoder']
+
+mod17_dstar_def = {'PLATFORM_MOD17': '', 'CONFIG_DSTAR': '', 'USE_DYNAMIC_ALLOC': ''}
+mod17_dstar_src = mod17_src + openrtx_src + stm32f405_src + ui_src_module17 + dstar_src + fm_src + fm_audio_src + dstar_auido_src
+mod17_dstar_inc = mod17_inc + openrtx_inc + stm32f405_inc + fm_inc
+mod17_dstar_def += openrtx_def + stm32f405_def
+
+mod17_p25_def = {'PLATFORM_MOD17': '', 'CONFIG_P25': '', 'USE_DYNAMIC_ALLOC': ''}
+mod17_p25_src = mod17_src + openrtx_src + stm32f405_src + ui_src_module17 + p25_src + fm_src + fm_audio_src + imbe_vocoder_src + p25_audio_src
+mod17_p25_inc = mod17_inc + openrtx_inc + stm32f405_inc + fm_inc + imbe_vocoder_inc
+mod17_p25_def += openrtx_def + stm32f405_def
+
+mod17_rpt_def = {'PLATFORM_MOD17': '', 'CONFIG_DSTAR': '', 'CONFIG_P25': '', 'USE_DYNAMIC_ALLOC': ''}
+mod17_rpt_src = mod17_src + openrtx_rpt_src + stm32f405_src + ui_src_module17 + p25_src + dstar_src + fm_src
+mod17_rpt_inc = mod17_inc + openrtx_inc + stm32f405_inc + fm_inc
+mod17_rpt_def += openrtx_def + stm32f405_def
+
+mod17_def = {'PLATFORM_MOD17': ''}
+mod17_src += openrtx_src + stm32f405_src + ui_src_module17 + fm_src + fm_audio_src
+mod17_inc += openrtx_inc + stm32f405_inc + fm_inc
 mod17_def += openrtx_def + stm32f405_def
 
 ##
@@ -547,6 +653,33 @@ foreach k, v : mod17_def
   endif
 endforeach
 
+mod17_p25_args = []
+foreach k, v : mod17_p25_def
+  if v == ''
+    mod17_p25_args += '-D@0@'.format(k)
+  else
+    mod17_p25_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
+
+mod17_dstar_args = []
+foreach k, v : mod17_dstar_def
+  if v == ''
+    mod17_dstar_args += '-D@0@'.format(k)
+  else
+    mod17_dstar_args += '-D@0@=@1@'.format(k, v)
+endif
+endforeach
+
+mod17_rpt_args = []
+foreach k, v : mod17_rpt_def
+  if v == ''
+    mod17_rpt_args += '-D@0@'.format(k)
+  else
+    mod17_rpt_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
+
 linux_opts = {
   'sources'            : linux_default_src,
   'include_directories': linux_inc,
@@ -628,6 +761,36 @@ mod17_opts = {
   'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/stm32_1m+192k_rom.ld']
 }
 
+mod17_p25_opts = {
+  'sources'            : mod17_p25_src,
+  'include_directories': mod17_p25_inc,
+  'dependencies'       : [codec2_dep],
+  'c_args'             : mod17_p25_args,
+  'cpp_args'           : mod17_p25_args,
+  'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_Mod17.ld',
+  '-Wl,--print-memory-usage'],
+}
+
+mod17_dstar_opts = {
+  'sources'            : mod17_dstar_src,
+  'include_directories': mod17_dstar_inc,
+  'dependencies'       : [codec2_dep],
+  'c_args'             : mod17_dstar_args,
+  'cpp_args'           : mod17_dstar_args,
+  'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_Mod17.ld',
+  '-Wl,--print-memory-usage'],
+}
+
+mod17_rpt_opts = {
+  'sources'            : mod17_rpt_src,
+  'include_directories': mod17_rpt_inc,
+  'dependencies'       : [],
+  'c_args'             : mod17_rpt_args,
+  'cpp_args'           : mod17_rpt_args,
+  'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_Mod17.ld',
+  '-Wl,--print-memory-usage'],
+}
+
 ttwrplus_opts = {
   'sources'            : ['CMakeLists.txt'],
   'include_directories': [],
@@ -699,7 +862,28 @@ targets = [
     'wrap'     : ' ',
     'load_addr': ' '
   },
-  {
+{
+  'name'     : 'mod17_p25',
+  'opts'     : mod17_p25_opts,
+  'flashable': true,
+  'wrap'     : ' ',
+  'load_addr': ' '
+},
+{
+  'name'     : 'mod17_dstar',
+  'opts'     : mod17_dstar_opts,
+  'flashable': true,
+  'wrap'     : ' ',
+  'load_addr': ' '
+},
+{
+  'name'     : 'mod17_rpt',
+  'opts'     : mod17_rpt_opts,
+  'flashable': true,
+  'wrap'     : ' ',
+  'load_addr': ' '
+},
+{
     'name'     : 'ttwrplus',
     'opts'     : ttwrplus_opts,
     'flashable': true,
@@ -712,8 +896,6 @@ if build_machine.system() == 'linux'
   bin2sgl     = find_program('scripts/bin2sgl.Linux',          required:false, disabler:true)
 elif build_machine.system() == 'windows'
   bin2sgl     = find_program('scripts/bin2sgl.exe',            required:false, disabler:true)
-elif build_machine.system() == 'darwin'
-  bin2sgl     = find_program('scripts/bin2sgl.Darwin',         required:false, disabler:true)
 endif
 
 radio_tool  = find_program('radio_tool')
@@ -730,20 +912,21 @@ foreach t : targets
   # ttwrplus is a Zephyr target, we compile it using west and package it in uf2 format
   if name == 'openrtx_ttwrplus'
 
-      if build_machine.system() == 'windows'
+      if build_machine.system() == 'linux'
 
           txt = custom_target('Copy CMakeLists.txt',
                               input            : 'CMakeLists.txt',
-                              output           : 'CMakeLists.txt',
-                              command          : ['xcopy', '@INPUT@', '@OUTPUT@'],
+                              output           :  'CMakeLists.txt',
+                              command          : ['cp', '@INPUT@', '@OUTPUT@'],
                               install          : false,
                               build_by_default : true)
-      else  # Unix-like OS that has cp
+
+      elif build_machine.system() == 'windows'
 
           txt = custom_target('Copy CMakeLists.txt',
                               input            : 'CMakeLists.txt',
-                              output           : 'CMakeLists.txt',
-                              command          : ['cp', '@INPUT@', '@OUTPUT@'],
+                              output           :  'CMakeLists.txt',
+                              command          : ['xcopy', '@INPUT@', '@OUTPUT@'],
                               install          : false,
                               build_by_default : true)
       endif
@@ -793,12 +976,7 @@ foreach t : targets
       # Handle GD77 custom wrapping and flashing tools
       if name == 'openrtx_gd77' or name == 'openrtx_dm1801'
 
-        if build_machine.system() == 'windows'
-              wrap = custom_target(name+'_wrap',
-                                   output  : name+'_bin.sgl',
-                                   input   : bin,
-                                   command : [bin2sgl, '@INPUT@', '-m', t['wrap']])
-        else  # Unix-like OS that has mv
+        if build_machine.system() == 'linux'
               wrap = custom_target(name+'_wrap',
                                    output  : name+'_wrap.sgl',
                                    input   : bin,
@@ -807,6 +985,12 @@ foreach t : targets
                                              '-m', t['wrap'],
                                              '&&',
                                              'mv', '@INPUT@.sgl', '@OUTPUT@'])
+
+        elif build_machine.system() == 'windows'
+              wrap = custom_target(name+'_wrap',
+                                   output  : name+'_bin.sgl',
+                                   input   : bin,
+                                   command : [bin2sgl, '@INPUT@', '-m', t['wrap']])
         endif
 
         custom_target(name+'_flash',
@@ -815,7 +999,7 @@ foreach t : targets
                       command : [gd77_loader, '-f', '@INPUT@', '-m', t['wrap']])
 
       # Module17 also uses dfu-tool for flashing
-      elif name == 'openrtx_mod17'
+      elif name == 'openrtx_mod17' or name == 'openrtx_mod17_p25' or name == 'openrtx_mod17_dstar'
 
         # Wrap target for Module17 for consistency, same output as bin target
         custom_target(name+'_wrap',
