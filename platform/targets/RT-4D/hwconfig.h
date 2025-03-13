@@ -10,6 +10,8 @@
 #include <at32f423.h>
 #include "pinmap.h"
 
+extern const struct spiCustomDevice display_spi;
+
 /* Screen dimensions */
 #define CONFIG_SCREEN_WIDTH 128
 #define CONFIG_SCREEN_HEIGHT 64
