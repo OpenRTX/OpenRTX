@@ -74,8 +74,12 @@ struct ChannelState chState[] =
 static void stopTransfer(const uint8_t chNum)
 {
     channels[chNum].tim.stop();
-    *channels[chNum].dacReg = chState[chNum].idleLevel;
     chState[chNum].ctx->running = 0;
+
+    // If the data register is written when the external trigger is still
+    // enabled, the DAC output may not be udated.
+    DAC->CR &= ~(DAC_CR_TEN1 << (chNum * 16));
+    *channels[chNum].dacReg = chState[chNum].idleLevel;
 }
 
 /**
@@ -125,7 +129,6 @@ void stm32dac_init(const uint8_t instance, const uint16_t idleLevel)
             DAC->DHR12R1 = idleLevel;
             DAC->CR |= DAC_CR_DMAEN1    // Enable DMA
                     | 0x00              // TIM6 as trigger source for CH1
-                    | DAC_CR_TEN1       // Enable trigger input
                     | DAC_CR_EN1;       // Enable CH1
         }
             break;
@@ -138,7 +141,6 @@ void stm32dac_init(const uint8_t instance, const uint16_t idleLevel)
             DAC->DHR12R2 = idleLevel;
             DAC->CR |= DAC_CR_DMAEN2    // Enable DMA
                     | DAC_CR_TSEL2_1    // TIM7 as trigger source for CH2
-                    | DAC_CR_TEN2       // Enable trigger input
                     | DAC_CR_EN2;       // Enable CH2
         }
             break;
@@ -203,6 +205,7 @@ static int stm32dac_start(const uint8_t instance, const void *config,
                                   ctx->bufSize, circ);
 
     // Configure DAC trigger
+    DAC->CR |= (DAC_CR_TEN1 << (instance * 16));
     channels[instance].tim.setUpdateFrequency(ctx->sampleRate);
     channels[instance].tim.start();
 
