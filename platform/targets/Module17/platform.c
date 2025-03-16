@@ -24,9 +24,9 @@
 #include <interfaces/nvmem.h>
 #include <interfaces/audio.h>
 #include <peripherals/gpio.h>
-#include <drivers/adc_stm32.h>
 #include <drivers/i2c_stm32.h>
 #include <calibInfo_Mod17.h>
+#include <adc_stm32.h>
 #include <backlight.h>
 #include <hwconfig.h>
 #include <MCP4551.h>
