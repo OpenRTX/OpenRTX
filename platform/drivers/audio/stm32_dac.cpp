@@ -19,13 +19,35 @@
  ***************************************************************************/
 
 #include <kernel/scheduler/scheduler.h>
+#include <core/cache_cortexMx.h>
 #include <peripherals/gpio.h>
 #include <data_conversion.h>
 #include <DmaStream.hpp>
-#include <Timer.hpp>
 #include <miosix.h>
 #include <errno.h>
+#include <hwconfig.h>
 #include "stm32_dac.h"
+
+#if defined(STM32H743xx)
+#include <Lptim.hpp>
+
+#define DAC             DAC1
+#define DAC_TRIG_CH1    (11 <<  2)  // lptim1_out
+#define DAC_TRIG_CH2    (12 << 18)  // lptim2_out
+
+typedef Lptim          timebase_type;
+#define TimebaseCh1    Lptim(LPTIM1_BASE, 168000000)
+#define TimebaseCh2    Lptim(LPTIM2_BASE, 168000000)
+#else
+#include <Timer.hpp>
+
+#define DAC_TRIG_CH1    0x00
+#define DAC_TRIG_CH2    DAC_CR_TSEL2_1
+
+typedef Timer          timebase_type;
+#define TimebaseCh1    Timer(TIM6_BASE)
+#define TimebaseCh2    Timer(TIM7_BASE)
+#endif
 
 struct ChannelState
 {
@@ -37,7 +59,7 @@ struct ChannelState
 struct DacChannel
 {
     volatile uint32_t  *dacReg;     // DAC data register
-    Timer               tim;        // TIM peripheral for DAC trigger
+    timebase_type       tim;        // TIM peripheral for DAC trigger
 };
 
 
@@ -46,8 +68,8 @@ using Dma1_Stream6 = DmaStream< DMA1_BASE, 6, 7, 3 >; // DMA 1, Stream 6, channe
 
 static constexpr DacChannel channels[] =
 {
-    {&(DAC->DHR12R1), Timer(TIM6_BASE)},
-    {&(DAC->DHR12R2), Timer(TIM7_BASE)},
+    {&(DAC->DHR12R1), TimebaseCh1},
+    {&(DAC->DHR12R2), TimebaseCh2},
 };
 
 #pragma GCC diagnostic ignored "-Wpedantic"
@@ -117,30 +139,46 @@ void __attribute__((used)) DMA1_Stream6_IRQHandler()
 void stm32dac_init(const uint8_t instance, const uint16_t idleLevel)
 {
     // Enable peripherals
+    #if defined(STM32H743xx)
+    RCC->APB1LENR |= RCC_APB1LENR_DAC12EN;
+    #else
     RCC->APB1ENR |= RCC_APB1ENR_DACEN;
+    #endif
 
     switch(instance)
     {
         case STM32_DAC_CH1:
         {
+            #if defined(STM32H743xx)
+            RCC->APB1LENR |= RCC_APB1LENR_LPTIM1EN;
+            RCC->D2CCIP2R |= RCC_D2CCIP2R_LPTIM1SEL_0;
+            DMAMUX1_Channel5->CCR = 67;
+            #else
             RCC->APB1ENR |= RCC_APB1ENR_TIM6EN;
+            #endif
             __DSB();
 
             DAC->DHR12R1 = idleLevel;
             DAC->CR |= DAC_CR_DMAEN1    // Enable DMA
-                    | 0x00              // TIM6 as trigger source for CH1
+                    | DAC_TRIG_CH1      // Set trigger source for CH1
                     | DAC_CR_EN1;       // Enable CH1
         }
             break;
 
         case STM32_DAC_CH2:
         {
+            #if defined(STM32H743xx)
+            RCC->APB4ENR |= RCC_APB4ENR_LPTIM2EN;
+            RCC->D3CCIPR |= RCC_D3CCIPR_LPTIM2SEL_0;
+            DMAMUX1_Channel6->CCR = 68;
+            #else
             RCC->APB1ENR |= RCC_APB1ENR_TIM7EN;
+            #endif
             __DSB();
 
             DAC->DHR12R2 = idleLevel;
             DAC->CR |= DAC_CR_DMAEN2    // Enable DMA
-                    | DAC_CR_TSEL2_1    // TIM7 as trigger source for CH2
+                    | DAC_TRIG_CH2      // Set trigger source for CH2
                     | DAC_CR_EN2;       // Enable CH2
         }
             break;
@@ -165,9 +203,12 @@ void stm32dac_terminate()
         }
     }
 
-    RCC->APB1ENR &= ~(RCC_APB1ENR_DACEN  |
-                      RCC_APB1ENR_TIM6EN |
-                      RCC_APB1ENR_TIM7EN);
+    #if defined(STM32H743xx)
+    RCC->APB1LENR &= ~(RCC_APB1LENR_DAC12EN | RCC_APB1LENR_LPTIM1EN);
+    RCC->APB4ENR  &= ~RCC_APB4ENR_LPTIM2EN;
+    #else
+    RCC->APB1ENR &= ~(RCC_APB1ENR_DACEN  | RCC_APB1ENR_TIM6EN | RCC_APB1ENR_TIM7EN);
+    #endif
     __DSB();
 }
 
@@ -196,6 +237,7 @@ static int stm32dac_start(const uint8_t instance, const void *config,
      * has been called.
      */
     S16toU12(ctx->buffer, ctx->bufSize);
+    miosix::markBufferBeforeDmaWrite(ctx->buffer, ctx->bufSize*sizeof(int16_t));
 
     bool circ = false;
     if(ctx->bufMode == BUF_CIRC_DOUBLE)
@@ -227,7 +269,9 @@ static int stm32dac_sync(struct streamCtx *ctx, uint8_t dirty)
     if((ctx->bufMode == BUF_CIRC_DOUBLE) && (dirty != 0))
     {
         void *ptr = state->stream.idleBuf();
-        S16toU12(reinterpret_cast< int16_t *>(ptr), ctx->bufSize/2);
+        size_t writeSize = ctx->bufSize/2;
+        S16toU12(reinterpret_cast< int16_t *>(ptr), writeSize);
+        miosix::markBufferBeforeDmaWrite(ctx->buffer, writeSize*sizeof(int16_t));
     }
 
    bool ok = state->stream.sync();
