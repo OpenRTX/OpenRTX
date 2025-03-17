@@ -16,6 +16,9 @@ extern const struct spiCustomDevice display_spi;
 #define CONFIG_SCREEN_WIDTH 128
 #define CONFIG_SCREEN_HEIGHT 64
 
+#define CONFIG_SCREEN_CONTRAST
+#define CONFIG_DEFAULT_CONTRAST 91
+
 /* Screen pixel format */
 #define CONFIG_PIX_FMT_BW
 
