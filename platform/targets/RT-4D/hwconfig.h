@@ -10,7 +10,12 @@
 #include <at32f423.h>
 #include "pinmap.h"
 
+enum adcChannel {
+    ADC_VBAT_CH = 20,
+};
+
 extern const struct spiCustomDevice display_spi;
+extern const struct Adc adc1;
 
 /* Screen dimensions */
 #define CONFIG_SCREEN_WIDTH 128

@@ -4,8 +4,12 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include <drivers/ADC/adc_at32.h>
 #include "drivers/SPI/spi_bitbang.h"
 #include <hwconfig.h>
+#include <pthread.h>
+
+static pthread_mutex_t adcMutex;
 
 const struct spiConfig spi_display_config = {
     .clk = { LCD_CLK },
@@ -16,3 +20,4 @@ const struct spiConfig spi_display_config = {
 };
 
 SPI_BITBANG_DEVICE_DEFINE(display_spi, spi_display_config, NULL)
+ADC_AT32_DEVICE_DEFINE(adc1, ADC1, &adcMutex, 3300000)
