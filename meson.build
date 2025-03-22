@@ -839,7 +839,7 @@ targets = [
     'name'     : 'cs7000',
     'opts'     : cs7000_opts,
     'flashable': true,
-    'wrap'     : ' ',
+    'wrap'     : 'cs7000',
     'load_addr': '0x08000000'
   },
   {
@@ -866,6 +866,7 @@ dfu_util    = find_program('dfu-util',                         required:false, d
 west        = find_program('west',                             required:false, disabler:true)
 uf2conv     = find_program('scripts/uf2conv.py',               required:false, disabler:true)
 dfu_convert = find_program('scripts/dfu-convert.py',           required:false, disabler:true)
+cs7000_wrap = find_program('scripts/cs7000_wrap.py',           required:false, disabler:true)
 
 foreach t : targets
 
@@ -980,14 +981,18 @@ foreach t : targets
       # For CS7000 'wrap' target prepares a .dfu file
       elif name == 'openrtx_cs7000' or name == 'openrtx_cs7000p'
 
-        custom_target(name+'_wrap',
+        custom_target(name+'_dfu',
                       output  : name+'.dfu',
                       input   : bin,
                       command : [dfu_convert, '-b', t['load_addr']+':@INPUT@', '@OUTPUT@'])
 
+        wrap = custom_target(name+'_wrap',
+                             input   : bin,
+                             output  : name+'.bin',
+                             command : [cs7000_wrap, '@INPUT@', '@OUTPUT@'])
 
         custom_target(name+'_flash',
-                      input   : bin,
+                      input   : wrap,
                       output  : name+'_flash',
                       command : [dfu_util,
                                  '-d', '0483:df11',
