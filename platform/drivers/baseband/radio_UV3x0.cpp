@@ -67,8 +67,10 @@ void radio_init(const rtxStatus_t *rtxState)
     gpio_clearPin(PA_SEL_SW);
 
     // TODO: keep audio connected to HR_C6000, for volume control
+#ifndef PLATFORM_DM1701
     gpio_setMode(RX_AUDIO_MUX, OUTPUT);
     gpio_setPin(RX_AUDIO_MUX);
+#endif
 
     /*
      * Configure and enable DAC
@@ -122,7 +124,12 @@ void radio_setOpmode(const enum opmode mode)
             at1846s.setOpMode(AT1846S_OpMode::DMR); // AT1846S in DMR mode, disables RX filter
             at1846s.setBandwidth(AT1846S_BW::_25);  // Set bandwidth to 25kHz for proper deviation
             C6000.fmMode();                         // HR_C6000 in FM mode
+            #if defined(PLATFORM_DM1701)
+            C6000.setInputGain(-6);                 // Input gain in dB, found experimentally
+            C6000.writeCfgRegister(0x35, 0x12);     // FM deviation coefficient
+            #else
             C6000.setInputGain(+6);                 // Input gain in dB, found experimentally
+            #endif
             break;
 
         default:
