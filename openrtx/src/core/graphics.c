@@ -155,7 +155,7 @@ static PIXEL_T framebuffer[FB_SIZE];
 #else
 static PIXEL_T __attribute__((section(".bss.fb"))) framebuffer[FB_SIZE];
 #endif
-static char text[32];
+static char text[91];
 
 
 void gfx_init()
@@ -163,7 +163,7 @@ void gfx_init()
     display_init();
 
     // Clear text buffer
-    memset(text, 0x00, 32);
+    memset(text, 0x00, 91);
 }
 
 void gfx_terminate()
@@ -621,6 +621,21 @@ point_t gfx_drawSymbol(point_t start, symbolSize_t size, textAlign_t alignment,
 
     buffer[0] = (char) symbol;
     return gfx_printBuffer(start, symSize, alignment, color, buffer);
+}
+
+point_t gfx_drawSymbols(point_t start, symbolSize_t size, textAlign_t alignment,
+                        color_t color, const char* symbols)
+{
+    /*
+     * Symbol tables come immediately after fonts in the general font table.
+     * But, to prevent errors where symbol size is used instead of font size and
+     * vice-versa, their enums are separate. The trickery below is used to put
+     * together again the two enums in a single consecutive index.
+     *
+     * TODO: improve this.
+     */
+    int symSize = size + FONT_SIZE_NUM;
+    return gfx_printBuffer(start, symSize, alignment, color, symbols);
 }
 
 /*

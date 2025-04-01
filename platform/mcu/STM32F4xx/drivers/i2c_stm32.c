@@ -19,6 +19,11 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+/***************************************************************************
+ *   Added timeout code to remedy touch panel lock ups.                    *
+ *   By: Rick Schnicker KD0OSS                                             *
+ * *************************************************************************/
+
 #include <stm32f4xx.h>
 #include <pthread.h>
 #include <errno.h>
@@ -101,13 +106,23 @@ static int i2c_readImpl(const struct i2cDevice *dev, const uint8_t addr,
 {
     I2C_TypeDef *i2c = (I2C_TypeDef *) dev->periph;
     uint8_t   *bytes = (uint8_t *) data;
+    int timeout = 10000;
 
     if(length == 0 || bytes == NULL)
-        return EINVAL;
+        return -EINVAL;
 
     // Send start
     i2c->CR1 |= I2C_CR1_START;
-    while((i2c->SR1 & I2C_SR1_SB_Msk) == 0) ;
+    while((i2c->SR1 & I2C_SR1_SB_Msk) == 0)
+    {
+        if(!timeout)
+        {
+            i2c->SR2;
+            i2c->CR1 |= I2C_CR1_STOP;
+            return -ETIMEDOUT;
+        }
+        timeout--;
+    }
 
     // Send address (read)
     i2c->DR = (addr << 1) | 1;
@@ -118,27 +133,45 @@ static int i2c_readImpl(const struct i2cDevice *dev, const uint8_t addr,
         i2c->CR1 |= I2C_CR1_ACK;  // Ack
 
     // Wait for ADDR bit to be set then read SR1 and SR2
+    timeout = 10000;
     while((i2c->SR1 & I2C_SR1_ADDR_Msk) == 0)
     {
+        if(!timeout)
+        {
+            i2c->SR2;
+            i2c->CR1 |= I2C_CR1_STOP;
+            return -ETIMEDOUT;
+        }
         // Check if the address was NACKed
         if((i2c->SR1 & I2C_SR1_AF_Msk) != 0)
         {
             i2c->CR1 |= I2C_CR1_STOP;
-            return ENODEV;
+            return -ENODEV;
         }
+        timeout--;
     }
 
     // Read SR2 by checking that we are receiver
     if((i2c->SR2 & I2C_SR2_TRA_Msk) != 0)
     {
         i2c->CR1 |= I2C_CR1_STOP;
-        return EPROTO;
+        return -EPROTO;
     }
 
     for(size_t i = 0; i < length; i++)
     {
         // Wait for data to be available
-        while((i2c->SR1 & I2C_SR1_RXNE_Msk) == 0) ;
+        timeout = 10000;
+        while((i2c->SR1 & I2C_SR1_RXNE_Msk) == 0)
+        {
+            if(!timeout)
+            {
+                i2c->SR2;
+                i2c->CR1 |= I2C_CR1_STOP;
+                return -ETIMEDOUT;
+            }
+            timeout--;
+        }
 
         if((i + 2) >= length)
             i2c->CR1 &= ~I2C_CR1_ACK; // Nack
@@ -159,33 +192,51 @@ static int i2c_writeImpl(const struct i2cDevice *dev, const uint8_t addr,
 {
     I2C_TypeDef   *i2c   = (I2C_TypeDef *) dev->periph;
     const uint8_t *bytes = (const uint8_t *) data;
+    int timeout = 10000;
 
     if(length == 0 || bytes == NULL)
-        return EINVAL;
+        return -EINVAL;
 
     // Send start
     i2c->CR1 |= I2C_CR1_START;
-    while((i2c->SR1 & I2C_SR1_SB_Msk) == 0) ;
+    while((i2c->SR1 & I2C_SR1_SB_Msk) == 0)
+    {
+        if(!timeout)
+        {
+            i2c->SR2;
+            i2c->CR1 |= I2C_CR1_STOP;
+            return -ETIMEDOUT;
+        }
+        timeout--;
+    }
 
     // Send address (write)
     i2c->DR = addr << 1;
 
     // Wait for ADDR bit to be set then read SR1 and SR2
+    timeout = 10000;
     while((i2c->SR1 & I2C_SR1_ADDR_Msk) == 0)
     {
+        if(!timeout)
+        {
+            i2c->SR2;
+            i2c->CR1 |= I2C_CR1_STOP;
+            return -ETIMEDOUT;
+        }
         // Check if the address was NACKed
         if((i2c->SR1 & I2C_SR1_AF_Msk) != 0)
         {
             i2c->CR1 |= I2C_CR1_STOP;
-            return ENODEV;
+            return -ENODEV;
         }
+        timeout--;
     }
 
     // Read SR2 by checking that we are transmitter
     if((i2c->SR2 & I2C_SR2_TRA_Msk) == 0)
     {
         i2c->CR1 |= I2C_CR1_STOP;
-        return EPROTO; // We are not transmitter
+        return -EPROTO; // We are not transmitter
     }
 
     // Send data
@@ -193,7 +244,17 @@ static int i2c_writeImpl(const struct i2cDevice *dev, const uint8_t addr,
     {
         i2c->DR = bytes[i];    // Send data
         // Wait for data to be sent
-        while((i2c->SR1 & I2C_SR1_TXE_Msk) == 0) ;
+        timeout = 10000;
+        while((i2c->SR1 & I2C_SR1_TXE_Msk) == 0)
+        {
+            if(!timeout)
+            {
+                i2c->SR2;
+                i2c->CR1 |= I2C_CR1_STOP;
+                return -ETIMEDOUT;
+            }
+            timeout--;
+        }
     }
 
     if(stop)

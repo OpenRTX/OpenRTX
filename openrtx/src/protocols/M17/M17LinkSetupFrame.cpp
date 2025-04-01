@@ -76,6 +76,12 @@ void M17LinkSetupFrame::setType(streamType_t type)
     data.type  = type;
 }
 
+// Added by KD0OSS (2025)
+void M17LinkSetupFrame::setMetaText(uint8_t *text)
+{
+    memcpy(data.meta.raw_data, text, 14);
+}
+
 meta_t& M17LinkSetupFrame::metadata()
 {
     return data.meta;
@@ -86,6 +92,13 @@ void M17LinkSetupFrame::updateCrc()
     // Compute CRC over the first 28 bytes, then store it in big endian format.
     uint16_t crc = crc16(&data, 28);
     data.crc     = __builtin_bswap16(crc);
+}
+
+uint16_t M17LinkSetupFrame::m17Crc(const void *data, const size_t len)
+{
+    // Compute CRC over len bytes, then store it in big endian format.
+    uint16_t crc = crc16(data, len);
+    return __builtin_bswap16(crc);
 }
 
 bool M17LinkSetupFrame::valid() const

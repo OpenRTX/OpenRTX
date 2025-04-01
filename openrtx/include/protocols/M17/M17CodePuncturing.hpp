@@ -52,6 +52,14 @@ static constexpr std::array< uint8_t, 12 > DATA_PUNCTURE =
     1, 1, 1, 1, 1, 0
 };
 
+/**
+ *  Puncture matrix for packet frames.
+ */
+static constexpr std::array< uint8_t, 8 > PACKET_PUNCTURE =
+{
+    1, 1, 1, 1,
+    1, 1, 1, 0
+};
 
 /**
  * Apply a given puncturing scheme to a byte array.
