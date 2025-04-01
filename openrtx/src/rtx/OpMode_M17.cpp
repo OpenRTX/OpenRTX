@@ -434,34 +434,35 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                 }
             }
         }
-
-        locked = lock;
-
-        if(platform_getPttStatus() || state.havePacketData)
-        {
-            demodulator.stopBasebandSampling();
-            locked = false;
-            status->opStatus = OFF;
-        }
-
-                // Force invalidation of LSF data as soon as lock is lost (for whatever cause)
-        if(locked == false)
-        {
-            status->lsfOk = false;
-            dataValid     = false;
-            extendedCall  = false;
-            textStarted   = false;
-            smsStarted    = false;
-            memset(textBuffer, 0, 52);
-            status->M17_link[0] = '\0';
-            status->M17_refl[0] = '\0';
-
-            codec_stop(rxAudioPath);
-            audioPath_release(rxAudioPath);
-        }
     }
 
-    void OpMode_M17::txState(rtxStatus_t *const status)
+    locked = lock;
+
+    if(platform_getPttStatus() || state.havePacketData)
+    {
+        demodulator.stopBasebandSampling();
+        locked = false;
+        status->opStatus = OFF;
+    }
+
+            // Force invalidation of LSF data as soon as lock is lost (for whatever cause)
+    if(locked == false)
+    {
+        status->lsfOk = false;
+        dataValid     = false;
+        extendedCall  = false;
+        textStarted   = false;
+        smsStarted    = false;
+        memset(textBuffer, 0, 52);
+        status->M17_link[0] = '\0';
+        status->M17_refl[0] = '\0';
+
+        codec_stop(rxAudioPath);
+        audioPath_release(rxAudioPath);
+    }
+}
+
+void OpMode_M17::txState(rtxStatus_t *const status)
 {
     frame_t m17Frame;
 
@@ -476,7 +477,6 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
 
         std::string src(status->source_address);
         std::string dst(status->destination_address);
-        M17LinkSetupFrame lsf;
 
         lsf.clear();
         lsf.setSource(src);
