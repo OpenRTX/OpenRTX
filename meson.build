@@ -424,6 +424,7 @@ mduv3x0_def += openrtx_def + stm32f405_def
 ##
 md9600_src = ['platform/targets/MD-9600/platform.c',
               'platform/targets/MD-9600/hwconfig.c',
+              'platform/drivers/GPS/GPS_MDx.cpp',
               'platform/drivers/display/ST7567_MD9600.c',
               'platform/drivers/keyboard/keyboard_MD9600.c',
               'platform/drivers/backlight/backlight_MDx.c',
