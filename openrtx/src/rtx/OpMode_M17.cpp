@@ -134,6 +134,9 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
     invertRxPhase = (mod17CalData.bb_rx_invert == 1) ? true : false;
     #elif defined(PLATFORM_CS7000) || defined(PLATFORM_CS7000P)
     invertTxPhase = true;
+    #elif defined(PLATFORM_DM1701)
+    invertTxPhase = true;
+    invertRxPhase = true;
     #endif
 
     // Main FSM logic
