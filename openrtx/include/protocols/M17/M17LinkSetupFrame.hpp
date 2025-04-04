@@ -102,6 +102,13 @@ public:
     void setType(streamType_t type);
 
     /**
+     * Set metadata text field.
+     *
+     * @param text: 14 bytes of text to be written
+     */
+    void setMetaText(uint8_t *text);
+
+    /**
      * Get metadata field.
      *
      * @return a reference to frame's metadata field, allowing for both read and
@@ -114,6 +121,12 @@ public:
      * field.
      */
     void updateCrc();
+
+    /**
+     * Compute a new CRC over the content and update the corresponding
+     * field.
+     */
+    uint16_t m17Crc(const void *data, const size_t len);
 
     /**
      * Check if frame data is valid that is, if the CRC computed over the LSF
