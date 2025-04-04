@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 - 2024 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2021 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Wojciech Kaczmarski SP5WWP               *
  *                                Frederik Saraci IU2NRO                   *

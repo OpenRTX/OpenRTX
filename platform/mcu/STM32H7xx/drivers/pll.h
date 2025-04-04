@@ -1,6 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2018 by Terraneo Federico                               *
- *                 2024 by Terraneo Federico and Silvano Seva IU2KWO       *
+ *                 2024 - 2025 by Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
