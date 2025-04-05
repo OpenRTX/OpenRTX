@@ -22,6 +22,16 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <W25Qx.h>
+#include <nvmem_access.h>
+#include <interfaces/delays.h>
+
+#define SECREG_READ(dev, data, len) \
+    nvm_devRead((const struct nvmDevice *) dev, 0x0000, data, len)
+
+extern const struct W25QxSecRegDevice cal1;
+extern const struct W25QxSecRegDevice cal2;
+extern const struct W25QxSecRegDevice hwInfo;
+
 
 void printChunk(void *chunk)
 {
@@ -34,12 +44,10 @@ void printChunk(void *chunk)
     }
 }
 
-void printSecurityRegister(uint32_t reg)
+void printSecurityRegister(const struct W25QxSecRegDevice dev)
 {
     uint8_t secRegister[256] = {0};
-    W25Qx_wakeup();
-    W25Qx_readSecurityRegister(reg, secRegister, 256);
-    W25Qx_sleep();
+    SECREG_READ(&dev, secRegister, 256);
 
     for(uint32_t addr = 0; addr < 256; addr += 16)
     {
@@ -50,20 +58,19 @@ void printSecurityRegister(uint32_t reg)
 
 int main()
 {
-    W25Qx_init();
 
     while(1)
     {
-        getchar();
+        delayMs(5000);
 
-        printf("0x1000:");
-        printSecurityRegister(0x1000);
+        printf("\r\n\r\n0x1000:");
+        printSecurityRegister(cal1);
 
         printf("\r\n\r\n0x2000:");
-        printSecurityRegister(0x2000);
+        printSecurityRegister(cal2);
 
         printf("\r\n\r\n0x3000:");
-        printSecurityRegister(0x3000);
+        printSecurityRegister(hwInfo);
     }
 
     return 0;

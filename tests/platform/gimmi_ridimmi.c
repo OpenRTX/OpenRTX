@@ -24,10 +24,11 @@
 #include <stdbool.h>
 #include <inttypes.h>
 #include <interfaces/delays.h>
-#include <interfaces/gpio.h>
+#include <peripherals/gpio.h>
 #include <interfaces/platform.h>
 #include <rtx.h>
 #include <hwconfig.h>
+#include <pinmap.h>
 
 /*
  * Uncomment this directive to sample audio coming from RTX stage instead of the
@@ -104,9 +105,15 @@ void recordMic(uint16_t *buffer)
               |  ADC_CR2_ADON;      /* Enable ADC                    */
 
     /* Wait until DMA transfer ends, meanwhile blink the green led */
+    bool toggle = true;
     while((DMA2_Stream0->CR & DMA_SxCR_EN) == 1)
     {
-        gpio_togglePin(GREEN_LED);
+        if (toggle) {
+            gpio_setPin(GREEN_LED);
+        } else {
+            gpio_clearPin(GREEN_LED);
+        }
+        toggle = !toggle;
         delayMs(250);
     }
 }
@@ -181,14 +188,13 @@ int main()
     gpio_setPin(MIC_PWR);
 
     #ifdef SAMPLE_RTX_AUDIO
-    gpio_setMode(GPIOC, 3, INPUT_ANALOG);
+    gpio_setMode(GPIOC, 3, ANALOG);
     #else
-    gpio_setMode(AIN_MIC, INPUT_ANALOG);
+    gpio_setMode(AIN_MIC, ANALOG);
     #endif
 
     /* AF2 is TIM3 channel 3 */
-    gpio_setMode(BEEP_OUT, ALTERNATE);
-    gpio_setAlternateFunction(BEEP_OUT, 2);
+    gpio_setMode(BEEP_OUT, ALTERNATE | ALTERNATE_FUNC(2));
 
     gpio_setPin(GREEN_LED);
 

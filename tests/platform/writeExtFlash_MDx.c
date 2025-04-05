@@ -22,6 +22,20 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include "W25Qx.h"
+#include <nvmem_access.h>
+#include <interfaces/delays.h>
+
+extern const struct nvmDevice eflash;
+
+static inline void W25Qx_readData(uint32_t addr, void *buf, size_t len)
+{
+    nvm_devRead(&eflash, addr, buf, len);
+}
+
+static inline void W25Qx_writePage(uint32_t addr, void *buf, size_t len)
+{
+    nvm_devWrite(&eflash, addr, buf, len);
+}
 
 
 //static const uint32_t sector_address = 0x80000;
@@ -43,12 +57,10 @@ void printChunk(void *chunk)
 
 int main()
 {
-    W25Qx_init();
-    W25Qx_wakeup();
 
     while(1)
     {
-        getchar();
+        delayMs(5000);
 
         printf("Attempting write... ");
 

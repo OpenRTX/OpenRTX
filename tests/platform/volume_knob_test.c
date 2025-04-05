@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
-#include <interfaces/gpio.h>
+#include <peripherals/gpio.h>
 #include <hwconfig.h>
 
 int main()
@@ -31,7 +31,7 @@ int main()
 
     while(1)
     {
-        printf("%f\r\n", platform_getVolumeLevel());
+        printf("%d\r\n", platform_getVolumeLevel());
         delayMs(500);
     }
 

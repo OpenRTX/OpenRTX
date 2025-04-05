@@ -19,7 +19,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include <interfaces/gpio.h>
+#include <peripherals/gpio.h>
 #include <interfaces/delays.h>
 #include "toneGenerator_MDx.h"
 #include "hwconfig.h"
@@ -29,17 +29,17 @@ int main()
     gpio_setMode(SPK_MUTE, OUTPUT);     // Turn on speaker
     gpio_clearPin(SPK_MUTE);
 
-    gpio_setMode(AMP_EN, OUTPUT);     // Turn on audio amplifier
-    gpio_setPin(AMP_EN);
+    gpio_setMode(AUDIO_AMP_EN, OUTPUT);     // Turn on audio amplifier
+    gpio_setPin(AUDIO_AMP_EN);
 
     toneGen_init();
-    toneGen_setBeepFreq(440.0f);
+    toneGen_setToneFreq(440.0f);
 
     while(1)
     {
-        toneGen_beepOn();
+        toneGen_toneOn();
         delayMs(500);
-        toneGen_beepOff();
+        toneGen_toneOff();
         delayMs(500);
     }
 
