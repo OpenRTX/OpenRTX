@@ -1,5 +1,5 @@
-/**************************************************************************
- *   Copyright (C) 2024 by Silvano Seva IU2KWO                             *
+/***************************************************************************
+ *   Copyright (C) 2024 - 2025 by Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -13,7 +13,7 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
- **************************************************************************/
+ ***************************************************************************/
 
 #include <peripherals/gpio.h>
 #include <interfaces/delays.h>

@@ -4,12 +4,17 @@
 OpenRTX is a free and open source firmware for digital amateur radio devices, top-down designed
 with modularity, flexibility and performance in mind.
 
-Currently OpenRTX is being actively developed for the following radios:
+Currently OpenRTX supports the following devices:
 
 - TYT MD-380/390
 - TYT MD-UV380/390
 - TYT MD-9600
-- Radioddity GD77 and Baofeng DM-1801
+- Radioddity GD77
+- Baofeng DM-1801
+- Baofeng DM-1701
+- Connect Systems CS7000-M17
+- Connect Systems CS7000-M17 Plus
+- Module17
 
 This firmware is *highly experimental* and currently under development, this means
 that it may not have all the expected functionalities. Anyway, contributions and testing will be warmly welcomed and accepted!
@@ -99,5 +104,6 @@ A warm thank you goes to SP5WWP and the [M17](https://m17project.org) community 
 Also, a thank you for donating hardware to this project goes to:
 * M17 Project
 * laurivosandi
+* smeegle5000
 
 And thanks to everyone who donated via [LiberaPay](https://liberapay.com/OpenRTX/donate).

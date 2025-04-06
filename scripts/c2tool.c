@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2024 by Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2024 - 2025 by Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
         printHelp();
         return 0;
     }
-    
+
     while(1)
     {
         int opt = getopt(argc, argv, "edi:o:");

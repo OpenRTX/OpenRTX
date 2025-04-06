@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2022 - 2023 by Alain Carlucci,                          *
+ *   Copyright (C) 2022 - 2025 by Alain Carlucci,                          *
  *                                Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Silvano Seva IU2KWO                      *
