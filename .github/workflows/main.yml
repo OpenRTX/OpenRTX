@@ -118,6 +118,7 @@ jobs:
             meson compile -C build_cm4 openrtx_gd77_wrap &&
             meson compile -C build_cm7 openrtx_cs7000p_wrap &&
             meson compile -C build_cm7 openrtx_cs7000p_dfu &&
+            meson compile -C build_cm4 openrtx_rt4d_bin &&
             chmod -R 777 * &&
             ls build_cm7/ &&
             ls build_cm4/ &&
@@ -132,6 +133,7 @@ jobs:
             mv build_linux/openrtx_linux openrtx_linux_${{ env.BRANCH_NAME }} &&
             mv build_cm4/openrtx_md3x0_wrap openrtx_md3x0_${{ env.BRANCH_NAME }}.bin &&
             mv build_cm4/openrtx_mduv3x0_wrap openrtx_mduv3x0_${{ env.BRANCH_NAME }}.bin &&
+            mv build_cm4/openrtx_rt4d_bin openrtx_rt4d_${{ env.BRANCH_NAME }}.bin &&
             mv build_cm4/openrtx_mod17_bin openrtx_mod17_${{ env.BRANCH_NAME }}.bin
       - uses: actions/upload-artifact@v4
         with:
