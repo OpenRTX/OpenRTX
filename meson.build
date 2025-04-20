@@ -314,7 +314,7 @@ at32f423_inc = ['platform/mcu/AT32F423',
                 'platform/mcu/CMSIS/Include',
                 'platform/mcu/CMSIS/Device/Artery/AT32F423/Include']
 
-at32f423_def = {'AT32F423CCT7':''}
+at32f423_def = {'AT32F423CCT7':'', 'AT32F423xx':''}
 
 at32f423_src += miosix_cm4f_src
 at32f423_inc += miosix_cm4f_inc

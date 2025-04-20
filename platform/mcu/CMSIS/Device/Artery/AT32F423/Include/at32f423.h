@@ -73,7 +73,7 @@ extern "C" {
     defined (AT32F423V8T7)   || defined (AT32F423VBT7)   || defined (AT32F423VCT7)   || \
     defined (AT32F423CBU7_7)
 
-    #define AT32F423xx
+    // #define AT32F423xx
 #endif
 
 /**
