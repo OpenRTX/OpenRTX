@@ -457,31 +457,31 @@ typedef struct
   * @{
   */
 
-void spi_i2s_reset(spi_type *spi_x);
-void spi_default_para_init(spi_init_type* spi_init_struct);
-void spi_init(spi_type* spi_x, spi_init_type* spi_init_struct);
-void spi_ti_mode_enable(spi_type* spi_x, confirm_state new_state);
-void spi_crc_next_transmit(spi_type* spi_x);
-void spi_crc_polynomial_set(spi_type* spi_x, uint16_t crc_poly);
-uint16_t spi_crc_polynomial_get(spi_type* spi_x);
-void spi_crc_enable(spi_type* spi_x, confirm_state new_state);
-uint16_t spi_crc_value_get(spi_type* spi_x, spi_crc_direction_type crc_direction);
-void spi_hardware_cs_output_enable(spi_type* spi_x, confirm_state new_state);
-void spi_software_cs_internal_level_set(spi_type* spi_x, spi_software_cs_level_type level);
-void spi_frame_bit_num_set(spi_type* spi_x, spi_frame_bit_num_type bit_num);
-void spi_half_duplex_direction_set(spi_type* spi_x, spi_half_duplex_direction_type direction);
-void spi_enable(spi_type* spi_x, confirm_state new_state);
-void i2s_default_para_init(i2s_init_type* i2s_init_struct);
-void i2s_init(spi_type* spi_x, i2s_init_type* i2s_init_struct);
-void i2s_enable(spi_type* spi_x, confirm_state new_state);
-void spi_i2s_interrupt_enable(spi_type* spi_x, uint32_t spi_i2s_int, confirm_state new_state);
-void spi_i2s_dma_transmitter_enable(spi_type* spi_x, confirm_state new_state);
-void spi_i2s_dma_receiver_enable(spi_type* spi_x, confirm_state new_state);
-void spi_i2s_data_transmit(spi_type* spi_x, uint16_t tx_data);
-uint16_t spi_i2s_data_receive(spi_type* spi_x);
-flag_status spi_i2s_flag_get(spi_type* spi_x, uint32_t spi_i2s_flag);
-flag_status spi_i2s_interrupt_flag_get(spi_type* spi_x, uint32_t spi_i2s_flag);
-void spi_i2s_flag_clear(spi_type* spi_x, uint32_t spi_i2s_flag);
+// void spi_i2s_reset(spi_type *spi_x);
+// void spi_default_para_init(spi_init_type* spi_init_struct);
+// void spi_init(spi_type* spi_x, spi_init_type* spi_init_struct);
+// void spi_ti_mode_enable(spi_type* spi_x, confirm_state new_state);
+// void spi_crc_next_transmit(spi_type* spi_x);
+// void spi_crc_polynomial_set(spi_type* spi_x, uint16_t crc_poly);
+// uint16_t spi_crc_polynomial_get(spi_type* spi_x);
+// void spi_crc_enable(spi_type* spi_x, confirm_state new_state);
+// uint16_t spi_crc_value_get(spi_type* spi_x, spi_crc_direction_type crc_direction);
+// void spi_hardware_cs_output_enable(spi_type* spi_x, confirm_state new_state);
+// void spi_software_cs_internal_level_set(spi_type* spi_x, spi_software_cs_level_type level);
+// void spi_frame_bit_num_set(spi_type* spi_x, spi_frame_bit_num_type bit_num);
+// void spi_half_duplex_direction_set(spi_type* spi_x, spi_half_duplex_direction_type direction);
+// void spi_enable(spi_type* spi_x, confirm_state new_state);
+// void i2s_default_para_init(i2s_init_type* i2s_init_struct);
+// void i2s_init(spi_type* spi_x, i2s_init_type* i2s_init_struct);
+// void i2s_enable(spi_type* spi_x, confirm_state new_state);
+// void spi_i2s_interrupt_enable(spi_type* spi_x, uint32_t spi_i2s_int, confirm_state new_state);
+// void spi_i2s_dma_transmitter_enable(spi_type* spi_x, confirm_state new_state);
+// void spi_i2s_dma_receiver_enable(spi_type* spi_x, confirm_state new_state);
+// void spi_i2s_data_transmit(spi_type* spi_x, uint16_t tx_data);
+// uint16_t spi_i2s_data_receive(spi_type* spi_x);
+// flag_status spi_i2s_flag_get(spi_type* spi_x, uint32_t spi_i2s_flag);
+// flag_status spi_i2s_interrupt_flag_get(spi_type* spi_x, uint32_t spi_i2s_flag);
+// void spi_i2s_flag_clear(spi_type* spi_x, uint32_t spi_i2s_flag);
 
 /**
   * @}
