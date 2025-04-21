@@ -1005,6 +1005,13 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             }
             break;
         case 5:
+            #ifdef PLATFORM_A36PLUS
+            state.settings.rx_modulation = !state.settings.rx_modulation;
+            bk4819_set_modulation(state.settings.rx_modulation); // required for instant feedback
+            radio_updateConfiguration();
+            *sync_rtx = true;
+            break;
+            #endif
             // Cycle through radio modes
             #ifdef CONFIG_M17
             if(state.channel.mode == OPMODE_FM)
