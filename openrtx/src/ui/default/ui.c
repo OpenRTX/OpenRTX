@@ -1007,9 +1007,13 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
         case 5:
             #ifdef PLATFORM_A36PLUS
             state.settings.rx_modulation = !state.settings.rx_modulation;
-            bk4819_set_modulation(state.settings.rx_modulation); // required for instant feedback
             radio_updateConfiguration();
-            *sync_rtx = true;
+            // Update modulation if squelch is open, for immediate feedback
+            if(rtx_rxSquelchOpen())
+            {
+                bk4819_set_modulation(state.settings.rx_modulation);
+                *sync_rtx = true;
+            }
             break;
             #endif
             // Cycle through radio modes
@@ -2427,8 +2431,11 @@ void ui_updateFSM(bool *sync_rtx)
                             {
                                 // Cycle over the available modulations
                                 state.settings.rx_modulation = !state.settings.rx_modulation;
-                                bk4819_set_modulation(state.settings.rx_modulation); // required for instant feedback
                                 radio_updateConfiguration();
+                                if(rtx_rxSquelchOpen()) // If squelch is open, update the BK4819 AF immediately
+                                {
+                                    bk4819_set_modulation(state.settings.rx_modulation); // required for instant feedback
+                                }
                             }
                             break;
                         #endif
