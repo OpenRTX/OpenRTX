@@ -616,13 +616,14 @@ dm1701_def += openrtx_def + stm32f405_def
 ## Radtel RT-4D
 ##
 
-rt4d_src = ['platform/targets/RT-4D/platform.c',
+rt4d_src = ['platform/drivers/NVM/nvmem_rt4d.c',
+            'platform/drivers/NVM/W25Qx.c',
+            'platform/targets/RT-4D/platform.c',
             'platform/drivers/backlight/backlight_RT4D.c',
             'platform/drivers/stubs/audio_stub.c',
             'platform/drivers/stubs/cps_io_stub.c',
             'platform/drivers/display/display_rt4d.c',
             'platform/drivers/keyboard/keyboard_rt4d.c',
-            'platform/drivers/stubs/nvmem_stub.c',
             'platform/drivers/stubs/radio_stub.c',
             'platform/drivers/SPI/spi_custom.c',
             'platform/drivers/SPI/spi_bitbang.c',

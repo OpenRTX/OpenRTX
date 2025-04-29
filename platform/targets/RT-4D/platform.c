@@ -5,9 +5,11 @@
  */
 
 #include <drivers/ADC/adc_at32.h>
+#include "drivers/SPI/spi_bitbang.h"
+#include <hwconfig.h>
+#include <interfaces/nvmem.h>
 #include <interfaces/platform.h>
 #include <peripherals/gpio.h>
-#include <hwconfig.h>
 
 static hwInfo_t hwInfo = {
     .vhf_maxFreq = 174,
@@ -30,6 +32,7 @@ void platform_init()
     gpio_setMode(AIN_VBAT, ANALOG);
 
     adcAt32_init(&adc1);
+    nvm_init();
 }
 
 void platform_terminate()

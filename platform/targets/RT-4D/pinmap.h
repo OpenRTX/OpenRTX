@@ -41,7 +41,7 @@
 #define EFLASH_MISO GPIOB, 14
 #define EFLASH_MOSI GPIOB, 15
 #define EFLASH_SCK GPIOB, 13
-#define EFLASH_CS GPIOB, 12
+#define EFLASH_CS &GpioB, 12
 
 // BK1080
 #define BK1080_SCK GPIOC, 13
