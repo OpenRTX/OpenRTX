@@ -25,8 +25,24 @@ W25Qx_DEVICE_DEFINE(eflash, cfg);
 
 const struct nvmPartition memPartitions[] = {
     {
-        .offset = 0x0000, // First partition
-        .size = 0x1000000 // 16MiB
+        .offset = 0x0000, // First partition Calibration Data
+        .size = 0x2000    // 8KiB
+    },
+    {
+        .offset = 0x2000, // Second partition Settings
+        .size = 0x2000    // 8KiB
+    },
+    {
+        .offset = 0x4000, // Third partition Channels
+        .size = 0x18000   // 96KiB
+    },
+    {
+        .offset = 0x1C000, // Fourth partition Zones
+        .size = 0x40000    // 156KiB
+    },
+    {
+        .offset = 0x5C000, // Last Partition TODO
+        .size = 0xfa4000   // Remaining space
     },
 };
 
