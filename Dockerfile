@@ -1,19 +1,55 @@
-FROM --platform=linux/amd64 ubuntu
-WORKDIR /work
+FROM ubuntu:24.04 AS build
 
-RUN apt-get update && apt-get install -y \
+# dependencies for miosix compiler
+RUN apt-get update -y && apt-get install -y \
   git \
   wget \
   sudo \
+  build-essential \
+  libncurses5-dev \
+  byacc \
+  flex \
+  texinfo \
+  patch \
+  tar \
+  unzip \
+  lzip \
+  libelf-dev \
+  perl \
+  libexpat1-dev \
+  && rm -rf /var/lib/apt/lists/*
+
+# compile miosix compiler
+RUN git clone --depth 1 https://github.com/fedetft/miosix-kernel.git \
+  && cd miosix-kernel/miosix/_tools/compiler/gcc-9.2.0-mp3.2 \
+  && sh download.sh \
+  && bash install-script.sh -j`nproc`
+
+
+# 2th stage build
+FROM ubuntu:24.04
+
+# copy arm-miosix-eabi compiler from build stage
+COPY --from=build /opt /opt
+
+# create symbolic links to compiler
+RUN ln -s /opt/arm-miosix-eabi/bin/* /bin/
+
+# dependencies for the project
+RUN apt-get update -y && apt-get install -y \
+  git \
   pkg-config \
   build-essential \
   meson \
-  ninja-build \
+  libsdl2-dev \
+  libreadline-dev \
+  dfu-util \
   cmake \
   libusb-1.0-0 \
   libusb-1.0-0-dev \
-  libsdl2-dev \
+  codec2 \
   libcodec2-dev \
-  libreadline-dev
+  && rm -rf /var/lib/apt/lists/*
 
-RUN wget https://miosix.org/toolchain/MiosixToolchainInstaller.run && sh MiosixToolchainInstaller.run && rm MiosixToolchainInstaller.run
+# fix error from git with different users
+RUN git config --system --add safe.directory '*'
