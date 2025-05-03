@@ -100,6 +100,15 @@
       ]
     },
     {
+      "label": "run linux unit tests",
+      "type": "shell",
+      "command": "meson test -C build_linux",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "build linux",
+      ]
+    },
+    {
       "label": "setup linux build with address sanitizer",
       "type": "shell",
       "command": "meson setup build_linux_address -Dasan=true"
@@ -111,6 +120,15 @@
       "dependsOrder": "sequence",
       "dependsOn": [
         "setup linux build with address sanitizer",
+      ]
+    },
+    {
+      "label": "run linux unit tests with address sanitizer",
+      "type": "shell",
+      "command": "meson test -C build_linux_address",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "build linux with address sanitizer",
       ]
     }
   ]
