@@ -6,22 +6,21 @@
 
 #include <interfaces/platform.h>
 #include <peripherals/gpio.h>
+#include "interfaces/display.h"
 #include <hwconfig.h>
 #include <interfaces/delays.h>
-#include <interfaces/display.h>
 #include "drivers/SPI/spi_bitbang.h"
 #include "at32f423.h"
 #include "at32f423_gpio.h"
 
 void display_init()
 {
-    gpio_setMode(LCD_BACKLIGHT, OUTPUT);
+    backlight_init();
+
     gpio_setMode(LCD_CD, OUTPUT);
     gpio_setMode(LCD_CS, OUTPUT);
     gpio_setMode(LCD_RST, OUTPUT);
     spiBitbang_init(&display_spi);
-    // Display power on
-    gpio_setPin(LCD_BACKLIGHT);
 
     gpio_setPin(LCD_CS);
     gpio_clearPin(LCD_CD);
@@ -117,9 +116,4 @@ void display_setContrast(uint8_t contrast)
     gpio_clearPin(LCD_CD); /* RS low -> command mode              */
     spi_send((const struct spiDevice *)&display_spi, command, 2);
     gpio_setPin(LCD_CS);
-}
-
-void display_setBacklightLevel(uint8_t level)
-{
-    (void)level;
 }

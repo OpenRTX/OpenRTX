@@ -619,6 +619,7 @@ dm1701_def += openrtx_def + stm32f405_def
 rt4d_src = ['platform/drivers/NVM/nvmem_rt4d.c',
             'platform/drivers/NVM/W25Qx.c',
             'platform/targets/RT-4D/platform.c',
+            'platform/drivers/backlight/backlight_RT4D.c',
             'platform/drivers/stubs/audio_stub.c',
             'platform/drivers/CPS/cps_io_native_RT4D.c',
             'platform/drivers/display/display_rt4d.c',
