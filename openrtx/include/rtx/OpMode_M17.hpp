@@ -147,6 +147,7 @@ private:
     bool invertRxPhase;                ///< RX signal phase inversion setting.
     bool blinkOn;                      ///< Flag for LED blinking state
     bool   rfSqlOpen;   ///< Flag for RF squelch status (analog squelch).
+    bool   samplingActive; ///< True when baseband sampling is active
     pathId rxAudioPath;                ///< Audio path ID for RX
     pathId txAudioPath;                ///< Audio path ID for TX
     M17::M17Modulator    modulator;    ///< M17 modulator.

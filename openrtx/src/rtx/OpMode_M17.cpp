@@ -40,7 +40,8 @@ using namespace M17;
 
 OpMode_M17::OpMode_M17() : startRx(false), startTx(false), locked(false),
                            dataValid(false), extendedCall(false),
-                           invertTxPhase(false), invertRxPhase(false)
+                           invertTxPhase(false), invertRxPhase(false),
+                           rfSqlOpen(false), samplingActive(false)
 {
 
 }
@@ -202,11 +203,10 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
 
     if(startRx)
     {
-        demodulator.startBasebandSampling();
-
+        // Ensure radio is enabled, sampling will start on squelch open
         radio_enableRx();
-
         startRx = false;
+        samplingActive = false;
     }
 
     // M0VVA NEW
@@ -221,8 +221,39 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         if((rfSqlOpen == false) && (rssi > (squelch + 1))) rfSqlOpen = true;
         if((rfSqlOpen == true)  && (rssi < (squelch - 1))) rfSqlOpen = false;
 
-    // M0VVA NEW
 
+        // • On every call to rxState you update rfSqlOpen as you already do.
+        // • If rfSqlOpen just flipped true, you call startBasebandSampling() once and set samplingActive.
+        // • If rfSqlOpen just flipped false, you immediately stopBasebandSampling(), tear down any codec/audio resources, clear your dataValid/locked flags, and release the speaker path.
+        // • While rfSqlOpen remains false you do nothing expensive—just sleep(1 ms) and return.
+        // • Only when rfSqlOpen is true do you fall through into demodulator.update(), decoder.decodeFrame(), codec_pushFrame(), etc.
+        // This will dramatically reduce CPU use (and power) as soon as the squelch is closed, since the entire digital receive chain is gated off. You can tune the sleepFor(0,1) to be as long as you like (1–5 ms is usually plenty for standby).
+
+        // if squelch just opened, start sampling
+        if (rfSqlOpen && !samplingActive) {
+            demodulator.startBasebandSampling();
+            samplingActive = true;
+        }
+        // if squelch just closed, stop sampling and tear down audio
+        if (!rfSqlOpen && samplingActive) {
+            demodulator.stopBasebandSampling();
+            samplingActive = false;
+            locked      = false;
+            dataValid   = false;
+            status->lsfOk = false;
+            extendedCall  = false;
+            // stop & release audio path
+            codec_stop(rxAudioPath);
+            audioPath_release(rxAudioPath);
+        }
+        // if squelch still closed, skip DSP entirely
+        if (!rfSqlOpen) {
+            // light sleep to yield CPU and drop current draw
+            sleepFor(0, 1);
+            return;
+        }
+    
+    // M0VVA NEW
 
 
     bool newData = demodulator.update(invertRxPhase);
