@@ -24,25 +24,35 @@
 #include <history.h>
 
 history_list_t *history_list;
-bool new_history;
 
-history_list_t *history_init()
+// history_list_t *history_init()
+void history_init()
 {
-    history_list_t *list = (history_list_t *)malloc(sizeof(history_list_t));
-    if(list==NULL) return NULL;
-    list->head = NULL;
-    list->tail = NULL;
-    list->length = 0;
-    new_history = false;
-    return list;
+    history_list = (history_list_t *)malloc(sizeof(history_list_t));
+    if(history_list==NULL) return NULL;
+    history_list->head = NULL;
+    history_list->tail = NULL;
+    history_list->length = 0;
+    history_list->new_history = false;
+    // return list;
 }
 
-history_t *history_find(history_list_t *list, const char* callsign)
+int findCallsignLength(const char* callsign) {
+        int i;
+        for (i = 0; callsign[i] != ' ' && callsign[i] != '\0' && i<9; i++);
+	return i;
+}
+
+// history_t *history_find(history_list_t *list, const char* callsign)
+history_t *history_find(const char* callsign)
 {
-        history_t *current = list->head;
-        while(current)
+        if(history_list == NULL) return NULL;
+
+        history_t *current = history_list->head;
+        while(current != NULL)
         {
-            if(strncmp(current->callsign, callsign, 9) == 0)
+            int i = findCallsignLength(callsign);
+            if(strncmp(current->callsign, callsign, i) == 0)
                 return current;
             current = current->next;
         }
@@ -54,87 +64,113 @@ history_t *history_create(const char* callsign, const char* module, datetime_t s
     history_t *node = (history_t *) malloc(sizeof(history_t));
     if(node==NULL)
         return NULL;
-    int i;
-    for (i = 0; callsign[i] != ' ' && callsign[i] != '\0' && i<9; i++);
+    int i = findCallsignLength(callsign);
     strncpy(node->callsign, callsign, i);
-    // if((module!=NULL) && (module[0]!='\0'))
-    //     strncpy(node->module, module, 9);
+    node->callsign[i]='\0';
     node->time = state_time;
     node->next = NULL;
     node->prev = NULL;
     return node;
 }
 
-void history_prune(history_list_t *list, history_t *this)
+// void history_prune(history_list_t *list, history_t *this)
+void history_prune(history_t *this)
 {
+    if (history_list==NULL || this==NULL) return;
     history_t *current = this;
-    if(current->prev!=NULL)
+    if(current->prev!=NULL) {
         current->prev->next =  current->next;
-    if (current->next!=NULL)
+    }
+    if (current->next!=NULL) {
         current->next->prev = current->prev;
-    if (list->tail == current)
-        list->tail = current->prev;
-    list->length--;
+    }
+    if (history_list->tail == current) {
+        history_list->tail = current->prev;
+    }
+    history_list->length--;
     free(current);
 }
 
-void history_push(history_list_t *list, const char* callsign, const char* module, datetime_t state_time)
+// void history_push(history_list_t *list, const char* callsign, const char* module, datetime_t state_time)
+void history_push(const char* callsign, const char* module, datetime_t state_time)
 {
-    if(list->length > HISTORY_MAX)
-        history_prune(list, list->tail);
+    if(history_list->length > HISTORY_MAX)
+        history_prune(history_list->tail);
     history_t *node = history_create(callsign, module, state_time);
     if(node==NULL)
         return;
-    node->next = list->head;
-    node->next->prev = node;
-    node->prev = NULL;
-    if(list->tail == NULL)
-        list->tail = node;
-    list->head = node;
-    list->length++;
-    new_history = true;
+    node->next = history_list->head;
+    if(node->next != NULL) {
+        node->next->prev = node;
+    }
+    if(history_list->tail == NULL) {
+        history_list->tail = node;
+    }
+    history_list->head = node;
+    history_list->length++;
+    history_list->new_history = true;
 }
 
-void history_update(history_list_t *list, history_t* node, const char* module, datetime_t state_time)
+// void history_update(history_list_t *list, history_t* node, const char* module, datetime_t state_time)
+void history_update(history_t* node, const char* module, datetime_t state_time)
 {
     if(node!=NULL) {
-        if((module!=NULL) && (module[0]!='\0'))
-            strncpy(node->module, module, 9);
+        // if((module!=NULL) && (module[0]!='\0'))
+        //     strncpy(node->module, module, 9);
         node->time = state_time;
-        node->next->prev = node->prev;
-        node->prev->next = node->next;
-        if(list->tail == node)
-            list->tail = node->next;
-        node->next = list->head;
-	list->head = node;
+
+        if (history_list->head == node) {
+            return;
+        }
+        if(node->next != NULL) {
+            node->next->prev = node->prev;
+        }
+        if(node->prev != NULL) {
+            node->prev->next = node->next;
+        }
+        if(history_list->tail == node) {
+            history_list->tail = node->prev;
+        }
+        node->next = history_list->head;
+        if(history_list->head != NULL) {
+            history_list->head->prev = node;
+        }
+        history_list->head = node;
         node->prev = NULL;
     }
 
 }
 
+#ifdef DEBUG
 void history_test(history_list_t *list, const char* src, const char* dest, const char* refl, const char *link , datetime_t state_time)
 {
     char message[10];
     snprintf(message,9,"%2s%2s%2s%2s",src,dest,refl,link);
     history_push(list, message, NULL, state_time); 
 }
+#endif
 
-void history_add(history_list_t *list, const char* callsign, const char* module, datetime_t state_time)
+// void history_add(history_list_t *list, const char* callsign, const char* module, datetime_t state_time)
+void history_add(const char* callsign, const char* module, datetime_t state_time)
 {
-    history_t *node = history_find(list, callsign);
-    if(node) 
-        history_update(list, node, module, state_time);
-    else 
-        history_push(list, callsign, module, state_time); 
+    history_t *node = history_find(callsign);
+    // if(node != NULL) 
+    //     history_update(node, module, state_time);
+    // else 
+        history_push(callsign, module, state_time); 
 }
 
-int read_history(history_list_t *list,  history_t *history, uint8_t pos)
+// int read_history(history_list_t *list,  history_t *history, uint8_t pos)
+int read_history(history_t *history, uint8_t pos)
 {
-    history_t *current = list->head;
+    history_t *current = history_list->head;
     uint8_t index = 0;
-    if (pos==history_size(list)) return -1;
+    if (pos==history_size(history_list)) return -1;
     while(pos>index)
     {
+	if(current == NULL) {
+		return -1;
+        }
         current = current->next;
         index++;
     }
@@ -142,19 +178,25 @@ int read_history(history_list_t *list,  history_t *history, uint8_t pos)
     return index;
 }
 
-uint8_t history_size(history_list_t *list)
+// uint8_t history_size(history_list_t *list)
+uint8_t history_size()
 {
-    return list->length;
+    return history_list->length;
 }
 
 void format_history_value(char *buf, int max_len, history_t history) {
-    sniprintf(buf, max_len, "%10s  %02d:%02d:%02d", history.callsign, history.time.hour, history.time.minute, history.time.second);
+    int gap = max_len - 10;
+    gap -= strlen(history.callsign);
+    char spaces[gap + 1]; // Create a buffer for the spaces
+    memset(spaces, ' ', gap); // Fill the buffer with spaces
+    spaces[gap] = '\0'; // Null-terminate the string
+    sniprintf(buf, max_len, "%s%s%02d:%02d:%02d", history.callsign, spaces, history.time.hour, history.time.minute, history.time.second);
 }
 
 bool is_new_history() {
-    return new_history;
+    return history_list->new_history;
 }
 
 void reset_new_history() {
-    new_history = false;
+    history_list->new_history = false;
 }

@@ -126,6 +126,8 @@ enum displayItems
 #endif
     D_TIMER,
     D_NOTIFICATIONS,
+    D_BATTERY,
+    D_SMETER
 };
 
 #ifdef CONFIG_GPS

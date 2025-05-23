@@ -33,6 +33,7 @@ const stringsTable_t englishStrings =
     .contacts          = "Contacts",
     .history           = "History",
     .notifications     = "Notifications",
+    .batteryIcon       = "Battery icon",
     .gps               = "GPS",
     .settings          = "Settings",
     .backupAndRestore  = "Backup & Restore",

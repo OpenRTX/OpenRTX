@@ -122,6 +122,7 @@ private:
      * current RTX status.
      */
     void txState(rtxStatus_t *const status);
+    void txLog(rtxStatus_t *const status);
 
     /**
      * Compare two callsigns in plain text form.
@@ -145,6 +146,7 @@ private:
     bool invertTxPhase;                ///< TX signal phase inversion setting.
     bool invertRxPhase;                ///< RX signal phase inversion setting.
     bool blinkOn;                      ///< Flag for LED blinking state
+    bool   rfSqlOpen;   ///< Flag for RF squelch status (analog squelch).
     pathId rxAudioPath;                ///< Audio path ID for RX
     pathId txAudioPath;                ///< Audio path ID for TX
     M17::M17Modulator    modulator;    ///< M17 modulator.

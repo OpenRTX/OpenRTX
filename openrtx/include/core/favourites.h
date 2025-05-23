@@ -18,8 +18,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef HISTORY_H
-#define HISTORY_H
+#ifndef FAVOURITES_H
+#define FAVOURITES_H
 
 #include <datatypes.h>
 #include <settings.h>
@@ -27,49 +27,36 @@
 #include <stdbool.h>
 #include <gps.h>
 
-#define HISTORY_MAX 20
+#define FAVOURITES_MAX 20
 
-typedef struct history 
+typedef struct favourite 
 {
     char callsign[10];
     char module[10];
-    datetime_t time;
-    struct history * next;
-    struct history * prev;
+    struct favourite * next;
+    struct favourite * prev;
 }
-history_t;
+favourite_t;
 
-typedef struct history_list
+typedef struct favourite_list
 {
-    history_t *head;
-    history_t *tail;
+    favourite_t *head;
+    favourite_t *tail;
     uint8_t length;
-    bool new_history;
-    char status;
 }
-history_list_t;
+favourite_list_t;
 
 // extern pthread_mutex_t history_mutex;
-// extern history_list_t *history_list;
+extern favourite_list_t *favourite_list;
 
 /**
  * Initialise radio state mutex and radio state variable, reading the
  * informations from device drivers.
  */
-// history_list_t *history_init();
-void history_init();
-// void history_add(history_list_t *list, const char* callsign, const char* module, datetime_t state_time);
-// void history_test(history_list_t *list, const char* src, const char* dest, const char* refl, const char *link , datetime_t state_time);
-// int read_history(history_list_t *list, history_t *history, uint8_t pos);
-// history_t* find_callsign(history_list_t *list, const char* callsign);
-// uint8_t history_size(history_list_t *list);
-void history_add(const char* callsign, const char* module, datetime_t state_time);
-void history_test(const char* src, const char* dest, const char* refl, const char *link , datetime_t state_time);
-int read_history(history_t *history, uint8_t pos);
-history_t* find_callsign(const char* callsign);
-uint8_t history_size();
-void format_history_value(char *buf, int max_len, history_t history);
-bool is_new_history();
-void reset_new_history();
+favourite_list_t *favourite_init();
+void favourite_add(favourite_list_t *list, const char* callsign, const char* module);
+int read_favourite(favourite_list_t *list, favourite_t *item, uint8_t pos);
+uint8_t favourite_size(favourite_list_t *list);
+void format_favourite_value(char *buf, int max_len, favourite_t item);
 
 #endif /* HISTORY_H */

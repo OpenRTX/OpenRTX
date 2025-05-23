@@ -206,6 +206,11 @@ void rtx_task()
                 reinitFilter = false;
             }
         }
+
+        if(rtxStatus.logMessage != '\0')
+        {
+            rtxStatus.opMode = OPMODE_LOG;
+        }
     }
     else
     {
@@ -231,7 +236,12 @@ bool rtx_rxSquelchOpen()
     return currMode->rxSquelchOpen();
 }
 
-void rtx_setHistory(bool value)
+void    rtx_setHistory(bool value)
 {
     rtxStatus.historyEnabled = value;
+}
+
+void rtx_setMenuActive(bool value)
+{
+    rtxStatus.menuActive = value;
 }

@@ -34,6 +34,7 @@ const stringsTable_t spanishStrings =
     .contacts          = "Contactos",
     .history           = "Historico",
     .notifications     = "Notificacion",
+    .batteryIcon       = "Bat. icon",
     .gps               = "GPS",
     .settings          = "Ajustes",
     .backupAndRestore  = "Backup & Restaurar",

@@ -37,6 +37,7 @@ typedef struct
     const char* contacts;
     const char* history;
     const char* notifications;
+    const char* batteryIcon;
     const char* gps;
     const char* settings;
     const char* backupAndRestore;

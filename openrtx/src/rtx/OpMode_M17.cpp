@@ -81,7 +81,7 @@ void OpMode_M17::disable()
 
 void OpMode_M17::blinkLed(rtxStatus_t *const status)
 {
-   if (!status->historyEnabled || !status->notificationsEnabled)
+   if (status->pauseNotifications) || !status->historyEnabled || !status->notificationsEnabled || status->menuActive)
    {
       platform_ledOff(GREEN);
       platform_ledOff(RED);
@@ -105,6 +105,7 @@ void OpMode_M17::blinkLed(rtxStatus_t *const status)
 
 void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
 {
+    #define PLATFORM_MDUV3x0
     (void) newCfg;
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
     //
@@ -138,6 +139,10 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
 
         case TX:
             txState(status);
+            break;
+
+        case LOG:
+            txLog(status);
             break;
 
         default:
@@ -194,6 +199,7 @@ void OpMode_M17::offState(rtxStatus_t *const status)
 
 void OpMode_M17::rxState(rtxStatus_t *const status)
 {
+
     if(startRx)
     {
         demodulator.startBasebandSampling();
@@ -202,6 +208,22 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
 
         startRx = false;
     }
+
+    // M0VVA NEW
+
+        // RF squelch mechanism
+        // This turns squelch (0 to 15) into RSSI (-127.0dbm to -61dbm)
+        rssi_t squelch = -127 + (status->sqlLevel * 66) / 15;
+        rssi_t rssi    = rtx_getRssi();
+
+        // Provide a bit of hysteresis, only change state if the RSSI has
+        // moved more than 1dBm on either side of the current squelch setting.
+        if((rfSqlOpen == false) && (rssi > (squelch + 1))) rfSqlOpen = true;
+        if((rfSqlOpen == true)  && (rssi < (squelch - 1))) rfSqlOpen = false;
+
+    // M0VVA NEW
+
+
 
     bool newData = demodulator.update(invertRxPhase);
     bool lock    = demodulator.isLocked();
@@ -318,6 +340,42 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         codec_stop(rxAudioPath);
         audioPath_release(rxAudioPath);
     }
+}
+
+void OpMode_M17::txLog(rtxStatus_t *const status)
+{
+    frame_t m17Frame;
+
+    std::string src(status->source_address);
+    std::string dst(status->logMessage);
+    M17LinkSetupFrame lsf;
+
+    lsf.clear();
+    lsf.setSource(src);
+    lsf.setDestination(dst);
+    streamType_t type;
+    type.fields.dataMode = M17_DATAMODE_STREAM;     // Stream
+    type.fields.dataType = M17_DATATYPE_DATA;      // Voice data
+    type.fields.CAN      = status->can;             // Channel access number
+
+    lsf.setType(type);
+    lsf.updateCrc();
+    encoder.reset();
+    encoder.encodeLsf(lsf, m17Frame);
+    radio_enableTx();
+
+    modulator.invertPhase(invertTxPhase);
+    modulator.start();
+    modulator.sendPreamble();
+    modulator.sendFrame(m17Frame);
+
+    encoder.encodeEotFrame(m17Frame);
+    modulator.sendFrame(m17Frame);
+    modulator.stop();
+    radio_disableRtx();
+
+    status->logMessage[0] = '\0';
+    status->opStatus = RX;
 }
 
 void OpMode_M17::txState(rtxStatus_t *const status)

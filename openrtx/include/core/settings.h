@@ -55,6 +55,7 @@ typedef struct
     bool    gps_enabled;          // GPS active
     bool    history_enabled;
     bool    notifications_enabled;
+    bool    showSMeter;
     char    callsign[10];         // Plaintext callsign
     uint8_t display_timer   : 4,  // Standby timer
             m17_can         : 4;  // M17 CAN
@@ -82,6 +83,7 @@ static const settings_t default_settings =
     false,                        // GPS enabled
     true,                         // History enabled
     true,                         // Notifications indicator enabled
+    true,
     "",                           // Empty callsign
     TIMER_30S,                    // 30 seconds
     0,                            // M17 CAN
