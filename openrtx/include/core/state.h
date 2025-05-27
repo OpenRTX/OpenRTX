@@ -64,6 +64,10 @@ typedef struct
     bool       txDisable;
     uint8_t    step_index;
     bool       pauseNotifications;
+<<<<<<< Updated upstream
+=======
+    bool       night_mode;
+>>>>>>> Stashed changes
 }
 state_t;
 

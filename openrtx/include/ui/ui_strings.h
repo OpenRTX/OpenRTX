@@ -38,6 +38,10 @@ typedef struct
     const char* history;
     const char* notifications;
     const char* batteryIcon;
+<<<<<<< Updated upstream
+=======
+    const char* displaySMeter;
+>>>>>>> Stashed changes
     const char* gps;
     const char* settings;
     const char* backupAndRestore;

@@ -782,6 +782,13 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, rssi_t rssi,
     gfx_drawRect(rssi_pos, rssi_width, rssi_height, white, true);
 }
 
+void gfx_drawVolume(point_t start, uint16_t width, uint16_t height, uint8_t volume) {
+    color_t white =  {255, 255, 255, 255};
+    point_t volume_pos = {0, (uint8_t)(start.y + height)};
+    fontSize_t font = FONT_SIZE_6PT;
+    uint8_t percent = (uint8_t)((volume / 255.0) * 100.0);
+    gfx_print(volume_pos, font, TEXT_ALIGN_RIGHT, white, "%d%%", percent);
+}
 /*
  * Function to draw RSSI-meter with level-meter of arbitrary size
  * Version without squelch bar for digital protocols

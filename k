@@ -1,8 +1,9 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
+ *                                Grzegorz Kaczmarek SP6HFE                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -161,13 +162,7 @@ const char *display_items[] =
     "Contrast",
 #endif
     "Timer",
-<<<<<<< Updated upstream
     "Notifications"
-=======
-    "Notifications",
-    "Battery Icon",
-    "SMeter"
->>>>>>> Stashed changes
 };
 
 #ifdef CONFIG_GPS
@@ -287,17 +282,6 @@ const color_t color_black = {0, 0, 0, 255};
 const color_t color_grey = {60, 60, 60, 255};
 const color_t color_white = {255, 255, 255, 255};
 const color_t yellow_fab413 = {250, 180, 19, 255};
-const color_t color_blue = {39, 60, 98, 255};
-const color_t color_cyan = {0, 253, 255, 255};
-<<<<<<< Updated upstream
-const color_t color_cyan = {0, 253, 255, 255};
-const color_t color_darkRed = {166, 25, 0, 255};
-=======
-const color_t color_darkRed = {166, 25, 0, 255};
-
-const color_t color_list = color_cyan;
-const color_t color_listSelected = color_black;
->>>>>>> Stashed changes
 
 layout_t layout;
 state_t last_state;
@@ -328,18 +312,16 @@ static void _ui_calculateLayout(layout_t *layout)
     #if CONFIG_SCREEN_HEIGHT > 127
 
     // Height and padding shown in diagram at beginning of file
-    static const uint16_t top_border = 0;
     static const uint16_t top_h = 16;
-    static const uint16_t top_pad = 4; // 4
+    static const uint16_t top_pad = 4;
     static const uint16_t line1_h = 20;
     static const uint16_t line2_h = 20;
     static const uint16_t line3_h = 20;
     static const uint16_t line3_large_h = 40;
     static const uint16_t line4_h = 20;
-    // static const uint16_t menu_h = 16;
-    static const uint16_t menu_h = 10;  // M0VVA
+    static const uint16_t menu_h = 16;
     static const uint16_t bottom_h = 23;
-    static const uint16_t bottom_pad = top_pad; // top_pad
+    static const uint16_t bottom_pad = top_pad;
     static const uint16_t status_v_pad = 2;
     static const uint16_t small_line_v_pad = 2;
     static const uint16_t big_line_v_pad = 6;
@@ -359,7 +341,7 @@ static void _ui_calculateLayout(layout_t *layout)
     static const symbolSize_t line4_symbol_size = SYMBOLS_SIZE_8PT;
     // Frequency line font: 16 pt
     static const fontSize_t line3_large_font = FONT_SIZE_16PT;
-    // Bottom bar font: 8 pt/
+    // Bottom bar font: 8 pt
     static const fontSize_t bottom_font = FONT_SIZE_8PT;
     // TimeDate/Frequency input font
     static const fontSize_t input_font = FONT_SIZE_12PT;
@@ -445,12 +427,12 @@ static void _ui_calculateLayout(layout_t *layout)
     #endif
 
     // Calculate printing positions
-    static const uint16_t top_pos   = top_h + top_border - status_v_pad - text_v_offset;
-    static const uint16_t line1_pos = top_h + top_border + top_pad + line1_h - small_line_v_pad - text_v_offset;
-    static const uint16_t line2_pos = top_h + top_border + top_pad + line1_h + line2_h - small_line_v_pad - text_v_offset;
-    static const uint16_t line3_pos = top_h + top_border + top_pad + line1_h + line2_h + line3_h - small_line_v_pad - text_v_offset;
-    static const uint16_t line4_pos = top_h + top_border + top_pad + line1_h + line2_h + line3_h + line4_h - small_line_v_pad - text_v_offset;
-    static const uint16_t line3_large_pos = top_h + top_border + top_pad + line1_h + line2_h + line3_large_h - big_line_v_pad - text_v_offset;
+    static const uint16_t top_pos   = top_h - status_v_pad - text_v_offset;
+    static const uint16_t line1_pos = top_h + top_pad + line1_h - small_line_v_pad - text_v_offset;
+    static const uint16_t line2_pos = top_h + top_pad + line1_h + line2_h - small_line_v_pad - text_v_offset;
+    static const uint16_t line3_pos = top_h + top_pad + line1_h + line2_h + line3_h - small_line_v_pad - text_v_offset;
+    static const uint16_t line4_pos = top_h + top_pad + line1_h + line2_h + line3_h + line4_h - small_line_v_pad - text_v_offset;
+    static const uint16_t line3_large_pos = top_h + top_pad + line1_h + line2_h + line3_large_h - big_line_v_pad - text_v_offset;
     static const uint16_t bottom_pos = CONFIG_SCREEN_HEIGHT - bottom_pad - status_v_pad - text_v_offset;
 
     layout_t new_layout =
@@ -940,14 +922,14 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             {
                 if(state.channel.fm.txTone == 0)
                 {
-                    state.channel.fm.txTone = MAX_TONE_INDEX-1;
+                    state.channel.fm.txTone = CTCSS_FREQ_NUM-1;
                 }
                 else
                 {
                     state.channel.fm.txTone--;
                 }
 
-                state.channel.fm.txTone %= MAX_TONE_INDEX;
+                state.channel.fm.txTone %= CTCSS_FREQ_NUM;
                 state.channel.fm.rxTone = state.channel.fm.txTone;
                 *sync_rtx = true;
                 vp_announceCTCSS(state.channel.fm.rxToneEn,
@@ -962,7 +944,7 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             if(state.channel.mode == OPMODE_FM)
             {
                 state.channel.fm.txTone++;
-                state.channel.fm.txTone %= MAX_TONE_INDEX;
+                state.channel.fm.txTone %= CTCSS_FREQ_NUM;
                 state.channel.fm.rxTone = state.channel.fm.txTone;
                 *sync_rtx = true;
                 vp_announceCTCSS(state.channel.fm.rxToneEn,
@@ -1297,22 +1279,7 @@ void ui_drawSplashScreen()
 
     gfx_print(logo_orig, logo_font, TEXT_ALIGN_CENTER, yellow_fab413, "O P N\nR T X");
     gfx_print(call_orig, call_font, TEXT_ALIGN_CENTER, color_white, state.settings.callsign);
-<<<<<<< Updated upstream
-    point_t orig_v = {0, 12};
-    gfx_print(orig_v, call_font, TEXT_ALIGN_CENTER, color_blue, "202503271257");
-    orig_v.y = 24;
-    gfx_print(orig_v, logo_font, TEXT_ALIGN_CENTER, color_blue, "M0VVA mod");
-    orig_v.x = 96;
-    orig_v.y = 0;
-    gfx_print(orig_v, logo_font, TEXT_ALIGN_LEFT, color_blue, "X");
-=======
 
-    point_t orig_v = {0, 12};
-    gfx_print(orig_v, FONT_SIZE_6PT, TEXT_ALIGN_CENTER, color_blue, "20250523");
-    point_t orig_a = {0, 24};
-    gfx_print(orig_a, FONT_SIZE_8PT, TEXT_ALIGN_CENTER, color_blue, "M0VVA mod");
-    
->>>>>>> Stashed changes
     vp_announceSplashScreen();
 }
 
@@ -1623,7 +1590,7 @@ void ui_updateFSM(bool *sync_rtx)
                             else
                                 vp_replayLastPrompt();
                             f1Handled = true;
-			}
+                        }
                     }
                     else if(input_isNumberPressed(msg))
                     {
@@ -1731,11 +1698,7 @@ void ui_updateFSM(bool *sync_rtx)
                                 }
 
                                 f1Handled = true;
-                            } else {
-			      last_state.settings.night_mode = !last_state.settings.night_mode;
-                              *sync_rtx = true;
-                              f1Handled = true;
-		    	    }
+                            }
                         }
                         else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
                                 msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
@@ -1798,12 +1761,8 @@ void ui_updateFSM(bool *sync_rtx)
                             }
 
                             f1Handled = true;
-                     } else {
-		        last_state.settings.night_mode = !last_state.settings.night_mode;
-                        *sync_rtx = true;
-                        f1Handled = true;
+                        }
                     }
-	            }
                     else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
                     {
                         _ui_fsm_loadChannel(state.channel_index + 1, sync_rtx);
@@ -1937,46 +1896,12 @@ void ui_updateFSM(bool *sync_rtx)
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_TOP);
                 break;
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
 #ifdef CONFIG_M17
-            // History menu screen
-            // M0VVA - implement history displays
-            case MENU_HISTORY:
-                if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                    // Using 1 as parameter disables menu wrap around
-                    _ui_menuUp(1);
-                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                {
-                    history_t history;
-<<<<<<< Updated upstream
-                    if(read_history(history_list, &history, ui_state.menu_selected + 1) != -1)
-=======
-                    if(read_history(&history, ui_state.menu_selected + 1) != -1)
->>>>>>> Stashed changes
-                        ui_state.menu_selected += 1;
-                }
-                else if(msg.long_press && msg.keys & KEY_ENTER)
-                {
-                    history_t history;
-<<<<<<< Updated upstream
-                    read_history(history_list, &history, ui_state.menu_selected);
-=======
-                    read_history(&history, ui_state.menu_selected);
->>>>>>> Stashed changes
-                    strncpy(state.settings.m17_dest, history.callsign, 10);
-                    *sync_rtx = true;
-                }
-                else if(msg.keys & KEY_ESC)
-                    _ui_menuBack(MENU_TOP);
-                break;
+		case MENU_HISTORY:
+		    if(state.settings.history_enabled)
+			    _ui_drawMenuHistory(&ui_state);
+		    break;
 #endif
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
 #ifdef CONFIG_GPS
             // GPS menu screen
             case MENU_GPS:
@@ -2144,7 +2069,7 @@ void ui_updateFSM(bool *sync_rtx)
                     switch(ui_state.menu_selected)
                     {
 #ifdef CONFIG_SCREEN_BRIGHTNESS
-                        case §RIGHTNESS:
+                        case D_BRIGHTNESS:
                             _ui_changeBrightness(-5);
                             vp_announceSettingsInt(&currentLanguage->brightness, queueFlags,
                                                    state.settings.brightness);
@@ -2161,28 +2086,6 @@ void ui_updateFSM(bool *sync_rtx)
                             _ui_changeTimer(-1);
                             vp_announceDisplayTimer();
                             break;
-<<<<<<< Updated upstream
-                        case D_NOTIFICATIONS:
-                            state.settings.notifications_enabled = !state.settings.notifications_enabled;
-                            *sync_rtx = true;
-                            break;
-=======
-
-			case D_NOTIFICATIONS:
-			    state.settings.notifications_enabled = !state.settings.notifications_enabled;
-                            *sync_rtx = true;
-                            break;
-
-    	                case D_SMETER:
-                            state.settings.showSMeter = !state.settings.showSMeter;
-                            *sync_rtx = true;
-                            break;
-
-			 case D_BATTERY:
-                            state.settings.display_battery = !state.settings.display_battery;
-                            break;
-
->>>>>>> Stashed changes
                         default:
                             state.ui_screen = SETTINGS_DISPLAY;
                     }
@@ -2210,24 +2113,6 @@ void ui_updateFSM(bool *sync_rtx)
                             _ui_changeTimer(+1);
                             vp_announceDisplayTimer();
                             break;
-<<<<<<< Updated upstream
-                        case D_NOTIFICATIONS:
-                            state.settings.notifications_enabled = !state.settings.notifications_enabled;
-                            *sync_rtx = true;
-                            break;
-=======
-
-    	                case D_NOTIFICATIONS:
-                            state.settings.notifications_enabled = !state.settings.notifications_enabled;
-                            *sync_rtx = true;
-                            break;
-
-    	                case D_SMETER:
-                            state.settings.showSMeter = !state.settings.showSMeter;
-                            *sync_rtx = true;
-                            break;
-
->>>>>>> Stashed changes
                         default:
                             state.ui_screen = SETTINGS_DISPLAY;
                     }
@@ -2387,7 +2272,6 @@ void ui_updateFSM(bool *sync_rtx)
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_SETTINGS);
                 break;
-#define CONFIG_M17
 #ifdef CONFIG_M17
             // M17 Settings
             case SETTINGS_M17:
@@ -2452,31 +2336,6 @@ void ui_updateFSM(bool *sync_rtx)
                                 ui_state.edit_mode = !ui_state.edit_mode;
                             else if(msg.keys & KEY_ESC)
                                 ui_state.edit_mode = false;
-<<<<<<< Updated upstream
-                            break;
-                        case M17_HISTORY:
-=======
-			    break;
-			 case M17_HISTORY:
->>>>>>> Stashed changes
-                            if(msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT ||
-                                (ui_state.edit_mode &&
-                                 (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT ||
-                                  msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)))
-                            {
-                                state.settings.history_enabled =
-                                    !state.settings.history_enabled;
-<<<<<<< Updated upstream
-                                rtx_setNotifications(state.settings.history_enabled);
-=======
-//                                rtx_setNotifications(state.settings.history_enabled);
->>>>>>> Stashed changes
-                            }
-                            else if(msg.keys & KEY_ENTER)
-                                ui_state.edit_mode = !ui_state.edit_mode;
-                            else if(msg.keys & KEY_ESC)
-                                ui_state.edit_mode = false;
-                            break;
                     }
                 }
                 else
@@ -2625,15 +2484,9 @@ void ui_updateFSM(bool *sync_rtx)
         }
 #endif //            CONFIG_GPS
 
-<<<<<<< Updated upstream
-        if (((txOngoing || rtx_rxSquelchOpen()) && !last_state.settings.notifications_enabled) || last_state.volume_changed)
-=======
-        if ((!last_state.settings.notifications_enabled && (txOngoing || rtx_rxSquelchOpen())) || (!last_state.settings.night_mode && (abs((int)state.volume - (int)last_state.volume) > 2)))
-//        if ((!last_state.settings.notifications_enabled && (txOngoing || rtx_rxSquelchOpen())) )
->>>>>>> Stashed changes
+        if (txOngoing || rtx_rxSquelchOpen() || (state.volume != last_state.volume))
         {
             _ui_exitStandby(now);
-            if(last_state.volume_changed) state.volume_changed = false;
             return;
         }
 
@@ -2654,13 +2507,6 @@ bool ui_updateGUI()
         _ui_calculateLayout(&layout);
         layout_ready = true;
     }
-
-    rtx_setMenuActive(!(last_state.ui_screen == MAIN_VFO || last_state.ui_screen == MAIN_VFO_INPUT));
-<<<<<<< Updated upstream
-        
-=======
-
->>>>>>> Stashed changes
     // Draw current GUI page
     switch(last_state.ui_screen)
     {
@@ -2691,14 +2537,6 @@ bool ui_updateGUI()
         // Contacts menu screen
         case MENU_CONTACTS:
             _ui_drawMenuContacts(&ui_state);
-            break;
-<<<<<<< Updated upstream
-        // Contacts menu screen
-=======
->>>>>>> Stashed changes
-        case MENU_HISTORY:
-            if(state.settings.history_enabled)
-                _ui_drawMenuHistory(&ui_state); // fixed
             break;
 #ifdef CONFIG_GPS
         // GPS menu screen

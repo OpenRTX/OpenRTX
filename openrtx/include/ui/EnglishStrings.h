@@ -33,7 +33,12 @@ const stringsTable_t englishStrings =
     .contacts          = "Contacts",
     .history           = "History",
     .notifications     = "Notifications",
+<<<<<<< Updated upstream
     .batteryIcon       = "Battery icon",
+=======
+    .batteryIcon       = "Battery Icon",
+    .displaySMeter     = "SMeter",
+>>>>>>> Stashed changes
     .gps               = "GPS",
     .settings          = "Settings",
     .backupAndRestore  = "Backup & Restore",

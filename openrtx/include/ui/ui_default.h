@@ -271,5 +271,12 @@ extern const color_t color_grey;
 extern const color_t color_white;
 extern const color_t yellow_fab413;
 extern const color_t color_blue;
+<<<<<<< Updated upstream
+=======
+extern const color_t color_cyan;
+extern const color_t color_darkRed;
+extern const color_t color_list;
+extern const color_t color_listSelected;
+>>>>>>> Stashed changes
 
 #endif /* UI_DEFAULT_H */

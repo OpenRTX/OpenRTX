@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2021 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -33,15 +33,19 @@
 #include <interfaces/platform.h>
 
 extern mod17Calib_t mod17CalData;
+
 #endif
+
+#define BLINK_TICK 50
+#define BLINK_OFF_TICK 2000
+#define BLINK_ON_TICK 200
 
 using namespace std;
 using namespace M17;
 
 OpMode_M17::OpMode_M17() : startRx(false), startTx(false), locked(false),
                            dataValid(false), extendedCall(false),
-                           invertTxPhase(false), invertRxPhase(false),
-                           rfSqlOpen(false), samplingActive(false)
+                           invertTxPhase(false), invertRxPhase(false)
 {
 
 }
@@ -70,6 +74,8 @@ void OpMode_M17::disable()
 {
     startRx = false;
     startTx = false;
+    blinkOn = false;
+    blinkState = 0;
     platform_ledOff(GREEN);
     platform_ledOff(RED);
     audioPath_release(rxAudioPath);
@@ -82,11 +88,7 @@ void OpMode_M17::disable()
 
 void OpMode_M17::blinkLed(rtxStatus_t *const status)
 {
-<<<<<<< Updated upstream
-   if (status->pauseNotifications) || !status->historyEnabled || !status->notificationsEnabled || status->menuActive)
-=======
    if (status->pauseNotifications || !status->historyEnabled || !status->notificationsEnabled || status->menuActive)
->>>>>>> Stashed changes
    {
       platform_ledOff(GREEN);
       platform_ledOff(RED);
@@ -96,12 +98,13 @@ void OpMode_M17::blinkLed(rtxStatus_t *const status)
    if( blinkTimer > getTick() )
       return;
 
+   platform_ledOff(GREEN);
    if(blinkOn) {
             platform_ledOn(RED);
-            blinkTimer = getTick() + 50;
+            blinkTimer = getTick() + BLINK_TICK;
    } else {
             platform_ledOff(RED);
-            blinkTimer = getTick() + (blinkState < 1 ? 200 : 2000);
+            blinkTimer = getTick() + (blinkState < 1 ? BLINK_ON_TICK : BLINK_OFF_TICK);
             blinkState++;
             if(blinkState>1) blinkState=0;
    }
@@ -110,7 +113,6 @@ void OpMode_M17::blinkLed(rtxStatus_t *const status)
 
 void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
 {
-    #define PLATFORM_MDUV3x0
     (void) newCfg;
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
     //
@@ -129,6 +131,11 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
     //
     invertTxPhase = (mod17CalData.bb_tx_invert == 1) ? true : false;
     invertRxPhase = (mod17CalData.bb_rx_invert == 1) ? true : false;
+    #elif defined(PLATFORM_CS7000) || defined(PLATFORM_CS7000P)
+    invertTxPhase = true;
+    #elif defined(PLATFORM_DM1701)
+    invertTxPhase = true;
+    invertRxPhase = true;
     #endif
 
     // Main FSM logic
@@ -146,16 +153,6 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
             txState(status);
             break;
 
-<<<<<<< Updated upstream
-        case LOG:
-            txLog(status);
-            break;
-=======
-//        case LOG:
-//            txLog(status);
-//            break;
->>>>>>> Stashed changes
-
         default:
             break;
     }
@@ -164,11 +161,12 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
     switch(status->opStatus)
     {
         case RX:
+
             if(dataValid)
                 platform_ledOn(GREEN);
             else
-               // platform_ledOff(GREEN);
-                blinkLed(status);
+            //    platform_ledOff(GREEN);
+	        blinkLed(status);
             break;
 
         case TX:
@@ -210,14 +208,17 @@ void OpMode_M17::offState(rtxStatus_t *const status)
 
 void OpMode_M17::rxState(rtxStatus_t *const status)
 {
-
     if(startRx)
     {
-        // Ensure radio is enabled, sampling will start on squelch open
+        demodulator.startBasebandSampling();
+
         radio_enableRx();
+
         startRx = false;
-        samplingActive = false;
     }
+
+    bool newData = demodulator.update(invertRxPhase);
+    bool lock    = demodulator.isLocked();
 
     // M0VVA NEW
 
@@ -231,43 +232,8 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         if((rfSqlOpen == false) && (rssi > (squelch + 1))) rfSqlOpen = true;
         if((rfSqlOpen == true)  && (rssi < (squelch - 1))) rfSqlOpen = false;
 
-
-        // • On every call to rxState you update rfSqlOpen as you already do.
-        // • If rfSqlOpen just flipped true, you call startBasebandSampling() once and set samplingActive.
-        // • If rfSqlOpen just flipped false, you immediately stopBasebandSampling(), tear down any codec/audio resources, clear your dataValid/locked flags, and release the speaker path.
-        // • While rfSqlOpen remains false you do nothing expensive—just sleep(1 ms) and return.
-        // • Only when rfSqlOpen is true do you fall through into demodulator.update(), decoder.decodeFrame(), codec_pushFrame(), etc.
-        // This will dramatically reduce CPU use (and power) as soon as the squelch is closed, since the entire digital receive chain is gated off. You can tune the sleepFor(0,1) to be as long as you like (1–5 ms is usually plenty for standby).
-
-        // if squelch just opened, start sampling
-        if (rfSqlOpen && !samplingActive) {
-            demodulator.startBasebandSampling();
-            samplingActive = true;
-        }
-        // if squelch just closed, stop sampling and tear down audio
-        if (!rfSqlOpen && samplingActive) {
-            demodulator.stopBasebandSampling();
-            samplingActive = false;
-            locked      = false;
-            dataValid   = false;
-            status->lsfOk = false;
-            extendedCall  = false;
-            // stop & release audio path
-            codec_stop(rxAudioPath);
-            audioPath_release(rxAudioPath);
-        }
-        // if squelch still closed, skip DSP entirely
-        if (!rfSqlOpen) {
-            // light sleep to yield CPU and drop current draw
-            sleepFor(0, 1);
-            return;
-        }
-    
     // M0VVA NEW
 
-
-    bool newData = demodulator.update(invertRxPhase);
-    bool lock    = demodulator.isLocked();
 
     // Reset frame decoder when transitioning from unlocked to locked state.
     if((lock == true) && (locked == false))
@@ -383,6 +349,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
     }
 }
 
+
 void OpMode_M17::txLog(rtxStatus_t *const status)
 {
     frame_t m17Frame;
@@ -417,6 +384,7 @@ void OpMode_M17::txLog(rtxStatus_t *const status)
 
     status->logMessage[0] = '\0';
     status->opStatus = RX;
+
 }
 
 void OpMode_M17::txState(rtxStatus_t *const status)
@@ -503,4 +471,3 @@ bool OpMode_M17::compareCallsigns(const std::string& localCs,
 
     return false;
 }
-

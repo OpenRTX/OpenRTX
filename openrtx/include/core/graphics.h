@@ -302,6 +302,8 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
  */
 void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, rssi_t rssi,
                     uint8_t squelch, uint8_t volume, bool drawVolume, color_t color);
+void gfx_drawVolume(point_t start, uint16_t width, uint16_t height, uint8_t volume); 
+
 
 /**
  * Function to draw Smeter + level meter of arbitrary size.

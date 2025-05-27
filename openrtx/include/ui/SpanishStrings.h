@@ -34,7 +34,12 @@ const stringsTable_t spanishStrings =
     .contacts          = "Contactos",
     .history           = "Historico",
     .notifications     = "Notificacion",
+<<<<<<< Updated upstream
     .batteryIcon       = "Bat. icon",
+=======
+    .batteryIcon       = "Icon de batteria",
+    .displaySMeter     = "SMeter",
+>>>>>>> Stashed changes
     .gps               = "GPS",
     .settings          = "Ajustes",
     .backupAndRestore  = "Backup & Restaurar",
