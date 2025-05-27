@@ -148,10 +148,16 @@ private:
     bool blinkOn;                      ///< Flag for LED blinking state
     bool   rfSqlOpen;   ///< Flag for RF squelch status (analog squelch).
     bool   samplingActive; ///< True when baseband sampling is active
-    static constexpr unsigned RSSI_CHECK_INTERVAL_MS = 100;  ///< Interval between RSSI checks when squelch closed (ms)
-    static constexpr unsigned RADIO_SETTLE_MS = 5;          ///< Radio settle time after enable (ms)
-    long long nextRssiCheckTime;                            ///< Timestamp for next RSSI check
-    bool rfPowered;                                          ///< True when RF front-end is powered
+    /**
+     * Time (ms) to keep squelch open after physical closure,
+     * preventing dropouts during speech gaps.
+     */
+    static constexpr unsigned SQUELCH_HOLD_MS = 500;
+    
+    /**
+     * Timestamp (in ticks) until which we treat squelch as open.
+     */
+    long long squelchHoldUntil;
     pathId rxAudioPath;                ///< Audio path ID for RX
     pathId txAudioPath;                ///< Audio path ID for TX
     M17::M17Modulator    modulator;    ///< M17 modulator.
