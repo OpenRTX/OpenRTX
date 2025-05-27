@@ -40,7 +40,8 @@ using namespace M17;
 
 OpMode_M17::OpMode_M17() : startRx(false), startTx(false), locked(false),
                            dataValid(false), extendedCall(false),
-                           invertTxPhase(false), invertRxPhase(false)
+                           invertTxPhase(false), invertRxPhase(false),
+                           rfSqlOpen(false), samplingActive(false)
 {
 
 }
@@ -60,6 +61,9 @@ void OpMode_M17::enable()
     extendedCall = false;
     startRx      = true;
     startTx      = false;
+    blinkOn      = false;
+    blinkTimer   = getTick();
+    blinkState   = 0;
 }
 
 void OpMode_M17::disable()
@@ -76,8 +80,33 @@ void OpMode_M17::disable()
     demodulator.terminate();
 }
 
+void OpMode_M17::blinkLed(rtxStatus_t *const status)
+{
+   if (status->pauseNotifications) || !status->historyEnabled || !status->notificationsEnabled || status->menuActive)
+   {
+      platform_ledOff(GREEN);
+      platform_ledOff(RED);
+      return;
+   }
+
+   if( blinkTimer > getTick() )
+      return;
+
+   if(blinkOn) {
+            platform_ledOn(RED);
+            blinkTimer = getTick() + 50;
+   } else {
+            platform_ledOff(RED);
+            blinkTimer = getTick() + (blinkState < 1 ? 200 : 2000);
+            blinkState++;
+            if(blinkState>1) blinkState=0;
+   }
+   blinkOn = !blinkOn;
+}
+
 void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
 {
+    #define PLATFORM_MDUV3x0
     (void) newCfg;
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
     //
@@ -113,6 +142,10 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
             txState(status);
             break;
 
+        case LOG:
+            txLog(status);
+            break;
+
         default:
             break;
     }
@@ -121,11 +154,11 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
     switch(status->opStatus)
     {
         case RX:
-
             if(dataValid)
                 platform_ledOn(GREEN);
             else
-                platform_ledOff(GREEN);
+               // platform_ledOff(GREEN);
+                blinkLed(status);
             break;
 
         case TX:
@@ -167,14 +200,61 @@ void OpMode_M17::offState(rtxStatus_t *const status)
 
 void OpMode_M17::rxState(rtxStatus_t *const status)
 {
+
     if(startRx)
     {
-        demodulator.startBasebandSampling();
-
+        // Ensure radio is enabled, sampling will start on squelch open
         radio_enableRx();
-
         startRx = false;
+        samplingActive = false;
     }
+
+    // M0VVA NEW
+
+        // RF squelch mechanism
+        // This turns squelch (0 to 15) into RSSI (-127.0dbm to -61dbm)
+        rssi_t squelch = -127 + (status->sqlLevel * 66) / 15;
+        rssi_t rssi    = rtx_getRssi();
+
+        // Provide a bit of hysteresis, only change state if the RSSI has
+        // moved more than 1dBm on either side of the current squelch setting.
+        if((rfSqlOpen == false) && (rssi > (squelch + 1))) rfSqlOpen = true;
+        if((rfSqlOpen == true)  && (rssi < (squelch - 1))) rfSqlOpen = false;
+
+
+        // • On every call to rxState you update rfSqlOpen as you already do.
+        // • If rfSqlOpen just flipped true, you call startBasebandSampling() once and set samplingActive.
+        // • If rfSqlOpen just flipped false, you immediately stopBasebandSampling(), tear down any codec/audio resources, clear your dataValid/locked flags, and release the speaker path.
+        // • While rfSqlOpen remains false you do nothing expensive—just sleep(1 ms) and return.
+        // • Only when rfSqlOpen is true do you fall through into demodulator.update(), decoder.decodeFrame(), codec_pushFrame(), etc.
+        // This will dramatically reduce CPU use (and power) as soon as the squelch is closed, since the entire digital receive chain is gated off. You can tune the sleepFor(0,1) to be as long as you like (1–5 ms is usually plenty for standby).
+
+        // if squelch just opened, start sampling
+        if (rfSqlOpen && !samplingActive) {
+            demodulator.startBasebandSampling();
+            samplingActive = true;
+        }
+        // if squelch just closed, stop sampling and tear down audio
+        if (!rfSqlOpen && samplingActive) {
+            demodulator.stopBasebandSampling();
+            samplingActive = false;
+            locked      = false;
+            dataValid   = false;
+            status->lsfOk = false;
+            extendedCall  = false;
+            // stop & release audio path
+            codec_stop(rxAudioPath);
+            audioPath_release(rxAudioPath);
+        }
+        // if squelch still closed, skip DSP entirely
+        if (!rfSqlOpen) {
+            // light sleep to yield CPU and drop current draw
+            sleepFor(0, 1);
+            return;
+        }
+    
+    // M0VVA NEW
+
 
     bool newData = demodulator.update(invertRxPhase);
     bool lock    = demodulator.isLocked();
@@ -291,6 +371,42 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         codec_stop(rxAudioPath);
         audioPath_release(rxAudioPath);
     }
+}
+
+void OpMode_M17::txLog(rtxStatus_t *const status)
+{
+    frame_t m17Frame;
+
+    std::string src(status->source_address);
+    std::string dst(status->logMessage);
+    M17LinkSetupFrame lsf;
+
+    lsf.clear();
+    lsf.setSource(src);
+    lsf.setDestination(dst);
+    streamType_t type;
+    type.fields.dataMode = M17_DATAMODE_STREAM;     // Stream
+    type.fields.dataType = M17_DATATYPE_DATA;      // Voice data
+    type.fields.CAN      = status->can;             // Channel access number
+
+    lsf.setType(type);
+    lsf.updateCrc();
+    encoder.reset();
+    encoder.encodeLsf(lsf, m17Frame);
+    radio_enableTx();
+
+    modulator.invertPhase(invertTxPhase);
+    modulator.start();
+    modulator.sendPreamble();
+    modulator.sendFrame(m17Frame);
+
+    encoder.encodeEotFrame(m17Frame);
+    modulator.sendFrame(m17Frame);
+    modulator.stop();
+    radio_disableRtx();
+
+    status->logMessage[0] = '\0';
+    status->opStatus = RX;
 }
 
 void OpMode_M17::txState(rtxStatus_t *const status)

@@ -34,6 +34,7 @@ openrtx_def += {'FONT_UBUNTU_REGULAR': ''}
 ##
 
 openrtx_src = ['openrtx/src/core/state.c',
+               'openrtx/src/core/history.c',
                'openrtx/src/core/threads.c',
                'openrtx/src/core/battery.c',
                'openrtx/src/core/graphics.c',

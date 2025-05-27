@@ -37,6 +37,7 @@ void _ui_drawMainBackground()
 
 void _ui_drawMainTop(ui_state_t * ui_state)
 {
+
 #ifdef CONFIG_RTC
     // Print clock on top bar
     datetime_t local_time = utcToLocalTime(last_state.time,
@@ -44,19 +45,48 @@ void _ui_drawMainTop(ui_state_t * ui_state)
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "%02d:%02d:%02d", local_time.hour,
               local_time.minute, local_time.second);
+
+    // if(history_size(history_list)==0) {
+    //     history_add(history_list, "M0VVA", "NONE", local_time);
+    //     history_add(history_list, "G4XIX", "NONE", local_time);
+    //     history_add(history_list, "M7TFT", "NONE", local_time);
+    //     history_add(history_list, "G0WCZ", "NONE", local_time);
+    //     history_add(history_list, "2E0MXA", "NONE", local_time);
+    //     history_add(history_list, "MM7RBK", "NONE", local_time);
+    // }
+
 #endif
     // If the radio has no built-in battery, print input voltage
 #ifdef CONFIG_BAT_NONE
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_RIGHT,
               color_white,"%.1fV", last_state.v_bat);
 #else
-    // Otherwise print battery icon on top bar, use 4 px padding
-    uint16_t bat_width = CONFIG_SCREEN_WIDTH / 9;
-    uint16_t bat_height = layout.top_h - (layout.status_v_pad * 2);
-    point_t bat_pos = {CONFIG_SCREEN_WIDTH - bat_width - layout.horizontal_pad,
-                       layout.status_v_pad};
-    gfx_drawBattery(bat_pos, bat_width, bat_height, last_state.charge);
+    switch(last_state.settings.display_battery) {
+        case 1:
+            // Otherwise print battery icon on top bar, use 4 px padding
+            uint16_t bat_width = CONFIG_SCREEN_WIDTH / 9;
+            uint16_t bat_height = layout.top_h - (layout.status_v_pad * 2);
+            point_t bat_pos = {CONFIG_SCREEN_WIDTH - bat_width - layout.horizontal_pad,
+                            layout.status_v_pad};
+            gfx_drawBattery(bat_pos, bat_width, bat_height, last_state.charge);
+            break;
+        case 2:
+            point_t charge_pos = {CONFIG_SCREEN_WIDTH - 24 - layout.horizontal_pad,
+                            layout.status_v_pad};
+            gfx_print(charge_pos , layout.line1_font, TEXT_ALIGN_LEFT,
+                  color_white,"%02d", last_state.charge);
+            break;
+    }
 #endif
+
+    point_t list_pos = {layout.top_pos.x + 24, layout.top_pos.y};
+    if (last_state.settings.history_enabled)
+    {
+        gfx_print(list_pos , layout.line1_font, TEXT_ALIGN_LEFT,
+            is_new_history() ? yellow_fab413 : color_black, "H%d", history_size(history_list));
+        rtx_setHistory(is_new_history());
+    }
+
     if (ui_state->input_locked == true)
       gfx_drawSymbol(layout.top_pos, layout.top_symbol_size, TEXT_ALIGN_LEFT,
                      color_white, SYMBOL_LOCK);
@@ -123,6 +153,13 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
         #ifdef CONFIG_M17
         case OPMODE_M17:
         {
+            // if(history_size(history_list) == 0) {
+            //     // Add some sample data
+                // history_add(history_list, "M0VVA", "MOD_A", utcToLocalTime(last_state.time, last_state.settings.utc_timezone));
+            //     history_add(history_list, "G4XIX", "MOD_B", utcToLocalTime(last_state.time, last_state.settings.utc_timezone));
+            //     // Cleanup above
+            // }
+
             // Print M17 Destination ID on line 3 of 3
             rtxStatus_t rtxStatus = rtx_getCurrentStatus();
 
@@ -133,7 +170,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                                color_white, SYMBOL_CALL_RECEIVED);
 
                 gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                          color_white, "%s", rtxStatus.M17_dst);
+                          yellow_fab413, "%s", rtxStatus.M17_dst);
 
                 // Source address
                 gfx_drawSymbol(layout.line1_pos, layout.line1_symbol_size, TEXT_ALIGN_LEFT,
@@ -149,7 +186,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                                    color_white, SYMBOL_ACCESS_POINT);
 
                     gfx_print(layout.line4_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                              color_white, "%s", rtxStatus.M17_link);
+                              color_blue, "%s", rtxStatus.M17_link);
                 }
 
                 // Reflector (if present)
@@ -161,6 +198,50 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                     gfx_print(layout.line3_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                               color_white, "%s", rtxStatus.M17_refl);
                 }
+                // if ( (strncmp(rtxStatus.M17_dst, "INFO",4)!=0) &&
+                //      (strncmp(rtxStatus.M17_dst, "ECHO",4)!=0) &&
+                //      (strncmp(rtxStatus.M17_src, last_state.settings.callsign, 8)!=0) )
+                //     history_add(history_list, rtxStatus.M17_src, rtxStatus.M17_refl, 
+                //              utcToLocalTime(last_state.time, last_state.settings.utc_timezone));
+
+                if (rtxStatus.M17_dst == NULL || rtxStatus.M17_src == NULL || rtxStatus.M17_refl == NULL) {
+                    printf("Error: Invalid M17 status fields\n");
+                    return;
+                }
+                
+                if (last_state.settings.callsign == NULL) {
+                    printf("Error: Invalid callsign in settings\n");
+                    return;
+                }
+                
+                if (history_list == NULL) {
+                    printf("Error: history_list is NULL\n");
+                    return;
+                }
+                
+                if (strnlen(rtxStatus.M17_dst, 4) < 4 || strnlen(rtxStatus.M17_src, 8) < 8) {
+                    printf("Error: M17_dst or M17_src string is too short\n");
+                    return;
+                }
+                
+                datetime_t local_time = utcToLocalTime(last_state.time, last_state.settings.utc_timezone);
+                if (local_time.hour < 0 || local_time.hour > 23 || 
+                    local_time.minute < 0 || local_time.minute > 59 || 
+                    local_time.second < 0 || local_time.second > 59) {
+                    printf("Error: Invalid local time\n");
+                    return;
+                }
+                
+                bool isInfo = (strncmp(rtxStatus.M17_dst, "INFO", 4) == 0);
+                bool isEcho = (strncmp(rtxStatus.M17_dst, "ECHO", 4) == 0);
+                bool isSelf = (strncmp(rtxStatus.M17_src, last_state.settings.callsign, 8) == 0);
+                
+                if (!isInfo && !isEcho && !isSelf) {
+                    if (!history_add(history_list, rtxStatus.M17_src, rtxStatus.M17_refl, local_time)) {
+                        printf("Error: Failed to add to history\n");
+                    }
+                }
+
             }
             else
             {

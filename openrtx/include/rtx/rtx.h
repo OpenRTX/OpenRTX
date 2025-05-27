@@ -66,6 +66,13 @@ typedef struct
     char     M17_src[10];              /**  M17 LSF source             */
     char     M17_link[10];             /**  M17 LSF traffic originator */
     char     M17_refl[10];             /**  M17 LSF reflector module   */
+    char       logMessage[10];
+    
+    // bool     historyEnabled;
+    bool     notificationsEnabled;
+    bool     pauseNotifications;
+    bool     menuActive;
+    bool     showSMeter;
 }
 rtxStatus_t;
 
@@ -96,7 +103,8 @@ enum opstatus
 {
     OFF = 0,        /**< OFF          */
     RX  = 1,        /**< Receiving    */
-    TX  = 2         /**< Transmitting */
+    TX  = 2,         /**< Transmitting */
+    LOG = 3       /**< Logging      */
 };
 
 
@@ -145,6 +153,10 @@ rssi_t rtx_getRssi();
  * @return true if RX squelch is open.
  */
 bool rtx_rxSquelchOpen();
+
+void rtx_setHistory(bool);
+
+void rtx_setMenuActive(bool);
 
 #ifdef __cplusplus
 }

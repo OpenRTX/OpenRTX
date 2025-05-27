@@ -97,6 +97,8 @@ public:
 
 private:
 
+    void blinkLed(rtxStatus_t *const status);
+
     /**
      * Function handling the OFF operating state.
      *
@@ -120,6 +122,7 @@ private:
      * current RTX status.
      */
     void txState(rtxStatus_t *const status);
+    void txLog(rtxStatus_t *const status);
 
     /**
      * Compare two callsigns in plain text form.
@@ -142,12 +145,21 @@ private:
     bool extendedCall;                 ///< Extended callsign data received
     bool invertTxPhase;                ///< TX signal phase inversion setting.
     bool invertRxPhase;                ///< RX signal phase inversion setting.
+    bool blinkOn;                      ///< Flag for LED blinking state
+    bool   rfSqlOpen;   ///< Flag for RF squelch status (analog squelch).
+    bool   samplingActive; ///< True when baseband sampling is active
+    static constexpr unsigned RSSI_CHECK_INTERVAL_MS = 100;  ///< Interval between RSSI checks when squelch closed (ms)
+    static constexpr unsigned RADIO_SETTLE_MS = 5;          ///< Radio settle time after enable (ms)
+    long long nextRssiCheckTime;                            ///< Timestamp for next RSSI check
+    bool rfPowered;                                          ///< True when RF front-end is powered
     pathId rxAudioPath;                ///< Audio path ID for RX
     pathId txAudioPath;                ///< Audio path ID for TX
     M17::M17Modulator    modulator;    ///< M17 modulator.
     M17::M17Demodulator  demodulator;  ///< M17 demodulator.
     M17::M17FrameDecoder decoder;      ///< M17 frame decoder
     M17::M17FrameEncoder encoder;      ///< M17 frame encoder
+    time_t blinkTimer;                 ///< Timer for LED blinking
+    uint8_t blinkState;                ///< State of blink cadence
 };
 
 #endif /* OPMODE_M17_H */
