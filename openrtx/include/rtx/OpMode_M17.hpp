@@ -148,7 +148,6 @@ private:
     bool blinkOn;                      ///< Flag for LED blinking state
     bool   rfSqlOpen;   ///< Flag for RF squelch status (analog squelch).
     bool   samplingActive; ///< True when baseband sampling is active
-    
     /**
      * Time (ms) to keep squelch open after physical closure,
      * preventing dropouts during speech gaps.

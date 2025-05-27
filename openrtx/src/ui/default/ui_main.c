@@ -62,42 +62,19 @@ void _ui_drawMainTop(ui_state_t * ui_state)
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_RIGHT,
               color_white,"%.1fV", last_state.v_bat);
 #else
-<<<<<<< Updated upstream
-    switch(last_state.settings.display_battery) {
-        case 1:
-=======
     if(last_state.settings.display_battery) {
->>>>>>> Stashed changes
             // Otherwise print battery icon on top bar, use 4 px padding
             uint16_t bat_width = CONFIG_SCREEN_WIDTH / 9;
             uint16_t bat_height = layout.top_h - (layout.status_v_pad * 2);
             point_t bat_pos = {CONFIG_SCREEN_WIDTH - bat_width - layout.horizontal_pad,
                             layout.status_v_pad};
             gfx_drawBattery(bat_pos, bat_width, bat_height, last_state.charge);
-<<<<<<< Updated upstream
-            break;
-        case 2:
-            point_t charge_pos = {CONFIG_SCREEN_WIDTH - 24 - layout.horizontal_pad,
-                            layout.status_v_pad};
-            gfx_print(charge_pos , layout.line1_font, TEXT_ALIGN_LEFT,
-                  color_white,"%02d", last_state.charge);
-            break;
-=======
     } else {
             point_t bat_pos = {layout.top_pos.x, layout.top_pos.y - 2};
             gfx_print(bat_pos , FONT_SIZE_6PT, TEXT_ALIGN_RIGHT,
                   color_white,"%d%%", last_state.charge);
->>>>>>> Stashed changes
     }
 #endif
-
-    point_t list_pos = {layout.top_pos.x + 24, layout.top_pos.y};
-    if (last_state.settings.history_enabled)
-    {
-        gfx_print(list_pos , layout.line1_font, TEXT_ALIGN_LEFT,
-            is_new_history() ? yellow_fab413 : color_black, "H%d", history_size(history_list));
-        rtx_setHistory(is_new_history());
-    }
 
     if (ui_state->input_locked == true)
       gfx_drawSymbol(layout.top_pos, layout.top_symbol_size, TEXT_ALIGN_LEFT,
@@ -219,52 +196,6 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                     gfx_print(layout.line3_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                               color_white, "%s", rtxStatus.M17_refl);
                 }
-<<<<<<< Updated upstream
-                // if ( (strncmp(rtxStatus.M17_dst, "INFO",4)!=0) &&
-                //      (strncmp(rtxStatus.M17_dst, "ECHO",4)!=0) &&
-                //      (strncmp(rtxStatus.M17_src, last_state.settings.callsign, 8)!=0) )
-                //     history_add(history_list, rtxStatus.M17_src, rtxStatus.M17_refl, 
-                //              utcToLocalTime(last_state.time, last_state.settings.utc_timezone));
-
-                if (rtxStatus.M17_dst == NULL || rtxStatus.M17_src == NULL || rtxStatus.M17_refl == NULL) {
-                    printf("Error: Invalid M17 status fields\n");
-                    return;
-                }
-                
-                if (last_state.settings.callsign == NULL) {
-                    printf("Error: Invalid callsign in settings\n");
-                    return;
-                }
-                
-                if (history_list == NULL) {
-                    printf("Error: history_list is NULL\n");
-                    return;
-                }
-                
-                if (strnlen(rtxStatus.M17_dst, 4) < 4 || strnlen(rtxStatus.M17_src, 8) < 8) {
-                    printf("Error: M17_dst or M17_src string is too short\n");
-                    return;
-                }
-                
-                datetime_t local_time = utcToLocalTime(last_state.time, last_state.settings.utc_timezone);
-                if (local_time.hour < 0 || local_time.hour > 23 || 
-                    local_time.minute < 0 || local_time.minute > 59 || 
-                    local_time.second < 0 || local_time.second > 59) {
-                    printf("Error: Invalid local time\n");
-                    return;
-                }
-                
-                bool isInfo = (strncmp(rtxStatus.M17_dst, "INFO", 4) == 0);
-                bool isEcho = (strncmp(rtxStatus.M17_dst, "ECHO", 4) == 0);
-                bool isSelf = (strncmp(rtxStatus.M17_src, last_state.settings.callsign, 8) == 0);
-                
-                if (!isInfo && !isEcho && !isSelf) {
-                    if (!history_add(history_list, rtxStatus.M17_src, rtxStatus.M17_refl, local_time)) {
-                        printf("Error: Failed to add to history\n");
-                    }
-                }
-
-=======
   		
 	       // NEW VERSION	
                 if (    rtxStatus.M17_dst != NULL && 
@@ -283,7 +214,6 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
 	            }
                 }                  
     
->>>>>>> Stashed changes
             }
             else
             {

@@ -66,24 +66,15 @@ typedef struct
     char     M17_src[10];              /**  M17 LSF source             */
     char     M17_link[10];             /**  M17 LSF traffic originator */
     char     M17_refl[10];             /**  M17 LSF reflector module   */
-<<<<<<< Updated upstream
     char       logMessage[10];
     
-    // bool     historyEnabled;
-    bool     notificationsEnabled;
-    bool     pauseNotifications;
-    bool     menuActive;
-    bool     showSMeter;
-=======
-    char     logMessage[10];
     bool     historyEnabled;
     bool     notificationsEnabled;
-    bool     display_battery;
     bool     pauseNotifications;
     bool     menuActive;
     bool     showSMeter;
+    bool     display_battery;
     bool     nightMode;
->>>>>>> Stashed changes
 }
 rtxStatus_t;
 
@@ -114,12 +105,8 @@ enum opstatus
 {
     OFF = 0,        /**< OFF          */
     RX  = 1,        /**< Receiving    */
-<<<<<<< Updated upstream
     TX  = 2,         /**< Transmitting */
     LOG = 3       /**< Logging      */
-=======
-    TX  = 2        /**< Transmitting */
->>>>>>> Stashed changes
 };
 
 
@@ -173,11 +160,8 @@ void rtx_setHistory(bool);
 
 void rtx_setMenuActive(bool);
 
-<<<<<<< Updated upstream
-=======
 void rtx_setShowSMeter(bool);
 
->>>>>>> Stashed changes
 #ifdef __cplusplus
 }
 #endif
