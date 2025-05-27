@@ -286,18 +286,12 @@ int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
             sniprintf(buf, max_len, "%s",
                      display_timer_values[last_state.settings.display_timer]);
             return 0;
-<<<<<<< Updated upstream
-        case D_NOTIFICATIONS:
-=======
 	case D_NOTIFICATIONS:
->>>>>>> Stashed changes
             sniprintf(buf, max_len, "%s",
                      (last_state.settings.notifications_enabled) ?
                                                 currentLanguage->on :
                                                 currentLanguage->off);
             return 0;
-<<<<<<< Updated upstream
-=======
 	case D_BATTERY:
             sniprintf(buf, max_len, "%s",
                      (last_state.settings.display_battery) ?
@@ -310,7 +304,6 @@ int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
                                                 currentLanguage->on :
                                                 currentLanguage->off);
             return 0;
->>>>>>> Stashed changes
     }
     sniprintf(buf, max_len, "%d", value);
     return 0;
@@ -461,11 +454,7 @@ int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
                                                            currentLanguage->on :
                                                            currentLanguage->off);
             break;
-<<<<<<< Updated upstream
-        case M17_HISTORY_ENABLED:
-=======
 	case M17_HISTORY:
->>>>>>> Stashed changes
             sniprintf(buf, max_len, "%s", (last_state.settings.history_enabled) ?
                                                            currentLanguage->on :
                                                            currentLanguage->off);
@@ -681,11 +670,7 @@ void _ui_drawHistoryList(uint8_t selected, int (*getCurrentEntry)(char *buf, uin
     uint8_t entries_in_screen = (CONFIG_SCREEN_HEIGHT - 1 - pos.y) / layout.menu_h + 1;
     uint8_t scroll = 0;
     char entry_buf[MAX_ENTRY_LEN] = "";
-<<<<<<< Updated upstream
-    color_t text_color = color_white;
-=======
     color_t text_color = color_cyan;
->>>>>>> Stashed changes
     for(int item=0, result=0; (result == 0) && (pos.y < CONFIG_SCREEN_HEIGHT); item++)
     {
         // If selection is off the screen, scroll screen
@@ -716,16 +701,6 @@ void _ui_drawHistoryList(uint8_t selected, int (*getCurrentEntry)(char *buf, uin
                 // If no space is found, treat the entire entry as the left part
                 strncpy(left_part, entry_buf, sizeof(left_part) - 1);
                 left_part[sizeof(left_part) - 1] = '\0';
-<<<<<<< Updated upstream
-            } 
-            text_color = color_white;
-            if(item + scroll == selected)
-            {
-                text_color = color_black;
-                // Draw rectangle under selected item, compensating for text height
-                point_t rect_pos = {0, pos.y - layout.menu_h + 3};
-                gfx_drawRect(rect_pos, CONFIG_SCREEN_WIDTH, layout.menu_h, color_white, true);
-=======
             }
             text_color = color_cyan;
             if(item + scroll == selected)
@@ -734,16 +709,11 @@ void _ui_drawHistoryList(uint8_t selected, int (*getCurrentEntry)(char *buf, uin
                 // Draw rectangle under selected item, compensating for text height
                 point_t rect_pos = {0, pos.y - layout.menu_h + 3};
                 gfx_drawRect(rect_pos, CONFIG_SCREEN_WIDTH, layout.menu_h, color_cyan, true);
->>>>>>> Stashed changes
                 announceMenuItemIfNeeded(entry_buf, NULL, false);
             }
             pos.x = 0;
             gfx_print(pos, layout.menu_font, TEXT_ALIGN_LEFT, text_color, left_part);
-<<<<<<< Updated upstream
-            pos.x = CONFIG_SCREEN_WIDTH;
-=======
 //            pos.x = 64;
->>>>>>> Stashed changes
             gfx_print(pos, layout.menu_font, TEXT_ALIGN_RIGHT, text_color, right_part);
             pos.y += layout.menu_h;
         }
@@ -753,11 +723,7 @@ void _ui_drawHistoryList(uint8_t selected, int (*getCurrentEntry)(char *buf, uin
 void _ui_drawMenuHistory(ui_state_t* ui_state)
 {
     gfx_clearScreen();
-<<<<<<< Updated upstream
-    // Print "Contacts" on top bar
-=======
     // Print "History" on top bar
->>>>>>> Stashed changes
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->history);
     // Print contact entries
