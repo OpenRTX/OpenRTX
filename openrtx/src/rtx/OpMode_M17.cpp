@@ -41,7 +41,7 @@ using namespace M17;
 OpMode_M17::OpMode_M17() : startRx(false), startTx(false), locked(false),
                            dataValid(false), extendedCall(false),
                            invertTxPhase(false), invertRxPhase(false),
-                           rfSqlOpen(false), samplingActive(false), squelchHoldUntil(0)
+                           rfSqlOpen(false), samplingActive(false), squelchHoldUntil(0), nextRssiCheckTime(0), rfPowered(false), nextRssiCheckTime(0), rfPowered(false)
 {
 
 }
@@ -54,6 +54,8 @@ OpMode_M17::~OpMode_M17()
 void OpMode_M17::enable()
 {
     squelchHoldUntil = 0;
+    nextRssiCheckTime = getTick();
+    rfPowered = false;
     codec_init();
     modulator.init();
     demodulator.init();
@@ -221,43 +223,42 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
     }
 
     
-        // RF squelch mechanism with hold
+        // RF squelch duty-cycling and hold logic
         long long now = getTick();
-        // Convert SQ level to RSSI (-127dBm to -61dBm)
-        rssi_t squelch = -127 + (status->sqlLevel * 66) / 15;
-        rssi_t rssi = rtx_getRssi();
-        // Hysteresis with 1dB band
-        if(!rfSqlOpen && rssi > (squelch + 1)) rfSqlOpen = true;
-        if(rfSqlOpen && rssi < (squelch - 1)) rfSqlOpen = false;
-        // Extend squelch open if within hold period
-        if(rfSqlOpen) {
-            squelchHoldUntil = now + SQUELCH_HOLD_MS;
-        }
-        bool sqOpen = (rfSqlOpen || now < squelchHoldUntil);
-        // Manage baseband sampling based on effective squelch
-        if(sqOpen && !samplingActive) {
-            demodulator.startBasebandSampling();
-            samplingActive = true;
-        }
-        if(!sqOpen && samplingActive) {
-            demodulator.stopBasebandSampling();
-            samplingActive = false;
-            locked = false;
-            dataValid = false;
-            status->lsfOk = false;
-            extendedCall = false;
-            // stop & release audio path
-            codec_stop(rxAudioPath);
-            audioPath_release(rxAudioPath);
-        }
-        if(!sqOpen) {
-            // light sleep to yield CPU and drop current draw
-            sleepFor(0, 1);
+        // Convert SQL level to RSSI threshold (-127dBm to -61dBm)
+        rssi_t threshold = -127 + (status->sqlLevel * 66) / 15;
+
+        // Keep front-end powered if squelch physically open or in hold
+        if(rfSqlOpen || now < squelchHoldUntil) {
+            if(!rfPowered) {
+                radio_enableRx();
+                rfPowered = true;
+            }
+        } else {
+            // RF front-end off; perform periodic RSSI scans
+            if(now >= nextRssiCheckTime) {
+                // Power up RF and wait to settle
+                radio_enableRx();
+                rfPowered = true;
+                sleepFor(0, RADIO_SETTLE_MS);
+                // Measure RSSI
+                rssi_t rssi = rtx_getRssi();
+                // Apply hysteresis
+                if(!rfSqlOpen && rssi > (threshold + 1)) rfSqlOpen = true;
+                if(rfSqlOpen && rssi < (threshold - 1)) rfSqlOpen = false;
+                if(rfSqlOpen) squelchHoldUntil = now + SQUELCH_HOLD_MS;
+                // Power down
+                radio_disableRx();
+                rfPowered = false;
+                nextRssiCheckTime = now + RSSI_CHECK_INTERVAL_MS;
+            }
+            // Sleep deeply until next scan
+            sleepUntil(nextRssiCheckTime);
             return;
         }
-
-
-
+        // Determine effective squelch
+        bool sqOpen = (rfSqlOpen || now < squelchHoldUntil);
+        // Manage baseband sampling based on effective squelch
     bool newData = demodulator.update(invertRxPhase);
     bool lock    = demodulator.isLocked();
 

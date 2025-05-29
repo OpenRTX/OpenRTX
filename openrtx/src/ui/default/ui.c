@@ -2696,7 +2696,7 @@ bool ui_updateGUI()
         // Contacts menu screen
 =======
 >>>>>>> Stashed changes
-        case MENU_HISTORY:
+pul        case MENU_HISTORY:
             if(state.settings.history_enabled)
                 _ui_drawMenuHistory(&ui_state); // fixed
             break;
