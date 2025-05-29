@@ -133,7 +133,6 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
     #elif defined(PLATFORM_MOD17)
     //
     // Get phase inversion settings from calibration.
-    
     //
     invertTxPhase = (mod17CalData.bb_tx_invert == 1) ? true : false;
     invertRxPhase = (mod17CalData.bb_rx_invert == 1) ? true : false;
@@ -254,19 +253,6 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
             sleepUntil(nextRssiCheckTime);
             return;
         }
-    // Manage baseband sampling based on effective squelch
-    if(rfSqlOpen && !samplingActive)
-    {
-        demodulator.startBasebandSampling();
-        samplingActive = true;
-    }
-    else if(!rfSqlOpen && samplingActive)
-    {
-        demodulator.stopBasebandSampling();
-        samplingActive = false;
-        return;
-    }
-
         // Determine effective squelch
         // Manage baseband sampling based on effective squelch
     bool newData = demodulator.update(invertRxPhase);
@@ -384,11 +370,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         codec_stop(rxAudioPath);
         audioPath_release(rxAudioPath);
     }
-
-            
 }
-    
-
 
 void OpMode_M17::txLog(rtxStatus_t *const status)
 {
