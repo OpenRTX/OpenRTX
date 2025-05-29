@@ -29,19 +29,12 @@ history_list_t *history_list;
 void history_init()
 {
     history_list = (history_list_t *)malloc(sizeof(history_list_t));
-<<<<<<< Updated upstream
-    if(history_list==NULL) return NULL;
-=======
->>>>>>> Stashed changes
+    if(history_list==NULL) return;
     history_list->head = NULL;
     history_list->tail = NULL;
     history_list->length = 0;
     history_list->new_history = false;
-<<<<<<< Updated upstream
-    // return list;
-=======
     history_list->status = ' ';
->>>>>>> Stashed changes
 }
 
 int findCallsignLength(const char* callsign) {
@@ -53,27 +46,13 @@ int findCallsignLength(const char* callsign) {
 // history_t *history_find(history_list_t *list, const char* callsign)
 history_t *history_find(const char* callsign)
 {
-<<<<<<< Updated upstream
-=======
 	history_list->status='L';
->>>>>>> Stashed changes
         if(history_list == NULL) return NULL;
 
         history_t *current = history_list->head;
         while(current != NULL)
         {
             int i = findCallsignLength(callsign);
-<<<<<<< Updated upstream
-            if(strncmp(current->callsign, callsign, i) == 0)
-                return current;
-            current = current->next;
-        }
-        return NULL;
-}
-
-history_t *history_create(const char* callsign, const char* module, datetime_t state_time)
-{
-=======
             if(strncmp(current->callsign, callsign, i) == 0) {
 		history_list->status='F';
                 return current;
@@ -86,7 +65,6 @@ history_t *history_create(const char* callsign, const char* module, datetime_t s
 
 history_t *history_create(const char* callsign, datetime_t state_time)
 { 
->>>>>>> Stashed changes
     history_t *node = (history_t *) malloc(sizeof(history_t));
     if(node==NULL)
         return NULL;
@@ -117,17 +95,6 @@ void history_prune(history_t *this)
     free(current);
 }
 
-<<<<<<< Updated upstream
-// void history_push(history_list_t *list, const char* callsign, const char* module, datetime_t state_time)
-void history_push(const char* callsign, const char* module, datetime_t state_time)
-{
-    if(history_list->length > HISTORY_MAX)
-        history_prune(history_list->tail);
-    history_t *node = history_create(callsign, module, state_time);
-    if(node==NULL)
-        return;
-    node->next = history_list->head;
-=======
 void history_push(const char* callsign, datetime_t state_time)
 {
     if(history_list->length > HISTORY_MAX)
@@ -137,7 +104,6 @@ void history_push(const char* callsign, datetime_t state_time)
         return;
     if(history_list->head != NULL)
         node->next = history_list->head;
->>>>>>> Stashed changes
     if(node->next != NULL) {
         node->next->prev = node;
     }
@@ -149,18 +115,9 @@ void history_push(const char* callsign, datetime_t state_time)
     history_list->new_history = true;
 }
 
-<<<<<<< Updated upstream
-// void history_update(history_list_t *list, history_t* node, const char* module, datetime_t state_time)
-void history_update(history_t* node, const char* module, datetime_t state_time)
-{
-    if(node!=NULL) {
-        // if((module!=NULL) && (module[0]!='\0'))
-        //     strncpy(node->module, module, 9);
-=======
 void history_update(history_t* node, datetime_t state_time)
 {
     if(node!=NULL) {
->>>>>>> Stashed changes
         node->time = state_time;
 
         if (history_list->head == node) {
@@ -194,16 +151,6 @@ void history_test(history_list_t *list, const char* src, const char* dest, const
 }
 #endif
 
-<<<<<<< Updated upstream
-// void history_add(history_list_t *list, const char* callsign, const char* module, datetime_t state_time)
-void history_add(const char* callsign, const char* module, datetime_t state_time)
-{
-    history_t *node = history_find(callsign);
-    // if(node != NULL) 
-    //     history_update(node, module, state_time);
-    // else 
-        history_push(callsign, module, state_time); 
-=======
 void history_add(const char* callsign, datetime_t state_time)
 {
     if(callsign == NULL) return;
@@ -212,7 +159,6 @@ void history_add(const char* callsign, datetime_t state_time)
         history_update(node, state_time);
     else 
         history_push(callsign, state_time); 
->>>>>>> Stashed changes
 }
 
 // int read_history(history_list_t *list,  history_t *history, uint8_t pos)
@@ -230,11 +176,7 @@ int read_history(history_t *history, uint8_t pos)
         index++;
     }
     memcpy(history, current, sizeof(history_t));
-<<<<<<< Updated upstream
-    return index;
-=======
     return 0;
->>>>>>> Stashed changes
 }
 
 // uint8_t history_size(history_list_t *list)
@@ -243,15 +185,6 @@ uint8_t history_size()
     return history_list->length;
 }
 
-<<<<<<< Updated upstream
-void format_history_value(char *buf, int max_len, history_t history) {
-    int gap = max_len - 10;
-    gap -= strlen(history.callsign);
-    char spaces[gap + 1]; // Create a buffer for the spaces
-    memset(spaces, ' ', gap); // Fill the buffer with spaces
-    spaces[gap] = '\0'; // Null-terminate the string
-    sniprintf(buf, max_len, "%s%s%02d:%02d:%02d", history.callsign, spaces, history.time.hour, history.time.minute, history.time.second);
-=======
 char history_status()
 {
    return history_list->status;
@@ -265,7 +198,6 @@ void format_history_value(char *buf, int max_len, history_t history) {
 //    spaces[gap] = '\0'; // Null-terminate the string
 //    sniprintf(buf, max_len, "%s%s%02d:%02d:%02d", history.callsign, spaces, history.time.hour, history.time.minute, history.time.second);
     sniprintf(buf, max_len, "%s %02d:%02d:%02d", history.callsign, history.time.hour, history.time.minute, history.time.second);
->>>>>>> Stashed changes
 }
 
 bool is_new_history() {
@@ -275,7 +207,3 @@ bool is_new_history() {
 void reset_new_history() {
     history_list->new_history = false;
 }
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes

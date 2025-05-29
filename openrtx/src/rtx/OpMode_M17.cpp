@@ -85,11 +85,7 @@ void OpMode_M17::disable()
 
 void OpMode_M17::blinkLed(rtxStatus_t *const status)
 {
-<<<<<<< Updated upstream
-   if (status->pauseNotifications) || !status->historyEnabled || !status->notificationsEnabled || status->menuActive)
-=======
    if (status->pauseNotifications || !status->historyEnabled || !status->notificationsEnabled || status->menuActive)
->>>>>>> Stashed changes
    {
       platform_ledOff(GREEN);
       platform_ledOff(RED);
@@ -113,7 +109,6 @@ void OpMode_M17::blinkLed(rtxStatus_t *const status)
 
 void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
 {
-    #define PLATFORM_MDUV3x0
     (void) newCfg;
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
     //
@@ -149,15 +144,9 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
             txState(status);
             break;
 
-<<<<<<< Updated upstream
         case LOG:
             txLog(status);
             break;
-=======
-//        case LOG:
-//            txLog(status);
-//            break;
->>>>>>> Stashed changes
 
         default:
             break;
