@@ -38,19 +38,10 @@ extern mod17Calib_t mod17CalData;
 using namespace std;
 using namespace M17;
 
-OpMode_M17::OpMode_M17() : startRx(false),
-                           startTx(false),
-                           locked(false),
-                           dataValid(false),
-                           extendedCall(false),
-                           invertTxPhase(false),
-                           invertRxPhase(false),
-                           blinkOn(false),
-                           rfSqlOpen(false),
-                           samplingActive(false),
-                           squelchHoldUntil(0),
-                           nextRssiCheckTime(0),
-                           rfPowered(false)
+OpMode_M17::OpMode_M17() : startRx(false), startTx(false), locked(false),
+                           dataValid(false), extendedCall(false),
+                           invertTxPhase(false), invertRxPhase(false),
+                           rfSqlOpen(false), samplingActive(false), squelchHoldUntil(0), nextRssiCheckTime(0), rfPowered(false), nextRssiCheckTime(0), rfPowered(false)
 {
 
 }
@@ -156,6 +147,7 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
         case LOG:
             txLog(status);
             break;
+
         default:
             break;
     }
@@ -245,7 +237,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                 if(rfSqlOpen && rssi < (threshold - 1)) rfSqlOpen = false;
                 if(rfSqlOpen) squelchHoldUntil = now + SQUELCH_HOLD_MS;
                 // Power down
-                radio_disableRtx();
+                radio_disableRx();
                 rfPowered = false;
                 nextRssiCheckTime = now + RSSI_CHECK_INTERVAL_MS;
             }
@@ -254,6 +246,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
             return;
         }
         // Determine effective squelch
+        bool sqOpen = (rfSqlOpen || now < squelchHoldUntil);
         // Manage baseband sampling based on effective squelch
     bool newData = demodulator.update(invertRxPhase);
     bool lock    = demodulator.isLocked();
