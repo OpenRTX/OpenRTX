@@ -248,6 +248,21 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         // Determine effective squelch
         bool sqOpen = (rfSqlOpen || now < squelchHoldUntil);
         // Manage baseband sampling based on effective squelch
+    // Manage baseband sampling based on effective squelch
+    if(rfSqlOpen) {
+        if(!samplingActive) {
+            demodulator.startBasebandSampling();
+            samplingActive = true;
+        }
+    } else {
+        if(samplingActive) {
+            demodulator.stopBasebandSampling();
+            samplingActive = false;
+        }
+        // No sampling -> skip DSP processing
+        return;
+    }
+
     bool newData = demodulator.update(invertRxPhase);
     bool lock    = demodulator.isLocked();
 
