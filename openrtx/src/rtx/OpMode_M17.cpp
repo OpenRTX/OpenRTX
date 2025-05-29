@@ -207,6 +207,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
     {
         // Ensure radio is enabled, sampling will start on squelch open
         radio_enableRx();
+        rfPowered = true;
         startRx = false;
         samplingActive = false;
     }
@@ -249,7 +250,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         bool sqOpen = (rfSqlOpen || now < squelchHoldUntil);
         // Manage baseband sampling based on effective squelch
     // Manage baseband sampling based on effective squelch
-    if(rfSqlOpen) {
+    if (sqOpen) {
         if(!samplingActive) {
             demodulator.startBasebandSampling();
             samplingActive = true;
