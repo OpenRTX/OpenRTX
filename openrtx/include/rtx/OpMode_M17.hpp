@@ -158,6 +158,12 @@ private:
      * Timestamp (in ticks) until which we treat squelch as open.
      */
     long long squelchHoldUntil;
+    // RF–power–gate / RSSI polling constants and state
+    static constexpr unsigned RSSI_CHECK_INTERVAL_MS = 100;  ///< ms between RSSI scans when squelch closed
+    static constexpr unsigned RADIO_SETTLE_MS         =   5;   ///< ms to wait after radio_enableRx()
+    long long              nextRssiCheckTime;             ///< tick when we’ll re-enable & poll RSSI
+    bool                   rfPowered;                     ///< true if RX front-end is currently powered
+
     pathId rxAudioPath;                ///< Audio path ID for RX
     pathId txAudioPath;                ///< Audio path ID for TX
     M17::M17Modulator    modulator;    ///< M17 modulator.

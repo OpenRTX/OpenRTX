@@ -2625,6 +2625,7 @@ bool ui_updateGUI()
         case MENU_CONTACTS:
             _ui_drawMenuContacts(&ui_state);
             break;
+        // Contacts menu screen
         case MENU_HISTORY:
             if(state.settings.history_enabled)
                 _ui_drawMenuHistory(&ui_state); // fixed

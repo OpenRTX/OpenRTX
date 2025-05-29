@@ -55,6 +55,7 @@ void *ui_threadFunc(void *arg)
 
     kbd_msg_t   kbd_msg;
     rtxStatus_t rtx_cfg = { 0 };
+    long long uiFastUntil = 0;
     bool        sync_rtx = true;
     long long   time     = 0;
 
@@ -70,7 +71,12 @@ void *ui_threadFunc(void *arg)
     {
         time = getTick();
 
+        bool keyEvent = false;
         if(input_scanKeyboard(&kbd_msg))
+        {
+            ui_pushEvent(EVENT_KBD, kbd_msg.value);
+            keyEvent = true;
+        }
         {
             ui_pushEvent(EVENT_KBD, kbd_msg.value);
         }
