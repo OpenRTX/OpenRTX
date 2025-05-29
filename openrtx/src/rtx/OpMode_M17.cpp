@@ -41,7 +41,7 @@ using namespace M17;
 OpMode_M17::OpMode_M17() : startRx(false), startTx(false), locked(false),
                            dataValid(false), extendedCall(false),
                            invertTxPhase(false), invertRxPhase(false),
-                           rfSqlOpen(false), samplingActive(false), squelchHoldUntil(0), nextRssiCheckTime(0), rfPowered(false), nextRssiCheckTime(0), rfPowered(false)
+                           rfSqlOpen(false), samplingActive(false), squelchHoldUntil(0), nextRssiCheckTime(0), rfPowered(false)
 {
 
 }
@@ -237,7 +237,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                 if(rfSqlOpen && rssi < (threshold - 1)) rfSqlOpen = false;
                 if(rfSqlOpen) squelchHoldUntil = now + SQUELCH_HOLD_MS;
                 // Power down
-                radio_disableRx();
+                radio_disableRtx();
                 rfPowered = false;
                 nextRssiCheckTime = now + RSSI_CHECK_INTERVAL_MS;
             }
@@ -249,7 +249,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         bool sqOpen = (rfSqlOpen || now < squelchHoldUntil);
         // Manage baseband sampling based on effective squelch
     // Manage baseband sampling based on effective squelch
-    if(rfSqlOpen) {
+    if(sqOpen) {
         if(!samplingActive) {
             demodulator.startBasebandSampling();
             samplingActive = true;
