@@ -94,7 +94,6 @@ void OpMode_M17::disable()
 
 void OpMode_M17::blinkLed(rtxStatus_t *const status)
 {
-
    if (status->pauseNotifications || !status->historyEnabled || !status->notificationsEnabled || status->menuActive)
    {
       platform_ledOff(GREEN);
@@ -119,7 +118,6 @@ void OpMode_M17::blinkLed(rtxStatus_t *const status)
 
 void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
 {
-    #define PLATFORM_MDUV3x0
     (void) newCfg;
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
     //
@@ -158,8 +156,6 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
         case LOG:
             txLog(status);
             break;
-
-
         default:
             break;
     }

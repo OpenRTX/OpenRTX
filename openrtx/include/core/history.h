@@ -32,10 +32,6 @@
 typedef struct history 
 {
     char callsign[10];
-<<<<<<< Updated upstream
-    char module[10];
-=======
->>>>>>> Stashed changes
     datetime_t time;
     struct history * next;
     struct history * prev;
@@ -53,26 +49,12 @@ typedef struct history_list
 history_list_t;
 
 // extern pthread_mutex_t history_mutex;
-<<<<<<< Updated upstream
-// extern history_list_t *history_list;
-=======
 extern history_list_t *history_list;
->>>>>>> Stashed changes
 
 /**
  * Initialise radio state mutex and radio state variable, reading the
  * informations from device drivers.
  */
-<<<<<<< Updated upstream
-// history_list_t *history_init();
-void history_init();
-// void history_add(history_list_t *list, const char* callsign, const char* module, datetime_t state_time);
-// void history_test(history_list_t *list, const char* src, const char* dest, const char* refl, const char *link , datetime_t state_time);
-// int read_history(history_list_t *list, history_t *history, uint8_t pos);
-// history_t* find_callsign(history_list_t *list, const char* callsign);
-// uint8_t history_size(history_list_t *list);
-void history_add(const char* callsign, const char* module, datetime_t state_time);
-=======
 //history_list_t *history_init();
 //void history_add(history_list_t *list, const char* callsign, const char* module, datetime_t state_time);
 //void history_test(history_list_t *list, const char* src, const char* dest, const char* refl, const char *link , datetime_t state_time);
@@ -80,15 +62,11 @@ void history_add(const char* callsign, const char* module, datetime_t state_time
 //history_t* find_callsign(history_list_t *list, const char* callsign);
 void history_init();
 void history_add(const char* callsign, datetime_t state_time);
->>>>>>> Stashed changes
 void history_test(const char* src, const char* dest, const char* refl, const char *link , datetime_t state_time);
 int read_history(history_t *history, uint8_t pos);
 history_t* find_callsign(const char* callsign);
 uint8_t history_size();
-<<<<<<< Updated upstream
-=======
 char history_status();
->>>>>>> Stashed changes
 void format_history_value(char *buf, int max_len, history_t history);
 bool is_new_history();
 void reset_new_history();

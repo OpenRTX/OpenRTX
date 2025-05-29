@@ -68,10 +68,7 @@ void rtx_init(pthread_mutex_t *m)
     rtxStatus.M17_refl[0]   = '\0';
     rtxStatus.historyEnabled = false;
     rtxStatus.notificationsEnabled = true;
-<<<<<<< Updated upstream
-=======
     rtxStatus.nightMode = true;
->>>>>>> Stashed changes
     currMode = &noMode;
 
     /*
@@ -211,13 +208,10 @@ void rtx_task()
             }
         }
 
-<<<<<<< Updated upstream
-        if(rtxStatus.logMessage != '\0')
-        {
-            rtxStatus.opMode = OPMODE_LOG;
-        }
-=======
->>>>>>> Stashed changes
+//        if(rtxStatus.logMessage != '\0')
+//        {
+//            rtxStatus.opMode = OPMODE_LOG;
+//        }
     }
     else
     {
@@ -243,21 +237,11 @@ bool rtx_rxSquelchOpen()
     return currMode->rxSquelchOpen();
 }
 
-<<<<<<< Updated upstream
 void    rtx_setHistory(bool value)
-=======
-void rtx_setHistory(bool value)
->>>>>>> Stashed changes
 {
     rtxStatus.historyEnabled = value;
 }
 
-<<<<<<< Updated upstream
-void rtx_setMenuActive(bool value)
-{
-    rtxStatus.menuActive = value;
-}
-=======
 void rtx_setNightMode(bool value)
 {
     rtxStatus.nightMode = value;
@@ -272,4 +256,3 @@ void rtx_setMenuActive(bool value)
 {
     rtxStatus.menuActive = value;
 }
->>>>>>> Stashed changes

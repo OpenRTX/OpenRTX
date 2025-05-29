@@ -55,13 +55,9 @@ typedef struct
     bool    gps_enabled;          // GPS active
     bool    history_enabled;
     bool    notifications_enabled;
-<<<<<<< Updated upstream
-    bool    showSMeter;
-=======
     bool    display_battery;      // true:icon, false: percent
     bool    showSMeter;
     bool    night_mode;
->>>>>>> Stashed changes
     char    callsign[10];         // Plaintext callsign
     uint8_t display_timer   : 4,  // Standby timer
             m17_can         : 4;  // M17 CAN
@@ -88,17 +84,12 @@ static const settings_t default_settings =
     0,                            // UTC Timezone
     false,                        // GPS enabled
     true,                         // History enabled
-<<<<<<< Updated upstream
-    true,                         // Notifications indicator enabled
-    true,
-=======
     true,                         // Notifications enabled
     false,                        // Display battery icon
     true,			  // ShowSMeter enabled
     true,			  // Night mode enabled
->>>>>>> Stashed changes
     "",                           // Empty callsign
-    TIMER_30S,                    // 30 seconds
+TIMER_30S,                    // 30 seconds
     0,                            // M17 CAN
     0,                            // Voice prompts off
     0,                            // Phonetic spell off
