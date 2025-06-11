@@ -1031,13 +1031,16 @@ void _ui_drawSMSMenu(ui_state_t* ui_state)
                       layout.horizontal_pad, layout.message_font,
                       TEXT_ALIGN_CENTER, color_white, text);
 
+        gfx_drawRect(bot_rect_pos, CONFIG_SCREEN_WIDTH, layout.menu_h, color_white, true);
+
+#ifdef CONFIG_T9
         if(ui_state->useT9)
             sprintf(title, "#: T9");
         else
             sprintf(title, "#: abc");
 
-        gfx_drawRect(bot_rect_pos, CONFIG_SCREEN_WIDTH, layout.menu_h, color_white, true);
         gfx_print(bot_pos, layout.top_font, TEXT_ALIGN_CENTER, color_black, title);
+#endif
         gfx_print(bot_pos, layout.top_font, TEXT_ALIGN_RIGHT, color_black, "Back");
         gfx_print(bot_pos, layout.top_font, TEXT_ALIGN_LEFT, color_black, "Send");
     }

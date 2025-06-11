@@ -67,6 +67,9 @@ extern const struct sky73210 pll;
 /* Device supports M17 mode */
 #define CONFIG_M17
 
+/* Enable T9 functions for SMS */
+#define CONFIG_T9
+
 /* Device has a GPS chip */
 // #define CONFIG_GPS
 
