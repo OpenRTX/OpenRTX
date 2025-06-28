@@ -90,7 +90,7 @@ static void *audio_thread(void *arg)
         if(state.volume != oldVolume)
         {
             // Apply new volume level, map 0 - 255 range into -31 to 31
-            int8_t gain = ((int8_t) (state.volume / 4)) - 31;
+            int8_t gain = ((int8_t) (state.volume / 4)) - 32;
             C6000.setDacGain(gain);
 
             oldVolume = state.volume;
