@@ -101,6 +101,10 @@ endif
 openrtx_src += ['lib/minmea/minmea.c']
 openrtx_inc += ['lib/minmea/include']
 
+# QRCode, QR Code generation library
+openrtx_src += ['lib/QRCode/qrcode.c']
+openrtx_inc += ['lib/QRCode/include']
+
 # QDEC, a very simple, header only, quadrature decoding library
 openrtx_inc += ['lib/qdec/include']
 

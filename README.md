@@ -78,6 +78,8 @@ This software is released under the GNU GPL v3.
 
 minmea is released under the DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE v2.
 
+[QRCode](https://github.com/ricmoo/QRCode) is released under the MIT License.
+
 Code for STM32F405 USB driver is released under the MCD-ST Liberty SW License Agreement V2.
 
 uf2conf.py and related files are released by Microsoft Corporation under MIT license.
