@@ -61,7 +61,8 @@ extern const struct Adc adc1;
 #define CONFIG_SCREEN_BRIGHTNESS
 
 /* Battery type */
-#define CONFIG_BAT_LIPO_2S
+#define CONFIG_BAT_LIPO
+#define CONFIG_BAT_NCELLS 2
 
 /* Device supports M17 mode */
 #define CONFIG_M17

@@ -51,7 +51,8 @@ extern const struct spiDevice c6000_spi;
 #define CONFIG_SCREEN_BRIGHTNESS
 
 /* Battery type */
-#define CONFIG_BAT_LIPO_2S
+#define CONFIG_BAT_LIPO
+#define CONFIG_BAT_NCELLS 2
 
 #ifdef __cplusplus
 }
