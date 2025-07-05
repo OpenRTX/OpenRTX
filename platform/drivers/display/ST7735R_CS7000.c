@@ -73,7 +73,14 @@ static inline void sendCmd(uint8_t cmd)
                  "           itt   ne         \n"
                  "           subne r1, r1, #1 \n"
                  "           bne   ___loop_d  \n":::"r1");
-    GPIOD->BSRR = cmd | (1 << 13);
+    GPIOD->BSRR = cmd;
+
+    asm volatile("            mov   r1, #5     \n"
+                 "___loop_1:  cmp   r1, #0     \n"
+                 "            itt   ne         \n"
+                 "            subne r1, r1, #1 \n"
+                 "            bne   ___loop_1  \n":::"r1");
+    GPIOD->BSRR = (1 << 13);
 }
 
 static inline void sendData(uint8_t val)
@@ -89,7 +96,14 @@ static inline void sendData(uint8_t val)
                  "           itt   ne         \n"
                  "           subne r1, r1, #1 \n"
                  "           bne   ___loop_e  \n":::"r1");
-    GPIOD->BSRR = val | (1 << 13);
+    GPIOD->BSRR = val;
+
+    asm volatile("            mov   r1, #5     \n"
+                 "___loop_2:  cmp   r1, #0     \n"
+                 "            itt   ne         \n"
+                 "            subne r1, r1, #1 \n"
+                 "            bne   ___loop_2  \n":::"r1");
+    GPIOD->BSRR = (1 << 13);
 }
 
 void display_init()
