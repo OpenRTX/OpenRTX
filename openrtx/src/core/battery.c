@@ -29,6 +29,9 @@
 #if defined(CONFIG_BAT_LIPO)
 static const uint16_t vcell_max = 0x0414;   // 4.08V
 static const uint16_t vcell_min = 0x039C;   // 3.61V
+#elif defined (CONFIG_BAT_LIION)
+static const uint16_t vcell_max = 0x0433;   // 4.15V
+static const uint16_t vcell_min = 0x0333;   // 3.2V
 #elif defined(CONFIG_BAT_NONE)
 #else
 #error Please define a battery type into platform/targets/.../hwconfig.h

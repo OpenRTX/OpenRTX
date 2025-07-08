@@ -62,7 +62,7 @@ extern const struct sky73210 pll;
 #define CONFIG_SCREEN_BRIGHTNESS
 
 /* Battery type */
-#define CONFIG_BAT_LIPO
+#define CONFIG_BAT_LIION
 #define CONFIG_BAT_NCELLS 2
 
 /* Device supports M17 mode */

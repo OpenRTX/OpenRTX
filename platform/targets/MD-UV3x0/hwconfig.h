@@ -58,7 +58,7 @@ extern const struct Adc adc1;
 #define CONFIG_PIX_FMT_RGB565
 
 /* Battery type */
-#define CONFIG_BAT_LIPO
+#define CONFIG_BAT_LIION
 #define CONFIG_BAT_NCELLS 2
 
 /* Device supports M17 mode */
