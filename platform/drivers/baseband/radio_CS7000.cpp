@@ -341,7 +341,7 @@ void radio_enableTx()
             if(config->txToneEn)
                 C6000.setTxCtcss(config->txTone, 0x20);
             else
-                C6000.disableCtcss();
+                C6000.disableTones();
 
             FmConfig cfg = (config->bandwidth == BW_12_5) ? FmConfig::BW_12p5kHz
                                                           : FmConfig::BW_25kHz;
@@ -350,7 +350,7 @@ void radio_enableTx()
             break;
 
         case OPMODE_M17:
-            C6000.disableCtcss();
+            C6000.disableTones();
             C6000.startAnalogTx(TxAudioSource::LINE_IN, FmConfig::BW_25kHz);
             break;
 
