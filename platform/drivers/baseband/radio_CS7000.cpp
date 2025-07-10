@@ -340,6 +340,8 @@ void radio_enableTx()
             // a new transmission.
             if(config->txToneEn)
                 C6000.setTxCtcss(config->txTone, 0x20);
+            else if(config->toneEn)
+                C6000.sendTone(1750, 0x1E);
             else
                 C6000.disableTones();
 
