@@ -39,6 +39,8 @@ const uint32_t freq_steps[] = { 1000, 5000, 6250, 10000, 12500, 15000,
                                 20000, 25000, 50000, 100000 };
 const size_t n_freq_steps   = sizeof(freq_steps) / sizeof(freq_steps[0]);
 
+static bool volume_changed;
+static uint8_t prev_volume;
 
 void state_init()
 {
@@ -73,13 +75,16 @@ void state_init()
     state.charge = battery_getCharge(state.v_bat);
     state.rssi   = -127.0f;
     state.volume = platform_getVolumeLevel();
-
+    state.volume_changed = false;
     state.channel_index = 0;    // Set default channel index (it is 0-based)
     state.bank_enabled  = false;
     state.rtxStatus     = RTX_OFF;
     state.emergency     = false;
     state.txDisable     = false;
+    state.pauseNotifications = false;
     state.step_index    = 4; // Default frequency step 12.5kHz
+
+    prev_volume = state.volume;
 
     // Force brightness field to be in range 0 - 100
     if(state.settings.brightness > 100)
@@ -135,6 +140,11 @@ void state_task()
     uint16_t vol = platform_getVolumeLevel() + state.volume;
     state.volume = vol / 2;
 
+    if(state.volume != prev_volume) {
+        prev_volume = state.volume;
+        state.volume_changed = true;
+    } 
+    
     state.charge = battery_getCharge(state.v_bat);
     state.rssi = rtx_getRssi();
 

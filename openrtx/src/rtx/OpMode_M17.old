@@ -33,15 +33,19 @@
 #include <interfaces/platform.h>
 
 extern mod17Calib_t mod17CalData;
+
 #endif
+
+#define BLINK_TICK 50
+#define BLINK_OFF_TICK 2000
+#define BLINK_ON_TICK 200
 
 using namespace std;
 using namespace M17;
 
 OpMode_M17::OpMode_M17() : startRx(false), startTx(false), locked(false),
                            dataValid(false), extendedCall(false),
-                           invertTxPhase(false), invertRxPhase(false),
-                           rfSqlOpen(false), samplingActive(false), squelchHoldUntil(0), nextRssiCheckTime(0), rfPowered(false)
+                           invertTxPhase(false), invertRxPhase(false)
 {
 
 }
@@ -53,9 +57,6 @@ OpMode_M17::~OpMode_M17()
 
 void OpMode_M17::enable()
 {
-    squelchHoldUntil = 0;
-    nextRssiCheckTime = getTick();
-    rfPowered = false;
     codec_init();
     modulator.init();
     demodulator.init();
@@ -73,6 +74,8 @@ void OpMode_M17::disable()
 {
     startRx = false;
     startTx = false;
+    blinkOn = false;
+    blinkState = 0;
     platform_ledOff(GREEN);
     platform_ledOff(RED);
     audioPath_release(rxAudioPath);
@@ -95,12 +98,13 @@ void OpMode_M17::blinkLed(rtxStatus_t *const status)
    if( blinkTimer > getTick() )
       return;
 
+   platform_ledOff(GREEN);
    if(blinkOn) {
             platform_ledOn(RED);
-            blinkTimer = getTick() + 50;
+            blinkTimer = getTick() + BLINK_TICK;
    } else {
             platform_ledOff(RED);
-            blinkTimer = getTick() + (blinkState < 1 ? 200 : 2000);
+            blinkTimer = getTick() + (blinkState < 1 ? BLINK_ON_TICK : BLINK_OFF_TICK);
             blinkState++;
             if(blinkState>1) blinkState=0;
    }
@@ -149,10 +153,6 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
             txState(status);
             break;
 
-        case LOG:
-            txLog(status);
-            break;
-
         default:
             break;
     }
@@ -161,11 +161,12 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
     switch(status->opStatus)
     {
         case RX:
+
             if(dataValid)
                 platform_ledOn(GREEN);
             else
-               // platform_ledOff(GREEN);
-                blinkLed(status);
+            //    platform_ledOff(GREEN);
+	        blinkLed(status);
             break;
 
         case TX:
@@ -207,69 +208,32 @@ void OpMode_M17::offState(rtxStatus_t *const status)
 
 void OpMode_M17::rxState(rtxStatus_t *const status)
 {
-
     if(startRx)
     {
-        // Ensure radio is enabled, sampling will start on squelch open
+        demodulator.startBasebandSampling();
+
         radio_enableRx();
+
         startRx = false;
-        samplingActive = false;
-    }
-
-    
-        // RF squelch duty-cycling and hold logic
-        long long now = getTick();
-        // Convert SQL level to RSSI threshold (-127dBm to -61dBm)
-        rssi_t threshold = -127 + (status->sqlLevel * 66) / 15;
-
-        // Keep front-end powered if squelch physically open or in hold
-        if(rfSqlOpen || now < squelchHoldUntil) {
-            if(!rfPowered) {
-                radio_enableRx();
-                rfPowered = true;
-            }
-        } else {
-            // RF front-end off; perform periodic RSSI scans
-            if(now >= nextRssiCheckTime) {
-                // Power up RF and wait to settle
-                radio_enableRx();
-                rfPowered = true;
-                sleepFor(0, RADIO_SETTLE_MS);
-                // Measure RSSI
-                rssi_t rssi = rtx_getRssi();
-                // Apply hysteresis
-                if(!rfSqlOpen && rssi > (threshold + 1)) rfSqlOpen = true;
-                if(rfSqlOpen && rssi < (threshold - 1)) rfSqlOpen = false;
-                if(rfSqlOpen) squelchHoldUntil = now + SQUELCH_HOLD_MS;
-                // Power down
-                radio_disableRtx();
-                rfPowered = false;
-                nextRssiCheckTime = now + RSSI_CHECK_INTERVAL_MS;
-            }
-            // Sleep deeply until next scan
-            sleepUntil(nextRssiCheckTime);
-            return;
-        }
-        // Determine effective squelch
-        bool sqOpen = (rfSqlOpen || now < squelchHoldUntil);
-        // Manage baseband sampling based on effective squelch
-    // Manage baseband sampling based on effective squelch
-    if(sqOpen) {
-        if(!samplingActive) {
-            demodulator.startBasebandSampling();
-            samplingActive = true;
-        }
-    } else {
-        if(samplingActive) {
-            demodulator.stopBasebandSampling();
-            samplingActive = false;
-        }
-        // No sampling -> skip DSP processing
-        return;
     }
 
     bool newData = demodulator.update(invertRxPhase);
     bool lock    = demodulator.isLocked();
+
+    // M0VVA NEW
+
+        // RF squelch mechanism
+        // This turns squelch (0 to 15) into RSSI (-127.0dbm to -61dbm)
+        rssi_t squelch = -127 + (status->sqlLevel * 66) / 15;
+        rssi_t rssi    = rtx_getRssi();
+
+        // Provide a bit of hysteresis, only change state if the RSSI has
+        // moved more than 1dBm on either side of the current squelch setting.
+        if((rfSqlOpen == false) && (rssi > (squelch + 1))) rfSqlOpen = true;
+        if((rfSqlOpen == true)  && (rssi < (squelch - 1))) rfSqlOpen = false;
+
+    // M0VVA NEW
+
 
     // Reset frame decoder when transitioning from unlocked to locked state.
     if((lock == true) && (locked == false))
@@ -385,6 +349,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
     }
 }
 
+
 void OpMode_M17::txLog(rtxStatus_t *const status)
 {
     frame_t m17Frame;
@@ -419,6 +384,7 @@ void OpMode_M17::txLog(rtxStatus_t *const status)
 
     status->logMessage[0] = '\0';
     status->opStatus = RX;
+
 }
 
 void OpMode_M17::txState(rtxStatus_t *const status)
@@ -505,4 +471,3 @@ bool OpMode_M17::compareCallsigns(const std::string& localCs,
 
     return false;
 }
-

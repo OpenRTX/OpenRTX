@@ -37,29 +37,57 @@ void _ui_drawMainBackground()
 
 void _ui_drawMainTop(ui_state_t * ui_state)
 {
+
 #ifdef CONFIG_RTC
     // Print clock on top bar
     datetime_t local_time = utcToLocalTime(last_state.time,
                                            last_state.settings.utc_timezone);
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, "%02d:%02d:%02d", local_time.hour,
+              color_darkRed, "%02d:%02d:%02d", local_time.hour,
               local_time.minute, local_time.second);
+
+    // if(history_size(history_list)==0) {
+    //     history_add(history_list, "M0VVA", "NONE", local_time);
+    //     history_add(history_list, "G4XIX", "NONE", local_time);
+    //     history_add(history_list, "M7TFT", "NONE", local_time);
+    //     history_add(history_list, "G0WCZ", "NONE", local_time);
+    //     history_add(history_list, "2E0MXA", "NONE", local_time);
+    //     history_add(history_list, "MM7RBK", "NONE", local_time);
+    // }
+
 #endif
+
     // If the radio has no built-in battery, print input voltage
 #ifdef CONFIG_BAT_NONE
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_RIGHT,
               color_white,"%.1fV", last_state.v_bat);
 #else
-    // Otherwise print battery icon on top bar, use 4 px padding
-    uint16_t bat_width = CONFIG_SCREEN_WIDTH / 9;
-    uint16_t bat_height = layout.top_h - (layout.status_v_pad * 2);
-    point_t bat_pos = {CONFIG_SCREEN_WIDTH - bat_width - layout.horizontal_pad,
-                       layout.status_v_pad};
-    gfx_drawBattery(bat_pos, bat_width, bat_height, last_state.charge);
+    if(last_state.settings.display_battery) {
+            // Otherwise print battery icon on top bar, use 4 px padding
+            uint16_t bat_width = CONFIG_SCREEN_WIDTH / 9;
+            uint16_t bat_height = layout.top_h - (layout.status_v_pad * 2);
+            point_t bat_pos = {CONFIG_SCREEN_WIDTH - bat_width - layout.horizontal_pad,
+                            layout.status_v_pad};
+            gfx_drawBattery(bat_pos, bat_width, bat_height, last_state.charge);
+    } else {
+            point_t bat_pos = {layout.top_pos.x, layout.top_pos.y - 2};
+            gfx_print(bat_pos , FONT_SIZE_6PT, TEXT_ALIGN_RIGHT,
+                  color_white,"%d%%", last_state.charge);
+    }
 #endif
+
     if (ui_state->input_locked == true)
       gfx_drawSymbol(layout.top_pos, layout.top_symbol_size, TEXT_ALIGN_LEFT,
                      color_white, SYMBOL_LOCK);
+
+    point_t list_pos = {layout.top_pos.x + 24, layout.top_pos.y};
+    if (last_state.settings.history_enabled)
+    {
+        gfx_print(list_pos , layout.line1_font, TEXT_ALIGN_LEFT,
+            is_new_history() ? yellow_fab413 : color_black, "H");
+//            yellow_fab413, "H%d", history_size(history_list));
+        rtx_setHistory(is_new_history());
+    }
 }
 
 void _ui_drawBankChannel()
@@ -123,6 +151,13 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
         #ifdef CONFIG_M17
         case OPMODE_M17:
         {
+            // if(history_size(history_list) == 0) {
+            //     // Add some sample data
+                // history_add(history_list, "M0VVA", "MOD_A", utcToLocalTime(last_state.time, last_state.settings.utc_timezone));
+            //     history_add(history_list, "G4XIX", "MOD_B", utcToLocalTime(last_state.time, last_state.settings.utc_timezone));
+            //     // Cleanup above
+            // }
+
             // Print M17 Destination ID on line 3 of 3
             rtxStatus_t rtxStatus = rtx_getCurrentStatus();
 
@@ -133,7 +168,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                                color_white, SYMBOL_CALL_RECEIVED);
 
                 gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                          color_white, "%s", rtxStatus.M17_dst);
+                          yellow_fab413, "%s", rtxStatus.M17_dst);
 
                 // Source address
                 gfx_drawSymbol(layout.line1_pos, layout.line1_symbol_size, TEXT_ALIGN_LEFT,
@@ -149,7 +184,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                                    color_white, SYMBOL_ACCESS_POINT);
 
                     gfx_print(layout.line4_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                              color_white, "%s", rtxStatus.M17_link);
+                              color_blue, "%s", rtxStatus.M17_link);
                 }
 
                 // Reflector (if present)
@@ -161,6 +196,24 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                     gfx_print(layout.line3_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                               color_white, "%s", rtxStatus.M17_refl);
                 }
+  		
+	       // NEW VERSION	
+                if (    rtxStatus.M17_dst != NULL && 
+			rtxStatus.M17_src != NULL && 
+			rtxStatus.M17_refl != NULL &&
+                	last_state.settings.callsign != NULL ) {
+                
+                    datetime_t local_time = utcToLocalTime(last_state.time, last_state.settings.utc_timezone);
+                
+                    bool isInfo = (strncmp(rtxStatus.M17_dst, "INFO", 4) == 0);
+                    bool isEcho = (strncmp(rtxStatus.M17_dst, "ECHO", 4) == 0);
+                    bool isSelf = (strncmp(rtxStatus.M17_src, last_state.settings.callsign, 8) == 0);
+                
+                    if (!isInfo && !isEcho && !isSelf) {
+                        history_add(rtxStatus.M17_src, local_time);
+	            }
+                }                  
+    
             }
             else
             {
@@ -288,7 +341,8 @@ void _ui_drawMainBottom()
                                 true);
             break;
         #ifdef CONFIG_M17
-        case OPMODE_M17:
+	    case OPMODE_M17:
+            if (last_state.rtxStatus==RTX_TX) {
             gfx_drawSmeterLevel(meter_pos,
                                 meter_width,
                                 meter_height,
@@ -296,6 +350,18 @@ void _ui_drawMainBottom()
                                 mic_level,
                                 volume,
                                 true);
+            } else if (last_state.settings.showSMeter) {
+            gfx_drawSmeter(meter_pos,
+                           meter_width,
+                           meter_height,
+                           rssi,
+                           squelch,
+                           volume,
+                           true,
+                           yellow_fab413);
+            } else {
+	    gfx_drawVolume(meter_pos, meter_width, meter_height, volume);
+	    }
             break;
         #endif
     }

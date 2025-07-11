@@ -72,3 +72,6 @@ scripts/get_demod_log
 
 # OpenRTX Codeplugs
 *.rtxc
+.vscode/settings.json
+openrtx/foo
+openrtx.tgz

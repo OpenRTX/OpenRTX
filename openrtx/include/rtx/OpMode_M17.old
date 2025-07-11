@@ -145,34 +145,16 @@ private:
     bool extendedCall;                 ///< Extended callsign data received
     bool invertTxPhase;                ///< TX signal phase inversion setting.
     bool invertRxPhase;                ///< RX signal phase inversion setting.
-    bool blinkOn;                      ///< Flag for LED blinking state
-    bool   rfSqlOpen;   ///< Flag for RF squelch status (analog squelch).
-    bool   samplingActive; ///< True when baseband sampling is active
-    /**
-     * Time (ms) to keep squelch open after physical closure,
-     * preventing dropouts during speech gaps.
-     */
-    static constexpr unsigned SQUELCH_HOLD_MS = 500;
-    
-    /**
-     * Timestamp (in ticks) until which we treat squelch as open.
-     */
-    long long squelchHoldUntil;
-    // RF–power–gate / RSSI polling constants and state
-    static constexpr unsigned RSSI_CHECK_INTERVAL_MS = 100;  ///< ms between RSSI scans when squelch closed
-    static constexpr unsigned RADIO_SETTLE_MS         =   5;   ///< ms to wait after radio_enableRx()
-    long long              nextRssiCheckTime;             ///< tick when we’ll re-enable & poll RSSI
-    bool                   rfPowered;                     ///< true if RX front-end is currently powered
-
+    bool blinkOn;
+    bool rfSqlOpen;
     pathId rxAudioPath;                ///< Audio path ID for RX
     pathId txAudioPath;                ///< Audio path ID for TX
     M17::M17Modulator    modulator;    ///< M17 modulator.
     M17::M17Demodulator  demodulator;  ///< M17 demodulator.
     M17::M17FrameDecoder decoder;      ///< M17 frame decoder
     M17::M17FrameEncoder encoder;      ///< M17 frame encoder
-    time_t blinkTimer;                 ///< Timer for LED blinking
-    uint8_t blinkState;                ///< State of blink cadence
+    time_t blinkTimer;
+    uint8_t blinkState;    
 };
 
 #endif /* OPMODE_M17_H */
-

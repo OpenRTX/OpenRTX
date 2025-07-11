@@ -118,6 +118,7 @@ static bool ScreenContainsReadOnlyEntries(int menuScreen)
     {
     case MENU_CHANNEL:
     case MENU_CONTACTS:
+    case MENU_HISTORY:
     case MENU_INFO:
         return true;
     }
@@ -162,7 +163,7 @@ void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_
     uint8_t entries_in_screen = (CONFIG_SCREEN_HEIGHT - 1 - pos.y) / layout.menu_h + 1;
     uint8_t scroll = 0;
     char entry_buf[MAX_ENTRY_LEN] = "";
-    color_t text_color = color_white;
+    color_t text_color = color_cyan;
     for(int item=0, result=0; (result == 0) && (pos.y < CONFIG_SCREEN_HEIGHT); item++)
     {
         // If selection is off the screen, scroll screen
@@ -172,16 +173,17 @@ void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_
         result = (*getCurrentEntry)(entry_buf, sizeof(entry_buf), item+scroll);
         if(result != -1)
         {
-            text_color = color_white;
+            text_color = color_cyan;
             if(item + scroll == selected)
             {
-                text_color = color_black;
+                text_color = color_listSelected;
                 // Draw rectangle under selected item, compensating for text height
                 point_t rect_pos = {0, pos.y - layout.menu_h + 3};
-                gfx_drawRect(rect_pos, CONFIG_SCREEN_WIDTH, layout.menu_h, color_white, true);
+                gfx_drawRect(rect_pos, CONFIG_SCREEN_WIDTH, layout.menu_h, color_cyan, true);
                 announceMenuItemIfNeeded(entry_buf, NULL, false);
             }
             gfx_print(pos, layout.menu_font, TEXT_ALIGN_LEFT, text_color, entry_buf);
+	    text_color = color_cyan;
             pos.y += layout.menu_h;
         }
     }
@@ -197,7 +199,7 @@ void _ui_drawMenuListValue(ui_state_t* ui_state, uint8_t selected,
     uint8_t scroll = 0;
     char entry_buf[MAX_ENTRY_LEN] = "";
     char value_buf[MAX_ENTRY_LEN] = "";
-    color_t text_color = color_white;
+    color_t text_color = color_list;
     for(int item=0, result=0; (result == 0) && (pos.y < CONFIG_SCREEN_HEIGHT); item++)
     {
         // If selection is off the screen, scroll screen
@@ -209,20 +211,20 @@ void _ui_drawMenuListValue(ui_state_t* ui_state, uint8_t selected,
         result = (*getCurrentValue)(value_buf, sizeof(value_buf), item+scroll);
         if(result != -1)
         {
-            text_color = color_white;
+            text_color = color_list;
             if(item + scroll == selected)
             {
                 // Draw rectangle under selected item, compensating for text height
                 // If we are in edit mode, draw a hollow rectangle
-                text_color = color_black;
+                text_color = color_listSelected;
                 bool full_rect = true;
                 if(ui_state->edit_mode)
                 {
-                    text_color = color_white;
+                    text_color = color_list;
                     full_rect = false;
                 }
                 point_t rect_pos = {0, pos.y - layout.menu_h + 3};
-                gfx_drawRect(rect_pos, CONFIG_SCREEN_WIDTH, layout.menu_h, color_white, full_rect);
+                gfx_drawRect(rect_pos, CONFIG_SCREEN_WIDTH, layout.menu_h, color_list, full_rect);
                 bool editModeChanged = priorEditMode != ui_state->edit_mode;
                 priorEditMode = ui_state->edit_mode;
                 // force the menu item to be spoken  when the edit mode changes.
@@ -283,6 +285,24 @@ int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
         case D_TIMER:
             sniprintf(buf, max_len, "%s",
                      display_timer_values[last_state.settings.display_timer]);
+            return 0;
+	case D_NOTIFICATIONS:
+            sniprintf(buf, max_len, "%s",
+                     (last_state.settings.notifications_enabled) ?
+                                                currentLanguage->on :
+                                                currentLanguage->off);
+            return 0;
+	case D_BATTERY:
+            sniprintf(buf, max_len, "%s",
+                     (last_state.settings.display_battery) ?
+                                                currentLanguage->on :
+                                                currentLanguage->off);
+	    return 0;
+	case D_SMETER:
+            sniprintf(buf, max_len, "%s",
+                     (last_state.settings.showSMeter) ?
+                                                currentLanguage->on :
+                                                currentLanguage->off);
             return 0;
     }
     sniprintf(buf, max_len, "%d", value);
@@ -431,6 +451,11 @@ int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
             break;
         case M17_CAN_RX:
             sniprintf(buf, max_len, "%s", (last_state.settings.m17_can_rx) ?
+                                                           currentLanguage->on :
+                                                           currentLanguage->off);
+            break;
+	case M17_HISTORY:
+            sniprintf(buf, max_len, "%s", (last_state.settings.history_enabled) ?
                                                            currentLanguage->on :
                                                            currentLanguage->off);
             break;
@@ -588,6 +613,16 @@ int _ui_getContactName(char *buf, uint8_t max_len, uint8_t index)
     return result;
 }
 
+int _ui_getHistoryItem(char *buf, uint8_t max_len, uint8_t index)
+{
+    history_t history;
+    int result = read_history(&history, index);
+    if(result != -1) {
+        format_history_value(buf, max_len, history);
+    }
+    return result;
+}
+
 void _ui_drawMenuTop(ui_state_t* ui_state)
 {
     gfx_clearScreen();
@@ -626,6 +661,74 @@ void _ui_drawMenuContacts(ui_state_t* ui_state)
               color_white, currentLanguage->contacts);
     // Print contact entries
     _ui_drawMenuList(ui_state->menu_selected, _ui_getContactName);
+}
+
+void _ui_drawHistoryList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_t max_len, uint8_t index))
+{
+    point_t pos = layout.line1_pos;
+    // Number of menu entries that fit in the screen height
+    uint8_t entries_in_screen = (CONFIG_SCREEN_HEIGHT - 1 - pos.y) / layout.menu_h + 1;
+    uint8_t scroll = 0;
+    char entry_buf[MAX_ENTRY_LEN] = "";
+    color_t text_color = color_cyan;
+    for(int item=0, result=0; (result == 0) && (pos.y < CONFIG_SCREEN_HEIGHT); item++)
+    {
+        // If selection is off the screen, scroll screen
+        if(selected >= entries_in_screen)
+            scroll = selected - entries_in_screen + 1;
+        // Call function pointer to get current menu entry string
+        result = (*getCurrentEntry)(entry_buf, sizeof(entry_buf), item+scroll);
+        if(result != -1)
+        {
+            // Split the entry into two parts: left of the first space and right of the first space
+            char *space_pos = strchr(entry_buf, ' ');
+            char left_part[MAX_ENTRY_LEN] = "";
+            char right_part[MAX_ENTRY_LEN] = "";
+
+            if (space_pos != NULL)
+            {
+                // Copy everything to the left of the space
+                size_t left_len = space_pos - entry_buf;
+                strncpy(left_part, entry_buf, left_len);
+                left_part[left_len] = '\0'; // Null-terminate the string
+
+                // Copy everything to the right of the space
+                strncpy(right_part, space_pos + 1, sizeof(right_part) - 1);
+                right_part[sizeof(right_part) - 1] = '\0'; // Null-terminate the string
+            }
+            else
+            {
+                // If no space is found, treat the entire entry as the left part
+                strncpy(left_part, entry_buf, sizeof(left_part) - 1);
+                left_part[sizeof(left_part) - 1] = '\0';
+            }
+            text_color = color_cyan;
+            if(item + scroll == selected)
+            {
+                text_color = color_listSelected;
+                // Draw rectangle under selected item, compensating for text height
+                point_t rect_pos = {0, pos.y - layout.menu_h + 3};
+                gfx_drawRect(rect_pos, CONFIG_SCREEN_WIDTH, layout.menu_h, color_cyan, true);
+                announceMenuItemIfNeeded(entry_buf, NULL, false);
+            }
+            pos.x = 0;
+            gfx_print(pos, layout.menu_font, TEXT_ALIGN_LEFT, text_color, left_part);
+//            pos.x = 64;
+            gfx_print(pos, layout.menu_font, TEXT_ALIGN_RIGHT, text_color, right_part);
+            pos.y += layout.menu_h;
+        }
+    }
+}
+
+void _ui_drawMenuHistory(ui_state_t* ui_state)
+{
+    gfx_clearScreen();
+    // Print "History" on top bar
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
+              color_white, currentLanguage->history);
+    // Print contact entries
+    _ui_drawHistoryList(ui_state->menu_selected, _ui_getHistoryItem);
+    if(is_new_history()) reset_new_history();
 }
 
 #ifdef CONFIG_GPS
