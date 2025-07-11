@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 - 2024 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2021 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -62,7 +62,8 @@ public:
     /**
      * Constructor.
      *
-     * @param dev: pointer to chip's hardware interface descriptor.
+     * @param uSpi: pointer to SPI device for "user" SPI interface.
+     * @param uCs: gpioPin object for "user" SPI chip select.
      */
     HR_Cx000(const struct spiDevice *uSpi, const struct gpioPin uCs) : uSpi(uSpi), uCs(uCs)
     {
@@ -261,6 +262,8 @@ private:
         ScopedChipSelect cs(uSpi, uCs);
         spi_send(uSpi, seq, len);
     }
+
+protected:
 
     const struct spiDevice *uSpi;
     const struct gpioPin uCs;

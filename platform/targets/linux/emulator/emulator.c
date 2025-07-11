@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -477,8 +477,10 @@ static int process_line(char *line)
     }
 }
 
-void *startCLIMenu()
+void *startCLIMenu(void *arg)
 {
+    (void) arg;
+
     printf("\n\n");
     char *histfile = ".emulatorsh_history";
     shell_help(NULL, 0, NULL);

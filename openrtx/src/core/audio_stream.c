@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2023 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Frederik Saraci IU2NRO                          *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2023 - 2025 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -61,6 +61,27 @@ static bool validateStream(const streamId id)
     return true;
 }
 
+/**
+ * \internal
+ * Start an audio stream. In case of failure, the stream is freed.
+ *
+ * @param id: stream ID.
+ * @return zero if the stream started, a negative error code otherwise.
+ */
+static int startStream(const streamId id)
+{
+    const struct audioDevice *dev = streams[id].dev;
+
+    int ret = dev->driver->start(dev->instance, dev->config, &streams[id].ctx);
+    if(ret < 0)
+    {
+        streams[id].ctx.running = 0;
+        streams[id].path = 0;
+    }
+
+    return ret;
+}
+
 streamId audioStream_start(const pathId path, stream_sample_t * const buf,
                            const size_t length, const uint32_t sampleRate,
                            const uint8_t mode)
@@ -76,9 +97,11 @@ streamId audioStream_start(const pathId path, stream_sample_t * const buf,
     // Search for an audio device serving the correct output endpoint.
     const struct audioDevice *dev  = NULL;
     const struct audioDevice *devs = inputDevices;
+    const uint8_t streamMode = (mode & 0xF0);
+    const uint8_t bufMode = (mode & 0x0F);
     uint8_t endpoint = pathInfo.source;
 
-    if((mode & 0xF0) == STREAM_OUTPUT)
+    if(streamMode == STREAM_OUTPUT)
     {
         devs = outputDevices;
         endpoint = pathInfo.sink;
@@ -121,16 +144,16 @@ streamId audioStream_start(const pathId path, stream_sample_t * const buf,
     streams[id].path           = path;
     streams[id].dev            = dev;
     streams[id].ctx.buffer     = buf;
-    streams[id].ctx.bufMode    = (mode & 0x0F);
+    streams[id].ctx.bufMode    = bufMode;
     streams[id].ctx.bufSize    = length;
     streams[id].ctx.sampleRate = sampleRate;
 
-    int ret = dev->driver->start(dev->instance, dev->config, &streams[id].ctx);
-    if(ret < 0)
+    // In circular mode, start immediately
+    if(bufMode == BUF_CIRC_DOUBLE)
     {
-        streams[id].ctx.running = 0;
-        streams[id].path = 0;
-        return ret;
+        int ret = startStream(id);
+        if(ret < 0)
+            return ret;
     }
 
     return id;
@@ -163,18 +186,29 @@ void audioStream_terminate(const streamId id)
 
 dataBlock_t inputStream_getData(streamId id)
 {
-    dataBlock_t block;
-    block.data = NULL;
-    block.len  = 0;
+    const struct audioDevice *dev = streams[id].dev;
+    dataBlock_t block = {NULL, 0};
+    int ret;
 
     if(validateStream(id) == false)
         return block;
 
-    int ret = streams[id].dev->driver->sync(&(streams[id].ctx), false);
+    if(streams[id].ctx.bufMode == BUF_LINEAR)
+    {
+        ret = startStream(id);
+        if(ret < 0)
+        {
+            streams[id].ctx.running = 0;
+            streams[id].path = 0;
+            return block;
+        }
+    }
+
+    ret = dev->driver->sync(&(streams[id].ctx), false);
     if(ret < 0)
         return block;
 
-    ret = streams[id].dev->driver->data(&(streams[id].ctx), &block.data);
+    ret = dev->driver->data(&(streams[id].ctx), &block.data);
     if(ret < 0)
     {
         block.data = NULL;

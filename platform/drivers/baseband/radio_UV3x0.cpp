@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2021 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -56,19 +56,21 @@ void radio_init(const rtxStatus_t *rtxState)
      */
     gpio_setMode(VHF_LNA_EN,   OUTPUT);
     gpio_setMode(UHF_LNA_EN,   OUTPUT);
-    gpio_setMode(PA_EN_1,      OUTPUT);
-    gpio_setMode(PA_EN_2,      OUTPUT);
+    gpio_setMode(TX_PA_EN,     OUTPUT);
+    gpio_setMode(RF_APC_SW,    OUTPUT);
     gpio_setMode(PA_SEL_SW,    OUTPUT);
 
     gpio_clearPin(VHF_LNA_EN);
     gpio_clearPin(UHF_LNA_EN);
-    gpio_clearPin(PA_EN_1);
-    gpio_clearPin(PA_EN_2);
+    gpio_clearPin(TX_PA_EN);
+    gpio_clearPin(RF_APC_SW);
     gpio_clearPin(PA_SEL_SW);
 
     // TODO: keep audio connected to HR_C6000, for volume control
+#ifndef PLATFORM_DM1701
     gpio_setMode(RX_AUDIO_MUX, OUTPUT);
     gpio_setPin(RX_AUDIO_MUX);
+#endif
 
     /*
      * Configure and enable DAC
@@ -122,7 +124,12 @@ void radio_setOpmode(const enum opmode mode)
             at1846s.setOpMode(AT1846S_OpMode::DMR); // AT1846S in DMR mode, disables RX filter
             at1846s.setBandwidth(AT1846S_BW::_25);  // Set bandwidth to 25kHz for proper deviation
             C6000.fmMode();                         // HR_C6000 in FM mode
+            #if defined(PLATFORM_DM1701)
+            C6000.setInputGain(-6);                 // Input gain in dB, found experimentally
+            C6000.writeCfgRegister(0x35, 0x12);     // FM deviation coefficient
+            #else
             C6000.setInputGain(+6);                 // Input gain in dB, found experimentally
+            #endif
             break;
 
         default:
@@ -151,8 +158,8 @@ void radio_disableAfOutput()
 
 void radio_enableRx()
 {
-    gpio_clearPin(PA_EN_1);
-    gpio_clearPin(PA_EN_2);
+    gpio_clearPin(TX_PA_EN);
+    gpio_clearPin(RF_APC_SW);
     gpio_clearPin(VHF_LNA_EN);
     gpio_clearPin(UHF_LNA_EN);
     DAC->DHR12R1 = 0;
@@ -186,8 +193,8 @@ void radio_enableTx()
 
     gpio_clearPin(VHF_LNA_EN);
     gpio_clearPin(UHF_LNA_EN);
-    gpio_clearPin(PA_EN_1);
-    gpio_clearPin(PA_EN_2);
+    gpio_clearPin(TX_PA_EN);
+    gpio_clearPin(RF_APC_SW);
 
     C6000.setModOffset(txModBias);
     at1846s.setFrequency(config->txFrequency);
@@ -237,8 +244,8 @@ void radio_enableTx()
         gpio_setPin(PA_SEL_SW);
     }
 
-    gpio_setPin(PA_EN_1);
-    gpio_setPin(PA_EN_2);
+    gpio_setPin(TX_PA_EN);
+    gpio_setPin(RF_APC_SW);
 
     if(config->txToneEn)
     {
@@ -257,8 +264,8 @@ void radio_disableRtx()
 {
     gpio_clearPin(VHF_LNA_EN);
     gpio_clearPin(UHF_LNA_EN);
-    gpio_clearPin(PA_EN_1);
-    gpio_clearPin(PA_EN_2);
+    gpio_clearPin(TX_PA_EN);
+    gpio_clearPin(RF_APC_SW);
     DAC->DHR12L1 = 0;
 
     // If we are currently transmitting, stop tone and C6000 TX

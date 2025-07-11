@@ -1,23 +1,14 @@
 /*
- * C++ enabled linker script for stm32 (1M FLASH, 192K RAM)
+ * C++ enabled linker script for stm32 (2M FLASH, 512K RAM)
  * Developed by TFT: Terraneo Federico Technologies
  * Optimized for use with the Miosix kernel
  */
 
 /*
- * This chip has an unusual quirk that the RAM is divided in two block mapped
- * at two non contiguous memory addresses. I don't know why they've done that,
- * probably doing the obvious thing would have made writing code too easy...
- * Anyway, since hardware can't be changed, we've got to live with that and
- * try to make use of both RAMs.
- *
- * Given the constraints above, this linker script puts:
- * - read only data and code (.text, .rodata, .eh_*) in FLASH
- * - the 512Byte main (IRQ) stack, .data and .bss in the "small" 64KB RAM
- * - stacks and heap in the "large" 128KB RAM.
- *
- * Unfortunately thread stacks can't be put in the small RAM as Miosix
- * allocates them inside the heap.
+ * This linker script puts:
+ * - read only data and code (.text, .rodata, .eh_*) in flash
+ * - stacks, heap and sections .data and .bss in the internal ram
+ * - the external ram (if available) is not used.
  */
 
 /*
@@ -46,11 +37,11 @@
  * the MEMORY definitions below accordingly.
  */
 _main_stack_size = 0x00000200;                     /* main stack = 512Bytes */
-_main_stack_top  = 0x10000000 + _main_stack_size;
+_main_stack_top  = 0x24000000 + _main_stack_size;
 ASSERT(_main_stack_size   % 8 == 0, "MAIN stack size error");
 
-/* Mapping the heap into the large 128KB RAM */
-_heap_end = 0x20020000;                            /* end of available ram  */
+/* end of the heap */
+_heap_end = 0x24080000;                            /* end of available ram  */
 
 /* identify the Entry Point  */
 ENTRY(_Z13Reset_Handlerv)
@@ -58,26 +49,23 @@ ENTRY(_Z13Reset_Handlerv)
 /* specify the memory areas  */
 MEMORY
 {
-    flash(rx)    : ORIGIN = 0x08000000, LENGTH =   1M - 128K
-    /*
-     * Note, the small ram starts at 0x10000000 but it is necessary to add the
-     * size of the main stack, so it is 0x10000200.
-     */
-    smallram(wx) : ORIGIN = 0x10000200, LENGTH = 64K-0x200
-    largeram(wx) : ORIGIN = 0x20000000, LENGTH = 128K
+    flash(rx)   : ORIGIN = 0x08000000, LENGTH = 2M
+
+    /* NOTE: for now wer support only the AXI SRAM */
+    ram(wx)     : ORIGIN = 0x24000200, LENGTH =  512K-0x200
 }
 
 /* now define the output sections  */
 SECTIONS
 {
     . = 0;
-
+    
     /* .text section: code goes to flash */
     .text :
     {
         /* Startup code must go at address 0 */
         KEEP(*(.isr_vector))
-
+        
         *(.text)
         *(.text.*)
         *(.gnu.linkonce.t.*)
@@ -99,7 +87,7 @@ SECTIONS
         /* C++ Static constructors/destructors (eabi) */
         . = ALIGN(4);
         KEEP(*(.init))
-
+        
         . = ALIGN(4);
         __miosix_init_array_start = .;
         KEEP (*(SORT(.miosix_init_array.*)))
@@ -160,27 +148,20 @@ SECTIONS
         *(.gnu.linkonce.d.*)
         . = ALIGN(8);
         _edata = .;
-    } > smallram AT > flash
+    } > ram AT > flash
     _etext = LOADADDR(.data);
 
-    /* Secondary bss section, placed in the 128kB RAM and not initialized: here
-       go the display framebuffer and, immediately after it, the heap area. */
-    .bss2 (NOLOAD) :
-    {
-        *(.bss.fb)
-        . = ALIGN(8);
-        _end = .;
-        PROVIDE(end = .);
-    } > largeram
-
-    /* Primary bss section, placed in the 64kB CCM RAM: uninitialized global variables */
+    /* .bss section: uninitialized global variables go to ram */
+    _bss_start = .;
     .bss :
     {
-        _bss_start = .;
         *(.bss)
         *(.bss.*)
         *(.gnu.linkonce.b.*)
         . = ALIGN(8);
-    } > smallram
+    } > ram
     _bss_end = .;
+
+    _end = .;
+    PROVIDE(end = .);
 }

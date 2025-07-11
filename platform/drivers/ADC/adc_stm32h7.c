@@ -1,6 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Silvano Seva IU2KWO                      *
- *                            and Niccolò Izzo IU2KIN                      *
+ *   Copyright (C) 2024 - 2025 by Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,28 +15,35 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stm32f4xx.h>
+#include <stm32h7xx.h>
 #include <pthread.h>
 #include <errno.h>
 #include "adc_stm32.h"
 
 int adcStm32_init(const struct Adc *adc)
 {
+    /*
+     * Configure ADC for synchronous clock mode (clocked by AHB clock), divided
+     * by 4. This gives an ADC clock of 50MHz  when AHB clock is 200MHz.
+     *
+     * NOTE: ADC1 and ADC2 share the same clock tree!
+     */
+
     switch((uint32_t) adc->priv)
     {
         case ADC1_BASE:
-            RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
-            __DSB();
-            break;
-
         case ADC2_BASE:
-            RCC->APB2ENR |= RCC_APB2ENR_ADC2EN;
+            RCC->AHB1ENR |= RCC_AHB1ENR_ADC12EN;
             __DSB();
+            ADC12_COMMON->CCR = ADC_CCR_CKMODE_1
+                              | ADC_CCR_CKMODE_0;
             break;
 
         case ADC3_BASE:
-            RCC->APB2ENR |= RCC_APB2ENR_ADC3EN;
+            RCC->AHB4ENR |= RCC_AHB4ENR_ADC3EN;
             __DSB();
+            ADC3_COMMON->CCR = ADC_CCR_CKMODE_1
+                             | ADC_CCR_CKMODE_0;
             break;
 
         default:
@@ -47,22 +53,30 @@ int adcStm32_init(const struct Adc *adc)
 
     ADC_TypeDef *pAdc = ((ADC_TypeDef *) adc->priv);
 
-    /*
-     * ADC clock is APB2 frequency divided by 8, giving 10.5MHz.
-     * We set the sample time of each channel to 84 ADC cycles and we have that
-     * a conversion takes 12 cycles: total conversion time is then of ~9us.
-     */
-    ADC->CCR   |= ADC_CCR_ADCPRE;
-    pAdc->SMPR2 = 0x4924924;
-    pAdc->SMPR1 = 0x24924924;
+    // Enable ADC voltage regulator, enable boost mode. Wait until LDO regulator
+    // is ready.
+    pAdc->CR = ADC_CR_ADVREGEN
+             | ADC_CR_BOOST_1
+             | ADC_CR_BOOST_0;
+
+    while((pAdc->ISR & ADC_ISR_LDORDY) == 0) ;
+
+    // Start calibration, both offset and linearity.
+    pAdc->CR |= ADC_CR_ADCAL
+             |  ADC_CR_ADCALLIN;
+
+    while((pAdc->CR & ADC_CR_ADCAL) != 0) ;
 
     /*
-     * Convert one channel, no overrun interrupt, 12-bit resolution,
-     * no analog watchdog, discontinuous mode, no end of conversion interrupts,
-     * turn on ADC.
+     * ADC clock is 50MHz. We set the sample time of each channel to 387.5 ADC
+     * cycles, giving a total conversion time of ~7us.
      */
-    pAdc->SQR1 = 0;
-    pAdc->CR2  = ADC_CR2_ADON;
+    pAdc->SMPR2 = 0x36DB6DB6;
+    pAdc->SMPR1 = 0x36DB6DB6;
+
+    // Finally,turn on the ADC
+    pAdc->CR   |= ADC_CR_ADEN;
+    while((pAdc->ISR & ADC_ISR_ADRDY) != 0) ;
 
     if(adc->mutex != NULL)
         pthread_mutex_init((pthread_mutex_t *) adc->mutex, NULL);
@@ -72,27 +86,27 @@ int adcStm32_init(const struct Adc *adc)
 
 void adcStm32_terminate(const struct Adc *adc)
 {
-    /* A conversion may be in progress, wait until it finishes */
+    // A conversion may be in progress, wait until it finishes
     if(adc->mutex != NULL)
         pthread_mutex_lock((pthread_mutex_t *) adc->mutex);
 
-    ((ADC_TypeDef *) adc->priv)->CR2 = 0;
+    ((ADC_TypeDef *) adc->priv)->CR = 0;
 
     switch((uint32_t) adc->priv)
     {
         case ADC1_BASE:
-            RCC->APB2ENR &= ~RCC_APB2ENR_ADC1EN;
-            __DSB();
-            break;
-
         case ADC2_BASE:
-            RCC->APB2ENR &= ~RCC_APB2ENR_ADC2EN;
+            if((ADC1->CR == 0) && (ADC2->CR == 0))
+                RCC->AHB1ENR &= ~RCC_AHB1ENR_ADC12EN;
             __DSB();
             break;
 
         case ADC3_BASE:
-            RCC->APB2ENR &= ~RCC_APB2ENR_ADC3EN;
+            RCC->AHB4ENR &= ~RCC_AHB4ENR_ADC3EN;
             __DSB();
+            break;
+
+        default:
             break;
     }
 
@@ -102,28 +116,16 @@ void adcStm32_terminate(const struct Adc *adc)
 
 uint16_t adcStm32_sample(const struct Adc *adc, const uint32_t channel)
 {
-    if(channel > 19)
+    if(channel > 16)
         return 0;
 
     ADC_TypeDef *pAdc = ((ADC_TypeDef *) adc->priv);
 
-    /* Channel 18 is Vbat, enable it if requested */
-    if(channel == 18)
-        ADC123_COMMON->CCR |= ADC_CCR_VBATE;
+    pAdc->SQR1 = channel << ADC_SQR1_SQ1_Pos;
+    pAdc->PCSEL = 1 << channel;
+    pAdc->CR |= ADC_CR_ADSTART;
 
-    pAdc->SQR3 = channel;
-    pAdc->CR2 |= ADC_CR2_SWSTART;
+    while((pAdc->ISR & ADC_ISR_EOC) == 0) ;
 
-    while((pAdc->SR & ADC_SR_EOC) == 0) ;
-
-    uint16_t value = pAdc->DR;
-
-    /* Disconnect Vbat channel. Vbat has an internal x2 voltage divider */
-    if(channel == 18)
-    {
-        value *= 2;
-        ADC123_COMMON->CCR &= ~ADC_CCR_VBATE;
-    }
-
-    return value;
+    return pAdc->DR;
 }

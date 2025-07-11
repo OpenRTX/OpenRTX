@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN,                     *
  *                                Silvano Seva IU2KWO                      *
  *                                                                         *
@@ -26,17 +26,13 @@
  * Obtained by multiplying the values in volt by 256.
  */
 
-#if defined CONFIG_BAT_LIPO_1S
-static const uint16_t bat_v_min = 0x039C;   // 3.61V
-static const uint16_t bat_v_max = 0x0426;   // 4.15V
-#elif defined CONFIG_BAT_LIPO_2S
-static const uint16_t bat_v_min = 0x071A;   // 7.10V
-static const uint16_t bat_v_max = 0x0819;   // 8.10V
-#elif defined CONFIG_BAT_LIPO_3S
-static const uint16_t bat_v_min = 0x0AD4;   // 10.83V
-static const uint16_t bat_v_max = 0x0C73;   // 12.45V
-#elif defined CONFIG_BAT_NONE
-// Nothing to do, just avoid arising the compiler error
+#if defined(CONFIG_BAT_LIPO)
+static const uint16_t vcell_max = 0x0414;   // 4.08V
+static const uint16_t vcell_min = 0x039C;   // 3.61V
+#elif defined (CONFIG_BAT_LIION)
+static const uint16_t vcell_max = 0x0433;   // 4.15V
+static const uint16_t vcell_min = 0x0333;   // 3.2V
+#elif defined(CONFIG_BAT_NONE)
 #else
 #error Please define a battery type into platform/targets/.../hwconfig.h
 #endif
@@ -64,6 +60,9 @@ uint8_t battery_getCharge(uint16_t vbat)
      * of 0.79% and minimum error of -0.78%
      */
 
+    const uint32_t vbat_max = vcell_max * CONFIG_BAT_NCELLS;
+    const uint32_t vbat_min = vcell_min * CONFIG_BAT_NCELLS;
+
     uint32_t vb = vbat << 16;
     vb          = vb / 1000;
     vb          = (vb + 256) >> 8;
@@ -72,10 +71,10 @@ uint8_t battery_getCharge(uint16_t vbat)
      * If the voltage is below minimum we return 0 to prevent an underflow in
      * the following calculation
      */
-    if (vb < bat_v_min) return 0;
+    if (vb < vbat_min) return 0;
 
-    uint32_t diff   = vb - bat_v_min;
-    uint32_t range  = bat_v_max - bat_v_min;
+    uint32_t diff   = vb - vbat_min;
+    uint32_t range  = vbat_max - vbat_min;
     uint32_t result = ((diff << 8) / range) * 100;
     result         += 128;
     result         >>= 8;

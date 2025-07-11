@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2024 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -51,7 +51,8 @@ extern const struct spiDevice c6000_spi;
 #define CONFIG_SCREEN_BRIGHTNESS
 
 /* Battery type */
-#define CONFIG_BAT_LIPO_2S
+#define CONFIG_BAT_LIION
+#define CONFIG_BAT_NCELLS 2
 
 #ifdef __cplusplus
 }

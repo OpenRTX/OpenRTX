@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2023 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN,                            *
- *                         Frederik Saraci IU2NRO,                         *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2023 - 2025 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -97,8 +97,8 @@
 /* RTX stage control */
 #define VHF_LNA_EN GPIOA,5
 #define UHF_LNA_EN GPIOA,2
-#define PA_EN_1    GPIOC,5
-#define PA_EN_2    GPIOC,4
+#define TX_PA_EN   GPIOC,5
+#define RF_APC_SW  GPIOC,4
 #define PA_SEL_SW  GPIOC,6
 #define APC_REF    GPIOA,4
 

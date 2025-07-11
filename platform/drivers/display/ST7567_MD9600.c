@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2021 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -143,7 +143,8 @@ void display_setContrast(uint8_t contrast)
     spi_release(&spi2);
 }
 
-void display_setBacklightLevel(uint8_t level)
-{
-    (void) level;
-}
+/*
+ * Function implemented in backlight_MDx driver
+ *
+ * void display_setBacklightLevel(uint8_t level)
+ */

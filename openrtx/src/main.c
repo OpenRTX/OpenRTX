@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -47,7 +47,7 @@ int main(void)
     openrtx_init();
 
 #ifndef PLATFORM_LINUX
-    openrtx_run();
+    openrtx_run(NULL);
 #else
     // macOS requires SDL main loop to run on the main thread.
     // Here we create a new thread for OpenRTX main program and utilize the main

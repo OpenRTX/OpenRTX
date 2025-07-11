@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020  - 2023 by Federico Amedeo Izzo IU2NUO,            *
+ *   Copyright (C) 2020  - 2025 by Federico Amedeo Izzo IU2NUO,            *
  *                                 Niccolò Izzo IU2KIN,                    *
  *                                 Frederik Saraci IU2NRO,                 *
  *                                 Silvano Seva IU2KWO                     *
@@ -40,18 +40,68 @@
  ******************************************************************************/
 
 /**
- * Data structure containing the tone information for analog FM channels.
- * This is just a lookup table for the CTCSS frequencies and is not actually
- * present in the codeplug binary data.
+ * Enumeration type for CTCSS frequencies.
  */
-#define MAX_TONE_INDEX 50
-static const uint16_t ctcss_tone[MAX_TONE_INDEX] =
+enum CTCSSfreq
 {
-    670, 693, 719, 744, 770, 797, 825, 854, 885, 915, 948, 974, 1000, 1034,
-    1072, 1109, 1148, 1188, 1230, 1273, 1318, 1365, 1413, 1462, 1514, 1567,
-    1598, 1622, 1655, 1679, 1713, 1738, 1773, 1799, 1835, 1862, 1899, 1928,
-    1966, 1995, 2035, 2065, 2107, 2181, 2257, 2291, 2336, 2418, 2503, 2541
+    CTCSS_67_0 = 0,
+    CTCSS_69_3,
+    CTCSS_71_9,
+    CTCSS_74_4,
+    CTCSS_77_0,
+    CTCSS_79_7,
+    CTCSS_82_5,
+    CTCSS_85_4,
+    CTCSS_88_5,
+    CTCSS_91_5,
+    CTCSS_94_8,
+    CTCSS_97_4,
+    CTCSS_100_0,
+    CTCSS_103_5,
+    CTCSS_107_2,
+    CTCSS_110_9,
+    CTCSS_114_8,
+    CTCSS_118_8,
+    CTCSS_123_0,
+    CTCSS_127_3,
+    CTCSS_131_8,
+    CTCSS_136_5,
+    CTCSS_141_3,
+    CTCSS_146_2,
+    CTCSS_151_4,
+    CTCSS_156_7,
+    CTCSS_159_8,
+    CTCSS_162_2,
+    CTCSS_165_5,
+    CTCSS_167_9,
+    CTCSS_171_3,
+    CTCSS_173_8,
+    CTCSS_177_3,
+    CTCSS_179_9,
+    CTCSS_183_5,
+    CTCSS_186_2,
+    CTCSS_189_9,
+    CTCSS_192_8,
+    CTCSS_196_6,
+    CTCSS_199_5,
+    CTCSS_203_5,
+    CTCSS_206_5,
+    CTCSS_210_7,
+    CTCSS_218_1,
+    CTCSS_225_7,
+    CTCSS_229_1,
+    CTCSS_233_6,
+    CTCSS_241_8,
+    CTCSS_250_3,
+    CTCSS_254_1,
+
+    CTCSS_FREQ_NUM
 };
+
+/**
+ * CTCSS tone table for fast index-to-frequency conversion
+ */
+extern const uint16_t ctcss_tone[];
 
 /**
  * Data structure defining an analog-specific channel information such as tones.

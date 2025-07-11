@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 - 2024 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2021 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -21,6 +21,7 @@
 #ifndef HRC6000_H
 #define HRC6000_H
 
+#include <datatypes.h>
 #include "HR_Cx000.h"
 
 enum class C6000_SpiOpModes : uint8_t
@@ -34,6 +35,82 @@ enum class C6000_SpiOpModes : uint8_t
     AMBE1K = 7      ///< AMBE1000 configuration register.
 };
 
-using HR_C6000 = HR_Cx000 < C6000_SpiOpModes >;
+class HR_C6000 : public HR_Cx000 < C6000_SpiOpModes >
+{
+public:
+
+    /**
+     * Constructor.
+     *
+     * @param uSpi: pointer to SPI device for "user" SPI interface.
+     * @param uCs: gpioPin object for "user" SPI chip select.
+     */
+    HR_C6000(const struct spiDevice *uSpi, const struct gpioPin uCs) :
+        HR_Cx000< C6000_SpiOpModes >(uSpi, uCs) { }
+
+    /**
+     * Configure CTCSS tone transmission.
+     *
+     * @param tone: CTCSS tone frequency.
+     * @param deviation: CTCSS tone deviation.
+     */
+    void setTxCtcss(const tone_t tone, const uint8_t deviation);
+
+    /**
+     * Configure CTCSS tone detection.
+     *
+     * @param tone: CTCSS tone frequency.
+     */
+    void setRxCtcss(const tone_t tone);
+
+    /**
+     * Test if RX CTCSS tone has been detected.
+     *
+     * @return true if RX CTCSS tone has been detected.
+     */
+    inline bool ctcssDetected()
+    {
+        uint8_t reg = readCfgRegister(0x93);
+        return ((reg & 0x01) != 0) ? true : false;
+    }
+
+    /**
+     * Disable CTCSS tone encode and decode.
+     */
+    inline void disableCtcss()
+    {
+        writeCfgRegister(0xA1, 0x00);     // Disable all tones
+    }
+
+    /**
+     * Transmit a tone of a given frequency.
+     *
+     * @param freq: tone frequency in Hz.
+     * @param deviation: tone deviation.
+     */
+    void sendTone(const uint32_t freq, const uint8_t deviation);
+
+private:
+
+    /**
+     * Write a register with 16-bit address.
+     *
+     * @param opMode: "operating mode" specifier, see datasheet for details.
+     * @param addr: register address.
+     * @param value: value to be written.
+     */
+    void writeReg16(const C6000_SpiOpModes opMode, const uint16_t addr, const uint8_t value)
+    {
+        uint8_t data[4];
+
+        data[0] =  static_cast< uint8_t >(opMode) | 0x40;
+        data[2] = (addr >> 8) & 0x07;
+        data[1] = addr & 0xFF;
+        data[3] = value;
+
+        ScopedChipSelect cs(uSpi, uCs);
+        spi_send(uSpi, data, 4);
+    }
+};
 
 #endif /* HRC6000_H */

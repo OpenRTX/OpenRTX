@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 - 2024 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2021 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -30,7 +30,7 @@
 #include "stm32_pwm.h"
 #include "stm32_adc.h"
 
-#ifdef PLATFORM_MDUV3x0
+#if defined(PLATFORM_MDUV3x0) || defined (PLATFORM_DM1701)
 #include <HR_C6000.h>
 #include "Cx000_dac.h"
 #endif
@@ -73,7 +73,7 @@ static const struct PwmChannelCfg stm32pwm_cfg =
     stm32pwm_stopCbk
 };
 
-#ifdef PLATFORM_MDUV3x0
+#if defined(PLATFORM_MDUV3x0) || defined (PLATFORM_DM1701)
 static void *audio_thread(void *arg)
 {
     (void) arg;
@@ -90,7 +90,7 @@ static void *audio_thread(void *arg)
         if(state.volume != oldVolume)
         {
             // Apply new volume level, map 0 - 255 range into -31 to 31
-            int8_t gain = ((int8_t) (state.volume / 4)) - 31;
+            int8_t gain = ((int8_t) (state.volume / 4)) - 32;
             C6000.setDacGain(gain);
 
             oldVolume = state.volume;
@@ -109,7 +109,7 @@ static void *audio_thread(void *arg)
 const struct audioDevice outputDevices[] =
 {
     {NULL,                    NULL,          0, SINK_MCU},
-    #ifdef PLATFORM_MDUV3x0
+    #if defined(PLATFORM_MDUV3x0) || defined (PLATFORM_DM1701)
     {&Cx000_dac_audio_driver, NULL,          0, SINK_SPK},
     #else
     {&stm32_pwm_audio_driver, &stm32pwm_cfg, 0, SINK_SPK},
@@ -149,7 +149,7 @@ void audio_init()
     stm32pwm_init();
     stm32adc_init(STM32_ADC_ADC2);
 
-    #ifdef PLATFORM_MDUV3x0
+    #if defined(PLATFORM_MDUV3x0) || defined (PLATFORM_DM1701)
     gpio_setMode(DMR_CLK,  OUTPUT);
     gpio_setMode(DMR_MOSI, OUTPUT);
     gpio_setMode(DMR_MISO, INPUT);
@@ -203,7 +203,7 @@ void audio_connect(const enum AudioSource source, const enum AudioSink sink)
 
         // MD-UV380 uses HR_C6000 for MCU->SPK audio output. Switching between
         // incoming FM audio and DAC output is done automatically inside the IC.
-        #ifndef PLATFORM_MDUV3x0
+        #if !defined(PLATFORM_MDUV3x0) && !defined(PLATFORM_DM1701)
         case PATH(SOURCE_MCU, SINK_SPK):
         #endif
         case PATH(SOURCE_MCU, SINK_RTX):
@@ -251,7 +251,7 @@ void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
             radio_disableAfOutput();
             break;
 
-        #ifndef PLATFORM_MDUV3x0
+        #if !defined(PLATFORM_MDUV3x0) && !defined(PLATFORM_DM1701)
         case PATH(SOURCE_MCU, SINK_SPK):
         #endif
         case PATH(SOURCE_MCU, SINK_RTX):

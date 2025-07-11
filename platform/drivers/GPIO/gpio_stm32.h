@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2024 by Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2024 - 2025 by Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -19,7 +19,6 @@
 #define GPIO_STM32_H
 
 #include <peripherals/gpio.h>
-#include <stm32f4xx.h>
 #include <stdint.h>
 
 #ifdef __cplusplus

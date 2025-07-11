@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 - 2024 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2021 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN,                     *
  *                                Frederik Saraci IU2NRO,                  *
  *                                Silvano Seva IU2KWO                      *
@@ -24,16 +24,16 @@
 #include <interfaces/nvmem.h>
 #include <interfaces/audio.h>
 #include <peripherals/gpio.h>
-#include <drivers/adc_stm32.h>
 #include <drivers/i2c_stm32.h>
 #include <calibInfo_Mod17.h>
+#include <adc_stm32.h>
 #include <backlight.h>
 #include <hwconfig.h>
 #include <MCP4551.h>
 #include <errno.h>
 
 
-ADC_STM32_DEVICE_DEFINE(adc1, ADC1, NULL, 3300000)
+ADC_STM32_DEVICE_DEFINE(adc1, ADC1, NULL, ADC_COUNTS_TO_UV(3300000, 12))
 I2C_STM32_DEVICE_DEFINE(i2c1, I2C1, NULL)
 I2C_STM32_DEVICE_DEFINE(i2c2, I2C2, NULL)
 

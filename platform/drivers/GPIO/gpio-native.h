@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2024 by Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2024 - 2025 by Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -18,10 +18,13 @@
 #ifndef GPIO_NATIVE_H
 #define GPIO_NATIVE_H
 
-#if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0) \
- || defined(PLATFORM_MD9600) || defined(PLATFORM_MOD17)
+#if defined(STM32F405xx)
+#include <stm32f4xx.h>
 #include <gpio_stm32.h>
-#elif defined(PLATFORM_GD77) || defined(PLATFORM_DM1801)
+#elif defined(STM32H743xx)
+#include <stm32h7xx.h>
+#include <gpio_stm32.h>
+#elif defined(MK22FN512xx)
 #include <gpio_mk22.h>
 #endif
 

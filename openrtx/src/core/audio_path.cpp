@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2022 - 2023 by Alain Carlucci,                          *
+ *   Copyright (C) 2022 - 2025 by Alain Carlucci,                          *
  *                                Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Silvano Seva IU2KWO                      *
@@ -32,6 +32,13 @@ struct Path
     int8_t source      = -1;   ///< Source endpoint of the path.
     int8_t destination = -1;   ///< Destination endpoint of the path.
     int8_t priority    = -1;   ///< Path priority level.
+
+    Path(enum AudioSource src, enum AudioSink sink, enum AudioPriority prio)
+    {
+        source = static_cast<int8_t>(src);
+        destination = static_cast<int8_t>(sink);
+        priority = static_cast<int8_t>(prio);
+    }
 
     bool isValid() const
     {
@@ -110,7 +117,7 @@ static int                    pathCounter = 1;  // Counter for path ID generatio
 pathId audioPath_request(enum AudioSource source, enum AudioSink sink,
                          enum AudioPriority prio)
 {
-    const Path path{source, sink, prio};
+    const Path path(source, sink, prio);
     if (!path.isValid())
         return -1;
 

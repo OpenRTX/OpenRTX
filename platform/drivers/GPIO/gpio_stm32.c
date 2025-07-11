@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2024 by Silvano Seva IU2KWO                      *
+ *   Copyright (C) 2020 - 2025 by Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,7 +16,6 @@
  ***************************************************************************/
 
 #include <errno.h>
-#include "stm32f4xx.h"
 #include "gpio_stm32.h"
 
 static inline void setGpioAf(GPIO_TypeDef *port, uint8_t pin, const uint8_t af)

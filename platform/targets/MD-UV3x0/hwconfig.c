@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2024 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN,                            *
- *                         Frederik Saraci IU2NRO,                         *
- *                         Silvano Seva IU2KWO                             *
+ * Copyright (C) 2024 - 2025 by Federico Amedeo Izzo IU2NUO,               *
+ *                              Niccolò Izzo IU2KIN                        *
+ *                              Frederik Saraci IU2NRO                     *
+ *                              Silvano Seva IU2KWO                        *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -24,9 +24,11 @@
 #include <pthread.h>
 #include <pinmap.h>
 #include <spi_stm32.h>
+#include <adc_stm32.h>
 
 
 static pthread_mutex_t c6000_mutex;
+static pthread_mutex_t adcMutex;
 
 /**
  * SPI bitbang function for HR_C6000 command interface (U_SPI).
@@ -73,3 +75,4 @@ static uint8_t spiC6000_func(const void *priv, uint8_t value)
 
 SPI_CUSTOM_DEVICE_DEFINE(c6000_spi, spiC6000_func, NULL, &c6000_mutex)
 SPI_STM32_DEVICE_DEFINE(nvm_spi, SPI1, NULL)
+ADC_STM32_DEVICE_DEFINE(adc1, ADC1, &adcMutex, ADC_COUNTS_TO_UV(3300000, 12))

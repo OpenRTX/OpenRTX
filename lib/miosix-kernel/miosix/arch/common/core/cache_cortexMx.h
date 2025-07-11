@@ -122,6 +122,9 @@ void IRQconfigureCache(const unsigned int *xramBase=nullptr, unsigned int xramSi
  */
 inline void markBufferBeforeDmaWrite(const void *buffer, int size)
 {
+    (void) buffer;
+    (void) size;
+
 #if defined(__DCACHE_PRESENT) && (__DCACHE_PRESENT==1)
     // You may think that since the cache is configured as write-through,
     // there's nothing to do before the DMA can read a memory buffer just
@@ -145,7 +148,11 @@ inline void markBufferBeforeDmaWrite(const void *buffer, int size)
 #if defined(__DCACHE_PRESENT) && (__DCACHE_PRESENT==1)
 void markBufferAfterDmaRead(void *buffer, int size);
 #else
-inline void markBufferAfterDmaRead(void *buffer, int size) {}
+inline void markBufferAfterDmaRead(void *buffer, int size)
+{
+    (void) buffer;
+    (void) size;
+}
 #endif
 
 } //namespace miosix

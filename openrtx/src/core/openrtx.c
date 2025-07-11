@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2022 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2022 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -82,8 +82,10 @@ void openrtx_init()
     #endif
 }
 
-void *openrtx_run()
+void *openrtx_run(void *arg)
 {
+    (void) arg;
+
     state.devStatus = RUNNING;
 
     // Start the OpenRTX threads

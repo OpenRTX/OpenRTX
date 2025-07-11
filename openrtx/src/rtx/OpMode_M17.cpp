@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2021 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -127,6 +127,11 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
     //
     invertTxPhase = (mod17CalData.bb_tx_invert == 1) ? true : false;
     invertRxPhase = (mod17CalData.bb_rx_invert == 1) ? true : false;
+    #elif defined(PLATFORM_CS7000) || defined(PLATFORM_CS7000P)
+    invertTxPhase = true;
+    #elif defined(PLATFORM_DM1701)
+    invertTxPhase = true;
+    invertRxPhase = true;
     #endif
 
     // Main FSM logic

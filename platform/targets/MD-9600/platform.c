@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2021 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN,                     *
  *                                Frederik Saraci IU2NRO,                  *
  *                                Silvano Seva IU2KWO                      *
@@ -22,9 +22,10 @@
 #include <interfaces/nvmem.h>
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
+#include <backlight.h>
 #include <hwconfig.h>
 #include <string.h>
-#include <ADC1_MDx.h>
+#include <adc_stm32.h>
 #include <calibInfo_MDx.h>
 #include <toneGenerator_MDx.h>
 #include <peripherals/rtc.h>
@@ -53,12 +54,16 @@ void platform_init()
 
     gpio_setMode(PTT_SW, INPUT);
 
-    /*
-     * Initialise ADC1, for vbat, RSSI, ...
-     * Configuration of corresponding GPIOs in analog input mode is done inside
-     * the driver.
-     */
-    adc1_init();
+    gpio_setMode(AIN_VBAT,  ANALOG);
+    gpio_setMode(AIN_MIC,   ANALOG);
+    gpio_setMode(AIN_RSSI,  ANALOG);
+    gpio_setMode(AIN_SW2,   ANALOG);
+    gpio_setMode(AIN_SW1,   ANALOG);
+    gpio_setMode(AIN_RSSI2, ANALOG);
+    gpio_setMode(AIN_HTEMP, ANALOG);
+
+    /* Initialise ADC1, for vbat, RSSI, ... */
+    adcStm32_init(&adc1);
 
     /*
      * Initialise SPI2 for external flash and LCD
@@ -71,6 +76,7 @@ void platform_init()
     nvm_init();                      /* Initialise non volatile memory manager */
     toneGen_init();                  /* Initialise tone generator              */
     rtc_init();                      /* Initialise RTC                         */
+    backlight_init();                /* Initialize Backlight                   */
     chSelector_init();               /* Initialise channel selector handler    */
     audio_init();                    /* Initialise audio management module     */
 }
@@ -78,7 +84,7 @@ void platform_init()
 void platform_terminate()
 {
     /* Shut down all the modules */
-    adc1_terminate();
+    adcStm32_terminate(&adc1);
     toneGen_terminate();
     chSelector_terminate();
     audio_terminate();
@@ -98,19 +104,16 @@ uint16_t platform_getVbat()
 {
     /*
      * Battery voltage is measured through an 1:5.7 voltage divider and
-     * adc1_getMeasurement returns a value in mV. To have effective battery
-     * voltage we have to multiply by the ratio: with a simple trick we can do
-     * it also without using floats and with a maximum error of -1mV.
+     * adc1_getMeasurement returns a value in uV.
      */
-
-    uint16_t vbat = adc1_getMeasurement(ADC_VBAT_CH);
-    return (vbat * 6) - ((vbat * 3) / 10);
+    uint32_t vbat = adc_getVoltage(&adc1, ADC_VBAT_CH) * 57;
+    return vbat / 10000;
 }
 
 uint8_t platform_getMicLevel()
 {
     /* Value from ADC is 12 bit wide: shift right by four to get 0 - 255 */
-    return (adc1_getRawSample(ADC_VOX_CH) >> 4);
+    return adc_getRawSample(&adc1, ADC_VOX_CH) >> 4;
 }
 
 uint8_t platform_getVolumeLevel()
@@ -120,7 +123,7 @@ uint8_t platform_getVolumeLevel()
      * converted to a value in range 0 - 255 using fixed point math: divide by
      * 1600 and then multiply by 256.
      */
-    uint16_t value = adc1_getMeasurement(ADC_VOL_CH);
+    uint16_t value = adc_getVoltage(&adc1, ADC_VOL_CH) / 1000;
     if(value > 1599) value = 1599;
     uint32_t level = value << 16;
     level /= 1600;

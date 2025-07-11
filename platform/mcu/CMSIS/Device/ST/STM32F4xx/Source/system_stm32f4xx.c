@@ -312,6 +312,8 @@ static void SetSysClock(void)
   {
     /* Select regulator voltage output Scale 1 mode, System frequency up to 168 MHz */
     RCC->APB1ENR |= RCC_APB1ENR_PWREN;
+    __DSB();
+
     PWR->CR |= PWR_CR_VOS;
 
     /* HCLK = SYSCLK / 1 */

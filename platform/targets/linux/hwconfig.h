@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Frederik Saraci IU2NRO                   *
+ *   Copyright (C) 2020 - 2025 by Frederik Saraci IU2NRO                   *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -33,7 +33,8 @@ enum Mod17Flags
 #define CONFIG_SCREEN_BRIGHTNESS
 
 /* Battery type */
-#define CONFIG_BAT_LIPO_2S
+#define CONFIG_BAT_LIPO
+#define CONFIG_BAT_NCELLS 2
 
 /* Device supports M17 mode */
 #define CONFIG_M17

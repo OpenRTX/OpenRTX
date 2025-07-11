@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2023 - 2024 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2023 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -23,7 +23,6 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <stm32f4xx.h>
 #include <interfaces/audio.h>
 
 #ifdef __cplusplus

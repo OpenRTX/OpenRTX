@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN,                     *
  *                                Silvano Seva IU2KWO                      *
  *                                                                         *
@@ -33,8 +33,16 @@ extern HR_C6000 C6000;
 extern "C" {
 #endif
 
+enum AdcChannel
+{
+    ADC_VOL_CH   = 0,
+    ADC_VBAT_CH  = 1,
+    ADC_MIC_CH   = 3,
+};
+
 extern const struct spiCustomDevice c6000_spi;
 extern const struct spiDevice nvm_spi;
+extern const struct Adc adc1;
 
 /* Device has a working real time clock */
 #define CONFIG_RTC
@@ -50,7 +58,8 @@ extern const struct spiDevice nvm_spi;
 #define CONFIG_PIX_FMT_RGB565
 
 /* Battery type */
-#define CONFIG_BAT_LIPO_2S
+#define CONFIG_BAT_LIION
+#define CONFIG_BAT_NCELLS 2
 
 /* Device supports M17 mode */
 #define CONFIG_M17

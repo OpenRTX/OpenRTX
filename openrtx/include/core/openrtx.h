@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2022 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2022 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -34,6 +34,6 @@ void openrtx_init();
  * This function returns only on linux emulator, when the main program terminates.
  * Return type is void* to make this function be used as a pthread thread body.
  */
-void *openrtx_run();
+void *openrtx_run(void *arg);
 
 #endif /* OPENRTX_H */

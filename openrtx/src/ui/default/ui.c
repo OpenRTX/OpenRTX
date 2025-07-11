@@ -1,8 +1,9 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
+ *                                Grzegorz Kaczmarek SP6HFE                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -106,7 +107,7 @@ extern void _ui_drawMenuBackupRestore(ui_state_t* ui_state);
 extern void _ui_drawMenuBackup(ui_state_t* ui_state);
 extern void _ui_drawMenuRestore(ui_state_t* ui_state);
 extern void _ui_drawMenuInfo(ui_state_t* ui_state);
-extern void _ui_drawMenuAbout();
+extern void _ui_drawMenuAbout(ui_state_t* ui_state);
 #ifdef CONFIG_RTC
 extern void _ui_drawSettingsTimeDate();
 extern void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state);
@@ -931,14 +932,14 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             {
                 if(state.channel.fm.txTone == 0)
                 {
-                    state.channel.fm.txTone = MAX_TONE_INDEX-1;
+                    state.channel.fm.txTone = CTCSS_FREQ_NUM-1;
                 }
                 else
                 {
                     state.channel.fm.txTone--;
                 }
 
-                state.channel.fm.txTone %= MAX_TONE_INDEX;
+                state.channel.fm.txTone %= CTCSS_FREQ_NUM;
                 state.channel.fm.rxTone = state.channel.fm.txTone;
                 *sync_rtx = true;
                 vp_announceCTCSS(state.channel.fm.rxToneEn,
@@ -953,7 +954,7 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             if(state.channel.mode == OPMODE_FM)
             {
                 state.channel.fm.txTone++;
-                state.channel.fm.txTone %= MAX_TONE_INDEX;
+                state.channel.fm.txTone %= CTCSS_FREQ_NUM;
                 state.channel.fm.rxTone = state.channel.fm.txTone;
                 *sync_rtx = true;
                 vp_announceCTCSS(state.channel.fm.rxToneEn,
@@ -2566,9 +2567,7 @@ void ui_updateFSM(bool *sync_rtx)
         }
 #endif //            CONFIG_GPS
 
-//OH        if (((txOngoing || rtx_rxSquelchOpen()) && !last_state.settings.notifications_enabled) || last_state.volume_changed)
         if ((!last_state.settings.notifications_enabled && (txOngoing || rtx_rxSquelchOpen())) || (!last_state.settings.night_mode && (abs((int)state.volume - (int)last_state.volume) > 2)))
-//        if ((!last_state.settings.notifications_enabled && (txOngoing || rtx_rxSquelchOpen())) )
         {
             _ui_exitStandby(now);
             if(last_state.volume_changed) state.volume_changed = false;

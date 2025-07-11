@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 - 2024 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2021 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -24,8 +24,8 @@
 #include <peripherals/gpio.h>
 #include <calibInfo_MDx.h>
 #include <spi_bitbang.h>
+#include <adc_stm32.h>
 #include <hwconfig.h>
-#include <ADC1_MDx.h>
 #include <algorithm>
 #include <utils.h>
 #include "HR_C5000.h"
@@ -270,7 +270,7 @@ void radio_enableTx()
             {
                 source = TxAudioSource::LINE_IN;    // HR_C5000 audio input is tone generator
                 C5000.setModFactor(0x1E);           // Set correct modulation factor
-                gpio_setMode(BEEP_OUT, ALTERNATE);  // Override audio path configuration
+                gpio_setMode(BEEP_OUT, ALTERNATE | ALTERNATE_FUNC(2));
                 toneGen_beepOn(1750.0f, 255, 0);    // Enable 1750Hz tone, always on
             }
 
@@ -383,7 +383,7 @@ rssi_t radio_getRssi()
     if(rxFreq < 401035000) offset_index = 0;
     if(rxFreq > 479995000) offset_index = 8;
 
-    float rssi_mv  = ((float) adc1_getMeasurement(ADC_RSSI_CH));
+    float rssi_mv  = ((float) adc_getVoltage(&adc1, ADC_RSSI_CH)) / 1000.0f;
     float rssi_dbm = (rssi_mv - rssi_offset[offset_index]) / rssi_gain;
     return static_cast< rssi_t >(rssi_dbm);
 }

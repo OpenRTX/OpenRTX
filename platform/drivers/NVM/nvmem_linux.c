@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -152,7 +152,7 @@ void nvm_terminate()
 
 const struct nvmDescriptor *nvm_getDesc(const size_t index)
 {
-    if(index > 0)
+    if(index >= 0)
         return NULL;
 
     return &stateNvm;

@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2021 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -21,7 +21,6 @@
 #include <new>
 #include <cstddef>
 #include <cstring>
-#include <experimental/array>
 #include <M17/M17Modulator.hpp>
 #include <M17/M17Utils.hpp>
 #include <M17/M17DSP.hpp>

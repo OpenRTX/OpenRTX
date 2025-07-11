@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN,                     *
  *                                Silvano Seva IU2KWO                      *
  *                                                                         *
@@ -17,8 +17,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef CALIB_UTILS_H
-#define CALIB_UTILS_H
+#ifndef UTILS_H
+#define UTILS_H
 
 #include <datatypes.h>
 #include <stdint.h>
@@ -27,6 +27,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * Get the number of elements of an array.
+ *
+ * @param x: array.
+ * @return number of elements.
+ */
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
 /**
  * This function allows to obtain the value of a given calibration parameter for
@@ -49,8 +57,10 @@ uint8_t interpCalParameter(const freq_t freq, const freq_t *calPoints,
                            const uint8_t *param, const uint8_t elems);
 
 /**
- * \internal Utility function to convert 4 byte BCD values into a 32-bit
- * unsigned integer ones.
+ * Convert a 4 byte BCD number to a 32-bit unsigned integer one.
+ *
+ * @param bcd: BCD number
+ * @return unsigned integer representation of the BCD input.
  */
 uint32_t bcdToBin(uint32_t bcd);
 
@@ -63,6 +73,22 @@ uint32_t bcdToBin(uint32_t bcd);
  * @param str: string to be processed.
  */
 void stripTrailingZeroes(char *str);
+
+/**
+ * Get the S-level corresponding to a given RSSI value in dBm.
+ *
+ * @param rssi: RSSI in dBm
+ * @return S level, from S0 to S11
+ */
+uint8_t rssiToSlevel(const rssi_t rssi);
+
+/**
+ * Retrieve the CTCSS tone index given its frequency in tenths of Hz.
+ *
+ * @param freq: CTCSS frequency
+ * @return tone index or 255 if the tone has not been found
+ */
+uint8_t ctcssFreqToIndex(const uint16_t freq);
 
 #ifdef __cplusplus
 }

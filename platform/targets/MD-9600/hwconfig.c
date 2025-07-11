@@ -1,8 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2024 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN,                            *
- *                         Frederik Saraci IU2NRO,                         *
- *                         Silvano Seva IU2KWO                             *
+ * Copyright (C) 2024 - 2025 by Federico Amedeo Izzo IU2NUO,               *
+ *                              Niccolò Izzo IU2KIN                        *
+ *                              Frederik Saraci IU2NRO                     *
+ *                              Silvano Seva IU2KWO                        *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -20,8 +20,11 @@
 
 #include <hwconfig.h>
 #include <spi_stm32.h>
+#include <adc_stm32.h>
 #include <pthread.h>
 
 static pthread_mutex_t spi2Mutex;
+static pthread_mutex_t adcMutex;
 
 SPI_STM32_DEVICE_DEFINE(spi2, SPI2, &spi2Mutex)
+ADC_STM32_DEVICE_DEFINE(adc1, ADC1, &adcMutex, ADC_COUNTS_TO_UV(3300000, 12))

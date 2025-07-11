@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2021 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -27,7 +27,7 @@
 #error This header is C++ only!
 #endif
 
-#include <experimental/array>
+#include <array>
 #include "M17Utils.hpp"
 
 namespace M17
@@ -36,21 +36,21 @@ namespace M17
 /**
  * Puncture matrix for linx setup frame.
  */
-static constexpr auto LSF_PUNCTURE = std::experimental::make_array< uint8_t >
-(
+static constexpr std::array< uint8_t, 61 > LSF_PUNCTURE =
+{
     1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1,
     0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1,
     1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1
-);
+};
 
 /**
  *  Puncture matrix for audio frames.
  */
-static constexpr auto DATA_PUNCTURE = std::experimental::make_array< uint8_t >
-(
+static constexpr std::array< uint8_t, 12 > DATA_PUNCTURE =
+{
     1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 0
-);
+};
 
 
 /**

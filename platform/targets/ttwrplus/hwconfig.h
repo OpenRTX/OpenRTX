@@ -1,7 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2023 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN                             *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2023 - 2025 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -31,7 +31,8 @@
 #define CONFIG_PIX_FMT_BW
 #define CONFIG_GPS
 
-#define CONFIG_BAT_LIPO_1S
+#define CONFIG_BAT_LIPO
+#define CONFIG_BAT_NCELLS 1
 
 #define CONFIG_M17
 

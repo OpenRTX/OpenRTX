@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Silvano Seva IU2KWO                      *
  *                                                                         *
@@ -22,7 +22,7 @@
 #include <interfaces/platform.h>
 #include <hwconfig.h>
 #include <string.h>
-#include <ADC1_MDx.h>
+#include <adc_stm32.h>
 #include <calibInfo_MDx.h>
 #include <toneGenerator_MDx.h>
 #include <peripherals/rtc.h>
@@ -44,17 +44,18 @@ void platform_init()
     gpio_setMode(PTT_SW,  INPUT_PULL_UP);
     gpio_setMode(PTT_EXT, INPUT_PULL_UP);
 
+    gpio_setMode(AIN_VBAT,   ANALOG);
+    gpio_setMode(AIN_VOLUME, ANALOG);
+    gpio_setMode(AIN_MIC,    ANALOG);
+    gpio_setMode(AIN_RSSI,   ANALOG);
+
     #ifndef RUNNING_TESTSUITE
     gpio_setMode(PWR_SW, OUTPUT);
     gpio_setPin(PWR_SW);
     #endif
 
-    /*
-     * Initialise ADC1, for vbat, RSSI, ...
-     * Configuration of corresponding GPIOs in analog input mode is done inside
-     * the driver.
-     */
-    adc1_init();
+    /* Initialise ADC1, for vbat, RSSI, ... */
+    adcStm32_init(&adc1);
 
     memset(&hwInfo, 0x00, sizeof(hwInfo));
 
@@ -72,7 +73,7 @@ void platform_terminate()
     gpio_clearPin(RED_LED);
 
     /* Shut down all the modules */
-    adc1_terminate();
+    adcStm32_terminate(&adc1);
     nvm_terminate();
     toneGen_terminate();
     audio_terminate();
@@ -85,16 +86,16 @@ uint16_t platform_getVbat()
 {
     /*
      * Battery voltage is measured through an 1:3 voltage divider and
-     * adc1_getMeasurement returns a value in mV. Thus, to have effective
-     * battery voltage, multiply by three.
+     * adc1_getMeasurement returns a value in uV.
      */
-    return adc1_getMeasurement(ADC_VBAT_CH) * 3;
+    uint32_t vbat = adc_getVoltage(&adc1, ADC_VBAT_CH) * 3;
+    return vbat / 1000;
 }
 
 uint8_t platform_getMicLevel()
 {
     /* Value from ADC is 12 bit wide: shift right by four to get 0 - 255 */
-    return (adc1_getRawSample(ADC_VOX_CH) >> 4);
+    return adc_getRawSample(&adc1, ADC_VOX_CH) >> 4;
 }
 
 uint8_t platform_getVolumeLevel()
@@ -105,7 +106,7 @@ uint8_t platform_getVolumeLevel()
      * lines with a breakpoint around 270mV.
      * Output value has range 0 - 255 with breakpoint at 150.
      */
-    uint16_t value = adc1_getMeasurement(ADC_VOL_CH);
+    uint32_t value = adc_getVoltage(&adc1, ADC_VOL_CH) / 1000;
     uint32_t output;
 
     if(value <= 270)

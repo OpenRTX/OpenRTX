@@ -34,12 +34,13 @@ jobs:
           cd ${{github.workspace}}
           meson setup build_linux
           meson setup --cross-file cross_arm.txt build_arm
+          meson setup --cross-file cross_cm7.txt build_cm7
       - name: Compile linux
         run: |
           meson compile -C build_linux openrtx_linux
           meson compile -C build_linux openrtx_linux_smallscreen
           meson compile -C build_linux openrtx_linux_mod17
-      - name: Compile arm targets
+      - name: Compile arm cortex m4 targets
         run: |
           export PATH=$PATH:/tmp/OpenGD77/tools/Python/FirmwareLoader:/tmp/OpenGD77/firmware/tools
           echo $PATH
@@ -49,6 +50,13 @@ jobs:
           meson compile -C build_arm openrtx_gd77_wrap
           meson compile -C build_arm openrtx_dm1801_wrap
           meson compile -C build_arm openrtx_mod17_wrap
+          meson compile -C build_arm openrtx_cs7000_wrap
+          meson compile -C build_arm openrtx_dm1701_wrap
+      - name: Compile arm cortex m7 targets
+        run: |
+          export PATH=$PATH:/tmp/OpenGD77/tools/Python/FirmwareLoader:/tmp/OpenGD77/firmware/tools
+          echo $PATH
+          meson compile -C build_cm7 openrtx_cs7000p_wrap
       - uses: actions/upload-artifact@v4
         with:
           name: release-bins
@@ -57,6 +65,39 @@ jobs:
             ${{github.workspace}}/build_linux/openrtx_linux
             ${{github.workspace}}/build_linux/openrtx_linux_smallscreen
             ${{github.workspace}}/build_linux/openrtx_linux_mod17
+  build-zephyr:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          path: app
+      - name: install-deps
+        run: |
+          sudo apt update
+          sudo apt install -y git pkg-config build-essential meson libsdl2-dev libreadline-dev dfu-util cmake libusb-1.0-0 libusb-1.0-0-dev libcodec2-dev codec2
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+      - name: Setup Zephyr project
+        uses: zephyrproject-rtos/action-zephyr-setup@v1
+        with:
+          app-path: app
+          toolchains: xtensa-espressif_esp32s3_zephyr-elf
+          sdk-version: 0.17.0
+      - name: Compile zephyr
+        run: |
+          cd app
+          meson setup build
+          meson compile -C build openrtx_ttwrplus_uf2
+        shell: bash
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zephyr-release-bins
+          path: |
+            app/build/openrtx_*.uf2
   unit-test:
     runs-on: ubuntu-22.04
     steps:

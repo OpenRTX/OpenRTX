@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Silvano Seva IU2KWO                      *
  *                                                                         *
@@ -27,10 +27,19 @@
 extern "C" {
 #endif
 
+enum adcChannel
+{
+    ADC_VOL_CH   = 0,
+    ADC_VBAT_CH  = 1,
+    ADC_VOX_CH   = 3,
+    ADC_RSSI_CH  = 8
+};
+
 extern const struct spiDevice nvm_spi;
 extern const struct spiCustomDevice pll_spi;
 extern const struct spiCustomDevice c5000_spi;
 extern const struct sky73210 pll;
+extern const struct Adc adc1;
 
 /* Device has a working real time clock */
 #define CONFIG_RTC
@@ -52,7 +61,8 @@ extern const struct sky73210 pll;
 #define CONFIG_SCREEN_BRIGHTNESS
 
 /* Battery type */
-#define CONFIG_BAT_LIPO_2S
+#define CONFIG_BAT_LIION
+#define CONFIG_BAT_NCELLS 2
 
 /* Device supports M17 mode */
 #define CONFIG_M17

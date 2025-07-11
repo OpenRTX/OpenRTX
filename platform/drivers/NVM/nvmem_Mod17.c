@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2021 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -117,6 +117,12 @@ size_t nvm_getMemoryAreas(const struct nvmArea **list)
 void nvm_readCalibData(void *buf)
 {
     (void) buf;
+}
+
+const struct nvmDescriptor *nvm_getDesc(const size_t index)
+{
+    (void) index;
+    return NULL;
 }
 
 void nvm_readHwInfo(hwInfo_t *info)

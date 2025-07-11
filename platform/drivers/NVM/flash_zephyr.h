@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2023 - 2024 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2023 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -44,7 +44,7 @@ extern const struct nvmOps zephyr_flash_ops;
 static struct nvmInfo nvm_devInfo_##name;           \
 static const struct nvmDevice name =                \
 {                                                   \
-    .priv   = DEVICE_DT_GET(DT_ALIAS(alias))        \
+    .priv   = DEVICE_DT_GET(DT_ALIAS(alias)),       \
     .ops    = &zephyr_flash_ops,                    \
     .info   = &nvm_devInfo_##name,                  \
     .size   = sz                                    \
