@@ -270,7 +270,7 @@ void radio_enableTx()
             {
                 source = TxAudioSource::LINE_IN;    // HR_C5000 audio input is tone generator
                 C5000.setModFactor(0x1E);           // Set correct modulation factor
-                gpio_setMode(BEEP_OUT, ALTERNATE);  // Override audio path configuration
+                gpio_setMode(BEEP_OUT, ALTERNATE | ALTERNATE_FUNC(2));
                 toneGen_beepOn(1750.0f, 255, 0);    // Enable 1750Hz tone, always on
             }
 

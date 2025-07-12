@@ -75,9 +75,9 @@ public:
     }
 
     /**
-     * Disable CTCSS tone encode and decode.
+     * Disable all tone encode and decode.
      */
-    inline void disableCtcss()
+    inline void disableTones()
     {
         writeCfgRegister(0xA1, 0x00);     // Disable all tones
     }

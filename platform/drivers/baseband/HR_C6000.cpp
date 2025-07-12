@@ -88,4 +88,6 @@ void HR_C6000::sendTone(const uint32_t freq, const uint8_t deviation)
     writeCfgRegister(0xAF, 0x11);         // Set the same code to be sent six times (2 codes per register)
     writeCfgRegister(0xAE, 0x11);
     writeCfgRegister(0xAD, 0x11);
+    writeCfgRegister(0x60, 0x00);         // Disable FM transmission
+    writeCfgRegister(0x60, 0x80);         // Enable FM transmission, start sending the tone
 }

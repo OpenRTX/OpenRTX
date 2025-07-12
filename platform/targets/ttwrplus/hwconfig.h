@@ -31,7 +31,8 @@
 #define CONFIG_PIX_FMT_BW
 #define CONFIG_GPS
 
-#define CONFIG_BAT_LIPO_1S
+#define CONFIG_BAT_LIPO
+#define CONFIG_BAT_NCELLS 1
 
 #define CONFIG_M17
 

@@ -1,0 +1,135 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "setup arm build",
+      "type": "shell",
+      "command": "meson setup --cross-file cross_arm.txt build_arm"
+    },
+    {
+      "label": "build TYT MD-380, MD-390, Retevis RT3, Retevis RT8",
+      "type": "shell",
+      "command": "meson compile -C build_arm openrtx_md3x0",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "setup arm build",
+      ]
+    },
+    {
+      "label": "build TYT MD-UV380, MD-UV390, Retevis RT3s",
+      "type": "shell",
+      "command": "meson compile -C build_arm openrtx_mduv3x0",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "setup arm build",
+      ]
+    },
+    {
+      "label": "build TYT MD-9600",
+      "type": "shell",
+      "command": "meson compile -C build_arm openrtx_md9600",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "setup arm build",
+      ]
+    },
+    {
+      "label": "build Radioddity GD-77",
+      "type": "shell",
+      "command": "meson compile -C build_arm openrtx_gd77",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "setup arm build",
+      ]
+    },
+    {
+      "label": "build Baofeng DM1801",
+      "type": "shell",
+      "command": "meson compile -C build_arm openrtx_dm1801",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "setup arm build",
+      ]
+    },
+    {
+      "label": "build Module17",
+      "type": "shell",
+      "command": "meson compile -C build_arm openrtx_mod17",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "setup arm build",
+      ]
+    },
+    {
+      "label": "build Connect Systems CS7000-M17",
+      "type": "shell",
+      "command": "meson compile -C build_arm openrtx_cs7000",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "setup arm build",
+      ]
+    },
+    {
+      "label": "setup cm7 build",
+      "type": "shell",
+      "command": "meson setup --cross-file cross_cm7.txt build_cm7"
+    },
+    {
+      "label": "build Connect Systems CS7000-M17 Plus",
+      "type": "shell",
+      "command": "meson compile -C build_cm7 openrtx_cs7000p",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "setup cm7 build",
+      ]
+    },
+    {
+      "label": "setup linux build",
+      "type": "shell",
+      "command": "meson setup build_linux"
+    },
+    {
+      "label": "build linux",
+      "type": "shell",
+      "command": "meson compile -C build_linux openrtx_linux",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "setup linux build",
+      ]
+    },
+    {
+      "label": "run linux unit tests",
+      "type": "shell",
+      "command": "meson test -C build_linux",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "build linux",
+      ]
+    },
+    {
+      "label": "setup linux build with address sanitizer",
+      "type": "shell",
+      "command": "meson setup build_linux_address -Dasan=true"
+    },
+    {
+      "label": "build linux with address sanitizer",
+      "type": "shell",
+      "command": "meson compile -C build_linux_address openrtx_linux",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "setup linux build with address sanitizer",
+      ]
+    },
+    {
+      "label": "run linux unit tests with address sanitizer",
+      "type": "shell",
+      "command": "meson test -C build_linux_address",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "build linux with address sanitizer",
+      ]
+    }
+  ]
+}

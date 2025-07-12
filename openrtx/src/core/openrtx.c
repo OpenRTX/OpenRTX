@@ -81,8 +81,10 @@ void openrtx_init()
     #endif
 }
 
-void *openrtx_run()
+void *openrtx_run(void *arg)
 {
+    (void) arg;
+
     state.devStatus = RUNNING;
 
     // Start the OpenRTX threads

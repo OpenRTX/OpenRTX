@@ -477,8 +477,10 @@ static int process_line(char *line)
     }
 }
 
-void *startCLIMenu()
+void *startCLIMenu(void *arg)
 {
+    (void) arg;
+
     printf("\n\n");
     char *histfile = ".emulatorsh_history";
     shell_help(NULL, 0, NULL);

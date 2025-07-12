@@ -47,7 +47,7 @@ int main(void)
     openrtx_init();
 
 #ifndef PLATFORM_LINUX
-    openrtx_run();
+    openrtx_run(NULL);
 #else
     // macOS requires SDL main loop to run on the main thread.
     // Here we create a new thread for OpenRTX main program and utilize the main
