@@ -20,59 +20,48 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <os.h>
-#include <interfaces/gpio.h>
-#include <interfaces/graphics.h>
-#include "hwconfig.h"
+#include <graphics.h>
+#include <hwconfig.h>
 #include <interfaces/platform.h>
-
-void platform_test()
-{
-    gpio_togglePin(GREEN_LED);
-    OS_ERR os_err;
-    point_t pos_line1 = {0, 0};
-    point_t pos_line2 = {0, 9};
-    point_t pos_line3 = {0, 17};
-    color_t color_white = {255, 255, 255};
-    gfx_print(pos_line1, FONT_SIZE_1, TEXT_ALIGN_LEFT,
-              color_white, "Platform Test");
-    float vBat = platform_getVbat();
-    float micLevel = platform_getMicLevel();
-    float volumeLevel = platform_getVolumeLevel();
-    uint8_t currentCh = platform_getChSelector();
-    bool ptt = platform_getPttStatus();
-    gfx_print(pos_line2, FONT_SIZE_1, TEXT_ALIGN_LEFT, 
-              color_white, "bat:%.2f mic:%.2f", vBat, micLevel);
-    gfx_print(pos_line3, FONT_SIZE_1, TEXT_ALIGN_LEFT, 
-              color_white, "vol:%.2f ch:%d ptt:%s", volumeLevel, 
-              currentCh, ptt?"on":"off");
-    gfx_render();
-    while(gfx_renderingInProgress());
-    OSTimeDlyHMSM(0u, 0u, 0u, 250u, OS_OPT_TIME_HMSM_STRICT, &os_err);
-}
+#include <interfaces/delays.h>
+#include <interfaces/display.h>
 
 int main(void)
 {
-    gpio_setMode(GREEN_LED, OUTPUT);
-
-    // Init the graphic stack
+    platform_init();
     gfx_init();
-    platform_setBacklightLevel(255);
 
-    point_t origin = {0, SCREEN_HEIGHT / 2};
-    color_t color_yellow = {250, 180, 19};
+    display_setBacklightLevel(255);
 
-    OS_ERR os_err;
-
-    // Task infinite loop
     while(1)
     {
         gfx_clearScreen();
-        gfx_print(origin, FONT_SIZE_4, TEXT_ALIGN_CENTER, 
-                  color_yellow, "OpenRTX");
-        //gfx_render();
-        //while(gfx_renderingInProgress());
-        platform_test();
-        OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+
+        point_t pos_line = {5, 15};
+        color_t color_white = {255, 255, 255, 255};
+
+        uint16_t vBat = platform_getVbat();
+        uint8_t micLevel = platform_getMicLevel();
+        uint8_t volumeLevel = platform_getVolumeLevel();
+        int8_t currentCh = platform_getChSelector();
+        bool ptt = platform_getPttStatus();
+        bool pwr = platform_pwrButtonStatus();
+
+        gfx_print(pos_line, FONT_SIZE_6PT, TEXT_ALIGN_LEFT,
+                  color_white, "bat: %d, mic: %d", vBat, micLevel);
+
+        pos_line.y = 30;
+        gfx_print(pos_line, FONT_SIZE_6PT, TEXT_ALIGN_LEFT,
+                  color_white, "vol: %d, ch: %d", volumeLevel, currentCh);
+
+        pos_line.y = 45;
+        gfx_print(pos_line, FONT_SIZE_6PT, TEXT_ALIGN_LEFT,
+                  color_white, "ptt: %s, pwr: %s", ptt ? "on" : "off",
+                  pwr ? "on" : "off");
+
+        gfx_render();
+        sleepFor(0, 250u);
     }
+
+    return 0;
 }
