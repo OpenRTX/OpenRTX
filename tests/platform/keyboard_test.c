@@ -21,71 +21,60 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <os.h>
-#include <interfaces/gpio.h>
-#include <interfaces/graphics.h>
-#include "hwconfig.h"
+#include <hwconfig.h>
+#include <graphics.h>
 #include <interfaces/platform.h>
-#include "state.h"
 #include <interfaces/keyboard.h>
-#include "ui.h"
-
-color_t color_yellow_fab413 = {250, 180, 19};
-color_t color_red = {255, 0, 0};
-color_t color_green = {0, 255, 0};
+#include <interfaces/display.h>
+#include <interfaces/delays.h>
 
 char *keys_list[] = {
-        " ", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "#", "ENTER", "ESC", "UP", "DOWN", "LEFT", "RIGHT",
-        "MONI", "F1"
+     " ", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+     "*", "#", "ENTER", "ESC", "UP", "DOWN", "LEFT", "RIGHT",
+     "MONI", "F1"
 };
 
-void *print_keys(keyboard_t keys) {
-    point_t origin = {0, SCREEN_HEIGHT / 4};
-    //count set bits to check how many keys are being pressed
-    int i = __builtin_popcount(keys);
-    while (i > 0) {
-        //position of the first set bit
-        int pos = __builtin_ctz(keys);
-        gfx_print(origin, FONT_SIZE_8PT, TEXT_ALIGN_LEFT, 
-                  color_green, "Pressed: %s", keys_list[pos + 1]);
-        origin.y += 9;
-        //unset the bit we already handled
-        keys &= ~(1 << pos);
-        i--;
-    }
-    gfx_render();
-    while (gfx_renderingInProgress());
-}
-
-int main(void) {
-    OS_ERR os_err;
-
-    // Initialize platform drivers
+int main(void)
+{
     platform_init();
-
-    // Initialize graphics driver
     gfx_init();
-
-    // Clear screen
-    gfx_clearScreen();
-    gfx_render();
-    while (gfx_renderingInProgress());
-    platform_setBacklightLevel(255);
-
-    // Initialize keyboard driver
     kbd_init();
 
-    point_t title_origin = {0, SCREEN_HEIGHT / 9};
+    gfx_clearScreen();
+    gfx_render();
+    display_setBacklightLevel(255);
 
-    // UI update infinite loop
     while (1) {
+
         gfx_clearScreen();
-        gfx_print(title_origin, FONT_SIZE_8PT, TEXT_ALIGN_CENTER, 
-                  color_red, "Keyboard demo");
+
+        color_t color_white = {255, 255, 255, 255};
+        color_t color_green = {0,   255,   0, 255};
+        point_t origin = {5, 10};
+
+        gfx_print(origin, FONT_SIZE_6PT, TEXT_ALIGN_LEFT, color_green,
+                    "Keyboard test");
+
         keyboard_t keys = kbd_getKeys();
-        if (keys != 0)
-            print_keys(keys);
-        OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &os_err);
+        int i = __builtin_popcount(keys);
+
+        while (i > 0) {
+            //position of the first set bit
+            int pos = __builtin_ctz(keys);
+
+            origin.y += 10;
+            gfx_print(origin, FONT_SIZE_6PT, TEXT_ALIGN_LEFT, color_white,
+                        "Pressed: %s", keys_list[pos + 1]);
+
+            //unset the bit we already handled
+            keys &= ~(1 << pos);
+            i--;
+        }
+
+        gfx_render();
+        sleepFor(0, 100u);
     }
+
+    return 0;
 }
 
