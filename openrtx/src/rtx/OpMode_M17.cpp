@@ -486,11 +486,6 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         lsfFragCount = 6;
 
         // reset metatext so nothing left over from previous contact
-		memset(status->M17_Meta_Text, 0, 53);
-
-        lsfFragCount = 6;
-
-        // reset metatext so nothing left over from previous contact
         memset(status->M17_Meta_Text, 0, 53);
 
         std::string src(status->source_address);
@@ -595,13 +590,10 @@ void OpMode_M17::txState(rtxStatus_t *const status)
     		lsfFragCount++;
     }
 
-    if(gpsEnabled)
-    	gpsTimer++;
-
     // Wait at least 5 seconds between GPS transmissions
-    if((gpsTimer >= 150) && (last_text_blk == 0xff || last_text_blk == 0))
+    if((gpsTimer == -1) || ((gpsTimer >= 150) && (last_text_blk == 0xff || last_text_blk == 0)))
     {
-    	gpsTimer  = 0;
+        gpsTimer = 0;
 
         gps_t gps_data;
         pthread_mutex_lock(&state_mutex);
@@ -641,6 +633,9 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         }
     }
 
+    if(gpsEnabled)
+    	gpsTimer++;
+
     payload_t dataFrame;
     bool      lastFrame = false;
 
@@ -668,6 +663,7 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         encoder.encodeEotFrame(m17Frame);
         modulator.sendFrame(m17Frame);
         modulator.stop();
+        gpsTimer = -1;
     }
 }
 
