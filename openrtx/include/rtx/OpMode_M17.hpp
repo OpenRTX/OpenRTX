@@ -31,6 +31,8 @@
 #include <vector>
 #include "OpMode.hpp"
 
+#define FEET_PER_METER 3.28084
+#define MILES_PER_KM 0.621371
 /**
  * Specialisation of the OpMode class for the management of M17 operating mode.
  */
