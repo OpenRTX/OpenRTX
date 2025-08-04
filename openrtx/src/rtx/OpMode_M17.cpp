@@ -538,41 +538,6 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         else
         	last_text_blk = 0xff;   // no text to send
 
-        if(strlen(state.settings.M17_meta_text) > 0)      // have text to send
-        {
-            type.fields.encType    = M17_ENCRYPTION_NONE; // No encryption
-            type.fields.encSubType = M17_META_TEXT;       // Meta text
-
-            uint8_t buf[14];
-            memset(buf, 32, 14); // set to all spaces
-            // this should return number of meta blocks needed
-            uint8_t msglen = ceilf((float)strlen(state.settings.M17_meta_text) / 13.0f);
-            // set control byte upper nibble for number of text blocks
-            // 0001 = 1 blk. 0011 = 2 blks, 0111 = 3 blks, 1111 = 4 blks
-            buf[0] = (0x0f >> (4 - msglen)) << 4;
-
-            // check if less than 13 characters remain
-            uint8_t len = (uint8_t)(strlen(state.settings.M17_meta_text) - (last_text_blk * 13));
-            // if over 13 then limit to 13
-            if(len > 13)
-                len = 13;
-            memcpy(buf+1, state.settings.M17_meta_text+(last_text_blk * 13), len);
-
-            // set control byte lower nibble to block id
-            // 0001 = blk1, 0010 = blk2, 0100 = blk3, 1000 = blk4
-            buf[0] += (1 << last_text_blk++);
-            lsf.setMetaText(buf);
-            encoder.encodeLsf(lsf, m17Frame);
-
-            // if all blocks sent then reset
-            if(last_text_blk == msglen)
-            {
-                last_text_blk = 0;
-            }
-        }
-        else
-            last_text_blk = 0xff;                         // no text to send
-
         lsf.setType(type);
         lsf.updateCrc();
 
