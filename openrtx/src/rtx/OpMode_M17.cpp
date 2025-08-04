@@ -648,24 +648,25 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         	gnssData_t gnss;
         	gnss.data_src = 0x01; //OpenRTX source
         	gnss.station_type = 0x02; // Portable station
-        	float lat = gps_data.latitude / 1000000;
-        	float whole;
-        	float dec = modff(lat, &whole);
-        	gnss.lat_deg = (int)whole; // Degrees Latitude (whole)
-        	gnss.lat_dec = 65535 * dec; // Degrees Latitude (decimal)
-            int8_t sign = gps_data.latitude < 0 ? 1 : 0;
-        	gnss.lat_sign = sign; // Latitude sign
-        	float lng = gps_data.longitude / 1000000;
-        	dec = modff(lng, &whole);
-        	gnss.lon_deg = (int)whole; // Degrees Longitude (whole)
-        	gnss.lon_dec = 65535 * dec; // Degrees Longitude (decimal)
-            sign = gps_data.longitude < 0 ? 1 : 0;
-        	gnss.lon_sign = sign; // Longitude sign
-        	gnss.altitude = 1500 + gps_data.altitude; // Altitude
-        	gnss.alt_valid = 1; // Altitude valid
-        	gnss.bearing = gps_data.tmg_true; // Bearing
-        	gnss.speed = gps_data.speed; // Speed
-        	gnss.spd_valid = 0; // Speed and Bearing valid
+
+			float lat = gps_data.latitude / 1000000.0f;
+			float whole;
+			float fdec = modff(lat, &whole);
+			gnss.lat_deg = (uint8_t)fabsf(whole); // Degrees Latitude (whole)
+			gnss.lat_dec = (uint16_t)roundf(fabsf(65536.0 * fdec)); // Degrees Latitude (decimal)
+			int8_t sign = gps_data.latitude < 0 ? 1 : 0;
+			gnss.lat_sign = sign; // Latitude sign
+			float lng = gps_data.longitude / 1000000.0f;
+			fdec = modff(lng, &whole);
+			gnss.lon_deg = (uint8_t)fabsf(whole); // Degrees Longitude (whole)
+			gnss.lon_dec = (uint16_t)roundf(fabsf(65536.0 * fdec)); // Degrees Longitude (decimal)
+			sign = gps_data.longitude < 0 ? 1 : 0;
+			gnss.lon_sign = sign; // Longitude sign
+			gnss.altitude = (uint16_t)1500.0 + gps_data.altitude*FEET_PER_METER; // Altitude
+			gnss.alt_valid = 1; // Altitude valid
+			gnss.bearing = (uint16_t)gps_data.tmg_true; // Bearing
+			gnss.speed = (uint8_t)gps_data.speed*MILES_PER_KM; // Speed
+			gnss.spd_valid = 0; // Speed and Bearing valid
         	lsf.setMetaText((uint8_t*)&gnss);
 
         	type.fields.encSubType = M17_META_GNSS;
