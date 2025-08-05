@@ -1,7 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2021 - 2025 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2020 - 2025 by Federico Izzo IU2NUO,                    *
  *                                Niccolò Izzo IU2KIN                      *
- *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -18,43 +17,51 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <interfaces/delays.h>
-#include <interfaces/audio.h>
-#include <interfaces/audio_path.h>
-#include <audio_stream.h>
+#include <graphics.h>
+#include <hwconfig.h>
 #include <interfaces/platform.h>
-#include <dsp.h>
+#include <interfaces/delays.h>
+#include <interfaces/display.h>
 
-int main()
+int main(void)
 {
     platform_init();
+    gfx_init();
 
-    static const size_t numSamples = 45*1024;       // 90kB
-    stream_sample_t *sampleBuf = ((stream_sample_t *) malloc(numSamples *
-                                                      sizeof(stream_sample_t)));
+    display_setBacklightLevel(255);
 
-    audio_enableMic();
-    streamId id = inputStream_start(SOURCE_RTX, PRIO_TX, sampleBuf, numSamples,
-                                    BUF_LINEAR, 24000);
-
-    sleepFor(3u, 0u);
-    platform_ledOn(GREEN);
-
-    dataBlock_t audio = inputStream_getData(id);
-
-    platform_ledOff(GREEN);
-    platform_ledOn(RED);
-    sleepFor(10u, 0u);
-
-    uint16_t *ptr = ((uint16_t *) audio.data);
-    for(size_t i = 0; i < audio.len; i++)
+    while(1)
     {
-        iprintf("%04x ", __builtin_bswap16(ptr[i]));
-    }
+        gfx_clearScreen();
 
-    while(1) ;
+        point_t pos_line = {5, 15};
+        color_t color_white = {255, 255, 255, 255};
+
+        uint16_t vBat = platform_getVbat();
+        uint8_t micLevel = platform_getMicLevel();
+        uint8_t volumeLevel = platform_getVolumeLevel();
+        int8_t currentCh = platform_getChSelector();
+        bool ptt = platform_getPttStatus();
+        bool pwr = platform_pwrButtonStatus();
+
+        gfx_print(pos_line, FONT_SIZE_6PT, TEXT_ALIGN_LEFT,
+                  color_white, "bat: %d, mic: %d", vBat, micLevel);
+
+        pos_line.y = 30;
+        gfx_print(pos_line, FONT_SIZE_6PT, TEXT_ALIGN_LEFT,
+                  color_white, "vol: %d, ch: %d", volumeLevel, currentCh);
+
+        pos_line.y = 45;
+        gfx_print(pos_line, FONT_SIZE_6PT, TEXT_ALIGN_LEFT,
+                  color_white, "ptt: %s, pwr: %s", ptt ? "on" : "off",
+                  pwr ? "on" : "off");
+
+        gfx_render();
+        sleepFor(0, 250u);
+    }
 
     return 0;
 }
