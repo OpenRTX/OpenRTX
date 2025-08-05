@@ -165,7 +165,10 @@ private:
     filter_state_t                 dcrState;        ///< State of the DC removal filter
 
     Correlator   < M17_SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > correlator;
+    Synchronizer < M17_SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > lsfSync   {{ +3, +3, +3, +3, -3, -3, +3, -3 }};
     Synchronizer < M17_SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > streamSync{{ -3, -3, -3, -3, +3, +3, -3, +3 }};
+    Synchronizer < M17_SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > packetSync{{ +3, -3, +3, +3, -3, -3, -3, -3 }};
+    Synchronizer < M17_SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL >    eotSync{{ +3, +3, +3, +3, +3, +3, -3, +3 }};
     Iir          < 3 >                                        sampleFilter{sfNum, sfDen};
 };
 
