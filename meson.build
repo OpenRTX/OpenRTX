@@ -504,7 +504,8 @@ cs7000_src = ['platform/drivers/NVM/nvmem_CS7000.c',
              'platform/drivers/GPIO/gpio_shiftReg.c',
              'platform/drivers/SPI/spi_custom.c',
              'platform/drivers/SPI/spi_bitbang.c',
-             'platform/drivers/GPS/GPS_CS7000.cpp',
+             'platform/drivers/GPS/gps_stm32.cpp',
+             'platform/drivers/GPS/nmea_rbuf.c',
              'platform/targets/CS7000/hwconfig.c',
              'platform/targets/CS7000/platform.c']
 

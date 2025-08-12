@@ -50,6 +50,7 @@ extern const struct spiDevice c6000_spi;
 extern const struct gpioDev extGpio;
 extern const struct ak2365a detector;
 extern const struct sky73210 pll;
+extern const struct gpsDevice gps;
 
 /* Screen dimensions */
 #define CONFIG_SCREEN_WIDTH 160
@@ -70,6 +71,8 @@ extern const struct sky73210 pll;
 
 /* Device has a GPS chip */
 #define CONFIG_GPS
+#define CONFIG_GPS_STM32_USART6
+#define CONFIG_NMEA_RBUF_SIZE 128
 
 #ifdef __cplusplus
 }
