@@ -26,8 +26,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef PLL_H
-#define PLL_H
+#ifndef RCC_H
+#define RCC_H
 
 #include <stdint.h>
 
@@ -65,4 +65,4 @@ uint32_t getBusClock(const uint8_t bus);
 }
 #endif
 
-#endif //PLL_H
+#endif //RCC_H

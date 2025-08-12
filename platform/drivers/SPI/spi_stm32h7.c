@@ -15,7 +15,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <pll.h>
+#include <rcc.h>
 #include <errno.h>
 #include <stm32h7xx.h>
 #include "spi_stm32.h"

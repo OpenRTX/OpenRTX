@@ -280,7 +280,7 @@ mk22fn512_def += miosix_cm4f_def
 stm32h743_src = ['platform/mcu/STM32H7xx/boot/startup.cpp',
                  'platform/mcu/STM32H7xx/boot/bsp.cpp',
                  'platform/mcu/STM32H7xx/boot/libc_integration.cpp',
-                 'platform/mcu/STM32H7xx/drivers/pll.cpp',
+                 'platform/mcu/STM32H7xx/drivers/rcc.cpp',
                  'platform/mcu/STM32H7xx/drivers/delays.cpp',
                  'platform/drivers/GPIO/gpio_stm32.c',
                  'platform/drivers/ADC/adc_stm32h7.c',

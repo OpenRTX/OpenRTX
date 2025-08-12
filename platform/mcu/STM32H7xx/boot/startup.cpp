@@ -2,7 +2,7 @@
 #include "interfaces/arch_registers.h"
 #include "core/interrupts.h" //For the unexpected interrupt call
 #include "core/cache_cortexMx.h"
-#include "drivers/pll.h"
+#include "drivers/rcc.h"
 #include "kernel/stage_2_boot.h"
 #include <string.h>
 

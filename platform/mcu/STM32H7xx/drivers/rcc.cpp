@@ -27,7 +27,7 @@
  ***************************************************************************/
 
 #include <stm32h7xx.h>
-#include "pll.h"
+#include "rcc.h"
 
 /**
  * Clock tree configuration:
