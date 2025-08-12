@@ -33,10 +33,7 @@
 #include <utils.h>
 #include <input.h>
 #include <backup.h>
-#ifdef CONFIG_GPS
-#include <peripherals/gps.h>
 #include <gps.h>
-#endif
 #include <voicePrompts.h>
 
 #if defined(PLATFORM_TTWRPLUS)
@@ -137,7 +134,13 @@ void *main_thread(void *arg)
 {
     (void) arg;
 
-    long long time     = 0;
+    long long time = 0;
+
+    #if defined(CONFIG_GPS)
+    const struct gpsDevice *gps = platform_initGps();
+    if(gps != NULL)
+        state.gpsDetected = true;
+    #endif
 
     while(state.devStatus != SHUTDOWN)
     {
@@ -154,8 +157,8 @@ void *main_thread(void *arg)
         pthread_mutex_unlock(&state_mutex);
 
         // Run GPS task
-        #if defined(CONFIG_GPS) && !defined(MD3x0_ENABLE_DBG)
-        gps_task();
+        #if defined(CONFIG_GPS)
+        gps_task(gps);
         #endif
 
         // Run state update task
@@ -165,10 +168,6 @@ void *main_thread(void *arg)
         time += 5;
         sleepUntil(time);
     }
-
-    #if defined(CONFIG_GPS)
-    gps_terminate();
-    #endif
 
     return NULL;
 }

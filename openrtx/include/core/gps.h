@@ -107,7 +107,7 @@ static inline int gps_getSentence(const struct gpsDevice *dev, char *buf, const 
  * if available, enabled and ready, decode NMEA sentences and update
  * the radio state with the retrieved data.
  */
-void gps_task();
+void gps_task(const struct gpsDevice *dev);
 
 
 #endif /* GPS_H */
