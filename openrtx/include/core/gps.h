@@ -21,8 +21,8 @@
 #define GPS_H
 
 #include <datetime.h>
+#include <stddef.h>
 #include <stdint.h>
-#include <minmea.h>
 
 /**
  * Data structure representing a single satellite as part of a GPS fix.
@@ -56,6 +56,51 @@ typedef struct
     int16_t    tmg_true;             // Course over ground, degrees, true
 }
 gps_t;
+
+/**
+ * Data structure for GPS device managment.
+ */
+struct gpsDevice {
+    void *priv;
+    void (*enable)(void *priv);
+    void (*disable)(void *priv);
+    int  (*getSentence)(void *priv, char *buf, const size_t bufSize);
+};
+
+/**
+ * Enable the GPS.
+ *
+ * @param dev: pointer to GPS device handle.
+ */
+static inline void gps_enable(const struct gpsDevice *dev)
+{
+    dev->enable(dev->priv);
+}
+
+/**
+ * Disable the GPS.
+ *
+ * @param dev: pointer to GPS device handle.
+ */
+static inline void gps_disable(const struct gpsDevice *dev)
+{
+    dev->disable(dev->priv);
+}
+
+/**
+ * Get a full NMEA sentence from the GPS.
+ * This function is nonblocking.
+ *
+ * @param dev: pointer to GPS device handle.
+ * @param buf: pointer to a buffer where to write the sentence.
+ * @param bufSize: size of the destination buffer.
+ * @return the length of the extracted sentence, -1 if the sentence is
+ * longer than the maximum allowed size or zero if no sentence is available.
+ */
+static inline int gps_getSentence(const struct gpsDevice *dev, char *buf, const size_t bufSize)
+{
+    return dev->getSentence(dev->priv, buf, bufSize);
+}
 
 /**
  * This function perfoms the task of reading data from the GPS module,

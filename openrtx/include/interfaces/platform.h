@@ -75,6 +75,7 @@ typedef struct
 
 } hwInfo_t;
 
+struct gpsDevice;
 
 /**
  * This function handles device hardware initialization.
@@ -167,6 +168,14 @@ void platform_setTime(datetime_t t);
  * @return pointer to device's hardware information.
  */
 const hwInfo_t *platform_getHwInfo();
+
+#ifdef CONFIG_GPS
+/**
+ * Detect and initialize the on-board GPS.
+ * @return a GPS device handle or NULL if no device has been detected.
+ */
+const struct gpsDevice *platform_initGps();
+#endif
 
 #ifdef __cplusplus
 }
