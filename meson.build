@@ -385,7 +385,8 @@ md3x0_src = ['platform/drivers/CPS/cps_io_native_MD3x0.c',
              'platform/drivers/keyboard/keyboard_MD3x.c',
              'platform/drivers/display/HX8353_MD3x.cpp',
              'platform/drivers/backlight/backlight_MDx.c',
-             'platform/drivers/GPS/GPS_MDx.cpp',
+             'platform/drivers/GPS/gps_stm32.cpp',
+             'platform/drivers/GPS/nmea_rbuf.c',
              'platform/targets/MD-3x0/platform.c',
              'platform/targets/MD-3x0/hwconfig.c']
 

@@ -18,13 +18,28 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <peripherals/gpio.h>
 #include <spi_bitbang.h>
 #include <spi_custom.h>
 #include <spi_stm32.h>
 #include <adc_stm32.h>
+#include <gps_stm32.h>
 #include <SKY72310.h>
 #include <hwconfig.h>
 #include <pinmap.h>
+#include <gps.h>
+
+static void gpsEnable(void *priv)
+{
+    gpio_setPin(GPS_EN);
+    gpsStm32_enable(priv);
+}
+
+static void gpsDisable(void *priv)
+{
+    gpio_clearPin(GPS_EN);
+    gpsStm32_disable(priv);
+}
 
 const struct spiConfig spiPllCfg =
 {
@@ -56,4 +71,12 @@ const struct sky73210 pll =
     .spi    = (const struct spiDevice *) &pll_spi,
     .cs     = { PLL_CS },
     .refClk = 16800000
+};
+
+const struct gpsDevice gps =
+{
+    .priv = NULL,
+    .enable = gpsEnable,
+    .disable = gpsDisable,
+    .getSentence = gpsStm32_getNmeaSentence
 };
