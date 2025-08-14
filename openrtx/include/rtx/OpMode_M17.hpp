@@ -31,8 +31,12 @@
 #include <vector>
 #include "OpMode.hpp"
 
-#define FEET_PER_METER 3.28084
-#define MILES_PER_KM 0.621371
+#define M17_GNSS_SOURCE_M17CLIENT        0
+#define M17_GNSS_SOURCE_OPENRTX          1
+#define M17_GNSS_STATION_FIXED           0
+#define M17_GNSS_STATION_MOBILE          1
+#define M17_GNSS_STATION_HANDHELD        2
+
 /**
  * Specialisation of the OpMode class for the management of M17 operating mode.
  */
@@ -153,6 +157,11 @@ private:
      */
     bool compareCallsigns(const std::string& localCs, const std::string& incomingCs);
 
+    /**
+     * Convert OpenRTX latitude/longitude format into M17 format and vice versa.
+     */
+    void rtx_to_q(int32_t* qlat, int32_t* qlon, int32_t lat, int32_t lon);
+    void q_to_rtx(int32_t* lat, int32_t* lon, int32_t qlat, int32_t qlon);
 
 	uint8_t  textOffset = 0;              ///< Metatext offset
 	uint8_t  blk_id_tot = 0;              ///< Metatext block Id total

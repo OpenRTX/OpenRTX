@@ -79,20 +79,16 @@ enum M17ScramblingType
  */
 typedef struct __attribute__((packed))
 {
-    uint8_t  data_src;          //< Data source
-    uint8_t  station_type;      //< Station type
-    uint8_t  lat_deg;           //< Latitude, whole number
-    uint16_t lat_dec;           //< Latitude, decimal part multiplied by 65535
-    uint8_t  lon_deg;           //< Longitude, whole number
-    uint16_t lon_dec;           //< Longitude, decimal part multiplied by 65535
-    uint8_t  lat_sign  : 1;     //< Latitude N/S: 0 = north, 1 = south
-    uint8_t  lon_sign  : 1;     //< Longitude E/W: 0 = east, 1 = west
-    uint8_t  alt_valid : 1;     //< Altitude data valid
-    uint8_t  spd_valid : 1;     //< Speed data valid
-    uint8_t  _unused   : 4;
-    uint16_t altitude;          //< Altitude above sea level in feet + 1500
-    uint16_t bearing;           //< Bearing in degrees, whole number
-    uint8_t  speed;             //< Speed in mph, whole number
+    uint8_t  data_src : 4;      //< Data source
+    uint8_t  station_type : 4;  //< Station type
+    uint8_t  validity : 4;      //< Data validity
+    uint8_t  radius : 3;        //< Radius
+    uint16_t bearing : 9;       //< Bearing
+    uint8_t  lat[3];            //< Latitude
+    uint8_t  lon[3];            //< Longitude
+    uint16_t altitude;          //< Altitude MSL, 0.5m steps, 500m offset
+    uint16_t  speed : 12;       //< Speed, 0.5km/h steps
+    uint16_t  _unused : 12;
 }
 gnssData_t;
 
