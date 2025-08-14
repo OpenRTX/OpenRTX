@@ -18,18 +18,15 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <peripherals/gps.h>
-#include <interfaces/delays.h>
 #include <sys/time.h>
-#include <hwconfig.h>
+#include <stdbool.h>
 #include <string.h>
+#include <gps.h>
 
 #define MAX_NMEA_LEN 80
 #define NMEA_SAMPLES 8
 
-static long long startTime;
-
-char test_nmea_sentences [NMEA_SAMPLES][MAX_NMEA_LEN] =
+static const char test_nmea_sentences[NMEA_SAMPLES][MAX_NMEA_LEN] =
 {
     "$GPGGA,223659.522,5333.735,N,00959.130,E,1,12,1.0,0.0,M,0.0,M,,*62",
     "$GPGSA,A,3,01,02,03,04,05,06,07,08,09,10,11,12,1.0,1.0,1.0*30",
@@ -40,72 +37,61 @@ char test_nmea_sentences [NMEA_SAMPLES][MAX_NMEA_LEN] =
     "$GPVTG,92.15,T,,M,0.15,N,0.28,K,A*0C"
 };
 
-void gps_init(const uint16_t baud)
+static long long startTime;
+static bool enabled = true;
+static int currSentence = 0;
+
+static inline long long now()
 {
-    (void) baud;
-    return;
+    struct timeval te;
+    gettimeofday(&te, NULL);
+
+    return (te.tv_sec*1000LL) + (te.tv_usec/1000);
 }
 
-void gps_terminate()
+static void enable(void *priv)
 {
-    return;
+    (void) priv;
+
+    enabled = true;
+    currSentence = 0;
+    startTime = now();
 }
 
-void gps_enable()
+static void disable(void *priv)
 {
-    return;
+    (void) priv;
+
+    enabled = false;
 }
 
-void gps_disable()
+static int getNmeaSentence(void *priv, char *buf, const size_t bufSize)
 {
-    return;
-}
+    (void) priv;
 
-bool gps_detect(uint16_t timeout)
-{
-    (void) timeout;
-    return true;
-}
+    // GPS off > no data
+    if(!enabled)
+        return 0;
 
-int gps_getNmeaSentence(char *buf, const size_t maxLength)
-{
-    static int i = 0;
+    // Emit one sentence every 1s
+    long long currTime = now();
+    if((currTime - startTime) < 1000)
+        return 0;
 
-    // Emulate GPS device by sending NMEA sentences every 1s
-    if(i == 0)
-        sleepFor(1u, 0u);
-
-    size_t len = strnlen(test_nmea_sentences[i], MAX_NMEA_LEN);
-
-    if (len > maxLength)
+    size_t len = strnlen(test_nmea_sentences[currSentence], MAX_NMEA_LEN);
+    if(len > bufSize)
         return -1;
 
-    strncpy(buf, test_nmea_sentences[i], maxLength);
-    i++;
-    i %= NMEA_SAMPLES;
+    strncpy(buf, test_nmea_sentences[currSentence], bufSize);
+    currSentence += 1;
+    currSentence %= NMEA_SAMPLES;
+    startTime = currTime;
 
-    // Save the current timestamp for sentence ready emulation
-    struct timeval te;
-    gettimeofday(&te, NULL);
-    startTime = te.tv_sec*1000LL + te.tv_usec/1000;
-
-    return 0;
+    return (int) len;
 }
 
-bool gps_nmeaSentenceReady()
-{
-    // Return new sentence ready only after 1s from start
-    struct timeval te;
-    gettimeofday(&te, NULL);
-    long long currTime = te.tv_sec*1000LL + te.tv_usec/1000;
-
-    if((currTime -  startTime) > 1000) return true;
-
-    return false;
-}
-
-void gps_waitForNmeaSentence()
-{
-    return;
-}
-
+const struct gpsDevice gps = {
+    .enable = enable,
+    .disable = disable,
+    .getSentence = getNmeaSentence
+};

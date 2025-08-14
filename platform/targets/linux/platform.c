@@ -19,6 +19,7 @@
 #include <interfaces/platform.h>
 #include <interfaces/nvmem.h>
 #include <stdio.h>
+#include <gps.h>
 #include "emulator.h"
 
 /*
@@ -156,4 +157,10 @@ void platform_setTime(datetime_t t)
 const hwInfo_t *platform_getHwInfo()
 {
     return &hwInfo;
+}
+
+const struct gpsDevice *platform_initGps()
+{
+    extern struct gpsDevice gps;
+    return &gps;
 }
