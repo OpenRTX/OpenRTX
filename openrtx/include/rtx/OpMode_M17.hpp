@@ -31,11 +31,11 @@
 #include <vector>
 #include "OpMode.hpp"
 
-#define M17_GNSS_SOURCE_M17CLIENT        0
-#define M17_GNSS_SOURCE_OPENRTX          1
-#define M17_GNSS_STATION_FIXED           0
-#define M17_GNSS_STATION_MOBILE          1
-#define M17_GNSS_STATION_HANDHELD        2
+#define M17_GNSS_SOURCE_M17CLIENT        ((uint8_t)0)
+#define M17_GNSS_SOURCE_OPENRTX          ((uint8_t)1)
+#define M17_GNSS_STATION_FIXED           ((uint8_t)0)
+#define M17_GNSS_STATION_MOBILE          ((uint8_t)1)
+#define M17_GNSS_STATION_HANDHELD        ((uint8_t)2)
 
 /**
  * Specialisation of the OpMode class for the management of M17 operating mode.

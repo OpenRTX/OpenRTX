@@ -602,33 +602,39 @@ void OpMode_M17::txState(rtxStatus_t *const status)
 
         if(gps_data.fix_type > 0) //Valid GPS fix
         {
-        	gnssData_t gnss;
-        	gnss.data_src = M17_GNSS_SOURCE_OPENRTX; //OpenRTX source
-        	gnss.station_type = M17_GNSS_STATION_HANDHELD; //Portable station
+        	uint8_t gnss[14] = {0};
 
-            gnss.validity = 0; //zero out gnss data validity field
+        	gnss[0] = (M17_GNSS_SOURCE_OPENRTX<<4) | M17_GNSS_STATION_HANDHELD; //OpenRTX source, portable station
 
-            gnss.radius = 0;
-            gnss.validity |= (0<<0); //Radius invalid
+            gnss[1] &= ~((uint8_t)0xF0); //zero out gnss data validity field
 
-            gnss.bearing = (uint16_t)gps_data.tmg_true; //Bearing
+            gnss[1] &= ~((uint8_t)0x7<<1); //Radius = 0
+            gnss[1] &= ~((uint8_t)0<<4); //Radius invalid
+
+            gnss[1] |= ((uint16_t)gps_data.tmg_true>>8)&1; //Bearing
+            gnss[2] = ((uint16_t)gps_data.tmg_true)&0xFF;
 
             int32_t lat_tmp, lon_tmp;
             rtx_to_q(&lat_tmp, &lon_tmp, gps_data.latitude, gps_data.longitude);
             for(uint8_t i=0; i<3; i++)
             {
-                gnss.lat[i] = *((uint8_t*)&lat_tmp+2-i);
-                gnss.lon[i] = *((uint8_t*)&lon_tmp+2-i);
+                gnss[3+i] = *((uint8_t*)&lat_tmp+2-i);
+                gnss[6+i] = *((uint8_t*)&lon_tmp+2-i);
             }
-            gnss.validity |= (1<<3); //Lat/lon valid
+            gnss[1] |= (1<<7); //Lat/lon valid
 
-			gnss.altitude = (uint16_t)1000 + gps_data.altitude*2;
-			gnss.validity |= (1<<2); //Altitude valid
+            uint16_t alt = (uint16_t)1000 + gps_data.altitude*2;
+			gnss[9] = alt>>8;
+            gnss[10] = alt&0xFF;
+			gnss[1] |= (1<<6); //Altitude valid
 
-			gnss.speed = (uint16_t)gps_data.speed*2; //Speed
-			gnss.validity |= (1<<1); //Speed and Bearing valid
+            uint16_t speed = (uint16_t)gps_data.speed*2;
+			gnss[11] = speed>>8;
+            gnss[12] = (speed&0xFF)<<4;
+			gnss[1] |= (1<<5); //Speed and Bearing valid
 
-            gnss._unused = 0;
+            gnss[12] &= ~((uint8_t)0x0F);
+            gnss[13] = 0;
 
         	lsf.setMetaText((uint8_t*)&gnss);
 
