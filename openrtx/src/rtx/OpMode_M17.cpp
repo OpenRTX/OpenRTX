@@ -628,6 +628,8 @@ void OpMode_M17::txState(rtxStatus_t *const status)
 			gnss.speed = (uint16_t)gps_data.speed*2; //Speed
 			gnss.validity |= (1<<1); //Speed and Bearing valid
 
+            gnss._unused = 0;
+
         	lsf.setMetaText((uint8_t*)&gnss);
 
         	type.fields.encSubType = M17_META_GNSS;
