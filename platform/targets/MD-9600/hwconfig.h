@@ -40,6 +40,7 @@ enum adcChannel
     ADC_HTEMP_CH = 15
 };
 
+extern const struct gpsDevice gps;
 extern const struct spiDevice spi2;
 extern const struct Adc adc1;
 
@@ -48,6 +49,8 @@ extern const struct Adc adc1;
 
 /* Device supports an optional GPS chip */
 #define CONFIG_GPS
+#define CONFIG_GPS_STM32_USART1
+#define CONFIG_NMEA_RBUF_SIZE 128
 
 /* Screen dimensions */
 #define CONFIG_SCREEN_WIDTH 128
