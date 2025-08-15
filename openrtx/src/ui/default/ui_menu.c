@@ -638,7 +638,10 @@ void _ui_drawMenuGPS()
               color_white, currentLanguage->gps);
     point_t fix_pos = {layout.line2_pos.x, CONFIG_SCREEN_HEIGHT * 2 / 5};
     // Print GPS status, if no fix, hide details
-    if(!last_state.settings.gps_enabled)
+    if(!last_state.gpsDetected)
+        gfx_print(fix_pos, layout.line3_large_font, TEXT_ALIGN_CENTER,
+                  color_white, currentLanguage->noGps);
+    else if(!last_state.settings.gps_enabled)
         gfx_print(fix_pos, layout.line3_large_font, TEXT_ALIGN_CENTER,
                   color_white, currentLanguage->gpsOff);
     else if (last_state.gps_data.fix_quality == 0)

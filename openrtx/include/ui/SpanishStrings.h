@@ -95,6 +95,7 @@ const stringsTable_t spanishStrings =
     .broadcast         = "TODOS",
     .radioSettings     = "Ajustes de Radio",
     .frequencyOffset   = "Offset de frecuencia",
-    .macroLatching     = "Macro Latching"
+    .macroLatching     = "Macro Latching",
+    .noGps             = "Ningún GPS",
 };
 #endif  // SPANISHSTRINGS_H
