@@ -600,30 +600,42 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         gps_data = state.gps_data;
         pthread_mutex_unlock(&state_mutex);
 
-        if(gps_data.fix_type > 0) // Valid GPS fix
+        if(gps_data.fix_type > 0) //Valid GPS fix
         {
-        	gnssData_t gnss;
-        	gnss.data_src = 0x01; //OpenRTX source
-        	gnss.station_type = 0x02; // Portable station
+        	uint8_t gnss[14] = {0};
 
-			float lat = gps_data.latitude / 1000000.0f;
-			float whole;
-			float fdec = modff(lat, &whole);
-			gnss.lat_deg = (uint8_t)fabsf(whole); // Degrees Latitude (whole)
-			gnss.lat_dec = (uint16_t)roundf(fabsf(65536.0 * fdec)); // Degrees Latitude (decimal)
-			int8_t sign = gps_data.latitude < 0 ? 1 : 0;
-			gnss.lat_sign = sign; // Latitude sign
-			float lng = gps_data.longitude / 1000000.0f;
-			fdec = modff(lng, &whole);
-			gnss.lon_deg = (uint8_t)fabsf(whole); // Degrees Longitude (whole)
-			gnss.lon_dec = (uint16_t)roundf(fabsf(65536.0 * fdec)); // Degrees Longitude (decimal)
-			sign = gps_data.longitude < 0 ? 1 : 0;
-			gnss.lon_sign = sign; // Longitude sign
-			gnss.altitude = (uint16_t)1500.0 + gps_data.altitude*FEET_PER_METER; // Altitude
-			gnss.alt_valid = 1; // Altitude valid
-			gnss.bearing = (uint16_t)gps_data.tmg_true; // Bearing
-			gnss.speed = (uint8_t)gps_data.speed*MILES_PER_KM; // Speed
-			gnss.spd_valid = 0; // Speed and Bearing valid
+        	gnss[0] = (M17_GNSS_SOURCE_OPENRTX<<4) | M17_GNSS_STATION_HANDHELD; //OpenRTX source, portable station
+
+            gnss[1] &= ~((uint8_t)0xF0); //zero out gnss data validity field
+
+            gnss[1] &= ~((uint8_t)0x7<<1); //Radius = 0
+            gnss[1] &= ~((uint8_t)0<<4); //Radius invalid
+
+            gnss[1] |= ((uint16_t)gps_data.tmg_true>>8)&1; //Bearing
+            gnss[2] = ((uint16_t)gps_data.tmg_true)&0xFF;
+
+            int32_t lat_tmp, lon_tmp;
+            rtx_to_q(&lat_tmp, &lon_tmp, gps_data.latitude, gps_data.longitude);
+            for(uint8_t i=0; i<3; i++)
+            {
+                gnss[3+i] = *((uint8_t*)&lat_tmp+2-i);
+                gnss[6+i] = *((uint8_t*)&lon_tmp+2-i);
+            }
+            gnss[1] |= (1<<7); //Lat/lon valid
+
+            uint16_t alt = (uint16_t)1000 + gps_data.altitude*2;
+			gnss[9] = alt>>8;
+            gnss[10] = alt&0xFF;
+			gnss[1] |= (1<<6); //Altitude valid
+
+            uint16_t speed = (uint16_t)gps_data.speed*2;
+			gnss[11] = speed>>8;
+            gnss[12] = (speed&0xFF)<<4;
+			gnss[1] |= (1<<5); //Speed and Bearing valid
+
+            gnss[12] &= ~((uint8_t)0x0F);
+            gnss[13] = 0;
+
         	lsf.setMetaText((uint8_t*)&gnss);
 
         	type.fields.encSubType = M17_META_GNSS;
@@ -792,4 +804,22 @@ bool OpMode_M17::compareCallsigns(const std::string& localCs,
     }
 
     return false;
+}
+
+void OpMode_M17::rtx_to_q(int32_t* qlat, int32_t* qlon, int32_t lat, int32_t lon)
+{
+	if(qlat!=NULL && qlon!=NULL)
+	{
+		*qlat = lat / 10 - lat / 147 + lat / 105646;  // 90e6/(2^23-1) - 1/(1/10 - 1/147 + 1/105646)  = ~0
+		*qlon = lon / 21 - lon / 985 - lon / 2237284; //180e6/(2^23-1) - 1/(1/21 - 1/985 - 1/2237284) = ~0
+	}
+}
+
+void OpMode_M17::q_to_rtx(int32_t* lat, int32_t* lon, int32_t qlat, int32_t qlon)
+{
+	if(lat!=NULL && lon!=NULL)
+	{
+		*lat = qlat * 11 - qlat / 4 - qlat / 47 + qlat / 8777; // 90e6/(2^23-1) - (11 - 1/4 - 1/47 + 1/8777) = ~0
+		*lon = qlon * 21 + qlon / 2 - qlon / 23 + qlon / 867;  //180e6/(2^23-1) - (21 + 1/2 - 1/23 + 1/867)  = ~0
+	}
 }
