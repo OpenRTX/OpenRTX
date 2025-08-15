@@ -1,6 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2023 - 2025 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2021 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -17,25 +18,42 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef HWCONFIG_H
-#define HWCONFIG_H
+#ifndef GPS_ZEPHYR_H
+#define GPS_ZEPHYR_H
 
-#include <zephyr/device.h>
+#include <stdint.h>
+#include <stddef.h>
 
-/*
- * Display properties are encoded in the devicetree
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * Initialise the GPS driver.
+ * This function does not turn on the GPS module.
  */
-#define DISPLAY       DT_CHOSEN(zephyr_display)
-#define CONFIG_SCREEN_WIDTH  DT_PROP(DISPLAY, width)
-#define CONFIG_SCREEN_HEIGHT DT_PROP(DISPLAY, height)
-#define CONFIG_PIX_FMT_BW
+void gpsZephyr_init();
 
-#define CONFIG_GPS
-#define CONFIG_NMEA_RBUF_SIZE 128
+/**
+ * Terminate the GPS driver.
+ */
+void gpsZephyr_terminate();
 
-#define CONFIG_BAT_LIPO
-#define CONFIG_BAT_NCELLS 1
+/**
+ * Retrieve a NMEA sentence from the GPS.
+ * If the sentence is longer than the maximum size of the destination buffer,
+ * the characters not written in the destination are lost.
+ *
+ * @param priv: unused parameter, for function signature compatibility.
+ * @param buf: pointer to NMEA sentence destination buffer.
+ * @param maxLen: maximum acceptable size for the destination buffer.
+ * @return the length of the extracted sentence or -1 if the sentence is longer
+ * than the maximum allowed size. If the ring buffer is empty, zero is returned.
+ */
+int gpsZephyr_getNmeaSentence(void *priv, char *buf, const size_t maxLength);
 
-#define CONFIG_M17
+#ifdef __cplusplus
+}
+#endif
 
-#endif /* HWCONFIG_H */
+#endif /* GPS_STM32_H */

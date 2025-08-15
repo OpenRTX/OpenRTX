@@ -19,7 +19,9 @@
 
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
+#include <gps_zephyr.h>
 #include <hwconfig.h>
+#include <gps.h>
 
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/sensor.h>
@@ -52,6 +54,24 @@ static hwInfo_t hwInfo =
 // RGB led color data
 static struct led_rgb led_color = {0};
 
+static void gpsEnable(void *priv)
+{
+    (void) priv;
+    pmu_setGPSPower(true);
+}
+
+static void gpsDisable(void *priv)
+{
+    (void) priv;
+    pmu_setGPSPower(false);
+}
+
+static const struct gpsDevice gps =
+{
+    .enable = gpsEnable,
+    .disable = gpsDisable,
+    .getSentence = gpsZephyr_getNmeaSentence
+};
 
 void platform_init()
 {
@@ -107,6 +127,7 @@ void platform_init()
 
 void platform_terminate()
 {
+    gpsZephyr_terminate();
     pmu_terminate();
 }
 
@@ -219,3 +240,9 @@ const hwInfo_t *platform_getHwInfo()
     return &hwInfo;
 }
 
+const struct gpsDevice *platform_initGps()
+{
+    gpsZephyr_init();
+
+    return &gps;
+}
