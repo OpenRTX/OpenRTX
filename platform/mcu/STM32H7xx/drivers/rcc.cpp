@@ -96,6 +96,11 @@ void startPll()
                    |  RCC_PLLCFGR_DIVP2EN;
     RCC->CR |= RCC_CR_PLL2ON;                           // Start PLL2
     while((RCC->CR & RCC_CR_PLL2RDY)==0) ;              // Wait until ready
+
+    //Configure USART6 kernel clock source to use PCLK2 (100MHz for GPS baud rate)  
+    // USART16SEL field is bits [5:3]: 000 = pclk2 (actually 100MHz, not 200MHz)
+    RCC->D2CCIP2R &= ~(0x7 << 3);                       // Clear USART16SEL field (bits [5:3])
+    // Leave as 000 = PCLK2 (100MHz due to APB2 /2 divider)
 }
 
 uint32_t getBusClock(const uint8_t bus)
@@ -103,6 +108,23 @@ uint32_t getBusClock(const uint8_t bus)
     if(bus >= PERIPH_BUS_NUM)
         return 0;
 
-    // All busses run at 200MHz
-    return 200000000;
+    switch(bus) {
+        case PERIPH_BUS_AHB:
+            return 200000000;  // AHB: CPU(400MHz) / HPRE_DIV2 = 200MHz
+        
+        case PERIPH_BUS_APB1:
+            return 100000000;  // APB1: AHB(200MHz) / D2PPRE1_DIV2 = 100MHz
+            
+        case PERIPH_BUS_APB2:
+            return 100000000;  // APB2: AHB(200MHz) / D2PPRE2_DIV2 = 100MHz  
+            
+        case PERIPH_BUS_APB3:
+            return 100000000;  // APB3: AHB(200MHz) / D1PPRE_DIV2 = 100MHz
+            
+        case PERIPH_BUS_APB4:
+            return 100000000;  // APB4: AHB(200MHz) / D3PPRE_DIV2 = 100MHz
+            
+        default:
+            return 200000000;  // Default to AHB frequency
+    }
 }

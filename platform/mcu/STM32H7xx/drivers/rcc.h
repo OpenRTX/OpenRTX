@@ -30,6 +30,7 @@
 #define RCC_H
 
 #include <stdint.h>
+#include <stm32h7xx.h>
 
 #ifdef __cplusplus
 extern "C" {
