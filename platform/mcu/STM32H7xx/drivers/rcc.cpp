@@ -75,11 +75,11 @@ void startPll()
 
     //Before increasing the fequency set dividers
     RCC->D1CFGR = RCC_D1CFGR_D1CPRE_DIV1  //CPU clock /1
-                | RCC_D1CFGR_D1PPRE_DIV2  //D1 APB3   /2
+                | RCC_D1CFGR_D1PPRE_DIV1  //D1 APB3   /2
                 | RCC_D1CFGR_HPRE_DIV2;   //D1 AHB    /2
-    RCC->D2CFGR = RCC_D2CFGR_D2PPRE2_DIV1 //D2 APB2   /2
-                | RCC_D2CFGR_D2PPRE1_DIV1;//D2 APB1   /2
-    RCC->D3CFGR = RCC_D3CFGR_D3PPRE_DIV1; //D3 APB4   /2
+    RCC->D2CFGR = RCC_D2CFGR_D2PPRE2_DIV1 //D2 APB2   /1
+                | RCC_D2CFGR_D2PPRE1_DIV1;//D2 APB1   /1
+    RCC->D3CFGR = RCC_D3CFGR_D3PPRE_DIV1; //D3 APB4   /1
 
     //And increase FLASH wait states
     FLASH->ACR = FLASH_ACR_WRHIGHFREQ_1   //Settings for FLASH freq=200MHz
