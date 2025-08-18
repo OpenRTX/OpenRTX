@@ -112,16 +112,16 @@ uint32_t getBusClock(const uint8_t bus)
             return 200000000;  // AHB: CPU(400MHz) / HPRE_DIV2 = 200MHz
         
         case PERIPH_BUS_APB1:
-            return 200000000;  // APB1: AHB(200MHz) / D2PPRE1_DIV2 = 100MHz
+            return 200000000;  // APB1: AHB(200MHz) / D2PPRE1_DIV1 = 200MHz
             
         case PERIPH_BUS_APB2:
-            return 200000000;  // APB2: AHB(200MHz) / D2PPRE2_DIV2 = 100MHz  
+            return 200000000;  // APB2: AHB(200MHz) / D2PPRE2_DIV1 = 200MHz  
             
         case PERIPH_BUS_APB3:
-            return 200000000;  // APB3: AHB(200MHz) / D1PPRE_DIV2 = 100MHz
+            return 200000000;  // APB3: AHB(200MHz) / D1PPRE_DIV1 = 200MHz
             
         case PERIPH_BUS_APB4:
-            return 200000000;  // APB4: AHB(200MHz) / D3PPRE_DIV2 = 100MHz
+            return 200000000;  // APB4: AHB(200MHz) / D3PPRE_DIV1 = 200MHz
             
         default:
             return 200000000;  // Default to AHB frequency
