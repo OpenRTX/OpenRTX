@@ -96,6 +96,10 @@ void startPll()
                    |  RCC_PLLCFGR_DIVP2EN;
     RCC->CR |= RCC_CR_PLL2ON;                           // Start PLL2
     while((RCC->CR & RCC_CR_PLL2RDY)==0) ;              // Wait until ready
+
+    // Configure USART6 kernel clock source to use PCLK2
+    // USART16SEL field is bits [5:3]: 000 = pclk2
+    RCC->D2CCIP2R &= ~RCC_D2CCIP2R_USART16SEL;
 }
 
 uint32_t getBusClock(const uint8_t bus)
