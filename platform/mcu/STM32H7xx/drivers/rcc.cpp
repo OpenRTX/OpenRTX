@@ -97,7 +97,7 @@ void startPll()
     RCC->CR |= RCC_CR_PLL2ON;                           // Start PLL2
     while((RCC->CR & RCC_CR_PLL2RDY)==0) ;              // Wait until ready
 
-    //Configure USART6 kernel clock source to use PCLK2 (100MHz for GPS baud rate)  
+    //Configure USART6 kernel clock source to use PCLK2 (200MHz for GPS baud rate of 9600baud)  
     // USART16SEL field is bits [5:3]: 000 = pclk2 (100MHz)
     RCC->D2CCIP2R &= ~(0x7 << 3); // Clear USART16SEL field (bits [5:3])
 }
