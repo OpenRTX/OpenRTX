@@ -629,7 +629,7 @@ void OpMode_M17::txState(rtxStatus_t *const status)
 			gnss[1] |= (1<<6); //Altitude valid
 
             uint16_t speed = (uint16_t)gps_data.speed*2;
-			gnss[11] = speed>>8;
+			gnss[11] = speed>>4;
             gnss[12] = (speed&0xFF)<<4;
 			gnss[1] |= (1<<5); //Speed and Bearing valid
 
