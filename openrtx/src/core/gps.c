@@ -27,10 +27,7 @@
 
 #define KNOTS2KMH(x) ((((int) x) * 1852) / 1000)
 
-static bool gpsEnabled        = false;
-#ifdef CONFIG_RTC
-static bool isRtcSyncronised  = false;
-#endif
+static bool gpsEnabled = false;
 
 void gps_task(const struct gpsDevice *dev)
 {
@@ -180,17 +177,15 @@ void gps_task(const struct gpsDevice *dev)
     #ifdef CONFIG_RTC
     if(state.gps_set_time)
     {
-        if((sId == MINMEA_SENTENCE_RMC) &&
-           (gps_data.fix_quality > 0)   &&
-           (isRtcSyncronised == false))
+        if((sId == MINMEA_SENTENCE_RMC) && (gps_data.fix_quality > 0))
         {
             platform_setTime(gps_data.timestamp);
-            isRtcSyncronised = true;
+
+            // Done, clear the flag
+            pthread_mutex_lock(&state_mutex);
+            state.gps_set_time = false;
+            pthread_mutex_unlock(&state_mutex);
         }
-    }
-    else
-    {
-        isRtcSyncronised = false;
     }
     #endif
 }
