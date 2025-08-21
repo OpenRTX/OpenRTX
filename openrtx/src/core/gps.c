@@ -87,7 +87,6 @@ void gps_task(const struct gpsDevice *dev)
                 gps_data.timestamp.year = frame.date.year;
             }
 
-            gps_data.tmg_true = minmea_tofloat(&frame.course);
             gps_data.speed = KNOTS2KMH(minmea_toint(&frame.speed));
         }
         break;
@@ -110,6 +109,7 @@ void gps_task(const struct gpsDevice *dev)
             struct minmea_sentence_gsa frame;
             if (minmea_parse_gsa(&frame, sentence))
             {
+                gps_data.hdop = minmea_toscaledint(&frame.hdop, 100);
                 gps_data.fix_type = frame.fix_type;
                 for (int i = 0; i < 12; i++)
                 {

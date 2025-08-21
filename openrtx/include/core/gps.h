@@ -54,6 +54,7 @@ typedef struct
     uint16_t   speed;                // Ground speed in km/h
     int16_t    tmg_mag;              // Course over ground, degrees, magnetic
     int16_t    tmg_true;             // Course over ground, degrees, true
+    uint16_t   hdop;                 // Horizontal dilution of precision, in cm
 }
 gps_t;
 
