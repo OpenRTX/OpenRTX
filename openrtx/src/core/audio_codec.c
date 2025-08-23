@@ -325,7 +325,14 @@ static void *decodeFunc(void *arg)
 
         if(newData)
         {
-            codec2_decode(codec2, audioBuf, ((uint8_t *) &frame));
+            if(codec2_get_energy(codec2, ((uint8_t *) &frame)) > 120)
+            {
+                codec2_decode(codec2, audioBuf, ((uint8_t *) &frame));
+            }
+            else
+            {
+                memset((uint8_t*)audioBuf, 0, codec2_samples_per_frame(codec2)*sizeof(audioBuf[0])); 
+            }
 
             #ifdef PLATFORM_MD3x0
             // Bump up volume a little bit, as on MD3x0 is quite low
