@@ -35,6 +35,7 @@
 #include <dsp.h>
 
 #define BUF_SIZE 4
+#define SAMP_ENERGY_THRESH  120.0f
 
 static pathId           audioPath;
 
@@ -323,7 +324,8 @@ static void *decodeFunc(void *arg)
         if(audioBuf == NULL)
             break;
 
-        if(newData)
+        float energy = codec2_get_energy(codec2, (uint8_t *) &frame);
+        if(newData && (energy > SAMP_ENERGY_THRESH))
         {
             codec2_decode(codec2, audioBuf, ((uint8_t *) &frame));
 
