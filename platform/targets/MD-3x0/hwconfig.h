@@ -35,6 +35,7 @@ enum adcChannel
     ADC_RSSI_CH  = 8
 };
 
+extern const struct gpsDevice gps;
 extern const struct spiDevice nvm_spi;
 extern const struct spiCustomDevice pll_spi;
 extern const struct spiCustomDevice c5000_spi;
@@ -46,6 +47,8 @@ extern const struct Adc adc1;
 
 /* Device supports an optional GPS chip */
 #define CONFIG_GPS
+#define CONFIG_GPS_STM32_USART3
+#define CONFIG_NMEA_RBUF_SIZE 128
 
 /* Device has a channel selection knob */
 #define CONFIG_KNOB_ABSOLUTE

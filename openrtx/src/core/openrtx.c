@@ -23,7 +23,6 @@
 #include <interfaces/display.h>
 #include <interfaces/delays.h>
 #include <interfaces/cps_io.h>
-#include <peripherals/gps.h>
 #include <voicePrompts.h>
 #include <graphics.h>
 #include <openrtx.h>
@@ -73,12 +72,6 @@ void openrtx_init()
     gfx_render();
     sleepFor(0u, 30u);
     display_setBacklightLevel(state.settings.brightness);
-
-    #if defined(CONFIG_GPS)
-    // Detect and initialise GPS
-    state.gpsDetected = gps_detect(1000);
-    if(state.gpsDetected) gps_init(9600);
-    #endif
 }
 
 void *openrtx_run(void *arg)

@@ -1,7 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2021 - 2025 by Federico Amedeo Izzo IU2NUO,             *
- *                                Niccolò Izzo IU2KIN,                     *
- *                                Frederik Saraci IU2NRO,                  *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -18,59 +18,42 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef HWCONFIG_H
-#define HWCONFIG_H
+#ifndef GPS_ZEPHYR_H
+#define GPS_ZEPHYR_H
 
-#include <stm32f4xx.h>
-#include "pinmap.h"
+#include <stdint.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-enum adcChannel
-{
-    ADC_VOL_CH   = 0,
-    ADC_VBAT_CH  = 1,
-    ADC_VOX_CH   = 3,
-    ADC_RSSI_CH  = 8,
-    ADC_SW1_CH   = 7,
-    ADC_SW2_CH   = 6,
-    ADC_RSSI2_CH = 9,
-    ADC_HTEMP_CH = 15
-};
+/**
+ * Initialise the GPS driver.
+ * This function does not turn on the GPS module.
+ */
+void gpsZephyr_init();
 
-extern const struct gpsDevice gps;
-extern const struct spiDevice spi2;
-extern const struct Adc adc1;
+/**
+ * Terminate the GPS driver.
+ */
+void gpsZephyr_terminate();
 
-/* Device has a working real time clock */
-#define CONFIG_RTC
-
-/* Device supports an optional GPS chip */
-#define CONFIG_GPS
-#define CONFIG_GPS_STM32_USART1
-#define CONFIG_NMEA_RBUF_SIZE 128
-
-/* Screen dimensions */
-#define CONFIG_SCREEN_WIDTH 128
-#define CONFIG_SCREEN_HEIGHT 64
-
-/* Screen has adjustable contrast */
-#define CONFIG_SCREEN_CONTRAST
-#define CONFIG_DEFAULT_CONTRAST 91
-
-/* Screen has adjustable brightness */
-#define CONFIG_SCREEN_BRIGHTNESS
-
-/* Screen pixel format */
-#define CONFIG_PIX_FMT_BW
-
-/* Battery type */
-#define CONFIG_BAT_NONE
+/**
+ * Retrieve a NMEA sentence from the GPS.
+ * If the sentence is longer than the maximum size of the destination buffer,
+ * the characters not written in the destination are lost.
+ *
+ * @param priv: unused parameter, for function signature compatibility.
+ * @param buf: pointer to NMEA sentence destination buffer.
+ * @param maxLen: maximum acceptable size for the destination buffer.
+ * @return the length of the extracted sentence or -1 if the sentence is longer
+ * than the maximum allowed size. If the ring buffer is empty, zero is returned.
+ */
+int gpsZephyr_getNmeaSentence(void *priv, char *buf, const size_t maxLength);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* HWCONFIG_H */
+#endif /* GPS_STM32_H */

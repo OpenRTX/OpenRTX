@@ -1,3 +1,4 @@
+#include <minmea.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <gps.h>

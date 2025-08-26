@@ -18,7 +18,6 @@
  ***************************************************************************/
 
 #include <interfaces/platform.h>
-#include <peripherals/gps.h>
 #include <gps.h>
 #include <minmea.h>
 #include <stdio.h>
@@ -28,17 +27,15 @@
 
 #define KNOTS2KMH(x) ((((int) x) * 1852) / 1000)
 
-static char sentence[2*MINMEA_MAX_LENGTH];
-static bool gpsEnabled        = false;
-static bool readNewSentence   = true;
-#ifdef CONFIG_RTC
-static bool isRtcSyncronised  = false;
-#endif
+static bool gpsEnabled = false;
 
-void gps_task()
+void gps_task(const struct gpsDevice *dev)
 {
+    char sentence[2*MINMEA_MAX_LENGTH];
+    int ret;
+
     // No GPS, return
-    if(state.gpsDetected == false)
+    if(dev == NULL)
         return;
 
     // Handle GPS turn on/off
@@ -47,9 +44,9 @@ void gps_task()
         gpsEnabled = state.settings.gps_enabled;
 
         if(gpsEnabled)
-            gps_enable();
+            gps_enable(dev);
         else
-            gps_disable();
+            gps_disable(dev);
     }
 
     // GPS disabled, nothing to do
@@ -57,23 +54,9 @@ void gps_task()
         return;
 
     // Acquire a new NMEA sentence from GPS
-    if(readNewSentence)
-    {
-        int status = gps_getNmeaSentence(sentence, 2*MINMEA_MAX_LENGTH);
-        if(status != 0) return;
-        readNewSentence = false;
-    }
-
-    // Waiting for a sentence...
-    if(gps_nmeaSentenceReady() == false)
+    ret = gps_getSentence(dev, sentence, sizeof(sentence));
+    if(ret <= 0)
         return;
-
-    // Discard all non-GPS sentences
-    if((sentence[0] != '$') || (sentence[1] != 'G'))
-    {
-        readNewSentence = true;
-        return;
-    }
 
     // Parse the sentence. Work on a local state copy to minimize the time
     // spent with the state mutex locked
@@ -101,7 +84,6 @@ void gps_task()
                 gps_data.timestamp.year = frame.date.year;
             }
 
-            gps_data.tmg_true = minmea_tofloat(&frame.course);
             gps_data.speed = KNOTS2KMH(minmea_toint(&frame.speed));
         }
         break;
@@ -124,6 +106,7 @@ void gps_task()
             struct minmea_sentence_gsa frame;
             if (minmea_parse_gsa(&frame, sentence))
             {
+                gps_data.hdop = minmea_toscaledint(&frame.hdop, 100);
                 gps_data.fix_type = frame.fix_type;
                 for (int i = 0; i < 12; i++)
                 {
@@ -194,20 +177,15 @@ void gps_task()
     #ifdef CONFIG_RTC
     if(state.gps_set_time)
     {
-        if((sId == MINMEA_SENTENCE_RMC) &&
-           (gps_data.fix_quality > 0)   &&
-           (isRtcSyncronised == false))
+        if((sId == MINMEA_SENTENCE_RMC) && (gps_data.fix_quality > 0))
         {
             platform_setTime(gps_data.timestamp);
-            isRtcSyncronised = true;
+
+            // Done, clear the flag
+            pthread_mutex_lock(&state_mutex);
+            state.gps_set_time = false;
+            pthread_mutex_unlock(&state_mutex);
         }
     }
-    else
-    {
-        isRtcSyncronised = false;
-    }
     #endif
-
-    // Finally, trigger the acquisition of a new NMEA sentence
-    readNewSentence = true;
 }

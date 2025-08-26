@@ -20,10 +20,12 @@
 #include <spi_custom.h>
 #include <adc_stm32.h>
 #include <spi_stm32.h>
+#include <gps_stm32.h>
 #include <SKY72310.h>
 #include <hwconfig.h>
 #include <pthread.h>
 #include <AK2365A.h>
+#include <gps.h>
 
 static const struct spiConfig spiFlashCfg =
 {
@@ -112,4 +114,11 @@ const struct sky73210 pll =
     .spi    = (const struct spiDevice *) &pll_spi,
     .cs     = { PLL_CS },
     .refClk = 16800000
+};
+
+const struct gpsDevice gps =
+{
+    .enable = gpsStm32_enable,
+    .disable = gpsStm32_disable,
+    .getSentence = gpsStm32_getNmeaSentence
 };

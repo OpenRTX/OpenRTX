@@ -31,7 +31,9 @@
 #include <peripherals/rtc.h>
 #include <interfaces/audio.h>
 #include <spi_stm32.h>
+#include <gps_stm32.h>
 #include <chSelector.h>
+#include <gps.h>
 
 /* TODO: Hardcoded hwInfo until we implement reading from flash */
 static const hwInfo_t hwInfo =
@@ -85,6 +87,7 @@ void platform_terminate()
 {
     /* Shut down all the modules */
     adcStm32_terminate(&adc1);
+    gpsStm32_terminate();
     toneGen_terminate();
     chSelector_terminate();
     audio_terminate();
@@ -227,6 +230,31 @@ void platform_setTime(datetime_t t)
 const hwInfo_t *platform_getHwInfo()
 {
     return &hwInfo;
+}
+
+const struct gpsDevice *platform_initGps()
+{
+    const struct gpsDevice *dev = NULL;
+
+    // Turn on the GPS and check if there is voltage on the RXD pin
+    gpio_setMode(GPS_DATA, INPUT_PULL_DOWN);
+    gpio_setMode(GPS_EN, OUTPUT);
+    gpio_setPin(GPS_EN);
+
+    for(size_t i = 0; i < 50; i++) {
+        if(gpio_readPin(GPS_DATA) != 0) {
+            dev = &gps;
+            gpsStm32_init(9600);
+            break;
+        }
+
+        sleepFor(0, 1);
+    }
+
+    gpio_clearPin(GPS_EN);
+    gpio_setMode(GPS_DATA, ALTERNATE | ALTERNATE_FUNC(7));
+
+    return dev;
 }
 
 /*

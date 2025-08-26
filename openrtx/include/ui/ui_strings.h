@@ -101,6 +101,7 @@ typedef struct
     const char* radioSettings;
     const char* frequencyOffset;
     const char* macroLatching;
+    const char* noGps;
 }
 stringsTable_t;
 

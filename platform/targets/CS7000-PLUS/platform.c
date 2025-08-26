@@ -22,9 +22,11 @@
 #include <gpio_shiftReg.h>
 #include <spi_bitbang.h>
 #include <adc_stm32.h>
+#include <gps_stm32.h>
 #include <Cx000_dac.h>
 #include <hwconfig.h>
 #include <string.h>
+#include <gps.h>
 
 static const hwInfo_t hwInfo =
 {
@@ -65,6 +67,7 @@ void platform_init()
 void platform_terminate()
 {
     adcStm32_terminate(&adc1);
+    gpsStm32_terminate();
 
     #ifndef RUNNING_TESTSUITE
     gpioDev_clear(MAIN_PWR_SW);
@@ -205,4 +208,12 @@ void platform_beepStop()
 const hwInfo_t *platform_getHwInfo()
 {
     return &hwInfo;
+}
+
+const struct gpsDevice *platform_initGps()
+{
+    gpio_setMode(GPS_RXD, ALTERNATE | ALTERNATE_FUNC(7));
+    gpsStm32_init(9600);
+
+    return &gps;
 }

@@ -27,7 +27,7 @@
  ***************************************************************************/
 
 #include <stm32h7xx.h>
-#include "pll.h"
+#include "rcc.h"
 
 /**
  * Clock tree configuration:
@@ -75,11 +75,11 @@ void startPll()
 
     //Before increasing the fequency set dividers
     RCC->D1CFGR = RCC_D1CFGR_D1CPRE_DIV1  //CPU clock /1
-                | RCC_D1CFGR_D1PPRE_DIV2  //D1 APB3   /2
+                | RCC_D1CFGR_D1PPRE_DIV1  //D1 APB3   /1
                 | RCC_D1CFGR_HPRE_DIV2;   //D1 AHB    /2
-    RCC->D2CFGR = RCC_D2CFGR_D2PPRE2_DIV2 //D2 APB2   /2
-                | RCC_D2CFGR_D2PPRE1_DIV2;//D2 APB1   /2
-    RCC->D3CFGR = RCC_D3CFGR_D3PPRE_DIV2; //D3 APB4   /2
+    RCC->D2CFGR = RCC_D2CFGR_D2PPRE2_DIV1 //D2 APB2   /1
+                | RCC_D2CFGR_D2PPRE1_DIV1;//D2 APB1   /1
+    RCC->D3CFGR = RCC_D3CFGR_D3PPRE_DIV1; //D3 APB4   /1
 
     //And increase FLASH wait states
     FLASH->ACR = FLASH_ACR_WRHIGHFREQ_1   //Settings for FLASH freq=200MHz
@@ -96,13 +96,35 @@ void startPll()
                    |  RCC_PLLCFGR_DIVP2EN;
     RCC->CR |= RCC_CR_PLL2ON;                           // Start PLL2
     while((RCC->CR & RCC_CR_PLL2RDY)==0) ;              // Wait until ready
+
+    // Configure USART6 kernel clock source to use PCLK2
+    // USART16SEL field is bits [5:3]: 000 = pclk2
+    RCC->D2CCIP2R &= ~RCC_D2CCIP2R_USART16SEL;
 }
 
 uint32_t getBusClock(const uint8_t bus)
 {
-    if(bus >= PERIPH_BUS_NUM)
-        return 0;
+    switch(bus) {
+        case PERIPH_BUS_AHB:
+            return 200000000;  // AHB: CPU(400MHz) / HPRE_DIV2 = 200MHz
+            break;
 
-    // All busses run at 200MHz
-    return 200000000;
+        case PERIPH_BUS_APB1:
+            return 200000000;  // APB1: AHB(200MHz) / D2PPRE1_DIV1 = 200MHz
+            break;
+
+        case PERIPH_BUS_APB2:
+            return 200000000;  // APB2: AHB(200MHz) / D2PPRE2_DIV1 = 200MHz
+            break;
+
+        case PERIPH_BUS_APB3:
+            return 200000000;  // APB3: AHB(200MHz) / D1PPRE_DIV1 = 200MHz
+            break;
+
+        case PERIPH_BUS_APB4:
+            return 200000000;  // APB4: AHB(200MHz) / D3PPRE_DIV1 = 200MHz
+            break;
+    }
+
+    return 0;
 }

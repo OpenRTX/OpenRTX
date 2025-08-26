@@ -271,6 +271,20 @@ static inline int minmea_toint(struct minmea_float *f)
     return f->value / f->scale;
 }
 
+/**
+ * Convert a fixed-point value to an integer value, applying an additional
+ * scaling factor.
+ * Returns zero for "unknown" values.
+ */
+static inline int minmea_toscaledint(struct minmea_float *f, const int scale)
+{
+    if(f->scale == 0)
+        return 0;
+
+    int_least32_t tmp = f->value * scale;
+    return tmp / f->scale;
+}
+
 #ifdef __cplusplus
 }
 #endif

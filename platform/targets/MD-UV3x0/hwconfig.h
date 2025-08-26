@@ -40,6 +40,7 @@ enum AdcChannel
     ADC_MIC_CH   = 3,
 };
 
+extern const struct gpsDevice gps;
 extern const struct spiCustomDevice c6000_spi;
 extern const struct spiDevice nvm_spi;
 extern const struct Adc adc1;
@@ -49,6 +50,8 @@ extern const struct Adc adc1;
 
 /* Device supports an optional GPS chip */
 #define CONFIG_GPS
+#define CONFIG_GPS_STM32_USART1
+#define CONFIG_NMEA_RBUF_SIZE 128
 
 /* Screen dimensions */
 #define CONFIG_SCREEN_WIDTH 160

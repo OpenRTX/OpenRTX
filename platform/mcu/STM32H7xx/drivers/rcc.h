@@ -26,8 +26,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef PLL_H
-#define PLL_H
+#ifndef RCC_H
+#define RCC_H
 
 #include <stdint.h>
 
@@ -43,7 +43,8 @@ enum PeriphBus
     PERIPH_BUS_AHB  = 0,
     PERIPH_BUS_APB1 = 1,
     PERIPH_BUS_APB2 = 2,
-    PERIPH_BUS_APB4 = 3,
+    PERIPH_BUS_APB3 = 3,
+    PERIPH_BUS_APB4 = 4,
 
     PERIPH_BUS_NUM
 };
@@ -63,6 +64,45 @@ uint32_t getBusClock(const uint8_t bus);
 
 #ifdef __cplusplus
 }
+
+/**
+ * Get the clock frequency of the bus a peripheral is attached to.
+ *
+ * @param periph: peripheral base address
+ * @return bus clock frequency in Hz or zero in case of errors.
+ */
+static constexpr uint32_t rcc_getPeriphClock(const void *periph)
+{
+    uint32_t addr = reinterpret_cast<uint32_t>(periph);
+
+    switch(addr & 0xFFFF0000) {
+        case APB1PERIPH_BASE:
+            return getBusClock(PERIPH_BUS_APB1);
+            break;
+
+        case APB2PERIPH_BASE:
+            return getBusClock(PERIPH_BUS_APB2);
+            break;
+
+        case D1_APB1PERIPH_BASE:
+            return getBusClock(PERIPH_BUS_APB3);
+            break;
+
+        case D3_APB1PERIPH_BASE:
+            return getBusClock(PERIPH_BUS_APB4);
+            break;
+
+        case AHB1PERIPH_BASE:
+        case AHB2PERIPH_BASE:
+        case D1_AHB1PERIPH_BASE:
+        case D3_AHB1PERIPH_BASE:
+            return getBusClock(PERIPH_BUS_AHB);
+            break;
+    }
+
+    return 0;
+}
+
 #endif
 
-#endif //PLL_H
+#endif //RCC_H
