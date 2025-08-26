@@ -352,6 +352,25 @@ void gfx_drawGPScompass(point_t start, uint16_t radius, float deg, bool active);
 void gfx_plotData(point_t start, uint16_t width, uint16_t height,
                   const int16_t *data, size_t len);
 
+/**
+ * Draw a qr code containing string
+ * in the specified rectangle with color and background color.
+ * @param color: qr code color, in color_t format.
+ * @param background_color: background color, in color_t format.
+ * @param data the string to encode in the qr code
+ */
+void gfx_drawQrCodeString(color_t color, color_t background_color, const char *data);
+
+/**
+ * Draw a qr code containing string
+ * in the specified rectangle with color and background color.
+ * @param color: qr code color, in color_t format.
+ * @param background_color: background color, in color_t format.
+ * @param data the bytes to encode in the qr code
+ * @param length the length of the data array
+ */
+void gfx_drawQrCodeBytes(color_t color, color_t background_color, uint8_t *data, uint16_t length);
+
 #ifdef __cplusplus
 }
 #endif
