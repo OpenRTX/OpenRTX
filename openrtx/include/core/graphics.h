@@ -277,6 +277,9 @@ void gfx_printError(const char *text, fontSize_t size);
 point_t gfx_drawSymbol(point_t start, symbolSize_t size, textAlign_t alignment,
                        color_t color, symbol_t symbol);
 
+point_t gfx_drawSymbols(point_t start, symbolSize_t size, textAlign_t alignment,
+                        color_t color, const char* symbols);
+
 /**
  * Function to draw battery of arbitrary size.
  * Starting coordinates are relative to the top left point.

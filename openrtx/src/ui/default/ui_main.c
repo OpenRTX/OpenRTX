@@ -16,16 +16,73 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
+ *                                                                         *
+ *   (2025) Modified by KD0OSS for new modes on Module17                   *
  ***************************************************************************/
 
 #include <interfaces/platform.h>
 #include <interfaces/cps_io.h>
+#include <interfaces/delays.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <ui/ui_default.h>
 #include <string.h>
 #include <ui/ui_strings.h>
 #include <utils.h>
+
+
+static char message[66];
+static bool scrollStarted = false;
+
+// shift string to left by one char
+// putting first char to the back
+bool _ui_scrollString(char *string, bool reset)
+{
+    uint8_t stringLen = 0;
+    char *in = NULL;
+
+    if(reset)
+    {
+        // add extra space to allow for gap
+        // between last char and first
+        stringLen = strlen(string)+2;
+        in = malloc(stringLen);
+        if(in == NULL) return false;
+        memset(in, 0, stringLen);
+    }
+    else
+    {
+        stringLen = strlen(string)+1;
+        in = malloc(stringLen);
+    }
+    if(in == NULL) return false;
+    strcpy(in, string);
+    if(reset)
+    {
+        // add space to end
+        in[strlen(string)] = 32;
+    }
+
+    char *data = malloc(stringLen);
+    if(data == NULL)
+    {
+        free(in);
+        return false;
+    }
+    memset(data, 0, stringLen);
+
+    size_t i;
+    for(i=1;i<strlen(in);i++)
+        data[i-1] = in[i];
+    data[i-1] = in[0];
+
+    strcpy(string, data);
+    free(data);
+    free(in);
+
+    return true;
+}
 
 void _ui_drawMainBackground()
 {
@@ -57,9 +114,32 @@ void _ui_drawMainTop(ui_state_t * ui_state)
                        layout.status_v_pad};
     gfx_drawBattery(bat_pos, bat_width, bat_height, last_state.charge);
 #endif
+#ifdef CONFIG_M17
+    // Show envelope if SMS received
+    if(state.totalSMSMessages > 0)
+    {
+        char symbols[4];
+        if (ui_state->input_locked == true)
+        {
+            sprintf(symbols, "%c %c", (char)SYMBOL_LOCK, (char)SYMBOL_MAIL);
+            gfx_drawSymbols(layout.top_pos, layout.top_symbol_size, TEXT_ALIGN_LEFT,
+                            color_white, symbols);
+        }
+        else
+            gfx_drawSymbol(layout.top_pos, layout.top_symbol_size, TEXT_ALIGN_LEFT,
+                           color_white, SYMBOL_MAIL);
+    }
+    else
+    {
+        if (ui_state->input_locked == true)
+            gfx_drawSymbol(layout.top_pos, layout.top_symbol_size, TEXT_ALIGN_LEFT,
+                           color_white, SYMBOL_LOCK);
+    }
+#else
     if (ui_state->input_locked == true)
       gfx_drawSymbol(layout.top_pos, layout.top_symbol_size, TEXT_ALIGN_LEFT,
                      color_white, SYMBOL_LOCK);
+#endif
 }
 
 void _ui_drawBankChannel()
@@ -142,6 +222,39 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                 gfx_print(layout.line1_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                           color_white, "%s", rtxStatus.M17_src);
 
+                // metatext available
+                if((strlen(rtxStatus.M17_Meta_Text) > 13) ||
+                    (rtxStatus.M17_Meta_Text[0] != '\0' && rtxStatus.M17_refl[0] != '\0'))
+                {
+                    if(!scrollStarted)
+                    {
+                        // if reflector info present prepend to message and share line3
+                        if(rtxStatus.M17_refl[0] != '\0')
+                            sprintf(message, "%s--%s", rtxStatus.M17_refl, rtxStatus.M17_Meta_Text);
+                        else
+                            strcpy(message, rtxStatus.M17_Meta_Text);
+                        _ui_scrollString(message, true);
+                        scrollStarted = true;
+                    }
+                    _ui_scrollString(message, false);
+
+                    char msg[14];
+                    strncpy(msg, message, 13);
+                    gfx_print(layout.line3_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                              color_white, "%s", msg);
+                    sleepFor(0, 100);
+                }
+                else
+                    if(strlen(rtxStatus.M17_Meta_Text) > 0)
+                    {
+                        if(rtxStatus.M17_refl[0] != '\0')
+                            sprintf(message, "%s--%s", rtxStatus.M17_refl, rtxStatus.M17_Meta_Text);
+                        else
+                            strcpy(message, rtxStatus.M17_Meta_Text);
+                        gfx_print(layout.line3_pos, layout.line3_font, TEXT_ALIGN_CENTER,
+                                  color_white, "%s", message);
+                    }
+
                 // RF link (if present)
                 if(rtxStatus.M17_link[0] != '\0')
                 {
@@ -153,7 +266,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                 }
 
                 // Reflector (if present)
-                if(rtxStatus.M17_refl[0] != '\0')
+                if(rtxStatus.M17_refl[0] != '\0' && rtxStatus.M17_Meta_Text[0] == '\0')
                 {
                     gfx_drawSymbol(layout.line3_pos, layout.line4_symbol_size, TEXT_ALIGN_LEFT,
                                    color_white, SYMBOL_NETWORK);
@@ -165,6 +278,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
             else
             {
                 const char *dst = NULL;
+                scrollStarted = false;
                 if(ui_state->edit_mode)
                 {
                     dst = ui_state->new_callsign;

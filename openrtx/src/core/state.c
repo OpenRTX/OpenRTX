@@ -52,6 +52,9 @@ void state_init()
     {
         state.settings = default_settings;
         strncpy(state.settings.callsign, "OPNRTX", 10);
+#ifdef CONFIG_M17
+        strncpy(state.settings.M17_meta_text, "OPENRTX", 53);
+#endif
     }
 
     /*
@@ -80,6 +83,13 @@ void state_init()
     state.emergency     = false;
     state.txDisable     = false;
     state.step_index    = 4; // Default frequency step 12.5kHz
+#ifdef CONFIG_M17
+    state.havePacketData    = false;
+    state.delSMSMessage     = false;
+    state.currentSMSMessage = 0;
+    state.currentSMSLine    = 0;
+    state.totalSMSMessages  = 0;
+#endif
 
     // Force brightness field to be in range 0 - 100
     if(state.settings.brightness > 100)
