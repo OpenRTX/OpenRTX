@@ -24,7 +24,9 @@
 #include <rtx.h>
 #include <OpMode_FM.hpp>
 #include <OpMode_M17.hpp>
+#include <core/state.h>
 
+extern state_t state;
 static pthread_mutex_t   *cfgMutex;     // Mutex for incoming config messages
 static const rtxStatus_t *newCnf;       // Pointer for incoming config messages
 static rtxStatus_t        rtxStatus;    // RTX driver status
@@ -126,6 +128,74 @@ void rtx_task()
 
         pthread_mutex_unlock(cfgMutex);
     }
+     /* Spectrum update block, run when in SPECTRUM mode.
+*
+* The spectrum mode is a special mode where the radio is in RX mode but
+* the audio path is disabled. This allows to display the RSSI level of the
+* received signals across a frequency range in a waterfall-like display.
+* 
+* This block writes the received RSSI levels to the spectrum buffer.
+*/
+    #ifdef CONFIG_SPECTRUM
+    if(state.rtxStatus == RTX_SPECTRUM)
+    {
+        //state.spectrum_peakRssi = -160;
+        #define SPECTRUM_WF_LINES 64 // must match NUMBER_BARS in ui_menu.c!
+        uint32_t spectrumStep = freq_steps[state.settings.spectrum_step];
+        // Get the current RSSI level
+
+        uint8_t peakIndex;
+        // Write the RSSI level to the spectrum buffer
+        for (int i = 0; i < SPECTRUM_WF_LINES; i++)
+        {
+            // set freq to (state.spectrum_startFreq + i * spectrumStep), no bk4819
+            rtxStatus.rxFrequency = (state.spectrum_startFreq + i * spectrumStep);
+            rtxStatus.txFrequency = rtxStatus.rxFrequency;
+            rssi = radio_getRssi();
+            uint8_t height = (rssi + 160) / 2;
+            // Macro for log2, not using the math library
+            #define log2(x) (31 - __builtin_clz(x))
+            //uint8_t height = ((rssi + 160)*log2(22 - (rssi>>1) )) >> 3;
+            state.spectrum_data[i] = height;
+            // set peak value
+            if(rssi > state.spectrum_peakRssi)
+            {
+                state.spectrum_peakRssi = rssi;
+                state.spectrum_peakFreq = state.spectrum_startFreq + i * spectrumStep;
+                state.spectrum_peakIndex = i;
+            }
+            // stop scanning if the rssi is greater than the current squelch rssi,
+            // and listen to that frequency
+            if(radio_getRssi() > (-127 + (state.settings.sqlLevel * 66) / 15))
+            {
+                // turn the speaker on
+                radio_enableAfOutput();
+                rssi = radio_getRssi();
+                while(rssi > (-127 + (state.settings.sqlLevel * 66) / 15))
+                {
+                    // allow us to exit the loop if the spectrum has been exited,
+                    // or the frequency has changed
+                    if(state.rtxStatus != RTX_SPECTRUM ||
+                       state.spectrum_peakFreq != state.spectrum_startFreq + i * spectrumStep)
+                    {
+                        state.spectrum_data[i] = 0;
+                        break;
+                    }
+                    rssi = radio_getRssi();
+                    height = ((rssi + 160)*log2(22 - (rssi>>1) )) >> 3;
+                    state.spectrum_data[i] = height;
+                    // give the UI a chance to refresh
+                    state.spectrum_shouldRefresh = true;
+                    sleepFor(0, 150);
+                }
+                // turn the speaker off
+                radio_disableAfOutput();
+            }
+        }
+        state.spectrum_shouldRefresh = true;
+        //state.spectrum_peakIndex = peakIndex;
+    }
+    #endif
 
     if(reconfigure)
     {
@@ -185,25 +255,27 @@ void rtx_task()
      */
     if(rtxStatus.opStatus == RX)
     {
-
-        if(!reconfigure)
-        {
-            if(!reinitFilter)
+        // if(state.rtxStatus != RTX_SPECTRUM)
+        // {
+            if(!reconfigure)
             {
-                /*
-                 * Filter RSSI value using 15.16 fixed point math. Equivalent
-                 * floating point code is: rssi = 0.74*radio_getRssi() + 0.26*rssi
-                 */
-                int32_t filt_rssi = radio_getRssi() * 0xBD70    // 0.74 * radio_getRssi
-                                  + rssi            * 0x428F;   // 0.26 * rssi
-                rssi = (filt_rssi + 32768) >> 16;               // Round to nearest
+                if(!reinitFilter)
+                {
+                    /*
+                    * Filter RSSI value using 15.16 fixed point math. Equivalent
+                    * floating point code is: rssi = 0.74*radio_getRssi() + 0.26*rssi
+                    */
+                    int32_t filt_rssi = radio_getRssi() * 0xBD70    // 0.74 * radio_getRssi
+                                    + rssi            * 0x428F;   // 0.26 * rssi
+                    rssi = (filt_rssi + 32768) >> 16;               // Round to nearest
+                }
+                else
+                {
+                    rssi = radio_getRssi();
+                    reinitFilter = false;
+                }
             }
-            else
-            {
-                rssi = radio_getRssi();
-                reinitFilter = false;
-            }
-        }
+        // }
     }
     else
     {
