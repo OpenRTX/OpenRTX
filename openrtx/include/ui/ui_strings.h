@@ -99,6 +99,9 @@ typedef struct
     const char* radio;
     const char* CAN;
     const char* canRxCheck;
+    #ifdef CONFIG_SPECTRUM
+    const char* spectrum;
+    #endif
 }
 stringsTable_t;
 
