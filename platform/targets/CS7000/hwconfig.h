@@ -74,6 +74,9 @@ extern const struct gpsDevice gps;
 #define CONFIG_GPS_STM32_USART6
 #define CONFIG_NMEA_RBUF_SIZE 128
 
+/* Device supports spectrum */
+#define CONFIG_SPECTRUM
+
 #ifdef __cplusplus
 }
 #endif
