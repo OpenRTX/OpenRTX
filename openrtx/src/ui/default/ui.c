@@ -85,6 +85,10 @@ extern void _ui_drawMenuContacts(ui_state_t* ui_state);
 extern void _ui_drawMenuGPS();
 extern void _ui_drawSettingsGPS(ui_state_t* ui_state);
 #endif
+#ifdef CONFIG_SPECTRUM
+extern void _ui_drawMenuSpectrum(ui_state_t* ui_state);
+extern void spectrum_changeFrequency(int32_t freq);
+#endif
 extern void _ui_drawSettingsAccessibility(ui_state_t* ui_state);
 extern void _ui_drawMenuSettings(ui_state_t* ui_state);
 extern void _ui_drawMenuBackupRestore(ui_state_t* ui_state);
@@ -112,6 +116,9 @@ const char *menu_items[] =
     "Contacts",
 #ifdef CONFIG_GPS
     "GPS",
+#endif
+#ifdef CONFIG_SPECTRUM
+    "Spectrum",
 #endif
     "Settings",
     "Info",
@@ -1837,6 +1844,22 @@ void ui_updateFSM(bool *sync_rtx)
                             state.ui_screen = MENU_GPS;
                             break;
 #endif
+#ifdef CONFIG_SPECTRUM
+                        case M_SPECTRUM:
+                        {
+                            // Get current RTX status and configure spectrum sweep
+                            rtxStatus_t rtxStatus = rtx_getCurrentStatus();
+                            // Calculate start frequency - center the spectrum around current VFO frequency
+                            #define SPECTRUM_WF_LINES ARRAY_SIZE(rtxStatus.rxSweep_data.data) / 2
+                            uint32_t spanWidth = SPECTRUM_WF_LINES * freq_steps[state.settings.spectrum_step];
+                            uint32_t startFreq = state.channel.rx_frequency - (spanWidth / 2);
+                            
+                            state.ui_screen = MENU_SPECTRUM;
+                            state.rtxStatus = RTX_RX_SWEEP;
+                            state.rxSweep_start_freq = startFreq;
+                            gfx_clearScreen();
+                            break;
+#endif
                         case M_SETTINGS:
                             state.ui_screen = MENU_SETTINGS;
                             break;
@@ -1940,6 +1963,34 @@ void ui_updateFSM(bool *sync_rtx)
                     _ui_menuBack(MENU_TOP);
                 break;
 #endif
+#ifdef CONFIG_SPECTRUM
+            // Spectrum menu screen
+            case MENU_SPECTRUM:
+            // Go to the Spectrum Settings if we press ENTER
+                if(msg.keys & KEY_ENTER)
+                {
+                    state.rtxStatus = RTX_RX;
+                    state.ui_screen = SETTINGS_SPECTRUM;
+                }
+                if(msg.keys & KEY_ESC) {
+                    state.rtxStatus = RTX_RX;
+                    sync_rtx = true;
+                    _ui_menuBack(MENU_TOP);
+                }
+                if(msg.keys & KEY_UP)
+                {
+                    spectrum_changeFrequency(freq_steps[state.settings.spectrum_step] * 32);
+                    *sync_rtx = true;
+                }
+                if(msg.keys & KEY_DOWN)
+                {
+                    spectrum_changeFrequency(-(freq_steps[state.settings.spectrum_step] * 32));
+                    *sync_rtx = true;
+                }
+                break;
+#endif
+
+
             // Settings menu screen
             case MENU_SETTINGS:
                 if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
@@ -2236,7 +2287,7 @@ void ui_updateFSM(bool *sync_rtx)
                     switch(ui_state.menu_selected)
                     {
                         case SP_MULTIPLIER:
-                            state.settings.spectrum_multiplier = (state.settings.spectrum_multiplier + 1) % 5;
+                            state.settings.spectrum_multiplier = (state.settings.spectrum_multiplier + 1) % SP_MULTIPLIER_MAX_STEPS;
                             break;
                         case SP_STEP:
                             state.settings.spectrum_step += 1;
@@ -2251,7 +2302,7 @@ void ui_updateFSM(bool *sync_rtx)
                 else if(msg.keys & KEY_ENTER)
                     ui_state.edit_mode = !ui_state.edit_mode;
                 else if(msg.keys & KEY_ESC) {
-                    state.rtxStatus = RTX_SPECTRUM;
+                    state.rtxStatus = RTX_RX_SWEEP;
                     state.spectrum_currentPart = 0;
                     _ui_menuBack(MENU_SPECTRUM);
                 }
@@ -2736,6 +2787,11 @@ bool ui_updateGUI()
         // GPS menu screen
         case MENU_GPS:
             _ui_drawMenuGPS();
+            break;
+#endif
+#ifdef CONFIG_SPECTRUM
+        case MENU_SPECTRUM:
+            _ui_drawMenuSpectrum(&ui_state);
             break;
 #endif
         // Settings menu screen
