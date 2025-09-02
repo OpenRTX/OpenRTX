@@ -210,6 +210,30 @@ void gfx_fillScreen(color_t color)
     }
 }
 
+color_t gfx_getPixel(point_t pos)
+{
+    if ((pos.x >= CONFIG_SCREEN_WIDTH) || (pos.y >= CONFIG_SCREEN_HEIGHT) ||
+        (pos.x < 0) || (pos.y < 0))
+        return (color_t){0}; // off the screen
+
+#ifdef CONFIG_PIX_FMT_RGB565
+    rgb565_t pixel = framebuffer[pos.x + pos.y*CONFIG_SCREEN_WIDTH];
+    return (color_t){pixel.r, pixel.g, pixel.b, 255};
+#elif defined CONFIG_PIX_FMT_BW
+    uint16_t idx = (pos.x + pos.y*CONFIG_SCREEN_WIDTH) / 8;
+    uint8_t bit = (pos.x + pos.y*CONFIG_SCREEN_WIDTH) % 8;
+    uint8_t bw = (framebuffer[idx] >> bit) & 0x1;
+    // Return white or black, fully opaque
+    if (bw)
+        return (color_t){255, 255, 255, 255};
+    else
+        return (color_t){0, 0, 0, 255};
+#else
+    // Unknown pixel format, failsafe
+    return (color_t){0};
+#endif
+}
+
 inline void gfx_setPixel(point_t pos, color_t color)
 {
     if (pos.x >= CONFIG_SCREEN_WIDTH || pos.y >= CONFIG_SCREEN_HEIGHT ||
