@@ -51,6 +51,10 @@ typedef struct
     bool    showBatteryIcon;      // Battery display true: icon, false: percentage
     bool    gpsSetTime;           // Use GPS to ajust RTC time
     char    M17_meta_text[53];    // M17 Meta Text to send
+    #ifdef CONFIG_SPECTRUM
+    uint8_t spectrum_multiplier;  // Multiplier for colors in spectrum display
+    uint8_t spectrum_step;        // Step for spectrum display
+    #endif
 }
 __attribute__((packed)) settings_t;
 
@@ -79,6 +83,10 @@ static const settings_t default_settings =
     false,                        // Display battery icon
     false,                        // Update RTC with GPS
     "OpenRTX",                    // Default M17 meta text
+    #ifdef CONFIG_SPECTRUM
+    1,                          // Multiplier for colors in spectrum display
+    1                           // Step for spectrum display
+    #endif
 };
 
 #endif /* SETTINGS_H */
