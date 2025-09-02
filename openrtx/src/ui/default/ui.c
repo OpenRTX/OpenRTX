@@ -100,6 +100,10 @@ extern void _ui_drawMenuContacts(ui_state_t* ui_state);
 extern void _ui_drawMenuGPS();
 extern void _ui_drawSettingsGPS(ui_state_t* ui_state);
 #endif
+#ifdef CONFIG_SPECTRUM
+extern void _ui_drawMenuSpectrum(ui_state_t* ui_state);
+extern void spectrum_changeFrequency(int32_t freq);
+#endif
 extern void _ui_drawSettingsAccessibility(ui_state_t* ui_state);
 extern void _ui_drawMenuSettings(ui_state_t* ui_state);
 extern void _ui_drawMenuBackupRestore(ui_state_t* ui_state);
@@ -126,6 +130,9 @@ const char *menu_items[] =
     "Contacts",
 #ifdef CONFIG_GPS
     "GPS",
+#endif
+#ifdef CONFIG_SPECTRUM
+    "Spectrum",
 #endif
     "Settings",
     "Info",
@@ -1809,6 +1816,16 @@ void ui_updateFSM(bool *sync_rtx)
                             state.ui_screen = MENU_GPS;
                             break;
 #endif
+#ifdef CONFIG_SPECTRUM
+                        case M_SPECTRUM:
+                            state.spectrum_startFreq = (state.channel.rx_frequency/10) - 32 * freq_steps[state.settings.spectrum_step]/10;
+                            state.ui_screen = MENU_SPECTRUM;
+                            state.rtxStatus = RTX_SPECTRUM;
+                            state.spectrum_currentPart = 0;
+                            // Fill the waterfall with blue, to make it less jarring
+                            gfx_drawRect((point_t){92, 0}, 44, 128, (color_t){0,0,255}, true);
+                            break;
+#endif
                         case M_SETTINGS:
                             state.ui_screen = MENU_SETTINGS;
                             break;
@@ -1912,6 +1929,41 @@ void ui_updateFSM(bool *sync_rtx)
                     _ui_menuBack(MENU_TOP);
                 break;
 #endif
+#ifdef CONFIG_SPECTRUM
+            // Spectrum menu screen
+            case MENU_SPECTRUM:
+            // Go to the Spectrum Settings if we press ENTER
+                if(msg.keys & KEY_ENTER)
+                {
+                    display_init();
+                    state.rtxStatus = RTX_RX;
+                    state.ui_screen = SETTINGS_SPECTRUM;
+                }
+                if(msg.keys & KEY_ESC) {
+                    state.rtxStatus = RTX_RX;
+                    radio_enableRx();
+                    display_init();
+                    _ui_menuBack(MENU_TOP);
+                }
+                if(msg.keys & KEY_UP)
+                {
+                    spectrum_changeFrequency(freq_steps[state.settings.spectrum_step]*32);
+                    state.spectrum_currentPart = 0;
+                }
+                if(msg.keys & KEY_DOWN)
+                {
+                    spectrum_changeFrequency(-(freq_steps[state.settings.spectrum_step]*32));
+                    state.spectrum_currentPart = 0;
+                }
+                if(msg.keys & KEY_DOWN)
+                {
+                    spectrum_changeFrequency(-(freq_steps[state.settings.spectrum_step]*32));
+                    state.spectrum_currentPart = 0;
+                }
+                break;
+#endif
+
+
             // Settings menu screen
             case MENU_SETTINGS:
                 if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
@@ -2590,6 +2642,11 @@ bool ui_updateGUI()
         // GPS menu screen
         case MENU_GPS:
             _ui_drawMenuGPS();
+            break;
+#endif
+#ifdef CONFIG_SPECTRUM
+        case MENU_SPECTRUM:
+            _ui_drawMenuSpectrum(&ui_state);
             break;
 #endif
         // Settings menu screen
