@@ -352,7 +352,7 @@ linux_small_def   = linux_def + {'CONFIG_SCREEN_WIDTH': '128', 'CONFIG_SCREEN_HE
 linux_mod17_src = linux_src + ui_src_module17
 linux_mod17_def = linux_def + {'CONFIG_SCREEN_WIDTH': '128', 'CONFIG_SCREEN_HEIGHT': '64', 'CONFIG_PIX_FMT_BW': ''}
 
-linux_c_args   = ['-ffunction-sections', '-fdata-sections']
+linux_c_args   = ['-ffunction-sections', '-fdata-sections', '-std=gnu17']
 linux_cpp_args = ['-ffunction-sections', '-fdata-sections', '-std=c++14']
 linux_l_args   = ['-lm', '-lreadline']
 
