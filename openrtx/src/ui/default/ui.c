@@ -181,6 +181,15 @@ const char *settings_radio_items[] =
     "Step",
 };
 
+#ifdef CONFIG_SPECTRUM
+const char *settings_spectrum_items[] =
+{
+    "Color Multiplier",
+    "Step",
+};
+#endif
+
+
 const char * settings_m17_items[] =
 {
     "Callsign",
@@ -279,6 +288,9 @@ const uint8_t settings_radio_num = sizeof(settings_radio_items)/sizeof(settings_
 const uint8_t settings_m17_num = sizeof(settings_m17_items)/sizeof(settings_m17_items[0]);
 #endif
 const uint8_t settings_fm_num = sizeof(settings_fm_items) / sizeof(settings_fm_items[0]);
+#ifdef CONFIG_SPECTRUM
+const uint8_t settings_spectrum_num = sizeof(settings_spectrum_items)/sizeof(settings_spectrum_items[0]);
+#endif
 const uint8_t settings_accessibility_num = sizeof(settings_accessibility_items)/sizeof(settings_accessibility_items[0]);
 const uint8_t backup_restore_num = sizeof(backup_restore_items)/sizeof(backup_restore_items[0]);
 const uint8_t info_num = sizeof(info_items)/sizeof(info_items[0]);
@@ -1959,6 +1971,11 @@ void ui_updateFSM(bool *sync_rtx)
                         case S_FM:
                             state.ui_screen = SETTINGS_FM;
                             break;
+#ifdef CONFIG_SPECTRUM
+                        case S_SPECTRUM:
+                            state.ui_screen = SETTINGS_SPECTRUM;
+                            break;
+#endif
                         case S_ACCESSIBILITY:
                             state.ui_screen = SETTINGS_ACCESSIBILITY;
                             break;
@@ -2186,6 +2203,54 @@ void ui_updateFSM(bool *sync_rtx)
                     ui_state.edit_mode = !ui_state.edit_mode;
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_SETTINGS);
+                break;
+#endif
+#ifdef CONFIG_SPECTRUM
+            case SETTINGS_SPECTRUM:
+                if(msg.keys & KEY_LEFT || (ui_state.edit_mode &&
+                   (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)))
+                {
+                    switch(ui_state.menu_selected)
+                    {
+                        case SP_MULTIPLIER:
+                            if(state.settings.spectrum_multiplier > 0)
+                                state.settings.spectrum_multiplier -= 1;
+                            else
+                                state.settings.spectrum_multiplier = 4;       
+                            break;
+                        case SP_STEP:
+                            if(state.settings.spectrum_step > 0)
+                                state.settings.spectrum_step -= 1;
+                            else
+                                state.settings.spectrum_step = n_freq_steps - 1;
+                            break;
+                    }
+                }
+                else if(msg.keys & KEY_RIGHT || (ui_state.edit_mode &&
+                        (msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)))
+                {
+                    switch(ui_state.menu_selected)
+                    {
+                        case SP_MULTIPLIER:
+                            state.settings.spectrum_multiplier = (state.settings.spectrum_multiplier + 1) % 5;
+                            break;
+                        case SP_STEP:
+                            state.settings.spectrum_step += 1;
+                            state.settings.spectrum_step %= n_freq_steps;
+                            break;
+                    }
+                }
+                else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                    _ui_menuUp(display_num);
+                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                    _ui_menuDown(display_num);
+                else if(msg.keys & KEY_ENTER)
+                    ui_state.edit_mode = !ui_state.edit_mode;
+                else if(msg.keys & KEY_ESC) {
+                    state.rtxStatus = RTX_SPECTRUM;
+                    state.spectrum_currentPart = 0;
+                    _ui_menuBack(MENU_SPECTRUM);
+                }
                 break;
 #endif
             // Radio Settings
@@ -2661,6 +2726,12 @@ bool ui_updateGUI()
         // GPS settings screen
         case SETTINGS_GPS:
             _ui_drawSettingsGPS(&ui_state);
+            break;
+#endif
+#ifdef CONFIG_SPECTRUM
+        // Spectrum settings screen
+        case SETTINGS_SPECTRUM:
+            _ui_drawSettingsSpectrum(&ui_state);
             break;
 #endif
 #ifdef CONFIG_M17

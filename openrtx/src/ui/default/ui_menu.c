@@ -920,6 +920,21 @@ void _ui_drawSettingsGPS(ui_state_t* ui_state)
 }
 #endif
 
+#ifdef CONFIG_SPECTRUM
+void _ui_drawSettingsSpectrum(ui_state_t* ui_state)
+{
+    //gfx_clearScreen();
+    // Print "Spectrum Settings" on top bar
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
+              color_white, currentLanguage->spectrum);
+    // Print display settings entries
+    _ui_drawMenuListValue(ui_state, ui_state->menu_selected,
+                          _ui_getSpectrumEntryName,
+                          _ui_getSpectrumValueName);
+}
+#endif
+
+
 #ifdef CONFIG_RTC
 void _ui_drawSettingsTimeDate()
 {
