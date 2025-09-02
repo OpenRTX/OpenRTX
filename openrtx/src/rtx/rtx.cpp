@@ -10,6 +10,9 @@
 #include "rtx/rtx.h"
 #include "rtx/OpMode_FM.hpp"
 #include "rtx/OpMode_M17.hpp"
+#include "core/state.h"
+#include "core/utils.h"
+#include "interfaces/platform.h"
 
 static pthread_mutex_t   *cfgMutex;     // Mutex for incoming config messages
 static const rtxStatus_t *newCnf;       // Pointer for incoming config messages
@@ -22,6 +25,9 @@ static OpMode     noMode;               // Empty opMode handler for opmode::NONE
 static OpMode_FM  fmMode;               // FM mode handler
 #ifdef CONFIG_M17
 static OpMode_M17 m17Mode;              // M17 mode handler
+#endif
+#ifdef CONFIG_SPECTRUM
+#define RX_SWEEP_POINTS ARRAY_SIZE(rtxStatus.rxSweep_data.data) / 2
 #endif
 
 
@@ -46,6 +52,9 @@ void rtx_init(pthread_mutex_t *m)
     rtxStatus.rxTone        = 0;
     rtxStatus.txToneEn      = 0;
     rtxStatus.txTone        = 0;
+    #ifdef CONFIG_SPECTRUM
+    rtxStatus.rxSweep_data.peakIndex = 32;
+    #endif
     rtxStatus.invertRxPhase = false;
     rtxStatus.lsfOk         = false;
     rtxStatus.M17_src[0]    = '\0';
@@ -113,6 +122,48 @@ void rtx_task()
 
         pthread_mutex_unlock(cfgMutex);
     }
+
+    /* Spectrum update block, run when in SPECTRUM mode.
+     *
+     * The spectrum mode is a special mode where the radio is in RX mode but
+     * the audio path is disabled. This allows to display the RSSI level of the
+     * received signals across a frequency range in a waterfall-like display.
+     *
+     * This block writes the received RSSI levels to the spectrum buffer.
+     */
+    #ifdef CONFIG_SPECTRUM
+    if(state.rtxStatus == RTX_RX_SWEEP)
+    {
+        rtxStatus.rxSweep_data.sweepDone = false; // Clear the flag at the start of the sweep
+        uint32_t spectrumStep = freq_steps[state.settings.spectrum_step];
+        // Get the current RSSI level
+        // uint8_t peakIndex; // No longer needed
+        rtxStatus.rxSweep_data.peakRssi = -160; // Reset peak RSSI for each sweep
+        // Write the RSSI level to the spectrum buffer
+        uint32_t spanWidth = RX_SWEEP_POINTS * freq_steps[state.settings.spectrum_step];
+        uint32_t startFreq = state.rxSweep_start_freq;
+        for (int i = 0; i < RX_SWEEP_POINTS; i++) {
+            rtxStatus.rxFrequency = (startFreq + i * spectrumStep);
+            radio_updateConfiguration();
+            rssi_t current_rssi = radio_getRssi();
+            sleepFor(0u, 1u);
+            uint8_t height = (current_rssi + 160) / 2;
+            // // Macro for log2, not using the math library
+            // #define log2(x) (31 - __builtin_clz(x))
+            // uint8_t height = ((rssi + 160)*log2(22 - (rssi>>1) )) >> 3;
+            rtxStatus.rxSweep_data.data[i] = height;
+            // set peak value
+            if(current_rssi > rtxStatus.rxSweep_data.peakRssi)
+            {
+                rtxStatus.rxSweep_data.peakRssi = current_rssi;
+                rtxStatus.rxSweep_data.peakFreq = rtxStatus.rxFrequency;
+                rtxStatus.rxSweep_data.peakIndex = i;
+            }
+        }
+        rtxStatus.rxFrequency = startFreq; // Restore original frequency
+        rtxStatus.rxSweep_data.sweepDone = true; // Set the flag after the sweep is complete
+    }
+    #endif
 
     if(reconfigure)
     {
@@ -208,7 +259,15 @@ void rtx_task()
 
 rssi_t rtx_getRssi()
 {
+    #ifdef CONFIG_SPECTRUM
+    // There is a bug where during spectrum operation, the RSSI reads collide.
+    // This is a workaround to prevent the RSSI from being updated during spectrum operation.
+    if(rtxStatus.opStatus != RTX_RX_SWEEP)
+        return rssi;
+    else return -127.0;
+    #else
     return rssi;
+    #endif
 }
 
 bool rtx_rxSquelchOpen()

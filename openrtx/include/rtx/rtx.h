@@ -11,10 +11,22 @@
 #include <stdint.h>
 #include "core/cps.h"
 #include <pthread.h>
+#include <hwconfig.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+// The data related to the receive sweep function
+typedef struct
+{
+    uint32_t   startFreq; // Start frequency for spectrum display, in Hz
+    uint32_t   peakFreq;  // Current peak frequency for spectrum display, in Hz
+    int16_t    peakRssi; // Current peak RSSI for spectrum display
+    uint8_t    peakIndex; // Current peak index for spectrum display
+    uint8_t    data[128]; // Spectrum data buffer
+    bool       sweepDone; // True if one scanning cycle is done.
+} rxSweep_t;
 
 typedef struct
 {
@@ -53,6 +65,9 @@ typedef struct
     char     M17_link[10];             /**  M17 LSF traffic originator */
     char     M17_refl[10];             /**  M17 LSF reflector module   */
     char     M17_meta_text[53];        /**< M17 Meta Text              */
+    #ifdef CONFIG_SPECTRUM
+    rxSweep_t rxSweep_data;            /**< Data for RX sweep function  */
+    #endif
 }
 rtxStatus_t;
 
