@@ -36,10 +36,14 @@
 #include "drivers/baseband/SA8x8.h"
 #endif
 
+#define NUMBER_BARS 64
+#define NUMBER_DIVS 2
+
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBottom();
 extern const char* _ui_getToneEnabledString(bool tone_tx_enable,
                             bool tone_rx_enable, bool use_abbreviation);
+color_t getColorFromLevel(uint16_t Level);
 
 static char priorSelectedMenuName[MAX_ENTRY_LEN] = "\0";
 static char priorSelectedMenuValue[MAX_ENTRY_LEN] = "\0";
@@ -346,6 +350,35 @@ int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
     return 0;
 }
 #endif
+
+#ifdef CONFIG_SPECTRUM
+int _ui_getSpectrumEntryName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= settings_spectrum_num) return -1;
+    sniprintf(buf, max_len, "%s", settings_spectrum_items[index]);
+    return 0;
+}
+
+int _ui_getSpectrumValueName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= settings_spectrum_num) return -1;
+    uint32_t value = 0;
+    switch(index)
+    {
+        case SP_MULTIPLIER:
+            value = last_state.settings.spectrum_multiplier + 1;
+            sniprintf(buf, max_len, "%d", value);
+            break;
+        case SP_STEP:
+            value = freq_steps[last_state.settings.spectrum_step];
+            sniprintf(buf, max_len, "%u.%uKHz", (unsigned int)(value / 1000),
+                                                 (unsigned int)(value % 1000));
+            break;
+    }
+    return 0;
+}
+#endif
+
 
 int _ui_getRadioEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
@@ -774,6 +807,125 @@ void _ui_drawMenuGPS()
                      CONFIG_SCREEN_HEIGHT / 3,
                      last_state.gps_data.satellites,
                      last_state.gps_data.active_sats);
+}
+#endif
+
+#ifdef CONFIG_SPECTRUM
+void _ui_drawMenuSpectrum(ui_state_t* ui_state)
+{   
+    (void)ui_state;  // Suppress unused parameter warning
+
+    // Get current RTX status to access spectrum data
+    rtxStatus_t rtxStatus = rtx_getCurrentStatus();
+    uint32_t spectrumStep = freq_steps[last_state.settings.spectrum_step];
+    char freq_str[16];
+    #define SPECTRUM_WF_LINES ARRAY_SIZE(rtxStatus.rxSweep_data.data)
+    
+    // Display spectrum data if sweep is done
+    if(rtxStatus.rxSweep_data.sweepDone)
+    {
+        gfx_drawRect((point_t){0, 0}, 64, CONFIG_SCREEN_HEIGHT, color_black, true);
+        // Print small text at the peak of the spectrum with the peak frequency,
+        // but only if the peak is between indices 8 and 56
+        if (state.spectrum_peakIndex > 4 && state.spectrum_peakIndex < 56)
+        {
+            sniprintf(freq_str, sizeof(freq_str), "%lu.%03lu",
+                    (unsigned long)(state.spectrum_peakFreq / 100000),
+                    (unsigned long)(state.spectrum_peakFreq % 100000 / 100));
+            gfx_print((point_t){4,state.spectrum_peakIndex*2}, FONT_SIZE_5PT, TEXT_ALIGN_LEFT,
+                    yellow_fab413, freq_str);
+        }
+        
+        // First, draw some test bars at known good positions to verify rendering works
+        gfx_drawRect((point_t){10, 10}, 20, 5, (color_t){255, 0, 0, 255}, true);  // Red test bar
+        gfx_drawRect((point_t){40, 20}, 30, 5, (color_t){0, 255, 0, 255}, true);  // Green test bar
+        gfx_drawRect((point_t){80, 30}, 25, 5, (color_t){0, 0, 255, 255}, true);  // Blue test bar
+        
+        for (int i = 0; i < NUMBER_BARS; i++)
+        {
+            uint8_t height = rtxStatus.rxSweep_data.data[i];
+            // Calculate starting position so bars grow leftwards from x=64
+            int x_start = 64 - height;
+            
+            if(height > 0)  // Only draw if there's data
+            {
+                const int y_pos = 2*i;  // Double the spacing between bars    
+                
+                if(y_pos + 1 <= CONFIG_SCREEN_HEIGHT && x_start >= 0)
+                {
+                    color_t bar_color = getColorFromLevel(height * last_state.settings.spectrum_multiplier);
+                    gfx_drawRect((point_t){x_start, y_pos}, height, 2, bar_color, true);
+                }
+            }
+            const int bar_width = 1;
+            color_t bar_color = getColorFromLevel(height * state.settings.spectrum_multiplier);
+            gfx_drawRect((point_t){64, 2*i}, bar_width, 1, bar_color, true);
+            gfx_drawRect((point_t){64, 2*i + 1}, bar_width, 1, bar_color, true);
+        }
+        // Move previous lines of pixels right by 1 pixel each to create waterfall effect
+        for (int x = CONFIG_SCREEN_WIDTH - 1; x > 63; x--)
+        {
+            for (int y = 0; y < CONFIG_SCREEN_HEIGHT; y++)
+            {
+                color_t pixel = gfx_getPixel((point_t){x-1, y});
+                gfx_setPixel((point_t){x, y}, pixel);
+            }
+        }
+    
+    // Print small text at the top of the spectrum with the start frequency
+    sniprintf(freq_str, sizeof(freq_str), "%lu.%02lu",
+            (unsigned long)(state.rxSweep_start_freq / 1000000),
+            (unsigned long)(state.rxSweep_start_freq % 1000000 / 1000));
+    gfx_print((point_t){4, 8}, FONT_SIZE_5PT, TEXT_ALIGN_LEFT,
+                color_white, freq_str);
+    // Print small text at the bottom of the spectrum with the end frequency
+    sniprintf(freq_str, sizeof(freq_str), "%lu.%02lu",
+            (unsigned long)((state.rxSweep_start_freq + SPECTRUM_WF_LINES * spectrumStep) / 1000000),
+            (unsigned long)((state.rxSweep_start_freq + SPECTRUM_WF_LINES * spectrumStep) % 1000000 / 1000));
+    gfx_print((point_t){layout.horizontal_pad, 126}, FONT_SIZE_5PT, TEXT_ALIGN_LEFT,
+                color_white, freq_str);
+    }
+    state.spectrum_currentPart = (state.spectrum_currentPart + 1) % 2;
+}
+
+void spectrum_changeFrequency(int32_t direction)
+{
+    // Update the start frequency in the state by the step size
+    state.rxSweep_start_freq += direction;
+}
+
+// Helper function to get a color from a level
+// !!!!PLEASE MOVE ME!!!!
+color_t getColorFromLevel(uint16_t Level) {
+    const uint8_t Blue_G = 0;
+    const uint8_t Blue_B = 255;
+    
+    const uint8_t Green_R = 0;
+    const uint8_t Green_G = 192;
+    const uint8_t Green_B = 0;
+    
+    const uint8_t Red_R = 255;
+    const uint8_t Red_G = 0;
+    //const uint8_t Red_B = 0
+    
+    uint8_t R, G, B;
+    
+    if (Level > 80) {
+        R = 255;
+        G = 255;
+        B = 255;
+    } else if (Level <= 40) {
+        Level = (Level * 100) / 40;
+        R = 0; // Blue_R + ((Green_R - Blue_R) * Level / 100);
+        G = Blue_G + ((Green_G - Blue_G) * Level / 100);
+        B = Blue_B + ((Green_B - Blue_B) * Level / 100);
+    } else {
+        Level = ((Level) * 100) / 30;
+        R = Green_R + ((Red_R - Green_R) * Level / 100);
+        G = Green_G + ((Red_G - Green_G) * Level / 100);
+        B = 0; // Green_B + ((Red_B - Green_B) * Level / 100);
+    }
+    return (color_t){R, G, B, 255};
 }
 #endif
 

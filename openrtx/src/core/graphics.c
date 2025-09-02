@@ -218,7 +218,11 @@ color_t gfx_getPixel(point_t pos)
 
 #ifdef CONFIG_PIX_FMT_RGB565
     rgb565_t pixel = framebuffer[pos.x + pos.y*CONFIG_SCREEN_WIDTH];
-    return (color_t){pixel.r, pixel.g, pixel.b, 255};
+    // Scale RGB565 values back to 8-bit RGB
+    uint8_t r = (pixel.r << 3) | (pixel.r >> 2);  // 5-bit to 8-bit
+    uint8_t g = (pixel.g << 2) | (pixel.g >> 4);  // 6-bit to 8-bit  
+    uint8_t b = (pixel.b << 3) | (pixel.b >> 2);  // 5-bit to 8-bit
+    return (color_t){r, g, b, 255};
 #elif defined CONFIG_PIX_FMT_BW
     uint16_t idx = (pos.x + pos.y*CONFIG_SCREEN_WIDTH) / 8;
     uint8_t bit = (pos.x + pos.y*CONFIG_SCREEN_WIDTH) % 8;
@@ -230,7 +234,7 @@ color_t gfx_getPixel(point_t pos)
         return (color_t){0, 0, 0, 255};
 #else
     // Unknown pixel format, failsafe
-    return (color_t){0};
+    return (color_t){255};
 #endif
 }
 
