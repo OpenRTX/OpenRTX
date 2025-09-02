@@ -210,6 +210,18 @@ void gfx_fillScreen(color_t color)
     }
 }
 
+color_t gfx_getPixel(point_t pos)
+{
+    if (pos.x >= CONFIG_SCREEN_WIDTH || pos.y >= CONFIG_SCREEN_HEIGHT ||
+        pos.x < 0 || pos.y < 0)
+        return (color_t){0}; // off the screen
+
+    return (color_t){.r = framebuffer[pos.x + pos.y*CONFIG_SCREEN_WIDTH].r,
+                     .g = framebuffer[pos.x + pos.y*CONFIG_SCREEN_WIDTH].g,
+                     .b = framebuffer[pos.x + pos.y*CONFIG_SCREEN_WIDTH].b,
+                     .alpha = 255};
+}
+
 inline void gfx_setPixel(point_t pos, color_t color)
 {
     if (pos.x >= CONFIG_SCREEN_WIDTH || pos.y >= CONFIG_SCREEN_HEIGHT ||
