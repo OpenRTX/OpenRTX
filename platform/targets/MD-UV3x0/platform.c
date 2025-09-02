@@ -61,7 +61,6 @@ void platform_init()
     nvm_init();                      /* Initialise non volatile memory manager */
     nvm_readCalibData(&calibration); /* Load calibration data                  */
     nvm_readHwInfo(&hwInfo);         /* Load hardware information data         */
-    toneGen_init();                  /* Initialise tone generator              */
     rtc_init();                      /* Initialise RTC                         */
     chSelector_init();               /* Initialise channel selector handler    */
     audio_init();                    /* Initialise audio management module     */
@@ -77,7 +76,6 @@ void platform_terminate()
     adcStm32_terminate(&adc1);
     gpsStm32_terminate();
     nvm_terminate();
-    toneGen_terminate();
     chSelector_terminate();
     audio_terminate();
 

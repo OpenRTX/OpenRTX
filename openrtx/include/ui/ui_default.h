@@ -22,6 +22,7 @@
 
 #include <stdbool.h>
 #include <state.h>
+#include <history.h>
 #include <graphics.h>
 #include <interfaces/keyboard.h>
 #include <stdint.h>
@@ -49,6 +50,7 @@ enum uiScreen
     MENU_BANK,
     MENU_CHANNEL,
     MENU_CONTACTS,
+    MENU_HISTORY,
     MENU_GPS,
     MENU_SETTINGS,
     MENU_BACKUP_RESTORE,
@@ -80,6 +82,9 @@ enum menuItems
     M_BANK = 0,
     M_CHANNEL,
     M_CONTACTS,
+#ifdef CONFIG_M17
+    M_HISTORY,
+#endif
 #ifdef CONFIG_GPS
     M_GPS,
 #endif
@@ -120,6 +125,9 @@ enum displayItems
     D_CONTRAST,
 #endif
     D_TIMER,
+    D_NOTIFICATIONS,
+    D_BATTERY,
+    D_SMETER
 };
 
 #ifdef CONFIG_GPS
@@ -149,7 +157,8 @@ enum settingsM17Items
 {
     M17_CALLSIGN = 0,
     M17_CAN,
-    M17_CAN_RX
+    M17_CAN_RX,
+    M17_HISTORY
 };
 
 /**
@@ -208,7 +217,7 @@ typedef struct ui_state_t
     // If true we can change a menu entry value with UP/DOWN
     bool edit_mode;
     bool input_locked;
-    // Variables used for VFO input
+// Variables used for VFO input
     uint8_t input_number;
     uint8_t input_position;
     uint8_t input_set;
@@ -261,5 +270,10 @@ extern const color_t color_black;
 extern const color_t color_grey;
 extern const color_t color_white;
 extern const color_t yellow_fab413;
+extern const color_t color_blue;
+extern const color_t color_cyan;
+extern const color_t color_darkRed;
+extern const color_t color_list;
+extern const color_t color_listSelected;
 
 #endif /* UI_DEFAULT_H */

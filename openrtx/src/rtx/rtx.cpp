@@ -66,6 +66,9 @@ void rtx_init(pthread_mutex_t *m)
     rtxStatus.M17_dst[0]    = '\0';
     rtxStatus.M17_link[0]   = '\0';
     rtxStatus.M17_refl[0]   = '\0';
+    rtxStatus.historyEnabled = false;
+    rtxStatus.notificationsEnabled = true;
+    rtxStatus.nightMode = true;
     currMode = &noMode;
 
     /*
@@ -204,6 +207,11 @@ void rtx_task()
                 reinitFilter = false;
             }
         }
+
+//        if(rtxStatus.logMessage != '\0')
+//        {
+//            rtxStatus.opMode = OPMODE_LOG;
+//        }
     }
     else
     {
@@ -227,4 +235,24 @@ rssi_t rtx_getRssi()
 bool rtx_rxSquelchOpen()
 {
     return currMode->rxSquelchOpen();
+}
+
+void    rtx_setHistory(bool value)
+{
+    rtxStatus.historyEnabled = value;
+}
+
+void rtx_setNightMode(bool value)
+{
+    rtxStatus.nightMode = value;
+}
+
+void rtx_setShowSMeter(bool value)
+{
+    rtxStatus.showSMeter = value;
+}
+
+void rtx_setMenuActive(bool value)
+{
+    rtxStatus.menuActive = value;
 }

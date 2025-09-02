@@ -52,6 +52,7 @@ void *ui_threadFunc(void *arg)
 
     kbd_msg_t   kbd_msg;
     rtxStatus_t rtx_cfg = { 0 };
+    long long uiFastUntil = 0;
     bool        sync_rtx = true;
     long long   time     = 0;
 
@@ -67,7 +68,12 @@ void *ui_threadFunc(void *arg)
     {
         time = getTick();
 
+        bool keyEvent = false;
         if(input_scanKeyboard(&kbd_msg))
+        {
+            ui_pushEvent(EVENT_KBD, kbd_msg.value);
+            keyEvent = true;
+        }
         {
             ui_pushEvent(EVENT_KBD, kbd_msg.value);
         }
@@ -94,6 +100,10 @@ void *ui_threadFunc(void *arg)
             rtx_cfg.txToneEn    = state.channel.fm.txToneEn;
             rtx_cfg.txTone      = ctcss_tone[state.channel.fm.txTone];
             rtx_cfg.toneEn      = state.tone_enabled;
+            rtx_cfg.historyEnabled = state.settings.history_enabled;
+            rtx_cfg.notificationsEnabled = state.settings.notifications_enabled;
+            rtx_cfg.pauseNotifications = state.pauseNotifications;
+            rtx_cfg.showSMeter = state.settings.showSMeter;
 
             // Enable Tx if channel allows it and we are in UI main screen
             rtx_cfg.txDisable = state.channel.rx_only || state.txDisable;

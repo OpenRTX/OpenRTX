@@ -28,6 +28,7 @@
 #include <openrtx.h>
 #include <threads.h>
 #include <state.h>
+#include <history.h>
 #include <ui.h>
 #ifdef PLATFORM_LINUX
 #include <stdlib.h>
@@ -41,7 +42,7 @@ void openrtx_init()
 
     platform_init();    // Initialize low-level platform drivers
     state_init();       // Initialize radio state
-
+    history_init();     // Initialize callsign history
     gfx_init();         // Initialize display and graphics driver
     kbd_init();         // Initialize keyboard driver
     ui_init();          // Initialize user interface

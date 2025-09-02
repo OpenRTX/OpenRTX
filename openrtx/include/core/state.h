@@ -41,6 +41,7 @@ typedef struct
     uint8_t    charge;
     rssi_t     rssi;
     uint8_t    volume;
+    bool       volume_changed;
 
     uint8_t    ui_screen;
     uint8_t    tuner_mode;
@@ -62,6 +63,8 @@ typedef struct
     bool       restore_eflash;
     bool       txDisable;
     uint8_t    step_index;
+    bool       pauseNotifications;
+    bool       night_mode;
 }
 state_t;
 
