@@ -103,5 +103,6 @@ const stringsTable_t englishStrings =
     .Decode            = "Decode",
     .Both              = "Both",
     .None              = "None"
+    .spectrum          = "Spectrum"
 };
 #endif  // ENGLISHSTRINGS_H

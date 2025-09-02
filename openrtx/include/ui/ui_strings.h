@@ -107,6 +107,7 @@ typedef struct
     const char* Decode;
     const char* Both;
     const char* None;
+    const char* spectrum;
 }
 stringsTable_t;
 
