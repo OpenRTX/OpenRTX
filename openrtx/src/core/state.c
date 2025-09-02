@@ -81,10 +81,15 @@ void state_init()
     state.txDisable     = false;
     state.step_index    = 4; // Default frequency step 12.5kHz
     #ifdef CONFIG_SPECTRUM
-    state.spectrum_startFreq = 432100000; // Default start frequency for spectrum display
-    state.spectrum_currentPart = 0;
-    state.spectrum_currentWFLine = 0;
-    state.spectrum_peakIndex = 32;
+    const hwInfo_t* hwinfo = platform_getHwInfo();
+    if(hwinfo->vhf_band)
+    {
+        state.rxSweep_start_freq = 136000000; // VHF
+    }
+    else
+    {
+        state.rxSweep_start_freq = 400000000; // UHF
+    }
     #endif
 
     // Force brightness field to be in range 0 - 100
@@ -142,7 +147,15 @@ void state_task()
     state.volume = vol / 2;
 
     state.charge = battery_getCharge(state.v_bat);
+    // There is a bug where during spectrum operation, the RSSI reads collide.
+    // This is a workaround to prevent the RSSI from being updated during spectrum operation.
+    #ifdef CONFIG_SPECTRUM
+    if(state.rtxStatus != RTX_SPECTRUM)
+        state.rssi = rtx_getRssi();
+    else state.rssi = -127.0;
+    #else
     state.rssi = rtx_getRssi();
+    #endif
 
     #ifdef CONFIG_RTC
     state.time = platform_getCurrentTime();
