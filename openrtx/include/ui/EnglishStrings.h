@@ -106,5 +106,6 @@ const stringsTable_t englishStrings =
     .direction         = "Direction",
     .step              = "Step",
     .radio             = "Radio",
+    .spectrum          = "Spectrum"
 };
 #endif  // ENGLISHSTRINGS_H

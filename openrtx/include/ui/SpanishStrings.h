@@ -107,5 +107,6 @@ const stringsTable_t spanishStrings =
     .direction         = "Dirección",
     .step              = "Paso",
     .radio             = "Radio",
+    .spectrum          = "Espectro"
 };
 #endif  // SPANISHSTRINGS_H
