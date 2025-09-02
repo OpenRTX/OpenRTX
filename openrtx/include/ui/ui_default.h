@@ -36,6 +36,7 @@ enum uiScreen
     MENU_BANK,
     MENU_CHANNEL,
     MENU_CONTACTS,
+    MENU_SPECTRUM,
     MENU_GPS,
     MENU_SETTINGS,
     MENU_BACKUP_RESTORE,
@@ -47,6 +48,9 @@ enum uiScreen
     SETTINGS_TIMEDATE_SET,
     SETTINGS_DISPLAY,
     SETTINGS_GPS,
+    #ifdef CONFIG_SPECTRUM
+    SETTINGS_SPECTRUM,
+    #endif
     SETTINGS_RADIO,
     SETTINGS_M17,
     SETTINGS_FM,
@@ -71,6 +75,9 @@ enum menuItems
 #ifdef CONFIG_GPS
     M_GPS,
 #endif
+#ifdef CONFIG_SPECTRUM
+    M_SPECTRUM,
+#endif
     M_SETTINGS,
     M_INFO,
     M_ABOUT
@@ -84,6 +91,9 @@ enum settingsItems
 #endif
 #ifdef CONFIG_GPS
     S_GPS,
+#endif
+#ifdef CONFIG_SPECTRUM
+    S_SPECTRUM,
 #endif
     S_RADIO,
 #ifdef CONFIG_M17
@@ -111,6 +121,13 @@ enum displayItems
     D_TIMER,
     D_BATTERY
 };
+
+enum spectrumItems
+{
+    SP_MULTIPLIER = 0,
+    SP_STEP
+};
+
 
 #ifdef CONFIG_GPS
 enum settingsGPSItems
@@ -238,6 +255,9 @@ extern const char *menu_items[];
 extern const char *settings_items[];
 extern const char *display_items[];
 extern const char *settings_gps_items[];
+#ifdef CONFIG_SPECTRUM
+extern const char *settings_spectrum_items[];
+#endif
 extern const char *settings_radio_items[];
 extern const char *settings_m17_items[];
 extern const char *settings_fm_items[];
@@ -249,6 +269,9 @@ extern const uint8_t menu_num;
 extern const uint8_t settings_num;
 extern const uint8_t display_num;
 extern const uint8_t settings_gps_num;
+#ifdef CONFIG_SPECTRUM
+extern const uint8_t settings_spectrum_num;
+#endif
 extern const uint8_t settings_radio_num;
 extern const uint8_t settings_m17_num;
 extern const uint8_t settings_fm_num;
