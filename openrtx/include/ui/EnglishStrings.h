@@ -94,5 +94,8 @@ const stringsTable_t englishStrings =
     .radio             = "Radio",
     .CAN               = "CAN",
     .canRxCheck        = "CAN RX Check",
+    #ifdef CONFIG_SPECTRUM
+    .spectrum          = "Spectrum"
+    #endif
 };
 #endif  // ENGLISHSTRINGS_H
