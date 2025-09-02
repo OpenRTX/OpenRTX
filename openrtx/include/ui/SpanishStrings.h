@@ -95,5 +95,8 @@ const stringsTable_t spanishStrings =
     .radio             = "Radio",
     .CAN               = "CAN",
     .canRxCheck        = "CAN RX Check",
+    #ifdef CONFIG_SPECTRUM
+    .spectrum          = "Espectro"
+    #endif
 };
 #endif  // SPANISHSTRINGS_H
