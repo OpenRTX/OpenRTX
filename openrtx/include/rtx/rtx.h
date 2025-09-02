@@ -30,6 +30,17 @@
 extern "C" {
 #endif
 
+// The data related to the receive sweep function
+typedef struct
+{
+    uint32_t   startFreq; // Start frequency for spectrum display, in Hz
+    uint32_t   peakFreq;  // Current peak frequency for spectrum display, in Hz
+    int16_t    peakRssi; // Current peak RSSI for spectrum display
+    uint8_t    peakIndex; // Current peak index for spectrum display
+    uint8_t    data[128]; // Spectrum data buffer
+    bool       sweepDone; // True if one scanning cycle is done.
+} rxSweep_t;
+
 typedef struct
 {
     uint8_t opMode;         /**< Operating mode (FM, DMR, ...) */
