@@ -144,9 +144,13 @@ void state_task()
     state.charge = battery_getCharge(state.v_bat);
     // There is a bug where during spectrum operation, the RSSI reads collide.
     // This is a workaround to prevent the RSSI from being updated during spectrum operation.
+    #ifdef CONFIG_SPECTRUM
     if(state.rtxStatus != RTX_SPECTRUM)
         state.rssi = rtx_getRssi();
     else state.rssi = -127.0;
+    #else
+    state.rssi = rtx_getRssi();
+    #endif
 
     #ifdef CONFIG_RTC
     state.time = platform_getCurrentTime();
