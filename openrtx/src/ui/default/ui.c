@@ -1935,14 +1935,12 @@ void ui_updateFSM(bool *sync_rtx)
             // Go to the Spectrum Settings if we press ENTER
                 if(msg.keys & KEY_ENTER)
                 {
-                    display_init();
                     state.rtxStatus = RTX_RX;
                     state.ui_screen = SETTINGS_SPECTRUM;
                 }
                 if(msg.keys & KEY_ESC) {
                     state.rtxStatus = RTX_RX;
-                    radio_enableRx();
-                    display_init();
+                    sync_rtx = true;
                     _ui_menuBack(MENU_TOP);
                 }
                 if(msg.keys & KEY_UP)

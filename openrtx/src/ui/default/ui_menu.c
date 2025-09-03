@@ -880,7 +880,6 @@ void _ui_drawMenuSpectrum(ui_state_t* ui_state)
         state.spectrum_currentWFLine = ((state.spectrum_currentWFLine+1) % (waterfall_end_y - waterfall_start_y));
     }
     state.spectrum_currentPart = (state.spectrum_currentPart + 1) % 2;
-    ui_updateFSM(NULL);
 }
 
 void spectrum_changeFrequency(int32_t direction)
