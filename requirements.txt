@@ -1,5 +1,6 @@
-pyusb
-meson
+setuptools>=68.0.0
+pyusb>=1.2.1
+meson>=1.2.0
 ffmpeg
-cairosvg==2.7.1
-numpy==1.25.2
+cairosvg>=2.7.1
+numpy>=1.25.2
