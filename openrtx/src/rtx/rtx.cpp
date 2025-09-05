@@ -145,8 +145,7 @@ void rtx_task()
 
         uint8_t peakIndex;
         // Write the RSSI level to the spectrum buffer
-        for (int i = 0; i < SPECTRUM_WF_LINES; i++)
-        {
+        for (int i = 0; i < SPECTRUM_WF_LINES; i++) {
             // set freq to (state.spectrum_startFreq + i * spectrumStep), no bk4819
             rtxStatus.rxFrequency = (state.spectrum_startFreq + i * spectrumStep);
             rtxStatus.txFrequency = rtxStatus.rxFrequency;
@@ -265,7 +264,15 @@ void rtx_task()
 
 rssi_t rtx_getRssi()
 {
+    #ifdef CONFIG_SPECTRUM
+    // There is a bug where during spectrum operation, the RSSI reads collide.
+    // This is a workaround to prevent the RSSI from being updated during spectrum operation.
+    if(state.rtxStatus != RTX_RX_SWEEP)
+        return rssi;
+    else return -127.0;
+    #else
     return rssi;
+    #endif
 }
 
 bool rtx_rxSquelchOpen()
