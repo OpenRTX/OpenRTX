@@ -136,7 +136,7 @@ void rtx_task()
 * This block writes the received RSSI levels to the spectrum buffer.
 */
     #ifdef CONFIG_SPECTRUM
-    if(state.rtxStatus == RTX_SPECTRUM)
+    if(state.rtxStatus == RTX_RX_SWEEP)
     {
         //state.spectrum_peakRssi = -160;
         #define SPECTRUM_WF_LINES 64 // must match NUMBER_BARS in ui_menu.c!
@@ -227,7 +227,7 @@ void rtx_task()
      */
     if(rtxStatus.opStatus == RX)
     {
-    // if(state.rtxStatus != RTX_SPECTRUM)
+    // if(state.rtxStatus != RTX_RX_SWEEP)
     // {
         if(!reconfigure)
         {

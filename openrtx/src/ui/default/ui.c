@@ -1820,7 +1820,7 @@ void ui_updateFSM(bool *sync_rtx)
                         case M_SPECTRUM:
                             state.spectrum_startFreq = (state.channel.rx_frequency/10) - 32 * freq_steps[state.settings.spectrum_step]/10;
                             state.ui_screen = MENU_SPECTRUM;
-                            state.rtxStatus = RTX_SPECTRUM;
+                            state.rtxStatus = RTX_RX_SWEEP;
                             state.spectrum_currentPart = 0;
                             // Fill the waterfall with blue, to make it less jarring
                             gfx_drawRect((point_t){92, 0}, 44, 128, (color_t){0,0,255}, true);
@@ -2265,7 +2265,7 @@ void ui_updateFSM(bool *sync_rtx)
                 else if(msg.keys & KEY_ENTER)
                     ui_state.edit_mode = !ui_state.edit_mode;
                 else if(msg.keys & KEY_ESC) {
-                    state.rtxStatus = RTX_SPECTRUM;
+                    state.rtxStatus = RTX_RX_SWEEP;
                     state.spectrum_currentPart = 0;
                     _ui_menuBack(MENU_SPECTRUM);
                 }
