@@ -150,7 +150,7 @@ void state_task()
     // There is a bug where during spectrum operation, the RSSI reads collide.
     // This is a workaround to prevent the RSSI from being updated during spectrum operation.
     #ifdef CONFIG_SPECTRUM
-    if(state.rtxStatus != RTX_SPECTRUM)
+    if(state.rtxStatus != RTX_RX_SWEEP)
         state.rssi = rtx_getRssi();
     else state.rssi = -127.0;
     #else

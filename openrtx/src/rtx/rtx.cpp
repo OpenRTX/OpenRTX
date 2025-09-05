@@ -255,7 +255,7 @@ if(state.rtxStatus == RTX_RX_SWEEP)
      */
     if(rtxStatus.opStatus == RX)
     {
-    // if(state.rtxStatus != RTX_SPECTRUM)
+    // if(state.rtxStatus != RTX_RX_SWEEP)
     // {
         if(!reconfigure)
         {

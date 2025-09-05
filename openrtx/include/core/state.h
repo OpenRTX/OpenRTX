@@ -83,7 +83,7 @@ enum RtxStatus
     RTX_RX,
     RTX_TX
     #ifdef CONFIG_SPECTRUM
-    ,RTX_SPECTRUM
+    ,RTX_RX_SWEEP
     #endif
 };
 
