@@ -2298,7 +2298,7 @@ void ui_updateFSM(bool *sync_rtx)
                 else if(msg.keys & KEY_ENTER)
                     ui_state.edit_mode = !ui_state.edit_mode;
                 else if(msg.keys & KEY_ESC) {
-                    state.rtxStatus = RTX_SPECTRUM;
+                    state.rtxStatus = RTX_RX_SWEEP;
                     state.spectrum_currentPart = 0;
                     _ui_menuBack(MENU_SPECTRUM);
                 }
