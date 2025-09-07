@@ -81,7 +81,13 @@ void state_init()
     state.txDisable     = false;
     state.step_index    = 4; // Default frequency step 12.5kHz
     #ifdef CONFIG_SPECTRUM
-    state.spectrum_startFreq = 432100000; // Default start frequency for spectrum display
+    const hwInfo_t* hwinfo  = platform_getHwInfo();
+    if(hwinfo->uhf_band) {
+        state.spectrum_startFreq = 432100000;
+    }
+    else if(hwinfo->vhf_band) {
+        state.spectrum_startFreq = 144000000;
+    }
     state.spectrum_currentPart = 0;
     state.spectrum_currentWFLine = 0;
     state.spectrum_peakIndex = 32;
