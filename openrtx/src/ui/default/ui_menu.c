@@ -36,6 +36,9 @@
 #include <SA8x8.h>
 #endif
 
+#define NUMBER_BARS 64
+#define NUMBER_DIVS 2
+
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBottom();
 color_t getColorFromLevel(uint16_t Level);
@@ -765,11 +768,8 @@ void _ui_drawMenuGPS()
 void _ui_drawMenuSpectrum(ui_state_t* ui_state)
 {   
     (void)ui_state;  // Suppress unused parameter warning
-    color_t bar_color = (color_t){255, 255, 255, 255};
     uint32_t spectrumStep = freq_steps[state.settings.spectrum_step];
     char freq_str[16];
-    #define NUMBER_BARS 64
-    #define NUMBER_DIVS 2
     
     // If there's a mismatch between the current and last state, reset everything
     if(last_state.spectrum_startFreq != state.spectrum_startFreq)

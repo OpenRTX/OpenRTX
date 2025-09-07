@@ -2250,7 +2250,7 @@ void ui_updateFSM(bool *sync_rtx)
                     switch(ui_state.menu_selected)
                     {
                         case SP_MULTIPLIER:
-                            state.settings.spectrum_multiplier = (state.settings.spectrum_multiplier + 1) % 5;
+                            state.settings.spectrum_multiplier = (state.settings.spectrum_multiplier + 1) % SP_MULTIPLIER_MAX_STEPS;
                             break;
                         case SP_STEP:
                             state.settings.spectrum_step += 1;
