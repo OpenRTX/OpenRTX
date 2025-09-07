@@ -20,6 +20,7 @@
 
 #include <audio_stream.h>
 #include <audio_codec.h>
+#include <hwconfig.h>
 #include <pthread.h>
 #include <threads.h>
 // codec2 system library has a weird include prefix
@@ -52,6 +53,14 @@ static uint8_t          readPos;
 static uint8_t          writePos;
 static uint8_t          numElements;
 static uint64_t         dataBuffer[BUF_SIZE];
+
+#ifdef CONFIG_CODEC2_NOISE_GATE
+static const uint32_t filtAlpha = float_to_UQ31(0.05);
+static const uint32_t openTsh = float_to_UQ31(0.0001); // equiv. to -40dB
+static const uint32_t closeTsh = openTsh - 16384;
+static const uint8_t gateDecay = 2;
+static struct pwrSquelch sqlState;
+#endif
 
 #ifdef PLATFORM_MOD17
 static const uint8_t micGainPre  = 4;
@@ -205,6 +214,9 @@ static void *encodeFunc(void *arg)
         return NULL;
     }
 
+    #ifdef CONFIG_CODEC2_NOISE_GATE
+    dsp_pwrSquelchInit(&sqlState);
+    #endif
     dsp_resetFilterState(&dcrState);
     codec2 = codec2_create(CODEC2_MODE_3200);
 
@@ -226,7 +238,15 @@ static void *encodeFunc(void *arg)
         dsp_dcRemoval(&dcrState, audio.data, audio.len);
 
         // Post-amplification stage
-        for(size_t i = 0; i < audio.len; i++) audio.data[i] *= micGainPost;
+        for(size_t i = 0; i < audio.len; i++) {
+            audio.data[i] *= micGainPost;
+
+            #ifdef CONFIG_CODEC2_NOISE_GATE
+            dsp_pwrSquelchUpdate(&sqlState, audio.data[i], filtAlpha);
+            if(!dsp_pwrSquelchEvaluate(&sqlState, openTsh, closeTsh, gateDecay))
+                audio.data[i] = 0;
+            #endif
+        }
         #endif
 
         // CODEC2 encodes 160ms of speech into 8 bytes: here we write the
