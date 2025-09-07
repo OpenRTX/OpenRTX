@@ -9,62 +9,51 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: install-deps
-        run: |
-          sudo apt update
-          sudo apt install -y git pkg-config build-essential meson libsdl2-dev libreadline-dev dfu-util cmake libusb-1.0-0 libusb-1.0-0-dev libcodec2-dev codec2
-      - name: install miosix
-        run: |
-          wget https://miosix.org/toolchain/MiosixToolchainInstaller.run
-          chmod +x MiosixToolchainInstaller.run
-          sudo sh MiosixToolchainInstaller.run
-          wget https://github.com/v0l/radio_tool/releases/download/v$RADIO_TOOL_VERSION/radio_tool-$RADIO_TOOL_VERSION-Linux.deb
-          sudo dpkg -i radio_tool-$RADIO_TOOL_VERSION-Linux.deb
-      - name: Get opengd77 for wrapping
-        run: |
-          git clone https://github.com/open-ham/OpenGD77.git /tmp/OpenGD77
-      - name: setup meson
-        run: |
-          cd ${{github.workspace}}
-          meson setup build_linux
-          meson setup --cross-file cross_arm.txt build_arm
-          meson setup --cross-file cross_cm7.txt build_cm7
-      - name: Compile linux
-        run: |
-          meson compile -C build_linux openrtx_linux
-          meson compile -C build_linux openrtx_linux_smallscreen
-          meson compile -C build_linux openrtx_linux_mod17
-      - name: Compile arm cortex m4 targets
-        run: |
-          export PATH=$PATH:/tmp/OpenGD77/tools/Python/FirmwareLoader:/tmp/OpenGD77/firmware/tools
-          echo $PATH
-          meson compile -C build_arm openrtx_md3x0_wrap
-          meson compile -C build_arm openrtx_mduv3x0_wrap
-          meson compile -C build_arm openrtx_md9600_wrap
-          meson compile -C build_arm openrtx_gd77_wrap
-          meson compile -C build_arm openrtx_dm1801_wrap
-          meson compile -C build_arm openrtx_mod17_wrap
-          meson compile -C build_arm openrtx_cs7000_wrap
-          meson compile -C build_arm openrtx_dm1701_wrap
-      - name: Compile arm cortex m7 targets
-        run: |
-          export PATH=$PATH:/tmp/OpenGD77/tools/Python/FirmwareLoader:/tmp/OpenGD77/firmware/tools
-          echo $PATH
-          meson compile -C build_cm7 openrtx_cs7000p_wrap
+      - name: Compile using devcontainer
+        uses: devcontainers/ci@v0.3
+        with:
+          runCmd: |
+            meson setup build_linux
+            meson setup --cross-file cross_arm.txt build_arm
+            meson setup --cross-file cross_cm7.txt build_cm7
+            meson compile -C build_linux openrtx_linux
+            meson compile -C build_linux openrtx_linux_smallscreen
+            meson compile -C build_linux openrtx_linux_mod17
+            meson compile -C build_arm openrtx_cs7000_wrap
+            meson compile -C build_arm openrtx_cs7000_dfu
+            meson compile -C build_arm openrtx_dm1701_wrap
+            meson compile -C build_arm openrtx_dm1801_wrap
+            meson compile -C build_arm openrtx_md3x0_wrap
+            meson compile -C build_arm openrtx_md9600_wrap
+            meson compile -C build_arm openrtx_mduv3x0_wrap
+            meson compile -C build_arm openrtx_mod17_wrap
+            meson compile -C build_arm openrtx_gd77_wrap
+            meson compile -C build_cm7 openrtx_cs7000p_wrap
+            meson compile -C build_cm7 openrtx_cs7000p_dfu
+            chmod -R 777 *
       - uses: actions/upload-artifact@v4
         with:
           name: release-bins
           path: |
-            ${{github.workspace}}/build_arm/openrtx_*_wrap
+            ${{github.workspace}}/build_cm7/openrtx_cs7000p_wrap.bin
+            ${{github.workspace}}/build_cm7/openrtx_cs7000p_dfu
+            ${{github.workspace}}/build_arm/openrtx_cs7000_wrap.bin
+            ${{github.workspace}}/build_arm/openrtx_cs7000_dfu
+            ${{github.workspace}}/build_arm/openrtx_dm1701_wrap
+            ${{github.workspace}}/build_arm/openrtx_dm1801_wrap.sgl
+            ${{github.workspace}}/build_arm/openrtx_gd77_wrap.sgl
             ${{github.workspace}}/build_linux/openrtx_linux
-            ${{github.workspace}}/build_linux/openrtx_linux_smallscreen
-            ${{github.workspace}}/build_linux/openrtx_linux_mod17
+            ${{github.workspace}}/build_arm/openrtx_md3x0_wrap
+            ${{github.workspace}}/build_arm/openrtx_md9600_wrap
+            ${{github.workspace}}/build_arm/openrtx_mduv3x0_wrap
+            ${{github.workspace}}/build_arm/openrtx_mod17_wrap
+          if-no-files-found: error
   build-zephyr:
     runs-on: ubuntu-22.04
     steps:
