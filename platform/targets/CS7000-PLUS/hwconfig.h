@@ -68,6 +68,7 @@ extern const struct gpsDevice gps;
 
 /* Device supports M17 mode */
 #define CONFIG_M17
+#define CONFIG_CODEC2_NOISE_GATE
 
 /* Device has a GPS chip */
 #define CONFIG_GPS
