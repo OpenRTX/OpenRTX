@@ -66,6 +66,8 @@ typedef struct
     char     M17_src[10];              /**  M17 LSF source             */
     char     M17_link[10];             /**  M17 LSF traffic originator */
     char     M17_refl[10];             /**  M17 LSF reflector module   */
+
+    bool     display_battery;
 }
 rtxStatus_t;
 

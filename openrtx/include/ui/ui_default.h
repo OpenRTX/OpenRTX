@@ -120,6 +120,7 @@ enum displayItems
     D_CONTRAST,
 #endif
     D_TIMER,
+    D_BATTERY
 };
 
 #ifdef CONFIG_GPS

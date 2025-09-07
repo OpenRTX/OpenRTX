@@ -32,6 +32,7 @@ const stringsTable_t spanishStrings =
     .banks             = "Banks",
     .channels          = "Canales",
     .contacts          = "Contactos",
+    .batteryIcon       = "Icon de batteria",
     .gps               = "GPS",
     .settings          = "Ajustes",
     .backupAndRestore  = "Backup & Restaurar",

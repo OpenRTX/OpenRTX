@@ -31,6 +31,7 @@ const stringsTable_t englishStrings =
     .banks             = "Banks",
     .channels          = "Channels",
     .contacts          = "Contacts",
+    .batteryIcon       = "Battery Icon",
     .gps               = "GPS",
     .settings          = "Settings",
     .backupAndRestore  = "Backup & Restore",
