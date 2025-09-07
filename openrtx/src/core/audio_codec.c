@@ -20,6 +20,7 @@
 
 #include "core/audio_stream.h"
 #include "core/audio_codec.h"
+#include "hwconfig.h"
 #include <pthread.h>
 #include "core/threads.h"
 // codec2 system library has a weird include prefix
@@ -52,6 +53,14 @@ static uint8_t          readPos;
 static uint8_t          writePos;
 static uint8_t          numElements;
 static uint64_t         dataBuffer[BUF_SIZE];
+
+#ifdef CONFIG_CODEC2_NOISE_GATE
+static const uint32_t filtAlpha = float_to_UQ31(0.05);
+static const uint32_t openTsh = 100;
+static const uint32_t closeTsh = 25;
+static const uint8_t gateDecay = 2;
+static struct pwrSquelch sqlState;
+#endif
 
 #ifdef PLATFORM_MOD17
 static const uint8_t micGain = 12;
@@ -203,6 +212,9 @@ static void *encodeFunc(void *arg)
         return NULL;
     }
 
+    #ifdef CONFIG_CODEC2_NOISE_GATE
+    dsp_resetState(sqlState);
+    #endif
     dsp_resetState(dcBlock);
     codec2 = codec2_create(CODEC2_MODE_3200);
 
@@ -221,6 +233,11 @@ static void *encodeFunc(void *arg)
             int16_t sample;
 
             sample = dsp_dcBlockFilter(&dcBlock, audio.data[i]);
+            #ifdef CONFIG_CODEC2_NOISE_GATE
+            sample = dsp_pwrSquelch(&sqlState, sample, filtAlpha, openTsh,
+                                    closeTsh, gateDecay);
+            #endif
+
             audio.data[i] = sample * micGain;
         }
         #endif
