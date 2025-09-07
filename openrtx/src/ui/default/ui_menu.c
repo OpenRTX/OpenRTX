@@ -836,11 +836,6 @@ void _ui_drawMenuSpectrum(ui_state_t* ui_state)
                     yellow_fab413, freq_str);
         }
         
-        // First, draw some test bars at known good positions to verify rendering works
-        gfx_drawRect((point_t){10, 10}, 20, 5, (color_t){255, 0, 0, 255}, true);  // Red test bar
-        gfx_drawRect((point_t){40, 20}, 30, 5, (color_t){0, 255, 0, 255}, true);  // Green test bar
-        gfx_drawRect((point_t){80, 30}, 25, 5, (color_t){0, 0, 255, 255}, true);  // Blue test bar
-        
         for (int i = 0; i < NUMBER_BARS; i++)
         {
             uint8_t height = rtxStatus.rxSweep_data.data[i];
