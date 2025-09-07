@@ -66,6 +66,7 @@ void rtx_init(pthread_mutex_t *m)
     rtxStatus.M17_dst[0]    = '\0';
     rtxStatus.M17_link[0]   = '\0';
     rtxStatus.M17_refl[0]   = '\0';
+    rtxStatus.historyEnabled = false;
     currMode = &noMode;
 
     /*
@@ -227,4 +228,9 @@ rssi_t rtx_getRssi()
 bool rtx_rxSquelchOpen()
 {
     return currMode->rxSquelchOpen();
+}
+
+void    rtx_setHistory(bool value)
+{
+    rtxStatus.historyEnabled = value;
 }

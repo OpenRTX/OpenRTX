@@ -35,6 +35,7 @@ typedef struct
     const char* banks;
     const char* channels;
     const char* contacts;
+    const char* history;
     const char* gps;
     const char* settings;
     const char* backupAndRestore;
