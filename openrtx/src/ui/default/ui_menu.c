@@ -865,7 +865,7 @@ void _ui_drawMenuSpectrum(ui_state_t* ui_state)
         for(int i = 0; i < NUMBER_BARS && i < 64; i++)
         {
             uint8_t height = state.spectrum_data[NUMBER_BARS-(i+1)];
-            bar_color = getColorFromLevel(height * (state.settings.spectrum_multiplier-1) + height);
+            color_t bar_color = getColorFromLevel(height * (state.settings.spectrum_multiplier-1) + height);
             
             // Draw two pixels wide for each spectrum bar (like the original code)
             point_t pos1 = {i * 2, new_line_y};
