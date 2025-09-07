@@ -790,19 +790,18 @@ void _ui_drawMenuSpectrum(ui_state_t* ui_state)
             gfx_print((point_t){4,state.spectrum_peakIndex*2}, FONT_SIZE_5PT, TEXT_ALIGN_LEFT,
                     yellow_fab413, freq_str);
         }
+        // Clear the spectrum bar area before drawing new bars
+        // Clear from x=0 to x=88 (where bars extend to) across full height
+        gfx_drawRect((point_t){0, 0}, 88, CONFIG_SCREEN_HEIGHT, (color_t){0, 0, 0, 255}, true);
+        
         // Draw all the bars in the spectrum
         // The bars appear to be drawn vertically along the Y axis
-        
-        // First, draw some test bars at known good positions to verify rendering works
-        gfx_drawRect((point_t){10, 10}, 20, 5, (color_t){255, 0, 0, 255}, true);  // Red test bar
-        gfx_drawRect((point_t){40, 20}, 30, 5, (color_t){0, 255, 0, 255}, true);  // Green test bar
-        gfx_drawRect((point_t){80, 30}, 25, 5, (color_t){0, 0, 255, 255}, true);  // Blue test bar
         
         for (int i = 0; i < NUMBER_BARS; i++)
         {
             uint8_t height = state.spectrum_data[i];
-            // For debugging, let's also draw some test bars with fixed values
-            if(i < 10) height = 20 + i * 3;  // Test data for first 10 bars
+            // Generate some random test data to see the bars
+            height = (i * 7 + getTick() / 100) % 50 + 10;  // Random-ish data between 10-60
             
             if(height > 0)  // Only draw if there's data
             {
@@ -855,8 +854,6 @@ void _ui_drawMenuSpectrum(ui_state_t* ui_state)
                 // Copy pixel from line below (y+1) to current line (y)
                 point_t src_pos = {x, y + 1};
                 point_t dst_pos = {x, y};
-                // For now, just draw white pixels for testing - will fix waterfall later
-                gfx_setPixel(dst_pos, (color_t){255,255,255,255});
             }
         }
         
@@ -865,7 +862,10 @@ void _ui_drawMenuSpectrum(ui_state_t* ui_state)
         for(int i = 0; i < NUMBER_BARS && i < 64; i++)
         {
             uint8_t height = state.spectrum_data[NUMBER_BARS-(i+1)];
-            color_t bar_color = getColorFromLevel(height * (state.settings.spectrum_multiplier-1) + height);
+            // Generate same random test data as the spectrum bars
+            height = (i * 7 + getTick() / 100) % 50 + 10;
+            
+            color_t bar_color = getColorFromLevel(height * state.settings.spectrum_multiplier);
             
             // Draw two pixels wide for each spectrum bar (like the original code)
             point_t pos1 = {i * 2, new_line_y};
