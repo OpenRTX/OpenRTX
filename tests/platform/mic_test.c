@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <interfaces/delays.h>
 #include <interfaces/audio.h>
-#include <interfaces/audio_path.h>
+#include <audio_path.h>
 #include <audio_stream.h>
 #include <interfaces/platform.h>
 #include <dsp.h>
@@ -38,9 +38,8 @@ int main()
     stream_sample_t *sampleBuf = ((stream_sample_t *) malloc(numSamples *
                                                       sizeof(stream_sample_t)));
 
-    audio_enableMic();
-    streamId id = inputStream_start(SOURCE_MIC, PRIO_TX, sampleBuf, numSamples,
-                                    BUF_LINEAR, 8000);
+    pathId pi = audioPath_request(SOURCE_MIC, SINK_MCU, PRIO_TX);
+    streamId id = audioStream_start(pi, sampleBuf, numSamples, 8000, BUF_LINEAR | STREAM_INPUT);
 
     sleepFor(3u, 0u);
     platform_ledOn(GREEN);
