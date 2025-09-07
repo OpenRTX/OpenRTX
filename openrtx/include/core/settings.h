@@ -62,6 +62,7 @@ typedef struct
             _reserved       : 3;
     bool    m17_can_rx;           // Check M17 CAN on RX
     char    m17_dest[10];         // M17 destination
+    bool    showBatteryIcon;      // Battery display true: icon, false: percentage
 }
 __attribute__((packed)) settings_t;
 
@@ -86,7 +87,8 @@ static const settings_t default_settings =
     1,                            // Automatic latch of macro menu enabled
     0,                            // not used
     false,                        // Check M17 CAN on RX
-    ""                            // Empty M17 destination
+    "",                           // Empty M17 destination
+    false,                        // Display battery icon
 };
 
 #endif /* SETTINGS_H */

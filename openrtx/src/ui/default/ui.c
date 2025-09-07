@@ -157,7 +157,8 @@ const char *display_items[] =
 #ifdef CONFIG_SCREEN_CONTRAST
     "Contrast",
 #endif
-    "Timer"
+    "Timer",
+    "Battery Icon"
 };
 
 #ifdef CONFIG_GPS
@@ -2068,6 +2069,9 @@ void ui_updateFSM(bool *sync_rtx)
                         case D_TIMER:
                             _ui_changeTimer(-1);
                             vp_announceDisplayTimer();
+                            break;
+                        case D_BATTERY:
+                            state.settings.showBatteryIcon = !state.settings.showBatteryIcon;
                             break;
                         default:
                             state.ui_screen = SETTINGS_DISPLAY;

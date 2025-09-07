@@ -100,6 +100,7 @@ typedef struct
     const char* frequencyOffset;
     const char* macroLatching;
     const char* noGps;
+    const char* batteryIcon;
 }
 stringsTable_t;
 
