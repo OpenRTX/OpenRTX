@@ -37,6 +37,12 @@ typedef int16_t audio_sample_t;
  */
 
 /**
+ * Convert a floating point value to unsigned Q1.31 format.
+ * To avoid conversion errors, the input value should range between 0 and 1.0
+ */
+#define float_to_UQ31(x) ((uint32_t) (x * 4294967296.0f))
+
+/**
  * Data structure holding the internal state of a filter.
  */
 typedef struct
@@ -46,7 +52,6 @@ typedef struct
     bool  initialised;  // state variables initialised
 }
 filter_state_t;
-
 
 /**
  * Reset the filter state variables.
@@ -73,6 +78,47 @@ void dsp_dcRemoval(filter_state_t *state, audio_sample_t *buffer, size_t length)
  * @param length: the length of the input buffer.
  */
 void dsp_invertPhase(audio_sample_t *buffer, uint16_t length);
+
+/**
+ * Data structure holding the internal state of a signal power squelch gate.
+ */
+struct pwrSquelch {
+    uint32_t filtOut;
+    uint8_t decayCnt;
+};
+
+/**
+ * Initialize the internal state of a signal power squelch gate.
+ *
+ * @param sq: pointer to state data structure.
+ */
+void dsp_pwrSquelchInit(struct pwrSquelch *sq);
+
+/**
+ * Update the internal state of a signal power squelch gate.
+ * The outut of the envelope filter is the normalized signal power, ranging
+ * from 0 to 65535.
+ *
+ * @param sq: pointer to state data structure.
+ * @param sample: new data sample.
+ * @param alpha: time constant for the envelope lowpass filter.
+ * @return filter output after update.
+ */
+uint16_t dsp_pwrSquelchUpdate(struct pwrSquelch *sq, int16_t sample,
+                              uint32_t alpha);
+
+/**
+ * Evaluate the signal power squelch gate condition.
+ * When the signal power falls below the threshold, the gate closes after a
+ * specified number of decay steps.
+ *
+ * @param sq: pointer to state data structure.
+ * @param thresh: gate opening threshold.
+ * @param decay: gate closing decay steps, set to zero for immediate shut.
+ * @return gate state.
+ */
+bool dsp_pwrSquelchEvaluate(struct pwrSquelch *sq, uint32_t thresh,
+                            uint8_t decay);
 
 #ifdef __cplusplus
 }
