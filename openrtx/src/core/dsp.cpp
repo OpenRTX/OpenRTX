@@ -37,3 +37,25 @@ int16_t dsp_dcBlockFilter(struct dcBlock *dcb, int16_t sample)
 
     return static_cast<int16_t>(dcb->prevOut);
 }
+
+int16_t dsp_pwrSquelch(struct pwrSquelch *sq, int16_t sample,
+                       uint32_t filtAlpha, uint32_t openTsh, uint32_t closeTsh,
+                       uint8_t decay)
+{
+    const uint32_t alphaComp = 0xFFFFFFFF - filtAlpha;
+
+    uint32_t energy = sample * sample;
+    uint64_t filtOut = (static_cast<uint64_t>(energy) * filtAlpha)
+                     + (static_cast<uint64_t>(sq->prevOut) * alphaComp);
+
+    filtOut >>= 32;
+    sq->prevOut = filtOut;
+
+    if (filtOut > openTsh)
+        sq->decayCnt = decay;
+
+    if ((filtOut < closeTsh) && (sq->decayCnt > 0))
+        sq->decayCnt -= 1;
+
+    return (sq->decayCnt != 0) ? sample : 0;
+}

@@ -42,6 +42,12 @@ extern "C" {
 #define dsp_resetState(state) memset(&state, 0x00, sizeof(state))
 
 /**
+ * Convert a floating point value to unsigned Q1.31 format.
+ * To avoid conversion errors, the input value should range between 0 and 1.0
+ */
+#define float_to_UQ31(x) ((uint32_t)(x * 4294967296.0f))
+
+/**
  * Data structure holding the internal state of a DC blocking filter.
  */
 struct dcBlock {
@@ -71,6 +77,52 @@ static inline void dsp_removeDcOffset(struct dcBlock *dcb, int16_t *buffer,
 {
     for (size_t i = 0; i < length; i++)
         buffer[i] = dsp_dcBlockFilter(dcb, buffer[i]);
+}
+
+/**
+ * Data structure holding the internal state of a power squelch gate.
+ */
+struct pwrSquelch {
+    uint32_t prevOut;
+    uint8_t decayCnt;
+};
+
+/**
+ * Run a single step of the power squelch gate.
+ * After the envelope of the signal power falls below the threshold, the gate
+ * will effectively close after the specified number of decay steps.
+ *
+ * @param sq: pointer to state data structure.
+ * @param sample: input sample.
+ * @param filtAlpha: envelope filter time constant.
+ * @param openTsh: squelch opening threshold.
+ * @param closeTsh: squelch closing threshold.
+ * @param decay: squelch decay steps.
+ * @return the input sample or zero if the squelch is closed.
+ */
+int16_t dsp_pwrSquelch(struct pwrSquelch *sq, int16_t sample,
+                       uint32_t filtAlpha, uint32_t openTsh, uint32_t closeTsh,
+                       uint8_t decay);
+/**
+ * Apply the power quelch gate on collection of samples, processing data
+ * in-place.
+ *
+ * @param sq: pointer to state data structure.
+ * @param buffer: buffer containing the audio samples.
+ * @param length: number of samples contained in the buffer.
+ * @param filtAlpha: envelope filter time constant.
+ * @param openTsh: squelch opening threshold.
+ * @param closeTsh: squelch closing threshold.
+ * @param decay: squelch decay steps.
+ */
+static inline void dsp_applyPwrSquelch(struct pwrSquelch *sq, int16_t *buffer,
+                                       size_t length, uint32_t filtAlpha,
+                                       uint32_t openTsh, uint32_t closeTsh,
+                                       uint8_t decay)
+{
+    for (size_t i = 0; i < length; i++)
+        buffer[i] =
+            dsp_pwrSquelch(sq, buffer[i], filtAlpha, openTsh, closeTsh, decay);
 }
 
 #ifdef __cplusplus
