@@ -709,13 +709,22 @@ void _ui_drawHistoryList(uint8_t selected, int (*getCurrentEntry)(char *buf, uin
 
 void _ui_drawMenuHistory(ui_state_t* ui_state)
 {
-    gfx_clearScreen();
-    // Print "History" on top bar
-    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, currentLanguage->history);
-    // Print contact entries
-    _ui_drawHistoryList(ui_state->menu_selected, _ui_getHistoryItem);
-    if(is_new_history()) reset_new_history();
+    point_t fix_pos = {layout.line2_pos.x, CONFIG_SCREEN_HEIGHT * 2 / 5};
+    
+    if(state.settings.history_enabled) {
+        gfx_clearScreen();
+        // Print "History" on top bar
+        gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
+                color_white, currentLanguage->history);
+        // Print contact entries
+        _ui_drawHistoryList(ui_state->menu_selected, _ui_getHistoryItem);
+        if(is_new_history()) reset_new_history();
+    }
+    else {
+        gfx_clearScreen();
+        gfx_print(fix_pos, layout.line3_font, TEXT_ALIGN_CENTER,
+        color_white, "History OFF");
+    }
 }
 
 #ifdef CONFIG_GPS

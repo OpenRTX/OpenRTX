@@ -1915,6 +1915,7 @@ void ui_updateFSM(bool *sync_rtx)
                     read_history(&history, ui_state.menu_selected);
                     strncpy(state.settings.m17_dest, history.callsign, 10);
                     *sync_rtx = true;
+                    _ui_menuBack(MENU_TOP);
                 }
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_TOP);
@@ -2577,8 +2578,7 @@ bool ui_updateGUI()
             break;
 #ifdef CONFIG_M17
         case MENU_HISTORY:
-            if(state.settings.history_enabled)
-                _ui_drawMenuHistory(&ui_state); // fixed
+            _ui_drawMenuHistory(&ui_state); // fixed
             break;
 #endif
 #ifdef CONFIG_GPS
