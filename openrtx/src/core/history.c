@@ -232,11 +232,6 @@ char history_status()
    return history_list->status;
 }
 
-/**
- * \internal
- * Format History Entry
- *
- */
 void history_format_value(char *buf, int max_len, struct history history) {
     sniprintf(buf, max_len, "%s %02d:%02d:%02d", history.callsign, history.time.hour, history.time.minute, history.time.second);
 }

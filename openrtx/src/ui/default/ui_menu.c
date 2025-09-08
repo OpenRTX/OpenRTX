@@ -712,11 +712,11 @@ void _ui_drawMenuHistory(ui_state_t* ui_state)
     point_t fix_pos = {layout.line2_pos.x, CONFIG_SCREEN_HEIGHT * 2 / 5};
     
     gfx_clearScreen();
+    // Print "History" on top bar
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
+            color_white, currentLanguage->history);
 
     if(state.settings.history_enabled) {
-        // Print "History" on top bar
-        gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-                color_white, currentLanguage->history);
         if(history_is_empty()) {
             // Print No History if history list is empty
             gfx_print(fix_pos, layout.line3_font, TEXT_ALIGN_CENTER,
