@@ -90,7 +90,7 @@ static const settings_t default_settings =
     false,                        // Check M17 CAN on RX
     "",                           // Empty M17 destination
     false,                        // Display battery icon
-    true                          // History enabled
+    true,                         // History enabled
 };
 
 #endif /* SETTINGS_H */
