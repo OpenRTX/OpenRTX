@@ -40,6 +40,9 @@ struct history
     struct history * prev;
 };
 
+/**
+ * Data structure History list.
+ */
 struct history_list
 {
     struct history *head;
@@ -49,7 +52,6 @@ struct history_list
     char status;
 };
 
-// extern pthread_mutex_t history_mutex;
 extern struct history_list *history_list;
 
 /**
@@ -58,15 +60,58 @@ extern struct history_list *history_list;
  */
 void history_init();
 
+/**
+ * Add History entry.
+ *
+ * @param callsign: callsign of user.
+ * @param state_time: time when user is heard.
+ */
 void history_add(const char* callsign, datetime_t state_time);
 
-int read_history(struct history *history, uint8_t pos);
+/**
+ * Read History entry.
+ *
+ * @param history: history entry.
+ * @param pos: position of entry.
+ */
+int history_read(struct history *history, uint8_t pos);
 
-struct history* find_callsign(const char* callsign);
+/**
+ * Return size of history list.
+ *
+ * @return the length of history list
+ */
 uint8_t history_size();
+
+/**
+ * Return boolean if history is empty or not.
+ *
+ * @return boolean if history is empty or not
+ */
+bool history_is_empty();
+
+/**
+ * Return status of history list
+ *
+ * @return the status of history list
+ */
 char history_status();
-void format_history_value(char *buf, int max_len, struct history history);
-bool is_new_history();
-void reset_new_history();
+
+/**
+ * Format the history value
+ */
+void history_format_value(char *buf, int max_len, struct history history);
+
+/**
+ * Check if its a new History value
+ *
+ * @return boolean value if history is new or old
+ */
+bool history_is_new();
+
+/**
+ * Reset new history
+ */
+void history_new_reset();
 
 #endif /* HISTORY_H */

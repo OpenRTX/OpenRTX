@@ -603,9 +603,9 @@ int _ui_getContactName(char *buf, uint8_t max_len, uint8_t index)
 int _ui_getHistoryItem(char *buf, uint8_t max_len, uint8_t index)
 {
     struct history history;
-    int result = read_history(&history, index);
+    int result = history_read(&history, index);
     if(result != -1) {
-        format_history_value(buf, max_len, history);
+        history_format_value(buf, max_len, history);
     }
     return result;
 }
@@ -717,9 +717,15 @@ void _ui_drawMenuHistory(ui_state_t* ui_state)
         // Print "History" on top bar
         gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
                 color_white, currentLanguage->history);
-        // Print contact entries
-        _ui_drawHistoryList(ui_state->menu_selected, _ui_getHistoryItem);
-        if(is_new_history()) reset_new_history();
+        if(history_is_empty()) {
+            // Print No History if history list is empty
+            gfx_print(fix_pos, layout.line3_font, TEXT_ALIGN_CENTER,
+            color_white, "No History");
+        } else {
+            // Print contact entries
+            _ui_drawHistoryList(ui_state->menu_selected, _ui_getHistoryItem);
+            if(history_is_new()) history_new_reset();
+        }
     }
     else {
         // Print History OFF if history not enabled

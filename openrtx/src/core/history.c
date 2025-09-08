@@ -25,13 +25,12 @@
 
 struct history_list *history_list;
 
-// struct history_list *history_init()
 void history_init()
 {
     history_list = (struct history_list *)malloc(sizeof(history_list));
     
     if(history_list==NULL) return;
-    
+
     history_list->head = NULL;
     history_list->tail = NULL;
     history_list->length = 0;
@@ -39,13 +38,26 @@ void history_init()
     history_list->status = ' ';
 }
 
+/**
+ * \internal
+ * Return the length of a callsign
+ *
+ * @param callsign: callsign of user
+ * @return length of callsign.
+ */
 int findCallsignLength(const char* callsign) {
         int i;
         for (i = 0; callsign[i] != ' ' && callsign[i] != '\0' && i<9; i++);
 	return i;
 }
 
-// struct history *history_find(struct history_list *list, const char* callsign)
+/**
+ * \internal
+ * Find History function
+ *
+ * @param callsign: callsign of user
+ * @return history structure or null
+ */
 struct history *history_find(const char* callsign)
 {
 	history_list->status='L';
@@ -65,6 +77,14 @@ struct history *history_find(const char* callsign)
         return NULL;
 }
 
+/**
+ * \internal
+ * Create History entry
+ *
+ * @param callsign: callsign of user
+ * @param datetime_t: datetime of entry
+ * @return history structure
+ */
 struct history *history_create(const char* callsign, datetime_t state_time)
 { 
     struct history *node = (struct history *) malloc(sizeof(struct history));
@@ -79,7 +99,12 @@ struct history *history_create(const char* callsign, datetime_t state_time)
     return node;
 }
 
-// void history_prune(struct history_list *list, struct history *this)
+/**
+ * \internal
+ * Prune History entry
+ *
+ * @param history: history entry
+ */
 void history_prune(struct history *this)
 {
     if (history_list==NULL || this==NULL) return;
@@ -97,6 +122,13 @@ void history_prune(struct history *this)
     free(current);
 }
 
+/**
+ * \internal
+ * Push History entry
+ *
+ * @param callsign: callsign of user
+ * @param datetime_t: date time of entry
+ */
 void history_push(const char* callsign, datetime_t state_time)
 {
     if(history_list->length > HISTORY_MAX)
@@ -117,6 +149,13 @@ void history_push(const char* callsign, datetime_t state_time)
     history_list->new_history = true;
 }
 
+/**
+ * \internal
+ * Update History entry
+ *
+ * @param callsign: callsign of user
+ * @param datetime_t: date time of entry
+ */
 void history_update(struct history* node, datetime_t state_time)
 {
     if(node!=NULL) {
@@ -144,6 +183,13 @@ void history_update(struct history* node, datetime_t state_time)
 
 }
 
+/**
+ * \internal
+ * Add History entry
+ *
+ * @param callsign: callsign of user
+ * @param datetime_t: date time of entry
+ */
 void history_add(const char* callsign, datetime_t state_time)
 {
     if(callsign == NULL) return;
@@ -154,8 +200,7 @@ void history_add(const char* callsign, datetime_t state_time)
         history_push(callsign, state_time); 
 }
 
-// int read_history(struct history_list *list,  struct history *history, uint8_t pos)
-int read_history(struct history *history, uint8_t pos)
+int history_read(struct history *history, uint8_t pos)
 {
     struct history *current = history_list->head;
     uint8_t index = 0;
@@ -172,10 +217,14 @@ int read_history(struct history *history, uint8_t pos)
     return 0;
 }
 
-// uint8_t history_size(struct history_list *list)
 uint8_t history_size()
 {
     return history_list->length;
+}
+
+bool history_is_empty()
+{
+    return history_list == NULL || history_list->length == 0;
 }
 
 char history_status()
@@ -183,20 +232,19 @@ char history_status()
    return history_list->status;
 }
 
-void format_history_value(char *buf, int max_len, struct history history) {
-//    int gap = max_len - 10;
-//    gap -= strlen(history.callsign);
-//    char spaces[gap + 1]; // Create a buffer for the spaces
-//    memset(spaces, ' ', gap); // Fill the buffer with spaces
-//    spaces[gap] = '\0'; // Null-terminate the string
-//    sniprintf(buf, max_len, "%s%s%02d:%02d:%02d", history.callsign, spaces, history.time.hour, history.time.minute, history.time.second);
+/**
+ * \internal
+ * Format History Entry
+ *
+ */
+void history_format_value(char *buf, int max_len, struct history history) {
     sniprintf(buf, max_len, "%s %02d:%02d:%02d", history.callsign, history.time.hour, history.time.minute, history.time.second);
 }
 
-bool is_new_history() {
+bool history_is_new() {
     return history_list->new_history;
 }
 
-void reset_new_history() {
+void history_new_reset() {
     history_list->new_history = false;
 }

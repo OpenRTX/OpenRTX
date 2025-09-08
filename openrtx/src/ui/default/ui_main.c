@@ -73,8 +73,8 @@ void _ui_drawMainTop(ui_state_t * ui_state)
     if (last_state.settings.history_enabled)
     {
         gfx_print(list_pos , layout.line1_font, TEXT_ALIGN_LEFT,
-            is_new_history() ? yellow_fab413 : color_black, "H");
-        rtx_setHistory(is_new_history());
+            history_is_new() ? yellow_fab413 : color_black, "H");
+        rtx_setHistory(history_is_new());
     }
 }
 

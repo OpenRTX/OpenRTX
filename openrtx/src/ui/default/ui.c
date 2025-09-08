@@ -1905,13 +1905,13 @@ void ui_updateFSM(bool *sync_rtx)
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
                 {
                     struct history history;
-                    if(read_history(&history, ui_state.menu_selected + 1) != -1)
+                    if(history_read(&history, ui_state.menu_selected + 1) != -1)
                         ui_state.menu_selected += 1;
                 }
                 else if(msg.long_press && msg.keys & KEY_ENTER)
                 {
                     struct history history;
-                    read_history(&history, ui_state.menu_selected);
+                    history_read(&history, ui_state.menu_selected);
                     strncpy(state.settings.m17_dest, history.callsign, 10);
                     *sync_rtx = true;
                     _ui_menuBack(MENU_TOP);
