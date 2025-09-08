@@ -53,7 +53,6 @@ typedef struct
     uint8_t voxLevel;             // Vox level
     int8_t  utc_timezone;         // Timezone, in units of half hours
     bool    gps_enabled;          // GPS active
-    bool    history_enabled;      // History active
     char    callsign[10];         // Plaintext callsign
     uint8_t display_timer   : 4,  // Standby timer
             m17_can         : 4;  // M17 CAN
@@ -64,6 +63,7 @@ typedef struct
     bool    m17_can_rx;           // Check M17 CAN on RX
     char    m17_dest[10];         // M17 destination
     bool    showBatteryIcon;      // Battery display true: icon, false: percentage
+    bool    history_enabled;      // History active
 }
 __attribute__((packed)) settings_t;
 
@@ -80,7 +80,6 @@ static const settings_t default_settings =
     0,                            // Vox level
     0,                            // UTC Timezone
     false,                        // GPS enabled
-    true,                         // History enabled
     "",                           // Empty callsign
     TIMER_30S,                    // 30 seconds
     0,                            // M17 CAN
@@ -91,6 +90,7 @@ static const settings_t default_settings =
     false,                        // Check M17 CAN on RX
     "",                           // Empty M17 destination
     false,                        // Display battery icon
+    true                          // History enabled
 };
 
 #endif /* SETTINGS_H */
