@@ -23,13 +23,15 @@
 #include <stdlib.h>
 #include <history.h>
 
-history_list_t *history_list;
+struct history_list *history_list;
 
-// history_list_t *history_init()
+// struct history_list *history_init()
 void history_init()
 {
-    history_list = (history_list_t *)malloc(sizeof(history_list_t));
+    history_list = (struct history_list *)malloc(sizeof(history_list));
+    
     if(history_list==NULL) return;
+    
     history_list->head = NULL;
     history_list->tail = NULL;
     history_list->length = 0;
@@ -43,13 +45,13 @@ int findCallsignLength(const char* callsign) {
 	return i;
 }
 
-// history_t *history_find(history_list_t *list, const char* callsign)
-history_t *history_find(const char* callsign)
+// struct history *history_find(struct history_list *list, const char* callsign)
+struct history *history_find(const char* callsign)
 {
 	history_list->status='L';
         if(history_list == NULL) return NULL;
 
-        history_t *current = history_list->head;
+        struct history *current = history_list->head;
         while(current != NULL)
         {
             int i = findCallsignLength(callsign);
@@ -63,9 +65,9 @@ history_t *history_find(const char* callsign)
         return NULL;
 }
 
-history_t *history_create(const char* callsign, datetime_t state_time)
+struct history *history_create(const char* callsign, datetime_t state_time)
 { 
-    history_t *node = (history_t *) malloc(sizeof(history_t));
+    struct history *node = (struct history *) malloc(sizeof(struct history));
     if(node==NULL)
         return NULL;
     int i = findCallsignLength(callsign);
@@ -77,11 +79,11 @@ history_t *history_create(const char* callsign, datetime_t state_time)
     return node;
 }
 
-// void history_prune(history_list_t *list, history_t *this)
-void history_prune(history_t *this)
+// void history_prune(struct history_list *list, struct history *this)
+void history_prune(struct history *this)
 {
     if (history_list==NULL || this==NULL) return;
-    history_t *current = this;
+    struct history *current = this;
     if(current->prev!=NULL) {
         current->prev->next =  current->next;
     }
@@ -99,7 +101,7 @@ void history_push(const char* callsign, datetime_t state_time)
 {
     if(history_list->length > HISTORY_MAX)
         history_prune(history_list->tail);
-    history_t *node = history_create(callsign, state_time);
+    struct history *node = history_create(callsign, state_time);
     if(node==NULL)
         return;
     if(history_list->head != NULL)
@@ -115,7 +117,7 @@ void history_push(const char* callsign, datetime_t state_time)
     history_list->new_history = true;
 }
 
-void history_update(history_t* node, datetime_t state_time)
+void history_update(struct history* node, datetime_t state_time)
 {
     if(node!=NULL) {
         node->time = state_time;
@@ -142,29 +144,20 @@ void history_update(history_t* node, datetime_t state_time)
 
 }
 
-#ifdef DEBUG
-void history_test(history_list_t *list, const char* src, const char* dest, const char* refl, const char *link , datetime_t state_time)
-{
-    char message[10];
-    snprintf(message,9,"%2s%2s%2s%2s",src,dest,refl,link);
-    history_push(list, message, NULL, state_time); 
-}
-#endif
-
 void history_add(const char* callsign, datetime_t state_time)
 {
     if(callsign == NULL) return;
-    history_t *node = history_find(callsign);
+    struct history *node = history_find(callsign);
     if(node != NULL) 
         history_update(node, state_time);
     else 
         history_push(callsign, state_time); 
 }
 
-// int read_history(history_list_t *list,  history_t *history, uint8_t pos)
-int read_history(history_t *history, uint8_t pos)
+// int read_history(struct history_list *list,  struct history *history, uint8_t pos)
+int read_history(struct history *history, uint8_t pos)
 {
-    history_t *current = history_list->head;
+    struct history *current = history_list->head;
     uint8_t index = 0;
     if (pos==history_size(history_list)) return -1;
     while(pos>index)
@@ -175,11 +168,11 @@ int read_history(history_t *history, uint8_t pos)
         current = current->next;
         index++;
     }
-    memcpy(history, current, sizeof(history_t));
+    memcpy(history, current, sizeof(struct history));
     return 0;
 }
 
-// uint8_t history_size(history_list_t *list)
+// uint8_t history_size(struct history_list *list)
 uint8_t history_size()
 {
     return history_list->length;
@@ -190,7 +183,7 @@ char history_status()
    return history_list->status;
 }
 
-void format_history_value(char *buf, int max_len, history_t history) {
+void format_history_value(char *buf, int max_len, struct history history) {
 //    int gap = max_len - 10;
 //    gap -= strlen(history.callsign);
 //    char spaces[gap + 1]; // Create a buffer for the spaces

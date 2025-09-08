@@ -29,45 +29,43 @@
 
 #define HISTORY_MAX 20
 
-typedef struct history 
+/**
+ * Data structure for History.
+ */
+struct history
 {
     char callsign[10];
     datetime_t time;
     struct history * next;
     struct history * prev;
-}
-history_t;
+};
 
-typedef struct history_list
+struct history_list
 {
-    history_t *head;
-    history_t *tail;
+    struct history *head;
+    struct history *tail;
     uint8_t length;
     bool new_history;
     char status;
-}
-history_list_t;
+};
 
 // extern pthread_mutex_t history_mutex;
-extern history_list_t *history_list;
+extern struct history_list *history_list;
 
 /**
  * Initialise radio state mutex and radio state variable, reading the
  * informations from device drivers.
  */
-//history_list_t *history_init();
-//void history_add(history_list_t *list, const char* callsign, const char* module, datetime_t state_time);
-//void history_test(history_list_t *list, const char* src, const char* dest, const char* refl, const char *link , datetime_t state_time);
-//int read_history(history_list_t *list, history_t *history, uint8_t pos);
-//history_t* find_callsign(history_list_t *list, const char* callsign);
 void history_init();
+
 void history_add(const char* callsign, datetime_t state_time);
-void history_test(const char* src, const char* dest, const char* refl, const char *link , datetime_t state_time);
-int read_history(history_t *history, uint8_t pos);
-history_t* find_callsign(const char* callsign);
+
+int read_history(struct history *history, uint8_t pos);
+
+struct history* find_callsign(const char* callsign);
 uint8_t history_size();
 char history_status();
-void format_history_value(char *buf, int max_len, history_t history);
+void format_history_value(char *buf, int max_len, struct history history);
 bool is_new_history();
 void reset_new_history();
 

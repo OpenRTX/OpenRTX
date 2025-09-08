@@ -1438,7 +1438,7 @@ void ui_updateFSM(bool *sync_rtx)
             macro_menu = true;
             macro_latched = true;
         }
-#endif // PLA%FORM_TTWRPLUS
+#endif // PLATFORM_TTWRPLUS
 
         if(state.tone_enabled && !(msg.keys & KEY_HASH))
         {
@@ -1898,20 +1898,19 @@ void ui_updateFSM(bool *sync_rtx)
                 break;
 #ifdef CONFIG_M17
             // History menu screen
-            // M0VVA - implement history displays
             case MENU_HISTORY:
                 if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
                     // Using 1 as parameter disables menu wrap around
                     _ui_menuUp(1);
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
                 {
-                    history_t history;
+                    struct history history;
                     if(read_history(&history, ui_state.menu_selected + 1) != -1)
                         ui_state.menu_selected += 1;
                 }
                 else if(msg.long_press && msg.keys & KEY_ENTER)
                 {
-                    history_t history;
+                    struct history history;
                     read_history(&history, ui_state.menu_selected);
                     strncpy(state.settings.m17_dest, history.callsign, 10);
                     *sync_rtx = true;

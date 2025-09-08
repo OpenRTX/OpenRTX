@@ -602,7 +602,7 @@ int _ui_getContactName(char *buf, uint8_t max_len, uint8_t index)
 
 int _ui_getHistoryItem(char *buf, uint8_t max_len, uint8_t index)
 {
-    history_t history;
+    struct history history;
     int result = read_history(&history, index);
     if(result != -1) {
         format_history_value(buf, max_len, history);
@@ -711,8 +711,9 @@ void _ui_drawMenuHistory(ui_state_t* ui_state)
 {
     point_t fix_pos = {layout.line2_pos.x, CONFIG_SCREEN_HEIGHT * 2 / 5};
     
+    gfx_clearScreen();
+
     if(state.settings.history_enabled) {
-        gfx_clearScreen();
         // Print "History" on top bar
         gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
                 color_white, currentLanguage->history);
@@ -721,7 +722,7 @@ void _ui_drawMenuHistory(ui_state_t* ui_state)
         if(is_new_history()) reset_new_history();
     }
     else {
-        gfx_clearScreen();
+        // Print History OFF if history not enabled
         gfx_print(fix_pos, layout.line3_font, TEXT_ALIGN_CENTER,
         color_white, "History OFF");
     }
