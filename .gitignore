@@ -64,8 +64,7 @@ subprojects/XPowersLib
 .emulatorsh_history
 
 # ignore bin2sgl
-!scripts/bin2sgl.Linux.bin
-!scripts/bin2sgl.exe
+scripts/bin2sgl
 
 # Compiled script
 scripts/get_demod_log

@@ -49,7 +49,14 @@ RUN apt-get update -y && apt-get install -y \
   libusb-1.0-0-dev \
   codec2 \
   libcodec2-dev \
+  wget \
   && rm -rf /var/lib/apt/lists/*
+
+# build bin2sgl tool
+RUN wget https://github.com/open-ham/OpenGD77/raw/refs/heads/main/tools/bin2sgl/bin2sgl/bin2sgl.c \
+  && gcc bin2sgl.c -o bin2sgl \
+  && mv bin2sgl /bin/bin2sgl \
+  && chmod +x /bin/bin2sgl
 
 # fix error from git with different users
 RUN git config --system --add safe.directory '*'

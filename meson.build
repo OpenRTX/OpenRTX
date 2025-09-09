@@ -906,14 +906,7 @@ targets = [
   },
 ]
 
-if build_machine.system() == 'linux'
-  bin2sgl     = find_program('scripts/bin2sgl.Linux',          required:false, disabler:true)
-elif build_machine.system() == 'windows'
-  bin2sgl     = find_program('scripts/bin2sgl.exe',            required:false, disabler:true)
-elif build_machine.system() == 'darwin'
-  bin2sgl     = find_program('scripts/bin2sgl.Darwin',         required:false, disabler:true)
-endif
-
+bin2sgl     = find_program('bin2sgl',          required:false, disabler:true)
 radio_tool  = find_program('radio_tool')
 objcopy     = find_program('objcopy',                          required:false, disabler:true)
 gd77_loader = find_program('scripts/gd-77_firmware_loader.py', required:false, disabler:true)
