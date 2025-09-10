@@ -42,7 +42,47 @@ if [ $# -eq 1 ]; then
     fi
 fi
 
-FILE_LIST=$(git ls-files | egrep '\.(c|cpp|h)$' | egrep -v 'lib/|subprojects/|platform/mcu')
+# FILE_LIST=$(git ls-files | egrep '\.(c|cpp|h)$' | egrep -v 'lib/|subprojects/|platform/mcu')
+# TODO: This is temporarily running on a subset of the repo while we "ratchet up" the codebase; see https://github.com/OpenRTX/OpenRTX/issues/346
+# Hey you! Have a new source file, or one that you've made changes to? Add it to the list below to enforce the new formatting.
+FILE_LIST=$(cat <<-EOF
+openrtx/include/core/audio_codec.h
+openrtx/include/core/battery.h
+openrtx/include/core/beeps.h
+openrtx/include/core/crc.h
+openrtx/include/core/data_conversion.h
+openrtx/include/core/datatypes.h
+openrtx/include/core/memory_profiling.h
+openrtx/include/core/openrtx.h
+openrtx/include/core/ui.h
+openrtx/include/core/utils.h
+openrtx/include/core/xmodem.h
+openrtx/include/fonts/symbols/symbols.h
+openrtx/include/interfaces/cps_io.h
+openrtx/include/interfaces/delays.h
+openrtx/include/interfaces/display.h
+openrtx/include/interfaces/radio.h
+openrtx/include/peripherals/gps.h
+openrtx/include/peripherals/rng.h
+openrtx/include/peripherals/rtc.h
+openrtx/src/core/memory_profiling.cpp
+platform/drivers/ADC/ADC0_GDx.h
+platform/drivers/audio/MAX9814.h
+platform/drivers/baseband/MCP4551.h
+platform/drivers/baseband/SA8x8.h
+platform/drivers/chSelector/chSelector.h
+platform/drivers/display/SH110x_Mod17.h
+platform/drivers/display/SSD1306_Mod17.h
+platform/drivers/display/SSD1309_Mod17.h
+platform/drivers/GPIO/gpio-native.h
+platform/drivers/GPS/gps_stm32.h
+platform/drivers/GPS/gps_zephyr.h
+platform/drivers/USB/usb.h
+platform/targets/GDx/hwconfig.h
+platform/targets/linux/emulator/sdl_engine.h
+platform/targets/ttwrplus/pmu.h
+EOF
+)
 
 CHECK_ARGS=""
 if [ "$1" == "--check" ]; then

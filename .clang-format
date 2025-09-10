@@ -3,7 +3,12 @@
 #  - .*indentwidth: 4
 #  - IndentCaseLabels: true 
 #  - removal of "ForEachMacros" that are irrevelant to this project
-# 
+#  - AlignConsecutiveBitFields: true
+#  - AlignOperands: AlignAfterOperator
+#  - AlignTrailingComments:
+#      Kind: Always
+#      OverEmptyLines: 1
+#  - Standard: c++14
 # Original header below
 ##########################################################################
 # SPDX-License-Identifier: GPL-2.0
@@ -22,8 +27,11 @@ AlignAfterOpenBracket: Align
 AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
 AlignEscapedNewlines: Left
-AlignOperands: true
-AlignTrailingComments: false
+AlignConsecutiveBitFields: true
+AlignOperands: AlignAfterOperator
+AlignTrailingComments:
+  Kind: Always
+  OverEmptyLines: 1
 AllowAllParametersOfDeclarationOnNextLine: false
 AllowShortBlocksOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: false
@@ -122,7 +130,7 @@ SpacesInContainerLiterals: false
 SpacesInCStyleCastParentheses: false
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
-Standard: Cpp03
+Standard: c++14
 TabWidth: 4
 UseTab: Never
 ...
