@@ -28,6 +28,7 @@
 #include <event.h>
 #include <hwconfig.h>
 #include <ui.h>
+#include <M17/m17_constants.h>
 
 // Maximum menu entry length
 #define MAX_ENTRY_LEN 21
@@ -148,6 +149,7 @@ enum settingsRadioItems
 enum settingsM17Items
 {
     M17_CALLSIGN = 0,
+    M17_METATEXT,
     M17_CAN,
     M17_CAN_RX
 };
@@ -193,6 +195,7 @@ typedef struct layout_t
     symbolSize_t line4_symbol_size;
     fontSize_t bottom_font;
     fontSize_t input_font;
+    fontSize_t message_font;
     fontSize_t menu_font;
 } layout_t;
 
@@ -207,6 +210,7 @@ typedef struct ui_state_t
     uint8_t menu_selected;
     // If true we can change a menu entry value with UP/DOWN
     bool edit_mode;
+    bool edit_message;
     bool input_locked;
     // Variables used for VFO input
     uint8_t input_number;
@@ -224,6 +228,7 @@ typedef struct ui_state_t
     char new_time_buf[9];
 #endif
     char new_callsign[10];
+    char new_m17_meta_text[M17_META_TEXT_DATA_MAX_LENGTH + 1];
     freq_t new_offset;
     // Which state to return to when we exit menu
     uint8_t last_main_state;

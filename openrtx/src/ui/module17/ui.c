@@ -20,6 +20,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <ui/ui_mod17.h>
 #include <rtx.h>
 #include <interfaces/platform.h>
@@ -94,6 +95,7 @@ const char *display_items[] =
 const char *m17_items[] =
 {
     "Callsign",
+        "Meta Txt",
     "CAN",
     "CAN RX Check"
 };
@@ -134,10 +136,13 @@ const char *authors[] =
     "Federico IU2NUO",
     "Mathis DB9MAT",
     "Morgan ON4MOD",
-    "Marco DM4RCO"
+        "Marco DM4RCO",
+        "Rick KD0OSS"
 };
 
 static const char symbols_callsign[] = "_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890/-.";
+static const char symbols_message[] = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890/-#*!?,.";
+static const char symbols_id[] = "1234567890";
 
 // Calculate number of menu entries
 const uint8_t menu_num = sizeof(menu_items)/sizeof(menu_items[0]);
@@ -209,6 +214,8 @@ static layout_t _ui_calculateLayout()
     const fontSize_t bottom_font = FONT_SIZE_6PT;
     // TimeDate/Frequency input font
     const fontSize_t input_font = FONT_SIZE_8PT;
+    // Message font
+    const fontSize_t message_font = FONT_SIZE_6PT;
     // Menu font
     const fontSize_t menu_font = FONT_SIZE_6PT;
     // Mode screen frequency font: 9 pt
@@ -261,6 +268,7 @@ static layout_t _ui_calculateLayout()
         line5_symbol_size,
         bottom_font,
         input_font,
+            message_font,
         menu_font,
         mode_font_big,
         mode_font_small
@@ -401,6 +409,9 @@ static void _ui_menuUp(uint8_t menu_entries)
     if((softpot == 0) && (state.ui_screen == SETTINGS_MODULE17))
         maxEntries -= 2;
 
+    if(ui_state.menu_selected > maxEntries)
+        ui_state.menu_selected = 1;
+
     if(ui_state.menu_selected > 0)
         ui_state.menu_selected -= 1;
     else
@@ -421,6 +432,9 @@ static void _ui_menuDown(uint8_t menu_entries)
     if((softpot == 0) && (state.ui_screen == SETTINGS_MODULE17))
         maxEntries -= 2;
 
+    if(ui_state.menu_selected > maxEntries)
+        ui_state.menu_selected = maxEntries;
+
     if(ui_state.menu_selected < maxEntries)
         ui_state.menu_selected += 1;
     else
@@ -432,6 +446,10 @@ static void _ui_menuBack(uint8_t prev_state)
     if(ui_state.edit_mode)
     {
         ui_state.edit_mode = false;
+    }
+    else if(ui_state.edit_message)
+    {
+        ui_state.edit_message = false;
     }
     else
     {
@@ -448,10 +466,13 @@ static void _ui_textInputReset(char *buf)
     ui_state.input_position = 0;
     ui_state.input_set = 0;
     ui_state.last_keypress = 0;
+    if(ui_state.edit_message)
+        memset(buf, 0, 822);
+    else
     memset(buf, 0, 9);
 }
 
-static void _ui_textInputArrows(char *buf, uint8_t max_len, kbd_msg_t msg)
+static void _ui_textInputArrows(char *buf, uint16_t max_len, kbd_msg_t msg)
 {
     if(ui_state.input_position >= max_len)
         return;
@@ -484,6 +505,41 @@ static void _ui_textInputArrows(char *buf, uint8_t max_len, kbd_msg_t msg)
         ui_state.input_set = ui_state.input_set==0 ? num_symbols-1 : ui_state.input_set-1;
 
     buf[ui_state.input_position] = symbols_callsign[ui_state.input_set];
+}
+
+static void _ui_numberInputArrows(char *buf, uint8_t max_len, kbd_msg_t msg)
+{
+    if(ui_state.input_position >= max_len)
+        return;
+
+    uint8_t num_symbols = 0;
+    num_symbols = strlen(symbols_id);
+
+    if (msg.keys & KEY_RIGHT)
+    {
+        if (ui_state.input_position < (max_len - 1))
+        {
+            ui_state.input_position = ui_state.input_position + 1;
+            ui_state.input_set = 0;
+        }
+    }
+    else if (msg.keys & KEY_LEFT)
+    {
+        if (ui_state.input_position > 0)
+        {
+            buf[ui_state.input_position] = '\0';
+            ui_state.input_position = ui_state.input_position - 1;
+        }
+
+                // get index of current selected number in symbol table
+        ui_state.input_set = strcspn(symbols_id, &buf[ui_state.input_position]);
+    }
+    else if (msg.keys & KEY_UP)
+        ui_state.input_set = (ui_state.input_set + 1) % num_symbols;
+    else if (msg.keys & KEY_DOWN)
+        ui_state.input_set = ui_state.input_set==0 ? num_symbols-1 : ui_state.input_set-1;
+
+    buf[ui_state.input_position] = symbols_id[ui_state.input_set];
 }
 
 static void _ui_textInputConfirm(char *buf)
@@ -683,6 +739,21 @@ void ui_updateFSM(bool *sync_rtx)
                         _ui_textInputArrows(ui_state.new_callsign, 9, msg);
                 }
                 else
+                    if(ui_state.edit_message)
+                    {
+                        if(msg.keys & KEY_ENTER)
+                        {
+                            _ui_textInputConfirm(ui_state.new_m17_meta_text);
+                            // Save selected message and disable input mode
+                            strncpy(state.settings.M17_meta_text, ui_state.new_m17_meta_text, M17_META_TEXT_DATA_MAX_LENGTH);
+                            ui_state.edit_message = false;
+                        }
+                        else if(msg.keys & KEY_ESC)
+                            ui_state.edit_message = false;
+                        else
+                            _ui_textInputArrows(ui_state.new_m17_meta_text, 52, msg);
+                    }
+                else
                 {
                     // Not in edit mode: handle CAN setting
                     if(msg.keys & KEY_LEFT)
@@ -722,6 +793,11 @@ void ui_updateFSM(bool *sync_rtx)
                                 ui_state.edit_mode = true;
                                 _ui_textInputReset(ui_state.new_callsign);
                                 break;
+                                    // Enable message input
+                                case M_METATEXT:
+                                    ui_state.edit_message = true;
+                                    _ui_textInputReset(ui_state.new_m17_meta_text);
+                                    break;
                             default:
                                 state.ui_screen = SETTINGS_M17;
                         }
@@ -764,6 +840,8 @@ void ui_updateFSM(bool *sync_rtx)
                         mod17CalData.bb_tx_invert = 0;
                         mod17CalData.bb_rx_invert = 0;
                         mod17CalData.mic_gain     = 0;
+
+                        ui_state.edit_message     = false;
 
                         state_resetSettingsAndVfo();
                         nvm_writeSettings(&state.settings);

@@ -20,12 +20,20 @@
 
 #include <interfaces/platform.h>
 #include <interfaces/cps_io.h>
+#include <interfaces/delays.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <ui/common/ui_utils.h>
 #include <ui/ui_default.h>
 #include <string.h>
 #include <ui/ui_strings.h>
 #include <utils.h>
+
+
+static char message[66];
+static bool scrollStarted = false;
+
 
 void _ui_drawMainBackground()
 {
@@ -57,9 +65,11 @@ void _ui_drawMainTop(ui_state_t * ui_state)
                        layout.status_v_pad};
     gfx_drawBattery(bat_pos, bat_width, bat_height, last_state.charge);
 #endif
+#ifdef CONFIG_M17
     if (ui_state->input_locked == true)
       gfx_drawSymbol(layout.top_pos, layout.top_symbol_size, TEXT_ALIGN_LEFT,
                      color_white, SYMBOL_LOCK);
+#endif
 }
 
 void _ui_drawBankChannel()
@@ -142,6 +152,39 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                 gfx_print(layout.line1_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                           color_white, "%s", rtxStatus.M17_src);
 
+                // metatext available
+                if((strlen(rtxStatus.M17_Meta_Text) > M17_META_TEXT_MAX_SCREEN_WIDTH) ||
+                    (rtxStatus.M17_Meta_Text[0] != '\0' && rtxStatus.M17_refl[0] != '\0'))
+                {
+                    if(!scrollStarted)
+                    {
+                        // if reflector info present prepend to message and share line3
+                        if(rtxStatus.M17_refl[0] != '\0')
+                            sprintf(message, "%s--%s", rtxStatus.M17_refl, rtxStatus.M17_Meta_Text);
+                        else
+                            strcpy(message, rtxStatus.M17_Meta_Text);
+                        ui_scrollString(message, true, sizeof(message));  // Using the new function
+                        scrollStarted = true;
+                    }
+                    ui_scrollString(message, false, sizeof(message));  // Using the new function
+
+                    char displayedMessage[M17_META_TEXT_MAX_SCREEN_WIDTH + 1];
+                    strncpy(displayedMessage, message, M17_META_TEXT_MAX_SCREEN_WIDTH);
+                    gfx_print(layout.line3_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                              color_white, "%s", displayedMessage);
+                    sleepFor(0, 100);
+                }
+                else
+                    if(strlen(rtxStatus.M17_Meta_Text) > 0)
+                    {
+                        if(rtxStatus.M17_refl[0] != '\0')
+                            sprintf(message, "%s--%s", rtxStatus.M17_refl, rtxStatus.M17_Meta_Text);
+                        else
+                            strcpy(message, rtxStatus.M17_Meta_Text);
+                        gfx_print(layout.line3_pos, layout.line3_font, TEXT_ALIGN_CENTER,
+                                  color_white, "%s", message);
+                    }
+
                 // RF link (if present)
                 if(rtxStatus.M17_link[0] != '\0')
                 {
@@ -153,7 +196,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                 }
 
                 // Reflector (if present)
-                if(rtxStatus.M17_refl[0] != '\0')
+                if(rtxStatus.M17_refl[0] != '\0' && rtxStatus.M17_Meta_Text[0] == '\0')
                 {
                     gfx_drawSymbol(layout.line3_pos, layout.line4_symbol_size, TEXT_ALIGN_LEFT,
                                    color_white, SYMBOL_NETWORK);
@@ -165,6 +208,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
             else
             {
                 const char *dst = NULL;
+                scrollStarted = false;
                 if(ui_state->edit_mode)
                 {
                     dst = ui_state->new_callsign;

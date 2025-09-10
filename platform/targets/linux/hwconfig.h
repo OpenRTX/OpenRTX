@@ -38,6 +38,7 @@ enum Mod17Flags
 
 /* Device supports M17 mode */
 #define CONFIG_M17
+#define M17_META_TEXT_MAX_SCREEN_WIDTH 13
 
 #ifdef __cplusplus
 }

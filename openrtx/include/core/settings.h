@@ -23,6 +23,7 @@
 
 #include <hwconfig.h>
 #include <stdbool.h>
+#include <M17/m17_constants.h>
 
 typedef enum
 {
@@ -62,6 +63,7 @@ typedef struct
             _reserved       : 3;
     bool    m17_can_rx;           // Check M17 CAN on RX
     char    m17_dest[10];         // M17 destination
+    char    M17_meta_text[M17_META_TEXT_DATA_MAX_LENGTH + 1];    // M17 Meta Text to send
 }
 __attribute__((packed)) settings_t;
 
@@ -86,7 +88,8 @@ static const settings_t default_settings =
     1,                            // Automatic latch of macro menu enabled
     0,                            // not used
     false,                        // Check M17 CAN on RX
-    ""                            // Empty M17 destination
+    "",                            // Empty M17 destination
+    "OpenRTX"                     // Default M17 meta text
 };
 
 #endif /* SETTINGS_H */

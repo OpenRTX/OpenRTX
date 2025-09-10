@@ -37,5 +37,6 @@
 #define CONFIG_BAT_NCELLS 1
 
 #define CONFIG_M17
+#define M17_META_TEXT_MAX_SCREEN_WIDTH 13
 
 #endif /* HWCONFIG_H */

@@ -29,6 +29,7 @@
 #include <interfaces/platform.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/delays.h>
+#include <M17/m17_constants.h>
 
 state_t state;
 pthread_mutex_t state_mutex;
@@ -52,6 +53,9 @@ void state_init()
     {
         state.settings = default_settings;
         strncpy(state.settings.callsign, "OPNRTX", 10);
+#ifdef CONFIG_M17
+        strncpy(state.settings.M17_meta_text, "OPENRTX", M17_META_TEXT_DATA_MAX_LENGTH + 1);
+#endif
     }
 
     /*

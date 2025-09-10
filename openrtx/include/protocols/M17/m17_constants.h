@@ -1,6 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2020 - 2025 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2021 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -15,64 +16,25 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
+ *                                                                         *
  ***************************************************************************/
 
-#ifndef HWCONFIG_H
-#define HWCONFIG_H
+// This file exists to complement M17Constants.hpp with C-compatible constants
 
-#include <stm32f4xx.h>
-#include "pinmap.h"
+#ifndef M17_C_CONSTANTS_H
+#define M17_C_CONSTANTS_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-enum adcChannel
-{
-    ADC_VOL_CH   = 0,
-    ADC_VBAT_CH  = 1,
-    ADC_VOX_CH   = 3,
-    ADC_RSSI_CH  = 8
-};
-
-extern const struct gpsDevice gps;
-extern const struct spiDevice nvm_spi;
-extern const struct spiCustomDevice pll_spi;
-extern const struct spiCustomDevice c5000_spi;
-extern const struct sky73210 pll;
-extern const struct Adc adc1;
-
-/* Device has a working real time clock */
-#define CONFIG_RTC
-
-/* Device supports an optional GPS chip */
-#define CONFIG_GPS
-#define CONFIG_GPS_STM32_USART3
-#define CONFIG_NMEA_RBUF_SIZE 128
-
-/* Device has a channel selection knob */
-#define CONFIG_KNOB_ABSOLUTE
-
-/* Screen dimensions */
-#define CONFIG_SCREEN_WIDTH 160
-#define CONFIG_SCREEN_HEIGHT 128
-
-/* Screen pixel format */
-#define CONFIG_PIX_FMT_RGB565
-
-/* Screen has adjustable brightness */
-#define CONFIG_SCREEN_BRIGHTNESS
-
-/* Battery type */
-#define CONFIG_BAT_LIION
-#define CONFIG_BAT_NCELLS 2
-
-/* Device supports M17 mode */
-#define CONFIG_M17
-#define M17_META_TEXT_MAX_SCREEN_WIDTH 13
+#define M17_META_TEXT_BLOCK_SIZE 13
+#define M17_META_TEXT_DATA_MAX_LENGTH M17_META_TEXT_BLOCK_SIZE * 4
+#define M17_META_TEXT_PADDING_CHAR ' '
+#define M17_META_GNSS_BLOCK_SIZE 14
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* HWCONFIG_H */
+#endif /* M17_C_CONSTANTS_H */

@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2020 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -17,62 +18,21 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef HWCONFIG_H
-#define HWCONFIG_H
+#ifndef UI_UTILS_H
+#define UI_UTILS_H
 
-#include <stm32f4xx.h>
-#include "pinmap.h"
+#include <stdbool.h>
+#include <stddef.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+/**
+ * Scroll a string to the left by one character, moving the first character to the end.
+ * When reset is true, it adds a space at the end of the string for a gap between scrolling.
+ *
+ * @param string The string to scroll
+ * @param reset If true, adds a space at the end and resets the scroll position
+ * @param max_len The maximum length of the buffer to prevent overflow
+ * @return true if operation succeeded, false otherwise
+ */
+bool ui_scrollString(char *string, bool reset, size_t max_len);
 
-enum adcChannel
-{
-    ADC_VOL_CH   = 0,
-    ADC_VBAT_CH  = 1,
-    ADC_VOX_CH   = 3,
-    ADC_RSSI_CH  = 8
-};
-
-extern const struct gpsDevice gps;
-extern const struct spiDevice nvm_spi;
-extern const struct spiCustomDevice pll_spi;
-extern const struct spiCustomDevice c5000_spi;
-extern const struct sky73210 pll;
-extern const struct Adc adc1;
-
-/* Device has a working real time clock */
-#define CONFIG_RTC
-
-/* Device supports an optional GPS chip */
-#define CONFIG_GPS
-#define CONFIG_GPS_STM32_USART3
-#define CONFIG_NMEA_RBUF_SIZE 128
-
-/* Device has a channel selection knob */
-#define CONFIG_KNOB_ABSOLUTE
-
-/* Screen dimensions */
-#define CONFIG_SCREEN_WIDTH 160
-#define CONFIG_SCREEN_HEIGHT 128
-
-/* Screen pixel format */
-#define CONFIG_PIX_FMT_RGB565
-
-/* Screen has adjustable brightness */
-#define CONFIG_SCREEN_BRIGHTNESS
-
-/* Battery type */
-#define CONFIG_BAT_LIION
-#define CONFIG_BAT_NCELLS 2
-
-/* Device supports M17 mode */
-#define CONFIG_M17
-#define M17_META_TEXT_MAX_SCREEN_WIDTH 13
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* HWCONFIG_H */
+#endif /* UI_UTILS_H */

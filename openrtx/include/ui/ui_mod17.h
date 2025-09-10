@@ -123,6 +123,7 @@ enum settingsGPSItems
 enum m17Items
 {
     M_CALLSIGN = 0,
+    M_METATEXT,
     M_CAN,
     M_CAN_RX
 };
@@ -180,6 +181,7 @@ typedef struct layout_t
     symbolSize_t line5_symbol_font;
     fontSize_t bottom_font;
     fontSize_t input_font;
+    fontSize_t message_font;
     fontSize_t menu_font;
     fontSize_t mode_font_big;
     fontSize_t mode_font_small;
@@ -196,6 +198,7 @@ typedef struct ui_state_t
     uint8_t menu_selected;
     // If true we can change a menu entry value with UP/DOWN
     bool edit_mode;
+    bool edit_message;
     // Variables used for VFO input
     uint8_t input_number;
     uint8_t input_position;

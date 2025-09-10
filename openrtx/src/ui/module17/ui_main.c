@@ -20,10 +20,19 @@
 
 #include <interfaces/platform.h>
 #include <interfaces/cps_io.h>
+#include <interfaces/delays.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <ui/ui_mod17.h>
 #include <string.h>
+#include <ui/common/ui_utils.h>
+#include <unistd.h>
+#include <stdlib.h>
+
+
+static char message[54];
+static bool scrollStarted = false;
+
 
 void _ui_drawMainBackground()
 {
@@ -68,9 +77,31 @@ static void _ui_drawModeInfo(ui_state_t* ui_state)
                 gfx_print(layout.line1_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                           color_white, "%s", rtxStatus.M17_src);
 
+                // metatext available
+                if(strlen(rtxStatus.M17_Meta_Text) > M17_META_TEXT_MAX_SCREEN_WIDTH)
+                {
+                    if(!scrollStarted)
+                    {
+                        strcpy(message, rtxStatus.M17_Meta_Text);
+                        ui_scrollString(message, true, sizeof(message));  // Using the new function
+                        scrollStarted = true;
+                    }
+                    ui_scrollString(message, false, sizeof(message));  // Using the new function
+
+                    char msg[M17_META_TEXT_MAX_SCREEN_WIDTH + 1];
+                    strncpy(msg, message, M17_META_TEXT_MAX_SCREEN_WIDTH);
+                    gfx_print(layout.line5_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                              color_white, "%s", msg);
+                    sleepFor(0, 100);
+                }
+                else
+                    if(strlen(rtxStatus.M17_Meta_Text) > 0)
+                        gfx_print(layout.line5_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                                  color_white, "%s", rtxStatus.M17_Meta_Text);
+
                 if(rtxStatus.M17_link[0] != '\0')
                 {
-                    gfx_drawSymbol(layout.line4_pos, layout.line3_symbol_font, TEXT_ALIGN_LEFT,
+                            gfx_drawSymbol(layout.line4_pos, layout.line4_symbol_font, TEXT_ALIGN_LEFT,
                                 color_white, SYMBOL_ACCESS_POINT);
                     gfx_print(layout.line4_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                             color_white, "%s", rtxStatus.M17_link);
@@ -78,7 +109,7 @@ static void _ui_drawModeInfo(ui_state_t* ui_state)
 
                 if(rtxStatus.M17_refl[0] != '\0')
                 {
-                    gfx_drawSymbol(layout.line3_pos, layout.line4_symbol_font, TEXT_ALIGN_LEFT,
+                            gfx_drawSymbol(layout.line3_pos, layout.line3_symbol_font, TEXT_ALIGN_LEFT,
                                    color_white, SYMBOL_NETWORK);
                     gfx_print(layout.line3_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                               color_white, "%s", rtxStatus.M17_refl);
@@ -88,6 +119,7 @@ static void _ui_drawModeInfo(ui_state_t* ui_state)
             {
                 char *dst = NULL;
                 char *last = NULL;
+                scrollStarted = false;
 
                 if(ui_state->edit_mode)
                 {

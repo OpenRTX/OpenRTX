@@ -66,6 +66,7 @@ extern const struct Adc adc1;
 
 /* Device supports M17 mode */
 #define CONFIG_M17
+#define M17_META_TEXT_MAX_SCREEN_WIDTH 13
 
 /*
  * To enable pwm for display backlight dimming uncomment this directive.

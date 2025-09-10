@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2020 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -17,62 +18,36 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef HWCONFIG_H
-#define HWCONFIG_H
+#include <ui/common/ui_utils.h>
+#include <string.h>
 
-#include <stm32f4xx.h>
-#include "pinmap.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-enum adcChannel
+bool ui_scrollString(char *string, bool reset, size_t max_len)
 {
-    ADC_VOL_CH   = 0,
-    ADC_VBAT_CH  = 1,
-    ADC_VOX_CH   = 3,
-    ADC_RSSI_CH  = 8
-};
-
-extern const struct gpsDevice gps;
-extern const struct spiDevice nvm_spi;
-extern const struct spiCustomDevice pll_spi;
-extern const struct spiCustomDevice c5000_spi;
-extern const struct sky73210 pll;
-extern const struct Adc adc1;
-
-/* Device has a working real time clock */
-#define CONFIG_RTC
-
-/* Device supports an optional GPS chip */
-#define CONFIG_GPS
-#define CONFIG_GPS_STM32_USART3
-#define CONFIG_NMEA_RBUF_SIZE 128
-
-/* Device has a channel selection knob */
-#define CONFIG_KNOB_ABSOLUTE
-
-/* Screen dimensions */
-#define CONFIG_SCREEN_WIDTH 160
-#define CONFIG_SCREEN_HEIGHT 128
-
-/* Screen pixel format */
-#define CONFIG_PIX_FMT_RGB565
-
-/* Screen has adjustable brightness */
-#define CONFIG_SCREEN_BRIGHTNESS
-
-/* Battery type */
-#define CONFIG_BAT_LIION
-#define CONFIG_BAT_NCELLS 2
-
-/* Device supports M17 mode */
-#define CONFIG_M17
-#define M17_META_TEXT_MAX_SCREEN_WIDTH 13
-
-#ifdef __cplusplus
+    if(reset)
+    {
+        // Get current string length
+        size_t len = strlen(string);
+        
+        // Ensure we have room for the space and null terminator
+        if(len + 2 <= max_len)
+        {
+            // Add space at the end for the gap
+            string[len] = ' ';
+            string[len + 1] = '\0';
+        }
+        return true;
+    }
+    
+    // Save the first character
+    char first = string[0];
+    
+    // Shift all characters to the left by one position
+    size_t len = strlen(string);
+    memmove(string, string + 1, len - 1);
+    
+    // Put the first character at the end
+    string[len - 1] = first;
+    
+    return true;
+    // TODO(i18n): add support for RTL language
 }
-#endif
-
-#endif /* HWCONFIG_H */
