@@ -1,7 +1,8 @@
 /***************************************************************************
- *   Copyright (C) 2022 by Federico Amedeo Izzo IU2NUO,                    *
- *                         Niccolò Izzo IU2KIN,                            *
- *                         Silvano Seva IU2KWO                             *
+ *   Copyright (C) 2022 - 2025 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN,                     *
+ *                                Silvano Seva IU2KWO                      *
+ *                                and the OpenRTX contributors             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -28,6 +29,8 @@
 #include <event.h>
 #include <hwconfig.h>
 #include <ui.h>
+#include <M17/m17_constants.h>
+#include <ui/common/ui_metadata.h>
 
 // Maximum menu entry length
 #define MAX_ENTRY_LEN 21
@@ -230,6 +233,7 @@ typedef struct ui_state_t
 #if defined(CONFIG_UI_NO_KEYBOARD)
     uint8_t macro_menu_selected;
 #endif // UI_NO_KEYBOARD
+    ui_metadata_t metadataDisplay;
 }
 ui_state_t;
 

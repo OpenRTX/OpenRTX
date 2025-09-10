@@ -4,6 +4,7 @@
  *                                Frederik Saraci IU2NRO,                  *
  *                                Silvano Seva IU2KWO                      *
  *                                Mathis Schmieder DB9MAT                  *
+ *                                and the OpenRTX contributors             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -77,5 +78,6 @@ enum Mod17Flags
 
 /* Device supports M17 mode */
 #define CONFIG_M17
+#define M17_META_TEXT_MAX_SCREEN_WIDTH 20
 
 #endif

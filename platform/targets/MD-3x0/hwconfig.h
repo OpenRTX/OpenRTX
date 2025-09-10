@@ -2,6 +2,7 @@
  *   Copyright (C) 2020 - 2025 by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Silvano Seva IU2KWO                      *
+ *                                and the OpenRTX contributors             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -69,6 +70,7 @@ extern const struct Adc adc1;
 
 /* Device supports M17 mode */
 #define CONFIG_M17
+#define M17_META_TEXT_MAX_SCREEN_WIDTH 13
 
 #ifdef __cplusplus
 }

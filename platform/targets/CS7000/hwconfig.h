@@ -1,5 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2024 - 2025 by Silvano Seva IU2KWO                      *
+ *                                and the OpenRTX contributors             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -68,6 +69,7 @@ extern const struct gpsDevice gps;
 
 /* Device supports M17 mode */
 #define CONFIG_M17
+#define M17_META_TEXT_MAX_SCREEN_WIDTH 13
 
 /* Device has a GPS chip */
 #define CONFIG_GPS

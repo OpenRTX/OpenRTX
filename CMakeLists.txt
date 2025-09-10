@@ -124,6 +124,8 @@ target_sources(app
     openrtx/src/protocols/M17/M17FrameDecoder.cpp
     openrtx/src/protocols/M17/M17LinkSetupFrame.cpp
 
+    openrtx/src/ui/common/ui_metadata.c
+    openrtx/src/ui/common/ui_scrollingText.c
     openrtx/src/ui/default/ui.c
     openrtx/src/ui/default/ui_main.c
     openrtx/src/ui/default/ui_menu.c

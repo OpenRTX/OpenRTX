@@ -1,7 +1,8 @@
 /***************************************************************************
- *   Copyright (C)  2022 by Federico Amedeo Izzo IU2NUO,                   *
- *                          Niccolò Izzo IU2KIN,                           *
- *                          Silvano Seva IU2KWO                            *
+ *   Copyright (C) 2022 - 2025 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN,                     *
+ *                                Silvano Seva IU2KWO                      *
+ *                                and the OpenRTX contributors             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -29,6 +30,7 @@
 #include <event.h>
 #include <hwconfig.h>
 #include <ui.h>
+#include <ui/common/ui_metadata.h>
 
 // Maximum menu entry length
 #define MAX_ENTRY_LEN 21
@@ -214,6 +216,7 @@ typedef struct ui_state_t
     char new_callsign[10];
     // Which state to return to when we exit menu
     uint8_t last_main_state;
+    ui_metadata_t metadataDisplay;
 }
 ui_state_t;
 

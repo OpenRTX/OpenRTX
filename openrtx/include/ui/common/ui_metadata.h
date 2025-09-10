@@ -1,6 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2023 - 2025 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2025        by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
  *                                and the OpenRTX contributors             *
  *                                                                         *
@@ -18,26 +19,43 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef HWCONFIG_H
-#define HWCONFIG_H
+#ifndef UI_METADATA_H
+#define UI_METADATA_H
 
-#include <zephyr/device.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <graphics.h>
+#include <M17/m17_constants.h>
 
-/*
- * Display properties are encoded in the devicetree
+/**
+ * Metadata display component state structure.
+ * Encapsulates all state needed for displaying and scrolling M17 metadata text.
  */
-#define DISPLAY       DT_CHOSEN(zephyr_display)
-#define CONFIG_SCREEN_WIDTH  DT_PROP(DISPLAY, width)
-#define CONFIG_SCREEN_HEIGHT DT_PROP(DISPLAY, height)
-#define CONFIG_PIX_FMT_BW
+typedef struct {
+    char originalText[M17_META_TEXT_DATA_MAX_LENGTH +
+                      1];     // Text that is the original, unscrolled text
+    size_t scrollPosition;
+    long long lastScrollTime; // Timestamp of last scroll update
+} ui_metadata_t;
 
-#define CONFIG_GPS
-#define CONFIG_NMEA_RBUF_SIZE 128
+/**
+ * Update and render metadata display in one step.
+ * Handles scrolling automatically if text is too long.
+ * 
+ * @param position Screen position for text rendering
+ * @param fontSize Font size to use for rendering
+ * @param metadata Pointer to metadata structure
+ * @param text Main text to display (can be NULL to clear)
+ * @return true if operation was successful, false otherwise
+ */
+bool ui_drawMetadata(point_t position, fontSize_t fontSize,
+                     ui_metadata_t *metadata, const char *text);
 
-#define CONFIG_BAT_LIPO
-#define CONFIG_BAT_NCELLS 1
+/**
+ * Clear metadata and reset state.
+ * 
+ * @param metadata Pointer to metadata structure
+ */
+void ui_metadataClear(ui_metadata_t *metadata);
 
-#define CONFIG_M17
-#define M17_META_TEXT_MAX_SCREEN_WIDTH 13
-
-#endif /* HWCONFIG_H */
+#endif /* UI_METADATA_H */

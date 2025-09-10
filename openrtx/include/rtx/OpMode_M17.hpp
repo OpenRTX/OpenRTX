@@ -165,24 +165,21 @@ private:
 	uint16_t numPacketbytes = 0;          ///< Number of packet bytes remaining
 	bool     foundMetaTextStart = false;  ///< Metatext found flag
 	char     textBuffer[M17_META_TEXT_DATA_MAX_LENGTH + 1];              ///< Temporary buffer for incoming metatext
+    M17::M17LinkSetupFrame lsf;          ///< M17 link setup frame
 
-    pathId rxAudioPath;                  ///< Audio path ID for RX
-    pathId txAudioPath;                  ///< Audio path ID for TX
-    bool extendedCall;                   ///< Extended callsign data received
-
-#if !defined(REPEATER) && !defined(HOTSPOT)
     bool startRx;                      ///< Flag for RX management.
     bool startTx;                      ///< Flag for TX management.
     bool locked;                       ///< Demodulator locked on data stream.
     bool dataValid;                    ///< Demodulated data is valid
+    bool extendedCall;                 ///< Extended callsign data received
     bool invertTxPhase;                ///< TX signal phase inversion setting.
     bool invertRxPhase;                ///< RX signal phase inversion setting.
+    pathId rxAudioPath;                ///< Audio path ID for RX
+    pathId txAudioPath;                ///< Audio path ID for TX
     M17::M17Modulator    modulator;    ///< M17 modulator.
     M17::M17Demodulator  demodulator;  ///< M17 demodulator.
     M17::M17FrameDecoder decoder;      ///< M17 frame decoder
     M17::M17FrameEncoder encoder;      ///< M17 frame encoder
-    M17::M17LinkSetupFrame lsf;          ///< M17 link setup frame
-#endif
 };
 
 #endif /* OPMODE_M17_H */

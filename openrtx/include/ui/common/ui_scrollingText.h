@@ -1,6 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2023 - 2025 by Federico Amedeo Izzo IU2NUO,             *
+ *   Copyright (C) 2025        by Federico Amedeo Izzo IU2NUO,             *
  *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
  *                                and the OpenRTX contributors             *
  *                                                                         *
@@ -18,26 +19,25 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef HWCONFIG_H
-#define HWCONFIG_H
+#ifndef UI_SCROLLINGTEXT_H
+#define UI_SCROLLINGTEXT_H
 
-#include <zephyr/device.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <graphics.h>
 
-/*
- * Display properties are encoded in the devicetree
+/**
+ * Print a string that scrolls if it is too long to fit in the available space.
+ * @param position Screen position for text rendering
+ * @param fontSize Font size to use for rendering
+ * @param state Pointer to ui_scrolling_text_state_t structure for maintaining state
+ * @param text Main text to display (can be NULL to clear)
+ * @param maxWidth  Maximum display width in characters
+ * @return true if operation was successful, false otherwise
  */
-#define DISPLAY       DT_CHOSEN(zephyr_display)
-#define CONFIG_SCREEN_WIDTH  DT_PROP(DISPLAY, width)
-#define CONFIG_SCREEN_HEIGHT DT_PROP(DISPLAY, height)
-#define CONFIG_PIX_FMT_BW
+bool ui_printScrollingBuffer(point_t start, fontSize_t size,
+                             textAlign_t alignment, color_t color,
+                             const char *buf, size_t *scrollPosition,
+                             uint8_t maxWidth, long long *lastScrollTime);
 
-#define CONFIG_GPS
-#define CONFIG_NMEA_RBUF_SIZE 128
-
-#define CONFIG_BAT_LIPO
-#define CONFIG_BAT_NCELLS 1
-
-#define CONFIG_M17
-#define M17_META_TEXT_MAX_SCREEN_WIDTH 13
-
-#endif /* HWCONFIG_H */
+#endif /* UI_SCROLLINGTEXT_H */

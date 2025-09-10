@@ -69,7 +69,11 @@ openrtx/include/peripherals/gps.h
 openrtx/include/peripherals/rng.h
 openrtx/include/peripherals/rtc.h
 openrtx/include/protocols/M17/m17_constants.h
+openrtx/include/ui/common/ui_metadata.h
+openrtx/include/ui/common/ui_scrollingText.h
 openrtx/src/core/memory_profiling.cpp
+openrtx/src/ui/common/ui_metadata.c
+openrtx/src/ui/common/ui_scrollingText.c
 platform/drivers/ADC/ADC0_GDx.h
 platform/drivers/audio/MAX9814.h
 platform/drivers/baseband/MCP4551.h

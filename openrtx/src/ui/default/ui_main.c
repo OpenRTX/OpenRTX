@@ -3,6 +3,7 @@
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
+ *                                and the OpenRTX contributors             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -20,12 +21,17 @@
 
 #include <interfaces/platform.h>
 #include <interfaces/cps_io.h>
+#include <interfaces/delays.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <ui/common/ui_scrollingText.h>
 #include <ui/ui_default.h>
 #include <string.h>
 #include <ui/ui_strings.h>
+#include <ui/common/ui_metadata.h>
 #include <utils.h>
+
 
 void _ui_drawMainBackground()
 {
@@ -141,29 +147,36 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
 
                 gfx_print(layout.line1_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                           color_white, "%s", rtxStatus.M17_src);
+                
+
+                // Metadata
+                if(rtxStatus.M17_Meta_Text[0] != '\0') {
+                    gfx_drawSymbol(layout.line3_pos, layout.line1_symbol_size, TEXT_ALIGN_LEFT,
+                                color_white, SYMBOL_ALPHABETICAL_VARIANT);
+                    ui_drawMetadata(layout.line3_pos, layout.line2_font, &ui_state->metadataDisplay, rtxStatus.M17_Meta_Text);
+                }
 
                 // RF link (if present)
                 if(rtxStatus.M17_link[0] != '\0')
                 {
                     gfx_drawSymbol(layout.line4_pos, layout.line3_symbol_size, TEXT_ALIGN_LEFT,
                                    color_white, SYMBOL_ACCESS_POINT);
-
                     gfx_print(layout.line4_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                               color_white, "%s", rtxStatus.M17_link);
                 }
 
                 // Reflector (if present)
-                if(rtxStatus.M17_refl[0] != '\0')
+                if(rtxStatus.M17_refl[0] != '\0' && rtxStatus.M17_Meta_Text[0] == '\0')
                 {
                     gfx_drawSymbol(layout.line3_pos, layout.line4_symbol_size, TEXT_ALIGN_LEFT,
                                    color_white, SYMBOL_NETWORK);
-
                     gfx_print(layout.line3_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                               color_white, "%s", rtxStatus.M17_refl);
                 }
             }
             else
             {
+                ui_metadataClear(&ui_state->metadataDisplay);
                 const char *dst = NULL;
                 if(ui_state->edit_mode)
                 {
