@@ -3,6 +3,7 @@
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
+ *                                and the OpenRTX contributors             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,8 +26,11 @@
 #include <M17/M17FrameEncoder.hpp>
 #include <M17/M17Demodulator.hpp>
 #include <M17/M17Modulator.hpp>
+#include <M17/m17_constants.h>
 #include <audio_path.h>
+#include <vector>
 #include "OpMode.hpp"
+#include <M17/M17LinkSetupFrame.hpp>
 
 /**
  * Specialisation of the OpMode class for the management of M17 operating mode.
@@ -134,20 +138,51 @@ private:
      */
     bool compareCallsigns(const std::string& localCs, const std::string& incomingCs);
 
+    /**
+    * Prepare a meta text block for transmission
+    *
+    * @param text       The complete meta text to send
+    * @param last_block Reference to the current block index counter
+    * @param buffer     Output buffer to store the prepared meta data (14 bytes)
+    * @return           True if all blocks have been prepared, false otherwise
+    */
+    bool prepareMetaTextBlock(const char* text, uint8_t& lastBlock, uint8_t* buffer);
 
+    /**
+     * Process incoming metadata text across multiple blocks.
+     *
+     * @param status Pointer to RTX status to update with received text
+     * @param meta Reference to metadata structure from LSF
+     * @return true if a complete text message was processed
+     */
+    bool processMetadataText(rtxStatus_t *const status, M17::meta_t& meta);
+
+	uint8_t  textOffset = 0;              ///< Metatext offset
+	uint8_t  blk_id_tot = 0;              ///< Metatext block Id total
+	uint8_t  frameCnt = 0;                ///< Transmit frame counter
+	uint8_t  last_text_blk =  0;          ///< Last metatext block counter
+	uint8_t  lsfFragCount = 5;            ///< LSF fragment counter
+	uint16_t numPacketbytes = 0;          ///< Number of packet bytes remaining
+	bool     foundMetaTextStart = false;  ///< Metatext found flag
+	char     textBuffer[M17_META_TEXT_DATA_MAX_LENGTH + 1];              ///< Temporary buffer for incoming metatext
+
+    pathId rxAudioPath;                  ///< Audio path ID for RX
+    pathId txAudioPath;                  ///< Audio path ID for TX
+    bool extendedCall;                   ///< Extended callsign data received
+
+#if !defined(REPEATER) && !defined(HOTSPOT)
     bool startRx;                      ///< Flag for RX management.
     bool startTx;                      ///< Flag for TX management.
     bool locked;                       ///< Demodulator locked on data stream.
     bool dataValid;                    ///< Demodulated data is valid
-    bool extendedCall;                 ///< Extended callsign data received
     bool invertTxPhase;                ///< TX signal phase inversion setting.
     bool invertRxPhase;                ///< RX signal phase inversion setting.
-    pathId rxAudioPath;                ///< Audio path ID for RX
-    pathId txAudioPath;                ///< Audio path ID for TX
     M17::M17Modulator    modulator;    ///< M17 modulator.
     M17::M17Demodulator  demodulator;  ///< M17 demodulator.
     M17::M17FrameDecoder decoder;      ///< M17 frame decoder
     M17::M17FrameEncoder encoder;      ///< M17 frame encoder
+    M17::M17LinkSetupFrame lsf;          ///< M17 link setup frame
+#endif
 };
 
 #endif /* OPMODE_M17_H */

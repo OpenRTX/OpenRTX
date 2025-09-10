@@ -3,6 +3,7 @@
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
+ *                                and the OpenRTX contributors             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -172,6 +173,8 @@ void OpMode_M17::offState(rtxStatus_t *const status)
 
 void OpMode_M17::rxState(rtxStatus_t *const status)
 {
+    uint8_t pthSts;
+
     if(startRx)
     {
         demodulator.startBasebandSampling();
@@ -204,6 +207,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
             if(status->lsfOk)
             {
                 dataValid = true;
+                frameCnt++;
 
                 // Retrieve stream source and destination data
                 std::string dst = lsf.getDestination();
@@ -215,8 +219,6 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                 if((streamType.fields.encType    == M17_ENCRYPTION_NONE) &&
                    (streamType.fields.encSubType == M17_META_EXTD_CALLSIGN))
                 {
-                    extendedCall = true;
-
                     meta_t& meta = lsf.metadata();
                     std::string exCall1 = decode_callsign(meta.extended_call_sign.call1);
                     std::string exCall2 = decode_callsign(meta.extended_call_sign.call2);
@@ -231,6 +233,18 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                     strncpy(status->M17_refl, exCall2.c_str(), 10);
 
                     extendedCall = true;
+                    if(frameCnt == 6)
+                        frameCnt = 0;
+
+                            // no metatext present
+                    memset(status->M17_Meta_Text, 0, M17_META_TEXT_DATA_MAX_LENGTH + 1);
+                }
+                // Check if metatext is present
+                else if((streamType.fields.encType    == M17_ENCRYPTION_NONE) &&
+                         (streamType.fields.encSubType == M17_META_TEXT) &&
+                         lsf.valid() && frameCnt == 6)
+                {
+                    processMetadataText(status, lsf.metadata());
                 }
 
                 // Set source and destination fields.
@@ -253,8 +267,10 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                 bool callMatch = compareCallsigns(std::string(status->source_address), dst);
 
                 // Open audio path only if CAN and callsign match
-                uint8_t pthSts = audioPath_getStatus(rxAudioPath);
-                if((pthSts == PATH_CLOSED) && (canMatch == true) && (callMatch == true))
+                if((type == M17FrameType::STREAM) && (canMatch == true) && (callMatch == true))
+                {
+                    pthSts = audioPath_getStatus(rxAudioPath);
+                    if(pthSts == PATH_CLOSED)
                 {
                     rxAudioPath = audioPath_request(SOURCE_MCU, SINK_SPK, PRIO_RX);
                     pthSts = audioPath_getStatus(rxAudioPath);
@@ -272,6 +288,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                     codec_pushFrame(sf.payload().data() + 8, false);
                 }
             }
+            } // if LSF OK
         }
     }
 
@@ -290,9 +307,10 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         status->lsfOk = false;
         dataValid     = false;
         extendedCall  = false;
+        foundMetaTextStart   = false;
+        memset(textBuffer, 0, M17_META_TEXT_DATA_MAX_LENGTH);
         status->M17_link[0] = '\0';
         status->M17_refl[0] = '\0';
-
         codec_stop(rxAudioPath);
         audioPath_release(rxAudioPath);
     }
@@ -380,5 +398,67 @@ bool OpMode_M17::compareCallsigns(const std::string& localCs,
     if(truncatedLocal == truncatedIncoming)
         return true;
 
+    return false;
+}
+
+bool OpMode_M17::processMetadataText(rtxStatus_t *const status, M17::meta_t& meta)
+{
+    if (status == nullptr)
+    {
+        return false;
+    }
+
+    // Reset frame counter since we're processing metadata
+    frameCnt = 0;
+    
+    // Extract block length and ID from control byte
+    uint8_t blk_len = (meta.raw_data[0] & 0xf0) >> 4;
+    uint8_t blk_id = (meta.raw_data[0] & 0x0f);
+    
+    // First block (ID 1) indicates start of new message
+    if(blk_id == 1)
+    {
+        // Reset buffers and counters for new message
+        memset(status->M17_Meta_Text, 0, M17_META_TEXT_DATA_MAX_LENGTH + 1);
+        memset(textBuffer, 0, M17_META_TEXT_DATA_MAX_LENGTH + 1);
+        textOffset = 0;
+        blk_id_tot = 0;
+        foundMetaTextStart = true;
+    }
+    
+    // Only process if we've seen the first block
+    if(foundMetaTextStart)
+    {
+        // Validate block ID and prevent buffer overflow
+        if(blk_id <= 0x0f && 
+           (textOffset + M17_META_TEXT_BLOCK_SIZE) <= M17_META_TEXT_DATA_MAX_LENGTH)
+        {
+            // Add this block's ID to our running total
+            blk_id_tot += blk_id;
+            
+            // Copy block data (skipping control byte) to our buffer
+            memcpy(textBuffer + textOffset, meta.raw_data + 1, M17_META_TEXT_BLOCK_SIZE);
+            textOffset += M17_META_TEXT_BLOCK_SIZE;
+            
+            // Check if message is complete
+            bool isComplete = (blk_len == blk_id_tot) || 
+                             (textOffset >= M17_META_TEXT_DATA_MAX_LENGTH);
+            
+            if(isComplete)
+            {
+                // Copy complete message to status and ensure null-termination
+                memcpy(status->M17_Meta_Text, textBuffer, textOffset);
+                status->M17_Meta_Text[textOffset] = '\0';
+                
+                // Reset for next message
+                textOffset = 0;
+                blk_id_tot = 0;
+                foundMetaTextStart = false;
+                
+                return true;
+            }
+        }
+    }
+    
     return false;
 }

@@ -3,6 +3,7 @@
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
+ *                                and the OpenRTX contributors             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -74,6 +75,13 @@ void M17LinkSetupFrame::setType(streamType_t type)
     // NOTE: M17 fields are big-endian, we need to swap bytes
     type.value = __builtin_bswap16(type.value);
     data.type  = type;
+}
+
+void M17LinkSetupFrame::setMetaText(uint8_t *text)
+{
+    if (text != nullptr) {
+        memcpy(data.meta.raw_data, text, 14);
+    }
 }
 
 meta_t& M17LinkSetupFrame::metadata()

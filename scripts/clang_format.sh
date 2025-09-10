@@ -68,6 +68,7 @@ openrtx/include/interfaces/radio.h
 openrtx/include/peripherals/gps.h
 openrtx/include/peripherals/rng.h
 openrtx/include/peripherals/rtc.h
+openrtx/include/protocols/M17/m17_constants.h
 openrtx/src/core/memory_profiling.cpp
 platform/drivers/ADC/ADC0_GDx.h
 platform/drivers/audio/MAX9814.h

@@ -3,6 +3,7 @@
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
+ *                                and the OpenRTX contributors             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -100,6 +101,13 @@ public:
      * @param type: stream type field to be written.
      */
     void setType(streamType_t type);
+
+    /**
+     * Set metadata text field.
+     *
+     * @param text: 14 bytes of text to be written
+     */
+    void setMetaText(uint8_t *text);
 
     /**
      * Get metadata field.

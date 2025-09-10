@@ -3,6 +3,7 @@
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
+ *                                and the OpenRTX contributors             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,6 +26,7 @@
 #include <stdint.h>
 #include <cps.h>
 #include <pthread.h>
+#include <M17/m17_constants.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -66,6 +68,7 @@ typedef struct
     char     M17_src[10];              /**  M17 LSF source             */
     char     M17_link[10];             /**  M17 LSF traffic originator */
     char     M17_refl[10];             /**  M17 LSF reflector module   */
+    char     M17_Meta_Text[M17_META_TEXT_DATA_MAX_LENGTH + 1];        /**< M17 Meta Text                */
 }
 rtxStatus_t;
 
@@ -145,6 +148,7 @@ rssi_t rtx_getRssi();
  * @return true if RX squelch is open.
  */
 bool rtx_rxSquelchOpen();
+
 
 #ifdef __cplusplus
 }
