@@ -11,6 +11,8 @@
 #include "rtx/OpMode_FM.hpp"
 #include "rtx/OpMode_M17.hpp"
 #include "core/state.h"
+#include "core/utils.h"
+#include "interfaces/platform.h"
 
 static pthread_mutex_t   *cfgMutex;     // Mutex for incoming config messages
 static const rtxStatus_t *newCnf;       // Pointer for incoming config messages
@@ -24,6 +26,10 @@ static OpMode_FM  fmMode;               // FM mode handler
 #ifdef CONFIG_M17
 static OpMode_M17 m17Mode;              // M17 mode handler
 #endif
+#ifdef CONFIG_SPECTRUM
+#define SPECTRUM_WF_LINES ARRAY_SIZE(rtxStatus.rxSweep_data.data) / 2
+#endif
+
 
 
 void rtx_init(pthread_mutex_t *m)
@@ -178,13 +184,15 @@ if(state.rtxStatus == RTX_RX_SWEEP)
                 state.spectrum_peakIndex = i;
             }
         }
-        state.spectrum_shouldRefresh = true;
-        //state.spectrum_peakIndex = peakIndex;
     }
-    #endif
+    rtxStatus.rxSweep_data.sweepDone = true; // Set the flag after the sweep is complete
+    rtxStatus.opStatus = RTX_RX;       // Reset RTX status to RX after sweep
+    //state.spectrum_peakIndex = peakIndex;
+}
+#endif
 
-    if(reconfigure)
-    {
+if(reconfigure)
+{
         // Force TX and RX tone squelch to off for OpModes different from FM.
         if(rtxStatus.opMode != OPMODE_FM)
         {
@@ -282,7 +290,7 @@ rssi_t rtx_getRssi()
     #ifdef CONFIG_SPECTRUM
     // There is a bug where during spectrum operation, the RSSI reads collide.
     // This is a workaround to prevent the RSSI from being updated during spectrum operation.
-    if(state.rtxStatus != RTX_RX_SWEEP)
+    if(rtxStatus.opStatus != RTX_RX_SWEEP)
         return rssi;
     else return -127.0;
     #else
