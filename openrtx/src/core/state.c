@@ -80,18 +80,6 @@ void state_init()
     state.emergency     = false;
     state.txDisable     = false;
     state.step_index    = 4; // Default frequency step 12.5kHz
-    #ifdef CONFIG_SPECTRUM
-    const hwInfo_t* hwinfo  = platform_getHwInfo();
-    if(hwinfo->uhf_band) {
-        state.spectrum_startFreq = 432100000;
-    }
-    else if(hwinfo->vhf_band) {
-        state.spectrum_startFreq = 144000000;
-    }
-    state.spectrum_currentPart = 0;
-    state.spectrum_currentWFLine = 0;
-    state.spectrum_peakIndex = 32;
-    #endif
 
     // Force brightness field to be in range 0 - 100
     if(state.settings.brightness > 100)

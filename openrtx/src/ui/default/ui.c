@@ -1818,13 +1818,25 @@ void ui_updateFSM(bool *sync_rtx)
 #endif
 #ifdef CONFIG_SPECTRUM
                         case M_SPECTRUM:
-                            state.spectrum_startFreq = (state.channel.rx_frequency/10) - 32 * freq_steps[state.settings.spectrum_step]/10;
+                        {
+                            // Get current RTX status and configure spectrum sweep
+                            rtxStatus_t rtxStatus = rtx_getCurrentStatus();
+                            // Calculate start frequency - center the spectrum around current VFO frequency
+                            #define SPECTRUM_WF_LINES ARRAY_SIZE(rtxStatus.rxSweep_data.data) / 2
+                            uint32_t spanWidth = SPECTRUM_WF_LINES * freq_steps[state.settings.spectrum_step];
+                            uint32_t startFreq = state.channel.rx_frequency - (spanWidth / 2);
+                            
+                            rtxStatus.rxSweep_data.startFreq = startFreq;
+                            rtxStatus.rxSweep_data.currentPart = 0;
+                            rtxStatus.opStatus = RTX_RX_SWEEP;
+                            rtx_configure(&rtxStatus);
+                            
                             state.ui_screen = MENU_SPECTRUM;
                             state.rtxStatus = RTX_RX_SWEEP;
-                            state.spectrum_currentPart = 0;
                             // Fill the waterfall with blue, to make it less jarring
                             gfx_drawRect((point_t){92, 0}, 44, 128, (color_t){0,0,255}, true);
                             break;
+                        }
 #endif
                         case M_SETTINGS:
                             state.ui_screen = MENU_SETTINGS;
@@ -1945,18 +1957,11 @@ void ui_updateFSM(bool *sync_rtx)
                 }
                 if(msg.keys & KEY_UP)
                 {
-                    spectrum_changeFrequency(freq_steps[state.settings.spectrum_step]*32);
-                    state.spectrum_currentPart = 0;
+                    spectrum_changeFrequency(freq_steps[state.settings.spectrum_step] * 32);
                 }
                 if(msg.keys & KEY_DOWN)
                 {
-                    spectrum_changeFrequency(-(freq_steps[state.settings.spectrum_step]*32));
-                    state.spectrum_currentPart = 0;
-                }
-                if(msg.keys & KEY_DOWN)
-                {
-                    spectrum_changeFrequency(-(freq_steps[state.settings.spectrum_step]*32));
-                    state.spectrum_currentPart = 0;
+                    spectrum_changeFrequency(-(freq_steps[state.settings.spectrum_step] * 32));
                 }
                 break;
 #endif
@@ -2266,7 +2271,6 @@ void ui_updateFSM(bool *sync_rtx)
                     ui_state.edit_mode = !ui_state.edit_mode;
                 else if(msg.keys & KEY_ESC) {
                     state.rtxStatus = RTX_RX_SWEEP;
-                    state.spectrum_currentPart = 0;
                     _ui_menuBack(MENU_SPECTRUM);
                 }
                 break;
