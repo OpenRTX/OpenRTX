@@ -31,13 +31,11 @@
 #include "core/memory_profiling.h"
 #include "ui/ui_strings.h"
 #include "core/voicePromptUtils.h"
+#include "rtx/rtx.h"
 
 #ifdef PLATFORM_TTWRPLUS
 #include "drivers/baseband/SA8x8.h"
 #endif
-
-#define NUMBER_BARS 64
-#define NUMBER_DIVS 2
 
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBottom();
@@ -827,16 +825,16 @@ void _ui_drawMenuSpectrum(ui_state_t* ui_state)
         gfx_drawRect((point_t){0, 0}, 64, CONFIG_SCREEN_HEIGHT, color_black, true);
         // Print small text at the peak of the spectrum with the peak frequency,
         // but only if the peak is between indices 8 and 56
-        if (state.spectrum_peakIndex > 4 && state.spectrum_peakIndex < 56)
+        if (rtxStatus.rxSweep_data.peakIndex > 4 && rtxStatus.rxSweep_data.peakIndex < 56)
         {
             sniprintf(freq_str, sizeof(freq_str), "%lu.%03lu",
-                    (unsigned long)(state.spectrum_peakFreq / 100000),
-                    (unsigned long)(state.spectrum_peakFreq % 100000 / 100));
-            gfx_print((point_t){4,state.spectrum_peakIndex*2}, FONT_SIZE_5PT, TEXT_ALIGN_LEFT,
+                    (unsigned long)(rtxStatus.rxSweep_data.peakFreq / 1000000),
+                    (unsigned long)(rtxStatus.rxSweep_data.peakFreq % 1000000 / 1000));
+            gfx_print((point_t){4, rtxStatus.rxSweep_data.peakIndex*2}, FONT_SIZE_5PT, TEXT_ALIGN_LEFT,
                     yellow_fab413, freq_str);
         }
         
-        for (int i = 0; i < NUMBER_BARS; i++)
+        for (int i = 0; i < SPECTRUM_WF_LINES; i++)
         {
             uint8_t height = rtxStatus.rxSweep_data.data[i];
             // Calculate starting position so bars grow leftwards from x=64
@@ -880,7 +878,6 @@ void _ui_drawMenuSpectrum(ui_state_t* ui_state)
     gfx_print((point_t){layout.horizontal_pad, 126}, FONT_SIZE_5PT, TEXT_ALIGN_LEFT,
                 color_white, freq_str);
     }
-    state.spectrum_currentPart = (state.spectrum_currentPart + 1) % 2;
 }
 
 void spectrum_changeFrequency(int32_t direction)
@@ -1070,7 +1067,7 @@ void _ui_drawSettingsGPS(ui_state_t* ui_state)
 #ifdef CONFIG_SPECTRUM
 void _ui_drawSettingsSpectrum(ui_state_t* ui_state)
 {
-    //gfx_clearScreen();
+    gfx_clearScreen();
     // Print "Spectrum Settings" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, currentLanguage->spectrum);

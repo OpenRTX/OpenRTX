@@ -25,6 +25,7 @@
 #include <stdint.h>
 #include "core/cps.h"
 #include <pthread.h>
+#include <hwconfig.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -77,8 +78,12 @@ typedef struct
     char     M17_src[10];              /**  M17 LSF source             */
     char     M17_link[10];             /**  M17 LSF traffic originator */
     char     M17_refl[10];             /**  M17 LSF reflector module   */
+    #ifdef CONFIG_SPECTRUM
+    rxSweep_t rxSweep_data;            /**< Data for RX sweep function  */
+    #endif
 }
 rtxStatus_t;
+
 
 /**
  * \enum bandwidth Enumeration type defining the current rtx bandwidth.

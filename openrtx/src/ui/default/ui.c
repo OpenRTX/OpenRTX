@@ -1855,6 +1855,7 @@ void ui_updateFSM(bool *sync_rtx)
                             state.rxSweep_start_freq = startFreq;
                             gfx_clearScreen();
                             break;
+                        }
 #endif
                         case M_SETTINGS:
                             state.ui_screen = MENU_SETTINGS;
@@ -2299,7 +2300,6 @@ void ui_updateFSM(bool *sync_rtx)
                     ui_state.edit_mode = !ui_state.edit_mode;
                 else if(msg.keys & KEY_ESC) {
                     state.rtxStatus = RTX_RX_SWEEP;
-                    state.spectrum_currentPart = 0;
                     _ui_menuBack(MENU_SPECTRUM);
                 }
                 break;
