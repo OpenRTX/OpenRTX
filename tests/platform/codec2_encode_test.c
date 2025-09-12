@@ -19,11 +19,12 @@
  ***************************************************************************/
 
 #include <audio_stream.h>
-#include <interfaces/audio_path.h>
+#include <audio_path.h>
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
 #include <memory_profiling.h>
 #include <interfaces/audio.h>
+#include <pthread.h>
 #include <codec2.h>
 #include <stdlib.h>
 #include <string.h>
@@ -46,21 +47,27 @@ void error()
 
 void *mic_task(void *arg)
 {
+    (void) arg;
+
     struct CODEC2 *codec2 = codec2_create(CODEC2_MODE_3200);
     int16_t *audioBuf = ((int16_t *) malloc(audioBufSize * sizeof(int16_t)));
     if(audioBuf == NULL) error();
     uint8_t *dataBuf  = ((uint8_t *) malloc(dataBufSize  * sizeof(uint8_t)));
     memset(dataBuf, 0x00, dataBufSize);
 
-    audio_enableMic();
     sleepFor(0u, 500u);
 
-    streamId id = inputStream_start(SOURCE_MIC, PRIO_RX, audioBuf, audioBufSize,
-                                    BUF_CIRC_DOUBLE, 8000);
+    pathId path = audioPath_request(SOURCE_MIC, SINK_MCU, PRIO_TX);
+    streamId id = audioStream_start(path, audioBuf, audioBufSize, 8000,
+                                    BUF_CIRC_DOUBLE | STREAM_INPUT);
 
     platform_ledOn(GREEN);
 
+    filter_state_t dcr;
     size_t pos = 0;
+
+    dsp_resetFilterState(&dcr);
+
     while(pos < dataBufSize)
     {
         dataBlock_t data = inputStream_getData(id);
@@ -70,7 +77,7 @@ void *mic_task(void *arg)
         for(size_t i = 0; i < data.len; i++) data.data[i] <<= 3;
 
         // DC removal
-        dsp_dcRemoval(data.data, data.len);
+        dsp_dcRemoval(&dcr, data.data, data.len);
 
         // Post-amplification stage
         for(size_t i = 0; i < data.len; i++) data.data[i] *= 20;
