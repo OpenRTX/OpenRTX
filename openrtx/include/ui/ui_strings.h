@@ -35,7 +35,6 @@ typedef struct
     const char* banks;
     const char* channels;
     const char* contacts;
-    const char* batteryIcon;
     const char* gps;
     const char* settings;
     const char* backupAndRestore;
@@ -101,6 +100,7 @@ typedef struct
     const char* frequencyOffset;
     const char* macroLatching;
     const char* noGps;
+    const char* batteryIcon;
 }
 stringsTable_t;
 

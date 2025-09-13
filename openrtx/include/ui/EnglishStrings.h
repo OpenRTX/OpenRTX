@@ -31,7 +31,6 @@ const stringsTable_t englishStrings =
     .banks             = "Banks",
     .channels          = "Channels",
     .contacts          = "Contacts",
-    .batteryIcon       = "Battery Icon",
     .gps               = "GPS",
     .settings          = "Settings",
     .backupAndRestore  = "Backup & Restore",
@@ -97,5 +96,6 @@ const stringsTable_t englishStrings =
     .frequencyOffset   = "Frequency Offset",
     .macroLatching     = "Macro Latching",
     .noGps             = "No GPS",
+    .batteryIcon       = "Battery Icon",
 };
 #endif  // ENGLISHSTRINGS_H
