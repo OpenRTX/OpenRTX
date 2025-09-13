@@ -31,7 +31,6 @@ const stringsTable_t englishStrings =
     .banks             = "Banks",
     .channels          = "Channels",
     .contacts          = "Contacts",
-    .history           = "History",
     .gps               = "GPS",
     .settings          = "Settings",
     .backupAndRestore  = "Backup & Restore",
@@ -98,5 +97,6 @@ const stringsTable_t englishStrings =
     .macroLatching     = "Macro Latching",
     .noGps             = "No GPS",
     .batteryIcon       = "Battery Icon",
+    .history           = "History",
 };
 #endif  // ENGLISHSTRINGS_H
