@@ -1,7 +1,7 @@
-FROM ubuntu:24.04 AS build
+FROM ubuntu:24.04
 
-# dependencies for miosix compiler
-RUN apt-get update -y && apt-get install -y \
+# Install dependencies
+RUN apt-get update -y && apt-get install -y --no-install-recommends \
   git \
   wget \
   sudo \
@@ -17,6 +17,21 @@ RUN apt-get update -y && apt-get install -y \
   libelf-dev \
   perl \
   libexpat1-dev \
+  ca-certificates \
+  pkg-config \
+  meson \
+  cmake \
+  libstdc++6 \
+  libusb-1.0-0 \
+  libusb-1.0-0-dev \
+  dfu-util \
+  libsdl2-dev \
+  libcodec2-dev \
+  libreadline-dev \
+  gcc \
+  g++ \
+  python3 \
+  python3-pip \
   && rm -rf /var/lib/apt/lists/*
 
 # compile miosix compiler
@@ -25,31 +40,35 @@ RUN git clone --depth 1 https://github.com/fedetft/miosix-kernel.git \
   && sh download.sh \
   && bash install-script.sh -j`nproc`
 
+# Build radio_tool from source (since the deb package doesnt support all architectures)
+RUN git clone https://github.com/v0l/radio_tool \
+    && cd radio_tool \
+    && git checkout tags/v0.3.0 \
+    && mkdir build && cd build \
+    && cmake .. \
+    && make -j4 \
+    && make install
+ENV PATH="$PATH:/usr/local/bin"
 
-# 2th stage build
-FROM ubuntu:24.04
+# Install opengd77 sources and put the firmware loader and tools in PATH
+RUN git clone https://github.com/open-ham/OpenGD77.git /tmp/OpenGD77
+ENV PATH="$PATH:/tmp/OpenGD77/tools/Python/FirmwareLoader:/tmp/OpenGD77/firmware/tools"
 
-# copy arm-miosix-eabi compiler from build stage
-COPY --from=build /opt /opt
+# Install Python 3.11 using the deadsnakes PPA
+RUN apt-get update -y \
+    && apt-get install -y software-properties-common \
+    && add-apt-repository -y ppa:deadsnakes/ppa \
+    && apt-get update \
+    && apt-get install -y python3.11 python3.11-venv python3.11-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# create symbolic links to compiler
-RUN ln -s /opt/arm-miosix-eabi/bin/* /bin/
+# Create and activate virtual environment
+ENV VIRTUAL_ENV=/opt/venv
+RUN python3.11 -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-# dependencies for the project
-RUN apt-get update -y && apt-get install -y \
-  git \
-  pkg-config \
-  build-essential \
-  meson \
-  libsdl2-dev \
-  libreadline-dev \
-  dfu-util \
-  cmake \
-  libusb-1.0-0 \
-  libusb-1.0-0-dev \
-  codec2 \
-  libcodec2-dev \
-  && rm -rf /var/lib/apt/lists/*
-
-# fix error from git with different users
-RUN git config --system --add safe.directory '*'
+# Copy requirements.txt and install dependencies
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -U pip && \
+    pip install --no-cache-dir -r requirements.txt
