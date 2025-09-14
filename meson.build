@@ -906,12 +906,12 @@ targets = [
   },
 ]
 
-bin2sgl     = find_program('bin2sgl',          required:false, disabler:true)
 radio_tool  = find_program('radio_tool')
-objcopy     = find_program('objcopy',                          required:false, disabler:true)
-gd77_loader = find_program('scripts/gd-77_firmware_loader.py', required:false, disabler:true)
 dfu_util    = find_program('dfu-util',                         required:false, disabler:true)
+objcopy     = find_program('objcopy',                          required:false, disabler:true)
 west        = find_program('west',                             required:false, disabler:true)
+bin2sgl     = find_program('scripts/bin2sgl.py',               required:false, disabler:true)
+gd77_loader = find_program('scripts/gd-77_firmware_loader.py', required:false, disabler:true)
 uf2conv     = find_program('scripts/uf2conv.py',               required:false, disabler:true)
 dfu_convert = find_program('scripts/dfu-convert.py',           required:false, disabler:true)
 cs7000_wrap = find_program('scripts/cs7000_wrap.py',           required:false, disabler:true)
@@ -986,21 +986,13 @@ foreach t : targets
       # Handle GD77 custom wrapping and flashing tools
       if name == 'openrtx_gd77' or name == 'openrtx_dm1801'
 
-        if build_machine.system() == 'windows'
-              wrap = custom_target(name+'_wrap',
-                                   output  : name+'_bin.sgl',
-                                   input   : bin,
-                                   command : [bin2sgl, '@INPUT@', '-m', t['wrap']])
-        else  # Unix-like OS that has mv
-              wrap = custom_target(name+'_wrap',
-                                   output  : name+'_wrap.sgl',
-                                   input   : bin,
-                                   command : [bin2sgl,
-                                             '-f', '@INPUT@',
-                                             '-m', t['wrap'],
-                                             '&&',
-                                             'mv', '@INPUT@.sgl', '@OUTPUT@'])
-        endif
+        wrap = custom_target(name+'_wrap',
+                              output  : name+'_bin.sgl',
+                              input   : bin,
+                              command : [bin2sgl,
+                                        '--in', '@INPUT@',
+                                        '--out', '@OUTPUT@',
+                                        '--mode', t['wrap']])
 
         custom_target(name+'_flash',
                       input   : wrap,
