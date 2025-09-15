@@ -16,6 +16,8 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
+ *                                                                         *
+ *   (2025) Modified by KD0OSS for DSTAR/P25 use on Module17/OpenRTX       *
  ***************************************************************************/
 
 #include <interfaces/radio.h>
@@ -66,6 +68,7 @@ void rtx_init(pthread_mutex_t *m)
     rtxStatus.M17_dst[0]    = '\0';
     rtxStatus.M17_link[0]   = '\0';
     rtxStatus.M17_refl[0]   = '\0';
+    rtxStatus.M17_Meta_Text[0] = '\0';
     currMode = &noMode;
 
     /*

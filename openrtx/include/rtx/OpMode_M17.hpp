@@ -16,6 +16,8 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
+ *                                                                         *
+ *   (2025) Modified by KD0OSS for new modes on Module17                   *
  ***************************************************************************/
 
 #ifndef OPMODE_M17_H
@@ -26,7 +28,14 @@
 #include <M17/M17Demodulator.hpp>
 #include <M17/M17Modulator.hpp>
 #include <audio_path.h>
+#include <vector>
 #include "OpMode.hpp"
+
+#define M17_GNSS_SOURCE_M17CLIENT        ((uint8_t)0)
+#define M17_GNSS_SOURCE_OPENRTX          ((uint8_t)1)
+#define M17_GNSS_STATION_FIXED           ((uint8_t)0)
+#define M17_GNSS_STATION_MOBILE          ((uint8_t)1)
+#define M17_GNSS_STATION_HANDHELD        ((uint8_t)2)
 
 /**
  * Specialisation of the OpMode class for the management of M17 operating mode.
@@ -134,20 +143,41 @@ private:
      */
     bool compareCallsigns(const std::string& localCs, const std::string& incomingCs);
 
+    /**
+     * Convert OpenRTX latitude/longitude format into M17 format and vice versa.
+     */
+    void rtx_to_q(int32_t* qlat, int32_t* qlon, int32_t lat, int32_t lon);
+    void q_to_rtx(int32_t* lat, int32_t* lon, int32_t qlat, int32_t qlon);
 
-    bool startRx;                      ///< Flag for RX management.
-    bool startTx;                      ///< Flag for TX management.
-    bool locked;                       ///< Demodulator locked on data stream.
-    bool dataValid;                    ///< Demodulated data is valid
-    bool extendedCall;                 ///< Extended callsign data received
-    bool invertTxPhase;                ///< TX signal phase inversion setting.
-    bool invertRxPhase;                ///< RX signal phase inversion setting.
-    pathId rxAudioPath;                ///< Audio path ID for RX
-    pathId txAudioPath;                ///< Audio path ID for TX
-    M17::M17Modulator    modulator;    ///< M17 modulator.
-    M17::M17Demodulator  demodulator;  ///< M17 demodulator.
-    M17::M17FrameDecoder decoder;      ///< M17 frame decoder
-    M17::M17FrameEncoder encoder;      ///< M17 frame encoder
+	uint8_t  textOffset = 0;              ///< Metatext offset
+	uint8_t  blk_id_tot = 0;              ///< Metatext block Id total
+	uint8_t  frameCnt = 0;                ///< Transmit frame counter
+	uint8_t  last_text_blk =  0;          ///< Last metatext block counter
+	uint8_t  lsfFragCount = 5;            ///< LSF fragment counter
+	uint16_t numPacketbytes = 0;          ///< Number of packet bytes remaining
+	int16_t gpsTimer = -1;                ///< GPS timer to prevent sending more than once every 5 seconds
+	bool     textStarted = false;         ///< Metatext found flag
+	bool     gpsEnabled = false;          ///< GPS available and enabled flag
+	bool     gpsStarted = false;          ///< GPS message started flag
+	char     textBuffer[53];              ///< Temporary buffer for incoming metatext
+
+    pathId rxAudioPath;                  ///< Audio path ID for RX
+    pathId txAudioPath;                  ///< Audio path ID for TX
+    bool extendedCall;                   ///< Extended callsign data received
+
+#if !defined(REPEATER) && !defined(HOTSPOT)
+    bool startRx;                        ///< Flag for RX management.
+    bool startTx;                        ///< Flag for TX management.
+    bool locked;                         ///< Demodulator locked on data stream.
+    bool dataValid;                      ///< Demodulated data is valid
+    bool invertTxPhase;                  ///< TX signal phase inversion setting.
+    bool invertRxPhase;                  ///< RX signal phase inversion setting.
+    M17::M17Modulator      modulator;    ///< M17 modulator.
+    M17::M17Demodulator    demodulator;  ///< M17 demodulator.
+    M17::M17FrameDecoder   decoder;      ///< M17 frame decoder
+    M17::M17FrameEncoder   encoder;      ///< M17 frame encoder
+    M17::M17LinkSetupFrame lsf;          ///< M17 link setup frame
+#endif
 };
 
 #endif /* OPMODE_M17_H */
