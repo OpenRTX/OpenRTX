@@ -36,7 +36,7 @@ jobs:
       - name: Build and release devcontainer Multi-Platform
         uses: devcontainers/ci@v0.3
         with:
-          imageName: ${{ REGISTRY_IMAGE }}
-          cacheFrom: ${{ REGISTRY_IMAGE }}
+          imageName: ${{ env.REGISTRY_IMAGE }}
+          cacheFrom: ${{ env.REGISTRY_IMAGE }}
           platform: linux/amd64,linux/arm64
           push: always
