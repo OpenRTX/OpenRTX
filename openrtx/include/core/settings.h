@@ -16,6 +16,8 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
+ *                                                                         *
+ *   (2025) Modified by KD0OSS for new modes on Module17                   *
  ***************************************************************************/
 
 #ifndef SETTINGS_H
@@ -61,7 +63,9 @@ typedef struct
             macroMenuLatch  : 1,  // Automatic latch of macro menu
             _reserved       : 3;
     bool    m17_can_rx;           // Check M17 CAN on RX
+    bool    m17_sms_match_call;   // SMS match callsign to receive
     char    m17_dest[10];         // M17 destination
+    char    M17_meta_text[53];    // M17 Meta Text to send
 }
 __attribute__((packed)) settings_t;
 
@@ -86,7 +90,9 @@ static const settings_t default_settings =
     1,                            // Automatic latch of macro menu enabled
     0,                            // not used
     false,                        // Check M17 CAN on RX
-    ""                            // Empty M17 destination
+    true,                         // SMS match callsign
+    "",                            // Empty M17 destination
+    "OpenRTX"                     // Default M17 meta text
 };
 
 #endif /* SETTINGS_H */

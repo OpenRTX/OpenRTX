@@ -62,6 +62,14 @@ typedef struct
     bool       restore_eflash;
     bool       txDisable;
     uint8_t    step_index;
+    #ifdef CONFIG_M17
+    char       sms_message[822];
+    int8_t     currentSMSMessage;
+    int8_t     currentSMSLine;
+    uint8_t    totalSMSMessages;
+    bool       havePacketData;
+    bool       delSMSMessage;
+    #endif
 }
 state_t;
 

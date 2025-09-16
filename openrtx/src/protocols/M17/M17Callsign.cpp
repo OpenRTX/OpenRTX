@@ -32,6 +32,15 @@ bool M17::encode_callsign(const std::string& callsign, call_t& encodedCall,
     // Encode the characters to base-40 digits.
     uint64_t encoded = 0;
 
+    // if callsign empty or ALL set to broadcast address
+    if(callsign.empty() || callsign == "ALL")
+    {
+    	encoded = 0xffffffffffff;
+        auto *ptr = reinterpret_cast< uint8_t *>(&encoded);
+        std::copy(ptr, ptr + 6, encodedCall.rbegin());
+    	return true;
+    }
+
     for(auto it = callsign.rbegin(); it != callsign.rend(); ++it)
     {
         encoded *= 40;
