@@ -81,6 +81,9 @@ enum RtxStatus
     RTX_OFF = 0,
     RTX_RX,
     RTX_TX
+    #ifdef CONFIG_SPECTRUM
+    ,RTX_RX_SWEEP
+    #endif
 };
 
 enum DeviceStatus

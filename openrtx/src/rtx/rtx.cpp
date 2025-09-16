@@ -19,11 +19,14 @@
  ***************************************************************************/
 
 #include <interfaces/radio.h>
+#include <interfaces/platform.h>
 #include <hwconfig.h>
 #include <string.h>
 #include <rtx.h>
 #include <OpMode_FM.hpp>
 #include <OpMode_M17.hpp>
+#include <core/state.h>
+#include <core/utils.h>
 
 static pthread_mutex_t   *cfgMutex;     // Mutex for incoming config messages
 static const rtxStatus_t *newCnf;       // Pointer for incoming config messages
@@ -37,6 +40,10 @@ static OpMode_FM  fmMode;               // FM mode handler
 #ifdef CONFIG_M17
 static OpMode_M17 m17Mode;              // M17 mode handler
 #endif
+#ifdef CONFIG_SPECTRUM
+#define SPECTRUM_WF_LINES ARRAY_SIZE(rtxStatus.rxSweep_data.data) / 2
+#endif
+
 
 
 void rtx_init(pthread_mutex_t *m)
@@ -60,6 +67,18 @@ void rtx_init(pthread_mutex_t *m)
     rtxStatus.rxTone        = 0;
     rtxStatus.txToneEn      = 0;
     rtxStatus.txTone        = 0;
+    #ifdef CONFIG_SPECTRUM
+    const hwInfo_t* hwinfo  = platform_getHwInfo();
+    if(hwinfo->uhf_band) {
+        rtxStatus.rxSweep_data.startFreq = 432100000;
+    }
+    else if(hwinfo->vhf_band) {
+        rtxStatus.rxSweep_data.startFreq = 144000000;
+    }
+    rtxStatus.rxSweep_data.currentPart = 0;
+    rtxStatus.rxSweep_data.currentWFLine = 0;
+    rtxStatus.rxSweep_data.peakIndex = 32;
+    #endif
     rtxStatus.invertRxPhase = false;
     rtxStatus.lsfOk         = false;
     rtxStatus.M17_src[0]    = '\0';
@@ -126,9 +145,48 @@ void rtx_task()
 
         pthread_mutex_unlock(cfgMutex);
     }
+     /* Spectrum update block, run when in SPECTRUM mode.
+*
+* The spectrum mode is a special mode where the radio is in RX mode but
+* the audio path is disabled. This allows to display the RSSI level of the
+* received signals across a frequency range in a waterfall-like display.
+* 
+* This block writes the received RSSI levels to the spectrum buffer.
+*/
+ #ifdef CONFIG_SPECTRUM
+if(rtxStatus.opStatus == RTX_RX_SWEEP)
+{
+    rtxStatus.rxSweep_data.sweepDone = false; // Clear the flag at the start of the sweep
+    uint32_t spectrumStep = freq_steps[state.settings.spectrum_step];
+    // Get the current RSSI level
+    // uint8_t peakIndex; // No longer needed
+    rtxStatus.rxSweep_data.peakRssi = -160; // Reset peak RSSI for each sweep
+    // Write the RSSI level to the spectrum buffer
+    for (int i = 0; i < SPECTRUM_WF_LINES; i++) {
+        rtxStatus.rxFrequency = (rtxStatus.rxSweep_data.startFreq + i * spectrumStep);
+        rtxStatus.txFrequency = rtxStatus.rxFrequency;
+        rssi_t current_rssi = radio_getRssi();
+        uint8_t height = (current_rssi + 160) / 2;
+        // Macro for log2, not using the math library
+        #define log2(x) (31 - __builtin_clz(x))
+        //uint8_t height = ((rssi + 160)*log2(22 - (rssi>>1) )) >> 3;
+        rtxStatus.rxSweep_data.data[i] = height;
+        // set peak value
+        if(current_rssi > rtxStatus.rxSweep_data.peakRssi)
+        {
+            rtxStatus.rxSweep_data.peakRssi = current_rssi;
+            rtxStatus.rxSweep_data.peakFreq = rtxStatus.rxSweep_data.startFreq + i * spectrumStep;
+            rtxStatus.rxSweep_data.peakIndex = i;
+        }
+    }
+    rtxStatus.rxSweep_data.sweepDone = true; // Set the flag after the sweep is complete
+    rtxStatus.opStatus = RTX_RX;       // Reset RTX status to RX after sweep
+    //state.spectrum_peakIndex = peakIndex;
+}
+#endif
 
-    if(reconfigure)
-    {
+if(reconfigure)
+{
         // Force TX and RX tone squelch to off for OpModes different from FM.
         if(rtxStatus.opMode != OPMODE_FM)
         {
@@ -185,17 +243,18 @@ void rtx_task()
      */
     if(rtxStatus.opStatus == RX)
     {
-
+    // if(state.rtxStatus != RTX_RX_SWEEP)
+    // {
         if(!reconfigure)
         {
             if(!reinitFilter)
             {
                 /*
-                 * Filter RSSI value using 15.16 fixed point math. Equivalent
-                 * floating point code is: rssi = 0.74*radio_getRssi() + 0.26*rssi
-                 */
+                * Filter RSSI value using 15.16 fixed point math. Equivalent
+                * floating point code is: rssi = 0.74*radio_getRssi() + 0.26*rssi
+                */
                 int32_t filt_rssi = radio_getRssi() * 0xBD70    // 0.74 * radio_getRssi
-                                  + rssi            * 0x428F;   // 0.26 * rssi
+                                + rssi            * 0x428F;   // 0.26 * rssi
                 rssi = (filt_rssi + 32768) >> 16;               // Round to nearest
             }
             else
@@ -204,6 +263,7 @@ void rtx_task()
                 reinitFilter = false;
             }
         }
+    // }
     }
     else
     {
@@ -221,7 +281,15 @@ void rtx_task()
 
 rssi_t rtx_getRssi()
 {
+    #ifdef CONFIG_SPECTRUM
+    // There is a bug where during spectrum operation, the RSSI reads collide.
+    // This is a workaround to prevent the RSSI from being updated during spectrum operation.
+    if(rtxStatus.opStatus != RTX_RX_SWEEP)
+        return rssi;
+    else return -127.0;
+    #else
     return rssi;
+    #endif
 }
 
 bool rtx_rxSquelchOpen()

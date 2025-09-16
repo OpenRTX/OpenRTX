@@ -97,5 +97,6 @@ const stringsTable_t spanishStrings =
     .frequencyOffset   = "Offset de frecuencia",
     .macroLatching     = "Macro Latching",
     .noGps             = "Ningún GPS",
+    .spectrum          = "Spectrum"
 };
 #endif  // SPANISHSTRINGS_H

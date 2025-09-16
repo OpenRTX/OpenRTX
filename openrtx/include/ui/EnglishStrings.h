@@ -96,5 +96,6 @@ const stringsTable_t englishStrings =
     .frequencyOffset   = "Frequency Offset",
     .macroLatching     = "Macro Latching",
     .noGps             = "No GPS",
+    .spectrum          = "Spectrum"
 };
 #endif  // ENGLISHSTRINGS_H
