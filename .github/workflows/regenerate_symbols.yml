@@ -11,22 +11,29 @@ on:
 
 jobs:
   check-symbol-generation:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
       - name: install-deps
         run: |
           sudo apt update
-          sudo apt install python3 python3-pip
+          sudo apt install ffmpeg clang-format
       - name: Setup symbols script dependencies
         run: |
           cd ${{github.workspace}}
+          pip3 install --upgrade pip
           pip3 install -r requirements.txt
-      - name: Run symbols script
-        run: ./scripts/generate_symbols.py
+      - name: Run symbols script and then format the output
+        run: |
+          ./scripts/generate_symbols.py
+          ./scripts/clang_format.sh
       - name: Fail the build if there are changes generated
         run: |
           git --no-pager diff

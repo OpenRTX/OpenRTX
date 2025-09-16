@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <interfaces/delays.h>
 #include <interfaces/audio.h>
-#include <interfaces/audio_path.h>
+#include <audio_path.h>
 #include <audio_stream.h>
 #include <interfaces/platform.h>
 #include <dsp.h>
@@ -34,13 +34,13 @@ int main()
     filter_state_t dcrState;
     dsp_resetFilterState(&dcrState);
 
-    static const size_t numSamples = 45*1024;       // 90kB
-    stream_sample_t *sampleBuf = ((stream_sample_t *) malloc(numSamples *
-                                                      sizeof(stream_sample_t)));
+    static const size_t numSamples = 45 * 1024; // 90kB
+    void *sampleBuf = malloc(numSamples * sizeof(stream_sample_t));
 
-    audio_enableMic();
-    streamId id = inputStream_start(SOURCE_MIC, PRIO_TX, sampleBuf, numSamples,
-                                    BUF_LINEAR, 8000);
+    pathId pi = audioPath_request(SOURCE_MIC, SINK_MCU, PRIO_TX);
+    streamId id = audioStream_start(pi, (stream_sample_t *)sampleBuf,
+                                    numSamples, 8000,
+                                    BUF_LINEAR | STREAM_INPUT);
 
     sleepFor(3u, 0u);
     platform_ledOn(GREEN);
@@ -52,22 +52,22 @@ int main()
     sleepFor(10u, 0u);
 
     // Pre-processing gain
-    for(size_t i = 0; i < audio.len; i++) audio.data[i] <<= 3;
+    for (size_t i = 0; i < audio.len; i++)
+        audio.data[i] <<= 3;
 
     // DC removal
     dsp_dcRemoval(&dcrState, audio.data, audio.len);
 
     // Post-processing gain
-    for(size_t i = 0; i < audio.len; i++) audio.data[i] *= 10;
+    for (size_t i = 0; i < audio.len; i++)
+        audio.data[i] *= 10;
 
-
-    uint16_t *ptr = ((uint16_t *) audio.data);
-    for(size_t i = 0; i < audio.len; i++)
-    {
+    uint16_t *ptr = ((uint16_t *)audio.data);
+    for (size_t i = 0; i < audio.len; i++)
         iprintf("%04x ", ptr[i]);
-    }
 
-    while(1) ;
+    while (1)
+        ;
 
     return 0;
 }

@@ -1,0 +1,20 @@
+name: "Format sources"
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+
+jobs:
+  clang-format:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: install-deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format
+      - name: Check if there are format errors
+        run: ./scripts/clang_format.sh --check

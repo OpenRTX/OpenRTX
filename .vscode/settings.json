@@ -1,0 +1,4 @@
+{
+    "C_Cpp.default.compileCommands": "/workspaces/OpenRTX/build_arm/compile_commands.json",
+    "C_Cpp.default.configurationProvider": "mesonbuild.mesonbuild"
+}

@@ -45,6 +45,15 @@
       ]
     },
     {
+      "label": "build Baofeng DM1701",
+      "type": "shell",
+      "command": "meson compile -C build_arm openrtx_dm1701",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "setup arm build",
+      ]
+    },
+    {
       "label": "build Baofeng DM1801",
       "type": "shell",
       "command": "meson compile -C build_arm openrtx_dm1801",

@@ -63,10 +63,6 @@ subprojects/XPowersLib
 # ignore linux openrtx emulator history file
 .emulatorsh_history
 
-# ignore bin2sgl
-!scripts/bin2sgl.Linux.bin
-!scripts/bin2sgl.exe
-
 # Compiled script
 scripts/get_demod_log
 
