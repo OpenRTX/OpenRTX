@@ -87,6 +87,7 @@ extern void _ui_drawSettingsGPS(ui_state_t* ui_state);
 #endif
 #ifdef CONFIG_SPECTRUM
 extern void _ui_drawMenuSpectrum(ui_state_t* ui_state);
+extern void _ui_drawSettingsSpectrum(ui_state_t* ui_state);
 extern void spectrum_changeFrequency(int32_t freq);
 #endif
 extern void _ui_drawSettingsAccessibility(ui_state_t* ui_state);
@@ -1975,7 +1976,7 @@ void ui_updateFSM(bool *sync_rtx)
                 }
                 if(msg.keys & KEY_ESC) {
                     state.rtxStatus = RTX_RX;
-                    sync_rtx = true;
+                    *sync_rtx = true;
                     _ui_menuBack(MENU_TOP);
                 }
                 if(msg.keys & KEY_UP)
