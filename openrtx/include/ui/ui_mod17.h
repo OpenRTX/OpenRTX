@@ -15,6 +15,8 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
+ *                                                                         *
+ *   (2025) Modified by KD0OSS for new modes on Module17                   *
  ***************************************************************************/
 
 #ifndef UI_MOD17_H
@@ -123,6 +125,7 @@ enum settingsGPSItems
 enum m17Items
 {
     M_CALLSIGN = 0,
+    M_METATEXT,
     M_CAN,
     M_CAN_RX
 };
@@ -180,6 +183,7 @@ typedef struct layout_t
     symbolSize_t line5_symbol_font;
     fontSize_t bottom_font;
     fontSize_t input_font;
+    fontSize_t message_font;
     fontSize_t menu_font;
     fontSize_t mode_font_big;
     fontSize_t mode_font_small;
@@ -196,6 +200,7 @@ typedef struct ui_state_t
     uint8_t menu_selected;
     // If true we can change a menu entry value with UP/DOWN
     bool edit_mode;
+    bool edit_message;
     // Variables used for VFO input
     uint8_t input_number;
     uint8_t input_position;
@@ -212,6 +217,7 @@ typedef struct ui_state_t
     char new_time_buf[9];
 #endif
     char new_callsign[10];
+    char new_message[822];
     // Which state to return to when we exit menu
     uint8_t last_main_state;
 }

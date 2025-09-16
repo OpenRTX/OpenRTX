@@ -52,6 +52,9 @@ void state_init()
     {
         state.settings = default_settings;
         strncpy(state.settings.callsign, "OPNRTX", 10);
+#ifdef CONFIG_M17
+        strncpy(state.settings.M17_meta_text, "OPENRTX", 53);
+#endif
     }
 
     /*

@@ -16,6 +16,8 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
+ *                                                                         *
+ *   (2025) Modified by KD0OSS for new modes on Module17                   *
  ***************************************************************************/
 
 #include <stdio.h>
@@ -92,10 +94,11 @@ const char *display_items[] =
 };
 
 const char *m17_items[] =
-{
-    "Callsign",
-    "CAN",
-    "CAN RX Check"
+    {
+        "Callsign",
+        "Meta Txt",
+        "CAN",
+        "CAN RX Check"
 };
 
 const char *module17_items[] =
@@ -134,10 +137,13 @@ const char *authors[] =
     "Federico IU2NUO",
     "Mathis DB9MAT",
     "Morgan ON4MOD",
-    "Marco DM4RCO"
+    "Marco DM4RCO",
+    "Rick KD0OSS"
 };
 
 static const char symbols_callsign[] = "_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890/-.";
+static const char symbols_message[] = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890/-#*!?,.";
+static const char symbols_id[] = "1234567890";
 
 // Calculate number of menu entries
 const uint8_t menu_num = sizeof(menu_items)/sizeof(menu_items[0]);
@@ -209,6 +215,8 @@ static layout_t _ui_calculateLayout()
     const fontSize_t bottom_font = FONT_SIZE_6PT;
     // TimeDate/Frequency input font
     const fontSize_t input_font = FONT_SIZE_8PT;
+    // Message font
+    const fontSize_t message_font = FONT_SIZE_6PT;
     // Menu font
     const fontSize_t menu_font = FONT_SIZE_6PT;
     // Mode screen frequency font: 9 pt
@@ -261,6 +269,7 @@ static layout_t _ui_calculateLayout()
         line5_symbol_size,
         bottom_font,
         input_font,
+        message_font,
         menu_font,
         mode_font_big,
         mode_font_small
@@ -433,6 +442,10 @@ static void _ui_menuBack(uint8_t prev_state)
     {
         ui_state.edit_mode = false;
     }
+    else if(ui_state.edit_message)
+    {
+        ui_state.edit_message = false;
+    }
     else
     {
         // Return to previous menu
@@ -448,10 +461,13 @@ static void _ui_textInputReset(char *buf)
     ui_state.input_position = 0;
     ui_state.input_set = 0;
     ui_state.last_keypress = 0;
-    memset(buf, 0, 9);
+    if(ui_state.edit_message)
+        memset(buf, 0, 822);
+    else
+        memset(buf, 0, 9);
 }
 
-static void _ui_textInputArrows(char *buf, uint8_t max_len, kbd_msg_t msg)
+static void _ui_textInputArrows(char *buf, uint16_t max_len, kbd_msg_t msg)
 {
     if(ui_state.input_position >= max_len)
         return;
@@ -683,60 +699,80 @@ void ui_updateFSM(bool *sync_rtx)
                         _ui_textInputArrows(ui_state.new_callsign, 9, msg);
                 }
                 else
-                {
-                    // Not in edit mode: handle CAN setting
-                    if(msg.keys & KEY_LEFT)
+                    if(ui_state.edit_message)
                     {
-                        switch(ui_state.menu_selected)
+                        if(msg.keys & KEY_ENTER)
                         {
-                            case M_CAN:
-                                _ui_changeCAN(-1);
-                                break;
-                            case M_CAN_RX:
-                                state.settings.m17_can_rx = !state.settings.m17_can_rx;
-                                break;
-                            default:
-                                state.ui_screen = SETTINGS_M17;
+                            _ui_textInputConfirm(ui_state.new_message);
+                            // Save selected message and disable input mode
+                            strncpy(state.settings.M17_meta_text, ui_state.new_message, 52);
+                            ui_state.edit_message = false;
+                        }
+                        else if(msg.keys & KEY_ESC)
+                            ui_state.edit_message = false;
+                        else
+                            _ui_textInputArrows(ui_state.new_message, 52, msg);
+                    }
+                    else
+                    {
+                        // Not in edit mode: handle CAN setting
+                        if(msg.keys & KEY_LEFT)
+                        {
+                            switch(ui_state.menu_selected)
+                            {
+                                case M_CAN:
+                                    _ui_changeCAN(-1);
+                                    break;
+                                case M_CAN_RX:
+                                    state.settings.m17_can_rx = !state.settings.m17_can_rx;
+                                    break;
+                                default:
+                                    state.ui_screen = SETTINGS_M17;
+                            }
+                        }
+                        else if(msg.keys & KEY_RIGHT)
+                        {
+                            switch(ui_state.menu_selected)
+                            {
+                                case M_CAN:
+                                    _ui_changeCAN(+1);
+                                    break;
+                                case M_CAN_RX:
+                                    state.settings.m17_can_rx = !state.settings.m17_can_rx;
+                                    break;
+                                default:
+                                    state.ui_screen = SETTINGS_M17;
+                            }
+                        }
+                        else if(msg.keys & KEY_ENTER)
+                        {
+                            switch(ui_state.menu_selected)
+                            {
+                                // Enable callsign input
+                                case M_CALLSIGN:
+                                    ui_state.edit_mode = true;
+                                    _ui_textInputReset(ui_state.new_callsign);
+                                    break;
+                                    // Enable message input
+                                case M_METATEXT:
+                                    ui_state.edit_message = true;
+                                    _ui_textInputReset(ui_state.new_message);
+                                    break;
+                                default:
+                                    state.ui_screen = SETTINGS_M17;
+                            }
+                        }
+                        else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                            _ui_menuUp(m17_num);
+                        else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                            _ui_menuDown(m17_num);
+                        else if(msg.keys & KEY_ESC)
+                        {
+                            *sync_rtx = true;
+                            nvm_writeSettings(&state.settings);
+                            _ui_menuBack(MENU_SETTINGS);
                         }
                     }
-                    else if(msg.keys & KEY_RIGHT)
-                    {
-                        switch(ui_state.menu_selected)
-                        {
-                            case M_CAN:
-                                _ui_changeCAN(+1);
-                                break;
-                            case M_CAN_RX:
-                                state.settings.m17_can_rx = !state.settings.m17_can_rx;
-                                break;
-                            default:
-                                state.ui_screen = SETTINGS_M17;
-                        }
-                    }
-                    else if(msg.keys & KEY_ENTER)
-                    {
-                        switch(ui_state.menu_selected)
-                        {
-                            // Enable callsign input
-                            case M_CALLSIGN:
-                                ui_state.edit_mode = true;
-                                _ui_textInputReset(ui_state.new_callsign);
-                                break;
-                            default:
-                                state.ui_screen = SETTINGS_M17;
-                        }
-                    }
-                    else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                        _ui_menuUp(m17_num);
-                    else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                        _ui_menuDown(m17_num);
-                    else if(msg.keys & KEY_ESC)
-                    {
-                        *sync_rtx = true;
-                        nvm_writeSettings(&state.settings);
-                        _ui_menuBack(MENU_SETTINGS);
-                    }
-                }
                 break;
             case SETTINGS_RESET2DEFAULTS:
                 if(! ui_state.edit_mode)
@@ -764,6 +800,8 @@ void ui_updateFSM(bool *sync_rtx)
                         mod17CalData.bb_tx_invert = 0;
                         mod17CalData.bb_rx_invert = 0;
                         mod17CalData.mic_gain     = 0;
+
+                        ui_state.edit_message     = false;
 
                         state_resetSettingsAndVfo();
                         nvm_writeSettings(&state.settings);
