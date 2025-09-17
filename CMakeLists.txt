@@ -83,6 +83,7 @@ target_include_directories(app
 
     lib/minmea/include
     lib/qdec/include
+    lib/QRCode/include
 )
 
 target_sources(app
@@ -150,4 +151,5 @@ target_sources(app
     subprojects/codec2/src/codebooknewamp1_energy.c
 
     lib/minmea/minmea.c
+    lib/QRCode/qrcode.c
 )

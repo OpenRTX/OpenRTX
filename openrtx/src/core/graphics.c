@@ -33,6 +33,8 @@
 #include <math.h>
 #include <utils.h>
 
+#include <qrcode.h>
+
 #include <gfxfont.h>
 #include <TomThumb.h>
 #include <FreeSans6pt7b.h>
@@ -999,4 +1001,39 @@ void gfx_plotData(point_t start, uint16_t width, uint16_t height,
         if (first_iteration)
             first_iteration = false;
     }
+}
+
+void gfx_drawQrCodeString(point_t start, uint16_t width, uint16_t height, color_t color,
+                          color_t background_color, const char *data)
+{
+    gfx_drawQrCodeBytes(start, width, height, color, background_color, (uint8_t*)data, strlen(data));
+
+}
+
+void gfx_drawQrCodeBytes(point_t start, uint16_t width, uint16_t height, color_t color,
+                          color_t background_color, uint8_t *data, uint16_t length)
+{
+    QRCode qrcode;
+    // TODO: Find best version and error correction
+    uint8_t qrcodeData[qrcode_getBufferSize(3)];
+    qrcode_initBytes(&qrcode, qrcodeData, 3, 0, data, length);
+
+    gfx_drawRect(start, width, height, background_color, true);
+
+    uint16_t qr_code_pixel_length = qrcode.size;;
+    uint16_t qr_code_pixel_border = 1;
+    uint16_t smallest_side_length = width < height ? width : height;
+
+    uint16_t pixel_size = smallest_side_length / (qr_code_pixel_length + (2*qr_code_pixel_border));
+    uint16_t offset_left = (width-(pixel_size*qr_code_pixel_length))/2;
+    uint16_t offset_top = (height-(pixel_size*qr_code_pixel_length))/2;;
+    for (int i = 0; i<qr_code_pixel_length; i++) {
+        for (int j = 0; j<qr_code_pixel_length; j++) {
+            point_t origin = {offset_left + i*pixel_size, offset_top + j*pixel_size};
+
+            color_t pixel_color = qrcode_getModule(&qrcode, i, j) ? color : background_color;
+            gfx_drawRect(origin, pixel_size, pixel_size, pixel_color, 1);
+        }
+    }
+
 }
