@@ -78,10 +78,33 @@ void _ui_drawBankChannel()
               b, last_state.channel_index + 1, last_state.channel.name);
 }
 
+char* _ui_getToneEnabledString(bool tone_tx_enable, bool tone_rx_enable, bool use_abbreviation) {
+    if(use_abbreviation) {
+        static char *strings[] = {
+            "N",
+            "T",
+            "R",
+            "B"
+        };
+
+        uint8_t index = (tone_rx_enable << 1) | (tone_tx_enable);
+        return strings[index];
+    } else {
+        char *strings[] = {
+            currentLanguage->CTCSSEnabledNone,
+            currentLanguage->CTCSSEnabledEncode,
+            currentLanguage->CTCSSEnabledDecode,
+            currentLanguage->CTCSSEnabledBoth,
+        };
+
+        uint8_t index = (tone_rx_enable << 1) | (tone_tx_enable);
+        return strings[index];
+    }
+}
+
 void _ui_drawModeInfo(ui_state_t* ui_state)
 {
     char bw_str[8] = { 0 };
-    char encdec_str[9] = { 0 };
 
     switch(last_state.channel.mode)
     {
@@ -96,23 +119,13 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
             // Get encdec string
             bool tone_tx_enable = last_state.channel.fm.txToneEn;
             bool tone_rx_enable = last_state.channel.fm.rxToneEn;
-
-            if (tone_tx_enable && tone_rx_enable)
-                sniprintf(encdec_str, 9, "ED");
-            else if (tone_tx_enable && !tone_rx_enable)
-                sniprintf(encdec_str, 9, " E");
-            else if (!tone_tx_enable && tone_rx_enable)
-                sniprintf(encdec_str, 9, " D");
-            else
-                sniprintf(encdec_str, 9, "  ");
-
             // Print Bandwidth, Tone and encdec info
             if (tone_tx_enable || tone_rx_enable)
             {
                 uint16_t tone = ctcss_tone[last_state.channel.fm.txTone];
                 gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                           color_white, "%s %d.%d %s", bw_str, (tone / 10),
-                          (tone % 10), encdec_str);
+                          (tone % 10), _ui_getToneEnabledString(tone_tx_enable, tone_rx_enable, true));
             }
             else
             {
