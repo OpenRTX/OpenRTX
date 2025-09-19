@@ -44,6 +44,7 @@ void _ui_drawMainTop(ui_state_t * ui_state)
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
               color_white, "%02d:%02d:%02d", local_time.hour,
               local_time.minute, local_time.second);
+
 #endif
     // If the radio has no built-in battery, print input voltage
 #ifdef CONFIG_BAT_NONE
@@ -67,6 +68,14 @@ void _ui_drawMainTop(ui_state_t * ui_state)
     if (ui_state->input_locked == true)
       gfx_drawSymbol(layout.top_pos, layout.top_symbol_size, TEXT_ALIGN_LEFT,
                      color_white, SYMBOL_LOCK);
+
+    point_t list_pos = {layout.top_pos.x + 24, layout.top_pos.y};
+    if (last_state.settings.history_enabled)
+    {
+        gfx_print(list_pos , layout.line1_font, TEXT_ALIGN_LEFT,
+            history_is_new() ? yellow_fab413 : color_black, "H");
+        rtx_setHistory(history_is_new());
+    }
 }
 
 void _ui_drawBankChannel()
@@ -168,6 +177,23 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                     gfx_print(layout.line3_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                               color_white, "%s", rtxStatus.M17_refl);
                 }
+	       // NEW VERSION	
+                if (rtxStatus.M17_dst != NULL && 
+                    rtxStatus.M17_src != NULL && 
+                    rtxStatus.M17_refl != NULL &&
+                	last_state.settings.callsign != NULL ) {
+
+                    datetime_t local_time = utcToLocalTime(last_state.time, last_state.settings.utc_timezone);
+
+                    bool isInfo = (strncmp(rtxStatus.M17_dst, "INFO", 4) == 0);
+                    bool isEcho = (strncmp(rtxStatus.M17_dst, "ECHO", 4) == 0);
+                    bool isSelf = (strncmp(rtxStatus.M17_src, last_state.settings.callsign, 8) == 0);
+
+                    if (!isInfo && !isEcho && !isSelf) {
+                        history_add(rtxStatus.M17_src, local_time);
+	                }
+                }              
+
             }
             else
             {
