@@ -1827,7 +1827,7 @@ void ui_updateFSM(bool *sync_rtx)
                             uint32_t spanWidth = SPECTRUM_WF_LINES * freq_steps[state.settings.spectrum_step];
                             uint32_t startFreq = state.channel.rx_frequency - (spanWidth / 2);
                             
-                            rtxStatus.rxSweep_data.startFreq = startFreq;
+                            rtxStatus.rxFrequency = startFreq;
                             rtxStatus.rxSweep_data.currentPart = 0;
                             rtxStatus.opStatus = RTX_RX_SWEEP;
                             rtx_configure(&rtxStatus);

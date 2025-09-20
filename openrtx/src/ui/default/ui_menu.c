@@ -766,7 +766,8 @@ void _ui_drawMenuGPS()
 void _ui_drawMenuSpectrum(ui_state_t* ui_state)
 {   
     (void)ui_state;  // Suppress unused parameter warning
-    
+
+    gfx_clearScreen();
     // Get current RTX status to access spectrum data
     rtxStatus_t rtxStatus = rtx_getCurrentStatus();
     uint32_t spectrumStep = freq_steps[last_state.settings.spectrum_step];
@@ -785,7 +786,7 @@ void _ui_drawMenuSpectrum(ui_state_t* ui_state)
         }
         // Set test peak values
         rtxStatus.rxSweep_data.peakIndex = SPECTRUM_WF_LINES / 2;
-        rtxStatus.rxSweep_data.peakFreq = rtxStatus.rxSweep_data.startFreq + rtxStatus.rxSweep_data.peakIndex * spectrumStep;
+        rtxStatus.rxSweep_data.peakFreq = rtxStatus.rxFrequency + rtxStatus.rxSweep_data.peakIndex * spectrumStep;
         rtxStatus.rxSweep_data.peakRssi = -80;
         // Mark as having data for display purposes
         rtxStatus.rxSweep_data.sweepDone = true;
@@ -808,10 +809,9 @@ void _ui_drawMenuSpectrum(ui_state_t* ui_state)
         }
         // Clear the spectrum bar area before drawing new bars
         // Clear from x=0 to x=88 (where bars extend to) across full height
-        gfx_drawRect((point_t){0, 0}, 88, CONFIG_SCREEN_HEIGHT, (color_t){0, 0, 0, 255}, true);
+        //gfx_drawRect((point_t){0, 0}, 88, CONFIG_SCREEN_HEIGHT, (color_t){0, 0, 0, 255}, true);
         
         // Draw all the bars in the spectrum
-        // The bars appear to be drawn vertically along the Y axis
         
         for (int i = 0; i < SPECTRUM_WF_LINES; i++)
         {
@@ -819,22 +819,22 @@ void _ui_drawMenuSpectrum(ui_state_t* ui_state)
             
             if(height > 0)  // Only draw if there's data
             {
-                // Draw spectrum bar horizontally from right to left
-                // Y position: spread bars across the screen height
-                // X position: start from a base position and extend left based on signal strength
-                int y_pos = i * (CONFIG_SCREEN_HEIGHT / SPECTRUM_WF_LINES);
-                int x_start = 88;  // Base position on screen
-                int bar_width = height;
-                int bar_height = (CONFIG_SCREEN_HEIGHT / SPECTRUM_WF_LINES);  // Use full height, no gap for debugging
+                // Draw spectrum bar vertically (typical spectrum display)
+                // X position: spread bars across the screen width
+                // Y position: bars grow upward from bottom based on signal strength
+                int x_pos = i * (CONFIG_SCREEN_WIDTH / SPECTRUM_WF_LINES);
+                int bar_width = (CONFIG_SCREEN_WIDTH / SPECTRUM_WF_LINES);  // Bar width to fill screen
+                int bar_height = height;  // Height based on signal strength
+                int y_start = CONFIG_SCREEN_HEIGHT - bar_height;  // Start from bottom
                 
-                // Make sure bars are at least 1 pixel high and within screen bounds
-                if(bar_height < 1) bar_height = 1;
+                // Make sure bars are at least 1 pixel wide and within screen bounds
                 if(bar_width < 1) bar_width = 1;
+                if(bar_height < 1) bar_height = 1;
                 
-                if(y_pos + bar_height <= CONFIG_SCREEN_HEIGHT && x_start - bar_width >= 0)
+                if(x_pos + bar_width <= CONFIG_SCREEN_WIDTH && y_start >= 0)
                 {
-                    color_t bar_color = getColorFromLevel(height * state.settings.spectrum_multiplier);
-                    gfx_drawRect((point_t){x_start - bar_width, y_pos}, bar_width, bar_height, bar_color, true);
+                    color_t bar_color = getColorFromLevel(height * last_state.settings.spectrum_multiplier);
+                    gfx_drawRect((point_t){x_pos, y_start}, bar_width, bar_height, bar_color, true);
                 }
             }
         }
@@ -842,14 +842,14 @@ void _ui_drawMenuSpectrum(ui_state_t* ui_state)
     
     // Print small text on the left of the spectrum with the start frequency
     sniprintf(freq_str, sizeof(freq_str), "%lu.%02lu",
-            (unsigned long)(rtxStatus.rxSweep_data.startFreq / 1000000),
-            (unsigned long)(rtxStatus.rxSweep_data.startFreq % 1000000 / 1000));
+            (unsigned long)(rtxStatus.rxFrequency / 1000000),
+            (unsigned long)(rtxStatus.rxFrequency % 1000000 / 1000));
     gfx_print((point_t){4, 8}, FONT_SIZE_5PT, TEXT_ALIGN_LEFT,
                 color_white, freq_str);
     // Print small text on the right of the spectrum with the end frequency
     sniprintf(freq_str, sizeof(freq_str), "%lu.%02lu",
-            (unsigned long)((rtxStatus.rxSweep_data.startFreq + SPECTRUM_WF_LINES * spectrumStep) / 1000000),
-            (unsigned long)((rtxStatus.rxSweep_data.startFreq + SPECTRUM_WF_LINES * spectrumStep) % 1000000 / 1000));
+            (unsigned long)((rtxStatus.rxFrequency + SPECTRUM_WF_LINES * spectrumStep) / 1000000),
+            (unsigned long)((rtxStatus.rxFrequency + SPECTRUM_WF_LINES * spectrumStep) % 1000000 / 1000));
     gfx_print((point_t){layout.horizontal_pad, 126}, FONT_SIZE_5PT, TEXT_ALIGN_LEFT,
                 color_white, freq_str);
 
@@ -897,7 +897,7 @@ void spectrum_changeFrequency(int32_t direction)
     rtxStatus_t rtxStatus = rtx_getCurrentStatus();
     
     // Update the start frequency in the rtxStatus structure
-    rtxStatus.rxSweep_data.startFreq += direction;
+    rtxStatus.rxFrequency += direction;
     
     // Configure the RTX with the updated status
     rtx_configure(&rtxStatus);

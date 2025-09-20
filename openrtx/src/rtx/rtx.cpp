@@ -68,13 +68,6 @@ void rtx_init(pthread_mutex_t *m)
     rtxStatus.txToneEn      = 0;
     rtxStatus.txTone        = 0;
     #ifdef CONFIG_SPECTRUM
-    const hwInfo_t* hwinfo  = platform_getHwInfo();
-    if(hwinfo->uhf_band) {
-        rtxStatus.rxSweep_data.startFreq = 432100000;
-    }
-    else if(hwinfo->vhf_band) {
-        rtxStatus.rxSweep_data.startFreq = 144000000;
-    }
     rtxStatus.rxSweep_data.currentPart = 0;
     rtxStatus.rxSweep_data.currentWFLine = 0;
     rtxStatus.rxSweep_data.peakIndex = 32;
@@ -136,8 +129,15 @@ void rtx_task()
         {
             // Copy new configuration and override opStatus flags
             uint8_t tmp = rtxStatus.opStatus;
+            // #ifdef CONFIG_SPECTRUM
+            // rxSweep_t tmp_sweep;
+            // tmp_sweep = rtxStatus.rxSweep_data; // Save current sweep data
+            // #endif
             memcpy(&rtxStatus, newCnf, sizeof(rtxStatus_t));
             rtxStatus.opStatus = tmp;
+            // #ifdef CONFIG_SPECTRUM
+            // rtxStatus.rxSweep_data = tmp_sweep; // Restore current sweep data
+            // #endif
 
             reconfigure = true;
             newCnf = NULL;
@@ -163,7 +163,7 @@ if(rtxStatus.opStatus == RTX_RX_SWEEP)
     rtxStatus.rxSweep_data.peakRssi = -160; // Reset peak RSSI for each sweep
     // Write the RSSI level to the spectrum buffer
     for (int i = 0; i < SPECTRUM_WF_LINES; i++) {
-        rtxStatus.rxFrequency = (rtxStatus.rxSweep_data.startFreq + i * spectrumStep);
+        rtxStatus.rxFrequency = (rtxStatus.rxFrequency + i * spectrumStep);
         rtxStatus.txFrequency = rtxStatus.rxFrequency;
         rssi_t current_rssi = radio_getRssi();
         uint8_t height = (current_rssi + 160) / 2;
@@ -175,7 +175,7 @@ if(rtxStatus.opStatus == RTX_RX_SWEEP)
         if(current_rssi > rtxStatus.rxSweep_data.peakRssi)
         {
             rtxStatus.rxSweep_data.peakRssi = current_rssi;
-            rtxStatus.rxSweep_data.peakFreq = rtxStatus.rxSweep_data.startFreq + i * spectrumStep;
+            rtxStatus.rxSweep_data.peakFreq = rtxStatus.rxFrequency + i * spectrumStep;
             rtxStatus.rxSweep_data.peakIndex = i;
         }
     }
