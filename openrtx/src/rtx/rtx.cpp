@@ -127,8 +127,15 @@ void rtx_task()
         {
             // Copy new configuration and override opStatus flags
             uint8_t tmp = rtxStatus.opStatus;
+            // #ifdef CONFIG_SPECTRUM
+            // rxSweep_t tmp_sweep;
+            // tmp_sweep = rtxStatus.rxSweep_data; // Save current sweep data
+            // #endif
             memcpy(&rtxStatus, newCnf, sizeof(rtxStatus_t));
             rtxStatus.opStatus = tmp;
+            // #ifdef CONFIG_SPECTRUM
+            // rtxStatus.rxSweep_data = tmp_sweep; // Restore current sweep data
+            // #endif
 
             reconfigure = true;
             newCnf = NULL;
