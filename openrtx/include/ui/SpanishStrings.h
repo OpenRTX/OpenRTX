@@ -98,5 +98,13 @@ const stringsTable_t spanishStrings =
     .macroLatching     = "Macro Latching",
     .noGps             = "Ningún GPS",
     .batteryIcon       = "Icon de batteria",
+    .fmSettings        = "Ajustes de FM",
+    .CTCSSTone         = "CTCSS Frequency",
+    .CTCSSEnabled      = "CTCSS En.",
+    .CTCSSEnabledEncode = "Codificar",
+    .CTCSSEnabledDecode = "Decodificar",
+    .CTCSSEnabledBoth  = "Ambos",
+    .CTCSSEnabledNone  = "Ni"
+
 };
 #endif  // SPANISHSTRINGS_H

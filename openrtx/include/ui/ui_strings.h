@@ -101,6 +101,13 @@ typedef struct
     const char* macroLatching;
     const char* noGps;
     const char* batteryIcon;
+    const char* fmSettings;
+    const char* CTCSSTone;
+    const char* CTCSSEnabled;
+    const char* CTCSSEnabledEncode;
+    const char* CTCSSEnabledDecode;
+    const char* CTCSSEnabledBoth;
+    const char* CTCSSEnabledNone;
 }
 stringsTable_t;
 

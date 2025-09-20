@@ -113,12 +113,13 @@ extern void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state);
 #endif
 extern void _ui_drawSettingsDisplay(ui_state_t* ui_state);
 extern void _ui_drawSettingsM17(ui_state_t* ui_state);
+extern void _ui_drawSettingsFM(ui_state_t* ui_state);
 extern void _ui_drawSettingsVoicePrompts(ui_state_t* ui_state);
 extern void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state);
 extern void _ui_drawSettingsRadio(ui_state_t* ui_state);
 extern bool _ui_drawMacroMenu(ui_state_t* ui_state);
 extern void _ui_reset_menu_anouncement_tracking();
-
+// TODO: get these from ui strings / currentLanguage
 const char *menu_items[] =
 {
     "Banks",
@@ -145,6 +146,7 @@ const char *settings_items[] =
 #ifdef CONFIG_M17
     "M17",
 #endif
+    "FM Settings",
     "Accessibility",
     "Default Settings"
 };
@@ -182,6 +184,12 @@ const char * settings_m17_items[] =
     "Callsign",
     "CAN",
     "CAN RX Check"
+};
+
+const char* settings_fm_items[] =
+{
+    "CTCSS Tone",
+    "CTCSS On"
 };
 
 const char * settings_accessibility_items[] =
@@ -268,6 +276,7 @@ const uint8_t settings_radio_num = sizeof(settings_radio_items)/sizeof(settings_
 #ifdef CONFIG_M17
 const uint8_t settings_m17_num = sizeof(settings_m17_items)/sizeof(settings_m17_items[0]);
 #endif
+const uint8_t settings_fm_num = sizeof(settings_fm_items) / sizeof(settings_fm_items[0]);
 const uint8_t settings_accessibility_num = sizeof(settings_accessibility_items)/sizeof(settings_accessibility_items[0]);
 const uint8_t backup_restore_num = sizeof(backup_restore_items)/sizeof(backup_restore_items[0]);
 const uint8_t info_num = sizeof(info_items)/sizeof(info_items[0]);
@@ -882,6 +891,26 @@ static bool _ui_exitStandby(long long now)
     return true;
 }
 
+// TODO: find a better home for this function
+/**
+ * Handle tone selection scrolling. This makes it easy for the UX to scroll through the various states that these two bool states can be.
+ */
+int _ui_handleToneSelectScroll(bool direction_up) {
+    bool tone_tx_enable = state.channel.fm.txToneEn;
+    bool tone_rx_enable = state.channel.fm.rxToneEn;
+    uint8_t tone_flags = tone_tx_enable << 1 | tone_rx_enable;
+    if(direction_up) 
+        tone_flags++;
+    else
+        tone_flags--;
+    tone_flags %= 4;
+    tone_tx_enable            = tone_flags >> 1;
+    tone_rx_enable            = tone_flags & 1;
+    state.channel.fm.txToneEn = tone_tx_enable;
+    state.channel.fm.rxToneEn = tone_rx_enable;
+    return 1;
+}
+
 static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
 {
     // If there is no keyboard left and right select the menu entry to edit
@@ -905,9 +934,6 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
     ui_state.input_number = input_getPressedNumber(msg);
 #endif // CONFIG_UI_NO_KEYBOARD
     // CTCSS Encode/Decode Selection
-    bool tone_tx_enable = state.channel.fm.txToneEn;
-    bool tone_rx_enable = state.channel.fm.rxToneEn;
-    uint8_t tone_flags = tone_tx_enable << 1 | tone_rx_enable;
     vpQueueFlags_t queueFlags = vp_getVoiceLevelQueueFlags();
 
     switch(ui_state.input_number)
@@ -915,7 +941,18 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
         case 1:
             if(state.channel.mode == OPMODE_FM)
             {
-                if(state.channel.fm.txTone == 0)
+                _ui_handleToneSelectScroll(true);
+                *sync_rtx                 = true;
+                vp_announceCTCSS(
+                    state.channel.fm.rxToneEn, state.channel.fm.rxTone,
+                    state.channel.fm.txToneEn, state.channel.fm.txTone,
+                    queueFlags | vpqIncludeDescriptions);
+            }
+            break;
+        case 2:
+            if (state.channel.mode == OPMODE_FM)
+            {
+                if (state.channel.fm.txTone == 0)
                 {
                     state.channel.fm.txTone = CTCSS_FREQ_NUM-1;
                 }
@@ -935,29 +972,12 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             }
             break;
 
-        case 2:
+        case 3:
             if(state.channel.mode == OPMODE_FM)
             {
                 state.channel.fm.txTone++;
                 state.channel.fm.txTone %= CTCSS_FREQ_NUM;
                 state.channel.fm.rxTone = state.channel.fm.txTone;
-                *sync_rtx = true;
-                vp_announceCTCSS(state.channel.fm.rxToneEn,
-                                 state.channel.fm.rxTone,
-                                 state.channel.fm.txToneEn,
-                                 state.channel.fm.txTone,
-                                 queueFlags);
-            }
-            break;
-        case 3:
-            if(state.channel.mode == OPMODE_FM)
-            {
-                tone_flags++;
-                tone_flags %= 4;
-                tone_tx_enable = tone_flags >> 1;
-                tone_rx_enable = tone_flags & 1;
-                state.channel.fm.txToneEn = tone_tx_enable;
-                state.channel.fm.rxToneEn = tone_rx_enable;
                 *sync_rtx = true;
                 vp_announceCTCSS(state.channel.fm.rxToneEn,
                                  state.channel.fm.rxTone,
@@ -1933,6 +1953,9 @@ void ui_updateFSM(bool *sync_rtx)
                             state.ui_screen = SETTINGS_M17;
                             break;
 #endif
+                        case S_FM:
+                            state.ui_screen = SETTINGS_FM;
+                            break;
                         case S_ACCESSIBILITY:
                             state.ui_screen = SETTINGS_ACCESSIBILITY;
                             break;
@@ -2356,6 +2379,75 @@ void ui_updateFSM(bool *sync_rtx)
                 }
                 break;
 #endif
+            case SETTINGS_FM:
+                if (ui_state.edit_mode)
+                {
+                    if (msg.keys & KEY_ESC)
+                    ui_state.edit_mode = false;
+                    switch (ui_state.menu_selected)
+                    {
+                        case CTCSS_Tone:
+                            if (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
+                            {
+                                if (state.channel.fm.txTone == 0)
+                                {
+                                    state.channel.fm.txTone =
+                                        CTCSS_FREQ_NUM - 1;
+                                }
+                                else
+                                {
+                                    state.channel.fm.txTone--;
+                                }
+                            }
+                            else if (msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
+                            {
+                                state.channel.fm.txTone++;
+                            } else if (msg.keys & KEY_ENTER) {
+                                ui_state.edit_mode = false;
+                            }
+                            state.channel.fm.txTone %= CTCSS_FREQ_NUM;
+                            state.channel.fm.rxTone = state.channel.fm.txTone;
+                            *sync_rtx               = true;
+                            vp_announceCTCSS(state.channel.fm.rxToneEn,
+                                             state.channel.fm.rxTone,
+                                             state.channel.fm.txToneEn,
+                                             state.channel.fm.txTone,
+                                             queueFlags);
+                            break;
+                        case CTCSS_Enabled:
+                            if (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
+                            {
+                                _ui_handleToneSelectScroll(true);
+                            } else if (msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
+                            {
+                                _ui_handleToneSelectScroll(false);
+                            } else if (msg.keys & KEY_ENTER) {
+                                ui_state.edit_mode = false;
+                            }
+
+                            *sync_rtx = true;
+                            vp_announceCTCSS(state.channel.fm.rxToneEn,
+                                             state.channel.fm.rxTone,
+                                             state.channel.fm.txToneEn,
+                                             state.channel.fm.txTone,
+                                             queueFlags | vpqIncludeDescriptions);
+                            break;
+                    }
+                }
+                else if (msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                    _ui_menuUp(settings_fm_num);
+                else if (msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                    _ui_menuDown(settings_fm_num);
+                else if (msg.keys & KEY_ENTER)
+                    ui_state.edit_mode = !ui_state.edit_mode;
+                else if (msg.keys & KEY_ESC)
+                    _ui_menuBack(MENU_SETTINGS);
+                else if (msg.keys & KEY_ENTER)
+                    ui_state.edit_mode = !ui_state.edit_mode;
+                else if (msg.keys & KEY_ESC)
+                    _ui_menuBack(MENU_SETTINGS);
+                break;
+
             case SETTINGS_ACCESSIBILITY:
                 if(msg.keys & KEY_LEFT || (ui_state.edit_mode &&
                    (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)))
@@ -2581,6 +2673,10 @@ bool ui_updateGUI()
             _ui_drawSettingsM17(&ui_state);
             break;
 #endif
+        // FM settings screen
+        case SETTINGS_FM:
+            _ui_drawSettingsFM(&ui_state);
+            break;
         case SETTINGS_ACCESSIBILITY:
             _ui_drawSettingsAccessibility(&ui_state);
             break;
