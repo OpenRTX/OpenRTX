@@ -90,6 +90,39 @@ uint8_t rssiToSlevel(const rssi_t rssi);
  */
 uint8_t ctcssFreqToIndex(const uint16_t freq);
 
+/**
+ * Convert coordinates from decimal value to Q1.23 representation.
+ * The input value should be in decimal degrees multiplied by 1000000
+ *
+ * @param coord: coordinate in decimal degrees
+ * @param unit: value, in degrees, corresponding to 1.0
+ * @return coordinate in Q1.23 format
+ */
+static inline int32_t coordToFixedPoint(const int32_t coord, const uint8_t unit)
+{
+    int64_t tmp = (int64_t)coord;
+    tmp *= ((1 << 23) - 1);
+    tmp /= (unit * 1000000);
+
+    return tmp;
+}
+
+/**
+ * Convert coordinates from Q1.23 representation to decimal value.
+ *
+ * @param value: coordinate in Q1.23 format
+ * @param unit: value, in degrees, corresponding to 1.0
+ * @return coordinate in decimal degrees
+ */
+static inline int32_t fixedPointToCoord(const int32_t value, const uint8_t unit)
+{
+    int64_t tmp = (int64_t)value;
+    tmp *= (unit * 1000000);
+    tmp /= ((1 << 23) - 1);
+
+    return tmp;
+}
+
 #ifdef __cplusplus
 }
 #endif

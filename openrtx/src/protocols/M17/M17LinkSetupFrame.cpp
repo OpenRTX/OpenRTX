@@ -22,6 +22,7 @@
 #include "protocols/M17/M17Golay.hpp"
 #include "protocols/M17/M17Callsign.hpp"
 #include "protocols/M17/M17LinkSetupFrame.hpp"
+#include "core/utils.h"
 
 using namespace M17;
 
@@ -134,6 +135,48 @@ void M17LinkSetupFrame::generateLichSegment(lich_t &segment,
         encoded          = __builtin_bswap32(encoded << 8);
         memcpy(&segment[3*i], &encoded, 3);
     }
+}
+
+void M17LinkSetupFrame::setGnssData(const gps_t *position,
+                                    const M17GNSSStationType stationType)
+{
+    if(position->fix_type < FIX_TYPE_2D)
+        return;
+
+    streamType_t streamType = getType();
+    streamType.fields.encType = M17_ENCRYPTION_NONE;
+    streamType.fields.encSubType = M17_META_GNSS;
+    setType(streamType);
+
+    data.meta.gnss_data.data_src = M17_GNSS_SOURCE_OPENRTX;
+    data.meta.gnss_data.station_type = stationType;
+
+    data.meta.gnss_data.coords_valid = 1;
+    data.meta.gnss_data.alt_valid = 1;
+    data.meta.gnss_data.velocity_valid = 1;
+    data.meta.gnss_data.radius_valid = 0;
+
+    data.meta.gnss_data.radius = position->hdop;
+
+    data.meta.gnss_data.bearing_1 = (position->tmg_true >> 8) & 0x01; // MSB (1 bit)
+    data.meta.gnss_data.bearing_2 = position->tmg_true & 0xFF; // Lower 8 bits
+
+    // Encode the coordinates in Q1.24 format, swap the byte order to big
+    // endian as required by M17 specification
+    int32_t lat_encoded = coordToFixedPoint(position->latitude, 90);
+    int32_t lon_encoded = coordToFixedPoint(position->longitude, 180);
+    for(uint8_t i = 0; i < 3; i++) {
+        data.meta.gnss_data.latitude_bytes[i] = *((uint8_t*)&lat_encoded + 2 - i);
+        data.meta.gnss_data.longitude_bytes[i] = *((uint8_t*)&lon_encoded + 2 - i);
+    }
+
+    uint16_t speed = (uint16_t)position->speed * 2;
+    data.meta.gnss_data.speed_1 = speed >> 4; // MBS
+    data.meta.gnss_data.speed_2 = speed & 0x0F; // Lower 4 bits
+
+    // Structure numeric fields that need offset and steps
+    uint16_t alt = (uint16_t)1000 + position->altitude * 2;
+    data.meta.gnss_data.altitude = __builtin_bswap16(alt);
 }
 
 uint16_t M17LinkSetupFrame::crc16(const void *data, const size_t len) const
