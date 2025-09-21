@@ -134,6 +134,7 @@ private:
      */
     bool compareCallsigns(const std::string& localCs, const std::string& incomingCs);
 
+    static constexpr uint16_t GPS_UPDATE_TICKS = 5 * 30;
 
     bool startRx;                      ///< Flag for RX management.
     bool startTx;                      ///< Flag for TX management.
@@ -142,12 +143,14 @@ private:
     bool extendedCall;                 ///< Extended callsign data received
     bool invertTxPhase;                ///< TX signal phase inversion setting.
     bool invertRxPhase;                ///< RX signal phase inversion setting.
+    bool gpsTransmitting;              ///< Currently transmitting GPS data
     pathId rxAudioPath;                ///< Audio path ID for RX
     pathId txAudioPath;                ///< Audio path ID for TX
     M17::M17Modulator    modulator;    ///< M17 modulator.
     M17::M17Demodulator  demodulator;  ///< M17 demodulator.
     M17::M17FrameDecoder decoder;      ///< M17 frame decoder
     M17::M17FrameEncoder encoder;      ///< M17 frame encoder
+    uint16_t gpsTimer;                 ///< GPS data transmission interval timer
 };
 
 #endif /* OPMODE_M17_H */
