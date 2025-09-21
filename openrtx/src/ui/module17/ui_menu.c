@@ -3,6 +3,7 @@
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
+ *                                Rick Schnicker KD0OSS                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,10 +17,13 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
+ *                                                                         *
+ *   (2025) Modified by KD0OSS for new modes on Module17                   *
  ***************************************************************************/
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 #include "core/utils.h"
 #include "ui/ui_mod17.h"
@@ -141,6 +145,28 @@ void _ui_drawMenuListValue(ui_state_t* ui_state, uint8_t selected,
     }
 }
 
+bool _ui_viewSubString(char *in_string, char *out_string, uint16_t start_pos, uint16_t num_chars)
+{
+    uint16_t totalLen = strlen(in_string);
+    if(start_pos >= totalLen || (num_chars + start_pos) > totalLen)
+        return false;
+
+    memset(out_string, 0, num_chars+1);
+
+    uint16_t i;
+    for(i=0;i<num_chars;i++)
+    {
+        out_string[i] = in_string[start_pos + i];
+        // replace tab, line feed and carriage return with space
+        if(out_string[i] == 0x09 || out_string[i] == 0x0a ||
+            out_string[i] == 0x0d || out_string[i] == '_')
+            out_string[i] = 0x20;
+    }
+    out_string[i] = 0;
+
+    return true;
+}
+
 int _ui_getMenuTopEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     uint8_t maxEntries = menu_num;
@@ -196,11 +222,24 @@ int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
         case M_CALLSIGN:
             snprintf(buf, max_len, "%s", last_state.settings.callsign);
             return 0;
+        case M_METATEXT:
+            // limit display to 8 characters
+            if (strlen(last_state.settings.M17_meta_text) > 8)
+            {
+                char tmp[9];
+                memcpy(tmp, last_state.settings.M17_meta_text, 8);
+                tmp[8] = 0;
+                // append asterisk to indicate more characters than displayed
+                snprintf(buf, max_len, "%s*", tmp);
+            }
+            else
+                snprintf(buf, max_len, "%s", last_state.settings.M17_meta_text);
+            return 0;
         case M_CAN:
             snprintf(buf, max_len, "%d", last_state.settings.m17_can);
             break;
         case M_CAN_RX:
-            snprintf(buf, max_len, "%s", (last_state.settings.m17_can_rx) ? "on" : "off");
+            snprintf(buf, max_len, "%s", (last_state.settings.m17_can_rx) ? "On" : "Off");
             break;
     }
 
@@ -572,6 +611,21 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
         gfx_printLine(1, 1, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
                       layout.horizontal_pad, layout.input_font,
                       TEXT_ALIGN_CENTER, color_white, ui_state->new_callsign);
+        // Print Button Info
+        gfx_print(layout.line5_pos, layout.line5_font, TEXT_ALIGN_LEFT,
+                  color_white, "Cancel");
+        gfx_print(layout.line5_pos, layout.line5_font, TEXT_ALIGN_RIGHT,
+                  color_white, "Accept");
+    }
+    else if(ui_state->edit_message)
+    {
+        gfx_printLine(1, 4, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
+                      layout.horizontal_pad, layout.menu_font,
+                      TEXT_ALIGN_LEFT, color_white, "Message:");
+
+        gfx_printLine(1, 1, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
+                      layout.horizontal_pad, layout.message_font,
+                      TEXT_ALIGN_CENTER, color_white, ui_state->new_message);
         // Print Button Info
         gfx_print(layout.line5_pos, layout.line5_font, TEXT_ALIGN_LEFT,
                   color_white, "Cancel");

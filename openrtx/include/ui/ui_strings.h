@@ -71,6 +71,7 @@ typedef struct
     const char* Federico;
     const char* Fred;
     const char* Joseph;
+    const char* Rick;
     const char* allChannels;
     const char* menu;
     const char* gpsOff;

@@ -103,6 +103,13 @@ public:
     void setType(streamType_t type);
 
     /**
+     * Set metadata text field.
+     *
+     * @param text: 14 bytes of text to be written
+     */
+    void setMetaText(uint8_t *text);
+
+    /**
      * Get metadata field.
      *
      * @return a reference to frame's metadata field, allowing for both read and

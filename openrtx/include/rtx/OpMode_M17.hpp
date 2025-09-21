@@ -153,6 +153,7 @@ private:
 	uint8_t  textOffset = 0;              ///< Metatext offset
 	uint8_t  blk_id_tot = 0;              ///< Metatext block Id total
 	uint8_t  frameCnt = 0;                ///< Transmit frame counter
+	uint8_t  last_text_blk =  0;          ///< Last metatext block counter
 	bool     textStarted = false;         ///< Metatext found flag
 	char     textBuffer[53];              ///< Temporary buffer for incoming metatext
 };
