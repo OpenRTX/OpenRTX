@@ -817,7 +817,7 @@ void _ui_drawMenuSpectrum(ui_state_t* ui_state)
     rtxStatus_t rtxStatus = rtx_getCurrentStatus();
     uint32_t spectrumStep = freq_steps[last_state.settings.spectrum_step];
     char freq_str[16];
-    #define SPECTRUM_WF_LINES ARRAY_SIZE(rtxStatus.rxSweep_data.data)
+    #define SPECTRUM_WF_LINES ARRAY_SIZE(rtxStatus.rxSweep_data.data) / 2
     
     // Display spectrum data if sweep is done
     if(rtxStatus.rxSweep_data.sweepDone)
