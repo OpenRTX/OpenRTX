@@ -125,3 +125,8 @@ void M17::M17FrameEncoder::encodeEotFrame(M17::frame_t& output)
         output[i + 1] = 0x5D;
     }
 }
+
+bool M17::M17FrameEncoder::canUpdateLsf()
+{
+    return currentLich == 0;
+}

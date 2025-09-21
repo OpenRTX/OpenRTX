@@ -92,6 +92,13 @@ public:
      */
     void encodeEotFrame(frame_t& output);
 
+    /**
+     * Indicates if it is safe to update the LSF.
+     *
+     * @return true if the LSF can be updated, false otherwise.
+     */
+    bool canUpdateLsf();
+
 private:
 
     M17ConvolutionalEncoder  encoder;           ///< Convolutional encoder.
