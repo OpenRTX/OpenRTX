@@ -23,9 +23,13 @@
 #include "interfaces/audio.h"
 #include "interfaces/radio.h"
 #include "protocols/M17/M17Callsign.hpp"
+#include "protocols/M17/M17Datatypes.hpp"
 #include "rtx/OpMode_M17.hpp"
 #include "core/audio_codec.h"
 #include <errno.h>
+#include "core/gps.h"
+#include "core/state.h"
+#include "core/utils.h"
 #include "rtx/rtx.h"
 
 #ifdef PLATFORM_MOD17
@@ -318,7 +322,11 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         type.fields.CAN      = status->can;             // Channel access number
 
         lsf.setType(type);
-        lsf.updateCrc();
+
+        if(state.settings.gps_enabled) {
+            lsf.setGnssData(&state.gps_data, M17_GNSS_STATION_HANDHELD);
+            gpsTimer = 0;
+        }
 
         encoder.reset();
         encoder.encodeLsf(lsf, m17Frame);
@@ -331,6 +339,17 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         modulator.start();
         modulator.sendPreamble();
         modulator.sendFrame(m17Frame);
+    }
+
+    if(state.settings.gps_enabled) {
+        gpsTimer++;
+
+        if(gpsTimer >= GPS_UPDATE_TICKS) {
+            auto lsf = encoder.getCurrentLsf();
+            lsf.setGnssData(&state.gps_data, M17_GNSS_STATION_HANDHELD);
+            encoder.updateLsfData(lsf);
+            gpsTimer = 0;
+        }
     }
 
     payload_t dataFrame;
