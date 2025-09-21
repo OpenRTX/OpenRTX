@@ -3,6 +3,7 @@
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
+ *                                Rick Schnicker KD0OSS                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -23,9 +24,13 @@
 #include "interfaces/audio.h"
 #include "interfaces/radio.h"
 #include "protocols/M17/M17Callsign.hpp"
+#include "protocols/M17/M17Datatypes.hpp"
 #include "rtx/OpMode_M17.hpp"
 #include "core/audio_codec.h"
 #include <errno.h>
+#include "core/gps.h"
+#include "core/state.h"
+#include "core/utils.h"
 #include "rtx/rtx.h"
 
 #ifdef PLATFORM_MOD17
@@ -40,7 +45,8 @@ using namespace M17;
 
 OpMode_M17::OpMode_M17() : startRx(false), startTx(false), locked(false),
                            dataValid(false), extendedCall(false),
-                           invertTxPhase(false), invertRxPhase(false)
+                           invertTxPhase(false), invertRxPhase(false),
+                           gpsTransmitting(false)
 {
 
 }
@@ -60,14 +66,17 @@ void OpMode_M17::enable()
     extendedCall = false;
     startRx      = true;
     startTx      = false;
+    gpsTransmitting = false;
 }
 
 void OpMode_M17::disable()
 {
     startRx = false;
     startTx = false;
+    gpsTransmitting = false;
     platform_ledOff(GREEN);
     platform_ledOff(RED);
+    platform_ledOff(YELLOW);
     audioPath_release(rxAudioPath);
     audioPath_release(txAudioPath);
     codec_terminate();
@@ -135,12 +144,18 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
 
         case TX:
             platform_ledOff(GREEN);
-            platform_ledOn(RED);
+
+            if(gpsTransmitting)
+                platform_ledOn(YELLOW);
+            else
+                platform_ledOn(RED);
+
             break;
 
         default:
             platform_ledOff(GREEN);
             platform_ledOff(RED);
+            platform_ledOff(YELLOW);
             break;
     }
 }
@@ -305,6 +320,7 @@ void OpMode_M17::txState(rtxStatus_t *const status)
     if(startTx)
     {
         startTx = false;
+        gpsTimer = 0;
 
         std::string src(status->source_address);
         std::string dst(status->destination_address);
@@ -320,7 +336,11 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         type.fields.CAN      = status->can;             // Channel access number
 
         lsf.setType(type);
-        lsf.updateCrc();
+
+        if(state.settings.gps_enabled) {
+            lsf.setGnssData(&state.gps_data, M17_GNSS_STATION_HANDHELD);
+            gpsTransmitting = true;
+        }
 
         encoder.reset();
         encoder.encodeLsf(lsf, m17Frame);
@@ -333,6 +353,20 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         modulator.start();
         modulator.sendPreamble();
         modulator.sendFrame(m17Frame);
+    }
+
+    if(state.settings.gps_enabled) {
+        gpsTimer++;
+
+        if(gpsTimer >= GPS_UPDATE_TICKS) {
+            auto lsf = encoder.getCurrentLsf();
+            lsf.setGnssData(&state.gps_data, M17_GNSS_STATION_HANDHELD);
+            encoder.updateLsfData(lsf);
+            gpsTransmitting = true;
+            gpsTimer = 0;
+        } else {
+            gpsTransmitting = false;
+        }
     }
 
     payload_t dataFrame;
