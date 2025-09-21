@@ -46,7 +46,7 @@ static uint32_t lastValueUpdate=0;
 
 const char *display_timer_values[] =
 {
-    "Off",
+    "OFF",
     "5 s",
     "10 s",
     "15 s",

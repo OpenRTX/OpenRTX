@@ -94,7 +94,7 @@ const stringsTable_t englishStrings =
     .broadcast         = "ALL",
     .radioSettings     = "Radio Settings",
     .frequencyOffset   = "Frequency Offset",
-    .macroLatching     = "Macro Latching",
+    .macroLatching     = "Macro Latch",
     .noGps             = "No GPS",
     .batteryIcon       = "Battery Icon",
 };
