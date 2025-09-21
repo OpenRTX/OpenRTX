@@ -170,7 +170,7 @@ private:
 	uint8_t  lsfFragCount = 5;            ///< LSF fragment counter
 	uint16_t numPacketbytes = 0;          ///< Number of packet bytes remaining
 	uint16_t lastCRC = 0;                 ///< CRC for last valid SMS message
-	int16_t gpsTimer = -1;                ///< GPS timer to prevent sending more than once every 5 seconds
+	int16_t  gpsTimer = -1;               ///< GPS timer to prevent sending more than once every 5 seconds
 	bool     textStarted = false;         ///< Metatext found flag
 	bool     smsEnabled = false;          ///< SMS enabled
 	bool     smsStarted = false;          ///< SMS message started flag

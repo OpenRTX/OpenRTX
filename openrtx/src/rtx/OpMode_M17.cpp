@@ -479,11 +479,16 @@ void OpMode_M17::txState(rtxStatus_t *const status)
 {
     static streamType_t type;
     frame_t m17Frame;
+    static bool textStarted;
+    static bool gpsStarted;
 
     if(startTx)
     {
         startTx = false;
         lsfFragCount = 6;
+        gpsTimer = -1;
+        textStarted = false;
+        gpsStarted = false;
 
         // reset metatext so nothing left over from previous contact
         memset(status->M17_Meta_Text, 0, 53);
@@ -549,50 +554,73 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         modulator.sendFrame(m17Frame);
     }
 
-    // 0xff indicates no text to send
-    if(last_text_blk != 0xff) // send meta text
+    if(lsfFragCount == 6)
     {
-    	if (lsfFragCount == 6)
+	   lsfFragCount = 0;
+       textStarted = false;
+       gpsStarted = false;
+
+       // reset metadata if no text message
+       if(last_text_blk == 0xff)
+       {
+           uint8_t buf[14];
+	       memset(buf, 0, 14);
+     	   lsf.setMetaText(buf);
+    	   type.fields.encSubType = M17_META_TEXT;
+    	   lsf.setType(type);
+           lsf.updateCrc();
+    	   encoder.encodeLsf(lsf, m17Frame);
+       }
+
+       // Wait at least 5 seconds between GPS transmissions
+       if((gpsTimer == -1 || gpsTimer >= 150) && (last_text_blk == 0 || last_text_blk == 0xff))
+       {
+           gpsStarted = true;
+           textStarted = true;
+       }
+    }
+    else
+    	lsfFragCount++;
+
+    // 0xff indicates no text to send
+    if(last_text_blk != 0xff && !gpsStarted && !textStarted) // send meta text
+    {
+        textStarted = true;
+
+    	uint8_t buf[14];
+    	memset(buf, 32, 14); // set to all spaces
+    	// this should return number of meta blocks needed
+    	uint8_t msglen = ceilf((float)strlen(state.settings.M17_meta_text) / 13.0f);
+    	// set control byte upper nibble for number of text blocks
+    	// 0001 = 1 blk. 0011 = 2 blks, 0111 = 3 blks, 1111 = 4 blks
+    	buf[0] = (0x0f >> (4 - msglen)) << 4;
+
+    	// check if less than 13 characters remain
+    	uint8_t len = (uint8_t)(strlen(state.settings.M17_meta_text) - (last_text_blk * 13));
+    	// if over 13 then limit to 13
+    	if(len > 13)
+    	    len = 13;
+    	memcpy(buf+1, state.settings.M17_meta_text+(last_text_blk * 13), len);
+
+    	// set control byte lower nibble to block id
+    	// 0001 = blk1, 0010 = blk2, 0100 = blk3, 1000 = blk4
+    	buf[0] += (1 << last_text_blk++);
+    	lsf.setMetaText(buf);
+    	type.fields.encSubType = M17_META_TEXT;
+    	lsf.setType(type);
+        lsf.updateCrc();
+    	encoder.encodeLsf(lsf, m17Frame);
+
+    	// if all blocks sent then reset
+    	if(last_text_blk == msglen)
     	{
-    		lsfFragCount = 0;
-
-    		uint8_t buf[14];
-    		memset(buf, 32, 14); // set to all spaces
-    		// this should return number of meta blocks needed
-    		uint8_t msglen = ceilf((float)strlen(state.settings.M17_meta_text) / 13.0f);
-    		// set control byte upper nibble for number of text blocks
-    		// 0001 = 1 blk. 0011 = 2 blks, 0111 = 3 blks, 1111 = 4 blks
-    		buf[0] = (0x0f >> (4 - msglen)) << 4;
-
-    		// check if less than 13 characters remain
-    		uint8_t len = (uint8_t)(strlen(state.settings.M17_meta_text) - (last_text_blk * 13));
-    		// if over 13 then limit to 13
-    		if(len > 13)
-    			len = 13;
-    		memcpy(buf+1, state.settings.M17_meta_text+(last_text_blk * 13), len);
-
-    		// set control byte lower nibble to block id
-    		// 0001 = blk1, 0010 = blk2, 0100 = blk3, 1000 = blk4
-    		buf[0] += (1 << last_text_blk++);
-    		lsf.setMetaText(buf);
-    		type.fields.encSubType = M17_META_TEXT;
-    		lsf.setType(type);
-            lsf.updateCrc();
-    		encoder.encodeLsf(lsf, m17Frame);
-
-    		// if all blocks sent then reset
-    		if(last_text_blk == msglen)
-    		{
-    			last_text_blk = 0;
-    		}
+    		last_text_blk = 0;
     	}
-    	else
-    		lsfFragCount++;
     }
 
-    // Wait at least 5 seconds between GPS transmissions
-    if((gpsTimer == -1) || ((gpsTimer >= 150) && (last_text_blk == 0xff || last_text_blk == 0)))
+    if(gpsStarted)
     {
+        gpsStarted = false;
         gpsTimer = 0;
 
         gps_t gps_data;
@@ -602,6 +630,7 @@ void OpMode_M17::txState(rtxStatus_t *const status)
 
         if(gps_data.fix_type > 0) //Valid GPS fix
         {
+            platform_ledOn(YELLOW); // Blink LED yellow when sending GNSS
         	uint8_t gnss[14] = {0};
 
         	gnss[0] = (M17_GNSS_SOURCE_OPENRTX<<4) | M17_GNSS_STATION_HANDHELD; //OpenRTX source, portable station
@@ -642,6 +671,7 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         	lsf.setType(type);
         	lsf.updateCrc();
         	encoder.encodeLsf(lsf, m17Frame);
+            platform_ledOn(RED);
         }
     }
 
