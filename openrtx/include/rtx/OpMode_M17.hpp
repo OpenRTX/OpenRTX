@@ -149,6 +149,12 @@ private:
     M17::M17Demodulator  demodulator;  ///< M17 demodulator.
     M17::M17FrameDecoder decoder;      ///< M17 frame decoder
     M17::M17FrameEncoder encoder;      ///< M17 frame encoder
+
+	uint8_t  textOffset = 0;              ///< Metatext offset
+	uint8_t  blk_id_tot = 0;              ///< Metatext block Id total
+	uint8_t  frameCnt = 0;                ///< Transmit frame counter
+	bool     textStarted = false;         ///< Metatext found flag
+	char     textBuffer[53];              ///< Temporary buffer for incoming metatext
 };
 
 #endif /* OPMODE_M17_H */

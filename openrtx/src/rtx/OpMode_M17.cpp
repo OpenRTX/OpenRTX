@@ -217,6 +217,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
             if(status->lsfOk)
             {
                 dataValid = true;
+                frameCnt++;
 
                 // Retrieve stream source and destination data
                 std::string dst = lsf.getDestination();
@@ -244,6 +245,47 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                     strncpy(status->M17_refl, exCall2.c_str(), 10);
 
                     extendedCall = true;
+                    if(frameCnt == 6)
+                       frameCnt = 0;
+                           // no metatext present
+                   memset(status->M17_Meta_Text, 0, 53);
+               }
+               // Check if metatext is present
+               else if((streamType.fields.encType    == M17_ENCRYPTION_NONE) &&
+                        (streamType.fields.encSubType == M17_META_TEXT) &&
+                        lsf.valid() && frameCnt == 6)
+               {
+                   frameCnt = 0;
+                   meta_t& meta = lsf.metadata();
+                   uint8_t blk_len = (meta.raw_data[0] & 0xf0) >> 4;
+                   uint8_t blk_id = (meta.raw_data[0] & 0x0f);
+                   if(blk_id == 1)
+                   {  // On first block reset everything
+                       memset(status->M17_Meta_Text, 0, 53);
+                       memset(textBuffer, 0, 53);
+                       textOffset = 0;
+                       blk_id_tot = 0;
+                       textStarted = true;
+                   }
+                   // check if first valid metatext block is found
+                   if(textStarted)
+                   {
+                   // Check for valid block id
+                       if(blk_id <= 0x0f)
+                       {
+                           blk_id_tot += blk_id;
+                           memcpy(textBuffer+textOffset, meta.raw_data+1, 13);
+                           textOffset += 13;
+                           // Check for completed text message
+                           if((blk_len == blk_id_tot) || textOffset == 52)
+                           {
+                               memcpy(status->M17_Meta_Text, textBuffer, textOffset);
+                               textOffset = 0;
+                               blk_id_tot = 0;
+                               textStarted = false;
+                           }
+                       }
+                   }
                 }
 
                 // Set source and destination fields.
@@ -303,6 +345,8 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         status->lsfOk = false;
         dataValid     = false;
         extendedCall  = false;
+        textStarted   = false;
+        memset(textBuffer, 0, 52);
         status->M17_link[0] = '\0';
         status->M17_refl[0] = '\0';
 
