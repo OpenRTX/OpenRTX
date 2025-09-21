@@ -3,6 +3,7 @@
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
+ *                                Rick KD0OSS                              *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -18,14 +19,20 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <errno.h>
 #include "interfaces/platform.h"
 #include "interfaces/delays.h"
 #include "interfaces/audio.h"
 #include "interfaces/radio.h"
 #include "protocols/M17/M17Callsign.hpp"
+#include "core/state.h"
 #include "rtx/OpMode_M17.hpp"
 #include "core/audio_codec.h"
+#include <vector>
 #include <errno.h>
+#include <stdlib.h>
+#include <math.h>
+#include "core/gps.h"
 #include "rtx/rtx.h"
 
 #ifdef PLATFORM_MOD17
@@ -55,11 +62,15 @@ void OpMode_M17::enable()
     codec_init();
     modulator.init();
     demodulator.init();
-    locked       = false;
-    dataValid    = false;
-    extendedCall = false;
-    startRx      = true;
-    startTx      = false;
+    smsSender.clear();
+    smsMessage.clear();
+    locked                 = false;
+    dataValid              = false;
+    extendedCall           = false;
+    startRx                = true;
+    startTx                = false;
+    smsEnabled             = true;
+    state.havePacketData   = false;
 }
 
 void OpMode_M17::disable()
@@ -115,7 +126,11 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
             break;
 
         case TX:
-            txState(status);
+            // check if we have SMS packet to send
+            if(state.havePacketData)
+                txPacketState(status);
+            else
+                txState(status);
             break;
 
         default:
@@ -131,6 +146,7 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
                 platform_ledOn(GREEN);
             else
                 platform_ledOff(GREEN);
+
             break;
 
         case TX:
@@ -165,6 +181,14 @@ void OpMode_M17::offState(rtxStatus_t *const status)
         return;
     }
 
+    if(state.havePacketData)
+    {
+        startTx = true;
+        status->opStatus = TX;
+        status->txDisable = 0;
+        return;
+    }
+
     // Sleep for 30ms if there is nothing else to do in order to prevent the
     // rtx thread looping endlessly and locking up all the other tasks
     sleepFor(0, 30);
@@ -172,6 +196,8 @@ void OpMode_M17::offState(rtxStatus_t *const status)
 
 void OpMode_M17::rxState(rtxStatus_t *const status)
 {
+    uint8_t pthSts;
+
     if(startRx)
     {
         demodulator.startBasebandSampling();
@@ -213,10 +239,8 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                 streamType_t streamType = lsf.getType();
 
                 if((streamType.fields.encType    == M17_ENCRYPTION_NONE) &&
-                   (streamType.fields.encSubType == M17_META_EXTD_CALLSIGN))
+                    (streamType.fields.encSubType == M17_META_EXTD_CALLSIGN))
                 {
-                    extendedCall = true;
-
                     meta_t& meta = lsf.metadata();
                     std::string exCall1 = decode_callsign(meta.extended_call_sign.call1);
                     std::string exCall2 = decode_callsign(meta.extended_call_sign.call2);
@@ -231,7 +255,9 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                     strncpy(status->M17_refl, exCall2.c_str(), 10);
 
                     extendedCall = true;
+
                 }
+                
 
                 // Set source and destination fields.
                 // If we have received an extended callsign the src will be the RF link address
@@ -253,31 +279,40 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                 bool callMatch = compareCallsigns(std::string(status->source_address), dst);
 
                 // Open audio path only if CAN and callsign match
-                uint8_t pthSts = audioPath_getStatus(rxAudioPath);
-                if((pthSts == PATH_CLOSED) && (canMatch == true) && (callMatch == true))
+                if((type == M17FrameType::STREAM) && (canMatch == true) && (callMatch == true))
                 {
-                    rxAudioPath = audioPath_request(SOURCE_MCU, SINK_SPK, PRIO_RX);
                     pthSts = audioPath_getStatus(rxAudioPath);
-                }
+                    if(pthSts == PATH_CLOSED)
+                    {
+                        rxAudioPath = audioPath_request(SOURCE_MCU, SINK_SPK, PRIO_RX);
+                        pthSts = audioPath_getStatus(rxAudioPath);
+                    }
 
-                // Extract audio data and sent it to codec
-                if((type == M17FrameType::STREAM) && (pthSts == PATH_OPEN))
+                    // Extract audio data and sent it to codec
+                    if((type == M17FrameType::STREAM) && (pthSts == PATH_OPEN))
+                    {
+                        // (re)start codec2 module if not already up
+                        if(codec_running() == false)
+                            codec_startDecode(rxAudioPath);
+
+                        M17StreamFrame sf = decoder.getStreamFrame();
+                        codec_pushFrame(sf.payload().data(),     false);
+                        codec_pushFrame(sf.payload().data() + 8, false);
+                    }
+                } // check if packet SMS message and SMS receive enabled
+                else if(type == M17FrameType::PACKET)
                 {
-                    // (re)start codec2 module if not already up
-                    if(codec_running() == false)
-                        codec_startDecode(rxAudioPath);
-
-                    M17StreamFrame sf = decoder.getStreamFrame();
-                    codec_pushFrame(sf.payload().data(),     false);
-                    codec_pushFrame(sf.payload().data() + 8, false);
-                }
-            }
+                    // grab decoded packet data
+                    M17PacketFrame pf = decoder.getPacketFrame();
+                    // Do something with the packet frame data
+                } // if type PACKET
+            } // if LSF OK
         }
     }
 
     locked = lock;
 
-    if(platform_getPttStatus())
+    if(platform_getPttStatus() || state.havePacketData)
     {
         demodulator.stopBasebandSampling();
         locked = false;
@@ -292,7 +327,6 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         extendedCall  = false;
         status->M17_link[0] = '\0';
         status->M17_refl[0] = '\0';
-
         codec_stop(rxAudioPath);
         audioPath_release(rxAudioPath);
     }
@@ -300,6 +334,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
 
 void OpMode_M17::txState(rtxStatus_t *const status)
 {
+    static streamType_t type;
     frame_t m17Frame;
 
     if(startTx)
@@ -308,16 +343,15 @@ void OpMode_M17::txState(rtxStatus_t *const status)
 
         std::string src(status->source_address);
         std::string dst(status->destination_address);
-        M17LinkSetupFrame lsf;
 
         lsf.clear();
         lsf.setSource(src);
         if(!dst.empty()) lsf.setDestination(dst);
 
-        streamType_t type;
-        type.fields.dataMode = M17_DATAMODE_STREAM;     // Stream
-        type.fields.dataType = M17_DATATYPE_VOICE;      // Voice data
-        type.fields.CAN      = status->can;             // Channel access number
+        type.fields.dataMode   = M17_DATAMODE_STREAM;     // Stream
+        type.fields.dataType   = M17_DATATYPE_VOICE;      // Voice data
+        type.fields.CAN        = status->can;             // Channel access number
+        
 
         lsf.setType(type);
         lsf.updateCrc();
@@ -334,6 +368,7 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         modulator.sendPreamble();
         modulator.sendFrame(m17Frame);
     }
+
 
     payload_t dataFrame;
     bool      lastFrame = false;
@@ -354,10 +389,89 @@ void OpMode_M17::txState(rtxStatus_t *const status)
 
     if(lastFrame)
     {
+        lastCRC = 0;
         encoder.encodeEotFrame(m17Frame);
         modulator.sendFrame(m17Frame);
         modulator.stop();
     }
+}
+
+void OpMode_M17::txPacketState(rtxStatus_t *const status)
+{
+    const char* packetData = "";
+    frame_t      m17Frame;
+    pktPayload_t packetFrame;
+    uint8_t      full_packet_data[33*25] = {0};
+
+    if(!startRx && locked)
+    {
+        demodulator.stopBasebandSampling();
+        locked = false;
+        status->opStatus = OFF;
+    }
+
+    startTx = false;
+
+    std::string src(status->source_address);
+    std::string dst(status->destination_address);
+
+    lsf.clear();
+    lsf.setSource(src);
+    if(!dst.empty()) lsf.setDestination(dst);
+
+    memset(full_packet_data, 0, 33*25);
+    full_packet_data[0] = 0x05;
+    memcpy((char*)&full_packet_data[1], packetData, strlen(packetData));
+    numPacketbytes                     = strlen(packetData) + 2; //0x05 and 0x00
+    uint16_t packet_crc                = lsf.m17Crc(full_packet_data, numPacketbytes);
+    full_packet_data[numPacketbytes]   = packet_crc & 0xFF;
+    full_packet_data[numPacketbytes+1] = packet_crc >> 8;
+    numPacketbytes += 2; //count 2-byte CRC too
+
+    streamType_t type;
+    type.fields.dataMode   = M17_DATAMODE_PACKET;     // Packet
+    type.fields.dataType   = 0;
+    type.fields.CAN        = status->can;             // Channel access number
+
+    lsf.setType(type);
+    lsf.updateCrc();
+
+    encoder.reset();
+    encoder.encodeLsf(lsf, m17Frame);
+
+    radio_enableTx();
+
+    modulator.invertPhase(invertTxPhase);
+    modulator.start();
+    modulator.sendPreamble();
+    modulator.sendFrame(m17Frame);
+
+    uint8_t cnt = 0;
+    while(numPacketbytes > 25)
+    {
+        memcpy(packetFrame.data(), &full_packet_data[cnt*25], 25);
+        packetFrame[25] = cnt << 2;
+        encoder.encodePacketFrame(packetFrame, m17Frame);
+        modulator.sendFrame(m17Frame);
+        cnt++;
+        numPacketbytes -= 25;
+    }
+
+    memset(packetFrame.data(), 0, 26);
+    memcpy(packetFrame.data(), &full_packet_data[cnt*25], numPacketbytes);
+    packetFrame[25] = 0x80 | (numPacketbytes << 2);
+    encoder.encodePacketFrame(packetFrame, m17Frame);
+    modulator.sendFrame(m17Frame);
+
+    encoder.encodeEotFrame(m17Frame);
+    modulator.sendFrame(m17Frame);
+    modulator.stop();
+
+    startRx = true;
+    state.havePacketData = false;
+    lastCRC = 0;
+    status->txDisable = 1;
+    status->opStatus = OFF;
 }
 
 bool OpMode_M17::compareCallsigns(const std::string& localCs,
@@ -379,6 +493,20 @@ bool OpMode_M17::compareCallsigns(const std::string& localCs,
 
     if(truncatedLocal == truncatedIncoming)
         return true;
+    else
+    {
+        // Remove any appended characters from callsign
+        int spacePos = truncatedLocal.find_first_of(' ');
+        if(spacePos >= 4)
+            truncatedLocal = truncatedLocal.substr(0, spacePos);
+
+        spacePos = truncatedIncoming.find_first_of(' ');
+        if(spacePos >= 4)
+            truncatedIncoming = truncatedIncoming.substr(0, spacePos);
+
+        if(truncatedLocal == truncatedIncoming)
+            return true;
+    }
 
     return false;
 }

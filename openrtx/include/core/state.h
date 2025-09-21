@@ -62,6 +62,9 @@ typedef struct
     bool       restore_eflash;
     bool       txDisable;
     uint8_t    step_index;
+    #ifdef CONFIG_M17
+    bool       havePacketData;
+    #endif
 }
 state_t;
 

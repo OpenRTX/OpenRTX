@@ -116,6 +116,12 @@ public:
     void updateCrc();
 
     /**
+     * Compute a new CRC over the content and update the corresponding
+     * field.
+     */
+    uint16_t m17Crc(const void *data, const size_t len);
+
+    /**
      * Check if frame data is valid that is, if the CRC computed over the LSF
      * fields matches the one carried by the LSF itself.
      *
