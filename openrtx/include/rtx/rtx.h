@@ -66,6 +66,7 @@ typedef struct
     char     M17_src[10];              /**  M17 LSF source             */
     char     M17_link[10];             /**  M17 LSF traffic originator */
     char     M17_refl[10];             /**  M17 LSF reflector module   */
+    bool     historyEnabled;
 }
 rtxStatus_t;
 
@@ -145,6 +146,8 @@ rssi_t rtx_getRssi();
  * @return true if RX squelch is open.
  */
 bool rtx_rxSquelchOpen();
+
+void rtx_setHistory(bool);
 
 #ifdef __cplusplus
 }

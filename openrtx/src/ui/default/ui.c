@@ -96,6 +96,7 @@ extern void _ui_drawMenuTop(ui_state_t* ui_state);
 extern void _ui_drawMenuBank(ui_state_t* ui_state);
 extern void _ui_drawMenuChannel(ui_state_t* ui_state);
 extern void _ui_drawMenuContacts(ui_state_t* ui_state);
+extern void _ui_drawMenuHistory(ui_state_t* ui_state);
 #ifdef CONFIG_GPS
 extern void _ui_drawMenuGPS();
 extern void _ui_drawSettingsGPS(ui_state_t* ui_state);
@@ -124,6 +125,9 @@ const char *menu_items[] =
     "Banks",
     "Channels",
     "Contacts",
+#ifdef CONFIG_M17
+    "History",
+#endif
 #ifdef CONFIG_GPS
     "GPS",
 #endif
@@ -181,7 +185,8 @@ const char * settings_m17_items[] =
 {
     "Callsign",
     "CAN",
-    "CAN RX Check"
+    "CAN RX Check",
+    "Keep History"
 };
 
 const char * settings_accessibility_items[] =
@@ -1433,7 +1438,7 @@ void ui_updateFSM(bool *sync_rtx)
             macro_menu = true;
             macro_latched = true;
         }
-#endif // PLA%FORM_TTWRPLUS
+#endif // PLATFORM_TTWRPLUS
 
         if(state.tone_enabled && !(msg.keys & KEY_HASH))
         {
@@ -1793,6 +1798,11 @@ void ui_updateFSM(bool *sync_rtx)
                         case M_CONTACTS:
                             state.ui_screen = MENU_CONTACTS;
                             break;
+#ifdef CONFIG_M17
+                        case M_HISTORY:
+                            state.ui_screen = MENU_HISTORY;
+                            break;
+#endif
 #ifdef CONFIG_GPS
                         case M_GPS:
                             state.ui_screen = MENU_GPS;
@@ -1886,6 +1896,30 @@ void ui_updateFSM(bool *sync_rtx)
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_TOP);
                 break;
+#ifdef CONFIG_M17
+            // History menu screen
+            case MENU_HISTORY:
+                if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                    // Using 1 as parameter disables menu wrap around
+                    _ui_menuUp(1);
+                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                {
+                    struct history history;
+                    if(history_read(&history, ui_state.menu_selected + 1) != -1)
+                        ui_state.menu_selected += 1;
+                }
+                else if(msg.long_press && msg.keys & KEY_ENTER)
+                {
+                    struct history history;
+                    history_read(&history, ui_state.menu_selected);
+                    strncpy(state.settings.m17_dest, history.callsign, 10);
+                    *sync_rtx = true;
+                    _ui_menuBack(MENU_TOP);
+                }
+                else if(msg.keys & KEY_ESC)
+                    _ui_menuBack(MENU_TOP);
+                break;
+#endif
 #ifdef CONFIG_GPS
             // GPS menu screen
             case MENU_GPS:
@@ -2323,6 +2357,22 @@ void ui_updateFSM(bool *sync_rtx)
                                 ui_state.edit_mode = !ui_state.edit_mode;
                             else if(msg.keys & KEY_ESC)
                                 ui_state.edit_mode = false;
+                        break;
+                        case M17_HISTORY:
+                            if(msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT ||
+                                (ui_state.edit_mode &&
+                                 (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT ||
+                                  msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)))
+                            {
+                                state.settings.history_enabled =
+                                    !state.settings.history_enabled;
+                            //rtx_setNotifications(state.settings.history_enabled);
+                            }
+                            else if(msg.keys & KEY_ENTER)
+                                ui_state.edit_mode = !ui_state.edit_mode;
+                            else if(msg.keys & KEY_ESC)
+                                ui_state.edit_mode = false;
+                            break;
                     }
                 }
                 else
@@ -2525,6 +2575,11 @@ bool ui_updateGUI()
         case MENU_CONTACTS:
             _ui_drawMenuContacts(&ui_state);
             break;
+#ifdef CONFIG_M17
+        case MENU_HISTORY:
+            _ui_drawMenuHistory(&ui_state); // fixed
+            break;
+#endif
 #ifdef CONFIG_GPS
         // GPS menu screen
         case MENU_GPS:
