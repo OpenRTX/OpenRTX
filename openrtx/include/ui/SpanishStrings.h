@@ -98,5 +98,6 @@ const stringsTable_t spanishStrings =
     .macroLatching     = "Macro Latching",
     .noGps             = "Ningún GPS",
     .batteryIcon       = "Icon de batteria",
+    .history           = "Historico",
 };
 #endif  // SPANISHSTRINGS_H
