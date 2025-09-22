@@ -38,6 +38,8 @@
 
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBottom();
+extern const char* _ui_getToneEnabledString(bool tone_tx_enable,
+                            bool tone_rx_enable, bool use_abbreviation);
 
 static char priorSelectedMenuName[MAX_ENTRY_LEN] = "\0";
 static char priorSelectedMenuValue[MAX_ENTRY_LEN] = "\0";
@@ -466,6 +468,13 @@ int _ui_getFMValueName(char* buf, uint8_t max_len, uint8_t index)
             sniprintf(buf, max_len, "%d.%d", (tone / 10), (tone % 10));
             break;
         }
+
+        case CTCSS_Enabled:
+            sniprintf(buf, max_len, "%s",
+                    _ui_getToneEnabledString(last_state.channel.fm.txToneEn,
+                                             last_state.channel.fm.rxToneEn,
+                                             false));
+            break;
     }
 
     return 0;
@@ -1139,16 +1148,11 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
         if (last_state.channel.mode == OPMODE_FM)
         {
             char encdec_str[9]  = {0};
-            bool tone_tx_enable = last_state.channel.fm.txToneEn;
-            bool tone_rx_enable = last_state.channel.fm.rxToneEn;
-            if (tone_tx_enable && tone_rx_enable)
-                sniprintf(encdec_str, 9, "  B ");
-            else if (tone_tx_enable && !tone_rx_enable)
-                sniprintf(encdec_str, 9, "  E ");
-            else if (!tone_tx_enable && tone_rx_enable)
-                sniprintf(encdec_str, 9, "  D ");
-            else
-                sniprintf(encdec_str, 9, "  N ");
+            sniprintf(encdec_str, 9, "  %s",
+                    _ui_getToneEnabledString(last_state.channel.fm.txToneEn,
+                                             last_state.channel.fm.rxToneEn,
+                                             true));
+
             gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
                       color_white, encdec_str);
             uint16_t tone = ctcss_tone[last_state.channel.fm.txTone];

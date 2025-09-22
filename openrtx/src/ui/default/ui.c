@@ -119,7 +119,7 @@ extern void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state);
 extern void _ui_drawSettingsRadio(ui_state_t* ui_state);
 extern bool _ui_drawMacroMenu(ui_state_t* ui_state);
 extern void _ui_reset_menu_anouncement_tracking();
-
+// TODO: get these from ui strings / currentLanguage
 const char *menu_items[] =
 {
     "Banks",
@@ -188,7 +188,8 @@ const char * settings_m17_items[] =
 
 const char* settings_fm_items[] =
 {
-    "CTCSS Tone"
+    "CTCSS Tone",
+    "CTCSS En."
 };
 
 const char * settings_accessibility_items[] =
@@ -890,6 +891,27 @@ static bool _ui_exitStandby(long long now)
     return true;
 }
 
+// TODO: find a better home for this function
+int _ui_handleToneSelectScroll(bool direction_up)
+{
+    bool tone_tx_enable = state.channel.fm.txToneEn;
+    bool tone_rx_enable = state.channel.fm.rxToneEn;
+    uint8_t tone_flags = tone_tx_enable << 1 | tone_rx_enable;
+
+    if(direction_up) 
+        tone_flags++;
+    else
+        tone_flags--;
+
+    tone_flags %= 4;
+    tone_tx_enable = tone_flags >> 1;
+    tone_rx_enable = tone_flags & 1;
+    state.channel.fm.txToneEn = tone_tx_enable;
+    state.channel.fm.rxToneEn = tone_rx_enable;
+
+    return 1;
+}
+
 static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
 {
     // If there is no keyboard left and right select the menu entry to edit
@@ -913,9 +935,6 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
     ui_state.input_number = input_getPressedNumber(msg);
 #endif // CONFIG_UI_NO_KEYBOARD
     // CTCSS Encode/Decode Selection
-    bool tone_tx_enable = state.channel.fm.txToneEn;
-    bool tone_rx_enable = state.channel.fm.rxToneEn;
-    uint8_t tone_flags = tone_tx_enable << 1 | tone_rx_enable;
     vpQueueFlags_t queueFlags = vp_getVoiceLevelQueueFlags();
 
     switch(ui_state.input_number)
@@ -923,12 +942,7 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
         case 1:
             if(state.channel.mode == OPMODE_FM)
             {
-                tone_flags++;
-                tone_flags %= 4;
-                tone_tx_enable            = tone_flags >> 1;
-                tone_rx_enable            = tone_flags & 1;
-                state.channel.fm.txToneEn = tone_tx_enable;
-                state.channel.fm.rxToneEn = tone_rx_enable;
+                _ui_handleToneSelectScroll(true);
                 *sync_rtx                 = true;
                 vp_announceCTCSS(
                     state.channel.fm.rxToneEn, state.channel.fm.rxTone,
@@ -2387,7 +2401,12 @@ void ui_updateFSM(bool *sync_rtx)
                                     state.channel.fm.txTone--;
                                 }
                             }
-
+                            else if (msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
+                            {
+                                state.channel.fm.txTone++;
+                            } else if (msg.keys & KEY_ENTER) {
+                                ui_state.edit_mode = false;
+                            }
                             state.channel.fm.txTone %= CTCSS_FREQ_NUM;
                             state.channel.fm.rxTone = state.channel.fm.txTone;
                             *sync_rtx = true;
@@ -2396,19 +2415,25 @@ void ui_updateFSM(bool *sync_rtx)
                                              state.channel.fm.txToneEn,
                                              state.channel.fm.txTone,
                                              queueFlags);
-
-                            if (msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
+                            break;
+                        case CTCSS_Enabled:
+                            if (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
                             {
-                                state.channel.fm.txTone++;
-                                state.channel.fm.txTone %= CTCSS_FREQ_NUM;
-                                state.channel.fm.rxTone = state.channel.fm.txTone;
-                                *sync_rtx = true;
-                                vp_announceCTCSS(state.channel.fm.rxToneEn,
-                                                 state.channel.fm.rxTone,
-                                                 state.channel.fm.txToneEn,
-                                                 state.channel.fm.txTone,
-                                                 queueFlags);
+                                _ui_handleToneSelectScroll(true);
+                            } else if (msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
+                            {
+                                _ui_handleToneSelectScroll(false);
+                            } else if (msg.keys & KEY_ENTER) {
+                                ui_state.edit_mode = false;
                             }
+
+                            *sync_rtx = true;
+                            vp_announceCTCSS(state.channel.fm.rxToneEn,
+                                             state.channel.fm.rxTone,
+                                             state.channel.fm.txToneEn,
+                                             state.channel.fm.txTone,
+                                             queueFlags | vpqIncludeDescriptions);
+                            break;
                     }
                 }
                 else if (msg.keys & KEY_UP || msg.keys & KNOB_LEFT)

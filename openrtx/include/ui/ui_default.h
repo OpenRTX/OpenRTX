@@ -157,7 +157,8 @@ enum settingsM17Items
 
 enum settingsFMItems
 {
-    CTCSS_Tone
+    CTCSS_Tone,
+    CTCSS_Enabled
 };
 
 /**

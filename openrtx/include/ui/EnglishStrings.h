@@ -98,5 +98,10 @@ const stringsTable_t englishStrings =
     .noGps             = "No GPS",
     .batteryIcon       = "Battery Icon",
     .CTCSSTone         = "CTCSS Frequency",
+    .CTCSSEn           = "CTCSS En.",
+    .Encode            = "Encode",
+    .Decode            = "Decode",
+    .Both              = "Both",
+    .None              = "None"
 };
 #endif  // ENGLISHSTRINGS_H

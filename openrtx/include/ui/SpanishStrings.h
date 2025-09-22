@@ -99,5 +99,10 @@ const stringsTable_t spanishStrings =
     .noGps             = "Ningún GPS",
     .batteryIcon       = "Icon de batteria",
     .CTCSSTone         = "Tono CTCSS",
+    .CTCSSEn           = "CTCSS En.",
+    .Encode            = "Codificar",
+    .Decode            = "Decodificar",
+    .Both              = "Ambos",
+    .None              = "Ni"
 };
 #endif  // SPANISHSTRINGS_H

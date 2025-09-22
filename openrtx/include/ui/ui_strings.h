@@ -102,6 +102,11 @@ typedef struct
     const char* noGps;
     const char* batteryIcon;
     const char* CTCSSTone;
+    const char* CTCSSEn;
+    const char* Encode;
+    const char* Decode;
+    const char* Both;
+    const char* None;
 }
 stringsTable_t;
 
