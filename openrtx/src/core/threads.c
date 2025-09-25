@@ -104,9 +104,6 @@ void *ui_threadFunc(void *arg)
             strncpy(rtx_cfg.source_address,      state.settings.callsign, 10);
             strncpy(rtx_cfg.destination_address, state.settings.m17_dest, 10);
 
-            // Copy over rxSweep data to avoid it being overwritten
-            rtx_cfg.rxSweep_data = rtx_getCurrentStatus().rxSweep_data;
-
             
             pthread_mutex_unlock(&rtx_mutex);
             rtx_configure(&rtx_cfg);

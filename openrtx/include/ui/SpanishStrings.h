@@ -104,6 +104,8 @@ const stringsTable_t spanishStrings =
     .Decode            = "Decodificar",
     .Both              = "Ambos",
     .None              = "Ni",
+    #ifdef CONFIG_SPECTRUM
     .spectrum          = "Espectro"
+    #endif
 };
 #endif  // SPANISHSTRINGS_H
