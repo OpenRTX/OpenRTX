@@ -106,6 +106,8 @@ const stringsTable_t englishStrings =
     .direction         = "Direction",
     .step              = "Step",
     .radio             = "Radio",
+    #ifdef CONFIG_SPECTRUM
     .spectrum          = "Spectrum"
+    #endif
 };
 #endif  // ENGLISHSTRINGS_H

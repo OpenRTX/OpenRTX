@@ -110,7 +110,9 @@ typedef struct
     const char* direction;
     const char* step;
     const char* radio;
+    #ifdef CONFIG_SPECTRUM
     const char* spectrum;
+    #endif
 }
 stringsTable_t;
 
