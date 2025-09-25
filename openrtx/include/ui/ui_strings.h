@@ -107,6 +107,9 @@ typedef struct
     const char* Decode;
     const char* Both;
     const char* None;
+    #ifdef CONFIG_SPECTRUM
+    const char* spectrum;
+    #endif
 }
 stringsTable_t;
 

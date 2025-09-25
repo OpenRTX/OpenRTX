@@ -102,6 +102,9 @@ const stringsTable_t englishStrings =
     .Encode            = "Encode",
     .Decode            = "Decode",
     .Both              = "Both",
-    .None              = "None"
+    .None              = "None",
+    #ifdef CONFIG_SPECTRUM
+    .spectrum          = "Spectrum"
+    #endif
 };
 #endif  // ENGLISHSTRINGS_H
