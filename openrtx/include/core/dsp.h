@@ -73,15 +73,6 @@ static inline void dsp_removeDcOffset(struct dcBlock *dcb, int16_t *buffer,
         buffer[i] = dsp_dcBlockFilter(dcb, buffer[i]);
 }
 
-/*
- * Inverts the phase of the audio buffer passed as paramenter.
- * The buffer will be processed in place to save memory.
- *
- * @param buffer: the buffer to be used as both source and destination.
- * @param length: the length of the input buffer.
- */
-void dsp_invertPhase(audio_sample_t *buffer, uint16_t length);
-
 #ifdef __cplusplus
 }
 #endif // __cplusplus

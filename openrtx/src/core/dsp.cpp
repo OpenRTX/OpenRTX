@@ -37,11 +37,3 @@ int16_t dsp_dcBlockFilter(struct dcBlock *dcb, int16_t sample)
 
     return static_cast<int16_t>(dcb->prevOut);
 }
-
-void dsp_invertPhase(audio_sample_t *buffer, uint16_t length)
-{
-    for(uint16_t i = 0; i < length; i++)
-    {
-        buffer[i] = -buffer[i];
-    }
-}
