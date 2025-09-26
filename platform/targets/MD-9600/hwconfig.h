@@ -21,7 +21,7 @@
 #ifndef HWCONFIG_H
 #define HWCONFIG_H
 
-#include <stm32f4xx.h>
+#include "stm32f4xx.h"
 #include "pinmap.h"
 
 #ifdef __cplusplus

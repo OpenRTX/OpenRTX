@@ -20,10 +20,10 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <M17/M17Demodulator.hpp>
-#include <M17/M17DSP.hpp>
-#include <M17/M17Utils.hpp>
-#include <audio_stream.h>
+#include "protocols/M17/M17Demodulator.hpp"
+#include "protocols/M17/M17DSP.hpp"
+#include "protocols/M17/M17Utils.hpp"
+#include "core/audio_stream.h"
 #include <math.h>
 #include <cstring>
 #include <stdio.h>
@@ -32,10 +32,10 @@ using namespace M17;
 
 #ifdef ENABLE_DEMOD_LOG
 
-#include <ringbuf.hpp>
+#include "core/ringbuf.hpp"
 #include <atomic>
 #ifndef PLATFORM_LINUX
-#include <usb_vcom.h>
+#include "drivers/USB/usb_vcom.h"
 #endif
 
 typedef struct

@@ -21,9 +21,9 @@
 #ifndef RTX_H
 #define RTX_H
 
-#include <datatypes.h>
+#include "core/datatypes.h"
 #include <stdint.h>
-#include <cps.h>
+#include "core/cps.h"
 #include <pthread.h>
 
 #ifdef __cplusplus

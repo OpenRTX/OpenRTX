@@ -18,26 +18,26 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <hwconfig.h>
+#include "hwconfig.h"
 #include <pthread.h>
-#include <ui.h>
-#include <state.h>
-#include <threads.h>
-#include <graphics.h>
-#include <interfaces/platform.h>
-#include <interfaces/delays.h>
-#include <interfaces/radio.h>
-#include <event.h>
-#include <rtx.h>
+#include "core/ui.h"
+#include "core/state.h"
+#include "core/threads.h"
+#include "core/graphics.h"
+#include "interfaces/platform.h"
+#include "interfaces/delays.h"
+#include "interfaces/radio.h"
+#include "core/event.h"
+#include "rtx/rtx.h"
 #include <string.h>
-#include <utils.h>
-#include <input.h>
-#include <backup.h>
-#include <gps.h>
-#include <voicePrompts.h>
+#include "core/utils.h"
+#include "core/input.h"
+#include "core/backup.h"
+#include "core/gps.h"
+#include "core/voicePrompts.h"
 
 #if defined(PLATFORM_TTWRPLUS)
-#include <pmu.h>
+#include "pmu.h"
 #endif
 
 /* Mutex for concurrent access to RTX state variable */

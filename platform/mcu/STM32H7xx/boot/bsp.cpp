@@ -21,7 +21,7 @@
 * Board support package, this file initializes hardware.
 ************************************************************************/
 
-#include <interfaces/bsp.h>
+#include "interfaces/bsp.h"
 #include <kernel/kernel.h>
 #include <kernel/sync.h>
 #include "stm32h743xx.h"

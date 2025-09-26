@@ -17,8 +17,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <peripherals/rtc.h>
-#include <stm32f4xx.h>
+#include "peripherals/rtc.h"
+#include "stm32f4xx.h"
 
 void rtc_init()
 {

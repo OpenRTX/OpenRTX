@@ -20,11 +20,11 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <graphics.h>
-#include <hwconfig.h>
-#include <interfaces/platform.h>
-#include <interfaces/delays.h>
-#include <interfaces/display.h>
+#include "core/graphics.h"
+#include "hwconfig.h"
+#include "interfaces/platform.h"
+#include "interfaces/delays.h"
+#include "interfaces/display.h"
 
 int main(void)
 {

@@ -18,8 +18,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/nvmem.h>
-#include <nvmem_access.h>
+#include "interfaces/nvmem.h"
+#include "core/nvmem_access.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <errno.h>

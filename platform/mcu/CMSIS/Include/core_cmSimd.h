@@ -66,11 +66,11 @@
 
 /*------------------ ICC Compiler ----------------------*/
 #elif defined ( __ICCARM__ )
-  #include <cmsis_iar.h>
+  #include "cmsis_iar.h"
 
 /*------------------ TI CCS Compiler -------------------*/
 #elif defined ( __TMS470__ )
-  #include <cmsis_ccs.h>
+  #include "cmsis_ccs.h"
 
 /*------------------ TASKING Compiler ------------------*/
 #elif defined ( __TASKING__ )
@@ -82,7 +82,7 @@
 
 /*------------------ COSMIC Compiler -------------------*/
 #elif defined ( __CSMC__ )
-  #include <cmsis_csm.h>
+  #include "cmsis_csm.h"
 
 #endif
 

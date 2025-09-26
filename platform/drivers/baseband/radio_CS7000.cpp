@@ -15,21 +15,21 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/nvmem.h>
-#include <interfaces/radio.h>
-#include <interfaces/delays.h>
-#include <peripherals/gpio.h>
-#include <peripherals/adc.h>
-#include <calibInfo_CS7000.h>
-#include <spi_bitbang.h>
-#include <ctcssDetector.hpp>
-#include <stm32_adc.h>
-#include <hwconfig.h>
+#include "interfaces/nvmem.h"
+#include "interfaces/radio.h"
+#include "interfaces/delays.h"
+#include "peripherals/gpio.h"
+#include "peripherals/adc.h"
+#include "calibration/calibInfo_CS7000.h"
+#include "drivers/SPI/spi_bitbang.h"
+#include "core/ctcssDetector.hpp"
+#include "drivers/audio/stm32_adc.h"
+#include "hwconfig.h"
 #include <algorithm>
-#include <utils.h>
-#include "HR_C6000.h"
-#include "SKY72310.h"
-#include "AK2365A.h"
+#include "core/utils.h"
+#include "drivers/baseband/HR_C6000.h"
+#include "drivers/baseband/SKY72310.h"
+#include "drivers/baseband/AK2365A.h"
 
 #ifdef PLATFORM_CS7000P
 #define DAC     DAC1

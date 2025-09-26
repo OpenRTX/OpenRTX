@@ -21,7 +21,7 @@
 #ifndef POSIX_FILE_H
 #define POSIX_FILE_H
 
-#include <interfaces/nvmem.h>
+#include "interfaces/nvmem.h"
 
 /**
  * Device driver for file-based nonvolatile memory storage. The driver

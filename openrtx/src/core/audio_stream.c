@@ -18,7 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <audio_stream.h>
+#include "core/audio_stream.h"
 #include <errno.h>
 
 #define MAX_NUM_STREAMS 3

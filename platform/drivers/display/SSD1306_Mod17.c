@@ -23,11 +23,11 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include <peripherals/gpio.h>
-#include <interfaces/display.h>
-#include <interfaces/delays.h>
-#include <hwconfig.h>
-#include <spi_stm32.h>
+#include "peripherals/gpio.h"
+#include "interfaces/display.h"
+#include "interfaces/delays.h"
+#include "hwconfig.h"
+#include "drivers/SPI/spi_stm32.h"
 
 extern const struct spiDevice spi2;
 

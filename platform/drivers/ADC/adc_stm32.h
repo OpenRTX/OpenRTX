@@ -18,7 +18,7 @@
 #ifndef ADC_STM32_H
 #define ADC_STM32_H
 
-#include <peripherals/adc.h>
+#include "peripherals/adc.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -23,10 +23,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <SDL2/SDL.h>
+#include "SDL2/SDL.h"
 
-#include <readline/readline.h>
-#include <readline/history.h>
+#include "readline/readline.h"
+#include "readline/history.h"
 
 #include "emulator.h"
 #include "sdl_engine.h"

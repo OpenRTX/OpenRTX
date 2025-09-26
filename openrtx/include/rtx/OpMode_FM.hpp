@@ -21,7 +21,7 @@
 #ifndef OPMODE_FM_H
 #define OPMODE_FM_H
 
-#include <audio_path.h>
+#include "core/audio_path.h"
 #include "OpMode.hpp"
 
 /**

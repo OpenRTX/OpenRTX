@@ -15,7 +15,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <HR_C6000.h>
+#include "drivers/baseband/HR_C6000.h"
 #include <pthread.h>
 #include <errno.h>
 #include "Cx000_dac.h"

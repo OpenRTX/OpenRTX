@@ -20,9 +20,9 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include <interfaces/keyboard.h>
-#include <emulator/sdl_engine.h>
-#include <emulator/emulator.h>
+#include "interfaces/keyboard.h"
+#include "emulator/sdl_engine.h"
+#include "emulator/emulator.h"
 
 void kbd_init()
 {

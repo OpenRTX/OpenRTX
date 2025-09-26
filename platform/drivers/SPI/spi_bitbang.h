@@ -21,8 +21,8 @@
 #ifndef SPI_BITBANG_H
 #define SPI_BITBANG_H
 
-#include <peripherals/gpio.h>
-#include <peripherals/spi.h>
+#include "peripherals/gpio.h"
+#include "peripherals/spi.h"
 #include "spi_custom.h"
 
 #ifdef __cplusplus

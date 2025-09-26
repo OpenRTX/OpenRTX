@@ -15,12 +15,12 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <peripherals/gpio.h>
-#include <interfaces/display.h>
-#include <interfaces/delays.h>
-#include <interfaces/platform.h>
-#include <backlight.h>
-#include <hwconfig.h>
+#include "peripherals/gpio.h"
+#include "interfaces/display.h"
+#include "interfaces/delays.h"
+#include "interfaces/platform.h"
+#include "drivers/backlight/backlight.h"
+#include "hwconfig.h"
 #include <string.h>
 
 enum ST775RCmd

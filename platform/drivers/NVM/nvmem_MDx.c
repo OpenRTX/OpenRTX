@@ -18,14 +18,14 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/nvmem.h>
-#include <interfaces/delays.h>
-#include <calibInfo_MDx.h>
-#include <nvmem_access.h>
-#include <spi_stm32.h>
+#include "interfaces/nvmem.h"
+#include "interfaces/delays.h"
+#include "calibration/calibInfo_MDx.h"
+#include "core/nvmem_access.h"
+#include "drivers/SPI/spi_stm32.h"
 #include <string.h>
-#include <wchar.h>
-#include <utils.h>
+#include "wchar.h"
+#include "core/utils.h"
 #include "W25Qx.h"
 
 #define SECREG_READ(dev, offs, data, len) \

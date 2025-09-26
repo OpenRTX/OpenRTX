@@ -21,10 +21,10 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/uart.h>
 #include <zephyr/kernel.h>
-#include <interfaces/delays.h>
+#include "interfaces/delays.h"
 #include <string.h>
 #include <stdio.h>
-#include "SA8x8.h"
+#include "drivers/baseband/SA8x8.h"
 
 /*
  * Minimum required version of sa868-fw

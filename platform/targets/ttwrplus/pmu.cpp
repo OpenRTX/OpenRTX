@@ -19,14 +19,14 @@
 
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/i2c.h>
-#include <interfaces/delays.h>
-#include <interfaces/keyboard.h>
-#include <hwconfig.h>
+#include "interfaces/delays.h"
+#include "interfaces/keyboard.h"
+#include "hwconfig.h"
 #include "pmu.h"
 
 // PMU is controlled through the XPowersLib external library
 #define XPOWERS_CHIP_AXP2101
-#include <XPowersLib.h>
+#include "XPowersLib.h"
 
 
 #if DT_NODE_HAS_STATUS(DT_ALIAS(i2c_0), okay)

@@ -19,8 +19,8 @@
  ***************************************************************************/
 
 #include <stdio.h>
-#include <interfaces/platform.h>
-#include <interfaces/delays.h>
+#include "interfaces/platform.h"
+#include "interfaces/delays.h"
 
 int main()
 {

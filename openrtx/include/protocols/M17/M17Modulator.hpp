@@ -25,10 +25,10 @@
 #error This header is C++ only!
 #endif
 
-#include <audio_stream.h>
-#include <M17/PwmCompensator.hpp>
-#include <M17/M17Constants.hpp>
-#include <audio_path.h>
+#include "core/audio_stream.h"
+#include "protocols/M17/PwmCompensator.hpp"
+#include "protocols/M17/M17Constants.hpp"
+#include "core/audio_path.h"
 #include <cstdint>
 #include <memory>
 #include <array>

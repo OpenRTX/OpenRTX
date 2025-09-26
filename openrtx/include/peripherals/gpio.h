@@ -20,7 +20,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <gpio-native.h>
+#include "drivers/GPIO/gpio-native.h"
 
 #ifdef __cplusplus
 extern "C" {

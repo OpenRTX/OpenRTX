@@ -20,7 +20,7 @@
 #ifndef RTC_H
 #define RTC_H
 
-#include <datetime.h>
+#include "core/datetime.h"
 #include <stdint.h>
 
 /**

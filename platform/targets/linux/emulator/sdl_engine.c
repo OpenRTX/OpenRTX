@@ -17,7 +17,7 @@
 
 #include <stdlib.h>
 #include <pthread.h>
-#include <state.h>
+#include "core/state.h"
 #include "sdl_engine.h"
 #include "emulator.h"
 

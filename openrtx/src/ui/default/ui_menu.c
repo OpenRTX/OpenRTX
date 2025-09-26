@@ -22,18 +22,18 @@
 #include <string.h>
 #include <stdlib.h>
 #include <inttypes.h>
-#include <utils.h>
-#include <ui/ui_default.h>
-#include <interfaces/nvmem.h>
-#include <interfaces/cps_io.h>
-#include <interfaces/platform.h>
-#include <interfaces/delays.h>
-#include <memory_profiling.h>
-#include <ui/ui_strings.h>
-#include <core/voicePromptUtils.h>
+#include "core/utils.h"
+#include "ui/ui_default.h"
+#include "interfaces/nvmem.h"
+#include "interfaces/cps_io.h"
+#include "interfaces/platform.h"
+#include "interfaces/delays.h"
+#include "core/memory_profiling.h"
+#include "ui/ui_strings.h"
+#include "core/voicePromptUtils.h"
 
 #ifdef PLATFORM_TTWRPLUS
-#include <SA8x8.h>
+#include "drivers/baseband/SA8x8.h"
 #endif
 
 /* UI main screen helper functions, their implementation is in "ui_main.c" */

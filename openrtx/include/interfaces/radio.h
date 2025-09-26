@@ -23,7 +23,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <rtx.h>
+#include "rtx/rtx.h"
 
 #ifdef __cplusplus
 extern "C" {

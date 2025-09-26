@@ -18,7 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/radio.h>
+#include "interfaces/radio.h"
 
 void radio_init(const rtxStatus_t *rtxState)
 {

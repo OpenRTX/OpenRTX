@@ -15,17 +15,17 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <gpio_shiftReg.h>
-#include <spi_bitbang.h>
-#include <spi_custom.h>
-#include <spi_stm32.h>
-#include <adc_stm32.h>
-#include <gps_stm32.h>
-#include <hwconfig.h>
+#include "drivers/GPIO/gpio_shiftReg.h"
+#include "drivers/SPI/spi_bitbang.h"
+#include "drivers/SPI/spi_custom.h"
+#include "drivers/SPI/spi_stm32.h"
+#include "drivers/ADC/adc_stm32.h"
+#include "drivers/GPS/gps_stm32.h"
+#include "hwconfig.h"
 #include <pthread.h>
-#include <SKY72310.h>
-#include <AK2365A.h>
-#include <gps.h>
+#include "drivers/baseband/SKY72310.h"
+#include "drivers/baseband/AK2365A.h"
+#include "core/gps.h"
 
 /**
  * SPI bitbang function for SN74HC595 gpio extender.

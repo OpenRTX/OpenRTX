@@ -21,7 +21,7 @@
 #ifndef FLASH_ZEPHYR_H
 #define FLASH_ZEPHYR_H
 
-#include <interfaces/nvmem.h>
+#include "interfaces/nvmem.h"
 
 /**
  * Wrapper interface for the Zephyr RTOS flash memory device driver.

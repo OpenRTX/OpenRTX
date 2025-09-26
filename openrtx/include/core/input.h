@@ -20,7 +20,7 @@
 #ifndef INPUT_H
 #define INPUT_H
 
-#include <interfaces/keyboard.h>
+#include "interfaces/keyboard.h"
 #include <inttypes.h>
 #include <stdbool.h>
 

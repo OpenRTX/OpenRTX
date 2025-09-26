@@ -28,7 +28,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <goertzel.hpp>
+#include "core/goertzel.hpp"
 
 /*
  * Goertzel filter coefficients for the 50 CTCSS tones, computed for a sampling

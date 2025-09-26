@@ -15,9 +15,9 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <peripherals/gpio.h>
-#include <hwconfig.h>
+#include "interfaces/platform.h"
+#include "peripherals/gpio.h"
+#include "hwconfig.h"
 #include "backlight.h"
 
 void backlight_init()

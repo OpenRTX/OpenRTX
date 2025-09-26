@@ -22,7 +22,7 @@
 #define DMA_STREAM_H
 
 #include <kernel/scheduler/scheduler.h>
-#include <stm32f4xx.h>
+#include "stm32f4xx.h"
 #include <miosix.h>
 
 /**

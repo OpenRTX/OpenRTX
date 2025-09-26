@@ -24,8 +24,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <sys/types.h>
-#include <audio_path.h>
-#include <interfaces/audio.h>
+#include "core/audio_path.h"
+#include "interfaces/audio.h"
 
 #ifdef __cplusplus
 extern "C" {

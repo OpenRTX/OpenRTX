@@ -17,10 +17,10 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <graphics.h>
-#include <interfaces/platform.h>
-#include <interfaces/display.h>
-#include <interfaces/delays.h>
+#include "core/graphics.h"
+#include "interfaces/platform.h"
+#include "interfaces/display.h"
+#include "interfaces/delays.h"
 
 int main()
 {

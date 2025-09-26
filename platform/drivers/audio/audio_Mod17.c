@@ -18,9 +18,9 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/audio.h>
-#include <peripherals/gpio.h>
-#include <hwconfig.h>
+#include "interfaces/audio.h"
+#include "peripherals/gpio.h"
+#include "hwconfig.h"
 #include "MAX9814.h"
 #include "stm32_dac.h"
 #include "stm32_adc.h"

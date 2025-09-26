@@ -18,13 +18,13 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <peripherals/gpio.h>
-#include <hwconfig.h>
-#include <spi_stm32.h>
-#include <adc_stm32.h>
-#include <gps_stm32.h>
+#include "peripherals/gpio.h"
+#include "hwconfig.h"
+#include "drivers/SPI/spi_stm32.h"
+#include "drivers/ADC/adc_stm32.h"
+#include "drivers/GPS/gps_stm32.h"
 #include <pthread.h>
-#include <gps.h>
+#include "core/gps.h"
 
 static void gpsEnable(void *priv)
 {

@@ -20,7 +20,7 @@
 
 #include "I2C0.h"
 #include <pthread.h>
-#include <MK22F51212.h>
+#include "MK22F51212.h"
 
 pthread_mutex_t mutex;
 

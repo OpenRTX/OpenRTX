@@ -23,7 +23,7 @@
 #include <thread>
 #include <vector>
 
-#include "audio_stream.h"
+#include "core/audio_stream.h"
 
 static const char* files[] = {"MIC.raw", "RTX.raw", "MCU.raw"};
 

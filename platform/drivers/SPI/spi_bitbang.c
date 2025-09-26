@@ -18,7 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/delays.h>
+#include "interfaces/delays.h"
 #include "spi_bitbang.h"
 
 uint8_t spiBitbang_sendRecv(const void *priv, uint8_t data)

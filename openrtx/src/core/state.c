@@ -18,17 +18,17 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <ui.h>
+#include "core/ui.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <event.h>
-#include <state.h>
-#include <battery.h>
-#include <hwconfig.h>
-#include <interfaces/platform.h>
-#include <interfaces/nvmem.h>
-#include <interfaces/delays.h>
+#include "core/event.h"
+#include "core/state.h"
+#include "core/battery.h"
+#include "hwconfig.h"
+#include "interfaces/platform.h"
+#include "interfaces/nvmem.h"
+#include "interfaces/delays.h"
 
 state_t state;
 pthread_mutex_t state_mutex;

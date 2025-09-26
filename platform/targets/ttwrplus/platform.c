@@ -17,18 +17,18 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <interfaces/delays.h>
-#include <gps_zephyr.h>
-#include <hwconfig.h>
-#include <gps.h>
+#include "interfaces/platform.h"
+#include "interfaces/delays.h"
+#include "drivers/GPS/gps_zephyr.h"
+#include "hwconfig.h"
+#include "core/gps.h"
 
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/drivers/uart.h>
 #include <zephyr/drivers/led_strip.h>
-#include <SA8x8.h>
-#include <pmu.h>
+#include "drivers/baseband/SA8x8.h"
+#include "pmu.h"
 
 #define BUTTON_PTT_NODE DT_NODELABEL(button_ptt)
 

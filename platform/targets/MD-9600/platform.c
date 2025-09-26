@@ -18,22 +18,22 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <peripherals/gpio.h>
-#include <interfaces/nvmem.h>
-#include <interfaces/platform.h>
-#include <interfaces/delays.h>
-#include <backlight.h>
-#include <hwconfig.h>
+#include "peripherals/gpio.h"
+#include "interfaces/nvmem.h"
+#include "interfaces/platform.h"
+#include "interfaces/delays.h"
+#include "drivers/backlight/backlight.h"
+#include "hwconfig.h"
 #include <string.h>
-#include <adc_stm32.h>
-#include <calibInfo_MDx.h>
-#include <toneGenerator_MDx.h>
-#include <peripherals/rtc.h>
-#include <interfaces/audio.h>
-#include <spi_stm32.h>
-#include <gps_stm32.h>
-#include <chSelector.h>
-#include <gps.h>
+#include "drivers/ADC/adc_stm32.h"
+#include "calibration/calibInfo_MDx.h"
+#include "drivers/tones/toneGenerator_MDx.h"
+#include "peripherals/rtc.h"
+#include "interfaces/audio.h"
+#include "drivers/SPI/spi_stm32.h"
+#include "drivers/GPS/gps_stm32.h"
+#include "drivers/chSelector/chSelector.h"
+#include "core/gps.h"
 
 /* TODO: Hardcoded hwInfo until we implement reading from flash */
 static const hwInfo_t hwInfo =

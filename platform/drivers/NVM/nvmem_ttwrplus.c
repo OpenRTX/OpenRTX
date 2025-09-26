@@ -20,7 +20,7 @@
 
 #include <zephyr/storage/flash_map.h>
 #include <zephyr/drivers/flash.h>
-#include <interfaces/nvmem.h>
+#include "interfaces/nvmem.h"
 #include "flash_zephyr.h"
 
 ZEPHYR_FLASH_DEVICE_DEFINE(eflash, flash, FIXED_PARTITION_SIZE(storage_partition));

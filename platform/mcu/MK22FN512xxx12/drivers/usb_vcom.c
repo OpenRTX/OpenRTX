@@ -28,11 +28,11 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <peripherals/gpio.h>
+#include "peripherals/gpio.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <MK22F51212.h>
+#include "MK22F51212.h"
 
 #include "usb/usb.h"
 #include "usb_vcom.h"

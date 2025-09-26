@@ -20,7 +20,7 @@
 #ifndef GPS_H
 #define GPS_H
 
-#include <datetime.h>
+#include "core/datetime.h"
 #include <stddef.h>
 #include <stdint.h>
 
