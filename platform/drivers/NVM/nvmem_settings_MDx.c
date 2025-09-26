@@ -18,10 +18,10 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/nvmem.h>
+#include "interfaces/nvmem.h"
 #include <string.h>
-#include <cps.h>
-#include <crc.h>
+#include "core/cps.h"
+#include "core/crc.h"
 #include "flash.h"
 
 /*

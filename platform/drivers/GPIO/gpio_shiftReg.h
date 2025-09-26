@@ -18,8 +18,8 @@
 #ifndef GPIO_SHIFTREG_H
 #define GPIO_SHIFTREG_H
 
-#include <peripherals/gpio.h>
-#include <peripherals/spi.h>
+#include "peripherals/gpio.h"
+#include "peripherals/spi.h"
 #include <stdint.h>
 
 #ifdef __cplusplus

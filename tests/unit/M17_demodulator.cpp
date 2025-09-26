@@ -26,10 +26,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <M17/M17DSP.h>
-#include <M17/M17Demodulator.h>
-#include <M17/M17Utils.h>
-#include <audio_stream.h>
+#include "protocols/M17/M17DSP.h"
+#include "protocols/M17/M17Demodulator.h"
+#include "protocols/M17/M17Utils.h"
+#include "core/audio_stream.h"
 
 using namespace std;
 

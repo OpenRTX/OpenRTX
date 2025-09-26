@@ -24,8 +24,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <datatypes.h>
-#include <peripherals/i2c.h>
+#include "core/datatypes.h"
+#include "peripherals/i2c.h"
 
 #ifdef __cplusplus
 extern "C" {

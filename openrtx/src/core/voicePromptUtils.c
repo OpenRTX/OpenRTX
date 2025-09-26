@@ -25,14 +25,14 @@
 
 #include "core/voicePromptUtils.h"
 
-#include <state.h>
+#include "core/state.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <utils.h>
+#include "core/utils.h"
 #include <inttypes.h>
-#include <ui/ui_default.h>
-#include <beeps.h>
+#include "ui/ui_default.h"
+#include "core/beeps.h"
 #include "interfaces/cps_io.h"
 
 const uint16_t BOOT_MELODY[] = {400, 3, 600, 3, 800, 3, 0, 0};

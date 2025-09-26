@@ -21,12 +21,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <interfaces/delays.h>
-#include <interfaces/audio.h>
-#include <audio_path.h>
-#include <audio_stream.h>
-#include <interfaces/platform.h>
-#include <dsp.h>
+#include "interfaces/delays.h"
+#include "interfaces/audio.h"
+#include "core/audio_path.h"
+#include "core/audio_stream.h"
+#include "interfaces/platform.h"
+#include "core/dsp.h"
 
 int main()
 {

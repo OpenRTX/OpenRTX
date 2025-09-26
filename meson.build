@@ -68,24 +68,7 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/protocols/M17/M17FrameDecoder.cpp',
                'openrtx/src/protocols/M17/M17LinkSetupFrame.cpp']
 
-openrtx_inc = ['openrtx/include',
-               'openrtx/include/rtx',
-               'openrtx/include/core',
-               'openrtx/include/calibration',
-               'openrtx/include/protocols',
-               'openrtx/include/fonts/adafruit',
-               'openrtx/include/fonts/symbols',
-               'platform/drivers/ADC',
-               'platform/drivers/NVM',
-               'platform/drivers/GPS',
-               'platform/drivers/SPI',
-               'platform/drivers/USB',
-               'platform/drivers/GPIO',
-               'platform/drivers/tones',
-               'platform/drivers/audio',
-               'platform/drivers/baseband',
-               'platform/drivers/backlight',
-               'platform/drivers/chSelector']
+openrtx_inc = ['openrtx/include', 'platform']
 
 ##
 ## OpenRTX UI sources

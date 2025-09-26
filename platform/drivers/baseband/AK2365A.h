@@ -18,8 +18,8 @@
 #ifndef AK2365A_H
 #define AK2365A_H
 
-#include <peripherals/gpio.h>
-#include <peripherals/spi.h>
+#include "peripherals/gpio.h"
+#include "peripherals/spi.h"
 #include <stdint.h>
 #include <stdbool.h>
 

@@ -15,11 +15,11 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <calibration/calibInfo_Mod17.h>
-#include <interfaces/platform.h>
-#include <interfaces/nvmem.h>
+#include "calibration/calibInfo_Mod17.h"
+#include "interfaces/platform.h"
+#include "interfaces/nvmem.h"
 #include <stdio.h>
-#include <gps.h>
+#include "core/gps.h"
 #include "emulator.h"
 
 /*

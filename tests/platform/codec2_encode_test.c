@@ -18,18 +18,18 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <audio_stream.h>
-#include <audio_path.h>
-#include <interfaces/platform.h>
-#include <interfaces/delays.h>
-#include <memory_profiling.h>
-#include <interfaces/audio.h>
+#include "core/audio_stream.h"
+#include "core/audio_path.h"
+#include "interfaces/platform.h"
+#include "interfaces/delays.h"
+#include "core/memory_profiling.h"
+#include "interfaces/audio.h"
 #include <pthread.h>
-#include <codec2.h>
+#include "codec2.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <dsp.h>
+#include "core/dsp.h"
 
 static const size_t audioBufSize = 320;
 static const size_t dataBufSize = 2 * 1024;

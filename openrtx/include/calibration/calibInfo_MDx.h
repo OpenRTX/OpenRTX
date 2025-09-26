@@ -21,7 +21,7 @@
 #ifndef CALIBINFO_MDX_H
 #define CALIBINFO_MDX_H
 
-#include <datatypes.h>
+#include "core/datatypes.h"
 #include <stdint.h>
 
 /**

@@ -18,17 +18,17 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <interfaces/keyboard.h>
-#include <interfaces/display.h>
-#include <interfaces/delays.h>
-#include <interfaces/cps_io.h>
-#include <voicePrompts.h>
-#include <graphics.h>
-#include <openrtx.h>
-#include <threads.h>
-#include <state.h>
-#include <ui.h>
+#include "interfaces/platform.h"
+#include "interfaces/keyboard.h"
+#include "interfaces/display.h"
+#include "interfaces/delays.h"
+#include "interfaces/cps_io.h"
+#include "core/voicePrompts.h"
+#include "core/graphics.h"
+#include "core/openrtx.h"
+#include "core/threads.h"
+#include "core/state.h"
+#include "core/ui.h"
 #ifdef PLATFORM_LINUX
 #include <stdlib.h>
 #endif

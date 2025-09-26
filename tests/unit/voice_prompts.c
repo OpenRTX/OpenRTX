@@ -22,8 +22,8 @@
 // Test private methods
 #define private public
 
-#include <state.h>
-#include <voicePromptUtils.h>
+#include "core/state.h"
+#include "core/voicePromptUtils.h"
 
 /**
  * Test voice prompts playback

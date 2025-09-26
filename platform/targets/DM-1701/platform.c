@@ -18,21 +18,21 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <peripherals/gpio.h>
-#include <hwconfig.h>
+#include "interfaces/platform.h"
+#include "peripherals/gpio.h"
+#include "hwconfig.h"
 #include <string.h>
-#include <calibInfo_MDx.h>
-#include <interfaces/nvmem.h>
-#include <toneGenerator_MDx.h>
-#include <peripherals/rtc.h>
-#include <interfaces/audio.h>
-#include <chSelector.h>
-#include <adc_stm32.h>
-#include <Cx000_dac.h>
+#include "calibration/calibInfo_MDx.h"
+#include "interfaces/nvmem.h"
+#include "drivers/tones/toneGenerator_MDx.h"
+#include "peripherals/rtc.h"
+#include "interfaces/audio.h"
+#include "drivers/chSelector/chSelector.h"
+#include "drivers/ADC/adc_stm32.h"
+#include "drivers/audio/Cx000_dac.h"
 
 #ifdef ENABLE_BKLIGHT_DIMMING
-#include <backlight.h>
+#include "drivers/backlight/backlight.h"
 #endif
 
 static const hwInfo_t hwInfo =

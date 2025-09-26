@@ -15,8 +15,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/delays.h>
-#include "AK2365A.h"
+#include "interfaces/delays.h"
+#include "drivers/baseband/AK2365A.h"
 
 
 static inline void writeReg(const struct ak2365a *dev, uint8_t reg, uint8_t value)

@@ -22,11 +22,11 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include <backlight.h>
-#include <peripherals/gpio.h>
-#include <interfaces/display.h>
-#include <interfaces/delays.h>
-#include <hwconfig.h>
+#include "drivers/backlight/backlight.h"
+#include "peripherals/gpio.h"
+#include "interfaces/display.h"
+#include "interfaces/delays.h"
+#include "hwconfig.h"
 
 /**
  * \internal

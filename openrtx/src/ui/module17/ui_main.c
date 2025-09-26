@@ -18,11 +18,11 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <interfaces/cps_io.h>
+#include "interfaces/platform.h"
+#include "interfaces/cps_io.h"
 #include <stdio.h>
 #include <stdint.h>
-#include <ui/ui_mod17.h>
+#include "ui/ui_mod17.h"
 #include <string.h>
 
 void _ui_drawMainBackground()

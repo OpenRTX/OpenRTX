@@ -20,12 +20,12 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include <peripherals/gpio.h>
-#include <interfaces/delays.h>
-#include <interfaces/keyboard.h>
-#include <interfaces/platform.h>
-#include <hwconfig.h>
-#include <i2c_stm32.h>
+#include "peripherals/gpio.h"
+#include "interfaces/delays.h"
+#include "interfaces/keyboard.h"
+#include "interfaces/platform.h"
+#include "hwconfig.h"
+#include "i2c_stm32.h"
 #include "cap1206.h"
 
 

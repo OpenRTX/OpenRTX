@@ -19,17 +19,17 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <interfaces/delays.h>
-#include <interfaces/nvmem.h>
-#include <interfaces/audio.h>
-#include <peripherals/gpio.h>
-#include <drivers/i2c_stm32.h>
-#include <calibInfo_Mod17.h>
-#include <adc_stm32.h>
-#include <backlight.h>
-#include <hwconfig.h>
-#include <MCP4551.h>
+#include "interfaces/platform.h"
+#include "interfaces/delays.h"
+#include "interfaces/nvmem.h"
+#include "interfaces/audio.h"
+#include "peripherals/gpio.h"
+#include "drivers/i2c_stm32.h"
+#include "calibration/calibInfo_Mod17.h"
+#include "drivers/ADC/adc_stm32.h"
+#include "drivers/backlight/backlight.h"
+#include "hwconfig.h"
+#include "drivers/baseband/MCP4551.h"
 #include <errno.h>
 
 

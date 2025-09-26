@@ -18,12 +18,12 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <usb_vcom.h>
+#include "drivers/USB/usb_vcom.h"
 #include <stdbool.h>
 #include <stdlib.h>
-#include <xmodem.h>
+#include "core/xmodem.h"
 #include <string.h>
-#include <crc.h>
+#include "core/crc.h"
 
 #define SOH     (0x01)  // start of 128-byte data packet
 #define STX     (0x02)  // start of 1024-byte data packet

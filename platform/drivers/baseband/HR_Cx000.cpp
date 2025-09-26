@@ -18,13 +18,13 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/delays.h>
-#include <peripherals/gpio.h>
+#include "interfaces/delays.h"
+#include "peripherals/gpio.h"
 #include <type_traits>
-#include <hwconfig.h>
-#include "HR_Cx000.h"
-#include "HR_C5000.h"
-#include "HR_C6000.h"
+#include "hwconfig.h"
+#include "drivers/baseband/HR_Cx000.h"
+#include "drivers/baseband/HR_C5000.h"
+#include "drivers/baseband/HR_C6000.h"
 
 template <>
 void HR_Cx000< C5000_SpiOpModes >::setDacGain(int8_t gain)

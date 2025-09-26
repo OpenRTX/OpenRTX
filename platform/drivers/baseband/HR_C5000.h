@@ -21,7 +21,7 @@
 #ifndef HRC5000_H
 #define HRC5000_H
 
-#include "HR_Cx000.h"
+#include "drivers/baseband/HR_Cx000.h"
 
 enum class C5000_SpiOpModes : uint8_t
 {

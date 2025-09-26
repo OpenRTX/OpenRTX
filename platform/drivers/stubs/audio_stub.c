@@ -18,7 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/audio.h>
+#include "interfaces/audio.h"
 
 const struct audioDevice outputDevices[] =
 {

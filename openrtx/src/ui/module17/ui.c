@@ -20,17 +20,17 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include <ui/ui_mod17.h>
-#include <rtx.h>
-#include <interfaces/platform.h>
-#include <interfaces/display.h>
-#include <interfaces/cps_io.h>
-#include <interfaces/nvmem.h>
-#include <interfaces/delays.h>
+#include "ui/ui_mod17.h"
+#include "rtx/rtx.h"
+#include "interfaces/platform.h"
+#include "interfaces/display.h"
+#include "interfaces/cps_io.h"
+#include "interfaces/nvmem.h"
+#include "interfaces/delays.h"
 #include <string.h>
-#include <battery.h>
-#include <input.h>
-#include <hwconfig.h>
+#include "core/battery.h"
+#include "core/input.h"
+#include "hwconfig.h"
 
 /* UI main screen functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBackground();

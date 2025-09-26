@@ -21,7 +21,7 @@
 #ifndef SPI_STM32_H
 #define SPI_STM32_H
 
-#include <peripherals/spi.h>
+#include "peripherals/spi.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -23,9 +23,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <hwconfig.h>
-#include <peripherals/gpio.h>
-#include <interfaces/delays.h>
+#include "hwconfig.h"
+#include "peripherals/gpio.h"
+#include "interfaces/delays.h"
 
 #define CMD_WRITE 0x02   /* Read data              */
 #define CMD_READ  0x03   /* Read data              */

@@ -20,11 +20,11 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <os.h>
-#include <interfaces/gpio.h>
-#include <interfaces/graphics.h>
+#include "os.h"
+#include "interfaces/gpio.h"
+#include "interfaces/graphics.h"
 #include "hwconfig.h"
-#include <interfaces/platform.h>
+#include "interfaces/platform.h"
 
 void printBits(uint16_t value, point_t pos)
 {

@@ -27,19 +27,19 @@
 #error This header is C++ only!
 #endif
 
-#include <iir.hpp>
+#include "core/iir.hpp"
 #include <cstdint>
 #include <cstddef>
 #include <memory>
 #include <array>
-#include <dsp.h>
+#include "core/dsp.h"
 #include <cmath>
-#include <audio_path.h>
-#include <audio_stream.h>
-#include <M17/M17Datatypes.hpp>
-#include <M17/M17Constants.hpp>
-#include <M17/Correlator.hpp>
-#include <M17/Synchronizer.hpp>
+#include "core/audio_path.h"
+#include "core/audio_stream.h"
+#include "protocols/M17/M17Datatypes.hpp"
+#include "protocols/M17/M17Constants.hpp"
+#include "protocols/M17/Correlator.hpp"
+#include "protocols/M17/Synchronizer.hpp"
 
 namespace M17
 {

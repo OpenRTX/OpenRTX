@@ -21,7 +21,7 @@
 #ifndef PINMAP_H
 #define PINMAP_H
 
-#include <MK22F51212.h>
+#include "MK22F51212.h"
 
 /* Power keep switch */
 #define PWR_SW GPIOE,26

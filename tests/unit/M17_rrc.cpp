@@ -22,7 +22,7 @@
 #include <limits.h>
 #include <inttypes.h>
 #include <stdio.h>
-#include "M17/M17DSP.hpp"
+#include "protocols/M17/M17DSP.hpp"
 
 #define IMPULSE_SIZE 4096
 

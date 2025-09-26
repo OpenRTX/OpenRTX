@@ -18,8 +18,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <peripherals/rng.h>
-#include <MK22F51212.h>
+#include "peripherals/rng.h"
+#include "MK22F51212.h"
 
 void rng_init()
 {

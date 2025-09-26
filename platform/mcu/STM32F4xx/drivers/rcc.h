@@ -22,7 +22,7 @@
 #ifndef RCC_H
 #define RCC_H
 
-#include <hwconfig.h>
+#include "hwconfig.h"
 #include <stdint.h>
 
 #ifdef __cplusplus

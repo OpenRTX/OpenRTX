@@ -18,7 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/cps_io.h>
+#include "interfaces/cps_io.h"
 
 
 int cps_open(char *cps_name)

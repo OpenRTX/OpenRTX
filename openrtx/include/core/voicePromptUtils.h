@@ -20,9 +20,9 @@
 #ifndef VOICE_PROMPT_UTILS_H
 #define VOICE_PROMPT_UTILS_H
 
-#include "cps.h"
+#include "core/cps.h"
 #include "ui/ui_strings.h"
-#include "voicePrompts.h"
+#include "core/voicePrompts.h"
 
 /*
 Please Note!

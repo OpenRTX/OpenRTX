@@ -18,7 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <dsp.h>
+#include "core/dsp.h"
 
 int16_t dsp_dcBlockFilter(struct dcBlock *dcb, int16_t sample)
 {

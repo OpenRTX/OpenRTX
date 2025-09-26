@@ -18,12 +18,12 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/radio.h>
-#include <hwconfig.h>
+#include "interfaces/radio.h"
+#include "hwconfig.h"
 #include <string.h>
-#include <rtx.h>
-#include <OpMode_FM.hpp>
-#include <OpMode_M17.hpp>
+#include "rtx/rtx.h"
+#include "rtx/OpMode_FM.hpp"
+#include "rtx/OpMode_M17.hpp"
 
 static pthread_mutex_t   *cfgMutex;     // Mutex for incoming config messages
 static const rtxStatus_t *newCnf;       // Pointer for incoming config messages

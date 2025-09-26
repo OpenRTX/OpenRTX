@@ -66,20 +66,20 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <math.h>
-#include <ui/ui_default.h>
-#include <rtx.h>
-#include <interfaces/platform.h>
-#include <interfaces/display.h>
-#include <interfaces/cps_io.h>
-#include <interfaces/nvmem.h>
-#include <interfaces/delays.h>
+#include "ui/ui_default.h"
+#include "rtx/rtx.h"
+#include "interfaces/platform.h"
+#include "interfaces/display.h"
+#include "interfaces/cps_io.h"
+#include "interfaces/nvmem.h"
+#include "interfaces/delays.h"
 #include <string.h>
-#include <battery.h>
-#include <input.h>
-#include <utils.h>
-#include <hwconfig.h>
-#include <voicePromptUtils.h>
-#include <beeps.h>
+#include "core/battery.h"
+#include "core/input.h"
+#include "core/utils.h"
+#include "hwconfig.h"
+#include "core/voicePromptUtils.h"
+#include "core/beeps.h"
 
 /* UI main screen functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBackground();

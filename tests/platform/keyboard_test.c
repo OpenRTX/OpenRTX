@@ -21,12 +21,12 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <hwconfig.h>
-#include <graphics.h>
-#include <interfaces/platform.h>
-#include <interfaces/keyboard.h>
-#include <interfaces/display.h>
-#include <interfaces/delays.h>
+#include "hwconfig.h"
+#include "core/graphics.h"
+#include "interfaces/platform.h"
+#include "interfaces/keyboard.h"
+#include "interfaces/display.h"
+#include "interfaces/delays.h"
 
 char *keys_list[] = {
      " ", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",

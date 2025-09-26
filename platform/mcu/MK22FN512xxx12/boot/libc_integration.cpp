@@ -17,8 +17,8 @@
 
 #include <stdio.h>
 #include <reent.h>
-#include <usb_vcom.h>
-#include <filesystem/file_access.h>
+#include "drivers/USB/usb_vcom.h"
+#include "filesystem/file_access.h"
 
 using namespace std;
 

@@ -22,8 +22,8 @@
 #ifndef HWCONFIG_H
 #define HWCONFIG_H
 
-#include <peripherals/i2c.h>
-#include <stm32f4xx.h>
+#include "peripherals/i2c.h"
+#include "stm32f4xx.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include "pinmap.h"

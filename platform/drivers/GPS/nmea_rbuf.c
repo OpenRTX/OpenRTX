@@ -18,7 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <hwconfig.h>
+#include "hwconfig.h"
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>

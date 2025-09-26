@@ -18,7 +18,7 @@
 #ifndef CALIBINFO_CS7000_H
 #define CALIBINFO_CS7000_H
 
-#include <datatypes.h>
+#include "core/datatypes.h"
 #include <stdint.h>
 
 

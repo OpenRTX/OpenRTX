@@ -19,9 +19,9 @@
  ***************************************************************************/
 
 #include <kernel/scheduler/scheduler.h>
-#include <data_conversion.h>
-#include <DmaStream.hpp>
-#include <Timer.hpp>
+#include "core/data_conversion.h"
+#include "DmaStream.hpp"
+#include "Timer.hpp"
 #include <miosix.h>
 #include <errno.h>
 #include "stm32_pwm.h"

@@ -18,20 +18,20 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <interfaces/delays.h>
-#include <interfaces/audio.h>
-#include <interfaces/radio.h>
-#include <peripherals/gpio.h>
-#include <hwconfig.h>
-#include <threads.h>
-#include <state.h>
+#include "interfaces/platform.h"
+#include "interfaces/delays.h"
+#include "interfaces/audio.h"
+#include "interfaces/radio.h"
+#include "peripherals/gpio.h"
+#include "hwconfig.h"
+#include "core/threads.h"
+#include "core/state.h"
 #include "toneGenerator_MDx.h"
 #include "stm32_pwm.h"
 #include "stm32_adc.h"
 
 #if defined(PLATFORM_MDUV3x0) || defined (PLATFORM_DM1701)
-#include <HR_C6000.h>
+#include "drivers/baseband/HR_C6000.h"
 #include "Cx000_dac.h"
 #endif
 

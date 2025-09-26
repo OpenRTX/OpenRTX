@@ -21,7 +21,7 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
-#include <hwconfig.h>
+#include "hwconfig.h"
 #include <stdbool.h>
 
 typedef enum

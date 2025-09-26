@@ -19,7 +19,7 @@
  ***************************************************************************/
 
 #include <stdio.h>
-#include "queue.h"
+#include "core/queue.h"
 
 void queue_init(queue_t *q)
 {

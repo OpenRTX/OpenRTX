@@ -18,14 +18,14 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <interfaces/delays.h>
-#include <interfaces/radio.h>
-#include <OpMode_FM.hpp>
-#include <rtx.h>
+#include "interfaces/platform.h"
+#include "interfaces/delays.h"
+#include "interfaces/radio.h"
+#include "rtx/OpMode_FM.hpp"
+#include "rtx/rtx.h"
 
 #if defined(PLATFORM_TTWRPLUS)
-#include "AT1846S.h"
+#include "drivers/baseband/AT1846S.h"
 #endif
 
 /**
