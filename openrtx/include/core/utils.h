@@ -90,6 +90,44 @@ uint8_t rssiToSlevel(const rssi_t rssi);
  */
 uint8_t ctcssFreqToIndex(const uint16_t freq);
 
+/**
+ * @brief Convert coordinates from fixed-point representation to Q1.24 representation
+ *
+ * @param qlat Pointer to the Q1.24 latitude coordinate.
+ * @param qlon Pointer to the Q1.24 longitude coordinate.
+ * @param lat Fixed-point latitude coordinate.
+ * @param lon Fixed-point longitude coordinate.
+ */
+inline void rtx_to_q(int32_t *qlat, int32_t *qlon, int32_t lat, int32_t lon)
+{
+    if (qlat != NULL && qlon != NULL) {
+        *qlat =
+            lat / 10 - lat / 147 +
+            lat / 105646; // 90e6/(2^23-1) - 1/(1/10 - 1/147 + 1/105646)  = ~0
+        *qlon =
+            lon / 21 - lon / 985 -
+            lon / 2237284; //180e6/(2^23-1) - 1/(1/21 - 1/985 - 1/2237284) = ~0
+    }
+}
+
+/**
+ * @brief Convert coordinates from Q1.24 representation to fixed-point representation
+ *
+ * @param lat Pointer to the fixed-point latitude coordinate.
+ * @param lon Pointer to the fixed-point longitude coordinate.
+ * @param qlat Q1.24 latitude coordinate.
+ * @param qlon Q1.24 longitude coordinate.
+ */
+inline void q_to_rtx(int32_t *lat, int32_t *lon, int32_t qlat, int32_t qlon)
+{
+    if (lat != NULL && lon != NULL) {
+        *lat = qlat * 11 - qlat / 4 - qlat / 47 +
+               qlat / 8777; // 90e6/(2^23-1) - (11 - 1/4 - 1/47 + 1/8777) = ~0
+        *lon = qlon * 21 + qlon / 2 - qlon / 23 +
+               qlon / 867;  //180e6/(2^23-1) - (21 + 1/2 - 1/23 + 1/867)  = ~0
+    }
+}
+
 #ifdef __cplusplus
 }
 #endif
