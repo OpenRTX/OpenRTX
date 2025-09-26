@@ -16,11 +16,11 @@
  ***************************************************************************/
 
 #include <stdint.h>
-#include <peripherals/gpio.h>
-#include <interfaces/delays.h>
-#include <interfaces/keyboard.h>
-#include <interfaces/platform.h>
-#include <hwconfig.h>
+#include "peripherals/gpio.h"
+#include "interfaces/delays.h"
+#include "interfaces/keyboard.h"
+#include "interfaces/platform.h"
+#include "hwconfig.h"
 
 
 /*

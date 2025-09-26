@@ -20,8 +20,8 @@
 
 #include <zephyr/drivers/uart.h>
 #include <zephyr/kernel.h>
-#include <hwconfig.h>
-#include <nmea_rbuf.h>
+#include "hwconfig.h"
+#include "drivers/GPS/nmea_rbuf.h"
 
 #if !DT_NODE_HAS_STATUS(DT_ALIAS(gps), okay)
 #error "Please select the correct gps UART device"

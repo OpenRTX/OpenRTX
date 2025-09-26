@@ -19,14 +19,14 @@
  ***************************************************************************/
 
 #include <string.h>
-#include <wchar.h>
-#include <interfaces/delays.h>
-#include <interfaces/nvmem.h>
-#include <nvmem_access.h>
-#include <calibInfo_GDx.h>
-#include <spi_bitbang.h>
-#include <hwconfig.h>
-#include <utils.h>
+#include "wchar.h"
+#include "interfaces/delays.h"
+#include "interfaces/nvmem.h"
+#include "core/nvmem_access.h"
+#include "calibration/calibInfo_GDx.h"
+#include "drivers/SPI/spi_bitbang.h"
+#include "hwconfig.h"
+#include "core/utils.h"
 #include "AT24Cx.h"
 #include "W25Qx.h"
 

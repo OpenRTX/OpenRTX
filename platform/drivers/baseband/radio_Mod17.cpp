@@ -18,11 +18,11 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/radio.h>
-#include <peripherals/gpio.h>
-#include <calibInfo_Mod17.h>
-#include <hwconfig.h>
-#include <MCP4551.h>
+#include "interfaces/radio.h"
+#include "peripherals/gpio.h"
+#include "calibration/calibInfo_Mod17.h"
+#include "hwconfig.h"
+#include "drivers/baseband/MCP4551.h"
 #include "../audio/MAX9814.h"
 
 static enum  opstatus      radioStatus;   // Current operating status

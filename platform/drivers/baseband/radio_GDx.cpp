@@ -18,17 +18,17 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/radio.h>
-#include <interfaces/nvmem.h>
-#include <peripherals/gpio.h>
-#include <calibInfo_GDx.h>
-#include <hwconfig.h>
-#include <spi_mk22.h>
+#include "interfaces/radio.h"
+#include "interfaces/nvmem.h"
+#include "peripherals/gpio.h"
+#include "calibration/calibInfo_GDx.h"
+#include "hwconfig.h"
+#include "drivers/SPI/spi_mk22.h"
 #include <algorithm>
-#include <utils.h>
+#include "core/utils.h"
 #include "radioUtils.h"
-#include "HR_C6000.h"
-#include "AT1846S.h"
+#include "drivers/baseband/HR_C6000.h"
+#include "drivers/baseband/AT1846S.h"
 
 static const rtxStatus_t *config;                // Pointer to data structure with radio configuration
 

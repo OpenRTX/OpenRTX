@@ -16,7 +16,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <hwconfig.h>
+#include "hwconfig.h"
 #include "ADC0_GDx.h"
 
 void adc0_init()

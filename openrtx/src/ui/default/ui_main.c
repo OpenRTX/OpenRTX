@@ -18,14 +18,14 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <interfaces/cps_io.h>
+#include "interfaces/platform.h"
+#include "interfaces/cps_io.h"
 #include <stdio.h>
 #include <stdint.h>
-#include <ui/ui_default.h>
+#include "ui/ui_default.h"
 #include <string.h>
-#include <ui/ui_strings.h>
-#include <utils.h>
+#include "ui/ui_strings.h"
+#include "core/utils.h"
 
 void _ui_drawMainBackground()
 {

@@ -22,39 +22,39 @@
  * It is suitable for both color, grayscale and B/W display
  */
 
-#include <interfaces/display.h>
-#include <hwconfig.h>
-#include <graphics.h>
+#include "interfaces/display.h"
+#include "hwconfig.h"
+#include "core/graphics.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <limits.h>
 #include <stdio.h>
 #include <math.h>
-#include <utils.h>
+#include "core/utils.h"
 
-#include <gfxfont.h>
-#include <TomThumb.h>
-#include <FreeSans6pt7b.h>
-#include <FreeSans8pt7b.h>
-#include <FreeSans9pt7b.h>
-#include <FreeSans10pt7b.h>
-#include <FreeSans12pt7b.h>
-#include <FreeSans16pt7b.h>
-#include <FreeSans18pt7b.h>
-#include <FreeSans24pt7b.h>
-#include <UbuntuRegular6pt7b.h>
-#include <UbuntuRegular8pt7b.h>
-#include <UbuntuRegular9pt7b.h>
-#include <UbuntuRegular10pt7b.h>
-#include <UbuntuRegular12pt7b.h>
-#include <UbuntuRegular16pt7b.h>
-#include <UbuntuRegular18pt7b.h>
-#include <UbuntuRegular24pt7b.h>
+#include "fonts/adafruit/gfxfont.h"
+#include "fonts/adafruit/TomThumb.h"
+#include "fonts/adafruit/FreeSans6pt7b.h"
+#include "fonts/adafruit/FreeSans8pt7b.h"
+#include "fonts/adafruit/FreeSans9pt7b.h"
+#include "fonts/adafruit/FreeSans10pt7b.h"
+#include "fonts/adafruit/FreeSans12pt7b.h"
+#include "fonts/adafruit/FreeSans16pt7b.h"
+#include "fonts/adafruit/FreeSans18pt7b.h"
+#include "fonts/adafruit/FreeSans24pt7b.h"
+#include "fonts/adafruit/UbuntuRegular6pt7b.h"
+#include "fonts/adafruit/UbuntuRegular8pt7b.h"
+#include "fonts/adafruit/UbuntuRegular9pt7b.h"
+#include "fonts/adafruit/UbuntuRegular10pt7b.h"
+#include "fonts/adafruit/UbuntuRegular12pt7b.h"
+#include "fonts/adafruit/UbuntuRegular16pt7b.h"
+#include "fonts/adafruit/UbuntuRegular18pt7b.h"
+#include "fonts/adafruit/UbuntuRegular24pt7b.h"
 
-#include <Symbols5pt7b.h>
-#include <Symbols6pt7b.h>
-#include <Symbols8pt7b.h>
+#include "fonts/symbols/Symbols5pt7b.h"
+#include "fonts/symbols/Symbols6pt7b.h"
+#include "fonts/symbols/Symbols8pt7b.h"
 
 // Variable swap macro
 #define DEG_RAD  0.017453292519943295769236907684886

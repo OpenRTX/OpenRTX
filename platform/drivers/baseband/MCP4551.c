@@ -19,7 +19,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include "MCP4551.h"
+#include "drivers/baseband/MCP4551.h"
 
 // Common WIPER values
 #define MCP4551_WIPER_MID   0x080

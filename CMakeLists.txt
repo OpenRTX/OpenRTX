@@ -63,20 +63,7 @@ target_include_directories(app
   PRIVATE
 
     openrtx/include
-    openrtx/include/rtx
-    openrtx/include/core
-    openrtx/include/calibration
-    openrtx/include/protocols
-    openrtx/include/fonts/adafruit
-    openrtx/include/fonts/symbols
-    platform/drivers/ADC
-    platform/drivers/NVM
-    platform/drivers/GPS
-    platform/drivers/USB
-    platform/drivers/tones
-    platform/drivers/baseband
-    platform/drivers/backlight
-    platform/drivers/chSelector
+    platform
 
     subprojects/codec2
     subprojects/codec2/src

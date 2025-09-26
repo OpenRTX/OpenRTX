@@ -24,9 +24,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <sys/types.h>
-#include <peripherals/spi.h>
-#include <peripherals/gpio.h>
-#include <interfaces/nvmem.h>
+#include "peripherals/spi.h"
+#include "peripherals/gpio.h"
+#include "interfaces/nvmem.h"
 
 /**
  * Driver for Winbond W25Qx family of SPI flash devices, used as external non

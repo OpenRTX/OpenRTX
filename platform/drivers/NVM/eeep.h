@@ -22,7 +22,7 @@
 #ifndef EEEP_H
 #define EEEP_H
 
-#include <interfaces/nvmem.h>
+#include "interfaces/nvmem.h"
 
 /**
  * Driver for Emulated EEPROM, providing a means to store recurrent data without

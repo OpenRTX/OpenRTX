@@ -21,7 +21,7 @@
 #ifndef AUDIO_CODEC_H
 #define AUDIO_CODEC_H
 
-#include <audio_path.h>
+#include "core/audio_path.h"
 #include <stdint.h>
 #include <stdbool.h>
 

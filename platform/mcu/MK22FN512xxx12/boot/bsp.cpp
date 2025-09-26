@@ -24,12 +24,12 @@
 * Board support package, this file initializes hardware.
 ************************************************************************/
 
-#include <interfaces/bsp.h>
+#include "interfaces/bsp.h"
 #include <kernel/kernel.h>
 #include <kernel/sync.h>
-#include <hwconfig.h>
+#include "hwconfig.h"
 
-#include <peripherals/gpio.h>
+#include "peripherals/gpio.h"
 
 namespace miosix
 {

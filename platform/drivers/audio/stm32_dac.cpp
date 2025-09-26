@@ -19,17 +19,17 @@
  ***************************************************************************/
 
 #include <kernel/scheduler/scheduler.h>
-#include <core/cache_cortexMx.h>
-#include <peripherals/gpio.h>
-#include <data_conversion.h>
-#include <DmaStream.hpp>
+#include "core/cache_cortexMx.h"
+#include "peripherals/gpio.h"
+#include "core/data_conversion.h"
+#include "DmaStream.hpp"
 #include <miosix.h>
 #include <errno.h>
-#include <hwconfig.h>
+#include "hwconfig.h"
 #include "stm32_dac.h"
 
 #if defined(STM32H743xx)
-#include <Lptim.hpp>
+#include "Lptim.hpp"
 
 #define DAC             DAC1
 #define DAC_TRIG_CH1    (11 <<  2)  // lptim1_out
@@ -39,7 +39,7 @@ typedef Lptim          timebase_type;
 #define TimebaseCh1    Lptim(LPTIM1_BASE, 168000000)
 #define TimebaseCh2    Lptim(LPTIM2_BASE, 168000000)
 #else
-#include <Timer.hpp>
+#include "Timer.hpp"
 
 #define DAC_TRIG_CH1    0x00
 #define DAC_TRIG_CH2    DAC_CR_TSEL2_1

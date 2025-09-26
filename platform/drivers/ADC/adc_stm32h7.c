@@ -15,7 +15,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stm32h7xx.h>
+#include "stm32h7xx.h"
 #include <pthread.h>
 #include <errno.h>
 #include "adc_stm32.h"

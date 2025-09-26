@@ -18,10 +18,10 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/nvmem.h>
-#include <calibInfo_Mod17.h>
+#include "interfaces/nvmem.h"
+#include "calibration/calibInfo_Mod17.h"
 #include <string.h>
-#include <crc.h>
+#include "core/crc.h"
 #include "flash.h"
 
 /*

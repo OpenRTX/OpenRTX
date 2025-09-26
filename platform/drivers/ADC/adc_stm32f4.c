@@ -16,7 +16,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stm32f4xx.h>
+#include "stm32f4xx.h"
 #include <pthread.h>
 #include <errno.h>
 #include "adc_stm32.h"

@@ -5,8 +5,8 @@
 
 #include <espressif/esp32s3/esp32s3_wroom_n16r8.dtsi>
 #include <zephyr/dt-bindings/pinctrl/esp-pinctrl-common.h>
-#include <dt-bindings/pinctrl/esp32s3-pinctrl.h>
-#include <dt-bindings/input/input-event-codes.h>
+#include "dt-bindings/pinctrl/esp32s3-pinctrl.h"
+#include "dt-bindings/input/input-event-codes.h"
 #include <zephyr/dt-bindings/pinctrl/esp32s3-gpio-sigmap.h>
 #include <zephyr/dt-bindings/led/led.h>
 

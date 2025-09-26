@@ -18,15 +18,15 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <openrtx.h>
+#include "core/openrtx.h"
 
 #ifdef PLATFORM_MD9600
-#include <interfaces/platform.h>
-#include <interfaces/delays.h>
+#include "interfaces/platform.h"
+#include "interfaces/delays.h"
 #endif
 
 #ifdef PLATFORM_LINUX
-#include <emulator/sdl_engine.h>
+#include "emulator/sdl_engine.h"
 #endif
 
 int main(void)

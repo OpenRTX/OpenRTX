@@ -22,11 +22,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <peripherals/gpio.h>
-#include <interfaces/delays.h>
-#include <interfaces/keyboard.h>
-#include <interfaces/platform.h>
-#include <adc_stm32.h>
+#include "peripherals/gpio.h"
+#include "interfaces/delays.h"
+#include "interfaces/keyboard.h"
+#include "interfaces/platform.h"
+#include "drivers/ADC/adc_stm32.h"
 #include "hwconfig.h"
 
 /**

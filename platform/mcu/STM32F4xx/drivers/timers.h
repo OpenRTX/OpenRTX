@@ -22,7 +22,7 @@
 #define TIMERS_H
 
 #include <stdint.h>
-#include <stm32f4xx.h>
+#include "stm32f4xx.h"
 
 #ifdef __cplusplus
 extern "C" {

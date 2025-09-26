@@ -18,7 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/audio_stream.h>
+#include "interfaces/audio_stream.h"
 
 streamId inputStream_start(const enum AudioSource source,
                            const enum AudioPriority prio,

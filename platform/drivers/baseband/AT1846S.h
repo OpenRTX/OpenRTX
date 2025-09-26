@@ -23,7 +23,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <datatypes.h>
+#include "core/datatypes.h"
 
 /**
  * Enumeration type defining the bandwidth settings supported by the AT1846S chip.

@@ -18,8 +18,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <cps.h>
+#include "interfaces/platform.h"
+#include "core/cps.h"
 
 const uint16_t ctcss_tone[CTCSS_FREQ_NUM] =
 {

@@ -22,7 +22,7 @@
 #ifndef I2C_STM32_H
 #define I2C_STM32_H
 
-#include <peripherals/i2c.h>
+#include "peripherals/i2c.h"
 
 /**
  * Device driver API for STM32 I2C peripheral.

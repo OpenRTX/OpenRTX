@@ -22,7 +22,7 @@
 // Test private methods
 #define private public
 
-#include <audio_stream.h>
+#include "core/audio_stream.h"
 #include <math.h>
 #include <stdio.h>
 

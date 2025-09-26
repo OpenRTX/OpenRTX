@@ -18,7 +18,7 @@
 #ifndef CAP1206_H
 #define CAP1206_H
 
-#include <peripherals/i2c.h>
+#include "peripherals/i2c.h"
 #include <stdint.h>
 
 #ifdef __cplusplus

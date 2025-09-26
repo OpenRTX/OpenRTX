@@ -18,12 +18,12 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/radio.h>
+#include "interfaces/radio.h"
 #include <algorithm>
-#include <pmu.h>
+#include "pmu.h"
 #include "radioUtils.h"
-#include "AT1846S.h"
-#include "SA8x8.h"
+#include "drivers/baseband/AT1846S.h"
+#include "drivers/baseband/SA8x8.h"
 
 static const rtxStatus_t *config;                // Pointer to data structure with radio configuration
 

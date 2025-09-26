@@ -18,7 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <peripherals/rng.h>
+#include "peripherals/rng.h"
 #include <random>
 #include <limits>
 

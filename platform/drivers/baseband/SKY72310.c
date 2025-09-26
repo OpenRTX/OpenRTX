@@ -16,9 +16,9 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/delays.h>
+#include "interfaces/delays.h"
 #include <math.h>
-#include "SKY72310.h"
+#include "drivers/baseband/SKY72310.h"
 
 static inline void writeReg(const struct sky73210 *dev, const uint16_t value)
 {

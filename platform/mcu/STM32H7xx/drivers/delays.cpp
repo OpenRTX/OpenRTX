@@ -16,7 +16,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/delays.h>
+#include "interfaces/delays.h"
 #include <miosix.h>
 
 void delayMs(unsigned int mseconds)

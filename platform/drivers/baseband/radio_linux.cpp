@@ -18,8 +18,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <emulator/emulator.h>
-#include <interfaces/radio.h>
+#include "emulator/emulator.h"
+#include "interfaces/radio.h"
 #include <cstdio>
 #include <string>
 

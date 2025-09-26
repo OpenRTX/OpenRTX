@@ -21,7 +21,7 @@
 #ifndef HWCONFIG_H
 #define HWCONFIG_H
 
-#include <MK22F51212.h>
+#include "MK22F51212.h"
 
 #ifdef PLATFORM_GD77
 #include "pinmap_GD77.h"

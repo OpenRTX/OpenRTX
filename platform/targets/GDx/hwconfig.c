@@ -18,10 +18,10 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <spi_bitbang.h>
-#include <spi_custom.h>
-#include <spi_mk22.h>
-#include <hwconfig.h>
+#include "drivers/SPI/spi_bitbang.h"
+#include "drivers/SPI/spi_custom.h"
+#include "drivers/SPI/spi_mk22.h"
+#include "hwconfig.h"
 
 static const struct spiConfig spiFlashCfg =
 {

@@ -23,11 +23,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <inttypes.h>
-#include <interfaces/delays.h>
-#include <interfaces/gpio.h>
-#include <interfaces/platform.h>
-#include <rtx.h>
-#include <hwconfig.h>
+#include "interfaces/delays.h"
+#include "interfaces/gpio.h"
+#include "interfaces/platform.h"
+#include "rtx/rtx.h"
+#include "hwconfig.h"
 
 /*
  * Uncomment this directive to sample audio coming from RTX stage instead of the

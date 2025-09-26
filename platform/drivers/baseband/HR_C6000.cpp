@@ -18,8 +18,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <utils.h>
-#include "HR_C6000.h"
+#include "core/utils.h"
+#include "drivers/baseband/HR_C6000.h"
 
 /*
  * Table of HR_C6000 CTCSS tones, used for reverse lookup of tone index to be

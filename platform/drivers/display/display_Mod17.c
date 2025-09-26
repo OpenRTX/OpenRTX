@@ -19,10 +19,10 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include <peripherals/gpio.h>
-#include <hwconfig.h>
-#include <interfaces/platform.h>
-#include <spi_stm32.h>
+#include "peripherals/gpio.h"
+#include "hwconfig.h"
+#include "interfaces/platform.h"
+#include "drivers/SPI/spi_stm32.h"
 #include "SH110x_Mod17.h"
 #include "SSD1309_Mod17.h"
 

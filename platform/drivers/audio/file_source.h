@@ -21,7 +21,7 @@
 #ifndef FILE_SOURCE_H
 #define FILE_SOURCE_H
 
-#include <interfaces/audio.h>
+#include "interfaces/audio.h"
 
 #ifdef __cplusplus
 extern "C" {

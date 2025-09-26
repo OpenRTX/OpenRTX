@@ -23,7 +23,7 @@
 
 #include <stdint.h>
 #include <sys/types.h>
-#include <interfaces/nvmem.h>
+#include "interfaces/nvmem.h"
 
 /**
  * Driver for ATMEL AT24Cx family of I2C EEPROM devices, used as external non

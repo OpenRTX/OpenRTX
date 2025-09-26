@@ -19,24 +19,24 @@
  ***************************************************************************/
 
 #include <kernel/scheduler/scheduler.h>
-#include <core/cache_cortexMx.h>
-#include <interfaces/delays.h>
-#include <peripherals/gpio.h>
-#include <DmaStream.hpp>
-#include <hwconfig.h>
+#include "core/cache_cortexMx.h"
+#include "interfaces/delays.h"
+#include "peripherals/gpio.h"
+#include "DmaStream.hpp"
+#include "hwconfig.h"
 #include <miosix.h>
 #include <errno.h>
 #include "stm32_adc.h"
 
 #if defined(STM32H743xx)
-#include <Lptim.hpp>
+#include "Lptim.hpp"
 
 typedef Lptim          timebase_type;
 #define TimebaseCh1    Lptim(LPTIM3_BASE, 168000000)
 #define TimebaseCh2    Lptim(LPTIM3_BASE, 168000000)
 #define TimebaseCh3    Lptim(LPTIM3_BASE, 168000000)
 #else
-#include <Timer.hpp>
+#include "Timer.hpp"
 
 typedef Timer          timebase_type;
 #define TimebaseCh1    Timer(TIM2_BASE)

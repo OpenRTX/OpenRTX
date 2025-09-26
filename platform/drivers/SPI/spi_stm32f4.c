@@ -18,9 +18,9 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <rcc.h>
+#include "rcc.h"
 #include <errno.h>
-#include <stm32f4xx.h>
+#include "stm32f4xx.h"
 #include "spi_stm32.h"
 
 

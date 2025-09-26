@@ -16,7 +16,7 @@
  ***************************************************************************/
 #include <errno.h>
 #include "MK22F51212.h"
-#include "gpio_mk22.h"
+#include "drivers/GPIO/gpio_mk22.h"
 
 /*
  * MK22 GPIO management is a bit convoluted: instead of having all the registers

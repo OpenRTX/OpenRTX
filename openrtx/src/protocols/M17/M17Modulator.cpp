@@ -21,9 +21,9 @@
 #include <new>
 #include <cstddef>
 #include <cstring>
-#include <M17/M17Modulator.hpp>
-#include <M17/M17Utils.hpp>
-#include <M17/M17DSP.hpp>
+#include "protocols/M17/M17Modulator.hpp"
+#include "protocols/M17/M17Utils.hpp"
+#include "protocols/M17/M17DSP.hpp"
 
 #if defined(PLATFORM_LINUX)
 #include <stdio.h>

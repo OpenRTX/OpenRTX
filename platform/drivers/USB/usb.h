@@ -22,7 +22,7 @@
 
 #include <stdint.h>
 #include <unistd.h>
-#include <tusb.h>
+#include "tusb.h"
 
 #ifdef __cplusplus
 extern "C" {

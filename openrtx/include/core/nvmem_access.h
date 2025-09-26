@@ -21,7 +21,7 @@
 #ifndef NVMEM_ACCESS_H
 #define NVMEM_ACCESS_H
 
-#include <interfaces/nvmem.h>
+#include "interfaces/nvmem.h"
 #include <stdint.h>
 #include <errno.h>
 

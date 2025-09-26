@@ -26,7 +26,7 @@
 #include "usbd_req.h"
 #include "stm32f4xx.h"
 
-#include <interfaces/delays.h>
+#include "interfaces/delays.h"
 #include "usb_vcom.h"
 
 /* Common USB OTG handle, also defined as 'extern' in other modules */

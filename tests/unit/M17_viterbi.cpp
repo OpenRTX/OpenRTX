@@ -23,10 +23,10 @@
 #include <cstdint>
 #include <random>
 #include <array>
-#include "M17/M17ConvolutionalEncoder.hpp"
-#include "M17/M17CodePuncturing.hpp"
-#include "M17/M17Viterbi.hpp"
-#include "M17/M17Utils.hpp"
+#include "protocols/M17/M17ConvolutionalEncoder.hpp"
+#include "protocols/M17/M17CodePuncturing.hpp"
+#include "protocols/M17/M17Viterbi.hpp"
+#include "protocols/M17/M17Utils.hpp"
 
 using namespace std;
 

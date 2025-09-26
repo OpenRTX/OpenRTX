@@ -18,7 +18,7 @@
 #ifndef PINMAP_H
 #define PINMAP_H
 
-#include <stm32h7xx.h>
+#include "stm32h7xx.h"
 
 /* Power control */
 #define BAT_DETECT    GPIOB,2

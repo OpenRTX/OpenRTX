@@ -18,8 +18,8 @@
 #ifndef GPIO_MK22_H
 #define GPIO_MK22_H
 
-#include <peripherals/gpio.h>
-#include <hwconfig.h>
+#include "peripherals/gpio.h"
+#include "hwconfig.h"
 #include <stdint.h>
 
 #ifdef __cplusplus

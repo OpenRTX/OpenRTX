@@ -18,9 +18,9 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  **************************************************************************/
 
-#include <interfaces/delays.h>
-#include "AT1846S.h"
-#include "SA8x8.h"
+#include "interfaces/delays.h"
+#include "drivers/baseband/AT1846S.h"
+#include "drivers/baseband/SA8x8.h"
 
 void AT1846S::init()
 {

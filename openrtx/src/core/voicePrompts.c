@@ -18,21 +18,21 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
-#include <interfaces/platform.h>
-#include <interfaces/keyboard.h>
-#include <interfaces/delays.h>
-#include <voicePromptUtils.h>
-#include <ui/ui_strings.h>
-#include <voicePrompts.h>
-#include <audio_codec.h>
-#include <audio_path.h>
+#include "interfaces/platform.h"
+#include "interfaces/keyboard.h"
+#include "interfaces/delays.h"
+#include "core/voicePromptUtils.h"
+#include "ui/ui_strings.h"
+#include "core/voicePrompts.h"
+#include "core/audio_codec.h"
+#include "core/audio_path.h"
 #include <strings.h>    // For strncasecmp
 #include <ctype.h>
-#include <state.h>
+#include "core/state.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <beeps.h>
+#include "core/beeps.h"
 #include <errno.h>
 
 static const uint32_t VOICE_PROMPTS_DATA_MAGIC   = 0x5056;  //'VP'

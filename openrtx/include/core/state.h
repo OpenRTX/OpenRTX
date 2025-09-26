@@ -21,12 +21,12 @@
 #ifndef STATE_H
 #define STATE_H
 
-#include <datatypes.h>
-#include <settings.h>
+#include "core/datatypes.h"
+#include "core/settings.h"
 #include <pthread.h>
 #include <stdbool.h>
-#include <cps.h>
-#include <gps.h>
+#include "core/cps.h"
+#include "core/gps.h"
 
 /**
  * Part of this structure has been commented because the corresponding

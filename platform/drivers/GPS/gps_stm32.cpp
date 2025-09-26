@@ -18,8 +18,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <hwconfig.h>
-#include <rcc.h>
+#include "hwconfig.h"
+#include "rcc.h"
 #include "nmea_rbuf.h"
 #include "gps_stm32.h"
 

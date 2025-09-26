@@ -19,7 +19,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <nvmem_access.h>
+#include "core/nvmem_access.h"
 #include <stdint.h>
 #include <limits.h>
 #include <errno.h>

@@ -21,13 +21,13 @@
 #define UI_DEFAULT_H
 
 #include <stdbool.h>
-#include <state.h>
-#include <graphics.h>
-#include <interfaces/keyboard.h>
+#include "core/state.h"
+#include "core/graphics.h"
+#include "interfaces/keyboard.h"
 #include <stdint.h>
-#include <event.h>
-#include <hwconfig.h>
-#include <ui.h>
+#include "core/event.h"
+#include "hwconfig.h"
+#include "core/ui.h"
 
 // Maximum menu entry length
 #define MAX_ENTRY_LEN 21

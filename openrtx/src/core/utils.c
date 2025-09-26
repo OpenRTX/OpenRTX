@@ -18,10 +18,10 @@
  ***************************************************************************/
 
 #include <string.h>
-#include <utils.h>
+#include "core/utils.h"
 #include <stdio.h>
 #include <math.h>
-#include <cps.h>
+#include "core/cps.h"
 
 uint8_t interpCalParameter(const freq_t freq, const freq_t *calPoints,
                            const uint8_t *param, const uint8_t elems)

@@ -18,11 +18,11 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <peripherals/gpio.h>
-#include <interfaces/delays.h>
+#include "peripherals/gpio.h"
+#include "interfaces/delays.h"
 #include <stdint.h>
 #include <string.h>
-#include <I2C0.h>
+#include "I2C0.h"
 #include "AT24Cx.h"
 
 static const uint8_t DEV_ADDR  = 0xA0;    /* EEPROM I2C address */

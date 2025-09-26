@@ -18,7 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <crc.h>
+#include "core/crc.h"
 
 uint16_t crc_ccitt(const void *data, const size_t len)
 {

@@ -21,7 +21,7 @@
 #ifndef SPI_CUSTOM_H
 #define SPI_CUSTOM_H
 
-#include <peripherals/spi.h>
+#include "peripherals/spi.h"
 
 #ifdef __cplusplus
 extern "C" {

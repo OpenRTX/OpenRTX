@@ -22,7 +22,7 @@
 #include <cstdio>
 #include <cstdint>
 #include <random>
-#include "M17/M17Golay.hpp"
+#include "protocols/M17/M17Golay.hpp"
 
 using namespace std;
 

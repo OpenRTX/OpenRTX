@@ -18,16 +18,16 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <interfaces/delays.h>
-#include <interfaces/audio.h>
-#include <interfaces/radio.h>
-#include <peripherals/gpio.h>
-#include <hwconfig.h>
-#include <threads.h>
-#include <state.h>
-#include <HR_C6000.h>
-#include <spi_stm32.h>
+#include "interfaces/platform.h"
+#include "interfaces/delays.h"
+#include "interfaces/audio.h"
+#include "interfaces/radio.h"
+#include "peripherals/gpio.h"
+#include "hwconfig.h"
+#include "core/threads.h"
+#include "core/state.h"
+#include "drivers/baseband/HR_C6000.h"
+#include "drivers/SPI/spi_stm32.h"
 #include "stm32_dac.h"
 #include "stm32_adc.h"
 #include "Cx000_dac.h"

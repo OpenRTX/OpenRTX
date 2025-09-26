@@ -19,11 +19,11 @@
  ***************************************************************************/
 
 #include <string.h>
-#include <wchar.h>
-#include <interfaces/delays.h>
-#include <interfaces/cps_io.h>
-#include <nvmem_access.h>
-#include <utils.h>
+#include "wchar.h"
+#include "interfaces/delays.h"
+#include "interfaces/cps_io.h"
+#include "core/nvmem_access.h"
+#include "core/utils.h"
 #include "AT24Cx.h"
 #include "W25Qx.h"
 #include "cps_data_GDx.h"

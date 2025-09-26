@@ -21,7 +21,7 @@
 #include <sys/time.h>
 #include <stdbool.h>
 #include <string.h>
-#include <gps.h>
+#include "core/gps.h"
 
 #define MAX_NMEA_LEN 80
 #define NMEA_SAMPLES 8

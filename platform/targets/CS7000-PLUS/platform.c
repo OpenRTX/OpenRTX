@@ -15,18 +15,18 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <peripherals/gpio.h>
-#include <interfaces/nvmem.h>
-#include <interfaces/audio.h>
-#include <gpio_shiftReg.h>
-#include <spi_bitbang.h>
-#include <adc_stm32.h>
-#include <gps_stm32.h>
-#include <Cx000_dac.h>
-#include <hwconfig.h>
+#include "interfaces/platform.h"
+#include "peripherals/gpio.h"
+#include "interfaces/nvmem.h"
+#include "interfaces/audio.h"
+#include "drivers/GPIO/gpio_shiftReg.h"
+#include "drivers/SPI/spi_bitbang.h"
+#include "drivers/ADC/adc_stm32.h"
+#include "drivers/GPS/gps_stm32.h"
+#include "drivers/audio/Cx000_dac.h"
+#include "hwconfig.h"
 #include <string.h>
-#include <gps.h>
+#include "core/gps.h"
 
 static const hwInfo_t hwInfo =
 {

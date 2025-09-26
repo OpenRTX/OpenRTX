@@ -23,9 +23,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include <nvmem_access.h>
-#include <interfaces/nvmem.h>
-#include <interfaces/delays.h>
+#include "core/nvmem_access.h"
+#include "interfaces/nvmem.h"
+#include "interfaces/delays.h"
 
 #define LINE_LENGTH    16
 #define CHUNK_SIZE     (LINE_LENGTH * 2)

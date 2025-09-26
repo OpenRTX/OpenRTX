@@ -25,12 +25,12 @@
  * this driver.
  */
 
-#include <interfaces/display.h>
-#include <emulator/sdl_engine.h>
-#include <chan.h>
+#include "interfaces/display.h"
+#include "emulator/sdl_engine.h"
+#include "core/chan.h"
 #include <stdio.h>
 #include <string.h>
-#include <SDL2/SDL.h>
+#include "SDL2/SDL.h"
 
 static bool inProgress;             /* Flag to signal when rendering is in progress */
 

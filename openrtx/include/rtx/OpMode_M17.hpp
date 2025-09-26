@@ -21,11 +21,11 @@
 #ifndef OPMODE_M17_H
 #define OPMODE_M17_H
 
-#include <M17/M17FrameDecoder.hpp>
-#include <M17/M17FrameEncoder.hpp>
-#include <M17/M17Demodulator.hpp>
-#include <M17/M17Modulator.hpp>
-#include <audio_path.h>
+#include "protocols/M17/M17FrameDecoder.hpp"
+#include "protocols/M17/M17FrameEncoder.hpp"
+#include "protocols/M17/M17Demodulator.hpp"
+#include "protocols/M17/M17Modulator.hpp"
+#include "core/audio_path.h"
 #include "OpMode.hpp"
 
 /**

@@ -20,10 +20,10 @@
 #ifndef EMULATOR_H
 #define EMULATOR_H
 
-#include <interfaces/keyboard.h>
+#include "interfaces/keyboard.h"
 #include <stdbool.h>
 #include <stdint.h>
-#include <SDL2/SDL.h>
+#include "SDL2/SDL.h"
 
 #ifndef CONFIG_SCREEN_WIDTH
 #define CONFIG_SCREEN_WIDTH 160

@@ -18,7 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <audio_path.h>
+#include "core/audio_path.h"
 #include <map>
 #include <set>
 

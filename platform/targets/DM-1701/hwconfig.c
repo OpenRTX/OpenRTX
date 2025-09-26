@@ -18,13 +18,13 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <spi_bitbang.h>
-#include <spi_custom.h>
-#include <hwconfig.h>
+#include "drivers/SPI/spi_bitbang.h"
+#include "drivers/SPI/spi_custom.h"
+#include "hwconfig.h"
 #include <pthread.h>
-#include <pinmap.h>
-#include <spi_stm32.h>
-#include <adc_stm32.h>
+#include "pinmap.h"
+#include "drivers/SPI/spi_stm32.h"
+#include "drivers/ADC/adc_stm32.h"
 
 static pthread_mutex_t c6000_mutex;
 static pthread_mutex_t adcMutex;

@@ -18,8 +18,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/display.h>
-#include <hwconfig.h>
+#include "interfaces/display.h"
+#include "hwconfig.h"
 #include <stddef.h>
 
 

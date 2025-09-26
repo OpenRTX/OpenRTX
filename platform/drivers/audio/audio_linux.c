@@ -18,8 +18,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/audio.h>
-#include <hwconfig.h>
+#include "interfaces/audio.h"
+#include "hwconfig.h"
 #include "file_source.h"
 
 

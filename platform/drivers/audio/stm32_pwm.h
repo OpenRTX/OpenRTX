@@ -23,8 +23,8 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <stm32f4xx.h>
-#include <interfaces/audio.h>
+#include "stm32f4xx.h"
+#include "interfaces/audio.h"
 
 #ifdef __cplusplus
 extern "C" {

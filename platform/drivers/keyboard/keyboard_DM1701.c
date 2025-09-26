@@ -21,10 +21,10 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include <peripherals/gpio.h>
-#include <interfaces/delays.h>
-#include <interfaces/keyboard.h>
-#include <interfaces/platform.h>
+#include "peripherals/gpio.h"
+#include "interfaces/delays.h"
+#include "interfaces/keyboard.h"
+#include "interfaces/platform.h"
 #include "hwconfig.h"
 
 static int8_t old_pos = 0;

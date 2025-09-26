@@ -18,7 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/keyboard.h>
+#include "interfaces/keyboard.h"
 
 void kbd_init()
 {

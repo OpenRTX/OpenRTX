@@ -18,8 +18,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <backup.h>
-#include <xmodem.h>
+#include "core/backup.h"
+#include "core/xmodem.h"
 #include <string.h>
 #include "W25Qx.h"
 

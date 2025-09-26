@@ -19,8 +19,8 @@
 #ifndef SKY73210_H
 #define SKY73210_H
 
-#include <peripherals/gpio.h>
-#include <peripherals/spi.h>
+#include "peripherals/gpio.h"
+#include "peripherals/spi.h"
 #include <stdint.h>
 #include <stdbool.h>
 

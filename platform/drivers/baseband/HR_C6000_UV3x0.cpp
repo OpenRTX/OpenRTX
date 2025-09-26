@@ -18,10 +18,10 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <peripherals/gpio.h>
-#include <interfaces/delays.h>
-#include <hwconfig.h>
-#include "HR_C6000.h"
+#include "peripherals/gpio.h"
+#include "interfaces/delays.h"
+#include "hwconfig.h"
+#include "drivers/baseband/HR_C6000.h"
 
 static const uint8_t initSeq1[] = { 0x01, 0x04, 0xD5, 0xD7, 0xF7, 0x7F, 0xD7, 0x57 };
 static const uint8_t initSeq2[] =

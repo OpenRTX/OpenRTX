@@ -18,18 +18,18 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <toneGenerator_MDx.h>
-#include <interfaces/nvmem.h>
-#include <interfaces/radio.h>
-#include <peripherals/gpio.h>
-#include <calibInfo_MDx.h>
-#include <spi_bitbang.h>
-#include <adc_stm32.h>
-#include <hwconfig.h>
+#include "drivers/tones/toneGenerator_MDx.h"
+#include "interfaces/nvmem.h"
+#include "interfaces/radio.h"
+#include "peripherals/gpio.h"
+#include "calibration/calibInfo_MDx.h"
+#include "drivers/SPI/spi_bitbang.h"
+#include "drivers/ADC/adc_stm32.h"
+#include "hwconfig.h"
 #include <algorithm>
-#include <utils.h>
-#include "HR_C5000.h"
-#include "SKY72310.h"
+#include "core/utils.h"
+#include "drivers/baseband/HR_C5000.h"
+#include "drivers/baseband/SKY72310.h"
 
 static const freq_t IF_FREQ = 49950000;         // Intermediate frequency: 49.95MHz
 

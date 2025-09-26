@@ -18,9 +18,9 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  **************************************************************************/
 
-#include <interfaces/delays.h>
-#include <I2C0.h>
-#include "AT1846S.h"
+#include "interfaces/delays.h"
+#include "I2C0.h"
+#include "drivers/baseband/AT1846S.h"
 
 void AT1846S::init()
 {

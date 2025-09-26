@@ -1,7 +1,7 @@
 #include <minmea.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <gps.h>
+#include "core/gps.h"
 
 static void assert_conversion(struct minmea_float *f, int32_t expected)
 {

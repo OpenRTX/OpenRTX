@@ -21,7 +21,7 @@
 #ifndef TIMER_H
 #define TIMER_H
 
-#include <stm32f4xx.h>
+#include "stm32f4xx.h"
 
 /**
  * Handler class for STM32F4 Timer peripheral.

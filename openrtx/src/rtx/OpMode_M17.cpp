@@ -18,19 +18,19 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <interfaces/delays.h>
-#include <interfaces/audio.h>
-#include <interfaces/radio.h>
-#include <M17/M17Callsign.hpp>
-#include <OpMode_M17.hpp>
-#include <audio_codec.h>
+#include "interfaces/platform.h"
+#include "interfaces/delays.h"
+#include "interfaces/audio.h"
+#include "interfaces/radio.h"
+#include "protocols/M17/M17Callsign.hpp"
+#include "rtx/OpMode_M17.hpp"
+#include "core/audio_codec.h"
 #include <errno.h>
-#include <rtx.h>
+#include "rtx/rtx.h"
 
 #ifdef PLATFORM_MOD17
-#include <calibInfo_Mod17.h>
-#include <interfaces/platform.h>
+#include "calibration/calibInfo_Mod17.h"
+#include "interfaces/platform.h"
 
 extern mod17Calib_t mod17CalData;
 #endif

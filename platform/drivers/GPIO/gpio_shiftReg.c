@@ -15,11 +15,11 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/delays.h>
-#include <peripherals/gpio.h>
+#include "interfaces/delays.h"
+#include "peripherals/gpio.h"
 #include <string.h>
 #include <errno.h>
-#include "gpio_shiftReg.h"
+#include "drivers/GPIO/gpio_shiftReg.h"
 
 void gpioShiftReg_init(const struct gpioDev *dev)
 {

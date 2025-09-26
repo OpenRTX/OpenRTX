@@ -23,9 +23,9 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/errno.h>
-#include <posix_file.h>
-#include <nvmem_access.h>
-#include <interfaces/nvmem.h>
+#include "drivers/NVM/posix_file.h"
+#include "core/nvmem_access.h"
+#include "interfaces/nvmem.h"
 
 #define NVM_MAX_PATHLEN 256
 

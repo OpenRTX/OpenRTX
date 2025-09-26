@@ -20,7 +20,7 @@
 #ifndef AUDIO_PATH_H
 #define AUDIO_PATH_H
 
-#include <interfaces/audio.h>
+#include "interfaces/audio.h"
 #include <stdint.h>
 
 #ifdef __cplusplus

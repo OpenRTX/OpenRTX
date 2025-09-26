@@ -18,8 +18,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/audio.h>
-#include "SA8x8.h"
+#include "interfaces/audio.h"
+#include "drivers/baseband/SA8x8.h"
 
 const struct audioDevice outputDevices[] =
 {

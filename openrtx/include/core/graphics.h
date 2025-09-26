@@ -20,12 +20,12 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
-#include <datatypes.h>
-#include <symbols.h>
+#include "core/datatypes.h"
+#include "fonts/symbols/symbols.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <gps.h>
+#include "core/gps.h"
 
 #ifdef __cplusplus
 extern "C" {

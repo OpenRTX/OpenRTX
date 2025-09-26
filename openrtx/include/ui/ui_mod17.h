@@ -21,14 +21,14 @@
 #define UI_MOD17_H
 
 #include <stdbool.h>
-#include <state.h>
-#include <graphics.h>
-#include <interfaces/keyboard.h>
-#include <calibInfo_Mod17.h>
+#include "core/state.h"
+#include "core/graphics.h"
+#include "interfaces/keyboard.h"
+#include "calibration/calibInfo_Mod17.h"
 #include <stdint.h>
-#include <event.h>
-#include <hwconfig.h>
-#include <ui.h>
+#include "core/event.h"
+#include "hwconfig.h"
+#include "core/ui.h"
 
 // Maximum menu entry length
 #define MAX_ENTRY_LEN 21

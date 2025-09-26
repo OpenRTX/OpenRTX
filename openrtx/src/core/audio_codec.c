@@ -18,21 +18,21 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <audio_stream.h>
-#include <audio_codec.h>
+#include "core/audio_stream.h"
+#include "core/audio_codec.h"
 #include <pthread.h>
-#include <threads.h>
+#include "core/threads.h"
 // codec2 system library has a weird include prefix
 #if defined(PLATFORM_LINUX)
 #include <codec2/codec2.h>
 #else
-#include <codec2.h>
+#include "codec2.h"
 #endif
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
-#include <dsp.h>
+#include "core/dsp.h"
 
 #define BUF_SIZE 4
 

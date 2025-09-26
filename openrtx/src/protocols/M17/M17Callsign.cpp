@@ -21,7 +21,7 @@
  ***************************************************************************/
 
 #include <string>
-#include <M17/M17Callsign.hpp>
+#include "protocols/M17/M17Callsign.hpp"
 
 bool M17::encode_callsign(const std::string& callsign, call_t& encodedCall,
                           bool strict)

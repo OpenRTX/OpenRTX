@@ -18,7 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <datetime.h>
+#include "core/datetime.h"
 #include <stdlib.h>
 #include <time.h>
 

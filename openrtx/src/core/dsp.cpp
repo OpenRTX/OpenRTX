@@ -18,7 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <dsp.h>
+#include "core/dsp.h"
 
 void dsp_resetFilterState(filter_state_t *state)
 {

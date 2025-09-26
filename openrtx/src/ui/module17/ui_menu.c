@@ -21,14 +21,14 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-#include <utils.h>
-#include <ui/ui_mod17.h>
-#include <interfaces/nvmem.h>
-#include <interfaces/cps_io.h>
-#include <interfaces/platform.h>
-#include <interfaces/delays.h>
-#include <memory_profiling.h>
-#include <hwconfig.h>
+#include "core/utils.h"
+#include "ui/ui_mod17.h"
+#include "interfaces/nvmem.h"
+#include "interfaces/cps_io.h"
+#include "interfaces/platform.h"
+#include "interfaces/delays.h"
+#include "core/memory_profiling.h"
+#include "hwconfig.h"
 
 /* UI main screen helper functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBottom();

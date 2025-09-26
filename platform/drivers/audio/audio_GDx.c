@@ -18,10 +18,10 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/audio.h>
-#include <peripherals/gpio.h>
-#include <interfaces/radio.h>
-#include <hwconfig.h>
+#include "interfaces/audio.h"
+#include "peripherals/gpio.h"
+#include "interfaces/radio.h"
+#include "hwconfig.h"
 
 #define PATH(x,y) ((x << 4) | y)
 

@@ -20,13 +20,13 @@
 #ifndef HWCONFIG_H
 #define HWCONFIG_H
 
-#include <stm32f4xx.h>
+#include "stm32f4xx.h"
 #include "pinmap.h"
 
 #ifdef __cplusplus
 
 // Export the HR_C6000 driver only for C++ sources
-#include <HR_C6000.h>
+#include "drivers/baseband/HR_C6000.h"
 
 extern HR_C6000 C6000;
 

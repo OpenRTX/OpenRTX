@@ -18,12 +18,12 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <wchar.h>
+#include "wchar.h"
 #include <string.h>
-#include <nvmem_access.h>
-#include <interfaces/delays.h>
-#include <interfaces/cps_io.h>
-#include <utils.h>
+#include "core/nvmem_access.h"
+#include "interfaces/delays.h"
+#include "interfaces/cps_io.h"
+#include "core/utils.h"
 #include "cps_data_MDUV3x0.h"
 #include "W25Qx.h"
 

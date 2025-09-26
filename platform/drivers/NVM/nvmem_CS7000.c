@@ -15,18 +15,18 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/nvmem.h>
-#include <interfaces/delays.h>
-#include <calibInfo_CS7000.h>
-#include <nvmem_access.h>
-#include <spi_bitbang.h>
-#include <spi_stm32.h>
+#include "interfaces/nvmem.h"
+#include "interfaces/delays.h"
+#include "calibration/calibInfo_CS7000.h"
+#include "core/nvmem_access.h"
+#include "drivers/SPI/spi_bitbang.h"
+#include "drivers/SPI/spi_stm32.h"
 #include <string.h>
-#include <wchar.h>
-#include <utils.h>
-#include <crc.h>
-#include <W25Qx.h>
-#include <eeep.h>
+#include "wchar.h"
+#include "core/utils.h"
+#include "core/crc.h"
+#include "drivers/NVM/W25Qx.h"
+#include "drivers/NVM/eeep.h"
 
 static const struct W25QxCfg cfg =
 {

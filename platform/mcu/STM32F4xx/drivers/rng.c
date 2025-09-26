@@ -18,9 +18,9 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/delays.h>
-#include <peripherals/rng.h>
-#include <stm32f4xx.h>
+#include "interfaces/delays.h"
+#include "peripherals/rng.h"
+#include "stm32f4xx.h"
 #include <pthread.h>
 
 static uint32_t oldValue = 0;

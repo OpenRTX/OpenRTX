@@ -21,8 +21,8 @@
 #ifndef HRCx000_H
 #define HRCx000_H
 
-#include <peripherals/gpio.h>
-#include <peripherals/spi.h>
+#include "peripherals/gpio.h"
+#include "peripherals/spi.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>

@@ -21,12 +21,12 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <sys/types.h>
-#include <interfaces/nvmem.h>
-#include <interfaces/platform.h>
-#include <interfaces/delays.h>
-#include <calibInfo_GDx.h>
-#include <nvmem_access.h>
-#include <utils.h>
+#include "interfaces/nvmem.h"
+#include "interfaces/platform.h"
+#include "interfaces/delays.h"
+#include "calibration/calibInfo_GDx.h"
+#include "core/nvmem_access.h"
+#include "core/utils.h"
 
 struct md3x0FullCalib {
    // 0x0000

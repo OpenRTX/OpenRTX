@@ -18,16 +18,16 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <peripherals/gpio.h>
-#include <spi_bitbang.h>
-#include <spi_custom.h>
-#include <spi_stm32.h>
-#include <adc_stm32.h>
-#include <gps_stm32.h>
-#include <SKY72310.h>
-#include <hwconfig.h>
-#include <pinmap.h>
-#include <gps.h>
+#include "peripherals/gpio.h"
+#include "drivers/SPI/spi_bitbang.h"
+#include "drivers/SPI/spi_custom.h"
+#include "drivers/SPI/spi_stm32.h"
+#include "drivers/ADC/adc_stm32.h"
+#include "drivers/GPS/gps_stm32.h"
+#include "drivers/baseband/SKY72310.h"
+#include "hwconfig.h"
+#include "pinmap.h"
+#include "core/gps.h"
 
 static void gpsEnable(void *priv)
 {

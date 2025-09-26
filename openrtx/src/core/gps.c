@@ -17,11 +17,11 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <gps.h>
+#include "interfaces/platform.h"
+#include "core/gps.h"
 #include <minmea.h>
 #include <stdio.h>
-#include <state.h>
+#include "core/state.h"
 #include <string.h>
 #include <stdbool.h>
 

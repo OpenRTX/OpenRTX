@@ -21,8 +21,8 @@
 #ifndef HRC6000_H
 #define HRC6000_H
 
-#include <datatypes.h>
-#include "HR_Cx000.h"
+#include "core/datatypes.h"
+#include "drivers/baseband/HR_Cx000.h"
 
 enum class C6000_SpiOpModes : uint8_t
 {

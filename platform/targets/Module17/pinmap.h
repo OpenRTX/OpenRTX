@@ -21,7 +21,7 @@
 #ifndef PINMAP_H
 #define PINMAP_H
 
-#include <stm32f4xx.h>
+#include "stm32f4xx.h"
 
 /* Signalling LEDs */
 #define PTT_LED         GPIOC,8
