@@ -20,6 +20,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <interfaces/delays.h>
 #include <interfaces/audio.h>
 #include <audio_path.h>
@@ -31,8 +32,8 @@ int main()
 {
     platform_init();
 
-    filter_state_t dcrState;
-    dsp_resetFilterState(&dcrState);
+    struct dcBlock dcb;
+    dsp_resetState(dcb);
 
     static const size_t numSamples = 45 * 1024; // 90kB
     void *sampleBuf = malloc(numSamples * sizeof(stream_sample_t));
@@ -51,16 +52,10 @@ int main()
     platform_ledOn(RED);
     sleepFor(10u, 0u);
 
-    // Pre-processing gain
-    for (size_t i = 0; i < audio.len; i++)
-        audio.data[i] <<= 3;
-
-    // DC removal
-    dsp_dcRemoval(&dcrState, audio.data, audio.len);
-
-    // Post-processing gain
-    for (size_t i = 0; i < audio.len; i++)
-        audio.data[i] *= 10;
+    for (size_t i = 0; i < audio.len; i++) {
+        int16_t sample = dsp_dcBlockFilter(&dcb, audio.data[i]);
+        audio.data[i] = sample * 32;
+    }
 
     uint16_t *ptr = ((uint16_t *)audio.data);
     for (size_t i = 0; i < audio.len; i++)

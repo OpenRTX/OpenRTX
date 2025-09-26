@@ -53,6 +53,7 @@ openrtx/include/core/audio_codec.h
 openrtx/include/core/battery.h
 openrtx/include/core/beeps.h
 openrtx/include/core/crc.h
+openrtx/include/core/dsp.h
 openrtx/include/core/data_conversion.h
 openrtx/include/core/datatypes.h
 openrtx/include/core/memory_profiling.h
@@ -68,6 +69,7 @@ openrtx/include/interfaces/radio.h
 openrtx/include/peripherals/gps.h
 openrtx/include/peripherals/rng.h
 openrtx/include/peripherals/rtc.h
+openrtx/src/core/dsp.cpp
 openrtx/src/core/memory_profiling.cpp
 platform/drivers/ADC/ADC0_GDx.h
 platform/drivers/audio/MAX9814.h

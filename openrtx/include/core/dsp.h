@@ -29,41 +29,49 @@
 extern "C" {
 #endif
 
-typedef int16_t audio_sample_t;
-
 /*
  * This header contains various DSP utilities which can be used to condition
  * input or output signals when implementing digital modes on OpenRTX.
  */
 
 /**
- * Data structure holding the internal state of a filter.
- */
-typedef struct
-{
-    float u[3];         // input values u(k), u(k-1), u(k-2)
-    float y[3];         // output values y(k), y(k-1), y(k-2)
-    bool  initialised;  // state variables initialised
-}
-filter_state_t;
-
-
-/**
- * Reset the filter state variables.
+ * Reset the state variables of a DSP object.
  *
- * @param state: pointer to the data structure containing the filter state.
+ * @param state: state variable.
  */
-void dsp_resetFilterState(filter_state_t *state);
+#define dsp_resetState(state) memset(&state, 0x00, sizeof(state))
 
 /**
- * Remove the DC offset from a collection of audio samples, processing data
- * in-place.
+ * Data structure holding the internal state of a DC blocking filter.
+ */
+struct dcBlock {
+    int32_t accum;
+    int32_t prevIn;
+    int32_t prevOut;
+};
+
+/**
+ * Run a single step of the DC blocking filter.
+ *
+ * @param dcb: pointer to DC filter state.
+ * @param sample: input sample.
+ * @return filtered sample
+ */
+int16_t dsp_dcBlockFilter(struct dcBlock *dcb, int16_t sample);
+
+/**
+ * Remove the DC offset from a collection of samples, processing data in-place.
  *
  * @param state: pointer to the data structure containing the filter state.
  * @param buffer: buffer containing the audio samples.
  * @param length: number of samples contained in the buffer.
  */
-void dsp_dcRemoval(filter_state_t *state, audio_sample_t *buffer, size_t length);
+static inline void dsp_removeDcOffset(struct dcBlock *dcb, int16_t *buffer,
+                                      const size_t length)
+{
+    for (size_t i = 0; i < length; i++)
+        buffer[i] = dsp_dcBlockFilter(dcb, buffer[i]);
+}
 
 /*
  * Inverts the phase of the audio buffer passed as paramenter.

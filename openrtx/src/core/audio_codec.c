@@ -54,12 +54,10 @@ static uint8_t          numElements;
 static uint64_t         dataBuffer[BUF_SIZE];
 
 #ifdef PLATFORM_MOD17
-static const uint8_t micGainPre  = 4;
-static const uint8_t micGainPost = 3;
+static const uint8_t micGain = 12;
 #else
 #ifndef PLATFORM_LINUX
-static const uint8_t micGainPre  = 8;
-static const uint8_t micGainPost = 4;
+static const uint8_t micGain = 32;
 #endif
 #endif
 
@@ -194,7 +192,7 @@ static void *encodeFunc(void *arg)
     pathId          iPath = *((pathId*) arg);
     stream_sample_t audioBuf[320];
     struct CODEC2   *codec2;
-    filter_state_t  dcrState;
+    struct dcBlock  dcBlock;
 
     iStream = audioStream_start(iPath, audioBuf, 320, 8000,
                                 STREAM_INPUT | BUF_CIRC_DOUBLE);
@@ -205,7 +203,7 @@ static void *encodeFunc(void *arg)
         return NULL;
     }
 
-    dsp_resetFilterState(&dcrState);
+    dsp_resetState(dcBlock);
     codec2 = codec2_create(CODEC2_MODE_3200);
 
     while(reqStop == false)
@@ -219,14 +217,12 @@ static void *encodeFunc(void *arg)
             break;
 
         #ifndef PLATFORM_LINUX
-        // Pre-amplification stage
-        for(size_t i = 0; i < audio.len; i++) audio.data[i] *= micGainPre;
+        for(size_t i = 0; i < audio.len; i++) {
+            int16_t sample;
 
-        // DC removal
-        dsp_dcRemoval(&dcrState, audio.data, audio.len);
-
-        // Post-amplification stage
-        for(size_t i = 0; i < audio.len; i++) audio.data[i] *= micGainPost;
+            sample = dsp_dcBlockFilter(&dcBlock, audio.data[i]);
+            audio.data[i] = sample * micGain;
+        }
         #endif
 
         // CODEC2 encodes 160ms of speech into 8 bytes: here we write the

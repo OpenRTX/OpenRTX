@@ -20,51 +20,22 @@
 
 #include <dsp.h>
 
-void dsp_resetFilterState(filter_state_t *state)
-{
-    state->u[0] = 0.0f;
-    state->u[1] = 0.0f;
-    state->u[2] = 0.0f;
-
-    state->y[0] = 0.0f;
-    state->y[1] = 0.0f;
-    state->y[2] = 0.0f;
-
-    state->initialised = false;
-}
-
-void dsp_dcRemoval(filter_state_t *state, audio_sample_t *buffer, size_t length)
+int16_t dsp_dcBlockFilter(struct dcBlock *dcb, int16_t sample)
 {
     /*
-     * Removal of DC component performed using an high-pass filter with
-     * transfer function G(z) = (z - 1)/(z - 0.999).
-     * Recursive implementation of the filter is:
-     * y(k) = u(k) - u(k-1) + 0.999*y(k-1)
+     * Implementation of a fixed-point DC block filter with noise shaping,
+     * ensuring zero DC component at the output.
+     * Filter pole set at 0.995
+     *
+     * Code adapted from https://dspguru.com/dsp/tricks/fixed-point-dc-blocking-filter-with-noise-shaping/
      */
+    dcb->accum -= dcb->prevIn;
+    dcb->prevIn = static_cast<int32_t>(sample) << 15;
+    dcb->accum += dcb->prevIn;
+    dcb->accum -= 164 * dcb->prevOut; // 32768.0 * (1.0 - pole)
+    dcb->prevOut = dcb->accum >> 15;
 
-    if(length < 2) return;
-
-    static constexpr float alpha = 0.999f;
-    size_t pos = 0;
-
-    if(state->initialised == false)
-    {
-        state->u[1] = static_cast< float >(buffer[0]);
-        state->initialised = true;
-        pos = 1;
-    }
-
-    for(; pos < length; pos++)
-    {
-        state->u[0] = static_cast< float >(buffer[pos]);
-        state->y[0] = (state->u[0])
-                    - (state->u[1])
-                    + alpha * (state->y[1]);
-
-        state->u[1] = state->u[0];
-        state->y[1] = state->y[0];
-        buffer[pos] = static_cast< audio_sample_t >(state->y[0] + 0.5f);
-    }
+    return static_cast<int16_t>(dcb->prevOut);
 }
 
 void dsp_invertPhase(audio_sample_t *buffer, uint16_t length)
