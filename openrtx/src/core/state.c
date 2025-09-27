@@ -77,6 +77,7 @@ void state_init()
     state.channel_index = 0;    // Set default channel index (it is 0-based)
     state.bank_enabled  = false;
     state.rtxStatus     = RTX_OFF;
+    state.dtmf_pressed  = 0;
     state.emergency     = false;
     state.txDisable     = false;
     state.step_index    = 4; // Default frequency step 12.5kHz

@@ -52,6 +52,7 @@ typedef struct
     uint16_t   bank;
     uint8_t    rtxStatus;
     bool       tone_enabled;
+    char       dtmf_pressed;
 
     bool       emergency;
     settings_t settings;

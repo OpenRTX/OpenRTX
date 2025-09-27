@@ -1463,6 +1463,13 @@ void ui_updateFSM(bool *sync_rtx)
             *sync_rtx = true;
         }
 
+        // Unset DTMF tone
+        if(state.dtmf_pressed != 0 && !input_isCharPressed(msg))
+        {
+            state.dtmf_pressed = 0;
+            *sync_rtx = true;
+        }
+
         int priorUIScreen = state.ui_screen;
         switch(state.ui_screen)
         {
@@ -1563,6 +1570,13 @@ void ui_updateFSM(bool *sync_rtx)
                         if(!state.tone_enabled)
                         {
                             state.tone_enabled = true;
+                            *sync_rtx = true;
+                        }
+                    }
+                    else if(txOngoing && state.channel.mode == OPMODE_FM) {
+                        char dtmfChar = input_keyToDtmfChar(msg.keys);
+                        if(dtmfChar != '\0' && state.dtmf_pressed != dtmfChar) {
+                            state.dtmf_pressed = dtmfChar;
                             *sync_rtx = true;
                         }
                     }
@@ -1757,6 +1771,13 @@ void ui_updateFSM(bool *sync_rtx)
                         if(!state.tone_enabled)
                         {
                             state.tone_enabled = true;
+                            *sync_rtx = true;
+                        }
+                    }
+                    else if(txOngoing && state.channel.mode == OPMODE_FM) {
+                        char dtmfChar = input_keyToDtmfChar(msg.keys);
+                        if(dtmfChar != '\0' && state.dtmf_pressed != dtmfChar) {
+                            state.dtmf_pressed = dtmfChar;
                             *sync_rtx = true;
                         }
                     }

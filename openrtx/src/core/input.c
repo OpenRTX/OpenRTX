@@ -108,3 +108,20 @@ uint8_t input_getPressedChar(kbd_msg_t msg)
 
     return __builtin_ctz(msg.keys & KBD_CHAR_MASK);
 }
+
+char input_keyToDtmfChar(uint32_t keys)
+{
+    if (keys & KEY_0) return '0';
+    if (keys & KEY_1) return '1';
+    if (keys & KEY_2) return '2';
+    if (keys & KEY_3) return '3';
+    if (keys & KEY_4) return '4';
+    if (keys & KEY_5) return '5';
+    if (keys & KEY_6) return '6';
+    if (keys & KEY_7) return '7';
+    if (keys & KEY_8) return '8';
+    if (keys & KEY_9) return '9';
+    if (keys & KEY_STAR) return '*';
+    if (keys & KEY_HASH) return '#';
+    return '\0';
+}

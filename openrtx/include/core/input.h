@@ -87,6 +87,14 @@ bool input_isCharPressed(kbd_msg_t msg);
 uint8_t input_getPressedNumber(kbd_msg_t msg);
 
 /**
+ * This function returns the DTMF character associated with a key.
+ *
+ * @param key: the key to convert
+ * @return the DTMF character associated with the key
+ */
+char input_keyToDtmfChar(uint32_t key);
+
+/**
  * This function returns the smallest number pressed on the keyboard and
  * associated to character. If no button is pressed, zero is returned.
  *
