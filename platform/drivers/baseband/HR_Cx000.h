@@ -240,7 +240,7 @@ private:
         uint8_t cmd[3];
         uint8_t ret[3];
 
-        cmd[0] = 0x80 | static_cast< uint8_t >(opMode);
+        cmd[0] = SPI_FLAGS_READ | static_cast< uint8_t >(opMode);
         cmd[1] = addr;
         cmd[2] = 0x00;
 
@@ -264,6 +264,12 @@ private:
     }
 
 protected:
+
+    enum SpiFlags
+    {
+        SPI_FLAGS_READ = 0x80,    ///< Do a read transaction
+        SPI_FLAGS_EXTD = 0x40,    ///< Use 16-bit addressing (HR_C6000 only)
+    };
 
     const struct spiDevice *uSpi;
     const struct gpioPin uCs;

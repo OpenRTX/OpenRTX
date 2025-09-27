@@ -103,13 +103,37 @@ private:
     {
         uint8_t data[4];
 
-        data[0] =  static_cast< uint8_t >(opMode) | 0x40;
+        data[0] = SPI_FLAGS_EXTD | static_cast< uint8_t >(opMode);
         data[2] = (addr >> 8) & 0x07;
         data[1] = addr & 0xFF;
         data[3] = value;
 
         ScopedChipSelect cs(uSpi, uCs);
         spi_send(uSpi, data, 4);
+    }
+
+    /**
+     * Read a register with 16-bit address.
+     *
+     * @param opMode: "operating mode" specifier, see datasheet for details.
+     * @param addr: register address.
+     * @return: value read from the register.
+     */
+    uint8_t readReg16(const C6000_SpiOpModes opMode, const uint16_t addr)
+    {
+        uint8_t data[3];
+        uint8_t value[1];
+
+        data[0] = SPI_FLAGS_READ | SPI_FLAGS_EXTD
+                | static_cast< uint8_t >(opMode);
+        data[2] = (addr >> 8) & 0x07;
+        data[1] = addr & 0xFF;
+
+        ScopedChipSelect cs(uSpi, uCs);
+        spi_send(uSpi, data, sizeof(data));
+        spi_receive(uSpi, value, 1);
+
+        return value[0];
     }
 };
 
