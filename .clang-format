@@ -9,6 +9,7 @@
 #      Kind: Always
 #      OverEmptyLines: 1
 #  - Standard: c++14
+#  - BreakBeforeBinaryOperators: NonAssignment
 # Original header below
 ##########################################################################
 # SPDX-License-Identifier: GPL-2.0
@@ -60,7 +61,7 @@ BraceWrapping:
   SplitEmptyFunction: true
   SplitEmptyRecord: true
   SplitEmptyNamespace: true
-BreakBeforeBinaryOperators: None
+BreakBeforeBinaryOperators: NonAssignment
 BreakBeforeBraces: Custom
 BreakBeforeInheritanceComma: false
 BreakBeforeTernaryOperators: false
