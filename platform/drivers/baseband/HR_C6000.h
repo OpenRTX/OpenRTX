@@ -92,9 +92,6 @@ public:
 
 private:
 
-    static const uint8_t SPI_IS_READ_FLAG = 0x80;
-    static const uint8_t SPI_EXPAND_FLAG = 0x40;
-
     /**
      * Write a register with 16-bit address.
      *
@@ -106,7 +103,7 @@ private:
     {
         uint8_t data[4];
 
-        data[0] =  static_cast< uint8_t >(opMode) | SPI_EXPAND_FLAG;
+        data[0] =  static_cast< uint8_t >(opMode) | static_cast< uint8_t >(SpiFlags::EXPAND);
         data[2] = (addr >> 8) & 0x07;
         data[1] = addr & 0xFF;
         data[3] = value;
@@ -127,15 +124,12 @@ private:
         uint8_t data[3];
         uint8_t value[1];
 
-        const uint8_t READ_FLAG = 0x80;
-        const uint8_t EXPAND_FLAG = 0x40;
-
-        data[0] =  static_cast< uint8_t >(opMode) | SPI_EXPAND_FLAG | SPI_IS_READ_FLAG;
+        data[0] =  static_cast< uint8_t >(opMode) | static_cast< uint8_t >(SpiFlags::EXPAND) | static_cast< uint8_t >(SpiFlags::IS_READ);
         data[2] = (addr >> 8) & 0x07;
         data[1] = addr & 0xFF;
 
         ScopedChipSelect cs(uSpi, uCs);
-        spi_send(uSpi, data, 4);
+        spi_send(uSpi, data, sizeof(data));
         spi_receive(uSpi, value, 1);
         return value[0];
     }

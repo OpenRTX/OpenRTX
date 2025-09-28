@@ -49,6 +49,14 @@ enum class TxAudioSource
     LINE_IN     ///< Audio source is "line in", e.g. tone generator.
 };
 
+/**
+ * Flags to use in SPI communication for 16 bit register reads and writes.
+ */
+enum class SpiFlags : uint8_t
+{
+    IS_READ = 0x80,
+    EXPAND = 0x40
+};
 class ScopedChipSelect;
 
 /**
