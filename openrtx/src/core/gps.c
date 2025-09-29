@@ -73,8 +73,6 @@ void gps_task(const struct gpsDevice *dev)
             struct minmea_sentence_rmc frame;
             if (minmea_parse_rmc(&frame, sentence))
             {
-                gps_data.latitude = minmea_tofixedpoint(&frame.latitude);
-                gps_data.longitude = minmea_tofixedpoint(&frame.longitude);
                 gps_data.timestamp.hour = frame.time.hours;
                 gps_data.timestamp.minute = frame.time.minutes;
                 gps_data.timestamp.second = frame.time.seconds;
@@ -82,9 +80,8 @@ void gps_task(const struct gpsDevice *dev)
                 gps_data.timestamp.date = frame.date.day;
                 gps_data.timestamp.month = frame.date.month;
                 gps_data.timestamp.year = frame.date.year;
+                gps_data.speed = KNOTS2KMH(minmea_toint(&frame.speed));
             }
-
-            gps_data.speed = KNOTS2KMH(minmea_toint(&frame.speed));
         }
         break;
 
@@ -93,6 +90,8 @@ void gps_task(const struct gpsDevice *dev)
             struct minmea_sentence_gga frame;
             if (minmea_parse_gga(&frame, sentence))
             {
+                gps_data.latitude = minmea_tofixedpoint(&frame.latitude);
+                gps_data.longitude = minmea_tofixedpoint(&frame.longitude);
                 gps_data.fix_quality = frame.fix_quality;
                 gps_data.satellites_tracked = frame.satellites_tracked;
                 gps_data.altitude = minmea_toint(&frame.altitude);
