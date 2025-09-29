@@ -23,7 +23,21 @@
 #include <string>
 #include "protocols/M17/M17Callsign.hpp"
 
-bool M17::encode_callsign(const std::string& callsign, call_t& encodedCall,
+using namespace M17;
+
+Callsign::Callsign(std::string callsign){
+    call = callsign;
+};
+
+Callsign::Callsign(char* callsign){
+    call = callsign;
+};
+
+Callsign::Callsign(const call_t encodedCall){
+    call = decode_callsign(encodedCall);
+};
+
+bool Callsign::encode_callsign(const std::string& callsign, call_t& encodedCall,
                           bool strict)
 {
     encodedCall.fill(0x00);
@@ -67,7 +81,7 @@ bool M17::encode_callsign(const std::string& callsign, call_t& encodedCall,
     return true;
 }
 
-std::string M17::decode_callsign(const call_t& encodedCall)
+std::string Callsign::decode_callsign(const call_t& encodedCall)
 {
     // First of all, check if encoded address is a broadcast one
     bool isBroadcast = true;
@@ -106,4 +120,49 @@ std::string M17::decode_callsign(const call_t& encodedCall)
     result[index] = '\0';
 
     return result;
+}
+
+Callsign::operator std::string()
+{
+    return this->call;
+}
+
+
+Callsign::operator call_t()
+{
+    call_t encodedCall;
+    encode_callsign(this->call, encodedCall);
+    return encodedCall;
+}
+
+/**
+ * NOTE! since only incomingCs is checked for special values, the second arg must be the incoming station
+ */
+bool compareCallsigns(const std::string& localCs,
+                                  const std::string& incomingCs)
+{
+    if((incomingCs == "ALL") || (incomingCs == "INFO") || (incomingCs == "ECHO"))
+        return true;
+
+    std::string truncatedLocal(localCs);
+    std::string truncatedIncoming(incomingCs);
+
+    int slashPos = localCs.find_first_of('/');
+    if(slashPos <= 2)
+        truncatedLocal = localCs.substr(slashPos + 1);
+
+    slashPos = incomingCs.find_first_of('/');
+    if(slashPos <= 2)
+        truncatedIncoming = incomingCs.substr(slashPos + 1);
+
+    if(truncatedLocal == truncatedIncoming)
+        return true;
+
+    return false;
+}
+
+// NOTE! Since this uses compareCallsigns internally, always have the right side of the equality check be the incoming callsign
+bool Callsign::operator==(const Callsign& other)
+{
+    return compareCallsigns(this->call, other.call);
 }
