@@ -19,23 +19,23 @@ jobs:
         uses: devcontainers/ci@v0.3
         with:
           runCmd: |
-            meson setup build_linux
-            meson setup --cross-file cross_arm.txt build_arm
-            meson setup --cross-file cross_cm7.txt build_cm7
-            meson compile -C build_linux openrtx_linux
-            meson compile -C build_linux openrtx_linux_smallscreen
-            meson compile -C build_linux openrtx_linux_mod17
-            meson compile -C build_arm openrtx_cs7000_bin
-            meson compile -C build_arm openrtx_cs7000_dfu
-            meson compile -C build_arm openrtx_dm1701_wrap
-            meson compile -C build_arm openrtx_dm1801_wrap
-            meson compile -C build_arm openrtx_md3x0_wrap
-            meson compile -C build_arm openrtx_md9600_wrap
-            meson compile -C build_arm openrtx_mduv3x0_wrap
-            meson compile -C build_arm openrtx_mod17_wrap
-            meson compile -C build_arm openrtx_gd77_wrap
-            meson compile -C build_cm7 openrtx_cs7000p_wrap
-            meson compile -C build_cm7 openrtx_cs7000p_dfu
+            meson setup build_linux &&
+            meson setup --cross-file cross_arm.txt build_arm &&
+            meson setup --cross-file cross_cm7.txt build_cm7 &&
+            meson compile -C build_linux openrtx_linux &&
+            meson compile -C build_linux openrtx_linux_smallscreen &&
+            meson compile -C build_linux openrtx_linux_mod17 &&
+            meson compile -C build_arm openrtx_cs7000_bin &&
+            meson compile -C build_arm openrtx_cs7000_dfu &&
+            meson compile -C build_arm openrtx_dm1701_wrap &&
+            meson compile -C build_arm openrtx_dm1801_wrap &&
+            meson compile -C build_arm openrtx_md3x0_wrap &&
+            meson compile -C build_arm openrtx_md9600_wrap &&
+            meson compile -C build_arm openrtx_mduv3x0_wrap &&
+            meson compile -C build_arm openrtx_mod17_wrap &&
+            meson compile -C build_arm openrtx_gd77_wrap &&
+            meson compile -C build_cm7 openrtx_cs7000p_wrap &&
+            meson compile -C build_cm7 openrtx_cs7000p_dfu &&
             chmod -R 777 *
       - uses: actions/upload-artifact@v4
         with:
