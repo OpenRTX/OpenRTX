@@ -26,7 +26,7 @@
 #include <string.h>
 #include "wchar.h"
 #include "core/utils.h"
-#include "W25Qx.h"
+#include "drivers/NVM/W25Qx.h"
 
 #define SECREG_READ(dev, offs, data, len) \
     nvm_devRead((const struct nvmDevice *) dev, offs, data, len)

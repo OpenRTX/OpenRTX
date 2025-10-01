@@ -21,7 +21,7 @@
 #include "core/backup.h"
 #include "core/xmodem.h"
 #include <string.h>
-#include "W25Qx.h"
+#include "drivers/NVM/W25Qx.h"
 
 #if defined(PLATFORM_GD77) || defined(PLATFORM_DM1801)
 static const size_t EFLASH_SIZE = 1024*1024;    // 1 MB

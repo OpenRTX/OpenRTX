@@ -18,7 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include "W25Qx.h"
+#include "drivers/NVM/W25Qx.h"
 #include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>

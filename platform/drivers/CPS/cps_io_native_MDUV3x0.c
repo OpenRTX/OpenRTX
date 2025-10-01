@@ -25,7 +25,7 @@
 #include "interfaces/cps_io.h"
 #include "core/utils.h"
 #include "cps_data_MDUV3x0.h"
-#include "W25Qx.h"
+#include "drivers/NVM/W25Qx.h"
 
 extern const struct nvmDevice eflash;
 

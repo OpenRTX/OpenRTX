@@ -25,7 +25,7 @@
 #include "wchar.h"
 #include "core/utils.h"
 #include "cps_data_MD3x0.h"
-#include "W25Qx.h"
+#include "drivers/NVM/W25Qx.h"
 
 extern const struct nvmDevice eflash;
 
