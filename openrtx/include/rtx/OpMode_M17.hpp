@@ -140,6 +140,7 @@ private:
     bool locked;                       ///< Demodulator locked on data stream.
     bool dataValid;                    ///< Demodulated data is valid
     bool extendedCall;                 ///< Extended callsign data received
+    bool gpsTransmitting;              ///< Currently transmitting GPS data
     bool invertTxPhase;                ///< TX signal phase inversion setting.
     bool invertRxPhase;                ///< RX signal phase inversion setting.
     pathId rxAudioPath;                ///< Audio path ID for RX
@@ -148,6 +149,13 @@ private:
     M17::M17Demodulator  demodulator;  ///< M17 demodulator.
     M17::M17FrameDecoder decoder;      ///< M17 frame decoder
     M17::M17FrameEncoder encoder;      ///< M17 frame encoder
+
+	uint8_t  textOffset = 0;              ///< Metatext offset
+	uint8_t  blk_id_tot = 0;              ///< Metatext block Id total
+	uint8_t  frameCnt = 0;                ///< Transmit frame counter
+	uint8_t  last_text_blk =  0;          ///< Last metatext block counter
+	bool     textStarted = false;         ///< Metatext found flag
+	char     textBuffer[53];              ///< Temporary buffer for incoming metatext
 };
 
 #endif /* OPMODE_M17_H */

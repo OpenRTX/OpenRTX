@@ -3,6 +3,7 @@
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
+ *                                Rick Schnicker KD0OSS                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -63,6 +64,7 @@ typedef struct
     bool    m17_can_rx;           // Check M17 CAN on RX
     char    m17_dest[10];         // M17 destination
     bool    showBatteryIcon;      // Battery display true: icon, false: percentage
+    char    M17_meta_text[53];    // M17 Meta Text to send
 }
 __attribute__((packed)) settings_t;
 
@@ -87,8 +89,9 @@ static const settings_t default_settings =
     1,                            // Automatic latch of macro menu enabled
     0,                            // not used
     false,                        // Check M17 CAN on RX
-    "",                           // Empty M17 destination
+    "",                            // Empty M17 destination
     false,                        // Display battery icon
+    "OpenRTX"                     // Default M17 meta text
 };
 
 #endif /* SETTINGS_H */

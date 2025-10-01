@@ -3,6 +3,7 @@
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
+ *                                Rick Schnicker KD0OSS                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -218,7 +219,7 @@ void _ui_drawMenuListValue(ui_state_t* ui_state, uint8_t selected,
                 // If we are in edit mode, draw a hollow rectangle
                 text_color = color_black;
                 bool full_rect = true;
-                if(ui_state->edit_mode)
+                if(ui_state->edit_mode || ui_state->edit_message)
                 {
                     text_color = color_white;
                     full_rect = false;
@@ -231,7 +232,7 @@ void _ui_drawMenuListValue(ui_state_t* ui_state, uint8_t selected,
                 // E.g. when pressing Enter on Display Brightness etc.
                 if (editModeChanged)
                     priorSelectedMenuName[0]='\0';
-                if (!ui_state->edit_mode || editModeChanged)
+                if ((!ui_state->edit_mode && !ui_state->edit_message) || editModeChanged)
                 {// If in edit mode, only want to speak the char being entered,,
             //not repeat the entire display.
                     announceMenuItemIfNeeded(entry_buf, value_buf,
@@ -243,6 +244,27 @@ void _ui_drawMenuListValue(ui_state_t* ui_state, uint8_t selected,
             pos.y += layout.menu_h;
         }
     }
+}
+
+bool _ui_viewSubString(char *in_string, char *out_string, uint16_t start_pos, uint16_t num_chars)
+{
+    uint16_t totalLen = strlen(in_string);
+    if(start_pos >= totalLen || (num_chars + start_pos) > totalLen)
+        return false;
+
+    memset(out_string, 0, num_chars+1);
+
+    uint16_t i;
+    for(i=0;i<num_chars;i++)
+    {
+        out_string[i] = in_string[start_pos + i];
+        // replace tab, line feed and carriage return with space
+        if(out_string[i] == 0x09 || out_string[i] == 0x0a || out_string[i] == 0x0d)
+            out_string[i] = 0x20;
+    }
+    out_string[i] = 0;
+
+    return true;
 }
 
 int _ui_getMenuTopEntryName(char *buf, uint8_t max_len, uint8_t index)
@@ -433,6 +455,20 @@ int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
         case M17_CALLSIGN:
             sniprintf(buf, max_len, "%s", last_state.settings.callsign);
             break;
+
+        case M17_METATEXT:
+            // limit display to 8 characters
+            if (strlen(last_state.settings.M17_meta_text) > 7)
+            {
+                char tmp[9];
+                memcpy(tmp, last_state.settings.M17_meta_text, 7);
+                tmp[8] = 0;
+                // append asterisk to indicate more characters than displayed
+                sniprintf(buf, max_len, "%s*", tmp);
+            }
+            else
+                sniprintf(buf, max_len, "%s", last_state.settings.M17_meta_text);
+        break;
 
         case M17_CAN:
             sniprintf(buf, max_len, "%d", last_state.settings.m17_can);
@@ -996,6 +1032,19 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
                       TEXT_ALIGN_CENTER, color_white, ui_state->new_callsign);
     }
     else
+        if((ui_state->edit_message) && (ui_state->menu_selected == M17_METATEXT))
+        {
+            uint16_t rect_width = CONFIG_SCREEN_WIDTH - (layout.horizontal_pad * 2);
+            uint16_t rect_height = (CONFIG_SCREEN_HEIGHT - (layout.top_h + layout.bottom_h))/2;
+            point_t rect_origin = {(CONFIG_SCREEN_WIDTH - rect_width) / 2,
+                (CONFIG_SCREEN_HEIGHT - rect_height) / 2};
+                gfx_drawRect(rect_origin, rect_width, rect_height, color_white, false);
+                // Print M17 message being typed
+                gfx_printLine(1, 1, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
+                              layout.horizontal_pad, layout.message_font,
+                              TEXT_ALIGN_CENTER, color_white, ui_state->new_message);
+        }
+        else
     {
         _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getM17EntryName,
                               _ui_getM17ValueName);

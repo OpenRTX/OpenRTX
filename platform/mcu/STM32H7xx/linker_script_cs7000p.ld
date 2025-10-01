@@ -49,7 +49,7 @@ ENTRY(_Z13Reset_Handlerv)
 /* specify the memory areas  */
 MEMORY
 {
-    flash(rx)   : ORIGIN = 0x08100000, LENGTH = 1M
+    flash(rx)   : ORIGIN = 0x08000000, LENGTH = 1M
 
     /* NOTE: for now wer support only the AXI SRAM */
     ram(wx)     : ORIGIN = 0x24000200, LENGTH =  512K-0x200
