@@ -23,7 +23,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "I2C0.h"
-#include "AT24Cx.h"
+#include "drivers/NVM/AT24Cx.h"
 
 static const uint8_t DEV_ADDR  = 0xA0;    /* EEPROM I2C address */
 static const size_t  PAGE_SIZE = 128;

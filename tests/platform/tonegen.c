@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include "interfaces/gpio.h"
 #include "interfaces/delays.h"
-#include "toneGenerator_MDx.h"
+#include "drivers/tones/toneGenerator_MDx.h"
 #include "hwconfig.h"
 
 int main()

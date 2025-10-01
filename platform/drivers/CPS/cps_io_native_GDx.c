@@ -24,8 +24,8 @@
 #include "interfaces/cps_io.h"
 #include "core/nvmem_access.h"
 #include "core/utils.h"
-#include "AT24Cx.h"
-#include "W25Qx.h"
+#include "drivers/NVM/AT24Cx.h"
+#include "drivers/NVM/W25Qx.h"
 #include "cps_data_GDx.h"
 
 //static const uint32_t zoneBaseAddr        = 0x149e0;  /**< Base address of zones                */

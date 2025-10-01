@@ -26,7 +26,7 @@
 #include "hwconfig.h"
 #include "core/threads.h"
 #include "core/state.h"
-#include "toneGenerator_MDx.h"
+#include "drivers/tones/toneGenerator_MDx.h"
 #include "stm32_pwm.h"
 #include "stm32_adc.h"
 

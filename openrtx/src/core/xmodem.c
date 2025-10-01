@@ -18,7 +18,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include "drivers/USB/usb_vcom.h"
+#include "drivers/usb_vcom.h"
 #include <stdbool.h>
 #include <stdlib.h>
 #include "core/xmodem.h"

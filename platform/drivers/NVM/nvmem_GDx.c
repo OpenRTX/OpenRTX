@@ -27,8 +27,8 @@
 #include "drivers/SPI/spi_bitbang.h"
 #include "hwconfig.h"
 #include "core/utils.h"
-#include "AT24Cx.h"
-#include "W25Qx.h"
+#include "drivers/NVM/AT24Cx.h"
+#include "drivers/NVM/W25Qx.h"
 
 static const struct W25QxCfg eflashCfg =
 {
