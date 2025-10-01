@@ -25,6 +25,30 @@
 #include <stdint.h>
 
 /**
+ * Enumeration type for GPS fix quality, according to the quality
+ * indicator field of NMEA GGA sentence
+ */
+enum FixQuality {
+    FIX_QUALITY_NO_FIX = 0,
+    FIX_QUALITY_GPS,
+    FIX_QUALITY_DGPS,
+    FIX_QUALITY_PPS,
+    FIX_QUALITY_RTK,
+    FIX_QUALITY_RTK_FLOAT,
+    FIX_QUALITY_ESTIMATED,
+};
+
+/**
+ * Enumeration type for GPS fix type, according to the fix type field of
+ * NMEA GSA sentence
+ */
+enum FixType {
+    FIX_TYPE_NOT_AVAIL = 1,
+    FIX_TYPE_2D,
+    FIX_TYPE_3D,
+};
+
+/**
  * Data structure representing a single satellite as part of a GPS fix.
  */
 typedef struct

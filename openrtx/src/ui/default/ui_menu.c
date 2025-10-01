@@ -684,24 +684,28 @@ void _ui_drawMenuGPS()
     else if(!last_state.settings.gps_enabled)
         gfx_print(fix_pos, layout.line3_large_font, TEXT_ALIGN_CENTER,
                   color_white, currentLanguage->gpsOff);
-    else if (last_state.gps_data.fix_quality == 0)
+    else if (last_state.gps_data.fix_quality == FIX_QUALITY_NO_FIX)
         gfx_print(fix_pos, layout.line3_large_font, TEXT_ALIGN_CENTER,
                   color_white, currentLanguage->noFix);
-    else if (last_state.gps_data.fix_quality == 6)
+    else if (last_state.gps_data.fix_quality == FIX_QUALITY_ESTIMATED)
         gfx_print(fix_pos, layout.line3_large_font, TEXT_ALIGN_CENTER,
                   color_white, currentLanguage->fixLost);
     else
     {
         switch(last_state.gps_data.fix_quality)
         {
-            case 1:
-                fix_buf = "SPS";
+            case FIX_QUALITY_GPS:
+                fix_buf = "GPS";
                 break;
-            case 2:
+            case FIX_QUALITY_DGPS:
                 fix_buf = "DGPS";
                 break;
-            case 3:
+            case FIX_QUALITY_PPS:
                 fix_buf = "PPS";
+                break;
+            case FIX_QUALITY_RTK:
+            case FIX_QUALITY_RTK_FLOAT:
+                fix_buf = "RTK";
                 break;
             default:
                 fix_buf = (char*)currentLanguage->error;
@@ -710,13 +714,13 @@ void _ui_drawMenuGPS()
 
         switch(last_state.gps_data.fix_type)
         {
-            case 1:
+            case FIX_TYPE_NOT_AVAIL:
                 type_buf = "";
                 break;
-            case 2:
+            case FIX_TYPE_2D:
                 type_buf = "2D";
                 break;
-            case 3:
+            case FIX_TYPE_3D:
                 type_buf = "3D";
                 break;
             default:
