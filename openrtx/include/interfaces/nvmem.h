@@ -19,34 +19,31 @@ extern "C" {
 /**
  * Enumeration field for nonvolatile memory device type.
  */
-enum nvmType
-{
-    NVM_FLASH  = 0,   ///< FLASH type non volatile memory
-    NVM_EEPROM,       ///< EEPROM type non volatile memory
-    NVM_FILE,         ///< File type non volatile memory
-    NVM_EEEPROM       ///< Emulated EEPROM type non volatile memory
+enum nvmType {
+    NVM_FLASH = 0, ///< FLASH type non volatile memory
+    NVM_EEPROM,    ///< EEPROM type non volatile memory
+    NVM_FILE,      ///< File type non volatile memory
+    NVM_EEEPROM    ///< Emulated EEPROM type non volatile memory
 };
 
 /**
  * Enumeration field for nonvolatile memory properties.
  */
-enum nvmProperties
-{
-    NVM_WRITE    = 0x100,    ///< Device allows write access
-    NVM_BITWRITE = 0x200,    ///< Device allows to change the value of single bits
-    NVM_ERASE    = 0x400,    ///< Device memory needs to be erased before writing
+enum nvmProperties {
+    NVM_WRITE = 0x100,    ///< Device allows write access
+    NVM_BITWRITE = 0x200, ///< Device allows to change the value of single bits
+    NVM_ERASE = 0x400,    ///< Device memory needs to be erased before writing
 };
 
 /**
  * Nonvolatile memory device information block. The content of this data structure
  * is defined by the device driver and remains constant.
  */
-struct nvmInfo
-{
-    size_t   write_size;    ///< Minimum write size (write unit)
-    size_t   erase_size;    ///< Minimum erase size (erase unit)
-    size_t   erase_cycles;  ///< Maximum allowed erase cycles of a block
-    uint32_t device_info;   ///< Device type and flags
+struct nvmInfo {
+    size_t write_size;    ///< Minimum write size (write unit)
+    size_t erase_size;    ///< Minimum erase size (erase unit)
+    size_t erase_cycles;  ///< Maximum allowed erase cycles of a block
+    uint32_t device_info; ///< Device type and flags
 };
 
 struct nvmDevice;
@@ -54,8 +51,7 @@ struct nvmDevice;
 /**
  * Nonvolatile memory device driver.
  */
-struct nvmOps
-{
+struct nvmOps {
     /**
      * Read data from nonvolatile memory device.
      *
@@ -65,7 +61,8 @@ struct nvmOps
      * @param len: number of bytes to read.
      * @return 0 on success, negative errno code on fail.
      */
-    int (*read)(const struct nvmDevice *dev, uint32_t offset, void *data, size_t len);
+    int (*read)(const struct nvmDevice *dev, uint32_t offset, void *data,
+                size_t len);
 
     /**
      * Write data to nonvolatile memory device. On flash memory devices the area
@@ -78,7 +75,8 @@ struct nvmOps
      * @param len: number of bytes to write.
      * @return 0 on success, negative errno code on fail.
      */
-    int (*write)(const struct nvmDevice *dev, uint32_t offset, const void *data, size_t len);
+    int (*write)(const struct nvmDevice *dev, uint32_t offset, const void *data,
+                 size_t len);
 
     /**
      * Erase part or all of the nonvolatile memory.
@@ -103,22 +101,20 @@ struct nvmOps
     int (*sync)(const struct nvmDevice *dev);
 };
 
-struct nvmDevice
-{
-    const void           *priv;    ///< Device driver private data
-    const struct nvmOps  *ops;     ///< Device operations
-    const struct nvmInfo *info;    ///< Device info
-    const size_t          size;    ///< Device size
+struct nvmDevice {
+    const void *priv;           ///< Device driver private data
+    const struct nvmOps *ops;   ///< Device operations
+    const struct nvmInfo *info; ///< Device info
+    const size_t size;          ///< Device size
 };
 
 /**
  * Data structure representing a partition of a nonvolatile memory. The offset
  * of the partition is referred to the beginning of the memory area.
  */
-struct nvmPartition
-{
-    const size_t offset;    ///< Offset from the beginning of the NVM area
-    const size_t size;      ///< Size in bytes
+struct nvmPartition {
+    const size_t offset; ///< Offset from the beginning of the NVM area
+    const size_t size;   ///< Size in bytes
 };
 
 /**
@@ -126,14 +122,12 @@ struct nvmPartition
  * relative to an area of nonvolatile memory with a fixed size, managed by a
  * given device and with zero or more partition.
  */
-struct nvmDescriptor
-{
-    const char                *name;        ///< Name
-    const struct nvmDevice    *dev;         ///< Associated device driver
-    const size_t               partNum;     ///< Number of partitions
-    const struct nvmPartition *partitions;  ///< Partion table
+struct nvmDescriptor {
+    const char *name;                      ///< Name
+    const struct nvmDevice *dev;           ///< Associated device driver
+    const size_t partNum;                  ///< Number of partitions
+    const struct nvmPartition *partitions; ///< Partion table
 };
-
 
 /**
  * Initialise NVM driver.

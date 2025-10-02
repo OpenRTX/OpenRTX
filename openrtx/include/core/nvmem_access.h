@@ -38,8 +38,8 @@ int nvm_read(const uint32_t dev, const int part, uint32_t offset, void *data,
  * @param len: number of bytes to write.
  * @return zero on success, a negative error code otherwise.
  */
-int nvm_write(const uint32_t dev, const int part, uint32_t offset, const void *data,
-              size_t len);
+int nvm_write(const uint32_t dev, const int part, uint32_t offset,
+              const void *data, size_t len);
 
 /**
  * Perform an erase operation on a nonvolatile memory. Acceptable offset and
@@ -65,7 +65,7 @@ int nvm_erase(const uint32_t dev, const int part, uint32_t offset, size_t size);
 static inline int nvm_devRead(const struct nvmDevice *dev, uint32_t offset,
                               void *data, size_t len)
 {
-    if((offset + len) > dev->size)
+    if ((offset + len) > dev->size)
         return -EINVAL;
 
     return dev->ops->read(dev, offset, data, len);
@@ -85,10 +85,10 @@ static inline int nvm_devRead(const struct nvmDevice *dev, uint32_t offset,
 static inline int nvm_devWrite(const struct nvmDevice *dev, uint32_t offset,
                                const void *data, size_t len)
 {
-    if(dev->ops->write == NULL)
+    if (dev->ops->write == NULL)
         return -ENOTSUP;
 
-    if((offset + len) > dev->size)
+    if ((offset + len) > dev->size)
         return -EINVAL;
 
     return dev->ops->write(dev, offset, data, len);
@@ -114,7 +114,7 @@ int nvm_devErase(const struct nvmDevice *dev, uint32_t offset, size_t size);
  */
 static inline int nvm_devSync(const struct nvmDevice *dev)
 {
-    if(dev->ops->sync == NULL)
+    if (dev->ops->sync == NULL)
         return -ENOTSUP;
 
     return dev->ops->sync(dev);
