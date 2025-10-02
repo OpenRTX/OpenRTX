@@ -57,6 +57,7 @@ openrtx/include/core/dsp.h
 openrtx/include/core/data_conversion.h
 openrtx/include/core/datatypes.h
 openrtx/include/core/memory_profiling.h
+openrtx/include/core/nvmem_access.h
 openrtx/include/core/openrtx.h
 openrtx/include/core/ui.h
 openrtx/include/core/utils.h
@@ -65,11 +66,13 @@ openrtx/include/fonts/symbols/symbols.h
 openrtx/include/interfaces/cps_io.h
 openrtx/include/interfaces/delays.h
 openrtx/include/interfaces/display.h
+openrtx/include/interfaces/nvmem.h
 openrtx/include/interfaces/radio.h
 openrtx/include/peripherals/gps.h
 openrtx/include/peripherals/rng.h
 openrtx/include/peripherals/rtc.h
 openrtx/src/core/dsp.cpp
+openrtx/src/core/nvmem_access.c
 openrtx/src/core/memory_profiling.cpp
 platform/drivers/ADC/ADC0_GDx.h
 platform/drivers/audio/MAX9814.h
