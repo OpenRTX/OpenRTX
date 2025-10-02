@@ -109,7 +109,7 @@ void gps_task(const struct gpsDevice *dev)
                 gps_data.fix_type = frame.fix_type;
                 for (int i = 0; i < 12; i++)
                 {
-                    if (frame.sats[i] != 0)
+                    if (frame.sats[i] != 0 && frame.sats[i] < 31)
                     {
                         gps_data.active_sats |= 1 << (frame.sats[i] - 1);
                     }
