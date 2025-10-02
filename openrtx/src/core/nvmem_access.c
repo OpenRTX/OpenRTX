@@ -10,7 +10,6 @@
 #include <stdint.h>
 #include <errno.h>
 
-
 /**
  * \internal
  * Compute the absolute offset from the beginning of an NVM device, given the
@@ -31,14 +30,13 @@ static inline int getAbsOffset(const struct nvmDescriptor *nvm, const int part,
     const struct nvmPartition *np;
 
     // Offset is relative to a partition
-    if(part >= 0)
-    {
-        if((size_t) part >= nvm->partNum)
+    if (part >= 0) {
+        if ((size_t)part >= nvm->partNum)
             return -EINVAL;
 
         np = &nvm->partitions[part];
 
-        if((*offset + len) > np->size)
+        if ((*offset + len) > np->size)
             return -EINVAL;
 
         *offset += np->offset;
@@ -47,30 +45,29 @@ static inline int getAbsOffset(const struct nvmDescriptor *nvm, const int part,
     return 0;
 }
 
-
 int nvm_read(const uint32_t dev, const int part, uint32_t offset, void *data,
              size_t len)
 {
     const struct nvmDescriptor *nvm = nvm_getDesc(dev);
-    if(nvm == NULL)
+    if (nvm == NULL)
         return -EINVAL;
 
     int ret = getAbsOffset(nvm, part, &offset, len);
-    if(ret < 0)
+    if (ret < 0)
         return ret;
 
     return nvm_devRead(nvm->dev, offset, data, len);
 }
 
-int nvm_write(const uint32_t dev, const int part, uint32_t offset, const void *data,
-              size_t len)
+int nvm_write(const uint32_t dev, const int part, uint32_t offset,
+              const void *data, size_t len)
 {
     const struct nvmDescriptor *nvm = nvm_getDesc(dev);
-    if(nvm == NULL)
+    if (nvm == NULL)
         return -EINVAL;
 
     int ret = getAbsOffset(nvm, part, &offset, len);
-    if(ret < 0)
+    if (ret < 0)
         return ret;
 
     return nvm_devWrite(nvm->dev, offset, data, len);
@@ -79,11 +76,11 @@ int nvm_write(const uint32_t dev, const int part, uint32_t offset, const void *d
 int nvm_erase(const uint32_t dev, const int part, uint32_t offset, size_t size)
 {
     const struct nvmDescriptor *nvm = nvm_getDesc(dev);
-    if(nvm == NULL)
+    if (nvm == NULL)
         return -EINVAL;
 
     int ret = getAbsOffset(nvm, part, &offset, size);
-    if(ret < 0)
+    if (ret < 0)
         return ret;
 
     return nvm_devErase(nvm->dev, offset, size);
@@ -92,19 +89,19 @@ int nvm_erase(const uint32_t dev, const int part, uint32_t offset, size_t size)
 int nvm_devErase(const struct nvmDevice *dev, uint32_t offset, size_t size)
 {
     // Erase operation is allowed
-    if(dev->ops->erase == NULL)
+    if (dev->ops->erase == NULL)
         return -ENOTSUP;
 
     // Out-of-bounds check
-    if((offset + size) > dev->size)
+    if ((offset + size) > dev->size)
         return -EINVAL;
 
     // Start offset must be aligned to the erase size
-    if((offset % dev->info->erase_size) != 0)
+    if ((offset % dev->info->erase_size) != 0)
         return -EINVAL;
 
     // Total size must be aligned to the erase size
-    if((size % dev->info->erase_size) != 0)
+    if ((size % dev->info->erase_size) != 0)
         return -EINVAL;
 
     return dev->ops->erase(dev, offset, size);
