@@ -207,6 +207,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
 
                 // Retrieve stream source and destination data
                 std::string dst = lsf.getDestination();
+                M17::Callsign dstCallsign(dst);
                 std::string src = lsf.getSource();
 
                 // Retrieve extended callsign data
@@ -218,8 +219,10 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                     extendedCall = true;
 
                     meta_t& meta = lsf.metadata();
-                    std::string exCall1 = decode_callsign(meta.extended_call_sign.call1);
-                    std::string exCall2 = decode_callsign(meta.extended_call_sign.call2);
+                    M17::Callsign exCall1Cs(meta.extended_call_sign.call1);
+                    M17::Callsign exCall2Cs(meta.extended_call_sign.call2);
+                    std::string exCall1 = exCall1Cs;
+                    std::string exCall2 = exCall2Cs;
 
                     //
                     // The source callsign only contains the last link when
@@ -250,8 +253,8 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
 
                 // Check if the destination callsign of the incoming transmission
                 // matches with ours
-                bool callMatch = compareCallsigns(std::string(status->source_address), dst);
-
+                bool callMatch = (M17::Callsign(status->source_address) == dstCallsign);
+            
                 // Open audio path only if CAN and callsign match
                 uint8_t pthSts = audioPath_getStatus(rxAudioPath);
                 if((pthSts == PATH_CLOSED) && (canMatch == true) && (callMatch == true))
@@ -358,27 +361,4 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         modulator.sendFrame(m17Frame);
         modulator.stop();
     }
-}
-
-bool OpMode_M17::compareCallsigns(const std::string& localCs,
-                                  const std::string& incomingCs)
-{
-    if((incomingCs == "ALL") || (incomingCs == "INFO") || (incomingCs == "ECHO"))
-        return true;
-
-    std::string truncatedLocal(localCs);
-    std::string truncatedIncoming(incomingCs);
-
-    int slashPos = localCs.find_first_of('/');
-    if(slashPos <= 2)
-        truncatedLocal = localCs.substr(slashPos + 1);
-
-    slashPos = incomingCs.find_first_of('/');
-    if(slashPos <= 2)
-        truncatedIncoming = incomingCs.substr(slashPos + 1);
-
-    if(truncatedLocal == truncatedIncoming)
-        return true;
-
-    return false;
 }
