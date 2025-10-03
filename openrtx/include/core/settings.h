@@ -63,6 +63,7 @@ typedef struct
     bool    m17_can_rx;           // Check M17 CAN on RX
     char    m17_dest[10];         // M17 destination
     bool    showBatteryIcon;      // Battery display true: icon, false: percentage
+    bool    gpsSetTime;           // Use GPS to ajust RTC time
 }
 __attribute__((packed)) settings_t;
 
@@ -89,6 +90,7 @@ static const settings_t default_settings =
     false,                        // Check M17 CAN on RX
     "",                           // Empty M17 destination
     false,                        // Display battery icon
+    false,                        // Update RTC with GPS
 };
 
 #endif /* SETTINGS_H */

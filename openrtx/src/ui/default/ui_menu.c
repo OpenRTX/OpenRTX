@@ -316,7 +316,7 @@ int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
                                                       currentLanguage->off);
             break;
         case G_SET_TIME:
-            sniprintf(buf, max_len, "%s", (last_state.gps_set_time) ?
+            sniprintf(buf, max_len, "%s", (last_state.settings.gpsSetTime) ?
                                                currentLanguage->on :
                                                currentLanguage->off);
             break;

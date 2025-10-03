@@ -2156,10 +2156,10 @@ void ui_updateFSM(bool *sync_rtx)
                                                            state.settings.gps_enabled);
                             break;
                         case G_SET_TIME:
-                            state.gps_set_time = !state.gps_set_time;
+                            state.settings.gpsSetTime = !state.settings.gpsSetTime;
                             vp_announceSettingsOnOffToggle(&currentLanguage->gpsSetTime,
                                                            queueFlags,
-                                                           state.gps_set_time);
+                                                           state.settings.gpsSetTime);
                             break;
                         case G_TIMEZONE:
                             if(msg.keys & KEY_LEFT || msg.keys & KEY_DOWN ||

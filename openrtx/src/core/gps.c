@@ -29,6 +29,23 @@
 
 static bool gpsEnabled = false;
 
+#ifdef CONFIG_RTC
+static bool rtcSyncDone = false;
+static void syncRtc(datetime_t timestamp)
+{
+    if(state.settings.gpsSetTime == false) {
+        rtcSyncDone = false;
+        return;
+    }
+
+    if(rtcSyncDone)
+        return;
+
+    platform_setTime(timestamp);
+    rtcSyncDone = true;
+}
+#endif
+
 void gps_task(const struct gpsDevice *dev)
 {
     char sentence[2*MINMEA_MAX_LENGTH];
@@ -81,6 +98,10 @@ void gps_task(const struct gpsDevice *dev)
                 gps_data.timestamp.month = frame.date.month;
                 gps_data.timestamp.year = frame.date.year;
                 gps_data.speed = KNOTS2KMH(minmea_toint(&frame.speed));
+                #ifdef CONFIG_RTC
+                if(frame.valid)
+                    syncRtc(gps_data.timestamp);
+                #endif
             }
         }
         break;
@@ -171,20 +192,4 @@ void gps_task(const struct gpsDevice *dev)
     pthread_mutex_lock(&state_mutex);
     state.gps_data = gps_data;
     pthread_mutex_unlock(&state_mutex);
-
-    // Synchronize RTC with GPS UTC clock, only when fix is done
-    #ifdef CONFIG_RTC
-    if(state.gps_set_time)
-    {
-        if((sId == MINMEA_SENTENCE_RMC) && (gps_data.fix_quality > 0))
-        {
-            platform_setTime(gps_data.timestamp);
-
-            // Done, clear the flag
-            pthread_mutex_lock(&state_mutex);
-            state.gps_set_time = false;
-            pthread_mutex_unlock(&state_mutex);
-        }
-    }
-    #endif
 }
