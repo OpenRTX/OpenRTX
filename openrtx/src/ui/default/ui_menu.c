@@ -315,6 +315,7 @@ int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
                                                       currentLanguage->on  :
                                                       currentLanguage->off);
             break;
+#ifdef CONFIG_RTC
         case G_SET_TIME:
             sniprintf(buf, max_len, "%s", (last_state.settings.gpsSetTime) ?
                                                currentLanguage->on :
@@ -340,6 +341,7 @@ int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
             sniprintf(buf, max_len, "%c%d.%d", sign, tz_hr, tz_mn);
         }
             break;
+#endif
     }
     return 0;
 }

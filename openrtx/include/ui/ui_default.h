@@ -129,8 +129,10 @@ enum displayItems
 enum settingsGPSItems
 {
     G_ENABLED = 0,
+#ifdef CONFIG_RTC
     G_SET_TIME,
     G_TIMEZONE
+#endif
 };
 #endif
 

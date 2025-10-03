@@ -167,8 +167,10 @@ const char *display_items[] =
 const char *settings_gps_items[] =
 {
     "GPS Enabled",
+#ifdef CONFIG_RTC
     "GPS Set Time",
     "UTC Timezone"
+#endif
 };
 #endif
 
@@ -2155,6 +2157,7 @@ void ui_updateFSM(bool *sync_rtx)
                                                            queueFlags,
                                                            state.settings.gps_enabled);
                             break;
+#ifdef CONFIG_RTC
                         case G_SET_TIME:
                             state.settings.gpsSetTime = !state.settings.gpsSetTime;
                             vp_announceSettingsOnOffToggle(&currentLanguage->gpsSetTime,
@@ -2170,6 +2173,7 @@ void ui_updateFSM(bool *sync_rtx)
                                 state.settings.utc_timezone += 1;
                             vp_announceTimeZone(state.settings.utc_timezone, queueFlags);
                             break;
+#endif
                         default:
                             state.ui_screen = SETTINGS_GPS;
                     }
