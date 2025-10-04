@@ -1456,8 +1456,7 @@ void ui_updateFSM(bool *sync_rtx)
             macro_menu = true;
             macro_latched = true;
         }
-#endif // PLA%FORM_TTWRPLUS
-
+#endif  // PLATFORM_TTWRPLUS
         if(state.tone_enabled && !(msg.keys & KEY_HASH))
         {
             state.tone_enabled = false;
@@ -1547,27 +1546,24 @@ void ui_updateFSM(bool *sync_rtx)
                                                    queueFlags);
                         }
                     }
-                    else if(msg.keys & KEY_HASH)
+                    #ifdef CONFIG_M17 // Only enter edit mode when using M17
+                    else if(state.channel.mode == OPMODE_M17 && msg.keys & KEY_HASH)
                     {
-                        #ifdef CONFIG_M17
-                        // Only enter edit mode when using M17
-                        if(state.channel.mode == OPMODE_M17)
+                        // Enable dst ID input
+                        ui_state.edit_mode = true;
+                        // Reset text input variables
+                        _ui_textInputReset(ui_state.new_callsign);
+                        vp_announceM17Info(NULL,  ui_state.edit_mode,
+                                            queueFlags);
+                    }
+                    #endif
+                    else if(txOngoing && msg.keys & KEY_F1 && state.channel.mode == OPMODE_FM)
+                    {
+                        // Enable 1750Hz tone burst for FM mode
+                        if(!state.tone_enabled)
                         {
-                            // Enable dst ID input
-                            ui_state.edit_mode = true;
-                            // Reset text input variables
-                            _ui_textInputReset(ui_state.new_callsign);
-                            vp_announceM17Info(NULL,  ui_state.edit_mode,
-                                               queueFlags);
-                        }
-                        else
-                        #endif
-                        {
-                            if(!state.tone_enabled)
-                            {
-                                state.tone_enabled = true;
-                                *sync_rtx = true;
-                            }
+                            state.tone_enabled = true;
+                            *sync_rtx = true;
                         }
                     }
                     else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
@@ -1598,7 +1594,7 @@ void ui_updateFSM(bool *sync_rtx)
                                                    queueFlags);
                         }
                     }
-                    else if(msg.keys & KEY_F1)
+                    else if(!txOngoing && msg.keys & KEY_F1)
                     {
                         if (state.settings.vpLevel > vpBeep)
                         {// quick press repeat vp, long press summary.
@@ -1610,7 +1606,7 @@ void ui_updateFSM(bool *sync_rtx)
                             f1Handled = true;
                         }
                     }
-                    else if(input_isNumberPressed(msg))
+                    else if(!txOngoing && input_isNumberPressed(msg))
                     {
                         // Open Frequency input screen
                         state.ui_screen = MAIN_VFO_INPUT;
@@ -1744,26 +1740,27 @@ void ui_updateFSM(bool *sync_rtx)
                         // Switch to VFO screen
                         state.ui_screen = MAIN_VFO;
                     }
-                    else if(msg.keys & KEY_HASH)
+                    #ifdef CONFIG_M17 // Only enter edit mode when using M17
+                    else if(state.channel.mode == OPMODE_M17 && msg.keys & KEY_HASH)
                     {
-                        // Only enter edit mode when using M17
-                        if(state.channel.mode == OPMODE_M17)
+                        // Enable dst ID input
+                        ui_state.edit_mode = true;
+                        // Reset text input variables
+                        _ui_textInputReset(ui_state.new_callsign);
+                        vp_announceM17Info(NULL,  ui_state.edit_mode,
+                                            queueFlags);
+                    }
+                    #endif
+                    else if(txOngoing && msg.keys & KEY_F1 && state.channel.mode == OPMODE_FM)
+                    {
+                        // Enable 1750Hz tone burst for FM mode
+                        if(!state.tone_enabled)
                         {
-                            // Enable dst ID input
-                            ui_state.edit_mode = true;
-                            // Reset text input variables
-                            _ui_textInputReset(ui_state.new_callsign);
-                        }
-                        else
-                        {
-                            if(!state.tone_enabled)
-                            {
-                                state.tone_enabled = true;
-                                *sync_rtx = true;
-                            }
+                            state.tone_enabled = true;
+                            *sync_rtx = true;
                         }
                     }
-                    else if(msg.keys & KEY_F1)
+                    else if(!txOngoing && msg.keys & KEY_F1)
                     {
                         if (state.settings.vpLevel > vpBeep)
                         {// quick press repeat vp, long press summary.
