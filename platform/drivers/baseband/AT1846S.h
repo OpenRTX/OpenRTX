@@ -156,6 +156,18 @@ public:
         maskSetRegister(0x3A, 0x7000, 0x1000); // Use tone 1
         maskSetRegister(0x79, 0xF000, 0xC000); // Enable tone output
     }
+    /**
+     * Setup and enable DTMF tone output
+     * @param freq1 frequency of first tone in 1/10 Hz
+     * @param freq2 frequency of second tone in 1/10 Hz
+     */
+    void enableDtmfTone(const tone_t freq1, const tone_t freq2)
+    {
+        i2c_writeReg16(0x35, freq1); // Set tone 1 freq
+        i2c_writeReg16(0x36, freq2); // Set tone 2 freq
+        maskSetRegister(0x3A, 0x7000, 0x3000); // Set voice sel to both tones 1 and 2
+        maskSetRegister(0x79, 0xF000, 0xC000); // Enable tone output
+    }
 
     /**
      * Change output back to microphone

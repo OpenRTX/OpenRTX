@@ -24,6 +24,7 @@
 #include "rtx/rtx.h"
 #include "rtx/OpMode_FM.hpp"
 #include "rtx/OpMode_M17.hpp"
+#include "protocols/FM/DTMF.hpp"
 
 static pthread_mutex_t   *cfgMutex;     // Mutex for incoming config messages
 static const rtxStatus_t *newCnf;       // Pointer for incoming config messages
@@ -217,6 +218,7 @@ void rtx_task()
      * version of the RSSI level.
      */
     currMode->update(&rtxStatus, reconfigure);
+
 }
 
 rssi_t rtx_getRssi()
