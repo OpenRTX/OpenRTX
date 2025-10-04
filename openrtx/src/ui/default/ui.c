@@ -2208,7 +2208,7 @@ void ui_updateFSM(bool *sync_rtx)
 #endif
                                 // Apply new offset
                                 state.channel.tx_frequency = state.channel.rx_frequency + ui_state.new_offset;
-                                vp_queueStringTableEntry(&currentLanguage->frequencyOffset);
+                                vp_queueStringTableEntry(&currentLanguage->offset);
                                 vp_queueFrequency(ui_state.new_offset);
                                 ui_state.edit_mode = false;
                             }
@@ -2216,7 +2216,7 @@ void ui_updateFSM(bool *sync_rtx)
                             if(msg.keys & KEY_ESC)
                             {
                                 // Announce old frequency offset
-                                vp_queueStringTableEntry(&currentLanguage->frequencyOffset);
+                                vp_queueStringTableEntry(&currentLanguage->offset);
                                 vp_queueFrequency((int32_t)state.channel.tx_frequency - (int32_t)state.channel.rx_frequency);
                             }
                             else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||

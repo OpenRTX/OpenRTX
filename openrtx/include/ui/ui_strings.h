@@ -97,7 +97,7 @@ typedef struct
     const char* usedHeap;
     const char* broadcast;
     const char* radioSettings;
-    const char* frequencyOffset;
+    const char* offset;
     const char* macroLatching;
     const char* noGps;
     const char* batteryIcon;
