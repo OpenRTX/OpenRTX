@@ -2414,11 +2414,6 @@ void ui_updateFSM(bool *sync_rtx)
                             state.channel.fm.txTone %= CTCSS_FREQ_NUM;
                             state.channel.fm.rxTone = state.channel.fm.txTone;
                             *sync_rtx = true;
-                            vp_announceCTCSS(state.channel.fm.rxToneEn,
-                                             state.channel.fm.rxTone,
-                                             state.channel.fm.txToneEn,
-                                             state.channel.fm.txTone,
-                                             queueFlags);
                             break;
                         case CTCSS_Enabled:
                             if (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
@@ -2432,11 +2427,6 @@ void ui_updateFSM(bool *sync_rtx)
                             }
 
                             *sync_rtx = true;
-                            vp_announceCTCSS(state.channel.fm.rxToneEn,
-                                             state.channel.fm.rxTone,
-                                             state.channel.fm.txToneEn,
-                                             state.channel.fm.txTone,
-                                             queueFlags | vpqIncludeDescriptions);
                             break;
                     }
                 }
