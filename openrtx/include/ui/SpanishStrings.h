@@ -103,6 +103,9 @@ const stringsTable_t spanishStrings =
     .Encode            = "Codificar",
     .Decode            = "Decodificar",
     .Both              = "Ambos",
-    .None              = "Ni"
+    .None              = "Ni",
+    .direction         = "Dirección",
+    .step              = "Paso",
+    .radio             = "Radio",
 };
 #endif  // SPANISHSTRINGS_H

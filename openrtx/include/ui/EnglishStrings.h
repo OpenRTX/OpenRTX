@@ -102,6 +102,9 @@ const stringsTable_t englishStrings =
     .Encode            = "Encode",
     .Decode            = "Decode",
     .Both              = "Both",
-    .None              = "None"
+    .None              = "None",
+    .direction         = "Direction",
+    .step              = "Step",
+    .radio             = "Radio",
 };
 #endif  // ENGLISHSTRINGS_H

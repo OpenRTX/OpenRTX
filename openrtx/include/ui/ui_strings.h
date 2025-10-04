@@ -107,6 +107,9 @@ typedef struct
     const char* Decode;
     const char* Both;
     const char* None;
+    const char* direction;
+    const char* step;
+    const char* radio;
 }
 stringsTable_t;
 
