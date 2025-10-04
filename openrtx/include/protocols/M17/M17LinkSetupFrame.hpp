@@ -27,7 +27,8 @@
 
 #include <string>
 #include <array>
-#include "M17Datatypes.hpp"
+#include "protocols/M17/M17Datatypes.hpp"
+#include "core/gps.h"
 
 namespace M17
 {
@@ -139,6 +140,16 @@ public:
      * @return Golay (24,12) encoded LSF chunk.
      */
     lich_t generateLichSegment(const uint8_t segmentNum);
+
+    /**
+     * @brief Set the GNSS data for the LSF's meta feature. This method not only
+     * handles converting the datatypes, but it also handles the byte swapping
+     * necessary since M17 is big endian but the runtime is little endian.
+     *
+     * @param position
+     * @param stationType 
+     */
+    void setGnssData(const gps_t *position, const M17GNSSStationType stationType);
 
 private:
 

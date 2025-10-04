@@ -22,6 +22,7 @@
 #include "protocols/M17/M17Golay.hpp"
 #include "protocols/M17/M17Callsign.hpp"
 #include "protocols/M17/M17LinkSetupFrame.hpp"
+#include "core/utils.h"
 
 using namespace M17;
 
@@ -157,4 +158,41 @@ uint16_t M17LinkSetupFrame::crc16(const void *data, const size_t len) const
     }
 
     return crc;
+}
+
+void M17LinkSetupFrame::setGnssData(const gps_t *position, const M17GNSSStationType stationType) {
+    gnssData_t gnssData;
+    memset(&gnssData, 0, sizeof(gnssData));
+
+    gnssData.data_src = M17_GNSS_SOURCE_OPENRTX;
+    gnssData.station_type = stationType;
+
+    gnssData.coords_valid = 1;
+    gnssData.alt_valid = 1;
+    gnssData.velocity_valid = 1;
+    gnssData.radius_valid = 0;
+
+    gnssData.radius = position->hdop;
+
+    gnssData.bearing_1 = (position->tmg_true >> 8) & 0x01; // MSB (1 bit)
+    gnssData.bearing_2 = position->tmg_true & 0xFF; // Lower 8 bits
+
+    // Encode the coordinates in Q1.24 format, flip the byte order for M17's big endian standard
+    int32_t lat_encoded, lon_encoded;
+    rtx_to_q(&lat_encoded, &lon_encoded, position->latitude, position->longitude);
+    for(uint8_t i = 0; i < 3; i++)
+    {
+        gnssData.latitude_bytes[i] = *((uint8_t*)&lat_encoded + 2 - i);
+        gnssData.longitude_bytes[i] = *((uint8_t*)&lon_encoded + 2 - i);
+    }
+
+    uint16_t speed = (uint16_t)position->speed * 2;
+    gnssData.speed_1 = speed >> 4; // MBS
+    gnssData.speed_2 = speed & 0x0F; // Lower 4 bits
+
+    // Structure numeric fields that need offset and steps
+    uint16_t alt = (uint16_t)1000 + position->altitude * 2;
+    gnssData.altitude = __builtin_bswap16(alt);
+
+    data.meta.gnss_data = gnssData;
 }
