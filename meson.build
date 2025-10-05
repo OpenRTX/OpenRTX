@@ -985,13 +985,6 @@ foreach t : targets
       # Module17 uses dfu-tool for flashing
       elif name == 'openrtx_mod17'
 
-        # Wrap target for Module17 for consistency, same output as bin target
-        custom_target(name+'_wrap',
-                      output  : name+'_wrap',
-                      input   : exe,
-                      command : [objcopy, '-O', 'binary', '@INPUT@', '@OUTPUT@'])
-
-
         custom_target(name+'_flash',
                       input   : bin,
                       output  : name+'_flash',
@@ -1011,7 +1004,7 @@ foreach t : targets
         custom_target(name+'_wrap',
                       output  : name+'_wrap',
                       input   : bin,
-                      command : [cs7000_wrap, '@INPUT@', '@OUTPUT@.bin'])
+                      command : [cs7000_wrap, '@INPUT@', '@OUTPUT@'])
 
         custom_target(name+'_flash',
                       input   : bin,
