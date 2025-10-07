@@ -43,22 +43,30 @@ void M17LinkSetupFrame::clear()
 
 void M17LinkSetupFrame::setSource(const std::string& callsign)
 {
-    encode_callsign(callsign, data.src);
+    // TODO: change type in signature to Callsign
+    Callsign cs(callsign);
+    data.src = cs;
 }
 
 std::string M17LinkSetupFrame::getSource()
 {
-    return decode_callsign(data.src);
+    // TODO: change type in signature to Callsign
+    Callsign cs(data.src);
+    return cs;
 }
 
 void M17LinkSetupFrame::setDestination(const std::string& callsign)
 {
-    encode_callsign(callsign, data.dst);
+    // TODO: change type in signature to Callsign
+    Callsign cs(callsign);
+    data.dst = cs;
 }
 
 std::string M17LinkSetupFrame::getDestination()
 {
-    return decode_callsign(data.dst);
+    // TODO: change type in signature to Callsign
+    Callsign cs(data.dst);
+    return cs;
 }
 
 streamType_t M17LinkSetupFrame::getType()
