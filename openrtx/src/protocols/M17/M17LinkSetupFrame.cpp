@@ -161,38 +161,43 @@ uint16_t M17LinkSetupFrame::crc16(const void *data, const size_t len) const
 }
 
 void M17LinkSetupFrame::setGnssData(const gps_t *position, const M17GNSSStationType stationType) {
-    gnssData_t gnssData;
-    memset(&gnssData, 0, sizeof(gnssData));
+    if(position->fix_type < FIX_TYPE_2D) {
+        return;
+    }
 
-    gnssData.data_src = M17_GNSS_SOURCE_OPENRTX;
-    gnssData.station_type = stationType;
+    streamType_t streamType = getType();
+    streamType.fields.encType    = M17_ENCRYPTION_NONE;
+    streamType.fields.encSubType = M17_META_GNSS;
+    setType(streamType);
 
-    gnssData.coords_valid = 1;
-    gnssData.alt_valid = 1;
-    gnssData.velocity_valid = 1;
-    gnssData.radius_valid = 0;
+    data.meta.gnss_data.data_src = M17_GNSS_SOURCE_OPENRTX;
+    data.meta.gnss_data.station_type = stationType;
 
-    gnssData.radius = position->hdop;
+    data.meta.gnss_data.coords_valid = 1;
+    data.meta.gnss_data.alt_valid = 1;
+    data.meta.gnss_data.velocity_valid = 1;
+    data.meta.gnss_data.radius_valid = 0;
 
-    gnssData.bearing_1 = (position->tmg_true >> 8) & 0x01; // MSB (1 bit)
-    gnssData.bearing_2 = position->tmg_true & 0xFF; // Lower 8 bits
+    data.meta.gnss_data.radius = position->hdop;
+
+    data.meta.gnss_data.bearing_1 = (position->tmg_true >> 8) & 0x01; // MSB (1 bit)
+    data.meta.gnss_data.bearing_2 = position->tmg_true & 0xFF; // Lower 8 bits
 
     // Encode the coordinates in Q1.24 format, flip the byte order for M17's big endian standard
     int32_t lat_encoded, lon_encoded;
     rtx_to_q(&lat_encoded, &lon_encoded, position->latitude, position->longitude);
     for(uint8_t i = 0; i < 3; i++)
     {
-        gnssData.latitude_bytes[i] = *((uint8_t*)&lat_encoded + 2 - i);
-        gnssData.longitude_bytes[i] = *((uint8_t*)&lon_encoded + 2 - i);
+        data.meta.gnss_data.latitude_bytes[i] = *((uint8_t*)&lat_encoded + 2 - i);
+        data.meta.gnss_data.longitude_bytes[i] = *((uint8_t*)&lon_encoded + 2 - i);
     }
 
     uint16_t speed = (uint16_t)position->speed * 2;
-    gnssData.speed_1 = speed >> 4; // MBS
-    gnssData.speed_2 = speed & 0x0F; // Lower 4 bits
+    data.meta.gnss_data.speed_1 = speed >> 4; // MBS
+    data.meta.gnss_data.speed_2 = speed & 0x0F; // Lower 4 bits
 
     // Structure numeric fields that need offset and steps
     uint16_t alt = (uint16_t)1000 + position->altitude * 2;
-    gnssData.altitude = __builtin_bswap16(alt);
+    data.meta.gnss_data.altitude = __builtin_bswap16(alt);
 
-    data.meta.gnss_data = gnssData;
 }

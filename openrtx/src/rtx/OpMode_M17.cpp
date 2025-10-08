@@ -313,14 +313,12 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
 
 void OpMode_M17::txState(rtxStatus_t *const status)
 {
-    static streamType_t type;
     frame_t m17Frame;
-    static int16_t gpsTimer;
 
     if(startTx)
     {
         startTx = false;
-        gpsTimer = -1;
+        gpsTimer = 0;
 
         std::string src(status->source_address);
         std::string dst(status->destination_address);
@@ -328,7 +326,14 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         lsf.clear();
         lsf.setSource(src);
         if(!dst.empty()) lsf.setDestination(dst);
+        
+        if(state.settings.gps_enabled)
+        {
+            lsf.setGnssData(&state.gps_data, M17_GNSS_STATION_HANDHELD);
+            gpsTransmitting = true;
+        }
 
+        streamType_t type = lsf.getType();
         type.fields.dataMode = M17_DATAMODE_STREAM;     // Stream
         type.fields.dataType = M17_DATATYPE_VOICE;      // Voice data
         type.fields.CAN      = status->can;             // Channel access number
@@ -349,16 +354,11 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         modulator.sendFrame(m17Frame);
     }
 
-    gps_t gps_data;
-    gps_data = state.gps_data;
-    if(encoder.canUpdateLsf() && state.settings.gps_enabled && (gpsTimer == -1 || gpsTimer >= MINIMUM_GPS_TIME_TICKS) && gps_data.fix_type > FIX_TYPE_NOT_AVAIL)
+    if(encoder.canUpdateLsf() && state.settings.gps_enabled && gpsTimer >= MINIMUM_GPS_TIME_TICKS)
     {
         gpsTimer = 0;
         gpsTransmitting = true;
-        lsf.setGnssData(&gps_data, M17_GNSS_STATION_HANDHELD);
-        type.fields.encType    = M17_ENCRYPTION_NONE;
-        type.fields.encSubType = M17_META_GNSS;
-        lsf.setType(type);
+        lsf.setGnssData(&state.gps_data, M17_GNSS_STATION_HANDHELD);
         lsf.updateCrc();
         encoder.encodeLsf(lsf, m17Frame);
     }
@@ -393,7 +393,7 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         encoder.encodeEotFrame(m17Frame);
         modulator.sendFrame(m17Frame);
         modulator.stop();
-        gpsTimer = -1;
+        gpsTimer = 0;
         gpsTransmitting = false;
     }
 }

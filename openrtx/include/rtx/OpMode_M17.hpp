@@ -135,6 +135,7 @@ private:
     bool compareCallsigns(const std::string& localCs, const std::string& incomingCs);
 
 
+    static constexpr int16_t MINIMUM_GPS_TIME_TICKS = 5 * 30; // Wait at least 5 seconds between GPS transmissions
     bool startRx;                      ///< Flag for RX management.
     bool startTx;                      ///< Flag for TX management.
     bool locked;                       ///< Demodulator locked on data stream.
@@ -150,9 +151,7 @@ private:
     M17::M17FrameDecoder decoder;      ///< M17 frame decoder
     M17::M17FrameEncoder encoder;      ///< M17 frame encoder
     M17::M17LinkSetupFrame lsf;        ///< M17 link setup frame
-
-
-    static constexpr int16_t MINIMUM_GPS_TIME_TICKS = 5 * 30; // Wait at least 5 seconds between GPS transmissions
+    int16_t gpsTimer;                  ///< Timer used to manage GPS data transmission intervals.
 };
 
 #endif /* OPMODE_M17_H */
