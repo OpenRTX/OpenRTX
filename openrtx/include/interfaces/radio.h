@@ -32,14 +32,14 @@ extern "C" {
 /**
  * This file provides a common interface for the platform-dependent low-level
  * rtx driver. Top level application code normally does not have to call directly
- * the API functions provided here, since all the transceiver managment, comprised
- * the handling of digital protocols is done by the 'rtx' module.
+ * the API functions provided here, since all the transceiver management,
+ * comprised the handling of digital protocols, is done by the 'rtx' module.
  *
  * The radio functionalities are controlled by means of an rtxStatus_t data
  * structure containing all the parameters required to define a given operating
- * configuration for the RF stage such as TX and RX frequencies, ...
- * The data structure is internally accessed by each of the API functions and is
- * guaranteed that the access is performed in read only mode.
+ * configuration for the RF stage such as TX and RX frequencies, modulation mode,
+ * squelch level, and so on. The data structure is internally accessed by each of
+ * the API functions and is guaranteed to be used in read-only mode.
  */
 
 /**
@@ -119,6 +119,31 @@ rssi_t radio_getRssi();
  * @return current operating status.
  */
 enum opstatus radio_getStatus();
+
+/* -------------------------------------------------------------------------- */
+/*                        FM Frequency Scan Additions                         */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Perform a frequency scan step and return the measured RSSI.
+ * Used internally by FM scan feature.
+ *
+ * @param freq Frequency to tune to in Hz.
+ * @param dwell_ms Time to wait before sampling RSSI (in milliseconds).
+ * @return RSSI value in dBm.
+ */
+rssi_t radio_scanStep(freq_t freq, uint16_t dwell_ms);
+
+/**
+ * Perform a full FM frequency scan between start and stop frequencies.
+ *
+ * @param start Start frequency in Hz.
+ * @param stop Stop frequency in Hz.
+ * @param step Frequency step in Hz (e.g. 12500 or 25000).
+ * @param threshold Minimum RSSI threshold to detect a signal.
+ * @return Frequency where signal was found, or 0 if none.
+ */
+freq_t radio_scan(freq_t start, freq_t stop, freq_t step, rssi_t threshold);
 
 #ifdef __cplusplus
 }
