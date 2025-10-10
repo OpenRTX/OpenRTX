@@ -218,6 +218,56 @@ void rtx_task()
      */
     currMode->update(&rtxStatus, reconfigure);
 }
+// -----------------------------------------------------------------------------
+// FM Frequency Scanning Control
+// -----------------------------------------------------------------------------
+// These functions provide an abstraction layer between the main RTX firmware
+// and the FM mode scanning feature. They are only compiled when CONFIG_FM_SCAN
+// is enabled in the build configuration.
+//
+// The goal is to allow higher-level components (such as the UI or key handler)
+// to start, stop, or query the scanning process in FM mode without needing to
+// directly interact with the lower-level fmMode object.
+//
+// 1. rtx_isScanning()
+//    - Checks if the transceiver is currently performing a frequency scan.
+//    - Returns true only if the current operating mode is FM and scanning
+//      is active in fmMode.
+//
+// 2. rtx_startScan(startFreq, stopFreq, stepHz)
+//    - Initiates a frequency scan within a given frequency range.
+//    - The scan will sweep from startFreq to stopFreq in steps of stepHz,
+//      searching for active signals.
+//    - Only runs if the RTX is currently in FM mode.
+//
+// 3. rtx_stopScan()
+//    - Stops the ongoing frequency scan if one is active.
+//    - Only applicable when the RTX is operating in FM mode.
+//
+// These wrappers make it easier to control the FM scan functionality from other
+// modules while maintaining separation between core radio logic and FM-specific
+// operations.
+// -----------------------------------------------------------------------------
+#ifdef CONFIG_FM_SCAN
+bool rtx_isScanning()
+{
+    if (rtxStatus.opMode == OPMODE_FM)
+        return fmMode.isScanning();
+    return false;
+}
+
+void rtx_startScan(uint32_t startFreq, uint32_t stopFreq, uint32_t stepHz)
+{
+    if (rtxStatus.opMode == OPMODE_FM)
+        fmMode.startScan(startFreq, stopFreq, stepHz);
+}
+
+void rtx_stopScan()
+{
+    if (rtxStatus.opMode == OPMODE_FM)
+        fmMode.stopScan();
+}
+#endif
 
 rssi_t rtx_getRssi()
 {
@@ -228,3 +278,5 @@ bool rtx_rxSquelchOpen()
 {
     return currMode->rxSquelchOpen();
 }
+
+
