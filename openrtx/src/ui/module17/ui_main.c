@@ -25,63 +25,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "ui/ui_mod17.h"
+#include "ui/utils.h"
 #include <string.h>
-
-#include <unistd.h>
-#include <stdlib.h>
-
-
-static char message[54];
-static bool scrollStarted = false;
-
-// shift string to left by one char
-// putting first char to the back
-bool _ui_scrollString(char *string, bool reset)
-{
-    uint8_t stringLen = 0;
-    char *in = NULL;
-
-    if(reset)
-    {
-        // add extra space to allow for gap
-        // between last char and first
-        stringLen = strlen(string)+2;
-        in = malloc(stringLen);
-        if(in == NULL) return false;
-        memset(in, 0, stringLen);
-    }
-    else
-    {
-        stringLen = strlen(string)+1;
-        in = malloc(stringLen);
-    }
-    if(in == NULL) return false;
-    strcpy(in, string);
-    if(reset)
-    {
-        // add space to end
-        in[strlen(string)] = 32;
-    }
-
-    char *data = malloc(stringLen);
-    if(data == NULL)
-    {
-        free(in);
-        return false;
-    }
-    memset(data, 0, stringLen);
-
-    size_t i;
-    for(i=1;i<strlen(in);i++)
-        data[i-1] = in[i];
-    data[i-1] = in[0];
-
-    strcpy(string, data);
-    free(data);
-    free(in);
-
-    return true;
-}
 
 void _ui_drawMainBackground()
 {
@@ -126,49 +71,36 @@ static void _ui_drawModeInfo(ui_state_t* ui_state)
                 gfx_print(layout.line1_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                           color_white, "%s", rtxStatus.M17_src);
 
-                // metatext available
-                if(strlen(rtxStatus.M17_Meta_Text) > 20)
+                if(rtxStatus.M17_link[0] != '\0')
                 {
-                    if(!scrollStarted)
-                    {
-                        strcpy(message, rtxStatus.M17_Meta_Text);
-                        _ui_scrollString(message, true);
-                        scrollStarted = true;
-                    }
-                    _ui_scrollString(message, false);
+                    gfx_drawSymbol(layout.line4_pos, layout.line3_symbol_font, TEXT_ALIGN_LEFT,
+                                color_white, SYMBOL_ACCESS_POINT);
+                    gfx_print(layout.line4_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                            color_white, "%s", rtxStatus.M17_link);
+                }
 
+                if(rtxStatus.M17_refl[0] != '\0')
+                {
+                    gfx_drawSymbol(layout.line3_pos, layout.line4_symbol_font, TEXT_ALIGN_LEFT,
+                                   color_white, SYMBOL_NETWORK);
+                    gfx_print(layout.line3_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                              color_white, "%s", rtxStatus.M17_refl);
+                }
+
+                // metatext available
+                if(rtxStatus.M17_meta_text[0] != '\0')
+                {
                     char msg[21];
-                    strncpy(msg, message, 20);
+                    scrollText(rtxStatus.M17_meta_text, msg, sizeof(msg), &ui_state->m17_meta_text_scroll_position);
                     gfx_print(layout.line5_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                               color_white, "%s", msg);
                     sleepFor(0, 100);
                 }
-                else
-                    if(strlen(rtxStatus.M17_Meta_Text) > 0)
-                        gfx_print(layout.line5_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                                  color_white, "%s", rtxStatus.M17_Meta_Text);
-
-                        if(rtxStatus.M17_link[0] != '\0')
-                        {
-                            gfx_drawSymbol(layout.line4_pos, layout.line4_symbol_font, TEXT_ALIGN_LEFT,
-                                           color_white, SYMBOL_ACCESS_POINT);
-                            gfx_print(layout.line4_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                                      color_white, "%s", rtxStatus.M17_link);
-                        }
-
-                        if(rtxStatus.M17_refl[0] != '\0')
-                        {
-                            gfx_drawSymbol(layout.line3_pos, layout.line3_symbol_font, TEXT_ALIGN_LEFT,
-                                           color_white, SYMBOL_NETWORK);
-                            gfx_print(layout.line3_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                                      color_white, "%s", rtxStatus.M17_refl);
-                        }
             }
             else
             {
                 char *dst = NULL;
                 char *last = NULL;
-                scrollStarted = false;
 
                 if(ui_state->edit_mode)
                 {

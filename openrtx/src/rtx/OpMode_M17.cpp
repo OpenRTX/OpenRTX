@@ -239,7 +239,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                     metaTextHandler.addBlock(meta);
                     const char* metatext = metaTextHandler.get();
                     if(metatext != nullptr)
-                         strncpy(status->M17_Meta_Text, metatext, 53);
+                         strncpy(status->M17_meta_text, metatext, 53);
                 }
 
                 // Set source and destination fields.
@@ -299,7 +299,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         status->lsfOk = false;
         dataValid     = false;
         extendedCall  = false;
-        status->M17_Meta_Text[0] = '\0';
+        status->M17_meta_text[0] = '\0';
         status->M17_link[0] = '\0';
         status->M17_refl[0] = '\0';
 

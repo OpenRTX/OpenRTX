@@ -205,6 +205,7 @@ typedef struct ui_state_t
     freq_t new_tx_frequency;
     char new_rx_freq_buf[14];
     char new_tx_freq_buf[14];
+    size_t m17_meta_text_scroll_position;
 #ifdef CONFIG_RTC
     // Variables used for Time & Date input
     datetime_t new_timedate;

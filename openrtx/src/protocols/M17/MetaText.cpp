@@ -26,6 +26,7 @@
 #include "protocols/M17/M17Utils.hpp"
 #include <algorithm>
 #include <cstdio>
+#include <cstdint>
 
 using namespace M17;
 
@@ -60,21 +61,24 @@ const char *MetaText::get()
     // Stitch the blocks together
     for (size_t i = 0; i < blocks.size(); i++) {
         const auto &meta = blocks[i];
-        if (meta.raw_data[0] == 0)
+        if (meta.raw_data[0] == 0 || i >= getTotalBlocks(meta))
             break;
 
-        uint8_t totalBlocks = getTotalBlocks(meta);
-        // TODO: should we use totalBlocks for validation that we've received all blocks?
         memcpy(metaTextBuffer + (i * BLOCK_LENGTH), meta.raw_data + 1,
                BLOCK_LENGTH);
     }
 
     // Set the string terminator after the last non-space character
-    for (size_t i = MAX_TEXT_LENGTH; i > 0; i--) {
-        if (metaTextBuffer[i - 1] != ' ') {
-            metaTextBuffer[i] = '\0';
-            break;
+    size_t lastNonStringPos = SIZE_MAX;
+    for (size_t i = 0; i < MAX_TEXT_LENGTH; ++i) {
+        if (metaTextBuffer[i] != ' ') {
+            lastNonStringPos = i;
         }
+    }
+    if (lastNonStringPos != SIZE_MAX) {
+        metaTextBuffer[lastNonStringPos + 1] = '\0';
+    } else {
+        metaTextBuffer[0] = '\0';
     }
     return metaTextBuffer;
 }
