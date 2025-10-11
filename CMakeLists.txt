@@ -19,7 +19,7 @@ cmake_minimum_required(VERSION 3.20.0)
 # NOTE: the board-specific CMakeLists.txt files have to use the ${OPENRTX_ROOT}
 # variable as the base path. E.g. ${OPENRTX_ROOT}/platform/drivers/somedriver.c
 #
-if (${BOARD} STREQUAL "ttwrplus")
+if ((${BOARD} STREQUAL "ttwrplus") OR (${BOARD} STREQUAL "ttwr21"))
     set(ARCH xtensa)
     set(CONF_FILE ${CMAKE_CURRENT_LIST_DIR}/platform/mcu/ESP32S3/zephyr.conf)
 endif()

@@ -3,7 +3,7 @@
  */
 /dts-v1/;
 
-#include <ttwrplus-common.dtsi>
+#include "ttwr-common.dtsi"
 
 / {
     model = "LILYGO T-TWR Plus 2.0";

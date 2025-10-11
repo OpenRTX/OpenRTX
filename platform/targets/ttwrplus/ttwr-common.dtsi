@@ -1,0 +1,314 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+/dts-v1/;
+
+#include <espressif/esp32s3/esp32s3_wroom_n16r8.dtsi>
+#include <zephyr/dt-bindings/pinctrl/esp-pinctrl-common.h>
+#include <dt-bindings/pinctrl/esp32s3-pinctrl.h>
+#include <dt-bindings/input/input-event-codes.h>
+#include <zephyr/dt-bindings/pinctrl/esp32s3-gpio-sigmap.h>
+#include <zephyr/dt-bindings/led/led.h>
+
+/ {
+    aliases {
+        i2c-0 = &i2c0;
+        watchdog0 = &wdt0;
+        radio = &uart0;
+        gps = &uart1;
+        radio-pwr = &radio_pwr;
+        radio-pdn = &radio_pdn;
+        radio-ptt = &radio_ptt;
+        pmu-irq = &pmu_irq;
+        qdec0 = &pcnt;
+        led0 = &ws2812c;
+        flash = &flash0;
+    };
+
+    chosen {
+        zephyr,sram = &sram0;
+        zephyr,console = &usb_serial;
+        zephyr,shell-uart = &usb_serial;
+        zephyr,flash = &flash0;
+        zephyr,display = &sh1106;
+    };
+
+    leds: leds {
+        compatible = "gpio-leds";
+
+        radio_pwr: radio_pwr {
+            gpios = <&gpio1 6 GPIO_ACTIVE_HIGH>;
+            label = "SA868S H/L on IO38";
+        };
+
+        radio_pdn: radio_pdn {
+            gpios = <&gpio1 8 GPIO_ACTIVE_LOW>;
+            label = "SA868S PDN on IO40";
+        };
+
+        radio_ptt: radio_ptt {
+            gpios = <&gpio1 9 GPIO_ACTIVE_HIGH>;
+            label = "SA868S PTT on IO41";
+        };
+
+        pmu_irq: pmu_irq {
+            gpios = <&gpio0 4 GPIO_ACTIVE_LOW>;
+            label = "PMU IRQ Pin on IO4";
+        };
+    };
+
+    buttons: buttons {
+        compatible = "gpio-keys";
+
+        button_boot: button_0 {
+            gpios = <&gpio0 0 GPIO_ACTIVE_LOW>;
+            zephyr,code = <INPUT_KEY_VOLUMEDOWN>;
+            label = "BOOT Button";
+        };
+
+        button_user: button_1 {
+            gpios = <&gpio0 21 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            zephyr,code = <INPUT_BTN_START>;
+            label = "Encoder Button";
+        };
+
+        button_ptt: button_2 {
+            gpios = <&gpio0 3 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            zephyr,code = <INPUT_BTN_SELECT>;
+            label = "PTT Button";
+        };
+
+        button_mode: button_3 {
+            gpios = <&gpio0 15 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            zephyr,code = <INPUT_BTN_MODE>;
+            label = "Mode Button";
+        };
+    };
+};
+
+&cpu0 {
+    clock-frequency = <ESP32_CLK_CPU_240M>;
+};
+
+&cpu1 {
+    clock-frequency = <ESP32_CLK_CPU_240M>;
+};
+
+&usb_serial {
+    status = "okay";
+};
+
+&uart0 {
+    status = "okay";
+    current-speed = <9600>;
+    pinctrl-0 = <&uart0_default>;
+    pinctrl-names = "default";
+};
+
+&uart1 {
+    status = "okay";
+    current-speed = <9600>;
+    pinctrl-0 = <&uart1_default>;
+    pinctrl-names = "default";
+};
+
+&i2c0 {
+    status = "okay";
+    clock-frequency = <I2C_BITRATE_FAST>;
+    pinctrl-0 = <&i2c0_default>;
+    pinctrl-names = "default";
+
+    sh1106: sh1106@3c {
+        compatible = "sinowealth,sh1106";
+        reg = <0x3c>;
+
+        width = <128>;
+        height = <64>;
+
+        segment-offset = <2>;
+        page-offset = <0>;
+        display-offset = <0>;
+        multiplex-ratio = <63>;
+        prechargep = <0x22>;
+
+        segment-remap;
+        com-invdir;
+    };
+};
+
+&spi3 {
+    #address-cells = <1>;
+    #size-cells = <0>;
+    line-idle-low; /* Workaround to have low signal for latching */
+    status = "okay";
+    pinctrl-0 = <&spim3_default>;
+    pinctrl-names = "default";
+    ws2812c: ws2812@0 {
+        compatible = "worldsemi,ws2812-spi";
+
+        /* SPI */
+        reg = <0x0>; /* ignored, but necessary for SPI bindings */
+        spi-max-frequency = <6400000>;
+
+        /* WS2812C */
+        chain-length = <1>; /* arbitrary; change at will */
+        spi-cpha;
+        spi-one-frame = <0xf0>; /* 11110000: 625 ns high and 625 ns low */
+        spi-zero-frame = <0xc0>; /* 11000000: 312.5 ns high and 937.5 ns low */
+        color-mapping = <LED_COLOR_ID_GREEN LED_COLOR_ID_RED LED_COLOR_ID_BLUE>;
+        reset-delay = <280>; /* > 280us by WS2812C datasheet */
+    };
+};
+
+&pcnt {
+    pinctrl-0 = <&pcnt_default>;
+    pinctrl-names = "default";
+    status = "okay";
+    #address-cells = <1>;
+    #size-cells = <0>;
+    unit0@0 {
+        reg = <0>;
+        #address-cells = <1>;
+        #size-cells = <0>;
+        filter = <100>;
+        channelA@0 {
+            reg = <0>;
+            sig-pos-mode = <2>;
+            sig-neg-mode = <1>;
+            ctrl-h-mode = <0>;
+            ctrl-l-mode = <1>;
+        };
+    };
+};
+
+&timer0 {
+    status = "disabled";
+};
+
+&timer1 {
+    status = "disabled";
+};
+
+&timer2 {
+    status = "disabled";
+};
+
+&timer3 {
+    status = "disabled";
+};
+
+&wdt0 {
+    status = "okay";
+};
+
+&trng0 {
+    status = "okay";
+};
+
+&pinctrl {
+    /* SA868S control */
+    uart0_default: uart0_default {
+        group1 {
+            pinmux = <UART0_TX_GPIO39>;
+            output-high;
+        };
+        group2 {
+            pinmux = <UART0_RX_GPIO48>;
+            bias-pull-up;
+        };
+    };
+
+    /* GNSS control */
+    uart1_default: uart1_default {
+        group1 {
+            pinmux = <UART1_TX_GPIO6>;
+            output-high;
+        };
+        group2 {
+            pinmux = <UART1_RX_GPIO5>;
+            bias-pull-up;
+        };
+    };
+
+    i2c0_default: i2c0_default {
+        group1 {
+            pinmux = <I2C0_SDA_GPIO8>,
+                     <I2C0_SCL_GPIO9>;
+            bias-pull-up;
+            drive-open-drain;
+            output-high;
+        };
+    };
+
+    spim3_default: spim3_default {
+        group2 {
+            pinmux = <SPIM3_MOSI_GPIO42>;
+        };
+    };
+
+    pcnt_default: pcnt_default {
+        group1 {
+            pinmux = <PCNT0_CH0SIG_GPIO46>,
+                     <PCNT0_CH0CTRL_GPIO47>;
+            bias-pull-up;
+        };
+    };
+};
+
+&flash0 {
+    status = "okay";
+    partitions {
+        compatible = "fixed-partitions";
+        #address-cells = <1>;
+        #size-cells = <1>;
+
+        /* Reserve 32kB for the bootloader */
+        boot_partition: partition@0 {
+            label = "tinyuf2";
+            reg = <0x00000000 0x00008000>;
+            read-only;
+        };
+
+        /* Reserve 4kB for the partition table */
+        table_partition: partition@8000 {
+            label = "partition-table";
+            reg = <0x00008000 0x00009000>;
+        };
+
+        /* Reserve 20kB for non-volatile storage */
+        nvs_partition: partition@9000 {
+            label = "nvs";
+            reg = <0x00009000 0x0000e000>;
+        };
+
+        /* Reserve 8kB for otadata partition */
+        otadata_partition: partition@e000 {
+            label = "otadata";
+            reg = <0x0000e000 0x00010000>;
+        };
+
+        /* Reserve 2048kB for ota_0 partition */
+        slot0_partition: partition@10000 {
+            label = "ota_0";
+            reg = <0x00010000 0x00210000>;
+        };
+
+        /* Reserve 2048kB for ota_1 partition */
+        slot1_partition: partition@210000 {
+            label = "ota_1";
+            reg = <0x00210000 0x00410000>;
+        };
+
+        /* Reserve 256kB for uf2 partition */
+        uf2_partition: partition@410000 {
+            label = "uf2";
+            reg = <0x00410000 0x00450000>;
+        };
+
+        /* Reserve 11968kB for storage partition (ffat) */
+        storage_partition: partition@450000 {
+            label = "ffat";
+            reg = <0x00450000 0x00bb0000>;
+        };
+    };
+};

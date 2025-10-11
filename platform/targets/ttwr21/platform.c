@@ -26,6 +26,7 @@
 #include <zephyr/drivers/uart.h>
 #include <zephyr/drivers/led_strip.h>
 #include <SA8x8.h>
+#include <program_RL78.h>
 #include <pmu.h>
 /*
 unsigned char sa8x8_fw[] = {
@@ -2783,7 +2784,7 @@ uint8_t volume_level = 125;
 
 static hwInfo_t hwInfo =
 {
-    .name        = "ttwrplus",
+    .name        = "ttwr21",
     .hw_version  = 0,
     .uhf_band    = 0,
     .vhf_band    = 0,
@@ -2838,6 +2839,18 @@ void platform_init()
         led_strip_update_rgb(led_dev, &led_color, 1);
 
         pmu_setBasebandProgramPower(true);
+
+        // Flash a supported baseband firmware
+        if (rl78_flash(sa8x8_fw, sa8x8_fw_len)) {
+            led_color.r = 0x50;
+            led_color.g = 0x00;
+            led_color.b = 0x00;
+            printk("Failed to flash baseband\n");
+        } else {
+            led_color.r = 0x00;
+            led_color.g = 0x50;
+            led_color.b = 0x00;
+        }
 
         led_strip_update_rgb(led_dev, &led_color, 1);
 
