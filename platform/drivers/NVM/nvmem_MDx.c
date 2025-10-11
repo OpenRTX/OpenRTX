@@ -37,18 +37,21 @@ static const struct nvmDescriptor nvmDevices[] =
     {
         .name       = "External flash",
         .dev        = &eflash,
+        .size       = 0x1000000,    // 16 MB, 128 Mbit
         .partNum    = 0,
         .partitions = NULL
     },
     {
         .name       = "Cal. data 1",
         .dev        = (const struct nvmDevice *) &cal1,
+        .size       = 0x100,        // 256 byte
         .partNum    = 0,
         .partitions = NULL
     },
     {
         .name       = "Cal. data 2",
         .dev        = (const struct nvmDevice *) &cal2,
+        .size       = 0x100,        // 256 byte
         .partNum    = 0,
         .partitions = NULL
     }
