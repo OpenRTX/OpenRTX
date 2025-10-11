@@ -139,6 +139,9 @@ private:
 
     ///< Maximum allowed hamming distance when determining the frame type.
     static constexpr uint8_t MAX_SYNC_HAMM_DISTANCE = 4;
+
+    // Max number of viterbi bit errors allowed in a frame before it's skipped
+    static constexpr uint16_t MAX_VITERBI_ERRORS = 15;
 };
 
 } // namespace M17

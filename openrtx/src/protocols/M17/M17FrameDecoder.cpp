@@ -153,8 +153,13 @@ void M17FrameDecoder::decodeStream(const std::array<uint8_t, 46> &data)
     begin += lich.size();
     std::copy(begin, data.end(), punctured.begin());
 
-    viterbi.decodePunctured(punctured, tmp, DATA_PUNCTURE);
-    memcpy(&streamFrame.data, tmp.data(), tmp.size());
+    uint16_t bitErrorCount =
+        viterbi.decodePunctured(punctured, tmp, DATA_PUNCTURE);
+
+    // If Viterbi bit error is too high, skip copying the frame altogether; this avoids passing bad audio
+    if (bitErrorCount < MAX_VITERBI_ERRORS) {
+        memcpy(&streamFrame.data, tmp.data(), tmp.size());
+    }
 }
 
 bool M17FrameDecoder::decodeLich(std::array<uint8_t, 6> &segment,
