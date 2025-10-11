@@ -79,9 +79,6 @@ int nvm_erase(const uint32_t dev, const int part, uint32_t offset, size_t size);
 static inline int nvm_devRead(const struct nvmDevice *dev, uint32_t offset,
                               void *data, size_t len)
 {
-    if ((offset + len) > dev->size)
-        return -EINVAL;
-
     return dev->ops->read(dev, offset, data, len);
 }
 
@@ -101,9 +98,6 @@ static inline int nvm_devWrite(const struct nvmDevice *dev, uint32_t offset,
 {
     if (dev->ops->write == NULL)
         return -ENOTSUP;
-
-    if ((offset + len) > dev->size)
-        return -EINVAL;
 
     return dev->ops->write(dev, offset, data, len);
 }
