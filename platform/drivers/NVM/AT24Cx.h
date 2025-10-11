@@ -28,12 +28,11 @@ extern const struct nvmInfo AT24Cx_info;
  * @param name: instance name.
  * @param sz: memory size, in bytes.
  */
-#define AT24Cx_DEVICE_DEFINE(name, sz) \
+#define AT24Cx_DEVICE_DEFINE(name)     \
 struct nvmDevice name =                \
 {                                      \
     .ops  = &AT24Cx_ops,               \
     .info = &AT24Cx_info,              \
-    .size = sz                         \
 };
 
 /**
