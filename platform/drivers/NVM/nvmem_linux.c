@@ -47,6 +47,7 @@ const struct nvmDescriptor stateNvm =
 {
     .name       = "Device state NVM area",
     .dev        = (const struct nvmDevice *) &stateDevice,
+    .size       = 1024,
     .partNum    = sizeof(statePartitions) / sizeof(struct nvmPartition),
     .partitions = statePartitions
 };
