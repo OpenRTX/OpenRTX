@@ -140,6 +140,9 @@ private:
 
     ///< Maximum allowed hamming distance when determining the frame type.
     static constexpr uint8_t MAX_SYNC_HAMM_DISTANCE = 4;
+
+    ///< Maximum number of corrected bit errors allowed in a stream frame.
+    static constexpr uint16_t MAX_VITERBI_ERRORS = 15;
 };
 
 } // namespace M17
