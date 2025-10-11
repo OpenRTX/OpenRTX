@@ -26,14 +26,13 @@ extern const struct nvmOps zephyr_flash_ops;
  * @param alias: devicetree alias of the flash device.
  * @param sz: memory size, in bytes.
  */
-#define ZEPHYR_FLASH_DEVICE_DEFINE(name, alias, sz) \
+#define ZEPHYR_FLASH_DEVICE_DEFINE(name, alias)     \
 static struct nvmInfo nvm_devInfo_##name;           \
 static const struct nvmDevice name =                \
 {                                                   \
     .priv   = DEVICE_DT_GET(DT_ALIAS(alias)),       \
     .ops    = &zephyr_flash_ops,                    \
     .info   = &nvm_devInfo_##name,                  \
-    .size   = sz                                    \
 };
 
 
