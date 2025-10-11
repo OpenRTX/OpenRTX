@@ -760,7 +760,7 @@ mod17_opts = {
   'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/stm32_1m+192k_rom.ld']
 }
 
-ttwrplus_opts = {
+ttwr_opts = {
   'sources'            : ['CMakeLists.txt'],
   'include_directories': [],
   'dependencies'       : [codec2_dep],
@@ -861,7 +861,14 @@ targets = [
   },
   {
     'name'     : 'ttwrplus',
-    'opts'     : ttwrplus_opts,
+    'opts'     : ttwr_opts,
+    'flashable': true,
+    'wrap'     : ' ',
+    'load_addr': ' '
+  },
+  {
+    'name'     : 'ttwr21',
+    'opts'     : ttwr_opts,
     'flashable': true,
     'wrap'     : ' ',
     'load_addr': ' '
@@ -904,21 +911,21 @@ foreach t : targets
   name = 'openrtx_'+t['name']
 
   # ttwrplus is a Zephyr target, we compile it using west and package it in uf2 format
-  if name == 'openrtx_ttwrplus'
+  if t['name'] == 'ttwrplus' or t['name'] == 'ttwr21'
 
       if build_machine.system() == 'windows'
 
-          txt = custom_target('Copy CMakeLists.txt',
+          txt = custom_target(t['name']+': Copy CMakeLists.txt',
                               input            : 'CMakeLists.txt',
-                              output           : 'CMakeLists.txt',
+                              output           : t['name']+'CMakeLists.txt',
                               command          : ['xcopy', '@INPUT@', '@OUTPUT@'],
                               install          : false,
                               build_by_default : true)
       else  # Unix-like OS that has cp
 
-          txt = custom_target('Copy CMakeLists.txt',
+          txt = custom_target(t['name']+': Copy CMakeLists.txt',
                               input            : 'CMakeLists.txt',
-                              output           : 'CMakeLists.txt',
+                              output           : t['name']+'CMakeLists.txt',
                               command          : ['cp', '@INPUT@', '@OUTPUT@'],
                               install          : false,
                               build_by_default : true)
@@ -930,7 +937,7 @@ foreach t : targets
                           output  : name+'_bin',
                           command : [west,
                                     'build',
-                                    '-b', 'ttwrplus',
+                                    '-b', t['name'],
                                     '-d', '.', '..'])
 
       uf2 = custom_target(name+'_uf2',

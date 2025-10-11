@@ -3,7 +3,7 @@
  */
 /dts-v1/;
 
-#include <ttwrplus-common.dtsi>
+#include "ttwr-common.dtsi"
 
 / {
     model = "LILYGO T-TWR Plus 2.1 Preview";
@@ -13,6 +13,7 @@
         radio-prg = &uart2;
         radio-prg-reset = &radio_prg_reset;
     };
+};
 
 &leds {
     compatible = "gpio-leds";
