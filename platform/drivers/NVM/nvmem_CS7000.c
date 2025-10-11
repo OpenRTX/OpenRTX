@@ -23,12 +23,7 @@ static const struct W25QxCfg cfg =
     .cs  = { FLASH_CS }
 };
 
-#ifdef PLATFORM_CS7000P
-W25Qx_DEVICE_DEFINE(eflash, cfg, 0x2000000)        // 32 MB, 256 Mbit
-#else
-W25Qx_DEVICE_DEFINE(eflash, cfg, 0x1000000)        // 16 MB, 128 Mbit
-#endif
-
+W25Qx_DEVICE_DEFINE(eflash, cfg)
 EEEP_DEVICE_DEFINE(eeep)
 
 const struct nvmPartition memPartitions[] =

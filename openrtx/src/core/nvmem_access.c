@@ -97,10 +97,6 @@ int nvm_devErase(const struct nvmDevice *dev, uint32_t offset, size_t size)
     if (dev->ops->erase == NULL)
         return -ENOTSUP;
 
-    // Out-of-bounds check
-    if ((offset + size) > dev->size)
-        return -EINVAL;
-
     // Start offset must be aligned to the erase size
     if ((offset % dev->info->erase_size) != 0)
         return -EINVAL;

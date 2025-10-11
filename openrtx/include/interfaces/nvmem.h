@@ -105,7 +105,6 @@ struct nvmDevice {
     const void *priv;           ///< Device driver private data
     const struct nvmOps *ops;   ///< Device operations
     const struct nvmInfo *info; ///< Device info
-    const size_t size;          ///< Device size
 };
 
 /**
