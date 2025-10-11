@@ -27,10 +27,10 @@ static const struct W25QxCfg eflashCfg =
     .cs  = { FLASH_CS }
 };
 
-W25Qx_DEVICE_DEFINE(eflash, eflashCfg, 0x1000000)        // 16 MB, 128 Mbit
-W25Qx_SECREG_DEFINE(cal1,   eflashCfg, 0x1000, 0x100)    // 256 byte
-W25Qx_SECREG_DEFINE(cal2,   eflashCfg, 0x2000, 0x100)    // 256 byte
-W25Qx_SECREG_DEFINE(hwInfo, eflashCfg, 0x3000, 0x100)    // 256 byte
+W25Qx_DEVICE_DEFINE(eflash, eflashCfg)
+W25Qx_SECREG_DEFINE(cal1,   eflashCfg, 0x1000)
+W25Qx_SECREG_DEFINE(cal2,   eflashCfg, 0x2000)
+W25Qx_SECREG_DEFINE(hwInfo, eflashCfg, 0x3000)
 
 static const struct nvmDescriptor nvmDevices[] =
 {

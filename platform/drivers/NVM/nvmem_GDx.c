@@ -22,8 +22,8 @@ static const struct W25QxCfg eflashCfg =
     .cs  = { FLASH_CS }
 };
 
-W25Qx_DEVICE_DEFINE(eflash, eflashCfg, 0x100000)  // 1 MB,  8 Mbit
-AT24Cx_DEVICE_DEFINE(eeprom, 0x10000)             // 64 kB, 512 kbit
+W25Qx_DEVICE_DEFINE(eflash, eflashCfg)
+AT24Cx_DEVICE_DEFINE(eeprom)
 
 static const struct nvmDescriptor nvmDevices[] =
 {

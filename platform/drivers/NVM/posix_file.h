@@ -23,7 +23,6 @@ struct nvmFileDevice
     const void           *priv;    ///< Device driver private data
     const struct nvmOps  *ops;     ///< Device operations
     const struct nvmInfo *info;    ///< Device info
-    const size_t          size;    ///< Device size
     int                     fd;    ///< File descriptor
 };
 
@@ -40,12 +39,11 @@ extern const struct nvmInfo posix_file_info;
  * @param path: full path of the file used for data storage.
  * @param dim: size of the storage file, in bytes.
  */
-#define POSIX_FILE_DEVICE_DEFINE(name, dim) \
+#define POSIX_FILE_DEVICE_DEFINE(name)      \
 static struct nvmFileDevice name =          \
 {                                           \
     .ops  = &posix_file_ops,                \
     .info = &posix_file_info,               \
-    .size = dim,                            \
     .fd   = -1                              \
 };
 
@@ -56,9 +54,11 @@ static struct nvmFileDevice name =          \
  *
  * @param dev: pointer to device descriptor.
  * @param fileName: full path of the file used for data storage.
+ * @param size: file size.
  * @return zero on success, a negative error code otherwise.
  */
-int posixFile_init(struct nvmFileDevice *dev, const char *fileName);
+int posixFile_init(struct nvmFileDevice *dev, const char *fileName,
+                   const size_t size);
 
 /**
  * Shut down a POSIX file driver instance.
