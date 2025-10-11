@@ -57,7 +57,7 @@ static inline int getAbsOffset(const struct nvmDescriptor *nvm, const int part,
         offs += np->offset;
     }
 
-    if((offs + len) > nvm->size)
+    if ((offs + len) > nvm->size)
         return -EINVAL;
 
     *offset = offs;
@@ -75,7 +75,7 @@ int nvm_read(const uint32_t dev, const int part, uint32_t offset, void *data,
     if (ret < 0)
         return ret;
 
-    return nvm_devRead(nvm->dev, offset, data, len);
+    return nvm_devRead(nvm->dev, nvm->baseAddr + offset, data, len);
 }
 
 int nvm_write(const uint32_t dev, const int part, uint32_t offset,
@@ -89,7 +89,7 @@ int nvm_write(const uint32_t dev, const int part, uint32_t offset,
     if (ret < 0)
         return ret;
 
-    return nvm_devWrite(nvm->dev, offset, data, len);
+    return nvm_devWrite(nvm->dev, nvm->baseAddr + offset, data, len);
 }
 
 int nvm_erase(const uint32_t dev, const int part, uint32_t offset, size_t size)
@@ -102,7 +102,7 @@ int nvm_erase(const uint32_t dev, const int part, uint32_t offset, size_t size)
     if (ret < 0)
         return ret;
 
-    return nvm_devErase(nvm->dev, offset, size);
+    return nvm_devErase(nvm->dev, nvm->baseAddr + offset, size);
 }
 
 int nvm_devErase(const struct nvmDevice *dev, uint32_t offset, size_t size)
@@ -119,5 +119,5 @@ int nvm_devErase(const struct nvmDevice *dev, uint32_t offset, size_t size)
     if ((size % dev->info->erase_size) != 0)
         return -EINVAL;
 
-    return dev->ops->erase(dev, offset, size);
+    return dev->ops->erase(dev, nvm->baseAddr + offset, size);
 }
