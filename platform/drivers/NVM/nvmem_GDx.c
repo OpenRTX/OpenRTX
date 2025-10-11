@@ -30,12 +30,14 @@ static const struct nvmDescriptor nvmDevices[] =
     {
         .name       = "External flash",
         .dev        = &eflash,
+        .size       = 0x100000,     // 1 MB,  8 Mbit
         .partNum    = 0,
         .partitions = NULL
     },
     {
         .name       = "EEPROM",
         .dev        = &eeprom,
+        .size       = 0x10000,      // 64 kB, 512 kbit
         .partNum    = 0,
         .partitions = NULL
     }

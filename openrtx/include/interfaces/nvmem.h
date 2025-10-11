@@ -125,6 +125,7 @@ struct nvmPartition {
 struct nvmDescriptor {
     const char *name;                      ///< Name
     const struct nvmDevice *dev;           ///< Associated device driver
+    const size_t size;                     ///< Area size, in byte
     const size_t partNum;                  ///< Number of partitions
     const struct nvmPartition *partitions; ///< Partion table
 };
