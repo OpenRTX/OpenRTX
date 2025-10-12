@@ -1,0 +1,41 @@
+# This file is used for skywalking-eyes; execute it like so: `docker run -it --rm -v $(pwd):/github/workspace ghcr.io/apache/skywalking-eyes/license-eye header fix -c .licenserc.yaml`
+header:
+  license:
+    spdx-id: GPL-3.0-or-later
+    copyright-owner: OpenRTX Contributors
+    copyright-year: '2020-2025'
+    software-name: OpenRTX
+    content: |
+      SPDX-License-Identifier: GPL-3.0-or-later
+      Copyright (C) 2020-2025 OpenRTX Contributors
+
+      This file is part of OpenRTX.
+  paths:
+    - '**'
+
+  paths-ignore:
+    - 'subprojects/**'
+    - 'scripts/**' # Skip scripts folder because it's a mix of derived and non-derived works
+    - 'lib/**'
+    - 'build*/**'
+    - 'openrtx/include/fonts/adafruit/**'
+    - 'platform/mcu/CMSIS/**'
+    - 'platform/mcu/MK22FN512xxx12/drivers/usb/**'
+    - 'platform/mcu/MK22FN512xxx12/drivers/usb_vcom.c'
+    - 'platform/mcu/STM32F4xx/drivers/usb/**'
+    - 'meta/readme'
+    - '.*/**'
+    - '**/*.md'
+    - '**/*.txt'
+    - '**/*.ld'
+    - '**/*.rules'
+    - 'LICENSE'
+    - 'meson.build'
+    - 'openrtx/src/core/voicePromptData.S'
+    - 'platform/mcu/ESP32S3/zephyr.conf'
+    - 'platform/targets/ttwrplus/Kconfig.board'
+    - 'platform/targets/ttwrplus/Kconfig.defconfig'
+    - 'platform/targets/ttwrplus/Kconfig.sysbuild'
+    - 'platform/targets/ttwrplus/ttwrplus.dts'
+    - 'platform/targets/ttwrplus/ttwrplus_defconfig'
+    - 'openrtx/include/fonts/symbols/sources/*.svg'
