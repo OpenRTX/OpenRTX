@@ -56,12 +56,12 @@ struct nvmOps {
      * Read data from nonvolatile memory device.
      *
      * @param dev: pointer to NVM device descriptor.
-     * @param offset: offset to read, byte aligned.
+     * @param address: start address of read, byte aligned.
      * @param data: destination buffer for data read.
      * @param len: number of bytes to read.
      * @return 0 on success, negative errno code on fail.
      */
-    int (*read)(const struct nvmDevice *dev, uint32_t offset, void *data,
+    int (*read)(const struct nvmDevice *dev, uint32_t address, void *data,
                 size_t len);
 
     /**
@@ -70,13 +70,13 @@ struct nvmOps {
      * NULL if the device does not support writing.
      *
      * @param dev: pointer to NVM device descriptor.
-     * @param offset: starting offset for the write, byte aligned.
+     * @param address: start address for the write, byte aligned.
      * @param data: data to write.
      * @param len: number of bytes to write.
      * @return 0 on success, negative errno code on fail.
      */
-    int (*write)(const struct nvmDevice *dev, uint32_t offset, const void *data,
-                 size_t len);
+    int (*write)(const struct nvmDevice *dev, uint32_t address,
+                 const void *data, size_t len);
 
     /**
      * Erase part or all of the nonvolatile memory.
@@ -85,11 +85,11 @@ struct nvmOps {
      * this function pointer is set to NULL.
      *
      * @param dev: pointer to NVM device descriptor.
-     * @param offset: starting offset for the erase, byte aligned.
+     * @param address: start address for the erase, byte aligned.
      * @param size: size of the area to be erased.
      * @return 0 on success, negative errno code on fail.
      */
-    int (*erase)(const struct nvmDevice *dev, uint32_t offset, size_t size);
+    int (*erase)(const struct nvmDevice *dev, uint32_t address, size_t size);
 
     /**
      * Sync device cache and state to its underlying hardware.
