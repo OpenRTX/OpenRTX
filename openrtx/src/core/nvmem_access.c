@@ -61,7 +61,7 @@ int nvm_read(const uint32_t dev, const int part, uint32_t offset, void *data,
     if (ret < 0)
         return ret;
 
-    return nvm_devRead(nvm->dev, offset, data, len);
+    return nvm_devRead(nvm->dev, nvm->baseAddr + offset, data, len);
 }
 
 int nvm_write(const uint32_t dev, const int part, uint32_t offset,
@@ -75,7 +75,7 @@ int nvm_write(const uint32_t dev, const int part, uint32_t offset,
     if (ret < 0)
         return ret;
 
-    return nvm_devWrite(nvm->dev, offset, data, len);
+    return nvm_devWrite(nvm->dev, nvm->baseAddr + offset, data, len);
 }
 
 int nvm_erase(const uint32_t dev, const int part, uint32_t offset, size_t size)
@@ -88,22 +88,22 @@ int nvm_erase(const uint32_t dev, const int part, uint32_t offset, size_t size)
     if (ret < 0)
         return ret;
 
-    return nvm_devErase(nvm->dev, offset, size);
+    return nvm_devErase(nvm->dev, nvm->baseAddr + offset, size);
 }
 
-int nvm_devErase(const struct nvmDevice *dev, uint32_t offset, size_t size)
+int nvm_devErase(const struct nvmDevice *dev, uint32_t address, size_t size)
 {
     // Erase operation is allowed
     if (dev->ops->erase == NULL)
         return -ENOTSUP;
 
-    // Start offset must be aligned to the erase size
-    if ((offset % dev->info->erase_size) != 0)
+    // Start address must be aligned to the erase size
+    if ((address % dev->info->erase_size) != 0)
         return -EINVAL;
 
     // Total size must be aligned to the erase size
     if ((size % dev->info->erase_size) != 0)
         return -EINVAL;
 
-    return dev->ops->erase(dev, offset, size);
+    return dev->ops->erase(dev, address, size);
 }
