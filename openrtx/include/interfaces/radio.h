@@ -133,17 +133,6 @@ enum opstatus radio_getStatus();
  */
 rssi_t radio_scanStep(freq_t freq, uint16_t dwell_ms);
 
-/**
- * Perform a full FM frequency scan between start and stop frequencies.
- *
- * @param start Start frequency in Hz.
- * @param stop Stop frequency in Hz.
- * @param step Frequency step in Hz (e.g. 12500 or 25000).
- * @param threshold Minimum RSSI threshold to detect a signal.
- * @return Frequency where signal was found, or 0 if none.
- */
-freq_t radio_scan(freq_t start, freq_t stop, freq_t step, rssi_t threshold);
-
 #ifdef __cplusplus
 }
 #endif
