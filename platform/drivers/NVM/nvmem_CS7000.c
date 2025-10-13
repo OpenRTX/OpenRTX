@@ -69,6 +69,7 @@ static const struct nvmDescriptor extMem[] =
     {
         .name       = "External flash",
         .dev        = &eflash,
+        .baseAddr   = 0x00000000,
 #ifdef PLATFORM_CS7000P
         .size       = 0x2000000,        // 32 MB, 256 Mbit
 #else
@@ -80,6 +81,7 @@ static const struct nvmDescriptor extMem[] =
     {
         .name       = "Virtual EEPROM",
         .dev        = &eeep,
+        .baseAddr   = 0x00000000,
         .size       = 0xFFFFFFFF,
         .partNum    = 0,
         .partitions = NULL
