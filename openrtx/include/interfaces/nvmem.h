@@ -138,6 +138,7 @@ struct nvmPartition {
 struct nvmDescriptor {
     const char *name;                      ///< Name
     const struct nvmDevice *dev;           ///< Associated device driver
+    const size_t baseAddr;                 ///< Device base address
     const size_t size;                     ///< Device size
     const size_t partNum;                  ///< Number of partitions
     const struct nvmPartition *partitions; ///< Partion table
