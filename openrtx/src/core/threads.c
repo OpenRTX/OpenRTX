@@ -36,7 +36,7 @@
 #include "core/gps.h"
 #include "core/voicePrompts.h"
 
-#if defined(PLATFORM_TTWRPLUS)
+#if defined(PLATFORM_TTWR)
 #include "pmu.h"
 #endif
 
@@ -146,7 +146,7 @@ void *main_thread(void *arg)
     {
         time = getTick();
 
-        #if defined(PLATFORM_TTWRPLUS)
+        #if defined(PLATFORM_TTWR)
         pmu_handleIRQ();
         #endif
 

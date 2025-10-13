@@ -24,7 +24,7 @@
 #include "rtx/OpMode_FM.hpp"
 #include "rtx/rtx.h"
 
-#if defined(PLATFORM_TTWRPLUS)
+#if defined(PLATFORM_TTWR)
 #include "drivers/baseband/AT1846S.h"
 #endif
 
@@ -36,7 +36,7 @@
  * provide the helper function below to keep the real volume level consistent
  * with the knob position.
  */
-#if defined(PLATFORM_TTWRPLUS)
+#if defined(PLATFORM_TTWR)
 void _setVolume()
 {
     static uint8_t oldVolume = 0xFF;
@@ -84,7 +84,7 @@ void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
 {
     (void) newCfg;
 
-    #if defined(PLATFORM_TTWRPLUS)
+    #if defined(PLATFORM_TTWR)
     // Set output volume by changing the HR_C6000 DAC gain
     _setVolume();
     #endif

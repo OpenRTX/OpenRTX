@@ -218,7 +218,7 @@ const char *info_items[] =
     "VHF",
     "UHF",
     "Hw Version",
-#ifdef PLATFORM_TTWRPLUS
+#ifdef PLATFORM_TTWR
     "Radio",
     "Radio FW",
 #endif
@@ -1039,11 +1039,11 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             break;
     }
 
-#if defined(PLATFORM_TTWRPLUS)
+#if defined(PLATFORM_TTWR)
     if(msg.keys & KEY_VOLDOWN)
 #else
     if(msg.keys & KEY_LEFT || msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
-#endif // PLATFORM_TTWRPLUS
+#endif // PLATFORM_TTWR
     {
 #ifdef CONFIG_KNOB_ABSOLUTE // If the radio has an absolute position knob
         state.settings.sqlLevel = platform_getChSelector() - 1;
@@ -1056,11 +1056,11 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
         }
     }
 
-#if defined(PLATFORM_TTWRPLUS)
+#if defined(PLATFORM_TTWR)
     else if(msg.keys & KEY_VOLUP)
 #else
     else if(msg.keys & KEY_RIGHT || msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
-#endif // PLATFORM_TTWRPLUS
+#endif // PLATFORM_TTWR
     {
 #ifdef CONFIG_KNOB_ABSOLUTE
         state.settings.sqlLevel = platform_getChSelector() - 1;
@@ -1389,7 +1389,7 @@ void ui_updateFSM(bool *sync_rtx)
     // drop caused by the RF PA power absorption causes spurious triggers of
     // the low battery alert.
     bool txOngoing = platform_getPttStatus();
-#if !defined(PLATFORM_TTWRPLUS)
+#if !defined(PLATFORM_TTWR)
     if ((!state.emergency) && (!txOngoing) && (state.charge <= 0))
     {
         state.ui_screen = LOW_BAT;
@@ -1400,7 +1400,7 @@ void ui_updateFSM(bool *sync_rtx)
         }
         return;
     }
-#endif // PLATFORM_TTWRPLUS
+#endif // PLATFORM_TTWR
 
     // Unlatch and exit from macro menu on PTT press
     if(macro_latched && txOngoing)
@@ -1449,7 +1449,7 @@ void ui_updateFSM(bool *sync_rtx)
         {
             macro_menu = false;
         }
-#if defined(PLATFORM_TTWRPLUS)
+#if defined(PLATFORM_TTWR)
         // T-TWR Plus has no KEY_MONI, using KEY_VOLDOWN long press instead
         if ((msg.keys & KEY_VOLDOWN) && msg.long_press)
         {

@@ -32,7 +32,7 @@
 #include "ui/ui_strings.h"
 #include "core/voicePromptUtils.h"
 
-#ifdef PLATFORM_TTWRPLUS
+#ifdef PLATFORM_TTWR
 #include "drivers/baseband/SA8x8.h"
 #endif
 
@@ -575,7 +575,7 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
         case 8: // LCD Type
             sniprintf(buf, max_len, "%d", hwinfo->hw_version);
             break;
-        #ifdef PLATFORM_TTWRPLUS
+        #ifdef PLATFORM_TTWR
         case 9: // Radio model
             strncpy(buf, sa8x8_getModel(), max_len);
             break;
