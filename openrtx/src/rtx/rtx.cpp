@@ -278,5 +278,3 @@ bool rtx_rxSquelchOpen()
 {
     return currMode->rxSquelchOpen();
 }
-
-
