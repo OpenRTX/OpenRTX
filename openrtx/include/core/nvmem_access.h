@@ -57,15 +57,15 @@ int nvm_erase(const uint32_t dev, const int part, uint32_t offset, size_t size);
  * Perform a byte-aligned read operation on an NVM area.
  *
  * @param area: pointer to the NVM are descriptor.
- * @param offset: offset for the read operation.
+ * @param address: start address for the read operation.
  * @param data: pointer to a buffer where to store the data read.
  * @param len: number of bytes to read.
  * @return zero on success, a negative error code otherwise.
  */
-static inline int nvm_devRead(const struct nvmDevice *dev, uint32_t offset,
+static inline int nvm_devRead(const struct nvmDevice *dev, uint32_t address,
                               void *data, size_t len)
 {
-    return dev->ops->read(dev, offset, data, len);
+    return dev->ops->read(dev, address, data, len);
 }
 
 /**
@@ -74,18 +74,18 @@ static inline int nvm_devRead(const struct nvmDevice *dev, uint32_t offset,
  * the write.
  *
  * @param area: pointer to the NVM are descriptor.
- * @param offset: offset for the write operation.
+ * @param address: start address for the write operation.
  * @param data: pointer to a buffer containing the data to write.
  * @param len: number of bytes to write.
  * @return zero on success, a negative error code otherwise.
  */
-static inline int nvm_devWrite(const struct nvmDevice *dev, uint32_t offset,
+static inline int nvm_devWrite(const struct nvmDevice *dev, uint32_t address,
                                const void *data, size_t len)
 {
     if (dev->ops->write == NULL)
         return -ENOTSUP;
 
-    return dev->ops->write(dev, offset, data, len);
+    return dev->ops->write(dev, address, data, len);
 }
 
 /**
@@ -93,11 +93,11 @@ static inline int nvm_devWrite(const struct nvmDevice *dev, uint32_t offset,
  * on the NVM device the area belongs to.
  *
  * @param area: pointer to the NVM are descriptor.
- * @param offset: offset for the erase operation.
+ * @param address: start address for the erase operation.
  * @param size: size of the area to be erased.
  * @return zero on success, a negative error code otherwise.
  */
-int nvm_devErase(const struct nvmDevice *dev, uint32_t offset, size_t size);
+int nvm_devErase(const struct nvmDevice *dev, uint32_t address, size_t size);
 
 /**
  * Sync device cache and state to its underlying hardware.
