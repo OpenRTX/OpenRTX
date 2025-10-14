@@ -28,9 +28,17 @@
 #include "pmu.h"
 
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/i2c.h>
+#include <zephyr/drivers/led_strip.h>
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/drivers/uart.h>
-#include <zephyr/drivers/led_strip.h>
+
+enum ttwr21_band {
+  VHF = 0,
+  MHZ350 = 1,
+  UHF = 2,
+};
+
 /*
 unsigned char sa8x8_fw[] = {
   0x32, 0x01, 0xff, 0xff, 0x9b, 0x01, 0xa7, 0x01, 0xb3, 0x01, 0xbf, 0x01,
@@ -2819,6 +2827,30 @@ static const struct gpsDevice gps =
     .getSentence = gpsZephyr_getNmeaSentence
 };
 
+#define I2C_DEV_NODE    DT_ALIAS(i2c_0)
+
+// Try reading i2c register to detect radio band
+// VHF = 0x3c
+// UHF = 0x3d
+// 300MHz = ???
+int8_t detect_band()
+{
+    static const struct device *const i2c_dev = DEVICE_DT_GET(I2C_DEV_NODE);
+    if (!i2c_dev) {
+        printk("I2C device not found!\n");
+        return -1;
+    }
+
+    uint8_t val;
+    if(!i2c_reg_read_byte(i2c_dev, 0x3c, 0x00, &val)) {
+        return VHF;
+    } else if(!i2c_reg_read_byte(i2c_dev, 0x3d, 0x00, &val)) {
+        return UHF;
+    } else {
+        printk("Error detecting supported band!\n");
+    }
+}
+
 void platform_init()
 {
     int ret;
@@ -2886,6 +2918,24 @@ void platform_init()
         pmu_setBasebandProgramPower(false);
     }
 
+    // Detect radio model and set hwInfo accordingly
+    enum ttwr21_band band = detect_band();
+    switch(band) {
+        case VHF:
+            hwInfo.vhf_band = 1;
+            hwInfo.vhf_minFreq = 134;
+            hwInfo.vhf_maxFreq = 174;
+            break;
+        case UHF:
+            hwInfo.uhf_band = 1;
+            hwInfo.uhf_minFreq = 400;
+            hwInfo.uhf_maxFreq = 480;
+            break;
+        case MHZ350:
+            printk("Error: 350MHz band not supported!\n");
+            break;
+    }
+
     // Enable power to baseband
     pmu_setBasebandPower(true);
 
@@ -2896,23 +2946,17 @@ void platform_init()
         // }
     }
 
-
-    // Detect radio model and set hwInfo accordingly
+    // Confirm that SA8x8 has the fw of the corresponding band
     const char *model = sa8x8_getModel();
-    if(strncmp(model, "SA868S-VHF", 10) == 0)
-    {
-        hwInfo.vhf_band = 1;
-        hwInfo.vhf_minFreq = 134;
-        hwInfo.vhf_maxFreq = 174;
-    }
-    else if(strncmp(model, "SA868S-UHF", 10) == 0)
-    {
-        hwInfo.uhf_band = 1;
-        hwInfo.uhf_minFreq = 400;
-        hwInfo.uhf_maxFreq = 480;
-    }
-    else
-    {
+    if(!strncmp(model, "SA868S-VHF", 10)) {
+        if(!hwInfo.vhf_band) {
+            printk("Mismatch between radio band and baseband firmware!");
+        }
+    } else if(!strncmp(model, "SA868S-UHF", 10)) {
+        if(!hwInfo.uhf_band) {
+            printk("Mismatch between radio band and baseband firmware!");
+        }
+    } else {
         printk("Error detecting baseband model\n");
     }
 }

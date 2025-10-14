@@ -20,6 +20,7 @@
 
 #include <zephyr/drivers/display.h>
 #include "interfaces/display.h"
+#include "interfaces/platform.h"
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include "hwconfig.h"
@@ -41,8 +42,12 @@ static uint8_t shadowBuffer[FB_SIZE];
 
 void display_init()
 {
-    // Get display handle
-    displayDev = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
+    // Get band info to choose the right display handle
+    const hwInfo_t* hwInfo = platform_getHwInfo();
+    if (hwInfo->vhf_band)
+        displayDev = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
+    else
+        displayDev = DEVICE_DT_GET(DT_ALIAS(sh1106_alt));
 }
 
 void display_terminate()

@@ -8,4 +8,8 @@
 / {
     model = "LILYGO T-TWR Plus 2.0";
     compatible = "espressif,esp32s3";
+
+    aliases {
+        sh1106-alt = &sh1106;
+    };
 };

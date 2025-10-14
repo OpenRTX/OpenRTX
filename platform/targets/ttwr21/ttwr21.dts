@@ -12,6 +12,7 @@
     aliases {
         radio-prg = &uart2;
         radio-prg-reset = &radio_prg_reset;
+        sh1106-alt = &sh1106_alt;
     };
 };
 

@@ -233,7 +233,7 @@ int sa8x8_init()
 
     if (!waitUntilReady() || !checkFwVersion())
     {
-        printk("SA8x8: must flash a supported baseband version!\n", ret);
+        printk("SA8x8: must flash a supported baseband version! %d\n", ret);
         return -2;
     }
 
