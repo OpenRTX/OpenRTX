@@ -445,32 +445,3 @@ rssi_t radio_scanStep(freq_t freq, uint16_t dwell_ms)
     // Read RSSI from detector
     return radio_getRssi();
 }
-
-/**
- * Perform a full frequency scan across a range.
- */
-freq_t radio_scan(freq_t start, freq_t stop, freq_t step, rssi_t threshold)
-{
-    // Ensure RX path is enabled before scanning
-    bool wasOff = (radioStatus == OFF);
-    if (wasOff)
-        radio_enableRx();
-
-    freq_t detectedFreq = 0;
-
-    for (freq_t f = start; f <= stop; f += step)
-    {
-        rssi_t level = radio_scanStep(f, 80);  // 80ms dwell per step
-        if (level > threshold)
-        {
-            detectedFreq = f;
-            break;
-        }
-    }
-
-    // Restore previous state
-    if (wasOff)
-        radio_disableRtx();
-
-    return detectedFreq;
-}
