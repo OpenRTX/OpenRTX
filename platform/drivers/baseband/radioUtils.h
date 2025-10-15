@@ -28,6 +28,21 @@
 extern "C" {
 #endif
 
+struct DtmfKeyEntry {
+    const char symbol;       // DTMF symbol (0-9, A-D, *, #)
+    const uint16_t freqLow;  // Low frequency component in Hz
+    const uint16_t freqHigh; // High frequency component in Hz
+};
+
+static constexpr DtmfKeyEntry dtmfKeyMap[] = {
+    { '1', 697, 1209 }, { '2', 697, 1336 }, { '3', 697, 1477 },
+    { 'A', 697, 1633 }, { '4', 770, 1209 }, { '5', 770, 1336 },
+    { '6', 770, 1477 }, { 'B', 770, 1633 }, { '7', 852, 1209 },
+    { '8', 852, 1336 }, { '9', 852, 1477 }, { 'C', 852, 1633 },
+    { '*', 941, 1209 }, { '0', 941, 1336 }, { '#', 941, 1477 },
+    { 'D', 941, 1633 }
+};
+
 static const freq_t BAND_VHF_LO = 136000000;
 static const freq_t BAND_VHF_HI = 174000000;
 static const freq_t BAND_UHF_LO = 400000000;
@@ -56,6 +71,21 @@ static inline enum Band getBandFromFrequency(const freq_t freq)
     if((freq >= BAND_VHF_LO) && (freq <= BAND_VHF_HI)) return BND_VHF;
     if((freq >= BAND_UHF_LO) && (freq <= BAND_UHF_HI)) return BND_UHF;
     return BND_NONE;
+}
+
+/**
+ * This function looks up the DTMF frequencies for a given symbol.
+ *
+ * @param symbol: The DTMF symbol to look up (0-9, A-D, *, #)
+ * @return A DtmfKeyEntry struct containing the symbol and its frequencies.
+ *         If the symbol is not found, returns an entry with symbol '\0' and frequencies 0.
+ */
+static inline DtmfKeyEntry lookupDtmfFreq(char symbol)
+{
+    for (const auto &entry : dtmfKeyMap)
+        if (entry.symbol == symbol)
+            return entry;
+    return { '\0', 0, 0 }; // Not found
 }
 
 #ifdef __cplusplus

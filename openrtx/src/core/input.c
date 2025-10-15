@@ -109,7 +109,7 @@ uint8_t input_getPressedChar(kbd_msg_t msg)
     return __builtin_ctz(msg.keys & KBD_CHAR_MASK);
 }
 
-char input_keyToDtmfChar(uint32_t keys)
+char input_getDtmfChar(uint32_t keys)
 {
     if (keys & KEY_0) return '0';
     if (keys & KEY_1) return '1';

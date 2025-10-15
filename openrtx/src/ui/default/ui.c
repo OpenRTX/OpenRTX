@@ -1574,7 +1574,7 @@ void ui_updateFSM(bool *sync_rtx)
                         }
                     }
                     else if(txOngoing && state.channel.mode == OPMODE_FM) {
-                        char dtmfChar = input_keyToDtmfChar(msg.keys);
+                        char dtmfChar = input_getDtmfChar(msg.keys);
                         if(dtmfChar != '\0' && state.dtmf_pressed != dtmfChar) {
                             state.dtmf_pressed = dtmfChar;
                             *sync_rtx = true;
@@ -1775,7 +1775,7 @@ void ui_updateFSM(bool *sync_rtx)
                         }
                     }
                     else if(txOngoing && state.channel.mode == OPMODE_FM) {
-                        char dtmfChar = input_keyToDtmfChar(msg.keys);
+                        char dtmfChar = input_getDtmfChar(msg.keys);
                         if(dtmfChar != '\0' && state.dtmf_pressed != dtmfChar) {
                             state.dtmf_pressed = dtmfChar;
                             *sync_rtx = true;

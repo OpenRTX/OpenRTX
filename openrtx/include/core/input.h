@@ -92,7 +92,7 @@ uint8_t input_getPressedNumber(kbd_msg_t msg);
  * @param key: the key to convert
  * @return the DTMF character associated with the key
  */
-char input_keyToDtmfChar(uint32_t key);
+char input_getDtmfChar(uint32_t key);
 
 /**
  * This function returns the smallest number pressed on the keyboard and
