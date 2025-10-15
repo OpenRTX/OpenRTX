@@ -1,7 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2023 - 2025 by Federico Amedeo Izzo IU2NUO,             *
- *                                Niccolò Izzo IU2KIN                      *
- *                                Silvano Seva IU2KWO                      *
+ *   Copyright (C) 2023 by Federico Amedeo Izzo IU2NUO,                    *
+ *                         Niccolò Izzo IU2KIN                             *
+ *                         Silvano Seva IU2KWO                             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -19,14 +19,14 @@
 
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/i2c.h>
-#include "interfaces/delays.h"
-#include "interfaces/keyboard.h"
-#include "hwconfig.h"
-#include "pmu.h"
+#include <interfaces/delays.h>
+#include <interfaces/keyboard.h>
+#include <hwconfig.h>
+#include "drivers/PMU/AXP2101_zephyr.h"
 
 // PMU is controlled through the XPowersLib external library
 #define XPOWERS_CHIP_AXP2101
-#include "XPowersLib.h"
+#include <XPowersLib.h>
 
 
 #if DT_NODE_HAS_STATUS(DT_ALIAS(i2c_0), okay)

@@ -25,7 +25,7 @@
 
 #include "drivers/baseband/SA8x8.h"
 #include "drivers/program/program_RL78.h"
-#include "pmu.h"
+#include "drivers/PMU/AXP2101_zephyr.h"
 
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/i2c.h>

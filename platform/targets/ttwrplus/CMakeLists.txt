@@ -10,18 +10,18 @@ target_sources(app
     ${OPENRTX_ROOT}/platform/mcu/ESP32S3/drivers/delays.c
 
     ${OPENRTX_ROOT}/platform/targets/ttwrplus/platform.c
-    ${OPENRTX_ROOT}/platform/targets/ttwrplus/pmu.cpp
 
-    ${OPENRTX_ROOT}/platform/drivers/display/SH1106_ttwr.c
-    ${OPENRTX_ROOT}/platform/drivers/keyboard/keyboard_ttwr.c
-    ${OPENRTX_ROOT}/platform/drivers/baseband/radio_ttwr.cpp
-    ${OPENRTX_ROOT}/platform/drivers/baseband/AT1846S_SA8x8.cpp
-    ${OPENRTX_ROOT}/platform/drivers/baseband/SA8x8.c
     ${OPENRTX_ROOT}/platform/drivers/GPS/gps_zephyr.c
     ${OPENRTX_ROOT}/platform/drivers/GPS/nmea_rbuf.c
-    ${OPENRTX_ROOT}/platform/drivers/audio/audio_ttwr.c
     ${OPENRTX_ROOT}/platform/drivers/NVM/flash_zephyr.c
     ${OPENRTX_ROOT}/platform/drivers/NVM/nvmem_ttwr.c
+    ${OPENRTX_ROOT}/platform/drivers/PMU/AXP2101_zephyr.cpp
+    ${OPENRTX_ROOT}/platform/drivers/audio/audio_ttwr.c
+    ${OPENRTX_ROOT}/platform/drivers/baseband/AT1846S_SA8x8.cpp
+    ${OPENRTX_ROOT}/platform/drivers/baseband/SA8x8.c
+    ${OPENRTX_ROOT}/platform/drivers/baseband/radio_ttwr.cpp
+    ${OPENRTX_ROOT}/platform/drivers/display/SH1106_ttwr.c
+    ${OPENRTX_ROOT}/platform/drivers/keyboard/keyboard_ttwr.c
 
     ${OPENRTX_ROOT}/platform/drivers/stubs/cps_io_stub.c
 

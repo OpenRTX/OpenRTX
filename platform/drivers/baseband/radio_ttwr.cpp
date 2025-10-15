@@ -20,7 +20,7 @@
 
 #include "interfaces/radio.h"
 #include <algorithm>
-#include "pmu.h"
+#include "drivers/PMU/AXP2101_zephyr.h"
 #include "radioUtils.h"
 #include "drivers/baseband/AT1846S.h"
 #include "drivers/baseband/SA8x8.h"

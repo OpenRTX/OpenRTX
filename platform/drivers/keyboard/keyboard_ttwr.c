@@ -22,7 +22,7 @@
 #include "interfaces/keyboard.h"
 #include "interfaces/platform.h"
 #include "hwconfig.h"
-#include "pmu.h"
+#include "drivers/PMU/AXP2101_zephyr.h"
 
 static const struct device *const buttons_dev = DEVICE_DT_GET(DT_NODELABEL(buttons));
 

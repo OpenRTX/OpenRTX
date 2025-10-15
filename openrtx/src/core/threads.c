@@ -37,7 +37,7 @@
 #include "core/voicePrompts.h"
 
 #if defined(PLATFORM_TTWR)
-#include "pmu.h"
+#include "drivers/PMU/AXP2101_zephyr.h"
 #endif
 
 /* Mutex for concurrent access to RTX state variable */

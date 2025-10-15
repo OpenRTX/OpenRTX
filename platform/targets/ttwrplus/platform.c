@@ -28,7 +28,7 @@
 #include <zephyr/drivers/uart.h>
 #include <zephyr/drivers/led_strip.h>
 #include "drivers/baseband/SA8x8.h"
-#include "pmu.h"
+#include "drivers/PMU/AXP2101_zephyr.h"
 
 #define BUTTON_PTT_NODE DT_NODELABEL(button_ptt)
 
