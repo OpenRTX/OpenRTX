@@ -2959,6 +2959,9 @@ void platform_init()
     } else {
         printk("Error detecting baseband model\n");
     }
+
+    // Connect SA868s to PA
+    pmu_setAudioSwitch(false);
 }
 
 void platform_terminate()

@@ -354,6 +354,15 @@ void pmu_setGPSPower(bool enable)
         PMU.disableALDO4();
 }
 
+// When enabled PA is connected to ESP32, when disabled to SA868s
+void pmu_setAudioSwitch(bool enable)
+{
+    if (enable)
+        PMU.enableALDO3();
+    else
+        PMU.disableALDO3();
+}
+
 void pmu_handleIRQ()
 {
     // Check if we got some interrupts

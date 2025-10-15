@@ -67,6 +67,13 @@ void pmu_setBasebandProgramPower(bool enable);
 void pmu_setGPSPower(bool enable);
 
 /**
+ * Control the Power Amplifier audio switch.
+ *
+ * @param enable: set to true to connect the PA to ESP32, false to SA868s
+ */
+void pmu_setAudioSwitch(bool enable);
+
+/**
  * Handle the AXP2101 IRQ flags.
  * This function has to be called periodically.
  */
