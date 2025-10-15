@@ -217,6 +217,7 @@ void rtx_task()
      * version of the RSSI level.
      */
     currMode->update(&rtxStatus, reconfigure);
+
 }
 
 rssi_t rtx_getRssi()
