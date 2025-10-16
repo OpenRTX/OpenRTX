@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
 CONFIG_SOC_SERIES_ESP32S3=y
 CONFIG_DISPLAY=y
 CONFIG_SSD1306=y

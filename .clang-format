@@ -1,4 +1,4 @@
-# Clang format taken from https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/.clang-format?id=b9a10f876409bf3768178f4aded199e193ddbe33
+# Clang format taken from https://git.kernel.org/pub/scm/linux/kernel/giFt/torvalds/linux.git/tree/.clang-format?id=b9a10f876409bf3768178f4aded199e193ddbe33
 # Patched with:
 #  - .*indentwidth: 4
 #  - IndentCaseLabels: true
@@ -14,6 +14,7 @@
 #  - BreakBeforeBinaryOperators: NonAssignment
 #  - PenaltyBreakAssignment: 30
 # Original header below
+# SPDX-FileCopyrightText: Copyright OpenRTX Contributors, Linux Kernel Contributors
 ##########################################################################
 # SPDX-License-Identifier: GPL-2.0
 #

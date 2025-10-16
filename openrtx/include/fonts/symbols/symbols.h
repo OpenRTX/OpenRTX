@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+ * 
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 // This is a generated file, please do not edit it! Use generate_symbols.py
 typedef enum {
     SYMBOL_SPACE = 32,

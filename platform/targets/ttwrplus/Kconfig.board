@@ -1,6 +1,8 @@
+# SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
 # LilyGo T-TWR Plus board configuration
-
-# SPDX-License-Identifier: Apache-2.0
 
 config BOARD_TTWRPLUS
 	bool "LilyGo T-TWR Plus Board"
