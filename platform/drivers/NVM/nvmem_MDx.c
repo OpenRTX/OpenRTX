@@ -14,9 +14,6 @@
 #include "core/utils.h"
 #include "drivers/NVM/W25Qx.h"
 
-#define SECREG_READ(dev, offs, data, len) \
-    nvm_devRead((const struct nvmDevice *) dev, offs, data, len)
-
 static const struct W25QxCfg eflashCfg =
 {
     #ifdef PLATFORM_MD9600
@@ -28,9 +25,7 @@ static const struct W25QxCfg eflashCfg =
 };
 
 W25Qx_DEVICE_DEFINE(eflash, eflashCfg)
-W25Qx_SECREG_DEFINE(cal1,   eflashCfg, 0x1000)
-W25Qx_SECREG_DEFINE(cal2,   eflashCfg, 0x2000)
-W25Qx_SECREG_DEFINE(hwInfo, eflashCfg, 0x3000)
+W25Qx_SECREG_DEFINE(secReg, eflashCfg)
 
 static const struct nvmDescriptor nvmDevices[] =
 {
@@ -44,7 +39,7 @@ static const struct nvmDescriptor nvmDevices[] =
     },
     {
         .name       = "Cal. data 1",
-        .dev        = (const struct nvmDevice *) &cal1,
+        .dev        = &secReg,
         .baseAddr   = 0x1000,
         .size       = 0x100,        // 256 byte
         .partNum    = 0,
@@ -52,7 +47,7 @@ static const struct nvmDescriptor nvmDevices[] =
     },
     {
         .name       = "Cal. data 2",
-        .dev        = (const struct nvmDevice *) &cal2,
+        .dev        = &secReg,
         .baseAddr   = 0x2000,
         .size       = 0x100,        // 256 byte
         .partNum    = 0,
@@ -95,17 +90,17 @@ void nvm_readCalibData(void *buf)
     struct CalData *calib = ((struct CalData *) buf);
 
     // Security register 1: base address 0x1000
-    SECREG_READ(&cal1, 0x0009, &(calib->freqAdjustMid), 1);
-    SECREG_READ(&cal1, 0x0010, calib->txHighPower, 9);
-    SECREG_READ(&cal1, 0x0020, calib->txLowPower, 9);
-    SECREG_READ(&cal1, 0x0030, calib->rxSensitivity, 9);
+    nvm_devRead(&secReg, 0x1009, &(calib->freqAdjustMid), 1);
+    nvm_devRead(&secReg, 0x1010, calib->txHighPower, 9);
+    nvm_devRead(&secReg, 0x1020, calib->txLowPower, 9);
+    nvm_devRead(&secReg, 0x1030, calib->rxSensitivity, 9);
 
     // Security register 2: base address 0x2000
-    SECREG_READ(&cal2, 0x0030, calib->sendIrange, 9);
-    SECREG_READ(&cal2, 0x0040, calib->sendQrange, 9);
-    SECREG_READ(&cal2, 0x0070, calib->analogSendIrange, 9);
-    SECREG_READ(&cal2, 0x0080, calib->analogSendQrange, 9);
-    SECREG_READ(&cal2, 0x00b0, ((uint8_t *) &freqs), 72);
+    nvm_devRead(&secReg, 0x2030, calib->sendIrange, 9);
+    nvm_devRead(&secReg, 0x2040, calib->sendQrange, 9);
+    nvm_devRead(&secReg, 0x2070, calib->analogSendIrange, 9);
+    nvm_devRead(&secReg, 0x2080, calib->analogSendQrange, 9);
+    nvm_devRead(&secReg, 0x20b0, ((uint8_t *) &freqs), 72);
 
     /*
      * Frequency stored in calibration data is divided by ten: so, after
@@ -124,17 +119,17 @@ void nvm_readCalibData(void *buf)
     struct CalData *vhfCal = &(cal->vhfCal);
 
     // Security register 1: base address 0x1000
-    SECREG_READ(&cal1, 0x000c, (&vhfCal->freqAdjustMid), 1);
-    SECREG_READ(&cal1, 0x0019, vhfCal->txHighPower, 5);
-    SECREG_READ(&cal1, 0x0029, vhfCal->txLowPower, 5);
-    SECREG_READ(&cal1, 0x0039, vhfCal->rxSensitivity, 5);
+    nvm_devRead(&secReg, 0x100c, (&vhfCal->freqAdjustMid), 1);
+    nvm_devRead(&secReg, 0x1019, vhfCal->txHighPower, 5);
+    nvm_devRead(&secReg, 0x1029, vhfCal->txLowPower, 5);
+    nvm_devRead(&secReg, 0x1039, vhfCal->rxSensitivity, 5);
 
     // Security register 2: base address 0x2000
-    SECREG_READ(&cal2, 0x0039, vhfCal->sendIrange, 5);
-    SECREG_READ(&cal2, 0x0049, vhfCal->sendQrange, 5);
-    SECREG_READ(&cal2, 0x0079, vhfCal->analogSendIrange, 5);
-    SECREG_READ(&cal2, 0x0089, vhfCal->analogSendQrange, 5);
-    SECREG_READ(&cal2, 0x0000, ((uint8_t *) &freqs), 40);
+    nvm_devRead(&secReg, 0x2039, vhfCal->sendIrange, 5);
+    nvm_devRead(&secReg, 0x2049, vhfCal->sendQrange, 5);
+    nvm_devRead(&secReg, 0x2079, vhfCal->analogSendIrange, 5);
+    nvm_devRead(&secReg, 0x2089, vhfCal->analogSendQrange, 5);
+    nvm_devRead(&secReg, 0x2000, ((uint8_t *) &freqs), 40);
 
     for(uint8_t i = 0; i < 5; i++)
     {
@@ -151,10 +146,10 @@ void nvm_readHwInfo(hwInfo_t *info)
     uint8_t  lcdInfo = 0;
 
     // Security register 3: base address 0x3000
-    SECREG_READ(&hwInfo, 0x0000, info->name, 8);
-    SECREG_READ(&hwInfo, 0x0014, &freqMin, 2);
-    SECREG_READ(&hwInfo, 0x0016, &freqMax, 2);
-    SECREG_READ(&hwInfo, 0x001D, &lcdInfo, 1);
+    nvm_devRead(&secReg, 0x3000, info->name, 8);
+    nvm_devRead(&secReg, 0x3014, &freqMin, 2);
+    nvm_devRead(&secReg, 0x3016, &freqMax, 2);
+    nvm_devRead(&secReg, 0x301D, &lcdInfo, 1);
 
     // Ensure correct null-termination of device name by removing the 0xff.
     for(uint8_t i = 0; i < sizeof(info->name); i++)
@@ -187,8 +182,8 @@ void nvm_readHwInfo(hwInfo_t *info)
     uint16_t vhf_freqMin = 0;
     uint16_t vhf_freqMax = 0;
 
-    SECREG_READ(&hwInfo, 0x0018, &vhf_freqMin, 2);
-    SECREG_READ(&hwInfo, 0x001a, &vhf_freqMax, 2);
+    nvm_devRead(&secReg, 0x3018, &vhf_freqMin, 2);
+    nvm_devRead(&secReg, 0x301a, &vhf_freqMax, 2);
 
     info->vhf_minFreq = ((uint16_t) bcdToBin(vhf_freqMin))/10;
     info->vhf_maxFreq = ((uint16_t) bcdToBin(vhf_freqMax))/10;
