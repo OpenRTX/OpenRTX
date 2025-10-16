@@ -516,7 +516,7 @@ void vp_queueStringTableEntry(const char* const* stringTableStringPtr)
      * This function looks up a voice prompt corresponding to a string table
      * entry. These are stored in the voice data after the voice prompts with no
      * corresponding string table entry, hence the offset calculation:
-     * NUM_VOICE_PROMPTS + (stringTableStringPtr - currentLanguage->languageName)
+     * NUM_VOICE_PROMPTS + (stringTableStringPtr - uiStrings.languageName)
      */
 
     if (state.settings.vpLevel < vpLow)
@@ -526,7 +526,7 @@ void vp_queueStringTableEntry(const char* const* stringTableStringPtr)
         return;
 
     uint16_t pos = NUM_VOICE_PROMPTS
-                 + (stringTableStringPtr - &currentLanguage->languageName);
+                 + (stringTableStringPtr - &uiStrings.languageName);
 
     vp_queuePrompt(pos);
 }

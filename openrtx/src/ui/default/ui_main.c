@@ -28,13 +28,15 @@ void _ui_drawMainTop(ui_state_t * ui_state)
     datetime_t local_time = utcToLocalTime(last_state.time,
                                            last_state.settings.utc_timezone);
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
+        // i18n: time shown on top status bar, hh:mm:ss format
               color_white, "%02d:%02d:%02d", local_time.hour,
               local_time.minute, local_time.second);
 #endif
     // If the radio has no built-in battery, print input voltage
 #ifdef CONFIG_BAT_NONE
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_RIGHT,
-              color_white,"%.1fV", last_state.v_bat);
+        // i18n: battery voltage string, shown on top status bar
+              color_white, "%.1fV", last_state.v_bat);
 #else
     if(last_state.settings.showBatteryIcon) {
         // print battery icon on top bar, use 4 px padding
@@ -47,7 +49,8 @@ void _ui_drawMainTop(ui_state_t * ui_state)
         // print the battery percentage
         point_t bat_pos = {layout.top_pos.x, layout.top_pos.y - 2};
         gfx_print(bat_pos , FONT_SIZE_6PT, TEXT_ALIGN_RIGHT,
-        color_white,"%d%%", last_state.charge);
+        // i18n: battery percentage string, shown on top status bar
+        color_white, "%d%%", last_state.charge);
     }
 #endif
     if (ui_state->input_locked == true)
@@ -60,6 +63,7 @@ void _ui_drawBankChannel()
     // Print Bank number, channel number and Channel name
     uint16_t b = (last_state.bank_enabled) ? last_state.bank : 0;
     gfx_print(layout.line1_pos, layout.line1_font, TEXT_ALIGN_CENTER,
+        // i18n: bank number, channel number, and channel name shown on the main screen
               color_white, "%01d-%03d: %.12s",
               b, last_state.channel_index + 1, last_state.channel.name);
 }
@@ -69,10 +73,10 @@ const char* _ui_getToneEnabledString(bool tone_tx_enable, bool tone_rx_enable,
 {
     const char *strings[2][4] = {
         {
-            currentLanguage->None,
-            currentLanguage->Encode,
-            currentLanguage->Decode,
-            currentLanguage->Both,
+            uiStrings.None,
+            uiStrings.Encode,
+            uiStrings.Decode,
+            uiStrings.Both,
         }, {
             "N",
             "T",
@@ -121,6 +125,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
         case OPMODE_DMR:
             // Print talkgroup
             gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                // i18n: DMR talkgroup shown on main screen
                     color_white, "DMR TG%s", "");
             break;
 
@@ -176,12 +181,13 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                 else
                 {
                     if(strnlen(rtxStatus.destination_address, 10) == 0)
-                        dst = currentLanguage->broadcast;
+                        dst = uiStrings.broadcast;
                     else
                         dst = rtxStatus.destination_address;
                 }
 
                 gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                    // i18n: M17 destination ID shown on main screen
                           color_white, "M17 #%s", dst);
             }
             break;

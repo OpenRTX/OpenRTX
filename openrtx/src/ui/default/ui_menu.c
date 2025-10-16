@@ -133,7 +133,7 @@ static void announceMenuItemIfNeeded(char* name, char* value, bool editMode)
 // We're not in edit mode.
 // The screen is navigable but entries  are readonly.
     if (!value && !editMode && !ScreenContainsReadOnlyEntries(state.ui_screen))
-        vp_queueStringTableEntry(&currentLanguage->menu);
+        vp_queueStringTableEntry(&uiStrings.menu);
 
     if (editMode)
         vp_queuePrompt(PROMPT_EDIT);
@@ -275,8 +275,8 @@ int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
         case D_BATTERY:
             sniprintf(buf, max_len, "%s",
                      (last_state.settings.showBatteryIcon) ?
-                     currentLanguage->on :
-                     currentLanguage->off);
+                     uiStrings.on :
+                     uiStrings.off);
 	    return 0;
     }
     sniprintf(buf, max_len, "%d", value);
@@ -298,14 +298,14 @@ int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
     {
         case G_ENABLED:
             sniprintf(buf, max_len, "%s", (last_state.settings.gps_enabled) ?
-                                                      currentLanguage->on  :
-                                                      currentLanguage->off);
+                                                      uiStrings.on  :
+                                                      uiStrings.off);
             break;
 #ifdef CONFIG_RTC
         case G_SET_TIME:
             sniprintf(buf, max_len, "%s", (last_state.settings.gpsSetTime) ?
-                                               currentLanguage->on :
-                                               currentLanguage->off);
+                                               uiStrings.on :
+                                               uiStrings.off);
             break;
         case G_TIMEZONE:
         {
@@ -323,7 +323,7 @@ int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
                 tz_hr *= (-1);
                 tz_mn *= (-1);
             }
-
+            // i18n: Print timezone offset in format +/-HH.MM
             sniprintf(buf, max_len, "%c%d.%d", sign, tz_hr, tz_mn);
         }
             break;
@@ -383,21 +383,25 @@ int _ui_getRadioValueName(char *buf, uint8_t max_len, uint8_t index)
 
     if(value >= 1000000)
     {
-        prefix = 'M';
+        // i18n: SI prefix for mega
+        prefix = "M"[0];
         div    = 1000000;
     }
     else if(value >= 1000)
     {
-        prefix = 'k';
+        // i18n: SI prefix for kilo
+        prefix = "k"[0];
         div    = 1000;
     }
 
     // NOTE: casts are there only to squelch -Wformat warnings on the
     // sniprintf.
     char str[16];
+    // i18n: frequency value
     sniprintf(str, sizeof(str), "%u.%u", (unsigned int)(value / div),
                                         (unsigned int)(value % div));
     stripTrailingZeroes(str);
+    // i18n: frequency value with unit prefix
     sniprintf(buf, max_len, "%s%cHz", str, prefix);
 
     return 0;
@@ -427,8 +431,8 @@ int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
             break;
         case M17_CAN_RX:
             sniprintf(buf, max_len, "%s", (last_state.settings.m17_can_rx) ?
-                                                           currentLanguage->on :
-                                                           currentLanguage->off);
+                                                           uiStrings.on :
+                                                           uiStrings.off);
             break;
     }
 
@@ -453,6 +457,7 @@ int _ui_getFMValueName(char* buf, uint8_t max_len, uint8_t index)
     switch (index) {
         case CTCSS_Tone: {
             uint16_t tone = ctcss_tone[last_state.channel.fm.txTone];
+            // i18n: decimal number
             sniprintf(buf, max_len, "%d.%d", (tone / 10), (tone % 10));
             break;
         }
@@ -487,10 +492,10 @@ int _ui_getAccessibilityValueName(char *buf, uint8_t max_len, uint8_t index)
             switch (value)
             {
                 case vpNone:
-                    sniprintf(buf, max_len, "%s", currentLanguage->off);
+                    sniprintf(buf, max_len, "%s", uiStrings.off);
                     break;
                 case vpBeep:
-                    sniprintf(buf, max_len, "%s", currentLanguage->beep);
+                    sniprintf(buf, max_len, "%s", uiStrings.beep);
                     break;
                 default:
                                     sniprintf(buf, max_len, "%d", (value-vpBeep));
@@ -499,10 +504,10 @@ int _ui_getAccessibilityValueName(char *buf, uint8_t max_len, uint8_t index)
             break;
         }
         case A_PHONETIC:
-            sniprintf(buf, max_len, "%s", last_state.settings.vpPhoneticSpell ? currentLanguage->on : currentLanguage->off);
+            sniprintf(buf, max_len, "%s", last_state.settings.vpPhoneticSpell ? uiStrings.on : uiStrings.off);
             break;
         case A_MACRO_LATCH:
-            sniprintf(buf, max_len, "%s", last_state.settings.macroMenuLatch ? currentLanguage->on : currentLanguage->off);
+            sniprintf(buf, max_len, "%s", last_state.settings.macroMenuLatch ? uiStrings.on : uiStrings.off);
             break;
     }
     return 0;
@@ -537,20 +542,23 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
             // to mantissa for rounding to nearest integer
             uint16_t volt  = (last_state.v_bat + 50) / 1000;
             uint16_t mvolt = ((last_state.v_bat - volt * 1000) + 50) / 100;
+            // i18n: decimal number with volts
             sniprintf(buf, max_len, "%d.%dV", volt, mvolt);
         }
             break;
         case 2: // Battery charge
+            // i18n: battery charge percentage
             sniprintf(buf, max_len, "%d%%", last_state.charge);
             break;
         case 3: // RSSI
+
             sniprintf(buf, max_len, "%"PRIi32"dBm", last_state.rssi);
             break;
         case 4: // Heap usage
             sniprintf(buf, max_len, "%dB", getHeapSize() - getCurrentFreeHeap());
             break;
         case 5: // Band
-            sniprintf(buf, max_len, "%s %s", hwinfo->vhf_band ? currentLanguage->VHF : "", hwinfo->uhf_band ? currentLanguage->UHF : "");
+            sniprintf(buf, max_len, "%s %s", hwinfo->vhf_band ? uiStrings.VHF : "", hwinfo->uhf_band ? uiStrings.UHF : "");
             break;
         case 6: // VHF
             sniprintf(buf, max_len, "%d - %d", hwinfo->vhf_minFreq, hwinfo->vhf_maxFreq);
@@ -586,7 +594,7 @@ int _ui_getBankName(char *buf, uint8_t max_len, uint8_t index)
     // First bank "All channels" is not read from flash
     if(index == 0)
     {
-        strncpy(buf, currentLanguage->allChannels, max_len);
+        strncpy(buf, uiStrings.allChannels, max_len);
     }
     else
     {
@@ -621,7 +629,7 @@ void _ui_drawMenuTop(ui_state_t* ui_state)
     gfx_clearScreen();
     // Print "Menu" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, currentLanguage->menu);
+              color_white, uiStrings.menu);
     // Print menu entries
     _ui_drawMenuList(ui_state->menu_selected, _ui_getMenuTopEntryName);
 }
@@ -631,7 +639,7 @@ void _ui_drawMenuBank(ui_state_t* ui_state)
     gfx_clearScreen();
     // Print "Bank" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, currentLanguage->banks);
+              color_white, uiStrings.banks);
     // Print bank entries
     _ui_drawMenuList(ui_state->menu_selected, _ui_getBankName);
 }
@@ -641,7 +649,7 @@ void _ui_drawMenuChannel(ui_state_t* ui_state)
     gfx_clearScreen();
     // Print "Channel" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, currentLanguage->channels);
+              color_white, uiStrings.channels);
     // Print channel entries
     _ui_drawMenuList(ui_state->menu_selected, _ui_getChannelName);
 }
@@ -651,7 +659,7 @@ void _ui_drawMenuContacts(ui_state_t* ui_state)
     gfx_clearScreen();
     // Print "Contacts" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, currentLanguage->contacts);
+              color_white, uiStrings.contacts);
     // Print contact entries
     _ui_drawMenuList(ui_state->menu_selected, _ui_getContactName);
 }
@@ -659,25 +667,26 @@ void _ui_drawMenuContacts(ui_state_t* ui_state)
 #ifdef CONFIG_GPS
 void _ui_drawMenuGPS()
 {
-    char *fix_buf, *type_buf;
+    const char *fix_buf = NULL;
+    const char *type_buf = NULL;
     gfx_clearScreen();
     // Print "GPS" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, currentLanguage->gps);
+              color_white, uiStrings.gps);
     point_t fix_pos = {layout.line2_pos.x, CONFIG_SCREEN_HEIGHT * 2 / 5};
     // Print GPS status, if no fix, hide details
     if(!last_state.gpsDetected)
         gfx_print(fix_pos, layout.line3_large_font, TEXT_ALIGN_CENTER,
-                  color_white, currentLanguage->noGps);
+                  color_white, uiStrings.noGps);
     else if(!last_state.settings.gps_enabled)
         gfx_print(fix_pos, layout.line3_large_font, TEXT_ALIGN_CENTER,
-                  color_white, currentLanguage->gpsOff);
+                  color_white, uiStrings.gpsOff);
     else if (last_state.gps_data.fix_quality == FIX_QUALITY_NO_FIX)
         gfx_print(fix_pos, layout.line3_large_font, TEXT_ALIGN_CENTER,
-                  color_white, currentLanguage->noFix);
+                  color_white, uiStrings.noFix);
     else if (last_state.gps_data.fix_quality == FIX_QUALITY_ESTIMATED)
         gfx_print(fix_pos, layout.line3_large_font, TEXT_ALIGN_CENTER,
-                  color_white, currentLanguage->fixLost);
+                  color_white, uiStrings.fixLost);
     else
     {
         switch(last_state.gps_data.fix_quality)
@@ -696,7 +705,7 @@ void _ui_drawMenuGPS()
                 fix_buf = "RTK";
                 break;
             default:
-                fix_buf = (char*)currentLanguage->error;
+                fix_buf = (char*)uiStrings.error;
                 break;
         }
 
@@ -706,13 +715,15 @@ void _ui_drawMenuGPS()
                 type_buf = "";
                 break;
             case FIX_TYPE_2D:
+            // i18n: type of GPS fix
                 type_buf = "2D";
                 break;
+            // i18n: type of GPS fix
             case FIX_TYPE_3D:
                 type_buf = "3D";
                 break;
             default:
-                type_buf = (char*)currentLanguage->error;
+                type_buf = (char*)uiStrings.error;
                 break;
         }
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
@@ -722,7 +733,8 @@ void _ui_drawMenuGPS()
         int32_t latitude     = abs(last_state.gps_data.latitude);
         uint8_t latitude_int = latitude / 1000000;
         int32_t latitude_dec = latitude % 1000000;
-        char *direction_lat  = (last_state.gps_data.latitude < 0) ? "S     " : "N     ";
+        // i18n: latitude direction, string length critical
+        const char *direction_lat  = (last_state.gps_data.latitude < 0) ? "S     " : "N     ";
 
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   color_white, direction_lat);
@@ -735,13 +747,15 @@ void _ui_drawMenuGPS()
         int32_t longitude     = abs(last_state.gps_data.longitude);
         uint8_t longitude_int = longitude / 1000000;
         int32_t longitude_dec = longitude % 1000000;
-        char *direction_lon   = (last_state.gps_data.longitude < 0) ? "W     " : "E     ";
+        // i18n: longitude direction, string length critical
+        const char *direction_lon   = (last_state.gps_data.longitude < 0) ? "W     " : "E     ";
 
         gfx_print(layout.line2_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   color_white, direction_lon);
         gfx_print(layout.line2_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white, "%d.%.6d", longitude_int, longitude_dec);
         gfx_print(layout.bottom_pos, layout.bottom_font, TEXT_ALIGN_CENTER,
+            // i18n: speed and altitude in GPS screen
                   color_white, "S %dkm/h  A %dm",
                   last_state.gps_data.speed,
                   last_state.gps_data.altitude);
@@ -768,7 +782,7 @@ void _ui_drawMenuSettings(ui_state_t* ui_state)
     gfx_clearScreen();
     // Print "Settings" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, currentLanguage->settings);
+              color_white, uiStrings.settings);
     // Print menu entries
     _ui_drawMenuList(ui_state->menu_selected, _ui_getSettingsEntryName);
 }
@@ -778,7 +792,7 @@ void _ui_drawMenuBackupRestore(ui_state_t* ui_state)
     gfx_clearScreen();
     // Print "Backup & Restore" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, currentLanguage->backupAndRestore);
+              color_white, uiStrings.backupAndRestore);
     // Print menu entries
     _ui_drawMenuList(ui_state->menu_selected, _ui_getBackupRestoreEntryName);
 }
@@ -790,17 +804,17 @@ void _ui_drawMenuBackup(ui_state_t* ui_state)
     gfx_clearScreen();
     // Print "Flash Backup" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, currentLanguage->flashBackup);
+              color_white, uiStrings.flashBackup);
     // Print backup message
     point_t line = layout.line2_pos;
     gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
-              color_white, currentLanguage->connectToRTXTool);
+              color_white, uiStrings.connectToRTXTool);
     line.y += 18;
     gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
-              color_white, currentLanguage->toBackupFlashAnd);
+              color_white, uiStrings.toBackupFlashAnd);
     line.y += 18;
     gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
-              color_white, currentLanguage->pressPTTToStart);
+              color_white, uiStrings.pressPTTToStart);
 
    if (!platform_getPttStatus())
         return;
@@ -816,17 +830,17 @@ void _ui_drawMenuRestore(ui_state_t* ui_state)
     gfx_clearScreen();
     // Print "Flash Restore" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, currentLanguage->flashRestore);
+              color_white, uiStrings.flashRestore);
     // Print backup message
     point_t line = layout.line2_pos;
     gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
-              color_white, currentLanguage->connectToRTXTool);
+              color_white, uiStrings.connectToRTXTool);
     line.y += 18;
     gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
-              color_white, currentLanguage->toRestoreFlashAnd);
+              color_white, uiStrings.toRestoreFlashAnd);
     line.y += 18;
     gfx_print(line, FONT_SIZE_8PT, TEXT_ALIGN_CENTER,
-              color_white, currentLanguage->pressPTTToStart);
+              color_white, uiStrings.pressPTTToStart);
 
     if (!platform_getPttStatus())
         return;
@@ -840,7 +854,7 @@ void _ui_drawMenuInfo(ui_state_t* ui_state)
     gfx_clearScreen();
     // Print "Info" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, currentLanguage->info);
+              color_white, uiStrings.info);
     // Print menu entries
     _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getInfoEntryName,
                            _ui_getInfoValueName);
@@ -863,7 +877,7 @@ void _ui_drawMenuAbout(ui_state_t* ui_state)
         logo_pos.x = layout.horizontal_pad;
         logo_pos.y = layout.line3_large_h;
         gfx_print(logo_pos, layout.line3_large_font, TEXT_ALIGN_CENTER,
-                  yellow_fab413, currentLanguage->openRTX);
+                  yellow_fab413, uiStrings.openRTX);
     }
 
     point_t pos = {CONFIG_SCREEN_WIDTH / 7, CONFIG_SCREEN_HEIGHT - (layout.menu_h * 3) - 5};
@@ -886,7 +900,7 @@ void _ui_drawSettingsDisplay(ui_state_t* ui_state)
     gfx_clearScreen();
     // Print "Display" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, currentLanguage->display);
+              color_white, uiStrings.display);
     // Print display settings entries
     _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getDisplayEntryName,
                            _ui_getDisplayValueName);
@@ -898,7 +912,7 @@ void _ui_drawSettingsGPS(ui_state_t* ui_state)
     gfx_clearScreen();
     // Print "GPS Settings" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, currentLanguage->gpsSettings);
+              color_white, uiStrings.gpsSettings);
     // Print display settings entries
     _ui_drawMenuListValue(ui_state, ui_state->menu_selected,
                           _ui_getSettingsGPSEntryName,
@@ -914,7 +928,7 @@ void _ui_drawSettingsTimeDate()
                                            last_state.settings.utc_timezone);
     // Print "Time&Date" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, currentLanguage->timeAndDate);
+              color_white, uiStrings.timeAndDate);
     // Print current time and date
     gfx_print(layout.line2_pos, layout.input_font, TEXT_ALIGN_CENTER,
               color_white, "%02d/%02d/%02d",
@@ -931,10 +945,12 @@ void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state)
     gfx_clearScreen();
     // Print "Time&Date" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, currentLanguage->timeAndDate);
+              color_white, uiStrings.timeAndDate);
     if(ui_state->input_position <= 0)
     {
+        // i18n: date placeholder for setting date; string length critical
         strcpy(ui_state->new_date_buf, "__/__/__");
+        // i18n: time placeholder for setting time; string length critical
         strcpy(ui_state->new_time_buf, "__:__:00");
     }
     else
@@ -971,10 +987,10 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
     gfx_clearScreen();
     // Print "M17 Settings" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, currentLanguage->m17settings);
+              color_white, uiStrings.m17settings);
     gfx_printLine(1, 4, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
                   layout.horizontal_pad, layout.menu_font,
-                  TEXT_ALIGN_LEFT, color_white, currentLanguage->callsign);
+                  TEXT_ALIGN_LEFT, color_white, uiStrings.callsign);
     if((ui_state->edit_mode) && (ui_state->menu_selected == M17_CALLSIGN))
     {
         uint16_t rect_width = CONFIG_SCREEN_WIDTH - (layout.horizontal_pad * 2);
@@ -1000,7 +1016,7 @@ void _ui_drawSettingsFM(ui_state_t* ui_state)
     gfx_clearScreen();
     // Print "FM Settings" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER, color_white,
-              currentLanguage->fm);
+              uiStrings.fm);
     // Print FM settings entries
     _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getFMEntryName,
                           _ui_getFMValueName);
@@ -1011,7 +1027,7 @@ void _ui_drawSettingsAccessibility(ui_state_t* ui_state)
     gfx_clearScreen();
     // Print "Accessibility" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, currentLanguage->accessibility);
+              color_white, uiStrings.accessibility);
     // Print accessibility settings entries
     _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getAccessibilityEntryName,
                            _ui_getAccessibilityValueName);
@@ -1026,16 +1042,16 @@ void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state)
 
     gfx_clearScreen();
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, currentLanguage->resetToDefaults);
+              color_white, uiStrings.resetToDefaults);
 
     // Make text flash yellow once every 1s
     color_t textcolor = drawcnt % 2 == 0 ? color_white : yellow_fab413;
     gfx_printLine(1, 4, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
                   layout.horizontal_pad, layout.top_font,
-                  TEXT_ALIGN_CENTER, textcolor, currentLanguage->toReset);
+                  TEXT_ALIGN_CENTER, textcolor, uiStrings.toReset);
     gfx_printLine(2, 4, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
                   layout.horizontal_pad, layout.top_font,
-                  TEXT_ALIGN_CENTER, textcolor, currentLanguage->pressEnterTwice);
+                  TEXT_ALIGN_CENTER, textcolor, uiStrings.pressEnterTwice);
 
     if((getTick() - lastDraw) > 1000)
     {
@@ -1052,7 +1068,7 @@ void _ui_drawSettingsRadio(ui_state_t* ui_state)
 
     // Print "Radio Settings" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, currentLanguage->radioSettings);
+              color_white, uiStrings.radioSettings);
 
     // Handle the special case where a frequency is being input
     if ((ui_state->menu_selected == R_OFFSET) && (ui_state->edit_mode))
@@ -1100,7 +1116,7 @@ void _ui_drawSettingsRadio(ui_state_t* ui_state)
 void _ui_drawMacroTop()
 {
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-                color_white, currentLanguage->macroMenu);
+                color_white, uiStrings.macroMenu);
     if (macro_latched)
     {
         gfx_drawSymbol(layout.top_pos, layout.top_symbol_size, TEXT_ALIGN_LEFT,
@@ -1258,6 +1274,7 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
     unsigned int power_int = (last_state.channel.power / 1000);
     unsigned int power_dec = (last_state.channel.power % 1000) / 100;
     gfx_print(pos_2, layout.top_font, TEXT_ALIGN_RIGHT,
+        // i18n: transmit power setting
               color_white, "%d.%dW", power_int, power_dec);
 
     // Third row
@@ -1291,9 +1308,11 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
               yellow_fab413, "9        ");
     if( ui_state->input_locked == true )
         gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_RIGHT,
+    // i18n: "Unlk" means "Unlock", string length critical
                   color_white, "Unlk");
     else
         gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_RIGHT,
+    // i18n: "Lck" means "Lock", string length critical
                     color_white, "Lck");
 
     // Draw S-meter bar

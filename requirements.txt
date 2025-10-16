@@ -6,3 +6,4 @@ cairosvg>=2.7.1
 numpy>=1.25.2
 intelhex==2.3.0
 urllib3
+polib>=1.1.0

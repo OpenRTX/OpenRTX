@@ -1,0 +1,342 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: OpenRTX\n"
+"POT-Creation-Date: 2026-02-13 19:26\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. This should be the endonym for the language/locale; it is used in the
+#. locale selection menu
+#: openrtx/include/ui/ui_strings.h:languageName
+msgid "English"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:off
+msgid "OFF"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:on
+msgid "ON"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:banks
+msgid "Banks"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:channels
+msgid "Channels"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:contacts
+msgid "Contacts"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:gps
+msgid "GPS"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:settings
+msgid "Settings"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:backupAndRestore
+msgid "Backup & Restore"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:info
+msgid "Info"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:about
+msgid "About"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:display
+msgid "Display"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:timeAndDate
+msgid "Time & Date"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:fm
+msgid "FM"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:m17
+msgid "M17"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:dmr
+msgid "DMR"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:defaultSettings
+msgid "Default Settings"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:brightness
+msgid "Brightness"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:contrast
+msgid "Contrast"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:timer
+msgid "Timer"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:gpsEnabled
+msgid "GPS Enabled"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:gpsSetTime
+msgid "GPS Set Time"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:UTCTimeZone
+msgid "UTC Timezone"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:voice
+msgid "Voice"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:level
+msgid "Level"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:phonetic
+msgid "Phonetic"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:beep
+msgid "Beep"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:backup
+msgid "Backup"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:restore
+msgid "Restore"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:batteryVoltage
+msgid "Bat. Voltage"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:batteryCharge
+msgid "Bat. Charge"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:RSSI
+msgid "RSSI"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:model
+msgid "Model"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:band
+msgid "Band"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:VHF
+msgid "VHF"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:UHF
+msgid "UHF"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:LCDType
+msgid "LCD Type"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:Niccolo
+msgid "Niccolo' IU2KIN"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:Silvano
+msgid "Silvano IU2KWO"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:Federico
+msgid "Federico IU2NUO"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:Fred
+msgid "Fred IU2NRO"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:Joseph
+msgid "Joseph VK7JS"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:allChannels
+msgid "All channels"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:menu
+msgid "Menu"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:gpsOff
+msgid "GPS OFF"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:noFix
+msgid "No Fix"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:fixLost
+msgid "Fix Lost"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:error
+msgid "ERROR"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:flashBackup
+msgid "Flash Backup"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:connectToRTXTool
+msgid "Connect to RTXTool"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:toBackupFlashAnd
+msgid "to backup flash and"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:pressPTTToStart
+msgid "press PTT to start."
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:flashRestore
+msgid "Flash Restore"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:toRestoreFlashAnd
+msgid "to restore flash and"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:openRTX
+msgid "OpenRTX"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:gpsSettings
+msgid "GPS Settings"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:m17settings
+msgid "M17 Settings"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:callsign
+msgid "Callsign:"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:resetToDefaults
+msgid "Reset to Defaults"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:toReset
+msgid "To reset:"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:pressEnterTwice
+msgid "Press Enter twice"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:macroMenu
+msgid "Macro Menu"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:forEmergencyUse
+msgid "For emergency use"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:pressAnyButton
+msgid "press any button."
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:accessibility
+msgid "Accessibility"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:usedHeap
+msgid "Used heap"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:broadcast
+msgid "ALL"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:radioSettings
+msgid "Radio Settings"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:offset
+msgid "Offset"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:macroLatching
+msgid "Macro Latch"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:noGps
+msgid "No GPS"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:batteryIcon
+msgid "Battery Icon"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:CTCSSTone
+msgid "CTCSS Tone"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:CTCSSEn
+msgid "CTCSS En."
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:Encode
+msgid "Encode"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:Decode
+msgid "Decode"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:Both
+msgid "Both"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:None
+msgid "None"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:direction
+msgid "Direction"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:step
+msgid "Step"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:radio
+msgid "Radio"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:CAN
+msgid "CAN"
+msgstr ""
+
+#: openrtx/include/ui/ui_strings.h:canRxCheck
+msgid "CAN RX Check"
+msgstr ""

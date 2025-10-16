@@ -104,121 +104,20 @@ extern void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state);
 extern void _ui_drawSettingsRadio(ui_state_t* ui_state);
 extern bool _ui_drawMacroMenu(ui_state_t* ui_state);
 extern void _ui_reset_menu_anouncement_tracking();
-// TODO: get these from ui strings / currentLanguage
-const char *menu_items[] =
-{
-    "Banks",
-    "Channels",
-    "Contacts",
+
+char *menu_items[7];
+char *settings_items[8];  // 5 base + 3 optional (RTC, GPS, M17)
+char *display_items[4];
 #ifdef CONFIG_GPS
-    "GPS",
+char *settings_gps_items[3];
 #endif
-    "Settings",
-    "Info",
-    "About"
-};
-
-const char *settings_items[] =
-{
-    "Display",
-#ifdef CONFIG_RTC
-    "Time & Date",
-#endif
-#ifdef CONFIG_GPS
-    "GPS",
-#endif
-    "Radio",
-#ifdef CONFIG_M17
-    "M17",
-#endif
-    "FM",
-    "Accessibility",
-    "Default Settings"
-};
-
-const char *display_items[] =
-{
-#ifdef CONFIG_SCREEN_BRIGHTNESS
-    "Brightness",
-#endif
-#ifdef CONFIG_SCREEN_CONTRAST
-    "Contrast",
-#endif
-    "Timer",
-    "Battery Icon"
-};
-
-#ifdef CONFIG_GPS
-const char *settings_gps_items[] =
-{
-    "GPS Enabled",
-#ifdef CONFIG_RTC
-    "GPS Set Time",
-    "UTC Timezone"
-#endif
-};
-#endif
-
-const char *settings_radio_items[] =
-{
-    "Offset",
-    "Direction",
-    "Step",
-};
-
-const char * settings_m17_items[] =
-{
-    "Callsign",
-    "CAN",
-    "CAN RX Check"
-};
-
-const char* settings_fm_items[] =
-{
-    "CTCSS Tone",
-    "CTCSS En."
-};
-
-const char * settings_accessibility_items[] =
-{
-    "Macro Latch",
-    "Voice",
-    "Phonetic"
-};
-
-const char *backup_restore_items[] =
-{
-    "Backup",
-    "Restore"
-};
-
-const char *info_items[] =
-{
-    "",
-    "Bat. Voltage",
-    "Bat. Charge",
-    "RSSI",
-    "Used heap",
-    "Band",
-    "VHF",
-    "UHF",
-    "Hw Version",
-#ifdef PLATFORM_TTWRPLUS
-    "Radio",
-    "Radio FW",
-#endif
-};
-
-const char *authors[] =
-{
-    "Niccolo' IU2KIN",
-    "Silvano IU2KWO",
-    "Federico IU2NUO",
-    "Fred IU2NRO",
-    "Joseph VK7JS",
-    "Morgan ON4MOD",
-    "Marco DM4RCO"
-};
+char *settings_radio_items[3];
+char *settings_m17_items[3];
+char *settings_fm_items[2];
+char *settings_accessibility_items[3];
+char *backup_restore_items[2];
+char *info_items[13];
+char *authors[7];
 
 static const char *symbols_ITU_T_E161[] =
 {
@@ -481,12 +380,12 @@ static void _ui_drawLowBatteryScreen()
               FONT_SIZE_6PT,
               TEXT_ALIGN_CENTER,
               color_white,
-              currentLanguage->forEmergencyUse);
+              uiStrings.forEmergencyUse);
     gfx_print(text_pos_2,
               FONT_SIZE_6PT,
               TEXT_ALIGN_CENTER,
               color_white,
-              currentLanguage->pressAnyButton);
+              uiStrings.pressAnyButton);
 }
 
 static freq_t _ui_freq_add_digit(freq_t freq, uint8_t pos, uint8_t number)
@@ -771,7 +670,7 @@ static void _ui_changeTimer(int variation)
 static void _ui_changeMacroLatch(bool newVal)
 {
     state.settings.macroMenuLatch = newVal ? 1 : 0;
-    vp_announceSettingsOnOffToggle(&currentLanguage->macroLatching,
+    vp_announceSettingsOnOffToggle(&uiStrings.macroLatching,
                                    vp_getVoiceLevelQueueFlags(),
                                    state.settings.macroMenuLatch);
 }
@@ -811,7 +710,7 @@ static void _ui_changePhoneticSpell(bool newVal)
 {
     state.settings.vpPhoneticSpell = newVal ? 1 : 0;
 
-    vp_announceSettingsOnOffToggle(&currentLanguage->phonetic,
+    vp_announceSettingsOnOffToggle(&uiStrings.phonetic,
                                    vp_getVoiceLevelQueueFlags(),
                                    state.settings.vpPhoneticSpell);
 }
@@ -1007,12 +906,12 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
 #ifdef CONFIG_SCREEN_BRIGHTNESS
         case 7:
             _ui_changeBrightness(-5);
-            vp_announceSettingsInt(&currentLanguage->brightness, queueFlags,
+            vp_announceSettingsInt(&uiStrings.brightness, queueFlags,
                                    state.settings.brightness);
             break;
         case 8:
             _ui_changeBrightness(+5);
-            vp_announceSettingsInt(&currentLanguage->brightness, queueFlags,
+            vp_announceSettingsInt(&uiStrings.brightness, queueFlags,
                                    state.settings.brightness);
             break;
 #endif
@@ -1262,6 +1161,94 @@ void ui_init()
     // This syntax is called compound literal
     // https://stackoverflow.com/questions/6891720/initialize-reset-struct-to-zero-null
     ui_state = (const struct ui_state_t){ 0 };
+    
+    // Initialize menu arrays with localized strings
+    int idx = 0;
+    menu_items[idx++] = (char*)uiStrings.banks;
+    menu_items[idx++] = (char*)uiStrings.channels;
+    menu_items[idx++] = (char*)uiStrings.contacts;
+#ifdef CONFIG_GPS
+    menu_items[idx++] = (char*)uiStrings.gps;
+#endif
+    menu_items[idx++] = (char*)uiStrings.settings;
+    menu_items[idx++] = (char*)uiStrings.info;
+    menu_items[idx++] = (char*)uiStrings.about;
+    
+    idx = 0;
+    settings_items[idx++] = (char*)uiStrings.display;
+#ifdef CONFIG_RTC
+    settings_items[idx++] = (char*)uiStrings.timeAndDate;
+#endif
+#ifdef CONFIG_GPS
+    settings_items[idx++] = (char*)uiStrings.gps;
+#endif
+    settings_items[idx++] = (char*)uiStrings.radio;
+#ifdef CONFIG_M17
+    settings_items[idx++] = (char*)uiStrings.m17;
+#endif
+    settings_items[idx++] = (char*)uiStrings.fm;
+    settings_items[idx++] = (char*)uiStrings.accessibility;
+    settings_items[idx++] = (char*)uiStrings.defaultSettings;
+    
+    idx = 0;
+#ifdef CONFIG_SCREEN_BRIGHTNESS
+    display_items[idx++] = (char*)uiStrings.brightness;
+#endif
+#ifdef CONFIG_SCREEN_CONTRAST
+    display_items[idx++] = (char*)uiStrings.contrast;
+#endif
+    display_items[idx++] = (char*)uiStrings.timer;
+    display_items[idx++] = (char*)uiStrings.batteryIcon;
+    
+#ifdef CONFIG_GPS
+    idx = 0;
+    settings_gps_items[idx++] = (char*)uiStrings.gpsEnabled;
+#ifdef CONFIG_RTC
+    settings_gps_items[idx++] = (char*)uiStrings.gpsSetTime;
+    settings_gps_items[idx++] = (char*)uiStrings.UTCTimeZone;
+#endif
+#endif
+    
+    settings_radio_items[0] = (char*)uiStrings.offset;
+    settings_radio_items[1] = (char*)uiStrings.direction;
+    settings_radio_items[2] = (char*)uiStrings.step;
+    
+    settings_m17_items[0] = (char*)uiStrings.callsign;
+    settings_m17_items[1] = (char*)uiStrings.CAN;
+    settings_m17_items[2] = (char*)uiStrings.canRxCheck;
+    
+    settings_fm_items[0] = (char*)uiStrings.CTCSSTone;
+    settings_fm_items[1] = (char*)uiStrings.CTCSSEn;
+    
+    settings_accessibility_items[0] = (char*)uiStrings.macroLatching;
+    settings_accessibility_items[1] = (char*)uiStrings.voice;
+    settings_accessibility_items[2] = (char*)uiStrings.phonetic;
+    
+    backup_restore_items[0] = (char*)uiStrings.backup;
+    backup_restore_items[1] = (char*)uiStrings.restore;
+    
+    idx = 0;
+    info_items[idx++] = (char*)"";
+    info_items[idx++] = (char*)uiStrings.batteryVoltage;
+    info_items[idx++] = (char*)uiStrings.batteryCharge;
+    info_items[idx++] = (char*)uiStrings.RSSI;
+    info_items[idx++] = (char*)uiStrings.usedHeap;
+    info_items[idx++] = (char*)uiStrings.band;
+    info_items[idx++] = (char*)uiStrings.VHF;
+    info_items[idx++] = (char*)uiStrings.UHF;
+    info_items[idx++] = (char*)"Hw Version";
+#ifdef PLATFORM_TTWRPLUS
+    info_items[idx++] = (char*)uiStrings.radio;
+    info_items[idx++] = (char*)"Radio FW";
+#endif
+    
+    authors[0] = (char*)uiStrings.Niccolo;
+    authors[1] = (char*)uiStrings.Silvano;
+    authors[2] = (char*)uiStrings.Federico;
+    authors[3] = (char*)uiStrings.Fred;
+    authors[4] = (char*)uiStrings.Joseph;
+    authors[5] = (char*)"Morgan ON4MOD";
+    authors[6] = (char*)"Marco DM4RCO";
 }
 
 void ui_drawSplashScreen()
@@ -2021,7 +2008,7 @@ void ui_updateFSM(bool *sync_rtx)
                     // Reset input position and selection
                     ui_state.input_position = 0;
                     memset(&ui_state.new_timedate, 0, sizeof(datetime_t));
-                    vp_announceBuffer(&currentLanguage->timeAndDate,
+                    vp_announceBuffer(&uiStrings.timeAndDate,
                                       true, false, "dd/mm/yy");
                 }
                 else if(msg.keys & KEY_ESC)
@@ -2066,14 +2053,14 @@ void ui_updateFSM(bool *sync_rtx)
 #ifdef CONFIG_SCREEN_BRIGHTNESS
                         case D_BRIGHTNESS:
                             _ui_changeBrightness(-5);
-                            vp_announceSettingsInt(&currentLanguage->brightness, queueFlags,
+                            vp_announceSettingsInt(&uiStrings.brightness, queueFlags,
                                                    state.settings.brightness);
                             break;
 #endif
 #ifdef CONFIG_SCREEN_CONTRAST
                         case D_CONTRAST:
                             _ui_changeContrast(-4);
-                            vp_announceSettingsInt(&currentLanguage->brightness, queueFlags,
+                            vp_announceSettingsInt(&uiStrings.brightness, queueFlags,
                                                    state.settings.contrast);
                             break;
 #endif
@@ -2096,14 +2083,14 @@ void ui_updateFSM(bool *sync_rtx)
 #ifdef CONFIG_SCREEN_BRIGHTNESS
                         case D_BRIGHTNESS:
                             _ui_changeBrightness(+5);
-                            vp_announceSettingsInt(&currentLanguage->brightness, queueFlags,
+                            vp_announceSettingsInt(&uiStrings.brightness, queueFlags,
                                                    state.settings.brightness);
                             break;
 #endif
 #ifdef CONFIG_SCREEN_CONTRAST
                         case D_CONTRAST:
                             _ui_changeContrast(+4);
-                            vp_announceSettingsInt(&currentLanguage->brightness, queueFlags,
+                            vp_announceSettingsInt(&uiStrings.brightness, queueFlags,
                                                    state.settings.contrast);
                             break;
 #endif
@@ -2138,14 +2125,14 @@ void ui_updateFSM(bool *sync_rtx)
                                 state.settings.gps_enabled = 0;
                             else
                                 state.settings.gps_enabled = 1;
-                            vp_announceSettingsOnOffToggle(&currentLanguage->gpsEnabled,
+                            vp_announceSettingsOnOffToggle(&uiStrings.gpsEnabled,
                                                            queueFlags,
                                                            state.settings.gps_enabled);
                             break;
 #ifdef CONFIG_RTC
                         case G_SET_TIME:
                             state.settings.gpsSetTime = !state.settings.gpsSetTime;
-                            vp_announceSettingsOnOffToggle(&currentLanguage->gpsSetTime,
+                            vp_announceSettingsOnOffToggle(&uiStrings.gpsSetTime,
                                                            queueFlags,
                                                            state.settings.gpsSetTime);
                             break;
@@ -2193,7 +2180,7 @@ void ui_updateFSM(bool *sync_rtx)
 #endif
                                 // Apply new offset
                                 state.channel.tx_frequency = state.channel.rx_frequency + ui_state.new_offset;
-                                vp_queueStringTableEntry(&currentLanguage->offset);
+                                vp_queueStringTableEntry(&uiStrings.offset);
                                 vp_queueFrequency(ui_state.new_offset);
                                 ui_state.edit_mode = false;
                             }
@@ -2201,7 +2188,7 @@ void ui_updateFSM(bool *sync_rtx)
                             if(msg.keys & KEY_ESC)
                             {
                                 // Announce old frequency offset
-                                vp_queueStringTableEntry(&currentLanguage->offset);
+                                vp_queueStringTableEntry(&uiStrings.offset);
                                 vp_queueFrequency((int32_t)state.channel.tx_frequency - (int32_t)state.channel.rx_frequency);
                             }
                             else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
@@ -2287,14 +2274,14 @@ void ui_updateFSM(bool *sync_rtx)
                                 // Save selected callsign and disable input mode
                                 strncpy(state.settings.callsign, ui_state.new_callsign, 10);
                                 ui_state.edit_mode = false;
-                                vp_announceBuffer(&currentLanguage->callsign,
+                                vp_announceBuffer(&uiStrings.callsign,
                                                   false, true, state.settings.callsign);
                             }
                             else if(msg.keys & KEY_ESC)
                             {
                                 // Discard selected callsign and disable input mode
                                 ui_state.edit_mode = false;
-                                vp_announceBuffer(&currentLanguage->callsign,
+                                vp_announceBuffer(&uiStrings.callsign,
                                                   false, true, state.settings.callsign);
                             }
                             else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
@@ -2308,7 +2295,7 @@ void ui_updateFSM(bool *sync_rtx)
                             }
                             else if (msg.long_press && (msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
                             {
-                                vp_announceBuffer(&currentLanguage->callsign,
+                                vp_announceBuffer(&uiStrings.callsign,
                                                   true, true, ui_state.new_callsign);
                                 f1Handled=true;
                             }
@@ -2349,7 +2336,7 @@ void ui_updateFSM(bool *sync_rtx)
                         if(ui_state.menu_selected == M17_CALLSIGN)
                         {
                             _ui_textInputReset(ui_state.new_callsign);
-                            vp_announceBuffer(&currentLanguage->callsign,
+                            vp_announceBuffer(&uiStrings.callsign,
                                             true, true, ui_state.new_callsign);
                         }
                     }

@@ -118,6 +118,14 @@ endif
 xpowerslib_proj = subproject('XPowersLib')
 
 ##
+## Localization - use pre-generated locale files
+##
+
+locale = get_option('locale')
+ui_strings_generated = files('openrtx/src/core/locale_generated/ui_strings_' + locale + '.c')
+openrtx_src += ui_strings_generated
+
+##
 ## RTOS
 ##
 subdir('lib/miosix-kernel')

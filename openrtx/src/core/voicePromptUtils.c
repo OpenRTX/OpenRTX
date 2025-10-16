@@ -122,15 +122,15 @@ void vp_announceRadioMode(const uint8_t mode, const vpQueueFlags_t flags)
     switch (mode)
     {
         case OPMODE_DMR:
-            vp_queueStringTableEntry(&currentLanguage->dmr);
+            vp_queueStringTableEntry(&uiStrings.dmr);
             break;
 
         case OPMODE_FM:
-            vp_queueStringTableEntry(&currentLanguage->fm);
+            vp_queueStringTableEntry(&uiStrings.fm);
             break;
 
         case OPMODE_M17:
-            vp_queueStringTableEntry(&currentLanguage->m17);
+            vp_queueStringTableEntry(&uiStrings.m17);
             break;
     }
 
@@ -306,7 +306,7 @@ void vp_replayLastPrompt()
 void vp_announceError(const vpQueueFlags_t flags)
 {
     clearCurrPromptIfNeeded(flags);
-    vp_queueStringTableEntry(&currentLanguage->error);
+    vp_queueStringTableEntry(&uiStrings.error);
     playIfNeeded(flags);
 }
 
@@ -322,7 +322,7 @@ void vp_announceText(const char* text, const vpQueueFlags_t flags)
 
     if (offset != -1)
         vp_queueStringTableEntry(
-            (const char* const*)(&currentLanguage->languageName + offset));
+            (const char* const*)(&uiStrings.languageName + offset));
     else  // Just spell it out
         vp_queueString(text, vpAnnounceCommonSymbols);
 
@@ -340,7 +340,7 @@ void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
         if (flags & vpqIncludeDescriptions)
             vp_queuePrompt(PROMPT_TONE);
 
-        vp_queueStringTableEntry(&currentLanguage->off);
+        vp_queueStringTableEntry(&uiStrings.off);
         playIfNeeded(flags);
         return;
     }
@@ -354,6 +354,7 @@ void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
             vp_queuePrompt(PROMPT_TONE);
 
         uint16_t tone = ctcss_tone[rxTone];
+        // i18n: decimal number
         sniprintf(buffer, sizeof(buffer), "%d.%d", (tone / 10), (tone % 10));
 
         vp_queueString(buffer, vpAnnounceCommonSymbols);
@@ -373,6 +374,7 @@ void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
         }
 
         uint16_t tone = ctcss_tone[rxTone];
+        // i18n: decimal number
         sniprintf(buffer, sizeof(buffer), "%d.%d", (tone / 10), (tone % 10));
 
         vp_queueString(buffer, vpAnnounceCommonSymbols);
@@ -387,6 +389,7 @@ void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
         }
 
         uint16_t tone = ctcss_tone[txTone];
+        // i18n: decimal number
         sniprintf(buffer, sizeof(buffer), "%d.%d", (tone / 10), (tone % 10));
 
         vp_queueString(buffer, vpAnnounceCommonSymbols);
@@ -493,7 +496,7 @@ void vp_announceBank(const uint16_t bank, const vpQueueFlags_t flags)
     }
     else
     {
-        vp_queueStringTableEntry(&currentLanguage->allChannels);
+        vp_queueStringTableEntry(&uiStrings.allChannels);
     }
 
     playIfNeeded(flags);
@@ -520,11 +523,11 @@ void vp_announceM17Info(const channel_t* channel, bool isEditing,
     else if ((channel != NULL) && (channel->m17.contact_index != 0))
     {
         if (!vp_announceContactWithIndex(channel->m17.contact_index, flags))
-                    vp_queueStringTableEntry(&currentLanguage->broadcast);
+                    vp_queueStringTableEntry(&uiStrings.broadcast);
     }
     else
     {
-        vp_queueStringTableEntry(&currentLanguage->broadcast);
+        vp_queueStringTableEntry(&uiStrings.broadcast);
     }
 
     playIfNeeded(flags);
@@ -556,10 +559,10 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
 
     if (gpsInfoFlags & vpGPSIntro)
     {
-        vp_queueStringTableEntry(&currentLanguage->gps);
+        vp_queueStringTableEntry(&uiStrings.gps);
         if (!state.settings.gps_enabled)
         {
-            vp_queueStringTableEntry(&currentLanguage->off);
+            vp_queueStringTableEntry(&uiStrings.off);
             vp_play();
 
             return;
@@ -571,7 +574,7 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
         switch (state.gps_data.fix_quality)
         {
             case 0:
-                vp_queueStringTableEntry(&currentLanguage->noFix);
+                vp_queueStringTableEntry(&uiStrings.noFix);
                 vp_play();
                 return;
             case 1:
@@ -587,11 +590,11 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
                 break;
 
             case 6:
-                vp_queueStringTableEntry(&currentLanguage->fixLost);
+                vp_queueStringTableEntry(&uiStrings.fixLost);
                 break;
 
             default:
-                vp_queueStringTableEntry(&currentLanguage->error);
+                vp_queueStringTableEntry(&uiStrings.error);
 
                 vp_play();
 
@@ -718,13 +721,13 @@ void vp_announceAboutScreen()
 {
     vp_flush();
 
-    vp_queueStringTableEntry(&currentLanguage->openRTX);
+    vp_queueStringTableEntry(&uiStrings.openRTX);
 
-    vp_queueStringTableEntry(&currentLanguage->Niccolo);
-    vp_queueStringTableEntry(&currentLanguage->Silvano);
-    vp_queueStringTableEntry(&currentLanguage->Federico);
-    vp_queueStringTableEntry(&currentLanguage->Fred);
-    vp_queueStringTableEntry(&currentLanguage->Joseph);
+    vp_queueStringTableEntry(&uiStrings.Niccolo);
+    vp_queueStringTableEntry(&uiStrings.Silvano);
+    vp_queueStringTableEntry(&uiStrings.Federico);
+    vp_queueStringTableEntry(&uiStrings.Fred);
+    vp_queueStringTableEntry(&uiStrings.Joseph);
 
     vp_play();
 }
@@ -733,11 +736,11 @@ void vp_announceBackupScreen()
 {
     vp_flush();
 
-    vp_queueStringTableEntry(&currentLanguage->flashBackup);
+    vp_queueStringTableEntry(&uiStrings.flashBackup);
 
-    vp_queueStringTableEntry(&currentLanguage->connectToRTXTool);
-    vp_queueStringTableEntry(&currentLanguage->toBackupFlashAnd);
-    vp_queueStringTableEntry(&currentLanguage->pressPTTToStart);
+    vp_queueStringTableEntry(&uiStrings.connectToRTXTool);
+    vp_queueStringTableEntry(&uiStrings.toBackupFlashAnd);
+    vp_queueStringTableEntry(&uiStrings.pressPTTToStart);
     vp_queuePrompt(PROMPT_VP_UNAVAILABLE);
 
     vp_play();
@@ -747,11 +750,11 @@ void vp_announceRestoreScreen()
 {
     vp_flush();
 
-    vp_queueStringTableEntry(&currentLanguage->flashRestore);
+    vp_queueStringTableEntry(&uiStrings.flashRestore);
 
-    vp_queueStringTableEntry(&currentLanguage->connectToRTXTool);
-    vp_queueStringTableEntry(&currentLanguage->toRestoreFlashAnd);
-    vp_queueStringTableEntry(&currentLanguage->pressPTTToStart);
+    vp_queueStringTableEntry(&uiStrings.connectToRTXTool);
+    vp_queueStringTableEntry(&uiStrings.toRestoreFlashAnd);
+    vp_queueStringTableEntry(&uiStrings.pressPTTToStart);
     vp_queuePrompt(PROMPT_VP_UNAVAILABLE);
 
     vp_play();
@@ -762,7 +765,7 @@ void vp_announceSettingsTimeDate()
 {
     vp_flush();
 
-    vp_queueStringTableEntry(&currentLanguage->timeAndDate);
+    vp_queueStringTableEntry(&uiStrings.timeAndDate);
 
     datetime_t local_time = utcToLocalTime(state.time,
                                            state.settings.utc_timezone);
@@ -791,18 +794,18 @@ void vp_announceSettingsVoiceLevel(const vpQueueFlags_t flags)
     switch (state.settings.vpLevel)
     {
         case vpNone:
-            vp_queueStringTableEntry(&currentLanguage->off);
+            vp_queueStringTableEntry(&uiStrings.off);
             break;
 
         case vpBeep:
-            vp_queueStringTableEntry(&currentLanguage->beep);
+            vp_queueStringTableEntry(&uiStrings.beep);
             break;
 
         default:
             if (flags & vpqIncludeDescriptions)
             {
                 vp_queuePrompt(PROMPT_VOICE_NAME);
-                vp_queueStringTableEntry(&currentLanguage->level);
+                vp_queueStringTableEntry(&uiStrings.level);
             }
 
             vp_queueInteger(state.settings.vpLevel-vpBeep);
@@ -820,7 +823,7 @@ void vp_announceSettingsOnOffToggle(const char* const* stringTableStringPtr,
     if (flags & vpqIncludeDescriptions)
         vp_queueStringTableEntry(stringTableStringPtr);
 
-    vp_queueStringTableEntry(val ? &currentLanguage->on : &currentLanguage->off);
+    vp_queueStringTableEntry(val ? &uiStrings.on : &uiStrings.off);
 
      playIfNeeded(flags);
 }
@@ -881,7 +884,7 @@ void vp_announceScreen(uint8_t ui_screen)
         #endif
 
         case SETTINGS_M17:
-            vp_announceBuffer(&currentLanguage->callsign,
+            vp_announceBuffer(&uiStrings.callsign,
                               false, true, state.settings.callsign);
             break;
     }
@@ -923,7 +926,7 @@ void vp_announceDisplayTimer()
     vp_flush();
 
     if (isPlaying == false)
-        vp_queueStringTableEntry(&currentLanguage->timer);
+        vp_queueStringTableEntry(&uiStrings.timer);
 
     uint8_t seconds = 0;
     uint8_t minutes = 0;
@@ -964,7 +967,7 @@ void vp_announceDisplayTimer()
 
     if ((seconds == 0) && (minutes == 0))
     {
-        vp_queueStringTableEntry(&currentLanguage->off);
+        vp_queueStringTableEntry(&uiStrings.off);
     }
     else if (seconds > 0)
     {
@@ -1046,7 +1049,7 @@ void vp_announceSplashScreen()
         localFlags |= vpqIncludeDescriptions;
     }
 
-    vp_queueStringTableEntry(&currentLanguage->openRTX);
+    vp_queueStringTableEntry(&uiStrings.openRTX);
     vp_queuePrompt(PROMPT_VFO);
     vp_announceFrequencies(state.channel.rx_frequency,
                            state.channel.tx_frequency,
@@ -1061,7 +1064,7 @@ void vp_announceTimeZone(const int8_t timeZone, const vpQueueFlags_t flags)
 
     if (flags & vpqIncludeDescriptions)
     {
-        vp_queueStringTableEntry(&currentLanguage->UTCTimeZone);
+        vp_queueStringTableEntry(&uiStrings.UTCTimeZone);
     }
 
     int wholeHours = timeZone / 2;

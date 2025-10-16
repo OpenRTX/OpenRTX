@@ -388,6 +388,82 @@ void gfx_drawVLine(int16_t x, uint16_t width, color_t color)
 }
 
 /**
+ * Remove accents from UTF-8 characters and return ASCII equivalent.
+ * Returns 0 if character should be skipped.
+ */
+static char remove_accent_utf8(const unsigned char *str, size_t *bytes_consumed)
+{
+    unsigned char c = str[0];
+    *bytes_consumed = 1;
+    
+    // ASCII - return as-is
+    if (c < 0x80)
+        return c;
+    
+    // UTF-8 multibyte sequence
+    uint32_t codepoint = 0;
+    
+    // 2-byte sequence (110xxxxx 10xxxxxx)
+    if ((c & 0xE0) == 0xC0 && (str[1] & 0xC0) == 0x80)
+    {
+        codepoint = ((c & 0x1F) << 6) | (str[1] & 0x3F);
+        *bytes_consumed = 2;
+    }
+    // 3-byte sequence (1110xxxx 10xxxxxx 10xxxxxx)
+    else if ((c & 0xF0) == 0xE0 && (str[1] & 0xC0) == 0x80 && (str[2] & 0xC0) == 0x80)
+    {
+        codepoint = ((c & 0x0F) << 12) | ((str[1] & 0x3F) << 6) | (str[2] & 0x3F);
+        *bytes_consumed = 3;
+    }
+    // 4-byte sequence (11110xxx 10xxxxxx 10xxxxxx 10xxxxxx)
+    else if ((c & 0xF8) == 0xF0 && (str[1] & 0xC0) == 0x80 && 
+             (str[2] & 0xC0) == 0x80 && (str[3] & 0xC0) == 0x80)
+    {
+        codepoint = ((c & 0x07) << 18) | ((str[1] & 0x3F) << 12) | 
+                    ((str[2] & 0x3F) << 6) | (str[3] & 0x3F);
+        *bytes_consumed = 4;
+    }
+    else
+    {
+        // Invalid UTF-8, skip this byte
+        return 0;
+    }
+    
+    // Map common Latin-1 Supplement and Latin Extended-A to ASCII
+    // Latin letters with acute accents
+    if (codepoint >= 0x00C0 && codepoint <= 0x00C5) return 'A'; // À-Å
+    if (codepoint == 0x00C6) return 'A'; // Æ -> A
+    if (codepoint == 0x00C7) return 'C'; // Ç
+    if (codepoint >= 0x00C8 && codepoint <= 0x00CB) return 'E'; // È-Ë
+    if (codepoint >= 0x00CC && codepoint <= 0x00CF) return 'I'; // Ì-Ï
+    if (codepoint == 0x00D0) return 'D'; // Ð
+    if (codepoint == 0x00D1) return 'N'; // Ñ
+    if (codepoint >= 0x00D2 && codepoint <= 0x00D6) return 'O'; // Ò-Ö
+    if (codepoint == 0x00D8) return 'O'; // Ø
+    if (codepoint >= 0x00D9 && codepoint <= 0x00DC) return 'U'; // Ù-Ü
+    if (codepoint == 0x00DD) return 'Y'; // Ý
+    if (codepoint == 0x00DE) return 'T'; // Þ (Thorn)
+    if (codepoint == 0x00DF) return 's'; // ß (German ss)
+    
+    // Lowercase variants
+    if (codepoint >= 0x00E0 && codepoint <= 0x00E5) return 'a'; // à-å
+    if (codepoint == 0x00E6) return 'a'; // æ -> a
+    if (codepoint == 0x00E7) return 'c'; // ç
+    if (codepoint >= 0x00E8 && codepoint <= 0x00EB) return 'e'; // è-ë
+    if (codepoint >= 0x00EC && codepoint <= 0x00EF) return 'i'; // ì-ï
+    if (codepoint == 0x00F0) return 'd'; // ð
+    if (codepoint == 0x00F1) return 'n'; // ñ
+    if (codepoint >= 0x00F2 && codepoint <= 0x00F6) return 'o'; // ò-ö
+    if (codepoint == 0x00F8) return 'o'; // ø
+    if (codepoint >= 0x00F9 && codepoint <= 0x00FC) return 'u'; // ù-ü
+    if (codepoint == 0x00FD || codepoint == 0x00FF) return 'y'; // ý, ÿ
+    if (codepoint == 0x00FE) return 't'; // þ (thorn)
+    
+    // Skip other characters we can't represent
+    return 0;
+}
+
+/**
  * Compute the pixel size of the first text line
  * @param f: font used as the source of glyphs
  * @param text: the input text
@@ -396,9 +472,22 @@ void gfx_drawVLine(int16_t x, uint16_t width, color_t color)
 static inline uint16_t get_line_size(GFXfont f, const char *text, uint16_t length)
 {
     uint16_t line_size = 0;
-    for(unsigned i = 0; i < length && text[i] != '\n' && text[i] != '\r'; i++)
+    for(unsigned i = 0; i < length && text[i] != '\n' && text[i] != '\r'; )
     {
-        GFXglyph glyph = f.glyph[text[i] - f.first];
+        // Decode UTF-8 and remove accents
+        size_t bytes_consumed = 0;
+        char c = remove_accent_utf8((const unsigned char*)&text[i], &bytes_consumed);
+        i += bytes_consumed;
+        
+        // Skip invalid or unmappable characters
+        if (c == 0)
+            continue;
+        
+        // Skip characters outside font range
+        if ((unsigned char)c < f.first || (unsigned char)c > f.last)
+            continue;
+        
+        GFXglyph glyph = f.glyph[c - f.first];
         if (line_size + glyph.xAdvance < CONFIG_SCREEN_WIDTH)
             line_size += glyph.xAdvance;
         else
@@ -452,9 +541,28 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
     uint16_t line_h = 0;
 
     /* For each char in the string */
-    for(unsigned i = 0; i < len; i++)
+    for(unsigned i = 0; i < len; )
     {
-        char c = buf[i];
+        // Try to decode UTF-8 and remove accents
+        size_t bytes_consumed = 0;
+        char c = remove_accent_utf8((const unsigned char*)&buf[i], &bytes_consumed);
+        
+        // Skip invalid or unmappable characters
+        if (c == 0)
+        {
+            i += bytes_consumed;
+            continue;
+        }
+        
+        // Advance to next character
+        i += bytes_consumed;
+        
+        // Check if character is in font range
+        if ((unsigned char)c < f.first || (unsigned char)c > f.last)
+        {
+            continue;
+        }
+        
         GFXglyph glyph = f.glyph[c - f.first];
         uint8_t *bitmap = f.bitmap;
 

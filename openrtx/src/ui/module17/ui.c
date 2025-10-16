@@ -47,81 +47,16 @@ extern void _ui_drawSettingsModule17(ui_state_t* ui_state);
 extern void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state);
 extern bool _ui_drawMacroMenu(ui_state_t* ui_state);
 
-const char *menu_items[] =
-{
-    "Settings",
+char *menu_items[5];
+char *settings_items[6];
+char *display_items[1];
+char *m17_items[3];
+char *module17_items[7];
 #ifdef CONFIG_GPS
-    "GPS",
+char *settings_gps_items[3];
 #endif
-    "Info",
-    "About",
-    "Shutdown"
-};
-
-const char *settings_items[] =
-{
-    "Display",
-#ifdef CONFIG_RTC
-    "Time & Date",
-#endif
-#ifdef CONFIG_GPS
-    "GPS",
-#endif
-    "M17",
-    "Module 17",
-    "Default Settings"
-};
-
-const char *display_items[] =
-{
-    "Brightness",
-};
-
-const char *m17_items[] =
-{
-    "Callsign",
-    "CAN",
-    "CAN RX Check"
-};
-
-const char *module17_items[] =
-{
-    "Mic Gain",
-    "PTT In",
-    "PTT Out",
-    "TX Phase",
-    "RX Phase",
-    "TX Softpot",
-    "RX Softpot"
-};
-
-#ifdef CONFIG_GPS
-const char *settings_gps_items[] =
-{
-    "GPS Enabled",
-    "GPS Set Time",
-    "UTC Timezone"
-};
-#endif
-
-const char *info_items[] =
-{
-    "",
-    "Used heap",
-    "Hw Version",
-    "HMI",
-    "BB Tuning Pot",
-};
-
-const char *authors[] =
-{
-    "Niccolo' IU2KIN",
-    "Silvano IU2KWO",
-    "Federico IU2NUO",
-    "Mathis DB9MAT",
-    "Morgan ON4MOD",
-    "Marco DM4RCO"
-};
+char *info_items[5];
+char *authors[6];
 
 static const char symbols_callsign[] = "_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890/-.";
 
@@ -263,6 +198,61 @@ void ui_init()
     // This syntax is called compound literal
     // https://stackoverflow.com/questions/6891720/initialize-reset-struct-to-zero-null
     ui_state = (const struct ui_state_t){ 0 };
+    
+    // Initialize menu arrays with localized strings
+    int idx = 0;
+    menu_items[idx++] = (char*)uiStrings.settings;
+#ifdef CONFIG_GPS
+    menu_items[idx++] = (char*)uiStrings.gps;
+#endif
+    menu_items[idx++] = (char*)uiStrings.info;
+    menu_items[idx++] = (char*)uiStrings.about;
+    menu_items[idx++] = (char*)"Shutdown";
+    
+    idx = 0;
+    settings_items[idx++] = (char*)uiStrings.display;
+#ifdef CONFIG_RTC
+    settings_items[idx++] = (char*)uiStrings.timeAndDate;
+#endif
+#ifdef CONFIG_GPS
+    settings_items[idx++] = (char*)uiStrings.gps;
+#endif
+    settings_items[idx++] = (char*)uiStrings.m17;
+    settings_items[idx++] = (char*)"Module 17";
+    settings_items[idx++] = (char*)uiStrings.defaultSettings;
+    
+    display_items[0] = (char*)uiStrings.brightness;
+    
+    m17_items[0] = (char*)uiStrings.callsign;
+    m17_items[1] = (char*)uiStrings.CAN;
+    m17_items[2] = (char*)uiStrings.canRxCheck;
+    
+    module17_items[0] = (char*)"Mic Gain";
+    module17_items[1] = (char*)"PTT In";
+    module17_items[2] = (char*)"PTT Out";
+    module17_items[3] = (char*)"TX Phase";
+    module17_items[4] = (char*)"RX Phase";
+    module17_items[5] = (char*)"TX Softpot";
+    module17_items[6] = (char*)"RX Softpot";
+    
+#ifdef CONFIG_GPS
+    settings_gps_items[0] = (char*)uiStrings.gpsEnabled;
+    settings_gps_items[1] = (char*)uiStrings.gpsSetTime;
+    settings_gps_items[2] = (char*)uiStrings.UTCTimeZone;
+#endif
+    
+    info_items[0] = (char*)"";
+    info_items[1] = (char*)uiStrings.usedHeap;
+    info_items[2] = (char*)"Hw Version";
+    info_items[3] = (char*)"HMI";
+    info_items[4] = (char*)"BB Tuning Pot";
+    
+    authors[0] = (char*)uiStrings.Niccolo;
+    authors[1] = (char*)uiStrings.Silvano;
+    authors[2] = (char*)uiStrings.Federico;
+    authors[3] = (char*)"Mathis DB9MAT";
+    authors[4] = (char*)"Morgan ON4MOD";
+    authors[5] = (char*)"Marco DM4RCO";
 }
 
 void ui_drawSplashScreen()
