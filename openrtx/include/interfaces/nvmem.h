@@ -75,8 +75,8 @@ struct nvmOps {
      * @param len: number of bytes to write.
      * @return 0 on success, negative errno code on fail.
      */
-    int (*write)(const struct nvmDevice *dev, uint32_t address, const void *data,
-                 size_t len);
+    int (*write)(const struct nvmDevice *dev, uint32_t address,
+                 const void *data, size_t len);
 
     /**
      * Erase part or all of the nonvolatile memory.
