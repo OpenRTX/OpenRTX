@@ -1,3 +1,10 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * Copyright (C) 2020-2025 OpenRTX Contributors
+ *
+ * This file is part of OpenRTX.
+ */
+
 #include "stm32f4xx.h"
 #include <stdint.h>
 #include "rcc.h"

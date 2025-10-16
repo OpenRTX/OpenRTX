@@ -1,3 +1,10 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * Copyright (C) 2020-2025 OpenRTX Contributors
+ *
+ * This file is part of OpenRTX.
+ */
+
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/i2c.h>
 #include "interfaces/delays.h"

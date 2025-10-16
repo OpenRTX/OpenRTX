@@ -1,3 +1,10 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * Copyright (C) 2020-2025 OpenRTX Contributors
+ *
+ * This file is part of OpenRTX.
+ */
+
 #include <errno.h>
 #include "MK22F51212.h"
 #include "drivers/GPIO/gpio_mk22.h"

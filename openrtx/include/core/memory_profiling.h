@@ -1,3 +1,10 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * Copyright (C) 2020-2025 OpenRTX Contributors
+ *
+ * This file is part of OpenRTX.
+ */
+
 #ifndef MEMORY_PROFILING_H
 #define MEMORY_PROFILING_H
 

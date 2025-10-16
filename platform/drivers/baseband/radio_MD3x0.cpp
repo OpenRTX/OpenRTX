@@ -1,3 +1,10 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * Copyright (C) 2020-2025 OpenRTX Contributors
+ *
+ * This file is part of OpenRTX.
+ */
+
 #include "drivers/tones/toneGenerator_MDx.h"
 #include "interfaces/nvmem.h"
 #include "interfaces/radio.h"

@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2020-2025 OpenRTX Contributors
+#
+# This file is part of OpenRTX.
+
 # This file is used for skywalking-eyes; execute it like so: `docker run -it --rm -v $(pwd):/github/workspace ghcr.io/apache/skywalking-eyes/license-eye header fix -c .licenserc.yaml`
 header:
   license:

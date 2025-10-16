@@ -1,3 +1,10 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * Copyright (C) 2020-2025 OpenRTX Contributors
+ *
+ * This file is part of OpenRTX.
+ */
+
 #include "interfaces/delays.h"
 #include "drivers/baseband/AT1846S.h"
 #include "drivers/baseband/SA8x8.h"

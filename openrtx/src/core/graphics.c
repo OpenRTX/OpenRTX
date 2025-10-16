@@ -1,3 +1,10 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * Copyright (C) 2020-2025 OpenRTX Contributors
+ *
+ * This file is part of OpenRTX.
+ */
+
 /**
  * This source file provides an  implementation for the graphics.h interface
  * It is suitable for both color, grayscale and B/W display

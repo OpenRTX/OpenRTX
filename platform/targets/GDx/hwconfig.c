@@ -1,3 +1,10 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * Copyright (C) 2020-2025 OpenRTX Contributors
+ *
+ * This file is part of OpenRTX.
+ */
+
 #include "drivers/SPI/spi_bitbang.h"
 #include "drivers/SPI/spi_custom.h"
 #include "drivers/SPI/spi_mk22.h"

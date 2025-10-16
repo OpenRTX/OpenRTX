@@ -1,3 +1,10 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * Copyright (C) 2020-2025 OpenRTX Contributors
+ *
+ * This file is part of OpenRTX.
+ */
+
 #include "protocols/M17/M17Demodulator.hpp"
 #include "protocols/M17/M17DSP.hpp"
 #include "protocols/M17/M17Utils.hpp"

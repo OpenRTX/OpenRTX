@@ -1,3 +1,10 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * Copyright (C) 2020-2025 OpenRTX Contributors
+ *
+ * This file is part of OpenRTX.
+ */
+
 #ifndef BEEPS_H_INCLUDED
 #define BEEPS_H_INCLUDED
 // Duration in tenths of a second.

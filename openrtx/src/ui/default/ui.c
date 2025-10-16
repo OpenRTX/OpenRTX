@@ -1,4 +1,11 @@
 /*
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * Copyright (C) 2020-2025 OpenRTX Contributors
+ *
+ * This file is part of OpenRTX.
+ */
+
+/*
  * The graphical user interface (GUI) works by splitting the screen in
  * horizontal rows, with row height depending on vertical resolution.
  *
