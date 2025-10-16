@@ -126,19 +126,15 @@ void W25Qx_sleep(const struct nvmDevice *dev)
     spi_release(cfg->spi);
 }
 
-static int nvm_api_readSecReg(const struct nvmDevice *dev, uint32_t offset, void *data, size_t len)
+static int nvm_api_readSecReg(const struct nvmDevice *dev, uint32_t address, void *data, size_t len)
 {
-    const struct W25QxSecRegDevice *pDev = (const struct W25QxSecRegDevice *) dev;
     const struct W25QxCfg *cfg = (const struct W25QxCfg *) dev->priv;
+    const size_t offset = (address + len) & 0x0FFF;
 
-    // Keep 256-byte boundary to avoid wrap-around when reading
-    size_t readLen = len;
-    if((offset + len) > 0xFF)
-    {
-        readLen = 0xFF - (offset & 0xFF);
-    }
+    // Avoid wrap-around when reading
+    if(offset > 0xFF)
+        return -EINVAL;
 
-    uint32_t address = pDev->baseAddr + offset;
     const uint8_t command[] =
     {
         CMD_RSECR,              // Command
@@ -152,7 +148,7 @@ static int nvm_api_readSecReg(const struct nvmDevice *dev, uint32_t offset, void
     gpioPin_clear(&cfg->cs);
 
     spi_send(cfg->spi, command, sizeof(command));
-    spi_receive(cfg->spi, data, readLen);
+    spi_receive(cfg->spi, data, len);
 
     gpioPin_set(&cfg->cs);
     spi_release(cfg->spi);
