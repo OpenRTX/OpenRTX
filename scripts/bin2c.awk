@@ -30,9 +30,11 @@ BEGIN {
     bytes_x_line = 12
     outfile = infile
     gsub(getext(infile), ".h", outfile)
+    arr_name = basename(infile)
+    gsub("-", "_", arr_name)
 
     # Print header
-    printf("unsigned char %s[] = {\n", basename(infile)) > outfile
+    printf("unsigned char %s[] = {\n", arr_name) > outfile
     for(i=0; i<len; i+=bytes_x_line) {
         printf("   ") > outfile
         # printf("0x%08x ", i)
@@ -47,7 +49,10 @@ BEGIN {
         print "" > outfile
     }
     printf("};\n\n") > outfile
-    printf("unsigned int %s_len = %d;\n", basename(infile), len) > outfile
+    printf("unsigned int %s_len = %d;\n", arr_name, len) > outfile
+    # Find offset of character to patch (UHF -> VHF)
+    patch_offset = index($0, "SA868S-UHF") + 6
+    printf("unsigned int %s_patch_offset = %d;\n", arr_name, patch_offset) > outfile
 }
 # Extract basename of file
 function basename(filename,     a) {

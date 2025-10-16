@@ -144,6 +144,24 @@ void platform_init()
     // Initialize PMU
     pmu_init();
 
+    // Detect radio model and set hwInfo accordingly
+    enum ttwr21_band band = detect_band();
+    switch(band) {
+        case VHF:
+            hwInfo.vhf_band = 1;
+            hwInfo.vhf_minFreq = 134;
+            hwInfo.vhf_maxFreq = 174;
+            break;
+        case UHF:
+            hwInfo.uhf_band = 1;
+            hwInfo.uhf_minFreq = 400;
+            hwInfo.uhf_maxFreq = 480;
+            break;
+        case MHZ350:
+            printk("Error: 350MHz band not supported!\n");
+            break;
+    }
+
     if (gpio_pin_get_dt(&button_mode)) {
         led_color.r = 0x50;
         led_color.g = 0x50;
@@ -152,8 +170,12 @@ void platform_init()
 
         pmu_setBasebandProgramPower(true);
 
+        // If band is VHF we need to patch the firmware
+        if (band == VHF)
+            sa8x8_fw_sa868s_uhf[sa8x8_fw_sa868s_uhf_patch_offset] = 'V';
+
         // Flash a supported baseband firmware
-        if (rl78_flash(sa8x8_fw, sa8x8_fw_len)) {
+        if (rl78_flash(sa8x8_fw_sa868s_uhf, sa8x8_fw_sa868s_uhf_len)) {
             led_color.r = 0x50;
             led_color.g = 0x00;
             led_color.b = 0x00;
@@ -175,24 +197,6 @@ void platform_init()
         led_strip_update_rgb(led_dev, &led_color, 1);
 
         pmu_setBasebandProgramPower(false);
-    }
-
-    // Detect radio model and set hwInfo accordingly
-    enum ttwr21_band band = detect_band();
-    switch(band) {
-        case VHF:
-            hwInfo.vhf_band = 1;
-            hwInfo.vhf_minFreq = 134;
-            hwInfo.vhf_maxFreq = 174;
-            break;
-        case UHF:
-            hwInfo.uhf_band = 1;
-            hwInfo.uhf_minFreq = 400;
-            hwInfo.uhf_maxFreq = 480;
-            break;
-        case MHZ350:
-            printk("Error: 350MHz band not supported!\n");
-            break;
     }
 
     // Enable power to baseband
