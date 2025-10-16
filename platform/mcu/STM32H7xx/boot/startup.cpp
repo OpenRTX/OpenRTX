@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+ * 
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 
 #include "interfaces/arch_registers.h"
 #include "core/interrupts.h" //For the unexpected interrupt call

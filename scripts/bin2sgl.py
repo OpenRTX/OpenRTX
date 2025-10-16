@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 # Single-file bin2sgl converter (Python)
+#
+# This work is a derivation from the OpenGD77 project, the file specifically having these terms:
+# SPDX-FileCopyrightText: Copyright (C)2019 Kai Ludwig, DG4KLU
+# SPDX-License-Identifier: BSD-3-Clause
 from __future__ import annotations
 import argparse
 from pathlib import Path

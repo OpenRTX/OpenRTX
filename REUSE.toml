@@ -1,0 +1,138 @@
+# SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+version = 1
+
+# Miosix sources are GPL v2.0
+[[annotations]]
+path = [
+    "lib/miosix-kernel/**/*",
+]
+SPDX-License-Identifier = "GPL-2.0-or-later"
+SPDX-FileCopyrightText = "Terraneo Federico"
+precedence = "override"
+
+[[annotations]]
+path = "openrtx/include/fonts/adafruit/**/*"
+SPDX-License-Identifier = "Ubuntu-font-1.0"
+SPDX-FileCopyrightText = "2012 Adafruit Industries"
+precedence = "override"
+
+# This section is for OpenRTX sources that cannot have comments in them, like `json` files
+[[annotations]]
+path = [
+    "requirements.txt",
+    "meta/**/*",
+    ".vscode/**/*",
+    "voiceprompts.vpc",
+    "osx.txt",
+    "tests/unit/assets/**/*",
+    "README.md",
+    "CONTRIBUTING.md",
+    "99-openrtx.rules",
+    ".github/**/*",
+    ".devcontainer/**/*",
+    "cross_*.txt",
+    "meson*",
+    "subprojects/tinyusb.wrap",
+    "subprojects/radio_tool.wrap",
+    "subprojects/codec2.wrap",
+    "subprojects/XPowersLib.wrap",
+    "scripts/uf2families.json",
+    "scripts/generate_symbols.py",
+]
+SPDX-License-Identifier = "GPL-3.0-or-later"
+SPDX-FileCopyrightText = "OpenRTX Contributors"
+
+# This section is for font glyph sources that were taken from Pictogrammers
+[[annotations]]
+path = [
+    "openrtx/include/fonts/symbols/sources/access-point.svg",
+    "openrtx/include/fonts/symbols/sources/access-point.svg",
+    "openrtx/include/fonts/symbols/sources/alpha-m-box-outline.svg",
+    "openrtx/include/fonts/symbols/sources/call-made.svg",
+    "openrtx/include/fonts/symbols/sources/call-received.svg",
+    "openrtx/include/fonts/symbols/sources/cog.svg",
+    "openrtx/include/fonts/symbols/sources/crosshairs-gps.svg",
+    "openrtx/include/fonts/symbols/sources/crosshairs.svg",
+    "openrtx/include/fonts/symbols/sources/lock.svg",
+    "openrtx/include/fonts/symbols/sources/network.svg",
+    "openrtx/include/fonts/symbols/sources/transmission-tower.svg",
+    "openrtx/include/fonts/symbols/sources/wifi-strength-1.svg",
+    "openrtx/include/fonts/symbols/sources/wifi-strength-2.svg",
+    "openrtx/include/fonts/symbols/sources/wifi-strength-3.svg",
+    "openrtx/include/fonts/symbols/sources/wifi-strength-4.svg"
+]
+SPDX-License-Identifier = "Apache-2.0"
+SPDX-FileCopyrightText = "Pictogrammers"
+
+# This section is for font glyph sources that were taken from Pictogrammers
+[[annotations]]
+path = "lib/qdec/**/*"
+SPDX-License-Identifier = "MIT"
+SPDX-FileCopyrightText = "2019 SimpleHacks (\"Simple hacks for a simple life\")"
+
+[[annotations]]
+path = [
+    "platform/mcu/CMSIS/Include/**/*",
+    "platform/mcu/CMSIS/Device/ST/STM32H7xx/Include/*"
+]
+precedence = "aggregate"
+SPDX-License-Identifier = "Apache-2.0" # It's unclear if this older version is actually apache, but the latest is
+
+[[annotations]]
+path = [
+    "platform/mcu/STM32F4xx/drivers/usb/**/*",
+    "platform/mcu/CMSIS/Device/ST/STM32F4xx/Source/system_stm32f4xx.c"
+]
+SPDX-License-Identifier = "LicenseRef-MCD-ST-Liberty-SW-V2"
+SPDX-FileCopyrightText = "2012 STMicroelectronics"
+
+[[annotations]]
+path = [
+    "platform/mcu/MK22FN512xxx12/drivers/usb/**/*",
+    "platform/mcu/MK22FN512xxx12/drivers/usb_vcom.c"
+]
+precedence = "aggregate"
+SPDX-License-Identifier = "BSD-3-Clause"
+SPDX-FileCopyrightText = "Freescale Semiconductor, Inc.; NXP"
+
+[[annotations]]
+path = [
+    "platform/mcu/CMSIS/Device/ST/STM32F4xx/Include/**/*",
+    "platform/mcu/CMSIS/Device/ST/STM32H7xx/Source/system_stm32h7xx.c"
+]
+precedence = "aggregate"
+SPDX-License-Identifier = "BSD-3-Clause"
+SPDX-FileCopyrightText = "2017 STMicroelectronics"
+
+[[annotations]]
+path = "lib/minmea/**/*"
+precedence = "aggregate"
+SPDX-License-Identifier = "WTFPL"
+SPDX-FileCopyrightText = "Kosma Moczek <kosma@cloudyourcar.com>"
+
+[[annotations]]
+path = [
+    "scripts/nightly_build.sh"
+]
+precedence = "aggregate"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+SPDX-FileCopyrightText = "Philipp Neumann DF5PMF"
+
+[[annotations]]
+path = "scripts/openocd/**/*"
+SPDX-License-Identifier = "GPL-2.0-or-later"
+SPDX-FileCopyrightText = "OpenOCD"
+
+[[annotations]]
+path = "scripts/dfu-convert.py"
+SPDX-License-Identifier = "LGPL-3.0-only"
+SPDX-FileCopyrightText = "Antonio Galea - 2010/11/18"
+
+[[annotations]]
+path = [
+    "scripts/gd-77_firmware_loader.py"
+]
+SPDX-License-Identifier = "GPL-2.0-or-later"
+SPDX-FileCopyrightText = "Roger VK3KYY"

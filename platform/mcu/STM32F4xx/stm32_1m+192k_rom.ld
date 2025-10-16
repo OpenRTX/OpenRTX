@@ -1,7 +1,7 @@
 /*
- * C++ enabled linker script for stm32 (1M FLASH, 192K RAM)
- * Developed by TFT: Terraneo Federico Technologies
- * Optimized for use with the Miosix kernel
+ * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 /*

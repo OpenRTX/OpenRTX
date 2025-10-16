@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 /*******************************************************************************
  *                                                                             *
  *  Convert a baseband from m17-cpp-mod to Module17/MD3x0 ADC input equivalent *

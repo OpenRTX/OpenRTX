@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+#
+# This file is part of OpenRTX.
+
 # SPDX-License-Identifier: Apache-2.0
 
 if(NOT "${OPENOCD}" MATCHES "^${ESPRESSIF_TOOLCHAIN_PATH}/.*")
