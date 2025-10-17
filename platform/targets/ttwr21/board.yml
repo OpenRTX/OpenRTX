@@ -1,0 +1,6 @@
+board:
+  name: ttwr21
+  full_name: T-TWR REV2.1
+  vendor: lilygo
+  socs:
+  - name: esp32s3

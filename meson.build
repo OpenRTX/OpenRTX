@@ -937,7 +937,7 @@ foreach t : targets
                           output  : name+'_bin',
                           command : [west,
                                     'build',
-                                    '-b', t['name'],
+                                    '-b', t['name']+'/esp32s3/procpu',
                                     '-d', '.', '..'])
 
       uf2 = custom_target(name+'_uf2',

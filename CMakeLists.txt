@@ -19,7 +19,7 @@ cmake_minimum_required(VERSION 3.20.0)
 # NOTE: the board-specific CMakeLists.txt files have to use the ${OPENRTX_ROOT}
 # variable as the base path. E.g. ${OPENRTX_ROOT}/platform/drivers/somedriver.c
 #
-if ((${BOARD} STREQUAL "ttwrplus") OR (${BOARD} STREQUAL "ttwr21"))
+if ((${BOARD} MATCHES "ttwrplus.*") OR (${BOARD} MATCHES "ttwr21.*"))
     set(ARCH xtensa)
     set(CONF_FILE ${CMAKE_CURRENT_LIST_DIR}/platform/mcu/ESP32S3/zephyr.conf)
 endif()
@@ -27,9 +27,12 @@ endif()
 #
 # Create the board_root folder and the proper folder tree for the targets
 #
+# Extract board prefix
+string(REPLACE "/" ";" board_name_list ${BOARD})
+list(GET board_name_list 0 board_basename)
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory
-                ${CMAKE_CURRENT_LIST_DIR}/platform/targets/${BOARD}
-                ${CMAKE_CURRENT_LIST_DIR}/build/board_root/boards/${ARCH}/${BOARD})
+                ${CMAKE_CURRENT_LIST_DIR}/platform/targets/${board_basename}
+                ${CMAKE_CURRENT_LIST_DIR}/build/board_root/boards/${ARCH}/${board_basename})
 
 #
 # Set the BOARD_ROOT and OPENRTX_ROOT variables

@@ -1,5 +1,5 @@
-identifier: ttwr21
-name: LILYGO T-TWR REV2.1
+identifier: ttwr21/esp32s3/procpu
+name: T-TWR REV2.1 PROCPU
 type: mcu
 arch: xtensa
 toolchain:
@@ -8,13 +8,14 @@ supported:
   - gpio
   - uart
   - i2c
+  - i2s
   - spi
+  - can
   - counter
   - watchdog
   - entropy
   - pwm
   - dma
-testing:
-  ignore_tags:
-    - net
-    - bluetooth
+  - input
+  - video
+vendor: lilygo
