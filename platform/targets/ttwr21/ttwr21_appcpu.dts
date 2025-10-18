@@ -6,7 +6,7 @@
 /dts-v1/;
 
 #include <espressif/esp32s3/esp32s3_wroom_n16r8.dtsi>
-#include <espressif/partitions_0x0_amp.dtsi>
+#include "partitions_0x1000_tinyuf2_16M.dtsi"
 
 / {
 	model = "T-TWR REV 2.1 APPCPU";
