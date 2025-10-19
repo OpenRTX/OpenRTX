@@ -1,0 +1,6 @@
+../../openrtx/src/core/crypto_utils.c:207: * @brief M17 encryption key generation
+../../openrtx/include/core/crypto_utils.h:120: * @brief M17 encryption key generation
+../../openrtx/include/core/crypto_utils.h:177: * @brief Secure key storage
+../../openrtx/include/core/crypto_utils.h:182:int secure_key_store(const secure_key_t *key, uint32_t storage_id);
+../../openrtx/include/core/crypto_utils.h:190:int secure_key_retrieve(secure_key_t *key, uint32_t storage_id);
+../../openrtx/include/core/crypto_utils.h:197:int secure_key_delete(uint32_t storage_id);

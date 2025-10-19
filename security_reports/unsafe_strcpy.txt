@@ -1,0 +1,2 @@
+../../openrtx/include/core/string_utils.h:22:static inline int safe_strcpy(char *dest, const char *src, size_t dest_size)
+../../openrtx/include/core/string_utils.h:39:#define SAFE_STRCPY(dest, src) safe_strcpy(dest, src, sizeof(dest))

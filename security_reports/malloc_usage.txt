@@ -1,0 +1,35 @@
+../../openrtx/src/core/audio_codec.c-402-    struct sched_param param;
+../../openrtx/src/core/audio_codec.c-403-    param.sched_priority = THREAD_PRIO_HIGH;
+../../openrtx/src/core/audio_codec.c-404-    pthread_attr_setschedparam(&codecAttr, &param);
+../../openrtx/src/core/audio_codec.c-405-    #elif defined(__ZEPHYR__)
+../../openrtx/src/core/audio_codec.c-406-    // Allocate and set the stack for CODEC2 thread
+../../openrtx/src/core/audio_codec.c:407:    void *codec_thread_stack = malloc(CODEC2_THREAD_STKSIZE * sizeof(uint8_t));
+../../openrtx/src/core/audio_codec.c-408-    pthread_attr_setstack(&codecAttr, codec_thread_stack, CODEC2_THREAD_STKSIZE);
+../../openrtx/src/core/audio_codec.c-409-    #endif
+../../openrtx/src/core/audio_codec.c-410-
+../../openrtx/src/core/audio_codec.c-411-    // Start thread
+../../openrtx/src/core/audio_codec.c-412-    int ret = pthread_create(&codecThread, &codecAttr, func, &audioPath);
+--
+../../openrtx/src/core/threads.c-204-    pthread_attr_init(&rtx_attr);
+../../openrtx/src/core/threads.c-205-
+../../openrtx/src/core/threads.c-206-    #ifndef __ZEPHYR__
+../../openrtx/src/core/threads.c-207-    pthread_attr_setstacksize(&rtx_attr, RTX_THREAD_STKSIZE);
+../../openrtx/src/core/threads.c-208-    #else
+../../openrtx/src/core/threads.c:209:    void *rtx_thread_stack = malloc(RTX_THREAD_STKSIZE * sizeof(uint8_t));
+../../openrtx/src/core/threads.c-210-    pthread_attr_setstack(&rtx_attr, rtx_thread_stack, RTX_THREAD_STKSIZE);
+../../openrtx/src/core/threads.c-211-    #endif
+../../openrtx/src/core/threads.c-212-
+../../openrtx/src/core/threads.c-213-    #ifdef _MIOSIX
+../../openrtx/src/core/threads.c-214-    // Max priority for RTX thread when running with miosix rtos
+--
+../../openrtx/src/core/threads.c-225-    pthread_attr_init(&ui_attr);
+../../openrtx/src/core/threads.c-226-
+../../openrtx/src/core/threads.c-227-    #ifndef __ZEPHYR__
+../../openrtx/src/core/threads.c-228-    pthread_attr_setstacksize(&ui_attr, UI_THREAD_STKSIZE);
+../../openrtx/src/core/threads.c-229-    #else
+../../openrtx/src/core/threads.c:230:    void *ui_thread_stack = malloc(UI_THREAD_STKSIZE * sizeof(uint8_t));
+../../openrtx/src/core/threads.c-231-    pthread_attr_setstack(&ui_attr, ui_thread_stack, UI_THREAD_STKSIZE);
+../../openrtx/src/core/threads.c-232-    #endif
+../../openrtx/src/core/threads.c-233-
+../../openrtx/src/core/threads.c-234-    pthread_t ui_thread;
+../../openrtx/src/core/threads.c-235-    pthread_create(&ui_thread, &ui_attr, ui_threadFunc, NULL);

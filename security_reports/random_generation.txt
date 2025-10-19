@@ -1,0 +1,23 @@
+../../openrtx/src/core/openrtx.c:70:    // hide random pixels during render process
+../../openrtx/src/core/crypto_utils.c:79: * @brief Secure random number generation
+../../openrtx/src/core/crypto_utils.c:81:int secure_random(uint8_t *buffer, size_t size)
+../../openrtx/src/core/crypto_utils.c:87:    // Use platform-specific secure random number generator
+../../openrtx/src/core/crypto_utils.c:96: * @brief Secure random number generation for single byte
+../../openrtx/src/core/crypto_utils.c:98:uint8_t secure_random_byte(void)
+../../openrtx/src/core/crypto_utils.c:104: * @brief Secure random number generation for 32-bit value
+../../openrtx/src/core/crypto_utils.c:106:uint32_t secure_random_uint32(void)
+../../openrtx/src/core/crypto_utils.c:111:    if (secure_random(bytes, 4) == 0) {
+../../openrtx/src/core/crypto_utils.c:217:    if (secure_random(key_data, 16) != 0) {
+../../openrtx/include/core/crypto_utils.h:62: * @brief Secure random number generation
+../../openrtx/include/core/crypto_utils.h:63: * @param buffer Buffer to fill with random data
+../../openrtx/include/core/crypto_utils.h:67:int secure_random(uint8_t *buffer, size_t size);
+../../openrtx/include/core/crypto_utils.h:70: * @brief Secure random number generation for single byte
+../../openrtx/include/core/crypto_utils.h:73:uint8_t secure_random_byte(void);
+../../openrtx/include/core/crypto_utils.h:76: * @brief Secure random number generation for 32-bit value
+../../openrtx/include/core/crypto_utils.h:79:uint32_t secure_random_uint32(void);
+../../openrtx/include/core/crypto_utils.h:232:    secure_random(buf, size)
+../../openrtx/include/peripherals/rng.h:37:void rng_init();
+../../openrtx/include/peripherals/rng.h:42:void rng_terminate();
+../../openrtx/include/peripherals/rng.h:45: * Generate a 32 bit random number.
+../../openrtx/include/peripherals/rng.h:47: * @return random number.
+../../openrtx/include/peripherals/rng.h:49:uint32_t rng_get();

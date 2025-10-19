@@ -1,0 +1,252 @@
+../../openrtx/src/core/thread_utils.c:2: * @file thread_utils.c
+../../openrtx/src/core/thread_utils.c:6:#include "core/thread_utils.h"
+../../openrtx/src/core/thread_utils.c:10:safe_mutex_t global_mutex = {0};
+../../openrtx/src/core/thread_utils.c:13: * @brief Initialize thread safety system
+../../openrtx/src/core/thread_utils.c:15:int thread_safety_init(void)
+../../openrtx/src/core/thread_utils.c:20:    result = safe_mutex_init(&global_mutex);
+../../openrtx/src/core/thread_utils.c:29: * @brief Cleanup thread safety system
+../../openrtx/src/core/thread_utils.c:31:int thread_safety_cleanup(void)
+../../openrtx/src/core/thread_utils.c:36:    result = safe_mutex_destroy(&global_mutex);
+../../openrtx/src/core/openrtx.c:29:#include "core/threads.h"
+../../openrtx/src/core/openrtx.c:36:extern void *main_thread(void *arg);
+../../openrtx/src/core/openrtx.c:83:    // Start the OpenRTX threads
+../../openrtx/src/core/openrtx.c:84:    create_threads();
+../../openrtx/src/core/openrtx.c:86:    // Jump to the device management thread
+../../openrtx/src/core/openrtx.c:87:    main_thread(NULL);
+../../openrtx/src/core/openrtx.c:89:    // Device thread terminated, complete shutdown sequence
+../../openrtx/src/core/chan.c:24:    pthread_mutex_init(&c->m_meta, NULL);
+../../openrtx/src/core/chan.c:25:    pthread_mutex_init(&c->m_read, NULL);
+../../openrtx/src/core/chan.c:26:    pthread_mutex_init(&c->m_write, NULL);
+../../openrtx/src/core/chan.c:28:    pthread_cond_init(&c->c_reader, NULL);
+../../openrtx/src/core/chan.c:29:    pthread_cond_init(&c->c_writer, NULL);
+../../openrtx/src/core/chan.c:38:    pthread_mutex_lock(&c->m_write);
+../../openrtx/src/core/chan.c:39:    pthread_mutex_lock(&c->m_meta);
+../../openrtx/src/core/chan.c:43:        pthread_mutex_unlock(&c->m_meta);
+../../openrtx/src/core/chan.c:44:        pthread_mutex_unlock(&c->m_write);
+../../openrtx/src/core/chan.c:55:        pthread_cond_signal(&c->c_writer);
+../../openrtx/src/core/chan.c:59:    pthread_cond_wait(&c->c_reader, &c->m_meta);
+../../openrtx/src/core/chan.c:62:    pthread_mutex_unlock(&c->m_meta);
+../../openrtx/src/core/chan.c:63:    pthread_mutex_unlock(&c->m_write);
+../../openrtx/src/core/chan.c:68:    pthread_mutex_lock(&c->m_read);
+../../openrtx/src/core/chan.c:69:    pthread_mutex_lock(&c->m_meta);
+../../openrtx/src/core/chan.c:75:        pthread_cond_wait(&c->c_writer, &c->m_meta);
+../../openrtx/src/core/chan.c:81:        pthread_mutex_unlock(&c->m_meta);
+../../openrtx/src/core/chan.c:82:        pthread_mutex_unlock(&c->m_read);
+../../openrtx/src/core/chan.c:93:    pthread_cond_signal(&c->c_reader);
+../../openrtx/src/core/chan.c:95:    pthread_mutex_unlock(&c->m_meta);
+../../openrtx/src/core/chan.c:96:    pthread_mutex_unlock(&c->m_read);
+../../openrtx/src/core/chan.c:102:    pthread_mutex_lock(&c->m_meta);
+../../openrtx/src/core/chan.c:104:    pthread_mutex_unlock(&c->m_meta);
+../../openrtx/src/core/chan.c:111:    pthread_mutex_lock(&c->m_meta);
+../../openrtx/src/core/chan.c:113:    pthread_mutex_unlock(&c->m_meta);
+../../openrtx/src/core/chan.c:120:    pthread_mutex_lock(&c->m_meta);
+../../openrtx/src/core/chan.c:124:        pthread_cond_broadcast(&c->c_reader);
+../../openrtx/src/core/chan.c:125:        pthread_cond_broadcast(&c->c_writer);
+../../openrtx/src/core/chan.c:127:    pthread_mutex_unlock(&c->m_meta);
+../../openrtx/src/core/chan.c:134:    pthread_mutex_destroy(&c->m_write);
+../../openrtx/src/core/chan.c:135:    pthread_mutex_destroy(&c->m_read);
+../../openrtx/src/core/chan.c:136:    pthread_mutex_destroy(&c->m_meta);
+../../openrtx/src/core/chan.c:138:    pthread_cond_destroy(&c->c_writer);
+../../openrtx/src/core/chan.c:139:    pthread_cond_destroy(&c->c_reader);
+../../openrtx/src/core/queue.c:27:    pthread_mutex_init(&q->mutex, NULL);
+../../openrtx/src/core/queue.c:28:    pthread_cond_init(&q->not_empty, NULL);
+../../openrtx/src/core/queue.c:37:    pthread_mutex_destroy(&q->mutex);
+../../openrtx/src/core/queue.c:38:    pthread_cond_destroy(&q->not_empty);
+../../openrtx/src/core/queue.c:45:    pthread_mutex_lock(&q->mutex);
+../../openrtx/src/core/queue.c:54:                pthread_cond_wait(&q->not_empty, &q->mutex);
+../../openrtx/src/core/queue.c:59:            pthread_mutex_unlock(&q->mutex);
+../../openrtx/src/core/queue.c:69:    pthread_mutex_unlock(&q->mutex);
+../../openrtx/src/core/queue.c:78:    pthread_mutex_lock(&q->mutex);
+../../openrtx/src/core/queue.c:90:            pthread_cond_signal(&q->not_empty);
+../../openrtx/src/core/queue.c:97:        pthread_mutex_unlock(&q->mutex);
+../../openrtx/src/core/queue.c:101:    pthread_mutex_unlock(&q->mutex);
+../../openrtx/src/core/gps.c:81:    pthread_mutex_lock(&state_mutex);
+../../openrtx/src/core/gps.c:83:    pthread_mutex_unlock(&state_mutex);
+../../openrtx/src/core/gps.c:192:    pthread_mutex_lock(&state_mutex);
+../../openrtx/src/core/gps.c:194:    pthread_mutex_unlock(&state_mutex);
+../../openrtx/src/core/audio_codec.c:23:#include <pthread.h>
+../../openrtx/src/core/audio_codec.c:24:#include "core/threads.h"
+../../openrtx/src/core/audio_codec.c:45:static pthread_t        codecThread;
+../../openrtx/src/core/audio_codec.c:46:static pthread_attr_t   codecAttr;
+../../openrtx/src/core/audio_codec.c:47:static pthread_mutex_t  data_mutex  = PTHREAD_MUTEX_INITIALIZER;
+../../openrtx/src/core/audio_codec.c:48:static pthread_mutex_t  init_mutex  = PTHREAD_MUTEX_INITIALIZER;
+../../openrtx/src/core/audio_codec.c:49:static pthread_cond_t   wakeup_cond = PTHREAD_COND_INITIALIZER;
+../../openrtx/src/core/audio_codec.c:72:    pthread_mutex_lock(&init_mutex);
+../../openrtx/src/core/audio_codec.c:74:    pthread_mutex_unlock(&init_mutex);
+../../openrtx/src/core/audio_codec.c:87:    pthread_mutex_lock(&init_mutex);
+../../openrtx/src/core/audio_codec.c:89:    pthread_mutex_unlock(&init_mutex);
+../../openrtx/src/core/audio_codec.c:136:    pthread_mutex_lock(&data_mutex);
+../../openrtx/src/core/audio_codec.c:139:        pthread_cond_wait(&wakeup_cond, &data_mutex);
+../../openrtx/src/core/audio_codec.c:145:    pthread_mutex_unlock(&data_mutex);
+../../openrtx/src/core/audio_codec.c:170:    pthread_mutex_lock(&data_mutex);
+../../openrtx/src/core/audio_codec.c:173:        pthread_cond_wait(&wakeup_cond, &data_mutex);
+../../openrtx/src/core/audio_codec.c:181:    pthread_mutex_unlock(&data_mutex);
+../../openrtx/src/core/audio_codec.c:201:        pthread_detach(pthread_self());
+../../openrtx/src/core/audio_codec.c:235:        pthread_mutex_lock(&data_mutex);
+../../openrtx/src/core/audio_codec.c:247:            pthread_cond_signal(&wakeup_cond);
+../../openrtx/src/core/audio_codec.c:252:        pthread_mutex_unlock(&data_mutex);
+../../openrtx/src/core/audio_codec.c:258:    // In case thread terminates due to invalid path or stream error, detach it
+../../openrtx/src/core/audio_codec.c:261:        pthread_detach(pthread_self());
+../../openrtx/src/core/audio_codec.c:280:        pthread_detach(pthread_self());
+../../openrtx/src/core/audio_codec.c:287:    // Ensure that thread start is correctly synchronized with the output
+../../openrtx/src/core/audio_codec.c:303:        pthread_mutex_lock(&data_mutex);
+../../openrtx/src/core/audio_codec.c:310:                pthread_cond_signal(&wakeup_cond);
+../../openrtx/src/core/audio_codec.c:316:        pthread_mutex_unlock(&data_mutex);
+../../openrtx/src/core/audio_codec.c:344:    // In case thread terminates due to invalid path or stream error, detach it
+../../openrtx/src/core/audio_codec.c:347:        pthread_detach(pthread_self());
+../../openrtx/src/core/audio_codec.c:359:    // Handle access contention when starting the codec thread to ensure that
+../../openrtx/src/core/audio_codec.c:360:    // only one call at a time can effectively start the thread.
+../../openrtx/src/core/audio_codec.c:361:    pthread_mutex_lock(&init_mutex);
+../../openrtx/src/core/audio_codec.c:367:            pthread_mutex_unlock(&init_mutex);
+../../openrtx/src/core/audio_codec.c:377:            pthread_mutex_unlock(&init_mutex);
+../../openrtx/src/core/audio_codec.c:388:    pthread_mutex_unlock(&init_mutex);
+../../openrtx/src/core/audio_codec.c:395:    pthread_attr_init(&codecAttr);
+../../openrtx/src/core/audio_codec.c:398:    // Set stack size of CODEC2 thread to 16kB.
+../../openrtx/src/core/audio_codec.c:399:    pthread_attr_setstacksize(&codecAttr, CODEC2_THREAD_STKSIZE);
+../../openrtx/src/core/audio_codec.c:401:    // Set priority of CODEC2 thread to the maximum one, the same of RTX thread.
+../../openrtx/src/core/audio_codec.c:404:    pthread_attr_setschedparam(&codecAttr, &param);
+../../openrtx/src/core/audio_codec.c:406:    // Allocate and set the stack for CODEC2 thread
+../../openrtx/src/core/audio_codec.c:407:    void *codec_thread_stack = malloc(CODEC2_THREAD_STKSIZE * sizeof(uint8_t));
+../../openrtx/src/core/audio_codec.c:408:    pthread_attr_setstack(&codecAttr, codec_thread_stack, CODEC2_THREAD_STKSIZE);
+../../openrtx/src/core/audio_codec.c:411:    // Start thread
+../../openrtx/src/core/audio_codec.c:412:    int ret = pthread_create(&codecThread, &codecAttr, func, &audioPath);
+../../openrtx/src/core/audio_codec.c:422:    pthread_join(codecThread, NULL);
+../../openrtx/src/core/audio_codec.c:429:    pthread_attr_getstack(&codecAttr, &addr, &size);
+../../openrtx/src/core/voicePrompts.c:576:    // the AT1846S chip may take more than 20ms, making the codec2 thread miss
+../../openrtx/src/core/state.c:34:pthread_mutex_t state_mutex;
+../../openrtx/src/core/state.c:45:    pthread_mutex_init(&state_mutex, NULL);
+../../openrtx/src/core/state.c:100:    pthread_mutex_destroy(&state_mutex);
+../../openrtx/src/core/state.c:111:    pthread_mutex_lock(&state_mutex);
+../../openrtx/src/core/state.c:145:    pthread_mutex_unlock(&state_mutex);
+../../openrtx/src/core/threads.c:22:#include <pthread.h>
+../../openrtx/src/core/threads.c:25:#include "core/threads.h"
+../../openrtx/src/core/threads.c:44:pthread_mutex_t rtx_mutex;
+../../openrtx/src/core/threads.c:49:void *ui_threadFunc(void *arg)
+../../openrtx/src/core/threads.c:75:        pthread_mutex_lock(&state_mutex);   // Lock r/w access to radio state
+../../openrtx/src/core/threads.c:78:        pthread_mutex_unlock(&state_mutex); // Unlock r/w access to radio state
+../../openrtx/src/core/threads.c:85:            pthread_mutex_lock(&rtx_mutex);
+../../openrtx/src/core/threads.c:107:            pthread_mutex_unlock(&rtx_mutex);
+../../openrtx/src/core/threads.c:133:void *main_thread(void *arg)
+../../openrtx/src/core/threads.c:154:        pthread_mutex_lock(&state_mutex);
+../../openrtx/src/core/threads.c:157:        pthread_mutex_unlock(&state_mutex);
+../../openrtx/src/core/threads.c:178:void *rtx_threadFunc(void *arg)
+../../openrtx/src/core/threads.c:197:void create_threads()
+../../openrtx/src/core/threads.c:200:    pthread_mutex_init(&rtx_mutex, NULL);
+../../openrtx/src/core/threads.c:202:    // Create rtx radio thread
+../../openrtx/src/core/threads.c:203:    pthread_attr_t rtx_attr;
+../../openrtx/src/core/threads.c:204:    pthread_attr_init(&rtx_attr);
+../../openrtx/src/core/threads.c:207:    pthread_attr_setstacksize(&rtx_attr, RTX_THREAD_STKSIZE);
+../../openrtx/src/core/threads.c:209:    void *rtx_thread_stack = malloc(RTX_THREAD_STKSIZE * sizeof(uint8_t));
+../../openrtx/src/core/threads.c:210:    pthread_attr_setstack(&rtx_attr, rtx_thread_stack, RTX_THREAD_STKSIZE);
+../../openrtx/src/core/threads.c:214:    // Max priority for RTX thread when running with miosix rtos
+../../openrtx/src/core/threads.c:217:    pthread_attr_setschedparam(&rtx_attr, &param);
+../../openrtx/src/core/threads.c:220:    pthread_t rtx_thread;
+../../openrtx/src/core/threads.c:221:    pthread_create(&rtx_thread, &rtx_attr, rtx_threadFunc, NULL);
+../../openrtx/src/core/threads.c:223:    // Create UI thread
+../../openrtx/src/core/threads.c:224:    pthread_attr_t ui_attr;
+../../openrtx/src/core/threads.c:225:    pthread_attr_init(&ui_attr);
+../../openrtx/src/core/threads.c:228:    pthread_attr_setstacksize(&ui_attr, UI_THREAD_STKSIZE);
+../../openrtx/src/core/threads.c:230:    void *ui_thread_stack = malloc(UI_THREAD_STKSIZE * sizeof(uint8_t));
+../../openrtx/src/core/threads.c:231:    pthread_attr_setstack(&ui_attr, ui_thread_stack, UI_THREAD_STKSIZE);
+../../openrtx/src/core/threads.c:234:    pthread_t ui_thread;
+../../openrtx/src/core/threads.c:235:    pthread_create(&ui_thread, &ui_attr, ui_threadFunc, NULL);
+../../openrtx/src/protocols/M17/M17Demodulator.cpp:68:static pthread_t logThread;
+../../openrtx/src/protocols/M17/M17Demodulator.cpp:181:    pthread_create(&logThread, NULL, logFunc, NULL);
+../../openrtx/src/main.c:52:    // macOS requires SDL main loop to run on the main thread.
+../../openrtx/src/main.c:53:    // Here we create a new thread for OpenRTX main program and utilize the main
+../../openrtx/src/main.c:54:    // thread for the SDL main loop.
+../../openrtx/src/main.c:55:    pthread_t openrtx_thread;
+../../openrtx/src/main.c:56:    pthread_create(&openrtx_thread, NULL, openrtx_run, NULL);
+../../openrtx/src/main.c:59:    pthread_join(openrtx_thread, NULL);
+../../openrtx/src/rtx/OpMode_FM.cpp:187:    // Sleep thread for 30ms for 33Hz update rate
+../../openrtx/src/rtx/rtx.cpp:28:static pthread_mutex_t   *cfgMutex;     // Mutex for incoming config messages
+../../openrtx/src/rtx/rtx.cpp:42:void rtx_init(pthread_mutex_t *m)
+../../openrtx/src/rtx/rtx.cpp:100:    pthread_mutex_lock(cfgMutex);
+../../openrtx/src/rtx/rtx.cpp:102:    pthread_mutex_unlock(cfgMutex);
+../../openrtx/src/rtx/rtx.cpp:114:    if(pthread_mutex_trylock(cfgMutex) == 0)
+../../openrtx/src/rtx/rtx.cpp:127:        pthread_mutex_unlock(cfgMutex);
+../../openrtx/src/rtx/OpMode_M17.cpp:169:    // rtx thread looping endlessly and locking up all the other tasks
+../../openrtx/include/core/audio_codec.h:76: * Get current oprational status of the codec thread.
+../../openrtx/include/core/audio_codec.h:78: * @return true if the codec thread is active.
+../../openrtx/include/core/state.h:26:#include <pthread.h>
+../../openrtx/include/core/state.h:96:extern pthread_mutex_t state_mutex;
+../../openrtx/include/core/openrtx.h:35: * Return type is void* to make this function be used as a pthread thread body.
+../../openrtx/include/core/queue.h:24:#include <pthread.h>
+../../openrtx/include/core/queue.h:35:    pthread_mutex_t mutex;
+../../openrtx/include/core/queue.h:36:    pthread_cond_t not_empty;
+../../openrtx/include/core/audio_stream.h:91: * another thread is pending on this function, it returns immediately a
+../../openrtx/include/core/audio_stream.h:113: * If the stream is not running or there is another thread waiting at the
+../../openrtx/include/core/audio_stream.h:121: * running or there is another thread waiting at the synchronisation point.
+../../openrtx/include/core/memory_profiling.h:29: * \return stack size of the caller thread.
+../../openrtx/include/core/memory_profiling.h:34: * \return absolute free stack of current thread.
+../../openrtx/include/core/memory_profiling.h:35: * Absolute free stack is the minimum free stack since the thread was
+../../openrtx/include/core/memory_profiling.h:41: * \return current free stack of current thread.
+../../openrtx/include/core/memory_profiling.h:49: * shared among all threads, therefore this function returns the same value
+../../openrtx/include/core/memory_profiling.h:50: * regardless which thread is called in.
+../../openrtx/include/core/memory_profiling.h:57: * The heap is shared among all threads, therefore this function returns
+../../openrtx/include/core/memory_profiling.h:58: * the same value regardless which thread is called in.
+../../openrtx/include/core/memory_profiling.h:66: * The heap is shared among all threads, therefore this function returns
+../../openrtx/include/core/memory_profiling.h:67: * the same value regardless which thread is called in.
+../../openrtx/include/core/chan.h:20:#include <pthread.h>
+../../openrtx/include/core/chan.h:29:    pthread_mutex_t m_meta;
+../../openrtx/include/core/chan.h:30:    pthread_mutex_t m_read;
+../../openrtx/include/core/chan.h:31:    pthread_mutex_t m_write;
+../../openrtx/include/core/chan.h:32:    pthread_cond_t c_reader;
+../../openrtx/include/core/chan.h:33:    pthread_cond_t c_writer;
+../../openrtx/include/core/thread_utils.h:2: * @file thread_utils.h
+../../openrtx/include/core/thread_utils.h:5: * This header provides thread safety mechanisms to prevent
+../../openrtx/include/core/thread_utils.h:6: * race conditions and data corruption in multi-threaded code.
+../../openrtx/include/core/thread_utils.h:17:#include <pthread.h>
+../../openrtx/include/core/thread_utils.h:22:#include <pthread.h>
+../../openrtx/include/core/thread_utils.h:30:    pthread_mutex_t mutex;
+../../openrtx/include/core/thread_utils.h:34:    pthread_mutex_t mutex;
+../../openrtx/include/core/thread_utils.h:37:} safe_mutex_t;
+../../openrtx/include/core/thread_utils.h:44:static inline int safe_mutex_init(safe_mutex_t *mutex)
+../../openrtx/include/core/thread_utils.h:51:    int result = pthread_mutex_init(&mutex->mutex, NULL);
+../../openrtx/include/core/thread_utils.h:53:    k_mutex_init(&mutex->mutex);
+../../openrtx/include/core/thread_utils.h:56:    int result = pthread_mutex_init(&mutex->mutex, NULL);
+../../openrtx/include/core/thread_utils.h:71:static inline int safe_mutex_lock(safe_mutex_t *mutex)
+../../openrtx/include/core/thread_utils.h:78:    return pthread_mutex_lock(&mutex->mutex);
+../../openrtx/include/core/thread_utils.h:80:    k_mutex_lock(&mutex->mutex, K_FOREVER);
+../../openrtx/include/core/thread_utils.h:83:    return pthread_mutex_lock(&mutex->mutex);
+../../openrtx/include/core/thread_utils.h:92:static inline int safe_mutex_unlock(safe_mutex_t *mutex)
+../../openrtx/include/core/thread_utils.h:99:    return pthread_mutex_unlock(&mutex->mutex);
+../../openrtx/include/core/thread_utils.h:101:    k_mutex_unlock(&mutex->mutex);
+../../openrtx/include/core/thread_utils.h:104:    return pthread_mutex_unlock(&mutex->mutex);
+../../openrtx/include/core/thread_utils.h:113:static inline int safe_mutex_destroy(safe_mutex_t *mutex)
+../../openrtx/include/core/thread_utils.h:120:    int result = pthread_mutex_destroy(&mutex->mutex);
+../../openrtx/include/core/thread_utils.h:125:    int result = pthread_mutex_destroy(&mutex->mutex);
+../../openrtx/include/core/thread_utils.h:215:        if (safe_mutex_lock(mutex) == 0) { \
+../../openrtx/include/core/thread_utils.h:217:            safe_mutex_unlock(mutex); \
+../../openrtx/include/core/thread_utils.h:248:extern safe_mutex_t global_mutex;
+../../openrtx/include/core/thread_utils.h:251: * @brief Initialize thread safety system
+../../openrtx/include/core/thread_utils.h:254:int thread_safety_init(void);
+../../openrtx/include/core/thread_utils.h:257: * @brief Cleanup thread safety system
+../../openrtx/include/core/thread_utils.h:260:int thread_safety_cleanup(void);
+../../openrtx/include/core/threads.h:35: * Thread priority levels, UNIX-like: lower level, higher thread priority
+../../openrtx/include/core/threads.h:45: * Spawn all the threads for the various functionalities.
+../../openrtx/include/core/threads.h:47:void create_threads();
+../../openrtx/include/peripherals/adc.h:21:#include <pthread.h>
+../../openrtx/include/peripherals/adc.h:47:    const pthread_mutex_t *mutex;      ///< Pointer to mutex, can be NULL
+../../openrtx/include/peripherals/adc.h:70:        pthread_mutex_lock((pthread_mutex_t *) adc->mutex);
+../../openrtx/include/peripherals/adc.h:75:        pthread_mutex_unlock((pthread_mutex_t *) adc->mutex);
+../../openrtx/include/peripherals/spi.h:26:#include <pthread.h>
+../../openrtx/include/peripherals/spi.h:64:    pthread_mutex_t   *mutex;   ///< Pointer to mutex for exclusive access
+../../openrtx/include/peripherals/spi.h:75:        pthread_mutex_init(dev->mutex, NULL);
+../../openrtx/include/peripherals/spi.h:86:        pthread_mutex_destroy(dev->mutex);
+../../openrtx/include/peripherals/spi.h:100:    return pthread_mutex_lock(dev->mutex);
+../../openrtx/include/peripherals/spi.h:114:    return pthread_mutex_trylock(dev->mutex);
+../../openrtx/include/peripherals/spi.h:128:    return pthread_mutex_unlock(dev->mutex);
+../../openrtx/include/peripherals/i2c.h:25:#include <pthread.h>
+../../openrtx/include/peripherals/i2c.h:80:    const pthread_mutex_t *mutex;      ///< Mutex for exclusive access
+../../openrtx/include/peripherals/i2c.h:95:    return pthread_mutex_lock((pthread_mutex_t *) dev->mutex);
+../../openrtx/include/peripherals/i2c.h:109:    return pthread_mutex_trylock((pthread_mutex_t *) dev->mutex);
+../../openrtx/include/peripherals/i2c.h:123:    return pthread_mutex_unlock((pthread_mutex_t *) dev->mutex);
+../../openrtx/include/interfaces/delays.h:45: * Puts the calling thread in a sleeping state for the specified amount of time.
+../../openrtx/include/interfaces/delays.h:52: * Puts the calling thread in a sleeping state until the system time reaches
+../../openrtx/include/interfaces/audio.h:63:                       ///  thread woken up whenever half of the buffer is full.
+../../openrtx/include/interfaces/audio.h:119:     * @return zero on success, -1 if the calling thread was not blocked.
+../../openrtx/include/rtx/rtx.h:27:#include <pthread.h>
+../../openrtx/include/rtx/rtx.h:108:void rtx_init(pthread_mutex_t *m);
+../../openrtx/include/rtx/rtx.h:143: * Get current status of the RX squelch. This function is thread-safe and can
+../../openrtx/include/rtx/rtx.h:144: * be called also from threads other than the one running the RTX task.

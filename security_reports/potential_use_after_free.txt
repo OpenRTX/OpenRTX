@@ -1,0 +1,6 @@
+../../openrtx/src/core/audio_codec.c-427-    size_t size;
+../../openrtx/src/core/audio_codec.c-428-
+../../openrtx/src/core/audio_codec.c-429-    pthread_attr_getstack(&codecAttr, &addr, &size);
+../../openrtx/src/core/audio_codec.c:430:    free(addr);
+../../openrtx/src/core/audio_codec.c-431-    #endif
+../../openrtx/src/core/audio_codec.c-432-}
