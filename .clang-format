@@ -106,6 +106,7 @@ ObjCBinPackProtocolList: Auto
 ObjCBlockIndentWidth: 4
 ObjCSpaceAfterProperty: true
 ObjCSpaceBeforeProtocolList: true
+PackConstructorInitializers: NextLine
 
 # Taken from git's rules
 PenaltyBreakAssignment: 30

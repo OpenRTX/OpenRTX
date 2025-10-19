@@ -105,6 +105,7 @@ target_sources(app
     openrtx/src/protocols/M17/M17DSP.cpp
     openrtx/src/protocols/M17/M17Golay.cpp
     openrtx/src/protocols/M17/M17Callsign.cpp
+    openrtx/src/protocols/M17/Callsign.cpp
     openrtx/src/protocols/M17/M17Modulator.cpp
     openrtx/src/protocols/M17/M17Demodulator.cpp
     openrtx/src/protocols/M17/M17FrameEncoder.cpp
