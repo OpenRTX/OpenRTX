@@ -95,7 +95,7 @@ public:
 private:
 
     M17ConvolutionalEncoder  encoder;           ///< Convolutional encoder.
-    std::array< lich_t, 6 >  lichSegments;      ///< Encoded LSF chunks for LICH generation.
+    M17LinkSetupFrame        currLsf;           ///< LSF of current transmission.
     uint8_t                  currentLich;       ///< Index of current LSF chunk.
     uint16_t                 streamFrameNumber; ///< Current frame number.
 };

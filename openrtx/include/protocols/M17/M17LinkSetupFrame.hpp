@@ -136,10 +136,10 @@ public:
      * Generate one of the six possible LSF chunks for embedding in data frame's
      * LICH field. Output is the Golay (24,12) encoded LSF chunk.
      *
+     * @param segment: LSF chunk to be filled
      * @param segmentNum: segment number, between 0 and 5.
-     * @return Golay (24,12) encoded LSF chunk.
      */
-    lich_t generateLichSegment(const uint8_t segmentNum);
+    void generateLichSegment(lich_t &segment, const uint8_t segmentNum);
 
 private:
 

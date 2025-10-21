@@ -101,7 +101,8 @@ const uint8_t * M17LinkSetupFrame::getData()
     return reinterpret_cast < const uint8_t * >(&data);
 }
 
-lich_t M17LinkSetupFrame::generateLichSegment(const uint8_t segmentNum)
+void M17LinkSetupFrame::generateLichSegment(lich_t &segment,
+                                            const uint8_t segmentNum)
 {
     /*
      * The M17 protocol specification prescribes that the content of the
@@ -127,15 +128,12 @@ lich_t M17LinkSetupFrame::generateLichSegment(const uint8_t segmentNum)
 
     // Encode each block and assemble the final data block.
     // NOTE: shift and bitswap required to genereate big-endian data.
-    lich_t result;
     for(size_t i = 0; i < blocks.size(); i++)
     {
         uint32_t encoded = golay24_encode(blocks[i]);
         encoded          = __builtin_bswap32(encoded << 8);
-        memcpy(&result[3*i], &encoded, 3);
+        memcpy(&segment[3*i], &encoded, 3);
     }
-
-    return result;
 }
 
 uint16_t M17LinkSetupFrame::crc16(const void *data, const size_t len) const
