@@ -41,6 +41,7 @@ void M17FrameEncoder::reset()
     // Clear counters
     currentLich       = 0;
     streamFrameNumber = 0;
+    updateLsf = false;
 
     // Clear the LSF
     currLsf.clear();
@@ -91,6 +92,10 @@ uint16_t M17FrameEncoder::encodeStreamFrame(const payload_t& payload,
     lich_t lich;
     currLsf.generateLichSegment(lich, currentLich);
     currentLich = (currentLich + 1) % NUM_LSF_CHUNKS;
+    if((currentLich == 0) && (updateLsf == true)) {
+        currLsf = newLsf;
+        updateLsf = false;
+    }
 
     // Add LICH segment to coded data
     std::array<uint8_t, 46> frame;
