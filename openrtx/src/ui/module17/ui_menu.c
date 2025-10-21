@@ -520,8 +520,10 @@ void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state)
               color_white, "Time&Date");
     if(ui_state->input_position <= 0)
     {
-        strcpy(ui_state->new_date_buf, "__/__/__");
-        strcpy(ui_state->new_time_buf, "__:__:00");
+        strncpy(ui_state->new_date_buf, "__/__/__", sizeof(ui_state->new_date_buf) - 1);
+        ui_state->new_date_buf[sizeof(ui_state->new_date_buf) - 1] = '\0';
+        strncpy(ui_state->new_time_buf, "__:__:00", sizeof(ui_state->new_time_buf) - 1);
+        ui_state->new_time_buf[sizeof(ui_state->new_time_buf) - 1] = '\0';
     }
     else
     {
