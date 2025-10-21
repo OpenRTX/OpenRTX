@@ -92,12 +92,38 @@ public:
      */
     void encodeEotFrame(frame_t& output);
 
+    /**
+     * Get a copy of the LSF data belonging to the current transmission.
+     *
+     * @return LSF data.
+     */
+    M17LinkSetupFrame getCurrentLsf()
+    {
+        return currLsf;
+    }
+
+    /**
+     * Update the Link Setup Frame data for the current transmission.
+     * The new LSF data will become active once all the LICH segments of the
+     * previous LSF have been sent.
+     *
+     * @param lsf: new Link Setup Frame to be sent.
+     */
+    void updateLsfData(M17LinkSetupFrame& lsf)
+    {
+        newLsf = lsf;
+        newLsf.updateCrc();
+        updateLsf = true;
+    }
+
 private:
 
     M17ConvolutionalEncoder  encoder;           ///< Convolutional encoder.
     M17LinkSetupFrame        currLsf;           ///< LSF of current transmission.
+    M17LinkSetupFrame        newLsf;            ///< Next LSF to be sent.
     uint8_t                  currentLich;       ///< Index of current LSF chunk.
     uint16_t                 streamFrameNumber; ///< Current frame number.
+    bool                     updateLsf;         ///< LSF data needs update.
 };
 
 }      // namespace M17
