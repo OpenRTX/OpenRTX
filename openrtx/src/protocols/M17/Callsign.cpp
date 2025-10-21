@@ -65,9 +65,7 @@ Callsign::Callsign(const char *callsign)
 
 Callsign::Callsign(const call_t encodedCall)
 {
-    std::strncpy(call, decode_callsign(encodedCall).c_str(),
-                 CALLSIGN_MAX_CHARS);
-    call[CALLSIGN_MAX_CHARS] = '\0';
+    decode_callsign(encodedCall, this->call);
 }
 
 bool Callsign::encode_callsign(const std::string &callsign, call_t &encodedCall,
@@ -111,7 +109,8 @@ bool Callsign::encode_callsign(const std::string &callsign, call_t &encodedCall,
     return true;
 }
 
-std::string Callsign::decode_callsign(const call_t &encodedCall) const
+const char *Callsign::decode_callsign(const call_t &encodedCall,
+                                      char *out) const
 {
     // First of all, check if encoded address is a broadcast one
     bool isBroadcast = true;
@@ -122,8 +121,11 @@ std::string Callsign::decode_callsign(const call_t &encodedCall) const
         }
     }
 
-    if (isBroadcast)
-        return BROADCAST_CALL_STR;
+    if (isBroadcast) {
+        std::strncpy(out, BROADCAST_CALL_STR, CALLSIGN_MAX_CHARS);
+        out[CALLSIGN_MAX_CHARS] = '\0';
+        return out;
+    }
 
     // Then, check if encoded address is the invalid one
     bool isInvalid = true;
@@ -134,8 +136,11 @@ std::string Callsign::decode_callsign(const call_t &encodedCall) const
         }
     }
 
-    if (isInvalid)
-        return INVALID_CALL_STR;
+    if (isInvalid) {
+        std::strncpy(out, INVALID_CALL_STR, CALLSIGN_MAX_CHARS);
+        out[CALLSIGN_MAX_CHARS] = '\0';
+        return out;
+    }
 
     /*
      * Address is not broadcast, decode it.
@@ -148,16 +153,13 @@ std::string Callsign::decode_callsign(const call_t &encodedCall) const
     std::copy(encodedCall.rbegin(), encodedCall.rend(), p);
 
     // Decode each base-40 digit and map them to the appriate character.
-    std::string result;
-    size_t index = 0;
-
-    while (encoded) {
-        result.push_back(charMap[encoded % 40]);
-        index++;
+    size_t pos = 0;
+    while (encoded && pos < CALLSIGN_MAX_CHARS) {
+        out[pos++] = charMap[encoded % 40];
         encoded /= 40;
     }
-
-    return result;
+    out[pos] = '\0';
+    return out;
 }
 
 Callsign::operator std::string() const
@@ -180,27 +182,32 @@ Callsign::operator call_t() const
 /**
  * NOTE! since only incomingCs is checked for special values, the second arg must be the incoming station
  */
-bool compareCallsigns(const std::string &localCs, const std::string &incomingCs)
+bool compareCallsigns(const char *localCs, const char *incomingCs)
 {
-    if ((incomingCs == BROADCAST_CALL_STR) || (incomingCs == "INFO")
-        || (incomingCs == "ECHO"))
+    // treat null pointers as empty strings
+    if (!localCs)
+        localCs = "";
+    if (!incomingCs)
+        incomingCs = "";
+
+    if (std::strcmp(incomingCs, BROADCAST_CALL_STR) == 0
+        || std::strcmp(incomingCs, "INFO") == 0
+        || std::strcmp(incomingCs, "ECHO") == 0)
         return true;
 
-    std::string truncatedLocal(localCs);
-    std::string truncatedIncoming(incomingCs);
+    // find slash and possibly truncate if slash is within first 3 chars
+    const char *truncatedLocal = localCs;
+    const char *truncatedIncoming = incomingCs;
 
-    int slashPos = localCs.find_first_of('/');
-    if (slashPos <= 2)
-        truncatedLocal = localCs.substr(slashPos + 1);
+    const char *slash = std::strchr(localCs, '/');
+    if (slash && (slash - localCs) <= 2)
+        truncatedLocal = slash + 1;
 
-    slashPos = incomingCs.find_first_of('/');
-    if (slashPos <= 2)
-        truncatedIncoming = incomingCs.substr(slashPos + 1);
+    slash = std::strchr(incomingCs, '/');
+    if (slash && (slash - incomingCs) <= 2)
+        truncatedIncoming = slash + 1;
 
-    if (truncatedLocal == truncatedIncoming)
-        return true;
-
-    return false;
+    return std::strcmp(truncatedLocal, truncatedIncoming) == 0;
 }
 
 // NOTE! Since this uses compareCallsigns internally, always have the right side of the equality check be the incoming callsign

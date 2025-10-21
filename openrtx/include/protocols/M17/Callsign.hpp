@@ -77,7 +77,7 @@ private:
             * \param encodedCall base-40 encoded callsign.
             * \return a string containing the decoded text.
             */
-    std::string decode_callsign(const call_t &encodedCall) const;
+    const char *decode_callsign(const call_t &encodedCall, char *out) const;
 
     char call[M17::Callsign::CALLSIGN_MAX_CHARS + 1];
 };
