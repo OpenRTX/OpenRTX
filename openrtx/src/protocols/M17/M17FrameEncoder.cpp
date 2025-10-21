@@ -42,23 +42,14 @@ void M17FrameEncoder::reset()
     currentLich       = 0;
     streamFrameNumber = 0;
 
-    // Clear all the LICH segments
-    for(auto& segment : lichSegments)
-    {
-        segment.fill(0x00);
-    }
+    // Clear the LSF
+    currLsf.clear();
 }
 
 void M17FrameEncoder::encodeLsf(M17LinkSetupFrame& lsf, frame_t& output)
 {
-    // Ensure the LSF to be encoded has a valid CRC field
     lsf.updateCrc();
-
-    // Generate the Golay(24,12) LICH segments
-    for(size_t i = 0; i < lichSegments.size(); i++)
-    {
-        lichSegments[i] = lsf.generateLichSegment(i);
-    }
+    currLsf = lsf;
 
     // Encode the LSF, then puncture and decorrelate its data
     std::array<uint8_t, 61> encoded;
@@ -96,15 +87,15 @@ uint16_t M17FrameEncoder::encodeStreamFrame(const payload_t& payload,
     std::array<uint8_t, 34> punctured;
     puncture(encoded, punctured, DATA_PUNCTURE);
 
+    // Generate LICH segment
+    lich_t lich;
+    currLsf.generateLichSegment(lich, currentLich);
+    currentLich = (currentLich + 1) % NUM_LSF_CHUNKS;
+
     // Add LICH segment to coded data
     std::array<uint8_t, 46> frame;
-    auto it = std::copy(lichSegments[currentLich].begin(),
-                        lichSegments[currentLich].end(),
-                        frame.begin());
+    auto it = std::copy(lich.begin(), lich.end(), frame.begin());
     std::copy(punctured.begin(), punctured.end(), it);
-
-    // Increment LICH counter after copy
-    currentLich = (currentLich + 1) % lichSegments.size();
 
     interleave(frame);
     decorrelate(frame);

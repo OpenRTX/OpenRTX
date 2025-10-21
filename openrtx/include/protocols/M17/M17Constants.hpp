@@ -36,6 +36,7 @@ static constexpr size_t M17_SYMBOL_RATE      = 4800;
 static constexpr size_t M17_FRAME_SYMBOLS    = 192;
 static constexpr size_t M17_SYNCWORD_SYMBOLS = 8;
 static constexpr size_t M17_FRAME_BYTES      = M17_FRAME_SYMBOLS / 4;
+static constexpr size_t NUM_LSF_CHUNKS       = 6;
 
 static constexpr syncw_t LSF_SYNC_WORD    = {0x55, 0xF7};  // LSF sync word
 static constexpr syncw_t BERT_SYNC_WORD   = {0xDF, 0x55};  // BERT data sync word
