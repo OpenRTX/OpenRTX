@@ -1058,6 +1058,10 @@ m17_viterbi_test = executable('m17_viterbi_test',
                                sources : unit_test_src + ['tests/unit/M17_viterbi.cpp'],
                                kwargs  : unit_test_opts)
 
+m17_callsign_test = executable('m17_callsign_test',
+                      sources : unit_test_src + ['tests/unit/M17_callsign.cpp'],
+                      kwargs  : unit_test_opts)
+                 
 m17_demodulator_test = executable('m17_demodulator_test',
                             sources: unit_test_src + ['tests/unit/M17_demodulator.cpp'],
                             kwargs: unit_test_opts)
@@ -1090,6 +1094,7 @@ test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
 ## test('M17 Demodulator Test',  m17_demodulator_test) # Skipped for now as this test no longer works after an M17 refactor
 test('M17 RRC Test',          m17_rrc_test)
+test('M17 Callsign Unit Test',          m17_callsign_test)
 test('Codeplug Test',         cps_test)
 ## test('Linux InputStream Test', linux_inputStream_test)
 ## test('Sine Test',             sine_test)
