@@ -69,6 +69,7 @@ openrtx/include/interfaces/radio.h
 openrtx/include/peripherals/gps.h
 openrtx/include/peripherals/rng.h
 openrtx/include/peripherals/rtc.h
+openrtx/include/protocols/M17/PacketFrame.hpp
 openrtx/src/core/dsp.cpp
 openrtx/src/core/memory_profiling.cpp
 platform/drivers/ADC/ADC0_GDx.h
