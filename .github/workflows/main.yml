@@ -121,6 +121,8 @@ jobs:
         run: meson test -C build "M17 Golay Unit Test"
       - name: M17 RRC Test
         run: meson test -C build "M17 RRC Test"
+      - name: M17 Callsign Unit Test
+        run: meson test -C build "M17 Callsign Unit Test"
       - name: Codeplug Test
         run: meson test -C build "Codeplug Test"
       - name: minmea Conversion Test
