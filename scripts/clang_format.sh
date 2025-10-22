@@ -90,6 +90,7 @@ platform/targets/linux/emulator/sdl_engine.h
 platform/targets/ttwrplus/pmu.h
 tests/platform/mic_test.c
 tests/platform/codec2_encode_test.c
+tests/unit/M17_callsign.cpp
 EOF
 )
 

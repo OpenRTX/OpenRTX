@@ -65,52 +65,49 @@ Callsign::Callsign(const char *callsign)
 
 Callsign::Callsign(const call_t encodedCall)
 {
-    decode_callsign(encodedCall, this->call);
+    decode(encodedCall, this->call);
 }
 
-bool Callsign::encode_callsign(const std::string &callsign, call_t &encodedCall,
-                               bool strict) const
+void Callsign::encode(const char *callsign, call_t &encodedCall,
+                      bool strict) const
 {
-    if (callsign.size() > 9)
-        return false;
     // Return the special broadcast callsign if "ALL"
-    if (callsign.compare(BROADCAST_CALL_STR) == 0) {
+    if (strcmp(callsign, BROADCAST_CALL_STR) == 0) {
         encodedCall = BROADCAST_CALL;
-        return true;
+        return;
     }
-    if (callsign.compare(INVALID_CALL_STR) == 0) {
+    if (strcmp(callsign, INVALID_CALL_STR) == 0) {
         encodedCall = INVALID_CALL;
-        return true;
+        return;
     }
     encodedCall.fill(0x00);
     // Encode the characters to base-40 digits.
     uint64_t encoded = 0;
 
-    for (auto it = callsign.rbegin(); it != callsign.rend(); ++it) {
+    for (size_t i = strlen(callsign); i-- > 0;) {
         encoded *= 40;
-        if (*it >= 'A' and *it <= 'Z') {
-            encoded += (*it - 'A') + 1;
-        } else if (*it >= '0' and *it <= '9') {
-            encoded += (*it - '0') + 27;
-        } else if (*it == '-') {
+        if (callsign[i] >= 'A' && callsign[i] <= 'Z') {
+            encoded += (callsign[i] - 'A') + 1;
+        } else if (callsign[i] >= '0' && callsign[i] <= '9') {
+            encoded += (callsign[i] - '0') + 27;
+        } else if (callsign[i] == '-') {
             encoded += 37;
-        } else if (*it == '/') {
+        } else if (callsign[i] == '/') {
             encoded += 38;
-        } else if (*it == '.') {
+        } else if (callsign[i] == '.') {
             encoded += 39;
         } else if (strict) {
-            return false;
+            return;
         }
     }
 
     auto *ptr = reinterpret_cast<uint8_t *>(&encoded);
     std::copy(ptr, ptr + 6, encodedCall.rbegin());
 
-    return true;
+    return;
 }
 
-const char *Callsign::decode_callsign(const call_t &encodedCall,
-                                      char *out) const
+void Callsign::decode(const call_t &encodedCall, char *out) const
 {
     // First of all, check if encoded address is a broadcast one
     bool isBroadcast = true;
@@ -124,7 +121,7 @@ const char *Callsign::decode_callsign(const call_t &encodedCall,
     if (isBroadcast) {
         std::strncpy(out, BROADCAST_CALL_STR, CALLSIGN_MAX_CHARS);
         out[CALLSIGN_MAX_CHARS] = '\0';
-        return out;
+        return;
     }
 
     // Then, check if encoded address is the invalid one
@@ -139,7 +136,7 @@ const char *Callsign::decode_callsign(const call_t &encodedCall,
     if (isInvalid) {
         std::strncpy(out, INVALID_CALL_STR, CALLSIGN_MAX_CHARS);
         out[CALLSIGN_MAX_CHARS] = '\0';
-        return out;
+        return;
     }
 
     /*
@@ -159,7 +156,7 @@ const char *Callsign::decode_callsign(const call_t &encodedCall,
         encoded /= 40;
     }
     out[pos] = '\0';
-    return out;
+    return;
 }
 
 Callsign::operator std::string() const
@@ -175,15 +172,14 @@ Callsign::operator const char *() const
 Callsign::operator call_t() const
 {
     call_t encodedCall;
-    encode_callsign(std::string(this->call), encodedCall);
+    encode(this->call, encodedCall);
     return encodedCall;
 }
 
-/**
- * NOTE! since only incomingCs is checked for special values, the second arg must be the incoming station
- */
-bool compareCallsigns(const char *localCs, const char *incomingCs)
+bool Callsign::operator==(const Callsign &other) const
 {
+    const char *localCs = this->call;
+    const char *incomingCs = other.call;
     // treat null pointers as empty strings
     if (!localCs)
         localCs = "";
@@ -208,10 +204,4 @@ bool compareCallsigns(const char *localCs, const char *incomingCs)
         truncatedIncoming = slash + 1;
 
     return std::strcmp(truncatedLocal, truncatedIncoming) == 0;
-}
-
-// NOTE! Since this uses compareCallsigns internally, always have the right side of the equality check be the incoming callsign
-bool Callsign::operator==(const Callsign &other) const
-{
-    return compareCallsigns(this->call, other.call);
 }

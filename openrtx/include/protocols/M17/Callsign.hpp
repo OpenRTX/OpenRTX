@@ -31,12 +31,32 @@
 namespace M17
 {
 
+/**
+     * An M17 Callsign class
+     * 
+     * This class implements the M17 protocol spec for callsigns. It is responsible for encoding and decoding of callsigns. It also has the definitions for invalid and broadcast callsigns.
+     */
 class Callsign {
 public:
-    static constexpr size_t CALLSIGN_MAX_CHARS = 9;
-
+    /**
+     * Construct a Callsign class from an std::string containing the callsign text
+     * 
+     * @param callsign the ascii calsign (max 9 chars)
+     */
     Callsign(std::string callsign);
+
+    /**
+     * Construct a Callsign class from a C string containing the callsign text
+     * 
+     * @param callsign NUL-terminated ascii calsign (max 9 chars)
+     */
     Callsign(const char *callsign);
+
+    /**
+     * Construct a Callsign class from an encoded call_t base-40 callsign
+     * 
+     * @param encodedCall encoded callsign value
+     */
     Callsign(const call_t encodedCall);
 
     /**
@@ -49,39 +69,72 @@ public:
         return call[0] == '\0';
     }
 
+    /**
+     * Answer if two callsigns are equivalent; left side of equivalency should be local callsign and right side should be incoming in order for special broadcast, info, and echo callsigns to be considered equivalent.
+     * This handles stripping slashes as well.
+     * 
+     * @param other the incoming callsign to compare against
+     * @return true if callsigns are equivalent (or)
+     */
     bool operator==(const Callsign &other) const;
+
+    /**
+     * Convenience operator for getting the callsign in encoded format
+     * @return the base-40 encoded version of the callsign
+     */
     operator call_t() const;
+
+    /**
+     * Convenience operator for getting the callsign as a std::string
+     * @return the callsign in a std::string format
+     */
     operator std::string() const;
+
+    /**
+     * Convenience operator for getting the callsign as a cstring
+     * @return the callsign in a cstring format
+     */
     operator const char *() const;
 
 private:
-    /**
-            * Encode a callsign in base-40 format, starting with the right-most character.
-            * The final value is written out in "big-endian" form, with the most-significant
-            * value first, leading to 0-padding of callsigns shorter than nine characters.
-            *
-            * \param callsign the callsign to encode.
-            * \param encodedCall call_t data structure where to put the encoded data.
-            * \param strict a flag (disabled by default) which indicates whether invalid
-            * characters are allowed and assigned a value of 0 or not allowed, making the
-            * function return an error.
-            * @return true if the callsign was successfully encoded, false on error.
-            */
-    bool encode_callsign(const std::string &callsign, call_t &encodedCall,
-                         bool strict = false) const;
+    static constexpr size_t CALLSIGN_MAX_CHARS = 9;
 
     /**
-            * Decode a base-40 encoded callsign to its text representation. This decodes
-            * a 6-byte big-endian value into a string of up to 9 characters.
-            *
-            * \param encodedCall base-40 encoded callsign.
-            * \return a string containing the decoded text.
-            */
-    const char *decode_callsign(const call_t &encodedCall, char *out) const;
+    * Encode a callsign in base-40 format, starting with the right-most character.
+    * The final value is wr(this->callitten out in "big-endian" form, with the most-significant
+    * value first, leading to 0-padding of callsigns shorter than nine characters.
+    *
+    * @param callsign the callsign to encode.
+    * @param encodedCall call_t data structure where to put the encoded data.
+    * @param strict a flag (disabled by default) which indicates whether invalid
+    * characters are allowed and assigned a value of 0 or not allowed, making the
+    * function return an error.
+    */
+    void encode(const char *callsign, call_t &encodedCall,
+                bool strict = false) const;
+
+    /**
+    * Decode a base-40 encoded callsign to its text representation. This decodes
+    * a 6-byte big-endian value into a string of up to 9 characters.
+    *
+    * @param encodedCall base-40 encoded callsign.
+    * @param out buffer for outputting the decoded call
+    */
+    void decode(const call_t &encodedCall, char *out) const;
 
     char call[M17::Callsign::CALLSIGN_MAX_CHARS + 1];
 };
+/**
+ * Get the broadcast callsign "ALL".
+ * 
+ * @return Broadcast callsign
+ */
 Callsign &getBroadcastCallsign();
+/**
+ * Get the invalid callsign 0. This is useful internally to represent undefined, but is forbidden from being sent by the M17 specification.
+ * 
+ * @return Invalid callsign
+ */
 Callsign &getInvalidCallsign();
 } // namespace M17
 
