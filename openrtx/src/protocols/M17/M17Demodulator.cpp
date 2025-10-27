@@ -235,151 +235,148 @@ bool M17Demodulator::update(const bool invertPhase)
 
     // Read samples from the ADC
     dataBlock_t baseband = inputStream_getData(basebandId);
-    if(baseband.data != NULL)
+    if(baseband.data == NULL)
+        return false;
+
+    // Process samples
+    for(size_t i = 0; i < baseband.len; i++)
     {
-        // Process samples
-        for(size_t i = 0; i < baseband.len; i++)
+        // Apply DC removal filter
+        int16_t sample = dsp_dcBlockFilter(&dcBlock, baseband.data[i]);
+
+        // Apply RRC on the baseband sample
+        float           elem   = static_cast< float >(sample);
+        if(invertPhase) elem   = 0.0f - elem;
+        sample = static_cast< int16_t >(M17::rrc_24k(elem));
+
+        // Update correlator and sample filter for correlation thresholds
+        correlator.sample(sample);
+        corrThreshold = sampleFilter(std::abs(sample));
+
+        switch(demodState)
         {
-            // Apply DC removal filter
-            int16_t sample = dsp_dcBlockFilter(&dcBlock, baseband.data[i]);
-
-            // Apply RRC on the baseband sample
-            float           elem   = static_cast< float >(sample);
-            if(invertPhase) elem   = 0.0f - elem;
-            sample = static_cast< int16_t >(M17::rrc_24k(elem));
-
-            // Update correlator and sample filter for correlation thresholds
-            correlator.sample(sample);
-            corrThreshold = sampleFilter(std::abs(sample));
-
-            switch(demodState)
+            case DemodState::INIT:
             {
-                case DemodState::INIT:
+                initCount -= 1;
+                if(initCount == 0)
+                    demodState = DemodState::UNLOCKED;
+            }
+                break;
+
+            case DemodState::UNLOCKED:
+            {
+                int32_t syncThresh = static_cast< int32_t >(corrThreshold * 33.0f);
+                int8_t  syncStatus = streamSync.update(correlator, syncThresh, -syncThresh);
+
+                if(syncStatus != 0)
+                    demodState = DemodState::SYNCED;
+            }
+                break;
+
+            case DemodState::SYNCED:
+            {
+                // Set sampling point and deviation, zero frame symbol count
+                samplingPoint  = streamSync.samplingIndex();
+                outerDeviation = correlator.maxDeviation(samplingPoint);
+                frameIndex     = 0;
+
+                // Quantize the syncword taking data from the correlator
+                // memory.
+                for(size_t i = 0; i < SYNCWORD_SAMPLES; i++)
                 {
-                    initCount -= 1;
-                    if(initCount == 0)
-                        demodState = DemodState::UNLOCKED;
+                    size_t  pos = (correlator.index() + i) % SYNCWORD_SAMPLES;
+                    int16_t val = correlator.data()[pos];
+
+                    if((pos % SAMPLES_PER_SYMBOL) == samplingPoint)
+                        updateFrame(val);
                 }
+
+                uint8_t hd  = hammingDistance((*demodFrame)[0], STREAM_SYNC_WORD[0]);
+                        hd += hammingDistance((*demodFrame)[1], STREAM_SYNC_WORD[1]);
+
+                if(hd == 0)
+                {
+                    locked     = true;
+                    demodState = DemodState::LOCKED;
+                }
+                else
+                {
+                    demodState = DemodState::UNLOCKED;
+                }
+            }
+                break;
+
+            case DemodState::LOCKED:
+            {
+                if(sampleIndex != samplingPoint)
                     break;
 
-                case DemodState::UNLOCKED:
-                {
-                    int32_t syncThresh = static_cast< int32_t >(corrThreshold * 33.0f);
-                    int8_t  syncStatus = streamSync.update(correlator, syncThresh, -syncThresh);
+                // Quantize and update frame at each sampling point
+                updateFrame(sample);
 
-                    if(syncStatus != 0)
-                        demodState = DemodState::SYNCED;
+                // When we have reached almost the end of a frame, switch
+                // to syncpoint update.
+                if(frameIndex == (M17_FRAME_SYMBOLS - M17_SYNCWORD_SYMBOLS/2))
+                {
+                    demodState = DemodState::SYNC_UPDATE;
+                    syncCount  = SYNCWORD_SAMPLES * 2;
                 }
-                    break;
+            }
+                break;
 
-                case DemodState::SYNCED:
+            case DemodState::SYNC_UPDATE:
+            {
+                // Keep filling the ongoing frame!
+                if(sampleIndex == samplingPoint)
+                    updateFrame(sample);
+
+                // Find the new correlation peak
+                int32_t syncThresh = static_cast< int32_t >(corrThreshold * 33.0f);
+                int8_t  syncStatus = streamSync.update(correlator, syncThresh, -syncThresh);
+
+                // Correlation has to coincide with a syncword!
+                if((syncStatus != 0) && (frameIndex == M17_SYNCWORD_SYMBOLS))
                 {
-                    // Set sampling point and deviation, zero frame symbol count
-                    samplingPoint  = streamSync.samplingIndex();
-                    outerDeviation = correlator.maxDeviation(samplingPoint);
-                    frameIndex     = 0;
-
-                    // Quantize the syncword taking data from the correlator
-                    // memory.
-                    for(size_t i = 0; i < SYNCWORD_SAMPLES; i++)
-                    {
-                        size_t  pos = (correlator.index() + i) % SYNCWORD_SAMPLES;
-                        int16_t val = correlator.data()[pos];
-
-                        if((pos % SAMPLES_PER_SYMBOL) == samplingPoint)
-                            updateFrame(val);
-                    }
-
                     uint8_t hd  = hammingDistance((*demodFrame)[0], STREAM_SYNC_WORD[0]);
                             hd += hammingDistance((*demodFrame)[1], STREAM_SYNC_WORD[1]);
 
-                    if(hd == 0)
+                    // Valid sync found: update deviation and sample
+                    // point, then go back to locked state
+                    if(hd <= 1)
                     {
-                        locked     = true;
-                        demodState = DemodState::LOCKED;
+                        outerDeviation = correlator.maxDeviation(samplingPoint);
+                        samplingPoint  = streamSync.samplingIndex();
+                        missedSyncs    = 0;
+                        demodState     = DemodState::LOCKED;
+                        break;
+                    }
+                }
+
+                // No syncword found within the window, increase the count
+                // of missed syncs and choose where to go. The lock is lost
+                // after four consecutive sync misses.
+                if(syncCount == 0)
+                {
+                    if(missedSyncs >= 4)
+                    {
+                        demodState = DemodState::UNLOCKED;
+                        locked     = false;
                     }
                     else
                     {
-                        demodState = DemodState::UNLOCKED;
+                        demodState = DemodState::LOCKED;
                     }
+
+                    missedSyncs += 1;
                 }
-                    break;
 
-                case DemodState::LOCKED:
-                {
-                    // Quantize and update frame at each sampling point
-                    if(sampleIndex == samplingPoint)
-                    {
-                        updateFrame(sample);
-
-                        // When we have reached almost the end of a frame, switch
-                        // to syncpoint update.
-                        if(frameIndex == (M17_FRAME_SYMBOLS - M17_SYNCWORD_SYMBOLS/2))
-                        {
-                            demodState = DemodState::SYNC_UPDATE;
-                            syncCount  = SYNCWORD_SAMPLES * 2;
-                        }
-                    }
-                }
-                    break;
-
-                case DemodState::SYNC_UPDATE:
-                {
-                    // Keep filling the ongoing frame!
-                    if(sampleIndex == samplingPoint)
-                        updateFrame(sample);
-
-                    // Find the new correlation peak
-                    int32_t syncThresh = static_cast< int32_t >(corrThreshold * 33.0f);
-                    int8_t  syncStatus = streamSync.update(correlator, syncThresh, -syncThresh);
-
-                    if(syncStatus != 0)
-                    {
-                        // Correlation has to coincide with a syncword!
-                        if(frameIndex == M17_SYNCWORD_SYMBOLS)
-                        {
-                            uint8_t hd  = hammingDistance((*demodFrame)[0], STREAM_SYNC_WORD[0]);
-                                    hd += hammingDistance((*demodFrame)[1], STREAM_SYNC_WORD[1]);
-
-                            // Valid sync found: update deviation and sample
-                            // point, then go back to locked state
-                            if(hd <= 1)
-                            {
-                                outerDeviation = correlator.maxDeviation(samplingPoint);
-                                samplingPoint  = streamSync.samplingIndex();
-                                missedSyncs    = 0;
-                                demodState     = DemodState::LOCKED;
-                                break;
-                            }
-                        }
-                    }
-
-                    // No syncword found within the window, increase the count
-                    // of missed syncs and choose where to go. The lock is lost
-                    // after four consecutive sync misses.
-                    if(syncCount == 0)
-                    {
-                        if(missedSyncs >= 4)
-                        {
-                            demodState = DemodState::UNLOCKED;
-                            locked     = false;
-                        }
-                        else
-                        {
-                            demodState = DemodState::LOCKED;
-                        }
-
-                        missedSyncs += 1;
-                    }
-
-                    syncCount -= 1;
-                }
-                    break;
+                syncCount -= 1;
             }
-
-            sampleCount += 1;
-            sampleIndex  = (sampleIndex + 1) % SAMPLES_PER_SYMBOL;
+                break;
         }
+
+        sampleCount += 1;
+        sampleIndex  = (sampleIndex + 1) % SAMPLES_PER_SYMBOL;
     }
 
     return newFrame;
