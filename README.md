@@ -107,3 +107,9 @@ Also, a thank you for donating hardware to this project goes to:
 * smeegle5000
 
 And thanks to everyone who donated via [LiberaPay](https://liberapay.com/OpenRTX/donate).
+
+## Translation
+
+Contribute to the crowdsourced effort to make OpenRTX more accessible by helping [translate it](https://hosted.weblate.org/projects/openrtx/). Weblate proudly supports libre projects like OpenRTX with their tools to help this.
+
+[![Translation status](https://hosted.weblate.org/widget/openrtx/287x66-grey.png)](https://hosted.weblate.org/engage/openrtx/)
