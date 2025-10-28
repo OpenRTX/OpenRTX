@@ -40,6 +40,7 @@
 #include "protocols/M17/M17Constants.hpp"
 #include "protocols/M17/Correlator.hpp"
 #include "protocols/M17/Synchronizer.hpp"
+#include "protocols/M17/DevEstimator.hpp"
 
 namespace M17
 {
@@ -183,13 +184,13 @@ private:
     uint8_t                        missedSyncs;     ///< Counter of missed synchronizations
     uint32_t                       initCount;       ///< Downcounter for initialization
     uint32_t                       syncCount;       ///< Downcounter for resynchronization
-    std::pair < int32_t, int32_t > outerDeviation;  ///< Deviation of outer symbols
     float                          corrThreshold;   ///< Correlation threshold
     struct dcBlock                 dcBlock;         ///< State of the DC removal filter
 
     Correlator   < M17_SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > correlator;
     Synchronizer < M17_SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > streamSync{{ -3, -3, -3, -3, +3, +3, -3, +3 }};
     Iir          < 3 >                                        sampleFilter{sfNum, sfDen};
+    DevEstimator                                              devEstimator;
 };
 
 } /* M17 */

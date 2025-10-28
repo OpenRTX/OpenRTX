@@ -290,6 +290,7 @@ bool M17Demodulator::update(const bool invertPhase)
 
 void M17Demodulator::quantize(stream_sample_t sample)
 {
+    auto outerDeviation = devEstimator.outerDeviation();
     int8_t symbol;
 
     if(sample > (2 * outerDeviation.first)/3)
@@ -314,6 +315,7 @@ void M17Demodulator::quantize(stream_sample_t sample)
 
     if(frameIndex >= M17_FRAME_SYMBOLS)
     {
+        devEstimator.update();
         std::swap(readyFrame, demodFrame);
         frameIndex = 0;
         newFrame   = true;
@@ -345,8 +347,9 @@ void M17Demodulator::syncedState()
 {
     // Set sampling point and deviation, zero frame symbol count
     samplingPoint  = streamSync.samplingIndex();
-    outerDeviation = correlator.maxDeviation(samplingPoint);
+    auto deviation = correlator.maxDeviation(samplingPoint);
     frameIndex     = 0;
+    devEstimator.init(deviation);
 
     // Quantize the syncword taking data from the correlator
     // memory.
@@ -375,6 +378,7 @@ void M17Demodulator::lockedState(int16_t sample)
 
     // Quantize and update frame at each sampling point
     quantize(sample);
+    devEstimator.sample(sample);
 
     // When we have reached almost the end of a frame, switch
     // to syncpoint update.
@@ -387,8 +391,10 @@ void M17Demodulator::lockedState(int16_t sample)
 void M17Demodulator::syncUpdateState(int16_t sample)
 {
     // Keep filling the ongoing frame!
-    if(sampleIndex == samplingPoint)
+    if(sampleIndex == samplingPoint) {
         quantize(sample);
+        devEstimator.sample(sample);
+    }
 
     // Find the new correlation peak
     int32_t syncThresh = static_cast< int32_t >(corrThreshold * 33.0f);
@@ -402,7 +408,6 @@ void M17Demodulator::syncUpdateState(int16_t sample)
         // Valid sync found: update deviation and sample
         // point, then go back to locked state
         if(hd <= 1) {
-            outerDeviation = correlator.maxDeviation(samplingPoint);
             samplingPoint = streamSync.samplingIndex();
             missedSyncs = 0;
             demodState = DemodState::LOCKED;
