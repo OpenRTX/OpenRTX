@@ -26,6 +26,9 @@
  * NOTE: This string table's order must not be altered as voice prompts will be
  * indexed in the same order as these strings.
  * Also, menus may be printed using string table offsets.
+ * Also, if you add a string here, ensure it also has an entry added to
+ * scripts/voiceprompts/wordlist_english_UK.csv and that you regerenate the
+ * vpc file.
  */
 typedef struct
 {

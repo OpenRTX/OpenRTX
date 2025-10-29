@@ -1,0 +1,2 @@
+Wordlist_file,Voice_name,Voice_pack_name,Download,Encode,Createpack,Volume_change_db,Remove_silence,Audio_tempo
+wordlist_english_UK.csv,Brian,english_uk_brian.vpc,y,y,y,0,n,

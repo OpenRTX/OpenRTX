@@ -1,0 +1,44 @@
+name: "Check if voice prompts need to be regenerated"
+on:
+  workflow_dispatch:
+  push:
+    paths:
+    - 'openrtx/include/ui/EnglishStrings.h'
+    - 'scripts/voiceprompts/**/*'
+    - 'voiceprompts.vpc'
+  pull_request:
+    paths:
+    - 'openrtx/include/ui/EnglishStrings.h'
+    - 'scripts/voiceprompts/**/*'
+    - 'voiceprompts.vpc'
+
+
+jobs:
+  check-voice-prompts:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: install-deps
+        run: |
+          sudo apt update
+          sudo apt install ffmpeg codec2
+      - name: Setup symbols script dependencies
+        run: |
+          cd ${{github.workspace}}
+          pip3 install --upgrade pip
+          pip3 install -r requirements.txt
+      - name: Run voice prompts script
+        run: |
+          cd scripts/voiceprompts
+          python3 generate_voice_prompts.py
+      - name: Fail the build if there are changes generated
+        run: |
+          git --no-pager diff
+          git diff-index --quiet HEAD
