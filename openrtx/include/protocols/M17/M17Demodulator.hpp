@@ -110,12 +110,36 @@ private:
      * @param sample: baseband sample.
      * @return quantized symbol.
      */
-    int8_t updateFrame(const int16_t sample);
+    void quantize(const int16_t sample);
 
     /**
      * Reset the demodulator state.
      */
     void reset();
+
+    /**
+     * State handler function for DemodState::UNLOCKED
+     */
+    void unlockedState();
+
+    /**
+     * State handler function for DemodState::SYNCED
+     */
+    void syncedState();
+
+    /**
+     * State handler function for DemodState::LOCKED
+     *
+     * @param sample: current baseband sample
+     */
+    void lockedState(int16_t sample);
+
+    /**
+     * State handler function for DemodState::SYNC_UPDATE
+     *
+     * @param sample: current baseband sample
+     */
+    void syncUpdateState(int16_t sample);
 
     /**
      * M17 baseband signal sampled at 24kHz, half of an M17 frame is processed
@@ -151,7 +175,6 @@ private:
     pathId                         basebandPath;    ///< Id of the baseband input path.
     std::unique_ptr<frame_t >      demodFrame;      ///< Frame being demodulated.
     std::unique_ptr<frame_t >      readyFrame;      ///< Fully demodulated frame to be returned.
-    bool                           locked;          ///< A syncword was correctly demodulated.
     bool                           newFrame;        ///< A new frame has been fully decoded.
     uint16_t                       frameIndex;      ///< Index for filling the raw frame.
     uint32_t                       sampleIndex;     ///< Sample index, from 0 to (SAMPLES_PER_SYMBOL - 1)
