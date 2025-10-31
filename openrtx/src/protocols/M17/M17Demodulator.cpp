@@ -403,13 +403,16 @@ void M17Demodulator::syncUpdateState()
     uint8_t streamHd = hammingDistance((*demodFrame)[0], STREAM_SYNC_WORD[0])
                      + hammingDistance((*demodFrame)[1], STREAM_SYNC_WORD[1]);
 
+    uint8_t eotHd = hammingDistance((*demodFrame)[0], EOT_SYNC_WORD[0])
+                  + hammingDistance((*demodFrame)[1], EOT_SYNC_WORD[1]);
+
     if(streamHd <= 1)
         missedSyncs = 0;
     else
         missedSyncs += 1;
 
-    // The lock is lost after four consecutive sync misses.
-    if(missedSyncs > 4)
+    // The lock is lost after four consecutive sync misses or an EOT frame.
+    if((missedSyncs > 4) || (eotHd <= 1))
         demodState = DemodState::UNLOCKED;
     else
         demodState = DemodState::LOCKED;
