@@ -444,6 +444,9 @@ int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
                                                            currentLanguage->on :
                                                            currentLanguage->off);
             break;
+        case M17_TX_LEVEL:
+            sniprintf(buf, max_len, "%d", last_state.settings.m17_tx_level);
+            break;
     }
 
     return 0;

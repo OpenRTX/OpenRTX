@@ -124,7 +124,8 @@ enum m17Items
 {
     M_CALLSIGN = 0,
     M_CAN,
-    M_CAN_RX
+    M_CAN_RX,
+    M_TX_LEVEL
 };
 
 enum module17Items

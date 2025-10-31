@@ -64,6 +64,7 @@ typedef struct
     char    m17_dest[10];         // M17 destination
     bool    showBatteryIcon;      // Battery display true: icon, false: percentage
     bool    gpsSetTime;           // Use GPS to ajust RTC time
+    uint8_t m17_tx_level;          // M17 TX level
 }
 __attribute__((packed)) settings_t;
 
@@ -91,6 +92,11 @@ static const settings_t default_settings =
     "",                           // Empty M17 destination
     false,                        // Display battery icon
     false,                        // Update RTC with GPS
+#ifdef PLATFORM_MOD17
+    12,                           // M17 TX level 
+#else
+    32,                           // M17 TX level 
+#endif
 };
 
 #endif /* SETTINGS_H */
