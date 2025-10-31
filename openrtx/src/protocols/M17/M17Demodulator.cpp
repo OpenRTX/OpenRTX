@@ -249,7 +249,23 @@ bool M17Demodulator::update(const bool invertPhase)
         if(invertPhase) elem   = 0.0f - elem;
         sample = static_cast< int16_t >(M17::rrc_24k(elem));
 
-        // Update correlator and sample filter for correlation thresholds
+        // Clock recovery reset MUST come before sampling
+        if((sampleIndex == 0) && resetClockRec) {
+            clockRec.reset();
+            resetClockRec = false;
+            updateSampPoint = false;
+        }
+
+        // Update sample point only when "far enough" from the last sampling,
+        // to avoid sampling issues when SP rolls over.
+        int diff = samplingPoint - sampleIndex;
+        if(updateSampPoint && (std::abs(diff) == SAMPLES_PER_SYMBOL/2)) {
+            clockRec.update();
+            samplingPoint = clockRec.samplingPoint();
+            updateSampPoint = false;
+        }
+
+        clockRec.sample(sample);
         correlator.sample(sample);
         corrThreshold = sampleFilter(std::abs(sample));
 
@@ -277,7 +293,7 @@ bool M17Demodulator::update(const bool invertPhase)
                 break;
 
             case DemodState::SYNC_UPDATE:
-                syncUpdateState(sample);
+                syncUpdateState();
                 break;
         }
 
@@ -312,14 +328,6 @@ void M17Demodulator::quantize(stream_sample_t sample)
 
     setSymbol(*demodFrame, frameIndex, symbol);
     frameIndex += 1;
-
-    if(frameIndex >= M17_FRAME_SYMBOLS)
-    {
-        devEstimator.update();
-        std::swap(readyFrame, demodFrame);
-        frameIndex = 0;
-        newFrame   = true;
-    }
 }
 
 void M17Demodulator::reset()
@@ -376,58 +384,35 @@ void M17Demodulator::lockedState(int16_t sample)
     if(sampleIndex != samplingPoint)
         return;
 
-    // Quantize and update frame at each sampling point
     quantize(sample);
     devEstimator.sample(sample);
 
-    // When we have reached almost the end of a frame, switch
-    // to syncpoint update.
-    if(frameIndex == (M17_FRAME_SYMBOLS - M17_SYNCWORD_SYMBOLS/2)) {
+    if(frameIndex == M17_FRAME_SYMBOLS) {
+        devEstimator.update();
+        std::swap(readyFrame, demodFrame);
+
+        frameIndex = 0;
+        newFrame = true;
+        updateSampPoint = true;
         demodState = DemodState::SYNC_UPDATE;
-        syncCount  = SYNCWORD_SAMPLES * 2;
     }
 }
 
-void M17Demodulator::syncUpdateState(int16_t sample)
+void M17Demodulator::syncUpdateState()
 {
-    // Keep filling the ongoing frame!
-    if(sampleIndex == samplingPoint) {
-        quantize(sample);
-        devEstimator.sample(sample);
-    }
+    uint8_t streamHd = hammingDistance((*demodFrame)[0], STREAM_SYNC_WORD[0])
+                     + hammingDistance((*demodFrame)[1], STREAM_SYNC_WORD[1]);
 
-    // Find the new correlation peak
-    int32_t syncThresh = static_cast< int32_t >(corrThreshold * 33.0f);
-    int8_t  syncStatus = streamSync.update(correlator, syncThresh, -syncThresh);
-
-    // Correlation has to coincide with a syncword!
-    if((syncStatus != 0) && (frameIndex == M17_SYNCWORD_SYMBOLS)) {
-        uint8_t hd = hammingDistance((*demodFrame)[0], STREAM_SYNC_WORD[0])
-                   + hammingDistance((*demodFrame)[1], STREAM_SYNC_WORD[1]);
-
-        // Valid sync found: update deviation and sample
-        // point, then go back to locked state
-        if(hd <= 1) {
-            samplingPoint = streamSync.samplingIndex();
-            missedSyncs = 0;
-            demodState = DemodState::LOCKED;
-            return;
-        }
-    }
-
-    // No syncword found within the window, increase the count
-    // of missed syncs and choose where to go. The lock is lost
-    // after four consecutive sync misses.
-    if(syncCount == 0) {
-        if(missedSyncs >= 4)
-            demodState = DemodState::UNLOCKED;
-        else
-            demodState = DemodState::LOCKED;
-
+    if(streamHd <= 1)
+        missedSyncs = 0;
+    else
         missedSyncs += 1;
-    }
 
-    syncCount -= 1;
+    // The lock is lost after four consecutive sync misses.
+    if(missedSyncs > 4)
+        demodState = DemodState::UNLOCKED;
+    else
+        demodState = DemodState::LOCKED;
 }
 
 constexpr std::array < float, 3 > M17Demodulator::sfNum;

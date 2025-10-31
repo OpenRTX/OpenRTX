@@ -41,6 +41,7 @@
 #include "protocols/M17/Correlator.hpp"
 #include "protocols/M17/Synchronizer.hpp"
 #include "protocols/M17/DevEstimator.hpp"
+#include "protocols/M17/ClockRecovery.hpp"
 
 namespace M17
 {
@@ -137,10 +138,8 @@ private:
 
     /**
      * State handler function for DemodState::SYNC_UPDATE
-     *
-     * @param sample: current baseband sample
      */
-    void syncUpdateState(int16_t sample);
+    void syncUpdateState();
 
     /**
      * M17 baseband signal sampled at 24kHz, half of an M17 frame is processed
@@ -161,7 +160,7 @@ private:
         UNLOCKED,   ///< Not locked
         SYNCED,     ///< Synchronized, validate syncword
         LOCKED,     ///< Locked
-        SYNC_UPDATE ///< Updating the sampling point
+        SYNC_UPDATE ///< Updating the synchronization state
     };
 
     /**
@@ -177,13 +176,14 @@ private:
     std::unique_ptr<frame_t >      demodFrame;      ///< Frame being demodulated.
     std::unique_ptr<frame_t >      readyFrame;      ///< Fully demodulated frame to be returned.
     bool                           newFrame;        ///< A new frame has been fully decoded.
+    bool                           resetClockRec;   ///< Clock recovery reset request.
+    bool                           updateSampPoint; ///< Sampling point update pending.
     uint16_t                       frameIndex;      ///< Index for filling the raw frame.
     uint32_t                       sampleIndex;     ///< Sample index, from 0 to (SAMPLES_PER_SYMBOL - 1)
     uint32_t                       samplingPoint;   ///< Symbol sampling point
     uint32_t                       sampleCount;     ///< Free-running sample counter
     uint8_t                        missedSyncs;     ///< Counter of missed synchronizations
     uint32_t                       initCount;       ///< Downcounter for initialization
-    uint32_t                       syncCount;       ///< Downcounter for resynchronization
     float                          corrThreshold;   ///< Correlation threshold
     struct dcBlock                 dcBlock;         ///< State of the DC removal filter
 
@@ -191,6 +191,7 @@ private:
     Synchronizer < M17_SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > streamSync{{ -3, -3, -3, -3, +3, +3, -3, +3 }};
     Iir          < 3 >                                        sampleFilter{sfNum, sfDen};
     DevEstimator                                              devEstimator;
+    ClockRecovery< SAMPLES_PER_SYMBOL >                       clockRec;
 };
 
 } /* M17 */
