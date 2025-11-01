@@ -6,7 +6,7 @@ on:
 
 env:
   RADIO_TOOL_VERSION: 0.2.2
-
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -36,23 +36,36 @@ jobs:
             meson compile -C build_arm openrtx_gd77_wrap &&
             meson compile -C build_cm7 openrtx_cs7000p_wrap &&
             meson compile -C build_cm7 openrtx_cs7000p_dfu &&
-            chmod -R 777 *
+            chmod -R 777 * &&
+            ls build_cm7/ &&
+            ls build_arm/ &&
+            ls build_linux/ &&
+            mv build_cm7/openrtx_cs7000p_wrap openrtx_cs7000p_${{ env.BRANCH_NAME }}.bin &&
+            mv build_cm7/openrtx_cs7000p_dfu openrtx_cs7000p_${{ env.BRANCH_NAME }}.dfu &&
+            mv build_arm/openrtx_cs7000_bin openrtx_cs7000_${{ env.BRANCH_NAME }}.bin &&
+            mv build_arm/openrtx_cs7000_dfu openrtx_cs7000_${{ env.BRANCH_NAME }}.dfu &&
+            mv build_arm/openrtx_dm1701_wrap openrtx_dm1701_${{ env.BRANCH_NAME }}.bin &&
+            mv build_arm/openrtx_dm1801_bin.sgl openrtx_dm1801_${{ env.BRANCH_NAME }}.sgl &&
+            mv build_arm/openrtx_gd77_bin.sgl openrtx_gd77_${{ env.BRANCH_NAME }}.sgl &&
+            mv build_linux/openrtx_linux openrtx_linux_${{ env.BRANCH_NAME }} &&
+            mv build_arm/openrtx_md3x0_wrap openrtx_md3x0_${{ env.BRANCH_NAME }}.bin &&
+            mv build_arm/openrtx_mduv3x0_wrap openrtx_mduv3x0_${{ env.BRANCH_NAME }}.bin &&
+            mv build_arm/openrtx_mod17_bin openrtx_mod17_${{ env.BRANCH_NAME }}.bin
       - uses: actions/upload-artifact@v4
         with:
           name: release-bins
           path: |
-            ${{github.workspace}}/build_cm7/openrtx_cs7000p_wrap
-            ${{github.workspace}}/build_cm7/openrtx_cs7000p_dfu
-            ${{github.workspace}}/build_arm/openrtx_cs7000_bin
-            ${{github.workspace}}/build_arm/openrtx_cs7000_dfu
-            ${{github.workspace}}/build_arm/openrtx_dm1701_wrap
-            ${{github.workspace}}/build_arm/openrtx_dm1801_wrap.sgl
-            ${{github.workspace}}/build_arm/openrtx_gd77_wrap.sgl
-            ${{github.workspace}}/build_linux/openrtx_linux
-            ${{github.workspace}}/build_arm/openrtx_md3x0_wrap
-            ${{github.workspace}}/build_arm/openrtx_md9600_wrap
-            ${{github.workspace}}/build_arm/openrtx_mduv3x0_wrap
-            ${{github.workspace}}/build_arm/openrtx_mod17_bin
+            ${{github.workspace}}/openrtx_cs7000p_${{ env.BRANCH_NAME }}.bin
+            ${{github.workspace}}/openrtx_cs7000p_${{ env.BRANCH_NAME }}.dfu
+            ${{github.workspace}}/openrtx_cs7000_${{ env.BRANCH_NAME }}.bin
+            ${{github.workspace}}/openrtx_cs7000_${{ env.BRANCH_NAME }}.dfu
+            ${{github.workspace}}/openrtx_dm1701_${{ env.BRANCH_NAME }}.bin
+            ${{github.workspace}}/openrtx_dm1801_${{ env.BRANCH_NAME }}.sgl
+            ${{github.workspace}}/openrtx_gd77_${{ env.BRANCH_NAME }}.sgl
+            ${{github.workspace}}/openrtx_linux_${{ env.BRANCH_NAME }}
+            ${{github.workspace}}/openrtx_md3x0_${{ env.BRANCH_NAME }}.bin
+            ${{github.workspace}}/openrtx_mduv3x0_${{ env.BRANCH_NAME }}.bin
+            ${{github.workspace}}/openrtx_mod17_${{ env.BRANCH_NAME }}.bin
           if-no-files-found: error
   build-zephyr:
     runs-on: ubuntu-22.04
