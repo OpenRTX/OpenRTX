@@ -41,7 +41,7 @@ jobs:
         with:
           name: release-bins
           path: |
-            ${{github.workspace}}/build_cm7/openrtx_cs7000p_wrap.bin
+            ${{github.workspace}}/build_cm7/openrtx_cs7000p_wrap
             ${{github.workspace}}/build_cm7/openrtx_cs7000p_dfu
             ${{github.workspace}}/build_arm/openrtx_cs7000_bin
             ${{github.workspace}}/build_arm/openrtx_cs7000_dfu
