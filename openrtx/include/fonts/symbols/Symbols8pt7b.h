@@ -1,3 +1,10 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * Copyright (C) 2020-2025 OpenRTX Contributors
+ *
+ * This file is part of OpenRTX.
+ */
+
 // This is a generated file, please do not edit it! Use generate_symbols.py
 static const uint8_t Symbols8pt7bBitmaps[] PROGMEM = {
 0x00, //space
