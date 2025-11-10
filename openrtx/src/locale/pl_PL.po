@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-10-15 19:01-0500\n"
-"PO-Revision-Date: 2025-11-10 13:03+0000\n"
-"Last-Translator: Ryan Turner <ryan@turnrye.com>\n"
+"PO-Revision-Date: 2025-11-10 13:09+0000\n"
+"Last-Translator: Wojciech Kaczmarski <w.kaczmarski@teletra.pl>\n"
 "Language-Team: Polish <https://hosted.weblate.org/projects/openrtx/openrtx/"
 "pl/>\n"
 "Language: pl_PL\n"
@@ -26,36 +26,36 @@ msgstr "Polski"
 
 #: openrtx/include/ui/EnglishStrings.h:30 openrtx/src/ui/default/ui_menu.c:51
 msgid "OFF"
-msgstr ""
+msgstr "WYŁ."
 
 #: openrtx/include/ui/EnglishStrings.h:31
 msgid "ON"
-msgstr ""
+msgstr "WŁ."
 
 #: openrtx/include/ui/EnglishStrings.h:32
 msgid "Banks"
-msgstr ""
+msgstr "Banki"
 
 #: openrtx/include/ui/EnglishStrings.h:33
 msgid "Channels"
-msgstr ""
+msgstr "Kanały"
 
 #: openrtx/include/ui/EnglishStrings.h:34
 msgid "Contacts"
-msgstr ""
+msgstr "Kontakty"
 
 #: openrtx/include/ui/EnglishStrings.h:35 openrtx/src/ui/default/ui_menu.c:708
 #: openrtx/src/ui/module17/ui_menu.c:343
 msgid "GPS"
-msgstr ""
+msgstr "GPS"
 
 #: openrtx/include/ui/EnglishStrings.h:36 openrtx/src/ui/module17/ui_menu.c:431
 msgid "Settings"
-msgstr ""
+msgstr "Ustawienia"
 
 #: openrtx/include/ui/EnglishStrings.h:37
 msgid "Backup & Restore"
-msgstr ""
+msgstr "Kopia zapasowa i przywracanie"
 
 #: openrtx/include/ui/EnglishStrings.h:38 openrtx/src/ui/module17/ui_menu.c:441
 msgid "Info"
