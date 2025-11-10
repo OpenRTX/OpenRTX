@@ -232,6 +232,15 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
 
                     extendedCall = true;
                 }
+                if((streamType.fields.encType    == M17_ENCRYPTION_NONE) &&
+                   (streamType.fields.encSubType == M17_META_TEXT))
+                {
+                    meta_t& meta = lsf.metadata();
+                    metaTextHandler.addBlock(meta);
+                    const char* metatext = metaTextHandler.get();
+                    if(metatext != nullptr)
+                         strncpy(status->M17_meta_text, metatext, 53);
+                }
 
                 // Set source and destination fields.
                 // If we have received an extended callsign the src will be the RF link address
@@ -290,9 +299,11 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         status->lsfOk = false;
         dataValid     = false;
         extendedCall  = false;
+        status->M17_meta_text[0] = '\0';
         status->M17_link[0] = '\0';
         status->M17_refl[0] = '\0';
 
+        metaTextHandler.reset();
         codec_stop(rxAudioPath);
         audioPath_release(rxAudioPath);
     }
