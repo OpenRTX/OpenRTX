@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-10-17 07:55-0500\n"
-"PO-Revision-Date: 2025-11-10 16:04+0000\n"
+"PO-Revision-Date: 2025-11-10 16:11+0000\n"
 "Last-Translator: Andreas Schmidberger <dev@oe3anc.at>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/openrtx/openrtx/"
 "de/>\n"
@@ -99,7 +99,7 @@ msgstr "Kontrast"
 
 #: openrtx/include/ui/EnglishStrings.h:49
 msgid "Timer"
-msgstr ""
+msgstr "Dauer"
 
 #: openrtx/include/ui/EnglishStrings.h:50
 msgid "GPS Enabled"
