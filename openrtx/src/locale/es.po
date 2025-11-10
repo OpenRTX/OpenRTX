@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-10-17 07:55-0500\n"
 "PO-Revision-Date: 2025-11-11 01:09+0000\n"
-"Last-Translator: Juan Pucheu <jpucheu@gmail.com>\n"
+"Last-Translator: Wojciech Kaczmarski <w.kaczmarski@teletra.pl>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/openrtx/openrtx/"
 "es/>\n"
 "Language: es\n"
@@ -463,12 +463,12 @@ msgstr "%c%d.%d"
 #. i18n: SI prefix for mega
 #: openrtx/src/ui/default/ui_menu.c:401
 msgid "M"
-msgstr "Mhz"
+msgstr "M"
 
 #. i18n: SI prefix for kilo
 #: openrtx/src/ui/default/ui_menu.c:407
 msgid "k"
-msgstr "Khz"
+msgstr "k"
 
 #. i18n: frequency value
 #. NOTE: casts are there only to squelch -Wformat warnings on the
