@@ -206,15 +206,19 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
             {
                 dataValid = true;
 
-                uint8_t metadataStorage[MetadataFactory::getMaxStorageSize()];
-                
-                M17::Metadata* metadata = MetadataFactory::create(lsf, metadataStorage);
-                if (auto* extCall = dynamic_cast<ExtendedCallsignMetadata*>(metadata)) {
+                uint8_t metadataStorage[M17::MetadataFactory::getMaxStorageSize()];
+                M17::Metadata* metadata = M17::MetadataFactory::create(lsf, metadataStorage);
+                if (auto* extCall = dynamic_cast<M17::ExtendedCallsignMetadata*>(metadata)) {
                     extendedCall = true;
                     strncpy(status->M17_src, extCall->getCall1().c_str(), 10);
                     strncpy(status->M17_refl, extCall->getCall2().c_str(), 10);
+                } else if(auto* textBlock = dynamic_cast<M17::TextBlockMetadata*>(metadata)) {
+                    metaTextHandler.addBlock(textBlock->getMeta());
+                    const char* metatext = metaTextHandler.get();
+                    if(metatext != nullptr && strlen(metatext) > 0) {
+                        strncpy(status->M17_meta_text, metatext, 53);
+                    }
                 }
-
                 metadata->~Metadata();
 
                 // Retrieve stream source and destination data
@@ -278,9 +282,11 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         status->lsfOk = false;
         dataValid     = false;
         extendedCall  = false;
+        status->M17_meta_text[0] = '\0';
         status->M17_link[0] = '\0';
         status->M17_refl[0] = '\0';
 
+        metaTextHandler.reset();
         codec_stop(rxAudioPath);
         audioPath_release(rxAudioPath);
     }
