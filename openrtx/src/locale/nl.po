@@ -8,27 +8,29 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-10-17 07:55-0500\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: Automatically generated\n"
-"Language-Team: none\n"
+"PO-Revision-Date: 2025-11-10 18:11+0000\n"
+"Last-Translator: Jetse <jetse@pa1jet.nl>\n"
+"Language-Team: Dutch <https://hosted.weblate.org/projects/openrtx/openrtx/nl/"
+">\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 5.15-dev\n"
 
 #. i18n: This should be the endonym for the language/locale; it is used in the locale selection menu
 #: openrtx/include/ui/EnglishStrings.h:30
 msgid "English"
-msgstr ""
+msgstr "Nederlands"
 
 #: openrtx/include/ui/EnglishStrings.h:31 openrtx/src/ui/default/ui_menu.c:51
 msgid "OFF"
-msgstr ""
+msgstr "UIT"
 
 #: openrtx/include/ui/EnglishStrings.h:32
 msgid "ON"
-msgstr ""
+msgstr "AAN"
 
 #: openrtx/include/ui/EnglishStrings.h:33
 msgid "Banks"
@@ -36,32 +38,34 @@ msgstr ""
 
 #: openrtx/include/ui/EnglishStrings.h:34
 msgid "Channels"
-msgstr ""
+msgstr "Kanalen"
 
 #: openrtx/include/ui/EnglishStrings.h:35
 msgid "Contacts"
-msgstr ""
+msgstr "Contacten"
 
 #: openrtx/include/ui/EnglishStrings.h:36 openrtx/src/ui/default/ui_menu.c:709
 #: openrtx/src/ui/module17/ui_menu.c:343
 msgid "GPS"
-msgstr ""
+msgstr "GPS"
 
 #: openrtx/include/ui/EnglishStrings.h:37 openrtx/src/ui/module17/ui_menu.c:431
 msgid "Settings"
-msgstr ""
+msgstr "Instellingen"
 
 #: openrtx/include/ui/EnglishStrings.h:38
 msgid "Backup & Restore"
-msgstr ""
+msgstr "Backup & Herstellen"
 
 #: openrtx/include/ui/EnglishStrings.h:39 openrtx/src/ui/module17/ui_menu.c:441
+#, fuzzy
 msgid "Info"
-msgstr ""
+msgstr "Informatie"
 
 #: openrtx/include/ui/EnglishStrings.h:40
+#, fuzzy
 msgid "About"
-msgstr ""
+msgstr "Over"
 
 #: openrtx/include/ui/EnglishStrings.h:41 openrtx/src/ui/module17/ui_menu.c:475
 msgid "Display"
@@ -69,31 +73,31 @@ msgstr ""
 
 #: openrtx/include/ui/EnglishStrings.h:42
 msgid "Time & Date"
-msgstr ""
+msgstr "Datum & Tijd"
 
 #: openrtx/include/ui/EnglishStrings.h:43
 msgid "FM"
-msgstr ""
+msgstr "FM"
 
 #: openrtx/include/ui/EnglishStrings.h:44
 msgid "M17"
-msgstr ""
+msgstr "M17"
 
 #: openrtx/include/ui/EnglishStrings.h:45
 msgid "DMR"
-msgstr ""
+msgstr "DMR"
 
 #: openrtx/include/ui/EnglishStrings.h:46
 msgid "Default Settings"
-msgstr ""
+msgstr "Fabrieksinstellingen"
 
 #: openrtx/include/ui/EnglishStrings.h:47
 msgid "Brightness"
-msgstr ""
+msgstr "Helderheid"
 
 #: openrtx/include/ui/EnglishStrings.h:48
 msgid "Contrast"
-msgstr ""
+msgstr "Contrast"
 
 #: openrtx/include/ui/EnglishStrings.h:49
 msgid "Timer"
@@ -109,11 +113,11 @@ msgstr ""
 
 #: openrtx/include/ui/EnglishStrings.h:52
 msgid "UTC Timezone"
-msgstr ""
+msgstr "UTC Tijdzone"
 
 #: openrtx/include/ui/EnglishStrings.h:53
 msgid "Voice"
-msgstr ""
+msgstr "Stem"
 
 #: openrtx/include/ui/EnglishStrings.h:54
 msgid "Level"
@@ -129,19 +133,20 @@ msgstr ""
 
 #: openrtx/include/ui/EnglishStrings.h:57
 msgid "Backup"
-msgstr ""
+msgstr "Backup"
 
 #: openrtx/include/ui/EnglishStrings.h:58
 msgid "Restore"
-msgstr ""
+msgstr "Herstel"
 
 #: openrtx/include/ui/EnglishStrings.h:59
 msgid "Bat. Voltage"
-msgstr ""
+msgstr "Bat. Spanning"
 
 #: openrtx/include/ui/EnglishStrings.h:60
+#, fuzzy
 msgid "Bat. Charge"
-msgstr ""
+msgstr "Bat. Lading"
 
 #: openrtx/include/ui/EnglishStrings.h:61
 msgid "RSSI"
@@ -149,11 +154,11 @@ msgstr ""
 
 #: openrtx/include/ui/EnglishStrings.h:62
 msgid "Model"
-msgstr ""
+msgstr "Model"
 
 #: openrtx/include/ui/EnglishStrings.h:63
 msgid "Band"
-msgstr ""
+msgstr "Band"
 
 #: openrtx/include/ui/EnglishStrings.h:64
 msgid "VHF"
