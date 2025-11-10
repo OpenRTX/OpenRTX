@@ -3,6 +3,7 @@
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
+ *                                Rick Schnicker KD0OSS                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -20,12 +21,14 @@
 
 #include "interfaces/platform.h"
 #include "interfaces/cps_io.h"
+#include "interfaces/delays.h"
 #include <stdio.h>
 #include <stdint.h>
 #include "ui/ui_default.h"
 #include <string.h>
 #include "ui/ui_strings.h"
 #include "core/utils.h"
+#include "ui/utils.h"
 
 void _ui_drawMainBackground()
 {
@@ -170,8 +173,17 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                               color_white, "%s", rtxStatus.M17_link);
                 }
 
+                // Meta text (if present)
+                if(rtxStatus.M17_meta_text[0] != '\0')
+                {
+                    char msg[14];
+                    scrollText(rtxStatus.M17_meta_text, msg, sizeof(msg), &ui_state->m17_meta_text_scroll_position);
+                    gfx_print(layout.line3_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                              color_white, "%s", msg);
+                    sleepFor(0, 100);
+                }
                 // Reflector (if present)
-                if(rtxStatus.M17_refl[0] != '\0')
+                else if(rtxStatus.M17_refl[0] != '\0')
                 {
                     gfx_drawSymbol(layout.line3_pos, layout.line4_symbol_size, TEXT_ALIGN_LEFT,
                                    color_white, SYMBOL_NETWORK);
