@@ -110,6 +110,7 @@ target_sources(app
     openrtx/src/protocols/M17/M17FrameEncoder.cpp
     openrtx/src/protocols/M17/M17FrameDecoder.cpp
     openrtx/src/protocols/M17/M17LinkSetupFrame.cpp
+    openrtx/src/protocols/M17/MetaText.cpp
 
     openrtx/src/ui/default/ui.c
     openrtx/src/ui/default/ui_main.c
