@@ -6,9 +6,11 @@
 
 #include "interfaces/platform.h"
 #include "interfaces/cps_io.h"
+#include "interfaces/delays.h"
 #include <stdio.h>
 #include <stdint.h>
 #include "ui/ui_mod17.h"
+#include "ui/utils.h"
 #include <string.h>
 
 void _ui_drawMainBackground()
@@ -68,6 +70,32 @@ static void _ui_drawModeInfo(ui_state_t* ui_state)
                                    color_white, SYMBOL_NETWORK);
                     gfx_print(layout.line3_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                               color_white, "%s", rtxStatus.M17_refl);
+                }
+
+                // metatext available
+                if(rtxStatus.M17_meta_text[0] != '\0')
+                {
+                    char msg[21];
+                    
+                    // Always display current position
+                    scrollTextPeek(rtxStatus.M17_meta_text, msg, sizeof(msg),
+                                   ui_state->m17_meta_text_scroll_position);
+                    // Only advance scroll every 100ms
+                    long long now = getTick();
+                    if(now - ui_state->m17_meta_text_last_scroll_tick >= 100)
+                    {
+                        scrollTextAdvance(rtxStatus.M17_meta_text, sizeof(msg),
+                                          &ui_state->m17_meta_text_scroll_position);
+                        ui_state->m17_meta_text_last_scroll_tick = now;
+                    }
+                    gfx_print(layout.line5_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                              color_white, "%s", msg);
+                }
+                
+                // Reset scroll position when meta text becomes empty
+                if(rtxStatus.M17_meta_text[0] == '\0')
+                {
+                    ui_state->m17_meta_text_scroll_position = 0;
                 }
             }
             else
