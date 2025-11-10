@@ -8,92 +8,94 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-10-17 07:55-0500\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: Automatically generated\n"
-"Language-Team: none\n"
+"PO-Revision-Date: 2025-11-10 15:48+0000\n"
+"Last-Translator: Andreas Schmidberger <dev@oe3anc.at>\n"
+"Language-Team: German <https://hosted.weblate.org/projects/openrtx/openrtx/"
+"de/>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 5.15-dev\n"
 
 #. i18n: This should be the endonym for the language/locale; it is used in the locale selection menu
 #: openrtx/include/ui/EnglishStrings.h:30
 msgid "English"
-msgstr ""
+msgstr "Deutsch"
 
 #: openrtx/include/ui/EnglishStrings.h:31 openrtx/src/ui/default/ui_menu.c:51
 msgid "OFF"
-msgstr ""
+msgstr "AUS"
 
 #: openrtx/include/ui/EnglishStrings.h:32
 msgid "ON"
-msgstr ""
+msgstr "EIN"
 
 #: openrtx/include/ui/EnglishStrings.h:33
 msgid "Banks"
-msgstr ""
+msgstr "Bänke"
 
 #: openrtx/include/ui/EnglishStrings.h:34
 msgid "Channels"
-msgstr ""
+msgstr "Kanäle"
 
 #: openrtx/include/ui/EnglishStrings.h:35
 msgid "Contacts"
-msgstr ""
+msgstr "Kontakte"
 
 #: openrtx/include/ui/EnglishStrings.h:36 openrtx/src/ui/default/ui_menu.c:709
 #: openrtx/src/ui/module17/ui_menu.c:343
 msgid "GPS"
-msgstr ""
+msgstr "GPS"
 
 #: openrtx/include/ui/EnglishStrings.h:37 openrtx/src/ui/module17/ui_menu.c:431
 msgid "Settings"
-msgstr ""
+msgstr "Einstellungen"
 
 #: openrtx/include/ui/EnglishStrings.h:38
 msgid "Backup & Restore"
-msgstr ""
+msgstr "Sichern & Wiederherstellen"
 
 #: openrtx/include/ui/EnglishStrings.h:39 openrtx/src/ui/module17/ui_menu.c:441
 msgid "Info"
-msgstr ""
+msgstr "Info"
 
 #: openrtx/include/ui/EnglishStrings.h:40
 msgid "About"
-msgstr ""
+msgstr "Über"
 
 #: openrtx/include/ui/EnglishStrings.h:41 openrtx/src/ui/module17/ui_menu.c:475
 msgid "Display"
-msgstr ""
+msgstr "Bildschirm"
 
 #: openrtx/include/ui/EnglishStrings.h:42
 msgid "Time & Date"
-msgstr ""
+msgstr "Zeit & Datum"
 
 #: openrtx/include/ui/EnglishStrings.h:43
 msgid "FM"
-msgstr ""
+msgstr "FM"
 
 #: openrtx/include/ui/EnglishStrings.h:44
 msgid "M17"
-msgstr ""
+msgstr "M17"
 
 #: openrtx/include/ui/EnglishStrings.h:45
 msgid "DMR"
-msgstr ""
+msgstr "DMR"
 
 #: openrtx/include/ui/EnglishStrings.h:46
 msgid "Default Settings"
-msgstr ""
+msgstr "Standard Einstellungen"
 
 #: openrtx/include/ui/EnglishStrings.h:47
 msgid "Brightness"
-msgstr ""
+msgstr "Helligkeit"
 
 #: openrtx/include/ui/EnglishStrings.h:48
 msgid "Contrast"
-msgstr ""
+msgstr "Kontrast"
 
 #: openrtx/include/ui/EnglishStrings.h:49
 msgid "Timer"
@@ -101,121 +103,121 @@ msgstr ""
 
 #: openrtx/include/ui/EnglishStrings.h:50
 msgid "GPS Enabled"
-msgstr ""
+msgstr "GPS aktiviert"
 
 #: openrtx/include/ui/EnglishStrings.h:51
 msgid "GPS Set Time"
-msgstr ""
+msgstr "GPS Zeit setzen"
 
 #: openrtx/include/ui/EnglishStrings.h:52
 msgid "UTC Timezone"
-msgstr ""
+msgstr "UTC Zeitzone"
 
 #: openrtx/include/ui/EnglishStrings.h:53
 msgid "Voice"
-msgstr ""
+msgstr "Stimme"
 
 #: openrtx/include/ui/EnglishStrings.h:54
 msgid "Level"
-msgstr ""
+msgstr "Stufe"
 
 #: openrtx/include/ui/EnglishStrings.h:55
 msgid "Phonetic"
-msgstr ""
+msgstr "Phonetisch"
 
 #: openrtx/include/ui/EnglishStrings.h:56
 msgid "Beep"
-msgstr ""
+msgstr "Piepton"
 
 #: openrtx/include/ui/EnglishStrings.h:57
 msgid "Backup"
-msgstr ""
+msgstr "Sichern"
 
 #: openrtx/include/ui/EnglishStrings.h:58
 msgid "Restore"
-msgstr ""
+msgstr "Wiederherstellen"
 
 #: openrtx/include/ui/EnglishStrings.h:59
 msgid "Bat. Voltage"
-msgstr ""
+msgstr "Akkuspannung"
 
 #: openrtx/include/ui/EnglishStrings.h:60
 msgid "Bat. Charge"
-msgstr ""
+msgstr "Akkuladung"
 
 #: openrtx/include/ui/EnglishStrings.h:61
 msgid "RSSI"
-msgstr ""
+msgstr "RSSI"
 
 #: openrtx/include/ui/EnglishStrings.h:62
 msgid "Model"
-msgstr ""
+msgstr "Model"
 
 #: openrtx/include/ui/EnglishStrings.h:63
 msgid "Band"
-msgstr ""
+msgstr "Band"
 
 #: openrtx/include/ui/EnglishStrings.h:64
 msgid "VHF"
-msgstr ""
+msgstr "VHF"
 
 #: openrtx/include/ui/EnglishStrings.h:65
 msgid "UHF"
-msgstr ""
+msgstr "UHF"
 
 #: openrtx/include/ui/EnglishStrings.h:66
 msgid "LCD Type"
-msgstr ""
+msgstr "LCD Typ"
 
 #: openrtx/include/ui/EnglishStrings.h:67
 msgid "Niccolo' IU2KIN"
-msgstr ""
+msgstr "Niccolo' IU2KIN"
 
 #: openrtx/include/ui/EnglishStrings.h:68
 msgid "Silvano IU2KWO"
-msgstr ""
+msgstr "Silvano IU2KWO"
 
 #: openrtx/include/ui/EnglishStrings.h:69
 msgid "Federico IU2NUO"
-msgstr ""
+msgstr "Federico IU2NUO"
 
 #: openrtx/include/ui/EnglishStrings.h:70
 msgid "Fred IU2NRO"
-msgstr ""
+msgstr "Fred IU2NRO"
 
 #: openrtx/include/ui/EnglishStrings.h:71
 msgid "Joseph VK7JS"
-msgstr ""
+msgstr "Joseph VK7JS"
 
 #: openrtx/include/ui/EnglishStrings.h:72
 msgid "All channels"
-msgstr ""
+msgstr "Alle Kanäle"
 
 #: openrtx/include/ui/EnglishStrings.h:73 openrtx/src/ui/module17/ui_main.c:129
 #: openrtx/src/ui/module17/ui_menu.c:331
 msgid "Menu"
-msgstr ""
+msgstr "Menü"
 
 #: openrtx/include/ui/EnglishStrings.h:74 openrtx/src/ui/module17/ui_menu.c:348
 msgid "GPS OFF"
-msgstr ""
+msgstr "GPS AUS"
 
 #: openrtx/include/ui/EnglishStrings.h:75 openrtx/src/ui/module17/ui_menu.c:351
 msgid "No Fix"
-msgstr ""
+msgstr "Kein FIX"
 
 #: openrtx/include/ui/EnglishStrings.h:76 openrtx/src/ui/module17/ui_menu.c:354
 msgid "Fix Lost"
-msgstr ""
+msgstr "FIX verloren"
 
 #: openrtx/include/ui/EnglishStrings.h:77 openrtx/src/ui/module17/ui_menu.c:369
 #: openrtx/src/ui/module17/ui_menu.c:385
 msgid "ERROR"
-msgstr ""
+msgstr "FEHLER"
 
 #: openrtx/include/ui/EnglishStrings.h:78
 msgid "Flash Backup"
-msgstr ""
+msgstr "Speicher Sicherung"
 
 #: openrtx/include/ui/EnglishStrings.h:79
 msgid "Connect to RTXTool"
