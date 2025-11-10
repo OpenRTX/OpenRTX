@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-10-17 07:55-0500\n"
-"PO-Revision-Date: 2025-11-10 18:11+0000\n"
+"PO-Revision-Date: 2025-11-11 01:09+0000\n"
 "Last-Translator: \"Carl (Superminaren)\" <c.vargklint@gmail.com>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/openrtx/openrtx/"
 "sv/>\n"
@@ -452,7 +452,7 @@ msgstr ""
 
 #: openrtx/src/ui/default/ui_menu.c:66
 msgid "1 hour"
-msgstr ""
+msgstr "1 timme"
 
 #. i18n: Print timezone offset in format +/-HH.MM
 #: openrtx/src/ui/default/ui_menu.c:341
@@ -591,11 +591,11 @@ msgstr ""
 
 #: openrtx/src/ui/module17/ui_main.c:121 openrtx/src/ui/module17/ui_menu.c:577
 msgid "Cancel"
-msgstr ""
+msgstr "Avbryt"
 
 #: openrtx/src/ui/module17/ui_main.c:123 openrtx/src/ui/module17/ui_menu.c:579
 msgid "Accept"
-msgstr ""
+msgstr "Godkänn"
 
 #: openrtx/src/ui/module17/ui_menu.c:360
 msgid "SPS"
@@ -608,8 +608,8 @@ msgstr ""
 
 #: openrtx/src/ui/module17/ui_menu.c:503 openrtx/src/ui/module17/ui_menu.c:520
 msgid "Time&Date"
-msgstr ""
+msgstr "Tid&Datum"
 
 #: openrtx/src/ui/module17/ui_menu.c:593
 msgid "Module17 Settings"
-msgstr ""
+msgstr "Module17 Inställningar"
