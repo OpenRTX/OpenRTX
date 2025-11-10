@@ -221,7 +221,7 @@ msgstr "Speicher Sicherung"
 
 #: openrtx/include/ui/EnglishStrings.h:79
 msgid "Connect to RTXTool"
-msgstr ""
+msgstr "Zu RTXTool verbinden"
 
 #: openrtx/include/ui/EnglishStrings.h:80
 msgid "to backup flash and"
