@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-10-15 19:01-0500\n"
-"PO-Revision-Date: 2025-11-10 15:48+0000\n"
+"PO-Revision-Date: 2025-11-10 17:53+0000\n"
 "Last-Translator: Wojciech Kaczmarski <w.kaczmarski@teletra.pl>\n"
 "Language-Team: Ukrainian <https://hosted.weblate.org/projects/openrtx/"
 "openrtx/uk/>\n"
@@ -330,7 +330,7 @@ msgstr "Декодуй"
 
 #: openrtx/include/ui/EnglishStrings.h:105
 msgid "Both"
-msgstr "Оба"
+msgstr "Обидва"
 
 #: openrtx/include/ui/EnglishStrings.h:106
 msgid "None"
