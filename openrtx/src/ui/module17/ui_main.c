@@ -40,7 +40,7 @@ void _ui_drawMainTop()
     datetime_t local_time = utcToLocalTime(last_state.time,
                                            last_state.settings.utc_timezone);
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, "%02d:%02d:%02d", local_time.hour,
+              color_white, gettext("%02d:%02d:%02d"), local_time.hour,
               local_time.minute, local_time.second);
 #endif
 
@@ -108,7 +108,7 @@ static void _ui_drawModeInfo(ui_state_t* ui_state)
 
                 // Print CAN
                 gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_RIGHT,
-                          color_white, "CAN %02d", state.settings.m17_can);
+                          color_white, gettext("CAN %02d"), state.settings.m17_can);
                 gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                           color_white, last);
                 // Print M17 Destination ID on line 2
@@ -118,15 +118,15 @@ static void _ui_drawModeInfo(ui_state_t* ui_state)
                 {
                     // Print Button Info
                     gfx_print(layout.line5_pos, layout.line5_font, TEXT_ALIGN_LEFT,
-                              color_white, "Cancel");
+                              color_white, gettext("Cancel"));
                     gfx_print(layout.line5_pos, layout.line5_font, TEXT_ALIGN_RIGHT,
-                              color_white, "Accept");
+                              color_white, gettext("Accept"));
                 }
                 else
                 {
                     // Menu
                     gfx_print(layout.line5_pos, layout.line5_font, TEXT_ALIGN_RIGHT,
-                              color_white, "Menu");
+                              color_white, gettext("Menu"));
                 }
                 break;
             }
