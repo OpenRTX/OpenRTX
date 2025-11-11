@@ -62,6 +62,7 @@ typedef struct
     bool       restore_eflash;
     bool       txDisable;
     uint8_t    step_index;
+    uint32_t   rxSweep_start_freq;
 }
 state_t;
 
@@ -81,6 +82,9 @@ enum RtxStatus
     RTX_OFF = 0,
     RTX_RX,
     RTX_TX
+    #ifdef CONFIG_SPECTRUM
+    ,RTX_RX_SWEEP
+    #endif
 };
 
 enum DeviceStatus
